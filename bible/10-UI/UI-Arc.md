@@ -147,8 +147,9 @@ or Space - opens the film. A tap that arrives while assets are still
 loading is honoured too: it unlocks the context inside that gesture and
 the film opens when the artwork and score finish, rather than asking for
 a second press the player has no reason to expect. The gate's own copy
-says so ("Tap anywhere to begin"), Begin remains the visible and
-focusable control, and Skip keeps its own hit area.
+says so ("Tap anywhere to begin") - SPOKEN rather than drawn since
+INTRO-FIELD below - Begin remains the visible and focusable control, and
+Skip keeps its own hit area.
 The scene's listeners, frame callback and WebGL allocations are disposed
 at handoff. The older classic data-backed title/splash remain on Begin.
 
@@ -161,6 +162,46 @@ browser assertions. Desktop, portrait, short landscape, reduced motion,
 missing music and skipping during loading are exercised there.
 `?nointro` opens the existing front door directly for menu probes.
 `?introdebug` and `?introat=seconds` are development-only review controls.
+
+### INTRO-FIELD THE GATE IS THE BUTTON (2026-09-18)
+
+Mac, on the shipped cinematic: *"For the first screen where you have to
+touch to begin. Remove all the text except the begin button."*
+
+The gate carried a kicker ("The Elder Scrolls II"), a title ("The Iliac
+Bay"), a rule between them and the button, and a status line under it.
+All of that is off the picture. The kicker, the title and the ornament
+are gone from the MARKUP and from the STYLE alike, not hidden: a hidden
+node is one the next reader re-shows by accident, and a rule with no node
+is litter that outlives the reason for it.
+
+The status line is the one that needed thought rather than deletion. It
+is a `role="status"` live region, and it is what tells a player the tap
+is what enables sound - so it stays a node and keeps being written to,
+but it is CLIPPED (`clip-path: inset(50%)`, 1x1, no reserved line)
+rather than `display: none`, because a `display: none` live region is
+never announced at all. Read aloud, never drawn.
+
+The safety this rests on: the one message a player must SEE is not this
+line's. A score that fails to load writes the FOOTER, which is still
+drawn, and the pin asserts that no failure is ever routed to the clipped
+line. Hiding the status could not hide a real failure, and the pin is
+what keeps that true.
+
+Two consequences fell out of the removal. The pause path used to
+re-word the heading to "The journey awaits"; with no heading it simply
+does not, and the button's own `Resume` is the whole affordance. And the
+probe's "tap anywhere that is not a control" check had aimed at the
+kicker's box - the only thing on the gate that was reliably clear of
+Begin and Skip - so it aims at the button's own top now.
+
+Skip keeps its corner: it is a control, not copy, and it is the only way
+to reach the menu without sitting through the film.
+
+Pins: `test/intro.test.js` (the removed strings and classes by name, the
+clip rather than the hide, the footer as the failure surface, both of the
+button's words, and the probe's new anchor). Mutants:
+`tools/mutants/introfield.json`, 7 dead.
 
 ## U65 THE INTRO (2026-08-30) - HISTORICAL REMOVAL
 

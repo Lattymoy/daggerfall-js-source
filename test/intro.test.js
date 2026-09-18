@@ -200,3 +200,50 @@ test('INTRO2: the shared logo has accessible text and its exact natural aspect r
   assert.equal(logo.tag, 'img'); assert.equal(logo.alt, 'The Elder Scrolls II: Daggerfall Enhanced');
   assert.equal(logo.width / logo.height, 3); assert.equal(logo.draggable, false);
 });
+
+// ═══ INTRO-FIELD (Mac, 2026-09-18) ═══════════════════════════════════
+// "For the first screen where you have to touch to begin. Remove all the
+// text except the begin button."
+test('INTRO-FIELD: the gate is the BEGIN button and nothing drawn beside it - the status line is spoken, not shown (mutants: INTROFIELD-*)', () => {
+  const src = String(read('src/ui/introScreen.js'));
+
+  // 1. NOTHING BUT THE BUTTON IS APPENDED. The kicker, the title and the
+  // ornament rule are gone from the gate, not merely hidden - a hidden
+  // node is a thing the next reader re-shows by accident.
+  assert.match(src, /gate\.append\(begin, status\);/, 'the gate holds the button and the live region, in that order, and nothing else');
+  for (const gone of ['The Elder Scrolls II', 'The Iliac Bay', 'The journey awaits']) {
+    assert.ok(!src.includes(gone), `"${gone}" is off the gate entirely`);
+  }
+  for (const cls of ['intro-kicker', 'intro-ornament']) {
+    assert.ok(!src.includes(cls), `.${cls} is gone from the markup AND the style - a rule with no node is litter`);
+  }
+  assert.doesNotMatch(src, /\.intro-gate h1\{/, 'and the gate has no heading rule left to style a heading with');
+
+  // 2. THE STATUS LINE IS SPOKEN, NOT DRAWN. It stays a node because it
+  // is the live region a screen reader is owed, and because it is what
+  // says the tap enables sound - but it takes no space on the picture.
+  assert.match(src, /const status = make\(doc, 'p', 'intro-status', 'Preparing the journey…'\); status\.setAttribute\('role', 'status'\);/,
+    'still a role=status live region');
+  const rule = src.match(/\.intro-status\{([^}]*)\}/);
+  assert.ok(rule, 'and it still has a rule of its own');
+  assert.match(rule[1], /clip-path:inset\(50%\)/, 'CLIPPED rather than display:none - a display:none live region is not announced');
+  assert.match(rule[1], /width:1px/); assert.match(rule[1], /height:1px/);
+  assert.doesNotMatch(rule[1], /min-height:18px/, 'and it reserves no line of the layout any more');
+
+  // 3. THE ONE MESSAGE A PLAYER MUST SEE IS NOT THIS LINE'S. The score
+  // failing to load writes the FOOTER, which is still drawn - hiding the
+  // status must never have hidden a real failure.
+  assert.match(src, /footer\.textContent = 'Music couldn’t load\. You can still continue\.';/);
+  assert.doesNotMatch(src, /status\.textContent = '[^']*(couldn|failed|error)/i, 'no failure is routed to the clipped line');
+
+  // 4. AND THE BUTTON STILL CARRIES BOTH ITS WORDS, since the heading it
+  // used to be re-worded beside is gone.
+  assert.match(src, /begin\.textContent = resuming \? 'Resume' : 'Begin';/);
+  assert.match(src, /begin\.disabled = false; begin\.textContent = 'Resume';/, 'a suspended film says Resume on the button itself');
+
+  // The probe aimed its "tap anywhere that is not a control" at the
+  // kicker's box. With the kicker gone it aims at the button's own top.
+  const probe = String(read('tools/introProbe.mjs'));
+  assert.ok(!probe.includes('.intro-kicker'), 'the probe does not reach for a node that no longer exists');
+  assert.match(probe, /const button = document\.querySelector\('\.intro-begin'\)\.getBoundingClientRect\(\);\s*\n\s*return \{ x: Math\.round\(innerWidth \/ 2\), y: Math\.round\(button\.top \/ 2\)/);
+});

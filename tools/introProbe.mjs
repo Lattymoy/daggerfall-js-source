@@ -118,9 +118,12 @@ try {
   const touchPage = await touchContext.newPage(); follow(touchPage);
   await touchPage.goto(`${base}?introdebug`); await touchPage.bringToFront(); await ready(touchPage);
   const spot = await touchPage.evaluate(() => {
-    const kicker = document.querySelector('.intro-kicker').getBoundingClientRect();
+    // MAC: the gate is the Begin button alone now, so there is no kicker to
+    // aim above - the anchor is the BUTTON's own top, and the tap goes half
+    // way between it and the top of the screen. That is bare gate: the thing
+    // this check is for.
     const button = document.querySelector('.intro-begin').getBoundingClientRect();
-    return { x: Math.round(innerWidth / 2), y: Math.round(kicker.top / 2), clear: kicker.top / 2 < button.top - 40 };
+    return { x: Math.round(innerWidth / 2), y: Math.round(button.top / 2), clear: button.top / 2 < button.top - 40 };
   });
   check('the tap target under test is neither Begin nor Skip', spot.clear, spot);
   await touchPage.touchscreen.tap(spot.x, spot.y);
