@@ -281,8 +281,8 @@
   {
     "name": "renderer-panel-keeps",
     "file": "src/render/renderer.js",
-    "old": "    if (this._air?.pending && !this._panelSaved) this._compositeAir();\n    if (this._shadows && world) this._renderPasses(proj, view, lightDir);",
-    "new": "    if (this._air?.pending && !this._panelSaved) this._compositeAir();\n    if (this._shadows && (world || this._panelSaved)) this._renderPasses(proj, view, lightDir);",
+    "old": "    if (this._air?.pending && !this._panelSaved) this._compositeAir();\n    this._deckOwed = null;   // VC6c: whatever was owed is drawn; this frame's deck is its host's to set\n    if (this._shadows && world) this._renderPasses(proj, view, lightDir);",
+    "new": "    if (this._air?.pending && !this._panelSaved) this._compositeAir();\n    this._deckOwed = null;   // VC6c: whatever was owed is drawn; this frame's deck is its host's to set\n    if (this._shadows && (world || this._panelSaved)) this._renderPasses(proj, view, lightDir);",
     "tests": [
       "test/el2_shadows.test.js",
       "test/audit_el.test.js"

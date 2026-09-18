@@ -10,6 +10,7 @@ import {
   GUARD_NPC_SPAWN_RANGE, GUARD_BEHIND_ANGLE,
   GUARD_FALLBACK_MIN_DIST, GUARD_FALLBACK_MAX_DIST,
 } from '../src/scenes/cityGuards.js';
+import { uninstallSurvivalLoot } from '../src/systems/survival/loot.js';   // AUDIT VC6: SURV2's corpse food is stood down for the pins that count a body's items
 
 const ARENA2 = process.env.ARENA2_PATH;
 const skipReal = !ARENA2 || !existsSync(ARENA2)
@@ -214,6 +215,16 @@ function stubClassCfg() {
 }
 
 test('guards G3 (un-gated): the id is MINTED at the spawn, and the loot key survives the prune', async () => {
+  // AUDIT VC6 (2026-09-18): THIS PIN USED TO FAIL ONE RUN IN EIGHT.
+  // SURV2 registers a death handler that puts the body's food on it,
+  // and this pool raised the death with no roll of its own - so the
+  // drop fell to Math.random and about fifteen per cent of kills grew
+  // one or two items nobody had put there. The pool hands its own
+  // `rand` now (cityGuards.js), which makes the drop deterministic; the
+  // handler is stood down HERE so that what this pin reads is the
+  // GUARDS' law - the key surviving the prune - and not SURV2's table,
+  // which is pinned in its own file (test/surv2_items.test.js).
+  uninstallSurvivalLoot();
   const player = { level: 1, reflexes: 2, skills: 30, items: [], stats: { strength: 50, agility: 50, luck: 50 }, crimeCommitted: 5 };
   const deps = { ...makeDeps(() => 0.9), fetchBytes: async () => stubClassCfg(), playerEntity: player };
   const g = createCityGuards(deps);

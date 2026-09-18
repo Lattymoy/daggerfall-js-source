@@ -15,6 +15,7 @@ import { skyFrameForTime, isNight, setLightCurve, daylightScale } from '../world
 import { createWindModel } from '../systems/wind.js';   // WIND1; WEATHER2b: the lead is the front's own (leadMinutes)
 import { releaseUnloadGuard } from '../systems/unloadGuard.js';   // MAC-L3: a door the game opened is not a door to warn about
 import { EnhancedSkyRenderer, skyState, easeWeather, weatherRow, CLOUD_SHADOW, moonlightTerm, WEATHER_EASE_MINUTES, WIND_SECONDS_PER_MINUTE } from '../render/enhancedSky.js';   // ES1: the enhanced sky, behind the skin; EV5: its moons light the world
+import { meterFor } from '../render/perfMeter.js';   // VC6d: `?perf=zones` - the sky's own span
 import { VolumetricClouds, QUALITY as CLOUD_QUALITY } from '../render/volumetricClouds.js';   // VC3: the clouds over the dome
 import { cloudsStateUnderMod, dynamicMoonState, dynamicMoonlight } from '../render/dynamicSkiesBridge.js';   // DS1/DS2: the mod's state in the port's shapes - the moons, the clouds, and the moons' own term (AUDIT 65 MC-3: the bridge's third export had no caller and this file carried its body inline)
 import { isEnhanced } from '../systems/uiSkin.js';
@@ -610,8 +611,14 @@ export function createSkyController(gl, params) {
     /** VC3: `viewport` is the host's world rect [x, y, w, h] in pixels,
      *  restored after the clouds' map is marched (a render target). */
     draw(yaw, pitch, fovY, aspect, viewport = [0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight]) {
+      // VC6d: the sky and its cloud march are the one heavy pass the
+      // renderer does not run, so they mark their own span and hand the
+      // frame back to the world's - `?perf=zones` and nothing otherwise.
+      const meter = meterFor(gl);
+      meter?.mark('sky');
       (enhancedSky ?? dynamicSky ?? sky).draw(yaw, pitch, fovY, aspect);
       if (clouds) { clouds.update(viewport); clouds.draw(yaw, pitch, fovY, aspect); }   // VC3: over the dome, under the host's marker
+      meter?.mark('world');
     },
   };
 }

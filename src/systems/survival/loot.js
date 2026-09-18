@@ -22,9 +22,15 @@ export const DEFAULT_ANIMAL_MEAT = Object.freeze([1, 2]);
 export const HUMANOID_FOOD_ABOVE = 17;
 export const HUMANOID_SECOND_ABOVE = 19;
 
-let _player = () => null;
-/** The hosts hand in the player (for luck); a null reader reads 50. */
-export function setSurvivalPlayerReader(fn) { _player = typeof fn === 'function' ? fn : () => null; }
+// AUDIT VC6 (2026-09-18): THE LUCK READER IS GONE, because it was never
+// set. `setSurvivalPlayerReader` had no caller anywhere in the tree, so
+// `_player()` answered null at every kill and the luck modifier read 50
+// for every player in the game - the whole of Climates & Calories' luck
+// term was dead, and a seam that looks wired is worse than one that is
+// plainly absent. The three pools that raise a death hand their own
+// player's luck in `opts` now (cityGuards, exteriorFoes, dungeonContext),
+// which is where it was always available; 50 is the floor for a caller
+// that has none, as it always was.
 const luckMod = (luck) => Math.trunc((luck ?? 50) / 10);
 const range = (min, max, rolls) => min + Math.floor(rolls() * (max - min + 1));
 
@@ -75,7 +81,7 @@ export function installSurvivalLoot({ enabled = () => true } = {}) {
   _installed = true;
   registerEnemyDeathHandler(SURVIVAL_LOOT_HANDLER, (entity, opts = {}) => {
     if (!enabled() || !entity || !Array.isArray(entity.items)) return;
-    const luck = opts.luck ?? _player()?.stats?.luck ?? 50;
+    const luck = opts.luck ?? 50;   // AUDIT VC6: the raiser's own player, or the floor
     for (const item of corpseFood(entity, { luck, rolls: opts.rolls ?? Math.random })) entity.items.push(item);
   });
   return true;

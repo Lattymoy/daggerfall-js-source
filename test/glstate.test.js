@@ -274,6 +274,7 @@ test('AUDIT 47: no shader in the tree uses a uniform it did not declare in its o
   // hid from the last one (AUDIT 47 F1).
   const files = ['src/render/renderer.js', 'src/render/precipitation.js', 'src/render/enhancedSky.js', 'src/render/cloudNoise.js', 'src/render/volumetricClouds.js', 'src/render/enhancedLighting.js', 'src/render/farRing.js', 'src/render/shadowPass.js', 'src/render/airPass.js'];   // VC2/VC3: the noise generators, the slice viewer, the march and the composite; EL1: the lighting lane's five, and the far ring; EL2: the depth programs
   const shadowGlsl = (readFileSync('src/render/shadowPass.js', 'utf8').match(/export const SHADOW_GLSL = `([\s\S]*?)`;/) || [, ''])[1];   // EL2: the receiver block another file composes in
+  const cloudShadowGlsl = (readFileSync('src/render/cloudShadow.js', 'utf8').match(/export const CLOUD_SHADOW_GLSL = `([\s\S]*?)`;/) || [, ''])[1];   // VC6c: and the cloud shadow's, once TWO passes needed it
   const aoGlsl = (readFileSync('src/render/airPass.js', 'utf8').match(/export const AIR_AO_GLSL = `([\s\S]*?)`;/) || [, ''])[1];   // EL3: and the AO's
   const adaptGlsl = (readFileSync('src/render/airPass.js', 'utf8').match(/export const AIR_ADAPT_GLSL = `([\s\S]*?)`;/) || [, ''])[1];   // EL4: and the eye's
   // AUDIT 49: labGrass.js composes its stages as HEAD + FIELD + body, so
@@ -295,7 +296,12 @@ test('AUDIT 47: no shader in the tree uses a uniform it did not declare in its o
   for (const file of files) {
     const s = readFileSync(file, 'utf8');
     assert.ok(!/`\.replace\('uniform /.test(s), `${file}: a uniform must be declared in the template, not injected after it`);
-    const shared = (s.match(/const CLOUD_SHADOW_GLSL = `([\s\S]*?)`;/) || [, ''])[1];
+    // VC6c: the cloud shadow block moved to its own leaf when a SECOND
+    // pass (the air's shafts) needed it, so the sweep follows it there -
+    // a file that interpolates an imported block must still be swept, or
+    // the move would have silently taken two shaders out of the net.
+    const shared = (s.match(/const CLOUD_SHADOW_GLSL = `([\s\S]*?)`;/) || [, ''])[1]
+      || (/\$\{CLOUD_SHADOW_GLSL\}/.test(s) ? cloudShadowGlsl : '');
     const field = (s.match(/const CLOUD_FIELD_GLSL = `([\s\S]*?)`;/) || [, ''])[1];   // VC4: the marches' shared field
     const re = /const ([A-Z_]+) = `#version 300 es([\s\S]*?)`(?:;|\.)/g;
     let m; let seen = 0;

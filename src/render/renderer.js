@@ -7,6 +7,12 @@
 //   - Indexed color means hard pixels: NEAREST filtering.
 //   - Alpha 0 texels are palette-index cutouts; the shader discards them.
 
+import { CLOUD_SHADOW_GLSL } from './cloudShadow.js';   // EE5 / VC4: the cloud shadow's reader - VC6c's one home, shared with the air pass's shafts
+// ABOVE the first shader text on purpose: every template below is built
+// at module scope, and a block a shader interpolates has to be in hand by
+// then. The import hoists and the leaf has no imports of its own, so this
+// is already guaranteed - the line stands where it reads as the rule.
+
 const VS = `#version 300 es
 layout(location=0) in vec3 aPos;
 layout(location=1) in vec3 aNormal;
@@ -29,19 +35,8 @@ void main() {
 // the sun - declared INSIDE each shader that interpolates it (a GLSL
 // declaration is visible only to its own compilation unit; the first
 // attempt put it outside every shader and the renderer threw on boot).
-const CLOUD_SHADOW_GLSL = `
-uniform sampler2D uCloudShadowMap;
-uniform vec4 uCloudShadowRect;   // VC4: the square's corner x, z; 1 / its side; the amount (0 = no shadow, the classic skin and every interior)
-// the transmittance of the cloud slab along the sun's ray from this
-// ground point, read off the map the same field the sky is drawn from
-// writes (render/volumetricClouds.js); outside the square, no shadow
-float cloudShadowAt(vec3 wp) {
-  if (uCloudShadowRect.w <= 0.0) return 1.0;
-  vec2 uv = (wp.xz - uCloudShadowRect.xy) * uCloudShadowRect.z;
-  if (uv.x < 0.0 || uv.y < 0.0 || uv.x > 1.0 || uv.y > 1.0) return 1.0;
-  return 1.0 - (1.0 - texture(uCloudShadowMap, uv).r) * uCloudShadowRect.w;
-}
-`;
+// VC6c moved the text itself to render/cloudShadow.js, because the air
+// pass's shafts read the same field and cannot import from here.
 
 const FS = `#version 300 es
 precision highp float;
@@ -415,7 +410,7 @@ void main() {
 
 import { ShadowPass, SHADOW_GLSL } from './shadowPass.js';   // EL7: the receiver block, for the water surface's lane program
 import { boundsOf } from './bounds.js';
-import { PerfMeter, perfOn } from './perfMeter.js';   // EL8: `?perf`   // EL5: the bounds every bundle carries for the replays' culling   // EL2: the lane's shadow maps - a leaf that compiles nothing until a lane asks
+import { PerfMeter, perfOn, perfZones, setMeter } from './perfMeter.js';   // EL8: `?perf`   // EL5: the bounds every bundle carries for the replays' culling   // EL2: the lane's shadow maps - a leaf that compiles nothing until a lane asks
 import { AirPass, AIR_ADAPT_UNIT as ADAPT_UNIT, AIR_CONTACT_UNIT as CONTACT_UNIT } from './airPass.js';   // EL3: the ambient occlusion, the bloom and the shafts - the same kind of leaf; EL4: the eye's unit; EL6: all of it off the frame's own depth, at the resolve
 import { SHADE_DARK } from '../systems/concealDraw.js';   // ECV1 / AUDIT 65 PN-3: the shade's pull toward black, interpolated into BB_FS below - the shader restated 0.12 as a second literal. The LEAF, not systems/combatVisuals.js, which re-exports it: that module's graph would take this file's closure from 13 modules to 69
 
@@ -981,7 +976,7 @@ export class Renderer {
     // terrain culling it exists to measure. texBinds counts the binds a
     // DRAW pays; upload-time binds are creation cost, not frame cost.
     this.stats = { draws: 0, programBinds: 0, vaoBinds: 0, texBinds: 0 };
-    this._perf = perfOn() ? new PerfMeter(gl) : null;   // EL8: `?perf` - a GPU-timed line every PERF_EVERY world frames
+    this._perf = perfOn() ? setMeter(gl, new PerfMeter(gl, perfZones())) : null;   // EL8: `?perf` - a GPU-timed line every PERF_EVERY world frames; VC6d: `?perf=zones` per pass, and the meter is findable by its context (the sky's march marks its own span)
     this._frameStamp = 0;      // PERF3: bumped by beginFrame (and the state restores) - the terrain program's frame-constant block is uploaded once per stamp
     this._tFrameStamp = -1;
     this._windowEmission = new Float32Array([0, 0, 0]);
@@ -1049,6 +1044,7 @@ export class Renderer {
      *  host from the SKY's own state. Null = no shadows, which is the
      *  classic skin and every interior. */
     this._cloudShadow = null;
+    this._deckOwed = null;   // VC6c: the deck a frame still owed an image is kept across beginFrame's clear
     // EV4: one shared index buffer PER INDEX SET, keyed by the array's
     // identity - the world host shares one full-grid array across every
     // pixel and one strided far-ring array across the LOD ring. The old
@@ -1518,8 +1514,9 @@ export class Renderer {
    *  made. Every non-panel frame draws into a frame image, resolved by its
    *  first screen draw or by resolveFrame(). */
   _beginLane(proj, view, lightDir, world) {
-    if (world && this._perf) { this._perf.begin(); this.stats.draws = 0; }   // EL8: the frame's clock starts with its passes
+    if (world && this._perf) { this._perf.begin(); this._perf.mark('shadow'); this.stats.draws = 0; }   // EL8: the frame's clock starts with its passes; VC6d: and its first span
     if (this._air?.pending && !this._panelSaved) this._compositeAir();
+    this._deckOwed = null;   // VC6c: whatever was owed is drawn; this frame's deck is its host's to set
     if (this._shadows && world) this._renderPasses(proj, view, lightDir);
     // EL4: THE FRAME IMAGE - the world pass draws into it, the clear included; a panel frame keeps the canvas
     this._frameFbo = this._air && !this._panelSaved ? this._air.beginFrameTarget(this.canvas.width, this.canvas.height) : null;
@@ -1554,6 +1551,7 @@ export class Renderer {
         windowEmission: this._windowEmission, isSpectral: isSpectralArchive, bindVao, clearColor: this._clearColor,
       });
     }
+    this._perf?.mark('world');   // VC6d: the passes' work is submitted; everything until the sky or the resolve is the world's own draws
     sp.discard();
     this._restoreWorldViewport();
     this.markForeignPass();   // AUDIT-EL F19: the last replayed VAO is unbound for real (a shadow set to null over a live bind is a capture waiting to happen), and the shadows forgotten
@@ -1569,9 +1567,12 @@ export class Renderer {
 
   _compositeAir() {
     if (!this._air?.pending) return;
+    this._perf?.mark('air');   // VC6d: the AO, the bloom, the shafts and the resolve
+    this._air.setCloudShadow(this._cloudShadow ?? this._deckOwed);   // VC6c: the FRAME's deck - the host sets it after beginFrame, so the shafts can only read it here
     this._air.composite();   // EL4: the resolve - the frame to the canvas
     if (this._perf) {   // EL8: the clock stops at the resolve; the line, when it is due
       this._perf.end();
+      this._perf.stop();   // VC6d: the frame's last span
       const line = this._perf.frame({ draws: this.stats.draws, shadows: this._shadows ? { ...this._shadows.stats, casters: this._shadows.casters } : null, air: { ...this._air.stats } });
       if (line) console.info(line);
     }
@@ -2657,7 +2658,8 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     // that wants one sets it after this (the exterior hosts do, per
     // pixel); an interior or a dungeon, which never does, gets none, and
     // never inherits the last exterior frame's map onto its walls.
-    if (this._cloudShadow) { this._cloudShadow = null; this._csStamp++; }
+    // VC6c: `_deckOwed` keeps it one moment longer, for an image the air pass still owes this frame (airPass.setCloudShadow); `_beginLane` drops it the instant that resolve is done.
+    if (this._cloudShadow) { this._deckOwed = this._cloudShadow; this._cloudShadow = null; this._csStamp++; }
     // EV6: the shadows reset with the counters - whatever ran between
     // frames (UI passes, another context's work) is not trusted. The
     // cloud-shadow upload stamps are the same kind of claim (RS-3) and

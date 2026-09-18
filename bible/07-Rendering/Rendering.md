@@ -48,6 +48,14 @@ directory by `test/audit18_bible_docs.test.js`:
   (`transformSphere`), the frustum's normalised planes (`spherePlanes`,
   over frustum.js's extraction) and the sphere test the shadow and air
   replays cull by. A leaf: no GL. See `07-Rendering/Enhanced-Lighting-Arc.md`.
+- `cloudShadow.js` - EE5 / VC4 THE CLOUD SHADOW BLOCK: the uniforms and
+  the reader (`cloudShadowAt`) that answer how much sun reaches a point
+  on the ground, off the map `volumetricClouds.js` writes. Its own leaf
+  since VC6c, because a GLSL declaration is visible only inside its own
+  compilation unit and TWO passes interpolate it now - every renderer
+  program that lights by the sun, and the air pass's shafts, which
+  cannot import from the renderer that imports them. No GL, no imports.
+  See `07-Rendering/Volumetric-Clouds-Arc.md`.
 - `shadowPass.js` - EL2 THE SHADOW PASS: records what the world pass draws and
   replays it depth-only from the light at the top of the next frame - a
   two-cascade sun map outdoors, a cube map from the nearest lantern indoors -

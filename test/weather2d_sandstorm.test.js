@@ -69,16 +69,16 @@ test('WEATHER2d the sky, the clouds, the wind, the grass: a tan row; a wall on t
   assert.deepEqual(WEATHER_SKY.sandstorm, { cover: 0.90, soft: 0.30, grey: 0.70, lit: '#d8b47a', shade: '#8a6a3c', wind: [0.040, 0.014] });
   assert.equal(Object.keys(WEATHER_SKY).length, WEATHER_TYPES.length);
   assert.ok(weatherRow('sandstorm').cover === 0.9, 'the eased row reads it');
-  assert.deepEqual(VC_PROFILE.sandstorm, { base: 0, top: 900, density: 1.00, dark: 0.35, flat: 0.95, shear: 0.05 });
+  assert.deepEqual(VC_PROFILE.sandstorm, { base: 0, top: 900, density: 1.00, dark: 0.35, flat: 0.95, shear: 0.05, vary: 0.00 });   // VC6a: a wall is one thing everywhere
   assert.deepEqual(CELL_TINT, { sandstorm: [0.88, 0.72, 0.46] });
   const c = cellOf('sandstorm', 10, 20, 9000);
   assert.deepEqual(c.tint, CELL_TINT.sandstorm); assert.equal(c.base, 0); assert.equal(c.cover, 0.9);
   assert.equal(cellOf('thunder', 0, 0, 1).tint, undefined, 'only the word that has one');
   assert.deepEqual(slabOf(VC_PROFILE.sunny, [c]), { base: 0, top: 3200 }, 'the union slab reaches the ground');
   const k = packCells([c, cellOf('rain', 0, 0, 1)], 8);
-  assert.deepEqual([...k.t.slice(0, 8)], [0.88, 0.72, 0.46, 1, 1, 1, 1, 1].map((v) => Math.fround(v)), 'the tints, white for a word without one');
+  assert.deepEqual([...k.t.slice(0, 8)], [0.88, 0.72, 0.46, 0, 1, 1, 1, 0.25].map((v) => Math.fround(v)), 'the tints, white for a word without one; VC6a: the spare w is the cell\'s own type variation - a sandstorm 0, rain its row\'s');
   assert.match(CLOUD_FIELD_GLSL, /uniform vec4 uCellC\[8\];/); assert.match(CLOUD_FIELD_GLSL, /fTint = mix\(fTint, uCellC\[i\]\.rgb, w\);/);
-  assert.match(CLOUD_FIELD_GLSL, /fGrey = 0\.0; fTint = vec3\(1\.0\);/, 'the zone is untinted');
+  assert.match(CLOUD_FIELD_GLSL, /fGrey = 0\.0; fTint = vec3\(1\.0\); fVary = uVary;/, 'the zone is untinted, and varies by its own row');
   assert.match(MARCH_FS, /\* fTint;   \/\/ WEATHER2d: the cell's tint/); assert.ok(FIELD_UNIFORMS.includes('uCellC'));
   assert.equal(VIOLENCE.sandstorm, 0.95); assert.ok(VIOLENCE.sandstorm < VIOLENCE.thunder && VIOLENCE.sandstorm > VIOLENCE.rain);
   const m = createWindModel({ seed: 3 }); m.tick(0, 'sunny'); m.tick(600, 'sandstorm');

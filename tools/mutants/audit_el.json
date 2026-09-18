@@ -83,8 +83,8 @@
  {
   "name": "f5-owed-frame-lost",
   "file": "src/render/renderer.js",
-  "old": "    if (this._air?.pending && !this._panelSaved) this._compositeAir();\n    if (this._shadows && world)",
-  "new": "    if (this._shadows && world)",
+  "old": "    if (this._air?.pending && !this._panelSaved) this._compositeAir();\n    this._deckOwed = null;   // VC6c: whatever was owed is drawn; this frame's deck is its host's to set\n    if (this._shadows && world)",
+  "new": "    this._deckOwed = null;   // VC6c: whatever was owed is drawn; this frame's deck is its host's to set\n    if (this._shadows && world)",
   "tests": [
    "test/audit_el.test.js"
   ]
