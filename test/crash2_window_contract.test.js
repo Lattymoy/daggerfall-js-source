@@ -22,7 +22,7 @@
 //
 //   F3  IT ASSUMED THE POPULATION WAS `ui/*Door.js`. It is not: twelve
 //       window CLASSES are constructed straight into a slot, and
-//       townTalk.js:1120 paints every COVERED window too
+//       townTalk.js:1122 paints every COVERED window too
 //       (`eachCoveredWindow((w) => w.draw(...))`), so depth is in the
 //       contract as well as the top.
 //

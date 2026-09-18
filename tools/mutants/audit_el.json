@@ -99,15 +99,6 @@
   ]
  },
  {
-  "name": "f5-map-no-resolve",
-  "file": "src/ui/overworldMap.js",
-  "old": "        renderer.resolveFrame?.();   // AUDIT-EL F5",
-  "new": "        // AUDIT-EL F5",
-  "tests": [
-   "test/audit_el.test.js"
-  ]
- },
- {
   "name": "f6-fog-unscaled",
   "file": "src/render/enhancedLighting.js",
   "old": "  return { ...fog, color: [c[0] * EL_DUNGEON_AMBIENT_SCALE, c[1] * EL_DUNGEON_AMBIENT_SCALE, c[2] * EL_DUNGEON_AMBIENT_SCALE] };",

@@ -55,14 +55,14 @@ does the pack's USE arm.
                         worldModes.js:1859 (the factory) and :1904 (a
                         HAND-ROLLED second one, 342 lines below it in
                         the same file),
-                        dungeonContext.js:965, world.js:1758,
+                        dungeonContext.js:965, world.js:1826,
                         exterior.js:2200. It is the only window TWO
                         enhanced screens already push - the sheet's
                         button and the pack's USE hand-off, whose
                         close-then-hand-over ordering U55 got
                         backwards. No law needs extracting first.
     THE LOGBOOK         THREE sites: charSheetNav.js:53,
-    / NOTEBOOK          world.js:5421, dungeonContext.js:6081. A seam
+    / NOTEBOOK          world.js:5774, dungeonContext.js:6081. A seam
                         wants making, as U52's and U53's did.
     HISTORY             ONE site (charSheetNav.js:61), and it reads
                         only the entity's backStory. The small one.
@@ -380,6 +380,13 @@ no data color table in DFU - the classic terrain is baked art);
 vertical relief is one documented exaggeration constant; notices are
 literal strings where the classic popups read TEXT.RSC 454/1010; and
 the countdown-days animation became the flight.
+
+MAP1 (2026-09-18) RETIRED THIS SCREEN WHOLE: ui/overworldMap.js,
+render/overworldRenderer.js, tools/overworldProbe.mjs and
+test/overworldmap.test.js are gone; the enhanced map is the held
+parchment (ui/heldMap.js + ui/inkMap.js, bible/10-UI/Held-Map-Arc.md).
+ui/overworldModel.js stays - its water, marker, trace and chain laws are
+the ink's. What follows is the record of the screen as it shipped.
 
 NEW MODULES: ui/overworldModel.js (pure - the relief grid, tints,
 markers, route points; synthetic-bay testable), render/
@@ -7866,7 +7873,7 @@ mutations, 4 dead.
 
 PX24 (Mac: "with the logbook and history, I want them as one detailed
 UI"): THE CHRONICLE. Two classic windows built at four sites -
-questJournal.js from charSheetNav:53, world.js:2129 and
+questJournal.js from charSheetNav:53, world.js:2202 and
 dungeonContext.js, playerHistory.js from charSheetNav:61 - become ONE
 seam (ui/chronicleDoor.js, the U52/U53/PX23 shape a sixth time) and,
 on the enhanced skin, ONE WINDOW.
@@ -8553,7 +8560,7 @@ cited and ported somewhere in `src/`. FOUR were not:
 |---|---|---|
 | DaggerfallUseMagicItemWindow | 139 | **CLOSED, UI1** - see below |
 | DaggerfallMerchantServicePopupWindow | 175 | **CLOSED, UI2** - see below |
-| DaggerfallTransportWindow | 264 | OPEN, and it is a SYSTEM gap wearing a UI hat: `motor.js:611` reads `riding: false` with "the transport arc pends". The window is the last tenth of that arc, not a slice on its own |
+| DaggerfallTransportWindow | 264 | OPEN, and it is a SYSTEM gap wearing a UI hat: `motor.js:612` reads `riding: false` with "the transport arc pends". The window is the last tenth of that arc, not a slice on its own |
 | DaggerfallUnityMouseControlsWindow | - | NOT A GAP: DFU's own mouse-settings screen, and the port's settings surface (U29) carries those keys already |
 
 ### UI1 CLOSED: the use-magic-item window
@@ -8597,7 +8604,7 @@ the art-less fallback.
 ### What is left
 
 `DaggerfallTransportWindow` alone, and it wants its own arc: the window
-is trivial, `TransportManager` is not - `motor.js:611` reads
+is trivial, `TransportManager` is not - `motor.js:612` reads
 `riding: false` with "the transport arc pends". With UI1 and UI2
 closed, **58 of DFU's 60 real windows are ported**, and the 59th is a
 system's last tenth.
@@ -9737,9 +9744,9 @@ re-resolved the `exterior.js` half of a three-file sentence and left the
 `ExteriorAutomapWindow` construction, `:4101` on a `locationName:`
 field). Both halves are now read by `test/citedrift.test.js` - the
 existing entries only ever captured the exterior number, which is how
-the other half went stale unnoticed. (The rest cite named `world.js:5695`,
+the other half went stale unnoticed. (The rest cite named `world.js:6060`,
 the first of the host's TWO identical `act === 'Rest'` arms; ROAD-H H5
-deleted the second and the cite is `world.js:5701` now.)
+deleted the second and the cite is `world.js:6066` now.)
 
 ## AUDIT 62 F24/F25 - THE SENTINEL SWEEP WAS TWO WINDOWS SHORT (2026-09-07)
 
@@ -13798,7 +13805,7 @@ exactly as the classic did; the enhanced HUD has no arrow counter (AUDIT
 WINDOWS, which the first record did not name: under the enhanced skin the
 death screen (`ui/deathScreen.js:71-72`), the rest window's rows
 (`ui/restWindow.js:836`), the save window (`ui/saveWindow.js`, eight
-`shadowText` sites), the travel popup (`ui/travelPopUp.js:436`), the quest
+`shadowText` sites), the travel popup (`ui/travelPopUp.js:678`), the quest
 journal (`ui/questJournal.js:641-642`), every MessageBox row
 (`ui/messageBox.js:431, 434`) and every ActionTextBox (`ui/actionText.js:41,
 152`) still draw in the bitmap font - each a native window under THE
@@ -14525,9 +14532,9 @@ whether an entry MATCHES and asserts nothing.
 Following it out was worse than the symptom. Five Ledger rows cite a
 PAIR - `` `world.js:N`, `exterior.js:M` `` - and the table captured `M`
 alone. So `M` was re-resolved at every wave for a year and `N` was never
-read: `world.js:4222` named a line that is 8950, `:659` one that is
+read: `world.js:4315` named a line that is 8950, `:672` one that is
 1215, `:1094` one that is 2194, `:3903` one that is 3066, `:3920` one
-that is 8907. `world.js:3958-3990` and `dungeonContext.js:1316` were
+that is 8907. `world.js:4051-4083` and `dungeonContext.js:1316` were
 stale the same way. Seven numbers re-resolved BY CONTENT, every
 uncaptured half de-baked to `\d+`, and eight new entries added so every
 number in a pair is captured. The half nobody reads cannot rot in
@@ -14828,7 +14835,7 @@ that through `InputManager` (:1084-1108, one poll a frame in
 `GetKeyDown` at all, so every consumer wrote its own out of the only
 read there was.
 
-`motor.js:1001` had already named this bug's twin from the other side:
+`motor.js:1020` had already named this bug's twin from the other side:
 "a render frame that accumulates less than one physics step swallowed
 the press" - the fix there moved `_heightAction` out of the fixed-step
 loop. The half that remained was the host's.

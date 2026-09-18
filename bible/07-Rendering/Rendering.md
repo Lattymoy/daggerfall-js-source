@@ -284,11 +284,6 @@ directory by `test/audit18_bible_docs.test.js`:
   skin (`?sky=classic` opts back to the painted pass); the classic pass
   above is untouched. Its lab is `sky.html` + `src/tools/skyLab.js`,
   its eye `tools/enhancedSkyProbe.mjs`.
-- `overworldRenderer.js` - U61 the OVERWORLD pass: the whole-bay relief,
-  its location markers, the route line and the cloud deck behind the
-  enhanced travel map (self-contained, save/restore, mirrorProjectionX
-  on its camera like every world pass - see `src/ui/overworldMap.js`
-  for the window that drives it).
 - `waterSurface.js` - WATER1 THE WATER SURFACE: the enhanced pass over the
   exterior water tiles - the terrain grid drawn again and lifted, the
   water-corner table that inverts the marching squares, the swell, foam, Fresnel,
@@ -364,6 +359,8 @@ directory by `test/audit18_bible_docs.test.js`:
   sixteen pixels snapped to the 819.2 grid, which the terrain, the models, the
   characters and the flats sample through renderer.js's CLOUD_SHADOW_GLSL;
   VC5: the arc closed after an Opus review (Volumetric-Clouds-Arc.md).
+
+RETIRED from this list (MAP1, 2026-09-18): `src/render/overworldRenderer.js`, the U61 OVERWORLD pass (the whole-bay relief, its markers, route line and cloud deck behind the enhanced travel map) - gone with the relief map itself (`src/ui/overworldMap.js`, RETIRED the same day) when the enhanced map became the held parchment (`src/ui/heldMap.js` + `src/ui/inkMap.js`, a 2D canvas that draws through no renderer pass; bible/10-UI/Held-Map-Arc.md).
 
 AUDIT 18 deleted a `groundMesh.js` bullet from this list: R10 had already
 deleted that module, and the bullet tagged it "(ledgered departure)" when

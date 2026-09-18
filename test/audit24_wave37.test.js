@@ -92,13 +92,26 @@ function fireListener(lineSrc, event = {}) {
   // it used to re-derive `townTalk.overlayActive || modes?.overlayHeld`
   // inline. Same subject for this pin - the harness just owes the name.
   const gamePaused = () => false;
+  // TO1: the pointerdown statement grew a fifth rung - Travel Options'
+  // 320x27 control strip takes its click on the HUD layer, above the
+  // relock, for the same reason the large HUD's panels do. This pin's
+  // subject is unchanged; the harness just owes the names that rung
+  // reads. `travelControlUI` is null here, which is the state in every
+  // frame of the game that is not an accelerated journey, so the arm
+  // is skipped and the fall-through to requestLook is witnessed.
+  const travelControlUI = null;
+  const isEnhanced = () => false;
+  const nativeMetrics = () => ({ ox: 0, oy: 0, s: 1 });
+  const pointToNative = () => null;
   const latch = {};
   const createActivateGate = () => ({});
   const setClickDelay = () => seen.push({ type: 'setClickDelay' });
   new Function('canvas', 'townTalk', 'requestLook', 'routeLargeHudClick', 'hudCtx', 'mwViewWheel',
     'document', 'gamePaused', 'latch', 'createActivateGate', 'setClickDelay',
+    'travelControlUI', 'isEnhanced', 'nativeMetrics', 'pointToNative',
     `var modes; ${lineSrc}`)(canvas, townTalk, requestLook, routeLargeHudClick, hudCtx, mwViewWheel,
-    document, gamePaused, latch, createActivateGate, setClickDelay);
+    document, gamePaused, latch, createActivateGate, setClickDelay,
+    travelControlUI, isEnhanced, nativeMetrics, pointToNative);
   assert.equal(seen.length, 1, 'one listener registered');
   seen[0].fn({ preventDefault: () => seen.push({ type: 'preventDefault' }), button: 0, clientX: 0, clientY: 0, ...event });
   return seen.map((s) => s.type);

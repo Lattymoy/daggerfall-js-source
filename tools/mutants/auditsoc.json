@@ -442,7 +442,7 @@
   },
   {
     "name": "D2-members-on-one-pixel-not-stacked",
-    "file": "src/ui/overworldMap.js",
+    "file": "src/ui/inkMap.js",
     "old": "(m.stack ?? 0) * PARTY_LABEL_STACK",
     "new": "0 * PARTY_LABEL_STACK",
     "tests": [

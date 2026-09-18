@@ -788,7 +788,7 @@ function dropIntent(item, over, fromItem, source = 'local') {
  *  from a touch, so the whole feature was mouse-only - on a screen the
  *  port ships to and whose 44px target law this arc has now enforced
  *  twice. Every other drag here is pointerdown/move/up
- *  (ui/overworldMap.js's pan); this follows it.
+ *  (ui/heldMap.js's pan); this follows it.
  *
  *  ONE POINTER FOR THE PANE, and a 4px threshold, so a tap is still a
  *  pick - the row's own click law is untouched below that distance and
