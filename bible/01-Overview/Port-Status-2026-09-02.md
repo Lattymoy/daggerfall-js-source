@@ -301,7 +301,7 @@ reference surface absent · **Departure** = deliberate, ledgered.
 | **formats-mw** | Departure lane, faithful within it | **Departure lane, now consumed** | `clipSweepTimes` has a production caller: `combat/fpArm.js:1734` runs the whole-clip reach sweep the superseded page said had never run in the game. 17 modules / 8,842 lines. |
 | **world-terrain** | Near-1:1 | **Near-1:1** | ROAD-A A1 moved the texture season onto `DaggerfallDateTime.SeasonValue` - climate swaps, the winter sunlight term and sky selection - and demoted `?season` to a debug override. The lightning flash stays a recorded enhanced-lane departure. |
 | **world-layout** | Near-1:1 | **Near-1:1** | `rmbLayout`'s shared-block mutation is gated: `attachWindmillRecord` runs only when `enhanced` is true, is idempotent by a `subs.findIndex(r => r?.windmill)` guard, and the header names `subRecords.length` as the count three subsystems bind on (`world/rmbLayout.js:139-150` the gated call, `:179` the guard). |
-| **scenes-world** | Law 1:1 / seams broken | **Near-1:1** | `currentWeatherKey` reads a live getter (`world.js:5331`). Region identity, the quest region/vampire faction seams and `CleanupUntrackedObjects` were the wave; `world.js:3145` carries the sweep and `hostMagic.js:608` its missile half. |
+| **scenes-world** | Law 1:1 / seams broken | **Near-1:1** | `currentWeatherKey` reads a live getter (`world.js:5333`). Region identity, the quest region/vampire faction seams and `CleanupUntrackedObjects` were the wave; `world.js:3146` carries the sweep and `hostMagic.js:608` its missile half. |
 | **scenes-modes** | Solid, pause parity broken | **Near-1:1** | ROAD-B B1 put `UserInterfaceManager`'s real stack under this host's slot (`ui/windowStack.js`, 295 lines, imported at `worldModes.js:69`). See "the pause primitive" below - the stack exists, its `paused()` member has no reader. |
 | **scenes-dungeon** | Deep, one lifecycle leak | **Near-1:1** | The three process-global seams return on destroy. ROAD-D D8 made this the fourth caller of `playerArrowHitFoe`, moved its action flats, mounted the enchant ctx off the shared `scenes/hostEnchant.js`, and routed its chargen through the one construction seam. |
 | **scenes-support** | Near-1:1 | **Near-1:1** | ROAD-D D9 stood the city-watch fallback through `FoeSpawner.PlaceFoeFreely` on its own collider. Court reads the live region. |
@@ -388,7 +388,7 @@ are the **narrowed remainders** Wave D recorded rather than shipped
 
 **Blocked - no 1:1 target.**
 
-- ~~**`src/scenes/dungeonContext.js:1905`** - the two window seams this
+- ~~**`src/scenes/dungeonContext.js:1907`** - the two window seams this
   host cannot mount (`onTeleport`'s INTERIM shape). *There is no
   standalone dungeon scene in DFU to port from; `?dungeon` is the
   port's own dev route. Closing it means porting the trade window and
@@ -420,7 +420,7 @@ are the **narrowed remainders** Wave D recorded rather than shipped
 
 **Blocked - host scope.**
 
-- **`src/scenes/exterior.js:1855`** - Recall pends here; the anchor
+- **`src/scenes/exterior.js:1857`** - Recall pends here; the anchor
   machinery lives in the streaming `?world` host. *(The triage measured
   this row at `:1033`; RE-RESOLVED onto the live refusal at ROAD-G G7,
   because this is the one row in the two lists that is still OPEN - a
@@ -437,7 +437,7 @@ are the **narrowed remainders** Wave D recorded rather than shipped
   named exactly: a jump to an anchor on ANOTHER map pixel, which is
   `_teleportToPixel`'s - the streamer's - and there is no streamer here.
   Its refusal names the reason instead of eating the cast.*
-- ~~**`src/scenes/exterior.js:1646`** - PX3: this test host mounts no
+- ~~**`src/scenes/exterior.js:1647`** - PX3: this test host mounts no
   quest bridge, so the pause window's Quests tab says so.~~ **SHIPPED
   (QX1, 2026-09-03).** *The triage's premise - "this file has no bridge
   at all and constructs no quest machine" - was a missing construction,
@@ -462,7 +462,7 @@ are the **narrowed remainders** Wave D recorded rather than shipped
 
 **Blocked - data, an asset, or a layer the port does not have.**
 
-- ~~**`src/scenes/world.js:3266`** - the port's default landing stands
+- ~~**`src/scenes/world.js:3267`** - the port's default landing stands
   in for `GetPlayerTravelPosition`, flagged for the first session with
   ARENA2.~~ **SHIPPED (ship landing, 2026-09-03).** *The owner supplied
   the real MAPS.BSA and the claim it rested on was FALSE: map pixel
@@ -647,9 +647,9 @@ could see the others' closures until the squash, which is how "leaving
 Five of the sites that survived Wave E only MOVED, and `Home.md` was
 regenerated onto the new sites: ~~`exterior.js:1313` -> `:1149`~~
 (**CLOSED at TP2**: the Recall interim narrowed to the one arm this host
-cannot take, `exterior.js:1648`), ~~`exterior.js:1691` -> `:1401`~~
+cannot take, `exterior.js:1649`), ~~`exterior.js:1693` -> `:1401`~~
 (**CLOSED at QX1**: this host took the quest bridge, so the pause window's
-Quests tab has a machine to read), ~~`world.js:3305` -> `:3153`~~
+Quests tab has a machine to read), ~~`world.js:3306` -> `:3154`~~
 (**CLOSED at the ship landing**), ~~`worldModes.js:1860` -> `:1718`~~
 (**CLOSED at ROAD-F GS1**, below), `pauseWindow.js:58` -> `:65`. The
 entries in the two lists above still quote the line numbers of the
@@ -884,8 +884,8 @@ ships, which is the warning the section's own preamble opens with.
 9. **`:559` UseItem's unbuilt destinations.** Every arm the row names is
    built: `DrinkPotion` (`systems/useItem.js:184`, `:262-272`),
    `RecordLocationFromMap`/`DiscoverRandomLocation`
-   (`ui/nativeInventory.js:736-740`, `scenes/world.js:3194`), the
-   (`ui/nativeInventory.js:736-740`, `scenes/world.js:3140`), the
+   (`ui/nativeInventory.js:736-740`, `scenes/world.js:3195`), the
+   (`ui/nativeInventory.js:736-740`, `scenes/world.js:3141`), the
    quest-item click (`useItem.js:216`, `:229-230`) and
    `DoItemEnchantmentPayloads(Used)` (already struck at E2). D10 closed
    the last residue in the row's book-reader clause - the fixed 10px row
@@ -897,9 +897,9 @@ ships, which is the warning the section's own preamble opens with.
     (`ui/bankWindow.js` + the ships arm of `ui/bankPurchaseWindow.js`
     over the shared `openBankMarket` mount, with `purchaseShip` finally
     having a caller), and `PreventEnemySpawns`-on-arrival is live at
-    `scenes/world.js:4270` (the arrival clamp anchoring the encounter
+    `scenes/world.js:4272` (the arrival clamp anchoring the encounter
     clock, so the traveled window is not replayed) and `:1969` (the
-    `scenes/world.js:4214` (the arrival clamp anchoring the encounter
+    `scenes/world.js:4216` (the arrival clamp anchoring the encounter
     clock, so the traveled window is not replayed) and `:1915` (the
     ":524-525" clear that lets spawns resume). AUDIT 58 re-resolved this
     pair - both cites had drifted off the lines they name.

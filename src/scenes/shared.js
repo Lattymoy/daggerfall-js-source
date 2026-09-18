@@ -31,6 +31,8 @@ import { skillValue, tallySkill, SKILLS, SKILL_NAMES } from '../systems/skills.j
 import { DOOR_SPELL_TEXT, castBySkeletonKey } from '../systems/mysticism.js';   // X1: the door-spell alert lines; D9: Open.CheckCastByItem
 import { raiseSkills } from '../systems/advancement.js';   // AUDIT 23 (entity-1): the rest-end raise
 import { tickPlayerMinutes, runMagicRoundsFor, worldMinutes, setWorldMinutes, advanceWorldMinutes, MINUTES_PER_DAY, CLASSIC_MINUTES_PER_SECOND, sharedClockOn } from '../systems/worldTick.js';
+import { REST_KIND, REST_TEXT_SURVIVAL, restHour, stiffen } from '../systems/survival/rest.js';   // SURV4: the rest law - a bed and a fire sleep, the window alone is rough
+import { survivalOn } from '../systems/survival/switch.js';
 import { setSyntheticTimeIncrease } from '../systems/effectBroker.js';   // AUDIT 63 F13: VampirismInfection.cs:161-162
 import { setInfectionHost, vampireClanForFaction } from '../systems/infection.js';   // V1: the host seam for the dream/death videos and the turn's clock raise
 import { findFactions } from '../systems/talk.js';   // V1: GetRegionFaction's FindFactions(Province, region)
@@ -1950,15 +1952,29 @@ export function createRestDeps(entity, opts = {}) {
     // come from the host's `endLines`, which is already its TEXT.RSC
     // reader - one host dep, not a second one that could disagree.
     box = null,
-    place = null, ...rest
+    place = null,
+    // SURV4: the host's word on WHERE the sleep is (survival/rest.js restKind) - a bed, a camp, or rough; a
+    // host that says nothing sleeps rough, which is what the window alone has always been
+    restKind = () => REST_KIND.Rough, ...rest
   } = opts;
+  let _kind = REST_KIND.Rough;   // the running rest's kind, read at the open
+  let _roughHours = 0;           // rested hours paid at the rough rate - the stiff morning follows them
   return {
     // PlayerEntity.IsResting / IsLoitering (:268, :284, :789, :285).
     // Every host owes these identically - they are entity flags, not
     // host state - so the composition writes them rather than asking
     // four hosts to remember. A host may still override via the
     // spread if it needs to observe the edge.
-    setResting: (b) => { entity.isResting = !!b; },
+    setResting: (b) => {
+      entity.isResting = !!b;
+      // SURV4: the kind is read at the OPEN (the fire may die under a long night - it was lit when you lay down);
+      // `entity.restKind` is the needs law's `sleeping` for the hosts' env feed and the encounter roll's `roughRest`
+      if (b) { _kind = survivalOn() ? restKind() : REST_KIND.Bed; _roughHours = 0; }
+      // SURV4: rough hours rested are a stiff morning (STIFF_HOURS of speed and agility) on the way out - an interrupted
+      // night too, since the hours were slept - said once; the hours are spent
+      if (!b && _roughHours > 0 && stiffen(entity, worldMinutes(), REST_KIND.Rough)) { say(REST_TEXT_SURVIVAL.stiff); _roughHours = 0; }
+      entity.restKind = b ? _kind : null;
+    },
     setLoitering: (b) => { entity.isLoitering = !!b; },
     // THE PASS-THROUGH IS LOAD BEARING, and it is here because a review
     // round caught the shape without it: worldModes handed this
@@ -1981,7 +1997,8 @@ export function createRestDeps(entity, opts = {}) {
     // four hosts, and the same read feeds each host's open gate.
     preventedRestMessage: getPreventedRestMessage,
     onRestFinished: () => raisePlayerSkills(entity, { say, onLevelUp, lines: rest.endLines, box }),
-    tickVitals: () => restVitals(entity, { day: day(), inside: inside() }),
+    // SURV4: the hour by its kind - DFU's whole hour in a bed or by a fire, half of it rough (survival/rest.js restHour)
+    tickVitals: () => { if (_kind === REST_KIND.Rough) _roughHours++; return restHour(entity, _kind, () => restVitals(entity, { day: day(), inside: inside() })); },
     fullyHealed: () => restFullyHealed(entity),
     sharedMinutes: () => (sharedClockOn() ? worldMinutes() : null),   // WORLD5: a rest online is paced by the world's clock, not by the window's timer
     dead: () => entity.health <= 0,

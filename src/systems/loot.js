@@ -16,11 +16,11 @@
 //     slots match the role per the approved engine-PRNG stance
 // MI (magic items) rolls need the MAGIC.DEF registry
 // (setMagicItemTemplates), and EVERY host that can generate loot now
-// loads it: scenes/shared.js:106-109 (loadMagicRegistries) feeds the
+// loads it: scenes/shared.js:108-111 (loadMagicRegistries) feeds the
 // module table this file reads, called from dungeonContext.js:1061,
 // world.js:2030 and exterior.js:1129 - interiors run inside those hosts
 // and read the same table. What is left is the data-absent boot, and
-// that is DFU's own answer rather than a stand-in: shared.js:109
+// that is DFU's own answer rather than a stand-in: shared.js:111
 // records it, the category simply stays empty.
 
 import { randomMaterial, randomArmorMaterial, createWeapon, WEAPONS_ENUM, ARMOR_ENUM } from '../combat/enemyEquipment.js';

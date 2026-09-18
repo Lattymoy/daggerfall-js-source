@@ -1474,7 +1474,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // owned, and destroy() hands it back (the _prevPassiveHost idiom this
   // file already uses for its other process-global seams). A bare null
   // would not do: on ?world and ?exterior the previous holder is the
-  // host's own townTalk sink (world.js:7080 / exterior.js:3194), set
+  // host's own townTalk sink (world.js:7082 / exterior.js:3196), set
   // once at boot and never again, so nulling on the way out of the
   // first dungeon would silently un-file every mid-screen label above
   // ground for the rest of the session - MC-1's own bug, re-opened.
@@ -1741,6 +1741,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     for (let l = 0; l < n; l++) {
     const hit = intermittentEnemySpawn({
       gameMinutes: start + l + 1, inside: true, inDungeon: true, isResting: true,
+      roughRest: playerEntity.restKind === 'rough',   // SURV4: the bare floor asks twice; a fire on it, once
       enemyAlertActive: !!playerEntity.enemyAlertActive,
       dungeonType: dfLocation.mapTableData.dungeonType,
       playerLevel: playerEntity.level,
@@ -1795,6 +1796,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // on to something else (the death screen, above all).
     onClose: () => { if (activeOverlay?.isRestWindow) activeOverlay = null; },
     day: () => false, inside: () => true,
+    restKind: () => (_fpFeet && camps.byFire(_fpFeet) ? 'camp' : 'rough'),   // SURV4: a fire on the floor is the sleep; the bare floor is rough
   });
   // U4: the ONE player-damage door - every source (traps, melee,
   // arrows, spell missiles) lands here; death opens the overlay.
@@ -2952,8 +2954,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
               // AUDIT 39 (#64) / THE FOUR HOSTS RULE - SHIPPED (wave D):
               // this host was the FOURTH BODY of the player-arrow law
               // and is now the fourth CALLER. combat/arrowFlight.js's
-              // playerArrowHitFoe is the one copy world.js:9729,
-              // exterior.js:4614 and worldModes.js:6140 already ran;
+              // playerArrowHitFoe is the one copy world.js:9731,
+              // exterior.js:4616 and worldModes.js:6140 already ran;
               // the flag said the divergence would bite and it already
               // had. This copy splashed at the ARROW TIP
               // (`[m.pos[0], m.pos[1], m.pos[2]]`) on the claim that

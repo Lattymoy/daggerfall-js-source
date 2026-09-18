@@ -1,0 +1,93 @@
+[
+  {
+    "name": "SURV4-a-fire-outranks-a-berth",
+    "file": "src/systems/survival/rest.js",
+    "old": "  if (bed || houseOwned || ship) return REST_KIND.Bed;\n  if (byFire) return REST_KIND.Camp;",
+    "new": "  if (byFire) return REST_KIND.Camp;\n  if (bed || houseOwned || ship) return REST_KIND.Bed;",
+    "tests": ["test/surv4_rest.test.js"]
+  },
+  {
+    "name": "SURV4-a-rough-hour-is-a-whole-hour",
+    "file": "src/systems/survival/rest.js",
+    "old": "  rough: Object.freeze({ recovery: 0.5, encounters: 2, stiffHours: 4 }),",
+    "new": "  rough: Object.freeze({ recovery: 1, encounters: 2, stiffHours: 4 }),",
+    "tests": ["test/surv4_rest.test.js"]
+  },
+  {
+    "name": "SURV4-a-rough-hour-says-healed-after-taking-back",
+    "file": "src/systems/survival/rest.js",
+    "old": "  return healed && entity.health === h1 && entity.fatigue === f1 && entity.magicka === m1;",
+    "new": "  return healed;",
+    "tests": ["test/surv4_rest.test.js"]
+  },
+  {
+    "name": "SURV4-a-bed-leaves-you-stiff",
+    "file": "src/systems/survival/rest.js",
+    "old": "  if (!(hours > 0)) return false;",
+    "new": "",
+    "tests": ["test/surv4_rest.test.js"]
+  },
+  {
+    "name": "SURV4-a-fire-does-not-answer-the-cold",
+    "file": "src/systems/survival/rest.js",
+    "old": "  if ((tempWord === 'freezing' || tempWord === 'deadly cold') && !byFire && !insideBuilding) return REST_TEXT_SURVIVAL.tooCold;",
+    "new": "  if ((tempWord === 'freezing' || tempWord === 'deadly cold') && !insideBuilding) return REST_TEXT_SURVIVAL.tooCold;",
+    "tests": ["test/surv4_rest.test.js"]
+  },
+  {
+    "name": "SURV4-the-gate-ignores-the-switch",
+    "file": "src/systems/survival/rest.js",
+    "old": "  const cold = () => enabled() && restBlock({ ...(readEnv?.() ?? {}) }) === REST_TEXT_SURVIVAL.tooCold;",
+    "new": "  const cold = () => restBlock({ ...(readEnv?.() ?? {}) }) === REST_TEXT_SURVIVAL.tooCold;",
+    "tests": ["test/surv4_rest.test.js"]
+  },
+  {
+    "name": "SURV4-stiffness-never-lifts",
+    "file": "src/systems/survival/needs.js",
+    "old": "  if (Number.isFinite(s.stiffUntil) && now < s.stiffUntil) sub(['speed', 'agility'], STIFF_PENALTY);",
+    "new": "  if (Number.isFinite(s.stiffUntil) && s.stiffUntil > 0) sub(['speed', 'agility'], STIFF_PENALTY);",
+    "tests": ["test/surv4_rest.test.js"]
+  },
+  {
+    "name": "SURV4-a-rough-rest-asks-once",
+    "file": "src/systems/encounters.js",
+    "old": "  if (r || !ctx.roughRest) return r;\n  return intermittentEnemySpawnOnce(ctx, rolls);",
+    "new": "  return r;",
+    "tests": ["test/surv4_rest.test.js"]
+  },
+  {
+    "name": "SURV4-every-rest-asks-twice",
+    "file": "src/systems/encounters.js",
+    "old": "  if (r || !ctx.roughRest) return r;",
+    "new": "  if (r) return r;",
+    "tests": ["test/surv4_rest.test.js"]
+  },
+  {
+    "name": "SURV4-the-kind-is-read-every-hour",
+    "file": "src/scenes/shared.js",
+    "old": "      if (b) { _kind = survivalOn() ? restKind() : REST_KIND.Bed; _roughHours = 0; }",
+    "new": "      if (b) { _kind = REST_KIND.Rough; _roughHours = 0; }",
+    "tests": ["test/surv4_rest.test.js"]
+  },
+  {
+    "name": "SURV4-the-mod-off-still-costs",
+    "file": "src/scenes/shared.js",
+    "old": "_kind = survivalOn() ? restKind() : REST_KIND.Bed;",
+    "new": "_kind = restKind();",
+    "tests": ["test/surv4_rest.test.js"]
+  },
+  {
+    "name": "SURV4-the-stiff-morning-is-said-every-time",
+    "file": "src/scenes/shared.js",
+    "old": "say(REST_TEXT_SURVIVAL.stiff); _roughHours = 0; }",
+    "new": "say(REST_TEXT_SURVIVAL.stiff); }",
+    "tests": ["test/surv4_rest.test.js"]
+  },
+  {
+    "name": "SURV4-the-entity-never-says-how-it-sleeps",
+    "file": "src/scenes/shared.js",
+    "old": "      entity.restKind = b ? _kind : null;",
+    "new": "      entity.restKind = null;",
+    "tests": ["test/surv4_rest.test.js"]
+  }
+]

@@ -27,6 +27,8 @@
 import { feltTemperature } from './temperature.js';
 import { drinkFrom, findDrink, waterskinName, DRINK_RELIEF, TEMPLATE, isFood, foodStage, FOOD_STAGE, rotFoodDay, rotWeight, ROT_DAY_MINUTES } from './food.js';
 import { STAT_KEYS_ORDER } from '../statMods.js';
+/** SURV4: speed and agility down by this while stiff (survival/rest.js's STIFF_PENALTY, restated here so rest.js may import this module). */
+const STIFF_PENALTY = 5;
 import { MINUTES_PER_DAY } from '../gameDate.js';
 
 export const NEED = Object.freeze({
@@ -86,7 +88,7 @@ export const SURVIVAL_TEXT = Object.freeze({
 
 /** A fresh record at `now`: just fed, watered, dry and awake. */
 export function newSurvival(now = 0) {
-  return { lastAte: now - 10, thirst: 0, wet: 0, sleepDebt: 0, awakeSince: now, exposure: 0, fed: 0, drunk: 0, rotMinutes: 0, rotDays: 0, notes: {} };
+  return { lastAte: now - 10, thirst: 0, wet: 0, sleepDebt: 0, awakeSince: now, exposure: 0, fed: 0, drunk: 0, rotMinutes: 0, rotDays: 0, stiffUntil: 0, notes: {} };   // SURV4: stiffUntil, the rough night's morning
 }
 /** The entity's record, made if missing. */
 export function survivalOf(entity, now = 0) {
@@ -138,6 +140,7 @@ export function survivalStatMods(s, temp, now, { endurance = 50 } = {}) {
   if (s.thirst >= NEED.DEHYDRATED) sub(ALL, Math.trunc((s.thirst - 90) / 10));
   const sleep = sleepStage(s.sleepDebt);
   if (sleep === 'tired') sub(ALL, 2); else if (sleep === 'drowsy') sub(ALL, 5); else if (sleep === 'exhausted') sub(ALL, 10);
+  if (Number.isFinite(s.stiffUntil) && now < s.stiffUntil) sub(['speed', 'agility'], STIFF_PENALTY);   // SURV4: the rough night's morning
   if (s.drunk > endurance / 2) {
     const d = Math.trunc((s.drunk - endurance / 2) / 10);
     sub(['agility', 'intelligence', 'willpower', 'speed'], d);

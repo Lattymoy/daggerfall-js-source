@@ -39,7 +39,7 @@ carry, and everything static.
 | SURV1 | the model: felt temperature, five needs, food and water, one entry of stat drains | `src/systems/survival/temperature.js`, `needs.js`, `food.js`; the world-minute hook in `worldTick.js`; the record on `entity.survival`, saved |
 | SURV2 | the items: templates 530-541, minting, spoilage, the use handlers, the general store's provisions, the starting kit, the corpse's meat, the mod's icons through a vendor-only archive | `survival/items.js`, `loot.js`, `switch.js`; `itemTemplates.js` custom rows; `textureReplacement.js` vendor art; `useItem.js`, `shopStock.js`, `equip.js` |
 | SURV3 | camps: the tent and the fire as placed objects with a menu, cooking, the water sources, shared online | `survival/camp.js` (the law), `scenes/camps.js` (the pool), the three hosts' mounts, `player/activationRace.js`, both inventory skins, `sceneCache.js` |
-| SURV4 | the rest law: beds and campfires sleep, the window is costed | (in progress) |
+| SURV4 | the rest law: a bed or a fire sleeps whole, the window alone is rough - half the hour, the roll twice, a stiff morning; the felt temperature can refuse the sleep | `survival/rest.js` (the law), `scenes/shared.js` createRestDeps (the composed hour and the kind), `encounters.js` (the second ask), the four hosts' `restKind` |
 | SURV5 | the HUD strip, the status page, the tavern menus, the switch | (in progress) |
 | SURV6 | hunting and foraging as real-time events | (in progress) |
 | SURV7 | online alignment, records, the probe | (in progress) |
@@ -153,3 +153,33 @@ stays open. Outdoors a camp survives a building visit, goes with its
 pixel and comes back from the scene cache (which had been dropping
 HT1's torches at that door since HT1, fixed here) and rides the save
 in natives.
+
+### The rest (SURV4)
+
+Where you sleep decides what the sleep is worth (`survival/rest.js`).
+A BED - a rented room, your own house, your ship - and a CAMP - within
+four metres of a lit fire - are the sleep: the rested hour pays DFU's
+whole recovery (scenes/shared.js's restVitals, still the one home),
+the sleep debt clears at one and a half hours an hour, the night is
+the night. Everything else is ROUGH - the rest window opened on a
+dungeon floor, a hillside, a guild hall's boards - a last resort that
+costs: the hour keeps half of what DFU's hour gained (floored, and an
+hour that took some back never reports "healed"), the debt pays down
+at half an hour an hour and never below tired, the resting encounter
+roll asks the minute's decision twice (`encounters.js`, the first
+spawn taken), and you rise stiff - four hours of speed and agility off
+the survival entry, said once on the window's close. The kind is read
+at the window's OPEN by the host that knows where it stands (the four
+`restKind` deps: the exterior hosts and the dungeon ask the camp pool,
+the interior asks its rental record), rides the entity as
+`entity.restKind` for the needs law's `sleeping` and the roll's
+`roughRest`, and with the mod off every rest is DFU's bed. Online the
+same law under RESTX2's real-time pacing: a fire or a bed is a short
+real wait for a full restore, the window alone the same wait for half
+of one and a stiff morning.
+
+The gate: too cold to sleep (freezing or worse) without a fire or a
+roof, too hot to sleep (scorching) anywhere - `restBlock`, installed
+on DFU's own RegisterPreventRestCondition seam by
+`installSurvivalRestGate` with the host's felt-temperature reader
+(SURV7 wires the reader; the two handlers answer nothing until then).
