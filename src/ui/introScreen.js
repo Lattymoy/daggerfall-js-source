@@ -97,7 +97,10 @@ export async function runIntro({ theme, onReveal, doc = document, freezeAt = nul
   gate.append(kicker, heading, make(doc, 'div', 'intro-ornament'), begin, status);
   const skip = make(doc, 'button', 'intro-skip', 'Skip intro'); skip.type = 'button';
   const next = make(doc, 'button', 'intro-continue', 'Tap to continue'); next.type = 'button'; next.hidden = true;
-  const footer = make(doc, 'div', 'intro-footer', 'Daggerfall Enhanced');
+  // MAC: no wordmark in the letterbox - the logo says it, and says it better.
+  // The element stays because it is the FAILURE surface: if the score cannot
+  // load, beginPlayback writes its truthful card here. Empty until then.
+  const footer = make(doc, 'div', 'intro-footer');
   host.append(film, gate, skip, next, footer); doc.body.append(host);
   // Shared by the setup path and by a tap that beats it: a gesture given
   // during 'preparing' must still open on decoded artwork, never on the
