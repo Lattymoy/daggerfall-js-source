@@ -50,10 +50,15 @@ setPlayerStruckHook((attacker, target, damage) => onPlayerStruckByEnemy(attacker
 installMeanerMonsters();   // MM1: before the overhaul, as DFU Awakes the dependency first
 installPcaao();
 installUnleveledLoot();   // UL1: after everything it would override (its manifest orders it after Roleplay Realism)
+installSurvivalIcons();   // SURV2: the mod's spoiled-food and waterskin icons ride the texture pipeline as the port's own art
+installSurvivalLoot({ enabled: survivalOn });   // SURV2: an animal's corpse carries meat, a humanoid's sometimes a meal (after UL1, which walks the gold); off with the one switch
 import { normalizeReputations, NORMALIZE_INTERVAL_MINUTES } from './court.js';   // AUDIT 23 (C4)
 // S43: the entity update's 7-day and 38-day arms (PlayerEntity.cs:460-472).
 import { regionPowerUpdate } from './regionPower.js';
 import { runSurvivalMinutes } from './survival/needs.js';   // SURV1: the needs, a world minute at a time
+import { installSurvivalIcons } from './survival/items.js';   // SURV2: the templates register at its import; the icons here
+import { installSurvivalLoot } from './survival/loot.js';   // SURV2: the corpse's food
+import { survivalOn } from './survival/switch.js';   // SURV2: the one switch
 /** :462 - `% 10080`, seven days of game minutes. */
 export const FACTION_POWER_INTERVAL_MINUTES = 10080;
 /** :469 - `% 54720`, thirty-eight days. */

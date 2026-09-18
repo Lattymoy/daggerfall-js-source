@@ -670,6 +670,23 @@ export const FEATURES = Object.freeze([
     kinds: Object.freeze(['enhanced']),
     control: Object.freeze({ store: 'prefs', key: 'wildernessCamps', initial: true, online: 'player' }),
   }),
+  // SURV2 (2026-09-18, Mac: "All on by default"): THE SURVIVAL ARC -
+  // an overhaul of Ralzar's Climates & Calories (vendor/climates-
+  // calories/README.md), not a port. The one switch for the whole of
+  // it: the felt temperature and the five needs on the world minute,
+  // the food, water and camping items the store shelves and a new
+  // character carries, camps and campfires, the costed rest, hunting.
+  // Off is the classic game: no needs, no provisions minted.
+  Object.freeze({
+    id: 'mod-climates-calories',   // a mod-row id: WM3's law reaches the credits' vendor through it
+    group: 'character',
+    title: 'Climates & Calories',
+    note: 'Heat, cold, rain and the road wear you down - eat, drink, sleep and dress for the weather, and rest at a '
+      + 'campfire or a bed. Off is the classic game, with no needs at all.',
+    effect: 'Takes effect at once. Online the room decides.',
+    kinds: Object.freeze(['enhanced', 'classic']),
+    control: Object.freeze({ store: 'prefs', key: 'survival', initial: true, online: true }),
+  }),
 ]);
 
 // ── RF4: the lanes, and what the stores derive ────────────────────

@@ -17,8 +17,13 @@
 // always below -20 in a desert); the tables' spirit is kept.
 import { EQUIP_SLOTS } from '../../characters/paperdoll.js';
 import { CLIMATES } from '../../formats/mapsFile.js';
-import { EFFECT_FLAGS } from '../spellcast.js';
 import { RACES } from '../races.js';
+
+/** spellcast.js's EFFECT_FLAGS.Fire and .Frost (DFCareer.EffectFlags),
+ *  restated so this leaf imports no combat module: spellcast sits on the
+ *  formulas -> equip cycle, and equip mints the starting kit from here. */
+export const FLAG_FIRE = 8;
+export const FLAG_FROST = 16;
 
 /** The climate's own temperature. Desert2 is the Dak'fron interior, the
  *  hottest; Mountain the coldest; Ocean is a beach (the classic maps put
@@ -149,7 +154,7 @@ export const environmentWet = ({ submerged = false, wading = false } = {}) =>
 export function resistTemperature(temp, ctx = {}) {
   if (temp === 0) return 0;
   const cold = temp < 0;
-  const bit = cold ? EFFECT_FLAGS.Frost : EFFECT_FLAGS.Fire;
+  const bit = cold ? FLAG_FROST : FLAG_FIRE;
   const rt = ctx.raceTemplate ?? {};
   let r = cold ? (ctx.frostResist ?? 0) : (ctx.fireResist ?? 0);
   if (((rt.resistanceFlags ?? 0) & bit) === bit) r += 25;

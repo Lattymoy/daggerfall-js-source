@@ -6,11 +6,12 @@ import { fileURLToPath } from 'node:url';
 
 import {
   CLIMATE_TEMP, MONTH_TEMP, naturalTemperature, hourTemperature, weatherWetGain, resistTemperature,
-  clothingWarmth, armorWarmth, dungeonTemperature, feltTemperature, temperatureWord, cloakState, NAKED_OFFSET,
+  clothingWarmth, armorWarmth, dungeonTemperature, feltTemperature, temperatureWord, cloakState, NAKED_OFFSET, FLAG_FIRE, FLAG_FROST,
 } from '../src/systems/survival/temperature.js';
+import { EFFECT_FLAGS } from '../src/systems/spellcast.js';
 import {
   TEMPLATE, FOOD, foodName, foodSatiety, rotOnce, rotRoll, rotFoodDay, eatLaw, drinkFrom, refillSkins, findDrink, waterIn,
-  FOOD_STAGE, WATERSKIN_CAPACITY_KG, DRINK_KG, FOUL_MEAL_DISEASES, MILD_MEAL_DISEASES,
+  FOOD_STAGE, WATERSKIN_CAPACITY_KG, DRINK_KG, FOUL_MEAL_DISEASES, MILD_MEAL_DISEASES, DISEASE_STOMACH_ROT, DISEASE_SWAMP_ROT, DISEASE_YELLOW_FEVER,
 } from '../src/systems/survival/food.js';
 import {
   NEED, newSurvival, survivalOf, hungerStage, thirstStage, sleepStage, wetStage, survivalStatMods, applySurvivalMods,
@@ -184,8 +185,10 @@ test('SURV1: the eating law - not a full stomach, never putrid, banked four hour
   assert.equal(mouldy.sick, 'foul');
   assert.equal(mouldy.satiety, 60, 'mouldy bread: a third');
   assert.equal(eatLaw({ templateIndex: TEMPLATE.Orange }, { lastAte: now - 2000, now }).thirstRelief, 10, 'fruit is a drink too');
+  assert.deepEqual([DISEASE_STOMACH_ROT, DISEASE_SWAMP_ROT, DISEASE_YELLOW_FEVER], [DISEASES.StomachRot, DISEASES.SwampRot, DISEASES.YellowFever], 'the restated ids are diseases.js\'s');
   assert.deepEqual(MILD_MEAL_DISEASES, [DISEASES.StomachRot]);
   assert.ok(!FOUL_MEAL_DISEASES.includes(DISEASES.Plague) && !FOUL_MEAL_DISEASES.includes(DISEASES.Cholera), 'no plague from a meal');
+  assert.deepEqual([FLAG_FIRE, FLAG_FROST], [EFFECT_FLAGS.Fire, EFFECT_FLAGS.Frost], 'the restated flag bits are spellcast.js\'s');
   assert.deepEqual(eatLaw({ templateIndex: 5 }, { lastAte: 0, now }), { ok: false, reason: 'not food' });
 });
 
@@ -327,7 +330,7 @@ test('SURV1: by source - liveStat reads the survival entry, and the model is thr
   assert.match(read('src/systems/statMods.js'), /if \(a\.kind === 'survival'\) \{ mod \+= a\.statMods\?\.\[statName\] \?\? 0; continue; \}/);
   for (const f of ['temperature', 'food', 'needs']) {
     const src = read(`src/systems/survival/${f}.js`);
-    assert.doesNotMatch(src, /from '\.\.\/\.\.\/scenes\/|from '\.\.\/\.\.\/ui\/|document\.|window\./, `${f}.js is pure`);
+    assert.doesNotMatch(src, /from '\.\.\/\.\.\/scenes\/|from '\.\.\/\.\.\/ui\/|from '\.\.\/\.\.\/combat\/|from '\.\.\/spellcast|from '\.\.\/diseases|from '\.\.\/effects|document\.|window\./, `${f}.js is pure - and off the formulas -> equip cycle`);
   }
   assert.match(read('src/systems/survival/needs.js'), /export const MAX_CATCHUP_MINUTES = 2 \* MINUTES_PER_DAY;/);
 });

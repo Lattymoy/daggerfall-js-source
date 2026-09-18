@@ -6,8 +6,13 @@
 // be forced down. The template indices are the mod's own (530-540, an
 // unused range above DFU's 288) so a save that carried them elsewhere
 // would read here; 541 is the port's own campfire.
-import { dice100 } from '../../combat/formulas.js';
-import { DISEASES, inflictDisease } from '../diseases.js';
+// No combat or disease import: both sit on the formulas -> equip cycle
+// and equip.js mints the starting kit through items.js -> here. The
+// luck roll is Dice100's own line and the disease ids are DFU's
+// (diseases.js DISEASES: StomachRot 3, SwampRot 6, YellowFever 2 -
+// pinned in the test); the infliction is handed in by the caller.
+const dice100 = (chance, roll01) => Math.floor(roll01 * 100) < chance;
+export const DISEASE_STOMACH_ROT = 3, DISEASE_SWAMP_ROT = 6, DISEASE_YELLOW_FEVER = 2;
 
 export const TEMPLATE = Object.freeze({
   CampingEquipment: 530, Rations: 531, Apple: 532, Orange: 533, Bread: 534, RawFish: 535, CookedFish: 536,
@@ -123,13 +128,14 @@ export function eatLaw(item, { lastAte, now, luck = 50, rolls = Math.random } = 
 
 /** The diseases a bad meal risks: the mild one (stomach rot) and the
  *  foul list (the dungeon's own). */
-export const MILD_MEAL_DISEASES = Object.freeze([DISEASES.StomachRot]);
-export const FOUL_MEAL_DISEASES = Object.freeze([DISEASES.StomachRot, DISEASES.SwampRot, DISEASES.YellowFever]);   // all curable; no plague from a meal
+export const MILD_MEAL_DISEASES = Object.freeze([DISEASE_STOMACH_ROT]);
+export const FOUL_MEAL_DISEASES = Object.freeze([DISEASE_STOMACH_ROT, DISEASE_SWAMP_ROT, DISEASE_YELLOW_FEVER]);   // all curable; no plague from a meal
 
-/** Infect for a bad meal through the disease law (a roll inside). */
-export function sickenFromMeal(entity, sick, { rolls = Math.random, currentDay = 0, onContract = null } = {}) {
-  if (!sick) return false;
-  return inflictDisease(entity, sick === 'foul' ? FOUL_MEAL_DISEASES : MILD_MEAL_DISEASES, { rolls, currentDay, onContract });
+/** Infect for a bad meal through the disease law the caller hands in
+ *  (diseases.js inflictDisease - a roll inside). */
+export function sickenFromMeal(entity, sick, { inflict = null, rolls = Math.random, currentDay = 0, onContract = null } = {}) {
+  if (!sick || typeof inflict !== 'function') return false;
+  return inflict(entity, sick === 'foul' ? FOUL_MEAL_DISEASES : MILD_MEAL_DISEASES, { rolls, currentDay, onContract });
 }
 
 /** Waterskins: the water rides the item as `water` (kg). */

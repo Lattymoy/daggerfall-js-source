@@ -127,6 +127,8 @@ export const MAGIC_ITEMS_ENUM_TEMPLATE = 0;
 // constant, declared here and in loot.js.
 import { BOOK_TEMPLATE, createRegularMagicItem, createRandomPotion, randomlyAddPotionRecipe, getMagicItemTemplates, createRandomWeapon, createRandomArmor, createRandomClothing } from './loot.js';   // G4: the guild shelves' two minters (AUDIT 26 F129/F130: + the recipe arm and the registry)
 import { SPELLBOOK_TEMPLATE_INDEX } from './spellMaker.js';   // G4: one home for MiscItems 132
+import { provisionsStock } from './survival/items.js';   // SURV2: the general store's provisions shelf
+import { survivalOn } from './survival/switch.js';   // SURV2: the one switch
 
 export { BOOK_TEMPLATE };
 
@@ -219,6 +221,11 @@ export function stockShopShelf({ buildingType, quality }, playerEntity = {}, { r
   if (buildingType === BUILDING_TYPES.GeneralStore) {
     add({ group: 'Transportation', templateIndex: TRANSPORT_HORSE });
     add({ group: 'Transportation', templateIndex: TRANSPORT_SMALL_CART });
+    // SURV2: the provisions shelf - rations, bread, fruit, skins, fire
+    // kits, and camping gear and a skillet in a better shop. Minted by
+    // their own module (their templates are the port's), after the
+    // horse and the cart so the shelf reads travel first, then food.
+    if (survivalOn()) for (const it of provisionsStock(quality, rolls)) items.push(it);
   }
   const level = playerEntity.level ?? 1;
   const female = playerEntity.gender === 'female';

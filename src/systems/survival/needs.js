@@ -25,7 +25,7 @@
 // rather than dead of the time they were not playing. The tick itself
 // owes at most MAX_CATCHUP_MINUTES per reading.
 import { feltTemperature } from './temperature.js';
-import { drinkFrom, findDrink, DRINK_RELIEF, TEMPLATE, FOOD, isFood, foodStage, FOOD_STAGE, rotFoodDay, rotWeight, ROT_DAY_MINUTES } from './food.js';
+import { drinkFrom, findDrink, waterskinName, DRINK_RELIEF, TEMPLATE, isFood, foodStage, FOOD_STAGE, rotFoodDay, rotWeight, ROT_DAY_MINUTES } from './food.js';
 import { STAT_KEYS_ORDER } from '../statMods.js';
 import { MINUTES_PER_DAY } from '../gameDate.js';
 
@@ -317,6 +317,7 @@ export function drinkWater(entity, now, say = null) {
   if (!skin) return false;
   const r = drinkFrom(skin);
   if (!r.ok) return false;
+  skin.name = waterskinName(skin);
   s.thirst = Math.max(0, s.thirst - DRINK_RELIEF);
   s.notes['thirst:thirsty'] = s.notes['thirst:parched'] = s.notes['thirst:dehydrated'] = undefined;
   say?.(r.empty ? SURVIVAL_TEXT.drained : r.low ? SURVIVAL_TEXT.drankLow : SURVIVAL_TEXT.drank);

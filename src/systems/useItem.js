@@ -32,7 +32,9 @@
 import { templateByIndex } from './itemTemplates.js';
 import { doItemEnchantmentPayloads, PAYLOAD } from './enchantments.js';   // E2: the Used payload arm
 import { inflictPoison } from './poisons.js';
+import { inflictDisease } from './diseases.js';   // SURV2: a bad meal's sickness, handed to the food law
 import { getItem } from './inventory.js';   // D9: ItemCollection.GetItem - the oil arm's lantern lookup (:1791)
+import { isSurvivalItem, useSurvivalItem } from './survival/items.js';   // SURV2: food, water, camp gear
 
 /** THE ARMS WHOSE DESTINATION WINDOW THE PORT HAS NOT BUILT, named so a use
  *  SAYS something rather than eating itself. Keyed by this module's own result
@@ -250,11 +252,16 @@ export function useItem(item, collection, {
   }
 
   let out = null;
+  // SURV2: the survival items (food, the waterskin, camping gear, the
+  // campfire kit, the skillet) answer from their own module - their
+  // templates are the port's, above DFU's 288, and their use is eating,
+  // drinking and placing, none of which the ladder below knows.
+  if (isSurvivalItem(item)) out = useSurvivalItem(item, collection, { entity, now: nowMinute, rolls, currentDay: Math.trunc(nowMinute / 1440), inflict: inflictDisease });
   // B1: the book arm hands the ITEM to the window's openBook hook
   // (DaggerfallInventoryWindow pushes the reader; a failed open shows
   // the ruined-book box - failText - which the WINDOW shows on the
   // hook's failure callback, not immediately).
-  if (isBook(item)) out = { kind: 'book', item, failText: named('bookUnavailable') };
+  else if (isBook(item)) out = { kind: 'book', item, failText: named('bookUnavailable') };
 
   else if (isPotion(item)) {
     // DrinkPotion + RemoveOne. AUDIT 22 F5: RemoveOne takes THIS
