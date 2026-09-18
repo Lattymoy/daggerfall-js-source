@@ -756,6 +756,41 @@ export async function bootWorld(canvas, renderer, params, status) {
   const worldHeight = MAX_TERRAIN_HEIGHT * DEFAULT_TERRAIN_SCALE;
   const tileSide = TERRAIN_SIZE / 128;
   const built = new Map(); // key -> pixel entry
+
+  // BOOT-TDZ (2026-09-18, Mac: "boot failed: can't access lexical
+  // declaration 'yn' before initialization"): TRAVEL OPTIONS' BINDINGS
+  // STAND HERE, ABOVE THE STREAM, because the stream reads them.
+  //
+  // The pixel builder below calls `travelOptions?.initLocationRects`
+  // (AUDIT-TO1 B3's second hook) and the topic sync reads
+  // `_travelRegionSeen`, and BOTH run inside the boot's own first build
+  // - `const playerPixel = await buildPixel(first.px, first.py)` - which
+  // happens three and a half thousand lines before the mod itself is
+  // constructed. A `const` is in its TEMPORAL DEAD ZONE until its own
+  // declaration RUNS, and optional chaining does not soften that:
+  // `travelOptions?.x` throws exactly as `travelOptions.x` would. The
+  // boot died there for any character whose first pixel carries a
+  // location, which is every ordinary save.
+  //
+  // So the bindings are declared null here and ASSIGNED where the mod is
+  // built; every reader above already guards on null, which is the guard
+  // a player with the mod switched off needs in any case.
+  let travelOptions = null;
+  /** AUDIT-TO1 B3: the region the last pixel crossing stood in, for
+   *  OnRegionIndexChanged's edge; null until the first crossing. */
+  let _travelRegionSeen = null;
+  // AUDIT-TO1 F2: the live travel control panel, for the one reader
+  // that is built before it - CastWhenHeld's durability guard. Filled
+  // where the panel is constructed; null in every frame with no journey.
+  const _travelUIHolder = { ui: null };
+  // AUDIT-TO1 J1: DisableWeatherAndSound / EnableWeatherAndSound
+  // (TravelOptionsMod.cs:1215-1271) - the two switches an accelerated
+  // journey throws, declared HERE because the mount rig that reads one
+  // is built long before the mod is. They were written and never read:
+  // rain kept falling and the stride fired at the accelerated step rate
+  // - the exact things AllowWeather and AllowAnnoyingSounds exist to stop.
+  let _travelWeatherOff = false;
+  let _travelSoundsOff = false;
   // EV3: one local AABB per model ARCHETYPE, scanned once ever - the
   // per-placement box is then eight corner transforms at build time.
   /** AUDIT 64 F11: DFMesh.Size for a model id - `modelData.DFMesh.Size`
@@ -3708,18 +3743,6 @@ export async function bootWorld(canvas, renderer, params, status) {
   // W1: the map dictionary the window reads is built at the top of
   // this boot, with the terrain repairs that also need HasLocation.
   let _travelMap = null;   // the live window, for the probe surface
-  // AUDIT-TO1 F2: the live travel control panel, for the one reader
-  // that is built before it - CastWhenHeld's durability guard. Filled
-  // where the panel is constructed; null in every frame with no journey.
-  const _travelUIHolder = { ui: null };
-  // AUDIT-TO1 J1: DisableWeatherAndSound / EnableWeatherAndSound
-  // (TravelOptionsMod.cs:1215-1271) - the two switches an accelerated
-  // journey throws, declared HERE because the mount rig that reads one
-  // is built long before the mod is. They were written and never read:
-  // rain kept falling and the stride fired at the accelerated step rate
-  // - the exact things AllowWeather and AllowAnnoyingSounds exist to stop.
-  let _travelWeatherOff = false;
-  let _travelSoundsOff = false;
   /** ItemCollection.Contains(ItemGroups.Transportation, template) -
    *  the same one-line test ui/nativeInventory.js's wagon gate uses. */
   const hasTransport = (template) => (playerEntity.items ?? []).some((it) => it.templateIndex === template);
@@ -5293,7 +5316,7 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  site guards - a player who turns Travel Options off has the
    *  classic travel map and classic fast travel, whole. */
   _travelUIHolder.ui = travelControlUI;   // AUDIT-TO1 F2: the holder the enchant ctx reads
-  const travelOptions = travelOptionsOn ? createTravelOptions({
+  travelOptions = travelOptionsOn ? createTravelOptions({   // BOOT-TDZ: ASSIGNED here; the binding stands above the stream that reads it
     settings: travelOptionsSettings,
     ui: travelControlUI,
     junctionMap: travelJunctionMap,
@@ -5381,9 +5404,6 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  call below it, which is the order TravelOptionsMod.Update and
    *  PlayerMotor.Update run in. */
   let _travelDrive = null;
-  /** AUDIT-TO1 B3: the region the last pixel crossing stood in, for
-   *  OnRegionIndexChanged's edge; null until the first crossing. */
-  let _travelRegionSeen = null;
   /** TO1 (:1438-1445): the Follow Paths key, which is a KeyCode NAME in
    *  the mod's own settings rather than one of DFU's actions - the
    *  Handheld Torches precedent, which the port already reads the same

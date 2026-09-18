@@ -196,6 +196,43 @@ events (the touch-quickslot pattern). It is NOT in the port's overlay
 slot, and that is load-bearing: an overlay holds the motor and the
 world clock, which is the one thing a journey must not do.
 
+## BOOT-TDZ (2026-09-18) - the mod is declared above the stream that reads it
+
+Mac, on the deployed build: *"boot failed: can't access lexical
+declaration 'yn' before initialization"*. `bootWorld` built the mod near
+its end (`const travelOptions = travelOptionsOn ? createTravelOptions(...)`)
+and the PIXEL BUILDER, three and a half thousand lines above it, calls
+AUDIT-TO1 B3's second hook on every pixel it finishes:
+
+    if (_isPlayersPixel && dfLocation) travelOptions?.initLocationRects(playerTravelPixel());
+
+The boot awaits its own first build - `const playerPixel = await
+buildPixel(first.px, first.py)` - long before that `const` runs, so the
+read landed in the binding's TEMPORAL DEAD ZONE and threw. Optional
+chaining is no guard against one: `a?.b` evaluates `a` and throws exactly
+as `a.b` would; it only softens `null` and `undefined`, which a binding
+that has not been initialised is not. Every character whose first pixel
+carries a location - which is every ordinary save, and every new game
+that starts in a town - died at boot; a character standing in open
+wilderness did not, which is why the slice's own browser probes (no
+location under them) and every headless pin missed it.
+
+The bindings the stream reads now stand above the stream, declared null
+and ASSIGNED where the mod is built: `travelOptions`, `_travelRegionSeen`
+(the region-crossing edge the topic sync reads), `_travelUIHolder` (F2's
+holder) and J1's two `_travelWeatherOff`/`_travelSoundsOff` switches,
+which had already been hoisted once for the mount rig and not far
+enough. Every reader above the build already guarded on null - the same
+guard a player with Travel Options switched off needs - so nothing else
+changed.
+
+Pinned in `test/to1_travelOptions.test.js` as a LAW rather than a
+literal: every one of those bindings must be declared before the line
+`const playerPixel = await buildPixel(first.px, first.py)`, and the mod
+must be assigned there, never re-declared. Mutants
+`tools/mutants/to1.json`: `travel-options-declared-late`,
+`region-seen-declared-late`, `holder-declared-late`.
+
 ## Recorded departures
 
 1. **Hidden Map Locations** (`:284-293`, `:1264-1266`, and

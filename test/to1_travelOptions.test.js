@@ -1132,7 +1132,8 @@ test('TO1: the wiring - one construction, the fork on the popup\'s word, the pan
   // the mod is built once, and only while its switch is on
   assert.equal((w.match(/createTravelOptions\(\{/g) || []).length, 1, 'ONE construction');
   assert.match(w, /const travelOptionsOn = modSetting\(TRAVEL_OPTIONS_VENDOR, 'Enabled'\);/);
-  assert.match(w, /const travelOptions = travelOptionsOn \? createTravelOptions\(\{/);
+  assert.match(w, /\n  travelOptions = travelOptionsOn \? createTravelOptions\(\{/, 'BOOT-TDZ: ASSIGNED where the mod is built - the binding is declared above the stream that reads it');
+  assert.match(w, /let travelOptions = null;/, 'BOOT-TDZ: and declared there, null');
   // the fork
   assert.match(w, /if \(opts\?\.playerControlled && beginAcceleratedTravel\(pick, opts, \{ estimateMinutes: computed\?\.minutes \?\? null \}\)\) return;[^\n]*\n\s*fastTravelTo\(pick, opts, computed\);/,
     'the walked trip is tried first (with the popup\'s estimate riding along - AUDIT-TO1 L5) and fast travel is the fallback');
@@ -1591,4 +1592,54 @@ test('AUDIT-TO1 (mutant): a pixel carrying BOTH a road and a track shows the ROA
   const centre = ((3 - 1 - 1) * DOT_SCALE * w5) + (1 * DOT_SCALE) + (2 * w5) + 2;
   assert.equal(buf[centre], packColor(ROAD_COLOR), 'the road is drawn over the track');
   assert.notEqual(buf[centre], packColor(TRACK_COLOR));
+});
+
+// ── BOOT-TDZ (2026-09-18) ────────────────────────────────────────
+//
+// Mac: "boot failed: can't access lexical declaration 'yn' before
+// initialization". The mod was a `const` three and a half thousand lines
+// below the stream that reads it, and the boot's OWN first build -
+// `await buildPixel(first.px, first.py)` - runs the pixel builder, whose
+// AUDIT-TO1 B3 hook says `travelOptions?.initLocationRects(...)`. A const
+// is in its temporal dead zone until its declaration RUNS, and optional
+// chaining does not soften that: `a?.b` evaluates `a` and throws exactly
+// as `a.b` would. Every character whose first pixel carries a location -
+// which is every ordinary save - died on it. The bindings the stream
+// reads stand above the stream now, null until the mod is built.
+test('BOOT-TDZ: every Travel Options binding the STREAM reads is declared above the boot\'s own first pixel build - a const read in its temporal dead zone killed the boot, and `?.` is not a guard against one (mutants: travel-options-declared-late, region-seen-declared-late, holder-declared-late)', () => {
+  const w = read('src/scenes/world.js');
+  const lines = w.split('\n');
+  const at = (re, what) => {
+    const i = lines.findIndex((l) => re.test(l));
+    assert.notEqual(i, -1, `world.js no longer carries ${what}`);
+    return i + 1;
+  };
+  // the statement the whole bug hung on: the boot awaits the first build
+  const firstBuild = at(/^ {2}const playerPixel = await buildPixel\(first\.px, first\.py\);/, 'the boot\'s first pixel build');
+  // ...and these two readers run INSIDE it, above where the mod is built
+  const hook = at(/travelOptions\?\.initLocationRects\(playerTravelPixel\(\)\);/, 'the B3 location-rect hook');
+  assert.ok(hook < firstBuild, `the B3 hook (line ${hook}) is inside the builder the boot awaits (line ${firstBuild})`);
+  // the region edge reads its own binding from the topic sync, which the
+  // boot calls on the arrival path below the build; the binding is held
+  // to the same law as the hook's, in the loop that follows
+  at(/if \(_travelRegionSeen !== null && _region !== _travelRegionSeen\)/, 'the region edge');
+  // every binding they touch is declared before that build can run
+  for (const [name, re] of [
+    ['travelOptions', /^ {2}let travelOptions = null;/],
+    ['_travelRegionSeen', /^ {2}let _travelRegionSeen = null;/],
+    ['_travelUIHolder', /^ {2}const _travelUIHolder = \{ ui: null \};/],
+    ['_travelWeatherOff', /^ {2}let _travelWeatherOff = false;/],
+    ['_travelSoundsOff', /^ {2}let _travelSoundsOff = false;/],
+  ]) {
+    const decl = at(re, `the ${name} binding`);
+    assert.ok(decl < firstBuild,
+      `${name} is declared at line ${decl}, after the boot's first build at line ${firstBuild}: the stream would read it in its temporal dead zone`);
+  }
+  // the mod is ASSIGNED where it is built, and declared exactly once
+  assert.equal((w.match(/^ {2}(?:let|const) travelOptions\b/gm) ?? []).length, 1, 'one declaration of travelOptions, and it is the hoisted one');
+  assert.match(w, /\n {2}travelOptions = travelOptionsOn \? createTravelOptions\(\{/, 'built by assignment, not by a second declaration');
+  // the readers above the build all guard on null, which is also the
+  // guard a player with the mod switched off needs
+  assert.match(w, /travelOptions\?\.initLocationRects/);
+  assert.match(w, /if \(travelOptions\) \{\n\s*travelOptions\.onMapPixelChanged/);
 });
