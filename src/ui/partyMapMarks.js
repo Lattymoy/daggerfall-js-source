@@ -6,7 +6,7 @@
 // ONE reading of the host's `party` dep, shared by BOTH maps.
 //
 // The two travel maps could not be less alike - the enhanced one is a
-// live GL relief of the whole bay (ui/overworldMap.js), the classic
+// parchment in the player's hands with the bay inked on (ui/heldMap.js), the classic
 // one is a 320x160 region page painted out of TRAV0I00's art
 // (ui/travelMapWindow.js) - and neither of them should be the place
 // that decides what a party member IS. So the host says it once, in
@@ -146,7 +146,7 @@ export function partyLabelText(mark) {
  *  that compares this repaints when a member actually moves, goes indoors, drops offline, joins or leaves. */
 export function partyMarksKey(marks) {
   // AUDIT SOC D6: `loc` is in the signature because `loc` is DRAWN - the enhanced label's second line
-  // (`.ovpwhere`) and both maps' hover sentence are the place's name, so a member who walked from Daggerfall into
+  // (the ink label under the ring) and both maps' hover sentence are the place's name, so a member who walked from Daggerfall into
   // Privateers Hold WITHOUT changing map pixel (the pose carries the place's own pixel, so that happens) left a
   // label naming the town they had left. `leader` is still absent, and deliberately: no map draws it.
   return marks.map((m) => `${m.acct ?? m.name}:${m.px},${m.py},${m.in},${m.online ? 1 : 0},${m.name},${m.loc}`).join('|');

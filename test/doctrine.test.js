@@ -61,6 +61,11 @@ const PUBLIC_ALLOWLIST = new Map([
   // the question this list exists to ask. They are the first character
   // texture in the project that ships rather than loading through the data
   // door, and the reason viewer.html no longer needs ARENA2 for its skin.
+  // MAP0 (2026-09-18): THE HELD MAP'S SPRITE. Mac's own painting - two
+  // gauntleted hands holding a blank parchment, 1448x1086 - and the
+  // only picture the enhanced map will ship; the map itself is drawn
+  // onto the paper at runtime from MAPS and WOODS data (10-UI/Held-Map-Arc.md).
+  ['public/art/held-map.png', "OURS - Mac's own painting of the held parchment (MAP0, 2026-09-18); no ARENA2 pixel in it"],
   ['public/skin/skin-intensity.png', 'OURS - intensity baked from our own generated turnaround'],
   ['public/skin/skin-uv.json', "OURS - UVs over our own rig's geometry, no pixels at all"],
   ['public/skin/skin-layout.json', 'OURS - atlas cell rectangles, no pixels at all'],
@@ -337,6 +342,19 @@ const BUNDLE_ART = new Map([
   ['vendor/eye-of-the-beholder/Textures/',
     { manifest: 'vendor/eye-of-the-beholder/eyeofthebeholder.dfmod.json',
       why: "THIRD-PARTY - Eye Of The Beholder 2.1 (RedRoryOTheGlen); the mod's own player sprites, re-encoded as indexed PNG (lossless for every drawn pixel - see the vendor README)" }],
+  // AUDIT-TO1 F3: TO1 vendored three pictures and never came here, and
+  // the gate did not say so on the day - `tracked()` reads git's index,
+  // the slice ran its suite BEFORE `git add`, and three untracked files
+  // are invisible to a rule written about tracked ones. It reddened on
+  // the very next run. The art itself is fine and always was: these are
+  // the mod's own UI chrome - a control strip and two filter buttons -
+  // NOT a render of ARENA2, which is the thing Port-Doctrine forbids.
+  // The row is a directory row for the same reason Eye Of The
+  // Beholder's is: membership is DERIVED from the bundle's own
+  // manifest, so the port cannot quietly widen it.
+  ['vendor/travel-options/Textures/',
+    { manifest: 'vendor/travel-options/travel-options.dfmod.json',
+      why: "THIRD-PARTY - Travel Options 1.11 (Hazelnut, MIT); the mod's own UI chrome - the 320x27 control strip and the two ports-filter buttons - re-encoded from the bundle's Texture2D objects by tools/travelOptionsAssets.mjs (see the vendor README: these are the PIXELS, not the author's file bytes)" }],
 ]);
 /** The basenames each bundle manifest names, lowercased. Memoised: the
  *  membership test runs once per tracked raster and the manifest is

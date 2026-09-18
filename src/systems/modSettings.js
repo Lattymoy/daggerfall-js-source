@@ -598,6 +598,101 @@ export const MOD_SETTINGS = Object.freeze({
       miscSkillsImpact: Object.freeze({ default: 2, min: 0, max: 100, description: 'Points given by a Misc Skill level up (100 points required to level up)' }),
     }),
   }),
+  // TO1 (2026-09-17, Mac: "This is the next daggerfall mod we are to
+  // implement 1:1"): TRAVEL OPTIONS 1.11 (Hazelnut). Its twelve sections
+  // as modsettings.json ships them, the key named section-dot-name;
+  // descriptions are the mod's own, verbatim. The shipped file's five
+  // unnamed spacer sections ("__", "-", "_", "--", ".") carry no keys
+  // and are noted where they fall. Plus the port's `Enabled` (MO1: on).
+  //
+  // A key with `color` is a ColorKey - DFU has the kind natively
+  // (ModSettings.ColorKey) and the port did not until this mod, which
+  // has seventeen of them: the fourteen travel-map location colours,
+  // the middle-click mark, and the junction map's player and background.
+  // The value is an `#rrggbbaa` string; the mod's own presets write the
+  // same eight hex digits without the hash ("D77727FF"), and
+  // `colorKeyRgba` below reads either.
+  'travel-options': Object.freeze({
+    title: 'Travel Options',
+    author: 'Hazelnut',
+    keys: Object.freeze({
+      Enabled: Object.freeze({
+        default: true,
+        description: 'Hazelnut\u2019s Travel Options 1.11, 1:1: the travel map and its popup decide between Daggerfall\u2019s own '
+          + 'fast travel and a TIME ACCELERATED journey you actually walk - the world streaming past at up to sixty times speed, '
+          + 'with a control panel to steer it, encounters and locations pausing it, and roads and tracks to follow. Off returns '
+          + 'the classic travel map and fast travel alone.',
+      }),
+      'CautiousTravel.PlayerControlledCautiousTravel': Object.freeze({ default: true, description: "Enables the travel option \"Cautiously\" to initiate time accelerated travel, instead of vanilla fast travel" }),
+      'CautiousTravel.SpeedPenalty': Object.freeze({ default: 20, min: 5, max: 40, description: "Speed penalty for travelling cautiously, as a percentage" }),
+      'CautiousTravel.MaxChanceToAvoidEncounter': Object.freeze({ default: 95, min: 60, max: 100, description: "Maximum chance to avoid an encounter when travelling cautiously, as a percentage" }),
+      'CautiousTravel.HealthMinimumPercentage': Object.freeze({ default: 5, min: 0, max: 25, description: "Level of health that will automatically pause the journey when travelling cautiously, as a percentage" }),
+      'CautiousTravel.FatigueMinimumValue': Object.freeze({ default: 5, min: 0, max: 50, description: "Level of fatigue that will automatically pause the journey when travelling cautiously, absolute value" }),
+      'StopAtInnsTravel.PlayerControlledInnsTravel': Object.freeze({ default: false, description: "Enables the stop for night travel option \"Inns\" to initiate time accelerated travel, instead of fast travel" }),
+      'ShipTravel.OnlyFromPorts': Object.freeze({ default: true, description: "Restricts ship travel to be possible only from places with ports" }),
+      'ShipTravel.OnlyToPorts': Object.freeze({ default: false, description: "Restricts ship travel to be possible only if destination has a port, if from ports setting is enabled" }),
+      'GeneralOptions.AllowTargetingMapCoordinates': Object.freeze({ default: true, description: "Allows travel map to target any coordinates using time accelerated travel" }),
+      'GeneralOptions.LocationPause': Object.freeze({ default: 0, options: Object.freeze(["off", "nearby", "entered"]), description: "Auto pause when encountering a game location during real time accelerated travel" }),
+      'GeneralOptions.AllowWeather': Object.freeze({ default: false, description: "Allows weather effects during time accelerated travel" }),
+      'GeneralOptions.AllowAnnoyingSounds': Object.freeze({ default: false, description: "Allows footstep and hoof sounds during time accelerated travel" }),
+      'GeneralOptions.AllowRealGrass': Object.freeze({ default: false, description: "Allows the Real Grass mod to run during time accelerated travel" }),
+      'TimeAcceleration.DefaultStartingAcceleration': Object.freeze({ default: 4, options: Object.freeze(["1", "2", "3", "5", "10", "15", "20", "25", "30", "40", "50"]), description: "The initial time acceleration used after starting the game" }),
+      'TimeAcceleration.AlwaysUseStartingAcceleration': Object.freeze({ default: false, description: "Always uses the default starting acceleration when initiating a journey, rather than value from the previous journey" }),
+      'TimeAcceleration.AccelerationLimit': Object.freeze({ default: 60, min: 10, max: 100, description: "The maximum limit allowed for time acceleration, road following is limited to half this amount" }),
+      'Teleportation.EnablePaidTeleportation': Object.freeze({ default: false, description: "Enable paid Mages teleportation service for all guild members, before rank 8" }),
+      // the shipped file's spacer section "__" carries no keys
+      'RoadsIntegration.Enable': Object.freeze({ default: true, description: "Enhances the travel map with larger location dots for cities & towns, and shows roads & tracks with toggle buttons" }),
+      'RoadsIntegration.VariableSizeDots': Object.freeze({ default: true, description: "All locations, except for cities & towns, are rendered as smaller dots" }),
+      // AUDIT-TO1 I1: the mod ships index 1, "F" - and F is the key SOC5
+      // spent on SocialInteract (inputActions.js DEFAULT_BINDINGS), the
+      // same collision HT4 moved Handheld Torches' light toggle off.
+      // One press did both: the friends card opened AND a road leg
+      // began. Of the mod's own six: F is SOC5's, G is Handheld
+      // Torches' light toggle (HT4), O its ignite and X its throw
+      // (Throwing.ThrowTorchInput above) - so K, index 3, is the one
+      // letter nothing in the port or a vendored mod answers. The
+      // player may still pick F from the list; this is about what
+      // SHIPS. `keyChoice` DECLARES the kind, the way `axis` does, so
+      // the HT4 pin walks this choice list as it walks a TextKey and
+      // never has to guess whether "U" is a key or a bob shape.
+      'RoadsIntegration.FollowPathsKey': Object.freeze({ default: 3, keyChoice: true, options: Object.freeze(["None", "F", "G", "K", "O", "X", "Custom Key Bind"]), description: "Sets the key to initiate time accelerated travelling following paths if roads integration enabled" }),
+      'RoadsIntegration.FollowPathsCustomKeyBind': Object.freeze({ default: "", text: true, description: "Custom key bind for following paths used if CustomBind set above" }),
+      'RoadsIntegration.EnableWaterways': Object.freeze({ default: false, description: "Enhances the travel map with rivers and streams with a toggle button" }),
+      'RoadsIntegration.EnableStreamsToggle': Object.freeze({ default: false, description: "Adds a streams toggle button separate from rivers button" }),
+      'RoadsIntegration.MarkLocationColor': Object.freeze({ default: '#ffeb05ff', color: true, description: "The colour used to highlight locations using middle mouse button on travel map" }),
+      // the shipped file's spacer section "-" carries no keys
+      'FastTravelCostScaling.FastTravelCostScaleFactor': Object.freeze({ default: 1, min: 1, max: 10, description: "Scales the cost of inns when using standard fast travel, suggest x4-x6 for Climate & Calories." }),
+      'FastTravelCostScaling.ShipTravelCostScaleFactor': Object.freeze({ default: 1, min: 1, max: 10, description: "Scales the cost of ships when using standard fast travel, suggest x2-x3 for Climate & Calories." }),
+      // the shipped file's spacer section "_" carries no keys
+      'RoadsJunctionMap.Enable': Object.freeze({ default: true, description: "Enables the junction mini-map" }),
+      'RoadsJunctionMap.PersistentMap': Object.freeze({ default: false, description: "Set this to have the junction mini-map always displayed when following paths" }),
+      'RoadsJunctionMap.ToggleMapOffPaths': Object.freeze({ default: true, description: "Set this to have the junction mini-map toggled when follow key pressed and not on a path" }),
+      'RoadsJunctionMap.ScreenSize': Object.freeze({ default: 75, min: 40, max: 200, description: "The width and height the mini-map is rendered on the screen" }),
+      'RoadsJunctionMap.ScreenPositionX': Object.freeze({ default: 235, min: 0, max: 280, description: "The X coordinate the mini-map is rendered on the screen" }),
+      'RoadsJunctionMap.ScreenPositionY': Object.freeze({ default: 10, min: 0, max: 160, description: "The Y coordinate the mini-map is rendered on the screen" }),
+      'RoadsJunctionMap.FilterMode': Object.freeze({ default: 0, options: Object.freeze(["Point", "Bilinear", "Trilinear"]), description: "Pixel filtering to use when rendering the mini-map" }),
+      'RoadsJunctionMap.Circular': Object.freeze({ default: true, description: "Draw the mini-map in a circle around the player" }),
+      'RoadsJunctionMap.PlayerColor': Object.freeze({ default: '#ff0000ff', color: true, description: "The colour of the player position and direction indicator" }),
+      'RoadsJunctionMap.Opaque': Object.freeze({ default: false, description: "Render the mini-map with an opaque background color" }),
+      'RoadsJunctionMap.BackgroundColor': Object.freeze({ default: '#327f19ff', color: true, description: "The opaque background color to use for the mini-map" }),
+      // the shipped file's spacer section "--" carries no keys
+      // the shipped file's spacer section "." carries no keys
+      'LocationColours.DungeonLabyrinth': Object.freeze({ default: '#d77727ff', color: true, description: "The colour shown on the travel map" }),
+      'LocationColours.DungeonKeep': Object.freeze({ default: '#bf571bff', color: true, description: "The colour shown on the travel map" }),
+      'LocationColours.DungeonRuin': Object.freeze({ default: '#ab330fff', color: true, description: "The colour shown on the travel map" }),
+      'LocationColours.Graveyard': Object.freeze({ default: '#930f07ff', color: true, description: "The colour shown on the travel map" }),
+      'LocationColours.Coven': Object.freeze({ default: '#0f0f0fff', color: true, description: "The colour shown on the travel map" }),
+      'LocationColours.Farm': Object.freeze({ default: '#9b696aff', color: true, description: "The colour shown on the travel map" }),
+      'LocationColours.WealthyHome': Object.freeze({ default: '#bc8a8aff', color: true, description: "The colour shown on the travel map" }),
+      'LocationColours.PoorHome': Object.freeze({ default: '#7e5159ff', color: true, description: "The colour shown on the travel map" }),
+      'LocationColours.Temple': Object.freeze({ default: '#b0cdffff', color: true, description: "The colour shown on the travel map" }),
+      'LocationColours.Cult': Object.freeze({ default: '#447cc0ff', color: true, description: "The colour shown on the travel map" }),
+      'LocationColours.Tavern': Object.freeze({ default: '#8c5637ff', color: true, description: "The colour shown on the travel map" }),
+      'LocationColours.City': Object.freeze({ default: '#e3b490ff', color: true, description: "The colour shown on the travel map" }),
+      'LocationColours.Hamlet': Object.freeze({ default: '#c18564ff', color: true, description: "The colour shown on the travel map" }),
+      'LocationColours.Village': Object.freeze({ default: '#a56446ff', color: true, description: "The colour shown on the travel map" }),
+    }),
+  }),
 });
 
 let memory = null;
@@ -651,7 +746,44 @@ export function isTextKey(def) { return def && def.text === true; }
 /** HT1: a TupleIntKey / TupleFloatKey - `tuple` names the pair's kind,
  *  the value `[first, second]`. */
 export function isTupleKey(def) { return def && (def.tuple === 'int' || def.tuple === 'float'); }
+/** TO1: a ColorKey (DFU's ModSettings.ColorKey - Travel Options has
+ *  seventeen) - `color` declared, the value an `#rrggbbaa` string. */
+export function isColorKey(def) { return def && def.color === true; }
+
+/** TO1: the eight hex digits of a ColorKey, in either of the two
+ *  spellings the mod itself uses - `#rrggbbaa` as this store writes it
+ *  and `RRGGBBAA` as its own presets write it (modpresets.json:
+ *  "D77727FF") - as `[r, g, b, a]` 0..255. Three or six digits are
+ *  accepted too and take a full alpha, because a player typing a
+ *  colour into the pane types "#c08a3e". Anything unreadable answers
+ *  null, and the caller falls back to the declared default. */
+export function colorKeyRgba(value) {
+  if (Array.isArray(value) && value.length === 4 && value.every((n) => Number.isFinite(n))) {
+    return value.map((n) => Math.max(0, Math.min(255, Math.trunc(n))));
+  }
+  if (typeof value !== 'string') return null;
+  let s = value.trim();
+  if (s.startsWith('#')) s = s.slice(1);
+  if (!/^[0-9a-fA-F]+$/.test(s)) return null;
+  if (s.length === 3) s = s.split('').map((c) => c + c).join('') + 'ff';
+  else if (s.length === 4) s = s.split('').map((c) => c + c).join('');
+  else if (s.length === 6) s += 'ff';
+  else if (s.length !== 8) return null;
+  return [0, 2, 4, 6].map((i) => parseInt(s.slice(i, i + 2), 16));
+}
+
+/** The canonical spelling this store keeps: `#rrggbbaa`, lower case. */
+export function colorKeyHex(rgba) {
+  const c = colorKeyRgba(rgba);
+  if (!c) return null;
+  return '#' + c.map((n) => n.toString(16).padStart(2, '0')).join('');
+}
+
 function coerce(def, v) {
+  if (isColorKey(def)) {
+    const hex = colorKeyHex(v);
+    return hex ?? def.default;
+  }
   if (isTextKey(def)) {
     const t = typeof v === 'string' ? v.trim() : '';
     return t.length ? t : def.default;

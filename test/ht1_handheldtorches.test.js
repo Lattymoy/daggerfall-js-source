@@ -918,13 +918,61 @@ test('HT4: no vendored mod ships a key the port has already spent', () => {
       // the DECLARATION rather than guessing from the value. The
       // assertion below stays strict for everything that IS a key.
       if (!def.text || def.axis || typeof def.default !== 'string') continue;   // only the KeyCode fields
+      // TO1: ...and an EMPTY default is not a key either. Travel
+      // Options' `RoadsIntegration.FollowPathsCustomKeyBind` ships ""
+      // because it is only read when the CHOICE above it is set to
+      // "Custom Key Bind" (TravelOptionsMod.cs:224-232), and an unset
+      // custom bind falls back to F there. Nothing is bound, so nothing
+      // can collide; the gate below stays strict for every key that
+      // names one.
+      if (def.default === '') continue;
       const code = domCodeForKeyCode(def.default);
       assert.ok(code, `${vendor}/${key} ships "${def.default}", which is not a KeyCode the port can bind`);
       if (portSpent.has(def.default) || dfuBound.has(code)) offenders.push(`${vendor}/${key} = ${def.default} (${code})`);
     }
+    // AUDIT-TO1 I1: ...AND A MULTIPLE-CHOICE KEY THAT CHOOSES A KEY.
+    // Travel Options' RoadsIntegration.FollowPathsKey is a
+    // MultipleChoiceKey over ["None", "F", "G", "K", "O", "X", "Custom
+    // Key Bind"] whose default is an INDEX, so the TextKey walk above
+    // (`typeof def.default !== 'string'`) stepped straight over it - and
+    // it shipped on F, the key SOC5 spends on SocialInteract, for three
+    // days with this gate green. The setting DECLARES the kind
+    // (`keyChoice: true`, the `axis` precedent), because a walk that
+    // guessed from the value took Weapon Widget's Bob.Shape "U" for a
+    // key. The option at the default index is judged exactly as a
+    // TextKey default; "None" and "Custom Key Bind" name no key.
+    for (const [key, def] of Object.entries(mod.keys)) {
+      if (!def.keyChoice) continue;
+      assert.ok(Array.isArray(def.options) && typeof def.default === 'number', `${vendor}/${key} declares keyChoice and is not a choice list`);
+      const choice = def.options[def.default];
+      const code = domCodeForKeyCode(choice);
+      if (!code) continue;   // "None" / "Custom Key Bind"
+      if (portSpent.has(choice) || dfuBound.has(code)) offenders.push(`${vendor}/${key} = option ${def.default} "${choice}" (${code})`);
+    }
   }
   assert.deepEqual(offenders, [],
     'these ship on a key the port or DFU already answers - one press would do two things');
+
+  // AUDIT-TO1 I1 (b): ...AND NO TWO VENDORED MODS SHIP THE SAME KEY. The
+  // walk above judges a mod against DFU and the port; it never judged
+  // two mods against EACH OTHER, and the first pick for the follow key
+  // was X - Handheld Torches' throw. Every shipped key code across every
+  // vendor, once.
+  const shipped = new Map();   // code -> first owner
+  const twice = [];
+  for (const [vendor, mod] of Object.entries(MOD_SETTINGS)) {
+    for (const [key, def] of Object.entries(mod.keys)) {
+      let name = null;
+      if (def.text && !def.axis && typeof def.default === 'string' && def.default !== '') name = def.default;
+      else if (def.keyChoice) name = def.options[def.default];
+      const code = name ? domCodeForKeyCode(name) : null;
+      if (!code) continue;
+      const owner = `${vendor}/${key}`;
+      if (shipped.has(code)) twice.push(`${owner} and ${shipped.get(code)} both ship ${code}`);
+      else shipped.set(code, owner);
+    }
+  }
+  assert.deepEqual(twice, [], 'two vendored mods ship the same key - one press would do two things');
 
   // ...AND THE AXIS EXEMPTION IS NOT A HOLE. It is still a `text` key -
   // the pane shows it as one - so the skip above turns on the declared

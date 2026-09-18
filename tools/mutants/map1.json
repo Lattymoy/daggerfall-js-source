@@ -1,0 +1,381 @@
+[
+ {
+  "name": "coast-through-pixel-centres",
+  "file": "src/ui/inkMap.js",
+  "old": "      if (x + 1 < width && here !== inside(x + 1, y)) segs.push([x + 1, y, x + 1, y + 1]);",
+  "new": "      if (x + 1 < width && here !== inside(x + 1, y)) segs.push([x + 0.5, y, x + 0.5, y + 1]);",
+  "tests": [
+   "test/heldmap.test.js"
+  ]
+ },
+ {
+  "name": "coast-ignores-climate",
+  "file": "src/ui/inkMap.js",
+  "old": "    return !isWaterPixel(climate, byte);",
+  "new": "    return byte > 0 || climate === -2;",
+  "tests": [
+   "test/heldmap.test.js"
+  ]
+ },
+ {
+  "name": "border-on-the-coast",
+  "file": "src/ui/inkMap.js",
+  "old": "      if (x + 1 < width && isLand(x + 1, y)) {",
+  "new": "      if (x + 1 < width) {",
+  "tests": [
+   "test/heldmap.test.js"
+  ]
+ },
+ {
+  "name": "border-through-unnamed",
+  "file": "src/ui/inkMap.js",
+  "old": "        if (q >= 0 && q !== r) segs.push([x + 1, y, x + 1, y + 1]);",
+  "new": "        if (q !== r) segs.push([x + 1, y, x + 1, y + 1]);",
+  "tests": [
+   "test/heldmap.test.js"
+  ]
+ },
+ {
+  "name": "generated-network-inked",
+  "file": "src/ui/inkMap.js",
+  "old": "  if (!net || net.source !== 'basic-roads') return { roads: [], tracks: [] };",
+  "new": "  if (!net) return { roads: [], tracks: [] };",
+  "tests": [
+   "test/heldmap.test.js"
+  ]
+ },
+ {
+  "name": "tracks-dropped",
+  "file": "src/ui/inkMap.js",
+  "old": "  return { roads: soften(net.roads), tracks: soften(net.tracks) };",
+  "new": "  return { roads: soften(net.roads), tracks: [] };",
+  "tests": [
+   "test/heldmap.test.js"
+  ]
+ },
+ {
+  "name": "undiscovered-inked",
+  "file": "src/ui/inkMap.js",
+  "old": "  const opts = isDiscovered ? { isDiscovered } : {};",
+  "new": "  const opts = { isDiscovered: () => true };",
+  "tests": [
+   "test/heldmap.test.js"
+  ]
+ },
+ {
+  "name": "far-shows-hamlets",
+  "file": "src/ui/inkMap.js",
+  "old": "  far: new Set([11]),\n  mid: new Set([0, 1, 2, 8, 9, 10, 11, 12, 13]),",
+  "new": "  far: new Set([11, 12]),\n  mid: new Set([0, 1, 2, 8, 9, 10, 11, 12, 13]),",
+  "tests": [
+   "test/heldmap.test.js"
+  ]
+ },
+ {
+  "name": "band-boundaries-moved",
+  "file": "src/ui/inkMap.js",
+  "old": "  Object.freeze({ name: 'mid', min: 2.4 }),",
+  "new": "  Object.freeze({ name: 'mid', min: 2.5 }),",
+  "tests": [
+   "test/heldmap.test.js"
+  ]
+ },
+ {
+  "name": "clamp-no-centre",
+  "file": "src/ui/inkMap.js",
+  "old": "    if (visible >= map) return (map - visible) / 2;",
+  "new": "    if (visible >= map) return 0;",
+  "tests": [
+   "test/heldmap.test.js"
+  ]
+ },
+ {
+  "name": "clamp-lets-edge-in",
+  "file": "src/ui/inkMap.js",
+  "old": "    return Math.min(map - visible, Math.max(0, o));",
+  "new": "    return Math.max(0, o);",
+  "tests": [
+   "test/heldmap.test.js"
+  ]
+ },
+ {
+  "name": "ceiling-dropped",
+  "file": "src/ui/inkMap.js",
+  "old": "  const scale = Math.max(scaleMin, Math.min(SCALE_MAX, view.scale));",
+  "new": "  const scale = Math.max(scaleMin, view.scale);",
+  "tests": [
+   "test/heldmap.test.js"
+  ]
+ },
+ {
+  "name": "zoom-not-at-cursor",
+  "file": "src/ui/inkMap.js",
+  "old": "  return { ox: mx - px / scale, oy: my - py / scale, scale };",
+  "new": "  return { ox: view.ox, oy: view.oy, scale };",
+  "tests": [
+   "test/heldmap.test.js"
+  ]
+ },
+ {
+  "name": "overlap-drawn",
+  "file": "src/ui/inkMap.js",
+  "old": "    if (boxes.some((b) => b.x < box.x + box.w && b.x + b.w > box.x && b.y < box.y + box.h && b.y + b.h > box.y)) continue;",
+  "new": "    if (false) continue;",
+  "tests": [
+   "test/heldmap.test.js"
+  ]
+ },
+ {
+  "name": "rank-ignored",
+  "file": "src/ui/inkMap.js",
+  "old": "    .sort((a, b) => (rank.get(a.colorIndex) ?? 99) - (rank.get(b.colorIndex) ?? 99));",
+  "new": "    ;",
+  "tests": [
+   "test/heldmap.test.js"
+  ]
+ },
+ {
+  "name": "no-clear",
+  "file": "src/ui/inkMap.js",
+  "old": "  ctx.clearRect(0, 0, paperW, paperH);\n",
+  "new": "",
+  "tests": [
+   "test/heldmap.test.js"
+  ]
+ },
+ {
+  "name": "wash-dropped",
+  "file": "src/ui/inkMap.js",
+  "old": "  stroke(model.coast, Math.max(3, s * 1.6), PEN.wash);\n",
+  "new": "",
+  "tests": [
+   "test/heldmap.test.js"
+  ]
+ },
+ {
+  "name": "roads-flag-ignored",
+  "file": "src/ui/inkMap.js",
+  "old": "  if (!opts.filters?.roads) stroke(model.roads, band === 'far' ? 1 : 1.5, PEN.line);",
+  "new": "  stroke(model.roads, band === 'far' ? 1 : 1.5, PEN.line);",
+  "tests": [
+   "test/heldmap.test.js"
+  ]
+ },
+ {
+  "name": "tracks-at-far",
+  "file": "src/ui/inkMap.js",
+  "old": "  if (band !== 'far' && !opts.filters?.tracks) stroke(model.tracks, 1, PEN.soft, [2, 3]);",
+  "new": "  if (!opts.filters?.tracks) stroke(model.tracks, 1, PEN.soft, [2, 3]);",
+  "tests": [
+   "test/heldmap.test.js"
+  ]
+ },
+ {
+  "name": "party-in-ink-colour",
+  "file": "src/ui/inkMap.js",
+  "old": "    ctx.strokeStyle = m.color; ctx.lineWidth = 2.2;",
+  "new": "    ctx.strokeStyle = PEN.line; ctx.lineWidth = 2.2;",
+  "tests": [
+   "test/heldmap.test.js",
+   "test/soc6_partymap.test.js"
+  ]
+ },
+ {
+  "name": "label-ignores-view",
+  "file": "src/ui/inkMap.js",
+  "old": "    const [x, y] = toPaper(view, m.x, m.y);\n    ctx.strokeStyle = m.color;",
+  "new": "    const [x, y] = [m.x * view.scale, m.y * view.scale];\n    ctx.strokeStyle = m.color;",
+  "tests": [
+   "test/soc6_partymap.test.js"
+  ]
+ },
+ {
+  "name": "names-not-in-the-face",
+  "file": "src/ui/inkMap.js",
+  "old": "      ctx.font = nameFont(n.mark, n.size);\n      ctx.fillText(n.mark.name, n.x, n.y);",
+  "new": "      ctx.font = `${n.size}px sans-serif`;\n      ctx.fillText(n.mark.name, n.x, n.y);",
+  "tests": [
+   "test/heldmap.test.js"
+  ]
+ },
+ {
+  "name": "key-threshold-moved",
+  "file": "src/ui/heldMap.js",
+  "old": "export const HAND_LUM = 144;",
+  "new": "export const HAND_LUM = 160;",
+  "tests": [
+   "test/heldmap.test.js"
+  ]
+ },
+ {
+  "name": "key-clears-hands",
+  "file": "src/ui/heldMap.js",
+  "old": "    if (l >= lum) data[i + 3] = 0;",
+  "new": "    if (l >= lum || l < 120) data[i + 3] = 0;",
+  "tests": [
+   "test/heldmap.test.js"
+  ]
+ },
+ {
+  "name": "url-off-public",
+  "file": "src/ui/heldMap.js",
+  "old": "export const HELD_MAP_URL = 'art/held-map.png';",
+  "new": "export const HELD_MAP_URL = '/art/held-map.png';",
+  "tests": [
+   "test/heldmap.test.js"
+  ]
+ },
+ {
+  "name": "commit-fires-before-the-fade",
+  "file": "src/ui/heldMap.js",
+  "old": "    this._commit = commit;\n    this._panel = null;",
+  "new": "    this._commit = commit;\n    if (commit?.kind === 'travel') this.deps.onTravel?.(commit.pick, commit.opts, commit.computed);\n    this._panel = null;",
+  "tests": [
+   "test/heldmap.test.js"
+  ]
+ },
+ {
+  "name": "teleport-no-closes-the-map",
+  "file": "src/ui/heldMap.js",
+  "old": "      if (this._panelState?.fee) { this._beginClose(null); return; }\n      this._closePanel();\n      return;",
+  "new": "      this._beginClose(null);\n      return;",
+  "tests": [
+   "test/heldmap.test.js"
+  ]
+ },
+ {
+  "name": "escape-closes-through-the-panel",
+  "file": "src/ui/heldMap.js",
+  "old": "      if (this._panel) { this._closePanel(); return; }",
+  "new": "      if (this._panel) { this._beginClose(null); return; }",
+  "tests": [
+   "test/heldmap.test.js"
+  ]
+ },
+ {
+  "name": "pick-radius-in-map-px",
+  "file": "src/ui/heldMap.js",
+  "old": "      if (!shown.has(m.colorIndex)) continue;\n      const [x, y] = toPaper(this._view, m.x, m.y);",
+  "new": "      if (!shown.has(m.colorIndex)) continue;\n      const [x, y] = [m.x, m.y];",
+  "tests": [
+   "test/heldmap.test.js"
+  ]
+ },
+ {
+  "name": "hidden-mark-pickable",
+  "file": "src/ui/heldMap.js",
+  "old": "      if (!shown.has(m.colorIndex)) continue;\n      const [x, y] = toPaper(this._view, m.x, m.y);",
+  "new": "      const [x, y] = toPaper(this._view, m.x, m.y);",
+  "tests": [
+   "test/heldmap.test.js"
+  ]
+ },
+ {
+  "name": "bare-click-keeps-selection",
+  "file": "src/ui/heldMap.js",
+  "old": "    if (this._selected) this._select(null);\n  }\n\n  _renderSearch(entries) {",
+  "new": "  }\n\n  _renderSearch(entries) {",
+  "tests": [
+   "test/heldmap.test.js"
+  ]
+ },
+ {
+  "name": "pan-unclamped",
+  "file": "src/ui/heldMap.js",
+  "old": "    this._view = clampView(v, this._limits());\n    this._goal = { ...this._view };",
+  "new": "    this._view = { ...v };\n    this._goal = { ...this._view };",
+  "tests": [
+   "test/heldmap.test.js"
+  ]
+ },
+ {
+  "name": "layout-off-paper",
+  "file": "src/ui/heldMap.js",
+  "old": "    const pw = sw * (PAPER.x1 - PAPER.x0), ph = sh * (PAPER.y1 - PAPER.y0);",
+  "new": "    const pw = sw, ph = sh;",
+  "tests": [
+   "test/heldmap.test.js"
+  ]
+ },
+ {
+  "name": "paint-per-draw",
+  "file": "src/ui/heldMap.js",
+  "old": "  draw() { /* DOM only:",
+  "new": "  draw() { this._paint(); /* DOM only:",
+  "tests": [
+   "test/heldmap.test.js"
+  ]
+ },
+ {
+  "name": "chains-rebuilt-per-filter",
+  "file": "src/ui/heldMap.js",
+  "old": "    if (!rec || rec.net !== net || rec.width !== this._size.width || rec.height !== this._size.height) {",
+  "new": "    if (true) {",
+  "tests": [
+   "test/heldmap.test.js"
+  ]
+ },
+ {
+  "name": "party-dirties-markers",
+  "file": "src/ui/heldMap.js",
+  "old": "    this._renderLegend();\n    this._dirty = true;\n    return true;",
+  "new": "    this._renderLegend();\n    this._marksDirty = true;\n    this._dirty = true;\n    return true;",
+  "tests": [
+   "test/soc6_partymap.test.js"
+  ]
+ },
+ {
+  "name": "party-poll-every-frame",
+  "file": "src/ui/heldMap.js",
+  "old": "    if (this._partyPoll <= 0) { this._partyPoll = PARTY_POLL_S; this._refreshParty(); }",
+  "new": "    if (this._partyPoll <= 0) { this._partyPoll = 0; this._refreshParty(); }",
+  "tests": [
+   "test/soc6_partymap.test.js"
+  ]
+ },
+ {
+  "name": "offline-green",
+  "file": "src/ui/heldMap.js",
+  "old": "        color: m.online ? PARTY_MARK_CSS : PARTY_OFFLINE_CSS,",
+  "new": "        color: PARTY_MARK_CSS,",
+  "tests": [
+   "test/soc6_partymap.test.js"
+  ]
+ },
+ {
+  "name": "in-word-dropped",
+  "file": "src/ui/heldMap.js",
+  "old": "        x: m.x, y: m.y, name: partyLabelText(m), online: m.online, stack: m.stack,",
+  "new": "        x: m.x, y: m.y, name: m.name, online: m.online, stack: m.stack,",
+  "tests": [
+   "test/soc6_partymap.test.js"
+  ]
+ },
+ {
+  "name": "hover-nearest-only",
+  "file": "src/ui/heldMap.js",
+  "old": "        .filter((m) => m.px === pm.px && m.py === pm.py)",
+  "new": "        .filter((m) => m === pm)",
+  "tests": [
+   "test/soc6_partymap.test.js"
+  ]
+ },
+ {
+  "name": "legend-never-opens",
+  "file": "src/ui/heldMap.js",
+  "old": "    leg.classList.toggle('open', true);\n    leg.style.display = 'flex';",
+  "new": "    leg.classList.toggle('open', true);\n    leg.style.display = 'none';",
+  "tests": [
+   "test/soc6_partymap.test.js"
+  ]
+ },
+ {
+  "name": "search-no-focus",
+  "file": "src/ui/heldMap.js",
+  "old": "    this._focusOn(entry.pos.x + 0.5, entry.pos.y + 0.5);\n    this._select(",
+  "new": "    this._select(",
+  "tests": [
+   "test/heldmap.test.js"
+  ]
+ }
+]

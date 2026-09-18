@@ -248,7 +248,7 @@ test('F101/F115: both fast-travel callers now supply the perk', () => {
   const cost = pop.indexOf('calculateTripCost(');
   assert.ok(cost > 0);
   assert.match(pop.slice(cost, cost + 500), /freeTavernRooms: this\.freeTavernRooms\(\),/);
-  const ow = src('ui/overworldMap.js');
+  const ow = src('ui/heldMap.js');   // MAP1: the held map, the relief map's successor
   const owCost = ow.indexOf('const cost = calculateTripCost(');
   assert.match(ow.slice(owCost, owCost + 400), /freeTavernRooms: !!this\.deps\.freeTavernRooms\?\.\(\),/,
     'the enhanced skin bills the same fare as the native popup');

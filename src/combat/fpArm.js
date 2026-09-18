@@ -80,6 +80,9 @@ import { fpLightingOn } from './fpsWeapon.js';   // MAC-P: the first-person ligh
 import { createParticleSystem, packParticleQuads, particleDrawState, affineOfTransform, affineMul, affineApply, affineScale } from '../formats/mwParticles.js';   // MAC-Q: the torch's flame, and any other particle system a part carries
 import { boneSourcesFor, resolveHolsterParts, holsterPartPaths, holsterHidden, HOLSTER_SLOTS } from '../systems/weaponSheathing.js';   // WS1
 import { injectSkeletonNodes } from '../formats/mwSkin.js';   // WS1: the dry injection the holster's bone probe runs
+// MAP3: THE HELD SHEET - the pose deltas over the idle, the paper piece
+// the hands hold, and where its corners land on the composite
+import { deltaTracks, heldSampler, paperPiece, refreshPaperSource, projectPaperCorners, normaliseHeldPose, HELD_POSE_DEFAULT } from './heldPose.js';
 
 // MW-LOAD (2026-09-08, Mac: "improve the load time when Morrowind assets
 // are enabled"): THE ARCHIVE IS OPENED, NOT READ, AND THIS FILE IS ITS
@@ -2172,6 +2175,42 @@ export function createFpArm() {
   let overlayMemo = null;        // { base, overlay, mask, tracks }
   let overlayClock = 0;
   const overlaySample = overlaySampler(sampleTrack, () => overlayClock);
+  // MAP3: THE HELD SHEET. While the travel map holds it, the arms take
+  // the held pose's deltas over whatever the four-slot winner does
+  // (combat/heldPose.js - the torch's overlay idiom, a delta per bone
+  // instead of a second clock), the weapon, the arrow and the torch are
+  // hidden, and a parchment piece rides the rig root where the eye
+  // looks. `heldMemo` keeps the frame allocation-free the way
+  // overlayMemo does: one merged map and one sampler per (base, spec,
+  // inner sampler), rebuilt only when one of them changes.
+  let held = null;               // { spec, piece, aspect, eye, built, reach0 }
+  let heldMemo = null;           // { base, spec, inner, tracks, sampler }
+  let lastFrame = null;          // { model, view, proj, rect } - what draw() last composed with
+  let drewLast = false;          // AUDIT-MAP2: whether the LAST draw() call composed the arm
+  /** Put (or re-put) the sheet on the rig at the camera node's translation.
+   *  The reach - which sets the pass's far plane (rule 54: the planes come
+   *  off the arm's own reach) - grows to cover the sheet's farthest corner
+   *  and a quarter more, so a sheet tuned past the arm's sweep is not
+   *  clipped while its corners still project; releasePaper restores it. */
+  const placeSheet = (node) => {
+    const eye = node.t;
+    if (!held.piece || !built.arm.pieces.includes(held.piece)) {
+      held.piece = paperPiece(eye, held.spec.paper, held.aspect);
+      built.arm.pieces = built.arm.pieces.filter((p) => p.slot !== 'paper');
+      built.arm.pieces.push(held.piece);
+      releaseMesh(); packed = null;   // the ranges the textures hang on are the piece list; a new piece is a new list
+    }
+    const far = refreshPaperSource(held.piece, eye, held.spec.paper, held.aspect);
+    held.eye = [eye[0], eye[1], eye[2]];
+    if (held.built !== built) { held.built = built; held.reach0 = built.reach; }
+    built.reach = Math.max(held.reach0, far * 1.25 / 4);
+  };
+  const heldTracksFor = (base, inner) => {
+    if (!heldMemo || heldMemo.base !== base || heldMemo.spec !== held.spec || heldMemo.inner !== inner) {
+      heldMemo = { base, spec: held.spec, inner, tracks: deltaTracks(base, held.spec, built.arm.skeleton), sampler: heldSampler(inner) };
+    }
+    return heldMemo;
+  };
   const overlayFor = (base, mask) => {
     const overlay = torchSource.trackMap;
     if (!overlayMemo || overlayMemo.base !== base || overlayMemo.overlay !== overlay || overlayMemo.mask !== mask) {
@@ -3080,6 +3119,7 @@ export function createFpArm() {
       buildGen += 1;   // AUDIT MW-TORCH F7: a build in flight lands dead
       pendingBuild = null; lastBuildOpts = null;
       releaseMesh(); built = null; packed = null;
+      held = null; heldMemo = null; lastFrame = null; drewLast = false;   // MAP3: the sheet goes with the rig
       releaseThirdMesh(); thirdBuilt = null; thirdPacked = null; viewMode = 'first';
       movementState = null; movementGroup = null; movementSource = null; movementBase = null;
       jumpState = null; jumpGroup = null; jumpSource = null; jumpStance = null; jumpKind = null;   // MW-D39
@@ -3457,6 +3497,53 @@ export function createFpArm() {
      * path from then on. Returns the slow path's promise, true on the
      * fast path, false when nothing changed or nothing stands.
      */
+    /** MAP3: HOLD THE SHEET. The travel map's holder calls this when it
+     *  opens on a drawn Morrowind arm: the pose deltas go over the idle,
+     *  the weapon/arrow/torch hide, and a parchment piece of `aspect`
+     *  (the sheet's width over its height) is placed where the eye is
+     *  looking. Answers false until the rig has been posed once (the eye
+     *  is read off the last pose); the caller asks again next frame. A
+     *  second call re-places the sheet (a new spec, a new aspect). */
+    holdPaper(spec = null, { aspect = 1.6 } = {}) {
+      if (!built || !built.ok || viewMode !== 'first') return false;   // AUDIT-MAP2: the third-person body holds nothing
+      const node = built.arm.mats && built.arm.mats.get(built.cameraRef);
+      if (!node) return false;
+      const s = normaliseHeldPose(spec, held ? held.spec : HELD_POSE_DEFAULT);   // a partial spec changes only what it names
+      const prev = held;
+      held = { spec: s, piece: null, aspect, eye: null, built: prev?.built ?? null, reach0: prev?.reach0 ?? 0 };
+      heldMemo = null;
+      placeSheet(node);
+      return true;
+    },
+    /** MAP3: the sheet goes and the arms return to whatever they were doing. */
+    releasePaper() {
+      if (!held) return false;
+      if (built && built.ok) {
+        built.arm.pieces = built.arm.pieces.filter((p) => p.slot !== 'paper');
+        if (held.built === built) built.reach = held.reach0;   // the far plane is the arm's own again
+      }
+      held = null; heldMemo = null;
+      if (built && built.ok) { releaseMesh(); packed = null; }
+      return true;
+    },
+    /** AUDIT-MAP2: whether the last draw() call composed the arm - false
+     *  after a draw that returned early (no canvas, no camera, no eye) and
+     *  before any draw. weaponRig.armsDrawn() folds this in. */
+    drewLast() { return drewLast; },
+    /** MAP3: the pose in force (null when nothing is held), and the live
+     *  tuning door (window.__heldPose) - a new spec re-places the sheet. */
+    heldPose() { return held ? held.spec : null; },
+    setHeldPose(spec) { return held ? api.holdPaper(spec, { aspect: held.aspect }) : false; },
+    /** MAP3: the sheet's four corners on the composite, in CSS px of the
+     *  canvas (top-left, top-right, bottom-right, bottom-left), through
+     *  the model, view and projection the last draw composed with - or
+     *  null before the first draw, without a sheet, or with a corner
+     *  behind the lens. */
+    paperCorners() {
+      if (!held || !lastFrame || !mesh) return null;
+      return projectPaperCorners(held.piece.positions, lastFrame, lastFrame.rect);
+    },
+
     setTorch(lit) {
       const want = !!lit;
       if (!built || !built.ok) return false;
@@ -3709,9 +3796,28 @@ export function createFpArm() {
       const fBase = poseSource ? poseSource.trackMap : built.tracks;
       const fOverlay = torchState && torchSource && built.leftArm && built.leftArm.size;
       if (fOverlay) overlayClock = torchState.time;
+      let fTracks = fOverlay ? overlayFor(fBase, built.leftArm) : fBase;
+      let fSampler = fOverlay ? overlaySample : sampleTrack;
+      if (held) {
+        // MAP3: a rebuild (an equip's follow) mints a piece list without
+        // the sheet; it is put back where the eye is now. AUDIT-MAP2: the
+        // eye MOVES (the neck's pitch and offset, the bob), and the sheet
+        // follows it - its source is refreshed whenever the camera node's
+        // translation moved since it was placed (last frame's pose: one
+        // frame of lag on a node that moves a millimetre a frame). A rig
+        // with no camera node cannot hold: the sheet is let go.
+        const node = built.arm.mats && built.arm.mats.get(built.cameraRef);
+        if (!node) { held = null; heldMemo = null; }
+        else if (!built.arm.pieces.includes(held.piece)) placeSheet(node);
+        else if (node.t[0] !== held.eye[0] || node.t[1] !== held.eye[1] || node.t[2] !== held.eye[2]) placeSheet(node);
+      }
+      if (held) {
+        const hm = heldTracksFor(fTracks, fSampler);
+        fTracks = hm.tracks; fSampler = hm.sampler;
+      }
       poseAssembly(built.arm, {
-        tracks: fOverlay ? overlayFor(fBase, built.leftArm) : fBase,
-        sampleTrack: fOverlay ? overlaySample : sampleTrack,
+        tracks: fTracks,
+        sampleTrack: fSampler,
         time: poseTime(state),   // MS1: a backhand's window runs backwards
         // Rule 56's accum root is STICKY and rig-wide, so it does not
         // follow the source the way the tracks do.
@@ -3792,11 +3898,15 @@ export function createFpArm() {
         if (r.slot === 'weapon') r.hidden = !weaponShown;
         else if (r.slot === 'arrow') r.hidden = !arrowShown;
         else if (r.slot === 'torch') r.hidden = !torchVisible();   // MW-D51: the same hide-not-remove, on the carried-left rule
+        else if (r.slot === 'paper') r.hidden = !held;
+        // MAP3: the hands hold the sheet and nothing else while it is up
+        if (held && (r.slot === 'weapon' || r.slot === 'arrow' || r.slot === 'torch')) r.hidden = true;
       }
       frames++;
     },
 
     draw(canvas) {
+      drewLast = false;   // AUDIT-MAP2: true again only past every early return below
       // MW-D24: in third person the first-person overlay does not exist
       // - the reference masks the whole FP root out of the scene
       // (Mask_FirstPerson, npcanimation.cpp:542-546 - setViewMode's
@@ -3892,6 +4002,17 @@ export function createFpArm() {
       // take under MAC-I - one answer, both lanes. Null keeps the frame's
       // light exactly as it was, which is what the switch off means.
       const vmLight = fpLightingOn() ? (renderer.flatLightAt?.() ?? null) : null;
+      // MAP3: what this frame composed with, so paperCorners() can put the
+      // sheet's corners where the composite puts them. MAC-R1: the pad's
+      // frustum raises the top edge; the SCREEN shows the symmetric frame's
+      // rows at the same pixel scale, so the corners project through the
+      // symmetric matrix into the screen's rect.
+      {
+        const W = canvas.clientWidth || canvas.width, H = canvas.clientHeight || canvas.height;
+        const projScreen = pad > 0 ? perspective(FP_FIELD_OF_VIEW, pw / ph, near, far) : proj;
+        lastFrame = { model: NIF_TO_PASS, view, proj: projScreen, rect: screenTransform ? screenTransform({ x: 0, y: 0, w: W, h: H }) : { x: 0, y: 0, w: W, h: H } };
+        drewLast = true;
+      }
       const tex = renderer.renderCharacterSprite(mesh, NIF_TO_PASS, proj, view, pw, phFull, { lensLocal: true, viewmodelLight: vmLight });   // VC5 review: lens-local - no cloud deck on the arm   // MAC-R1: phFull - the screen's rows and the pad above them
       // WW1: Weapon Widget's channels move the composite as they move the
       // classic sprite - a screen-space rect in place of the fullscreen
@@ -4001,7 +4122,7 @@ export function createFpArm() {
      * composite - MW-D23's law): this pass composites through the
      * WORLD's lens, which is mirrorProjectionX (dungeon.js:664 et al.),
      * and the port's world convention puts the player's RIGHT at +X at
-     * yaw 0 (motor.js:662) - a LEFT-handed convention the mirror turns
+     * yaw 0 (motor.js:663) - a LEFT-handed convention the mirror turns
      * into correct screen imagery. A right-handed NIF actor placed with
      * a pure rotation therefore reads MIRRORED on screen (measured:
      * sword ink Δleft 1701 vs Δright -127 with the motor's +X anchor

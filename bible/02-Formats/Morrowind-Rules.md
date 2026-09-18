@@ -6745,3 +6745,100 @@ needs the widget's shift over a raised blade. The lens law is pinned
 numerically (`test/macr_fixes.test.js`) and the draw by source; MW-D10
 and MW-D23's projection pins re-aimed. Mutants in
 `tools/mutants/macr.json`.
+## MAP3 (2026-09-18): the held sheet - the first hand-authored pose
+
+Mac (the Held Map arc, `bible/10-UI/Held-Map-Arc.md`): "Morrowind will
+need its own handcrafted map with hand placement just like the sprite.
+Our first custom rig change." Until this slice every pose on the
+first-person rig was one of Morrowind's own clips (the idle, the weapon
+groups, MW-D51's torch overlay). `src/combat/heldPose.js` is the first
+that is not: a set of rotations authored here, laid over the idle.
+
+**The mechanism is MW-D51's, one step further.** poseAssembly poses the
+rig from a TRACK MAP and a SAMPLER (`tracks.get(bone)` then
+`sampleTrack(track, time)` -> `{rotation, translation, scale}`). The
+torch wrapped the masked bones' tracks (`{__overlay}`) and handed a
+sampler that reads the wrapper on its own clock. The held pose wraps the
+same way - `{__delta, __base, __rest}` per posed bone - and its sampler
+answers the base pose's rotation TIMES a constant delta quaternion: a
+turn about the bone's OWN axes on top of whatever the idle is doing, so
+the arm keeps breathing while the hands come up. `heldTracksFor` in
+fpArm.js wraps whatever the torch overlay left (the two idioms stack:
+overlay first, delta over it), memoised per (base map, spec, inner
+sampler) as overlayMemo is, so a frame allocates nothing. A bone the
+skeleton lacks is not posed; a zero delta is not wrapped at all.
+
+**Why deltas, not absolute rotations.** An absolute local rotation is a
+number about ONE skeleton's rest frames; retail's `xbase_anim.1st.nif`
+and the fixtures' `armfp.nif` do not share them. "Bend the left forearm
+forty degrees more" means the same thing on both. Degrees, X then Y then
+Z, each about the bone's own (already turned) axes - `quatFromEulerDeg`
+is `qx * qy * qz` in Hamilton's [x, y, z, w].
+
+**The paper is a rigid piece like the weapon and the torch** (a `source`
+of vertices placed by an attachment transform each frame) but its
+attachment is the RIG ROOT (`attachRef: null`, the identity), not a hand
+bone: it is put where the eye is (`built.arm.mats.get(built.cameraRef).t`,
+the camera node's rig-space translation), `forward` metres ahead (+Y,
+the actor faces +Y), `drop` below (-Z), `width` across with the sheet's
+aspect giving the height, leaning back by `tilt` about its own
+horizontal; two triangles in BOTH windings, parchment diffuse, no
+texture. Slot `paper`; hidden with `!held` beside the torch's line;
+while held the weapon, the arrow and the torch are hidden (the hands
+hold the sheet and nothing else). Adding or removing it changes the
+piece list, which is the range list the textures hang on, so the mesh
+is released and repacks (the MW-D11 rule). An equip-follow rebuild
+mints a piece list without the sheet; the frame puts it back.
+
+**The picture is NOT on the piece.** The ink stays the window's DOM
+canvas; the rig answers `paperCorners()` - the piece's posed vertices
+through the model, view and projection the last `draw()` composed with
+(recorded per frame as `lastFrame`, the WW1 channel rect included), to
+CSS pixels - and the window lays the canvas over them by a CSS matrix3d
+(`src/ui/quadMap.js`). A corner behind the lens answers null and the
+window hides the ink that frame.
+
+**The seam.** `weaponRig.armsDrawn()` is the draw seam's own record:
+reset at the top of every `draw()`, set to `fpArm.active()` on the line
+before the untouched `if (fpArm.active()) { fpArm.draw(c); return; }`
+(after the EOTB guard, so a hidden weapon answers no). The world host
+hands the window a `holder` of four closures over the rig (available,
+hold, release, corners) - asked per open, never snapshot.
+
+**The defaults are ZERO, on purpose.** `HELD_POSE_DEFAULT` names the six
+bones (upper arm, forearm, hand, both sides) with `[0, 0, 0]` and the
+paper at 0.46 m wide, 0.42 m ahead, 0.14 m down, 22 degrees back. The
+session had the fixture arm only; a number placed by eye on it would be
+a claim about retail bones no one here has seen. `window.__heldPose(spec)`
+re-places the sheet on the live arm (a PARTIAL spec changes only what it
+names - the pose in force is the base); `window.__heldPose()` reads it
+back. The pose Mac lands on becomes the shipped default.
+
+Pins: `test/map3_heldpose.test.js` (16) on the real fixture rig
+headless; `test/heldmap.test.js` MAP3 (4); `tools/mutants/map3.json` 39
+dead; a MAP3 layer in `tools/mwArmProbe.mjs`.
+
+**AUDIT-MAP2 (the same day) corrected four things above.** (1) The
+quaternions: the first draft packed `[x, y, z, w]`; the rig's sampler
+(mwAnim.js) and `quatToMat33` (mwSkin.js) are `[w, x, y, z]`, so a
+forty-degree bend about X reached the rig as a hundred-and-forty-degree
+turn about Z. Repacked; the pin now poses a delta through
+`poseSkeleton` itself and reads the matrix. (2) The bone names: the six
+defaults were the part-attach family (`left forearm`) - the nodes the
+body parts hang on - but retail's `.kf` keys `Bip01 L Forearm`, and the
+hand is a child of the Bip01 bone, not of the attach node; a delta
+there would have turned the forearm mesh and left the hand behind. A
+held bone now resolves to whichever spelling the clip keys, then to
+whichever the skeleton has (`HELD_BONE_ALIASES`; the fixture keys the
+attach names, retail the Bip01 ones). (3) The paper's second winding
+was a coplanar twin whose normal faced away, fighting the first under a
+culling-off pass: one winding, facing the eye. (4) The sheet was placed
+at the eye once; the camera node moves with the neck (pitch, offset,
+bob), so the sheet's source is refreshed in place whenever the node's
+translation moved. Also: the pass's far plane is the arm's reach times
+four, and the default sheet sat past it on the fixture - a held sheet
+now grows `built.reach` to its farthest corner and a quarter more
+(restored on release); `paperCorners` answers only from a frame the arm
+composed (`drewLast()`, folded into `weaponRig.armsDrawn()`); `holdPaper`
+is refused in third person; a rebuild with no camera node lets the
+sheet go. Record: `bible/10-UI/Held-Map-Arc.md`, AUDIT-MAP2.

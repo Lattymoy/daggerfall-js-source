@@ -25,6 +25,19 @@ const ROADS = {
   'roads-hazelnut/riverData.bytes': '6b867c189be672874334557573d8c40598beb050277dd18f81a2c33b9b9ac8ab',
   'roads-hazelnut/streamData.bytes': '567ebda53a121435f5c26c12c6141d2d596c54af82fe3a08109f25544cef349f',
 };
+// TO1: Travel Options' three UI textures. Unlike every other row here
+// these are NOT the author's own file bytes - the mod ships one Unity
+// bundle and the PNGs it was built from are not in it, so these are
+// re-encodes of its Texture2D objects (vendor/travel-options/README.md
+// says so, and tools/travelOptionsAssets.mjs reproduces them from a
+// copy of the shipped zip). The PIXELS are the author's; these hashes
+// are of this tree's encoder, which is why they are pinned at all: a
+// re-vendoring that changed a pixel would move them.
+const TRAVEL_OPTIONS = {
+  'travel-options/Textures/TOcontrolUI.png': '24558c6a9006ec5fbc4086f61024b133500d46c168fcf3d700e68209f73062bf',
+  'travel-options/Textures/TOportsOff.png': '21b2ef46c0b0df29ef5219cca9aafd8bb89a2519f6de0ace41a2c008c96f2314',
+  'travel-options/Textures/TOportsOn.png': '3d45be2534ba194b18906251e3b2be5af4422a1fca82f29e68c1a74042c5a9d7',
+};
 const WINDMILLS = {
   'windmills-kamer/Blade.dae': 'c373edf569f43334f5e17ab9f65409705bca62c597f529022bcbbcb427eebae9',
   'windmills-kamer/Windmill.dae': 'c932193ae0afce9806360272b7b548e24f174e1bdaa3f310430121550155f889',
@@ -58,6 +71,10 @@ const check = (table) => { for (const [rel, want] of Object.entries(table)) asse
 test('MODS AUDIT: Basic Roads - the four path arrays are Hazelnut’s, sha256 against ajrb/dfunity-mods master', () => {
   check(ROADS);
   assert.equal(Object.keys(ROADS).length, 4);
+});
+
+test('TO1: Travel Options - the three UI textures are the bundle\u2019s own pixels, sha256 of this tree\u2019s re-encode', () => {
+  check(TRAVEL_OPTIONS);
 });
 
 test('MODS AUDIT: Windmills of Daggerfall - the five Collada exports are Kamer’s, sha256 against the archive', () => {

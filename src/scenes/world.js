@@ -11,7 +11,7 @@ import { WORLD_FRAME } from '../render/renderer.js';   // AUDIT-EL F5
 import { windmillsOn } from '../world/windmills.js';   // WM3: the Windmills pack's switch
 import { SKY_CLEAR } from '../render/renderer.js'; import { centreFromFeet } from '../characters/enemyAnchor.js';   // REVIEW 2026-09-05: one line, so the cites below it hold
 import { Arch3dFile } from '../formats/arch3dFile.js';
-import { requestLook, releaseLook, makeLookGate, bindCursorToggle, setCursorActive } from '../player/pointerLock.js';   // U45: bindCursorToggle is PlayerMouseLook.cursorActive; releaseLook: the chat's open (AUDIT CHAT C2)
+import { requestLook, releaseLook, makeLookGate, bindCursorToggle, setCursorActive, cursorActive } from '../player/pointerLock.js';   // AUDIT-TO1 I2: the strip's click router wants the FREED cursor   // U45: bindCursorToggle is PlayerMouseLook.cursorActive; releaseLook: the chat's open (AUDIT CHAT C2)
 import { attachTouch } from '../ui/touch.js';
 import { attachGamepad } from '../ui/gamepadInput.js';   // GP1: the pad speaks the same hooks
 import { BlocksFile } from '../formats/blocksFile.js';
@@ -75,8 +75,7 @@ import { RestWindow, preloadRestArt } from '../ui/restWindow.js';   // S40: rest
 import { ActionTextBox } from '../ui/actionText.js';   // AUDIT 23 (C5)
 import { healthStatusRows, statusInfoRows } from '../systems/healthStatus.js';   // BS1/F198: the Status health box
 import { survivalStatusRows } from '../systems/survival/status.js';   // SURV5: the status page's third box
-import { liveStat } from '../systems/statMods.js';
-import { maxFatigue, FATIGUE_MULTIPLIER } from '../systems/statMods.js';   // AUDIT 23 (C5); AUDIT SOC B5: the party pose's fatigue in the digits a sheet shows
+import { maxFatigue, FATIGUE_MULTIPLIER, liveStat } from '../systems/statMods.js';   // AUDIT 23 (C5); AUDIT SOC B5: the party pose's fatigue in the digits a sheet shows
 // V5: resting above ground. RestWindow and RestSession have been
 // finished since U7; what was missing was a host outside the dungeon
 // that opens one, and CanRest's whole town half.
@@ -89,7 +88,20 @@ import {
 } from '../systems/sceneCache.js';
 import { WORLD_CONTEXT, makeAnchor, teleportPlan } from '../systems/teleportAnchor.js';   // A10: the Recall anchor's law - shape, IsSameInterior, the cross-context plan
 import { isPlayerInTown } from '../systems/nearbyObjects.js';
-import { createTravelMapWindow, travelMapDoorReady, preloadTravelMapArt, canFindPlace } from '../ui/travelMapDoor.js';   // W1's classic art window + U61's overworld, one door
+import { createTravelMapWindow, travelMapDoorReady, preloadTravelMapArt, canFindPlace } from '../ui/travelMapDoor.js';
+import { checkLocationDiscovered as travelCheckDiscovered, getPixelColorIndex as travelPixelColorIndex } from '../ui/travelMapWindow.js';
+import { travelMapFilters, travelMapMarkedMapId } from '../systems/travelMapState.js';   // AUDIT-TO1 F2: the junction map honours the map's four filters; AUDIT-MAP: and reads the mark from the store
+import { shortcutBinding, sequenceString } from '../systems/dialogShortcuts.js';   // AUDIT-TO1 H2: TravelExit is a dialog SHORTCUT, as DFU reads it   // TO1: the junction map draws by the same two laws the page does
+// TO1 (2026-09-17, Mac: "This is the next daggerfall mod we are to
+// implement 1:1"): TRAVEL OPTIONS 1.11 (Hazelnut) - the accelerated
+// journey the player WALKS, its control panel and its junction map,
+// plus the path following that rides the port's Basic Roads.
+import { createTravelOptions, readTravelOptionsSettings, locationTypeName as travelLocationTypeName, TRAVEL_OPTIONS_VENDOR } from '../systems/travelOptions.js';
+import { createTravelControlUI, preloadTravelControlArt } from '../ui/travelControlUI.js';
+import { pointToNative, nativeMetrics } from '../ui/nativePanel.js';   // TO1: the travel panel's clicks land in the 320x200 panel's own coordinates
+import { createTravelJunctionMap } from '../ui/travelJunctionMap.js';
+import { drawEnhancedTravelControl, hideEnhancedTravelControl } from '../ui/enhancedTravelControl.js';
+import { setTimeScale as setWorldTimeScale, timeScale as worldTimeScale, resetTimeScale } from '../systems/timeScale.js';   // W1's classic art window + U61's overworld, one door
 import { racialRestBlock, racialFastTravelBlock, cureVampirism, SUNLIGHT_TRAVEL_TEXT } from '../systems/vampirism.js';   // AUDIT 64 F21: the career rung and the racial one show the SAME sunlightDamageFastTravelDay box (DaggerfallUI.cs:619, VampirismEffect.cs:202)
 import { giveOffer } from '../ui/pendingOffer.js';   // AUDIT 58: DaggerfallUI.GiveOffer, the rung in front of BOTH the rest and the fast-travel press   // V2b: the vampire's rest and daylight gates; V2d: $CUREVAM's cure arm
 import { cureLycanthropy, racialSuppressPopulationSpawns, racialSuppressInventory, racialSuppressTalk, lycanthropeMoveSound } from '../systems/lycanthropy.js';   // V2d: $CUREWER's cure arm; V4: the transformed gates; LM1: the 4-20s move-sound loop
@@ -98,7 +110,7 @@ import { setCrimeGuildQuestHost, setCrimeGuildClock } from '../systems/crimeGuil
 import { randomCemeteryLocationIndex } from '../systems/infection.js';   // V2e: GetRandomCemetery's pick half
 import { MEMBERSHIP_STATUS } from '../systems/quest/questLists.js';   // V2d: the vampire clan pool asks as a Member
 import { playerInSunlight, playerInHolyPlace, careerSunDamage } from '../systems/passiveSpecials.js';   // V2c: the enchant ctx's two E1 flags; AUDIT 64 F20/F21: Career.DamageFromSunlight, the travel door's own rung and the arrival clamp's second arm
-import { buildMapDict } from '../systems/mapDirectory.js';   // W1: ContentReader's map dict
+import { buildMapDict, locationSummaryAt as travelLocationSummaryAt } from '../systems/mapDirectory.js';   // W1: ContentReader's map dict; TO1: the junction map's own reads
 import { dilateCoastalClimate, smoothLocationNeighbourhood } from '../world/terrainHelper.js';   // AUDIT 58 F4
 import { ExteriorAutomapWindow, stampResidenceQuestNames, registerExteriorAutomapConsoleCommands } from '../ui/exteriorAutomapWindow.js';   // A2: the town map on M; D5: the quest-residence plate name; E3: ExteriorAutoMapConsoleCommands
 import { buildingSummaries } from '../world/buildingSummaries.js';   // ROAD-C c2/S10: the plate anchor's Position-bearing walk
@@ -173,7 +185,7 @@ import { createInventoryWindow, inventoryDoorReady } from '../ui/inventoryDoor.j
 import { createUseMagicItemWindow } from '../ui/useMagicItemWindow.js';   // UI1: the U key's window
 import { preloadTransportArt } from '../ui/transportWindow.js';   // TR3: the picker's art (the picker itself is the mount rig's)
 import { hasHorse, hasCart, TRANSPORT_MODES } from '../systems/transport.js';   // TR3: what the rows offer
-import { shipTransition, REPOSITION } from '../systems/ship.js';   // TR4: board and disembark
+import { shipTransition, REPOSITION, isOnShip } from '../systems/ship.js';   // TR4: board and disembark; AUDIT-TO1 D1: TransportManager.IsOnShip for the popup
 import { createMountRig } from '../player/mountRig.js';   // MAC-K3: the mount surface, one home for this host and the fixed-city one
 import { largeHudViewportRect, largeHudWorldAspect } from '../ui/hudLarge.js';   // ROAD-E E5: ViewportChanger - the docked bar shrinks the world pass
 import { createLockOn, LOCK_PICK_DISTANCE } from '../player/lockOn.js';   // TI1: touch lock-on
@@ -219,7 +231,7 @@ import { PlayerMotor, startRestGroundedCheck, motionBagOf } from '../player/moto
 import { exteriorSurfaces, downProbe, rayDistanceFor, ON_EXTERIOR_WATER, exteriorSwimming } from '../player/exteriorSurface.js';   // ROAD-B (b3): PlayerMotor's three exterior surface methods; OT1: IsPlayerSwimming above ground
 import { isOnFoot } from '../systems/transport.js';   // TransportManager.IsOnFoot - the raycast's reach and the mounted footstep gate
 import { floorLanding } from '../player/enterExit.js';   // FixStanding for the exterior arrivals (2026-08-27)
-import { jumpSpeedMultiplier, isEnhancedJumping, tallySkill, SKILLS } from '../systems/skills.js';   // AUDIT 64 F2: CheckAirControl's IsEnhancedJumping disjunct
+import { jumpSpeedMultiplier, isEnhancedJumping, tallySkill, SKILLS } from '../systems/skills.js';   // TO1: the avoid-encounter roll reads skillValue live (imported above, SURV6) Stealth   // AUDIT 64 F2: CheckAirControl's IsEnhancedJumping disjunct
 import { playerEntity, surfacePlayer, hurtPlayer, setDeathPresenter, setAvoidDeathHook } from '../characters/playerEntity.js';
 import { SOUND } from '../systems/soundClips.js';
 import { createWeaponRig, autoBuildArms, armIdentityOf, armBuiltFor, armsReady } from '../combat/weaponRig.js';   // MWA1: the arms at boot; MWA3: the identity the arm should stand for, beside the one it does
@@ -317,7 +329,7 @@ import { lastHealthLost, lastHealthLostPercent } from '../ui/hudVitals.js';   //
 import { fieldOfView } from '../ui/viewSettings.js';   // MENU: Video/FieldOfView, one home for five hosts
 import { keyEdges, noteKeyDown, noteKeyUp, beginInputFrame, pressed, released, pressedCode, actionOf, held, moveHeld, anyMove, swallowBrowserKey, mouseCode, isSwingButton, keyboardLook, isTextEntryTarget, bindings, routeAction, installContextMenuGuard, POLLED_ACTIONS, QUICKSLOT_ACTIONS } from '../ui/input.js';
 import { armUnloadGuard, releaseUnloadGuard } from '../systems/unloadGuard.js';   // MAC-L3: one door in front of every way out of a running game; AUDIT-MACL F3: ...and down for a door the game opened itself
-import { actionForCode } from '../systems/inputActions.js';   // FIX-E: the overlay's QuickLoad read, off the code alone   // I2: the rebindable registry; AUDIT 39r: the mouse half of the held set
+import { actionForCode, getBinding } from '../systems/inputActions.js';   // AUDIT-TO1 H2: the help's TravelMap binding, read through the store's own accessor   // FIX-E: the overlay's QuickLoad read, off the code alone   // I2: the rebindable registry; AUDIT 39r: the mouse half of the held set
 import { hudShortcutKey } from '../ui/hudShortcuts.js';   // AUDIT 64 F36/F37: DaggerfallHUD.Update's LargeHUDToggle / HUDToggle arms
 import { createActivateGate, activateFrame, setClickDelay } from '../systems/activateGate.js';   // A8: PlayerActivate's ActivateCenterObject frame
 import { openPauseFlow, preloadPauseFlowArt, pauseDoorReady, pauseOpts } from '../ui/pauseDoor.js';   // I3/I4; U51 picks the skin; MAC-L1: pauseOpts is the ONE reader of the door's options
@@ -1336,8 +1348,19 @@ export async function bootWorld(canvas, renderer, params, status) {
     const staticMerged = staticBuilder.finish();   // PERF4
     const staticBatch = staticMerged ? renderer.createMesh(staticMerged) : null;
 
+    // AUDIT-TO1 B3: StreamingWorld.OnUpdateLocationGameObject
+    // (TravelOptionsMod.cs:384, handler :438-445) - the mod re-reads the
+    // location rects when the terrain under the player LANDS, because
+    // OnMapPixelChanged may have fired before it was built. The record
+    // below is what locationTileRect reads, so this runs after it lands.
+    const _isPlayersPixel = px === playerTravelPixel().x && py === playerTravelPixel().y;
     built.set(key, {
       staticBatch,   // PERF4: the merged static models, drawn with the pixel matrix; null when the pixel has none
+      // AUDIT-TO1 B2: DaggerfallTerrain.MapData.locationRect - the tile
+      // rect setLocationTiles answered, with its extraClearance, which is
+      // what Travel Options' SetLocationRects reads off the BUILT terrain
+      // (TravelOptionsMod.cs:541-551). Null for a pixel with no location.
+      locationRect,
       _seasonsGen: seasonsGen,   // SIB1: the install this pixel's flats were built under (AUDIT 61: captured at the lookups)
       px, py, terrain, water, tilemapTex, tilemap, groundArchive, models, windmills, batches, flatAnims, texRemap, lights: pixelLights, animals: pixelAnimals, springs: pixelSprings, skyBase: climate.skyBase, samples, natureCount: nature.length,
       tilemapBytes, season,   // GR1: the placer reads the tiles and the season
@@ -1356,6 +1379,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       centerHeight: samples[64 * HEIGHTMAP_DIMENSION + 64] * worldHeight,
       avgY: dfLocation ? avg * worldHeight : 0,
     });
+    if (_isPlayersPixel && dfLocation) travelOptions?.initLocationRects(playerTravelPixel());   // AUDIT-TO1 B3: the second hook
     // AUDIT 61 (SIB1): an install landed while this pixel's textures were
     // in flight (a forced apply on a quickload or a teleport whose
     // destination ring keeps this pixel), so its flats were read from an
@@ -2019,6 +2043,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     showOverlay: (w) => townTalk.showOverlay(w),
     onShip: () => boardOrDisembark(),
     paused: () => gamePaused(),
+    ridingVolumeScale: () => (_travelSoundsOff ? 0 : 1),   // AUDIT-TO1 J1: TransportManager.RidingVolumeScale = 0 for the journey
   });
   preloadPauseFlowArt({ renderer, fetchBytes, palette }).catch((e) => console.warn('[pause] pause/controls art unavailable:', e?.message ?? e));   // I3/I4
   // B1 + AUDIT B-C2: an async open must not clobber a window the
@@ -2047,6 +2072,10 @@ export async function bootWorld(canvas, renderer, params, status) {
   preloadRestArt({ renderer, fetchBytes, palette });   // D3: REST00I0/01I0/02I0 for the rest window's two pages
   preloadTravelMapArt({ renderer, fetchBytes, palette })   // W1: TRAV0I00/01/03/04 + the FMAP palette warm at boot
     .catch((e) => console.warn('[travelmap] classic travel map art unavailable:', e?.message ?? e));
+  // TO1: the mod's own control strip, beside it. Its own loader
+  // swallows a missing file - the panel then draws its text on the
+  // bare screen, which is what the mod's `Debug.LogError` arm leaves.
+  preloadTravelControlArt({ renderer, fetchBytes, palette }).catch(() => {});
   preloadSpellbookArt({ renderer, fetchBytes, palette })   // U42: SPBK00I0/01I0 + the ICON/MASK sheets warm at boot
     .catch((e) => console.warn('[spellbook] classic spellbook art unavailable:', e?.message ?? e));
   preloadPaperDollArt({ renderer, fetchBytes, palette, getTexture }, { where: paperDollWhere() });   // U8f/U8g + UI3: SCBG/BODY/FACE + the item-record pipeline ( Breton male 0 is the PRE-chargen default, reloaded on the chosen identity)
@@ -2299,6 +2328,18 @@ export async function bootWorld(canvas, renderer, params, status) {
     _topicsKey = key;
     const dfLocation = key ? locationIndex.get(key) : null;
     _musicLoc = dfLocation ?? null;   // AUDIT 19: the music context's location half
+    // AUDIT-TO1 B3: PlayerGPS.OnMapPixelChanged (TravelOptionsMod.cs:382,
+    // handler :425-429) - the junction map's non-forced disable and the
+    // rects for the pixel the player now stands in. And OnRegionIndexChanged
+    // (:383, :438-445) on the same crossing, because the region is a
+    // property of the pixel. Four of the mod's five Start subscriptions
+    // had no caller; the fifth (OnEncounter) is wired at the seam below.
+    if (travelOptions) {
+      travelOptions.onMapPixelChanged(playerTravelPixel());
+      const _region = _questRegionIndex();
+      if (_travelRegionSeen !== null && _region !== _travelRegionSeen) travelOptions.onRegionIndexChanged();
+      _travelRegionSeen = _region;
+    }
     // TV-slice: entering a location's pixel DISCOVERS it (PlayerGPS
     // DiscoverCurrentLocation on the location-rect entry) - the write
     // half of the travel map's visibility law; fast-travel arrivals
@@ -3229,6 +3270,14 @@ export async function bootWorld(canvas, renderer, params, status) {
     // AllowMagicRepairs read - lives in one body, so it cannot be
     // right in one host and stale in the other.
     setDefaultEnchantCtx(createEnchantCtx({
+      // AUDIT-TO1 F2: CastWhenHeldTO's second guard. The control UI is
+      // built six hundred lines below this, so the ctx reads it through
+      // a HOLDER rather than the `const` itself: the arrow is created
+      // here and called from a magic round, and a closure over a `const`
+      // in its temporal dead zone is the shape AUDIT 24 wave 37 was
+      // written about. The holder exists from this line on and answers
+      // false until the UI lands, which is the right answer then.
+      travelUIShowing: () => !!_travelUIHolder.ui?.isShowing,
       playerEntity,
       spellsByIndex: () => spellsByIndex,
       now: () => Math.floor(playerTicker.classicMinutes),
@@ -3659,6 +3708,18 @@ export async function bootWorld(canvas, renderer, params, status) {
   // W1: the map dictionary the window reads is built at the top of
   // this boot, with the terrain repairs that also need HasLocation.
   let _travelMap = null;   // the live window, for the probe surface
+  // AUDIT-TO1 F2: the live travel control panel, for the one reader
+  // that is built before it - CastWhenHeld's durability guard. Filled
+  // where the panel is constructed; null in every frame with no journey.
+  const _travelUIHolder = { ui: null };
+  // AUDIT-TO1 J1: DisableWeatherAndSound / EnableWeatherAndSound
+  // (TravelOptionsMod.cs:1215-1271) - the two switches an accelerated
+  // journey throws, declared HERE because the mount rig that reads one
+  // is built long before the mod is. They were written and never read:
+  // rain kept falling and the stride fired at the accelerated step rate
+  // - the exact things AllowWeather and AllowAnnoyingSounds exist to stop.
+  let _travelWeatherOff = false;
+  let _travelSoundsOff = false;
   /** ItemCollection.Contains(ItemGroups.Transportation, template) -
    *  the same one-line test ui/nativeInventory.js's wagon gate uses. */
   const hasTransport = (template) => (playerEntity.items ?? []).some((it) => it.templateIndex === template);
@@ -4797,6 +4858,14 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  shape, because the interim entity has no name to key by. */
   async function worldQuickLoad({ mostRecent = false, key = null } = {}) {
     if (_loading) return;
+    // AUDIT-TO1 G1: SaveLoadManager.OnLoad -> ClearTravelDestination
+    // (TravelOptionsMod.cs:378), which closes the panel and so drops the
+    // scale (OnClose -> InterruptTravel). Before the first await, so a
+    // journey's autopilot can never drive the LOADED character toward the
+    // old destination at the old acceleration. Departure 8 rested on
+    // this hook and the hook was never wired.
+    travelOptions?.clearTravelDestination();
+    if (worldTimeScale() !== 1) resetTimeScale();
     // AUDIT-MACL F2: THE LATCH GOES UP BEFORE THE FIRST AWAIT, and MAC-L4
     // is why it has to be said out loud. This guard and the latch below
     // it used to be separated by straight-line code alone - one
@@ -5143,7 +5212,13 @@ export async function bootWorld(canvas, renderer, params, status) {
     // travel by day, and the refusal is the override's own line.
     const ftb = racialFastTravelBlock(playerEntity, nowMin);
     if (ftb) { townTalk.say(ftb.text); return; }
-    _travelMap = buildTravelMapWindow({ onTravel: (pick, opts, computed) => { fastTravelTo(pick, opts, computed); } });
+    // TO1: the fork. `playerControlled` is the popup's own word for a
+    // trip its three toggles say is WALKED (ui/travelPopUp.js
+    // callFastTravelGoldCheck); everything else is DFU's fast travel.
+    _travelMap = buildTravelMapWindow({ onTravel: (pick, opts, computed) => {
+      if (opts?.playerControlled && beginAcceleratedTravel(pick, opts, { estimateMinutes: computed?.minutes ?? null })) return;   // AUDIT-TO1 L5: the popup's estimate rides along for the panel's ETA
+      fastTravelTo(pick, opts, computed);
+    } });
     if (!_travelMap) { townTalk.say('(the travel map art is unavailable)'); return; }
     if (gotoPlace) _travelMap.gotoPlace(gotoPlace);   // GotoPlace (:214-217), consumed on the map's first tick
     townTalk.showOverlay(_travelMap);
@@ -5161,6 +5236,199 @@ export async function bootWorld(canvas, renderer, params, status) {
     });
     win?.activateTeleportationTravel();
     return win;
+  }
+
+  // ── TO1: TRAVEL OPTIONS ────────────────────────────────────────────
+  // The mod, its control panel and its junction map, built once with
+  // this host's own reads. Everything it needs is a function here: it
+  // holds no reference to the world and the world holds one reference
+  // to it, which is what lets its pins fly whole journeys on a table.
+  //
+  // THE FOUR HOSTS RULE (bible/Home.md): this seam is wired in
+  // scenes/world.js ALONE and the other three are named. exterior.js
+  // (?exterior) has no roads and no travel map and says so itself
+  // (bible/03-World/Roads.md); worldModes.js and dungeonContext.js are
+  // the INDOOR hosts, and the mod's own follow key refuses indoors
+  // (TravelOptionsMod.cs:1439-1440, `PlayerEnterExit.IsPlayerInside`).
+  // The journey is an exterior thing and lives with the exterior.
+  const travelOptionsSettings = readTravelOptionsSettings();
+  const travelOptionsOn = modSetting(TRAVEL_OPTIONS_VENDOR, 'Enabled');
+  const travelJunctionMap = travelOptionsOn && travelOptionsSettings.roadsJunctionMap
+    ? createTravelJunctionMap({
+      settings: () => travelOptionsSettings,
+      pathsAt: (x, y, type) => {
+        const net = terrainGen.roads();
+        if (!net || net.source !== 'basic-roads') return 0;
+        const arr = [net.roads, net.tracks, net.rivers, net.streams][type];
+        return arr ? (arr[y * 1000 + x] & 0xff) : 0;
+      },
+      locationAt: (x, y) => {
+        const summary = travelLocationSummaryAt(mapDict, x, y);
+        return summary ? { locationType: summary.locationType, mapId: summary.mapID ?? summary.mapId, discovered: travelCheckDiscovered(summary) } : null;
+      },
+      locationColorOf: (t) => {
+        // AUDIT-TO1 F2: through the map's LIVE filter set - the mod's
+        // DrawMapSection calls GetPixelColorIndex on the persistent window
+        // whose filters the player toggled (TravelOptionsMapWindow.cs:817-820)
+        const i = travelPixelColorIndex(t, travelMapFilters());
+        if (i === -1) return null;
+        const c = travelOptionsSettings.locationColors?.[i];
+        return c ? (((c[3] << 24) >>> 0) | (c[2] << 16) | (c[1] << 8) | c[0]) >>> 0 : null;
+      },
+      markedMapId: () => travelMapMarkedMapId(),   // AUDIT-MAP: the STORE (AUDIT-TO1 G4) - a mark set on the guild's teleport window, never assigned to _travelMap, was invisible to the disc
+    })
+    : null;
+  // the enhanced panel paints the SAME buffer through the same routine,
+  // so it needs the same four reads - one law, two skins.
+  if (travelJunctionMap) travelJunctionMap.deps = travelJunctionMap.deps ?? {};
+  const travelControlUI = travelOptionsOn ? createTravelControlUI({
+    defaultStartingAccel: travelOptionsSettings.defaultStartingAccel,
+    accelerationLimit: travelOptionsSettings.accelerationLimit,
+    onOpenMap: () => toggleTravelMap(),
+    onClose: () => travelOptions?.interruptTravel(),         // TravelOptionsMod.cs:378 - CAMP: stop, keep the destination
+    onCancel: () => travelOptions?.clearTravelDestination(), // :377 - EXIT: forget it
+    onTimeAccelerationChanged: (n) => setWorldTimeScale(n),  // :379 -> SetTimeScale
+  }) : null;
+  /** TO1: the mod itself. Null while its switch is off, and every call
+   *  site guards - a player who turns Travel Options off has the
+   *  classic travel map and classic fast travel, whole. */
+  _travelUIHolder.ui = travelControlUI;   // AUDIT-TO1 F2: the holder the enchant ctx reads
+  const travelOptions = travelOptionsOn ? createTravelOptions({
+    settings: travelOptionsSettings,
+    ui: travelControlUI,
+    junctionMap: travelJunctionMap,
+    // THE PATH DATA IS HIS, OR IT IS NOTHING. The port draws roads
+    // either way - his vendored arrays, or its own generated network
+    // when Basic Roads is off - and FOLLOWING them is his mod's
+    // feature. A follower walking the port's generated tracks would be
+    // offering something the player never switched on, so the network
+    // is handed over only when it is actually his (`source`, TO1's own
+    // field on the network object, terrainGenClient.js).
+    roads: () => { const net = terrainGen.roads(); return net?.source === 'basic-roads' ? net : null; },
+    worldPos: () => { const wc = state.worldCoords(walkMode ? player.pos : cam.pos); return { x: wc.x, z: wc.z }; },
+    mapPixel: playerTravelPixel,
+    yaw: () => (cam.yaw * 180) / Math.PI,   // the port's camera yaw is radians, 0 at +z, clockwise - Unity's own sense
+    setFacing: (yawDeg, pitch) => { cam.yaw = (yawDeg * Math.PI) / 180; cam.pitch = pitch ?? 0; lookFilter.settle(); },
+    setMouseLookEnabled: () => { /* the port has no mouse-look flag to restore: the autopilot simply stops writing cam.yaw */ },
+    currentLocation: () => (_musicLoc ? { mapId: _musicLoc.mapTableData?.mapId, locationType: _musicLoc.mapTableData?.locationType, name: _musicLoc.name, regionName: _musicLoc.regionName } : null),
+    hasCurrentLocation: () => !!_musicLoc,
+    localizedCurrentLocationName: () => _musicLoc?.name ?? '',
+    localizedLocationName: (summary) => summary?.name ?? '',
+    locationTypeName: () => travelLocationTypeName(_musicLocationType()),
+    climateIndex: () => { const px = playerTravelPixel(); return maps.getClimateIndex(px.x, px.y); },
+    regionName: () => maps.getRegionName(_questRegionIndex()),
+    entity: () => ({
+      health: playerEntity.health, maxHealth: playerEntity.maxHealth, fatigue: playerEntity.fatigue,
+      luck: liveStat(playerEntity, 'luck'), stealth: skillValue(playerEntity, SKILLS.Stealth),
+    }),
+    enemiesNearby: () => areEnemiesNearby([...cityGuards.guards, ...exteriorFoes.foes]),
+    diseaseCount: () => diseaseCount(playerEntity),
+    showHealthStatus: () => hudCtx.showStatus?.(),
+    say: (line) => townTalk.say(line),
+    messageBox: (line) => townTalk.say(line),
+    setTimeScale: (n) => setWorldTimeScale(n),
+    now: () => performance.now() / 1000,          // UNSCALED real seconds, as Time.unscaledTime is
+    worldTimeNow: () => worldMinutes(),
+    locationWorldRect: (summary) => {
+      if (!summary?.pixel) return null;
+      const loc = maps.getLocation(summary.regionIndex, summary.locationIndex ?? summary.mapIndex);
+      if (!loc) return null;
+      const r = locationWorldRect(loc, summary.pixel.x, summary.pixel.y);
+      return { xMin: r.minX, xMax: r.maxX, zMin: r.minZ, zMax: r.maxZ };
+    },
+    // AUDIT-TO1 B1/B2: SetLocationRects (TravelOptionsMod.cs:539-567) reads
+    // the BUILT terrain's MapData.locationRect and the location's own
+    // HasCustomLocationPosition. This called a `getLocationAt` method
+    // MapsFile does not have, so every rect was null and the
+    // border-ring circumnavigation, the in-town follow arms and the
+    // town-edge leg target were all dead; the rect it would have built
+    // was blocks x 8 tiles - half the town - with no ground-tile bound.
+    // Now: the summary the junction map already reads, the location
+    // through it, and the rect the pixel build stored (null until the
+    // terrain is built, which is the C#'s `GetTerrainFromPixel` null).
+    locationTileRect: (pixel) => {
+      const summary = travelLocationSummaryAt(mapDict, pixel.x, pixel.y);
+      if (!summary) return null;
+      const loc = maps.getLocation(summary.regionIndex, summary.locationIndex ?? summary.mapIndex);
+      if (!loc) return null;
+      const r = built.get(`${pixel.x},${pixel.y}`)?.locationRect ?? null;
+      if (!r) return null;
+      return {
+        tileRect: { x: r.xMin, y: r.yMin, width: r.xMax - r.xMin, height: r.yMax - r.yMin },
+        locationType: loc.mapTableData?.locationType ?? summary.locationType,
+        hasCustomPosition: hasCustomLocationPosition(loc),
+      };
+    },
+    discoverLocation: (loc) => { if (loc?.regionName && loc?.name) questWorld.discoverLocation(loc.regionName, loc.name); },
+    roll100: () => Math.floor(Math.random() * 100) + 1,   // Dice100.SuccessRoll's Random.Range(1, 101)
+    // AUDIT-TO1 H2: DisplayHelpInfo's two bindings (:1011) - TravelExit is
+    // a DaggerfallShortcut (a dialog shortcut here), TravelMap an
+    // InputManager action. Both read as `Key` + letter and both printed
+    // EMPTY before: the bindings store is not an action->code map.
+    binding: (action) => {
+      const code = action === 'TravelExit' ? sequenceString(shortcutBinding('TravelExit')) : getBinding(bindings(), action);
+      return String(code ?? '').replace(/^Key/, '');
+    },
+    text: (key) => (key === 'cannotTravelWithEnemiesNearby' ? CANNOT_TRAVEL_ENEMIES_TEXT : ''),
+    pushWindow: (ui) => { ui.show(); },
+    setWeatherEnabled: (on) => { _travelWeatherOff = !on; },
+    setTravelSoundsEnabled: (on) => { _travelSoundsOff = !on; },
+    setRealGrassEnabled: () => { /* Real Grass is not a mod the port has - recorded in bible/06-Systems/Travel-Options.md */ },
+  }) : null;
+  /** TO1: what the autopilot asked for THIS frame - the yaw and the
+   *  forward force, or null when no journey is running. Written by the
+   *  mod's update at the top of the player block and read by the motor
+   *  call below it, which is the order TravelOptionsMod.Update and
+   *  PlayerMotor.Update run in. */
+  let _travelDrive = null;
+  /** AUDIT-TO1 B3: the region the last pixel crossing stood in, for
+   *  OnRegionIndexChanged's edge; null until the first crossing. */
+  let _travelRegionSeen = null;
+  /** TO1 (:1438-1445): the Follow Paths key, which is a KeyCode NAME in
+   *  the mod's own settings rather than one of DFU's actions - the
+   *  Handheld Torches precedent, which the port already reads the same
+   *  way. Answers the PRESS edge, once. */
+  let _travelFollowHeld = false;
+  function travelFollowPressed() {
+    const key = travelOptionsSettings.followKey;
+    if (!key || key === 'None') return false;
+    // AUDIT-TO1 I3: the SAME stand-down as beginAcceleratedTravel's. Recorded
+    // departure 9 said "online the journey does not run" and only the map's
+    // door stood down; the follow key started one on a shared clock.
+    if (sharedClockOn()) return false;
+    const code = key.length === 1 ? `Key${key.toUpperCase()}` : key;
+    const down = keys.has(code);   // a raw KeyCode name, not one of the port's actions - the Handheld Torches shape
+    const edge = down && !_travelFollowHeld;
+    _travelFollowHeld = down;
+    return edge;
+  }
+
+  /** TO1: THE OTHER ARRIVAL. `fastTravelTo` is DFU's - gold, a
+   *  teleport, a clock advanced by the estimate, a fade. This is the
+   *  mod's: the player is put on the road and WALKS, and the clock
+   *  advances because time really passes. The two share the door
+   *  (`onTravel`) and fork on the popup's own word.
+   *
+   *  The refusal ladder the travel map runs before it opens
+   *  (:4782-4823 - art, enemies nearby, an offer standing, a vampire in
+   *  daylight, a racial block) is not repeated here: this is only ever
+   *  reached FROM that map, through a popup it opened. The follow key
+   *  has its own, which is the mod's (TravelOptionsMod.cs:1438-1445).
+   *
+   *  ONLINE it does not run at all. The shared clock is the world's
+   *  (WORLD5) and a journey that takes real hours of it cannot be one
+   *  player's business; the trip falls back to DFU's own, which online
+   *  already arrives at once. */
+  function beginAcceleratedTravel(pick, opts, { coords = false, estimateMinutes = null } = {}) {
+    if (!travelOptions || sharedClockOn()) return false;
+    if (coords) travelOptions.beginTravelToCoords(pick.pixel, !!opts?.speedCautious);
+    else {
+      travelOptions.beginTravel({
+        pixel: pick.pixel, name: pick.name, mapId: pick.mapId,
+        regionIndex: pick.regionIndex, locationIndex: pick.locationIndex,
+      }, !!opts?.speedCautious, estimateMinutes);
+    }
+    return true;
   }
 
   /** ONE construction for the map, because G5 gave it a second opener
@@ -5232,6 +5500,62 @@ export async function bootWorld(canvas, renderer, params, status) {
       // join or leave - both skins read it on their own refresh. The
       // host says WHERE and WHO; neither map is told what a party is.
       party: () => partyMarkers(),
+      // TO1: the mod itself, and the six reads its additions to this
+      // window need. Every one is guarded on the other side - with
+      // Travel Options off `travelOptions` answers null and the map is
+      // DFU's own, whole.
+      travelOptions: () => travelOptions,
+      // AUDIT-TO1 I4: ...and the door ACTS on the refusal it can still get
+      // (the popup was minted before the online state could change).
+      onTravelToCoords: (pick, opts) => { if (!beginAcceleratedTravel(pick, opts, { coords: true })) townTalk.say('You cannot travel there now.'); },
+      onResumeTravel: () => { travelOptions?.resumeTravel(); },
+      // AUDIT-TO1 H1: the map's H boxes the help in the WINDOW'S OWN box
+      // (the I key's slot), because a townTalk overlay over the map would
+      // stand in the map's own slot; the rows are the mod's own lines.
+      helpRows: () => (travelOptions ? travelOptions.helpText().split('\n') : null),
+      // AUDIT-TO1 I4: a bare-pixel journey has no DFU fast travel to fall
+      // back on, so the coordinates popup opens only where the host will
+      // honour it - never online, where the journey stands down.
+      coordsAllowed: () => !!travelOptions && !sharedClockOn(),
+      // AUDIT-TO1 D1: PlayerGPS.CurrentLocation's MapId (null in open
+      // wilderness, the C#'s !Loaded) and TransportManager.IsOnShip - the
+      // two reads IsNotAtPort / HasNoOceanTravel need and never had.
+      currentLocationMapId: () => _musicLoc?.mapTableData?.mapId ?? null,
+      isOnShip: () => isOnShip(playerEntity, playerEntity.boardShipPosition ?? null, playerTravelPixel()),
+      // TravelOptionsMapWindow.cs:472 - `GuildManager.GetGuild(MagesGuild).Rank`.
+      magesGuildRank: () => joinedGuildOfGroup(activeMemberships(playerEntity), GUILD_GROUPS.MagesGuild)?.rank ?? 0,
+      payTeleport: (cost) => { deductGold(playerEntity, cost); },
+      // :384-388 - the place's OWN discovered buildings, the port's
+      // discovery store keyed the same way (systems/discovery.js).
+      // AUDIT-TO1 I6: the discovery store is keyed `${regionIndex}:${name}`
+      // by every writer (this host's own discoveryLocationId, exterior.js,
+      // townTalk's reveal) - it was read here by NUMERIC map id, so the I
+      // key answered "no knowledge" for every place in the game, a city
+      // whose every shop the player had entered included.
+      discoveredBuildings: (summary) => {
+        if (!summary) return [];
+        const loc = maps.getLocation(summary.regionIndex, summary.locationIndex ?? summary.mapIndex);
+        return loc?.name ? discoveredBuildings(`${summary.regionIndex}:${loc.name}`) : [];
+      },
+      // :432-433 - DFU reads `exteriorAutomapBuildingType<Type>` out of
+      // its own text table; the port has the enum and no such table, so
+      // the enum's own name is spaced out ("GeneralStore" -> "General
+      // Store"). Recorded in bible/06-Systems/Travel-Options.md.
+      buildingTypeName: (t) => (Object.keys(TALK_BUILDING_TYPES).find((k) => TALK_BUILDING_TYPES[k] === t) ?? String(t)).replace(/([a-z])([A-Z])/g, '$1 $2'),
+      // MAP3: THE MORROWIND HELD POSE. When the Morrowind arm is the
+      // thing drawn on screen, the held map hands its sheet to the rig
+      // (combat/fpArm.js holdPaper) and lays its ink over the sheet's
+      // projected corners; on the classic body the sprite lane stands.
+      // Asked per open, never snapshot: the arm can be built, unloaded or
+      // hidden between two presses of the key.
+      holder: {
+        available: () => !!weaponRig?.armsDrawn?.(),
+        hold: (spec, opts) => !!weaponRig?.holdPaper?.(spec, opts),
+        release: () => { weaponRig?.releasePaper?.(); },
+        // AUDIT-MAP2: corners only from a frame the arm DREW - a paralysed,
+        // hidden or third-person arm answers none, and the window hides the ink
+        corners: () => (weaponRig?.armsDrawn?.() ? weaponRig.paperCorners() : null) ?? null,
+      },
       ...extra,
     });
   }
@@ -5688,6 +6012,18 @@ export async function bootWorld(canvas, renderer, params, status) {
       // lives here, behind the same overlay/mode gate as every
       // sibling door; preventDefault only when the dial answers, so
       // classic Tab keeps its default.
+      // TO1: THE TRAVEL PANEL OWNS THREE KEYS while it is up - M for
+      // the map, C for the camp, and the TravelExit binding to leave
+      // (TravelControlUI.cs:128-147). It is NOT in the overlay slot, so
+      // nothing above has swallowed them, and it takes them before the
+      // world's own M does - which is the mod's own order, its window
+      // being the top one while a journey runs.
+      if (travelControlUI?.isShowing && travelControlUI.input(e.code, e)) { e.preventDefault(); return; }
+      // ...and H over it opens the mod's help (:1335-1338).
+      // AUDIT-TO1 H1: DisplayHelpInfo is `DaggerfallUI.MessageBox(HelpText.Split('\n'))`
+      // (:1005-1014) - a boxed line per row. This was one HUD popup row
+      // of the whole 570-character string, centred off both edges.
+      if (travelControlUI?.isShowing && e.code === 'KeyH' && travelOptions) { e.preventDefault(); townTalk.showBox(travelOptions.helpText().split('\n')); return; }
       if (e.code === 'Tab' && hudCtx.toggleDial()) { e.preventDefault(); return; }
       // AUDIT 64 F36/F37 - THE HUD'S OWN SHORTCUTS (DaggerfallHUD.cs
       // :308-318). This host runs its own ladder and never calls
@@ -5833,6 +6169,25 @@ export async function bootWorld(canvas, renderer, params, status) {
       (e.clientX - _r.left) * (canvas.width / _r.width),
       (e.clientY - _r.top) * (canvas.height / _r.height),
       e.button, hudCtx, { windowUp: gamePaused() })) return;
+    // TO1: the travel panel's three buttons and its spinner, in the
+    // same rung and for the same reason the large HUD's panels are
+    // here - a HUD-layer control is clicked before the pointer is
+    // relocked, or the click becomes a swing. The ENHANCED panel is
+    // DOM and takes its own clicks (pointer-events on the controls
+    // alone), so this arm is the classic skin's.
+    // AUDIT-TO1 I2: ...and only with the cursor FREED and the primary
+    // button, as routeLargeHudClick above gates itself (`cursorActive()`).
+    // With the pointer locked, clientX/clientY are FROZEN at the last
+    // unlocked position, so a world click landed on whatever control the
+    // cursor had been parked over - the spinner (+5 acceleration) or EXIT
+    // (journey aborted, destination cleared); and the strip is clicked
+    // by OnMouseClick alone (TravelControlUI.cs:120-147), never a swing.
+    if (travelControlUI?.isShowing && !gamePaused() && cursorActive() && e.button === 0 && !(isEnhanced() && typeof document !== 'undefined')) {
+      const v = pointToNative(nativeMetrics(canvas),
+        (e.clientX - _r.left) * (canvas.width / _r.width),
+        (e.clientY - _r.top) * (canvas.height / _r.height));
+      if (v && travelControlUI.click(v[0], v[1])) return;
+    }
     // ROAD-Ar: the click that GRABS the pointer back is a UI gesture,
     // not a world click, and it presses and releases Mouse0 into the
     // gate exactly as a window's close button does - so it takes
@@ -6050,6 +6405,11 @@ export async function bootWorld(canvas, renderer, params, status) {
       return JSON.stringify(out);
     };
     window.__talk = () => JSON.stringify(townTalk._debug());   // T3b probe surface
+    // MAP3: the held pose's tuning door - `__heldPose()` reads the pose in
+    // force while the map is up, `__heldPose({ bones: { 'left forearm':
+    // [rx, ry, rz], ... }, paper: { width, forward, drop, tilt } })` re-places
+    // the sheet on the live arm (bible/10-UI/Held-Map-Arc.md, MAP3)
+    window.__heldPose = (spec) => (spec ? weaponRig?.setHeldPose?.(spec) : weaponRig?.heldPose?.());
     window.__chargenRace = () => townTalk._debug().overlayFlow?.race?.key ?? null;   // U10 probe surface
     window.__chargenConfirm = () => townTalk._debug().overlayFlow?.raceConfirm ?? null;   // U11 probe surface
     window.__chargenFlow = () => townTalk._debug().overlayFlow ?? null;   // S3e probe surface
@@ -6494,7 +6854,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     /** GameManager.RaiseOnEncounterEvent - its one core consumer is
      *  the rest window's AbortRestForEnemySpawn, routed through the
      *  modes host (dungeon mode owns the only rest overlay). */
-    raiseOnEncounterEvent: () => modes?.raiseOnEncounterEvent?.(),
+    raiseOnEncounterEvent: () => { travelOptions?.onEncounter(); modes?.raiseOnEncounterEvent?.(); },   // AUDIT-TO1 B3: GameManager_OnEncounter (:405-413) hears it first
     // ---- B3: THE RESPAWN SEAMS (TeleportPc's transport - see
     // _respawnAtSite above for the composition and the BT1 record of
     // DFU's own partial implementation).
@@ -8447,8 +8807,8 @@ export async function bootWorld(canvas, renderer, params, status) {
     // label reads, which box or sub-window is up, and the popup's
     // numbers. The keyed stand-in could be driven blind; a click
     // surface cannot.
-    // U61: the enhanced overworld carries its own probe surface
-    // (globalThis.__overworld); this one reads the CLASSIC window's
+    // U61/MAP1: the enhanced held map carries its own probe surface
+    // (globalThis.__heldMap); this one reads the CLASSIC window's
     // shape and answers null for the other skin rather than throwing
     // on fields it does not have.
     window.__travelMap = () => JSON.stringify(_travelMap && !_travelMap.done && _travelMap.regionLabelText ? {
@@ -8585,6 +8945,17 @@ export async function bootWorld(canvas, renderer, params, status) {
       if (kb.x || kb.y) lookFilter.add(kb.x * keyboardLookRate() * dt, kb.y * keyboardLookRate() * dt * lookInvert());
       _lockChest = lockOn.tick(dt, cam, cam.pos, lookFilter);   // TI1: the lock pays its facing into the same filter, owed to the NEXT tick like a look
     }
+    // AUDIT-TO1 G2: THE SCALE'S NET, ABOVE EVERY MODE GATE (below the video hold and the look filter's own tick, whose adjacency AUDIT 39 #160 and AUDIT 28 W7 pin). timeScale() is
+    // module-global and the motor reads it in every host, but every
+    // door that lowered it sat below `if (modes.frame(dt, now)) return`
+    // inside the exterior block - so a building door clicked mid-journey
+    // left the player running the shop at fifty times walking speed
+    // with nothing left to set it back. A journey is an exterior thing
+    // (the mod's own follow key refuses indoors, :1136-1137): an indoor
+    // mode with the panel up ENDS it, as any other window on top would
+    // (:1040-1047), and a scale with no panel behind it is reset here.
+    if (travelControlUI?.isShowing && (modes?.mode ?? 'exterior') !== 'exterior') travelControlUI.closeWindow();
+    if (!travelControlUI?.isShowing && worldTimeScale() !== 1) resetTimeScale();
     // TI1: the tap's one-frame press. Armed 2 on the tap: this frame
     // counts to 1 and the gate sees the press (AUDIT 62 F8: `_tapArmed
     // > 0` IS the press - the arm no longer stuffs a literal 'Mouse0'
@@ -8785,7 +9156,66 @@ export async function bootWorld(canvas, renderer, params, status) {
         const jumpHeld = held(keys, 'Jump');
         const crouchHeld = held(keys, 'Crouch');   // P12 host parity (audit F4); I2: DFU's default C
         const crouchPress = pressed(latch.edge, keys, 'Crouch');   // MWCROUCH: GetKeyDown, not a held-ring derivation - the levitate descent below still reads the HELD key
+        // TO1: THE JOURNEY'S CLOCK. Travel Options runs an accelerated
+        // journey on Unity's `Time.timeScale` (TravelOptionsMod.cs:382-390),
+        // which scales EVERYTHING - the calendar, the player, the physics,
+        // every animation in the world. The port scales TWO of them, named
+        // here and recorded in bible/06-Systems/Travel-Options.md as the
+        // slice's one deliberate departure:
+        //
+        //   - the TRAVELLER: `player.update` takes `dt * travelScale`, and
+        //     the motor scales its own fixed step with the same number
+        //     (player/motor.js), so a x50 journey is one physics step a
+        //     frame covering fifty times the ground rather than fifty steps
+        //     - which is exactly what `Time.fixedDeltaTime = timeScale *
+        //     baseFixedDeltaTime` buys in the mod's own SetTimeScale.
+        //   - the CALENDAR: the player's ticker below, so the days really
+        //     pass while the miles do.
+        //
+        // WHAT IS NOT SCALED, and why it is the better answer here: the
+        // encounter pump, the foe pools, the weather front and every
+        // animation keep real time. At x50 a scaled encounter pump would
+        // roll fifty times the ambushes a real second, and the terrain
+        // build queue would be asked for fifty pixels in the time it can
+        // raise one - the mod's own readme warns about exactly that
+        // ("raising this can cause players to fall off the terrain and into
+        // the void"). The journey the player sees is the same: the ground
+        // goes past at the acceleration, the clock keeps up with it, and
+        // what interrupts a journey interrupts it on its own honest clock.
+            const travelScale = worldTimeScale();
         const _overlayHeld = (modes?.dungeonCtx?.uiOverlayActive ?? false) || townTalk.overlayActive;   // chargen/windows/talk hold the motor - typing must not walk the player
+        // TO1: THE MOD'S OWN FRAME - TravelOptionsMod.Update, in its
+        // own order, given what this host knows this frame. It answers
+        // the autopilot's drive for the motor below, and everything
+        // else it does (stopping for a foe, for the sea, for a town, a
+        // path leg arriving, the junction map's upkeep) it does itself.
+        _travelDrive = null;
+        if (travelOptions) {
+          const followDown = travelFollowPressed();
+          const report = travelOptions.update({
+            topWindowIsTravelUI: !!travelControlUI?.isShowing && !townTalk.overlayActive,
+            topWindowAllowsTravel: townTalk.overlay === _travelMap,   // the mod's `DfTravelMapWindow` exception (:1351)
+            // AUDIT-TO1 A1: GameManager.IsPlayerOnHUD is "the HUD is the top
+            // window" (IsHUDTopWindow), and in DFU the travel panel IS a
+            // pushed window (InitTravelUI -> PushWindow, :533), so the
+            // property is FALSE for the whole of a journey and the :1040
+            // arm fires only when another window really is on top. The
+            // port's panel is a HUD readout, deliberately not an overlay -
+            // so this read `!overlayActive`, which is exactly `!gamePaused()`
+            // one line below, and the two guards partitioned every frame:
+            // every accelerated journey interrupted itself on its first
+            // unpaused frame and the mod's whole Update past that line was
+            // dead. The panel standing in for DFU's pushed window is the term.
+            isPlayerOnHUD: !townTalk.overlayActive && !(modes?.overlayHeld ?? false) && !travelControlUI?.isShowing,
+            gamePaused: gamePaused(),
+            inputPaused: _overlayHeld,
+            followKeyDown: followDown,
+            helpKeyDown: false,   // H over the travel UI is routed by the key ladder, not polled
+            isPlayerInside: (modes?.mode ?? 'exterior') !== 'exterior',
+          });
+          _travelDrive = report?.drive?.arrived === false ? report.drive : null;
+          if (!travelControlUI?.isShowing && worldTimeScale() !== 1) resetTimeScale();   // the panel gone is the journey over
+        }
       // AUDIT 18 F9: the player's world clock, HELD by the same gate.
       // It ran only inside a dungeon before F8 moved it here; F8 then
       // ran it unconditionally, which is the U7 bug shape inverted -
@@ -8797,7 +9227,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       // fatigue, no skill advancement. Open the char sheet and the
       // motor already held here - the clock did not, so a disease
       // aged while the game was paused.
-      if (!_overlayHeld) playerTicker.tick(dt * timeScaleMult, {
+      if (!_overlayHeld) playerTicker.tick(dt * timeScaleMult * travelScale, {   // TO1: ...and the calendar keeps up with the miles
         running: player.isRunning && !player.standing,   // AUDIT 23 (entity-2): PlayerEntity.cs:408
         // AUDIT 64 F7 - PlayerEntity.cs:311, the TALLY's own gate:
         // `playerMotor.IsRunning && !playerMotor.IsRiding`, with NO
@@ -8832,6 +9262,31 @@ export async function bootWorld(canvas, renderer, params, status) {
         // DFU's own script-order indeterminacy between InputManager.Update
         // and PlayerMotor.Update.
         const axes = _overlayHeld ? { forward: moveAxes.vertical, strafe: moveAxes.horizontal } : moveAxes.update(dt, { ...mv, autorun: player.toggleAutorun });
+        // TO1: THE AUTOPILOT DRIVES. Its Update answers two numbers -
+        // the yaw the body should face and the forward force - and the
+        // mod applies them straight to the player controller
+        // (PlayerAutoPilot.cs:96-104: `mouseLook.Yaw = yawVector.y` and
+        // `InputManager.ApplyVerticalForce(travelSpeedMultiplier)`).
+        // Here that is `cam.yaw` and the forward AXIS, which is the
+        // same two things by the port's own names. The player's own
+        // keys are overridden for the frame, exactly as the mod
+        // overrides them: a journey is not steerable by hand, it is
+        // stopped (the camp button, the exit button, the follow key).
+        // `axes` is a fresh literal every frame (MoveAxes.update returns
+        // one), so writing the autopilot's force into it overrides the
+        // player's own for this frame and nothing else - which is what
+        // ApplyVerticalForce does to InputManager's axis.
+        if (_travelDrive) {
+          cam.yaw = (_travelDrive.yaw * Math.PI) / 180;
+          cam.pitch = _travelDrive.pitch ?? 0;
+          axes.forward = _travelDrive.forward;
+          // AUDIT-TO1 K2: and NOT the strafe. ApplyVerticalForce writes the
+          // vertical axis alone (PlayerAutoPilot.cs:104) and the panel's
+          // `pauseWhileOpened = false` keeps InputManager collecting the
+          // strafe key, so DFU sidesteps a held strafe at walk speed with
+          // limitDiagonalSpeed cutting the forward share - the port
+          // zeroed it and ran 41% faster along the bearing while it was held.
+        }
         // Audit F3: the crouch toggle stays LIVE while paralyzed - DFU
         // gates movement and the jump only (DecideHeightAction has no check).
         // AUDIT 39r: and so does the SPEED-ADJUSTMENT capture. DFU zeroes the
@@ -8843,7 +9298,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         // ROAD-Ar (R0): ...and the season hold stops the motor dead,
         // because there is no floor under it while the re-skin runs.
         if (!_overlayHeld && !_seasonHeld) player.update(dt, paralyzed ? { forward: 0, strafe: 0, run: held(keys, 'Run'), autoRun: held(keys, 'AutoRun'), back: mv.backwards, sneak: held(keys, 'Sneak'), jump: false, up: false, down: false, crouch: crouchPress } : {
-          forward: axes.forward,   // AUDIT 28 W8: InputManager's axes - accelerated under MovementAcceleration, the held difference without
+          forward: axes.forward,   // TO1: the autopilot's force while a journey runs, else the player's own   // AUDIT 28 W8: InputManager's axes - accelerated under MovementAcceleration, the held difference without
           strafe: axes.strafe,
           run: held(keys, 'Run'),
           // AUDIT 39: PlayerSpeedChanger's AutoRun latch (:82-99) - the
@@ -8913,7 +9368,10 @@ export async function bootWorld(canvas, renderer, params, status) {
           // player is walking on or swimming in exterior water", so
           // BOTH non-None methods feed this one boolean.
           const _onWater = _surf.water !== ON_EXTERIOR_WATER.None;
-          const _step = footsteps.update(player.pos, {
+          // AUDIT-TO1 J1: `PlayerFootsteps.enabled = false` for the journey
+          // (:1225) - the component does not RUN, which is what a disabled
+          // MonoBehaviour is; the one-gate line below stays the hosts' literal.
+          const _step = _travelSoundsOff ? null : footsteps.update(player.pos, {
             grounded: player.grounded, swimming: player.swimming, levitating: player.levitating,
             spriteStep: mwViewFootstep(),   // AUDIT-EOTB2: SyncFootsteps - the sprite's stride while it is on screen
             // AUDIT 64 F3 (review): PlayerFootsteps gates on
@@ -8946,10 +9404,10 @@ export async function bootWorld(canvas, renderer, params, status) {
             onExteriorPath: _surf.path,
             onStaticGeometry: _surf.staticGeometry,
           }));
-          if (_step && classicFootstepAllowed(_step.clip)) audio.playOneShot(_step.clip, _step.volume);   // IF1: DisableVanillaFootsteps - every classic clip is None while the mod owns the stride; BA1: Better Ambience nulls all but Dungeon2 and Outside2 (DisableBuiltInFootsteps' slip)
+          if (_step && classicFootstepAllowed(_step.clip)) audio.playOneShot(_step.clip, _step.volume);   // IF1: DisableVanillaFootsteps - every classic clip is None while the mod owns the stride; BA1: Better Ambience nulls all but Dungeon2 and Outside2 (DisableBuiltInFootsteps' slip)   // IF1: DisableVanillaFootsteps - every classic clip is None while the mod owns the stride; BA1: Better Ambience nulls all but Dungeon2 and Outside2 (DisableBuiltInFootsteps' slip)
           // IF1: ImmersiveFootstepsObject.FixedUpdate - the exterior arm reads the season, the climate and the tile the classic set above reads.
           immersiveFootsteps.update(dt, {
-            paused: _overlayHeld || _seasonHeld, entity: playerEntity,
+            paused: _overlayHeld || _seasonHeld || _travelSoundsOff, entity: playerEntity,   // AUDIT-TO1 J1: the mod's stride stands down with the classic one
             grounded: player.grounded, standingStill: player.standing, isRunning: player.isRunning, movingLessThanHalfSpeed: player.movingLessThanHalfSpeed,
             transportMode: player.transportMode, swimming: !!player.isPlayerSwimming, pos: player.pos,
             inside: false, inDungeon: false,
@@ -9620,6 +10078,9 @@ export async function bootWorld(canvas, renderer, params, status) {
       // OnExitLocationRect clears it (:531-534). The layer then ticks
       // its own 1-80s counter beside the ordinary wilderness one.
       if (_inRect && !_wasInLocationRect) {
+        // AUDIT-TO1 B3: PlayerGPS.OnEnterLocationRect (TravelOptionsMod.cs
+        // :381, handler :431-436) - LocationPause "entered"
+        travelOptions?.onEnterLocationRect(_musicLoc ? { name: _musicLoc.name, mapId: _musicLoc.mapTableData?.mapId, locationType: _musicLoc.mapTableData?.locationType } : null);
         ambience.setCemeteryNearby(_musicLocationType() === LOCATION_TYPES.Graveyard);
         // AUDIT 63 F9: and the SAME entry event is what a Thieves Guild
         // or Dark Brotherhood member's RegisterEvents subscribes to
@@ -9743,8 +10204,14 @@ export async function bootWorld(canvas, renderer, params, status) {
         precip.windV[0] = wd.windV[0]; precip.windV[1] = wd.windV[1];
         precip.windOff[0] += wd.step[0]; precip.windOff[1] += wd.step[1];
       }
-      precip.draw(precipShown, proj, view, new Float32Array(cam.pos), camRight, now / 1000);
-      renderer.markForeignPass();   // EV6: so did the rain
+      // AUDIT-TO1 J1: DisableWeatherAndSound stops the rain/snow PARTICLES
+      // for the journey (:1218-1223) and restores them at its end; the sim,
+      // the front and the wind carry on underneath, which is what the mod's
+      // `PlayerWeather` disable leaves running too.
+      if (!_travelWeatherOff) {
+        precip.draw(precipShown, proj, view, new Float32Array(cam.pos), camRight, now / 1000);
+        renderer.markForeignPass();   // EV6: so did the rain
+      }
     }
     // WIND3: THE WISPS - the wind, seen (render/windWisps.js). After the
     // rain and before the grass, on the same integrated wind; a foreign
@@ -10042,6 +10509,60 @@ export async function bootWorld(canvas, renderer, params, status) {
           // platform does not have - which is the whole of AUDIT SOC C9.
           quickUse: (n) => quickUse(n), quickSwap: () => quickSwap(), quickOffHand: () => quickOffHand(), quickSpell: () => quickSpell(), quickSwitchHand: () => quickSwitchHand(),   // QS6   // MAC-R3: the main cell's hand switch
           weaponSheathed: !!weaponRig.playerWeapon.sheathed });   // AUDIT 28 W2: the arrow counter's drawn-bow gate   // U38 + X4 + U43
+    }
+    // TO1: THE TRAVEL PANEL, on the HUD layer and after it - a journey's
+    // controls sit over the vitals and under the talk layer, so a
+    // message box still covers them. It is here rather than in the
+    // overlay slot because an overlay HOLDS the motor and the clock
+    // (`_overlayHeld` above), and a journey is the one window that must
+    // not (TravelControlUI.cs:83, `pauseWhileOpened = false`).
+    // AUDIT-TO1 F1: THE JUNCTION MAP IS THE HUD'S, NOT THE PANEL'S. In the
+    // mod it is a child of the HUD's native panel (TravelOptionsMod.cs:358)
+    // drawn whenever `Enabled`, and the two moments it exists for are
+    // both moments the travel window is DOWN - the stop at a junction
+    // (SelectNextPath enables it and then closes the window, :735-748)
+    // and the follow key's off-path toggle (:646-652). Both draws sat
+    // inside `if (travelControlUI?.isShowing)`, so the map was painted
+    // only while a leg ran and vanished the instant the leg ended: the
+    // player was told to pick a direction with no map to pick it from.
+    const _junctionUp = !!(travelJunctionMap && travelOptions?.junctionMapOn);
+    const _junctionState = _junctionUp ? {
+      on: true, buf: travelJunctionMap.buf, settings: travelOptionsSettings,
+      mapPixel: travelJunctionMap.lastDrawn ?? playerTravelPixel(),
+      direction: travelJunctionMap.lastDrawn?.direction ?? 0,
+      deps: travelJunctionMap.deps,
+    } : { on: false };
+    if (travelControlUI?.isShowing) travelControlUI.tick(dt);   // :165-179 - the message's clock is Time.unscaledTime, which this dt is
+    if (isEnhanced() && typeof document !== 'undefined') {
+      if (travelControlUI?.isShowing || _junctionUp) {
+        drawEnhancedTravelControl({
+          showing: !!travelControlUI?.isShowing,
+          // AUDIT-TO1 L7: the HUD's own word - a window over the HUD hides
+          // this too (the enhanced overworld is a GL picture under
+          // transparent chrome, and the bar painted over the bay)
+          covered: townTalk.hudCovered || (modes?.hudCovered ?? false) || gamePaused(),
+          destination: travelControlUI?.destinationName ?? '',
+          following: !travelOptions?.destinationName,
+          accel: travelControlUI?.timeAcceleration ?? 1,
+          message: travelControlUI?.message ?? '',
+          minutesLeft: travelOptions?.minutesLeft ?? null,   // AUDIT-TO1 L5: the popup's estimate, run down on the world clock
+          from: playerTravelPixel(),
+          to: travelOptions?.state?.autopilot?.destinationMapPixel ?? null,
+          junction: _junctionState,
+        }, {
+          map: () => toggleTravelMap(),
+          camp: () => travelControlUI?.closeWindow(),
+          exit: () => travelControlUI?.cancelWindow(),
+          faster: () => travelControlUI?.faster(),
+          slower: () => travelControlUI?.slower(),
+        });
+      } else hideEnhancedTravelControl();
+    } else {
+      if (travelControlUI?.isShowing) travelControlUI.draw(renderer, canvas, townTalk.font);
+      if (travelJunctionMap) {
+        travelJunctionMap.enabled = _junctionUp;
+        travelJunctionMap.drawPanel(renderer, canvas);   // over the strip when it is up - TravelControlUI.Draw's own extra call (:185-186)
+      }
     }
     townTalk.frame(dt);   // T3b: HUD lines + the talk overlay, above everything
     // SS1: the frame's LAST draw is behind us - deliver a pending save
