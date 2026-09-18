@@ -337,8 +337,8 @@
   {
     "name": "renderer-setlights-cap",
     "file": "src/render/renderer.js",
-    "old": "    const n = this.maxPointLights;   // EL1: the installed set's cap\n    this._pointLights = data.subarray ? data.subarray(0, n * 4) : data;",
-    "new": "    const n = 16;\n    this._pointLights = data.subarray ? data.subarray(0, n * 4) : data;",
+    "old": "    const n = this.maxPointLights;   // EL1: the installed set's cap\n    // MAC-T1: the carried mask is a property of the composed array, and `subarray` returns a fresh view without it -\n    // so it is lifted FIRST, and cut to the same cap\n    const carried = data.carried ?? null;\n    this._pointCarried = carried ? carried.subarray(0, n) : null;\n    this._pointLights = data.subarray ? data.subarray(0, n * 4) : data;",
+    "new": "    const n = 16;\n    const carried = data.carried ?? null;\n    this._pointCarried = carried ? carried.subarray(0, n) : null;\n    this._pointLights = data.subarray ? data.subarray(0, n * 4) : data;",
     "tests": [
       "test/el1_enhancedlighting.test.js"
     ]

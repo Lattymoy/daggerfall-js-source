@@ -182,6 +182,14 @@ export function playerTorchLight(entity, feet, yaw = 0) {
     y: feet[1] + o.up,
     z: feet[2] - r[2] * o.left + f[2] * o.forward,
     range: st.range,
+    // MAC-T1 (Mac, 2026-09-18: "a ball of light that hovers over the third person character when having a torch
+    // equipped"): THE LIGHT IN THE HAND SAYS SO. EL7's "no glare for the torch in the hand" was written as "within
+    // 1.5 of the CAMERA" (airPass.js, shadowPass.js's caster pick, enhancedLighting's contact march - one number,
+    // three laws), and the third-person camera stands 2.7 behind the hand, so the exemption lapsed and the bloom's
+    // glare sprite - a torso-sized additive ball - was painted over the body billboard, which the presence test took
+    // for a flame flat. DFU's PlayerTorch is a bare point light with no flare in any camera; the record carries the
+    // fact and the three laws read it. The composer (magicCandle.withPlayerLights) turns it into a per-light mask.
+    carried: true,
   };
 }
 

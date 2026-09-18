@@ -259,7 +259,7 @@ vec3 elPointLit(vec3 wp, vec3 n) {
     // F3: never for the light in the hand (the torch, a hand's width from every corner - shadowPass's SHADOW_CASTER_MIN_DISTANCE, the same law that keeps it out of the caster slots);
     // F5: and only within the share of the range where the light is worth a shadow
     float sh = k >= 0 ? pointShadowAt(k, wp, n)
-      : (d > uPointLights[i].w * ${glslFloat(AIR_CONTACT_RANGE_FRACTION)} || length(uPointLights[i].xyz - uCamPos) < ${glslFloat(SHADOW_CASTER_MIN_DISTANCE)}) ? 1.0
+      : (k == -2 || d > uPointLights[i].w * ${glslFloat(AIR_CONTACT_RANGE_FRACTION)} || length(uPointLights[i].xyz - uCamPos) < ${glslFloat(SHADOW_CASTER_MIN_DISTANCE)}) ? 1.0   // MAC-T1: -2 is the hand's light, by name
       : contactShadow(wp, n, Ln, d);
     // EL4: a glint - Blinn-Phong, a low gloss for stone and wood, a twelfth of the light: wet stone under a torch
     vec3 H = normalize(Ln + normalize(uCamPos - wp));

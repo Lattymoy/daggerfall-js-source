@@ -989,6 +989,8 @@ export class Renderer {
     this._flashLight = null;   // DS1: the storm's flash, composed in by setFlashLight
     this._flashLightScratch = new Float32Array(CLASSIC_MAX_LIGHTS * 4);
     this._flashColorScratch = new Float32Array(CLASSIC_MAX_LIGHTS * 3);
+    this._flashCarriedScratch = new Uint8Array(CLASSIC_MAX_LIGHTS);   // MAC-T1: the carried mask under the flash
+    this._pointCarried = null;   // MAC-T1: per-light, 1 for the light in the player's hand (withPlayerLights' mask), else null
     this._pointColor = new Float32Array([1, 1, 1]);
     // LT1: per-light colour x intensity (vec3 per light). null = every
     // light wears the shared _pointColor - the exterior lantern path,
@@ -1407,6 +1409,7 @@ export class Renderer {
     if (this._flashLightScratch.length < n * 4) {
       this._flashLightScratch = new Float32Array(n * 4);
       this._flashColorScratch = new Float32Array(n * 3);
+      this._flashCarriedScratch = new Uint8Array(n);
       this._pointColorScratch = new Float32Array(n * 3);
       this._pointColorDec = new Float32Array(n * 3);
     }
@@ -1538,14 +1541,14 @@ export class Renderer {
     this._camPos[2] = -(v[8] * v[12] + v[9] * v[13] + v[10] * v[14]);
     const bindVao = (vao) => this._bindVao(vao);
     sp.render({
-      eye: this._camPos, lightDir, sunScale: this._sunScale, pointLights: this._pointLights,
+      eye: this._camPos, lightDir, sunScale: this._sunScale, pointLights: this._pointLights, carried: this._pointCarried,   // MAC-T1
       textures: this.textures, isSpectral: isSpectralArchive, bindVao,
     });
     if (this._air) {
       const count = this._pointLights.length / 4;
       this._air.prepare({   // EL6: the inputs alone - the images are drawn at the resolve, off the frame's depth
         proj, view, lightDir, eye: this._camPos, sunScale: this._sunScale, sunColor: this._sunColor,
-        pointLights: this._pointLights, pointColors: count > 0 ? this._pointColorData(count) : null,
+        pointLights: this._pointLights, pointColors: count > 0 ? this._pointColorData(count) : null, carried: this._pointCarried,   // MAC-T1
         viewport: this._worldViewportPx ?? [0, 0, this.canvas.width, this.canvas.height],
         shadows: sp, textures: this.textures, emissionTextures: this.emissionTextures, blackTex: this._blackTex,
         windowEmission: this._windowEmission, isSpectral: isSpectralArchive, bindVao, clearColor: this._clearColor,
@@ -3086,6 +3089,10 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
    *  shared `color` - the exterior lantern path, unchanged. */
   setPointLights(data, color, colors = null) {
     const n = this.maxPointLights;   // EL1: the installed set's cap
+    // MAC-T1: the carried mask is a property of the composed array, and `subarray` returns a fresh view without it -
+    // so it is lifted FIRST, and cut to the same cap
+    const carried = data.carried ?? null;
+    this._pointCarried = carried ? carried.subarray(0, n) : null;
     this._pointLights = data.subarray ? data.subarray(0, n * 4) : data;
     if (color) this._pointColor = color;
     this._pointColors = colors ? (colors.subarray ? colors.subarray(0, n * 3) : colors) : null;
@@ -3110,6 +3117,12 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     out[0] = f.x; out[1] = f.y; out[2] = f.z; out[3] = f.range;
     out.set(data.subarray ? data.subarray(0, keep * 4) : data.slice(0, keep * 4), 4);
     this._pointLights = out.subarray(0, (keep + 1) * 4);
+    // MAC-T1: the mask shifts with the arrays - the flash takes slot 0 unmarked, the hand's light keeps its bit
+    if (this._pointCarried) {
+      const m = this._flashCarriedScratch;
+      m[0] = 0; m.set(this._pointCarried.subarray(0, keep), 1);
+      this._pointCarried = m.subarray(0, keep + 1);
+    }
     const c = this._flashColorScratch;
     c[0] = f.color[0]; c[1] = f.color[1]; c[2] = f.color[2];
     if (colors) {
