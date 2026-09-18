@@ -83,9 +83,11 @@ mini-map stays what it is - a HUD disc - and reads the same ink.
   through the same functions the classic window calls, so the two never
   drift. The junction disc reads the ink renderer's road picture.
 - **MAP3 - the Morrowind held pose.** A held-item pose for the
-  first-person arms (`formats/mwFirstPerson.js`, `combat/fpArm.js`), a
-  paper mesh, the rendered map as its texture, and the sprite lane kept
-  for the classic body. The first custom rig change; its own record.
+  first-person arms (`combat/heldPose.js` over `combat/fpArm.js`), a
+  paper piece on the rig, the ink sheet laid over the piece's projected
+  corners (`ui/quadMap.js`) rather than baked into a texture, and the
+  sprite lane kept for the classic body. The first custom rig change;
+  SHIPPED 2026-09-18, below.
 
 ## Doctrine, said once
 
@@ -336,3 +338,115 @@ once at open and deducts on Yes whether or not the player then goes).
 **Not this slice's.** F5 typed in the search box reloads the page - the
 host's own order skips its browser-key guard for any text target, the
 chargen name field included (pre-existing, host-side).
+
+## MAP3 - the Morrowind held pose (SHIPPED 2026-09-18)
+
+Mac: "Morrowind will need its own handcrafted map with hand placement
+just like the sprite. Our first custom rig change." `src/combat/heldPose.js`
+(the pose and the paper), `src/ui/quadMap.js` (the sheet over the
+paper's corners), and the seams in `src/combat/fpArm.js`,
+`src/combat/weaponRig.js`, `src/scenes/world.js` and `src/ui/heldMap.js`.
+The record of the rig change itself is in
+`bible/02-Formats/Morrowind-Rules.md` (MAP3); this is the window's side.
+
+**The two lanes.** The window opens in the SPRITE lane (MAP1) and asks
+the host's `holder` on its first tick whether the Morrowind arm was the
+thing drawn on the last frame (`weaponRig.armsDrawn()`, the draw seam's
+own record - set on the line before `if (fpArm.active()) { fpArm.draw(c);
+return; }`, reset at the top of every draw, so a hidden or unloaded or
+third-person arm answers no). On yes it hands the rig a sheet of the
+paper's own aspect (`holdPaper(null, { aspect })`) and takes the HANDS
+lane: the painting and its keyed thumbs go, the root goes clear (the
+world and the arm show through - `.hmroot.hmhands { background:
+transparent }`), and the ink canvas is laid over the four corners the
+rig projects. Asked per open, never snapshot: the arm can be built,
+unloaded or hidden between two presses of the key. A rig that has been
+built but not yet posed refuses the first hold (the eye is read off the
+last pose); the window asks again each tick, thirty times, then stays
+on the sprite. A host with no holder at all (every scene but the world)
+is the sprite lane.
+
+**The sheet over the paper.** The ink stays a DOM canvas at full
+resolution - the picture, the pointer surface, the whole of MAP1 and
+MAP2 unchanged - and is placed by a CSS `matrix3d`: a flat quad under a
+projective camera is exactly a homography, so `quadPlacement(w, h,
+corners)` (Heckbert's adjugate, unit square to the four corners, then
+the sheet's scale) is the forward map for the CSS and its inverse is the
+pointer's. Every pointer event goes through `_paperPoint`, which in the
+hands lane maps the client point through the inverse - a pick lands on
+the city under the angled sheet, a drag pans in SHEET pixels (the
+delta of two inverse-mapped points, not the screen delta; in the sprite
+lane the two are the same offset), the pinch's anchor likewise. The
+corners are re-read every tick and the matrix rewritten only when they
+move (keyed to a tenth of a pixel); no corners (the arm has not drawn,
+or a corner is behind the lens) hides the ink rather than leaving it
+stale. A resize keeps the 4:3 fit's paper size (PAPER of the stage, so
+the aspect is the same at any size) and re-holds so the rig re-places
+the paper. Dispose releases the arm in either lane.
+
+**The rig's side, briefly** (the record proper is Morrowind-Rules MAP3).
+The pose is a set of DELTAS in degrees about each bone's own axes,
+applied after the idle through the torch's track-map/sampler idiom
+(`{__delta, __base, __rest}` wrappers, `heldSampler` answering base
+TIMES delta) - the arm keeps breathing, the hands come up; the paper is
+a rigid parchment-coloured quad on the rig root, `forward` ahead and
+`drop` below the eye, `width` across, leaning back by `tilt`, its
+corners projected through the model, view and projection the last draw
+composed with; the weapon, the arrow and the torch are hidden while it
+is up; an equip-follow rebuild puts the sheet back on the next frame.
+
+**The tuning door, and the honest note.** `HELD_POSE_DEFAULT`'s bone
+deltas are ALL ZERO: the port was written against the fixture arm and
+the session had no retail `xbase_anim.1st.nif` to pose, so no number
+here claims to be right on retail bones. The pose is tuned LIVE:
+`window.__heldPose()` reads the pose in force while the map is up;
+`window.__heldPose({ bones: { 'left forearm': [rx, ry, rz], 'left hand':
+[...], ... }, paper: { width, forward, drop, tilt, colour } })` re-places
+the sheet on the arm as you watch, a PARTIAL spec changing only what it
+names (the pose in force is the base, so one bone or the paper alone can
+be walked in). Bones: the two arms, clavicle to hand, in the first-person
+skeleton's own names. Metres for the paper, degrees for the rest. The
+numbers Mac lands on go into `HELD_POSE_DEFAULT` as the shipped pose.
+
+**Not done, by decision.** The paper carries no texture (the ink is the
+DOM sheet over it; the piece is the parchment under the ink); the thumbs
+over the sheet are the arm's own hands, posed, not a keyed overlay;
+there is no separate handcrafted picture for Morrowind - the sheet is
+the same ink.
+
+**Pins.** `test/map3_heldpose.test.js` (16): the quaternion laws
+(Hamilton, the intrinsic X-Y-Z order, the 3x3 conversion through all four
+trace branches), `deltaTracks` (wrapped, zero skipped, missing bone
+skipped, lowercased, base untouched), `heldSampler` (base times delta,
+the base's translation, rest without a base, unwrapped passthrough),
+`paperCornersRig` (the eye, forward +Y, drop -Z, the aspect, the tilt's
+lean and foreshortening, the order), `paperPiece` (the root, both
+windings, the UVs, the colour copied), `projectPaperCorners` (the axis
+at the centre, +X right, +Y up on the lens is up the page, behind the
+lens null, the model applied), `normaliseHeldPose` (the merge over a
+base, the padding, the unknown bone, the NaN, the colour triple, the
+zero default); the quad map (the unit square, the projective row, all
+four corners, the diagonals, the inverse, the singular cases, the
+column-major CSS, the placement's box and mappers); the REAL fixture
+rig headless (mwtorch's harness): hold refused with nothing built, one
+paper piece on the root at the eye with the mesh released for the
+repack, a second hold replacing, release removing, corners null before
+the first draw and through the draw's own camera after it (a trapezium
+wider at the bottom, on the canvas for a smaller sheet, a rectangle at
+zero tilt), a forearm delta moving the hand and not the other arm, the
+door keeping the bones in force through a paper-only spec, the rebuild
+re-adding the sheet, unload dropping it; the hide lines, the draw seam's
+`_armDrewLast`, the holder on the one dep bag and the door.
+`test/heldmap.test.js` (+4, 71): the hands lane through a faked holder
+(sprite and thumbs gone, the matrix of the corners, the inverse pointer,
+a pick and a pan under the angle, moving corners, no corners, release
+once), the sprite lane when the arm is not drawn (never polled, still
+released at teardown, no holder at all), the thirty asks, the resize
+re-hold. Mutants: `tools/mutants/map3.json`, 39 dead, 0 survived.
+Browser: a MAP3 layer in `tools/mwArmProbe.mjs` (the fixture arm takes
+the sheet, a shown paper range, the pose read back, four corners on the
+canvas, the sheet's texels at the corners' centre, release) - the five
+geometric checks pass in this session's headless Chromium; the three
+texel readbacks could not be verified here, where the probe's OWN
+earlier texel layers (the clip's motion, the look) also fail on this
+container's GL, eight before MAP3 touched it.

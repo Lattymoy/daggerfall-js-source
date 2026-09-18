@@ -723,6 +723,56 @@ ok(Math.abs(fixBobUp.cy - fixBobRest.cy) < 0.005,
   `and the bob does not slide them against the view (cy ${fixBobRest.cy.toFixed(3)} -> ${fixBobUp.cy.toFixed(3)})`);
 
 
+// ── MAP3: THE HELD SHEET ─────────────────────────────────────────────
+// The held map hands the arm a sheet (combat/heldPose.js): a parchment
+// quad on the rig root where the eye looks, the arms posed by deltas over
+// the idle, the hand-carried pieces hidden. The window lays its ink over
+// the corners the arm projects, so the corners must be where the paper's
+// texels are - read back off the same target the arm draws to.
+const heldBefore = await shoot(0.016);
+const held = await page.evaluate(() => {
+  const arm = window.__arm;
+  // the fixture rig is metre-scaled: a sheet the default's size hangs
+  // off the bottom of its frame, so the probe's sheet is smaller and higher
+  const ok = arm.holdPaper({ paper: { width: 0.3, drop: 0.02, forward: 0.6 } }, { aspect: 1.6 });
+  window.__frame(); arm.update(0.016); const drew = arm.draw(window.__cv);
+  return { ok, drew, corners: arm.paperCorners(), ranges: arm.mesh().ranges.map((r) => [r.slot, r.hidden]), pose: arm.heldPose() };
+});
+ok(held.ok && held.drew, 'the fixture arm takes the sheet and draws with it');
+ok(held.ranges.some(([s, h]) => s === 'paper' && !h), `a paper range, shown (${held.ranges.map((r) => r[0]).join(' ')})`);
+ok(held.pose && held.pose.paper.width === 0.3 && held.pose.bones['left forearm'].every((v) => v === 0), 'the pose in force reads back: the probe\'s paper over the default (zero) deltas');
+const W = 960, Hh = 720;
+ok(Array.isArray(held.corners) && held.corners.length === 4 && held.corners.every(([x, y]) => x > 0 && x < W && y > 0 && y < Hh),
+  `four corners on the canvas (${(held.corners || []).map((c) => c.map((v) => v.toFixed(0)).join(',')).join(' ')})`);
+const heldShot = await shoot(0.016);
+ok(heldShot.lit > heldBefore.lit * 1.2, `the sheet adds texels to the frame (${heldBefore.lit} -> ${heldShot.lit})`);
+// the texel under the corners' centre is lit: the paper is WHERE the corners say
+const centreLit = await page.evaluate(() => {
+  const arm = window.__arm;
+  const c = arm.paperCorners();
+  const cx = (c[0][0] + c[2][0]) / 2, cy = (c[0][1] + c[2][1]) / 2;   // the diagonals cross at the sheet's centre
+  const vp = window.__vp;
+  const tx = Math.round(cx / window.__cv.clientWidth * vp.pw), ty = Math.round((1 - cy / window.__cv.clientHeight) * vp.ph);
+  const gl = window.__r.gl;
+  const cs = window.__r._charSpriteRT();
+  gl.bindFramebuffer(gl.FRAMEBUFFER, cs.fbo);
+  const px = new Uint8Array(4);
+  gl.readPixels(Math.min(vp.pw - 1, Math.max(0, tx)), Math.min(vp.ph - 1, Math.max(0, ty)), 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, px);
+  gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+  return { tx, ty, alpha: px[3], rgb: [px[0], px[1], px[2]] };
+});
+ok(centreLit.alpha > 8, `the texel under the corners' centre is the sheet (alpha ${centreLit.alpha} at ${centreLit.tx},${centreLit.ty})`);
+ok(centreLit.rgb[0] >= centreLit.rgb[2], `and it is parchment, warmer than blue (${centreLit.rgb.join(',')})`);
+const released = await page.evaluate(() => {
+  const arm = window.__arm;
+  const r = arm.releasePaper();
+  window.__frame(); arm.update(0.016); arm.draw(window.__cv);
+  return { r, corners: arm.paperCorners(), ranges: arm.mesh().ranges.map((x) => x[0]), pose: arm.heldPose() };
+});
+const afterShot = await shoot(0.016);
+ok(released.r && released.corners === null && released.pose === null && !released.ranges.includes('paper'), 'released: no sheet, no corners, no pose');
+ok(Math.abs(afterShot.lit - heldBefore.lit) < heldBefore.lit * 0.05, `and the frame is the arm alone again (${heldBefore.lit} -> ${afterShot.lit})`);
+
 // ── L6: THE SILENT FAILURE, REFUSED RATHER THAN DRAWN ───────────────
 // A .kf keyed to bones this skeleton lacks poses NOTHING: poseSkeleton
 // answers every bone with node.rest and draws a clean, static, entirely

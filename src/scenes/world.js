@@ -5219,6 +5219,18 @@ export async function bootWorld(canvas, renderer, params, status) {
       // the enum's own name is spaced out ("GeneralStore" -> "General
       // Store"). Recorded in bible/06-Systems/Travel-Options.md.
       buildingTypeName: (t) => (Object.keys(TALK_BUILDING_TYPES).find((k) => TALK_BUILDING_TYPES[k] === t) ?? String(t)).replace(/([a-z])([A-Z])/g, '$1 $2'),
+      // MAP3: THE MORROWIND HELD POSE. When the Morrowind arm is the
+      // thing drawn on screen, the held map hands its sheet to the rig
+      // (combat/fpArm.js holdPaper) and lays its ink over the sheet's
+      // projected corners; on the classic body the sprite lane stands.
+      // Asked per open, never snapshot: the arm can be built, unloaded or
+      // hidden between two presses of the key.
+      holder: {
+        available: () => !!weaponRig?.armsDrawn?.(),
+        hold: (spec, opts) => !!weaponRig?.holdPaper?.(spec, opts),
+        release: () => { weaponRig?.releasePaper?.(); },
+        corners: () => weaponRig?.paperCorners?.() ?? null,
+      },
       ...extra,
     });
   }
@@ -6029,6 +6041,11 @@ export async function bootWorld(canvas, renderer, params, status) {
       return JSON.stringify(out);
     };
     window.__talk = () => JSON.stringify(townTalk._debug());   // T3b probe surface
+    // MAP3: the held pose's tuning door - `__heldPose()` reads the pose in
+    // force while the map is up, `__heldPose({ bones: { 'left forearm':
+    // [rx, ry, rz], ... }, paper: { width, forward, drop, tilt } })` re-places
+    // the sheet on the live arm (bible/10-UI/Held-Map-Arc.md, MAP3)
+    window.__heldPose = (spec) => (spec ? weaponRig?.setHeldPose?.(spec) : weaponRig?.heldPose?.());
     window.__chargenRace = () => townTalk._debug().overlayFlow?.race?.key ?? null;   // U10 probe surface
     window.__chargenConfirm = () => townTalk._debug().overlayFlow?.raceConfirm ?? null;   // U11 probe surface
     window.__chargenFlow = () => townTalk._debug().overlayFlow ?? null;   // S3e probe surface

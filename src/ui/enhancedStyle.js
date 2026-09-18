@@ -1238,6 +1238,10 @@ body.draglock .wornrow, body.draglock .wornmap { touch-action: none; }
   font-family: var(--body, sans-serif); color: var(--bone);
 }
 .hmroot:active { cursor: grabbing; }
+/* MAP3: the hands lane - the Morrowind arm and the world show through,
+   the ink canvas lies on the held paper under its matrix3d */
+.hmroot.hmhands { background: transparent; }
+.hmroot.hmhands .hmink { will-change: transform; }
 .hmstage { position: absolute; }
 /* the painting is 1448x1086 and is only ever shown SMALLER than that, so
    it is scaled smooth - a pixelated downscale would alias its dither */

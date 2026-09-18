@@ -1,0 +1,353 @@
+[
+ {
+  "name": "euler-zyx",
+  "file": "src/combat/heldPose.js",
+  "old": "  return quatMul(quatMul(quatAxis(0, e[0] ?? 0), quatAxis(1, e[1] ?? 0)), quatAxis(2, e[2] ?? 0));",
+  "new": "  return quatMul(quatMul(quatAxis(2, e[2] ?? 0), quatAxis(1, e[1] ?? 0)), quatAxis(0, e[0] ?? 0));",
+  "tests": [
+   "test/map3_heldpose.test.js"
+  ]
+ },
+ {
+  "name": "zero-delta-wrapped",
+  "file": "src/combat/heldPose.js",
+  "old": "    if (isZero(bones[name])) continue;   // a zero delta leaves the idle alone\n",
+  "new": "",
+  "tests": [
+   "test/map3_heldpose.test.js"
+  ]
+ },
+ {
+  "name": "missing-bone-wrapped",
+  "file": "src/combat/heldPose.js",
+  "old": "    if (!node) continue;                 // a bone this skeleton does not have is not posed",
+  "new": "    if (!node) { out.set(key, { __delta: quatFromEulerDeg(bones[name]), __base: base?.get(key) ?? null, __rest: [0, 0, 0, 1] }); continue; }",
+  "tests": [
+   "test/map3_heldpose.test.js"
+  ]
+ },
+ {
+  "name": "delta-times-base",
+  "file": "src/combat/heldPose.js",
+  "old": "    return { rotation: quatMul(q, track.__delta), translation: base?.translation ?? null, scale: base?.scale ?? null };",
+  "new": "    return { rotation: quatMul(track.__delta, q), translation: base?.translation ?? null, scale: base?.scale ?? null };",
+  "tests": [
+   "test/map3_heldpose.test.js"
+  ]
+ },
+ {
+  "name": "translation-dropped",
+  "file": "src/combat/heldPose.js",
+  "old": "    return { rotation: quatMul(q, track.__delta), translation: base?.translation ?? null, scale: base?.scale ?? null };",
+  "new": "    return { rotation: quatMul(q, track.__delta), translation: null, scale: base?.scale ?? null };",
+  "tests": [
+   "test/map3_heldpose.test.js"
+  ]
+ },
+ {
+  "name": "drop-up",
+  "file": "src/combat/heldPose.js",
+  "old": "cz = eye[2] - paper.drop * UNITS_PER_METRE;",
+  "new": "cz = eye[2] + paper.drop * UNITS_PER_METRE;",
+  "tests": [
+   "test/map3_heldpose.test.js"
+  ]
+ },
+ {
+  "name": "tilt-forward",
+  "file": "src/combat/heldPose.js",
+  "old": "  const uy = Math.sin(t), uz = Math.cos(t);",
+  "new": "  const uy = -Math.sin(t), uz = Math.cos(t);",
+  "tests": [
+   "test/map3_heldpose.test.js"
+  ]
+ },
+ {
+  "name": "one-winding",
+  "file": "src/combat/heldPose.js",
+  "old": "    indices: new Uint16Array([0, 1, 2, 0, 2, 3, 0, 2, 1, 0, 3, 2]),",
+  "new": "    indices: new Uint16Array([0, 1, 2, 0, 2, 3]),",
+  "tests": [
+   "test/map3_heldpose.test.js"
+  ]
+ },
+ {
+  "name": "uvs-flipped",
+  "file": "src/combat/heldPose.js",
+  "old": "    uvs: new Float32Array([0, 0, 1, 0, 1, 1, 0, 1]),",
+  "new": "    uvs: new Float32Array([0, 1, 1, 1, 1, 0, 0, 0]),",
+  "tests": [
+   "test/map3_heldpose.test.js"
+  ]
+ },
+ {
+  "name": "y-not-flipped",
+  "file": "src/combat/heldPose.js",
+  "old": "    out.push([rect.x + (cx * 0.5 + 0.5) * rect.w, rect.y + (1 - (cy * 0.5 + 0.5)) * rect.h]);",
+  "new": "    out.push([rect.x + (cx * 0.5 + 0.5) * rect.w, rect.y + (cy * 0.5 + 0.5) * rect.h]);",
+  "tests": [
+   "test/map3_heldpose.test.js"
+  ]
+ },
+ {
+  "name": "behind-lens-projected",
+  "file": "src/combat/heldPose.js",
+  "old": "    if (!(cw > 1e-6)) return null;",
+  "new": "    if (cw === 0) return null;",
+  "tests": [
+   "test/map3_heldpose.test.js"
+  ]
+ },
+ {
+  "name": "nan-through",
+  "file": "src/combat/heldPose.js",
+  "old": "    bones[name] = [0, 1, 2].map((i) => (Number.isFinite(+e[i]) ? +e[i] : 0));",
+  "new": "    bones[name] = [0, 1, 2].map((i) => +e[i]);",
+  "tests": [
+   "test/map3_heldpose.test.js"
+  ]
+ },
+ {
+  "name": "colour-any-length",
+  "file": "src/combat/heldPose.js",
+  "old": "  const colour = Array.isArray(p.colour) && p.colour.length === 3 ?",
+  "new": "  const colour = Array.isArray(p.colour) && p.colour.length >= 2 ?",
+  "tests": [
+   "test/map3_heldpose.test.js"
+  ]
+ },
+ {
+  "name": "partial-resets-bones",
+  "file": "src/combat/heldPose.js",
+  "old": "    const e = spec?.bones?.[name] ?? base?.bones?.[name] ?? HELD_POSE_DEFAULT.bones[name];",
+  "new": "    const e = spec?.bones?.[name] ?? HELD_POSE_DEFAULT.bones[name];",
+  "tests": [
+   "test/map3_heldpose.test.js"
+  ]
+ },
+ {
+  "name": "affine-only",
+  "file": "src/ui/quadMap.js",
+  "old": "    g = (dx3 * dy2 - dx2 * dy3) / det;",
+  "new": "    g = 0;",
+  "tests": [
+   "test/map3_heldpose.test.js"
+  ]
+ },
+ {
+  "name": "matrix3d-row-major",
+  "file": "src/ui/quadMap.js",
+  "old": "    a, d, 0, g,\n    b, e, 0, h,",
+  "new": "    a, b, 0, c,\n    d, e, 0, f,",
+  "tests": [
+   "test/map3_heldpose.test.js"
+  ]
+ },
+ {
+  "name": "degenerate-placed",
+  "file": "src/ui/quadMap.js",
+  "old": "  const inv = invertH(H);\n  if (!inv) return null;",
+  "new": "  const inv = invertH(H) ?? H;",
+  "tests": [
+   "test/map3_heldpose.test.js"
+  ]
+ },
+ {
+  "name": "box-from-first-two",
+  "file": "src/ui/quadMap.js",
+  "old": "w: Math.max(...xs) - Math.min(...xs), h: Math.max(...ys) - Math.min(...ys) },",
+  "new": "w: xs[1] - xs[0], h: ys[2] - ys[1] },",
+  "tests": [
+   "test/map3_heldpose.test.js"
+  ]
+ },
+ {
+  "name": "paper-stacked",
+  "file": "src/combat/fpArm.js",
+  "old": "      built.arm.pieces = built.arm.pieces.filter((p) => p.slot !== 'paper');\n      built.arm.pieces.push(piece);",
+  "new": "      built.arm.pieces.push(piece);",
+  "tests": [
+   "test/map3_heldpose.test.js"
+  ]
+ },
+ {
+  "name": "no-repack",
+  "file": "src/combat/fpArm.js",
+  "old": "      releaseMesh(); packed = null;\n      return true;\n    },\n    /** MAP3: the sheet goes",
+  "new": "      return true;\n    },\n    /** MAP3: the sheet goes",
+  "tests": [
+   "test/map3_heldpose.test.js"
+  ]
+ },
+ {
+  "name": "paper-kept-on-release",
+  "file": "src/combat/fpArm.js",
+  "old": "      if (built && built.ok) built.arm.pieces = built.arm.pieces.filter((p) => p.slot !== 'paper');\n",
+  "new": "",
+  "tests": [
+   "test/map3_heldpose.test.js"
+  ]
+ },
+ {
+  "name": "weapon-shown-while-held",
+  "file": "src/combat/fpArm.js",
+  "old": "        if (held && (r.slot === 'weapon' || r.slot === 'arrow' || r.slot === 'torch')) r.hidden = true;\n",
+  "new": "",
+  "tests": [
+   "test/map3_heldpose.test.js"
+  ]
+ },
+ {
+  "name": "corners-before-draw",
+  "file": "src/combat/fpArm.js",
+  "old": "      if (!held || !lastFrame || !mesh) return null;",
+  "new": "      if (!held || !mesh) return null;",
+  "tests": [
+   "test/map3_heldpose.test.js"
+  ]
+ },
+ {
+  "name": "delta-not-applied",
+  "file": "src/combat/fpArm.js",
+  "old": "        fTracks = hm.tracks; fSampler = hm.sampler;",
+  "new": "        fSampler = hm.sampler;",
+  "tests": [
+   "test/map3_heldpose.test.js"
+  ]
+ },
+ {
+  "name": "rebuild-no-readd",
+  "file": "src/combat/fpArm.js",
+  "old": "        if (!built.arm.pieces.includes(held.piece)) {",
+  "new": "        if (false) {",
+  "tests": [
+   "test/map3_heldpose.test.js"
+  ]
+ },
+ {
+  "name": "unload-keeps-held",
+  "file": "src/combat/fpArm.js",
+  "old": "      held = null; heldMemo = null; lastFrame = null;   // MAP3: the sheet goes with the rig",
+  "new": "      lastFrame = null;",
+  "tests": [
+   "test/map3_heldpose.test.js"
+  ]
+ },
+ {
+  "name": "door-partial-resets",
+  "file": "src/combat/fpArm.js",
+  "old": "      const s = normaliseHeldPose(spec, held ? held.spec : HELD_POSE_DEFAULT);",
+  "new": "      const s = normaliseHeldPose(spec);",
+  "tests": [
+   "test/map3_heldpose.test.js"
+  ]
+ },
+ {
+  "name": "armsDrawn-from-active",
+  "file": "src/combat/weaponRig.js",
+  "old": "      _armDrewLast = !eotbHidesWeapon() && fpArm.active();   // MAP3: the two lines below draw the arm exactly when this is true\n",
+  "new": "",
+  "tests": [
+   "test/map3_heldpose.test.js"
+  ]
+ },
+ {
+  "name": "lane-never-hands",
+  "file": "src/ui/heldMap.js",
+  "old": "    this._lane = 'hands';\n    this._handsTries = 0;",
+  "new": "    this._handsTries = 0;",
+  "tests": [
+   "test/heldmap.test.js"
+  ]
+ },
+ {
+  "name": "sprite-shown-in-hands",
+  "file": "src/ui/heldMap.js",
+  "old": "    c.sprite.style.display = 'none';\n    c.hands.style.display = 'none';",
+  "new": "    c.hands.style.display = 'none';",
+  "tests": [
+   "test/heldmap.test.js"
+  ]
+ },
+ {
+  "name": "transform-not-set",
+  "file": "src/ui/heldMap.js",
+  "old": "    if (q) { ink.style.transform = q.css; ink.style.opacity = '1'; } else { ink.style.opacity = '0'; }",
+  "new": "    if (q) { ink.style.opacity = '1'; } else { ink.style.opacity = '0'; }",
+  "tests": [
+   "test/heldmap.test.js"
+  ]
+ },
+ {
+  "name": "placed-null-not-hidden",
+  "file": "src/ui/heldMap.js",
+  "old": "    if (q) { ink.style.transform = q.css; ink.style.opacity = '1'; } else { ink.style.opacity = '0'; }",
+  "new": "    if (q) { ink.style.transform = q.css; ink.style.opacity = '1'; }",
+  "tests": [
+   "test/heldmap.test.js"
+  ]
+ },
+ {
+  "name": "pointer-not-inverted",
+  "file": "src/ui/heldMap.js",
+  "old": "      const p = this._placement?.toSheet(clientX - r.left, clientY - r.top);",
+  "new": "      const p = [clientX - r.left, clientY - r.top];",
+  "tests": [
+   "test/heldmap.test.js"
+  ]
+ },
+ {
+  "name": "pan-in-screen-px",
+  "file": "src/ui/heldMap.js",
+  "old": "        this._setView({ ox: downAt.ox - (bx - ax) / this._view.scale, oy: downAt.oy - (by - ay) / this._view.scale, scale: this._view.scale });",
+  "new": "        this._setView({ ox: downAt.ox - dx / this._view.scale, oy: downAt.oy - dy / this._view.scale, scale: this._view.scale });",
+  "tests": [
+   "test/heldmap.test.js"
+  ]
+ },
+ {
+  "name": "release-dropped",
+  "file": "src/ui/heldMap.js",
+  "old": "    this.deps.holder?.release?.();   // MAP3: the arms let the sheet go, whichever lane stood\n",
+  "new": "",
+  "tests": [
+   "test/heldmap.test.js"
+  ]
+ },
+ {
+  "name": "hands-without-arm",
+  "file": "src/ui/heldMap.js",
+  "old": "    if (this._lane === 'hands' || !h?.available?.()) {",
+  "new": "    if (this._lane === 'hands' || !h) {",
+  "tests": [
+   "test/heldmap.test.js"
+  ]
+ },
+ {
+  "name": "no-retry",
+  "file": "src/ui/heldMap.js",
+  "old": "    else if (!first && this._handsTries > 0 && this._handsTries < 30) { this._handsTries++; this._tryHands(); }",
+  "new": "    else if (false) { this._handsTries++; this._tryHands(); }",
+  "tests": [
+   "test/heldmap.test.js"
+  ]
+ },
+ {
+  "name": "retry-forever",
+  "file": "src/ui/heldMap.js",
+  "old": "    else if (!first && this._handsTries > 0 && this._handsTries < 30) { this._handsTries++; this._tryHands(); }",
+  "new": "    else if (!first && this._handsTries > 0) { this._handsTries++; this._tryHands(); }",
+  "tests": [
+   "test/heldmap.test.js"
+  ]
+ },
+ {
+  "name": "resize-keeps-old-aspect",
+  "file": "src/ui/heldMap.js",
+  "old": "      this.deps.holder?.hold?.(null, { aspect: pw / ph });\n",
+  "new": "",
+  "tests": [
+   "test/heldmap.test.js"
+  ]
+ }
+]

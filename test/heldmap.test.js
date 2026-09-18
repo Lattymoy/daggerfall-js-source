@@ -42,6 +42,7 @@ import {
   BAND_MARKS, BAND_NAMES, SCALE_MAX, PEN,
 } from '../src/ui/inkMap.js';
 import { PARTY_MARK_CSS } from '../src/ui/partyMapMarks.js';
+import { quadPlacement } from '../src/ui/quadMap.js';   // MAP3
 import { getPixelColorIndex } from '../src/ui/travelMapWindow.js';
 import { CLIMATES, LOCATION_TYPES, mapPixelToLongitudeLatitude } from '../src/formats/mapsFile.js';
 import { SCALED_OCEAN_ELEVATION } from '../src/world/terrainSampler.js';
@@ -1651,4 +1652,157 @@ test('AUDIT-MAP H6/perf: a box holds the whole chrome (the modal class), the sta
   const ctx2 = recordingCtx();
   paintInkStatic(ctx2, { coast: [], borders: [], roads: [], tracks: [], regions: [], high: [], marks: [] }, { ox: 0, oy: 0, scale: 10 }, { paperW: 60, paperH: 40, band: 'near' });
   assert.ok(!ctx2.calls.some((c) => c.fn === 'arc'));
+});
+
+// ── MAP3: THE HANDS LANE ─────────────────────────────────────────
+
+/** The host's holder, faked: says whether the arm is drawn, takes the
+ *  sheet (or not yet), answers the corners it projected. */
+const holderStub = ({ available = true, holdOk = () => true, corners = () => null } = {}) => {
+  const h = {
+    calls: [],
+    available: () => available,
+    hold: (spec, opts) => { h.calls.push(['hold', spec, opts.aspect]); return holdOk(); },
+    release: () => { h.calls.push(['release']); },
+    corners,
+  };
+  return h;
+};
+const TRAPEZIUM = [[150, 300], [650, 300], [730, 700], [70, 700]];
+const bayDeps = () => {
+  const mapDict = new Map();
+  const sm = summaryOf(500, 250, LOCATION_TYPES.TownCity); mapDict.set(sm.id, sm);
+  return { mapSize: { width: 1000, height: 500 }, woods: { heightMapBuffer: new Uint8Array(500000).fill(10) }, mapDict, maps: { regionCount: 1, getRegion: () => ({ mapNames: ['A', 'B', 'C', 'Wayrest'] }), getPoliticIndex: () => 128 } };
+};
+
+test('MAP3 hands lane: when the holder says the arm is drawn and takes the sheet, the sprite and its thumbs go, the root goes clear, and the ink canvas is laid over the holder\'s corners by the quad map - the sheet keeps the 4:3 fit\'s size, the pointer maps back through the inverse, a pick lands on the city under the angled sheet, a drag pans in SHEET pixels, no corners hides the ink, and dispose releases the arm once (mutants: lane-never-hands, sprite-shown-in-hands, transform-not-set, pointer-not-inverted, pan-in-screen-px, release-dropped)', () => {
+  withDocument(() => {
+    globalThis.innerWidth = 1600; globalThis.innerHeight = 900;
+    try {
+      let corners = TRAPEZIUM;
+      const holder = holderStub({ corners: () => corners });
+      const win = open(mkWin({ ...bayDeps(), holder }));
+      assert.equal(win._lane, 'hands');
+      assert.equal(holder.calls.filter((c) => c[0] === 'hold').length, 1, 'asked once on the first tick');
+      const [, spec, aspect] = holder.calls[0];
+      assert.equal(spec, null, 'no spec from the window: the rig\'s pose in force');
+      assert.ok(Math.abs(aspect - win._paper.w / win._paper.h) < 1e-9, 'the sheet\'s own aspect, from the 4:3 fit');
+      const c = win._chrome;
+      assert.equal(c.sprite.style.display, 'none');
+      assert.equal(c.hands.style.display, 'none', 'the keyed thumbs go with the painting');
+      assert.equal(c.stage.style.width, '100%');
+      assert.equal(c.ink.style.left, '0px', 'the canvas sits at the origin under its matrix');
+      assert.equal(c.ink.style.transformOrigin, '0 0');
+      const q = quadPlacement(win._paper.w, win._paper.h, TRAPEZIUM);
+      assert.equal(c.ink.style.transform, q.css, 'the matrix3d of the corners');
+      assert.equal(c.ink.style.opacity, '1');
+      const probe = JSON.parse(globalThis.__heldMap());
+      assert.equal(probe.lane, 'hands'); assert.equal(probe.placed, true);
+      // the pointer: the top-right corner is the sheet's (w, 0)
+      const tr = win._paperPoint(650, 300);
+      assert.ok(Math.abs(tr[0] - win._paper.w) < 1e-6 && Math.abs(tr[1]) < 1e-6, `inverse: ${tr}`);
+      // a pick through the angle: the city's sheet point, sent through the forward map
+      const stage = c.stage;
+      const ev = (id, x, y) => ({ pointerId: id, clientX: x, clientY: y, button: 0, preventDefault() {} });
+      win._setView({ ox: 450, oy: 220, scale: 8 });   // zoomed in, so a pan has room under the clamp
+      assert.equal(win._view.scale, 8);
+      const [px, py] = toPaper(win._view, 500.5, 250.5);
+      const [sx, sy] = q.toScreen(px, py);
+      fire(stage, 'pointerdown', ev(1, sx, sy));
+      fire(stage, 'pointerup', ev(1, sx, sy));
+      assert.equal(win._selected?.name, 'Wayrest', 'picked under the angled sheet');
+      // a drag: the map point under the finger stays under it
+      win._selected = null;
+      const before = toMap(win._view, ...win._paperPoint(sx, sy));
+      fire(stage, 'pointerdown', ev(2, sx, sy));
+      fire(stage, 'pointermove', ev(2, sx + 60, sy + 40));
+      const after = toMap(win._view, ...win._paperPoint(sx + 60, sy + 40));
+      assert.ok(Math.abs(after[0] - before[0]) < 1e-6 && Math.abs(after[1] - before[1]) < 1e-6, 'the pan is measured on the sheet, not the screen');
+      fire(stage, 'pointerup', ev(2, sx + 60, sy + 40));
+      assert.equal(win._selected, null, 'a drag is not a pick');
+      // the arm moves: the corners move, the matrix follows
+      corners = TRAPEZIUM.map(([x, y]) => [x + 10, y]);
+      win.tick(0.05);
+      assert.equal(c.ink.style.transform, quadPlacement(win._paper.w, win._paper.h, corners).css);
+      // no corners (the arm has not drawn, or a corner is behind the lens): hidden, not stale
+      corners = null;
+      win.tick(0.05);
+      assert.equal(c.ink.style.opacity, '0');
+      assert.equal(JSON.parse(globalThis.__heldMap()).placed, false);
+      assert.deepEqual(win._paperPoint(100, 100), [-1e9, -1e9], 'and nothing is under the pointer');
+      corners = TRAPEZIUM;
+      win.tick(0.05);
+      assert.equal(c.ink.style.opacity, '1');
+      assert.equal(holder.calls.filter((c2) => c2[0] === 'release').length, 0);
+      win.dispose();
+      assert.deepEqual(holder.calls.filter((c2) => c2[0] === 'release'), [['release']], 'released once');
+    } finally { delete globalThis.innerWidth; delete globalThis.innerHeight; }
+  });
+});
+
+test('MAP3 sprite lane stands when the arm is not drawn: no hold is asked, the painting shows, the pointer is the plain offset - and the holder is still released at teardown, whichever lane stood; no holder at all (a host without a rig) is the sprite lane (mutants: hands-without-arm, release-only-in-hands)', () => {
+  withDocument(() => {
+    const holder = holderStub({ available: false });
+    const win = open(mkWin({ holder }));
+    assert.equal(win._lane, 'sprite');
+    assert.ok(!holder.calls.some((c) => c[0] === 'hold'), 'never asked');
+    assert.notEqual(win._chrome.sprite.style.display, 'none');
+    assert.deepEqual(win._paperPoint(30, 40), [30, 40]);
+    assert.equal(JSON.parse(globalThis.__heldMap()).lane, 'sprite');
+    for (let i = 0; i < 40; i++) win.tick(0.05);
+    assert.ok(!holder.calls.some((c) => c[0] === 'hold'), 'and not later either: an arm that is not drawn is not polled');
+    win.dispose();
+    assert.deepEqual(holder.calls, [['release']]);
+    const bare = open(mkWin());
+    assert.equal(bare._lane, 'sprite');
+    bare.dispose();
+  });
+});
+
+test('MAP3 the rig that has not posed yet: the holder refuses the first hold, the window asks again each tick and takes the hands lane when the rig answers; a rig that never answers is asked thirty times and then left alone (mutants: no-retry, retry-forever)', () => {
+  withDocument(() => {
+    let ok = false;
+    const holder = holderStub({ holdOk: () => ok, corners: () => TRAPEZIUM });
+    const win = mkWin({ holder });
+    win.tick(0.05); win.tick(0.05); win.tick(0.05);
+    assert.equal(win._lane, 'sprite');
+    assert.equal(holder.calls.filter((c) => c[0] === 'hold').length, 3, 'asked on every tick so far');
+    ok = true;
+    win.tick(0.05);
+    assert.equal(win._lane, 'hands', 'the fourth ask lands');
+    assert.equal(win._chrome.sprite.style.display, 'none');
+    win.tick(0.05);
+    assert.equal(holder.calls.filter((c) => c[0] === 'hold').length, 4, 'held: no more asking');
+    win.dispose();
+    const never = holderStub({ holdOk: () => false });
+    const w2 = mkWin({ holder: never });
+    for (let i = 0; i < 80; i++) w2.tick(0.05);
+    assert.equal(never.calls.filter((c) => c[0] === 'hold').length, 30, 'thirty asks, then the sprite lane for good');
+    assert.equal(w2._lane, 'sprite');
+    w2.dispose();
+  });
+});
+
+test('MAP3 a resize in the hands lane re-holds at the new aspect - the sheet is the 4:3 fit\'s paper again, the canvas stays at the origin, the corners key is dropped so the next tick re-places (mutants: resize-keeps-old-aspect)', () => {
+  withDocument(() => {
+    globalThis.innerWidth = 1600; globalThis.innerHeight = 900;
+    try {
+      const holder = holderStub({ corners: () => TRAPEZIUM });
+      const win = open(mkWin({ holder }));
+      assert.equal(win._lane, 'hands');
+      const holds = () => holder.calls.filter((c) => c[0] === 'hold');
+      assert.equal(holds().length, 1);
+      const a1 = holds()[0][2];
+      globalThis.innerWidth = 700; globalThis.innerHeight = 900;   // a tall window: the 4:3 fit shrinks
+      win.tick(0.05);
+      assert.equal(holds().length, 2, 're-held on the layout that moved');
+      assert.ok(Math.abs(holds()[1][2] - win._paper.w / win._paper.h) < 1e-9);
+      assert.ok(Math.abs(a1 - holds()[1][2]) < 1e-9, 'PAPER of a 4:3 stage: the same aspect at any size');
+      assert.equal(win._chrome.ink.style.left, '0px');
+      assert.equal(win._chrome.ink.style.transform, quadPlacement(win._paper.w, win._paper.h, TRAPEZIUM).css, 're-placed for the new sheet size');
+      win.tick(0.05);
+      assert.equal(holds().length, 2, 'a no-op layout does not re-hold');
+      win.dispose();
+    } finally { delete globalThis.innerWidth; delete globalThis.innerHeight; }
+  });
 });

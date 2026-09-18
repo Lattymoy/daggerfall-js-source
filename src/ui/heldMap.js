@@ -110,6 +110,7 @@ import {
   PARTY_MARK_CSS, PARTY_OFFLINE_CSS, PARTY_LEGEND_TEXT,
 } from './partyMapMarks.js';
 import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
+import { quadPlacement } from './quadMap.js';   // MAP3: the sheet over the held paper's corners
 import { bindings } from './input.js';
 import { actionForCode } from '../systems/inputActions.js';
 
@@ -187,6 +188,18 @@ export class HeldMapWindow {
     this._clock = 0;
     this._commit = null;    // { kind, pick, opts, computed }
 
+    // MAP3: THE LANE. 'sprite' is Mac's painting (MAP1); 'hands' is the
+    // Morrowind arm holding the sheet, entered when the host's `holder`
+    // says the arm is drawn and takes the sheet - the ink canvas then
+    // goes transparent-backed and is laid over the paper piece's
+    // projected corners by a CSS matrix3d (ui/quadMap.js), the pointer
+    // mapped back through the inverse. Decided on the first tick (the
+    // sheet needs its size, which the layout gives), retried for a few
+    // ticks while the rig has not been posed yet.
+    this._lane = 'sprite';
+    this._placement = null;    // quadPlacement, in the hands lane
+    this._cornersKey = '';
+    this._handsTries = 0;
     this._model = null;     // the ink model, minted on the first layout
     this._marksDirty = true;
     this._marksVersion = 0;
@@ -232,6 +245,7 @@ export class HeldMapWindow {
       view: { ox: Math.round(this._view.ox * 10) / 10, oy: Math.round(this._view.oy * 10) / 10, scale: Math.round(this._view.scale * 100) / 100 },
       band: zoomBand(this._view.scale),
       paper: { w: Math.round(this._paper.w), h: Math.round(this._paper.h) },
+      lane: this._lane, placed: !!this._placement,   // MAP3
       marks: this._model?.marks.length ?? 0,
       party: this._party.map((m) => `${m.name}@${m.px},${m.py}${m.in ? `/${m.in}` : ''}${m.online ? '' : '-off'}`),
       selected: this._selected?.name ?? null,
@@ -340,9 +354,11 @@ export class HeldMapWindow {
   tick(dt) {
     if (this.done) return;   // a torn-down window has no chrome to drive
     this._clock += dt;
-    if (!this._ticked) {
+    const first = !this._ticked;
+    if (first) {
       this._ticked = true;
       this._layout();
+      this._tryHands();   // MAP3: the Morrowind arm takes the sheet, if it is drawn
       if (this._gotoPlace) { this._consumeGotoPlace(); this._gotoPlace = null; }
       // MAP2 (TravelOptionsMapWindow.cs:322-345): opened during a journey,
       // the sheet centres on the player; opened with a destination still
@@ -360,6 +376,10 @@ export class HeldMapWindow {
     this._partyPoll -= dt;
     if (this._partyPoll <= 0) { this._partyPoll = PARTY_POLL_S; this._refreshParty(); }
     this._layout();
+    // MAP3: the hands lane follows the arm every frame; the sprite lane
+    // keeps asking for a few ticks in case the rig had not posed yet
+    if (this._lane === 'hands') this._placeOnHands();
+    else if (!first && this._handsTries > 0 && this._handsTries < 30) { this._handsTries++; this._tryHands(); }
     this._t += dt;
     switch (this._phase) {
       case 'opening': {
@@ -423,6 +443,7 @@ export class HeldMapWindow {
   _teardown() {
     if (this._tornDown) return;
     this._tornDown = true;
+    this.deps.holder?.release?.();   // MAP3: the arms let the sheet go, whichever lane stood
     this._unmountChrome();
     // ownership-checked: a second window minted after this one owns
     // the surface now, and an unconditional delete would blind it
@@ -493,6 +514,15 @@ export class HeldMapWindow {
     const firstLayout = this._paper.w === 1;
     this._paper = { w: pw, h: ph, dpr };
     this._stage = { x: sx, y: sy, w: sw, h: sh };
+    if (this._lane === 'hands') {
+      // MAP3: the sheet keeps the size the 4:3 fit gives it, but sits at
+      // the root's origin under its matrix; the arm re-places the paper
+      // for the new aspect
+      Object.assign(c.stage.style, { left: '0px', top: '0px', width: '100%', height: '100%' });
+      Object.assign(c.ink.style, { left: '0px', top: '0px' });
+      this.deps.holder?.hold?.(null, { aspect: pw / ph });
+      this._cornersKey = '';
+    }
     if (firstLayout) {
       // at rest the whole bay is on the sheet, centred
       const scale = scaleMinOf(this._limits());
@@ -507,6 +537,43 @@ export class HeldMapWindow {
 
   _limits() {
     return { mapW: this._size.width, mapH: this._size.height, paperW: this._paper.w, paperH: this._paper.h };
+  }
+
+  // ── MAP3: THE HANDS LANE ───────────────────────────────────────
+
+  /** Ask the host's holder for the arm. On yes the sprite and its keyed
+   *  thumbs go, the root goes clear (the world and the arm show through)
+   *  and the ink canvas is placed by the sheet's corners from now on. */
+  _tryHands() {
+    const h = this.deps.holder;
+    if (this._lane === 'hands' || !h?.available?.()) { if (this._lane !== 'hands') this._handsTries = 0; return false; }
+    if (this._handsTries === 0) this._handsTries = 1;
+    if (!h.hold?.(null, { aspect: this._paper.w / this._paper.h })) return false;
+    this._lane = 'hands';
+    this._handsTries = 0;
+    const c = this._chrome;
+    c.root.classList.toggle('hmhands', true);
+    c.sprite.style.display = 'none';
+    c.hands.style.display = 'none';
+    Object.assign(c.ink.style, { left: '0px', top: '0px', transformOrigin: '0 0', opacity: '0' });
+    Object.assign(c.stage.style, { left: '0px', top: '0px', width: '100%', height: '100%' });
+    this._cornersKey = '';
+    this._dirty = true;
+    return true;
+  }
+
+  /** The sheet follows the arm: the holder's four corners, into a
+   *  homography from the canvas's own rectangle, into the matrix3d the
+   *  browser lays the canvas with; hidden while the arm has not drawn. */
+  _placeOnHands() {
+    const c = this.deps.holder?.corners?.() ?? null;
+    const key = c ? c.map((p) => `${Math.round(p[0] * 10) / 10},${Math.round(p[1] * 10) / 10}`).join(';') : '';
+    if (key === this._cornersKey) return;
+    this._cornersKey = key;
+    const q = c ? quadPlacement(this._paper.w, this._paper.h, c) : null;
+    this._placement = q;
+    const ink = this._chrome.ink;
+    if (q) { ink.style.transform = q.css; ink.style.opacity = '1'; } else { ink.style.opacity = '0'; }
   }
 
   /** The ink model: chains once per data set (cached on the bytes and
@@ -636,8 +703,14 @@ export class HeldMapWindow {
     this._dirty = true;
   }
 
-  /** Client coordinates to paper pixels. */
+  /** Client coordinates to paper pixels - through the inverse homography
+   *  in the hands lane (MAP3), where the canvas is laid at an angle. */
   _paperPoint(clientX, clientY) {
+    if (this._lane === 'hands') {
+      const r = this._chrome.root.getBoundingClientRect?.() ?? { left: 0, top: 0 };
+      const p = this._placement?.toSheet(clientX - r.left, clientY - r.top);
+      return p ?? [-1e9, -1e9];
+    }
     const r = this._chrome.ink.getBoundingClientRect?.() ?? { left: 0, top: 0 };
     return [clientX - r.left, clientY - r.top];
   }
@@ -1341,7 +1414,12 @@ export class HeldMapWindow {
       if (downAt) {
         const dx = e.clientX - downAt.x, dy = e.clientY - downAt.y;
         if (Math.abs(dx) + Math.abs(dy) > 4) panned = true;
-        this._setView({ ox: downAt.ox - dx / this._view.scale, oy: downAt.oy - dy / this._view.scale, scale: this._view.scale });
+        // the drag in SHEET pixels (MAP3: in the hands lane the sheet lies
+        // at an angle, so a screen pixel is not a sheet pixel; in the
+        // sprite lane the two are the same offset)
+        const [ax, ay] = this._paperPoint(downAt.x, downAt.y);
+        const [bx, by] = this._paperPoint(e.clientX, e.clientY);
+        this._setView({ ox: downAt.ox - (bx - ax) / this._view.scale, oy: downAt.oy - (by - ay) / this._view.scale, scale: this._view.scale });
       } else {
         this._hoverLabel(...this._paperPoint(e.clientX, e.clientY));
       }

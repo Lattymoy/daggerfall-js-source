@@ -509,6 +509,7 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
   // door both end in it, which is exactly the pair WEAPON-VIS2 caught
   // double-firing.
   let _toggleSheathCalls = 0;
+  let _armDrewLast = false;   // MAP3: the draw seam's own record of whether the arm drew
 
   /** WeaponManager.ToggleSheath (:1115-1128), the flip both doors below
    *  end in - the panel's raw one and the key's arm. It is ONE function
@@ -911,7 +912,16 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
     },
     /** The overlay draw, LAST in the host's frame (composites over the
      *  scene; any HUD draws over it). Runs the bow guard first. */
+    /** MAP3: whether the Morrowind arm was the thing drawn on the last
+     *  frame - the held map's holder opens the hands lane on it. */
+    armsDrawn() { return _armDrewLast; },
+    holdPaper(spec, opts) { return fpArm.holdPaper(spec, opts); },
+    releasePaper() { return fpArm.releasePaper(); },
+    paperCorners() { return fpArm.paperCorners(); },
+    heldPose() { return fpArm.heldPose(); },
+    setHeldPose(spec) { return fpArm.setHeldPose(spec); },
     draw({ paralyzed = false } = {}) {
+      _armDrewLast = false;
       try { return drawInner({ paralyzed }); } finally { widget.endOfFrame(); }   // WW1: WaitForEndOfFrame resumes after the frame's draw
     },
     widget,   // WW1: the clone, for the pins
@@ -969,6 +979,7 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
       // the sprite body is on screen (Compatibility.Don'tHideWeapon keeps
       // it) - the classic sprite, the torch hand and the clone alike. The
       // machine still swings; only the picture goes.
+      _armDrewLast = !eotbHidesWeapon() && fpArm.active();   // MAP3: the two lines below draw the arm exactly when this is true
       if (eotbHidesWeapon()) return;
       if (fpArm.active()) { fpArm.draw(c); return; }
       // HT1: the torch hand draws FIRST, the weapon over it - two OnGUIs
