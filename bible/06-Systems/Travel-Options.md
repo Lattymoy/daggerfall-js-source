@@ -475,6 +475,79 @@ hosts, and the mod's own follow key refuses indoors
 (`:1439-1440`, `PlayerEnterExit.IsPlayerInside`). An accelerated
 journey is an exterior thing and lives with the exterior.
 
+## TO-FIELD (2026-09-18) - the three the field found
+
+Mac, on the shipped build: *"Using travel options spawns you under the
+maps, doesn't travel on the road and you instantly collapse from
+exhaustion"*, and then the term that settled the second: *"if you
+actually look at the mod, its pure continous travel along roads instead
+of an instant shift. So im not sure where this port went wrong"*.
+
+**The model was never wrong.** The mod's own readme calls it "time
+accelerated real travel", and the port runs exactly that: the player
+walks, the calendar keeps up with the miles, and nothing on that path
+ever teleports. Two of the three were real defects in the host; the
+third was a thing the port never said out loud.
+
+- **Under the maps - the walk did not wait for the ground.** The journey
+  drove the motor at up to sixty times walking pace across a streamer
+  that builds ONE pixel per call, and `heightAt` answers `-Infinity`
+  over a pixel that is not built yet, which no collider clamp can catch.
+  Every other player-moving path in this host already waits - the boot
+  stand (`playerSpawned && built.has`), the ride-out (TSR4a, *"it just
+  spawns me straight into the ground"*), the season re-skin, a teleport
+  awaiting its pixel - and this one, the fastest of them, did not. The
+  drive now holds while the ground under the feet OR
+  `TRAVEL_LOOKAHEAD = 64` ahead of the bearing is missing AND the
+  streamer is still bringing it; with nothing queued the ground is not
+  coming and holding for ever would be its own bug, so it goes through.
+  The wait is the ride-out's own sentence, deliberately, so the two read
+  alike.
+
+- **Instant exhaustion - the port's own needs charged at the mod's
+  clock.** The two clocks do not charge alike, and only one of them is
+  DFU's. The vanilla band asks only whether the minute CHANGED this
+  frame and pays ONE minute whatever the jump
+  (`PlayerEntity.cs:402-418`, and `systems/worldTick.js` verbatim), so
+  the journey's vanilla drain IS DFU's - and Travel Options watches that
+  very number with its own cautious stop
+  (`TravelOptionsMod.cs:1079`, ported at `travelOptions.js:758`). The
+  NEEDS are this port's own addition, from a mod Travel Options has
+  never heard of, and `runSurvivalMinutes` LOOPS every simulated minute
+  - so at the mod's acceleration they charged several minutes of
+  starving, parched and exhausted fatigue in the frame the vanilla band
+  charged one, on a traveller who by construction never stops to rest,
+  with no stop of their own. An accelerated journey is sat as `resting`
+  now, which is the needs' OWN knob for exactly this and holds the
+  per-minute fatigue arms and the bare-skin block and nothing else:
+  every accrual - hunger's marker, thirst, sleep debt, wet, exposure -
+  sits outside it, so the days really pass and the traveller still
+  arrives as hungry as the ride made them. The heat arm still bites
+  (it wants `resting && byFire`), which is right: the weather is part of
+  the journey.
+
+- **"Doesn't travel on the road" - nothing was broken; nothing said
+  how.** The mod does not route along roads to a named destination and
+  never did: an autopilot beelines, and PATH FOLLOWING is a separate
+  mode the player starts with a key while standing on a path and facing
+  the way they mean to go (readme: *"If a key is set, default 'F', then
+  you can follow paths by standing on them and facing the direction you
+  want to travel and pressing the key"*), which stops itself at a
+  location or a junction of more than two ways. The port had to move
+  that key off the mod's own F - this skin spends F on SOC5's
+  SocialInteract (I1) - so it ships on K, the one of the mod's six
+  letters nothing here answers. The only place the port named it was the
+  help text INSIDE a running journey, which a player who has never
+  started one cannot reach. The held map's travel card names it now,
+  whenever roads integration is on and a key is set: *"On the road,
+  press K to follow it."*
+
+Pinned in `test/to1_travelOptions.test.js` (TO-FIELD) with three
+mutants - `travel-drive-ungated`, `needs-at-travel-scale`,
+`follow-key-unsaid`. `tools/mutants/surv7.json`'s
+`SURV7-the-world-feeds-the-dungeon-too` was re-aimed by content onto the
+reader's new three arms.
+
 ## Pins
 
 `test/to1_travelOptions.test.js`. `tools/mutants/to1.json`.

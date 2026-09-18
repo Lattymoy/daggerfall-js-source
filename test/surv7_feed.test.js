@@ -133,7 +133,11 @@ test('SURV7: by source - the four hosts feed their env (the roof, the floor, the
     assert.match(src, /byFire: m === 'exterior' && camps\.byFire\(feet\),/, `${name}: the fire`);
     assert.match(src, /sleeping: playerEntity\.isResting && !playerEntity\.isLoitering \? \(playerEntity\.restKind \?\? 'rough'\) : null,/, `${name}: the sleep and its kind`);
     assert.match(src, /fireResist: elementalResistanceChance\(playerEntity, ELEMENTS\.Fire\), frostResist: elementalResistanceChance\(playerEntity, ELEMENTS\.Frost\),/, `${name}: the resistances`);
-    assert.match(src, /survivalEnv: \(\) => \(_mode\(\) === 'dungeon' \? null : survivalEnvNow\(\)\),/, `${name}: the ticker's reader, silent underground`);
+    // TO-FIELD: world.js sits an accelerated journey as `resting` on the way
+    // through - the needs' own drain-only knob - so its reader carries a
+    // third arm exterior.js has no use for (no journey runs on that host).
+    if (name === 'world') assert.match(src, /survivalEnv: \(\) => \(_mode\(\) === 'dungeon' \? null\n\s+: worldTimeScale\(\) > 1 \? \{ \.\.\.survivalEnvNow\(\), resting: true \}\n\s+: survivalEnvNow\(\)\),/, `${name}: the ticker's reader, silent underground and rested on the road`);
+    else assert.match(src, /survivalEnv: \(\) => \(_mode\(\) === 'dungeon' \? null : survivalEnvNow\(\)\),/, `${name}: the ticker's reader, silent underground`);
     assert.match(src, /survivalEnv: \(\) => survivalEnvNow\(\),/, `${name}: the host bag's reader`);
   }
   assert.match(world, /climateIndex: maps\.getClimateIndex\(playerTravelPixel\(\)\.x, playerTravelPixel\(\)\.y\),\n\s+month: dateFromClassicMinutes\(wm\)\.month/, 'world: the pixel\'s climate');

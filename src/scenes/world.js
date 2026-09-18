@@ -909,6 +909,12 @@ export async function bootWorld(canvas, renderer, params, status) {
   // finished pixel; the in-flight map answers a flying one with the
   // SAME promise, so every caller - pump, boot, teleport - shares one
   // build.
+  /** TO-FIELD: how far ahead of the traveller the ground must exist
+   *  before the journey's drive goes through - about ten tiles, which
+   *  is more than the fastest accelerated step and far less than a map
+   *  pixel, so the wait is a stutter at the edge of the built world
+   *  rather than a stop. */
+  const TRAVEL_LOOKAHEAD = 64;
   const inFlight = new Map();
   async function buildPixel(px, py) {
     const key = `${px},${py}`;
@@ -1890,7 +1896,31 @@ export async function bootWorld(canvas, renderer, params, status) {
     // player is standing.
     isInside: () => (modes?.mode ?? 'exterior') !== 'exterior',
     onExhausted: onExhaustedExterior,
-    survivalEnv: () => (_mode() === 'dungeon' ? null : survivalEnvNow()),   // SURV7: the dungeon's own tick feeds its own
+    // SURV7: the dungeon's own tick feeds its own.
+    // TO-FIELD (2026-09-18, Mac: "you instantly collapse from exhaustion"):
+    // ...and AN ACCELERATED JOURNEY IS SAT AS RESTING, for the needs' own
+    // fatigue arms alone. The two clocks do not charge alike. DFU's
+    // vanilla band (PlayerEntity.cs:402-418) asks only "did the minute
+    // CHANGE this frame" and pays ONE minute whatever the jump - which is
+    // exactly what worldTick.js does, so the journey's vanilla drain is
+    // DFU's, verbatim, and Travel Options watches that very number with
+    // its own cautious stop (TravelOptionsMod.cs:1079). The needs are the
+    // port's own addition and they run a LOOP over every simulated minute
+    // (needs.js runSurvivalMinutes) - so at the mod's acceleration they
+    // charge several minutes of starving, parched and exhausted fatigue in
+    // the frame the vanilla band charges one, on a traveller who by
+    // construction never stops to rest. Nothing in the mod knows they
+    // exist, and there is no stop for them.
+    //
+    // `resting` is the needs' OWN knob for this and nothing else: every
+    // accrual - hunger's marker, thirst, sleep debt, wet, exposure - sits
+    // outside it, so the days really pass and the traveller arrives as
+    // hungry as the ride made them. Only the per-minute FATIGUE arms and
+    // the bare-skin block are held, which is the half the journey cannot
+    // answer.
+    survivalEnv: () => (_mode() === 'dungeon' ? null
+      : worldTimeScale() > 1 ? { ...survivalEnvNow(), resting: true }
+        : survivalEnvNow()),
     // AUDIT 64 F27: the ticker's lines are HUD POPUPS, not a log.
     // LoanChecker.CheckOverdueLoans posts its two 6/3/1-month reminders
     // with DaggerfallUI.AddHUDText (LoanChecker.cs:42-45) - the only
@@ -9210,7 +9240,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         // the void"). The journey the player sees is the same: the ground
         // goes past at the acceleration, the clock keeps up with it, and
         // what interrupts a journey interrupts it on its own honest clock.
-            const travelScale = worldTimeScale();
+        const travelScale = worldTimeScale();
         const _overlayHeld = (modes?.dungeonCtx?.uiOverlayActive ?? false) || townTalk.overlayActive;   // chargen/windows/talk hold the motor - typing must not walk the player
         // TO1: THE MOD'S OWN FRAME - TravelOptionsMod.Update, in its
         // own order, given what this host knows this frame. It answers
@@ -9307,7 +9337,27 @@ export async function bootWorld(canvas, renderer, params, status) {
         if (_travelDrive) {
           cam.yaw = (_travelDrive.yaw * Math.PI) / 180;
           cam.pitch = _travelDrive.pitch ?? 0;
-          axes.forward = _travelDrive.forward;
+          // TO-FIELD (2026-09-18, Mac: "Using travel options spawns you
+          // under the maps"): THE WALK WAITS FOR THE GROUND. An
+          // accelerated journey is the one player-moving path in this
+          // host with no readiness gate - the boot stand has one
+          // (playerSpawned && built.has), the ride-out has one (TSR4a,
+          // "it just spawns me straight into the ground"), the season
+          // re-skin holds the motor, and a teleport awaits its pixel.
+          // This one drove the motor at up to sixty times walking pace
+          // across a streamer that builds ONE pixel per call, and
+          // `heightAt` answers -Infinity over a pixel that is not built
+          // yet - which the collider's ground clamp can never catch. So
+          // the player walked off the built world and fell.
+          //
+          // The wait is the ride-out's own sentence: hold while the
+          // ground is missing AND the streamer is still bringing it. If
+          // nothing is queued the ground is not coming and holding for
+          // ever would be its own bug, so the drive goes through.
+          const _feet = walkMode ? player.pos : cam.pos;
+          const _ahead = [_feet[0] + Math.sin(cam.yaw) * TRAVEL_LOOKAHEAD, _feet[2] + Math.cos(cam.yaw) * TRAVEL_LOOKAHEAD];
+          const _standing = Number.isFinite(heightAt(_feet[0], _feet[2])) && Number.isFinite(heightAt(_ahead[0], _ahead[1]));
+          axes.forward = (!_standing && (building || queue.length || inFlight.size)) ? 0 : _travelDrive.forward;
           // AUDIT-TO1 K2: and NOT the strafe. ApplyVerticalForce writes the
           // vertical axis alone (PlayerAutoPilot.cs:104) and the panel's
           // `pauseWhileOpened = false` keeps InputManager collecting the

@@ -1058,5 +1058,32 @@
   "tests": [
    "test/to1_travelOptions.test.js"
   ]
+ },
+ {
+  "name": "travel-drive-ungated",
+  "file": "src/scenes/world.js",
+  "old": "          axes.forward = (!_standing && (building || queue.length || inFlight.size)) ? 0 : _travelDrive.forward;",
+  "new": "          axes.forward = _travelDrive.forward;",
+  "tests": [
+   "test/to1_travelOptions.test.js"
+  ]
+ },
+ {
+  "name": "needs-at-travel-scale",
+  "file": "src/scenes/world.js",
+  "old": "    survivalEnv: () => (_mode() === 'dungeon' ? null\n      : worldTimeScale() > 1 ? { ...survivalEnvNow(), resting: true }\n        : survivalEnvNow()),",
+  "new": "    survivalEnv: () => (_mode() === 'dungeon' ? null : survivalEnvNow()),",
+  "tests": [
+   "test/to1_travelOptions.test.js"
+  ]
+ },
+ {
+  "name": "follow-key-unsaid",
+  "file": "src/ui/heldMap.js",
+  "old": "        card.append(el('p', 'hmmeta', `On the road, press ${_fk} to follow it.`));\n",
+  "new": "",
+  "tests": [
+   "test/to1_travelOptions.test.js"
+  ]
  }
 ]

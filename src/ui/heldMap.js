@@ -1761,6 +1761,20 @@ export class HeldMapWindow {
         card.append(dl);
       }
       if (t?.online) card.append(el('p', 'hmmeta', ONLINE_TRAVEL_LINE));   // OL2: the popup's own line
+      // TO-FIELD (2026-09-18, Mac: "it... doesn't travel on the road"):
+      // THE FOLLOW KEY, SAID WHERE THE TRIP IS BOUGHT. Travel Options
+      // does not route along roads to a destination - it beelines, and
+      // road following is a MODE the player starts with a key mid-
+      // journey (the mod's own readme: "The key used to start/stop path
+      // following", and its junction map "pops up when path following
+      // stops at a junction"). The port had to move that key off the
+      // mod's own F, which this skin spends on the social card, so the
+      // one place it was named was the H help INSIDE a running journey -
+      // which is no use to a player who has never started one.
+      const _fk = this._to?.settings?.followKey;
+      if (_fk && _fk !== 'None' && this._to?.settings?.roadsIntegration) {
+        card.append(el('p', 'hmmeta', `On the road, press ${_fk} to follow it.`));
+      }
       if (st.notice) card.append(el('p', 'hmnotice', st.notice));
       const row = el('div', 'hmacts');
       const go = el('button', 'act', 'Begin journey');

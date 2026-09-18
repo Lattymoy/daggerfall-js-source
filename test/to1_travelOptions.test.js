@@ -1664,3 +1664,56 @@ test('BOOT-TDZ: every Travel Options binding the STREAM reads is declared above 
     'the builder reads the player pixel once, inside the mod\'s own guard');
   assert.ok(code.indexOf('playerTravelPixel(') > code.indexOf('if (travelOptions && dfLocation)'), 'and only after that guard');
 });
+
+// ── TO-FIELD (2026-09-18) ────────────────────────────────────────
+//
+// Mac, playing the shipped build: "Using travel options spawns you under
+// the maps, doesn't travel on the road and you instantly collapse from
+// exhaustion". Three defects, and none of them is the mod's model being
+// wrong - the port does run the mod's continuous accelerated journey, as
+// its own readme describes it, and never teleports on that path.
+test('TO-FIELD: the accelerated journey waits for the ground, and the port\'s own needs are not charged at the mod\'s clock (mutants: travel-drive-ungated, needs-at-travel-scale)', () => {
+  const w = read('src/scenes/world.js');
+
+  // 1. THE WALK WAITS. The journey drives the motor at up to sixty times
+  // walking pace across a streamer that builds one pixel per call, and
+  // `heightAt` answers -Infinity over a pixel that is not built - which
+  // the collider's ground clamp can never catch. Every other
+  // player-moving path in this host already waits; this one did not.
+  assert.match(w, /const TRAVEL_LOOKAHEAD = 64;/, 'the look-ahead the drive checks');
+  assert.match(w, /const _standing = Number\.isFinite\(heightAt\(_feet\[0\], _feet\[2\]\)\) && Number\.isFinite\(heightAt\(_ahead\[0\], _ahead\[1\]\)\);\s*\n\s*axes\.forward = \(!_standing && \(building \|\| queue\.length \|\| inFlight\.size\)\) \? 0 : _travelDrive\.forward;/,
+    'the drive holds while the ground is missing AND the streamer is still bringing it - the ride-out\'s own sentence');
+  // ...and the wait is the ride-out's, so the two read the same way
+  assert.match(w, /if \(edge && !groundThere && \(building \|\| queue\.length \|\| inFlight\.size\)\) return;/, 'TSR4a\'s wait still stands to be read against');
+
+  // 2. THE NEEDS' OWN FATIGUE IS NOT CHARGED AT THE MOD'S CLOCK. DFU's
+  // vanilla band asks only whether the minute CHANGED this frame and pays
+  // ONE minute whatever the jump (PlayerEntity.cs:402-418), which is what
+  // worldTick.js does - so the journey's vanilla drain is DFU's verbatim,
+  // and the mod's cautious stop watches that very number
+  // (TravelOptionsMod.cs:1079). The needs are the port's own addition and
+  // they LOOP every simulated minute, so at the mod's acceleration they
+  // charged several minutes of starving/parched/exhausted fatigue in the
+  // frame the vanilla band charged one, with no stop of their own. The
+  // journey is sat as `resting` - the needs' own knob for exactly this -
+  // which holds those arms and NOTHING else: every accrual sits outside
+  // it, so the days still pass and the traveller still arrives hungry.
+  assert.match(w, /survivalEnv: \(\) => \(_mode\(\) === 'dungeon' \? null\n\s+: worldTimeScale\(\) > 1 \? \{ \.\.\.survivalEnvNow\(\), resting: true \}\n\s+: survivalEnvNow\(\)\),/,
+    'an accelerated journey feeds the needs as a rested traveller');
+  assert.doesNotMatch(w, /survivalEnv: \(\) => \(_mode\(\) === 'dungeon' \? null : survivalEnvNow\(\)\),/, 'the ungated feed is gone');
+  // and the knob really is drain-only: the accruals are outside it
+  const n = read('src/systems/survival/needs.js');
+  for (const accrual of [/s\.wet = Math\.min\(NEED\.WET_MAX, s\.wet \+ temp\.wetGain\);/, /s\.thirst = Math\.min\(NEED\.THIRST_MAX, s\.thirst \+ rate\);/, /s\.sleepDebt = Math\.min\(NEED\.SLEEP_DEBT_MAX, s\.sleepDebt \+ 1 \/ 60\);/])
+    assert.match(n, accrual, 'the accrual stands');
+  assert.match(n, /if \(hungerAfter === 'starving' && !resting\) sinks\.drainFatigue\?\.\(DRAIN\.starving\);/, 'and the drains are what `resting` holds');
+  assert.match(n, /if \(sleepNow === 'exhausted' && !resting\) sinks\.drainFatigue\?\.\(DRAIN\.exhausted\);/);
+
+  // 3. THE FOLLOW KEY IS NAMED WHERE THE TRIP IS BOUGHT. The mod does not
+  // route along roads to a destination - road following is a mode the
+  // player starts with a key, and the port had to move that key off the
+  // mod's own F (this skin spends F on the social card), so the only
+  // place it was named was the help inside a running journey.
+  const m = read('src/ui/heldMap.js');
+  assert.match(m, /const _fk = this\._to\?\.settings\?\.followKey;/);
+  assert.match(m, /On the road, press \$\{_fk\} to follow it\./);
+});
