@@ -3533,9 +3533,6 @@ export function createFpArm() {
     /** MAP3: the pose in force (null when nothing is held), and the live
      *  tuning door (window.__heldPose) - a new spec re-places the sheet. */
     heldPose() { return held ? held.spec : null; },
-    /** MAP-FIELD: whether a sheet is up - the draw seam asks, because a
-     *  held map draws the arms whatever the WEAPON's own `shown()` says. */
-    holdingPaper() { return !!held; },
     setHeldPose(spec) { return held ? api.holdPaper(spec, { aspect: held.aspect }) : false; },
     /** MAP3: the sheet's four corners on the composite, in CSS px of the
      *  canvas (top-left, top-right, bottom-right, bottom-left), through

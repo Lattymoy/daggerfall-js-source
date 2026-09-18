@@ -472,8 +472,8 @@
  {
   "name": "hands-without-arm",
   "file": "src/ui/heldMap.js",
-  "old": "    if (!h?.available?.()) return false;",
-  "new": "    if (!h) return false;",
+  "old": "    if (this._lane === 'hands' || !h?.available?.()) {",
+  "new": "    if (this._lane === 'hands' || !h) {",
   "tests": [
    "test/heldmap.test.js"
   ]
@@ -640,33 +640,6 @@
   "new": ".hmroot.hmlanehands .hmfoot { padding: 6px 10px; border-radius: 4px; }",
   "tests": [
    "test/heldmap.test.js"
-  ]
- },
- {
-  "name": "sheathed-arm-does-not-draw",
-  "file": "src/combat/weaponRig.js",
-  "old": "      const sheetOnly = playerWeapon.sheathed && !spellArmed() && !fpsSpellCasting.isPlayingAnim\n        && (entity?.equipCountdown ?? 0) <= 0 && fpArm.active() && fpArm.holdingPaper();\n      if (paralyzed || (!shown() && !torchOnly && !sheetOnly)) return;",
-  "new": "      if (paralyzed || (!shown() && !torchOnly)) return;",
-  "tests": [
-   "test/map3_heldpose.test.js"
-  ]
- },
- {
-  "name": "holder-asks-did-it-draw",
-  "file": "src/scenes/world.js",
-  "old": "        available: () => !!weaponRig?.armsAvailable?.(),   // MAP-FIELD: WOULD it draw - the arm is sheathed until it takes the sheet",
-  "new": "        available: () => !!weaponRig?.armsDrawn?.(),",
-  "tests": [
-   "test/map3_heldpose.test.js"
-  ]
- },
- {
-  "name": "sheet-leg-relaxes-every-leg-of-shown",
-  "file": "src/combat/weaponRig.js",
-  "old": "      const sheetOnly = playerWeapon.sheathed && !spellArmed() && !fpsSpellCasting.isPlayingAnim\n        && (entity?.equipCountdown ?? 0) <= 0 && fpArm.active() && fpArm.holdingPaper();\n      if (paralyzed || (!shown() && !torchOnly && !sheetOnly)) return;",
-  "new": "      const sheetOnly = !shown() && fpArm.active() && fpArm.holdingPaper();\n      if (paralyzed || (!shown() && !torchOnly && !sheetOnly)) return;",
-  "tests": [
-   "test/map3_heldpose.test.js"
   ]
  }
 ]

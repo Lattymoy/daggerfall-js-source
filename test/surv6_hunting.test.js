@@ -283,7 +283,7 @@ test('SURV6: by source - the overworld host alone rolls, opens in the slot, pass
   assert.match(world, /showOverlay: \(w\) => townTalk\.showOverlay\(w\), overlayActive: \(\) => townTalk\.overlayActive,\n\s+advanceMinutes: \(n\) => playerTicker\.advance\(n\),/);
   assert.match(world, /for \(let i = 0; i < count; i\+\+\) _standEncounterFoe\(\{ mobileType, \.\.\.SPAWNER_ARMS\.wilderness \}, feet\);/);
   assert.match(world, /inflictPoison, inflictDisease, tally: \(id\) => tallySkill\(playerEntity, id, 1\),/);
-  assert.match(world, /if \(_mode\(\) === 'exterior' && worldTimeScale\(\) <= 1\) hunting\.tick\(\);/);
+  assert.match(world, /if \(_mode\(\) === 'exterior'\) hunting\.tick\(\);/);
   assert.doesNotMatch(ext, /createHunting/, 'the town host lives inside the rect');
   assert.doesNotMatch(leaf, /from '\.\.\/\.\.\/scenes\/|from '\.\.\/\.\.\/ui\/|from '\.\.\/\.\.\/combat\/|from '\.\.\/spellcast|from '\.\.\/diseases|from '\.\.\/poisons|from '\.\.\/effects|document\.|window\./);
   assert.match(read('src/scenes/townTalk.js'), /overlay\?\.tick\?\.\(dt\);/, 'the busy page\'s clock');

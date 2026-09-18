@@ -1069,7 +1069,7 @@ test('TORCH-VIS (the ladder): a lit hand draws while merely sheathed, the weapon
   // the sheathed case, and a readied spell, a cast in flight and an equip countdown all still hide the torch
   assert.match(rig, /const torchOnly = !shown\(\) && !spellArmed\(\) && !fpsSpellCasting\.isPlayingAnim\s*\n\s*&& \(entity\?\.equipCountdown \?\? 0\) <= 0 && isHeldLight\(entity\?\.lightSource\)\s*\n\s*&& \(!fpArm\.active\(\) \|\| fpArm\.torchShown\(\)\);/,
     'the exception names every leg of shown() it does NOT relax, asks the mod\'s own light test, and lets the Morrowind arm veto a light it has no art for');
-  assert.match(rig, /if \(paralyzed \|\| \(!shown\(\) && !torchOnly && !sheetOnly\)\) return;/, 'the gate takes the exception, and paralysis still takes everything (MAP-FIELD put the held sheet\'s own leg beside the torch\'s - the same law, a second thing that is not the weapon)');
+  assert.match(rig, /if \(paralyzed \|\| \(!shown\(\) && !torchOnly\)\) return;/, 'the gate takes the exception, and paralysis still takes everything');
   // and the weapon stays hidden: the return sits AFTER the torch hand and BEFORE the clone and the sprite
   const draw = rig.slice(rig.indexOf('const torchOnly ='));
   const torchAt = draw.indexOf('handheld.draw(renderer, c, fpTint)');

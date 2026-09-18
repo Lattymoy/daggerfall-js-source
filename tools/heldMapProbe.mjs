@@ -463,24 +463,6 @@ try {
   await page.waitForFunction(() => globalThis.__win.done, null, { timeout: 5000 });
   const released = await page.evaluate(() => ({ pose: globalThis.__arm.heldPose(), corners: globalThis.__arm.paperCorners() }));
   check('closing the map releases the sheet from the arm', released.pose === null && released.corners === null, JSON.stringify(released));
-
-  // ── 7. MAP-FIELD: the sprite, asked for from the GAME'S OWN PAGE ──
-  // Every check above mounts the window on menu.html, which sits at the
-  // site root - where a document-relative 'art/held-map.png' happens to
-  // resolve. The game is /play/index.html, one directory down, and there
-  // the same string asked for /play/art/held-map.png and got the page
-  // back. So this check runs from that depth, on purpose.
-  await page.goto(`${BASE}/play/index.html?skin=enhanced`, { waitUntil: 'domcontentloaded' });
-  const sprite = await page.evaluate(async () => {
-    const { HELD_MAP_URL } = await import('/src/ui/heldMap.js');
-    const res = await fetch(HELD_MAP_URL);
-    const img = new Image();
-    const decoded = await new Promise((ok) => { img.onload = () => ok(true); img.onerror = () => ok(false); img.src = HELD_MAP_URL; });
-    return { url: HELD_MAP_URL, page: location.pathname, status: res.status, type: res.headers.get('content-type'), decoded, w: img.naturalWidth, h: img.naturalHeight };
-  });
-  check('the sprite resolves from the GAME page, not the site root', /^https?:\/\/[^/]+\/art\/held-map\.png$/.test(sprite.url) && sprite.page === '/play/index.html', JSON.stringify({ url: sprite.url, page: sprite.page }));
-  check('...and it is served as a PNG', sprite.status === 200 && /image\/png/.test(sprite.type ?? ''), JSON.stringify({ status: sprite.status, type: sprite.type }));
-  check('...and the browser decodes Mac\'s painting at its own size', sprite.decoded && sprite.w === 1448 && sprite.h === 1086, JSON.stringify({ decoded: sprite.decoded, w: sprite.w, h: sprite.h }));
 } catch (e) {
   check(`probe threw: ${e.message}`, false);
 } finally {

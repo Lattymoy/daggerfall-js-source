@@ -26,7 +26,7 @@ import {
 } from '../src/ui/overworldModel.js';
 import { createTravelMapWindow, travelMapDoorReady } from '../src/ui/travelMapDoor.js';
 import {
-  HeldMapWindow, HELD_MAP_URL, appRootFrom, SPRITE, PAPER, THUMB_ZONES, HAND_LUM, keyHandPixels, rgbaCss, wheelPixels,
+  HeldMapWindow, HELD_MAP_URL, SPRITE, PAPER, THUMB_ZONES, HAND_LUM, keyHandPixels, rgbaCss, wheelPixels,
 } from '../src/ui/heldMap.js';
 import { simplifyChain, traceChains } from '../src/ui/overworldModel.js';
 import { travelMapMarkedMapId, setTravelMapMarkedMapId } from '../src/systems/travelMapState.js';
@@ -970,61 +970,7 @@ test('MAP1 window: pan, wheel and keys move the VIEW under a clamp, the search g
 });
 
 test('MAP1: the sprite is the port\'s own under the doctrine row, the paper and thumb geometry are the painting\'s, and the hand key keeps only what is darker than the sheet (mutants: key-threshold-moved, key-clears-hands, url-off-public)', () => {
-  // MAP-FIELD (2026-09-18, Mac: "The sprite I gave to be used is nowhere
-  // to be seen at all"): THE URL IS RESOLVED FROM THE MODULE, NOT THE
-  // DOCUMENT. It was the bare relative 'art/held-map.png' - and this pin
-  // asserted that string, and a mutant that made it absolute DIED here,
-  // so the wrong answer was locked in twice over. The game's document is
-  // /play/index.html: the browser asked for /play/art/held-map.png, got
-  // the page back instead of a PNG, and the window stood with no
-  // parchment and no hands. The build's base is './', so there is no
-  // absolute path to hardcode; the module's own URL carries the root.
-  assert.ok(HELD_MAP_URL.endsWith('/art/held-map.png'), `the sprite hangs off a root: ${HELD_MAP_URL}`);
-  assert.notEqual(HELD_MAP_URL, 'art/held-map.png', 'never the bare document-relative form - that is the bug');
-  // AUDIT-FIELD: and the EXPORT is the helper's answer, not the module's
-  // own directory. The two lines above pass for `new URL('art/...',
-  // import.meta.url)` - the obvious regression, and the same CLASS as the
-  // bug this commit exists for - because that also ends in the right
-  // characters. Every strong assertion below is on the pure helper, which
-  // the export could simply stop calling.
-  assert.doesNotMatch(HELD_MAP_URL, /\/(?:assets|src)\//, 'the sprite hangs off the ROOT, never off the module directory');
-  assert.equal(HELD_MAP_URL, new URL('art/held-map.png', appRootFrom(import.meta.url.replace('/test/', '/src/ui/'))).href,
-    'the export IS appRootFrom\'s answer');
-  assert.equal(appRootFrom('https://daggerfalljs.dev/assets/main-abc123.js'), 'https://daggerfalljs.dev/',
-    'a build serves the module from <root>/assets/');
-  assert.equal(appRootFrom('https://example.test/sub/path/assets/main-abc123.js'), 'https://example.test/sub/path/',
-    '...and under a project sub-path, which is why base is relative');
-  assert.equal(appRootFrom('http://localhost:5173/src/ui/heldMap.js'), 'http://localhost:5173/',
-    'the dev server serves it from <root>/src/');
-  assert.equal(appRootFrom('http://localhost:5173/src/ui/heldMap.js?t=1700000000'), 'http://localhost:5173/',
-    '...with the dev server\'s own cache-busting query cut off');
-  // AUDIT-FIELD F3: THE LAST SUCH SEGMENT, NOT THE FIRST. JS regex matching
-  // is leftmost-first and `.*$` being greedy only decides the tail, so the
-  // first cut cut at the FIRST `/assets/` or `/src/` on the path. A tree
-  // with a directory named exactly `assets` or `src` ABOVE the build's own
-  // - unpack dist/ into ~/public_html/assets/dfjs/ and you have one - lost
-  // every segment below it and the sprite 404'd again, one directory up
-  // from where it lives. The sub-path row above cannot catch this: its
-  // sub-path is `/sub/path/`, which contains neither word.
-  assert.equal(appRootFrom('https://h.test/assets/dfjs/assets/main-abc.js'), 'https://h.test/assets/dfjs/',
-    'a root UNDER a directory called assets keeps every segment below it');
-  assert.equal(appRootFrom('https://h.test/a/src/b/assets/main-abc.js'), 'https://h.test/a/src/b/',
-    '...and one under a directory called src does too');
-  assert.equal(appRootFrom('https://h.test/my-assets/app/assets/main-abc.js'), 'https://h.test/my-assets/app/',
-    'and a segment that merely ENDS in assets was never the cut - it takes the slash');
-  // AUDIT-FIELD F4: the shapes with no root to find answer null rather than
-  // guessing. `blob:`/`data:` cannot be a base at all, and `new URL('art/..',
-  // blobUrl)` THROWS - at module evaluation, in a file scenes/world.js
-  // imports statically through travelMapDoor.js, so the throw would cost the
-  // whole scene and not just the map. A path with neither segment is not a
-  // shape this app is served from, and answering the module's own directory
-  // there is how the bug this helper exists for looked.
-  for (const noRoot of ['blob:https://h.test/0f0f', 'data:text/javascript,0', 'https://h.test/main-abc.js']) {
-    assert.equal(appRootFrom(noRoot), null, `no root to find in ${noRoot}`);
-  }
-  assert.doesNotThrow(() => appRootFrom('blob:https://h.test/0f0f'), 'and it never throws - the import chain rides on it');
-  assert.equal(new URL('art/held-map.png', appRootFrom('https://daggerfalljs.dev/assets/main-abc123.js')).href,
-    'https://daggerfalljs.dev/art/held-map.png', 'and the sprite lands at the site root, whatever page asked');
+  assert.equal(HELD_MAP_URL, 'art/held-map.png');
   assert.ok(existsSync(new URL('../public/art/held-map.png', import.meta.url)), 'the file ships');
   assert.match(read('test/doctrine.test.js'), /\['public\/art\/held-map\.png', "OURS - Mac's own painting/, 'under the OURS row');
   assert.deepEqual(SPRITE, { w: 1448, h: 1086 });
@@ -2117,40 +2063,5 @@ test('AUDIT-MAP2 perf and polish: the kept static layer is not reset on every pa
     for (let i = 0; i < 8; i++) w2.tick(0.05);
     assert.deepEqual(w2._player, { x: 6, y: 7 }, 'moved with the poll');
     w2.dispose();
-  });
-});
-
-// ── AUDIT-FIELD F2: the hands lane's retry ───────────────────────────
-//
-// MAP-FIELD made this lane reachable in the game for the first time (its
-// `available` used to be `armsDrawn()`, which a sheathed player could
-// never answer yes to). The retry that lets a map opened before the rig
-// is up still find the arms - "in case the rig had not posed yet" - was
-// disarmed by the very first no, which is precisely the case it exists
-// for. MAP-FIELD pinned none of this lane by execution; this does.
-test('AUDIT-FIELD: the hands lane keeps asking after a no - the rig is not always up on the frame the map opens (mutant: hands-retry-disarmed-by-the-first-no)', () => {
-  withDocument(() => {
-    // the rig is not posed for the first few ticks, then it is
-    let up = false, held = false;
-    const holder = { available: () => up, hold: () => { held = up; return held; }, corners: () => null, release: () => { held = false; } };
-    const win = mkWin({ holder });
-    win.tick(0.05);
-    assert.equal(win._lane, 'sprite', 'the first ask finds no arm, so the painting stands');
-    assert.ok(win._handsTries > 0, 'and the retry is ARMED by that ask - the bug was zeroing it here');
-    up = true;
-    for (let i = 0; i < 5; i++) win.tick(0.05);
-    assert.equal(win._lane, 'hands', 'the moment the rig poses, the sheet goes to the arm');
-    win.dispose();
-  });
-});
-
-test('AUDIT-FIELD: an arm that never comes leaves the painting standing, and the asking stops', () => {
-  withDocument(() => {
-    const holder = { available: () => false, hold: () => false, corners: () => null, release: () => {} };
-    const win = mkWin({ holder });
-    for (let i = 0; i < 40; i++) win.tick(0.05);
-    assert.equal(win._lane, 'sprite', 'no arm, ever: the classic sprite is the whole window');
-    assert.ok(win._handsTries >= 30, 'and the retry ran to its bound rather than for ever');
-    win.dispose();
   });
 });

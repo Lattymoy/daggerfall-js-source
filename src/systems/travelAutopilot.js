@@ -11,7 +11,7 @@
 // why an accelerated trip is a REAL walk across real terrain rather
 // than a fade to black: the port does the same through
 // `player.update(dt, { forward, ... }, cam.yaw, cam.pitch)`
-// (scenes/world.js:9082-9102).
+// (scenes/world.js:8925-8945).
 //
 // PURE: it holds its own state and takes the player's position as
 // numbers. No DOM, no renderer, no world reads - which is what lets
@@ -171,38 +171,4 @@ export class TravelAutopilot {
     this.pitch = 0;
     return { yaw: this.yaw, pitch: 0 };
   }
-}
-
-// ── TO-FIELD / AUDIT-FIELD: THE GROUND THE JOURNEY WALKS ON ──────────
-//
-// The autopilot above answers a bearing and a force; it knows nothing
-// about whether the ground under that bearing has been BUILT yet. On a
-// streaming world it has not always: the streamer raises ONE map pixel
-// per call and an accelerated journey crosses them at up to a hundred
-// times walking pace, so the traveller can outrun the world and walk
-// into the hole - which is what Mac saw ("Using travel options spawns
-// you under the maps"). These two are that gate, kept PURE here for the
-// same reason the autopilot is: the pins can drive them on a table
-// instead of matching the host's source text, which is all the first
-// cut of this fix had.
-
-/** How far ahead of the traveller the ground must exist. `floor` is a
- *  distance that is comfortable at ordinary speed and far less than a
- *  map pixel; the FRAME's own reach is the real requirement, because a
- *  motor moves `speed * min(dt, maxFrameDt) * scale` in one go and the
- *  frame that hitches is exactly the frame the streamer is behind. */
-export function travelLookaheadFor({ speed = 0, dt = 0, scale = 1, maxFrameDt = 0.25, floor = 64, margin = 1.5 }) {
-  return Math.max(floor, speed * Math.min(dt, maxFrameDt) * Math.max(1, scale) * margin);
-}
-
-/** The journey's forward force, held while the ground is missing AND the
- *  streamer is still bringing it. `heightAt` answers a non-finite number
- *  over a pixel that is not built. With nothing in flight the ground is
- *  not coming and holding for ever would be its own bug, so the drive
- *  goes through - a hole that will never be filled is a build failure,
- *  not a reason to stand still until the sun goes out. */
-export function travelDriveForward({ feet, yaw, lookahead, heightAt, streaming, forward }) {
-  const ahead = [feet[0] + Math.sin(yaw) * lookahead, feet[2] + Math.cos(yaw) * lookahead];
-  const standing = Number.isFinite(heightAt(feet[0], feet[2])) && Number.isFinite(heightAt(ahead[0], ahead[1]));
-  return (!standing && streaming) ? 0 : forward;
 }

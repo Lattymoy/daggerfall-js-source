@@ -115,52 +115,7 @@ import { bindings } from './input.js';
 import { actionForCode } from '../systems/inputActions.js';
 
 // ── THE SPRITE (Mac's, public/art/held-map.png) ──────────────────
-/** MAP-FIELD (2026-09-18, Mac: "The sprite I gave to be used is nowhere
- *  to be seen at all"): THE SITE ROOT, READ OFF THIS MODULE.
- *
- *  The sprite lives in `public/`, so it is served at `<root>/art/held-map.png`.
- *  A bare relative `art/held-map.png` is resolved against the DOCUMENT,
- *  and the game's document is `/play/index.html` - so the browser asked
- *  for `/play/art/held-map.png`, the host answered with the page itself,
- *  the decode failed, `onload` never fired, and the window stood with no
- *  parchment and no hands: ink on black. The build's `base` is './', so
- *  there is no absolute path to hardcode either.
- *
- *  The MODULE's own URL knows where the root is under any base: a build
- *  serves it from `<root>/assets/`, the dev server from `<root>/src/`.
- *  Cutting that segment off gives the root, and the sprite hangs off it.
- *  Pure, so the pin can drive it with the shapes both lanes produce. */
-export function appRootFrom(moduleUrl) {
-  let u;
-  // AUDIT-FIELD F4: a module URL that cannot be a base (blob:, data:)
-  // has no pathname to cut, and `new URL('art/...', it)` THROWS - at
-  // module evaluation, in a file scenes/world.js imports statically
-  // through travelMapDoor.js, so the throw would not cost the map, it
-  // would cost the whole scene. There is no root to find in such a URL.
-  try { u = new URL(moduleUrl); } catch { return null; }
-  if (!u.pathname.startsWith('/')) return null;   // an opaque path: cannot-be-a-base
-  u.search = ''; u.hash = '';
-  // AUDIT-FIELD F3: THE LAST such segment, not the first. JS regex
-  // matching is leftmost-first, and `.*$` being greedy only decides the
-  // tail - so the first cut cut at the FIRST `/assets/` or `/src/` on
-  // the path. Unpack `dist/` into `~/public_html/assets/dfjs/` - or any
-  // tree with a directory named exactly `assets` or `src` above the
-  // build's own - and `/assets/dfjs/assets/main-x.js` collapsed to `/`,
-  // and the sprite 404'd again, one directory up from where it lives. A
-  // greedy leading group takes the last one instead. A path with neither
-  // segment is not a shape this app is served from, and guessing the
-  // module's own directory there is how the bug this helper exists for
-  // looked; answer null and let the caller fall back out loud.
-  const cut = u.pathname.replace(/^(.*)\/(?:assets|src)\/[^/]*(?:\/.*)?$/, '$1/');
-  if (cut === u.pathname) return null;
-  u.pathname = cut;
-  return u.href;
-}
-/** The root the sprite hangs off, or null when this module's URL names
- *  none - the sprite then falls back to the document's own base, which
- *  is right at a site root and is at least a URL rather than a throw. */
-export const APP_ROOT = appRootFrom(import.meta.url);
-export const HELD_MAP_URL = new URL('art/held-map.png', APP_ROOT ?? globalThis.document?.baseURI ?? 'https://invalid.invalid/').href;
+export const HELD_MAP_URL = 'art/held-map.png';
 /** Its own pixels, and the stage's aspect. */
 export const SPRITE = Object.freeze({ w: 1448, h: 1086 });
 /** The parchment's rectangle, as fractions of the sprite - measured
@@ -614,22 +569,8 @@ export class HeldMapWindow {
    *  and the ink canvas is placed by the sheet's corners from now on. */
   _tryHands() {
     const h = this.deps.holder;
-    if (this._lane === 'hands') { this._handsTries = 0; return false; }
-    // AUDIT-FIELD F2: THE RETRY IS ARMED BY THE FIRST ASK, NOT BY THE
-    // FIRST ANSWER. This counter is the whole reason the sprite lane
-    // keeps asking for thirty ticks - "in case the rig had not posed
-    // yet" - and the ask that arms it used to ZERO it whenever
-    // `available()` said no, which is precisely the case it exists for.
-    // `armsAvailable()` wants `fpArm.active()`, which wants a mesh, and
-    // the mesh is nulled by `releaseMesh()` on every piece rebuild (an
-    // equip, a body swap) and is not up at all in a world's first
-    // frames - so a map opened in any of those moments was latched to
-    // the painted sprite for the whole open, with the retry written to
-    // prevent exactly that doing nothing. MAP-FIELD made this
-    // reachable: before it `available` was `armsDrawn()`, which a
-    // sheathed player could never answer yes to anyway.
+    if (this._lane === 'hands' || !h?.available?.()) { if (this._lane !== 'hands') this._handsTries = 0; return false; }
     if (this._handsTries === 0) this._handsTries = 1;
-    if (!h?.available?.()) return false;
     if (!h.hold?.(null, { aspect: this._paper.w / this._paper.h })) return false;
     this._lane = 'hands';
     this._handsTries = 0;
@@ -1799,20 +1740,6 @@ export class HeldMapWindow {
         card.append(dl);
       }
       if (t?.online) card.append(el('p', 'hmmeta', ONLINE_TRAVEL_LINE));   // OL2: the popup's own line
-      // TO-FIELD (2026-09-18, Mac: "it... doesn't travel on the road"):
-      // THE FOLLOW KEY, SAID WHERE THE TRIP IS BOUGHT. Travel Options
-      // does not route along roads to a destination - it beelines, and
-      // road following is a MODE the player starts with a key mid-
-      // journey (the mod's own readme: "The key used to start/stop path
-      // following", and its junction map "pops up when path following
-      // stops at a junction"). The port had to move that key off the
-      // mod's own F, which this skin spends on the social card, so the
-      // one place it was named was the H help INSIDE a running journey -
-      // which is no use to a player who has never started one.
-      const _fk = this._to?.settings?.followKey;
-      if (_fk && _fk !== 'None' && this._to?.settings?.roadsIntegration) {
-        card.append(el('p', 'hmmeta', `On the road, press ${_fk} to follow it.`));
-      }
       if (st.notice) card.append(el('p', 'hmnotice', st.notice));
       const row = el('div', 'hmacts');
       const go = el('button', 'act', 'Begin journey');
