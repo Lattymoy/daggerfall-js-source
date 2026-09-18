@@ -1222,7 +1222,19 @@ export async function bootWorld(canvas, renderer, params, status) {
               // by the person's LIVE archive, never the creation one
               frameCount: (rec, a) => personTex.get(a).getFrameCount(rec),
               collider: personCollider,
-              groundY: () => locOrigin[1],
+              // JAN1 (2026-09-18, Janome: "people walking in the sky lol, just outside the city"): THE TERRAIN'S
+              // FLOOR, not the location's average. The navgrid is the BLOCK rect; the flattened rect is the stamped
+              // tiles plus a clearance (terrainTiles.js setLocationTiles) and is smaller by a band of ~70 units on
+              // every side, and blendLocationTerrain only EASES that band toward the average - so a walker there stood
+              // at the average while the real ground fell away under it, ten metres in the air on the flattest city
+              // pixel. Inside the rect heightAt IS the average, so nothing there moves; the fixed city's host
+              // (exterior.js) already asks its collider. Persons are pixel-local vertically: the pixel's translation
+              // comes off the world height. A pixel not built yet answers the old constant.
+              groundY: (x, z) => {
+                const t = state.pixelTranslation(px, py);
+                const h = heightAt(x + locOrigin[0] + t[0], z + locOrigin[2] + t[2]);
+                return Number.isFinite(h) ? h - t[1] + 2.0 * 0.025 : locOrigin[1];
+              },
             });
             personBatches.set(person, renderer.createBillboardBatch(archive, 0, { w: 1, h: 1 }, [[0, 0, 0]]));
             return person;
@@ -3255,6 +3267,9 @@ export async function bootWorld(canvas, renderer, params, status) {
     // the slot, so this bypasses toggleSpellbook's already-open guard
     // - the inventory has just run its own close law.
     openSpellbook: () => { const b = makeSpellbookWindow(); if (b) townTalk.showOverlay(b); },
+    // JAN1: the pose is the player's - a door in or out hands the pair through these (HARD2c's one home)
+    weaponPose: () => weaponPoseOf(weaponRig.playerWeapon),
+    applyWeaponPose: (p) => applyWeaponPose(weaponRig.playerWeapon, p),
     openCharSheet: () => { if (charSheetDoorReady()) townTalk.showOverlay(makeCharSheetWindow()); },   // MAC-C: the pack's other window key crosses over rather than doing nothing - the same door the sheet's own Items button takes back the other way
     ...useHooks,   // U53: the one bag (revealMap, drinkPotion, getQuest)
     nowMinute: () => Math.floor(playerTicker.classicMinutes),
@@ -3806,6 +3821,19 @@ export async function bootWorld(canvas, renderer, params, status) {
     // :3616-3620) - a new world origin means a new building list and a
     // stale topic list
     npcSession.onWorldChanged();
+    // JAN1 (Janome: "sometimes speaking to people gives this interaction
+    // menu ... until i leave the building and re-enter"): the DIRECTORY
+    // half of that same law. syncTopics runs in the EXTERIOR frame alone
+    // (under the modal return), so a restore that lands the player INSIDE
+    // a building - worldQuickLoad's building arm, and the boot ?load that
+    // takes it before the frame loop has even started - mounted the
+    // interior with `topics` still null, and nothing could re-sync until
+    // the player walked back out. The Where-is directory stayed empty for
+    // the whole visit and openTalkWindow's door dropped every NPC in the
+    // building onto the keyed greeting chain. cam.pos is at the arrival
+    // and the destination pixel is built, so the pixel walk answers here;
+    // the frame loop's own call is then a no-op.
+    syncTopics();
   }
 
   /**
@@ -5265,14 +5293,14 @@ export async function bootWorld(canvas, renderer, params, status) {
      *  GameManager.Instance.WeaponManager.ToggleSheath() - a SINGLETON
      *  call with no scene gate at all, registered for both buttons at
      *  :211-212, so the panel is live on every screen the bar is drawn
-     *  on. Here routeAction's arm is optional (ui/input.js:597) and
+     *  on. Here routeAction's arm is optional (ui/input.js:605) and
      *  only dungeonContext.js carried the door, so above ground, in
      *  ?exterior and inside a building the click was swallowed by
      *  routeLargeHudClick's unconditional `return true` and nothing
      *  drew or sheathed - while Z kept working everywhere, which is
      *  why it read as "only the panel is dead". THE FOUR HOSTS RULE.
      *  No double-fire from the keyboard: routeKey declines
-     *  POLLED_ACTIONS (ui/input.js:458), so a Z press reaches the
+     *  POLLED_ACTIONS (ui/input.js:466), so a Z press reaches the
      *  frame's edge latch and nothing else. */
     toggleSheath: () => weaponRig.toggleSheath(),
     // QS2: the diamond's three presses, beside the sheath panel's door and for
@@ -5580,7 +5608,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       // gates the position now, not just the presence.
       // WEAPON-VIS2: this ladder never calls routeKey (the comment
       // above the Escape arm says so directly), so routeKey's own
-      // `POLLED_ACTIONS.has(act)` decline (ui/input.js:560) never
+      // `POLLED_ACTIONS.has(act)` decline (ui/input.js:568) never
       // touched this door. hudCtx carries toggleSheath (AUDIT 58, for
       // the large HUD's sheath panel), so 'ReadyWeapon' - Z - reached
       // routeAction from BOTH here AND the frame's own poll below
@@ -5951,7 +5979,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // exterior -> the townTalk overlay, interior OR dungeon -> the mode
   // machine's slot. U43-ii shipped the dungeon half: showQuestBox
   // offers the window to `modes.showQuestOverlay` below, and
-  // worldModes answers it in BOTH modes (worldModes.js:7396-7408 -
+  // worldModes answers it in BOTH modes (worldModes.js:7406-7418 -
   // dungeon routes to dungeonCtx.showOverlay), so a dungeon popup is
   // shown rather than logged loudly and dropped.
   // AUDIT 24 (wave 21): DaggerfallMessageBox.Show() is a

@@ -154,7 +154,7 @@ export class VirtueLevelUpScreen {
   // The same action vocabulary LevelUpScreen answers (charsheet.js:106),
   // so every host's existing overlay route drives this screen unchanged
   // - including 'char:-', which is the only hyphen a typed-character
-  // branch can produce (ui/input.js:338 - the typed-character branch,
+  // branch can produce (ui/input.js:346 - the typed-character branch,
   // whose class carries a literal trailing hyphen).
   input(action) {
     const key = STAT_KEYS_ORDER[this.cursor];

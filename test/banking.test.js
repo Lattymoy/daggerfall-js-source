@@ -421,12 +421,14 @@ test('B1: the accounts and the loan SURVIVE a save (SerializablePlayer)', async 
   // ...and the restored copy is detached from the snapshot too
   loaded.bankAccounts[3].accountGold = 5;
   assert.equal(snap.bankAccounts[3].accountGold, 777);
-  // a PRE-B1 save restores empty rather than throwing
+  // a PRE-B1 save restores the FULL table rather than throwing - JAN1 (Janome's `region 17 is outside the 0 bank
+  // accounts`): an empty table is truthy, the host's `??=` never minted one, and every bank reader threw
   const old = { ...snap };
   delete old.bankAccounts;
   const fresh = { stats: {}, items: [] };
   restorePlayer(fresh, old);
-  assert.deepEqual(fresh.bankAccounts, []);
+  assert.equal(fresh.bankAccounts.length, 62, 'the full table, as a new game mints it');
+  assert.equal(accountTotal(fresh.bankAccounts, 17), 0);
 });
 
 // ── H3: SHIP OWNERSHIP + the two SELL arms ───────────────────────

@@ -30,6 +30,8 @@ import { getEscortFacesSaveData, restoreEscortFacesSaveData } from '../ui/hudEsc
 import { quickslotSaveData, restoreQuickslotSaveData } from './quickslots.js';   // QS1: the quickslot diamond rides the one composer
 import { resetMagicRoundMarker, sharedClockOn, worldMinutes, alignEntityClocks } from './worldTick.js';   // EntityEffectBroker.InitMagicRoundTimer, on the LOAD arm (:230-233); AUDIT WORLD5 C4: a load online is an arrival
 import { isMembershipStore } from './guilds.js';   // V2e: the two-book membership store rides the save whole
+import { createBankAccounts, createHouses } from './banking.js';   // JAN1: a save with no accounts restores the full table - an EMPTY one is truthy and the host's `??=` never minted it
+import { setItemFields } from './itemTemplates.js';   // JAN1: an item saved before MAC-N1 (no value) is set on the way in, so the trade strip never sums NaN
 import { restoreKnightlyOrderFlags } from './knightlyGifts.js';   // D9: KnightlyOrder.RestoreGuildData's armour-bit back-fill
 import { GUILD_GROUPS } from '../formats/factionFile.js';   // the membership book's key IS the guild group
 import { appStorage } from './appStorage.js';   // DA1: localStorage in a browser, real save files in the desktop shell
@@ -515,13 +517,16 @@ export function restorePlayer(entity, snap, spellsByIndex = null) {
   entity.skills = Array.isArray(snap.skills) ? [...snap.skills] : snap.skills;   // AUDIT 17e: pre-chargen skills is a flat number
   entity.skillUses = [...snap.skillUses];
   entity.career = snap.career ? { ...snap.career } : entity.career;
-  entity.items = snap.items.map((it) => ({ ...it }));
-  entity.wagonItems = (snap.wagonItems ?? []).map((it) => ({ ...it }));   // W-slice (pre-W saves restore empty)
-  entity.otherItems = (snap.otherItems ?? []).map((it) => ({ ...it }));   // R1: the in-repair collection (pre-R1 saves restore empty)
+  entity.items = snap.items.map((it) => setItemFields(it));   // JAN1: SetItem's two writes on every item in (a copy, as before)
+  entity.wagonItems = (snap.wagonItems ?? []).map((it) => setItemFields(it));   // W-slice (pre-W saves restore empty); JAN1: set on the way in
+  entity.otherItems = (snap.otherItems ?? []).map((it) => setItemFields(it));   // R1: the in-repair collection (pre-R1 saves restore empty); JAN1: set on the way in
   entity.rentedRooms = (snap.rentedRooms ?? []).map((r) => ({ ...r }));   // U39: the rented rooms (pre-U39 saves restore empty)
-  entity.bankAccounts = (snap.bankAccounts ?? []).map((a) => ({ ...a }));   // B1 (pre-B1 saves restore empty)
+  // JAN1 (2026-09-18, Janome: CRASH `region 17 is outside the 0 bank accounts`, a softlock at the bank): a pre-B1 save
+  // restored an EMPTY table, which is truthy, so worldModes' `??= createBankAccounts` never minted one and every bank
+  // reader threw by DFU's own ValidateRegion law. No accounts saved is no accounts opened: the full table, as a new game.
+  entity.bankAccounts = snap.bankAccounts?.length ? snap.bankAccounts.map((a) => ({ ...a })) : createBankAccounts();   // B1
   entity.sceneCache = restoreSceneCache(createSceneCache(), snap.sceneCache);   // P1
-  entity.houses = (snap.houses ?? []).map((h) => ({ ...h }));
+  entity.houses = snap.houses?.length ? snap.houses.map((h) => ({ ...h })) : createHouses(entity.bankAccounts.length);   // JAN1: the same law for the house registry (H1 mints it beside the accounts)
   entity.ownedShip = snap.ownedShip ?? -1;
   entity.boardShipPosition = snap.boardShipPosition ?? null;   // TR4 (:425)
   entity.anchorPosition = snap.anchorPosition ? { ...snap.anchorPosition } : null;   // TP-slice

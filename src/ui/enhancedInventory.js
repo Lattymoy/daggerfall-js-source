@@ -2327,11 +2327,15 @@ function onKey(e) {
   // one closes it, as it always did.
   if (overlayAction(e) === 'back' && drag) { e.preventDefault(); e.stopPropagation(); dragStop(false); return; }
   const act = actionOf(e);
-  if (act === 'CharacterSheet' && deps?.openCharSheet) {
+  if (act === 'CharacterSheet' && typeof deps?.openCharSheet === 'function') {
     e.preventDefault();
     e.stopPropagation();
+    // JAN1 (2026-09-18, Janome: "got this while toggling between F5 and F6 menus" - CRASH `openCharSheet is not a
+    // function`): THE HOOK IS READ BEFORE ANYTHING CLOSES - the file's own law at the close arm above - because
+    // `onExit` unmounts, and the unmount clears `deps` to `{}` before this line ran on it.
+    const openCharSheet = deps.openCharSheet;
     onExit();                 // the pack's own close law runs FIRST...
-    deps.openCharSheet();     // ...and this replaces the slot it just freed
+    openCharSheet();          // ...and this replaces the slot it just freed
     return;
   }
   if (overlayAction(e) !== 'back' && act !== 'Inventory') return;
