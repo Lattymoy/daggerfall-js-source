@@ -392,7 +392,7 @@ test('CD2: both status pages state the open-flag count Home.md actually holds', 
   // readable only as long as nobody asked which two.
   const roadText = read(ROAD);
   for (const site of ['combat/fpsSpellCasting.js:178', 'characters/enemyCasting.js:91',
-    'systems/inventory.js:48', 'systems/talkMacros.js:289', 'ui/hudLarge.js:75',
+    'systems/inventory.js:48', 'systems/talkMacros.js:314', 'ui/hudLarge.js:75',
     'ui/exteriorAutomapWindow.js:96']) {
     assert.ok(roadText.includes(site), `Road-To-1-1.md does not name the retired flag ${site}`);
   }
@@ -658,8 +658,8 @@ const SOURCE_CITES = [
   // AUDIT QS6 F1, a fifth time and at a second door: this row names FIVE hosts
   // and the table captured ONE, with a sixth number baked into the pick - so
   // citeMerge bumped the LITERAL at the BOX1/TI3 merge and left the doc, and
-  // four of the five had been stale for waves (`worldModes.js:5680` for a line
-  // that is 5921, `world.js:8969` for 8836, `interior.js:297` for 329,
+  // four of the five had been stale for waves (`worldModes.js:5689` for a line
+  // that is 5921, `world.js:8975` for 8836, `interior.js:297` for 329,
   // `dungeon.js:890` for 959). Every one is captured now, against the
   // projection each host really builds.
   ['bible/10-UI/Settings-Screen-Spec.md', /`exterior\.js:(\d+)`, `dungeon\.js:\d+`/, EX, /^ {6}fieldOfView\(\),$/],

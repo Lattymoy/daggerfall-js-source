@@ -2,6 +2,8 @@
 // the click state machine over fake session hooks.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';   // PORTRAIT1: the host hand-off is a source read
+
 import { NativeTalkWindow, TALK_RECTS, TOPIC_ROWS, TOPIC_ROW_H, CONV_LINE_H, ROW_H, ROW_SPACING, QUESTION_COLOR, ANSWER_COLOR, SELECTED_TEXT_COLOR, TOPIC_SELECTED_TEXT_COLOR, topicRowStyle, PORTRAIT_RECT, PORTRAIT_ARCHIVE } from '../src/ui/nativeTalk.js';
 import { portraitIndexFromStaticNPCBillboard, OOPS_PORTRAIT_RECORD } from '../src/systems/npcSession.js';
 import { PERSON_FACE_RECORDS, PERSON_TEXTURES, NUM_PERSON_FACE_VARIANTS } from '../src/characters/mobilePerson.js';
@@ -35,6 +37,8 @@ const hooks = () => {
     npcName: 'People of Daggerfall',
   };
 };
+
+const rd = (p) => readFileSync(new URL('../' + p, import.meta.url), 'utf8');   // PORTRAIT1
 
 test('nativeTalk: the verbatim rects + the click state machine', () => {
   // DaggerfallTalkWindow geometry spot pins
@@ -146,7 +150,7 @@ test('AUDIT 65 UI-1: the talk window takes the HOST\'s four-argument click - the
   // townTalk.js:789 mounts NativeTalkWindow into the same overlay slot
   // every other window uses, and every slot dispatches
   // `click(vx, vy, right, middle)` - townTalk.js:1156,
-  // worldModes.js:7492, dungeonContext.js:5870. The double-click clock
+  // worldModes.js:7501, dungeonContext.js:5870. The double-click clock
   // used to occupy that fourth positional, so `e.button === 1` arrived
   // as `now`, `false ?? Date.now()` kept the `false`, and
   // `false - false === 0 < 300` made EVERY second click in the topic
@@ -254,4 +258,48 @@ test('D10: SetPerson mints the mobile walker TFAC record from the outfit variant
   assert.deepEqual(PERSON_FACE_RECORDS.Breton.female, [72, 72, 24, 72]);
   assert.equal(PERSON_TEXTURES.Breton.male.length, PERSON_FACE_RECORDS.Breton.male.length,
     'one face record per outfit variant');
+});
+
+// ── PORTRAIT1: THE HOST HAND-OFF, WHICH THE STUB ABOVE CANNOT SEE ──
+//
+// Mac, 2026-09-18: "talking to anyone indoors shows the error, outdoors looks normal" - the talk window drew
+// Daggerfall's own "OOPS! Tell Mack NOW" debug face - and, for one tavern NPC, "the portrait doesn't match the
+// overworld sprite". ONE ROOT, and it was not in the law above, which is a faithful translation and was green
+// throughout: it was the HOST BAG. `world.js` and `exterior.js` handed `worldModes` a hand-listed pipeline literal
+// that omitted `flatFaceIndex`, so `staticNpcPortrait`'s `pipeline.flatFaceIndex` arrived undefined, the `?.` calls
+// below it never trapped, BOTH lookups collapsed to -1, and record 410 - a last resort in DFU - became the only
+// outcome for every static NPC in the game. The second report is the same bug one step less broken: an INDIVIDUAL
+// faction returns before the lookups, so that NPC got its faction's canonical face, which has nothing to do with
+// the sprite standing there. Outdoors looked fine only because wandering MOBILES take a different law entirely
+// (personFaceRecordId); exterior STATIC NPCs were just as broken and easy to miss among the walkers.
+//
+// The test above passes its own `faces` stub, so it is structurally incapable of catching a host that supplies no
+// lookup at all. These two pins are the halves it cannot hold: the WIRING, and the law driven over a REAL FlatsFile.
+// The WIRING half of this lives in test/hostdeps.test.js, which owns the host-bag contract for every key
+// worldModes takes off the pipeline - that is where `uploadRecordFrame` was pinned after IT went missing, and
+// where the member-read gap that let `flatFaceIndex` through has now been closed. This file holds the LAW.
+test('PORTRAIT1 (the law, over a real FlatsFile): the NPC\'s OWN billboard decides the face, and a host that supplies no lookup silently yields the debug face', async () => {
+  const { FlatsFile } = await import('../src/formats/flatsFile.js');
+  const block = (a, r, caption, face) => `${a} ${r}\n${caption}\n1\n0\n0\n${face}`;
+  // a real parse, no ARENA2 needed: the faction's generic flat and the NPC's own sprite carry DIFFERENT faces
+  const flats = new FlatsFile().load([
+    block(182, 1, 'the faction\'s generic townsperson', 55),
+    block(334, 9, 'the sprite actually standing there', 77),
+  ].join('\n\n'));
+  const flatFaceIndex = (a, r) => flats.faceIndex(a, r);
+  const faction = { type: 2, flat1: (182 * 128) + 1, flat2: (182 * 128) + 1 };
+  const npc = { gender: 0, billboardArchiveIndex: 334, billboardRecordIndex: 9 };
+
+  const wired = portraitIndexFromStaticNPCBillboard(npc, { factionData: faction, flatFaceIndex });
+  assert.equal(wired.record, 77, 'the face is the SPRITE\'s, not the faction\'s - which is the whole point of the billboard override');
+  assert.notEqual(wired.record, OOPS_PORTRAIT_RECORD, 'and it is not the debug face');
+  assert.notEqual(wired.record, 55, 'the faction\'s generic face is overwritten, or the portrait would not match the sprite');
+
+  // THE PRODUCTION SHAPE THAT SHIPPED: no lookup at all. It does not throw, it does not warn - it answers 410,
+  // which is why a wrong face reached every player while the suite stayed green. Pinned so the silence is on record.
+  const unwired = portraitIndexFromStaticNPCBillboard(npc, { factionData: faction, flatFaceIndex: undefined });
+  assert.equal(unwired.record, OOPS_PORTRAIT_RECORD, 'no lookup collapses to the debug face, silently');
+  // ...and the same NPC with an INDIVIDUAL faction takes the early return, which is report two: a real face, wrong person
+  const individual = portraitIndexFromStaticNPCBillboard(npc, { factionData: { type: 4, face: 61 }, flatFaceIndex: undefined });
+  assert.deepEqual(individual, { archive: 'CommonFaces', record: 61 }, 'an Individual faction never consults the sprite at all');
 });

@@ -32,6 +32,7 @@ import { carriedWeight } from '../systems/inventory.js';   // AUDIT 17e F30; E4:
 import { totalGoldAmount } from '../systems/court.js';   // PlayerEntity.GetGoldAmount - coins plus letters of credit
 import { entityMaxEncumbrance, handToHandMinDamage, handToHandMaxDamage } from '../combat/formulas.js';   // U10; AUDIT 63 F34: CalculateHandToHandMin/MaxDamage
 import { STAT_KEYS_ORDER } from '../systems/chargen.js';
+import { statDescriptionRows } from '../systems/talkMacros.js';   // ATTRMACRO1: SetTextTokens' macro pass over TEXT.RSC records 0..7
 import { SKILLS, SKILL_NAMES, skillValue, getSkillRecentlyIncreased, resetSkillsRecentlyRaised } from '../systems/skills.js';
 import { applyLevelUp, LEVELUP_BONUS_POOL_MIN, LEVELUP_BONUS_POOL_MAX } from '../systems/advancement.js';
 import { usesVirtueLeveling } from '../systems/oblivionLeveling.js';   // ORL1: whose law levels this character
@@ -493,7 +494,14 @@ export class CharSheet {
       for (let i = 0; i < STAT_KEYS_ORDER.length; i++) {
         if (!inRect([se.x, se.y + se.step * i, se.w, se.h], vx, vy)) continue;
         audio.playOneShot(SOUND.ButtonClick, 1);
-        const rows = this.hooks.rows?.(statDescriptionTextId(i)) ?? [];
+        // ATTRMACRO1 (2026-09-18, Mac: "none of the attribute explanations show actual values"): DFU's line here
+        // is `SetTextTokens((int)sender.Tag, playerEntity.Stats)` - the record AND a macro source - and the comment
+        // above has said so since AUDIT 58 while the code handed the rows straight to the box. So every one of the
+        // eight showed `%str`, `%ark`, `%dam`, `%enc` and their siblings as literal tokens. The source is the
+        // player's stats (systems/quest/questMacros.js statsMacroSource) and the pass is the one every other
+        // TEXT.RSC surface makes; it is applied HERE and not inside the `rows` hook, which the journal, the item
+        // text, the health box and the skills dialog all share.
+        const rows = statDescriptionRows(this.hooks.rows?.(statDescriptionTextId(i)) ?? [], this.entity);
         if (rows.length) this.child = new ActionTextBox(rows);
         return true;
       }

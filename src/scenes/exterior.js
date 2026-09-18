@@ -3417,14 +3417,20 @@ export async function bootExterior(canvas, renderer, params, status) {
     // A5b: the tavern arm needs the host's clock, and leaving one has to
     // hand the street back its own song - the host owns both, so both
     // ride in as closures rather than worldModes reaching for a global.
-    // uploadRecordFrame rides here too: worldModes hands this bag
-    // straight to buildDungeonContext and buildInteriorContext, and
-    // BOTH destructure it for their mobile-sprite draw. Leaving it
-    // out did not fail loudly - it arrived as undefined and threw
-    // `is not a function` on the first enemy frame in a dungeon
-    // entered from this host, while the standalone ?dungeon scene
-    // (which spreads the whole pipeline) was fine.
-    pipeline: { getGpuMesh, cpuModels, getTexture, uploadRecord, uploadRecordFrame, arch, palette, getMachineryParts },   // WM4b: the mill machinery's moving parts, for the interior arm
+    // PORTRAIT1 (2026-09-18, Mac: "talking to anyone indoors shows the error, outdoors looks normal" - the talk
+    // window drew Daggerfall's own "OOPS! Tell Mack NOW" debug face): THE HAND-LISTED BAG IS RETIRED, and this is
+    // the SECOND key it cost. The note it replaces recorded the first: `uploadRecordFrame` was left out of the
+    // list, arrived as undefined and threw `is not a function` on the first enemy frame in a dungeon entered from
+    // this host, "while the standalone ?dungeon scene (which spreads the whole pipeline) was fine". That reading
+    // was right and the lesson was not taken - the list stayed. `flatFaceIndex` then went the same way and was
+    // WORSE, because nothing threw: worldModes' `staticNpcPortrait` reads it with `?.`, so FLATS.CFG was simply
+    // never consulted, both arms of GetPortraitIndexFromStaticNPCBillboard collapsed to -1, and every static NPC
+    // in the game kept the record-410 default that is meant to be a last resort. A silent wrong face, everywhere,
+    // with the file loaded and in memory the whole time (the CAPTIONS worked, because they close over the host's
+    // own `pipeline` variable and never went through this bag at all).
+    // So the bag is the pipeline, as `dungeon.js` has always handed it. `arch` and `palette` ride along because
+    // `createDataPipeline` takes them as inputs and returns only the palette.
+    pipeline: { ...pipeline, arch, palette },   // PORTRAIT1: THE WHOLE PIPELINE, as the standalone ?dungeon scene has always handed it (dungeon.js) - see the note above
     foes: !params.has('nofoes'),   // C11: foes are the DEFAULT now (monsters live; ?nofoes for the empty-dungeon dev view)
     playerClass: params.has('class') ? Number(params.get('class')) : undefined,
     playerSpell: params.has('spell') ? Number(params.get('spell')) : undefined,
@@ -4620,7 +4626,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     // ROAD-G G2: THE ENEMY ARM EXISTS NOW - the note here said "this
     // host mounts no bow-armed pool", which stopped being true with the
     // encounter mount above, and an archer's shaft would have flown
-    // through the player for ever. world.js:10026-10147 is the shape.
+    // through the player for ever. world.js:10032-10153 is the shape.
     arrows.update(dt, {
       // enemy arrows hunt only a WALKING player - the fly camera has no
       // capsule to hit
@@ -4849,7 +4855,7 @@ export async function bootExterior(canvas, renderer, params, status) {
         // removed elsewhere.
         if (!cityGuards.resolvePlayerHit(weaponRig.playerWeapon, eye, fwd, player.pos, makeInView(proj, view, multiply), guardHitSound)) {
           // ROAD-G G2: encounter foes resolve AFTER the watch and
-          // BEFORE civilians - world.js:10220's order, and the order
+          // BEFORE civilians - world.js:10226's order, and the order
           // matters because a watchman standing over a quest foe must
           // still be the one the swing finds.
           if (exteriorFoes.resolvePlayerHit(weaponRig.playerWeapon, eye, fwd, player.pos, makeInView(proj, view, multiply), guardHitSound)) {

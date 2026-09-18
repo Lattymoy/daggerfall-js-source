@@ -1,0 +1,65 @@
+[
+  {
+    "name": "ATTRMACRO1-the-sheet-mounts-the-rows-raw-again",
+    "file": "src/ui/charsheet.js",
+    "old": "        const rows = statDescriptionRows(this.hooks.rows?.(statDescriptionTextId(i)) ?? [], this.entity);",
+    "new": "        const rows = this.hooks.rows?.(statDescriptionTextId(i)) ?? [];",
+    "tests": ["test/macrocoverage.test.js"]
+  },
+  {
+    "name": "ATTRMACRO1-the-box-gets-the-mcp-but-no-player-hooks",
+    "file": "src/systems/talkMacros.js",
+    "old": "  const hooks = { playerEntity: () => entity };",
+    "new": "  const hooks = {};",
+    "tests": ["test/macrocoverage.test.js"]
+  },
+  {
+    "name": "ATTRMACRO1-the-rating-forgets-which-attribute-was-read",
+    "file": "src/systems/quest/questMacros.js",
+    "old": "      return STAT_RATINGS[lastStat][i];",
+    "new": "      return STAT_RATINGS.strength[i];",
+    "tests": ["test/macrocoverage.test.js"]
+  },
+  {
+    "name": "ATTRMACRO1-the-rating-threshold-walk-goes-one-step-too-far",
+    "file": "src/systems/quest/questMacros.js",
+    "old": "      while (i < STAT_RATING_THRESHOLDS.length && lastStatValue >= STAT_RATING_THRESHOLDS[i]) i++;",
+    "new": "      while (i < STAT_RATING_THRESHOLDS.length && lastStatValue > STAT_RATING_THRESHOLDS[i]) i++;",
+    "tests": ["test/macrocoverage.test.js"]
+  },
+  {
+    "name": "ATTRMACRO1-the-stat-read-stops-latching-for-the-rating",
+    "file": "src/systems/quest/questMacros.js",
+    "old": "  const read = (key) => { lastStat = key; lastStatValue = liveStat(entity, key); return String(lastStatValue); };",
+    "new": "  const read = (key) => String(liveStat(entity, key));",
+    "tests": ["test/macrocoverage.test.js"]
+  },
+  {
+    "name": "ATTRMACRO1-the-damage-modifier-reads-agility",
+    "file": "src/systems/quest/questMacros.js",
+    "old": "  damageModifier: (e) => damageModifier(liveStat(e, 'strength')),",
+    "new": "  damageModifier: (e) => damageModifier(liveStat(e, 'agility')),",
+    "tests": ["test/macrocoverage.test.js"]
+  },
+  {
+    "name": "ATTRMACRO1-the-derived-modifiers-go-back-to-entity-fields",
+    "file": "src/systems/quest/questMacros.js",
+    "old": "  return e ? signedFmt(DERIVED_MODIFIER[field](e)) : null;",
+    "new": "  return e ? signedFmt(e[field] ?? 0) : null;",
+    "tests": ["test/macrocoverage.test.js"]
+  },
+  {
+    "name": "ATTRMACRO1-the-row-shape-is-flattened-so-the-title-loses-its-centre",
+    "file": "src/systems/talkMacros.js",
+    "old": "  return rows.map((r, i) => (typeof r === 'string' ? tokens[i].text : { ...r, text: tokens[i].text }));",
+    "new": "  return tokens.map((t) => t.text);",
+    "tests": ["test/macrocoverage.test.js"]
+  },
+  {
+    "name": "ATTRMACRO1-the-willpower-ratings-are-tidied-to-match-the-others",
+    "file": "src/systems/quest/questMacros.js",
+    "old": "  willpower: ['inane', 'submissive', 'passive', 'distracted', 'unassertive',",
+    "new": "  willpower: ['inane', 'submissive', 'passive', 'distracted', 'about average',",
+    "tests": ["test/macrocoverage.test.js"]
+  }
+]

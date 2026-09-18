@@ -43,7 +43,7 @@
 import { tokensToString } from './rumorMill.js';
 import { QUESTION_TYPE } from './topicTree.js';
 import { TALK_STRINGS } from './answerPipeline.js';
-import { getMacroValue, macroTableCoverage } from './quest/questMacros.js';
+import { getMacroValue, macroTableCoverage, statsMacroSource } from './quest/questMacros.js';   // ATTRMACRO1: the stats MCP the attribute boxes expand against
 
 /** Every symbol MacroHelper's dictionary carries, handled rows and
  *  C#-null rows alike - the set ExpandMacros can resolve. Read off
@@ -250,6 +250,31 @@ export function talkMacroHooks(ctx) {
  *  niladic handlers, each already carrying GetValue's ladder - so a
  *  row the talk source does not override answers its sentinel rather
  *  than nothing. `%pql` is absent because it is not a DFU macro. */
+/** ATTRMACRO1 (2026-09-18, Mac: "none of the attribute explanations show actual values"): THE ATTRIBUTE BOXES'
+ *  OWN EXPANSION - DaggerfallCharacterSheetWindow's `SetTextTokens((int)sender.Tag, playerEntity.Stats)`, where the
+ *  macro source is the player's STATS rather than a quest or a conversation. The window read TEXT.RSC records 0..7
+ *  and mounted them with no macro pass at all, so every one of them showed its tokens raw.
+ *
+ *  Both halves are handed over, because the eight records need both: `%str..%luc` and `%ark` come off the MCP, and
+ *  `%dam %enc %spc %spt %mad %thd %hea %hmd` are player globals off the `playerEntity` hook. Supplying only one
+ *  leaves half the records broken.
+ *
+ *  A FRESH SOURCE PER BOX, deliberately: `%ark` reads the last stat macro evaluated, and a source shared between
+ *  two boxes would carry the previous box's attribute into this one's rating.
+ *
+ *  Shape-preserving, as `statusInfoRows` is: hosts hand rows back as plain strings on some routes and as
+ *  `{ text, center }` on others, and the centre flag is what titles these records. */
+export function statDescriptionRows(rows, entity) {
+  if (!entity || !rows?.length) return rows ?? [];
+  const mcp = { source: statsMacroSource(entity) };
+  const hooks = { playerEntity: () => entity };
+  const handlers = {};
+  for (const symbol of MACRO_SYMBOLS) handlers[symbol] = () => getMacroValue(symbol, mcp, hooks);
+  const tokens = rows.map((r) => ({ text: typeof r === 'string' ? r : String(r?.text ?? '') }));
+  expandTalkMacros(tokens, handlers);
+  return rows.map((r, i) => (typeof r === 'string' ? tokens[i].text : { ...r, text: tokens[i].text }));
+}
+
 export function talkMacroHandlers(ctx, mcp = { source: talkMacroSource(ctx) }) {
   const hooks = talkMacroHooks(ctx);
   const table = {};
