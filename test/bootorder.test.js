@@ -72,23 +72,31 @@ function surface(node) {
 // Each name here is reachable from the first build only down a branch a
 // FIRST build cannot take, and each predates Travel Options - they are
 // the analysis being generous, not the boot being wrong.
+//
+// AUDIT-FIELD F6: AND EVERY REASON NAMES A GUARD THAT MUST STILL BE
+// THERE. A name alone is a permanent blind spot: this gate passed on the
+// exact line that produced Mac's second crash, because `walkMode` was
+// allow-listed and the walker cannot see that the fix moved the read
+// behind a guard. `questBridge` was allow-listed on a reason that was
+// simply FALSE - "quest placements only", where the real guard is
+// `entry.npcs.length` - and a third dead zone sat behind that sentence
+// until AUDIT-FIELD went looking. So each entry carries the source the
+// claim rests on, and the claim fails with it.
 const ALLOWED = {
-  // buildPixelNow -> destroyPixel, which only runs when a pixel is being
-  // REPLACED (the roads retry, a season re-skin); the first build of a
-  // key has nothing to tear down.
-  droppedLoot: 'destroyPixel, on a rebuild only',
-  droppedTorches: 'destroyPixel, on a rebuild only',
-  cityGuards: 'destroyPixel, on a rebuild only',
-  exteriorFoes: 'destroyPixel, on a rebuild only',
-  // buildPixelNow -> standPixelNpcs, whose quest arm is reached only for
-  // a pixel a quest has already placed someone on.
-  questBridge: 'standPixelNpcs, quest placements only',
-  // BOOT-TDZ2: the three playerTravelPixel() reads, now behind the mod's
-  // own guard - with no mod there is nothing to initialise and the call
-  // never happens. The pin for that guard is in to1_travelOptions.test.js.
-  walkMode: 'playerTravelPixel, behind the travelOptions guard',
-  player: 'playerTravelPixel, behind the travelOptions guard',
-  cam: 'playerTravelPixel, behind the travelOptions guard',
+  // buildPixelNow -> destroyPixel. NOT "on a rebuild only": :1458's ROADS
+  // 25a arm tears down during the FIRST build whenever the road network
+  // lands mid-build, which on a fast connection is every boot. What makes
+  // these four safe is that every read of them is behind `if (collectLoose)`
+  // and that call site passes it false.
+  droppedLoot: ['destroyPixel, and only under collectLoose', 'collectLoose: false'],
+  droppedTorches: ['destroyPixel, and only under collectLoose', 'collectLoose: false'],
+  cityGuards: ['destroyPixel, and only under collectLoose', 'collectLoose: false'],
+  exteriorFoes: ['destroyPixel, and only under collectLoose', 'collectLoose: false'],
+  // BOOT-TDZ2: the playerTravelPixel() reads, behind the mod's own guard -
+  // with no mod there is nothing to initialise and the call never happens.
+  walkMode: ['playerTravelPixel, behind the travelOptions guard', 'if (travelOptions && dfLocation) {'],
+  player: ['playerTravelPixel, behind the travelOptions guard', 'if (travelOptions && dfLocation) {'],
+  cam: ['playerTravelPixel, behind the travelOptions guard', 'if (travelOptions && dfLocation) {'],
 };
 
 test('BOOT-TDZ2: nothing the boot walk runs reads a binding the boot walk has not declared - the gate the two dead-zone crashes deserved (mutants: hook-asks-the-pixel-first, travel-options-declared-late)', () => {
@@ -147,4 +155,16 @@ test('BOOT-TDZ2: nothing the boot walk runs reads a binding the boot walk has no
   // is a line that moved, and the reason recorded for it is now stale
   const gone = Object.keys(ALLOWED).filter((nm) => !found.has(nm));
   assert.deepEqual(gone, [], 'the allow-list names a binding the boot walk can no longer reach - drop it');
+
+  // AUDIT-FIELD F6: AND EVERY EXCUSE CARRIES ITS GUARD. The walker cannot
+  // see conditions - it walks both arms of every `if` - so a name on this
+  // list is blessed down EVERY path, which is how this gate came to pass
+  // on the exact line that produced the second crash. Each entry names
+  // the source the excuse rests on; delete the guard and the excuse goes
+  // with it, whatever the walker still thinks it can reach.
+  const builder = src.slice(src.indexOf('async function buildPixelNow'), src.indexOf('async function standPixelNpcs'));
+  for (const [nm, [why, guard]] of Object.entries(ALLOWED)) {
+    assert.ok(builder.includes(guard),
+      `${nm} is excused as "${why}", and the guard that excuse rests on (${guard}) is no longer in the pixel builder`);
+  }
 });

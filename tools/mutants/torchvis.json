@@ -2,8 +2,8 @@
  {
   "name": "TORCHVIS-the-sheathed-stance-takes-the-torch-down-again",
   "file": "src/combat/weaponRig.js",
-  "old": "    if (paralyzed || (!shown() && !torchOnly && !sheetOnly)) return;",
-  "new": "    if (paralyzed || (!shown() && !sheetOnly)) return;",
+  "old": "      if (paralyzed || (!shown() && !torchOnly && !sheetOnly)) return;",
+  "new": "      if (paralyzed || (!shown() && !sheetOnly)) return;",
   "tests": [
    "test/ht1_handheldtorches.test.js"
   ]

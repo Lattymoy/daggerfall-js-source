@@ -11,6 +11,7 @@
 // by source. The fixtures are the vendored files wherever there is one
 // - the shape the producer mints, not a literal typed twice.
 import { test } from 'node:test';
+import { travelDriveForward, travelLookaheadFor } from '../src/systems/travelAutopilot.js';   // AUDIT-FIELD F8
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
@@ -1680,9 +1681,35 @@ test('TO-FIELD: the accelerated journey waits for the ground, and the port\'s ow
   // `heightAt` answers -Infinity over a pixel that is not built - which
   // the collider's ground clamp can never catch. Every other
   // player-moving path in this host already waits; this one did not.
-  assert.match(w, /const TRAVEL_LOOKAHEAD = 64;/, 'the look-ahead the drive checks');
-  assert.match(w, /const _standing = Number\.isFinite\(heightAt\(_feet\[0\], _feet\[2\]\)\) && Number\.isFinite\(heightAt\(_ahead\[0\], _ahead\[1\]\)\);\s*\n\s*axes\.forward = \(!_standing && \(building \|\| queue\.length \|\| inFlight\.size\)\) \? 0 : _travelDrive\.forward;/,
-    'the drive holds while the ground is missing AND the streamer is still bringing it - the ride-out\'s own sentence');
+  // AUDIT-FIELD F8: AND IT IS EXECUTED, NOT MATCHED. The first cut pinned
+  // this whole fix with regexes over world.js's own source, which pass
+  // iff the author's bytes are present and prove nothing about what the
+  // gate DOES - a sign flip on the bearing would have probed the ground
+  // BEHIND the traveller (always built), restoring the bug whole, with
+  // every pin still green. The decision is a pure function now and the
+  // laws below drive it on a table.
+  const ground = (built) => (x, z) => (built(x, z) ? 0 : -Infinity);   // heightAt over an unbuilt pixel
+  const eastOfZeroIsVoid = ground((x) => x < 0);
+  const F = (o) => travelDriveForward({ feet: [0, 0, 0], yaw: 0, lookahead: 64, heightAt: eastOfZeroIsVoid, streaming: true, forward: 1, ...o });
+  // yaw 0 is +z in this port's convention, so the void to the EAST is
+  // not ahead of a northbound traveller and the drive goes through
+  assert.equal(F({ heightAt: ground(() => true) }), 1, 'ground under the feet and ahead: the journey walks');
+  assert.equal(F({ yaw: Math.PI / 2, heightAt: ground((x) => x < 32) }), 0,
+    'the ground ahead is missing and the streamer is still bringing it: the drive is held');
+  assert.equal(F({ yaw: Math.PI / 2, heightAt: ground((x) => x < 32), streaming: false }), 1,
+    '...but with nothing in flight the ground is not coming, and standing still for ever is its own bug');
+  assert.equal(F({ yaw: -Math.PI / 2, heightAt: ground((x) => x > -32) }), 0,
+    'the probe follows the BEARING - a sign flip would look behind, where the world is always built');
+  assert.equal(F({ heightAt: ground(() => false) }), 0, 'no ground under the feet either: held');
+  // ...and the reach is the FRAME's, with 64 only as its floor
+  assert.equal(travelLookaheadFor({ speed: 0, dt: 1 / 60, scale: 60 }), 64, 'a still traveller takes the floor');
+  assert.equal(travelLookaheadFor({ speed: 10, dt: 1 / 60, scale: 1 }), 64, 'and so does an ordinary walk');
+  assert.ok(travelLookaheadFor({ speed: 10, dt: 0.1, scale: 60, maxFrameDt: 0.25 }) > 64,
+    'a hitching frame at the shipped default limit reaches further than the floor - which is the frame the streamer is behind');
+  assert.equal(travelLookaheadFor({ speed: 10, dt: 0.1, scale: 60 }), 10 * 0.1 * 60 * 1.5, 'speed x frame x scale x margin');
+  assert.equal(travelLookaheadFor({ speed: 10, dt: 10, scale: 60, maxFrameDt: 0.25 }), 10 * 0.25 * 60 * 1.5,
+    'the frame is capped at the motor\'s own maximumDeltaTime, exactly as the step it predicts is');
+  assert.match(w, /axes\.forward = travelDriveForward\(\{/, 'and the host drives through that one decision');
   // ...and the wait is the ride-out's, so the two read the same way
   assert.match(w, /if \(edge && !groundThere && \(building \|\| queue\.length \|\| inFlight\.size\)\) return;/, 'TSR4a\'s wait still stands to be read against');
 
@@ -1713,6 +1740,15 @@ test('TO-FIELD: the accelerated journey waits for the ground, and the port\'s ow
   // player starts with a key, and the port had to move that key off the
   // mod's own F (this skin spends F on the social card), so the only
   // place it was named was the help inside a running journey.
+  // AUDIT-FIELD F10: and SURV6's hunting roll is held with them. It fires
+  // once a GAME minute, so an accelerated ride rolled it every few real
+  // seconds, and every event opens a box through `townTalk.showOverlay` -
+  // which the mod reads as a foreign window on top and answers with
+  // interruptTravel(). The journey could not survive its first minute of
+  // wilderness, which fits "doesn't travel" better than anything else here.
+  assert.match(w, /if \(_mode\(\) === 'exterior' && worldTimeScale\(\) <= 1\) hunting\.tick\(\);/,
+    'the wilderness waits until the player walks at their own pace again');
+
   const m = read('src/ui/heldMap.js');
   assert.match(m, /const _fk = this\._to\?\.settings\?\.followKey;/);
   assert.match(m, /On the road, press \$\{_fk\} to follow it\./);

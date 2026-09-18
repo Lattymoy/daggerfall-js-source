@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 
 import { ENV_DEFAULTS, survivalCtx, survivalFeed, restGateEnv, installSurvivalGate, survivalRecordAt } from '../src/systems/survival/env.js';
 import { REST_TEXT_SURVIVAL } from '../src/systems/survival/rest.js';
-import { newSurvival, alignSurvival, ALIGN_GRACE_MINUTES } from '../src/systems/survival/needs.js';
+import { newSurvival, alignSurvival, ALIGN_GRACE_MINUTES, runSurvivalMinutes, survivalOf } from '../src/systems/survival/needs.js';
 import { raceById, RACES } from '../src/systems/races.js';
 import { registerPreventRestCondition, getPreventedRestMessage, clearPreventRestConditions } from '../src/systems/restSession.js';
 import { createPlayerTicker } from '../src/scenes/shared.js';
@@ -152,4 +152,38 @@ test('SURV7: by source - the four hosts feed their env (the roof, the floor, the
   assert.match(save, /if \(sharedClockOn\(\)\) alignSurvival\(entity, Math\.floor\(worldMinutes\(\)\), Math\.floor\(snap\.classicMinutes \?\? 0\)\);/, 'the load arm');
   assert.match(read('src/systems/worldTick.js'), /felt = runSurvivalMinutes\(entity, lastMinutes, nowMinutes, survival\.env \?\? \{\}, /, 'the tick runs the minutes');
   assert.doesNotMatch(read('src/systems/survival/env.js'), /from '\.\.\/\.\.\/scenes\/|from '\.\.\/\.\.\/ui\/|from '\.\.\/\.\.\/combat\/|from '\.\.\/spellcast|from '\.\.\/diseases|from '\.\.\/effects|from '\.\.\/lycanthropy|document\.|window\./);
+});
+
+// ── AUDIT-FIELD F11/F12: what `resting` actually holds ───────────────
+//
+// TO-FIELD sits an accelerated journey as `resting` and the record's
+// strongest sentence is that this is a HARM-only knob - the days still
+// pass, the traveller still arrives hungry. Nothing executed that. It is
+// executed here, because the first cut of that record also got its own
+// arithmetic wrong, and a sentence nobody runs is how that happens.
+test('AUDIT-FIELD: `resting` holds the needs\' per-minute harms and NOT one accrual - the law TO-FIELD sits an accelerated journey on', () => {
+  const env = { ...ENV_DEFAULTS, insideBuilding: false, climateIndex: 231, month: 6, weather: 'sunny', inSunlight: true };
+  const run = (resting) => {
+    const e = { stats: { endurance: 50, strength: 50 }, health: 50, maxHealth: 50, items: [], raceId: 1 };
+    let fatigue = 0, hurt = 0;
+    const sinks = { drainFatigue: (n) => { fatigue += n; }, restoreFatigue: () => {}, hurt: (n) => { hurt += n; }, say: () => {} };
+    // start hungry, thirsty and sleepless so every harm arm is LIVE -
+    // a fed, watered, rested traveller would show nothing either way
+    const s = survivalOf(e, 0);
+    Object.assign(s, { lastAte: -100000, thirst: 101, sleepDebt: 13, awakeSince: -100000, exposure: 0, wet: 0, fed: 0, lastMinute: 0, notes: {} });
+    runSurvivalMinutes(e, 0, 600, { ...env, resting }, { sinks, autoEat: false, autoDrink: false });
+    const r = survivalOf(e, 600);
+    return { fatigue, hurt, thirst: r.thirst, sleepDebt: r.sleepDebt, wet: r.wet, exposure: r.exposure, lastAte: r.lastAte };
+  };
+  const awake = run(false), sat = run(true);
+  // the HARMS are held
+  assert.ok(awake.fatigue > 0, 'a starving, parched, exhausted traveller pays fatigue when awake');
+  assert.equal(sat.fatigue, 0, '...and pays none sat as resting - which is the whole of this fix');
+  assert.ok(sat.hurt <= awake.hurt, 'AUDIT-FIELD F12: and the bare-skin HEALTH ticks go with them, which TO-FIELD did not say out loud');
+  // ...and NOT ONE accrual moves. This is the sentence the record rests on.
+  for (const k of ['thirst', 'sleepDebt', 'wet', 'exposure', 'lastAte']) {
+    assert.equal(sat[k], awake[k], `the ${k} accrual is outside the knob - the days really pass`);
+  }
+  assert.ok(sat.thirst > 101 && sat.sleepDebt > 13, 'and they really did advance over the ten hours, in both runs');
+  assert.ok(sat.thirst <= 150 && sat.sleepDebt <= 24, '...up to the needs\' own ceilings, which is where they stop either way');
 });

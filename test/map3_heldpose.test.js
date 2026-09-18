@@ -530,8 +530,20 @@ test('MAP3 weaponRig: armsDrawn() is the draw seam\'s own record - reset at the 
   // unreachable in the game. The sheet then draws it, the way the
   // torch does (TORCH-VIS: `shown()` is the WEAPON's predicate).
   assert.match(src, /armsAvailable\(\) \{ return !eotbHidesWeapon\(\) && fpArm\.active\(\); \},/);
-  assert.match(src, /const sheetOnly = !shown\(\) && fpArm\.active\(\) && fpArm\.holdingPaper\(\);\s*\n\s*if \(paralyzed \|\| \(!shown\(\) && !torchOnly && !sheetOnly\)\) return;/,
-    'the held sheet draws the sheathed arm, beside the torch\'s own leg');
+  // AUDIT-FIELD F1: and it relaxes THE SHEATHE LEG ALONE. `shown()` is
+  // false for FOUR reasons - a readied spell, a cast animation playing,
+  // an equip countdown, and the sheathe - and a bare `!shown()` reopened
+  // the gate for all four. `torchOnly` one line above re-states its own
+  // three legs for exactly this reason; the sheet's leg says the same,
+  // and says it POSITIVELY (`playerWeapon.sheathed`) so no later leg of
+  // `shown()` can be relaxed here by accident.
+  assert.match(src, /const sheetOnly = playerWeapon\.sheathed && !spellArmed\(\) && !fpsSpellCasting\.isPlayingAnim\s*\n\s*&& \(entity\?\.equipCountdown \?\? 0\) <= 0 && fpArm\.active\(\) && fpArm\.holdingPaper\(\);\s*\n\s*if \(paralyzed \|\| \(!shown\(\) && !torchOnly && !sheetOnly\)\) return;/,
+    'the held sheet draws the SHEATHED arm, beside the torch\'s own leg - and no other leg of shown()');
+  for (const leg of ['!spellArmed()', '!fpsSpellCasting.isPlayingAnim', '(entity?.equipCountdown ?? 0) <= 0']) {
+    const torch = src.slice(src.indexOf('const torchOnly'), src.indexOf('const sheetOnly'));
+    const sheet = src.slice(src.indexOf('const sheetOnly'), src.indexOf('const sheetOnly') + 400);
+    assert.ok(torch.includes(leg) && sheet.includes(leg), `both exceptions carry ${leg} - neither is a door round shown()`);
+  }
   assert.match(rd('src/combat/fpArm.js'), /holdingPaper\(\) \{ return !!held; \},/);
   for (const arm of ['holdPaper(spec, opts) { return fpArm.holdPaper(spec, opts); }', 'releasePaper() { return fpArm.releasePaper(); }',
     'paperCorners() { return fpArm.paperCorners(); }', 'heldPose() { return fpArm.heldPose(); }', 'setHeldPose(spec) { return fpArm.setHeldPose(spec); }']) {

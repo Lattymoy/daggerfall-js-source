@@ -465,6 +465,35 @@ circumnavigation speed limiter (its UI-number quirk included) and the
 expressions now (`AUDIT-TO1 A1` runs two frames with them), which is the
 hole every earlier pin left.
 
+## AUDIT-FIELD (2026-09-18) - the arc audited before it merged
+
+Four adversarial lenses over BOOT-TDZ, BOOT-TDZ2, MAP-FIELD and
+TO-FIELD, plus the browser probe. What it found about this page's own
+subject is folded into the TO-FIELD section above; the two findings that
+belong to the BOOT arc are here because they are the same story.
+
+- **F5 - THE THIRD DEAD ZONE, and it was live.** `buildPixelNow` ends
+  with an unconditional `await standPixelNpcs(entry)`, whose second line
+  reads `questBridge?.machine` - a `let` declared five hundred statements
+  below the boot's own first build. The `?.` is no guard, and the early
+  return above it (`if (!entry?.npcs?.length) return;`) is the SAME
+  town/wilderness split as the two crashes that shipped: a first pixel in
+  the wilderness booted, a first pixel in a town threw. Reproduced on the
+  exact shape, then fixed the way BOOT-TDZ fixed the first one - the
+  binding is declared at the top of the boot now. The pass's own doc
+  comment always said it means to run at boot with no bridge and read it
+  as null; declaring it up there is what makes that sentence true.
+
+- **F6 - and the gate that was meant to catch this did not.** Reverting
+  BOOT-TDZ2's guard left `test/bootorder.test.js` GREEN, because the
+  walker is name-based and cannot see conditions: `walkMode` was
+  allow-listed, so it was blessed down every path. `questBridge` was
+  allow-listed on a reason that was simply false - "quest placements
+  only", where the real guard is `entry.npcs.length` - and the third dead
+  zone sat behind that sentence. Each allow-list entry now carries the
+  source its excuse rests on and fails with it; all three crashes are
+  caught by the gate, checked by reverting each fix in turn.
+
 ## The four hosts
 
 The journey is wired in `scenes/world.js` ALONE, and the other three
@@ -505,26 +534,46 @@ third was a thing the port never said out loud.
   alike.
 
 - **Instant exhaustion - the port's own needs charged at the mod's
-  clock.** The two clocks do not charge alike, and only one of them is
-  DFU's. The vanilla band asks only whether the minute CHANGED this
+  clock.** The vanilla band asks only whether the minute CHANGED this
   frame and pays ONE minute whatever the jump
   (`PlayerEntity.cs:402-418`, and `systems/worldTick.js` verbatim), so
   the journey's vanilla drain IS DFU's - and Travel Options watches that
-  very number with its own cautious stop
-  (`TravelOptionsMod.cs:1079`, ported at `travelOptions.js:758`). The
-  NEEDS are this port's own addition, from a mod Travel Options has
-  never heard of, and `runSurvivalMinutes` LOOPS every simulated minute
-  - so at the mod's acceleration they charged several minutes of
-  starving, parched and exhausted fatigue in the frame the vanilla band
-  charged one, on a traveller who by construction never stops to rest,
-  with no stop of their own. An accelerated journey is sat as `resting`
-  now, which is the needs' OWN knob for exactly this and holds the
-  per-minute fatigue arms and the bare-skin block and nothing else:
-  every accrual - hunger's marker, thirst, sleep debt, wet, exposure -
-  sits outside it, so the days really pass and the traveller still
-  arrives as hungry as the ride made them. The heat arm still bites
-  (it wants `resting && byFire`), which is right: the weather is part of
-  the journey.
+  very number with its own cautious stop (`TravelOptionsMod.cs:1079`,
+  ported at `travelOptions.js:758`). The NEEDS are this port's own
+  addition, from a mod Travel Options has never heard of, and they
+  charged on top of it on a traveller who by construction never stops to
+  eat, drink or sleep. An accelerated journey is sat as `resting` now -
+  the needs' OWN knob for exactly this. Every accrual (hunger's marker,
+  thirst, sleep debt, wet, exposure) sits outside it, so the days really
+  pass and the traveller still arrives as hungry as the ride made them.
+
+  **AUDIT-FIELD corrected this bullet's own arithmetic, and it is worth
+  keeping the correction visible.** The first cut of this record said the
+  needs "charge several minutes of fatigue in the frame the vanilla band
+  charges one". That is false. Game-minutes per frame are `dt * 0.2 *
+  scale` with `dt` clamped to 0.1, so a frame carries 0.2 minutes at 60
+  fps and the mod's default limit of sixty, and at most 2 at its ceiling
+  of a hundred; `runSurvivalMinutes` walks `[last+1, now]` and the band
+  asks "did the minute change" - **they run 1:1**. The surcharge is in
+  MAGNITUDE: DFU's band is 11 a minute and the needs stack starving 4,
+  parched 6 or dehydrated 12, exhausted 8, heat 6 and bare feet 4 on top
+  of it once their stages are reached, roughly three times the drain.
+  Nor does the fix make a journey endless, which the first cut also
+  implied: 11 a minute empties a 6400 pool in 582 game-minutes whatever
+  this line does. That is DFU's own number at DFU's own rate, and
+  collapsing on a long RECKLESS ride is the mod's designed loop - camp
+  out, stop at inns, or travel cautiously and be paused at the fatigue
+  floor. What the line removes is the port's own surcharge on top, so an
+  accelerated journey costs what it costs in DFU and no more.
+
+  **And `resting` holds two HEALTH arms with the fatigue ones** (F12),
+  which the first cut did not disclose: the bare-skin block's naked-cold
+  and sunburn ticks (`needs.js:293`), and, for a traveller who is also
+  `byFire`, the exposure damage at `:277`. Harm you cannot answer while
+  the autopilot holds the controls is not a loss worth keeping. The law
+  is executed now, not matched: `test/surv7_feed.test.js` runs ten game
+  hours with the knob both ways and asserts fatigue held at zero while
+  every accrual lands on the same number.
 
 - **"Doesn't travel on the road" - nothing was broken; nothing said
   how.** The mod does not route along roads to a named destination and
@@ -541,6 +590,35 @@ third was a thing the port never said out loud.
   started one cannot reach. The held map's travel card names it now,
   whenever roads integration is on and a key is set: *"On the road,
   press K to follow it."*
+
+- **AUDIT-FIELD F10: and SURV6's hunting roll is held with them.** The
+  wilderness roll fires once a GAME minute, so an accelerated ride rolled
+  it every few real seconds, and every event opens a Yes/No box through
+  `townTalk.showOverlay` - which the mod reads as a foreign window on top
+  and answers with `interruptTravel()` (`TravelOptionsMod.cs:1348-1356`).
+  A wilderness journey could not survive its own first minute. This fits
+  "doesn't travel" better than anything else the arc found, and it is the
+  same shape as the needs' surcharge: a thing the port added that Travel
+  Options has never heard of, charged at the mod's clock.
+
+- **AUDIT-FIELD F7: the look-ahead is a FLOOR, not the whole distance.**
+  `TRAVEL_LOOKAHEAD = 64` was called "more than the fastest accelerated
+  step", which is true of a fixed physics step and false of a FRAME: the
+  motor moves `speed * min(dt, MAX_FRAME_DT) * scale` in one go, so a
+  horse at the shipped default limit covers ~65 units in a 10 fps frame
+  and ~120 at the mod's ceiling - past a 64-unit probe, off the built
+  world, and once the motor is airborne `airControl` is false, so zeroing
+  the drive on the NEXT frame no longer steers. `travelLookaheadFor`
+  measures the frame that is about to run and keeps 64 as its floor.
+
+- **AUDIT-FIELD F8: and the gate is a pure function now.** TO-FIELD
+  pinned this whole fix with regexes over `world.js`'s own source, which
+  pass iff the author's bytes are present and prove nothing about what
+  the gate does - a sign flip on the bearing would have probed the ground
+  BEHIND the traveller, always built, restoring the bug whole with every
+  pin green. `travelDriveForward` and `travelLookaheadFor` live in
+  `systems/travelAutopilot.js` beside the autopilot, for the reason that
+  file is pure: the pins drive them on a table. Six mutants ride them.
 
 Pinned in `test/to1_travelOptions.test.js` (TO-FIELD) with three
 mutants - `travel-drive-ungated`, `needs-at-travel-scale`,

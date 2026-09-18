@@ -107,5 +107,32 @@
   "tests": [
    "test/surv7_feed.test.js"
   ]
+ },
+ {
+  "name": "AUDIT-FIELD-resting-holds-the-accruals-too",
+  "file": "src/systems/survival/needs.js",
+  "old": "    s.thirst = Math.min(NEED.THIRST_MAX, s.thirst + rate);",
+  "new": "    if (!resting) s.thirst = Math.min(NEED.THIRST_MAX, s.thirst + rate);",
+  "tests": [
+   "test/surv7_feed.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-FIELD-resting-pays-the-starving-fatigue-anyway",
+  "file": "src/systems/survival/needs.js",
+  "old": "  if (hungerAfter === 'starving' && !resting) sinks.drainFatigue?.(DRAIN.starving);",
+  "new": "  if (hungerAfter === 'starving') sinks.drainFatigue?.(DRAIN.starving);",
+  "tests": [
+   "test/surv7_feed.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-FIELD-resting-pays-the-exhausted-fatigue-anyway",
+  "file": "src/systems/survival/needs.js",
+  "old": "    if (sleepNow === 'exhausted' && !resting) sinks.drainFatigue?.(DRAIN.exhausted);",
+  "new": "    if (sleepNow === 'exhausted') sinks.drainFatigue?.(DRAIN.exhausted);",
+  "tests": [
+   "test/surv7_feed.test.js"
+  ]
  }
 ]

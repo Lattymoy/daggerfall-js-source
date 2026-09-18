@@ -1060,15 +1060,6 @@
   ]
  },
  {
-  "name": "travel-drive-ungated",
-  "file": "src/scenes/world.js",
-  "old": "          axes.forward = (!_standing && (building || queue.length || inFlight.size)) ? 0 : _travelDrive.forward;",
-  "new": "          axes.forward = _travelDrive.forward;",
-  "tests": [
-   "test/to1_travelOptions.test.js"
-  ]
- },
- {
   "name": "needs-at-travel-scale",
   "file": "src/scenes/world.js",
   "old": "    survivalEnv: () => (_mode() === 'dungeon' ? null\n      : worldTimeScale() > 1 ? { ...survivalEnvNow(), resting: true }\n        : survivalEnvNow()),",
@@ -1082,6 +1073,69 @@
   "file": "src/ui/heldMap.js",
   "old": "        card.append(el('p', 'hmmeta', `On the road, press ${_fk} to follow it.`));\n",
   "new": "",
+  "tests": [
+   "test/to1_travelOptions.test.js"
+  ]
+ },
+ {
+  "name": "travel-drive-ungated",
+  "file": "src/systems/travelAutopilot.js",
+  "old": "  return (!standing && streaming) ? 0 : forward;",
+  "new": "  return forward;",
+  "tests": [
+   "test/to1_travelOptions.test.js"
+  ]
+ },
+ {
+  "name": "travel-lookahead-behind",
+  "file": "src/systems/travelAutopilot.js",
+  "old": "  const ahead = [feet[0] + Math.sin(yaw) * lookahead, feet[2] + Math.cos(yaw) * lookahead];",
+  "new": "  const ahead = [feet[0] - Math.sin(yaw) * lookahead, feet[2] - Math.cos(yaw) * lookahead];",
+  "tests": [
+   "test/to1_travelOptions.test.js"
+  ]
+ },
+ {
+  "name": "travel-lookahead-underfoot-only",
+  "file": "src/systems/travelAutopilot.js",
+  "old": "  const ahead = [feet[0] + Math.sin(yaw) * lookahead, feet[2] + Math.cos(yaw) * lookahead];",
+  "new": "  const ahead = [feet[0], feet[2]];",
+  "tests": [
+   "test/to1_travelOptions.test.js"
+  ]
+ },
+ {
+  "name": "travel-drive-holds-for-ever",
+  "file": "src/systems/travelAutopilot.js",
+  "old": "  return (!standing && streaming) ? 0 : forward;",
+  "new": "  return !standing ? 0 : forward;",
+  "tests": [
+   "test/to1_travelOptions.test.js"
+  ]
+ },
+ {
+  "name": "travel-lookahead-is-only-the-floor",
+  "file": "src/systems/travelAutopilot.js",
+  "old": "  return Math.max(floor, speed * Math.min(dt, maxFrameDt) * Math.max(1, scale) * margin);",
+  "new": "  return floor;",
+  "tests": [
+   "test/to1_travelOptions.test.js"
+  ]
+ },
+ {
+  "name": "travel-lookahead-uncapped-frame",
+  "file": "src/systems/travelAutopilot.js",
+  "old": "  return Math.max(floor, speed * Math.min(dt, maxFrameDt) * Math.max(1, scale) * margin);",
+  "new": "  return Math.max(floor, speed * dt * Math.max(1, scale) * margin);",
+  "tests": [
+   "test/to1_travelOptions.test.js"
+  ]
+ },
+ {
+  "name": "hunting-rolls-at-the-mods-clock",
+  "file": "src/scenes/world.js",
+  "old": "    if (_mode() === 'exterior' && worldTimeScale() <= 1) hunting.tick();   // SURV6: the minute's hunting roll; the window takes the slot",
+  "new": "    if (_mode() === 'exterior') hunting.tick();   // SURV6: the minute's hunting roll; the window takes the slot",
   "tests": [
    "test/to1_travelOptions.test.js"
   ]

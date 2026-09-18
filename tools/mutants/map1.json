@@ -219,8 +219,8 @@
  {
   "name": "sprite-url-document-relative",
   "file": "src/ui/heldMap.js",
-  "old": "  u.pathname = u.pathname.replace(/\\/(?:assets|src)\\/.*$/, '/');",
-  "new": "  u.pathname = u.pathname.replace(/\\/(?:assets)\\/.*$/, '/');",
+  "old": "export const HELD_MAP_URL = new URL('art/held-map.png', APP_ROOT ?? globalThis.document?.baseURI ?? 'https://invalid.invalid/').href;",
+  "new": "export const HELD_MAP_URL = 'art/held-map.png';",
   "tests": [
    "test/heldmap.test.js"
   ]
