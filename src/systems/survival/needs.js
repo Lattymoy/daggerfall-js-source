@@ -310,6 +310,7 @@ export function survivalMinute(entity, now, env = {}, deps = {}) {
   if (s.drunk > 0 && now % 10 === 0) s.drunk = Math.max(0, s.drunk - 1);
 
   applySurvivalMods(entity, survivalStatMods(s, temp, now, { endurance }));
+  s.felt = temp.felt;   // SURV5: the last felt reading rides the record - the HUD strip and the status page read it without the env
   return temp;
 }
 

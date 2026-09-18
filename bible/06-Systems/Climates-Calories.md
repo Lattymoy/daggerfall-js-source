@@ -40,7 +40,7 @@ carry, and everything static.
 | SURV2 | the items: templates 530-541, minting, spoilage, the use handlers, the general store's provisions, the starting kit, the corpse's meat, the mod's icons through a vendor-only archive | `survival/items.js`, `loot.js`, `switch.js`; `itemTemplates.js` custom rows; `textureReplacement.js` vendor art; `useItem.js`, `shopStock.js`, `equip.js` |
 | SURV3 | camps: the tent and the fire as placed objects with a menu, cooking, the water sources, shared online | `survival/camp.js` (the law), `scenes/camps.js` (the pool), the three hosts' mounts, `player/activationRace.js`, both inventory skins, `sceneCache.js` |
 | SURV4 | the rest law: a bed or a fire sleeps whole, the window alone is rough - half the hour, the roll twice, a stiff morning; the felt temperature can refuse the sleep | `survival/rest.js` (the law), `scenes/shared.js` createRestDeps (the composed hour and the kind), `encounters.js` (the second ask), the four hosts' `restKind` |
-| SURV5 | the HUD strip, the status page, the tavern menus, the switch | (in progress) |
+| SURV5 | what the player is told: the HUD's needs strip, the status page's third box, the survival items' info box; the mod's regional tavern menus with the meal, the drink and the blackout | `survival/status.js`, `survival/tavernMenu.js`; `ui/enhancedHud.js` + `enhancedStyle.js`; `itemInfo.js`; `ui/tavernWindow.js` + the interior host's hooks; the four hosts' status chain |
 | SURV6 | hunting and foraging as real-time events | (in progress) |
 | SURV7 | online alignment, records, the probe | (in progress) |
 
@@ -183,3 +183,49 @@ roof, too hot to sleep (scorching) anywhere - `restBlock`, installed
 on DFU's own RegisterPreventRestCondition seam by
 `installSurvivalRestGate` with the host's felt-temperature reader
 (SURV7 wires the reader; the two handlers answer nothing until then).
+
+### What the player is told (SURV5)
+
+The enhanced HUD carries a NEEDS STRIP under the effects
+(`survival/status.js` survivalHudChips): one chip a felt need - Peckish,
+Hungry, Starving; Thirsty, Parched, Dehydrated; Tired, Drowsy,
+Exhausted; Damp to Drenched; Hot, Scorching, Cold, Freezing, Deadly
+cold; Stiff; Drunk - warn or danger by the stage, nothing while every
+need is met, gone with the switch. The felt temperature rides the
+record (`s.felt`, written by the minute law) so the strip reads no
+env. The status key's chain gets a THIRD box after DFU's two (the
+mod's AdviceText reborn): one line a need in the mod's own words ("You
+could do with a decent meal.", "You are invigorated from your last
+meal."), the stiff morning, the drunk bands (past half the endurance
+"drunk", past the endurance less ten "very drunk"), and a vampire's
+one line "You have no need for food or sleep." - the four hosts chain
+it. A survival item's info box is built tokens, like the potion
+recipe's (the custom rows have no TEXT.RSC record): the name, the
+weight, a food's worth and stage and rawness, a skin's water, the
+gear's uses, the skillet's word.
+
+### The tavern (SURV5)
+
+Climates & Calories replaced DFU's eleven-line food-and-drink list
+with regional menus (read off the DLL: six keys - n, ne, se, s, b, o -
+picked by region with a climate fallback, three price tiers a key, a
+breakfast list, separate Food and Drinks buttons). The port keys the
+same dishes by CLIMATE (`survival/tavernMenu.js` MENU_KEY_BY_CLIMATE -
+the mod's region switch is not recoverable whole from the IL), tiers
+by the tavern's quality (under 6 low, under 13 mid, else high), serves
+breakfast from six to ten, refuses at five ("Sorry, breakfast starts
+at dawn."), and folds food and drink into the ONE picker DFU's Food
+button opens, a header between (TVRN00I0 has four buttons and no
+room for the mod's fifth). A meal takes half an hour and banks its
+worth against the hunger marker on the mod's own law (too full under
+the worth - "The rest goes to waste.", charged; four hours back past
+worth + 240; the worth banked). A drink takes a quarter hour, quenches
+forty of thirst, and counts by its kind - milk, tea, juice and coffee
+nothing, an ale ten, a wine twenty, a spirit thirty-five - against the
+endurance: past half "You are getting drunk...", past ten under it
+"You are very drunk...", past it the BLACKOUT: the night passes to six
+(the interior's ticker; online the clock stands, WORLD5), the counter
+falls to a quarter of the endurance, and the morning is a rough one
+(SURV4's stiffness). The counter sobers one a ten minutes and drains
+the stats the mod's way (SURV1). With the mod off the Food button is
+DFU's own chain, unchanged.

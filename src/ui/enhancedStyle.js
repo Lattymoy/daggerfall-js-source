@@ -2158,6 +2158,11 @@ body.draglock .wornrow, body.draglock .wornmap { touch-action: none; }
 .hud-eff.expiring { color: rgb(243,239,44); border-color: var(--brass);
   text-shadow: 2px 2px 0 rgb(93,77,12); }
 .hud-effrounds { color: var(--brass); font-variant-numeric: tabular-nums; }
+/* SURV5: THE NEEDS STRIP - the effects' shape, one chip a felt need; a danger takes the classic urgency pair. */
+.hud-needs { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; max-width: min(720px, 80vw); }
+.hud-need { padding: 3px 8px; background: rgba(10,12,17,0.6); border: 2px solid rgba(125,116,96,0.35);
+  font-size: 12px; letter-spacing: 0.08em; color: var(--bone); }
+.hud-need.danger { color: rgb(243,239,44); border-color: var(--brass); text-shadow: 2px 2px 0 rgb(93,77,12); }
 
 /* ── FONT1: THE POPUP COLUMN ─────────────────────────────────────
    Every line the game says without opening a window - the Ambient Text

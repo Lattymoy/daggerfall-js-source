@@ -62,6 +62,9 @@ import { mountHitNumbers } from './hitNumbers.js';   // HN1
 import { activeSpellIcons, maxRoundsRemaining } from './hudActiveSpells.js';
 import { liveBundles } from '../systems/mysticism.js';   // PX30: the ONE bundle walk the HUD already uses
 import { getPref } from '../systems/uiPrefs.js';   // PX30c: the port's own prefs, not DFU's settings
+import { survivalHudChips } from '../systems/survival/status.js';   // SURV5: the needs strip
+import { survivalOn } from '../systems/survival/switch.js';
+import { worldMinutes } from '../systems/worldTick.js';
 import { compassScroll, breathShortThreshold, compassMarkerLerp, DETECT_MARKER_RGB } from './hud.js';
 import { maxBreath, maxFatigue, liveStat } from '../systems/statMods.js';   // PX30b/PX30d: DFU's own ceilings
 // QS3: the quickslot diamond. The MODEL is systems/quickslots.js and
@@ -349,6 +352,8 @@ function build(doc) {
   bottom.append(bars);
   const effects = el('div', 'hud-effects');
   bottom.append(effects);
+  const needs = el('div', 'hud-needs');   // SURV5: the needs strip, under the effects
+  bottom.append(needs);
   root.append(bottom);
 
   // PX32: THE RETICLE. The enhanced branch returns before the classic
@@ -517,7 +522,7 @@ function build(doc) {
   cells.main.cell.addEventListener('pointerdown', tap(() => { liveOpts.quickSwitchHand?.(); }));
 
   doc.body.append(root);
-  return { root, compass, marks, detectMarks: [], foe, foeName, foeFill, foeBladeFull, magicka, health, fatigue, effects,
+  return { root, compass, marks, detectMarks: [], foe, foeName, foeFill, foeBladeFull, magicka, health, fatigue, effects, needs,
     breath, breathFill, readied, reticle, cross, centreWord, cornerWord,
     quick, quickCells: cells, quickTags: tags,
     spellChip: { chip: spellChip, tag: spellTag, img: spellGlyph, text: spellText, name: spellName } };
@@ -751,6 +756,14 @@ export function drawEnhancedHud(vitals, heading01, dt = 0, opts = {}) {
       if (Number.isFinite(e.rounds)) chip.append(el('span', 'hud-effrounds', String(e.rounds)));
       parts.effects.append(chip);
     }
+  }
+  // SURV5: THE NEEDS STRIP - one chip a felt need (survival/status.js), rebuilt when the set changes; empty while every need is met, and gone with the switch
+  const chips = survivalOn() ? survivalHudChips(vitals, Math.floor(worldMinutes())) : [];
+  const nkey = chips.map((c) => `${c.key}:${c.text}:${c.level}`).join('|');
+  if (last.needs !== nkey) {
+    last.needs = nkey;
+    parts.needs.textContent = '';
+    for (const c of chips) parts.needs.append(el('div', `hud-need ${c.level}`, c.text));
   }
 }
 
