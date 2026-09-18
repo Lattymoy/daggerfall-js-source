@@ -121,8 +121,20 @@ async function boot() {
     for (const k of BOOT_DOOR_KEYS) params.delete(k);
     publishBootParams(params);
     const { runEnhancedMenu } = await import('./ui/enhancedMenu.js');
-    status('main menu');
-    choice = await runEnhancedMenu();
+    const { runCinematicFrontDoor } = await import('./ui/introScreen.js');
+    // INTRO2: the cinematic and menu share ONE music session. The final
+    // splash holds for the player's tap; opening the menu ducks the track,
+    // choosing a game closes it before any in-game or classic video audio.
+    status('introduction');
+    const freeze = import.meta.env.DEV && params.has('introat') ? Number(params.get('introat')) : null;
+    choice = await runCinematicFrontDoor(() => {
+      status('main menu');
+      return runEnhancedMenu();
+    }, {
+      skip: params.has('nointro'),
+      debug: import.meta.env.DEV && params.has('introdebug'),
+      freezeAt: freeze !== null && Number.isFinite(freeze) ? Math.max(0, freeze) : null,
+    });
   }
   if (choice !== 'begin') {
     await ensureData();

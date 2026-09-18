@@ -144,7 +144,7 @@ test('FD1: both skins open on the enhanced door; classic collapses its game door
   assert.match(menu, /begin: paneBegin,/, 'the dispatch knows it');
   const main = src('main.js');
   assert.match(main, /if \(params\.has\('begin'\)\) choice = 'begin';/, 'the URL door for the probes that pin classic geometry');
-  assert.match(main, /choice = await runEnhancedMenu\(\);/);
+  assert.match(main, /choice = await runCinematicFrontDoor\(\(\) => \{[\s\S]*?return runEnhancedMenu\(\);/);
   assert.match(main, /if \(choice !== 'begin'\) \{\s*\n\s*await ensureData\(\);/, 'the enhanced doors gate the data after the menu');
   const beginAt = main.indexOf("// FD1: BEGIN - the classic start sequence, data first.");
   assert.ok(beginAt > 0);

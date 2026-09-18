@@ -40,14 +40,13 @@ const PUBLIC_ALLOWLIST = new Map([
   ['public/icons/icon-192.png', 'TI2: home-screen icon, drawn by scripts/makeIcons.mjs from the skin\'s tokens'],
   ['public/icons/icon-512.png', 'TI2: home-screen icon, drawn by scripts/makeIcons.mjs from the skin\'s tokens'],
   ['public/icons/icon-512-maskable.png', 'TI2: home-screen icon (maskable), drawn by scripts/makeIcons.mjs from the skin\'s tokens'],
-  // THE INTRO'S FOUR ASSETS (U65) WENT WITH THE INTRO at 1c62e11
-  // (U65f): two marks, a title card and the one recorded piece of
-  // music this port ever shipped. The rows went with the files; this
-  // sentence replaces the rationale that outlived them, because a
-  // licensing position stated over an empty list tells a reader the
-  // repo publishes a music recording and two third-party trademarks,
-  // and it publishes neither. Every note is synthesised from the
-  // player's own MIDI.BSA again (systems/songPlayer.js, the A5 arc).
+  // INTRO2 (2026-09-18): restored at Mac's explicit request. The credit
+  // marks and score are the identical U65 assets, not ARENA2-derived data.
+  // Credit marks identify their respective projects; no new rights claimed.
+  ['src/assets/intro/interkarma.webp', 'U65 credit artwork identifying Interkarma / Daggerfall Unity; recovered unchanged'],
+  ['src/assets/intro/nexus.webp', 'U65 credit artwork identifying Nexus Mods; recovered unchanged'],
+  ['src/assets/intro/theme.mp3', 'U65 original theme recording; recovered unchanged at Mac\'s request'],
+  ['src/assets/branding/daggerfall-enhanced.jpg', 'Mac\'s supplied 19956.png, 2026-09-18; original JPEG bytes, no ARENA2 data'],
   // THE SITE'S PICTURES (U60c) WERE RETIRED with the DA site cleanup
   // (Mac, 2026-08-31): the landing page carries no raster at all now -
   // landing.test.js pins <img> absent - so the three menu screens,
@@ -296,12 +295,8 @@ test('AUDIT 27: the allow-list is checked BOTH ways - no row outlives its file',
   // a tracked file must have a row - so a row could be written for a
   // file that never landed, or outlive one that was deleted, and the
   // list would still pass while meaning less than it claims.
-  // The list is public-only again: it briefly reached into src/assets
-  // for the intro (Vite emits those into the build, so they are just
-  // as PUBLISHED as public/), and 1c62e11 took the intro out. The
-  // reverse check still reads each row's OWN directory rather than
-  // assuming public/, so the next published-but-not-public row needs
-  // no new machinery.
+  // The intro also ships from src/assets through Vite. Read each row's
+  // own directory so bundled art has the same ownership check as public/.
   const stale = [...PUBLIC_ALLOWLIST.keys()]
     .filter((f) => !tracked(f.split('/')[0]).includes(f));
   assert.deepEqual(stale, [],

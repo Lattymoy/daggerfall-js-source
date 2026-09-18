@@ -56,15 +56,11 @@ test('BR1: every surface the player reads carries the one name', () => {
   // with `git grep 'Daggerfall JavaScript'` finding nothing. Every
   // wordmark is therefore pinned STRUCTURALLY - the sub-line's own text,
   // wherever the halves live.
-  // ...and IN GAME it is still TYPE, on purpose. enhancedStyle.js's BRAND
-  // note is the reason: the classic PICK03I0 paints its labels into a
-  // 320x200 bitmap, which cannot reflow, scale or be read on a phone, and
-  // that is the exact thing this overhaul exists to stop doing. The
-  // landing page's logo is a FIXED BANNER on a document - one heading, no
-  // state, sized off the viewport, with its text in alt. A menu is not.
-  assert.match(read('src/ui/enhancedMenu.js'), /const mark = el\('h1', 'px-wordmark', 'Daggerfall'\);\s*\n\s*mark\.append\(el\('small', null, 'Enhanced'\)\);/,
-    'the IN-GAME wordmark, which is the first thing a player sees');
-  assert.doesNotMatch(read('src/ui/enhancedMenu.js'), /<img|\.webp|\.png/, 'and it is still type - the menu paints no wordmark');
+  // INTRO2 (Mac, 2026-09-18): his supplied logo replaces the in-game
+  // wordmark. The landing page and archived prototypes keep BR3's type.
+  assert.match(read('src/ui/enhancedMenu.js'), /mark\.append\(brandMark\(\)\)/,
+    'the front door uses the same accessible mark as the cinematic');
+  assert.match(read('src/ui/brandMark.js'), /Daggerfall Enhanced/);
   for (const proto of ['menu-pixel.html', 'menu-redesign.html']) {
     assert.match(read(proto), /<h1 class="wordmark">Daggerfall<small>Enhanced<\/small><\/h1>/, `${proto}'s wordmark`);
   }

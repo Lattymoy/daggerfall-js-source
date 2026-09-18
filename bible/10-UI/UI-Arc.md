@@ -31,12 +31,143 @@ little scatter so a flurry fans out. Enhanced only: the enhanced HUD
 registers the hook; the classic path never has one.
 
 
-## U65 THE INTRO (2026-08-30) - RIPPED OUT
+## INTRO2 THE SCORE-LED INTRO (2026-09-18)
+
+Mac requested a complete overhaul of the unfinished intro, his supplied
+Daggerfall Enhanced logo, a precisely timed final splash, and continued
+quieter music after tapping into the main menu.
+
+The shared front door in `main.js` now owns one `IntroTheme` session from
+Begin through the menu. The recovered recording is decoded before Begin
+is enabled. A trusted gesture unlocks audio; the film follows the audio
+DEVICE timestamp with the observed display interval, not elapsed wall
+time or a guessed tempo. The old U65 capture's corrective audio remuxing
+is not retained. No game archive is requested until a game door is chosen.
+
+| Score time | Presentation |
+|---|---|
+| 0–1.5s | Opening fade over the water |
+| 1.25–5.3s | Interkarma / Daggerfall Unity credit |
+| 5.65–9.3s | Nexus Mods credit |
+| 9.45–12.162s | Continuous perspective camera rises through cloud |
+| 11.712s | Measured cloud-break accent |
+| 17.54s | Camera settles over the bay; GPU frame is held |
+| 18.388–19.168s | Supplied logo flies out of the depth of the shot |
+| 19.168s | Exact title landing on the decoded 19-second beat |
+| 20.518s onward | Tap to continue; final title holds indefinitely |
+| Player tap | 1.1s eased visual fade; same source ramps from 0.82 to 0.26 |
+
+The landscape is the restored seeded, data-free bay generator rendered
+with a new WebGL2 terrain, water, sky and cloud pass. One perspective
+camera replaces the old column-renderer/orthographic handoff. The camera
+finishes before the logo arrives; the subtle impact is composited over the
+held background so terrain work cannot delay the final title. Rendering
+is capped at 900,000 pixels and stops at rest unless the viewport changes.
+Reduced motion keeps a fixed camera and reveals the logo on the same cue.
+
+The supplied 1536×512 JPEG bytes are unchanged, correctly named `.jpg`,
+and shared by the final splash, main-menu wordmark and sidebar home
+button. Screen blending removes the supplied black backdrop without
+resampling or redrawing the mark. Source identity is pinned by SHA-256.
+The two credit assets and original recording are restored unchanged from
+U65e, `8688721e`; no ARENA2-derived pixels are added.
+
+Music levels multiply the live music setting (menu is about 10 dB below
+intro). Fade input is swallowed and the mounted menu is inert until the
+fade finishes. Starting any game releases the source, decoded buffer,
+context and settings listener before classic/game audio can start.
+Backgrounding suspends audio, interrupted playback offers Resume, missing
+audio offers a truthful final card, and Skip remains usable during load.
+
+### INTRO2b THE 19-SECOND BEAT AND THE WHOLE-SCREEN TAP (2026-09-18)
+
+Mac, on the same cut: "For browser users, they need a touch to enter the
+game on startup, so the music plays" and "the daggerfall logo needs to
+drop with the beat that happens around the 19 second mark".
+
+The first cut landed the logo at 20.533333s, taken as the loudest frame
+inside a hand-picked 20.35–20.7s window. It is not a local maximum of the
+onset curve at all - the curve there is flat - so the landing read as
+arbitrary. The beat Mac hears is real and measurable: decoded sample
+**230016 / 12000 = 19.168s**, normalized flux 1.77 and the largest raw
+onset anywhere between the cloud break and the close. The title now lands
+there. `tools/introAudioCheck.mjs` measures that window instead, still
+reports the louder 21.066667s answer so a replacement track cannot swap
+the two silently, and still fails above 1ms of drift. The camera's rest
+moved with the beat (18.9s to 17.54s), keeping the same 0.85s of
+stillness before it, so the landing is the only movement on the hit.
+
+**The score is Mac's remastered master**, supplied the same day. It is a
+different recording from the U65e one it replaces - 164.3335s against
+164.5202s - carrying the same arrangement. Every landmark was re-measured
+against it rather than carried over: the cloud break is still 11.712s,
+and the 19-second beat sits one analysis hop earlier than the old
+master's.
+
+Its ID3 title said "Daggerfall JS Main Theme", which is the one thing BR1
+exists to keep off a shipped surface. ONLY that title was rewritten, to
+"Daggerfall Enhanced Main Theme (Remastered x2)": the tag is reassembled
+frame for frame (cover art, lyrics, C2PA manifest and all) and the MPEG
+payload behind it is Mac's file bit for bit. `intro.test.js` pins BOTH
+hashes - the whole file at `f51aea74…` and the audio payload alone at
+`3a1bc066…` - so a re-encode, a trim or a third track cannot arrive
+without the cue being re-measured, and cannot hide behind a retag either.
+
+### INTRO2c THE MARK ARRIVES FROM THE DEPTH OF THE SHOT (2026-09-18)
+
+Mac: "I want the logo to fly in from the screen, not from the top of the
+screen. If that makes sense. Needs to feel powerful, not goofy."
+
+The first cut dropped the wordmark 0.68 screen heights from above and
+shrank it 1.04 to 1.0. That is a title card falling into frame, and it
+reads as goofy. The mark now has **no vertical component at any time**
+(`introTitleAt().y` is 0 for every t, and the test walks every frame to
+say so). It travels along the camera axis instead, dead centre.
+
+Apparent size under a CONSTANT approach speed is 1/z, so z sweeps
+linearly from `TITLE_DEPTH` (5.5) to 1 across the 0.78s before the beat
+and the scale is 1/z: far and nearly still for most of the run-up, then
+filling the frame over the last few frames. An eased size ramp is the
+goofy read, and so is an overshoot - there is neither, and the test walks
+the whole entrance at 120Hz asserting the scale never passes 1. The mark
+stops dead on the beat. Depth of field closes with the distance
+(`TITLE_BLUR` 7px to 0), so it resolves as it arrives instead of sliding
+in already sharp, and the filter is dropped entirely at rest so the held
+splash costs no filter pass for as long as the player looks at it.
+
+The recoil belongs to the WORLD, never to the wordmark: the held terrain
+frame settles 6px and 1.2%, and the bloom lifts to 0.6, both decaying on
+the same `impact` exponential. Reduced motion keeps the musical reveal
+and none of the flight.
+
+The autoplay gesture is now the WHOLE gate, not the 168px Begin button.
+A browser grants audio once per gesture and a phone player taps the
+screen rather than a target, so any tap or click on the gate - and Enter
+or Space - opens the film. A tap that arrives while assets are still
+loading is honoured too: it unlocks the context inside that gesture and
+the film opens when the artwork and score finish, rather than asking for
+a second press the player has no reason to expect. The gate's own copy
+says so ("Tap anywhere to begin"), Begin remains the visible and
+focusable control, and Skip keeps its own hit area.
+The scene's listeners, frame callback and WebGL allocations are disposed
+at handoff. The older classic data-backed title/splash remain on Begin.
+
+Verification lives in `test/intro.test.js`, the independent decoded-score
+check, and the browser probe/capture under `tools/intro*.mjs`. The rendered
+preview evaluates the actual scene at frame/30, muxing the original score
+at zero offset; it is a director's preview, not a hardware latency claim.
+Live timing and uninterrupted lower-volume menu playback are separate
+browser assertions. Desktop, portrait, short landscape, reduced motion,
+missing music and skipping during loading are exercised there.
+`?nointro` opens the existing front door directly for menu probes.
+`?introdebug` and `?introat=seconds` are development-only review controls.
+
+## U65 THE INTRO (2026-08-30) - HISTORICAL REMOVAL
 
 Built through five versions in one day (U65, c, d, e: generated Iliac
 flyover, measured beat grid, sync-verified capture) and removed the
 same day at Mac's direction after every version failed his eye. The
-enhanced door opens directly on the menu. History carries the slice.
+enhanced door opened directly on the menu until INTRO2 above. History carries the original slice.
 
 ## THE BOARD, as of U61 (2026-08-26) — OPEN, not shipped
 
