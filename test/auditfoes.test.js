@@ -95,7 +95,7 @@ test('AUDIT FOES FOE8: a class puppet is judged against the level it was BUILT a
   const x = code('src/scenes/exteriorFoes.js');
   const e = code('src/characters/enemyEntity.js');
   // the re-roll that made the equality test a lie, still there and still DFU's
-  assert.match(e, /if \(mobileType === KNIGHT_CITYWATCH_ID\) level \+= 3 \+ Math\.floor\(rollFn\(\) \* 4\);/,
+  assert.match(e, /if \(mobileType === KNIGHT_CITYWATCH_ID && !exactLevel\) level \+= 3 \+ Math\.floor\(rollFn\(\) \* 4\);/,   // AUDIT WATCH1 A5: a puppet hands the streamed level in as final
     'DFU adds Range(3,7) to a City Watch inside the constructor');
   assert.match(x, /f\.builtLevel = builtLevel;/, 'the build level is kept on the record');
   assert.match(x, /r\.l !== \(f\.builtLevel \| 0\)/, 'and the stream is compared against it');

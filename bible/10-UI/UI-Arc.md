@@ -3956,7 +3956,7 @@ showed up as an obvious bug.
 
 DFU reads `attacker.Career.<group>AttackModifier` for every attacker
 (FormulaHelper.cs:993-1030). The port flattened that byte onto the
-entity, and only the FOE builder ever set it (enemyEntity.js:113). A
+entity, and only the FOE builder ever set it (enemyEntity.js:117). A
 player carries `career` and no flat field, so
 `bonusOrPenaltyByEnemyType`'s null guard returned 0 on every swing.
 That alone would have been enough.
@@ -8493,7 +8493,7 @@ and firing THAT twice is a second PopToHUD.
 
 ### Why only two of the four hosts crashed
 
-`worldModes.js:5507` and `dungeonContext.js:1458` answer the same
+`worldModes.js:5513` and `dungeonContext.js:1458` answer the same
 `onClose` by nulling their slot and never disposing - nothing to
 re-enter. Only the two hosts that come through `townTalk.closeOverlay`
 dispose. **The four-hosts rule caught this one by accident**: the two

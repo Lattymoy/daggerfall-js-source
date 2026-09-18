@@ -77,7 +77,7 @@ test('audit24 lifetimes: a city guard frees its batch on both death paths, and t
   assert.match(src, /function releaseGuardBatch\(g\) \{[\s\S]*?destroyBillboardBatch\(g\.batch\)/);
   // AUDIT 26 F035 (+ MT-ii, the same gate from the other end): the
   // header grew its provenance flag.
-  assert.match(bodyOf(src, 'function damageGuard(g, damage, playerFeet, knockDir, { fromPlayer = true, bypassShield = false } = {})'),
+  assert.match(bodyOf(src, 'function damageGuard(g, damage, playerFeet, knockDir, { fromPlayer = true, bypassShield = false, peer = false } = {})'),
     /health <= 0[\s\S]{0,300}releaseGuardBatch\(g\)/, 'the killed path');
   assert.match(src, /if \(!g\.dead\) \{ g\.dead = true; releaseGuardBatch\(g\); \}/,
     'and the walk-away path when the crime clears');
@@ -88,7 +88,7 @@ test('audit24 lifetimes: a city guard frees its batch on both death paths, and t
   // per-frame walk over `guards` paid for them. DFU destroys the
   // walk-away watch outright (EnemyEntity.cs:184-191) and keeps only
   // the killed body. So the key is the guard's own id now, and the
-  // prune is the encounter pool's (exteriorFoes.js:946).
+  // prune is the encounter pool's (exteriorFoes.js:947).
   assert.match(src, /idOf: \(g\) => g\.id/, 'lootTargets keys by a stable id');
   assert.doesNotMatch(src, /guardCorpse:\$\{i\}/, 'never by the array index again');
   assert.match(src, /guards\.find\(\(g\) => g\.id === id\)/, 'and takeLoot resolves the same name');

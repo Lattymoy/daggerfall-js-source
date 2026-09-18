@@ -14,7 +14,8 @@ import { OnlineSession, FOES_STALE_MS } from '../src/net/online.js';
 import { fakeRoom } from './fakeRoom.mjs';
 import { fakeSocketClass } from './fakeSocket.mjs';
 import { createExteriorFoes, MAX_ACTIVE_ENCOUNTER_FOES } from '../src/scenes/exteriorFoes.js';
-import { runDayChange, dayRollsFor, setSharedClock, sharedClockOn, MINUTES_PER_DAY, DAY_SALT } from '../src/systems/worldTick.js';
+import { runDayChange, dayRollsFor, setSharedClock, sharedClockOn, MINUTES_PER_DAY, DAY_SALT, worldRegionPricesOn } from '../src/systems/worldTick.js';
+import { regionPriceAdjustment } from '../src/systems/shopStock.js';   // ECON1: the world's index through the one seam
 import { MERCHANTS_FACTION_ID } from '../src/systems/guilds.js';
 import { FACTION_TYPES } from '../src/formats/factionFile.js';
 
@@ -360,8 +361,12 @@ test('AUDIT WORLD6b C4/C5: the day\'s rolls - online the walk is one day at a ti
     for (let d = day - 2; d <= day; d++) runDayChange({ entity: stayed, lastMinutes: (d - 1) * MINUTES_PER_DAY, nowMinutes: d * MINUTES_PER_DAY, rolls: () => 0.99 });
     const away = fresh();
     runDayChange({ entity: away, lastMinutes: (day - 3) * MINUTES_PER_DAY, nowMinutes: day * MINUTES_PER_DAY, rolls: () => 0.01 });
-    assert.deepEqual(away.regionPrices, stayed.regionPrices, 'C4: three days away and three days there walk the region alike, whatever the dice');
-    assert.notDeepEqual(stayed.regionPrices, { 0: 1000, 1: 1000 }, 'and the walk walked');
+    // ECON1: the prices are the WORLD'S now - a pure function of the day - so the player's own are not walked at all
+    // online, and three days away and three days there read the same index because both read today's
+    assert.deepEqual(stayed.regionPrices, { 0: 1000, 1: 1000 }, 'ECON1: the player\'s own prices are not written online');
+    assert.deepEqual(away.regionPrices, stayed.regionPrices);
+    assert.equal(regionPriceAdjustment(away, 0), regionPriceAdjustment(stayed, 0), 'C4: three days away and three days there read the region alike, whatever the dice');
+    assert.equal(regionPriceAdjustment(away, 0), worldRegionPricesOn(day)[0], 'and it is today\'s world index');
     const a = dayRollsFor(day * MINUTES_PER_DAY, Math.random, DAY_SALT.prices), b = dayRollsFor(day * MINUTES_PER_DAY, Math.random, DAY_SALT.powers), c = dayRollsFor(day * MINUTES_PER_DAY, Math.random, DAY_SALT.prices);
     assert.notEqual(a(), b(), 'C5: the prices and the powers are salted apart'); assert.equal(c(), dayRollsFor(day * MINUTES_PER_DAY, Math.random, DAY_SALT.prices)(), 'one salt, one sequence');
   } finally { setSharedClock(null); }
@@ -371,7 +376,7 @@ test('AUDIT WORLD6b C4/C5: the day\'s rolls - online the walk is one day at a ti
   assert.notDeepEqual(off1.regionPrices, off2.regionPrices, 'offline the dice decide, the span whole (DFU\'s own)');
   const w = rd('src/systems/worldTick.js');
   const imports = w.match(/^import [^\n]* from '[^\n]*';/gm); assert.ok(w.indexOf('const SHARED_DAY_SEED') > w.lastIndexOf(imports.at(-1)), 'the constants sit below the imports');
-  assert.match(w, /export const DAY_SALT = Object\.freeze\(\{ prices: 1, powers: 2 \}\);/);
+  assert.match(w, /export const DAY_SALT = Object\.freeze\(\{ prices: 1, powers: 2, priceInit: 3, conditions: 4 \}\);/);   // ECON1: two more consumers, salted apart
   // the world host by source: the heartbeat (A9), the death branch (C8), the full kick (C7), the targets (B8), the Wabbajack (B9), the pane (C9)
   const h = rd('src/scenes/world.js');
   assert.match(h, /else if \(id && isWorldRoom\(online\.room\)\) _foesInAt = performance\.now\(\);/, 'A9');

@@ -962,9 +962,9 @@ export function createWorldModes(host) {
    *
    *  This host owned two pools and ran NO fan-out at all - no
    *  runMagicRoundsFor, so no tickActiveEffects and no updatePoisons
-   *  (worldTick.js:232-233), and no killIfAnyLiveStatZero. Both pools
-   *  READ the effect list every frame (exteriorFoes.js:845-846 and
-   *  cityGuards.js:790-791 each take `entityIsParalyzed` +
+   *  (worldTick.js:300-301), and no killIfAnyLiveStatZero. Both pools
+   *  READ the effect list every frame (exteriorFoes.js:846-847 and
+   *  cityGuards.js:803-804 each take `entityIsParalyzed` +
    *  `applyEnemyMotorEffectFlags`), and nothing ever ended one: a
    *  Continuous Damage bundle on a foe in a shop never took a round,
    *  a poison inflicted at this host's own onInflictPoison never
@@ -4544,7 +4544,13 @@ export function createWorldModes(host) {
       if (restore) {
         // The SAVED record stands whole - identity, latch and all.
         interiorBuilding = restore.building ?? null;
-        insideOpenShop = !!interiorBuilding?.insideOpenShop;
+        // OL4 (AUDIT ALL O2): a save taken inside a shop entered while classically closed carries `false`, and Play
+        // Online always begins on a restore - so the online shift never reached a restored interior: the door opened,
+        // the shelf opened in STEALING mode and no clerk stood. The saved latch is never taken away (DFU's own law,
+        // SerializablePlayer.cs:394-400), only added to by the effective hours at the restore - the same
+        // "SetActive(true) and nothing else" shape as updateNpcPresence.
+        insideOpenShop = !!interiorBuilding?.insideOpenShop
+          || (interiorBuilding?.buildingType != null && isShop(interiorBuilding.buildingType) && isBuildingOpen(interiorBuilding.buildingType, _hour));
       } else {
         interiorBuilding = buildingDataForDoor?.(hit) ?? null;
         // PlayerActivate.cs:1120 verbatim - computed once, at the door,
@@ -6150,10 +6156,10 @@ export function createWorldModes(host) {
         // AUDIT 58: WeaponManager.cs:630 after the damage fork - a
         // zero-damage shaft still enrages its mark and the room.
         // ROAD-G G1 (review): the interior WATCH carries the pair now
-        // (cityGuards.js:575-580), so this seam splits by pool exactly
+        // (cityGuards.js:580-585), so this seam splits by pool exactly
         // as `dealDamage` above it does rather than dropping the
         // non-encounter half - the zero-damage SWING already reaches
-        // that door (cityGuards.js:1029) and the shaft owes the same.
+        // that door (cityGuards.js:1049) and the shaft owes the same.
         onAttackFromPlayer: (f) => (f._encounter
           ? interiorFoes?.attackFromPlayer(f, player.pos, 'arrow')   // AUDIT WORLD6b-iii(e) A2: the pool's one door, the shaft's kind on it
           : interiorGuards?.handleAttackFromPlayer(f, player.pos)),
