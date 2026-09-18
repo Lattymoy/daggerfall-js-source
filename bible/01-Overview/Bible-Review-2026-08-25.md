@@ -216,7 +216,7 @@ own AUDIT-18 correction.
 Doc review only, nothing fixed - but four code comments assert the
 opposite of their own code and deserve a slice's attention:
 - `src/ui/deathScreen.js:42-43` claims "`drop` is read by each host's
-  frame" - no host reads it (the Ledger row `:425` is right, the
+  frame" - no host reads it (the Ledger row `:426` is right, the
   comment is wrong).
 - `src/systems/mysticism.js:53` header "OPEN AND LOCK ARE NOT WIRED" -
   they are (X1, `actionSystem.js:926-927`).
@@ -233,7 +233,7 @@ opposite of their own code and deserve a slice's attention:
 
 ## Line-citation drift (low, batched)
 
-`Port-Ledger.md:526` (save.js:29/:507/:516 → :28/:536/:566), `:528`
+`Port-Ledger.md:527` (save.js:29/:507/:516 → :28/:536/:566), `:528`
 (world.js:2030 → :2412); `Quest-Arc.md:719`/`:2905`
 (worldModes.js:486 → :903); `Player-Arc.md:955` (worldModes.js:689 →
 :2764), `:304` (world.js "531 lines" → 3,564); `Characters-Arc.md:190`
