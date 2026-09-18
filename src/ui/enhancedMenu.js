@@ -606,6 +606,16 @@ function paneOnline(body) {
 }
 
 function paneLoad(body) {
+  // ONLINE-LOAD1: the same shape paneSave already uses for
+  // savingPrevented - checked BEFORE canLoad below, so the "no load
+  // door here" message never shows in place of the real reason during
+  // a live online session.
+  const locked = hooks.loadingPrevented?.();
+  if (locked) {
+    body.append(empty('Loading is disabled during online play.',
+      'Leave the shared world to load a save; other players are relying on this session staying put.'));
+    return;
+  }
   // SLOTS1: EVERY restorable slot, most recent first - the classic
   // save window's list, as cards. The one pressed is the one loaded
   // (its key rides the boot from the front door, and the host's
@@ -619,7 +629,7 @@ function paneLoad(body) {
   for (const save of saves) {
     // NO CONFIRM ON LOAD, in either mode. It discards unsaved play,
     // which is the shape AUDIT F3/F4 made confirm - but classic's
-    // own pause window loads on one press (pauseWindow.js:307-309) and
+    // own pause window loads on one press (pauseWindow.js:317-319) and
     // so does F11, and inventing a prompt on exactly one of the
     // port's three load doors is a divergence, not a safety net.
     body.append(slotCard(save, {
@@ -1597,6 +1607,22 @@ function morrowindCard() {
   return mw;
 }
 
+/** 2026-09-17 (per-request): a toggle for how OTHER PLAYERS look when you have no Morrowind body of your own to put
+ *  them in - the animated class-enemy sprite (Warrior, Mage, Knight, ... - whatever their character's class maps
+ *  onto, net/remotePlayers.js classMobileType) by default, or the flat paperdoll every peer used to be drawn as,
+ *  unconditionally, before this. A Morrowind body (mwArms card above) still takes priority over either when it
+ *  applies - this only decides between the two for a peer standing in neither. */
+function peerSpritesCard() {
+  const c = el('div', 'card');
+  c.append(el('h3', null, 'Other players'));
+  c.append(el('p', 'meta',
+    'How a player without a Morrowind body (the card above) is drawn: as their character\u2019s class - a Warrior '
+    + 'looks like a Warrior, a Mage like a Mage - animated and puppeted by what they\u2019re actually doing, the '
+    + 'same sprite a hostile one of them already is. Off: the flat paperdoll portrait instead, standing still.'));
+  c.append(prefRow('peerClassSprites', 'Animated class sprite', 'On: the sprite above. Off: the paperdoll.', { home: true }));
+  return c;
+}
+
 /** M-EXT: the replacement packs - music and textures - attach here.
  *  The launcher's row was the only door; FD1 removed the launcher. */
 function packsCard() {
@@ -1628,6 +1654,7 @@ function packsCard() {
 function modsFooter(body) {
   if (isOnlinePage()) body.append(el('p', 'meta', ONLINE_LOCK_NOTE));   // OL1: said once, under the tiles
   body.append(morrowindCard());   // SO1: the assets card, off the Enhanced pane
+  body.append(peerSpritesCard()); // 2026-09-17: other players' look, without a Morrowind body of their own
   body.append(packsCard());       // SO1/M-EXT: the packs' door, off the launcher
   const c = el('div', 'card');
   c.append(el('h3', null, "Daggerfall Unity\u2019s own mod system"));

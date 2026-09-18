@@ -162,9 +162,15 @@ export function createRandomClothing(gender, rolls = Math.random) {
   return { group, templateIndex, dye, variant };
 }
 
+/** MOD: a flat multiplier over every non-gold roll below (WP through
+ *  RL - every category `halving` ever touches), applied to the
+ *  starting chance before the halving ladder runs. Gold is computed
+ *  above this closure and never reads it, so a caller that wants
+ *  "less item loot, same gold" (spawnEnemyLoot's humanoid cut) passes
+ *  `itemChanceScale` and gold is untouched. 1 = DFU's own rates. */
 /** LootTables.GenerateRandomLoot, verbatim flow. `who` = { level,
  *  gender } (race feeds clothing variants later - S2). */
-export function generateRandomLoot(matrix, who, rolls = Math.random) {
+export function generateRandomLoot(matrix, who, rolls = Math.random, { itemChanceScale = 1 } = {}) {
   const items = [];
   const level = Math.max(1, who.level | 0);
   const gold = (matrix.MinGold + Math.floor(rolls() * (matrix.MaxGold + 1 - matrix.MinGold))) * level;
@@ -174,7 +180,7 @@ export function generateRandomLoot(matrix, who, rolls = Math.random) {
   // gold stack (276) - looted gold was a second, unspendable row.
   if (gold > 0) items.push(goldStack(gold));
   const halving = (chance, make) => {
-    let c = chance;
+    let c = chance * itemChanceScale;   // MOD: the one scale point every category shares
     while (dice100(Math.trunc(c), rolls())) { items.push(mintCondition(named(make()))); c *= 0.5; }   // AUDIT 23 (items-5)
   };
   halving(matrix.WP, () => createRandomWeapon(level, rolls));
@@ -547,9 +553,9 @@ export function validLootList(v) {
   return out;
 }
 
-export function generateItems(lootTableKey, who, rolls = Math.random) {
+export function generateItems(lootTableKey, who, rolls = Math.random, opts = {}) {
   const matrix = LOOT_MATRICES[lootTableKey] ?? LOOT_MATRICES['-'];
-  return generateRandomLoot(matrix, who, rolls);
+  return generateRandomLoot(matrix, who, rolls, opts);
 }
 
 // ---- The three rolls nobody ran (AUDIT 24, wave 43) ----------------

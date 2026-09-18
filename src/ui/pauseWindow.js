@@ -181,7 +181,7 @@ export class PauseOptionsWindow {
     // GameManager.cs:515-518, and ActionComplete is the RELEASE edge
     // (InputManager.cs:634-637) - so its opening release is spent before
     // the window exists and :186's bare `GetKeyUp` is safe there. Every
-    // host here opens on the key DOWN (world.js:6178, exterior.js:2653,
+    // host here opens on the key DOWN (world.js:6228, exterior.js:2673,
     // ui/input.js:412) and then routes that same key's release into the
     // window it just mounted, so the release door closes only a window
     // whose own press it saw.
@@ -295,6 +295,16 @@ export class PauseOptionsWindow {
     }
     if (inRect(R.load, vx, vy)) {
       this._click();
+      // ONLINE-LOAD1: the same shape savingPrevented uses just above -
+      // the real gate is worldQuickLoad/dungeonContext's own quickLoad,
+      // this is the classic window's own read of the same signal so it
+      // shows why rather than the one-press quickload silently doing
+      // nothing (or the note appearing to come from nowhere).
+      if (this.hooks.loadingPrevented?.()) {
+        this.top = 'note';
+        this._noteRows = ['Loading is disabled during online play.'];
+        return true;
+      }
       // SAV4: LOAD GAME opens the slot window too (:308); a host
       // without the loadKey seam keeps the one-press quickload. C1: a
       // push leaves this window standing, same as SAVE above.

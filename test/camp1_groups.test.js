@@ -30,6 +30,15 @@ import { FEATURES } from '../src/systems/features.js';
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const read = (p) => readFileSync(join(root, p), 'utf8');
 const rollsOf = (list) => { let i = 0; return () => list[i++ % list.length]; };
+// THEMED GROUPS: rollGroupComposition now draws its SEED member FIRST
+// (chooseRandomEnemy, two rolls - the level band, then the pick) and only then
+// the kind and the size, because every other member is drawn from the seed's
+// own faction. A cycling rollsOf() cannot say that legibly, so the composition
+// cases below script their rolls in order and let a trailing value feed the
+// remaining member draws. SEED is a pair that lands on a real, non-solitary
+// Woodlands type at level 5, so the seed is taken on its first attempt.
+const scripted = (list, tail = 0.5) => { let i = 0; return () => (i < list.length ? list[i++] : tail); };
+const SEED = [0.3, 0.2];
 const WILD = { inside: false, inLocationRect: false, preventEnemySpawns: false, climateIndex: CLIMATES.Woodlands, playerLevel: 5 };
 
 test('CAMP1: the window is 15 REAL minutes of play, stated in game minutes through the one clock rate, and opens on exactly those minutes', () => {
@@ -50,18 +59,18 @@ test('CAMP1: the timer roll - gated on the wilderness (not inside, not the town 
   assert.equal(rollCampEncounter({ ...WILD, gameMinutes: t + 720, inLocationRect: true }, rollsOf([0.1])), null);
   assert.equal(rollCampEncounter({ ...WILD, gameMinutes: t, preventEnemySpawns: true }, rollsOf([0.1])), null, 'a clock jump\'s minutes roll nothing');
   assert.equal(rollCampEncounter({ ...WILD, gameMinutes: t + 1 }, rollsOf([0.1])), null, 'the window is closed on every other minute');
-  const hit = rollCampEncounter({ ...WILD, gameMinutes: t }, rollsOf([0.1, 0.99, 0.5]));
+  const hit = rollCampEncounter({ ...WILD, gameMinutes: t }, scripted([...SEED, 0.1, 0.99]));
   assert.ok(hit, 'an open window IS a group - no chance roll on the timer path (Mac: "every 15 minutes it should happen guaranteed")');
   assert.equal(hit.kind, 'camp', 'kind roll under 0.5: a camp');
   assert.equal(hit.mobileTypes.length, CAMP_SIZE[1], 'size roll 0.99: the top of the camp band');
   assert.ok(hit.mobileTypes.every((m) => Number.isInteger(m) && m >= 0), 'every member is a real mobile id off the climate\'s table');
   assert.deepEqual([hit.spacing, hit.alertRadius, hit.minDistance, hit.maxDistance], [CAMP_SPACING, CAMP_ALERT_RADIUS, MIN_CAMP_SPAWN_DISTANCE, MAX_CAMP_SPAWN_DISTANCE]);
-  const pack = rollCampEncounter({ ...WILD, gameMinutes: t }, rollsOf([0.9, 0.0, 0.5]));
+  const pack = rollCampEncounter({ ...WILD, gameMinutes: t }, scripted([...SEED, 0.9, 0.0]));
   assert.equal(pack.kind, 'pack');
   assert.equal(pack.mobileTypes.length, PACK_SIZE[0], 'size roll 0: the bottom of the pack band');
   assert.deepEqual([pack.spacing, pack.alertRadius], [PACK_SPACING, PACK_ALERT_RADIUS]);
   assert.ok(PACK_SPACING > CAMP_SPACING && CAMP_ALERT_RADIUS === CAMP_SPACING * 3 && PACK_ALERT_RADIUS === PACK_SPACING * 2, 'a camp is tight (three spacings of shout), a pack is loose (two)');
-  assert.equal(rollCampEncounter({ ...WILD, gameMinutes: t, climateIndex: 9999 }, rollsOf([0.1, 0.5, 0.5])), null, 'an unknown climate has no table: nothing to spawn');
+  assert.equal(rollCampEncounter({ ...WILD, gameMinutes: t, climateIndex: 9999 }, scripted([...SEED, 0.1, 0.5])), null, 'an unknown climate has no table: nothing to spawn - the seed roll itself comes back empty');
 });
 
 test('CAMP1: the chunk-load roll - the same gate and composition, no time gate at all, and its own 15% chance', () => {
@@ -69,7 +78,7 @@ test('CAMP1: the chunk-load roll - the same gate and composition, no time gate a
   assert.equal(rollCampChanceOnChunkLoad(0.149), true);
   assert.equal(rollCampChanceOnChunkLoad(0.15), false);
   assert.equal(rollCampEncounterOnChunkLoad({ ...WILD, gameMinutes: 181 }, rollsOf([0.2])), null, 'roll 0.2: no group this pixel');
-  const hit = rollCampEncounterOnChunkLoad({ ...WILD, gameMinutes: 181 }, rollsOf([0.1, 0.1, 0.5, 0.5]));
+  const hit = rollCampEncounterOnChunkLoad({ ...WILD, gameMinutes: 181 }, scripted([0.1, ...SEED, 0.1, 0.5]));   // the 15% chance roll first, then the seed, then kind and size
   assert.ok(hit && hit.kind === 'camp', 'roll 0.1 on a CLOSED minute: a group - the pixel crossing is the cadence');
   assert.equal(rollCampEncounterOnChunkLoad({ ...WILD, gameMinutes: 181, inLocationRect: true }, rollsOf([0.1])), null, 'the town gate holds here too');
   // the timer's own 5% is kept for a lower-than-guaranteed rate later, and is not consulted by the timer path
@@ -108,7 +117,18 @@ test('CAMP1 by source: both exterior hosts roll it after the single roll comes b
     assert.match(stand, /playerFeet: \[anchorFeet\[0\], anchorFeet\[1\] \+ 0\.9, anchorFeet\[2\]\],\s*\n\s*playerYawRad: Math\.random\(\) \* Math\.PI \* 2,\s*\n\s*fovDegrees: 0,/, `${name}: each member's env is centred on the ANCHOR, any bearing`);
     assert.match(stand, /spot = placeFoeFreely\(memberEnv, \{ minDistance: 1, maxDistance: hit\.spacing, lineOfSightCheck: false \}\);/, `${name}: within the group's spacing, no player-relative view test`);
     assert.match(stand, /if \(!spot\) continue;/, `${name}: a member with no ground is skipped, not the group`);
-    assert.match(stand, /\.then\(\(f\) => \{ if \(f\) \{ f\.campId = campId; f\.campAlertRadius = hit\.alertRadius; \} \}\)/, `${name}: the stood foe carries its group and its shout radius`);
+    assert.match(stand, /\.then\(\(f\) => \{\s*\n\s*if \(f\) \{\s*\n\s*f\.campId = campId; f\.campAlertRadius = hit\.alertRadius;/, `${name}: the stood foe carries its group and its shout radius`);
+    // CAMP2: a themed group is grouped by FACTION (mobileFactions.js), which can
+    // still straddle several combat Teams - so without an exemption,
+    // EnemyInfighting (on by default) has campmates fighting each other on sight
+    // instead of the player. Active-Arcs.md refused the hand-off's version of
+    // this, which set `suppressInfighting` on the entity: that flag skips the
+    // infighting arm entirely and drops to the one below it, where a campmate
+    // stops targeting EVERY non-player candidate - the player's own summoned
+    // ally included - and it outlives the campId that justified it across a
+    // quickload. The exemption is the CAMP's, and this pins that it stays so.
+    assert.match(stand, /if \(f\.entity\) f\.entity\.campId = campId;/, `${name}: a campmate is exempt from its CAMPMATES`);
+    assert.doesNotMatch(stand, /suppressInfighting/, `${name}: and not from every other foe in the world`);
     assert.match(stand, /yaw: Math\.atan2\(anchorFeet\[0\] - spot\.x, anchorFeet\[2\] - spot\.z\),/, `${name}: members face the camp, not the player`);
   }
   // CAMP1-REST re-aimed both of these: the timer roll now stands down under a rest as well (its own test below)

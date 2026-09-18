@@ -720,7 +720,7 @@ export const KEEPALIVE_FAN_MS = HEARTBEAT_MS / 2;
  *  carries it (`v`), and a client whose wire.js was built against another version says so on the console: the client
  *  is deployed by CI and the relay by hand, so a skew between them is the ordinary state of a release day, and until
  *  now nothing on either end could see it. */
-export const RELAY_VERSION = 'world82';   // RESPAWN1: the memory's foe door takes the team pair as the NAME this port writes, so a dungeon's kills survive the trip home
+export const RELAY_VERSION = 'world83';   // ONLINE-CLASS1: a look carries the character's class name, so a peer without a Morrowind body stands as its class-enemy sprite
 
 /** The listeners sorted by distance from `from`, nearest first; one with no pose yet sorts last, because a peer that
  *  has never said where it is cannot be near. The ordering is Euclidean in the POSE'S OWN FRAME, which is a cell's
@@ -840,14 +840,25 @@ export function validLookItem(it) {
   return out;
 }
 
-/** A look the room will keep and repeat: the paperdoll's recipe, bounded and projected. */
+/** A look the room will keep and repeat: the paperdoll's recipe, bounded and projected.
+ *  `class` (2026-09-17, remote-player billboard): the character's career name, so a peer without a Morrowind body
+ *  can be drawn as the matching class-enemy sprite (Warrior, Mage, ...) instead of the flat paperdoll - see
+ *  net/remotePlayers.js classMobileType. Optional and letters-only, same bound as `race`; an unrecognized or
+ *  missing name just falls back to the paperdoll, so this is safe to leave off an older peer's look entirely. */
 export function validLook(look) {
   if (!look || typeof look !== 'object') return null;
   const race = typeof look.race === 'string' && /^[A-Za-z]{1,16}$/.test(look.race) ? look.race : 'Breton';
   const gender = look.gender === 'female' ? 'female' : 'male';
   const faceIndex = uint(look.faceIndex, 9) ?? 0;
+  const klass = typeof look.class === 'string' && /^[A-Za-z]{1,20}$/.test(look.class) ? look.class : null;
   const items = Array.isArray(look.items) ? look.items.map(validLookItem).filter(Boolean).slice(0, MAX_LOOK_ITEMS) : [];
-  return { race, gender, faceIndex, items };
+  // The key is OMITTED, not set to null, when the look names no class. SOC1's
+  // own pin names this exact mutant - "the keys added to a hello that named
+  // none, which breaks every older hello pin" - and it is a wire law, not a
+  // style choice: a peer that never had a class must serialize to the same
+  // bytes it always did, or every older pin and every deployed client that
+  // compares looks sees a shape it has not seen before.
+  return { race, gender, faceIndex, ...(klass ? { class: klass } : {}), items };
 }
 
 /** The room's key from the request path: /room/<key>, or null. */

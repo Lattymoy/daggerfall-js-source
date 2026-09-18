@@ -82,7 +82,7 @@ test('D-ONLINE1 by source: the world host snapshots "was this death online" at t
   assert.match(fn, /_lastEncMinutes = Math\.floor\(playerTicker\.classicMinutes\);/, 'no encounter catch-up across the trip');
   assert.match(fn, /playerEntity\.health = respawnHealth\(playerEntity\.maxHealth\);\s*\n\s*surfacePlayer\(\);\s*\n\s*townTalk\.showOverlay\(new ActionTextBox\(\[respawnFlavorText\(kind\)\]\)\);/, 'half health, surfaced, and the line where the death screen stood');
   assert.match(read('src/scenes/worldModes.js'), /interiorOverlay = new DeathScreen\(\{ eyeHeight: player\.eye\[1\] - player\.pos\[1\], capsuleHeight: player\.height, onReset: \(\) => \{ if \(!host\.onlineRespawn\?\.\(\)\) endRunToTitleMenu\(renderer\); \} \}\);/, 'a building\'s death asks the host, and ends the run when it says no');
-  assert.match(read('src/scenes/worldModes.js'), /onlineRespawn: \(\) => host\.onlineRespawn\?\.\(\) \?\? false,/, 'the dungeon context is handed the same door');
+  assert.match(read('src/scenes/worldModes.js'), /return host\.onlineRespawn\?\.\(\) \?\? false;\s*\n\s*\},/, 'the dungeon context is handed the same door, falling through to it once PH1\'s in-place Privateer\'s Hold respawn declines');
   assert.match(read('src/scenes/dungeonContext.js'), /activeOverlay = new DeathScreen\(\{ eyeHeight: _ms\?\.eyeLevel, capsuleHeight: _ms\?\.capsule, onReset: \(\) => \{ if \(!opts\.onlineRespawn\?\.\(\)\) endRunToTitleMenu\(renderer\); \} \}\);/, 'and asks it');
   assert.match(read('src/scenes/exterior.js'), /new DeathScreen\(\{[^\n]*onReset: \(\) => endRunToTitleMenu\(renderer\), hint: 'ENTER end' \}\)/, 'the fixed city has no online and keeps the bare form');
 });

@@ -32,12 +32,12 @@ const mkSenses = (extra = {}) => ({ gameMinutes: 0, playerStealth: 0, rolls: () 
 /** One foe descriptor - ai + entity, the candidate shape. yaw
  *  matters: the FOV is 180, so a foe facing away cannot SEE a
  *  candidate behind it (fixtures face their opponents). */
-function mkFoe(feet, { team = 'PlayerEnemy', birthTeam = team, suppress = false, hostile = true, health = 20, isQuestFoe = false, questAttackable = false, yaw = 0 } = {}) {
+function mkFoe(feet, { team = 'PlayerEnemy', birthTeam = team, suppress = false, campId = null, hostile = true, health = 20, isQuestFoe = false, questAttackable = false, yaw = 0 } = {}) {
   const ai = new EnemyAI(clearCollider(), feet, yaw);
   ai.isHostile = hostile;
   return {
     ai,
-    entity: { team, mobileTeam: birthTeam, suppressInfighting: suppress, health, basics: { team: birthTeam } },
+    entity: { team, mobileTeam: birthTeam, suppressInfighting: suppress, campId, health, basics: { team: birthTeam } },
     isQuestFoe, questAttackable,
   };
 }
@@ -57,6 +57,45 @@ const drive = (foes, playerFeet, targeting, seconds) => {
     for (const f of foes) f.ai.update(0.1, playerFeet, mkSenses({ targeting }));
   }
 };
+
+test('CAMP2: the infighting exemption is the CAMP’s - not a blanket flag that also spares the player’s summoned ally, and not one that outlives the camp id', () => {
+  // A themed camp (campEncounters.js) is grouped by FACTION, which can straddle
+  // combat Teams - a vermin nest is Spiders + Scorpions, a bandit gang several
+  // classes - so infighting would otherwise set campmates on each other on sight.
+  //
+  // Active-Arcs.md REFUSED the hand-off's version of this, which set
+  // `suppressInfighting` on the entity, and this test is the guard for the
+  // reason: that flag skips the infighting arm entirely and falls to the arm
+  // below it, where a foe targets nothing but the player - the player's own
+  // summoned ally included (MT-i above pins exactly that, for the seducer the
+  // flag exists for). It also outlived the campId that justified it, since a
+  // quickload drops campId and not the flag.
+  const playerFeet = [0, 0, 30];
+  // Both pacified, so the PLAYER is not an option for either and the only
+  // question left is whether they take each other.
+  const bandit = mkFoe([0, 0, 0], { team: 'Criminals', campId: 7, hostile: false });
+  const vermin = mkFoe([0, 0, 3], { team: 'Vermin', campId: 7, hostile: false, yaw: Math.PI });
+  const pool = [bandit, vermin];
+  drive(pool, playerFeet, armPool(pool), 1.3);
+  assert.equal(bandit.ai.target, null, 'campmates of different Teams leave each other alone');
+  assert.equal(vermin.ai.target, null, 'both ways round');
+
+  // the SAME pair with no camp id: ordinary infighting takes them, so the
+  // exemption is what did the work above and this test is not vacuous.
+  const b2 = mkFoe([0, 0, 0], { team: 'Criminals', hostile: false });
+  const v2 = mkFoe([0, 0, 3], { team: 'Vermin', hostile: false, yaw: Math.PI });
+  const pool2 = [b2, v2];
+  drive(pool2, playerFeet, armPool(pool2), 1.3);
+  assert.equal(b2.ai.target, v2, 'no camp id, no exemption - a quickload that drops it leaves ordinary foes');
+
+  // and a campmate still fights the player's summoned ally, which is the
+  // behaviour the blanket flag took away.
+  const b3 = mkFoe([0, 0, 0], { team: 'Criminals', campId: 9 });
+  const ally = mkFoe([0, 0, 3], { team: 'PlayerAlly', birthTeam: 'Daedra' });
+  const pool3 = [b3, ally];
+  drive(pool3, playerFeet, armPool(pool3), 1.3);
+  assert.equal(b3.ai.target, ally, 'a summoned ally is still fought');
+});
 
 test('MT-i GATE: MOBILE_TEAMS is DaggerfallUnityEnums.cs\'s enum, in order; every basics row names a member', (t) => {
   assert.equal(MOBILE_TEAMS.length, 22);

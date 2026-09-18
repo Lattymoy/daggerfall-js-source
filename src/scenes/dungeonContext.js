@@ -1481,7 +1481,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // owned, and destroy() hands it back (the _prevPassiveHost idiom this
   // file already uses for its other process-global seams). A bare null
   // would not do: on ?world and ?exterior the previous holder is the
-  // host's own townTalk sink (world.js:7653 / exterior.js:3235), set
+  // host's own townTalk sink (world.js:7740 / exterior.js:3255), set
   // once at boot and never again, so nulling on the way out of the
   // first dungeon would silently un-file every mid-screen label above
   // ground for the rest of the session - MC-1's own bug, re-opened.
@@ -1967,7 +1967,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // copied mount would have diverged the first time an arm grew.
   /** DR1: THE TWO SPELL WINDOWS THIS HOST MOUNTS NOW, and the one door
    *  they go through. `mountSpellWindow` is worldModes'
-   *  mountSpellWindow DUNGEON ARM (worldModes.js:1053,
+   *  mountSpellWindow DUNGEON ARM (worldModes.js:1055,
    *  `dungeonCtx?.showOverlay(win)`) resolved to what it actually
    *  calls here - this file's own pushDungeonWindow, which IS
    *  UserInterfaceManager.PushWindow. So a spell window raised over an
@@ -2456,7 +2456,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // NEXT updateMissiles pass to fill. But the push lands in a
     // MICROTASK - this is async and its one caller does not await it -
     // and both hosts draw dynamicDraws BEFORE they call drawFoes
-    // (dungeon.js:1001 against :1039; worldModes.js:6035 against :6049).   // QS6: both pairs' SECOND half was stale before this slice - they named neither `drawFoes` call, and a positional bump would have moved a wrong number by the right offset; re-resolved by content
+    // (dungeon.js:1001 against :1039; worldModes.js:6081 against :6104).   // QS6: both pairs' SECOND half was stale before this slice - they named neither `drawFoes` call, and a positional bump would have moved a wrong number by the right offset; re-resolved by content
     // So the very next frame drew the arrow with a NULL matrix, and
     // `uniformMatrix4fv(uModel, false, null)` throws - Float32List is
     // a non-nullable WebIDL union. Firing a bow killed the frame loop,
@@ -2984,8 +2984,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
               // AUDIT 39 (#64) / THE FOUR HOSTS RULE - SHIPPED (wave D):
               // this host was the FOURTH BODY of the player-arrow law
               // and is now the fourth CALLER. combat/arrowFlight.js's
-              // playerArrowHitFoe is the one copy world.js:10487,
-              // exterior.js:4661 and worldModes.js:6176 already ran;
+              // playerArrowHitFoe is the one copy world.js:10607,
+              // exterior.js:4681 and worldModes.js:6222 already ran;
               // the flag said the divergence would bite and it already
               // had. This copy splashed at the ARROW TIP
               // (`[m.pos[0], m.pos[1], m.pos[2]]`) on the claim that
@@ -5309,6 +5309,12 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         // the LOAD arm needs the host's position applier, exactly as
         // routeKey's own QuickLoad case passes it
         quickLoad: () => ctx.quickLoad?.(setPlayerPos),
+        // ONLINE-LOAD1: the world host's pause hooks (world.js) pass this
+        // as `loadingPrevented: () => !!online` so the Load pane shows
+        // WHY rather than silently no-opping; this host now reads the
+        // same signal through opts.dungeonOnline (worldModes.js), which
+        // the standalone ?dungeon probe never sets, so it stays open there.
+        loadingPrevented: () => !!opts.dungeonOnline?.(),
         // SAV4: the slot window's seams over the same two verbs.
         playerName: () => playerEntity.name,
         saveAs: (saveName) => ctx.quickSave?.(saveName),
@@ -5374,6 +5380,12 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     playerAttackInput,
     spellArmed: () => magic.spellArmed(),   // A8: PlayerEffectManager.HasReadySpell, for the host's activate gate
     weaponRig: () => weaponRig,   // AUDIT WORLD C1: the rig the player's hands are in underground, for the pose's arm
+    // PH1: the death screen's own release, for a respawn that stays INSIDE
+    // this dungeon (Privateer's Hold) rather than exiting it - the exact
+    // same clear the quickLoad path already does for a DeathScreen
+    // (restoreSaved, above), just callable on its own for a respawn that
+    // never calls quickLoad at all.
+    clearDeathOverlay: () => { if (activeOverlay instanceof DeathScreen) activeOverlay = null; },
     readiedSpell: () => magic.readied(),   // ROAD-Ar: PlayerEffectManager.ReadySpell - the gate needs its TargetType for the ByTouch exception (PlayerActivate.cs:250-258)
     toggleSheath: weaponRig.toggleSheath,
     // QS2: the diamond's three presses. This ctx is routeKey's, in BOTH hosts
@@ -5619,6 +5631,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       return r.ok;
     },
     quickLoad(setPlayerPos, key = null) {
+      // ONLINE-LOAD1: guarded here, not only the pane's loadingPrevented - F9/F11 reach this directly.
+      if (opts.dungeonOnline?.()) { hudText.add('Loading is disabled during online play.'); return; }
       const snap = key != null ? loadSlot(key) : quickLoadSlot(playerEntity.name);
       if (!snap) { hudText.add('No saved game.'); return; }
       const extras = restorePlayer(playerEntity, snap, spellsByIndex);
@@ -6403,7 +6417,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       //
       // The interior host's `interiorHitEffects.clear()` is NOT the same
       // line and was never a precedent for one: that pool is built with
-      // no `onSpawn` (worldModes.js:527), so it owns its batches and
+      // no `onSpawn` (worldModes.js:529), so it owns its batches and
       // clear() is the only thing that frees them - and it runs on a
       // between-buildings RESET, not a teardown.
       // AUDIT 64 F41: the scene ambience leaves with the scene too -

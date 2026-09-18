@@ -173,6 +173,8 @@ import { plainLines } from './shared.js';   // V5b: TEXT.RSC answers ROWS, and t
 import { hallAccessAnytime } from '../systems/guildServices.js';
 import { resolveVariantGuild } from '../systems/guildVariants.js';
 import { getBool, getInt } from '../systems/settings.js';   // R1: InstantRepairs / AllowMagicRepairs go LIVE
+import { longitudeLatitudeToMapPixel } from '../formats/mapsFile.js';   // PH1: Privateer's Hold identity check, the classic start's own pixel math
+import { respawnHealth } from '../systems/deathRespawn.js';   // PH1: the in-place respawn's own heal, the SAME fraction world.js's own online respawn uses
 import { reducedRepairCost } from '../systems/guildServices.js';   // R1: FightersGuild.ReducedRepairCost finds its caller
 import {
   calculateItemRepairCost, updateRepairTimes, repairJobsAt, repairRefusal, repairStatusLabel,
@@ -5126,7 +5128,51 @@ export function createWorldModes(host) {
           // the outer host exactly as dungeonOnline/useMagicItem do;
           // answers false when this is not a live online session, so
           // the death screen falls back to endRunToTitleMenu.
-          onlineRespawn: () => host.onlineRespawn?.() ?? false,
+          // PH1 (Lost, 2026-09-18: "respawn where you started, only in
+          // Privateer's Hold, online only"): the tutorial dungeon's own
+          // map pixel is a live location on the overworld (Daggerfall
+          // itself, per the classic start's own StartCellX/Y), so the
+          // general dungeon-death rule below (host.onlineRespawn: exit to
+          // the door, land on the surface) drops a still-tutorial
+          // character straight into a city - which is the "spawned in a
+          // city" report this fixes. Detected the SAME way the classic
+          // start reads it (settings.cfg Startup.StartCellX/Y, 109/158 by
+          // default) rather than a hardcoded pixel, so a custom start
+          // cell is honoured exactly as the classic start honours it.
+          //
+          // Gated on opts.dungeonOnline (ONLINE-LOAD1's own live-session
+          // signal, just below) rather than world.js's _deathWasOnline -
+          // an EARLIER draft of this fix read that flag instead and it is
+          // never set on the way into a dungeon death at all (only on the
+          // two exterior death sites), so that draft's Privateer's Hold
+          // branch could not fire for a real dungeon death and always
+          // fell through to host.onlineRespawn.
+          onlineRespawn: () => {
+            const mt = dfLocation?.mapTableData;
+            const px = mt && Number.isFinite(mt.longitude) && Number.isFinite(mt.latitude)
+              ? longitudeLatitudeToMapPixel(mt.longitude, mt.latitude) : null;
+            const isPrivateersHold = !!px && px.x === getInt('Startup', 'StartCellX') && px.y === getInt('Startup', 'StartCellY');
+            if (isPrivateersHold && (host.dungeonOnline?.() ?? false)) {
+              // preferEnterMarker: true - the SAME marker a fresh classic
+              // start opens on (dungeon.js/tryEnterDungeon's own default),
+              // which is what "where you started" means for this one dungeon.
+              const spawn = ctx.startSpawn({ preferEnterMarker: true });
+              if (spawn) {
+                player.spawn(spawn[0], spawn[1], spawn[2]);
+                playerEntity.health = respawnHealth(playerEntity.maxHealth);
+                surfacePlayer();
+                ctx.clearDeathOverlay?.();
+                return true;
+              }
+            }
+            return host.onlineRespawn?.() ?? false;
+          },
+          // ONLINE-LOAD1 (dungeons): the same signal world.js's own pause
+          // hooks pass as `loadingPrevented` above ground - this host
+          // forwards it too, but never handed it INTO the dungeon
+          // context, so the dungeon's own togglePause (dungeonContext.js)
+          // had nothing to read and its Load pane never refused online.
+          dungeonOnline: () => host.dungeonOnline?.() ?? false,
           // FOE1 (2026-09-15, Mac, relaying players: "during online play,
           // certain enemies cant be damaged"): THIS LINE WAS INSIDE A
           // COMMENT. HT1 appended `// HT1: the torch keys` to the end of
@@ -5189,7 +5235,7 @@ export function createWorldModes(host) {
           hudMessageSink: (t) => questBridge?.notebook?.addMessage(t),
           // MAC1 J: and the relock the dungeon's pause door needs, on
           // the same threading - the context owns no canvas of its own
-          // (dungeonContext.js:5593), so the OUTER host's one rides in.
+          // (dungeonContext.js:5605), so the OUTER host's one rides in.
           // This is the most-played pause door of the six: world.js
           // gates its own Escape ladder on exterior mode, so underground
           // the key falls to routeKey -> ui/input.js:637 -> the
@@ -6151,7 +6197,7 @@ export function createWorldModes(host) {
           // AUDIT 39r: and the FLASH, which this arm was copied without.
           // An arrow reaches the player through BowDamage ->
           // ApplyDamageToPlayer -> SendDamageToPlayer, the same door as
-          // a blow (world.js:7420's own wave-46 note); the interior
+          // a blow (world.js:7507's own wave-46 note); the interior
           // MELEE hit already flashes inside exteriorFoes, so only this
           // arm - which applies its own damage - was missing it.
           flashPlayerDamage(dmg);   // BA1: RemoveHealth carries the amount
@@ -6957,7 +7003,7 @@ export function createWorldModes(host) {
   addEventListener('mousedown', (e) => {
     // AUDIT-MACK F2: THIS HOST DOES NOT FEED THE HELD SET, and MAC-K1
     // briefly made it. `keys` is not this host's - it arrives on the
-    // host bag (`exterior.js:3324`, `world.js`'s twin), and the OUTER
+    // host bag (`exterior.js:3340`, `world.js`'s twin), and the OUTER
     // host's own mousedown writes `keys.add(mouseCode(e.button))`
     // UNGATED, before any mode test, on a listener that is never
     // removed. So the three button codes were already in the Set while
@@ -7224,6 +7270,7 @@ export function createWorldModes(host) {
         quickSave: host.quickSave,
         quickLoad: host.quickLoad,
         relock: host.relock,   // MAC1: the resume gesture relocks the pointer (ui/pauseDoor.js)
+        loadingPrevented: host.loadingPrevented,   // ONLINE-LOAD1: forwarded from the world host, same as quickLoad above
         playerName: host.playerName,
         saveAs: host.saveAs,
         loadKey: host.loadKey,
@@ -7710,6 +7757,18 @@ export function createWorldModes(host) {
   }
   return {
     get mode() { return mode; },
+    // ONLINE-AUTOSAVE1: a mode-aware save for callers OUTSIDE any key
+    // route (world.js's own beforeunload hook) that need "whatever F9
+    // would do right now" without knowing which of the three save
+    // composers is live. Exterior and interior share the world host's
+    // own (host.quickSave, exactly as interiorKeyCtx's F9 arm above
+    // calls it); dungeon keeps its own composer (dungeonCtx.quickSave,
+    // the SAME split IS1's header describes for load) since a
+    // dungeon's foes/loot/door state has no equivalent in host's
+    // envelope at all. `saveName` forwards through either way, default
+    // QuickSave, so the caller can also target a character's AutoSave
+    // slot without this method knowing what that means.
+    quickSaveNow: (saveName) => (mode === 'dungeon' ? dungeonCtx?.quickSave(saveName) : host.quickSave?.(saveName)),
     // ONLINE1: what the host needs to name the room - the mounted dungeon's
     // location, the interior's building; null in the exterior
     roomIdentity: () => (mode === 'dungeon' ? { kind: 'dungeon', mapId: dungeonLoc?.mapTableData?.mapId ?? null, regionIndex: dungeonLoc?.regionIndex ?? -1, name: dungeonLoc?.name ?? '' }
@@ -8378,9 +8437,9 @@ export function createWorldModes(host) {
      *  .cs:175-176 writes `weaponDrawn`/`usingLeftHand` off it,
      *  :420-421 restores them onto it. The port has FOUR PlayerWeapons
      *  (world.js's, this file's `interiorWeapon` :538, dungeonContext's
-     *  and exterior.js's - which this seam does not reach: that host has no save path at all, its charter exterior.js:2899-2921), and IS1 routed the inside-a-building save to
+     *  and exterior.js's - which this seam does not reach: that host has no save path at all, its charter exterior.js:2915-2937), and IS1 routed the inside-a-building save to
      *  the WORLD host's composer - which reads its own exterior rig
-     *  unconditionally (world.js:4899). So an F9 pressed in a shop
+     *  unconditionally (world.js:4919). So an F9 pressed in a shop
      *  recorded the street's sheath and hand, and the load wrote them
      *  back into the street's rig; the rig actually in the player's
      *  hands was in no envelope at all.
@@ -8407,7 +8466,7 @@ export function createWorldModes(host) {
      *  presenter for the whole visit) or the interior's? world.js's gate read townTalk's slot alone. */
     deathUp() { return mode === 'dungeon' ? !!dungeonCtx?.deathUp?.() : interiorOverlay instanceof DeathScreen; },
     /** The restore half - and NOT gated on the mode, deliberately.
-     *  worldQuickLoad calls forceExitToExterior FIRST (world.js:4990)
+     *  worldQuickLoad calls forceExitToExterior FIRST (world.js:5032)
      *  and only re-enters the building at :4217, so the mode at apply
      *  time is whatever the LOAD landed in, not whatever the SAVE was
      *  taken in: an outdoor save loaded while the player was indoors
@@ -8417,8 +8476,8 @@ export function createWorldModes(host) {
      *
      *  FLAG ONLY and presence-gated - both laws now stated once, in
      *  combat/playerWeapon.js's applyWeaponPose, with the citation.
-     *  HARD2c: this used to spell them out, and named `world.js:5103`
-     *  and `dungeonContext.js:5665` for its two sibling copies - lines
+     *  HARD2c: this used to spell them out, and named `world.js:5145`
+     *  and `dungeonContext.js:5679` for its two sibling copies - lines
      *  that had moved to :4418 and :5457. Three copies of a two-line
      *  law, and even the comment pointing between them had gone stale. */
     applyWeaponPose(pose) {

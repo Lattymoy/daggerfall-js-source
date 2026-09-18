@@ -65,8 +65,8 @@
   {
     "name": "SURV2-luck-does-not-widen-the-butchering",
     "file": "src/systems/survival/loot.js",
-    "old": "    const n = range(min, max + Math.max(0, lm - 5), rolls);",
-    "new": "    const n = range(min, max, rolls);",
+    "old": "    const n = scaledCount(range(min, max + Math.max(0, lm - 5), rolls), ANIMAL_LOOT_SCALE, rolls);",
+    "new": "    const n = scaledCount(range(min, max, rolls), ANIMAL_LOOT_SCALE, rolls);",
     "tests": [
       "test/surv2_items.test.js"
     ]

@@ -237,7 +237,7 @@ test('audit24 wave43: all four spawn sites roll, AFTER the equipment', () => {
   // trio or the equipment on its own.
   const hc = rd('src/scenes/hostCombat.js').split('\n');
   const at = (needle) => hc.findIndex((l) => l.trim().startsWith(needle));
-  const gen = at('entity.items = generateItems('); const eq = at('equipEnemy(entity, mobileType, player.level);'); const ex = at('addEnemyLootExtras(entity.items, basics, rolls);');
+  const gen = at('entity.items = generateItems('); const eq = at('equipEnemy(entity, mobileType, player.level, rolls);'); const ex = at('addEnemyLootExtras(entity.items, basics, rolls);');
   assert.ok(gen >= 0 && eq > gen && ex > eq, 'hostCombat: the table, then the equipment, then the trio');
   for (const [f, branches] of [['src/scenes/dungeonContext.js', 2], ['src/scenes/exteriorFoes.js', 1], ['src/scenes/cityGuards.js', 1]]) {
     const src = rd(f);

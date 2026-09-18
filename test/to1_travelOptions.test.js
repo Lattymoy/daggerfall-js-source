@@ -1553,8 +1553,13 @@ test('AUDIT-TO1 B1/B2/B3: the location rects come off the BUILT terrain, and the
 
 test('AUDIT-TO1 G1/G2/G3/I2/I3/I4/I6/J1/K2/H1/H2: the host seams the sweep found dead, each wired and named', () => {
   const w = read('src/scenes/world.js');
-  // G1: a load clears the destination and the scale
-  assert.match(w, /async function worldQuickLoad\(\{ mostRecent = false, key = null \} = \{\}\) \{\s*\n\s*if \(_loading\) return;[\s\S]{0,700}?travelOptions\?\.clearTravelDestination\(\);\s*\n\s*if \(worldTimeScale\(\) !== 1\) resetTimeScale\(\);/);
+  // G1: a load clears the destination and the scale. The window is generous
+  // because ONLINE-LOAD1's refusal now stands between the latch guard and the
+  // clear, with its reasoning - and it belongs THERE, ahead of it: a load that
+  // is refused must not cancel the player's journey on its way out. What this
+  // pins is unchanged - the clear happens at the top of the function, before
+  // its first await, not that it is the first statement in it.
+  assert.match(w, /async function worldQuickLoad\(\{ mostRecent = false, key = null \} = \{\}\) \{\s*\n\s*if \(_loading\) return;[\s\S]{0,2400}?travelOptions\?\.clearTravelDestination\(\);\s*\n\s*if \(worldTimeScale\(\) !== 1\) resetTimeScale\(\);/);
   // G2: the scale's net above every gate, and an indoor mode ends the journey
   assert.match(w, /if \(travelControlUI\?\.isShowing && \(modes\?\.mode \?\? 'exterior'\) !== 'exterior'\) travelControlUI\.closeWindow\(\);\s*\n\s*if \(!travelControlUI\?\.isShowing && worldTimeScale\(\) !== 1\) resetTimeScale\(\);/);
   // I2: the strip's click router wants the freed cursor and the primary button
