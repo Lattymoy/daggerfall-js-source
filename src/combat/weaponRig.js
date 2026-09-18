@@ -175,7 +175,7 @@ export async function autoBuildArms(entity, { wanted = () => getPref('mwArms'), 
  *                     pass console is retired: every call site hands
  *                     over a real one - hudText.add
  *                     (dungeonContext.js:2654), townTalk.say
- *                     (exterior.js:1763, world.js:2739) and
+ *                     (exterior.js:1769, world.js:2768) and
  *                     worldModes' own interior sink (worldModes.js:390,
  *                     which warns to console only where a host mounts
  *                     no townTalk at all), so the empty default below
@@ -634,7 +634,7 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
      *             "does not toggle / toggles twice / gets stuck", and
      *             it is why Handheld Torches misbehaved with it: the
      *             mod's UpdateFreeHand reads WeaponManager.Sheathed
-     *             LIVE (handheldTorches.js:286), so a flag flipped to
+     *             LIVE (handheldTorches.js:290), so a flag flipped to
      *             "drawn" with no weapon on screen stows the torch.
      *   :268      `!isAttacking` - the hand already had this gate
      *             (switchHand below); the sheath did not, so Z
