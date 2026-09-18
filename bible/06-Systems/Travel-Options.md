@@ -226,6 +226,34 @@ enough. Every reader above the build already guarded on null - the same
 guard a player with Travel Options switched off needs - so nothing else
 changed.
 
+### BOOT-TDZ2, the same day - the line's own test read three more
+
+Hoisting the mod was half of it. The same line decided whether the pixel
+was the player's with `px === playerTravelPixel().x`, and
+`playerTravelPixel` reads `walkMode`, `player` and `cam` - three more
+bindings the boot walk declares below its own first build. So the boot
+died again, one binding along, on exactly the same save.
+
+The builder ASKS THE MOD FIRST now:
+
+    if (travelOptions && dfLocation) {
+      const here = playerTravelPixel();
+      if (px === here.x && py === here.y) travelOptions.initLocationRects(here);
+    }
+
+With no mod there is nothing to initialise, so the mod is both the
+cheaper test and the only one that is safe that early - and the pixel is
+read once per build rather than three times. Before TO1 the pixel
+builder reached none of those bindings; this call was the slice's own.
+
+The gate this deserved is `test/bootorder.test.js`: it walks the boot's
+statements up to and including the first build, follows every call into
+the functions `bootWorld` declares, and names every binding they reach
+that the boot walk has not declared yet. Eight names stand on an
+allow-list, each reachable only down a branch a first build cannot take
+and each older than this arc; a ninth fails the suite rather than a
+player's browser.
+
 Pinned in `test/to1_travelOptions.test.js` as a LAW rather than a
 literal: every one of those bindings must be declared before the line
 `const playerPixel = await buildPixel(first.px, first.py)`, and the mod

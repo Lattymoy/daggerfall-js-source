@@ -1049,5 +1049,14 @@
   "tests": [
    "test/to1_travelOptions.test.js"
   ]
+ },
+ {
+  "name": "hook-asks-the-pixel-first",
+  "file": "src/scenes/world.js",
+  "old": "    if (travelOptions && dfLocation) {\n      const here = playerTravelPixel();\n      if (px === here.x && py === here.y) travelOptions.initLocationRects(here);\n    }\n",
+  "new": "    if (dfLocation && px === playerTravelPixel().x && py === playerTravelPixel().y) travelOptions?.initLocationRects(playerTravelPixel());\n",
+  "tests": [
+   "test/to1_travelOptions.test.js"
+  ]
  }
 ]

@@ -1388,7 +1388,6 @@ export async function bootWorld(canvas, renderer, params, status) {
     // location rects when the terrain under the player LANDS, because
     // OnMapPixelChanged may have fired before it was built. The record
     // below is what locationTileRect reads, so this runs after it lands.
-    const _isPlayersPixel = px === playerTravelPixel().x && py === playerTravelPixel().y;
     built.set(key, {
       staticBatch,   // PERF4: the merged static models, drawn with the pixel matrix; null when the pixel has none
       // AUDIT-TO1 B2: DaggerfallTerrain.MapData.locationRect - the tile
@@ -1414,7 +1413,16 @@ export async function bootWorld(canvas, renderer, params, status) {
       centerHeight: samples[64 * HEIGHTMAP_DIMENSION + 64] * worldHeight,
       avgY: dfLocation ? avg * worldHeight : 0,
     });
-    if (_isPlayersPixel && dfLocation) travelOptions?.initLocationRects(playerTravelPixel());   // AUDIT-TO1 B3: the second hook
+    // AUDIT-TO1 B3: the second hook. BOOT-TDZ2: THE MOD IS ASKED FIRST,
+    // because this builder runs inside the boot's OWN first build and
+    // `playerTravelPixel()` reads `walkMode`, `player` and `cam` - three
+    // bindings the boot walk declares below that build. With no mod there
+    // is nothing to initialise anyway, so asking it first is both the
+    // cheaper test and the only one that is safe this early.
+    if (travelOptions && dfLocation) {
+      const here = playerTravelPixel();
+      if (px === here.x && py === here.y) travelOptions.initLocationRects(here);
+    }
     // AUDIT 61 (SIB1): an install landed while this pixel's textures were
     // in flight (a forced apply on a quickload or a teleport whose
     // destination ring keeps this pixel), so its flats were read from an
