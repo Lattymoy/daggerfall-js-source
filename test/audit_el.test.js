@@ -144,8 +144,11 @@ test('AUDIT-EL F5/F8: a WORLD frame spends the records; a second beginFrame (the
     assert.equal((read(f).match(/renderer\.beginFrame\([^;]*, WORLD_FRAME\);/g) || []).length, n, `${f}: ${n} world frame(s)`);
     assert.equal((read(f).match(/renderer\.beginFrame\(/g) || []).length, n, `${f}: no unmarked beginFrame`);
   }
-  for (const f of ['src/ui/overworldMap.js', 'src/ui/videoPlayer.js', 'src/scenes/menu.js']) assert.ok(!/WORLD_FRAME/.test(read(f)), `${f}: not a world frame`);
-  assert.match(read('src/ui/overworldMap.js'), /renderer\.markForeignPass\(\);\n\s+renderer\.resolveFrame\?\.\(\);/, 'the map resolves after its relief');
+  for (const f of ['src/ui/heldMap.js', 'src/ui/videoPlayer.js', 'src/scenes/menu.js']) assert.ok(!/WORLD_FRAME/.test(read(f)), `${f}: not a world frame`);
+  // MAP1 (2026-09-18): the relief map that resolved its own frame here is
+  // RETIRED; its successor is DOM and a 2D canvas, so it opens no frame,
+  // marks no seam and has nothing to resolve.
+  assert.doesNotMatch(read('src/ui/heldMap.js'), /beginFrame|markForeignPass|resolveFrame/, 'the held map draws nothing through the renderer');
 });
 
 test('AUDIT-EL F6: the dungeon\'s fog colour goes down with its ambient; the two hosts hand it through', () => {

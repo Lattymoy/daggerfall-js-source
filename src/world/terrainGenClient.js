@@ -78,7 +78,7 @@ export class TerrainGenClient {
           // `smoothRoadHeights` with SmoothRoads off. The switches come
           // from `_switches` - the same object the worker is running, and
           // the shape terrainGenWorker.js and _roadsFallback() both use.
-          if (m.net) this._roads = { roads: m.net.roads, tracks: m.net.tracks, ...(this._switches ?? {}) };
+          if (m.net) this._roads = { roads: m.net.roads, tracks: m.net.tracks, ...(this._switches ?? {}), source: this._roadsSource ?? 'generated' };   // TO1: whose network this is
           if (m.stats && this._roadsStats) this._roadsStats(m.stats);
           return;
         }
@@ -117,6 +117,7 @@ export class TerrainGenClient {
     this._roads = null;
     this._roadsStats = onStats;
     this._switches = switches;
+    this._roadsSource = 'generated';   // TO1: the port's own network, not Hazelnut's
     if (this._worker && this._settlements) this._worker.postMessage({ t: 'roads', settlements: this._settlements, switches });
     else if (!this._worker) this._roadsFallback();
   }
@@ -144,7 +145,20 @@ export class TerrainGenClient {
     // Mods pane's SmoothRoads switch reached the kernel only on the fallback
     // path and read `undefined` - i.e. ON - on the path the game takes.
     // `!== false` keeps the kernel's default-on gate for a caller that omits it.
-    this._roads = { roads: net.roads, tracks: net.tracks, rivers: net.rivers ?? null, streams: net.streams ?? null, water: !!net.water, smooth: net.smooth !== false };
+    // TO1: WHOSE NETWORK THIS IS, on the object itself. The port draws
+    // roads either way - Hazelnut's vendored arrays when Basic Roads is
+    // on, its OWN generated network when it is off or his files cannot
+    // be read (bible/03-World/Roads.md, the deliberate inversion) - and
+    // until now nothing the network was handed to could tell the two
+    // apart. Travel Options must: path FOLLOWING is his mod's feature,
+    // gated on his mod being enabled, and a follower that walked the
+    // port's generated tracks would be offering a feature the player
+    // never switched on. `source` is set at all THREE assembly sites and
+    // in the worker's own, which is the AUDIT 58 F3 / BR3 lesson: a
+    // field added to one of them is silently inert on the path the game
+    // actually takes.
+    this._roadsSource = net.source ?? 'basic-roads';
+    this._roads = { roads: net.roads, tracks: net.tracks, rivers: net.rivers ?? null, streams: net.streams ?? null, water: !!net.water, smooth: net.smooth !== false, source: this._roadsSource };
     this._roadsStats = onStats;
     if (this._worker) {
       const copy = { roads: net.roads.slice(), tracks: net.tracks.slice(), rivers: net.rivers ? net.rivers.slice() : null, streams: net.streams ? net.streams.slice() : null, water: !!net.water, smooth: net.smooth !== false };
@@ -156,7 +170,7 @@ export class TerrainGenClient {
   _roadsFallback() {
     if (this._roads || !this._settlements) return;
     const net = buildRoadsFromSettlements(this._settlements, this._woods);
-    this._roads = net ? { roads: net.roads, tracks: net.tracks, ...(this._switches ?? {}) } : null;
+    this._roads = net ? { roads: net.roads, tracks: net.tracks, ...(this._switches ?? {}), source: this._roadsSource ?? 'generated' } : null;   // TO1
     if (net && this._roadsStats) this._roadsStats(net.stats);
   }
 

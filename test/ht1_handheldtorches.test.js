@@ -797,7 +797,7 @@ test('HT1: a foe struck - hostile, the to-hit roll with Accuracy, ContinuousDama
 
 test('HT1: the rig runs the component beside the widget - one per rig, the pool bound to it, Update then LateUpdate with the frame\'s inputs (the machine, the sheathe, the hand, the cast, the third person, the climb, the swim, the lycanthrope, the motion, the look, the camera, the collider, the raw keys, the sheathe door), the draw seam after the arms and before the widget', () => {
   const rig = rd('src/combat/weaponRig.js');
-  assert.match(rig, /import \{ createHandheldTorches \} from '\.\.\/systems\/handheldTorches\.js';/);
+  assert.match(rig, /import \{ createHandheldTorches, isHeldLight \} from '\.\.\/systems\/handheldTorches\.js';/);   // TORCH-VIS: and the mod's own light test, so the ladder asks it in the mod's words
   assert.match(rig, /const handheld = createHandheldTorches\(\{ audio, say, torches \}\);/);
   assert.match(rig, /const handheldOn = \(\) => modSetting\('handheld-torches', 'Enabled'\);/);
   assert.match(rig, /pool\.setOnPickedUp\?\.\(\(item\) => handheld\.receivePickedUp\(item\)\);/, 'the pool hands a picked-up light to the component');
@@ -807,7 +807,7 @@ test('HT1: the rig runs the component beside the widget - one per rig, the pool 
   assert.match(rig, /look, swingHeld: _held, cursorActive: cursorActive\(\), camera: camThunk, collider: \(\) => collider\?\.\(\) \?\? null,\s*keyDown: \(code\) => !!keyDown\?\.\(code\), sheathWeapons: \(\) => \{ if \(!playerWeapon\.sheathed\) playerWeapon\.toggleSheath\(\); \},\s*\};\s*handheld\.update\(dt, tctx\);\s*handheld\.lateUpdate\(dt, tctx\);/);
   // MAC-I: every sprite in this seam takes the frame's TINT now (FPSWeapon.Tint, off the room's light);
   // the ORDER and the returns are what this pin holds, and neither moved.
-  assert.match(rig, /if \(fpArm\.active\(\)\) \{[^}]*fpArm\.draw\(c\);[^}]*return; \}\s*(?:\/\/[^\n]*\n\s*)*if \(handheldOn\(\) && c\) handheld\.draw\(renderer, c, fpTint\);\s*if \(widgetOn\(\) && c && widget\.draw\(renderer, c, fpTint\)\) return;/, 'the arms return first (no classic hand under the Morrowind arms), the torch hand under the weapon');
+  assert.match(rig, /if \(fpArm\.active\(\)\) \{[^}]*fpArm\.draw\(c\);[^}]*return; \}\s*(?:\/\/[^\n]*\n\s*)*if \(handheldOn\(\) && c\) handheld\.draw\(renderer, c, fpTint\);\s*if \(torchOnly\) return;[^\n]*\n\s*if \(widgetOn\(\) && c && widget\.draw\(renderer, c, fpTint\)\) return;/, 'the arms return first (no classic hand under the Morrowind arms), the torch hand under the weapon');
   assert.match(rig, /keyDown = null, torches = \(\) => null \}\)/, 'the two deps the hosts feed');
   assert.match(rig, /if \(!_torchesOn && _handheldWasOn\) handheld\.dispose\(\);/, 'AUDIT 66 F8: the switch off is a teardown - update() runs only while the mod is on, so the burning loop could not stop itself');
   assert.match(rig, /dispose\(\) \{ handheld\.dispose\(\); _handheldWasOn = false; \}/, 'AUDIT 66 F8: and the host has a door to call');
@@ -918,13 +918,61 @@ test('HT4: no vendored mod ships a key the port has already spent', () => {
       // the DECLARATION rather than guessing from the value. The
       // assertion below stays strict for everything that IS a key.
       if (!def.text || def.axis || typeof def.default !== 'string') continue;   // only the KeyCode fields
+      // TO1: ...and an EMPTY default is not a key either. Travel
+      // Options' `RoadsIntegration.FollowPathsCustomKeyBind` ships ""
+      // because it is only read when the CHOICE above it is set to
+      // "Custom Key Bind" (TravelOptionsMod.cs:224-232), and an unset
+      // custom bind falls back to F there. Nothing is bound, so nothing
+      // can collide; the gate below stays strict for every key that
+      // names one.
+      if (def.default === '') continue;
       const code = domCodeForKeyCode(def.default);
       assert.ok(code, `${vendor}/${key} ships "${def.default}", which is not a KeyCode the port can bind`);
       if (portSpent.has(def.default) || dfuBound.has(code)) offenders.push(`${vendor}/${key} = ${def.default} (${code})`);
     }
+    // AUDIT-TO1 I1: ...AND A MULTIPLE-CHOICE KEY THAT CHOOSES A KEY.
+    // Travel Options' RoadsIntegration.FollowPathsKey is a
+    // MultipleChoiceKey over ["None", "F", "G", "K", "O", "X", "Custom
+    // Key Bind"] whose default is an INDEX, so the TextKey walk above
+    // (`typeof def.default !== 'string'`) stepped straight over it - and
+    // it shipped on F, the key SOC5 spends on SocialInteract, for three
+    // days with this gate green. The setting DECLARES the kind
+    // (`keyChoice: true`, the `axis` precedent), because a walk that
+    // guessed from the value took Weapon Widget's Bob.Shape "U" for a
+    // key. The option at the default index is judged exactly as a
+    // TextKey default; "None" and "Custom Key Bind" name no key.
+    for (const [key, def] of Object.entries(mod.keys)) {
+      if (!def.keyChoice) continue;
+      assert.ok(Array.isArray(def.options) && typeof def.default === 'number', `${vendor}/${key} declares keyChoice and is not a choice list`);
+      const choice = def.options[def.default];
+      const code = domCodeForKeyCode(choice);
+      if (!code) continue;   // "None" / "Custom Key Bind"
+      if (portSpent.has(choice) || dfuBound.has(code)) offenders.push(`${vendor}/${key} = option ${def.default} "${choice}" (${code})`);
+    }
   }
   assert.deepEqual(offenders, [],
     'these ship on a key the port or DFU already answers - one press would do two things');
+
+  // AUDIT-TO1 I1 (b): ...AND NO TWO VENDORED MODS SHIP THE SAME KEY. The
+  // walk above judges a mod against DFU and the port; it never judged
+  // two mods against EACH OTHER, and the first pick for the follow key
+  // was X - Handheld Torches' throw. Every shipped key code across every
+  // vendor, once.
+  const shipped = new Map();   // code -> first owner
+  const twice = [];
+  for (const [vendor, mod] of Object.entries(MOD_SETTINGS)) {
+    for (const [key, def] of Object.entries(mod.keys)) {
+      let name = null;
+      if (def.text && !def.axis && typeof def.default === 'string' && def.default !== '') name = def.default;
+      else if (def.keyChoice) name = def.options[def.default];
+      const code = name ? domCodeForKeyCode(name) : null;
+      if (!code) continue;
+      const owner = `${vendor}/${key}`;
+      if (shipped.has(code)) twice.push(`${owner} and ${shipped.get(code)} both ship ${code}`);
+      else shipped.set(code, owner);
+    }
+  }
+  assert.deepEqual(twice, [], 'two vendored mods ship the same key - one press would do two things');
 
   // ...AND THE AXIS EXEMPTION IS NOT A HOLE. It is still a `text` key -
   // the pane shows it as one - so the skip above turns on the declared
@@ -973,3 +1021,69 @@ test('HT5: the torch hand moves as the weapon does - every motion module the two
   assert.ok(r.h._w.position[0] !== 0 || r.h._w.position[1] !== 0, 'walking with Bob on: the hand has moved off its rest');
 });
 
+
+// ── TORCH-VIS: A SHEATHED STANCE IS NOT A STOWED LIGHT ──────────────
+//
+// Mac, 2026-09-18: "If you only have the torch equipped and no weapon, it doesn't show you holding it in first
+// person (morrowind)." Pre-existing, and the cause was one clause too wide. The weapon rig's draw ladder opens on
+// `shown()`, which is the WEAPON's visibility - the file says so itself where the classic spellcasting hands were
+// hoisted above it, "NOT under shown() - the weapon is the thing shown() hides" - and one leg of it is
+// `playerWeapon.sheathed`. A player walking around with a torch and nothing drawn IS sheathed, so the ladder
+// returned before either lane could draw the light: the Morrowind arm never got its `fpArm.draw(c)`, and the
+// classic torch hand never got its screen quad. The one state a carried light exists for was the one state it
+// never drew in.
+//
+// The two tests below are the two halves of the fix: the LAW it rests on (the Morrowind rig's own, driven for
+// real) and the LADDER that now honours it.
+test('TORCH-VIS (the law): the Morrowind rig already says a SHEATHED stance keeps the carried light visible, and a READIED SPELL hides it - so `sheathed` was the one leg of shown() that must not take the torch down with the weapon', async () => {
+  const { animWeaponType, carriedLeftVisible } = await import('../src/combat/fpArm.js');
+  // MW-D51 is NpcAnimation::updateCarriedLeftVisible verbatim: visible unless the stance's flags say two-handed.
+  // A sheathed stance idles in None whatever is owned, and None is not two-handed - so the reference draws the
+  // torch for a weaponless player. Driven over every owned type, so this cannot pass on one lucky weapon.
+  for (const owned of [-1, 0, 1, 2, 3, 4, 5, 6]) {
+    assert.equal(carriedLeftVisible(animWeaponType(owned, true, false)), true,
+      `THE LAW: sheathed still carries the light (owning type ${owned})`);
+  }
+  // ...and the case that must keep hiding it, which is why the fix does not simply drop the gate
+  assert.equal(carriedLeftVisible(animWeaponType(1, false, true)), false, 'a readied spell hides the carried left - the reference\'s own case');
+  // the mod's half of it: a free hand is what lets a weaponless player carry a light at all (HT7)
+  const { isHeldLight } = await import('../src/systems/handheldTorches.js');
+  const { TEMPLATES } = await import('../src/systems/useItem.js');
+  assert.equal(isHeldLight({ templateIndex: TEMPLATES.Torch }), true);
+  assert.equal(isHeldLight({ templateIndex: TEMPLATES.Lantern }), true);
+  assert.equal(isHeldLight({ templateIndex: TEMPLATES.Torch + 1000 }), false, 'a sword is not a light');
+  assert.equal(isHeldLight(null), false, 'and an empty hand is not one either');
+  // ...and the ladder's test and the ARM's test are deliberately NOT the same question, which is why the arm gets
+  // a veto: the Morrowind held-light art is the TORCH alone, so a lit LANTERN is a light the entity has and the
+  // arm cannot paint. Opening the gate on the entity's answer alone would paint a sheathed idle holding nothing.
+  const { isLitTorch } = await import('../src/combat/weaponRig.js');
+  const lantern = { templateIndex: TEMPLATES.Lantern }, torch = { templateIndex: TEMPLATES.Torch };
+  assert.equal(isHeldLight(lantern), true, 'the ladder counts a lantern as a held light...');
+  assert.equal(isLitTorch(lantern), false, '...and the Morrowind arm does not - it has no lantern in hand');
+  assert.equal(isHeldLight(torch) && isLitTorch(torch), true, 'a torch is both');
+});
+
+test('TORCH-VIS (the ladder): a lit hand draws while merely sheathed, the weapon does NOT come back with it, and the other three hiding laws stand', () => {
+  const rig = rd('src/combat/weaponRig.js');
+  // the exception is computed from the OTHER legs of shown(), never from `sheathed` - so it can only ever widen
+  // the sheathed case, and a readied spell, a cast in flight and an equip countdown all still hide the torch
+  assert.match(rig, /const torchOnly = !shown\(\) && !spellArmed\(\) && !fpsSpellCasting\.isPlayingAnim\s*\n\s*&& \(entity\?\.equipCountdown \?\? 0\) <= 0 && isHeldLight\(entity\?\.lightSource\)\s*\n\s*&& \(!fpArm\.active\(\) \|\| fpArm\.torchShown\(\)\);/,
+    'the exception names every leg of shown() it does NOT relax, asks the mod\'s own light test, and lets the Morrowind arm veto a light it has no art for');
+  assert.match(rig, /if \(paralyzed \|\| \(!shown\(\) && !torchOnly\)\) return;/, 'the gate takes the exception, and paralysis still takes everything');
+  // and the weapon stays hidden: the return sits AFTER the torch hand and BEFORE the clone and the sprite
+  const draw = rig.slice(rig.indexOf('const torchOnly ='));
+  const torchAt = draw.indexOf('handheld.draw(renderer, c, fpTint)');
+  const stopAt = draw.indexOf('if (torchOnly) return;');
+  const cloneAt = draw.indexOf('widget.draw(renderer, c, fpTint)');
+  const spriteAt = draw.indexOf('drawFpsWeapon(');
+  assert.ok(torchAt > 0 && stopAt > 0 && cloneAt > 0 && spriteAt > 0, 'all four are in the ladder');
+  assert.ok(torchAt < stopAt, 'the lit hand draws first...');
+  assert.ok(stopAt < cloneAt && stopAt < spriteAt, '...and then the torch-only pass STOPS: no weapon clone, no weapon sprite, while sheathed');
+  // the Morrowind lane is served by the arm's own return above, which is why this needed no second torch draw
+  assert.ok(draw.indexOf('fpArm.draw(c); return; }') < torchAt, 'the arm still returns whole, above the classic hand');
+  assert.match(rd('src/combat/fpArm.js'), /torchShown: \(\) => torchVisible\(\),/, 'the veto is a real read on the arm, not a literal that satisfies a regex');
+  // THE FOUR HOSTS: the fix is in the rig, and every host builds its torch through that one rig
+  for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js', 'src/scenes/worldModes.js', 'src/scenes/dungeonContext.js']) {
+    assert.match(rd(host), /createWeaponRig\(\{/, `${host} builds its viewmodel through the one rig`);
+  }
+});

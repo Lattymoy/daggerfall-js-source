@@ -53,7 +53,7 @@ test('ROAD-B: the conversion is gated, unranged, uncapped, and disables the mobi
 });
 
 test('ROAD-B: the catch-up loop calls it once per Update, not once per minute', () => {
-  const fn = between(WORLD, 'function runEncounterTick(playerFeet, simMinutesEnd = null)', 'const _guardPool = ');   // RESTX2: the signature grew the rest's sim-minute
+  const fn = between(WORLD, 'function runEncounterTick(playerFeet, simMinutesEnd = null, isResting = false)', 'const _guardPool = ');   // RESTX2: the signature grew the rest's sim-minute; CAMP1-REST: and the flag that says the tick IS a rest
   // :484 - the latch is declared OUTSIDE the loop...
   const latch = fn.indexOf('let _updatedGuards = false;');
   const loop = fn.indexOf('for (let l = 0; l < span; l++) {');

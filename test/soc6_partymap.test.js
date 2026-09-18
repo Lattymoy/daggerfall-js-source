@@ -7,7 +7,7 @@
 // leader}]` - handed to whichever map the skin opens, read on that
 // map's own refresh rather than snapshot at open, because a party
 // changes while a map is up. The drawings are a green ring with a name
-// under it on the enhanced overworld (ui/overworldMap.js) and a green
+// under it on the enhanced map (ui/heldMap.js since MAP1; the relief map before it) and a green
 // dot on the classic region page (ui/travelMapWindow.js).
 //
 // WHAT IS WORTH PINNING, AND WHAT IS NOT. The relief and the region
@@ -23,7 +23,7 @@
 //
 // The harness is the one the map tests already use: node drives the
 // enhanced window through the stub document the door tests wrote
-// (test/overworldmap.test.js fakeDocument), and the classic window
+// (test/heldmap.test.js fakeDocument), and the classic window
 // through _setTravelMapArtForTests with a hand-built region
 // (test/travelvisibility.test.js).
 import { test } from 'node:test';
@@ -35,7 +35,8 @@ import {
   PARTY_DOT_RGB, PARTY_OFFLINE_DOT_RGB, PARTY_MARK_CSS, PARTY_OFFLINE_CSS, PARTY_LEGEND_TEXT,
 } from '../src/ui/partyMapMarks.js';
 import { PARTY_GREEN, PARTY_GREEN_CSS, SocialState } from '../src/net/social.js';
-import { OverworldMapWindow } from '../src/ui/overworldMap.js';
+import { HeldMapWindow } from '../src/ui/heldMap.js';
+import { toPaper, PEN, PARTY_LABEL_STACK } from '../src/ui/inkMap.js';
 import { createTravelMapWindow } from '../src/ui/travelMapDoor.js';
 import {
   TravelMapWindow, OFFSET_LOOKUP, REGION_W, REGION_H, _setTravelMapArtForTests, PARTY_POLL_S,
@@ -43,7 +44,6 @@ import {
 import { buildMapDict } from '../src/systems/mapDirectory.js';
 import { REGION_NAMES, LOCATION_TYPES, CLIMATES, getMapPixelID } from '../src/formats/mapsFile.js';
 import { MAP_WIDTH, MAP_HEIGHT } from '../src/formats/woodsFile.js';
-import { perspective, lookAt, mirrorProjectionX } from '../src/world/mat4.js';
 import { resetTravelMapState } from '../src/systems/travelMapState.js';
 import { restoreDiscovery } from '../src/systems/discovery.js';
 import { _resetForTests } from '../src/systems/uiPrefs.js';
@@ -51,7 +51,19 @@ import { _resetForTests } from '../src/systems/uiPrefs.js';
 const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 const skin = (v) => { _resetForTests(); globalThis.location = { search: `?skin=${v}` }; };
 
-// ── THE ENHANCED HARNESS (test/overworldmap.test.js's own) ───────
+// ── THE ENHANCED HARNESS (test/heldmap.test.js's own) ────────────
+//
+// MAP1 (2026-09-18): the enhanced map is the HELD PARCHMENT
+// (ui/heldMap.js + ui/inkMap.js); the 3D relief and its DOM labels are
+// RETIRED. The party is INK now - a ring and a name on the sheet, drawn
+// by paintInk through the same view transform as every other mark - so
+// the pins below drive the window's party state and a recording 2D
+// context in place of `_rings` and the label nodes. Every LAW held
+// here is the one SOC6 wrote: the dep polled and never snapshot, the
+// marks at the pixel's centre, offline grey and still drawn, the label
+// riding the projection, the hover sentence, the marks never dirtying
+// the map's own, the legend with the first member and gone with the
+// last, and AUDIT SOC's stacking of a shared pixel.
 
 /** Just enough document for the chrome: elements that append, listen
  *  and classList without rendering anything. */
@@ -95,24 +107,45 @@ const winDeps = (extra = {}) => ({
   ...extra,
 });
 
-const mkWin = (extra = {}) => new OverworldMapWindow(winDeps(extra));
+const mkWin = (extra = {}) => new HeldMapWindow(winDeps(extra));
 
-/** The window's own camera, composed exactly as draw() composes it -
- *  so a label placed through _project is checked against the matrices
- *  the rings are actually drawn with, not against a second reading. */
-const aimCamera = (win, tx, tz, dist) => {
-  win._cam.tx = tx; win._cam.tz = tz; win._cam.dist = dist;
-  win._vw = 800; win._vh = 600;
-  win._proj = mirrorProjectionX(perspective(50 * Math.PI / 180, 800 / 600, 0.5, 6000));
-  win._view = lookAt(win._eye(), [tx, win._groundY(), tz], [0, 1, 0]);
+/** A recording 2D context: every call with the styles in force. */
+function recordingCtx() {
+  const calls = [];
+  const state = {};
+  return new Proxy({}, {
+    get: (_, k) => {
+      if (k === 'calls') return calls;
+      if (k === 'measureText') return (t) => ({ width: t.length * 6 });
+      if (k in state) return state[k];
+      return (...args) => { calls.push({ fn: k, args, strokeStyle: state.strokeStyle, fillStyle: state.fillStyle }); };
+    },
+    set: (_, k, v) => { state[k] = v; return true; },
+  });
+}
+/** The window's own paint, on a recording context: what the sheet
+ *  would show for this window's party, view and selection. */
+const paintOf = (win) => {
+  const ctx = recordingCtx();
+  win._chrome.ink.getContext = () => ctx;
+  win._dirty = true;
+  win._paint();
+  delete win._chrome.ink.getContext;
+  return ctx.calls;
 };
+/** The party's rings and names out of a paint: `arc` calls in the party
+ *  colours, `fillText` calls in them. */
+const partyInk = (calls) => ({
+  rings: calls.filter((c) => c.fn === 'arc' && (c.strokeStyle === PARTY_MARK_CSS || c.strokeStyle === PARTY_OFFLINE_CSS)),
+  names: calls.filter((c) => c.fn === 'fillText' && (c.fillStyle === PARTY_MARK_CSS || c.fillStyle === PARTY_OFFLINE_CSS)),
+});
+/** Lay the sheet out (the paper's size comes from the first layout, which
+ *  the first tick runs) and aim the view by hand. */
+const aimView = (win, ox, oy, scale) => { win._layout(); win._view = { ox, oy, scale }; win._goal = { ...win._view }; };
 
 const member = (over = {}) => ({
   acct: 'a1', name: 'Nym', px: 3, py: 7, in: 0, loc: 'Daggerfall', online: true, leader: false, ...over,
 });
-
-const labels = (win) => win._chrome.party.children;
-const labelText = (lab) => lab.children.map((c) => c.textContent).join(' | ');
 
 // ── THE SEAM ─────────────────────────────────────────────────────
 
@@ -122,8 +155,9 @@ test('SOC6: the party dep is a FUNCTION the map keeps asking, and its absence dr
     // ABSENT IS ORDINARY: a solo player, an offline game and every host
     // that never heard of the hub pass no `party` at all.
     const solo = mkWin();
+    solo._layout();
     assert.deepEqual(solo._party, [], 'no dep, no marks');
-    assert.equal(solo._rings().length, 1, 'and the only ring is the player\'s own');
+    assert.equal(partyInk(paintOf(solo)).rings.length, 0, 'and no ring on the sheet but the player\'s own mark');
     solo.dispose();
 
     let reads = 0;
@@ -131,8 +165,6 @@ test('SOC6: the party dep is a FUNCTION the map keeps asking, and its absence dr
     const win = mkWin({ party: () => { reads++; return roster; } });
     assert.equal(reads, 1, 'the marks stand WITH the window - not a poll later');
     assert.equal(win._party.length, 1);
-    // ...and the window keeps asking, because the party changes while
-    // the map is open. A snapshot at open would freeze it here.
     win.tick(0.3);
     assert.equal(reads, 2, 'the dep is re-read on the window\'s own poll');
     roster = [member(), member({ acct: 'a2', name: 'Fen', px: 8, py: 2 })];
@@ -195,85 +227,66 @@ test('SOC6: the marks drop what cannot be drawn and never clamp a member into th
   }
 });
 
-// ── THE ENHANCED MAP ─────────────────────────────────────────────
+// ── THE HELD MAP ─────────────────────────────────────────────────
 
-test('SOC6: the overworld rings a member in the player\'s own pass, at the pixel\'s CENTRE (mutants: ring-raw-pixel, ring-wrong-z-sign, ring-skips-party, ring-indistinct-from-player)', () => {
+test('SOC6: the held map rings a member at the pixel\'s CENTRE, through the sheet\'s own view transform, told from the player\'s mark by colour (mutants: ring-raw-pixel, ring-skips-party, ring-indistinct-from-player)', () => {
   skin('enhanced');
   withDocument(() => {
     const win = mkWin({ party: () => [member({ px: 3, py: 7 }), member({ acct: 'a2', name: 'Fen', px: 8, py: 2 })] });
-    const rings = win._rings();
-    assert.equal(rings.length, 3, 'the player, and one per member - the SAME pass, so the mark rides pan/zoom/flight');
-    const [me, first, second] = rings;
-    // the pixel's centre and the negated z: the player ring's own
-    // reading (x + 0.5, -(y + 0.5)), which is what puts a member
-    // standing where the player stands concentric with them
-    assert.equal(first.center[0], 3.5);
-    assert.equal(first.center[2], -7.5);
-    assert.equal(second.center[0], 8.5);
-    assert.equal(second.center[2], -2.5);
-    assert.equal(first.center[1], win._heightAt(3.5, -7.5) + 0.3, 'and on the ground it stands on');
-    // the green is the ONE green the slice draws a party in
-    assert.deepEqual(first.color.slice(0, 3), [...PARTY_GREEN].slice(0, 3));
-    assert.notDeepEqual(first.color, me.color, 'told apart from the player\'s white ring by colour');
-    assert.ok(first.size < me.size, '...and by size, so the two never read as one mark');
+    // the pixel's centre: what puts a member standing where the player
+    // stands concentric with them
+    assert.deepEqual(win._party.map((m) => [m.x, m.y]), [[3.5, 7.5], [8.5, 2.5]]);
+    aimView(win, 0, 0, 20);
+    const { rings } = partyInk(paintOf(win));
+    assert.equal(rings.length, 2, 'one ring per member');
+    assert.deepEqual(rings.map((r) => r.args.slice(0, 2)), [toPaper(win._view, 3.5, 7.5), toPaper(win._view, 8.5, 2.5)],
+      'placed through toPaper - the SAME transform every mark on the sheet rides, so a pan or a zoom moves them for free');
+    assert.equal(rings[0].strokeStyle, PARTY_MARK_CSS, 'the ONE green the slice draws a party in');
+    assert.notEqual(rings[0].strokeStyle, PEN.player, 'told apart from the player\'s own mark by colour');
+    win.dispose();
   });
 });
 
-test('SOC6: offline is grey and still drawn, in the ring and in the label (mutants: offline-hidden, offline-green, offline-label-plain)', () => {
+test('SOC6: offline is grey and still drawn, in the ring, the name and the hover words (mutants: offline-hidden, offline-green, offline-label-plain)', () => {
   skin('enhanced');
   withDocument(() => {
     const win = mkWin({ party: () => [member({ online: false })] });
     assert.equal(win._party.length, 1, 'a member who logged out is still WHERE they logged out');
-    const ring = win._rings()[1];
-    assert.notDeepEqual(ring.color.slice(0, 3), [...PARTY_GREEN].slice(0, 3), 'the life is out of the green');
-    assert.equal(labels(win).length, 1);
-    assert.equal(labels(win)[0].style.color, PARTY_OFFLINE_CSS);
+    aimView(win, 0, 0, 20);
+    const { rings, names } = partyInk(paintOf(win));
+    assert.equal(rings[0].strokeStyle, PARTY_OFFLINE_CSS, 'the life is out of the green');
+    assert.equal(names[0].fillStyle, PARTY_OFFLINE_CSS);
     assert.match(partyHoverText(readPartyMarks(() => [member({ online: false })])[0]), /- offline$/,
       'and the hover line says so in words, not only in a colour');
     win.dispose();
   });
 });
 
-test('SOC6: the label names the member and rides _project through a pan (mutants: label-fixed-position, label-drops-name, label-ignores-projection, label-clamped-to-edge)', () => {
+test('SOC6: the name rides the ring through a pan and a zoom, and neither is drawn while the mark is off the sheet (mutants: label-fixed-position, label-drops-name, label-ignores-view)', () => {
   skin('enhanced');
   withDocument(() => {
     const win = mkWin({ party: () => [member({ px: 3, py: 7, loc: 'Daggerfall' })] });
-    win._phase = 'map';
-    aimCamera(win, 5.5, -5.5, 40);
-    win._positionPartyLabels();
-    const lab = labels(win)[0];
-    assert.match(labelText(lab), /Nym/, 'the name is the label');
-    assert.match(labelText(lab), /Daggerfall/, 'and the place it names is under it');
-    const at = () => [lab.style.left, lab.style.top];
-    const projected = () => {
-      const m = win._party[0];
-      const p = win._project(m.x, m.y, m.z);
-      return [`${Math.round(p[0])}px`, `${Math.round(p[1] + 17)}px`];
-    };
-    assert.deepEqual(at(), projected(), 'placed through the SAME projection the ring is drawn with');
-    const before = at();
-    // pan and zoom: the label must follow, because it is projected and
-    // not pinned to a screen corner
-    aimCamera(win, 2.0, -2.0, 120);
-    win._positionPartyLabels();
-    assert.notDeepEqual(at(), before, 'a pan moves the mark');
-    assert.deepEqual(at(), projected(), '...to where the projection puts it');
-    assert.equal(lab.style.display, 'block');
-    // no camera yet (the veil's first frames, before draw has run):
-    // hidden, never clamped to the border where it would name a place
-    // it is not
-    win._proj = null;
-    win._positionPartyLabels();
-    assert.equal(lab.style.display, 'none');
-    // and the whole layer is down while the window is not the map
-    win._phase = 'rise';
-    win._positionPartyLabels();
-    assert.equal(win._chrome.party.style.display, 'none');
+    aimView(win, 0, 0, 20);
+    const at = () => { const { rings, names } = partyInk(paintOf(win)); return { ring: rings[0]?.args.slice(0, 2), name: names[0] }; };
+    const first = at();
+    assert.equal(first.name.args[0], 'Nym', 'the name is the label');
+    assert.deepEqual(first.ring, toPaper(win._view, 3.5, 7.5));
+    assert.equal(first.name.args[1], first.ring[0], 'centred under its ring');
+    assert.equal(first.name.args[2], first.ring[1] + 9, 'nine px below it');
+    aimView(win, 1, 2, 40);
+    const second = at();
+    assert.notDeepEqual(second.ring, first.ring, 'a pan and a zoom move the mark');
+    assert.deepEqual(second.ring, toPaper(win._view, 3.5, 7.5), '...to where the view puts it');
+    // off the sheet: neither the ring nor the name is inked
+    aimView(win, 8, 8, 40);
+    const gone = at();
+    assert.equal(gone.ring, undefined);
+    assert.equal(gone.name, undefined);
     win.dispose();
   });
 });
 
-test('SOC6: regardless of their location - a dungeon and a building mark the PLACE\'s pixel and the label says which (mutants: indoor-hidden, in-word-dropped, in-word-swapped)', () => {
+test('SOC6: regardless of their location - a dungeon and a building mark the PLACE\'s pixel and the name says which (mutants: indoor-hidden, in-word-dropped, in-word-swapped)', () => {
   skin('enhanced');
   withDocument(() => {
     const roster = [
@@ -285,7 +298,7 @@ test('SOC6: regardless of their location - a dungeon and a building mark the PLA
     assert.equal(win._party.length, 3, 'nobody is hidden for being indoors - that was the whole sentence');
     for (const m of win._party) {
       assert.equal(m.x, 3.5, 'all three mark the same place pixel - the pose carries the PLACE\'s own');
-      assert.equal(m.z, -7.5);
+      assert.equal(m.y, 7.5);
     }
     assert.equal(partyPlaceWords(win._party[0]), 'dungeon');
     assert.equal(partyPlaceWords(win._party[1]), 'inside');
@@ -293,7 +306,8 @@ test('SOC6: regardless of their location - a dungeon and a building mark the PLA
     assert.equal(partyLabelText(win._party[0]), 'Del (dungeon)');
     assert.equal(partyLabelText(win._party[1]), 'Bry (inside)');
     assert.equal(partyLabelText(win._party[2]), 'Oth');
-    assert.match(labelText(labels(win)[0]), /Del \(dungeon\)/, 'and it is on the map, not only in a helper');
+    aimView(win, 0, 0, 20);
+    assert.deepEqual(partyInk(paintOf(win)).names.map((n) => n.args[0]), ['Del (dungeon)', 'Bry (inside)', 'Oth'], 'and it is on the sheet, not only in a helper');
     win.dispose();
   });
 });
@@ -305,47 +319,47 @@ test('SOC6: the hover line reads "Name - place (dungeon)" and beats the place un
     'Nym - The Odd Blades (inside)');
   assert.equal(partyHoverText(readPartyMarks(() => [member({ in: 0, loc: 'Daggerfall' })])[0]),
     'Nym - Daggerfall');
-  // between locations the pose carries no place name - the wilderness
-  // is named rather than left as a dangling dash
   assert.equal(partyHoverText(readPartyMarks(() => [member({ loc: '' })])[0]), 'Nym - the wilderness');
 
   skin('enhanced');
   withDocument(() => {
-    const win = mkWin({ party: () => [member({ px: 3, py: 7, in: 1, loc: 'Privateers Hold' })] });
-    win._phase = 'map';
-    aimCamera(win, 3.5, -7.5, 40);
-    const p = win._project(win._party[0].x, win._party[0].y, win._party[0].z);
+    const summary = { id: getMapPixelID(3, 7), mapID: 1, regionIndex: 17, mapIndex: 0, locationType: LOCATION_TYPES.TownCity, discovered: true };
+    const win = mkWin({
+      party: () => [member({ px: 3, py: 7, in: 1, loc: 'Privateers Hold' })],
+      mapDict: new Map([[summary.id, summary]]),
+      maps: { regionCount: 1, getRegion: () => ({ mapNames: ['Daggerfall'] }), getPoliticIndex: () => 128 },
+    });
+    aimView(win, 0, 0, 20);
+    const p = toPaper(win._view, 3.5, 7.5);
     // a marker AND a place under the same cursor: the player pointed at
     // the green ring, and "who" is the answer they asked for
-    win._markers = [{ x: 3.5, y: win._party[0].y, z: -7.5, colorIndex: 0, summary: { regionIndex: 17, name: 'Daggerfall' } }];
+    assert.equal(win._markerAt(p[0], p[1])?.name, 'Daggerfall', 'the town IS under the cursor');
     win._hoverLabel(p[0], p[1]);
     assert.equal(win._chrome.label.textContent, 'Nym - Privateers Hold (dungeon)');
-    assert.equal(win._chrome.root.style.cursor, 'pointer');
+    assert.equal(win._chrome.stage.style.cursor, 'pointer');
     win.dispose();
   });
 });
 
-test('SOC6: a party that moves repaints its marks and NEVER the map\'s own marker buffer (mutants: party-dirties-markers, party-rebuilds-relief, party-repaints-unchanged)', () => {
+test('SOC6: a party that moves repaints its marks and NEVER the map\'s own (mutants: party-dirties-markers, party-rebuilds-chains, party-repaints-unchanged)', () => {
   skin('enhanced');
   withDocument(() => {
     let roster = [member({ px: 3, py: 7 })];
     const win = mkWin({ party: () => roster });
-    // the location markers are a GL buffer built from the WHOLE mapDict;
-    // a friend walking one pixel east must not cost that rebuild
-    win._markersDirty = false;
-    const markerBuffer = win._markers;
-    let terrain = 0;
-    win._ensureTerrain = () => { terrain++; };
+    const model = win._ensureModel();
+    win._marksDirty = false;
+    const marks = model.marks, coast = model.coast;
 
+    win._dirty = false;
     assert.equal(win._refreshParty(), false, 'an unchanged party repaints nothing at all');
-    const labBefore = labels(win)[0];
+    assert.equal(win._dirty, false);
     roster = [member({ px: 4, py: 7 })];
     assert.equal(win._refreshParty(), true, 'a member who moved does');
     assert.equal(win._party[0].x, 4.5, 'to the new pixel');
-    assert.notEqual(labels(win)[0], labBefore, 'the label was re-minted');
-    assert.equal(win._markersDirty, false, 'and the bay\'s dots were NOT dirtied');
-    assert.equal(win._markers, markerBuffer, '...nor rebuilt');
-    assert.equal(terrain, 0, '...nor the relief');
+    assert.equal(win._dirty, true, 'the sheet is repainted');
+    assert.equal(win._marksDirty, false, 'and the bay\'s marks were NOT dirtied');
+    assert.equal(win._ensureModel().marks, marks, '...nor rebuilt');
+    assert.equal(win._ensureModel().coast, coast, '...nor the chains');
     win.dispose();
   });
 });
@@ -568,7 +582,7 @@ test('SOC6: the door carries the party to whichever skin the host wears (mutants
   skin('enhanced');
   withDocument(() => {
     const win = createTravelMapWindow(winDeps({ party: () => [member()] }));
-    assert.ok(win instanceof OverworldMapWindow);
+    assert.ok(win instanceof HeldMapWindow);
     assert.equal(win._party.length, 1, 'the enhanced skin - which is the one online forces (OL1)');
     win.dispose();
   });
@@ -576,13 +590,13 @@ test('SOC6: the door carries the party to whichever skin the host wears (mutants
   // either door's doc finds it
   assert.match(read('src/ui/travelMapDoor.js'), /party: \(\) => \[\{acct, name, px, py, in, loc, online, leader\}\]/);
   assert.match(read('src/ui/travelMapWindow.js'), /SOC6, an optional/);
-  assert.match(read('src/ui/overworldMap.js'), /SOC6: and an optional `party:/);
+  assert.match(read('src/ui/heldMap.js'), /SOC6: and an optional `party:/);
 });
 
 
 // ── THE AUDIT'S OWN PINS ─────────────────────────────────────────
 
-test('AUDIT SOC D2: members on ONE pixel stack rather than stand on top of each other - three distinct label tops in seat order, and a hover line that names all three (mutants: the stagger dropped, so three names draw as one smear; the hover naming the nearest only; the stagger applied to members who are NOT on the same pixel)', () => {
+test('AUDIT SOC D2: members on ONE pixel stack rather than stand on top of each other - three distinct name lines in seat order, and a hover line that names all three (mutants: the stagger dropped, so three names draw as one smear; the hover naming the nearest only; the stagger applied to members who are NOT on the same pixel)', () => {
   skin('enhanced');
   withDocument(() => {
     const together = [
@@ -592,107 +606,62 @@ test('AUDIT SOC D2: members on ONE pixel stack rather than stand on top of each 
       member({ acct: 'a4', name: 'Oth', px: 8, py: 2, loc: 'Wayrest' }),
     ];
     const win = mkWin({ party: () => together });
-    win._phase = 'map';
-    aimCamera(win, 3.5, -7.5, 40);
+    aimView(win, 0, 0, 20);
     // the stack index is the hub's seat order among the members sharing that pixel, and nobody else's
     assert.deepEqual(win._party.map((m) => m.stack), [0, 1, 2, 0], 'the fourth is alone on its own pixel');
-    win._positionPartyLabels();
-    const tops = win._party.slice(0, 3).map((m) => win._partyLabels.get(m.acct).style.top);
-    assert.equal(new Set(tops).size, 3, 'three DISTINCT tops - this is the whole finding');
-    const p = win._project(win._party[0].x, win._party[0].y, win._party[0].z);
-    assert.deepEqual(tops, [0, 1, 2].map((i) => `${Math.round(p[1] + 17 + i * 30)}px`), 'each 30 further down than the last');
+    const { names } = partyInk(paintOf(win));
+    const tops = names.slice(0, 3).map((n) => n.args[2]);
+    assert.equal(new Set(tops).size, 3, 'three DISTINCT lines - this is the whole finding');
+    const p = toPaper(win._view, 3.5, 7.5);
+    assert.deepEqual(tops, [0, 1, 2].map((i) => p[1] + 9 + i * PARTY_LABEL_STACK), 'each one label further down than the last');
     // ...and the one standing elsewhere is not pushed down by them
-    const q = win._project(win._party[3].x, win._party[3].y, win._party[3].z);
-    assert.equal(win._partyLabels.get('a4').style.top, `${Math.round(q[1] + 17)}px`);
-    // THE HOVER NAMES EVERY MEMBER ON THAT PIXEL. One ring can stand for a whole party in one town, and a line that
-    // named one of three hid two.
-    win._markers = [];
+    const q = toPaper(win._view, 8.5, 2.5);
+    assert.equal(names[3].args[2], q[1] + 9);
+    // THE HOVER NAMES EVERY MEMBER ON THAT PIXEL.
     win._hoverLabel(p[0], p[1]);
     const line = win._chrome.label.textContent;
     for (const who of ['Nym', 'Del', 'Bry']) assert.match(line, new RegExp(who), `${who} is named`);
     assert.equal(line.split(' / ').length, 3, 'joined with " / ", one clause each');
     assert.match(line, /Del - Privateers Hold \(dungeon\)/, 'and each clause is that member\'s own sentence');
     assert.doesNotMatch(line, /Oth/, 'the member on another pixel is not in it');
-    // the member alone on a pixel still reads as one sentence
     win._hoverLabel(q[0], q[1]);
     assert.equal(win._chrome.label.textContent, 'Oth - Wayrest');
     win.dispose();
   });
 });
 
-test('AUDIT SOC C16/C17: no title on a pointer-transparent layer, and a label near the edge is CLAMPED into the window rather than cut by the root\'s overflow (mutants: the dead title put back; the clamp dropped; a clamp invented for a headless run where the label has no measured width)', () => {
-  // C16: `.ovparty` is pointer-events: none, so the browser never resolves a hover on a label and the tooltip could
-  // not appear on any device. The sentence it carried is the window's hover line, which _partyAt already draws.
-  const src = read('src/ui/overworldMap.js');
-  assert.doesNotMatch(src, /lab\.title = /, 'a title nothing can ever show is a comment pretending to be code');
-  assert.match(read('src/ui/enhancedStyle.js'), /\.ovparty \{ position: absolute; inset: 0; display: none; pointer-events: none; \}/,
-    'and the layer that makes it dead is still pointer-transparent, which is the point of it');
+test('AUDIT SOC C16/C17 (MAP1): the party is INK - no label node, no title, no clamp; the name is placed by the same transform as its ring (mutants: a DOM label layer put back; the name placed by a second transform)', () => {
+  // C16/C17 were about DOM labels over a GL relief - a pointer-transparent layer whose `title` could never show, and a
+  // label cut by the root's overflow. MAP1 draws the party ON THE SHEET, so there is no label node to carry a title and
+  // no window edge to be cut by: the canvas IS the paper, and what is off the paper is simply not drawn.
+  const src = read('src/ui/heldMap.js');
+  assert.doesNotMatch(src, /lab\.title = |_partyLabels|_positionPartyLabels/, 'no label nodes at all');
   assert.match(src, /partyHoverText/, 'the sentence lives on in the hover line');
-
-  skin('enhanced');
-  withDocument(() => {
-    const win = mkWin({ party: () => [member({ px: 3, py: 7 })] });
-    win._phase = 'map';
-    const m = win._party[0];
-    const lab = labels(win)[0];
-    const at = () => win._project(m.x, m.y, m.z);
-    /** Pan until the member projects where `want` says - the label's place is the projection's, so an edge case has
-     *  to be reached by moving the CAMERA rather than by inventing a screen coordinate. */
-    const aimUntil = (want) => {
-      for (let tx = -20; tx <= 30; tx += 0.25) {
-        aimCamera(win, tx, -7.5, 40);
-        const p = at();
-        if (p && want(p[0])) return p;
-      }
-      throw new Error('no camera put the member there');
-    };
-    // headless: the label has no measured width, so it is left exactly where the projection put it
-    const near = aimUntil((x) => x >= -40 && x < 60);
-    win._positionPartyLabels();
-    assert.equal(lab.style.left, `${Math.round(near[0])}px`, 'no measured width, no invented clamp');
-    // ...and with one, the mark is nudged in by half a label rather than being cut by .ovroot { overflow: hidden }
-    lab.offsetWidth = 160;
-    win._positionPartyLabels();
-    assert.equal(lab.style.left, '88px', 'half the label plus the window\'s own 8px margin');
-    // the far edge too
-    const far = aimUntil((x) => x > win._vw - 60 && x < win._vw + 40);
-    win._positionPartyLabels();
-    assert.equal(lab.style.left, `${win._vw - 8 - 80}px`, 'and never past the far edge');
-    assert.ok(far[0] > win._vw - 88, 'the raw projection really was inside the margin');
-    // a label with room on both sides is not moved at all
-    const mid = aimUntil((x) => x > 200 && x < 600);
-    lab.offsetWidth = 40;
-    win._positionPartyLabels();
-    assert.equal(lab.style.left, `${Math.round(mid[0])}px`, 'the clamp is a floor and a ceiling, not a placement');
-    win.dispose();
-  });
+  const ink = read('src/ui/inkMap.js');
+  assert.match(ink, /const \[x, y\] = toPaper\(view, m\.x, m\.y\);\s*\n\s*ctx\.strokeStyle = m\.color;[\s\S]{0,400}ctx\.fillText\(m\.name, x, y \+ 9 \+ \(m\.stack \?\? 0\) \* PARTY_LABEL_STACK\);/,
+    'ring and name from ONE toPaper read');
+  assert.doesNotMatch(read('src/ui/enhancedStyle.js'), /\.ovparty|\.hmparty/, 'and no layer in the stylesheet either');
 });
 
-test('AUDIT SOC C10/D5: the legend is the last CHIP in the filter row, so it wraps with the chips instead of landing on them under 860px (mutants: the legend floated at a guessed height again; the legend appended to the root, where the chips wrap under it)', () => {
+test('AUDIT SOC C10/D5 (MAP1): the legend is a flex child of the FOOT row, beside the hint and the band, so it wraps with them instead of landing on them (mutants: the legend floated at a guessed height again; the legend appended to the root)', () => {
   const style = read('src/ui/enhancedStyle.js');
-  // Measured in Chromium at 430x860 BEFORE: the chips wrapped to two 44px rows spanning y 752..848 and the legend
-  // sat at y 762..790 - inside them. At 1280x800 the chips were one row and the legend cleared it, which is why a
-  // fixed `bottom: 70px` looked right and was not.
-  assert.match(style, /\.ovlegend \{\s*position: static; flex: none; display: none;/, 'a chip, not a floating box');
-  assert.doesNotMatch(style, /\.ovlegend \{[^}]*bottom: 70px/, 'no guess about how tall the row happens to be');
-  assert.match(style, /\.ovfilters \{\s*position: absolute; left: 18px; bottom: 18px; display: flex; gap: 8px;/, 'the row it lives in is unchanged');
-  assert.match(style, /@media \(max-width: 860px\) \{[\s\S]*?\.ovfilters \{ left: 12px; bottom: 12px; flex-wrap: wrap;/, '...and still the row that wraps');
-  assert.match(read('src/ui/overworldMap.js'), /const legend = el\('div', 'ovlegend'\);\s*\n\s*chips\.append\(legend\);/, 'appended INTO the chips');
+  assert.match(style, /\.hmlegend \{\s*position: static; flex: none; display: none;/, 'a chip, not a floating box');
+  assert.doesNotMatch(style, /\.hmlegend \{[^}]*bottom: 70px/, 'no guess about how tall the row happens to be');
+  assert.match(style, /\.hmfoot \{\s*position: absolute; left: 18px; bottom: 18px; display: flex; gap: 12px;/, 'the row it lives in');
+  assert.match(style, /@media \(max-width: 860px\) \{[\s\S]*?\.hmfoot \{ left: 12px; bottom: 12px; flex-wrap: wrap;/, '...and still the row that wraps');
+  assert.match(read('src/ui/heldMap.js'), /const legend = el\('div', 'hmlegend'\);[\s\S]{0,400}?foot\.append\(hint, band, legend, ports\);/, 'appended INTO the foot (MAP2 put the ports button beside it)');
   skin('enhanced');
   withDocument(() => {
     const win = mkWin({ party: () => [member()] });
-    const chips = win._chrome.root.children.find((c) => c.children.includes(win._chrome.legend));
-    assert.ok(chips, 'the legend is a child of the chips row, not of the root');
+    const foot = win._chrome.root.children.find((c) => c.children.includes(win._chrome.legend));
+    assert.ok(foot, 'the legend is a child of the foot row, not of the root');
     assert.equal(win._chrome.root.children.includes(win._chrome.legend), false);
-    // and it still opens with the first member and closes with the last
     assert.equal(win._chrome.legend.style.display, 'flex');
     win.dispose();
   });
 });
 
 test('AUDIT SOC D7/D9: the offline grey is DERIVED from the dot bytes rather than typed twice, and the hover radius says 18 and why (mutants: the CSS grey typed back by hand, so the label and the classic dot drift again; the comment claiming the markers\' own 16)', () => {
-  // D7: one grey. The two used to disagree by one green channel - #8c948c in the bytes, #8c928c in the CSS - for
-  // the very same offline seat on the two maps.
   const hex = (rgb) => '#' + rgb.map((v) => v.toString(16).padStart(2, '0')).join('');
   assert.equal(PARTY_OFFLINE_CSS, hex(PARTY_OFFLINE_DOT_RGB), 'the DOM grey IS the buffer grey');
   assert.equal(PARTY_OFFLINE_CSS, '#8c948c');
@@ -701,8 +670,8 @@ test('AUDIT SOC D7/D9: the offline grey is DERIVED from the dot bytes rather tha
   assert.match(marks, /export const PARTY_OFFLINE_CSS = hex\(PARTY_OFFLINE_DOT_RGB\);/, 'derived, not spelled');
   const bare = marks.replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/\/\/[^\n]*/g, ' ');
   assert.doesNotMatch(bare, /#8c9/, 'the literal is not in the module\'s code at all - only the derivation is');
-  // D9: the radius, and the reason for it
-  const src = read('src/ui/overworldMap.js');
+  // D9: the radius, and the reason for it - on the held map now
+  const src = read('src/ui/heldMap.js');
   assert.match(src, /_partyAt\(sx, sy\) \{\s*\n\s*let best = null, bestD = 18 \* 18;/);
   assert.match(src, /radius of 18[\s\S]{0,400}WIDER than the location markers/, 'the comment says the number it uses and why it is not the markers\' own');
   assert.match(src, /_markerAt\(sx, sy\) \{\s*\n\s*let best = null, bestD = 16 \* 16;/, 'and the markers still pick at 16');

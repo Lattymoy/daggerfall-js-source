@@ -145,6 +145,16 @@ export const CREDITS = Object.freeze({
       link: 'https://github.com/ajrb/dfunity-mods',
     }),
     Object.freeze({
+      title: 'Travel Options',
+      version: '1.11',
+      author: 'Hazelnut',
+      what: 'The journey you walk: the travel map and its popup choose between Daggerfall\u2019s own fast travel and a TIME ACCELERATED trip across the real world, with a control panel to steer it, encounters and locations to pause it, and Basic Roads\u2019 own roads and tracks to follow with a key. The travel map gains his ports filter, his five-texel page with the network drawn on it, a location-information key and a marked location. The autopilot class is Jedidia\u2019s, from Tedious Travel.',
+      terms: 'Code MIT (Copyright (C) 2020 Hazelnut; PlayerAutoPilot Copyright (C) 2019 Jedidia). The three UI textures are re-encodes of the mod\u2019s own art, vendored with the author\u2019s permission (2026-09-17); see vendor/travel-options/README.md.',
+      contact: 'forums.dfworkshop.net',
+      vendor: Object.freeze(['travel-options']),
+      link: 'https://github.com/ajrb/dfunity-mods',
+    }),
+    Object.freeze({
       title: 'Dynamic Skies',
       version: '2.3.4',
       author: 'BadLuckBurt and carademono',

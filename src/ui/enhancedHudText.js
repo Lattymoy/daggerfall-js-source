@@ -69,7 +69,7 @@
 // on the canvas in the 1996 bitmap face under this skin, and that is a
 // slice of its own rather than an oversight: ui/deathScreen.js:71-72,
 // ui/restWindow.js:836, ui/saveWindow.js:615+ (shadowText, eight
-// sites), ui/travelPopUp.js:436, ui/questJournal.js:641-642,
+// sites), ui/travelPopUp.js:678, ui/questJournal.js:641-642,
 // ui/messageBox.js:431/:434 and ui/actionText.js:41/:152 (every
 // ActionTextBox). Each of those is a native window whose every drawn
 // element cites a DFU rect (THE NATIVE-WINDOW RULE), so the face cannot

@@ -73,3 +73,92 @@ comment beside the wrong rule said "as every reference use pairs it",
 and the pin quoted the comment's code back to itself. A pin that
 restates the implementation is a pin on the typing, not the law; the
 law's pin is the reference's line, run over the inputs.
+
+## TORCH-VIS (2026-09-18) - a sheathed stance is not a stowed light
+
+Mac, playing the Morrowind lane:
+
+> If you only have the torch equipped and no weapon, it doesn't show you
+> holding it in first person (morrowind)
+
+Pre-existing, and **one clause too wide**. The weapon rig's draw ladder
+opens on `shown()`, and `shown()` is the **weapon's** visibility - the
+file says so itself a few lines above, where the classic spellcasting
+hands were hoisted out from under it: *"NOT under shown() - the weapon is
+the thing shown() hides"*. One leg of `shown()` is
+`playerWeapon.sheathed`, and a player walking around with a torch and
+nothing drawn is sheathed by definition. So the ladder returned before
+either lane could draw the light: the Morrowind arm never reached
+`fpArm.draw(c)`, and HT1's classic torch hand never reached its screen
+quad. **The one state a carried light exists for was the one state it
+never drew in.**
+
+The fix is not a new rule; it is the two references' existing rule,
+finally reachable.
+
+- **The Morrowind rig already answered it.** MW-D51's
+  `carriedLeftVisible` is `NpcAnimation::updateCarriedLeftVisible`
+  verbatim - visible unless the stance's flags say two-handed - and
+  `animWeaponType(owned, sheathed, spellReady)` idles a sheathed player
+  in `None` whatever they own. `None` is not two-handed, so **the
+  reference draws the torch for a weaponless player**. The same law
+  answers FALSE for a readied spell, which is exactly why that leg of
+  `shown()` must keep hiding it.
+- **Handheld Torches already answered it too.** HT7's hand law leaves
+  "an empty hand you are not swinging with" free *precisely so a
+  weaponless player can carry a light*.
+
+So the ladder gained one exception, computed from the legs it does NOT
+relax: `torchOnly` is true only when `shown()` is false, no spell is
+armed, no cast is playing, no equip countdown is running, and
+`isHeldLight(entity.lightSource)` - the mod's own two templates, now
+exported so the ladder asks the question in the mod's words rather than
+inventing a second spelling of it. Paralysis, third person and the EOTB
+body still take everything, above.
+
+**And the lane that will draw it has a veto.** This is the half the first
+cut got wrong, and it is worth writing down because it is the same
+mistake this page already records once: *the entity knowing a light is
+equipped is not the same question as "will anything actually appear".*
+The Morrowind held-light art is the **torch alone** - `isLitTorch`, with
+the classic lane's hand sprite covering the lantern as it always has -
+and a rig can resolve no light at all (no LIGH record, no attached mesh,
+no Shield Bone: AUDIT MW-TORCH F2's own case). Opening the gate on those
+would have painted a sheathed idle **holding nothing** where the screen
+used to be blank: a pose nobody has ever seen, offered as a fix. So the
+arm answers for itself - `fpArm.torchShown()` is its own `torchVisible()`,
+the reference's three conditions at once - and the exception defers to it
+on that lane. The classic lane needs no veto: `handheld.draw` asks the
+same question itself and returns false.
+
+**What comes back with the torch, said accurately.** On the CLASSIC lane,
+nothing: `if (torchOnly) return;` sits between the lit hand and the
+widget's clone, so a sheathed player draws a light and no weapon, clone
+or sprite. On the MORROWIND lane the arm returns above that line and
+paints its own stance, which hides the weapon in the settled sheathed
+state - but **not** during the unequip transient, where the rig
+deliberately keeps the blade in hand until the detach key. So sheathing
+with a torch lit now plays the sheathe animation out instead of cutting
+to nothing. That is the reference's own behaviour, and the note in the
+code says so rather than claiming a blanket "no weapon", which would have
+been false on the lane the report came from.
+
+**A thing worth knowing before the next change here:** this fix puts the
+Morrowind *sheathed* first-person idle on screen for the first time. The
+gate had hidden it since the lane shipped, so that pose is art this port
+has never exercised.
+
+One rig, four hosts: the change is inside `createWeaponRig`, which
+`world.js`, `exterior.js`, `worldModes.js` and `dungeonContext.js` all
+build their viewmodel through, so no host was touched.
+
+**Campaign:** 2 pins (the law driven over the real reference for every
+owned type and the two light tests' deliberate divergence; the ladder and
+the veto by source), 9 mutants, 9 killed. Four standing
+ladder pins re-aimed by content (HT1's order, MW-ATTACH's fall-through,
+WW1's order, FPSSpellCasting's gate index).
+
+**Not seen on a GPU.** Nobody has stood in a cave holding only a torch.
+Worth a pass: equip a torch with no weapon, first person, both lanes;
+then ready a spell (the torch should go), then draw a weapon (the weapon
+should come back).

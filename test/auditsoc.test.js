@@ -331,7 +331,17 @@ test('AUDIT SOC B5/B18/B10: the party pose says fatigue in the sheet\'s digits (
   const w = rd('src/scenes/world.js');
   const pose = w.slice(w.indexOf('const composePartyPose = () => {'), w.indexOf('const partyMarkers = '));
   assert.match(pose, /f: Math\.trunc\(\(playerEntity\.fatigue \?\? 0\) \/ FATIGUE_MULTIPLIER\), fm: Math\.trunc\(maxFatigue\(playerEntity\) \/ FATIGUE_MULTIPLIER\)/, 'the digits ui/charsheet.js shows');
-  assert.match(w, /import \{ maxFatigue, FATIGUE_MULTIPLIER \} from '\.\.\/systems\/statMods\.js';/);
+  // TO1 (2026-09-17): the host imports `liveStat` from the same module
+  // now (Travel Options' avoid-encounter chance is a Luck reading), so
+  // the pin names the two bindings THIS test is about rather than the
+  // whole import list - a list that grows is not this pin's subject,
+  // and either name going missing still reddens here.
+  const statMods = /import \{([^}]*)\} from '\.\.\/systems\/statMods\.js';/.exec(w);
+  assert.ok(statMods, 'the host no longer imports from systems/statMods.js');
+  for (const name of ['maxFatigue', 'FATIGUE_MULTIPLIER']) {
+    assert.ok(statMods[1].split(',').map((n) => n.trim()).includes(name),
+      `the statMods import no longer names ${name}`);
+  }
   assert.doesNotMatch(pose, /composeLook\(/, 'no look composed for three fields');
   assert.match(pose, /race: playerEntity\.race \?\? 'Breton', gender: playerEntity\.gender \?\? 'male', face: playerEntity\.faceIndex \?\? 0/, 'composeLook\'s own three readings');
   assert.equal((pose.match(/playerTravelPixel\(\)/g) ?? []).length, 1, 'the pixel once');
