@@ -1,14 +1,30 @@
 // INTRO2. Seconds in the DECODED recording, not an approximate tempo grid.
 // tools/introAudioCheck.mjs reproduces these landmarks from the shipped MP3.
-// The title uses the first closing beat itself; the louder answer is
-// deliberately ignored. There is no capture correction or arbitrary lead.
-export const TITLE_IMPACT_TIME = 246400 / 12000;
+// There is no capture correction or arbitrary lead.
+//
+// INTRO2b (Mac, 2026-09-18: "the logo needs to drop with the beat that
+// happens around the 19 second mark"). The first cut landed on 20.533333s,
+// which is only the loudest FRAME inside a hand-picked 20.35-20.7s window -
+// it is not a local maximum of the onset curve at all, and the ear hears no
+// attack there. The beat Mac means is the real one: decoded sample 230016,
+// normalized flux 1.77 and the largest raw onset anywhere between the cloud
+// break and the closing pair. The louder answer at 21.066667s still follows
+// it, and is still deliberately ignored.
+//
+// Measured on the REMASTERED master Mac supplied on the same day, which is a
+// different recording (164.3335s, not 164.5202s) carrying the same
+// arrangement. Its cloud break is still 11.712s; its 19s beat moved one
+// analysis hop earlier than the old master's, and the cue moved with it.
+export const TITLE_IMPACT_TIME = 230016 / 12000;
 export const CLOUD_REVEAL_TIME = 11.712;
 export const TITLE_ENTER_TIME = TITLE_IMPACT_TIME - 0.78;
 export const TITLE_READY_TIME = TITLE_IMPACT_TIME + 1.35;
 export const MENU_FADE_SECONDS = 1.1;
 export const INTRO_HOLD_TIME = TITLE_IMPACT_TIME + 2.4;
-export const LANDSCAPE_HOLD_TIME = 18.9;
+// The camera must be at rest BEFORE the logo starts moving, so the landing is
+// the only movement on the beat. Moving the beat 1.365s earlier moves this
+// with it, keeping the same 0.85s of stillness ahead of TITLE_ENTER_TIME.
+export const LANDSCAPE_HOLD_TIME = 17.54;
 
 const unit = (x) => Math.max(0, Math.min(1, x));
 export const introEase = (x) => { const k = unit(x); return k * k * k * (k * (k * 6 - 15) + 10); };
@@ -23,14 +39,34 @@ export function introCreditOpacity(credit, time) {
   return between(time, credit.start, credit.up) * (1 - between(time, credit.out, credit.end));
 }
 
-/** Exact landing at the measured onset; no random jitter of the wordmark. */
+/** INTRO2c (Mac: "I want the logo to fly in from the screen, not from the top
+ * of the screen. If that makes sense. Needs to feel powerful, not goofy").
+ *
+ * The mark no longer drops in from above. It comes out of the DEPTH of the
+ * shot, dead centre on the camera axis, and stops on the beat.
+ *
+ * The apparent size of something travelling at a CONSTANT speed toward a lens
+ * is 1/z, so a linear sweep of z from TITLE_DEPTH to 1 is the real thing: far
+ * and almost still for most of the approach, then filling the frame over the
+ * last few frames. An eased size ramp is exactly what reads as goofy, and so
+ * does an overshoot - this has neither. The mark stops dead at 1, and the
+ * recoil belongs to the WORLD (impact: bloom and a settling frame), not to a
+ * bouncing wordmark. Depth of field closes with the distance, so it resolves
+ * as it arrives instead of sliding in already sharp.
+ *
+ * y stays 0 at every time: the entrance has no vertical component at all. */
+export const TITLE_DEPTH = 5.5;
+export const TITLE_BLUR = 7;
 export function introTitleAt(time, reducedMotion = false) {
-  if (time < TITLE_ENTER_TIME) return { opacity: 0, y: -0.68, scale: 1.04, impact: 0 };
+  // Reduced motion keeps the musical reveal and nothing that flies.
+  if (reducedMotion) return { opacity: time < TITLE_IMPACT_TIME ? 0 : 1, y: 0, scale: 1, blur: 0, impact: 0 };
+  if (time < TITLE_ENTER_TIME) return { opacity: 0, y: 0, scale: 1 / TITLE_DEPTH, blur: TITLE_BLUR, impact: 0 };
   if (time < TITLE_IMPACT_TIME) {
     const k = unit((time - TITLE_ENTER_TIME) / (TITLE_IMPACT_TIME - TITLE_ENTER_TIME));
-    return { opacity: reducedMotion ? 0 : between(k, 0, 0.18), y: -0.68 * (1 - k * k), scale: 1.04 - 0.04 * k * k, impact: 0 };
+    const z = TITLE_DEPTH - (TITLE_DEPTH - 1) * k;
+    return { opacity: between(k, 0, 0.16), y: 0, scale: 1 / z, blur: TITLE_BLUR * (z - 1) / (TITLE_DEPTH - 1), impact: 0 };
   }
-  return { opacity: 1, y: 0, scale: 1, impact: reducedMotion ? 0 : Math.exp(-(time - TITLE_IMPACT_TIME) * 8) };
+  return { opacity: 1, y: 0, scale: 1, blur: 0, impact: Math.exp(-(time - TITLE_IMPACT_TIME) * 8) };
 }
 
 /** One perspective camera from the water to the full bay. No projection cut.
@@ -62,7 +98,7 @@ export function introFrameAt(time, reducedMotion = false) {
     landscapeTime: reducedMotion ? LANDSCAPE_HOLD_TIME : Math.min(t, LANDSCAPE_HOLD_TIME),
     opening: between(t, 0, 1.5),
     cloud: between(t, 10.25, 11.35) * (1 - between(t, CLOUD_REVEAL_TIME, 12.35)),
-    shade: 0.16 + 0.50 * between(t, 18.9, TITLE_IMPACT_TIME + 0.25),
+    shade: 0.16 + 0.50 * between(t, LANDSCAPE_HOLD_TIME, TITLE_IMPACT_TIME + 0.25),
     title: introTitleAt(t, reducedMotion),
     credits: INTRO_CREDITS.map((credit) => ({ ...credit, opacity: introCreditOpacity(credit, t) })),
     ready: t >= TITLE_READY_TIME,

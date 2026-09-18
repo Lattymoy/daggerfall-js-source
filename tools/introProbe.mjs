@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { chromium, devices } from 'playwright';
 import { createServer } from 'vite';
-import { TITLE_IMPACT_TIME } from '../src/ui/introCue.js';
+import { TITLE_IMPACT_TIME, TITLE_ENTER_TIME, TITLE_READY_TIME } from '../src/ui/introCue.js';
 import { MENU_THEME_GAIN } from '../src/systems/introTheme.js';
 
 const out = process.argv[2] ?? 'test-harness/intro';
@@ -47,20 +47,22 @@ try {
     requestAnimationFrame(sample);
   });
   await page.waitForFunction(() => window.__intro.state.phase === 'hold', null, { timeout: 60000 });
-  await page.waitForFunction(() => window.__intro.state.time > 23.2);
+  await page.waitForFunction((t) => window.__intro.state.time > t, TITLE_READY_TIME + 1.5);
   await shot(page, '06-final-title');
   const live = await page.evaluate(() => ({ samples: window.__samples, snapshot: window.__intro.snapshot() }));
   writeFileSync(`${out}/live-timing.json`, JSON.stringify(live, null, 2));
-  const before = live.samples.findLast(s => s.time < TITLE_IMPACT_TIME && s.time > 20);
+  const before = live.samples.findLast(s => s.time < TITLE_IMPACT_TIME && s.time > TITLE_ENTER_TIME);
   const landed = live.samples.find(s => s.time >= TITLE_IMPACT_TIME);
   // SwiftShader can present only one frame during the short title fade. The
   // useful live invariant is that the last pre-attack presentation is already
   // visibly descending and has not landed; exact opacity is covered by the
   // deterministic cue tests and frame-by-frame review render.
-  check('logo is visibly above its landing before the musical attack', before?.titleY < 0 && before?.titleOpacity > 0.9, {
-    time: before?.time, opacity: before?.titleOpacity, y: before?.titleY,
-  });
-  check('first frame after the attack lands exactly at rest', landed?.titleY === 0 && landed?.titleOpacity === 1, landed?.time);
+  check('logo is still out in front of its landing before the musical attack',
+    before?.titleScale < 0.95 && before?.titleY === 0 && before?.titleOpacity > 0.9, {
+      time: before?.time, opacity: before?.titleOpacity, scale: before?.titleScale, y: before?.titleY,
+    });
+  check('first frame after the attack lands exactly at rest, sharp and centred',
+    landed?.titleScale === 1 && landed?.titleBlur === 0 && landed?.titleY === 0 && landed?.titleOpacity === 1, landed?.time);
   // A display cannot present between refreshes. On a hardware runner this is
   // normally one 16.7 ms frame; SwiftShader can take longer. The invariant is
   // that the first available presentation after the decoded onset is landed,
@@ -109,6 +111,32 @@ try {
   check('resuming continues the score instead of jumping by wall time', await pausedPage.evaluate(() => window.__intro.theme.time() < window.__pause.time + 1));
   await pausedContext.close();
 
+  // INTRO2b (Mac): a phone player taps the SCREEN, and a browser grants audio
+  // once per gesture. This taps the gate well clear of Begin and of Skip, on a
+  // real touch device, and requires that single tap to unlock and open.
+  const touchContext = await browser.newContext({ ...devices['Pixel 5'] });
+  const touchPage = await touchContext.newPage(); follow(touchPage);
+  await touchPage.goto(`${base}?introdebug`); await touchPage.bringToFront(); await ready(touchPage);
+  const spot = await touchPage.evaluate(() => {
+    const kicker = document.querySelector('.intro-kicker').getBoundingClientRect();
+    const button = document.querySelector('.intro-begin').getBoundingClientRect();
+    return { x: Math.round(innerWidth / 2), y: Math.round(kicker.top / 2), clear: kicker.top / 2 < button.top - 40 };
+  });
+  check('the tap target under test is neither Begin nor Skip', spot.clear, spot);
+  await touchPage.touchscreen.tap(spot.x, spot.y);
+  // The score's own clock, not the debug mirror: `state` is refreshed from the
+  // animation frame, and a page the compositor considers background is
+  // throttled, which says nothing about whether the music is running.
+  await touchPage.waitForFunction(() => window.__intro.theme.time() > 0.25, null, { timeout: 25000 });
+  const opened = await touchPage.evaluate(() => ({
+    audio: window.__intro.theme.context?.state, source: !!window.__intro.theme.source,
+    score: window.__intro.theme.time(), gateHidden: !!document.querySelector('.intro-gate')?.hidden,
+    status: document.querySelector('.intro-status')?.textContent,
+  }));
+  check('one tap anywhere on the gate unlocks audio and opens the film',
+    opened.audio === 'running' && opened.source && opened.score > 0.25 && opened.gateHidden && opened.status === '', opened);
+  await touchContext.close();
+
   // Stills use the same renderer at explicit score times. They prove
   // composition and sizing, not live synchronization (tested above).
   for (const [name, options] of [
@@ -120,7 +148,7 @@ try {
     const c = await browser.newContext(options), p = await c.newPage(); follow(p);
     await p.goto(`${base}?introdebug&introat=0`); await ready(p);
     if (name === 'desktop') {
-      for (const [t, label] of [[3, '02-interkarma'], [7, '03-nexus'], [12.5, '04-cloud-rise'], [18.9, '05-bay']]) { await seek(p, t); await shot(p, label); }
+      for (const [t, label] of [[3, '02-interkarma'], [7, '03-nexus'], [12.5, '04-cloud-rise'], [17.6, '05-bay']]) { await seek(p, t); await shot(p, label); }
     }
     await seek(p, 24);
     const layout = await p.evaluate(() => {

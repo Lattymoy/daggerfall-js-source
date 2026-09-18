@@ -54,9 +54,12 @@ function peakBetween(from, to) {
   }
   return { time: (peak * hop + size / 2) / rate, strength: normalized[peak], analysisSample: peak * hop + size / 2 };
 }
-// The closing figure has two distinct hits. Direction calls for the title on
-// the first, subtler beat at sample 246400—not the louder answer at 252800.
-const title = peakBetween(20.35, 20.7), titleAnswer = peakBetween(20.85, 21.25), clouds = peakBetween(11.45, 11.95);
+// INTRO2b: the title lands on the beat Mac hears "around the 19 second mark"
+// — sample 230016 of the remastered master, a true local maximum and the
+// largest raw onset between the cloud break and the close. The louder answer
+// at 252800 is still ignored, and is still reported so a replacement track
+// cannot silently swap the two.
+const title = peakBetween(19.0, 19.35), titleAnswer = peakBetween(20.85, 21.25), clouds = peakBetween(11.45, 11.95);
 const report = {
   sha256: createHash('sha256').update(readFileSync(track)).digest('hex'),
   method: 'Positive spectral flux; Hann 1024; hop 128; mono 12000 Hz; local mean ±0.5 s; peak centre',

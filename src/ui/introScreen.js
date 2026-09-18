@@ -25,11 +25,11 @@ const STYLE = `
 .intro-credit p{margin:0;font-size:clamp(11px,1.15vw,15px);text-transform:uppercase;letter-spacing:.26em;text-shadow:0 2px 12px #000}
 .intro-credit img{display:block;max-width:62vw;max-height:29dvh;width:auto;height:auto;object-fit:contain;filter:drop-shadow(0 3px 14px #0008)}
 .intro-credit[data-credit=nexus] img{max-width:45vw;max-height:17dvh}
-.intro-title{position:absolute;left:50%;top:48%;width:min(86vw,1240px);opacity:0;pointer-events:none;mix-blend-mode:screen;will-change:transform,opacity}
+.intro-title{position:absolute;left:50%;top:48%;width:min(86vw,1240px);opacity:0;pointer-events:none;mix-blend-mode:screen;transform-origin:50% 50%;will-change:transform,opacity,filter}
 .intro-title .enhanced-logo{display:block;width:100%;height:auto}
 .intro-title-fallback{font-size:clamp(28px,7vw,100px);text-align:center;margin:0;letter-spacing:.05em}
 .intro-light{position:absolute;inset:0;opacity:0;pointer-events:none;background:radial-gradient(ellipse at 50% 50%,#ebd3a025,transparent 58%)}
-.intro-gate{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:22px;text-align:center;background:radial-gradient(ellipse at 50% 42%,#14222dcc,#030609 75%);padding:28px}
+.intro-gate{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:22px;text-align:center;background:radial-gradient(ellipse at 50% 42%,#14222dcc,#030609 75%);padding:28px;cursor:pointer}
 .intro-kicker{font-size:12px;text-transform:uppercase;letter-spacing:.38em;line-height:1.8;color:#a9a390;margin:0}
 .intro-gate h1{font-weight:400;font-size:clamp(28px,5vw,56px);letter-spacing:.17em;margin:0;text-transform:uppercase}
 .intro-ornament{width:145px;height:1px;background:linear-gradient(90deg,transparent,#a28b51,transparent);position:relative;margin:5px 0}
@@ -99,8 +99,13 @@ export async function runIntro({ theme, onReveal, doc = document, freezeAt = nul
   const next = make(doc, 'button', 'intro-continue', 'Tap to continue'); next.type = 'button'; next.hidden = true;
   const footer = make(doc, 'div', 'intro-footer', 'Daggerfall Enhanced');
   host.append(film, gate, skip, next, footer); doc.body.append(host);
+  // Shared by the setup path and by a tap that beats it: a gesture given
+  // during 'preparing' must still open on decoded artwork, never on the
+  // blank frames a half-decoded credit would show at 1.25 s.
+  const decoded = Promise.all(images).catch(() => {});
 
   let landscape = null, phase = 'preparing', over = false, frameId = null, transitionAt = null;
+  const GATE_PHASES = ['preparing', 'ready', 'paused'];
   let fallbackTime = null, menuHost = null, lastFrame = null, readyFocused = false;
   let lastWidth = 0, lastHeight = 0;
   let previousFrame = 0, frameInterval = 1000 / 60, frameCount = 0;
@@ -149,8 +154,13 @@ export async function runIntro({ theme, onReveal, doc = document, freezeAt = nul
   const beginPlayback = async () => {
     if (phase === 'transition' || over || phase === 'starting') return;
     const resuming = phase === 'paused';
-    phase = 'starting'; begin.disabled = true; status.textContent = 'Opening…';
+    phase = 'starting'; begin.disabled = true;
+    // The assets may still be loading behind this tap; prepare() below is the
+    // same promise the setup path awaits, so the film opens the moment it is
+    // ready rather than asking the player to find the button a second time.
+    status.textContent = 'Opening…';
     const unlocked = await theme.unlock();
+    await decoded;
     const loaded = await theme.prepare();
     if (over || transitionAt !== null) return;
     if (!loaded) {
@@ -160,24 +170,30 @@ export async function runIntro({ theme, onReveal, doc = document, freezeAt = nul
     }
     if (!unlocked || !theme.start()) {
       phase = resuming ? 'paused' : 'ready'; begin.disabled = false;
-      begin.textContent = resuming ? 'Resume' : 'Begin'; status.textContent = 'Tap to enable sound.';
+      begin.textContent = resuming ? 'Resume' : 'Begin'; status.textContent = 'Tap anywhere to enable sound.';
       return;
     }
     phase = 'playing'; gate.hidden = true; status.textContent = '';
   };
 
+  // MAC (2026-09-18): a browser gives audio exactly ONE chance per gesture, so
+  // the gesture surface is the WHOLE gate, not the 168 px button - a phone
+  // player taps the screen, not a target. The button stays as the visible and
+  // focusable affordance; a tap during 'preparing' is honoured too, so the
+  // single tap a player actually makes is the one that unlocks the context.
+  const gateIsOpen = () => !gate.hidden && GATE_PHASES.includes(phase);
   function onClick(event) {
     event.stopPropagation();
     if (phase === 'transition') { event.preventDefault(); return; }
     if (event.target.closest('.intro-skip')) { enterMenu(); return; }
-    if (event.target.closest('.intro-begin')) { void beginPlayback(); return; }
+    if (gateIsOpen()) { void beginPlayback(); return; }
     if (phase === 'hold') enterMenu();
   }
   function onKey(event) {
     if (phase === 'transition') { event.preventDefault(); event.stopImmediatePropagation(); return; }
     if (event.repeat) return;
     if (event.key === 'Escape') { event.preventDefault(); event.stopImmediatePropagation(); enterMenu(); }
-    else if ((event.key === 'Enter' || event.key === ' ') && ['ready', 'paused', 'hold'].includes(phase)) {
+    else if ((event.key === 'Enter' || event.key === ' ') && (phase === 'hold' || gateIsOpen())) {
       event.preventDefault(); event.stopImmediatePropagation();
       if (event.target === skip || phase === 'hold') enterMenu(); else void beginPlayback();
     }
@@ -199,7 +215,7 @@ export async function runIntro({ theme, onReveal, doc = document, freezeAt = nul
     const st = introFrameAt(time, reduced);
     if (phase === 'playing' && freezeAt === null && theme.context?.state !== 'running' && !doc.hidden) {
       phase = 'paused'; gate.hidden = false; heading.textContent = 'The journey awaits';
-      begin.disabled = false; begin.textContent = 'Resume'; status.textContent = 'Tap to resume the music and film.';
+      begin.disabled = false; begin.textContent = 'Resume'; status.textContent = 'Tap anywhere to resume the music and film.';
     }
     if (phase === 'paused' && theme.context?.state === 'running') { phase = 'playing'; gate.hidden = true; }
     const showFilm = ['playing', 'hold', 'paused', 'transition'].includes(phase) || freezeAt !== null;
@@ -214,13 +230,18 @@ export async function runIntro({ theme, onReveal, doc = document, freezeAt = nul
       // The final camera settles BEFORE the title arrives. Its tiny impact
       // is composited over a held frame, so expensive terrain cannot stall
       // the musical landing or burn GPU while the player considers the menu.
-      canvas.style.transform = `translateY(${(st.title.impact * 4).toFixed(2)}px) scale(${(1 + st.title.impact * 0.008).toFixed(5)})`;
+      // INTRO2c: the recoil lives HERE and in the bloom below, never in the
+      // wordmark - a bouncing logo is the goofy read Mac rejected.
+      canvas.style.transform = `translateY(${(st.title.impact * 6).toFixed(2)}px) scale(${(1 + st.title.impact * 0.012).toFixed(5)})`;
       cloud.style.opacity = String(reduced ? 0 : st.cloud * 0.88);
       shade.style.opacity = String(st.shade);
       for (const credit of st.credits) credits.get(credit.key).style.opacity = String(credit.opacity);
       title.style.opacity = String(st.title.opacity);
       title.style.transform = `translate(-50%,-50%) translateY(${(st.title.y * host.clientHeight).toFixed(3)}px) scale(${st.title.scale.toFixed(5)})`;
-      light.style.opacity = String(st.title.impact * 0.45);
+      // Depth of field only while the mark is travelling; 'none' at rest so
+      // the held splash costs no filter pass for as long as the player looks.
+      title.style.filter = st.title.blur > 0.02 ? `blur(${st.title.blur.toFixed(2)}px)` : 'none';
+      light.style.opacity = String(st.title.impact * 0.6);
       next.hidden = !st.ready; next.style.opacity = String(st.prompt);
       if (st.ready && phase === 'playing') { phase = 'hold'; skip.hidden = true; }
       if (st.ready && !readyFocused && transitionAt === null) { readyFocused = true; next.focus({ preventScroll: true }); }
@@ -230,6 +251,7 @@ export async function runIntro({ theme, onReveal, doc = document, freezeAt = nul
       debugState.phase = phase; debugState.time = time; debugState.frames = frameCount;
       debugState.frameMs = delta; debugState.presentationMs = stamp + frameInterval;
       debugState.titleY = st.title.y; debugState.titleOpacity = st.title.opacity;
+      debugState.titleScale = st.title.scale; debugState.titleBlur = st.title.blur;
       if (st.title.impact > 0 && debugState.impactTime === null) debugState.impactTime = time;
       if (st.ready && debugState.readyTime === null) debugState.readyTime = time;
     }
@@ -257,9 +279,10 @@ export async function runIntro({ theme, onReveal, doc = document, freezeAt = nul
       landscape = createIntroLandscape(canvas);
       debugState.landscapeReady = !!landscape;
       landscape?.render(0, host.clientWidth, host.clientHeight, reduced);
-      await Promise.all([musicReady, ...images]);
-      if (!over && transitionAt === null) {
-        phase = 'ready'; begin.disabled = false; status.textContent = reduced ? 'Reduced motion enabled' : 'Sound on for the full experience';
+      await Promise.all([musicReady, decoded]);
+      if (!over && transitionAt === null && phase === 'preparing') {
+        phase = 'ready'; begin.disabled = false;
+        status.textContent = reduced ? 'Tap anywhere to begin. Reduced motion is on.' : 'Tap anywhere to begin. Sound on for the full experience.';
         if (freezeAt !== null) { phase = 'playing'; gate.hidden = true; }
         else begin.focus({ preventScroll: true });
       }
