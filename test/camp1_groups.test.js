@@ -11,6 +11,7 @@ import {
   CAMP_CHANCE, CAMP_CHANCE_ON_CHUNK_LOAD, GROUP_ROLL_RADIUS,
 } from '../src/systems/campEncounters.js';
 import { CLASSIC_MINUTES_PER_SECOND } from '../src/systems/worldTick.js';
+import { areEnemiesNearby, RESTING_DISTANCE, MIN_WILDERNESS_SPAWN_DISTANCE } from '../src/systems/encounters.js';   // CAMP1-REST: the interrupt, its reach, and the band the classic roll mints inside it
 import { CLIMATES } from '../src/formats/mapsFile.js';
 import { FEATURES } from '../src/systems/features.js';
 
@@ -110,8 +111,13 @@ test('CAMP1 by source: both exterior hosts roll it after the single roll comes b
     assert.match(stand, /\.then\(\(f\) => \{ if \(f\) \{ f\.campId = campId; f\.campAlertRadius = hit\.alertRadius; \} \}\)/, `${name}: the stood foe carries its group and its shout radius`);
     assert.match(stand, /yaw: Math\.atan2\(anchorFeet\[0\] - spot\.x, anchorFeet\[2\] - spot\.z\),/, `${name}: members face the camp, not the player`);
   }
-  assert.match(w, /if \(getPref\('wildernessCamps'\) !== false && amGroupRollOwner\(online\?\.id \?\? null, playerFeet, peersNear\(\)\)\) \{\s*\n\s*const campHit = rollCampEncounter\(/, 'world.js: the timer roll is gated on group ownership');
-  assert.match(e, /if \(getPref\('wildernessCamps'\) !== false\) \{\s*\n\s*const campHit = rollCampEncounter\(/, 'exterior.js: no peers on this route, no guard');
+  // CAMP1-REST re-aimed both of these: the timer roll now stands down under a rest as well (its own test below)
+  assert.match(w, /if \(!isResting && getPref\('wildernessCamps'\) !== false && amGroupRollOwner\(online\?\.id \?\? null, playerFeet, peersNear\(\)\)\) \{\s*\n\s*const campHit = rollCampEncounter\(/, 'world.js: the timer roll is gated on group ownership - and on not resting');
+  assert.match(e, /if \(!isResting && getPref\('wildernessCamps'\) !== false\) \{\s*\n\s*const campHit = rollCampEncounter\(/, 'exterior.js: no peers on this route, no guard - the rest gate stands alone');
+  // ...and the CHUNK-LOAD twin below takes NO rest gate, deliberately: it fires on a pixel crossing and a
+  // resting player crosses none, so a gate there would be a law with no case (the assertion two lines down
+  // is the one that would redden if someone added one).
+  assert.ok(!/isResting/.test(w.slice(w.indexOf('stream: entered ${r.current.x}'), w.indexOf('\n    pump();', w.indexOf('stream: entered ${r.current.x}')))), 'the chunk-load roll needs no rest gate');
   assert.match(e, /const _standCampEncounter = \(hit, feet\) => \{\s*\n\s*if \(!walkMode\) return;/, 'exterior.js: the fly camera has no capsule to place around');
   // the chunk-load twin, on the stream's own "entered" event, outdoors only
   const ci = w.indexOf('stream: entered ${r.current.x}');
@@ -133,4 +139,80 @@ test('CAMP1 by source: both exterior hosts roll it after the single roll comes b
   assert.ok(row, 'the enhanced pane carries the row');
   assert.deepEqual([row.group, row.title, [...row.kinds], row.control.key, row.control.initial, row.control.online], ['world', 'Wilderness camps & packs', ['enhanced'], 'wildernessCamps', true, 'player']);
   assert.match(read('src/systems/campEncounters.js'), /^\/\/ This is an ORIGINAL addition, not a Daggerfall Unity or classic/m, 'the module says what it is');
+});
+
+// CAMP1-REST (2026-09-18, Mac's wilderness-resting hand-off): the group roll stands down while the tick is
+// servicing a rest. THE MECHANISM IS SIGHT FIRST, DISTANCE SECOND - the hand-off's own note read it as a pure
+// distance law and that is not what encounters.js does. areEnemiesNearby's resting arm reports a foe that has SEEN
+// the player at ANY range, and only falls back to the 12-unit proximity test for a foe that has not. A lone
+// wanderer is minted facing the player ("LookAt player") and trips the sight arm on its first senses tick, which
+// is how a rest has always been interruptible and is what the dungeon's own rest roll leans on. A group is minted
+// facing its ANCHOR, out at 14..26 and so past the fallback, and the world is NOT frozen while a rest runs
+// (WINFOE1 drives the foe pool on the frame's own dt under a window) - so most groups do wake the sleeper, and it
+// is the group whose members happen to face away that lands in silence and is standing there on waking. Mac's
+// call is that groups are a walking-around feature rather than that they should be yawed at a sleeper.
+test('CAMP1 by source: the group roll is skipped while resting - camps/packs only fire while wandering, never mid-rest', () => {
+  for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
+    const h = read(host);
+    const i = h.indexOf('function runEncounterTick(');
+    assert.match(h.slice(i, i + 200), /function runEncounterTick\(playerFeet, simMinutesEnd = null, isResting = false\) \{/, `${host}: the tick knows whether it's servicing a rest`);
+    const fn = h.slice(i, h.indexOf('\n  }\n', i));
+    assert.match(fn, /if \(!isResting && getPref\('wildernessCamps'\)/, `${host}: the camp/pack roll is gated off during rest`);
+    assert.match(h, /advanceMinutes: \(n, sharedEnd\) => \{ playerTicker\.advance\(n\); runEncounterTick\([^)]*, sharedEnd, true\); \}/, `${host}: the rest deps flag every tick they drive as a rest`);
+    // `encounterTick` takes no flag - and it is NOT only the walking tick, which is worth saying plainly because
+    // the hand-off's note assumed it was: worldModes' INTERIOR rest deps drive it too
+    // (`advanceMinutes: (n) => { interiorTicker.advance(n); host.encounterTick?.(); }`). That rest needs no flag
+    // because a roll from inside a building cannot reach a group at all - campGateOk refuses `inside` outright -
+    // so the gate holds there by construction rather than by the flag, and both halves are pinned here.
+    assert.match(h, /encounterTick: \(\) => runEncounterTick\([^,)]*\),/, `${host}: the frame's own tick passes no third argument - isResting defaults to false`);
+  }
+  // the interior rest that reaches encounterTick unflagged, and the one line that makes it harmless
+  assert.match(read('src/scenes/worldModes.js'), /advanceMinutes: \(n\) => \{ interiorTicker\.advance\(n\); host\.encounterTick\?\.\(\); \},/, 'the interior rest drives the host tick with no flag...');
+  assert.match(read('src/systems/campEncounters.js'), /const campGateOk = \(ctx\) => !\(ctx\.inside \|\| ctx\.inLocationRect \|\| ctx\.preventEnemySpawns\);/, '...and a roll from inside can never reach a group anyway');
+});
+
+// CAMP1-REST, THE LAW UNDER THE GATE. The source pins above say the roll stands down under a rest; this one says
+// WHAT a rest can actually see, so the gate cannot be deleted as "belt and braces" by a reader who never met the
+// bug - and so that nobody re-derives the hand-off's own reading of it, which was that camps outrun the interrupt
+// on DISTANCE alone. They do not. The interrupt is sight first:
+//
+//     SEEN me          -> reported at ANY range        (a foe minted "LookAt player" trips this at once)
+//     not seen, <= 12  -> reported if it would spawn   (RESTING_DISTANCE, the fallback)
+//     not seen,  > 12  -> dropped before anything else (the whole camp band, 14..26, lives here)
+//
+// So a lone wanderer wakes the sleeper because it is minted FACING them, not because of where it stands (its own
+// band, 10..20, is mostly outside the fallback too). A camp is minted facing its ANCHOR and out past the
+// fallback, so the one group that lands in silence is the one whose members happen to face away - and the world
+// is not frozen meanwhile, which is why most groups do wake the sleeper and only the quiet ones read as a bug.
+// If someone moves the bands so they overlap, or yaws members at the player, this reddens and the gate can be
+// reconsidered on purpose rather than by accident.
+test('CAMP1-REST: the rest interrupt is SIGHT first - a seen foe reports at any range, an unseen one only inside 12, and the whole camp band lies outside that; the two spawners differ in FACING, which is what a group can lose', () => {
+  assert.ok(MIN_CAMP_SPAWN_DISTANCE > RESTING_DISTANCE,
+    `a camp's NEAREST member (${MIN_CAMP_SPAWN_DISTANCE}) is already outside the fallback's reach (${RESTING_DISTANCE})`);
+  assert.ok(MAX_CAMP_SPAWN_DISTANCE >= MIN_CAMP_SPAWN_DISTANCE, 'and the band only runs outward from there');
+  assert.ok(MIN_WILDERNESS_SPAWN_DISTANCE < RESTING_DISTANCE,
+    `a lone wanderer's band starts inside it (${MIN_WILDERNESS_SPAWN_DISTANCE}) - but that is not why it wakes the player`);
+  // THE DIFFERENCE THAT ACTUALLY DECIDES IT, by source: the lone arm yaws its foe at the PLAYER, the group arm
+  // yaws each member at the ANCHOR. That is the line a future "fix" would touch instead of this gate.
+  for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
+    const h = read(host);
+    assert.match(h, /yaw: Math\.atan2\(feet\[0\] - spot\.x, feet\[2\] - spot\.z\),   \/\/ LookAt player/, `${host}: the lone wanderer faces the player`);
+    assert.match(h, /yaw: Math\.atan2\(anchorFeet\[0\] - spot\.x, anchorFeet\[2\] - spot\.z\),/, `${host}: a campmate faces the camp`);
+  }
+
+  // the interrupt on the shape the spawner mints: a member just stood has detected nothing, seen nothing, and
+  // carries no wouldBeSpawned mark (enemyMotor sets it false at construction and recomputes it on its own update)
+  const foe = (dist, over = {}) => ({ dead: false, ai: { detected: false, inSight: false, isHostile: true, _distLocal: dist, ...over } });
+  const camp = [foe(MIN_CAMP_SPAWN_DISTANCE), foe(MAX_CAMP_SPAWN_DISTANCE), foe((MIN_CAMP_SPAWN_DISTANCE + MAX_CAMP_SPAWN_DISTANCE) / 2)];
+  assert.equal(areEnemiesNearby(camp, { resting: true }), false,
+    'THE BUG: a whole camp rolled under a rest is invisible to the interrupt - it arrived in silence and was standing there on waking');
+  // ...and stays invisible even once its members ARE marked, because the mark only counts inside the reach
+  assert.equal(areEnemiesNearby(camp.map((f) => foe(f.ai._distLocal, { wouldBeSpawned: true })), { resting: true }), false,
+    'the mark does not help at camp distance: the resting arm drops it before the mark is ever read');
+
+  // the contrast that makes the gate the right fix rather than a blanket "rests are never interrupted"
+  assert.equal(areEnemiesNearby([foe(MIN_WILDERNESS_SPAWN_DISTANCE, { wouldBeSpawned: true })], { resting: true }), true,
+    'the classic wandering monster is minted inside the reach and still wakes the player - the lone roll is left alone');
+  assert.equal(areEnemiesNearby([foe(MAX_CAMP_SPAWN_DISTANCE, { detected: true, inSight: true })], { resting: true }), true,
+    'and a foe that HAS seen the player wakes them at any distance');
 });

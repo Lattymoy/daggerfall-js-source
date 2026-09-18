@@ -164,9 +164,12 @@ test('RESTX2 by source: the free lane and the shared-clock lane are gone from th
   // THE FOUR HOSTS: the two exterior hosts read the end the session hands them; the dungeon already did
   for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
     const h = read(host);
-    assert.match(h, /function runEncounterTick\(playerFeet, simMinutesEnd = null\) \{/, `${host}: the roll takes the rest's minute`);
+    assert.match(h, /function runEncounterTick\(playerFeet, simMinutesEnd = null, isResting = false\) \{/, `${host}: the roll takes the rest's minute, and now knows it's a rest`);
     assert.match(h, /const now = simMinutesEnd \?\? Math\.floor\(playerTicker\.classicMinutes\);/, `${host}: ...as its now, when handed one`);
-    assert.match(h, /advanceMinutes: \(n, sharedEnd\) => \{ playerTicker\.advance\(n\); runEncounterTick\([^)]*, sharedEnd\); \}/, `${host}: the rest deps hand it over`);
+    // RESTING GATE: the rest deps pass isResting=true, so camps/packs (MIN_CAMP_SPAWN_DISTANCE always
+    // outside RESTING_DISTANCE - see encounters.js/campEncounters.js) never silently outflank the
+    // enemies-nearby interrupt - they're a walking-around feature only, same as before this gate existed.
+    assert.match(h, /advanceMinutes: \(n, sharedEnd\) => \{ playerTicker\.advance\(n\); runEncounterTick\([^)]*, sharedEnd, true\); \}/, `${host}: the rest deps hand it over, flagged as a rest`);
   }
   assert.match(read('src/scenes/dungeonContext.js'), /advanceMinutes: \(n, sharedEnd\) => _restAdvance\(n, sharedEnd\),/, 'the dungeon\'s arm, unchanged');
   assert.match(read('src/scenes/worldModes.js'), /advanceMinutes: \(n\) => \{ interiorTicker\.advance\(n\); host\.encounterTick\?\.\(\); \},/, 'the interior\'s arm rolls nothing inside a building and is unchanged (audit62)');
