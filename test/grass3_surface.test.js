@@ -85,7 +85,7 @@ test('GRASS3: the height law IS the drawn mesh - every point, on its own triangl
   }
 });
 
-test('GRASS3: the law is NOT bilinear, and the difference is what was putting blades off the ground', () => {
+test('GRASS3: the law is NOT bilinear - a different surface, though on real grades a small one', () => {
   const data = terrain();
   const bilinear = (lx, lz) => {
     const fx = lx / CELL, fz = lz / CELL;
@@ -114,14 +114,34 @@ test('GRASS3: the law is NOT bilinear, and the difference is what was putting bl
     assert.ok(Math.abs(got - t * (1 - t) * saddle) < 1e-3, `on the diagonal at t=${t} the gap is t(1-t) x the saddle`);
   }
   assert.ok(saddle > 0, 'and this quad HAS a saddle, or the pin above would pass on a plane');
-  // OFF it they part, and a blade is only 0.25..0.72 world units tall at
-  // the port's height of 38 - so this is blades standing in mid-air or
-  // buried, not a rounding difference.
-  let gap = 0;
-  for (const [lx, lz] of points(4000, 0x2f6e2b1, TERRAIN_SIZE - CELL)) {
-    gap = Math.max(gap, Math.abs(bilinear(lx, lz) - surfaceHeightAt(data, lx, lz)));
+  // OFF it they part - and HOW FAR is worth pinning, because the first
+  // draft of this arc got it badly wrong. On the terrain below (a 311%
+  // grade: a cliff, not a landscape) the gap runs to most of a blade,
+  // and that was reported as "41% of blades float on hilly ground". On
+  // REAL grades it is a small fraction of a blade and nobody would ever
+  // see it. Both halves are pinned so the claim cannot drift back.
+  const gapOn = (amp, freq) => {
+    const d = terrain(amp, freq);
+    const bi = (lx, lz) => {
+      const fx = lx / CELL, fz = lz / CELL;
+      const x0 = Math.min(hDim - 2, Math.floor(fx)), z0 = Math.min(hDim - 2, Math.floor(fz));
+      const ax = fx - x0, az = fz - z0;
+      const T = (x, z) => d[x * hDim + z];
+      return ((T(x0, z0) * (1 - ax) + T(x0 + 1, z0) * ax) * (1 - az)
+            + (T(x0, z0 + 1) * (1 - ax) + T(x0 + 1, z0 + 1) * ax) * az) * WORLD_H;
+    };
+    let g = 0;
+    for (const [lx, lz] of points(4000, 0x2f6e2b1, TERRAIN_SIZE - CELL)) {
+      g = Math.max(g, Math.abs(bi(lx, lz) - surfaceHeightAt(d, lx, lz)));
+    }
+    return g;
+  };
+  assert.ok(gapOn(0.031, 0.11) > 0.5, 'on a cliff the two surfaces are most of a blade apart - they ARE different surfaces');
+  const BLADE = 0.5;
+  for (const [amp, freq, grade] of [[0.004, 0.018, '7%'], [0.006, 0.025, '14%'], [0.010, 0.025, '23%'], [0.020, 0.040, '75%']]) {
+    const g = gapOn(amp, freq);
+    assert.ok(g < BLADE / 5, `at a ${grade} grade the gap is ${g.toFixed(3)}u, well under a fifth of a blade - this was never a visible bug`);
   }
-  assert.ok(gap > 0.5, `on rolling ground the two surfaces differ by ${gap.toFixed(2)} world units - most of a blade`);
   // the placer reads the drawn surface now, and says so
   const world = readFileSync(new URL('../src/scenes/world.js', import.meta.url), 'utf8');
   assert.match(world, /const h = surfaceHeightAt\(p\.samples, lx, lz, p\._stride \?\? 1\);/, 'the grass placer asks for the DRAWN height');

@@ -10400,12 +10400,14 @@ export async function bootWorld(canvas, renderer, params, status) {
         const rec = p.tilemapBytes[tz * TERRAIN_TILE_DIM + tx] >> 2;
         if (rec === 0 || !grass || !grass.has(rec)) return null;
         // GRASS3: the height of the surface that is DRAWN, not a
-        // bilinear patch over the same samples. The terrain is cut into
-        // triangles and a bilinear read agrees with them only on the
-        // diagonal - measured, that floats or sinks 41% of blades by
-        // more than half a blade's height on hilly ground and 74% in
-        // mountains. `p._stride` is the ring class this pixel is drawn
-        // at, and the grass only stands on the stride-1 ring anyway.
+        // bilinear patch over the same samples - the terrain is cut into
+        // triangles and bilinear is a different surface. On real grades
+        // the two are under 0.08 world units apart against a blade of
+        // 0.25-0.72, so this is correctness rather than a fix anyone
+        // would see; it is also the exact law a GPU-placed field has to
+        // run, where there is no baked height to fall back on.
+        // `p._stride` is the ring class this pixel is drawn at, and the
+        // grass only stands on the stride-1 ring anyway.
         const h = surfaceHeightAt(p.samples, lx, lz, p._stride ?? 1);
         if (h <= sea) return null;
         return h + t[1];

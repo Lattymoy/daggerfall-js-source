@@ -90,13 +90,22 @@ export const TERRAIN_SKIRT_DEPTH = 40;
  * at the corners. Anything placed by bilinear sits off the ground it is
  * supposed to stand on, by up to a quarter of the quad's saddle term.
  *
- * `scenes/world.js`'s grass placer did exactly that, and it is measured
- * rather than argued (tools/grassHeightProbe.mjs): on gentle ground the
- * gap is under 0.4 world units and nobody would see it, but on hilly
- * ground 41% of blades are off by more than half a blade's height and
- * in mountains 74% are, the worst by 12 units - two dozen blade heights
- * of float or sink. That is the "grass does not sit on the hill" bug,
- * and it is one interpolation away.
+ * `scenes/world.js`'s grass placer did exactly that. HOW MUCH IT
+ * MATTERED, measured honestly and corrected once (tools/grassHeightProbe
+ * .mjs): across real terrain grades - 7% to 75% - the two surfaces are
+ * between 0.003 and 0.08 world units apart, against a blade 0.25 to
+ * 0.72 tall. NO blade is off by even a sixth of its height. A first
+ * reading of this claimed 41% of blades floated on "hilly" ground and
+ * 74% in "mountains"; that synthetic terrain turned out to be a 311%
+ * grade - a cliff, not a landscape - and the real answer is that
+ * nobody would ever have seen this.
+ *
+ * So this is a CORRECTNESS fix, not a visible one, and it is worth
+ * making for two reasons that do not depend on the size of the error:
+ * a placer should ask the surface where the surface is rather than
+ * approximate it, and this is the exact law a GPU-placed field has to
+ * run in its vertex shader - where it stops being free, because a
+ * derived blade has no baked height to fall back on.
  *
  * The same law is what a GPU placer has to run, because a blade derived
  * in a vertex shader must land on the surface the fragment shader is

@@ -10,9 +10,14 @@
 //
 // It reports two numbers:
 //
-//   bilinearVsTriangle  what the CURRENT placer costs. The terrain is
-//                       triangles and the placer read a bilinear patch;
-//                       this is how far apart those two surfaces are.
+//   bilinearVsTriangle  how far the placer's old bilinear read sat from
+//                       the drawn triangles. NOTE the terrain here is
+//                       deliberately extreme (a 311% grade) to exercise
+//                       the saddle term; on real grades of 7-75% the
+//                       gap is 0.003 to 0.08 world units and no blade
+//                       is off by a sixth of its height. The fix is
+//                       correctness, not a rescue - see
+//                       test/grass3_surface.test.js, which pins both.
 //   shaderVsCpu         whether GLSL can match `surfaceHeightAt` - the
 //                       law the mesh is actually built from, pinned
 //                       against the real index buffer in
@@ -204,8 +209,13 @@ check('...and it is float rounding rather than a near miss', out.shaderVsCpu.max
 // THE BUG THAT WAS ALREADY THERE. Bilinear is a different surface from
 // the triangles the terrain is drawn as, and on ground with any saddle
 // in it the gap is a real fraction of a blade.
-check('and the bilinear read it replaces was NOT standing them on the ground',
-  out.bilinearVsTriangle.max > BLADE, `off by up to ${out.bilinearVsTriangle.max.toFixed(2)}u, ${(out.bilinearVsTriangle.max / BLADE).toFixed(1)} blade heights`);
+// ON THIS CLIFF the two surfaces are a blade apart - which is what
+// makes them provably different surfaces rather than two spellings of
+// one. It is NOT a claim about what a player would have seen: the same
+// measurement on real grades is in the pins, and it is a fraction of a
+// blade.
+check('bilinear and the drawn triangles are genuinely different surfaces (on terrain chosen to show it)',
+  out.bilinearVsTriangle.max > BLADE, `up to ${out.bilinearVsTriangle.max.toFixed(2)}u apart at a 311% grade; on real grades it is under 0.08u`);
 
 const failed = results.filter((x) => !x).length;
 console.log(`\n${results.length - failed}/${results.length} checks passed`);
