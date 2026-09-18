@@ -127,15 +127,19 @@ test('MAC-N1: the smith PAYS for a corpse\'s cuirass - the staged lot totals a f
   assert.equal(w.box?.buttons, 'YesNo', 'an offer is made');
   assert.ok(w.box.price > 0, `and it is for gold: ${w.box.price}`);
 
-  // THE DISCRIMINATING HALF: the shape the corpse used to mint - condition, no value - prices the WHOLE lot at NaN
-  // and the offer at 0. That is the bug, reproduced through the same window, so this pin fails on the fix's removal.
+  // THE DISCRIMINATING HALF, re-aimed by JAN1: the shape the corpse used to mint - condition, no value - priced the
+  // WHOLE lot at NaN and the offer at 0 (the bug, reproduced through the same window). Every price arm reads
+  // `itemValueOf` now (Janome's COST:NaN, a save from before this fix), so the valueless piece prices at its BASE and
+  // the lot at the number the set lot answers - the window can no longer print NaN whatever the minter did.
   const bare = [createWeapon(WEAPONS_ENUM.Claymore, 0), mintCondition({ group: 'Armor', templateIndex: ARMOR_ENUM.Cuirass, material: 0 })];
   const before = tradeCost('Sell', bare, { quality: 10 });
-  assert.ok(Number.isNaN(before.cost), 'one valueless piece takes the whole lot to NaN');
+  const set = tradeCost('Sell', bare.map((it) => setItemFields(it)), { quality: 10 });
+  assert.ok(Number.isFinite(before.cost) && before.cost > 0, `a valueless piece prices at its base, never NaN: ${before.cost}`);
+  assert.equal(before.cost, set.cost, 'the same number the set lot answers');
   const b = new NativeTradeWindow(smithHooks('Sell', bare));
   b.click(...LOCAL_SLOT0); b.click(...LOCAL_SLOT0);
   b.click(...MODE_ACTION);
-  assert.equal(b.box?.price, 0, 'and the smith "does not want to pay"');
+  assert.ok(b.box?.price > 0, `and the smith pays: ${b.box?.price}`);
 });
 
 test('MAC-N1: every Armor mint in the tree goes through SetItem\'s writes, and the value law has ONE home', () => {
@@ -148,7 +152,7 @@ test('MAC-N1: every Armor mint in the tree goes through SetItem\'s writes, and t
   // ONE home for `value ?? itemBaseValue` as a MINT (readers - itemInfo's %wth, the keyed shelf's itemValue - may fall back)
   const copies = SRC.filter(([p, s]) => p !== 'src/systems/itemTemplates.js' && /value: item\.value \?\? itemBaseValue\(item\)/.test(s)).map(([p]) => p);
   assert.deepEqual(copies, [], 'the five private copies of SetItem\'s value write are gone');
-  assert.match(rd('src/systems/itemTemplates.js'), /export function setItemFields\(item\) \{\s*return \{\s*\.\.\.item,\s*name: item\.name \?\? templateByIndex\(item\.templateIndex\)\?\.name,\s*value: item\.value \?\? itemBaseValue\(item\),\s*\};\s*\}/);
+  assert.match(rd('src/systems/itemTemplates.js'), /export function setItemFields\(item\) \{\s*return \{\s*\.\.\.item,\s*name: item\.name \?\? templateByIndex\(item\.templateIndex\)\?\.name,\s*value: itemValueOf\(item\),\s*\};\s*\}/, 'JAN1: the value write reads through itemValueOf - a non-finite saved value is an absent one');
 });
 
 test('MAC-N1: the recovered arrow is CreateWeapon\'s arrow with stackCount 1 (EnemyAttack.cs:145-147), minted by ONE export at every host', () => {

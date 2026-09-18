@@ -3,7 +3,7 @@
 // createCharacter (systems/chargen) rolls the real career the first
 // time a chargen-running context boots, and every host runs it
 // through systems/chargenSession.js - dungeonContext.js:1957,
-// world.js:2229, exterior.js:1240 and applyHeadlessChargen for the
+// world.js:2241, exterior.js:1241 and applyHeadlessChargen for the
 // test room (AUDIT 23).
 //
 // NOT A GAP (recorded): the stand-ins below - flat skills 30,
@@ -39,7 +39,7 @@ export const playerEntity = {
   armorValues: [100, 100, 100, 100, 100, 100, 100],
   skills: 30,       // the header's stand-in, and a HANDLED shape: permanentSkillValue (skills.js:72) returns a numeric `skills` whole, so no reader ever indexes it
   stats: { strength: 50, agility: 50, luck: 50 },
-  fatigue: 3200,    // (Str 50 + End 0) x 64 over the stand-in stats above - maxFatigue's own arithmetic (statMods.js:135), no dropped term; applyCharacter re-derives it from the rolled stats (S15)
+  fatigue: 3200,    // (Str 50 + End 0) x 64 over the stand-in stats above - maxFatigue's own arithmetic (statMods.js:139), no dropped term; applyCharacter re-derives it from the rolled stats (S15)
   items: [],        // the inventory (S2); gold rides as a Currency stack
   // THE ONE CONSTRUCTION SEAM, sixth occurrence (U24). DFU's
   // PlayerEntity is constructed WITH its skill-use counters, and

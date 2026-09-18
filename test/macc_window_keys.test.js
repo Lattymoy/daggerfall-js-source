@@ -82,12 +82,12 @@ test('MAC-C: the enhanced pack reads the registry for BOTH keys', () => {
   assert.ok(!/e\.key !== 'F6'/.test(code), 'the literal is gone');
   assert.match(s, /const act = actionOf\(e\);/, 'the registry answers');
   assert.match(s, /act !== 'Inventory'\) return;/, 'the pack closes on ITS action');
-  assert.match(s, /if \(act === 'CharacterSheet' && deps\?\.openCharSheet\)/, 'and crosses over on the other');
+  assert.match(s, /if \(act === 'CharacterSheet' && typeof deps\?\.openCharSheet === 'function'\)/, 'and crosses over on the other (JAN1: a function, asked for as one)');
   // the ORDER is the thing: the pack's own close law runs before the
   // slot is taken, or the sheet mounts under a window about to close.
   const arm = s.slice(s.indexOf("if (act === 'CharacterSheet'"));
-  assert.ok(arm.indexOf('onExit();') < arm.indexOf('deps.openCharSheet();'),
-    'close FIRST, then replace the slot - showOverlay is a replace, not a push');
+  assert.ok(arm.indexOf('const openCharSheet = deps.openCharSheet;') < arm.indexOf('onExit();') && arm.indexOf('onExit();') < arm.indexOf('\n    openCharSheet();'),
+    'the hook read, then close FIRST, then replace the slot - showOverlay is a replace, not a push (JAN1: the close empties the bag the hook lived in)');
 });
 
 test('MAC-C: the enhanced sheet page has a key of its own, and gives it back', () => {

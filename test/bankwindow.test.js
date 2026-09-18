@@ -372,5 +372,5 @@ test('B2: the host consumes the banking route that has been dead since G8', () =
   // the save carries them
   const save = readFileSync(join(root, 'src', 'systems', 'save.js'), 'utf8');
   assert.match(save, /snap\.bankAccounts =/);
-  assert.match(save, /entity\.bankAccounts = \(snap\.bankAccounts \?\? \[\]\)/);
+  assert.match(save, /entity\.bankAccounts = snap\.bankAccounts\?\.length \? snap\.bankAccounts\.map\(\(a\) => \(\{ \.\.\.a \}\)\) : createBankAccounts\(\);/, 'JAN1: no accounts saved is the full table');
 });

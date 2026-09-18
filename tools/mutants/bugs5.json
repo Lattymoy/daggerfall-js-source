@@ -132,8 +132,8 @@
   {
     "name": "F5-range-gate-dropped",
     "file": "src/render/enhancedLighting.js",
-    "old": "      : (d > uPointLights[i].w * ${glslFloat(AIR_CONTACT_RANGE_FRACTION)} || length",
-    "new": "      : (false || length",
+    "old": "      : (k == -2 || d > uPointLights[i].w * ${glslFloat(AIR_CONTACT_RANGE_FRACTION)} || length",
+    "new": "      : (k == -2 || false || length",
     "tests": [
       "test/el8_contact.test.js"
     ]

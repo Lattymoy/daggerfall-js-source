@@ -172,10 +172,10 @@ three (`src/scenes/worldModes.js:904-972`). **The exterior host mounted no
 enchant ctx at all** - the session has ONE, and that host set none, so
 every enchantment payload that needs a foe idled in the host a player
 spends most of their time in (`setDefaultEnchantCtx` is imported at
-`src/scenes/exterior.js:50` now, and the pool it answers with is the
+`src/scenes/exterior.js:51` now, and the pool it answers with is the
 live one). **`scenes/interior.js` registered a keydown listener and never
 called `swallowBrowserKey`**, so F5 inside a building reloaded the page
-and destroyed the session - against `src/ui/input.js:528-550`'s own law,
+and destroyed the session - against `src/ui/input.js:536-558`'s own law,
 "one list, because there is one keyboard, and every host has to use it."
 **The large HUD's sheath panel answered only in the dungeon**, three
 hosts inert. The interior ray had no quest-foe click arm, so `clicked foe`
@@ -521,7 +521,7 @@ Left, deliberately, each recorded at its site or here:
   a zero-damage arrow into a pacified watchman turned nobody while the
   identical SWING turned the area. `handleAttackFromPlayer` is on the
   pool's public surface now (as the encounter pool's has always been,
-  `exteriorFoes.js:1710`) and all three seams route by pool membership.
+  `exteriorFoes.js:1763`) and all three seams route by pool membership.
 - ~~The indoor WATCH refuses the Wabbajack: DFU transforms any
   `EnemyEntity` and `Knight_CityWatch` is one, but the guard pool exposes
   no remove/spawn pair. The refusal and its reason are written into the

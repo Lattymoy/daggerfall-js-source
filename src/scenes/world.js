@@ -65,7 +65,7 @@ import { preloadSpellbookArt, spellbookArtLoaded } from '../ui/spellbookWindow.j
 import { createSpellbookWindow } from '../ui/spellbookDoor.js';   // PX23: the book's one door
 import { calculateCastCost } from '../systems/spellcost.js';   // M2   // T3b
 import { rangedDamageSpells } from '../systems/spellcast.js';   // U42: the flight probe's picker
-import { worldMinutes, setWorldMinutes, setSharedClock, sharedClockOn, alignEntityClocks } from '../systems/worldTick.js';   // AUDIT 23 (C2): the ONE clock
+import { worldMinutes, setWorldMinutes, setSharedClock, sharedClockOn, alignEntityClocks, setWorldPriceTilt } from '../systems/worldTick.js';   // ECON1 / AUDIT ALL E1: the world's tilt off the file's base powers   // AUDIT 23 (C2): the ONE clock
 import { setSyntheticTimeIncrease } from '../systems/effectBroker.js';   // AUDIT 63 F13: DaggerfallTravelPopUp_OnPostFastTravel (EntityEffectBroker.cs:846-847)
 import { tallySwingSkills, SWING_WEAPON_FATIGUE_LOSS, playerPainVoice, playPlayerVoice, makeEnemiesHostile } from './hostCombat.js';   // ROAD-B: GameManager.MakeEnemiesHostile
 import { flashPlayerDamage } from '../ui/damageFlash.js';   // AUDIT 24 (wave 46): the arrow owes the flash too   // AUDIT 23 (C14)
@@ -135,7 +135,7 @@ import { arrivalClampMinutes, playerTravelPosition } from '../systems/travel.js'
 import { hasSpecialAbility, SPECIAL_ABILITY } from '../systems/rest.js';   // F-slice: the NoRegen restore gate
 import { locationCompassDirection, buildingCompassDirection, findFactionByTypeAndRegion } from '../systems/talk.js';   // wave 26: %di's remote arm + the region-faction search; the LOCAL arm beside it
 import { seasonValue, SEASONS, MINUTES_PER_DAY, dateFromClassicMinutes, dateTimeString, midDateTimeString, lunarPhasesFromMinutes, LUNAR_PHASES, isDayFromMinutes } from '../systems/gameDate.js';   // AUDIT 23 (wts-1); Q4-v: the notebook's header shapes; V2c: the enchant ctx's moon arms
-import { regionPriceAdjustment, TRANSPORT_HORSE, TRANSPORT_SMALL_CART } from '../systems/shopStock.js';   // Q4-v: CreateGold's regional term (the shops' own producer); U41: Items.Contains(Transportation, ...)
+import { regionPriceAdjustment, worldPriceTiltOf, TRANSPORT_HORSE, TRANSPORT_SMALL_CART } from '../systems/shopStock.js';   // Q4-v: CreateGold's regional term (the shops' own producer); U41: Items.Contains(Transportation, ...)
 import { getNameBankOfRegion, getRandomFullName } from '../characters/nameHelper.js';   // AUDIT 23 (characters-5); AUDIT 58: MacroHelper.GetRandomFullName, one home
 import { createHitEffects } from './hitEffects.js';
 import { createDroppedTorches } from './droppedTorches.js';
@@ -1240,7 +1240,19 @@ export async function bootWorld(canvas, renderer, params, status) {
               // by the person's LIVE archive, never the creation one
               frameCount: (rec, a) => personTex.get(a).getFrameCount(rec),
               collider: personCollider,
-              groundY: () => locOrigin[1],
+              // JAN1 (2026-09-18, Janome: "people walking in the sky lol, just outside the city"): THE TERRAIN'S
+              // FLOOR, not the location's average. The navgrid is the BLOCK rect; the flattened rect is the stamped
+              // tiles plus a clearance (terrainTiles.js setLocationTiles) and is smaller by a band of ~70 units on
+              // every side, and blendLocationTerrain only EASES that band toward the average - so a walker there stood
+              // at the average while the real ground fell away under it, ten metres in the air on the flattest city
+              // pixel. Inside the rect heightAt IS the average, so nothing there moves; the fixed city's host
+              // (exterior.js) already asks its collider. Persons are pixel-local vertically: the pixel's translation
+              // comes off the world height. A pixel not built yet answers the old constant.
+              groundY: (x, z) => {
+                const t = state.pixelTranslation(px, py);
+                const h = heightAt(x + locOrigin[0] + t[0], z + locOrigin[2] + t[2]);
+                return Number.isFinite(h) ? h - t[1] + 2.0 * 0.025 : locOrigin[1];
+              },
             });
             personBatches.set(person, renderer.createBillboardBatch(archive, 0, { w: 1, h: 1 }, [[0, 0, 0]]));
             return person;
@@ -2914,7 +2926,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // and dungeonContext.js:2203 mounts the same one, gated on
   // `opts.enchantCtx !== false` because setDefaultEnchantCtx is a
   // session singleton and EC1 already routes THIS host's mount into
-  // that context through modes.dungeonCtx - so worldModes.js:4637
+  // that context through modes.dungeonCtx - so worldModes.js:4643
   // passes false beside its `chargen: false` and only the standalone
   // ?dungeon route mounts its own. S40 filled isResting
   // in - the sentence that stood here said it "stays absent above
@@ -2999,11 +3011,11 @@ export async function bootWorld(canvas, renderer, params, status) {
     // through the one that owns the billboard - `exteriorFoePool` is
     // the watch AND the encounter foes, and this arm reached the
     // encounter pool's remover for both. That was not a leak: removeFoe
-    // (exteriorFoes.js:365-370) never looks the record up in `foes`, and
+    // (exteriorFoes.js:368-373) never looks the record up in `foes`, and
     // both pools share this host's one renderer, so a struck WATCHMAN
-    // got exactly what removeGuard (cityGuards.js:1240-1242) gives it -
+    // got exactly what removeGuard (cityGuards.js:1260-1262) gives it -
     // batch freed, `dead = true`, no corpse, skipped by the next AI pass
-    // (cityGuards.js:782) and spliced out at the end of it (:964).
+    // (cityGuards.js:795) and spliced out at the end of it (:984).
     // Routing by POOL MEMBERSHIP is an OWNERSHIP fix: each pool owns the
     // teardown of its own records so the two can diverge safely, and
     // removeFoe's `questBehaviour?.notifyDestroyed()` (exteriorFoes.js
@@ -3361,6 +3373,9 @@ export async function bootWorld(canvas, renderer, params, status) {
     // the slot, so this bypasses toggleSpellbook's already-open guard
     // - the inventory has just run its own close law.
     openSpellbook: () => { const b = makeSpellbookWindow(); if (b) townTalk.showOverlay(b); },
+    // JAN1: the pose is the player's - a door in or out hands the pair through these (HARD2c's one home)
+    weaponPose: () => weaponPoseOf(weaponRig.playerWeapon),
+    applyWeaponPose: (p) => applyWeaponPose(weaponRig.playerWeapon, p),
     openCharSheet: () => { if (charSheetDoorReady()) townTalk.showOverlay(makeCharSheetWindow()); },   // MAC-C: the pack's other window key crosses over rather than doing nothing - the same door the sheet's own Items button takes back the other way
     ...useHooks,   // U53: the one bag (revealMap, drinkPotion, getQuest)
     nowMinute: () => Math.floor(playerTicker.classicMinutes),
@@ -3913,6 +3928,19 @@ export async function bootWorld(canvas, renderer, params, status) {
     // :3616-3620) - a new world origin means a new building list and a
     // stale topic list
     npcSession.onWorldChanged();
+    // JAN1 (Janome: "sometimes speaking to people gives this interaction
+    // menu ... until i leave the building and re-enter"): the DIRECTORY
+    // half of that same law. syncTopics runs in the EXTERIOR frame alone
+    // (under the modal return), so a restore that lands the player INSIDE
+    // a building - worldQuickLoad's building arm, and the boot ?load that
+    // takes it before the frame loop has even started - mounted the
+    // interior with `topics` still null, and nothing could re-sync until
+    // the player walked back out. The Where-is directory stayed empty for
+    // the whole visit and openTalkWindow's door dropped every NPC in the
+    // building onto the keyed greeting chain. cam.pos is at the arrival
+    // and the destination pixel is built, so the pixel walk answers here;
+    // the frame loop's own call is then a no-op.
+    syncTopics();
   }
 
   /**
@@ -5378,14 +5406,14 @@ export async function bootWorld(canvas, renderer, params, status) {
      *  GameManager.Instance.WeaponManager.ToggleSheath() - a SINGLETON
      *  call with no scene gate at all, registered for both buttons at
      *  :211-212, so the panel is live on every screen the bar is drawn
-     *  on. Here routeAction's arm is optional (ui/input.js:597) and
+     *  on. Here routeAction's arm is optional (ui/input.js:605) and
      *  only dungeonContext.js carried the door, so above ground, in
      *  ?exterior and inside a building the click was swallowed by
      *  routeLargeHudClick's unconditional `return true` and nothing
      *  drew or sheathed - while Z kept working everywhere, which is
      *  why it read as "only the panel is dead". THE FOUR HOSTS RULE.
      *  No double-fire from the keyboard: routeKey declines
-     *  POLLED_ACTIONS (ui/input.js:458), so a Z press reaches the
+     *  POLLED_ACTIONS (ui/input.js:466), so a Z press reaches the
      *  frame's edge latch and nothing else. */
     toggleSheath: () => weaponRig.toggleSheath(),
     // QS2: the diamond's three presses, beside the sheath panel's door and for
@@ -5693,7 +5721,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       // gates the position now, not just the presence.
       // WEAPON-VIS2: this ladder never calls routeKey (the comment
       // above the Escape arm says so directly), so routeKey's own
-      // `POLLED_ACTIONS.has(act)` decline (ui/input.js:560) never
+      // `POLLED_ACTIONS.has(act)` decline (ui/input.js:568) never
       // touched this door. hudCtx carries toggleSheath (AUDIT 58, for
       // the large HUD's sheath panel), so 'ReadyWeapon' - Z - reached
       // routeAction from BOTH here AND the frame's own poll below
@@ -6064,7 +6092,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // exterior -> the townTalk overlay, interior OR dungeon -> the mode
   // machine's slot. U43-ii shipped the dungeon half: showQuestBox
   // offers the window to `modes.showQuestOverlay` below, and
-  // worldModes answers it in BOTH modes (worldModes.js:7404-7416 -
+  // worldModes answers it in BOTH modes (worldModes.js:7420-7432 -
   // dungeon routes to dungeonCtx.showOverlay), so a dungeon popup is
   // shown rather than logged loudly and dropped.
   // AUDIT 24 (wave 21): DaggerfallMessageBox.Show() is a
@@ -7224,6 +7252,10 @@ export async function bootWorld(canvas, renderer, params, status) {
   // front door never boots, and its interior frame and town room
   // disagreed with this one's (AUDIT ONLINE D6/D8).
   const onlineOn = params.has('online');
+  // ECON1 / AUDIT ALL E1: the world's price walk is tilted by the game's own BASE faction powers (FACTION.TXT, the talk
+  // host's file dict - never the player's store, which quests move) once the file is read; a modded file desyncs the
+  // shared economy (recorded). Offline nothing is installed and the player's own tilted walk runs.
+  if (onlineOn) townTalk.ensureFactions?.().then(() => { if (townTalk.factionDict) setWorldPriceTilt(worldPriceTiltOf(townTalk.factionDict)); }).catch(() => {});
   let online = null, remotePlayers = null, peerBodies = null, nameLayer = null, nameSight = null, _onlineLast = null, _onlineKey = null, _onlineKeySince = 0;
   // D-ONLINE1 (2026-09-17, a player: "still see you have died then main menu"): `onlineFrame` LEAVES the room the
   // instant the death screen goes up (AUDIT ONLINE D12: the dead broadcast nothing and see no one), every frame,
@@ -7411,6 +7443,11 @@ export async function bootWorld(canvas, renderer, params, status) {
       now: () => performance.now(),
       staleMs: FOES_STALE_MS,   // AUDIT WORLD6b C3: an owner whose stream has died is swept as the seat is (WORLD2's own window)
       onPeerHit: (hit, fate) => hitSend(hit, fate),   // AUDIT FOES FOE2: through the pending set, so a refused blow heals; LOOT-DUP: with the frame's own fate
+      // WATCH1 (2026-09-17, the paused online arc's first stop: "guards on a shared crime"): the criminal's watch
+      // rides the cell's stream as puppets at every peer, and a peer's blow on one lands through the watch's own
+      // door as NOT this player's blow (no Murder of mine for a watchman a peer kills). The crime itself stays the
+      // criminal's: a peer who strikes my watch commits nothing, and my murder marks no one else.
+      watch: { list: () => cityGuards.guards, hurt: (g, dmg, at, dir) => cityGuards.hurtGuard(g, dmg, at, dir, { fromPlayer: false, peer: true }) },   // AUDIT WATCH1 A4: and a PEER's - no reveal, no notice, no pile
       toWire: (feet) => { const wc = state.worldCoords(feet); return [wc.x, feet[1] - state.compensation[1], wc.z]; },
       toScene: (p) => { const l = state.localFromWorld(p[0], p[2]); return [l[0], p[1] + state.compensation[1], l[1]]; },
     });
@@ -9804,11 +9841,11 @@ export async function bootWorld(canvas, renderer, params, status) {
         // AFTER the damage fork closes (:615), so a shaft that lost the
         // roll still enrages what it hit and wakes the area. ROAD-G G1
         // (review): the WATCH carries the pair now
-        // (cityGuards.js:575-580), so this seam ROUTES by pool exactly
+        // (cityGuards.js:580-585), so this seam ROUTES by pool exactly
         // as `dealDamage` above it does, instead of excluding the
         // guards - a zero-damage shaft into a pacified watchman has to
         // reach the same door the zero-damage SWING already reaches
-        // (cityGuards.js:1029). DFU makes no pool distinction:
+        // (cityGuards.js:1049). DFU makes no pool distinction:
         // AssignBowDamageToTarget's player arm (DaggerfallMissile.cs
         // :660-688) calls WeaponDamage, so :630 runs for the shaft as
         // for the swing.

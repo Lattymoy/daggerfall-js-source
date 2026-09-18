@@ -305,9 +305,17 @@ export function held(keys, action) {
  * `noteKeyDown` takes the DOM's `repeat` flag: auto-repeat is one
  * physical press to Unity, and GetKeyDown fires once for it.
  */
-export function keyEdges() { return { down: new Set(), up: new Set(), downFrame: new Set(), upFrame: new Set() }; }
-export function noteKeyDown(edges, code, repeat = false) { if (edges && !repeat) edges.down.add(code); }
-export function noteKeyUp(edges, code) { if (edges) edges.up.add(code); }
+// JAN1 (2026-09-18, Janome: "when I press T and then H to quickly get on my horse, my hand also changes sides"):
+// THE RING RELEASES ONLY WHAT IT CAPTURED. T opens the transport picker, whose H accelerator (DialogShortcuts.txt's
+// TransportHorse - DFU's own row) picks the horse and closes the window on the DOWN edge; the host's keydown is gated
+// behind the overlay, so that down never reached the ring - but the keyup listener is ungated (a window opened
+// mid-swing must still let go), so the UP landed, and SwitchHand - the one action read off the UP ring
+// (ActionComplete) - flipped the hand. `own` holds every code whose down the ring saw; an up with no down of its own
+// is a window's, not the player's. The mouse listeners note their down unconditionally, so a release under a window
+// still lands, as its law says.
+export function keyEdges() { return { down: new Set(), up: new Set(), downFrame: new Set(), upFrame: new Set(), own: new Set() }; }
+export function noteKeyDown(edges, code, repeat = false) { if (edges && !repeat) { edges.down.add(code); edges.own?.add(code); } }
+export function noteKeyUp(edges, code) { if (!edges) return; if (edges.own && !edges.own.delete(code)) return; edges.up.add(code); }
 /** The frame's ONE rotation. Idempotent only in the sense that a second
  *  call in the same frame would throw the frame's edges away - so it is
  *  called once, at the top of the host's frame, and never inside a gate. */

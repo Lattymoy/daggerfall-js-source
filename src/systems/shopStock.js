@@ -469,11 +469,70 @@ export function stockHouseContainer({ buildingType, record }, playerEntity = {},
   return items;
 }
 
-/** RandomizeInitialRegionalPrices: 750..1250 per region, lazily. */
+/** RandomizeInitialRegionalPrices (:2040-2047): one region's opening index, 750..1250, off one roll. ECON1: one home
+ *  for the player's lazy draw and the world's epoch draw. */
+export const initialRegionPrice = (roll01) => 750 + Math.floor(roll01 * 501);
+// ECON1 (2026-09-17): THE WORLD'S PRICE SOURCE. Under the shared clock the region's index is the world's - a pure
+// function of the world's day (worldTick.worldRegionPrice) - and every consumer of this seam reads it instead of the
+// player's own walk. Installed and removed by setSharedClock; null offline, and then the player's own state answers
+// as DFU's does. The player's `regionPrices` are never written while the source stands: the save keeps its own
+// economy for its own world.
+let _worldPrice = null;
+/** ECON1: install (a function of a region index answering the world's index) or remove (null) the world's price source. */
+export function setWorldPriceSource(fn) { _worldPrice = typeof fn === 'function' ? fn : null; }
+export const worldPriceSourceOn = () => _worldPrice !== null;
+/** RandomizeInitialRegionalPrices: 750..1250 per region, lazily. ECON1: the world's, when the shared clock stands -
+ *  no lazy draw then (a neighbour's day must not move this player's dice, AUDIT WORLD6b B14's law) and no write. */
 export function regionPriceAdjustment(playerEntity, regionIndex, rolls = Math.random) {
+  if (_worldPrice) { const p = _worldPrice(regionIndex); if (Number.isFinite(p)) return p; }
   playerEntity.regionPrices ??= {};
-  playerEntity.regionPrices[regionIndex] ??= 750 + Math.floor(rolls() * 501);
+  playerEntity.regionPrices[regionIndex] ??= initialRegionPrice(rolls());
   return playerEntity.regionPrices[regionIndex];
+}
+/** ECON1 (AUDIT ALL E1): THE WORLD'S TILT. DFU's walk is tilted by The Merchants' power against the region's own
+ *  (trunc((merchants - province) / 5)), and the first cut dropped the term whole because the LIVE powers are each
+ *  player's (quests move them) - but with the tilt at zero the index never left ~500..1600 in twenty simulated years,
+ *  so PricesHigh / PricesLow could never light online and The Merchants' power never took its price bump
+ *  (regionPower.js). The BASE powers are the game's own data (FACTION.TXT, identical on every unmodded client), so the
+ *  tilt is computable from the day plus static data with no owner and no wire: only the quest-moved part had to go.
+ *  Over a dict of the FILE's records (the talk host's, never the player's store): a function of the region index
+ *  answering the tilt, or null where DFU walks nothing (no Province faction for the region; no Merchants at all, and
+ *  then DFU walks no region - the whole walk stands still). A modded FACTION.TXT desyncs the shared economy; recorded. */
+export function worldPriceTiltOf(baseDict) {
+  if (!baseDict || typeof baseDict.get !== 'function') return () => null;
+  const merchants = baseDict.get(MERCHANTS_FACTION_ID);
+  if (!merchants) return () => null;
+  return (regionIndex) => {
+    const province = findFactionByTypeAndRegion(baseDict, FACTION_TYPES.Province, regionIndex | 0);
+    return province ? Math.trunc(((merchants.power | 0) - (province.power | 0)) / 5) : null;
+  };
+}
+/** UpdateRegionalPrices' one step (:2064-2074): the merchants' tilt (`powerBias` = trunc((merchants - region) / 5),
+ *  the world's from the base powers, worldPriceTiltOf - ECON1 / AUDIT ALL E1) plus 50 less the index's own
+ *  distance from the pivot, one roll, 51/50 up or 49/50 down, clamped. ECON1: one home for the player's walk and the
+ *  world's. */
+export function priceWalkStep(adj, powerBias, roll01) {
+  const chanceOfPriceRise = (powerBias | 0) + 50 - Math.trunc((adj - 1000) / 25);
+  // Dice100.FailedRoll(chance) is !SuccessRoll(chance), and dice100() here IS SuccessRoll - one roll drawn either
+  // way, which is why the negation is on the RESULT and not a second draw.
+  const next = dice100(chanceOfPriceRise, roll01) ? Math.trunc(51 * adj / 50) : Math.trunc(49 * adj / 50);
+  return Math.min(PRICE_ADJUSTMENT_MAX, Math.max(PRICE_ADJUSTMENT_MIN, next));
+}
+/** UpdateRegionalPrices' condition half (:2075-2087), verbatim including the nesting: at or under 2000 and at or over
+ *  500 turns BOTH flags off, under 500 turns PricesLow on, over 2000 turns PricesHigh on. ECON1: one home for the
+ *  player's walk and the world's day at the player's own condition store. */
+export function applyPriceConditionFlags(conditions, regionIndex, adjusted, rolls = Math.random) {
+  if (!conditions) return;
+  if (adjusted <= 2000) {
+    if (adjusted >= 500) {
+      turnOffConditionFlag(conditions, regionIndex, REGION_FLAGS.PricesHigh);
+      turnOffConditionFlag(conditions, regionIndex, REGION_FLAGS.PricesLow);
+    } else {
+      turnOnConditionFlag(conditions, regionIndex, REGION_FLAGS.PricesLow, rolls);
+    }
+  } else {
+    turnOnConditionFlag(conditions, regionIndex, REGION_FLAGS.PricesHigh, rolls);
+  }
 }
 
 // ONE DFU MEMBER, ONE EXPORT: REGION_COUNT is PlayerEntity.regionData's
@@ -547,6 +606,7 @@ export const PRICE_ADJUSTMENT_MAX = 4000;
  */
 export function updateRegionalPrices(playerEntity, factionDict, times, rolls = Math.random, conditions = null) {
   if (!factionDict || !(times > 0)) return;
+  playerEntity.regionPrices ??= {};   // AUDIT ALL E2: the table is this walk's own to stand - it leaned on regionPriceAdjustment's lazy init, which the world's source (ECON1) skips
   // GetFactionData(The_Merchants) - `if (!...) return`, so a missing
   // merchants faction stops the WHOLE walk, not just one region.
   const merchants = factionDict.get(MERCHANTS_FACTION_ID);
@@ -556,29 +616,9 @@ export function updateRegionalPrices(playerEntity, factionDict, times, rolls = M
     if (!regionFaction) continue;
     for (let j = 0; j < times; j++) {
       const adj = regionPriceAdjustment(playerEntity, i, rolls);
-      const chanceOfPriceRise = Math.trunc((merchants.power - regionFaction.power) / 5)
-        + 50 - Math.trunc((adj - 1000) / 25);
-      // Dice100.FailedRoll(chance) is !SuccessRoll(chance), and
-      // dice100() here IS SuccessRoll - one roll drawn either way,
-      // which is why the negation is on the RESULT and not a second
-      // draw.
-      const next = dice100(chanceOfPriceRise, rolls())
-        ? Math.trunc(51 * adj / 50)
-        : Math.trunc(49 * adj / 50);
-      const adjusted = Math.min(PRICE_ADJUSTMENT_MAX, Math.max(PRICE_ADJUSTMENT_MIN, next));
+      const adjusted = priceWalkStep(adj, Math.trunc((merchants.power - regionFaction.power) / 5), rolls());   // ECON1: one home for the step
       playerEntity.regionPrices[i] = adjusted;
-      // :2075-2087, verbatim including the nesting.
-      if (!conditions) continue;
-      if (adjusted <= 2000) {
-        if (adjusted >= 500) {
-          turnOffConditionFlag(conditions, i, REGION_FLAGS.PricesHigh);
-          turnOffConditionFlag(conditions, i, REGION_FLAGS.PricesLow);
-        } else {
-          turnOnConditionFlag(conditions, i, REGION_FLAGS.PricesLow, rolls);
-        }
-      } else {
-        turnOnConditionFlag(conditions, i, REGION_FLAGS.PricesHigh, rolls);
-      }
+      applyPriceConditionFlags(conditions, i, adjusted, rolls);   // :2075-2087, one home for the flag half
     }
   }
 }

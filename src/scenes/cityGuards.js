@@ -60,7 +60,7 @@ import { copyEffectEntry } from '../systems/save.js';   // AUDIT 26 F217
 import { KNIGHT_CITY_WATCH } from '../characters/mobileTypes.js';
 import { MobileUnit } from '../characters/mobileUnit.js';
 import { EnemyAI, withinYaw, isBackFacing } from '../characters/enemyMotor.js';
-import { runTargetMachine, isPlayerTarget, PLAYER_TARGET, resetAllyTeamOnPlayerAttack } from '../characters/enemyTargets.js';   // MT-ii   // ROAD-G G1: MakeEnemyHostileToAttacker's entity-side half, for the watch too
+import { runTargetMachine, isPlayerTarget, PLAYER_TARGET, resetAllyTeamOnPlayerAttack, wireRecipient, bumpAtkCount } from '../characters/enemyTargets.js';   // AUDIT WATCH1: the wire's spellings, one home   // MT-ii   // ROAD-G G1: MakeEnemyHostileToAttacker's entity-side half, for the watch too
 import { applyDamageToNonPlayer, spawnEnemyLoot } from './hostCombat.js';   // MT-ii: EnemyAttack.ApplyDamageToNonPlayer
 import { EnemyAttack } from '../characters/enemyAttack.js';
 import { makeEnemyEntity } from '../characters/enemyEntity.js';
@@ -147,7 +147,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
   // with no Y test. The default keeps the two street pools as they were.
   playerInside = false,
   // ROAD-G G1: GameManager.MakeEnemiesHostile over the HOST's whole
-  // area, the encounter pool's dep to the line (exteriorFoes.js:110).
+  // area, the encounter pool's dep to the line (exteriorFoes.js:112).
   // DaggerfallEntityBehaviour.cs:255-258 fires it when a NON-hostile
   // enemy is struck by the player, and Knight_CityWatch is an
   // EnemyClass - one of the two EntityTypes that walk (:250). This
@@ -219,14 +219,14 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
   const activeCount = () => guards.filter((g) => !g.dead).length;
 
   /** SpawnCityGuard: the C17 class-foe recipe at a position/facing. */
-  async function spawnGuardAt(pos, yaw, attackerFeet = null) {
+  async function spawnGuardAt(pos, yaw, attackerFeet = null, { level = null } = {}) {   // AUDIT ALL A6: a restore hands the saved level in as final
     const basics = ENEMY_BASICS[GUARD_MOBILE_TYPE];
     const pending = { feet: [pos[0], pos[1] + 0.1, pos[2]] };   // AUDIT-39r: shifted by offsetAll until the record lands
     spawning.push(pending);
     const gen = epoch;   // AUDIT-39r: the world this guard is being posted to
     try {
       const career = await ensureCareer();
-      const entity = makeEnemyEntity(GUARD_MOBILE_TYPE, basics, career, playerEntity.level);
+      const entity = makeEnemyEntity(GUARD_MOBILE_TYPE, basics, career, level ?? playerEntity.level, Math.random, { exactLevel: level != null });   // AUDIT ALL A6: a quickload re-rolled every standing watchman's Range(3,7) bonus - a free difficulty re-roll, and online the streamed `l` moved and every reader tore its puppet down
       // RF2: SetEnemyCareer's whole loot chain, one seam
       // (hostCombat.spawnEnemyLoot) - the table on the PLAYER's gender
       // (AUDIT 18; Knight_CityWatch has NO LootTableKey in DFU, so the
@@ -280,6 +280,11 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
       const mobile = new MobileUnit(GUARD_MOBILE_TYPE, basics, (rec) => tex.getFrameCount(rec), Math.random, 'male');
       const batch = renderer.createBillboardBatch(archive, 0, { w: 1, h: 1 }, [[0, 0, 0]]);
       const g = { id: _nextGuardId++, mobile, ai, attack, entity, batch, tex, archive, mobileType: GUARD_MOBILE_TYPE, idleH, dead: false, _prevMState: 'Idle', _mout: null,
+        // WATCH1: THE WATCH RIDES THE CELL'S STREAM. `seq` is this watchman's number on the wire, minted by the
+        // encounter pool's own counter the first time he rides a frame (one number space with the foes, so a
+        // peer's blow names one thing); `_atkA`/`_atkB` the attack count and its recipient in the pool's spelling
+        // (WORLD6b / AUDIT WORLD6b-iii(a) A3), latched at the strike edge below. Null and zero until he rides.
+        seq: null, _atkA: 0, _atkB: '',
         sounds: new EnemySoundSource(GUARD_MOBILE_TYPE, rand),
         // MT-ii: THE CROSS-POOL DAMAGE DOOR. A striker resolves its
         // melee frame inside its OWN pool's loop, so the target's pool
@@ -571,7 +576,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
    *  which arrowFlight.js calls unconditionally (arrowFlight.js:230)
    *  because `dealDamage` is inside its own `dmg > 0` fork - so the
    *  door is PUBLIC (the returned surface below), exactly as the
-   *  encounter pool's is (exteriorFoes.js:1736). */
+   *  encounter pool's is (exteriorFoes.js:1785). */
   function handleAttackFromPlayer(g, playerFeet = null) {
     if (!g?.ai) return;
     if (!g.ai.isHostile) makeAreaHostile?.();
@@ -594,8 +599,10 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
    *  watchman, an ungated crime FRAMES THE PLAYER for a murder they
    *  did not commit, and the watch responds to that crime, so the
    *  town turns on them for a rat's work. */
-  function damageGuard(g, damage, playerFeet, knockDir, { fromPlayer = true, bypassShield = false } = {}) {
-    if (damage > 0) markConcealedHit(g, _ecvT);   // ECV1: a hit on an unseen watchman flashes him
+  function damageGuard(g, damage, playerFeet, knockDir, { fromPlayer = true, bypassShield = false, peer = false } = {}) {
+    // AUDIT WATCH1 A4: a PEER's blow (WATCH1's net seam) is the encounter pool's peer law (AUDIT WORLD6b B2): no
+    // reveal of this player's and no kill notice of this player's - the striker's own rang at the striker.
+    if (damage > 0 && !peer) markConcealedHit(g, _ecvT);   // ECV1: a hit on an unseen watchman flashes him
     // ROAD-G G1: HandleAttackFromSource's MOBILE-ENEMY AGGRO BLOCK
     // (DaggerfallEntityBehaviour.cs:250-261), which this door carried
     // none of while both encounter pools carried it whole. The order is
@@ -628,7 +635,13 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
       // EnemyDeath:131-136 - the clear gates on `senses.Target ==
       // PlayerEntityBehaviour`, which MT-ii makes observable.
       if (isPlayerTarget(g.ai?.target) && g.ai?.detected) setEnemyAlert(playerEntity, false);
-      sayEnemyDied(say, GUARD_MOBILE_TYPE);   // EnemyDeath:79-83, the kill notice
+      if (!peer) sayEnemyDied(say, GUARD_MOBILE_TYPE);   // EnemyDeath:79-83, the kill notice (AUDIT WATCH1 A4: the striker's alone)
+      // AUDIT WATCH1 A3: A BODY ANOTHER HAND FELLED CARRIES NOTHING. Killing the watch yourself is Murder, a
+      // Brotherhood tally and a legal-reputation cost; a peer's kill is none of those for the owner (the crime is
+      // whose it was), and had left five armed and armoured bodies in the street for the owner to strip for free -
+      // two clients could clear a town's watch at no cost to anyone. The walk-away precedent (G3: "walk-aways
+      // vanish with their items") is the same law: only a body the owner killed is the owner's to loot.
+      if (peer) g.entity.items = [];
       raiseEnemyDeath(g.entity);   // UL1: OnEnemyDeath (:139)
       // G4 (HandleAttackFromSource, verbatim): killing the city watch
       // IS Murder, and CG2 landed the second half -
@@ -856,6 +869,13 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
       const strikeEdge = mstate !== 'Idle' && (g._prevMState ?? 'Idle') === 'Idle';
       g._prevMState = mstate;
       if (strikeEdge) playEnemyClip(audio, g.sounds.attack(), g.ai.feet, acuteHearingMultiplier(playerEntity));   // AUDIT 24 (wave 41); CF1: acute hearing
+      // WATCH1: the attack count on the wire, the ranged bit low (the watch never shoots - `rangedAttack = false`
+      // above, AUDIT 18), and whom the swing was at: '.' me, '' a foe of mine (a watchman brawling a rat, MT-ii). A
+      // peer is never a watchman's target (the hunt's candidates are this host's own, never the roster), so a puppet
+      // of him lands nothing at its reader (exteriorFoes' update, the puppet arm: `recipientIsMe(f, f._pupBlowAt)`)
+      // and only draws the swing. AUDIT WATCH1 A2: read off the TARGET (`g.ai.target`), through the one home - the
+      // first cut handed `_tgt`, which is the target's FEET, to isPlayerTarget, so the '.' arm was dead code.
+      if (strikeEdge) { g._atkA = bumpAtkCount(g._atkA, false); g._atkB = wireRecipient(g.ai.target); }
       g._mout = g.mobile.update(dt, {
         moving: g.ai.moving,
         striking: strikeEdge,
@@ -1201,7 +1221,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
       const wc = toNative(g.ai.feet);
       return {
         nativeX: wc.x, nativeZ: wc.z, y: g.ai.feet[1], yaw: g.ai.yaw,
-        health: g.entity.health, maxHealth: g.entity.maxHealth,
+        health: g.entity.health, maxHealth: g.entity.maxHealth, level: g.entity.level,   // AUDIT ALL A6: the level the bonus was rolled into
         magicka: g.entity.magicka ?? 0, fatigue: g.entity.fatigue ?? 0,
         items: (g.entity.items ?? []).map((it) => ({ ...it })),
         activeEffects: (g.entity.activeEffects ?? []).map(copyEffectEntry),
@@ -1212,7 +1232,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
   function restoreWorld(saved, fromNative, yOffset = 0) {
     for (const sg of saved ?? []) {
       const [lx, lz] = fromNative(sg.nativeX, sg.nativeZ);
-      spawnGuardAt([lx, sg.y + yOffset, lz], sg.yaw ?? 0, null).then((g) => {
+      spawnGuardAt([lx, sg.y + yOffset, lz], sg.yaw ?? 0, null, { level: Number.isFinite(sg.level) ? sg.level : null }).then((g) => {
         if (!g) return;
         g.entity.maxHealth = sg.maxHealth ?? g.entity.maxHealth;
         g.entity.health = Math.min(sg.health ?? g.entity.health, g.entity.maxHealth);
@@ -1259,10 +1279,12 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
     hurtGuard: (g, dmg, playerFeet, knockDir = null, opts = undefined) => damageGuard(g, dmg, playerFeet, knockDir, opts),   // AUDIT WORLD6b-iii(a) B2: and the provenance (a foe's blast on a guard is not my blow)
     // ROAD-G G1 (review): the seam forwards the OPTIONS bag too, so the
     // `fromPlayer` gate (F035's law, DaggerfallEntityBehaviour.cs:203)
-    // has a negative arm a test can drive. `hurtGuard` above forwards
-    // none, and the real `fromPlayer: false` callers - the cross-pool
-    // `hurtFromFoe` minted at spawn (:264) and the fall arm inside
-    // update() - both need ARENA2 to reach.
+    // has a negative arm a test can drive. The real `fromPlayer: false`
+    // callers are three: the cross-pool `hurtFromFoe` minted at spawn
+    // (the record above) and the fall arm inside update(), which need
+    // ARENA2 to reach, and WATCH1's `watch.hurt` net seam (world.js's
+    // exteriorFoes.setNet), which hands `{ fromPlayer: false, peer: true }`
+    // through `hurtGuard` and is the one a test drives (test/watch1.test.js).
     _damage: (i, dmg, opts) => { const g = guards[i]; if (g && !g.dead) damageGuard(g, dmg, [0, 0, 0], null, opts); },   // probe/test seam through the REAL death path
     _debug: () => guards.map((g) => ({ dead: g.dead, hp: g.entity.health, pos: g.ai.feet.map((v) => +v.toFixed(1)), detected: g.ai.detected, state: g.attack.machine.state, moving: g.ai.moving, dist: +(g.ai._dist ?? -1).toFixed(1), giveUp: g.ai.giveUpTimer })) };
 }

@@ -105,9 +105,14 @@ export function setItemFields(item) {
   return {
     ...item,
     name: item.name ?? templateByIndex(item.templateIndex)?.name,
-    value: item.value ?? itemBaseValue(item),
+    value: itemValueOf(item),
   };
 }
+/** JAN1 (2026-09-18, Janome: "when I try to sell certain items I get COST:NaN ... he offers me 0"): THE ONE VALUE
+ *  READ. DFU's `item.value` is always an int; the port's can be absent (an item saved before MAC-N1 set every minter)
+ *  or, worse, NaN (a sum over an absent term), and `??` lets NaN through. A value that is not a finite number is no
+ *  value: the template's base price answers, as SetItem's own write does. Every price arm reads through here. */
+export const itemValueOf = (item) => (Number.isFinite(item?.value) ? item.value : itemBaseValue(item ?? {}));
 
 // ---- AUDIT 17e F9: GetItemImage's INVENTORY branch, verbatim ----
 // (ItemHelper.cs:399-430 + DaggerfallUnityItem.GetInventoryTexture*

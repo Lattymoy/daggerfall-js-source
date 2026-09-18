@@ -137,7 +137,7 @@ test('WORLD6b-iii(c): a pile larger than one frame is granted in parts - the fir
 
 test('WORLD6b-iii(c): by source - the record and the reader, the target, the ask, the grant emptied only once the frame left, the record', () => {
   const x = rd('src/scenes/exteriorFoes.js');
-  assert.match(x, /o: f\.corpse \? Math\.min\(255, f\.entity\?\.items\?\.length \| 0\) : 0 \};/, 'the record');
+  assert.match(x, /o: onWatch \? 0 : \(f\.corpse \? Math\.min\(255, f\.entity\?\.items\?\.length \| 0\) : 0\) \};/, 'the record (AUDIT WATCH1 A3: a watch body advertises no pile)');
   assert.match(x, /if \(r\.o !== undefined\) \{ p\.o = r\.o; if \(r\.o > 0 && !\(f\._closedN != null && \(_owners\.get\(f\.puppet\)\?\.n \?\? 0\) <= f\._closedN\)\) f\.corpseDisabled = false; \}/, 'the reader (AUDIT WORLD6b-iii(c) A7: a word older than the grant that closed it re-opens nothing)');
   assert.match(x, /isCorpse: \(f\) => !!f\.corpse && !!f\.entity && \(!f\.puppet \|\| \(f\._pup\?\.o \| 0\) > 0\),/, 'the target');
   assert.match(x, /_net\?\.onPeerHit\?\.\(\{ to: f\.puppet, k: _owners\.get\(f\.puppet\)\?\.k \?\? _net\.room\?\.\(\) \?\? null, i: f\.seq, take: 1 \},\s*\{ sent: \(\) => \{ f\._takeAsked = _now\(\); \} \}\);/, 'the ask, keyed to the owner\'s cell, latched when the frame left (AUDIT WORLD6b-iii(c) B1; LOOT-DUP: and left is THIS frame\'s word, not the hit queue\'s)');
