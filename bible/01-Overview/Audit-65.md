@@ -354,7 +354,7 @@ half the lanes' own mutation tallies could not see.
   permanent `entity.skills` array while the hand-to-hand damage row four
   lines below it (AUDIT 63 F34) already read live, so a lycanthrope read
   `Hand-to-Hand 30%` on one line and a damage range computed from 60 on
-  the next. `charsheet.js:659` and `enhancedCharSheet.js:145` read
+  the next. `charsheet.js:667` and `enhancedCharSheet.js:145` read
   `skillValue` now, which moves the enhanced skin's meter with its
   number (`enhancedMenu.js:1972-1973`) - correctly, since the attribute
   bars beside it were already live. The art-less `_drawFallback` pane

@@ -2955,7 +2955,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // and dungeonContext.js:2203 mounts the same one, gated on
   // `opts.enchantCtx !== false` because setDefaultEnchantCtx is a
   // session singleton and EC1 already routes THIS host's mount into
-  // that context through modes.dungeonCtx - so worldModes.js:4643
+  // that context through modes.dungeonCtx - so worldModes.js:4652
   // passes false beside its `chargen: false` and only the standalone
   // ?dungeon route mounts its own. S40 filled isResting
   // in - the sentence that stood here said it "stays absent above
@@ -6133,7 +6133,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // exterior -> the townTalk overlay, interior OR dungeon -> the mode
   // machine's slot. U43-ii shipped the dungeon half: showQuestBox
   // offers the window to `modes.showQuestOverlay` below, and
-  // worldModes answers it in BOTH modes (worldModes.js:7420-7432 -
+  // worldModes answers it in BOTH modes (worldModes.js:7429-7441 -
   // dungeon routes to dungeonCtx.showOverlay), so a dungeon popup is
   // shown rather than logged loudly and dropped.
   // AUDIT 24 (wave 21): DaggerfallMessageBox.Show() is a
@@ -6546,7 +6546,7 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  :3552), so the in-place pass is right for both. Also: C# calls
    *  this whether or not GetQuest found anything - the null-parent arm
    *  is a DFU forum-bug fix INSIDE ExpandQuestMessage, not a caller
-   *  guard, and expandQuestMessage carries it (questMacros.js:437). */
+   *  guard, and expandQuestMessage carries it (questMacros.js:478). */
   const expandQuestTokens = (questID, tokens) => {
     expandQuestMessage(questBridge?.machine.getQuest(questID) ?? null, tokens, true);
     return tokensToString(tokens);
@@ -8215,14 +8215,20 @@ export async function bootWorld(canvas, renderer, params, status) {
     playerWeapon: params.get('weapon') ?? undefined,
     paint: params.has('paint'),
     piece: params.has('piece') ? Number(params.get('piece') || 102) || 102 : 0,
-    // uploadRecordFrame rides here too: worldModes hands this bag
-    // straight to buildDungeonContext and buildInteriorContext, and
-    // BOTH destructure it for their mobile-sprite draw. Leaving it
-    // out did not fail loudly - it arrived as undefined and threw
-    // `is not a function` on the first enemy frame in a dungeon
-    // entered from this host, while the standalone ?dungeon scene
-    // (which spreads the whole pipeline) was fine.
-    pipeline: { getGpuMesh, cpuModels, getTexture, uploadRecord, uploadRecordFrame, arch, palette, getMachineryParts },   // WM4b: the mill machinery's moving parts, for the interior arm
+    // PORTRAIT1 (2026-09-18, Mac: "talking to anyone indoors shows the error, outdoors looks normal" - the talk
+    // window drew Daggerfall's own "OOPS! Tell Mack NOW" debug face): THE HAND-LISTED BAG IS RETIRED, and this is
+    // the SECOND key it cost. The note it replaces recorded the first: `uploadRecordFrame` was left out of the
+    // list, arrived as undefined and threw `is not a function` on the first enemy frame in a dungeon entered from
+    // this host, "while the standalone ?dungeon scene (which spreads the whole pipeline) was fine". That reading
+    // was right and the lesson was not taken - the list stayed. `flatFaceIndex` then went the same way and was
+    // WORSE, because nothing threw: worldModes' `staticNpcPortrait` reads it with `?.`, so FLATS.CFG was simply
+    // never consulted, both arms of GetPortraitIndexFromStaticNPCBillboard collapsed to -1, and every static NPC
+    // in the game kept the record-410 default that is meant to be a last resort. A silent wrong face, everywhere,
+    // with the file loaded and in memory the whole time (the CAPTIONS worked, because they close over the host's
+    // own `pipeline` variable and never went through this bag at all).
+    // So the bag is the pipeline, as `dungeon.js` has always handed it. `arch` and `palette` ride along because
+    // `createDataPipeline` takes them as inputs and returns only the palette.
+    pipeline: { ...pipeline, arch, palette },   // PORTRAIT1: THE WHOLE PIPELINE, as the standalone ?dungeon scene has always handed it (dungeon.js) - see the note above
     doorTargets: () => buildingDoors.map((e) => ({
       ...e, door: shiftedDoor(e),
       dfLocation: locationIndex.get(e.pixelKey), group: e.pixelKey,

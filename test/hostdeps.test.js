@@ -70,16 +70,40 @@ function literalKeys(src, opener) {
 
 const missing = (needed, given) => [...needed].filter((k) => !given.has(k));
 
-test('worldModes unpacks nothing from `pipeline` that its hosts do not hand it', () => {
+test('worldModes takes nothing off `pipeline` that its hosts do not hand it - DESTRUCTURED keys and MEMBER READS alike', () => {
   const modes = read('src/scenes/worldModes.js');
   const needed = destructuredFrom(modes, 'pipeline');
   assert.ok(needed.size >= 5, 'the destructure was found at all');
   assert.ok(needed.has('uploadRecordFrame'), 'the one that was missing is in the contract');
+  // PORTRAIT1 (2026-09-18): THE GAP THIS PIN HAD. It read the DESTRUCTURE alone, and `flatFaceIndex` is taken off
+  // the bag as a MEMBER (`pipeline.flatFaceIndex`, the static-NPC portrait's FLATS.CFG lookup). So the key went
+  // missing from both host bags and this pin - written after `uploadRecordFrame` did the same thing - stayed green
+  // while every static NPC in the game drew Daggerfall's "OOPS! Tell Mack NOW" debug face. A member read is a
+  // dependency exactly as a destructured name is.
+  for (const m of modes.matchAll(/\bpipeline\.([A-Za-z_$][\w$]*)/g)) needed.add(m[1]);
+  assert.ok(needed.has('flatFaceIndex'), 'the second one that went missing is in the contract too');
   for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
-    const given = literalKeys(read(host), 'pipeline: {');
-    assert.deepEqual(missing(needed, given), [],
-      `${host} must supply every key worldModes unpacks from pipeline`);
+    const src = read(host);
+    const bag = /^\s*pipeline: \{ ([^}]*) \},/m.exec(src);
+    assert.ok(bag, `${host} hands a pipeline bag`);
+    // A bag that SPREADS the pipeline hands over everything the pipeline exports, which is the whole point of
+    // spreading it: two keys have now been lost to hand-listing, and the standalone ?dungeon scene - which has
+    // always spread - never lost either. So the spread satisfies the contract, and the hand-list must earn it.
+    if (/^\.\.\.pipeline\b/.test(bag[1].trim())) {
+      const dp = read('src/scenes/dataPipeline.js');
+      const returned = dp.slice(dp.lastIndexOf('return {'));
+      const extra = literalKeys(src, 'pipeline: {');
+      const absent = [...needed].filter((k) => !extra.has(k) && !new RegExp(`\\b${k}\\b`).test(returned));
+      assert.deepEqual(absent, [], `${host} spreads the pipeline, but it does not export: ${absent.join(', ')}`);
+      continue;
+    }
+    assert.deepEqual(missing(needed, literalKeys(src, 'pipeline: {')), [],
+      `${host} must supply every key worldModes takes off pipeline`);
   }
+  // and the two hosts must agree, byte for byte - they always have, and a drift between them is how one host's
+  // interior gets a face and the other's does not
+  const bagOf = (h) => /^\s*pipeline: \{ ([^}]*) \},/m.exec(read(h))[1].trim();
+  assert.equal(bagOf('src/scenes/world.js'), bagOf('src/scenes/exterior.js'), 'the two hosts hand the SAME bag');
 });
 
 test('buildDungeonContext gets every dep it unpacks, from BOTH of its callers', () => {

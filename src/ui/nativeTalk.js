@@ -669,7 +669,7 @@ export class NativeTalkWindow {
     // sentence the player-says panel is showing. The port re-ran
     // _updateQuestion here unconditionally, and GetQuestionText is
     // ExpandRandomTextRecord - a fresh RANDOM variant of 7212/7225 per
-    // call (systems/answerPipeline.js -> talkMacros.js:349-353) - so
+    // call (systems/answerPipeline.js -> talkMacros.js:374-378) - so
     // the conversation recorded a different sentence from the one on
     // screen. _selectIndex IS that guarded handler.
     this._selectIndex(idx);
@@ -920,7 +920,7 @@ export class NativeTalkWindow {
    *  AUDIT 65 UI-1: the third and fourth slots are the HOST's, not
    *  this window's. Every overlay slot dispatches
    *  `click(vx, vy, right, middle)` - townTalk.js:1154,
-   *  worldModes.js:7492, dungeonContext.js:5870 - so the clock that
+   *  worldModes.js:7501, dungeonContext.js:5870 - so the clock that
    *  used to sit in the fourth arrived as `e.button === 1`, a boolean,
    *  and `false ?? Date.now()` kept the `false`: every second click in
    *  the topic list picked. The THIRD slot is really read - it is the

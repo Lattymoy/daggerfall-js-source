@@ -3063,7 +3063,16 @@ export function createWorldModes(host) {
    *  portraitIndexFromStaticNPCBillboard (systems/npcSession.js); this
    *  is the host wiring it needs - the faction record from townTalk's
    *  FACTION.TXT and FLATS.CFG's faceIndex column from the data
-   *  pipeline (dataPipeline.js:46, loaded for the captions already). */
+   *  pipeline (dataPipeline.js's `flatFaceIndex`).
+   *
+   *  PORTRAIT1: this comment used to say the column was "loaded for the
+   *  captions already", and that is what licensed the host bag to leave
+   *  `flatFaceIndex` out. It was half true and wholly misleading: the
+   *  file IS loaded and warmed in the host, but the CAPTIONS reach it by
+   *  closing over the host's own `pipeline` variable, never through this
+   *  bag. This read is the bag's only consumer, so it was the only one
+   *  that broke - silently, because the `?.` below never traps. The
+   *  hosts spread the whole pipeline now. */
   function staticNpcPortrait(npcData) {
     return portraitIndexFromStaticNPCBillboard(npcData, {
       factionData: townTalk?.factionDict?.get(npcData?.factionID ?? 0) ?? null,
