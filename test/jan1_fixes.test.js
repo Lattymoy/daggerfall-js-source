@@ -100,3 +100,34 @@ test('JAN1 (3): the trade window prices an item with no finite value at its base
   assert.equal((t.match(/calculateCost\(item\.value/g) ?? []).length, 0, 'no price arm reads item.value raw');
   assert.equal((t.match(/itemValueOf\(item\)/g) ?? []).length, 4, 'four arms through the one read: Buy, Sell, SellMagic, Repair');
 });
+
+// (4) "sometimes speaking to people gives this interaction menu ... anyone else i speak to in the same building has the
+//     same thing happen, until i leave the building and re-enter" - the box is townTalk's KEYED CHAIN (showGreeting),
+//     which openTalkWindow takes when the Where-is directory is empty. The directory is synced from the EXTERIOR frame
+//     alone (under the modal return), so a load that lands the player inside a building (the boot ?load runs before
+//     the frame loop even starts) had no frame to sync it and no way to recover until the player stepped back outside.
+//     The arrival now answers both halves of TalkManager's OnLoadEvent: the session AND the topics.
+test('JAN1 (4): a topic-less host opens the KEYED chain verbatim (the box in the screenshot); the arrival syncs the talk topics beside the session, because the frame\'s own sync sits below the modal return and never runs indoors', async () => {
+  const { createTownTalk } = await import('../src/scenes/townTalk.js');
+  const host = createTownTalk({
+    renderer: { uploadTexture: () => ({}) }, canvas: { width: 640, height: 400 },
+    fetchBytes: async () => { throw new Error('this pin loads no ARENA2'); },
+    playerEntity: { name: 'T', stats: { personality: 50 }, skills: 30, skillUses: [] },
+    regionIndex: 0,
+  });
+  host.openTalkWindow('What do you want?');
+  const w = host.overlay;
+  assert.ok(w?.isChoiceWindow, 'no directory: the keyed chain, not the enhanced panel');
+  assert.deepEqual(w.options.map((o) => o.label).filter(Boolean), ['W - where is...', 'T - tone: Normal', 'Esc - goodbye']);
+  assert.match(rd('src/scenes/townTalk.js'), /if \(talkDoorReady\(\) && directory\.length\) \{/, 'the one door the symptom comes out of');
+
+  const world = rd('src/scenes/world.js');
+  assert.match(world, /npcSession\.onWorldChanged\(\);\n(?:\s*\/\/[^\n]*\n)*\s*syncTopics\(\);\n  \}/,
+    'a new world origin re-answers BOTH halves of TalkManager\'s OnLoadEvent - the topics sync right beside the session');
+  const modalAt = world.indexOf('if (modes.frame(dt, now)) {');
+  const frameSync = world.indexOf('syncTopics();   // T3d');
+  assert.ok(modalAt > 0 && frameSync > modalAt, 'the frame\'s own sync is BELOW the modal return: it never runs indoors');
+  const bootLoad = world.indexOf('await worldQuickLoad(');
+  assert.ok(bootLoad > 0 && world.lastIndexOf('requestAnimationFrame(frame);') > bootLoad,
+    'the boot load runs inside bootWorld, before the frame loop starts - the deterministic arm');
+});

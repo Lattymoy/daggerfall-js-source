@@ -128,8 +128,8 @@
   {
     "name": "JAN1-the-dungeon-exit-reads-the-pose-after-the-teardown",
     "file": "src/scenes/worldModes.js",
-    "old": "    const pose = weaponPoseOf(dungeonCtx.weaponRig?.()?.playerWeapon ?? null);\n    dungeonCtx.destroy();",
-    "new": "    dungeonCtx.destroy();\n    const pose = weaponPoseOf(dungeonCtx?.weaponRig?.()?.playerWeapon ?? null);",
+    "old": "    const pose = dungeonPose();\n    host.onDungeonLeave?.();   // WORLD1: the room's memory goes out while the dungeon still stands\n    teardownDungeonQuestFlats();   // B2: OnDestroy for the quest stands, before the batch teardown\n    dungeonCtx.destroy();\n",
+    "new": "    host.onDungeonLeave?.();   // WORLD1: the room's memory goes out while the dungeon still stands\n    teardownDungeonQuestFlats();   // B2: OnDestroy for the quest stands, before the batch teardown\n    dungeonCtx.destroy();\n    const pose = dungeonPose();\n",
     "tests": [
       "test/jan1_field.test.js"
     ]
@@ -204,6 +204,35 @@
     "new": "viewDist(depthAt(cuv)) > lantern + ${glslFloat(AIR_GLARE_SLACK)}) vis = 0.0;",
     "tests": [
       "test/jan1_field.test.js"
+    ]
+  },
+  {
+    "name": "JAN1-the-arrival-forgets-the-topics",
+    "file": "src/scenes/world.js",
+    "old": "    // the frame loop's own call is then a no-op.\n    syncTopics();\n  }\n",
+    "new": "    // the frame loop's own call is then a no-op.\n  }\n",
+    "tests": [
+      "test/jan1_fixes.test.js"
+    ]
+  },
+  {
+    "name": "JAN1-the-keyed-chain-loses-its-where-is-row",
+    "file": "src/scenes/townTalk.js",
+    "old": "        { code: 'KeyW', label: 'W - where is...', action: () => openCategories(onClosed) },",
+    "new": "        { code: 'KeyW', label: '', action: () => openCategories(onClosed) },",
+    "tests": [
+      "test/jan1_fixes.test.js"
+    ]
+  },
+  {
+    "name": "JAN1-the-talk-door-opens-the-panel-with-no-directory",
+    "file": "src/scenes/townTalk.js",
+    "old": "    if (talkDoorReady() && directory.length) {",
+    "new": "    if (talkDoorReady()) {",
+    "tests": [
+      "test/jan1_fixes.test.js",
+      "test/enhancedTalk.test.js",
+      "test/audit63_windows.test.js"
     ]
   }
 ]

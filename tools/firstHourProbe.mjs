@@ -172,7 +172,7 @@ const alive = async (where) => {
 begin('1 chargen');
 await page.goto('http://localhost:5222/play/?world&shot&classic&novideo&play');
 // NOT __shotReady: that flag waits for the EXTERIOR stream queue to
-// drain (world.js:3924), and the classic start spends its first
+// drain (world.js:3952), and the classic start spends its first
 // minutes inside a dungeon with the world still building behind it -
 // the first run sat here past five minutes with the host long since
 // up. The host being up is __mode answering, which is exactly what
@@ -578,7 +578,7 @@ if (inShop) {
     await waitFrames(4);
     // ...and BUY raises the merchant's HAGGLE OFFER, a Yes/No box
     // ("I can sell for no less than N gold pieces") - ShowTradePopup's
-    // three bands, ported at systems/tradeModes.js:280. A purchase is
+    // three bands, ported at systems/tradeModes.js:281. A purchase is
     // THREE gestures: stage, ask, agree.
     const offer = await J(() => window.__shopOverlay());
     check('the merchant makes an offer', offer?.box?.buttons === 'YesNo',
