@@ -228,7 +228,7 @@
   {
     "name": "VC6c-the-renderer-keeps-the-deck-from-the-air-pass",
     "file": "src/render/renderer.js",
-    "old": "        cloudShadow: this._cloudShadow,   // VC6c: the sun behind a bank throws no shafts\n",
+    "old": "    this._air.setCloudShadow(this._cloudShadow ?? this._deckOwed);   // VC6c: the FRAME's deck - the host sets it after beginFrame, so the shafts can only read it here\n",
     "new": "",
     "tests": [
       "test/vc6_clouds.test.js"
@@ -340,6 +340,33 @@
     "new": "        means.set(name, list.length ? list.reduce((a, b) => a + b, 0) / list.length : null);",
     "tests": [
       "test/el8_contact.test.js"
+    ]
+  },
+  {
+    "name": "VC6c-the-deck-is-read-at-prepare-where-beginFrame-has-just-cleared-it",
+    "file": "src/render/renderer.js",
+    "old": "    this._air.setCloudShadow(this._cloudShadow ?? this._deckOwed);   // VC6c:",
+    "new": "    this._air.setCloudShadow(this._cloudShadow ?? null);   // VC6c:",
+    "tests": [
+      "test/vc6_clouds.test.js"
+    ]
+  },
+  {
+    "name": "VC6c-a-frame-inherits-the-last-frames-deck",
+    "file": "src/render/renderer.js",
+    "old": "    this._deckOwed = null;   // VC6c: whatever was owed is drawn; this frame's deck is its host's to set\n",
+    "new": "",
+    "tests": [
+      "test/vc6_clouds.test.js"
+    ]
+  },
+  {
+    "name": "VC6c-the-cleared-deck-is-dropped-before-the-image-it-owes",
+    "file": "src/render/renderer.js",
+    "old": "    if (this._cloudShadow) { this._deckOwed = this._cloudShadow; this._cloudShadow = null; this._csStamp++; }",
+    "new": "    if (this._cloudShadow) { this._cloudShadow = null; this._csStamp++; }",
+    "tests": [
+      "test/vc6_clouds.test.js"
     ]
   }
 ]

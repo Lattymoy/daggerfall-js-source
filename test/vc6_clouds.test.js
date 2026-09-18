@@ -54,7 +54,15 @@ test('VC6a: the periods no longer walk in step - the variation is five times the
     const n = FIELD_PERIOD_METRES / m;
     assert.ok(Math.abs(n - Math.round(n)) < 1e-9 && n >= 1, `${name} divides the field's period (${n} times)`);
   }
-  assert.ok(WARP_METRES > 0 && WARP_METRES < SHAPE_METRES / 3, `the warp bends the lattice, it does not tear a cloud: ${WARP_METRES} m against a ${SHAPE_METRES} m tile`);
+  // THE WARP'S AMPLITUDE IS BOUNDED BY THE FIELD IT READS, not by the
+  // field it bends. Its own features are the variation volume's Worley
+  // cells - VARIATION_METRES / 32 - and an amplitude near that size makes
+  // q -> q + A*f(q) FOLD: the map stops being one-to-one and clouds smear.
+  // Three pixels was tried and did exactly that (a fan at the zenith the
+  // bare field never had); the probe chose one.
+  assert.ok(WARP_METRES > 0, 'there is a warp');
+  assert.ok(WARP_METRES < VARIATION_METRES / 32 / 2, `and it stays under half its own field's feature size (${VARIATION_METRES / 32} m), or the lattice folds: ${WARP_METRES} m`);
+  assert.ok(WARP_METRES < SHAPE_METRES / 3, 'and well under the tile it bends');
 });
 
 test('VC6a: one texture read does four jobs - two coverage frequencies and the domain warp - so the repeat is broken for nothing', () => {
@@ -164,12 +172,34 @@ test('VC6c: a sun behind a bank throws no shafts - the gate is the cloud shadow 
   assert.match(air, /shaft: P\(QUAD_VS, SHAFT_FS, \['uDepth', 'uSun', 'uShaftParams', 'uSunColor', 'uProjInfo', 'uRect', 'uCanvas', 'uEye', 'uCloudShadowMap', 'uCloudShadowRect'\]\)/, 'every uniform it declares has its location fetched');
   assert.match(air, /gl\.uniform3fv\(this\.programs\.shaft\.uEye, f\.eye\);/);
   assert.match(air, /gl\.uniform4fv\(this\.programs\.shaft\.uCloudShadowRect, deck\?\.rect \?\? this\._noDeck\);/);
+  // ═══ THE DECK IS READ AT THE RESOLVE, NEVER AT PREPARE ═════════════
+  // beginFrame CLEARS the deck (a deck is a frame's, so an interior never
+  // inherits the last exterior's map) and `prepare` runs inside
+  // beginFrame, a moment after that clear - while both exterior hosts set
+  // the frame's deck AFTER beginFrame returns. The first cut of VC6c took
+  // it as a prepare input and was handed null every frame of the real
+  // game: the gate could never have fired. No pin could see it - the pins
+  // drive no frame - and the field probe did (tools/vc6ShaftProbe.mjs).
+  assert.doesNotMatch(air, /f\.cloudShadow/, 'never a prepare input');
+  assert.match(air, /setCloudShadow\(deck\) \{ this\.cloudShadow = deck \?\? null; \}/);
+  assert.match(air, /const deck = this\.cloudShadow;/, 'the shafts read what the resolve set');
+  const r = read('src/render/renderer.js');
+  assert.match(r, /this\._air\.setCloudShadow\(this\._cloudShadow \?\? this\._deckOwed\);[^\n]*\n\s*this\._air\.composite\(\);/, 'set at the resolve, immediately before the images are drawn');
+  for (const h of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
+    const src = read(h);
+    assert.ok(src.indexOf('renderer.beginFrame(') < src.indexOf('renderer.setCloudShadow('), `${h}: the host sets the deck AFTER beginFrame - which is the whole reason the resolve is where it must be read`);
+  }
+  // and a frame that drew no screen quad resolves at the TOP of the next
+  // one, by which time beginFrame has cleared the deck - so the cleared
+  // deck is held exactly that long, and dropped the instant it is spent
+  assert.match(r, /if \(this\._cloudShadow\) \{ this\._deckOwed = this\._cloudShadow; this\._cloudShadow = null; this\._csStamp\+\+; \}/);
+  assert.match(r, /if \(this\._air\?\.pending && !this\._panelSaved\) this\._compositeAir\(\);\s*\n\s*this\._deckOwed = null;/, 'dropped the instant the owed image is drawn, so the next frame can only read its own host\'s deck');
   // OFF IS FREE. No deck - the classic skin, every interior, ?clouds=off -
   // means an amount of 0, and the block's own first line answers full sun
   // before it samples anything. The pass is exactly what it was.
   assert.match(CLOUD_SHADOW_GLSL, /if \(uCloudShadowRect\.w <= 0\.0\) return 1\.0;/);
   assert.match(air, /this\._noDeck = new Float32Array\(\[0, 0, 0, 0\]\);/, 'and that is what a missing deck uploads');
-  assert.match(read('src/render/renderer.js'), /cloudShadow: this\._cloudShadow,   \/\/ VC6c: the sun behind a bank throws no shafts/, 'the renderer hands the frame\'s deck to the pass');
+
 });
 
 // ═══════════════════════════════════════════════════════════════════════
@@ -222,7 +252,7 @@ test('VC6d: the frame\'s spans TILE it - every mark hands the clock straight to 
   // between them, which is the only reason the total in the line is true.
   assert.match(r, /this\._perf\.begin\(\); this\._perf\.mark\('shadow'\);/);
   assert.match(r, /this\._perf\?\.mark\('world'\);[^\n]*\n\s*sp\.discard\(\);/, 'the passes end where the world\'s draws begin');
-  assert.match(r, /this\._perf\?\.mark\('air'\);[^\n]*\n\s*this\._air\.composite\(\);/);
+  assert.match(r, /this\._perf\?\.mark\('air'\);[^\n]*\n[^\n]*\n\s*this\._air\.composite\(\);/, 'the air\'s span opens before its images are drawn (VC6c\'s deck is set between the two)');
   assert.match(r, /this\._perf\.end\(\);\s*\n\s*this\._perf\.stop\(\);/, 'and the last span closes with the frame');
   assert.match(shared, /meter\?\.mark\('sky'\);/); assert.match(shared, /meter\?\.mark\('world'\);/);
   assert.equal((shared.match(/meter\?\.mark\(/g) || []).length, 2, 'the sky takes its span and hands the frame back - it does not keep it');

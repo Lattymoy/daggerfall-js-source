@@ -1044,6 +1044,7 @@ export class Renderer {
      *  host from the SKY's own state. Null = no shadows, which is the
      *  classic skin and every interior. */
     this._cloudShadow = null;
+    this._deckOwed = null;   // VC6c: the deck a frame still owed an image is kept across beginFrame's clear
     // EV4: one shared index buffer PER INDEX SET, keyed by the array's
     // identity - the world host shares one full-grid array across every
     // pixel and one strided far-ring array across the LOD ring. The old
@@ -1515,6 +1516,7 @@ export class Renderer {
   _beginLane(proj, view, lightDir, world) {
     if (world && this._perf) { this._perf.begin(); this._perf.mark('shadow'); this.stats.draws = 0; }   // EL8: the frame's clock starts with its passes; VC6d: and its first span
     if (this._air?.pending && !this._panelSaved) this._compositeAir();
+    this._deckOwed = null;   // VC6c: whatever was owed is drawn; this frame's deck is its host's to set
     if (this._shadows && world) this._renderPasses(proj, view, lightDir);
     // EL4: THE FRAME IMAGE - the world pass draws into it, the clear included; a panel frame keeps the canvas
     this._frameFbo = this._air && !this._panelSaved ? this._air.beginFrameTarget(this.canvas.width, this.canvas.height) : null;
@@ -1547,7 +1549,6 @@ export class Renderer {
         viewport: this._worldViewportPx ?? [0, 0, this.canvas.width, this.canvas.height],
         shadows: sp, textures: this.textures, emissionTextures: this.emissionTextures, blackTex: this._blackTex,
         windowEmission: this._windowEmission, isSpectral: isSpectralArchive, bindVao, clearColor: this._clearColor,
-        cloudShadow: this._cloudShadow,   // VC6c: the sun behind a bank throws no shafts
       });
     }
     this._perf?.mark('world');   // VC6d: the passes' work is submitted; everything until the sky or the resolve is the world's own draws
@@ -1567,6 +1568,7 @@ export class Renderer {
   _compositeAir() {
     if (!this._air?.pending) return;
     this._perf?.mark('air');   // VC6d: the AO, the bloom, the shafts and the resolve
+    this._air.setCloudShadow(this._cloudShadow ?? this._deckOwed);   // VC6c: the FRAME's deck - the host sets it after beginFrame, so the shafts can only read it here
     this._air.composite();   // EL4: the resolve - the frame to the canvas
     if (this._perf) {   // EL8: the clock stops at the resolve; the line, when it is due
       this._perf.end();
@@ -2656,7 +2658,8 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     // that wants one sets it after this (the exterior hosts do, per
     // pixel); an interior or a dungeon, which never does, gets none, and
     // never inherits the last exterior frame's map onto its walls.
-    if (this._cloudShadow) { this._cloudShadow = null; this._csStamp++; }
+    // VC6c: `_deckOwed` keeps it one moment longer, for an image the air pass still owes this frame (airPass.setCloudShadow); `_beginLane` drops it the instant that resolve is done.
+    if (this._cloudShadow) { this._deckOwed = this._cloudShadow; this._cloudShadow = null; this._csStamp++; }
     // EV6: the shadows reset with the counters - whatever ran between
     // frames (UI passes, another context's work) is not trusted. The
     // cloud-shadow upload stamps are the same kind of claim (RS-3) and

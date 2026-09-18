@@ -739,6 +739,7 @@ export class AirPass {
     this.aoParams = new Float32Array([AIR_AO_RADIUS, AIR_AO_STRENGTH, AIR_AO_BIAS, 0]);
     this.shaftParams = new Float32Array([AIR_SHAFT_DECAY, AIR_SHAFT_STRENGTH, AIR_SHAFT_REACH, 1]);
     this._noDeck = new Float32Array([0, 0, 0, 0]);   // VC6c: no cloud field - amount 0, full sun
+    this.cloudShadow = null;   // VC6c: the frame's deck, set at the resolve
     this.f = null;   // EL6: the frame's inputs, from prepare() to composite()
     // EL8: the previous frame's view-projection and projection terms, for the contact march; valid once a frame has been prepared
     this.prevVP = new Float32Array(16); this.prevProjInfo = new Float32Array(4); this.prevValid = false;
@@ -910,7 +911,9 @@ export class AirPass {
    * pointLights, pointColors (decoded vec3s), viewport [x,y,w,h], shadows
    * (the ShadowPass: its records and its depth programs), textures,
    * emissionTextures, blackTex, windowEmission, isSpectral, bindVao,
-   * clearColor, cloudShadow (VC6c: the deck the shafts are gated on) }. The images are drawn at the resolve, off the frame's own
+   * clearColor }. The cloud deck is NOT among them - it is set later, by
+   * `setCloudShadow`, because the host only hands it to the renderer
+   * AFTER beginFrame (VC6c). The images are drawn at the resolve, off the frame's own
    * depth: the AO, the bloom source (the emitters and the glares, both
    * occluded by that depth), the shafts. Before EL6 they were drawn HERE,
    * off a depth image the records were replayed into - a third walk of the
@@ -929,6 +932,19 @@ export class AirPass {
     this.measured = false;   // AUDIT-EL F10: set at the resolve, by whether the world drew
     this.stats.emitDraws = 0; this.stats.glares = 0; this.stats.shafts = false;   // this frame's, counted at the resolve
   }
+
+  /**
+   * VC6c: THE FRAME'S CLOUD DECK, and why it is not a `prepare` input.
+   * `prepare` runs inside beginFrame, and beginFrame has just CLEARED the
+   * deck a moment before - a deck is a frame's, not the renderer's, so an
+   * interior never inherits the last exterior's map. The host sets this
+   * frame's deck AFTER beginFrame returns (world.js, exterior.js). So the
+   * shafts read it at the RESOLVE, where the frame's own deck is in hand.
+   * The first cut of VC6c took it at prepare and was handed null every
+   * frame of the real game: the gate could never have fired, the pins
+   * could not see it (they drive no frame), and only the field probe did.
+   */
+  setCloudShadow(deck) { this.cloudShadow = deck ?? null; }
 
   /** EL6: the images, at the resolve, off the frame's depth. */
   _images() {
@@ -986,7 +1002,7 @@ export class AirPass {
       // VC6c: the cloud shadow at the player's feet. No deck (the classic
       // skin, every interior, `?clouds=off`) means an amount of 0, which
       // is what makes cloudShadowAt answer full sun without a branch here.
-      const deck = f.cloudShadow;
+      const deck = this.cloudShadow;
       gl.activeTexture(gl.TEXTURE1);
       gl.bindTexture(gl.TEXTURE_2D, deck?.map ?? f.blackTex ?? null);
       gl.uniform1i(this.programs.shaft.uCloudShadowMap, 1);

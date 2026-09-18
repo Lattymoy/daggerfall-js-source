@@ -120,9 +120,19 @@ export const MOTTLE_METRES = PIXEL_METRES * 5;
  *  The warp is read from the variation sample's own spare channels, so
  *  it costs no texture read; it bends the shape volume's lattice so the
  *  eye cannot find the tile's straight edges even where the tile does
- *  come round. A fifth of the shape's period - enough to break the
- *  grid, not so much that a cloud tears. */
-export const WARP_METRES = PIXEL_METRES * 3;
+ *  come round.
+ *
+ *  ONE PIXEL, AND THE PROBE CHOSE IT. Three was tried first, on the
+ *  reasoning that a fifth of the shape's period would bend the grid
+ *  without tearing a cloud. It tore them: the warp field's own features
+ *  are the variation volume's Worley cells, about 2 km across, so an
+ *  amplitude of 2458 m is larger than the gradient it rides and the map
+ *  q -> q + A*f(q) FOLDS - it stops being one-to-one, and the sky grew a
+ *  smeared fan near the zenith that the bare field never had. The
+ *  amplitude has to stay well under the warp field's own feature size,
+ *  not under the field it is bending. Seen in the lab, against the same
+ *  shot on the tree before this change. */
+export const WARP_METRES = PIXEL_METRES * 1;
 /** CLK1: the field's COMMON PERIOD - the least common multiple of the
  *  four periods above (15, 1, 80 and 5 pixels: 240), so a position
  *  moved by a whole number of it samples the same cloud. The drift and
