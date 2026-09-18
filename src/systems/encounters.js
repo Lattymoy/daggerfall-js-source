@@ -101,24 +101,34 @@ export const rollWildernessNight = (roll01 = Math.random()) => Math.floor(roll01
 export const rollDungeon = (enemyAlertActive, roll01 = Math.random()) =>
   enemyAlertActive ? Math.floor(roll01 * 36) : 1;
 
+/** The table-selection half of ChooseRandomEnemy (:1370-1467), split
+ *  out so callers that need to know WHICH table a ctx resolves to -
+ *  campEncounters.js filtering a group theme through the same table
+ *  chooseRandomEnemy would draw from - don't have to re-derive the
+ *  climate/day-night/location-rect logic a second time. Returns a
+ *  table index, or null where chooseRandomEnemy would return -1
+ *  (a town by day, an unknown climate). */
+export function resolveEncounterTableIndex(ctx) {
+  if (ctx.underwater) return 19;
+  if (ctx.dungeonType != null) return ctx.dungeonType;
+  if (ctx.buildingType != null) return BUILDING_TABLE.get(ctx.buildingType) ?? 39;
+  const band = CLIMATE_TABLE.get(ctx.climateIndex);
+  if (!band) return null;
+  if (ctx.inLocationRect) {
+    if (ctx.isDay) return null;   // a town by day spawns nothing
+    return band[0];
+  }
+  return ctx.isDay ? band[1] : band[2];
+}
+
 /** RandomEncounters.ChooseRandomEnemy (:1334-1516), verbatim. ctx:
  *  { underwater, dungeonType, buildingType, climateIndex, inLocationRect,
  *    isDay, playerLevel }. rolls() feeds Dice100 + the final pick.
  *  Returns a mobile id, or -1 (MobileTypes.None) when the place has
  *  no encounters (a location rect by day, an unknown climate). */
 export function chooseRandomEnemy(ctx, rolls = Math.random) {
-  let idx;
-  if (ctx.underwater) idx = 19;
-  else if (ctx.dungeonType != null) idx = ctx.dungeonType;
-  else if (ctx.buildingType != null) idx = BUILDING_TABLE.get(ctx.buildingType) ?? 39;
-  else {
-    const band = CLIMATE_TABLE.get(ctx.climateIndex);
-    if (!band) return -1;
-    if (ctx.inLocationRect) {
-      if (ctx.isDay) return -1;   // a town by day spawns nothing
-      idx = band[0];
-    } else idx = ctx.isDay ? band[1] : band[2];
-  }
+  const idx = resolveEncounterTableIndex(ctx);
+  if (idx == null) return -1;
 
   // the level band (:1471-1507) - "assume enemy lists of length 20"
   const roll = Math.floor(rolls() * 100) + 1;   // Dice100.Roll 1..100

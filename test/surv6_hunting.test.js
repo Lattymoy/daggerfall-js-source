@@ -110,25 +110,25 @@ test('SURV6: the outcomes - water by the pool, the rocks\' snake by bow or hand 
   assert.equal(huntOutcome({ climate: 'desert', kind: 'rocks' }, { hasBow: true, skills: { archery: 50 }, luck: 100, rolls: seq(d(1), 0.54, 0.99) }).key, 'snakeShot', 'luck 100 adds five');
   // fruit
   o = huntOutcome({ climate: 'subtropical', kind: 'fruit' }, { rolls: seq(d(50), 0.99) });
-  assert.equal(o.key, 'fruitEasy'); assert.equal(o.fruit, 3);
+  assert.equal(o.key, 'fruitEasy'); assert.equal(o.fruit, 1);   // MOD: HUNT_LOOT_SCALE halves the yield (3 raw -> 1 scaled)
   o = huntOutcome({ climate: 'subtropical', kind: 'fruit' }, { skills, rolls: seq(d(51), 0.5, 0) });
-  assert.equal(o.key, 'fruitClimb'); assert.equal(o.fruit, 2); assert.deepEqual(o.skills, [SKILL.Climbing]);
+  assert.equal(o.key, 'fruitClimb'); assert.equal(o.fruit, 1); assert.deepEqual(o.skills, [SKILL.Climbing]);   // MOD: halved (2 raw -> 1 scaled)
   assert.equal(huntOutcome({ climate: 'subtropical', kind: 'fruit' }, { skills: none, rolls: seq(d(75), 0.5) }).key, 'fruitFall');
   o = huntOutcome({ climate: 'subtropical', kind: 'fruit' }, { rolls: seq(d(76)) });
   assert.equal(o.key, 'fruitStrange'); assert.equal(o.poison, true); assert.equal(o.fruit, 0);
   assert.equal(huntOutcome({ climate: 'subtropical', kind: 'fruit' }, { rolls: seq(d(89)) }).key, 'fruitNone');
   // birds: the sneak and the shot, the volley on a second shot
   o = huntOutcome({ climate: 'woods', kind: 'birds' }, { hasBow: true, skills, rolls: seq(d(1), 0.5, 0.5, 0.5, 0.99) });
-  assert.equal(o.key, 'birdsVolley'); assert.equal(o.meat, 3); assert.match(o.lines[2], /the 3 dead birds/);
+  assert.equal(o.key, 'birdsVolley'); assert.equal(o.meat, 1); assert.match(o.lines[2], /the 3 dead birds/);   // MOD: the flavour line still names the raw catch (3); o.meat is the halved yield actually minted
   o = huntOutcome({ climate: 'woods', kind: 'birds' }, { hasBow: true, skills: { ...skills, archery: 50 }, rolls: seq(d(1), 0.5, 0.1, 0.9) });
-  assert.equal(o.key, 'birdsShot'); assert.equal(o.meat, 1);
+  assert.equal(o.key, 'birdsShot'); assert.equal(o.meat, 0);   // MOD: halved (1 raw -> 0 scaled, this roll)
   assert.equal(huntOutcome({ climate: 'woods', kind: 'birds' }, { hasBow: true, skills: { ...skills, stealth: 0 }, rolls: seq(d(1), 0.5) }).key, 'birdsSpooked');
   o = huntOutcome({ climate: 'swamp', kind: 'birds' }, { hasBow: false, skills, rolls: seq(d(1), 0.5, 0.5) });
-  assert.equal(o.key, 'birdsStrike'); assert.equal(o.meat, 1);
+  assert.equal(o.key, 'birdsStrike'); assert.equal(o.meat, 0);   // MOD: halved (1 raw -> 0 scaled, this roll)
   o = huntOutcome({ climate: 'swamp', kind: 'birds' }, { rolls: seq(d(91), 0.2) });
   assert.equal(o.key, 'birdsRoar'); assert.deepEqual(o.beast, { mobileType: MOBILE_TYPES.Spider, count: 2 });
   // the lizard
-  assert.equal(huntOutcome({ climate: 'swamp', kind: 'lizard' }, { hasBow: true, skills, rolls: seq(d(1), 0.5) }).meat, 2);
+  assert.equal(huntOutcome({ climate: 'swamp', kind: 'lizard' }, { hasBow: true, skills, rolls: seq(d(1), 0.5) }).meat, 1);   // MOD: halved (2 raw -> 1 scaled)
   assert.equal(huntOutcome({ climate: 'swamp', kind: 'lizard' }, { hasBow: true, skills: none, rolls: seq(d(1), 0.5) }).key, 'lizardMiss');
   assert.equal(huntOutcome({ climate: 'swamp', kind: 'lizard' }, { hasBow: false, skills, rolls: seq(d(1), 0.5) }).key, 'lizardStrike');
   assert.equal(huntOutcome({ climate: 'swamp', kind: 'lizard' }, { hasBow: false, skills: none, rolls: seq(d(1), 0.5, 0.49) }).poison, true);
@@ -136,7 +136,7 @@ test('SURV6: the outcomes - water by the pool, the rocks\' snake by bow or hand 
   assert.equal(huntOutcome({ climate: 'swamp', kind: 'lizard' }, { rolls: seq(d(91), 0.5) }).key, 'lizardHunted');
   // the tracks: deer in the woods, a goat on the mountain, the rabbit, the boar and the fall
   o = huntOutcome({ climate: 'woods', kind: 'tracks' }, { hasBow: true, skills, rolls: seq(d(1), 0.49, 0.5, 0.99) });
-  assert.equal(o.key, 'deerShot'); assert.equal(o.meat, 6);
+  assert.equal(o.key, 'deerShot'); assert.equal(o.meat, 3);   // MOD: halved (6 raw -> 3 scaled)
   assert.equal(huntOutcome({ climate: 'mountain', kind: 'tracks' }, { hasBow: true, skills, rolls: seq(d(1), 0.49, 0.5, 0) }).key, 'goatShot');
   assert.equal(huntOutcome({ climate: 'mountain', kind: 'tracks' }, { hasBow: true, skills: none, rolls: seq(d(1), 0.49, 0.5) }).key, 'goatMiss');
   assert.equal(huntOutcome({ climate: 'woods', kind: 'tracks' }, { hasBow: true, skills, rolls: seq(d(1), 0.5, 0.5) }).key, 'rabbitShot');
@@ -162,8 +162,8 @@ test('SURV6: the outcomes - water by the pool, the rocks\' snake by bow or hand 
 test('SURV6: the finds into the pack and the harm onto the body - meat and fruit minted, the skins filled, the bite\'s poison and the foul pool\'s disease through the handlers, the fall and the boar', () => {
   const p = player();
   let rows = applyHuntOutcome(p, p.items, huntOutcome({ climate: 'woods', kind: 'tracks' }, { hasBow: true, skills: { archery: 100 }, rolls: seq(0, 0.49, 0.5, 0) }), { rolls: seq(0.9) });
-  assert.equal(p.items.filter((i) => i.templateIndex === TEMPLATE.RawMeat).length, 4);
-  assert.equal(rows.at(-1), 'You gain 4 Raw Meat.'); assert.equal(rows[0], HUNT_TEXT.deerShot[0]);
+  assert.equal(p.items.filter((i) => i.templateIndex === TEMPLATE.RawMeat).length, 2);   // MOD: halved (4 raw -> 2 scaled)
+  assert.equal(rows.at(-1), 'You gain 2 Raw Meat.'); assert.equal(rows[0], HUNT_TEXT.deerShot[0]);
   // fruit: the coin picks apples or oranges
   p.items.length = 0;
   rows = applyHuntOutcome(p, p.items, { lines: ['x'], fruit: 2 }, { rolls: seq(0.2) });
@@ -262,7 +262,7 @@ test('SURV6: composed - once a game minute the roll; the window in the slot, non
   const h2 = createHunting({ entity: p2, env: () => ({ ...e, minute: 5000 }), rolls: seq(0, 0, 0.5, 0.2, 0.5, 0, 0.5, 0.5, 0.5, 0.99), tally: (id) => tallied2.push(id) });
   const w2 = h2.tick();
   w2.input('KeyY'); w2.tick(100);
-  assert.equal(p2.items.filter((i) => i.templateIndex === TEMPLATE.RawMeat).length, 3, 'the volley\'s three birds');
+  assert.equal(p2.items.filter((i) => i.templateIndex === TEMPLATE.RawMeat).length, 1, 'the volley\'s three birds, halved by HUNT_LOOT_SCALE');   // MOD: -50%
   assert.deepEqual(tallied2, [SKILLS.Archery, SKILLS.Stealth]);
   // the switch
   setPref('survival', false);
