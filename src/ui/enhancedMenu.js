@@ -45,7 +45,7 @@
 // reload. Classic works that way because classic is a DOS program with
 // a fixed 320x200 screen. Neither reason survives here.
 //
-// This is ONE screen, under BOTH skins (main.js:88-174, FD1: the
+// This is ONE screen, under BOTH skins (main.js:88-186, FD1: the
 // launcher and its settings window are deleted; the classic rail is
 // Begin, which leads into the splash and PICK03I0 exactly as before).
 // Every destination is a press away from every other, settings
@@ -110,6 +110,7 @@ import { uiSkin, otherSkin, setUiSkin, SKIN_NAMES, isEnhanced } from '../systems
 import { getPref, setPref, isOpen, setOpen } from '../systems/uiPrefs.js';
 import { DEFAULT_SERVER } from '../net/online.js';   // ONLINE1: the relay this port hosts, the field's placeholder   // R7: the port's own switches; SO1: the folded tiers' memory
 import { replacementCount } from '../systems/musicReplacement.js';   // M-EXT: the packs card reports what the pick covers
+import { brandMark } from './brandMark.js';   // INTRO2: Mac's supplied logo, shared with the final splash
 import { textureReplacementCount } from '../systems/textureReplacement.js';   // M-TEX: and the texture half
 import { isTouchDevice } from './touch.js';   // TI2: the Touch card mounts only where a finger can reach it
 import { dateFromClassicMinutes, dateString, dateTimeString } from '../systems/gameDate.js';
@@ -2150,8 +2151,8 @@ function renderHome() {
   }
 
   const stage = el('div', 'px-stage');
-  const mark = el('h1', 'px-wordmark', 'Daggerfall');
-  mark.append(el('small', null, 'Enhanced'));   // BR1: the front door's own wordmark - the name is SPLIT across two elements here, which is why the brand sweep pins it structurally and not by adjacency
+  const mark = el('h1', 'px-wordmark');
+  mark.append(brandMark());
   stage.append(mark);
   const rule = el('div', 'px-rule');
   rule.append(el('span', 'px-gem'));
@@ -2686,12 +2687,16 @@ function renderInto() {
 
   const side = el('aside', 'side');
   const brand = el('div', 'brand');
-  const h1 = el('h1', null, 'Daggerfall');
+  const h1 = el('h1');
   // PX1/PX2: the wordmark is the way back to the pixel home - the
   // same affordance every site's masthead carries. Escape does it too
   // (onKey); this is the one a finger can see.
-  h1.style.cursor = 'pointer';
-  h1.onclick = () => go('home');
+  const homeMark = el('button', 'brand-home');
+  homeMark.type = 'button';
+  homeMark.setAttribute('aria-label', 'Daggerfall Enhanced — main menu');
+  homeMark.append(brandMark());
+  homeMark.onclick = () => go('home');
+  h1.append(homeMark);
   brand.append(h1);
   brand.append(skinSwitch());   // the word ENHANCED became the switch
   side.append(brand);

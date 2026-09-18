@@ -38,7 +38,7 @@ const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
 const errors = [];
 page.on('pageerror', (e) => errors.push(e.message));
 
-await page.goto(`${BASE}/play/`, { waitUntil: 'networkidle' });
+await page.goto(`${BASE}/play/?nointro`, { waitUntil: 'networkidle' });
 await page.waitForSelector('.px-menu button');
 await page.locator('.px-menu button').filter({ hasText: /Features/ }).first().click();
 await page.waitForSelector('.ft-tile');

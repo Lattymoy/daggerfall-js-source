@@ -1620,6 +1620,17 @@ body.draglock .wornrow, body.draglock .wornmap { touch-action: none; }
 .px-wordmark { font-family: 'Jacquard 12', var(--brand); font-weight: 400; margin: 0;
   font-size: 96px; line-height: 1; text-align: center;
   text-shadow: 4px 4px 0 rgba(0,0,0,0.7); }
+/* INTRO2: one supplied wordmark, at its natural 3:1 aspect ratio. Its
+   black backing blends at presentation time; the source stays unmodified. */
+.px-wordmark:has(.enhanced-logo) { width: min(590px, 84vw); line-height: 0; flex-shrink: 0; }
+.enhanced-logo { display: block; width: 100%; height: auto; object-fit: contain;
+  mix-blend-mode: screen; image-rendering: auto; }
+.brand-home { display: block; width: 100%; border: 0; padding: 0; background: transparent; cursor: pointer; }
+.brand-home:focus-visible { outline: 2px solid var(--brass); outline-offset: 6px; }
+.shell .brand h1:has(.enhanced-logo) { line-height: 0; }
+@media (max-height: 560px) and (min-width: 600px) {
+  .px-wordmark:has(.enhanced-logo) { width: min(430px, 56vw); }
+}
 .px-wordmark small { display: block; font-family: ${PIXEL_STACK};
   font-size: 16px; letter-spacing: 0.5em; text-indent: 0.5em;
   text-transform: uppercase; color: #7d7460; margin-top: 8px;
