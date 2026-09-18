@@ -308,7 +308,7 @@
   {
     "name": "renderer-air-before-shadows",
     "file": "src/render/renderer.js",
-    "old": "    sp.render({\n      eye: this._camPos, lightDir, sunScale: this._sunScale, pointLights: this._pointLights,\n      textures: this.textures, isSpectral: isSpectralArchive, bindVao,\n    });\n    if (this._air) {",
+    "old": "    sp.render({\n      eye: this._camPos, lightDir, sunScale: this._sunScale, pointLights: this._pointLights, carried: this._pointCarried,   // MAC-T1\n      textures: this.textures, isSpectral: isSpectralArchive, bindVao,\n    });\n    if (this._air) {",
     "new": "    if (this._air) {",
     "tests": [
       "test/el3_air.test.js"
