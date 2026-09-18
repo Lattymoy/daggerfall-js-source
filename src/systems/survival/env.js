@@ -74,7 +74,11 @@ export function restGateEnv(entity, env = null) {
  * readers. Returns the two handlers (for a teardown's unregister).
  */
 export function installSurvivalGate(register, entity, env) {
-  return installSurvivalRestGate(() => restGateEnv(entity?.(), env?.()), register, { enabled: survivalOn });
+  return installSurvivalRestGate(() => { const e = env?.(); return e ? restGateEnv(entity?.(), e) : null; }, register, { enabled: survivalOn });
+}
+/** AUDIT SURV B/C: a torn-down host takes its pair off the seam (a dead dungeon's handler was refusing the outdoor fire). */
+export function uninstallSurvivalGate(pair, unregister) {
+  for (const h of pair ?? []) unregister?.(h);
 }
 
 /** A load or an arrival: the record made if missing and aligned to now (needs.js alignSurvival's law). */

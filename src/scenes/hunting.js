@@ -64,9 +64,9 @@ export function createHunting({
         advanceMinutes?.(minutes);
         return rows;
       },
-      onClosed: () => {
+      onClosed: (searched) => {
         _win = null;
-        if (outcome?.beast) spawnBeast?.(outcome.beast);
+        if (searched && outcome?.beast) spawnBeast?.(outcome.beast);   // AUDIT SURV C: only after a search - a window dropped from under (a death) stands nothing
       },
     });
     showOverlay?.(_win);

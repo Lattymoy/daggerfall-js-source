@@ -22,18 +22,19 @@ export const HUD_NEED_WORDS = Object.freeze({
 });
 
 /** The strip's chips: [{ key, text, level }] - empty when every need is met. */
-export function survivalHudChips(entity, now) {
+export function survivalHudChips(entity, now, { vampire = false, endurance = 50 } = {}) {
   if (!entity?.survival) return [];
   const s = survivalOf(entity, now);
   const out = [];
   const push = (key, table, stage) => { const w = table[stage]; if (w) out.push({ key, text: w[0], level: w[1] }); };
-  push('hunger', HUD_NEED_WORDS.hunger, hungerStage(hungerMinutes(s, now)));
+  if (!vampire) push('hunger', HUD_NEED_WORDS.hunger, hungerStage(hungerMinutes(s, now)));   // AUDIT SURV C: no need for food or sleep
   push('thirst', HUD_NEED_WORDS.thirst, thirstStage(s.thirst));
-  push('sleep', HUD_NEED_WORDS.sleep, sleepStage(s.sleepDebt));
+  if (!vampire) push('sleep', HUD_NEED_WORDS.sleep, sleepStage(s.sleepDebt));
   push('wet', HUD_NEED_WORDS.wet, wetStage(s.wet));
   if (Number.isFinite(s.felt)) push('temp', HUD_NEED_WORDS.temp, temperatureWord(s.felt));
   if (isStiff(s, now)) out.push({ key: 'stiff', text: 'Stiff', level: 'warn' });
-  if (s.drunk > 0) out.push({ key: 'drunk', text: s.drunk > 40 ? 'Very drunk' : 'Drunk', level: s.drunk > 40 ? 'danger' : 'warn' });
+  // AUDIT SURV C/D: the page's own bands (the mod's LiveEndurance / 2 and - 10), not a hard forty
+  if (s.drunk > endurance / 2) out.push({ key: 'drunk', text: s.drunk > endurance - 10 ? 'Very drunk' : 'Drunk', level: s.drunk > endurance - 10 ? 'danger' : 'warn' });
   return out;
 }
 

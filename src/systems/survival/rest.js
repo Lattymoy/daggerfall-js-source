@@ -95,8 +95,15 @@ export function restBlock({ tempWord = 'comfortable', byFire = false, insideBuil
  * restSession.js's own.
  */
 export function installSurvivalRestGate(readEnv, register, { enabled = () => true } = {}) {
-  const cold = () => enabled() && restBlock({ ...(readEnv?.() ?? {}) }) === REST_TEXT_SURVIVAL.tooCold;
-  const hot = () => enabled() && restBlock({ ...(readEnv?.() ?? {}) }) === REST_TEXT_SURVIVAL.tooHot;
+  // AUDIT SURV B/C: a reader that answers null is a host that does not own the mode (the world's under a dungeon,
+  // the interior's outdoors) - it says nothing, so the seam's first true answer is always the live host's
+  const block = () => {
+    const e = readEnv?.();
+    if (!e || !enabled()) return null;
+    return restBlock(e);
+  };
+  const cold = () => block() === REST_TEXT_SURVIVAL.tooCold;
+  const hot = () => block() === REST_TEXT_SURVIVAL.tooHot;
   register(cold, REST_TEXT_SURVIVAL.tooCold);
   register(hot, REST_TEXT_SURVIVAL.tooHot);
   return [cold, hot];

@@ -31,6 +31,7 @@ import { FlatAnim } from '../render/flatAnimation.js';
 import { trs } from '../world/mat4.js';
 import { localAabb, transformedAabb } from '../render/frustum.js';
 import { ListPickerWindow } from '../ui/listPicker.js';
+import { survivalOn } from '../systems/survival/switch.js';   // AUDIT SURV B: the pool stands nothing with the mod off
 import {
   TENT_MODEL, FIRE_FLAT, FIRE_LIGHT_RANGE, CAMP_REACH, CAMP_KIND, CAMP_TEXT, CAMPS_PER_OWNER,
   placeCampItem, packCamp, stokeFire, fireLit, campExpired, tentPos, nearestFire, campInfoText, campMenu,
@@ -234,9 +235,11 @@ export function createCamps({
   /** This player's own camps for the save and the scene cache, in the host's frame. */
   const snapshot = (toWorld = (p) => p) => own().map((rec) => { const p = toWorld(rec.pos); return { ...rec, pos: [p[0], p[1], p[2]] }; });
   function restore(list, fromWorld = (p) => p) {
-    for (let i = camps.length - 1; i >= 0; i--) if (camps[i].owner == null) drop(camps[i]);
+    if (!survivalOn()) return null;
+    // AUDIT SURV B: a MERGE by id, not a clear-and-stand - the save's list and a peer's memory join what stands
     for (const r of Array.isArray(list) ? list : []) {
       if (!r || typeof r !== 'object' || !Array.isArray(r.pos) || r.pos.length !== 3 || !(r.kind === CAMP_KIND.Tent || r.kind === CAMP_KIND.Fire)) continue;
+      if (r.id != null && camps.some((c) => c.owner == null && c.rec.id === String(r.id))) continue;
       const p = fromWorld(r.pos);
       stand({ id: String(r.id ?? `me:${++_nextId}`), owner: r.owner ?? null, kind: r.kind, pos: [p[0], p[1], p[2]], yaw: Number(r.yaw) || 0, litUntil: Number.isFinite(r.litUntil) ? r.litUntil : null, wear: r.wear | 0, placedAt: r.placedAt ?? null });
       if (own().length >= CAMPS_PER_OWNER) break;
@@ -248,6 +251,7 @@ export function createCamps({
   const wireRecords = (toWire = (p) => p) => own().map((rec) => campWire(rec, toWire));
   /** Another's word: their camps replace theirs, through the door. */
   function applyOwner(owner, records, toScene = (p) => p, nowMs = 0) {
+    if (!survivalOn()) return null;
     if (typeof owner !== 'string' || !owner || owner === (selfId?.() ?? null)) return false;
     const merged = mergeOwnerCamps(camps.filter((c) => c.owner === owner).map((c) => c.rec), owner, records, toScene);
     const fresh = merged.filter((r) => r.owner === owner);

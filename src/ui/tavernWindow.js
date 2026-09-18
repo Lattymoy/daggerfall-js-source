@@ -271,12 +271,13 @@ export class TavernWindow {
     const h = this.hooks;
     const now = h.now();
     const menu = tavernMenu({ climateIndex: h.climateIndex(), quality: h.quality?.() ?? 5, hour: Math.trunc((now % 1440) / 60) });
-    if (menu.closed) { this._chain([{ rows: line(TAVERN_MENU_TEXT.closed) }], { closesTavern: true }); return; }
-    this._chain([{
+    // AUDIT SURV C/D: before six the kitchen refuses in the mod's two words and the drinks still pour (the picker
+    // follows the refusal); the Drinks divider is not a door out - a header pick keeps the picker up
+    const box = {
       picker: menu.rows.map((r) => r.text),
       onPick: (i) => {
         const row = menu.rows[i];
-        if (!row || row.kind === 'header') return null;
+        if (!row || row.kind === 'header') return [box];
         audio.playOneShot(SOUND.ButtonClick, 1);
         if (totalGoldAmount(h.entity) < row.price) return [{ rows: this._rows(NOT_ENOUGH_GOLD_ID) }];
         deductGold(h.entity, row.price);
@@ -293,7 +294,8 @@ export class TavernWindow {
         return [{ rows: line(r.text) }];
       },
       onCancel: () => null,
-    }], { closesTavern: true });
+    };
+    this._chain(menu.closed ? [{ rows: line(menu.closedText) }, box] : [box], { closesTavern: true });
   }
 
   _food() {

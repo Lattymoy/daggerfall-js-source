@@ -4,104 +4,134 @@
     "file": "src/systems/survival/tavernMenu.js",
     "old": "export const menuKeyFor = (climateIndex) => MENU_KEY_BY_CLIMATE[climateIndex] ?? 'n';",
     "new": "export const menuKeyFor = (climateIndex) => 'n';",
-    "tests": ["test/surv5_ui.test.js"]
+    "tests": [
+      "test/surv5_ui.test.js"
+    ]
   },
   {
     "name": "SURV5-breakfast-all-day",
     "file": "src/systems/survival/tavernMenu.js",
-    "old": "export const breakfastHours = (hour) => hour >= BREAKFAST_FROM && hour < BREAKFAST_UNTIL;",
+    "old": "export const breakfastHours = (hour) => hour >= BREAKFAST_FROM && hour <= BREAKFAST_UNTIL;",
     "new": "export const breakfastHours = (hour) => hour >= BREAKFAST_FROM;",
-    "tests": ["test/surv5_ui.test.js"]
+    "tests": [
+      "test/surv5_ui.test.js"
+    ]
   },
   {
     "name": "SURV5-the-kitchen-never-closes",
     "file": "src/systems/survival/tavernMenu.js",
-    "old": "  const closed = hour === KITCHEN_CLOSED_HOUR;",
+    "old": "  const closed = kitchenClosed(hour);",
     "new": "  const closed = false;",
-    "tests": ["test/surv5_ui.test.js"]
+    "tests": [
+      "test/surv5_ui.test.js"
+    ]
   },
   {
     "name": "SURV5-a-full-stomach-eats-again",
     "file": "src/systems/survival/tavernMenu.js",
     "old": "  if (hunger < worth) return { ok: false, text: TAVERN_MENU_TEXT.tooFull, minutes: MEAL_MINUTES };",
     "new": "",
-    "tests": ["test/surv5_ui.test.js"]
+    "tests": [
+      "test/surv5_ui.test.js"
+    ]
   },
   {
     "name": "SURV5-a-long-hunger-banks-the-whole-gap",
     "file": "src/systems/survival/tavernMenu.js",
     "old": "  if (hunger > worth + NEED.PECKISH_AT) s.lastAte = now - NEED.PECKISH_AT;",
     "new": "",
-    "tests": ["test/surv5_ui.test.js"]
+    "tests": [
+      "test/surv5_ui.test.js"
+    ]
   },
   {
     "name": "SURV5-the-blackout-band-is-the-drunk-band",
     "file": "src/systems/survival/tavernMenu.js",
     "old": "  if (s.drunk > endurance) return { text: TAVERN_MENU_TEXT.blackout, blackout: true, minutes: DRINK_MINUTES };",
     "new": "",
-    "tests": ["test/surv5_ui.test.js"]
+    "tests": [
+      "test/surv5_ui.test.js"
+    ]
   },
   {
     "name": "SURV5-a-wine-is-a-soft-drink",
     "file": "src/systems/survival/tavernMenu.js",
     "old": "  if (/wine|port/.test(n)) return 'wine';",
     "new": "  if (/wine|port/.test(n)) return 'soft';",
-    "tests": ["test/surv5_ui.test.js"]
+    "tests": [
+      "test/surv5_ui.test.js"
+    ]
   },
   {
     "name": "SURV5-the-morning-is-noon",
     "file": "src/systems/survival/tavernMenu.js",
     "old": "export const BLACKOUT_WAKE_HOUR = 6;",
     "new": "export const BLACKOUT_WAKE_HOUR = 12;",
-    "tests": ["test/surv5_ui.test.js"]
+    "tests": [
+      "test/surv5_ui.test.js"
+    ]
   },
   {
     "name": "SURV5-the-strip-shows-a-met-need",
     "file": "src/systems/survival/status.js",
     "old": "  const push = (key, table, stage) => { const w = table[stage]; if (w) out.push({ key, text: w[0], level: w[1] }); };",
     "new": "  const push = (key, table, stage) => { const w = table[stage] ?? [stage, 'warn']; out.push({ key, text: w[0], level: w[1] }); };",
-    "tests": ["test/surv5_ui.test.js"]
+    "tests": [
+      "test/surv5_ui.test.js"
+    ]
   },
   {
     "name": "SURV5-the-vampire-is-told-of-hunger",
     "file": "src/systems/survival/status.js",
     "old": "  if (vampire) return [STATUS_TEXT.vampire];",
     "new": "",
-    "tests": ["test/surv5_ui.test.js"]
+    "tests": [
+      "test/surv5_ui.test.js"
+    ]
   },
   {
     "name": "SURV5-the-page-says-drunk-from-the-first-sip",
     "file": "src/systems/survival/status.js",
     "old": "  if (s.drunk > endurance / 2) lines.push(",
     "new": "  if (s.drunk > 0) lines.push(",
-    "tests": ["test/surv5_ui.test.js"]
+    "tests": [
+      "test/surv5_ui.test.js"
+    ]
   },
   {
     "name": "SURV5-the-record-forgets-the-felt-reading",
     "file": "src/systems/survival/needs.js",
     "old": "  s.felt = temp.felt;   // SURV5: the last felt reading rides the record - the HUD strip and the status page read it without the env",
     "new": "",
-    "tests": ["test/surv5_ui.test.js"]
+    "tests": [
+      "test/surv5_ui.test.js"
+    ]
   },
   {
     "name": "SURV5-a-raw-food-does-not-say-so",
     "file": "src/systems/itemInfo.js",
     "old": "    if (foodOf(item)?.raw) out.push({ text: 'Raw - cook it at a fire.', center: true });",
     "new": "",
-    "tests": ["test/surv5_ui.test.js"]
+    "tests": [
+      "test/surv5_ui.test.js"
+    ]
   },
   {
     "name": "SURV5-the-tavern-serves-the-mod-off",
     "file": "src/ui/tavernWindow.js",
     "old": "    if (survivalOn() && typeof h.climateIndex === 'function') { this._survivalFood(); return; }   // SURV5",
     "new": "    if (typeof h.climateIndex === 'function') { this._survivalFood(); return; }   // SURV5",
-    "tests": ["test/surv5_ui.test.js"]
+    "tests": [
+      "test/surv5_ui.test.js"
+    ]
   },
   {
     "name": "SURV5-the-blackout-leaves-you-limber",
     "file": "src/ui/tavernWindow.js",
     "old": "          stiffen(h.entity, now + r.minutes + b.minutes);   // the night on the boards is a rough one (SURV4)\n",
     "new": "",
-    "tests": ["test/surv5_ui.test.js"]
+    "tests": [
+      "test/surv5_ui.test.js"
+    ]
   }
 ]

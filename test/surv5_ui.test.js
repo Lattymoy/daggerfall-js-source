@@ -28,11 +28,11 @@ import { setPref, _resetForTests } from '../src/systems/uiPrefs.js';
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const read = (p) => readFileSync(join(root, p), 'utf8');
 
-test('SURV5: the menus - the mod\'s six keys by climate, three tiers by quality, breakfast from six to ten and a closed kitchen at five; every dish priced; the bay drinks the south\'s', () => {
+test('SURV5: the menus - the mod\'s keys by climate (five of its six carried), three tiers by quality, breakfast from six to ten and a closed kitchen at five; every dish priced; the bay drinks the south\'s', () => {
   assert.deepEqual(Object.keys(MENU_KEY_BY_CLIMATE).map(Number), [224, 225, 226, 227, 228, 229, 230, 231, 232, 233]);
   assert.equal(menuKeyFor(232), 'n'); assert.equal(menuKeyFor(225), 's'); assert.equal(menuKeyFor(229), 'se'); assert.equal(menuKeyFor(227), 'ne'); assert.equal(menuKeyFor(230), 'b'); assert.equal(menuKeyFor(999), 'n');
   assert.deepEqual([menuTier(1), menuTier(5), menuTier(6), menuTier(12), menuTier(13), menuTier(20)], ['low', 'low', 'mid', 'mid', 'high', 'high']);
-  assert.equal(breakfastHours(6), true); assert.equal(breakfastHours(9), true); assert.equal(breakfastHours(10), false); assert.equal(KITCHEN_CLOSED_HOUR, 5);
+  assert.equal(breakfastHours(6), true); assert.equal(breakfastHours(9), true); assert.equal(breakfastHours(10), true, 'the mod\'s hour <= 10 (AUDIT SURV D)'); assert.equal(breakfastHours(11), false); assert.equal(KITCHEN_CLOSED_HOUR, 5);
   for (const key of ['n', 'ne', 'se', 's', 'b']) {
     for (const list of ['breakfast', 'low', 'mid', 'high']) {
       assert.ok(FOOD_MENUS[key][list].length >= 2, `${key}.${list} has dishes`);
@@ -109,12 +109,12 @@ test('SURV5: the info box - a survival item\'s built tokens: the name, the weigh
   const rows = (id) => [{ text: `record ${id}`, center: true }];
   const bread = createSurvivalItem(TEMPLATE.Bread, { foodStage: FOOD_STAGE.Stale });
   const t = survivalInfoTokens(bread);
-  assert.deepEqual(t.map((r) => r.text), ['Stale Bread', 'Weight: 1.50 kg', 'Nourishes for 90 minutes (stale)']);
+  assert.deepEqual(t.map((r) => r.text), ['Stale Bread', 'Weight: 1.50 kilograms', 'Nourishes for 90 minutes (stale)']);
   assert.deepEqual(itemInfoRows(bread, rows).map((r) => r.text), t.map((r) => r.text), 'the box reads the built tokens, not a record');
   const fish = createSurvivalItem(TEMPLATE.RawFish);
   assert.equal(survivalInfoTokens(fish).at(-1).text, 'Raw - cook it at a fire.');
   const skin = createSurvivalItem(TEMPLATE.Waterskin, { water: 1.25 });
-  assert.deepEqual(survivalInfoTokens(skin).map((r) => r.text), ['Waterskin', 'Weight: 1.75 kg', 'Water: 1.3 of 2.0 kg']);
+  assert.deepEqual(survivalInfoTokens(skin).map((r) => r.text), ['Waterskin', 'Weight: 1.75 kilograms', 'Water: 1.3 of 2.0 kg']);
   assert.equal(survivalInfoTokens(createSurvivalItem(TEMPLATE.Campfire, { condition: 1 })).at(-1).text, '1 use left');
   assert.equal(survivalInfoTokens(createSurvivalItem(TEMPLATE.CampingEquipment)).at(-1).text, '50 uses left');
   assert.equal(survivalInfoTokens(createSurvivalItem(TEMPLATE.Skillet)).at(-1).text, 'Cooking at a campfire goes twice as fast.');
@@ -143,7 +143,7 @@ test('SURV5: the tavern window - the survival menu in the one picker: a meal cha
   assert.equal(boxes[0].rows[0].text, TAVERN_MENU_TEXT.invigorated);
   assert.equal(a.entity.goldPieces, 90); assert.deepEqual(a.passed, [MEAL_MINUTES]); assert.equal(a.entity.survival.lastAte, a.now - NEED.PECKISH_AT + 240, 'the marker four hours back, the worth banked');
   assert.equal(a.entity.lastTimePlayerAteOrDrankAtTavern, a.now, 'DFU\'s own stamp too');
-  assert.equal(a.w.flow.top.onPick(picker.indexOf(TAVERN_MENU_TEXT.drinksHeader)), null, 'the header picks nothing');
+  assert.equal(a.w.flow.top.onPick(picker.indexOf(TAVERN_MENU_TEXT.drinksHeader))?.[0]?.picker, a.w.flow.top.picker, 'the header picks nothing - the picker stands (AUDIT SURV C: a divider is not a door out)');
   const wine = picker.indexOf('30 gold   Nereid Wine');
   a.w.flow.top.onPick(wine);
   assert.equal(a.entity.survival.drunk, 20); assert.equal(a.entity.goldPieces, 60); assert.deepEqual(a.passed, [MEAL_MINUTES, DRINK_MINUTES]);
@@ -174,7 +174,7 @@ test('SURV5: by source - the four hosts chain the third box, the enhanced HUD ca
     assert.match(read(f), /if \(survivalOn\(\)\) _box\.addNext\(survivalStatusRows\(playerEntity, Math\.floor\(worldMinutes\(\)\), \{ vampire: !!liveVampirism\(playerEntity\), endurance: liveStat\(playerEntity, 'endurance'\) \}\)\);/, `${f}: the third box`);
   }
   const hud = read('src/ui/enhancedHud.js');
-  assert.match(hud, /const needs = el\('div', 'hud-needs'\);/); assert.match(hud, /const chips = survivalOn\(\) \? survivalHudChips\(vitals, Math\.floor\(worldMinutes\(\)\)\) : \[\];/);
+  assert.match(hud, /const needs = el\('div', 'hud-needs'\);/); assert.match(hud, /const chips = survivalOn\(\) \? survivalHudChips\(vitals, Math\.floor\(worldMinutes\(\)\), \{ vampire: !!liveVampirism\(vitals\), endurance: liveStat\(vitals, 'endurance'\) \}\) : \[\];/);
   assert.match(read('src/ui/enhancedStyle.js'), /\.hud-need\.danger \{/);
   const wm = read('src/scenes/worldModes.js');
   assert.match(wm, /climateIndex: \(\) => host\.climateIndex\?\.\(\) \?\? 232,\s*\n\s*advanceMinutes: \(n\) => interiorTicker\.advance\(n\),\s*\n\s*endurance: \(\) => liveStat\(playerEntity, 'endurance'\),/);

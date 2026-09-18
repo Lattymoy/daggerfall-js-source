@@ -654,7 +654,7 @@ export const getBookAuthor = (id) => _bookAuthors.get(id) ?? null;
  *  skin's water, the gear's uses. Built tokens in the box's own row shape. */
 export function survivalInfoTokens(item) {
   const t = templateByIndex(item?.templateIndex);
-  const out = [{ text: item?.name ?? t?.name ?? '', center: true }, { text: `Weight: ${unitWeightInKg(item).toFixed(2)} kg`, center: true }];
+  const out = [{ text: item?.name ?? t?.name ?? '', center: true }, { text: `Weight: ${unitWeightInKg(item).toFixed(2)} kilograms`, center: true }];
   if (isFood(item)) {
     const s = foodStage(item);
     out.push({ text: `Nourishes for ${foodSatiety(item)} minutes${s > 0 ? ` (${STAGE_WORDS[s].toLowerCase()})` : ''}`, center: true });

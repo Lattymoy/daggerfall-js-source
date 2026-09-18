@@ -20,7 +20,6 @@ export const BUSY_DOTS = 12;
 export class HuntWindow {
   constructor({ prompt = [], busy = 'You search...', seconds = 4, onSearched = null, onClosed = null } = {}) {
     this.done = false;
-    this.isChoiceWindow = true;   // townTalk routes the raw key code (Y / N / Escape) to a choice window
     this.phase = HUNT_PHASE.Ask;
     this.seconds = Math.max(0.01, seconds);
     this.busy = busy;
@@ -37,6 +36,13 @@ export class HuntWindow {
   }
 
   get progress() { return Math.min(1, this._elapsed / this.seconds); }
+  /** AUDIT SURV C: raw key codes (Y / N / Escape) reach the ASK page alone; the result page is a click-anywhere box
+   *  and goes through townTalk's action route, so a key held through the busy page cannot dismiss it unread. */
+  get isChoiceWindow() { return this.phase === HUNT_PHASE.Ask; }
+  /** The busy row: the first dot at once, the last before the page turns. */
+  get dots() { return '.'.repeat(Math.min(BUSY_DOTS, Math.floor(this.progress * BUSY_DOTS) + 1)); }
+  /** AUDIT SURV C: the slot taken from under the window (a death screen, a transition) closes it as a No - nothing searched, nothing charged, no beast. */
+  dispose() { this._end(false); }
 
   _begin() { if (this.phase !== HUNT_PHASE.Ask) return; this.phase = HUNT_PHASE.Busy; this._elapsed = 0; }
 
@@ -58,7 +64,12 @@ export class HuntWindow {
   }
 
   input(code, e = null) {
-    if (this.phase === HUNT_PHASE.Busy) return;
+    if (this.phase === HUNT_PHASE.Busy) {
+      // AUDIT SURV C: Escape walks away from the search - nothing found, nothing charged (a foe that wanders in
+      // under the window keeps its clock, WINFOE1, and the hunter must be able to turn and fight)
+      if (code === 'Escape') this._end(false);
+      return;
+    }
     this._flow.input(code, e);
   }
 
@@ -72,7 +83,7 @@ export class HuntWindow {
   draw(renderer, canvas, font) {
     if (this.phase !== HUNT_PHASE.Busy) { this._flow.draw(renderer, canvas, font); return; }
     const m = nativeMetrics(canvas);
-    const dots = '.'.repeat(Math.max(1, Math.round(this.progress * BUSY_DOTS)));
+    const dots = this.dots;
     const rows = [{ text: this.busy, center: true }, { text: dots, center: true }];
     const sizing = [{ text: this.busy, center: true }, { text: '.'.repeat(BUSY_DOTS), center: true }];
     this._box = layoutMessageBox(font, rows, [], { sizingRows: sizing });

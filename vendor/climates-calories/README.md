@@ -5,7 +5,7 @@
 description: "Introduces temperature effects based on climates,
 seasons, weather and clothes etc. Also adds food items and starvation
 effects." The shipped bundle carries a compiled DLL (no C# source),
-eleven item templates (530-540), eighteen small textures and a tent
+eleven item templates (530-540), twenty small textures and a tent
 model.
 
 Mac (Lattymoy) handed the shipped zip
@@ -31,7 +31,7 @@ not a 1:1 port, with the mod's own item art carried.**
   port's custom templates (same indices, same textures; the prices
   retuned where the mod's were typos - meat 50, skillet 500) and adds
   541, the port's own Campfire Kit.
-- `Textures/` - sixteen of the mod's eighteen PNGs: the spoiled face of
+- `Textures/` - sixteen of the mod's twenty PNGs: the spoiled face of
   each food (`532_0-0` a mouldy apple, `532_1-0` a rotten one, and so
   on through 537), raw meat's three (`538_0-0`, `538_1-0`, `538_2-0` -
   the fresh one, which the template names) and the waterskin

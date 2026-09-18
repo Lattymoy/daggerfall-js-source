@@ -41,8 +41,9 @@ import { healthStatusRows, statusInfoRows } from '../systems/healthStatus.js';  
 import { survivalStatusRows } from '../systems/survival/status.js';   // SURV5
 import { liveVampirism } from '../systems/racialLive.js';   // SURV5: the vampire's one status line
 import { survivalOn } from '../systems/survival/switch.js';
-import { survivalFeed, installSurvivalGate } from '../systems/survival/env.js';   // SURV7: the needs' feed and the rest gate
-import { registerPreventRestCondition } from '../systems/restSession.js';   // SURV7: the gate's seam
+import { survivalFeed, installSurvivalGate, uninstallSurvivalGate } from '../systems/survival/env.js';   // SURV7: the needs' feed and the rest gate; AUDIT SURV B/C: and off the seam at the teardown
+import { registerPreventRestCondition, unregisterPreventRestCondition } from '../systems/restSession.js';   // SURV7: the gate's seam
+import { runSurvivalMinutes } from '../systems/survival/needs.js';   // AUDIT SURV B: the dungeon's rest pays its night asleep
 import { dateFromClassicMinutes } from '../systems/gameDate.js';   // SURV7: the env's month
 import { playerEntity, surfacePlayer, hurtPlayer as hurtEntity, damageShieldPool, setDeathPresenter, setAvoidDeathHook } from '../characters/playerEntity.js';   // AUDIT 58: DecreaseHealth's shield hook is the BASE class's, so every entity's door owes it
 import { addItem, spendArrow, isEnchanted } from '../systems/inventory.js';
@@ -1480,7 +1481,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // owned, and destroy() hands it back (the _prevPassiveHost idiom this
   // file already uses for its other process-global seams). A bare null
   // would not do: on ?world and ?exterior the previous holder is the
-  // host's own townTalk sink (world.js:7141 / exterior.js:3226), set
+  // host's own townTalk sink (world.js:7143 / exterior.js:3226), set
   // once at boot and never again, so nulling on the way out of the
   // first dungeon would silently un-file every mid-screen label above
   // ground for the rest of the session - MC-1's own bug, re-opened.
@@ -1726,6 +1727,13 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // and the rest ends "You never awaken."
     const _w = claimMagicRounds(start, end);
     runMagicRoundsFor(playerEntity, _w.from, _w.to, { sinks: playerSinks, say: (msg) => hudText.add(msg) });
+    // AUDIT SURV B: the NEEDS under the rest window too. This host's frame body holds the only tickPlayerMinutes call
+    // and the rest overlay holds the frame, so the whole night reached the minute law on the first frame after the
+    // window closed - with `isResting` already false, as AWAKE minutes: the sleep debt rose through a night by the
+    // fire. Paid here while `isResting` stands (the env says sleeping and its kind); the record's own marker keeps
+    // the frame from paying the same night again (runSurvivalMinutes).
+    const feed = survivalFeed(playerEntity, survivalEnvNow(), { say: (msg) => hudText.add(msg) });
+    if (feed) runSurvivalMinutes(playerEntity, start, Math.floor(end), feed.env, { ...feed.deps, sinks: playerSinks, rolls: Math.random });
     // ...and the FOE half of the same broker event. OnNewMagicRound
     // is global - every EntityEffectManager in the scene subscribes
     // - so a foe's poisons and effects age through the rest too.
@@ -2665,7 +2673,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       resting: !!playerEntity.isResting, sleeping: playerEntity.isResting && !playerEntity.isLoitering ? (playerEntity.restKind ?? 'rough') : null,
     };
   };
-  installSurvivalGate(registerPreventRestCondition, () => playerEntity, survivalEnvNow);   // SURV7: the rest gate, this host's readers
+  const _survivalGate = installSurvivalGate(registerPreventRestCondition, () => playerEntity, survivalEnvNow);   // SURV7: the rest gate, this host's readers; AUDIT SURV B/C: the pair leaves the seam with this context
   const camps = createCamps({
     renderer, getTexture, uploadRecordFrame, meshes: { getGpuMesh, cpuModels }, entity: playerEntity,
     camera: () => (_fpFeet ? { feet: _fpFeet, yaw: _fpYaw } : null), collider: () => collider,
@@ -2976,7 +2984,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
               // AUDIT 39 (#64) / THE FOUR HOSTS RULE - SHIPPED (wave D):
               // this host was the FOURTH BODY of the player-arrow law
               // and is now the fourth CALLER. combat/arrowFlight.js's
-              // playerArrowHitFoe is the one copy world.js:9794,
+              // playerArrowHitFoe is the one copy world.js:9796,
               // exterior.js:4646 and worldModes.js:6151 already ran;
               // the flag said the divergence would bite and it already
               // had. This copy splashed at the ARROW TIP
@@ -6377,6 +6385,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // The rig's own component goes with it: it holds the burning
       // loop of the torch in the player's HAND and PlayerTorch's
       // position override (AUDIT 66 F8).
+      uninstallSurvivalGate(_survivalGate, unregisterPreventRestCondition);   // AUDIT SURV B/C: a dead dungeon's handler was refusing the outdoor fire
       camps.destroyAll();   // SURV3: a fire's batch is this context's too
       droppedTorches.destroyAll();
       weaponRig.dispose?.();

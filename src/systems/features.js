@@ -680,11 +680,11 @@ export const FEATURES = Object.freeze([
   Object.freeze({
     id: 'mod-climates-calories',   // a mod-row id: WM3's law reaches the credits' vendor through it
     group: 'character',
-    title: 'Climates & Calories',
+    title: 'Climates & Calories by Ralzar',   // AUDIT SURV E: the author's name, as every mod row carries it
     note: 'Heat, cold, rain and the road wear you down - eat, drink, sleep and dress for the weather, and rest at a '
       + 'campfire or a bed. Off is the classic game, with no needs at all.',
     effect: 'Takes effect at once. Online the room decides.',
-    kinds: Object.freeze(['enhanced', 'classic']),
+    kinds: Object.freeze(['mod', 'enhanced', 'classic']),   // AUDIT SURV E: a mod row, under the MOD AUTHORED filter
     control: Object.freeze({ store: 'prefs', key: 'survival', initial: true, online: true }),
   }),
 ]);

@@ -76,6 +76,7 @@ export const CAMP_TEXT = Object.freeze({
   stoked: 'You stoke the fire.',
   cold: 'The fire has burned down to embers.',
   cooked: (name) => `You cook the ${name}.`,
+  wornOut: 'Your camping equipment is worn out.',
   nothingToCook: 'You have nothing to cook.',
   seeOwnCamp: 'You see your camp.',
   seeCamp: 'You see a camp.',
@@ -143,6 +144,7 @@ export function placeCampItem(item, list, { now = 0, owner = null, feet = [0, 0,
   const spot = campSpot(feet, yaw, probe);
   const d = campDecision(kind, { ...place, ground: spot.ground });
   if (!d.ok) return { ok: false, text: d.text, camp: null, spent: false };
+  if ((item.currentCondition ?? 1) <= 0) return { ok: false, text: CAMP_TEXT.wornOut, camp: null, spent: false };   // AUDIT SURV A: the fiftieth pitch was the last
   const uses = Math.max(0, (item.currentCondition ?? 1) - 1);
   item.currentCondition = uses;
   let spent = false;
@@ -180,6 +182,7 @@ export const hasSkillet = (items) => (items ?? []).some(isSkillet);
 export function cookFood(item, list, { skillet = false } = {}) {
   const f = foodOf(item);
   if (!f?.cooks) return null;
+  const rawName = item.name;   // AUDIT SURV E: the line names what went on the fire
   const cooked = createSurvivalItem(f.cooks, { foodStage: Math.max(0, foodStage(item) - 1) });
   if (!cooked) return null;
   dressFood(cooked);
@@ -188,7 +191,7 @@ export function cookFood(item, list, { skillet = false } = {}) {
     else { const i = list.indexOf(item); if (i >= 0) list.splice(i, 1); }
     list.push(cooked);
   }
-  return { item: cooked, minutes: skillet ? SKILLET_COOK_MINUTES : COOK_MINUTES, text: CAMP_TEXT.cooked(cooked.name) };
+  return { item: cooked, minutes: skillet ? SKILLET_COOK_MINUTES : COOK_MINUTES, text: CAMP_TEXT.cooked(rawName) };
 }
 
 /** The nearest LIT fire within `reach` of `pos`, or null. */

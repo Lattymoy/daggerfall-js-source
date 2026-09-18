@@ -24,7 +24,7 @@
 // a player away longer than a day comes back fed, watered and rested
 // rather than dead of the time they were not playing. The tick itself
 // owes at most MAX_CATCHUP_MINUTES per reading.
-import { feltTemperature } from './temperature.js';
+import { feltTemperature, temperatureWord } from './temperature.js';
 import { drinkFrom, findDrink, waterskinName, DRINK_RELIEF, TEMPLATE, isFood, foodStage, FOOD_STAGE, rotFoodDay, rotWeight, ROT_DAY_MINUTES } from './food.js';
 import { STAT_KEYS_ORDER } from '../statMods.js';
 /** SURV4: speed and agility down by this while stiff (survival/rest.js's STIFF_PENALTY, restated here so rest.js may import this module). */
@@ -43,7 +43,17 @@ export const NEED = Object.freeze({
 export const THIRST_PER_MINUTE = 100 / 360;
 /** The fatigue units (x64 is one classic point) the needs charge per
  *  minute. DFU's own walking drain is 11 a minute for scale. */
-export const DRAIN = Object.freeze({ heatPer20: 16, starving: 4, parched: 6, dehydrated: 12, exhausted: 8, wellFed: 64 });
+export const DRAIN = Object.freeze({ heatPer20: 6, starving: 4, parched: 6, dehydrated: 12, exhausted: 8, wellFed: 64, bareFeet: 4 });
+/** AUDIT SURV E: the harms that can kill come once every ten minutes,
+ *  not every minute, and the bare-skin harms leave the last five
+ *  points - a starting character (short shirt, casual pants, no shoes,
+ *  25 health) walked a clear winter afternoon and died in two hours.
+ *  Only EXPOSURE past DAMAGE_AT kills, and never in your sleep - the
+ *  rest gate refuses the freezing and the scorching night (rest.js). */
+export const HARM_EVERY_MINUTES = 10;
+export const HEALTH_FLOOR = 5;
+/** AUDIT SURV A: the well-fed hour - a point of fatigue back for every hour spent fed (the mod's 500-tally was minutes and paid twenty). */
+export const WELL_FED_MINUTES = 60;
 /** Rough drains cannot take the last of a pool by themselves. */
 export const FLOOR_FATIGUE = 64;
 export const MAX_CATCHUP_MINUTES = 2 * MINUTES_PER_DAY;
@@ -144,7 +154,7 @@ export function survivalStatMods(s, temp, now, { endurance = 50 } = {}) {
   if (s.drunk > endurance / 2) {
     const d = Math.trunc((s.drunk - endurance / 2) / 10);
     sub(['agility', 'intelligence', 'willpower', 'speed'], d);
-    mods.personality = (mods.personality ?? 0) + Math.max(0, 20 - d);   // the drink makes you friendly
+    mods.personality = (mods.personality ?? 0) + Math.min(5, d + 1);   // the drink makes you a little friendlier (AUDIT SURV A: +1..+5 rising with the drink, never the +20 that paid for itself)
   }
   return mods;
 }
@@ -217,7 +227,7 @@ export function survivalMinute(entity, now, env = {}, deps = {}) {
   // HUNGER: the marker stands; the tallies move.
   const hunger = hungerMinutes(s, now);
   const hungerNow = vampire ? 'fed' : hungerStage(hunger);
-  if (hungerNow === 'fed') { s.fed += NEED.PECKISH_AT - hunger; if (s.fed >= 500) { s.fed = 0; sinks.restoreFatigue?.(DRAIN.wellFed); } }
+  if (hungerNow === 'fed' && !vampire) { s.fed += 1; if (s.fed >= WELL_FED_MINUTES) { s.fed = 0; sinks.restoreFatigue?.(DRAIN.wellFed); } }
   if (hungerNow === 'starving' && autoEat) {
     const sack = items.find((i) => i.templateIndex === TEMPLATE.Rations && isFood(i));
     if (sack) { eatRations(entity, sack, now, say); }
@@ -231,7 +241,7 @@ export function survivalMinute(entity, now, env = {}, deps = {}) {
   if (!vampire) {
     const rate = THIRST_PER_MINUTE * Math.max(0.5, 1 + Math.max(0, temp.felt - 10) / 10);
     s.thirst = Math.min(NEED.THIRST_MAX, s.thirst + rate);
-    if (autoDrink && s.thirst >= NEED.THIRSTY + 10) drinkWater(entity, now, say);
+    if (autoDrink && s.thirst >= NEED.THIRSTY) drinkWater(entity, now, say);   // AUDIT SURV E: at the stage, so the chip never blinks with a skin in the pack
     const thirstNow = thirstStage(s.thirst);
     if (thirstNow !== 'fine') note(s, `thirst:${thirstNow}`, now, say, SURVIVAL_TEXT[thirstNow], { once: true });
     for (const k of ['thirsty', 'parched', 'dehydrated']) if (k !== thirstNow) clearNote(s, `thirst:${k}`);
@@ -247,7 +257,8 @@ export function survivalMinute(entity, now, env = {}, deps = {}) {
     if (sleeping) {
       const rate = sleeping === 'rough' ? 0.5 : 1.5;   // hours of debt per hour asleep
       const floor = sleeping === 'rough' ? NEED.SLEEP_TIRED : 0;
-      s.sleepDebt = Math.max(floor, Math.min(s.sleepDebt, s.sleepDebt - rate / 60));
+      const next = s.sleepDebt - rate / 60;
+      s.sleepDebt = s.sleepDebt >= floor ? Math.max(floor, next) : Math.max(0, next);   // AUDIT SURV A: the floor holds from above and never lifts a rested sleeper up to it
       s.awakeSince = now;
     } else if (awakeHours(s, now) > NEED.AWAKE_FREE_HOURS) {
       s.sleepDebt = Math.min(NEED.SLEEP_DEBT_MAX, s.sleepDebt + 1 / 60);
@@ -261,30 +272,42 @@ export function survivalMinute(entity, now, env = {}, deps = {}) {
   // TEMPERATURE: the body pays for the heat and the cold.
   const abs = temp.abs;
   if (abs > NEED.EXPOSURE_AT) s.exposure = Math.min(s.exposure + 1, 600); else s.exposure = Math.max(0, s.exposure - 2);
+  const harmTick = now % HARM_EVERY_MINUTES === 0;
+  const hurtFloored = (n) => { if ((entity.health ?? 0) > HEALTH_FLOOR) sinks.hurt?.(n); };
   if (!resting || !env.byFire) {
     if (abs >= 20) sinks.drainFatigue?.(DRAIN.heatPer20 * Math.trunc(abs / 20));
-    if (abs > NEED.DAMAGE_AT) sinks.hurt?.(Math.max(1, Math.trunc((abs - 40) / 10)));
+    if (abs > NEED.DAMAGE_AT && !sleeping && harmTick) sinks.hurt?.(Math.max(1, Math.trunc((abs - 40) / 10)));
   }
-  const word = temp.felt > 50 ? 'burning' : temp.felt > 30 ? 'scorching' : temp.felt > 20 ? 'hot' : temp.felt > 10 ? 'warm'
-    : temp.felt < -50 ? 'deadly' : temp.felt < -30 ? 'freezing' : temp.felt < -20 ? 'cold' : temp.felt < -10 ? 'chilly' : null;
-  if (word && !(env.insideDungeon && (word === 'warm' || word === 'chilly'))) note(s, 'temp', now, say, SURVIVAL_TEXT[word]);
+  // AUDIT SURV A/E: the strip's own words (temperature.js temperatureWord), one note a word said once - an escalation
+  // speaks at once and a held reading never repeats (a cold afternoon said three lines every five minutes)
+  const tw = temperatureWord(temp.felt);
+  const word = tw === 'scorching' ? 'scorching' : tw === 'hot' ? 'hot' : tw === 'warm' ? 'warm' : tw === 'deadly cold' ? 'deadly' : tw === 'freezing' ? 'freezing' : tw === 'cold' ? 'cold' : null;
+  const tempKey = word && !(env.insideDungeon && word === 'warm') ? `temp:${word}` : null;
+  if (tempKey) note(s, tempKey, now, say, SURVIVAL_TEXT[word], { once: true });
+  for (const k of ['scorching', 'hot', 'warm', 'deadly', 'freezing', 'cold']) if (`temp:${k}` !== tempKey) clearNote(s, `temp:${k}`);
 
   // BARE SKIN: naked in the cold, bare feet, the sun on uncovered skin.
-  if (!env.insideBuilding && !vampire && !ctx.beastForm) {
+  // AUDIT SURV E: never asleep or sat resting (the bedroll and the fire), once every ten minutes, never the last five points;
+  // bare feet cost fatigue, not blood. Each line is said once and again only after it lifted.
+  let naked = false, sun = false, feet0 = false;
+  if (!env.insideBuilding && !vampire && !ctx.beastForm && !sleeping && !resting) {
     const chest = worn?.[17] ?? null, chestArmor = worn?.[18] ?? null, legs = worn?.[24] ?? null, legsArmor = worn?.[23] ?? null, feet = worn?.[26] ?? null;
     const bareTop = !chest && !chestArmor && !temp.cloak, bareLegs = !legs && !legsArmor && !temp.cloak;
-    if ((bareTop || bareLegs) && temp.natTemp < -10) { sinks.hurt?.(1); note(s, 'naked', now, say, SURVIVAL_TEXT.nakedCold); }
+    if ((bareTop || bareLegs) && temp.natTemp < -10) { naked = true; if (harmTick) hurtFloored(1); note(s, 'naked', now, say, SURVIVAL_TEXT.nakedCold, { once: true }); }
     if ((bareTop || bareLegs) && env.inSunlight && temp.natTemp > 10 && env.weather !== 'overcast' && ctx.raceId !== 8 && ctx.raceId !== 4) {
-      if ((entity.health ?? 0) > 5) sinks.hurt?.(1);
-      note(s, 'sun', now, say, SURVIVAL_TEXT.sunburn);
+      sun = true;
+      if (harmTick) hurtFloored(1);
+      note(s, 'sun', now, say, SURVIVAL_TEXT.sunburn, { once: true });
     }
     if (!feet && !env.transport && abs > endurance / 2 && !env.swimming) {
-      sinks.hurt?.(1);
-      note(s, 'feet', now, say, temp.felt > 0 ? SURVIVAL_TEXT.bareFeetHot : SURVIVAL_TEXT.bareFeetCold);
+      feet0 = true;
+      sinks.drainFatigue?.(DRAIN.bareFeet);
+      note(s, 'feet', now, say, temp.felt > 0 ? SURVIVAL_TEXT.bareFeetHot : SURVIVAL_TEXT.bareFeetCold, { once: true });
     }
   }
-  if (temp.metal > 5) note(s, 'armor', now, say, SURVIVAL_TEXT.armorHot);
-  else if (temp.metal < -5) note(s, 'armor', now, say, SURVIVAL_TEXT.armorCold);
+  if (!naked) clearNote(s, 'naked'); if (!sun) clearNote(s, 'sun'); if (!feet0) clearNote(s, 'feet');
+  if (temp.metal > 5) note(s, 'armor:hot', now, say, SURVIVAL_TEXT.armorHot, { once: true }); else clearNote(s, 'armor:hot');
+  if (temp.metal < -5) note(s, 'armor:cold', now, say, SURVIVAL_TEXT.armorCold, { once: true }); else clearNote(s, 'armor:cold');
 
   // RUST: a wet metal piece loses a point on a 5% minute.
   if (s.wet > NEED.WET_DAMP && worn && rolls() < 0.05) {
@@ -292,8 +315,8 @@ export function survivalMinute(entity, now, env = {}, deps = {}) {
     if (metal.length) {
       const piece = metal[Math.floor(rolls() * metal.length)];
       const loss = Math.max(1, Math.trunc((piece.maxCondition ?? 100) / 100));
-      piece.condition = Math.max(0, (piece.condition ?? piece.maxCondition ?? 0) - loss);
-      if (piece.condition < (piece.maxCondition ?? 0) / 10) note(s, 'rust', now, say, SURVIVAL_TEXT.rust(piece.name ?? 'armor'));
+      piece.currentCondition = Math.max(0, (piece.currentCondition ?? piece.maxCondition ?? 0) - loss);   // AUDIT SURV A: the port's field (mintCondition's), not a phantom `condition`
+      if (piece.currentCondition < (piece.maxCondition ?? 0) / 10) note(s, 'rust', now, say, SURVIVAL_TEXT.rust(piece.name ?? 'armor'));
     }
   }
 
@@ -310,6 +333,7 @@ export function survivalMinute(entity, now, env = {}, deps = {}) {
   if (s.drunk > 0 && now % 10 === 0) s.drunk = Math.max(0, s.drunk - 1);
 
   applySurvivalMods(entity, survivalStatMods(s, temp, now, { endurance }));
+  s.lastMinute = now;   // AUDIT SURV B: the last minute paid - a span run under a rest is not run again by the frame
   s.felt = temp.felt;   // SURV5: the last felt reading rides the record - the HUD strip and the status page read it without the env
   return temp;
 }
@@ -346,9 +370,22 @@ export function eatRations(entity, sack, now, say = null) {
  *  temperature. */
 export function runSurvivalMinutes(entity, from, to, env, deps) {
   let temp = null;
-  const start = Math.max(Math.floor(from), Math.floor(to) - MAX_CATCHUP_MINUTES);
-  for (let m = start + 1; m <= Math.floor(to); m++) temp = survivalMinute(entity, m, env, deps);
+  const end = Math.floor(to);
+  const s = survivalOf(entity, end);
+  // AUDIT SURV B: the record's own marker - the dungeon's rest pays its night asleep under the window and the frame
+  // after it must not pay the same night awake; a marker from a clock ahead of this one (a rewind) is re-anchored
+  let last = Number.isFinite(s.lastMinute) ? s.lastMinute : Math.floor(from);
+  if (last > end + MAX_CATCHUP_MINUTES) last = Math.floor(from);
+  const start = Math.max(Math.floor(from), last, end - MAX_CATCHUP_MINUTES);
+  for (let m = start + 1; m <= end; m++) temp = survivalMinute(entity, m, env, deps);
+  if (end > (s.lastMinute ?? -Infinity)) s.lastMinute = end;
   return temp;
+}
+/** AUDIT SURV A: the feed stopped (the mod off, a host with no reader) - the drains the last minute wrote go with it. */
+export function clearSurvivalMods(entity) {
+  if (!entity?.activeEffects?.some((a) => a && a.kind === 'survival')) return false;
+  applySurvivalMods(entity, {});
+  return true;
 }
 
 /** WORLD5's law for these markers: a save (or a player) arriving from
@@ -360,7 +397,7 @@ export function alignSurvival(entity, now, lastSeen = null) {
   const s = survivalOf(entity, now);
   const gap = lastSeen == null ? Infinity : now - lastSeen;
   if (gap > ALIGN_GRACE_MINUTES || (s.lastAte ?? now) > now || (s.awakeSince ?? now) > now) {
-    Object.assign(s, { lastAte: now - 10, thirst: 0, wet: 0, sleepDebt: 0, awakeSince: now, exposure: 0, drunk: 0, notes: {} });
+    Object.assign(s, { lastAte: now - 10, thirst: 0, wet: 0, sleepDebt: 0, awakeSince: now, exposure: 0, drunk: 0, fed: 0, lastMinute: now, notes: {} });
     return true;
   }
   return false;

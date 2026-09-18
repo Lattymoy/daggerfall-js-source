@@ -188,7 +188,7 @@ test('SURV6: the finds into the pack and the harm onto the body - meat and fruit
   applyHuntOutcome(p, p.items, { lines: [], poison: true }, { rolls: seq(0), inflictPoison: (t, type) => poisons.push(type) });
   assert.equal(poisons[1], BITE_POISON_RANGE[0]); assert.equal(BITE_POISON_RANGE[0], 128); assert.equal(BITE_POISON_RANGE[1], 139);
   applyHuntOutcome(p, p.items, { lines: [], disease: true }, { now: 3 * 1440 + 5, currentDay: 3, inflictDisease: (t, list, o) => diseases.push([list, o.currentDay]) });
-  assert.deepEqual(diseases, [[FOUL_WATER_DISEASES, 3]]); assert.equal(FOUL_WATER_DISEASES, FOUL_MEAL_DISEASES);
+  assert.deepEqual(diseases, [[FOUL_WATER_DISEASES, 3]]); assert.deepEqual([...FOUL_WATER_DISEASES], [...FOUL_MEAL_DISEASES]);
   assert.doesNotThrow(() => applyHuntOutcome(p, p.items, { lines: [], poison: true, disease: true }, {}), 'no handler, no harm');
   // the body
   p.health = 3;
@@ -214,8 +214,8 @@ test('SURV6: the window - the Yes/No box, No closes; Yes commits to the busy pag
   w = new HuntWindow({ prompt: ['A?'], busy: 'You search...', seconds: 2, onSearched: () => { searched++; return ['Found.']; }, onClosed: (s) => closed.push(s) });
   w.input('KeyY');
   assert.equal(w.phase, HUNT_PHASE.Busy); assert.equal(w.done, false); assert.equal(w.progress, 0);
-  w.input('Escape'); w.input('KeyN'); assert.equal(w.click(0, 0), true);
-  assert.equal(w.phase, HUNT_PHASE.Busy, 'committed - no key or click leaves the busy page');
+  w.input('KeyN'); w.input('KeyY'); assert.equal(w.click(0, 0), true);
+  assert.equal(w.phase, HUNT_PHASE.Busy, 'committed - no key or click leaves the busy page (AUDIT SURV C: Escape alone walks away)');
   w.tick(0.5); assert.equal(w.progress, 0.25); assert.equal(w.phase, HUNT_PHASE.Busy); assert.equal(searched, 0);
   w.tick(1.5);
   assert.equal(w.phase, HUNT_PHASE.Result); assert.equal(searched, 1); assert.deepEqual(w.rows, ['Found.']); assert.equal(w.done, false);
@@ -287,5 +287,5 @@ test('SURV6: by source - the overworld host alone rolls, opens in the slot, pass
   assert.doesNotMatch(ext, /createHunting/, 'the town host lives inside the rect');
   assert.doesNotMatch(leaf, /from '\.\.\/\.\.\/scenes\/|from '\.\.\/\.\.\/ui\/|from '\.\.\/\.\.\/combat\/|from '\.\.\/spellcast|from '\.\.\/diseases|from '\.\.\/poisons|from '\.\.\/effects|document\.|window\./);
   assert.match(read('src/scenes/townTalk.js'), /overlay\?\.tick\?\.\(dt\);/, 'the busy page\'s clock');
-  assert.match(read('src/scenes/hunting.js'), /if \(outcome\?\.beast\) spawnBeast\?\.\(outcome\.beast\);/);
+  assert.match(read('src/scenes/hunting.js'), /if \(searched && outcome\?\.beast\) spawnBeast\?\.\(outcome\.beast\);/);
 });

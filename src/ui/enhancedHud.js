@@ -63,6 +63,7 @@ import { activeSpellIcons, maxRoundsRemaining } from './hudActiveSpells.js';
 import { liveBundles } from '../systems/mysticism.js';   // PX30: the ONE bundle walk the HUD already uses
 import { getPref } from '../systems/uiPrefs.js';   // PX30c: the port's own prefs, not DFU's settings
 import { survivalHudChips } from '../systems/survival/status.js';   // SURV5: the needs strip
+import { liveVampirism } from '../systems/racialLive.js';   // AUDIT SURV C: no hunger or sleep chip on a vampire
 import { survivalOn } from '../systems/survival/switch.js';
 import { worldMinutes } from '../systems/worldTick.js';
 import { compassScroll, breathShortThreshold, compassMarkerLerp, DETECT_MARKER_RGB } from './hud.js';
@@ -428,7 +429,7 @@ function build(doc) {
     gauge.setAttribute('shape-rendering', 'crispEdges');
     gauge.setAttribute('aria-hidden', 'true');
     const track = svgEl(doc, 'path', 'hud-qwtrack');
-    track.setAttribute('d', `M ${WEAR_L} L ${WEAR_R.slice(2)}`);
+    track.setAttribute('d', `M ${WEAR_L} M ${WEAR_R}`);   // AUDIT SURV E: two open arms, not one path with a hole in its numbers (Chromium logged the old `d` every build and drew half the track)
     const wearL = svgEl(doc, 'path', 'hud-qwfill');
     wearL.setAttribute('d', `M ${WEAR_L}`);
     const wearR = svgEl(doc, 'path', 'hud-qwfill');
@@ -758,7 +759,7 @@ export function drawEnhancedHud(vitals, heading01, dt = 0, opts = {}) {
     }
   }
   // SURV5: THE NEEDS STRIP - one chip a felt need (survival/status.js), rebuilt when the set changes; empty while every need is met, and gone with the switch
-  const chips = survivalOn() ? survivalHudChips(vitals, Math.floor(worldMinutes())) : [];
+  const chips = survivalOn() ? survivalHudChips(vitals, Math.floor(worldMinutes()), { vampire: !!liveVampirism(vitals), endurance: liveStat(vitals, 'endurance') }) : [];   // AUDIT SURV C: the vampire's strip, the page's drunk bands
   const nkey = chips.map((c) => `${c.key}:${c.text}:${c.level}`).join('|');
   if (last.needs !== nkey) {
     last.needs = nkey;

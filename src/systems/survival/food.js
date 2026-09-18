@@ -82,9 +82,15 @@ export function rotRoll(item, daysKept = 0, rolls = Math.random) {
 
 /** A day's rot over every food in the collections handed in. Returns how
  *  many spoiled a stage. */
-export function rotFoodDay(collections, daysKept = 0, rolls = Math.random) {
+export function rotFoodDay(collections, rotDay = 0, rolls = Math.random) {
   let n = 0;
-  for (const list of collections) for (const item of list ?? []) if (rotRoll(item, daysKept, rolls)) n++;
+  // AUDIT SURV A: `rotDay` is the WORLD's rot-day counter; an item ages from the day it was first seen (stamped
+  // here), not from the world's first day - a global count spoiled every food overnight past the third month
+  for (const list of collections) for (const item of list ?? []) {
+    if (!foodOf(item) || foodOf(item).keeps == null) continue;
+    if (!Number.isFinite(item.rotDay)) item.rotDay = rotDay;
+    if (rotRoll(item, Math.max(0, rotDay - item.rotDay), rolls)) n++;
+  }
   return n;
 }
 

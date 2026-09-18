@@ -55,7 +55,7 @@ installSurvivalLoot({ enabled: survivalOn });   // SURV2: an animal's corpse car
 import { normalizeReputations, NORMALIZE_INTERVAL_MINUTES } from './court.js';   // AUDIT 23 (C4)
 // S43: the entity update's 7-day and 38-day arms (PlayerEntity.cs:460-472).
 import { regionPowerUpdate } from './regionPower.js';
-import { runSurvivalMinutes } from './survival/needs.js';   // SURV1: the needs, a world minute at a time
+import { runSurvivalMinutes, clearSurvivalMods } from './survival/needs.js';   // SURV1: the needs, a world minute at a time; AUDIT SURV A: and the drains dropped when the feed stops
 import { installSurvivalIcons } from './survival/items.js';   // SURV2: the templates register at its import; the icons here
 import { installSurvivalLoot } from './survival/loot.js';   // SURV2: the corpse's food
 import { survivalOn } from './survival/switch.js';   // SURV2: the one switch
@@ -722,7 +722,7 @@ export function tickPlayerMinutes({
   let felt = null;
   if (survival && nowMinutes > lastMinutes) {
     felt = runSurvivalMinutes(entity, lastMinutes, nowMinutes, survival.env ?? {}, { ...(survival.deps ?? {}), sinks: survival.deps?.sinks ?? sinks, rolls });
-  }
+  } else if (!survival) clearSurvivalMods(entity);   // AUDIT SURV A: the mod off (or a host with no reader) leaves no drain behind
 
   // EntityEffectManager.UpdateEntityMods' tail (:1855-1866), on its own
   // 0.2s real-time cadence: a live stat at zero kills the host. It sits

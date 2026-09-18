@@ -107,7 +107,7 @@ test('SURV3: cooking - the raw foods alone; cooked a stage nearer fresh, one off
   pack.push(createSurvivalItem(TEMPLATE.Skillet));
   const m = cookFood(meat, pack, { skillet: hasSkillet(pack) });
   assert.equal(m.item.templateIndex, TEMPLATE.Meat); assert.equal(foodStage(m.item), 0); assert.equal(m.minutes, SKILLET_COOK_MINUTES); assert.equal(SKILLET_COOK_MINUTES, 15);
-  assert.equal(m.text, CAMP_TEXT.cooked('Meat'));
+  assert.equal(m.text, CAMP_TEXT.cooked('Raw Meat'));
   assert.equal(cookFood(bread, pack), null, 'bread does not cook');
 });
 
@@ -225,7 +225,7 @@ test('SURV3: the pool - the eye names it, the menu rests, stokes, cooks and pack
   const cook = h.overlays.at(-1);
   assert.deepEqual(cook.items, ['Raw Fish']);
   cook._pick(0);
-  assert.equal(h.said.at(-2), CAMP_TEXT.cooked('Cooked Fish')); assert.equal(h.said.at(-1), `+${COOK_MINUTES}`, 'offline the cook\'s minutes pass');
+  assert.equal(h.said.at(-2), CAMP_TEXT.cooked('Raw Fish')); assert.equal(h.said.at(-1), `+${COOK_MINUTES}`, 'offline the cook\'s minutes pass');
   assert.equal(h.entity.items.some((it) => it.templateIndex === TEMPLATE.CookedFish), true);
   h.camps.activate(key, 'grab'); h.overlays.at(-1)._pick(1);
   assert.equal(h.said.at(-1), CAMP_TEXT.nothingToCook);
@@ -242,7 +242,7 @@ test('SURV3: the pool - the eye names it, the menu rests, stokes, cooks and pack
   await settle();
   assert.equal(h.camps.camps.length, 1); assert.deepEqual(h.camps.camps[0].rec.pos, [0, 0, PLACE_AHEAD]);
   h.camps.restore([{ junk: 1 }, null, { kind: 'x', pos: [0, 0, 0] }]);
-  assert.equal(h.camps.camps.length, 0, 'a restore replaces mine; nothing off a bad row');
+  assert.equal(h.camps.camps.length, 1, 'a restore merges by id (AUDIT SURV B: the save\'s list joins what stands); nothing off a bad row');
   h.camps.restore(snap, (p) => [p[0] - 100, p[1], p[2]]);
   await settle();
   h.camps.offsetAll([5, 0, 0]);
@@ -340,11 +340,11 @@ test('SURV3: by source - the three hosts stand the pool, feed the race, draw the
     assert.match(src, /if \(!survivalOn\(\)\) return \[\];|survivalOn\(\) \? springs\.map/, `${name}: no water arm with the mod off`);
   }
   // world: the pixel sweep, the scene cache, the save envelope, the recenter, the cell's frames
-  assert.match(world, /if \(collectLoose\) camps\.collectPixel\(key\);/);
-  assert.equal((world.match(/camps: camps\.snapshot\(\(pos\) => \{ const wc = state\.worldCoords\(pos\); return \[wc\.x, pos\[1\] - state\.compensation\[1\], wc\.z\]; \}\)/g) ?? []).length, 2, 'the scene cache and the save, in natives');
-  assert.match(world, /camps\.restore\(arrived\.camps,/); assert.match(world, /camps\.restore\(w\.camps,/);
+  assert.doesNotMatch(world, /camps\.collectPixel\(key\)/, 'AUDIT SURV B: the streaming sweep spares a placed camp');
+  assert.equal((world.match(/camps: camps\.snapshot\(\(pos\) => \{ const wc = state\.worldCoords\(pos\); return \[wc\.x, pos\[1\] - state\.compensation\[1\], wc\.z\]; \}\)/g) ?? []).length, 1, 'the save envelope alone carries the camps (AUDIT SURV B: the scene cache no longer does)');
+  assert.doesNotMatch(world, /camps\.restore\(arrived\.camps,/); assert.match(world, /camps\.restore\(w\.camps,/);
   assert.match(world, /camps\.offsetAll\(r\.offset\);/);
-  assert.match(world, /if \(cell && full\) \{ const c = camps\.wireRecords\(campToWire\); if \(c\.length\) frame\.c = c; \}/, 'my camps ride my full foes frame');
+  assert.match(world, /if \(cell && full\) frame\.c = camps\.wireRecords\(campToWire\);/, 'my camps ride my full foes frame (AUDIT SURV B: an empty list too)');
   assert.match(world, /exteriorFoes\.setOnCamps\(\(from, c, at\) => camps\.applyOwner\(from, c, campToScene, at\)\);/, 'a peer\'s arrive with their foes, off the pool\'s own apply');
   assert.match(read('src/scenes/exteriorFoes.js'), /if \(Array\.isArray\(data\.c\)\) _onCamps\?\.\(from, data\.c, _now\(\)\);[^\n]*\n\s*return true;/, 'past the pool\'s room test');
   assert.match(world, /if \(isCellRoom\(online\.room\)\) \{ const near = peersNear\(\); if \(near\) camps\.sweepOwners\(new Set\(near\.map\(\(p\) => p\.id\)\), now, FOES_STALE_MS\); \}/, 'and go as their puppets do - the same liveness');

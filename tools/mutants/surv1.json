@@ -4,104 +4,134 @@
     "file": "src/systems/survival/temperature.js",
     "old": "  return cold ? Math.min(temp + r, 0) : Math.max(temp - r, 0);",
     "new": "  return cold ? temp + r : temp - r;",
-    "tests": ["test/surv1_model.test.js"]
+    "tests": [
+      "test/surv1_model.test.js"
+    ]
   },
   {
     "name": "SURV1-wet-clothes-keep-their-warmth",
     "file": "src/systems/survival/temperature.js",
     "old": "  warmth = Math.max(0, warmth - Math.min(wet, WET_MAX));",
     "new": "  warmth = Math.max(0, warmth);",
-    "tests": ["test/surv1_model.test.js"]
+    "tests": [
+      "test/surv1_model.test.js"
+    ]
   },
   {
     "name": "SURV1-the-sun-cooks-covered-metal",
     "file": "src/systems/survival/temperature.js",
     "old": "  if (metalTemp > 0 && inSunlight && !covered) heat = metalTemp;",
     "new": "  if (metalTemp > 0 && inSunlight) heat = metalTemp;",
-    "tests": ["test/surv1_model.test.js"]
+    "tests": [
+      "test/surv1_model.test.js"
+    ]
   },
   {
     "name": "SURV1-a-dungeon-is-the-sky",
     "file": "src/systems/survival/temperature.js",
     "old": "  if (env.insideDungeon) natTemp = dungeonTemperature(natTemp);",
     "new": "",
-    "tests": ["test/surv1_model.test.js"]
+    "tests": [
+      "test/surv1_model.test.js"
+    ]
   },
   {
     "name": "SURV1-the-drink-cools-a-vampire",
     "file": "src/systems/survival/temperature.js",
     "old": "  if (felt > 9 && ctx.hasWater && !ctx.vampire) felt = Math.max(felt - WATER_COOLS, 0);",
     "new": "  if (felt > 9 && ctx.hasWater) felt = Math.max(felt - WATER_COOLS, 0);",
-    "tests": ["test/surv1_model.test.js"]
+    "tests": [
+      "test/surv1_model.test.js"
+    ]
   },
   {
     "name": "SURV1-a-stage-does-not-halve-the-meal",
     "file": "src/systems/survival/food.js",
     "old": "export const foodSatiety = (item) => Math.trunc((foodOf(item)?.satiety ?? 0) / (foodStage(item) + 1));",
     "new": "export const foodSatiety = (item) => foodOf(item)?.satiety ?? 0;",
-    "tests": ["test/surv1_model.test.js"]
+    "tests": [
+      "test/surv1_model.test.js"
+    ]
   },
   {
     "name": "SURV1-the-bank-is-unlimited",
     "file": "src/systems/survival/food.js",
     "old": "  if (hunger > satiety + FULL_AHEAD_MINUTES) base = now - FULL_AHEAD_MINUTES;",
     "new": "",
-    "tests": ["test/surv1_model.test.js"]
+    "tests": [
+      "test/surv1_model.test.js"
+    ]
   },
   {
     "name": "SURV1-cooked-food-turns-the-stomach",
     "file": "src/systems/survival/food.js",
     "old": "  if (f.raw || stage > 0) {",
     "new": "  if (true) {",
-    "tests": ["test/surv1_model.test.js"]
+    "tests": [
+      "test/surv1_model.test.js"
+    ]
   },
   {
     "name": "SURV1-the-rot-roll-ignores-the-days",
     "file": "src/systems/survival/food.js",
     "old": "  const roll = 1 + Math.floor(rolls() * 100) + Math.trunc(daysKept / 2);",
     "new": "  const roll = 1 + Math.floor(rolls() * 100);",
-    "tests": ["test/surv1_model.test.js"]
+    "tests": [
+      "test/surv1_model.test.js"
+    ]
   },
   {
     "name": "SURV1-a-drain-can-empty-a-stat",
     "file": "src/systems/survival/needs.js",
     "old": "    capped[k] = m < 0 ? -Math.min(-m, Math.max(0, perm - 5)) : m;",
     "new": "    capped[k] = m;",
-    "tests": ["test/surv1_model.test.js"]
+    "tests": [
+      "test/surv1_model.test.js"
+    ]
   },
   {
     "name": "SURV1-a-rough-rest-clears-the-whole-debt",
     "file": "src/systems/survival/needs.js",
     "old": "      const floor = sleeping === 'rough' ? NEED.SLEEP_TIRED : 0;",
     "new": "      const floor = 0;",
-    "tests": ["test/surv1_model.test.js"]
+    "tests": [
+      "test/surv1_model.test.js"
+    ]
   },
   {
     "name": "SURV1-the-catch-up-is-unbounded",
     "file": "src/systems/survival/needs.js",
-    "old": "  const start = Math.max(Math.floor(from), Math.floor(to) - MAX_CATCHUP_MINUTES);",
-    "new": "  const start = Math.floor(from);",
-    "tests": ["test/surv1_model.test.js"]
+    "old": "  const start = Math.max(Math.floor(from), last, end - MAX_CATCHUP_MINUTES);",
+    "new": "  const start = Math.max(Math.floor(from), last);",
+    "tests": [
+      "test/surv1_model.test.js"
+    ]
   },
   {
     "name": "SURV1-a-short-absence-is-aligned-too",
     "file": "src/systems/survival/needs.js",
     "old": "  if (gap > ALIGN_GRACE_MINUTES || (s.lastAte ?? now) > now || (s.awakeSince ?? now) > now) {",
     "new": "  if (true) {",
-    "tests": ["test/surv1_model.test.js"]
+    "tests": [
+      "test/surv1_model.test.js"
+    ]
   },
   {
     "name": "SURV1-the-stage-line-repeats-every-minute",
     "file": "src/systems/survival/needs.js",
     "old": "  if (once) { if (n[key] === 'on') return; n[key] = 'on'; say?.(text); return; }",
     "new": "  if (once) { say?.(text); return; }",
-    "tests": ["test/surv1_model.test.js"]
+    "tests": [
+      "test/surv1_model.test.js"
+    ]
   },
   {
     "name": "SURV1-liveStat-ignores-the-survival-entry",
     "file": "src/systems/statMods.js",
     "old": "      if (a.kind === 'survival') { mod += a.statMods?.[statName] ?? 0; continue; }",
     "new": "      if (a.kind === 'survival') { continue; }",
-    "tests": ["test/surv1_model.test.js"]
+    "tests": [
+      "test/surv1_model.test.js"
+    ]
   }
 ]

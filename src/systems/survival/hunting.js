@@ -54,16 +54,16 @@ export const HUNT_ODDS = Object.freeze({ summer: 200, winter: 300, event: 70 });
 export const HUNT_COOLDOWN = Object.freeze([100, 500]);
 /** A search takes Random(30, 60) game minutes (TimeSkip's band)... */
 export const HUNT_MINUTES = Object.freeze([30, 60]);
-/** ...at this many REAL seconds a game hour on the busy page - ten
- *  times the rest window's REST_WAIT_PER_HOUR (0.75): a rest is a skip,
- *  a hunt is a happening. */
+/** ...at this many REAL seconds a game hour on the busy page - roughly
+ *  ten times the rest window's REST_WAIT_PER_HOUR (0.75): a rest is a
+ *  skip, a hunt is a happening. */
 export const HUNT_WAIT_PER_HOUR = 8;
 export const huntRealSeconds = (minutes) => Math.round((minutes / 60) * HUNT_WAIT_PER_HOUR * 100) / 100;
 /** The snake's and the lizard's bite: any poison, the mod's Random(128, 140). */
 export const BITE_POISON_RANGE = Object.freeze([128, 139]);
 /** A foul pool's diseases: the same curable three a foul meal risks. */
 export const FOUL_WATER_DISEASES = FOUL_MEAL_DISEASES;
-/** A pool's water by its size, kg (a skin holds 2.5). */
+/** A pool's water by its size, kg (a skin holds two). */
 export const POOL_KG = Object.freeze({ pool: 5, smallPool: 2, foul: 1 });
 /** The mountain fall's health, the boar's fatigue (in the stat's units). */
 export const FALL_HURT = Object.freeze([1, 4]);

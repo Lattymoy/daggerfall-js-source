@@ -31,8 +31,11 @@ export const menuKeyFor = (climateIndex) => MENU_KEY_BY_CLIMATE[climateIndex] ??
 /** The tier by the tavern's quality (1-20): the mod's three tables a key. */
 export const menuTier = (quality) => (quality < 6 ? 'low' : quality < 13 ? 'mid' : 'high');
 /** Breakfast is served from six to ten; at five the kitchen is not yet open. */
+/** The mod's DoFood (read off the DLL, AUDIT SURV D): breakfast from six to ten INCLUSIVE; before six no food -
+ *  at five "breakfast starts at dawn", earlier "the kitchen is closed for the night" - and the drinks pour all night. */
 export const BREAKFAST_FROM = 6, BREAKFAST_UNTIL = 10, KITCHEN_CLOSED_HOUR = 5;
-export const breakfastHours = (hour) => hour >= BREAKFAST_FROM && hour < BREAKFAST_UNTIL;
+export const breakfastHours = (hour) => hour >= BREAKFAST_FROM && hour <= BREAKFAST_UNTIL;
+export const kitchenClosed = (hour) => hour < BREAKFAST_FROM;
 /** What a meal is worth, by its list (minutes of hunger paid). */
 export const MEAL_WORTH = Object.freeze({ breakfast: 120, low: 120, mid: 200, high: 240 });
 /** The drinks' kinds and what each does to the counter. */
@@ -110,6 +113,7 @@ export function drinkKind(name) {
 
 export const TAVERN_MENU_TEXT = Object.freeze({
   closed: 'Sorry, breakfast starts at dawn.',
+  closedNight: 'Sorry, the kitchen is closed for the night.',
   tooFull: 'You are too full to finish your meal. The rest goes to waste.',
   invigorated: 'You feel invigorated by the meal.',
   fortified: 'The drink fortifies you.',
@@ -123,17 +127,18 @@ export const TAVERN_MENU_TEXT = Object.freeze({
 /**
  * The menu as the picker shows it: the food (breakfast in the morning,
  * the tier's list otherwise), a header, the drinks. `hour` 0-23.
- * Returns { rows: [{ text, kind: 'food'|'drink'|'header', name, price, worth, strength }], closed }.
+ * Returns { rows: [{ text, kind: 'food'|'drink'|'header', name, price, worth, strength }], closed, closedText }.
  */
 export function tavernMenu({ climateIndex = 232, quality = 5, hour = 12 } = {}) {
   const key = menuKeyFor(climateIndex), tier = menuTier(quality);
-  const closed = hour === KITCHEN_CLOSED_HOUR;
+  const closed = kitchenClosed(hour);
+  const closedText = closed ? (hour === KITCHEN_CLOSED_HOUR ? TAVERN_MENU_TEXT.closed : TAVERN_MENU_TEXT.closedNight) : null;
   const list = breakfastHours(hour) ? 'breakfast' : tier;
   const rows = [];
   if (!closed) for (const f of FOOD_MENUS[key][list]) rows.push({ text: `${String(f.price).padStart(2)} gold   ${f.name}`, kind: 'food', name: f.name, price: f.price, worth: MEAL_WORTH[list] });
   rows.push({ text: TAVERN_MENU_TEXT.drinksHeader, kind: 'header', name: null, price: 0 });
   for (const k of drinkMenuFor(key)[tier]) rows.push({ text: `${String(k.price).padStart(2)} gold   ${k.name}`, kind: 'drink', name: k.name, price: k.price, strength: DRINK_STRENGTH[drinkKind(k.name)] });
-  return { rows, closed, key, tier, list };
+  return { rows, closed, closedText, key, tier, list };
 }
 
 /** TavernFood's marker law: hunger under the worth is too full (charged); past worth + 240 the marker starts four hours back; the worth banks. */

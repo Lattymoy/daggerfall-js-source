@@ -195,7 +195,7 @@ export function clothingWarmth(worn, { wet = 0, natural = 0, inSunlight = false 
   }
   const pure = warmth;
   warmth = Math.max(0, warmth - Math.min(wet, WET_MAX));
-  if (natural > 30 && inSunlight && hood) warmth -= HOOD_SHADE;
+  if (natural > 30 && inSunlight && hood) warmth = Math.max(0, warmth - HOOD_SHADE);   // AUDIT SURV D: never below nothing, as the law says
   return { warmth, pure, hood };
 }
 

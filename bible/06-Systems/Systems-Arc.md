@@ -4572,7 +4572,7 @@ the true clause along with the false ones is in the campaign, because
 over-retiring is the equal and opposite failure.
 
 **And one delegation pointed at a flag nobody had ever written.**
-`world.js:1729` said the dungeon-mode enchant ctx was "FLAGGED there
+`world.js:1731` said the dungeon-mode enchant ctx was "FLAGGED there
 with the rest of its enchant wiring" in `dungeonContext.js`. It was
 not. `setDefaultEnchantCtx` had exactly **one** caller in the tree, so
 the standalone `?dungeon` host ran every arm that needs a host
@@ -5550,7 +5550,7 @@ to that cite and moves under the same content check; citeMerge had
 done this since CS2 and citeShift only reported them, so the two
 regexes are one law now, exported from citeShift (`ANY_CITE`,
 `CONTINUATION`) and imported by citeMerge. (2) A TEST'S ESCAPED
-LITERAL FOLLOWS THE ROW IT PINS: `world\.js:4219` in citedrift.test.js
+LITERAL FOLLOWS THE ROW IT PINS: `world\.js:4221` in citedrift.test.js
 is a quote of a Ledger row's text; the row is STRUCK and its number
 held, and the literal used to move anyway, parting the pin from its
 row at every shift. The CLI plans every doc first, learns which
@@ -7905,3 +7905,13 @@ formulas in. ONE SWITCH (`survival/switch.js`, the enhanced pane's
 "survival" pref, ON by default - Mac's third point) turns the whole
 mod off, and off it every seam is DFU's own: the bed's hour, the
 eleven-line tavern list, no chips, no gate, no roll.
+
+AUDIT SURV (2026-09-18, Mac: "Let's audit everything so far"): five
+opus lenses over the arc - laws, wiring, surfaces, records, a Chromium
+probe. Three blockers (the harms killed a starting character in two
+hours and a legal rough rest took 480 health a night; the kit never
+reached a chargen character; a dungeon rest paid its night awake), the
+rest gate's handler leak, four camp doors, nine law bugs and a dozen
+surface faults - all fixed, recorded in `06-Systems/Climates-Calories.md`
+"The audit", pinned by `test/auditsurv.test.js` (8) and
+`tools/mutants/auditsurv.json`.

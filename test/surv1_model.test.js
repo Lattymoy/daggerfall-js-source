@@ -235,7 +235,7 @@ test('SURV1: the stat drains are one survival entry that liveStat reads, capped 
   assert.equal(hot.speed, -5, 'exposure: min(minutes past 30, degrees past 30) / 4');
   const drunk = survivalStatMods({ ...newSurvival(now), drunk: 45 }, { abs: 0 }, now, { endurance: 50 });
   assert.equal(drunk.agility, -2);
-  assert.equal(drunk.personality, 18, 'the drink makes you friendly');
+  assert.equal(drunk.personality, 3, 'the drink makes you a little friendlier (AUDIT SURV A: +1..+5 with the drink, never a +20)');
   assert.equal(drunk.strength, undefined);
 });
 
@@ -246,7 +246,7 @@ test('SURV1: one world minute - a comfortable fed player pays nothing; a naked p
   const now = 30000;
   const temp = survivalMinute(e, now, { ...noon }, { worn: worn({ [S.ChestClothes]: item(158), [S.LegsClothes]: item(151), [S.Feet]: item(149) }), sinks: sinksOf(log), ctx: { raceId: RACES.Breton } });
   assert.equal(temp.felt, 0 + 5 + 22 - 5, 'dressed on a summer noon: warm');
-  assert.deepEqual(log.filter((l) => l[0] !== 'say'), [['fatigue', 16]], 'warm (22): one band of heat drain, nothing else');
+  assert.deepEqual(log.filter((l) => l[0] !== 'say'), [['fatigue', DRAIN.heatPer20]], 'warm (22): one band of heat drain, nothing else');
   assert.equal(e.survival.thirst > 0, true);
   log = []; e = mk();
   survivalMinute(e, now, { ...noon, climateIndex: CLIMATES.Desert2, month: 6, inSunlight: true }, { worn: worn({}), sinks: sinksOf(log), ctx: { raceId: RACES.Breton } });

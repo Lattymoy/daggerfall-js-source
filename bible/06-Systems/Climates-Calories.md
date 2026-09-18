@@ -29,7 +29,7 @@ menus and drunkenness. Its bugs and cliffs, from the code: a quadratic
 sleep counter (exhaustion after one long day), a starvation counter
 that never resets, fast travel and prison resetting every need for
 free, a thirst that rises even when freezing, a race cliff on heat
-loss, six mod-message calls a round into a mod the port does not
+loss, four mod-message calls a round into a mod the port does not
 carry, and everything static.
 
 ## What the port built
@@ -54,7 +54,8 @@ the hour's (evening and dawn -10, the small hours -20, times 3-4 in
 the deserts and 2 in the mountains) and the weather's (overcast -8,
 fog -5, rain and snow -10, a storm -15, the sandstorm +5); indoors
 half the climate and season with no sky or hour, underground no hour
-or sky and then the dungeon correction (cool, -20..0). Resistance is
+or sky and then the dungeon correction (toward -20, so a felt of
+-20..+5 for the naturals the world reaches). Resistance is
 degrees toward zero: race flags (25/50, -25/-50), spell resistances as
 degrees, a vampire 25 of frost, a were-beast in its form 100/80.
 Clothing warms by piece (1-12), the cloaks by variant (a formal cloak
@@ -94,7 +95,8 @@ The mod's templates as the port's custom rows above DFU's 288
 Camping Equipment (50 uses), Rations (250 minutes, stackable), Apple
 and Orange (60, and ten off the thirst), Bread (180), Raw Fish (90,
 raw), Cooked Fish (200), Meat (240), Raw Meat (100, raw), the Waterskin
-(two kilos of water that weigh what they are; a drink is a tenth), the
+(two kilos of water that weigh what they are; a drink is a tenth of a
+kilo, a twentieth of the skin), the
 Skillet, and the port's own Campfire Kit (five fires). A food spoils by
 stage on a heat-driven day count against its keeping (bread 95, raw
 fish 50); past stale it wears the mod's own picture through DFU's
@@ -135,7 +137,7 @@ name the camp and any other mode opens a list picker: rest here, cook
 food (the raw fish and meat, cooked a stage nearer fresh in half an
 hour, a quarter with a skillet; offline the minutes pass), stoke a
 cold tent, and pack up your own (or put out your own fire). The water
-sources are the mod's list - the fountain and well flats (212: 0, 2,
+sources are the mod's player-facing list - the fountain and well flats (212: 0, 2,
 8, 9; 85: 0), the dry fountain (212: 3, which only says so) and the
 three trough models (41220-41222) - under the same ray, filling every
 skin and quenching the thirst. Both inventory skins close and hand a
@@ -183,8 +185,10 @@ roof, too hot to sleep (scorching) anywhere - `restBlock`, installed
 on DFU's own RegisterPreventRestCondition seam by
 `installSurvivalRestGate` with the host's felt-temperature reader
 (SURV7 wires the reader - `survival/env.js` installSurvivalGate, one
-install per ticker, the felt word off the record and the fire and the
-roof off the host's env).
+install per ticker and per dungeon context, the felt word off the
+record and the fire and the roof off the host's env; a reader that
+answers null is a host that does not own the mode and says nothing,
+and a torn-down dungeon takes its pair off the seam - AUDIT SURV).
 
 ### What the player is told (SURV5)
 
@@ -215,8 +219,9 @@ breakfast list, separate Food and Drinks buttons). The port keys the
 same dishes by CLIMATE (`survival/tavernMenu.js` MENU_KEY_BY_CLIMATE -
 the mod's region switch is not recoverable whole from the IL), tiers
 by the tavern's quality (under 6 low, under 13 mid, else high), serves
-breakfast from six to ten, refuses at five ("Sorry, breakfast starts
-at dawn."), and folds food and drink into the ONE picker DFU's Food
+breakfast from six to ten inclusive, refuses food before six in the
+mod's two words (at five "Sorry, breakfast starts at dawn.", earlier
+"Sorry, the kitchen is closed for the night.") while the drinks pour, and folds food and drink into the ONE picker DFU's Food
 button opens, a header between (TVRN00I0 has four buttons and no
 room for the mod's fifth). A meal takes half an hour and banks its
 worth against the hunger marker on the mod's own law (too full under
@@ -246,7 +251,8 @@ InflictPoison on a bite; SpawnBeast) is restated in
 overworld, off the widened town rect, by day, no foe near, not resting
 or fast travelling, in a climate the mod hunted (the desert pair, the
 subtropics, the swamp pair, the woods pair, the mountain pair), the
-odds as the mod's, and a cooldown of Random(100, 500) minutes riding
+odds the mod's plus one (its roll is Random(1, 200) - luckMod < 1; the
+road-following arm it asked TravelOptions for is not carried), and a cooldown of Random(100, 500) minutes riding
 the survival record as `huntAt` (saved with it). Each climate has two
 events on a coin: the desert's greener vegetation (WATER) or its rocks
 (a snake); the subtropics' water or trees (FRUIT); the swamp's birds
@@ -329,3 +335,84 @@ save's own clock (a day or more away starts fed, watered and rested;
 an hour away keeps its hunger), and the online arrival resets a record
 from further along than the world. With the mod off the feed is null,
 the gate answers nothing, and DFU's tick is DFU's.
+
+### The audit (AUDIT SURV, 2026-09-18)
+
+Mac: "Let's audit everything so far". Five opus agents read the arc -
+the pure laws, the wiring walk, the player-facing surfaces, the tests
+and records, and a runtime probe in Chromium (the game data is not in
+the container, so the probe drove the arc's modules, the real ticker,
+the rest deps, the tavern and hunt windows and the enhanced HUD on the
+front door, not the 3D scene). What they found, all fixed and pinned
+(`test/auditsurv.test.js`, `tools/mutants/auditsurv.json`):
+
+- THE HARMS KILLED A STARTING CHARACTER (E, blocker). The bare-feet
+  arm took a point of health every game minute past |felt| 25 with no
+  floor, the exposure arm a point or more a minute past 50, and both
+  ran through a rough sleep - a chargen character (short shirt, casual
+  pants, no shoes, 25 health) died in two hours on a clear winter
+  afternoon and a legal rough rest took 480 health a night. Now: bare
+  feet cost fatigue (DRAIN.bareFeet a minute), the naked-cold and
+  sunburn arms hurt once every ten minutes and never below five
+  health, exposure past DAMAGE_AT hurts once every ten minutes and
+  never in your sleep (the gate refuses the freezing and the scorching
+  night), and no bare-skin arm runs while resting or asleep. The heat
+  and cold fatigue band fell from 16 to 6 a minute (a chilly night by
+  a fire emptied the pool in seven hours).
+- THE KIT NEVER REACHED A CHARGEN CHARACTER (E, blocker): the
+  provisions rode the retired pre-chargen seeder alone. Now
+  `startingGear.assignStartingGear` adds them after the spellbook.
+- A DUNGEON REST PAID ITS NIGHT AWAKE (B, blocker): the dungeon's
+  `_restAdvance` ran no needs, and the frame after the window paid
+  the whole night with `isResting` false, so a night by a dungeon fire
+  RAISED the sleep debt. Now `_restAdvance` runs the survival minutes
+  with the sleep's kind, and the record's own marker (`s.lastMinute`)
+  keeps the frame from paying the span again.
+- THE REST GATE LEAKED (B, C, D): two handlers per dungeon entry and
+  none ever unregistered, so a dead dungeon's handler refused the
+  outdoor fire. Now a reader that answers null says nothing (the
+  world's under a dungeon, the interior's outdoors), and the dungeon
+  context unregisters its pair at the teardown.
+- THE CAMPS (B): the streaming sweep destroyed a placed camp and only a
+  teleport's scene cache brought it back - the sweep spares them now
+  and the cache carries none (the pool is the truth, the save envelope
+  carries it, a restore merges by id); packing the last camp never
+  reached peers (an empty `c` says "none stand"); the pool stands
+  nothing with the mod off; a relay clock correction re-aligns the
+  needs.
+- THE LAWS (A): a rough nap raised a rested sleeper's debt to tired
+  (the floor clamped upward); the rust arm wrote a phantom
+  `condition` field; food aged from the world's first rot-day, not its
+  own (every food spoiled overnight past the third month - items are
+  stamped on their first day now); the drink paid +20 Personality
+  (now +1..+5); the well-fed tally banked minutes as points (now a
+  point of fatigue an hour spent fed); spent camping gear pitched for
+  ever (refused at zero); a hood shaded below nothing; the survival
+  stat entry outlived the switch (the tick with no feed clears it);
+  the temperature notes had their own bands and said three lines
+  every five minutes (the strip's words, once each).
+- THE SURFACES (C): a hunt window dropped from under (a death screen)
+  never ran its close hook and killed hunting for the scene
+  (`dispose`); Escape now abandons the search; the result page is a
+  click-anywhere box, not a raw-key one; the last dot draws; the
+  Drinks divider closed the tavern (a header pick keeps the picker);
+  the five o'clock tavern refused the drinks the law still served
+  (now the mod's two refusals, then the drinks); a vampire's strip
+  said Starving; the HUD's drunk band was a hard forty; the enhanced
+  card never showed the survival tokens; an empty strip cost the
+  bottom row a gap; the weight word was `kg` where DFU says
+  kilograms; the cook line named the cooked item; the Thirsty chip
+  blinked (the skin now answers at the stage); the quickslot wear
+  track was an invalid SVG path logged every HUD build.
+- THE RECORDS (D): the tavern kitchen hours were misread off the DLL
+  (fixed above); the README counted eighteen textures (twenty); the
+  save's record round-trip was pinned by nothing (now it is); twenty
+  citations under-shifted by citeShift re-aimed by content; the odds,
+  the mod-message count, the dungeon band, the drink's fraction and
+  the water list reworded here; the mod's feature row now carries
+  `'mod'` and the author's name.
+
+Not driven (no ARENA2 in the container): the 3D fire and tent, the
+activation ray, the inventory windows in situ, dungeon-floor camps,
+online camp sharing. The probe's scripts and screenshots are in the
+session scratchpad, not the tree.
