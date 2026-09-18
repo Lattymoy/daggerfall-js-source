@@ -82,7 +82,7 @@ test('HARD2c: the WRITE differential - the old inline arithmetic, carried verbat
 
 test('HARD2c: the RESTORE differential - all three copies were the same law', () => {
   // world.js:5049/:5062, dungeonContext.js:5665/:5671 and
-  // worldModes.js:8393-8394 - three copies, one law, carried verbatim.
+  // worldModes.js:8402-8403 - three copies, one law, carried verbatim.
   const oldApply = (w, pose) => {
     if (!pose) return;
     if (pose.weaponDrawn != null) w.sheathed = !pose.weaponDrawn;
