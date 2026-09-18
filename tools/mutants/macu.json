@@ -1,0 +1,51 @@
+[
+  {
+    "name": "MACU-the-reader-forgets-the-table",
+    "file": "src/formats/textRsc.js",
+    "old": "    const row = this._table.get(id);\n    if (row) return row;\n",
+    "new": "",
+    "tests": ["test/macu_directions.test.js"]
+  },
+  {
+    "name": "MACU-the-default-table-is-empty",
+    "file": "src/formats/textRsc.js",
+    "old": "  load(bytes, { table = INTERNAL_RSC } = {}) {",
+    "new": "  load(bytes, { table = null } = {}) {",
+    "tests": ["test/macu_directions.test.js"]
+  },
+  {
+    "name": "MACU-hasRecord-ignores-the-table",
+    "file": "src/formats/textRsc.js",
+    "old": "  hasRecord(id) { return this._table.has(id) || this._byId.has(id); }",
+    "new": "  hasRecord(id) { return this._byId.has(id); }",
+    "tests": ["test/macu_directions.test.js"]
+  },
+  {
+    "name": "MACU-the-variants-fuse-into-one",
+    "file": "src/formats/textRsc.js",
+    "old": "    if (i > 0) out.push(RSC.SubrecordSeparator);",
+    "new": "    if (i > 0) out.push(RSC.NewLine);",
+    "tests": ["test/macu_directions.test.js"]
+  },
+  {
+    "name": "MACU-the-row-names-the-building-again",
+    "file": "src/formats/rscTable.js",
+    "old": "    \"%di of where we're standing\",",
+    "new": "    \"%loc is %di of where we're standing\",",
+    "tests": ["test/macu_directions.test.js"]
+  },
+  {
+    "name": "MACU-the-markup-keeps-the-editor's-newlines",
+    "file": "src/formats/rscTable.js",
+    "old": "  const s = String(value ?? '').replace(/\\r?\\n/g, '');",
+    "new": "  const s = String(value ?? '');",
+    "tests": ["test/macu_directions.test.js"]
+  },
+  {
+    "name": "MACU-the-fallback-is-the-classic-sentence",
+    "file": "src/scenes/townTalk.js",
+    "old": ": '%di of here')   // MAC-U",
+    "new": ": '%loc is %di of here')   // MAC-U",
+    "tests": ["test/macu_directions.test.js"]
+  }
+]
