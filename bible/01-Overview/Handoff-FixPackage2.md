@@ -127,3 +127,64 @@ refused.**
 (the tool's own `--apply` for the mechanical ones, by content for the 20
 it left for a person, plus four range-ends and a probe-fleet span it
 cannot see). Gate green: **8,944 tests, 0 failures**, lint, types, build.
+
+---
+
+# Lootchanges 3.0, same day
+
+A third zip, 10 files, and the lesson above paid out immediately: **two of
+them carried no author changes at all** and would have reverted work that
+shipped hours earlier.
+
+| file | vs HEAD | author's own diff | base | behind |
+|---|---|---|---|---|
+| `systems/lootThemes.js` | new | new | — | — |
+| `systems/loot.js` | 33 | 31 | `efaf21c4` | 2 |
+| `systems/survival/loot.js` | 7 | 7 | `efaf21c4` | 0 |
+| `scenes/hostCombat.js` | 2 | 2 | `efaf21c4` | 0 |
+| `test/audit18_hosts_dungeon.test.js` | 2 | 2 | `efaf21c4` | 0 |
+| `test/rf2_spawnloot.test.js` | 6 | 2 | `8d14f507` | 1 |
+| **`systems/survival/hunting.js`** | 23 | **0** | `1723fd61` | 1 |
+| **`test/surv6_hunting.test.js`** | 27 | **0** | `8564f100` | 3 |
+| `test/audit24_wave43.test.js` | 0 | 0 | `efaf21c4` | 0 |
+| `test/surv2_items.test.js` | 0 | 0 | `efaf21c4` | 0 |
+
+The last four are the interesting rows. `audit24_wave43` and `surv2_items`
+are byte-identical to HEAD - no-ops, dropped. But `hunting.js` and
+`surv6_hunting.test.js` show 23 and 27 changed lines **against HEAD** while
+being byte-identical to a base that predates the 2.0 integration: the
+author changed nothing in them, they are simply older copies riding along.
+Copying them would have deleted `HUNT_LOOT_SCALE` and its test - the
+hunting-yield halving that landed in #262 - with a diff that applies
+perfectly cleanly. **Both skipped.** A file whose author diff is zero
+carries no intent and is never worth the risk of its stale base.
+
+## What landed
+
+- **`lootThemes.js`** (new). The player report: *"I killed an Imp and it
+  dropped a Wereboar's Tusk and a Unicorn Horn."* Classic never ties a
+  `CreatureIngredients1/2/3` roll to the creature that died - the loot
+  table's letter says how OFTEN each pool is tried, never WHICH item comes
+  out. Defensible for the nineteen human classes (a person can be carrying
+  any reagent as trade stock); not for a monster. A curated per-`mobileType`
+  override narrows a successful roll to that creature's own shelf, with
+  documented empty entries for the four that have nothing in the 23-item
+  pool. **Odds are untouched**: `LOOT_MATRICES` and the halving ladder both
+  run exactly as before - the roll still happens and the ladder still
+  halves, a themed tier with nothing to mint simply mints nothing.
+- **The Centaur is a humanoid.** Half human, carries a person's kit, so it
+  takes the same 75% item/gear and 50% food cuts as the other humanoids,
+  even though its own affinity/team row (Daylight/Centaurs) says neither
+  "Human" nor "Orcs".
+
+## Verified, and pinned
+
+The zip shipped no test for any of it. Checked live before writing one: an
+Imp draws `[53]` (Daedra's Heart) and nothing else across 3,000 rolls, a
+human class still draws the full 23, a Vampire draws nothing. Every
+`MOBILE_TYPES.*` name in the table resolves - a typo there would have
+keyed the object under `undefined` and silently themed nobody.
+
+`loot.test.js` now pins all four halves, **including that the odds do not
+move**: the same roll stream mints identical non-creature loot themed or
+not, which is the claim the header makes and the one most likely to rot.

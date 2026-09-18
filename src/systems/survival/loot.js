@@ -55,7 +55,12 @@ function scaledCount(n, scale, rolls) {
 }
 
 export const isAnimal = (entity) => entity?.basics?.affinity === 'Animal' || entity?.mobileType === MOBILE_TYPES.Slaughterfish;
-export const isHumanoid = (entity) => (entity?.mobileType ?? 0) >= 128 || entity?.basics?.team === 'Orcs' || entity?.basics?.affinity === 'Human';
+// MOD (player report): a Centaur is half human and carries a
+// person's loot/kit, not an animal's - drops the same way the other
+// humanoids do (75% item/gear cut in hostCombat.js, 50% food cut
+// below), even though its own affinity/team row (Daylight/Centaurs)
+// doesn't say "Human" or "Orcs".
+export const isHumanoid = (entity) => (entity?.mobileType ?? 0) >= 128 || entity?.basics?.team === 'Orcs' || entity?.basics?.affinity === 'Human' || entity?.mobileType === MOBILE_TYPES.Centaur;
 
 /** What one corpse carries: raw meat or fish for an animal, sometimes a
  *  meal for a humanoid. Pure: returns the items. */

@@ -34,6 +34,7 @@ import { validItemField, validItemFields, itemFieldsOfKind, ITEM_STR_MAX } from 
 import { createRandomBook, BOOK_TEMPLATE } from './books.js';   // IM1: CreateRandomBook whole (A2: + its book-file price)
 import { potionRecipeByKey, POTION_DEFAULT_TEXTURE_RECORD } from './potions.js';   // F103: PotionRecipeKey's price side effect; AUDIT 63 F20: and its texture-record half
 import { RANDOM_TREASURE_ARCHIVE, RANDOM_TREASURE_ICONS, DROP_ICON_ARCHIVES, DROP_ICON_IDXS } from './lootDataTables.js';   // G5: DaggerfallLootDataTables.cs, its own file again
+import { themedIngredientPool } from './lootThemes.js';   // MOD: a monster's CreatureIngredients roll draws from ITS OWN curated subset, not the full mismatched pool
 
 // LootChanceMatrix rows, verbatim (22 keys, '-' included).
 export const LOOT_MATRICES = Object.freeze({
@@ -167,10 +168,16 @@ export function createRandomClothing(gender, rolls = Math.random) {
  *  starting chance before the halving ladder runs. Gold is computed
  *  above this closure and never reads it, so a caller that wants
  *  "less item loot, same gold" (spawnEnemyLoot's humanoid cut) passes
- *  `itemChanceScale` and gold is untouched. 1 = DFU's own rates. */
+ *  `itemChanceScale` and gold is untouched. 1 = DFU's own rates.
+ *
+ *  MOD: `mobileType`, when given, narrows a CreatureIngredients1/2/3
+ *  roll to that creature's own curated subset (lootThemes.js) instead
+ *  of the full vanilla pool - so an Imp cannot hand over a Unicorn
+ *  Horn. Every other category, and every mobileType lootThemes.js
+ *  does not name, is untouched. */
 /** LootTables.GenerateRandomLoot, verbatim flow. `who` = { level,
  *  gender } (race feeds clothing variants later - S2). */
-export function generateRandomLoot(matrix, who, rolls = Math.random, { itemChanceScale = 1 } = {}) {
+export function generateRandomLoot(matrix, who, rolls = Math.random, { itemChanceScale = 1, mobileType = null } = {}) {
   const items = [];
   const level = Math.max(1, who.level | 0);
   const gold = (matrix.MinGold + Math.floor(rolls() * (matrix.MaxGold + 1 - matrix.MinGold))) * level;
@@ -181,15 +188,27 @@ export function generateRandomLoot(matrix, who, rolls = Math.random, { itemChanc
   if (gold > 0) items.push(goldStack(gold));
   const halving = (chance, make) => {
     let c = chance * itemChanceScale;   // MOD: the one scale point every category shares
-    while (dice100(Math.trunc(c), rolls())) { items.push(mintCondition(named(make()))); c *= 0.5; }   // AUDIT 23 (items-5)
+    // MOD: `make` may answer null now (a themed creature-ingredient
+    // roll with nothing to mint this tier) - the roll still happened
+    // and the ladder still halves, only nothing lands in `items`.
+    while (dice100(Math.trunc(c), rolls())) { const it = make(); if (it) items.push(mintCondition(named(it))); c *= 0.5; }   // AUDIT 23 (items-5)
   };
   halving(matrix.WP, () => createRandomWeapon(level, rolls));
   halving(matrix.AM, () => createRandomArmor(level, rolls));
   const ingredient = (chance, groupName) =>
     halving(chance, () => ({ group: groupName, templateIndex: pick(ITEM_GROUPS[groupName], rolls) }));
-  ingredient(matrix.C1 * level, 'CreatureIngredients1');
-  ingredient(matrix.C2 * level, 'CreatureIngredients2');
-  ingredient(matrix.C3, 'CreatureIngredients3');
+  // MOD: the three CREATURE tiers read a themed subset when this
+  // mobileType has one (lootThemes.js); an empty subset for a tier
+  // means the roll happens and mints nothing, rather than falling
+  // back to the mismatched vanilla pool.
+  const creatureIngredient = (chance, groupName, tier) =>
+    halving(chance, () => {
+      const pool = themedIngredientPool(mobileType, tier, ITEM_GROUPS[groupName]);
+      return pool.length ? { group: groupName, templateIndex: pick(pool, rolls) } : null;
+    });
+  creatureIngredient(matrix.C1 * level, 'CreatureIngredients1', 'C1');
+  creatureIngredient(matrix.C2 * level, 'CreatureIngredients2', 'C2');
+  creatureIngredient(matrix.C3, 'CreatureIngredients3', 'C3');
   ingredient(matrix.P1 * level, 'PlantIngredients1');
   ingredient(matrix.P2 * level, 'PlantIngredients2');
   ingredient(matrix.M1, 'MiscellaneousIngredients1');
