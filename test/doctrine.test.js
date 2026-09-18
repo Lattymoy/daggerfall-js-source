@@ -61,6 +61,11 @@ const PUBLIC_ALLOWLIST = new Map([
   // the question this list exists to ask. They are the first character
   // texture in the project that ships rather than loading through the data
   // door, and the reason viewer.html no longer needs ARENA2 for its skin.
+  // MAP0 (2026-09-18): THE HELD MAP'S SPRITE. Mac's own painting - two
+  // gauntleted hands holding a blank parchment, 1448x1086 - and the
+  // only picture the enhanced map will ship; the map itself is drawn
+  // onto the paper at runtime from MAPS and WOODS data (10-UI/Held-Map-Arc.md).
+  ['public/art/held-map.png', "OURS - Mac's own painting of the held parchment (MAP0, 2026-09-18); no ARENA2 pixel in it"],
   ['public/skin/skin-intensity.png', 'OURS - intensity baked from our own generated turnaround'],
   ['public/skin/skin-uv.json', "OURS - UVs over our own rig's geometry, no pixels at all"],
   ['public/skin/skin-layout.json', 'OURS - atlas cell rectangles, no pixels at all'],
