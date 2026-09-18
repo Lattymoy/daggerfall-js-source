@@ -273,8 +273,8 @@
  {
   "name": "bare-click-keeps-selection",
   "file": "src/ui/heldMap.js",
-  "old": "    if (m) this._select(m);\n    else if (this._selected) this._select(null);",
-  "new": "    if (m) this._select(m);",
+  "old": "    if (this._selected) this._select(null);\n  }\n\n  _renderSearch(entries) {",
+  "new": "  }\n\n  _renderSearch(entries) {",
   "tests": [
    "test/heldmap.test.js"
   ]

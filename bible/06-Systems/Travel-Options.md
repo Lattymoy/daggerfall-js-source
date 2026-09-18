@@ -360,6 +360,13 @@ crossing), and the doctrine row the three vendored pictures were owed.
   `minutesLeft`; the popup's estimate rides `beginTravel` now and runs
   down on the world clock; null for a followed path); it painted over the
   enhanced map (`covered`, the HUD's own word).
+- **MAP2 (2026-09-18, bible/10-UI/Held-Map-Arc.md).** The enhanced map
+  is the held parchment now, and it carries every addition this window
+  gained here through the SAME functions - `portsFilterAllows`/`hasPort`,
+  `travelMapMarkedMapId`, `locationInfoRows`, `resumePrompt`, the popup's
+  walked estimate, `onTravelToCoords` - so the default skin is the mod's
+  map too. The junction disc stays this mod's own DrawMapSection in both
+  lanes; it reads the same mark the sheet inks.
 - **The records.** Departures 6, 8, 9 corrected; five added (10-14); the
   source-gate paragraph's stale ROADS 16 numbers replaced; the mutant
   `map-section-roads-under-tracks` was a live survivor recorded as

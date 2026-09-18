@@ -148,12 +148,69 @@ something changed, and only where a real 2D context exists.
 sheet; the enhanced map is DOM and a 2D canvas, so the renderer's
 foreign-pass count fell by one (four passes now).
 
+## MAP2 - Travel Options on the sheet (SHIPPED 2026-09-18)
+
+Every addition the mod makes to the classic map lands on the held map
+through the SAME function the classic window calls
+(`src/ui/travelMapOptions.js`, `src/systems/travelPorts.js`), so the two
+skins cannot drift:
+
+- **The ports filter.** `portsFilterAllows` over `hasPort`, asked
+  BEFORE DFU's own discovery test by the marks, the find box and the
+  journal's click-through alike; a harbour glyph (an anchor) beside
+  every port's mark at the mid and near bands while the mod restricts
+  ship travel to ports; a Ports button in the foot row shown under the
+  same condition, and P as its key (the sheet's own spelling). Per-open,
+  as the classic one is (departure 6).
+- **The mark.** The middle click marks the place under the cursor and a
+  second clears it, through `travelMapMarkedMapId` in the shared store
+  (AUDIT-TO1 G4), inked as a ring in `MarkLocationColor` at EVERY band -
+  the mark is the thing the player put there to steer by, so it shows
+  even where the band hides the place.
+- **I and H.** `locationInfoRows` in a box over the sheet - the title,
+  the guild halls named, the shops counted by type in two columns, or the
+  mod's "no knowledge" sentence - and the host's help rows in the same
+  box. Any key or any click closes it and does nothing else that press.
+- **The coordinates click.** A bare pixel is a destination when the mod
+  allows it, the host can honour it (never online) and the visit is not a
+  teleport; a cross where no mark is; the decision opens itself with the
+  popup's own walked estimate and no fare; Begin skips the gold gate and
+  hands `onTravelToCoords` the coordinates popup's own `{pixel, name}`
+  with `playerControlled: true`.
+- **The walked estimate.** When the mod's fork says the player drives the
+  trip to a place (`isPlayerControlledTravel`), the card bills what the
+  popup's UpdateLabels bills - hours and minutes from the classic
+  estimate with the taken-over settings inverted, divided by twice the
+  speed multiplier, and the mod's words in the cost row - and the gold
+  gate is skipped for it.
+- **The resume prompt.** On the first tick with a destination pending,
+  the mod's own sentence with Yes/No: Yes resumes and lowers the sheet,
+  No pops the box alone and leaves the player on the map (AUDIT-TO1 G3);
+  opened during a journey, the sheet centres on the player instead.
+
+**Departure from the MAP0 page, recorded.** MAP0 said the junction disc
+would read the ink renderer's road picture. It does not: the disc is
+Travel Options' own five-texel DrawMapSection (`src/ui/travelJunctionMap.js`),
+carried 1:1 in both lanes, and a second drawing of the same roads through
+the ink would be a departure from the mod for no gain. The disc reads the
+same MARK the sheet inks (the shared store), which is the tie that
+matters.
+
 ## Pins
 
-`test/heldmap.test.js` (40): U61's carried laws (the walk, the height
+`test/heldmap.test.js` (47; the seven MAP2 pins drive a fake mod's
+settings through the window: the ports law over a REAL port id from the
+mod's list, the harbour glyph by band and condition, the mark through the
+store and its ring at far, the I box and its two closers, the H rows and
+the host fallback, the coordinates click's three refusals and its
+hand-off, the walked estimate verbatim against the popup's arithmetic,
+the resume prompt's Yes and No and the active-journey aim). Mutants:
+`tools/mutants/map2.json`, 29 dead, 1 equivalent as recorded.
+
+MAP1's pins: U61's carried laws (the walk, the height
 and water laws, the buckets, the door both ways, the one construction
 seam, the window's panel laws through a stub document, the source
-sweeps) and MAP1's own - the coast fixture (a 2x2 island: eight edges,
+sweeps) and the slice's own - the coast fixture (a 2x2 island: eight edges,
 one closed loop, integer corners; ocean climate is sea at any byte; a
 corner pixel closes), the border fixture (2|3 on both rows, 5|6 on one;
 none on the shore, none against a nameless byte; the centroids over land

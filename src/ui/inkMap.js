@@ -48,6 +48,7 @@ export const PEN = Object.freeze({
   region: 'rgba(58, 40, 22, 0.55)',  // a province's name
   select: 'rgba(168, 112, 24, 0.95)', // the chosen mark's ring
   player: 'rgba(120, 28, 20, 0.95)',  // the player's own mark
+  coords: 'rgba(120, 28, 20, 0.75)',  // MAP2: a bare-pixel destination's cross
 });
 /** The hand-lettered face the names are inked in. The enhanced skin's
  *  display face (ui/enhancedStyle.js --display), so the map and the
@@ -306,10 +307,15 @@ export function buildInkModel(deps) {
  *  Rebuilt on its own when a filter or a discovery changes, because
  *  the chains never do. */
 /**
+ * MAP2: `isPort` says which marks carry a harbour (Travel Options'
+ * port list, systems/travelPorts.js hasPort, asked through the window
+ * so this module never learns the list); `mapId` is MapSummary.MapID,
+ * what the mod's mark and ports laws key on.
  * @param {{ summaries?: Iterable<any>, filters?: any,
- *   isDiscovered?: (summary: any) => boolean, nameOf?: (summary: any) => string }} deps
+ *   isDiscovered?: (summary: any) => boolean, nameOf?: (summary: any) => string,
+ *   isPort?: (summary: any) => boolean }} deps
  */
-export function buildInkMarks({ summaries = [], filters = {}, isDiscovered = undefined, nameOf = () => '' }) {
+export function buildInkMarks({ summaries = [], filters = {}, isDiscovered = undefined, nameOf = () => '', isPort = () => false }) {
   const opts = isDiscovered ? { isDiscovered } : {};
   return buildMarkerModel(summaries, filters, opts).map((m) => ({
     x: m.x, y: -m.z,             // the pixel's centre, in map pixels (y down)
@@ -317,6 +323,8 @@ export function buildInkMarks({ summaries = [], filters = {}, isDiscovered = und
     kind: markKind(m.colorIndex),
     name: nameOf(m.summary),
     summary: m.summary,
+    mapId: m.summary?.mapID ?? m.summary?.mapId ?? null,
+    port: !!isPort(m.summary),
   }));
 }
 
@@ -404,9 +412,10 @@ export function placeNames(marks, view, band, { paperW, paperH, measure }) {
  * @param {{ox: number, oy: number, scale: number}} view
  * @param {{ paperW: number, paperH: number, dpr?: number, band?: string,
  *   filters?: any, player?: {x: number, y: number}|null,
- *   selected?: {x: number, y: number}|null,
+ *   selected?: {x: number, y: number, coords?: boolean}|null,
  *   party?: {x: number, y: number, name: string, online: boolean, stack: number, color: string}[],
- *   regionNames?: string[], names?: ReturnType<typeof placeNames>, pulse?: number }} opts
+ *   regionNames?: string[], names?: ReturnType<typeof placeNames>, pulse?: number,
+ *   ports?: boolean, markedMapId?: number, markColor?: string|null }} opts
  */
 export function paintInk(ctx, model, view, opts) {
   const { paperW, paperH, dpr = 1 } = opts;
@@ -458,12 +467,27 @@ export function paintInk(ctx, model, view, opts) {
   if (!opts.filters?.roads) stroke(model.roads, band === 'far' ? 1 : 1.5, PEN.line);
   if (band !== 'far' && !opts.filters?.tracks) stroke(model.tracks, 1, PEN.soft, [2, 3]);
 
-  // the marks
+  // the marks - and MAP2's harbour glyph beside a port's, while the mod
+  // restricts ship travel to ports (the classic page's ports button
+  // shows under the same condition, TravelOptionsMapWindow.cs:148)
   const shown = BAND_MARKS[band] ?? BAND_MARKS.near;
   for (const m of model.marks) {
     if (!shown.has(m.colorIndex) || !visible(m.x, m.y)) continue;
     const [x, y] = toPaper(view, m.x, m.y);
     paintGlyph(ctx, m.kind, x, y);
+    if (opts.ports && m.port && band !== 'far') paintHarbour(ctx, x, y);
+  }
+  // MAP2: the mod's MARK (TravelOptionsMapWindow.cs:532-550, drawn in
+  // MarkLocationColor) - a ring on the marked place at EVERY band, whether
+  // or not the band inks the place itself: the mark is the thing the
+  // player put there to steer by.
+  if (opts.markColor && opts.markedMapId != null && opts.markedMapId >= 0) {
+    for (const m of model.marks) {
+      if (m.mapId !== opts.markedMapId || !visible(m.x, m.y)) continue;
+      const [x, y] = toPaper(view, m.x, m.y);
+      ctx.strokeStyle = opts.markColor; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(x, y, 9, 0, Math.PI * 2); ctx.stroke();
+    }
   }
   // the names
   if (opts.names) {
@@ -503,6 +527,14 @@ export function paintInk(ctx, model, view, opts) {
   }
   if (opts.selected) {
     const [x, y] = toPaper(view, opts.selected.x, opts.selected.y);
+    if (opts.selected.coords) {
+      // MAP2: a bare pixel chosen as a destination - a cross where no
+      // mark is, since there is no place to ring
+      ctx.strokeStyle = PEN.coords; ctx.lineWidth = 1.6;
+      ctx.beginPath();
+      ctx.moveTo(x - 6, y - 6); ctx.lineTo(x + 6, y + 6); ctx.moveTo(x + 6, y - 6); ctx.lineTo(x - 6, y + 6);
+      ctx.stroke();
+    }
     ctx.strokeStyle = PEN.select; ctx.lineWidth = 2;
     ctx.beginPath(); ctx.arc(x, y, 10 + pulse * 2, 0, Math.PI * 2); ctx.stroke();
   }
@@ -518,6 +550,17 @@ export function paintInk(ctx, model, view, opts) {
 /** The stack of party labels on ONE pixel: each member's name this
  *  much further down than the last (AUDIT SOC D2's law, on ink). */
 export const PARTY_LABEL_STACK = 13;
+
+/** MAP2: the harbour glyph - a small anchor beside a port's mark. Skin. */
+export function paintHarbour(ctx, x, y) {
+  const ax = x + 8, ay = y - 1;
+  ctx.strokeStyle = PEN.soft; ctx.lineWidth = 1.1;
+  ctx.beginPath();
+  ctx.moveTo(ax, ay - 4); ctx.lineTo(ax, ay + 3);        // the shank
+  ctx.moveTo(ax - 2.5, ay - 2); ctx.lineTo(ax + 2.5, ay - 2);   // the stock
+  ctx.arc(ax, ay + 0.5, 3, Math.PI * 0.15, Math.PI * 0.85);     // the flukes
+  ctx.stroke();
+}
 
 /** One glyph per kind, at paper (x, y). Skin. */
 export function paintGlyph(ctx, kind, x, y) {

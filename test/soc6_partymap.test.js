@@ -649,7 +649,7 @@ test('AUDIT SOC C10/D5 (MAP1): the legend is a flex child of the FOOT row, besid
   assert.doesNotMatch(style, /\.hmlegend \{[^}]*bottom: 70px/, 'no guess about how tall the row happens to be');
   assert.match(style, /\.hmfoot \{\s*position: absolute; left: 18px; bottom: 18px; display: flex; gap: 12px;/, 'the row it lives in');
   assert.match(style, /@media \(max-width: 860px\) \{[\s\S]*?\.hmfoot \{ left: 12px; bottom: 12px; flex-wrap: wrap;/, '...and still the row that wraps');
-  assert.match(read('src/ui/heldMap.js'), /const legend = el\('div', 'hmlegend'\);\s*\n\s*foot\.append\(hint, band, legend\);/, 'appended INTO the foot');
+  assert.match(read('src/ui/heldMap.js'), /const legend = el\('div', 'hmlegend'\);[\s\S]{0,400}?foot\.append\(hint, band, legend, ports\);/, 'appended INTO the foot (MAP2 put the ports button beside it)');
   skin('enhanced');
   withDocument(() => {
     const win = mkWin({ party: () => [member()] });

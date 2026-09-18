@@ -1,0 +1,274 @@
+[
+ {
+  "name": "ports-ignored-by-marks",
+  "file": "src/ui/heldMap.js",
+  "old": "        isDiscovered: (s) => this._discovered(s),   // MAP2: the ports arm before DFU's own test\n",
+  "new": "",
+  "tests": [
+   "test/heldmap.test.js"
+  ]
+ },
+ {
+  "name": "ports-on-by-default",
+  "file": "src/ui/heldMap.js",
+  "old": "    this.portsFilter = false;\n    Object.defineProperty(this, 'markedMapId', {",
+  "new": "    this.portsFilter = true;\n    Object.defineProperty(this, 'markedMapId', {",
+  "tests": [
+   "test/heldmap.test.js"
+  ]
+ },
+ {
+  "name": "ports-button-always",
+  "file": "src/ui/heldMap.js",
+  "old": "  _portsShown() { return !!this._to?.settings?.shipTravelPortsOnly; }",
+  "new": "  _portsShown() { return !!this._to; }",
+  "tests": [
+   "test/heldmap.test.js"
+  ]
+ },
+ {
+  "name": "ports-filter-skips-search",
+  "file": "src/ui/heldMap.js",
+  "old": "        if (!this._discovered(entry.summary)) continue;",
+  "new": "        if (!checkLocationDiscovered(entry.summary)) continue;",
+  "tests": [
+   "test/heldmap.test.js"
+  ]
+ },
+ {
+  "name": "harbour-at-far",
+  "file": "src/ui/inkMap.js",
+  "old": "    if (opts.ports && m.port && band !== 'far') paintHarbour(ctx, x, y);",
+  "new": "    if (opts.ports && m.port) paintHarbour(ctx, x, y);",
+  "tests": [
+   "test/heldmap.test.js"
+  ]
+ },
+ {
+  "name": "harbour-always",
+  "file": "src/ui/inkMap.js",
+  "old": "    if (opts.ports && m.port && band !== 'far') paintHarbour(ctx, x, y);",
+  "new": "    if (m.port && band !== 'far') paintHarbour(ctx, x, y);",
+  "tests": [
+   "test/heldmap.test.js"
+  ]
+ },
+ {
+  "name": "mark-per-window",
+  "file": "src/ui/heldMap.js",
+  "old": "      get: () => travelMapMarkedMapId(),\n      set: (v) => setTravelMapMarkedMapId(v),",
+  "new": "      get: () => this._ownMark ?? -1,\n      set: (v) => { this._ownMark = v; },",
+  "tests": [
+   "test/heldmap.test.js"
+  ]
+ },
+ {
+  "name": "mark-never-clears",
+  "file": "src/ui/heldMap.js",
+  "old": "    this.markedMapId = this.markedMapId === id ? -1 : id;",
+  "new": "    this.markedMapId = id;",
+  "tests": [
+   "test/heldmap.test.js"
+  ]
+ },
+ {
+  "name": "mark-ring-hidden-at-far",
+  "file": "src/ui/inkMap.js",
+  "old": "      if (m.mapId !== opts.markedMapId || !visible(m.x, m.y)) continue;",
+  "new": "      if (m.mapId !== opts.markedMapId || !visible(m.x, m.y) || !shown.has(m.colorIndex)) continue;",
+  "tests": [
+   "test/heldmap.test.js"
+  ]
+ },
+ {
+  "name": "mark-colour-ignored",
+  "file": "src/ui/inkMap.js",
+  "old": "      ctx.strokeStyle = opts.markColor; ctx.lineWidth = 2;",
+  "new": "      ctx.strokeStyle = PEN.select; ctx.lineWidth = 2;",
+  "tests": [
+   "test/heldmap.test.js"
+  ]
+ },
+ {
+  "name": "mark-colour-not-the-settings",
+  "file": "src/ui/heldMap.js",
+  "old": "      markColor: rgbaCss(this._to?.settings?.markLocationColor),",
+  "new": "      markColor: rgbaCss([255, 0, 0, 255]),",
+  "tests": [
+   "test/heldmap.test.js"
+  ]
+ },
+ {
+  "name": "info-ignores-guild-line",
+  "file": "src/ui/heldMap.js",
+  "old": "        rows: info.guilds ? [info.guilds] : [],",
+  "new": "        rows: [],",
+  "tests": [
+   "test/heldmap.test.js"
+  ]
+ },
+ {
+  "name": "info-stays-on-key",
+  "file": "src/ui/heldMap.js",
+  "old": "      if (this._info) { e?.preventDefault?.(); this._closeInfo(); return; }",
+  "new": "      if (this._info) { e?.preventDefault?.(); return; }",
+  "tests": [
+   "test/heldmap.test.js"
+  ]
+ },
+ {
+  "name": "info-stays-on-click",
+  "file": "src/ui/heldMap.js",
+  "old": "      if (!this._info) return;\n      e.stopPropagation?.();\n      this._closeInfo();",
+  "new": "      if (!this._info) return;\n      e.stopPropagation?.();",
+  "tests": [
+   "test/heldmap.test.js"
+  ]
+ },
+ {
+  "name": "help-without-rows-silent",
+  "file": "src/ui/heldMap.js",
+  "old": "    if (rows?.length) { this._info = { title: '', rows: rows.slice(), cells: [] }; this._renderBox(); }\n    else this.deps.onHelp?.();",
+  "new": "    if (rows?.length) { this._info = { title: '', rows: rows.slice(), cells: [] }; this._renderBox(); }",
+  "tests": [
+   "test/heldmap.test.js"
+  ]
+ },
+ {
+  "name": "coords-without-setting",
+  "file": "src/ui/heldMap.js",
+  "old": "    return !!this._to?.settings?.targetCoordsAllowed && (this.deps.coordsAllowed?.() ?? true) && !this.teleportationTravel;",
+  "new": "    return !!this._to && (this.deps.coordsAllowed?.() ?? true) && !this.teleportationTravel;",
+  "tests": [
+   "test/heldmap.test.js"
+  ]
+ },
+ {
+  "name": "coords-online",
+  "file": "src/ui/heldMap.js",
+  "old": "    return !!this._to?.settings?.targetCoordsAllowed && (this.deps.coordsAllowed?.() ?? true) && !this.teleportationTravel;",
+  "new": "    return !!this._to?.settings?.targetCoordsAllowed && !this.teleportationTravel;",
+  "tests": [
+   "test/heldmap.test.js"
+  ]
+ },
+ {
+  "name": "coords-on-teleport",
+  "file": "src/ui/heldMap.js",
+  "old": "    return !!this._to?.settings?.targetCoordsAllowed && (this.deps.coordsAllowed?.() ?? true) && !this.teleportationTravel;",
+  "new": "    return !!this._to?.settings?.targetCoordsAllowed && (this.deps.coordsAllowed?.() ?? true);",
+  "tests": [
+   "test/heldmap.test.js"
+  ]
+ },
+ {
+  "name": "coords-pays-fare",
+  "file": "src/ui/heldMap.js",
+  "old": "    if (!st.trip.walked) {\n      const total = this.deps.gold?.() ?? 0;",
+  "new": "    if (true) {\n      const total = this.deps.gold?.() ?? 0;",
+  "tests": [
+   "test/heldmap.test.js"
+  ]
+ },
+ {
+  "name": "walked-estimate-unscaled",
+  "file": "src/ui/heldMap.js",
+  "old": "      st.trip.walkedMinutes = Math.trunc(mins / mult);",
+  "new": "      st.trip.walkedMinutes = Math.trunc(mins);",
+  "tests": [
+   "test/heldmap.test.js"
+  ]
+ },
+ {
+  "name": "walked-estimate-classic-settings",
+  "file": "src/ui/heldMap.js",
+  "old": "        speedCautious: st.opts.speedCautious && !s.cautiousTravel,\n        sleepModeInn: st.opts.sleepModeInn && !s.stopAtInnsTravel,",
+  "new": "        speedCautious: st.opts.speedCautious,\n        sleepModeInn: st.opts.sleepModeInn,",
+  "tests": [
+   "test/heldmap.test.js"
+  ]
+ },
+ {
+  "name": "walked-shows-days",
+  "file": "src/ui/heldMap.js",
+  "old": "        if (t.walked) {",
+  "new": "        if (false) {",
+  "tests": [
+   "test/heldmap.test.js"
+  ]
+ },
+ {
+  "name": "walked-only-for-coords",
+  "file": "src/ui/heldMap.js",
+  "old": "    if (s && (sel.coords || isPlayerControlledTravel(s, st.opts))) {",
+  "new": "    if (s && sel.coords) {",
+  "tests": [
+   "test/heldmap.test.js"
+  ]
+ },
+ {
+  "name": "coords-hand-no-flag",
+  "file": "src/ui/heldMap.js",
+  "old": "      const opts = { speedCautious: st.opts.speedCautious, sleepModeInn: st.opts.sleepModeInn, travelShip: st.opts.travelShip, playerControlled: true };",
+  "new": "      const opts = { speedCautious: st.opts.speedCautious, sleepModeInn: st.opts.sleepModeInn, travelShip: st.opts.travelShip, playerControlled: false };",
+  "tests": [
+   "test/heldmap.test.js"
+  ]
+ },
+ {
+  "name": "resume-every-tick",
+  "file": "src/ui/heldMap.js",
+  "old": "      if (!this._resumeAsked) {\n        this._resumeAsked = true;",
+  "new": "      if (!this._resumeAsked) {",
+  "tests": [
+   "test/heldmap.test.js"
+  ],
+  "equivalent": true,
+  "why": "the resume arm sits inside the first-tick block (`if (!this._ticked)`), which runs once by construction; the once-per-open flag mirrors the classic window and is belt over braces"
+ },
+ {
+  "name": "no-closes-map",
+  "file": "src/ui/heldMap.js",
+  "old": "        else if (code === 'KeyN' || code === 'Escape' || code === 'KeyE') { this._top = null; this._renderBox(); }",
+  "new": "        else if (code === 'KeyN' || code === 'Escape' || code === 'KeyE') { this._top = null; this._renderBox(); this._beginClose(null); }",
+  "tests": [
+   "test/heldmap.test.js"
+  ]
+ },
+ {
+  "name": "yes-never-resumes",
+  "file": "src/ui/heldMap.js",
+  "old": "{ this._top = null; this._renderBox(); this.deps.onResumeTravel?.(); this._beginClose(null); }",
+  "new": "{ this._top = null; this._renderBox(); this._beginClose(null); }",
+  "tests": [
+   "test/heldmap.test.js"
+  ]
+ },
+ {
+  "name": "active-asks",
+  "file": "src/ui/heldMap.js",
+  "old": "          if (this._to.isTravelActive) this._focusOn(this._player.x + 0.5, this._player.y + 0.5, this._view.scale);\n          else if (this._to.destinationName) { this._top = 'resume'; this._renderBox(); }",
+  "new": "          if (this._to.destinationName) { this._top = 'resume'; this._renderBox(); }",
+  "tests": [
+   "test/heldmap.test.js"
+  ]
+ },
+ {
+  "name": "coords-commit-dropped",
+  "file": "src/ui/heldMap.js",
+  "old": "          else if (c?.kind === 'coords') this.deps.onTravelToCoords?.(c.pick, c.opts);   // MAP2: a bare pixel, the mod's own journey\n",
+  "new": "",
+  "tests": [
+   "test/heldmap.test.js"
+  ]
+ },
+ {
+  "name": "coords-cross-dropped",
+  "file": "src/ui/inkMap.js",
+  "old": "    if (opts.selected.coords) {",
+  "new": "    if (false) {",
+  "tests": [
+   "test/heldmap.test.js"
+  ]
+ }
+]

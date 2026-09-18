@@ -51,6 +51,25 @@
 // runs; the filter chip row is gone (the store's flags still decide what
 // is inked, and the classic window's chips still set them); the province
 // pages and the region picker have no meaning on one sheet.
+//
+// ── MAP2: TRAVEL OPTIONS ON THE SHEET ─────────────────────────────
+//
+// Everything the mod adds to the classic map (TO1) lands here through
+// the functions the classic window itself calls: the PORTS filter
+// (portsFilterAllows over hasPort - a place without a harbour is not on
+// the map at all while it is on; a harbour glyph beside every port
+// while the mod restricts ship travel to ports; per-open, departure 6),
+// the MARK (the middle click, travelMapMarkedMapId in the shared store,
+// drawn in MarkLocationColor at every band), the I key's building list
+// (locationInfoRows, in a box over the sheet that any key or click
+// closes), the H help (the host's helpRows in the same box), the
+// COORDINATES click (a bare pixel is a destination when the mod allows
+// it and the host can honour it; the mod's own walked estimate, no fare,
+// onTravelToCoords), the RESUME prompt (resumePrompt on the first tick
+// when a destination is pending; Yes resumes and lowers the sheet, No
+// stays on the map - AUDIT-TO1 G3), and the walked-trip estimate on the
+// card (TravelOptionsPopUp.cs UpdateLabels: hours and minutes and no
+// fare when the trip is player-controlled). The teleport fee is MAP1's.
 // ═══════════════════════════════════════════════════════════════════
 
 import { MAP_WIDTH, MAP_HEIGHT } from '../formats/woodsFile.js';
@@ -58,11 +77,18 @@ import { REGION_NAMES, longitudeLatitudeToMapPixel, getPixelFromPixelID, patchRe
 import { locationSummaryAt } from '../systems/mapDirectory.js';
 import { calculateTravelTime, calculateTripCost, travelDays, walkTravelPath } from '../systems/travel.js';
 import { guildFastTravel } from '../systems/guildVariants.js';   // TP1: GuildManager.FastTravel
-import { travelMapFilters, travelMapPopUpState, setTravelMapPopUpState, travelMapSaveData } from '../systems/travelMapState.js';
+import {
+  travelMapFilters, travelMapPopUpState, setTravelMapPopUpState, travelMapSaveData,
+  travelMapMarkedMapId, setTravelMapMarkedMapId,   // MAP2: the mod's mark outlives the window (AUDIT-TO1 G4)
+} from '../systems/travelMapState.js';
 // AUDIT-TO1 C1/C2/C3: the mod's laws on the DEFAULT skin, as the pure
 // functions the popup itself calls, so the two skins cannot drift.
 import { isPlayerControlledTravel, enforceShipRestriction, shipTravelRefusal, SHIP_REFUSAL_TEXT } from './travelPopUp.js';
-import { teleportCost, teleportCostPrompt } from './travelMapOptions.js';
+// MAP2: the mod's map additions, through the SAME functions the classic
+// window calls (ui/travelMapOptions.js), so the two skins cannot drift.
+import { teleportCost, teleportCostPrompt, portsFilterAllows, locationInfoRows, resumePrompt } from './travelMapOptions.js';
+import { hasPort } from '../systems/travelPorts.js';
+import { TRAVEL_OPTIONS_TEXT as TO_TEXT, format as toFormat } from '../systems/travelOptionsText.js';
 import { getDaggerfallDistance, MatchesCutOff } from '../systems/editDistance.js';
 import { checkLocationDiscovered } from './travelMapWindow.js';
 import {
@@ -164,11 +190,25 @@ export class HeldMapWindow {
     this._party = [];
     this._partyKey = '';
     this._partyPoll = 0;
-    this._selected = null;  // { summary, name, x, y }
+    this._selected = null;  // { summary, name, x, y } - or { coords: true, ... } for a bare pixel (MAP2)
     this._panel = null;     // 'travel' | 'teleport' | null
     this._panelState = null;
     this._searchIndex = null;
     this._dead = false;
+    // MAP2: the mod itself (null when it is off), read ONCE per open the
+    // way the classic window reads it; the ports filter is per-open (the
+    // one field that does not outlive the window, departure 6); the mark
+    // rides the shared store like the eight filters (AUDIT-TO1 G4).
+    this._to = deps.travelOptions?.() ?? null;
+    this.portsFilter = false;
+    Object.defineProperty(this, 'markedMapId', {
+      get: () => travelMapMarkedMapId(),
+      set: (v) => setTravelMapMarkedMapId(v),
+      enumerable: true,
+    });
+    this._info = null;          // the I key's box, or the H key's
+    this._top = null;           // 'resume' | null - the mod's Yes/No over the sheet
+    this._resumeAsked = false;  // once per open
 
     this._mountChrome();
     this._tornDown = false;
@@ -182,6 +222,7 @@ export class HeldMapWindow {
       selected: this._selected?.name ?? null,
       panel: this._panel,
       armed: this.teleportationTravel,
+      portsFilter: this.portsFilter, marked: this.markedMapId, info: !!this._info, top: this._top,   // MAP2
       filters: { ...this.filters },
       trip: this._panelState?.trip ?? null,
       notice: this._panelState?.notice ?? null,
@@ -213,6 +254,20 @@ export class HeldMapWindow {
   input(code, e) {
     // The search field stops its own keydown propagation, so a key
     // arriving here was never meant for a text box.
+    if (this._phase !== 'closing') {
+      // MAP2 (:449-453): the info box is ClickAnywhereToClose, so ANY key
+      // closes it and nothing else happens that press.
+      if (this._info) { e?.preventDefault?.(); this._closeInfo(); return; }
+      // MAP2 (:326-345): the resume prompt. YES resumes the journey and
+      // lowers the sheet; NO pops the box alone and leaves the player ON
+      // the map to pick somewhere else (AUDIT-TO1 G3).
+      if (this._top === 'resume') {
+        e?.preventDefault?.();
+        if (code === 'KeyY' || code === 'Enter' || code === 'NumpadEnter') { this._top = null; this._renderBox(); this.deps.onResumeTravel?.(); this._beginClose(null); }
+        else if (code === 'KeyN' || code === 'Escape' || code === 'KeyE') { this._top = null; this._renderBox(); }
+        return;
+      }
+    }
     if (code === 'Escape' || actionForCode(bindings(), code) === 'TravelMap') {
       e?.preventDefault?.();
       if (this._phase !== 'map') return;      // the sheet is moving: let it land
@@ -236,6 +291,14 @@ export class HeldMapWindow {
       if (code === 'KeyY' || code === 'Enter' || code === 'NumpadEnter') { this._confirmTeleport(true); return; }
       if (code === 'KeyN' || code === 'KeyE') { this._confirmTeleport(false); return; }
       return;
+    }
+    // MAP2 (:360-370): I over a selected place, H anywhere - the mod's
+    // two keys, on the popup and off it alike; P is this sheet's own
+    // spelling of the ports button (recorded).
+    if (this._to) {
+      if (code === 'KeyI' && this._selected && !this._selected.coords) { this._displayLocationInfo(); return; }
+      if (code === 'KeyH') { this._displayHelp(); return; }
+      if (code === 'KeyP' && this._portsShown()) { this._togglePorts(); return; }
     }
     if (this._panel === 'travel' && this._panelState) {
       // The classic popup's own hotkeys: S/T/N toggle their pair.
@@ -266,6 +329,16 @@ export class HeldMapWindow {
       this._ticked = true;
       this._layout();
       if (this._gotoPlace) { this._consumeGotoPlace(); this._gotoPlace = null; }
+      // MAP2 (TravelOptionsMapWindow.cs:322-345): opened during a journey,
+      // the sheet centres on the player; opened with a destination still
+      // pending, the mod asks whether to resume it. Once per open.
+      if (!this._resumeAsked) {
+        this._resumeAsked = true;
+        if (this._to) {
+          if (this._to.isTravelActive) this._focusOn(this._player.x + 0.5, this._player.y + 0.5, this._view.scale);
+          else if (this._to.destinationName) { this._top = 'resume'; this._renderBox(); }
+        }
+      }
     }
     // SOC6: the party is POLLED, on this window's own cadence, from the
     // first tick to the last - never snapshot at open.
@@ -290,6 +363,7 @@ export class HeldMapWindow {
           this._commit = null;
           if (c?.kind === 'travel') this.deps.onTravel?.(c.pick, c.opts, c.computed);
           else if (c?.kind === 'teleport') this.deps.onTeleport?.(c.pick);
+          else if (c?.kind === 'coords') this.deps.onTravelToCoords?.(c.pick, c.opts);   // MAP2: a bare pixel, the mod's own journey
           this._close();
           return;
         }
@@ -431,6 +505,8 @@ export class HeldMapWindow {
       this._model.marks = buildInkMarks({
         summaries: this.deps.mapDict?.values() ?? [],
         filters: this.filters,
+        isDiscovered: (s) => this._discovered(s),   // MAP2: the ports arm before DFU's own test
+        isPort: (s) => hasPort(s?.mapID ?? s?.mapId),
         nameOf: (s) => this._summaryName(s),
       });
     }
@@ -454,7 +530,11 @@ export class HeldMapWindow {
       paperW: this._paper.w, paperH: this._paper.h, dpr: this._paper.dpr, band,
       filters: this.filters, names, regionNames: REGION_NAMES,
       player: this._player,
-      selected: this._selected ? { x: this._selected.x, y: this._selected.y } : null,
+      selected: this._selected ? { x: this._selected.x, y: this._selected.y, coords: !!this._selected.coords } : null,
+      // MAP2: the harbours while the mod restricts ships to ports, and the mark in the mod's colour
+      ports: this._portsShown(),
+      markedMapId: this.markedMapId,
+      markColor: rgbaCss(this._to?.settings?.markLocationColor),
       party: this._party.map((m) => ({
         x: m.x, y: m.y, name: partyLabelText(m), online: m.online, stack: m.stack,
         // the colour is DATA, not a theme: online is the party green the
@@ -560,6 +640,130 @@ export class HeldMapWindow {
     return best;
   }
 
+  // ── MAP2: THE MOD'S ADDITIONS ──────────────────────────────────
+
+  /** TO1 (:828-844): with the PORTS filter on, a place without a
+   *  harbour is not on the map at all - the mod's override answers false
+   *  before DFU's own discovery test is even reached. Marks, the search
+   *  and the journal's click-through all ask this, as the classic
+   *  window's override is asked by all three. */
+  _discovered(summary) {
+    if (!portsFilterAllows(this.portsFilter, summary?.mapID ?? summary?.mapId)) return false;
+    return checkLocationDiscovered(summary);
+  }
+
+  /** The ports button shows only while the mod restricts ship travel to
+   *  ports (:148). */
+  _portsShown() { return !!this._to?.settings?.shipTravelPortsOnly; }
+
+  _togglePorts() {
+    this.portsFilter = !this.portsFilter;
+    this._marksDirty = true;
+    this._dirty = true;
+    this._searchIndex = null;   // the find box's dictionary is gated by the same law
+    this._renderPorts();
+  }
+
+  _renderPorts() {
+    const b = this._chrome?.ports;
+    if (!b) return;
+    const shown = this._portsShown();
+    b.style.display = shown ? 'inline-block' : 'none';
+    b.classList.toggle('on', this.portsFilter);
+    b.textContent = this.portsFilter ? 'Ports only' : 'Ports';
+  }
+
+  /** TO1 (:532-550), MarkLocationHandler - the MIDDLE click marks the
+   *  place under the cursor, or clears the mark when it is already this
+   *  one. The ring is inked by paintInk in MarkLocationColor. */
+  _markLocationHandler(sx, sy) {
+    const m = this._markerAt(sx, sy);
+    if (!m) return;
+    const id = m.mapId ?? -1;
+    this.markedMapId = this.markedMapId === id ? -1 : id;
+    this._dirty = true;
+  }
+
+  /** TO1 (:374-464), DisplayLocationInfo - the I key over a selected
+   *  place. The rows are ui/travelMapOptions.js's; this holds the box. */
+  _displayLocationInfo() {
+    if (!this._selected || this._selected.coords || this._info) return;
+    const summary = this._selected.summary;
+    const info = locationInfoRows(summary?.locationType,
+      this.deps.discoveredBuildings?.(summary) ?? null,
+      (t) => this.deps.buildingTypeName?.(t) ?? String(t));
+    const title = this._selected.name;
+    if (!info) {
+      this._info = { title: '', rows: [toFormat(TO_TEXT.MsgNoKnowledge, title)], cells: [] };
+    } else {
+      this._info = {
+        title,
+        rows: info.guilds ? [info.guilds] : [],
+        // :437-441 - two columns; the grid below is the sheet's own two
+        cells: info.rows.map((r) => `${r.name}  ${r.count}`),
+      };
+    }
+    this._renderBox();
+  }
+
+  /** AUDIT-TO1 H1: the help in this window's own box, one row per line
+   *  as DisplayHelpInfo's Split('\n') gives it. */
+  _displayHelp() {
+    if (this._info) return;
+    const rows = this.deps.helpRows?.();
+    if (rows?.length) { this._info = { title: '', rows: rows.slice(), cells: [] }; this._renderBox(); }
+    else this.deps.onHelp?.();
+  }
+
+  _closeInfo() {
+    this._info = null;
+    this._renderBox();
+  }
+
+  /** The box over the sheet: the I/H box, or the resume prompt. */
+  _renderBox() {
+    const box = this._chrome?.box;
+    if (!box) return;
+    box.innerHTML = '';
+    const open = !!this._info || this._top === 'resume';
+    box.classList.toggle('open', open);
+    box.style.display = open ? 'block' : 'none';
+    if (!open) return;
+    if (this._info) {
+      if (this._info.title) box.append(el('h3', 'hmbox-title', this._info.title));
+      for (const r of this._info.rows) box.append(el('p', 'hmbox-row', r));
+      if (this._info.cells.length) {
+        const grid = el('div', 'hmbox-grid');
+        for (const c of this._info.cells) grid.append(el('span', 'hmbox-cell', c));
+        box.append(grid);
+      }
+      box.append(el('p', 'hmbox-hint', 'any key or click to close'));
+      return;
+    }
+    box.append(el('p', 'hmbox-row hmbox-prompt', resumePrompt(this._to?.destinationName ?? '')));
+    const row = el('div', 'hmacts');
+    const yes = el('button', 'act', 'Resume');
+    yes.onclick = () => this.input('KeyY');
+    const no = el('button', 'act hmghost', 'Not now');
+    no.onclick = () => this.input('KeyN');
+    row.append(yes, no);
+    box.append(row);
+  }
+
+  /** MAP2: the mod's coordinates click - a bare pixel becomes the
+   *  destination when the mod allows it (:1375, targetCoordsAllowed) and
+   *  the host can honour it (AUDIT-TO1 I4, coordsAllowed: never online).
+   *  Never on a teleport visit: a bare pixel is no place to appear. */
+  _coordsAllowedHere() {
+    return !!this._to?.settings?.targetCoordsAllowed && (this.deps.coordsAllowed?.() ?? true) && !this.teleportationTravel;
+  }
+
+  _regionNameAt(px, py) {
+    const politic = this.deps.maps?.getPoliticIndex?.(px, py) ?? -1;
+    const region = politic - 128;
+    return (region >= 0 && region < (this.deps.maps?.regionCount ?? 0)) ? (REGION_NAMES[region] ?? '') : '';
+  }
+
   // ── SELECTION, TRAVEL, TELEPORT ────────────────────────────────
 
   _summaryName(summary) {
@@ -567,8 +771,10 @@ export class HeldMapWindow {
     return region?.mapNames?.[summary.mapIndex] ?? '';
   }
 
-  /** The classic wrapper's own pick shape, verbatim. */
+  /** The classic wrapper's own pick shape, verbatim - and for a bare
+   *  pixel (MAP2), the coordinates popup's own {pixel, name}. */
   _pickOf(selected) {
+    if (selected.coords) return { pixel: { x: Math.floor(selected.x), y: Math.floor(selected.y) }, name: selected.name };
     const { summary } = selected;
     const pos = getPixelFromPixelID(summary.id);
     return {
@@ -584,7 +790,7 @@ export class HeldMapWindow {
   _select(mark) {
     this._closePanel();
     if (!mark) { this._selected = null; this._dirty = true; this._renderCard(); return; }
-    this._selected = { ...mark, name: mark.name || this._summaryName(mark.summary) };
+    this._selected = { ...mark, name: mark.name || (mark.summary ? this._summaryName(mark.summary) : '') };
     this._dirty = true;
     this._renderCard();
     // the decision is one press away, and in teleport mode the pick IS
@@ -681,7 +887,8 @@ export class HeldMapWindow {
   _refreshTrip() {
     const st = this._panelState;
     if (!st?.opts || !this._selected) return;
-    const dest = getPixelFromPixelID(this._selected.summary.id);
+    const sel = this._selected;
+    const dest = sel.coords ? { x: Math.floor(sel.x), y: Math.floor(sel.y) } : getPixelFromPixelID(sel.summary.id);
     const time = this._journey(dest, {
       speedCautious: st.opts.speedCautious,
       sleepModeInn: st.opts.sleepModeInn,
@@ -703,6 +910,25 @@ export class HeldMapWindow {
       freeTavernRooms: !!this.deps.freeTavernRooms?.(),
     });
     st.trip = { ...time, minutes, ...cost, days: travelDays(minutes) };
+    // MAP2 (TravelOptionsPopUp.cs:104-137, UpdateLabels): a WALKED trip -
+    // a bare pixel's, or a place's when the mod's fork says the player
+    // drives it - has no fare and its own estimate: the classic one
+    // asked with the two settings the mod has taken over inverted, then
+    // divided by TWICE the speed multiplier, truncated. Verbatim what
+    // ui/travelPopUp.js computes for its own labels.
+    const s = st.to?.settings;
+    if (s && (sel.coords || isPlayerControlledTravel(s, st.opts))) {
+      const w = calculateTravelTime(this.deps.getPlayerPixel(), dest, {
+        speedCautious: st.opts.speedCautious && !s.cautiousTravel,
+        sleepModeInn: st.opts.sleepModeInn && !s.stopAtInnsTravel,
+        travelShip: st.opts.travelShip,
+        hasHorse: st.hasHorse, hasCart: st.hasCart,
+      }, this.deps.getClimateIndex);
+      const mins = guildFastTravel(this.deps.playerEntity?.() ?? null, w.minutes);
+      const mult = ((st.opts.speedCautious && s.cautiousTravel) ? s.cautiousTravelMultiplier : s.recklessTravelMultiplier) * 2;
+      st.trip.walked = true;
+      st.trip.walkedMinutes = Math.trunc(mins / mult);
+    }
     st.notice = null;
     this._renderCard();
   }
@@ -746,11 +972,23 @@ export class HeldMapWindow {
     if (!st?.trip) return;
     st.confirm = false;
     if (!yes) { this._renderCard(); return; }
-    const total = this.deps.gold?.() ?? 0;
-    const pieces = this.deps.goldPieces?.() ?? total;
-    if (total < st.trip.totalCost || pieces < st.trip.piecesCost) {
-      st.notice = 'You do not have enough gold. Taverns only accept gold pieces.';
-      this._renderCard();
+    // MAP2: a walked trip pays no fare, so it never reaches the gold
+    // check - the mod's own order (CallFastTravelGoldCheck's first arm)
+    if (!st.trip.walked) {
+      const total = this.deps.gold?.() ?? 0;
+      const pieces = this.deps.goldPieces?.() ?? total;
+      if (total < st.trip.totalCost || pieces < st.trip.piecesCost) {
+        st.notice = 'You do not have enough gold. Taverns only accept gold pieces.';
+        this._renderCard();
+        return;
+      }
+    }
+    if (this._selected.coords) {
+      // MAP2: the coordinates popup's own hand-off - {pixel, name} and the
+      // toggles with `playerControlled: true`, to onTravelToCoords
+      const opts = { speedCautious: st.opts.speedCautious, sleepModeInn: st.opts.sleepModeInn, travelShip: st.opts.travelShip, playerControlled: true };
+      this._rememberPanel();
+      this._beginClose({ kind: 'coords', pick: this._pickOf(this._selected), opts });
       return;
     }
     const opts = {
@@ -797,7 +1035,7 @@ export class HeldMapWindow {
     const row = region.mapTable[index];
     const pos = longitudeLatitudeToMapPixel(row.longitude, row.latitude);
     const summary = locationSummaryAt(this.deps.mapDict, pos.x, pos.y);
-    if (!summary || !checkLocationDiscovered(summary)) return;
+    if (!summary || !this._discovered(summary)) return;
     this._focusOn(pos.x + 0.5, pos.y + 0.5);
     this._select({ x: pos.x + 0.5, y: pos.y + 0.5, colorIndex: 11, kind: 'city', name: '', summary });
     if (!this.teleportationTravel) this._openPanel('travel');
@@ -843,7 +1081,7 @@ export class HeldMapWindow {
     for (const match of matches) {
       const entries = byName.get(match.text) ?? [];
       for (const entry of entries) {
-        if (!checkLocationDiscovered(entry.summary)) continue;
+        if (!this._discovered(entry.summary)) continue;
         if (cutoff === null) cutoff = new MatchesCutOff(match.relevance);
         else if (!cutoff.keep(match.relevance)) return out;
         out.push(entry);
@@ -900,12 +1138,28 @@ export class HeldMapWindow {
     const band = el('div', 'hmband', '');
     // SOC6: the legend, beside the hint, only while there is a mark to explain
     const legend = el('div', 'hmlegend');
-    foot.append(hint, band, legend);
+    // MAP2: the ports button (the classic page's TO1 button, :191-197),
+    // shown only while the mod restricts ship travel to ports
+    const ports = el('button', 'act hmports', 'Ports');
+    ports.onclick = () => { if (this._phase === 'map') this._togglePorts(); };
+    foot.append(hint, band, legend, ports);
+    // MAP2: the box over the sheet - the I/H box, or the resume prompt
+    const box = el('div', 'hmbox');
 
-    root.append(stage, top, card, foot);
+    root.append(stage, top, card, foot, box);
     document.body.append(root);
-    this._chrome = { root, stage, sprite, ink, hands, label, search, searchInput, results, close, card, hint, band, legend };
+    this._chrome = { root, stage, sprite, ink, hands, label, search, searchInput, results, close, card, hint, band, legend, ports, box };
+    this._renderPorts();
     this._refreshParty();   // SOC6: the marks stand with the window, not a quarter second after it
+
+    // MAP2 (:449): the info box is ClickAnywhereToClose - a pointer down
+    // ANYWHERE closes it and goes no further, ahead of the stage's own
+    // handlers (capture), so the click neither pans nor picks
+    root.addEventListener('pointerdown', (e) => {
+      if (!this._info) return;
+      e.stopPropagation?.();
+      this._closeInfo();
+    }, { capture: true });
 
     // the search field owns its keys - the host must never route a
     // typed character into the map's own bindings
@@ -922,6 +1176,9 @@ export class HeldMapWindow {
     let downAt = null, panned = false;
     stage.addEventListener('pointerdown', (e) => {
       if (this._phase !== 'map') return;
+      if (this._top) return;   // the resume prompt holds the sheet
+      // MAP2 (:532-550): the MIDDLE button marks the place under the cursor
+      if (e.button === 1) { e.preventDefault?.(); this._markLocationHandler(...this._paperPoint(e.clientX, e.clientY)); return; }
       // ONE finger pans; a second is ignored rather than adopted
       if (downAt) return;
       downAt = { id: e.pointerId, x: e.clientX, y: e.clientY, ox: this._view.ox, oy: this._view.oy };
@@ -1028,8 +1285,19 @@ export class HeldMapWindow {
 
   _pickAt(sx, sy) {
     const m = this._markerAt(sx, sy);
-    if (m) this._select(m);
-    else if (this._selected) this._select(null);
+    if (m) { this._select(m); return; }
+    // MAP2 (:1375): a bare pixel opens the coordinates decision when the
+    // mod allows it - the classic page's own click, on the sheet
+    if (this._coordsAllowedHere()) {
+      const [mx, my] = toMap(this._view, sx, sy);
+      const px = Math.floor(mx), py = Math.floor(my);
+      if (px >= 0 && py >= 0 && px < this._size.width && py < this._size.height) {
+        this._select({ coords: true, x: px + 0.5, y: py + 0.5, colorIndex: -1, kind: 'coords', name: toFormat(TO_TEXT.MsgTargetCoords, px, py), summary: null, mapId: null });
+        this._openPanel('travel');
+        return;
+      }
+    }
+    if (this._selected) this._select(null);
   }
 
   _renderSearch(entries) {
@@ -1054,7 +1322,9 @@ export class HeldMapWindow {
     if (!this._selected || this._phase !== 'map') return;
     const { summary } = this._selected;
     card.append(el('h3', 'hmname', this._selected.name || 'Unknown place'));
-    card.append(el('p', 'hmmeta', REGION_NAMES[summary.regionIndex] ?? ''));
+    card.append(el('p', 'hmmeta', this._selected.coords
+      ? this._regionNameAt(Math.floor(this._selected.x), Math.floor(this._selected.y))
+      : (REGION_NAMES[summary.regionIndex] ?? '')));
 
     if (this._panel === 'teleport') {
       const fee = this._panelState?.fee ?? null;
@@ -1116,11 +1386,19 @@ export class HeldMapWindow {
       if (t) {
         const dl = el('dl', 'stats hmtrip');
         const add = (k, v) => { dl.append(el('dt', null, k), el('dd', null, v)); };
-        add('Journey', `${t.days} ${t.days === 1 ? 'day' : 'days'}`);
-        add('Cost', `${t.totalCost} gold`);
-        // the label shows COINS, never the letters-of-credit total -
-        // the popup's own reading
-        add('Purse', `${this.deps.goldPieces?.() ?? 0} gold`);
+        if (t.walked) {
+          // MAP2: the popup's own two labels for a walked trip - hours and
+          // minutes, and the mod's words in the cost row
+          const hours = Math.trunc(t.walkedMinutes / 60), mins = t.walkedMinutes % 60;
+          add('Journey', toFormat(TO_TEXT.MsgTimeFormat, hours, mins).trim());
+          add('Cost', TO_TEXT.MsgPlayerControlled);
+        } else {
+          add('Journey', `${t.days} ${t.days === 1 ? 'day' : 'days'}`);
+          add('Cost', `${t.totalCost} gold`);
+          // the label shows COINS, never the letters-of-credit total -
+          // the popup's own reading
+          add('Purse', `${this.deps.goldPieces?.() ?? 0} gold`);
+        }
         card.append(dl);
       }
       if (st.notice) card.append(el('p', 'hmnotice', st.notice));
@@ -1140,6 +1418,14 @@ export class HeldMapWindow {
     row.append(travel);
     card.append(row);
   }
+}
+
+/** MAP2: a mod colour ([r, g, b, a] bytes, modSettings colorKeyRgba) as
+ *  a CSS colour for the pen; null when the setting is absent. */
+export function rgbaCss(rgba) {
+  if (!Array.isArray(rgba) || rgba.length < 3) return null;
+  const a = rgba.length > 3 ? rgba[3] / 255 : 1;
+  return `rgba(${rgba[0]}, ${rgba[1]}, ${rgba[2]}, ${Math.round(a * 1000) / 1000})`;
 }
 
 /** The key, on RGBA bytes in place: a pixel at or above HAND_LUM is

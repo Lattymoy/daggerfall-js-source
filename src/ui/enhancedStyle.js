@@ -1324,6 +1324,22 @@ body.draglock .wornrow, body.draglock .wornmap { touch-action: none; }
 }
 .hmlegend.open { display: flex; }
 .hmlegdot { width: 10px; height: 10px; border-radius: 50%; box-shadow: 0 0 0 1px rgba(0,0,0,0.8); }
+/* MAP2: the ports button in the foot row (shown only while the mod
+   restricts ships to ports), and the box over the sheet - the I key's
+   building list, the H help, the resume prompt */
+.hmports { display: none; pointer-events: auto; min-height: 36px; padding: 6px 12px; font-size: 12px; }
+.hmports.on { color: var(--brass); border-color: var(--brass); }
+.hmbox {
+  display: none; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+  width: min(460px, calc(100vw - 36px)); max-height: 70vh; overflow: auto; padding: 18px 22px;
+  background: rgba(10, 13, 17, 0.94); border: 1px solid var(--iron); z-index: 2;
+}
+.hmbox.open { display: block; }
+.hmbox-title { font-family: var(--display); font-weight: 300; font-size: 22px; margin: 0 0 10px; text-align: center; }
+.hmbox-row { font-size: 14px; margin: 6px 0; white-space: pre-wrap; }
+.hmbox-prompt { text-align: center; font-size: 15px; margin: 4px 0 14px; }
+.hmbox-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 18px; margin: 10px 0; font-size: 13.5px; }
+.hmbox-hint { color: var(--dim); font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; text-align: center; margin: 12px 0 0; }
 @media (max-width: 860px) {
   .hmlabel { font-size: 18px; }
   .hmtop { flex-wrap: wrap; }
@@ -3381,6 +3397,11 @@ body:has(.dfchat.touch) .hudtext-stack { top: ${HUD_TEXT_TOP_CHAT_TOUCH_PX}px; }
   border-color: var(--brass); background: rgba(0,0,0,0.35); text-shadow: 2px 2px 0 rgb(93,77,12); }
 .hmhint, .hmband, .hmlegend { color: #7d7460; font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase;
   text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
+.hmbox { border: 2px solid rgba(216,207,174,0.7); outline: 2px solid rgba(125,116,96,0.35); outline-offset: 4px;
+  border-radius: 0; background: rgba(10,12,17,0.86); font-family: inherit; text-shadow: 2px 2px 0 rgba(0,0,0,0.85); }
+.hmbox-title { font-family: inherit; font-weight: 400; letter-spacing: 0.14em; text-transform: uppercase;
+  border-bottom: 2px solid rgba(125,116,96,0.5); padding-bottom: 8px; }
+.hmbox-row, .hmbox-grid { color: #c5bda2; }
 
 /* ── FT14: ONE ROOF (2026-09-15) ───────────────────────────────
    The features home stops being a list. Twenty-eight tiles in a

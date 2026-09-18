@@ -26,16 +26,20 @@ import {
 } from '../src/ui/overworldModel.js';
 import { createTravelMapWindow, travelMapDoorReady } from '../src/ui/travelMapDoor.js';
 import {
-  HeldMapWindow, HELD_MAP_URL, SPRITE, PAPER, THUMB_ZONES, HAND_LUM, keyHandPixels,
+  HeldMapWindow, HELD_MAP_URL, SPRITE, PAPER, THUMB_ZONES, HAND_LUM, keyHandPixels, rgbaCss,
 } from '../src/ui/heldMap.js';
+import { travelMapMarkedMapId, setTravelMapMarkedMapId } from '../src/systems/travelMapState.js';
+import { TRAVEL_OPTIONS_TEXT as TO_TEXT, format as toFormat } from '../src/systems/travelOptionsText.js';
+import { hasPort, PORT_LOCATION_IDS } from '../src/systems/travelPorts.js';
+import { guildFastTravel } from '../src/systems/guildVariants.js';
 import {
-  buildInkModel, buildInkMarks, paintInk, placeNames, zoomBand, clampView, scaleMinOf, zoomAt,
+  buildInkModel, buildInkMarks, paintInk, placeNames, zoomBand, clampView, scaleMinOf, zoomAt, viewCentredOn,
   toPaper, toMap, boundarySegments, linkSegments, landAt, roadChains, markKind,
   BAND_MARKS, BAND_NAMES, SCALE_MAX, PEN,
 } from '../src/ui/inkMap.js';
 import { PARTY_MARK_CSS } from '../src/ui/partyMapMarks.js';
 import { getPixelColorIndex } from '../src/ui/travelMapWindow.js';
-import { CLIMATES, LOCATION_TYPES } from '../src/formats/mapsFile.js';
+import { CLIMATES, LOCATION_TYPES, mapPixelToLongitudeLatitude } from '../src/formats/mapsFile.js';
 import { SCALED_OCEAN_ELEVATION } from '../src/world/terrainSampler.js';
 import {
   travelMapFilters, travelMapPopUpState, setTravelMapPopUpState,
@@ -240,7 +244,9 @@ function fakeDocument() {
       },
       append(...k) { n.children.push(...k); },
       remove() { n.removed = true; },
-      addEventListener() {}, removeEventListener() {},
+      // MAP2: the listeners are kept so a pin can fire one (the root's
+      // click-anywhere-to-close, the stage's middle click)
+      addEventListener(t, fn) { (n.listeners ||= []).push([t, fn]); }, removeEventListener() {},
       setPointerCapture() {}, querySelectorAll: () => [],
       set innerHTML(v) { n.children = []; }, get innerHTML() { return ''; },
     };
@@ -969,6 +975,292 @@ test('MAP1: the window paints only from tick, guarded on a real 2D context, and 
     assert.match(src, /const ctx = canvas\?\.getContext\?\.\('2d'\);\s*\n\s*const model = this\._ensureModel\(\);\s*\n\s*if \(!ctx \|\| !model\) return;/, 'the paint is guarded on the context');
     assert.match(src, /if \(this\._dirty\) this\._paint\(\);/, 'and runs from tick when something changed');
     assert.equal((src.match(/this\._paint\(\)/g) || []).length, 1, 'from tick alone');
+    win.dispose();
+  });
+});
+
+// ═══ MAP2: TRAVEL OPTIONS ON THE SHEET ═══════════════════════════════
+//
+// bible/10-UI/Held-Map-Arc.md: "each through the same functions the
+// classic window calls, so the two never drift." The fake mod below is
+// the settings shape systems/travelOptions.js hands the windows.
+
+const fire = (node, type, ev) => { for (const [t, fn] of node.listeners ?? []) if (t === type) fn(ev); };
+/** A port's map id, off the mod's own list, so the harbour laws are asked
+ *  about a REAL port rather than a made-up one. */
+const A_PORT = PORT_LOCATION_IDS[0];
+const modSettings = (over = {}) => ({
+  shipTravelPortsOnly: true, targetCoordsAllowed: true, cautiousTravel: true, stopAtInnsTravel: false,
+  cautiousTravelMultiplier: 0.8, recklessTravelMultiplier: 1, markLocationColor: [255, 235, 5, 255], teleportCost: false,
+  ...over,
+});
+const modDeps = (extra = {}, settings = {}, mod = {}) => {
+  const mapDict = new Map();
+  const put = (x, y, t, mapID) => { const sm = summaryOf(x, y, t, { mapID }); mapDict.set(sm.id, sm); return sm; };
+  put(3, 3, LOCATION_TYPES.TownCity, A_PORT);          // a harbour town
+  put(8, 6, LOCATION_TYPES.TownHamlet, 555001);        // an inland hamlet
+  const to = { settings: modSettings(settings), destinationName: null, isTravelActive: false, ...mod };
+  // the find box's dictionary: name index 1 ('B') is the inland hamlet at (8,6), index 3 ('Wayrest') the port at (3,3)
+  const row = (x, y) => ({ ...mapPixelToLongitudeLatitude(x, y) });
+  const mapTable = [row(0, 0), row(8, 6), row(0, 0), row(3, 3)].map((r) => ({ longitude: r.x, latitude: r.y }));
+  return winDeps({
+    mapDict,
+    maps: { regionCount: 1, getRegion: () => ({ mapNames: ['A', 'B', 'C', 'Wayrest'], mapTable, mapNameLookup: new Map() }), getPoliticIndex: () => 128 },
+    travelOptions: () => to, coordsAllowed: () => true,
+    ...extra,
+  });
+};
+
+test('MAP2 ports: the filter is the mod\'s law (portsFilterAllows over hasPort) before DFU\'s own discovery test - marks, the find box and the click-through all lose an inland place; the button shows only while the mod restricts ships; per-open; P toggles (mutants: ports-ignored-by-marks, ports-outlives-window, ports-button-always, harbour-at-far)', () => {
+  assert.equal(hasPort(A_PORT), true, 'the fixture\'s port is on the mod\'s list');
+  withDocument(() => {
+    const win = open(mkWin(modDeps()));
+    assert.equal(win._chrome.ports.style.display, 'inline-block', 'the ports button, while ShipTravel.OnlyFromPorts is on');
+    assert.deepEqual(win._ensureModel().marks.map((m) => [m.kind, m.port]), [['city', true], ['hamlet', false]], 'the harbour flag rides the mark');
+    win.input('KeyP');
+    assert.equal(win.portsFilter, true);
+    assert.equal(win._chrome.ports.textContent, 'Ports only');
+    assert.deepEqual(win._ensureModel().marks.map((m) => m.kind), ['city'], 'the inland hamlet is not on the map at all');
+    assert.equal(win._discovered(win.deps.mapDict.get(summaryOf(8, 6, 0).id)), false, 'the one law the search and the click-through ask too');
+    assert.equal(win._discovered(win.deps.mapDict.get(summaryOf(3, 3, 0).id)), true);
+    // (the ladder still answers the next-best DISCOVERED name, as FindLocation's own does - the cutoff is set at the first kept match)
+    assert.ok(!win._findLocations('B').some((e) => e.name === 'B'), 'the find box cannot find the inland hamlet either');
+    assert.deepEqual(win._findLocations('Wayrest').map((e) => e.name), ['Wayrest'], 'but the port is there');
+    win.input('KeyP');
+    assert.equal(win._ensureModel().marks.length, 2, 'and back');
+    assert.equal(win._findLocations('B')[0]?.name, 'B', 'and so is the hamlet, to the find box');
+    // the harbour glyph: beside a port at mid and near, never at far, and
+    // only while the mod restricts ships to ports
+    const harbours = (band, scale, ports) => {
+      const ctx = recordingCtx();
+      paintInk(ctx, win._ensureModel(), { ox: 0, oy: 0, scale }, { paperW: 200, paperH: 200, band, ports });
+      return ctx.calls.filter((c) => c.fn === 'arc' && c.lineWidth === 1.1).length;
+    };
+    assert.equal(harbours('near', 10, true), 1, 'one anchor, beside the port');
+    assert.equal(harbours('far', 1, true), 0, 'none at far');
+    assert.equal(harbours('near', 10, false), 0, 'none while ships may sail from anywhere');
+    win.dispose();
+    // per-open (departure 6): a fresh window opens with the filter off
+    const again = mkWin(modDeps());
+    assert.equal(again.portsFilter, false);
+    again.dispose();
+    // no button without the restriction, and P does nothing
+    const free = open(mkWin(modDeps({}, { shipTravelPortsOnly: false })));
+    assert.equal(free._chrome.ports.style.display, 'none');
+    free.input('KeyP');
+    assert.equal(free.portsFilter, false);
+    free.dispose();
+  });
+});
+
+test('MAP2 mark: the middle click marks the place under the cursor through the SHARED store and clears it on a second, and the ring is inked in MarkLocationColor at every band (mutants: mark-per-window, mark-never-clears, mark-ring-hidden-at-far, mark-colour-ignored)', () => {
+  withDocument(() => {
+    setTravelMapMarkedMapId(-1);
+    const win = open(mkWin(modDeps()));
+    const [cx, cy] = toPaper(win._view, 8.5, 6.5);
+    win._markLocationHandler(cx, cy);
+    assert.equal(win.markedMapId, 555001, 'the hamlet is marked');
+    assert.equal(travelMapMarkedMapId(), 555001, 'in the store, where the junction map reads it after the sheet closes');
+    // the stage's own middle button does the same, and does not pan
+    fire(win._chrome.stage, 'pointerdown', { button: 1, pointerId: 1, clientX: cx, clientY: cy, preventDefault() {} });
+    assert.equal(win.markedMapId, -1, 'a second middle click clears it');
+    win._markLocationHandler(cx, cy);
+    assert.equal(win.markedMapId, 555001);
+    // the ring: at FAR the hamlet itself is not inked, the mark still is
+    const rings = (band, scale) => {
+      const ctx = recordingCtx();
+      paintInk(ctx, win._ensureModel(), { ox: 0, oy: 0, scale }, { paperW: 200, paperH: 200, band, markedMapId: win.markedMapId, markColor: rgbaCss([255, 235, 5, 255]) });
+      return ctx.calls.filter((c) => c.fn === 'arc' && c.strokeStyle === 'rgba(255, 235, 5, 1)');
+    };
+    assert.equal(rings('far', 1).length, 1, 'the mark at far, though the hamlet is not');
+    assert.equal(rings('near', 10).length, 1);
+    assert.deepEqual(rings('near', 10)[0].args.slice(0, 2), toPaper({ ox: 0, oy: 0, scale: 10 }, 8.5, 6.5), 'on the marked place');
+    // the window's own paint hands the pen the SETTING's colour
+    const ctx = recordingCtx();
+    win._chrome.ink.getContext = () => ctx;
+    win._dirty = true; win._paint();
+    delete win._chrome.ink.getContext;
+    assert.equal(ctx.calls.filter((c) => c.fn === 'arc' && c.strokeStyle === 'rgba(255, 235, 5, 1)').length, 1, 'MarkLocationColor, from the mod\'s settings');
+    assert.equal(rgbaCss([255, 235, 5, 128]), 'rgba(255, 235, 5, 0.502)');
+    assert.equal(rgbaCss(null), null, 'no setting, no ring');
+    setTravelMapMarkedMapId(-1);
+    win.dispose();
+  });
+});
+
+test('MAP2 I and H: the building list through locationInfoRows in a box any key or click closes; no knowledge in the mod\'s words; the host\'s help rows in the same box (mutants: info-ignores-guild-line, info-stays-on-key, info-stays-on-click, help-without-rows-silent)', () => {
+  withDocument(() => {
+    const buildings = [
+      { buildingType: 0, displayName: 'The Odd Blades' }, { buildingType: 0, displayName: 'Another' },
+      { buildingType: 11, displayName: 'The Fighters Guild' },
+    ];
+    let helped = 0;
+    const win = open(mkWin(modDeps({
+      discoveredBuildings: () => buildings, buildingTypeName: (t) => (t === 0 ? 'Alchemist' : String(t)),
+      helpRows: () => ['line one', 'line two'], onHelp: () => helped++,
+    })));
+    win._pickAt(...toPaper(win._view, 3.5, 3.5));
+    assert.equal(win._selected?.name, 'Wayrest');
+    win.input('KeyI');
+    assert.equal(win._info.title, 'Wayrest');
+    assert.deepEqual(win._info.rows, ['Guild Halls:    Fighters Guild'], 'the guild hall NAMED, never counted');
+    assert.deepEqual(win._info.cells, ['Alchemist  2'], 'the shops counted by type');
+    assert.equal(win._chrome.box.style.display, 'block');
+    win.input('KeyS');
+    assert.equal(win._info, null, 'ANY key closes it...');
+    assert.equal(win._panelState?.opts?.speedCautious ?? true, true, '...and does nothing else that press');
+    win.input('KeyI');
+    fire(win._chrome.root, 'pointerdown', { button: 0, stopPropagation() {} });
+    assert.equal(win._info, null, '...as does a click anywhere');
+    // no knowledge: the mod's own sentence
+    const none = open(mkWin(modDeps({ discoveredBuildings: () => [] })));
+    none._pickAt(...toPaper(none._view, 3.5, 3.5));
+    none.input('KeyI');
+    assert.deepEqual(none._info.rows, [toFormat(TO_TEXT.MsgNoKnowledge, 'Wayrest')]);
+    none.dispose();
+    // H: the host's rows; with none, the host's own box
+    win.input('KeyH');
+    assert.deepEqual(win._info.rows, ['line one', 'line two']);
+    win._closeInfo();
+    win.dispose();
+    const mute = open(mkWin(modDeps({ helpRows: () => null, onHelp: () => helped++ })));
+    mute.input('KeyH');
+    assert.equal(helped, 1, 'the host\'s onHelp when it hands no rows');
+    mute.dispose();
+  });
+});
+
+test('MAP2 coordinates: a bare pixel is a destination only when the mod allows it, the host can honour it and the visit is not a teleport; the card bills the mod\'s walked estimate and no fare; Begin skips the gold gate and hands onTravelToCoords the popup\'s own {pixel, name} with playerControlled (mutants: coords-without-setting, coords-online, coords-on-teleport, coords-pays-fare, walked-estimate-unscaled)', () => {
+  withDocument(() => {
+    const coords = [];
+    const win = open(mkWin(modDeps({ onTravelToCoords: (...a) => coords.push(a), gold: () => 0, goldPieces: () => 0 })));
+    const [bx, by] = toPaper(win._view, 1.5, 1.5);
+    win._pickAt(bx, by);
+    assert.equal(win._selected?.coords, true);
+    assert.equal(win._selected.name, toFormat(TO_TEXT.MsgTargetCoords, 1, 1));
+    assert.equal(win._panel, 'travel', 'the decision opens itself, as the coordinates popup does');
+    const st = win._panelState;
+    assert.equal(st.trip.walked, true);
+    // the estimate, verbatim what ui/travelPopUp.js computes for its labels
+    const s = win._to.settings;
+    const w = calculateTravelTime({ x: 5, y: 5 }, { x: 1, y: 1 }, {
+      speedCautious: st.opts.speedCautious && !s.cautiousTravel, sleepModeInn: st.opts.sleepModeInn && !s.stopAtInnsTravel,
+      travelShip: st.opts.travelShip, hasHorse: false, hasCart: false,
+    }, () => CLIMATES.Woodlands);
+    const mult = ((st.opts.speedCautious && s.cautiousTravel) ? s.cautiousTravelMultiplier : s.recklessTravelMultiplier) * 2;
+    assert.equal(st.trip.walkedMinutes, Math.trunc(guildFastTravel(null, w.minutes) / mult));
+    // the card: hours and minutes, and the mod's words for the fare
+    const texts = win._chrome.card.children.flatMap((c) => (c.children ?? []).map((k) => k.textContent));
+    assert.ok(texts.includes(toFormat(TO_TEXT.MsgTimeFormat, Math.trunc(st.trip.walkedMinutes / 60), st.trip.walkedMinutes % 60).trim()));
+    assert.ok(texts.includes(TO_TEXT.MsgPlayerControlled));
+    // penniless, and still allowed: a walked trip pays no fare
+    win._begin();
+    assert.equal(win._phase, 'closing', 'no gold gate');
+    assert.equal(win._commit.kind, 'coords');
+    for (let i = 0; i < 20 && !win.done; i++) win.tick(0.05);
+    assert.equal(coords.length, 1);
+    assert.deepEqual(coords[0][0], { pixel: { x: 1, y: 1 }, name: toFormat(TO_TEXT.MsgTargetCoords, 1, 1) });
+    assert.equal(coords[0][1].playerControlled, true);
+    assert.deepEqual(Object.keys(coords[0][1]), ['speedCautious', 'sleepModeInn', 'travelShip', 'playerControlled']);
+    // the three refusals
+    const off = open(mkWin(modDeps({}, { targetCoordsAllowed: false })));
+    off._pickAt(...toPaper(off._view, 1.5, 1.5));
+    assert.equal(off._selected, null, 'the mod does not allow it');
+    off.dispose();
+    const online = open(mkWin(modDeps({ coordsAllowed: () => false })));
+    online._pickAt(...toPaper(online._view, 1.5, 1.5));
+    assert.equal(online._selected, null, 'the host cannot honour it (never online)');
+    online.dispose();
+    const tele = open(mkWin(modDeps()));
+    tele.activateTeleportationTravel();
+    tele._pickAt(...toPaper(tele._view, 1.5, 1.5));
+    assert.equal(tele._selected, null, 'a bare pixel is no place to appear');
+    tele.dispose();
+    // the cross on the sheet
+    const ctx = recordingCtx();
+    paintInk(ctx, { coast: [], borders: [], roads: [], tracks: [], regions: [], high: [], marks: [] }, { ox: 0, oy: 0, scale: 10 },
+      { paperW: 100, paperH: 100, band: 'near', selected: { x: 1.5, y: 1.5, coords: true } });
+    assert.ok(ctx.calls.some((c) => c.fn === 'stroke' && c.strokeStyle === PEN.coords), 'a cross where no mark is');
+  });
+});
+
+test('MAP2 walked place: when the mod\'s fork says the player drives the trip to a PLACE, the card shows the walked estimate and no fare, and the commit still carries the classic pick (mutants: walked-shows-days, walked-charged)', () => {
+  withDocument(() => {
+    const traveled = [];
+    // cautiousTravel + stopAtInnsTravel on, no ship: isPlayerControlledTravel is true for the remembered toggles
+    const win = open(mkWin(modDeps({ onTravel: (...a) => traveled.push(a), gold: () => 0, goldPieces: () => 0 }, { stopAtInnsTravel: true, shipTravelPortsOnly: false })));
+    win._pickAt(...toPaper(win._view, 8.5, 6.5));
+    win._openPanel('travel');
+    const st = win._panelState;
+    assert.equal(st.opts.travelShip, true, 'the remembered toggle');
+    win._toggleOpt('travelShip');
+    assert.equal(st.trip.walked, true, 'now player-controlled');
+    assert.equal(st.trip.byRoad, false);
+    const texts = win._chrome.card.children.flatMap((c) => (c.children ?? []).map((k) => k.textContent));
+    assert.ok(texts.includes(TO_TEXT.MsgPlayerControlled), 'no fare row');
+    assert.ok(!texts.some((t) => /^\d+ days?$/.test(t)), 'no day count');
+    win._begin();
+    assert.equal(win._phase, 'closing', 'penniless and still allowed');
+    assert.equal(win._commit.kind, 'travel');
+    assert.equal(win._commit.opts.playerControlled, true);
+    assert.deepEqual(win._commit.pick.pixel, { x: 8, y: 6 });
+    win.dispose();
+  });
+});
+
+test('MAP2 resume: a pending destination asks once on the first tick - Yes resumes and lowers the sheet, No stays on the map; a journey in progress centres the sheet on the player instead (mutants: resume-every-tick, no-closes-map, active-asks)', () => {
+  withDocument(() => {
+    let resumed = 0;
+    const win = mkWin(modDeps({ onResumeTravel: () => resumed++ }, {}, { destinationName: 'Wayrest' }));
+    assert.equal(win._top, null, 'not before the first tick');
+    win.tick(0.05);
+    assert.equal(win._top, 'resume');
+    assert.equal(win._chrome.box.style.display, 'block');
+    assert.ok(win._chrome.box.children.some((c) => c.textContent === toFormat(TO_TEXT.MsgResume, 'Wayrest')), 'the mod\'s own sentence');
+    win.input('KeyN');
+    assert.equal(win._top, null, 'No pops the box alone');
+    assert.equal(win._phase, 'opening', 'and the map stays');
+    for (let i = 0; i < 20; i++) win.tick(0.05);
+    assert.equal(win._top, null, 'asked once per open');
+    win.dispose();
+    const yes = mkWin(modDeps({ onResumeTravel: () => resumed++ }, {}, { destinationName: 'Wayrest' }));
+    yes.tick(0.05);
+    yes.input('KeyY');
+    assert.equal(resumed, 1);
+    assert.equal(yes._phase, 'closing', 'Yes lowers the sheet');
+    for (let i = 0; i < 20 && !yes.done; i++) yes.tick(0.05);
+    assert.equal(yes.done, true);
+    // a journey in progress: no prompt, the sheet on the player
+    const active = mkWin(modDeps({}, {}, { destinationName: 'Wayrest', isTravelActive: true }));
+    active.tick(0.05);
+    assert.equal(active._top, null);
+    // the goal is the view centred on the player's pixel, under the clamp
+    // (on a bay the sheet already holds whole, the clamp centres the bay)
+    assert.deepEqual(active._goal, clampView(viewCentredOn(5.5, 5.5, active._view.scale, active._limits()), active._limits()), 'aimed at the player\'s pixel');
+    const still = mkWin(modDeps({}, {}, { destinationName: null, isTravelActive: false }));
+    still.tick(0.05);
+    assert.deepEqual(still._goal, still._view, 'no journey: the view rests where it opened');
+    active.dispose();
+    // no mod: nothing asked, nothing centred
+    const plain = open(mkWin());
+    assert.equal(plain._top, null);
+    plain.dispose();
+  });
+});
+
+test('MAP2: the additions are the classic window\'s own functions, and the probe reports them', () => {
+  const src = read('src/ui/heldMap.js');
+  assert.match(src, /import \{ teleportCost, teleportCostPrompt, portsFilterAllows, locationInfoRows, resumePrompt \} from '\.\/travelMapOptions\.js';/);
+  assert.match(src, /import \{ hasPort \} from '\.\.\/systems\/travelPorts\.js';/);
+  assert.match(src, /if \(!portsFilterAllows\(this\.portsFilter, summary\?\.mapID \?\? summary\?\.mapId\)\) return false;\s*\n\s*return checkLocationDiscovered\(summary\);/, 'the classic override, verbatim');
+  assert.match(src, /get: \(\) => travelMapMarkedMapId\(\),\s*\n\s*set: \(v\) => setTravelMapMarkedMapId\(v\),/, 'the mark in the shared store');
+  assert.match(src, /const info = locationInfoRows\(summary\?\.locationType,/);
+  assert.match(src, /resumePrompt\(this\._to\?\.destinationName \?\? ''\)/);
+  assert.doesNotMatch(src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, ''), /PORT_SET|PORT_LOCATION_IDS/, 'the port list is never read here');
+  withDocument(() => {
+    const win = open(mkWin(modDeps()));
+    const probe = JSON.parse(globalThis.__heldMap());
+    assert.deepEqual([probe.portsFilter, probe.marked, probe.info, probe.top], [false, -1, false, null]);
     win.dispose();
   });
 });
