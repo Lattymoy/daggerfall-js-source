@@ -227,7 +227,8 @@ import { createWeatherFront, blendTerms, soundWeather } from '../systems/weather
 import { fetchBytes, loadMagicRegistries, seasonOverride, createSkyController, createPlayerTicker, createRestDeps, plainLines, wireInfectionVideos, createMusicDirector, motorStats, climbingDeps, createDetectFeed, foeNearbyRecord, lootNearbyRecord, nearbyLootRecords, claimFrame, frameAlive, frameHeld, applyFallLanding, ensureAudio, applyMotorEffectFlags, adjustFallStart, offsetArrows, populatesWanderingNpcs, endRunToTitleMenu, exitToTitleMenu, subscribeFoePools, sensesContext, routeMouseDrag , raisePlayerSkills, liveEnchantFoes, liveEnchantFoeSinks, enchantFoeHost } from './shared.js';   // TP1: PlayerEntity.RaiseSkills   // EC1: the live enchant pool + its sinks router; AUDIT 58: the membership question the Wabbajack door asks too
 import { getNearbyObjects } from '../systems/nearbyObjects.js';   // X9: the dispel sweep filters the same scan
 import { dispelNearby } from '../systems/mysticism.js';   // X9: the destroy law (destroyed, not killed)
-import { PlayerMotor, startRestGroundedCheck, motionBagOf } from '../player/motor.js';   // StartRestGroundedCheck's ONE home; WW2: the one motion bag
+import { PlayerMotor, startRestGroundedCheck, motionBagOf, MAX_FRAME_DT } from '../player/motor.js';
+import { travelDriveForward, travelLookaheadFor } from '../systems/travelAutopilot.js';   // TO-FIELD / AUDIT-FIELD F8: the journey's ground gate, pure so the pins can drive it   // StartRestGroundedCheck's ONE home; WW2: the one motion bag
 import { exteriorSurfaces, downProbe, rayDistanceFor, ON_EXTERIOR_WATER, exteriorSwimming } from '../player/exteriorSurface.js';   // ROAD-B (b3): PlayerMotor's three exterior surface methods; OT1: IsPlayerSwimming above ground
 import { isOnFoot } from '../systems/transport.js';   // TransportManager.IsOnFoot - the raycast's reach and the mounted footstep gate
 import { floorLanding } from '../player/enterExit.js';   // FixStanding for the exterior arrivals (2026-08-27)
@@ -791,6 +792,20 @@ export async function bootWorld(canvas, renderer, params, status) {
   // - the exact things AllowWeather and AllowAnnoyingSounds exist to stop.
   let _travelWeatherOff = false;
   let _travelSoundsOff = false;
+  // AUDIT-FIELD F5 (2026-09-18): THE THIRD DEAD ZONE, and the one the
+  // BOOT-TDZ gate was blind to because it names no name of the mod's.
+  // `buildPixelNow` ends with an unconditional `await
+  // standPixelNpcs(entry)`, and that function's second line reads
+  // `questBridge?.machine` - a `let` that was declared five hundred
+  // statements further down, well below the boot's own first build. The
+  // `?.` is no guard (it evaluates the binding and throws exactly as a
+  // dot would), and the early return above it - `if (!entry?.npcs?.length)
+  // return;` - is the SAME town/wilderness split as the two that shipped:
+  // a first pixel with no exterior StaticNPC booted, a first pixel in a
+  // town threw. The pass's own doc comment says it means to run at boot
+  // with no bridge and read it as null; declaring it here is what makes
+  // that sentence true.
+  let questBridge = null;
   // EV3: one local AABB per model ARCHETYPE, scanned once ever - the
   // per-placement box is then eight corner transforms at build time.
   /** AUDIT 64 F11: DFMesh.Size for a model id - `modelData.DFMesh.Size`
@@ -909,6 +924,29 @@ export async function bootWorld(canvas, renderer, params, status) {
   // finished pixel; the in-flight map answers a flying one with the
   // SAME promise, so every caller - pump, boot, teleport - shares one
   // build.
+  /** TO-FIELD: how far ahead of the traveller the ground must exist
+   *  before the journey's drive goes through - about ten tiles, far less
+   *  than a map pixel, so the wait is a stutter at the edge of the built
+   *  world rather than a stop.
+   *
+   *  AUDIT-FIELD F7: A FLOOR, NOT THE WHOLE DISTANCE. The first cut
+   *  called 64 "more than the fastest accelerated step", which is true
+   *  of a fixed physics STEP and false of a FRAME: the motor moves
+   *  `speed * min(dt, MAX_FRAME_DT) * scale` in one go (motor.js:1006),
+   *  and the frame that hitches is exactly the frame in which the
+   *  streamer is behind. A horse at the shipped default limit of sixty
+   *  covers ~65 units in a 10 fps frame and ~120 at the mod's ceiling of
+   *  a hundred - past a 64-unit probe, off the built world, and once the
+   *  motor is airborne `airControl` is false (motor.js:1547) so zeroing
+   *  the drive on the NEXT frame no longer steers: the fall is already
+   *  paid for. `travelLookahead` measures the frame that is about to
+   *  run instead, and keeps 64 as its floor. */
+  const TRAVEL_LOOKAHEAD = 64;
+  const TRAVEL_LOOKAHEAD_MARGIN = 1.5;
+  const travelLookahead = (dt, scale) => travelLookaheadFor({
+    speed: player?.speed ?? 0, dt, scale, maxFrameDt: MAX_FRAME_DT,
+    floor: TRAVEL_LOOKAHEAD, margin: TRAVEL_LOOKAHEAD_MARGIN,
+  });
   const inFlight = new Map();
   async function buildPixel(px, py) {
     const key = `${px},${py}`;
@@ -1890,7 +1928,53 @@ export async function bootWorld(canvas, renderer, params, status) {
     // player is standing.
     isInside: () => (modes?.mode ?? 'exterior') !== 'exterior',
     onExhausted: onExhaustedExterior,
-    survivalEnv: () => (_mode() === 'dungeon' ? null : survivalEnvNow()),   // SURV7: the dungeon's own tick feeds its own
+    // SURV7: the dungeon's own tick feeds its own.
+    // TO-FIELD (2026-09-18, Mac: "you instantly collapse from exhaustion"):
+    // ...and AN ACCELERATED JOURNEY IS SAT AS RESTING, for the needs'
+    // own harm arms alone.
+    //
+    // AUDIT-FIELD F11 CORRECTS THIS FIX'S OWN ARITHMETIC. The first cut
+    // said the needs "charge several minutes of fatigue in the frame the
+    // vanilla band charges one". That is FALSE and the numbers say so:
+    // game-minutes per frame are `dt * CLASSIC_MINUTES_PER_SECOND *
+    // scale` = `dt * 0.2 * scale`, and `dt` is clamped to 0.1
+    // (:9001), so even at the mod's ceiling of a hundred a frame carries
+    // 2 minutes and at the shipped default limit of sixty it carries
+    // 0.2 at 60 fps. `runSurvivalMinutes` walks [last+1, now] and the
+    // vanilla band asks "did the minute CHANGE" - they run 1:1.
+    //
+    // The surcharge is in MAGNITUDE, not in minutes: DFU's band is
+    // `FATIGUE_LOSS.Default` = 11 a minute (PlayerEntity.cs:402-418,
+    // worldTick.js verbatim), and the needs stack starving 4, parched 6
+    // or dehydrated 12, exhausted 8, heat 6 and bare feet 4 ON TOP of it
+    // once their stages are reached - roughly three times the drain, on a
+    // traveller who by construction never stops to eat, drink or sleep.
+    // Travel Options has never heard of them; its cautious stop watches
+    // the entity's live fatigue (TravelOptionsMod.cs:1079,
+    // travelOptions.js:758) and so does catch them, but a RECKLESS
+    // journey has no stop at all and simply collapses.
+    //
+    // AND IT DOES NOT MAKE THE JOURNEY ENDLESS, which the first cut also
+    // implied. 11 a minute empties a 6400 pool in 582 game-minutes
+    // whatever this line does - that is DFU's own number at DFU's own
+    // rate, and collapsing on a long reckless ride is the mod's designed
+    // loop (camp out, stop at inns, or travel cautiously and be paused at
+    // the fatigue floor). What this line removes is the port's OWN
+    // surcharge on top of it, so an accelerated journey costs what it
+    // costs in DFU and no more.
+    //
+    // `resting` is the needs' own knob for exactly this. Every ACCRUAL -
+    // hunger's marker, thirst, sleep debt, wet, exposure - sits outside
+    // it, so the days really pass and the traveller arrives as hungry as
+    // the ride made them. What it holds is the per-minute fatigue arms,
+    // and - AUDIT-FIELD F12, which the first cut did not disclose - two
+    // HEALTH arms with them: the bare-skin block's naked-cold and sunburn
+    // ticks (needs.js:293), and, when the traveller is also `byFire`, the
+    // exposure damage at :277. Health harm you cannot answer while the
+    // autopilot holds the controls is not a loss worth keeping.
+    survivalEnv: () => (_mode() === 'dungeon' ? null
+      : worldTimeScale() > 1 ? { ...survivalEnvNow(), resting: true }
+        : survivalEnvNow()),
     // AUDIT 64 F27: the ticker's lines are HUD POPUPS, not a log.
     // LoanChecker.CheckOverdueLoans posts its two 6/3/1-month reminders
     // with DaggerfallUI.AddHUDText (LoanChecker.cs:42-45) - the only
@@ -2200,7 +2284,10 @@ export async function bootWorld(canvas, renderer, params, status) {
   // ready LAST. An already-made character (chargenDone at boot) is a
   // continuing session, not a new game - no init, exactly as DFU only
   // raises OnStartGame from the starting flows.
-  let questBridge = null;
+  // AUDIT-FIELD F5: `questBridge` is DECLARED at the top of the boot now
+  // (with the Travel Options bindings BOOT-TDZ hoisted for the same
+  // reason); this is where it used to be, and the comment above still
+  // describes what it is for.
   let _questStartPending = false, _questStarted = false;
   const questInitAtGameStart = () => {
     if (_questStarted) return;
@@ -5577,7 +5664,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       // Asked per open, never snapshot: the arm can be built, unloaded or
       // hidden between two presses of the key.
       holder: {
-        available: () => !!weaponRig?.armsDrawn?.(),
+        available: () => !!weaponRig?.armsAvailable?.(),   // MAP-FIELD: WOULD it draw - the arm is sheathed until it takes the sheet
         hold: (spec, opts) => !!weaponRig?.holdPaper?.(spec, opts),
         release: () => { weaponRig?.releasePaper?.(); },
         // AUDIT-MAP2: corners only from a frame the arm DREW - a paralysed,
@@ -9216,7 +9303,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         // the void"). The journey the player sees is the same: the ground
         // goes past at the acceleration, the clock keeps up with it, and
         // what interrupts a journey interrupts it on its own honest clock.
-            const travelScale = worldTimeScale();
+        const travelScale = worldTimeScale();
         const _overlayHeld = (modes?.dungeonCtx?.uiOverlayActive ?? false) || townTalk.overlayActive;   // chargen/windows/talk hold the motor - typing must not walk the player
         // TO1: THE MOD'S OWN FRAME - TravelOptionsMod.Update, in its
         // own order, given what this host knows this frame. It answers
@@ -9313,7 +9400,34 @@ export async function bootWorld(canvas, renderer, params, status) {
         if (_travelDrive) {
           cam.yaw = (_travelDrive.yaw * Math.PI) / 180;
           cam.pitch = _travelDrive.pitch ?? 0;
-          axes.forward = _travelDrive.forward;
+          // TO-FIELD (2026-09-18, Mac: "Using travel options spawns you
+          // under the maps"): THE WALK WAITS FOR THE GROUND. An
+          // accelerated journey is the one player-moving path in this
+          // host with no readiness gate - the boot stand has one
+          // (playerSpawned && built.has), the ride-out has one (TSR4a,
+          // "it just spawns me straight into the ground"), the season
+          // re-skin holds the motor, and a teleport awaits its pixel.
+          // This one drove the motor at up to sixty times walking pace
+          // across a streamer that builds ONE pixel per call, and
+          // `heightAt` answers -Infinity over a pixel that is not built
+          // yet - which the collider's ground clamp can never catch. So
+          // the player walked off the built world and fell.
+          //
+          // The wait is the ride-out's own sentence: hold while the
+          // ground is missing AND the streamer is still bringing it. If
+          // nothing is queued the ground is not coming and holding for
+          // ever would be its own bug, so the drive goes through.
+          // AUDIT-FIELD F9: `walkMode && playerSpawned`, this file's own
+          // idiom at :1876, :2430, :2840 and a dozen more - under ?fly
+          // the gate was probing the camera while the motor moved the
+          // player, so it guarded a position nobody was standing on.
+          const _feet = walkMode && playerSpawned ? player.pos : cam.pos;
+          axes.forward = travelDriveForward({
+            feet: _feet, yaw: cam.yaw, heightAt,
+            lookahead: travelLookahead(dt, travelScale),
+            streaming: !!(building || queue.length || inFlight.size),
+            forward: _travelDrive.forward,
+          });
           // AUDIT-TO1 K2: and NOT the strafe. ApplyVerticalForce writes the
           // vertical axis alone (PlayerAutoPilot.cs:104) and the panel's
           // `pauseWhileOpened = false` keeps InputManager collecting the
@@ -10207,7 +10321,19 @@ export async function bootWorld(canvas, renderer, params, status) {
     livePersonBatches.push(...hitEffects.batches());
     // HT1: the dropped torches burn, the thrown one flies, a burning foe's flame follows it (the transition sweep is at the mode branch above, AUDIT 66 F11)
     if (_mode() === 'exterior') { droppedTorches.tick(dt); livePersonBatches.push(...droppedTorches.batches()); camps.tick(dt); livePersonBatches.push(...camps.batches()); }   // SURV3: the fires burn on the same axis
-    if (_mode() === 'exterior') hunting.tick();   // SURV6: the minute's hunting roll; the window takes the slot
+    // AUDIT-FIELD F10: ...AND NOT WHILE A JOURNEY RUNS. SURV6's roll is
+    // once a GAME minute, and an accelerated journey spends those at up
+    // to a hundred times real time - so a wilderness ride rolled the
+    // hunting event every few real seconds, and every event opens a
+    // Yes/No box through `townTalk.showOverlay`, which the mod reads as
+    // a foreign window on top and answers with `interruptTravel()`
+    // (TravelOptionsMod.cs:1348-1356). The journey could not survive its
+    // own first minute of wilderness. This is the same shape as the
+    // needs' surcharge above - a thing the port added that Travel
+    // Options has never heard of, charged at the mod's clock - and it
+    // takes the same answer: the wilderness waits until you are walking
+    // at your own pace again.
+    if (_mode() === 'exterior' && worldTimeScale() <= 1) hunting.tick();   // SURV6: the minute's hunting roll; the window takes the slot
     if (livePersonBatches.length) renderer.drawBillboards(livePersonBatches, camRight, UP_Y);
     // WX2: what falls is what the front SHOWS - under the enhanced sky the
     // outgoing rain tapers after the sim has cleared and the incoming

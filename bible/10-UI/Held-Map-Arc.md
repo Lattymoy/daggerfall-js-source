@@ -587,6 +587,68 @@ source, the mirrored sheet, the sliver, the horizon), `test/heldmap.test.js`
 T4, the perf-and-polish sweep; the resize pin re-aimed). Mutants:
 `tools/mutants/map3.json` rewritten, 70 records, 68 dead, 2 equivalent
 as recorded; `to1.json` c3-fee-never-deducted re-aimed. Browser:
-`tools/heldMapProbe.mjs` 47 checks (the hands lane on the real fixture
+`tools/heldMapProbe.mjs` 50 checks (the hands lane on the real fixture
 rig: the matrix laid on the corners to the pixel, the parchment texel
 under the ink, hover and pick through the inverse, release on close).
+
+## MAP-FIELD (2026-09-18) - what a player actually saw, and why no probe did
+
+Mac, playing the deployed build: *"The sprite I gave to be used is nowhere
+to be seen at all and the morrowind doesn't even hold the map. It's a full
+screen map which WASNT SUPPOSED TO BE A THING."* Two defects, and the
+second is this arc's own premise failing outright.
+
+**The sprite asked the wrong page.** `HELD_MAP_URL` was the bare
+`'art/held-map.png'`. A bare relative URL resolves against the DOCUMENT,
+and the game's document is `/play/index.html` - so the browser asked for
+`/play/art/held-map.png`, the host answered with the page itself, the
+decode failed, `onload` never fired and `_keyHands` never ran. What is
+left is the ink canvas on the black root: no parchment, no gauntlets,
+a big rectangle of map. The build's `base` is `'./'` (one build serves
+from a project sub-path), so there is no absolute path to hardcode
+either. `appRootFrom(import.meta.url)` reads the root off THIS MODULE
+instead - a build serves it from `<root>/assets/`, the dev server from
+`<root>/src/` - and the sprite hangs off that, correct under any base
+and from any page depth.
+
+Every probe ran on `menu.html`, which sits AT the root, where the broken
+string happens to resolve. The pin asserted the string itself, and
+`map1.json` carried a mutant that made the URL absolute and DIED on that
+pin - so the wrong answer was locked in twice, by the two mechanisms this
+port uses to stop exactly that. The pin is a law now (the root is read
+off the module; the bare form is named as the bug) and the probe's last
+three checks run from `/play/index.html` on purpose.
+
+**The arms never took the sheet, and could not.** MAP3's holder asked
+`armsDrawn()` - did the Morrowind arm draw on the last frame. But
+`weaponRig`'s draw gate is `if (paralyzed || (!shown() && !torchOnly))
+return;`, and `shown()` is the WEAPON's predicate: its `sheathed` leg
+turns it off. A player opening the travel map is walking about sheathed
+by definition, so the arm was not drawing, `armsDrawn()` was false, and
+the hands lane was unreachable in the game - it only ever ran in the
+probe, where a weapon is drawn.
+
+TORCH-VIS had already written the sentence this needed, one slice
+earlier and ten lines up the same function: *"a SHEATHED STANCE IS NOT A
+STOWED LIGHT... `shown()` is the WEAPON's visibility"*. A held map is the
+second thing that is not the weapon. So the gate takes a second
+exception beside the torch's - `sheetOnly`, the arm active and holding a
+sheet - and the holder asks a different question: `armsAvailable()`,
+whether the arm WOULD draw, since until it takes the sheet it does not
+draw at all. The weapon, the arrow and the torch are already hidden
+while the sheet is up, so the hands hold the map and nothing else.
+
+**The lesson for the next reader.** Every pin and every probe in this arc
+tested the window against a harness. Nothing tested it against the page
+the game is served from, or against a player who is not holding a sword -
+the two things every real open has. Both defects were invisible to 78
+pins, 50 browser checks and two audits, and obvious in ten seconds of
+play.
+
+Pins: `test/heldmap.test.js` (the URL law and `appRootFrom`'s four
+shapes), `test/map3_heldpose.test.js` (the sheathed draw, the
+availability question, `holdingPaper`), `test/ht1_handheldtorches.test.js`
+re-aimed to the two-leg gate. Mutants: `map1.json`
+`sprite-url-document-relative`, `map3.json` `sheathed-arm-does-not-draw`
+and `holder-asks-did-it-draw`, `torchvis.json` re-aimed. Browser:
+`tools/heldMapProbe.mjs` 50 checks, the last three from the game's page.
