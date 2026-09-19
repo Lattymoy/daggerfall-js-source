@@ -147,12 +147,40 @@ export const vendorTextureCount = () => _vendor.size;
 export function clearVendorTextures() { for (const k of _vendor.keys()) _decoded.delete(k); _vendor.clear(); }
 /** An archive that exists ONLY as vendored art (no ARENA2 file). */
 export const isVendorArchive = (archive) => { for (const e of _vendor.values()) if (e.archive === Number(archive)) return true; return false; };
+/** One past the highest RECORD vendored for an archive, off the
+ *  REGISTRY and not the decoded map - a PNG that has not been fetched
+ *  yet, or would not decode, must not shrink the archive underneath a
+ *  caller that is about to ask for its record. */
+export function vendorRecordCount(archive) {
+  let n = 0;
+  for (const e of _vendor.values()) if (e.archive === Number(archive)) n = Math.max(n, e.record + 1);
+  return n;
+}
 /** A TextureFile stand-in for a vendor-only archive: sizes from the
- *  decoded PNGs, a bitmap the swap arm never reads. */
+ *  decoded PNGs, a bitmap the swap arm never reads.
+ *
+ *  SURV-ART (2026-09-19, Mac: "the sprites aren't showing at all") -
+ *  IT MUST ANSWER `recordCount` AND `getSize`. Every icon door in the
+ *  port gates on `record < tex.recordCount` before it uploads
+ *  (ui/itemScroller.js, ui/nativeInventory.js, ui/paperDoll.js, and
+ *  the world arms in scenes/) and then measures with `tex.getSize`,
+ *  which is the TextureFile surface those lines were written against.
+ *  This object carried neither, so the comparison read
+ *  `0 < undefined` - FALSE for every record of every vendored archive
+ *  - and the upload it guards never ran: no texture, no size, nothing
+ *  drawn. The mod's art was registered, fetched and decoded, and then
+ *  fell off the last step. A stand-in for a file must answer like the
+ *  file. */
 export function vendorTextureStandIn(archive) {
+  const recordCount = vendorRecordCount(archive);
   const size = (record) => { const d = _decoded.get(textureKey(archive, record, 0)); return d ? { width: d.width, height: d.height } : { width: 1, height: 1 }; };
   return {
     vendor: true,
+    recordCount,
+    getSize: (record) => (record >= 0 && record < recordCount ? size(record) : { width: 0, height: 0 }),   // TextureFile.getSize's own out-of-range answer
+    getScale: () => ({ x: 0, y: 0 }),
+    getOffset: () => ({ x: 0, y: 0 }),
+    getFrameCount: () => 1,
     getWidth: (record) => size(record).width,
     getHeight: (record) => size(record).height,
     getDFBitmap: (record) => ({ ...size(record), data: null }),

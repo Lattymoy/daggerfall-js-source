@@ -595,3 +595,79 @@ back, the per-minute cadence, the health floor, a flat rate, death in
 your sleep, the threshold dropped to dehydrated, and four on the walk
 (a jump lethal again, the replayed bite unclamped, every minute live,
 every minute a replay).
+
+## SURV-ART - THE ART NEVER REACHED THE SCREEN (2026-09-19)
+
+Mac: *"the sprites aren't showing at all"*.
+
+Sixteen of the mod's twenty PNGs are vendored at
+`vendor/climates-calories/Textures/`, registered at boot by
+`installSurvivalIcons`, fetched and decoded. They drew NOTHING. Both of
+the port's icon doors dropped them on the last step, and each did it in
+its own way - which is why nothing in the suite noticed: every pin the
+SURV2 work wrote held the registration, the decode and the addressing,
+and all three were correct.
+
+**THE GL DOOR** (`ui/itemScroller.js`, `ui/nativeInventory.js`) asks the
+pipeline for the archive and then gates on
+
+```js
+if (img.record < tex.recordCount) {
+  icons.uploadRecord(img.archive, img.record, ...);
+  sizes.set(key, tex.getSize(img.record));
+}
+```
+
+For a vendored archive `getTexture` hands back `vendorTextureStandIn`,
+and that object carried `getWidth`, `getHeight`, `getDFBitmap` and
+`getColor32` - but neither `recordCount` nor `getSize`. So the gate read
+`0 < undefined`, which is FALSE for every record of every vendored
+archive, and the upload it guards never ran: no texture, no size, and
+`if (!glTex || !size?.width) return false` a few lines later drew
+nothing. A stand-in for a file must answer like the file. It now
+carries `recordCount`, `getSize` (with `TextureFile.getSize`'s own
+out-of-range answer), `getOffset`, `getScale` and `getFrameCount`.
+
+`vendorRecordCount` reads the REGISTRY, not the decoded map. The
+pipeline builds the stand-in inside the same await that preloads, and a
+PNG still in flight - or one that would not decode - must not shrink
+the archive underneath the caller about to ask for its record; that
+reads as "no such record" and is this bug again by another route.
+
+**THE DOM DOOR** (`ui/textureCanvas.js` `requestIcon`, which the
+enhanced HUD's quickslots and the enhanced inventory's tiles both draw
+through) had no vendor arm at all. It went straight to `getArchive`,
+which fetches `TEXTURE.539` - a file that does not exist, for an
+archive that is only ever the port's own art - warned, and cached the
+failure as a PERMANENT miss, so every repaint after it drew the
+two-letter initials fallback. The arm now stands FIRST, before the
+fetch that cannot succeed, and takes `decodedTexture`'s color32 shape
+straight to a canvas through the new `color32Canvas`, because a PNG has
+no palette index to look up and no cutout rule to apply - it carries
+its own alpha.
+
+`color32Canvas` REVERSES THE ROWS, and that is not incidental. The port
+stores every texture in color32 order (row 0 the picture's bottom,
+`formats/color32Order.js`); a canvas is top-down. Without the reversal
+every mod icon in the DOM would have drawn upside down - SW4's fault
+one door along, and pinned here so it cannot arrive.
+
+**The pins** (`test/survart_icons.test.js`, 3) drive the real modules,
+because a source-text pin would have matched the broken code too: the
+first walks all sixteen through the GL door's own expression, the
+second runs `requestIcon` against a canvas stub and reads the pixels
+back out to check which way up they landed, the third holds both doors'
+arms in place. Mutants: `tools/mutants/survart.json`, 5, 5 dead.
+
+**What is still NOT imported**, and deliberately, per
+`vendor/climates-calories/README.md`: the tent model's two reskins
+(`50_7-0`, `67_10-0`) and the two tavern menu backgrounds
+(`RALZARTAVERN`, `BLANKMENU_TAVERN`). The tavern pair has nowhere to go
+- the port draws its own panel. The tent pair is a real gap: the camp
+stands the mod's model 41606 wearing classic Daggerfall's textures
+rather than the mod's canvas. Importing them is not just a copy:
+`isVendorArchive` answers true if ANY record of an archive is vendored,
+and archives 50 and 67 are real ARENA2 files, so registering one record
+from each would send the whole archive down the stand-in branch and
+lose every other texture in it. That check has to learn the difference
+between "this archive is ours" and "this record is ours" first.
