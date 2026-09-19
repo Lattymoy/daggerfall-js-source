@@ -721,7 +721,297 @@ rather than a scratch script, so the next reader can re-run the numbers
 instead of trusting this page.
 
 Pins: `test/heldmap.test.js` (the geometry as a law over five viewports,
-the matte key, the `hidesHud` word, and the cuffs driven through
-`_keyMatte` itself over a synthetic sprite). Mutants: `map1.json`
-`MAPFIELD2-*` x16, `map3.json` `foot-no-scrim` re-aimed by content.
-Browser: `tools/heldMapArtProbe.mjs`, 9 checks.
+the `hidesHud` word, and the cuffs driven through the window itself over
+a synthetic sprite). Mutants: `map1.json` `MAPFIELD2-*`, `map3.json`
+`foot-no-scrim` re-aimed by content. Browser:
+`tools/heldMapArtProbe.mjs`.
+
+> Superseded in part by MAP-FIELD3/4 below: the matte key described here
+> is GONE, and `extendCuffs` no longer skips by `PAPER`'s x range. The
+> column measurements on this page ("69 of the 366 columns", "up to 68px")
+> are the FIRST painting's and do not describe the art now shipped.
+
+## MAP-FIELD3/4 - the map ran off the sheet, and the third painting (2026-09-19)
+
+Mac, with a replacement sprite: *"So heres the new map I want to replace
+the current one I have implemented. Same positioning. Additionally, the
+ingame map 9n the map appears going off the edge"*. Then, with a fourth
+file: *"Try this instead"*.
+
+**The overflow was ours and it predated both new paintings.** `PAPER` is
+the rectangle the ink canvas is laid on, EXACTLY - so a rectangle larger
+than the parchment prints the Iliac Bay over the torn edge and out onto
+the sky. Measured against the ORIGINAL art, the shipped constant sat
+about 10px left and 12px above the sheet's real edge. Nobody had
+measured it; it had been read off the picture by eye.
+
+It is measured now, and not as the sheet's outermost pixels. The sheet
+is painted as a slightly turned quadrilateral with torn, rounded
+corners, so an upright rectangle has to give a little at each corner to
+sit inside it at all. `heldMapArtProbe.mjs` walks the per-row and
+per-column first and last solid pixel and shrinks until nothing
+overhangs, and pins that the overhang is ZERO - the check that would
+have caught this on day one.
+
+**THE KEY IS A COLOUR. This is the finding worth keeping.** The thumbs
+rest on the sheet, so the sprite's own pixels are keyed back OVER the
+ink where they lie. Three paintings were keyed on BRIGHTNESS and all
+three were wrong, each in a way that looked fine until it was measured:
+
+- Painting one: bronze gauntlets reaching luma 148 against parchment
+  shaded down to 130. No line exists. Saturation is no better - the
+  sheet sits at 0.45-0.50 and the glove at 0.50-0.68.
+- Painting three: a cream middle that cuts cleanly at 154 - and a BURNT
+  BORDER that does not. Keying there kept a ragged halo of the sheet's
+  own edge around each thumb and laid it on top of the map.
+
+What parts them is WARMTH. The sheet is parchment: warm all the way
+through, cream middle and burnt border alike. The gauntlets are steel:
+warmed at the highlights, neutral and at times cold in the body.
+Measured over the two thumbs and 340,918 pixels of sheet, red-minus-blue
+under 75 catches 36% of the thumb and FIVE pixels of the sheet - and
+each of those five is a speck in a crack, which the flood drops as an
+island. The same file, keyed on brightness, has the sheet's border at
+luma 37 and the glove's ridges at 212: a total overlap.
+
+Colour alone is only a seed. `keyThumbPixels` is seed, then FLOOD in
+from the side the thumb enters on (so a stain in the middle of the sheet
+is dropped however dark it is), then CLOSE - grow and shrink by the same
+amount, which bridges the lit ridge down the thumb while it is interior
+and puts the outline back where the paint had it - then FILL what is
+enclosed, which takes the specular highlights. Growing without the
+shrink was tried and is wrong: it bridges nothing that reaches the
+silhouette and leaves a pale rim round the thumb.
+
+**RECORDED DEPARTURE: the black matte key is gone.** MAP-FIELD2's
+`keyMattePixels` / `MATTE_LUM` / `MATTE_EDGE` and the `keyHandPixels`
+brightness key are removed, not merely unused. The new painting carries
+a real alpha channel - 857,265 pixels exactly transparent, no matte at
+all - so the picture states its own silhouette. Reviving the key on this
+art would be a BUG, because these gauntlets are grey and reach luma 0: a
+brightness key punches holes straight through them. `test/heldmap.test.js`
+pins the absence by name, and `map1.json`
+`MAPFIELD4-the-brightness-key-comes-back` is its killer. If a matted
+painting is ever supplied again the key comes back from here, keyed to
+that file, and not by feel.
+
+**`extendCuffs` asks a different question now, and two answers were
+wrong first.** The cuffs are cut by the frame and their cut ends are not
+level (0.866 to 0.893 of the file). Asking whether a column sits outside
+`PAPER`'s x range smears the sheet's own torn edge, because `PAPER` is
+inset inside the parchment. Asking whether it ends below the sheet
+smears the whole parchment, because the sheet's ragged bottom hangs
+lower than `PAPER`'s foot. The answer that holds is the CUFF BAND, and
+it is safe only because the painting leaves a gap there: every column
+under the sheet ends by 0.733, every cut cuff at 0.866 or below, and
+NOTHING ends in between. What would lie between is the hand's own
+silhouette - drawn to end where it ends, and ruined by a streak.
+
+**And on this art the crop closes the gap by itself.** At MAP-FIELD2's
+bite it cleared the highest cut cuff by half a pixel; at MAP-FIELD5's it
+clears by 75. Either way no column is short, so the pin had to be
+rewritten twice - the first version claimed a shortfall this painting
+does not have, and the second pinned the MARGIN, which is a number Mac
+moves whenever the sheet should sit higher or lower. It pins the LAW
+now: no cut cuff ends above the screen's edge. `extendCuffs` is what
+keeps that true at any bite, which is why it stays where the margin is
+comfortable.
+
+## MAP-FIELD5 - lower on the screen (2026-09-19)
+
+Mac: *"Can you lower it on the screen more"*. `HELD_MAP_BITE` 0.03 ->
+0.11, about 60px further down a 720p screen. `HELD_MAP_HEIGHT` sets how
+big the sheet is and `HELD_MAP_BITE` how far down it sits; they are
+independent, so this is the one number to turn and it disturbs nothing
+else. The only consequence worth recording is the cuff margin above.
+
+**The lesson.** Every number in this slice is a measurement, and twice
+now a number that was "obviously right" by eye was wrong by tens of
+pixels. Three of the claims in the first draft of this work were wrong
+and were corrected by the probe rather than by looking: that the
+gauntlets were neutral pewter (they are not - only their bodies are),
+that no sheet pixel at all falls under the colour line (five do), and
+that the right forearm crosses under the sheet (it does not - that came
+from misreading an ASCII dump's column scale).
+
+Pins: `test/heldmap.test.js` (the colour key over a zone with a crack
+speck, the seeded side, clear ground, and the cut cuffs driven through
+`_paintSheet` itself). Mutants: `map1.json`, `MAPFIELD4-*` x4 plus the
+re-aimed `MAPFIELD2-*`. Browser: `tools/heldMapArtProbe.mjs`, 19 checks.
+
+## MAP-FIELD6 - readable glyphs (2026-09-19)
+
+Mac: *"Some of the glyphs are hard to read. I want to make everything
+more readable, without clutter and keeping the same design"*.
+
+**It was never contrast.** The pen sits at luma 43 on parchment at 172,
+which is as strong a difference as print. Three things were actually
+wrong, and only one of them is about the glyphs themselves.
+
+**1. A label was free to land on another town's mark** - LATENT, and
+this is the correction that matters most on this page. `placeNames`
+tested a candidate box against the boxes of labels already placed and
+against nothing else, so a city's name ran straight through the ring of
+the city beside it. Every glyph the band inks now seeds the same greedy
+test, before any name is placed.
+
+But **this sheet inks no names at all**. MAP-FIELD2 took them off at
+Mac's word and the window has passed `names: null` ever since;
+`placeNames` has no caller in `src/`. The first draft of this section
+called the buried glyph "the fault Mac could SEE", and it was not - it
+could not have been, because there are no labels on the sheet to bury
+it. The before-and-after pictures that went with it were rendered
+through a fixture that passes `names`, which is not the game.
+
+What Mac actually saw is #2 and #3 below. This first part is a fix to
+`inkMap`'s law, kept because the law is kept (see the import in
+`heldMap.js`, which says so), and reachable the day anything inks names
+again - not a fix to anything on screen today.
+
+That alone silenced the two names that most needed saying, because a
+blocked label had exactly one place to go. So a name now has FOUR
+candidates - right, left, above, below - and takes the first clear one.
+Right stays first, because that is where the eye looks and where every
+label sat before. Only a name with nowhere clear at all is dropped, and
+that trade is deliberate: the mark is still there to hover, and one
+unreadable label is worth less than the mark it was covering.
+
+RANK still decides, but what it buys has changed. It used to decide who
+got a label at all; now it decides who gets the BETTER SIDE, since the
+loser has three more to try. The pin had to move with it - the old
+fixture could no longer tell a ranked run from an unranked one, and the
+mutant that proves the law went quiet until it was re-aimed.
+
+**2. The ink had nothing to hold it apart from the paper.** The
+parchment is not a flat ground: it is painted with brown cracks and
+stains of very nearly the pen's own hue. A 1.2px line over that tangles
+with the texture. Every glyph and every name is now drawn TWICE - once
+in `PEN.halo`, a wide soft parchment-light pass, then in ink. This is a
+cartographer's halo, and it takes clutter AWAY rather than adding it:
+the page keeps exactly the marks it had and they stop competing with the
+sheet's own marks. Nothing about the design moves.
+
+The halo is laid as a PASS, not per mark. Per mark, a neighbour's halo
+falls on ink already drawn and bites a hole in it - which on a crowded
+coast is worse than the tangle it set out to fix.
+
+**3. The relief hatch was reading as ink.** The high ground's carets
+were drawn in `PEN.soft`, the same tone as borders and tracks, and at
+the near band they are dense. They have their own `PEN.relief` now, at
+about two thirds the weight. They are meant to be felt, not read, and
+quieting them is most of what "without clutter" asked for.
+
+The pen went 1.2 -> 1.5 with all this, which thickens every STROKED
+glyph and the halo that carries it.
+
+(The first draft of that sentence said the weight was what made "a
+village's dot and a track's dashes hold together at the far band". It
+was wrong three times over: the dot is `fill()` alone, so the pen never
+touches it - what changed the dot is its radius, 2 -> 2.2, which no
+record mentioned; a track's dashes are stroked at a width of 1 written
+into the paint; and the far band draws neither, inking cities only and
+skipping the tracks.)
+
+Pins: `test/heldmap.test.js` - the halo pass ahead of every ink stroke
+(which takes two marks to state at all), a name kept off every glyph
+with the four candidates driving it, rank read at the SIDE it now
+decides, and a town ringed on all four sides losing its label and
+keeping its mark. Mutants: `map1.json` `MAPFIELD6-*` x6, with
+`overlap-drawn` and `rank-ignored` re-aimed by content.
+
+## MAP-FIELD7 - the sheet travels (2026-09-19)
+
+Mac: *"when you open or close your map, I want the sprite to come in and
+go out at the bottom of the screen instead of fading in"*.
+
+The two clocks had SAID this since MAP-FIELD2 - `OPEN_S` was commented
+"the sheet rises into view" and `CLOSE_S` "...and lowers" - and the code
+under them was a fade on the root. It really moves now.
+
+**The stage is carried on its own height.** `translateY(100%)` needs no
+viewport number and is right at every size: the stage's top sits at
+`vh - (SPRITE_ART_FOOT - HELD_MAP_BITE) * h`, so moving it down by a
+full `h` always puts its top past the bottom edge and the whole painting
+with it. It is eased on `smoothstep` - the port's own, from
+`systems/mathf.js` - because a held thing has weight: it leaves and
+arrives slowly and crosses quickly.
+
+**The chrome does not travel.** The top bar and the card are anchored to
+the viewport's own edges, and sliding them up from the floor reads as a
+mistake. They keep the fade the sheet used to have - but the fade had to
+move OFF the root, because the root carries the stage and fading it
+would fade the sprite, which is the thing Mac asked to stop. `_setRaise`
+walks the root's children and skips the stage by identity.
+
+A CSS rule (`.hmroot > :not(.hmstage)`) driven by a custom property was
+tried first and is a departure worth recording, because it failed for a
+reason worth knowing: the suite has SIXTEEN separate fake documents,
+each with `style` as a bare object, and a custom property can only be
+set through `setProperty`. Upgrading one stub fixed one file and broke
+eleven pins in another. The rule was not wrong, but a law that only
+holds where the harness happens to be rich enough is a law with a hole
+in it - so it moved into JS, where every stub can already see it.
+
+**And in the hands lane nothing slides at all.** There the arm brings
+the sheet in itself and the ink is laid on the rig's projected corners
+by a matrix3d of its own; a translate on the stage would drag the whole
+sheet off the paper the arm is holding - a worse bug than the fade it
+replaced. `_setRaise` returns early on that lane, and the pin drives a
+real holder to prove it.
+
+The clocks grew a little with the change (0.3 -> 0.42 opening, 0.36
+closing). A fade of a third of a second reads as instant; a travelling
+thing at the same length reads as hurried, and leaving should be a touch
+quicker than arriving.
+
+Pins: `test/heldmap.test.js` - mounted DOWN before the first tick, a
+monotonic rise that ends with NO transform left on the stage, the root
+never carrying an opacity, the fade rule excluding the stage by name, a
+close mid-rise lowering from where it was, and the hands lane never
+sliding. Mutants: `map1.json` `MAPFIELD7-*` x6.
+
+## AUDIT MAP-FIELD (2026-09-19) - the audit before the merge
+
+Mac: *"Audit first"*. Four reviewers over the whole held-map arc. What
+they found is folded into the sections above; what follows is what the
+audit itself is worth remembering for.
+
+**Two real bugs, both in the window's lifecycle.** `_tryHands()` was
+phase-guarded on one of its two arms only, so the retry could take the
+sheet into the arm MID-CLOSE - hiding the painting on the spot and, via
+`_setRaise`'s hands-lane early return, snapping the lowering sheet back
+to its held place. And the travel/teleport/coords hook only ever fired
+from `tick()`'s closing arm, so a host that disposed the window while
+the sheet was lowering DROPPED the journey the player had committed to,
+silently; MAP-FIELD7's longer `CLOSE_S` had widened that window by a
+fifth. Both are fixed and both have behavioural pins.
+
+**Three claims of ours that measurement disproved.** The "nothing ends
+in between" premise for `CUFF_BAND` (64 columns do). The pen's
+justification (wrong on all three of its counts). And the whole first
+half of MAP-FIELD6, which fixed a fault the shipping sheet cannot have.
+Every one of them was written with the confidence of a measurement and
+none of them had been measured.
+
+**And the lesson about PINS, which is the one to keep.** Four probe
+checks could not fail on any art: they classified their populations BY
+the constant under test, so `extendCuffs` was asked whether it had
+painted exactly the columns it is defined to paint. Shift the art eight
+pixels and six hand-silhouette columns really are streaked off the
+bottom of the screen - and the probe still said 19/19. The populations
+are measured off the PICTURE now (the sheet by where the sheet is, the
+cuts by the art's own foot), and dropping `CUFF_BAND` to 0.80 fails
+three checks where it used to fail none.
+
+The same shape had eaten a real law elsewhere: `border-through-unnamed`
+had been anchored on a line that occurs TWICE in `inkMap.js`, so the
+record could not apply and the law it is the only killer of was checked
+by nothing. A departure guarded by SPELLING went the same way - the
+matte key's `doesNotMatch(src, /MATTE_LUM|.../)` let a real brightness
+key written under any other name through all 84 pins. The cuff fixture
+carries a near-black pixel in the arm now, so any such key breaks it.
+
+Laws that were argued at length in a commit and pinned by nothing:
+MAP-FIELD5 end to end, `PEN.relief`, `GLYPH_PEN`, `PEN.halo`'s colour,
+the halo's stroke on filled kinds, and the easing. All six have pins and
+mutants now. A law worth a paragraph is worth a pin.

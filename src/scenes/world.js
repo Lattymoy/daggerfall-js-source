@@ -22,6 +22,7 @@ import { modSetting } from '../systems/modSettings.js';   // ROADS 24
 import { WoodsFile, MAP_WIDTH, MAP_HEIGHT } from '../formats/woodsFile.js';
 import { buildTerrainGrid, buildTerrainIndices, isOutdoorWaterTile, TERRAIN_TILE_DIM, TERRAIN_SKIRT_DEPTH, surfaceHeightAt } from '../world/terrainSurface.js';
 import { waterUniforms, buildWaterIndices, waterSwitchOn } from '../render/waterSurface.js';   // WATER1: the enhanced water surface over the pixel's own grid; WATER-AUDIT: its own index set
+import { waterCorners, WATER_DRAW_MASK_TABLE } from '../world/waterCorners.js';   // GRASS-WET1: the one table that says which of a tile's corners stand in water - the DRAW's, because a blade in a puddle is a picture, not a physics
 import { windowEmissionRGB } from '../render/windowEmission.js';
 import { CITY_LIGHT_COLOR, CITY_LIGHT_RANGE, LIGHTS_ARCHIVE, collectCityLights, nearestLights } from '../world/cityLights.js';
 import { withPlayerLights } from './magicCandle.js';   // X11/T1: the lights the PLAYER carries
@@ -29,7 +30,8 @@ import { playerTorchLight } from '../systems/playerTorch.js';   // T1
 import { applyClimate, getGroundArchive, getTerrainGroundArchive, getNatureArchive, SEASON, climateSeasonFromMinutes, INTERIOR_SEASON } from '../world/climateSwaps.js';   // A1: the season is the calendar's, and an interior's is Summer whatever the date
 import { RMB_SIDE, layoutLocation } from '../world/locationLayout.js';
 import { lookAt, multiply, perspective, mirrorProjectionX, trs, identity, UP_Y, wrapAngle } from '../world/mat4.js';   // HANDEDNESS: the one mirror (mat4's law)
-import { frustumPlanes, aabbOutside, localAabb, transformedAabb, flatBatchAabb, cullDisabled } from '../render/frustum.js';   // EV3: the frustum
+import { aabbOutside, localAabb, transformedAabb, flatBatchAabb, cullDisabled } from '../render/frustum.js';   // GHOST1: the plane extraction comes through bounds.js's `spherePlanes` now - `_planes` serves the sphere test too
+import { spherePlanes, batchVisible } from '../render/bounds.js';   // PERF-CROWD: the batch's own bounding sphere, the test the shadow replay already uses   // GHOST1: through its ONE home, on the NORMALISED planes it needs   // EV3: the frustum
 import { withMoonAmbient } from '../render/enhancedSky.js';   // EV5: secunda rides the ambient
 import { FarRingRenderer, ringDisabled } from '../render/farRing.js';   // EV8: the province's mountains on the horizon
 import { syncLightingLane, lanternColor } from '../render/enhancedLighting.js';   // EL1: the Enhanced Lighting lane, installed at mount
@@ -1027,7 +1029,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // EV4: the far ring builds strided with its skirt; the kernel's
     // ghost rows keep edge normals central differences either way.
     const stride = strideFor(px, py);
-    const { samples, tilemap, positions, normals, tilemapBytes, avg, nature, withRoads } = await terrainGen.generate({
+    const { samples, tilemap, positions, normals, tilemapBytes, avg, nature, withRoads, paths } = await terrainGen.generate({
       px, py, stride, tilemap: seedTilemap, locationRect, hasLocation: !!dfLocation, climateType: climateBase,
     });
     // WM3: this pixel's climate law, bound once - the one argument the
@@ -1483,6 +1485,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       _seasonsGen: seasonsGen,   // SIB1: the install this pixel's flats were built under (AUDIT 61: captured at the lookups)
       px, py, terrain, water, tilemapTex, tilemap, groundArchive, models, windmills, batches, flatAnims, texRemap, lights: pixelLights, animals: pixelAnimals, springs: pixelSprings, skyBase: climate.skyBase, samples, natureCount: nature.length,
       tilemapBytes, season,   // GR1: the placer reads the tiles and the season
+      paths,   // GRASS-PATH1: which tiles the road painter wrote; null on a pixel built before the network arrived
       withRoads,   // ROADS 25: painted with the network present, or before it arrived (see below)
       _box: bounds,   // EV3: pixel-local presentation bounds (terrain + models + flats)
       _stride: stride,   // EV4: the terrain surface's current ring class
@@ -3216,7 +3219,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // ?dungeon host RAN every CastWhenUsed / CastWhenStrikes / SoulBound
   // / affinity arm against no ctx at all. They are optional-chained, so
   // it WAS silent. WAVE D closed it: the body is scenes/hostEnchant.js
-  // and dungeonContext.js:2209 mounts the same one, gated on
+  // and dungeonContext.js:2221 mounts the same one, gated on
   // `opts.enchantCtx !== false` because setDefaultEnchantCtx is a
   // session singleton and EC1 already routes THIS host's mount into
   // that context through modes.dungeonCtx - so worldModes.js:4666
@@ -5022,7 +5025,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // so an F9 pressed inside a shop recorded the street's sheath and
     // hand. The mode host answers for the rig that is actually drawn
     // and null outside interior mode (the dungeon owns its own
-    // composer, dungeonContext.js:5611), so exterior mode and a
+    // composer, dungeonContext.js:5620), so exterior mode and a
     // pre-seam mode host compose exactly as before, per field.
     const wp = modes?.weaponPose?.() ?? null;
     const snap = snapshotPlayer(playerEntity, {
@@ -5662,10 +5665,11 @@ export async function bootWorld(canvas, renderer, params, status) {
   function travelFollowPressed() {
     const key = travelOptionsSettings.followKey;
     if (!key || key === 'None') return false;
-    // AUDIT-TO1 I3: the SAME stand-down as beginAcceleratedTravel's. Recorded
-    // departure 9 said "online the journey does not run" and only the map's
-    // door stood down; the follow key started one on a shared clock.
-    if (sharedClockOn()) return false;
+    // TO-ONLINE: and the SAME door as beginAcceleratedTravel's, which is
+    // why I3 put a stand-down here when there was one there. There is
+    // none there now (the reason is written out at that function), so
+    // there is none here: the two must answer alike or the key and the
+    // map disagree about whether a journey may start.
     const code = key.length === 1 ? `Key${key.toUpperCase()}` : key;
     const down = keys.has(code);   // a raw KeyCode name, not one of the port's actions - the Handheld Torches shape
     const edge = down && !_travelFollowHeld;
@@ -5685,12 +5689,29 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  reached FROM that map, through a popup it opened. The follow key
    *  has its own, which is the mod's (TravelOptionsMod.cs:1438-1445).
    *
-   *  ONLINE it does not run at all. The shared clock is the world's
-   *  (WORLD5) and a journey that takes real hours of it cannot be one
-   *  player's business; the trip falls back to DFU's own, which online
-   *  already arrives at once. */
+   *  ONLINE IT RUNS TOO (TO-ONLINE, 2026-09-19, Mac: "travel options
+   *  uses instant travel for the online mod, which shouldn't be the
+   *  case"). Departure 9 stood it down on `sharedClockOn()` for a
+   *  reason that does not survive the code: it said a journey would
+   *  move the world's clock, which is not one player's to move - but
+   *  under the shared clock `playerTicker` reads the relay and
+   *  fabricates nothing from `dt` (systems/worldTick.js, WORLD5's own
+   *  law), so the journey CANNOT move it. What the stand-down actually
+   *  bought was the fallback, and the fallback is DFU's fast travel
+   *  with `noWorldTime` - a teleport that arrives at once and costs
+   *  nothing, which is cheaper than the ride it refused. So the ride
+   *  runs, and the online world is left exactly as it was: no new rule,
+   *  no clock touched, no cap invented. The one thing that differs
+   *  online is the acceleration, and it differs by the world's own
+   *  arithmetic rather than by anything decided here - `travelScale`
+   *  reaches the traveller and the calendar offline, and
+   *  online the calendar is the relay's and ignores it. (The frame's
+   *  ticker line is where that scaling is applied; it is not quoted
+   *  here, because a source-text pin greps for it and a comment that
+   *  spells it out satisfies that pin without the code doing so - which
+   *  is exactly how this note first went vacuous.) */
   function beginAcceleratedTravel(pick, opts, { coords = false, estimateMinutes = null } = {}) {
-    if (!travelOptions || sharedClockOn()) return false;
+    if (!travelOptions) return false;
     if (coords) travelOptions.beginTravelToCoords(pick.pixel, !!opts?.speedCautious);
     else {
       travelOptions.beginTravel({
@@ -5785,8 +5806,11 @@ export async function bootWorld(canvas, renderer, params, status) {
       helpRows: () => (travelOptions ? travelOptions.helpText().split('\n') : null),
       // AUDIT-TO1 I4: a bare-pixel journey has no DFU fast travel to fall
       // back on, so the coordinates popup opens only where the host will
-      // honour it - never online, where the journey stands down.
-      coordsAllowed: () => !!travelOptions && !sharedClockOn(),
+      // honour it. TO-ONLINE: which is now everywhere the mod is on -
+      // the journey no longer stands down on the shared clock, so the
+      // door no longer has to. It still asks `beginAcceleratedTravel`'s
+      // own question, because that is the function that would refuse.
+      coordsAllowed: () => !!travelOptions,
       // AUDIT-TO1 D1: PlayerGPS.CurrentLocation's MapId (null in open
       // wilderness, the C#'s !Loaded) and TransportManager.IsOnShip - the
       // two reads IsNotAtPort / HasNoOceanTravel need and never had.
@@ -6687,6 +6711,27 @@ export async function bootWorld(canvas, renderer, params, status) {
       spawned: playerSpawned, y: +player.pos[1].toFixed(2),
       ground: heightAt(player.pos[0], player.pos[2]), built: built.has(`${state.current.x},${state.current.y}`),
     });
+    // WATER-DRAW1 probe surface: THE TILE UNDER THE PLAYER, BY NUMBER.
+    // The water pass discards a tile whose record the corner table gives
+    // no water corners for, and the only way to name the record from a
+    // screenshot is to stand on it. Prints the record, the transform,
+    // the corners the DRAW gives it and the corners the FEET do - so a
+    // tile that looks wrong reports itself in one line.
+    window.__tileHere = () => {
+      const p = built.get(`${state.current.x},${state.current.y}`);
+      if (!p?.tilemapBytes) return JSON.stringify({ built: false });
+      const t = state.pixelTranslation(p.px, p.py);
+      const tx = Math.floor((cam.pos[0] - t[0]) / 6.4), tz = Math.floor((cam.pos[2] - t[2]) / 6.4);
+      if (tx < 0 || tz < 0 || tx >= TERRAIN_TILE_DIM || tz >= TERRAIN_TILE_DIM) return JSON.stringify({ offPixel: true });
+      const byte = p.tilemapBytes[tz * TERRAIN_TILE_DIM + tx];
+      return JSON.stringify({
+        pixel: `${p.px},${p.py}`, tile: `${tx},${tz}`, archive: p.groundArchive,
+        record: byte >> 2, transform: byte & 3, byte,
+        drawnWet: waterCorners(byte, WATER_DRAW_MASK_TABLE), feetWet: waterCorners(byte),
+        path: p.paths?.[tz * TERRAIN_TILE_DIM + tx] ? 1 : 0,   // GRASS-PATH1
+        location: p.location ?? null,
+      });
+    };
     // M3 probe surface: the live climb state (the wall probe + the
     // check machine ride the real collider and the real skill rolls).
     window.__climb = () => JSON.stringify({
@@ -8627,6 +8672,21 @@ export async function bootWorld(canvas, renderer, params, status) {
     // place - the hold bought nothing but a 500 ms strip with no socket in the cell I stood in); otherwise the hold
     else if (key !== online.room) { if (!online.room || isWorldRoom(key) || isWorldRoom(online.room) || (isCellRoom(key) && online.inRoom(key)) || now - _onlineKeySince >= ROOM_HOLD_MS) { online.look = composeLook(playerEntity); online.join(key, { ...pose, ...arm }); } }   // the look re-composed: the next room's hello carries the gear worn now
     else online.sendPose({ ...pose, ...arm });
+    // PERF11 (2026-09-19, Mac: "Online mode needs further performance
+    // improvements"): ONE peersNear() A FRAME. The owner sweeps below -
+    // the foes' prune and the camps' - each built the list from scratch
+    // and then a Set of its ids from scratch, twice a frame, for the
+    // same answer: peersNear() walks every peer in the room and mints an
+    // object and a scene triple apiece, so a busy room paid all of it
+    // and then paid it again. The memo is per frame and lazy, so a room
+    // that is not a cell room still builds nothing.
+    let _ownerIds;
+    const ownerIds = () => {
+      if (_ownerIds !== undefined) return _ownerIds;
+      const near = peersNear();
+      _ownerIds = near ? new Set(near.map((p) => p.id)) : null;
+      return _ownerIds;
+    };
     // WORLD6b-iii(b) THE CELL SEAM: the neighbouring cells within the relay's range are held as a HALO - hello'd and
     // posed into, so a peer a pixel across the edge is in my room and I in theirs (D9); a crossing promotes the halo
     const wantHalo = mp && isCellRoom(online.room) ? cellHaloFor(mp.x, mp.y, { current: online.haloRooms() }) : [];
@@ -8638,13 +8698,13 @@ export async function bootWorld(canvas, renderer, params, status) {
     // WORLD6b-iii(b): a cell crossing is no room change to the puppets - their owners' cells are still held (the
     // halo) and the prune below takes back any whose owner the hunt no longer sees
     if (online.room !== _foesRoom) { const seam = isCellRoom(online.room) && isCellRoom(_foesRoom); _foesRoom = online.room; _foesFullAt = -Infinity; if (!seam) exteriorFoes.clearPuppets(); }   // AUDIT WORLD6b C7: a new room hears every foe of mine at once
-    if (isCellRoom(online.room)) { const near = peersNear(); if (near) exteriorFoes.pruneOwners(new Set(near.map((p) => p.id)), now); }   // AUDIT WORLD6b-iii(b) C3/B5: no answer (the socket not open) is not "nobody" - it pruned every owner while the halos kept feeding frames, a spawn-and-discard loop per frame   // AUDIT WORLD6b-ii C2: ONE liveness for the owner - the peers the hunt reads (visible: a pose, in range, inside the timeout) are the peers whose puppets stand
+    if (isCellRoom(online.room)) { const ids = ownerIds(); if (ids) exteriorFoes.pruneOwners(ids, now); }   // PERF11: the one list   // AUDIT WORLD6b-iii(b) C3/B5: no answer (the socket not open) is not "nobody" - it pruned every owner while the halos kept feeding frames, a spawn-and-discard loop per frame   // AUDIT WORLD6b-ii C2: ONE liveness for the owner - the peers the hunt reads (visible: a pose, in range, inside the timeout) are the peers whose puppets stand
     worldPublish(now);   // WORLD1: the room's memory, every WORLD_PUBLISH_MS while this player hosts a dungeon
     foesStream(now);   // WORLD2: the host's changed foes, every FOES_MS; WORLD6b: mine, in a cell
     actFlush();        // AUDIT WORLD3 A3: an act the wire refused, re-read and re-sent
     hitFlush(now);     // AUDIT FOES FOE2: and a BLOW the wire refused - a joiner applies none locally, so a lost frame is a lost blow
     modes?.setDungeonAuthority?.(dungeonAuthority(now));   // AUDIT WORLD2 C2: the seat re-read every frame - a dead socket, a terminal close or a silent host hands the foes back
-    if (isCellRoom(online.room)) { const near = peersNear(); if (near) camps.sweepOwners(new Set(near.map((p) => p.id)), now, FOES_STALE_MS); }   // SURV3: a peer's camps go as their puppets do - the same liveness, the same answer-gate   // AUDIT WORLD6b-iii(b) C3/B5: no answer (the socket not open) is not "nobody" - it pruned every owner while the halos kept feeding frames, a spawn-and-discard loop per frame   // AUDIT WORLD6b-ii C2: ONE liveness for the owner - the peers the hunt reads (visible: a pose, in range, inside the timeout) are the peers whose puppets stand
+    if (isCellRoom(online.room)) { const ids = ownerIds(); if (ids) camps.sweepOwners(ids, now, FOES_STALE_MS); }   // PERF11: the same list   // SURV3: a peer's camps go as their puppets do - the same liveness, the same answer-gate   // AUDIT WORLD6b-iii(b) C3/B5: no answer (the socket not open) is not "nobody" - it pruned every owner while the halos kept feeding frames, a spawn-and-discard loop per frame   // AUDIT WORLD6b-ii C2: ONE liveness for the owner - the peers the hunt reads (visible: a pose, in range, inside the timeout) are the peers whose puppets stand
     const drawable = online.drawable();
     peerBodies.sync(drawable, onlineToScene, dt, player.pos);   // the nearest first, the far ones asleep
     remotePlayers.sync(drawable, onlineToScene, { bodyHeight: (id) => peerBodies.heightOf(id), dt, eye: player.pos });   // 2026-09-17: dt drives the class-enemy billboard path's own animation clock; eye is the local player's own position, needed for mobileOrientation's facing calculation (see remotePlayers.js _syncMobilePeer)
@@ -9276,6 +9336,31 @@ export async function bootWorld(canvas, renderer, params, status) {
   const cullOn = !cullDisabled();
   const _planes = new Float32Array(24);
   const _pv = new Float32Array(16);
+  /** PERF-LIGHTS: the night's lantern pool and the one translation triple
+   *  it reads through - refilled every frame, never re-minted. */
+  const _sceneLights = [];
+  const _lightT = [0, 0, 0];
+  /**
+   * PERF-ON2 / PERF-CROWD: is this billboard batch outside the frame?
+   *
+   * ONE test for every batch the host submits by hand - the peers, and
+   * the whole live crowd (townspeople, the watch, the foes, the ground
+   * piles, the blow effects, the dropped torches, the camps). The world's
+   * OWN flats have had this since EV3; these lists never did, so a
+   * townsman behind the camera was a draw, two texture binds and its
+   * uniforms every frame, and a town is full of them.
+   *
+   * GHOST1: THE TEST IS `batchVisible`, not a copy of it. The batch's own
+   * sphere, lifted half a height for the bottom anchor, with the whole
+   * argument for the lift written where it lives (render/bounds.js). This
+   * host and the billboard pass each hand-rolled that lift while the
+   * shadow replay and the air pass's emitters - the other readers of the
+   * same sphere - had none, so the passes disagreed about the same sprite
+   * and a culled flat kept its bloom. A ghost campfire.
+   *
+   * A batch with no bounds is always drawn, as `batchVisible` has it.
+   */
+  const billboardOutside = (b) => !batchVisible(_planes, b);
   // A4: the streaming world's animal sources - pixel-local positions
   // translated through the floating origin at roll time (16 Hz over
   // a handful of animals; recenters are free).
@@ -9358,7 +9443,9 @@ export async function bootWorld(canvas, renderer, params, status) {
       player.bobOffset = [cy * bob[0], bob[1], -sy * bob[0]];
     }
     last = now;
+    meterFor(renderer.gl)?.markCpu('online');   // PERF-CPU
     if (onlineOn && playerSpawned) { if (!online) onlineStart(); onlineFrame(now, dt); }   // ONLINE1: the pose out, the peers in - after the look is paid, before the camera is read and any mode draws
+    meterFor(renderer.gl)?.markCpu('sim');   // PERF-CPU: everything between here and the next mark is the rest of the simulation
     lookGate(gamePaused());   // a window up frees the cursor; closing re-locks
     const fwd = [Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), Math.cos(cam.yaw) * Math.cos(cam.pitch)];
     const right = [Math.cos(cam.yaw), 0, -Math.sin(cam.yaw)];   // HANDEDNESS (mat4's law): screen-right = (cos, 0, -sin) under the mirrored projection - Unity's own right
@@ -10291,16 +10378,26 @@ export async function bootWorld(canvas, renderer, params, status) {
     // placed under the current compensation, nearest 16 to the camera.
     if (lightsOnAt(minute)) {
       worldLightAnimator.tick(dt);
-      const sceneLights = [];
+      // PERF-LIGHTS (2026-09-19): THE LANTERNS ARE A POOL, NOT A FRESH
+      // LIST. This built an array and an object PER LANTERN every frame -
+      // a town at night is hundreds of them, and the pixel translation
+      // minted a triple per pixel beside them - all of it thrown away the
+      // moment nearestLights had picked its sixteen. The objects are
+      // refilled in place now and the count rides into the selector, so a
+      // night frame allocates nothing here at all. The selection, its
+      // order and its ties are untouched.
+      let n = 0;
       for (const p of built.values()) {
         if (!p.lights.length) continue;
-        const t = state.pixelTranslation(p.px, p.py);
+        const t = state.pixelTranslation(p.px, p.py, _lightT);
         for (const l of p.lights) {
-          sceneLights.push({ x: l[0] + t[0], y: l[1] + t[1], z: l[2] + t[2] });
+          const e = _sceneLights[n] ?? (_sceneLights[n] = { x: 0, y: 0, z: 0 });
+          e.x = l[0] + t[0]; e.y = l[1] + t[1]; e.z = l[2] + t[2];
+          n++;
         }
       }
       renderer.setPointLights(
-        withPlayerLights(nearestLights(sceneLights, cam.pos, renderer.maxPointLights, worldLightAnimator.ranges),   // EL1: the installed set's cap (16 classic, 48 on the lane)
+        withPlayerLights(nearestLights(_sceneLights, cam.pos, renderer.maxPointLights, worldLightAnimator.ranges, null, 0, n),   // EL1: the installed set's cap (16 classic, 48 on the lane); PERF-LIGHTS: `n` is how much of the pool is live
           magic?.candleLight(), playerTorchLight(playerEntity, player.pos, cam.yaw), ...camps.lights(), ...droppedTorches.lights()),   // X11 candle; T1 torch; HT1 the dropped lights
         CITY_LIGHT_COLOR_F32
       );
@@ -10325,9 +10422,52 @@ export async function bootWorld(canvas, renderer, params, status) {
 
     // WM2b: read the eased wind ONCE a frame, not once a mill.
     const windNow = sky.wind();
-    if (cullOn) frustumPlanes(multiply(proj, view, _pv), _planes);   // EV3
+    // GHOST1 (2026-09-19): NORMALISED, because `_planes` now serves TWO
+    // tests. EV3's `aabbOutside` only reads the sign of `a*px+b*py+c*pz+d`
+    // and dividing all four coefficients by a positive length cannot
+    // change a sign, so every box test below is bit-for-bit the decision
+    // it was. `billboardOutside` is the one that needs it: `sphereInPlanes`
+    // compares that dot product against `-r`, and that is only a distance
+    // against a radius when the normal is a unit vector. Unnormalised, the
+    // radius counted for 1/|n| of what it should and a flat still on
+    // screen was culled - the sprites popping as the camera turned, and
+    // the campfires that left only their bloom behind. Six square roots a
+    // frame.
+    if (cullOn) spherePlanes(multiply(proj, view, _pv), _planes);   // EV3 (GHOST1: normalised - the sphere test shares these)
+    meterFor(renderer.gl)?.markCpu('batches');   // PERF-CPU: the pixel walk that fills allBatches, culling as it goes
     const allBatches = [];
-    if (remotePlayers) for (const b of remotePlayers.batches()) allBatches.push(b);   // ONLINE1: the others, at their feet
+    // PERF-ON2 (2026-09-19, Mac: "Online mode needs further performance
+    // improvements", with a readout showing 51 fps, script 23.3 ms and
+    // 1365 draws): THE OTHERS ARE CULLED LIKE EVERYTHING ELSE IS.
+    //
+    // Every world flat two lines below gets a frustum test against its
+    // own box before it is submitted (EV3). The peers did not: a peer
+    // behind the camera, or one at the far edge of the relay's range -
+    // RANGE_PIXELS is 3 map pixels, which is nearly 2,500 units - was a
+    // draw, two texture binds and its uniforms, every frame, whatever
+    // the camera was looking at. Measured with PERF-ON's own recording
+    // Proxy (tools/onlinePerfProbe.mjs): 6.3 GL calls a peer a frame,
+    // 1 draw and 2 texture binds of it, and nothing capped it but the
+    // number of people in the room. PERF-ON passed over this in a line
+    // - "a peer's doll is one billboard batch created once, with only
+    // its `origin` written afterwards" - which is true of the batch's
+    // CREATION and says nothing about its per-frame DRAW.
+    //
+    // THE BOX IS THE SHADER'S OWN. The billboard VS places a quad at
+    // `uOrigin + uRight * (aCorner.x * uSize.x) + uUp * ((aCorner.y +
+    // 0.5) * uSize.y)`: bottom-anchored, so it stands from the origin
+    // up by its height, and it turns to face the eye, so it can reach
+    // half its WIDTH in any horizontal direction. A peer's batch is one
+    // placement at [0,0,0] with the position on `origin`, so the box is
+    // that, in world space, with no pixel translation to add.
+    //
+    // A culled peer casts no shadow while it is off screen - which is
+    // exactly what the world's own flats have done since EV3, since the
+    // shadow pass reads the list this builds.
+    if (remotePlayers) for (const b of remotePlayers.batches()) {   // ONLINE1: the others, at their feet
+      if (cullOn && billboardOutside(b)) continue;
+      allBatches.push(b);
+    }
     for (const p of built.values()) {
       // EV2: the pixel's frame matrix caches on the built entry and
       // refreshes only when its translation actually changes (a
@@ -10471,6 +10611,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         renderer.drawWaterSurface(p.water, p._pixelMatrix, renderer.tileArrays.get(p.groundArchive), p.tilemapTex, 6.4, wu);
       }
     }
+    meterFor(renderer.gl)?.markCpu('flats');   // PERF-CPU: submitting the billboards - the draws themselves, from JS. ABOVE setFlatWind, not between it and the draw: WIND3 pins the two as ADJACENT, and the wind is part of this phase anyway.
     renderer.setFlatWind(floraSwayOn() && wd.on ? [wd.windV[0], wd.windV[1], now / 1000, wd.gust] : null);   // WIND3: the flats lean with the one wind; the flora batches carry their share (sway)
     renderer.drawBillboards(allBatches, camRight, UP_Y);
     if (magic.batches().length) renderer.drawBillboards(magic.batches(), camRight, UP_Y);   // M2: spell missiles
@@ -10533,6 +10674,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     _lastPlayerPos = [cam.pos[0], cam.pos[1], cam.pos[2]];
     const isDay = !isNight(minute);
     const livePersonBatches = [];
+    meterFor(renderer.gl)?.markCpu('people');   // PERF-CPU: the towns' own pools
     _livePersons = [];   // T3b: rebuilt each frame in WORLD space
     for (const p of built.values()) {
       if (!p.population) continue;
@@ -10610,6 +10752,20 @@ export async function bootWorld(canvas, renderer, params, status) {
     // while you cross it, which is what was asked for; anyone who would
     // rather ride through it turns the survival mod's hunting off.
     if (_mode() === 'exterior') hunting.tick();   // SURV6: the minute's hunting roll; the window takes the slot
+    // PERF-CROWD (2026-09-19): and the live crowd is culled too. This list
+    // is the townspeople, the city watch, the exterior foes, the ground
+    // piles, the blow effects, the dropped torches and the camps - every
+    // one of them submitted whatever the camera was looking at, which in a
+    // town is most of the frame's billboards. Filtered IN PLACE, so the
+    // cull costs no array of its own.
+    if (cullOn && livePersonBatches.length) {
+      let keep = 0;
+      for (let i = 0; i < livePersonBatches.length; i++) {
+        const b = livePersonBatches[i];
+        if (!billboardOutside(b)) livePersonBatches[keep++] = b;
+      }
+      livePersonBatches.length = keep;
+    }
     if (livePersonBatches.length) renderer.drawBillboards(livePersonBatches, camRight, UP_Y);
     // WX2: what falls is what the front SHOWS - under the enhanced sky the
     // outgoing rain tapers after the sim has cleared and the incoming
@@ -10658,8 +10814,10 @@ export async function bootWorld(canvas, renderer, params, status) {
     }
     // GR1: THE LAB'S GRASS. The scatter is the lab's 1,200,000 candidates
     // over a 420m square around the eye, kept where they land on a GRASS
-    // tile of a near-ring pixel - never on a road record, never on water
-    // (a water record, or under the sea plane), never in winter - each
+    // tile of a near-ring pixel - never on a road record, never on a tile
+    // the road painter wrote (GRASS-PATH1), never on water (a water
+    // record, a tile with ANY water corner - GRASS-WET1 - or under the
+    // sea plane), never in winter - each
     // rooted at the real ground under it. Rebuilt when the eye is more
     // than 60m from the scatter's centre. Drawn with the lab's own draw:
     // the game's sun, ambient and colour in the lab's uniforms, the same
@@ -10677,9 +10835,24 @@ export async function bootWorld(canvas, renderer, params, status) {
       // being filled this frame.
       const sea = SCALED_OCEAN_ELEVATION * DEFAULT_TERRAIN_SCALE + 0.5;
       const scale = MAX_TERRAIN_HEIGHT * DEFAULT_TERRAIN_SCALE;
-      const near = [...built.values()].filter((p) => p._stride === 1 && p.tilemapBytes && p.season !== SEASON.Winter);
-      const pieces = near.map((p) => ({ p, t: state.pixelTranslation(p.px, p.py, [0, 0, 0]), grass: grassRecords.get(p.groundArchive) }));
-      const pieceAt = pieceIndex(pieces, TERRAIN_SIZE);   // PERF8: one Map read per blade instead of a scan of every near pixel
+      // PERF10 (2026-09-19, Mac: "further out in the wilderniss it loaded
+      // many chunks and grass the performance still degrades"): THE
+      // INDEX IS BUILT ONLY WHEN A CELL IS ACTUALLY FILLED. `near` spread
+      // every streamed pixel into an array, mapped it into a second one
+      // (a fresh translation triple apiece) and built a Map over it -
+      // EVERY FRAME, whether or not the field had a cell to place. The
+      // further out you walk the more pixels are streamed and the longer
+      // that costs, and on a standing field it is spent for nothing at
+      // all: `keep`/`ground` are called only from placeLabGrassCell.
+      // One lazy memo per frame, so a frame that fills nothing allocates
+      // nothing and a frame that fills two cells pays exactly what it
+      // paid before.
+      let _pieceAt = null;
+      let _near = null;
+      const nearPieces = () => (_near ??= [...built.values()].filter((p) => p._stride === 1 && p.tilemapBytes && p.season !== SEASON.Winter));
+      const pieceAt = (x, z) => (_pieceAt ??= pieceIndex(   // PERF8: one Map read per blade instead of a scan of every near pixel
+        nearPieces().map((p) => ({ p, t: state.pixelTranslation(p.px, p.py, [0, 0, 0]), grass: grassRecords.get(p.groundArchive) })),
+        TERRAIN_SIZE))(x, z);
       // GRASS4 measured this pair and left it alone, which is worth
       // recording so nobody "fixes" it again: `ground` repeats the
       // lookup `keep` just did, and caching the answer across the two
@@ -10694,8 +10867,28 @@ export async function bootWorld(canvas, renderer, params, status) {
         const { p, t, grass } = hit;
         const lx = x - t[0]; const lz = z - t[2];
         const tx = Math.floor(lx / 6.4); const tz = Math.floor(lz / 6.4);
-        const rec = p.tilemapBytes[tz * TERRAIN_TILE_DIM + tx] >> 2;
+        const ti = tz * TERRAIN_TILE_DIM + tx;
+        const byte = p.tilemapBytes[ti];
+        const rec = byte >> 2;
         if (rec === 0 || !grass || !grass.has(rec)) return null;
+        // GRASS-PATH1 (2026-09-19, Mac: "Grass shouldnt be on dirt
+        // paths"): the road painter's own mask. A track across grass
+        // writes 10/11/12/51 - the SAME records the natural dirt-grass
+        // marching squares write - so the record cannot tell a path from
+        // a field's edge and the placer grew a lawn straight down every
+        // track. The painter knows, and now says (world/roadPainter.js).
+        if (p.paths?.[ti]) return null;
+        // GRASS-WET1 (2026-09-19, Mac: "some textures not taking the
+        // water tile"): NOT A CORNER OF IT IN WATER. `rec === 0` above
+        // rejects only tiles that are water WHOLE; the water-grass shore
+        // records (20-22, 49) a stream or a town's own ground tiles
+        // write are mostly-grass by texel count, so grassRecordsOf takes
+        // them and blades grew out of the water - a green mottled patch
+        // in the middle of a pond, which is the water tile not reading
+        // as water. The corner table (world/waterCorners.js) is the one
+        // law for that question; the water pass and the player's feet
+        // already read it, and now the grass does too.
+        if (waterCorners(byte, WATER_DRAW_MASK_TABLE)) return null;
         // GRASS3: the height of the surface that is DRAWN, not a
         // bilinear patch over the same samples - the terrain is cut into
         // triangles and bilinear is a different surface. On real grades
@@ -10723,7 +10916,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       };
       if (!labGrassField) labGrassField = createGrassField(labGrass, { keep, ground, density: grassDensity });   // PERF1: the pref's fraction of the lab's field
       labGrassField.update(ex, ez, keep, ground);
-      window.__grassStats = () => ({ blades: labGrass.count, drawn: labGrass.drawn, nearPixels: near.length, cells: labGrassField?.live.size ?? 0, slots: labGrassField?.slots ?? 0,
+      window.__grassStats = () => ({ blades: labGrass.count, drawn: labGrass.drawn, nearPixels: nearPieces().length, cells: labGrassField?.live.size ?? 0, slots: labGrassField?.slots ?? 0,
         perCell: labGrass.perCell, range: LAB_GRASS.range, height: LAB_GRASS.height, verts: labGrass.verts,
         // GRASS2: what the field HOLDS, against what a slot-sized draw
         // would have submitted - the pad, measured rather than assumed.

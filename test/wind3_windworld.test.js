@@ -218,7 +218,13 @@ test('WIND3 the flats\' sway in the renderer: BB_VS declares the wind and the sh
   assert.match(r, /this\.bbUFlatWind = gl\.getUniformLocation\(this\.bbProgram, 'uFlatWind'\);/);
   assert.match(r, /this\.bbUSway = gl\.getUniformLocation\(this\.bbProgram, 'uSway'\);/);
   assert.match(r, /setFlatWind\(v\) \{\s*\n\s*const fw = this\._flatWind \?\?= new Float32Array\(4\);\s*\n\s*if \(v\) \{ fw\[0\] = v\[0\] \|\| 0; fw\[1\] = v\[1\] \|\| 0; fw\[2\] = v\[2\] \|\| 0; fw\[3\] = v\[3\] \|\| 0; \} else fw\.fill\(0\);/);
-  const db = r.slice(r.indexOf('  drawBillboards(batches, camRight, camUp) {'), r.indexOf('  drawBillboards(batches, camRight, camUp) {') + 6000);
+  // the METHOD's body, found by its own closing brace rather than by a
+  // count of characters: the fixed 6,000-char window this replaces slid
+  // off the end the moment PERF-CROWD2 added the frustum test above these
+  // lines, and a pin that stops covering its subject because the subject
+  // moved is a pin that fails for the wrong reason.
+  const dbStart = r.indexOf('  drawBillboards(batches, camRight, camUp) {');
+  const db = r.slice(dbStart, r.indexOf('\n  }\n', dbStart));
   assert.equal((db.match(/gl\.uniform4fv\(this\.bbUFlatWind, this\._flatWind \?\? ZERO_FLAT_WIND\);/g) || []).length, 1, 'one wind upload a call');
   assert.match(db, /const sw = b\.sway \|\| 0;[^\n]*\n\s*if \(sw !== lastSway\) \{ gl\.uniform1f\(this\.bbUSway, sw\); lastSway = sw; \}/, 'the share per batch, uploaded when it changes');
   assert.match(db, /let lastSway = null;/, 'the first batch always uploads');

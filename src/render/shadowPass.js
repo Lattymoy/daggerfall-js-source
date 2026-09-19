@@ -75,6 +75,39 @@ export const SHADOW_CASTER_TABLE = 48;
  *  not. */
 export const SHADOW_FAR_CASCADE_EVERY = 2;
 export const SHADOW_FAR_CASTER_EVERY = 3;
+/**
+ * PERF-FLICKER (2026-09-19, Mac: "Online mode needs further performance
+ * improvements", 51 fps with script at 23.3 ms): THE FLICKER WAS
+ * REBUILDING EVERY SHADOW CUBE, EVERY FRAME.
+ *
+ * EL8 spends the point casters carefully: the nearest SHADOW_NEAR_CASTERS
+ * redraw their six faces every frame, the rest every
+ * SHADOW_FAR_CASTER_EVERY - about twenty face replays a frame out of
+ * thirty-six. A slot also redraws when its light CHANGED, which is right:
+ * a new lantern in the slot needs its own map.
+ *
+ * But a lantern's range is ANIMATED. CityLightAnimator (world/worldClock.js)
+ * wanders every light's range inside a one-unit band at fourteen steps a
+ * second - the flicker - and that range is the `w` the shadow pass compares.
+ * So `changed` was true for every caster on almost every frame, every slot
+ * redrew all six faces, and EL8's whole schedule was dead: thirty-six face
+ * replays a frame instead of twenty, each one a full replay of the casters
+ * in that light's reach. The saving was designed, measured and then quietly
+ * given back by an animation in another file.
+ *
+ * The shadow's far plane is ROUNDED UP to this quantum, and the rounded
+ * value is what the matrices, the change test and `pointParams` all use -
+ * so the map and the shader agree exactly, as they must (the fragment
+ * stage reconstructs depth from `P.w`). Rounding UP means the cube's far
+ * plane is never inside the lantern's reach, so no shadow is ever clipped
+ * short; the only cost is depth spread over a slightly longer range, which
+ * at 512 square and a 24-bit depth buffer is nothing. A quantum of 4
+ * swallows the whole one-unit wobble of an 18-unit lantern.
+ */
+export const SHADOW_FAR_QUANTUM = 4;
+/** PERF-FLICKER: the far plane a cube map is built for - the light's own
+ *  range, rounded UP so a flicker cannot move it. */
+export const shadowFarFor = (far) => Math.ceil(far / SHADOW_FAR_QUANTUM) * SHADOW_FAR_QUANTUM;
 export const SHADOW_NEAR_CASTERS = 2;
 /** The cascades' radii around the eye, world units (a terrain tile is 6.4,
  *  an RMB block 102.4): EL7 - the room the player stands in (a texel of
@@ -519,7 +552,11 @@ export class ShadowPass {
     for (let k = 0; k < casters.length; k++) {
       const i = casters[k];
       const pos = [L[i * 4], L[i * 4 + 1], L[i * 4 + 2]];
-      const far = L[i * 4 + 3];
+      // PERF-FLICKER: the SHADOW's far, not the lantern's live one - the
+      // flicker must not count as "this light changed" and rebuild six
+      // faces. Everything below takes this value (the face matrices, the
+      // change test and pointParams), so the map and the shader agree.
+      const far = shadowFarFor(L[i * 4 + 3]);
       // EL8: the slot's layers are drawn again when its light changed (position or range), every frame for the nearest slots, every third otherwise
       const sl = this._slotLight, o = k * 4;
       const changed = !(sl[o] === pos[0] && sl[o + 1] === pos[1] && sl[o + 2] === pos[2] && sl[o + 3] === far);
@@ -592,6 +629,23 @@ export class ShadowPass {
         gl.uniform4fv(P.bb.flatWind, r.flatWind);
         gl.activeTexture(gl.TEXTURE0);
         let lastSway = null;
+        // PERF-BASIS (2026-09-19): THE BASIS IS UPLOADED ONCE, NOT ONCE A
+        // FLAT. Both vectors went up twice per batch per replay, and only
+        // ONE of the four cases varies: `up` is the constant [0,1,0] (or
+        // the record's, fixed for the record), and `right` is the frame's
+        // sun basis - set once in frame() before the cascade loop - unless
+        // this is a LANTERN's replay, where each flat turns to face it
+        // (below). So a sun cascade was paying two uniform uploads a flat
+        // for two numbers that could not change, three cascades deep,
+        // every frame. On a frame that is script-bound, a GL call that
+        // cannot change anything is the purest kind of waste there is.
+        const perBatchRight = !recordBasis && !!lightPos;
+        gl.uniform3fv(P.bb.up, recordBasis ? r.up : this._up);
+        if (!perBatchRight) gl.uniform3fv(P.bb.right, recordBasis ? r.right : this._right);
+        // PERF-BASIS: and the texture bind skips its repeats, as the main
+        // pass's has since PERF3 - a run of flats sharing a record bound
+        // the same texture once apiece.
+        let lastTex = null;
         for (const b of r.batches) {
           if (!b?.vao || b._dead || b.conceal || f.isSpectral(b.archive)) continue;   // a concealed foe and a ghost cast nothing
           if (lightPos && b.archive === SHADOW_LIGHT_FLATS) continue;   // EL6: a flame is the lantern, not its occluder
@@ -602,22 +656,23 @@ export class ShadowPass {
           const tex = f.textures.get(key);
           if (!tex) continue;
           const o = b.origin || [0, 0, 0];
-          if (lightPos) {
+          // AUDIT-EL F13: the CAMERA's depth image (the air pass) draws a flat
+          // with the basis it was drawn with, off the record - the sun's basis
+          // drew every tree edge-on, a sliver the AO and the glares saw through.
+          // PERF-BASIS: which is why `recordBasis` still wins here; it is
+          // just hoisted, because it cannot change between two flats.
+          if (perBatchRight) {
             // face the lantern: right = up x (light - flat)
             const dx = lightPos[0] - o[0], dz = lightPos[2] - o[2];
             const l = Math.hypot(dx, dz) || 1;
             this._right[0] = dz / l; this._right[1] = 0; this._right[2] = -dx / l;
+            gl.uniform3fv(P.bb.right, this._right);
           }
-          // AUDIT-EL F13: the CAMERA's depth image (the air pass) draws a flat
-          // with the basis it was drawn with, off the record - the sun's basis
-          // drew every tree edge-on, a sliver the AO and the glares saw through
-          gl.uniform3fv(P.bb.right, recordBasis ? r.right : this._right);
-          gl.uniform3fv(P.bb.up, recordBasis ? r.up : this._up);
           gl.uniform3f(P.bb.origin, o[0], o[1], o[2]);
           gl.uniform2f(P.bb.size, b.size.w, b.size.h);
           const sw = b.sway || 0;
           if (sw !== lastSway) { gl.uniform1f(P.bb.sway, sw); lastSway = sw; }
-          gl.bindTexture(gl.TEXTURE_2D, tex);
+          if (tex !== lastTex) { gl.bindTexture(gl.TEXTURE_2D, tex); lastTex = tex; }   // PERF-BASIS
           f.bindVao(b.vao);
           gl.drawElements(gl.TRIANGLES, b.indexCount, gl.UNSIGNED_INT, 0);
           draws++;

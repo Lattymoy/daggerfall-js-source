@@ -517,7 +517,27 @@ void main() {
   int t = int(data & 3u);
   vec2 tileUV = fract(unwrapped);
   vec2 tuv = ROT[t] * tileUV + TRANS[t];
-  vec3 tex = elDecode(texture(uTileArr, vec3(tuv, float(layer))).rgb);
+  // GRAIN1 (2026-09-19, Mac: "distance terrian has a weird grain look"):
+  // THE TILE ARRAY IS MIPMAPPED, AND THE GRADIENT IS THE UNWRAPPED ONE.
+  //
+  // The grain is minification aliasing: past a few tiles out a screen
+  // pixel covers many texels and NEAREST picks one of them, so the ground
+  // boils as the camera moves. The cure is a mipmap - and the reason
+  // there was none is right here. tileUV is fract(unwrapped), so it
+  // jumps 1 -> 0 at every tile edge, and texture() picks its mip from
+  // the screen-space derivative of the coordinate it is handed: at each
+  // of those jumps the derivative is a whole tile wide, the hardware
+  // reads that as "this pixel covers the entire texture", and it samples
+  // the coarsest mip. That is a blurred line drawn around all 16,384
+  // tiles of every pixel - far worse than the grain.
+  //
+  // unwrapped does not jump. Its derivative is the true footprint, and
+  // ROT[t] is constant across the fragment, so rotating it gives the
+  // footprint in the rotated tile's own frame. textureGrad takes that
+  // directly and the seams cannot happen. One sample either way.
+  vec2 gx = ROT[t] * dFdx(unwrapped);
+  vec2 gy = ROT[t] * dFdy(unwrapped);
+  vec3 tex = elDecode(textureGrad(uTileArr, vec3(tuv, float(layer)), gx, gy).rgb);
   vec3 n = normalize(vNormal);
   float diff = max(dot(n, uLightDir), 0.0) * cloudShadowAt(vWorldPos) * sunShadowAt(vWorldPos, n);   // EL2: the sun map
   float mdiff = max(dot(n, uMoonDir), 0.0);

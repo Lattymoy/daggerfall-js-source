@@ -17,8 +17,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spherePlanes, sphereInPlanes, boundsOf, transformSphere, recordVisible, subMeshVisible, batchVisible } from '../src/render/bounds.js';
 import {
-  SHADOW_POINT_CASTERS, SHADOW_POINT_SIZE, SHADOW_POINT_NEAR, pickShadowCaster, pickShadowCasters, pointFaceMatrices, faceBasis, SHADOW_GLSL, ShadowPass,
-} from '../src/render/shadowPass.js';
+  SHADOW_POINT_CASTERS, SHADOW_POINT_SIZE, SHADOW_POINT_NEAR, pickShadowCaster, pickShadowCasters, pointFaceMatrices, faceBasis, SHADOW_GLSL, ShadowPass, shadowFarFor } from '../src/render/shadowPass.js';
 import { AIR_GLARE_SLACK } from '../src/render/airPass.js';
 import { EL_LANE, EL_MESH_FS, EL_BB_FS, EL_TERRAIN_FS, EL_CHAR_FS } from '../src/render/enhancedLighting.js';
 import { Renderer, WORLD_FRAME } from '../src/render/renderer.js';
@@ -193,7 +192,13 @@ test('EL5: the replays cull - a record outside a face\'s frustum is not drawn, a
   calls.length = 0;
   r.beginFrame(I, I, new Float32Array([0, 1, 0]), WORLD_FRAME);
   assert.equal(sp.kind, 'point'); assert.equal(sp.casters, 2, 'both lanterns cast'); assert.deepEqual([...sp.shadowIndex], [0, 1, -1, -1, -1, -1], 'nearest first');
-  assert.deepEqual([...sp.pointParams].slice(0, 8), [3, 1, 0, 10, 0, 1, 40, 8]);
+  // PERF-FLICKER: the w is the CUBE MAP's own far plane - the lantern's
+  // range rounded UP to SHADOW_FAR_QUANTUM, so the animated flicker cannot
+  // read as "this light changed" and rebuild six faces a frame. 10 -> 12;
+  // 8 is already a multiple and is untouched, which is the pin's own proof
+  // that the rounding is UP and not a blanket widening.
+  assert.deepEqual([...sp.pointParams].slice(0, 8), [3, 1, 0, shadowFarFor(10), 0, 1, 40, shadowFarFor(8)]);
+  assert.deepEqual([shadowFarFor(10), shadowFarFor(8)], [12, 8]);
   // twelve faces: the near sub-mesh is in front of some (drawn there), the far one is out of every face's far plane; the bare mesh draws on all twelve; the far terrain and the far batch never
   assert.ok(sp.stats.pointDraws < 12 * 5, `culled: ${sp.stats.pointDraws} of 60 draws`);
   assert.ok(sp.stats.culled > 0);

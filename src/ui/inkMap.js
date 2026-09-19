@@ -43,12 +43,68 @@ import {
 export const PEN = Object.freeze({
   line: 'rgba(58, 40, 22, 0.92)',    // the pen
   soft: 'rgba(58, 40, 22, 0.42)',    // borders, tracks, minor marks
+  relief: 'rgba(58, 40, 22, 0.26)',  // MAP-FIELD6: the high ground's carets
   wash: 'rgba(58, 40, 22, 0.10)',    // the shore's shade
   name: 'rgba(46, 32, 18, 0.95)',    // a place's name
   region: 'rgba(58, 40, 22, 0.55)',  // a province's name
   select: 'rgba(168, 112, 24, 0.95)', // the chosen mark's ring
   player: 'rgba(120, 28, 20, 0.95)',  // the player's own mark
   coords: 'rgba(120, 28, 20, 0.75)',  // MAP2: a bare-pixel destination's cross
+  halo: 'rgba(238, 222, 190, 0.80)',  // MAP-FIELD6: the parchment, quieted under a glyph or a name
+});
+/** MAP-FIELD6 (2026-09-19, Mac: "Some of the glyphs are hard to read. I
+ *  want to make everything more readable, without clutter and keeping
+ *  the same design").
+ *
+ *  The trouble was never CONTRAST. The ink sits at luma 43 on parchment
+ *  at 172, which is as strong a difference as print. It was that the
+ *  parchment is not a flat ground - it is painted with brown cracks and
+ *  stains of very nearly the pen's own hue - and a 1.2px line laid over
+ *  that has nothing to hold it apart from the paper's own marks.
+ *
+ *  So each glyph and each name is drawn TWICE: once in `halo`, a wide
+ *  soft parchment-light pass that quiets the paper under it, and then
+ *  in ink. This is a cartographer's halo and it takes clutter AWAY
+ *  rather than adding it - the page keeps exactly the marks it had, and
+ *  they stop tangling with the texture. Nothing about the design moves.
+ *
+ *  The pen is a little heavier with it (1.2 -> 1.5), which thickens
+ *  every STROKED glyph - the temple's cross, the dungeon's triangle,
+ *  the coven's star, the home's square - and the halo that carries it.
+ *
+ *  AUDIT MAP-FIELD: the first draft of this sentence said the weight
+ *  was "what makes a village's dot and a track's dashes hold together
+ *  at the far band", and it was wrong three times over. A village's dot
+ *  is `fill()` alone on the ink pass, so `GLYPH_PEN` never touches it -
+ *  what changed the dot is its radius, 2 -> 2.2. A track's dashes are
+ *  stroked at a width of 1 written into the paint, which this constant
+ *  does not reach. And at the FAR band neither is drawn at all: that
+ *  band inks cities only, and skips the tracks. */
+export const GLYPH_PEN = 1.5;
+/** How far the halo stands out past the ink it carries, in paper px.
+ *
+ *  AUDIT MAP-FIELD: it is the STAND-OFF, and the code now matches the
+ *  word. A stroke of width W centred on a path stands out W/2, so a
+ *  glyph haloed at `GLYPH_PEN + HALO_PEN` stood out HALO_PEN/2 - half
+ *  what this said - while `strokeText` used HALO_PEN as the whole width
+ *  and happened to land on the same 1.6px by a different road. Two call
+ *  sites, one constant, two meanings, and neither was the one written
+ *  here. Both add `2 * HALO_PEN` to the width of the ink they carry
+ *  now, so the halo stands out exactly this far from both. */
+export const HALO_PEN = 1.6;
+/** The room each kind's glyph takes, as a radius in paper pixels - what
+ *  a NAME must keep clear of. Taken off paintGlyph below, which is the
+ *  one place these shapes are drawn.
+ *
+ *  AUDIT MAP-FIELD: these are the GEOMETRY, not the ink. A stroked
+ *  shape is half a pen wider than its path on each side, so the ink
+ *  reaches up to 0.75px past the figures here (worst: the temple, 5.75
+ *  against 5). Both users add 1 before testing, and that `+ 1` is
+ *  therefore LOAD-BEARING rather than a courtesy margin - it is what
+ *  covers the pen. Widen the pen much further and these need redoing. */
+export const GLYPH_R = Object.freeze({
+  city: 6.5, hamlet: 3.5, village: 2.8, temple: 5, cult: 4.5,
+  dungeon: 5, graveyard: 3.8, coven: 5, tavern: 3.2, home: 3.2,
 });
 /** The hand-lettered face the names are inked in. The enhanced skin's
  *  display face (ui/enhancedStyle.js --display), so the map and the
@@ -438,15 +494,43 @@ export function nameFont(mark, size) {
   return `${mark.kind === 'city' ? '600 ' : ''}${size}px ${NAME_FACE}`;
 }
 
+/** The rectangle a name's INK occupies, from the baseline the painter
+ *  will pass to `fillText`. ONE formula, used to reserve the room and
+ *  returned on the placement, so the box that was reserved is the box a
+ *  reader can test against.
+ *
+ *  `ASC`/`DESC` are the display face's ink above and below the baseline
+ *  as a fraction of the em. They are a measurement of a Garamond cut
+ *  rather than of this exact font at this exact size - a canvas can
+ *  answer that and node cannot - so they are rounded OUTWARD: a box a
+ *  shade too tall drops a label that would have just fitted, where one
+ *  a shade too short lets a descender sit on the next name. */
+export const NAME_ASC = 0.78;
+export const NAME_DESC = 0.28;
+export function nameBox(x, baseline, w, size) {
+  return { x, y: baseline - (size * NAME_ASC), w, h: size * (NAME_ASC + NAME_DESC) };
+}
+
 /**
  * Where the names go, and which ones fit. Greedy in NAME_RANK order: a
  * name that would overlap one already placed is dropped, so a crowded
  * coast keeps its cities legible instead of smearing every hamlet over
  * them. Pure: `measure(text, size)` answers a width so node can drive
  * it with a stub.
+ *
+ * MAP-FIELD6: a name is kept clear of every GLYPH the band inks, not
+ * only of other names. This was the readability fault Mac could see
+ * rather than the one he could name: a label was free to land squarely
+ * on the next town's mark, so "Proofhold" ran through the ring of the
+ * city beside it and a cluster of hamlets sat on top of its own label.
+ * The glyph boxes are seeded into the same greedy test the names use,
+ * which means a name that has nowhere clear to go is DROPPED - the mark
+ * itself is still there to hover, and one unreadable label is worth
+ * less than the mark it was covering.
  */
 export function placeNames(marks, view, band, { paperW, paperH, measure }) {
   const named = BAND_NAMES[band] ?? BAND_NAMES.near;
+  const shown = BAND_MARKS[band] ?? BAND_MARKS.near;
   const rank = new Map(NAME_RANK.map((c, i) => [c, i]));
   const size = band === 'near' ? 14 : 13;
   const out = [];
@@ -457,16 +541,55 @@ export function placeNames(marks, view, band, { paperW, paperH, measure }) {
   const onSheet = (m) => { const [px, py] = toPaper(view, m.x, m.y); return !(px < -40 || py < -20 || px > paperW + 40 || py > paperH + 20); };
   const sorted = marks.filter((m) => m.name && named.has(m.colorIndex) && onSheet(m))
     .sort((a, b) => (rank.get(a.colorIndex) ?? 99) - (rank.get(b.colorIndex) ?? 99));
+  // the ground the glyphs already hold - seeded BEFORE any name is
+  // placed, so the first name is as bound by them as the last
+  for (const m of marks) {
+    if (!shown.has(m.colorIndex) || !onSheet(m)) continue;
+    const [px, py] = toPaper(view, m.x, m.y);
+    const r = (GLYPH_R[m.kind] ?? 4) + 1;
+    boxes.push({ x: px - r, y: py - r, w: r * 2, h: r * 2 });
+  }
+  const hits = (box) => boxes.some((b) => b.x < box.x + box.w && b.x + b.w > box.x && b.y < box.y + box.h && b.y + b.h > box.y);
   for (const m of sorted) {
     const [px, py] = toPaper(view, m.x, m.y);
     const measured = measure(m.name, size, nameFont(m, size));
     const w = Number.isFinite(measured) ? measured : 0;   // a stub's NaN would let every name overlap
-    const glyph = m.kind === 'city' ? 6 : 4;
-    const box = { x: px + glyph + 3, y: py - size * 0.55, w, h: size * 1.1 };
-    if (box.x + w > paperW - 4) { box.x = px - glyph - 3 - w; }   // flip to the left at the paper's edge
-    if (boxes.some((b) => b.x < box.x + box.w && b.x + b.w > box.x && b.y < box.y + box.h && b.y + b.h > box.y)) continue;
-    boxes.push(box);
-    out.push({ mark: m, x: box.x, y: py + size * 0.35, size, w });
+    const glyph = (GLYPH_R[m.kind] ?? 4) + 1;
+    // MAP-FIELD6: FOUR PLACES TO TRY, not one. Seeding the glyphs into
+    // the test (above) is what stops a label landing on a mark, but with
+    // a single candidate it also silenced the two names that most needed
+    // saying - a city whose label reached over its neighbour's ring was
+    // simply dropped. A label has somewhere else to go, and the sheet
+    // reads better for a name set to the left or under its town than for
+    // no name at all. Right first, because that is where the eye looks
+    // for it and where every label sat before this.
+    //
+    // AUDIT MAP-FIELD: each candidate names only its BASELINE, and the
+    // box is derived from that baseline by `nameBox` - one formula. The
+    // first draft gave every candidate its own `y` as well, three
+    // different offsets from three different baselines, and then threw
+    // the `y` away on the way out: no consumer could rebuild the
+    // rectangle that had been reserved, and the pin invented a fourth
+    // that matched none of them. The box is RETURNED now.
+    const cands = [
+      { x: px + glyph + 3, base: py + size * 0.35 },
+      { x: px - glyph - 3 - w, base: py + size * 0.35 },
+      { x: px - w * 0.5, base: py - glyph - 5 },
+      { x: px - w * 0.5, base: py + glyph + 2 + size * 0.85 },
+    ];
+    // AUDIT MAP-FIELD: BOUNDED ON BOTH AXES. The first draft bounded x
+    // alone, so the above/below candidates could place a label wholly
+    // off the top or bottom of the sheet - painted where nobody can see
+    // it AND holding a box that then blocked a neighbour that could
+    // have been drawn. That is strictly worse than the drop the design
+    // intends, and it was a fault this commit introduced: the single
+    // candidate it replaced always sat at the mark's own height.
+    const fit = cands.map((c) => ({ ...c, box: nameBox(c.x, c.base, w, size) }))
+      .find((c) => c.box.x >= 2 && c.box.x + c.box.w <= paperW - 2
+        && c.box.y >= 2 && c.box.y + c.box.h <= paperH - 2 && !hits(c.box));
+    if (!fit) continue;
+    boxes.push(fit.box);
+    out.push({ mark: m, x: fit.x, y: fit.base, size, w, box: fit.box });
   }
   return out;
 }
@@ -551,8 +674,11 @@ export function paintInkStatic(ctx, model, view, opts) {
   // the shore: a soft shade under a firm line
   stroke(model.coast, Math.max(3, s * 1.6), PEN.wash);
   stroke(model.coast, 1.3, PEN.line);
-  // the high ground: carets, thinned by band (once, at build)
-  ctx.strokeStyle = PEN.soft;
+  // the high ground: carets, thinned by band (once, at build).
+  // MAP-FIELD6: in PEN.relief, not PEN.soft - a hatch this dense at the
+  // pen's own weight reads as ink competing with the marks, and it is
+  // the one thing on the sheet that is meant to be felt, not read.
+  ctx.strokeStyle = PEN.relief;
   ctx.lineWidth = 1;
   ctx.beginPath();
   const caret = Math.max(2.5, Math.min(7, s * 0.9));
@@ -575,9 +701,17 @@ export function paintInkStatic(ctx, model, view, opts) {
   // restricts ship travel to ports (the classic page's ports button
   // shows under the same condition, TravelOptionsMapWindow.cs:148)
   const shown = BAND_MARKS[band] ?? BAND_MARKS.near;
+  // MAP-FIELD6: EVERY halo first, then every glyph. One pass per mark
+  // would let a neighbour's halo fall on the ink already laid down, so
+  // a crowded coast would come out with bites taken out of it - which
+  // is worse than the tangle the halo is here to fix.
+  const inked = [];
   for (const m of model.marks) {
     if (!shown.has(m.colorIndex) || !visible(m.x, m.y)) continue;
-    const [x, y] = toPaper(view, m.x, m.y);
+    inked.push([m, ...toPaper(view, m.x, m.y)]);
+  }
+  for (const [m, x, y] of inked) paintGlyph(ctx, m.kind, x, y, true);
+  for (const [m, x, y] of inked) {
     paintGlyph(ctx, m.kind, x, y);
     if (opts.ports && m.port && band !== 'far') paintHarbour(ctx, x, y);
   }
@@ -593,11 +727,20 @@ export function paintInkStatic(ctx, model, view, opts) {
       ctx.beginPath(); ctx.arc(x, y, 9, 0, Math.PI * 2); ctx.stroke();
     }
   }
-  // the names
+  // the names - MAP-FIELD6: haloed the same way, and for the same
+  // reason. A name set in a light serif over the sheet's own cracks was
+  // the least readable thing on the page.
   if (opts.names) {
-    ctx.fillStyle = PEN.name;
     ctx.textBaseline = 'alphabetic';
     ctx.textAlign = 'left';
+    ctx.lineJoin = 'round';
+    ctx.strokeStyle = PEN.halo;
+    ctx.lineWidth = 2 * HALO_PEN;   // strokeText is centred on the glyph too
+    for (const n of opts.names) {
+      ctx.font = nameFont(n.mark, n.size);
+      ctx.strokeText(n.mark.name, n.x, n.y);
+    }
+    ctx.fillStyle = PEN.name;
     for (const n of opts.names) {
       ctx.font = nameFont(n.mark, n.size);
       ctx.fillText(n.mark.name, n.x, n.y);
@@ -683,19 +826,27 @@ export function paintHarbour(ctx, x, y) {
   ctx.stroke();
 }
 
-/** One glyph per kind, at paper (x, y). Skin. */
-export function paintGlyph(ctx, kind, x, y) {
-  ctx.strokeStyle = PEN.line;
-  ctx.fillStyle = PEN.line;
-  ctx.lineWidth = 1.2;
+/** One glyph per kind, at paper (x, y). Skin.
+ *
+ *  MAP-FIELD6: `halo` true draws the SAME shape in the parchment-light
+ *  halo, fattened, so a later ink pass lands on quiet paper instead of
+ *  on the sheet's own cracks. The filled kinds are stroked as well as
+ *  filled on that pass, or their halo would sit inside them and show
+ *  nothing. Both passes are driven from this one switch, so a glyph
+ *  cannot be drawn in ink in a shape its halo did not clear. */
+export function paintGlyph(ctx, kind, x, y, halo = false) {
+  ctx.strokeStyle = halo ? PEN.halo : PEN.line;
+  ctx.fillStyle = halo ? PEN.halo : PEN.line;
+  ctx.lineWidth = halo ? GLYPH_PEN + (2 * HALO_PEN) : GLYPH_PEN;
+  const solid = () => { ctx.fill(); if (halo) ctx.stroke(); };
   ctx.beginPath();
   switch (kind) {
     case 'city':
-      ctx.arc(x, y, 3.2, 0, Math.PI * 2); ctx.fill();
+      ctx.arc(x, y, 3.2, 0, Math.PI * 2); solid();
       ctx.beginPath(); ctx.arc(x, y, 6, 0, Math.PI * 2); ctx.stroke();
       return;
-    case 'hamlet': ctx.arc(x, y, 3, 0, Math.PI * 2); ctx.fill(); return;
-    case 'village': ctx.arc(x, y, 2, 0, Math.PI * 2); ctx.fill(); return;
+    case 'hamlet': ctx.arc(x, y, 3, 0, Math.PI * 2); solid(); return;
+    case 'village': ctx.arc(x, y, 2.2, 0, Math.PI * 2); solid(); return;
     case 'temple':
       ctx.moveTo(x, y - 5); ctx.lineTo(x, y + 4); ctx.moveTo(x - 3, y - 2); ctx.lineTo(x + 3, y - 2); ctx.stroke(); return;
     case 'cult':
@@ -712,7 +863,7 @@ export function paintGlyph(ctx, kind, x, y) {
       }
       ctx.closePath(); ctx.stroke(); return;
     case 'tavern':
-      ctx.rect(x - 2.5, y - 2.5, 5, 5); ctx.fill(); return;
+      ctx.rect(x - 2.5, y - 2.5, 5, 5); solid(); return;
     default:   // home
       ctx.rect(x - 2.5, y - 2.5, 5, 5); ctx.stroke();
   }

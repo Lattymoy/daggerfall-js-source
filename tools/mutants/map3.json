@@ -482,7 +482,7 @@
   {
     "name": "no-retry",
     "file": "src/ui/heldMap.js",
-    "old": "    } else if (!first && this._handsTries > 0 && this._handsTries < 30) { this._handsTries++; this._tryHands(); }",
+    "old": "    } else if (!first && this._phase !== 'closing' && this._handsTries > 0 && this._handsTries < 30) { this._handsTries++; this._tryHands(); }",
     "new": "    } else if (false) { this._handsTries++; this._tryHands(); }",
     "tests": [
       "test/heldmap.test.js"
@@ -491,8 +491,8 @@
   {
     "name": "retry-forever",
     "file": "src/ui/heldMap.js",
-    "old": "    } else if (!first && this._handsTries > 0 && this._handsTries < 30) { this._handsTries++; this._tryHands(); }",
-    "new": "    } else if (!first && this._handsTries > 0) { this._handsTries++; this._tryHands(); }",
+    "old": "    } else if (!first && this._phase !== 'closing' && this._handsTries > 0 && this._handsTries < 30) { this._handsTries++; this._tryHands(); }",
+    "new": "    } else if (!first && this._phase !== 'closing' && this._handsTries > 0) { this._handsTries++; this._tryHands(); }",
     "tests": [
       "test/heldmap.test.js"
     ]

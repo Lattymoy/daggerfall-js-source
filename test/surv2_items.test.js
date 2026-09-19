@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 
 import {
   SURVIVAL_TEMPLATES, createSurvivalItem, spoilFood, dressFood, useSurvivalItem, drinkAtSource, provisionsStock, startingProvisions,
-  isSurvivalItem, VENDOR_ICON_FILES, installSurvivalIcons, WATER_SOURCE_FLATS, WATER_SOURCE_MODELS, isWaterSourceFlat, isDrySourceFlat,
+  isSurvivalItem, VENDOR_ICON_FILES, VENDOR_TENT_FILES, installSurvivalIcons, WATER_SOURCE_FLATS, WATER_SOURCE_MODELS, isWaterSourceFlat, isDrySourceFlat,
   CAMPFIRE_USES, CAMPING_USES, SURVIVAL_USE_TEXT,
 } from '../src/systems/survival/items.js';
 import { TEMPLATE, FOOD_STAGE, waterIn } from '../src/systems/survival/food.js';
@@ -235,10 +235,11 @@ test('SURV2: the dead leave food - animals raw meat by kind (half of it turning)
 test('SURV2: the mod\'s sixteen icons are vendored, allow-listed, and ride the texture pipeline as the port\'s own art through a stand-in archive', async () => {
   for (const f of VENDOR_ICON_FILES) assert.ok(existsSync(join(root, `vendor/climates-calories/Textures/${f}.png`)), f);
   const doctrine = read('test/doctrine.test.js');
-  for (const f of VENDOR_ICON_FILES) assert.ok(doctrine.includes(`'vendor/climates-calories/Textures/${f}.png'`), `${f} has its allow-list row`);
+  for (const f of [...VENDOR_ICON_FILES, ...VENDOR_TENT_FILES]) assert.ok(doctrine.includes(`'vendor/climates-calories/Textures/${f}.png'`), `${f} has its allow-list row`);
+  for (const f of VENDOR_TENT_FILES) assert.ok(existsSync(join(root, `vendor/climates-calories/Textures/${f}.png`)), f);
   clearVendorTextures();
   const bytes = readFileSync(join(root, 'vendor/climates-calories/Textures/539_0-0.png'));
-  const n = addVendorTextures([{ archive: 539, record: 0, fileName: '539_0-0', load: async () => new Uint8Array(bytes) }]);
+  const n = addVendorTextures([{ archive: 539, record: 0, fileName: '539_0-0', standIn: true, load: async () => new Uint8Array(bytes) }]);   // SURV-TENT: an archive that is ONLY this art
   assert.equal(n, 1);
   assert.equal(isVendorArchive(539), true);
   assert.equal(isVendorArchive(538), false);
@@ -256,9 +257,16 @@ test('SURV2: the mod\'s sixteen icons are vendored, allow-listed, and ride the t
   assert.ok(decodedTexture(539, 0), 'a user pick replacing the index does not lose the port\'s own');
   clearVendorTextures();
   assert.equal(vendorTextureCount(), 0);
-  assert.equal(installSurvivalIcons({ fetchBytes: async () => new Uint8Array(bytes) }), 16, 'the boot registers all sixteen');
+  // SURV-TENT: eighteen now - the sixteen icons plus the tent's two
+  // reskins, which are the OTHER kind of vendored file
+  assert.equal(installSurvivalIcons({ fetchBytes: async () => new Uint8Array(bytes) }), 18, 'the boot registers all eighteen');
   assert.equal(installSurvivalIcons(), 0, 'once');
-  assert.ok(isVendorArchive(532) && isVendorArchive(538));
+  assert.ok(isVendorArchive(532) && isVendorArchive(538), 'the icon archives are the port\'s own whole');
+  // ...and 50 and 67 are NOT: they are real ARENA2 archives with one
+  // record overridden, so the pipeline must still load the file. This
+  // answering true would have cost every other record in them.
+  assert.equal(isVendorArchive(50), false, 'TEXTURE.050 is still fetched');
+  assert.equal(isVendorArchive(67), false, 'and TEXTURE.067');
   clearVendorTextures();
 });
 

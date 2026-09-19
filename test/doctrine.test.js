@@ -286,6 +286,8 @@ const PUBLIC_ALLOWLIST = new Map([
   ['vendor/climates-calories/Textures/538_1-0.png', "THIRD-PARTY - Climates & Calories 1.7.1 (Ralzar), carried on the author's permission (relayed by Mac); the mod's own pixel art - rotten raw meat"],
   ['vendor/climates-calories/Textures/538_2-0.png', "THIRD-PARTY - Climates & Calories 1.7.1 (Ralzar), carried on the author's permission (relayed by Mac); the mod's own pixel art - raw meat, fresh"],
   ['vendor/climates-calories/Textures/539_0-0.png', "THIRD-PARTY - Climates & Calories 1.7.1 (Ralzar), carried on the author's permission (relayed by Mac); the mod's own pixel art - the waterskin"],
+  ['vendor/climates-calories/Textures/50_7-0.png', "THIRD-PARTY - Climates & Calories 1.7.1 (Ralzar), carried on the author's permission (relayed by Mac); the mod's own pixel art - the tent's canvas (SURV-TENT)"],
+  ['vendor/climates-calories/Textures/67_10-0.png', "THIRD-PARTY - Climates & Calories 1.7.1 (Ralzar), carried on the author's permission (relayed by Mac); the mod's own pixel art - the tent's pole (SURV-TENT)"],
   // FOEBAR1 (2026-09-17): THE TARGET BAR'S BLADE FACE. Two pictures a
   // friend of Mac's drew for this port and sent through him to be its
   // alternate enemy health bar - a twin-bladed shape with a skull hub,

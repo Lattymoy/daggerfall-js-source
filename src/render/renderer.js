@@ -409,8 +409,10 @@ void main() {
 }`;
 
 import { ShadowPass, SHADOW_GLSL } from './shadowPass.js';   // EL7: the receiver block, for the water surface's lane program
-import { boundsOf } from './bounds.js';
-import { PerfMeter, perfOn, perfZones, setMeter } from './perfMeter.js';   // EL8: `?perf`   // EL5: the bounds every bundle carries for the replays' culling   // EL2: the lane's shadow maps - a leaf that compiles nothing until a lane asks
+import { boundsOf, spherePlanes, batchVisible } from './bounds.js';
+import { cullDisabled } from './frustum.js';   // PERF-CROWD2: the billboard pass culls for every host, so no host can forget to
+import { multiply as mat4Multiply } from '../world/mat4.js';   // PERF-CROWD2: proj * view, for this call's planes
+import { PerfMeter, perfOn, perfZones, perfCpu, setMeter } from './perfMeter.js';   // EL8: `?perf`   // EL5: the bounds every bundle carries for the replays' culling   // EL2: the lane's shadow maps - a leaf that compiles nothing until a lane asks
 import { AirPass, AIR_ADAPT_UNIT as ADAPT_UNIT, AIR_CONTACT_UNIT as CONTACT_UNIT } from './airPass.js';   // EL3: the ambient occlusion, the bloom and the shafts - the same kind of leaf; EL4: the eye's unit; EL6: all of it off the frame's own depth, at the resolve
 import { SHADE_DARK } from '../systems/concealDraw.js';   // ECV1 / AUDIT 65 PN-3: the shade's pull toward black, interpolated into BB_FS below - the shader restated 0.12 as a second literal. The LEAF, not systems/combatVisuals.js, which re-exports it: that module's graph would take this file's closure from 13 modules to 69
 
@@ -631,7 +633,27 @@ void main() {
   int t = int(data & 3u);
   vec2 tileUV = fract(unwrapped);
   vec2 tuv = ROT[t] * tileUV + TRANS[t];
-  vec3 tex = texture(uTileArr, vec3(tuv, float(layer))).rgb;
+  // GRAIN1 (2026-09-19, Mac: "distance terrian has a weird grain look"):
+  // THE TILE ARRAY IS MIPMAPPED, AND THE GRADIENT IS THE UNWRAPPED ONE.
+  //
+  // The grain is minification aliasing: past a few tiles out a screen
+  // pixel covers many texels and NEAREST picks one of them, so the ground
+  // boils as the camera moves. The cure is a mipmap - and the reason
+  // there was none is right here. tileUV is fract(unwrapped), so it
+  // jumps 1 -> 0 at every tile edge, and texture() picks its mip from
+  // the screen-space derivative of the coordinate it is handed: at each
+  // of those jumps the derivative is a whole tile wide, the hardware
+  // reads that as "this pixel covers the entire texture", and it samples
+  // the coarsest mip. That is a blurred line drawn around all 16,384
+  // tiles of every pixel - far worse than the grain.
+  //
+  // unwrapped does not jump. Its derivative is the true footprint, and
+  // ROT[t] is constant across the fragment, so rotating it gives the
+  // footprint in the rotated tile's own frame. textureGrad takes that
+  // directly and the seams cannot happen. One sample either way.
+  vec2 gx = ROT[t] * dFdx(unwrapped);
+  vec2 gy = ROT[t] * dFdy(unwrapped);
+  vec3 tex = textureGrad(uTileArr, vec3(tuv, float(layer)), gx, gy).rgb;
   vec3 n = normalize(vNormal);
   float diff = max(dot(n, uLightDir), 0.0);
   // EE5: the deck's field, sampled where this ground's ray to the sun
@@ -821,7 +843,7 @@ export const PANEL_CLEAR_RGBA = Object.freeze([49 / 255, 77 / 255, 121 / 255, 5 
 // see AUTOMAP_WATER_COLOR below for the seam DFU reads it across.
 import { WATER_MAP_COLOR } from './underwaterFog.js';
 import { WATER_SURFACE_VS, waterSurfaceFs } from './waterSurface.js';   // WATER1: the enhanced water pass over the terrain grid
-import { packWaterMask } from '../world/waterCorners.js';   // MAC2: the corner table's one home
+import { packWaterMask, WATER_DRAW_MASK_TABLE } from '../world/waterCorners.js';   // MAC2: the corner table's one home; WATER-DRAW1: the PASS takes the draw's table, not the feet's
 
 /** The automap render panel, DFU's own rect on the 320x200 native
  *  screen (DaggerfallAutomapWindow's dummyPanelRenderAutomap /
@@ -957,11 +979,7 @@ export class Renderer {
     // The value last uploaded to the solid program's uEmissionColor
     // (uniforms are program state, so this survives a program switch).
     this._emissionColorUp = null;
-    this._tex1Bound = null;   // PERF-TEX: cleared with its sibling
-    this._tex0Bound = null; this._activeUnit = null;   // PERF-TEX3: unit 0 and the selector, with it
-    this._sq = {};
-    this._tArrayTex = null;
-    this._tTileSize = null;
+    this._forgetTextureShadows();   // AUDIT-AIR1: nothing is bound yet, so nothing may be claimed
     // EV2: the sub-mesh texture cache's generation. drawMesh used to
     // mint a `${archive}_${record}` string per sub-mesh per frame -
     // thousands of short-lived strings a frame, the render loop's
@@ -980,9 +998,24 @@ export class Renderer {
     // were invisible here, which made the counter blind to exactly the
     // terrain culling it exists to measure. texBinds counts the binds a
     // DRAW pays; upload-time binds are creation cost, not frame cost.
-    this.stats = { draws: 0, programBinds: 0, vaoBinds: 0, texBinds: 0 };
-    this._perf = perfOn() ? setMeter(gl, new PerfMeter(gl, perfZones())) : null;   // EL8: `?perf` - a GPU-timed line every PERF_EVERY world frames; VC6d: `?perf=zones` per pass, and the meter is findable by its context (the sky's march marks its own span)
+    this.stats = { draws: 0, programBinds: 0, vaoBinds: 0, texBinds: 0, bbCulled: 0 };   // PERF-CROWD2: the billboards this frame did NOT submit
+    this._perf = perfOn() ? setMeter(gl, new PerfMeter(gl, perfZones(), perfCpu())) : null;   // EL8: `?perf` - a GPU-timed line every PERF_EVERY world frames; VC6d: `?perf=zones` per pass, and the meter is findable by its context (the sky's march marks its own span); PERF-CPU: `?perf=cpu` tiles the same zones on the MAIN THREAD's clock, which is the one a script-bound frame is losing
     this._frameStamp = 0;      // PERF3: bumped by beginFrame (and the state restores) - the terrain program's frame-constant block is uploaded once per stamp
+    // PERF-CROWD2 (2026-09-19): THE BILLBOARD PASS CULLS, so that no host
+    // has to remember to. PERF-ON2 found the peers submitted uncut and
+    // PERF-CROWD found the whole town beside them - and then the same
+    // shape turned up in every other host: the dungeon's mobiles, drops
+    // and spells, the interior's flats, the fixed city's townspeople, and
+    // worldModes' five separate lists (blood, torches, drops, foes,
+    // guards), each its own uncut call. Fixing seven call sites leaves an
+    // eighth to be written next year. The test belongs here.
+    /** GRAIN1: the anisotropy extension and its ceiling, fetched once -
+     *  not once an archive. null when the driver has neither. */
+    this._anisoExt = null;
+    this._anisoMax = 0;
+    this._bbPlanes = new Float32Array(24);
+    this._bbPv = new Float32Array(16);
+    this._bbCullOff = cullDisabled();   // the ?cull=off door, read once
     this._tFrameStamp = -1;
     this._windowEmission = new Float32Array([0, 0, 0]);
     this._pointLights = new Float32Array(0); // vec4 per light [x,y,z,range]
@@ -1180,11 +1213,7 @@ export class Renderer {
   endWorldPass() {
     this._close2D();   // PERF-2D: the baseline back, before anything that needs it
     if (!this._worldViewportPx) return;
-    this._tex1Bound = null;   // PERF-TEX: the 2D path and the post passes own the units past here
-    this._tex0Bound = null; this._activeUnit = null;   // PERF-TEX3: unit 0 and the selector, with it
-    this._sq = {};   // PERF-UI: ...and this is the 2D pass's own door, so it starts knowing nothing
-    this._tArrayTex = null;
-    this._tTileSize = null;
+    this._forgetTextureShadows();   // PERF-TEX: the 2D path and the post passes own the units past here, and this is the 2D pass's own door
     this._worldViewportPx = null;
     this.gl.viewport(0, 0, this.canvas.width, this.canvas.height);
   }
@@ -1267,6 +1296,24 @@ export class Renderer {
   }
 
   /** EV6: bind `vao` (or null) unless the shadow says it already is. */
+  /**
+   * PERF-CROWD2: is this billboard batch inside the frame?
+   *
+   * GHOST1: `batchVisible` IS the test - the batch's own sphere, offset
+   * by its live origin and lifted half a height for the bottom anchor,
+   * with the whole argument for the lift written where it lives
+   * (bounds.js). This method used to hand-roll it, and the shadow replay
+   * and the air pass's emitters - which cull through `batchVisible` -
+   * therefore answered a DIFFERENT question about the same sprite: this
+   * pass dropped a flat the emission replay kept, leaving the bloom of a
+   * sprite that never drew. A ghost campfire. One home, one answer.
+   *
+   * A batch with no bounds is always drawn, as `batchVisible` has it.
+   */
+  _bbVisible(b) {
+    return batchVisible(this._bbPlanes, b);
+  }
+
   _bindVao(vao) {
     if (this._lastVao === vao) return;
     this.gl.bindVertexArray(vao);
@@ -1320,11 +1367,7 @@ export class Renderer {
     // unit active, so every texture shadow is forgotten with the rest. A
     // shadow that speaks for a unit it no longer owns is a WRONG TEXTURE,
     // which is the one thing a performance change may never cost.
-    this._tex1Bound = null;
-    this._tex0Bound = null; this._activeUnit = null;   // PERF-TEX3
-    this._tArrayTex = null;
-    this._tTileSize = null;
-    this._sq = {};
+    this._forgetTextureShadows();
   }
 
   /** EL1: compile one world program set from its four fragment shaders
@@ -1478,11 +1521,7 @@ export class Renderer {
     this._tFrameStamp = -1;
     this._csUploaded = {};
     this._emissionColorUp = null;
-    this._tex1Bound = null;   // PERF-TEX: cleared with its sibling
-    this._tex0Bound = null; this._activeUnit = null;   // PERF-TEX3: unit 0 and the selector, with it
-    this._sq = {};
-    this._tArrayTex = null;
-    this._tTileSize = null;
+    this._forgetTextureShadows();   // the set is rebuilt, so every unit it bound is the new set's to claim
     this._lastProgram = null;
   }
 
@@ -1700,6 +1739,18 @@ export class Renderer {
     this._perf?.mark('air');   // VC6d: the AO, the bloom, the shafts and the resolve
     this._air.setCloudShadow(this._cloudShadow ?? this._deckOwed);   // VC6c: the FRAME's deck - the host sets it after beginFrame, so the shafts can only read it here
     this._air.composite();   // EL4: the resolve - the frame to the canvas
+    // AUDIT-AIR1: THE RESOLVE IS A FOREIGN PASS, and this seam - alone of
+    // the seven - never said so. `composite()` binds units 0..3 and
+    // leaves its own unit selected, exactly what `markForeignPass`
+    // exists for; the first screen quad after it found `_activeUnit`
+    // still claiming TEXTURE0 and `_tex0Bound` still naming the sprite
+    // it wanted, so it skipped the bind (or bound to unit 3) and sampled
+    // the RESOLVED FRAME BUFFER. On an unsheathe that is the weapon
+    // sprite painted with a blurred picture of the room - the "weird
+    // water texture". AFTER the composite, because the composite is what
+    // invalidates them. (VC6c/VC6d pin the two lines above this one as
+    // adjacent, which is why the reason is written here and not there.)
+    this._forgetTextureShadows();
     if (this._perf) {   // EL8: the clock stops at the resolve; the line, when it is due
       this._perf.end();
       this._perf.stop();   // VC6d: the frame's last span
@@ -1765,6 +1816,38 @@ export class Renderer {
    *  it exists so that the warning in `markForeignPass` names a remedy
    *  rather than a bug report. */
   endUiRun() { this._close2D(); }
+
+  /** PERF-TEX3 / AUDIT-AIR1: FORGET EVERY TEXTURE SHADOW - ONE HOME.
+   *
+   *  The six fields below are a claim about what the GPU holds: which
+   *  texture is on unit 0 and unit 1, which unit is SELECTED, the
+   *  sampler-array and tile-size of the tilemap path, and the screen
+   *  quad's uniform values. Every one of them is only true while this
+   *  renderer is the only thing touching GL. The instant something else
+   *  binds - a foreign pass, an upload, the air pass's resolve - the
+   *  claim is a lie, and a shadow that speaks for a unit it no longer
+   *  owns is a WRONG TEXTURE. That is the one thing a performance
+   *  change may never cost.
+   *
+   *  WHY IT IS A FUNCTION (AUDIT-AIR1, 2026-09-19, Mac: "sometimes
+   *  unsheathing, it spawns a weird water texture"). This block was
+   *  COPIED at five seams and the sixth - `_compositeAir`, which runs
+   *  the air pass and is as foreign as anything gets - was never given
+   *  one. `airPass.composite()` binds units 0..3 and leaves unit 3
+   *  selected, so the first screen quad after a resolve found
+   *  `_activeUnit` still claiming TEXTURE0 and `_tex0Bound` still
+   *  naming the sprite it wanted: it skipped the bind, or bound to unit
+   *  3, and drew the RESOLVED FRAME BUFFER instead of its own art. On
+   *  an unsheathe that is the weapon sprite painted with a blurred
+   *  picture of the room - the "weird water texture". Six copies of a
+   *  rule is five chances to miss one; this is the one home. */
+  _forgetTextureShadows() {
+    this._tex1Bound = null;
+    this._tex0Bound = null; this._activeUnit = null;
+    this._sq = {};
+    this._tArrayTex = null;
+    this._tTileSize = null;
+  }
 
   /** Hand the baseline back, if a run is open. Idempotent, and cheap
    *  enough to call at the head of anything: one property read. */
@@ -2933,7 +3016,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
   beginFrame(proj, view, lightDir, opts = null) {
     this._close2D();   // PERF-2D: the baseline back, before anything that needs it
     const s = this.stats;
-    s.draws = 0; s.programBinds = 0; s.vaoBinds = 0; s.texBinds = 0;
+    s.draws = 0; s.programBinds = 0; s.vaoBinds = 0; s.texBinds = 0; s.bbCulled = 0;   // PERF-CROWD2
     // VC4: the cloud shadow deck is a FRAME's, not the renderer's - a host
     // that wants one sets it after this (the exterior hosts do, per
     // pixel); an interior or a dungeon, which never does, gets none, and
@@ -2993,11 +3076,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     gl.uniform1i(this.uEmissionTex, 1);
     gl.uniform3fv(this.uEmissionColor, this._c3(this._windowEmission));
     this._emissionColorUp = this._windowEmission;   // F49: the per-sub-mesh shadow starts the frame true
-    this._tex1Bound = null;   // PERF-TEX: a frame's; the post passes (air, clouds) own unit 1 between frames
-    this._tex0Bound = null; this._activeUnit = null;   // PERF-TEX3: unit 0 and the selector, with it
-    this._sq = {};   // PERF-UI: the screen-quad uniform shadow is a frame's too
-    this._tArrayTex = null;
-    this._tTileSize = null;
+    this._forgetTextureShadows();   // PERF-TEX: a frame's; the post passes (air, clouds) own the units between frames
     const count = this._pointLights.length / 4;
     gl.uniform1i(this.uPointCount, count);
     if (count > 0) gl.uniform4fv(this.uPointLights, this._pointLights);
@@ -3537,8 +3616,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     const tex = gl.createTexture();
     this._activeTexture(gl.TEXTURE1);
     gl.bindTexture(gl.TEXTURE_2D, tex);
-    this._tex1Bound = null;   // PERF-TEX: an upload owns unit 1 and leaves it active - the shadow cannot speak for it
-    this._tex0Bound = null; this._activeUnit = null;   // PERF-TEX3: unit 0 and the selector, with it
+    this._forgetTextureShadows();   // PERF-TEX: an upload owns unit 1 and leaves it ACTIVE - no shadow may speak past it (AUDIT-AIR1: through the one home, like the other six)
     gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
     gl.texImage2D(
       gl.TEXTURE_2D, 0, gl.RGBA, color32.width, color32.height, 0,
@@ -3758,8 +3836,40 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     for (let i = 0; i < layers.length; i++) {
       gl.texSubImage3D(gl.TEXTURE_2D_ARRAY, 0, 0, 0, i, w, h, 1, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array(layers[i].colors.buffer, layers[i].colors.byteOffset, w * h * 4));
     }
-    gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+    // GRAIN1 (2026-09-19, Mac: "distance terrian has a weird grain look"):
+    // THE MIPMAP, AND WHY THE MAGNIFIER DOES NOT MOVE.
+    //
+    // MIN was NEAREST, so a distant pixel covering a dozen texels picked
+    // ONE of them and picked a different one as the camera drifted: the
+    // ground boiled. That is minification aliasing and a mipmap is its
+    // only cure. The terrain shaders take textureGrad with the UNWRAPPED
+    // gradient (see TERRAIN_FS), so the mip is chosen from the real
+    // footprint and the fract() wrap cannot blur a line round every tile.
+    //
+    // MAG stays NEAREST, deliberately. Magnification is the ground under
+    // the player's feet, where Daggerfall's texels are meant to be square
+    // and visible; a mipmap has no say there (there is no mip above
+    // level 0) and LINEAR would smear the one place the art is read at
+    // full size. So this buys the distance and spends nothing on the
+    // near field.
+    //
+    // A 2D ARRAY mipmaps each layer on its own, so no tile can bleed into
+    // another the way an atlas would - which is the other reason atlases
+    // ship unmipped and this need not.
+    gl.generateMipmap(gl.TEXTURE_2D_ARRAY);
+    gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
     gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    // GRAIN1: and anisotropy where the driver has it. Terrain is read at
+    // a grazing angle almost everywhere, and an isotropic mip has to take
+    // the WIDER of the two footprints - so it over-blurs along the view
+    // and still aliases across it. This is the one filtering term that
+    // buys back the sharpness the mipmap costs. Capped at 4: the returns
+    // fall off a cliff after that and the frame is CPU-bound anyway.
+    const aniso = this._anisoExt ||= (gl.getExtension('EXT_texture_filter_anisotropic') ?? null);
+    if (aniso) {
+      this._anisoMax ||= gl.getParameter(aniso.MAX_TEXTURE_MAX_ANISOTROPY_EXT) || 1;
+      gl.texParameterf(gl.TEXTURE_2D_ARRAY, aniso.TEXTURE_MAX_ANISOTROPY_EXT, Math.min(4, this._anisoMax));
+    }
     // DFU's terrain texture array wraps Clamp (TextureReader) - keeps
     // the far edge texel at transformed-uv 1.0 boundary ties.
     gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
@@ -3933,7 +4043,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     const L = laneWater ? this._wsLane : this._ws;
     this._use(laneWater ? this.waterSurfaceProgramLane : this.waterSurfaceProgram);
     this._csLoc.water = L.cloud; this._waterSurfaceFog = L.fog;
-    if (!L.maskUploaded) { gl.uniform4uiv(L.mask, packWaterMask()); L.maskUploaded = true; }
+    if (!L.maskUploaded) { gl.uniform4uiv(L.mask, packWaterMask(WATER_DRAW_MASK_TABLE)); L.maskUploaded = true; }   // WATER-DRAW1
     gl.uniformMatrix4fv(L.proj, false, this._proj);
     gl.uniformMatrix4fv(L.view, false, this._view);
     gl.uniformMatrix4fv(L.model, false, modelMatrix);
@@ -4020,6 +4130,27 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     this._close2D();   // PERF-2D: the baseline back, before anything that needs it
     const gl = this.gl;
     if (this._casting) this._shadows.recordBillboards(batches, this._flatWind, camRight, camUp);   // EL2 (EL3: with the basis)
+    // PERF-CROWD2: the frame's planes, once a CALL - after the shadow
+    // record above, on purpose: everything still CASTS, only the drawing
+    // is culled, so no shadow disappears because its caster went off
+    // screen. The planes are recomputed rather than cached on the frame
+    // stamp because the panel bracket swaps _proj/_view without bumping
+    // it; one 4x4 multiply a call is nothing beside what it saves.
+    // GHOST1 (2026-09-19): the planes are SPHERE planes - normalised.
+    // `frustumPlanes` leaves them unnormalised on purpose (frustum.js's
+    // own note: the box test only asks for the sign, and normalising
+    // would spend four square roots on nothing), and `sphereInPlanes`
+    // compares `dot + d < -r`, which is only a world-space distance
+    // against a world-space radius once the normal is a unit vector.
+    // Fed the raw planes, the radius counts for 1/|n| of what it should
+    // and a flat whose centre is just past a plane is culled while its
+    // quad is still on screen - sprites popping as the camera turns, and
+    // a small flat (a campfire) gone entirely while the air pass's
+    // emitter, which culls through `spherePlanes`, still drew its bloom.
+    // A ghost campfire. `spherePlanes` is the one home for this and
+    // every other sphere cull in the tree already goes through it.
+    const bbCull = !this._bbCullOff && !!this._proj && !!this._view;
+    if (bbCull) spherePlanes(mat4Multiply(this._proj, this._view, this._bbPv), this._bbPlanes);
     this._use(this.bbProgram);
     this._uploadCloudShadow('bb');   // VC4
     gl.uniformMatrix4fv(this.bbUProj, false, this._proj);
@@ -4117,7 +4248,24 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     gl.uniform4f(this.bbUConceal, 0, 0, 0, 0);   // ECV1: plain unless a batch says otherwise
     const opaque = this._bbOpaque ??= [];
     opaque.length = 0;
-    for (const b of batches) if (!isSpectralArchive(b.archive) && !b.conceal) { keyOf(b); opaque.push(b); }
+    // AUDIT PERF-CROWD2 F1: `keyOf` runs BEFORE the cull, and must. It is
+    // not this pass's bookkeeping alone - the shadow replay
+    // (shadowPass.js) and the air pass's emitters (airPass.js) both read
+    // `b._bbKey`, and both take it as it stands (`?? recompute` only
+    // fires when it is ABSENT, never when it is STALE). A culled batch
+    // that never re-keyed would carry last-seen-on-screen's key for as
+    // long as it stayed off camera - and a mobile animates by writing its
+    // RECORD (MAC4), so an off-screen foe would cast the silhouette of
+    // whatever frame it was on when it left the view, or none at all once
+    // that texture is gone. The shadow cascades reach 240 units; off
+    // screen is exactly where those casters live. Keying is a few
+    // comparisons and mints a string only when something changed.
+    for (const b of batches) {
+      if (isSpectralArchive(b.archive) || b.conceal) continue;
+      keyOf(b);
+      if (bbCull && !this._bbVisible(b)) { this.stats.bbCulled++; continue; }   // PERF-CROWD2
+      opaque.push(b);
+    }
     opaque.sort((a, b) => (a._bbKey < b._bbKey ? -1 : a._bbKey > b._bbKey ? 1 : 0));
     for (const b of opaque) drawOne(b);
     opaque.length = 0;
@@ -4130,7 +4278,9 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     // shader reads only when uConceal says plain.
     let blended = null;
     for (const b of batches) {
-      if (b.conceal || isSpectralArchive(b.archive)) (blended ??= []).push(b);
+      if (!(b.conceal || isSpectralArchive(b.archive))) continue;
+      if (bbCull && !this._bbVisible(b)) { this.stats.bbCulled++; continue; }   // PERF-CROWD2: the ghosts and the concealed too
+      (blended ??= []).push(b);
     }
     if (blended) {
       const cp = this._camPos;

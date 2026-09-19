@@ -131,28 +131,79 @@ export const textureReplacementCount = () => _index.size;
 // stand-in TextureFile for them (vendorTextureStandIn) and draws the
 // decoded PNGs through the same swap arm a replacement uses.
 const _vendor = new Map();
-/** Register vendored files: [{ archive, record, frame?, load }] where
- *  `load()` resolves to the PNG bytes. */
+/** Register vendored files: [{ archive, record, frame?, load, standIn? }]
+ *  where `load()` resolves to the PNG bytes.
+ *
+ *  `standIn` IS THE WHOLE DIFFERENCE BETWEEN THE TWO KINDS, and it is
+ *  declared rather than guessed at (SURV-TENT). A vendored file is
+ *  either
+ *    - the ONLY thing its archive is (Climates & Calories' item icons
+ *      at 532-539: no TEXTURE.532 exists or ever will, so the pipeline
+ *      must stand a shell in for the file) - `standIn: true`; or
+ *    - ONE RECORD of a real ARENA2 archive, overridden the way a
+ *      texture pack overrides one (the same mod's tent reskins at
+ *      50_7-0 and 67_10-0, where TEXTURE.050 is a real file carrying
+ *      dozens of other records) - `standIn` absent.
+ *  Nothing about the archive number tells them apart. */
 export function addVendorTextures(entries) {
   let n = 0;
   for (const e of entries ?? []) {
     if (!Number.isFinite(e?.archive) || !Number.isFinite(e?.record) || typeof e.load !== 'function') continue;
     const key = textureKey(e.archive, e.record, e.frame ?? 0, 'Albedo');
-    _vendor.set(key, { archive: Number(e.archive), record: Number(e.record), frame: Number(e.frame ?? 0), map: 'Albedo', fileName: e.fileName ?? key, load: e.load });
+    _vendor.set(key, { archive: Number(e.archive), record: Number(e.record), frame: Number(e.frame ?? 0), map: 'Albedo', fileName: e.fileName ?? key, load: e.load, standIn: e.standIn === true });
     n++;
   }
   return n;
 }
 export const vendorTextureCount = () => _vendor.size;
 export function clearVendorTextures() { for (const k of _vendor.keys()) _decoded.delete(k); _vendor.clear(); }
-/** An archive that exists ONLY as vendored art (no ARENA2 file). */
-export const isVendorArchive = (archive) => { for (const e of _vendor.values()) if (e.archive === Number(archive)) return true; return false; };
+/** An archive that exists ONLY as vendored art (no ARENA2 file), which
+ *  is what sends the pipeline down the stand-in branch instead of
+ *  fetching TEXTURE.###.
+ *
+ *  SURV-TENT (2026-09-19): this used to answer true if ANY record of
+ *  the archive was vendored, which was harmless only while every
+ *  vendored file happened to be of the first kind. Registering one
+ *  record of a REAL archive - the tent's 50_7-0 - would have sent
+ *  TEXTURE.050 down the stand-in branch too, and every other record in
+ *  it (every wall and floor drawn from archive 50) would have come
+ *  back as a 1x1 nothing. The archive number cannot tell you; only the
+ *  registration can, so it says. */
+export const isVendorArchive = (archive) => { for (const e of _vendor.values()) if (e.standIn && e.archive === Number(archive)) return true; return false; };
+/** One past the highest RECORD vendored for an archive, off the
+ *  REGISTRY and not the decoded map - a PNG that has not been fetched
+ *  yet, or would not decode, must not shrink the archive underneath a
+ *  caller that is about to ask for its record. */
+export function vendorRecordCount(archive) {
+  let n = 0;
+  for (const e of _vendor.values()) if (e.standIn && e.archive === Number(archive)) n = Math.max(n, e.record + 1);
+  return n;
+}
 /** A TextureFile stand-in for a vendor-only archive: sizes from the
- *  decoded PNGs, a bitmap the swap arm never reads. */
+ *  decoded PNGs, a bitmap the swap arm never reads.
+ *
+ *  SURV-ART (2026-09-19, Mac: "the sprites aren't showing at all") -
+ *  IT MUST ANSWER `recordCount` AND `getSize`. Every icon door in the
+ *  port gates on `record < tex.recordCount` before it uploads
+ *  (ui/itemScroller.js, ui/nativeInventory.js, ui/paperDoll.js, and
+ *  the world arms in scenes/) and then measures with `tex.getSize`,
+ *  which is the TextureFile surface those lines were written against.
+ *  This object carried neither, so the comparison read
+ *  `0 < undefined` - FALSE for every record of every vendored archive
+ *  - and the upload it guards never ran: no texture, no size, nothing
+ *  drawn. The mod's art was registered, fetched and decoded, and then
+ *  fell off the last step. A stand-in for a file must answer like the
+ *  file. */
 export function vendorTextureStandIn(archive) {
+  const recordCount = vendorRecordCount(archive);
   const size = (record) => { const d = _decoded.get(textureKey(archive, record, 0)); return d ? { width: d.width, height: d.height } : { width: 1, height: 1 }; };
   return {
     vendor: true,
+    recordCount,
+    getSize: (record) => (record >= 0 && record < recordCount ? size(record) : { width: 0, height: 0 }),   // TextureFile.getSize's own out-of-range answer
+    getScale: () => ({ x: 0, y: 0 }),
+    getOffset: () => ({ x: 0, y: 0 }),
+    getFrameCount: () => 1,
     getWidth: (record) => size(record).width,
     getHeight: (record) => size(record).height,
     getDFBitmap: (record) => ({ ...size(record), data: null }),
@@ -211,11 +262,11 @@ export async function textureReplacementBytes(archive, record, frame = 0, map = 
 // ROAD-H H4: WHAT IS IN THIS MAP IS A COLOR32, NOT A DECODED PNG.
 //
 // The upload path is `renderer.uploadTexture(archive, record, color32)`,
-// which reads `color32.colors` and `asBytes` of it (renderer.js:2403),
+// which reads `color32.colors` and `asBytes` of it (renderer.js:2482),
 // and every texture it uploads is BOTTOM-UP - `getColor32` writes
 // `dstRow = (dstHeight - 1 - border - y) * dstWidth`
 // (baseImageFile.js:143, BaseImageFile.cs:250) and the upload leaves
-// UNPACK_FLIP_Y_WEBGL off (renderer.js:2393). A browser decode hands
+// UNPACK_FLIP_Y_WEBGL off (renderer.js:2472). A browser decode hands
 // back `{ width, height, data }` with the TOP row first, so a swap
 // stored raw was BOTH the wrong field name - `color32.colors` was
 // `undefined` and `asBytes` threw on the first swapped record a pack

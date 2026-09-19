@@ -98,7 +98,14 @@ test('EV3: culling is wired, escape-hatched, and never gates the non-draw work',
   // both hosts consult the hatch once at build and the planes per frame
   for (const [name, src] of [['world', world], ['exterior', exterior]]) {
     assert.ok(src.includes('cullDisabled()'), `${name}: ?cull=off is the escape hatch`);
-    assert.ok(src.includes('frustumPlanes('), `${name}: planes extracted from the live camera`);
+    // GHOST1: the streaming host extracts through `spherePlanes`, which IS
+    // `frustumPlanes` plus a normalise - its `_planes` serve the billboard
+    // SPHERE test as well as these box tests, and `sphereInPlanes` needs
+    // unit normals for its radius margin to mean anything. Dividing four
+    // coefficients by a positive length cannot move a sign, so every box
+    // decision below is untouched (pinned over 10,000 boxes in
+    // test/ghost1_spritecull.test.js).
+    assert.ok(src.includes('frustumPlanes(') || src.includes('spherePlanes('), `${name}: planes extracted from the live camera`);
     assert.ok(src.includes('aabbOutside('), `${name}: the outside test gates draws`);
   }
   // the streamed host: the windmill's ROTOR ANGLE and its HUM are not

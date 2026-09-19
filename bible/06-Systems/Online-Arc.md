@@ -4618,7 +4618,7 @@ appended its own note to the end of the line that already carried
 **Why that is an invulnerable enemy.** Online, a joiner applies no local
 damage to a layout foe - `damageFoe`'s non-authority arm hands the blow
 to the room's host through `opts.onFoeHit?.(...)` and RETURNS
-(`dungeonContext.js:3935`). With the property missing that call is a
+(`dungeonContext.js:3947`). With the property missing that call is a
 no-op on `undefined`: no damage, no frame, no warning, nothing on the
 console. Every layout foe in every online dungeon absorbed every blow
 from everyone but the room's authority, for eight slices, in silence.
@@ -4745,7 +4745,7 @@ arrival, that is not rare. The blow is dropped instead.
   foe's maul, and your own Daedroth all do literally nothing to a
   puppet. The first two are WORLD2's law on purpose; the third is a gap
   in it.
-- **A foe's blast on a puppet is credited to ME.** `world.js:3133` and
+- **A foe's blast on a puppet is credited to ME.** `world.js:3138` and
   `:2925` pass `foeSinks: (f) => enchantFoeSinks(f)`, dropping the
   provenance argument `applySpellToFoe` hands them (`hostMagic.js:187`)
   - the same shape AUDIT WORLD6b-iii(a) B2 fixed one layer down.

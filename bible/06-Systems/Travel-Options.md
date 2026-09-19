@@ -301,15 +301,64 @@ must be assigned there, never re-declared. Mutants
    audit - `worldQuickLoad` now clears the destination and resets the
    scale before its first await. The new-game half is moot here: a new
    game reloads the document.
-9. **Online the journey does not run.** The shared clock is the
-   world's (WORLD5) and a trip that takes real hours of it cannot be
-   one player's business, so `beginAcceleratedTravel` stands down under
-   `sharedClockOn()` and the trip falls back to DFU's own, which online
-   already arrives at once. AUDIT-TO1 I3/I4: the FOLLOW KEY stands down
-   under the same test now (it started a leg online before), and the
-   coordinates popup - a bare pixel has no DFU fast travel to fall back
-   on - opens only where the host will honour it (`coordsAllowed`), and
-   its door says so when refused.
+9. **Online the journey RUNS** (TO-ONLINE, 2026-09-19, Mac: *"travel
+   options uses instant travel for the online mod, which shouldn't be
+   the case"*). This item used to read "online the journey does not
+   run", and its argument was that the shared clock is the world's
+   (WORLD5) and a trip taking real hours of it cannot be one player's
+   business. **That premise is not what the code does.** Under the
+   shared clock `playerTicker` reads the relay and *fabricates nothing
+   from `dt`* (`systems/worldTick.js`, WORLD5's own law) - so an
+   accelerated journey cannot move the world's clock, and there was
+   never anything there to protect. What the stand-down actually bought
+   was its FALLBACK, and the fallback is DFU's fast travel under
+   `noWorldTime`: a teleport that arrives at once and costs nothing.
+   The rule refused a ride because it might be too cheap and handed the
+   player something free.
+
+   So `beginAcceleratedTravel` asks only whether the mod is there, the
+   FOLLOW KEY asks the same question (AUDIT-TO1 I3 put a stand-down
+   there because there was one at the map's door; the two must answer
+   alike), and `coordsAllowed` opens wherever the journey runs - which
+   is now everywhere the mod is on (AUDIT-TO1 I4's reason stands, it is
+   just no longer narrowed by the clock). **The online world is
+   untouched**: no clock moved, no new online rule, no cap invented.
+
+   THE ONE THING THAT DIFFERS ONLINE, by the world's own arithmetic
+   rather than by anything decided here: the acceleration. The online
+   clock runs at exactly the offline rate (`wire.js`
+   `ONLINE_MINUTES_PER_MS` is `CLASSIC_MINUTES_PER_SECOND / 1000`,
+   pinned equal), so **at x1 the two are identical** - a three-day ride
+   is six real minutes and three game-days pass on either clock. Above
+   x1 they part, because `travelScale` reaches the traveller AND the
+   calendar offline (the frame's `playerTicker.tick(dt * timeScaleMult
+   * travelScale, ...)`) and online the calendar is the relay's and
+   ignores it. Offline the spinner buys real time and charges game-days;
+   online it buys both. Named here rather than capped: capping it would
+   be an online rule, and this slice was asked not to make one.
+
+   AUDITED BEFORE MERGE, and one consequence named rather than fixed.
+   The journey machinery itself is online-agnostic - `travelOptions`,
+   `travelControlUI`, the junction map and the autopilot never ask about
+   the shared clock - so nothing was put into an unhandled state by
+   letting it run; a walked trip charges no fare online exactly as it
+   charges none offline, and a SHIP trip is not player-controlled, so it
+   still takes DFU's arm and still says the online line. What
+   acceleration does stress is the WIRE: the online world is sharded
+   into `WORLD_CELL` squares and a crossing is cheap only when the next
+   cell was already hello'd as a halo (`net/online.js`, WORLD6b-iii(b)
+   promotion). At x30 the player can outrun the halo, and each crossing
+   is then a full join rather than a promotion. That is connection
+   churn, not a correctness bug, and capping the spinner to stop it
+   would be the online rule this slice was asked not to make - so it is
+   written down here for whoever meets it.
+
+   THE POPUP SAYS SO. `ONLINE_TRAVEL_LINE` - "the world's clock does
+   not wait. You arrive now, and no inn is paid" - is DFU's fast travel
+   talking, and it was true of every online trip while the journey stood
+   down. It is false over a walked one, so both skins now gate it off
+   `walkedTrip` / `t.walked`; that branch already carries the mod's own
+   `MsgPlayerControlled` and an hours:minutes estimate.
 10. **A message box over the journey PAUSES it rather than interrupting
     it** (AUDIT-TO1 H1). DFU's `DaggerfallUI.MessageBox` pushes a window,
     so the mod's own help (`:1005-1014`) trips the "any other window"

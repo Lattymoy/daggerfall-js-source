@@ -1,0 +1,199 @@
+[
+ {
+  "name": "GRASS-PATH1-the-painter-writes-but-does-not-mark",
+  "file": "src/world/roadPainter.js",
+  "old": "  if (ctx.paths) ctx.paths[ctx.i] = 1;   // GRASS-PATH1\n  return true;\n}",
+  "new": "  return true;\n}",
+  "tests": [
+   "test/grasspath.test.js"
+  ]
+ },
+ {
+  "name": "GRASS-PATH1-the-rect-fill-around-a-location-is-not-marked",
+  "file": "src/world/roadPainter.js",
+  "old": "    ctx.tilemap[ctx.i] = 46;\n    if (ctx.paths) ctx.paths[ctx.i] = 1;   // GRASS-PATH1",
+  "new": "    ctx.tilemap[ctx.i] = 46;",
+  "tests": [
+   "test/grasspath.test.js"
+  ]
+ },
+ {
+  "name": "GRASS-PATH1-the-rivers-bare-water-join-is-not-marked",
+  "file": "src/world/roadPainter.js",
+  "old": "  const water = () => { ctx.tilemap[ctx.i] = 0xff; if (ctx.paths) ctx.paths[ctx.i] = 1; };   // GRASS-PATH1",
+  "new": "  const water = () => { ctx.tilemap[ctx.i] = 0xff; };",
+  "tests": [
+   "test/grasspath.test.js"
+  ],
+  "equivalent": true,
+  "why": "the river's bare-water join never writes a tile paintPath has not already written and marked: paintPath runs first inside paintPathWithSubPathJoins and its corner and elbow arms cover every tile water() then overwrites. Verified by applying this mutant and fuzzing 4,000 random road/track/river/stream/corner/rect/ground combinations - the mask disagreed with the writes in ZERO of them. The mark is kept as belt-and-braces: it costs nothing and it does not depend on paintPath's arms staying exactly as they are."
+ },
+ {
+  "name": "GRASS-PATH1-every-tile-is-marked-whether-the-painter-wrote-it-or-not",
+  "file": "src/world/roadPainter.js",
+  "old": "      const ctx = { tilemap, i, x, y, ground, rect: locationRect, paths };",
+  "new": "      const ctx = { tilemap, i, x, y, ground, rect: locationRect, paths };\n      if (paths) paths[i] = 1;",
+  "tests": [
+   "test/grasspath.test.js"
+  ]
+ },
+ {
+  "name": "GRASS-PATH1-the-mask-never-leaves-the-kernel",
+  "file": "src/world/terrainGen.js",
+  "old": "    paths,   // GRASS-PATH1: null when no network was present, as `withRoads` says",
+  "new": "    paths: null,",
+  "tests": [
+   "test/grasspath.test.js"
+  ]
+ },
+ {
+  "name": "GRASS-PATH1-a-blade-stands-on-a-painted-tile-again",
+  "file": "src/scenes/world.js",
+  "old": "        if (p.paths?.[ti]) return null;",
+  "new": "",
+  "tests": [
+   "test/grasspath.test.js"
+  ]
+ },
+ {
+  "name": "GRASS-WET1-a-blade-stands-in-the-water-again",
+  "file": "src/scenes/world.js",
+  "old": "        if (waterCorners(byte, WATER_DRAW_MASK_TABLE)) return null;",
+  "new": "",
+  "tests": [
+   "test/grasspath.test.js"
+  ]
+ },
+ {
+  "name": "GRASS-WET1-the-grass-asks-the-FEET-question-instead-of-the-eyes",
+  "file": "src/scenes/world.js",
+  "old": "        if (waterCorners(byte, WATER_DRAW_MASK_TABLE)) return null;",
+  "new": "        if (waterCorners(byte)) return null;",
+  "tests": [
+   "test/grasspath.test.js"
+  ]
+ },
+ {
+  "name": "WATER-DRAW1-the-draw-list-is-emptied-so-the-fix-reverts-silently",
+  "file": "src/world/waterCorners.js",
+  "old": "export const SHALLOW_DRAWN = Object.freeze([9]);",
+  "new": "export const SHALLOW_DRAWN = Object.freeze([]);",
+  "tests": [
+   "test/grasspath.test.js",
+   "test/water.test.js"
+  ]
+ },
+ {
+  "name": "WATER-DRAW1-the-drawn-records-leak-into-the-LAWs-table-so-the-player-swims-on-them",
+  "file": "src/world/waterCorners.js",
+  "old": "export const WATER_MASK_TABLE = buildWaterMaskTable();",
+  "new": "export const WATER_MASK_TABLE = buildWaterMaskTable(true);",
+  "tests": [
+   "test/grasspath.test.js",
+   "test/water.test.js"
+  ]
+ },
+ {
+  "name": "WATER-DRAW1-the-pass-takes-the-feets-table-back",
+  "file": "src/render/waterSurface.js",
+  "old": "export function buildWaterIndices(bytes, stride = 1, table = WATER_DRAW_MASK_TABLE, tileDim = 128) {",
+  "new": "export function buildWaterIndices(bytes, stride = 1, table = buildWaterMaskTable(), tileDim = 128) {",
+  "tests": [
+   "test/grasspath.test.js"
+  ]
+ },
+ {
+  "name": "PERF10-the-empty-free-list-breaks-again-and-leaves-a-hole",
+  "file": "src/render/labGrass.js",
+  "old": "        let slot = free.pop();\n        if (slot === undefined) {",
+  "new": "        let slot = free.pop();\n        if (slot === undefined) break;\n        if (false) {",
+  "tests": [
+   "test/grasspath.test.js"
+  ]
+ },
+ {
+  "name": "PERF10-the-eviction-takes-the-nearest-standing-cell-instead-of-the-farthest",
+  "file": "src/render/labGrass.js",
+  "old": "            if (hd > farD) { farD = hd; far = held; farKey = k; }",
+  "new": "            if (hd < farD) { farD = hd; far = held; farKey = k; }",
+  "tests": [
+   "test/grasspath.test.js"
+  ]
+ },
+ {
+  "name": "PERF10-the-slot-sweep-is-coarse-again-and-the-bound-comes-back-two-cells-short",
+  "file": "src/render/labGrass.js",
+  "old": "export function discSlotCount(radius, cell = GRASS_CELL, steps = 240) {",
+  "new": "export function discSlotCount(radius, cell = GRASS_CELL, steps = 8) {",
+  "tests": [
+   "test/grasspath.test.js"
+  ]
+ },
+ {
+  "name": "PERF10-the-hysteresis-goes-so-the-rim-churns-where-the-eye-stands",
+  "file": "src/render/labGrass.js",
+  "old": "      const keepR2 = span * span;      // PERF10: held out to here",
+  "new": "      const keepR2 = range * range;",
+  "tests": [
+   "test/grasspath.test.js",
+   "test/labGrass.test.js"
+  ]
+ },
+ {
+  "name": "PERF10-the-fill-reaches-as-far-as-the-hold-so-cells-are-placed-that-cannot-be-drawn",
+  "file": "src/render/labGrass.js",
+  "old": "      const fillR2 = range * range;    // PERF10: placed only inside here",
+  "new": "      const fillR2 = span * span;",
+  "tests": [
+   "test/grasspath.test.js",
+   "test/labGrass.test.js"
+  ]
+ },
+ {
+  "name": "PERF10-the-free-sweep-measures-from-the-cells-centre-not-its-nearest-point",
+  "file": "src/render/labGrass.js",
+  "old": "  const nearSq = (cx, cz, ex, ez) => {\n    const dx = Math.max(cx * cell - ex, 0, ex - (cx + 1) * cell);\n    const dz = Math.max(cz * cell - ez, 0, ez - (cz + 1) * cell);\n    return dx * dx + dz * dz;\n  };",
+  "new": "  const nearSq = (cx, cz, ex, ez) => {\n    const dx = (cx + 0.5) * cell - ex;\n    const dz = (cz + 0.5) * cell - ez;\n    return dx * dx + dz * dz;\n  };",
+  "tests": [
+   "test/grasspath.test.js",
+   "test/labGrass.test.js"
+  ]
+ },
+ {
+  "name": "PERF10-the-cell-key-transposes-so-two-different-cells-share-a-slot",
+  "file": "src/render/labGrass.js",
+  "old": "export const cellKey = (cx, cz) => cx * 65536 + cz;",
+  "new": "export const cellKey = (cx, cz) => cx + cz * 65536;",
+  "tests": [
+   "test/grasspath.test.js"
+  ]
+ },
+ {
+  "name": "PERF10-the-near-piece-index-is-built-eagerly-again-every-frame",
+  "file": "src/scenes/world.js",
+  "old": "      const nearPieces = () => (_near ??= [...built.values()].filter((p) => p._stride === 1 && p.tilemapBytes && p.season !== SEASON.Winter));",
+  "new": "      const near = [...built.values()].filter((p) => p._stride === 1 && p.tilemapBytes && p.season !== SEASON.Winter);\n      const nearPieces = () => near;",
+  "tests": [
+   "test/grasspath.test.js"
+  ]
+ },
+ {
+  "name": "PERF11-the-owner-list-is-built-twice-a-frame-again",
+  "file": "src/scenes/world.js",
+  "old": "    if (isCellRoom(online.room)) { const ids = ownerIds(); if (ids) camps.sweepOwners(ids, now, FOES_STALE_MS); }   // PERF11: the same list",
+  "new": "    if (isCellRoom(online.room)) { const near = peersNear(); if (near) camps.sweepOwners(new Set(near.map((p) => p.id)), now, FOES_STALE_MS); }",
+  "tests": [
+   "test/grasspath.test.js",
+   "test/surv3_camps.test.js"
+  ]
+ },
+ {
+  "name": "PERF11-the-memo-recomputes-instead-of-memoising-so-nothing-is-saved",
+  "file": "src/scenes/world.js",
+  "old": "      if (_ownerIds !== undefined) return _ownerIds;",
+  "new": "      if (false) return _ownerIds;",
+  "tests": [
+   "test/grasspath.test.js"
+  ]
+ }
+]
