@@ -2,8 +2,8 @@
 // place). These initial values are the PRE-CHARGEN state only:
 // createCharacter (systems/chargen) rolls the real career the first
 // time a chargen-running context boots, and every host runs it
-// through systems/chargenSession.js - dungeonContext.js:1963,
-// world.js:2473, exterior.js:1264 and applyHeadlessChargen for the
+// through systems/chargenSession.js - dungeonContext.js:1973,
+// world.js:2481, exterior.js:1272 and applyHeadlessChargen for the
 // test room (AUDIT 23).
 //
 // NOT A GAP (recorded): the stand-ins below - flat skills 30,

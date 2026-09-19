@@ -151,6 +151,62 @@ rest will), a kit's cannot, and a kit's camp is swept when its fire
 dies while a cold tent stands. Within four metres of a lit fire you
 are BY it - the needs law's warmth and drying, and SURV4's sleep.
 
+### The world's own fires (HEARTH1)
+
+Mac, 2026-09-19: *"Does this version of C&C not let you use braziers as
+extra campfires to cook from?"* It did not, and that was a gap rather
+than a rule. `byFire` looked at exactly one pool - camps somebody had
+PLACED - so every brazier, fire bowl and tavern hearth in Daggerfall was
+a sprite and a point light and nothing else: a player standing over a
+roaring brazier was as cold, as wet and as roughly rested as one
+standing in a field, and had to burn a Campfire Kit two feet from it to
+cook a fish.
+
+`survival/hearth.js` is the law, and it is mostly its own exclusions.
+Three archive-210 records are a fire you can stand over - 0 (bowl with
+fire), 1 (the flame a camp itself stands, so a block that places one is
+placing a campfire) and 20 (the brazier torch). Everything else in the
+lights archive is out: the fourteen candles, lanterns and chandeliers
+obviously, the eleven records DFU's own `AddLight` switch leaves as
+unnamed "todo" arms for want of evidence, and - the one worth writing
+down - the two WALL TORCHES (6, 17). Those are a real flame, and they
+are excluded because they are bracketed at head height: counting them
+would make every lit corridor in every dungeon a kitchen and every
+torchlit street a campsite. A fire you cook on is one you can stand
+over.
+
+All four hosts collect their own, off walks they were already doing.
+The two exterior hosts split theirs out of the lantern list
+(`collectCityLights` carries the texture record now, in both its arms);
+the dungeon reads its own flats, because a dungeon's lights are RDB
+Light RESOURCES with no texture at all; the interior takes the list its
+context built. The streaming host's are pixel-local and ride the
+floating origin like every other coordinate it carries, and its walk is
+cut at `HEARTH_NEAR` (16 m), which clears both questions the pool is
+asked.
+
+What a hearth IS: `byFire` - the fifteen degrees of warmth, the drying,
+and SURV4's sleep, so a rest by a brazier is a camp's rest. And a target
+under the activation ray at a camp's own reach, whose box reaches DOWN
+as well as up because the position is the flame and the bowl is under
+it; Info and Talk name it, and every other mode opens the cooking list.
+
+What it is NOT: a camp. `campAt` still answers with camps alone, because
+the menu, the packing and the online record all key on a camp record and
+a brazier has none - it is nobody's to pack, stoke or put out, and it
+does not burn down, so the cooking list skips the embers test a camp
+needs.
+
+The INTERIOR host is the one that changed shape. It has no camp pool and
+may not have one (the mod refuses to pitch or light indoors), and its
+survival reader had said `byFire: false` outright since AUDIT SURV B -
+correct while a camp was the only fire the law knew, and wrong the
+moment a tavern's hearth counts. It carries a pool now that can never
+STAND anything: `place()` says `insideBuilding`, which is the camp law's
+own refusal, and it is handed no texture door to mount a fire with. It
+exists for two answers - `byFire`, and the ray's cooking list - and its
+fires leave with the room on every way out.
+
 Under the one activation ray (the race takes it, at 3.2) Info and Talk
 name the camp and any other mode opens a list picker: rest here, cook
 food (the raw fish and meat, cooked a stage nearer fresh in half an
