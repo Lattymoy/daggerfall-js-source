@@ -178,6 +178,42 @@ export const SHADOW_CASTER_MAX_RANGE = 120;
  *  shadow was a sliver anyway and a wrong one. */
 export const SHADOW_NO_CAST_ARCHIVES = Object.freeze(new Set([216]));
 export const SHADOW_FLAT_MIN_HEIGHT = 0.5;
+/**
+ * WEEDS1 (2026-09-19, Mac: "its better, what else can we do?"): HOW MANY
+ * TEXELS OF A CASCADE A SPRITE MUST BE TALL TO CAST INTO IT.
+ *
+ * F5 already culls a caster too small to shadow a texel - but it measures
+ * the BATCH'S SPHERE, and a billboard batch is every flat of one
+ * (archive, record) across a whole streamed pixel. A pixel is 128 tiles at
+ * 6.4 units: 819 across. So a batch of ankle-high weeds scattered over it
+ * has a bounding sphere of several hundred units and sails through a test
+ * meant to catch small things, while each sprite in it is thirty
+ * centimetres. Every weed, flower, pebble and ground prop in the world
+ * was replayed into the 240-unit cascade, where its shadow is one texel.
+ *
+ * The right measure for a flat is the SPRITE, which the batch carries as
+ * `size`. This is MAC1's argument - "all the billboards in the distance
+ * ESPECIALLY ALL THE SMALL ONES" - applied to the pass that never got it.
+ *
+ * FOUR TEXELS, and the number matters because it is what keeps this
+ * confined to the far cascade. Against each cascade's texel:
+ *
+ *   cascade 0 (12 units, 1.2 cm texel)  -> 4.7 cm, under the flat floor
+ *   cascade 1 (48 units, 4.7 cm texel)  -> 19 cm,  under the flat floor
+ *   cascade 2 (240 units, 23 cm texel)  -> 94 cm
+ *
+ * so the near two are untouched by construction (the existing
+ * SHADOW_FLAT_MIN_HEIGHT of 0.5 is higher than either) and the far one
+ * stops carrying anything under about a metre. A metre-tall plant at a
+ * hundred metres shadows two screen pixels; a tree, a person and a fence
+ * post all clear it comfortably.
+ *
+ * The LANTERN replays pass no texel and are unaffected, which is right: a
+ * cube face is 512 over a range of about eighteen units, so its texel is
+ * three centimetres and a small prop beside a lantern casts a shadow you
+ * can actually see.
+ */
+export const SHADOW_FLAT_MIN_TEXELS = 4;
 /** F5: a caster smaller than this many of a cascade's texels is not
  *  replayed into it - the far cascade's texel is 23 cm, and a rock or a
  *  weed half a metre across shadows two texels of it for a replay each. */
@@ -598,7 +634,7 @@ export class ShadowPass {
         gl.bindFramebuffer(gl.FRAMEBUFFER, this.sunFbos[c]);
         gl.viewport(0, 0, SHADOW_SUN_SIZE, SHADOW_SUN_SIZE);
         gl.clear(gl.DEPTH_BUFFER_BIT);
-        this.stats.sunDraws += this.replay(f, this.sunVP[c], null, false, SHADOW_CASCADE_MIN_RADIUS_TEXELS * sunTexelWorld(c));   // F5: the small casters skipped by the cascade's texel
+        this.stats.sunDraws += this.replay(f, this.sunVP[c], null, false, SHADOW_CASCADE_MIN_RADIUS_TEXELS * sunTexelWorld(c), sunTexelWorld(c));   // F5: the small solids; WEEDS1: and the small SPRITES, which F5's sphere test cannot see casters skipped by the cascade's texel
         this._sunDrawn[c] = 1; this.stats.cascadesDrawn++;
       }
       for (let c = 0; c < SHADOW_CASCADES.length; c++) { this.sunParams[c] = SHADOW_CASCADES[c]; this.sunTexel[c] = sunTexelWorld(c); this._sunVPFlat.set(this.sunVP[c], c * 16); }
@@ -646,7 +682,12 @@ export class ShadowPass {
     gl.enable(gl.CULL_FACE);
   }
 
-  replay(f, vp, lightPos, recordBasis = false, minRadius = 0) {
+  replay(f, vp, lightPos, recordBasis = false, minRadius = 0, texel = 0) {
+    // WEEDS1: the height a FLAT must have to cast into this replay - the
+    // global floor, or four of this cascade's texels, whichever is more.
+    // A replay with no texel (the lanterns, the camera's depth image) gets
+    // the floor alone, exactly as before.
+    const minFlatH = texel > 0 ? Math.max(SHADOW_FLAT_MIN_HEIGHT, texel * SHADOW_FLAT_MIN_TEXELS) : SHADOW_FLAT_MIN_HEIGHT;
     const gl = this.gl;
     const P = this.programs;
     const planes = spherePlanes(vp, this._planes);   // EL5: this replay's frustum - a record outside it is not drawn
@@ -712,9 +753,18 @@ export class ShadowPass {
         for (const b of r.batches) {
           if (!b?.vao || b._dead || b.conceal || f.isSpectral(b.archive)) continue;   // a concealed foe and a ghost cast nothing
           if (lightPos && b.archive === SHADOW_LIGHT_FLATS) continue;   // EL6: a flame is the lantern, not its occluder
-          if (b.noShadow || SHADOW_NO_CAST_ARCHIVES.has(b.archive) || (b.size && b.size.h < SHADOW_FLAT_MIN_HEIGHT)) { this.stats.culled++; continue; }   // F2: a thing on the ground is no standing card
+          if (b.noShadow || SHADOW_NO_CAST_ARCHIVES.has(b.archive) || (b.size && b.size.h < minFlatH)) { this.stats.culled++; continue; }   // F2: a thing on the ground is no standing card   // WEEDS1: ...and nothing under four texels of THIS cascade
           if (!batchVisible(planes, b)) { this.stats.culled++; continue; }   // EL5
-          if (minRadius > 0 && b.bounds && b.bounds[3] < minRadius) { this.stats.culled++; continue; }   // F5
+          // WEEDS1: F5's sphere test used to sit here and is GONE, because
+          // it can no longer decide anything. A single-flat batch's radius
+          // is hypot(w, h) / 2, so F5 fired only when hypot(w, h) < 4 texels
+          // - and that implies h < 4 texels, which is the sprite test two
+          // lines up. A multi-flat batch's sphere spans its pixel and F5
+          // never fired on it at all. Its behavioural pin passed after
+          // WEEDS1 landed for the wrong reason (the same flat was already
+          // culled) and its mutant survived, which is what said so. F5's
+          // test over MESHES and terrain, at the top of this loop, is
+          // untouched and still live.
           const key = b._bbKey ?? (b.frame == null ? `${b.archive}_${b.record}` : `${b.archive}_${b.record}#${b.frame}`);
           const tex = f.textures.get(key);
           if (!tex) continue;
