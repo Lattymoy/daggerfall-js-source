@@ -4,90 +4,172 @@
   "file": "src/scenes/world.js",
   "old": "      if (cullOn && peerBatchOutside(b)) continue;",
   "new": "",
-  "tests": ["test/perfon2_peercull.test.js"]
+  "tests": [
+   "test/perfon2_peercull.test.js"
+  ]
  },
  {
   "name": "PERF-ON2-the-box-is-centred-on-the-origin-so-a-peer-at-the-bottom-of-the-view-pops-out",
   "file": "src/scenes/world.js",
   "old": "    _peerBox[0] = o[0] - hw; _peerBox[1] = o[1]; _peerBox[2] = o[2] - hw;",
   "new": "    _peerBox[0] = o[0] - hw; _peerBox[1] = o[1] - h * 0.5; _peerBox[2] = o[2] - hw;",
-  "tests": ["test/perfon2_peercull.test.js"]
+  "tests": [
+   "test/perfon2_peercull.test.js"
+  ]
  },
  {
   "name": "PERF-ON2-the-box-takes-the-whole-width-either-way-so-the-cull-is-loose",
   "file": "src/scenes/world.js",
   "old": "    const hw = (b.size?.w ?? 0) * 0.5, h = b.size?.h ?? 0;",
   "new": "    const hw = (b.size?.w ?? 0), h = b.size?.h ?? 0;",
-  "tests": ["test/perfon2_peercull.test.js"]
+  "tests": [
+   "test/perfon2_peercull.test.js"
+  ]
  },
  {
   "name": "PERF-ON2-a-fresh-box-a-peer-a-frame",
   "file": "src/scenes/world.js",
   "old": "  const _peerBox = new Float32Array(6);",
   "new": "  const _peerBox = null;",
-  "tests": ["test/perfon2_peercull.test.js"]
+  "tests": [
+   "test/perfon2_peercull.test.js"
+  ]
  },
  {
   "name": "PERF-CPU-the-cpu-door-turns-the-gpu-zone-arm-on-too",
   "file": "src/render/perfMeter.js",
   "old": "  try { return /[?&]perf=cpu\\b/.test(search); } catch { return false; }",
   "new": "  try { return /[?&]perf\\b/.test(search); } catch { return false; }",
-  "tests": ["test/perfon2_peercull.test.js"]
+  "tests": [
+   "test/perfon2_peercull.test.js"
+  ]
  },
  {
   "name": "PERF-CPU-the-renderer-never-passes-the-door",
   "file": "src/render/renderer.js",
   "old": "new PerfMeter(gl, perfZones(), perfCpu())",
   "new": "new PerfMeter(gl, perfZones())",
-  "tests": ["test/perfon2_peercull.test.js"]
+  "tests": [
+   "test/perfon2_peercull.test.js"
+  ]
  },
  {
   "name": "PERF-CPU-the-spans-do-not-tile-so-a-zone-is-counted-from-the-frame-start",
   "file": "src/render/perfMeter.js",
   "old": "  _cpuMark(name) {\n    this._cpuClose();\n    this.cpuOpen = [name, this._now()];\n  }",
   "new": "  _cpuMark(name) {\n    this.cpuOpen = [name, this._now()];\n  }",
-  "tests": ["test/perfon2_peercull.test.js"]
+  "tests": [
+   "test/perfon2_peercull.test.js"
+  ]
  },
  {
   "name": "PERF-CPU-a-span-left-open-leaks-into-the-next-frame",
   "file": "src/render/perfMeter.js",
   "old": "    if (this.cpu) {\n      this._cpuClose();",
   "new": "    if (this.cpu) {\n      if (false) this._cpuClose();",
-  "tests": ["test/perfon2_peercull.test.js"]
+  "tests": [
+   "test/perfon2_peercull.test.js"
+  ]
  },
  {
   "name": "PERF-CPU-the-gpu-clock-runs-under-the-cpu-door-and-its-samples-pile-up",
   "file": "src/render/perfMeter.js",
   "old": "    if (this.cpu) return;\n    if (!this.ext || this.active || this.zones) return;",
   "new": "    if (!this.ext || this.active || this.zones) return;",
-  "tests": ["test/perfon2_peercull.test.js"]
+  "tests": [
+   "test/perfon2_peercull.test.js"
+  ]
  },
  {
   "name": "PERF-CPU-markCpu-also-opens-a-gpu-query-so-the-zone-arm-is-disturbed",
   "file": "src/render/perfMeter.js",
   "old": "  markCpu(name) { if (this.cpu) this._cpuMark(name); }",
   "new": "  markCpu(name) { this.mark(name); }",
-  "tests": ["test/perfon2_peercull.test.js"]
+  "tests": [
+   "test/perfon2_peercull.test.js"
+  ]
  },
  {
   "name": "PERF-CPU-the-line-does-not-say-which-clock-it-is",
   "file": "src/render/perfMeter.js",
   "old": "        return perfZoneLine(means, counts, 'cpu');",
   "new": "        return perfZoneLine(means, counts);",
-  "tests": ["test/perfon2_peercull.test.js"]
+  "tests": [
+   "test/perfon2_peercull.test.js"
+  ]
  },
  {
   "name": "PERF-CPU-the-mean-is-per-sample-not-per-frame",
   "file": "src/render/perfMeter.js",
   "old": "        for (const [name, ms] of this.cpuZones) means.set(name, ms / Math.max(1, this.cpuFrames));",
   "new": "        for (const [name, ms] of this.cpuZones) means.set(name, ms);",
-  "tests": ["test/perfon2_peercull.test.js"]
+  "tests": [
+   "test/perfon2_peercull.test.js"
+  ]
  },
  {
   "name": "PERF-CPU-the-host-marks-no-phases-so-the-breakdown-is-the-draw-path-again",
   "file": "src/scenes/world.js",
   "old": "    meterFor(renderer.gl)?.markCpu('online');   // PERF-CPU",
   "new": "",
-  "tests": ["test/perfon2_peercull.test.js"]
+  "tests": [
+   "test/perfon2_peercull.test.js"
+  ]
+ },
+ {
+  "name": "PERF-FLICKER-the-shadow-takes-the-lanterns-live-range-again-so-the-flicker-rebuilds-six-faces-a-frame",
+  "file": "src/render/shadowPass.js",
+  "old": "      const far = shadowFarFor(L[i * 4 + 3]);",
+  "new": "      const far = L[i * 4 + 3];",
+  "tests": [
+   "test/perfon2_peercull.test.js",
+   "test/el2_shadows.test.js",
+   "test/el5_field.test.js"
+  ]
+ },
+ {
+  "name": "PERF-FLICKER-the-far-plane-rounds-DOWN-so-a-shadow-is-clipped-inside-the-lanterns-reach",
+  "file": "src/render/shadowPass.js",
+  "old": "export const shadowFarFor = (far) => Math.ceil(far / SHADOW_FAR_QUANTUM) * SHADOW_FAR_QUANTUM;",
+  "new": "export const shadowFarFor = (far) => Math.floor(far / SHADOW_FAR_QUANTUM) * SHADOW_FAR_QUANTUM;",
+  "tests": [
+   "test/perfon2_peercull.test.js"
+  ]
+ },
+ {
+  "name": "PERF-FLICKER-the-quantum-is-too-fine-to-swallow-the-flicker",
+  "file": "src/render/shadowPass.js",
+  "old": "export const SHADOW_FAR_QUANTUM = 4;",
+  "new": "export const SHADOW_FAR_QUANTUM = 0.25;",
+  "tests": [
+   "test/perfon2_peercull.test.js"
+  ]
+ },
+ {
+  "name": "PERF-LIGHTS-the-count-is-ignored-so-the-pools-stale-entries-are-selected-from",
+  "file": "src/world/cityLights.js",
+  "old": "  const len = n < 0 ? lights.length : Math.min(n, lights.length);",
+  "new": "  const len = lights.length;",
+  "tests": [
+   "test/perfon2_peercull.test.js"
+  ]
+ },
+ {
+  "name": "PERF-LIGHTS-the-default-stops-meaning-the-whole-array",
+  "file": "src/world/cityLights.js",
+  "old": "export function nearestLights(lights, pos, max = 16, range = CITY_LIGHT_RANGE, colorOf = null, xzRange = 0, n = -1) {",
+  "new": "export function nearestLights(lights, pos, max = 16, range = CITY_LIGHT_RANGE, colorOf = null, xzRange = 0, n = 0) {",
+  "tests": [
+   "test/perfon2_peercull.test.js"
+  ]
+ },
+ {
+  "name": "PERF-LIGHTS-the-host-mints-a-light-object-a-lantern-a-frame-again",
+  "file": "src/scenes/world.js",
+  "old": "          const e = _sceneLights[n] ?? (_sceneLights[n] = { x: 0, y: 0, z: 0 });",
+  "new": "          const e = (_sceneLights[n] = { x: 0, y: 0, z: 0 });",
+  "tests": [
+   "test/perfon2_peercull.test.js"
+  ]
  }
 ]

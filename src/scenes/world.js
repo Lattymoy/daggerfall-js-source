@@ -9321,6 +9321,10 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  standing `size.h` up from the origin, and reaching `size.w / 2` in
    *  any horizontal direction because the quad turns to face the eye. */
   const _peerBox = new Float32Array(6);
+  /** PERF-LIGHTS: the night's lantern pool and the one translation triple
+   *  it reads through - refilled every frame, never re-minted. */
+  const _sceneLights = [];
+  const _lightT = [0, 0, 0];
   const peerBatchOutside = (b) => {
     const o = b.origin; if (!o) return false;
     const hw = (b.size?.w ?? 0) * 0.5, h = b.size?.h ?? 0;
@@ -10345,16 +10349,26 @@ export async function bootWorld(canvas, renderer, params, status) {
     // placed under the current compensation, nearest 16 to the camera.
     if (lightsOnAt(minute)) {
       worldLightAnimator.tick(dt);
-      const sceneLights = [];
+      // PERF-LIGHTS (2026-09-19): THE LANTERNS ARE A POOL, NOT A FRESH
+      // LIST. This built an array and an object PER LANTERN every frame -
+      // a town at night is hundreds of them, and the pixel translation
+      // minted a triple per pixel beside them - all of it thrown away the
+      // moment nearestLights had picked its sixteen. The objects are
+      // refilled in place now and the count rides into the selector, so a
+      // night frame allocates nothing here at all. The selection, its
+      // order and its ties are untouched.
+      let n = 0;
       for (const p of built.values()) {
         if (!p.lights.length) continue;
-        const t = state.pixelTranslation(p.px, p.py);
+        const t = state.pixelTranslation(p.px, p.py, _lightT);
         for (const l of p.lights) {
-          sceneLights.push({ x: l[0] + t[0], y: l[1] + t[1], z: l[2] + t[2] });
+          const e = _sceneLights[n] ?? (_sceneLights[n] = { x: 0, y: 0, z: 0 });
+          e.x = l[0] + t[0]; e.y = l[1] + t[1]; e.z = l[2] + t[2];
+          n++;
         }
       }
       renderer.setPointLights(
-        withPlayerLights(nearestLights(sceneLights, cam.pos, renderer.maxPointLights, worldLightAnimator.ranges),   // EL1: the installed set's cap (16 classic, 48 on the lane)
+        withPlayerLights(nearestLights(_sceneLights, cam.pos, renderer.maxPointLights, worldLightAnimator.ranges, null, 0, n),   // EL1: the installed set's cap (16 classic, 48 on the lane); PERF-LIGHTS: `n` is how much of the pool is live
           magic?.candleLight(), playerTorchLight(playerEntity, player.pos, cam.yaw), ...camps.lights(), ...droppedTorches.lights()),   // X11 candle; T1 torch; HT1 the dropped lights
         CITY_LIGHT_COLOR_F32
       );

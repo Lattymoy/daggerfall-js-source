@@ -94,11 +94,18 @@ const _selIdx = [];
  *  (DungeonLightHandler.cs:60-74). 0 means "no cut" - every exterior
  *  and interior caller, unchanged. See dungeonLights.js for why the
  *  two rules compose in this order. */
-export function nearestLights(lights, pos, max = 16, range = CITY_LIGHT_RANGE, colorOf = null, xzRange = 0) {
+export function nearestLights(lights, pos, max = 16, range = CITY_LIGHT_RANGE, colorOf = null, xzRange = 0, n = -1) {
   const perLight = typeof range !== 'number' ? range : null;
   const xz2 = xzRange > 0 ? xzRange * xzRange : 0;
+  // PERF-LIGHTS (2026-09-19): how many of `lights` are live. The world
+  // host refills a POOL of light objects rather than minting one per
+  // lantern per frame (a town at night is hundreds of them, sixty times a
+  // second, in a frame that is already script-bound), so its array is
+  // longer than its contents. Default -1 keeps every other caller's
+  // meaning exactly: the whole array.
+  const len = n < 0 ? lights.length : Math.min(n, lights.length);
   let count = 0;
-  for (let i = 0; i < lights.length; i++) {
+  for (let i = 0; i < len; i++) {
     const l = lights[i];
     const dx = l.x - pos[0];
     const dy = l.y - pos[1];

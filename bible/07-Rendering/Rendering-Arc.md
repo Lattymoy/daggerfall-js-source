@@ -2025,3 +2025,78 @@ take. Nobody re-measured, because there was no instrument that could.**
 
 **Pinned** in `test/perfon2_peercull.test.js` (6). Mutants
 `tools/mutants/perfon2.json`: 13 - 13 dead, 0 survived.
+
+
+## PERF-FLICKER + PERF-LIGHTS - two costs the night was paying for nothing (2026-09-19)
+
+Mac: *"I don't want more tests, I want actual performance fixes."* Fair.
+Two, both on the frame's critical path, both found by reading the hot
+path with the readout's own verdict in hand - script 23.3 ms on a
+19.7 ms frame, so the CPU is the budget and GL calls issued from JS are
+how it is spent.
+
+### PERF-FLICKER - the lantern flicker was rebuilding every shadow cube, every frame
+
+EL8 spends the point casters carefully. The nearest `SHADOW_NEAR_CASTERS`
+redraw their six cube faces every frame; the rest every
+`SHADOW_FAR_CASTER_EVERY`. Six casters, so about **twenty** face replays
+a frame out of thirty-six. A slot also redraws when its light **changed**,
+which is right - a new lantern in a slot needs its own map:
+
+```js
+const changed = !(sl[o] === pos[0] && sl[o+1] === pos[1] && sl[o+2] === pos[2] && sl[o+3] === far);
+```
+
+But `far` is the light's range, and **a lantern's range is animated**.
+`CityLightAnimator` (world/worldClock.js) wanders every light's range
+inside a one-unit band at fourteen steps a second - that is the flicker.
+So `changed` was true for every caster on almost every frame, every slot
+rebuilt all six faces, and EL8's whole schedule was dead: **thirty-six
+face replays a frame instead of twenty**, each one a full replay of the
+casters within that lantern's reach.
+
+The saving was designed, measured, and then quietly given back by an
+animation in another file. Nothing in either file was wrong on its own.
+
+The fix is one line plus a law: the cube map's far plane is the light's
+range **rounded UP** to `SHADOW_FAR_QUANTUM`, and the rounded value is
+what the face matrices, the change test and `pointParams` all take - they
+must agree, because the fragment stage reconstructs depth from `P.w`.
+Rounding UP means the far plane is never inside the lantern's reach, so
+no shadow is ever clipped short; the cost is depth spread over a slightly
+longer range, which at 512 square on a 24-bit buffer is nothing. A
+quantum of 4 swallows the whole one-unit wobble of an 18-unit lantern:
+the pin drives the real animator for 600 frames, checks the range really
+does move, and holds that every one of those frames maps to ONE far
+plane.
+
+### PERF-LIGHTS - a fresh object per lantern per frame, all night
+
+The night branch built its light list from scratch every frame:
+
+```js
+const sceneLights = [];
+for (const p of built.values()) {
+  const t = state.pixelTranslation(p.px, p.py);        // a triple a pixel
+  for (const l of p.lights) sceneLights.push({ x: …, y: …, z: … });   // an object a lantern
+}
+```
+
+A town at night is hundreds of lanterns, sixty times a second, every one
+of them thrown away the moment `nearestLights` had picked its sixteen -
+in a frame that is already script-bound. The objects are refilled in
+place now, the translation writes into one reused triple, and the live
+count rides into the selector as a new trailing argument whose default
+(`-1`) keeps every other caller's meaning exactly. A night frame
+allocates nothing here at all.
+
+The selection is untouched, and that is pinned rather than asserted: 60
+random towns, each selected both ways - a freshly built list, and the
+pool with stale entries past the live count - **identical every time**.
+
+**Pinned** in `test/perfon2_peercull.test.js`. Mutants
+`tools/mutants/perfon2.json`: 19 - 19 dead, 0 survived.
+
+**The lesson: EL8's schedule and the lantern flicker were each correct,
+and the pair was not. A cache key that includes an animated value is not
+a cache, and nothing in either file could see the other.**
