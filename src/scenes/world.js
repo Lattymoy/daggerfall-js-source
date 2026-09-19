@@ -361,6 +361,13 @@ const CANNOT_TRAVEL_ENEMIES_TEXT = 'You cannot travel with enemies nearby.';
 // streamingWorld.js). Everything is stored pixel-local; per-frame
 // placement is pixelTranslation(px, py) under the current compensation.
 export async function bootWorld(canvas, renderer, params, status) {
+  // MENU1-WARM: the seven enhanced menus are lazy chunks, each fetched
+  // the first time its door opens - which is mid-play, on the frame the
+  // key was pressed. Asked for idly instead, so no door pays for its
+  // bytes at the moment it is wanted. Fire and forget: it waits for the
+  // browser's own idle answer, swallows every failure (MENU1's notice is
+  // the door's to show), and boots nothing if the player never opens one.
+  void import('../ui/enhancedChunk.js').then((m) => m.warmEnhancedChunks()).catch(() => {});
   const regionName = params.get('region') || 'Daggerfall';
   const locationName = params.get('loc') || 'Daggerfall';
   // WORLD5 (Mac: "the shared clock and weather, and the quest clocks stood down online"): ONLINE, THE WORLD'S CLOCK IS

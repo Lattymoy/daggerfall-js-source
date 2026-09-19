@@ -31,6 +31,42 @@ little scatter so a flurry fans out. Enhanced only: the enhanced HUD
 registers the hook; the classic path never has one.
 
 
+
+## MENU1-WARM - THE MENU BYTES ARE ASKED FOR EARLY (2026-09-19)
+
+Mac: *"Also look for any elements of hitching, or hiccups."*
+
+MENU1 is about a lazy chunk that FAILS. This is its other half: one that
+merely arrives LATE, which is a hitch rather than a refusal and so was
+never reported as a bug at all.
+
+Every enhanced menu is its own content-hashed chunk, reached by a dynamic
+`import()` **the first time that door opens** - and that is the frame the
+player pressed the key, mid-dungeon, with the stream running. The browser
+fetches it (28 KB for the inventory, 78 KB for the menu, 18 KB for the
+book), parses and compiles it, and the game holds still until the overlay
+can mount. On a slow link, or against the 404-then-400ms-retry MENU1
+documents, it is not subtle. There was no `modulepreload` on either page
+and nothing warmed them.
+
+So they are asked for IDLY instead, once a session, from the world boot:
+the module map is a cache, and a door awaiting an import already in it
+resolves without a round trip. **Nothing about the doors changed** - they
+still call `mountEnhancedChunk`, still await the same `import()`, still
+retry once and still speak through MENU1's notice if it fails. Only WHEN
+the bytes are asked for moved, from the keypress to the first idle moment.
+
+Its four rules, each pinned: it waits for `requestIdleCallback` (the
+browser's own answer to "not now", so it cannot race the stream's build
+queue); ONE chunk at a time, because seven parallel fetches would be the
+stall it exists to remove; it swallows every failure silently, because
+the player should hear about a broken chunk from the door's overlay and
+not from a console line for a fetch nobody asked for; and it runs once,
+fire-and-forget - an awaited warm at the boot would BE the hitch.
+
+**Pinned** in `test/menu1_enhanced_chunk.test.js` (4).
+
+
 ## INTRO2 THE SCORE-LED INTRO (2026-09-18)
 
 Mac requested a complete overhaul of the unfinished intro, his supplied
@@ -227,14 +263,14 @@ does the pack's USE arm.
                         worldModes.js:1861 (the factory) and :1904 (a
                         HAND-ROLLED second one, 342 lines below it in
                         the same file),
-                        dungeonContext.js:965, world.js:1851,
+                        dungeonContext.js:965, world.js:1858,
                         exterior.js:2220. It is the only window TWO
                         enhanced screens already push - the sheet's
                         button and the pack's USE hand-off, whose
                         close-then-hand-over ordering U55 got
                         backwards. No law needs extracting first.
     THE LOGBOOK         THREE sites: charSheetNav.js:53,
-    / NOTEBOOK          world.js:5869, dungeonContext.js:6095. A seam
+    / NOTEBOOK          world.js:5876, dungeonContext.js:6095. A seam
                         wants making, as U52's and U53's did.
     HISTORY             ONE site (charSheetNav.js:61), and it reads
                         only the entity's backStory. The small one.
@@ -8045,7 +8081,7 @@ mutations, 4 dead.
 
 PX24 (Mac: "with the logbook and history, I want them as one detailed
 UI"): THE CHRONICLE. Two classic windows built at four sites -
-questJournal.js from charSheetNav:53, world.js:2255 and
+questJournal.js from charSheetNav:53, world.js:2262 and
 dungeonContext.js, playerHistory.js from charSheetNav:61 - become ONE
 seam (ui/chronicleDoor.js, the U52/U53/PX23 shape a sixth time) and,
 on the enhanced skin, ONE WINDOW.
@@ -9916,9 +9952,9 @@ re-resolved the `exterior.js` half of a three-file sentence and left the
 `ExteriorAutomapWindow` construction, `:4101` on a `locationName:`
 field). Both halves are now read by `test/citedrift.test.js` - the
 existing entries only ever captured the exterior number, which is how
-the other half went stale unnoticed. (The rest cite named `world.js:6163`,
+the other half went stale unnoticed. (The rest cite named `world.js:6170`,
 the first of the host's TWO identical `act === 'Rest'` arms; ROAD-H H5
-deleted the second and the cite is `world.js:6169` now.)
+deleted the second and the cite is `world.js:6176` now.)
 
 ## AUDIT 62 F24/F25 - THE SENTINEL SWEEP WAS TWO WINDOWS SHORT (2026-09-07)
 
@@ -14704,9 +14740,9 @@ whether an entry MATCHES and asserts nothing.
 Following it out was worse than the symptom. Five Ledger rows cite a
 PAIR - `` `world.js:N`, `exterior.js:M` `` - and the table captured `M`
 alone. So `M` was re-resolved at every wave for a year and `N` was never
-read: `world.js:4388` named a line that is 8950, `:674` one that is
+read: `world.js:4395` named a line that is 8950, `:681` one that is
 1215, `:1094` one that is 2194, `:3903` one that is 3066, `:3920` one
-that is 8907. `world.js:4124-4156` and `dungeonContext.js:1316` were
+that is 8907. `world.js:4131-4163` and `dungeonContext.js:1316` were
 stale the same way. Seven numbers re-resolved BY CONTENT, every
 uncaptured half de-baked to `\d+`, and eight new entries added so every
 number in a pair is captured. The half nobody reads cannot rot in
