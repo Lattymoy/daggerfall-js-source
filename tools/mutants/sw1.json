@@ -75,5 +75,14 @@
     "tests": [
       "test/sw1_shield_widget.test.js"
     ]
+  },
+  {
+    "name": "SW4-1-the-shield-door-flips-the-png",
+    "file": "src/combat/shieldWidgetAssets.js",
+    "old": "        return toScreenOrder(await decodePng(new Uint8Array(await res.arrayBuffer())));",
+    "new": "        return toColor32(await decodePng(new Uint8Array(await res.arrayBuffer())));",
+    "tests": [
+      "test/sw1_shield_widget.test.js"
+    ]
   }
 ]

@@ -29,6 +29,16 @@
 // screen; not byte-lossless, because the ghost colour the author's
 // export left UNDER the transparent pixels collapses to one index.
 // Nothing visible changes; the bytes under the cutout do.
+//
+// SW4 (2026-09-19, Mac: "the new shield mod we integrated shows the
+// shields upside down") - AND REVERSED, ONCE, ON DISK. The 600 came out
+// of the mod's Unity texture buffer without the flip a PNG's top-down
+// rows need - a Texture2D is stored bottom-up - so every sprite shipped
+// vertically mirrored and the arm reached DOWN into the shield out of
+// the sky. The rows were reversed in place, palette and transparent
+// index carried over byte for byte, each file checked by flipping the
+// output back to the input. The door below is unchanged, because the
+// door was never what was wrong: see bible/05-Combat/Shield-Widget.md.
 
 import { toScreenOrder } from '../formats/color32Order.js';
 import { decodePng } from '../systems/textureReplacement.js';
