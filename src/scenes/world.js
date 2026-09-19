@@ -22,6 +22,7 @@ import { modSetting } from '../systems/modSettings.js';   // ROADS 24
 import { WoodsFile, MAP_WIDTH, MAP_HEIGHT } from '../formats/woodsFile.js';
 import { buildTerrainGrid, buildTerrainIndices, isOutdoorWaterTile, TERRAIN_TILE_DIM, TERRAIN_SKIRT_DEPTH, surfaceHeightAt } from '../world/terrainSurface.js';
 import { waterUniforms, buildWaterIndices, waterSwitchOn } from '../render/waterSurface.js';   // WATER1: the enhanced water surface over the pixel's own grid; WATER-AUDIT: its own index set
+import { waterCorners } from '../world/waterCorners.js';   // GRASS-WET1: the one table that says which of a tile's corners stand in water
 import { windowEmissionRGB } from '../render/windowEmission.js';
 import { CITY_LIGHT_COLOR, CITY_LIGHT_RANGE, LIGHTS_ARCHIVE, collectCityLights, nearestLights } from '../world/cityLights.js';
 import { withPlayerLights } from './magicCandle.js';   // X11/T1: the lights the PLAYER carries
@@ -1027,7 +1028,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // EV4: the far ring builds strided with its skirt; the kernel's
     // ghost rows keep edge normals central differences either way.
     const stride = strideFor(px, py);
-    const { samples, tilemap, positions, normals, tilemapBytes, avg, nature, withRoads } = await terrainGen.generate({
+    const { samples, tilemap, positions, normals, tilemapBytes, avg, nature, withRoads, paths } = await terrainGen.generate({
       px, py, stride, tilemap: seedTilemap, locationRect, hasLocation: !!dfLocation, climateType: climateBase,
     });
     // WM3: this pixel's climate law, bound once - the one argument the
@@ -1483,6 +1484,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       _seasonsGen: seasonsGen,   // SIB1: the install this pixel's flats were built under (AUDIT 61: captured at the lookups)
       px, py, terrain, water, tilemapTex, tilemap, groundArchive, models, windmills, batches, flatAnims, texRemap, lights: pixelLights, animals: pixelAnimals, springs: pixelSprings, skyBase: climate.skyBase, samples, natureCount: nature.length,
       tilemapBytes, season,   // GR1: the placer reads the tiles and the season
+      paths,   // GRASS-PATH1: which tiles the road painter wrote; null on a pixel built before the network arrived
       withRoads,   // ROADS 25: painted with the network present, or before it arrived (see below)
       _box: bounds,   // EV3: pixel-local presentation bounds (terrain + models + flats)
       _stride: stride,   // EV4: the terrain surface's current ring class
@@ -8627,6 +8629,21 @@ export async function bootWorld(canvas, renderer, params, status) {
     // place - the hold bought nothing but a 500 ms strip with no socket in the cell I stood in); otherwise the hold
     else if (key !== online.room) { if (!online.room || isWorldRoom(key) || isWorldRoom(online.room) || (isCellRoom(key) && online.inRoom(key)) || now - _onlineKeySince >= ROOM_HOLD_MS) { online.look = composeLook(playerEntity); online.join(key, { ...pose, ...arm }); } }   // the look re-composed: the next room's hello carries the gear worn now
     else online.sendPose({ ...pose, ...arm });
+    // PERF11 (2026-09-19, Mac: "Online mode needs further performance
+    // improvements"): ONE peersNear() A FRAME. The owner sweeps below -
+    // the foes' prune and the camps' - each built the list from scratch
+    // and then a Set of its ids from scratch, twice a frame, for the
+    // same answer: peersNear() walks every peer in the room and mints an
+    // object and a scene triple apiece, so a busy room paid all of it
+    // and then paid it again. The memo is per frame and lazy, so a room
+    // that is not a cell room still builds nothing.
+    let _ownerIds;
+    const ownerIds = () => {
+      if (_ownerIds !== undefined) return _ownerIds;
+      const near = peersNear();
+      _ownerIds = near ? new Set(near.map((p) => p.id)) : null;
+      return _ownerIds;
+    };
     // WORLD6b-iii(b) THE CELL SEAM: the neighbouring cells within the relay's range are held as a HALO - hello'd and
     // posed into, so a peer a pixel across the edge is in my room and I in theirs (D9); a crossing promotes the halo
     const wantHalo = mp && isCellRoom(online.room) ? cellHaloFor(mp.x, mp.y, { current: online.haloRooms() }) : [];
@@ -8638,13 +8655,13 @@ export async function bootWorld(canvas, renderer, params, status) {
     // WORLD6b-iii(b): a cell crossing is no room change to the puppets - their owners' cells are still held (the
     // halo) and the prune below takes back any whose owner the hunt no longer sees
     if (online.room !== _foesRoom) { const seam = isCellRoom(online.room) && isCellRoom(_foesRoom); _foesRoom = online.room; _foesFullAt = -Infinity; if (!seam) exteriorFoes.clearPuppets(); }   // AUDIT WORLD6b C7: a new room hears every foe of mine at once
-    if (isCellRoom(online.room)) { const near = peersNear(); if (near) exteriorFoes.pruneOwners(new Set(near.map((p) => p.id)), now); }   // AUDIT WORLD6b-iii(b) C3/B5: no answer (the socket not open) is not "nobody" - it pruned every owner while the halos kept feeding frames, a spawn-and-discard loop per frame   // AUDIT WORLD6b-ii C2: ONE liveness for the owner - the peers the hunt reads (visible: a pose, in range, inside the timeout) are the peers whose puppets stand
+    if (isCellRoom(online.room)) { const ids = ownerIds(); if (ids) exteriorFoes.pruneOwners(ids, now); }   // PERF11: the one list   // AUDIT WORLD6b-iii(b) C3/B5: no answer (the socket not open) is not "nobody" - it pruned every owner while the halos kept feeding frames, a spawn-and-discard loop per frame   // AUDIT WORLD6b-ii C2: ONE liveness for the owner - the peers the hunt reads (visible: a pose, in range, inside the timeout) are the peers whose puppets stand
     worldPublish(now);   // WORLD1: the room's memory, every WORLD_PUBLISH_MS while this player hosts a dungeon
     foesStream(now);   // WORLD2: the host's changed foes, every FOES_MS; WORLD6b: mine, in a cell
     actFlush();        // AUDIT WORLD3 A3: an act the wire refused, re-read and re-sent
     hitFlush(now);     // AUDIT FOES FOE2: and a BLOW the wire refused - a joiner applies none locally, so a lost frame is a lost blow
     modes?.setDungeonAuthority?.(dungeonAuthority(now));   // AUDIT WORLD2 C2: the seat re-read every frame - a dead socket, a terminal close or a silent host hands the foes back
-    if (isCellRoom(online.room)) { const near = peersNear(); if (near) camps.sweepOwners(new Set(near.map((p) => p.id)), now, FOES_STALE_MS); }   // SURV3: a peer's camps go as their puppets do - the same liveness, the same answer-gate   // AUDIT WORLD6b-iii(b) C3/B5: no answer (the socket not open) is not "nobody" - it pruned every owner while the halos kept feeding frames, a spawn-and-discard loop per frame   // AUDIT WORLD6b-ii C2: ONE liveness for the owner - the peers the hunt reads (visible: a pose, in range, inside the timeout) are the peers whose puppets stand
+    if (isCellRoom(online.room)) { const ids = ownerIds(); if (ids) camps.sweepOwners(ids, now, FOES_STALE_MS); }   // PERF11: the same list   // SURV3: a peer's camps go as their puppets do - the same liveness, the same answer-gate   // AUDIT WORLD6b-iii(b) C3/B5: no answer (the socket not open) is not "nobody" - it pruned every owner while the halos kept feeding frames, a spawn-and-discard loop per frame   // AUDIT WORLD6b-ii C2: ONE liveness for the owner - the peers the hunt reads (visible: a pose, in range, inside the timeout) are the peers whose puppets stand
     const drawable = online.drawable();
     peerBodies.sync(drawable, onlineToScene, dt, player.pos);   // the nearest first, the far ones asleep
     remotePlayers.sync(drawable, onlineToScene, { bodyHeight: (id) => peerBodies.heightOf(id), dt, eye: player.pos });   // 2026-09-17: dt drives the class-enemy billboard path's own animation clock; eye is the local player's own position, needed for mobileOrientation's facing calculation (see remotePlayers.js _syncMobilePeer)
@@ -10658,8 +10675,10 @@ export async function bootWorld(canvas, renderer, params, status) {
     }
     // GR1: THE LAB'S GRASS. The scatter is the lab's 1,200,000 candidates
     // over a 420m square around the eye, kept where they land on a GRASS
-    // tile of a near-ring pixel - never on a road record, never on water
-    // (a water record, or under the sea plane), never in winter - each
+    // tile of a near-ring pixel - never on a road record, never on a tile
+    // the road painter wrote (GRASS-PATH1), never on water (a water
+    // record, a tile with ANY water corner - GRASS-WET1 - or under the
+    // sea plane), never in winter - each
     // rooted at the real ground under it. Rebuilt when the eye is more
     // than 60m from the scatter's centre. Drawn with the lab's own draw:
     // the game's sun, ambient and colour in the lab's uniforms, the same
@@ -10677,9 +10696,24 @@ export async function bootWorld(canvas, renderer, params, status) {
       // being filled this frame.
       const sea = SCALED_OCEAN_ELEVATION * DEFAULT_TERRAIN_SCALE + 0.5;
       const scale = MAX_TERRAIN_HEIGHT * DEFAULT_TERRAIN_SCALE;
-      const near = [...built.values()].filter((p) => p._stride === 1 && p.tilemapBytes && p.season !== SEASON.Winter);
-      const pieces = near.map((p) => ({ p, t: state.pixelTranslation(p.px, p.py, [0, 0, 0]), grass: grassRecords.get(p.groundArchive) }));
-      const pieceAt = pieceIndex(pieces, TERRAIN_SIZE);   // PERF8: one Map read per blade instead of a scan of every near pixel
+      // PERF10 (2026-09-19, Mac: "further out in the wilderniss it loaded
+      // many chunks and grass the performance still degrades"): THE
+      // INDEX IS BUILT ONLY WHEN A CELL IS ACTUALLY FILLED. `near` spread
+      // every streamed pixel into an array, mapped it into a second one
+      // (a fresh translation triple apiece) and built a Map over it -
+      // EVERY FRAME, whether or not the field had a cell to place. The
+      // further out you walk the more pixels are streamed and the longer
+      // that costs, and on a standing field it is spent for nothing at
+      // all: `keep`/`ground` are called only from placeLabGrassCell.
+      // One lazy memo per frame, so a frame that fills nothing allocates
+      // nothing and a frame that fills two cells pays exactly what it
+      // paid before.
+      let _pieceAt = null;
+      let _near = null;
+      const nearPieces = () => (_near ??= [...built.values()].filter((p) => p._stride === 1 && p.tilemapBytes && p.season !== SEASON.Winter));
+      const pieceAt = (x, z) => (_pieceAt ??= pieceIndex(   // PERF8: one Map read per blade instead of a scan of every near pixel
+        nearPieces().map((p) => ({ p, t: state.pixelTranslation(p.px, p.py, [0, 0, 0]), grass: grassRecords.get(p.groundArchive) })),
+        TERRAIN_SIZE))(x, z);
       // GRASS4 measured this pair and left it alone, which is worth
       // recording so nobody "fixes" it again: `ground` repeats the
       // lookup `keep` just did, and caching the answer across the two
@@ -10694,8 +10728,28 @@ export async function bootWorld(canvas, renderer, params, status) {
         const { p, t, grass } = hit;
         const lx = x - t[0]; const lz = z - t[2];
         const tx = Math.floor(lx / 6.4); const tz = Math.floor(lz / 6.4);
-        const rec = p.tilemapBytes[tz * TERRAIN_TILE_DIM + tx] >> 2;
+        const ti = tz * TERRAIN_TILE_DIM + tx;
+        const byte = p.tilemapBytes[ti];
+        const rec = byte >> 2;
         if (rec === 0 || !grass || !grass.has(rec)) return null;
+        // GRASS-PATH1 (2026-09-19, Mac: "Grass shouldnt be on dirt
+        // paths"): the road painter's own mask. A track across grass
+        // writes 10/11/12/51 - the SAME records the natural dirt-grass
+        // marching squares write - so the record cannot tell a path from
+        // a field's edge and the placer grew a lawn straight down every
+        // track. The painter knows, and now says (world/roadPainter.js).
+        if (p.paths?.[ti]) return null;
+        // GRASS-WET1 (2026-09-19, Mac: "some textures not taking the
+        // water tile"): NOT A CORNER OF IT IN WATER. `rec === 0` above
+        // rejects only tiles that are water WHOLE; the water-grass shore
+        // records (20-22, 49) a stream or a town's own ground tiles
+        // write are mostly-grass by texel count, so grassRecordsOf takes
+        // them and blades grew out of the water - a green mottled patch
+        // in the middle of a pond, which is the water tile not reading
+        // as water. The corner table (world/waterCorners.js) is the one
+        // law for that question; the water pass and the player's feet
+        // already read it, and now the grass does too.
+        if (waterCorners(byte)) return null;
         // GRASS3: the height of the surface that is DRAWN, not a
         // bilinear patch over the same samples - the terrain is cut into
         // triangles and bilinear is a different surface. On real grades
@@ -10723,7 +10777,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       };
       if (!labGrassField) labGrassField = createGrassField(labGrass, { keep, ground, density: grassDensity });   // PERF1: the pref's fraction of the lab's field
       labGrassField.update(ex, ez, keep, ground);
-      window.__grassStats = () => ({ blades: labGrass.count, drawn: labGrass.drawn, nearPixels: near.length, cells: labGrassField?.live.size ?? 0, slots: labGrassField?.slots ?? 0,
+      window.__grassStats = () => ({ blades: labGrass.count, drawn: labGrass.drawn, nearPixels: nearPieces().length, cells: labGrassField?.live.size ?? 0, slots: labGrassField?.slots ?? 0,
         perCell: labGrass.perCell, range: LAB_GRASS.range, height: LAB_GRASS.height, verts: labGrass.verts,
         // GRASS2: what the field HOLDS, against what a slot-sized draw
         // would have submitted - the pad, measured rather than assumed.

@@ -176,7 +176,7 @@ test('AUDIT WORLD6b-iii(b) by source: the world host joins a held cell at once a
   assert.match(w, /\(isCellRoom\(key\) && online\.inRoom\(key\)\) \|\| now - _onlineKeySince >= ROOM_HOLD_MS/, 'B1/B8: a held cell is joined at once');
   assert.match(w, /if \(mp && isCellRoom\(online\.room\) && isCellRoom\(key\) && key !== online\.room\) wantHalo\.push\(key\);/, 'B1: the cell stood in, wanted until the join');
   assert.match(w, /if \(wantHalo\.some\(\(r\) => !online\.haloRooms\(\)\.includes\(r\)\)\) online\.look = composeLook\(playerEntity\);/, 'C5');
-  assert.match(w, /const near = peersNear\(\); if \(near\) exteriorFoes\.pruneOwners\(new Set\(near\.map\(\(p\) => p\.id\)\), now\);/, 'C3/B5');
+  assert.match(w, /const ids = ownerIds\(\); if \(ids\) exteriorFoes\.pruneOwners\(ids, now\);/, 'C3/B5');
   const x = rd('src/scenes/exteriorFoes.js');
   assert.match(x, /if \(data\.k != null && _net\?\.room && data\.k !== _net\.room\(\) && !_net\.inRoom\?\.\(data\.k\)\) return false;[\s\S]{0,5000}?const f = foes\.find\(\(x\) => !x\.puppet && x\.seq === \(data\.i \| 0\)\) \?\? watchOf\(data\.i \| 0\);\s*const dmg = Number\(data\.dmg\);/, 'C1: applyHit (WORLD6b-iii(c): the take and the grant arms stand between; WATCH1: the number may name a watchman)');
   const o = rd('src/net/online.js');
