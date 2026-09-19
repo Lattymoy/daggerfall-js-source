@@ -30,8 +30,8 @@ import { playerTorchLight } from '../systems/playerTorch.js';   // T1
 import { applyClimate, getGroundArchive, getTerrainGroundArchive, getNatureArchive, SEASON, climateSeasonFromMinutes, INTERIOR_SEASON } from '../world/climateSwaps.js';   // A1: the season is the calendar's, and an interior's is Summer whatever the date
 import { RMB_SIDE, layoutLocation } from '../world/locationLayout.js';
 import { lookAt, multiply, perspective, mirrorProjectionX, trs, identity, UP_Y, wrapAngle } from '../world/mat4.js';   // HANDEDNESS: the one mirror (mat4's law)
-import { frustumPlanes, aabbOutside, localAabb, transformedAabb, flatBatchAabb, cullDisabled } from '../render/frustum.js';
-import { sphereInPlanes } from '../render/bounds.js';   // PERF-CROWD: the batch's own bounding sphere, the test the shadow replay already uses   // EV3: the frustum
+import { aabbOutside, localAabb, transformedAabb, flatBatchAabb, cullDisabled } from '../render/frustum.js';   // GHOST1: the plane extraction comes through bounds.js's `spherePlanes` now - `_planes` serves the sphere test too
+import { spherePlanes, batchVisible } from '../render/bounds.js';   // PERF-CROWD: the batch's own bounding sphere, the test the shadow replay already uses   // GHOST1: through its ONE home, on the NORMALISED planes it needs   // EV3: the frustum
 import { withMoonAmbient } from '../render/enhancedSky.js';   // EV5: secunda rides the ambient
 import { FarRingRenderer, ringDisabled } from '../render/farRing.js';   // EV8: the province's mountains on the horizon
 import { syncLightingLane, lanternColor } from '../render/enhancedLighting.js';   // EL1: the Enhanced Lighting lane, installed at mount
@@ -9350,26 +9350,17 @@ export async function bootWorld(canvas, renderer, params, status) {
    * townsman behind the camera was a draw, two texture binds and its
    * uniforms every frame, and a town is full of them.
    *
-   * THE SPHERE IS THE BATCH'S OWN, LIFTED. `createBillboardBatch` stores a
-   * sphere over the placement points with the sprite's half-diagonal added
-   * to the radius - and that is the sphere the shadow replay already culls
-   * by. But the billboard VS is BOTTOM-ANCHORED (`uUp * ((aCorner.y + 0.5)
-   * * uSize.y)`): a sprite stands its full height ABOVE its placement
-   * point, and a sphere of radius hypot(w, h) / 2 about that point does
-   * not reach the top of anything taller than it is wide. A person is
-   * exactly that shape. Lifting the centre by half the height bounds the
-   * quad exactly - from there it spans w/2 sideways and h/2 either way in
-   * y, which is what the stored radius already covers - and without the
-   * lift this would cull heads at the top of the screen.
+   * GHOST1: THE TEST IS `batchVisible`, not a copy of it. The batch's own
+   * sphere, lifted half a height for the bottom anchor, with the whole
+   * argument for the lift written where it lives (render/bounds.js). This
+   * host and the billboard pass each hand-rolled that lift while the
+   * shadow replay and the air pass's emitters - the other readers of the
+   * same sphere - had none, so the passes disagreed about the same sprite
+   * and a culled flat kept its bloom. A ghost campfire.
    *
    * A batch with no bounds is always drawn, as `batchVisible` has it.
    */
-  const billboardOutside = (b) => {
-    const s = b.bounds; if (!s) return false;
-    const o = b.origin;
-    const h = b.size?.h ?? 0;
-    return !sphereInPlanes(_planes, s[0] + (o ? o[0] : 0), s[1] + (o ? o[1] : 0) + h * 0.5, s[2] + (o ? o[2] : 0), s[3]);
-  };
+  const billboardOutside = (b) => !batchVisible(_planes, b);
   // A4: the streaming world's animal sources - pixel-local positions
   // translated through the floating origin at roll time (16 Hz over
   // a handful of animals; recenters are free).
@@ -10431,7 +10422,18 @@ export async function bootWorld(canvas, renderer, params, status) {
 
     // WM2b: read the eased wind ONCE a frame, not once a mill.
     const windNow = sky.wind();
-    if (cullOn) frustumPlanes(multiply(proj, view, _pv), _planes);   // EV3
+    // GHOST1 (2026-09-19): NORMALISED, because `_planes` now serves TWO
+    // tests. EV3's `aabbOutside` only reads the sign of `a*px+b*py+c*pz+d`
+    // and dividing all four coefficients by a positive length cannot
+    // change a sign, so every box test below is bit-for-bit the decision
+    // it was. `billboardOutside` is the one that needs it: `sphereInPlanes`
+    // compares that dot product against `-r`, and that is only a distance
+    // against a radius when the normal is a unit vector. Unnormalised, the
+    // radius counted for 1/|n| of what it should and a flat still on
+    // screen was culled - the sprites popping as the camera turned, and
+    // the campfires that left only their bloom behind. Six square roots a
+    // frame.
+    if (cullOn) spherePlanes(multiply(proj, view, _pv), _planes);   // EV3 (GHOST1: normalised - the sphere test shares these)
     meterFor(renderer.gl)?.markCpu('batches');   // PERF-CPU: the pixel walk that fills allBatches, culling as it goes
     const allBatches = [];
     // PERF-ON2 (2026-09-19, Mac: "Online mode needs further performance

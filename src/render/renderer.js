@@ -409,8 +409,8 @@ void main() {
 }`;
 
 import { ShadowPass, SHADOW_GLSL } from './shadowPass.js';   // EL7: the receiver block, for the water surface's lane program
-import { boundsOf, sphereInPlanes } from './bounds.js';
-import { frustumPlanes, cullDisabled } from './frustum.js';   // PERF-CROWD2: the billboard pass culls for every host, so no host can forget to
+import { boundsOf, spherePlanes, batchVisible } from './bounds.js';
+import { cullDisabled } from './frustum.js';   // PERF-CROWD2: the billboard pass culls for every host, so no host can forget to
 import { multiply as mat4Multiply } from '../world/mat4.js';   // PERF-CROWD2: proj * view, for this call's planes
 import { PerfMeter, perfOn, perfZones, perfCpu, setMeter } from './perfMeter.js';   // EL8: `?perf`   // EL5: the bounds every bundle carries for the replays' culling   // EL2: the lane's shadow maps - a leaf that compiles nothing until a lane asks
 import { AirPass, AIR_ADAPT_UNIT as ADAPT_UNIT, AIR_CONTACT_UNIT as CONTACT_UNIT } from './airPass.js';   // EL3: the ambient occlusion, the bloom and the shafts - the same kind of leaf; EL4: the eye's unit; EL6: all of it off the frame's own depth, at the resolve
@@ -1299,23 +1299,19 @@ export class Renderer {
   /**
    * PERF-CROWD2: is this billboard batch inside the frame?
    *
-   * The batch's own sphere (`createBillboardBatch` stores one over the
-   * placement points with the sprite's half-diagonal added), offset by
-   * its live origin and LIFTED half a height - because the billboard VS
-   * is bottom-anchored (`uUp * ((aCorner.y + 0.5) * uSize.y)`), so a
-   * sprite stands its full height above its placement point and the
-   * stored sphere does not reach the top of anything taller than it is
-   * wide. A person is exactly that shape; without the lift this culls
-   * heads at the top of the screen.
+   * GHOST1: `batchVisible` IS the test - the batch's own sphere, offset
+   * by its live origin and lifted half a height for the bottom anchor,
+   * with the whole argument for the lift written where it lives
+   * (bounds.js). This method used to hand-roll it, and the shadow replay
+   * and the air pass's emitters - which cull through `batchVisible` -
+   * therefore answered a DIFFERENT question about the same sprite: this
+   * pass dropped a flat the emission replay kept, leaving the bloom of a
+   * sprite that never drew. A ghost campfire. One home, one answer.
    *
    * A batch with no bounds is always drawn, as `batchVisible` has it.
    */
   _bbVisible(b) {
-    const s = b.bounds;
-    if (!s) return true;
-    const o = b.origin;
-    return sphereInPlanes(this._bbPlanes,
-      s[0] + (o ? o[0] : 0), s[1] + (o ? o[1] : 0) + (b.size?.h ?? 0) * 0.5, s[2] + (o ? o[2] : 0), s[3]);
+    return batchVisible(this._bbPlanes, b);
   }
 
   _bindVao(vao) {
@@ -4140,8 +4136,21 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     // screen. The planes are recomputed rather than cached on the frame
     // stamp because the panel bracket swaps _proj/_view without bumping
     // it; one 4x4 multiply a call is nothing beside what it saves.
+    // GHOST1 (2026-09-19): the planes are SPHERE planes - normalised.
+    // `frustumPlanes` leaves them unnormalised on purpose (frustum.js's
+    // own note: the box test only asks for the sign, and normalising
+    // would spend four square roots on nothing), and `sphereInPlanes`
+    // compares `dot + d < -r`, which is only a world-space distance
+    // against a world-space radius once the normal is a unit vector.
+    // Fed the raw planes, the radius counts for 1/|n| of what it should
+    // and a flat whose centre is just past a plane is culled while its
+    // quad is still on screen - sprites popping as the camera turns, and
+    // a small flat (a campfire) gone entirely while the air pass's
+    // emitter, which culls through `spherePlanes`, still drew its bloom.
+    // A ghost campfire. `spherePlanes` is the one home for this and
+    // every other sphere cull in the tree already goes through it.
     const bbCull = !this._bbCullOff && !!this._proj && !!this._view;
-    if (bbCull) frustumPlanes(mat4Multiply(this._proj, this._view, this._bbPv), this._bbPlanes);
+    if (bbCull) spherePlanes(mat4Multiply(this._proj, this._view, this._bbPv), this._bbPlanes);
     this._use(this.bbProgram);
     this._uploadCloudShadow('bb');   // VC4
     gl.uniformMatrix4fv(this.bbUProj, false, this._proj);

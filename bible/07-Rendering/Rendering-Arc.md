@@ -2255,7 +2255,7 @@ beside them. Then the same shape turned up everywhere else:
 | `worldModes.js:6095` | the dungeon's flats, camps, torches and peers |
 | `worldModes.js:6258` | the interior's flats and peers |
 | `worldModes.js:6264-6298` | blood, torches, drops, foes, guards - **five separate uncut calls** |
-| `exterior.js:4776`, `world.js:10615` | the spell missiles |
+| `exterior.js:4776`, `world.js:10617` | the spell missiles |
 | `exterior.js:4838` | the fixed city's townspeople |
 | `interior.js:352`, `dungeon.js:1006` | the flats, the camps, the torches |
 
@@ -2381,3 +2381,83 @@ reports a maximum of 16 there.
 written against, and had been carried as a property of the terrain ever
 since. The wrap was never the obstacle - handing the wrapped coordinate
 to the hardware was.**
+
+## GHOST1 (2026-09-19) - THE SPRITES THAT WERE CULLED WHILE THEY WERE ON SCREEN - SHIPPED
+
+Two reports in `#bug-reports`, the same afternoon:
+
+> **Clerical Error:** "loaded from a save and we have ghost campfires now"
+> - with a screenshot of a flame that is a blurred glow and nothing else.
+
+> **kurkku:** "sprites disappear and reappear at certain(?) angles"
+
+One bug, in the billboard frustum cull PERF-CROWD and PERF-CROWD2 had
+added the same day. Two things were wrong with it.
+
+### 1. The planes were not normalised
+
+`frustumPlanes` (EV3) returns its Gribb/Hartmann planes **unnormalised**,
+on purpose and with its own note saying so: `aabbOutside` only reads the
+SIGN of `a*px + b*py + c*pz + d`, and normalising would spend four square
+roots a frame on nothing.
+
+`sphereInPlanes` is not that test. It compares `dot + d < -r`, and that
+is a world distance against a world radius **only when the normal is a
+unit vector**. That is exactly why `spherePlanes` exists beside it, and
+why the shadow replay and the air pass have always gone through it.
+
+Both new culls skipped it. On a 60-degree frustum the side planes carry
+`|n|` = 1.40 and the top and bottom exactly 2.00, so a sprite's radius
+counted for as little as **half of itself** and the cull ate a band
+around the frustum's edge proportional to the sprite's own size. Swept
+over ~440,000 placements whose quad genuinely lands inside the clip box,
+the raw planes throw some away at every sprite size tested; the
+normalised ones throw away none. The band is widest where the planes
+converge - close to the eye, which is where you stand when you look at a
+campfire - and at the screen edge, which is what turning does to
+everything else. Both reports, one cause.
+
+### 2. The lift was in the wrong place, which is what made it a GHOST
+
+A billboard's stored sphere is over the PLACEMENT points, and the vertex
+shader is bottom-anchored (`uUp * ((aCorner.y + 0.5) * uSize.y)`), so the
+quad stands its full height above that point. PERF-CROWD lifted the
+centre half a height to bound it - correctly - and PERF-CROWD2 wrote the
+same lift again in the renderer. Neither put it in `batchVisible`, which
+is the copy the shadow replay and the **air pass's emission replay** cull
+by.
+
+So two passes asked different questions about one sprite. The main pass
+dropped a flat the emitters kept, and what was left on screen was the
+BLOOM of a sprite that never drew: a blurred, sourceless glow where the
+fire should be. A ghost campfire, exactly as reported and exactly as
+photographed.
+
+The lift lives in `batchVisible` now and the two hand copies are gone -
+`renderer._bbVisible` and `world.js`'s `billboardOutside` both delegate.
+A negative height (`droppedTorches`' flame, drawn on a negated
+`localScale.y`) lifts DOWNWARD by the same rule, which is where its quad
+actually hangs.
+
+### The change that had to be free
+
+`world.js`'s `_planes` now serve both tests, so EV3's box culling reads
+normalised planes too. Dividing four coefficients by a positive length
+cannot move a sign, so every `aabbOutside` decision is bit-for-bit what
+it was - pinned over 10,000 boxes rather than argued. The cost is six
+square roots a frame.
+
+**Pinned** in `test/ghost1_spritecull.test.js` (6) - the measurement of
+`|n|`, the over-cull sweep from the outside (quad corners projected
+through the same proj*view the shader uses), the conservative direction,
+the lift and its one home, and the EV3 equivalence. Mutants
+`tools/mutants/ghost1.json`: 10 - 10 dead, 0 survived. Four
+`perfon2.json` records retired: their laws moved into `bounds.js` and
+`ghost1.json` kills them there.
+
+**The lesson: a helper that exists BECAUSE the other one is wrong for
+your case is not interchangeable with it. `spherePlanes` sat next to
+`frustumPlanes` with a comment saying precisely why, and two new callers
+reached past it. And when two passes cull the same object by two copies
+of one rule, the bug does not hide - it draws.**
+
