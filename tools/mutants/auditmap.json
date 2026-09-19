@@ -237,7 +237,7 @@
  },
  {
   "name": "app-root-cuts-at-the-first-assets-segment",
-  "file": "src/ui/heldMap.js",
+  "file": "src/systems/appRoot.js",
   "old": "  const cut = u.pathname.replace(/^(.*)\\/(?:assets|src)\\/[^/]*(?:\\/.*)?$/, '$1/');\n  if (cut === u.pathname) return null;\n  u.pathname = cut;",
   "new": "  u.pathname = u.pathname.replace(/\\/(?:assets|src)\\/.*$/, '/');",
   "tests": [

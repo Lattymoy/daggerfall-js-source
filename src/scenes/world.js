@@ -25,6 +25,7 @@ import { waterUniforms, buildWaterIndices, waterSwitchOn } from '../render/water
 import { waterCorners, WATER_DRAW_MASK_TABLE } from '../world/waterCorners.js';   // GRASS-WET1: the one table that says which of a tile's corners stand in water - the DRAW's, because a blade in a puddle is a picture, not a physics
 import { windowEmissionRGB } from '../render/windowEmission.js';
 import { CITY_LIGHT_COLOR, CITY_LIGHT_RANGE, LIGHTS_ARCHIVE, collectCityLights, nearestLights } from '../world/cityLights.js';
+import { isHearthFlat, HEARTH_NEAR } from '../systems/survival/hearth.js';   // HEARTH1: which of those lanterns is a fire you could cook on, and how far one can matter
 import { withPlayerLights } from './magicCandle.js';   // X11/T1: the lights the PLAYER carries
 import { playerTorchLight } from '../systems/playerTorch.js';   // T1
 import { applyClimate, getGroundArchive, getTerrainGroundArchive, getNatureArchive, SEASON, climateSeasonFromMinutes, INTERIOR_SEASON } from '../world/climateSwaps.js';   // A1: the season is the calendar's, and an interior's is Summer whatever the date
@@ -69,7 +70,7 @@ import { calculateCastCost } from '../systems/spellcost.js';   // M2   // T3b
 import { rangedDamageSpells } from '../systems/spellcast.js';   // U42: the flight probe's picker
 import { worldMinutes, setWorldMinutes, setSharedClock, sharedClockOn, alignEntityClocks, setWorldPriceTilt } from '../systems/worldTick.js';   // ECON1 / AUDIT ALL E1: the world's tilt off the file's base powers   // AUDIT 23 (C2): the ONE clock
 import { setSyntheticTimeIncrease } from '../systems/effectBroker.js';   // AUDIT 63 F13: DaggerfallTravelPopUp_OnPostFastTravel (EntityEffectBroker.cs:846-847)
-import { tallySwingSkills, SWING_WEAPON_FATIGUE_LOSS, playerPainVoice, playPlayerVoice, makeEnemiesHostile } from './hostCombat.js';   // ROAD-B: GameManager.MakeEnemiesHostile
+import { tallySwingSkills, SWING_WEAPON_FATIGUE_LOSS, playerPainVoice, playPlayerVoice, makeEnemiesHostile, isBowWeapon } from './hostCombat.js';   // ROAD-B: GameManager.MakeEnemiesHostile
 import { flashPlayerDamage } from '../ui/damageFlash.js';   // AUDIT 24 (wave 46): the arrow owes the flash too   // AUDIT 23 (C14)
 import { hudFade } from '../ui/fadeLayer.js';   // D4: performFastTravel's and TeleportAway's fade from black
 import { exhaustionOutcome, EXHAUSTED_IN_WATER } from '../systems/rest.js';   // AUDIT 23 (C5)
@@ -244,7 +245,7 @@ import { SOUND } from '../systems/soundClips.js';
 import { createWeaponRig, autoBuildArms, armIdentityOf, armBuiltFor, armsReady } from '../combat/weaponRig.js';   // MWA1: the arms at boot; MWA3: the identity the arm should stand for, beside the one it does
 import { weaponPoseOf, applyWeaponPose, mergeWeaponPose } from '../combat/playerWeapon.js';   // HARD2c: the sheath+hand pair as ONE law, and SL-2's per-field merge with the mode host's live rig
 import { ArrowFlight, playerArrowHitFoe } from '../combat/arrowFlight.js';   // C13: visible exterior arrows; AUDIT 39 (#64): and the shaft that LANDS
-import { addItem, spendArrow, carriedWeight } from '../systems/inventory.js';   // E4: PlayerEntity.CarriedWeight carries the gold counter's own term
+import { addItem, spendAmmoFor, carriedWeight } from '../systems/inventory.js';   // E4: PlayerEntity.CarriedWeight carries the gold counter's own term
 import { calculateAttackDamage } from '../combat/formulas.js';   // X2-slice: enemy-arrow impacts
 import { inflictPoison } from '../systems/poisons.js';   // X2-slice: poisoned enemy arrows
 import { weaponTypeForItem, WEAPON_TYPES } from '../combat/fpsWeapon.js';
@@ -1123,6 +1124,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // Flat groups: pixel-local base positions.
     const groups = new Map();
     const pixelLights = []; // archive-210 lanterns, pixel-local (R3)
+    const pixelHearths = []; // HEARTH1: the braziers and fire bowls among them, pixel-local
     const pixelAnimals = []; // A4: archive-201 town animals, pixel-local {pos, sound}
     const pixelSprings = []; // SURV3: the mod's water sources - fountains and wells (212: 0, 2, 8, 9; 85: 0), the dry fountain (212: 3), the troughs (41220-41222) - pixel-local {pos, dry}
     const pixelNpcFlats = []; // AUDIT 26 (F019): the flats RMBLayout stands as StaticNPCs, pixel-local
@@ -1356,11 +1358,17 @@ export async function bootWorld(canvas, renderer, params, status) {
             locLocal[0] + b.originX + flat.x, locLocal[1] + flat.y, locLocal[2] + b.originZ + flat.z);
         }
         for (const light of collectCityLights(b.dfBlock, lightSize)) {
-          pixelLights.push([
+          const lp = [
             locLocal[0] + b.originX + light.x,
             locLocal[1] + light.y,
             locLocal[2] + b.originZ + light.z,
-          ]);
+          ];
+          pixelLights.push(lp);
+          // HEARTH1: a town brazier is a fire, so the survival law wants
+          // it. Split off the SAME walk that builds the lanterns - the
+          // record is the only thing that tells the two apart and this
+          // is the one place that has it.
+          if (isHearthFlat(LIGHTS_ARCHIVE, light.record)) pixelHearths.push(lp);
         }
       }
 
@@ -1515,7 +1523,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       // (TravelOptionsMod.cs:541-551). Null for a pixel with no location.
       locationRect,
       _seasonsGen: seasonsGen,   // SIB1: the install this pixel's flats were built under (AUDIT 61: captured at the lookups)
-      px, py, terrain, water, tilemapTex, tilemap, groundArchive, models, windmills, batches, flatAnims, texRemap, lights: pixelLights, animals: pixelAnimals, springs: pixelSprings, skyBase: climate.skyBase, samples, natureCount: nature.length,
+      px, py, terrain, water, tilemapTex, tilemap, groundArchive, models, windmills, batches, flatAnims, texRemap, lights: pixelLights, hearths: pixelHearths, animals: pixelAnimals, springs: pixelSprings, skyBase: climate.skyBase, samples, natureCount: nature.length,
       tilemapBytes, season,   // GR1: the placer reads the tiles and the season
       paths,   // GRASS-PATH1: which tiles the road painter wrote; null on a pixel built before the network arrived
       withRoads,   // ROADS 25: painted with the network present, or before it arrived (see below)
@@ -2670,8 +2678,39 @@ export async function bootWorld(canvas, renderer, params, status) {
   // Online, in a cell, my camps ride my foes frame and a peer's arrive
   // with theirs (applyOwner in onFoes below); an owner gone quiet is
   // swept as their puppets are.
+  /**
+   * HEARTH1: THE WORLD'S OWN FIRES, in this host's frame.
+   *
+   * The braziers and fire bowls the pixels carry (`p.hearths`, collected
+   * off the same block walk that builds the lanterns), translated
+   * through the floating origin at the moment they are asked for. Only
+   * the pixels within a light's reach of the player can matter - a
+   * brazier two kilometres off is not one you are standing at - so the
+   * walk is cut at HEARTH_NEAR and what survives is a handful. Unlike
+   * the lantern pool beside it (PERF-LIGHTS) this is NOT refilled in
+   * place: that one runs once a frame over hundreds, this runs on the
+   * survival tick and the activation ray over the few fires within
+   * sixteen metres, and a pool for that would be bookkeeping bought
+   * with nothing.
+   */
+  const _hearthT = [0, 0, 0];
+  const hearthsNear = () => {
+    const out = [];
+    const eye = walkMode && playerSpawned ? player.pos : cam.pos;
+    for (const p of built.values()) {
+      if (!p.hearths?.length) continue;
+      const t = state.pixelTranslation(p.px, p.py, _hearthT);
+      for (const h of p.hearths) {
+        const x = h[0] + t[0], y = h[1] + t[1], z = h[2] + t[2];
+        if (Math.abs(x - eye[0]) > HEARTH_NEAR || Math.abs(z - eye[2]) > HEARTH_NEAR) continue;
+        out.push({ x, y, z });
+      }
+    }
+    return out;
+  };
   const camps = createCamps({
     renderer, getTexture, uploadRecordFrame, meshes: { getGpuMesh, cpuModels }, entity: playerEntity,
+    hearths: hearthsNear,   // HEARTH1
     camera: () => ({ feet: walkMode && playerSpawned ? player.pos : cam.pos, yaw: cam.yaw }), collider: () => collider,
     place: () => ({ insideBuilding: _mode() === 'interior', insideDungeon: _mode() === 'dungeon', inTown: _isPlayerInTownStrict(), enemiesNearby: areEnemiesNearby(exteriorFoePool(), { resting: true }), inWater: !!player.isPlayerSwimming }),
     pixelKeyAt: () => `${playerTravelPixel().x},${playerTravelPixel().y}`, say: (l) => townTalk.say(l), showOverlay: (w) => townTalk.showOverlay(w),
@@ -3265,10 +3304,10 @@ export async function bootWorld(canvas, renderer, params, status) {
   // ?dungeon host RAN every CastWhenUsed / CastWhenStrikes / SoulBound
   // / affinity arm against no ctx at all. They are optional-chained, so
   // it WAS silent. WAVE D closed it: the body is scenes/hostEnchant.js
-  // and dungeonContext.js:2221 mounts the same one, gated on
+  // and dungeonContext.js:2231 mounts the same one, gated on
   // `opts.enchantCtx !== false` because setDefaultEnchantCtx is a
   // session singleton and EC1 already routes THIS host's mount into
-  // that context through modes.dungeonCtx - so worldModes.js:4666
+  // that context through modes.dungeonCtx - so worldModes.js:4700
   // passes false beside its `chargen: false` and only the standalone
   // ?dungeon route mounts its own. S40 filled isResting
   // in - the sentence that stood here said it "stays absent above
@@ -5071,7 +5110,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // so an F9 pressed inside a shop recorded the street's sheath and
     // hand. The mode host answers for the rig that is actually drawn
     // and null outside interior mode (the dungeon owns its own
-    // composer, dungeonContext.js:5620), so exterior mode and a
+    // composer, dungeonContext.js:5634), so exterior mode and a
     // pre-seam mode host compose exactly as before, per field.
     const wp = modes?.weaponPose?.() ?? null;
     const snap = snapshotPlayer(playerEntity, {
@@ -6916,7 +6955,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // exterior -> the townTalk overlay, interior OR dungeon -> the mode
   // machine's slot. U43-ii shipped the dungeon half: showQuestBox
   // offers the window to `modes.showQuestOverlay` below, and
-  // worldModes answers it in BOTH modes (worldModes.js:7518-7581 -
+  // worldModes answers it in BOTH modes (worldModes.js:7567-7630 -
   // dungeon routes to dungeonCtx.showOverlay), so a dungeon popup is
   // shown rather than logged loudly and dropped.
   // AUDIT 24 (wave 21): DaggerfallMessageBox.Show() is a
@@ -11094,8 +11133,10 @@ export async function bootWorld(canvas, renderer, params, status) {
         // AUDIT 23 (combat-2): the bow machine's frame-4 loose sound.
         if (ev === 'bowSound') { audio.playOneShot(SOUND.ArrowShoot, 1.1); continue; }
         if (ev !== 'hit') continue;
-        if (weaponTypeForItem(weaponRig.playerWeapon.weapon) === WEAPON_TYPES.Bow) {
-          if (spendArrow(playerEntity.items)) {
+        // EVERY RANGED WEAPON, not only the bow: `isBowWeapon` is
+        // "scored on Archery", which is what the Thunderlock is too.
+        if (isBowWeapon(weaponRig.playerWeapon.weapon)) {
+          if (spendAmmoFor(playerEntity.items, weaponRig.playerWeapon.weapon)) {
             // AUDIT 23 (C14): the swing fatigue + the FULL bow tally
             // arm (Archery AND CriticalStrike) - see exterior.js.
             drainExteriorFatigue(SWING_WEAPON_FATIGUE_LOSS);

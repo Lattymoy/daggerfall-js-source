@@ -22,6 +22,7 @@ import { weightMultipliersByMaterial } from '../characters/weapons.js';
 // A2: SetItem's two draws-and-writes, one home each (itemTemplates.js
 // is a leaf of this module's import graph - it reads the same JSON).
 import { mintCondition, rollPaintingMessage, templateByIndex } from './itemTemplates.js';
+import { ammoTemplateFor } from '../characters/thunderlockIds.js';   // what a ranged weapon spends - a leaf, so no cycle (see the file)
 
 /** DaggerfallUnityItem.IsEnchanted verbatim
  *  (DaggerfallUnityItem.cs:266-269): DERIVED from the enchantment
@@ -408,6 +409,31 @@ export function removeOne(list, templateIndex, opts = null) {
  *  with the recovery rule it exists to qualify. */
 export const spendArrow = (list) => removeOne(list, ARROW_TEMPLATE,
   { group: 'Weapons', allowQuestItem: false, priorityToConjured: true });
+
+/**
+ * THE SHOT'S AMMUNITION, by the weapon that fires it.
+ *
+ * DFU has one ranged weapon family and therefore one ammunition, so
+ * `spendArrow` was the whole law and every host said it by name. The
+ * port has two now - the Dwarven Thunderlock spends a Dwemer Pellet -
+ * and a host that asks "spend an arrow" while holding a gun is asking
+ * the wrong question. This asks the weapon.
+ *
+ * A bow, or anything else that reaches here, still spends an Arrow:
+ * the answer for every classic weapon is unchanged.
+ */
+export const spendAmmoFor = (list, weapon) =>
+  removeOne(list, ammoTemplateFor(weapon) ?? ARROW_TEMPLATE,
+    { group: 'Weapons', allowQuestItem: false, priorityToConjured: true });
+
+/** How much ammunition the pack holds for that weapon - the number the
+ *  out-of-ammo sheathe and the quiver both read. */
+export function ammoCountFor(list, weapon) {
+  const template = ammoTemplateFor(weapon) ?? ARROW_TEMPLATE;
+  let n = 0;
+  for (const it of list ?? []) if (it?.templateIndex === template) n += Math.max(0, it.stackCount ?? 1);
+  return n;
+}
 
 export function transferAll(fromList, toList) {
   let n = 0;

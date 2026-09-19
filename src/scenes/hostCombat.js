@@ -41,32 +41,22 @@ import { comprehendLanguagesChance } from '../systems/effects.js';   // X11: the
  *  Longsword trained - and rolled to hit with - Hand-to-Hand for the
  *  rest of the game. DaggerfallUnityItem.cs:910-941 + :943-962,
  *  keyed on Weapons (ItemEnums.cs:113..130). */
-export const WEAPON_SKILL_BY_TEMPLATE = Object.freeze({
-  113: SKILLS.ShortBlade,   // Dagger
-  114: SKILLS.ShortBlade,   // Tanto
-  115: SKILLS.BluntWeapon,  // Staff
-  116: SKILLS.ShortBlade,   // Shortsword
-  117: SKILLS.ShortBlade,   // Wakazashi
-  118: SKILLS.LongBlade,    // Broadsword
-  119: SKILLS.LongBlade,    // Saber
-  120: SKILLS.LongBlade,    // Longsword
-  121: SKILLS.LongBlade,    // Katana
-  122: SKILLS.LongBlade,    // Claymore
-  123: SKILLS.LongBlade,    // Dai-Katana
-  124: SKILLS.BluntWeapon,  // Mace
-  125: SKILLS.BluntWeapon,  // Flail
-  126: SKILLS.BluntWeapon,  // Warhammer
-  127: SKILLS.Axe,          // Battle Axe
-  128: SKILLS.Axe,          // War Axe
-  129: SKILLS.Archery,      // Short Bow
-  130: SKILLS.Archery,      // Long Bow
-});
+// AUDIT-THUNDERLOCK: this was a SECOND COPY of the table - the very
+// duplicate test/audit24_onehome.test.js's ratchet has been naming
+// (`weaponSkillUsed  src/characters/weapons.js src/scenes/hostCombat.js`)
+// - and the port's own weapon is what made it cost something: adding
+// the Dwarven Thunderlock to characters/weapons.js left THIS copy
+// answering null, so `isBowWeapon` said false and the gun fell through
+// to the melee arc in every host. One table now, re-exported here so
+// the callers that speak this file's name keep working.
+export { weaponSkillUsed } from '../characters/weapons.js';
+import { weaponSkillUsed, WEAPON_SKILL_USED } from '../characters/weapons.js';
 
-/** GetWeaponSkillIDAsShort: null (Skills.None) for anything that is
- *  not one of the 18 weapon templates. */
-export function weaponSkillUsed(templateIndex) {
-  return WEAPON_SKILL_BY_TEMPLATE[templateIndex] ?? null;
-}
+/** The same table in the shape THIS file's name has always had - an
+ *  object keyed by template index. Derived, so it cannot drift from
+ *  the Map it is derived from. */
+export const WEAPON_SKILL_BY_TEMPLATE = Object.freeze(Object.fromEntries(WEAPON_SKILL_USED));
+
 
 /** CalculateAttackDamage's skillID pick (FormulaHelper.cs:573-590):
  *  the weapon's skill, or HandToHand with no weapon. */

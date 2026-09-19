@@ -30,7 +30,7 @@ export const CITY_LIGHT_COLOR = Object.freeze([1, 1, 1]);
  * @param {object} dfBlock - BlocksFile.getBlock output (type Rmb).
  * @param {(record:number) => {w:number,h:number}} getScaledSize -
  *   scaledBillboardSize for archive 210 records.
- * @returns {Array<{x:number,y:number,z:number}>}
+ * @returns {Array<{record:number,x:number,y:number,z:number}>}
  */
 export function collectCityLights(dfBlock, getScaledSize) {
   const rmb = dfBlock.rmbBlock;
@@ -41,6 +41,13 @@ export function collectCityLights(dfBlock, getScaledSize) {
     if (obj.textureArchive !== LIGHTS_ARCHIVE) continue;
     const size = getScaledSize(obj.textureRecord);
     lights.push({
+      // HEARTH1: the RECORD rides along. A lantern and a brazier are the
+      // same point light to this collector and NOT the same thing to the
+      // survival law (survival/hearth.js), and this is the one walk of
+      // the block that knows which is which - collecting the flats a
+      // second time to ask again would be the same walk for the same
+      // answer.
+      record: obj.textureRecord,
       x: obj.xPos * GLOBAL_SCALE,
       y: -obj.yPos * GLOBAL_SCALE + size.h,
       z: (obj.zPos + RMB_DIMENSION) * GLOBAL_SCALE,
@@ -55,6 +62,7 @@ export function collectCityLights(dfBlock, getScaledSize) {
       if (obj.textureArchive !== LIGHTS_ARCHIVE) continue;
       const size = getScaledSize(obj.textureRecord);
       lights.push({
+        record: obj.textureRecord,   // HEARTH1
         x: obj.xPos * GLOBAL_SCALE + subX,
         y: -obj.yPos * GLOBAL_SCALE + size.h,
         z: (obj.zPos + RMB_DIMENSION) * GLOBAL_SCALE + subZ,

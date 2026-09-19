@@ -1,0 +1,218 @@
+[
+ {
+  "name": "HEARTH1-the-wall-torches-count-so-every-lit-corridor-is-a-kitchen",
+  "file": "src/systems/survival/hearth.js",
+  "old": "export const HEARTH_RECORDS = Object.freeze([0, 1, 20]);",
+  "new": "export const HEARTH_RECORDS = Object.freeze([0, 1, 6, 17, 20]);",
+  "tests": [
+   "test/hearth1_worldfires.test.js"
+  ]
+ },
+ {
+  "name": "HEARTH1-the-brazier-itself-drops-out-of-the-law",
+  "file": "src/systems/survival/hearth.js",
+  "old": "export const HEARTH_RECORDS = Object.freeze([0, 1, 20]);",
+  "new": "export const HEARTH_RECORDS = Object.freeze([0, 1]);",
+  "tests": [
+   "test/hearth1_worldfires.test.js"
+  ]
+ },
+ {
+  "name": "HEARTH1-the-candles-and-lanterns-count-too-so-a-candlelit-room-warms-you",
+  "file": "src/systems/survival/hearth.js",
+  "old": "  return archive === HEARTH_ARCHIVE && HEARTH_SET.has(record);",
+  "new": "  return archive === HEARTH_ARCHIVE;",
+  "tests": [
+   "test/hearth1_worldfires.test.js"
+  ]
+ },
+ {
+  "name": "HEARTH1-the-archive-is-not-checked-so-any-record-0-flat-in-the-world-is-a-fire",
+  "file": "src/systems/survival/hearth.js",
+  "old": "  return archive === HEARTH_ARCHIVE && HEARTH_SET.has(record);",
+  "new": "  return HEARTH_SET.has(record);",
+  "tests": [
+   "test/hearth1_worldfires.test.js"
+  ]
+ },
+ {
+  "name": "HEARTH1-a-hole-in-the-flat-list-throws-instead-of-being-skipped",
+  "file": "src/systems/survival/hearth.js",
+  "old": "    if (!f) continue;",
+  "new": "",
+  "tests": [
+   "test/hearth1_worldfires.test.js"
+  ]
+ },
+ {
+  "name": "HEARTH1-nearestHearth-ignores-the-vertical-so-a-fire-a-storey-down-warms-you",
+  "file": "src/systems/survival/hearth.js",
+  "old": "    const d = Math.hypot(h.x - pos[0], h.y - pos[1], h.z - pos[2]);",
+  "new": "    const d = Math.hypot(h.x - pos[0], h.z - pos[2]);",
+  "tests": [
+   "test/hearth1_worldfires.test.js"
+  ]
+ },
+ {
+  "name": "HEARTH1-the-reach-bound-opens-so-a-fire-exactly-at-it-is-out-where-a-camps-is-in",
+  "file": "src/systems/survival/hearth.js",
+  "old": "    if (d <= bestD) { best = h; bestD = d; }",
+  "new": "    if (d < bestD) { best = h; bestD = d; }",
+  "tests": [
+   "test/hearth1_worldfires.test.js"
+  ]
+ },
+ {
+  "name": "HEARTH1-the-streaming-cut-off-falls-inside-the-warmth-reach-so-the-walk-answers-before-the-law-does",
+  "file": "src/systems/survival/hearth.js",
+  "old": "export const HEARTH_NEAR = 16;",
+  "new": "export const HEARTH_NEAR = 3;",
+  "tests": [
+   "test/hearth1_worldfires.test.js"
+  ]
+ },
+ {
+  "name": "HEARTH1-byFire-forgets-the-world-fires-again-and-only-a-placed-camp-counts",
+  "file": "src/scenes/camps.js",
+  "old": "  const byFire = (pos) => !!nearestFire(camps.map((c) => c.rec), pos, now()) || !!hearthAt(pos);",
+  "new": "  const byFire = (pos) => !!nearestFire(camps.map((c) => c.rec), pos, now());",
+  "tests": [
+   "test/hearth1_worldfires.test.js"
+  ]
+ },
+ {
+  "name": "HEARTH1-campAt-answers-with-a-hearth-so-a-brazier-becomes-a-camp-to-pack-and-publish",
+  "file": "src/scenes/camps.js",
+  "old": "  const campAt = (pos) => nearestFire(camps.map((c) => c.rec), pos, now());",
+  "new": "  const campAt = (pos) => nearestFire(camps.map((c) => c.rec), pos, now()) ?? hearthAt(pos);",
+  "tests": [
+   "test/hearth1_worldfires.test.js"
+  ]
+ },
+ {
+  "name": "HEARTH1-the-ray-never-sees-a-world-fire-so-there-is-nothing-to-cook-on",
+  "file": "src/scenes/camps.js",
+  "old": "    const wf = worldFires();\n    if (wf) for (let i = 0; i < wf.length; i++) {",
+  "new": "    const wf = null;\n    if (wf) for (let i = 0; i < wf.length; i++) {",
+  "tests": [
+   "test/hearth1_worldfires.test.js"
+  ]
+ },
+ {
+  "name": "HEARTH1-the-hearths-box-does-not-reach-down-so-aiming-at-the-bowl-misses-the-fire",
+  "file": "src/scenes/camps.js",
+  "old": "        aabb: { min: [h.x - HEARTH_HALF, h.y - HEARTH_HALF * 2, h.z - HEARTH_HALF], max: [h.x + HEARTH_HALF, h.y + HEARTH_HALF, h.z + HEARTH_HALF] },",
+  "new": "        aabb: { min: [h.x - HEARTH_HALF, h.y, h.z - HEARTH_HALF], max: [h.x + HEARTH_HALF, h.y + HEARTH_HALF, h.z + HEARTH_HALF] },",
+  "tests": [
+   "test/hearth1_worldfires.test.js"
+  ]
+ },
+ {
+  "name": "HEARTH1-a-world-fire-is-named-as-your-own-campfire",
+  "file": "src/scenes/camps.js",
+  "old": "      if (mode === 'info' || mode === 'dialogue') { say(CAMP_TEXT.seeHearth); return true; }",
+  "new": "      if (mode === 'info' || mode === 'dialogue') { say(CAMP_TEXT.seeFire); return true; }",
+  "tests": [
+   "test/hearth1_worldfires.test.js"
+  ]
+ },
+ {
+  "name": "HEARTH1-openCook-tests-a-null-camps-embers-so-cooking-on-a-brazier-throws",
+  "file": "src/scenes/camps.js",
+  "old": "    if (c && !fireLit(c.rec, now())) { say(CAMP_TEXT.cold); return null; }",
+  "new": "    if (!fireLit(c.rec, now())) { say(CAMP_TEXT.cold); return null; }",
+  "tests": [
+   "test/hearth1_worldfires.test.js"
+  ]
+ },
+ {
+  "name": "HEARTH1-the-misc-block-flats-stop-carrying-the-record-so-half-a-towns-braziers-are-lanterns",
+  "file": "src/world/cityLights.js",
+  "old": "      record: obj.textureRecord,\n      x: obj.xPos * GLOBAL_SCALE,",
+  "new": "      x: obj.xPos * GLOBAL_SCALE,",
+  "tests": [
+   "test/hearth1_worldfires.test.js"
+  ]
+ },
+ {
+  "name": "HEARTH1-the-subrecord-flats-stop-carrying-it-so-the-other-half-are",
+  "file": "src/world/cityLights.js",
+  "old": "        record: obj.textureRecord,   // HEARTH1\n",
+  "new": "",
+  "tests": [
+   "test/hearth1_worldfires.test.js"
+  ]
+ },
+ {
+  "name": "HEARTH1-the-interior-collector-stops-carrying-it-so-no-tavern-has-a-hearth",
+  "file": "src/world/interiorLights.js",
+  "old": "      record: f.record,   // HEARTH1",
+  "new": "",
+  "tests": [
+   "test/hearth1_worldfires.test.js"
+  ]
+ },
+ {
+  "name": "HEARTH1-the-streaming-host-stops-collecting-so-no-town-brazier-is-a-fire",
+  "file": "src/scenes/world.js",
+  "old": "          if (isHearthFlat(LIGHTS_ARCHIVE, light.record)) pixelHearths.push(lp);",
+  "new": "",
+  "tests": [
+   "test/hearth1_worldfires.test.js"
+  ]
+ },
+ {
+  "name": "HEARTH1-the-fixed-city-stops-collecting",
+  "file": "src/scenes/exterior.js",
+  "old": "      if (isHearthFlat(LIGHTS_ARCHIVE, light.record)) cityHearths.push(l);",
+  "new": "",
+  "tests": [
+   "test/hearth1_worldfires.test.js"
+  ]
+ },
+ {
+  "name": "HEARTH1-the-dungeon-stops-collecting-so-a-bowl-of-fire-underground-is-scenery-again",
+  "file": "src/scenes/dungeonContext.js",
+  "old": "      if (isHearthFlat(f.archive, f.record)) dungeonHearths.push({ x: f.x + b.originX, y: f.y, z: f.z + b.originZ });",
+  "new": "",
+  "tests": [
+   "test/hearth1_worldfires.test.js"
+  ]
+ },
+ {
+  "name": "HEARTH1-the-interiors-byFire-goes-back-to-a-hard-false",
+  "file": "src/scenes/worldModes.js",
+  "old": "byFire: interiorCamps.byFire(player.pos) } : null)",
+  "new": "byFire: false } : null)",
+  "tests": [
+   "test/hearth1_worldfires.test.js"
+  ]
+ },
+ {
+  "name": "HEARTH1-the-rooms-fires-outlive-the-room-so-the-next-building-inherits-a-hearth",
+  "file": "src/scenes/worldModes.js",
+  "old": "    interiorCamps.destroyAll(); interiorHearths.length = 0;   // HEARTH1: this room's fires are this room's - one building's hearth is not the next one's",
+  "new": "",
+  "tests": [
+   "test/hearth1_worldfires.test.js"
+  ]
+ },
+ {
+  "name": "HEARTH1-the-interior-pool-is-allowed-to-pitch-a-camp-indoors",
+  "file": "src/scenes/worldModes.js",
+  "old": "    place: () => ({ insideBuilding: true }),\n    camera: () => ({ feet: player.pos, yaw: cam.yaw }),",
+  "new": "    place: () => ({}),\n    camera: () => ({ feet: player.pos, yaw: cam.yaw }),",
+  "tests": [
+   "test/hearth1_worldfires.test.js"
+  ]
+ },
+ {
+  "name": "HEARTH1-the-streaming-walk-forgets-the-floating-origin-so-a-brazier-drifts-off-its-pixel",
+  "file": "src/scenes/world.js",
+  "old": "        const x = h[0] + t[0], y = h[1] + t[1], z = h[2] + t[2];",
+  "new": "        const x = h[0], y = h[1], z = h[2];",
+  "tests": [
+   "test/hearth1_worldfires.test.js"
+  ]
+ }
+]

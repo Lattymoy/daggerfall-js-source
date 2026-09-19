@@ -22,6 +22,7 @@ import { CANNOT_CHANGE_INDOORS } from '../ui/transportWindow.js';   // TR5: the 
 import { smallerDungeonsStamp, needsStartWarp } from '../world/smallerDungeons.js';   // AUDIT 28 W4 / FT1: the save-time stamp and the load-time warp, one home
 import { remapSubMeshes } from '../world/texRemap.js';   // WM3: the one climate/dungeon remap seam
 import { collectDungeonLights, dungeonAmbientFor, DUNGEON_AMBIENT, SPECIAL_AREA_BLOCK } from '../world/dungeonLights.js';   // AUDIT 26 F183: the castle / special-area ambients
+import { isHearthFlat } from '../systems/survival/hearth.js';   // HEARTH1: a bowl of fire down a corridor is a fire you can cook on
 import { CityLightAnimator, MINUTES_PER_DAY } from '../world/worldClock.js';
 import { billboardSize, mobileBillboardSize } from '../world/rmbFlats.js';
 import { enemyControllerHeight, idleSpriteHeight, feetFromCentre, centreFromFeet, spriteOriginY, keepRebuiltSpawn } from '../characters/enemyAnchor.js';   // INCIDENT 2026-09-04 (ceiling bats): SetupDemoEnemy.cs:103-115 capsule + DaggerfallMobileUnit.cs:398-411 anchor
@@ -46,7 +47,7 @@ import { registerPreventRestCondition, unregisterPreventRestCondition } from '..
 import { runSurvivalMinutes } from '../systems/survival/needs.js';   // AUDIT SURV B: the dungeon's rest pays its night asleep
 import { dateFromClassicMinutes } from '../systems/gameDate.js';   // SURV7: the env's month
 import { playerEntity, surfacePlayer, hurtPlayer as hurtEntity, damageShieldPool, setDeathPresenter, setAvoidDeathHook } from '../characters/playerEntity.js';   // AUDIT 58: DecreaseHealth's shield hook is the BASE class's, so every entity's door owes it
-import { addItem, spendArrow, isEnchanted } from '../systems/inventory.js';
+import { addItem, spendAmmoFor, isEnchanted } from '../systems/inventory.js';
 import { useQuickslot, swapQuickslot, offHandQuickslot, spellQuickslotPress, offHandOffersSwap, tickQuickslotHold } from '../systems/quickslots.js';   // QS2/QS4: the diamond's performers   // QS6: the spell slot, the off hand's swap question, and the hold machine
 import { worldAabb, objectAabb } from '../player/activate.js';   // AUDIT 63 F37/F38: objectAabb is the LIVE box a ray or a collision meets
 import { createWeaponRig, envAttack } from '../combat/weaponRig.js';   // C10: the shared FP-weapon surface
@@ -432,6 +433,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   const positionIndex = new Map();
   const torches = [];         // A2: { pos, handle } - looping Burning sources gated by range
   const ambientAnimals = [];  // A2: { pos, sound } - random-cadence barks (A4: consumed by the shared module)
+  const dungeonHearths = []; // HEARTH1: { x, y, z } - the braziers and fire bowls, for the survival law
   const animalAmbience = createAnimalAmbience(audio, () => ambientAnimals);
   for (const [bi, b] of dungeon.blocks.entries()) {
     const originMatrix = trs(b.originX, 0, b.originZ, 0, 0, 0);
@@ -648,6 +650,14 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         ambientAnimals.push({ pos: [f.x + b.originX, f.y, f.z + b.originZ], sound: ANIMAL_SOUND_BY_RECORD[f.record] });
       }
       if (f.action) await registerFlatAction(bi, f.position, f.action, f.x + b.originX, f.y, f.z + b.originZ, f.archive, f.record);
+      // HEARTH1 (Mac: "Does this version of C&C not let you use braziers
+      // as extra campfires to cook from?"): a dungeon's own fires. The
+      // block frame, off the walk that was already reading every flat -
+      // unlike the two exterior hosts there is no lantern list to split
+      // this from, because a dungeon's lights are RDB Light RESOURCES
+      // (collectDungeonLights) with no texture record at all, and the
+      // fires are flats.
+      if (isHearthFlat(f.archive, f.record)) dungeonHearths.push({ x: f.x + b.originX, y: f.y, z: f.z + b.originZ });
     }
     for (const m of b.layout.markers) {
       // Acting markers join the runtime too (DFU AddActionFlatHelper
@@ -1482,7 +1492,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // owned, and destroy() hands it back (the _prevPassiveHost idiom this
   // file already uses for its other process-global seams). A bare null
   // would not do: on ?world and ?exterior the previous holder is the
-  // host's own townTalk sink (world.js:7953 / exterior.js:3301), set
+  // host's own townTalk sink (world.js:7992 / exterior.js:3310), set
   // once at boot and never again, so nulling on the way out of the
   // first dungeon would silently un-file every mid-screen label above
   // ground for the rest of the session - MC-1's own bug, re-opened.
@@ -1985,7 +1995,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // copied mount would have diverged the first time an arm grew.
   /** DR1: THE TWO SPELL WINDOWS THIS HOST MOUNTS NOW, and the one door
    *  they go through. `mountSpellWindow` is worldModes'
-   *  mountSpellWindow DUNGEON ARM (worldModes.js:1067,
+   *  mountSpellWindow DUNGEON ARM (worldModes.js:1100,
    *  `dungeonCtx?.showOverlay(win)`) resolved to what it actually
    *  calls here - this file's own pushDungeonWindow, which IS
    *  UserInterfaceManager.PushWindow. So a spell window raised over an
@@ -2474,7 +2484,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // NEXT updateMissiles pass to fill. But the push lands in a
     // MICROTASK - this is async and its one caller does not await it -
     // and both hosts draw dynamicDraws BEFORE they call drawFoes
-    // (dungeon.js:1001 against :1039; worldModes.js:6093 against :6104).   // QS6: both pairs' SECOND half was stale before this slice - they named neither `drawFoes` call, and a positional bump would have moved a wrong number by the right offset; re-resolved by content
+    // (dungeon.js:1001 against :1039; worldModes.js:6140 against :6163).   // QS6: both pairs' SECOND half was stale before this slice - they named neither `drawFoes` call, and a positional bump would have moved a wrong number by the right offset; re-resolved by content
     // So the very next frame drew the arrow with a NULL matrix, and
     // `uniformMatrix4fv(uModel, false, null)` throws - Float32List is
     // a non-nullable WebIDL union. Firing a bow killed the frame loop,
@@ -2694,6 +2704,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   const _survivalGate = installSurvivalGate(registerPreventRestCondition, () => playerEntity, survivalEnvNow);   // SURV7: the rest gate, this host's readers; AUDIT SURV B/C: the pair leaves the seam with this context
   const camps = createCamps({
     renderer, getTexture, uploadRecordFrame, meshes: { getGpuMesh, cpuModels }, entity: playerEntity,
+    hearths: () => dungeonHearths,   // HEARTH1: built with the blocks and standing still, like everything else down here
     camera: () => (_fpFeet ? { feet: _fpFeet, yaw: _fpYaw } : null), collider: () => collider,
     place: () => ({ insideBuilding: false, insideDungeon: true, inTown: false, enemiesNearby: areEnemiesNearby(foes, { resting: true }), inWater: !!(_fpFeet && Number.isFinite(blockWaterLevelAt(_fpFeet[0], _fpFeet[2])) && blockWaterLevelAt(_fpFeet[0], _fpFeet[2]) !== 10000 && _fpFeet[1] < -blockWaterLevelAt(_fpFeet[0], _fpFeet[2]) * GLOBAL_SCALE) }),
     say: (l) => hudText.add(l), showOverlay: (w) => pushDungeonWindow(w), openRest: () => { activeOverlay = null; api.toggleRest?.(); },   // the picker leaves the slot first
@@ -3002,8 +3013,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
               // AUDIT 39 (#64) / THE FOUR HOSTS RULE - SHIPPED (wave D):
               // this host was the FOURTH BODY of the player-arrow law
               // and is now the fourth CALLER. combat/arrowFlight.js's
-              // playerArrowHitFoe is the one copy world.js:11040,
-              // exterior.js:4727 and worldModes.js:6234 already ran;
+              // playerArrowHitFoe is the one copy world.js:11079,
+              // exterior.js:4736 and worldModes.js:6281 already ran;
               // the flag said the divergence would bite and it already
               // had. This copy splashed at the ARROW TIP
               // (`[m.pos[0], m.pos[1], m.pos[2]]`) on the claim that
@@ -4634,7 +4645,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
           // look instead of the melee arc (WeaponManager verbatim
           // shape).
           const lookDir = [-view[2], -view[6], -view[10]];   // the view-matrix forward this file already uses for the viewmodel
-          if (!spendArrow(playerEntity.items)) continue;   // one Arrow per loose, verbatim (the arrow guard normally pre-sheathes at zero)
+          // one round per loose, verbatim (the ammo guard normally
+          // pre-sheathes at zero). WHICH round is the weapon's answer:
+          // a bow spends an Arrow, the Thunderlock a Dwemer Pellet.
+          if (!spendAmmoFor(playerEntity.items, playerWeapon.weapon)) continue;
           fireArrow(eye, lookDir, playerWeapon.weapon, true);   // ROAD-H H1c: fireArrow applies GetAimPosition's player arm (the bow hand), as DFU's missile does its own
           // WeaponManager.cs:419-436, in DFU's order: the swing costs
           // fatigue whatever it hits, and a BOW always takes the tally
@@ -6466,7 +6480,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       //
       // The interior host's `interiorHitEffects.clear()` is NOT the same
       // line and was never a precedent for one: that pool is built with
-      // no `onSpawn` (worldModes.js:541), so it owns its batches and
+      // no `onSpawn` (worldModes.js:574), so it owns its batches and
       // clear() is the only thing that frees them - and it runs on a
       // between-buildings RESET, not a teardown.
       // AUDIT 64 F41: the scene ambience leaves with the scene too -
