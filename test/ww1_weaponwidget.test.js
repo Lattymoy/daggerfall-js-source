@@ -559,7 +559,7 @@ test('WW1: the Morrowind arms take the frame\'s Position and Scale over their ow
 
 test('WW1: the rig runs the clone beside the machine - the late update after the machine\'s step with the frame\'s inputs, the draw seam after the arms and before the classic sprite, the end-of-frame resume, the recoil fed from resolveHit, the arms\' transform, the hosts\' motion words, the look latch, the miss billboard', () => {
   const rig = rd('src/combat/weaponRig.js');
-  assert.match(rig, /const widget = createWeaponWidget\(\{ audio, envHit: envCast, missEffect \}\);/);
+  assert.match(rig, /const widget = createWeaponWidget\(\{\s*audio, envHit: envCast, missEffect,/);
   assert.match(rig, /const widgetOn = \(\) => modSetting\('weapon-widget', 'Enabled'\);/);
   assert.match(rig, /playerWeapon\.onAttackResult = \(\{ foe, damage \}\) => widget\.onAttackDamageCalculated\(\{ damage, parrySounds: !!foe\?\.basics\?\.parrySounds, pos: foe\?\.pos \?\? foe\?\.ai\?\.pos \?\? null, isEnemy: true \}\);/);
   // SW1 widened the inner span from 2800: the shield widget's own frame

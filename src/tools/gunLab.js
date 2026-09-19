@@ -416,7 +416,7 @@ export function widgetRigStep(rig, s, dt, {
 
 /**
  * THE MOTOR'S FRAME, as the rig assembles it for the clone
- * (weaponRig.js:1011-1018) - baseSpeed from GetBaseSpeed's walk arm,
+ * (weaponRig.js:1046-1053) - baseSpeed from GetBaseSpeed's walk arm,
  * speedRatio the live speed over it, and localVel the eye's motion
  * turned into the body's frame (right, up, forward). The lab has no
  * motor, so `walking`/`running` stand in for one and the vector is
