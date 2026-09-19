@@ -40,7 +40,8 @@ import { vendorTextureStandIn, preloadTextureArchive } from '../src/systems/text
 import { paperdollItemImage, PAPERDOLL_ORIGIN } from '../src/ui/paperDoll.js';
 import { PAPERDOLL_OFFSET } from '../src/systems/thunderlock.js';
 import { createRecoil, createScreenShake, GUN_FEEL, GUN_TICK_SECONDS, GUN_COOLDOWN_SECONDS } from '../src/combat/gunFeel.js';   // FIELD-GUN6
-import { createGunMachine } from '../src/tools/gunLab.js';   // FIELD-GUN7: the PROTOTYPE's own machine, as the oracle
+import { createGunMachine, placeSprite, unionDrawRect } from '../src/tools/gunLab.js';   // FIELD-GUN7/10: the PROTOTYPE's own machine and its placement, as the oracle
+import { drawFpsWeapon } from '../src/combat/fpsWeapon.js';   // FIELD-GUN10
 import { gunPitch } from '../src/combat/gunFeel.js';   // FIELD-GUN8
 import { GROUP_TEMPLATE_INDICES } from '../src/systems/itemTemplates.js';
 import { FIND_MIN_TIER } from '../src/systems/thunderlock.js';
@@ -720,7 +721,7 @@ test('FIELD-GUN7: the POSE is the lab\'s too - size 49, and the raise rides the 
   const rig = readFileSync('src/combat/weaponRig.js', 'utf8');
   assert.match(rig, /weaponOffsetHeight\(\) \+ GUN_FEEL\.raise/,
     'the bar\'s offset is kept and the lab\'s raise rides it');
-  assert.match(rig, /_tlAdjust \? weaponOffsetHeight\(\) \+ GUN_FEEL\.raise : undefined/,
+  assert.match(rig, /_tlAdjust \? weaponOffsetHeight\(\) \+ GUN_FEEL\.raise \* \(c\.height \/ 200\) : undefined/,
     'and only this weapon takes it - every other keeps drawFpsWeapon\'s own default');
 });
 
@@ -842,4 +843,81 @@ test('FIELD-GUN8: the voice and the one module the lab turns on', () => {
   assert.match(rig, /return s;/, 'and everything else is handed back untouched');
   const decl = rig.slice(rig.indexOf('const widget = createWeaponWidget('), rig.indexOf('const widgetOn ='));
   assert.ok(!/Modules\.(Bob|Offset|Step)/.test(decl), 'no other module is touched');
+});
+
+test('FIELD-GUN10: the game DRAWS the gun where the prototype draws it', () => {
+  // Mac, a fourth time: "It's still not 1:1. I don't get why it's so
+  // hard to have byte level parity."
+  //
+  // The answer, and it is the honest one: there are TWO
+  // implementations of the placement, and every round before this
+  // checked their INPUTS rather than their OUTPUT. The lab lays the
+  // rect out with placeSprite + unionDrawRect; the game lays it out
+  // inside drawFpsWeapon. Copying numbers between two functions
+  // cannot converge - it only moves the chance of being wrong around.
+  //
+  // So this diffs the RECT, which is the only thing a player sees.
+  // Run against the code before the fix it prints dy=-23: the game
+  // drew the gun twenty-three pixels above the prototype, because
+  // `offsetHeight` is in SCREEN pixels (it is the large HUD bar's own
+  // drawn height) and the lab's `raise` is in NATIVE 320x200 units.
+  const CW = 1280, CH = 800;
+  // the real art's boxes, as tools/gunProtoProbe.mjs measures them off
+  // the shipped sheet: the flash grows UP and LEFT, so the union is
+  // taller than the gun and shares its bottom edge
+  const anchor = { x: 0, y: 21, w: 585, h: 312 };
+  const union = { x: 0, y: 0, w: 586, h: 333 };
+
+  // ── the LAB's path, exactly as gun-proto.html drives it ──────────
+  const base = placeSprite({
+    canvasW: CW, canvasH: CH,
+    frameW: anchor.w, frameH: anchor.h,
+    widthPct: GUN_FEEL.widthPct, align: ALIGN.Right, offset: 0,
+    flip: false, offsetHeight: GUN_FEEL.raise * (CH / 200),
+  });
+  const anc = { x: anchor.x - union.x, y: anchor.y - union.y, w: anchor.w, h: anchor.h };
+  const labRect = unionDrawRect(base, anc, union);
+
+  // ── the GAME's path: the real drawFpsWeapon, with the art shaped
+  // the way loadThunderlockArt shapes it and a renderer that only
+  // remembers the rect it was handed ─────────────────────────────
+  const scale = (GUN_FEEL.widthPct * 320) / anchor.w;
+  const rec = { width: Math.round(union.w * scale), height: Math.round(union.h * scale), frames: ['tex'] };
+  const art = {
+    weaponType: WEAPON_TYPES.Thunderlock,
+    anims: getWeaponAnims(WEAPON_TYPES.Thunderlock),
+    records: [rec, rec],
+  };
+  let gameRect = null;
+  const renderer = { drawScreenQuad: (_tex, rect) => { gameRect = rect; } };
+  drawFpsWeapon(renderer, { width: CW, height: CH }, art, 'Idle', 0, {
+    flipHorizontal: false,
+    // what weaponRig passes: the HUD bar (zero here) plus the lab's
+    // raise TIMES THE SURFACE SCALE, which is the fix this pins
+    offsetHeight: 0 + GUN_FEEL.raise * (CH / 200),
+    adjust: { x: 0, y: 0 },
+  });
+
+  assert.ok(gameRect, 'the game drew something');
+  // THE TOLERANCE IS DERIVED, not picked. loadThunderlockArt rounds
+  // the record to whole NATIVE pixels where the lab keeps a float, so
+  // up to half a native pixel of error enters - and the surface scale
+  // multiplies it (x4 on an 800px-tall window). Half a native pixel
+  // plus half a screen one is the most rounding can account for;
+  // anything past that is a real divergence, and the 23px the raise
+  // was out by is twenty times it.
+  const tol = 0.5 * (CH / 200) + 0.5;
+  for (const k of ['x', 'y', 'w', 'h']) {
+    const d = gameRect[k] - labRect[k];
+    assert.ok(Math.abs(d) <= tol,
+      `the game's ${k} is ${d.toFixed(2)}px from the prototype's, past the ${tol}px rounding can explain `
+      + `(game ${gameRect[k].toFixed(2)}, lab ${labRect[k].toFixed(2)})`);
+  }
+
+  // ...and the rig really passes the scaled raise, since the pin
+  // above would pass just as well against a lab-shaped call that the
+  // game never makes.
+  const rig = readFileSync('src/combat/weaponRig.js', 'utf8');
+  assert.match(rig, /weaponOffsetHeight\(\) \+ GUN_FEEL\.raise \* \(c\.height \/ 200\)/,
+    'the rig scales the raise from native units into screen pixels');
 });
