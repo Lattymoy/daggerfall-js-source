@@ -2643,3 +2643,51 @@ moved.
 costs you two million times a frame. The exterior's real bill was never
 in the things that were easy to count.**
 
+## TREES1 (2026-09-19) - THE DARKENING ON THE TREES WAS PERF-SUN1 MEETING A SPRITE
+
+Mac, the day PERF-SUN shipped: *"There's this weird darkening effect
+happening to trees."*
+
+Mine, and the argument that produced it was **half right**.
+
+PERF-SUN1 gave the far cascade one shadow tap instead of nine, on this
+reasoning: each tap is already a hardware 2x2, the far cascade's texel is
+about two pixels at a hundred metres, so the extra eight soften nothing
+anyone can resolve. That is an **antialiasing** argument, and it holds
+perfectly for the terrain, the meshes, the rigs and the water - every one
+of which shades **per fragment**, so neighbouring pixels smooth a coarse
+filter whatever the lookup returns.
+
+**A flat is not like that.** `EL_BB_FS` reads the sun map ONCE, at the
+sprite's base, and wears that single value over the entire quad - which
+is EL2's own decision, because a sprite sampled at its own fragment would
+shadow itself. For a tree the kernel is therefore not softening an edge.
+It is the only gradation the tree has.
+
+So with one tap: a tree whose foot sits near a shadow edge stops being
+*partly* shaded and becomes fully lit or fully dark, the whole sprite at
+once - and jumps again at the cascade boundary as you walk toward it. A
+weird darkening effect happening to trees.
+
+`sunShadowSoftAt` keeps the kernel at every distance, and the flat is its
+only caller. One body, one early return, behind `!soft`. The saving
+stands almost entirely: the ground is where the fragments are, and flats
+are a thin slice beside it.
+
+**Pinned** in `test/perfsun_fragment.test.js`. The pin asks the CALL
+SITES, not the shader text: every one of these shaders pastes
+`SHADOW_GLSL` and therefore contains *both* function names, so "which
+does this shader use" can only be asked of what is left when the block is
+removed. It holds that the flat takes the soft one and never the cheap
+one, that every per-fragment surface takes the cheap one and never the
+soft one (or the saving goes), and that the body has exactly one early
+return - a soft path that still fell through to the cheap tap would be
+this very bug wearing the name of its own fix. 5 more mutants, all dead.
+EL2's flat pin re-aimed by content: its law - the flat's sun term wears
+both shadows, read at its base - is unchanged.
+
+**The lesson: the optimisation was correct about the pixels and wrong
+about one caller, because that caller does not have pixels in the sense
+the argument assumed. "It's below the resolution of a pixel" means
+nothing to a surface that takes one sample for ten thousand of them.**
+

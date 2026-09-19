@@ -2,7 +2,7 @@
  {
   "name": "PERF-SUN1-every-cascade-takes-the-3x3-again-so-the-far-ground-pays-nine-taps-a-fragment",
   "file": "src/render/shadowPass.js",
-  "old": "  if (c >= ${SHADOW_PCF_CASCADES}) return texture(uSunShadow, vec4(p.xy, float(c), ref));",
+  "old": "  if (!soft && c >= ${SHADOW_PCF_CASCADES}) return texture(uSunShadow, vec4(p.xy, float(c), ref));",
   "new": "",
   "tests": [
    "test/perfsun_fragment.test.js"
@@ -47,7 +47,7 @@
  {
   "name": "PERF-SUN1-the-cheap-tap-returns-AFTER-the-kernel-so-it-saves-nothing",
   "file": "src/render/shadowPass.js",
-  "old": "  if (c >= ${SHADOW_PCF_CASCADES}) return texture(uSunShadow, vec4(p.xy, float(c), ref));\n  float lit = 0.0;",
+  "old": "  if (!soft && c >= ${SHADOW_PCF_CASCADES}) return texture(uSunShadow, vec4(p.xy, float(c), ref));\n  float lit = 0.0;",
   "new": "  float lit = 0.0;",
   "tests": [
    "test/perfsun_fragment.test.js"
@@ -83,8 +83,8 @@
  {
   "name": "PERF-SUN2-the-flats-gate-goes-so-every-sprite-in-the-world-reads-the-sun-map-at-midnight",
   "file": "src/render/enhancedLighting.js",
-  "old": "  vec3 sunLit = dot(uBBSun, uBBSun) > 0.0 ? uBBSun * cloudShadowAt(vBBWorld) * sunShadowAt(base, vec3(0.0, 1.0, 0.0)) : vec3(0.0);",
-  "new": "  vec3 sunLit = uBBSun * cloudShadowAt(vBBWorld) * sunShadowAt(base, vec3(0.0, 1.0, 0.0));",
+  "old": "  vec3 sunLit = dot(uBBSun, uBBSun) > 0.0 ? uBBSun * cloudShadowAt(vBBWorld) * sunShadowSoftAt(base, vec3(0.0, 1.0, 0.0)) : vec3(0.0);",
+  "new": "  vec3 sunLit = uBBSun * cloudShadowAt(vBBWorld) * sunShadowSoftAt(base, vec3(0.0, 1.0, 0.0));",
   "tests": [
    "test/perfsun_fragment.test.js"
   ]
@@ -92,8 +92,8 @@
  {
   "name": "PERF-SUN2-the-flat-reads-its-shadow-at-its-own-fragment-so-a-sprite-shadows-itself",
   "file": "src/render/enhancedLighting.js",
-  "old": "sunShadowAt(base, vec3(0.0, 1.0, 0.0)) : vec3(0.0);",
-  "new": "sunShadowAt(vBBWorld, vec3(0.0, 1.0, 0.0)) : vec3(0.0);",
+  "old": "sunShadowSoftAt(base, vec3(0.0, 1.0, 0.0)) : vec3(0.0);",
+  "new": "sunShadowSoftAt(vBBWorld, vec3(0.0, 1.0, 0.0)) : vec3(0.0);",
   "tests": [
    "test/perfsun_fragment.test.js"
   ]
@@ -175,6 +175,51 @@
   "file": "src/render/waterSurface.js",
   "old": "  float spec = pow(max(dot(n, H), 0.0), 180.0) * uSunScale * shadow;",
   "new": "  float spec = pow(max(dot(n, H), 0.0), 180.0) * shadow;",
+  "tests": [
+   "test/perfsun_fragment.test.js"
+  ]
+ },
+ {
+  "name": "TREES1-the-flat-goes-back-to-the-cheap-tap-and-a-distant-tree-flips-lit-to-dark",
+  "file": "src/render/enhancedLighting.js",
+  "old": "sunShadowSoftAt(base, vec3(0.0, 1.0, 0.0)) : vec3(0.0);",
+  "new": "sunShadowAt(base, vec3(0.0, 1.0, 0.0)) : vec3(0.0);",
+  "tests": [
+   "test/perfsun_fragment.test.js"
+  ]
+ },
+ {
+  "name": "TREES1-the-soft-path-still-falls-through-to-the-cheap-tap-so-the-fix-wears-its-own-bug",
+  "file": "src/render/shadowPass.js",
+  "old": "  if (!soft && c >= ${SHADOW_PCF_CASCADES}) return texture(uSunShadow, vec4(p.xy, float(c), ref));",
+  "new": "  if (c >= ${SHADOW_PCF_CASCADES}) return texture(uSunShadow, vec4(p.xy, float(c), ref));",
+  "tests": [
+   "test/perfsun_fragment.test.js"
+  ]
+ },
+ {
+  "name": "TREES1-the-soft-entry-point-is-not-soft-at-all",
+  "file": "src/render/shadowPass.js",
+  "old": "float sunShadowSoftAt(vec3 wp, vec3 n) { return sunShadowTap(wp, n, true); }",
+  "new": "float sunShadowSoftAt(vec3 wp, vec3 n) { return sunShadowTap(wp, n, false); }",
+  "tests": [
+   "test/perfsun_fragment.test.js"
+  ]
+ },
+ {
+  "name": "TREES1-the-per-fragment-entry-point-takes-the-kernel-too-so-the-whole-saving-goes",
+  "file": "src/render/shadowPass.js",
+  "old": "float sunShadowAt(vec3 wp, vec3 n) { return sunShadowTap(wp, n, false); }",
+  "new": "float sunShadowAt(vec3 wp, vec3 n) { return sunShadowTap(wp, n, true); }",
+  "tests": [
+   "test/perfsun_fragment.test.js"
+  ]
+ },
+ {
+  "name": "TREES1-the-terrain-pays-for-a-kernel-its-own-neighbours-already-give-it",
+  "file": "src/render/enhancedLighting.js",
+  "old": "  float diff = (uSunScale > 0.0 && ndl > 0.0) ? ndl * cloudShadowAt(vWorldPos) * sunShadowAt(vWorldPos, n) : 0.0;   // EL2: the sun map",
+  "new": "  float diff = (uSunScale > 0.0 && ndl > 0.0) ? ndl * cloudShadowAt(vWorldPos) * sunShadowSoftAt(vWorldPos, n) : 0.0;   // EL2: the sun map",
   "tests": [
    "test/perfsun_fragment.test.js"
   ]

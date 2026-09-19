@@ -333,7 +333,7 @@ uniform vec4 uPointShadowParams[${SHADOW_POINT_CASTERS}];  // xyz the light, w i
 uniform int uShadowIndex[${SHADOW_POINT_CASTERS}];         // the lantern each caster's layers belong to, -1 for none
 uniform int uCasterOf[${SHADOW_CASTER_TABLE}];              // EL8: light i's caster slot, -1 for none - one lookup
 ${faceBasisGlsl()}
-float sunShadowAt(vec3 wp, vec3 n) {
+float sunShadowTap(vec3 wp, vec3 n, bool soft) {
   if (uSunShadowParams.w <= 0.0) return 1.0;
   float d = length(wp - uCamPos);
   int c = d < uSunShadowParams.x * 0.9 ? 0 : d < uSunShadowParams.y * 0.9 ? 1 : 2;
@@ -350,7 +350,21 @@ float sunShadowAt(vec3 wp, vec3 n) {
   // samples soften nothing the eye can resolve, over most of an outdoor
   // screen. The near cascades keep the kernel: that is EL7's contact
   // hairline, at a texel of 1.2 cm.
-  if (c >= ${SHADOW_PCF_CASCADES}) return texture(uSunShadow, vec4(p.xy, float(c), ref));
+  //
+  // TREES1 (2026-09-19, Mac: "there's this weird darkening effect
+  // happening to trees"): UNLESS THE CALLER IS A FLAT. The trade above
+  // is an ANTIALIASING one, and it only holds for a surface that shades
+  // PER FRAGMENT - the terrain and the meshes, where neighbouring pixels
+  // smooth a coarse filter whatever this returns. A flat is not like
+  // that. It reads ONE value at its base and wears it over the whole
+  // sprite (EL2: a sprite sampled at its own fragment would shadow
+  // itself), so the kernel is not softening an edge there - it is the
+  // only gradation the tree has. With one tap a tree whose foot sits
+  // near a shadow edge flips between fully lit and fully dark, and jumps
+  // again at the cascade boundary as you walk toward it. Flats keep the
+  // kernel at every distance, and they are a thin slice of the frame's
+  // fragments beside the ground, so nearly all of the saving stands.
+  if (!soft && c >= ${SHADOW_PCF_CASCADES}) return texture(uSunShadow, vec4(p.xy, float(c), ref));
   float lit = 0.0;
   for (int y = -1; y <= 1; y++) {
     for (int x = -1; x <= 1; x++) {
@@ -359,6 +373,10 @@ float sunShadowAt(vec3 wp, vec3 n) {
   }
   return lit / 9.0;
 }
+/** A surface that shades per fragment: the cheap tap past SHADOW_PCF_CASCADES. */
+float sunShadowAt(vec3 wp, vec3 n) { return sunShadowTap(wp, n, false); }
+/** A FLAT, which reads once for a whole sprite: the kernel at every distance (TREES1). */
+float sunShadowSoftAt(vec3 wp, vec3 n) { return sunShadowTap(wp, n, true); }
 // the face's depth of a point whose major-axis distance is m (cubeDepthRef in shadowPass.js)
 float cubeDepthOfM(float m, float far) {
   float near = ${SHADOW_POINT_NEAR};

@@ -479,7 +479,10 @@ void main() {
   // there is still uBBSun, which is the sun's whole share of the tint
   // and is ZERO at night. A uniform branch, so every sprite in the world
   // stops paying nine shadow compares for a term that is not there.
-  vec3 sunLit = dot(uBBSun, uBBSun) > 0.0 ? uBBSun * cloudShadowAt(vBBWorld) * sunShadowAt(base, vec3(0.0, 1.0, 0.0)) : vec3(0.0);
+  // TREES1: sunShadowSOFTat - a flat reads its shadow ONCE for the whole
+  // sprite, so the kernel is the only gradation it gets and the far
+  // cascade's one-tap trade does not apply to it.
+  vec3 sunLit = dot(uBBSun, uBBSun) > 0.0 ? uBBSun * cloudShadowAt(vBBWorld) * sunShadowSoftAt(base, vec3(0.0, 1.0, 0.0)) : vec3(0.0);
   vec3 lit = albedo * (uTint + sunLit + elPointFlat(vBBWorld, base) + elIndirectFlat(vBBWorld)) + emission;
   if (uConceal.x == 2.0) lit *= ${SHADE_DARK};   // AUDIT-EL F14: a uniform nothing uploaded read 0 - every shade a black cut-out
   if (uConceal.x == 4.0) lit = vec3(0.0);

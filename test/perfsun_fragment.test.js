@@ -38,8 +38,8 @@ test('PERF-SUN1: the far cascade takes ONE tap, and the near ones keep the kerne
     'the comparison sampler - without it a single tap really would be one texel');
   assert.match(sp, /gl\.texParameteri\(gl\.TEXTURE_2D_ARRAY, gl\.TEXTURE_MIN_FILTER, gl\.LINEAR\);/, '...filtered, which is what makes one tap a 2x2');
   // the branch, and which side of it each cascade falls
-  assert.match(SHADOW_GLSL, /if \(c >= 2\) return texture\(uSunShadow, vec4\(p\.xy, float\(c\), ref\)\);/,
-    'the far cascade returns on one tap, before the loop');
+  assert.match(SHADOW_GLSL, /if \(!soft && c >= 2\) return texture\(uSunShadow, vec4\(p\.xy, float\(c\), ref\)\);/,
+    'the far cascade returns on one tap, before the loop (TREES1: for a per-fragment caller)');
   assert.equal(SHADOW_PCF_CASCADES, 2);
   assert.ok(SHADOW_PCF_CASCADES < SHADOW_CASCADES.length, 'at least one cascade is cheap, or the change does nothing');
   assert.ok(SHADOW_PCF_CASCADES >= 1, 'and at least one keeps the kernel, or EL7’s contact hairline goes');
@@ -47,7 +47,7 @@ test('PERF-SUN1: the far cascade takes ONE tap, and the near ones keep the kerne
   assert.match(SHADOW_GLSL, /for \(int y = -1; y <= 1; y\+\+\)/);
   assert.match(SHADOW_GLSL, /return lit \/ 9\.0;/);
   // ...and the return is BEFORE the loop, or it saves exactly nothing
-  assert.ok(SHADOW_GLSL.indexOf('if (c >= 2) return texture(uSunShadow') < SHADOW_GLSL.indexOf('for (int y = -1; y <= 1; y++)'),
+  assert.ok(SHADOW_GLSL.indexOf('if (!soft && c >= 2) return texture(uSunShadow') < SHADOW_GLSL.indexOf('for (int y = -1; y <= 1; y++)'),
     'the cheap tap returns before the kernel runs');
   // WHY the far one can afford it, in numbers rather than assertion: a
   // texel of the far cascade against a pixel at a hundred metres.
@@ -122,12 +122,12 @@ test('PERF-SUN2: a FLAT has no normal, so its gate is the sun’s own share of t
   // zero. uBBSun IS the sun's whole share, so this is a uniform branch:
   // free, coherent, and it takes out the entire night.
   const bb = EL_BB_FS.split('\n').filter((l) => !l.trim().startsWith('//')).join('\n');
-  assert.match(bb, /vec3 sunLit = dot\(uBBSun, uBBSun\) > 0\.0 \? uBBSun \* cloudShadowAt\(vBBWorld\) \* sunShadowAt\(base, vec3\(0\.0, 1\.0, 0\.0\)\) : vec3\(0\.0\);/);
+  assert.match(bb, /vec3 sunLit = dot\(uBBSun, uBBSun\) > 0\.0 \? uBBSun \* cloudShadowAt\(vBBWorld\) \* sunShadowSoftAt\(base, vec3\(0\.0, 1\.0, 0\.0\)\) : vec3\(0\.0\);/);
   assert.match(bb, /uTint \+ sunLit \+ elPointFlat/, 'and it enters the sum exactly where the product did');
-  assert.doesNotMatch(bb, /uBBSun \* cloudShadowAt\(vBBWorld\) \* sunShadowAt\(base[^)]*\)\) \+ elPointFlat/, 'the inline product is gone');
+  assert.doesNotMatch(bb, /uBBSun \* cloudShadowAt\(vBBWorld\) \* sunShadowSoftAt\(base[^)]*\)\) \+ elPointFlat/, 'the inline product is gone');
   // the shadow is still read at the flat's BASE, once for the whole
   // sprite - a sprite in its own map would shadow itself (EL2)
-  assert.match(bb, /sunShadowAt\(base, vec3\(0\.0, 1\.0, 0\.0\)\)/);
+  assert.match(bb, /sunShadowSoftAt\(base, vec3\(0\.0, 1\.0, 0\.0\)\)/);
 });
 
 test('PERF-SUN: the tree sway is CLEARED as a suspect - the lean is baked at build, not decided a frame', () => {
@@ -183,7 +183,7 @@ test('AUDIT F2: the cheap tap runs OUTWARD from its index, and the note says so'
   // radius, so a further one is always the coarser map - but the note
   // first written here claimed the opposite, and a false claim about a
   // safe direction is exactly what this slice's own lesson was about.
-  assert.match(SHADOW_GLSL, /if \(c >= 2\) return/, 'outward from the index, not the last cascade alone');
+  assert.match(SHADOW_GLSL, /if \(!soft && c >= 2\) return/, 'outward from the index, not the last cascade alone');
   assert.doesNotMatch(sp, /A cascade count this does not cover keeps the kernel/, 'the false note is gone');
   assert.match(sp, /EVERY cascade from/, '...and the true one is there');
   for (let i = 1; i < SHADOW_CASCADES.length; i++) {
@@ -225,4 +225,52 @@ test('AUDIT F1: the sway door\u2019s state is declared ABOVE its reader', () => 
   assert.ok(decl > 0 && reader > 0, 'both are there');
   assert.ok(decl < reader, 'the state is declared before the function that reads it');
   assert.ok(w.indexOf('let _swayOff;') < reader, '...and so is its sibling');
+});
+
+
+// ---- TREES1 (2026-09-19) -------------------------------------------------
+
+test('TREES1: a FLAT keeps the kernel at every distance, because it samples once for a whole sprite', () => {
+  // Mac: "there's this weird darkening effect happening to trees."
+  //
+  // PERF-SUN1's cheap far tap is an ANTIALIASING trade, and it only holds
+  // for a surface that shades PER FRAGMENT - the terrain and the meshes,
+  // where neighbouring pixels smooth a coarse filter whatever the lookup
+  // returns. A flat is not like that: it reads ONE value at its base and
+  // wears it over the whole sprite (EL2 - sampled at its own fragment a
+  // sprite would shadow itself), so the kernel is not softening an edge
+  // there, it is the only gradation the tree has. One tap flips a tree
+  // whose foot sits near a shadow edge between fully lit and fully dark,
+  // and jumps again at the cascade boundary as you walk toward it.
+  assert.match(SHADOW_GLSL, /float sunShadowTap\(vec3 wp, vec3 n, bool soft\) \{/, 'one body');
+  assert.match(SHADOW_GLSL, /if \(!soft && c >= 2\) return texture\(uSunShadow/, 'the cheap tap is the NOT-soft path');
+  assert.match(SHADOW_GLSL, /float sunShadowAt\(vec3 wp, vec3 n\) \{ return sunShadowTap\(wp, n, false\); \}/);
+  assert.match(SHADOW_GLSL, /float sunShadowSoftAt\(vec3 wp, vec3 n\) \{ return sunShadowTap\(wp, n, true\); \}/);
+  // the FLAT takes the soft one, and it is the ONLY caller that does -
+  // every per-fragment surface keeps the cheap far tap, which is where
+  // the saving was
+  // THE CALL SITE, NOT THE PASTED BLOCK. Every one of these shaders
+  // contains BOTH function names, because it pastes SHADOW_GLSL which
+  // defines them - so the question "which does this shader use" can only
+  // be asked of what is left when the block is taken out.
+  const body = (raw) => raw.replace(SHADOW_GLSL, '').split('\n').map((l) => l.replace(/\/\/.*$/, '')).join('\n');
+  const bb = body(EL_BB_FS);
+  assert.match(bb, /sunShadowSoftAt\(base, vec3\(0\.0, 1\.0, 0\.0\)\)/, 'the flat reads the soft one');
+  assert.doesNotMatch(bb, /(?<!Soft)At\(base[^)]*\)\s*:/, '...and never the cheap one');
+  assert.ok(!/[^t]sunShadowAt\(/.test(bb), 'no call to the cheap lookup survives in the flat\u2019s own body');
+  for (const [n, raw] of [['mesh', EL_MESH_FS], ['terrain', EL_TERRAIN_FS], ['char', EL_CHAR_FS]]) {
+    const src = body(raw);
+    assert.match(src, /sunShadowAt\(vWorldPos, n\)/, `${n}: shades per fragment, so it keeps the cheap far tap`);
+    assert.doesNotMatch(src, /sunShadowSoftAt\(/, `${n}: and does not pay for a kernel its neighbours already give it`);
+  }
+  const water = body(waterSurfaceFs('', SHADOW_GLSL));
+  assert.match(water, /sunShadowAt\(vWorldPos, n\)/, 'the water shades per fragment too');
+  assert.doesNotMatch(water, /sunShadowSoftAt\(/);
+  // and the soft path really is the kernel, for EVERY cascade - a `soft`
+  // that still fell through to the cheap tap somewhere would be the bug
+  // this fixes, wearing the name of the fix
+  const tap = /float sunShadowTap\(vec3 wp, vec3 n, bool soft\) \{([\s\S]*?)\n\}/.exec(SHADOW_GLSL);
+  assert.ok(tap, 'the body is where this pin thinks it is');
+  assert.equal((tap[1].match(/return texture\(uSunShadow/g) ?? []).length, 1, 'exactly one early return, and it is behind !soft');
+  assert.match(tap[1], /return lit \/ 9\.0;/, 'and the kernel is what everything else reaches');
 });
