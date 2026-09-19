@@ -229,16 +229,17 @@ for (const z of out.zones) {
   check(`...and what it keeps there is steel, not parchment`, z.warmFrac < 0.12, `${(z.warmFrac * 100).toFixed(1)}% of it as warm as the sheet`);
 }
 
-// THE GAP MAC SAW AT MAP-FIELD2 - and on THIS painting, how narrowly
-// the crop alone closes it. On the first art a minority of arm columns
-// ended well above the screen's edge and extendCuffs was the only thing
-// that could close them. Here the cut cuffs are nearly level, and
-// HELD_MAP_BITE carries the highest of them past the bottom by less
-// than a pixel. That is not a gap - it is a coincidence one viewport
-// size away from being one, and extendCuffs is what turns it into a
-// guarantee. Pin the thinness, which is the true statement, rather than
-// a shortfall this painting does not have.
-check('the cut cuffs clear the screen\'s bottom edge only barely - the crop alone is a hair from a gap', out.worstShortfallPx <= 0 && out.cuffClearancePx < 8, `the highest cut column clears by ${out.cuffClearancePx.toFixed(1)}px on a ${out.screenHeight}px screen`);
+// THE GAP MAC SAW AT MAP-FIELD2, which is what all of this is for: no
+// arm may end in mid-air above the screen's edge. On the first painting
+// a minority of columns did, and extendCuffs was the only thing that
+// could close them. On this one the cut cuffs are nearly level and
+// HELD_MAP_BITE carries every one of them past the edge on its own - by
+// half a pixel at the bite MAP-FIELD2 set, and comfortably at the lower
+// one MAP-FIELD5 asked for. So the pin is the LAW (no column short),
+// not the margin, which is a number Mac moves whenever the sheet should
+// sit higher or lower. extendCuffs is what keeps the law true when he
+// does: raise the bite far enough and the margin goes back to nothing.
+check('no cut cuff is left short of the screen\'s bottom edge - the gap Mac saw', out.worstShortfallPx <= 0, `${out.colsShortOfBottom} of ${out.armCols} cut columns short; the highest clears by ${out.cuffClearancePx.toFixed(1)}px on a ${out.screenHeight}px screen`);
 check('extendCuffs closes ALL of them - no cut column is left ending in mid-air', out.armColsLeftShort === 0, `${out.armColsLeftShort} still short`);
 // MAP-FIELD4: the test is where the column ENDS, not where it sits. The
 // right forearm crosses UNDER the sheet in this painting, so the old

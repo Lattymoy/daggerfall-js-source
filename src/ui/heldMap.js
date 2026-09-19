@@ -332,7 +332,15 @@ export function extendCuffs(data, w, h, foot = CUFF_BAND, alphaMin = 128) {
  *  sprite - so it is the one number to turn if the map reads too small
  *  to use or too big to see past. */
 export const HELD_MAP_HEIGHT = 0.92;
-export const HELD_MAP_BITE = 0.03;
+// MAP-FIELD5 (2026-09-19, Mac: "Can you lower it on the screen more").
+// 0.03 to 0.11 - about 60px further down a 720p screen. This is the
+// number to turn for that, and the only one: HEIGHT sets how big the
+// sheet is, BITE sets how far down it sits, and neither disturbs the
+// other. One consequence is recorded at the cuff pins - the bite now
+// carries the cut cuffs well past the bottom edge rather than by half a
+// pixel, so extendCuffs is a guarantee against a future change rather
+// than the thing standing between this art and a notch.
+export const HELD_MAP_BITE = 0.11;
 /** Where the PAINTING's content ends, as a fraction of the sprite's own
  *  height - measured off the file, not guessed: below this line every
  *  row is empty, so the bottom tenth of `held-map.png` is nothing.

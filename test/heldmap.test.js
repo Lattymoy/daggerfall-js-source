@@ -2303,11 +2303,11 @@ test('MAP-FIELD2: the sheet is HELD - bottom-anchored with the arms past the edg
 //
 // The cuffs are CUT BY THE FRAME: the picture simply stops partway down
 // the forearms. Measured by column (tools/heldMapArtProbe.mjs) the cut
-// ends are not level - they run 0.866 to 0.893 of the file - and on
-// this art HELD_MAP_BITE clears the highest of them by half a pixel on
-// a 900px screen. Half a pixel is not a margin, it is a coincidence one
-// viewport away from a notch, and extendCuffs is what makes it a
-// guarantee.
+// ends are not level - they run 0.866 to 0.893 of the file. Whether the
+// bite alone clears them depends on where Mac wants the sheet to sit:
+// at MAP-FIELD2's bite the highest cleared by half a pixel, at
+// MAP-FIELD5's by 75. extendCuffs is what makes the law hold at any of
+// them, which is why it stays even where the margin is comfortable.
 //
 // WHICH columns it may carry is the whole difficulty, and two answers
 // were wrong before this one. Asking whether a column falls outside

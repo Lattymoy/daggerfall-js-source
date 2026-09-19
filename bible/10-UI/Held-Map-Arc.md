@@ -807,11 +807,23 @@ under the sheet ends by 0.733, every cut cuff at 0.866 or below, and
 NOTHING ends in between. What would lie between is the hand's own
 silhouette - drawn to end where it ends, and ruined by a streak.
 
-**And on this art the crop nearly closes the gap by itself.** The bite
-clears the highest cut cuff by half a pixel on a 900px screen. That is
-not a margin, it is a coincidence one viewport away from a notch, so
-`extendCuffs` stays - but the pin had to be rewritten to say that,
-because the old one claimed a shortfall this painting does not have.
+**And on this art the crop closes the gap by itself.** At MAP-FIELD2's
+bite it cleared the highest cut cuff by half a pixel; at MAP-FIELD5's it
+clears by 75. Either way no column is short, so the pin had to be
+rewritten twice - the first version claimed a shortfall this painting
+does not have, and the second pinned the MARGIN, which is a number Mac
+moves whenever the sheet should sit higher or lower. It pins the LAW
+now: no cut cuff ends above the screen's edge. `extendCuffs` is what
+keeps that true at any bite, which is why it stays where the margin is
+comfortable.
+
+## MAP-FIELD5 - lower on the screen (2026-09-19)
+
+Mac: *"Can you lower it on the screen more"*. `HELD_MAP_BITE` 0.03 ->
+0.11, about 60px further down a 720p screen. `HELD_MAP_HEIGHT` sets how
+big the sheet is and `HELD_MAP_BITE` how far down it sits; they are
+independent, so this is the one number to turn and it disturbs nothing
+else. The only consequence worth recording is the cuff margin above.
 
 **The lesson.** Every number in this slice is a measurement, and twice
 now a number that was "obviously right" by eye was wrong by tens of
