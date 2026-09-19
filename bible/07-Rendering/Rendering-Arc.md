@@ -2381,3 +2381,53 @@ reports a maximum of 16 there.
 written against, and had been carried as a property of the terrain ever
 since. The wrap was never the obstacle - handing the wrapped coordinate
 to the hardware was.**
+
+
+## GRAIN2 - "Why dont we crank it to 16?" (2026-09-19)
+
+The honest answer to that question is: **4 was a guess, and the 16 I
+quoted was not your hardware.**
+
+GRAIN1 reported `EXT_texture_filter_anisotropic` at a maximum of 16,
+"verified in real WebGL2". That WebGL2 is **SwiftShader** - ANGLE's
+software rasteriser, which is the only GL this container has. It reports
+16 because it can do 16 in software; it says nothing about any GPU, and
+its cost profile for anisotropic taps is nothing like one. The number was
+reported honestly and read further than it should have been.
+
+So the two things worth knowing:
+
+**Why not just set 16.** Anisotropy is paid in fill rate, on the pass
+that covers more screen than any other. Most of the sharpness arrives by
+4x and the curve flattens hard after it - but "flattens" is not "free",
+and the machine that pays is not always the one asking. This is a
+multiplayer port; a laptop on integrated graphics is a player too.
+
+**Why 16 is probably fine anyway, on this texture.** The expensive case
+for anisotropy is a large working set streaming from VRAM. The terrain
+tile array is 56 layers of 64x64 - under a megabyte with its mipmap
+chain, small enough to stay resident in cache. Sixteen taps of a texture
+that never leaves L2 is a very different proposition from sixteen taps of
+a 4K album. The folklore is about the latter.
+
+Neither of those is a measurement, and this session cannot make one. So
+the number stops being a number chosen once for everybody and becomes a
+**dial**: `groundSharpness`, off / default (4x) / maximum, on the
+Features page beside the cloud dial, the player's own online, landing on
+the next world load as every quality dial does.
+
+`anisotropyFor(tier, driverMax)` is the whole law and it is pure:
+`off` is 1 (the extension's own word for none - not 0, which is not a
+legal value), `max` is whatever the driver allows, `default` is 4 capped
+by the driver, and an unknown tier - a pref written by a future build -
+falls back to the default rather than to the maximum. A driver with no
+extension answers 1 for every tier and the renderer then asks for
+nothing at all.
+
+**Pinned** in `test/grain1_terrainmip.test.js`. Mutants
+`tools/mutants/grain1.json`: 15 - 15 dead, 0 survived.
+
+**The lesson: a number nobody can measure should not be spelled into the
+source as though somebody had. GRAIN1's 4 was defensible and its 16 was
+a software rasteriser talking - the fix for both is the same, and it is
+not a better guess.**

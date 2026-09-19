@@ -410,6 +410,30 @@ void main() {
 
 import { ShadowPass, SHADOW_GLSL } from './shadowPass.js';   // EL7: the receiver block, for the water surface's lane program
 import { boundsOf, sphereInPlanes } from './bounds.js';
+import { getPref } from '../systems/uiPrefs.js';   // GRAIN2: the ground-sharpness dial, read where the tile array is built
+
+/**
+ * GRAIN2 (2026-09-19, Mac: "Why dont we crank it to 16?"): the
+ * ground-sharpness tier as a max-anisotropy value, against what the
+ * driver actually allows.
+ *
+ * The honest answer to the question is that 4 was a conservative guess.
+ * Anisotropy is paid in fill rate on the pass that covers the most
+ * screen, and this session cannot measure that - its only GL is
+ * SwiftShader, a software rasteriser whose cost profile is nothing like
+ * a GPU's, and the "16" it reports is its own. So the number is a DIAL
+ * and the default is the safe end of it, not a claim.
+ *
+ * `1` is the extension's own word for no anisotropy, which is why `off`
+ * answers it rather than 0; an unknown tier is the default, so a stored
+ * pref from a future build cannot turn the ground to mush.
+ */
+export function anisotropyFor(tier, driverMax = 1) {
+  const cap = Math.max(1, driverMax || 1);
+  if (tier === 'off') return 1;
+  if (tier === 'max') return cap;
+  return Math.min(4, cap);
+}
 import { frustumPlanes, cullDisabled } from './frustum.js';   // PERF-CROWD2: the billboard pass culls for every host, so no host can forget to
 import { multiply as mat4Multiply } from '../world/mat4.js';   // PERF-CROWD2: proj * view, for this call's planes
 import { PerfMeter, perfOn, perfZones, perfCpu, setMeter } from './perfMeter.js';   // EL8: `?perf`   // EL5: the bounds every bundle carries for the replays' culling   // EL2: the lane's shadow maps - a leaf that compiles nothing until a lane asks
@@ -3867,12 +3891,20 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     // a grazing angle almost everywhere, and an isotropic mip has to take
     // the WIDER of the two footprints - so it over-blurs along the view
     // and still aliases across it. This is the one filtering term that
-    // buys back the sharpness the mipmap costs. Capped at 4: the returns
-    // fall off a cliff after that and the frame is CPU-bound anyway.
+    // buys back the sharpness the mipmap costs.
+    //
+    // GRAIN2: HOW MUCH OF IT IS THE MACHINE'S QUESTION. 4x was a
+    // conservative guess and nothing more - it is paid in fill rate, on
+    // the pass that covers the most screen, and this session cannot
+    // measure that (its only GL is SwiftShader, whose cost profile is
+    // nothing like a GPU's). So it is a dial rather than a number chosen
+    // once for everybody: `groundSharpness` off / default / max, read
+    // here, the player's own online.
     const aniso = this._anisoExt ||= (gl.getExtension('EXT_texture_filter_anisotropic') ?? null);
     if (aniso) {
       this._anisoMax ||= gl.getParameter(aniso.MAX_TEXTURE_MAX_ANISOTROPY_EXT) || 1;
-      gl.texParameterf(gl.TEXTURE_2D_ARRAY, aniso.TEXTURE_MAX_ANISOTROPY_EXT, Math.min(4, this._anisoMax));
+      const want = anisotropyFor(getPref('groundSharpness'), this._anisoMax);
+      if (want > 1) gl.texParameterf(gl.TEXTURE_2D_ARRAY, aniso.TEXTURE_MAX_ANISOTROPY_EXT, want);
     }
     // DFU's terrain texture array wraps Clamp (TextureReader) - keeps
     // the far edge texel at transformed-uv 1.0 boundary ties.
