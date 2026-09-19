@@ -178,8 +178,8 @@
   {
     "name": "CAMP1-the-chunk-roll-fires-from-inside-a-dungeon",
     "file": "src/scenes/world.js",
-    "old": "      if ((modes?.mode ?? 'exterior') === 'exterior' && getPref('wildernessCamps') !== false && amGroupRollOwner(online?.id ?? null, player.feetAt(), peersNear())) {",
-    "new": "      if (getPref('wildernessCamps') !== false && amGroupRollOwner(online?.id ?? null, player.feetAt(), peersNear())) {",
+    "old": "      if ((modes?.mode ?? 'exterior') === 'exterior' && !playerEntity.isResting && getPref('wildernessCamps') !== false && amGroupRollOwner(online?.id ?? null, player.feetAt(), peersNear())) {   // CAMP-REST: never while the player is resting or waiting",
+    "new": "      if (!playerEntity.isResting && getPref('wildernessCamps') !== false && amGroupRollOwner(online?.id ?? null, player.feetAt(), peersNear())) {",
     "tests": [
       "test/camp1_groups.test.js"
     ]
@@ -251,8 +251,8 @@
   {
     "name": "D-ONLINE1-the-open-world-is-not-an-online-death",
     "file": "src/scenes/world.js",
-    "old": "  const _onlineWorldSession = () => !!(online && online.status === 'open' && (isWorldRoom(online.room) || isCellRoom(online.room)));",
-    "new": "  const _onlineWorldSession = () => !!(online && online.status === 'open' && isWorldRoom(online.room));",
+    "old": "  const _onlineWorldSession = () => onlineOn || !!(online && online.status === 'open' && (isWorldRoom(online.room) || isCellRoom(online.room)));",
+    "new": "  const _onlineWorldSession = () => onlineOn || !!(online && online.status === 'open' && isWorldRoom(online.room));",
     "tests": [
       "test/donline1_respawn.test.js"
     ]
