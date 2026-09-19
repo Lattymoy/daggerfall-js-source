@@ -84,7 +84,15 @@ test('OL2 (6): online the trip\'s countdown is empty and it begins on the next t
   const orig = on.w.draw; void orig;
   const src = rd('src/ui/travelPopUp.js');
   assert.match(src, /shadowText\(renderer, font, this\.noWorldTime\(\) \? 'now' : String\(this\.countdownValueTravelTimeDays\), m, LABEL_POS\.time\[0\], LABEL_POS\.time\[1\]\);/);
-  assert.match(src, /if \(this\.noWorldTime\(\)\) shadowText\(renderer, font, ONLINE_TRAVEL_LINE, m, 0, POPUP_RECTS\.native\[1\] \+ POPUP_RECTS\.native\[3\] \+ 4, \{ align: 'center', w: NATIVE_W \}\);/);
+  // TO-ONLINE (2026-09-19): ...and NOT over a walked trip. This line is DFU's
+  // FAST TRAVEL talking, and while Travel Options stood down on the shared
+  // clock the teleport was the only online arrival there was, so it was true
+  // of every trip. The journey runs online now (bible Travel-Options.md item
+  // 9), and over a walked one "you arrive now, and no inn is paid" is false -
+  // that branch carries the mod's own words and an hours:minutes estimate.
+  // What OL2 (6) pins is unchanged: the line still says why, wherever the
+  // trip really is DFU's.
+  assert.match(src, /if \(this\.noWorldTime\(\) && !this\.walkedTrip\) shadowText\(renderer, font, ONLINE_TRAVEL_LINE, m, 0, POPUP_RECTS\.native\[1\] \+ POPUP_RECTS\.native\[3\] \+ 4, \{ align: 'center', w: NATIVE_W \}\);/);
   assert.match(src, /sleepModeInn: this\.sleepModeInn && !this\.noWorldTime\(\),/);
   assert.match(src, /this\.countdownValueTravelTimeDays = this\.noWorldTime\(\) \? 0 : travelDays\(this\.travelTimeTotalMins\);/);
   assert.equal(ONLINE_TRAVEL_LINE, 'Online: the world\'s clock does not wait. You arrive now, and no inn is paid.');

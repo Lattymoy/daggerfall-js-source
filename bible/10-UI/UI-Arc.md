@@ -270,7 +270,7 @@ does the pack's USE arm.
                         close-then-hand-over ordering U55 got
                         backwards. No law needs extracting first.
     THE LOGBOOK         THREE sites: charSheetNav.js:53,
-    / NOTEBOOK          world.js:5971, dungeonContext.js:6131. A seam
+    / NOTEBOOK          world.js:5992, dungeonContext.js:6131. A seam
                         wants making, as U52's and U53's did.
     HISTORY             ONE site (charSheetNav.js:61), and it reads
                         only the entity's backStory. The small one.
@@ -9952,9 +9952,9 @@ re-resolved the `exterior.js` half of a three-file sentence and left the
 `ExteriorAutomapWindow` construction, `:4101` on a `locationName:`
 field). Both halves are now read by `test/citedrift.test.js` - the
 existing entries only ever captured the exterior number, which is how
-the other half went stale unnoticed. (The rest cite named `world.js:6303`,
+the other half went stale unnoticed. (The rest cite named `world.js:6324`,
 the first of the host's TWO identical `act === 'Rest'` arms; ROAD-H H5
-deleted the second and the cite is `world.js:6309` now.)
+deleted the second and the cite is `world.js:6330` now.)
 
 ## AUDIT 62 F24/F25 - THE SENTINEL SWEEP WAS TWO WINDOWS SHORT (2026-09-07)
 
@@ -14013,7 +14013,7 @@ exactly as the classic did; the enhanced HUD has no arrow counter (AUDIT
 WINDOWS, which the first record did not name: under the enhanced skin the
 death screen (`ui/deathScreen.js:71-72`), the rest window's rows
 (`ui/restWindow.js:836`), the save window (`ui/saveWindow.js`, eight
-`shadowText` sites), the travel popup (`ui/travelPopUp.js:678`), the quest
+`shadowText` sites), the travel popup (`ui/travelPopUp.js:685`), the quest
 journal (`ui/questJournal.js:641-642`), every MessageBox row
 (`ui/messageBox.js:431, 434`) and every ActionTextBox (`ui/actionText.js:41,
 152`) still draw in the bitmap font - each a native window under THE

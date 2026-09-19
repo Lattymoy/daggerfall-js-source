@@ -656,7 +656,14 @@ export class TravelPopUpWindow {
       shadowText(renderer, font, String(this.trip.totalCost), m, LABEL_POS.cost[0], LABEL_POS.cost[1]);
       shadowText(renderer, font, this.noWorldTime() ? 'now' : String(this.countdownValueTravelTimeDays), m, LABEL_POS.time[0], LABEL_POS.time[1]);   // OL2: the days label says "now" online
     }
-    if (this.noWorldTime()) shadowText(renderer, font, ONLINE_TRAVEL_LINE, m, 0, POPUP_RECTS.native[1] + POPUP_RECTS.native[3] + 4, { align: 'center', w: NATIVE_W });
+    // TO-ONLINE: ...and NOT over a walked trip. The line says "you
+    // arrive now, and no inn is paid", which was true of every online
+    // trip while Travel Options stood down on the shared clock and the
+    // teleport was the only arrival there was. A walked trip online is
+    // a real ride now (scenes/world.js beginAcceleratedTravel), so over
+    // that one the sentence is simply false - the branch above has
+    // already said the mod's own words and an hours:minutes estimate.
+    if (this.noWorldTime() && !this.walkedTrip) shadowText(renderer, font, ONLINE_TRAVEL_LINE, m, 0, POPUP_RECTS.native[1] + POPUP_RECTS.native[3] + 4, { align: 'center', w: NATIVE_W });
     if (!_art) {
       // art-less fallback: the option rows the classic art labels
       const rows = [
