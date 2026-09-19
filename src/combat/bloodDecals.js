@@ -81,6 +81,39 @@ export function scaleRate(rate, density = 1) {
 export const bloodRate = (damage, maxHealth, density = 1) =>
   scaleRate(ladderRate(damagePercent(damage, maxHealth)), density);
 
+/** THE PORT'S OWN ART DIRECTION, and said to be: the reference scales
+ *  its particles, not its marks, so these two numbers are a choice
+ *  rather than a fact. A glancing blow leaves a spatter about a third
+ *  of a metre across and a near-lethal one a bit over a metre, which is
+ *  what a body's worth of blood looks like on a dungeon floor. */
+export const MARK_SIZE_MIN = 0.35;
+export const MARK_SIZE_MAX = 1.2;
+
+/**
+ * How wide the mark a hit leaves is, off the rate ladder's own band.
+ *
+ * ONE MARK PER BLOOD EVENT IS THE WHOLE OF BLOOD1a, and the rate sizes
+ * it rather than multiplying it. The reference's rate is a PARTICLE
+ * count and each particle that lands prints its own mark - so the
+ * scatter is the particles' to bring (BLOOD1b), and inventing a
+ * decals-per-hit law here would be inventing one to un-invent later.
+ * The ring is a thousand marks; two hundred a hit would spend it in
+ * five swings.
+ */
+export function markSize(rate) {
+  const lo = ladderRate(0), hi = RATE_MAX;                 // the ladder's own ends, never a second copy of 30/200
+  const t = Math.max(0, Math.min(1, (rate - lo) / (hi - lo)));
+  return MARK_SIZE_MIN + (MARK_SIZE_MAX - MARK_SIZE_MIN) * t;
+}
+
+/** DFU's `bloodIndex` of 2 is the BLOODLESS six (skeletons and the
+ *  like), and `characters/enemyBasics.js` has carried it from DFU
+ *  since long before this arc. They bleed nothing, so they mark
+ *  nothing - the splash record the port already draws for them stands,
+ *  and no stain is laid under it. */
+export const BLOODLESS_INDEX = 2;
+export const marksBlood = (bloodIndex) => (bloodIndex ?? 0) !== BLOODLESS_INDEX;
+
 /** At or past the threshold. */
 export const isOverkill = (damage, maxHealth) => damagePercent(damage, maxHealth) >= OVERKILL_PERCENT;
 

@@ -290,3 +290,164 @@ test('BLOOD1a by source: the decal pass is ONE draw call, depth-tested and depth
   assert.match(r, /_ensureDecalProgram\(\) \{/);
   assert.match(r, /createDecalBatch\(capacity\) \{\s*\n\s*const gl = this\.gl;[\s\S]{0,200}?this\._ensureDecalProgram\(\);/);
 });
+
+// ---- the mark, on the seam the splash already uses ------------------
+
+import { createHitEffects, MARK_DROP } from '../src/scenes/hitEffects.js';
+import { markSize, marksBlood, MARK_SIZE_MIN, MARK_SIZE_MAX, BLOODLESS_INDEX } from '../src/combat/bloodDecals.js';
+
+/** A renderer stub that records what the mark asked of it. */
+function rigHitEffects(over = {}) {
+  const wrote = [];
+  const drew = [];
+  const renderer = {
+    createDecalBatch: (capacity) => ({ capacity, id: 'batch' }),
+    writeDecalSlot: (batch, slot, floats) => { wrote.push({ slot, floats: [...floats] }); return true; },
+    drawDecals: (batch, tex) => { drew.push({ batch, tex }); },
+    createBillboardBatch: () => ({}),
+  };
+  const fx = createHitEffects({
+    renderer,
+    getTexture: () => new Promise(() => {}),   // the splash half never warms here
+    uploadRecordFrame: () => {},
+    collider: { raycastHit: () => ({ dist: 1.5, normal: [0, 1, 0], key: 'floor' }) },
+    decals: { enabled: () => true, capacity: () => 4, density: () => 1 },
+    decalTexture: () => 'blood-tex',
+    ...over,
+  });
+  return { fx, wrote, drew, renderer };
+}
+
+test('BLOOD1a: the mark rides the splash’s own call, finds its surface, and a bloodless foe stains nothing', () => {
+  const { fx, wrote } = rigHitEffects();
+
+  // the splash's eight call sites across four hosts are the events
+  // where blood happens - the mark comes off the same call rather than
+  // a ninth seam nobody would remember to feed
+  fx.showBloodSplash(0, [10, 5, 10], null, { damage: 10, maxHealth: 40 });
+  assert.equal(fx.decals.count(), 1);
+  assert.equal(wrote.length, 1, 'one slot written, at its own offset');
+
+  // THE SURFACE IS FOUND, NOT ASSUMED. Blood spawns at chest height, so
+  // the mark is where the ray DOWN landed - 1.5 below, plus the 2cm lift.
+  const d = fx.decals._pool().decals()[0];
+  assert.deepEqual(d.pos, [10, 5 - 1.5 + 0.02, 10]);
+  // ...and the rate sized it: 25% of max health is the bottom rung
+  assert.ok(Math.abs(d.size - markSize(30)) < 1e-9, 'a glancing blow leaves the small spatter');
+
+  // a near-lethal hit leaves the big one
+  // 50 of 40 is 125% - PAST the hundred rung and short of the overkill
+  // line, which is the 150 band. The first cut of this pin used 39 of
+  // 40 and called it near-lethal; 97.5% is the SEVENTY rung. The ladder
+  // is not intuition.
+  fx.showBloodSplash(0, [0, 5, 0], null, { damage: 50, maxHealth: 40 });
+  const big = fx.decals._pool().decals().at(-1);
+  assert.ok(big.size > d.size, 'more damage, more blood');
+  assert.ok(Math.abs(big.size - markSize(150)) < 1e-9, `125% is the 150 band (got ${big.size})`);
+
+  // THE SURFACE'S OWN NORMAL, not world up. A dungeon is stairs and
+  // ramps: blood on a slope lies ALONG the slope, and a mark that took
+  // its basis from nowhere would stand on a floor and float through a
+  // staircase. The stub above answers a level floor, which is why this
+  // one tilts - the first cut of these pins used the level collider
+  // for everything and could not tell the two apart.
+  const tilt = [0, Math.SQRT1_2, Math.SQRT1_2];   // a 45-degree ramp
+  const { fx: slope } = rigHitEffects({ collider: { raycastHit: () => ({ dist: 1, normal: tilt }) } });
+  slope.showBloodSplash(0, [0, 5, 0], null, { damage: 10, maxHealth: 40 });
+  const on = slope.decals._pool().decals()[0];
+  // to a TOLERANCE, not exactly: the module re-normalises what it is
+  // handed, and hypot of two Math.SQRT1_2 is 1.0000000000000002, so a
+  // unit vector in comes back a bit different in the last place
+  assert.ok(dot(on.normal, tilt) > 1 - 1e-12, 'the mark wears the surface it landed on');
+  // ...the 2cm lift comes off the RAMP, not straight up
+  assert.ok(Math.abs(on.pos[1] - (5 - 1 + Math.SQRT1_2 * 0.02)) < 1e-9, 'lifted along the ramp');
+  assert.ok(Math.abs(on.pos[2] - Math.SQRT1_2 * 0.02) < 1e-9, 'which moves it in z too');
+  // ...and its quad lies in the ramp's plane
+  assert.ok(Math.abs(dot(on.right, tilt)) < 1e-9 && Math.abs(dot(on.up, tilt)) < 1e-9, 'the quad lies on the ramp');
+
+  // A BLOODLESS FOE MARKS NOTHING - DFU's own bloodIndex says which
+  // six, and enemyBasics.js has carried it since long before this arc
+  assert.equal(BLOODLESS_INDEX, 2);
+  assert.equal(marksBlood(2), false);
+  const before = fx.decals.count();
+  fx.showBloodSplash(2, [1, 5, 1], null, { damage: 39, maxHealth: 40 });
+  assert.equal(fx.decals.count(), before, 'a skeleton bleeds nothing');
+});
+
+test('BLOOD1a: blood over open air leaves no mark, and a host that wires none of it draws what it always drew', () => {
+  // NOTHING WITHIN REACH is no mark, not one hanging in space - a body
+  // on a bridge with a chasm under it
+  const { fx: over } = rigHitEffects({ collider: { raycastHit: () => ({ dist: Infinity, normal: null }) } });
+  over.showBloodSplash(0, [0, 50, 0], null, { damage: 10, maxHealth: 40 });
+  assert.equal(over.decals.count(), 0);
+  // ...and the reach is a body's height and a bit, because that is how
+  // far the floor is from where blood spawns
+  assert.equal(MARK_DROP, 3);
+  const { fx: far } = rigHitEffects({ collider: { raycastHit: () => ({ dist: MARK_DROP + 0.01, normal: [0, 1, 0] }) } });
+  far.showBloodSplash(0, [0, 5, 0], null, { damage: 10, maxHealth: 40 });
+  assert.equal(far.decals.count(), 0, 'past the reach is past it');
+
+  // THE SWITCH, and every way a host can decline: off, no collider, a
+  // renderer too old to know the pass
+  for (const off of [
+    { decals: { enabled: () => false, capacity: () => 4, density: () => 1 } },
+    { collider: null },
+    { renderer: { createBillboardBatch: () => ({}) } },
+  ]) {
+    const { fx } = rigHitEffects(off);
+    assert.doesNotThrow(() => fx.showBloodSplash(0, [0, 5, 0], null, { damage: 10, maxHealth: 40 }));
+    assert.equal(fx.decals.count(), 0, 'no marks, no throw');
+  }
+  // ...and a host that passes NO decal deps at all is the old signature
+  const bare = createHitEffects({ renderer: { createBillboardBatch: () => ({}) }, getTexture: () => new Promise(() => {}), uploadRecordFrame: () => {} });
+  assert.doesNotThrow(() => bare.showBloodSplash(0, [0, 5, 0]));
+  assert.equal(bare.decals.count(), 0);
+});
+
+test('BLOOD1a: the ring recycles under the mark, the draw needs a texture, and a mode change blanks the buffer', () => {
+  const { fx, wrote, drew } = rigHitEffects();
+  for (let i = 0; i < 6; i++) fx.showBloodSplash(0, [i, 5, 0], null, { damage: 10, maxHealth: 40 });
+  assert.equal(fx.decals.count(), 4, 'the ring is four and stays four');
+  assert.deepEqual(wrote.map((w) => w.slot), [0, 1, 2, 3, 0, 1], 'and the oldest slot is the one rewritten');
+
+  // the draw is one call, and it needs art: no texture, no pass
+  assert.equal(fx.decals.draw(), true);
+  assert.deepEqual(drew.at(-1), { batch: { capacity: 4, id: 'batch' }, tex: 'blood-tex' });
+  const { fx: noArt } = rigHitEffects({ decalTexture: () => null });
+  noArt.showBloodSplash(0, [0, 5, 0], null, { damage: 10, maxHealth: 40 });
+  assert.equal(noArt.decals.draw(), false, 'no art, no draw - and no throw');
+
+  // the streaming world moves them
+  assert.equal(fx.decals.shiftOrigin([100, 0, 0]), 4);
+
+  // A MODE CHANGE blanks the buffer SLOT BY SLOT rather than freeing
+  // it: the ring is the same ring next time, and rebuilding would cost
+  // an allocation every time the player opens a door.
+  const n = wrote.length;
+  assert.equal(fx.decals.clear(), 4);
+  assert.equal(fx.decals.count(), 0);
+  assert.equal(wrote.length - n, 4, 'four blanks written, no batch rebuilt');
+  assert.deepEqual(wrote.at(-1).floats, new Array(DECAL_FLOATS).fill(0));
+  assert.equal(fx.decals.draw(), false, 'and nothing draws after');
+});
+
+test('BLOOD1a: the mark’s size band is the port’s own choice, and it reads the ladder’s ends rather than copying them', () => {
+  assert.equal(MARK_SIZE_MIN, 0.35);
+  assert.equal(MARK_SIZE_MAX, 1.2);
+  assert.ok(Math.abs(markSize(30) - MARK_SIZE_MIN) < 1e-9, 'the bottom rung is the smallest mark');
+  assert.ok(Math.abs(markSize(200) - MARK_SIZE_MAX) < 1e-9, 'the top rung is the biggest');
+  assert.ok(markSize(50) > markSize(30) && markSize(150) > markSize(70), 'and it rises with the rung');
+  // clamped outside the ladder either way
+  assert.equal(markSize(-100), MARK_SIZE_MIN);
+  assert.equal(markSize(1e6), MARK_SIZE_MAX);
+  // THE ENDS ARE READ, NOT COPIED: a second literal 30/200 here would
+  // drift the day a rung moves.
+  const src = readFileSync(new URL('../src/combat/bloodDecals.js', import.meta.url), 'utf8');
+  const fn = src.slice(src.indexOf('export function markSize('), src.indexOf('export const BLOODLESS_INDEX'));
+  assert.match(fn, /const lo = ladderRate\(0\), hi = RATE_MAX;/);
+  // comments stripped, for the reason the no-GL pin above strips them:
+  // the law is that the CODE carries no second copy, and the line that
+  // reads the ladder's ends is allowed to say which ends it means.
+  const code = fn.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');
+  assert.doesNotMatch(code, /\b(30|200)\b/, 'no second copy of the ladder’s ends');
+});

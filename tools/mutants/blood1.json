@@ -151,5 +151,68 @@
     "tests": [
       "test/blood1_decals.test.js"
     ]
+  },
+  {
+    "name": "BLOOD1a-a-bloodless-foe-stains-the-floor",
+    "file": "src/scenes/hitEffects.js",
+    "old": "    if (!marksBlood(bloodIndex)) return null;",
+    "new": "",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1a-the-surface-is-assumed-instead-of-found",
+    "file": "src/scenes/hitEffects.js",
+    "old": "      [pos[0], pos[1] - h.dist, pos[2]],",
+    "new": "      [pos[0], pos[1], pos[2]],",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1a-blood-over-open-air-still-marks",
+    "file": "src/scenes/hitEffects.js",
+    "old": "    if (!h || !Number.isFinite(h.dist) || h.dist > MARK_DROP) return null;",
+    "new": "    if (!h) return null;",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1a-the-mark-takes-the-surfaces-normal-from-nowhere",
+    "file": "src/scenes/hitEffects.js",
+    "old": "      h.normal ?? [0, 1, 0],",
+    "new": "      [0, 1, 0],",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1a-a-mode-change-frees-the-ring-instead-of-blanking-it",
+    "file": "src/scenes/hitEffects.js",
+    "old": "    for (const d of _pool.decals()) {\n      clearDecalQuad(_scratch, 0);\n      renderer.writeDecalSlot(_batch, d.slot, _scratch);\n    }",
+    "new": "",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1a-the-draw-runs-without-art",
+    "file": "src/scenes/hitEffects.js",
+    "old": "    if (!tex) return false;",
+    "new": "",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1a-the-mark-size-reads-a-second-copy-of-the-ladder",
+    "file": "src/combat/bloodDecals.js",
+    "old": "  const lo = ladderRate(0), hi = RATE_MAX;",
+    "new": "  const lo = 30, hi = 200;",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
   }
 ]

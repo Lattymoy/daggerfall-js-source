@@ -40,6 +40,7 @@
 
 import { FlatAnim, isAnimatedFlat, IMPACT_FPS } from '../render/flatAnimation.js';   // AUDIT 26 F033: ImpactBillboardFramesPerSecond
 import { billboardSize } from '../world/rmbFlats.js';
+import { createBloodDecalPool, writeDecalQuad, clearDecalQuad, bloodRate, markSize, marksBlood, DECAL_FLOATS } from '../combat/bloodDecals.js';   // BLOOD1a: the mark left behind, beside the splash that plays over it
 
 /** EnemyBlood.cs:23. */
 export const BLOOD_ARCHIVE = 380;
@@ -49,6 +50,12 @@ export const BLOOD_FPS = 10;
 export const IMPACT_RECORD = 1;
 /** :35 - `+ transform.forward * 0.02f`. */
 export const FORWARD_NUDGE = 0.02;
+
+/** BLOOD1a: how far down a mark looks for something to stain. Blood
+ *  spawns at chest height (`bloodCentre` is five eighths up the
+ *  capsule), so the floor is a body's height away and a little more on
+ *  a step; past that the blood is over open air and leaves nothing. */
+export const MARK_DROP = 3;
 
 /** :41-54 - ShowMagicSparkles, the same one-shot billboard at record
  *  3 (`sparklesIndex`).
@@ -83,7 +90,16 @@ export function bloodCentre(feet, height) {
  * `tick(dt)` advances them and destroys the ones that have finished;
  * `batches()` hands the host what to draw, on the flats' axis.
  */
-export function createHitEffects({ renderer, getTexture, uploadRecordFrame, onSpawn = null, onRetire = null }) {
+export function createHitEffects({
+  renderer, getTexture, uploadRecordFrame, onSpawn = null, onRetire = null,
+  // BLOOD1a: the mark's three deps. `collider` finds the surface under
+  // the blood, `decals` is the switch and its two settings, and
+  // `decalTexture` answers the GL texture the marks are drawn from -
+  // TEXTURE.380's own art out of the player's ARENA2, which is where
+  // every other pixel in this port comes from. A host that passes none
+  // of them draws exactly the splash it always drew.
+  collider = null, decals = null, decalTexture = null,
+} = {}) {
   // onSpawn/onRetire let a host whose draw list is PERSISTENT (the
   // dungeon's billboardBatches, which the missile impact already
   // pushes into and splices out of) register the batch instead of
@@ -131,6 +147,85 @@ export function createHitEffects({ renderer, getTexture, uploadRecordFrame, onSp
     return entry;
   }
 
+  // ---- BLOOD1a: THE MARK ---------------------------------------------
+  //
+  // The splash is a one-shot that plays and goes; the mark is what is
+  // still there when the player walks back through. Both come off the
+  // same event, so they come off the same call - `showBloodSplash` has
+  // eight call sites across four hosts and adding a ninth seam would
+  // have meant eight places to remember instead of one.
+
+  let _pool = null;
+  let _batch = null;
+  const _scratch = new Float32Array(DECAL_FLOATS);
+
+  const decalsOn = () => !!(decals?.enabled?.() ?? false) && !!collider && !!renderer?.createDecalBatch;
+
+  function ensurePool() {
+    if (_pool && _batch) return true;
+    const cap = Math.max(1, Math.floor(decals?.capacity?.() ?? 1000));
+    _pool = createBloodDecalPool({ capacity: cap });
+    _batch = renderer.createDecalBatch(cap);
+    return true;
+  }
+
+  /**
+   * Lay a mark under a splash.
+   *
+   * THE SURFACE IS FOUND, NOT ASSUMED. Blood spawns at chest height on
+   * a body (`bloodCentre` is five eighths up the capsule), which is
+   * nowhere near anything to stain, so the ray goes DOWN to the floor.
+   * Nothing within reach - a body over a chasm, a foe on a bridge with
+   * open air below - leaves no mark rather than one hanging in space.
+   */
+  function markBlood(bloodIndex, pos, hit) {
+    if (!decalsOn() || !pos) return null;
+    // A BLOODLESS FOE MARKS NOTHING. DFU's own bloodIndex says which,
+    // and characters/enemyBasics.js has carried it since long before
+    // this arc - the splash record the port already draws for them
+    // stands, and no stain is laid under it.
+    if (!marksBlood(bloodIndex)) return null;
+    const down = [0, -1, 0];
+    const h = collider.raycastHit?.(pos, down, MARK_DROP);
+    if (!h || !Number.isFinite(h.dist) || h.dist > MARK_DROP) return null;
+    ensurePool();
+    const rate = bloodRate(hit?.damage ?? 0, hit?.maxHealth ?? 0, decals?.density?.() ?? 1);
+    const d = _pool.place(
+      [pos[0], pos[1] - h.dist, pos[2]],
+      h.normal ?? [0, 1, 0],
+      { size: markSize(rate) },
+    );
+    if (!d) return null;
+    // ONE SLOT'S WORTH of the buffer, at its own offset - the ring
+    // recycles, so a placement never rebuilds anything.
+    writeDecalQuad(_scratch, 0, d);
+    renderer.writeDecalSlot(_batch, d.slot, _scratch);
+    return d;
+  }
+
+  function drawMarks() {
+    if (!_batch || !_pool || !_pool.count) return false;
+    const tex = decalTexture?.();
+    if (!tex) return false;
+    renderer.drawDecals(_batch, tex);
+    return true;
+  }
+
+  /** A MODE CHANGE THROWS THE ROOM AWAY. The marks go with it, and the
+   *  buffer is blanked slot by slot rather than freed - the ring is the
+   *  same ring next time, and rebuilding it would cost an allocation
+   *  every time the player opens a door. */
+  function clearMarks() {
+    if (!_pool) return 0;
+    const n = _pool.count;
+    for (const d of _pool.decals()) {
+      clearDecalQuad(_scratch, 0);
+      renderer.writeDecalSlot(_batch, d.slot, _scratch);
+    }
+    _pool.clear();
+    return n;
+  }
+
   function retire(entry) {
     entry.dead = true;
     if (entry.batch) {
@@ -145,7 +240,19 @@ export function createHitEffects({ renderer, getTexture, uploadRecordFrame, onSp
   return {
     /** ShowBloodSplash (:26-39). `bloodIndex` picks the record, so the
      *  six rows DFU gives a 2 splash differently from everything else. */
-    showBloodSplash: (bloodIndex, pos, facing = null) => spawn(bloodIndex ?? 0, pos, facing),
+    showBloodSplash: (bloodIndex, pos, facing = null, hit = null) => {
+      const entry = spawn(bloodIndex ?? 0, pos, facing);
+      markBlood(bloodIndex, pos, hit);   // BLOOD1a: the splash plays, the mark stays
+      return entry;
+    },
+    /** BLOOD1a: the host's own hooks on the ring. */
+    decals: {
+      draw: drawMarks,
+      shiftOrigin: (delta) => (_pool ? _pool.shiftOrigin(delta) : 0),
+      clear: clearMarks,
+      count: () => (_pool ? _pool.count : 0),
+      _pool: () => _pool,
+    },
     /** ShowMagicSparkles (:41-54), record 3. */
     showMagicSparkles: (pos, facing = null) => spawn(SPARKLES_RECORD, pos, facing),
     /** AUDIT 26 F033 - DaggerfallMissile.DoCollision (:364-370):

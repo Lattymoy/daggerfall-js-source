@@ -161,6 +161,25 @@ Slices, each behind its own `features.js` row:
    are imported BY the renderer FROM the module, so the format has one
    home and the writer cannot disagree with the buffer.
 
+   **THE MARK RIDES THE SPLASH'S OWN CALL.** `showBloodSplash` has
+   eight call sites across four hosts and IS the event "blood happened
+   here", so the stain comes off it rather than a ninth seam nobody
+   would remember to feed. The surface is FOUND, not assumed: blood
+   spawns at chest height, so the ray goes down and the mark wears
+   whatever normal it hit - on a ramp it lies along the ramp and its
+   2cm lift comes off the ramp. Blood over open air leaves nothing. A
+   bloodless foe stains nothing, off DFU's own `bloodIndex`. A host
+   that passes none of the three decal deps draws exactly the splash it
+   always drew.
+
+   **ONE MARK PER BLOOD EVENT is the whole of BLOOD1a**, and the rate
+   SIZES it rather than multiplying it (0.35m to 1.2m, the port's own
+   art direction and said to be). The reference's rate is a PARTICLE
+   count and each particle that lands prints its own mark, so the
+   scatter is the particles' to bring in BLOOD1b: a decals-per-hit law
+   invented here would be one to un-invent later, and two hundred a hit
+   would spend a thousand-mark ring in five swings.
+
    Two things the writing settled that the reading had not. THE
    LADDER'S TOP RUNG AND THE OVERKILL LINE ARE ONE NUMBER (175): the
    first cut had them as separate table rows and the boundary came out
