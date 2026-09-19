@@ -2686,16 +2686,28 @@ export async function bootWorld(canvas, renderer, params, status) {
    * through the floating origin at the moment they are asked for. Only
    * the pixels within a light's reach of the player can matter - a
    * brazier two kilometres off is not one you are standing at - so the
-   * walk is cut at HEARTH_NEAR and what survives is a handful. Unlike
-   * the lantern pool beside it (PERF-LIGHTS) this is NOT refilled in
-   * place: that one runs once a frame over hundreds, this runs on the
-   * survival tick and the activation ray over the few fires within
-   * sixteen metres, and a pool for that would be bookkeeping bought
-   * with nothing.
+   * walk is cut at HEARTH_NEAR and what survives is a handful.
+   *
+   * AUDIT HEARTH1 F2: IT IS A POOL, because this runs EVERY FRAME. The
+   * first draft minted an array and an object per fire and said in this
+   * comment that it ran "on the survival tick and the activation ray",
+   * so a pool would be bookkeeping bought with nothing. That was simply
+   * wrong about the frame: the player ticker calls its host's
+   * `survivalEnv` on every frame - it is the ticker, not the caller,
+   * that decides whether a minute has rolled - so `byFire` and this walk
+   * with it ran sixty times a second, allocating each time. That is the
+   * exact churn PERF-LIGHTS took out of the lanterns two thousand lines
+   * below, reintroduced by a comment that reasoned from a cadence
+   * nobody had checked. The objects live in `_hearthStore` and are
+   * refilled in place; `_hearthOut` is the answer's own length, and
+   * setting ITS length frees nothing, because the store still holds
+   * every object it ever made.
    */
   const _hearthT = [0, 0, 0];
+  const _hearthStore = [];   // the objects, grown once and never freed
+  const _hearthOut = [];     // this frame's answer - the first n of the store
   const hearthsNear = () => {
-    const out = [];
+    let n = 0;
     const eye = walkMode && playerSpawned ? player.pos : cam.pos;
     for (const p of built.values()) {
       if (!p.hearths?.length) continue;
@@ -2703,10 +2715,14 @@ export async function bootWorld(canvas, renderer, params, status) {
       for (const h of p.hearths) {
         const x = h[0] + t[0], y = h[1] + t[1], z = h[2] + t[2];
         if (Math.abs(x - eye[0]) > HEARTH_NEAR || Math.abs(z - eye[2]) > HEARTH_NEAR) continue;
-        out.push({ x, y, z });
+        const e = _hearthStore[n] ?? (_hearthStore[n] = { x: 0, y: 0, z: 0 });
+        e.x = x; e.y = y; e.z = z;
+        _hearthOut[n] = e;
+        n++;
       }
     }
-    return out;
+    _hearthOut.length = n;
+    return _hearthOut;
   };
   const camps = createCamps({
     renderer, getTexture, uploadRecordFrame, meshes: { getGpuMesh, cpuModels }, entity: playerEntity,
@@ -6955,7 +6971,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // exterior -> the townTalk overlay, interior OR dungeon -> the mode
   // machine's slot. U43-ii shipped the dungeon half: showQuestBox
   // offers the window to `modes.showQuestOverlay` below, and
-  // worldModes answers it in BOTH modes (worldModes.js:7567-7630 -
+  // worldModes answers it in BOTH modes (worldModes.js:7565-7628 -
   // dungeon routes to dungeonCtx.showOverlay), so a dungeon popup is
   // shown rather than logged loudly and dropped.
   // AUDIT 24 (wave 21): DaggerfallMessageBox.Show() is a
