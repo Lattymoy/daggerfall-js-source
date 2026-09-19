@@ -1473,6 +1473,93 @@ scene with nothing remembered between quads. Identical.
 flags stop repeating while `dst` and `src` - which really are a quad's
 own - still go up every single time; and the equality above.
 
+## PERF-2D - THE BRACKET THAT WAS PER QUAD (2026-09-19)
+
+PERF-UI ended by naming what it had left on the table and why:
+
+> **What was left, and why.** 240 cap toggles and 242 VAO binds remain [...]
+> Removing them means not restoring the state a quad found, which is a
+> CONTRACT change: the world paths after it would have to own their own
+> caps. That is a real optimisation and a real risk.
+
+It was measured this time, and the number is why it is no longer being
+left. A dungeon frame - 3 batched level meshes, 25 loose models and a
+hundred-odd HUD quads, which is what a player is looking at in the scenes
+where "heavy performance issues across the game" was reported:
+
+| | GL calls | share |
+|---|---|---|
+| world meshes | 232 | 13% |
+| billboards | 34 | 2% |
+| **the HUD (120 quads)** | **1,494** | **85%** |
+| whole frame | 1,760 | |
+| *of which the per-quad cap/VAO bracket* | *763* | ***43%*** |
+
+**The UI is the frame.** Not the terrain, not the models - the 2D pass,
+in every scene there is, and 43% of the whole frame's GL traffic was one
+bracket opened and shut around every single quad.
+
+| | GL calls a frame | a quad |
+|---|---|---|
+| before | 1,760 | 12.4 |
+| after | 1,043 | 6.5 |
+
+**41% off the frame; 48% off the UI pass.** The bracket itself: 763 calls
+to 46.
+
+**It is NOT the contract change PERF-UI refused.** That one would have
+made the world paths own their caps. The renderer still owns them here -
+what changed is only WHEN the restore happens. `_open2D(vao)` disables
+the caps and binds; `_close2D()` hands the baseline back; and `_close2D`
+is called at the head of everything that needs it. The quad no longer
+carries the bracket, the RUN does.
+
+**The law it replaces was installed after a mutation campaign, so the
+replacement had to be at least as strong.** `perfon_text_run.test.js`
+says it plainly: deleting `gl.enable(gl.CULL_FACE)` from drawScreenQuad
+*passed the entire suite* - "leaving it off means every back face in the
+world pass that follows draws, for the rest of the session." Three things
+carry that weight now:
+
+1. **The source law.** Every method in `renderer.js` that issues a
+   `gl.draw*` is one of the three 2D primitives or calls `_close2D()`
+   first, and so do the five seams where foreign GL runs. Read out of
+   the source, so it cannot go vacuous.
+2. **The equality proof.** A mixed scene - UI runs interleaved with
+   meshes, a character sprite quad, an instanced run, an overlay and
+   foreign seams, because the transition OUT of an open run is the only
+   thing this can break - replayed twice, once with the run and once
+   with `_close2D()` forced after every quad, which IS the old bracket.
+   The full effective state at every draw (program, VAO, both texture
+   units, the caps, the draw's own arguments) is identical. Proved the
+   same way against the previous commit in a worktree: **366 draws, all
+   identical.**
+3. **The gap, made loud.** The sky, the rain, the wisps, the sand and the
+   grass are NOT in this file - the hosts hold `renderer.gl` and call
+   them directly, and they assume the baseline (precipitation's draw sets
+   BLEND and depthMask and never touches DEPTH_TEST, so an open run would
+   give it rain that draws through walls). Today they cannot collide:
+   every foreign pass runs in the world section and the first screen quad
+   is what ENDS it (ROAD-E E5). But that is the hosts' running order and
+   not a law. So `markForeignPass` - which a host calls AFTER its foreign
+   pass - checks whether the run is still open, and if it is, says so
+   once, naming `endUiRun()` as the remedy. The two regressions this
+   bracket has already caused were both silent; this one would not be.
+
+**The trap, and it is worth writing down.** `drawScreenQuad` calls
+`_compositeAir()` at the head of EVERY quad. Putting `_close2D()` at the
+top of `_compositeAir` - where every other guard goes - shuts the run a
+hundred times a frame and hands the entire saving back, while every test
+still passes, because nothing about the picture changes. It belongs after
+that function's early return, and there is a pin that says so.
+
+**What is left now.** 777 calls for 120 quads: `dst` and `src` per quad
+(262), the texture binds (204), the draws (120). The next real cut is
+batching same-texture quads into `drawScreenQuadRun`, which already
+exists and already does one draw for a whole string - but that is a
+CALLER change across some thirty UI files, not a renderer change, and it
+wants its own slice.
+
 ## PERF-WARM - THE COMPILE THAT HAPPENS MID-FRAME (2026-09-19)
 
 PERF-TEX, PERF-TEX2 and PERF-UI took redundant GL calls out of the steady

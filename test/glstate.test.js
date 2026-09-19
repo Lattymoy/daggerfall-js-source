@@ -758,3 +758,194 @@ test('PERF-WARM: the pixel-snow program is built with the renderer on the lane t
   assert.equal(off.pixelProgram, null, 'the classic lane compiled nothing it cannot bind');
   assert.equal(off.labProgram, null);
 });
+
+// ═══ PERF-2D - THE BRACKET THAT WAS PER QUAD ════════════════════════
+// Every screen quad disabled DEPTH_TEST and CULL_FACE, bound its VAO,
+// drew, then re-enabled both and unbound. Against a dungeon frame that
+// is otherwise 3 batched level meshes and 25 loose models, that bracket
+// alone was 43% of every GL call in the frame. It is a RUN's state, so
+// it opens once and closes on demand.
+
+/** The full effective state at every draw - the caps too, which is the
+ *  new thing that can go wrong: a world draw with no depth test and no
+ *  culling is the 2026-08-23 "sky-blue screen" wearing the other face. */
+const effectiveWithCaps = (log) => {
+  const CAPS = ['DEPTH_TEST', 'CULL_FACE', 'BLEND'];
+  const on = new Map();          // enum -> bool
+  const named = new Map();       // enum -> name, learned from the rig's own enums
+  let unit = 0, prog = null, vao = null;
+  const units = new Map(); const out = [];
+  // glLogRig mints object ids with Math.random, so the raw value differs
+  // between two runs of the same scene. Canonicalise by ORDER OF FIRST
+  // APPEARANCE: same object still means same slot, which is the only
+  // thing the comparison is about, and a different object still differs.
+  const slot = new Map();
+  const id = (t) => {
+    if (t === null || t === undefined) return String(t);
+    const raw = (t.id !== undefined) ? t.id : String(t);
+    if (!slot.has(raw)) slot.set(raw, '#' + slot.size);
+    return slot.get(raw);
+  };
+  return { rows: out, feed(r) {
+    // glLogRig clears the log after construction, so the constructor's
+    // own `enable(DEPTH_TEST)`/`enable(CULL_FACE)` are not in it. Seed
+    // the baseline they establish, or every draw reads as caps-off and
+    // the comparison below compares two piles of zeroes.
+    on.set(r.gl.DEPTH_TEST, true); on.set(r.gl.CULL_FACE, true); on.set(r.gl.BLEND, false);
+    for (const c of CAPS) named.set(r.gl[c], c);
+    for (const [k, ...a] of log) {
+      if (k === 'enable') on.set(a[0], true);
+      else if (k === 'disable') on.set(a[0], false);
+      else if (k === 'activeTexture') unit = a[0];
+      else if (k === 'bindTexture') units.set(unit, a[1]);
+      else if (k === 'useProgram') prog = a[0];
+      else if (k === 'bindVertexArray') vao = a[0];
+      else if (k.startsWith('draw')) out.push([
+        k, id(prog), id(vao), id(units.get(0)), id(units.get(1)),
+        CAPS.map((c) => c + '=' + (on.get(r.gl[c]) ? 1 : 0)).join(' '),
+        a.slice(1).map(String).join(','),
+      ].join('|'));
+    }
+    return out;
+  } };
+};
+
+/** The scene the proof runs on: UI runs interleaved with every 3D pass
+ *  the renderer has, because the transition OUT of an open run is the
+ *  only thing this change can break. `eager` closes the run after every
+ *  quad, which is exactly the per-quad bracket that stood before. */
+const mixedScene = (r, { eager = false } = {}) => {
+  const m = identity();
+  // drawMesh SKIPS a sub-mesh whose texture is not in the cache, so
+  // without this the meshes below draw nothing and the whole proof is
+  // a row of quads. (The non-vacuity assertions at the end exist
+  // because this is exactly the way such a scene goes quietly hollow.)
+  for (let a = 0; a < 7; a++) for (let b = 0; b < 7; b++) r.textures.set(`${a}_${b}`, { id: `t${a}_${b}` });
+  const mesh = (n, tag) => ({ vao: { id: 'vao_' + tag }, subMeshes: Array.from({ length: n }, (_, i) => ({ textureArchive: i % 7, textureRecord: (i * 3) % 7, primitiveCount: 40, startIndex: i * 40 })) });
+  const q = (i) => {
+    r.drawScreenQuad(i % 7 === 0 ? null : { id: i % 3 ? 'A' : 'B' },
+      { x: i * 3, y: 4 + (i % 40), w: 8, h: 8 }, { u0: 0, v0: 0, u1: 1, v1: 1 },
+      i % 11 ? [1, 1, 1, 1] : [1, 0.2, 0.2, 1], i % 17 ? {} : { blend: true });
+    if (eager) r._close2D();
+  };
+  r.beginFrame(new Float32Array(identity()), new Float32Array(identity()), new Float32Array([0, -1, 0]));
+  r.drawMesh(mesh(7, 'lvl'), m);
+  r.markForeignPass();
+  r.drawMesh(mesh(3, 'b'), m);
+  for (let i = 0; i < 20; i++) q(i);
+  r.drawMesh(mesh(4, 'after2d'), m);          // 3D straight out of an open run
+  for (let i = 20; i < 30; i++) q(i);
+  r.drawCharacterSpriteQuad({ id: 'sprite' }, [1, 2, 3], 0.5, 1, [1, 0, 0], 1, 1);
+  for (let i = 30; i < 40; i++) q(i);
+  r.endUiRun(); r.markForeignPass();          // a foreign seam out of an open run, the way a host would take it
+  for (let i = 40; i < 50; i++) q(i);
+  r.drawScreenQuadRun({ id: 'font' }, [{ dst: { x: 1, y: 2, w: 3, h: 4 }, src: { u0: 0, v0: 0, u1: 1, v1: 1 } }], [1, 1, 1, 1]);
+  for (let i = 50; i < 60; i++) q(i);
+  r.drawScreenOverlayQuad({ id: 'ovl' }, 1, 1);   // a third VAO inside one run
+  for (let i = 60; i < 70; i++) q(i);
+  r.drawMesh(mesh(2, 'tail'), m);
+  for (let i = 70; i < 80; i++) q(i);
+};
+
+test('PERF-2D: the run opens once and closes on demand - the per-quad bracket is gone', () => {
+  const { r, log } = glLogRig();
+  const from0 = 0;
+  mixedScene(r);
+  const slice = log.slice(from0);
+  const caps = slice.filter(([k, a]) => (k === 'enable' || k === 'disable') && (a === r.gl.DEPTH_TEST || a === r.gl.CULL_FACE)).length;
+  const quads = slice.filter(([k]) => k === 'drawElements' || k === 'drawElementsInstanced' || k === 'drawArrays').length;
+  assert.ok(quads > 80, `the scene really drew (${quads})`);
+  // Four transitions out of an open run (a mesh, a sprite quad, a
+  // foreign mark, a mesh) plus the opens: nowhere near one a quad.
+  assert.ok(caps <= 30, `the cap bracket ran ${caps} times for ${quads} draws - it is a run's, not a quad's`);
+  // and the same for the VAO: the three 2D primitives share the run
+  const vaoBinds = slice.filter(([k]) => k === 'bindVertexArray').length;
+  assert.ok(vaoBinds <= 40, `${vaoBinds} VAO binds for ${quads} draws`);
+});
+
+test('PERF-2D: every draw sees exactly the state it saw when the bracket was per quad', () => {
+  const { r: rRun, log: logRun } = glLogRig();
+  mixedScene(rRun);
+  const run = effectiveWithCaps(logRun).feed(rRun);
+
+  const { r: rEager, log: logEager } = glLogRig();
+  mixedScene(rEager, { eager: true });          // the bracket, closed after every quad, as it stood
+  const eager = effectiveWithCaps(logEager).feed(rEager);
+
+  assert.equal(run.length, eager.length, 'the same draws happened');
+  assert.deepEqual(run, eager, 'the deferred restore changed what a draw sees');
+  // and the claim is not vacuous: the caps really are off at a quad and
+  // on at a mesh, so the comparison above has something to compare
+  assert.ok(run.some((d) => d.includes('DEPTH_TEST=0 CULL_FACE=0')), 'quads draw with the caps off');
+  assert.ok(run.some((d) => d.includes('DEPTH_TEST=1 CULL_FACE=1')), 'meshes draw with the caps on');
+});
+
+test('PERF-2D: the source law - every draw in renderer.js is a 2D primitive or closes the run first', () => {
+  const src = readFileSync('src/render/renderer.js', 'utf8').split('\n');
+  const TWO_D = new Set(['drawScreenQuad', 'drawScreenQuadRun', 'drawScreenOverlayQuad',
+    '_ensureScreenQuadProgram', '_ensureScreenQuadRunProgram', '_ensureOverlayProgram']);
+  let method = null; const seen = new Map();   // method -> {closed, drew}
+  for (const line of src) {
+    const m = /^  (_?[A-Za-z][A-Za-z0-9_]*)\(.*\)\s*\{\s*$/.exec(line);
+    if (m) { method = m[1]; seen.set(method, { closed: false, drew: false }); continue; }
+    if (!method) continue;
+    const e = seen.get(method);
+    if (line.includes('this._close2D()')) e.closed = true;
+    if (/gl\.draw(Arrays|Elements)/.test(line) && !e.drew) e.drew = !e.closed;   // drew BEFORE any close
+  }
+  const offenders = [...seen].filter(([name, e]) => e.drew && !TWO_D.has(name)).map(([n]) => n);
+  assert.deepEqual(offenders, [], `these draw before handing the baseline back: ${offenders.join(', ')}`);
+  // and the seams where FOREIGN gl runs close it too - the hosts call
+  // these, and a sky or a rain pass assumes the baseline
+  for (const seam of ['beginFrame', 'endWorldPass', 'markForeignPass', 'beginPanelFrame', 'endPanelFrame']) {
+    assert.ok(seen.get(seam)?.closed, `${seam} does not close the 2D run, and foreign GL runs after it`);
+  }
+});
+
+test('PERF-2D: _compositeAir closes AFTER its early return, or the saving is handed straight back', () => {
+  const src = readFileSync('src/render/renderer.js', 'utf8');
+  const i = src.indexOf('_compositeAir() {');
+  const body = src.slice(i, i + 700);
+  const ret = body.indexOf("if (!this._air?.pending) return;");
+  const close = body.indexOf('this._close2D();');
+  assert.ok(ret > 0 && close > ret,
+    'drawScreenQuad calls _compositeAir at the head of EVERY quad - a close before its early return is the per-quad bracket again');
+});
+
+test('PERF-2D: a foreign pass inside an open run is the one gap, and it SPEAKS', () => {
+  // The sky, the rain, the wisps and the grass are not in renderer.js -
+  // the hosts hold `renderer.gl` and call them directly, so no guard in
+  // that file can stand in front of them, and they assume the baseline.
+  // Today they cannot collide (every foreign pass runs in the world
+  // section and the first screen quad is what ENDS it), but that is the
+  // hosts' order and not a law, and both regressions this bracket has
+  // already caused were silent ones.
+  const { r } = glLogRig();
+  r.beginFrame(new Float32Array(identity()), new Float32Array(identity()), new Float32Array([0, -1, 0]));
+  const said = [];
+  const warn = console.warn;
+  console.warn = (...a) => said.push(a.join(' '));
+  try {
+    r.markForeignPass();                    // no run open: nothing to say
+    assert.deepEqual(said, [], 'a foreign pass outside a run is ordinary and silent');
+    r.drawScreenQuad({ id: 'A' }, { x: 0, y: 0, w: 8, h: 8 });
+    r.markForeignPass();                    // a run WAS open: that is the bug
+    assert.equal(said.length, 1, 'a foreign pass inside an open run says so');
+    assert.match(said[0], /DEPTH_TEST and CULL_FACE off/);
+    assert.match(said[0], /endUiRun/, 'and names the remedy rather than just the fault');
+    r.drawScreenQuad({ id: 'A' }, { x: 0, y: 0, w: 8, h: 8 });
+    r.markForeignPass();
+    assert.equal(said.length, 1, 'once a session, not once a frame - a warning in a frame loop is a second bug');
+  } finally { console.warn = warn; }
+  // and the remedy really is one: it closes the run, so the next mark is quiet
+  const { r: r2 } = glLogRig();
+  r2.beginFrame(new Float32Array(identity()), new Float32Array(identity()), new Float32Array([0, -1, 0]));
+  const said2 = [];
+  console.warn = (...a) => said2.push(a.join(' '));
+  try {
+    r2.drawScreenQuad({ id: 'A' }, { x: 0, y: 0, w: 8, h: 8 });
+    r2.endUiRun();
+    r2.markForeignPass();
+    assert.deepEqual(said2, [], 'endUiRun closes the run, so the foreign pass is ordinary again');
+  } finally { console.warn = warn; }
+});

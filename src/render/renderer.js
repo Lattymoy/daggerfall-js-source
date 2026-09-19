@@ -1176,6 +1176,7 @@ export class Renderer {
    * the world pass did.
    */
   endWorldPass() {
+    this._close2D();   // PERF-2D: the baseline back, before anything that needs it
     if (!this._worldViewportPx) return;
     this._tex1Bound = null;   // PERF-TEX: the 2D path and the post passes own the units past here
     this._sq = {};   // PERF-UI: ...and this is the 2D pass's own door, so it starts knowing nothing
@@ -1241,6 +1242,33 @@ export class Renderer {
    *  cost is one upload per program key per seam; no draw, program or
    *  VAO count moves. */
   markForeignPass() {
+    // PERF-2D: THE ONE GAP THIS CHANGE CANNOT GUARD, MADE LOUD.
+    //
+    // Every path inside this file closes the 2D run before it needs the
+    // baseline, and `test/glstate.test.js` reads that law out of the
+    // source. The SKY, the rain, the wisps, the sand and the grass are
+    // not inside this file: the hosts hand them `renderer.gl` at
+    // construction and call `draw` on them directly, so nothing here can
+    // stand in front of those. They assume the baseline - precipitation's
+    // draw, for one, sets BLEND and depthMask and never touches
+    // DEPTH_TEST, so an open run would give it rain that draws through
+    // walls.
+    //
+    // Today they cannot collide: in both hosts every foreign pass runs in
+    // the world section and the first screen quad is what ENDS it
+    // (ROAD-E E5). But that is the hosts' running order, not a law, and
+    // the two regressions this bracket already caused (the 2026-08-23
+    // sky-blue screen; the `gl.enable(gl.CULL_FACE)` a mutation campaign
+    // deleted with the whole suite still green) were both silent.
+    //
+    // So: a host calls this AFTER its foreign pass. If the run is still
+    // open when it does, a foreign pass just drew inside one - the exact
+    // bug - and it says so, once, instead of rendering wrong all session.
+    if (this._2dVao && !this._warned2dForeign) {
+      this._warned2dForeign = true;
+      console.warn('PERF-2D: a foreign pass ran inside an open 2D run - it drew with DEPTH_TEST and CULL_FACE off. Call renderer.endUiRun() before the pass.');
+    }
+    this._close2D();
     this.gl.bindVertexArray(null);
     this._lastProgram = null;
     this._lastVao = null;
@@ -1616,6 +1644,12 @@ export class Renderer {
 
   _compositeAir() {
     if (!this._air?.pending) return;
+    // PERF-2D: AFTER the early return, and that ordering is the whole
+    // saving. drawScreenQuad calls this at the head of EVERY quad, so a
+    // close before the return would shut the run a hundred times a
+    // frame and hand the per-quad bracket straight back. The air pass
+    // only needs the baseline when it actually resolves.
+    this._close2D();
     this._perf?.mark('air');   // VC6d: the AO, the bloom, the shafts and the resolve
     this._air.setCloudShadow(this._cloudShadow ?? this._deckOwed);   // VC6c: the FRAME's deck - the host sets it after beginFrame, so the shafts can only read it here
     this._air.composite();   // EL4: the resolve - the frame to the canvas
@@ -1637,6 +1671,64 @@ export class Renderer {
 
   /** EL2: the ShadowPass or null - a probe's read. */
   get shadows() { return this._shadows; }
+
+  /** PERF-2D: THE BRACKET THAT WAS PER QUAD.
+   *
+   *  Every screen quad used to disable DEPTH_TEST and CULL_FACE, bind
+   *  its VAO, draw, then re-enable both and unbind - four cap calls and
+   *  two VAO binds a quad, for a HUD that draws a hundred-odd of them.
+   *  Measured against a dungeon frame that is otherwise 3 batched level
+   *  meshes and 25 loose models, that bracket alone was **43% of every
+   *  GL call in the frame**, in every scene there is.
+   *
+   *  It is a RUN's state, not a quad's, so it is opened once and closed
+   *  once. The renderer still OWNS it - this is not the contract change
+   *  PERF-UI weighed and refused, where the world paths would have had
+   *  to own their own caps. What changed is only WHEN the restore
+   *  happens: on demand, at the head of everything that needs the
+   *  baseline back, instead of eagerly after every quad.
+   *
+   *  The law, and `test/glstate.test.js` reads it out of the source:
+   *  **every method in this file that issues a `gl.draw*` either is one
+   *  of the three 2D primitives or calls `_close2D()` first**, and so
+   *  does every seam where foreign GL can run (`beginFrame`,
+   *  `endWorldPass`, `markForeignPass`, the panel frames). Miss one and
+   *  a world draw runs with no depth test and no culling, which is the
+   *  2026-08-23 "sky-blue screen" regression wearing the other face -
+   *  so the pin is a source pin and cannot go vacuous. */
+  _open2D(vao) {
+    if (!this._2dVao) {
+      const gl = this.gl;
+      gl.disable(gl.DEPTH_TEST);
+      // HANDEDNESS REGRESSION (2026-08-23, "the sky-blue screen"): a 2D
+      // blit has no facing, but with CULL_FACE left ON the global
+      // frontFace(CW) swap culled EVERY screen quad - the whole UI
+      // layer, title screen to fonts - leaving only the clear color.
+      // tools/cullProbe.mjs is the real-GL repro.
+      gl.disable(gl.CULL_FACE);
+    }
+    // The three primitives have three different VAOs, and switching
+    // between them inside one run is a bind and NOT a cap toggle.
+    this._bindVao(vao);
+    this._2dVao = vao;
+  }
+
+  /** PERF-2D: the host's own door onto `_close2D`, for a frame that has
+   *  to run a foreign pass after a screen quad. Nothing needs it today;
+   *  it exists so that the warning in `markForeignPass` names a remedy
+   *  rather than a bug report. */
+  endUiRun() { this._close2D(); }
+
+  /** Hand the baseline back, if a run is open. Idempotent, and cheap
+   *  enough to call at the head of anything: one property read. */
+  _close2D() {
+    if (!this._2dVao) return;
+    const gl = this.gl;
+    this._bindVao(null);
+    gl.enable(gl.CULL_FACE);
+    gl.enable(gl.DEPTH_TEST);
+    this._2dVao = null;
+  }
 
   _buildProgram(vsSrc, fsSrc) {
     const gl = this.gl;
@@ -1808,6 +1900,7 @@ export class Renderer {
    *  body that was just drawn and never writing over it. State is
    *  returned to the character pass's baseline on the way out. */
   _drawParticleEffects(mesh, modelMatrix) {
+    this._close2D();   // PERF-2D: the baseline back, before anything that needs it
     const gl = this.gl;
     const list = mesh.effects;
     if (!list || !list.length) return;
@@ -1881,6 +1974,7 @@ export class Renderer {
    * the water/billboard paths.
    */
   drawCharacter(mesh, modelMatrix) {
+    this._close2D();   // PERF-2D: the baseline back, before anything that needs it
     const gl = this.gl;
     const c = this._char;
     if (this._casting && this._spriteDepth === 0 && this._studioDepth === 0) this._shadows.recordCharacter(mesh, modelMatrix);   // EL7: the rigs cast - never from the sprite target or the studio bake
@@ -2125,6 +2219,7 @@ export class Renderer {
    *  to leave the GPU as an image. Y is flipped on the way out (GL rows
    *  run bottom-up); the RT is borrowed and returned exactly as above. */
   renderCharacterSpriteImage(mesh, modelMatrix, proj, view, pw, ph, { studio = true } = {}) {
+    this._close2D();   // PERF-2D: the baseline back, before anything that needs it
     const gl = this.gl;
     // PX23 (Mac: the new sprites and the character display are quite
     // dark in the inventory): THE IMAGE IS LIT BY A STUDIO, NOT BY THE
@@ -2177,6 +2272,7 @@ export class Renderer {
   /** Composite the sprite into the world: camera-facing quad at the
    *  character's position, alpha-cut, fogged, depth-tested. */
   drawCharacterSpriteQuad(tex, center, halfW, halfH, right, u1 = 1, v1 = 1) {
+    this._close2D();   // PERF-2D: the baseline back, before anything that needs it
     const gl = this.gl;
     this._ensureCharQuadProgram();
     const [cx, cy, cz] = center, [rx, , rz] = right;
@@ -2328,15 +2424,7 @@ void main() {
     this._compositeAir();   // EL3: a no-op unless a render is owed
     this._ensureScreenQuadProgram();
     this._use(this.screenQuadProgram);
-    this._bindVao(this._screenQuadVao);
-    gl.disable(gl.DEPTH_TEST);
-    // HANDEDNESS REGRESSION (2026-08-23, "the sky-blue screen"): a 2D
-    // blit has no facing, but with CULL_FACE left ON the global
-    // frontFace(CW) swap culled EVERY screen quad - the whole UI
-    // layer, title screen to fonts - leaving only the clear color.
-    // tools/cullProbe.mjs is the real-GL repro; the bracket is the
-    // overlay pass's own idiom.
-    gl.disable(gl.CULL_FACE);
+    this._open2D(this._screenQuadVao);   // PERF-2D: a RUN's bracket, not a quad's
     const ox = this._screenOffset?.[0] ?? 0, oy = this._screenOffset?.[1] ?? 0;
     gl.uniform4f(this._screenQuad.dst, dst.x + ox, dst.y + oy, dst.w, dst.h);
     // PERF-UI: THE FOUR THAT ARE NOT A QUAD'S OWN. `dst` and `src` above
@@ -2388,9 +2476,8 @@ void main() {
     gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_SHORT, 0);
     this.stats.draws++;
     if (blend) gl.disable(gl.BLEND);
-    gl.enable(gl.CULL_FACE);
-    gl.enable(gl.DEPTH_TEST);
-    this._bindVao(null);
+    // PERF-2D: the run stays open - _close2D hands the baseline back at
+    // the head of whatever needs it next.
   }
 
   /** PERF-WARM: build the screen-quad program, its sampler binding and
@@ -2500,21 +2587,16 @@ void main() {
       a[o + 4] = src.u0; a[o + 5] = src.v0; a[o + 6] = src.u1; a[o + 7] = src.v1;
     }
     this._use(this.screenQuadRunProgram);
-    this._bindVao(this._screenQuadRunVao);
+    this._open2D(this._screenQuadRunVao);   // PERF-2D
     gl.bindBuffer(gl.ARRAY_BUFFER, this._screenQuadRunVbo);
     if (this._screenQuadRunCap < n) { gl.bufferData(gl.ARRAY_BUFFER, a.byteLength, gl.STREAM_DRAW); this._screenQuadRunCap = a.length / 8; }
     gl.bufferSubData(gl.ARRAY_BUFFER, 0, a, 0, n * 8);
-    gl.disable(gl.DEPTH_TEST);
-    gl.disable(gl.CULL_FACE);   // the same handedness bracket drawScreenQuad keeps
     gl.uniform2f(this._screenQuadRun.canvas, gl.drawingBufferWidth, gl.drawingBufferHeight);
     gl.uniform4f(this._screenQuadRun.color, color[0], color[1], color[2], color[3]);
     gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, tex); gl.uniform1i(this._screenQuadRun.tex, 0);
     this.stats.texBinds++;
     gl.drawElementsInstanced(gl.TRIANGLES, 6, gl.UNSIGNED_SHORT, 0, n);
     this.stats.draws++;
-    gl.enable(gl.CULL_FACE);
-    gl.enable(gl.DEPTH_TEST);
-    this._bindVao(null);
   }
 
   /** PERF-WARM: build the instanced screen-quad program and its two
@@ -2590,14 +2672,9 @@ void main() {
     gl.bindTexture(gl.TEXTURE_2D, tex);
     gl.uniform1i(this._overlay.tex, 0);
     gl.uniform2f(this._overlay.uv1, u1, v1);
-    gl.disable(gl.DEPTH_TEST);
-    gl.disable(gl.CULL_FACE);
-    this._bindVao(this._overlayVAO);
+    this._open2D(this._overlayVAO);   // PERF-2D
     gl.drawArrays(gl.TRIANGLE_FAN, 0, 4);
     this.stats.texBinds++; this.stats.draws++;
-    this._bindVao(null);
-    gl.enable(gl.CULL_FACE);
-    gl.enable(gl.DEPTH_TEST);
   }
 
   /** PERF-WARM: build the full-screen overlay program and its VAO -
@@ -2799,6 +2876,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
   }
 
   beginFrame(proj, view, lightDir, opts = null) {
+    this._close2D();   // PERF-2D: the baseline back, before anything that needs it
     const s = this.stats;
     s.draws = 0; s.programBinds = 0; s.vaoBinds = 0; s.texBinds = 0;
     // VC4: the cloud shadow deck is a FRAME's, not the renderer's - a host
@@ -2915,6 +2993,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
    * space, with the letterbox offset already applied by the caller.
    */
   beginPanelFrame(proj, view, lightDir, rect, clearRGBA = PANEL_CLEAR_RGBA, setup = null) {
+    this._close2D();   // PERF-2D: the baseline back, before anything that needs it
     if (this._panelSaved) throw new Error('beginPanelFrame: already inside a panel frame');
     const gl = this.gl;
     // EVERY global this pass can touch, saved by name. A thirteenth
@@ -3003,6 +3082,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
    *  the renderer's baseline, and ONE markForeignPass - the pass ran
    *  its own programs and the shadows must not be trusted. */
   endPanelFrame() {
+    this._close2D();   // PERF-2D: the baseline back, before anything that needs it
     const s = this._panelSaved;
     if (!s) return;
     this._panelSaved = null;
@@ -3663,6 +3743,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
 
   /** Draw one terrain surface with its tilemap + tile array. */
   drawTerrain(surface, modelMatrix, arrayTex, tilemapTex, tileSize) {
+    this._close2D();   // PERF-2D: the baseline back, before anything that needs it
     const gl = this.gl;
     this._use(this.terrainProgram);
     if (this._casting) this._shadows.recordTerrain(surface, modelMatrix, arrayTex, tilemapTex, tileSize);   // EL2
@@ -3732,6 +3813,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
    * @param {number[]} color - rgba
    */
   drawWater(quads, color, waterTex, scrollTiles = 0) {
+    this._close2D();   // PERF-2D: the baseline back, before anything that needs it
     if (!quads.length) return;
     const gl = this.gl;
     this._use(this.waterProgram);
@@ -3786,6 +3868,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
   }
 
   drawWaterSurface(surface, modelMatrix, arrayTex, tilemapTex, tileSize, u, tileDim = 128) {
+    this._close2D();   // PERF-2D: the baseline back, before anything that needs it
     const gl = this.gl;
     const laneWater = !!(this._lane?.shadows && this.waterSurfaceProgramLane && this._shadows);   // EL7: the lane's water receives the sun map
     const L = laneWater ? this._wsLane : this._ws;
@@ -3875,6 +3958,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
 
   /** Draw billboard batches facing the camera. Call after solid geometry. */
   drawBillboards(batches, camRight, camUp) {
+    this._close2D();   // PERF-2D: the baseline back, before anything that needs it
     const gl = this.gl;
     if (this._casting) this._shadows.recordBillboards(batches, this._flatWind, camRight, camUp);   // EL2 (EL3: with the basis)
     this._use(this.bbProgram);
@@ -4094,10 +4178,12 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
   }
 
   drawMesh(mesh, modelMatrix, texRemap = null) {
+    this._close2D();   // PERF-2D: the baseline back, before anything that needs it
     this._drawMeshBundle(mesh, modelMatrix, texRemap, false);
   }
 
   _drawMeshBundle(mesh, modelMatrix, texRemap, wire) {
+    this._close2D();   // PERF-2D: the baseline back, before anything that needs it
     // NEVER TRAPS. A mesh that is absent, or one whose subMeshes never
     // arrived, is game DATA missing - a model id the player's ARCH3D
     // does not carry, a record the ingest diet dropped - and the rule
