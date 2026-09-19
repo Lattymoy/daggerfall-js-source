@@ -3706,6 +3706,21 @@ body:has(.dfchat.touch) .hudtext-stack { top: ${HUD_TEXT_TOP_CHAT_TOUCH_PX}px; }
 .lv-sky .px-ground, .lv-sky .px-vignette { position: absolute; }
 /* Every band of the column sits over the sky, not in it. */
 .lv-crown, .lv-plate, .lv-stage, .lv-choice, .lv-ribbonwrap, .lv-foot { position: relative; z-index: 1; }
+/* EVERY BAND OWNS ITS ROW. The grid above has six tracks for six bands,
+   and the flexible one (minmax(0,1fr)) is the STAGE's. The plate is
+   display:none on a screen that owes no points (ASCEND-ANYTIME's "Your
+   stars"), and a display:none item leaves the grid entirely - so with
+   auto-placement every band after it slid up a track: the stage took an
+   auto row and the CHOICE landed in the 1fr row, where minmax(0,...)
+   let it shrink below its own content and paint over the skill ribbon.
+   Pinning the rows makes the plate's row an empty auto track (0px)
+   instead of a reshuffle. */
+.lv-crown { grid-row: 1; }
+.lv-plate { grid-row: 2; }
+.lv-stage { grid-row: 3; }
+.lv-choice { grid-row: 4; }
+.lv-ribbonwrap { grid-row: 5; }
+.lv-foot { grid-row: 6; }
 
 /* THE CROWN: name | level | race, the three the classic sheet leads
    with (DaggerfallCharacterSheetWindow.cs:134-204) and the three

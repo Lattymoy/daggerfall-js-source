@@ -5321,7 +5321,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         questLog: () => opts.questBridge?.questLog() ?? { active: [], finished: [] },
         quickSave: () => ctx.quickSave?.(),
         // MAC1 J: the pointer comes back INSIDE the resume gesture
-        // (ui/pauseDoor.js:207-224). THIS CONTEXT OWNS NO CANVAS OF ITS
+        // (ui/pauseDoor.js:270-287). THIS CONTEXT OWNS NO CANVAS OF ITS
         // OWN (:4701), so the relock arrives from whichever dungeon host
         // mounted it - the way hudMessageSink is threaded (:1349) - and
         // both of them hand it in: dungeon.js's opts bag and

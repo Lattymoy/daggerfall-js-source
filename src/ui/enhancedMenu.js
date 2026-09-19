@@ -2384,6 +2384,23 @@ function pauseStats(body) {
     }
     detail.append(row);
   }
+  // ASCEND-ANYTIME: ...AND THE ONE DOOR THAT OPENS THIS SAME CHARACTER.
+  // The other three lead somewhere else, so they resume the game first;
+  // this one swaps a screen in OVER the window it is pressed from and
+  // puts that window back when it closes, so it must NOT resume - a
+  // resume here would hand the keys back to a player who is about to be
+  // looking at a full-screen sky.
+  //
+  // Drawn only when a door handed the hook over, exactly as the three
+  // above are: ui/charSheetDoor.js's page always could (it owns the
+  // entity), and ui/pauseDoor.js's could not until it was taught to.
+  if (typeof hooks.openAscend === 'function') {
+    const row = el('div', 'px-sheetdoors');
+    const b = el('button', 'act', 'Ascend');
+    b.onclick = () => hooks.openAscend();
+    row.append(b);
+    detail.append(row);
+  }
   wrap.append(detail);
   body.append(wrap);
 }
