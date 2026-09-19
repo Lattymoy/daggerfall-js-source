@@ -581,6 +581,42 @@ export function createGrassField(renderer, { keep, ground = null, span = LAB_GRA
   for (let i = 0; i < slots; i++) free.push(i);
   return {
     perCell, slots, live,
+    // GRASS-STALE1 (2026-09-19, Discord: "grass is flying and not on the
+    // ground" around graveyards and other POIs): a cell, once placed, is
+    // never rebuilt unless it leaves render range entirely (the loop
+    // below only queues a key that is NOT already in `live`) - by
+    // design, cheap, and correct AS LONG AS `keep`/`ground`'s answer for
+    // a given (x,z) never changes after a cell first reads it.
+    //
+    // It does change, right where this bug lives: the world streams
+    // nearest-first, so a cell can be placed from a location pixel's
+    // PRE-blend height (or its not-yet-built neighbour) before
+    // blendLocationTerrain (terrainGen.js) has flattened that pixel's
+    // samples toward the location's own avgY - the same flat height its
+    // buildings sit at. The cell was placed correctly for the data it
+    // had; the data changed under it, and nothing told the cell.
+    // `invalidate` is that missing telling: drop a cell from `live`
+    // without waiting for it to leave range, so the very next update()
+    // sees it as unplaced and re-reads `keep`/`ground` fresh. The
+    // world.js caller runs it the moment a location pixel finishes
+    // building, over that pixel's own bounds.
+    //
+    // This is NOT GRASS3's question. GRASS3 put a blade on the surface
+    // that is DRAWN rather than on a bilinear guess, which is about
+    // WHICH height a cell reads; this is about WHEN, and a cell that
+    // read the right surface at the wrong moment is wrong either way.
+    invalidate(x0, z0, x1, z1) {
+      const cx0 = Math.floor(x0 / cell), cx1 = Math.floor(x1 / cell);
+      const cz0 = Math.floor(z0 / cell), cz1 = Math.floor(z1 / cell);
+      for (let cz = cz0; cz <= cz1; cz++) for (let cx = cx0; cx <= cx1; cx++) {
+        const key = `${cx},${cz}`;
+        const slot = live.get(key);
+        if (slot === undefined) continue;
+        renderer.clearSlot(slot);
+        live.delete(key);
+        free.push(slot);
+      }
+    },
     update(ex, ez, keepNow = keep, groundNow = ground) {
       const c0x = Math.floor((ex - span) / cell), c1x = Math.floor((ex + span) / cell);
       const c0z = Math.floor((ez - span) / cell), c1z = Math.floor((ez + span) / cell);
