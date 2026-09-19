@@ -48,6 +48,8 @@ import { bowDamageArrow } from '../combat/enemyEquipment.js';   // MAC-N1: the r
 import { DOOR_TYPE } from '../world/meshReader.js';
 import { getGroundArchive } from '../world/climateSwaps.js';
 import { DUNGEON_AMBIENT, DUNGEON_LIGHT_COLOR, DUNGEON_LIGHT_BLOCK_RANGE } from '../world/dungeonLights.js';   // A10: the block-range cut
+import { createCamps } from './camps.js';   // HEARTH1: not to STAND a camp indoors - nothing may be - but to answer the room's own fires
+import { isHearthFlat, HEARTH_ARCHIVE } from '../systems/survival/hearth.js';
 import { lanternColor, dungeonAmbient, dungeonTrilight, dungeonFog } from '../render/enhancedLighting.js';   // EL1: the world host installed the lane; this reads it; EL4: the dark; AUDIT-EL F6: the fog with it
 import { INTERIOR_AMBIENT, INTERIOR_NIGHT_AMBIENT, INTERIOR_LIGHT_DIR } from '../world/interiorLights.js';
 import { isNight } from '../world/worldClock.js';   // AUDIT 23 (C12)
@@ -437,7 +439,11 @@ export function createWorldModes(host) {
       } });
     },
     // SURV7: the outer host's env with the roof this host owns - sheltered, no sun, no water, no fire
-    survivalEnv: () => (mode === 'interior' && host.survivalEnv ? { ...host.survivalEnv(), insideBuilding: true, insideDungeon: false, inSunlight: false, swimming: false, byFire: false } : null),   // AUDIT SURV B: the interior's reader answers in the interior alone (its gate claimed a roof outdoors)
+    // HEARTH1: `byFire` was a hard FALSE here - right while the only
+    // fire the law knew was a camp, and camps are refused indoors, and
+    // wrong the moment the room's own hearth counts. It is the pool's
+    // answer now, and that pool can only ever hold the room's fires.
+    survivalEnv: () => (mode === 'interior' && host.survivalEnv ? { ...host.survivalEnv(), insideBuilding: true, insideDungeon: false, inSunlight: false, swimming: false, byFire: interiorCamps.byFire(player.pos) } : null),   // AUDIT SURV B: the interior's reader answers in the interior alone (its gate claimed a roof outdoors)
   });
 
   // V1: the infection's host seam (THE FOUR HOSTS RULE). The interior
@@ -527,6 +533,33 @@ export function createWorldModes(host) {
     entity: playerEntity, camera: () => ({ pos: player.eyeAt(), feet: player.pos, yaw: cam.yaw, pitch: cam.pitch,
       forward: [Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), Math.cos(cam.yaw) * Math.cos(cam.pitch)], right: [Math.cos(cam.yaw), 0, -Math.sin(cam.yaw)], up: [0, 1, 0] }),
     inside: () => true, waterLevel: () => null, say: (l) => say(l),
+  });
+  /**
+   * HEARTH1 (2026-09-19, Mac: "Does this version of C&C not let you use
+   * braziers as extra campfires to cook from?"): THE ROOM'S OWN FIRE.
+   *
+   * The interior host is the one host with NO camp pool, and rightly:
+   * the mod refuses to pitch a tent or light a kit indoors and its
+   * survival reader has said `byFire: false` outright since AUDIT SURV B.
+   * But a tavern's common room has a fire in it, and standing over it
+   * left you as cold, as wet and as roughly rested as standing in the
+   * street - and with a fish you could not cook.
+   *
+   * So this pool STANDS NOTHING. `place()` says insideBuilding, which is
+   * the refusal the camp law already carries, and no getTexture or
+   * meshes are handed over, so it can never mount a fire of its own. It
+   * is here for exactly two answers: `byFire` for the needs law, and the
+   * activation ray's cooking list. One pool per building, cleared on the
+   * way out with the torches.
+   */
+  const interiorHearths = [];
+  const interiorCamps = createCamps({
+    entity: playerEntity,
+    hearths: () => interiorHearths,
+    place: () => ({ insideBuilding: true }),
+    camera: () => ({ feet: player.pos, yaw: cam.yaw }),
+    say: (l) => say(l), showOverlay: (w) => mountInterior(w),
+    advanceMinutes: (n) => { interiorTicker.advance(n); host.encounterTick?.(); },
   });
   /** HE1: EnemyBlood.ShowBloodSplash, in the fourth host. The other
    *  three have mounted this pool since AUDIT 24 wave 39 and this one
@@ -1310,10 +1343,10 @@ export function createWorldModes(host) {
    *  billboard is CENTRE-anchored, so the base ends up ON the marker
    *  inside a building and half a height BELOW it inside a dungeon.
    *  This port's billboard shader is BOTTOM-anchored (position = base,
-   *  the C11 law dungeonContext.js:1614 states), so the same visual
+   *  the C11 law dungeonContext.js:1624 states), so the same visual
    *  result needs the shift on the DUNGEON side - which is exactly the
    *  shift the dungeon's own RDB flats already take
-   *  (dungeonContext.js:1519, `y - size.h / 2`), and which a building's
+   *  (dungeonContext.js:1529, `y - size.h / 2`), and which a building's
    *  flats correctly do not (interiorContext.js passes its centers
    *  straight through).
    *
@@ -4564,6 +4597,7 @@ export function createWorldModes(host) {
       // sibling pile pool (interiorDropped) restored correctly beside
       // it. The sweep belongs here, where the transition is.
       interiorTorches.destroyAll();   // HT1: DestroyLightSources_OnTransition
+      interiorCamps.destroyAll(); interiorHearths.length = 0;   // HEARTH1: and the room's own fires - one building's hearth is not the next one's
       // E2/P1: the building's identity, resolved BEFORE the interior
       // stands. DFU's transition does the same three things in this
       // order (PlayerActivate.cs:1119-1121): take the discovered
@@ -4679,6 +4713,15 @@ export function createWorldModes(host) {
       exitReturn = { siblings };
       exteriorDoor = hit.door;   // IS1: SetExteriorDoors - the save's way back in
       interiorCtx = ctx;
+      // HEARTH1: the room's own fires, off the light list this context
+      // already built - a tavern's hearth, a brazier in a hall. The
+      // parent frame, which is what the lights carry and what the
+      // player's feet are in; they stand still for as long as the room
+      // does, and go out with it below.
+      interiorHearths.length = 0;
+      for (const l of ctx.lights ?? []) {
+        if (isHearthFlat(HEARTH_ARCHIVE, l.record)) interiorHearths.push({ x: l.x, y: l.y, z: l.z });
+      }
       // WORLD6a: this building's room - keyed as the relay room is (the map id unsigned, the building key), stamped
       // by this context; an OWNED house or ship is the player's own and keeps no room. The doors go out as acts the
       // moment they move (WORLD3's change seam, the graph's own), keyed by the building.
@@ -4865,6 +4908,7 @@ export function createWorldModes(host) {
     });
     targets.push(...interiorDropped.lootTargets());   // ID1: the player's own piles, the dungeon's key vocabulary
     targets.push(...interiorTorches.targets());   // HT1: the dropped torches
+    targets.push(...interiorCamps.targets());   // HEARTH1: the room's own fires - there is never a camp in this pool to add beside them
     // U23: the StaticNPCs. Their reach is DFU's own 256 classic units
     // (PlayerActivate.cs:87), twice a door's, and a person with no
     // billboard size resolved is not a target at all.
@@ -4947,6 +4991,7 @@ export function createWorldModes(host) {
         return true;
       }
       if (key.startsWith('droppedTorch:')) { interiorTorches.activate(key, getInteractionMode()); return true; }   // HT1: PickUpLightSource
+      if (key.startsWith('hearth:')) { interiorCamps.activate(key, getInteractionMode()); return true; }   // HEARTH1: name it, or cook on it
       if (key.startsWith('droppedLoot:')) {
         // ID1: the pile the player dropped in this room. Activating a
         // container opens the inventory WITH it as the remote target
@@ -5077,6 +5122,7 @@ export function createWorldModes(host) {
     interiorGuards = null;
     interiorDropped.restorePiles(null);   // ID1: the piles are cached above; free their batches with the scene
     interiorHitEffects.clear();   // HE1: a splash mid-animation must not follow the player into the next building
+    interiorCamps.destroyAll(); interiorHearths.length = 0;   // HEARTH1: this room's fires are this room's - one building's hearth is not the next one's
     interiorCtx = null;
     interiorBuilding = null;   // E2: the identity + overlay leave with the interior
     exteriorDoor = null;       // IS1: ...and the way back in with them
@@ -5105,6 +5151,7 @@ export function createWorldModes(host) {
     immersiveFootsteps.onTransitionExterior();   // IF1: UpdateFootsteps_OnTransitionExterior
     betterAmbience.onTransition(null);   // BA1: OnTransitionExterior
     interiorTorches.destroyAll();   // HT1: DestroyLightSources_OnTransition
+    interiorCamps.destroyAll(); interiorHearths.length = 0;   // HEARTH1
     questBridge?.onExteriorTransition();   // Q4-v: CreateFoe's pending-wave invalidation
     npcSession?.onWorldChanged();          // TK-v: OnTransitionToExterior (:3599-3603)
     unleveledLootExteriorTransition();     // UL1: OnTransitionExterior - the BUILDING exit alone clears the mod's dungeon
@@ -5247,7 +5294,7 @@ export function createWorldModes(host) {
           hudMessageSink: (t) => questBridge?.notebook?.addMessage(t),
           // MAC1 J: and the relock the dungeon's pause door needs, on
           // the same threading - the context owns no canvas of its own
-          // (dungeonContext.js:5640), so the OUTER host's one rides in.
+          // (dungeonContext.js:5651), so the OUTER host's one rides in.
           // This is the most-played pause door of the six: world.js
           // gates its own Escape ladder on exterior mode, so underground
           // the key falls to routeKey -> ui/input.js:637 -> the
@@ -6209,7 +6256,7 @@ export function createWorldModes(host) {
           // AUDIT 39r: and the FLASH, which this arm was copied without.
           // An arrow reaches the player through BowDamage ->
           // ApplyDamageToPlayer -> SendDamageToPlayer, the same door as
-          // a blow (world.js:7733's own wave-46 note); the interior
+          // a blow (world.js:7772's own wave-46 note); the interior
           // MELEE hit already flashes inside exteriorFoes, so only this
           // arm - which applies its own damage - was missing it.
           flashPlayerDamage(dmg);   // BA1: RemoveHealth carries the amount
@@ -7015,7 +7062,7 @@ export function createWorldModes(host) {
   addEventListener('mousedown', (e) => {
     // AUDIT-MACK F2: THIS HOST DOES NOT FEED THE HELD SET, and MAC-K1
     // briefly made it. `keys` is not this host's - it arrives on the
-    // host bag (`exterior.js:3371`, `world.js`'s twin), and the OUTER
+    // host bag (`exterior.js:3380`, `world.js`'s twin), and the OUTER
     // host's own mousedown writes `keys.add(mouseCode(e.button))`
     // UNGATED, before any mode test, on a listener that is never
     // removed. So the three button codes were already in the Set while
@@ -8267,6 +8314,7 @@ export function createWorldModes(host) {
         interiorDropped.restorePiles(null);   // ID1: same teardown, the quest-teleport / load arm
         interiorTorches.destroyAll();   // AUDIT 66 F6: HT1's pool was the one that never joined this list - a quest teleport or a load out of a building left the room's torches lit, batched and burning in the ear
         interiorHitEffects.clear();   // HE1: the same
+        interiorCamps.destroyAll(); interiorHearths.length = 0;   // HEARTH1: the same list, for the same reason
         // ...and the OnPop the comment above is about, on every window
         // the stack holds (ROAD-B B1).
         interiorWindows.reconcile(interiorOverlay);
@@ -8479,9 +8527,9 @@ export function createWorldModes(host) {
      *  .cs:175-176 writes `weaponDrawn`/`usingLeftHand` off it,
      *  :420-421 restores them onto it. The port has FOUR PlayerWeapons
      *  (world.js's, this file's `interiorWeapon` :538, dungeonContext's
-     *  and exterior.js's - which this seam does not reach: that host has no save path at all, its charter exterior.js:2961-2983), and IS1 routed the inside-a-building save to
+     *  and exterior.js's - which this seam does not reach: that host has no save path at all, its charter exterior.js:2970-2992), and IS1 routed the inside-a-building save to
      *  the WORLD host's composer - which reads its own exterior rig
-     *  unconditionally (world.js:5078). So an F9 pressed in a shop
+     *  unconditionally (world.js:5117). So an F9 pressed in a shop
      *  recorded the street's sheath and hand, and the load wrote them
      *  back into the street's rig; the rig actually in the player's
      *  hands was in no envelope at all.
@@ -8508,7 +8556,7 @@ export function createWorldModes(host) {
      *  presenter for the whole visit) or the interior's? world.js's gate read townTalk's slot alone. */
     deathUp() { return mode === 'dungeon' ? !!dungeonCtx?.deathUp?.() : interiorOverlay instanceof DeathScreen; },
     /** The restore half - and NOT gated on the mode, deliberately.
-     *  worldQuickLoad calls forceExitToExterior FIRST (world.js:5170)
+     *  worldQuickLoad calls forceExitToExterior FIRST (world.js:5209)
      *  and only re-enters the building at :4217, so the mode at apply
      *  time is whatever the LOAD landed in, not whatever the SAVE was
      *  taken in: an outdoor save loaded while the player was indoors
@@ -8518,8 +8566,8 @@ export function createWorldModes(host) {
      *
      *  FLAG ONLY and presence-gated - both laws now stated once, in
      *  combat/playerWeapon.js's applyWeaponPose, with the citation.
-     *  HARD2c: this used to spell them out, and named `world.js:5283`
-     *  and `dungeonContext.js:5702` for its two sibling copies - lines
+     *  HARD2c: this used to spell them out, and named `world.js:5322`
+     *  and `dungeonContext.js:5713` for its two sibling copies - lines
      *  that had moved to :4418 and :5457. Three copies of a two-line
      *  law, and even the comment pointing between them had gone stale. */
     applyWeaponPose(pose) {

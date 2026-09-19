@@ -145,7 +145,13 @@ test('SURV7: by source - the four hosts feed their env (the roof, the floor, the
   assert.match(world, /climateIndex: maps\.getClimateIndex\(playerTravelPixel\(\)\.x, playerTravelPixel\(\)\.y\),\n\s+month: dateFromClassicMinutes\(wm\)\.month/, 'world: the pixel\'s climate');
   assert.match(ext, /climateIndex: locClimateIndex,\n\s+month: dateFromClassicMinutes\(wm\)\.month/, 'exterior: the location\'s climate');
   assert.match(world, /alignSurvival\(playerEntity, Math\.floor\(worldMinutes\(\)\), Math\.floor\(worldMinutes\(\)\)\);/, 'world: the arrival');
-  assert.match(modes, /survivalEnv: \(\) => \(mode === 'interior' && host\.survivalEnv \? \{ \.\.\.host\.survivalEnv\(\), insideBuilding: true, insideDungeon: false, inSunlight: false, swimming: false, byFire: false \} : null\),/, 'interior: the roof');
+  // HEARTH1 (2026-09-19): the interior's `byFire` was a hard FALSE, and
+  // this pin held it that way. It was right while the only fire the law
+  // knew was a placed camp - camping indoors is refused - and wrong the
+  // moment the ROOM's own hearth counts. The roof, the floor, the sun
+  // and the water are still the interior's to force; the fire is the
+  // one thing in that line the room now answers for itself.
+  assert.match(modes, /survivalEnv: \(\) => \(mode === 'interior' && host\.survivalEnv \? \{ \.\.\.host\.survivalEnv\(\), insideBuilding: true, insideDungeon: false, inSunlight: false, swimming: false, byFire: interiorCamps\.byFire\(player\.pos\) \} : null\),/, 'interior: the roof, and its own fire');
   assert.match(modes, /survivalEnv: \(\) => host\.survivalEnv\?\.\(\) \?\? null,/, 'the dungeon gets the outer reader');
   assert.match(dc, /insideBuilding: false, insideDungeon: true, inSunlight: false, swimming: false, transport: false,/, 'dungeon: the floor');
   assert.match(dc, /byFire: !!\(_fpFeet && camps\.byFire\(_fpFeet\)\),/, 'dungeon: its own fire');
