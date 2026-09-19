@@ -204,7 +204,7 @@ test('EL8: the perf readout - the door, the line, the meter without the extensio
   assert.equal(line, '[perf] gpu n/a | draws 1', 'a line every PERF_EVERY frames, the GPU column n/a without the extension');
   assert.equal(m.frame({ draws: 1 }), null);
   const r = read('src/render/renderer.js');
-  assert.match(r, /this\._perf = perfOn\(\) \? setMeter\(gl, new PerfMeter\(gl, perfZones\(\)\)\) : null;/);
+  assert.match(r, /this\._perf = perfOn\(\) \? setMeter\(gl, new PerfMeter\(gl, perfZones\(\), perfCpu\(\)\)\) : null;/);
   assert.match(r, /if \(world && this\._perf\) \{ this\._perf\.begin\(\); this\._perf\.mark\('shadow'\); this\.stats\.draws = 0; \}/, 'the clock starts with a world frame');
   assert.match(r, /this\._perf\.end\(\);\n\s+this\._perf\.stop\(\);/, 'and stops at the resolve');
 });

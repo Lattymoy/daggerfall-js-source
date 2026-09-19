@@ -164,13 +164,13 @@
  {
   "name": "f13-record-basis-ignored",
   "file": "src/render/shadowPass.js",
-  "old": "          gl.uniform3fv(P.bb.right, recordBasis ? r.right : this._right);",
-  "new": "          gl.uniform3fv(P.bb.right, this._right);",
+  "old": "        if (!perBatchRight) gl.uniform3fv(P.bb.right, recordBasis ? r.right : this._right);",
+  "new": "        if (!perBatchRight) gl.uniform3fv(P.bb.right, this._right);",
   "tests": [
    "test/audit_el.test.js"
   ],
   "equivalent": true,
-  "why": "EL6: no replay passes recordBasis=true any more - the camera depth replay is gone (the frame's own depth) and the emitters carry their basis in _replayEmission"
+  "why": "EL6: no replay passes recordBasis=true any more - the camera depth replay is gone (the frame's own depth) and the emitters carry their basis in _replayEmission. RE-AIMED BY CONTENT at PERF-BASIS (2026-09-19), which hoisted this upload out of the batch loop: the line moved, the law did not, and a positional bump would have left it anchored on nothing."
  },
  {
   "name": "f14-shade-black",

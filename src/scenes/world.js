@@ -30,7 +30,8 @@ import { playerTorchLight } from '../systems/playerTorch.js';   // T1
 import { applyClimate, getGroundArchive, getTerrainGroundArchive, getNatureArchive, SEASON, climateSeasonFromMinutes, INTERIOR_SEASON } from '../world/climateSwaps.js';   // A1: the season is the calendar's, and an interior's is Summer whatever the date
 import { RMB_SIDE, layoutLocation } from '../world/locationLayout.js';
 import { lookAt, multiply, perspective, mirrorProjectionX, trs, identity, UP_Y, wrapAngle } from '../world/mat4.js';   // HANDEDNESS: the one mirror (mat4's law)
-import { frustumPlanes, aabbOutside, localAabb, transformedAabb, flatBatchAabb, cullDisabled } from '../render/frustum.js';   // EV3: the frustum
+import { frustumPlanes, aabbOutside, localAabb, transformedAabb, flatBatchAabb, cullDisabled } from '../render/frustum.js';
+import { sphereInPlanes } from '../render/bounds.js';   // PERF-CROWD: the batch's own bounding sphere, the test the shadow replay already uses   // EV3: the frustum
 import { withMoonAmbient } from '../render/enhancedSky.js';   // EV5: secunda rides the ambient
 import { FarRingRenderer, ringDisabled } from '../render/farRing.js';   // EV8: the province's mountains on the horizon
 import { syncLightingLane, lanternColor } from '../render/enhancedLighting.js';   // EL1: the Enhanced Lighting lane, installed at mount
@@ -9335,6 +9336,40 @@ export async function bootWorld(canvas, renderer, params, status) {
   const cullOn = !cullDisabled();
   const _planes = new Float32Array(24);
   const _pv = new Float32Array(16);
+  /** PERF-LIGHTS: the night's lantern pool and the one translation triple
+   *  it reads through - refilled every frame, never re-minted. */
+  const _sceneLights = [];
+  const _lightT = [0, 0, 0];
+  /**
+   * PERF-ON2 / PERF-CROWD: is this billboard batch outside the frame?
+   *
+   * ONE test for every batch the host submits by hand - the peers, and
+   * the whole live crowd (townspeople, the watch, the foes, the ground
+   * piles, the blow effects, the dropped torches, the camps). The world's
+   * OWN flats have had this since EV3; these lists never did, so a
+   * townsman behind the camera was a draw, two texture binds and its
+   * uniforms every frame, and a town is full of them.
+   *
+   * THE SPHERE IS THE BATCH'S OWN, LIFTED. `createBillboardBatch` stores a
+   * sphere over the placement points with the sprite's half-diagonal added
+   * to the radius - and that is the sphere the shadow replay already culls
+   * by. But the billboard VS is BOTTOM-ANCHORED (`uUp * ((aCorner.y + 0.5)
+   * * uSize.y)`): a sprite stands its full height ABOVE its placement
+   * point, and a sphere of radius hypot(w, h) / 2 about that point does
+   * not reach the top of anything taller than it is wide. A person is
+   * exactly that shape. Lifting the centre by half the height bounds the
+   * quad exactly - from there it spans w/2 sideways and h/2 either way in
+   * y, which is what the stored radius already covers - and without the
+   * lift this would cull heads at the top of the screen.
+   *
+   * A batch with no bounds is always drawn, as `batchVisible` has it.
+   */
+  const billboardOutside = (b) => {
+    const s = b.bounds; if (!s) return false;
+    const o = b.origin;
+    const h = b.size?.h ?? 0;
+    return !sphereInPlanes(_planes, s[0] + (o ? o[0] : 0), s[1] + (o ? o[1] : 0) + h * 0.5, s[2] + (o ? o[2] : 0), s[3]);
+  };
   // A4: the streaming world's animal sources - pixel-local positions
   // translated through the floating origin at roll time (16 Hz over
   // a handful of animals; recenters are free).
@@ -9417,7 +9452,9 @@ export async function bootWorld(canvas, renderer, params, status) {
       player.bobOffset = [cy * bob[0], bob[1], -sy * bob[0]];
     }
     last = now;
+    meterFor(renderer.gl)?.markCpu('online');   // PERF-CPU
     if (onlineOn && playerSpawned) { if (!online) onlineStart(); onlineFrame(now, dt); }   // ONLINE1: the pose out, the peers in - after the look is paid, before the camera is read and any mode draws
+    meterFor(renderer.gl)?.markCpu('sim');   // PERF-CPU: everything between here and the next mark is the rest of the simulation
     lookGate(gamePaused());   // a window up frees the cursor; closing re-locks
     const fwd = [Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), Math.cos(cam.yaw) * Math.cos(cam.pitch)];
     const right = [Math.cos(cam.yaw), 0, -Math.sin(cam.yaw)];   // HANDEDNESS (mat4's law): screen-right = (cos, 0, -sin) under the mirrored projection - Unity's own right
@@ -10350,16 +10387,26 @@ export async function bootWorld(canvas, renderer, params, status) {
     // placed under the current compensation, nearest 16 to the camera.
     if (lightsOnAt(minute)) {
       worldLightAnimator.tick(dt);
-      const sceneLights = [];
+      // PERF-LIGHTS (2026-09-19): THE LANTERNS ARE A POOL, NOT A FRESH
+      // LIST. This built an array and an object PER LANTERN every frame -
+      // a town at night is hundreds of them, and the pixel translation
+      // minted a triple per pixel beside them - all of it thrown away the
+      // moment nearestLights had picked its sixteen. The objects are
+      // refilled in place now and the count rides into the selector, so a
+      // night frame allocates nothing here at all. The selection, its
+      // order and its ties are untouched.
+      let n = 0;
       for (const p of built.values()) {
         if (!p.lights.length) continue;
-        const t = state.pixelTranslation(p.px, p.py);
+        const t = state.pixelTranslation(p.px, p.py, _lightT);
         for (const l of p.lights) {
-          sceneLights.push({ x: l[0] + t[0], y: l[1] + t[1], z: l[2] + t[2] });
+          const e = _sceneLights[n] ?? (_sceneLights[n] = { x: 0, y: 0, z: 0 });
+          e.x = l[0] + t[0]; e.y = l[1] + t[1]; e.z = l[2] + t[2];
+          n++;
         }
       }
       renderer.setPointLights(
-        withPlayerLights(nearestLights(sceneLights, cam.pos, renderer.maxPointLights, worldLightAnimator.ranges),   // EL1: the installed set's cap (16 classic, 48 on the lane)
+        withPlayerLights(nearestLights(_sceneLights, cam.pos, renderer.maxPointLights, worldLightAnimator.ranges, null, 0, n),   // EL1: the installed set's cap (16 classic, 48 on the lane); PERF-LIGHTS: `n` is how much of the pool is live
           magic?.candleLight(), playerTorchLight(playerEntity, player.pos, cam.yaw), ...camps.lights(), ...droppedTorches.lights()),   // X11 candle; T1 torch; HT1 the dropped lights
         CITY_LIGHT_COLOR_F32
       );
@@ -10385,8 +10432,40 @@ export async function bootWorld(canvas, renderer, params, status) {
     // WM2b: read the eased wind ONCE a frame, not once a mill.
     const windNow = sky.wind();
     if (cullOn) frustumPlanes(multiply(proj, view, _pv), _planes);   // EV3
+    meterFor(renderer.gl)?.markCpu('batches');   // PERF-CPU: the pixel walk that fills allBatches, culling as it goes
     const allBatches = [];
-    if (remotePlayers) for (const b of remotePlayers.batches()) allBatches.push(b);   // ONLINE1: the others, at their feet
+    // PERF-ON2 (2026-09-19, Mac: "Online mode needs further performance
+    // improvements", with a readout showing 51 fps, script 23.3 ms and
+    // 1365 draws): THE OTHERS ARE CULLED LIKE EVERYTHING ELSE IS.
+    //
+    // Every world flat two lines below gets a frustum test against its
+    // own box before it is submitted (EV3). The peers did not: a peer
+    // behind the camera, or one at the far edge of the relay's range -
+    // RANGE_PIXELS is 3 map pixels, which is nearly 2,500 units - was a
+    // draw, two texture binds and its uniforms, every frame, whatever
+    // the camera was looking at. Measured with PERF-ON's own recording
+    // Proxy (tools/onlinePerfProbe.mjs): 6.3 GL calls a peer a frame,
+    // 1 draw and 2 texture binds of it, and nothing capped it but the
+    // number of people in the room. PERF-ON passed over this in a line
+    // - "a peer's doll is one billboard batch created once, with only
+    // its `origin` written afterwards" - which is true of the batch's
+    // CREATION and says nothing about its per-frame DRAW.
+    //
+    // THE BOX IS THE SHADER'S OWN. The billboard VS places a quad at
+    // `uOrigin + uRight * (aCorner.x * uSize.x) + uUp * ((aCorner.y +
+    // 0.5) * uSize.y)`: bottom-anchored, so it stands from the origin
+    // up by its height, and it turns to face the eye, so it can reach
+    // half its WIDTH in any horizontal direction. A peer's batch is one
+    // placement at [0,0,0] with the position on `origin`, so the box is
+    // that, in world space, with no pixel translation to add.
+    //
+    // A culled peer casts no shadow while it is off screen - which is
+    // exactly what the world's own flats have done since EV3, since the
+    // shadow pass reads the list this builds.
+    if (remotePlayers) for (const b of remotePlayers.batches()) {   // ONLINE1: the others, at their feet
+      if (cullOn && billboardOutside(b)) continue;
+      allBatches.push(b);
+    }
     for (const p of built.values()) {
       // EV2: the pixel's frame matrix caches on the built entry and
       // refreshes only when its translation actually changes (a
@@ -10530,6 +10609,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         renderer.drawWaterSurface(p.water, p._pixelMatrix, renderer.tileArrays.get(p.groundArchive), p.tilemapTex, 6.4, wu);
       }
     }
+    meterFor(renderer.gl)?.markCpu('flats');   // PERF-CPU: submitting the billboards - the draws themselves, from JS. ABOVE setFlatWind, not between it and the draw: WIND3 pins the two as ADJACENT, and the wind is part of this phase anyway.
     renderer.setFlatWind(floraSwayOn() && wd.on ? [wd.windV[0], wd.windV[1], now / 1000, wd.gust] : null);   // WIND3: the flats lean with the one wind; the flora batches carry their share (sway)
     renderer.drawBillboards(allBatches, camRight, UP_Y);
     if (magic.batches().length) renderer.drawBillboards(magic.batches(), camRight, UP_Y);   // M2: spell missiles
@@ -10592,6 +10672,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     _lastPlayerPos = [cam.pos[0], cam.pos[1], cam.pos[2]];
     const isDay = !isNight(minute);
     const livePersonBatches = [];
+    meterFor(renderer.gl)?.markCpu('people');   // PERF-CPU: the towns' own pools
     _livePersons = [];   // T3b: rebuilt each frame in WORLD space
     for (const p of built.values()) {
       if (!p.population) continue;
@@ -10669,6 +10750,20 @@ export async function bootWorld(canvas, renderer, params, status) {
     // while you cross it, which is what was asked for; anyone who would
     // rather ride through it turns the survival mod's hunting off.
     if (_mode() === 'exterior') hunting.tick();   // SURV6: the minute's hunting roll; the window takes the slot
+    // PERF-CROWD (2026-09-19): and the live crowd is culled too. This list
+    // is the townspeople, the city watch, the exterior foes, the ground
+    // piles, the blow effects, the dropped torches and the camps - every
+    // one of them submitted whatever the camera was looking at, which in a
+    // town is most of the frame's billboards. Filtered IN PLACE, so the
+    // cull costs no array of its own.
+    if (cullOn && livePersonBatches.length) {
+      let keep = 0;
+      for (let i = 0; i < livePersonBatches.length; i++) {
+        const b = livePersonBatches[i];
+        if (!billboardOutside(b)) livePersonBatches[keep++] = b;
+      }
+      livePersonBatches.length = keep;
+    }
     if (livePersonBatches.length) renderer.drawBillboards(livePersonBatches, camRight, UP_Y);
     // WX2: what falls is what the front SHOWS - under the enhanced sky the
     // outgoing rain tapers after the sim has cleared and the incoming
