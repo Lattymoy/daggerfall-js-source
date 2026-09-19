@@ -83,6 +83,7 @@ export const CAMP_TEXT = Object.freeze({
   seeOwnFire: 'You see your campfire.',
   seeFire: 'You see a campfire.',
   seeEmbers: 'You see the embers of a fire.',
+  seeHearth: 'You see a fire burning.',   // HEARTH1: the world's own, which is nobody's to pack
   menuRest: 'Rest here',
   menuCook: 'Cook food',
   menuStoke: 'Stoke the fire',
