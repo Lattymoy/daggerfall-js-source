@@ -60,8 +60,8 @@ test('GRASS-PATH1: the mask is null on a roadless pixel and the painter is uncha
 test('GRASS-PATH1 / GRASS-WET1: the host keeps no blade on a painted tile or a tile with a water corner', () => {
   const w = read('src/scenes/world.js');
   assert.match(w, /if \(p\.paths\?\.\[ti\]\) return null;/, 'a painted tile grows nothing');
-  assert.match(w, /if \(waterCorners\(byte\)\) return null;/, 'nor does a tile with any corner in water');
-  assert.match(w, /import \{ waterCorners \} from '\.\.\/world\/waterCorners\.js';/, 'from the one table that owns the question');
+  assert.match(w, /if \(waterCorners\(byte, WATER_DRAW_MASK_TABLE\)\) return null;/, 'nor does a tile with any corner in water');
+  assert.match(w, /import \{ waterCorners, WATER_DRAW_MASK_TABLE \} from '\.\.\/world\/waterCorners\.js';/, 'from the one table that owns the question');
   assert.match(w, /^\s+paths,\s+\/\/ GRASS-PATH1/m, 'the mask rides the built pixel');
 });
 
@@ -118,4 +118,37 @@ test('PERF11: the online frame builds the owner list once, not twice', () => {
   assert.match(w, /exteriorFoes\.pruneOwners\(ids, now\);/);
   assert.match(w, /camps\.sweepOwners\(ids, now, FOES_STALE_MS\);/);
   assert.doesNotMatch(w, /const near = peersNear\(\); if \(near\)/, 'neither sweep builds its own any more');
+});
+
+test('WATER-DRAW1: the draw and the feet ask different questions, and only the draw’s table moved', async () => {
+  const { WATER_MASK_TABLE, WATER_DRAW_MASK_TABLE, SHALLOW_DRAWN, SHALLOW_WHOLE, buildWaterMaskTable } = await import('../src/world/waterCorners.js');
+  // The LAW's table is byte-for-byte what it was: the player swims where
+  // PlayerMotor.OnShallowWaterTile says and nowhere else.
+  assert.deepEqual([...WATER_MASK_TABLE], [...buildWaterMaskTable()], 'the feet’s table is the default build');
+  for (const r of SHALLOW_DRAWN) {
+    assert.equal(WATER_MASK_TABLE[r << 2], 0, `record ${r} is NOT water to DFU's motor, and still is not`);
+    assert.equal(WATER_DRAW_MASK_TABLE[r << 2], 0xF, `...but the enhanced pass draws it whole`);
+  }
+  // and nothing else differs between the two
+  const diff = [];
+  for (let i = 0; i < 256; i++) if (WATER_MASK_TABLE[i] !== WATER_DRAW_MASK_TABLE[i]) diff.push(i >> 2);
+  assert.deepEqual([...new Set(diff)].sort((a, b) => a - b), [...SHALLOW_DRAWN].sort((a, b) => a - b), 'SHALLOW_DRAWN is the whole of the difference');
+  // SHALLOW_DRAWN names records neither the shore families nor DFU's list covers
+  for (const r of SHALLOW_DRAWN) assert.ok(!SHALLOW_WHOLE.includes(r), `${r} is not already DFU's`);
+  // the consumers: the pass and the lab take the draw's, the feet and the town's navigation the law's
+  const pass = read('src/render/waterSurface.js');
+  assert.match(pass, /table = WATER_DRAW_MASK_TABLE/, 'buildWaterIndices takes the draw’s');
+  assert.doesNotMatch(pass.replace(/WATER_DRAW_MASK_TABLE/g, ''), /WATER_MASK_TABLE/, 'and nothing in the pass takes the feet’s');
+  assert.match(read('src/render/renderer.js'), /packWaterMask\(WATER_DRAW_MASK_TABLE\)/, 'and so does the shader’s uniform');
+  assert.match(read('src/player/exteriorSurface.js'), /import \{ waterCorners, waterCoverage \} from '\.\.\/world\/waterCorners\.js';/, 'the feet keep the default, which is the law’s');
+  assert.match(read('src/world/cityNavigation.js'), /WATER_MASK_TABLE\[\(record << 2\) \| t\]/, 'and so does the town’s navigation');
+  // the grass asks the EYE's question - a blade in a puddle is a picture
+  assert.match(read('src/scenes/world.js'), /if \(waterCorners\(byte, WATER_DRAW_MASK_TABLE\)\) return null;/);
+});
+
+test('WATER-DRAW1: the tile probe names the record under the player', () => {
+  const w = read('src/scenes/world.js');
+  assert.match(w, /window\.__tileHere = \(\) => \{/);
+  assert.match(w, /record: byte >> 2, transform: byte & 3, byte,/, 'the number a screenshot cannot give');
+  assert.match(w, /drawnWet: waterCorners\(byte, WATER_DRAW_MASK_TABLE\), feetWet: waterCorners\(byte\),/, 'and both answers, so the two questions can be told apart');
 });

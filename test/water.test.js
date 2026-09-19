@@ -62,6 +62,11 @@ test('WATER1: the water-corner table inverts the marching squares - a shape\'s w
     for (let t = 0; t < 4; t++) assert.equal(waterCorners((r << 2) | t), 0xF, `record ${r} t${t}: whole`);
   }
   assert.ok(!onShallowWaterTile(9), 'record 9 is not in DFU\'s list...');
+  // WATER-DRAW1 (2026-09-19): ...and it stays out of THIS table, which is
+  // the LAW's - what the player swims in. The enhanced pass draws it
+  // (test/grasspath.test.js holds WATER_DRAW_MASK_TABLE): DFU never drew
+  // a water surface, so OnShallowWaterTile was never a drawing list, and
+  // reading it as one left record 9 as an unshaded square in a town pond.
   // every other record carries no water here: the ring-1 and ring-2 transitions, the bases, and record 9
   for (const r of [1, 2, 3, 9, 10, 11, 12, 15, 16, 17, 46, 51, 53]) {
     for (let t = 0; t < 4; t++) assert.equal(waterCorners((r << 2) | t), 0, `record ${r} t${t}`);
@@ -175,13 +180,13 @@ test('WATER1: the shader - the terrain\'s own grid lifted, the corner lookup by 
 test('WATER1: the renderer - one program, the deck\'s shadow key, and a draw state that blends over the ground it is lifted from', () => {
   const r = rd('src/render/renderer.js');
   assert.match(r, /import \{ WATER_SURFACE_VS, waterSurfaceFs \} from '\.\/waterSurface\.js';/);
-  assert.match(r, /import \{ packWaterMask \} from '\.\.\/world\/waterCorners\.js';/, 'MAC2: the corner table\'s one home is the world leaf the player\'s feet share');
+  assert.match(r, /import \{ packWaterMask, WATER_DRAW_MASK_TABLE \} from '\.\.\/world\/waterCorners\.js';/, 'MAC2: the corner table\'s one home is the world leaf the player\'s feet share - WATER-DRAW1: and the PASS takes the draw\'s half of it, not the feet\'s');
   assert.match(r, /this\.waterSurfaceProgram = this\._buildProgram\(WATER_SURFACE_VS, waterSurfaceFs\(CLOUD_SHADOW_GLSL\)\);/, 'the same block the terrain interpolates');
   assert.match(r, /cloud: \[u\('uCloudShadowMap'\), u\('uCloudShadowRect'\)\],/, 'VC4\'s recorded gap, closed (EL7: in the one uniform table both water programs take)');
   assert.match(r, /this\._csLoc\.water = this\._ws\.cloud;/);
   const draw = r.slice(r.indexOf('  drawWaterSurface(surface, modelMatrix, arrayTex, tilemapTex, tileSize, u, tileDim = 128) {'));
   const body = draw.slice(0, draw.indexOf('\n  }\n'));
-  assert.match(body, /if \(!L\.maskUploaded\) \{ gl\.uniform4uiv\(L\.mask, packWaterMask\(\)\); L\.maskUploaded = true; \}/, 'the table once per program (EL7: the lane\'s water program has its own)');
+  assert.match(body, /if \(!L\.maskUploaded\) \{ gl\.uniform4uiv\(L\.mask, packWaterMask\(WATER_DRAW_MASK_TABLE\)\); L\.maskUploaded = true; \}/, 'the table once per program (EL7: the lane\'s water program has its own) - WATER-DRAW1: and it is the DRAW\'s table that reaches the shader');
   assert.match(body, /this\._uploadCloudShadow\('water'\);/);
   assert.match(body, /this\._uploadFog\(this\._waterSurfaceFog\);/);
   for (const k of ['_lightDir', '_ambient', '_sunScale', '_sunColor', '_moonDir', '_moonScale', '_moonColor']) {

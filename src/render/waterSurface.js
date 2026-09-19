@@ -32,7 +32,7 @@
 // pass draws water the player swims). The coverage inside a tile is
 // the bilinear blend of its corners - the diagonal the shore tile's own
 // art follows - feathered by SHORE_SOFTNESS.
-import { WATER_MASK_TABLE } from '../world/waterCorners.js';   // MAC2: the corner table is a leaf the player's feet share
+import { WATER_DRAW_MASK_TABLE } from '../world/waterCorners.js';   // MAC2: the corner table is a leaf the player's feet share; WATER-DRAW1: the DRAW's half of it - the feet's is the law's own table, and the two are not the same question
 import { WIND_ROW_CALM, WIND_ROW_SPAN } from '../systems/wind.js';
 import { getPref } from '../systems/uiPrefs.js';   // FT6: the switch, read here alone
 import { isEnhanced } from '../systems/uiSkin.js';
@@ -80,7 +80,7 @@ export const DEFAULT_SKY_HORIZON = Object.freeze([0.66, 0.78, 0.92]);
  *  location's real extent, and zero converts to water, so the whole map
  *  answered yes for every non-square town (AUDIT 65 MC-6: the one gate -
  *  the whole-map twin it replaced had no caller left and is retired). */
-export function tilemapRectHasWater(bytes, dim, width, height, table = WATER_MASK_TABLE) {
+export function tilemapRectHasWater(bytes, dim, width, height, table = WATER_DRAW_MASK_TABLE) {
   const w = Math.min(width, dim), h = Math.min(height, dim);
   for (let y = 0; y < h; y++) {
     const row = y * dim;
@@ -101,7 +101,7 @@ export function tilemapRectHasWater(bytes, dim, width, height, table = WATER_MAS
  * tiles at (x * stride.., z * stride..) - the grid's cell IS the tile at
  * stride 1 (6.4 units), which is the frame the shader samples in.
  */
-export function buildWaterIndices(bytes, stride = 1, table = WATER_MASK_TABLE, tileDim = 128) {
+export function buildWaterIndices(bytes, stride = 1, table = WATER_DRAW_MASK_TABLE, tileDim = 128) {
   const g = tileDim / stride + 1;
   const q = g - 1;
   const out = [];

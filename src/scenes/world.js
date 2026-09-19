@@ -22,7 +22,7 @@ import { modSetting } from '../systems/modSettings.js';   // ROADS 24
 import { WoodsFile, MAP_WIDTH, MAP_HEIGHT } from '../formats/woodsFile.js';
 import { buildTerrainGrid, buildTerrainIndices, isOutdoorWaterTile, TERRAIN_TILE_DIM, TERRAIN_SKIRT_DEPTH, surfaceHeightAt } from '../world/terrainSurface.js';
 import { waterUniforms, buildWaterIndices, waterSwitchOn } from '../render/waterSurface.js';   // WATER1: the enhanced water surface over the pixel's own grid; WATER-AUDIT: its own index set
-import { waterCorners } from '../world/waterCorners.js';   // GRASS-WET1: the one table that says which of a tile's corners stand in water
+import { waterCorners, WATER_DRAW_MASK_TABLE } from '../world/waterCorners.js';   // GRASS-WET1: the one table that says which of a tile's corners stand in water - the DRAW's, because a blade in a puddle is a picture, not a physics
 import { windowEmissionRGB } from '../render/windowEmission.js';
 import { CITY_LIGHT_COLOR, CITY_LIGHT_RANGE, LIGHTS_ARCHIVE, collectCityLights, nearestLights } from '../world/cityLights.js';
 import { withPlayerLights } from './magicCandle.js';   // X11/T1: the lights the PLAYER carries
@@ -6689,6 +6689,27 @@ export async function bootWorld(canvas, renderer, params, status) {
       spawned: playerSpawned, y: +player.pos[1].toFixed(2),
       ground: heightAt(player.pos[0], player.pos[2]), built: built.has(`${state.current.x},${state.current.y}`),
     });
+    // WATER-DRAW1 probe surface: THE TILE UNDER THE PLAYER, BY NUMBER.
+    // The water pass discards a tile whose record the corner table gives
+    // no water corners for, and the only way to name the record from a
+    // screenshot is to stand on it. Prints the record, the transform,
+    // the corners the DRAW gives it and the corners the FEET do - so a
+    // tile that looks wrong reports itself in one line.
+    window.__tileHere = () => {
+      const p = built.get(`${state.current.x},${state.current.y}`);
+      if (!p?.tilemapBytes) return JSON.stringify({ built: false });
+      const t = state.pixelTranslation(p.px, p.py);
+      const tx = Math.floor((cam.pos[0] - t[0]) / 6.4), tz = Math.floor((cam.pos[2] - t[2]) / 6.4);
+      if (tx < 0 || tz < 0 || tx >= TERRAIN_TILE_DIM || tz >= TERRAIN_TILE_DIM) return JSON.stringify({ offPixel: true });
+      const byte = p.tilemapBytes[tz * TERRAIN_TILE_DIM + tx];
+      return JSON.stringify({
+        pixel: `${p.px},${p.py}`, tile: `${tx},${tz}`, archive: p.groundArchive,
+        record: byte >> 2, transform: byte & 3, byte,
+        drawnWet: waterCorners(byte, WATER_DRAW_MASK_TABLE), feetWet: waterCorners(byte),
+        path: p.paths?.[tz * TERRAIN_TILE_DIM + tx] ? 1 : 0,   // GRASS-PATH1
+        location: p.location ?? null,
+      });
+    };
     // M3 probe surface: the live climb state (the wall probe + the
     // check machine ride the real collider and the real skill rolls).
     window.__climb = () => JSON.stringify({
@@ -10749,7 +10770,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         // as water. The corner table (world/waterCorners.js) is the one
         // law for that question; the water pass and the player's feet
         // already read it, and now the grass does too.
-        if (waterCorners(byte)) return null;
+        if (waterCorners(byte, WATER_DRAW_MASK_TABLE)) return null;
         // GRASS3: the height of the surface that is DRAWN, not a
         // bilinear patch over the same samples - the terrain is cut into
         // triangles and bilinear is a different surface. On real grades

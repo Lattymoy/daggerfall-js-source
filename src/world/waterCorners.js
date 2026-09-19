@@ -44,12 +44,53 @@ export const SHORE_FAMILIES = Object.freeze([
 export const SHALLOW_WHOLE = Object.freeze([8, 23, 33, 34, 35, 36]);
 
 /**
+ * WATER-DRAW1 (2026-09-19, Mac with a screenshot: "some textures not
+ * taking the water tile"): THE DRAW AND THE FEET ARE NOT THE SAME
+ * QUESTION, and this file had been answering both with one list.
+ *
+ * The screenshot is a town pond. Every tile in it shimmers except one,
+ * which sits there as a flat blue square with a muddy bed showing
+ * through - the terrain pass's own tile, with no water drawn over it,
+ * because `waterCorners` answered 0 for its record and the pass's
+ * fragment shader does `if (corners == 0u) discard`.
+ *
+ * WHY IT ANSWERED 0. The whole-tile half of the table is
+ * `SHALLOW_WHOLE`, and SHALLOW_WHOLE is PlayerMotor.OnShallowWaterTile
+ * (:551-563) - a list DFU uses to decide whether the PLAYER'S FEET are
+ * in shallow water. DFU never drew a water surface at all, so that list
+ * was never a drawing list; the port made it one at WATER1 and
+ * inherited its omissions. Record 9 is the omission that shows: it sits
+ * inside the water-dirt group (5-8 are the marching shapes and the
+ * first shallow variant) and its art is a water tile, but DFU's motor
+ * does not name it, so the pass refused to draw it.
+ *
+ * So there are two tables now. `WATER_MASK_TABLE` is unchanged and is
+ * the LAW's - what the player swims in (player/exteriorSurface.js) and
+ * what the town's own navigation refuses to walk (world/cityNavigation.js)
+ * are DFU's answers and stay verbatim. `WATER_DRAW_MASK_TABLE` is the
+ * ENHANCED PASS's - what reads as water to the eye - and it is the law's
+ * table plus the records below.
+ *
+ * HONESTLY: this list is read off a screenshot, not off ARENA2, which
+ * this container does not have. Record 9 is the one record in 0-55 that
+ * is water art and covered by neither the shore families nor DFU's
+ * motor list, so it is the one candidate the code can name. If another
+ * tile turns up unshaded, `window.__tileHere()` (scenes/world.js) prints
+ * the record the player is standing on and it belongs on this line.
+ */
+export const SHALLOW_DRAWN = Object.freeze([9]);
+
+/**
  * The 256-entry water-corner table, indexed by the CONVERTED tile byte
  * (record << 2 | transform). Bits: 1 = corner (0,0), 2 = (1,0),
  * 4 = (0,1), 8 = (1,1), in the tilemap's frame (x along the tile row,
  * y along the column - AssignTilesJob's b0..b3).
+ *
+ * WATER-DRAW1: `drawn` adds the records that READ as water without
+ * being water to DFU's motor - see SHALLOW_DRAWN. The default is false,
+ * so the law's table is what this function has always built.
  */
-export function buildWaterMaskTable() {
+export function buildWaterMaskTable(drawn = false) {
   const table = new Uint8Array(256);
   for (let t = 0; t < 4; t++) table[(WATER_TILE_INDEX << 2) | t] = 0xF;
   const lookup = createLookupTable();
@@ -63,10 +104,16 @@ export function buildWaterMaskTable() {
     for (const family of SHORE_FAMILIES) table[(family[k] << 2) | t] = water;
   }
   for (const r of SHALLOW_WHOLE) for (let t = 0; t < 4; t++) table[(r << 2) | t] = 0xF;   // MAC2: the docks, moats and puddles, whole
+  if (drawn) for (const r of SHALLOW_DRAWN) for (let t = 0; t < 4; t++) table[(r << 2) | t] = 0xF;   // WATER-DRAW1: and what the EYE calls water
   return table;
 }
 
+/** The LAW's table: what the player swims in and what the town's
+ *  navigation refuses. DFU's answers, verbatim. */
 export const WATER_MASK_TABLE = buildWaterMaskTable();
+/** WATER-DRAW1: the enhanced PASS's table - what reads as water to the
+ *  eye. The law's, plus SHALLOW_DRAWN. */
+export const WATER_DRAW_MASK_TABLE = buildWaterMaskTable(true);
 
 /** The table packed eight nibbles to a uint, as the shader's
  *  `uvec4 uWaterMask[8]` takes it: entry i is word i >> 3, nibble i & 7. */
