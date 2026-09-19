@@ -72,6 +72,7 @@ import { buttonText } from '../systems/controlsConfig.js';    // GetButtonText -
 // four more places to forget it. The module is a leaf here: it imports
 // systems/skills.js and a faction constant, and nothing in ui/.
 import { playerEntity } from '../characters/playerEntity.js';
+import { openLevelUpWindow } from './levelUpOpener.js';   // LV3: the strip's level row is a button now
 
 /** The three things this surface announces. */
 export const NOTICE_LEVEL = 'level';
@@ -357,8 +358,19 @@ function rehome(doc, node) {
 }
 
 function rowNode(doc, r) {
-  const n = doc.createElement('div');
-  n.className = `lv-note lv-note-${r.kind}${r.standing ? ' lv-standing' : ''}`;
+  // LV3 (Dudey, 2026-09-19: "a button to open the levelup screen again once closed"): THE LEVEL'S ROW IS A BUTTON
+  // when there is a key to press - the same key the row already names, sent through ui/levelUpOpener.js, so it
+  // opens the window exactly as the sheet key does in every host. Without a binding it stays a plain line: a
+  // button that presses nothing is a drawn door. It takes clicks only where the game hands the player a cursor
+  // (touch, or the freed cursor); the pause window's Stats page carries the same door for everyone else.
+  const clickable = r.kind === NOTICE_LEVEL && codeForAction(bindings(), 'CharacterSheet') != null;
+  const n = doc.createElement(clickable ? 'button' : 'div');
+  n.className = `lv-note lv-note-${r.kind}${r.standing ? ' lv-standing' : ''}${clickable ? ' lv-clickable' : ''}`;
+  if (clickable) {
+    n.type = 'button';
+    n.title = 'Open the level-up window';
+    n.onclick = (e) => { e?.preventDefault?.(); e?.stopPropagation?.(); openLevelUpWindow(); };
+  }
   const gem = doc.createElement('span');
   gem.className = 'lv-note-gem';
   gem.textContent = r.kind === NOTICE_SKILL ? '▲' : '✦';
