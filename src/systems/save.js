@@ -36,6 +36,8 @@ import { setItemFields } from './itemTemplates.js';   // JAN1: an item saved bef
 import { restoreKnightlyOrderFlags } from './knightlyGifts.js';   // D9: KnightlyOrder.RestoreGuildData's armour-bit back-fill
 import { GUILD_GROUPS } from '../formats/factionFile.js';   // the membership book's key IS the guild group
 import { appStorage } from './appStorage.js';   // DA1: localStorage in a browser, real save files in the desktop shell
+import { isOnlinePage } from './onlineLane.js';   // ONLINE-DEATH-FIX: the page is online
+import { respawnHealth } from './deathRespawn.js';   // ONLINE-DEATH-FIX: the SAME half-health an online respawn leaves
 
 /** One membership book, rows copied (GuildMembership_v1's shape). */
 const copyMembershipBook = (book) => Object.fromEntries(
@@ -518,6 +520,10 @@ export function restorePlayer(entity, snap, spellsByIndex = null) {
   // number, orphaning every maxMagickaModifier producer. Idempotent.
   defineLiveMaxMagicka(entity);
   for (const k of ENTITY_FIELDS) entity[k] = snap[k];
+  // ONLINE-DEATH-FIX: NEVER LOAD DEAD ONLINE. hurtPlayer fires the death only on the alive->0 TRANSITION, so a
+  // character restored at 0 HP can never die again and is stuck at 0% (unkillable). Online, a death is a respawn, so a
+  // dead save (the exit autosave can write one) comes back at the respawn's own half health. Offline is untouched.
+  if (isOnlinePage() && !((entity.health ?? 0) > 0)) entity.health = respawnHealth(entity.maxHealth);
   entity.stats = { ...snap.stats };
   entity.survival = snap.survival && typeof snap.survival === 'object' ? { ...snap.survival, notes: {} } : null;   // SURV1: a pre-SURV save starts fresh at the host's first tick
   // Pre-S15 saves carry no fatigue: default to rested (MaxFatigue =

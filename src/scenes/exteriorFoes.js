@@ -646,7 +646,16 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       ...senses,
       targeting: (ai, pf, cdt) => {
         const hadTarget = !!ai.target;
-        const result = runTargetMachine(f, [...senses.candidates(), PLAYER_TARGET, ...peerCandidates()], pf, cdt, {   // WORLD6b-ii: the peers are MY foes' candidates; AUDIT WORLD6b-ii A5: after ME (a peer never beats me on a tie), A9: a puppet never steps here
+        // CAMP-REST (Dudey, 2026-09-19: "the camp enemies should just not appear when resting"): a campmate
+        // does not NOTICE a sleeping player. `noTargetMode` is the machine's own "leave the player off the
+        // list" switch (the pacified foe's arm) - it drops the player as a candidate and nothing else, so a
+        // camp still fights other foes and peers. It only applies while the foe is not ALREADY on the player:
+        // a camp that had noticed you before you lay down keeps hunting, exactly as the rest's own enemy check
+        // (which refuses a rest with a seen foe in it) already assumes. A lone wanderer carries no campId and
+        // is untouched - it is still the classic rest interruption.
+        const campAsleep = f.campId != null && !!senses.playerEntity?.isResting && !isLocalPlayerTarget(ai.target);
+        const result = runTargetMachine(f, [...senses.candidates(), PLAYER_TARGET, ...peerCandidates()], pf, cdt, {
+          noTargetMode: campAsleep,   // WORLD6b-ii: the peers are MY foes' candidates; AUDIT WORLD6b-ii A5: after ME (a peer never beats me on a tie), A9: a puppet never steps here
           playerEntity: senses.playerEntity ?? null,
           playerHeight: senses.playerHeight,   // AUDIT 62 F23: GetTargets measures the player at its LIVE capsule too
         });

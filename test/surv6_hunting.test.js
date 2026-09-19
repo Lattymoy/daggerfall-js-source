@@ -280,7 +280,7 @@ test('SURV6: by source - the overworld host alone rolls, opens in the slot, pass
   assert.match(world, /enemiesNear: areEnemiesNearby\(exteriorFoePool\(\)\), resting: !!playerEntity\.isResting \|\| !!playerEntity\.preventEnemySpawns,/);
   assert.match(world, /hasBow: weaponTypeForItem\(weaponRig\.playerWeapon\.weapon\) === WEAPON_TYPES\.Bow,/);
   assert.match(world, /skills: \{ archery: skillValue\(playerEntity, SKILLS\.Archery\), stealth: skillValue\(playerEntity, SKILLS\.Stealth\), criticalStrike: skillValue\(playerEntity, SKILLS\.CriticalStrike\), climbing: skillValue\(playerEntity, SKILLS\.Climbing\) \},/);
-  assert.match(world, /showOverlay: \(w\) => townTalk\.showOverlay\(w\), overlayActive: \(\) => townTalk\.overlayActive,\n\s+advanceMinutes: \(n\) => playerTicker\.advance\(n\),/);
+  assert.match(world, /showOverlay: \(w\) => townTalk\.showOverlay\(w\), overlayActive: \(\) => townTalk\.overlayActive,\n\s+advanceMinutes: \(n\) => \{ playerTicker\.advance\(n\); runEncounterTick\(walkMode && playerSpawned \? player\.pos : cam\.pos, null, true\); \},/);   // CAMP-REST: the search's minutes are spent through the tick as a skip
   assert.match(world, /for \(let i = 0; i < count; i\+\+\) _standEncounterFoe\(\{ mobileType, \.\.\.SPAWNER_ARMS\.wilderness \}, feet\);/);
   assert.match(world, /inflictPoison, inflictDisease, tally: \(id\) => tallySkill\(playerEntity, id, 1\),/);
   // TO-FIELD3 (Mac, 2026-09-18: "hunting rolls fire during travel

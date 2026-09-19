@@ -63,10 +63,10 @@ test('D-ONLINE1: half health back, never none; one flavour line per kind, the pi
 test('D-ONLINE1 by source: the world host snapshots "was this death online" at the presenter, its reset respawns or ends the run by that snapshot, F11 does the same, the modal hosts ask through one door, and the respawn leaves any mode, lands on a start marker, restores half health and speaks', () => {
   const w = read('src/scenes/world.js');
   assert.match(w, /_deathWasOnline = _onlineWorldSession\(\);\s*\n\s*townTalk\.showOverlay\(new DeathScreen\(\{ eyeHeight: player\.eye\[1\] - player\.pos\[1\], capsuleHeight: player\.height, onReset: \(\) => \(_deathWasOnline \? respawnOnlinePlayer\(\) : endRunToTitleMenu\(renderer\)\) \}\)\);/, 'captured synchronously at the presenter, and read at the reset');
-  assert.match(w, /const _onlineWorldSession = \(\) => !!\(online && online\.status === 'open' && \(isWorldRoom\(online\.room\) \|\| isCellRoom\(online\.room\)\)\);/, 'the predicate counts the open world\'s CELL room - a death outdoors is an online death');
+  assert.match(w, /const _onlineWorldSession = \(\) => onlineOn \|\| !!\(online && online\.status === 'open' && \(isWorldRoom\(online\.room\) \|\| isCellRoom\(online\.room\)\)\);/, 'the predicate counts the open world\'s CELL room - a death outdoors is an online death');
   assert.match(w, /if \(_deathWasOnline == null\) _deathWasOnline = _onlineWorldSession\(\);[^\n]*\n\s*if \(online\.room\) \{ worldPublish\(now, true\); online\.leave\(\);/, 'the frame\'s backstop for the modal hosts\' deaths is taken BEFORE the leave clears the room');
   assert.match(w, /if \(townTalk\.overlay instanceof DeathScreen && _deathWasOnline\) respawnOnlinePlayer\(\);\s*\n\s*else hudCtx\.quickLoad\(\);/, 'F11 on an online death respawns; otherwise it quickloads as ever');
-  assert.match(w, /onlineRespawn: \(\) => \{ if \(!_deathWasOnline\) return false; respawnOnlinePlayer\(\); return true; \},/, 'the host bag\'s door for the modal hosts');
+  assert.match(w, /onlineRespawn: \(\) => \{ if \(!\(_deathWasOnline \?\? _onlineWorldSession\(\)\)\) return false; respawnOnlinePlayer\(\); return true; \},/, 'the host bag\'s door for the modal hosts');
   const ri = w.indexOf('function respawnOnlinePlayer() {');
   const fn = w.slice(ri, w.indexOf('\n  }\n', ri));
   assert.match(fn, /_deathWasOnline = null;/, 'armed fresh for the next death');

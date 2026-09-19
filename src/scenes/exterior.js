@@ -953,7 +953,9 @@ export async function bootExterior(canvas, renderer, params, status) {
       // the drowning) was dropped.
       townTalk.pushOverlay(new ActionTextBox(lines));
       if (out.kind === 'rest') {
+        // CAMP-REST: the forced hour is spent through the tick as a rest, never replayed as walking time (no group roll)
         playerTicker.advance(60);   // RaiseTime(1 hour); the latch holds re-entry
+        runEncounterTick(walkMode ? player.pos : cam.pos, null, true);
         playerEntity.health = Math.min(playerEntity.maxHealth, playerEntity.health + out.health);
         playerEntity.fatigue = Math.min(maxFatigue(playerEntity), (playerEntity.fatigue ?? 0) + out.fatigue);
         playerEntity.magicka = Math.min(playerEntity.maxMagicka ?? Infinity, (playerEntity.magicka ?? 0) + out.magicka);
@@ -1313,7 +1315,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     camera: () => ({ feet: walkMode ? player.pos : cam.pos, yaw: cam.yaw }), collider: () => collider,
     place: () => ({ insideBuilding: _mode() === 'interior', insideDungeon: _mode() === 'dungeon', inTown: _isPlayerInTownStrict(), enemiesNearby: areEnemiesNearby(exteriorFoePool(), { resting: true }), inWater: !!player.isPlayerSwimming }),
     say: (l) => townTalk.say(l), showOverlay: (w) => townTalk.showOverlay(w), openRest: () => { townTalk.closeOverlay(); toggleRest(); },
-    advanceMinutes: (n) => playerTicker.advance(n),
+    advanceMinutes: (n) => { playerTicker.advance(n); runEncounterTick(walkMode ? player.pos : cam.pos, null, true); },   // CAMP-REST: a camp meal is a skip - no group roll on the replay
   });
   const springTargets = () => (survivalOn() ? springs.map((s, i) => ({ key: `water:${i}`, aabb: { min: [s.pos[0] - 0.8, s.pos[1], s.pos[2] - 0.8], max: [s.pos[0] + 0.8, s.pos[1] + 1.6, s.pos[2] + 0.8] }, distance: RAY_DISTANCE, reach: DEFAULT_ACTIVATION_DISTANCE })) : []);
   const drinkAtSpring = (key) => { const s = springs[Number(key.split(':')[1])]; if (!s) return false; townTalk.say(s.dry ? DRY_SOURCE_TEXT : drinkAtSource(playerEntity, Math.floor(worldMinutes())).text); return true; };
