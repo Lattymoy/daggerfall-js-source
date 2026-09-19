@@ -13,6 +13,8 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { identity } from '../src/world/mat4.js';
 import { Renderer, CLOUD_SHADOW_UNIT, SKY_CLEAR } from '../src/render/renderer.js';
+import { PrecipitationRenderer } from '../src/render/precipitation.js';
+import { warmPrograms } from '../src/render/warmPrograms.js';
 import { TEXTURE_SLOTS } from '../src/systems/dynamicSkies.js';   // AUDIT 65 RS-3: the nine slots the reserved unit has to clear
 
 function countingRenderer(counts) {
@@ -648,4 +650,106 @@ test('PERF-UI: it moves NO PIXEL - every uniform and texture at every quad is wh
   raw.push(...lb.slice(from));
   assert.deepEqual(shadowed, uiEffective(b, raw), 'a shadow skipped an upload the caller meant');
   assert.equal(shadowed.length, 55);
+});
+
+// PERF-WARM - the compile that no longer happens mid-frame. The stub
+// does not compile shaders, so nothing here measures the win; what it
+// pins is the STRUCTURE the win rests on: that the five on-demand
+// programs each have an idempotent step, that warming builds them all
+// before any draw does, that the draw path still builds on demand for
+// a renderer nobody warmed, and that a failing step does not take the
+// rest of the warm with it.
+
+/** Run warmPrograms with a synchronous scheduler, so a test does not
+ *  wait on requestIdleCallback (there is none in node). */
+const runWarm = (steps, opts = {}) => warmPrograms(steps, { idle: (fn) => fn(), ...opts });
+
+test('PERF-WARM: warmSteps names the five on-demand programs, and warming builds every one', async () => {
+  const r = countingRenderer({});
+  const names = ['screenQuadProgram', 'screenQuadRunProgram', 'charQuadProgram', 'particleProgram', 'overlayProgram'];
+  for (const n of names) assert.ok(!r[n], `${n} is not built before the warm`);
+
+  const steps = r.warmSteps();
+  assert.equal(steps.length, names.length, 'one step per on-demand program');
+  const done = await runWarm(steps);
+  assert.equal(done, names.length, 'every step ran');
+  for (const n of names) assert.ok(r[n], `${n} was built by the warm`);
+});
+
+test('PERF-WARM: the steps are idempotent - a second warm rebuilds nothing', async () => {
+  const r = countingRenderer({});
+  await runWarm(r.warmSteps());
+  const first = {
+    sq: r.screenQuadProgram, run: r.screenQuadRunProgram, cq: r.charQuadProgram,
+    p: r.particleProgram, ov: r.overlayProgram,
+  };
+  await runWarm(r.warmSteps());
+  assert.equal(r.screenQuadProgram, first.sq, 'the screen quad kept its program');
+  assert.equal(r.screenQuadRunProgram, first.run);
+  assert.equal(r.charQuadProgram, first.cq);
+  assert.equal(r.particleProgram, first.p);
+  assert.equal(r.overlayProgram, first.ov);
+});
+
+test('PERF-WARM: an unwarmed renderer still builds on the draw, and a warmed one does not build again', () => {
+  // the draw path is what it always was for anyone who never warms
+  const cold = countingRenderer({});
+  cold.beginFrame(identity(), identity(), new Float32Array([0, 1, 0]));
+  cold.drawScreenQuad(null, 0, 0, 10, 10);
+  assert.ok(cold.screenQuadProgram, 'the draw built it, exactly as before');
+
+  // and a warmed one does not pay a second time on the frame
+  const warm = countingRenderer({});
+  warm._ensureScreenQuadProgram();
+  const built = warm.screenQuadProgram;
+  warm.beginFrame(identity(), identity(), new Float32Array([0, 1, 0]));
+  warm.drawScreenQuad(null, 0, 0, 10, 10);
+  assert.equal(warm.screenQuadProgram, built, 'the frame found it already there');
+});
+
+test('PERF-WARM: a step that throws is swallowed, and the steps after it still run', async () => {
+  const ran = [];
+  const done = await runWarm([
+    () => ran.push('a'),
+    () => { throw new Error('a driver that would not link'); },
+    () => ran.push('c'),
+  ]);
+  assert.deepEqual(ran, ['a', 'c'], 'the throw did not stop the warm');
+  assert.equal(done, 2, 'and it is not counted as done');
+});
+
+test('PERF-WARM: the warm stops when its host is gone, and never on a step it already passed', async () => {
+  const ran = [];
+  let alive = true;
+  const done = await runWarm([
+    () => { ran.push('a'); alive = false; },
+    () => ran.push('b'),
+  ], { alive: () => alive });
+  assert.deepEqual(ran, ['a'], 'the second step was not run');
+  assert.equal(done, 1);
+});
+
+test('PERF-WARM: the pixel-snow program is built with the renderer on the lane that can draw it', () => {
+  const gl = new Proxy({}, {
+    get: (o, k) => {
+      if (k === 'getProgramParameter' || k === 'getShaderParameter') return () => true;
+      if (k === 'getUniformLocation') return () => ({});
+      if (k === 'createProgram' || k === 'createShader' || k === 'createBuffer'
+        || k === 'createVertexArray' || k === 'createTexture') return () => ({});
+      if (typeof k === 'string' && k.toUpperCase() === k) return 1;
+      return () => {};
+    },
+  });
+  const opts = { pixelSnow: { minParticleSize: 1, maxParticleSize: 4 } };   // no textureUrl: setPixelSnow takes the config and loads nothing
+  // the enhanced lane can reach drawPixelSnow, so its program is the
+  // constructor's - along with the lab's, which drawPixelSnow shares
+  const on = new PrecipitationRenderer(gl, { ...opts, enhanced: true });
+  assert.ok(on.pixelProgram, 'the enhanced lane compiled it up front');
+  assert.ok(on.labProgram, 'and the lab it borrows its instances from');
+
+  // the classic lane cannot: drawPixelSnow is only reachable through
+  // drawLab. AUDIT 58's rule holds - it compiles neither.
+  const off = new PrecipitationRenderer(gl, opts);
+  assert.equal(off.pixelProgram, null, 'the classic lane compiled nothing it cannot bind');
+  assert.equal(off.labProgram, null);
 });

@@ -1473,6 +1473,70 @@ scene with nothing remembered between quads. Identical.
 flags stop repeating while `dst` and `src` - which really are a quad's
 own - still go up every single time; and the equality above.
 
+## PERF-WARM - THE COMPILE THAT HAPPENS MID-FRAME (2026-09-19)
+
+PERF-TEX, PERF-TEX2 and PERF-UI took redundant GL calls out of the steady
+frame. This slice is about a different cost and the one a player actually
+notices: a **hitch**. Seven programs were compiled the first time
+something needed them, and "the first time" is always inside a draw call,
+which is always inside a frame.
+
+| program | the frame that paid for it |
+|---|---|
+| `particleProgram` | the first spell effect that draws |
+| `charQuadProgram` | the first classic character sprite |
+| `screenQuadProgram` | the first 2D blit of the session |
+| `screenQuadRunProgram` | the first instanced 2D run |
+| `overlayProgram` | the first full-screen overlay |
+| the lab's `pixelProgram` | the first frame of Dynamic Skies' snow |
+| the rain's whole renderer | the weather change that turns rain on |
+
+A compile-and-link is not a few hundred small calls that add up - it is
+ONE call into the **driver's own compiler**, which can hold the calling
+thread for tens of milliseconds, and nothing in this codebase can make it
+cheaper. The only thing that can be done with it is to **move it**: off
+the frame that needs the program and onto time the browser was going to
+spend idle.
+
+**The refactor is the whole change.** Each `if (!this.xProgram) { ... }`
+block came out of its draw function into an `_ensureXProgram()` method
+byte for byte, guard included - so the draw path is EXACTLY what it was
+for anyone who never warms, and warming twice costs one property read.
+`renderer.warmSteps()` names the five; `render/warmPrograms.js` walks
+them one per `requestIdleCallback`, the shape `ui/enhancedChunk.js`
+settled on for MENU1 and for the same reason (five compiles back to back
+in one callback is the stall this exists to remove, moved somewhere less
+visible).
+
+**The rain is the expensive one.** `applyWeather` built the whole
+`PrecipitationRenderer` - a program, a 1000-particle vertex volume and its
+index buffer - inside a game frame, the moment the weather turned. Both
+exterior hosts add that construction to the idle walk. The draw gate is
+the MODE and never the object (the draw site's own law, W1 review: "the
+renderer outlives a clear-up"), so a renderer that exists before any rain
+does draws nothing. The pixel-snow program joins `_buildLab` in the
+constructor on the **enhanced lane only** - `drawPixelSnow` is reachable
+only through `drawLab`, so AUDIT 58's rule that the classic lane compiles
+nothing it cannot bind still holds, and `drawPixelSnow` keeps its own
+on-demand build for the renderer handed the enhanced deck without the
+lane's flag.
+
+**WHAT THIS DOES NOT CLAIM.** Unlike the three slices above, the SIZE of
+this win is not measured here and cannot be: `test/glstate.test.js` drives
+a Proxy stub, and a stub does not compile shaders. The claim is
+STRUCTURAL - the program is built before the first draw needs it rather
+than during it - and the number belongs to whatever driver the player is
+running. Saying otherwise would be inventing a figure, which is the one
+thing the three measured slices above were careful not to do.
+
+**Pinned** in `test/glstate.test.js` (6): `warmSteps` names exactly five
+and warming builds every one; the steps are idempotent; an unwarmed
+renderer still builds on the draw and a warmed one does not build again;
+a step that throws does not take the rest of the warm with it; a warm
+stops when its host is gone; and the pixel-snow program is the
+constructor's on the lane that can draw it and nobody's on the lane that
+cannot.
+
 ## PERF-ON - ONE DRAW A STRING (2026-09-15)
 
 Mac: *"Next thing I want to tackle is improving online performance. I

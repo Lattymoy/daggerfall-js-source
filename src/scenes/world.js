@@ -313,6 +313,7 @@ import {
   LightningPlayer,
 } from '../world/weather.js';
 import { PrecipitationRenderer } from '../render/precipitation.js';
+import { warmPrograms } from '../render/warmPrograms.js';
 import { ROTOR_HUB, rotorPhase, advanceRotor, mountRotor, MILL_SOUND, millSoundPosition } from '../world/windmills.js';   // WM2b: the sails; WM4c: the hum
 import { BODY } from '../world/windmillMesh.js';   // WM2d: the tower, for the collider
 import { remapSubMeshes } from '../world/texRemap.js';   // WM3: the one climate/dungeon remap seam
@@ -647,6 +648,17 @@ export async function bootWorld(canvas, renderer, params, status) {
   const precipOpts = { enhanced: sky.enhanced, countCap: Number(params.get('rain')) || null };
   if (sky.pixelSnow) precipOpts.pixelSnow = sky.pixelSnow;   // DS1: Dynamic Skies' InitSnow - the pixel snow replacement, when its switch is on
   let precip = precipMode ? new PrecipitationRenderer(renderer.gl, precipOpts) : null;
+  // PERF-WARM: the renderer's on-demand programs, and the rain's whole
+  // renderer, paid for at idle rather than on the frame that first needs
+  // them. The rain is the expensive one: a weather change builds a
+  // program, a 1000-particle vertex volume and its index buffer inside
+  // applyWeather, which runs on a game frame. The draw gate is the MODE
+  // and never the object (the same law the draw site below states), so
+  // an early renderer draws nothing until the weather says so.
+  void warmPrograms([
+    ...renderer.warmSteps(),
+    () => { if (!precip) precip = new PrecipitationRenderer(renderer.gl, precipOpts); },
+  ]);
   const wisps = sky.enhanced ? new WindWispsRenderer(renderer.gl) : null;   // WIND3: built on the enhanced lane, so a shader fault is a boot fault; its row is read per frame
   const windAudio = createWindAudio();   // WIND3: the wind loop, ticked on the exterior frame and stopped on the modal one
   const sand = sky.enhanced ? new WindWispsRenderer(renderer.gl, SAND_LOOK) : null;   // WEATHER2d: the sandstorm's sand - the wisps' program in the sand's look

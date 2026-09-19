@@ -1659,6 +1659,34 @@ export class Renderer {
     return prog;
   }
 
+  /** PERF-WARM: the programs this renderer builds ON DEMAND, each as its
+   *  own step, so a caller can pay for them while the browser is idle
+   *  instead of on the frame that first needs them.
+   *
+   *  Five programs were compiled inside a draw call: the particle
+   *  effects' (first spell), the character-sprite quad's (first classic
+   *  sprite), the screen quad's, the instanced screen quad's and the
+   *  overlay's. A compile and link is a DRIVER operation - it can take
+   *  tens of milliseconds and there is no way to make it cheaper, only
+   *  to move it. Every step is idempotent: the block each one wraps
+   *  still begins with its own `if (!this.xProgram)`, so the draw path
+   *  is unchanged for anyone who never warms, and a warm that has
+   *  already run costs one property read.
+   *
+   *  Not warmed: the world, sky, billboard and terrain programs, which
+   *  the constructor already builds, and the lab's programs, which
+   *  render/precipitation.js owns and only the enhanced lane compiles
+   *  (AUDIT 58 - warming them here would undo that). */
+  warmSteps() {
+    return [
+      () => this._ensureScreenQuadProgram(),
+      () => this._ensureScreenQuadRunProgram(),
+      () => this._ensureCharQuadProgram(),
+      () => this._ensureParticleProgram(),
+      () => this._ensureOverlayProgram(),
+    ];
+  }
+
   /**
    * VAO from packCharacterFaces output (interleaved 9 floats/vertex).
    *
@@ -1783,14 +1811,7 @@ export class Renderer {
     const gl = this.gl;
     const list = mesh.effects;
     if (!list || !list.length) return;
-    if (!this.particleProgram) {
-      this.particleProgram = this._buildProgram(PARTICLE_VS, PARTICLE_FS);
-      const pp = this.particleProgram;
-      this._particle = {
-        proj: gl.getUniformLocation(pp, 'uProj'), view: gl.getUniformLocation(pp, 'uView'), model: gl.getUniformLocation(pp, 'uModel'),
-        tex: gl.getUniformLocation(pp, 'uTex'), useTex: gl.getUniformLocation(pp, 'uUseTex'), alphaCut: gl.getUniformLocation(pp, 'uAlphaCut'),
-      };
-    }
+    this._ensureParticleProgram();
     let any = false;
     for (const e of list) {
       if (!e || e.hidden || !e.count) continue;
@@ -1825,6 +1846,22 @@ export class Renderer {
       gl.bindTexture(gl.TEXTURE_2D, null);
       this._bindVao(null);
       this._use(this.charProgram);   // the pass's own program back, for the caller's next draw
+    }
+  }
+
+  /** PERF-WARM: build the particle program. Was inline in
+   *  _drawParticleEffects and so compiled on the frame the first spell
+   *  effect drew; it is its own step now so warmSteps() can pay for it
+   *  at idle. The body is the block that stood there, unchanged. */
+  _ensureParticleProgram() {
+    const gl = this.gl;
+    if (!this.particleProgram) {
+      this.particleProgram = this._buildProgram(PARTICLE_VS, PARTICLE_FS);
+      const pp = this.particleProgram;
+      this._particle = {
+        proj: gl.getUniformLocation(pp, 'uProj'), view: gl.getUniformLocation(pp, 'uView'), model: gl.getUniformLocation(pp, 'uModel'),
+        tex: gl.getUniformLocation(pp, 'uTex'), useTex: gl.getUniformLocation(pp, 'uUseTex'), alphaCut: gl.getUniformLocation(pp, 'uAlphaCut'),
+      };
     }
   }
 
@@ -2141,6 +2178,37 @@ export class Renderer {
    *  character's position, alpha-cut, fogged, depth-tested. */
   drawCharacterSpriteQuad(tex, center, halfW, halfH, right, u1 = 1, v1 = 1) {
     const gl = this.gl;
+    this._ensureCharQuadProgram();
+    const [cx, cy, cz] = center, [rx, , rz] = right;
+    const v = new Float32Array([
+      cx - rx*halfW, cy - halfH, cz - rz*halfW, 0, 0,
+      cx - rx*halfW, cy + halfH, cz - rz*halfW, 0, v1,
+      cx + rx*halfW, cy + halfH, cz + rz*halfW, u1, v1,
+      cx + rx*halfW, cy - halfH, cz + rz*halfW, u1, 0,
+    ]);
+    this._use(this.charQuadProgram);
+    const c = this._charQuad;
+    gl.uniformMatrix4fv(c.proj, false, this._proj);
+    gl.uniformMatrix4fv(c.view, false, this._view);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, tex);
+    gl.uniform1i(c.tex, 0);
+    this._uploadFog(this._charQuad);
+    this._bindVao(this._charQuadVAO);
+    gl.bindBuffer(gl.ARRAY_BUFFER, this._charQuadVBO);
+    gl.bufferSubData(gl.ARRAY_BUFFER, 0, v);
+    gl.disable(gl.CULL_FACE);
+    gl.drawArrays(gl.TRIANGLE_FAN, 0, 4);
+    this.stats.texBinds++; this.stats.draws++;
+    gl.enable(gl.CULL_FACE);
+    this._bindVao(null);
+  }
+
+  /** PERF-WARM: build the character-sprite quad's program and VAO -
+   *  the block that stood at the head of drawCharacterSpriteQuad,
+   *  unchanged, so the first classic sprite does not compile it. */
+  _ensureCharQuadProgram() {
+    const gl = this.gl;
     if (!this.charQuadProgram) {
       const vs = `#version 300 es
 layout(location=0) in vec3 aPos;
@@ -2196,29 +2264,6 @@ void main() {
       this._bindVao(null);
       this._charQuadVAO = vao; this._charQuadVBO = vbo;
     }
-    const [cx, cy, cz] = center, [rx, , rz] = right;
-    const v = new Float32Array([
-      cx - rx*halfW, cy - halfH, cz - rz*halfW, 0, 0,
-      cx - rx*halfW, cy + halfH, cz - rz*halfW, 0, v1,
-      cx + rx*halfW, cy + halfH, cz + rz*halfW, u1, v1,
-      cx + rx*halfW, cy - halfH, cz + rz*halfW, u1, 0,
-    ]);
-    this._use(this.charQuadProgram);
-    const c = this._charQuad;
-    gl.uniformMatrix4fv(c.proj, false, this._proj);
-    gl.uniformMatrix4fv(c.view, false, this._view);
-    gl.activeTexture(gl.TEXTURE0);
-    gl.bindTexture(gl.TEXTURE_2D, tex);
-    gl.uniform1i(c.tex, 0);
-    this._uploadFog(this._charQuad);
-    this._bindVao(this._charQuadVAO);
-    gl.bindBuffer(gl.ARRAY_BUFFER, this._charQuadVBO);
-    gl.bufferSubData(gl.ARRAY_BUFFER, 0, v);
-    gl.disable(gl.CULL_FACE);
-    gl.drawArrays(gl.TRIANGLE_FAN, 0, 4);
-    this.stats.texBinds++; this.stats.draws++;
-    gl.enable(gl.CULL_FACE);
-    this._bindVao(null);
   }
 
   /** Fullscreen overlay of a sprite-RT sub-rect: no depth, no fog,
@@ -2281,6 +2326,78 @@ void main() {
     // call every host has to remember (and forget once).
     if (this._worldViewportPx) this.endWorldPass();
     this._compositeAir();   // EL3: a no-op unless a render is owed
+    this._ensureScreenQuadProgram();
+    this._use(this.screenQuadProgram);
+    this._bindVao(this._screenQuadVao);
+    gl.disable(gl.DEPTH_TEST);
+    // HANDEDNESS REGRESSION (2026-08-23, "the sky-blue screen"): a 2D
+    // blit has no facing, but with CULL_FACE left ON the global
+    // frontFace(CW) swap culled EVERY screen quad - the whole UI
+    // layer, title screen to fonts - leaving only the clear color.
+    // tools/cullProbe.mjs is the real-GL repro; the bracket is the
+    // overlay pass's own idiom.
+    gl.disable(gl.CULL_FACE);
+    const ox = this._screenOffset?.[0] ?? 0, oy = this._screenOffset?.[1] ?? 0;
+    gl.uniform4f(this._screenQuad.dst, dst.x + ox, dst.y + oy, dst.w, dst.h);
+    // PERF-UI: THE FOUR THAT ARE NOT A QUAD'S OWN. `dst` and `src` above
+    // and below really do change every call; the canvas size is the
+    // FRAME's, and useTex/blendTex/rotOn/colour are the same for every
+    // quad of a run - a row of icons, a bar, a panel's backdrop. The HUD
+    // draws a hundred-odd of these a frame in every scene there is, so
+    // each was going up a hundred-odd times to say what it already said.
+    // Shadowed on VALUE, so a caller that really changes one still
+    // uploads: setting a uniform to what it already holds is a no-op by
+    // definition, and this is only the removal of those.
+    const q = this._sq;
+    if (q.cw !== gl.drawingBufferWidth || q.ch !== gl.drawingBufferHeight) {
+      gl.uniform2f(this._screenQuad.canvas, gl.drawingBufferWidth, gl.drawingBufferHeight);
+      q.cw = gl.drawingBufferWidth; q.ch = gl.drawingBufferHeight;
+    }
+    gl.uniform4f(this._screenQuad.src, src.u0, src.v0, src.u1, src.v1);
+    if (q.r !== color[0] || q.g !== color[1] || q.b !== color[2] || q.a !== color[3]) {
+      gl.uniform4f(this._screenQuad.color, color[0], color[1], color[2], color[3]);
+      q.r = color[0]; q.g = color[1]; q.b = color[2]; q.a = color[3];
+    }
+    const useTex = tex ? 1 : 0, blendTex = (tex && opts.blend) ? 1 : 0;
+    if (q.useTex !== useTex) { gl.uniform1i(this._screenQuad.useTex, useTex); q.useTex = useTex; }
+    if (q.blendTex !== blendTex) { gl.uniform1i(this._screenQuad.blendTex, blendTex); q.blendTex = blendTex; }
+    // c2/S10: opts.rotate = { rad, px, py } - the pivot is in the SAME
+    // space dst is (the screen offset applies to both, so a rotated
+    // quad and its unrotated siblings letterbox together).
+    const rot = opts.rotate ?? null;
+    const rotOn = rot ? 1 : 0;
+    if (q.rotOn !== rotOn) { gl.uniform1i(this._screenQuad.rotOn, rotOn); q.rotOn = rotOn; }
+    if (rot) {
+      gl.uniform4f(this._screenQuad.rot, Math.cos(rot.rad), Math.sin(rot.rad), rot.px + ox, rot.py + oy);
+    }
+    // The sampler binding went up with the program; only the texture is a
+    // quad's own. (Not `_bindEmission`'s shadow: that one speaks for unit
+    // 1, this is unit 0, and the 2D pass is the far side of endWorldPass.)
+    if (tex) { gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, tex); this.stats.texBinds++; }
+    // U10: a SOLID quad's alpha was written straight out with blending
+    // OFF, so every translucent UI panel in the port drew OPAQUE -
+    // DaggerfallUI.ScreenDimColor (0,0,0,0.5) blacked the screen out
+    // behind a modal window instead of dimming it, and the same went
+    // for the talk/rest/action panels and the char-sheet backdrops.
+    // Sixteen call sites had been authoring alpha that never applied.
+    // Textured quads keep their existing law (discard a<0.5, opaque
+    // rgb) so no art path changes - unless the CALLER opts in with
+    // { blend: true }, which only ui/titleScreen.js does (U21c).
+    const blend = screenQuadBlends(tex, color, opts);
+    if (blend) { gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA); }
+    gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_SHORT, 0);
+    this.stats.draws++;
+    if (blend) gl.disable(gl.BLEND);
+    gl.enable(gl.CULL_FACE);
+    gl.enable(gl.DEPTH_TEST);
+    this._bindVao(null);
+  }
+
+  /** PERF-WARM: build the screen-quad program, its sampler binding and
+   *  its VAO - the block that stood at the head of drawScreenQuad,
+   *  unchanged. This is the 2D blit every UI surface goes through. */
+  _ensureScreenQuadProgram() {
+    const gl = this.gl;
     if (!this.screenQuadProgram) {
       const vs = `#version 300 es
 layout(location=0) in vec2 aPos;
@@ -2363,70 +2480,6 @@ void main() {
       this._bindVao(null);
       this._screenQuadVao = vao;
     }
-    this._use(this.screenQuadProgram);
-    this._bindVao(this._screenQuadVao);
-    gl.disable(gl.DEPTH_TEST);
-    // HANDEDNESS REGRESSION (2026-08-23, "the sky-blue screen"): a 2D
-    // blit has no facing, but with CULL_FACE left ON the global
-    // frontFace(CW) swap culled EVERY screen quad - the whole UI
-    // layer, title screen to fonts - leaving only the clear color.
-    // tools/cullProbe.mjs is the real-GL repro; the bracket is the
-    // overlay pass's own idiom.
-    gl.disable(gl.CULL_FACE);
-    const ox = this._screenOffset?.[0] ?? 0, oy = this._screenOffset?.[1] ?? 0;
-    gl.uniform4f(this._screenQuad.dst, dst.x + ox, dst.y + oy, dst.w, dst.h);
-    // PERF-UI: THE FOUR THAT ARE NOT A QUAD'S OWN. `dst` and `src` above
-    // and below really do change every call; the canvas size is the
-    // FRAME's, and useTex/blendTex/rotOn/colour are the same for every
-    // quad of a run - a row of icons, a bar, a panel's backdrop. The HUD
-    // draws a hundred-odd of these a frame in every scene there is, so
-    // each was going up a hundred-odd times to say what it already said.
-    // Shadowed on VALUE, so a caller that really changes one still
-    // uploads: setting a uniform to what it already holds is a no-op by
-    // definition, and this is only the removal of those.
-    const q = this._sq;
-    if (q.cw !== gl.drawingBufferWidth || q.ch !== gl.drawingBufferHeight) {
-      gl.uniform2f(this._screenQuad.canvas, gl.drawingBufferWidth, gl.drawingBufferHeight);
-      q.cw = gl.drawingBufferWidth; q.ch = gl.drawingBufferHeight;
-    }
-    gl.uniform4f(this._screenQuad.src, src.u0, src.v0, src.u1, src.v1);
-    if (q.r !== color[0] || q.g !== color[1] || q.b !== color[2] || q.a !== color[3]) {
-      gl.uniform4f(this._screenQuad.color, color[0], color[1], color[2], color[3]);
-      q.r = color[0]; q.g = color[1]; q.b = color[2]; q.a = color[3];
-    }
-    const useTex = tex ? 1 : 0, blendTex = (tex && opts.blend) ? 1 : 0;
-    if (q.useTex !== useTex) { gl.uniform1i(this._screenQuad.useTex, useTex); q.useTex = useTex; }
-    if (q.blendTex !== blendTex) { gl.uniform1i(this._screenQuad.blendTex, blendTex); q.blendTex = blendTex; }
-    // c2/S10: opts.rotate = { rad, px, py } - the pivot is in the SAME
-    // space dst is (the screen offset applies to both, so a rotated
-    // quad and its unrotated siblings letterbox together).
-    const rot = opts.rotate ?? null;
-    const rotOn = rot ? 1 : 0;
-    if (q.rotOn !== rotOn) { gl.uniform1i(this._screenQuad.rotOn, rotOn); q.rotOn = rotOn; }
-    if (rot) {
-      gl.uniform4f(this._screenQuad.rot, Math.cos(rot.rad), Math.sin(rot.rad), rot.px + ox, rot.py + oy);
-    }
-    // The sampler binding went up with the program; only the texture is a
-    // quad's own. (Not `_bindEmission`'s shadow: that one speaks for unit
-    // 1, this is unit 0, and the 2D pass is the far side of endWorldPass.)
-    if (tex) { gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, tex); this.stats.texBinds++; }
-    // U10: a SOLID quad's alpha was written straight out with blending
-    // OFF, so every translucent UI panel in the port drew OPAQUE -
-    // DaggerfallUI.ScreenDimColor (0,0,0,0.5) blacked the screen out
-    // behind a modal window instead of dimming it, and the same went
-    // for the talk/rest/action panels and the char-sheet backdrops.
-    // Sixteen call sites had been authoring alpha that never applied.
-    // Textured quads keep their existing law (discard a<0.5, opaque
-    // rgb) so no art path changes - unless the CALLER opts in with
-    // { blend: true }, which only ui/titleScreen.js does (U21c).
-    const blend = screenQuadBlends(tex, color, opts);
-    if (blend) { gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA); }
-    gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_SHORT, 0);
-    this.stats.draws++;
-    if (blend) gl.disable(gl.BLEND);
-    gl.enable(gl.CULL_FACE);
-    gl.enable(gl.DEPTH_TEST);
-    this._bindVao(null);
   }
 
   drawScreenQuadRun(tex, quads, color = [1, 1, 1, 1]) {
@@ -2437,6 +2490,38 @@ void main() {
     // primitive after a shrunk world pass is where the canvas returns.
     if (this._worldViewportPx) this.endWorldPass();
     this._compositeAir();   // EL3: a no-op unless a render is owed
+    this._ensureScreenQuadRunProgram();
+    if (this._screenQuadRunData.length < n * 8) this._screenQuadRunData = new Float32Array(n * 8);
+    const a = this._screenQuadRunData;
+    const ox = this._screenOffset?.[0] ?? 0, oy = this._screenOffset?.[1] ?? 0;
+    for (let i = 0; i < n; i++) {
+      const { dst, src } = quads[i], o = i * 8;
+      a[o] = dst.x + ox; a[o + 1] = dst.y + oy; a[o + 2] = dst.w; a[o + 3] = dst.h;
+      a[o + 4] = src.u0; a[o + 5] = src.v0; a[o + 6] = src.u1; a[o + 7] = src.v1;
+    }
+    this._use(this.screenQuadRunProgram);
+    this._bindVao(this._screenQuadRunVao);
+    gl.bindBuffer(gl.ARRAY_BUFFER, this._screenQuadRunVbo);
+    if (this._screenQuadRunCap < n) { gl.bufferData(gl.ARRAY_BUFFER, a.byteLength, gl.STREAM_DRAW); this._screenQuadRunCap = a.length / 8; }
+    gl.bufferSubData(gl.ARRAY_BUFFER, 0, a, 0, n * 8);
+    gl.disable(gl.DEPTH_TEST);
+    gl.disable(gl.CULL_FACE);   // the same handedness bracket drawScreenQuad keeps
+    gl.uniform2f(this._screenQuadRun.canvas, gl.drawingBufferWidth, gl.drawingBufferHeight);
+    gl.uniform4f(this._screenQuadRun.color, color[0], color[1], color[2], color[3]);
+    gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, tex); gl.uniform1i(this._screenQuadRun.tex, 0);
+    this.stats.texBinds++;
+    gl.drawElementsInstanced(gl.TRIANGLES, 6, gl.UNSIGNED_SHORT, 0, n);
+    this.stats.draws++;
+    gl.enable(gl.CULL_FACE);
+    gl.enable(gl.DEPTH_TEST);
+    this._bindVao(null);
+  }
+
+  /** PERF-WARM: build the instanced screen-quad program and its two
+   *  VAO streams - the block that stood at the head of
+   *  drawScreenQuadRun, unchanged. */
+  _ensureScreenQuadRunProgram() {
+    const gl = this.gl;
     if (!this.screenQuadRunProgram) {
       const vs = `#version 300 es
 layout(location=0) in vec2 aPos;
@@ -2495,33 +2580,30 @@ void main() {
       this._screenQuadRunData = new Float32Array(0);
       this._screenQuadRunCap = 0;
     }
-    if (this._screenQuadRunData.length < n * 8) this._screenQuadRunData = new Float32Array(n * 8);
-    const a = this._screenQuadRunData;
-    const ox = this._screenOffset?.[0] ?? 0, oy = this._screenOffset?.[1] ?? 0;
-    for (let i = 0; i < n; i++) {
-      const { dst, src } = quads[i], o = i * 8;
-      a[o] = dst.x + ox; a[o + 1] = dst.y + oy; a[o + 2] = dst.w; a[o + 3] = dst.h;
-      a[o + 4] = src.u0; a[o + 5] = src.v0; a[o + 6] = src.u1; a[o + 7] = src.v1;
-    }
-    this._use(this.screenQuadRunProgram);
-    this._bindVao(this._screenQuadRunVao);
-    gl.bindBuffer(gl.ARRAY_BUFFER, this._screenQuadRunVbo);
-    if (this._screenQuadRunCap < n) { gl.bufferData(gl.ARRAY_BUFFER, a.byteLength, gl.STREAM_DRAW); this._screenQuadRunCap = a.length / 8; }
-    gl.bufferSubData(gl.ARRAY_BUFFER, 0, a, 0, n * 8);
-    gl.disable(gl.DEPTH_TEST);
-    gl.disable(gl.CULL_FACE);   // the same handedness bracket drawScreenQuad keeps
-    gl.uniform2f(this._screenQuadRun.canvas, gl.drawingBufferWidth, gl.drawingBufferHeight);
-    gl.uniform4f(this._screenQuadRun.color, color[0], color[1], color[2], color[3]);
-    gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, tex); gl.uniform1i(this._screenQuadRun.tex, 0);
-    this.stats.texBinds++;
-    gl.drawElementsInstanced(gl.TRIANGLES, 6, gl.UNSIGNED_SHORT, 0, n);
-    this.stats.draws++;
-    gl.enable(gl.CULL_FACE);
-    gl.enable(gl.DEPTH_TEST);
-    this._bindVao(null);
   }
 
     drawScreenOverlayQuad(tex, u1, v1) {
+    const gl = this.gl;
+    this._ensureOverlayProgram();
+    this._use(this.overlayProgram);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, tex);
+    gl.uniform1i(this._overlay.tex, 0);
+    gl.uniform2f(this._overlay.uv1, u1, v1);
+    gl.disable(gl.DEPTH_TEST);
+    gl.disable(gl.CULL_FACE);
+    this._bindVao(this._overlayVAO);
+    gl.drawArrays(gl.TRIANGLE_FAN, 0, 4);
+    this.stats.texBinds++; this.stats.draws++;
+    this._bindVao(null);
+    gl.enable(gl.CULL_FACE);
+    gl.enable(gl.DEPTH_TEST);
+  }
+
+  /** PERF-WARM: build the full-screen overlay program and its VAO -
+   *  the block that stood at the head of drawScreenOverlayQuad,
+   *  unchanged. */
+  _ensureOverlayProgram() {
     const gl = this.gl;
     if (!this.overlayProgram) {
       const vs = `#version 300 es
@@ -2550,19 +2632,6 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
       this._bindVao(null);
       this._overlayVAO = vao;
     }
-    this._use(this.overlayProgram);
-    gl.activeTexture(gl.TEXTURE0);
-    gl.bindTexture(gl.TEXTURE_2D, tex);
-    gl.uniform1i(this._overlay.tex, 0);
-    gl.uniform2f(this._overlay.uv1, u1, v1);
-    gl.disable(gl.DEPTH_TEST);
-    gl.disable(gl.CULL_FACE);
-    this._bindVao(this._overlayVAO);
-    gl.drawArrays(gl.TRIANGLE_FAN, 0, 4);
-    this.stats.texBinds++; this.stats.draws++;
-    this._bindVao(null);
-    gl.enable(gl.CULL_FACE);
-    gl.enable(gl.DEPTH_TEST);
   }
 
   /** Upload a getColor32 result as a REPEAT/NEAREST texture, keyed and cached.

@@ -337,7 +337,16 @@ export class PrecipitationRenderer {
     this.pixelSnow = null;
     this.pixelTex = null;
     this.pixelProgram = null;
-    if (opts.pixelSnow) this.setPixelSnow(opts.pixelSnow);
+    if (opts.pixelSnow) {
+      this.setPixelSnow(opts.pixelSnow);
+      // PERF-WARM: and its PROGRAM here too, on the same rule _buildLab
+      // above follows - the pixel-snow lane is fixed at construction, so
+      // the compile belongs to the constructor (which the scene now pays
+      // for at idle) rather than to the first frame of snow. drawPixelSnow
+      // keeps its own on-demand build for the renderer that is handed the
+      // enhanced deck without the lane's flag.
+      if (opts.enhanced) this._buildPixelSnow();
+    }
 
     // One buffer sized for the LARGEST set this program can draw, and
     // the smaller profile draws a prefix of it. Per-particle quad (4

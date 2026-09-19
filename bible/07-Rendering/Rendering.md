@@ -348,6 +348,17 @@ directory by `test/audit18_bible_docs.test.js`:
   + Worley at 8/16/32) and a 32^3 detail volume (Worley at 4/8/16), tiling on
   every axis, generated on the GPU one layer per draw; the lab's slice viewer
   (`?noise=`) behind tools/cloudNoiseProbe.mjs.
+- `warmPrograms.js` - PERF-WARM THE COMPILE THAT NO LONGER HAPPENS MID-FRAME:
+  the idle driver for the programs a renderer builds ON DEMAND. Five of
+  renderer.js's were compiled inside a draw call (the particle effects' on the
+  first spell, the character-sprite quad's on the first classic sprite, the
+  screen quad's, the instanced screen quad's and the overlay's), and a
+  compile-and-link is a DRIVER stall of tens of milliseconds that nothing here
+  can make cheaper - only MOVE. `renderer.warmSteps()` names them, one step
+  each; this walks them behind `requestIdleCallback`, one per callback, the
+  shape `ui/enhancedChunk.js` settled on and for the same reason. Both exterior
+  hosts add the rain's whole renderer to the walk. A leaf: no renderer type,
+  no lane, no GL.
 - `perfMeter.js` - EL8 THE PERF READOUT: `?perf` - the frame's GPU time on
   `EXT_disjoint_timer_query_webgl2` and the lane's counts, one console line
   every PERF_EVERY world frames. A leaf: no renderer, no lane. See
