@@ -328,7 +328,7 @@ test('ROAD-H H8: a HELD button and a stick axis on the SAME resolved code do not
   // map-set with only a SAME-dict check: `if (!dict.ContainsKey(key)
   // && actionVal != Actions.Unknown) dict.Add(key, actionVal);`
   // (LoadActionKeybinds, InputManager.cs:1950-1969; loadActionKeybinds,
-  // inputActions.js:557-567, whose own comment says "Raw map-set, NOT
+  // inputActions.js:579-589, whose own comment says "Raw map-set, NOT
   // setBinding"). A hand-edited KeyBindings.txt that puts Jump on the
   // run key as a SECONDARY - with the primary Space spent on something
   // else - loads exactly as written, and SURVIVES the startup autofill

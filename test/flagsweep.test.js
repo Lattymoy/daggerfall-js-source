@@ -11,7 +11,7 @@
 // judgement call; it is DELEGATING, and the delegation is checkable:
 // the named file must carry a flag. world.js sent the reader to a
 // flag in systems/healthStatus.js that ST1 had shipped away, and
-// world.js:1999 sent them to one in dungeonContext.js that had never
+// world.js:2007 sent them to one in dungeonContext.js that had never
 // been written at all - which is the worse of the two, because the
 // work is real and the ledger could not see it.
 import { test } from 'node:test';
@@ -223,13 +223,13 @@ test('FS1: the enchant ctx is MOUNTED by every host that owes it', () => {
   // it went on asserting "setDefaultEnchantCtx has exactly one caller
   // in the tree" - and "the flag now exists where the work does",
   // pointing at a flag this wave retired - after the second mount
-  // shipped. dungeonContext.js:1880 and hostEnchant.js:8 both say
+  // shipped. dungeonContext.js:1886 and hostEnchant.js:8 both say
   // "had"; the sentence a reader meets first must too.
   assert.equal(/setDefaultEnchantCtx has\n\s*\/\/ exactly one caller/.test(world), false,
     'the E2 header states the one-caller claim as HISTORY, not as present fact');
   assert.equal(/The flag now exists where the\n\s*\/\/ work does/.test(world), false,
     'the flag it pointed at was retired at the mount');
-  assert.match(world, /WAVE D closed it: the body is scenes\/hostEnchant\.js\n\s*\/\/ and dungeonContext\.js:2203 mounts the same one/,
+  assert.match(world, /WAVE D closed it: the body is scenes\/hostEnchant\.js\n\s*\/\/ and dungeonContext\.js:2209 mounts the same one/,
     'and the header names the shipped shape instead');
 });
 

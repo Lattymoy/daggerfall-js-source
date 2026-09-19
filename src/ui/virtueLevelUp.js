@@ -62,7 +62,7 @@ export const REMAINING_POINTS_LABEL = 'Virtues left';
 
 /** The mod prints Morrowind's `sAttributeStrength` GMSTs; Daggerfall's
  *  own attribute names are the port's stat keys, and the sheet already
- *  prints them as three-letter heads (charsheet.js:145). This screen
+ *  prints them as three-letter heads (charsheet.js:175). This screen
  *  has the room for the whole word. */
 const label = (k) => k.charAt(0).toUpperCase() + k.slice(1);
 
@@ -101,8 +101,12 @@ export function levelUpHitNative(vx, vy) {
 }
 
 export class VirtueLevelUpScreen {
-  constructor(entity, { settings = null, rolls = Math.random } = {}) {
-    audio.playOneShot(SOUND.LevelUp, 1);   // the mod streams MW_Triumph.mp3 here; the port's own level-up fanfare stands in its place
+  constructor(entity, { settings = null, rolls = Math.random, fanfare = true } = {}) {
+    // LV2: `fanfare` for the same reason ui/charsheet.js's LevelUpScreen
+    // takes it - on the enhanced skin the notice plays this at the
+    // moment the level was earned, and this window arrives when the
+    // player asks for it. One event, one sound.
+    if (fanfare) audio.playOneShot(SOUND.LevelUp, 1);   // the mod streams MW_Triumph.mp3 here; the port's own level-up fanfare stands in its place
     this.entity = entity;
     this.s = settings ?? levelingSettings();
     this._rolls = rolls;
@@ -151,7 +155,7 @@ export class VirtueLevelUpScreen {
     return ok;
   }
 
-  // The same action vocabulary LevelUpScreen answers (charsheet.js:107),
+  // The same action vocabulary LevelUpScreen answers (charsheet.js:123),
   // so every host's existing overlay route drives this screen unchanged
   // - including 'char:-', which is the only hyphen a typed-character
   // branch can produce (ui/input.js:346 - the typed-character branch,

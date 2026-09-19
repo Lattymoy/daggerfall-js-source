@@ -847,19 +847,36 @@ test('ORL1: the interior host\'s two level-up arms, and the dungeon host\'s font
   // substring check against a COMMENT in another file. These are source
   // laws because the hosts are not constructible in a unit test, and
   // they are held by CONTENT rather than by a file name.
+  // LV1 MOVED THIS PIN AND STRENGTHENED IT. Both interior arms used to
+  // re-answer the mod's question inline, which is what this asserted;
+  // they now ask ui/charSheetDoor.js, which answers the WHOLE fork -
+  // lane, skin and book - so the arm cannot be right about the mod and
+  // wrong about the skin, which is exactly what happened when the
+  // enhanced level-up window landed and three hosts got it.
   const wm = rd('src/scenes/worldModes.js');
-  const arms = wm.match(/\?\? \(usesVirtueLeveling\(playerEntity\) && !playerEntity\.oghmaLevelUp\n\s*\? new VirtueLevelUpScreen\(playerEntity\)\n\s*: new LevelUpScreen\(playerEntity\)\)/g) ?? [];
-  assert.equal(arms.length, 2, 'BOTH interior level-up arms know whose law levels this character');
-  assert.match(wm, /import \{ VirtueLevelUpScreen \} from '\.\.\/ui\/virtueLevelUp\.js';/);
+  const arms = wm.match(/interiorOverlay = host\.makeCharSheet\?\.\(\) \?\? createCharSheetWindow\(\{ entity: playerEntity \}\);/g) ?? [];
+  assert.equal(arms.length, 2, 'BOTH interior level-up arms go through the ONE seam');
+  assert.match(wm, /import \{ createCharSheetWindow \} from '\.\.\/ui\/charSheetDoor\.js';/);
+  assert.doesNotMatch(wm, /new (Virtue)?LevelUpScreen\(/, 'and neither builds a screen of its own');
 
   const dc = rd('src/scenes/dungeonContext.js');
   // the virtue arm comes BEFORE the classic ones, or the purse would be
-  // spent by a policy that does not know the mod's caps
+  // spent by a policy that does not know the mod's caps - and LV1's DOM
+  // wrapper comes before both, because it WRAPS either of them (and
+  // because nulling it rather than closing it would leave the window on
+  // screen over a game already handed back).
   const virtue = dc.indexOf('activeOverlay?.isVirtueLevelUp');
   const classic = dc.indexOf('activeOverlay instanceof LevelUpScreen');
+  const enhanced = dc.indexOf('activeOverlay?.isEnhancedLevelUp');
   assert.ok(virtue > 0 && classic > 0 && virtue < classic,
     'the font-less escape asks about the mod\'s window FIRST');
+  assert.ok(enhanced > 0 && enhanced < virtue, 'and about the window that wraps it before either');
   assert.match(dc, /activeOverlay\.spendRemainingHeadless\(\);/);
+  // The wrapper's own escape runs the MOD's planner when the mod's
+  // screen is inside it - spendPoolLowest there would ignore the
+  // three-attribute cap, the +5 ceiling and Luck's price.
+  assert.match(rd('src/ui/charSheetDoor.js'),
+    /if \(screen\?\.isVirtueLevelUp\) \{ screen\.spendRemainingHeadless\(\); close\(\); return true; \}/);
 });
 
 test('ORL1: the window\'s font-less escape spends within the caps and closes', () => {
@@ -1101,10 +1118,23 @@ test('ORL1: the choice rides the ONE chargen door, and every apply path answers 
 
 test('ORL1: the mod\'s window is the door\'s, in BOTH lanes, and the classic sheet stands down', () => {
   const door = rd('src/ui/charSheetDoor.js');
-  assert.match(door, /if \(deps\.entity\?\.readyToLevelUp && !deps\.entity\?\.oghmaLevelUp && usesVirtueLeveling\(deps\.entity\)\) \{\n\s*return new VirtueLevelUpScreen\(deps\.entity\);/,
-    'the mod\'s window comes BEFORE the skin fork - it is not a sheet');
-  // and it is ahead of the enhanced lane's own level-up screen
-  assert.ok(door.indexOf('new VirtueLevelUpScreen') < door.indexOf('new LevelUpScreen'));
+  // LV1: the fork is one block now rather than two guards in a row,
+  // because the enhanced skin needs the same answer to build its own
+  // window with. The LAW is unchanged and still pinned: whose law
+  // levels this character is decided BEFORE anything is constructed,
+  // the Oghma is excluded from the mod's arm, and the mod's screen is
+  // what the classic lane gets.
+  assert.match(door, /const virtue = !deps\.entity\?\.oghmaLevelUp && usesVirtueLeveling\(deps\.entity\);/,
+    'the mod\'s question is asked first, and the book is not the mod\'s');
+  // LV2 re-aimed this BY CONTENT: both constructions now carry the
+  // fanfare answer (ui/levelNotice.js played it at the moment the level
+  // was earned, which on the enhanced skin is not this moment), and the
+  // law this pin holds - WHICH screen the answer above chooses - is
+  // unchanged.
+  assert.match(door, /const rollout = \(\) => \(virtue\n\s*\? new VirtueLevelUpScreen\(deps\.entity, \{ fanfare \}\)\n\s*: new LevelUpScreen\(deps\.entity, undefined, \{ fanfare \}\)\);/,
+    'and the screen either skin drives is chosen by that answer');
+  assert.match(door, /if \(virtue\) return new VirtueLevelUpScreen\(deps\.entity\);\n\s*if \(isEnhanced\(\)\) return new LevelUpScreen\(deps\.entity\);/,
+    'the mod\'s window still comes ahead of the enhanced lane\'s canvas screen');
   const sheet = rd('src/ui/charsheet.js');
   assert.match(sheet, /if \(!e\.oghmaLevelUp && usesVirtueLeveling\(e\)\) return;/,
     'the classic rollout refuses a virtue level-up - the other half of the door');

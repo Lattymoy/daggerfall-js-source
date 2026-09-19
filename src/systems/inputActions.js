@@ -470,6 +470,28 @@ export function actionForCode(store, code) {
   return store.primary.get(code) ?? store.secondary.get(code) ?? null;
 }
 
+/**
+ * THE INVERSE, and the only one in the tree (LV2). The store's two
+ * dicts are CODE -> ACTION, which is what every reader has ever
+ * wanted: a press arrives and the game asks what it means. A SCREEN
+ * asking the other way - "which key opens the sheet?", so a
+ * notification can name it - has no dict to read and has to walk one.
+ *
+ * It lives here, beside its mirror, rather than inside the surface
+ * that wanted it first: a second walk written into a view is how two
+ * screens come to disagree about which key they are telling a player
+ * to press. Primary first, then secondary, which is the order
+ * `actionForCode` resolves in - so the key this NAMES is the key that
+ * ANSWERS.
+ */
+export function codeForAction(store, action) {
+  for (const dict of [store?.primary, store?.secondary]) {
+    if (!dict) continue;
+    for (const [code, act] of dict) if (act === action) return code;
+  }
+  return null;
+}
+
 // TestSetBinding (:1405-1422): a default lands only if the action is
 // missing from THIS dict, the code is free in BOTH, the action was not
 // force-removed, and the code is not serving as a combo's MODIFIER

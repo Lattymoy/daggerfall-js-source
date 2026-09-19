@@ -25,7 +25,7 @@
 // The level-up screen stays on the text idiom (its retrofit rides
 // a later U8 slice).
 
-import { statUp, statDown, MAX_STAT_VALUE } from './chargen.js';
+import { statUp, statDown, allStatsMax } from './chargen.js';   // LV1's audit: DaggerfallStats.IsAllMax has ONE home now (and MAX_STAT_VALUE left with the copy that used it - this file's last reader was that copy)
 import { actionForCode } from '../systems/inputActions.js';   // MAC-C: the sheet's toggle key is the registry's
 import { bindings } from './input.js';
 import { carriedWeight } from '../systems/inventory.js';   // AUDIT 17e F30; E4: PlayerEntity.CarriedWeight, one home
@@ -34,7 +34,7 @@ import { entityMaxEncumbrance, handToHandMinDamage, handToHandMaxDamage } from '
 import { STAT_KEYS_ORDER } from '../systems/chargen.js';
 import { statDescriptionRows } from '../systems/talkMacros.js';   // ATTRMACRO1: SetTextTokens' macro pass over TEXT.RSC records 0..7
 import { SKILLS, SKILL_NAMES, skillValue, getSkillRecentlyIncreased, resetSkillsRecentlyRaised } from '../systems/skills.js';
-import { applyLevelUp, LEVELUP_BONUS_POOL_MIN, LEVELUP_BONUS_POOL_MAX } from '../systems/advancement.js';
+import { applyLevelUp, bonusPoolFor } from '../systems/advancement.js';
 import { usesVirtueLeveling } from '../systems/oblivionLeveling.js';   // ORL1: whose law levels this character
 import { ActionTextBox } from './actionText.js';   // the mustDistributeBonusPoints refusal, ClickAnywhereToClose
 import { OGHMA_BONUS_POOL } from '../systems/artifactEffects.js';   // AUDIT 39: the sheet's oghmaBonusPool (:44)
@@ -86,8 +86,19 @@ export const charSheetArtLoaded = () => !!_art;
 export { carriedWeight };
 
 export class LevelUpScreen {
-  constructor(entity, rolls = Math.random) {
-    audio.playOneShot(SOUND.LevelUp, 1);   // UpdatePlayerValues (:373) - the level-up fanfare
+  /**
+   * LV2: `fanfare` is the third argument and it is a QUESTION ABOUT
+   * WHO ALREADY SPOKE. UpdatePlayerValues plays the level-up sound
+   * when the rollout mounts (:373) because in DFU the rollout mounts
+   * AT the level-up. On the enhanced skin the two moments have come
+   * apart: the notice announces and plays it where the player earned
+   * it, and this window may not open for another ten minutes. One
+   * event, one sound - so the door that knows the notice already spoke
+   * passes false, and every other caller keeps DFU's own behaviour by
+   * default.
+   */
+  constructor(entity, rolls = Math.random, { fanfare = true } = {}) {
+    if (fanfare) audio.playOneShot(SOUND.LevelUp, 1);   // UpdatePlayerValues (:373) - the level-up fanfare
     this.entity = entity;
     // Roll the pool NOW so the screen can show it; the base stats are
     // the floors (statDown returns points only above them).
@@ -100,8 +111,13 @@ export class LevelUpScreen {
     // reached by the next GENUINE level-up, which it then ate (no
     // Level++, no health roll).
     this.oghma = !!entity.oghmaLevelUp;
-    this.pool = this.oghma ? OGHMA_BONUS_POOL
-      : LEVELUP_BONUS_POOL_MIN + Math.floor(rolls() * (LEVELUP_BONUS_POOL_MAX + 1 - LEVELUP_BONUS_POOL_MIN));
+    // AUDIT LV2, reopened (Mac): the pool is THE LEVEL'S, not this
+    // window's. Rolled here it was re-rolled on every open, and since
+    // LV2 the player opens this window themselves - so closing it and
+    // pressing the key again until it said 6 was free points.
+    // `bonusPoolFor` draws once and remembers, on the entity, until
+    // the level is spent.
+    this.pool = this.oghma ? OGHMA_BONUS_POOL : bonusPoolFor(entity, rolls);
     this._rolledPool = this.pool;
     this.base = { ...entity.stats };
     this.working = { ...entity.stats };
@@ -109,6 +125,10 @@ export class LevelUpScreen {
     this.done = false;
     this._rolls = rolls;
   }
+
+  /** DaggerfallStats.IsAllMax over the working stats - the same law
+   *  the sheet's rollout reads, from the same home. */
+  allMax() { return allStatsMax(this.working); }
 
   input(action) {
     const key = STAT_KEYS_ORDER[this.cursor];
@@ -127,7 +147,17 @@ export class LevelUpScreen {
     // LevelUpScreen has no click of its own to fall back on.
     // StatsRollout.cs:255's down-spinner is the same door.
     else if (action === 'minus' || action === 'char:-') { audio.playOneShot(SOUND.ButtonClick, 1); const r = statDown(this.working[key], this.base[key], this.pool); this.working[key] = r.working; this.pool = r.pool; }
-    else if (action === 'confirm' && this.pool === 0) {
+    // LV1's audit: `|| this.allMax()`. CheckIfDoneLeveling's refusal
+    // has TWO terms (:437-443) and this screen only ever carried one,
+    // so a character at 100 across the board could not leave it: every
+    // `statUp` is refused at the ceiling, the pool can never reach
+    // zero, and the only exit tested for zero. The sheet's own rollout
+    // has had the second term since AUDIT 44 (`_workingAllMax`); this
+    // screen - the one the enhanced skin mounted until LV1 - did not.
+    // The leftover points are VOIDED, which is what DFU does on the
+    // same branch: it writes the working stats home and drops the
+    // pool, because there is nowhere left to put it.
+    else if (action === 'confirm' && (this.pool === 0 || this.allMax())) {
       // applyLevelUp rolls HP; our pre-rolled pool distributes here -
       // the distribute hook writes the hand-built stats.
       applyLevelUp(this.entity, (stats) => Object.assign(stats, this.working), this._rolls, this._rolledPool);
@@ -146,7 +176,11 @@ export class LevelUpScreen {
     STAT_KEYS_ORDER.forEach((k, i) => drawText(renderer, font,
       `${i === this.cursor ? '> ' : '  '}${k.slice(0, 3).toUpperCase()}  ${this.working[k]}`,
       40 * s, (56 + i * 12) * s, s, i === this.cursor ? hot : white));
-    drawText(renderer, font, '+/- assign   ENTER when pool 0', 40 * s, (56 + 10 * 12) * s, s, dim);
+    // ...and the foot says which of CheckIfDoneLeveling's two terms is
+    // open, because at the ceiling "ENTER when pool 0" is an
+    // instruction this screen will never honour (LV1's audit).
+    drawText(renderer, font, this.allMax() ? 'every attribute is at its maximum   ENTER to continue'
+      : '+/- assign   ENTER when pool 0', 40 * s, (56 + 10 * 12) * s, s, dim);
   }
 }
 
@@ -318,17 +352,20 @@ export class CharSheet {
     this.leveling = true;
     audio.playOneShot(SOUND.LevelUp, 1);   // levelUpSound (:46, :373)
     this.oghma = !!e.oghmaLevelUp;
-    this.pool = this.oghma ? OGHMA_BONUS_POOL
-      : LEVELUP_BONUS_POOL_MIN + Math.floor(rolls() * (LEVELUP_BONUS_POOL_MAX + 1 - LEVELUP_BONUS_POOL_MIN));
+    // The same one home. This rollout commits at mount (applyLevelUp
+    // below), so it never re-opened on an unspent level - but the draw
+    // is the level's wherever it is taken.
+    this.pool = this.oghma ? OGHMA_BONUS_POOL : bonusPoolFor(e, rolls);
     this.base = { ...e.stats };
     this.working = { ...e.stats };
     this.cursor = 0;
     applyLevelUp(e, () => {}, rolls, this.pool);
   }
 
-  /** DaggerfallStats.IsAllMax (:85-97) over the working stats. */
+  /** DaggerfallStats.IsAllMax (:85-97) over the working stats - the
+   *  shared law (ui/chargen.js), not a second copy of it. */
   _workingAllMax() {
-    return STAT_KEYS_ORDER.every((k) => this.working[k] === MAX_STAT_VALUE);
+    return allStatsMax(this.working);
   }
 
   /** CheckIfDoneLeveling (:433-455). Levelling: an unspent pool

@@ -88,7 +88,8 @@ import { preloadChargenArt, stopConstellationAnim } from '../ui/chargenArt.js'; 
 import { preloadMessageBoxArt } from '../ui/messageBox.js';   // U11
 import { ChargenFlow } from '../ui/chargen.js';
 import { LevelUpScreen, preloadCharSheetArt } from '../ui/charsheet.js';
-import { createCharSheetWindow } from '../ui/charSheetDoor.js';   // U52: the sheet's ONE seam, and the skin fork in front of it
+import { createCharSheetWindow, warmLevelUpWindow } from '../ui/charSheetDoor.js';
+import { announceLevelUp } from '../ui/levelNotice.js';   // LV2: the level-up notification, and the skin fork over whether the window opens itself   // U52: the sheet's ONE seam, and the skin fork in front of it
 import { QuestJournalWindow, preloadQuestJournalArt } from '../ui/questJournal.js';   // U43: the LogBook and NoteBook doors
 import { createChronicleWindow } from '../ui/chronicleDoor.js';   // PX24d: the chronicle's one door
 import { DeathScreen } from '../ui/deathScreen.js';
@@ -1481,7 +1482,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // owned, and destroy() hands it back (the _prevPassiveHost idiom this
   // file already uses for its other process-global seams). A bare null
   // would not do: on ?world and ?exterior the previous holder is the
-  // host's own townTalk sink (world.js:7753 / exterior.js:3267), set
+  // host's own townTalk sink (world.js:7753 / exterior.js:3282), set
   // once at boot and never again, so nulling on the way out of the
   // first dungeon would silently un-file every mid-screen label above
   // ground for the rest of the session - MC-1's own bug, re-opened.
@@ -1636,8 +1637,13 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // own free-slot guard included); calling it here rather than
   // building a second bag is the same rule U43 wrote for F5.
   const _onLevelUp = () => {
-    hudText.add('You have gained a level!');
-    api.toggleCharSheet();
+    // LV2 - THE RISING: the classic skin keeps this host's line and
+    // its own sheet toggle (free-slot guard included); the enhanced
+    // skin announces and lets the player choose the moment.
+    announceLevelUp(playerEntity, {
+      say: (m) => hudText.add(m),
+      open: () => api.toggleCharSheet(),
+    });
   };
   // E-slice: a rest-interruption ENCOUNTER - one foe minted through
   // the same chain as the load loop, at the classic minimum distance
@@ -1967,7 +1973,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // copied mount would have diverged the first time an arm grew.
   /** DR1: THE TWO SPELL WINDOWS THIS HOST MOUNTS NOW, and the one door
    *  they go through. `mountSpellWindow` is worldModes'
-   *  mountSpellWindow DUNGEON ARM (worldModes.js:1055,
+   *  mountSpellWindow DUNGEON ARM (worldModes.js:1067,
    *  `dungeonCtx?.showOverlay(win)`) resolved to what it actually
    *  calls here - this file's own pushDungeonWindow, which IS
    *  UserInterfaceManager.PushWindow. So a spell window raised over an
@@ -2456,7 +2462,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // NEXT updateMissiles pass to fill. But the push lands in a
     // MICROTASK - this is async and its one caller does not await it -
     // and both hosts draw dynamicDraws BEFORE they call drawFoes
-    // (dungeon.js:1001 against :1039; worldModes.js:6081 against :6104).   // QS6: both pairs' SECOND half was stale before this slice - they named neither `drawFoes` call, and a positional bump would have moved a wrong number by the right offset; re-resolved by content
+    // (dungeon.js:1001 against :1039; worldModes.js:6093 against :6104).   // QS6: both pairs' SECOND half was stale before this slice - they named neither `drawFoes` call, and a positional bump would have moved a wrong number by the right offset; re-resolved by content
     // So the very next frame drew the arrow with a NULL matrix, and
     // `uniformMatrix4fv(uModel, false, null)` throws - Float32List is
     // a non-nullable WebIDL union. Firing a bow killed the frame loop,
@@ -2984,8 +2990,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
               // AUDIT 39 (#64) / THE FOUR HOSTS RULE - SHIPPED (wave D):
               // this host was the FOURTH BODY of the player-arrow law
               // and is now the fourth CALLER. combat/arrowFlight.js's
-              // playerArrowHitFoe is the one copy world.js:10651,
-              // exterior.js:4693 and worldModes.js:6222 already ran;
+              // playerArrowHitFoe is the one copy world.js:10672,
+              // exterior.js:4708 and worldModes.js:6234 already ran;
               // the flag said the divergence would bite and it already
               // had. This copy splashed at the ARROW TIP
               // (`[m.pos[0], m.pos[1], m.pos[2]]`) on the claim that
@@ -5711,7 +5717,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // CHARGEN WIZARD sitting on top of it - and playing through the
       // wizard runs finishChargen, overwriting the character that was
       // just loaded. The context mounts chargen at build time
-      // (dungeonContext.js:889) and dungeon.js calls quickLoad after,
+      // (dungeonContext.js:890) and dungeon.js calls quickLoad after,
       // so the wizard is ALWAYS up on this path.
       // NOTE: activeOverlay is cleared but chargenWindow is NOT nulled.
       // Later sites test `activeOverlay === chargenWindow`, and with
@@ -6045,6 +6051,19 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         // the mod's three-attribute cap, its +5 ceiling and Luck's
         // price. The window spends its own purse by its own rules and
         // commits through the same door a player's Enter uses.
+        // LV1: THE ENHANCED WINDOW IS A DOM DIV, so this arm is not
+        // only about the pool - `activeOverlay = null` below would
+        // leave the window ON THE SCREEN with nothing owning it, over
+        // a game that had already been handed back. It goes FIRST
+        // because it wraps either of the two screens the arms beneath
+        // test for, and it spends by that screen's own lane before it
+        // takes its own DOM away (ui/charSheetDoor.js's
+        // enhancedLevelUpOverlay).
+        else if (activeOverlay?.isEnhancedLevelUp) {
+          console.warn('[levelup] FONT art unavailable; applying headlessly');
+          activeOverlay.spendRemainingHeadless();
+          surfacePlayer();
+        }
         else if (activeOverlay?.isVirtueLevelUp) {
           console.warn('[levelup] FONT art unavailable; applying headlessly');
           activeOverlay.spendRemainingHeadless();
@@ -6116,6 +6135,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
      *  guard; a cross-over has just freed one. */
     makeCharSheet() {
       preloadCharSheetArt({ renderer, fetchBytes, palette });   // U8a: lazy - ready by the next open at worst
+      warmLevelUpWindow();   // LV1's audit: and the level-up window's chunk with it, for the same reason and on the same terms
       return createCharSheetWindow({
         entity: playerEntity,
         artDeps: { renderer, fetchBytes, palette },
@@ -6417,7 +6437,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       //
       // The interior host's `interiorHitEffects.clear()` is NOT the same
       // line and was never a precedent for one: that pool is built with
-      // no `onSpawn` (worldModes.js:529), so it owns its batches and
+      // no `onSpawn` (worldModes.js:541), so it owns its batches and
       // clear() is the only thing that frees them - and it runs on a
       // between-buildings RESET, not a teardown.
       // AUDIT 64 F41: the scene ambience leaves with the scene too -

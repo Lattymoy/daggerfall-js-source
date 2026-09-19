@@ -760,7 +760,7 @@ export function classicSaveToSnapshot(saveGames, {
     startingLevelUpSkillSum: doc.startingLevelUpSkillSum,
     // SetCurrentLevelUpSkillSum() straight after AssignCharacter.
     currentLevelUpSkillSum: levelUpSkillSum({ career, skills: doc.workingSkills }),
-    readyToLevelUp: false, pendingLevel: null,
+    readyToLevelUp: false, pendingLevel: null, pendingBonusPool: null,
     chargenDone: true,
     // ORL1: A CLASSIC SAVE IS A CLASSIC CHARACTER. Daggerfall's own
     // SAVEVARS carries no leveling-system choice and no point bar -

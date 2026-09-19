@@ -34,7 +34,7 @@ matrix/draw path (GC spikes riding the beat).
 FOUND ON THE WAY, both real: a recenter injects 819.2 units into
 footsteps' stride accumulator (a spurious footstep at every map-pixel
 crossing, footsteps.js:151), and `_playerStill` reads one moving
-frame per crossing (world.js:6784-6786).
+frame per crossing (world.js:6805-6807).
 
 frame per crossing (world.js:10147-10149).
 
