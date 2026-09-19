@@ -27,6 +27,7 @@ import { FIRE_FRAMES, cellRect, keyBackground, contentBox, unionBox } from './gu
 import { decodePng } from '../systems/textureReplacement.js';
 import { toScreenOrder } from '../formats/color32Order.js';   // FIELD-GUN3: HT3's law - a SCREEN QUAD's PNG keeps its rows
 import { WEAPON_TYPES, getWeaponAnims } from './fpsWeapon.js';
+import { GUN_FEEL } from './gunFeel.js';   // FIELD-GUN7: the lab's settled pose, one home
 import { APP_ROOT } from '../systems/appRoot.js';   // AUDIT-THUNDERLOCK F7: the SITE root, not the document's
 
 /** The sheet, off the SITE ROOT rather than the document.
@@ -114,7 +115,12 @@ function crop(img, box) {
  * the surface's width, Mac's own slider - expressed once, here, as
  * the width the gun's own box takes in native pixels.
  */
-export const NATIVE_WIDTH = 0.54 * 320;
+// FIELD-GUN7: 0.49, not 0.54. The lab's panel ended at SIZE 49 -
+// Mac's last word on it was "Size: 49" - and this was written from
+// the screenshot before that, so the gun has been drawn a tenth too
+// big in the game since the day it was integrated. It reads the one
+// home now, so the lab's slider and the game's sprite cannot part.
+export const NATIVE_WIDTH = GUN_FEEL.widthPct * 320;
 
 /**
  * Load it. `fetchBytes` is the door a test comes through; by default

@@ -26,7 +26,7 @@ import {
 import { isBowWeapon, attackSkillOf, WEAPON_SKILL_BY_TEMPLATE } from '../src/scenes/hostCombat.js';
 import { spendAmmoFor, ammoCountFor } from '../src/systems/inventory.js';
 import { playerArchiveFor } from '../src/characters/paperdollArt.js';
-import { shimmer } from '../src/combat/thunderlockArt.js';
+import { shimmer, NATIVE_WIDTH } from '../src/combat/thunderlockArt.js';
 import { uniqueFinds, uniqueFindChance, rollLootRarity, legendariesFor, rarityEligible } from '../src/systems/lootRarity.js';
 // FIELD-GUN: the two the audit could not see, because every pin it
 // wrote asked about REGISTRATION and none of them picked the thing up.
@@ -39,7 +39,8 @@ import { SHEET_GRID, cellRect } from '../src/combat/gunSheet.js';
 import { vendorTextureStandIn, preloadTextureArchive } from '../src/systems/textureReplacement.js';   // FIELD-GUN4
 import { paperdollItemImage, PAPERDOLL_ORIGIN } from '../src/ui/paperDoll.js';
 import { PAPERDOLL_OFFSET } from '../src/systems/thunderlock.js';
-import { createRecoil, createScreenShake, GUN_FEEL } from '../src/combat/gunFeel.js';   // FIELD-GUN6
+import { createRecoil, createScreenShake, GUN_FEEL, GUN_TICK_SECONDS, GUN_COOLDOWN_SECONDS } from '../src/combat/gunFeel.js';   // FIELD-GUN6
+import { createGunMachine } from '../src/tools/gunLab.js';   // FIELD-GUN7: the PROTOTYPE's own machine, as the oracle
 import { GROUP_TEMPLATE_INDICES } from '../src/systems/itemTemplates.js';
 import { FIND_MIN_TIER } from '../src/systems/thunderlock.js';
 
@@ -608,7 +609,7 @@ test('FIELD-GUN6: the lab\'s feel is the GAME\'s - one home, and it reaches both
   // player with Weapon Widget off must not be holding a different gun.
   const rig = readFileSync('src/combat/weaponRig.js', 'utf8');
   assert.match(rig, /widget\.draw\(renderer, c, fpTint, _tlAdjust\)/, 'the clone takes it');
-  assert.match(rig, /drawFpsWeapon\([^)]*adjust: _tlAdjust \}\)/, 'and so does the classic sprite');
+  assert.match(rig, /drawFpsWeapon\([^)]*adjust: _tlAdjust, offsetHeight \}\)/, 'and so does the classic sprite');
   assert.match(rig, /_tlRecoil\.punch\(\);/, 'the shot kicks');
   assert.match(rig, /_tlShake\.punch\(\);/, 'and shakes');
   assert.match(rig, /betterAmbience\.weaponKick\?\./, 'the ROOM moves, through the one camera shaker the port has');
@@ -617,4 +618,107 @@ test('FIELD-GUN6: the lab\'s feel is the GAME\'s - one home, and it reaches both
     /if \(adjust\) \{ x \+= \(adjust\.x \?\? 0\) \* scaleX; y \+= \(adjust\.y \?\? 0\) \* scaleY; \}/);
   assert.match(readFileSync('src/combat/weaponWidget.js', 'utf8'),
     /rect\.y \+= \(adjust\.y \?\? 0\) \* sy;/);
+});
+
+test('FIELD-GUN7: the game\'s machine and the LAB\'s run the same cycle, frame for frame', () => {
+  // Mac, after FIELD-GUN6 shipped: "It still doesn't feel like the
+  // proto at all."
+  //
+  // He was right and GUN6 was the wrong layer. The recoil and the
+  // shake are decoration on top of a CADENCE, and the cadence was
+  // never carried: in the game a weapon's frame clock and its ranged
+  // cooldown are both SPD-DRIVEN, so the gun ran at about five frames
+  // a second at average speed where the lab runs fourteen, reloaded
+  // in 1.33s where the lab takes 1.7, and landed its damage on the
+  // melee hit frame - one after the muzzle flash the lab fires on.
+  // Nothing bolted on top can disguise a cycle three times too slow.
+  //
+  // So this pin is a DIFFERENTIAL against the prototype itself: the
+  // lab's machine is the oracle, and the game's has to agree with it
+  // frame for frame. It is the only pin in this file that can fail
+  // for "it doesn't feel right", because feel IS the timeline.
+  const lab = createGunMachine({ fps: GUN_FEEL.fps, cooldownMs: GUN_FEEL.reloadMs, hitFrame: GUN_FEEL.hitFrame });
+  const game = createWeaponMachine(false);
+  game.ranged = true;
+  game.frames = THUNDERLOCK_NUM_FRAMES;
+  game.tick = GUN_TICK_SECONDS;
+  game.cooldown = GUN_COOLDOWN_SECONDS;
+  game.hitFrame = GUN_FEEL.hitFrame;
+
+  lab.fire();
+  machineAttack(game, 'StrikeDown');
+  const dt = 1 / 60;
+  const labFrames = [], gameFrames = [];
+  let labHit = null, gameHit = null, labReady = null, gameReady = null;
+  // SPEED 100 - the FASTEST a character can be, which is where the
+  // classic formulas are furthest from the lab. If the two agree
+  // here they agree everywhere, because the gun no longer asks.
+  for (let i = 1; i <= 200; i++) {
+    const t = i * dt;
+    const ev = lab.step(dt);
+    if (ev === 'hit' && labHit === null) labHit = i;
+    if (ev === 'ready' && labReady === null) labReady = i;
+    labFrames.push(lab.state === 'Firing' ? lab.frame : -1);
+
+    const evs = machineStep(game, dt, 100);
+    if (evs.includes('hit') && gameHit === null) gameHit = i;
+    if (game.state === 'Idle' && game.now >= game.cooldownUntil && gameReady === null && i > 1) gameReady = i;
+    gameFrames.push(game.state !== 'Idle' ? game.frame : -1);
+    void t;
+  }
+
+  // the SHOT: the same six frames on the same ticks
+  const labShot = labFrames.filter((f) => f >= 0);
+  const gameShot = gameFrames.filter((f) => f >= 0);
+  assert.equal(labShot.length, gameShot.length,
+    `the shot is ${gameShot.length} frames long in the game and ${labShot.length} in the lab`);
+  assert.ok(labShot.length >= 20, 'six frames at 14fps is about 26 ticks of a 60Hz frame - a sanity floor');
+
+  // the HIT lands on the same tick, which is the muzzle flash
+  assert.equal(gameHit, labHit, `the damage lands on tick ${gameHit} in the game and ${labHit} in the lab`);
+
+  // and the weapon is READY again at the same moment
+  assert.ok(labReady && gameReady, 'both finish their reload inside the window');
+  assert.ok(Math.abs(gameReady - labReady) <= 1,
+    `ready at tick ${gameReady} in the game and ${labReady} in the lab`);
+
+  // THE SPEED INDEPENDENCE that makes the above true: a gun's
+  // mechanism does not care how agile you are. Run the same shot at
+  // the slowest and fastest a character can be and get the same
+  // timeline - which the SPD-driven formulas could never do.
+  const run = (speed) => {
+    const m = createWeaponMachine(false);
+    m.ranged = true; m.frames = THUNDERLOCK_NUM_FRAMES;
+    m.tick = GUN_TICK_SECONDS; m.cooldown = GUN_COOLDOWN_SECONDS; m.hitFrame = GUN_FEEL.hitFrame;
+    machineAttack(m, 'StrikeDown');
+    const out = [];
+    for (let i = 0; i < 200; i++) { machineStep(m, dt, speed); out.push(m.state !== 'Idle' ? m.frame : -1); }
+    return out;
+  };
+  assert.deepEqual(run(10), run(100), 'the gun fires the same at any speed');
+
+  // ...while the CLASSIC weapons still ask, which is the other half:
+  // this departure must not have leaked into the tables.
+  const melee = (speed) => {
+    const m = createWeaponMachine(false);
+    machineAttack(m, 'StrikeDown');
+    let n = 0;
+    for (let i = 0; i < 200; i++) { machineStep(m, dt, speed); if (m.state !== 'Idle') n++; }
+    return n;
+  };
+  assert.ok(melee(10) > melee(100), 'a sword is still slower in slow hands');
+});
+
+test('FIELD-GUN7: the POSE is the lab\'s too - size 49, and the raise rides the HUD bar', () => {
+  // The other two the lab settled and the game answered for itself.
+  assert.equal(GUN_FEEL.widthPct, 0.49, 'Mac\'s last word was "Size: 49"');
+  assert.equal(NATIVE_WIDTH, 0.49 * 320, 'and the art reads it rather than carrying a copy');
+  assert.equal(GUN_FEEL.raise, -8);
+  // the raise is ADDED to the classic offset rather than replacing
+  // it, so the weapon still clears the large HUD's bar
+  const rig = readFileSync('src/combat/weaponRig.js', 'utf8');
+  assert.match(rig, /weaponOffsetHeight\(\) \+ GUN_FEEL\.raise/,
+    'the bar\'s offset is kept and the lab\'s raise rides it');
+  assert.match(rig, /_tlAdjust \? weaponOffsetHeight\(\) \+ GUN_FEEL\.raise : undefined/,
+    'and only this weapon takes it - every other keeps drawFpsWeapon\'s own default');
 });

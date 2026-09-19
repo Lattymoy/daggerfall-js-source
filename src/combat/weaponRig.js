@@ -33,6 +33,7 @@ import { ARMOR_ENUM } from './enemyEquipment.js';   // MW-D32
 import { loadFpsWeaponArt, drawFpsWeapon, weaponTypeForItem, WEAPON_TYPES, fpLightingOn } from './fpsWeapon.js';
 import { loadThunderlockArt } from './thunderlockArt.js';
 import { createRecoil, createScreenShake, GUN_FEEL } from './gunFeel.js';   // FIELD-GUN6: the lab's own feel, in the game at last
+import { weaponOffsetHeight } from '../ui/hudLarge.js';   // FIELD-GUN7: the lab's raise rides the bar's offset rather than replacing it
 import { betterAmbience } from '../systems/betterAmbience.js';   // FIELD-GUN6: the ONE camera shaker in the port, already wired through all four hosts
 import { installThunderlockSounds, SFX as TL_SFX } from '../systems/thunderlock.js';   // AUDIT-THUNDERLOCK F8: the weapon's own clips, through the mod-sound door   // the port's own weapon: its art is a sheet, not a CIF   // MAC-I: the tint's switch, with the sprite it tints
 // ROAD-tail (FPSSpellCasting.cs): the classic spellcasting HANDS. A
@@ -1353,7 +1354,15 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
       // Widget off should not be holding a different gun.
       if (widgetOn() && c && widget.draw(renderer, c, fpTint, _tlAdjust)) return;
       const art = c && artFor(playerWeapon.weapon);
-      if (art) drawFpsWeapon(renderer, c, art, playerWeapon.machine.state, playerWeapon.machine.frame, { tint: fpTint, adjust: _tlAdjust });
+      if (art) {
+        // FIELD-GUN7: the lab's RAISE (-8) rides the classic offset
+        // rather than replacing it, so the weapon still clears the
+        // large HUD's bar and still sits where the lab put it
+        // relative to that. Undefined for every other weapon, which
+        // leaves drawFpsWeapon's own default reading the bar alone.
+        const offsetHeight = _tlAdjust ? weaponOffsetHeight() + GUN_FEEL.raise : undefined;
+        drawFpsWeapon(renderer, c, art, playerWeapon.machine.state, playerWeapon.machine.frame, { tint: fpTint, adjust: _tlAdjust, offsetHeight });
+      }
     }
   }
 }

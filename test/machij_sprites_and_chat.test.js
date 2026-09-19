@@ -221,7 +221,7 @@ test('MAC-I: the switch, and every sprite in the seam wearing the tint', () => {
   assert.match(rig, /handheld\.draw\(renderer, c, fpTint\)/);
   assert.match(rig, /widget\.draw\(renderer, c, fpTint, _tlAdjust\)/);   // FIELD-GUN6: the tint, then the Thunderlock's rect delta
   // FIELD-GUN6: `adjust` joined the tint - the Thunderlock's recoil and reload lower, null for every classic weapon
-  assert.match(rig, /drawFpsWeapon\(renderer, c, art, playerWeapon\.machine\.state, playerWeapon\.machine\.frame, \{ tint: fpTint, adjust: _tlAdjust \}\)/);
+  assert.match(rig, /drawFpsWeapon\(renderer, c, art, playerWeapon\.machine\.state, playerWeapon\.machine\.frame, \{ tint: fpTint, adjust: _tlAdjust, offsetHeight \}\)/);   // FIELD-GUN7: and the lab's raise
   // and each draw passes it THROUGH to the quad rather than accepting and dropping it
   assert.match(read('src/combat/fpsWeapon.js'), /renderer\.drawScreenQuad\(tex, \{ x, y, w, h \}, src, tint \?\? undefined\);/);
   // FIELD-GUN6: the rect is taken into a local first so the gun's kick can move it; the TINT still rides through untouched, which is what this pin is about

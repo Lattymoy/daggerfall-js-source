@@ -100,7 +100,11 @@ export function createWeaponMachine(isBow, isUnarmed = false) {
   // drawing like one, and one whose cycle is not five frames. Both
   // default to the classic answer, so a machine that never sets them
   // is the machine that has always been here.
-  return { isBow, isUnarmed, ranged: isBow, frames: null, state: 'Idle', frame: 0, ticks: 0, acc: 0, cooldownUntil: 0, now: 0, animIndex: 0, damageDone: false };
+  // FIELD-GUN7: `tick`, `cooldown` and `hitFrame` join `ranged` and
+  // `frames` as the port's own fields. Null in every one of them is
+  // "ask the classic formula", which is what a machine that never
+  // sets them has always done.
+  return { isBow, isUnarmed, ranged: isBow, frames: null, tick: null, cooldown: null, hitFrame: null, state: 'Idle', frame: 0, ticks: 0, acc: 0, cooldownUntil: 0, now: 0, animIndex: 0, damageDone: false };
 }
 
 export function machineAttack(m, strikeState) {
@@ -141,7 +145,20 @@ export function machineStep(m, dt, liveSpeed) {
   // slices them off one sheet), and a machine that does not set it
   // reads exactly the two classic tables it always did.
   const frames = (m.frames ?? (m.isBow ? BOW_NUM_FRAMES : MELEE_NUM_FRAMES))[m.state] ?? 5;
-  const tick = m.isBow ? CLASSIC_UPDATE_INTERVAL : getMeleeWeaponAnimTime(liveSpeed);
+  // FIELD-GUN7 (Mac, from play: "It still doesn't feel like the proto
+  // at all"). THE FRAME CLOCK IS THE FEEL, and this was the largest of
+  // the three numbers the lab settled and the game ignored. Both
+  // classic clocks are SPD-DRIVEN - a melee frame is
+  // `3 * (115 - speed) / 980`, which at an average 50 is 0.199s, about
+  // FIVE frames a second - and the lab's gun runs at fourteen. The
+  // port's own weapon was playing its cycle at a third of the speed it
+  // was tuned at, which no amount of recoil or shake on top can
+  // disguise: it IS the difference.
+  //
+  // A gun's mechanism does not care how agile you are. Drawing a
+  // bowstring does, and swinging a blade does, so both classic
+  // formulas stay exactly where they were for everything else.
+  const tick = m.tick ?? (m.isBow ? CLASSIC_UPDATE_INTERVAL : getMeleeWeaponAnimTime(liveSpeed));
   m.acc += dt;
   while (m.acc >= tick) {
     m.acc -= tick;
@@ -165,7 +182,10 @@ export function machineStep(m, dt, liveSpeed) {
     } else {
       m.frame++;
       if (m.frame === (m.isBow ? BOW_SOUND_FRAME : -1)) events.push('bowSound');
-      if (m.frame === (m.isBow ? HIT_FRAME_BOW : HIT_FRAME_MELEE)) events.push('hit');
+      // FIELD-GUN7: the lab lands the shot on frame 1 - the muzzle
+      // flash - and the melee hit frame is 2, so the damage arrived a
+      // frame after the flash it is supposed to BE.
+      if (m.frame === (m.hitFrame ?? (m.isBow ? HIT_FRAME_BOW : HIT_FRAME_MELEE))) events.push('hit');
       if (m.frame >= frames) {
         m.state = 'Idle'; m.frame = 0; m.ticks = 0;
         events.push('done');
@@ -174,7 +194,12 @@ export function machineStep(m, dt, liveSpeed) {
         // end of a shot; only the bow DRAWS. Written as `?? m.isBow`
         // so a machine minted before this field existed - every
         // classic one - still reads exactly as it did.
-        if (m.ranged ?? m.isBow) m.cooldownUntil = m.now + getBowCooldownTime(liveSpeed);
+        // FIELD-GUN7: `m.cooldown` is the lab's fixed 1.7s reload.
+        // getBowCooldownTime is `(10 * (100 - speed) + 800) / 980` -
+        // 1.33s at an average 50 - so the gun was reloading faster
+        // than the prototype AND at a speed that moved with the
+        // character, which is the one thing a mechanism does not do.
+        if (m.ranged ?? m.isBow) m.cooldownUntil = m.now + (m.cooldown ?? getBowCooldownTime(liveSpeed));
         break;
       }
     }
