@@ -155,10 +155,56 @@ Two more facts the re-read turned up, neither yet built:
 
 ### Gibs
 
-On an explosive death: the corpse renderer is switched OFF, knockback
-is zeroed, a gib prefab is instantiated at the body, and a blood burst
-goes off. Gibs are sprite quads with physics that pick a random frame
-from a sheet; on landing they print a decal and stop.
+**RE-READ 2026-09-19 (BLOOD1b).** Two handlers, and the first marks a
+death for the second:
+
+`OnExplosionDeath(entity)` - the spell-explosion path:
+
+    if (entity.EntityBehaviour.EntityType == 2) return;
+    if (entity is not EnemyEntity e) return;
+    if (GetBloodType(e.MobileEnemy.ID) != 1) return;     // blood only
+    entity's renderer.enabled = false;                   // the body vanishes
+    entity's EnemyMotor.KnockbackSpeed = 0f;
+    Instantiate(bloodExplosion3DPrefab, pos, identity);
+    SpawnBloodBurst(pos);
+    soundToPlayOnKillCallback = <the splash, deferred>;
+    lastKilled = entity;
+
+`EnemyDeath_OnEnemyDeath(sender, args)` - which acts on it:
+
+    if (lastKilled == null || sender is not EnemyDeath death) return;
+    if (lastKilled.EntityBehaviour != death's behaviour) return;
+    var ground = behaviour's EnemyMotor.FindGroundPosition(16f);
+    Instantiate(corpseExplosionPrefab, ground, identity, transform);
+    _corpsesList.Add(it);
+    if (!IsPlayerInside) StreamingWorld.TrackLooseObject(it, ...);
+    behaviour.CorpseLootContainer's renderer.enabled = false;
+    if (settingsAllowGibs) for (int i = 0; i < 10; i++)
+        GibList.Add(new GameObject("Gib", typeof(SpriteFloaty)) at the body);
+    soundToPlayOnKillCallback?.Invoke();
+    soundToPlayOnKillCallback = null;
+    lastKilled = null;
+
+**So `lastKilled` is the whole mechanism, and it is set in exactly two
+places**: an explosive death, and the PLAYER'S WARHAMMER OVERKILL in
+the attack handler above. Everything else dies ordinarily. The deferred
+splash sound plays here, on the death frame, which is what the deferral
+was for.
+
+A gib is a `SpriteFloaty`, and its physics are all in its `Start`:
+
+    velocity   = (Random(-15,15), Random(5,15), Random(-15,15))
+    useGravity = false; FixedUpdate: AddForce(Physics.gravity * 3, Acceleration)
+    drag = 0.1, angularDrag = 0, mass = 15, freezeRotation = true
+    AddTorque(Random.insideUnitSphere * 5, Acceleration)
+    Destroy(rigidbody, 4f); Destroy(boxCollider, 4f)
+    OnCollisionEnter: SpawnBlood(transform.position, 20, 2f, 4f)
+
+The y band NEVER reaches zero, so a chunk is always thrown upward.
+Nothing sets a PhysicMaterial, so Unity's default bounciness of zero
+applies: a chunk lands, it does not ricochet. At four seconds the
+rigidbody and the collider are destroyed and the quad freezes where it
+lies.
 
 ### Decals
 
@@ -366,10 +412,53 @@ Slices, each behind its own `features.js` row:
    is its own feature row, read live, and off is a killing blow that
    bleeds like any other hit. Mutants: 60, 60 dead.
 
-   STILL TO COME IN THIS SLICE: the splash sound (immediate for the
-   350 branch, deferred to the DEATH for the 450 one), the corpse
-   swap and the gibs, and the two facts the re-read turned up - the
-   swing direction throwing the spray, and the ceiling drips.
+   THEN THE GIBS (`src/combat/bloodGibs.js`), on the re-read above.
+   Ten chunks, the assembly's own throw, three times UNITY'S gravity -
+   not three times the port's own 20, which is DFU's number for a
+   walking body and has nothing to do with a thrown chunk - the drag,
+   the four-second freeze, and the twenty-particle splat where each
+   one hits. No bounce, because nothing sets a PhysicMaterial and the
+   engine's default bounciness is zero.
+
+   A CHUNK IS A POINT THAT RAYS ITS OWN STEP. `gibStep` answers a
+   segment and commits nothing; the host rays it and then says fly or
+   land. That is the same split `bloodDecals.js` keeps and it is what
+   lets the whole arc be driven on a table with no collider at all.
+
+   IT NEEDS NO DEATH SEAM, which is the one place this port is simpler
+   than the reference rather than poorer. The reference defers to
+   `EnemyDeath.OnEnemyDeath` because Unity's death is a separate event
+   and it wants its sound on that frame; a blow for 175% of a body's
+   whole health is always lethal, so here the hit IS the death - and
+   four hosts are spared a wire each of them would have had to
+   remember. The chunks then ride `hitEffects.tick`, the call every
+   host already makes each frame, for the same reason the origin shift
+   rides `offsetAll`.
+
+   THE GIBS RIDE THE OVERKILL ROW rather than one of their own, and
+   that is a departure from the reference's two settings worth
+   stating: here a body can only come apart on the player's warhammer
+   overkill, which that row already gates, so a second switch would be
+   one that does nothing unless the first is on.
+
+   WHAT HAS NOWHERE TO GO, and is not carried:
+
+   - **THE SPLASH SOUND.** The reference ships its own audio, which
+     this port has no permission to use, and ARENA2 has no blood or
+     splat clip - `SplashLarge` is water and `BodyFall` is a thud.
+     There is no deferral to build because there is nothing to defer.
+   - **THE CORPSE SWAP.** The reference hides the body and puts its
+     own corpse-explosion prefab where it stood. The port ships no
+     gore art and will not, so hiding the body would be a regression
+     rather than a port: a body that vanishes reads worse than one
+     that lies there.
+
+   STILL TO COME: the chunks are invisible in flight - what a player
+   sees is the blood appearing as they land. Giving them a quad needs
+   art, and the only honest source is TEXTURE.380's own frames, the
+   archive every other drop of blood in this arc comes from. Also
+   still open, both from the re-read: the swing direction throwing the
+   spray, and the ceiling drips.
 3. **BLOOD1c - bleeding.** The 2..5s cadence and the ramp above.
 
 The numbers in THE FACTS are the target to feel like. The code that

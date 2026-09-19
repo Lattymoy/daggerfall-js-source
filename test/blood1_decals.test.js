@@ -20,6 +20,13 @@ import {
   bloodHit, LETHAL_HIT, burstCount, burstRate, burstReach, BURST_DROPS_MAX, sprayCount, sprayRadius, sprayOffset, dropSize, SPRAY_SHARE, SPRAY_MAX, SPATTER_SCALE, SIZE_JITTER, SPRAY_WOBBLE, SPRAY_RADIUS_MIN, SPRAY_RADIUS_MAX,   // BLOOD1b
 } from '../src/combat/bloodDecals.js';
 
+import {
+  throwGibs, gibStep, gibFly, gibLand, gibSprayOrigin, shiftGibs,
+  GIB_COUNT, GIB_THROW_SIDE, GIB_THROW_UP, GIB_GRAVITY, GIB_GRAVITY_SCALE, UNITY_GRAVITY,
+  GIB_DRAG, GIB_LIFE, GIB_SPLASH_RATE, GIB_SPLASH_SPEED, GIB_SPRAY_LIFT,
+} from '../src/combat/bloodGibs.js';
+import { GRAVITY as PLAYER_GRAVITY } from '../src/player/motor.js';
+
 const dot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
 const len = (a) => Math.hypot(a[0], a[1], a[2]);
 
@@ -325,7 +332,7 @@ test('BLOOD1a by source: the decal pass is ONE draw call, depth-tested and depth
 // ---- the mark, on the seam the splash already uses ------------------
 
 import { createHitEffects } from '../src/scenes/hitEffects.js';
-import { createBloodMarks, MARK_DROP } from '../src/combat/bloodMarks.js';
+import { createBloodMarks, MARK_DROP, MAX_BODIES } from '../src/combat/bloodMarks.js';
 import { markSize, marksBlood, MARK_SIZE_MIN, MARK_SIZE_MAX, BLOODLESS_INDEX } from '../src/combat/bloodDecals.js';
 
 /** A renderer stub that records what the mark asked of it. */
@@ -978,4 +985,203 @@ test('BLOOD1b: a site that knows nothing about the swing says so, and gets the o
   // the player's four: a melee swing in each of the three foe pools,
   // and the shaft that all three share
   assert.equal(claimed, 4, 'exactly the four sites that ARE the player’s own blow');
+});
+
+test('BLOOD1b: the gib law - ten chunks thrown UP, falling at three times gravity, landing for good', () => {
+  // Read off the assembly, and the numbers are its own.
+  assert.equal(GIB_COUNT, 10);
+  assert.equal(GIB_THROW_SIDE, 15);
+  assert.deepEqual([GIB_THROW_UP.min, GIB_THROW_UP.max], [5, 15]);
+  assert.equal(GIB_GRAVITY_SCALE, 3);
+  assert.equal(GIB_DRAG, 0.1);
+  assert.equal(GIB_LIFE, 4);
+  assert.equal(GIB_SPLASH_RATE, 20);
+  assert.deepEqual([GIB_SPLASH_SPEED.min, GIB_SPLASH_SPEED.max], [2, 4]);
+
+  // THE GRAVITY IS UNITY'S, NOT THE PORT'S. `player/motor.js` carries
+  // GRAVITY = 20, DFU's own number for a walking body, which has
+  // nothing to do with a thrown chunk: the arc was shaped by Unity's
+  // physics and matching the feel means matching that number.
+  assert.equal(UNITY_GRAVITY, 9.81);
+  assert.equal(GIB_GRAVITY, 29.43);
+  assert.notEqual(GIB_GRAVITY, PLAYER_GRAVITY * GIB_GRAVITY_SCALE, 'and it is NOT three times the port’s own');
+
+  // ALWAYS THROWN UPWARD - the y band never reaches zero, which is
+  // what makes a gibbing read as a burst rather than a pile.
+  for (const r of [() => 0, () => 0.5, () => 1, () => 0.999]) {
+    for (const g of throwGibs([1, 2, 3], r)) {
+      assert.ok(g.vel[1] >= GIB_THROW_UP.min, 'no chunk starts out heading for the floor');
+      assert.ok(g.vel[1] <= GIB_THROW_UP.max);
+      assert.ok(Math.abs(g.vel[0]) <= GIB_THROW_SIDE && Math.abs(g.vel[2]) <= GIB_THROW_SIDE);
+      assert.deepEqual(g.pos, [1, 2, 3], 'and every one starts at the body');
+    }
+  }
+  assert.equal(throwGibs([0, 0, 0], () => 0.5).length, GIB_COUNT);
+  assert.equal(throwGibs(null, () => 0.5).length, 0, 'nowhere to throw them from is none of them');
+
+  // THE ARC. Gravity is added as an acceleration and the drag damps
+  // the WHOLE velocity, both before the move.
+  const g = throwGibs([0, 10, 0], () => 0.5)[0];   // straight up, no sideways
+  assert.deepEqual([g.vel[0], g.vel[2]], [0, 0]);
+  const up0 = g.vel[1];
+  const step = gibStep(g, 0.5);
+  assert.ok(Math.abs(g.vel[1] - (up0 * (1 - GIB_DRAG * 0.5) - GIB_GRAVITY * 0.5)) < 1e-9, 'damped, then pulled down');
+  assert.ok(g.vel[1] < 0, 'half a second and a chunk is already falling - three gravities is heavy');
+  // the step is a SEGMENT for the host to ray, and nothing is committed
+  assert.deepEqual(step.from, [0, 10, 0], 'the step starts where the chunk still is');
+  assert.ok(Math.abs(step.dist - Math.abs(g.vel[1]) * 0.5) < 1e-9);
+  assert.ok(Math.abs(Math.hypot(...step.dir) - 1) < 1e-12, 'a unit direction, for the ray');
+  assert.deepEqual(g.pos, [0, 10, 0], 'and the chunk has NOT moved until the host says so');
+  gibFly(g, step);
+  assert.deepEqual(g.pos, step.to, 'nothing in the way, and it goes where it wanted');
+
+  // SOMETHING IN THE WAY AND IT STOPS THERE FOR GOOD - no bounce,
+  // which is the engine's answer and not a choice: nothing sets a
+  // PhysicMaterial and Unity's default bounciness is zero.
+  gibLand(g, [4, 0, 5]);
+  assert.deepEqual(g.pos, [4, 0, 5]);
+  assert.equal(g.still, true);
+  assert.equal(gibStep(g, 1 / 60), null, 'a chunk that landed is done');
+
+  // ...and so is one whose four seconds are up: the assembly destroys
+  // the rigidbody AND the collider at 4, so it freezes where it lies
+  // rather than falling for ever.
+  //
+  // THE LOOP IS BOUNDED, and that is not belt and braces. The first
+  // cut of this pin spun `while (gibStep(...))` with no ceiling, so
+  // the mutant that deletes the four-second cutoff did not FAIL the
+  // pin - it hung the whole suite, and a mutation run that never
+  // returns reports nothing at all. A pin whose failure mode is a
+  // hang is not a pin.
+  const forever = throwGibs([0, 1e6, 0], () => 0.5)[0];
+  const cap = Math.ceil((GIB_LIFE * 4) * 60);
+  let frames = 0;
+  while (frames < cap && gibStep(forever, 1 / 60)) frames++;
+  assert.ok(frames < cap, 'a chunk that never stopped is the bug this pin exists for');
+  assert.ok(forever.still, 'it stops');
+  assert.ok(Math.abs(frames / 60 - GIB_LIFE) < 0.05, `and it stops at four seconds (got ${(frames / 60).toFixed(2)})`);
+
+  // THE SPLAT IS SPRAYED FROM A HAND'S BREADTH UP, because the spray
+  // finds its surface by raying DOWN and a ray that starts exactly on
+  // the surface it is looking for is a coin toss in any collider.
+  assert.equal(GIB_SPRAY_LIFT, 0.1);
+  assert.deepEqual(gibSprayOrigin({ pos: [4, 0, 5] }), [4, GIB_SPRAY_LIFT, 5]);
+
+  // THE STREAMING WORLD MOVES THEM TOO - a chunk mid-flight would
+  // otherwise land its splat 819.2 units from where it now is.
+  const flock = throwGibs([0, 0, 0], () => 0.5);
+  assert.equal(shiftGibs(flock, [100, 7, -100]), GIB_COUNT);
+  for (const c of flock) assert.deepEqual(c.pos, [100, 7, -100]);
+  assert.equal(shiftGibs(null, [1, 1, 1]), 0);
+});
+
+test('BLOOD1b: a warhammer takes the body apart, and the chunks stain where they land', () => {
+  // A FLOOR AT y = 0 and nothing else, so a chunk flies until it
+  // falls through it.
+  const floorRig = (over = {}) => rigHitEffects({
+    settings: { enabled: () => true, capacity: () => 1024, density: () => 1, overkill: () => true },
+    collider: () => ({
+      raycastHit: (from, dir, max) => {
+        if (dir[1] >= 0) return null;                       // going up: nothing above
+        const drop = from[1] / -dir[1];                     // where the ray meets y = 0
+        return drop >= 0 && drop <= max ? { dist: drop, normal: [0, 1, 0] } : null;
+      },
+    }),
+    ...over,
+  });
+  const kill = { damage: 70, maxHealth: 40, fromPlayer: true, heavy: true };
+
+  const { fx, marks } = floorRig();
+  fx.showBloodSplash(0, [0, 2, 0], null, kill);
+  assert.equal(marks.gibs().length, GIB_COUNT, 'ten chunks, thrown from the body');
+  for (const g of marks.gibs()) assert.deepEqual(g.pos, [0, 2, 0]);
+  const afterBlow = marks.count();
+
+  // IT NEEDS NO DEATH SEAM: a blow for 175% of a body's whole health
+  // is always lethal, so the hit IS the death and four hosts are
+  // spared a wire they would each have had to remember.
+  // THE CHUNKS RIDE `hitEffects.tick`, the call every host already
+  // makes - so ticking the SPLASH pool flies them.
+  const flown = marks.gibs().length;
+  for (let i = 0; i < Math.ceil(GIB_LIFE * 60) && marks.gibs().some((g) => !g.still); i++) fx.tick(1 / 60);
+  assert.ok(marks.gibs().length === 0 || marks.gibs().every((g) => g.still), 'they all come to rest');
+
+  // ...AND EACH ONE STAINED WHERE IT LANDED, with what it was
+  // carrying. Twenty is BELOW the rate ladder's bottom rung, so a
+  // chunk's splat is smaller than any blow's - one piece landing is
+  // not a body opening - and this counts the marks rather than just
+  // asserting the constant, because the constant being right does not
+  // make the tick read it.
+  assert.ok(GIB_SPLASH_RATE < ladderRate(0));
+  const perChunk = sprayCount(scaleRate(GIB_SPLASH_RATE, 1));
+  assert.ok(perChunk < sprayCount(ladderRate(0)));
+  assert.equal(marks.count() - afterBlow, flown * perChunk,
+    `each of the ${flown} chunks left ${perChunk} marks and no more`);
+
+  // NOT WITHOUT THE HAMMER. The ordinary overkill branch throws no
+  // chunks at all - the assembly gibs only the death it marked, and
+  // the player's warhammer is what marks one.
+  const { fx: plain, marks: plainMarks } = floorRig();
+  plain.showBloodSplash(0, [0, 2, 0], null, { ...kill, heavy: false });
+  assert.equal(plainMarks.gibs().length, 0);
+  const { fx: foe, marks: foeMarks } = floorRig();
+  foe.showBloodSplash(0, [0, 2, 0], null, { ...kill, fromPlayer: false });
+  assert.equal(foeMarks.gibs().length, 0, 'a foe’s warhammer takes nobody apart');
+
+  // ...nor with the row off
+  const { fx: off, marks: offMarks } = floorRig({ settings: { enabled: () => true, capacity: () => 1024, density: () => 1, overkill: () => false } });
+  off.showBloodSplash(0, [0, 2, 0], null, kill);
+  assert.equal(offMarks.gibs().length, 0);
+
+  // THE COST IS CAPPED AT FOUR BODIES. Each chunk rays its own step
+  // every frame, so what a gibbing costs per frame is decided here
+  // and not by how fast a player can swing.
+  assert.equal(MAX_BODIES, 4);
+  const { fx: many, marks: manyMarks } = floorRig();
+  for (let i = 0; i < 20; i++) many.showBloodSplash(0, [0, 2, 0], null, kill);
+  assert.ok(manyMarks.gibs().length <= GIB_COUNT * MAX_BODIES, `at most four bodies in the air (got ${manyMarks.gibs().length})`);
+
+  // A ROOM THROWN AWAY takes the chunks still in the air with it
+  const { fx: door, marks: doorMarks } = floorRig();
+  door.showBloodSplash(0, [0, 2, 0], null, kill);
+  assert.equal(doorMarks.gibs().length, GIB_COUNT);
+  door.clear();
+  assert.equal(doorMarks.gibs().length, 0, 'the chunks leave with the room');
+
+  // ...and the streaming world moves them: a chunk that stayed behind
+  // would land its splat 819.2 units from where it now is
+  const { fx: shift, marks: shiftMarks } = floorRig();
+  shift.showBloodSplash(0, [0, 2, 0], null, kill);
+  shift.offsetAll([100, 7, -100]);
+  for (const g of shiftMarks.gibs()) assert.deepEqual(g.pos, [100, 9, -100]);
+
+  // BETWEEN TWO WORLDS a chunk flies on rather than landing on
+  // nothing - a pixel unloaded, a mode half changed
+  const { fx: gone, marks: goneMarks } = floorRig({ collider: () => null });
+  gone.showBloodSplash(0, [0, 2, 0], null, kill);
+  assert.equal(goneMarks.gibs().length, 0, 'no world, no blow, no chunks');
+});
+
+test('BLOOD1b by source: the chunks ride the tick every host already makes', () => {
+  const fx = readFileSync(new URL('../src/scenes/hitEffects.js', import.meta.url), 'utf8');
+  // The same reading as the origin shift: every host that animates
+  // its splashes already calls `tick` each frame, and a second call
+  // beside it is a line four hosts have to remember - the one that
+  // forgot would leave a gibbed body's chunks hanging in the air.
+  const tick = fx.slice(fx.indexOf('    tick(dt) {'), fx.indexOf('\n    },', fx.indexOf('    tick(dt) {')));
+  assert.match(tick, /marks\?\.tick\?\.\(dt\);/, 'the chunks fly on the splash pool’s own tick');
+  for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js', 'src/scenes/dungeonContext.js']) {
+    assert.match(readFileSync(new URL(`../${host}`, import.meta.url), 'utf8'), /hitEffects\??\.?\.tick\(dt\);/,
+      `${host}: makes that call already`);
+  }
+  // NO RENDERER, NO GL, NO COLLIDER in the gib law either - same
+  // split as bloodDecals.js, and what lets the arc above be driven on
+  // a table.
+  const src = readFileSync(new URL('../src/combat/bloodGibs.js', import.meta.url), 'utf8');
+  const code = src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+  for (const forbidden of ['renderer', 'gl.', 'raycast', 'import ', 'document', 'window.']) {
+    assert.ok(!code.includes(forbidden), `bloodGibs.js must not reach for \`${forbidden}\``);
+  }
+  assert.ok(src.includes('collider'), 'the header explains what the host does with a step');
+  assert.ok(code.length < src.length * 0.75, 'the comments really came out');
 });

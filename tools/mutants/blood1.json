@@ -444,8 +444,8 @@
   {
     "name": "BLOOD1b-the-burst-REPLACES-the-ladder-s-spray",
     "file": "src/combat/bloodMarks.js",
-    "old": "      spray(col, pos, burstCount(heavy, density), burstReach(heavy, density), burstRate(heavy, density));\n    }\n    const rate = bloodRate(damage, maxHealth, density);\n    return spray(col, pos, sprayCount(rate), sprayRadius(rate), rate);",
-    "new": "      const h2 = !!hit?.fromPlayer && !!hit?.heavy;\n      return spray(col, pos, burstCount(h2, density), burstReach(h2, density), burstRate(h2, density));\n    }\n    const rate = bloodRate(damage, maxHealth, density);\n    return spray(col, pos, sprayCount(rate), sprayRadius(rate), rate);",
+    "old": "      if (heavy && _gibs.length < GIB_COUNT * MAX_BODIES) _gibs = _gibs.concat(throwGibs(pos, rng));\n    }\n    const rate = bloodRate(damage, maxHealth, density);\n    return spray(col, pos, sprayCount(rate), sprayRadius(rate), rate);",
+    "new": "      if (heavy && _gibs.length < GIB_COUNT * MAX_BODIES) _gibs = _gibs.concat(throwGibs(pos, rng));\n      const h2 = !!hit?.fromPlayer && !!hit?.heavy;\n      return spray(col, pos, burstCount(h2, density), burstReach(h2, density), burstRate(h2, density));\n    }\n    const rate = bloodRate(damage, maxHealth, density);\n    return spray(col, pos, sprayCount(rate), sprayRadius(rate), rate);",
     "tests": [
       "test/blood1_decals.test.js"
     ]
@@ -536,6 +536,159 @@
     "file": "src/combat/bloodDecals.js",
     "old": "    fromPlayer: !!fromPlayer,",
     "new": "    fromPlayer: fromPlayer !== false,",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-a-gib-can-be-thrown-downward",
+    "file": "src/combat/bloodGibs.js",
+    "old": "        GIB_THROW_UP.min + rng() * (GIB_THROW_UP.max - GIB_THROW_UP.min),",
+    "new": "        (rng() * 2 - 1) * GIB_THROW_UP.max,",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-the-gibs-fall-at-the-port-s-walking-gravity",
+    "file": "src/combat/bloodGibs.js",
+    "old": "export const UNITY_GRAVITY = 9.81;",
+    "new": "export const UNITY_GRAVITY = 20;",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-the-gibs-fall-at-plain-gravity",
+    "file": "src/combat/bloodGibs.js",
+    "old": "export const GIB_GRAVITY_SCALE = 3;",
+    "new": "export const GIB_GRAVITY_SCALE = 1;",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-a-gib-never-runs-out-of-time",
+    "file": "src/combat/bloodGibs.js",
+    "old": "  if (g.age >= GIB_LIFE) { g.still = true; return null; }   // the physics is destroyed and it freezes where it lies",
+    "new": "  if (false) { g.still = true; return null; }",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-the-step-commits-the-move-before-the-host-rays-it",
+    "file": "src/combat/bloodGibs.js",
+    "old": "  return {\n    from: [g.pos[0], g.pos[1], g.pos[2]],",
+    "new": "  g.pos[0] += dx; g.pos[1] += dy; g.pos[2] += dz;\n  return {\n    from: [g.pos[0], g.pos[1], g.pos[2]],",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-a-landed-gib-flies-on",
+    "file": "src/combat/bloodGibs.js",
+    "old": "  if (!g || g.still || !(dt > 0)) return null;",
+    "new": "  if (!g || !(dt > 0)) return null;",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-the-drag-is-not-applied",
+    "file": "src/combat/bloodGibs.js",
+    "old": "  const damp = Math.max(0, 1 - GIB_DRAG * dt);",
+    "new": "  const damp = 1;",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-a-gib-sprays-from-exactly-on-the-surface",
+    "file": "src/combat/bloodGibs.js",
+    "old": "export const gibSprayOrigin = (g) => [g.pos[0], g.pos[1] + GIB_SPRAY_LIFT, g.pos[2]];",
+    "new": "export const gibSprayOrigin = (g) => [g.pos[0], g.pos[1], g.pos[2]];",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-the-streaming-world-leaves-the-chunks-behind",
+    "file": "src/combat/bloodMarks.js",
+    "old": "    shiftGibs(_gibs, offset);   // BLOOD1b: a chunk mid-flight is in world space too",
+    "new": "",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-a-room-thrown-away-keeps-the-chunks-in-the-air",
+    "file": "src/combat/bloodMarks.js",
+    "old": "    _gibs = [];   // BLOOD1b: a room thrown away takes the chunks still in the air with it",
+    "new": "",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-an-ordinary-overkill-takes-the-body-apart-too",
+    "file": "src/combat/bloodMarks.js",
+    "old": "      if (heavy && _gibs.length < GIB_COUNT * MAX_BODIES) _gibs = _gibs.concat(throwGibs(pos, rng));",
+    "new": "      if (_gibs.length < GIB_COUNT * MAX_BODIES) _gibs = _gibs.concat(throwGibs(pos, rng));",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-the-bodies-in-the-air-are-uncapped",
+    "file": "src/combat/bloodMarks.js",
+    "old": "      if (heavy && _gibs.length < GIB_COUNT * MAX_BODIES) _gibs = _gibs.concat(throwGibs(pos, rng));",
+    "new": "      if (heavy) _gibs = _gibs.concat(throwGibs(pos, rng));",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-a-chunk-lands-where-it-aimed-not-where-it-hit",
+    "file": "src/combat/bloodMarks.js",
+    "old": "      gibLand(g, [\n        step.from[0] + step.dir[0] * h.dist,\n        step.from[1] + step.dir[1] * h.dist,\n        step.from[2] + step.dir[2] * h.dist,\n      ]);",
+    "new": "      gibLand(g, step.to);",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-a-chunk-lands-on-nothing-between-two-worlds",
+    "file": "src/combat/bloodMarks.js",
+    "old": "      if (!h || !Number.isFinite(h.dist) || h.dist > step.dist) { gibFly(g, step); continue; }",
+    "new": "      if (!h) { gibLand(g, null); continue; }",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-a-chunk-leaves-no-splat-where-it-landed",
+    "file": "src/combat/bloodMarks.js",
+    "old": "      if (on() && col) spray(col, gibSprayOrigin(g), sprayCount(rate), sprayRadius(rate), rate);",
+    "new": "",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-a-chunk-s-splat-is-a-whole-blow-s-worth",
+    "file": "src/combat/bloodMarks.js",
+    "old": "    const rate = scaleRate(GIB_SPLASH_RATE, density);",
+    "new": "    const rate = scaleRate(200, density);",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-the-chunks-do-not-ride-the-splash-pool-s-tick",
+    "file": "src/scenes/hitEffects.js",
+    "old": "      marks?.tick?.(dt);",
+    "new": "",
     "tests": [
       "test/blood1_decals.test.js"
     ]

@@ -27,7 +27,12 @@ import {
   createBloodDecalPool, writeDecalQuad, clearDecalQuad, bloodRate, marksBlood, DECAL_FLOATS,
   sprayCount, sprayRadius, sprayOffset, dropSize,   // BLOOD1b: the scatter BLOOD1a left to this slice
   isOverkill, burstCount, burstRate, burstReach,    // BLOOD1b: and the killing blow's own spray
+  scaleRate,
 } from './bloodDecals.js';
+import {
+  throwGibs, gibStep, gibFly, gibLand, gibSprayOrigin, shiftGibs,
+  GIB_SPLASH_RATE, GIB_COUNT,
+} from './bloodGibs.js';   // BLOOD1b: what a warhammer leaves of a body
 
 /** How far down a mark looks for something to stain. Blood spawns at
  *  chest height (`bloodCentre` is five eighths up the capsule), so the
@@ -38,6 +43,13 @@ export const MARK_DROP = 3;
 /** Straight down, once. BLOOD1b casts up to SPRAY_MAX rays for one
  *  blow, and the collider reads this direction and never writes it. */
 const DOWN = Object.freeze([0, -1, 0]);
+
+/** BLOOD1b: how many bodies' worth of chunks may be in the air at
+ *  once. Each chunk rays its own step every frame, so this is the
+ *  per-frame cost of a gibbing and it is decided here rather than by
+ *  how fast a player can swing. Four is more than a corridor ever
+ *  holds at once. */
+export const MAX_BODIES = 4;
 
 /**
  * @param {{renderer?:any, collider?:(() => any)|null, settings?:any, texture?:(() => any)|null, rng?:(() => number)}} [deps]
@@ -52,12 +64,21 @@ export function createBloodMarks({ renderer = null, collider = null, settings = 
   let _pool = null;
   let _batch = null;
   let _texKey = null;
+  /** BLOOD1b: chunks in flight. Plain data this pool owns outright,
+   *  emptied by `clear()` with the room they were thrown in. */
+  let _gibs = [];
   const _scratch = new Float32Array(DECAL_FLOATS);
 
   const liveCollider = () => (typeof collider === 'function' ? collider() : null);
   const on = () => !!(settings?.enabled?.() ?? false) && typeof collider === 'function' && !!renderer?.createDecalBatch;
   // BLOOD1b: the killing blow's own row, read LIVE like the rest - a
   // player who turns it off mid-fight gets the next blow plain.
+  //
+  // THE GIBS RIDE THIS ROW rather than one of their own, and that is a
+  // departure from the reference's two settings worth stating: here a
+  // body can only come apart on the player's warhammer overkill,
+  // which this row already gates, so a second switch would be one
+  // that does nothing unless the first is on.
   const overkillOn = () => !!(settings?.overkill?.() ?? false);
   const markTexture = texture ?? (() => (_texKey ? renderer?.textures?.get?.(_texKey) ?? null : null));
 
@@ -149,9 +170,58 @@ export function createBloodMarks({ renderer = null, collider = null, settings = 
       // the one nearly every overkill takes anyway.
       const heavy = !!hit?.fromPlayer && !!hit?.heavy;
       spray(col, pos, burstCount(heavy, density), burstReach(heavy, density), burstRate(heavy, density));
+      // ...AND THE BODY COMES APART. Only the heavy branch: the
+      // assembly gibs the death it marked with `lastKilled`, and the
+      // player's warhammer is what marks one.
+      //
+      // IT NEEDS NO DEATH SEAM. The reference defers to
+      // `EnemyDeath.OnEnemyDeath` because Unity's death is a separate
+      // event and it wants its sound on that frame; a blow for 175%
+      // of a body's whole health is ALWAYS lethal, so here the hit IS
+      // the death and four hosts are spared a wire they would each
+      // have had to remember.
+      if (heavy && _gibs.length < GIB_COUNT * MAX_BODIES) _gibs = _gibs.concat(throwGibs(pos, rng));
     }
     const rate = bloodRate(damage, maxHealth, density);
     return spray(col, pos, sprayCount(rate), sprayRadius(rate), rate);
+  }
+
+  /**
+   * BLOOD1b: fly the chunks. THIS RIDES `hitEffects.tick`, the call
+   * every host already makes each frame - the same reading as the
+   * origin shift below, and for the same reason: a second call beside
+   * it is a line four hosts have to remember.
+   *
+   * A chunk is a POINT that rays its own step. Nothing in the way and
+   * it flies on; something and it stops there for good and sprays
+   * what it was carrying - twenty, which is below the ladder's bottom
+   * rung, because one piece landing is not a body opening.
+   */
+  function tick(dt) {
+    if (!_gibs.length || !(dt > 0)) return 0;
+    const col = liveCollider();
+    const density = settings?.density?.() ?? 1;
+    const rate = scaleRate(GIB_SPLASH_RATE, density);
+    let moved = 0;
+    for (const g of _gibs) {
+      const step = gibStep(g, dt);
+      if (!step) continue;
+      moved++;
+      // Between two worlds - a pixel unloaded, a mode half changed -
+      // a chunk flies on rather than landing on nothing.
+      const h = col?.raycastHit ? col.raycastHit(step.from, step.dir, step.dist) : null;
+      if (!h || !Number.isFinite(h.dist) || h.dist > step.dist) { gibFly(g, step); continue; }
+      gibLand(g, [
+        step.from[0] + step.dir[0] * h.dist,
+        step.from[1] + step.dir[1] * h.dist,
+        step.from[2] + step.dir[2] * h.dist,
+      ]);
+      if (on() && col) spray(col, gibSprayOrigin(g), sprayCount(rate), sprayRadius(rate), rate);
+    }
+    // a chunk whose four seconds are up is done with, and the list is
+    // not a place to keep them
+    if (_gibs.every((g) => g.still)) _gibs = [];
+    return moved;
   }
 
   /** The ring is in WORLD space, which in the streaming host is the
@@ -159,6 +229,7 @@ export function createBloodMarks({ renderer = null, collider = null, settings = 
    *  and the VERTEX BUFFER moves with it, because a decal's corners are
    *  baked into it. */
   function shiftOrigin(offset) {
+    shiftGibs(_gibs, offset);   // BLOOD1b: a chunk mid-flight is in world space too
     if (!_pool || !_pool.count || !offset) return 0;
     const n = _pool.shiftOrigin(offset);
     for (const d of _pool.decals()) {
@@ -181,6 +252,7 @@ export function createBloodMarks({ renderer = null, collider = null, settings = 
    *  same ring next time, and rebuilding it would cost an allocation
    *  every time the player opens a door. */
   function clear() {
+    _gibs = [];   // BLOOD1b: a room thrown away takes the chunks still in the air with it
     if (!_pool) return 0;
     const n = _pool.count;
     for (const d of _pool.decals()) {
@@ -192,7 +264,8 @@ export function createBloodMarks({ renderer = null, collider = null, settings = 
   }
 
   return {
-    place, draw, shiftOrigin, clear, useArt,
+    place, draw, tick, shiftOrigin, clear, useArt,
+    gibs: () => _gibs.slice(),
     count: () => (_pool ? _pool.count : 0),
     /** HARD1: this pool ENDS WHAT IT OWNS. The ring is a thousand quads
      *  of vertex data and a VAO, handed to nobody, so the context that

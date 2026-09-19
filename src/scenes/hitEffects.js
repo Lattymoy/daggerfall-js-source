@@ -198,6 +198,13 @@ export function createHitEffects({
      *  flat batches and is not carried. */
     showMissEffect: (kind, pos, { archive = BLOOD_ARCHIVE, record = 2, fps = 20, scale = 2 } = {}) => spawn(record, pos, null, { archive, fps, scale }),
     tick(dt) {
+      // BLOOD1b: THE CHUNKS RIDE THIS, and deliberately rather than
+      // through a call of their own - the same reading as `offsetAll`
+      // below. Every host that animates its splashes already calls
+      // this line each frame; a second one beside it is a line four
+      // hosts have to remember, and the one that forgot would leave a
+      // gibbed body's chunks hanging in the air for ever.
+      marks?.tick?.(dt);
       for (let i = live.length - 1; i >= 0; i--) {
         const e = live[i];
         if (!e.batch) continue;             // still warming
