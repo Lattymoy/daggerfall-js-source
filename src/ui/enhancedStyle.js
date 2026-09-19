@@ -3662,6 +3662,15 @@ body:has(.dfchat.touch) .hudtext-stack { top: ${HUD_TEXT_TOP_CHAT_TOUCH_PX}px; }
    is the flex box's business and not a constant in this sheet. The
    gap is \`.hud-bottom\`'s 10px, so it stands off the vitals the same
    distance the effects row stands off them. */
+/* LV3: THE LEVEL'S ROW IS A BUTTON where there is a key to press (ui/levelNotice.js rowNode). The strip is
+   pointer-events:none so it never eats a click meant for the world; this one row opts back in. */
+button.lv-note.lv-clickable {
+  font: inherit; text-align: inherit; text-shadow: inherit; letter-spacing: inherit;
+  cursor: pointer; pointer-events: auto; -webkit-appearance: none; appearance: none;
+}
+button.lv-note.lv-clickable:hover, button.lv-note.lv-clickable:focus-visible {
+  background: rgba(40,36,12,0.72); border-color: rgb(243,239,44); outline: none;
+}
 .hud-bottom > #enhanced-levelnotice {
   position: static; transform: none; left: auto; bottom: auto; z-index: auto;
 }

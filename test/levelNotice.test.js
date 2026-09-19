@@ -580,3 +580,75 @@ test('LV2: the element reads no game data, and says so in the port\'s own words'
   assert.deepEqual(calls, [['MASTERED']]);
   destroyLevelNotices();
 });
+
+// LV3 (Dudey, 2026-09-19: "a button to open the levelup screen again once closed - you can't open it again when
+// you level up"). The enhanced skin only. The level's row on the strip is a BUTTON when the sheet action has a key,
+// pressing that key through ui/levelUpOpener.js - which is what opens the window in all four hosts - never a host's
+// slot.
+test('LV3: the level row is a button that presses the sheet key, and the key-less row stays a plain line', async () => {
+  const { openLevelUpWindow, levelUpDoorBound } = await import('../src/ui/levelUpOpener.js');
+  const sent = [];
+  const realKE = globalThis.KeyboardEvent, realDispatch = globalThis.dispatchEvent;
+  globalThis.KeyboardEvent = class { constructor(type, init) { this.type = type; Object.assign(this, init); } };
+  globalThis.dispatchEvent = (e) => { sent.push(e); return true; };
+  try {
+    const key = codeForAction(loadOrCreateBindings(), 'CharacterSheet');
+    assert.equal(levelUpDoorBound(), true, 'the default build binds the sheet');
+    assert.equal(openLevelUpWindow(), true);
+    assert.deepEqual(sent.map((e) => [e.type, e.code]), [['keydown', key], ['keyup', key]], 'a tap of the sheet key, down then up');
+    assert.equal(sent[0].bubbles, true);
+
+    // ...and the strip's row is the button that does it
+    destroyLevelNotices();
+    const doc = fakeDoc();
+    levelNotices.announceLevel(6, 0);
+    const host = drawLevelNotices({ owed: true, now: 1, doc });
+    const row = host.children.at(-1);
+    assert.equal(row.tag, 'button', 'the level row is a real button');
+    assert.equal(row.className.includes('lv-clickable'), true);
+    assert.equal(row.children.length, 3, 'still gem + body + key');
+    sent.length = 0;
+    let stopped = 0;
+    row.onclick({ preventDefault() {}, stopPropagation() { stopped++; } });
+    assert.deepEqual(sent.map((e) => e.type), ['keydown', 'keyup'], 'a click presses the sheet key');
+    assert.equal(stopped, 1, 'and the click never reaches the world behind it');
+    // a skill line is a report, not a door
+    levelNotices.announceSkill(SKILLS.Archery, 26, 1);
+    const both = drawLevelNotices({ owed: true, now: 2, doc });
+    const skillRow = both.children.find((c) => c.className.includes('lv-note-skill'));
+    assert.ok(skillRow, 'the skill line is on the strip');
+    assert.equal(skillRow.tag, 'div', 'a skill row is not a button');
+  } finally {
+    globalThis.KeyboardEvent = realKE;
+    if (realDispatch) globalThis.dispatchEvent = realDispatch; else delete globalThis.dispatchEvent;
+    destroyLevelNotices();
+  }
+});
+
+test('LV3 by source: an UNBOUND sheet action presses nothing and shows no button; the sheet\'s own door is ASCEND, at any time', () => {
+  const o = src('src/ui/levelUpOpener.js');
+  assert.match(o, /if \(code == null \|\| typeof win\?\.dispatchEvent !== 'function'/, 'no binding, no press - never a stale default');
+  assert.match(src('src/ui/levelNotice.js'), /const clickable = r\.kind === NOTICE_LEVEL && codeForAction\(bindings\(\), 'CharacterSheet'\) != null;/);
+  assert.match(src('src/ui/levelNotice.js'), /doc\.createElement\(clickable \? 'button' : 'div'\)/);
+  assert.match(src('src/ui/enhancedStyle.js'), /button\.lv-note\.lv-clickable \{[^}]*pointer-events: auto;/, 'the strip is pointer-events:none, this row opts back in');
+
+  // THE STATS PAGE CARRIES ONE DOOR TO THIS WINDOW, AND IT IS ALWAYS
+  // THERE. Mac, on this package: "the Ascend button needs to be
+  // accessible at any time in the character sheet."
+  //
+  // LV3 arrived with a SECOND door beside it - `['Level up', ...]`,
+  // unshifted onto the same row and gated on `readyToLevelUp` - which
+  // would put two buttons for one window on the page whenever a level
+  // was owed, and nothing there the rest of the time. ASCEND-ANYTIME
+  // had already made that page's door unconditional: it opens the real
+  // rollout when a level is owed (ui/pauseDoor.js's own branch, which
+  // resumes first) and a VIEW of the stars when none is, so the button
+  // a player learns is the button that is always there. LV3's opener
+  // is still what the STRIP presses, where there is no hooks bag to
+  // hand a door through.
+  const m = src('src/ui/enhancedMenu.js');
+  assert.match(m, /if \(typeof hooks\.openAscend === 'function'\) \{/, 'the page\'s door is handed in, not gated on state');
+  assert.doesNotMatch(m, /readyToLevelUp/, 'the Stats page never reads the flag: WHICH screen the door opens is the door\'s question');
+  assert.doesNotMatch(m, /doors\.unshift\(\['Level up'/, 'and there is no second, conditional door for the same window');
+  assert.match(m, /b\.onclick = \(\) => \{ onAction\('resume'\); fn\(\); \};/, 'the pause window RESUMES first for the doors that LEAVE this page');
+});
