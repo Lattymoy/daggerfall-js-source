@@ -44,9 +44,9 @@
 // their home since the Thunderlock became a real weapon, and the lab
 // reads them from there.
 export {
-  SHEET_GRID, FIRE_FRAMES, cellRect, keyBackground, contentBox, unionBox,
+  SHEET_GRID, FIRE_FRAMES, cellRect, keyBackground, contentBox, unionBox, unionDrawRect,
 } from '../combat/gunSheet.js';
-import { SHEET_GRID, FIRE_FRAMES, cellRect, keyBackground, contentBox, unionBox } from '../combat/gunSheet.js';
+import { SHEET_GRID, FIRE_FRAMES, cellRect, keyBackground, contentBox, unionBox, unionDrawRect } from '../combat/gunSheet.js';
 
 // ONE HOME: the alignment enum is FPSWeapon's own, imported rather
 // than restated, so an offset tuned in the lab means in the lab
@@ -416,7 +416,7 @@ export function widgetRigStep(rig, s, dt, {
 
 /**
  * THE MOTOR'S FRAME, as the rig assembles it for the clone
- * (weaponRig.js:1046-1053) - baseSpeed from GetBaseSpeed's walk arm,
+ * (weaponRig.js:1053-1060) - baseSpeed from GetBaseSpeed's walk arm,
  * speedRatio the live speed over it, and localVel the eye's motion
  * turned into the body's frame (right, up, forward). The lab has no
  * motor, so `walking`/`running` stand in for one and the vector is
@@ -449,12 +449,4 @@ export function labMotion({ walking = false, running = false, crouching = false,
  * The gun lands where you aligned it and the flash overflows around
  * it, which is what it does in the art.
  */
-export function unionDrawRect(anchorRect, anchor, union) {
-  const scale = anchorRect.w / anchor.w;
-  return {
-    x: anchorRect.x - (anchor.x - union.x) * scale,
-    y: anchorRect.y - (anchor.y - union.y) * scale,
-    w: union.w * scale,
-    h: union.h * scale,
-  };
-}
+// FIELD-GUN11: moved to combat/gunSheet.js, which the game reads too.

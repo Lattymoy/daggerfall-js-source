@@ -712,7 +712,14 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
     const dip = left > 0 ? Math.sin(Math.PI * t) : 0;  // down and back up
     const smooth = dip * dip * (3 - 2 * dip);
     const drop = smooth * GUN_FEEL.hiddenTarget[1] * 200;   // the lab's fraction, in native units
-    _tlAdjust = { x: kick.x, y: kick.y + drop };
+    // FIELD-GUN11: THE RAISE RIDES HERE, not on `offsetHeight`.
+    // Weapon Widget is ON by default and its clone reads
+    // `weaponOffsetHeight()` for itself (weaponWidget.js:591) - the
+    // HUD bar and nothing else - so a raise passed to drawFpsWeapon
+    // reached only the path a player with the mod OFF is on. The
+    // adjust is the one channel BOTH draws take, and both scale it
+    // from native units, so the lab's -8 means -8 on either.
+    _tlAdjust = { x: kick.x, y: kick.y + drop - GUN_FEEL.raise };
   }
 
   /** FPSWeapon.UpdateWeapon's bow guard: an UNsheathed bow with zero
@@ -1395,8 +1402,12 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
         // large HUD's bar and still sits where the lab put it
         // relative to that. Undefined for every other weapon, which
         // leaves drawFpsWeapon's own default reading the bar alone.
-        const offsetHeight = _tlAdjust ? weaponOffsetHeight() + GUN_FEEL.raise : undefined;
-        drawFpsWeapon(renderer, c, art, playerWeapon.machine.state, playerWeapon.machine.frame, { tint: fpTint, adjust: _tlAdjust, offsetHeight });
+        //
+        // FIELD-GUN11: the raise moved into `_tlAdjust` (see
+        // thunderlockFeel), because the clone never sees an
+        // offsetHeight this passes - so this arm keeps the classic
+        // default and both paths read the raise from one place.
+        drawFpsWeapon(renderer, c, art, playerWeapon.machine.state, playerWeapon.machine.frame, { tint: fpTint, adjust: _tlAdjust });
       }
     }
   }

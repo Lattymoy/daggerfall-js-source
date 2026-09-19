@@ -321,6 +321,123 @@ so nothing anywhere went red. The audit's eight findings were all
 *registration*; a registration pin cannot fail for a weapon that
 registers perfectly and is then dropped by the next table down.
 
+## FIELD-GUN10: why byte-level parity kept failing
+
+Mac, a fourth time: *"It's still not 1:1. I don't get why it's so hard
+to have byte level parity."*
+
+The honest answer is not that it is hard. It is that **there are two
+implementations of the placement, and every round before this one
+checked their inputs instead of their output.**
+
+The lab lays the rect out with `placeSprite` + `unionDrawRect`. The
+game lays it out inside `drawFpsWeapon`. Those are different
+functions. Copying numbers between two functions cannot converge —
+it only moves the chance of being wrong around, and each round of
+"still not the proto" was me moving it somewhere new.
+
+### What was actually left
+
+Measured by driving both paths with the same inputs and diffing the
+rect:
+
+```
+LAB  x=652.8 y=475.0 w=628.3 h=357.0
+GAME x=652.0 y=452.0 w=628.0 h=356.0
+DELTA dx=-0.8 dy=-23.0 dw=-0.3 dh=-1.0
+```
+
+**Twenty-three pixels high.** `offsetHeight` is in SCREEN pixels — it
+is `weaponOffsetHeight()`, the large HUD bar's own drawn height — and
+the lab's `raise` is in NATIVE 320×200 units, which is what the panel
+means by `-8`. Passed raw it applied at a *quarter* of its size on an
+800px-tall window. Everything else already agreed to within rounding.
+
+### The pin is the point
+
+`FIELD-GUN10` is that measurement, kept. It drives both paths and
+compares all four coordinates, with a tolerance **derived** from the
+one honest source of disagreement — `loadThunderlockArt` rounds the
+record to whole native pixels where the lab keeps a float, and the
+surface scale multiplies that by four — so a real divergence cannot
+hide inside it.
+
+Run against the code before the fix it says so in its own words:
+
+```
+the game's y is -22.98px from the prototype's, past the 2.5px
+rounding can explain (game 452.00, lab 474.98)
+```
+
+That is the lesson of all ten FIELD-GUN rounds in one line: **pin the
+output, not the inputs.** `GUN7` pins the machine's timeline against
+the lab's machine, `GUN8` pins every knob on the panel against the
+lab's own source, and `GUN10` pins the drawn rect against the lab's
+drawn rect. Between them there is no number left that can be copied
+wrongly without a test saying so.
+
+## FIELD-GUN11: the path nobody was testing
+
+Mac, a fifth time: *"Thats not the only issue. How many times do I
+have to say 1:1"*.
+
+FIELD-GUN10 pinned **one frame of one path**, and it was the path a
+player is *not* on. **Weapon Widget ships enabled**, so the draw goes
+through the clone's `getWeaponRect`, and the clone reads
+`weaponOffsetHeight()` for itself — the HUD bar and nothing else. The
+raise never reached it.
+
+Measured on that path:
+
+```
+at rest    LAB y=475.0   CLONE y=444.0   dy=-31.0
+sheathing  LAB y=575.3   CLONE y=550.8   dy=-24.5
+```
+
+**Thirty-one pixels high** — and feeding the raise through closed only
+part of it, because a second divergence sat underneath.
+
+### The clone was transforming the wrong box
+
+The lab lays out and transforms the **anchor** — the gun with no flash
+on it — and derives the drawn rect from it. The game handed Weapon
+Widget the **union**, which is 21 native pixels taller. Everything in
+that transform proportional to the rect's height came out ~6% large,
+so the Offset module's slide was 7.5px adrift the moment the weapon
+moved.
+
+`thunderlockArt.js` hands over an **anchor-sized record** now, with
+the union beside it, and both draw sites expand at the moment of
+drawing — exactly the shape the lab has always had. `unionDrawRect`
+moved into `combat/gunSheet.js` so the lab reads the game's copy
+rather than keeping its own.
+
+And the raise moved onto `_tlAdjust`, the one channel **both** draws
+read, instead of an `offsetHeight` only one of them sees.
+
+### After
+
+Both paths, four channel states across a cycle:
+
+```
+at rest         dy=-1.5    sheathing    dy=-1.1
+mid-bob         dy=-1.5    reload dip   dy=-0.7
+classic sprite  dy=-1.5
+```
+
+All inside the rounding the record's integer size can explain.
+
+### The pin
+
+`FIELD-GUN11` is that whole matrix — both paths, every channel — with
+a derived tolerance. Run against either fault it names it: `clone, at
+rest: y is -33.52px out` for the missing raise, `clone, sheathing: y
+is -15.07px out` for the union base.
+
+**Five rounds of "not 1:1" and the cause was the same every time: I
+pinned one path, one frame, one number at a time.** The matrix is what
+should have existed at the first integration.
+
 ## The test characters carry one
 
 TSR-GUN (Mac, 2026-09-19: *"Put this weapon and ammo inside the test

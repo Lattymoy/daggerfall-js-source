@@ -66,6 +66,7 @@ import {
 } from '../characters/weaponStates.js';
 import { WEAPON_TYPES, STATE_INDEX, ALIGN, NATIVE_W, NATIVE_H, WEAPON_FILE, weaponTypeForItem } from './fpsWeapon.js';
 import { weaponOffsetHeight } from '../ui/hudLarge.js';
+import { unionDrawRect } from './gunSheet.js';   // FIELD-GUN11: the gun's box -> the drawn box
 import { swingSoundFor, SOUND } from '../systems/soundClips.js';
 import { isEnchanted } from '../systems/inventory.js';
 import { getItemHands } from '../systems/equip.js';
@@ -702,7 +703,12 @@ export function createWeaponWidget({
       rect.x += (adjust.x ?? 0) * sx;
       rect.y += (adjust.y ?? 0) * sy;
     }
-    renderer.drawScreenQuad(tex, rect, w.curAnimRect, tint ?? undefined);
+    // FIELD-GUN11: as drawFpsWeapon does - the clone transforms the
+    // WEAPON's own box and the full image is expanded around it at
+    // the draw. Absent on every CIF record, so no classic weapon
+    // notices.
+    const q = w.art.unionBox && w.art.anchor ? unionDrawRect(rect, w.art.anchor, w.art.unionBox) : rect;
+    renderer.drawScreenQuad(tex, q, w.curAnimRect, tint ?? undefined);
     return true;
   }
 
