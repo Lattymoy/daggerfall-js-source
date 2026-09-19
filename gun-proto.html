@@ -76,13 +76,13 @@
   <label><span>idle pose</span><select id="idleSrc"><option value="sheet">sheet frame 1</option><option value="art">gun-idle.png</option></select></label>
   <label><span>align</span><select id="align"><option value="2">Right</option><option value="1">Center</option><option value="0">Left</option></select></label>
   <label><span>offset</span><input id="offset" type="range" min="0" max="0.4" step="0.005" value="0"><span class="v" id="voffset"></span></label>
-  <label><span>size %</span><input id="size" type="range" min="20" max="120" step="1" value="54"><span class="v" id="vsize"></span></label>
+  <label><span>size %</span><input id="size" type="range" min="20" max="120" step="1" value="49"><span class="v" id="vsize"></span></label>
   <label><span>raise</span><input id="raise" type="range" min="-60" max="60" step="1" value="-8"><span class="v" id="vraise"></span></label>
   <label><span>left hand</span><input id="flip" type="checkbox"><span class="v">mirror</span></label>
 
   <h2>Cycle</h2>
   <label><span>fire fps</span><input id="fps" type="range" min="4" max="30" step="1" value="14"><span class="v" id="vfps"></span></label>
-  <label><span>reload ms</span><input id="cool" type="range" min="0" max="2000" step="20" value="700"><span class="v" id="vcool"></span></label>
+  <label><span>reload ms</span><input id="cool" type="range" min="0" max="2000" step="20" value="1700"><span class="v" id="vcool"></span></label>
   <label><span>hit frame</span><input id="hit" type="range" min="0" max="5" step="1" value="1"><span class="v" id="vhit"></span></label>
   <label><span>auto</span><input id="auto" type="checkbox"><span class="v">hold</span></label>
 
@@ -93,10 +93,10 @@
   <label><span>damping</span><input id="damp" type="range" min="2" max="60" step="1" value="14"><span class="v" id="vdamp"></span></label>
 
   <h2>Screenshake &mdash; the camera</h2>
-  <label><span>shake</span><input id="shake" type="range" min="0" max="30" step="0.5" value="7"><span class="v" id="vshake"></span></label>
-  <label><span>roll&deg;</span><input id="shakeRot" type="range" min="0" max="4" step="0.1" value="0.7"><span class="v" id="vshakeRot"></span></label>
-  <label><span>rattle</span><input id="shakeFreq" type="range" min="6" max="60" step="1" value="26"><span class="v" id="vshakeFreq"></span></label>
-  <label><span>decay</span><input id="shakeDecay" type="range" min="0.5" max="10" step="0.1" value="3.2"><span class="v" id="vshakeDecay"></span></label>
+  <label><span>shake</span><input id="shake" type="range" min="0" max="30" step="0.5" value="30"><span class="v" id="vshake"></span></label>
+  <label><span>roll&deg;</span><input id="shakeRot" type="range" min="0" max="4" step="0.1" value="4"><span class="v" id="vshakeRot"></span></label>
+  <label><span>rattle</span><input id="shakeFreq" type="range" min="6" max="60" step="1" value="60"><span class="v" id="vshakeFreq"></span></label>
+  <label><span>decay</span><input id="shakeDecay" type="range" min="0.5" max="10" step="0.1" value="5"><span class="v" id="vshakeDecay"></span></label>
 
   <h2>Reload lower &mdash; the Offset module</h2>
   <label><span>drop</span><input id="drop" type="range" min="0" max="1.5" step="0.05" value="0.55"><span class="v" id="vdrop"></span></label>
@@ -150,10 +150,10 @@ const ctx = canvas.getContext('2d');
 const $ = (id) => document.getElementById(id);
 
 const state = {
-  idleSrc: 'sheet', align: ALIGN.Right, offset: 0, size: 54, raise: -8, flip: false,
-  fps: 14, cool: 700, hit: 1, auto: false,
+  idleSrc: 'sheet', align: ALIGN.Right, offset: 0, size: 49, raise: -8, flip: false,
+  fps: 14, cool: 1700, hit: 1, auto: false,
   kick: 16, back: 0.42, stiff: 120, damp: 14,
-  shake: 7, shakeRot: 0.7, shakeFreq: 26, shakeDecay: 3.2,
+  shake: 30, shakeRot: 4, shakeFreq: 60, shakeDecay: 5,
   drop: 0.55, offsetSpeed: 1, modOffset: true,
   modBob: true, bobLength: 100, bobSizeX: 1, bobSizeY: 1, bobSpeedMove: 1, bobSpeedState: 1, bobShape: 0, bobIdle: true,
   modInertia: true, inScale: 1, inSpeed: 1, inFwd: 1, inFwdSpeed: 1,

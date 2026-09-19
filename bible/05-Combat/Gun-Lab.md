@@ -46,8 +46,11 @@ not `WEAPON*.CIF` records sized in native pixels.
 
 The weapon sits on the **right** (`AlignRight`, offset 0), which is
 where the classic weapons sit and where Mac asked for it. The page's
-opening numbers are HIS, off the panel (2026-09-19): size 54, raise
--8, fire 14fps, reload 700ms, hit frame 1.
+opening numbers are HIS, off the panel (2026-09-19): size 49, raise
+-8, fire 14fps, reload 1700ms, hit frame 1, and the screenshake at the
+top of every slider it has — 30 native units, 4 degrees of roll, the
+fastest rattle — with decay at 5, which is what makes a shake that
+large survivable: it is over in well under a second.
 
 ## Weapon Widget's own movement, on the gun
 

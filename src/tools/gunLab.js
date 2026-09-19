@@ -209,7 +209,7 @@ export function placeSprite({
  * 2 for melee) and a one-shot that cannot be interrupted
  * (FPSWeapon.OnAttackDirection's rule). `auto` holds the trigger.
  */
-export function createGunMachine({ fps = 14, cooldownMs = 260, hitFrame = 1 } = {}) {
+export function createGunMachine({ fps = 14, cooldownMs = 1700, hitFrame = 1 } = {}) {
   const m = {
     state: 'Idle', frame: 0, fps, cooldownMs, hitFrame,
     trigger: false, shots: 0,

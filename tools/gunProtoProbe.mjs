@@ -216,7 +216,7 @@ await page.waitForTimeout(3000);
 const calm = await read();
 check('the shake settles to exactly nothing', calm.cam.x === 0 && calm.cam.y === 0 && calm.cam.rot === 0,
   `trauma ${calm.trauma.toFixed(3)}`);
-await set({ kick: 16, shake: 7, shakeDecay: 3.2, modBob: true, modInertia: true, modOffset: true });
+await set({ kick: 16, shake: 30, shakeDecay: 5, modBob: true, modInertia: true, modOffset: true });
 
 // The mirror, and the alignment swap under it.
 await set({ flip: true, align: 2 });
