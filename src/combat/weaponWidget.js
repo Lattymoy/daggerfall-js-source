@@ -66,7 +66,6 @@ import {
 } from '../characters/weaponStates.js';
 import { WEAPON_TYPES, STATE_INDEX, ALIGN, NATIVE_W, NATIVE_H, WEAPON_FILE, weaponTypeForItem } from './fpsWeapon.js';
 import { weaponOffsetHeight } from '../ui/hudLarge.js';
-import { unionDrawRect } from './gunSheet.js';   // FIELD-GUN11: the gun's box -> the drawn box
 import { swingSoundFor, SOUND } from '../systems/soundClips.js';
 import { isEnchanted } from '../systems/inventory.js';
 import { getItemHands } from '../systems/equip.js';
@@ -662,17 +661,7 @@ export function createWeaponWidget({
   /** OnGUI's repaint (IL 0x1424-0x1582): with the Offset module the
    *  sprite draws whatever the show clocks say (the slide takes it off
    *  screen); without it, only while the rig would show it. */
-  /** FIELD-GUN6: `adjust` is the ONE thing the mod has no module for -
-   *  a weapon that moves without the swing moving it. The clone's
-   *  Recoil replays a STRIKE in reverse when a blow lands, which a gun
-   *  has no strike to replay; the Dwarven Thunderlock's kick is a
-   *  spring the rig owns (combat/gunFeel.js). It arrives here as a
-   *  rect delta in native (320x200) units, applied AFTER the mod's own
-   *  transform for the reason the lab wrote down: the transform ends
-   *  in a floor, so the rect never rises above its resting place, and
-   *  a gun's kick rises. Null for every weapon but that one, which is
-   *  every caller that predates this. */
-  function draw(renderer, canvas, tint = null, adjust = null) {   // MAC-I: the room's light, as the sprite this clone stands in for takes it
+  function draw(renderer, canvas, tint = null) {   // MAC-I: the room's light, as the sprite this clone stands in for takes it
     if (!ctx || !w.art || !renderer || !canvas) return false;
     if (ctx.weaponType === T.None) return false;
     // WW4 (Mac's curated fix, 2026-09-16): an applicable clone that
@@ -697,18 +686,7 @@ export function createWeaponWidget({
     if (!rec) return false;
     const tex = w.curCustomTexture?.tex ?? rec.frames[Math.min(Math.max(0, w.currentFrame), rec.frames.length - 1)];
     if (!tex) return false;
-    const rect = getWeaponRect();
-    if (adjust) {
-      const sx = canvas.width / 320, sy = canvas.height / 200;
-      rect.x += (adjust.x ?? 0) * sx;
-      rect.y += (adjust.y ?? 0) * sy;
-    }
-    // FIELD-GUN11: as drawFpsWeapon does - the clone transforms the
-    // WEAPON's own box and the full image is expanded around it at
-    // the draw. Absent on every CIF record, so no classic weapon
-    // notices.
-    const q = w.art.unionBox && w.art.anchor ? unionDrawRect(rect, w.art.anchor, w.art.unionBox) : rect;
-    renderer.drawScreenQuad(tex, q, w.curAnimRect, tint ?? undefined);
+    renderer.drawScreenQuad(tex, getWeaponRect(), w.curAnimRect, tint ?? undefined);
     return true;
   }
 

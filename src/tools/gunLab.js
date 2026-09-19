@@ -57,8 +57,21 @@ import { SHEET_GRID, FIRE_FRAMES, cellRect, keyBackground, contentBox, unionBox,
 // arrow points ONE WAY - the lab reads the port's law and the port
 // does not know the lab exists (test/gunLab.test.js fails if that
 // ever stops being true).
+// FIELD-GUN12: THE LAB NOW RUNS THE GAME'S MODULE.
+// `createWidgetRig`, `widgetRigStep`, `labMotion` and the settings
+// reader moved to combat/gunViewmodel.js with the placement, because
+// the game needs the SAME frame and five rounds of "it still isn't
+// 1:1" is what two copies of it cost. The lab is no longer a thing
+// the game resembles - it is a thing the game runs.
+export { placeSprite } from '../combat/gunPlacement.js';
+export {
+  createGunRig as createWidgetRig, gunRigStep as widgetRigStep,
+  gunMotion as labMotion, gunWidgetSettings as labWidgetSettings,
+  widgetDefaults, gunFrameRect,
+} from '../combat/gunViewmodel.js';
 export { ALIGN } from '../combat/weaponAlign.js';
 import { ALIGN } from '../combat/weaponAlign.js';
+import { placeSprite } from '../combat/gunPlacement.js';
 
 // THE MOD'S OWN MODULES (WW1's 1:1 port of FPSWeaponClone) - run, not
 // imitated. The arrow points one way, as it does for ALIGN.
@@ -70,33 +83,8 @@ import { walkSpeed, runSpeed } from '../player/motor.js';   // GetBaseSpeed's wa
 export { createRecoil, createScreenShake, shakeNoise, GUN_FEEL } from '../combat/gunFeel.js';   // FIELD-GUN6: the one home
 export { widgetTransformRect };
 
-/**
- * FPSWeapon's OnGUI rect (:378-388), with the width taken as a
- * fraction of the screen instead of from a CIF record's native size -
- * the declared departure. Everything else is the classic law: bottom
- * anchored, aligned by the table's Alignment/Offset, and AlignRight
- * becoming AlignLeft under the handedness mirror (:459-464).
- *
- * `kick` is the lab's own: the recoil offset in NATIVE (320x200)
- * units, scaled with the surface so it reads the same at any window
- * size.
- */
-export function placeSprite({
-  canvasW, canvasH, frameW, frameH,
-  widthPct = 0.62, align = ALIGN.Center, offset = 0,
-  flip = false, kick = { x: 0, y: 0 }, offsetHeight = 0,
-}) {
-  const w = canvasW * widthPct;
-  const h = w * (frameH / frameW);
-  const a = (flip && align === ALIGN.Right) ? ALIGN.Left : align;
-  let x;
-  if (a === ALIGN.Left) x = canvasW * offset;
-  else if (a === ALIGN.Center) x = canvasW / 2 - w / 2;
-  else x = canvasW * (1 - offset) - w;
-  const y = canvasH - h - offsetHeight;
-  const sx = canvasW / 320, sy = canvasH / 200;
-  return { x: x + kick.x * sx * (flip ? -1 : 1), y: y + kick.y * sy, w, h };
-}
+// FIELD-GUN12: placeSprite moved to combat/gunPlacement.js, which
+// the game reads too - see that file's header.
 
 /**
  * THE CYCLE. A gun is not a sword: WeaponManager's six directional
@@ -348,90 +336,10 @@ export function createSfxPlayer({ base = 'sfx/', vary = 0.06, volume = 0.7 } = {
  */
 export const WIDGET_VENDOR = WEAPON_WIDGET_VENDOR;
 
-/** The mod's declared defaults, as the store would answer them. */
-export function widgetDefaults() {
-  const keys = MOD_SETTINGS[WEAPON_WIDGET_VENDOR].keys;
-  const out = {};
-  for (const k of Object.keys(keys)) out[k] = keys[k].default;
-  return out;
-}
 
-/** The mod's settings with the lab's overrides on top, derived through
- *  readWidgetSettings so every multiplier is the mod's own. */
-export function labWidgetSettings(overrides = {}) {
-  return readWidgetSettings(() => ({ ...widgetDefaults(), 'Modules.Inertia': true, ...overrides }));
-}
 
-/** FPSWeaponClone's .ctor fields, the ones the three modules carry
- *  between frames. */
-export function createWidgetRig() {
-  return {
-    time: 0,
-    position: [0, 0], scale: [1, 1], offset: [0, 0],
-    offsetCurrent: [0, 0], offsetTarget: [0, 0],
-    moveSmooth: 0, bobSmooth: [0, 0],
-    inertiaCurrent: [0, 0], inertiaTarget: [0, 0], inertiaSpeedMod: 1,
-    inertiaForwardCurrent: [0, 0], inertiaForwardTarget: [0, 0],
-  };
-}
 
-/**
- * One frame of the three modules, in the component's own order -
- * Offset, then Bob, then Inertia - writing the same three channels the
- * clone publishes. `idle` is the machine's Idle, which is what the mod
- * gates Bob and Inertia on; `shown` false is the reload lower.
- */
-export function widgetRigStep(rig, s, dt, {
-  screenRect, motion, look = [0, 0], flip = false, idle = true,
-  shown = true, hiddenTarget = [0, 0.55], liveSpeed = 50, cursorActive = false, swingHeld = false,
-}) {
-  rig.time += dt;
-  rig.position = [0, 0]; rig.scale = [1, 1]; rig.offset = [0, 0];
-  if (s.offset) {
-    const o = offsetStep({
-      offsetCurrent: rig.offsetCurrent, offsetTarget: rig.offsetTarget,
-      animating: false, shown, equipCountdown: 0, hiddenTarget,
-    }, dt, liveSpeed / 100 * s.offsetSpeed);   // get_offsetSpeedLive
-    rig.offsetCurrent = o.offsetCurrent; rig.offsetTarget = o.offsetTarget;
-    rig.offset = [rig.offset[0] + o.delta[0], rig.offset[1] + o.delta[1]];
-  }
-  if (s.bob && idle) {
-    const b = bobStep({ moveSmooth: rig.moveSmooth, bobSmooth: rig.bobSmooth, time: rig.time, screenRect }, s, motion, dt);
-    rig.moveSmooth = b.moveSmooth; rig.bobSmooth = b.bobSmooth;
-    rig.position = [rig.position[0] + b.delta[0], rig.position[1] + b.delta[1]];
-  }
-  if (s.inertia && idle) {
-    const i = inertiaStep({
-      inertiaCurrent: rig.inertiaCurrent, inertiaTarget: rig.inertiaTarget,
-      inertiaForwardCurrent: rig.inertiaForwardCurrent, inertiaForwardTarget: rig.inertiaForwardTarget,
-      screenRect, flip, look, cursorActive, swingHeld,
-    }, s, motion, dt);
-    rig.inertiaCurrent = i.inertiaCurrent; rig.inertiaTarget = i.inertiaTarget; rig.inertiaSpeedMod = i.inertiaSpeedMod;
-    rig.inertiaForwardCurrent = i.inertiaForwardCurrent; rig.inertiaForwardTarget = i.inertiaForwardTarget;
-    rig.scale = [rig.scale[0] + i.scale[0], rig.scale[1] + i.scale[1]];
-    rig.position = [rig.position[0] + i.delta[0], rig.position[1] + i.delta[1]];
-  }
-  return rig;
-}
 
-/**
- * THE MOTOR'S FRAME, as the rig assembles it for the clone
- * (weaponRig.js:1053-1060) - baseSpeed from GetBaseSpeed's walk arm,
- * speedRatio the live speed over it, and localVel the eye's motion
- * turned into the body's frame (right, up, forward). The lab has no
- * motor, so `walking`/`running` stand in for one and the vector is
- * built the same way round.
- */
-export function labMotion({ walking = false, running = false, crouching = false, liveSpeed = 50, strafe = 0 } = {}) {
-  const base = walkSpeed(liveSpeed);
-  const speed = walking ? (running ? runSpeed(liveSpeed, 50, crouching) : base) : 0;
-  return {
-    grounded: true, crouching, riding: false, standing: !walking,
-    speedRatio: base > 0 ? speed / base : 1,
-    baseSpeed: base,
-    localVel: [strafe * speed, 0, walking ? speed : 0],
-  };
-}
 
 /**
  * THE ANCHOR, and the second half of the alignment story unionBox

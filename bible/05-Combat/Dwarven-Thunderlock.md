@@ -438,6 +438,77 @@ is -15.07px out` for the union base.
 pinned one path, one frame, one number at a time.** The matrix is what
 should have existed at the first integration.
 
+## FIELD-GUN12: the prototype, ported
+
+Mac, the sixth time: *"Port the god damn prototype verbatim"*.
+
+**He is right, and the five rounds before this one are the argument.**
+
+The lab composed its frame one way and the game composed it another,
+and every round was me making the two *agree* about one more thing —
+the size, the raise, the frame clock, the cooldown, the hit frame, the
+volume, the pitch, a module's switch, the units of an offset, which
+box the transform is applied to. Each fix was correct. **The approach
+was not.** Two implementations of one thing do not converge by being
+corrected; they converge by becoming one implementation.
+
+### What moved
+
+`gun-proto.html`'s draw block is `combat/gunViewmodel.js` now, and
+both sides call it:
+
+| was | is |
+| --- | --- |
+| lab's `createWidgetRig` / `widgetRigStep` | `createGunRig` / `gunRigStep` |
+| lab's `labMotion` / `labWidgetSettings` | `gunMotion` / `gunWidgetSettings` |
+| lab's `placeSprite` | `combat/gunPlacement.js` |
+| lab's `unionDrawRect` | `combat/gunSheet.js` |
+| the lab's draw block | `gunFrameRect` |
+
+The lab imports every one of them back. **It is no longer a thing the
+game resembles — it is a thing the game runs.**
+
+### What the gun stopped going through
+
+For this weapon the rig no longer calls `drawFpsWeapon` or Weapon
+Widget's clone. Both are 1:1 ports — of DFU, and of
+RedRoryOTheGlen's mod — written for the weapons those two things
+have, and this weapon is neither's. Five rounds were spent making a
+rect built for a CIF record come back right for a contact sheet.
+
+It still **runs** the mod's three modules, on the mod's own settings;
+`gunViewmodel.js` imports them rather than imitating them, which is
+what the lab always did. And both of those files are now **untouched
+by this weapon** — the `adjust` parameter, the union expansion and the
+`_tlAdjust` channel are all gone from them, which is the other half of
+what this bought.
+
+### The pin is identity, not agreement
+
+Every round before ended with a numeric pin: drive both, diff, assert
+the difference is small. That is the right pin when two
+implementations must exist. It is the wrong *fix* when they need not —
+and each time one passed, the next thing the two composed differently
+was still waiting.
+
+`FIELD-GUN12` asserts the lab's exports **are** the game's function
+objects. Not "they agree" — the same function. It cannot drift, cannot
+round differently, and cannot be one path out of two.
+
+### One thing the move fixed on its own
+
+The frame's motor — camera, local velocity, look — was assembled
+*inside* `if (widgetOn() || _torchesOn || shieldOn())`. Fine while the
+three mods were its only readers; the gun's viewmodel is a fourth, and
+it must see the same numbers whether or not any mod is enabled. It is
+assembled above the gate now, `_lastEye` included.
+
+### The whole lesson, twelve rounds in
+
+**A prototype is not a specification to copy. It is code to move.**
+Every round of "it still isn't 1:1" was the distance between those two
+sentences.
+
 ## The test characters carry one
 
 TSR-GUN (Mac, 2026-09-19: *"Put this weapon and ammo inside the test
