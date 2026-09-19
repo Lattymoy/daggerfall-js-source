@@ -958,6 +958,7 @@ export class Renderer {
     // (uniforms are program state, so this survives a program switch).
     this._emissionColorUp = null;
     this._tex1Bound = null;   // PERF-TEX: cleared with its sibling
+    this._tex0Bound = null; this._activeUnit = null;   // PERF-TEX3: unit 0 and the selector, with it
     this._sq = {};
     this._tArrayTex = null;
     this._tTileSize = null;
@@ -1179,6 +1180,7 @@ export class Renderer {
     this._close2D();   // PERF-2D: the baseline back, before anything that needs it
     if (!this._worldViewportPx) return;
     this._tex1Bound = null;   // PERF-TEX: the 2D path and the post passes own the units past here
+    this._tex0Bound = null; this._activeUnit = null;   // PERF-TEX3: unit 0 and the selector, with it
     this._sq = {};   // PERF-UI: ...and this is the 2D pass's own door, so it starts knowing nothing
     this._tArrayTex = null;
     this._tTileSize = null;
@@ -1208,10 +1210,50 @@ export class Renderer {
   _bindEmission(tex) {
     if (this._tex1Bound === tex) return;
     const gl = this.gl;
-    gl.activeTexture(gl.TEXTURE1);
+    this._activeTexture(gl.TEXTURE1);
     gl.bindTexture(gl.TEXTURE_2D, tex);
-    gl.activeTexture(gl.TEXTURE0);
+    this._activeTexture(gl.TEXTURE0);
     this._tex1Bound = tex;
+    this.stats.texBinds++;
+  }
+
+  /** PERF-TEX3: THE UNIT THAT WAS ALREADY ACTIVE.
+   *
+   *  Measured over a frame of 25 loose models, 3 batched meshes and a
+   *  hundred-odd HUD quads: **97% of every `activeTexture` call set the
+   *  unit that was already selected** (117 of 121). It is not an
+   *  accident - every path in this file that reaches for a unit above 0
+   *  puts unit 0 back the moment it is done (`_bindEmission`, the
+   *  contact and adapt uploads, the cloud-shadow slot, the terrain's
+   *  tilemap), so unit 0 is what is active almost always, and almost
+   *  every call re-selects it.
+   *
+   *  `activeTexture` is a pure selector - it has no effect but to say
+   *  which unit the next `bindTexture` means - so this shadow cannot
+   *  change a picture on its own. What it CAN do is go stale, which is
+   *  why the funnel law (`test/glstate.test.js`) allows exactly one raw
+   *  `gl.activeTexture` in this file, inside here. */
+  _activeTexture(unit) {
+    if (this._activeUnit === unit) return;
+    this.gl.activeTexture(unit);
+    this._activeUnit = unit;
+  }
+
+  /** PERF-TEX3: THE TEXTURE THAT WAS ALREADY ON UNIT 0 - `_bindEmission`
+   *  for the unit every pass shares. 55% of the frame's `bindTexture`
+   *  calls re-bound the texture already on the unit: a mesh bundle whose
+   *  sub-meshes repeat an archive, and a HUD drawing ninety quads off
+   *  one sheet.
+   *
+   *  Cleared wherever something else may own unit 0 - the same points
+   *  `_tex1Bound` is cleared at, and for the same reason: a shadow that
+   *  speaks for a unit it no longer owns is a WRONG TEXTURE, which is
+   *  the one thing a performance change may never cost. */
+  _bindTex0(tex) {
+    if (this._tex0Bound === tex) return;
+    this._activeTexture(this.gl.TEXTURE0);
+    this.gl.bindTexture(this.gl.TEXTURE_2D, tex);
+    this._tex0Bound = tex;
     this.stats.texBinds++;
   }
 
@@ -1278,6 +1320,7 @@ export class Renderer {
     // shadow that speaks for a unit it no longer owns is a WRONG TEXTURE,
     // which is the one thing a performance change may never cost.
     this._tex1Bound = null;
+    this._tex0Bound = null; this._activeUnit = null;   // PERF-TEX3
     this._tArrayTex = null;
     this._tTileSize = null;
     this._sq = {};
@@ -1435,6 +1478,7 @@ export class Renderer {
     this._csUploaded = {};
     this._emissionColorUp = null;
     this._tex1Bound = null;   // PERF-TEX: cleared with its sibling
+    this._tex0Bound = null; this._activeUnit = null;   // PERF-TEX3: unit 0 and the selector, with it
     this._sq = {};
     this._tArrayTex = null;
     this._tTileSize = null;
@@ -1542,9 +1586,9 @@ export class Renderer {
   _uploadNoContact(loc) {
     if (!loc?.prevDepth) return;
     const gl = this.gl;
-    gl.activeTexture(gl.TEXTURE0 + CONTACT_UNIT);
+    this._activeTexture(gl.TEXTURE0 + CONTACT_UNIT);
     gl.bindTexture(gl.TEXTURE_2D, this._adaptOne());
-    gl.activeTexture(gl.TEXTURE0);
+    this._activeTexture(gl.TEXTURE0);
     gl.uniform1i(loc.prevDepth, CONTACT_UNIT);
     gl.uniform4fv(loc.contactParams, ZERO_CONTACT);
   }
@@ -1560,9 +1604,9 @@ export class Renderer {
     if (!loc?.adapt) return;
     const gl = this.gl;
     const tex = this._air && this._studioDepth === 0 ? this._air.adaptTexture : this._adaptOne();
-    gl.activeTexture(gl.TEXTURE0 + ADAPT_UNIT);
+    this._activeTexture(gl.TEXTURE0 + ADAPT_UNIT);
     gl.bindTexture(gl.TEXTURE_2D, tex);
-    gl.activeTexture(gl.TEXTURE0);
+    this._activeTexture(gl.TEXTURE0);
     gl.uniform1i(loc.adapt, ADAPT_UNIT);
   }
   /** AUDIT-EL F12: THE AO SAMPLER IS ALWAYS ON ITS UNIT. With the air off
@@ -1915,7 +1959,7 @@ export class Renderer {
         gl.uniformMatrix4fv(u.proj, false, this._proj);
         gl.uniformMatrix4fv(u.view, false, this._view);
         gl.uniformMatrix4fv(u.model, false, modelMatrix);
-        gl.activeTexture(gl.TEXTURE0);
+        this._activeTexture(gl.TEXTURE0);
         gl.uniform1i(u.tex, 0);
         gl.depthMask(false);
       }
@@ -2009,7 +2053,7 @@ export class Renderer {
     // the whole draw. Measured the moment this landed - the arm's
     // offscreen target went from 203 lit texels to 0 with no error, no
     // warning and a program that links clean.
-    gl.activeTexture(gl.TEXTURE0);
+    this._activeTexture(gl.TEXTURE0);
     gl.uniform1i(c.tex, 0);
     if (mesh.ranges && mesh.ranges.length) {
       for (const r of mesh.ranges) {
@@ -2286,8 +2330,7 @@ export class Renderer {
     const c = this._charQuad;
     gl.uniformMatrix4fv(c.proj, false, this._proj);
     gl.uniformMatrix4fv(c.view, false, this._view);
-    gl.activeTexture(gl.TEXTURE0);
-    gl.bindTexture(gl.TEXTURE_2D, tex);
+    this._bindTex0(tex);   // PERF-TEX3
     gl.uniform1i(c.tex, 0);
     this._uploadFog(this._charQuad);
     this._bindVao(this._charQuadVAO);
@@ -2461,7 +2504,7 @@ void main() {
     // The sampler binding went up with the program; only the texture is a
     // quad's own. (Not `_bindEmission`'s shadow: that one speaks for unit
     // 1, this is unit 0, and the 2D pass is the far side of endWorldPass.)
-    if (tex) { gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, tex); this.stats.texBinds++; }
+    if (tex) this._bindTex0(tex);   // PERF-TEX3: a HUD draws ninety quads off one sheet
     // U10: a SOLID quad's alpha was written straight out with blending
     // OFF, so every translucent UI panel in the port drew OPAQUE -
     // DaggerfallUI.ScreenDimColor (0,0,0,0.5) blacked the screen out
@@ -2593,8 +2636,7 @@ void main() {
     gl.bufferSubData(gl.ARRAY_BUFFER, 0, a, 0, n * 8);
     gl.uniform2f(this._screenQuadRun.canvas, gl.drawingBufferWidth, gl.drawingBufferHeight);
     gl.uniform4f(this._screenQuadRun.color, color[0], color[1], color[2], color[3]);
-    gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, tex); gl.uniform1i(this._screenQuadRun.tex, 0);
-    this.stats.texBinds++;
+    this._bindTex0(tex); gl.uniform1i(this._screenQuadRun.tex, 0);   // PERF-TEX3
     gl.drawElementsInstanced(gl.TRIANGLES, 6, gl.UNSIGNED_SHORT, 0, n);
     this.stats.draws++;
   }
@@ -2668,7 +2710,7 @@ void main() {
     const gl = this.gl;
     this._ensureOverlayProgram();
     this._use(this.overlayProgram);
-    gl.activeTexture(gl.TEXTURE0);
+    this._activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, tex);
     gl.uniform1i(this._overlay.tex, 0);
     gl.uniform2f(this._overlay.uv1, u1, v1);
@@ -2939,6 +2981,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     gl.uniform3fv(this.uEmissionColor, this._c3(this._windowEmission));
     this._emissionColorUp = this._windowEmission;   // F49: the per-sub-mesh shadow starts the frame true
     this._tex1Bound = null;   // PERF-TEX: a frame's; the post passes (air, clouds) own unit 1 between frames
+    this._tex0Bound = null; this._activeUnit = null;   // PERF-TEX3: unit 0 and the selector, with it
     this._sq = {};   // PERF-UI: the screen-quad uniform shadow is a frame's too
     this._tArrayTex = null;
     this._tTileSize = null;
@@ -2955,7 +2998,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     this._camPos[1] = -(v[4] * v[12] + v[5] * v[13] + v[6] * v[14]);
     this._camPos[2] = -(v[8] * v[12] + v[9] * v[13] + v[10] * v[14]);
     this._uploadFog(this._solidFog);
-    gl.activeTexture(gl.TEXTURE0);
+    this._activeTexture(gl.TEXTURE0);
     this._proj = proj;
     this._view = view;
   }
@@ -3479,9 +3522,10 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     if (this.emissionTextures.has(key)) return this.emissionTextures.get(key);
     const gl = this.gl;
     const tex = gl.createTexture();
-    gl.activeTexture(gl.TEXTURE1);
+    this._activeTexture(gl.TEXTURE1);
     gl.bindTexture(gl.TEXTURE_2D, tex);
     this._tex1Bound = null;   // PERF-TEX: an upload owns unit 1 and leaves it active - the shadow cannot speak for it
+    this._tex0Bound = null; this._activeUnit = null;   // PERF-TEX3: unit 0 and the selector, with it
     gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
     gl.texImage2D(
       gl.TEXTURE_2D, 0, gl.RGBA, color32.width, color32.height, 0,
@@ -3497,7 +3541,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     gl.generateMipmap?.(gl.TEXTURE_2D);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST_MIPMAP_NEAREST ?? gl.NEAREST);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-    gl.activeTexture(gl.TEXTURE0);
+    this._activeTexture(gl.TEXTURE0);
     this.emissionTextures.set(key, tex);
     this._texGen++;   // EV2: cached sub-mesh lookups refresh
     return tex;
@@ -3732,13 +3776,13 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     if (!loc || this._csUploaded[key] === this._csStamp) return;
     this._csUploaded[key] = this._csStamp;
     const gl = this.gl, cs = this._cloudShadow, [mapLoc, rectLoc] = loc;
-    gl.activeTexture(gl.TEXTURE0 + CLOUD_SHADOW_UNIT);   // AUDIT 65 RS-3: reserved, above every foreign pass's slots
+    this._activeTexture(gl.TEXTURE0 + CLOUD_SHADOW_UNIT);   // AUDIT 65 RS-3: reserved, above every foreign pass's slots
     gl.bindTexture(gl.TEXTURE_2D, cs?.map ?? this._blackTex);
     gl.uniform1i(mapLoc, CLOUD_SHADOW_UNIT);
     const r = cs?.map ? cs.rect : null;
     this._csRect[0] = r ? r[0] : 0; this._csRect[1] = r ? r[1] : 0; this._csRect[2] = r ? r[2] : 0; this._csRect[3] = r ? r[3] : 0;
     gl.uniform4fv(rectLoc, this._csRect);
-    gl.activeTexture(gl.TEXTURE0);
+    this._activeTexture(gl.TEXTURE0);
   }
 
   /** Draw one terrain surface with its tilemap + tile array. */
@@ -3791,14 +3835,14 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     // tile ARRAY is the world's single atlas, the same object for every
     // pixel of the frame, so it is shadowed like unit 1's emission map.
     if (this._tArrayTex !== arrayTex) {
-      gl.activeTexture(gl.TEXTURE0);
+      this._activeTexture(gl.TEXTURE0);
       gl.bindTexture(gl.TEXTURE_2D_ARRAY, arrayTex);
       this._tArrayTex = arrayTex;
       this.stats.texBinds++;
     }
-    gl.activeTexture(gl.TEXTURE2);
+    this._activeTexture(gl.TEXTURE2);
     gl.bindTexture(gl.TEXTURE_2D, tilemapTex);
-    gl.activeTexture(gl.TEXTURE0);
+    this._activeTexture(gl.TEXTURE0);
     this.stats.texBinds++;
     this._bindVao(surface.vao);
     gl.drawElements(gl.TRIANGLES, surface.indexCount, gl.UNSIGNED_INT, 0);
@@ -3820,7 +3864,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     gl.uniformMatrix4fv(this.waterUProj, false, this._proj);
     gl.uniformMatrix4fv(this.waterUView, false, this._view);
     gl.uniform4fv(this.waterUColor, color);
-    gl.activeTexture(gl.TEXTURE0);
+    this._activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, waterTex);
     gl.uniform1i(this.waterUTex, 0);
     gl.uniform1f(this.waterUScroll, scrollTiles);
@@ -3916,13 +3960,13 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     if (count > 0) gl.uniform3fv(L.pointColors, this._pointColorData(count, true));
     gl.uniform4fv(L.indirect, this._indirect);
     gl.uniform3fv(L.indirectColor, this._indirectColor);
-    gl.activeTexture(gl.TEXTURE0);
+    this._activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D_ARRAY, arrayTex);
     gl.uniform1i(L.tileArr, 0);
-    gl.activeTexture(gl.TEXTURE2);
+    this._activeTexture(gl.TEXTURE2);
     gl.bindTexture(gl.TEXTURE_2D, tilemapTex);
     gl.uniform1i(L.tilemap, 2);
-    gl.activeTexture(gl.TEXTURE0);
+    this._activeTexture(gl.TEXTURE0);
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
     gl.depthMask(false);
@@ -4036,10 +4080,11 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
       const tex = this.textures.get(key);
       if (!tex) return;
       if (key !== lastKey) {
-        gl.activeTexture(gl.TEXTURE0);
+        this._activeTexture(gl.TEXTURE0);
         gl.bindTexture(gl.TEXTURE_2D, tex);
-        gl.activeTexture(gl.TEXTURE1);
+        this._activeTexture(gl.TEXTURE1);
         gl.bindTexture(gl.TEXTURE_2D, this.emissionTextures.get(key) || this._blackTex);
+        this._tex0Bound = null;   // PERF-TEX3: and unit 0 with it - this path binds its own and keeps its own `lastKey` skip
         this._tex1Bound = null;   // PERF-TEX: this path has skipped on `lastKey` since it was written, so it needs no shadow of its own - but it OWNS unit 1 while it runs, and the mesh loop's shadow cannot speak for it afterwards
         this.stats.texBinds += 2;
         lastKey = key;
@@ -4089,7 +4134,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
       gl.depthMask(true);
       gl.disable(gl.BLEND);
     }
-    gl.activeTexture(gl.TEXTURE0);
+    this._activeTexture(gl.TEXTURE0);
     this._bindVao(null);
     gl.enable(gl.CULL_FACE);
     this._use(this.program);
@@ -4260,8 +4305,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
         this._emissionColorUp = emisColor;
       }
       this._bindEmission(sm._evEmis);   // PERF-TEX: skipped when it is already the one on the unit, which it usually is
-      gl.bindTexture(gl.TEXTURE_2D, tex);
-      this.stats.texBinds++;
+      this._bindTex0(tex);   // PERF-TEX3: a bundle whose sub-meshes repeat an archive re-bound the same texture every time
       if (wire) {
         const range = wireMesh.ranges[smi];
         gl.drawElements(gl.LINES, range.count, gl.UNSIGNED_INT, range.start * 4);

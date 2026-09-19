@@ -259,7 +259,7 @@ test('AUDIT 65 RS-3: the reserved cloud-shadow unit stands clear of every slot a
   assert.ok(CLOUD_SHADOW_UNIT <= 15, 'and WebGL2 only guarantees MAX_TEXTURE_IMAGE_UNITS >= 16');
   const rr = readFileSync('src/render/renderer.js', 'utf8');
   assert.doesNotMatch(rr, /gl\.TEXTURE7\b/, 'the literal is gone from both sites');
-  assert.match(rr, /gl\.activeTexture\(gl\.TEXTURE0 \+ CLOUD_SHADOW_UNIT\);/);
+  assert.match(rr, /this\._activeTexture\(gl\.TEXTURE0 \+ CLOUD_SHADOW_UNIT\);/);   // PERF-TEX3: through the selector's funnel
   assert.match(rr, /gl\.uniform1i\(mapLoc, CLOUD_SHADOW_UNIT\);/);
   // PERF-TEX joined the texture shadows to this list, so the pin is what
   // the mark must DO rather than the whole of its body; the additions have
@@ -483,7 +483,10 @@ test('PERF-TEX: the shadow is cleared wherever something else can own unit 1', (
   // longer owns, which is a wrong texture, which is a visual bug.
   const body = src.split('_bindEmission(tex) {')[1].split('\n  }')[0];
   assert.match(body, /if \(this\._tex1Bound === tex\) return;/, 'the helper is a shadow, not a wrapper');
-  assert.match(body, /gl\.activeTexture\(gl\.TEXTURE0\);/, 'and it leaves unit 0 active, as every draw path expects');
+  // PERF-TEX3: through the funnel now - 97% of this file's activeTexture
+  // calls selected the unit already selected, so the raw call lives in
+  // _activeTexture alone and everything else asks it.
+  assert.match(body, /this\._activeTexture\(gl\.TEXTURE0\);/, 'and it leaves unit 0 active, as every draw path expects');
   for (const site of ['beginFrame', 'endWorldPass']) {
     const fn = src.split(`  ${site}(`)[1]?.split('\n  }')[0] ?? '';
     assert.match(fn, /_tex1Bound = null/, `${site} does not clear the shadow`);
@@ -948,4 +951,75 @@ test('PERF-2D: a foreign pass inside an open run is the one gap, and it SPEAKS',
     r2.markForeignPass();
     assert.deepEqual(said2, [], 'endUiRun closes the run, so the foreign pass is ordinary again');
   } finally { console.warn = warn; }
+});
+
+// ═══ PERF-TEX3 - THE UNIT THAT WAS ALREADY ACTIVE ══════════════════
+// Measured over a frame of 25 loose models, 3 batched meshes, 20 terrain
+// pixels and a hundred-odd HUD quads: 97% of every activeTexture call
+// selected the unit already selected (117 of 121), and 55% of every
+// bindTexture re-bound the texture already on the unit (111 of 202).
+
+test('PERF-TEX3: the selector funnel - exactly one raw gl.activeTexture survives', () => {
+  const src = readFileSync('src/render/renderer.js', 'utf8');
+  // The same law EV6 wrote for useProgram and bindVertexArray, for the
+  // same reason: a shadow that one raw call can walk past is a shadow
+  // that will one day speak for a unit it does not own.
+  assert.equal((src.match(/gl\.activeTexture\(/g) || []).length, 1,
+    'only _activeTexture may touch activeTexture');
+  const body = src.split('_activeTexture(unit) {')[1].split('\n  }')[0];
+  assert.match(body, /if \(this\._activeUnit === unit\) return;/, 'it is a shadow, not a wrapper');
+  // and it is cleared wherever unit 1's shadow is - the two go together
+  const clears = (src.match(/this\._tex0Bound = null/g) || []).length;
+  assert.ok(clears >= 5, `unit 0's shadow is cleared at only ${clears} sites - _tex1Bound's every site is the floor`);
+  for (const site of ['beginFrame', 'endWorldPass', 'markForeignPass']) {
+    const fn = src.split(`  ${site}(`)[1]?.split('\n  }')[0] ?? '';
+    assert.match(fn, /_tex0Bound = null/, `${site} does not clear the unit-0 shadow`);
+  }
+});
+
+test('PERF-TEX3: the shadows skip what is already there, and a real change still binds', () => {
+  const { r, log } = glLogRig();
+  r.beginFrame(new Float32Array(identity()), new Float32Array(identity()), new Float32Array([0, -1, 0]));
+  const A = { id: 'sheet' }, B = { id: 'panel' };
+  const from = log.length;
+  for (let i = 0; i < 10; i++) r.drawScreenQuad(A, { x: i, y: 0, w: 8, h: 8 });
+  let slice = log.slice(from);
+  assert.equal(slice.filter(([k]) => k === 'bindTexture').length, 1, 'ten quads off one sheet bind it once');
+  assert.equal(slice.filter(([k]) => k === 'activeTexture').length, 0, 'and re-select nothing - unit 0 was already active');
+  assert.equal(slice.filter(([k]) => k === 'drawElements').length, 10, 'all ten still drew');
+
+  // a real change still binds - the shadow is not a hoist
+  const from2 = log.length;
+  r.drawScreenQuad(B, { x: 0, y: 0, w: 8, h: 8 });
+  r.drawScreenQuad(A, { x: 0, y: 0, w: 8, h: 8 });
+  slice = log.slice(from2);
+  assert.equal(slice.filter(([k]) => k === 'bindTexture').length, 2, 'two different sheets, two binds');
+
+  // and a foreign pass takes the shadow's word away
+  const from3 = log.length;
+  r.markForeignPass();
+  r.drawScreenQuad(A, { x: 0, y: 0, w: 8, h: 8 });
+  assert.equal(log.slice(from3).filter(([k]) => k === 'bindTexture').length, 1,
+    'a foreign pass owns the units; the next quad re-binds rather than trusting a stale shadow');
+});
+
+test('PERF-TEX3: a mesh bundle whose sub-meshes repeat an archive binds each texture once', () => {
+  const { r, log } = glLogRig();
+  r.textures.set('4_4', { id: 'tA' });
+  r.textures.set('5_5', { id: 'tB' });
+  r.beginFrame(new Float32Array(identity()), new Float32Array(identity()), new Float32Array([0, -1, 0]));
+  const sub = (a, b) => ({ textureArchive: a, textureRecord: b, primitiveCount: 4, startIndex: 0 });
+  const from = log.length;
+  // A A A B B A - the shape a real bundle has, and the reason the naive
+  // loop re-bound: consecutive repeats, not a sorted run
+  r.drawMesh({ vao: { id: 'v' }, subMeshes: [sub(4, 4), sub(4, 4), sub(4, 4), sub(5, 5), sub(5, 5), sub(4, 4)] }, identity());
+  // count binds on UNIT 0 only - _bindEmission's unit-1 traffic is
+  // PERF-TEX's business and would make this read 5 for the wrong reason
+  let unit = r.gl.TEXTURE0, binds = 0;
+  for (const [k, ...a] of log.slice(from)) {
+    if (k === 'activeTexture') unit = a[0];
+    else if (k === 'bindTexture' && a[0] === r.gl.TEXTURE_2D && unit === r.gl.TEXTURE0) binds++;
+  }
+  assert.equal(log.slice(from).filter(([k]) => k === 'drawElements').length, 6, 'all six sub-meshes drew');
+  assert.equal(binds, 3, `six sub-meshes over two textures bound ${binds} times - one a RUN, not one a sub-mesh`);
 });

@@ -1473,6 +1473,64 @@ scene with nothing remembered between quads. Identical.
 flags stop repeating while `dst` and `src` - which really are a quad's
 own - still go up every single time; and the equality above.
 
+## PERF-TEX3 - THE UNIT THAT WAS ALREADY ACTIVE (2026-09-19)
+
+With the 2D bracket gone, the same frame was measured again and asked the
+question PERF-TEX asked of unit 1: how much of what is left sets state to
+the value it already holds?
+
+| | calls | redundant |
+|---|---|---|
+| `activeTexture` | 121 | **117 (97%)** |
+| `bindTexture` | 202 | **111 (55%)** |
+
+**97% is not an accident.** Every path in `renderer.js` that reaches for a
+unit above 0 puts unit 0 back the moment it is done - `_bindEmission`, the
+contact and adapt uploads, the reserved cloud-shadow slot, the terrain's
+tilemap. So unit 0 is what is active almost always, and almost every
+`activeTexture` call re-selected it. The other half is texture locality
+nobody was exploiting: a mesh bundle whose sub-meshes repeat an archive,
+and a HUD drawing ninety quads off one sheet.
+
+Two shadows, both the `_bindEmission` idiom:
+
+- **`_activeTexture(unit)`** - a pure selector, so it cannot change a
+  picture on its own; what it can do is go stale, which is why the funnel
+  law allows exactly ONE raw `gl.activeTexture` in the file, inside it.
+  27 call sites routed.
+- **`_bindTex0(tex)`** - `_bindEmission` for the unit every pass shares,
+  cleared at every point `_tex1Bound` is cleared at.
+
+**Where it was NOT applied, and why.** `drawBillboards` clears the unit-0
+shadow instead of sharing it. That path already skips on its own
+`lastKey`, and routing it through the shared shadow is exactly what broke
+MAC4's record key and PERF3's sorted-cutout pin the first time PERF-TEX
+was written - a lesson worth paying for once.
+
+| the same dungeon frame | GL calls |
+|---|---|
+| before PERF-2D | 1,760 |
+| after PERF-2D | 1,043 |
+| **after PERF-TEX3** | **640** |
+
+**64% off the frame across the two slices**, and the frame now has no
+redundant texture traffic left in it at all: the same measurement run
+again answers 1 redundant call out of 640.
+
+**Proved, not asserted.** A scene covering every pass the shadows can
+touch - 20 terrain pixels sharing a world atlas, mesh bundles with
+emission moving under unit 0, billboards, a character sprite quad, a HUD
+with realistic locality, an instanced run, an overlay and a foreign seam -
+replayed against the previous commit in a worktree, recording what is on
+EVERY texture unit at every draw along with the program, the VAO and the
+draw's own arguments. **462 draws, all identical.**
+
+**Four existing pins were re-aimed, and all four were source-TEXT pins**
+broken by the rename (`gl.activeTexture(` to `this._activeTexture(`) -
+AUDIT 65 RS-3, PERF-TEX's own unit-1 law, WATER1's two-unit assertion and
+PERF3's billboard key. None of them was a behavioural failure, which the
+equality proof above is what establishes rather than the re-aiming.
+
 ## PERF-2D - THE BRACKET THAT WAS PER QUAD (2026-09-19)
 
 PERF-UI ended by naming what it had left on the table and why:
