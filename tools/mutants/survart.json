@@ -1,0 +1,77 @@
+[
+  {
+    "name": "SURVART-1-the-stand-in-forgets-recordCount",
+    "file": "src/systems/textureReplacement.js",
+    "old": "    recordCount,\n    getSize: (record) => (record >= 0 && record < recordCount ? size(record) : { width: 0, height: 0 }),   // TextureFile.getSize's own out-of-range answer",
+    "new": "    getSize: (record) => (record >= 0 && record < recordCount ? size(record) : { width: 0, height: 0 }),",
+    "tests": [
+      "test/survart_icons.test.js"
+    ]
+  },
+  {
+    "name": "SURVART-2-the-stand-in-forgets-getSize",
+    "file": "src/systems/textureReplacement.js",
+    "old": "    getSize: (record) => (record >= 0 && record < recordCount ? size(record) : { width: 0, height: 0 }),   // TextureFile.getSize's own out-of-range answer",
+    "new": "",
+    "tests": [
+      "test/survart_icons.test.js"
+    ]
+  },
+  {
+    "name": "SURVART-3-the-record-count-comes-off-the-decoded-map",
+    "file": "src/systems/textureReplacement.js",
+    "old": "  for (const e of _vendor.values()) if (e.standIn && e.archive === Number(archive)) n = Math.max(n, e.record + 1);",
+    "new": "  for (const e of _vendor.values()) if (e.standIn && e.archive === Number(archive) && _decoded.has(textureKey(e.archive, e.record, 0))) n = Math.max(n, e.record + 1);",
+    "tests": [
+      "test/survart_icons.test.js"
+    ]
+  },
+  {
+    "name": "SURVART-4-the-dom-door-loses-its-vendor-arm",
+    "file": "src/ui/textureCanvas.js",
+    "old": "  if (isVendorArchive(archive)) {",
+    "new": "  if (false && isVendorArchive(archive)) {",
+    "tests": [
+      "test/survart_icons.test.js"
+    ]
+  },
+  {
+    "name": "SURVART-5-the-dom-canvas-keeps-the-color32-rows",
+    "file": "src/ui/bitmapCanvas.js",
+    "old": "    const from = (h - 1 - y) * row;",
+    "new": "    const from = y * row;",
+    "tests": [
+      "test/survart_icons.test.js"
+    ]
+  },
+  {
+    "name": "SURVTENT-1-every-vendored-file-stands-in-for-its-archive",
+    "file": "src/systems/textureReplacement.js",
+    "old": "export const isVendorArchive = (archive) => { for (const e of _vendor.values()) if (e.standIn && e.archive === Number(archive)) return true; return false; };",
+    "new": "export const isVendorArchive = (archive) => { for (const e of _vendor.values()) if (e.archive === Number(archive)) return true; return false; };",
+    "tests": [
+      "test/survart_icons.test.js",
+      "test/surv2_items.test.js"
+    ]
+  },
+  {
+    "name": "SURVTENT-2-the-tent-art-is-registered-as-a-stand-in",
+    "file": "src/systems/survival/items.js",
+    "old": "    ...VENDOR_TENT_FILES.map((f) => vendorEntry(f, load, false)),",
+    "new": "    ...VENDOR_TENT_FILES.map((f) => vendorEntry(f, load, true)),",
+    "tests": [
+      "test/survart_icons.test.js",
+      "test/surv2_items.test.js"
+    ]
+  },
+  {
+    "name": "SURVTENT-3-the-tent-art-is-not-registered-at-all",
+    "file": "src/systems/survival/items.js",
+    "old": "    ...VENDOR_TENT_FILES.map((f) => vendorEntry(f, load, false)),",
+    "new": "",
+    "tests": [
+      "test/survart_icons.test.js",
+      "test/surv2_items.test.js"
+    ]
+  }
+]

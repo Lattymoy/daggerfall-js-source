@@ -325,3 +325,58 @@ is what is being equipped, and never for less.
 keyed by index, the same shape the clone's own cache has. A save that
 has worn all four shield types in every material with the Animation
 module on would hold all 600 (~42 MB); a normal one holds three.
+
+## SW4 - UPSIDE DOWN (2026-09-19)
+
+Mac: *"the new shield mod we integrated shows the shields upside down"*.
+
+**The code was right and the art was wrong.** SW1b's audit cleared the
+draw path in as many words - "the sprites go through `toScreenOrder` and
+not `toColor32`, which is HT3's law for anything drawn on a screen quad"
+- and that reading still holds: `drawScreenQuad` hands the rect's TOP
+the pair `v0`, `uploadTexture` runs with `UNPACK_FLIP_Y_WEBGL` off, so
+row 0 of a decoded PNG lands at the top of the sprite, and the shield's
+door does the same thing the held torch and the weapon widget's loose
+arm do. The audit checked the door. It never looked at the picture
+coming through it.
+
+**What was wrong.** All 600 vendored PNGs were written out of the mod's
+Unity texture buffer without the flip a PNG's top-down rows need. Unity
+stores a `Texture2D` bottom-up (`src/formats/color32Order.js` says so at
+the top, and it is why `toColor32` exists at all); a PNG scanline 0 is
+the picture's top. Dumping one into the other with no conversion
+mirrors every sprite vertically. On screen that put the shield's rim
+along the bottom of the frame and ran the gauntleted forearm DOWN into
+it out of the sky.
+
+This is the same gap AUDIT 62 F26 and ROAD-H H4 found at two other
+PNG-shaped doors, except one step further back: here the conversion was
+missed at EXTRACTION, before the file ever reached the repository, so
+nothing the port does at load could have put it right. Fixing it in
+code would have meant a second, opposite flip on this one door while its
+two screen-sprite neighbours kept the shared law - the door lying about
+which way up its files are, forever.
+
+**The fix.** All 600 files rewritten with their rows reversed, in place.
+They stay indexed PNGs: `IHDR`, `PLTE` and `tRNS` are carried over byte
+for byte and only the pixel rows move, so the palette, the transparent
+index and every drawn colour are untouched. Each file was checked before
+it was written by flipping the output back and comparing it to the
+input, all 600, exact. The set got slightly smaller (2,121,591 ->
+2,103,899 bytes) purely because the filter bytes re-choose against
+different neighbouring rows.
+
+**How a re-extraction gets caught.** The picture says which way up it
+is, and says it the same way in all 600: a first-person shield is HELD,
+so the arm runs off the BOTTOM edge of the sprite and the top edge -
+open air above the rim - is empty. Measured over the whole set, right
+way up: the top row is fully transparent in all 600, and the bottom row
+carries at least 69 opaque pixels, which is 44% of the narrowest
+sprite's width. Mirrored, that reads exactly backwards - 600 touching
+the top, none touching the bottom. Pin: *SW4: all 600 sprites are the
+right way up*, which reads every file (a small indexed-PNG reader lives
+in the test, because `decodePng` is a browser door), and which was run
+against the old art to watch it fail. Its neighbour *SW4: the shield
+door keeps the PNG's rows* holds the code half - the door's membership
+of HT3's list, which nothing had pinned before. Mutant:
+*SW4-1-the-shield-door-flips-the-png* (tools/mutants/sw1.json, 9 total).

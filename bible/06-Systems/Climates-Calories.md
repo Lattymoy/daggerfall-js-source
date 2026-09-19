@@ -595,3 +595,114 @@ back, the per-minute cadence, the health floor, a flat rate, death in
 your sleep, the threshold dropped to dehydrated, and four on the walk
 (a jump lethal again, the replayed bite unclamped, every minute live,
 every minute a replay).
+
+## SURV-ART - THE ART NEVER REACHED THE SCREEN (2026-09-19)
+
+Mac: *"the sprites aren't showing at all"*.
+
+Sixteen of the mod's twenty PNGs are vendored at
+`vendor/climates-calories/Textures/`, registered at boot by
+`installSurvivalIcons`, fetched and decoded. They drew NOTHING. Both of
+the port's icon doors dropped them on the last step, and each did it in
+its own way - which is why nothing in the suite noticed: every pin the
+SURV2 work wrote held the registration, the decode and the addressing,
+and all three were correct.
+
+**THE GL DOOR** (`ui/itemScroller.js`, `ui/nativeInventory.js`) asks the
+pipeline for the archive and then gates on
+
+```js
+if (img.record < tex.recordCount) {
+  icons.uploadRecord(img.archive, img.record, ...);
+  sizes.set(key, tex.getSize(img.record));
+}
+```
+
+For a vendored archive `getTexture` hands back `vendorTextureStandIn`,
+and that object carried `getWidth`, `getHeight`, `getDFBitmap` and
+`getColor32` - but neither `recordCount` nor `getSize`. So the gate read
+`0 < undefined`, which is FALSE for every record of every vendored
+archive, and the upload it guards never ran: no texture, no size, and
+`if (!glTex || !size?.width) return false` a few lines later drew
+nothing. A stand-in for a file must answer like the file. It now
+carries `recordCount`, `getSize` (with `TextureFile.getSize`'s own
+out-of-range answer), `getOffset`, `getScale` and `getFrameCount`.
+
+`vendorRecordCount` reads the REGISTRY, not the decoded map. The
+pipeline builds the stand-in inside the same await that preloads, and a
+PNG still in flight - or one that would not decode - must not shrink
+the archive underneath the caller about to ask for its record; that
+reads as "no such record" and is this bug again by another route.
+
+**THE DOM DOOR** (`ui/textureCanvas.js` `requestIcon`, which the
+enhanced HUD's quickslots and the enhanced inventory's tiles both draw
+through) had no vendor arm at all. It went straight to `getArchive`,
+which fetches `TEXTURE.539` - a file that does not exist, for an
+archive that is only ever the port's own art - warned, and cached the
+failure as a PERMANENT miss, so every repaint after it drew the
+two-letter initials fallback. The arm now stands FIRST, before the
+fetch that cannot succeed, and takes `decodedTexture`'s color32 shape
+straight to a canvas through the new `color32Canvas`, because a PNG has
+no palette index to look up and no cutout rule to apply - it carries
+its own alpha.
+
+`color32Canvas` REVERSES THE ROWS, and that is not incidental. The port
+stores every texture in color32 order (row 0 the picture's bottom,
+`formats/color32Order.js`); a canvas is top-down. Without the reversal
+every mod icon in the DOM would have drawn upside down - SW4's fault
+one door along, and pinned here so it cannot arrive.
+
+**The pins** (`test/survart_icons.test.js`, 3) drive the real modules,
+because a source-text pin would have matched the broken code too: the
+first walks all sixteen through the GL door's own expression, the
+second runs `requestIcon` against a canvas stub and reads the pixels
+back out to check which way up they landed, the third holds both doors'
+arms in place. Mutants: `tools/mutants/survart.json`, 5, 5 dead.
+
+## SURV-TENT - THE TENT'S TWO RESKINS (2026-09-19)
+
+Mac handed over the shipped zip, so the last two of the mod's twenty
+pictures could be read out of the bundle rather than guessed at.
+
+`src/formats/unityBundle.js` opens the `.dfmod` directly - it is a
+UnityFS container - and all twenty Texture2Ds come out by name. Two
+checks came with that, and both were worth running:
+
+- **The sixteen already vendored are EXACT.** Every pixel of every one
+  matches the bundle's own texture, size and orientation included. No
+  SW4 here: `decodeTexture2D` reverses Unity's bottom-up rows on the way
+  out, and whoever extracted them first did the same.
+- **The two missing ones are the tent's.** `50_7-0` is a 32x32 tan
+  canvas of three colours; `67_10-0` is a 64x8 dark wooden strip. The
+  camp stands the mod's model 41606 (`survival/camp.js` TENT_MODEL) and
+  these are how the mod dresses it - the mod ships no other model and no
+  other override, so that is what they are for. Without them the tent
+  wore whatever the base game put on that model.
+
+**THEY ARE A DIFFERENT KIND OF VENDORED FILE, and that is the whole of
+the work.** An icon's archive (532-539) exists ONLY as this art: there
+is no `TEXTURE.532` and never will be, so the pipeline stands a shell
+in for the file. `TEXTURE.050` and `TEXTURE.067` are real files
+carrying dozens of other records, and these override ONE record of
+each, the way a texture pack does.
+
+`isVendorArchive` answered true if ANY record of an archive was
+vendored, which was harmless only while every vendored file happened to
+be of the first kind. Registering `50_7-0` under it would have sent
+`TEXTURE.050` down the stand-in branch as well, and every other record
+in that archive - every wall and floor drawn from 50 - would have come
+back as a 1x1 nothing. The archive NUMBER cannot tell you which kind a
+file is, so the registration says: `addVendorTextures` takes a
+`standIn` flag, the icons pass it, the tent's two do not, and
+`isVendorArchive` and `vendorRecordCount` both read it.
+
+Pinned in `test/survart_icons.test.js` (the files, their sizes, that
+the swap arm finds both, and that 50 and 67 are still fetched while 532
+and 539 are not) and in the SURV2 icon pin. Mutants:
+`tools/mutants/survart.json` grew three - the flag ignored, the tent
+art registered AS a stand-in, and the tent art not registered at all -
+8 in total, 8 dead.
+
+**Still not imported**, and with nowhere to go: the two tavern menu
+backgrounds (`RALZARTAVERN`, `BLANKMENU_TAVERN`). The port draws its
+tavern menu in its own panel.
