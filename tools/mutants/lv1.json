@@ -68,12 +68,12 @@
   {
     "name": "the-oghma-is-promised-a-level-it-does-not-grant",
     "file": "src/ui/levelUpView.js",
-    "old": "    to: lane === LANE_OGHMA ? from : (e.pendingLevel ?? from + 1),",
-    "new": "    to: e.pendingLevel ?? from + 1,",
+    "old": "    to: (viewOnly || lane === LANE_OGHMA) ? from : (e.pendingLevel ?? from + 1),",
+    "new": "    to: viewOnly ? from : (e.pendingLevel ?? from + 1),",
     "tests": [
       "test/enhancedLevelUp.test.js"
     ],
-    "why": "applyLevelUp's oghma arm takes no Level++ (AUDIT 39), so this is the window lying about the one thing it is for."
+    "why": "applyLevelUp's oghma arm takes no Level++ (AUDIT 39), so this is the window lying about the one thing it is for. (ASCEND-ANYTIME added a second cause to this line - a VIEW promises no level either - so the mutant drops the OGHMA clause alone, which is what this record is the killer of.)"
   },
   {
     "name": "the-commit-is-allowed-with-points-unspent",

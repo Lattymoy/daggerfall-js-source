@@ -21,8 +21,20 @@
 //   stays exactly where DFU leaves it - set. The window opens when
 //   the player opens the sheet, which is where DFU levels you up
 //   anyway (ui/charSheetDoor.js has returned the level-up window for
-//   a pending level since LV1, so every route to the sheet - the key,
-//   the dial's Stats arm, the pause page - is already this door).
+//   a pending level since LV1).
+//
+// THAT PARENTHESIS USED TO END "...so every route to the sheet - the
+// key, the dial's Stats arm, the pause page - is already this door",
+// and two of those three were not. Only the KEY reached
+// `createCharSheetWindow`; the dial's Stats arm and the pause page
+// both ran `togglePause({ at: 'stats' })`, whose page is built from
+// `sheetModel` and has never read `readyToLevelUp`. Since this window
+// cannot close itself without spending, every close is something else
+// taking the slot - and the dial is exactly where a player reaches
+// next. Mac found it the only way it could be found: "when you close
+// the levelup screen without adding stat points you cant open it
+// again." The hosts' arms ask `levelOwed` now and the sentence above
+// says only what was checked.
 //
 // THE CLASSIC SKIN IS UNTOUCHED, byte for byte: it says its line and
 // opens its sheet, as it has since AUDIT 44. This is a departure the
@@ -60,6 +72,7 @@ import { buttonText } from '../systems/controlsConfig.js';    // GetButtonText -
 // four more places to forget it. The module is a leaf here: it imports
 // systems/skills.js and a faction constant, and nothing in ui/.
 import { playerEntity } from '../characters/playerEntity.js';
+import { openLevelUpWindow } from './levelUpOpener.js';   // LV3: the strip's level row is a button now
 
 /** The three things this surface announces. */
 export const NOTICE_LEVEL = 'level';
@@ -345,8 +358,19 @@ function rehome(doc, node) {
 }
 
 function rowNode(doc, r) {
-  const n = doc.createElement('div');
-  n.className = `lv-note lv-note-${r.kind}${r.standing ? ' lv-standing' : ''}`;
+  // LV3 (Dudey, 2026-09-19: "a button to open the levelup screen again once closed"): THE LEVEL'S ROW IS A BUTTON
+  // when there is a key to press - the same key the row already names, sent through ui/levelUpOpener.js, so it
+  // opens the window exactly as the sheet key does in every host. Without a binding it stays a plain line: a
+  // button that presses nothing is a drawn door. It takes clicks only where the game hands the player a cursor
+  // (touch, or the freed cursor); the pause window's Stats page carries the same door for everyone else.
+  const clickable = r.kind === NOTICE_LEVEL && codeForAction(bindings(), 'CharacterSheet') != null;
+  const n = doc.createElement(clickable ? 'button' : 'div');
+  n.className = `lv-note lv-note-${r.kind}${r.standing ? ' lv-standing' : ''}${clickable ? ' lv-clickable' : ''}`;
+  if (clickable) {
+    n.type = 'button';
+    n.title = 'Open the level-up window';
+    n.onclick = (e) => { e?.preventDefault?.(); e?.stopPropagation?.(); openLevelUpWindow(); };
+  }
   const gem = doc.createElement('span');
   gem.className = 'lv-note-gem';
   gem.textContent = r.kind === NOTICE_SKILL ? '▲' : '✦';

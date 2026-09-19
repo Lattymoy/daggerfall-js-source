@@ -72,7 +72,7 @@ import { STAT_KEYS_ORDER } from '../systems/chargen.js';
 import { statUp, statDown, MAX_STAT_VALUE } from './chargen.js';
 import { MUST_DISTRIBUTE_BONUS_POINTS } from './charsheet.js';
 import { REMAINING_POINTS_ERROR, REMAINING_POINTS_LABEL, TAKE_ONE_BACK_HINT } from './virtueLevelUp.js';
-import { attributeOffset, canRaiseAttribute, canLowerAttribute, LEVELUP_TOTAL } from '../systems/oblivionLeveling.js';
+import { attributeOffset, canRaiseAttribute, canLowerAttribute, LEVELUP_TOTAL, levelingSettings } from '../systems/oblivionLeveling.js';   // ASCEND-ANYTIME: a mod-law view still needs the mod's own prices to draw a row
 import { LEVELUP_SKILL_SUM_PER_LEVEL, skillRecentlyIncreased } from '../systems/advancement.js';
 import { SKILL_NAMES, skillValue } from '../systems/skills.js';
 import { sheetModel } from './enhancedCharSheet.js';
@@ -244,6 +244,60 @@ export function crowdedStarPairs(fig = STAR_FIGURE) {
  * (player.lua:599-616) and, on the classic lane, the only honest way to
  * draw a button whose refusal is silent.
  */
+/**
+ * ASCEND-ANYTIME - THE SCREEN FOR A PLAYER WHO IS NOT LEVELLING.
+ *
+ * The Ascension was built as the answer to an EVENT: a level is owed,
+ * here are your points, spend them. That made it a screen a player
+ * sees for ten seconds a level and can never look at again - and it is
+ * the only place in this port that draws a character as a figure in
+ * the sky rather than a column of numbers.
+ *
+ * This is that same window with nothing to spend. It is a VIEW, and
+ * the word is load-bearing: it writes NOTHING. No level, no stats, no
+ * bonus pool - in particular not `pendingBonusPool`, because a view
+ * that rolled one would hand a player a free re-roll of the next
+ * level's 4-6 just for looking at their own stars.
+ *
+ * It is a plain object rather than a class because every reader here
+ * already takes a duck: `pool`/`base`/`working` is the classic
+ * rollout's shape and `purse`/`deltas`/`s` is the mod's, so the rows,
+ * the bar and the crown all answer without a branch of their own. The
+ * two pools are zero, which is what makes every star refuse - `statUp`
+ * and `canRaiseAttribute` both stop at an empty pool, so nothing here
+ * restates "you may not raise this".
+ *
+ * `confirm` closes it and does nothing else, which is why `canAscend`
+ * is true from the first frame: there is nothing to finish.
+ */
+export function viewOnlyScreen(entity, virtue = false) {
+  const e = entity ?? {};
+  const stats = { ...(e.stats ?? {}) };
+  return {
+    /** What the crown reads to promise no level, and the window to ask
+     *  its own question instead of "choose what rises". */
+    viewOnly: true,
+    entity: e,
+    cursor: 0,
+    done: false,
+    // THE CLASSIC SHAPE, with an empty pool.
+    pool: 0,
+    base: stats,
+    working: { ...stats },
+    // ...and THE MOD'S, for a character who levels by its law. The
+    // prices are real (a row still draws its cost) and the purse is
+    // empty, which is the whole of the refusal.
+    isVirtueLevelUp: virtue,
+    purse: 0,
+    deltas: Object.fromEntries(STAT_KEYS_ORDER.map((k) => [k, 0])),
+    s: virtue ? levelingSettings() : null,
+    /** Never the all-max branch: that is a thing a LEVEL-UP says about
+     *  points it cannot place, and this one has none to place. */
+    allMax: () => false,
+    input(action) { if (action === 'confirm') this.done = true; },
+  };
+}
+
 export function rolloutRows(screen) {
   if (!screen) return [];
   const virtue = levelUpLane(screen) === LANE_VIRTUE;
@@ -402,13 +456,19 @@ export function levelUpCrown(entity, screen) {
   const e = entity ?? {};
   const lane = levelUpLane(screen);
   const from = e.level ?? 1;
+  // ASCEND-ANYTIME: a VIEW promises no level, for the same reason the
+  // Oghma arm does not - `to` is what the crown draws an arrow to, and
+  // an arrow to a level that is not coming is the one lie this window
+  // must not tell.
+  const viewOnly = !!screen?.viewOnly;
   return {
     name: e.name ?? 'Adventurer',
     race: e.race ?? '',
     career: e.career?.name ?? '',
     lane,
+    viewOnly,
     from,
-    to: lane === LANE_OGHMA ? from : (e.pendingLevel ?? from + 1),
+    to: (viewOnly || lane === LANE_OGHMA) ? from : (e.pendingLevel ?? from + 1),
   };
 }
 

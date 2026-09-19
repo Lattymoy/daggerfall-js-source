@@ -3662,6 +3662,15 @@ body:has(.dfchat.touch) .hudtext-stack { top: ${HUD_TEXT_TOP_CHAT_TOUCH_PX}px; }
    is the flex box's business and not a constant in this sheet. The
    gap is \`.hud-bottom\`'s 10px, so it stands off the vitals the same
    distance the effects row stands off them. */
+/* LV3: THE LEVEL'S ROW IS A BUTTON where there is a key to press (ui/levelNotice.js rowNode). The strip is
+   pointer-events:none so it never eats a click meant for the world; this one row opts back in. */
+button.lv-note.lv-clickable {
+  font: inherit; text-align: inherit; text-shadow: inherit; letter-spacing: inherit;
+  cursor: pointer; pointer-events: auto; -webkit-appearance: none; appearance: none;
+}
+button.lv-note.lv-clickable:hover, button.lv-note.lv-clickable:focus-visible {
+  background: rgba(40,36,12,0.72); border-color: rgb(243,239,44); outline: none;
+}
 .hud-bottom > #enhanced-levelnotice {
   position: static; transform: none; left: auto; bottom: auto; z-index: auto;
 }
@@ -3706,6 +3715,21 @@ body:has(.dfchat.touch) .hudtext-stack { top: ${HUD_TEXT_TOP_CHAT_TOUCH_PX}px; }
 .lv-sky .px-ground, .lv-sky .px-vignette { position: absolute; }
 /* Every band of the column sits over the sky, not in it. */
 .lv-crown, .lv-plate, .lv-stage, .lv-choice, .lv-ribbonwrap, .lv-foot { position: relative; z-index: 1; }
+/* EVERY BAND OWNS ITS ROW. The grid above has six tracks for six bands,
+   and the flexible one (minmax(0,1fr)) is the STAGE's. The plate is
+   display:none on a screen that owes no points (ASCEND-ANYTIME's "Your
+   stars"), and a display:none item leaves the grid entirely - so with
+   auto-placement every band after it slid up a track: the stage took an
+   auto row and the CHOICE landed in the 1fr row, where minmax(0,...)
+   let it shrink below its own content and paint over the skill ribbon.
+   Pinning the rows makes the plate's row an empty auto track (0px)
+   instead of a reshuffle. */
+.lv-crown { grid-row: 1; }
+.lv-plate { grid-row: 2; }
+.lv-stage { grid-row: 3; }
+.lv-choice { grid-row: 4; }
+.lv-ribbonwrap { grid-row: 5; }
+.lv-foot { grid-row: 6; }
 
 /* THE CROWN: name | level | race, the three the classic sheet leads
    with (DaggerfallCharacterSheetWindow.cs:134-204) and the three
