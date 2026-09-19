@@ -162,21 +162,55 @@ export function appRootFrom(moduleUrl) {
 export const APP_ROOT = appRootFrom(import.meta.url);
 export const HELD_MAP_URL = new URL('art/held-map.png', APP_ROOT ?? globalThis.document?.baseURI ?? 'https://invalid.invalid/').href;
 /** Its own pixels, and the stage's aspect. */
-export const SPRITE = Object.freeze({ w: 1448, h: 1086 });
+export const SPRITE = Object.freeze({ w: 1536, h: 1024 });
 /** The parchment's rectangle, as fractions of the sprite - measured
  *  off the painting (the sheet's outermost non-black column and row on
  *  each side, thumbs excluded). The ink canvas is laid exactly here. */
-export const PAPER = Object.freeze({ x0: 0.123, x1: 0.870, y0: 0.138, y1: 0.755 });
+// MAP-FIELD3 (2026-09-19, Mac: "the ingame map on the map appears going
+// off the edge"): MEASURED, and it had been wrong on the old art too.
+// The ink canvas is laid EXACTLY on this rectangle, so a rectangle
+// larger than the parchment prints the map onto the torn edge and out
+// over the sky. The old constants sat 10 px left and 12 px above the
+// old sheet's real edge - the bug Mac saw, and it predates this
+// painting.
+//
+// These are not the sheet's outermost pixels. They are the largest
+// rectangle that lies WHOLLY on the art (tools/heldMapArtProbe.mjs,
+// which walks the per-column and per-row first and last non-matte
+// pixel and shrinks until nothing overhangs). The sheet is painted as
+// a slightly turned quadrilateral with rounded, torn corners, so an
+// upright rectangle has to give up a little at each corner to sit
+// inside it at all: taking the sheet's own bounds instead is what hung
+// the ink over the sky at the top corners.
+export const PAPER = Object.freeze({ x0: 0.205, x1: 0.794, y0: 0.157, y1: 0.711 });
 /** Where the thumbs rest ON the sheet, as fractions of the sprite. In
- *  these two zones a sprite pixel darker than HAND_LUM is a gauntlet
- *  and is keyed back OVER the ink; anything lighter is paper and lets
- *  the ink through. Measured: the sheet's pixels sit at luminance
- *  144-192 (its creases 112-160), the thumbs almost wholly under 144. */
+ *  each zone the sprite's own thumb is found and keyed back OVER the
+ *  ink (keyThumbPixels); the rest of the zone is paper and lets the ink
+ *  through. `side` names the edge the thumb reaches in from - the one
+ *  nearer its own hand - which is what the search is seeded on.
+ *
+ *  MAP-FIELD3: the zones are drawn GENEROUSLY on purpose. Under a bare
+ *  threshold a wide zone was a liability, because every dark stain it
+ *  swept up landed on the map; under the blob key an island is dropped
+ *  however dark it is, so the only cost of a wide zone is the work, and
+ *  the only cost of a narrow one is a clipped thumb. */
 export const THUMB_ZONES = Object.freeze([
-  Object.freeze({ x0: 0.10, x1: 0.29, y0: 0.42, y1: 0.76 }),
-  Object.freeze({ x0: 0.71, x1: 0.90, y0: 0.42, y1: 0.76 }),
+  Object.freeze({ x0: 0.16, x1: 0.28, y0: 0.36, y1: 0.68, side: 'left' }),
+  Object.freeze({ x0: 0.71, x1: 0.84, y0: 0.36, y1: 0.68, side: 'right' }),
 ]);
-export const HAND_LUM = 144;
+/** The luma a pixel must be under to SEED the thumb's blob. Measured on
+ *  Mac's new painting, where the two overlap badly: the bronze reaches
+ *  up to 148 and the shaded parchment beside the grip comes down to
+ *  130, so no line separates them. This one is set under BOTH - three
+ *  quarters of the glove is below it and about four per cent of the
+ *  sheet - and what it misses of the glove is recovered by shape, in
+ *  keyThumbPixels. It is a seed, never the answer on its own. */
+export const HAND_LUM = 112;
+/** The radius of the CLOSE in step 3 of keyThumbPixels, in sprite
+ *  pixels: gaps narrower than twice this are bridged, and the thumb's
+ *  outline is left where it was. Four spans the lit ridge along Mac's
+ *  bronze without reaching across the sheet. */
+export const THUMB_GROW = 4;
 /** MAP-FIELD2 (Mac, 2026-09-18): "...and is full screen with a BLACK
  *  BACKGROUND". The black is not the page's - it is the painting's own
  *  matte, and the picture is fully opaque: measured off the file,
@@ -269,7 +303,7 @@ export const HELD_MAP_BITE = 0.03;
  *  named. The anchor is taken on this line instead, and `HELD_MAP_BITE`
  *  carries it a little past so the stumps are cropped by the edge
  *  rather than stopping at it. */
-export const SPRITE_ART_FOOT = 0.7864;
+export const SPRITE_ART_FOOT = 0.9277;
 
 // ── THE CLOCKS (skin) ────────────────────────────────────────────
 const OPEN_S = 0.3;      // the sheet rises into view
@@ -1724,10 +1758,13 @@ export class HeldMapWindow {
     this._chrome = null;
   }
 
-  /** The thumbs, keyed back over the ink: the sprite's pixels inside
-   *  THUMB_ZONES darker than HAND_LUM are copied onto the hands canvas,
-   *  everything else left clear. Runs once, when the sprite has
-   *  loaded; a document with no 2D context (node) skips it. */
+  /** The thumbs, keyed back over the ink: inside each of THUMB_ZONES
+   *  the sprite's own thumb is found as one blob reaching in from that
+   *  hand's side (keyThumbPixels) and copied onto the hands canvas,
+   *  everything else left clear. The painting's matte is keyed here too
+   *  - a zone's outer corner can fall outside the art, and a black
+   *  square is no better on the map than a tan one. Runs once, when the
+   *  sprite has loaded; a document with no 2D context (node) skips it. */
   /** MAP-FIELD2: the painting's black matte, keyed off into the canvas
    *  the stage actually shows. The <img> is the loader; this is the
    *  sprite. A failure here leaves the canvas blank rather than putting
@@ -1762,7 +1799,8 @@ export class HeldMapWindow {
         const x0 = Math.floor(z.x0 * w), y0 = Math.floor(z.y0 * h);
         const zw = Math.ceil((z.x1 - z.x0) * w), zh = Math.ceil((z.y1 - z.y0) * h);
         const img = octx.getImageData(x0, y0, zw, zh);
-        keyHandPixels(img.data);
+        keyThumbPixels(img.data, zw, zh, z.side);
+        keyMattePixels(img.data);   // MAP-FIELD3: a zone corner off the art is matte, not thumb
         hctx.putImageData(img, x0, y0);
       }
     } catch (e) {
@@ -1986,11 +2024,112 @@ export function rgbaCss(rgba) {
 
 /** The key, on RGBA bytes in place: a pixel at or above HAND_LUM is
  *  paper and goes clear; a darker one is gauntlet and stays. Pure, so
- *  the threshold is pinned without a canvas. */
+ *  the threshold is pinned without a canvas.
+ *
+ *  This is the TEST, not the key - `keyThumbPixels` is what the window
+ *  runs. It is kept because it is the threshold that function asks, and
+ *  because a zone with no blob in it at all is still keyed this way. */
 export function keyHandPixels(data, lum = HAND_LUM) {
   for (let i = 0; i < data.length; i += 4) {
     const l = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
     if (l >= lum) data[i + 3] = 0;
   }
+  return data;
+}
+
+/** MAP-FIELD3 (2026-09-19): THE THUMB IS ONE BLOB, NOT A BRIGHTNESS.
+ *
+ *  Mac's new painting is tan on tan, and the sheet is shaded: measured
+ *  across both thumb zones, the parchment nearest the grip sits at luma
+ *  130-150 while the bronze of the gauntlet runs up to 148, and
+ *  saturation does not part them either (sheet 0.45-0.50, glove
+ *  0.50-0.68). Keying at a single brightness therefore kept a whole
+ *  slab of shadowed parchment and laid it on top of the ink - the tan
+ *  splotches Mac would have seen either side of the map.
+ *
+ *  What parts them is SHAPE, on three steps:
+ *
+ *  1. SEED at HAND_LUM, which is set low enough (112) to sit under the
+ *     shaded parchment rather than through it. Most of the glove is
+ *     under it; almost none of the sheet is.
+ *  2. FLOOD from the zone's outer column - `side` names the one nearer
+ *     that thumb's own hand. The thumb reaches in from there; a crack
+ *     or a stain is an island in the middle of the sheet, so whatever
+ *     the flood cannot reach is paper and goes clear however dark it
+ *     is. This is what drops the sheet's own veins.
+ *  3. CLOSE by `grow` pixels, then fill what is enclosed. The bronze
+ *     carries a lit ridge down the thumb that is brighter than the seed
+ *     AND runs out through the silhouette, so neither the flood nor a
+ *     hole-fill alone would claim it - it came out as a seam of map
+ *     showing through the glove. Growing alone does not answer it
+ *     either: it bridges nothing that reaches the edge and leaves a
+ *     pale rim round the thumb. A CLOSE does - grow then shrink by the
+ *     same amount, so the seam is bridged while it is interior and the
+ *     outline returns to where the paint put it - and the fill then
+ *     takes any highlight left enclosed.
+ *
+ *  Pure, in place, over one zone's RGBA bytes - the same shape as the
+ *  other two keys, and pinned the same way. */
+export function keyThumbPixels(data, w, h, side = 'left', lum = HAND_LUM, grow = THUMB_GROW) {
+  const n = w * h;
+  if (n <= 0 || data.length < n * 4) return data;
+  const keep = new Uint8Array(n);
+  const stack = [];
+  const dark = (i) => {
+    const j = i * 4;
+    return 0.299 * data[j] + 0.587 * data[j + 1] + 0.114 * data[j + 2] < lum;
+  };
+  // 2. the flood, seeded down the column nearest this thumb's own hand
+  const col = side === 'right' ? w - 1 : 0;
+  for (let y = 0; y < h; y++) { const i = (y * w) + col; if (dark(i)) { keep[i] = 1; stack.push(i); } }
+  while (stack.length) {
+    const i = stack.pop();
+    const x = i % w, y = (i - x) / w;
+    if (x > 0 && !keep[i - 1] && dark(i - 1)) { keep[i - 1] = 1; stack.push(i - 1); }
+    if (x < w - 1 && !keep[i + 1] && dark(i + 1)) { keep[i + 1] = 1; stack.push(i + 1); }
+    if (y > 0 && !keep[i - w] && dark(i - w)) { keep[i - w] = 1; stack.push(i - w); }
+    if (y < h - 1 && !keep[i + w] && dark(i + w)) { keep[i + w] = 1; stack.push(i + w); }
+  }
+  // 3a. the CLOSE: grow by `grow` rings, then shrink by the same. A gap
+  // narrower than twice `grow` is bridged by the growing and cannot be
+  // reopened by the shrinking - it is interior by then - while the
+  // silhouette itself comes back to where it was. Each ring is
+  // collected in full BEFORE any of it is taken, so one pass moves the
+  // edge by exactly one pixel and not by the width of the zone.
+  for (let g = 0; g < grow; g++) {
+    const ring = [];
+    for (let i = 0; i < n; i++) {
+      if (keep[i]) continue;
+      const x = i % w, y = (i - x) / w;
+      if ((x > 0 && keep[i - 1]) || (x < w - 1 && keep[i + 1])
+        || (y > 0 && keep[i - w]) || (y < h - 1 && keep[i + w])) ring.push(i);
+    }
+    for (const i of ring) keep[i] = 1;
+  }
+  for (let g = 0; g < grow; g++) {
+    const ring = [];
+    for (let i = 0; i < n; i++) {
+      if (!keep[i]) continue;
+      const x = i % w, y = (i - x) / w;
+      // off the zone counts as kept: the thumb runs on into the hand,
+      // and eating its outer edge would peel the blob off that side
+      if ((x > 0 && !keep[i - 1]) || (x < w - 1 && !keep[i + 1])
+        || (y > 0 && !keep[i - w]) || (y < h - 1 && !keep[i + w])) ring.push(i);
+    }
+    for (const i of ring) keep[i] = 0;
+  }
+  // 3b. the fill: whatever the outside cannot reach is inside the thumb
+  const open = new Uint8Array(n);
+  for (let y = 0; y < h; y++) for (const x of [0, w - 1]) { const i = (y * w) + x; if (!keep[i] && !open[i]) { open[i] = 1; stack.push(i); } }
+  for (let x = 0; x < w; x++) for (const y of [0, h - 1]) { const i = (y * w) + x; if (!keep[i] && !open[i]) { open[i] = 1; stack.push(i); } }
+  while (stack.length) {
+    const i = stack.pop();
+    const x = i % w, y = (i - x) / w;
+    if (x > 0 && !keep[i - 1] && !open[i - 1]) { open[i - 1] = 1; stack.push(i - 1); }
+    if (x < w - 1 && !keep[i + 1] && !open[i + 1]) { open[i + 1] = 1; stack.push(i + 1); }
+    if (y > 0 && !keep[i - w] && !open[i - w]) { open[i - w] = 1; stack.push(i - w); }
+    if (y < h - 1 && !keep[i + w] && !open[i + w]) { open[i + w] = 1; stack.push(i + w); }
+  }
+  for (let i = 0; i < n; i++) if (open[i]) data[(i * 4) + 3] = 0;
   return data;
 }
