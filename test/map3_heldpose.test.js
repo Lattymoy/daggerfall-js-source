@@ -599,7 +599,9 @@ test('MAP-WEAPON: the sprite lane stands down while a map holds the screen, belo
     ['the shield', 'if (shieldRect) shield.draw('],
     ['the torch hand', 'if (handheldOn() && c) handheld.draw('],
     ['the clone', 'if (widgetOn() && c && widget.draw('],
-    ['the sprite', 'if (art) drawFpsWeapon('],
+    // FIELD-GUN7: the sprite's call took a block so the Thunderlock's
+    // raise can be computed for it, so the needle is the CALL
+    ['the sprite', 'drawFpsWeapon(renderer, c, art,'],
   ]) {
     assert.ok(gate < rig.indexOf(needle), `the gate stands ABOVE ${what}`);
   }

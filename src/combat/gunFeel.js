@@ -34,14 +34,41 @@
  * cannot drift, and so the next person to move one moves it once.
  */
 export const GUN_FEEL = Object.freeze({
-  // the spring (Mac, 2026-09-19: "kick 5, back 0, stiffness 400, damping 36")
+  // ── THE POSE (the lab's panel: size 49, raise -8) ────────────────
+  // `widthPct` is the gun's own box as a fraction of the 320-wide
+  // design surface, and `raise` is the lab's offsetHeight - NEGATIVE
+  // sits it lower on the screen, which is the classic rect's own
+  // sign (`y = height - h - offsetHeight`).
+  widthPct: 0.49, raise: -8,
+
+  // ── THE CADENCE (fps 14, reload 1700, hit on frame 1) ────────────
+  // THE THREE THAT MATTER MOST, and the three that were missed: in
+  // the game a weapon's frame clock is SPD-driven
+  // (getMeleeWeaponAnimTime) and its ranged cooldown is SPD-driven
+  // (getBowCooldownTime), so the gun ran at about five frames a
+  // second at average speed where the lab runs fourteen, reloaded in
+  // 1.33s where the lab takes 1.7, and landed its damage a frame late
+  // on the melee hit frame. A weapon whose cycle is three times
+  // slower than the thing it was tuned as is not the same weapon.
+  //
+  // So these are FIXED, which is itself the departure: a gun's
+  // mechanism does not care how agile you are. Drawing the bowstring
+  // does, which is why the classic formulas stay exactly where they
+  // are for everything else.
+  fps: 14, reloadMs: 1700, hitFrame: 1,
+
+  // ── THE SPRING (Mac: "kick 5, back 0, stiffness 400, damping 36")
   kick: 5, back: 0, stiff: 400, damp: 36,
-  // the shake ("All screenshake values max with decay at 5")
+  // ── THE SHAKE ("All screenshake values max with decay at 5")
   shake: 30, shakeRot: 4, shakeFreq: 60, shakeDecay: 5,
-  // the reload ("Reload: 1700") and how far the weapon drops while it runs
-  reloadMs: 1700,
+  // how far the weapon drops while the reload runs
   hiddenTarget: Object.freeze([0, 0.55]),
 });
+
+/** The lab's frame clock as a tick, which is what the machine reads. */
+export const GUN_TICK_SECONDS = 1 / GUN_FEEL.fps;
+/** ...and its cooldown in the seconds the machine counts. */
+export const GUN_COOLDOWN_SECONDS = GUN_FEEL.reloadMs / 1000;
 
 /**
  * THE RECOIL, as a DISPLACEMENT rather than an impulse.
