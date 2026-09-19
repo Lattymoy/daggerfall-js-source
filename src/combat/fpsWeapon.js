@@ -67,7 +67,6 @@ export const WEAPON_FILE = Object.freeze({
 // reader that wants only the enum does not take this module's world
 // with it. Re-exported here: this is still the enum's front door.
 export { ALIGN } from './weaponAlign.js';
-import { unionDrawRect } from './gunSheet.js';   // FIELD-GUN11: the gun's box -> the drawn box
 import { ALIGN } from './weaponAlign.js';
 
 // The classic 320x200 design surface every weapon image overlays.
@@ -319,11 +318,6 @@ export function drawFpsWeapon(renderer, canvas, art, state, frame, {
   // light the room's flats take (render/renderer.js flatLightAt). null
   // is Color.white, byte for byte, which is every caller before this.
   tint = null,
-  // FIELD-GUN6: a rect delta in native (320x200) units, for a weapon
-  // that moves without its animation moving it - the Thunderlock's
-  // recoil spring and its reload lower. Null is every classic weapon,
-  // which is every caller that predates it.
-  adjust = null,
 } = {}) {
   if (!art) return;
   const flip = flipHorizontal && FLIP_STATES.includes(state);
@@ -346,16 +340,8 @@ export function drawFpsWeapon(renderer, canvas, art, state, frame, {
   else if (alignment === ALIGN.Center) x = canvas.width / 2 - w / 2;
   else x = canvas.width * (1 - anim.Offset) - w;
   // OnGUI's rect (:388): `screenRect.height - height - weaponOffsetHeight`.
-  let y = canvas.height - h - offsetHeight;
-  if (adjust) { x += (adjust.x ?? 0) * scaleX; y += (adjust.y ?? 0) * scaleY; }
+  const y = canvas.height - h - offsetHeight;
   // The mirror: rect.xMax .. -width (:388), i.e. u from 1 to 0.
   const src = flip ? { u0: 1, v0: 0, u1: 0, v1: 1 } : undefined;
-  // FIELD-GUN11: the rect above is the WEAPON's own box for art that
-  // declares one (the Thunderlock's sheet - its flash and smoke live
-  // outside it). Everything that lays out or transforms the weapon
-  // works on that box, and the full image is expanded back around it
-  // HERE, at the moment of drawing. `unionBox` is absent on every CIF
-  // record, which is every weapon that predates this.
-  const q = art.unionBox && art.anchor ? unionDrawRect({ x, y, w, h }, art.anchor, art.unionBox) : { x, y, w, h };
-  renderer.drawScreenQuad(tex, q, src, tint ?? undefined);   // MAC-I: Tint
+  renderer.drawScreenQuad(tex, { x, y, w, h }, src, tint ?? undefined);   // MAC-I: Tint
 }

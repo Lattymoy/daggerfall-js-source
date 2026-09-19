@@ -2,8 +2,8 @@
   {
     "name": "SW1b-1-the-shield-gets-no-frame-of-its-own",
     "file": "src/combat/weaponRig.js",
-    "old": "      if (widgetOn() || _torchesOn || shieldOn()) {",
-    "new": "      if (widgetOn() || _torchesOn) {",
+    "old": "      if (widgetOn() || _torchesOn || shieldOn() || thunderlockHeld()) {",
+    "new": "      if (widgetOn() || _torchesOn || thunderlockHeld()) {",
     "tests": [
       "test/sw1_shield_widget.test.js"
     ]
@@ -31,8 +31,8 @@
   {
     "name": "SW1b-2c-the-shield-alone-lets-the-weapon-through",
     "file": "src/combat/weaponRig.js",
-    "old": "      if (!shown()) return;\n      // FIELD-GUN6: the Thunderlock's own movement rides EITHER draw -\n      // the mod's clone or the classic sprite - because the weapon's\n      // feel is the weapon's, not a mod's, and a player with Weapon\n      // Widget off should not be holding a different gun.\n      if (widgetOn() && c && widget.draw(renderer, c, fpTint, _tlAdjust)) return;",
-    "new": "      if (widgetOn() && c && widget.draw(renderer, c, fpTint, _tlAdjust)) return;",
+    "old": "      if (!shown()) return;\n      // FIELD-GUN12 (Mac, the sixth time: \"Port the god damn prototype\n      // verbatim\"). THE GUN TAKES THE PROTOTYPE'S OWN FRAME, not the\n      // classic rect-builder and not the mod's clone.\n      //\n      // Both of those are 1:1 ports - of DFU, and of\n      // RedRoryOTheGlen's mod - written for the weapons those two\n      // things have, and this weapon is neither's. Five rounds were\n      // spent making a rect built for a CIF record come back right\n      // for a contact sheet. It still RUNS the mod's three modules,\n      // on the mod's own settings (combat/gunViewmodel.js imports\n      // them; it does not imitate them) - what it no longer does is\n      // compose the frame a second way and then be corrected.\n      const tlArt = c && thunderlockHeld() ? artFor(playerWeapon.weapon) : null;\n      if (tlArt?.anchor && tlArt.unionBox) { drawThunderlock(tlArt, c, fpTint); return; }\n      if (widgetOn() && c && widget.draw(renderer, c, fpTint)) return;",
+    "new": "      // FIELD-GUN12 (Mac, the sixth time: \"Port the god damn prototype\n      // verbatim\"). THE GUN TAKES THE PROTOTYPE'S OWN FRAME, not the\n      // classic rect-builder and not the mod's clone.\n      //\n      // Both of those are 1:1 ports - of DFU, and of\n      // RedRoryOTheGlen's mod - written for the weapons those two\n      // things have, and this weapon is neither's. Five rounds were\n      // spent making a rect built for a CIF record come back right\n      // for a contact sheet. It still RUNS the mod's three modules,\n      // on the mod's own settings (combat/gunViewmodel.js imports\n      // them; it does not imitate them) - what it no longer does is\n      // compose the frame a second way and then be corrected.\n      const tlArt = c && thunderlockHeld() ? artFor(playerWeapon.weapon) : null;\n      if (tlArt?.anchor && tlArt.unionBox) { drawThunderlock(tlArt, c, fpTint); return; }\n      if (widgetOn() && c && widget.draw(renderer, c, fpTint)) return;",
     "tests": [
       "test/sw1_shield_widget.test.js",
       "test/ht1_handheldtorches.test.js",

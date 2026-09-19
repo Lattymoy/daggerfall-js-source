@@ -33,6 +33,7 @@ import { ARMOR_ENUM } from './enemyEquipment.js';   // MW-D32
 import { loadFpsWeaponArt, drawFpsWeapon, weaponTypeForItem, WEAPON_TYPES, fpLightingOn } from './fpsWeapon.js';
 import { loadThunderlockArt } from './thunderlockArt.js';
 import { createRecoil, createScreenShake, GUN_FEEL, gunPitch } from './gunFeel.js';
+import { createGunRig, gunRigStep, gunWidgetSettings, gunMotion, gunFrameRect } from './gunViewmodel.js';   // FIELD-GUN12: the PROTOTYPE's frame, run rather than resembled
 import { readWidgetSettings } from './weaponWidgetMotion.js';   // FIELD-GUN8: the mod's own reader, so the Thunderlock's Inertia rides its multipliers   // FIELD-GUN6: the lab's own feel, in the game at last
 import { weaponOffsetHeight } from '../ui/hudLarge.js';   // FIELD-GUN7: the lab's raise rides the bar's offset rather than replacing it
 import { betterAmbience } from '../systems/betterAmbience.js';   // FIELD-GUN6: the ONE camera shaker in the port, already wired through all four hosts
@@ -68,7 +69,7 @@ import { isShieldTemplate } from '../systems/armorMaterials.js';   // SW1: GetSh
 import { createHandheldTorches, isHeldLight } from '../systems/handheldTorches.js';   // HT1: Handheld Torches' component, one per rig beside the widget; TORCH-VIS: and its own light test
 import { isTransformedLycanthrope, liveLycanthropy } from '../systems/lycanthropy.js';   // WW1: Weapon Widget's FPSWeaponClone, beside the machine; AUDIT-EOTB2: the sprite's form
 import { concealmentFlags } from '../systems/effects.js';   // EOTB-IL: PlayerBillboard.UpdateMaterial reads the player's own IsInvisible / IsAShade / IsBlending
-import { getBool } from '../systems/settings.js';   // EOTB-IL: PlayerBillboard.LateUpdate reads DaggerfallUnity.Settings.BowDrawback
+import { getBool, getInt } from '../systems/settings.js';   // EOTB-IL: PlayerBillboard.LateUpdate reads DaggerfallUnity.Settings.BowDrawback
 import { domCodeForKeyCode } from '../systems/keyCodes.js';   // AUDIT-EOTB2: the mod's two keys, polled off the hosts' raw set as the torch mod's are
 import { modSetting } from '../systems/modSettings.js';   // WW1: its Enabled
 import { takeFrameLook } from '../player/lookFilter.js';   // WW1: the frame's look for the widget's inertia
@@ -235,6 +236,8 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
    *  game threw on construction, which the rig's own suites caught at
    *  once. The same trap systems/effectBroker.js's header describes
    *  one import away. */
+  /** FPSWeapon's handedness mirror, as the lab's `flip` switch. */
+  const handedFlip = () => getInt('Controls', 'Handedness', 0, 3) === 1;
   const thunderlockHeld = () => {
     const t = weaponTypeForItem(playerWeapon.weapon);
     return t === WEAPON_TYPES.Thunderlock || t === WEAPON_TYPES.Thunderlock_Magic;
@@ -644,6 +647,10 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
   // on Mac's own numbers.
   const _tlRecoil = createRecoil();
   const _tlShake = createScreenShake();
+  /** FIELD-GUN12: the prototype's own module state, carried between
+   *  frames exactly as the lab's page carries it. */
+  const _tlRig = createGunRig();
+  let _tlKick = { x: 0, y: 0 };
   /** The frame's rect delta for the weapon, in native (320x200)
    *  units: the spring, plus the reload lower under it. */
   let _tlAdjust = null;
@@ -687,6 +694,24 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
     if (!_tlClosed && m.now >= m.cooldownUntil - TL_CLOSE_LEAD) { _tlClosed = true; audio.playOneShot(TL_SFX.close, GUN_FEEL.sfxVolume * 0.95, gunPitch()); }
   }
 
+  /** FIELD-GUN12: the prototype's frame, drawn. `gunFrameRect` IS
+   *  gun-proto.html's draw block, so what reaches the screen here and
+   *  what reaches the lab's canvas are one function's answer rather
+   *  than two that have been argued into agreement. */
+  function drawThunderlock(art, canvas, tint) {
+    const m = playerWeapon.machine;
+    const rec = art.records[m.state === 'Idle' ? 0 : 1];
+    if (!rec) return;
+    const tex = rec.frames[Math.min(Math.max(0, m.frame), rec.frames.length - 1)];
+    if (!tex) return;
+    const { rect } = gunFrameRect({
+      canvasW: canvas.width, canvasH: canvas.height,
+      anchor: art.anchor, union: art.unionBox, rig: _tlRig,
+      kick: _tlKick, flip: handedFlip(),
+    });
+    renderer.drawScreenQuad(tex, rect, undefined, tint ?? undefined);
+  }
+
   /** FIELD-GUN6: the frame's rect delta, stepped once and read by
    *  whichever draw path is live - the mod's clone or the classic
    *  sprite. Null for every weapon that is not this one, which is what
@@ -699,27 +724,30 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
    *  looks like from behind the gun. It eases rather than steps, on
    *  the cooldown's own clock, so it is finishing exactly as the
    *  weapon becomes ready. */
-  function thunderlockFeel(dt) {
+  function thunderlockFeel(dt, frame = null) {
     const type = weaponTypeForItem(playerWeapon.weapon);
     if (type !== WEAPON_TYPES.Thunderlock && type !== WEAPON_TYPES.Thunderlock_Magic) { _tlAdjust = null; return; }
-    const kick = _tlRecoil.step(dt);
+    _tlKick = _tlRecoil.step(dt);
+    _tlAdjust = _tlKick;   // the arm below still reads it as "this weapon is live"
+    // FIELD-GUN12: THE RELOAD LOWER IS THE MOD'S OFFSET MODULE, driven
+    // the way the lab drives it - `shown: false` while the pump runs -
+    // rather than a second easing curve of my own next to it. The lab
+    // has always done it this way; the game had a hand-rolled
+    // smoothstep that was a different shape from the module's.
     const m = playerWeapon.machine;
-    const total = Math.max(0.001, GUN_FEEL.reloadMs / 1000);
-    const left = Math.max(0, m.cooldownUntil - m.now);
-    // 0 at the ends, 1 at the bottom of the dip - a smoothstep either
-    // way, so the weapon neither snaps down nor snaps back
-    const t = 1 - Math.min(1, left / total);           // 0..1 across the pump
-    const dip = left > 0 ? Math.sin(Math.PI * t) : 0;  // down and back up
-    const smooth = dip * dip * (3 - 2 * dip);
-    const drop = smooth * GUN_FEEL.hiddenTarget[1] * 200;   // the lab's fraction, in native units
-    // FIELD-GUN11: THE RAISE RIDES HERE, not on `offsetHeight`.
-    // Weapon Widget is ON by default and its clone reads
-    // `weaponOffsetHeight()` for itself (weaponWidget.js:591) - the
-    // HUD bar and nothing else - so a raise passed to drawFpsWeapon
-    // reached only the path a player with the mod OFF is on. The
-    // adjust is the one channel BOTH draws take, and both scale it
-    // from native units, so the lab's -8 means -8 on either.
-    _tlAdjust = { x: kick.x, y: kick.y + drop - GUN_FEEL.raise };
+    const reloading = m.now < m.cooldownUntil;
+    gunRigStep(_tlRig, gunWidgetSettings(), dt, {
+      screenRect: { width: frame?.width ?? 320, height: frame?.height ?? 200 },
+      motion: frame?.motion ?? gunMotion({}),
+      look: frame?.look ?? [0, 0],
+      flip: handedFlip(),
+      idle: m.state === 'Idle',
+      shown: !reloading,
+      hiddenTarget: GUN_FEEL.hiddenTarget,
+      liveSpeed: entity ? liveStat(entity, 'speed') : 50,
+      cursorActive: cursorActive(),
+      swingHeld: _held,
+    });
   }
 
   /** FPSWeapon.UpdateWeapon's bow guard: an UNsheathed bow with zero
@@ -1030,7 +1058,6 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
       // weapon coming back up - the lab's law, off the numbers the
       // machine already keeps.
       thunderlockVoice(dt);
-      thunderlockFeel(dt);   // FIELD-GUN6: the kick, the shake and the reload lower, stepped once for the frame
       // WW1: the clone's LateUpdate, after the original's frame advance -
       // the same order DFU's LateUpdate has against FPSWeapon's Update.
       const _torchesOn = handheldOn();
@@ -1045,22 +1072,33 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
       // mod was dead on a profile that enabled only it. Each consumer
       // inside is already gated on its own switch, so this costs the
       // assembly and nothing else.
-      if (widgetOn() || _torchesOn || shieldOn()) {
-        const cam = camera?.() ?? null;
-        const mv = cam?.move ?? {};
+      // FIELD-GUN12: THE FRAME'S MOTOR, ASSEMBLED ONCE, ABOVE THE GATE.
+      // It used to live inside `if (widgetOn() || _torchesOn ||
+      // shieldOn())`, which was fine while the three mods were its
+      // only readers - the Thunderlock's own viewmodel is a fourth,
+      // and it must read the SAME numbers the mod's modules read
+      // whether or not any mod is enabled. (`_lastEye` is the frame's
+      // own bookkeeping and belongs out here for the same reason.)
+      const cam = camera?.() ?? null;
+      const mv = cam?.move ?? {};
+      const spd = entity ? liveStat(entity, 'speed') : 50;
+      const base = Number.isFinite(mv.baseSpeed) ? mv.baseSpeed : walkSpeed(spd);
+      const ratio = Number.isFinite(mv.speedRatio) ? mv.speedRatio : (Number.isFinite(mv.speedField) && base > 0 ? mv.speedField / base : 1);
+      let localVel = [0, 0, 0];
+      if (cam?.pos && _lastEye && dt > 0) {
+        const v = [(cam.pos[0] - _lastEye[0]) / dt, (cam.pos[1] - _lastEye[1]) / dt, (cam.pos[2] - _lastEye[2]) / dt];
+        const yaw = cam.yaw || 0, sy = Math.sin(yaw), cy = Math.cos(yaw);
+        localVel = [v[0] * cy - v[2] * sy, v[1], v[0] * sy + v[2] * cy];   // InverseTransformVector: right, up, forward
+      }
+      const frameMotion = { grounded: mv.grounded !== false, crouching: !!mv.crouching, riding: !!mv.riding, standing: !!mv.standing, speedRatio: ratio, baseSpeed: base, localVel };
+      if (widgetOn() || _torchesOn || shieldOn() || thunderlockHeld()) {
         const held = activateHeld();
         _activateStarted = held && !_activatePrev; _activatePrev = held;
-        const spd = entity ? liveStat(entity, 'speed') : 50;
-        const base = Number.isFinite(mv.baseSpeed) ? mv.baseSpeed : walkSpeed(spd);
-        const ratio = Number.isFinite(mv.speedRatio) ? mv.speedRatio : (Number.isFinite(mv.speedField) && base > 0 ? mv.speedField / base : 1);
-        let localVel = [0, 0, 0];
-        if (cam?.pos && _lastEye && dt > 0) {
-          const v = [(cam.pos[0] - _lastEye[0]) / dt, (cam.pos[1] - _lastEye[1]) / dt, (cam.pos[2] - _lastEye[2]) / dt];
-          const yaw = cam.yaw || 0, sy = Math.sin(yaw), cy = Math.cos(yaw);
-          localVel = [v[0] * cy - v[2] * sy, v[1], v[0] * sy + v[2] * cy];   // InverseTransformVector: right, up, forward
-        }
         _lastEye = cam?.pos ? [cam.pos[0], cam.pos[1], cam.pos[2]] : null;
         const look = takeFrameLook();   // WW1/HT1: the frame's look, read once, shared by both
+        // FIELD-GUN12: the gun's own rig steps on the same frame, from
+        // the same motor and the same look the mod's modules take.
+        thunderlockFeel(dt, { width: c?.width ?? 320, height: c?.height ?? 200, motion: frameMotion, look });
         const camThunk = () => (cam ? { ...cam, forward: [Math.sin(cam.yaw || 0) * Math.cos(cam.pitch || 0), Math.sin(cam.pitch || 0), Math.cos(cam.yaw || 0) * Math.cos(cam.pitch || 0)],
           right: [Math.cos(cam.yaw || 0), 0, -Math.sin(cam.yaw || 0)], up: [0, 1, 0] } : null);
         if (_torchesOn) {
@@ -1390,25 +1428,23 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
       // returned, `sheetOnly` needs `fpArm.active()` which returned at the
       // seam - so this line stops the shield-only frame and nothing else.
       if (!shown()) return;
-      // FIELD-GUN6: the Thunderlock's own movement rides EITHER draw -
-      // the mod's clone or the classic sprite - because the weapon's
-      // feel is the weapon's, not a mod's, and a player with Weapon
-      // Widget off should not be holding a different gun.
-      if (widgetOn() && c && widget.draw(renderer, c, fpTint, _tlAdjust)) return;
+      // FIELD-GUN12 (Mac, the sixth time: "Port the god damn prototype
+      // verbatim"). THE GUN TAKES THE PROTOTYPE'S OWN FRAME, not the
+      // classic rect-builder and not the mod's clone.
+      //
+      // Both of those are 1:1 ports - of DFU, and of
+      // RedRoryOTheGlen's mod - written for the weapons those two
+      // things have, and this weapon is neither's. Five rounds were
+      // spent making a rect built for a CIF record come back right
+      // for a contact sheet. It still RUNS the mod's three modules,
+      // on the mod's own settings (combat/gunViewmodel.js imports
+      // them; it does not imitate them) - what it no longer does is
+      // compose the frame a second way and then be corrected.
+      const tlArt = c && thunderlockHeld() ? artFor(playerWeapon.weapon) : null;
+      if (tlArt?.anchor && tlArt.unionBox) { drawThunderlock(tlArt, c, fpTint); return; }
+      if (widgetOn() && c && widget.draw(renderer, c, fpTint)) return;
       const art = c && artFor(playerWeapon.weapon);
-      if (art) {
-        // FIELD-GUN7: the lab's RAISE (-8) rides the classic offset
-        // rather than replacing it, so the weapon still clears the
-        // large HUD's bar and still sits where the lab put it
-        // relative to that. Undefined for every other weapon, which
-        // leaves drawFpsWeapon's own default reading the bar alone.
-        //
-        // FIELD-GUN11: the raise moved into `_tlAdjust` (see
-        // thunderlockFeel), because the clone never sees an
-        // offsetHeight this passes - so this arm keeps the classic
-        // default and both paths read the raise from one place.
-        drawFpsWeapon(renderer, c, art, playerWeapon.machine.state, playerWeapon.machine.frame, { tint: fpTint, adjust: _tlAdjust });
-      }
+      if (art) drawFpsWeapon(renderer, c, art, playerWeapon.machine.state, playerWeapon.machine.frame, { tint: fpTint });
     }
   }
 }

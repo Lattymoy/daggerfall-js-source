@@ -608,20 +608,26 @@ test('FIELD-GUN6: the lab\'s feel is the GAME\'s - one home, and it reaches both
   for (let i = 0; i < 120; i++) s1.step(1 / 60);
   assert.deepEqual(s1.step(1 / 60), { x: 0, y: 0, rot: 0 }, 'the trauma runs out');
 
-  // IT REACHES BOTH DRAWS. The mod's clone and the classic sprite,
-  // because the weapon's feel is the weapon's and not a mod's - a
-  // player with Weapon Widget off must not be holding a different gun.
+  // FIELD-GUN12: IT REACHES THE ONE DRAW. The gun takes the
+  // prototype's own frame now - not the classic rect-builder and not
+  // the mod's clone - so there is no longer a second path for the
+  // kick to be missing from.
   const rig = readFileSync('src/combat/weaponRig.js', 'utf8');
-  assert.match(rig, /widget\.draw\(renderer, c, fpTint, _tlAdjust\)/, 'the clone takes it');
-  assert.match(rig, /drawFpsWeapon\([^)]*adjust: _tlAdjust \}\)/, 'and so does the classic sprite');
+  assert.match(rig, /if \(tlArt\?\.anchor && tlArt\.unionBox\) \{ drawThunderlock\(tlArt, c, fpTint\); return; \}/,
+    'the gun\'s own frame stands ahead of both classic paths');
+  assert.match(rig, /kick: _tlKick/, 'and the draw reads the spring');
   assert.match(rig, /_tlRecoil\.punch\(\);/, 'the shot kicks');
   assert.match(rig, /_tlShake\.punch\(\);/, 'and shakes');
   assert.match(rig, /betterAmbience\.weaponKick\?\./, 'the ROOM moves, through the one camera shaker the port has');
-  // both draws must actually APPLY it rather than accept and drop it
-  assert.match(readFileSync('src/combat/fpsWeapon.js', 'utf8'),
-    /if \(adjust\) \{ x \+= \(adjust\.x \?\? 0\) \* scaleX; y \+= \(adjust\.y \?\? 0\) \* scaleY; \}/);
-  assert.match(readFileSync('src/combat/weaponWidget.js', 'utf8'),
-    /rect\.y \+= \(adjust\.y \?\? 0\) \* sy;/);
+  // ...and the two 1:1 ports it no longer goes through are UNTOUCHED
+  // by it, which is the other half of what this bought.
+  // (fpsWeapon.js still ROUTES the weapon's anim table - that is the
+  // one thing it has always done for it. Its DRAW does not know.)
+  const fw = readFileSync('src/combat/fpsWeapon.js', 'utf8');
+  const drawFn = fw.slice(fw.indexOf('export function drawFpsWeapon'));
+  assert.ok(!/_tlAdjust|unionDrawRect|adjust/.test(drawFn), 'drawFpsWeapon is the classic draw again');
+  assert.ok(!/_tlAdjust|unionDrawRect|Thunderlock/.test(readFileSync('src/combat/weaponWidget.js', 'utf8')),
+    "the mod's clone knows nothing about the port's own weapon");
 });
 
 test('FIELD-GUN7: the game\'s machine and the LAB\'s run the same cycle, frame for frame', () => {
@@ -720,14 +726,12 @@ test('FIELD-GUN7: the POSE is the lab\'s too - size 49, and the raise rides the 
   assert.equal(GUN_FEEL.raise, -8);
   // the raise is ADDED to the classic offset rather than replacing
   // it, so the weapon still clears the large HUD's bar
-  // FIELD-GUN11: the raise rides the ADJUST now, not an offsetHeight -
-  // the clone never sees one the rig passes, and it is the path a
-  // player with the mod at its default is on.
-  const rig = readFileSync('src/combat/weaponRig.js', 'utf8');
-  assert.match(rig, /y: kick\.y \+ drop - GUN_FEEL\.raise/,
-    'the lab\'s raise is on the one channel BOTH draws read');
-  assert.ok(!/weaponOffsetHeight\(\) \+ GUN_FEEL\.raise/.test(rig),
-    'and not on an offsetHeight only one of them sees');
+  // FIELD-GUN12: the raise is the VIEWMODEL's, applied by the
+  // prototype's own frame function, so there is no longer a channel
+  // it can be missing from.
+  const vm = readFileSync('src/combat/gunViewmodel.js', 'utf8');
+  assert.match(vm, /const offsetHeight = raise \* \(canvasH \/ 200\);/,
+    'native units into screen pixels, once, where the rect is built');
 });
 
 /** FIELD-GUN8: THE PANEL, READ OFF THE LAB'S OWN SOURCE.
@@ -850,110 +854,68 @@ test('FIELD-GUN8: the voice and the one module the lab turns on', () => {
   assert.ok(!/Modules\.(Bob|Offset|Step)/.test(decl), 'no other module is touched');
 });
 
-test('FIELD-GUN11: BOTH draw paths put the gun where the prototype puts it, through the whole cycle', () => {
-  // Mac, a fifth time: "Thats not the only issue. How many times do I
-  // have to say 1:1".
+test('FIELD-GUN12: the lab and the game are the SAME function, not two that agree', async () => {
+  // Mac, the sixth time: "Port the god damn prototype verbatim".
   //
-  // FIELD-GUN10 pinned ONE frame of ONE path - and it was the path a
-  // player is NOT on. Weapon Widget ships ENABLED, so the draw goes
-  // through the clone's `getWeaponRect`, and the clone reads
-  // `weaponOffsetHeight()` for itself (weaponWidget.js) - the HUD bar
-  // and nothing else. The raise never reached it. Measured before the
-  // fix: 31 pixels high at rest, and 7.5 more adrift again the moment
-  // the Offset module moved, because the clone was transforming the
-  // UNION box where the lab transforms the ANCHOR and everything in
-  // that transform proportional to height came out 6% large.
+  // Every round before this one ended with a NUMERIC pin: drive both
+  // implementations, diff the answer, assert it is small. That is the
+  // right pin when two implementations must exist. It is the wrong
+  // fix when they need not - and each time one passed, the next thing
+  // the two composed differently was still waiting.
   //
-  // So this pin is the whole matrix: both paths, four channel states
-  // across a cycle - at rest, mid-bob, sheathing, the reload's dip.
-  const CW = 1280, CH = 800, sX = CW / 320, sY = CH / 200;
-  const anchor = { x: 0, y: 21, w: 585, h: 312 };   // as gunProtoProbe measures the shipped sheet
-  const union = { x: 0, y: 0, w: 586, h: 333 };
-  const anc = { x: anchor.x - union.x, y: anchor.y - union.y, w: anchor.w, h: anchor.h };
-  const scale = (GUN_FEEL.widthPct * 320) / anchor.w;
-
-  // the art in the shape loadThunderlockArt now hands over: the
-  // record is the GUN's box, with the union carried beside it
-  const rec = { width: Math.round(anchor.w * scale), height: Math.round(anchor.h * scale), frames: ['tex'] };
-  const art = {
-    weaponType: WEAPON_TYPES.Thunderlock,
-    anims: getWeaponAnims(WEAPON_TYPES.Thunderlock),
-    records: [rec, rec],
-    anchor: { x: anc.x * scale, y: anc.y * scale, w: anchor.w * scale, h: anchor.h * scale },
-    unionBox: { x: 0, y: 0, w: Math.round(union.w * scale), h: Math.round(union.h * scale) },
-  };
-  // what the rig puts on the ONE channel both draws read
-  const adjust = { x: 0, y: -GUN_FEEL.raise };
-
-  const CHANNELS = [
-    ['at rest', { position: [0, 0], scale: [1, 1], offset: [0, 0] }],
-    ['mid-bob', { position: [3.5, -2.1], scale: [1, 1], offset: [0, 0] }],
-    ['sheathing', { position: [0, 0], scale: [1, 1], offset: [0, 0.3] }],
-    ['the reload dip', { position: [0, 0], scale: [1, 1], offset: [0, GUN_FEEL.hiddenTarget[1]] }],
-  ];
-
-  const lab = (ch) => unionDrawRect(widgetTransformRect(placeSprite({
-    canvasW: CW, canvasH: CH, frameW: anchor.w, frameH: anchor.h,
-    widthPct: GUN_FEEL.widthPct, align: ALIGN.Right, offset: 0,
-    flip: false, offsetHeight: GUN_FEEL.raise * sY,
-  }), {
-    position: ch.position, scale: ch.scale, offset: ch.offset,
-    flip: false, screenHeight: CH, weaponOffsetHeight: GUN_FEEL.raise * sY,
-  }), anc, union);
-
-  /** The CLONE's path: alignRight + bottomY over the record, the
-   *  mod's transform, the rig's adjust, then the draw's expand. */
-  const clone = (ch) => {
-    const wp = { x: CW - rec.width * sX, y: CH - rec.height * sY, w: rec.width * sX, h: rec.height * sY };
-    const r = widgetTransformRect(wp, {
-      position: ch.position, scale: ch.scale, offset: ch.offset,
-      flip: false, screenHeight: CH, weaponOffsetHeight: 0,   // the HUD bar, absent here
-    });
-    r.x += adjust.x * sX; r.y += adjust.y * sY;
-    return unionDrawRect(r, art.anchor, art.unionBox);
-  };
-
-  /** The CLASSIC sprite path, driven through the real drawFpsWeapon. */
-  const classic = () => {
-    let got = null;
-    drawFpsWeapon({ drawScreenQuad: (_t, rect) => { got = rect; } }, { width: CW, height: CH },
-      art, 'Idle', 0, { flipHorizontal: false, offsetHeight: 0, adjust });
-    return got;
-  };
-
-  // THE TOLERANCE IS DERIVED. The record is rounded to whole NATIVE
-  // pixels where the lab keeps a float, and the surface scale
-  // multiplies that by four at 800px tall. Half a native pixel on
-  // each of width and height, plus half a screen pixel, is everything
-  // rounding can account for - the 31px the raise was out by is
-  // fifteen times it, and the 7.5px the union base cost is three.
-  const tol = 0.5 * sY + 0.5;
-  const off = [];
-  for (const [name, ch] of CHANNELS) {
-    const L = lab(ch), C = clone(ch);
-    for (const k of ['x', 'y', 'w', 'h']) {
-      const delta = C[k] - L[k];
-      if (Math.abs(delta) > tol) off.push(`clone, ${name}: ${k} is ${delta.toFixed(2)}px out (game ${C[k].toFixed(2)}, lab ${L[k].toFixed(2)})`);
-    }
+  // So the pin is IDENTITY now. Not "the lab and the game agree" -
+  // "the lab and the game are the same function object", which cannot
+  // drift, cannot round differently, and cannot be one path out of
+  // two. Everything the numeric pins used to check is true because
+  // there is nothing left to compare.
+  const lab = await import('../src/tools/gunLab.js');
+  const game = await import('../src/combat/gunViewmodel.js');
+  const place = await import('../src/combat/gunPlacement.js');
+  const sheet = await import('../src/combat/gunSheet.js');
+  for (const [labName, mod, gameName] of [
+    ['createWidgetRig', game, 'createGunRig'],
+    ['widgetRigStep', game, 'gunRigStep'],
+    ['labMotion', game, 'gunMotion'],
+    ['labWidgetSettings', game, 'gunWidgetSettings'],
+    ['gunFrameRect', game, 'gunFrameRect'],
+    ['placeSprite', place, 'placeSprite'],
+    ['unionDrawRect', sheet, 'unionDrawRect'],
+  ]) {
+    assert.equal(lab[labName], mod[gameName],
+      `the lab's ${labName} is not the game's ${gameName} - two copies again`);
   }
-  const L0 = lab(CHANNELS[0][1]), S = classic();
-  assert.ok(S, 'the classic path drew something');
-  for (const k of ['x', 'y', 'w', 'h']) {
-    const delta = S[k] - L0[k];
-    if (Math.abs(delta) > tol) off.push(`classic sprite: ${k} is ${delta.toFixed(2)}px out (game ${S[k].toFixed(2)}, lab ${L0[k].toFixed(2)})`);
-  }
-  assert.deepEqual(off, [], `the game does not draw the gun where the prototype does:\n${off.join('\n')}`);
 
-  // ...and the two structural facts the agreement rests on, so this
-  // cannot start passing for the wrong reason.
+  // ...and the rig really DRAWS through it, rather than importing it
+  // and then doing something else.
   const rig = readFileSync('src/combat/weaponRig.js', 'utf8');
-  assert.match(rig, /y: kick\.y \+ drop - GUN_FEEL\.raise/,
-    'the raise rides the adjust - the ONE channel both draws read');
-  for (const [f, what] of [['src/combat/fpsWeapon.js', 'the classic sprite'], ['src/combat/weaponWidget.js', 'the clone']]) {
-    assert.match(readFileSync(f, 'utf8'), /unionDrawRect\(/, `${what} expands the gun's box to the drawn box`);
+  assert.match(rig, /const \{ rect \} = gunFrameRect\(\{/, 'the draw takes the prototype\'s rect');
+  assert.match(rig, /gunRigStep\(_tlRig, gunWidgetSettings\(\), dt, \{/, 'and the prototype\'s module step');
+  assert.match(rig, /renderer\.drawScreenQuad\(tex, rect, undefined, tint \?\? undefined\)/, 'and puts it on the screen');
+
+  // THE FRAME IS STILL THE PROTOTYPE'S SHAPE: anchor placed and
+  // transformed, union derived, kick after the transform (the mod's
+  // ends in a floor the rect may not rise above, and a kick rises).
+  const vm = readFileSync('src/combat/gunViewmodel.js', 'utf8');
+  const order = ['placeSprite(', 'widgetTransformRect(', 'anchorRect.y += kick.y', 'unionDrawRect('];
+  let at = -1;
+  for (const step of order) {
+    const k = vm.indexOf(step, at + 1);
+    assert.ok(k > at, `the frame's order changed: ${step} is out of place`);
+    at = k;
   }
-  // the lab reads the game's copy of that expander, not a second one
-  const lab_ = readFileSync('src/tools/gunLab.js', 'utf8');
-  assert.match(lab_, /unionDrawRect,?\s*\n?\}? from '\.\.\/combat\/gunSheet\.js'/, 'one unionDrawRect, in the game\'s home');
-  assert.ok(!/^export function unionDrawRect/m.test(lab_), 'and the lab no longer defines its own');
+
+  // and it runs: a real frame, with the real numbers
+  const anchor = { x: 0, y: 21, w: 585, h: 312 };
+  const union = { x: 0, y: 0, w: 586, h: 333 };
+  const rigState = game.createGunRig();
+  game.gunRigStep(rigState, game.gunWidgetSettings({}), 1 / 60, {
+    screenRect: { width: 1280, height: 800 }, motion: game.gunMotion({ walking: true }), liveSpeed: 50,
+  });
+  const { rect, anchorRect } = game.gunFrameRect({
+    canvasW: 1280, canvasH: 800, anchor, union, rig: rigState,
+  });
+  assert.ok(rect.w > 0 && rect.h > 0, 'it draws something');
+  assert.ok(rect.h > anchorRect.h, 'the union is taller than the gun - the flash has its room');
+  assert.ok(Math.abs((rect.x + rect.w) - (anchorRect.x + anchorRect.w)) < 2,
+    'and they share a right edge, which is what AlignRight aligned');
 });
