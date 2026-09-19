@@ -21,6 +21,7 @@ import { assignEnemyEquipment, equipmentVariantFor, equipmentItems } from '../co
 import { rollEnemyWeaponPoison } from '../systems/poisons.js';
 import { EQUIP_SLOTS, equipTableOf, getEquipSlot } from '../systems/equip.js';
 import { generateItems, addEnemyLootExtras } from '../systems/loot.js';   // RF2: the spawn chain's DFU half, in its one home
+import { isHumanoid } from '../systems/survival/loot.js';   // MOD: the same humanoid test SURV2's corpse food already draws its line with
 import { rollCorpseLoot } from '../systems/lootRarity.js';   // RF2: and the port's, after it
 import { liveStat } from '../systems/statMods.js';   // RF2: the player's live luck for the roll   // AUDIT 58: ItemHelper's EquipItem half - a foe's equip table is what DamageEquipment's struck side reads
 import { GLOBAL_SCALE } from '../world/meshReader.js';
@@ -105,10 +106,22 @@ export const hasBowAttack = (basics) =>
  *  exterior pool's injectable stream - a puppet stands with an empty
  *  list and never comes here); the table roll itself stays on
  *  Math.random as UnityEngine.Random is, which is what every host
- *  passed before. Answers the entity's list. */
+ *  passed before. Answers the entity's list.
+ *
+ *  MOD: a humanoid foe's loot-table roll (every non-gold category -
+ *  weapons, armour, ingredients, magic items, clothing, books,
+ *  religious items) is cut to a QUARTER of DFU's own chance (a 75%
+ *  reduction); gold is computed before that scale ever applies and
+ *  rolls at its full, unmodified rate either way. "Humanoid" is the
+ *  same line survival/loot.js's corpse food already draws: class
+ *  enemies (128+), Orcs by team, and anything the basics row marks
+ *  affinity Human - so an Orc or a Knight is cut and a Zombie or a
+ *  Daedra Lord is not. */
+const HUMANOID_LOOT_ITEM_SCALE = 0.25;   // MOD: keep a quarter of the item chance (drop 75%)
 export function spawnEnemyLoot(entity, mobileType, basics, player, { rolls = Math.random } = {}) {
-  entity.items = generateItems(basics?.lootTableKey ?? '-', { level: player.level, gender: player.gender });
-  equipEnemy(entity, mobileType, player.level);
+  const itemChanceScale = isHumanoid(entity) ? HUMANOID_LOOT_ITEM_SCALE : 1;
+  entity.items = generateItems(basics?.lootTableKey ?? '-', { level: player.level, gender: player.gender }, undefined, { itemChanceScale, mobileType });
+  equipEnemy(entity, mobileType, player.level, rolls);
   addEnemyLootExtras(entity.items, basics, rolls);
   rollCorpseLoot(entity, basics, { rolls, luck: liveStat(player, 'luck') });
   return entity.items;
@@ -125,7 +138,15 @@ export function spawnEnemyLoot(entity, mobileType, basics, player, { rolls = Mat
  *  Order note: GenerateItems(LootTableKey) runs FIRST (EnemyEntity.cs:
  *  328) and the equipment items are appended after - callers must have
  *  filled `entity.items` before calling this. */
-export function equipEnemy(entity, mobileType, playerLevel) {
+/** MOD: the same 75% cut spawnEnemyLoot applies to the loot-table roll,
+ *  reapplied to a humanoid's WORN gear - so a looted Knight does not
+ *  hand over its whole equipped set as a matter of course. This only
+ *  touches what lands in `entity.items` (the corpse's droppable loot);
+ *  `entity.armorValues`, `entity.weapon` and the equip-slot table below
+ *  are built from the FULL `worn` set regardless, so the foe still
+ *  fights at its real armour and swings its real weapon - it is worn,
+ *  just not always left behind. */
+export function equipEnemy(entity, mobileType, playerLevel, rolls = Math.random) {
   const variant = equipmentVariantFor(entity.careerIndex, entity.isClass);
   if (variant === null) return null;
   const eq = assignEnemyEquipment(entity, variant, playerLevel);
@@ -141,7 +162,8 @@ export function equipEnemy(entity, mobileType, playerLevel) {
   // entity's items - the corpse's droppable loot.
   entity.items = entity.items ?? [];
   const worn = equipmentItems(eq);
-  entity.items.push(...worn);
+  const droppable = isHumanoid(entity) ? worn.filter(() => rolls() < HUMANOID_LOOT_ITEM_SCALE) : worn;
+  entity.items.push(...droppable);
   // AUDIT 58: AND IT PUTS THEM ON. ItemHelper.cs:1382/:1392/:1400 and
   // :1421-1450 pair every roll with
   // `enemyEntity.ItemEquipTable.EquipItem(item, true, false)` before

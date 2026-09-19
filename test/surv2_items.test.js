@@ -210,21 +210,21 @@ test('SURV2: the dead leave food - animals raw meat by kind (half of it turning)
   const bear = { mobileType: MOBILE_TYPES.GrizzlyBear, basics: { affinity: 'Animal' }, items: [] };
   assert.equal(isAnimal(bear), true);
   const meat = corpseFood(bear, { luck: 50, rolls: () => 0.0 });
-  assert.equal(meat.length, MEAT_BY_TYPE[MOBILE_TYPES.GrizzlyBear][0], 'a low roll: the least a bear gives');
+  assert.equal(meat.length, MEAT_BY_TYPE[MOBILE_TYPES.GrizzlyBear][0] / 2, 'a low roll: the least a bear gives, halved by ANIMAL_LOOT_SCALE');   // MOD: -50%
   assert.ok(meat.every((i) => i.templateIndex === TEMPLATE.RawMeat));
   assert.ok(meat.every((i) => i.foodStage === 1), 'a roll under a half: every piece is turning');
   const lucky = corpseFood(bear, { luck: 90, rolls: () => 0.999 });
-  assert.equal(lucky.length, 10 + (9 - 5), 'the top of the range plus the luck mod over five');
+  assert.equal(lucky.length, (10 + (9 - 5)) / 2, 'the top of the range plus the luck mod over five, halved by ANIMAL_LOOT_SCALE');   // MOD: -50%
   assert.ok(lucky.every((i) => !i.foodStage));
   const rat = corpseFood({ mobileType: MOBILE_TYPES.Rat, basics: { affinity: 'Animal' } }, { rolls: () => 0.9 });
-  assert.equal(rat.length, 1);
+  assert.equal(rat.length, 0, 'a single-meat catch, halved: the same 0.9 stream fails the keep-roll');   // MOD: -50%
   const fish = corpseFood({ mobileType: MOBILE_TYPES.Slaughterfish, basics: { affinity: 'Daylight' } }, { rolls: () => 0.9 });
-  assert.ok(fish.length >= 2 && fish.every((i) => i.templateIndex === TEMPLATE.RawFish), 'a fish is fish');
+  assert.ok(fish.length >= 1 && fish.every((i) => i.templateIndex === TEMPLATE.RawFish), 'a fish is fish, halved by ANIMAL_LOOT_SCALE');   // MOD: -50%
   const orc = { mobileType: MOBILE_TYPES.Orc, basics: { team: 'Orcs', affinity: 'Darkness' } };
   assert.equal(isHumanoid(orc), true);
   assert.deepEqual(corpseFood(orc, { luck: 50, rolls: () => 0.0 }), [], 'a low roll: nothing');
   const carried = corpseFood(orc, { luck: 50, rolls: () => 0.999 });
-  assert.equal(carried.length, 2, 'a 20: two things');
+  assert.equal(carried.length, 1, 'a 20: two things, but HUMANOID_FOOD_SCALE halves it to one');   // MOD: -50%
   const knight = { mobileType: 128 + 6, basics: { affinity: 'Human' } };
   assert.equal(isHumanoid(knight), true);
   assert.equal(corpseFood({ mobileType: MOBILE_TYPES.Ghost, basics: { affinity: 'Undead' } }, { rolls: () => 0.999 }).length, 0, 'a ghost carries nothing, whatever the roll');
@@ -319,7 +319,7 @@ test('AUDIT VC6: the corpse\'s food rolls on the roll it is HANDED, and on the l
   };
   const a = kill(() => 0.9, 50), b = kill(() => 0.9, 50);
   assert.deepEqual(a, b, 'the same stream, the same body - twice');
-  assert.equal(a.length, 1, 'a roll of 19 against HUMANOID_FOOD_ABOVE 17 is one meal, and 19 is not above 19, so not two');
+  assert.equal(a.length, 0, 'a roll of 19 is one meal, but the same 0.9 stream fails the 50% keep-roll HUMANOID_FOOD_SCALE adds');   // MOD: -50%
   // THE LUCK IS READ. A low roll that a lucky player carries over the
   // line is the whole of the term that was dead: 0.55 is a roll of 12,
   // which at luck 50 (mod 5) is 12 and carries nothing, and at luck 100
@@ -327,6 +327,6 @@ test('AUDIT VC6: the corpse\'s food rolls on the roll it is HANDED, and on the l
   // and 20 at luck 100, which is above BOTH thresholds: two meals.
   assert.deepEqual(kill(() => 0.55, 50), [], 'unlucky and unfed');
   assert.equal(kill(() => 0.7, 50).length, 0, 'the same roll at luck 50: nothing');
-  assert.equal(kill(() => 0.7, 100).length, 2, 'and at luck 100 the same roll carries two - the term the tree had never once applied');
+  assert.equal(kill(() => 0.7, 100).length, 1, 'and at luck 100 the same roll carries two, halved to one by HUMANOID_FOOD_SCALE');   // MOD: -50%
   uninstallSurvivalLoot();
 });

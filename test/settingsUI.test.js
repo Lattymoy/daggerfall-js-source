@@ -157,7 +157,7 @@ test('SO1: the settings pane is organised - the port\'s rows sit in the categori
   const menu = src('ui/enhancedMenu.js');
   assert.doesNotMatch(menu, /function paneEnhanced\(/, 'the Enhanced pane is gone');
   assert.doesNotMatch(menu, /inertRow\(/, 'and the row about a removed feature with it');
-  for (const fn of ['portRowsControls', 'portRowsInterface', 'morrowindCard', 'packsCard', 'categoryRows', 'tierGroup']) {
+  for (const fn of ['portRowsControls', 'portRowsInterface', 'morrowindCard', 'peerSpritesCard', 'packsCard', 'categoryRows', 'tierGroup']) {
     assert.match(menu, new RegExp(`function ${fn}\\(`), `${fn} exists`);
   }
   assert.match(menu, /if \(catId === 'controls'\) return portRowsControls\(opts\);[^\n]*\n\s*if \(catId === 'interface'\) return portRowsInterface\(opts\);/);
@@ -173,7 +173,9 @@ test('SO1: the settings pane is organised - the port\'s rows sit in the categori
   assert.match(ui, /if \(!pause\) out\.push\(skinRow\(\)\);/); assert.match(ui, /out\.push\(hudScaleRow\(\)\);/); assert.match(ui, /prefRow\('showFps'/);
   // FT14: the Mods page is gone; the assets and the packs stand under the feature tiles instead
   const mods = menu.slice(menu.indexOf('function modsFooter('), menu.indexOf('\n}', menu.indexOf('function modsFooter(')));
-  assert.match(mods, /body\.append\(morrowindCard\(\)\);[^\n]*\n\s*body\.append\(packsCard\(\)\);/);
+  // ONLINE-CLASS1 adds the peer-sprites card between them; the order is what
+  // this pins - the assets card, then the peers' look, then the packs' door.
+  assert.match(mods, /body\.append\(morrowindCard\(\)\);[^\n]*\n\s*body\.append\(peerSpritesCard\(\)\);[^\n]*\n\s*body\.append\(packsCard\(\)\);/);
   assert.match(menu, /await ds\.pickMusicFolder\(\); render\(\);/, 'the music pack is reachable without the launcher');
   assert.match(menu, /await ds\.pickTextureFolder\(\); render\(\);/);
   // tier is a group: live flat, the other two folded with a count, remembered on the shelf

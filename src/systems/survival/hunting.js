@@ -188,6 +188,23 @@ const outcome = (key, extra = {}) => ({
   meat: 0, fruit: 0, waterKg: 0, poison: false, disease: false, beast: null, hurt: 0, tired: false, skills: [], ...extra,
 });
 
+// MOD: the foraged catch (meat, fruit) is halved the same way
+// survival/loot.js halves a corpse's meat - stochastic rounding, so a
+// single-unit catch (a rabbit, a bird) still averages 50% over many
+// hunts instead of always rounding back up to 1 every time. Applied
+// once, over whatever huntOutcome's switch settled on, so every branch
+// above is cut without having to touch each one. Unconditional ("all
+// modes"): there is no separate difficulty knob on the hunt, only the
+// one survivalOn() switch that gates whether a hunt happens at all.
+export const HUNT_LOOT_SCALE = 0.5;
+function scaledYield(n, rolls) {
+  if (n <= 0) return n;
+  const scaled = n * HUNT_LOOT_SCALE;
+  const whole = Math.floor(scaled);
+  const frac = scaled - whole;
+  return frac > 0 && rolls() < frac ? whole + 1 : whole;
+}
+
 /**
  * What the search finds. `skills` is the hunter's live four (Archery,
  * Stealth, Critical Strike, Climbing); `hasBow` the weapon in hand.
@@ -196,6 +213,14 @@ const outcome = (key, extra = {}) => ({
  * host's tally.
  */
 export function huntOutcome({ climate, kind }, { hasBow = false, skills = {}, luck = 50, rolls = Math.random } = {}) {
+  const result = huntOutcomeRaw({ climate, kind }, { hasBow, skills, luck, rolls });
+  // MOD: the one scale point every branch above shares - see HUNT_LOOT_SCALE.
+  result.meat = scaledYield(result.meat, rolls);
+  result.fruit = scaledYield(result.fruit, rolls);
+  return result;
+}
+
+function huntOutcomeRaw({ climate, kind }, { hasBow = false, skills = {}, luck = 50, rolls = Math.random } = {}) {
   const d = 1 + Math.floor(rolls() * 100);   // Random(1, 101)
   const shot = () => check(skills.archery, luck, rolls);
   const sneak = () => check(skills.stealth, luck, rolls);

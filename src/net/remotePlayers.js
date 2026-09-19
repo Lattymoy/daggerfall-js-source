@@ -27,6 +27,46 @@ import { CAPSULE_HEIGHT } from '../player/motor.js';
 import { drawText, measureText } from '../ui/text.js';
 import { projectToScreen } from '../player/tapRay.js';   // one home (audit24 onehome): the touch layer's own projection
 import { LOOK_ITEM_FIELDS, LOOK_GROUPS } from './wire.js';   // the look's vocabulary: the wire's own
+// 2026-09-17 (per-request, the NON-Morrowind peer only - net/peerBodies.js and its Morrowind body are untouched):
+// the same class-enemy sprite classic dungeon humanoids already use (Warrior, Mage, Knight, ...), driven by simple
+// moving/striking flags off the peer's synced pose instead of AI - the reusable pieces dungeonContext.js already
+// builds a foe's OWN mobile unit from (MobileUnit.update takes the same flags EnemyMotor's AI would set).
+import { MobileUnit } from '../characters/mobileUnit.js';
+import { ENEMY_BASICS, ENEMY_NAMES } from '../characters/enemyBasics.js';
+import { mobileBillboardSize } from '../world/rmbFlats.js';
+import { getPref } from '../systems/uiPrefs.js';   // 2026-09-17: the 'peerClassSprites' on/off, read once a sync (Other players, enhancedMenu.js peerSpritesCard)
+import { CLASS_CAREERS } from '../systems/chargen.js';   // 2026-09-17 (bugfix): a stock class's CFG-loaded career carries no `.name` of its own - chargenSession.js's own class list already falls back to this array by careerIndex (`cf.career.name || CLASS_CAREERS[i]`), and composeLook needs the same fallback or every stock-class peer sends class:null
+
+/** entity.career?.name for a CUSTOM class; CLASS_CAREERS[entity.careerIndex] for a STOCK one, whose loaded career
+ *  object does not carry its own name (see the import comment above) - null if neither resolves, same as before
+ *  this existed. Centralized so composeLook has exactly one place that knows career data can be name-less. */
+function careerName(entity) {
+  return entity?.career?.name || (Number.isInteger(entity?.careerIndex) ? CLASS_CAREERS[entity.careerIndex] : null) || null;
+}
+
+/** DFU's own "Thief" class-enemy id (ENEMY_NAMES index 53 -> 128 + 53 - 43). Named here rather than left as a bare
+ *  138 so the fallback below reads as what it is - the SAME default the Unity co-op mod's own getCorrectType falls
+ *  through to for any class name its switch statement does not recognize. */
+const THIEF_MOBILE_TYPE = 138;
+
+/** A career name ("Warrior", "Mage", ...) to the matching class-enemy MobileType (128+), or null for a peer with no
+ *  class name to go on at all (mid-chargen, or an older peer whose look predates this field). `ENEMY_NAMES` is
+ *  generated straight off DFU's own EnemyBasics table (see characters/enemyBasics.js's header) - class rows start
+ *  at array index 43, mobileType 128 - so this reads the SAME data dungeonContext.js's own class-enemy foes render
+ *  from, rather than a second, hand-kept copy of the mapping (the Unity co-op mod this was ported from keeps its
+ *  own switch statement for exactly this; a data-driven lookup here cannot drift out of sync with the sprite table
+ *  the way a hand-written one can).
+ *  A NON-empty name this build does not recognize (a custom or modded class) falls to THIEF_MOBILE_TYPE rather than
+ *  null - matching the Unity mod precisely: its switch statement's own default arm is `return MobileTypes.Thief`,
+ *  reached for any string that fails every case. The empty/missing case is kept separate because Unity's own
+ *  RefreshProfile guards it BEFORE ever reaching that switch (`if (string.IsNullOrEmpty(newJob)) return;`) - so an
+ *  as-yet-classless peer there keeps showing whatever it already had (here, the paperdoll) rather than jumping to
+ *  Thief and back once a real class arrives. */
+export function classMobileType(name) {
+  if (typeof name !== 'string' || !name) return null;
+  const i = ENEMY_NAMES.indexOf(name);
+  return i >= 43 ? 128 + (i - 43) : THIEF_MOBILE_TYPE;
+}
 
 export { LOOK_ITEM_FIELDS, LOOK_GROUPS };
 
@@ -246,7 +286,16 @@ export function composeLook(entity) {
     if (o.equipSlot == null) o.equipSlot = slot;
     items.push(o);
   }
-  return { race: entity?.race ?? 'Breton', gender: entity?.gender ?? 'male', faceIndex: entity?.faceIndex ?? 0, items };
+  // 2026-09-17: `class` rides the look alongside race/gender/face so a peer without a Morrowind body can be drawn
+  // as the matching class-enemy sprite (see classMobileType, RemotePlayers) instead of the flat paperdoll. It is
+  // NOT part of the doll's own recipe - `entity.career?.name` is either DFU's stock class ("Warrior", "Mage", ...)
+  // or a custom class's name, and an unmapped one just leaves the peer on the paperdoll, same as today.
+  // OMITTED, not null, when the entity has no career - the same law wire.js's
+  // validLook keeps. Two reasons beyond the ONLINE1 pin: `lookKey` hashes this
+  // object, so a stray `class: null` would miss every look already cached, and
+  // a class-less peer must still serialize to the bytes it always did.
+  const klass = careerName(entity);
+  return { race: entity?.race ?? 'Breton', gender: entity?.gender ?? 'male', faceIndex: entity?.faceIndex ?? 0, ...(klass ? { class: klass } : {}), items };
 }
 
 /** One string per distinct look: the doll cache's key.
@@ -275,7 +324,7 @@ const uint = (v, max = 1e6) => (Number.isFinite(v) && v >= 0 ? Math.min(max, Mat
  * and the table's 27 slots bound the items.
  */
 export function peerStubEntity(look) {
-  const entity = { race: typeof look?.race === 'string' ? look.race.slice(0, 16) : 'Breton', gender: look?.gender === 'female' ? 'female' : 'male', faceIndex: uint(look?.faceIndex, 9) ?? 0, items: [], activeEffects: [], equip: createEquipTable() };
+  const entity = { race: typeof look?.race === 'string' ? look.race.slice(0, 16) : 'Breton', gender: look?.gender === 'female' ? 'female' : 'male', faceIndex: uint(look?.faceIndex, 9) ?? 0, class: typeof look?.class === 'string' ? look.class.slice(0, 20) : null, items: [], activeEffects: [], equip: createEquipTable() };
   const slots = entity.equip.slots.length;
   for (const it of look?.items ?? []) {
     if (!it || typeof it !== 'object' || entity.items.length >= slots) continue;
@@ -332,7 +381,7 @@ export class RemotePlayers {
   /**
    * @param {object} p
    * @param {import('../render/contract.js').RendererLike} p.renderer
-   * @param {{fetchBytes: Function, palette: object, getTexture?: Function}|null} p.deps  the compositor's
+   * @param {{fetchBytes: Function, palette: object, getTexture?: Function, uploadRecordFrame?: Function}|null} p.deps  the compositor's
    * @param {Function} [p.compose] the compositor's door (composePaperDollPixels); a test hands in its own
    * @param {Function} [p.now]
    */
@@ -342,10 +391,11 @@ export class RemotePlayers {
     this._compose = compose;
     this._now = now;
     this._dolls = new Map();     // lookKey -> { rec, w, h } ready | Promise composing | { failedUntil } (insertion-ordered: the oldest first)
-    this._batches = new Map();   // peer id -> { batch, key, doll, peer }
+    this._batches = new Map();   // peer id -> { batch, key, doll, peer } (doll kind) | { batch, kind: 'mobile', mobileType, gender, mobileUnit, archive, tex, height, lastAn, lastCn, peer } (mobile kind)
     this._shown = [];            // the last sync's drawable peers with their head heights - the name pass reads it
     this._wanted = new Set();    // SLAM7: the look keys the last sync ASKED FOR - composed or composing, drawn or not
     this._queue = Promise.resolve();
+    this._mobiles = new Map();   // 2026-09-17: peer id -> a ready MobileUnit bundle | Promise building | { failedUntil } - see _mobileFor
   }
 
   /** The doll for a look: composed once per look, serialized; a failure waits DOLL_RETRY_MS before another try. */
@@ -380,6 +430,64 @@ export class RemotePlayers {
     const rec = `doll_${++_dollSeq}`;
     renderer.uploadTexture(PEER_ARCHIVE, rec, { width: r.w, height: r.h, colors: new Uint32Array(crop.buffer) });
     return { rec, w: PEER_HEIGHT * (r.w / r.h), h: PEER_HEIGHT };
+  }
+
+  /** The mobile-unit bundle for a peer's class-enemy sprite: composed once per PEER (not shared by look, the way a
+   *  doll is - each peer's MobileUnit keeps its own animation clock and facing, exactly as each foe's own `f.mobile`
+   *  does in dungeonContext.js), retried after DOLL_RETRY_MS on a failure (a missing texture, a build that threw) -
+   *  same shape as `dollFor`, so a peer this fails for just keeps the paperdoll rather than never being drawn.
+   *  `mobileType`/`gender` changing (a peer's class - or, mid-look, their sex - changed) tears down and rebuilds:
+   *  a MobileUnit is built FOR one type/gender pair, and does not re-type itself the way a foe's async retypeFoe can. */
+  _mobileFor(peerId, mobileType, gender) {
+    const have = this._mobiles.get(peerId);
+    if (have && have.failedUntil != null) {
+      if (this._now() < have.failedUntil) return null;
+      this._mobiles.delete(peerId);
+    } else if (have) {
+      if (have.mobileType === mobileType && have.gender === gender) return have;
+      // a ready bundle for the WRONG type/gender - fall through and rebuild, same as a look-key miss for a doll
+    }
+    const p = this._buildMobile(mobileType, gender).catch(() => null);
+    this._mobiles.set(peerId, p);
+    p.then((bundle) => {
+      if (this._mobiles.get(peerId) !== p) return;   // SLAM12's own race: a peer released or rebuilt while this was in flight
+      if (bundle) this._mobiles.set(peerId, bundle);
+      else this._mobiles.set(peerId, { failedUntil: this._now() + DOLL_RETRY_MS });
+    });
+    return p;
+  }
+
+  async _buildMobile(mobileType, gender) {
+    const { deps } = this;
+    const basics = ENEMY_BASICS[mobileType];
+    if (!deps?.getTexture || !deps?.uploadRecordFrame || !basics?.maleTexture) {
+      // Mac, 2026-09-17: "just fix it" - this used to fail silently (a
+      // permanent, unlogged fallback to the paperdoll) with no way to tell
+      // WHICH of the three things was missing. Now it says so once per
+      // mobileType, so the real cause (deps never wired vs. no texture row
+      // for this class) is visible instead of invisible.
+      if (!this._warnedMissing) this._warnedMissing = new Set();
+      if (!this._warnedMissing.has(mobileType)) {
+        this._warnedMissing.add(mobileType);
+        console.warn(`[remotePlayers] class sprite ${mobileType} unavailable - `
+          + `getTexture:${!!deps?.getTexture} uploadRecordFrame:${!!deps?.uploadRecordFrame} `
+          + `maleTexture:${basics?.maleTexture ?? 'none'} - falling back to the paperdoll for this peer.`);
+      }
+      return null;
+    }
+    const archive = gender === 'female' && basics.femaleTexture ? basics.femaleTexture : basics.maleTexture;
+    const tex = await deps.getTexture(archive);
+    if (!tex) {
+      if (!this._warnedMissing) this._warnedMissing = new Set();
+      const key = `tex${archive}`;
+      if (!this._warnedMissing.has(key)) {
+        this._warnedMissing.add(key);
+        console.warn(`[remotePlayers] getTexture(${archive}) returned nothing for class sprite ${mobileType} - falling back to the paperdoll.`);
+      }
+      return null;
+    }
+    const mobileUnit = new MobileUnit(mobileType, basics, (rec) => tex.getFrameCount(rec), Math.random, gender);
+    return { mobileType, gender, mobileUnit, archive, tex, height: 0, lastAn: null, lastCn: null };
   }
 
   /** The looks the scene needs right now: the ones the last sync ASKED FOR - drawn, or composing and not yet handed
@@ -447,40 +555,118 @@ export class RemotePlayers {
    * answers 0 for every peer.
    * @param {Iterable<any>} peers
    * @param {(p: any) => number[]} [toScene]
-   * @param {{bodyHeight?: (id: any) => number}} [opts]
+   * @param {{bodyHeight?: (id: any) => number, dt?: number, eye?: ArrayLike<number>|null}} [opts]
    */
-  sync(peers, toScene = (p) => [p.x, p.y, p.z], { bodyHeight = () => 0 } = {}) {
+  sync(peers, toScene = (p) => [p.x, p.y, p.z], { bodyHeight = () => 0, dt = 0, eye = null } = {}) {
     const live = new Set();
-    this._shown = [];   // every drawable peer, doll or body, for the name pass
+    this._shown = [];   // every drawable peer, doll, mobile or body, for the name pass
     this._wanted = new Set();   // SLAM7: rebuilt every frame - a look nobody is standing in any more stops being needed at once
+    // 2026-09-17: read once a sync, not once a peer - the pref does not change mid-frame, and a card's toggle takes
+    // effect on the very next sync either way (this loop runs every frame; there is nothing to miss by not reading it fresher).
+    const spritesOn = getPref('peerClassSprites');
     for (const peer of peers) {
       if (!peer?.shown) continue;
-      // MWBODY1: a peer standing in a Morrowind body (net/peerBodies.js) draws no doll; its name still rides this pass, at the body's own head
+      // MWBODY1: a peer standing in a Morrowind body (net/peerBodies.js) draws no doll/mobile; its name still rides this pass, at the body's own head
       const bodyH = bodyHeight(peer.id);
       if (bodyH > 0) { this._shown.push({ peer, height: bodyH }); continue; }
       live.add(peer.id);
-      const key = lookKey(peer.look);
-      this._wanted.add(key); this._touch(key);   // SLAM7: asked for this frame, so it is needed and it is the newest thing in the cache
-      let entry = this._batches.get(peer.id);
-      if (entry && entry.key !== key) { this.renderer.destroyBillboardBatch?.(entry.batch); this._batches.delete(peer.id); entry = null; }
-      if (!entry) {
-        const doll = this._dolls.get(key);
-        if (!doll || typeof doll.rec !== 'string') { this.dollFor(peer.look); continue; }   // composing, or waiting out a failure
-        const batch = this.renderer.createBillboardBatch(PEER_ARCHIVE, doll.rec, { w: doll.w, h: doll.h }, [[0, 0, 0]]);
-        batch.origin = [0, 0, 0];
-        entry = { batch, key, doll, peer };
-        this._batches.set(peer.id, entry);
+      // 2026-09-17: a peer whose class maps onto a class-enemy sprite (classMobileType) is drawn as that sprite,
+      // animated off their synced pose (_syncMobilePeer) - the same billboard a hostile Warrior/Mage/etc. already
+      // is, just puppeted by the wire instead of AI. Anyone else - no class yet, a custom class this build has no
+      // sprite for, a mobile build still composing/waiting out a retry, or the player having turned the 'Other
+      // players' card off (spritesOn false) - keeps the paperdoll, exactly as before this whole feature existed.
+      const mobileType = spritesOn ? classMobileType(peer.look?.class) : null;
+      if (spritesOn && mobileType == null && peer.look && !peer.look.class) {
+        // Same "just fix it" logging as _buildMobile: if this fires, the
+        // problem is UPSTREAM of the sprite build entirely - the peer's
+        // `class` never arrived over the wire at all, so classMobileType
+        // never had a name to map.
+        if (!this._warnedNoClass) this._warnedNoClass = new Set();
+        if (!this._warnedNoClass.has(peer.id)) {
+          this._warnedNoClass.add(peer.id);
+          console.warn(`[remotePlayers] peer ${peer.id} has no look.class (${JSON.stringify(peer.look)}) - staying on the paperdoll.`);
+        }
       }
-      const f = toScene(peer.shown);
-      entry.batch.origin[0] = f[0]; entry.batch.origin[1] = f[1]; entry.batch.origin[2] = f[2];
-      entry.peer = peer;
-      this._shown.push({ peer, height: entry.doll.h });
+      const bundle = mobileType != null && ENEMY_BASICS[mobileType] ? this._mobileFor(peer.id, mobileType, peer.look?.gender === 'female' ? 'female' : 'male') : null;
+      if (bundle && typeof bundle.then !== 'function') { this._syncMobilePeer(peer, bundle, toScene, dt, eye); continue; }
+      this._syncDollPeer(peer, toScene);
     }
     for (const [id, entry] of this._batches) {
       if (live.has(id)) continue;
       this.renderer.destroyBillboardBatch?.(entry.batch);
       this._batches.delete(id);
+      this._mobiles.delete(id);   // 2026-09-17: a departed peer's mobile bundle (or its in-flight build) goes with its batch
     }
+  }
+
+  /** The paperdoll path, unchanged in shape from before the mobile-billboard branch existed - just factored out of
+   *  `sync` so the two paths (doll, mobile) share the same peer loop and the same departed-peer cleanup. */
+  _syncDollPeer(peer, toScene) {
+    const key = lookKey(peer.look);
+    this._wanted.add(key); this._touch(key);   // SLAM7: asked for this frame, so it is needed and it is the newest thing in the cache
+    let entry = this._batches.get(peer.id);
+    if (entry && (entry.kind === 'mobile' || entry.key !== key)) { this.renderer.destroyBillboardBatch?.(entry.batch); this._batches.delete(peer.id); entry = null; }
+    if (!entry) {
+      const doll = this._dolls.get(key);
+      if (!doll || typeof doll.rec !== 'string') { this.dollFor(peer.look); return; }   // composing, or waiting out a failure
+      const batch = this.renderer.createBillboardBatch(PEER_ARCHIVE, doll.rec, { w: doll.w, h: doll.h }, [[0, 0, 0]]);
+      batch.origin = [0, 0, 0];
+      entry = { kind: 'doll', batch, key, doll, peer };
+      this._batches.set(peer.id, entry);
+    }
+    const f = toScene(peer.shown);
+    entry.batch.origin[0] = f[0]; entry.batch.origin[1] = f[1]; entry.batch.origin[2] = f[2];
+    entry.peer = peer;
+    this._shown.push({ peer, height: entry.doll.h });
+  }
+
+  /** The class-enemy billboard path: `bundle.mobileUnit.update` is fed simple flags off the peer's OWN synced pose
+   *  (`shown`), the same wire fields net/peerBodies.js already reads to drive its own (Morrowind) rig - `mv` for
+   *  moving/running, `an`'s change for the striking edge - rather than anything new added to the wire protocol.
+   *  `striking` only fires from the SECOND frame a given peer is seen onward (`entry.lastAn` starts null): a peer's
+   *  attack counter is whatever it already was when they were first drawn, and comparing against nothing would
+   *  read that as a swing that just happened, exactly the false trigger `dollFor`-style caching is built to avoid
+   *  for a doll's look key. */
+  _syncMobilePeer(peer, bundle, toScene, dt, eye) {
+    let entry = this._batches.get(peer.id);
+    if (entry && (entry.kind !== 'mobile' || entry.mobileUnit !== bundle.mobileUnit)) { this.renderer.destroyBillboardBatch?.(entry.batch); this._batches.delete(peer.id); entry = null; }
+    const shown = peer.shown;
+    const f = toScene(shown);
+    const moving = !!shown.mv;
+    const an = shown.an | 0;
+    const striking = entry != null && entry.lastAn != null && an !== entry.lastAn;
+    const yaw = Number.isFinite(shown.yaw) ? shown.yaw : 0;
+    // BUGFIX (2026-09-17): mobileOrientation (characters/mobileUnit.js) reads cameraPos[0]/[2] unconditionally to
+    // work out which of the 8 directional frames faces the viewer - it was never optional the way `null` assumed,
+    // and crashed the moment a sprite actually built successfully. `eye` is the local player's own position, passed
+    // in from world.js's onlineFrame (the same call site already reading `player.pos` for peerBodies.sync); the `f`
+    // fallback (face the peer's own feet - degenerates to an arbitrary but valid angle, never a crash) only matters
+    // if sync() is ever called without an eye at all, which callers should not do.
+    //
+    // BUGFIX 2 (2026-09-17, "same sideways stance no matter how anyone moves"): the guard here used to be
+    // `Array.isArray(eye)`, which is FALSE for a typed array - and `player.pos` (world.js) is a Float32Array, not a
+    // plain Array. So this always failed and silently substituted the peer's OWN feet as "the viewer", making every
+    // peer face a coincident (zero-distance) point forever - orientation frozen regardless of anyone's real yaw or
+    // position. `eye.length === 3` accepts either array kind.
+    const out = bundle.mobileUnit.update(dt, { moving, striking }, yaw, f, eye && eye.length === 3 ? eye : f);
+    const rkey = `${out.record}#${out.frame}`;
+    if (!this.renderer.textures?.has?.(`${bundle.archive}_${rkey}`)) this.deps.uploadRecordFrame(bundle.archive, out.record, out.frame);
+    const sz = mobileBillboardSize(bundle.tex, out.record);
+    const size = { w: out.flip ? -sz.w : sz.w, h: sz.h };
+    if (!entry) {
+      const batch = this.renderer.createBillboardBatch(bundle.archive, rkey, size, [[0, 0, 0]]);
+      batch.origin = [0, 0, 0];
+      entry = { kind: 'mobile', batch, mobileUnit: bundle.mobileUnit, archive: bundle.archive, tex: bundle.tex, height: sz.h, lastAn: an, peer };
+      this._batches.set(peer.id, entry);
+    } else {
+      entry.batch.record = rkey;
+      entry.batch.size = size;
+      entry.height = sz.h;
+      entry.lastAn = an;
+      entry.peer = peer;
+    }
+    entry.batch.origin[0] = f[0]; entry.batch.origin[1] = f[1]; entry.batch.origin[2] = f[2];
+    this._shown.push({ peer, height: entry.height });
   }
 
   /** The batches for the hosts' billboard pass. */
@@ -633,5 +819,6 @@ export class RemotePlayers {
     this._batches.clear();
     this._wanted.clear();   // SLAM7: nothing is needed by a host that is gone
     for (const key of [...this._dolls.keys()]) this._release(key);
+    this._mobiles.clear();   // 2026-09-17: no GPU resource of its own to release (the shared archive texture cache outlives any one peer), just the map
   }
 }

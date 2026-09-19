@@ -142,7 +142,7 @@ import { elementalResistanceChance, ELEMENTS } from '../systems/spellcast.js';  
 import { rollCampEncounter, rollCampEncounterOnChunkLoad, amGroupRollOwner } from '../systems/campEncounters.js';   // CAMP1: the group-encounter roll - camps and packs, riding the same tick, and the chunk-load twin
 import { nearestSafeLocation, respawnFlavorText, respawnHealth } from '../systems/deathRespawn.js';   // D-ONLINE1: online, a death respawns instead of ending the run   // X-slice; the rest refusal raises the alert and asks the RESTING variant, the townsfolk idle the STRICT one; the catch-up loop's watch arm
 import { snapshotPlayer, restorePlayer, resolvePendingSpells, composeSessionState, restoreSessionState, dungeonPixelFor } from '../systems/save.js';   // P-slice: the above-ground quicksave; B4: the ONE quest+talk composer
-import { saveSlot, loadSlot, quickLoadSlot, mostRecentRestorable, QUICK_SAVE_NAME, requestScreenshot, capturePendingScreenshot } from '../systems/saveSlots.js';   // SAV4: the quicksave is a SLOT named QuickSave (SaveLoadManager.QuickSave/QuickLoad); SS1: the shot arms at save and lands at frame end
+import { saveSlot, loadSlot, quickLoadSlot, mostRecentRestorable, QUICK_SAVE_NAME, saveKeysOfCharacter, saveInfoOf, requestScreenshot, capturePendingScreenshot } from '../systems/saveSlots.js';   // SAV4: the quicksave is a SLOT named QuickSave (SaveLoadManager.QuickSave/QuickLoad); SS1: the shot arms at save and lands at frame end   // ONLINE-AUTOSAVE1: saveKeysOfCharacter/saveInfoOf - every slot this character already has, kept in sync on an online exit too
 import { frameBegin, frameEnd } from '../systems/frameClock.js';   // PERF1: the frame's script time
 import { arrivalClampMinutes, playerTravelPosition } from '../systems/travel.js';   // F-slice; F114: the ship-aware travel origin
 import { hasSpecialAbility, SPECIAL_ABILITY } from '../systems/rest.js';   // F-slice: the NoRegen restore gate
@@ -3109,7 +3109,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // and dungeonContext.js:2203 mounts the same one, gated on
   // `opts.enchantCtx !== false` because setDefaultEnchantCtx is a
   // session singleton and EC1 already routes THIS host's mount into
-  // that context through modes.dungeonCtx - so worldModes.js:4652
+  // that context through modes.dungeonCtx - so worldModes.js:4654
   // passes false beside its `chargen: false` and only the standalone
   // ?dungeon route mounts its own. S40 filled isResting
   // in - the sentence that stood here said it "stays absent above
@@ -3318,7 +3318,27 @@ export async function bootWorld(canvas, renderer, params, status) {
       const fly = (ENEMY_BASICS[mobileType]?.behaviour ?? 'General') === 'Flying';
       exteriorFoes.spawnFoe(mobileType, [spot.x, fly ? spot.y + 1.5 : spot.y, spot.z], {
         yaw: Math.atan2(anchorFeet[0] - spot.x, anchorFeet[2] - spot.z),
-      }).then((f) => { if (f) { f.campId = campId; f.campAlertRadius = hit.alertRadius; } }).catch(() => null);
+      }).then((f) => {
+        if (f) {
+          f.campId = campId; f.campAlertRadius = hit.alertRadius;
+          // CAMP2: campEncounters.js groups by THEME (mobileFactions.js),
+          // not by the game's own combat Team (enemyBasics.js), so a
+          // themed group can still mix several Teams - a "vermin nest"
+          // is Spiders + Scorpions + Vermin, a "bandit gang" is
+          // KnightsAndMages + Criminals classes. Without an exemption,
+          // EnemyInfighting (on by default, settingsDefaults.js) has
+          // different-team campmates fighting each other on sight
+          // instead of the player. The exemption is the CAMP'S, carried
+          // on the entity for enemyTargets.js's infighting arm to read:
+          // a campmate is spared its campmates and nobody else, so the
+          // player's own summoned ally is still fought, and it lapses
+          // with campId rather than outliving the group across a
+          // quickload. (The hand-off set an entity-wide infighting flag
+          // instead, which does neither - Active-Arcs.md records why it
+          // was refused, and enemytargets.test.js guards the difference.)
+          if (f.entity) f.entity.campId = campId;   // CAMP2: the infighting exemption is the CAMP's, not a blanket flag - see enemyTargets.js's arm
+        }
+      }).catch(() => null);
     }
   };
   const _standLooseFoe = (mobileType, opts = {}) => {
@@ -4880,7 +4900,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // so an F9 pressed inside a shop recorded the street's sheath and
     // hand. The mode host answers for the rig that is actually drawn
     // and null outside interior mode (the dungeon owns its own
-    // composer, dungeonContext.js:5573), so exterior mode and a
+    // composer, dungeonContext.js:5585), so exterior mode and a
     // pre-seam mode host compose exactly as before, per field.
     const wp = modes?.weaponPose?.() ?? null;
     const snap = snapshotPlayer(playerEntity, {
@@ -4959,6 +4979,28 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  shape, because the interim entity has no name to key by. */
   async function worldQuickLoad({ mostRecent = false, key = null } = {}) {
     if (_loading) return;
+    // ONLINE-LOAD1 (world/exterior + building interior, which routes
+    // straight to this same function - see worldModes.js's `quickLoad:
+    // host.quickLoad`): guarded HERE, at the source, not only in the
+    // enhanced pane (paneLoad's own loadingPrevented read) - F9/F11
+    // reach this function directly through routeKey (ui/input.js),
+    // with no pane in the way, exactly the gap dungeonContext.js's own
+    // quickLoad closes for the dungeon half of the game. Loading a
+    // save while a live online session is running would hand every
+    // other peer a player whose room the loaded save knows nothing
+    // about.
+    //
+    // Gated on `online` (the LIVE session, null until onlineStart's
+    // first frame) rather than `onlineOn` (the URL flag, true from the
+    // very start of boot): this same function is ALSO the boot-time
+    // "Load Game" / "Play Online with an existing character" loader
+    // (params.has('load') below), which runs before any session
+    // exists - an earlier draft gated on `onlineOn` and silently
+    // discarded that boot load whenever the URL carried ?online,
+    // leaving the player on an empty default entity (no name, no
+    // class, no gear) for the rest of the session: exactly a boot
+    // load, not an in-play one, and `online` is what tells them apart.
+    if (online) { townTalk.say('Loading is disabled during online play.'); return; }
     // AUDIT-TO1 G1: SaveLoadManager.OnLoad -> ClearTravelDestination
     // (TravelOptionsMod.cs:378), which closes the panel and so drops the
     // scale (OnClose -> InterruptTravel). Before the first await, so a
@@ -5952,6 +5994,14 @@ export async function bootWorld(canvas, renderer, params, status) {
         quickSave: worldQuickSave,
         quickLoad: worldQuickLoad,
         relock: () => requestLook(canvas),   // MAC1: the pointer comes back with the resume gesture (ui/pauseDoor.js)
+        // ONLINE-LOAD1: this host's own live-session flag (`online`,
+        // not `onlineOn` - see worldQuickLoad's own header for why),
+        // for the enhanced Load pane (enhancedMenu.js paneLoad) to
+        // grey itself out and say why, the same way savingPrevented
+        // already lets paneSave do for a shop mid-transaction. The real
+        // door is guarded at worldQuickLoad itself - this is the
+        // pane's read of the same signal, not a second gate.
+        loadingPrevented: () => !!online,
         // SAV4: the slot window's seams - the pause SAVE/LOAD doors
         // open it with these (openClassicPauseFlow builds the doors).
         playerName: () => playerEntity.name,
@@ -6334,6 +6384,43 @@ export async function bootWorld(canvas, renderer, params, status) {
   // one gesture at a time. `exitToTitleMenu` stands it down, because a
   // door the game opened is not a door to warn about.
   armUnloadGuard(() => playerSpawned);
+  // ONLINE-AUTOSAVE1 (Discord request, 2026-09-18: does the game save
+  // when you leave online?): unloadGuard.js's own header explains why
+  // it only ASKS and never saves, as a general rule - `beforeunload`
+  // gives no time for async work, and a save begun there is as often
+  // half-written as not. worldModes.quickSaveNow (and, in exterior
+  // mode, worldQuickSave under it) is the one exception to that rule:
+  // every composer it can reach is fully synchronous end to end
+  // (saveSlot writes straight to localStorage, no await anywhere in
+  // either chain), so it completes INSIDE this handler before the
+  // page can actually go - none of the corruption risk the general
+  // warning is about.
+  //
+  // Online only (`online`, the live session - see worldQuickLoad's own
+  // header for why that is the correct signal and not `onlineOn`), and
+  // only once there is a character worth saving (`playerSpawned`): an
+  // abrupt close mid-session - the tab, Back, Ctrl-W, exactly what the
+  // guard above exists to catch - no longer costs the whole session's
+  // progress the way it could before. Playing offline is unchanged:
+  // the browser's own unload prompt still asks either way, and a
+  // player who saved five minutes ago and means to quit without saving
+  // again keeps that choice offline; online, the choice of losing nothing
+  // is made for them, the same way loading already is.
+  //
+  // EVERY SLOT THIS CHARACTER ALREADY HAS, by explicit request (Discord,
+  // 2026-09-18) - QuickSave, AutoSave, and any save under a name the
+  // player chose themselves - all brought to the state the player is
+  // leaving in, not only the two the port itself manages. Nothing NEW is
+  // created (saveKeysOfCharacter names only slots that already exist),
+  // but a NAMED save is no longer a safe rollback point once this
+  // character has played online: leaving online overwrites it too, same
+  // as QuickSave/AutoSave always did.
+  addEventListener('beforeunload', () => {
+    if (!online || !playerSpawned) return;
+    const save = (saveName) => (modes ? modes?.quickSaveNow(saveName) : worldQuickSave(saveName));   // `?.` even inside the ternary: audit24 wave37's gate above the declaration is all-or-nothing
+    const names = new Set([QUICK_SAVE_NAME, ...saveKeysOfCharacter(playerEntity.name).map((key) => saveInfoOf(key)?.saveName).filter(Boolean)]);
+    for (const saveName of names) save(saveName);
+  });
 
   addEventListener('mousemove', (e) => {
     // U37: a window frees the mouse, so an open overlay gets the
@@ -6591,7 +6678,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // exterior -> the townTalk overlay, interior OR dungeon -> the mode
   // machine's slot. U43-ii shipped the dungeon half: showQuestBox
   // offers the window to `modes.showQuestOverlay` below, and
-  // worldModes answers it in BOTH modes (worldModes.js:7429-7441 -
+  // worldModes answers it in BOTH modes (worldModes.js:7476-7488 -
   // dungeon routes to dungeonCtx.showOverlay), so a dungeon popup is
   // shown rather than logged loudly and dropped.
   // AUDIT 24 (wave 21): DaggerfallMessageBox.Show() is a
@@ -7755,7 +7842,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // host's file dict - never the player's store, which quests move) once the file is read; a modded file desyncs the
   // shared economy (recorded). Offline nothing is installed and the player's own tilted walk runs.
   if (onlineOn) townTalk.ensureFactions?.().then(() => { if (townTalk.factionDict) setWorldPriceTilt(worldPriceTiltOf(townTalk.factionDict)); }).catch(() => {});
-  let online = null, remotePlayers = null, peerBodies = null, nameLayer = null, nameSight = null, _onlineLast = null, _onlineKey = null, _onlineKeySince = 0;
+  let online = null, remotePlayers = null, peerBodies = null, nameLayer = null, nameSight = null, _onlineLast = null, _onlineKey = null, _onlineKeySince = 0, _onlineMovingUntil = 0;
   // D-ONLINE1 (2026-09-17, a player: "still see you have died then main menu"): `onlineFrame` LEAVES the room the
   // instant the death screen goes up (AUDIT ONLINE D12: the dead broadcast nothing and see no one), every frame,
   // BEFORE `onReset` ever runs (the 3-second timer, or Enter) - so a respawn decision that read `online.room` at
@@ -7910,6 +7997,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   const dungeonAuthority = (now = performance.now()) => !(online?.room && isWorldRoom(online.room) && online.status === 'open' && online.host && !online.isHost() && now - _foesInAt < FOES_STALE_MS);
   let onlineToScene = (p) => [p.x, p.y, p.z];
   const ROOM_HOLD_MS = 500;   // AUDIT ONLINE D11: a room key holds this long before the socket moves - a cell edge is not a churn
+  const ONLINE_MOVE_HOLD_MS = 250;   // ONLINE-MVFLICKER1: see the outgoing `mv` computation's own header - debounces a single stray zero-delta sample
   const onlineStart = () => {
     online = new OnlineSession({
       url: params.get('server') || getPref('onlineServer') || DEFAULT_SERVER,
@@ -7963,7 +8051,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     onlineArrival();
     alignSurvival(playerEntity, Math.floor(worldMinutes()), Math.floor(worldMinutes()));   // SURV7: a record ahead of the world's clock starts fresh; the gap itself is save.js's load arm
     online.onClock = (offsetMs) => { const was = _sharedOffsetMs; _sharedOffsetMs = offsetMs; if (Math.abs(offsetMs - was) > 1000) { onlineArrival(); alignSurvival(playerEntity, Math.floor(worldMinutes()), Math.floor(worldMinutes())); } };   // AUDIT SURV B: the correction re-aligns the needs too   // WORLD5: the relay's clock corrects this machine's
-    remotePlayers = new RemotePlayers({ renderer, deps: { fetchBytes, palette, getTexture } });
+    remotePlayers = new RemotePlayers({ renderer, deps: { fetchBytes, palette, getTexture, uploadRecordFrame } });   // 2026-09-17: uploadRecordFrame added for the class-enemy billboard path (net/remotePlayers.js _buildMobile/_syncMobilePeer) - the doll path never touches it
     // MWBODY1: the enhanced skin with Morrowind data attached puts every peer in a body of its own; otherwise the doll
     const enhanced = isEnhanced();   // the skin cannot change without a reload (switchSkin), so it is read once, not per frame
     peerBodies = new PeerBodies({ renderer, enabled: () => enhanced && !!getPref('mwArms') && morrowindDataCount() > 0, generation: morrowindDataGeneration });
@@ -8341,7 +8429,29 @@ export async function bootWorld(canvas, renderer, params, status) {
     onlineToScene = overworld
       ? (p) => { const l = state.localFromWorld(p.x, p.z); return [l[0], p.y + state.compensation[1], l[1]]; }
       : (p) => [p.x, shedY ? p.y + state.compensation[1] : p.y, p.z];
-    const moved = _onlineLast ? (player.pos[0] - _onlineLast[0]) ** 2 + (player.pos[2] - _onlineLast[2]) ** 2 > 1e-6 : false;
+    // ONLINE-MVFLICKER1 (Discord, 2026-09-18: "walking animation doesn't
+    // complete, comes through only halfway"): `moved` used to be this
+    // single frame's own delta, sent whichever frame the throttle below
+    // (sendPose's own POSE_HZ gate) happened to let through - and a
+    // receiving peer's mobile sprite (net/remotePlayers.js
+    // _syncMobilePeer -> MobileUnit._change) resets to frame 0 on every
+    // idle<->move edge, unconditionally, for any class with an idle
+    // table of its own (characters/mobileUnit.js). One stray sampled
+    // frame with a near-zero delta - a physics sub-step that had not
+    // advanced yet, a single frame stalled on a collision, anything
+    // that briefly reads as "did not move" while a player is plainly
+    // still holding a direction - got sent as `mv:0` on whichever throw
+    // of the dice landed on the actual wire send, and the very next
+    // real "moving" packet started the walk cycle over from 0. Held
+    // instead: once real movement is seen, "moving" reads true for
+    // ONLINE_MOVE_HOLD_MS after the LAST frame that moved, so a single
+    // unlucky sample can no longer flip the sent bit mid-stride. A
+    // quarter second of lag on the transition TO idle is not
+    // perceptible walking to a stop; a walk cycle restarting every few
+    // packets is.
+    const movedThisFrame = _onlineLast ? (player.pos[0] - _onlineLast[0]) ** 2 + (player.pos[2] - _onlineLast[2]) ** 2 > 1e-6 : false;
+    if (movedThisFrame) _onlineMovingUntil = now + ONLINE_MOVE_HOLD_MS;
+    const moved = now < _onlineMovingUntil;
     _onlineLast = [player.pos[0], player.pos[1], player.pos[2]];
     if (key !== _onlineKey) { _onlineKey = key; _onlineKeySince = now; }
     const mv = moved ? (player.isRunning ? 2 : 1) : 0;
@@ -8385,7 +8495,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (isCellRoom(online.room)) { const near = peersNear(); if (near) camps.sweepOwners(new Set(near.map((p) => p.id)), now, FOES_STALE_MS); }   // SURV3: a peer's camps go as their puppets do - the same liveness, the same answer-gate   // AUDIT WORLD6b-iii(b) C3/B5: no answer (the socket not open) is not "nobody" - it pruned every owner while the halos kept feeding frames, a spawn-and-discard loop per frame   // AUDIT WORLD6b-ii C2: ONE liveness for the owner - the peers the hunt reads (visible: a pose, in range, inside the timeout) are the peers whose puppets stand
     const drawable = online.drawable();
     peerBodies.sync(drawable, onlineToScene, dt, player.pos);   // the nearest first, the far ones asleep
-    remotePlayers.sync(drawable, onlineToScene, { bodyHeight: (id) => peerBodies.heightOf(id) });
+    remotePlayers.sync(drawable, onlineToScene, { bodyHeight: (id) => peerBodies.heightOf(id), dt, eye: player.pos });   // 2026-09-17: dt drives the class-enemy billboard path's own animation clock; eye is the local player's own position, needed for mobileOrientation's facing calculation (see remotePlayers.js _syncMobilePeer)
   };
   const drawPeerBodies = (proj, view, eye) => { if (peerBodies) peerBodies.draw(canvas, { proj, view, eye }); };
   /** FONT1 (2026-09-16, Mac: "Especially the new online interfaces font use our enhanced font"): THE SOCKET'S OWN
@@ -8697,9 +8807,19 @@ export async function bootWorld(canvas, renderer, params, status) {
     // here and worldModes' interior arm consumes it;
     // dungeonContext.js keeps its own composer (no buildings there);
     // exterior.js builds no save doors (the probe host).
-    quickSave: () => worldQuickSave(),
+    // ONLINE-AUTOSAVE1: `saveName` forwards through (default QuickSave,
+    // same as every existing caller that hands none) so worldModes'
+    // quickSaveNow can also update a character's AutoSave slot on the
+    // way out, not only QuickSave - see its own header.
+    quickSave: (saveName) => worldQuickSave(saveName),
     quickLoad: () => worldQuickLoad(),
     relock: () => requestLook(canvas),   // MAC1: the interior arm's pause door relocks through this host's canvas
+    // ONLINE-LOAD1: the building host's own reflection of the same
+    // signal the exterior pause hooks pass (`online`, the live
+    // session - see worldQuickLoad's own header), so its interior
+    // pause menu greys the Load pane the same way - see
+    // worldModes.js's togglePause for the door itself.
+    loadingPrevented: () => !!online,
     playerName: () => playerEntity.name,
     saveAs: (saveName) => worldQuickSave(saveName),
     loadKey: (key) => worldQuickLoad({ key }),

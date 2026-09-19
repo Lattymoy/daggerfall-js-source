@@ -34,8 +34,33 @@ export const HUMANOID_SECOND_ABOVE = 19;
 const luckMod = (luck) => Math.trunc((luck ?? 50) / 10);
 const range = (min, max, rolls) => min + Math.floor(rolls() * (max - min + 1));
 
+// MOD: animal hunting loot cut in half, everywhere this fires (no mode
+// gate of its own - installSurvivalLoot's own `enabled` check is the
+// only on/off switch, so this always applies once that's on). A count
+// scales by stochastic rounding rather than a flat floor/round, so the
+// CUT averages exactly 50% over many kills instead of quietly rounding
+// every single-unit catch (a Rat's one meat) back up to 1 every time.
+export const ANIMAL_LOOT_SCALE = 0.5;
+// MOD: the same cut over a humanoid's carried food (rations, a stray
+// meat/fish/bread/fruit/water) - independent of the item-loot and
+// equipment cuts in hostCombat.js, since this is survival mode's own
+// separate food roll, not the loot table or the worn kit.
+export const HUMANOID_FOOD_SCALE = 0.5;
+function scaledCount(n, scale, rolls) {
+  if (n <= 0) return n;
+  const scaled = n * scale;
+  const whole = Math.floor(scaled);
+  const frac = scaled - whole;
+  return frac > 0 && rolls() < frac ? whole + 1 : whole;
+}
+
 export const isAnimal = (entity) => entity?.basics?.affinity === 'Animal' || entity?.mobileType === MOBILE_TYPES.Slaughterfish;
-export const isHumanoid = (entity) => (entity?.mobileType ?? 0) >= 128 || entity?.basics?.team === 'Orcs' || entity?.basics?.affinity === 'Human';
+// MOD (player report): a Centaur is half human and carries a
+// person's loot/kit, not an animal's - drops the same way the other
+// humanoids do (75% item/gear cut in hostCombat.js, 50% food cut
+// below), even though its own affinity/team row (Daylight/Centaurs)
+// doesn't say "Human" or "Orcs".
+export const isHumanoid = (entity) => (entity?.mobileType ?? 0) >= 128 || entity?.basics?.team === 'Orcs' || entity?.basics?.affinity === 'Human' || entity?.mobileType === MOBILE_TYPES.Centaur;
 
 /** What one corpse carries: raw meat or fish for an animal, sometimes a
  *  meal for a humanoid. Pure: returns the items. */
@@ -47,7 +72,7 @@ export function corpseFood(entity, { luck = 50, rolls = Math.random } = {}) {
     const id = entity.mobileType;
     const fish = FISH_BY_TYPE[id];
     const [min, max] = fish ?? MEAT_BY_TYPE[id] ?? DEFAULT_ANIMAL_MEAT;
-    const n = range(min, max + Math.max(0, lm - 5), rolls);
+    const n = scaledCount(range(min, max + Math.max(0, lm - 5), rolls), ANIMAL_LOOT_SCALE, rolls);
     for (let i = 0; i < n; i++) {
       const item = createSurvivalItem(fish ? TEMPLATE.RawFish : TEMPLATE.RawMeat);
       if (item && rolls() < 0.5) spoilFood(item);   // half of it is already turning
@@ -59,6 +84,7 @@ export function corpseFood(entity, { luck = 50, rolls = Math.random } = {}) {
     const roll = range(1, 20, rolls) + lm - 5;
     if (roll > HUMANOID_FOOD_ABOVE) out.push(humanoidFood(rolls));
     if (roll > HUMANOID_SECOND_ABOVE) out.push(humanoidFood(rolls));
+    out.length = scaledCount(out.length, HUMANOID_FOOD_SCALE, rolls);   // MOD: -50%
   }
   return out.filter(Boolean);
 }

@@ -98,8 +98,9 @@
  * @typedef {object} RendererLike
  * @property {(archive: number|string, record: number|string, color32: Color32, opts?: object) => any} uploadTexture
  * @property {(archive: number|string, record: number|string) => void} [releaseTexture]
- * @property {(archive: number, record: number, size: {w: number, h: number}, centers: number[][]) => BillboardBatch} createBillboardBatch
+ * @property {(archive: number|string, record: number|string, size: {w: number, h: number}, centers: number[][]) => BillboardBatch} createBillboardBatch
  * @property {(batch: BillboardBatch|null) => void} [destroyBillboardBatch]
+ * @property {Map<string, any>} [textures] the live texture cache, keyed `archive_record` - read to skip a re-upload
  */
 
 export {};

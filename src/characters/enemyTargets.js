@@ -164,6 +164,16 @@ export function getTargets(self, candidates, playerFeet, {
       continue;
     } else if (infighting && !self.entity?.suppressInfighting && targetEntity && !targetEntity.suppressInfighting) {
       if (targetEntity.team === selfTeam) continue;
+      // CAMP2: campEncounters.js groups by THEME (mobileFactions.js), which can
+      // straddle several combat Teams - a "vermin nest" is Spiders + Scorpions,
+      // a "bandit gang" several classes - so the line above does not hold them
+      // together and infighting has campmates fighting each other on sight.
+      // Scoped to the CAMP, not set as suppressInfighting on the entity: that
+      // flag skips this whole arm, dropping to the `else` below, where a
+      // campmate stops targeting every non-player candidate - the player's own
+      // summoned ally included. This exempts a campmate from its campmates and
+      // from nothing else, and it lapses with campId rather than outliving it.
+      if (self.entity?.campId != null && targetEntity.campId === self.entity.campId) continue;
     } else {
       if (!isPlayer && selfMobileTeam !== 'PlayerAlly') continue;
     }

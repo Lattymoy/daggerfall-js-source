@@ -42,8 +42,21 @@
 // module's own contract is "well OUTSIDE camps has this roll go up" -
 // a check duplicated across a party would silently double this
 // section's frequency for anyone travelling together.
-import { chooseRandomEnemy } from './encounters.js';
+import { chooseRandomEnemy, resolveEncounterTableIndex } from './encounters.js';
+import { ENCOUNTER_TABLES } from '../characters/encounterTables.js';
+import { factionOf, SOLITARY_TYPES, NIGHT_ONLY_FACTIONS } from '../characters/mobileFactions.js';
 import { CLASSIC_MINUTES_PER_SECOND } from './worldTick.js';   // real-seconds -> game-minutes, so the cadence below can be stated in real play time
+
+// A camp/pack seed roll that lands on a SOLITARY type (Dragonling,
+// Daedra, an Atronach, ...) gets this many extra tries at a normal
+// roll before the group is abandoned outright. Those ids are exactly
+// "way too high level" for a group: the single-encounter roll can
+// still surface one alone (that's classic's own rare-surprise design,
+// untouched), but a camp/pack must never be built around one, and
+// with only a handful of chances to dodge it that top-tier roll
+// (encounters.js's "roll > 95" branch) stays rare here same as it
+// always was.
+const MAX_SEED_ATTEMPTS = 4;
 
 export const MIN_CAMP_SPAWN_DISTANCE = 14;   // a cluster wants more clearance than one foe
 export const MAX_CAMP_SPAWN_DISTANCE = 26;
@@ -128,19 +141,61 @@ export function amGroupRollOwner(myId, myFeet, peers, radius = GROUP_ROLL_RADIUS
 /** The composition a hit rolls, shared by both entry points below -
  *  `rollCampEncounter` (the timer) and `rollCampEncounterOnChunkLoad`
  *  (a new pixel entered) differ only in what GATES the chance roll,
- *  never in what a hit is made of. */
+ *  never in what a hit is made of.
+ *
+ *  THEMED, not independent: the old version called chooseRandomEnemy
+ *  once per member with no relation between the picks, so nothing
+ *  stopped e.g. three unrelated tiers of monster - or a roll that hit
+ *  encounters.js's rare top-of-table branch more than once - from
+ *  landing in the same "group". Now exactly ONE seed member is drawn
+ *  the normal way (so the usual climate/day-night/level odds still
+ *  decide whether a group happens at all and how tough it opens at),
+ *  and every other member is drawn from THAT SAME climate table,
+ *  filtered down to the seed's faction (mobileFactions.js) - so a
+ *  camp reads as "a knot of bandits", "an orc raiding party", "a
+ *  cluster of spiders", never a grab-bag, and a table entry that was
+ *  never in that climate's list to begin with still can't appear. */
 function rollGroupComposition(ctx, rolls) {
   const timeOfDay = ctx.gameMinutes % 1440;
   const isDay = timeOfDay >= 360 && timeOfDay <= 1080;
+  const rollCtx = { ...ctx, isDay };
+
+  // Seed roll: same odds as a lone wanderer would get, but re-rolled
+  // away from SOLITARY types (never forced into a group), and away
+  // from a NIGHT_ONLY faction caught out by daylight, up to
+  // MAX_SEED_ATTEMPTS times before giving up on a group this tick.
+  let seed = -1;
+  for (let attempt = 0; attempt < MAX_SEED_ATTEMPTS; attempt++) {
+    const m = chooseRandomEnemy(rollCtx, rolls);
+    if (m === -1) return null;   // an unknown climate, or a town's day - nothing to spawn at all
+    if (SOLITARY_TYPES.has(m)) continue;
+    if (isDay && NIGHT_ONLY_FACTIONS.has(factionOf(m))) continue;
+    seed = m;
+    break;
+  }
+  if (seed === -1) return null;   // kept landing on a bad-fit type - no group this time
+
   const kind = rollCampKind(rolls());
   const [lo, hi] = kind === 'camp' ? CAMP_SIZE : PACK_SIZE;
   const size = lo + Math.floor(rolls() * (hi - lo + 1));
-  const mobileTypes = [];
-  for (let i = 0; i < size; i++) {
-    const m = chooseRandomEnemy({ ...ctx, isDay }, rolls);
-    if (m !== -1) mobileTypes.push(m);
+  const mobileTypes = [seed];
+
+  // The theme pool: every id in THIS SAME climate/day-night table that
+  // shares the seed's faction. Still just that one table - climate and
+  // time-of-day are exactly as restrictive as they were before this
+  // change - only now narrowed to "things that belong with the seed".
+  const theme = factionOf(seed);
+  const tableIdx = resolveEncounterTableIndex(rollCtx);
+  const table = tableIdx != null ? ENCOUNTER_TABLES[tableIdx] : null;
+  const pool = theme && table ? table.filter((id) => factionOf(id) === theme) : [];
+
+  for (let i = 1; i < size; i++) {
+    // No theme-mates available in this climate's table (a lone
+    // faction member is all it offers) - fill out the group with more
+    // of the seed itself rather than reaching outside the theme.
+    mobileTypes.push(pool.length ? pool[Math.floor(rolls() * pool.length)] : seed);
   }
-  if (!mobileTypes.length) return null;   // an unknown climate, or a town's day - nothing to spawn
+
   return {
     kind, mobileTypes,
     spacing: kind === 'camp' ? CAMP_SPACING : PACK_SPACING,

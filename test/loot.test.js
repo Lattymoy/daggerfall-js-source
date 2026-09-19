@@ -5,6 +5,10 @@ import {
   LOOT_MATRICES, ITEM_GROUPS, generateRandomLoot, generateItems,
   createRandomWeapon, createRandomArmor, BOOK_TEMPLATE,
 } from '../src/systems/loot.js';
+import { MOBILE_TYPES } from '../src/characters/mobileTypes.js';
+
+// itemTemplates.json indices, the three this test names by hand.
+const IDX_WEREBOARS_TUSK = 34, IDX_UNICORN_HORN = 37, IDX_DAEDRAS_HEART = 53;
 
 // Exhausted seq HOLDS its last value (a cycling seq re-fed roll 0 into
 // later categories - caught when key J grew a Tower Shield).
@@ -74,4 +78,47 @@ test('loot: level split (C1 scales, C3 flat), arrows, books, gender clothing', (
   const book = k.find((i) => i.group === 'Books');
   assert.ok(book && book.templateIndex === BOOK_TEMPLATE && book.variant === 1);
   assert.equal(generateItems('ZZ', { level: 1, gender: 'male' }, seq(0)).length, 0);   // unknown key -> '-'
+});
+
+test('LOOT-THEME: a monster’s creature-ingredient roll draws from its OWN shelf; a human class keeps the whole pool, and the odds never move', () => {
+  // The player report this answers: "I killed an Imp and it dropped a
+  // Wereboar's Tusk and a Unicorn Horn." Classic never tied a
+  // CreatureIngredients roll to the creature that died - the letter on the
+  // loot table says how OFTEN each pool is tried, never WHICH item comes out.
+  const who = { level: 20, gender: 'male' };
+  const drawn = (mobileType) => {
+    const seen = new Set();
+    for (let i = 0; i < 3000; i++) {
+      for (const it of generateItems('D', who, Math.random, { mobileType })) {
+        if (String(it.group).startsWith('CreatureIngredients')) seen.add(it.templateIndex);
+      }
+    }
+    return seen;
+  };
+
+  const imp = drawn(MOBILE_TYPES.Imp);
+  assert.deepEqual([...imp], [IDX_DAEDRAS_HEART], 'an Imp is a minor daedra and rolls the one daedric item');
+  assert.equal(imp.has(IDX_UNICORN_HORN), false, 'no unicorn to have taken a horn from');
+  assert.equal(imp.has(IDX_WEREBOARS_TUSK), false);
+
+  // Every human class - and every monster the table does not name - keeps the
+  // untouched vanilla pool, which is the whole point of the override being
+  // curated rather than a blanket narrowing.
+  const vanilla = drawn(null);
+  const poolSize = ITEM_GROUPS.CreatureIngredients1.length + ITEM_GROUPS.CreatureIngredients2.length + ITEM_GROUPS.CreatureIngredients3.length;
+  assert.equal(vanilla.size, poolSize, 'an unnamed mobileType reads the full pool');
+  assert.ok(vanilla.has(IDX_UNICORN_HORN) && vanilla.has(IDX_WEREBOARS_TUSK));
+
+  // A documented exception mints nothing rather than falling back to vanilla.
+  assert.deepEqual([...drawn(MOBILE_TYPES.Vampire)], [], 'nothing in the pool reads as a vampire’s');
+
+  // AND THE ODDS DO NOT MOVE. The themed roll still happens and the halving
+  // ladder still halves - it only narrows what a successful roll can mint - so
+  // the categories that are not creature ingredients are identical either way.
+  const roll = () => { let i = 0; const s = () => ((i = (i * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff); return s; };
+  const other = (mobileType) => {
+    const items = generateRandomLoot(LOOT_MATRICES.D, who, roll(), { mobileType });
+    return items.filter((it) => !String(it.group).startsWith('CreatureIngredients')).map((it) => `${it.group}:${it.templateIndex}`);
+  };
+  assert.deepEqual(other(MOBILE_TYPES.Imp), other(null), 'the same stream mints the same non-creature loot, themed or not');
 });

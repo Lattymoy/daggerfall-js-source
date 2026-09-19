@@ -220,7 +220,7 @@ test('audit24 wave38: PlayerActivate\'s CorpseMarker arm - empty, arrows, and th
   // the list; DFU reaches it because :957 opens the window over the
   // corpse. The port's bulk take is the residue this file records, so
   // the door is spelled in takeCorpseLoot - without it a corpse's
-  // loot-table gold (loot.js:170) lands in the pack, where
+  // loot-table gold (loot.js:176) lands in the pack, where
   // court.goldAmount cannot see it and it is unspendable forever.
   say.length = 0;
   player.items = [];

@@ -73,6 +73,12 @@ export const PREF_DEFAULTS = Object.freeze({
   // every host that owns a weapon rig builds at boot while it is on and
   // the archives are attached (combat/weaponRig.js autoBuildArms).
   mwArms: false,
+  // 2026-09-17 (per-request): a peer without a Morrowind body is drawn as their class's animated sprite by default
+  // (net/remotePlayers.js classMobileType/_syncMobilePeer) - the same billboard a hostile Warrior/Mage/etc. already
+  // is, puppeted by their pose instead of AI. Off returns to the flat paperdoll every peer used to be drawn as.
+  // Defaults ON, unlike mwArms above: this needs no attached data and no build step, so there is nothing to opt
+  // INTO the way Morrowind assets are - only a look a player might prefer to opt OUT of.
+  peerClassSprites: true,
   // WS1: `mwSheathing` (Weapon Sheathing on the third-person body) is
   // declared on its Features row (systems/features.js), RF4's law - it
   // arrives through FEATURE_PREF_DEFAULTS below.

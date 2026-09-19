@@ -62,7 +62,8 @@ const LAW = {
   world79: '1ce0aa5a1a3080a2ce121be6e9bb832cd4f5a0312dd47bb18963aebfacd03a6a',
   world80: 'fc02a655c311d19778d026248c77d6a2f85bf25888865942e0520164db7bac8d',   // RESPAWN1: validSharedFoe takes `team`/`mobileTeam` as the MobileTeams NAME - the numeric law refused every foe record a dungeon published, so every memory restored empty and every kill came back alive   // AUDIT SOC: the hub's cooldowns, the paged sweep of idle accounts and lapsed parties, pending rows without presence, by-account acts for relations alone, the record cache, the newest tab speaking, the replaced socket's leave, the clock on the channel welcome, `peers` on the picture, the act projected at the door
   world81: '38878bdb5febe591e819830f195ef68f75a620930f4f35d08e18984887559328',   // AUDIT WATCH1 A1: wire.js gained CELL_WATCH_PUPPETS_MAX (the reader's allowance for a criminal's watch beside its foes) - no relay behaviour moved, the bytes did
-  world82: '2c97add60a97d56f949ce6af4f8bba4947a862ad75183c578803c1c62864325a',   // AUDIT ALL (the merge): the main merge moved a comment line in wire.js under world81 and the row was rewritten in place - SLAM5 verbatim; world81 restored to the audit's bytes, world82 names today's
+  world82: '2c97add60a97d56f949ce6af4f8bba4947a862ad75183c578803c1c62864325a',
+  world83: '30d4fd6bb7a536b22ff0c01c08db137026181e39d0222b3607db30a43014f21e',   // ONLINE-CLASS1: validLook carries the character's class name (letters-only, optional), so a peer without a Morrowind body stands as its class-enemy sprite; an older peer's look without it still validates   // AUDIT ALL (the merge): the main merge moved a comment line in wire.js under world81 and the row was rewritten in place - SLAM5 verbatim; world81 restored to the audit's bytes, world82 names today's
 };
 
 const rd = (p) => readFileSync(new URL('../' + p, import.meta.url));
