@@ -849,7 +849,7 @@ test('ROADS 25: a pixel says whether a network was present, and the host rebuild
   assert.equal(typeof generatePixelTerrain, 'function');
   const world = read('src/scenes/world.js');
   // The host keeps it on the pixel entry...
-  assert.match(world, /const \{ samples, tilemap, positions, normals, tilemapBytes, avg, nature, withRoads \} = await terrainGen\.generate\(/);
+  assert.match(world, /const \{ samples, tilemap, positions, normals, tilemapBytes, avg, nature, withRoads[^}]*\} = await terrainGen\.generate\(/);
   assert.match(world, /^\s+withRoads,\s+\/\/ ROADS 25/m);
   // ...and when the network lands, tears down every pixel built without
   // one so the stream rebuilds it - on BOTH arrival paths, since the

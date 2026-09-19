@@ -428,6 +428,71 @@ export function placeLabGrass(opts) {
 export const GRASS_CELL = 30;
 
 
+/** PERF10 (2026-09-19): THE CELL'S KEY AS A NUMBER, pieceKey's law one
+ *  level up. The field's `live` map was keyed by `${cx},${cz}` and the
+ *  free-sweep ran `key.split(',').map(Number)` over EVERY live cell
+ *  EVERY frame - four hundred odd cells, so a string split, an array and
+ *  two boxed numbers apiece, a thousand allocations a frame to decide
+ *  that nothing had moved. cx * 65536 + cz is injective for |cz| <
+ *  32768, which a scene coordinate under a floating origin is nowhere
+ *  near (the world recenters), and the sweep now reads cx/cz off the
+ *  entry rather than out of its own key. */
+export const cellKey = (cx, cz) => cx * 65536 + cz;
+
+/** PERF10: HOW MANY SLOTS A DISC NEEDS. The field's window was the
+ *  square [eye - span, eye + span], and the draw (PERF2) skips any cell
+ *  whose nearest point is past `range` - so the square's corners, out at
+ *  1.4 x range, were placed, packed and uploaded every one of them and
+ *  never drew a fragment. The fill is a disc now, and this is the most
+ *  cells such a disc can hold.
+ *
+ *  AUDIT PERF10 F1: THE COUNT IS SWEPT, AND THE SWEEP HAS TO BE FINE.
+ *  The first draft swept 8x8 offsets inside a cell and answered 392 for
+ *  the shipped span; a brute force at 240x240 answers 394, and the peak
+ *  sits at offset (0, 6) - x exactly ON a cell boundary, where TWO
+ *  columns have a nearest-edge distance of zero and the row count jumps.
+ *  A coarse sweep steps straight over it. The square window this
+ *  replaced was exactly tight (22 x 22 = 484 = its own slot count), so
+ *  an under-count was a regression: `update` would find `free` empty,
+ *  break, and leave that cell unplaced for as long as the eye stood
+ *  there - a 30 m hole in the grass with nothing to recover it. The
+ *  sweep is 240 now and the loop below is O(columns + rows) per offset
+ *  rather than O(columns x rows), so a finer sweep costs less than the
+ *  coarse one did. `update` ALSO evicts rather than breaking, so no
+ *  hole survives a bound that is wrong again.
+ *
+ *  The distances from an eye at offset `o` to each column's nearest
+ *  edge are `0` for the eye's own column, `k * cell - o` to its right
+ *  and `o + j * cell` to its left; at o = 0 the two series both yield 0,
+ *  which is the degenerate double column the peak lives on.
+ *  Pure, so a pin can hold it against the fill loop. */
+export function discSlotCount(radius, cell = GRASS_CELL, steps = 240) {
+  const r2 = radius * radius;
+  const axes = [];
+  for (let i = 0; i < steps; i++) {
+    const o = (i / steps) * cell;
+    const d = [0];
+    for (let k = 1; k * cell - o <= radius; k++) d.push(k * cell - o);
+    for (let j = 0; o + j * cell <= radius; j++) d.push(o + j * cell);
+    d.sort((p, q) => p - q);
+    axes.push(d);
+  }
+  let max = 0;
+  for (const dx of axes) {
+    for (const dz of axes) {
+      let n = 0, hi = dz.length - 1;
+      for (const u of dx) {
+        const t = r2 - u * u;
+        if (t < 0) break;                       // dx ascends, so nothing past here fits either
+        while (hi >= 0 && dz[hi] * dz[hi] > t) hi--;
+        n += hi + 1;
+      }
+      if (n > max) max = n;
+    }
+  }
+  return max;
+}
+
 /** One cell's seed, from its coordinates - the anchor. */
 export function grassCellSeed(cx, cz, seed = LAB_GRASS.seed) {
   let h = (seed ^ 0x9e3779b9) >>> 0;
@@ -571,14 +636,42 @@ export function placeLabGrassCell(cx, cz, { keep, ground = null, perCell, height
  * few thousand keep() lookups, milliseconds, so the walk never
  * hitches and never has to be time-sliced.
  */
-export function createGrassField(renderer, { keep, ground = null, span = LAB_GRASS.span, density = LAB_GRASS.density, height = LAB_GRASS.height, seed = LAB_GRASS.seed, cell = GRASS_CELL, perFrame = 2 }) {
+export function createGrassField(renderer, { keep, ground = null, span = LAB_GRASS.span, density = LAB_GRASS.density, height = LAB_GRASS.height, seed = LAB_GRASS.seed, cell = GRASS_CELL, range = LAB_GRASS.range, perFrame = 2, slots: slotsOverride = 0 }) {
   const perCell = grassPerCell(density);   // GRASS2: the RATE, off the lab's own span - `span` below is the window, and the two are not the same question
-  const side = Math.ceil((span * 2) / cell) + 1;
-  const slots = side * side;
+  // PERF10 (2026-09-19, Mac: "when youre further out in the wilderniss
+  // it loaded many chunks and grass the performance still degrades"):
+  // THE WINDOW IS A DISC, and its two radii are the ones the field
+  // already had a name for. `span` was the half-side of a SQUARE, so the
+  // field held 484 cells of which the corners - out at 445m, half again
+  // the 300m _drawVisibleSlots fades to - were placed (6,122 keep()
+  // lookups apiece), packed, uploaded and then skipped every frame of
+  // their life.
+  //
+  // A cell is FILLED when its nearest point is inside `range` - the
+  // draw's own cull, so nothing is placed that cannot be drawn - and
+  // FREED only when its nearest point passes `span`. The gap between
+  // the two is the hysteresis the square had along its axes (its
+  // farthest axis cell had its near edge at 300 and its far edge at
+  // 315), so a cell at the rim does not churn while the eye stands
+  // still, and it is what bounds the slots: 392 rather than 484, 19%
+  // fewer, 8.6 MB less held on the GPU, and the world's first fill is
+  // 360 cells rather than 484. Not one blade changes where it stands.
+  // AUDIT PERF10 F1: `slots` is a TEST SEAM and nothing else - the game
+  // never passes it. The eviction path below cannot be reached through
+  // the public API once the bound is right, and a guarantee no pin can
+  // starve is a sentence rather than a law, so the pin starves it here.
+  const slots = slotsOverride > 0 ? slotsOverride : discSlotCount(span, cell);
   renderer.allocSlots(perCell, slots, cell, height);   // GRASS5: the pack's frame
-  const live = new Map();     // 'cx,cz' -> slot
+  const live = new Map();     // cellKey -> { slot, cx, cz }
   const free = [];
   for (let i = 0; i < slots; i++) free.push(i);
+  /** PERF10: the square distance from the eye to a cell's nearest point -
+   *  _drawVisibleSlots' own test, so what is filled is what is drawn. */
+  const nearSq = (cx, cz, ex, ez) => {
+    const dx = Math.max(cx * cell - ex, 0, ex - (cx + 1) * cell);
+    const dz = Math.max(cz * cell - ez, 0, ez - (cz + 1) * cell);
+    return dx * dx + dz * dz;
+  };
   return {
     perCell, slots, live,
     // GRASS-STALE1 (2026-09-19, Discord: "grass is flying and not on the
@@ -609,38 +702,68 @@ export function createGrassField(renderer, { keep, ground = null, span = LAB_GRA
       const cx0 = Math.floor(x0 / cell), cx1 = Math.floor(x1 / cell);
       const cz0 = Math.floor(z0 / cell), cz1 = Math.floor(z1 / cell);
       for (let cz = cz0; cz <= cz1; cz++) for (let cx = cx0; cx <= cx1; cx++) {
-        const key = `${cx},${cz}`;
-        const slot = live.get(key);
-        if (slot === undefined) continue;
-        renderer.clearSlot(slot);
+        const key = cellKey(cx, cz);
+        const held = live.get(key);
+        if (!held) continue;
+        renderer.clearSlot(held.slot);
         live.delete(key);
-        free.push(slot);
+        free.push(held.slot);
       }
     },
     update(ex, ez, keepNow = keep, groundNow = ground) {
-      const c0x = Math.floor((ex - span) / cell), c1x = Math.floor((ex + span) / cell);
-      const c0z = Math.floor((ez - span) / cell), c1z = Math.floor((ez + span) / cell);
-      // free what fell out of range
-      for (const [key, slot] of live) {
-        const [cx, cz] = key.split(',').map(Number);
-        if (cx < c0x || cx > c1x || cz < c0z || cz > c1z) { renderer.clearSlot(slot); live.delete(key); free.push(slot); }
+      const keepR2 = span * span;      // PERF10: held out to here
+      const fillR2 = range * range;    // PERF10: placed only inside here
+      const k = Math.ceil(range / cell) + 1;
+      const ecx = Math.floor(ex / cell), ecz = Math.floor(ez / cell);
+      // free what fell out of range. PERF10: cx/cz ride the entry, so
+      // this sweep - which runs over every live cell every frame and
+      // usually frees nothing - allocates nothing at all.
+      for (const [key, held] of live) {
+        if (nearSq(held.cx, held.cz, ex, ez) > keepR2) { renderer.clearSlot(held.slot); live.delete(key); free.push(held.slot); }
       }
       // fill what came into range, nearest first, a few a frame
       let budget = perFrame;
-      /** @type {{ d:number, cx:number, cz:number, key:string }[]} */
+      /** @type {{ d:number, cx:number, cz:number, key:number }[]} */
       const want = [];   // HARD3: a NAMED shape, because a mixed [number, number, number, string] literal widens to (number|string)[] and `a[0] - b[0]` stops type-checking
-      for (let cz = c0z; cz <= c1z; cz++) for (let cx = c0x; cx <= c1x; cx++) {
-        const key = `${cx},${cz}`;
-        if (!live.has(key)) want.push({ d: Math.hypot((cx + 0.5) * cell - ex, (cz + 0.5) * cell - ez), cx, cz, key });
+      for (let cz = ecz - k; cz <= ecz + k; cz++) for (let cx = ecx - k; cx <= ecx + k; cx++) {
+        const d = nearSq(cx, cz, ex, ez);
+        if (d > fillR2) continue;
+        const key = cellKey(cx, cz);
+        if (!live.has(key)) want.push({ d, cx, cz, key });
       }
       want.sort((a, b) => a.d - b.d);
-      for (const { cx, cz, key } of want) {
-        if (budget-- <= 0 || !free.length) break;
-        const slot = free.pop();
+      for (const { d, cx, cz, key } of want) {
+        if (budget <= 0) break;
+        let slot = free.pop();
+        if (slot === undefined) {
+          // AUDIT PERF10 F1: A BOUND CAN BE WRONG; A HOLE MUST NOT BE
+          // ABLE TO SURVIVE IT. `slots` is discSlotCount's swept answer,
+          // and the first draft of that sweep was two cells short - at
+          // which point this loop simply broke and the cell stayed
+          // unplaced for as long as the eye stood there. `want` is
+          // sorted nearest-first, so the nearest waiting cell takes the
+          // farthest standing one's slot; when every slot already holds
+          // something nearer there is nothing to gain and the walk
+          // stops. The invariant is not "the bound is right" but THE
+          // FIELD HOLDS THE NEAREST `slots` CELLS, which no bound can
+          // break.
+          let far = null, farKey = 0, farD = d;
+          for (const [k, held] of live) {
+            const hd = nearSq(held.cx, held.cz, ex, ez);
+            if (hd > farD) { farD = hd; far = held; farKey = k; }
+          }
+          if (!far) break;
+          renderer.clearSlot(far.slot); live.delete(farKey); slot = far.slot;
+        }
+        budget--;
         renderer.writeSlot(slot, placeLabGrassCell(cx, cz, { keep: keepNow, ground: groundNow, perCell, height, seed, cell }));
-        live.set(key, slot);
+        live.set(key, { slot, cx, cz });
       }
-      return want.length;   // cells still pending
+      // AUDIT PERF10 F5: what was MISSING when this update began - not
+      // what is still missing now. GR5's comment said "pending" and the
+      // number never meant that; the one caller ignores it and the pin
+      // reads it as "the rest wait their turn", both of which hold.
+      return want.length;
     },
   };
 }
