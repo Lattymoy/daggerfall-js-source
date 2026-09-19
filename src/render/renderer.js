@@ -410,7 +410,7 @@ void main() {
 
 import { ShadowPass, SHADOW_GLSL } from './shadowPass.js';   // EL7: the receiver block, for the water surface's lane program
 import { boundsOf } from './bounds.js';
-import { PerfMeter, perfOn, perfZones, setMeter } from './perfMeter.js';   // EL8: `?perf`   // EL5: the bounds every bundle carries for the replays' culling   // EL2: the lane's shadow maps - a leaf that compiles nothing until a lane asks
+import { PerfMeter, perfOn, perfZones, perfCpu, setMeter } from './perfMeter.js';   // EL8: `?perf`   // EL5: the bounds every bundle carries for the replays' culling   // EL2: the lane's shadow maps - a leaf that compiles nothing until a lane asks
 import { AirPass, AIR_ADAPT_UNIT as ADAPT_UNIT, AIR_CONTACT_UNIT as CONTACT_UNIT } from './airPass.js';   // EL3: the ambient occlusion, the bloom and the shafts - the same kind of leaf; EL4: the eye's unit; EL6: all of it off the frame's own depth, at the resolve
 import { SHADE_DARK } from '../systems/concealDraw.js';   // ECV1 / AUDIT 65 PN-3: the shade's pull toward black, interpolated into BB_FS below - the shader restated 0.12 as a second literal. The LEAF, not systems/combatVisuals.js, which re-exports it: that module's graph would take this file's closure from 13 modules to 69
 
@@ -981,7 +981,7 @@ export class Renderer {
     // terrain culling it exists to measure. texBinds counts the binds a
     // DRAW pays; upload-time binds are creation cost, not frame cost.
     this.stats = { draws: 0, programBinds: 0, vaoBinds: 0, texBinds: 0 };
-    this._perf = perfOn() ? setMeter(gl, new PerfMeter(gl, perfZones())) : null;   // EL8: `?perf` - a GPU-timed line every PERF_EVERY world frames; VC6d: `?perf=zones` per pass, and the meter is findable by its context (the sky's march marks its own span)
+    this._perf = perfOn() ? setMeter(gl, new PerfMeter(gl, perfZones(), perfCpu())) : null;   // EL8: `?perf` - a GPU-timed line every PERF_EVERY world frames; VC6d: `?perf=zones` per pass, and the meter is findable by its context (the sky's march marks its own span); PERF-CPU: `?perf=cpu` tiles the same zones on the MAIN THREAD's clock, which is the one a script-bound frame is losing
     this._frameStamp = 0;      // PERF3: bumped by beginFrame (and the state restores) - the terrain program's frame-constant block is uploaded once per stamp
     this._tFrameStamp = -1;
     this._windowEmission = new Float32Array([0, 0, 0]);

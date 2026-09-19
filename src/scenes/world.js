@@ -9314,6 +9314,20 @@ export async function bootWorld(canvas, renderer, params, status) {
   const cullOn = !cullDisabled();
   const _planes = new Float32Array(24);
   const _pv = new Float32Array(16);
+  /** PERF-ON2: a peer billboard's world box, against this frame's planes.
+   *  One scratch box reused - the test runs once a peer a frame and a
+   *  fresh array apiece would be the allocation PERF10 just took out of
+   *  the grass. The extent is the billboard VS's own: bottom-anchored,
+   *  standing `size.h` up from the origin, and reaching `size.w / 2` in
+   *  any horizontal direction because the quad turns to face the eye. */
+  const _peerBox = new Float32Array(6);
+  const peerBatchOutside = (b) => {
+    const o = b.origin; if (!o) return false;
+    const hw = (b.size?.w ?? 0) * 0.5, h = b.size?.h ?? 0;
+    _peerBox[0] = o[0] - hw; _peerBox[1] = o[1]; _peerBox[2] = o[2] - hw;
+    _peerBox[3] = o[0] + hw; _peerBox[4] = o[1] + h; _peerBox[5] = o[2] + hw;
+    return aabbOutside(_planes, _peerBox, 0, 0, 0);
+  };
   // A4: the streaming world's animal sources - pixel-local positions
   // translated through the floating origin at roll time (16 Hz over
   // a handful of animals; recenters are free).
@@ -9396,7 +9410,9 @@ export async function bootWorld(canvas, renderer, params, status) {
       player.bobOffset = [cy * bob[0], bob[1], -sy * bob[0]];
     }
     last = now;
+    meterFor(renderer.gl)?.markCpu('online');   // PERF-CPU
     if (onlineOn && playerSpawned) { if (!online) onlineStart(); onlineFrame(now, dt); }   // ONLINE1: the pose out, the peers in - after the look is paid, before the camera is read and any mode draws
+    meterFor(renderer.gl)?.markCpu('sim');   // PERF-CPU: everything between here and the next mark is the rest of the simulation
     lookGate(gamePaused());   // a window up frees the cursor; closing re-locks
     const fwd = [Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), Math.cos(cam.yaw) * Math.cos(cam.pitch)];
     const right = [Math.cos(cam.yaw), 0, -Math.sin(cam.yaw)];   // HANDEDNESS (mat4's law): screen-right = (cos, 0, -sin) under the mirrored projection - Unity's own right
@@ -10364,8 +10380,40 @@ export async function bootWorld(canvas, renderer, params, status) {
     // WM2b: read the eased wind ONCE a frame, not once a mill.
     const windNow = sky.wind();
     if (cullOn) frustumPlanes(multiply(proj, view, _pv), _planes);   // EV3
+    meterFor(renderer.gl)?.markCpu('batches');   // PERF-CPU: the pixel walk that fills allBatches, culling as it goes
     const allBatches = [];
-    if (remotePlayers) for (const b of remotePlayers.batches()) allBatches.push(b);   // ONLINE1: the others, at their feet
+    // PERF-ON2 (2026-09-19, Mac: "Online mode needs further performance
+    // improvements", with a readout showing 51 fps, script 23.3 ms and
+    // 1365 draws): THE OTHERS ARE CULLED LIKE EVERYTHING ELSE IS.
+    //
+    // Every world flat two lines below gets a frustum test against its
+    // own box before it is submitted (EV3). The peers did not: a peer
+    // behind the camera, or one at the far edge of the relay's range -
+    // RANGE_PIXELS is 3 map pixels, which is nearly 2,500 units - was a
+    // draw, two texture binds and its uniforms, every frame, whatever
+    // the camera was looking at. Measured with PERF-ON's own recording
+    // Proxy (tools/onlinePerfProbe.mjs): 6.3 GL calls a peer a frame,
+    // 1 draw and 2 texture binds of it, and nothing capped it but the
+    // number of people in the room. PERF-ON passed over this in a line
+    // - "a peer's doll is one billboard batch created once, with only
+    // its `origin` written afterwards" - which is true of the batch's
+    // CREATION and says nothing about its per-frame DRAW.
+    //
+    // THE BOX IS THE SHADER'S OWN. The billboard VS places a quad at
+    // `uOrigin + uRight * (aCorner.x * uSize.x) + uUp * ((aCorner.y +
+    // 0.5) * uSize.y)`: bottom-anchored, so it stands from the origin
+    // up by its height, and it turns to face the eye, so it can reach
+    // half its WIDTH in any horizontal direction. A peer's batch is one
+    // placement at [0,0,0] with the position on `origin`, so the box is
+    // that, in world space, with no pixel translation to add.
+    //
+    // A culled peer casts no shadow while it is off screen - which is
+    // exactly what the world's own flats have done since EV3, since the
+    // shadow pass reads the list this builds.
+    if (remotePlayers) for (const b of remotePlayers.batches()) {   // ONLINE1: the others, at their feet
+      if (cullOn && peerBatchOutside(b)) continue;
+      allBatches.push(b);
+    }
     for (const p of built.values()) {
       // EV2: the pixel's frame matrix caches on the built entry and
       // refreshes only when its translation actually changes (a
@@ -10509,6 +10557,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         renderer.drawWaterSurface(p.water, p._pixelMatrix, renderer.tileArrays.get(p.groundArchive), p.tilemapTex, 6.4, wu);
       }
     }
+    meterFor(renderer.gl)?.markCpu('flats');   // PERF-CPU: submitting the billboards - the draws themselves, from JS. ABOVE setFlatWind, not between it and the draw: WIND3 pins the two as ADJACENT, and the wind is part of this phase anyway.
     renderer.setFlatWind(floraSwayOn() && wd.on ? [wd.windV[0], wd.windV[1], now / 1000, wd.gust] : null);   // WIND3: the flats lean with the one wind; the flora batches carry their share (sway)
     renderer.drawBillboards(allBatches, camRight, UP_Y);
     if (magic.batches().length) renderer.drawBillboards(magic.batches(), camRight, UP_Y);   // M2: spell missiles
@@ -10571,6 +10620,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     _lastPlayerPos = [cam.pos[0], cam.pos[1], cam.pos[2]];
     const isDay = !isNight(minute);
     const livePersonBatches = [];
+    meterFor(renderer.gl)?.markCpu('people');   // PERF-CPU: the towns' own pools
     _livePersons = [];   // T3b: rebuilt each frame in WORLD space
     for (const p of built.values()) {
       if (!p.population) continue;

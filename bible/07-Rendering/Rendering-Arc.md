@@ -1905,3 +1905,123 @@ container, so nothing here was measured the way PERF-ON's names were.
 Said rather than implied.
 
 **Pinned** in `test/grasspath.test.js`.
+
+## PERF-ON2 + PERF-CPU - the others are culled, and the frame can be timed on the clock it is losing (2026-09-19)
+
+Mac: *"Online mode needs further performance improvements"*, then a
+readout from the running game:
+
+```
+51 fps
+19.7 ms   worst 40
+script 23.3 ms   worst 44
+draws 1365   binds 820
+```
+
+**A frame whose SCRIPT outruns its frame time is CPU-bound.** That one
+line reorders everything: the cost is not the GPU finishing the work, it
+is JavaScript issuing it.
+
+### Measured first, and two hypotheses died
+
+`tools/onlinePerfProbe.mjs` is the measurement that did not exist. Three
+arms, all over the real modules:
+
+| arm | what it measures | answer |
+|---|---|---|
+| session | `OnlineSession.tick()` + `drawable()` over a real session on `test/fakeSocket.mjs` | **0.04 ms/frame at 100 peers** |
+| names | the real `namePoints` + the real `ui/nameLayer.js` over a counting document | **1.65 inline style writes a name a frame** |
+| draw | `drawBillboards` under PERF-ON's own recording Proxy | **6.3 GL calls a peer a frame** |
+
+The first arm killed a fix before it was written. The per-frame
+allocation churn in `net/` - the peer map spread every tick, a fresh
+pose object a peer a frame, half a dozen collections rebuilt - is real,
+and it costs **0.04 ms at a hundred peers**. It is not the problem and
+it is not worth touching.
+
+The second arm was measured twice, because the first fixture was
+dishonest: a camera that strafed a metre and a half on the spot changed
+only each name's `left`, and reported 0.94 `left` against 0.04 `top` and
+0.005 `fontSize`. A player walks and turns, which moves every name in x,
+in y and in depth. Against an honest walk it is 1.65 writes a name.
+
+Then `tools/nameLayerBrowserProbe.mjs` asked Chromium what those writes
+COST, through `Performance.getMetrics` - and **refuted the fix**:
+
+| mode | layout ms/frame | layouts in 600 frames |
+|---|---|---|
+| `left`/`top` + font-size (today) | 0.123 | 600 |
+| `transform` + font-size | 0.119 | 599 |
+| `left`/`top`, font-size fixed | 0.079 | 599 |
+| `transform`, font-size fixed | **0.000** | **0** |
+
+Moving to `transform` alone buys nothing, because the per-frame
+`font-size` dirties layout by itself. Only moving BOTH takes the layer
+off the layout path entirely - and the prize is 0.12 ms a frame at 72
+names, which is under one per cent of a frame. **Recorded, not taken:
+the win is real, small, and costs a visual change to how a name is
+sized. It is not where 23 ms went.**
+
+### What the measurement did find: the peers were never culled
+
+Every world flat gets a frustum test against its own box before it is
+submitted (EV3). The peers did not:
+
+```js
+if (remotePlayers) for (const b of remotePlayers.batches()) allBatches.push(b);
+```
+
+A peer behind the camera, or one at the far edge of the relay's range -
+`RANGE_PIXELS` is 3 map pixels, nearly 2,500 units - was a draw, two
+texture binds and its uniforms, every frame, whatever the camera was
+looking at. At 6.3 GL calls a peer that is 630 calls a frame in a
+hundred-peer room, and **every one of them is script time**, which is
+the budget the readout says is gone.
+
+PERF-ON passed over this in a line - *"a peer's doll is one billboard
+batch created once, with only its `origin` written afterwards"* - which
+is true of the batch's CREATION and says nothing about its per-frame
+DRAW. The box is the billboard shader's own: bottom-anchored, standing
+`size.h` up from the origin and reaching `size.w / 2` in any horizontal
+direction, because the quad turns to face the eye. One scratch box,
+reused, because the test runs once a peer a frame.
+
+A culled peer casts no shadow while off screen - exactly what the
+world's own flats have done since EV3, since the shadow pass reads the
+list this builds.
+
+### And the instrument that was missing
+
+`?perf` times the frame on the GPU; `?perf=zones` breaks that number
+into passes. **Neither can see a millisecond of JavaScript.** So a
+script-bound frame could be investigated in this session only by reading
+the code and guessing which half of the work was which - the exact trap
+VC6d's own lesson names.
+
+`?perf=cpu` tiles the same zones on the main thread's clock. Same
+`mark(name)` call sites, no extension needed (so it answers on every
+browser, including the ones the GPU timer refuses), and `markCpu(name)`
+lets a host mark a phase that issues no GL at all - which is most of a
+simulation frame. The world host now marks `online`, `sim`, `batches`,
+`flats`, `people` beside the existing `grass` and `world`, and the line
+names its clock so no reader can mistake a CPU zone for a GPU one:
+
+```
+[perf] cpu 16.00ms | world 8.00 | sim 5.00 | online 2.00 | grass 1.00 | draws 1365
+```
+
+The two clocks do not run together: under `?perf=cpu` the GPU clock
+stands down, because the CPU arm reports before the GPU branch is
+reached and a clock left running there pushes a sample a frame into a
+list nothing drains.
+
+**The lesson: PERF-ON measured the online name pass at 153 GL calls a
+name and took it to 14 on 15 September. NAME1 landed twenty-six hours
+later and moved the face a player actually sees off that pass entirely -
+online forces the enhanced lane, the enhanced lane has a `document`, and
+`nameFrame` returns through the DOM layer before `drawNamePoints` is
+reached. The measured win is real and it is on a path players do not
+take. Nobody re-measured, because there was no instrument that could.**
+
+**Pinned** in `test/perfon2_peercull.test.js` (6). Mutants
+`tools/mutants/perfon2.json`: 13 - 13 dead, 0 survived.
