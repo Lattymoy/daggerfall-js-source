@@ -150,6 +150,10 @@ export async function loadThunderlockArt(renderer, { fetch: fetchSheet = null, d
   const scale = NATIVE_WIDTH / anchor.w;
   const width = Math.round(union.w * scale);
   const height = Math.round(union.h * scale);
+  // FIELD-GUN11: the gun's own box at the same scale - what the
+  // records carry, and what the transforms are applied to
+  const anchorW = Math.round(anchor.w * scale);
+  const anchorH = Math.round(anchor.h * scale);
 
   const type = magic ? WEAPON_TYPES.Thunderlock_Magic : WEAPON_TYPES.Thunderlock;
   // FIELD-GUN3 (Mac, from play: "The sprite is upside down"). HT3's
@@ -177,13 +181,35 @@ export async function loadThunderlockArt(renderer, { fetch: fetchSheet = null, d
   return {
     weaponType: type,
     anims: getWeaponAnims(type),
+    // FIELD-GUN11: THE RECORD IS THE GUN, NOT THE GUN PLUS ITS SMOKE.
+    //
+    // This used to be the UNION's size, and it is the last structural
+    // difference between this weapon in the lab and in the game. The
+    // lab places and TRANSFORMS the anchor box - the gun with no
+    // flash on it - and only then derives the rect the full image is
+    // drawn at (`unionDrawRect`). The game handed the union to
+    // Weapon Widget's transform instead, and anything in that
+    // transform proportional to the rect's height - the Offset
+    // module's slide most of all - came out 6% large, because the
+    // union is 21 native pixels taller than the gun.
+    //
+    // The lab's own header says why the anchor is the right box to
+    // lay out from: "Lay the screen rect out from the union box and
+    // Center puts the SMOKE in the middle of the screen and the
+    // weapon off to the right." The same is true of everything else
+    // that measures the rect.
+    //
+    // So the record is the ANCHOR now and both draw sites expand it
+    // back to the union at the moment of drawing, which is exactly
+    // the shape the lab has always had.
     records: [
-      { width, height, frames: [frames[0]] },   // 0: idle
-      { width, height, frames },                // 1: the fire cycle
+      { width: anchorW, height: anchorH, frames: [frames[0]] },   // 0: idle
+      { width: anchorW, height: anchorH, frames },                // 1: the fire cycle
     ],
-    // what the CIF path has no need of, and the rig does: the gun's
-    // own box inside the union, for a caller that wants to place the
-    // WEAPON rather than the smoke
+    // the gun's own box inside the union, and the union around it -
+    // what a caller needs to turn a transformed ANCHOR rect into the
+    // rect the whole image is drawn at
     anchor: { x: (anchor.x - union.x) * scale, y: (anchor.y - union.y) * scale, w: anchor.w * scale, h: anchor.h * scale },
+    unionBox: { x: 0, y: 0, w: width, h: height },
   };
 }
