@@ -1,83 +1,83 @@
 [
- {
-  "name": "TORCHVIS-the-sheathed-stance-takes-the-torch-down-again",
-  "file": "src/combat/weaponRig.js",
-  "old": "      if (paralyzed || (!shown() && !torchOnly && !sheetOnly)) return;",
-  "new": "      if (paralyzed || (!shown() && !sheetOnly)) return;",
-  "tests": [
-   "test/ht1_handheldtorches.test.js"
-  ]
- },
- {
-  "name": "TORCHVIS-an-empty-hand-draws-as-if-it-held-a-light",
-  "file": "src/combat/weaponRig.js",
-  "old": "        && (entity?.equipCountdown ?? 0) <= 0 && isHeldLight(entity?.lightSource)\n        && (!fpArm.active() || fpArm.torchShown());",
-  "new": "        && (entity?.equipCountdown ?? 0) <= 0\n        && (!fpArm.active() || fpArm.torchShown());",
-  "tests": [
-   "test/ht1_handheldtorches.test.js"
-  ]
- },
- {
-  "name": "TORCHVIS-a-readied-spell-keeps-the-torch-up",
-  "file": "src/combat/weaponRig.js",
-  "old": "      const torchOnly = !shown() && !spellArmed() && !fpsSpellCasting.isPlayingAnim",
-  "new": "      const torchOnly = !shown() && !fpsSpellCasting.isPlayingAnim",
-  "tests": [
-   "test/ht1_handheldtorches.test.js"
-  ]
- },
- {
-  "name": "TORCHVIS-the-weapon-comes-back-with-the-torch",
-  "file": "src/combat/weaponRig.js",
-  "old": "      if (torchOnly) return;   // TORCH-VIS: the lit hand ALONE - a sheathed stance still draws no weapon, clone or sprite\n",
-  "new": "",
-  "tests": [
-   "test/ht1_handheldtorches.test.js"
-  ]
- },
- {
-  "name": "TORCHVIS-the-carried-left-law-is-inverted",
-  "file": "src/combat/fpArm.js",
-  "old": "export const carriedLeftVisible = (type) => !(weaponFlags(type) & MW_TWO_HANDED);",
-  "new": "export const carriedLeftVisible = (type) => !!(weaponFlags(type) & MW_TWO_HANDED);",
-  "tests": [
-   "test/ht1_handheldtorches.test.js"
-  ]
- },
- {
-  "name": "TORCHVIS-every-item-counts-as-a-held-light",
-  "file": "src/systems/handheldTorches.js",
-  "old": "export const isHeldLight = (it) => isTorch(it) || isLantern(it);",
-  "new": "export const isHeldLight = (it) => !!it;",
-  "tests": [
-   "test/ht1_handheldtorches.test.js"
-  ]
- },
- {
-  "name": "TORCHVIS-the-morrowind-arm-loses-its-veto",
-  "file": "src/combat/weaponRig.js",
-  "old": "        && (!fpArm.active() || fpArm.torchShown());",
-  "new": "        && true;",
-  "tests": [
-   "test/ht1_handheldtorches.test.js"
-  ]
- },
- {
-  "name": "TORCHVIS-the-arm-claims-every-light-is-in-its-hand",
-  "file": "src/combat/fpArm.js",
-  "old": "    torchShown: () => torchVisible(),",
-  "new": "    torchShown: () => true,",
-  "tests": [
-   "test/ht1_handheldtorches.test.js"
-  ]
- },
- {
-  "name": "TORCHVIS-the-arms-light-test-takes-the-lantern-too",
-  "file": "src/combat/weaponRig.js",
-  "old": "export const isLitTorch = (item) => !!item && item.templateIndex === TEMPLATES.Torch;",
-  "new": "export const isLitTorch = (item) => !!item && (item.templateIndex === TEMPLATES.Torch || item.templateIndex === TEMPLATES.Lantern);",
-  "tests": [
-   "test/ht1_handheldtorches.test.js"
-  ]
- }
+  {
+    "name": "TORCHVIS-the-sheathed-stance-takes-the-torch-down-again",
+    "file": "src/combat/weaponRig.js",
+    "old": "      if (paralyzed || (!shown() && !torchOnly && !sheetOnly && !shieldRect)) return;",
+    "new": "      if (paralyzed || (!shown() && !sheetOnly && !shieldRect)) return;",
+    "tests": [
+      "test/ht1_handheldtorches.test.js"
+    ]
+  },
+  {
+    "name": "TORCHVIS-an-empty-hand-draws-as-if-it-held-a-light",
+    "file": "src/combat/weaponRig.js",
+    "old": "        && (entity?.equipCountdown ?? 0) <= 0 && isHeldLight(entity?.lightSource)\n        && (!fpArm.active() || fpArm.torchShown());",
+    "new": "        && (entity?.equipCountdown ?? 0) <= 0\n        && (!fpArm.active() || fpArm.torchShown());",
+    "tests": [
+      "test/ht1_handheldtorches.test.js"
+    ]
+  },
+  {
+    "name": "TORCHVIS-a-readied-spell-keeps-the-torch-up",
+    "file": "src/combat/weaponRig.js",
+    "old": "      const torchOnly = !shown() && !spellArmed() && !fpsSpellCasting.isPlayingAnim",
+    "new": "      const torchOnly = !shown() && !fpsSpellCasting.isPlayingAnim",
+    "tests": [
+      "test/ht1_handheldtorches.test.js"
+    ]
+  },
+  {
+    "name": "TORCHVIS-the-weapon-comes-back-with-the-torch",
+    "file": "src/combat/weaponRig.js",
+    "old": "      if (torchOnly) return;   // TORCH-VIS: the lit hand ALONE - a sheathed stance still draws no weapon, clone or sprite\n",
+    "new": "",
+    "tests": [
+      "test/ht1_handheldtorches.test.js"
+    ]
+  },
+  {
+    "name": "TORCHVIS-the-carried-left-law-is-inverted",
+    "file": "src/combat/fpArm.js",
+    "old": "export const carriedLeftVisible = (type) => !(weaponFlags(type) & MW_TWO_HANDED);",
+    "new": "export const carriedLeftVisible = (type) => !!(weaponFlags(type) & MW_TWO_HANDED);",
+    "tests": [
+      "test/ht1_handheldtorches.test.js"
+    ]
+  },
+  {
+    "name": "TORCHVIS-every-item-counts-as-a-held-light",
+    "file": "src/systems/handheldTorches.js",
+    "old": "export const isHeldLight = (it) => isTorch(it) || isLantern(it);",
+    "new": "export const isHeldLight = (it) => !!it;",
+    "tests": [
+      "test/ht1_handheldtorches.test.js"
+    ]
+  },
+  {
+    "name": "TORCHVIS-the-morrowind-arm-loses-its-veto",
+    "file": "src/combat/weaponRig.js",
+    "old": "        && (!fpArm.active() || fpArm.torchShown());",
+    "new": "        && true;",
+    "tests": [
+      "test/ht1_handheldtorches.test.js"
+    ]
+  },
+  {
+    "name": "TORCHVIS-the-arm-claims-every-light-is-in-its-hand",
+    "file": "src/combat/fpArm.js",
+    "old": "    torchShown: () => torchVisible(),",
+    "new": "    torchShown: () => true,",
+    "tests": [
+      "test/ht1_handheldtorches.test.js"
+    ]
+  },
+  {
+    "name": "TORCHVIS-the-arms-light-test-takes-the-lantern-too",
+    "file": "src/combat/weaponRig.js",
+    "old": "export const isLitTorch = (item) => !!item && item.templateIndex === TEMPLATES.Torch;",
+    "new": "export const isLitTorch = (item) => !!item && (item.templateIndex === TEMPLATES.Torch || item.templateIndex === TEMPLATES.Lantern);",
+    "tests": [
+      "test/ht1_handheldtorches.test.js"
+    ]
+  }
 ]

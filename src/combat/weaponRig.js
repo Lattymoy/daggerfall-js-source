@@ -51,6 +51,14 @@ import { SOUND } from '../systems/soundClips.js';
 import { equipSoundFor } from '../characters/weapons.js';   // F023: GetEquipSound
 import { setMidScreenText } from '../ui/midScreenText.js';   // AUDIT 64 F34: FPSWeapon.cs:365's mid-screen line
 import { createWeaponWidget } from './weaponWidget.js';
+// SW1: SHIELD WIDGET. The sibling, beside the weapon's clone and driven
+// on the same frame - the shield the game never drew, in the hand the
+// weapon is not in.
+import { createShieldWidget } from './shieldWidget.js';
+import { shieldWidgetTextures, shieldWidgetImage } from './shieldWidgetAssets.js';
+import { setAttackOnPlayerHook } from './formulas.js';   // SW1: PCAAO's onAttackDamageCalculated, for the Recoil module
+import { conditionPercentage } from '../systems/itemInfo.js';   // SW1: the condition tier
+import { isShieldTemplate } from '../systems/armorMaterials.js';   // SW1: GetShieldProtectedBodyParts' own test
 import { createHandheldTorches, isHeldLight } from '../systems/handheldTorches.js';   // HT1: Handheld Torches' component, one per rig beside the widget; TORCH-VIS: and its own light test
 import { isTransformedLycanthrope, liveLycanthropy } from '../systems/lycanthropy.js';   // WW1: Weapon Widget's FPSWeaponClone, beside the machine; AUDIT-EOTB2: the sprite's form
 import { concealmentFlags } from '../systems/effects.js';   // EOTB-IL: PlayerBillboard.UpdateMaterial reads the player's own IsInvisible / IsAShade / IsBlending
@@ -213,6 +221,60 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
   });
   const widget = createWeaponWidget({ audio, envHit: envCast, missEffect });
   const widgetOn = () => modSetting('weapon-widget', 'Enabled');
+  // SW1: the shield's own component. Its sprites come from the player's
+  // own copy of the mod (combat/shieldWidgetAssets.js); with none
+  // attached `size()` answers null and the widget draws nothing, which
+  // is the mod without its textures - there is no classic shield art to
+  // fall back to.
+  const shield = createShieldWidget({ textures: shieldWidgetTextures, audio });
+  let _shieldTime = 0;   // SW1: Unity's Time.time, for the bob's phase
+  // SW1: the sprite, uploaded once per index and kept. The door answers
+  // a promise, so the first frame that wants a sprite asks for it and
+  // draws nothing; the next one that has it draws. Same shape as the
+  // sibling's custom-texture cache.
+  const _shieldTex = new Map();
+  function shieldTextureFor(index) {
+    if (!renderer || !(index >= 0)) return null;
+    if (!_shieldTex.has(index)) {
+      _shieldTex.set(index, null);
+      shieldWidgetImage(index).then((img) => {
+        if (!img) return;
+        _shieldTex.set(index, renderer.uploadTexture('img', `sw:${index}`, img));
+      }).catch((e) => console.warn('[shield widget] texture load failed', index, e));
+    }
+    return _shieldTex.get(index);
+  }
+  /** The widget's blit: DaggerfallUI.DrawTextureWithTexCoords, at the
+   *  weapon's own tint. */
+  function drawShieldSprite(index, rect, uv, tint) {
+    const tex = shieldTextureFor(index);
+    if (!tex) return;
+    renderer.drawScreenQuad(tex, { x: rect.x, y: rect.y, w: rect.width, h: rect.height }, uv, tint ?? undefined);
+  }
+  const shieldOn = () => modSetting('shield-widget', 'Enabled');
+  /** The left hand's item in the four fields the widget reads.
+   *
+   *  Read WITHOUT materialising: `equipTableOf` is
+   *  `entity.equip ??= createEquipTable()`, so asking it every frame
+   *  GROWS an empty table on an entity that had none - and `syncWorn`
+   *  two functions up then reads that empty table and nulls the
+   *  player's weapon. (It did, and the unsheathe went silent.) The
+   *  optional chain below is the shape syncWorn itself uses for the
+   *  right hand, and it asks without writing. */
+  const shieldItem = () => {
+    const item = entity?.equip?.slots?.[EQUIP_SLOTS.LeftHand] ?? null;
+    if (!item) return null;
+    return {
+      templateIndex: item.templateIndex, nativeMaterialValue: item.nativeMaterialValue ?? 0,
+      conditionPercentage: conditionPercentage(item), isShield: isShieldTemplate(item.templateIndex),
+    };
+  };
+  // SW1: the Recoil module's whole trigger, at the tail of every
+  // resolution of an enemy's attack on the player (formulas.js).
+  setAttackOnPlayerHook((attacker, target, damage, struckBodyPart) => {
+    if (!shieldOn()) return;
+    shield.onAttackDamageCalculated({ targetIsPlayer: true, bodyPart: struckBodyPart, damage, item: shieldItem() });
+  });
   // HT1: HANDHELD TORCHES. The mod's HandheldTorches runs beside DFU's
   // WeaponManager reading it every frame (Sheathed, UsingRightHand,
   // ScreenWeapon.IsAttacking, the spell anim); here it reads the same
@@ -815,7 +877,16 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
       const _torchesOn = handheldOn();
       if (!_torchesOn && _handheldWasOn) handheld.dispose();   // AUDIT 66 F8: the switch off is a teardown
       _handheldWasOn = _torchesOn;
-      if (widgetOn() || _torchesOn) {
+      // SW1-FEED (audit, 2026-09-19): AND THE SHIELD OPENS IT TOO. This
+      // block assembles the frame the three mods share - the camera, the
+      // motor's local velocity, the look delta - and it used to be opened
+      // by the weapon's clone or the torch alone, so the Shield Widget
+      // got no frame at all unless an UNRELATED mod happened to be on:
+      // `ctx` stayed null, `drawRect()` answered null forever, and the
+      // mod was dead on a profile that enabled only it. Each consumer
+      // inside is already gated on its own switch, so this costs the
+      // assembly and nothing else.
+      if (widgetOn() || _torchesOn || shieldOn()) {
         const cam = camera?.() ?? null;
         const mv = cam?.move ?? {};
         const held = activateHeld();
@@ -846,6 +917,39 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
           handheld.update(dt, tctx);
           handheld.lateUpdate(dt, tctx);
         }
+        // SW1: the shield's frame. The same assembled answers the
+        // weapon's clone takes - Unity handed the MonoBehaviour the
+        // motor, the look and the weapon manager, and so does this.
+        if (shieldOn()) shield.lateUpdate({
+          dt, time: _shieldTime += dt,
+          // SW1-RECT (audit, 2026-09-19): `c` IS THE CANVAS, not a 2D
+          // context - every host passes the element (`drawFpsWeapon`
+          // beside this reads `canvas.width` off the same object). So
+          // `c.canvas` was undefined and the whole mod ran on the 320x200
+          // fallback: weaponScaleX came out 1, the sprite drew at its
+          // native ~134px whatever the window was, and the rect's clamp
+          // put it at y=200 - up by the top-left corner of an 800-tall
+          // canvas instead of down in the hand. DFU reads
+          // `DaggerfallUI.CustomScreenRect ?? new Rect(0, 0, Screen.width,
+          // Screen.height)`; the drawing buffer is this port's Screen.
+          screenRect: { x: 0, y: 0, width: c?.width ?? 320, height: c?.height ?? 200 },
+          item: shieldItem(), entity,
+          attacking: playerWeapon.machine.state !== 'Idle', sheathed: playerWeapon.sheathed,
+          castingAnim: fpsSpellCasting.isPlayingAnim, hasReadySpell: spellArmed(),
+          equipCountdownLeftHand: entity?.equipCountdown ?? 0,
+          isClimbing: !!cam?.climbing, isPaused: false, loadInProgress: false,
+          motor: {
+            speed: (mv.speedRatio ?? ratio) * base, baseSpeed: base,
+            isGrounded: mv.grounded !== false, isCrouching: !!mv.crouching, isRiding: !!mv.riding,
+            isStandingStill: !!mv.standing, moveDirectionLocal: localVel,
+          },
+          // SW1b-4 (audit): `takeFrameLook()` answers an ARRAY, [yaw, pitch]
+          // - the clone below reads `look[0]`/`look[1]`. Asking it for `.x`
+          // and `.y` got undefined every frame, so the shield's Inertia
+          // module saw the movement and never the look. It is off by
+          // default, which is the only reason nothing said so.
+          look: { x: look?.[0] ?? 0, y: look?.[1] ?? 0, cursorActive: cursorActive(), swingAction: _held },
+        });
         if (widgetOn()) widget.lateUpdate(dt, {
           renderer, canvas: c, entity, art: c ? artFor(playerWeapon.weapon) : null, weapon: playerWeapon.weapon,
           weaponType: weaponTypeForItem(playerWeapon.weapon), material: playerWeapon.weapon?.material ?? -1,
@@ -927,9 +1031,10 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
     setHeldPose(spec) { return fpArm.setHeldPose(spec); },
     draw({ paralyzed = false } = {}) {
       _armDrewLast = false;
-      try { return drawInner({ paralyzed }); } finally { widget.endOfFrame(); }   // WW1: WaitForEndOfFrame resumes after the frame's draw
+      try { return drawInner({ paralyzed }); } finally { widget.endOfFrame(); shield.endOfFrame(); }   // WW1: WaitForEndOfFrame resumes after the frame's draw
     },
     widget,   // WW1: the clone, for the pins
+    shield,   // SW1: the shield's component, for the pins
     handheld,   // HT1: Handheld Torches' component, for the pins and the pool
     /** AUDIT 66 F8: the host's teardown - every long-lived thing this
      *  rig owns is freed here, as the hosts free their pools. */
@@ -1039,7 +1144,35 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
       // `shown()` later cannot be relaxed here by accident.
       const sheetOnly = playerWeapon.sheathed && !spellArmed() && !fpsSpellCasting.isPlayingAnim
         && (entity?.equipCountdown ?? 0) <= 0 && fpArm.active() && fpArm.holdingPaper();
-      if (paralyzed || (!shown() && !torchOnly && !sheetOnly)) return;
+      // SW1-GATE (audit, 2026-09-19): A SHIELD IS NOT A WEAPON EITHER.
+      // `shown()` is the WEAPON's predicate - TORCH-VIS says so for the
+      // light and MAP-FIELD for the sheet, and the off hand is the third
+      // to ask. The mod exists for the poses it keeps OUTSIDE the swing:
+      // `Shield.WhenSheathed` (Off-screen by default, Corner and Ready the
+      // two people actually pick) and `Shield.WhenCasting` both describe
+      // frames in which `shown()` is FALSE, so gating the shield behind it
+      // left `WhenAttacking` the only setting in the mod that did
+      // anything. The shield's own verdict is `drawRect()` - the DLL's
+      // gate ladder itself (SW1 bible, "the gate ladder"), which already
+      // answers null for the equip countdown, the climb, the pause, the
+      // load, third person and every Hide/Off-screen pose - so it relaxes
+      // the early return exactly as far as the mod would draw and no
+      // further. It is a pure read of the frame `lateUpdate` already
+      // settled, so asking twice (here and in `shield.draw`) costs a
+      // clamp and changes nothing.
+      //
+      // AUDIT-FIELD F1 applies here as it did to the sheet: this must
+      // relax the gate ONLY where the shield genuinely paints, or a
+      // sheathed frame that used to draw nothing starts drawing the
+      // Morrowind arm instead. So the verdict carries the draw step's own
+      // two conditions (`!eotbHidesWeapon()`, `!fpArm.active()`) - the
+      // arm's branch returns above the shield and the EotB branch above
+      // that - and `if (!shown()) return;` below stops the shield-only
+      // frame before the weapon's clone and sprite.
+      if (shieldOn()) shield.setThirdPerson(eotbHidesWeapon());
+      const shieldRect = (shieldOn() && c && !eotbHidesWeapon() && !fpArm.active())
+        ? shield.drawRect() : null;
+      if (paralyzed || (!shown() && !torchOnly && !sheetOnly && !shieldRect)) return;
       // THE ONE SEAM. The arm draws whole and RETURNS, or it is inactive
       // and the classic sprite draws exactly as it always has. The return
       // is load-bearing: without it both composite and the player sees a
@@ -1063,8 +1196,20 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
       // with no order between them in DFU; the port picks the one that
       // keeps the weapon whole. Under the Morrowind arms it is not drawn
       // (a classic hand beside a modelled arm is neither mod nor lane).
+      // SW1: THE SHIELD DRAWS FIRST. It is the OFF hand, so it sits
+      // behind the torch hand and behind the weapon - two OnGUIs with no
+      // order between them in DFU, and this is the one that keeps both
+      // whole. Under the Morrowind arms it is not drawn, for the reason
+      // the torch hand is not: a classic sprite beside a modelled arm is
+      // neither mod nor lane (the arm's own branch has already returned).
+      if (shieldRect) shield.draw((index, rect, uv) => drawShieldSprite(index, rect, uv, fpTint));
       if (handheldOn() && c) handheld.draw(renderer, c, fpTint);
       if (torchOnly) return;   // TORCH-VIS: the lit hand ALONE - a sheathed stance still draws no weapon, clone or sprite
+      // SW1-GATE: and the shield ALONE is no more a weapon than the torch
+      // is. A no-op for every path that predates it - `torchOnly` has
+      // returned, `sheetOnly` needs `fpArm.active()` which returned at the
+      // seam - so this line stops the shield-only frame and nothing else.
+      if (!shown()) return;
       if (widgetOn() && c && widget.draw(renderer, c, fpTint)) return;
       const art = c && artFor(playerWeapon.weapon);
       if (art) drawFpsWeapon(renderer, c, art, playerWeapon.machine.state, playerWeapon.machine.frame, { tint: fpTint });
