@@ -59,24 +59,34 @@ export const SHALLOW_WHOLE = Object.freeze([8, 23, 33, 34, 35, 36]);
  * (:551-563) - a list DFU uses to decide whether the PLAYER'S FEET are
  * in shallow water. DFU never drew a water surface at all, so that list
  * was never a drawing list; the port made it one at WATER1 and
- * inherited its omissions. Record 9 is the omission that shows: it sits
- * inside the water-dirt group (5-8 are the marching shapes and the
- * first shallow variant) and its art is a water tile, but DFU's motor
- * does not name it, so the pass refused to draw it.
+ * inherited its omissions whole. THAT is the fault, and it is a fault
+ * whatever the right contents of the list below turn out to be.
  *
  * So there are two tables now. `WATER_MASK_TABLE` is unchanged and is
  * the LAW's - what the player swims in (player/exteriorSurface.js) and
  * what the town's own navigation refuses to walk (world/cityNavigation.js)
- * are DFU's answers and stay verbatim. `WATER_DRAW_MASK_TABLE` is the
- * ENHANCED PASS's - what reads as water to the eye - and it is the law's
- * table plus the records below.
+ * are DFU's answers and stay verbatim, because adding a record there
+ * would change the physics to fix a picture. `WATER_DRAW_MASK_TABLE` is
+ * the ENHANCED PASS's - what reads as water to the eye - and it is the
+ * law's table plus the records below.
  *
- * HONESTLY: this list is read off a screenshot, not off ARENA2, which
- * this container does not have. Record 9 is the one record in 0-55 that
- * is water art and covered by neither the shore families nor DFU's
- * motor list, so it is the one candidate the code can name. If another
- * tile turns up unshaded, `window.__tileHere()` (scenes/world.js) prints
- * the record the player is standing on and it belongs on this line.
+ * WHAT THIS FILE CANNOT KNOW, said plainly rather than implied. The
+ * contents of SHALLOW_DRAWN are inferred from ONE screenshot; this
+ * container has no ARENA2, so nothing here has looked at a single texel
+ * of record 9. What the tree CAN say is where record 9 sits: the
+ * water-dirt group runs 5-8 (three marching shapes and DFU's first
+ * shallow variant), 10 begins the dirt-grass ring, and 9 is the one
+ * record between them that neither the shore families nor DFU's motor
+ * list covers. That makes it the only candidate nameable from here -
+ * not a tile anyone has verified is water.
+ *
+ * SO THE FIX CAN BE WRONG IN THE OTHER DIRECTION, and it is worth
+ * knowing what that looks like: if record 9 is NOT water art, the pass
+ * will now shimmer over a dry tile instead of leaving a wet one flat -
+ * the same bug mirrored. It is one entry on the line below to revert.
+ * `window.__tileHere()` (scenes/world.js) prints the record under the
+ * player, its transform, and BOTH tables' answers, so the next tile
+ * that looks wrong either way reports itself as a number.
  */
 export const SHALLOW_DRAWN = Object.freeze([9]);
 
