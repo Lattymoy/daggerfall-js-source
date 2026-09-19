@@ -196,7 +196,7 @@ test('WATER1: the renderer - one program, the deck\'s shadow key, and a draw sta
   assert.match(r, /createWaterSurface\(terrain, indices\) \{[\s\S]*?const \[positions, normals\] = terrain\.buffers;[\s\S]*?return \{ vao, ebo, indexCount: indices\.length \};/);
   assert.match(r, /destroyWaterSurface\(water\) \{\s*\n\s*const gl = this\.gl;\s*\n\s*gl\.deleteBuffer\(water\.ebo\);\s*\n\s*gl\.deleteVertexArray\(water\.vao\);/);
   assert.match(body, /gl\.depthFunc\(gl\.LESS\);\s*\n\s*gl\.disable\(gl\.POLYGON_OFFSET_FILL\);\s*\n\s*gl\.depthMask\(true\);\s*\n\s*gl\.disable\(gl\.BLEND\);\s*\n\s*gl\.enable\(gl\.CULL_FACE\);/, 'and every bit of it put back');
-  assert.match(body, /gl\.bindTexture\(gl\.TEXTURE_2D_ARRAY, arrayTex\);[\s\S]*?gl\.activeTexture\(gl\.TEXTURE2\);\s*\n\s*gl\.bindTexture\(gl\.TEXTURE_2D, tilemapTex\);/, 'the terrain\'s two textures on the terrain\'s two units');
+  assert.match(body, /gl\.bindTexture\(gl\.TEXTURE_2D_ARRAY, arrayTex\);[\s\S]*?this\._activeTexture\(gl\.TEXTURE2\);\s*\n\s*gl\.bindTexture\(gl\.TEXTURE_2D, tilemapTex\);/, 'the terrain\'s two textures on the terrain\'s two units (PERF-TEX3: the unit through the selector\'s funnel)');
 });
 
 test('WATER1: both exterior hosts - the gate, the has-water skip, and the slot after the opaque passes and before the first flat', () => {

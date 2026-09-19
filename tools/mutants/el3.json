@@ -272,8 +272,8 @@
   {
     "name": "renderer-composite-once-only",
     "file": "src/render/renderer.js",
-    "old": "    if (this._worldViewportPx) this.endWorldPass();\n    this._compositeAir();   // EL3: a no-op unless a render is owed\n    if (!this.screenQuadProgram) {",
-    "new": "    if (this._worldViewportPx) this.endWorldPass();\n    if (!this.screenQuadProgram) {",
+    "old": "    if (this._worldViewportPx) this.endWorldPass();\n    this._compositeAir();   // EL3: a no-op unless a render is owed\n    this._ensureScreenQuadProgram();",
+    "new": "    if (this._worldViewportPx) this.endWorldPass();\n    this._ensureScreenQuadProgram();",
     "tests": [
       "test/el3_air.test.js"
     ]

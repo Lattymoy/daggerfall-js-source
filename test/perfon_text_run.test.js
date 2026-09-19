@@ -170,8 +170,12 @@ test('PERF-ON: the run is the NARROW case, and drawScreenQuad keeps every other 
   // The 1-bit cutout law, and the two brackets drawScreenQuad keeps.
   assert.match(runFn, /if \(t\.a < 0\.5\) discard;/, 'the classic 1-bit cutout law is not in the run’s shader');
   assert.match(runFn, /if \(this\._worldViewportPx\) this\.endWorldPass\(\);/, 'ROAD-E E5: a run is a 2D primitive and ends the world pass too');
-  assert.match(runFn, /gl\.disable\(gl\.CULL_FACE\);/, 'the handedness bracket - a screen quad with CULL_FACE on draws nothing');
-  assert.match(runFn, /gl\.enable\(gl\.CULL_FACE\);[\s\S]{0,80}gl\.enable\(gl\.DEPTH_TEST\);/, '...and it is put back');
+  // PERF-2D: the handedness bracket is the RUN's pair now (_open2D /
+  // _close2D), so the run opens it and does not carry its own copy - a
+  // screen quad with CULL_FACE on still draws nothing, and
+  // test/handedness.test.js pins the pair itself.
+  assert.match(runFn, /this\._open2D\(this\._screenQuadRunVao\)/, 'the run opens the 2D bracket');
+  assert.doesNotMatch(runFn, /gl\.disable\(gl\.CULL_FACE\);/, 'and does not keep a second copy of it');
   assert.match(runFn, /this\._screenOffset\?\.\[0\] \?\? 0/, 'the letterbox offset applies to a run as it does to a quad');
   assert.match(runFn, /this\.stats\.draws\+\+;/, 'a run is a draw and must be counted as one');
   // ONE draw for the whole run.
@@ -303,9 +307,19 @@ test('PERF-ON: a 2D primitive LEAVES GL as it found it - the bracket balances, f
   const balance = (fn) => {
     const log = [];
     const r = loggingRenderer(log);
-    fn(r);                       // the FIRST call builds the program; the toggles are the same either way
+    fn(r); r._close2D();         // the FIRST call builds the program; the toggles are the same either way
     log.length = 0;
     fn(r);
+    // PERF-2D (2026-09-19): the bracket is a RUN's now - 43% of a
+    // dungeon frame's GL calls were this pair, opened and shut around
+    // every single quad. The LAW is untouched and so is this pin: GL
+    // still goes back exactly as it was found, just at the end of the
+    // run rather than the end of the quad. `_close2D` is what every
+    // path that needs the baseline calls, and it is what the renderer
+    // itself calls at the head of every 3D draw and every foreign seam
+    // (test/glstate.test.js reads that law out of the source), so
+    // closing here is the same close the real frame does.
+    r._close2D();
     const net = new Map();
     for (const [call, cap] of log) {
       if (call === 'enable') net.set(cap, (net.get(cap) ?? 0) + 1);

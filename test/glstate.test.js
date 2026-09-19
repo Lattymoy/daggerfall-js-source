@@ -13,6 +13,8 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { identity } from '../src/world/mat4.js';
 import { Renderer, CLOUD_SHADOW_UNIT, SKY_CLEAR } from '../src/render/renderer.js';
+import { PrecipitationRenderer } from '../src/render/precipitation.js';
+import { warmPrograms } from '../src/render/warmPrograms.js';
 import { TEXTURE_SLOTS } from '../src/systems/dynamicSkies.js';   // AUDIT 65 RS-3: the nine slots the reserved unit has to clear
 
 function countingRenderer(counts) {
@@ -257,7 +259,7 @@ test('AUDIT 65 RS-3: the reserved cloud-shadow unit stands clear of every slot a
   assert.ok(CLOUD_SHADOW_UNIT <= 15, 'and WebGL2 only guarantees MAX_TEXTURE_IMAGE_UNITS >= 16');
   const rr = readFileSync('src/render/renderer.js', 'utf8');
   assert.doesNotMatch(rr, /gl\.TEXTURE7\b/, 'the literal is gone from both sites');
-  assert.match(rr, /gl\.activeTexture\(gl\.TEXTURE0 \+ CLOUD_SHADOW_UNIT\);/);
+  assert.match(rr, /this\._activeTexture\(gl\.TEXTURE0 \+ CLOUD_SHADOW_UNIT\);/);   // PERF-TEX3: through the selector's funnel
   assert.match(rr, /gl\.uniform1i\(mapLoc, CLOUD_SHADOW_UNIT\);/);
   // PERF-TEX joined the texture shadows to this list, so the pin is what
   // the mark must DO rather than the whole of its body; the additions have
@@ -481,7 +483,10 @@ test('PERF-TEX: the shadow is cleared wherever something else can own unit 1', (
   // longer owns, which is a wrong texture, which is a visual bug.
   const body = src.split('_bindEmission(tex) {')[1].split('\n  }')[0];
   assert.match(body, /if \(this\._tex1Bound === tex\) return;/, 'the helper is a shadow, not a wrapper');
-  assert.match(body, /gl\.activeTexture\(gl\.TEXTURE0\);/, 'and it leaves unit 0 active, as every draw path expects');
+  // PERF-TEX3: through the funnel now - 97% of this file's activeTexture
+  // calls selected the unit already selected, so the raw call lives in
+  // _activeTexture alone and everything else asks it.
+  assert.match(body, /this\._activeTexture\(gl\.TEXTURE0\);/, 'and it leaves unit 0 active, as every draw path expects');
   for (const site of ['beginFrame', 'endWorldPass']) {
     const fn = src.split(`  ${site}(`)[1]?.split('\n  }')[0] ?? '';
     assert.match(fn, /_tex1Bound = null/, `${site} does not clear the shadow`);
@@ -648,4 +653,420 @@ test('PERF-UI: it moves NO PIXEL - every uniform and texture at every quad is wh
   raw.push(...lb.slice(from));
   assert.deepEqual(shadowed, uiEffective(b, raw), 'a shadow skipped an upload the caller meant');
   assert.equal(shadowed.length, 55);
+});
+
+// PERF-WARM - the compile that no longer happens mid-frame. The stub
+// does not compile shaders, so nothing here measures the win; what it
+// pins is the STRUCTURE the win rests on: that the five on-demand
+// programs each have an idempotent step, that warming builds them all
+// before any draw does, that the draw path still builds on demand for
+// a renderer nobody warmed, and that a failing step does not take the
+// rest of the warm with it.
+
+/** Run warmPrograms with a synchronous scheduler, so a test does not
+ *  wait on requestIdleCallback (there is none in node). */
+const runWarm = (steps, opts = {}) => warmPrograms(steps, { idle: (fn) => fn(), ...opts });
+
+test('PERF-WARM: warmSteps names the five on-demand programs, and warming builds every one', async () => {
+  const r = countingRenderer({});
+  const names = ['screenQuadProgram', 'screenQuadRunProgram', 'charQuadProgram', 'particleProgram', 'overlayProgram'];
+  for (const n of names) assert.ok(!r[n], `${n} is not built before the warm`);
+
+  const steps = r.warmSteps();
+  assert.equal(steps.length, names.length, 'one step per on-demand program');
+  const done = await runWarm(steps);
+  assert.equal(done, names.length, 'every step ran');
+  for (const n of names) assert.ok(r[n], `${n} was built by the warm`);
+});
+
+test('PERF-WARM: the steps are idempotent - a second warm rebuilds nothing', async () => {
+  const r = countingRenderer({});
+  await runWarm(r.warmSteps());
+  const first = {
+    sq: r.screenQuadProgram, run: r.screenQuadRunProgram, cq: r.charQuadProgram,
+    p: r.particleProgram, ov: r.overlayProgram,
+  };
+  await runWarm(r.warmSteps());
+  assert.equal(r.screenQuadProgram, first.sq, 'the screen quad kept its program');
+  assert.equal(r.screenQuadRunProgram, first.run);
+  assert.equal(r.charQuadProgram, first.cq);
+  assert.equal(r.particleProgram, first.p);
+  assert.equal(r.overlayProgram, first.ov);
+});
+
+test('PERF-WARM: an unwarmed renderer still builds on the draw, and a warmed one does not build again', () => {
+  // the draw path is what it always was for anyone who never warms
+  const cold = countingRenderer({});
+  cold.beginFrame(identity(), identity(), new Float32Array([0, 1, 0]));
+  // a REAL quad: drawScreenQuad's signature is (tex, dst, src, color, opts)
+  // and a pin that feeds it numbers is only passing because the stub
+  // swallows them - `src.u0`, `color[0]` and `opts.blend` would all be
+  // undefined, which is not the call the draw path actually gets.
+  const QUAD = [{ x: 4, y: 8, w: 32, h: 16 }, { u0: 0, v0: 0, u1: 1, v1: 1 }, [1, 1, 1, 1], {}];
+  cold.drawScreenQuad({ fake: true }, ...QUAD);
+  assert.ok(cold.screenQuadProgram, 'the draw built it, exactly as before');
+
+  // and a warmed one does not pay a second time on the frame
+  const warm = countingRenderer({});
+  warm._ensureScreenQuadProgram();
+  const built = warm.screenQuadProgram;
+  warm.beginFrame(identity(), identity(), new Float32Array([0, 1, 0]));
+  warm.drawScreenQuad({ fake: true }, ...QUAD);
+  assert.equal(warm.screenQuadProgram, built, 'the frame found it already there');
+});
+
+test('PERF-WARM: a step that throws is swallowed, and the steps after it still run', async () => {
+  const ran = [];
+  const done = await runWarm([
+    () => ran.push('a'),
+    () => { throw new Error('a driver that would not link'); },
+    () => ran.push('c'),
+  ]);
+  assert.deepEqual(ran, ['a', 'c'], 'the throw did not stop the warm');
+  assert.equal(done, 2, 'and it is not counted as done');
+});
+
+test('PERF-WARM: the warm stops when its host is gone, and never on a step it already passed', async () => {
+  const ran = [];
+  let alive = true;
+  const done = await runWarm([
+    () => { ran.push('a'); alive = false; },
+    () => ran.push('b'),
+  ], { alive: () => alive });
+  assert.deepEqual(ran, ['a'], 'the second step was not run');
+  assert.equal(done, 1);
+});
+
+test('PERF-WARM: the pixel-snow program is built with the renderer on the lane that can draw it', () => {
+  const gl = new Proxy({}, {
+    get: (o, k) => {
+      if (k === 'getProgramParameter' || k === 'getShaderParameter') return () => true;
+      if (k === 'getUniformLocation') return () => ({});
+      if (k === 'createProgram' || k === 'createShader' || k === 'createBuffer'
+        || k === 'createVertexArray' || k === 'createTexture') return () => ({});
+      if (typeof k === 'string' && k.toUpperCase() === k) return 1;
+      return () => {};
+    },
+  });
+  const opts = { pixelSnow: { minParticleSize: 1, maxParticleSize: 4 } };   // no textureUrl: setPixelSnow takes the config and loads nothing
+  // the enhanced lane can reach drawPixelSnow, so its program is the
+  // constructor's - along with the lab's, which drawPixelSnow shares
+  const on = new PrecipitationRenderer(gl, { ...opts, enhanced: true });
+  assert.ok(on.pixelProgram, 'the enhanced lane compiled it up front');
+  assert.ok(on.labProgram, 'and the lab it borrows its instances from');
+
+  // the classic lane cannot: drawPixelSnow is only reachable through
+  // drawLab. AUDIT 58's rule holds - it compiles neither.
+  const off = new PrecipitationRenderer(gl, opts);
+  assert.equal(off.pixelProgram, null, 'the classic lane compiled nothing it cannot bind');
+  assert.equal(off.labProgram, null);
+});
+
+// ═══ PERF-2D - THE BRACKET THAT WAS PER QUAD ════════════════════════
+// Every screen quad disabled DEPTH_TEST and CULL_FACE, bound its VAO,
+// drew, then re-enabled both and unbound. Against a dungeon frame that
+// is otherwise 3 batched level meshes and 25 loose models, that bracket
+// alone was 43% of every GL call in the frame. It is a RUN's state, so
+// it opens once and closes on demand.
+
+/** The full effective state at every draw - the caps too, which is the
+ *  new thing that can go wrong: a world draw with no depth test and no
+ *  culling is the 2026-08-23 "sky-blue screen" wearing the other face. */
+const effectiveWithCaps = (log) => {
+  const CAPS = ['DEPTH_TEST', 'CULL_FACE', 'BLEND'];
+  const on = new Map();          // enum -> bool
+  const named = new Map();       // enum -> name, learned from the rig's own enums
+  let unit = 0, prog = null, vao = null;
+  const units = new Map(); const out = [];
+  // glLogRig mints object ids with Math.random, so the raw value differs
+  // between two runs of the same scene. Canonicalise by ORDER OF FIRST
+  // APPEARANCE: same object still means same slot, which is the only
+  // thing the comparison is about, and a different object still differs.
+  const slot = new Map();
+  const id = (t) => {
+    if (t === null || t === undefined) return String(t);
+    const raw = (t.id !== undefined) ? t.id : String(t);
+    if (!slot.has(raw)) slot.set(raw, '#' + slot.size);
+    return slot.get(raw);
+  };
+  return { rows: out, feed(r) {
+    // glLogRig clears the log after construction, so the constructor's
+    // own `enable(DEPTH_TEST)`/`enable(CULL_FACE)` are not in it. Seed
+    // the baseline they establish, or every draw reads as caps-off and
+    // the comparison below compares two piles of zeroes.
+    on.set(r.gl.DEPTH_TEST, true); on.set(r.gl.CULL_FACE, true); on.set(r.gl.BLEND, false);
+    for (const c of CAPS) named.set(r.gl[c], c);
+    for (const [k, ...a] of log) {
+      if (k === 'enable') on.set(a[0], true);
+      else if (k === 'disable') on.set(a[0], false);
+      else if (k === 'activeTexture') unit = a[0];
+      else if (k === 'bindTexture') units.set(unit, a[1]);
+      else if (k === 'useProgram') prog = a[0];
+      else if (k === 'bindVertexArray') vao = a[0];
+      else if (k.startsWith('draw')) out.push([
+        k, id(prog), id(vao), id(units.get(0)), id(units.get(1)),
+        CAPS.map((c) => c + '=' + (on.get(r.gl[c]) ? 1 : 0)).join(' '),
+        a.slice(1).map(String).join(','),
+      ].join('|'));
+    }
+    return out;
+  } };
+};
+
+/** The scene the proof runs on: UI runs interleaved with every 3D pass
+ *  the renderer has, because the transition OUT of an open run is the
+ *  only thing this change can break. `eager` closes the run after every
+ *  quad, which is exactly the per-quad bracket that stood before. */
+const mixedScene = (r, { eager = false } = {}) => {
+  const m = identity();
+  // drawMesh SKIPS a sub-mesh whose texture is not in the cache, so
+  // without this the meshes below draw nothing and the whole proof is
+  // a row of quads. (The non-vacuity assertions at the end exist
+  // because this is exactly the way such a scene goes quietly hollow.)
+  for (let a = 0; a < 7; a++) for (let b = 0; b < 7; b++) r.textures.set(`${a}_${b}`, { id: `t${a}_${b}` });
+  const mesh = (n, tag) => ({ vao: { id: 'vao_' + tag }, subMeshes: Array.from({ length: n }, (_, i) => ({ textureArchive: i % 7, textureRecord: (i * 3) % 7, primitiveCount: 40, startIndex: i * 40 })) });
+  const q = (i) => {
+    r.drawScreenQuad(i % 7 === 0 ? null : { id: i % 3 ? 'A' : 'B' },
+      { x: i * 3, y: 4 + (i % 40), w: 8, h: 8 }, { u0: 0, v0: 0, u1: 1, v1: 1 },
+      i % 11 ? [1, 1, 1, 1] : [1, 0.2, 0.2, 1], i % 17 ? {} : { blend: true });
+    if (eager) r._close2D();
+  };
+  r.beginFrame(new Float32Array(identity()), new Float32Array(identity()), new Float32Array([0, -1, 0]));
+  r.drawMesh(mesh(7, 'lvl'), m);
+  r.markForeignPass();
+  r.drawMesh(mesh(3, 'b'), m);
+  for (let i = 0; i < 20; i++) q(i);
+  r.drawMesh(mesh(4, 'after2d'), m);          // 3D straight out of an open run
+  for (let i = 20; i < 30; i++) q(i);
+  r.drawCharacterSpriteQuad({ id: 'sprite' }, [1, 2, 3], 0.5, 1, [1, 0, 0], 1, 1);
+  for (let i = 30; i < 40; i++) q(i);
+  r.endUiRun(); r.markForeignPass();          // a foreign seam out of an open run, the way a host would take it
+  for (let i = 40; i < 50; i++) q(i);
+  r.drawScreenQuadRun({ id: 'font' }, [{ dst: { x: 1, y: 2, w: 3, h: 4 }, src: { u0: 0, v0: 0, u1: 1, v1: 1 } }], [1, 1, 1, 1]);
+  for (let i = 50; i < 60; i++) q(i);
+  r.drawScreenOverlayQuad({ id: 'ovl' }, 1, 1);   // a third VAO inside one run
+  for (let i = 60; i < 70; i++) q(i);
+  r.drawMesh(mesh(2, 'tail'), m);
+  for (let i = 70; i < 80; i++) q(i);
+};
+
+test('PERF-2D: the run opens once and closes on demand - the per-quad bracket is gone', () => {
+  const { r, log } = glLogRig();
+  const from0 = 0;
+  mixedScene(r);
+  const slice = log.slice(from0);
+  const caps = slice.filter(([k, a]) => (k === 'enable' || k === 'disable') && (a === r.gl.DEPTH_TEST || a === r.gl.CULL_FACE)).length;
+  const quads = slice.filter(([k]) => k === 'drawElements' || k === 'drawElementsInstanced' || k === 'drawArrays').length;
+  assert.ok(quads > 80, `the scene really drew (${quads})`);
+  // Four transitions out of an open run (a mesh, a sprite quad, a
+  // foreign mark, a mesh) plus the opens: nowhere near one a quad.
+  assert.ok(caps <= 30, `the cap bracket ran ${caps} times for ${quads} draws - it is a run's, not a quad's`);
+  // and the same for the VAO: the three 2D primitives share the run
+  const vaoBinds = slice.filter(([k]) => k === 'bindVertexArray').length;
+  assert.ok(vaoBinds <= 40, `${vaoBinds} VAO binds for ${quads} draws`);
+});
+
+test('PERF-2D: every draw sees exactly the state it saw when the bracket was per quad', () => {
+  const { r: rRun, log: logRun } = glLogRig();
+  mixedScene(rRun);
+  const run = effectiveWithCaps(logRun).feed(rRun);
+
+  const { r: rEager, log: logEager } = glLogRig();
+  mixedScene(rEager, { eager: true });          // the bracket, closed after every quad, as it stood
+  const eager = effectiveWithCaps(logEager).feed(rEager);
+
+  assert.equal(run.length, eager.length, 'the same draws happened');
+  assert.deepEqual(run, eager, 'the deferred restore changed what a draw sees');
+  // and the claim is not vacuous: the caps really are off at a quad and
+  // on at a mesh, so the comparison above has something to compare
+  assert.ok(run.some((d) => d.includes('DEPTH_TEST=0 CULL_FACE=0')), 'quads draw with the caps off');
+  assert.ok(run.some((d) => d.includes('DEPTH_TEST=1 CULL_FACE=1')), 'meshes draw with the caps on');
+});
+
+test('PERF-2D: the source law - every draw in renderer.js is a 2D primitive or closes the run first', () => {
+  const src = readFileSync('src/render/renderer.js', 'utf8').split('\n');
+  const TWO_D = new Set(['drawScreenQuad', 'drawScreenQuadRun', 'drawScreenOverlayQuad',
+    '_ensureScreenQuadProgram', '_ensureScreenQuadRunProgram', '_ensureOverlayProgram']);
+  let method = null; const seen = new Map();   // method -> {closed, drew}
+  for (const line of src) {
+    const m = /^  (_?[A-Za-z][A-Za-z0-9_]*)\(.*\)\s*\{\s*$/.exec(line);
+    if (m) { method = m[1]; seen.set(method, { closed: false, drew: false }); continue; }
+    if (!method) continue;
+    const e = seen.get(method);
+    if (line.includes('this._close2D()')) e.closed = true;
+    if (/gl\.draw(Arrays|Elements)/.test(line) && !e.drew) e.drew = !e.closed;   // drew BEFORE any close
+  }
+  const offenders = [...seen].filter(([name, e]) => e.drew && !TWO_D.has(name)).map(([n]) => n);
+  assert.deepEqual(offenders, [], `these draw before handing the baseline back: ${offenders.join(', ')}`);
+  // and the seams where FOREIGN gl runs close it too - the hosts call
+  // these, and a sky or a rain pass assumes the baseline
+  for (const seam of ['beginFrame', 'endWorldPass', 'markForeignPass', 'beginPanelFrame', 'endPanelFrame']) {
+    assert.ok(seen.get(seam)?.closed, `${seam} does not close the 2D run, and foreign GL runs after it`);
+  }
+});
+
+test('PERF-2D: _compositeAir closes AFTER its early return, or the saving is handed straight back', () => {
+  const src = readFileSync('src/render/renderer.js', 'utf8');
+  const i = src.indexOf('_compositeAir() {');
+  const body = src.slice(i, i + 700);
+  const ret = body.indexOf("if (!this._air?.pending) return;");
+  const close = body.indexOf('this._close2D();');
+  assert.ok(ret > 0 && close > ret,
+    'drawScreenQuad calls _compositeAir at the head of EVERY quad - a close before its early return is the per-quad bracket again');
+});
+
+test('PERF-2D: a foreign pass inside an open run is the one gap, and it SPEAKS', () => {
+  // The sky, the rain, the wisps and the grass are not in renderer.js -
+  // the hosts hold `renderer.gl` and call them directly, so no guard in
+  // that file can stand in front of them, and they assume the baseline.
+  // Today they cannot collide (every foreign pass runs in the world
+  // section and the first screen quad is what ENDS it), but that is the
+  // hosts' order and not a law, and both regressions this bracket has
+  // already caused were silent ones.
+  const { r } = glLogRig();
+  r.beginFrame(new Float32Array(identity()), new Float32Array(identity()), new Float32Array([0, -1, 0]));
+  const said = [];
+  const warn = console.warn;
+  console.warn = (...a) => said.push(a.join(' '));
+  try {
+    r.markForeignPass();                    // no run open: nothing to say
+    assert.deepEqual(said, [], 'a foreign pass outside a run is ordinary and silent');
+    r.drawScreenQuad({ id: 'A' }, { x: 0, y: 0, w: 8, h: 8 });
+    r.markForeignPass();                    // a run WAS open: that is the bug
+    assert.equal(said.length, 1, 'a foreign pass inside an open run says so');
+    assert.match(said[0], /DEPTH_TEST and CULL_FACE off/);
+    assert.match(said[0], /endUiRun/, 'and names the remedy rather than just the fault');
+    r.drawScreenQuad({ id: 'A' }, { x: 0, y: 0, w: 8, h: 8 });
+    r.markForeignPass();
+    assert.equal(said.length, 1, 'once a session, not once a frame - a warning in a frame loop is a second bug');
+  } finally { console.warn = warn; }
+  // and the remedy really is one: it closes the run, so the next mark is quiet
+  const { r: r2 } = glLogRig();
+  r2.beginFrame(new Float32Array(identity()), new Float32Array(identity()), new Float32Array([0, -1, 0]));
+  const said2 = [];
+  console.warn = (...a) => said2.push(a.join(' '));
+  try {
+    r2.drawScreenQuad({ id: 'A' }, { x: 0, y: 0, w: 8, h: 8 });
+    r2.endUiRun();
+    r2.markForeignPass();
+    assert.deepEqual(said2, [], 'endUiRun closes the run, so the foreign pass is ordinary again');
+  } finally { console.warn = warn; }
+});
+
+// ═══ PERF-TEX3 - THE UNIT THAT WAS ALREADY ACTIVE ══════════════════
+// Measured over a frame of 25 loose models, 3 batched meshes, 20 terrain
+// pixels and a hundred-odd HUD quads: 97% of every activeTexture call
+// selected the unit already selected (117 of 121), and 55% of every
+// bindTexture re-bound the texture already on the unit (111 of 202).
+
+test('PERF-TEX3: the selector funnel - exactly one raw gl.activeTexture survives', () => {
+  const src = readFileSync('src/render/renderer.js', 'utf8');
+  // The same law EV6 wrote for useProgram and bindVertexArray, for the
+  // same reason: a shadow that one raw call can walk past is a shadow
+  // that will one day speak for a unit it does not own.
+  assert.equal((src.match(/gl\.activeTexture\(/g) || []).length, 1,
+    'only _activeTexture may touch activeTexture');
+  const body = src.split('_activeTexture(unit) {')[1].split('\n  }')[0];
+  assert.match(body, /if \(this\._activeUnit === unit\) return;/, 'it is a shadow, not a wrapper');
+  // and it is cleared wherever unit 1's shadow is - the two go together
+  const clears = (src.match(/this\._tex0Bound = null/g) || []).length;
+  assert.ok(clears >= 5, `unit 0's shadow is cleared at only ${clears} sites - _tex1Bound's every site is the floor`);
+  for (const site of ['beginFrame', 'endWorldPass', 'markForeignPass']) {
+    const fn = src.split(`  ${site}(`)[1]?.split('\n  }')[0] ?? '';
+    assert.match(fn, /_tex0Bound = null/, `${site} does not clear the unit-0 shadow`);
+  }
+});
+
+test('PERF-TEX3: the shadows skip what is already there, and a real change still binds', () => {
+  const { r, log } = glLogRig();
+  r.beginFrame(new Float32Array(identity()), new Float32Array(identity()), new Float32Array([0, -1, 0]));
+  const A = { id: 'sheet' }, B = { id: 'panel' };
+  const from = log.length;
+  for (let i = 0; i < 10; i++) r.drawScreenQuad(A, { x: i, y: 0, w: 8, h: 8 });
+  let slice = log.slice(from);
+  assert.equal(slice.filter(([k]) => k === 'bindTexture').length, 1, 'ten quads off one sheet bind it once');
+  assert.equal(slice.filter(([k]) => k === 'activeTexture').length, 0, 'and re-select nothing - unit 0 was already active');
+  assert.equal(slice.filter(([k]) => k === 'drawElements').length, 10, 'all ten still drew');
+
+  // a real change still binds - the shadow is not a hoist
+  const from2 = log.length;
+  r.drawScreenQuad(B, { x: 0, y: 0, w: 8, h: 8 });
+  r.drawScreenQuad(A, { x: 0, y: 0, w: 8, h: 8 });
+  slice = log.slice(from2);
+  assert.equal(slice.filter(([k]) => k === 'bindTexture').length, 2, 'two different sheets, two binds');
+
+  // and a foreign pass takes the shadow's word away
+  const from3 = log.length;
+  r.markForeignPass();
+  r.drawScreenQuad(A, { x: 0, y: 0, w: 8, h: 8 });
+  assert.equal(log.slice(from3).filter(([k]) => k === 'bindTexture').length, 1,
+    'a foreign pass owns the units; the next quad re-binds rather than trusting a stale shadow');
+});
+
+test('PERF-TEX3: a mesh bundle whose sub-meshes repeat an archive binds each texture once', () => {
+  const { r, log } = glLogRig();
+  r.textures.set('4_4', { id: 'tA' });
+  r.textures.set('5_5', { id: 'tB' });
+  r.beginFrame(new Float32Array(identity()), new Float32Array(identity()), new Float32Array([0, -1, 0]));
+  const sub = (a, b) => ({ textureArchive: a, textureRecord: b, primitiveCount: 4, startIndex: 0 });
+  const from = log.length;
+  // A A A B B A - the shape a real bundle has, and the reason the naive
+  // loop re-bound: consecutive repeats, not a sorted run
+  r.drawMesh({ vao: { id: 'v' }, subMeshes: [sub(4, 4), sub(4, 4), sub(4, 4), sub(5, 5), sub(5, 5), sub(4, 4)] }, identity());
+  // count binds on UNIT 0 only - _bindEmission's unit-1 traffic is
+  // PERF-TEX's business and would make this read 5 for the wrong reason
+  let unit = r.gl.TEXTURE0, binds = 0;
+  for (const [k, ...a] of log.slice(from)) {
+    if (k === 'activeTexture') unit = a[0];
+    else if (k === 'bindTexture' && a[0] === r.gl.TEXTURE_2D && unit === r.gl.TEXTURE0) binds++;
+  }
+  assert.equal(log.slice(from).filter(([k]) => k === 'drawElements').length, 6, 'all six sub-meshes drew');
+  assert.equal(binds, 3, `six sub-meshes over two textures bound ${binds} times - one a RUN, not one a sub-mesh`);
+});
+
+test('PERF-TEX3 AUDIT: no site binds TEXTURE_2D to unit 0 outside the helper without clearing the shadow', () => {
+  // PERF-TEX wrote exactly this law for unit 1 and it is why that slice
+  // never shipped a wrong texture. Writing its twin was skipped when the
+  // unit-0 shadow went in, and the audit found what that cost: a model
+  // drawn after a CHARACTER came out untextured, because drawCharacter
+  // binds unit 0 raw, ends on `bindTexture(TEXTURE_2D, null)`, and the
+  // shadow went on claiming the texture it had before.
+  const src = readFileSync('src/render/renderer.js', 'utf8');
+  const lines = src.split('\n');
+  let unit = 'TEXTURE0', method = null;
+  const offenders = [];
+  for (let i = 0; i < lines.length; i++) {
+    const m = /^  (_?[A-Za-z][A-Za-z0-9_]*)\(.*\)\s*\{\s*$/.exec(lines[i]);
+    if (m) { method = m[1]; unit = 'TEXTURE0'; }       // unit 0 is the baseline every method opens on
+    const am = /_activeTexture\(gl\.(TEXTURE\d+|TEXTURE0 \+ \w+)\)/.exec(lines[i]);
+    if (am) unit = am[1];
+    if (!/gl\.bindTexture\(gl\.TEXTURE_2D,/.test(lines[i])) continue;
+    if (unit !== 'TEXTURE0' || method === '_bindTex0') continue;
+    const window = lines.slice(i, i + 4).join('\n');
+    if (!/_tex0Bound|_bindTex0/.test(window)) offenders.push(`renderer.js:${i + 1} (${method})`);
+  }
+  assert.deepEqual(offenders, [], `these bind unit 0 without answering to the shadow: ${offenders.join(', ')}`);
+});
+
+test('PERF-TEX3 AUDIT: a model drawn after a character still has its texture', () => {
+  // The repro, kept: drawCharacter owns unit 0 while it runs and hands it
+  // back EMPTY. A mesh either side of it shares the shadow, so a shadow
+  // that survived the character would skip the bind and draw nothing.
+  const { r, log } = glLogRig();
+  r.textures.set('4_4', { id: 'MESH_TEX' });
+  r.beginFrame(new Float32Array(identity()), new Float32Array(identity()), new Float32Array([0, -1, 0]));
+  const bundle = { vao: { id: 'v' }, subMeshes: [{ textureArchive: 4, textureRecord: 4, primitiveCount: 4, startIndex: 0 }] };
+  r.drawMesh(bundle, identity());
+  r.drawCharacter({ vao: { id: 'cv' }, ranges: [{ start: 0, count: 3, tex: { id: 'CHAR_TEX' } }] }, identity());
+  r.drawMesh(bundle, identity());
+
+  let unit = r.gl.TEXTURE0; const on = new Map(); const sawAt = [];
+  for (const [k, ...a] of log) {
+    if (k === 'activeTexture') unit = a[0];
+    else if (k === 'bindTexture') on.set(unit + '/' + a[0], a[1]);
+    else if (k === 'drawElements') sawAt.push(on.get(r.gl.TEXTURE0 + '/' + r.gl.TEXTURE_2D));
+  }
+  assert.ok(sawAt.length >= 2, 'both meshes drew');
+  assert.equal(sawAt[sawAt.length - 1]?.id, 'MESH_TEX',
+    'the model after the character drew with ' + JSON.stringify(sawAt[sawAt.length - 1]) + ' on unit 0');
 });
