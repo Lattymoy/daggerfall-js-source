@@ -629,6 +629,23 @@ export class ShadowPass {
         gl.uniform4fv(P.bb.flatWind, r.flatWind);
         gl.activeTexture(gl.TEXTURE0);
         let lastSway = null;
+        // PERF-BASIS (2026-09-19): THE BASIS IS UPLOADED ONCE, NOT ONCE A
+        // FLAT. Both vectors went up twice per batch per replay, and only
+        // ONE of the four cases varies: `up` is the constant [0,1,0] (or
+        // the record's, fixed for the record), and `right` is the frame's
+        // sun basis - set once in frame() before the cascade loop - unless
+        // this is a LANTERN's replay, where each flat turns to face it
+        // (below). So a sun cascade was paying two uniform uploads a flat
+        // for two numbers that could not change, three cascades deep,
+        // every frame. On a frame that is script-bound, a GL call that
+        // cannot change anything is the purest kind of waste there is.
+        const perBatchRight = !recordBasis && !!lightPos;
+        gl.uniform3fv(P.bb.up, recordBasis ? r.up : this._up);
+        if (!perBatchRight) gl.uniform3fv(P.bb.right, recordBasis ? r.right : this._right);
+        // PERF-BASIS: and the texture bind skips its repeats, as the main
+        // pass's has since PERF3 - a run of flats sharing a record bound
+        // the same texture once apiece.
+        let lastTex = null;
         for (const b of r.batches) {
           if (!b?.vao || b._dead || b.conceal || f.isSpectral(b.archive)) continue;   // a concealed foe and a ghost cast nothing
           if (lightPos && b.archive === SHADOW_LIGHT_FLATS) continue;   // EL6: a flame is the lantern, not its occluder
@@ -639,22 +656,23 @@ export class ShadowPass {
           const tex = f.textures.get(key);
           if (!tex) continue;
           const o = b.origin || [0, 0, 0];
-          if (lightPos) {
+          // AUDIT-EL F13: the CAMERA's depth image (the air pass) draws a flat
+          // with the basis it was drawn with, off the record - the sun's basis
+          // drew every tree edge-on, a sliver the AO and the glares saw through.
+          // PERF-BASIS: which is why `recordBasis` still wins here; it is
+          // just hoisted, because it cannot change between two flats.
+          if (perBatchRight) {
             // face the lantern: right = up x (light - flat)
             const dx = lightPos[0] - o[0], dz = lightPos[2] - o[2];
             const l = Math.hypot(dx, dz) || 1;
             this._right[0] = dz / l; this._right[1] = 0; this._right[2] = -dx / l;
+            gl.uniform3fv(P.bb.right, this._right);
           }
-          // AUDIT-EL F13: the CAMERA's depth image (the air pass) draws a flat
-          // with the basis it was drawn with, off the record - the sun's basis
-          // drew every tree edge-on, a sliver the AO and the glares saw through
-          gl.uniform3fv(P.bb.right, recordBasis ? r.right : this._right);
-          gl.uniform3fv(P.bb.up, recordBasis ? r.up : this._up);
           gl.uniform3f(P.bb.origin, o[0], o[1], o[2]);
           gl.uniform2f(P.bb.size, b.size.w, b.size.h);
           const sw = b.sway || 0;
           if (sw !== lastSway) { gl.uniform1f(P.bb.sway, sw); lastSway = sw; }
-          gl.bindTexture(gl.TEXTURE_2D, tex);
+          if (tex !== lastTex) { gl.bindTexture(gl.TEXTURE_2D, tex); lastTex = tex; }   // PERF-BASIS
           f.bindVao(b.vao);
           gl.drawElements(gl.TRIANGLES, b.indexCount, gl.UNSIGNED_INT, 0);
           draws++;

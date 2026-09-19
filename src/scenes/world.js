@@ -30,7 +30,8 @@ import { playerTorchLight } from '../systems/playerTorch.js';   // T1
 import { applyClimate, getGroundArchive, getTerrainGroundArchive, getNatureArchive, SEASON, climateSeasonFromMinutes, INTERIOR_SEASON } from '../world/climateSwaps.js';   // A1: the season is the calendar's, and an interior's is Summer whatever the date
 import { RMB_SIDE, layoutLocation } from '../world/locationLayout.js';
 import { lookAt, multiply, perspective, mirrorProjectionX, trs, identity, UP_Y, wrapAngle } from '../world/mat4.js';   // HANDEDNESS: the one mirror (mat4's law)
-import { frustumPlanes, aabbOutside, localAabb, transformedAabb, flatBatchAabb, cullDisabled } from '../render/frustum.js';   // EV3: the frustum
+import { frustumPlanes, aabbOutside, localAabb, transformedAabb, flatBatchAabb, cullDisabled } from '../render/frustum.js';
+import { sphereInPlanes } from '../render/bounds.js';   // PERF-CROWD: the batch's own bounding sphere, the test the shadow replay already uses   // EV3: the frustum
 import { withMoonAmbient } from '../render/enhancedSky.js';   // EV5: secunda rides the ambient
 import { FarRingRenderer, ringDisabled } from '../render/farRing.js';   // EV8: the province's mountains on the horizon
 import { syncLightingLane, lanternColor } from '../render/enhancedLighting.js';   // EL1: the Enhanced Lighting lane, installed at mount
@@ -9314,23 +9315,39 @@ export async function bootWorld(canvas, renderer, params, status) {
   const cullOn = !cullDisabled();
   const _planes = new Float32Array(24);
   const _pv = new Float32Array(16);
-  /** PERF-ON2: a peer billboard's world box, against this frame's planes.
-   *  One scratch box reused - the test runs once a peer a frame and a
-   *  fresh array apiece would be the allocation PERF10 just took out of
-   *  the grass. The extent is the billboard VS's own: bottom-anchored,
-   *  standing `size.h` up from the origin, and reaching `size.w / 2` in
-   *  any horizontal direction because the quad turns to face the eye. */
-  const _peerBox = new Float32Array(6);
   /** PERF-LIGHTS: the night's lantern pool and the one translation triple
    *  it reads through - refilled every frame, never re-minted. */
   const _sceneLights = [];
   const _lightT = [0, 0, 0];
-  const peerBatchOutside = (b) => {
-    const o = b.origin; if (!o) return false;
-    const hw = (b.size?.w ?? 0) * 0.5, h = b.size?.h ?? 0;
-    _peerBox[0] = o[0] - hw; _peerBox[1] = o[1]; _peerBox[2] = o[2] - hw;
-    _peerBox[3] = o[0] + hw; _peerBox[4] = o[1] + h; _peerBox[5] = o[2] + hw;
-    return aabbOutside(_planes, _peerBox, 0, 0, 0);
+  /**
+   * PERF-ON2 / PERF-CROWD: is this billboard batch outside the frame?
+   *
+   * ONE test for every batch the host submits by hand - the peers, and
+   * the whole live crowd (townspeople, the watch, the foes, the ground
+   * piles, the blow effects, the dropped torches, the camps). The world's
+   * OWN flats have had this since EV3; these lists never did, so a
+   * townsman behind the camera was a draw, two texture binds and its
+   * uniforms every frame, and a town is full of them.
+   *
+   * THE SPHERE IS THE BATCH'S OWN, LIFTED. `createBillboardBatch` stores a
+   * sphere over the placement points with the sprite's half-diagonal added
+   * to the radius - and that is the sphere the shadow replay already culls
+   * by. But the billboard VS is BOTTOM-ANCHORED (`uUp * ((aCorner.y + 0.5)
+   * * uSize.y)`): a sprite stands its full height ABOVE its placement
+   * point, and a sphere of radius hypot(w, h) / 2 about that point does
+   * not reach the top of anything taller than it is wide. A person is
+   * exactly that shape. Lifting the centre by half the height bounds the
+   * quad exactly - from there it spans w/2 sideways and h/2 either way in
+   * y, which is what the stored radius already covers - and without the
+   * lift this would cull heads at the top of the screen.
+   *
+   * A batch with no bounds is always drawn, as `batchVisible` has it.
+   */
+  const billboardOutside = (b) => {
+    const s = b.bounds; if (!s) return false;
+    const o = b.origin;
+    const h = b.size?.h ?? 0;
+    return !sphereInPlanes(_planes, s[0] + (o ? o[0] : 0), s[1] + (o ? o[1] : 0) + h * 0.5, s[2] + (o ? o[2] : 0), s[3]);
   };
   // A4: the streaming world's animal sources - pixel-local positions
   // translated through the floating origin at roll time (16 Hz over
@@ -10425,7 +10442,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // exactly what the world's own flats have done since EV3, since the
     // shadow pass reads the list this builds.
     if (remotePlayers) for (const b of remotePlayers.batches()) {   // ONLINE1: the others, at their feet
-      if (cullOn && peerBatchOutside(b)) continue;
+      if (cullOn && billboardOutside(b)) continue;
       allBatches.push(b);
     }
     for (const p of built.values()) {
@@ -10712,6 +10729,20 @@ export async function bootWorld(canvas, renderer, params, status) {
     // while you cross it, which is what was asked for; anyone who would
     // rather ride through it turns the survival mod's hunting off.
     if (_mode() === 'exterior') hunting.tick();   // SURV6: the minute's hunting roll; the window takes the slot
+    // PERF-CROWD (2026-09-19): and the live crowd is culled too. This list
+    // is the townspeople, the city watch, the exterior foes, the ground
+    // piles, the blow effects, the dropped torches and the camps - every
+    // one of them submitted whatever the camera was looking at, which in a
+    // town is most of the frame's billboards. Filtered IN PLACE, so the
+    // cull costs no array of its own.
+    if (cullOn && livePersonBatches.length) {
+      let keep = 0;
+      for (let i = 0; i < livePersonBatches.length; i++) {
+        const b = livePersonBatches[i];
+        if (!billboardOutside(b)) livePersonBatches[keep++] = b;
+      }
+      livePersonBatches.length = keep;
+    }
     if (livePersonBatches.length) renderer.drawBillboards(livePersonBatches, camRight, UP_Y);
     // WX2: what falls is what the front SHOWS - under the enhanced sky the
     // outgoing rain tapers after the sim has cleared and the incoming

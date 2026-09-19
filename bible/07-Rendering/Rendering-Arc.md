@@ -2100,3 +2100,75 @@ pool with stale entries past the live count - **identical every time**.
 **The lesson: EL8's schedule and the lantern flicker were each correct,
 and the pair was not. A cache key that includes an animated value is not
 a cache, and nothing in either file could see the other.**
+
+
+## PERF-CROWD + PERF-BASIS - the town was never culled, and the sun's basis went up once a flat (2026-09-19)
+
+Continuing on fixes. Two more, both found by reading the submission path
+with the readout's verdict in hand - 1365 draws, script 23.3 ms.
+
+### PERF-CROWD - the whole live crowd was submitted uncut
+
+PERF-ON2 culled the peers. It turns out they were not the only list the
+host hands the renderer by hand:
+
+```js
+if (livePersonBatches.length) renderer.drawBillboards(livePersonBatches, camRight, UP_Y);
+```
+
+`livePersonBatches` is the townspeople, the city watch, the exterior
+foes, the dropped ground piles, the blow effects, the dropped torches and
+the camps. **Not one of them was frustum-tested.** Every townsman behind
+the camera was a draw, two texture binds and its uniforms, every frame -
+and in a town that list is most of the frame's billboards. The world's
+own flats have had this test since EV3; these never did.
+
+Same one-line shape as the peers, so both now take the same test, and the
+peers' hand-rolled box is retired with it.
+
+**The sphere had to be lifted, and that is the whole correctness of it.**
+`createBillboardBatch` stores a sphere over the placement points with the
+sprite's half-diagonal added to the radius. But the billboard vertex
+shader is BOTTOM-ANCHORED - `uUp * ((aCorner.y + 0.5) * uSize.y)` - so a
+sprite stands its full height ABOVE its placement point, and a sphere of
+radius `hypot(w, h) / 2` about that point does not reach the top of
+anything taller than it is wide. A person is exactly that shape: at
+w = 1, h = 3 the stored radius is 1.58 against a head at 3.0. Culling by
+the stored sphere would clip heads at the top of the screen. Lifting the
+centre by half the height bounds the quad exactly, and the pin holds both
+halves - that the unlifted sphere fails and the lifted one does not.
+
+(The shadow replay's own `batchVisible` has the same unlifted sphere. It
+is left alone: a shadow popping at a cascade edge is not a head
+disappearing, and changing it would move EL5's pinned culling counts.
+Recorded here rather than fixed quietly.)
+
+### PERF-BASIS - two uniform uploads a flat, for two numbers that could not change
+
+Inside the shadow replay's billboard loop:
+
+```js
+gl.uniform3fv(P.bb.right, recordBasis ? r.right : this._right);
+gl.uniform3fv(P.bb.up,    recordBasis ? r.up    : this._up);
+```
+
+Four cases, and only ONE of them varies per flat. `up` is the constant
+`[0,1,0]`, or the record's own basis which is fixed for the record.
+`right` is the frame's sun basis, computed once in `frame()` before the
+cascade loop - **unless** this is a lantern's replay, where each flat
+turns to face the lantern (EL6). So a sun cascade was paying two uniform
+uploads a flat for two numbers that could not change, three cascades
+deep, every frame. On a script-bound frame a GL call that cannot change
+anything is the purest waste there is.
+
+Both are hoisted to once a record; the lantern arm keeps its per-flat
+upload, because flattening every sprite's shadow to one direction is a
+bug, not a saving. And the texture bind now skips its repeats, as the
+main pass's has since PERF3.
+
+**The campaign found a hole that was there before this change**: nothing
+in the suite could fail a mutant that stopped the lantern's flats turning
+to face it. It is pinned now.
+
+**Pinned** in `test/perfon2_peercull.test.js`. Mutants
+`tools/mutants/perfon2.json`: 22 - 22 dead, 0 survived.

@@ -2,35 +2,8 @@
  {
   "name": "PERF-ON2-the-peers-are-submitted-uncut-again",
   "file": "src/scenes/world.js",
-  "old": "      if (cullOn && peerBatchOutside(b)) continue;",
+  "old": "      if (cullOn && billboardOutside(b)) continue;",
   "new": "",
-  "tests": [
-   "test/perfon2_peercull.test.js"
-  ]
- },
- {
-  "name": "PERF-ON2-the-box-is-centred-on-the-origin-so-a-peer-at-the-bottom-of-the-view-pops-out",
-  "file": "src/scenes/world.js",
-  "old": "    _peerBox[0] = o[0] - hw; _peerBox[1] = o[1]; _peerBox[2] = o[2] - hw;",
-  "new": "    _peerBox[0] = o[0] - hw; _peerBox[1] = o[1] - h * 0.5; _peerBox[2] = o[2] - hw;",
-  "tests": [
-   "test/perfon2_peercull.test.js"
-  ]
- },
- {
-  "name": "PERF-ON2-the-box-takes-the-whole-width-either-way-so-the-cull-is-loose",
-  "file": "src/scenes/world.js",
-  "old": "    const hw = (b.size?.w ?? 0) * 0.5, h = b.size?.h ?? 0;",
-  "new": "    const hw = (b.size?.w ?? 0), h = b.size?.h ?? 0;",
-  "tests": [
-   "test/perfon2_peercull.test.js"
-  ]
- },
- {
-  "name": "PERF-ON2-a-fresh-box-a-peer-a-frame",
-  "file": "src/scenes/world.js",
-  "old": "  const _peerBox = new Float32Array(6);",
-  "new": "  const _peerBox = null;",
   "tests": [
    "test/perfon2_peercull.test.js"
   ]
@@ -170,6 +143,69 @@
   "new": "          const e = (_sceneLights[n] = { x: 0, y: 0, z: 0 });",
   "tests": [
    "test/perfon2_peercull.test.js"
+  ]
+ },
+ {
+  "name": "PERF-CROWD-the-whole-live-crowd-is-submitted-uncut-again",
+  "file": "src/scenes/world.js",
+  "old": "        if (!billboardOutside(b)) livePersonBatches[keep++] = b;",
+  "new": "        livePersonBatches[keep++] = b;",
+  "tests": [
+   "test/perfon2_peercull.test.js"
+  ]
+ },
+ {
+  "name": "PERF-CROWD-the-sphere-is-not-lifted-so-a-tall-sprites-head-is-culled-at-the-screen-edge",
+  "file": "src/scenes/world.js",
+  "old": "    return !sphereInPlanes(_planes, s[0] + (o ? o[0] : 0), s[1] + (o ? o[1] : 0) + h * 0.5, s[2] + (o ? o[2] : 0), s[3]);",
+  "new": "    return !sphereInPlanes(_planes, s[0] + (o ? o[0] : 0), s[1] + (o ? o[1] : 0), s[2] + (o ? o[2] : 0), s[3]);",
+  "tests": [
+   "test/perfon2_peercull.test.js"
+  ]
+ },
+ {
+  "name": "PERF-CROWD-a-batch-without-bounds-is-culled-instead-of-drawn",
+  "file": "src/scenes/world.js",
+  "old": "    const s = b.bounds; if (!s) return false;",
+  "new": "    const s = b.bounds; if (!s) return true;",
+  "tests": [
+   "test/perfon2_peercull.test.js"
+  ]
+ },
+ {
+  "name": "PERF-BASIS-the-basis-goes-up-once-a-flat-again",
+  "file": "src/render/shadowPass.js",
+  "old": "        gl.uniform3fv(P.bb.up, recordBasis ? r.up : this._up);\n        if (!perBatchRight) gl.uniform3fv(P.bb.right, recordBasis ? r.right : this._right);",
+  "new": "",
+  "tests": [
+   "test/perfon2_peercull.test.js",
+   "test/el5_field.test.js",
+   "test/el2_shadows.test.js",
+   "test/audit_el.test.js"
+  ]
+ },
+ {
+  "name": "PERF-BASIS-the-lanterns-flats-stop-turning-to-face-it",
+  "file": "src/render/shadowPass.js",
+  "old": "          if (perBatchRight) {",
+  "new": "          if (false) {",
+  "tests": [
+   "test/perfon2_peercull.test.js",
+   "test/el5_field.test.js",
+   "test/el2_shadows.test.js",
+   "test/audit_el.test.js",
+   "test/el6_field.test.js"
+  ]
+ },
+ {
+  "name": "PERF-BASIS-the-texture-bind-repeats-again",
+  "file": "src/render/shadowPass.js",
+  "old": "          if (tex !== lastTex) { gl.bindTexture(gl.TEXTURE_2D, tex); lastTex = tex; }   // PERF-BASIS",
+  "new": "          gl.bindTexture(gl.TEXTURE_2D, tex);",
+  "tests": [
+   "test/perfon2_peercull.test.js",
+   "test/el5_field.test.js",
+   "test/el2_shadows.test.js"
   ]
  }
 ]
