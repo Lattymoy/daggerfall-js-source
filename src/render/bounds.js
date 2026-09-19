@@ -83,10 +83,39 @@ export function subMeshVisible(planes, r, i) {
   const o = i * 4, rad = r.subSpheres[o + 3];
   return rad < 0 || sphereInPlanes(planes, r.subSpheres[o], r.subSpheres[o + 1], r.subSpheres[o + 2], rad);
 }
-/** A billboard batch about its origin, by the bounds createBillboardBatch computed (none: always). */
+/**
+ * A billboard batch about its origin, by the bounds createBillboardBatch
+ * computed (none: always).
+ *
+ * THE SPHERE IS LIFTED HALF A HEIGHT, and that is the whole correctness of
+ * it. `createBillboardBatch` stores a sphere over the PLACEMENT points with
+ * the sprite's half-diagonal added to the radius, but the billboard vertex
+ * shader is bottom-anchored (`uUp * ((aCorner.y + 0.5) * uSize.y)`): the
+ * quad stands its full height from that point, so the stored sphere does
+ * not reach the top of anything taller than it is wide. Lifting the centre
+ * by h/2 bounds the quad exactly - from there it spans w/2 sideways and
+ * h/2 either way in y, which is what a radius of hypot(w, h)/2 already
+ * covers. (A negative height - droppedTorches' flame, drawn upside down on
+ * a negated localScale.y - lifts DOWNWARD by the same rule, which is where
+ * its quad hangs.)
+ *
+ * GHOST1 (2026-09-19, Clerical Error: "loaded from a save and we have ghost
+ * campfires now"; kurkku: "sprites disappear and reappear at certain(?)
+ * angles"): the lift used to live in TWO hand-written copies - PERF-CROWD's
+ * in world.js and PERF-CROWD2's in renderer.js - while this function, which
+ * the shadow replay and the AIR PASS's emitters cull by, had none. So the
+ * two passes disagreed about the same sprite: the main pass dropped a flat
+ * the emission replay kept, and what was left on screen was the bloom of a
+ * sprite that never drew. A ghost campfire, exactly as reported. One home,
+ * one answer, and every caller takes it.
+ */
 export function batchVisible(planes, b) {
   const s = b.bounds;
   if (!s) return true;
   const o = b.origin;
-  return sphereInPlanes(planes, s[0] + (o ? o[0] : 0), s[1] + (o ? o[1] : 0), s[2] + (o ? o[2] : 0), s[3]);
+  return sphereInPlanes(planes,
+    s[0] + (o ? o[0] : 0),
+    s[1] + (o ? o[1] : 0) + (b.size?.h ?? 0) * 0.5,
+    s[2] + (o ? o[2] : 0),
+    s[3]);
 }
