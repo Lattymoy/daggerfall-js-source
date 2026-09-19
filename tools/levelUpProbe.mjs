@@ -361,9 +361,19 @@ for (const [label, viewport] of [
 // question, so the lab mounts the REAL enhanced HUD under it and this
 // reads the boxes: a strip judged over an empty page is judged against
 // nothing.
-for (const [label, viewport] of [
-  ['notice', { width: 1400, height: 900 }],
-  ['notice phone', { width: 390, height: 844 }],
+//
+// AUDIT LV2 F4: ...AND THE BLOCK IS LIVE WHEN IT IS MEASURED. The lab
+// mounts the HUD with nothing in three of `.hud-bottom`'s four rows -
+// no breath bar, no effect chips, no needs strip - so the clearance
+// check below passed over a block 30px tall that is 111px tall in an
+// ordinary fight. It is filled here before it is measured, and a third
+// lane runs at `--hud-scale` 2, the top of ui/enhancedHud.js's own
+// range: a strip judged over an empty block at one scale is judged
+// against nothing.
+for (const [label, viewport, hudScale] of [
+  ['notice', { width: 1400, height: 900 }, 1],
+  ['notice phone', { width: 390, height: 844 }, 1],
+  ['notice hudscale2', { width: 1400, height: 900 }, 2],
 ]) {
   const ctx = await browser.newContext({ viewport });
   const page = await ctx.newPage();
@@ -371,6 +381,19 @@ for (const [label, viewport] of [
   page.on('pageerror', (e) => errors.push(e.message));
   await page.goto(`${BASE}/levelup.html?lane=notice`, { waitUntil: 'load' });
   await page.waitForSelector('#enhanced-levelnotice .lv-note', { timeout: 20000 });
+  // A LIVE BOTTOM BLOCK: the breath bar up, three effects, two needs -
+  // the rows a player levelling in a dungeon actually has - and the
+  // scale this lane is measuring at.
+  await page.evaluate((scale) => {
+    document.querySelector('.hud')?.style.setProperty('--hud-scale', String(scale));
+    const br = document.querySelector('.hud-breath');
+    if (br) { br.classList.add('on'); br.innerHTML = '<span class="hud-breathlabel">Breath</span><span class="hud-track"><i class="hud-fill" style="width:60%"></i></span>'; }
+    const ef = document.querySelector('.hud-effects');
+    if (ef) ef.innerHTML = ['Levitate', 'Shield', 'Free Action'].map((t) => `<span class="hud-eff">${t}</span>`).join('');
+    const nd = document.querySelector('.hud-needs');
+    if (nd) nd.innerHTML = ['Hungry', 'Cold'].map((t) => `<span class="hud-need">${t}</span>`).join('');
+  }, hudScale);
+  await page.waitForTimeout(80);
   const rows = (await page.locator('.lv-note').allInnerTexts()).map((s) => s.replace(/\s+/g, ' ').trim());
   check(`${label}: all three events are on the strip`, rows.length === 4, rows.join(' / '));
   check(`${label}: the level's row is LAST - nearest the vitals, where the eye is`,
@@ -385,6 +408,13 @@ for (const [label, viewport] of [
     const r = (s) => { const n = document.querySelector(s); if (!n) return null; const b = n.getBoundingClientRect(); return { x: b.x, y: b.y, w: b.width, h: b.height, r: b.right, b: b.bottom }; };
     const strip = r('#enhanced-levelnotice');
     return { vw: window.innerWidth, vh: window.innerHeight, strip, bottom: r('.hud-bottom'), top: r('.hud-top'),
+      // AUDIT LV2 F4: the strip HANGS IN `.hud-bottom` now, so the
+      // block's own box contains it and cannot be what it is measured
+      // against. The thing it must clear is the first row UNDER it -
+      // the breath bar when one is up, the vitals otherwise - and
+      // `home` says it is where the flex box can do that placing.
+      home: strip ? (document.querySelector('.hud-bottom')?.firstElementChild?.id ?? '') : '',
+      firstRow: r('.hud-breath.on') ?? r('.hud-bars'),
       events: strip ? getComputedStyle(document.querySelector('#enhanced-levelnotice')).pointerEvents : null,
       scrollW: document.documentElement.scrollWidth, scrollH: document.documentElement.scrollHeight };
   });
@@ -392,9 +422,11 @@ for (const [label, viewport] of [
     geo.strip ? `${Math.round(geo.strip.x)},${Math.round(geo.strip.y)} ${Math.round(geo.strip.w)}x${Math.round(geo.strip.h)}` : 'missing');
   // IT MUST NOT SIT ON THE HUD. The bottom block is the vitals and the
   // quickslots - the two things a player reads in a fight.
-  const clear = !geo.bottom || geo.strip.b <= geo.bottom.y;
+  check(`${label}: it hangs in the HUD's own bottom column, above every row it carries`,
+    geo.home === 'enhanced-levelnotice', geo.home || '(on the body)');
+  const clear = !geo.firstRow || geo.strip.b <= geo.firstRow.y + 1;
   check(`${label}: it clears the vitals and the quickslots`, clear,
-    `strip bottom ${Math.round(geo.strip.b)} vs hud top ${Math.round(geo.bottom?.y ?? 0)}`);
+    `strip bottom ${Math.round(geo.strip.b)} vs first HUD row ${Math.round(geo.firstRow?.y ?? 0)}`);
   check(`${label}: and the compass`, !geo.top || geo.strip.y >= geo.top.b,
     `strip top ${Math.round(geo.strip.y)} vs compass bottom ${Math.round(geo.top?.b ?? 0)}`);
   check(`${label}: no overflow`, geo.scrollW <= geo.vw + 1 && geo.scrollH <= geo.vh + 1,

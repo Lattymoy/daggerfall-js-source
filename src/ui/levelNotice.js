@@ -243,7 +243,22 @@ export function announceLevelUp(entity, { say = null, open = null, now = nowMs()
     open?.();
     return false;
   }
-  levelNotices.announceLevel(entity?.pendingLevel ?? ((entity?.level ?? 0) + 1), now);
+  const level = entity?.pendingLevel ?? ((entity?.level ?? 0) + 1);
+  // AUDIT LV2 F2 - ONCE PER LEVEL, NOT ONCE PER PASS. DFU RE-OFFERS
+  // the sheet on every later raise: RaiseSkills' tail sits outside the
+  // skill loop (:1413) and `checkForLevelUp` stays TRUE while `level`
+  // is behind the calculated one, so a player who earns a level and
+  // keeps resting reaches this arm again every pass that clears the
+  // 360-minute gate. Re-opening a window the player must answer is
+  // that law and the classic arm above keeps it whole. RE-ANNOUNCING
+  // is a different act: it replayed the fanfare and turned the
+  // standing reminder back into news, so an unspent level SHOUTED
+  // once per rest until it was spent - three passes, three fanfares,
+  // measured. The surface already knows which pending level it spoke
+  // for; if it is this one it has nothing new to say, and the
+  // reminder it put up is still up saying it.
+  if (!levelNotices.fanfareOwed(level)) return true;
+  levelNotices.announceLevel(level, now);
   audio.playOneShot(SOUND.LevelUp, 1);   // UpdatePlayerValues (:373) - moved to the MOMENT, which is what a notification is
   return true;
 }
@@ -271,7 +286,14 @@ export function announceSkillRaise(id, value, { say = null, now = nowMs(), doc =
  */
 export function announceMastery(id, { box = null, rows = null, now = nowMs(), doc = DOC } = {}) {
   if (!isEnhanced() || !doc) {
-    if (rows?.length) box?.(rows);
+    // AUDIT LV2 F3: `rows` is a THUNK, because an argument is not.
+    // The caller's rows are TEXT.RSC 4020 read off disk, and passing
+    // them by value meant the enhanced lane read the record on every
+    // mastery and threw it away - under a module whose own header
+    // promises that no game data is read to announce one. The read is
+    // the classic box's, so it happens where the box does.
+    const r = typeof rows === 'function' ? rows() : rows;
+    if (r?.length) box?.(r);
     return false;
   }
   levelNotices.announceMastery(id, now);
@@ -289,6 +311,38 @@ export const LEVEL_NOTICE_ID = 'enhanced-levelnotice';
 
 let host = null;
 let last = '';
+
+/**
+ * WHERE IT HANGS - AUDIT LV2 F4, and QS3's rule read the right way
+ * round (ui/enhancedHud.js:374-377): `.hud-bottom` is a CENTRED column
+ * anchored to the foot of the screen, so a centred thing that belongs
+ * above the vitals goes IN it and rides it; only a CORNER block is
+ * anchored to the HUD root and does the arithmetic itself, "because a
+ * corner block inside a centred flex column moves whenever a bar
+ * beside it changes width".
+ *
+ * This strip shipped body-level at a flat `bottom: 150px`, which is
+ * the arithmetic without the corner - and the arithmetic was wrong in
+ * two directions at once. `.hud-bottom` grows UPWARD with its CONTENT
+ * (the breath bar, the effect chips, the needs strip - none of which
+ * the lab mounts, which is why the probe's own clearance check passed
+ * over an empty block) and again with `--hud-scale`, which runs 0.5 to
+ * 2 and which a body-level sibling never inherits anyway (AUDIT FONT
+ * F2). Measured against a live block: the strip sat 19px INTO the
+ * vitals at scale 1 on a phone and 154px into them at scale 2 - the
+ * one thing this element's own comment says it must never do.
+ *
+ * Inside the column there is no number to get wrong: the flex box
+ * places it above every row the HUD has, at every scale, whatever the
+ * block is carrying. `doc.body` is the fallback for the frame before
+ * the HUD mounts - drawHud builds it on the call AFTER this one - and
+ * for the tests, whose fake document has no HUD at all.
+ */
+function rehome(doc, node) {
+  const home = doc.querySelector?.('.hud-bottom') ?? doc.body;
+  if (!home || node.parentNode === home) return;
+  if (home === doc.body) home.append(node); else home.prepend(node);
+}
 
 function rowNode(doc, r) {
   const n = doc.createElement('div');
@@ -311,7 +365,13 @@ function rowNode(doc, r) {
   n.append(gem, body);
   // THE LEVEL'S ROW NAMES THE WAY IN, and only the level's: a skill
   // line with a key on it would read as an instruction.
-  if (r.kind === NOTICE_LEVEL) {
+  // AUDIT LV2 F5: ...and only when there IS one. `buttonText(null)` is
+  // KeyCode.None's own string, "NONE" (systems/controlsConfig.js:222),
+  // so a player who cleared the sheet binding was shown a plate reading
+  // A LEVEL AWAITS / NONE - an instruction to press a key called None.
+  // The row still says a level is waiting; it just stops naming a way
+  // in it does not have.
+  if (r.kind === NOTICE_LEVEL && codeForAction(bindings(), 'CharacterSheet') != null) {
     const k = doc.createElement('span');
     k.className = 'lv-note-key';
     k.textContent = sheetKeyText();
@@ -335,6 +395,11 @@ export function drawLevelNotices({ owed = levelOwed(), hidden = false, now = now
   if (!doc || !isEnhanced()) return null;
   const rows = hidden ? [] : levelNotices.frame(now, { owed });
   levelNotices.sweep(now, { owed });
+  // Checked on every frame the strip is up rather than only when the
+  // paint changes: the HUD host is built by the call that runs right
+  // after this one, so a strip raised on the first frame of a session
+  // lands on the body and has to be moved home on the next.
+  if (host) rehome(doc, host);
   const sig = rows.map((r) => `${r.key}|${r.title}|${r.sub}|${r.standing ? 1 : 0}`).join('\n');
   if (sig === last && (host || !rows.length)) return host;
   last = sig;
@@ -349,14 +414,27 @@ export function drawLevelNotices({ owed = levelOwed(), hidden = false, now = now
     // else.
     host.setAttribute('role', 'status');
     host.setAttribute('aria-live', 'polite');
-    doc.body.append(host);
+    rehome(doc, host);
   }
   host.textContent = '';
   for (const r of rows) host.append(rowNode(doc, r));
   return host;
 }
 
-/** A host tearing down (ui/hud.js's own destroy path). */
+/** Every surface this module owns, gone, and the queue with it.
+ *
+ *  AUDIT LV2 F1: this used to name "ui/hud.js's own destroy path" -
+ *  and ui/hud.js has no destroy path. It is the same false caller
+ *  AUDIT FONT F12 struck from ui/enhancedHudText.js's twin one file
+ *  over, written again: NOTHING in src/ calls this. The enhanced
+ *  skin's elements live as long as the page does, because every skin
+ *  and scene change in this port ends in location.replace, and this
+ *  strip needs no per-owner release either - it is rebuilt from
+ *  `frame()` on the next frame and its standing row is read LIVE off
+ *  the player, so a stale one cannot outlive what it describes. So
+ *  this door's callers are the TESTS, which drive the module over a
+ *  fake document per case. If a page-level teardown is ever wired,
+ *  this is the half of it that belongs here. */
 export function destroyLevelNotices() {
   host?.remove();
   host = null;

@@ -110,8 +110,14 @@ export async function mount(lane = 'classic') {
     const tick = () => {
       if (globalThis.__lv?.lane !== 'notice') return;
       heading = (heading + 0.0004) % 1;
-      drawEnhancedHud(vitals, heading, 16, { hidden: false });
+      // IN ui/hud.js'S OWN ORDER, which is the strip FIRST: AUDIT LV2
+      // F4 made where the strip hangs depend on whether the HUD host
+      // exists yet, and drawHud paints the notices on the call BEFORE
+      // it builds that host. A lab that drew them the other way round
+      // would never take the fallback the shipping order takes on the
+      // first frame of every session.
       notice.drawLevelNotices({ owed: !!entity.readyToLevelUp });
+      drawEnhancedHud(vitals, heading, 16, { hidden: false });
       globalThis.requestAnimationFrame(tick);
     };
     globalThis.__lv = { entity, lane, notice, spend: () => { entity.readyToLevelUp = false; } };

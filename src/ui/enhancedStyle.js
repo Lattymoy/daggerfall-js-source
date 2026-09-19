@@ -3603,6 +3603,12 @@ body:has(.dfchat.touch) .hudtext-stack { top: ${HUD_TEXT_TOP_CHAT_TOUCH_PX}px; }
    It is pointer-transparent like the rest of the HUD (the key is the
    way in, and a pointer-locked player has no cursor to click with
    anyway - ui/player/pointerLock.js's whole subject). */
+/* THE STRIP HANGS IN \`.hud-bottom\`, above every row the HUD carries -
+   see ui/levelNotice.js's rehome and AUDIT LV2 F4. These are the
+   FALLBACK's numbers, for the frame before the HUD host exists: a
+   body-level strip needs a place, and 150px clears an empty block. The
+   rule below takes over the moment it is home, and inside the column
+   no number here is consulted. */
 #enhanced-levelnotice {
   position: fixed; left: 50%; bottom: 150px; transform: translateX(-50%);
   z-index: 4; pointer-events: none;
@@ -3650,6 +3656,15 @@ body:has(.dfchat.touch) .hudtext-stack { top: ${HUD_TEXT_TOP_CHAT_TOUCH_PX}px; }
 .lv-note.lv-standing .lv-note-sub { font-size: 13px; }
 .lv-note.lv-standing .lv-note-gem { font-size: 12px; }
 .lv-note.lv-standing.lv-note-level { border-color: rgba(243,239,44,0.55); }
+/* ...AND AT HOME IT IS A ROW LIKE THE OTHERS. The column places it,
+   the column's own transform scales it, and the block's height - which
+   changes with the breath bar, the effect chips and the needs strip -
+   is the flex box's business and not a constant in this sheet. The
+   gap is \`.hud-bottom\`'s 10px, so it stands off the vitals the same
+   distance the effects row stands off them. */
+.hud-bottom > #enhanced-levelnotice {
+  position: static; transform: none; left: auto; bottom: auto; z-index: auto;
+}
 @media (max-width: 720px) {
   #enhanced-levelnotice { bottom: 128px; gap: 3px; max-width: 94vw; }
   .lv-note { padding: 4px 10px; gap: 8px; }

@@ -1258,7 +1258,12 @@ export function raisePlayerSkills(entity, { say = () => {}, onLevelUp = null, ro
   // before this slice, which is why they are still written here.
   return raiseSkills(entity, Math.floor(worldMinutes()), rolls, onLevelUp,
     (id) => {
-      announceMastery(id, { box, rows: plainLines(lines?.(MASTERY_TEXT_ID)) });
+      // AUDIT LV2 F3: the TEXT.RSC read is a THUNK, so it happens on
+      // the lane that shows it. Passed by value it ran on BOTH - the
+      // enhanced skin read record 4020 off disk at every mastery and
+      // dropped it, under a surface that promises to read no game
+      // data to announce one.
+      announceMastery(id, { box, rows: () => plainLines(lines?.(MASTERY_TEXT_ID)) });
       audio.playOneShot(SOUND.ArenaFanfareLevelUp, 1);
     },
     (id) => announceSkillRaise(id, skillValue(entity, id), { say })) ?? [];

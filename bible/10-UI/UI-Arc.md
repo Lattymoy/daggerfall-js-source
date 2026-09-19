@@ -16254,13 +16254,141 @@ read HEAD's number at the same position in the same file, resolve it
 BY CONTENT in the working tree, and write that. Forty-seven cites came
 back. Run the tool once per base, or pair against HEAD - never both.
 
-`test/levelNotice.test.js` - 16 pins. `tools/mutants/lv2.json` - 18
-mutants, 17 dead, 1 recorded equivalent. `tools/levelUpProbe.mjs` -
-121/121, whose notice lanes mount the real enhanced HUD under the strip
-at desktop and phone and drive its whole life: announce, fold, spend,
-gone. Those two lanes WAIT FOR the fold and the sweep rather than
+`test/levelNotice.test.js` - 20 pins. `tools/mutants/lv2.json` - 25
+mutants, 23 dead, 2 recorded equivalent. `tools/levelUpProbe.mjs` -
+137/137, whose notice lanes mount the real enhanced HUD under the strip
+at desktop, on a phone and at the top of the HUD's own scale, and drive
+its whole life: announce, fold, spend, gone. (Those figures are AUDIT
+LV2's, below; the slice shipped with 16, 18 and 121.) Those two lanes WAIT FOR the fold and the sweep rather than
 waiting them OUT: the first draft slept a flat 4700ms over
 `ANNOUNCE_MS`'s 4500 and went red three checks deep on a machine also
 running the suite, because the fold rides the HUD's own tick and a
 loaded tick runs late. A probe that sleeps a fixed margin over a
 deadline is a probe that measures the machine.
+
+## AUDIT LV2 - five findings before the merge (2026-09-19)
+
+Mac: "Lets do a comprehensive audit on everything before we merge" -
+the whole branch, five commits, LV1 through LV2. AUDIT LV1 had already
+gone through the window; this one went through the NOTIFICATION and the
+seams it put into eight host arms, and found five. Four are fixed, one
+is recorded. **Two of them were things the port already knew and this
+slice did anyway**, which is the useful half of an audit: the tree had
+written both lessons down and the new code did not read them.
+
+**F1 - A DOOR THAT NAMED A CALLER THAT DOES NOT EXIST.**
+`destroyLevelNotices`' note said "a host tearing down (ui/hud.js's own
+destroy path)". `ui/hud.js` HAS no destroy path, and nothing in `src/`
+calls this function at all. It is the same false sentence AUDIT FONT
+F12 struck from `ui/enhancedHudText.js:325-336` one file over, written
+again, one arc later. The note is the sibling's corrected idiom now -
+the callers are the TESTS, the enhanced skin's elements live as long as
+the page does because every skin and scene change in this port ends in
+`location.replace`, and this strip needs no per-owner release either
+because its standing row is read LIVE off the player and cannot outlive
+what it describes.
+
+**F2 - AN UNSPENT LEVEL SHOUTED ONCE PER REST.** The one that would
+have reached a player. `RaiseSkills`' tail sits OUTSIDE the skill loop
+(:1413) and `checkForLevelUp` stays true for as long as `level` is
+behind the calculated level (`systems/advancement.js:184`, whose own
+comment says it "re-offers the sheet"), so EVERY later pass that clears
+the 360-minute gate reaches the level-up arm again. Re-opening a window
+the player must answer is that law and it is right. RE-ANNOUNCING is a
+different act, and nobody asked whether the notification wanted it:
+measured, three rest passes on ONE unspent level played the fanfare
+three times and knocked the standing reminder back into "You have
+risen" each time - an element whose entire design is that an
+announcement is an EVENT, shouting at a player once every six game
+hours until they spend. The enhanced arm asks `fanfareOwed` before it
+speaks now, which is the same question `ui/charSheetDoor.js` asks of
+the same surface for the same reason: one event, one sound. The classic
+arm is untouched and still re-offers the sheet every pass, because that
+is DFU.
+
+**F3 - THE ENHANCED LANE READ A TEXT.RSC RECORD IT NEVER SHOWED.**
+`scenes/shared.js` handed the mastery seam
+`rows: plainLines(lines?.(MASTERY_TEXT_ID))` - and an argument is not a
+thunk, so record 4020 came off disk on BOTH lanes and was dropped on
+the one that promises, in this module's own header, that "no game data
+is read to announce a level". No player ever saw a defect; the SENTENCE
+was false, which in this tree is the defect. The pin that was supposed
+to hold it only checked that `ui/levelNotice.js` imports no reader -
+which it never did - so it could not see a call site handing one in.
+`rows` is a function now, called on the lane that shows it, and the pin
+DRIVES both arms and counts the reads instead of reading the source.
+
+**F4 - THE STRIP SAT ON THE VITALS, AND THE PROBE MEASURED AN EMPTY
+BOX.** The serious one. `#enhanced-levelnotice` was mounted on
+`document.body` at a flat `bottom: 150px`, chosen to clear the HUD. It
+does not clear the HUD. `.hud-bottom` is a column anchored to the foot
+of the screen that grows UPWARD with its CONTENT - the breath bar, the
+effect chips, the needs strip - and again with `--hud-scale`, which
+runs 0.5 to 2 and which a body-level sibling never inherits anyway
+(AUDIT FONT F2 wrote that down when the popup column drew through the
+compass). Measured against a live block: the strip sat **19px into the
+vitals at scale 1 on a phone** and **154px into them at scale 2**. The
+element's own comment says it must never do this, and the probe has a
+check that says so - which passed, because the lab mounts the HUD with
+three of the block's four rows empty and the box it measured was 30px
+tall where an ordinary fight makes it 111.
+
+The fix is not a better number, it is the tree's own rule read the
+right way round. QS3 (`ui/enhancedHud.js:374-377`) already says it, for
+the quickslot diamond, in the opposite direction: the diamond lives on
+the HUD root rather than in `.hud-bottom` **because** it is a CORNER,
+"and a corner block inside a centred flex column moves whenever a bar
+beside it changes width". The strip is centred and belongs above the
+vitals, so it belongs IN the column - and inside it there is no number
+to get wrong at all: the flex box places it above every row the HUD
+carries, at every scale, whatever the block is holding. `doc.body` is
+kept as the fallback for the frame before the HUD mounts (`drawHud`
+builds the host on the call AFTER this one) and for the tests, and the
+strip is taken home on the frame the column appears.
+
+The probe's notice lanes FILL the block before they measure it now -
+breath up, three effects, two needs - a third lane runs at
+`--hud-scale` 2, and the clearance check is aimed at the first HUD row
+UNDER the strip rather than at a box that now contains it. All four new
+checks fail against the shipped code.
+
+**F5 - THE ROW NAMED A KEY CALLED NONE.** `buttonText(null)` is
+KeyCode.None's own string (`systems/controlsConfig.js:222`), so a
+player who CLEARED the character-sheet binding was handed a plate
+reading A LEVEL AWAITS / NONE - an instruction to press a key that does
+not exist, which is the bug the registry lookup was there to prevent
+one layer up. The row still says a level is waiting; it just stops
+naming a way in it does not have.
+
+**RECORDED, NOT FIXED: THE BONUS POOL RE-ROLLS ON EVERY OPEN.**
+`LevelUpScreen`'s constructor draws the 4-6 pool (`ui/charsheet.js`:113-115)
+and `ui/charSheetDoor.js` builds a fresh screen per opening, so closing
+the window and re-opening it rolls again. That is DFU's own shape -
+`UpdatePlayerValues` sets the rollout's BonusPool at every push of the
+sheet - and it is what the classic lane has always done, so it is not
+LV2's defect. What LV2 changes is how easy it is to REACH: a window
+the game used to push at you is now one the player opens deliberately,
+and "escape, press the key again, until it says 6" is one keystroke
+away and discoverable. Recorded rather than fixed because fixing it
+invents law. If Mac wants it closed, the remedy is one field: stash the
+rolled pool on the entity beside `pendingLevel` and clear it where
+`applyLevelUp` clears that.
+
+**CHECKED AND CLEAN**, so the next audit does not re-walk them: all
+eight host `onLevelUp` arms keep their free-slot guard INSIDE the
+`open` thunk, so a busy slot can no longer swallow the announcement
+along with the window; the rest window's PopToHUD still runs before
+RaiseSkills (:728-732), so the strip is up and visible when a rest
+ends rather than hidden behind the window that caused it; a level
+closed without spending leaves `readyToLevelUp` set and the stats
+untouched, because `LevelUpScreen` commits only on `confirm`, and SIX
+open-and-close cycles leave no residue - the host count returns to its
+baseline every time, the keydown and resize listeners come off in
+`destroy`, and `readyToLevelUp` is still set at the end (the first
+measurement said a full-screen window survived its own close, and was
+reading the LAB's own window, which the door lane never shuts); and an
+Oghma Infinium read while a level is already owed DOES eat that level's
+`Level++` through `applyLevelUp`'s oghma arm, but `checkForLevelUp`
+re-raises the flag on the next pass because `level` is still behind the
+calculated one - the mechanism `advancement.js:173-179` was written for,
+verified by running it rather than by reading it.

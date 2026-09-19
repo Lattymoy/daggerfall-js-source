@@ -2,7 +2,7 @@
   {
     "name": "the-window-opens-itself-again",
     "file": "src/ui/levelNotice.js",
-    "old": "  levelNotices.announceLevel(entity?.pendingLevel ?? ((entity?.level ?? 0) + 1), now);\n  audio.playOneShot(SOUND.LevelUp, 1);   // UpdatePlayerValues (:373) - moved to the MOMENT, which is what a notification is\n  return true;",
+    "old": "  if (!levelNotices.fanfareOwed(level)) return true;\n  levelNotices.announceLevel(level, now);\n  audio.playOneShot(SOUND.LevelUp, 1);   // UpdatePlayerValues (:373) - moved to the MOMENT, which is what a notification is\n  return true;",
     "new": "  say?.('You have gained a level!');\n  open?.();\n  return false;",
     "tests": [
       "test/levelNotice.test.js"
@@ -119,7 +119,7 @@
   {
     "name": "the-key-chip-rides-every-row",
     "file": "src/ui/levelNotice.js",
-    "old": "  if (r.kind === NOTICE_LEVEL) {\n    const k = doc.createElement('span');",
+    "old": "  if (r.kind === NOTICE_LEVEL && codeForAction(bindings(), 'CharacterSheet') != null) {\n    const k = doc.createElement('span');",
     "new": "  if (true) {\n    const k = doc.createElement('span');",
     "tests": [
       "test/levelNotice.test.js"
@@ -159,8 +159,8 @@
   {
     "name": "the-mastery-box-interrupts-the-enhanced-skin-again",
     "file": "src/scenes/shared.js",
-    "old": "      announceMastery(id, { box, rows: plainLines(lines?.(MASTERY_TEXT_ID)) });",
-    "new": "      const rows = plainLines(lines?.(MASTERY_TEXT_ID)); if (rows?.length) box?.(rows);",
+    "old": "      announceMastery(id, { box, rows: () => plainLines(lines?.(MASTERY_TEXT_ID)) });",
+    "new": "      const _rows = plainLines(lines?.(MASTERY_TEXT_ID)); if (_rows?.length) box?.(_rows);",
     "tests": [
       "test/levelNotice.test.js"
     ]
@@ -174,5 +174,76 @@
       "test/levelNotice.test.js",
       "test/enhancedHud.test.js"
     ]
+  },
+  {
+    "name": "the-unspent-level-shouts-once-per-rest",
+    "file": "src/ui/levelNotice.js",
+    "old": "  if (!levelNotices.fanfareOwed(level)) return true;",
+    "new": "  if (false) return true;",
+    "tests": [
+      "test/levelNotice.test.js"
+    ],
+    "why": "AUDIT LV2 F2. checkForLevelUp stays TRUE while `level` is behind the calculated one, so every later raise pass reaches this arm: without the guard an unspent level replayed the fanfare and knocked its own standing reminder back into news, once per rest, until it was spent."
+  },
+  {
+    "name": "a-genuinely-new-level-goes-unannounced",
+    "file": "src/ui/levelNotice.js",
+    "old": "  if (!levelNotices.fanfareOwed(level)) return true;",
+    "new": "  if (levelNotices.announcedLevel != null) return true;",
+    "tests": [
+      "test/levelNotice.test.js"
+    ],
+    "why": "AUDIT LV2 F2, the other way round, and EQUIVALENT at every reachable state - recorded rather than chased. `announcedLevel` is non-null only while a level is announced AND owed, and while a level is owed `checkForLevelUp` pins `pendingLevel` at `level + 1` (systems/advancement.js:207) because `level` does not advance until the points are spent - so the level asked about IS the level announced, and the two guards cannot disagree. The guard is still written as the QUESTION (`fanfareOwed`, the same one ui/charSheetDoor.js asks) rather than as the latch: `announcedLevel != null` would be coupling to an invariant nothing states, and a pin that made the two disagree would have to build a `pendingLevel` no road in the port produces - pinning the fixture, not the port.",
+    "equivalent": true
+  },
+  {
+    "name": "the-strip-goes-back-on-the-body",
+    "file": "src/ui/levelNotice.js",
+    "old": "  const home = doc.querySelector?.('.hud-bottom') ?? doc.body;",
+    "new": "  const home = doc.body;",
+    "tests": [
+      "test/levelNotice.test.js"
+    ],
+    "why": "AUDIT LV2 F4. `.hud-bottom` grows upward with its content and with --hud-scale; a body-level strip at a fixed offset sat 19px into the vitals at scale 1 on a phone and 154px into them at scale 2."
+  },
+  {
+    "name": "the-strip-hangs-under-the-vitals-instead-of-over-them",
+    "file": "src/ui/levelNotice.js",
+    "old": "  if (home === doc.body) home.append(node); else home.prepend(node);",
+    "new": "  home.append(node);",
+    "tests": [
+      "test/levelNotice.test.js"
+    ],
+    "why": "AUDIT LV2 F4. Appended, the strip becomes the column's LAST row - under the needs strip and hard against the foot of the screen, which is the overlap it was moved to avoid."
+  },
+  {
+    "name": "the-strip-is-taken-home-only-once",
+    "file": "src/ui/levelNotice.js",
+    "old": "  if (host) rehome(doc, host);",
+    "new": "  if (false) rehome(doc, host);",
+    "tests": [
+      "test/levelNotice.test.js"
+    ],
+    "why": "AUDIT LV2 F4. drawHud builds the HUD host on the call AFTER this one, so a strip raised on the first frame of a session lands on the body and must be moved home on the next."
+  },
+  {
+    "name": "the-mastery-rows-are-read-on-both-lanes-again",
+    "file": "src/scenes/shared.js",
+    "old": "      announceMastery(id, { box, rows: () => plainLines(lines?.(MASTERY_TEXT_ID)) });",
+    "new": "      announceMastery(id, { box, rows: plainLines(lines?.(MASTERY_TEXT_ID)) });",
+    "tests": [
+      "test/levelNotice.test.js"
+    ],
+    "why": "AUDIT LV2 F3. An argument is not a thunk: passed by value, TEXT.RSC record 4020 came off disk on the enhanced lane too and was dropped, under a module whose header promises no game data is read to announce a mastery."
+  },
+  {
+    "name": "the-row-names-a-key-called-None",
+    "file": "src/ui/levelNotice.js",
+    "old": "  if (r.kind === NOTICE_LEVEL && codeForAction(bindings(), 'CharacterSheet') != null) {",
+    "new": "  if (r.kind === NOTICE_LEVEL) {",
+    "tests": [
+      "test/levelNotice.test.js"
+    ],
+    "why": "AUDIT LV2 F5. buttonText(null) is KeyCode.None's own string, so a player who cleared the sheet binding was told to press NONE."
   }
 ]

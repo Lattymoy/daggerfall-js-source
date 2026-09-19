@@ -30,15 +30,29 @@ import {
 } from '../src/ui/levelNotice.js';
 
 /** The smallest document this strip can be drawn into - it touches
- *  createElement, className, textContent, setAttribute, append and
- *  remove, and nothing else. */
+ *  createElement, className, textContent, setAttribute, append,
+ *  prepend and remove, and nothing else.
+ *
+ *  AUDIT LV2 F4: it MODELS `parentNode`, because the strip now asks
+ *  where it is hanging (ui/levelNotice.js's rehome takes it home to
+ *  `.hud-bottom` when the HUD has mounted one). A fake whose append
+ *  left `parentNode` undefined answered "somewhere else" on every
+ *  frame and the strip was re-appended sixty times a second - which
+ *  the still-frame pin below caught, and which is the fake's fault
+ *  rather than the module's: a real node knows its parent. */
 function fakeDoc() {
   const make = (tag) => {
     const n = {
-      tag, className: '', textContent: '', attrs: {}, children: [],
+      tag, className: '', textContent: '', attrs: {}, children: [], parentNode: null,
       setAttribute(k, v) { this.attrs[k] = v; },
-      append(...kids) { this.children.push(...kids); },
-      remove() { n.removed = true; },
+      append(...kids) { for (const k of kids) { k.remove?.(); k.parentNode = this; this.children.push(k); } },
+      prepend(...kids) { for (const k of kids.reverse()) { k.remove?.(); k.parentNode = this; this.children.unshift(k); } },
+      remove() {
+        const at = n.parentNode?.children?.indexOf(n) ?? -1;
+        if (at >= 0) n.parentNode.children.splice(at, 1);
+        n.parentNode = null;
+        n.removed = true;
+      },
     };
     return n;
   };
@@ -234,6 +248,125 @@ test('LV2: the ENHANCED skin ANNOUNCES, and the window does not open itself', ()
   destroyLevelNotices();
 });
 
+// ── AUDIT LV2 (2026-09-19), the pre-merge sweep ───────────────────
+
+test('AUDIT LV2 F1: a door with no caller says so, rather than naming one', () => {
+  // This module's teardown named "ui/hud.js's own destroy path", and
+  // ui/hud.js has no destroy path - the same false caller AUDIT FONT
+  // F12 struck from ui/enhancedHudText.js's twin. The enhanced skin's
+  // elements live as long as the page does; every skin and scene
+  // change in this port ends in location.replace.
+  assert.doesNotMatch(src('src/ui/hud.js'), /destroyLevelNotices/);
+  for (const f of ['src/ui/hud.js', 'src/scenes/world.js', 'src/scenes/exterior.js',
+    'src/scenes/worldModes.js', 'src/scenes/dungeonContext.js', 'src/ui/charSheetDoor.js']) {
+    assert.doesNotMatch(src(f), /destroyLevelNotices/, `${f} would be a caller this note must then name`);
+  }
+  const doc = src('src/ui/levelNotice.js').slice(src('src/ui/levelNotice.js').indexOf('export function destroyLevelNotices') - 900);
+  assert.match(doc, /TESTS/, 'so the note names the callers it actually has');
+});
+
+test('AUDIT LV2 F2: an unspent level is announced ONCE, not once per rest', () => {
+  // DFU RE-OFFERS the sheet on every later pass while the level is
+  // unspent - RaiseSkills' tail is outside the skill loop (:1413) and
+  // `checkForLevelUp` stays true while `level` is behind the
+  // calculated one (systems/advancement.js:184, and its own comment
+  // says so). Re-opening a window is that law. Re-ANNOUNCING is not:
+  // measured before the fix, three rest passes on ONE unspent level
+  // played three fanfares and knocked the standing reminder back into
+  // news each time.
+  destroyLevelNotices();
+  const doc = fakeDoc();
+  const entity = { level: 5, pendingLevel: 6, readyToLevelUp: true };
+  const first = withSounds(() => { announceLevelUp(entity, { now: 0, doc }); });
+  assert.deepEqual(first, [SOUND.LevelUp], 'the level the player just earned sounds');
+  assert.equal(levelNotices.frame(0, { owed: true })[0].title, RISEN_TITLE);
+  // ...it folds, as an announcement must.
+  assert.equal(levelNotices.frame(ANNOUNCE_MS + 1, { owed: true })[0].title, AWAITS_TITLE);
+  // ...and now the next two passes, with the level still owed.
+  const again = withSounds(() => {
+    announceLevelUp(entity, { now: ANNOUNCE_MS + 1, doc });
+    announceLevelUp(entity, { now: ANNOUNCE_MS * 4, doc });
+  });
+  assert.deepEqual(again, [], 'a level already announced has nothing new to say');
+  assert.equal(levelNotices.frame(ANNOUNCE_MS * 4, { owed: true })[0].title, AWAITS_TITLE,
+    'and the reminder it put up is still a reminder');
+
+  // THE CLASSIC LANE KEEPS DFU'S RE-OFFER WHOLE: no document, so every
+  // pass says its line and opens the sheet again, as it always has.
+  let opened = 0;
+  const said = [];
+  announceLevelUp(entity, { say: (m) => said.push(m), open: () => { opened += 1; } });
+  announceLevelUp(entity, { say: (m) => said.push(m), open: () => { opened += 1; } });
+  assert.equal(opened, 2, 'the classic skin re-offers the sheet, which is DFU (:1413)');
+  assert.equal(said.length, 2);
+
+  // ...and a level that was SPENT and earned again is news again: the
+  // sweep drops the latch with the flag it describes.
+  levelNotices.sweep(ANNOUNCE_MS * 5, { owed: false });
+  const fresh = withSounds(() => { announceLevelUp({ level: 6, pendingLevel: 7, readyToLevelUp: true }, { now: ANNOUNCE_MS * 5, doc }); });
+  assert.deepEqual(fresh, [SOUND.LevelUp], 'a new level is a new event');
+  destroyLevelNotices();
+});
+
+test('AUDIT LV2 F4: the strip hangs in the HUD\'s own bottom column, not on the body', () => {
+  // It shipped body-level at a flat `bottom: 150px`, and `.hud-bottom`
+  // grows upward with its CONTENT (breath, effects, needs) and again
+  // with `--hud-scale` - so with a live block the strip sat 19px into
+  // the vitals at scale 1 on a phone and 154px into them at scale 2.
+  // QS3's rule (ui/enhancedHud.js:374-377) is that a CENTRED thing
+  // above the vitals belongs IN the column; only a CORNER does the
+  // arithmetic. tools/levelUpProbe.mjs measures the boxes; this pins
+  // where the node goes.
+  destroyLevelNotices();
+  const doc = fakeDoc();
+  const block = doc.createElement('div');
+  block.className = 'hud-bottom';
+  const bars = doc.createElement('div');
+  block.append(bars);
+  doc.querySelector = (sel) => (sel === '.hud-bottom' ? block : null);
+  const entity = { level: 5, pendingLevel: 6, readyToLevelUp: true };
+  announceLevelUp(entity, { now: 0, doc });
+  const host = drawLevelNotices({ owed: true, now: 0, doc });
+  assert.equal(host.parentNode, block, 'the strip hangs in the bottom column');
+  assert.equal(block.children[0], host, 'as its FIRST row, above every row the HUD carries');
+  assert.equal(doc.body.children.includes(host), false, 'and not on the body beside it');
+  // A STILL FRAME DOES NOT MOVE IT, and neither does a changed one.
+  drawLevelNotices({ owed: true, now: 1, doc });
+  drawLevelNotices({ owed: true, now: ANNOUNCE_MS + 1, doc });
+  assert.equal(block.children.length, 2, 'no second host, and the bars are still there');
+  assert.equal(block.children[0], host);
+
+  // NO HUD YET - the frame before ui/enhancedHud.js mounts one, and
+  // the tests' own document - falls back to the body and is taken home
+  // on the frame the column appears.
+  destroyLevelNotices();
+  const d2 = fakeDoc();
+  announceLevelUp(entity, { now: 0, doc: d2 });
+  const h2 = drawLevelNotices({ owed: true, now: 0, doc: d2 });
+  assert.equal(h2.parentNode, d2.body, 'nowhere else to hang, so the body');
+  const late = d2.createElement('div');
+  late.className = 'hud-bottom';
+  d2.querySelector = (sel) => (sel === '.hud-bottom' ? late : null);
+  drawLevelNotices({ owed: true, now: 1, doc: d2 });
+  assert.equal(h2.parentNode, late, 'and home the moment there is one');
+  assert.equal(d2.body.children.includes(h2), false);
+  destroyLevelNotices();
+});
+
+test('AUDIT LV2 F5: the level\'s row names a key only when there IS one', () => {
+  // `buttonText(null)` is KeyCode.None's own string, "NONE"
+  // (systems/controlsConfig.js:222), so a player who cleared the sheet
+  // binding was handed a plate reading A LEVEL AWAITS / NONE.
+  const store = loadOrCreateBindings();
+  assert.notEqual(codeForAction(store, 'CharacterSheet'), null, 'the default build binds it');
+  assert.match(sheetKeyText(), /\S/);
+  assert.notEqual(sheetKeyText(), 'NONE', 'and the chip names that key, not None');
+  // The unbound answer is the one the row must not print.
+  assert.equal(codeForAction({ primary: new Map(), secondary: new Map() }, 'CharacterSheet'), null);
+  assert.match(src('src/ui/levelNotice.js'),
+    /r\.kind === NOTICE_LEVEL && codeForAction\(bindings\(\), 'CharacterSheet'\) != null/);
+});
+
 test('LV2: the strip is the ONE call all four hosts already make, and the fork is not in any of them', () => {
   // THE FOUR HOSTS RULE. Every level-up arm in the tree goes through
   // the seam, so the answer to "does the window open itself" is
@@ -255,7 +388,7 @@ test('LV2: the strip is the ONE call all four hosts already make, and the fork i
   // ...and the raises and the mastery go through the same module.
   const shared = src('src/scenes/shared.js');
   assert.match(shared, /import \{ announceSkillRaise, announceMastery \} from '\.\.\/ui\/levelNotice\.js'/);
-  assert.match(shared, /announceMastery\(id, \{ box, rows: plainLines\(lines\?\.\(MASTERY_TEXT_ID\)\) \}\);/);
+  assert.match(shared, /announceMastery\(id, \{ box, rows: \(\) => plainLines\(lines\?\.\(MASTERY_TEXT_ID\)\) \}\);/);
   assert.match(shared, /announceSkillRaise\(id, skillValue\(entity, id\), \{ say \}\)/);
   assert.match(shared, /audio\.playOneShot\(SOUND\.ArenaFanfareLevelUp, 1\);/, 'the mastery fanfare stays in BOTH lanes');
 });
@@ -349,5 +482,25 @@ test('LV2: the element reads no game data, and says so in the port\'s own words'
   assert.equal(LEVEL_NOTICE_ID, 'enhanced-levelnotice');
   // The mastery's own TEXT.RSC rows stay with the CLASSIC box, which
   // is the lane that has them: the strip names the skill instead.
-  assert.match(src('src/ui/levelNotice.js'), /if \(rows\?\.length\) box\?\.\(rows\);/);
+  //
+  // AUDIT LV2 F3: and the classic lane is where the record is READ.
+  // This pin used to check only that levelNotice.js imports no reader,
+  // which the module never did - while scenes/shared.js handed it
+  // `plainLines(lines(MASTERY_TEXT_ID))` BY VALUE, so record 4020 came
+  // off disk on the enhanced lane too and was dropped. Driven, not
+  // read: the thunk must not be called when the strip takes it.
+  assert.match(n, /const r = typeof rows === 'function' \? rows\(\) : rows;/);
+  destroyLevelNotices();
+  let reads = 0;
+  const calls = [];
+  const read = () => { reads += 1; return ['MASTERED']; };
+  // THE ENHANCED ARM (a document, as the two pins above fork it).
+  assert.equal(announceMastery(SKILLS.LongBlade, { doc: fakeDoc(), box: (r) => calls.push(r), rows: read, now: 0 }), true);
+  assert.equal(reads, 0, 'the enhanced lane read TEXT.RSC for a box it never shows');
+  assert.equal(calls.length, 0, 'and it must not raise the classic box either');
+  // THE CLASSIC ARM (no document, node's own guard).
+  assert.equal(announceMastery(SKILLS.LongBlade, { box: (r) => calls.push(r), rows: read, now: 0 }), false);
+  assert.equal(reads, 1, 'the classic lane reads it exactly once');
+  assert.deepEqual(calls, [['MASTERED']]);
+  destroyLevelNotices();
 });
