@@ -1482,7 +1482,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // owned, and destroy() hands it back (the _prevPassiveHost idiom this
   // file already uses for its other process-global seams). A bare null
   // would not do: on ?world and ?exterior the previous holder is the
-  // host's own townTalk sink (world.js:7883 / exterior.js:3301), set
+  // host's own townTalk sink (world.js:7906 / exterior.js:3301), set
   // once at boot and never again, so nulling on the way out of the
   // first dungeon would silently un-file every mid-screen label above
   // ground for the rest of the session - MC-1's own bug, re-opened.
@@ -1920,7 +1920,19 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       tallySkill(playerEntity, SKILLS.Medical);
       surfacePlayer();
     } else {
-      playerEntity.health = 0;   // SetHealth(0): the fatal collapse
+      // AUDIT-DEATH1 (2026-09-19, Mac: "sometimes get stuck at 0% health
+      // and live"): THROUGH THE ONE DOOR, like the other three hosts.
+      // This wrote `playerEntity.health = 0` raw, and raw is exactly what
+      // the note ninety lines above warns about - "it was the only one of
+      // the four writers that checked for death, which is why the other
+      // three could go on writing health raw and nobody noticed". The
+      // death presenter fires on the TRANSITION inside `hurtPlayer`
+      // (characters/playerEntity.js), so a raw zero raises nothing: the
+      // player sat at 0% health, alive, in the one host that owns the
+      // DeathScreen. `bypassShield` is the SetHealth(0) door's own flag -
+      // no shield stands between the player and a lethal collapse - and
+      // it is what world.js, exterior.js and worldModes.js already pass.
+      hurtEntity(playerEntity, playerEntity.health, { bypassShield: true });   // SetHealth(0): the fatal collapse
       surfacePlayer();
     }
   }
@@ -2990,7 +3002,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
               // AUDIT 39 (#64) / THE FOUR HOSTS RULE - SHIPPED (wave D):
               // this host was the FOURTH BODY of the player-arrow law
               // and is now the fourth CALLER. combat/arrowFlight.js's
-              // playerArrowHitFoe is the one copy world.js:10876,
+              // playerArrowHitFoe is the one copy world.js:10897,
               // exterior.js:4727 and worldModes.js:6234 already ran;
               // the flag said the divergence would bite and it already
               // had. This copy splashed at the ARROW TIP

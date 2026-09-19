@@ -3218,7 +3218,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // ?dungeon host RAN every CastWhenUsed / CastWhenStrikes / SoulBound
   // / affinity arm against no ctx at all. They are optional-chained, so
   // it WAS silent. WAVE D closed it: the body is scenes/hostEnchant.js
-  // and dungeonContext.js:2209 mounts the same one, gated on
+  // and dungeonContext.js:2221 mounts the same one, gated on
   // `opts.enchantCtx !== false` because setDefaultEnchantCtx is a
   // session singleton and EC1 already routes THIS host's mount into
   // that context through modes.dungeonCtx - so worldModes.js:4666
@@ -5024,7 +5024,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // so an F9 pressed inside a shop recorded the street's sheath and
     // hand. The mode host answers for the rig that is actually drawn
     // and null outside interior mode (the dungeon owns its own
-    // composer, dungeonContext.js:5608), so exterior mode and a
+    // composer, dungeonContext.js:5620), so exterior mode and a
     // pre-seam mode host compose exactly as before, per field.
     const wp = modes?.weaponPose?.() ?? null;
     const snap = snapshotPlayer(playerEntity, {
@@ -5664,10 +5664,11 @@ export async function bootWorld(canvas, renderer, params, status) {
   function travelFollowPressed() {
     const key = travelOptionsSettings.followKey;
     if (!key || key === 'None') return false;
-    // AUDIT-TO1 I3: the SAME stand-down as beginAcceleratedTravel's. Recorded
-    // departure 9 said "online the journey does not run" and only the map's
-    // door stood down; the follow key started one on a shared clock.
-    if (sharedClockOn()) return false;
+    // TO-ONLINE: and the SAME door as beginAcceleratedTravel's, which is
+    // why I3 put a stand-down here when there was one there. There is
+    // none there now (the reason is written out at that function), so
+    // there is none here: the two must answer alike or the key and the
+    // map disagree about whether a journey may start.
     const code = key.length === 1 ? `Key${key.toUpperCase()}` : key;
     const down = keys.has(code);   // a raw KeyCode name, not one of the port's actions - the Handheld Torches shape
     const edge = down && !_travelFollowHeld;
@@ -5687,12 +5688,29 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  reached FROM that map, through a popup it opened. The follow key
    *  has its own, which is the mod's (TravelOptionsMod.cs:1438-1445).
    *
-   *  ONLINE it does not run at all. The shared clock is the world's
-   *  (WORLD5) and a journey that takes real hours of it cannot be one
-   *  player's business; the trip falls back to DFU's own, which online
-   *  already arrives at once. */
+   *  ONLINE IT RUNS TOO (TO-ONLINE, 2026-09-19, Mac: "travel options
+   *  uses instant travel for the online mod, which shouldn't be the
+   *  case"). Departure 9 stood it down on `sharedClockOn()` for a
+   *  reason that does not survive the code: it said a journey would
+   *  move the world's clock, which is not one player's to move - but
+   *  under the shared clock `playerTicker` reads the relay and
+   *  fabricates nothing from `dt` (systems/worldTick.js, WORLD5's own
+   *  law), so the journey CANNOT move it. What the stand-down actually
+   *  bought was the fallback, and the fallback is DFU's fast travel
+   *  with `noWorldTime` - a teleport that arrives at once and costs
+   *  nothing, which is cheaper than the ride it refused. So the ride
+   *  runs, and the online world is left exactly as it was: no new rule,
+   *  no clock touched, no cap invented. The one thing that differs
+   *  online is the acceleration, and it differs by the world's own
+   *  arithmetic rather than by anything decided here - `travelScale`
+   *  reaches the traveller and the calendar offline, and
+   *  online the calendar is the relay's and ignores it. (The frame's
+   *  ticker line is where that scaling is applied; it is not quoted
+   *  here, because a source-text pin greps for it and a comment that
+   *  spells it out satisfies that pin without the code doing so - which
+   *  is exactly how this note first went vacuous.) */
   function beginAcceleratedTravel(pick, opts, { coords = false, estimateMinutes = null } = {}) {
-    if (!travelOptions || sharedClockOn()) return false;
+    if (!travelOptions) return false;
     if (coords) travelOptions.beginTravelToCoords(pick.pixel, !!opts?.speedCautious);
     else {
       travelOptions.beginTravel({
@@ -5787,8 +5805,11 @@ export async function bootWorld(canvas, renderer, params, status) {
       helpRows: () => (travelOptions ? travelOptions.helpText().split('\n') : null),
       // AUDIT-TO1 I4: a bare-pixel journey has no DFU fast travel to fall
       // back on, so the coordinates popup opens only where the host will
-      // honour it - never online, where the journey stands down.
-      coordsAllowed: () => !!travelOptions && !sharedClockOn(),
+      // honour it. TO-ONLINE: which is now everywhere the mod is on -
+      // the journey no longer stands down on the shared clock, so the
+      // door no longer has to. It still asks `beginAcceleratedTravel`'s
+      // own question, because that is the function that would refuse.
+      coordsAllowed: () => !!travelOptions,
       // AUDIT-TO1 D1: PlayerGPS.CurrentLocation's MapId (null in open
       // wilderness, the C#'s !Loaded) and TransportManager.IsOnShip - the
       // two reads IsNotAtPort / HasNoOceanTravel need and never had.

@@ -2029,7 +2029,7 @@ export class HeldMapWindow {
         }
         card.append(dl);
       }
-      if (t?.online) card.append(el('p', 'hmmeta', ONLINE_TRAVEL_LINE));   // OL2: the popup's own line
+      if (t?.online && !t.walked) card.append(el('p', 'hmmeta', ONLINE_TRAVEL_LINE));   // OL2: the popup's own line   // TO-ONLINE: and not over a walked trip, which online is a real ride now and not an arrival at once
       // TO-FIELD (2026-09-18, Mac: "it... doesn't travel on the road"):
       // THE FOLLOW KEY, SAID WHERE THE TRIP IS BOUGHT. Travel Options
       // does not route along roads to a destination - it beelines, and

@@ -34,6 +34,9 @@ import { MINUTES_PER_DAY } from '../gameDate.js';
 export const NEED = Object.freeze({
   PECKISH_AT: 240, HUNGRY_AT: 720, STARVING_AT: 1440,   // minutes since a meal
   THIRSTY: 50, PARCHED: 80, DEHYDRATED: 100, THIRST_MAX: 150,
+  /** SURV-THIRST1: where thirst starts costing BLOOD - twenty past dehydrated,
+   *  which is the number the mod's own heat-only line used. */
+  THIRST_HARM: 120,
   SLEEP_TIRED: 4, SLEEP_DROWSY: 8, SLEEP_EXHAUSTED: 12, SLEEP_DEBT_MAX: 24, AWAKE_FREE_HOURS: 16,
   WET_DAMP: 5, WET_WET: 30, WET_SOAKED: 100, WET_DRENCHED: 200, WET_MAX: 300,
   EXPOSURE_AT: 30, DAMAGE_AT: 50,
@@ -203,7 +206,7 @@ const clearNote = (s, key) => { if (s.notes[key] === 'on') delete s.notes[key]; 
  */
 export function survivalMinute(entity, now, env = {}, deps = {}) {
   const s = survivalOf(entity, now);
-  const { worn = null, sinks = {}, rolls = Math.random, autoDrink = true, autoEat = true } = deps;
+  const { worn = null, sinks = {}, rolls = Math.random, autoDrink = true, autoEat = true, replay = false } = deps;
   const say = sinks.say ?? deps.say ?? null;
   const items = entity.items ?? [];
   const ctx = { ...(deps.ctx ?? {}), wet: s.wet, hasWater: !!findDrink(items) };
@@ -249,7 +252,50 @@ export function survivalMinute(entity, now, env = {}, deps = {}) {
       if (thirstNow === 'parched') sinks.drainFatigue?.(DRAIN.parched);
       else if (thirstNow === 'dehydrated') sinks.drainFatigue?.(DRAIN.dehydrated);
     }
-    if (s.thirst >= 120 && temp.felt > NEED.EXPOSURE_AT) sinks.hurt?.(1);
+    // SURV-THIRST1 (2026-09-19, Mac: "You should also should die on
+    // dehydration"). THE DEPARTURE, and the only one in this block.
+    //
+    // Climates & Calories bleeds you for thirst only in HEAT - this line
+    // read `s.thirst >= 120 && temp.felt > NEED.EXPOSURE_AT`, so a cool
+    // dungeon taxed fatigue for ever and never a drop of blood. Water is
+    // not a climate: a body past dehydrated fails wherever it stands, and
+    // the port says so. (bible/06-Systems/Climates-Calories.md carries the
+    // departure; it is NOT the mod's law and must not be tidied back.)
+    //
+    // The shape is AUDIT SURV E's, not a new one. A harm that can kill
+    // comes on the HARM TICK and not every minute - the old line fired
+    // sixty times an hour, which is how a starting character loses
+    // twenty-five points in twenty-five game-minutes - and it escalates
+    // the way exposure's does, off how far past the threshold you are.
+    // No `hurtFloored`: the bare-skin harms leave the last five points
+    // BECAUSE they are not meant to kill, and this one is.
+    //
+    // HEAT STILL KILLS YOU FASTER, through the mod's own mechanism rather
+    // than a second rule: the thirst RATE above already scales with the
+    // felt heat (felt 40 is four times as fast), so a desert reaches 150
+    // and stays there while a cellar crawls. What heat no longer does is
+    // buy a separate, harsher damage law.
+    //
+    // Not in your sleep, and not sat by a fire - the same two words the
+    // temperature harm below uses. Nothing in `systems/rest.js` refuses a
+    // rest for thirst, so a sleeper who could not wake to drink would be
+    // killed by a window they were allowed to open.
+    //
+    // AND NOT DEAD INSIDE A JUMP. `runSurvivalMinutes` replays every
+    // minute a clock jump crossed - a fast travel, a rest, a training
+    // session - so six game-hours of travel is thirty-six harm ticks in
+    // one frame, which took a starting character from full health to
+    // dead ON ARRIVAL. A replayed minute may wound to the floor and no
+    // further; the LAST minute of the walk is the one the player is
+    // standing in, and that one may finish them. So a thirsty journey
+    // still lands you at death's door, and the next minute you do not
+    // drink is the one that kills - which is the behaviour asked for,
+    // without the arrival being a coin flip.
+    if (s.thirst >= NEED.THIRST_HARM && !sleeping && !resting && now % HARM_EVERY_MINUTES === 0) {
+      const bite = Math.max(1, Math.trunc((s.thirst - NEED.THIRST_HARM + 10) / 10));
+      if (!replay) sinks.hurt?.(bite);
+      else if ((entity.health ?? 0) > HEALTH_FLOOR) sinks.hurt?.(Math.min(bite, (entity.health ?? 0) - HEALTH_FLOOR));
+    }
   }
 
   // SLEEP: the debt grows past the free hours; sleep pays it by quality.
@@ -377,7 +423,18 @@ export function runSurvivalMinutes(entity, from, to, env, deps) {
   let last = Number.isFinite(s.lastMinute) ? s.lastMinute : Math.floor(from);
   if (last > end + MAX_CATCHUP_MINUTES) last = Math.floor(from);
   const start = Math.max(Math.floor(from), last, end - MAX_CATCHUP_MINUTES);
-  for (let m = start + 1; m <= end; m++) temp = survivalMinute(entity, m, env, deps);
+  // SURV-THIRST1 AUDIT: WHICH MINUTE IS THE PLAYER ACTUALLY LIVING IN.
+  // Every minute but the last is a REPLAY - a jump's minutes, fabricated
+  // by `playerTicker.advance` (scenes/shared.js) for a fast travel, a
+  // rest or a training session, all of which run this same loop. A harm
+  // that may kill must not be charged hundreds of times inside one
+  // frame: six game-hours of fast travel is 36 harm ticks, and that
+  // killed a starting character dead on arrival. The last minute is the
+  // one the player is standing in, and it is the one that may finish
+  // them. ONE object, mutated - this loop runs up to 2,880 times and a
+  // fresh deps per minute would be 2,880 objects a jump (EV2's rule).
+  const walk = { ...deps, replay: true };
+  for (let m = start + 1; m <= end; m++) { walk.replay = m < end; temp = survivalMinute(entity, m, env, walk); }
   if (end > (s.lastMinute ?? -Infinity)) s.lastMinute = end;
   return temp;
 }

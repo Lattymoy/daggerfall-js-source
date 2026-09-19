@@ -957,11 +957,7 @@ export class Renderer {
     // The value last uploaded to the solid program's uEmissionColor
     // (uniforms are program state, so this survives a program switch).
     this._emissionColorUp = null;
-    this._tex1Bound = null;   // PERF-TEX: cleared with its sibling
-    this._tex0Bound = null; this._activeUnit = null;   // PERF-TEX3: unit 0 and the selector, with it
-    this._sq = {};
-    this._tArrayTex = null;
-    this._tTileSize = null;
+    this._forgetTextureShadows();   // AUDIT-AIR1: nothing is bound yet, so nothing may be claimed
     // EV2: the sub-mesh texture cache's generation. drawMesh used to
     // mint a `${archive}_${record}` string per sub-mesh per frame -
     // thousands of short-lived strings a frame, the render loop's
@@ -1180,11 +1176,7 @@ export class Renderer {
   endWorldPass() {
     this._close2D();   // PERF-2D: the baseline back, before anything that needs it
     if (!this._worldViewportPx) return;
-    this._tex1Bound = null;   // PERF-TEX: the 2D path and the post passes own the units past here
-    this._tex0Bound = null; this._activeUnit = null;   // PERF-TEX3: unit 0 and the selector, with it
-    this._sq = {};   // PERF-UI: ...and this is the 2D pass's own door, so it starts knowing nothing
-    this._tArrayTex = null;
-    this._tTileSize = null;
+    this._forgetTextureShadows();   // PERF-TEX: the 2D path and the post passes own the units past here, and this is the 2D pass's own door
     this._worldViewportPx = null;
     this.gl.viewport(0, 0, this.canvas.width, this.canvas.height);
   }
@@ -1320,11 +1312,7 @@ export class Renderer {
     // unit active, so every texture shadow is forgotten with the rest. A
     // shadow that speaks for a unit it no longer owns is a WRONG TEXTURE,
     // which is the one thing a performance change may never cost.
-    this._tex1Bound = null;
-    this._tex0Bound = null; this._activeUnit = null;   // PERF-TEX3
-    this._tArrayTex = null;
-    this._tTileSize = null;
-    this._sq = {};
+    this._forgetTextureShadows();
   }
 
   /** EL1: compile one world program set from its four fragment shaders
@@ -1478,11 +1466,7 @@ export class Renderer {
     this._tFrameStamp = -1;
     this._csUploaded = {};
     this._emissionColorUp = null;
-    this._tex1Bound = null;   // PERF-TEX: cleared with its sibling
-    this._tex0Bound = null; this._activeUnit = null;   // PERF-TEX3: unit 0 and the selector, with it
-    this._sq = {};
-    this._tArrayTex = null;
-    this._tTileSize = null;
+    this._forgetTextureShadows();   // the set is rebuilt, so every unit it bound is the new set's to claim
     this._lastProgram = null;
   }
 
@@ -1700,6 +1684,18 @@ export class Renderer {
     this._perf?.mark('air');   // VC6d: the AO, the bloom, the shafts and the resolve
     this._air.setCloudShadow(this._cloudShadow ?? this._deckOwed);   // VC6c: the FRAME's deck - the host sets it after beginFrame, so the shafts can only read it here
     this._air.composite();   // EL4: the resolve - the frame to the canvas
+    // AUDIT-AIR1: THE RESOLVE IS A FOREIGN PASS, and this seam - alone of
+    // the seven - never said so. `composite()` binds units 0..3 and
+    // leaves its own unit selected, exactly what `markForeignPass`
+    // exists for; the first screen quad after it found `_activeUnit`
+    // still claiming TEXTURE0 and `_tex0Bound` still naming the sprite
+    // it wanted, so it skipped the bind (or bound to unit 3) and sampled
+    // the RESOLVED FRAME BUFFER. On an unsheathe that is the weapon
+    // sprite painted with a blurred picture of the room - the "weird
+    // water texture". AFTER the composite, because the composite is what
+    // invalidates them. (VC6c/VC6d pin the two lines above this one as
+    // adjacent, which is why the reason is written here and not there.)
+    this._forgetTextureShadows();
     if (this._perf) {   // EL8: the clock stops at the resolve; the line, when it is due
       this._perf.end();
       this._perf.stop();   // VC6d: the frame's last span
@@ -1765,6 +1761,38 @@ export class Renderer {
    *  it exists so that the warning in `markForeignPass` names a remedy
    *  rather than a bug report. */
   endUiRun() { this._close2D(); }
+
+  /** PERF-TEX3 / AUDIT-AIR1: FORGET EVERY TEXTURE SHADOW - ONE HOME.
+   *
+   *  The six fields below are a claim about what the GPU holds: which
+   *  texture is on unit 0 and unit 1, which unit is SELECTED, the
+   *  sampler-array and tile-size of the tilemap path, and the screen
+   *  quad's uniform values. Every one of them is only true while this
+   *  renderer is the only thing touching GL. The instant something else
+   *  binds - a foreign pass, an upload, the air pass's resolve - the
+   *  claim is a lie, and a shadow that speaks for a unit it no longer
+   *  owns is a WRONG TEXTURE. That is the one thing a performance
+   *  change may never cost.
+   *
+   *  WHY IT IS A FUNCTION (AUDIT-AIR1, 2026-09-19, Mac: "sometimes
+   *  unsheathing, it spawns a weird water texture"). This block was
+   *  COPIED at five seams and the sixth - `_compositeAir`, which runs
+   *  the air pass and is as foreign as anything gets - was never given
+   *  one. `airPass.composite()` binds units 0..3 and leaves unit 3
+   *  selected, so the first screen quad after a resolve found
+   *  `_activeUnit` still claiming TEXTURE0 and `_tex0Bound` still
+   *  naming the sprite it wanted: it skipped the bind, or bound to unit
+   *  3, and drew the RESOLVED FRAME BUFFER instead of its own art. On
+   *  an unsheathe that is the weapon sprite painted with a blurred
+   *  picture of the room - the "weird water texture". Six copies of a
+   *  rule is five chances to miss one; this is the one home. */
+  _forgetTextureShadows() {
+    this._tex1Bound = null;
+    this._tex0Bound = null; this._activeUnit = null;
+    this._sq = {};
+    this._tArrayTex = null;
+    this._tTileSize = null;
+  }
 
   /** Hand the baseline back, if a run is open. Idempotent, and cheap
    *  enough to call at the head of anything: one property read. */
@@ -2993,11 +3021,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     gl.uniform1i(this.uEmissionTex, 1);
     gl.uniform3fv(this.uEmissionColor, this._c3(this._windowEmission));
     this._emissionColorUp = this._windowEmission;   // F49: the per-sub-mesh shadow starts the frame true
-    this._tex1Bound = null;   // PERF-TEX: a frame's; the post passes (air, clouds) own unit 1 between frames
-    this._tex0Bound = null; this._activeUnit = null;   // PERF-TEX3: unit 0 and the selector, with it
-    this._sq = {};   // PERF-UI: the screen-quad uniform shadow is a frame's too
-    this._tArrayTex = null;
-    this._tTileSize = null;
+    this._forgetTextureShadows();   // PERF-TEX: a frame's; the post passes (air, clouds) own the units between frames
     const count = this._pointLights.length / 4;
     gl.uniform1i(this.uPointCount, count);
     if (count > 0) gl.uniform4fv(this.uPointLights, this._pointLights);
@@ -3537,8 +3561,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     const tex = gl.createTexture();
     this._activeTexture(gl.TEXTURE1);
     gl.bindTexture(gl.TEXTURE_2D, tex);
-    this._tex1Bound = null;   // PERF-TEX: an upload owns unit 1 and leaves it active - the shadow cannot speak for it
-    this._tex0Bound = null; this._activeUnit = null;   // PERF-TEX3: unit 0 and the selector, with it
+    this._forgetTextureShadows();   // PERF-TEX: an upload owns unit 1 and leaves it ACTIVE - no shadow may speak past it (AUDIT-AIR1: through the one home, like the other six)
     gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
     gl.texImage2D(
       gl.TEXTURE_2D, 0, gl.RGBA, color32.width, color32.height, 0,

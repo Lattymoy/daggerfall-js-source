@@ -1161,7 +1161,20 @@ test('TO1: the wiring - one construction, the fork on the popup\'s word, the pan
   // the fork
   assert.match(w, /if \(opts\?\.playerControlled && beginAcceleratedTravel\(pick, opts, \{ estimateMinutes: computed\?\.minutes \?\? null \}\)\) return;[^\n]*\n\s*fastTravelTo\(pick, opts, computed\);/,
     'the walked trip is tried first (with the popup\'s estimate riding along - AUDIT-TO1 L5) and fast travel is the fallback');
-  assert.match(w, /if \(!travelOptions \|\| sharedClockOn\(\)\) return false;/, 'online the journey stands down');
+  // TO-ONLINE (2026-09-19, Mac: "travel options uses instant travel for the
+  // online mod, which shouldn't be the case"): the journey RUNS online. The
+  // stand-down departure 9 wrote was argued from a premise the code does not
+  // hold - it said a journey would move the world's clock, and under the
+  // shared clock `playerTicker` reads the relay and fabricates nothing from
+  // `dt` (WORLD5's own law), so it cannot. What the stand-down bought was the
+  // fallback, and the fallback is a teleport that arrives at once and costs
+  // nothing: cheaper than the ride it refused.
+  assert.match(w, /function beginAcceleratedTravel\(pick, opts, \{ coords = false, estimateMinutes = null \} = \{\}\) \{\s*\n\s*if \(!travelOptions\) return false;/,
+    'the journey asks only whether the mod is there');
+  assert.doesNotMatch(w, /if \(!travelOptions \|\| sharedClockOn\(\)\) return false;/, 'and not whether the clock is shared');
+  // not vacuous: WORLD5's law is what makes this safe, so read it
+  assert.match(read('src/systems/worldTick.js'), /if \(_sharedClock\) \{\s*\n\s*classicMinutes = _sharedLastTick \?\? _sharedClock\(\);/,
+    'the shared clock is READ, never advanced from dt - which is why an accelerated journey cannot move it');
   // THE COMPATIBILITY CHECK Mac asked for: following is handed HIS network alone
   assert.match(w, /roads: \(\) => \{ const net = terrainGen\.roads\(\); return net\?\.source === 'basic-roads' \? net : null; \},/,
     'the port\'s own generated network is never followed');
@@ -1191,7 +1204,12 @@ test('TO1: the wiring - one construction, the fork on the popup\'s word, the pan
   assert.match(w, /if \(v && travelControlUI\.click\(v\[0\], v\[1\]\)\) return;/);
   // the frame's two scaled things, and only those two
   assert.match(w, /const travelScale = worldTimeScale\(\);/);
-  assert.match(w, /playerTicker\.tick\(dt \* timeScaleMult \* travelScale,/, 'the calendar keeps up with the miles');
+  // TO-ONLINE: anchored on the WHOLE STATEMENT, not the expression. The bare
+  // expression went vacuous the moment a comment three hundred lines up
+  // quoted it - a source-text pin matches source, and a comment is source.
+  assert.match(w, /if \(!_overlayHeld\) playerTicker\.tick\(dt \* timeScaleMult \* travelScale, \{/, 'the calendar keeps up with the miles');
+  assert.equal((w.match(/playerTicker\.tick\(dt \* timeScaleMult/g) || []).length, 1,
+    'and there is exactly ONE of it - a second copy, in code or in a comment, is what makes this pin stop meaning anything');
   assert.match(w, /player\.update\(dt, paralyzed \? \{/, 'the motor still takes the REAL frame - it scales itself');
   // the four hosts rule: named, and the reason
   assert.match(w, /THE FOUR HOSTS RULE/);
@@ -1564,11 +1582,16 @@ test('AUDIT-TO1 G1/G2/G3/I2/I3/I4/I6/J1/K2/H1/H2: the host seams the sweep found
   assert.match(w, /if \(travelControlUI\?\.isShowing && \(modes\?\.mode \?\? 'exterior'\) !== 'exterior'\) travelControlUI\.closeWindow\(\);\s*\n\s*if \(!travelControlUI\?\.isShowing && worldTimeScale\(\) !== 1\) resetTimeScale\(\);/);
   // I2: the strip's click router wants the freed cursor and the primary button
   assert.match(w, /if \(travelControlUI\?\.isShowing && !gamePaused\(\) && cursorActive\(\) && e\.button === 0 && !\(isEnhanced\(\) && typeof document !== 'undefined'\)\) \{/);
-  // I3: the follow key stands down online, as the map's door does
-  assert.match(w, /function travelFollowPressed\(\) \{[\s\S]{0,600}?if \(sharedClockOn\(\)\) return false;/);
+  // I3 / TO-ONLINE: the follow key answers the MAP'S DOOR, whatever that door
+  // says. I3 put a stand-down here because there was one there; there is none
+  // there now, so there is none here - the two must agree or the key and the
+  // map disagree about whether a journey may start.
+  const follow = w.slice(w.indexOf('function travelFollowPressed() {'));
+  assert.doesNotMatch(follow.slice(0, follow.indexOf('\n  }')), /sharedClockOn\(\)/,
+    'the follow key does not stand down on the shared clock either');
   // I4: the coordinates door acts on its refusal, and the popup opens only where it is honoured
   assert.match(w, /if \(!beginAcceleratedTravel\(pick, opts, \{ coords: true \}\)\) townTalk\.say\('You cannot travel there now\.'\);/);
-  assert.match(w, /coordsAllowed: \(\) => !!travelOptions && !sharedClockOn\(\),/);
+  assert.match(w, /coordsAllowed: \(\) => !!travelOptions,/, 'TO-ONLINE: the door opens wherever the journey runs, which is now everywhere the mod is on');
   assert.match(read('src/ui/travelMapWindow.js'), /\(this\.deps\.coordsAllowed\?\.\(\) \?\? true\)/);
   // I6: the discovery store is read by the key its writers use
   assert.match(w, /return loc\?\.name \? discoveredBuildings\(`\$\{summary\.regionIndex\}:\$\{loc\.name\}`\) : \[\];/);
@@ -1784,4 +1807,21 @@ test('TO-FIELD: the accelerated journey waits for the ground; TO-FIELD3 took the
   const m = read('src/ui/heldMap.js');
   assert.match(m, /const _fk = this\._to\?\.settings\?\.followKey;/);
   assert.match(m, /On the road, press \$\{_fk\} to follow it\./);
+});
+
+test('TO-ONLINE: an online trip the toggles call WALKED is a ride, and the "you arrive now" line does not sit over it', () => {
+  // The line is DFU's fast travel talking - "the world's clock does not
+  // wait. You arrive now, and no inn is paid." It was true of every
+  // online trip while the journey stood down and the teleport was the
+  // only arrival there was. It is false over a walked one.
+  const pop = read('src/ui/travelPopUp.js');
+  assert.match(pop, /if \(this\.noWorldTime\(\) && !this\.walkedTrip\) shadowText\(renderer, font, ONLINE_TRAVEL_LINE,/,
+    'the classic popup gates the line off the walked trip');
+  // and the enhanced skin bills the same trip, so it says the same thing
+  assert.match(read('src/ui/heldMap.js'), /if \(t\?\.online && !t\.walked\) card\.append\(el\('p', 'hmmeta', ONLINE_TRAVEL_LINE\)\);/,
+    'the held map says the same');
+  // not vacuous: the walked branch really is the one that sets the flag,
+  // and it is the branch that carries the mod's own two labels
+  assert.match(pop, /this\.walkedTrip = true;\s*\n\s*this\.countdownValueTravelTimeDays = 0;/);
+  assert.match(pop, /if \(this\.walkedTrip\) \{\s*\n\s*shadowText\(renderer, font, TO_TEXT\.MsgPlayerControlled,/);
 });
