@@ -223,11 +223,23 @@ try {
       hands: [c.hands.width, c.hands.height],
       bg: getComputedStyle(c.root).backgroundColor, cursor: getComputedStyle(c.stage).cursor,
       PAPER: globalThis.__law.held.PAPER,
+      HEIGHT: globalThis.__law.held.HELD_MAP_HEIGHT, BITE: globalThis.__law.held.HELD_MAP_BITE,
+      FOOT: globalThis.__law.held.SPRITE_ART_FOOT, SPRITE: globalThis.__law.held.SPRITE,
     };
   });
-  check('root mounted with the map id, opaque black', geo.rootId === 'enhanced-travelmap' && geo.bg === 'rgb(0, 0, 0)', geo.bg);
-  const sw = Math.min(1280, 800 * 1448 / 1086);
-  check('stage is the sprite\'s 4:3 letterboxed into the viewport', Math.abs(geo.stage[2] - sw) < 1 && Math.abs(geo.stage[3] - 800) < 1 && Math.abs(geo.stage[0] - (1280 - sw) / 2) < 1, JSON.stringify(geo.stage));
+// MAP-FIELD2 RETIRED THE LETTERBOX, and these two checks had gone stale
+// with it - they still described the poster the sheet used to be, and
+// had been failing quietly ever since. The sheet is HELD now: the root
+// is CLEAR, because the world stands behind a thing in the player's
+// hands, and the stage is bottom-anchored on the PAINTING's foot rather
+// than centred in the viewport.
+  check('root mounted with the map id, and CLEAR - the world stands behind a held thing', geo.rootId === 'enhanced-travelmap' && /rgba\(0, 0, 0, 0\)|transparent/.test(geo.bg), geo.bg);
+  let wantH = 800 * geo.HEIGHT / geo.FOOT, wantW = wantH * geo.SPRITE.w / geo.SPRITE.h;
+  if (wantW > 1280) { wantW = 1280; wantH = wantW * geo.SPRITE.h / geo.SPRITE.w; }
+  const wantY = 800 - (geo.FOOT - geo.BITE) * wantH;
+  check('stage is the sprite anchored on the PAINTING\'s foot, centred across', Math.abs(geo.stage[2] - wantW) < 1 && Math.abs(geo.stage[3] - wantH) < 1
+    && Math.abs(geo.stage[0] - (1280 - wantW) / 2) < 1 && Math.abs(geo.stage[1] - wantY) < 1, JSON.stringify({ stage: geo.stage, want: [(1280 - wantW) / 2, wantY, wantW, wantH] }));
+  check('...and the painting\'s foot goes PAST the bottom edge, so no gap is left under the arms', geo.stage[1] + geo.stage[3] * geo.FOOT > 800, `foot at ${(geo.stage[1] + geo.stage[3] * geo.FOOT).toFixed(1)} of 800`);
   const P = geo.PAPER;
   check('ink canvas lies on PAPER of the stage', Math.abs(geo.ink[0] - (geo.stage[0] + geo.stage[2] * P.x0)) < 1 && Math.abs(geo.ink[2] - geo.stage[2] * (P.x1 - P.x0)) < 1 && Math.abs(geo.ink[3] - geo.stage[3] * (P.y1 - P.y0)) < 1, JSON.stringify(geo.ink));
   check('canvas backing store is the paper at device resolution', Math.abs(geo.inkPx[0] - geo.ink[2] * geo.dpr) <= 1 && Math.abs(geo.inkPx[1] - geo.ink[3] * geo.dpr) <= 1, JSON.stringify(geo.inkPx));
@@ -238,10 +250,21 @@ try {
   const key = await page.evaluate(() => {
     const c = globalThis.__win._chrome.hands; const ctx = c.getContext('2d');
     const at = (fx, fy) => ctx.getImageData(Math.round(fx * c.width), Math.round(fy * c.height), 1, 1).data[3];
-    // a thumb pixel (left thumb, inside the paper), the paper's centre, the black beside the hand
-    return { thumb: at(0.16, 0.55), paper: at(0.5, 0.45), black: at(0.02, 0.9), thumbZoneRow: Array.from({ length: 10 }, (_, i) => at(0.12 + i * 0.015, 0.6)) };
+    // a thumb pixel (left thumb, on the paper), the paper's centre, and
+    // the clear ground beside the hand. MAP-FIELD4: the sample point is
+    // READ OFF the row below, not guessed - the thumbs moved with the
+    // painting, and the old point (0.16, 0.55) now lands just outside
+    // the left one.
+    return { thumb: at(0.18, 0.6), paper: at(0.5, 0.45), clear: at(0.02, 0.9), thumbZoneRow: Array.from({ length: 10 }, (_, i) => at(0.12 + i * 0.015, 0.6)) };
   });
-  check('the left thumb is keyed back OVER the ink (opaque)', key.thumb === 255, JSON.stringify(key));
+// MAP-FIELD4: OPAQUE, not exactly 255. The copy of Mac's painting this
+// port was given arrived through a lossy re-encode, which left its
+// solid interior at alpha 251-254 instead of 255. That is invisible on
+// screen and above every threshold the module tests, so the pin asks
+// the module's own question - is this pixel THERE - rather than a
+// number the transport happened not to preserve. An original PNG would
+// pass this unchanged.
+  check('the left thumb is keyed back OVER the ink (opaque)', key.thumb > 128, JSON.stringify(key));
   check('the paper\'s centre is clear (outside the thumb zones nothing is drawn)', key.paper === 0, String(key.paper));
 
   // the ink: something is painted, and it is where the model says
@@ -403,7 +426,7 @@ try {
     const corners = globalThis.__arm.paperCorners();
     const xs = corners.map((p) => p[0]), ys = corners.map((p) => p[1]);
     return {
-      sprite: getComputedStyle(c.sprite).display, hands: getComputedStyle(c.hands).display,
+      sheet: getComputedStyle(c.sheet).display, hands: getComputedStyle(c.hands).display,
       rootBg: getComputedStyle(c.root).backgroundColor,
       transform: cs.transform.slice(0, 9), origin: cs.transformOrigin,
       box: [r.left, r.top, r.right, r.bottom].map((v) => Math.round(v)),
@@ -411,7 +434,10 @@ try {
       corners: corners.map((p) => p.map((v) => Math.round(v))),
     };
   });
-  check('the painting and its thumbs are gone and the root is clear', hg.sprite === 'none' && hg.hands === 'none' && /rgba\(0, 0, 0, 0\)|transparent/.test(hg.rootBg), JSON.stringify([hg.sprite, hg.hands, hg.rootBg]));
+// MAP-FIELD2 again: what the stage SHOWS is the canvas, `sheet` - the
+// <img> is only the loader and was never displayed, so asking after its
+// display told us nothing and this check had gone stale with the rest.
+  check('the painting and its thumbs are gone and the root is clear', hg.sheet === 'none' && hg.hands === 'none' && /rgba\(0, 0, 0, 0\)|transparent/.test(hg.rootBg), JSON.stringify([hg.sheet, hg.hands, hg.rootBg]));
   check('the ink is under a matrix3d about its top-left', hg.transform === 'matrix3d(' && hg.origin.startsWith('0px 0px'), JSON.stringify([hg.transform, hg.origin]));
   const near = (a, b) => Math.abs(a - b) <= 2;
   check('the browser lays the canvas exactly on the rig\'s corners (the bounding box, to 2 px)', hg.box.every((v, i) => near(v, hg.want[i])), JSON.stringify({ box: hg.box, want: hg.want }));

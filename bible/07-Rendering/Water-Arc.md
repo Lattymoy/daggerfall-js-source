@@ -587,3 +587,62 @@ a block's own water prop, drawn by the model pass, which the water
 surface never sees because it draws over the terrain grid alone.
 Confirming it needs either ARENA2 data (not in this container) or the
 name of a town where Mac sees it.
+
+## WATER-DRAW1 - THE DRAW AND THE FEET ARE NOT THE SAME QUESTION (2026-09-19)
+
+Mac, with a screenshot: *"It shows some textures not taking the water
+tile. Sometimes water tiles will be on their own as 1 tile. (Might be
+because it registers as ground or some waterbeds are just 1 tile."*
+
+The picture is a town pond. Every tile in it shimmers except one, which
+sits there as a flat blue square with a muddy bed showing through — the
+terrain pass's own tile, with no water drawn over it. The fragment
+shader's first statement says why:
+
+```glsl
+uint corners = waterCorners(data);
+if (corners == 0u) discard;
+```
+
+**Where the zero came from.** The whole-tile half of the corner table is
+`SHALLOW_WHOLE`, and `SHALLOW_WHOLE` is `PlayerMotor.OnShallowWaterTile`
+(:551-563) — a list DFU uses to decide whether the PLAYER'S FEET are in
+shallow water. DFU never drew a water surface at all, so that list was
+never a drawing list. WATER1 made it one, and inherited its omissions
+whole. Record 9 is the omission that shows: it sits inside the
+water-dirt group (5-8 are the marching shapes and the first shallow
+variant), its art is a water tile, and DFU's motor does not name it — so
+the enhanced pass refused to draw it and the terrain's flat tile is what
+you see.
+
+**Two tables now, and the split is the point.** `WATER_MASK_TABLE` is
+unchanged and is the LAW's: what the player swims in
+(`player/exteriorSurface.js`) and what a town's own navigation refuses to
+walk (`world/cityNavigation.js`) are DFU's answers and stay verbatim —
+adding record 9 there would have changed the physics to fix a picture.
+`WATER_DRAW_MASK_TABLE` is the ENHANCED PASS's: the law's table plus
+`SHALLOW_DRAWN`. The pass, the shader's packed uniform, the water lab and
+the grass placer's wet test all take the draw's; the feet and the
+navigation take the law's. A pin holds that `SHALLOW_DRAWN` is the WHOLE
+of the difference between them, so neither can drift into the other.
+
+**Said plainly: this list is read off a screenshot, not off ARENA2**,
+which this container does not have. Record 9 is the one record in 0-55
+that is water art and covered by neither the shore families nor DFU's
+motor list, so it is the one candidate the code can name from here.
+`window.__tileHere()` prints the record under the player, its transform,
+and both answers — the draw's and the feet's — so the next tile that
+looks wrong reports itself as a number instead of a screenshot, and goes
+on that line.
+
+**The second half of the report stands as written and is NOT a bug.**
+"Sometimes water tiles will be on their own as 1 tile" is DFU's own,
+recorded at `world/terrainSurface.js:48-51`: `setLocationTiles` stores a
+town ground tile that encodes as zero as the 0xFF sentinel, `convertTile`
+restores it to record 0, and record 0 IS water — so a town tile that
+happened to encode as zero reads as a one-tile pond to every consumer.
+Mac's own guess ("some waterbeds are just 1 tile") is the right one. The
+port keeps it.
+
+**Pinned** in `test/grasspath.test.js` (2), with `test/water.test.js`
+holding the law's table unmoved.
