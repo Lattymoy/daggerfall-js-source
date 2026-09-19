@@ -23,6 +23,7 @@ import { MISSILE_SPEED, MISSILE_COLLIDER_RADIUS, MISSILE_LIFESPAN_S, playerArrow
 import { CAPSULE_HEIGHT } from '../player/motor.js';   // ROAD-H tail: the standing capsule, the contact's default height   // ROAD-H H1c: GetAimPosition's player arrow arm
 import { trs } from '../world/mat4.js';
 import { SWING_MODS } from './playerWeapon.js';   // CalculateSwingModifiers, read live at the arrow's impact
+import { bloodHit } from './bloodDecals.js';   // BLOOD1b: the blow, in the shape the mark's ladder reads
 import { calculateAttackDamage } from './formulas.js';
 import { bowDamageArrow } from './enemyEquipment.js';   // MAC-N1: the recovered shaft is CreateWeapon's arrow, value and all
 import { backstabChanceOf, enemyPainVoice } from '../scenes/hostCombat.js';
@@ -150,7 +151,7 @@ export class ArrowFlight {
  *
  * WAVE D: four bodies became FOUR CALLERS. dungeonContext.js's
  * `m.fromPlayer` block - the arm this function was extracted FROM -
- * now calls it (dungeonContext.js:2595), so the copy that survived
+ * now calls it (dungeonContext.js:2596), so the copy that survived
  * the extraction is gone. It was not a harmless copy: it still
  * splashed at the arrow tip, the exact bug AUDIT 39r/R16 fixed here.
  * DaggerfallMissile.cs:681-687 routes an arrow into
@@ -220,7 +221,7 @@ export function playerArrowHitFoe(m, foe, {
     : at;
   if (dmg > 0) {
     audio?.play3d?.(hitSoundFor(m.weapon ?? null), at, ENEMY_HIT_VOLUME, { maxDistance: 16 });
-    hitEffects?.showBloodSplash?.(foe.entity?.basics?.bloodIndex ?? 0, bloodAt);
+    hitEffects?.showBloodSplash?.(foe.entity?.basics?.bloodIndex ?? 0, bloodAt, null, bloodHit(dmg, foe.entity));   // BLOOD1b: the arrow's blow drives the ladder
     const pain = enemyPainVoice(foe, dmg, rolls);
     if (pain && pain.clip >= 0) audio?.play3d?.(pain.clip, [at[0], at[1] + 0.9, at[2]], 1, { maxDistance: 16, pitch: 1 + pain.pitchLift });   // AUDIT 58: EnemySounds.cs:172-175
     dealDamage?.(foe, dmg);

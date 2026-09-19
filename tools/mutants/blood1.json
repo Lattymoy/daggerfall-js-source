@@ -164,8 +164,8 @@
   {
     "name": "BLOOD1a-the-surface-is-assumed-instead-of-found",
     "file": "src/combat/bloodMarks.js",
-    "old": "    const d = _pool.place([pos[0], pos[1] - h.dist, pos[2]], h.normal ?? [0, 1, 0], { size: markSize(rate) });",
-    "new": "    const d = _pool.place([pos[0], pos[1], pos[2]], h.normal ?? [0, 1, 0], { size: markSize(rate) });",
+    "old": "      const d = _pool.place([fromX, pos[1] - h.dist, fromZ], h.normal ?? [0, 1, 0], { size: dropSize(i, rate, rng) });",
+    "new": "      const d = _pool.place([fromX, pos[1], fromZ], h.normal ?? [0, 1, 0], { size: dropSize(i, rate, rng) });",
     "tests": [
       "test/blood1_decals.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "BLOOD1a-blood-over-open-air-still-marks",
     "file": "src/combat/bloodMarks.js",
-    "old": "    if (!h || !Number.isFinite(h.dist) || h.dist > MARK_DROP) return null;",
-    "new": "    if (!h) return null;",
+    "old": "      if (!h || !Number.isFinite(h.dist) || h.dist > MARK_DROP) continue;",
+    "new": "      if (!h) continue;",
     "tests": [
       "test/blood1_decals.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "BLOOD1a-the-mark-takes-the-surfaces-normal-from-nowhere",
     "file": "src/combat/bloodMarks.js",
-    "old": "    const d = _pool.place([pos[0], pos[1] - h.dist, pos[2]], h.normal ?? [0, 1, 0], { size: markSize(rate) });",
-    "new": "    const d = _pool.place([pos[0], pos[1] - h.dist, pos[2]], [0, 1, 0], { size: markSize(rate) });",
+    "old": "      const d = _pool.place([fromX, pos[1] - h.dist, fromZ], h.normal ?? [0, 1, 0], { size: dropSize(i, rate, rng) });",
+    "new": "      const d = _pool.place([fromX, pos[1] - h.dist, fromZ], [0, 1, 0], { size: dropSize(i, rate, rng) });",
     "tests": [
       "test/blood1_decals.test.js"
     ]
@@ -286,6 +286,159 @@
     "tests": [
       "test/blood1_decals.test.js",
       "test/hard1_ownership.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-a-splash-site-forgets-its-blow",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "          bloodCentre(foe.ai.feet, foe.ai.height), null, bloodHit(damage, foe.entity));   // BLOOD1b: the blow drives the ladder",
+    "new": "          bloodCentre(foe.ai.feet, foe.ai.height));",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-the-civilian-site-forgets-its-blow",
+    "file": "src/scenes/cityGuards.js",
+    "old": "        null, LETHAL_HIT);   // BLOOD1b: one hit kills a civilian, so the blow took ALL of them - the hundred rung, not an overkill",
+    "new": "        );",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-the-hit-shape-lets-a-NaN-through",
+    "file": "src/combat/bloodDecals.js",
+    "old": "  damage: Number.isFinite(damage) ? damage : 0,\n  maxHealth: Number.isFinite(entity?.maxHealth) ? entity.maxHealth : 0,",
+    "new": "  damage: damage ?? 0,\n  maxHealth: entity?.maxHealth ?? 0,",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-a-murdered-civilian-is-an-overkill",
+    "file": "src/combat/bloodDecals.js",
+    "old": "export const LETHAL_HIT = Object.freeze({ damage: 1, maxHealth: 1 });",
+    "new": "export const LETHAL_HIT = Object.freeze({ damage: 2, maxHealth: 1 });",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-the-spray-has-no-floor-of-one",
+    "file": "src/combat/bloodDecals.js",
+    "old": "  return Math.max(1, Math.min(SPRAY_MAX, Math.round(rate * SPRAY_SHARE)));",
+    "new": "  return Math.min(SPRAY_MAX, Math.round(rate * SPRAY_SHARE));",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-the-spray-has-no-ceiling",
+    "file": "src/combat/bloodDecals.js",
+    "old": "  return Math.max(1, Math.min(SPRAY_MAX, Math.round(rate * SPRAY_SHARE)));",
+    "new": "  return Math.max(1, Math.round(rate * SPRAY_SHARE));",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-the-reach-does-not-grow-with-the-blow",
+    "file": "src/combat/bloodDecals.js",
+    "old": "  return SPRAY_RADIUS_MIN + (SPRAY_RADIUS_MAX - SPRAY_RADIUS_MIN) * t;",
+    "new": "  return SPRAY_RADIUS_MIN;",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-drop-zero-is-thrown-clear-of-the-body",
+    "file": "src/combat/bloodDecals.js",
+    "old": "  if (!(i > 0)) return [0, 0];",
+    "new": "  if (i < 0) return [0, 0];",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-the-drops-are-laid-by-radius-and-the-middle-fills-in",
+    "file": "src/combat/bloodDecals.js",
+    "old": "  const r = (radius > 0 ? radius : 0) * Math.sqrt(Math.min(1, (i + rng()) / n));",
+    "new": "  const r = (radius > 0 ? radius : 0) * Math.min(1, (i + rng()) / n);",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-the-drops-take-a-random-angle-and-clump",
+    "file": "src/combat/bloodDecals.js",
+    "old": "  const turn = (i / n) * Math.PI * 2 + (rng() - 0.5) * SPRAY_WOBBLE;",
+    "new": "  const turn = rng() * Math.PI * 2;",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-every-drop-is-the-pool-s-own-size",
+    "file": "src/combat/bloodDecals.js",
+    "old": "  const base = markSize(rate) * (i > 0 ? SPATTER_SCALE : 1);",
+    "new": "  const base = markSize(rate);",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-the-drop-sizes-are-not-jittered",
+    "file": "src/combat/bloodDecals.js",
+    "old": "  return Math.max(0, base * (1 + (rng() - 0.5) * 2 * SIZE_JITTER));",
+    "new": "  return Math.max(0, base);",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-a-jitter-can-drive-a-drop-negative",
+    "file": "src/combat/bloodDecals.js",
+    "old": "  return Math.max(0, base * (1 + (rng() - 0.5) * 2 * SIZE_JITTER));",
+    "new": "  return base * (1 + (rng() - 0.5) * 6 * SIZE_JITTER);",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-the-whole-spray-takes-ONE-ray",
+    "file": "src/combat/bloodMarks.js",
+    "old": "      const h = col.raycastHit([fromX, pos[1], fromZ], DOWN, MARK_DROP);",
+    "new": "      const h = col.raycastHit([pos[0], pos[1], pos[2]], DOWN, MARK_DROP);",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-the-drop-is-laid-where-the-body-is-not-where-the-ray-went",
+    "file": "src/combat/bloodMarks.js",
+    "old": "      const d = _pool.place([fromX, pos[1] - h.dist, fromZ], h.normal ?? [0, 1, 0], { size: dropSize(i, rate, rng) });",
+    "new": "      const d = _pool.place([pos[0], pos[1] - h.dist, pos[2]], h.normal ?? [0, 1, 0], { size: dropSize(i, rate, rng) });",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-the-rate-sizes-one-mark-again-instead-of-counting-them",
+    "file": "src/combat/bloodMarks.js",
+    "old": "    const n = sprayCount(rate);",
+    "new": "    const n = 1;",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-the-ring-and-the-spray-roll-different-dice",
+    "file": "src/combat/bloodMarks.js",
+    "old": "    _pool = createBloodDecalPool({ capacity: cap, rng });",
+    "new": "    _pool = createBloodDecalPool({ capacity: cap });",
+    "tests": [
+      "test/blood1_decals.test.js"
     ]
   }
 ]

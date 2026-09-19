@@ -23,7 +23,10 @@
 // hosts, and the event either way is "blood happened here" - but as a
 // collaborator the pool is handed, not a thing it owns.
 
-import { createBloodDecalPool, writeDecalQuad, clearDecalQuad, bloodRate, markSize, marksBlood, DECAL_FLOATS } from './bloodDecals.js';
+import {
+  createBloodDecalPool, writeDecalQuad, clearDecalQuad, bloodRate, marksBlood, DECAL_FLOATS,
+  sprayCount, sprayRadius, sprayOffset, dropSize,   // BLOOD1b: the scatter BLOOD1a left to this slice
+} from './bloodDecals.js';
 
 /** How far down a mark looks for something to stain. Blood spawns at
  *  chest height (`bloodCentre` is five eighths up the capsule), so the
@@ -31,8 +34,12 @@ import { createBloodDecalPool, writeDecalQuad, clearDecalQuad, bloodRate, markSi
  *  the blood is over open air and leaves nothing. */
 export const MARK_DROP = 3;
 
+/** Straight down, once. BLOOD1b casts up to SPRAY_MAX rays for one
+ *  blow, and the collider reads this direction and never writes it. */
+const DOWN = Object.freeze([0, -1, 0]);
+
 /**
- * @param {{renderer?:any, collider?:(() => any)|null, settings?:any, texture?:(() => any)|null}} [deps]
+ * @param {{renderer?:any, collider?:(() => any)|null, settings?:any, texture?:(() => any)|null, rng?:(() => number)}} [deps]
  *
  * `collider` IS A GETTER, not a collider. Every host rebuilds its own -
  * a mode change swaps it, the streaming world swaps it again on every
@@ -40,7 +47,7 @@ export const MARK_DROP = 3;
  * reference would be marking a world that no longer exists within one
  * doorway.
  */
-export function createBloodMarks({ renderer = null, collider = null, settings = null, texture = null } = {}) {
+export function createBloodMarks({ renderer = null, collider = null, settings = null, texture = null, rng = Math.random } = {}) {
   let _pool = null;
   let _batch = null;
   let _texKey = null;
@@ -53,7 +60,11 @@ export function createBloodMarks({ renderer = null, collider = null, settings = 
   function ensure() {
     if (_pool && _batch) return;
     const cap = Math.max(1, Math.floor(settings?.capacity?.() ?? 1000));
-    _pool = createBloodDecalPool({ capacity: cap });
+    // ONE SOURCE OF CHANCE for the whole pool: the ring spins each
+    // mark's own turn and the spray below picks where the drops land,
+    // and a test that wants either held still should not have to find
+    // two seams to hold.
+    _pool = createBloodDecalPool({ capacity: cap, rng });
     _batch = renderer.createDecalBatch(cap);
   }
 
@@ -67,10 +78,22 @@ export function createBloodMarks({ renderer = null, collider = null, settings = 
   }
 
   /**
-   * Lay a mark under a splash. THE SURFACE IS FOUND, NOT ASSUMED: blood
-   * spawns at chest height, which is nowhere near anything to stain, so
-   * the ray goes DOWN. Nothing within reach - a body over a chasm, a
-   * foe on a bridge - leaves no mark rather than one hanging in space.
+   * Lay the marks one blood event leaves. THE SURFACE IS FOUND, NOT
+   * ASSUMED: blood spawns at chest height, which is nowhere near
+   * anything to stain, so every ray goes DOWN. Nothing within reach -
+   * a body over a chasm, a foe on a bridge - leaves no mark rather
+   * than one hanging in space, and that is judged PER DROP: spatter
+   * thrown past the edge of a walkway falls into the dark while the
+   * pool under the body still lands.
+   *
+   * BLOOD1b: THE RATE IS A COUNT AGAIN. BLOOD1a had it size a single
+   * mark, because the scatter belonged to this slice and inventing a
+   * decals-per-hit law there would have been inventing one to
+   * un-invent here. Now the ladder says how many drops reach the
+   * floor and how far they carry, and the size band sizes each.
+   *
+   * Answers the POOL - drop zero, the body's own spot - or null when
+   * nothing landed at all.
    */
   function place(bloodIndex, pos, hit = null) {
     if (!on() || !pos) return null;
@@ -80,15 +103,23 @@ export function createBloodMarks({ renderer = null, collider = null, settings = 
     if (!marksBlood(bloodIndex)) return null;
     const col = liveCollider();
     if (!col?.raycastHit) return null;   // between two worlds: a pixel unloaded, a mode half changed
-    const h = col.raycastHit(pos, [0, -1, 0], MARK_DROP);
-    if (!h || !Number.isFinite(h.dist) || h.dist > MARK_DROP) return null;
-    ensure();
     const rate = bloodRate(hit?.damage ?? 0, hit?.maxHealth ?? 0, settings?.density?.() ?? 1);
-    const d = _pool.place([pos[0], pos[1] - h.dist, pos[2]], h.normal ?? [0, 1, 0], { size: markSize(rate) });
-    if (!d) return null;
-    writeDecalQuad(_scratch, 0, d);
-    renderer.writeDecalSlot(_batch, d.slot, _scratch);   // ONE slot, at its own offset
-    return d;
+    const n = sprayCount(rate);
+    const radius = sprayRadius(rate);
+    let pool = null;
+    for (let i = 0; i < n; i++) {
+      const [dx, dz] = sprayOffset(i, n, radius, rng);
+      const fromX = pos[0] + dx, fromZ = pos[2] + dz;
+      const h = col.raycastHit([fromX, pos[1], fromZ], DOWN, MARK_DROP);
+      if (!h || !Number.isFinite(h.dist) || h.dist > MARK_DROP) continue;
+      ensure();
+      const d = _pool.place([fromX, pos[1] - h.dist, fromZ], h.normal ?? [0, 1, 0], { size: dropSize(i, rate, rng) });
+      if (!d) continue;
+      writeDecalQuad(_scratch, 0, d);
+      renderer.writeDecalSlot(_batch, d.slot, _scratch);   // ONE slot, at its own offset
+      if (i === 0) pool = d;
+    }
+    return pool;
   }
 
   /** The ring is in WORLD space, which in the streaming host is the

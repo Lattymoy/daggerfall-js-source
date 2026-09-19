@@ -106,6 +106,88 @@ export function markSize(rate) {
   return MARK_SIZE_MIN + (MARK_SIZE_MAX - MARK_SIZE_MIN) * t;
 }
 
+/**
+ * BLOOD1b - THE SPRAY: how many marks one blood event leaves.
+ *
+ * BLOOD1a laid ONE mark per event and said in as many words that the
+ * scatter was this slice's: "the reference's rate is a PARTICLE count
+ * and each particle that lands prints its own mark, so the scatter is
+ * the particles' to bring in BLOOD1b."
+ *
+ * This port flies no particles, and building a particle system to
+ * decide how many marks to draw would be paying for a simulation to
+ * answer a question that has a number in it. So the rate is read as
+ * what it is - how much blood left the body - and the share of it that
+ * reaches a surface is the PORT'S OWN number, said to be: most of a
+ * spray goes onto the body itself, into the air, and onto walls out of
+ * the ray's reach.
+ */
+export const SPRAY_SHARE = 0.12;
+/** ...and never more rays than this in one event, whatever the ladder
+ *  says. Each drop costs a raycast and an overkill is the worst case,
+ *  so the ceiling is decided at the top of this file rather than at
+ *  the bottom of a frame. At the ladder's top rung the share lands
+ *  just under it, which is the point: the cap shapes nothing a real
+ *  hit does, and catches a density setting or a future rung that
+ *  would. */
+export const SPRAY_MAX = 24;
+/** How many marks a rate is worth. Always at least one: BLOOD1a's
+ *  single mark is the FLOOR of this and not a case it replaced. */
+export function sprayCount(rate) {
+  if (!(rate > 0)) return 1;
+  return Math.max(1, Math.min(SPRAY_MAX, Math.round(rate * SPRAY_SHARE)));
+}
+
+/** How far the spatter reaches, off the ladder's own ends - a graze
+ *  spots the floor at the body's feet, a near-lethal blow throws it
+ *  most of two metres. The port's own numbers again. */
+export const SPRAY_RADIUS_MIN = 0.35;
+export const SPRAY_RADIUS_MAX = 1.8;
+export function sprayRadius(rate) {
+  const lo = ladderRate(0), hi = RATE_MAX;                 // the ladder's own ends, never a second copy
+  const t = Math.max(0, Math.min(1, (rate - lo) / (hi - lo)));
+  return SPRAY_RADIUS_MIN + (SPRAY_RADIUS_MAX - SPRAY_RADIUS_MIN) * t;
+}
+
+/** How far a drop's angle may wander off its share of the circle. */
+export const SPRAY_WOBBLE = 0.9;
+
+/**
+ * Where the i-th drop of a spray falls, as a horizontal offset from
+ * the body.
+ *
+ * DROP ZERO IS ALWAYS THE BODY'S OWN SPOT. A hit stains where it
+ * happened whatever else it does, which is what keeps BLOOD1a's single
+ * mark as the floor of this and what a player who turns the density
+ * right down still gets.
+ *
+ * The rest are laid on an EVEN angular turn with a wobble, not on a
+ * random angle: random angles clump, and a clump of spatter reads as
+ * one badly drawn mark rather than as a spray. The radius goes as the
+ * SQUARE ROOT of the drop's share, which spreads them by AREA - a
+ * linear radius piles them into the middle, where the pool already is.
+ */
+export function sprayOffset(i, count, radius, rng = Math.random) {
+  if (!(i > 0)) return [0, 0];
+  const n = Math.max(1, count);
+  const turn = (i / n) * Math.PI * 2 + (rng() - 0.5) * SPRAY_WOBBLE;
+  const r = (radius > 0 ? radius : 0) * Math.sqrt(Math.min(1, (i + rng()) / n));
+  return [Math.cos(turn) * r, Math.sin(turn) * r];
+}
+
+/** A POOL AND ITS SPATTER, not one size of mark repeated. Drop zero is
+ *  the pool under the body at the ladder's own size; everything around
+ *  it is spatter and this is its share. */
+export const SPATTER_SCALE = 0.45;
+/** ...jittered, because a ring of identical marks reads as a stencil
+ *  rather than as blood. (THE FACTS: the reference jitters its decal
+ *  scale too, which is the one part of this the reading settled.) */
+export const SIZE_JITTER = 0.3;
+export function dropSize(i, rate, rng = Math.random) {
+  const base = markSize(rate) * (i > 0 ? SPATTER_SCALE : 1);
+  return Math.max(0, base * (1 + (rng() - 0.5) * 2 * SIZE_JITTER));
+}
+
 /** DFU's `bloodIndex` of 2 is the BLOODLESS six (skeletons and the
  *  like), and `characters/enemyBasics.js` has carried it from DFU
  *  since long before this arc. They bleed nothing, so they mark
@@ -116,6 +198,33 @@ export const marksBlood = (bloodIndex) => (bloodIndex ?? 0) !== BLOODLESS_INDEX;
 
 /** At or past the threshold. */
 export const isOverkill = (damage, maxHealth) => damagePercent(damage, maxHealth) >= OVERKILL_PERCENT;
+
+/**
+ * BLOOD1b - THE HIT A MARK IS MEASURED BY, SPELLED IN ONE PLACE.
+ *
+ * BLOOD1a shipped the ladder and nothing drove it. `showBloodSplash`
+ * took the blow as its fourth argument and not one of the eleven call
+ * sites passed it, so every mark in a real game came out of
+ * `damagePercent(0, 0)` - the bottom rung, the smallest spatter, for a
+ * dagger's graze and for a blow that took three quarters of a giant.
+ * The pins drove the ladder on a table and the hosts never did.
+ *
+ * So the shape is here rather than at eleven sites, and
+ * test/blood1_decals.test.js reads every `showBloodSplash(` in `src/`
+ * and holds that each one hands its blow over. A site that forgets is
+ * the failure this whole seam exists to make impossible.
+ */
+export const bloodHit = (damage, entity) => Object.freeze({
+  damage: Number.isFinite(damage) ? damage : 0,
+  maxHealth: Number.isFinite(entity?.maxHealth) ? entity.maxHealth : 0,
+});
+
+/** A blow that kills whatever it lands on, for the one site with no
+ *  entity to measure against. WeaponManager.cs:504-508's wandering
+ *  civilian dies to ONE weapon hit whatever the weapon was, so the
+ *  share of their health it took is all of it - which the ladder reads
+ *  as its hundred rung, not as an overkill. */
+export const LETHAL_HIT = Object.freeze({ damage: 1, maxHealth: 1 });
 
 /** How far off the surface a mark floats, so it does not fight the
  *  wall it is on. hitEffects.js nudges its splash by the same 2cm for

@@ -309,7 +309,10 @@ test('audit24 wave39: the two DFU call sites deliberately NOT ported, and why', 
   // SetupDemoEnemy.cs:98-115 moves only controller.center). This pin
   // used to hold the bare-feet literal in place.
   for (const f of ['src/scenes/exteriorFoes.js', 'src/scenes/dungeonContext.js']) {
-    assert.match(rd(f), /hitEffects\?\.showBloodSplash\(0, f\.ai\._centre\(\)\);/, `${f}: fall damage bleeds at index 0, at the transform`);
+    // BLOOD1b carried the BLOW in beside it - a fall bleeds by what it
+    // cost, like any other blow - and what this pin holds is unchanged:
+    // record 0, at the transform.
+    assert.match(rd(f), /hitEffects\?\.showBloodSplash\(0, f\.ai\._centre\(\), null, bloodHit\(\w+, f\.entity\)\);/, `${f}: fall damage bleeds at index 0, at the transform, carrying its blow`);
     assert.doesNotMatch(rd(f), /showBloodSplash\(0, \[f\.ai\.feet\[0\], f\.ai\.feet\[1\], f\.ai\.feet\[2\]\]\)/, `${f}: not at the feet`);
     assert.match(rd(f), /SOUND\.FallDamage, \[f\.ai\.feet\[0\], f\.ai\.feet\[1\], f\.ai\.feet\[2\]\]/, `${f}: the FallDamage clip stays at FindGroundPosition() (EnemyMotor.cs:1409)`);
   }

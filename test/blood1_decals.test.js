@@ -11,12 +11,13 @@
 // not anybody's expression - and the port's own maths around them.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync, statSync } from 'node:fs';
 
 import {
   createBloodDecalPool, bloodRate, ladderRate, scaleRate, damagePercent, isOverkill,
   surfaceBasis, writeDecalQuad, clearDecalQuad, decalIndices,
   DECAL_FLOATS, DECAL_FLOATS_PER_VERTEX, RATE_LADDER, RATE_NEAR_LETHAL, RATE_MAX, OVERKILL_PERCENT, OVERKILL_BURST, OVERKILL_UNDER, SURFACE_LIFT,
+  bloodHit, LETHAL_HIT, sprayCount, sprayRadius, sprayOffset, dropSize, SPRAY_SHARE, SPRAY_MAX, SPATTER_SCALE, SIZE_JITTER, SPRAY_WOBBLE, SPRAY_RADIUS_MIN, SPRAY_RADIUS_MAX,   // BLOOD1b
 } from '../src/combat/bloodDecals.js';
 
 const dot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
@@ -311,11 +312,16 @@ function rigHitEffects(over = {}) {
     collider: () => ({ raycastHit: () => ({ dist: 1.5, normal: [0, 1, 0], key: 'floor' }) }),
     settings: { enabled: () => true, capacity: () => 4, density: () => 1 },
     texture: () => 'blood-tex',
+    // BLOOD1b: THE CHANCE HELD STILL. The spray wobbles each drop's
+    // angle and jitters each drop's size, both off this one seam; a
+    // half means no wobble and no jitter, so a pin can name the size
+    // the band asked for rather than a window around it.
+    rng: () => 0.5,
     ...over,
   };
   // HARD1: the ring is its OWN binding, HANDED to the splash pool -
   // which is a hand-off and so must never own GL.
-  const marks = createBloodMarks({ renderer: o.renderer ?? renderer, collider: o.collider, settings: o.settings, texture: o.texture });
+  const marks = createBloodMarks({ renderer: o.renderer ?? renderer, collider: o.collider, settings: o.settings, texture: o.texture, rng: o.rng });
   const fx = createHitEffects({
     renderer,
     getTexture: () => new Promise(() => {}),   // the splash half never warms here
@@ -326,31 +332,50 @@ function rigHitEffects(over = {}) {
 }
 
 test('BLOOD1a: the mark rides the splash’s own call, finds its surface, and a bloodless foe stains nothing', () => {
-  const { fx, marks, wrote } = rigHitEffects();
+  // a ring wide enough to hold a whole spray, so this pin reads what
+  // the LADDER asked for rather than what the ring had room for; the
+  // recycling pin below keeps the narrow one on purpose
+  const wide = { enabled: () => true, capacity: () => 64, density: () => 1 };
+  const { fx, marks, wrote } = rigHitEffects({ settings: wide });
 
-  // the splash's eight call sites across four hosts are the events
+  // the splash's eleven call sites across five files are the events
   // where blood happens - the mark comes off the same call rather than
-  // a ninth seam nobody would remember to feed
+  // a twelfth seam nobody would remember to feed
   fx.showBloodSplash(0, [10, 5, 10], null, { damage: 10, maxHealth: 40 });
-  assert.equal(marks.count(), 1);
-  assert.equal(wrote.length, 1, 'one slot written, at its own offset');
+  // BLOOD1b: ONE EVENT IS A SPRAY NOW. 25% of max health is the bottom
+  // rung, and the bottom rung's share of the floor is four drops.
+  assert.equal(marks.count(), sprayCount(30));
+  assert.equal(wrote.length, sprayCount(30), 'a slot written for each, each at its own offset');
 
   // THE SURFACE IS FOUND, NOT ASSUMED. Blood spawns at chest height, so
   // the mark is where the ray DOWN landed - 1.5 below, plus the 2cm lift.
+  // DROP ZERO IS THE BODY'S OWN SPOT, with no offset at all: a hit
+  // stains where it happened whatever else the spray does, which is
+  // what keeps BLOOD1a's single mark as the FLOOR of this.
   const d = marks._pool().decals()[0];
   assert.deepEqual(d.pos, [10, 5 - 1.5 + 0.02, 10]);
-  // ...and the rate sized it: 25% of max health is the bottom rung
-  assert.ok(Math.abs(d.size - markSize(30)) < 1e-9, 'a glancing blow leaves the small spatter');
+  // ...and the rate sized it: the pool at the band's own size
+  assert.ok(Math.abs(d.size - markSize(30)) < 1e-9, 'a glancing blow leaves the small pool');
+  // ...while everything around it is SPATTER, smaller and off-centre
+  for (const sp of marks._pool().decals().slice(1)) {
+    assert.ok(Math.abs(sp.size - markSize(30) * SPATTER_SCALE) < 1e-9, 'spatter is a share of the pool');
+    assert.ok(Math.hypot(sp.pos[0] - 10, sp.pos[2] - 10) > 0, 'and it landed somewhere else');
+    assert.ok(Math.hypot(sp.pos[0] - 10, sp.pos[2] - 10) <= sprayRadius(30) + 1e-9, 'inside the band’s reach');
+  }
 
-  // a near-lethal hit leaves the big one
+  // a near-lethal hit throws more of it, and further
   // 50 of 40 is 125% - PAST the hundred rung and short of the overkill
   // line, which is the 150 band. The first cut of this pin used 39 of
   // 40 and called it near-lethal; 97.5% is the SEVENTY rung. The ladder
   // is not intuition.
-  fx.showBloodSplash(0, [0, 5, 0], null, { damage: 50, maxHealth: 40 });
-  const big = marks._pool().decals().at(-1);
-  assert.ok(big.size > d.size, 'more damage, more blood');
+  const { fx: hard, marks: hardMarks } = rigHitEffects({ settings: wide });
+  hard.showBloodSplash(0, [0, 5, 0], null, { damage: 50, maxHealth: 40 });
+  const big = hardMarks._pool().decals()[0];
+  assert.equal(hardMarks.count(), sprayCount(150));
+  assert.ok(hardMarks.count() > marks.count(), 'more damage, more blood');
+  assert.ok(big.size > d.size, 'and a bigger pool under it');
   assert.ok(Math.abs(big.size - markSize(150)) < 1e-9, `125% is the 150 band (got ${big.size})`);
+  assert.ok(sprayRadius(150) > sprayRadius(30), 'and it carries further');
 
   // THE SURFACE'S OWN NORMAL, not world up. A dungeon is stairs and
   // ramps: blood on a slope lies ALONG the slope, and a mark that took
@@ -413,9 +438,16 @@ test('BLOOD1a: blood over open air leaves no mark, and a host that wires none of
 
 test('BLOOD1a: the ring recycles under the mark, the draw needs a texture, and a mode change blanks the buffer', () => {
   const { fx, marks, wrote, drew } = rigHitEffects();
+  // BLOOD1b: an event is a SPRAY, so a ring of four is spent by the
+  // first blow and everything after it is recycling - which is what
+  // the ring is for, and what "a count and not a lifetime" means once
+  // the count is small enough to see.
+  const per = sprayCount(30);
   for (let i = 0; i < 6; i++) fx.showBloodSplash(0, [i, 5, 0], null, { damage: 10, maxHealth: 40 });
   assert.equal(marks.count(), 4, 'the ring is four and stays four');
-  assert.deepEqual(wrote.map((w) => w.slot), [0, 1, 2, 3, 0, 1], 'and the oldest slot is the one rewritten');
+  assert.equal(wrote.length, 6 * per, 'a slot written for every drop of every spray');
+  assert.deepEqual(wrote.map((w) => w.slot), Array.from({ length: 6 * per }, (_, k) => k % 4),
+    'and the oldest slot is always the one rewritten');
 
   // the draw is one call, and it needs art: no texture, no pass
   assert.equal(marks.draw(), true);
@@ -476,7 +508,7 @@ test('BLOOD1a: the collider is a GETTER, and the mark survives the world being s
   let live = { raycastHit: () => ({ dist: 1, normal: [0, 1, 0] }) };
   const { fx, marks } = rigHitEffects({ collider: () => live });
   fx.showBloodSplash(0, [0, 5, 0], null, { damage: 10, maxHealth: 40 });
-  assert.equal(marks.count(), 1);
+  assert.equal(marks.count(), sprayCount(30));
 
   // the world is swapped: the NEW collider is the one asked
   live = { raycastHit: () => ({ dist: 2, normal: [0, 1, 0] }) };
@@ -606,4 +638,193 @@ test('BLOOD1a: the feature row owns the key and the default, and online it is th
   } finally {
     for (const k of restore) setPref(k, undefined);
   }
+});
+
+// ---------------------------------------------------------------- BLOOD1b
+
+test('BLOOD1b: EVERY splash site hands its blow over, so the rate ladder actually runs', () => {
+  const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
+
+  // BLOOD1a shipped the ladder and nothing drove it. `showBloodSplash`
+  // took the blow as its fourth argument and NOT ONE of the eleven call
+  // sites passed it, so every mark in a real game came out of
+  // damagePercent(0, 0) - the bottom rung, the smallest spatter, for a
+  // dagger's graze and for a blow that took three quarters of a giant.
+  // The pins above drove the ladder on a table and the hosts never did.
+  //
+  // This is the pin that makes forgetting impossible: it reads every
+  // call in `src/` and holds that each one carries a blow. A twelfth
+  // site written next year fails here on the day it is written.
+  const files = [];
+  (function walk(dir) {
+    for (const name of readdirSync(dir)) {
+      const p = `${dir}/${name}`;
+      if (statSync(new URL(`../${p}`, import.meta.url)).isDirectory()) walk(p);
+      else if (name.endsWith('.js')) files.push(p);
+    }
+  })('src');
+
+  /** The argument list of a call, by balanced parens. */
+  const argsAt = (s, i) => {
+    let depth = 0;
+    for (let j = i; j < s.length; j++) {
+      if (s[j] === '(') depth++;
+      else if (s[j] === ')') { depth--; if (!depth) return s.slice(i + 1, j); }
+    }
+    return null;
+  };
+
+  const sites = [];
+  for (const f of files) {
+    if (f === 'src/scenes/hitEffects.js') continue;   // the definition, not a call
+    // COMMENTS OUT FIRST, for the same reason the no-GL pin above
+    // strips them: the law is about the CALLS, and this arc's own
+    // prose has to be able to name the seam it is talking about.
+    const s = read(f).replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+    for (const m of s.matchAll(/showBloodSplash\??\.?\(/g)) {
+      const args = argsAt(s, m.index + m[0].length - 1);
+      assert.ok(args != null, `${f}: unbalanced showBloodSplash call`);
+      sites.push([f, args]);
+    }
+  }
+  // the count is pinned too: a site DELETED is as much a drift as one
+  // added, and both should be read by a person rather than pass quietly
+  assert.equal(sites.length, 11, `eleven splash sites across five files (found ${sites.length})`);
+  for (const [f, args] of sites) {
+    assert.ok(/bloodHit\(|LETHAL_HIT/.test(args),
+      `${f}: a splash site that hands over no blow - the ladder would read it as a graze`);
+  }
+
+  // THE SHAPE IS SPELLED ONCE. Eleven sites each building their own
+  // object literal is the FOUR HOSTS RULE's hazard with five more
+  // hosts; `bloodHit` is the one home and takes the ENTITY, because
+  // what a site has to hand is the body it just hurt, not a field of it.
+  assert.deepEqual(bloodHit(12, { maxHealth: 40 }), { damage: 12, maxHealth: 40 });
+  assert.deepEqual(bloodHit(undefined, undefined), { damage: 0, maxHealth: 0 }, 'nothing known is a graze, never a NaN');
+  assert.deepEqual(bloodHit(NaN, { maxHealth: NaN }), { damage: 0, maxHealth: 0 });
+  assert.ok(Object.isFrozen(bloodHit(1, { maxHealth: 2 })), 'and it is read, never edited downstream');
+
+  // A CIVILIAN DIES TO ONE HIT whatever the weapon was
+  // (WeaponManager.cs:504-508), and has no entity to measure against -
+  // so the blow took ALL of them. That is the HUNDRED rung, not an
+  // overkill: a murder is not a gibbing.
+  assert.deepEqual(LETHAL_HIT, { damage: 1, maxHealth: 1 });
+  assert.equal(damagePercent(LETHAL_HIT.damage, LETHAL_HIT.maxHealth), 100);
+  assert.equal(ladderRate(100), 70);
+  assert.equal(isOverkill(LETHAL_HIT.damage, LETHAL_HIT.maxHealth), false);
+});
+
+test('BLOOD1b: one blood event is a SPRAY, laid by area, and each drop finds its own surface', () => {
+  // THE RATE IS A PARTICLE COUNT AND THIS PORT FLIES NO PARTICLES.
+  // BLOOD1a said so and left the scatter here. The share of a spray
+  // that reaches a surface is the port's OWN number: most of it goes
+  // onto the body, into the air and onto walls out of the ray's reach.
+  assert.equal(SPRAY_SHARE, 0.12);
+  assert.deepEqual([30, 50, 70, 150, 200].map(sprayCount), [4, 6, 8, 18, 24]);
+  // ONE IS THE FLOOR, always - BLOOD1a's single mark is the bottom of
+  // this and not a case it replaced. A density turned right down still
+  // stains where the blow landed.
+  assert.equal(sprayCount(0), 1);
+  assert.equal(sprayCount(-5), 1);
+  assert.equal(sprayCount(1), 1);
+  // ...and the CAP is a ceiling decided at the top of the file rather
+  // than at the bottom of a frame: each drop costs a raycast. The top
+  // rung lands just under it, which is the point - the cap shapes
+  // nothing a real hit does and catches a rung that would.
+  assert.equal(SPRAY_MAX, 24);
+  assert.equal(sprayCount(1e6), SPRAY_MAX);
+  assert.ok(sprayCount(RATE_MAX) <= SPRAY_MAX);
+
+  // THE REACH GROWS WITH THE BLOW, off the ladder's own ends
+  assert.ok(Math.abs(sprayRadius(ladderRate(0)) - SPRAY_RADIUS_MIN) < 1e-9);
+  assert.ok(Math.abs(sprayRadius(RATE_MAX) - SPRAY_RADIUS_MAX) < 1e-9);
+  assert.ok(sprayRadius(150) > sprayRadius(70) && sprayRadius(70) > sprayRadius(30));
+  // ...and it reads the ends rather than keeping a second copy of them
+  const src = readFileSync(new URL('../src/combat/bloodDecals.js', import.meta.url), 'utf8');
+  const fn = src.slice(src.indexOf('export function sprayRadius('), src.indexOf('export const SPRAY_WOBBLE'));
+  assert.match(fn, /const lo = ladderRate\(0\), hi = RATE_MAX;/);
+  assert.doesNotMatch(fn.replace(/\/\/.*$/gm, ''), /\b(30|200)\b/, 'no second copy of the ladder’s ends');
+
+  // DROP ZERO IS THE BODY'S OWN SPOT. Whatever else a spray does, the
+  // hit stains where it happened.
+  assert.deepEqual(sprayOffset(0, 8, 2, () => 0.5), [0, 0]);
+  assert.deepEqual(sprayOffset(-1, 8, 2, () => 0.5), [0, 0]);
+
+  // THE REST ARE LAID BY AREA, NOT BY RADIUS. sqrt() on the share is
+  // what keeps the middle from filling in: a linear radius piles the
+  // drops where the pool already is. Held still (rng 0.5), drop k sits
+  // at radius * sqrt((k + 0.5) / n) - which rises, and rises SLOWER
+  // than k does.
+  const n = 8, R = 2;
+  const rs = Array.from({ length: n }, (_, k) => {
+    const [x, z] = sprayOffset(k, n, R, () => 0.5);
+    return Math.hypot(x, z);
+  });
+  for (let k = 1; k < n; k++) assert.ok(rs[k] > rs[k - 1], 'each drop lands further out than the last');
+  assert.ok(rs.at(-1) <= R + 1e-9, 'and none of them past the reach');
+  assert.ok(Math.abs(rs[1] - R * Math.sqrt(1.5 / n)) < 1e-9, 'by area: sqrt of the share');
+  assert.ok(rs[4] - rs[3] < rs[1] - rs[0], 'so the outer rings crowd and the middle does not fill');
+
+  // AN EVEN ANGULAR TURN, not a random angle: random angles clump, and
+  // a clump of spatter reads as one badly drawn mark. The wobble is
+  // what stops the even turn reading as a stencil.
+  assert.equal(SPRAY_WOBBLE, 0.9);
+  const ang = (k, r) => { const [x, z] = sprayOffset(k, n, R, r); return Math.atan2(z, x); };
+  assert.ok(Math.abs(ang(2, () => 0.5) - ang(1, () => 0.5) - (Math.PI * 2) / n) < 1e-9, 'an even share of the circle');
+  assert.ok(Math.abs(ang(1, () => 1) - ang(1, () => 0)) - SPRAY_WOBBLE < 1e-9, 'and the wobble is the whole of the wander');
+
+  // A POOL AND ITS SPATTER, not one size repeated
+  assert.equal(SPATTER_SCALE, 0.45);
+  assert.equal(SIZE_JITTER, 0.3);
+  assert.equal(dropSize(0, 150, () => 0.5), markSize(150));
+  assert.equal(dropSize(3, 150, () => 0.5), markSize(150) * SPATTER_SCALE);
+  // ...jittered either way, because a ring of identical marks reads as
+  // a stencil rather than as blood
+  assert.ok(Math.abs(dropSize(3, 150, () => 1) - markSize(150) * SPATTER_SCALE * (1 + SIZE_JITTER)) < 1e-12);
+  assert.ok(Math.abs(dropSize(3, 150, () => 0) - markSize(150) * SPATTER_SCALE * (1 - SIZE_JITTER)) < 1e-12);
+  assert.ok(dropSize(3, 150, () => 0) >= 0, 'and never negative, whatever the jitter');
+});
+
+test('BLOOD1b: a drop over open air falls past it while the pool under the body still lands', () => {
+  // THE REACH IS JUDGED PER DROP. A foe fought on the edge of a
+  // walkway throws spatter into the dark on one side and onto the
+  // stone on the other; a spray that took one ray for the lot would
+  // either hang the far drops in space or drop the near ones with them.
+  const reach = [];
+  const { fx, marks } = rigHitEffects({
+    settings: { enabled: () => true, capacity: () => 64, density: () => 1 },
+    // the floor stops at x = 0: everything thrown to the left is over
+    // the edge (the stub answers a miss), everything to the right lands
+    collider: () => ({
+      raycastHit: (from) => { reach.push(from[0]); return from[0] >= 0 ? { dist: 1, normal: [0, 1, 0] } : { dist: Infinity, normal: null }; },
+    }),
+  });
+  fx.showBloodSplash(0, [0, 5, 0], null, { damage: 50, maxHealth: 40 });   // 125%: the 150 band, eighteen drops
+  assert.equal(reach.length, sprayCount(150), 'a ray for every drop the ladder asked for');
+  const landed = marks._pool().decals();
+  assert.ok(landed.length > 0 && landed.length < reach.length, 'some landed, some fell past the edge');
+  assert.equal(landed.length, reach.filter((x) => x >= 0).length, 'exactly the ones over stone');
+  for (const d of landed) assert.ok(d.pos[0] >= 0, 'and nothing hangs over the drop');
+  // the POOL is drop zero and its ray went straight down from the body
+  assert.equal(reach[0], 0);
+});
+
+test('BLOOD1b: the ring and the spray roll ONE set of dice', () => {
+  // The ring spins every mark's own turn inside its surface, and the
+  // spray picks where each drop lands and how big it is. Both are
+  // chance, and a pool that let them come from two places would be one
+  // a test could hold still only halfway - so `createBloodMarks` takes
+  // the rng and hands it DOWN to the ring rather than letting the ring
+  // reach for Math.random of its own.
+  const { fx, marks } = rigHitEffects({ rng: () => 0.25 });
+  fx.showBloodSplash(0, [0, 5, 0], null, { damage: 10, maxHealth: 40 });
+  const d = marks._pool().decals()[0];
+  const want = surfaceBasis([0, 1, 0], 0.25 * Math.PI * 2);
+  assert.ok(Math.abs(dot(d.right, want.right) - 1) < 1e-12, 'the mark’s turn came from the rng handed in');
+  assert.ok(Math.abs(dot(d.up, want.up) - 1) < 1e-12);
+  // ...and a different roll is a different turn, so the pin above is
+  // reading the dice and not a constant
+  const { fx: other, marks: otherMarks } = rigHitEffects({ rng: () => 0.75 });
+  other.showBloodSplash(0, [0, 5, 0], null, { damage: 10, maxHealth: 40 });
+  assert.ok(dot(otherMarks._pool().decals()[0].right, d.right) < 0.99, 'a different roll turns it elsewhere');
 });

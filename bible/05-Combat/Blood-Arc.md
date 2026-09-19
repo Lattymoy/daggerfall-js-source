@@ -137,7 +137,7 @@ Slices, each behind its own `features.js` row:
 
 1. **BLOOD1a - the decal pool.** SHIPPED (`src/combat/bloodDecals.js`,
    `src/combat/bloodMarks.js`, `src/combat/bloodSwitch.js`,
-   `test/blood1_decals.test.js`, `tools/mutants/blood1.json` 31/31 dead).
+   `test/blood1_decals.test.js`, `tools/mutants/blood1.json` 32/32 dead).
    A fixed ring of oriented quads laid on the surface a hit or a
    particle met, recycled oldest-first, offset with the floating
    origin, cleared on a mode change; the rate ladder drives the count.
@@ -225,8 +225,58 @@ Slices, each behind its own `features.js` row:
    name. And the interior host's pool was never named in `tryExit()` or
    `forceExitToExterior()`, so blood laid in a building would have
    followed the player into the street.
-2. **BLOOD1b - overkill and gibs.** The 175% rung, the burst, the
-   corpse swap.
+2. **BLOOD1b - the blow, the scatter, then overkill and gibs.**
+   IN PROGRESS. The first two shipped together.
+
+   THE LADDER WAS DEAD. `showBloodSplash` took the blow as its fourth
+   argument and not one of the eleven call sites passed it, so every
+   mark in a real game came out of `damagePercent(0, 0)`: the bottom
+   rung, the smallest spatter, for a dagger's graze and for a blow that
+   took three quarters of a giant. BLOOD1a's pins drove the ladder on a
+   table and the hosts never did. The blow now rides all eleven, the
+   shape is spelled once (`bloodHit`, which takes the ENTITY because
+   what a site has to hand is the body it just hurt), and the pin reads
+   every call in `src/` and holds that each carries one. The count is
+   pinned too, so a site deleted is as much a drift as one added. The
+   one site with no entity to measure against is WeaponManager.cs's
+   wandering civilian, who dies to ONE hit whatever the weapon: the
+   blow took all of them, which is the hundred rung and NOT an overkill
+   - a murder is not a gibbing.
+
+   THE SCATTER, which BLOOD1a named as this slice's. The reference's
+   rate is a PARTICLE count and this port flies no particles, and
+   building a particle system to decide how many marks to draw would be
+   paying for a simulation to answer a question that has a number in
+   it. So the rate is read as how much blood left the body, and the
+   share of it that reaches a surface is the PORT'S OWN number and says
+   so: 0.12, which is four drops at the bottom rung and twenty-four at
+   the top. The ceiling of twenty-four is a cost decided at the top of
+   the file rather than at the bottom of a frame, because each drop is
+   a raycast; the top rung lands just under it, which is the point.
+   ONE IS STILL THE FLOOR, so BLOOD1a's single mark is the bottom of
+   this rather than a case it replaced.
+
+   DROP ZERO IS THE BODY'S OWN SPOT, with no offset at all: a hit
+   stains where it happened whatever else the spray does. The rest go
+   on an EVEN angular turn with a wobble rather than a random angle,
+   because random angles clump and a clump of spatter reads as one
+   badly drawn mark; and the radius goes as the SQUARE ROOT of the
+   drop's share, which spreads them by AREA - a linear radius piles
+   them into the middle, where the pool already is. A POOL AND ITS
+   SPATTER, not one size repeated: drop zero at the band's own size,
+   everything around it at 0.45 of it, each jittered by 30% either way
+   and floored at zero.
+
+   THE REACH IS JUDGED PER DROP. A foe fought on the edge of a walkway
+   throws spatter into the dark on one side and onto stone on the
+   other; a spray that took one ray for the lot would either hang the
+   far drops in space or lose the near ones with them.
+
+   ONE SET OF DICE: the pool takes the rng and hands it down to the
+   ring, so the mark's own turn and the spray's offsets come from one
+   seam. Mutants: 49, 49 dead.
+
+   STILL TO COME IN THIS SLICE: the 175% burst and the corpse swap.
 3. **BLOOD1c - bleeding.** The 2..5s cadence and the ramp above.
 
 The numbers in THE FACTS are the target to feel like. The code that

@@ -177,6 +177,7 @@ import { ENEMY_BASICS, enemyDisplayName } from '../characters/enemyBasics.js';
 import { bloodDecalDeps } from '../combat/bloodSwitch.js';   // BLOOD1a
 import { createBloodMarks } from '../combat/bloodMarks.js';   // BLOOD1a: HARD1 - the ring is this context's to own and to end
 import { createHitEffects, bloodCentre } from './hitEffects.js';
+import { bloodHit } from '../combat/bloodDecals.js';   // BLOOD1b: the blow, in the shape the mark's ladder reads
 import { createDroppedTorches } from './droppedTorches.js';
 import { createCamps } from './camps.js';   // SURV3: a fire on the dungeon floor (no tent below - the camp law says so)
 import { campWire, validCampRecord, mergeOwnerCamps } from '../systems/survival/camp.js';   // SURV3: the room's memory carries the camps as the wire says them   // HT1: Handheld Torches' dropped lights in the dungeon   // AUDIT 24 (wave 39): EnemyBlood.ShowBloodSplash
@@ -220,7 +221,7 @@ const q3 = (v) => Math.round(v * 1000) / 1000; const GENDER_BIT = ['male', 'fema
 const HIT_POS_MAX = 1e6;
 // AUDIT FOES FOE5: the most damage one peer's blow may claim. The host TRUSTS the number (it never recomputes - the
 // striker's own calc is the game's), so without a bound any joiner could one-shot every foe in the room and empty it
-// through the kill door. The exterior twin has carried this bound since WORLD6b (exteriorFoes.js:1703); the dungeon
+// through the kill door. The exterior twin has carried this bound since WORLD6b (exteriorFoes.js:1704); the dungeon
 // had none. Past anything a legal swing, shaft or blast can roll.
 const HIT_DMG_MAX = 10000;
 /** AUDIT WORLD3 E3: can the ONE build chain actually stand this species? Both of buildFoeAt's branches need a truthy
@@ -2876,7 +2877,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // cone and distance, so the body centre (DFU's own no-raycast
       // formula, EnemyAttack.cs:326-328) stands in.
       hitEffects?.showBloodSplash(ENEMY_BASICS[foe.mobileType]?.bloodIndex ?? 0,
-        bloodCentre(foe.ai.feet, foe.ai.height));
+        bloodCentre(foe.ai.feet, foe.ai.height), null, bloodHit(damage, foe.entity));   // BLOOD1b: the blow drives the ladder
       // C2-slice (combat-17): a damaged CLASS foe cries out 40% of
       // the time (heavyDamage = a quarter of max health in one hit).
       const pain = enemyPainVoice(foe, damage);
@@ -3378,7 +3379,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     if (!_authority || !data || typeof data !== 'object') return false;
     const i = data.i | 0, dmg = Number(data.dmg);
     const f = foes[i];
-    // AUDIT FOES FOE5: BOUNDED, as the exterior twin's applyHit is (exteriorFoes.js:1703). The number is a peer's
+    // AUDIT FOES FOE5: BOUNDED, as the exterior twin's applyHit is (exteriorFoes.js:1704). The number is a peer's
     // word and the host trusts it without recomputing, so an unbounded one let any joiner one-shot every foe in the
     // room - and, through the kill door, empty it. 10000 is past anything a legal swing, shaft or blast can roll.
     if (!f || i >= _layoutFoes || f.dead || !Number.isFinite(dmg) || dmg < 0 || dmg > HIT_DMG_MAX) return false;
@@ -3397,7 +3398,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // striker's callers play these before their own door; here the door is all there is)
     if (dmg > 0) {
       audio.play3d(hitSoundFor(null), f.ai.feet, ENEMY_HIT_VOLUME, { maxDistance: 16 });
-      hitEffects?.showBloodSplash(ENEMY_BASICS[f.mobileType]?.bloodIndex ?? 0, bloodCentre(f.ai.feet, f.ai.height));
+      hitEffects?.showBloodSplash(ENEMY_BASICS[f.mobileType]?.bloodIndex ?? 0, bloodCentre(f.ai.feet, f.ai.height), null, bloodHit(dmg, f.entity));   // BLOOD1b: a peer's blow is still a blow
       const pain = enemyPainVoice(f, dmg);
       if (pain && pain.clip >= 0) audio.play3d(pain.clip, [f.ai.feet[0], f.ai.feet[1] + 0.9, f.ai.feet[2]], 1, { maxDistance: 16, pitch: 1 + pain.pitchLift });
     }
@@ -3856,7 +3857,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // InstantiatePrefab's a fresh GameObject per saved record, so
     // EnemyEntity's `PickpocketByPlayerAttempted` default is the loaded
     // truth for every enemy. The re-minting pools match that by
-    // construction (exteriorFoes.js:1342's restoreWorld goes through
+    // construction (exteriorFoes.js:1343's restoreWorld goes through
     // spawnFoe), but this host patches the LIVE foes in place, so a
     // same-dungeon reload kept a raised latch and a failed pickpocket
     // could never be retried - falsifying the law
@@ -4755,7 +4756,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         if (dmg > 0) {
           audio.play3d(SOUND.FallDamage, [f.ai.feet[0], f.ai.feet[1], f.ai.feet[2]], 1, { maxDistance: 16 });
           // AUDIT 62 F20: the TRANSFORM (feet + centreOffset), per the note above.
-          hitEffects?.showBloodSplash(0, f.ai._centre());
+          hitEffects?.showBloodSplash(0, f.ai._centre(), null, bloodHit(dmg, f.entity));   // BLOOD1b: a fall bleeds by what it cost, like any other blow
           damageFoe(f, dmg, null, null, { fromPlayer: false });   // F041: a fall is nobody's attack
         }
       }

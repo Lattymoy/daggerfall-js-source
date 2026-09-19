@@ -27,6 +27,7 @@ import { liveStat } from '../systems/statMods.js';   // RF2: the player's live l
 import { GLOBAL_SCALE } from '../world/meshReader.js';
 import { swingSoundFor, hitSoundFor, ENEMY_HIT_VOLUME } from '../systems/soundClips.js';
 import { bloodCentre } from './hitEffects.js';   // AUDIT 62 F19: EnemyAttack.cs:326-328's one home, the same law the four player-melee sites cite
+import { bloodHit } from '../combat/bloodDecals.js';   // BLOOD1b: the blow, in the shape the mark's ladder reads
 import { KNIGHT_CITY_WATCH } from '../characters/mobileTypes.js';
 import { ATTRACT_RADIUS } from '../characters/enemySounds.js';   // AUDIT 24 (wave 41)
 import { enemyDisplayName } from '../characters/enemyBasics.js';   // AUDIT 24 (wave 42)
@@ -532,7 +533,7 @@ export function applyDamageToNonPlayer(attacker, target, {
     // the same DFU lines (dungeonContext.js, exteriorFoes.js,
     // cityGuards.js) have used the shared law all along.
     audio?.play3d?.(hitSoundFor(weapon), at, ENEMY_HIT_VOLUME, { maxDistance: 16 });
-    hitEffects?.showBloodSplash?.(tEnt?.basics?.bloodIndex ?? 0, bloodCentre(at, target.ai?.height ?? 1.8));
+    hitEffects?.showBloodSplash?.(tEnt?.basics?.bloodIndex ?? 0, bloodCentre(at, target.ai?.height ?? 1.8), null, bloodHit(damage, tEnt));   // BLOOD1b: foe-on-foe bleeds by its blow too
     // :336-350 - the knockback, on the ATTACKER-class guard
     if (target.ai && enemyKnockbackApplies(target.ai.knockbackSpeed ?? 0, aEnt?.isClass,
       tEnt?.basics?.weight)) {

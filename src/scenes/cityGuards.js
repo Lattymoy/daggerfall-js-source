@@ -87,6 +87,7 @@ import { WEAPON_REACH } from '../combat/playerWeapon.js';
 import { rayPersonDistance } from './townTalk.js';
 import { mintCorpseMarker, playBodyFall, playRareDrop, corpseLootTargets, openCorpseLoot, sayEnemyDied, raiseEnemyDeath } from './corpseMarker.js';
 import { bloodCentre } from './hitEffects.js';   // AUDIT 24 (wave 39): EnemyBlood.ShowBloodSplash
+import { bloodHit, LETHAL_HIT } from '../combat/bloodDecals.js';   // BLOOD1b: the blow, in the shape the mark's ladder reads
 import { EnemySoundSource, acuteHearingMultiplier } from '../characters/enemySounds.js';   // AUDIT 24 (wave 41): EnemySounds.cs, one home
 import { placeFoeEnv, entityOccupancy } from './questFoeHost.js';   // D9: FoeSpawner.PlaceFoeFreely's env, over THIS pool's collider
 import { placeFoeFreely } from '../systems/quest/sceneMount.js';   // D9: PlayerEntity.cs:687 spawns through FoeSpawner like everything else
@@ -148,7 +149,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
   // with no Y test. The default keeps the two street pools as they were.
   playerInside = false,
   // ROAD-G G1: GameManager.MakeEnemiesHostile over the HOST's whole
-  // area, the encounter pool's dep to the line (exteriorFoes.js:112).
+  // area, the encounter pool's dep to the line (exteriorFoes.js:113).
   // DaggerfallEntityBehaviour.cs:255-258 fires it when a NON-hostile
   // enemy is struck by the player, and Knight_CityWatch is an
   // EnemyClass - one of the two EntityTypes that walk (:250). This
@@ -574,10 +575,10 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
    *  and ALL THREE of this pool's arms reach the door: the melee swing
    *  and the spell through `damageGuard`'s `fromPlayer` gate below, and
    *  the player's ARROW through the hosts' `onAttackFromPlayer` seam,
-   *  which arrowFlight.js calls unconditionally (arrowFlight.js:230)
+   *  which arrowFlight.js calls unconditionally (arrowFlight.js:231)
    *  because `dealDamage` is inside its own `dmg > 0` fork - so the
    *  door is PUBLIC (the returned surface below), exactly as the
-   *  encounter pool's is (exteriorFoes.js:1794). */
+   *  encounter pool's is (exteriorFoes.js:1795). */
   function handleAttackFromPlayer(g, playerFeet = null) {
     if (!g?.ai) return;
     if (!g.ai.isHostile) makeAreaHostile?.();
@@ -861,7 +862,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
           // and played the clip but never bled, where exteriorFoes has
           // splashed since CH3.
           // AUDIT 62 F20: the TRANSFORM (feet + centreOffset), per the note above.
-          hitEffects?.showBloodSplash(0, g.ai._centre());
+          hitEffects?.showBloodSplash(0, g.ai._centre(), null, bloodHit(gdmg, g.entity));   // BLOOD1b: a fall bleeds by what it cost
           damageGuard(g, gdmg, null, null, { fromPlayer: false });   // F035: ApplyFallDamage carries no crime
           if (g.dead) continue;
         }
@@ -1045,7 +1046,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
         // in exteriorFoes: no raycast impact point here, so the body
         // centre stands in - DFU's own no-raycast formula).
         hitEffects?.showBloodSplash(ENEMY_BASICS[GUARD_MOBILE_TYPE]?.bloodIndex ?? 0,
-          bloodCentre(foe.ai.feet, foe.ai.height));
+          bloodCentre(foe.ai.feet, foe.ai.height), null, bloodHit(damage, foe.entity));   // BLOOD1b: the blow drives the ladder
         // C2-slice (combat-17): the struck watchman cries out 40%
         const pain = enemyPainVoice(foe, damage);
         if (pain && pain.clip >= 0) audio?.play3d?.(pain.clip, [foe.ai.feet[0], foe.ai.feet[1] + 0.9, foe.ai.feet[2]], 1, { maxDistance: 16, pitch: 1 + pain.pitchLift });   // AUDIT 58: EnemySounds.cs:172-175
@@ -1116,7 +1117,8 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
       // that has DFU's actual impactPosition - the ray already found
       // the person at bestD.
       hitEffects?.showBloodSplash(0,
-        [eye[0] + lookDir[0] * bestD, eye[1] + lookDir[1] * bestD, eye[2] + lookDir[2] * bestD]);
+        [eye[0] + lookDir[0] * bestD, eye[1] + lookDir[1] * bestD, eye[2] + lookDir[2] * bestD],
+        null, LETHAL_HIT);   // BLOOD1b: one hit kills a civilian, so the blow took ALL of them - the hundred rung, not an overkill
       best.disable();   // one weapon hit kills a civilian (SetActive(false))
       setCrimeCommitted(playerEntity, CRIME_MURDER);   // V4: through the one setter (SuppressCrime)
       // CG2: WeaponManager.cs:510's TallyCrimeGuildRequirements(false,
