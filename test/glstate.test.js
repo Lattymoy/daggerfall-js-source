@@ -259,8 +259,16 @@ test('AUDIT 65 RS-3: the reserved cloud-shadow unit stands clear of every slot a
   assert.doesNotMatch(rr, /gl\.TEXTURE7\b/, 'the literal is gone from both sites');
   assert.match(rr, /gl\.activeTexture\(gl\.TEXTURE0 \+ CLOUD_SHADOW_UNIT\);/);
   assert.match(rr, /gl\.uniform1i\(mapLoc, CLOUD_SHADOW_UNIT\);/);
-  assert.match(rr, /markForeignPass\(\) \{\s*\n\s*this\.gl\.bindVertexArray\(null\);\s*\n\s*this\._lastProgram = null;\s*\n\s*this\._lastVao = null;\s*\n\s*this\._csUploaded = \{\};\s*\n\s*\}/,
-    'and the mark forgets the upload stamps with the program and the VAO');
+  // PERF-TEX joined the texture shadows to this list, so the pin is what
+  // the mark must DO rather than the whole of its body; the additions have
+  // their own test above, and RS-3's law is these three.
+  {
+    const mark = rr.split('  markForeignPass(')[1].split('\n  }')[0];
+    assert.match(mark, /this\.gl\.bindVertexArray\(null\);/);
+    assert.match(mark, /this\._lastProgram = null;/);
+    assert.match(mark, /this\._lastVao = null;/);
+    assert.match(mark, /this\._csUploaded = \{\};/, 'the mark forgets the upload stamps with the program and the VAO');
+  }
 });
 
 // ═══ AUDIT 47: every shader declares what it uses, statically ═══════
@@ -484,5 +492,76 @@ test('PERF-TEX: the shadow is cleared wherever something else can own unit 1', (
     if (!/activeTexture\(gl\.TEXTURE1\)/.test(lines[i])) continue;
     const window = lines.slice(i, i + 4).join('\n');
     assert.match(window, /_tex1Bound|_bindEmission/, `renderer.js:${i + 1} binds unit 1 without answering to the shadow`);
+  }
+});
+
+// ═══ PERF-TEX2: THE TERRAIN'S ATLAS AND ITS TILE SIZE ══════════════
+//
+// The same sweep over drawTerrain, which runs once per streamed pixel -
+// 121 of them at the default land view. Measured over 121 pixels with a
+// model matrix and a tilemap of their own (as the streamer gives them)
+// and the world's single tile atlas shared between them: 1239 GL calls,
+// of which 120 bindTexture and 120 uniform1f set a value to the one it
+// already held. The tilemap is the pixel's; the ATLAS and the TILE SIZE
+// are the world's, and PERF3 left the latter outside its frame-constant
+// block as "per-pixel" when it is per-WORLD.
+//
+// Shadowed, never hoisted: a caller that really does change either still
+// uploads, so this cannot be wrong - only cheaper.
+const terrainScene = (r, log, { atlas = { id: 'atlas' }, tileSize = 128, n = 121 } = {}) => {
+  const M = () => new Float32Array(identity());
+  const from = log.length;
+  for (let i = 0; i < n; i++) {
+    const m = M(); m[12] = i * 1024;
+    r.drawTerrain({ vao: { id: `t${i}` }, indexCount: 768 }, m, atlas, { id: `tm${i}` }, tileSize);
+  }
+  return log.slice(from);
+};
+
+test('PERF-TEX2: the terrain pixel loop re-binds no atlas and re-uploads no tile size it already holds', () => {
+  const { r, log } = glLogRig();
+  r.beginFrame(new Float32Array(identity()), new Float32Array(identity()), new Float32Array([0, -1, 0]));
+  const slice = terrainScene(r, log);
+  assert.equal(r.stats.draws, 121, 'the pixels really drew');
+  let unit = 0, redundant = 0;
+  const held = new Map();
+  for (const [k, ...a] of slice) {
+    if (k === 'activeTexture') unit = a[0];
+    else if (k === 'bindTexture') { if (held.get(unit) === a[1]) redundant++; held.set(unit, a[1]); }
+  }
+  assert.equal(redundant, 0, 'a texture was bound to the unit that already held it');
+  const tileUploads = slice.filter((e) => e[0] === 'uniform1f' && e[1] === r.tUTileSize).length;
+  assert.equal(tileUploads, 1, `the tile size went up ${tileUploads} times for one world`);
+});
+
+test('PERF-TEX2: a world that really DOES change its atlas or tile size still uploads - the shadow is not a hoist', () => {
+  const { r, log } = glLogRig();
+  r.beginFrame(new Float32Array(identity()), new Float32Array(identity()), new Float32Array([0, -1, 0]));
+  terrainScene(r, log, { n: 3 });
+  const from = log.length;
+  terrainScene(r, log, { atlas: { id: 'other' }, tileSize: 64, n: 3 });
+  const after = log.slice(from);
+  assert.equal(after.filter((e) => e[0] === 'uniform1f' && e[1] === r.tUTileSize).length, 1,
+    'the new tile size never reached the GPU');
+  assert.ok(after.some((e) => e[0] === 'bindTexture' && e[2]?.id === 'other'), 'the new atlas was never bound');
+});
+
+test('PERF-TEX: every texture shadow is forgotten when a foreign pass takes the context', () => {
+  // THE ONE THAT MATTERS FOR CORRECTNESS. The skies and precipitation
+  // draw outside this renderer and bind their own textures on their own
+  // units; EV6 already forgets the program and VAO shadows for them, and
+  // a texture shadow that did not join them would speak for a unit it no
+  // longer owns - a wrong texture on screen, which is the one thing a
+  // performance change may never cost.
+  const { r } = glLogRig();
+  r._tex1Bound = { id: 'emis' }; r._tArrayTex = { id: 'atlas' }; r._tTileSize = 128;
+  r.markForeignPass();
+  assert.equal(r._tex1Bound, null, 'the emission unit still thinks it knows what is bound');
+  assert.equal(r._tArrayTex, null, 'the tile atlas still thinks it knows what is bound');
+  assert.equal(r._tTileSize, null, 'the tile size shadow survived a foreign pass');
+  const src = readFileSync(new URL('../src/render/renderer.js', import.meta.url), 'utf8');
+  const fn = src.split('  markForeignPass(')[1].split('\n  }')[0];
+  for (const shadow of ['_tex1Bound', '_tArrayTex', '_tTileSize']) {
+    assert.match(fn, new RegExp(`${shadow} = null`), `markForeignPass does not clear ${shadow}`);
   }
 });

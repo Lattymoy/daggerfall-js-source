@@ -1378,6 +1378,54 @@ the effective GPU state is unchanged draw for draw, and every site in
 the shadow - a source sweep, because a shadow that speaks for a unit it
 no longer owns is a wrong texture on screen.
 
+## PERF-TEX2 - THE ATLAS AND THE TILE SIZE, ONCE A WORLD (2026-09-19)
+
+The same sweep over `drawTerrain`, which runs once per streamed pixel -
+121 of them at the default land view of 5. 121 pixels, each with a model
+matrix and a tilemap of its own as the streamer gives them, sharing the
+world's one tile atlas:
+
+| | GL calls | a pixel | redundant state writes |
+|---|---|---|---|
+| before | 1239 | 10.2 | **361 (29%)** |
+| after | 879 | 7.3 | 0 |
+
+Two values were being set 121 times to say one thing. The TILEMAP is the
+pixel's own and always binds. The tile ARRAY is the world's single atlas -
+the same object for every pixel of the frame. And the TILE SIZE is the
+world's one number: PERF3 left it outside its frame-constant block as one
+of "the per-pixel two", and it is passed per pixel, but it is 128 every
+time.
+
+Both are SHADOWED, not hoisted, and the distinction is the whole safety
+argument. Hoisting either into PERF3's once-a-frame block would be wrong -
+that block runs once, and a pixel's own model matrix belongs beside them -
+so the guard stays where the upload was and only skips when the value is
+already there. A world that really does change its atlas or its tile size
+still uploads, which the suite proves by driving two.
+
+**The third redundancy was left alone.** `drawTerrain` ends with
+`_bindVao(null)`, which unbinds after every pixel - 121 extra binds a
+frame. It is not a mistake: a dozen sites in `renderer.js` do the same,
+and the foreign passes (the skies, precipitation) run against a context
+they expect to find clean. 121 calls is not worth breaking a convention
+the whole file keeps, and a subtle state bug is exactly the cost this
+campaign is not allowed to pay.
+
+**AND A GAP IN PERF-TEX, FOUND BY LOOKING FOR THIS ONE.** EV6's
+`markForeignPass` forgets the program and VAO shadows when a pass outside
+the renderer takes the context - and PERF-TEX's texture shadow had not
+joined them. A sky that binds its own texture to unit 1 would have left
+the shadow speaking for a unit it no longer owned: a wrong texture on
+screen, from a change whose entire claim is that it cannot move a pixel.
+All three shadows are cleared there now, and pinned to be.
+
+**Pinned** in `test/glstate.test.js` (3): no redundant bind or upload in
+the pixel loop, a world that changes either still uploads, and every
+texture shadow is forgotten on a foreign pass. PERF3's own pin was
+re-aimed: its law is that the two stay OUT of the frame-constant block,
+which they do, and it now says that rather than quoting two lines.
+
 ## PERF-ON - ONE DRAW A STRING (2026-09-15)
 
 Mac: *"Next thing I want to tackle is improving online performance. I

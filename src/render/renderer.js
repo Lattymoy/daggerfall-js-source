@@ -958,6 +958,8 @@ export class Renderer {
     // (uniforms are program state, so this survives a program switch).
     this._emissionColorUp = null;
     this._tex1Bound = null;   // PERF-TEX: cleared with its sibling
+    this._tArrayTex = null;
+    this._tTileSize = null;
     // EV2: the sub-mesh texture cache's generation. drawMesh used to
     // mint a `${archive}_${record}` string per sub-mesh per frame -
     // thousands of short-lived strings a frame, the render loop's
@@ -1175,6 +1177,8 @@ export class Renderer {
   endWorldPass() {
     if (!this._worldViewportPx) return;
     this._tex1Bound = null;   // PERF-TEX: the 2D path and the post passes own the units past here
+    this._tArrayTex = null;
+    this._tTileSize = null;
     this._worldViewportPx = null;
     this.gl.viewport(0, 0, this.canvas.width, this.canvas.height);
   }
@@ -1239,6 +1243,13 @@ export class Renderer {
     this._lastProgram = null;
     this._lastVao = null;
     this._csUploaded = {};
+    // PERF-TEX: a foreign pass binds its own textures and leaves its own
+    // unit active, so every texture shadow is forgotten with the rest. A
+    // shadow that speaks for a unit it no longer owns is a WRONG TEXTURE,
+    // which is the one thing a performance change may never cost.
+    this._tex1Bound = null;
+    this._tArrayTex = null;
+    this._tTileSize = null;
   }
 
   /** EL1: compile one world program set from its four fragment shaders
@@ -1393,6 +1404,8 @@ export class Renderer {
     this._csUploaded = {};
     this._emissionColorUp = null;
     this._tex1Bound = null;   // PERF-TEX: cleared with its sibling
+    this._tArrayTex = null;
+    this._tTileSize = null;
     this._lastProgram = null;
   }
 
@@ -2746,6 +2759,8 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     gl.uniform3fv(this.uEmissionColor, this._c3(this._windowEmission));
     this._emissionColorUp = this._windowEmission;   // F49: the per-sub-mesh shadow starts the frame true
     this._tex1Bound = null;   // PERF-TEX: a frame's; the post passes (air, clouds) own unit 1 between frames
+    this._tArrayTex = null;
+    this._tTileSize = null;
     const count = this._pointLights.length / 4;
     gl.uniform1i(this.uPointCount, count);
     if (count > 0) gl.uniform4fv(this.uPointLights, this._pointLights);
@@ -3549,7 +3564,14 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     this._use(this.terrainProgram);
     if (this._casting) this._shadows.recordTerrain(surface, modelMatrix, arrayTex, tilemapTex, tileSize);   // EL2
     gl.uniformMatrix4fv(this.tUModel, false, modelMatrix);
-    gl.uniform1f(this.tUTileSize, tileSize);
+    // PERF-TEX2: the model matrix is a pixel's own; the TILE SIZE is the
+    // world's, one number for all 121 of them at the default land view.
+    // PERF3 left it out of the frame-constant block as "per-pixel", and
+    // it is passed per pixel - but it is the same number every time, so
+    // 120 of every 121 uploads set the uniform to what it already held.
+    // Shadowed rather than hoisted: a caller that really does change it
+    // still uploads, so this cannot be wrong, only cheaper.
+    if (this._tTileSize !== tileSize) { gl.uniform1f(this.tUTileSize, tileSize); this._tTileSize = tileSize; }
     // EE5 / VC4: the deck's shadow map, or nothing at all
     this._uploadCloudShadow('terrain');
     // PERF3: THE FRAME-CONSTANT BLOCK, ONCE A FRAME. The mesh program has
@@ -3581,14 +3603,22 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
       gl.uniform1i(this.tUTileArr, 0);
       gl.uniform1i(this.tUTilemap, 2);
     }
-    gl.activeTexture(gl.TEXTURE0);
-    gl.bindTexture(gl.TEXTURE_2D_ARRAY, arrayTex);
+    // PERF-TEX2: the TILEMAP is this pixel's own and always binds; the
+    // tile ARRAY is the world's single atlas, the same object for every
+    // pixel of the frame, so it is shadowed like unit 1's emission map.
+    if (this._tArrayTex !== arrayTex) {
+      gl.activeTexture(gl.TEXTURE0);
+      gl.bindTexture(gl.TEXTURE_2D_ARRAY, arrayTex);
+      this._tArrayTex = arrayTex;
+      this.stats.texBinds++;
+    }
     gl.activeTexture(gl.TEXTURE2);
     gl.bindTexture(gl.TEXTURE_2D, tilemapTex);
     gl.activeTexture(gl.TEXTURE0);
+    this.stats.texBinds++;
     this._bindVao(surface.vao);
     gl.drawElements(gl.TRIANGLES, surface.indexCount, gl.UNSIGNED_INT, 0);
-    this.stats.texBinds += 2; this.stats.draws++;
+    this.stats.draws++;
     this._bindVao(null);
   }
 
