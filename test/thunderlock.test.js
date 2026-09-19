@@ -28,6 +28,12 @@ import { spendAmmoFor, ammoCountFor } from '../src/systems/inventory.js';
 import { playerArchiveFor } from '../src/characters/paperdollArt.js';
 import { shimmer } from '../src/combat/thunderlockArt.js';
 import { uniqueFinds, uniqueFindChance, rollLootRarity, legendariesFor, rarityEligible } from '../src/systems/lootRarity.js';
+// FIELD-GUN: the two the audit could not see, because every pin it
+// wrote asked about REGISTRATION and none of them picked the thing up.
+import { equipItem, getEquipSlot, getItemHands, EQUIP_SLOTS, ITEM_HANDS } from '../src/systems/equip.js';
+import { installThunderlockIcons, ICON_FILES } from '../src/systems/thunderlock.js';
+import { isVendorArchive, vendorRecordCount, clearVendorTextures } from '../src/systems/textureReplacement.js';
+import { inventoryItemImage } from '../src/systems/itemTemplates.js';
 import { GROUP_TEMPLATE_INDICES } from '../src/systems/itemTemplates.js';
 import { FIND_MIN_TIER } from '../src/systems/thunderlock.js';
 
@@ -349,4 +355,82 @@ test('F7: the art is fetched off the SITE root, not the document - the held map�
     assert.match(s, /APP_ROOT/, `${f} resolves against the site root`);
     assert.ok(!/new URL\([^)]*globalThis\.document\?\.baseURI\s*\)/.test(s), `${f} does not resolve against the document alone`);
   }
+});
+
+// ── FIELD-GUN (2026-09-19): TWO BUGS THE AUDIT WALKED PAST ──────────
+//
+// Mac, the first time he held one: "1. the inventory sprites dont have
+// their sprites 2. It doesnt let me equip".
+//
+// Both are the SAME SPECIES as the audit's own F1-F6 - a DFU table or
+// a pipeline flag with no row for the port's own weapon - and the
+// audit missed them for one reason worth writing down: every pin it
+// added asked whether something was REGISTERED. None of them picked
+// the weapon up, put it in a hand, or asked a door to draw it. A
+// registration pin cannot fail for a weapon that registers perfectly
+// and then cannot be held.
+//
+// So these two drive the ACTIONS, not the wiring.
+
+test('FIELD-GUN2: the gun can actually be EQUIPPED - it takes both hands and lands in the right one', () => {
+  const gun = createThunderlock();
+  // The bug: WEAPON_HANDS is keyed over DFU's 113-130, so index 560
+  // fell past it to ITEM_HANDS.None - and GetEquipSlot's weapon arm
+  // maps None to EQUIP_SLOTS.None, which equipItem refuses on its
+  // first line. Not a wrong hand: no hand at all.
+  assert.equal(getItemHands(gun), ITEM_HANDS.Both, 'a gun this heavy is two-handed');
+  const entity = { items: [gun] };
+  assert.equal(getEquipSlot(entity, gun), EQUIP_SLOTS.RightHand, 'and two hands route to the right one');
+  const unequipped = equipItem(entity, gun);
+  assert.ok(unequipped, 'equipItem did not refuse it');
+  assert.equal(gun.equipSlot, EQUIP_SLOTS.RightHand, 'it is really in the hand');
+  assert.equal(entity.equip.slots[EQUIP_SLOTS.RightHand], gun);
+
+  // ...and being two-handed means it clears the other hand, the same
+  // way a claymore does - pinned because the arm above could have
+  // answered RightOnly and passed every line up to here.
+  const shield = { group: 'Armor', templateIndex: 109 };   // a Buckler - SHIELD_INDICES' first, LeftOnly
+  const e2 = { items: [shield] };
+  equipItem(e2, shield);
+  assert.equal(e2.equip.slots[EQUIP_SLOTS.LeftHand], shield, 'the shield is up first');
+  const gun2 = createThunderlock();
+  e2.items.push(gun2);
+  equipItem(e2, gun2);
+  assert.equal(e2.equip.slots[EQUIP_SLOTS.LeftHand], null, 'and the gun takes that hand back');
+
+  // The departure is written where the other two are, ahead of the
+  // verbatim table rather than as a row inside it.
+  const src = readFileSync('src/characters/equipTable.js', 'utf8');
+  assert.ok(src.indexOf('THUNDERLOCK_TEMPLATE') < src.indexOf('const w = WEAPON_HANDS[item.templateIndex];'),
+    'the arm stands AHEAD of the generated DFU table, which stays what it is');
+});
+
+test('FIELD-GUN1: the icons register as STAND-IN archives, so the doors that gate on recordCount will draw them', async () => {
+  clearVendorTextures();
+  const seen = [];
+  const n = await installThunderlockIcons({ fetchBytes: async (f) => { seen.push(f); return new Uint8Array([0]); } });
+  assert.equal(n, ICON_FILES.length, 'both icons registered');
+
+  // THE BUG, and it is not the URL the audit's F7 fixed. Archives 560
+  // and 561 exist ONLY as this art - there is no TEXTURE.560 - and
+  // `standIn` is the flag that says so. Without it isVendorArchive
+  // answers false (the pipeline goes looking for an ARENA2 file that
+  // cannot exist) and vendorRecordCount answers 0 - and every icon
+  // door in the port gates on `record < tex.recordCount` before it
+  // uploads. The icon resolved correctly and then nothing drew it.
+  for (const archive of [THUNDERLOCK_ARCHIVE, PELLET_TEMPLATE]) {
+    assert.equal(isVendorArchive(archive), true, `archive ${archive} is vendor-only art`);
+    assert.ok(vendorRecordCount(archive) > 0, `...and the doors can see a record in ${archive}`);
+  }
+
+  // the record each door will ask for is the one that is registered
+  const gun = createThunderlock();
+  const shot = createPellets(5);
+  for (const [item, archive] of [[gun, THUNDERLOCK_ARCHIVE], [shot, PELLET_TEMPLATE]]) {
+    const img = inventoryItemImage(item);
+    assert.equal(img.archive, archive, 'the icon resolves to the weapon\'s own archive');
+    assert.ok(img.record < vendorRecordCount(archive),
+      'and the record is INSIDE what the doors will let through - the gate that was failing');
+  }
+  clearVendorTextures();
 });
