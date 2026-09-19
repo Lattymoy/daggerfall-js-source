@@ -178,6 +178,50 @@ Nothing in DFU's own pool sets that flag, so the classic pairings are
 exactly what they were: a dagger can still be Wyrmbane or
 Nightwhisper.
 
+## FIELD-GUN: the two the audit walked past
+
+Mac, the first time he held one:
+
+> 1. the inventory sprites dont have their sprites
+> 2. It doesnt let me equip
+
+Both are the audit's own species — a DFU table or a pipeline flag with
+no row for the port's own weapon — and both were live on `main` when
+it merged.
+
+**FIELD-GUN2, the equip.** `getItemHands` ends
+`WEAPON_HANDS[templateIndex]` → shields → `ITEM_HANDS.None`, and
+`WEAPON_HANDS` is the generated table over DFU's 113-130. Index 560
+fell past it to `None`. `GetEquipSlot`'s weapon arm maps `None` to
+`EQUIP_SLOTS.None`, and that is what `equipItem` refuses on its first
+line. Not a wrong hand — **no hand**, so no slot, so no way to hold the
+weapon at all. It is the THIRD departure of exactly the shape
+`characters/weapons.js` already carries twice, and nobody wrote it.
+
+**FIELD-GUN1, the icons.** They registered without `standIn: true`.
+That flag is not a hint, it is the registration: archives 560 and 561
+exist *only* as this art, and `standIn` is what tells `isVendorArchive`
+not to go looking for a `TEXTURE.560` that cannot exist, and what gives
+`vendorRecordCount` a record for the `record < tex.recordCount` gate
+that **every** icon door in the port checks before it uploads —
+`itemScroller`, `nativeInventory`, `paperDoll`. So the icon resolved to
+560/0 exactly as the audit said it would, and then every door refused
+to draw it.
+
+This is SURV-ART one mod over — *"the sprites aren't showing at all"* —
+and `textureReplacement.js` says so in the comment directly above the
+function. The audit read that file to take the URL law out of it for
+F7 and walked past the flag four lines away.
+
+### Why eight findings missed both
+
+Every pin the audit wrote asks whether something is **registered**. Not
+one of them picked the weapon up, put it in a hand, or asked a door to
+draw it — and a registration pin cannot fail for a weapon that
+registers perfectly and then cannot be held. The lesson is narrower
+than "test more": a departure needs a pin that performs *the player's
+verb*. `FIELD-GUN1` and `FIELD-GUN2` equip it and draw it.
+
 ## The test characters carry one
 
 TSR-GUN (Mac, 2026-09-19: *"Put this weapon and ammo inside the test

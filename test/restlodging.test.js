@@ -1389,7 +1389,9 @@ test('D3: the native pages are the two DFU panels, and nothing else moved onto a
   const w = src('src/ui/restWindow.js');
   // Setup :137-138 - "Hide world while resting", opaque black, so the
   // host's HUD goes with the world.
-  assert.match(w, /if \(this\.state === 'resting' && isEnhanced\(\)\) drawMenuBackdrop\(renderer, canvas, REST_VEIL\);\s*\n\s*else drawMenuBackdrop\(renderer, canvas\);/, 'opaque black, verbatim - the enhanced skin\'s resting page alone takes CLK4\'s veil');
+  // REST-VEIL2: the classic skin keeps it verbatim; the enhanced skin
+  // takes CLK4's veil on EVERY page of this window, selection included.
+  assert.match(w, /if \(isEnhanced\(\)\) drawMenuBackdrop\(renderer, canvas, REST_VEIL\);\s*\n\s*else drawMenuBackdrop\(renderer, canvas\);/, 'opaque black for the classic skin, the veil for the enhanced one - whole-window either way');
   // ShowStatus assigns the counter panel's BackgroundTexture per mode
   // and DFU's explicit 105x41 Size wins over the IMG's own.
   assert.match(w, /drawImg\(renderer, _art\[st\.texture\], m, REST_COUNTER_X, REST_PANEL_Y,\n\s+REST_COUNTER_RECT\[2\], REST_COUNTER_RECT\[3\]\);/);

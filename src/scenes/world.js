@@ -3144,6 +3144,14 @@ export async function bootWorld(canvas, renderer, params, status) {
       bob: [0, player.bobOffset ? player.bobOffset[1] : 0],
       move: motionBagOf(player) }),   // MW-D26: the movement-settings vector, the reference's own selection source; MW-D39 added the jump-state inputs; WW2: the one bag (a partial copy left the bob's idle gate unsent)
     spellArmed: () => magic.spellArmed(), abortSpell: () => magic.abortReadySpell(),   // M2; MAC-O1: WeaponManager.Update:251 - the ReadyWeapon key puts a readied spell away and draws
+    // MAP-WEAPON: the enhanced map is a SPRITE with alpha around it,
+    // not a full-screen window, so the weapon the classic body keeps
+    // drawing shows through it. Asked per frame off the live overlay
+    // slot rather than a flag raised at the open: the window can be
+    // closed by Escape, by a travel, by a quest popup taking the slot
+    // or by a teardown, and a flag would have to be lowered at all of
+    // them. The tag is the window's own (`isTravelMap`).
+    sheetWindowUp: () => townTalk.overlay?.isTravelMap === true,
   });
   autoBuildArms(playerEntity);   // MWA1: a continuing session's arms, at boot (a new character's come after the wizard, a load's after the restore)
   // WEAPON-VIS1: a live read of exactly what shown() gates on, always

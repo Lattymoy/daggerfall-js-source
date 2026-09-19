@@ -206,8 +206,25 @@ export function installThunderlockIcons({ fetchBytes = null } = {}) {
     if (!r.ok) throw new Error(`${name}: ${r.status}`);
     return new Uint8Array(await r.arrayBuffer());
   });
+  // FIELD-GUN1 (Mac, from play: "the inventory sprites dont have
+  // their sprites"). `standIn: true` IS THE REGISTRATION, not a hint.
+  // Archives 560 and 561 exist ONLY as this art - there is no
+  // TEXTURE.560 in ARENA2 and never will be - and `standIn` is the
+  // flag the pipeline reads to know that: `isVendorArchive` sends the
+  // load down the stand-in branch instead of fetching a file that
+  // cannot exist, and `vendorRecordCount` is what every icon door in
+  // the port (itemScroller, nativeInventory, paperDoll) gates on
+  // before it uploads - `record < tex.recordCount`, which is 0 for an
+  // archive with no stand-in registered. So the icons resolved to
+  // 560/0 and 561/0 correctly, as the audit said they would, and then
+  // every door refused to draw them.
+  //
+  // This is SURV-ART verbatim, one mod over - "the sprites aren't
+  // showing at all" - and textureReplacement.js:185 says so in the
+  // comment right above the function. The audit read that file for F7
+  // and took the URL law out of it while walking past the flag.
   return addVendorTextures(ICON_FILES.map(({ archive, record, frame, file }) => ({
-    archive, record, frame, fileName: file, load: () => load(file),
+    archive, record, frame, fileName: file, standIn: true, load: () => load(file),
   })));
 }
 
