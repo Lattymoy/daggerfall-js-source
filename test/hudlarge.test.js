@@ -466,7 +466,10 @@ test('D10: the offset really moves the horse rect and the viewmodel quad', () =>
   // (combat/weaponRig.js) passes nothing, so the default reads the bar
   const w = src('combat/fpsWeapon.js');
   assert.ok(w.includes('offsetHeight = weaponOffsetHeight(),'), 'the default IS the law');
-  assert.ok(w.includes('const y = canvas.height - h - offsetHeight;'), 'OnGUI :388');
+  // FIELD-GUN6: `let`, because the Thunderlock's recoil and reload
+  // lower move the rect after it is computed. The SUBTRACTION this
+  // pin is about - the bar's height off the bottom - is untouched.
+  assert.ok(w.includes('let y = canvas.height - h - offsetHeight;'), 'OnGUI :388');
   // MAC-K3: the horse arm is `player/mountRig.js`'s now, and it is the
   // ONE caller for every outdoor host - this used to read world.js,
   // which is the host that HAD a mount rather than the rule.

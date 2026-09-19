@@ -186,8 +186,28 @@ export function spendPellet(items) {
  *  layer and the inventory icon are the same record, which is why
  *  gun-paperdoll.png carries the hand gap and why the icon has a notch
  *  in it - it is a doll layer being shown in a list. */
+/**
+ * WHERE IT HANGS ON THE PAPER DOLL (FIELD-GUN4).
+ *
+ * A classic weapon record carries its own offset inside its CIF, and
+ * the doll blits it at `offset - paperDollOrigin`. Our sprite is a
+ * PNG and has no such field, so the number is declared here - the one
+ * place that knows the sprite is 68x42 and where its grip sits in it.
+ *
+ * The doll's panel is 110x184 with its origin at (200, 8), so these
+ * are panel coordinates plus that origin. The gun hangs muzzle-down
+ * across the body's right side (the viewer's left, which is where the
+ * doll's right hand is), low enough that the grip meets the hand and
+ * the barrel runs past the hip.
+ *
+ * MAC'S EYE IS THE GATE ON THIS ONE. It is a placement, not a law -
+ * there is no DFU number to be right or wrong against - so it is one
+ * constant, named, for him to move.
+ */
+export const PAPERDOLL_OFFSET = Object.freeze({ x: 200 + 8, y: 8 + 96 });
+
 export const ICON_FILES = Object.freeze([
-  { archive: ART.weaponArchive, record: 0, frame: 0, file: 'gun-paperdoll.png' },
+  { archive: ART.weaponArchive, record: 0, frame: 0, file: 'gun-paperdoll.png', offset: PAPERDOLL_OFFSET },
   { archive: ART.ammoArchive, record: 0, frame: 0, file: 'gun-ammo.png' },
 ]);
 
@@ -223,8 +243,8 @@ export function installThunderlockIcons({ fetchBytes = null } = {}) {
   // showing at all" - and textureReplacement.js:185 says so in the
   // comment right above the function. The audit read that file for F7
   // and took the URL law out of it while walking past the flag.
-  return addVendorTextures(ICON_FILES.map(({ archive, record, frame, file }) => ({
-    archive, record, frame, fileName: file, standIn: true, load: () => load(file),
+  return addVendorTextures(ICON_FILES.map(({ archive, record, frame, file, offset }) => ({
+    archive, record, frame, fileName: file, standIn: true, offset, load: () => load(file),
   })));
 }
 

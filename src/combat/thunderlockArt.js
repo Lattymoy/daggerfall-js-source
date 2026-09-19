@@ -25,7 +25,7 @@
 
 import { FIRE_FRAMES, cellRect, keyBackground, contentBox, unionBox } from './gunSheet.js';
 import { decodePng } from '../systems/textureReplacement.js';
-import { toColor32 } from '../formats/color32Order.js';   // WW3: the ORDER *and* the shape uploadTexture reads
+import { toScreenOrder } from '../formats/color32Order.js';   // FIELD-GUN3: HT3's law - a SCREEN QUAD's PNG keeps its rows
 import { WEAPON_TYPES, getWeaponAnims } from './fpsWeapon.js';
 import { APP_ROOT } from '../systems/appRoot.js';   // AUDIT-THUNDERLOCK F7: the SITE root, not the document's
 
@@ -94,7 +94,7 @@ function bakeCell(sheet, i) {
   return { img, box: contentBox(img) };
 }
 
-/** Crop to a box, in the shape toColor32 reads. */
+/** Crop to a box, in the shape the upload door reads. */
 function crop(img, box) {
   const out = new Uint8ClampedArray(box.w * box.h * 4);
   for (let y = 0; y < box.h; y++) {
@@ -146,10 +146,26 @@ export async function loadThunderlockArt(renderer, { fetch: fetchSheet = null, d
   const height = Math.round(union.h * scale);
 
   const type = magic ? WEAPON_TYPES.Thunderlock_Magic : WEAPON_TYPES.Thunderlock;
+  // FIELD-GUN3 (Mac, from play: "The sprite is upside down"). HT3's
+  // law, and the THIRD time this port has paid it: `toColor32` is a
+  // FLIP, right for a Unity texture whose rows are stored bottom-up
+  // and WRONG for a decoded PNG, whose row 0 already is the picture's
+  // top. Which one is right depends on where it is drawn, and the two
+  // answers are opposite - a world billboard samples v with 0 at the
+  // bottom and wants the flip; a SCREEN QUAD does not, because
+  // `drawScreenQuad` hands the rect's top the pair `v0` and nothing
+  // flips at upload.
+  //
+  // This weapon is drawn by `drawFpsWeapon`, which ends in
+  // `renderer.drawScreenQuad`. So it is a screen sprite from a PNG
+  // and it wants its rows exactly as they came: `toScreenOrder`, the
+  // same door the held torch and the weapon widget's loose arm take.
+  // The held torch (HT3) and the shield mod (SW4) each found this the
+  // same way - a person looking at the picture.
   const frames = baked.map((b, i) => {
     const rgba = crop(b.img, union);
     return renderer.uploadTexture('img', `thunderlock${magic ? ':magic' : ''}:${i}`,
-      toColor32(magic ? shimmer(rgba) : rgba));
+      toScreenOrder(magic ? shimmer(rgba) : rgba));
   });
 
   return {

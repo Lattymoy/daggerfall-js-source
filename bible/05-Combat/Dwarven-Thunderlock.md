@@ -222,6 +222,99 @@ registers perfectly and then cannot be held. The lesson is narrower
 than "test more": a departure needs a pin that performs *the player's
 verb*. `FIELD-GUN1` and `FIELD-GUN2` equip it and draw it.
 
+## FIELD-GUN3/4/5/6: the first play
+
+Three reports, four faults, and the shape of all of them is the same
+as FIELD-GUN1 and 2 the hour before: **the weapon reaches a pipeline
+that has no row for it, and the pipeline answers with its default
+rather than an error.**
+
+### "The sprite is upside down"
+
+HT3's law, paid a **third** time. `toColor32` is a *flip* — right for a
+Unity texture, whose rows are stored bottom-up — and wrong for a
+decoded PNG, whose row 0 already is the picture's top. Which one is
+right depends on where it is drawn, and the two answers are opposite:
+a world billboard wants the flip, a **screen quad** does not.
+`drawFpsWeapon` ends in `drawScreenQuad`. `toScreenOrder` now, the same
+door the held torch (HT3) and the shield mod (SW4) take — and both of
+those were found the same way, by a person looking at the picture.
+
+### "The paperdoll doesn't equip the texture"
+
+Two faults stacked, and the first hid the second.
+
+**FIELD-GUN5.** `characters/paperdoll.js`'s `getTemplate` is a `Map`
+built once from the frozen DFU JSON, so it is blind to
+`registerCustomTemplates` — and `composeDoll` filters the worn list on
+it answering. The gun was dropped from the draw list before anything
+downstream could even fail. It asks the one home now.
+
+**FIELD-GUN4.** Under that, the vendor stand-in returned
+`getDFBitmap: () => ({ …size, data: null })` — "a bitmap the swap arm
+never reads", which was true of every door that existed when SURV-ART
+wrote it, because that mod's art is never *worn*. The paper doll is the
+one door that reads the bitmap itself. Our art is truecolor and has no
+palette index to give, so the stand-in hands back RGBA and the doll
+composites it on alpha, with neither dye nor helm mask — and **top-down**,
+because `_decoded` holds the bottom-up color32 order while the doll
+composites into a top-down buffer. The same HT3 fork as the sprite, one
+pipeline over, in the same afternoon.
+
+And a **place**: a classic weapon record carries its paper-doll offset
+inside its CIF and this one has none, so the registration supplies it
+(`PAPERDOLL_OFFSET`). Without it the blit lands off the panel's left
+edge, which is the other half of drawing nothing. That number is a
+placement, not a law — there is no DFU value to be right against — so
+it is one named constant for Mac to move.
+
+### "This isn't 1 to 1 with the prototype"
+
+The largest of the three, and the one that says most about how this
+was built. **The lab settled the recoil, the shake and the reload
+lower, and then kept them.** `combat/weaponRig.js` — the thing that
+actually draws the weapon, in all four hosts — had none of the three.
+The sprite arrived, the sounds arrived, and the weapon sat dead still
+while it fired.
+
+So the two machines moved to `combat/gunFeel.js` and the lab
+re-exports them, exactly as `combat/gunSheet.js` already works for the
+slicing laws. Tuning the lab now tunes the game, because there is one
+copy of each number.
+
+- **The recoil** is a displacement, not an impulse: the barrel is
+  already up on the frame the trigger breaks and the spring is the
+  ride down. A second shot into the recovery stacks on what is left,
+  which is why it is a spring at all.
+- **The shake moves the room**, not the weapon, because the camera
+  carries the weapon — the lab's own finding. The port has exactly one
+  camera shaker (Better Ambience's, already wired through all four
+  hosts by `view()`), so the gun borrows it through a `weaponKick`
+  door rather than threading a second one through four scenes.
+- **The reload lower** eases down and back on the cooldown's own
+  clock. There is no reload *animation* to play, and a weapon that
+  drops out of frame and rides back up reads as one.
+
+All three reach **both** draw paths — the mod's clone and the classic
+sprite — because the weapon's feel is the weapon's, not a mod's: a
+player with Weapon Widget off must not be holding a different gun.
+
+**Still not carried:** the lab turns the Widget's Inertia module *on*
+as a declared departure ("this art IS high resolution, so the lab is
+the case the warning is about"). The game leaves it at the mod's own
+default, which is off. Forcing a third-party module on for one weapon
+is the player's setting to make, not this weapon's.
+
+### What these five have in common
+
+FIELD-GUN1 through 6 are one fault wearing six coats: **a lookup keyed
+over DFU's own range, asked about an index outside it.** `WEAPON_HANDS`,
+`ITEM_TEMPLATES[...]`, `getTemplate`'s map, the stand-in's `data: null`,
+`toColor32` — each answered its default, and a default is not an error,
+so nothing anywhere went red. The audit's eight findings were all
+*registration*; a registration pin cannot fail for a weapon that
+registers perfectly and is then dropped by the next table down.
+
 ## The test characters carry one
 
 TSR-GUN (Mac, 2026-09-19: *"Put this weapon and ammo inside the test
