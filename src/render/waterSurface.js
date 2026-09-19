@@ -311,7 +311,11 @@ void main() {
   float shadow = cloudShadowAt(vWorldPos)${shadowGlsl ? ' * sunShadowAt(vWorldPos, n)' : ''};   // EL7: a quay's shadow lies on the water under the lane
   // the classic texel, the body of the water, lit as the ground is lit
   vec2 uv = fract(f + vec2(uScroll));
-  vec3 tex = texture(uTileArr, vec3(uv, 0.0)).rgb * uTint;
+  // GRAIN1: the same wrap, the same cure - the scrolled coordinate before
+  // the fract is what the footprint is measured from, or the water tile
+  // draws a blurred line wherever the scroll rolls over.
+  vec2 wgx = dFdx(unwrapped), wgy = dFdy(unwrapped);
+  vec3 tex = textureGrad(uTileArr, vec3(uv, 0.0), wgx, wgy).rgb * uTint;
   float diff = max(dot(n, uLightDir), 0.0) * shadow;
   float mdiff = max(dot(n, uMoonDir), 0.0);
   vec3 lit = tex * (uAmbient + uSunColor * (uSunScale * diff) + uMoonColor * (uMoonScale * mdiff));

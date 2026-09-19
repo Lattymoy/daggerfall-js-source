@@ -2284,3 +2284,100 @@ how many the frame skipped.
 
 **The lesson: the same one-line omission in eight places is not eight
 bugs, it is one bug in the wrong layer.**
+
+
+## GRAIN1 - the distant ground was unfiltered, and the shader is why (2026-09-19)
+
+Mac: *"distance terrian has a weird grain look"* - and, before asking for
+it, *"im not sure if we can tackle this without taking a performance
+hit"*. **It costs nothing, and it may give some back.** That is worth
+saying first because the worry was reasonable.
+
+### What the grain is
+
+Minification aliasing. The tile array was `TEXTURE_MIN_FILTER = NEAREST`
+with no mipmap, so past a few tiles out a screen pixel covers a dozen
+texels and NEAREST picks exactly one of them - a *different* one each
+time the camera drifts a fraction. The ground boils. A mipmap is the
+only cure for it.
+
+### Why there wasn't one
+
+Not an oversight. The terrain shaders sample a per-tile UV:
+
+```glsl
+vec2 tileUV = fract(unwrapped);          // jumps 1 -> 0 at every tile edge
+vec2 tuv = ROT[t] * tileUV + TRANS[t];
+texture(uTileArr, vec3(tuv, float(layer)));
+```
+
+`texture()` picks its mip from the screen-space derivative of the
+coordinate it is handed. At each of those `fract` jumps the derivative is
+a whole tile wide, the hardware reads that as *"this pixel covers the
+entire texture"*, and it samples the coarsest mip. Turn mipmapping on
+naively and you get a blurred line drawn around all 16,384 tiles of every
+streamed pixel - far worse than the grain.
+
+### The fix
+
+`unwrapped` does not jump. Its derivative is the true footprint, and
+`ROT[t]` is constant across the fragment, so rotating it gives that
+footprint in the rotated tile's own frame:
+
+```glsl
+vec2 gx = ROT[t] * dFdx(unwrapped);
+vec2 gy = ROT[t] * dFdy(unwrapped);
+textureGrad(uTileArr, vec3(tuv, float(layer)), gx, gy);
+```
+
+One sample either way. Both terrain shaders take it, and so does the
+water pass, which samples the same array through the same `fract` wrap
+(its own rollover would have drawn the same line).
+
+Then the texture side: `generateMipmap`, `LINEAR_MIPMAP_LINEAR` on
+minification, and **`NEAREST` left exactly where it was on
+magnification** - the near field is where Daggerfall's texels are meant
+to be square and visible, a mipmap has no say there, and LINEAR would
+smear the one place the art is read at full size. The distance is bought
+and the near field is untouched.
+
+A 2D ARRAY mipmaps each layer independently, so no tile can bleed into
+another the way an atlas would - the other reason atlases ship unmipped
+and this need not.
+
+Anisotropy where the driver has it, capped at 4. Terrain is read at a
+grazing angle almost everywhere, and an isotropic mip must take the wider
+of the two footprints - so it over-blurs along the view and still aliases
+across it. This is the one term that buys back the sharpness the mipmap
+costs. Optional: a driver without the extension still draws, and the
+mipmap alone already removes the grain.
+
+### The cost, honestly
+
+- `textureGrad` against `texture`: one sample either way. Explicit
+  gradients can cost a little on some hardware; it is one instruction's
+  worth, not a pass.
+- The mipmap **reduces** texture bandwidth at distance. Unmipped
+  minification is the worst case for a texture cache - every neighbouring
+  pixel reads a scattered texel. Mipped, it reads a coherent block. At
+  distance this is a saving, not a cost.
+- Memory: +33% on the tile array. 56 layers at 64x64 RGBA is under a
+  megabyte, so the chain is a third of that.
+- Anisotropy at 4x is real fill-rate work, and it is the only line here
+  that spends anything.
+
+And the frame this ships into is **CPU-bound** - the readout that opened
+this arc was script 23.3 ms against a 19.7 ms frame. GPU filtering is
+not what it is short of.
+
+**Verified in real WebGL2** (headless Chromium, not asserted from
+memory): the construct compiles, and `EXT_texture_filter_anisotropic`
+reports a maximum of 16 there.
+
+**Pinned** in `test/grain1_terrainmip.test.js` (4). Mutants
+`tools/mutants/grain1.json`: 10 - 10 dead, 0 survived.
+
+**The lesson: "we cannot filter this" was true of the sampler it was
+written against, and had been carried as a property of the terrain ever
+since. The wrap was never the obstacle - handing the wrapped coordinate
+to the hardware was.**
