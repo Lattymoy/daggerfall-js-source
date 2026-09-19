@@ -149,19 +149,44 @@ The mod publishes three channels - `Position`, `Offset`, `Scale` - and
 WW1's does. The shield bobs, leans and recoils WITH that view rather
 than against it.
 
-## The textures, and the doctrine
+## The sprites, and the doctrine - the first cut got this WRONG
 
-600 renders of ARENA2 art. `bible/01-Overview/Port-Doctrine.md`: A
-RENDER OF GAME DATA IS GAME DATA. So they are not in this repository;
-they reach the game from the player's own copy of the mod, through the
-textures pick, read by `combat/shieldWidgetAssets.js` by the names the
-mod asks for (`<archive>_<record>-<frame>`). A loose PNG of the same
-name answers too, which is what `TryImportTexture` reads in DFU.
+The first cut of this port kept the 600 out of the repository and read
+them from the player's own copy of the mod, citing
+`vendor/weapon-widget/README.md`. Mac: *"huh? .dfmod? This needs to be
+integrated directly"* - and he was right.
 
-**Without the bundle the widget draws nothing**, and that is not a
-fallback choice - there is no classic shield art to fall back to. The
-sibling can draw the vanilla weapon frame when its repaints are missing;
-this one cannot, and does not pretend to.
+The doctrine (`bible/01-Overview/Port-Doctrine.md`) is that **A RENDER
+OF GAME DATA IS GAME DATA**. Weapon Widget's 173 textures are repaints
+of the classic `WEAPON*.CIF` frames; Seasons of the Iliac Bay's are
+repaints of classic flats. Both answer yes to "did these pixels come
+from ARENA2?", and that is why both are read from the player's own
+bundle.
+
+**These are not repaints of anything.** Classic Daggerfall draws no
+first-person shield at all - there is no original here to render. They
+are the modder's own art (the frame-by-frame animation courtesy of
+WilhelmBlack, whom the mod's own settings pane credits). The port
+carries them, as it carries Eye of the Beholder's 3035 sprites,
+Handheld Torches' hands, Weapon Sheathing's NIFs and Immersive
+Footsteps' audio. The mistake was copying the sibling's ruling without
+checking whether the sibling's REASON applied.
+
+Vendored under `vendor/shield-widget/Textures/`, re-encoded the way
+`vendor/eye-of-the-beholder/README.md` records for its own set and
+measured over all 600 rather than sampled: every pixel's alpha is 0 or
+255 (the port's own 1-bit cutout law), and no sprite holds more than 84
+distinct colours once the transparent pixels count as one. Each is an
+indexed PNG with an exact palette and a single transparent index -
+**49.51 MB of RGBA becomes 2.02 MB on disk**, verified per sprite, every
+drawn pixel identical and every hidden pixel still hidden. Lossless for
+everything that reaches a screen; not byte-lossless, because the ghost
+colour under the transparent pixels collapses to one index.
+
+The widget measures from a four-row table (one size per archive) rather
+than from a loaded texture, because the rect maths measures a sprite
+before any texture is uploaded and a shield with no measured size draws
+nothing.
 
 ## The settings
 

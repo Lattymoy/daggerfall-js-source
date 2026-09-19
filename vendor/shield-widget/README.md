@@ -44,24 +44,45 @@ the bundle. The port read the IL method by method - the record is
 where it lives in `src/combat/shieldWidget.js`. The DLL itself is the
 author's compiled work and is not carried.
 
-**The 600 textures.** Four archives - 112360 Buckler, 112361 Round,
-112362 Kite, 112363 Tower - thirty records each, five frames each. A
-record is a MATERIAL GROUP (ten of them) plus a CONDITION TIER (three),
-which is what lets the sprite batter as the shield wears. They are
-renders of ARENA2 art, and the port's doctrine
-(`bible/01-Overview/Port-Doctrine.md`) is that A RENDER OF GAME DATA IS
-GAME DATA - the same ruling `vendor/seasons-iliac-bay/README.md` records
-for that mod's repainted flats and `vendor/weapon-widget/README.md` for
-this author's other set. So they reach the game the way ARENA2 does:
-FROM THE PLAYER'S OWN COPY OF THE MOD, at play time, and never from this
-repository. Attach the mod's `.dfmod` through the textures pick (the
-Mods page) and `src/combat/shieldWidgetAssets.js` reads the sprites off
-it by the names the mod asks for.
+**The 600 textures are HERE**, under `Textures/`, and the mod works out
+of the box with nothing to attach.
 
-**Without the bundle the widget draws nothing.** That is not a fallback
-choice: there is no classic shield art to fall back TO, because classic
-Daggerfall has none. The sibling can draw the vanilla weapon frame when
-its own repaints are missing; this one cannot, and does not pretend to.
+That is a departure from `vendor/weapon-widget/README.md`, and the
+reason is worth stating because the first cut of this port got it wrong
+by copying the sibling's ruling without checking whether its reason
+applied. The doctrine
+(`bible/01-Overview/Port-Doctrine.md`) is that **a render of game data
+is game data**: Weapon Widget's 173 textures are repaints of the classic
+`WEAPON*.CIF` frames, and Seasons of the Iliac Bay's are repaints of
+classic flats, so both answer yes to "did these pixels come from
+ARENA2?" and both are read from the player's own copy of the mod
+instead.
+
+**These are not repaints of anything.** Classic Daggerfall draws no
+first-person shield at all - there is no original for them to be a
+render of. They are RedRoryOTheGlen's own art (with the frame-by-frame
+animation courtesy of WilhelmBlack, whom the mod's own settings pane
+credits), and they are carried the way Eye of the Beholder's 3035
+sprites and Handheld Torches' are.
+
+**Re-encoded, and measured over all 600 rather than sampled:**
+
+- every pixel's alpha is **0 or 255** - the classic 1-bit cutout, which
+  is the port's own law (`if (t.a < 0.5) discard`);
+- no sprite holds more than **84** distinct colours once the transparent
+  pixels are counted as one.
+
+So each is written as an indexed PNG with an exact palette and a single
+transparent index: **49.51 MB of RGBA becomes 2.02 MB on disk**, and the
+conversion was verified per sprite, all 600 - every DRAWN pixel
+identical, every hidden pixel still hidden.
+
+This is lossless for everything that reaches a screen, and it is not
+byte-lossless, which is the same real distinction
+`vendor/eye-of-the-beholder/README.md` writes out for its own set: the
+source RGBA carries ghost colour *under* transparent pixels, left by the
+author's export, that no renderer has ever shown. It collapses to one
+index. Nothing visible changes; the bytes under the cutout do.
 
 ## The three mods it talks to
 

@@ -1,34 +1,38 @@
 // @ts-check
-// SW1: SHIELD WIDGET'S TEXTURES, from the player's own copy of the mod.
+// SW1: SHIELD WIDGET'S SPRITES, vendored.
 //
-// The mod's bundle carries 600 PNGs - four archives (112360 Buckler,
-// 112361 Round, 112362 Kite, 112363 Tower), thirty records each, five
-// frames each. A record is a material group plus a condition tier, so
-// the set is the mod's own art for every shield in every metal at three
-// states of wear.
+// 600 of them - four archives (112360 Buckler, 112361 Round, 112362
+// Kite, 112363 Tower), thirty records each, five frames each. A record
+// is a MATERIAL GROUP plus a CONDITION TIER, so the set is the mod's own
+// art for every shield in every metal at three states of wear.
 //
-// They are renders of ARENA2 art, so by the port's doctrine (A RENDER
-// OF GAME DATA IS GAME DATA - bible/01-Overview/Port-Doctrine.md, and
-// the ruling vendor/weapon-widget/README.md records for the sibling)
-// they are NOT in this repository. They reach the game the way Seasons
-// of the Iliac Bay's repaints and Weapon Widget's do: the player
-// attaches the `.dfmod` through the textures pick, and this door reads
-// the bundle by its manifest's GUID and answers a texture by the name
-// the mod asks for - TextureReplacement's own `<archive>_<record>-<frame>`.
-// A loose PNG of the same name answers too, which is what
-// TryImportTexture reads in DFU when the bundle has none.
+// THEY ARE THE MODDER'S OWN ART, NOT A RENDER OF ARENA2. Classic
+// Daggerfall draws no first-person shield at all - there is no original
+// for these to be a repaint of. That is what separates them from Weapon
+// Widget's 173 (repaints of the classic WEAPON*.CIF frames) and from
+// Seasons of the Iliac Bay's flats, which the doctrine
+// (bible/01-Overview/Port-Doctrine.md: A RENDER OF GAME DATA IS GAME
+// DATA) keeps out of this repository and reads from the player's own
+// copy of the mod. This art is carried, the way Eye of the Beholder's
+// 3035 sprites and Handheld Torches' are, and the mod works out of the
+// box with nothing to attach.
 //
-// Without the bundle the widget has no sprite and draws nothing, which
-// is the mod without its own textures: there is no classic shield art
-// to fall back to, because classic Daggerfall draws no shield at all.
+// RE-ENCODED, and measured over all 600 rather than sampled:
+//   - every pixel's alpha is 0 or 255 - the classic 1-bit cutout, which
+//     is the port's own law (`if (t.a < 0.5) discard`);
+//   - no sprite holds more than 84 distinct colours once the
+//     transparent pixels are counted as one.
+// So each is written as an indexed PNG with an exact palette and a
+// single transparent index: 49.51 MB of RGBA becomes 2.02 MB on disk,
+// verified per sprite, all 600 - every DRAWN pixel identical, every
+// hidden pixel still hidden. Lossless for everything that reaches a
+// screen; not byte-lossless, because the ghost colour the author's
+// export left UNDER the transparent pixels collapses to one index.
+// Nothing visible changes; the bytes under the cutout do.
 
-import { readUnityBundle } from '../formats/unityBundle.js';
-import { toColor32, toScreenOrder } from '../formats/color32Order.js';
+import { toScreenOrder } from '../formats/color32Order.js';
 import { decodePng } from '../systems/textureReplacement.js';
-import { DFMOD_KEY_PREFIX } from '../systems/seasonsIliacBayAssets.js';
-import { SHIELD_ARCHIVE_FIRST, SHIELD_TEXTURE_COUNT, shieldTextureName } from './shieldWidget.js';
-
-export { DFMOD_KEY_PREFIX };
+import { SHIELD_TEXTURE_COUNT, shieldTextureName } from './shieldWidget.js';
 
 export const SHIELD_WIDGET_MOD = Object.freeze({
   guid: 'e59d8114-e9a2-4e8e-84e8-4666475dbb9f',
@@ -37,155 +41,76 @@ export const SHIELD_WIDGET_MOD = Object.freeze({
   author: 'RedRoryOTheGlen',
 });
 
-const isWidgetDfmod = (name) => /\.dfmod$/i.test(name) && /shield.?widget/i.test(name.slice(name.lastIndexOf('/') + 1));
-const isPng = (name) => /\.png$/i.test(name);
-/** The four archives' own spelling, which is what a loose PNG is named. */
-const isShieldPng = (name) => isPng(name) && /(^|\/)11236[0-3]_\d+-\d+\.png$/i.test(name);
-
-/** The texture name for a flat index, TextureReplacement's spelling. */
+/** TextureReplacement's own spelling, which is what the files are named. */
 export function shieldTextureFileName(index) {
   const { archive, record, frame } = shieldTextureName(index);
   return `${archive}_${record}-${frame}`;
 }
 
+/** The sprite's path in the repository, which is what the pins read. */
+export const shieldSpritePath = (index) => `vendor/shield-widget/Textures/${shieldTextureFileName(index)}.png`;
+
+/** The vendored sprite's URL - the shape handheldTorches.js uses for its
+ *  own, which is what lets the bundler carry them. The archive, record
+ *  and frame are interpolated separately, as that door does: measured
+ *  over a real build, all 600 names reach the bundle (201 as files and
+ *  the rest inlined under Vite's 4 KB limit, which is the project's
+ *  setting and not this mod's business). */
+export const shieldSpriteUrl = (index) => {
+  const { archive, record, frame } = shieldTextureName(index);
+  return new URL(`../../vendor/shield-widget/Textures/${archive}_${record}-${frame}.png`, import.meta.url).href;
+};
+
 // ---- the registry ----------------------------------------------------
 
-let _names = [];
-let _load = null;
-let _bundle = null;        // Promise<{ bundle, manifest } | null>
-let _images = new Map();   // texture name -> Promise<image | null>
-let _sizes = new Map();    // flat index -> { width, height } | null, once known
+/** Every sprite's size, keyed by flat index. Written once by
+ *  `SHIELD_SPRITE_SIZES` below, because the widget's rect maths measures
+ *  a sprite BEFORE any texture is uploaded - a shield with no measured
+ *  size draws nothing. The four archives each hold one size, so the
+ *  table is four rows and not six hundred. */
+export const SHIELD_ARCHIVE_SIZES = Object.freeze({
+  112360: Object.freeze({ width: 134, height: 131 }),   // Buckler
+  112361: Object.freeze({ width: 157, height: 132 }),   // Round
+  112362: Object.freeze({ width: 157, height: 125 }),   // Kite
+  112363: Object.freeze({ width: 196, height: 146 }),   // Tower
+});
 
-/** Register the stored names and a `load(name) -> bytes` loader (the
- *  texture pick's own). Returns how many entries could carry this mod's
- *  textures: its bundle (one) and any loose PNG spelt as it asks. */
-export function setShieldWidgetSources(fileNames, load) {
-  const names = (fileNames ?? []).filter((n) => (n.startsWith(DFMOD_KEY_PREFIX) && isWidgetDfmod(n)) || isShieldPng(n));
-  const loader = typeof load === 'function' ? load : null;
-  const same = loader === _load && names.length === _names.length && names.every((n, i) => n === _names[i]);
-  _names = names;
-  _load = loader;
-  if (!same) { _bundle = null; _images = new Map(); _sizes = new Map(); }
-  return _names.length;
-}
-export const clearShieldWidgetSources = () => setShieldWidgetSources([], null);
-export const shieldWidgetSourcesCount = () => _names.length;
-
-function manifestOf(bundle) {
-  for (const t of bundle?.textAssets ?? []) {
-    if (!/\.dfmod$/i.test(t.name)) continue;
-    try { return JSON.parse(t.text); } catch { /* not this one */ }
-  }
-  return null;
+/** The sprite's size. Known up front for every one of the 600. */
+export function shieldWidgetSize(index) {
+  if (!(index >= 0 && index < SHIELD_TEXTURE_COUNT)) return null;
+  return SHIELD_ARCHIVE_SIZES[shieldTextureName(index).archive] ?? null;
 }
 
-/** The mod's bundle, found by GUID (then title) among the stored
- *  bundles, opened once. */
-export async function shieldWidgetBundle() {
-  if (!_bundle) {
-    _bundle = (async () => {
-      if (!_load) return null;
-      for (const name of _names) {
-        if (!name.startsWith(DFMOD_KEY_PREFIX)) continue;
-        try {
-          const bytes = await _load(name);
-          if (!bytes || !bytes.byteLength) continue;
-          const bundle = readUnityBundle(bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes));
-          const manifest = manifestOf(bundle);
-          if (!manifest) continue;
-          if (manifest.GUID === SHIELD_WIDGET_MOD.guid || manifest.ModTitle === SHIELD_WIDGET_MOD.title) {
-            if (manifest.ModVersion && String(manifest.ModVersion) !== SHIELD_WIDGET_MOD.version) console.warn(`[shield widget] the bundle is ${manifest.ModTitle} ${manifest.ModVersion}; the port is ${SHIELD_WIDGET_MOD.version}'s IL`);
-            return { bundle, manifest };
-          }
-        } catch (e) {
-          console.warn(`[shield widget] ${name} would not open:`, e?.message ?? e);
-        }
-      }
-      return null;
-    })();
-  }
-  return _bundle;
-}
+const _images = new Map();   // flat index -> Promise<image | null>
 
-/** One sprite by flat index - `{ width, height, colors }` RGBA in the
- *  port's color32 (bottom-up) order, the SHAPE renderer.uploadTexture
- *  reads (WW3's crash: the order was right and the shape was not) - or
- *  null when neither the bundle nor a loose PNG carries it. Cached per
- *  name, misses included. */
+/** One sprite - `{ width, height, colors }` RGBA in the port's color32
+ *  shape, which is what `renderer.uploadTexture` reads (TEX1). The rows
+ *  stay as the PNG has them: this is a SCREEN quad, so it takes
+ *  `toScreenOrder` and not `toColor32`'s flip (HT3's law, and WW3's
+ *  crash is why the SHAPE is named here too). Cached per index, misses
+ *  included. */
 export function shieldWidgetImage(index) {
   if (!(index >= 0 && index < SHIELD_TEXTURE_COUNT)) return Promise.resolve(null);
-  const name = shieldTextureFileName(index);
-  if (!_images.has(name)) {
-    _images.set(name, (async () => {
-      const b = await shieldWidgetBundle();
-      const tex = b?.bundle?.textures?.find((t) => t.name === name);
-      if (tex) {
-        try {
-          const img = toColor32(tex.rgba());
-          _sizes.set(index, { width: img.width, height: img.height });
-          return img;
-        } catch (e) { console.warn(`[shield widget] ${name} would not decode:`, e?.message ?? e); }
-      }
-      if (!_load) { _sizes.set(index, null); return null; }
-      const loose = _names.find((n) => isPng(n) && n.slice(n.lastIndexOf('/') + 1).replace(/\.png$/i, '') === name);
-      if (!loose) { _sizes.set(index, null); return null; }
+  if (!_images.has(index)) {
+    _images.set(index, (async () => {
       try {
-        const bytes = await _load(loose);
-        if (!bytes || !bytes.byteLength) { _sizes.set(index, null); return null; }
-        // HT3's law, as the sibling's door states it: a decoded PNG is
-        // already top-first and this is a SCREEN quad, so it keeps its
-        // rows where the bundle arm above flips.
-        const img = toScreenOrder(await decodePng(bytes));
-        _sizes.set(index, { width: img.width, height: img.height });
-        return img;
+        const res = await fetch(shieldSpriteUrl(index));
+        if (!res.ok) return null;
+        return toScreenOrder(await decodePng(new Uint8Array(await res.arrayBuffer())));
       } catch (e) {
-        console.warn(`[shield widget] ${loose} would not decode:`, e?.message ?? e);
-        _sizes.set(index, null);
+        console.warn(`[shield widget] ${shieldTextureFileName(index)} would not load:`, e?.message ?? e);
         return null;
       }
     })());
   }
-  return _images.get(name);
-}
-
-/** The sprite's size, which is all the widget's rect maths needs -
- *  answered from the bundle's own header without decoding pixels, so a
- *  frame that has not drawn yet still measures. Null until the bundle
- *  is open. */
-export function shieldWidgetSize(index) {
-  if (_sizes.has(index)) return _sizes.get(index);
-  return null;
-}
-
-/** Read every sprite's size out of the open bundle in one pass, so the
- *  widget can measure before a single texture has been uploaded. */
-export async function primeShieldWidgetSizes() {
-  const b = await shieldWidgetBundle();
-  if (!b?.bundle?.textures) return 0;
-  const by = new Map(b.bundle.textures.map((t) => [t.name, t]));
-  let n = 0;
-  for (let i = 0; i < SHIELD_TEXTURE_COUNT; i++) {
-    const t = by.get(shieldTextureFileName(i));
-    if (!t) continue;
-    _sizes.set(i, { width: t.width, height: t.height });
-    n++;
-  }
-  return n;
+  return _images.get(index);
 }
 
 /** The widget's `textures` dep. */
 export const shieldWidgetTextures = Object.freeze({ size: shieldWidgetSize, image: shieldWidgetImage });
 
-/** Is the mod's bundle attached? Answers once the bundle question is settled. */
-export async function shieldWidgetTexturesAttached() {
-  if (!_names.length) return false;
-  return !!(await shieldWidgetBundle()) || _names.some(isShieldPng);
-}
-
 /** The four archives, for a probe or a pin. */
-export const SHIELD_ARCHIVES = Object.freeze([0, 1, 2, 3].map((i) => SHIELD_ARCHIVE_FIRST + i));
-// TDZ2: the counts are NOT re-exported from here. shieldWidget.js is a
-// cycle partner (it is imported above and imports nothing back, but the
-// pin's law is the shape, not the direction), and a namespace taken over
-// this module would throw at boot in the bundle where no node test can
-// see it. Import them from combat/shieldWidget.js, their one home.
+export const SHIELD_ARCHIVES = Object.freeze(Object.keys(SHIELD_ARCHIVE_SIZES).map(Number));
+
+/** Tests only: the cache is a session's. */
+export function _resetShieldSpritesForTests() { _images.clear(); }

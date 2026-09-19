@@ -6,7 +6,7 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync, existsSync } from 'node:fs';
 
 import {
   createShieldWidget, readShieldWidgetSettings, shieldTextureIndex, shieldTextureName,
@@ -312,29 +312,33 @@ test('SW1: the FPS-models seam is recorded and not carried', () => {
 // ---- the sprite door -------------------------------------------------
 
 import {
-  setShieldWidgetSources, clearShieldWidgetSources, shieldWidgetSourcesCount,
-  shieldTextureFileName, shieldWidgetSize, shieldWidgetTexturesAttached,
-  SHIELD_WIDGET_MOD, SHIELD_ARCHIVES, DFMOD_KEY_PREFIX,   // TDZ2: the counts come from shieldWidget.js, their one home
+  shieldTextureFileName, shieldWidgetSize, shieldSpritePath, SHIELD_ARCHIVE_SIZES,
+  SHIELD_WIDGET_MOD, SHIELD_ARCHIVES,
 } from '../src/combat/shieldWidgetAssets.js';
 
-test('SW1: the sprite door takes the mod’s own bundle and its own PNG names, and nothing else', async () => {
-  clearShieldWidgetSources();
-  assert.equal(shieldWidgetSourcesCount(), 0);
-  assert.equal(await shieldWidgetTexturesAttached(), false, 'nothing attached, nothing claimed');
-
-  const n = setShieldWidgetSources([
-    `${DFMOD_KEY_PREFIX}shield widget.dfmod`,      // the mod's bundle
-    `${DFMOD_KEY_PREFIX}weapon widget.dfmod`,      // the sibling's - not this door's
-    `${DFMOD_KEY_PREFIX}seasons of the iliac bay.dfmod`,
-    'textures/112362_24-1.png',                     // a loose sprite of this mod's
-    'textures/112364_0-0.png',                      // an archive outside the four
-    'textures/WEAPON04.CIF_0-0_Elven.png',          // the sibling's loose art
-  ], async () => new Uint8Array(0));
-  assert.equal(n, 2, 'the bundle and the one loose sprite');
-  clearShieldWidgetSources();
+test('SW1: the 600 sprites are VENDORED, and every one is on disk under the name the mod asks for', () => {
+  // They are the modder's own art, not a render of ARENA2 - classic
+  // Daggerfall draws no first-person shield, so there is no original for
+  // them to repaint. That is what separates them from Weapon Widget's
+  // 173 and Seasons of the Iliac Bay's flats, which the doctrine keeps
+  // out of the repo; these ship with the port and it works out of the box.
+  const dir = 'vendor/shield-widget/Textures';
+  const names = readdirSync(dir);
+  assert.equal(names.length, SHIELD_TEXTURE_COUNT, `${names.length} sprites vendored`);
+  for (let i = 0; i < SHIELD_TEXTURE_COUNT; i++) {
+    assert.ok(existsSync(`${dir}/${shieldTextureFileName(i)}.png`), `${shieldTextureFileName(i)}.png is missing`);
+  }
+  // and every one is an INDEXED png with a transparent index - the
+  // encoding the README's measurement rests on
+  for (const n of ['112360_0-0.png', '112362_2-0.png', '112363_29-4.png']) {
+    const b = readFileSync(`${dir}/${n}`);
+    assert.equal(b[25], 3, `${n} is colour type 3 (indexed)`);
+    assert.ok(b.includes(Buffer.from('PLTE')), `${n} carries a palette`);
+    assert.ok(b.includes(Buffer.from('tRNS')), `${n} carries the transparent index`);
+  }
 });
 
-test('SW1: a flat index spells TextureReplacement’s own name', () => {
+test('SW1: a flat index spells TextureReplacement\u2019s own name, and every size is known up front', () => {
   assert.equal(shieldTextureFileName(0), '112360_0-0');
   assert.equal(shieldTextureFileName(4), '112360_0-4', 'five frames to a record');
   assert.equal(shieldTextureFileName(5), '112360_1-0');
@@ -343,19 +347,31 @@ test('SW1: a flat index spells TextureReplacement’s own name', () => {
   assert.equal(shieldTextureFileName(599), '112363_29-4');
   assert.deepEqual([...SHIELD_ARCHIVES], [112360, 112361, 112362, 112363]);
   assert.equal(SHIELD_WIDGET_MOD.guid, 'e59d8114-e9a2-4e8e-84e8-4666475dbb9f');
-  assert.equal(SHIELD_WIDGET_MOD.version, '1.6');
-  // nothing is known until a bundle is open
-  assert.equal(shieldWidgetSize(0), null);
+  // the size is known for all 600 WITHOUT loading one - the widget
+  // measures before it uploads, and a shield with no size draws nothing
+  for (let i = 0; i < SHIELD_TEXTURE_COUNT; i++) assert.ok(shieldWidgetSize(i), `no size for ${i}`);
+  assert.deepEqual(shieldWidgetSize(0), SHIELD_ARCHIVE_SIZES[112360]);
+  assert.deepEqual(shieldWidgetSize(599), SHIELD_ARCHIVE_SIZES[112363]);
+  assert.equal(shieldWidgetSize(-1), null);
+  assert.equal(shieldWidgetSize(SHIELD_TEXTURE_COUNT), null);
+  // and the path is the vendored one the bundler carries
+  assert.equal(shieldSpritePath(0), 'vendor/shield-widget/Textures/112360_0-0.png');
+  // the URL is built the way handheldTorches.js builds its own - the
+  // archive, record and frame interpolated separately inside a
+  // `new URL(..., import.meta.url)`, which is what lets the bundler
+  // carry them. Measured over a real build: all 600 names reach it.
+  const door = readFileSync('src/combat/shieldWidgetAssets.js', 'utf8');
+  assert.match(door, /new URL\(`\.\.\/\.\.\/vendor\/shield-widget\/Textures\/\$\{archive\}_\$\{record\}-\$\{frame\}\.png`, import\.meta\.url\)/);
 });
 
-test('SW1: the widget measures from the door, and draws nothing when the door is empty', () => {
-  // no bundle attached is the mod without its sprites, and there is no
-  // classic shield art to fall back to
+test('SW1: a widget whose door answers no size draws nothing', () => {
+  // The vendored sizes mean this cannot happen in the game; the law is
+  // kept because the widget must never draw a rect it could not measure.
   const bare = createShieldWidget({
     settings: settingsOf(), textures: { size: () => null }, audio: null, rolls: () => 0.5, handedness: () => false,
   });
   for (let i = 0; i < 20; i++) bare.lateUpdate(frame());
-  assert.equal(bare.drawRect(), null, 'no sprite, no draw');
+  assert.equal(bare.drawRect(), null, 'no size, no draw');
 });
 
 // ---- the rig ---------------------------------------------------------
