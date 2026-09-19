@@ -74,6 +74,10 @@ const svg = (tag, cls) => {
  *  the book gets its own sentence instead. */
 export function crownTitle(crown) {
   if (crown.lane === LANE_OGHMA) return 'The Oghma Infinium';
+  // ASCEND-ANYTIME: no arrow where nothing moves. The Oghma arm above
+  // is the same sentence about a different cause, and a view asked for
+  // by a player who owes nothing is the second.
+  if (crown.to === crown.from) return `Level ${crown.from}`;
   return `Level ${crown.from} → ${crown.to}`;
 }
 
@@ -81,6 +85,17 @@ export function crownTitle(crown) {
  *  middle of the sky. Ours is plural because Daggerfall's pool is. */
 export const ASK_ONE = 'Choose what rises';
 export const ASK_DONE = 'The stars are set';
+/** ASCEND-ANYTIME: ...and what it asks when it is asking nothing. The
+ *  window is a VIEW here - the player opened their own sky to look at
+ *  it - so the line names what they are looking at rather than a
+ *  choice they do not have. */
+export const ASK_VIEW = 'Your stars';
+
+// ASCEND-ANYTIME: the doors reach the view-only screen THROUGH this
+// module, because this module is the lazy chunk they already load -
+// importing ui/levelUpView.js directly would pull the whole reading
+// into the boot bundle for a screen most sessions never open.
+export { viewOnlyScreen } from './levelUpView.js';
 
 /** A meter row in the enhanced skin's own shape (ui/enhancedMenu.js's
  *  meterRow, whose markup this matches so the two cannot drift in
@@ -170,6 +185,13 @@ export function mountEnhancedLevelUp(hostEl, d = {}) {
   // still be in the tree. Everything a player must SEE is drawn here
   // too; nothing is routed to a hidden node.
   const plate = el('div', 'lv-plate');
+  // ASCEND-ANYTIME: a view has no pool, so the plate that counts one
+  // has nothing to say and is taken out of the column entirely. The
+  // six bands are pinned to their own grid rows in ui/enhancedStyle.js
+  // because a display:none item leaves the grid: without that, every
+  // band after this one slid up a track and the choice line landed in
+  // the stage's flexible row and painted over the skill ribbon.
+  if (screen?.viewOnly) plate.style.display = 'none';
   plate.setAttribute('role', 'status');
   plate.setAttribute('aria-live', 'polite');
   const plateCount = el('div', 'lv-count');
@@ -381,7 +403,11 @@ export function mountEnhancedLevelUp(hostEl, d = {}) {
     }
 
     const row = rows.get(m.focus);
-    ask.textContent = m.pool > 0 ? ASK_ONE : ASK_DONE;
+    // ASCEND-ANYTIME: a VIEW asks nothing. "The stars are set" is what
+    // a finished LEVEL-UP says, and saying it to a player who never had
+    // points to set would be the window congratulating them for
+    // nothing.
+    ask.textContent = m.crown.viewOnly ? ASK_VIEW : (m.pool > 0 ? ASK_ONE : ASK_DONE);
     pickN.textContent = row.label;
     pickF.textContent = row.delta > 0 ? `${row.base} → ${row.value}` : String(row.value);
     // THE PRICE, only where there is one. Daggerfall's pool is a point
@@ -409,7 +435,10 @@ export function mountEnhancedLevelUp(hostEl, d = {}) {
     // refusal behind it is unreachable again. It carries the REASON
     // instead, where a pointer and an assistive tech both find it.
     ok.title = m.canAscend ? '' : refusalText(screen);
-    ok.textContent = m.lane === LANE_OGHMA ? 'Read on' : 'Ascend';
+    // ...and the button CLOSES rather than ascends, so it says so. The
+    // Oghma arm beside it is the same rule for the same reason: the
+    // word on the button is what the press does.
+    ok.textContent = m.crown.viewOnly ? 'Close' : (m.lane === LANE_OGHMA ? 'Read on' : 'Ascend');
 
     if (ribbonNodes.length) {
       ribbonAt = Math.max(0, Math.min(ribbonRows.length - 1, ribbonAt));

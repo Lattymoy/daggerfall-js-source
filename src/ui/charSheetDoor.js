@@ -183,7 +183,7 @@ export function createCharSheetWindow(deps = {}) {
     // anything new. What changes is which face is inside it, and the
     // sheet's own four buttons become that page's doors, out of these
     // same hooks: PX25 built the Stats page to take them.
-    return enhancedSheetPageOverlay(hooks);
+    return enhancedSheetPageOverlay(hooks, deps.entity);
   }
   return new CharSheet(deps.entity, hooks);
 }
@@ -194,10 +194,12 @@ export function createCharSheetWindow(deps = {}) {
  * enhancedMenu's; this only chooses the page and forwards the sheet's
  * own four buttons onto it.
  */
-function enhancedSheetPageOverlay(hooks) {
+function enhancedSheetPageOverlay(hooks, entity = null) {
   let fired = false;
   let view = null;
   let unregister = () => {};   // PX28
+  let ascendView = null;   // ASCEND-ANYTIME: the Ascension, while it has this page's place
+  let ascendHost = null;
   const host = document.createElement('div');
   host.id = 'enhanced-sheetpage';
   // z-index 13, the pause door's depth: they are peers, never stacked.
@@ -205,6 +207,10 @@ function enhancedSheetPageOverlay(hooks) {
   document.body.append(host);
   const close = () => {
     if (fired) return;
+    try { ascendView?.destroy?.(); } catch { /* already gone */ }   // ASCEND-ANYTIME: the sheet key closes whatever is on top
+    ascendView = null;
+    ascendHost?.remove();
+    ascendHost = null;
     try { view?.unmount?.(); } catch { /* already gone */ }
     view = null;
     host.remove();
@@ -259,6 +265,94 @@ function enhancedSheetPageOverlay(hooks) {
     close();                              // the sheet's own close law runs FIRST...
     if (toPack) hooks.inventory();        // ...and this replaces the slot it just freed
   }
+  /** THE PAGE'S OWN OPTIONS, named once. ASCEND-ANYTIME mounts this
+   *  page a SECOND time - after a view of the stars closes over it -
+   *  and a second copy of this bag is two pages that drift apart the
+   *  day a door is added to one of them. */
+  function pageOpts() {
+    return {
+      mode: 'pause',
+      at: 'stats',
+      onAction: (a) => { if (a === 'resume') close(); },
+      // The sheet's own buttons, onto the page PX25 built to take
+      // them. A host that hands no hook gets no button, which is the
+      // same honest refusal the classic sheet gives.
+      hooks: {
+        openPack: hooks.inventory ? () => { close(); hooks.inventory(); } : undefined,
+        openSpellbook: hooks.spellbook ? () => { close(); hooks.spellbook(); } : undefined,
+        openChronicle: hooks.logbook ? () => { close(); hooks.logbook(); } : undefined,
+        // ASCEND-ANYTIME: this page can always offer it, because this
+        // door owns the entity the button is about. A host that handed
+        // no entity gets no button, the same refusal the three above
+        // give for a door they were handed none of.
+        openAscend: entity ? openAscend : undefined,
+      },
+    };
+  }
+
+  /** ASCEND-ANYTIME: take the Ascension down and leave this page as it
+   *  was. Safe to call with none up, which is what `close` relies on. */
+  function dropAscend() {
+    try { ascendView?.destroy?.(); } catch { /* already gone */ }
+    ascendView = null;
+    ascendHost?.remove();
+    ascendHost = null;
+  }
+
+  /**
+   * ASCEND-ANYTIME: the Stats page's Ascend button, on the sheet key's
+   * own overlay.
+   *
+   * A level OWED is not this window's business at all - the door above
+   * already answers that press with the rollout, and this page is only
+   * ever built when nothing is owed. So there is one answer here: a
+   * VIEW of the stars (levelUpView's `viewOnlyScreen`), swapped in over
+   * this page and handing it back when it closes.
+   *
+   * Through the ONE lazy-chunk door, so a chunk that will not load says
+   * so instead of doing nothing - and this page stays up behind the
+   * notice rather than leaving the player on a dead button.
+   */
+  function openAscend() {
+    if (fired || ascendHost || !entity) return;
+    const h = document.createElement('div');
+    h.id = 'enhanced-ascend-view';
+    // 14: above this page's 13, the level-up overlay's own depth.
+    h.style.cssText = 'position:fixed;inset:0;z-index:14;background:transparent;overflow:hidden';
+    document.body.append(h);
+    ascendHost = h;
+    const drop = () => { if (ascendHost === h) dropAscend(); else h.remove(); };
+    mountEnhancedChunk({
+      load: () => import('./enhancedLevelUp.js'),
+      alive: () => !fired && ascendHost === h,
+      host: h, onDismiss: drop, label: 'ascend',
+      mount: ({ mountEnhancedLevelUp, viewOnlyScreen }) => {
+        // This page gives the keyboard up BEFORE the Ascension takes
+        // it: two capture handlers on one window would answer Escape
+        // twice.
+        try { view?.unmount?.(); } catch { /* already gone */ }
+        view = null;
+        ascendView = mountEnhancedLevelUp(h, {
+          screen: viewOnlyScreen(entity, usesVirtueLeveling(entity)),
+          entity,
+          onExit: () => {
+            dropAscend();
+            if (!fired) remountPage();
+          },
+        });
+      },
+    });
+  }
+
+  /** The Stats page again, after a view closed over it. */
+  function remountPage() {
+    mountEnhancedChunk({
+      load: () => import('./enhancedMenu.js'),
+      alive: () => !fired, host, onDismiss: close, label: 'charsheet',
+      mount: ({ mountEnhancedMenu }) => { view = mountEnhancedMenu(host, pageOpts()); },
+    });
+  }
+
   // `globalThis` and OPTIONAL, for the reason this file's own forks
   // give: node drives these hosts headless and has no listener target,
   // so a bare `addEventListener` is a ReferenceError at mount rather
@@ -270,21 +364,7 @@ function enhancedSheetPageOverlay(hooks) {
   mountEnhancedChunk({
     load: () => import('./enhancedMenu.js'),
     alive: () => !fired, host, onDismiss: close, label: 'charsheet',
-    mount: ({ mountEnhancedMenu }) => {
-    view = mountEnhancedMenu(host, {
-      mode: 'pause',
-      at: 'stats',
-      onAction: (a) => { if (a === 'resume') close(); },
-      // The sheet's own buttons, onto the page PX25 built to take
-      // them. A host that hands no hook gets no button, which is the
-      // same honest refusal the classic sheet gives.
-      hooks: {
-        openPack: hooks.inventory ? () => { close(); hooks.inventory(); } : undefined,
-        openSpellbook: hooks.spellbook ? () => { close(); hooks.spellbook(); } : undefined,
-        openChronicle: hooks.logbook ? () => { close(); hooks.logbook(); } : undefined,
-      },
-    });
-    },
+    mount: ({ mountEnhancedMenu }) => { view = mountEnhancedMenu(host, pageOpts()); },
   });
   return {
     // THE HOST CONTRACT, in the hosts' own words - `input`, not
