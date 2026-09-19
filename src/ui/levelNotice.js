@@ -21,8 +21,20 @@
 //   stays exactly where DFU leaves it - set. The window opens when
 //   the player opens the sheet, which is where DFU levels you up
 //   anyway (ui/charSheetDoor.js has returned the level-up window for
-//   a pending level since LV1, so every route to the sheet - the key,
-//   the dial's Stats arm, the pause page - is already this door).
+//   a pending level since LV1).
+//
+// THAT PARENTHESIS USED TO END "...so every route to the sheet - the
+// key, the dial's Stats arm, the pause page - is already this door",
+// and two of those three were not. Only the KEY reached
+// `createCharSheetWindow`; the dial's Stats arm and the pause page
+// both ran `togglePause({ at: 'stats' })`, whose page is built from
+// `sheetModel` and has never read `readyToLevelUp`. Since this window
+// cannot close itself without spending, every close is something else
+// taking the slot - and the dial is exactly where a player reaches
+// next. Mac found it the only way it could be found: "when you close
+// the levelup screen without adding stat points you cant open it
+// again." The hosts' arms ask `levelOwed` now and the sentence above
+// says only what was checked.
 //
 // THE CLASSIC SKIN IS UNTOUCHED, byte for byte: it says its line and
 // opens its sheet, as it has since AUDIT 44. This is a departure the

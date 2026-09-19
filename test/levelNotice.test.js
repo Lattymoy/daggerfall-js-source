@@ -288,6 +288,40 @@ test('AUDIT LV2 (reopened): the bonus pool is the LEVEL\'s, so re-opening the wi
   assert.doesNotMatch(src('src/ui/charsheet.js'), /LEVELUP_BONUS_POOL_MIN \+ Math\.floor\(rolls\(\)/);
 });
 
+test('LV2 FIX: EVERY route to the sheet asks the door, not just the key', () => {
+  // Mac: "when you close the levelup screen without adding stat points
+  // you cant open it again." LV2's own records say "every route to the
+  // sheet - the key, the dial's Stats arm, the pause page - is already
+  // this door", and I wrote that sentence without checking two of the
+  // three. Only the KEY went through `createCharSheetWindow`. The
+  // dial's Stats arm and the pause page both ran
+  // `togglePause({ at: 'stats' })`, and that page is built from
+  // `sheetModel` in ui/enhancedMenu.js, which has never read
+  // `readyToLevelUp` - so the route this skin most invites a player to
+  // use answered an owed level with the ordinary sheet, every time,
+  // with no way back to it.
+  //
+  // The enhanced level-up window CANNOT close itself without spending
+  // (ui/enhancedLevelUp.js's only `onExit()` is behind `ascend`), so
+  // every close is something else taking the slot - a pause, a map, a
+  // peer's window - and after one of those the dial is exactly where a
+  // player reaches. Pinned in all four hosts, because a route that
+  // forgets is the whole finding.
+  for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js', 'src/scenes/worldModes.js', 'src/scenes/dungeonContext.js']) {
+    const h = src(host);
+    assert.match(h, /import \{[^}]*levelOwed[^}]*\} from '\.\.\/ui\/levelNotice\.js'/, `${host} takes the live read`);
+    assert.match(h, /openSheetPage[^\n]*levelOwed\(playerEntity\)/,
+      `${host}'s Stats arm still goes straight to the pause page with a level owed`);
+    // ...and it opens the SHEET door, which is the one that answers with
+    // the Ascension - never a second copy of that fork.
+    assert.match(h, /openSheetPage[^\n]*toggleCharSheet\(\)/, `${host} must reach the door, not rebuild the fork`);
+  }
+  // The pause page itself is still the ordinary sheet, which is right:
+  // it is the page for a character who owes nothing.
+  assert.doesNotMatch(src('src/ui/enhancedMenu.js'), /readyToLevelUp/,
+    'the menu stays a VIEW - the routing decision belongs to the hosts, at the door');
+});
+
 test('AUDIT LV2 F1: a door with no caller says so, rather than naming one', () => {
   // This module's teardown named "ui/hud.js's own destroy path", and
   // ui/hud.js has no destroy path - the same false caller AUDIT FONT
@@ -411,7 +445,11 @@ test('LV2: the strip is the ONE call all four hosts already make, and the fork i
   // written once.
   for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js', 'src/scenes/worldModes.js', 'src/scenes/dungeonContext.js']) {
     const s = src(host);
-    assert.match(s, /import \{ announceLevelUp \} from '\.\.\/ui\/levelNotice\.js'/, `${host} takes the seam`);
+    // The seam, however many of this module's reads the host takes -
+    // LV2 FIX added `levelOwed` beside it, and a pin that spelled the
+    // whole import line would have failed on a file that takes MORE of
+    // the right thing.
+    assert.match(s, /import \{[^}]*\bannounceLevelUp\b[^}]*\} from '\.\.\/ui\/levelNotice\.js'/, `${host} takes the seam`);
     assert.match(s, /announceLevelUp\(playerEntity, \{/, `${host} announces through it`);
     assert.doesNotMatch(s, /onLevelUp: \(\) => townTalk\.showOverlay\(makeCharSheetWindow\(\)\)/,
       `${host} no longer opens the window from a level-up arm`);

@@ -170,7 +170,7 @@ import { FOUND_NOTHING_VALUABLE_TEXT_ID } from '../systems/talk.js';   // GetRan
 import { spellRecordOfIndex } from '../systems/loot.js';   // QG1: CastSpellDo's classic-record read (the G4 registry)
 import { preloadCharSheetArt } from '../ui/charsheet.js';   // U8a. AUDIT 44 (a11): no LevelUpScreen here - a level-up opens the SHEET, and the skin fork behind charSheetDoor decides which face it wears.
 import { createCharSheetWindow, charSheetDoorReady, warmLevelUpWindow } from '../ui/charSheetDoor.js';
-import { announceLevelUp } from '../ui/levelNotice.js';   // LV2: the level-up notification, and the skin fork over whether the window opens itself   // U52: the sheet's ONE seam, and the skin fork in front of it
+import { announceLevelUp, levelOwed } from '../ui/levelNotice.js';   // LV2: the level-up notification, and the skin fork over whether the window opens itself   // U52: the sheet's ONE seam, and the skin fork in front of it
 import { QuestJournalWindow, preloadQuestJournalArt } from '../ui/questJournal.js';   // U43: the LogBook and NoteBook doors
 import { createChronicleWindow } from '../ui/chronicleDoor.js';   // PX24d: the chronicle's one door
 import { openPixelDial } from '../ui/pixelDial.js';   // PX15: the Tab compass rose
@@ -4976,7 +4976,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // so an F9 pressed inside a shop recorded the street's sheath and
     // hand. The mode host answers for the rig that is actually drawn
     // and null outside interior mode (the dungeon owns its own
-    // composer, dungeonContext.js:5591), so exterior mode and a
+    // composer, dungeonContext.js:5608), so exterior mode and a
     // pre-seam mode host compose exactly as before, per field.
     const wp = modes?.weaponPose?.() ?? null;
     const snap = snapshotPlayer(playerEntity, {
@@ -6051,7 +6051,24 @@ export async function bootWorld(canvas, renderer, params, status) {
     // three columns against the left edge. The pause window's Stats
     // page IS that sheet, off the same sheetModel, and is centred by
     // construction. This host's own pause flow, landed on it.
-    openSheetPage: () => hudCtx.togglePause({ at: 'stats' }),
+    // LV2 FIX (2026-09-19, Mac: "when you close the levelup screen
+    // without adding stat points you cant open it again"): THE DIAL'S
+    // STATS ARM ASKS THE DOOR TOO. LV2's own records claim "every route
+    // to the sheet - the key, the dial's Stats arm, the pause page - is
+    // already this door", and that sentence was written without
+    // checking two of the three. The KEY goes through
+    // `createCharSheetWindow` and gets the Ascension; this arm and the
+    // pause page went straight to the menu's Stats tab, which reads
+    // `sheetModel` and has never heard of `readyToLevelUp`. So a player
+    // whose level-up window was closed by anything (a pause, a map, a
+    // peer's window) and who then reached for their sheet the way this
+    // skin invites - the dial - got the ordinary sheet and no way back
+    // to the level they were owed.
+    //
+    // `levelOwed` is ui/levelNotice.js's, which is the same live read
+    // the HUD's own standing reminder uses: one answer to "is a level
+    // waiting", not a second copy of the flag.
+    openSheetPage: () => (levelOwed(playerEntity) ? hudCtx.toggleCharSheet() : hudCtx.togglePause({ at: 'stats' })),
     // MAC-L1: ONE SIGNATURE ACROSS THE FOUR HOSTS, and ONE READER of
     // its options. `routeAction`'s Escape arm used to hand a position
     // applier over positionally, and this host reads argument one as
@@ -6754,7 +6771,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // exterior -> the townTalk overlay, interior OR dungeon -> the mode
   // machine's slot. U43-ii shipped the dungeon half: showQuestBox
   // offers the window to `modes.showQuestOverlay` below, and
-  // worldModes answers it in BOTH modes (worldModes.js:7501-7564 -
+  // worldModes answers it in BOTH modes (worldModes.js:7518-7581 -
   // dungeon routes to dungeonCtx.showOverlay), so a dungeon popup is
   // shown rather than logged loudly and dropped.
   // AUDIT 24 (wave 21): DaggerfallMessageBox.Show() is a

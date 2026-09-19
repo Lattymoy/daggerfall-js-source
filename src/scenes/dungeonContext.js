@@ -89,7 +89,7 @@ import { preloadMessageBoxArt } from '../ui/messageBox.js';   // U11
 import { ChargenFlow } from '../ui/chargen.js';
 import { LevelUpScreen, preloadCharSheetArt } from '../ui/charsheet.js';
 import { createCharSheetWindow, warmLevelUpWindow } from '../ui/charSheetDoor.js';
-import { announceLevelUp } from '../ui/levelNotice.js';   // LV2: the level-up notification, and the skin fork over whether the window opens itself   // U52: the sheet's ONE seam, and the skin fork in front of it
+import { announceLevelUp, levelOwed } from '../ui/levelNotice.js';   // LV2: the level-up notification, and the skin fork over whether the window opens itself   // U52: the sheet's ONE seam, and the skin fork in front of it
 import { QuestJournalWindow, preloadQuestJournalArt } from '../ui/questJournal.js';   // U43: the LogBook and NoteBook doors
 import { createChronicleWindow } from '../ui/chronicleDoor.js';   // PX24d: the chronicle's one door
 import { DeathScreen } from '../ui/deathScreen.js';
@@ -1482,7 +1482,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // owned, and destroy() hands it back (the _prevPassiveHost idiom this
   // file already uses for its other process-global seams). A bare null
   // would not do: on ?world and ?exterior the previous holder is the
-  // host's own townTalk sink (world.js:7789 / exterior.js:3282), set
+  // host's own townTalk sink (world.js:7806 / exterior.js:3299), set
   // once at boot and never again, so nulling on the way out of the
   // first dungeon would silently un-file every mid-screen label above
   // ground for the rest of the session - MC-1's own bug, re-opened.
@@ -2990,8 +2990,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
               // AUDIT 39 (#64) / THE FOUR HOSTS RULE - SHIPPED (wave D):
               // this host was the FOURTH BODY of the player-arrow law
               // and is now the fourth CALLER. combat/arrowFlight.js's
-              // playerArrowHitFoe is the one copy world.js:10724,
-              // exterior.js:4708 and worldModes.js:6234 already ran;
+              // playerArrowHitFoe is the one copy world.js:10741,
+              // exterior.js:4725 and worldModes.js:6234 already ran;
               // the flag said the divergence would bite and it already
               // had. This copy splashed at the ARROW TIP
               // (`[m.pos[0], m.pos[1], m.pos[2]]`) on the claim that
@@ -5257,7 +5257,24 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // three columns against the left edge. The pause window's Stats
     // page IS that sheet, off the same sheetModel, and is centred by
     // construction. This host's own pause flow, landed on it.
-    openSheetPage() { this.togglePause({ at: 'stats' }); },
+    // LV2 FIX (2026-09-19, Mac: "when you close the levelup screen
+    // without adding stat points you cant open it again"): THE DIAL'S
+    // STATS ARM ASKS THE DOOR TOO. LV2's own records claim "every route
+    // to the sheet - the key, the dial's Stats arm, the pause page - is
+    // already this door", and that sentence was written without
+    // checking two of the three. The KEY goes through
+    // `createCharSheetWindow` and gets the Ascension; this arm and the
+    // pause page went straight to the menu's Stats tab, which reads
+    // `sheetModel` and has never heard of `readyToLevelUp`. So a player
+    // whose level-up window was closed by anything (a pause, a map, a
+    // peer's window) and who then reached for their sheet the way this
+    // skin invites - the dial - got the ordinary sheet and no way back
+    // to the level they were owed.
+    //
+    // `levelOwed` is ui/levelNotice.js's, which is the same live read
+    // the HUD's own standing reminder uses: one answer to "is a level
+    // waiting", not a second copy of the flag.
+    openSheetPage() { if (levelOwed(playerEntity)) this.toggleCharSheet(); else this.togglePause({ at: 'stats' }); },
     // MAC-L1: ONE SIGNATURE ACROSS THE FOUR HOSTS. This was the odd one
     // out - `togglePause(setPlayerPos = null, opts = {})` against the
     // other three's `togglePause(opts = {})` - and `routeAction` spelt
