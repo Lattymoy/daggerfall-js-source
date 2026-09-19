@@ -207,5 +207,60 @@
    "test/el5_field.test.js",
    "test/el2_shadows.test.js"
   ]
+ },
+ {
+  "name": "PERF-CROWD2-the-pass-stops-culling-so-every-host-is-back-to-submitting-uncut",
+  "file": "src/render/renderer.js",
+  "old": "    const bbCull = !this._bbCullOff && !!this._proj && !!this._view;",
+  "new": "    const bbCull = false;",
+  "tests": [
+   "test/perfon2_peercull.test.js"
+  ]
+ },
+ {
+  "name": "PERF-CROWD2-the-cull-runs-BEFORE-the-shadow-record-so-an-off-screen-caster-stops-casting",
+  "file": "src/render/renderer.js",
+  "old": "    if (this._casting) this._shadows.recordBillboards(batches, this._flatWind, camRight, camUp);   // EL2 (EL3: with the basis)",
+  "new": "",
+  "tests": [
+   "test/perfon2_peercull.test.js",
+   "test/el2_shadows.test.js"
+  ]
+ },
+ {
+  "name": "PERF-CROWD2-the-passs-sphere-is-not-lifted-so-heads-are-culled-at-the-screen-edge",
+  "file": "src/render/renderer.js",
+  "old": "      s[0] + (o ? o[0] : 0), s[1] + (o ? o[1] : 0) + (b.size?.h ?? 0) * 0.5, s[2] + (o ? o[2] : 0), s[3]);",
+  "new": "      s[0] + (o ? o[0] : 0), s[1] + (o ? o[1] : 0), s[2] + (o ? o[2] : 0), s[3]);",
+  "tests": [
+   "test/perfon2_peercull.test.js"
+  ]
+ },
+ {
+  "name": "PERF-CROWD2-a-batch-without-bounds-is-culled-instead-of-drawn",
+  "file": "src/render/renderer.js",
+  "old": "    const s = b.bounds;\n    if (!s) return true;",
+  "new": "    const s = b.bounds;\n    if (!s) return false;",
+  "tests": [
+   "test/perfon2_peercull.test.js"
+  ]
+ },
+ {
+  "name": "PERF-CROWD2-the-blended-phase-is-left-uncut",
+  "file": "src/render/renderer.js",
+  "old": "      if (bbCull && !this._bbVisible(b)) { this.stats.bbCulled++; continue; }   // PERF-CROWD2: the ghosts and the concealed too",
+  "new": "",
+  "tests": [
+   "test/perfon2_peercull.test.js"
+  ]
+ },
+ {
+  "name": "PERF-CROWD2-the-cull-off-door-stops-working",
+  "file": "src/render/renderer.js",
+  "old": "    this._bbCullOff = cullDisabled();   // the ?cull=off door, read once",
+  "new": "    this._bbCullOff = false;",
+  "tests": [
+   "test/perfon2_peercull.test.js"
+  ]
  }
 ]

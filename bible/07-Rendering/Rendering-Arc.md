@@ -2172,3 +2172,45 @@ to face it. It is pinned now.
 
 **Pinned** in `test/perfon2_peercull.test.js`. Mutants
 `tools/mutants/perfon2.json`: 22 - 22 dead, 0 survived.
+
+
+## PERF-CROWD2 - the billboard pass culls, so no host can forget to (2026-09-19)
+
+PERF-ON2 found the peers submitted uncut. PERF-CROWD found the whole town
+beside them. Then the same shape turned up everywhere else:
+
+| host | list |
+|---|---|
+| `dungeonContext.js:5021` | the mobiles, the drops, the spells |
+| `worldModes.js:6095` | the dungeon's flats, camps, torches and peers |
+| `worldModes.js:6258` | the interior's flats and peers |
+| `worldModes.js:6264-6298` | blood, torches, drops, foes, guards - **five separate uncut calls** |
+| `exterior.js:4776`, `world.js:10594` | the spell missiles |
+| `exterior.js:4838` | the fixed city's townspeople |
+| `interior.js:352`, `dungeon.js:1006` | the flats, the camps, the torches |
+
+Seven call sites, and an eighth waiting to be written next year. **Fixing
+them one at a time is how this bug got to be in eight places.** The test
+belongs in the pass, so `drawBillboards` takes it and every host is
+correct by construction.
+
+**It culls AFTER the shadow record, on purpose.** `recordBillboards` runs
+first and takes the whole list, so everything still CASTS - only the
+drawing is culled. Nothing goes dark because its caster stepped off
+screen. (The world host's own lists are culled a step earlier, before
+they are even collected; that is EV3's existing behaviour for its flats
+and the peers and crowd now match it.)
+
+The planes are recomputed once a CALL rather than cached on the frame
+stamp, because the panel bracket swaps `_proj`/`_view` without bumping
+it - one 4x4 multiply a call against what it saves is not a trade worth
+thinking about. The sphere is the batch's own, lifted half a height for
+the bottom anchor, exactly as PERF-CROWD's is and for the same reason.
+`?cull=off` turns it off with everything else, and `stats.bbCulled` says
+how many the frame skipped.
+
+**Pinned** in `test/perfon2_peercull.test.js`. Mutants
+`tools/mutants/perfon2.json`: 28 - 28 dead, 0 survived.
+
+**The lesson: the same one-line omission in eight places is not eight
+bugs, it is one bug in the wrong layer.**

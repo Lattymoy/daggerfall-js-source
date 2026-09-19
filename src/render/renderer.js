@@ -409,7 +409,9 @@ void main() {
 }`;
 
 import { ShadowPass, SHADOW_GLSL } from './shadowPass.js';   // EL7: the receiver block, for the water surface's lane program
-import { boundsOf } from './bounds.js';
+import { boundsOf, sphereInPlanes } from './bounds.js';
+import { frustumPlanes, cullDisabled } from './frustum.js';   // PERF-CROWD2: the billboard pass culls for every host, so no host can forget to
+import { multiply as mat4Multiply } from '../world/mat4.js';   // PERF-CROWD2: proj * view, for this call's planes
 import { PerfMeter, perfOn, perfZones, perfCpu, setMeter } from './perfMeter.js';   // EL8: `?perf`   // EL5: the bounds every bundle carries for the replays' culling   // EL2: the lane's shadow maps - a leaf that compiles nothing until a lane asks
 import { AirPass, AIR_ADAPT_UNIT as ADAPT_UNIT, AIR_CONTACT_UNIT as CONTACT_UNIT } from './airPass.js';   // EL3: the ambient occlusion, the bloom and the shafts - the same kind of leaf; EL4: the eye's unit; EL6: all of it off the frame's own depth, at the resolve
 import { SHADE_DARK } from '../systems/concealDraw.js';   // ECV1 / AUDIT 65 PN-3: the shade's pull toward black, interpolated into BB_FS below - the shader restated 0.12 as a second literal. The LEAF, not systems/combatVisuals.js, which re-exports it: that module's graph would take this file's closure from 13 modules to 69
@@ -980,9 +982,20 @@ export class Renderer {
     // were invisible here, which made the counter blind to exactly the
     // terrain culling it exists to measure. texBinds counts the binds a
     // DRAW pays; upload-time binds are creation cost, not frame cost.
-    this.stats = { draws: 0, programBinds: 0, vaoBinds: 0, texBinds: 0 };
+    this.stats = { draws: 0, programBinds: 0, vaoBinds: 0, texBinds: 0, bbCulled: 0 };   // PERF-CROWD2: the billboards this frame did NOT submit
     this._perf = perfOn() ? setMeter(gl, new PerfMeter(gl, perfZones(), perfCpu())) : null;   // EL8: `?perf` - a GPU-timed line every PERF_EVERY world frames; VC6d: `?perf=zones` per pass, and the meter is findable by its context (the sky's march marks its own span); PERF-CPU: `?perf=cpu` tiles the same zones on the MAIN THREAD's clock, which is the one a script-bound frame is losing
     this._frameStamp = 0;      // PERF3: bumped by beginFrame (and the state restores) - the terrain program's frame-constant block is uploaded once per stamp
+    // PERF-CROWD2 (2026-09-19): THE BILLBOARD PASS CULLS, so that no host
+    // has to remember to. PERF-ON2 found the peers submitted uncut and
+    // PERF-CROWD found the whole town beside them - and then the same
+    // shape turned up in every other host: the dungeon's mobiles, drops
+    // and spells, the interior's flats, the fixed city's townspeople, and
+    // worldModes' five separate lists (blood, torches, drops, foes,
+    // guards), each its own uncut call. Fixing seven call sites leaves an
+    // eighth to be written next year. The test belongs here.
+    this._bbPlanes = new Float32Array(24);
+    this._bbPv = new Float32Array(16);
+    this._bbCullOff = cullDisabled();   // the ?cull=off door, read once
     this._tFrameStamp = -1;
     this._windowEmission = new Float32Array([0, 0, 0]);
     this._pointLights = new Float32Array(0); // vec4 per light [x,y,z,range]
@@ -1267,6 +1280,28 @@ export class Renderer {
   }
 
   /** EV6: bind `vao` (or null) unless the shadow says it already is. */
+  /**
+   * PERF-CROWD2: is this billboard batch inside the frame?
+   *
+   * The batch's own sphere (`createBillboardBatch` stores one over the
+   * placement points with the sprite's half-diagonal added), offset by
+   * its live origin and LIFTED half a height - because the billboard VS
+   * is bottom-anchored (`uUp * ((aCorner.y + 0.5) * uSize.y)`), so a
+   * sprite stands its full height above its placement point and the
+   * stored sphere does not reach the top of anything taller than it is
+   * wide. A person is exactly that shape; without the lift this culls
+   * heads at the top of the screen.
+   *
+   * A batch with no bounds is always drawn, as `batchVisible` has it.
+   */
+  _bbVisible(b) {
+    const s = b.bounds;
+    if (!s) return true;
+    const o = b.origin;
+    return sphereInPlanes(this._bbPlanes,
+      s[0] + (o ? o[0] : 0), s[1] + (o ? o[1] : 0) + (b.size?.h ?? 0) * 0.5, s[2] + (o ? o[2] : 0), s[3]);
+  }
+
   _bindVao(vao) {
     if (this._lastVao === vao) return;
     this.gl.bindVertexArray(vao);
@@ -2933,7 +2968,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
   beginFrame(proj, view, lightDir, opts = null) {
     this._close2D();   // PERF-2D: the baseline back, before anything that needs it
     const s = this.stats;
-    s.draws = 0; s.programBinds = 0; s.vaoBinds = 0; s.texBinds = 0;
+    s.draws = 0; s.programBinds = 0; s.vaoBinds = 0; s.texBinds = 0; s.bbCulled = 0;   // PERF-CROWD2
     // VC4: the cloud shadow deck is a FRAME's, not the renderer's - a host
     // that wants one sets it after this (the exterior hosts do, per
     // pixel); an interior or a dungeon, which never does, gets none, and
@@ -4020,6 +4055,14 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     this._close2D();   // PERF-2D: the baseline back, before anything that needs it
     const gl = this.gl;
     if (this._casting) this._shadows.recordBillboards(batches, this._flatWind, camRight, camUp);   // EL2 (EL3: with the basis)
+    // PERF-CROWD2: the frame's planes, once a CALL - after the shadow
+    // record above, on purpose: everything still CASTS, only the drawing
+    // is culled, so no shadow disappears because its caster went off
+    // screen. The planes are recomputed rather than cached on the frame
+    // stamp because the panel bracket swaps _proj/_view without bumping
+    // it; one 4x4 multiply a call is nothing beside what it saves.
+    const bbCull = !this._bbCullOff && !!this._proj && !!this._view;
+    if (bbCull) frustumPlanes(mat4Multiply(this._proj, this._view, this._bbPv), this._bbPlanes);
     this._use(this.bbProgram);
     this._uploadCloudShadow('bb');   // VC4
     gl.uniformMatrix4fv(this.bbUProj, false, this._proj);
@@ -4117,7 +4160,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     gl.uniform4f(this.bbUConceal, 0, 0, 0, 0);   // ECV1: plain unless a batch says otherwise
     const opaque = this._bbOpaque ??= [];
     opaque.length = 0;
-    for (const b of batches) if (!isSpectralArchive(b.archive) && !b.conceal) { keyOf(b); opaque.push(b); }
+    for (const b of batches) if (!isSpectralArchive(b.archive) && !b.conceal) { if (bbCull && !this._bbVisible(b)) { this.stats.bbCulled++; continue; } keyOf(b); opaque.push(b); }   // PERF-CROWD2
     opaque.sort((a, b) => (a._bbKey < b._bbKey ? -1 : a._bbKey > b._bbKey ? 1 : 0));
     for (const b of opaque) drawOne(b);
     opaque.length = 0;
@@ -4130,7 +4173,9 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     // shader reads only when uConceal says plain.
     let blended = null;
     for (const b of batches) {
-      if (b.conceal || isSpectralArchive(b.archive)) (blended ??= []).push(b);
+      if (!(b.conceal || isSpectralArchive(b.archive))) continue;
+      if (bbCull && !this._bbVisible(b)) { this.stats.bbCulled++; continue; }   // PERF-CROWD2: the ghosts and the concealed too
+      (blended ??= []).push(b);
     }
     if (blended) {
       const cp = this._camPos;

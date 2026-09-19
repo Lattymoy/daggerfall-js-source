@@ -220,3 +220,22 @@ test('PERF-BASIS: the shadow replay uploads the basis once, not once a flat - an
   assert.match(sp, /if \(tex !== lastTex\) \{ gl\.bindTexture\(gl\.TEXTURE_2D, tex\); lastTex = tex; \}/, 'a run of flats sharing a record binds once');
   assert.match(sp, /let lastTex = null;/, 'reset per record, so a record cannot inherit the last one\u2019s texture');
 });
+
+test('PERF-CROWD2: the billboard PASS culls, so no host can forget to - and it culls after the shadow record, so nothing stops casting', () => {
+  const r = read('src/render/renderer.js');
+  // the same bug was in every host: the dungeon's mobiles, drops and
+  // spells, the interior's flats, the fixed city's townspeople, and
+  // worldModes' five separate uncut calls. Seven call sites, and an
+  // eighth waiting to be written. The test lives in the pass now.
+  assert.match(r, /const bbCull = !this\._bbCullOff && !!this\._proj && !!this\._view;/, 'the pass decides, once a call');
+  assert.match(r, /if \(this\._casting\) this\._shadows\.recordBillboards\([^\n]*\n(?:[^\n]*\n){0,8}?\s*if \(bbCull\) frustumPlanes\(/,
+    'the planes are taken AFTER the shadow record - everything still casts, only the drawing is culled');
+  assert.match(r, /if \(bbCull && !this\._bbVisible\(b\)\) \{ this\.stats\.bbCulled\+\+; continue; \}[\s\S]{0,40}?keyOf\(b\); opaque\.push\(b\);/, 'the opaque partition');
+  assert.match(r, /if \(bbCull && !this\._bbVisible\(b\)\) \{ this\.stats\.bbCulled\+\+; continue; \}[\s\S]{0,60}?\(blended \?\?= \[\]\)\.push\(b\);/, 'and the blended one - the ghosts and the concealed are billboards too');
+  // the same lifted sphere as the host's, and for the same reason
+  assert.match(r, /s\[1\] \+ \(o \? o\[1\] : 0\) \+ \(b\.size\?\.h \?\? 0\) \* 0\.5/, 'the sphere centre is lifted half a height');
+  assert.match(r, /const s = b\.bounds;\n\s*if \(!s\) return true;/, 'a batch with no bounds is always drawn');
+  // the ?cull=off door still turns everything off, as it does for EV3
+  assert.match(r, /this\._bbCullOff = cullDisabled\(\);/, 'one read, at construction');
+  assert.match(r, /bbCulled: 0/, 'and the frame says how many it skipped');
+});
