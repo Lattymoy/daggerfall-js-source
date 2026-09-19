@@ -20,7 +20,7 @@ import { MapsFile, getWorldClimateSettings, longitudeLatitudeToMapPixel, getPixe
 import { settlementsOf, loadModRoads } from '../world/roadsProducer.js';   // ROADS 3 / AUDIT ROADS F2 / ROADS 22
 import { modSetting } from '../systems/modSettings.js';   // ROADS 24
 import { WoodsFile, MAP_WIDTH, MAP_HEIGHT } from '../formats/woodsFile.js';
-import { buildTerrainGrid, buildTerrainIndices, isOutdoorWaterTile, TERRAIN_TILE_DIM, TERRAIN_SKIRT_DEPTH } from '../world/terrainSurface.js';
+import { buildTerrainGrid, buildTerrainIndices, isOutdoorWaterTile, TERRAIN_TILE_DIM, TERRAIN_SKIRT_DEPTH, surfaceHeightAt } from '../world/terrainSurface.js';
 import { waterUniforms, buildWaterIndices, waterSwitchOn } from '../render/waterSurface.js';   // WATER1: the enhanced water surface over the pixel's own grid; WATER-AUDIT: its own index set
 import { windowEmissionRGB } from '../render/windowEmission.js';
 import { CITY_LIGHT_COLOR, CITY_LIGHT_RANGE, LIGHTS_ARCHIVE, collectCityLights, nearestLights } from '../world/cityLights.js';
@@ -122,6 +122,7 @@ import { createExteriorFoes } from './exteriorFoes.js';   // X-slice
 import { StaticBatchBuilder, keyResolver } from '../render/staticBatch.js';   // PERF4: a pixel's static models as one mesh
 import { createBreather } from '../systems/buildBreather.js';   // PERF7: the stream build yields to the frame
 import { pieceIndex } from '../render/labGrass.js';   // PERF8: the piece under a point, by arithmetic
+import { meterFor } from '../render/perfMeter.js';   // GRASS2: the field gets a zone of its own - it was inside the world's
 import { LabGrassRenderer, createGrassField, grassRecordsOf, LAB_GRASS, LAB_DIM } from '../render/labGrass.js';   // GR1: the lab's grass, byte for byte
 import { windDrive, floraSwayOf, floraSwayOn } from '../systems/windDrive.js';   // WIND3: the one wind in every consumer's units; the flats' sway
 import { WindWispsRenderer, wispsOn, SAND_LOOK } from '../render/windWisps.js';   // WIND3: the wind, seen; WEATHER2d: the sandstorm's sand in the same program
@@ -10517,6 +10518,14 @@ export async function bootWorld(canvas, renderer, params, status) {
       const near = [...built.values()].filter((p) => p._stride === 1 && p.tilemapBytes && p.season !== SEASON.Winter);
       const pieces = near.map((p) => ({ p, t: state.pixelTranslation(p.px, p.py, [0, 0, 0]), grass: grassRecords.get(p.groundArchive) }));
       const pieceAt = pieceIndex(pieces, TERRAIN_SIZE);   // PERF8: one Map read per blade instead of a scan of every near pixel
+      // GRASS4 measured this pair and left it alone, which is worth
+      // recording so nobody "fixes" it again: `ground` repeats the
+      // lookup `keep` just did, and caching the answer across the two
+      // saves NOTHING once pieceIndex's key is a number rather than a
+      // string (labGrass.js pieceKey). The duplicate was only ever
+      // expensive because of the string it built; the arithmetic it
+      // repeats is free. A stash here would be mutable state and a
+      // coordinate guard bought for no measured gain.
       const keep = (x, z) => {
         const hit = pieceAt(x, z);
         if (!hit) return null;
@@ -10525,9 +10534,16 @@ export async function bootWorld(canvas, renderer, params, status) {
         const tx = Math.floor(lx / 6.4); const tz = Math.floor(lz / 6.4);
         const rec = p.tilemapBytes[tz * TERRAIN_TILE_DIM + tx] >> 2;
         if (rec === 0 || !grass || !grass.has(rec)) return null;
-        const hDim = HEIGHTMAP_DIMENSION; const s2 = p.samples;
-        const fx = lx / 6.4; const fz = lz / 6.4; const x0 = Math.min(hDim - 2, tx); const z0 = Math.min(hDim - 2, tz); const ax = fx - x0; const az = fz - z0;
-        const h = ((s2[x0 * hDim + z0] * (1 - ax) + s2[(x0 + 1) * hDim + z0] * ax) * (1 - az) + (s2[x0 * hDim + z0 + 1] * (1 - ax) + s2[(x0 + 1) * hDim + z0 + 1] * ax) * az) * scale;
+        // GRASS3: the height of the surface that is DRAWN, not a
+        // bilinear patch over the same samples - the terrain is cut into
+        // triangles and bilinear is a different surface. On real grades
+        // the two are under 0.08 world units apart against a blade of
+        // 0.25-0.72, so this is correctness rather than a fix anyone
+        // would see; it is also the exact law a GPU-placed field has to
+        // run, where there is no baked height to fall back on.
+        // `p._stride` is the ring class this pixel is drawn at, and the
+        // grass only stands on the stride-1 ring anyway.
+        const h = surfaceHeightAt(p.samples, lx, lz, p._stride ?? 1);
         if (h <= sea) return null;
         return h + t[1];
       };
@@ -10545,7 +10561,11 @@ export async function bootWorld(canvas, renderer, params, status) {
       };
       if (!labGrassField) labGrassField = createGrassField(labGrass, { keep, ground, density: grassDensity });   // PERF1: the pref's fraction of the lab's field
       labGrassField.update(ex, ez, keep, ground);
-      window.__grassStats = () => ({ blades: labGrass.count, drawn: labGrass.drawn, nearPixels: near.length, cells: labGrassField?.live.size ?? 0, slots: labGrassField?.slots ?? 0 });
+      window.__grassStats = () => ({ blades: labGrass.count, drawn: labGrass.drawn, nearPixels: near.length, cells: labGrassField?.live.size ?? 0, slots: labGrassField?.slots ?? 0,
+        perCell: labGrass.perCell, range: LAB_GRASS.range, height: LAB_GRASS.height, verts: labGrass.verts,
+        // GRASS2: what the field HOLDS, against what a slot-sized draw
+        // would have submitted - the pad, measured rather than assumed.
+        held: labGrass.slotCount ? labGrass.slotCount.reduce((a, b) => a + b, 0) : null });
       // GR2: the sky's row on the lab's slider - a sunny day is the lab's
       // 70. AUDIT 49 F4: the lab's uWind is WIND.speed, which carries the
       // gust; uWindV is the rate without it - the same pair the rain is
@@ -10553,6 +10573,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       // strength. WIND3: all of it off the one mapping (`wd`, systems/
       // windDrive.js) - the grass, the rain, the wisps and the flats read
       // the same numbers by construction.
+      meterFor(renderer.gl)?.mark('grass');   // GRASS2
       labGrass.draw(proj, view, new Float32Array(cam.pos), now / 1000,
         // WIND4 (Mac: "grass doesnt get darker at night"): the WHOLE of
         // the scene's light, not three of its five terms - the sun's
@@ -10562,6 +10583,10 @@ export async function bootWorld(canvas, renderer, params, status) {
         { sunDir: renderer._lightDir, amb: renderer._ambient, sunCol: renderer._sunColor, dim: wxNow.dim,
           sunScale: renderer._sunScale, moonDir: renderer._moonDir, moonScale: renderer._moonScale, moonCol: renderer._moonColor },   // WX2: the dim crosses on the front
         { dir: wd.dir, speed: wd.slider * wd.gust, windV: wd.windV });
+      // GRASS2: the field had been inside the WORLD's span, which is the
+      // one number that cannot say whether the grass is worth what it
+      // costs. It marks its own now, and hands the frame straight back.
+      meterFor(renderer.gl)?.mark('world');
       renderer.markForeignPass();   // EV6: the grass changed programs behind the shadows' back
     }
     // C13: streaming-world arrows fly against the live pixel

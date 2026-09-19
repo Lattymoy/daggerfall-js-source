@@ -39,7 +39,7 @@ import { readFileSync } from 'node:fs';
 
 import { WISP_MAX, WISP_FLOOR, WISP_BOX, WISP_LOOK, SAND_LOOK, wispCount } from '../src/render/windWisps.js';
 import { WORLD_PER_DRIFT, wrapField } from '../src/render/volumetricClouds.js';
-import { LAB_GRASS_FS, LAB_GRASS_VS } from '../src/render/labGrass.js';
+import { LAB_GRASS_FS, LAB_GRASS_VS, GRASS2_VS_EDITS } from '../src/render/labGrass.js';
 
 const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 
@@ -109,8 +109,15 @@ test('WIND4 (3) the grass darkens: the sward takes the sun\'s SCALE and the moon
   for (const n of ['uSunScale', 'uMoonDir', 'uMoonScale', 'uMoonCol']) assert.ok(grass.includes(`'${n}'`), `${n} is looked up`);
   // GR1's law: the lab is the same text, and sets the new uniforms itself
   const lab = read('grass-proto.html');
-  assert.ok(lab.includes(LAB_GRASS_FS), 'the lab carries this fragment stage verbatim');
-  assert.ok(lab.includes(LAB_GRASS_VS), 'and this vertex stage');
+  assert.ok(lab.includes(LAB_GRASS_FS), 'the lab carries this fragment stage verbatim - GRASS2 changed no fragment law');
+  // GRASS2: the VERTEX stage is the lab's text plus three declared edits
+  // now, so it is no longer a substring of the lab. The whole-text law
+  // lives in labGrass.test.js, which applies the edits and compares; what
+  // is checked here is that the lab still carries the lines those edits
+  // replace - if the lab moved under them, that pin's `from` would stop
+  // matching and the departure would silently become a rewrite.
+  for (const e of GRASS2_VS_EDITS) assert.ok(lab.includes(e.from), `the lab still carries the line this edit replaces: ${e.why}`);
+  assert.ok(!lab.includes(LAB_GRASS_VS), 'and the port\'s vertex stage is NOT the lab\'s any more - the departure is real and says so here too');
   assert.match(lab, /gl\.uniform1f\(gl\.getUniformLocation\(grassProg, 'uSunScale'\), 1\);/, 'the lab has no night: scale one');
   assert.match(lab, /gl\.uniform1f\(gl\.getUniformLocation\(grassProg, 'uMoonScale'\), 0\);/);
 });

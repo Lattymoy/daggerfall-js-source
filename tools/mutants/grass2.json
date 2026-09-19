@@ -1,0 +1,113 @@
+[
+ {
+  "name": "GRASS2-the-fade-is-a-hash-again-so-the-host-cannot-know-what-will-fail",
+  "file": "src/render/labGrass.js",
+  "old": "  float u = uSlotN > 0.5 ? float(gl_InstanceID) / uSlotN : 0.0;\n  if (vFade <= 0.001 || u > vFade * 1.15) { gl_Position = vec4(2,2,2,1); return; }",
+  "new": "  if (vFade <= 0.001 || fract(aInst.w * 91.7) > vFade * 1.15) { gl_Position = vec4(2,2,2,1); return; }",
+  "tests": [
+   "test/labGrass.test.js",
+   "test/wind4_windweather.test.js"
+  ]
+ },
+ {
+  "name": "GRASS2-the-whole-cell-is-submitted-so-the-fade-costs-full-vertex-work",
+  "file": "src/render/labGrass.js",
+  "old": "      const budget = Math.min(n, Math.ceil(n * fade * 1.15));",
+  "new": "      const budget = n;",
+  "tests": [
+   "test/perf2.test.js"
+  ]
+ },
+ {
+  "name": "GRASS2-the-budget-is-taken-at-the-cells-CENTRE-so-its-near-edge-is-cut",
+  "file": "src/render/labGrass.js",
+  "old": "      const dn = Math.sqrt(dx * dx + dz * dz);",
+  "new": "      const dn = Math.hypot((box[0] + box[3]) / 2 - eye[0], (box[2] + box[5]) / 2 - eye[2]);",
+  "tests": [
+   "test/perf2.test.js"
+  ]
+ },
+ {
+  "name": "GRASS2-the-shader-is-told-the-PREFIX-count-so-it-thins-over-the-wrong-denominator",
+  "file": "src/render/labGrass.js",
+  "old": "      gl.uniform1f(this.u.uSlotN, n);   // the fraction is over the CELL, not over the prefix",
+  "new": "      gl.uniform1f(this.u.uSlotN, budget);",
+  "tests": [
+   "test/perf2.test.js"
+  ]
+ },
+ {
+  "name": "GRASS2-every-cell-keeps-the-five-quad-blade",
+  "file": "src/render/labGrass.js",
+  "old": "      const far = dn > range * GRASS_FAR_AT;",
+  "new": "      const far = false;",
+  "tests": [
+   "test/perf2.test.js"
+  ]
+ },
+ {
+  "name": "GRASS2-the-far-blade-is-the-near-blade-so-the-level-of-detail-buys-nothing",
+  "file": "src/render/labGrass.js",
+  "old": "export const GRASS_FAR_SEGMENTS = 1;",
+  "new": "export const GRASS_FAR_SEGMENTS = 5;",
+  "tests": [
+   "test/labGrass.test.js",
+   "test/perf2.test.js"
+  ]
+ },
+ {
+  "name": "GRASS2-the-draw-is-instanced-on-the-slot-size-so-every-pad-blade-is-paid-for",
+  "file": "src/render/labGrass.js",
+  "old": "      const n = this.slotCount ? this.slotCount[slot] : p;",
+  "new": "      const n = p;",
+  "tests": [
+   "test/perf2.test.js"
+  ]
+ },
+ {
+  "name": "GRASS2-the-density-rate-follows-the-window-so-a-longer-range-thins-the-grass",
+  "file": "src/render/labGrass.js",
+  "old": "export const grassPerCell = (density = LAB_GRASS.density, span = LAB_GRASS.densitySpan, cell = GRASS_CELL) =>",
+  "new": "export const grassPerCell = (density = LAB_GRASS.density, span = LAB_GRASS.span, cell = GRASS_CELL) =>",
+  "tests": [
+   "test/perf2.test.js",
+   "test/labGrass.test.js"
+  ]
+ },
+ {
+  "name": "GRASS2-the-window-is-not-a-whole-number-of-cells-so-its-edges-fall-out-of-phase",
+  "file": "src/render/labGrass.js",
+  "old": "export const LAB_GRASS = Object.freeze({ density: 1200000, height: 38, range: 250, span: 270, densitySpan: 210, seed: 0x2f6e2b1 });",
+  "new": "export const LAB_GRASS = Object.freeze({ density: 1200000, height: 38, range: 250, span: 260, densitySpan: 210, seed: 0x2f6e2b1 });",
+  "tests": [
+   "test/labGrass.test.js"
+  ]
+ },
+ {
+  "name": "GRASS2-the-tint-is-per-blade-noise-again-so-the-field-is-a-flat-carpet",
+  "file": "src/render/labGrass.js",
+  "old": "  float clump = vnoise(root * 0.055) * 0.66 + vnoise(root * 0.017) * 0.34;\n  vTint = clamp(mix(aInst2.z, clump, 0.55), 0.0, 1.0);",
+  "new": "  vTint = aInst2.z;",
+  "tests": [
+   "test/labGrass.test.js"
+  ]
+ },
+ {
+  "name": "GRASS2-the-blade-is-the-labs-height-again",
+  "file": "src/render/labGrass.js",
+  "old": "export const LAB_GRASS = Object.freeze({ density: 1200000, height: 38, range: 250, span: 270, densitySpan: 210, seed: 0x2f6e2b1 });",
+  "new": "export const LAB_GRASS = Object.freeze({ density: 1200000, height: 54, range: 250, span: 270, densitySpan: 210, seed: 0x2f6e2b1 });",
+  "tests": [
+   "test/labGrass.test.js"
+  ]
+ },
+ {
+  "name": "GRASS2-the-field-has-no-zone-of-its-own-so-its-cost-hides-inside-the-worlds",
+  "file": "src/scenes/world.js",
+  "old": "      meterFor(renderer.gl)?.mark('grass');   // GRASS2",
+  "new": "",
+  "tests": [
+   "test/el8_contact.test.js"
+  ]
+ }
+]

@@ -78,6 +78,70 @@ export const isOutdoorWaterTile = (rawTile) => playerTileMapIndex(rawTile) === W
 export const TERRAIN_SKIRT_DEPTH = 40;
 
 /**
+ * GRASS3 (2026-09-18): THE HEIGHT OF THE SURFACE THAT IS ACTUALLY DRAWN,
+ * at any point inside a pixel - pixel-local x/z, the same frame
+ * `buildTerrainGrid` builds in.
+ *
+ * WHY THIS IS NOT BILINEAR, which is the whole point of it. The terrain
+ * is TRIANGLES: `buildTerrainIndices` cuts every quad on the diagonal
+ * from (x, z) to (x+1, z+1) and emits i0,i2,i3 then i0,i3,i1. Inside a
+ * quad the drawn surface is therefore two PLANES, and a bilinear patch
+ * is a different surface that agrees with it only on the diagonal and
+ * at the corners. Anything placed by bilinear sits off the ground it is
+ * supposed to stand on, by up to a quarter of the quad's saddle term.
+ *
+ * `scenes/world.js`'s grass placer did exactly that. HOW MUCH IT
+ * MATTERED, measured honestly and corrected once (tools/grassHeightProbe
+ * .mjs): across real terrain grades - 7% to 75% - the two surfaces are
+ * between 0.003 and 0.08 world units apart, against a blade 0.25 to
+ * 0.72 tall. NO blade is off by even a sixth of its height. A first
+ * reading of this claimed 41% of blades floated on "hilly" ground and
+ * 74% in "mountains"; that synthetic terrain turned out to be a 311%
+ * grade - a cliff, not a landscape - and the real answer is that
+ * nobody would ever have seen this.
+ *
+ * So this is a CORRECTNESS fix, not a visible one, and it is worth
+ * making for two reasons that do not depend on the size of the error:
+ * a placer should ask the surface where the surface is rather than
+ * approximate it, and this is the exact law a GPU-placed field has to
+ * run in its vertex shader - where it stops being free, because a
+ * derived blade has no baked height to fall back on.
+ *
+ * The same law is what a GPU placer has to run, because a blade derived
+ * in a vertex shader must land on the surface the fragment shader is
+ * drawing. Kept here, beside the grid and the indices it has to agree
+ * with, so there is ONE place that knows how the ground is cut.
+ *
+ * `stride` matches the ring class: the far ring's mesh is coarser, so
+ * its drawn surface is coarser too, and asking this for a stride-1
+ * height over stride-4 ground would float just as badly.
+ *
+ * @param {Float32Array} heightmapData sample(x, z) = data[x*hDim+z], normalized
+ * @param {number} lx pixel-local x, 0..TERRAIN_SIZE
+ * @param {number} lz pixel-local z, 0..TERRAIN_SIZE
+ * @param {number} [stride] the ring class this pixel is drawn at
+ * @returns {number} world height, MAX_TERRAIN_HEIGHT * DEFAULT_TERRAIN_SCALE applied
+ */
+export function surfaceHeightAt(heightmapData, lx, lz, stride = 1) {
+  const hDim = HEIGHTMAP_DIMENSION;
+  const worldHeight = MAX_TERRAIN_HEIGHT * DEFAULT_TERRAIN_SCALE;
+  const quad = (TERRAIN_SIZE / (hDim - 1)) * stride;
+  const last = (hDim - 1) / stride - 1;        // the last quad's index
+  const at = (x, z) => heightmapData[Math.max(0, Math.min(hDim - 1, x)) * hDim
+    + Math.max(0, Math.min(hDim - 1, z))];
+  const qx = Math.max(0, Math.min(last, Math.floor(lx / quad)));
+  const qz = Math.max(0, Math.min(last, Math.floor(lz / quad)));
+  const ax = lx / quad - qx, az = lz / quad - qz;
+  const x0 = qx * stride, z0 = qz * stride, x1 = x0 + stride, z1 = z0 + stride;
+  const h00 = at(x0, z0), h10 = at(x1, z0), h01 = at(x0, z1), h11 = at(x1, z1);
+  // the diagonal runs (x,z)-(x+1,z+1): az >= ax is the i0,i2,i3 half
+  const h = az >= ax
+    ? h00 + az * (h01 - h00) + ax * (h11 - h01)
+    : h00 + ax * (h10 - h00) + az * (h11 - h10);
+  return h * worldHeight;
+}
+
+/**
  * Build the height grid for one pixel: positions + normals over the
  * 129x129 samples, pixel-local frame (x/z in [0, 819.2]).
  *
