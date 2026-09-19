@@ -230,7 +230,17 @@ test('PERF-CROWD2: the billboard PASS culls, so no host can forget to - and it c
   assert.match(r, /const bbCull = !this\._bbCullOff && !!this\._proj && !!this\._view;/, 'the pass decides, once a call');
   assert.match(r, /if \(this\._casting\) this\._shadows\.recordBillboards\([^\n]*\n(?:[^\n]*\n){0,8}?\s*if \(bbCull\) frustumPlanes\(/,
     'the planes are taken AFTER the shadow record - everything still casts, only the drawing is culled');
-  assert.match(r, /if \(bbCull && !this\._bbVisible\(b\)\) \{ this\.stats\.bbCulled\+\+; continue; \}[\s\S]{0,40}?keyOf\(b\); opaque\.push\(b\);/, 'the opaque partition');
+  // AUDIT PERF-CROWD2 F1: keyOf runs BEFORE the cull. The shadow replay
+  // and the air pass both read `b._bbKey` and both take it as it stands -
+  // `?? recompute` fires only when it is ABSENT, never when it is STALE -
+  // so a culled batch that never re-keyed would cast the silhouette of
+  // whatever frame it was on when it left the view. A mobile animates by
+  // writing its RECORD (MAC4), and the cascades reach 240 units.
+  assert.match(r, /keyOf\(b\);\n\s*if \(bbCull && !this\._bbVisible\(b\)\) \{ this\.stats\.bbCulled\+\+; continue; \}[\s\S]{0,40}?opaque\.push\(b\);/,
+    'the opaque partition keys every batch, THEN culls');
+  for (const other of ['src/render/shadowPass.js', 'src/render/airPass.js']) {
+    assert.match(read(other), /const key = b\._bbKey \?\? \(b\.frame == null/, `${other} reads the key this pass maintains`);
+  }
   assert.match(r, /if \(bbCull && !this\._bbVisible\(b\)\) \{ this\.stats\.bbCulled\+\+; continue; \}[\s\S]{0,60}?\(blended \?\?= \[\]\)\.push\(b\);/, 'and the blended one - the ghosts and the concealed are billboards too');
   // the same lifted sphere as the host's, and for the same reason
   assert.match(r, /s\[1\] \+ \(o \? o\[1\] : 0\) \+ \(b\.size\?\.h \?\? 0\) \* 0\.5/, 'the sphere centre is lifted half a height');
@@ -238,4 +248,25 @@ test('PERF-CROWD2: the billboard PASS culls, so no host can forget to - and it c
   // the ?cull=off door still turns everything off, as it does for EV3
   assert.match(r, /this\._bbCullOff = cullDisabled\(\);/, 'one read, at construction');
   assert.match(r, /bbCulled: 0/, 'and the frame says how many it skipped');
+});
+
+test('AUDIT PERF-LIGHTS F2: a per-light range array shorter than the light list gives a real range, not a silent NaN', async () => {
+  const { nearestLights, CITY_LIGHT_RANGE } = await import('../src/world/cityLights.js');
+  // PRE-EXISTING, found by the audit rather than caused by it: the world
+  // host sizes its CityLightAnimator at 4096 lanterns and nothing checks
+  // the light list against that. Past the end the range read `undefined`,
+  // which lands in a Float32Array as NaN - and a NaN far plane goes on to
+  // the point-shadow matrices and the shader's depth reconstruction,
+  // where it fails silently and totally. A cliff with no edge marked.
+  const lights = []; for (let i = 0; i < 20; i++) lights.push({ x: i, y: 0, z: 0 });
+  const short = new Float32Array(5);        // five ranges for twenty lights
+  const out = nearestLights(lights, [0, 0, 0], 16, short, null, 0, 20);
+  const w = [...out].filter((_, i) => i % 4 === 3);
+  assert.equal(w.some(Number.isNaN), false, 'not one NaN far plane');
+  assert.ok(w.slice(5).every((v) => v === CITY_LIGHT_RANGE), 'past the end it is the module\u2019s own default range');
+  assert.ok(w.slice(0, 5).every((v) => v === 0), 'and inside it, the array\u2019s own values, untouched');
+  // a full-length array is unaffected in every entry
+  const full = new Float32Array(20); for (let i = 0; i < 20; i++) full[i] = 11 + i;
+  const ok = nearestLights(lights, [0, 0, 0], 16, full, null, 0, 20);
+  assert.deepEqual([...ok].filter((_, i) => i % 4 === 3), [...Array(16)].map((_, i) => 11 + i), 'the ordinary path is byte for byte what it was');
 });

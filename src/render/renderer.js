@@ -4160,7 +4160,24 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     gl.uniform4f(this.bbUConceal, 0, 0, 0, 0);   // ECV1: plain unless a batch says otherwise
     const opaque = this._bbOpaque ??= [];
     opaque.length = 0;
-    for (const b of batches) if (!isSpectralArchive(b.archive) && !b.conceal) { if (bbCull && !this._bbVisible(b)) { this.stats.bbCulled++; continue; } keyOf(b); opaque.push(b); }   // PERF-CROWD2
+    // AUDIT PERF-CROWD2 F1: `keyOf` runs BEFORE the cull, and must. It is
+    // not this pass's bookkeeping alone - the shadow replay
+    // (shadowPass.js) and the air pass's emitters (airPass.js) both read
+    // `b._bbKey`, and both take it as it stands (`?? recompute` only
+    // fires when it is ABSENT, never when it is STALE). A culled batch
+    // that never re-keyed would carry last-seen-on-screen's key for as
+    // long as it stayed off camera - and a mobile animates by writing its
+    // RECORD (MAC4), so an off-screen foe would cast the silhouette of
+    // whatever frame it was on when it left the view, or none at all once
+    // that texture is gone. The shadow cascades reach 240 units; off
+    // screen is exactly where those casters live. Keying is a few
+    // comparisons and mints a string only when something changed.
+    for (const b of batches) {
+      if (isSpectralArchive(b.archive) || b.conceal) continue;
+      keyOf(b);
+      if (bbCull && !this._bbVisible(b)) { this.stats.bbCulled++; continue; }   // PERF-CROWD2
+      opaque.push(b);
+    }
     opaque.sort((a, b) => (a._bbKey < b._bbKey ? -1 : a._bbKey > b._bbKey ? 1 : 0));
     for (const b of opaque) drawOne(b);
     opaque.length = 0;

@@ -127,7 +127,17 @@ export function nearestLights(lights, pos, max = 16, range = CITY_LIGHT_RANGE, c
     out[i * 4] = l.x;
     out[i * 4 + 1] = l.y;
     out[i * 4 + 2] = l.z;
-    out[i * 4 + 3] = perLight ? perLight[_selIdx[i]] : range;
+    // AUDIT PERF-LIGHTS F2 (pre-existing, found by this audit): a
+    // per-light range array SHORTER than the light list gives `undefined`
+    // here, which lands in a Float32Array as NaN - and a NaN far plane
+    // goes on to the point-shadow matrices and the shader's depth
+    // reconstruction, where it fails silently and totally. The host sizes
+    // its animator at 4096 lanterns and nothing checks the lights against
+    // it; a big enough city at a long enough land view is a cliff with no
+    // edge marked. The fallback is the module's own default range, which
+    // is what an unanimated lantern is anyway.
+    const w = perLight ? perLight[_selIdx[i]] : range;
+    out[i * 4 + 3] = Number.isFinite(w) ? w : CITY_LIGHT_RANGE;
   }
   if (!colorOf) return out;
   // The colour arm rides the SAME selection - the one-sort law above
