@@ -3196,7 +3196,7 @@ collapse is a bare `RaiseTime(1 * SecondsPerHour)` (`:2429`) that
 returns; `Update` is not re-entered.
 
 The port's hosts implement that same RaiseTime as
-`playerTicker.advance(60)` (`exterior.js:965`, `world.js:969`), fired
+`playerTicker.advance(60)` (`exterior.js:965`, `world.js:1001`), fired
 from inside `sinks.drainFatigue` - so it re-enters `tickPlayerMinutes`
 from inside that function's own fatigue band. The nested tick wrote the
 marker an hour ahead, the outer frame's own `setWorldMinutes` then
@@ -4572,7 +4572,7 @@ the true clause along with the false ones is in the campaign, because
 over-retiring is the equal and opposite failure.
 
 **And one delegation pointed at a flag nobody had ever written.**
-`world.js:1939` said the dungeon-mode enchant ctx was "FLAGGED there
+`world.js:1971` said the dungeon-mode enchant ctx was "FLAGGED there
 with the rest of its enchant wiring" in `dungeonContext.js`. It was
 not. `setDefaultEnchantCtx` had exactly **one** caller in the tree, so
 the standalone `?dungeon` host ran every arm that needs a host
@@ -5550,7 +5550,7 @@ to that cite and moves under the same content check; citeMerge had
 done this since CS2 and citeShift only reported them, so the two
 regexes are one law now, exported from citeShift (`ANY_CITE`,
 `CONTINUATION`) and imported by citeMerge. (2) A TEST'S ESCAPED
-LITERAL FOLLOWS THE ROW IT PINS: `world\.js:4600` in citedrift.test.js
+LITERAL FOLLOWS THE ROW IT PINS: `world\.js:4638` in citedrift.test.js
 is a quote of a Ledger row's text; the row is STRUCK and its number
 held, and the literal used to move anyway, parting the pin from its
 row at every shift. The CLI plans every doc first, learns which
@@ -7821,6 +7821,66 @@ row (prefs `wildernessCamps`, per player online).
 anchor is the third street-wide occupancy ask). Mutants in
 `tools/mutants/restx2camp.json`. Not seen in a browser: the placement
 rides the same law RE1 proved.
+
+### CAMP-NOTIMER - THE STREAMING WORLD'S TIMER TRIGGER IS GONE (2026-09-19)
+
+Lost's `dungeon-and-camp-spawner-patch`, relayed by Mac.
+
+CAMP1 gave `scenes/world.js` TWO ways to raise a group: this
+per-minute tick, which fired a GUARANTEED one every 15 REAL minutes of
+play even while the player stood still, and the chunk-load roll on the
+stream's own `entered` event. The timer arm is removed from this host
+entirely. A camp or a pack must be a consequence of the player walking
+onto new ground - placed right next to them at that moment - never a
+background clock dropping one on someone standing still. The
+chunk-load roll is the streaming world's ONLY camp trigger now, and
+`rollCampEncounter` leaves this file's imports with the arm.
+
+`scenes/exterior.js` is UNTOUCHED. It is the fixed single-location
+preview host (`?exterior`, `?region=`, `?loc=`) with no chunk streaming
+to hang a roll off, so the timer is the only trigger it can have;
+`systems/campEncounters.js` still exports both entry points for it.
+
+`CAMP_CHANCE_ON_CHUNK_LOAD` stays at 0.15, considered and kept: the
+package explored lowering it to the timer's old 5% and reverted. A
+chunk is entered far less often than a background timer ticks, so the
+roll carrying the whole load alone needs the higher figure to keep the
+frequency this host had before.
+
+Placement itself needed no change - both triggers already stood the
+group 14-26 units out, band-placed off the player's own feet.
+
+THE PINS MOVED WITH IT. world.js is pinned by ABSENCE now (no
+`wildernessCamps` gate and no live `rollCampEncounter(` call left in
+its tick; the import carrying only the chunk-load twin), while
+exterior.js keeps the positive ones - the two hosts no longer share
+those. The rest gate and the group-ownership guard both survive on
+world.js's chunk-load roll, which is where `camp1rest.json` and
+`restx2camp.json`'s two world-host mutants are re-aimed.
+
+### SPAWNED-DUNGEONS2b - ONE LINE PER CROSSING (2026-09-19)
+
+The same package. A crossing can put several unannounced spawns inside
+the radius at once - the search covers a 5x5 block of pixels - and
+saying a line per hit stacked them up the log back to back. Every
+pixel found this crossing is still marked announced, so none of them
+nags again later, but only the CLOSEST is ever actually said.
+
+The line grew a direction with it: `You see a Dungeon nearby, in the
+Southwest!`, or plain `You see a Dungeon nearby!` standing on the pixel
+itself. The compass word is talk.js's own eight-band
+`directionHintString`, off the map-pixel delta - `px` is east-positive
+already, `py` is SOUTH-positive (`mapsFile.js`
+longitudeLatitudeToMapPixel writes `y = 499 - lat/128`), so north needs
+the sign flipped on the way in.
+
+NOT TAKEN FROM THE PACKAGE, for the reason SPAWNED-DUNGEONS records one
+step earlier: its `world.js` was cut from a base without PERF-CROWD, and
+its tests name a `SPAWNABLE_DUNGEON_TYPES` and an async `spawnedDungeonAt`
+that are in neither this tree nor the zip. Taken as files they would have
+reverted the first and failed to import the second. Only the three
+changes its own CHANGES.md describes are here.
+
 
 ## WINFOE1 - THE ENEMY POOLS KEEP THEIR CLOCK UNDER A WINDOW (2026-09-17)
 

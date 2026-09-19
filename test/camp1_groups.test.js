@@ -23,9 +23,17 @@ import { FEATURES } from '../src/systems/features.js';
 // ORIGINAL addition, not a DFU system: it reuses the encounter tables
 // (chooseRandomEnemy) and the cadence loop (runEncounterTick), and
 // adds one behaviour, a member that notices the player wakes its
-// campmates. Two triggers: a guaranteed group every 15 REAL minutes of
-// play, and a 15% roll each new map pixel entered. Online, exactly one
-// of the players within 100m rolls (a deterministic lowest-id pick).
+// campmates. Two triggers exist in the module: a guaranteed group every
+// 15 REAL minutes of play, and a 15% roll each new map pixel entered.
+// Online, exactly one of the players within 100m rolls (a deterministic
+// lowest-id pick).
+//
+// CAMP-NOTIMER (2026-09-19, Lost's package): world.js, the real
+// streaming open world, WIRES UP ONLY THE SECOND. A camp or a pack must
+// be a consequence of the player stepping onto new ground, never a
+// background timer dropping one on a player standing still.
+// exterior.js - the fixed single-location preview host, with no chunk
+// streaming to hang a roll off - still wires up the timer, unchanged.
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const read = (p) => readFileSync(join(root, p), 'utf8');
@@ -104,13 +112,31 @@ test('CAMP1: group ownership online - the one lowest id among the players within
 test('CAMP1 by source: both exterior hosts roll it after the single roll comes back empty, stand an anchor then the members around it, the world host under the group-ownership guard and on every pixel entered; a member that notices the player wakes its campmates; the feature row', () => {
   const w = read('src/scenes/world.js');
   const e = read('src/scenes/exterior.js');
-  for (const [name, h] of [['world.js', w], ['exterior.js', e]]) {
+  // CAMP-NOTIMER (2026-09-19, Lost's package): THE TIMER ARM IS GONE
+  // FROM world.js. It fired a GUARANTEED group every 15 real minutes of
+  // play even while the player stood still; a camp or a pack must be a
+  // consequence of walking onto new ground, so the chunk-load roll is
+  // now that host's only trigger. exterior.js is the fixed
+  // single-location preview host with no chunk streaming to hang a roll
+  // off, so its timer arm stands unchanged - which is why the two hosts
+  // no longer share this pin.
+  {
+    const i = w.indexOf('function runEncounterTick(');
+    const fn = w.slice(i, w.indexOf('\n  }\n', i));
+    assert.doesNotMatch(fn, /getPref\('wildernessCamps'\)/, 'world.js: no camp gate left in the per-minute tick');
+    assert.doesNotMatch(fn, /const campHit = rollCampEncounter\(/, 'world.js: no live timer roll left in the per-minute tick');
+  }
+  assert.doesNotMatch(w, /import \{ rollCampEncounter,/, 'world.js: the unused timer entry point is dropped from the import');
+  assert.match(w, /import \{ rollCampEncounterOnChunkLoad, amGroupRollOwner \} from '\.\.\/systems\/campEncounters\.js';/, 'world.js: only the chunk-load twin and the ownership guard are imported now');
+  for (const [name, h] of [['exterior.js', e]]) {
     const i = h.indexOf('function runEncounterTick(');
     const fn = h.slice(i, h.indexOf('\n  }\n', i));
     assert.ok(fn.indexOf('_standEncounterFoe(hit, playerFeet)') < fn.indexOf("getPref('wildernessCamps') !== false"), `${name}: the group roll sits AFTER the single roll's break, so the two never both fire on one minute`);
     assert.match(fn, /const campHit = rollCampEncounter\(\{\s*\n\s*gameMinutes: _lastEncMinutes \+ l \+ 1, inside: _m !== 'exterior',\s*\n\s*inLocationRect: _musicInLocationRect\(\),/, `${name}: the same minute, the same rect`);
     assert.match(fn, /preventEnemySpawns: playerEntity\.preventEnemySpawns,/, `${name}: and the suppression flag`);
     assert.match(fn, /if \(campHit\) \{ _standCampEncounter\(campHit, playerFeet\); break; \}/, `${name}: a hit stands and ends the minute`);
+  }
+  for (const [name, h] of [['world.js', w], ['exterior.js', e]]) {
     const si = h.indexOf('const _standCampEncounter = (hit, feet) => {');
     const stand = h.slice(si, h.indexOf('\n  };', si));
     assert.match(stand, /anchor = placeFoeFreely\(anchorEnv, \{ minDistance: hit\.minDistance, maxDistance: hit\.maxDistance, lineOfSightCheck: true \}\);/, `${name}: the anchor is placed as a single encounter is - the group's band, out of view`);
@@ -131,8 +157,7 @@ test('CAMP1 by source: both exterior hosts roll it after the single roll comes b
     assert.doesNotMatch(stand, /suppressInfighting/, `${name}: and not from every other foe in the world`);
     assert.match(stand, /yaw: Math\.atan2\(anchorFeet\[0\] - spot\.x, anchorFeet\[2\] - spot\.z\),/, `${name}: members face the camp, not the player`);
   }
-  // CAMP1-REST re-aimed both of these: the timer roll now stands down under a rest as well (its own test below)
-  assert.match(w, /if \(!isResting && getPref\('wildernessCamps'\) !== false && amGroupRollOwner\(online\?\.id \?\? null, playerFeet, peersNear\(\)\)\) \{\s*\n\s*const campHit = rollCampEncounter\(/, 'world.js: the timer roll is gated on group ownership - and on not resting');
+  // CAMP1-REST re-aimed exterior.js's; world.js's timer roll is gone entirely (CAMP-NOTIMER, above)
   assert.match(e, /if \(!isResting && getPref\('wildernessCamps'\) !== false\) \{\s*\n\s*const campHit = rollCampEncounter\(/, 'exterior.js: no peers on this route, no guard - the rest gate stands alone');
   // CAMP-REST (2026-09-19, Dudey: "the camp enemies should just not appear when resting"): the CHUNK-LOAD twin takes
   // a rest gate too now. The old note said a resting player crosses no pixel, so a gate was a law with no case - but
@@ -172,7 +197,10 @@ test('CAMP1 by source: both exterior hosts roll it after the single roll comes b
 // is the group whose members happen to face away that lands in silence and is standing there on waking. Mac's
 // call is that groups are a walking-around feature rather than that they should be yawed at a sleeper.
 test('CAMP1 by source: the group roll is skipped while resting - camps/packs only fire while wandering, never mid-rest', () => {
-  for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
+  // CAMP-NOTIMER: world.js has no timer arm left to gate - its ONLY camp
+  // trigger is the chunk-load roll, whose own rest gate is pinned below.
+  // exterior.js keeps the timer, so it keeps the gate.
+  for (const host of ['src/scenes/exterior.js']) {
     const h = read(host);
     const i = h.indexOf('function runEncounterTick(');
     assert.match(h.slice(i, i + 200), /function runEncounterTick\(playerFeet, simMinutesEnd = null, isResting = false\) \{/, `${host}: the tick knows whether it's servicing a rest`);
