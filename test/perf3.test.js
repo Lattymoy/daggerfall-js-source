@@ -61,7 +61,12 @@ test('PERF3 pins: the terrain block goes up once per frame stamp; the cutout bil
   assert.match(r, /this\._uploadCloudShadow\('terrain'\);\n\s+\/\/ PERF3/, 'the deck keeps its own stamp, outside the block');
   // the billboards
   assert.match(r, /const keyOf = \(b\) => \{[\s\S]{0,1200}b\._bbKeyRecord !== b\.record \|\| b\._bbKeyFrame !== b\.frame \|\| b\._bbKeyArchive !== b\.archive/, 'the key is cached per record, frame and archive (FA1 animates b.frame; the mobiles animate b.record - MAC4)');
-  assert.match(r, /if \(key !== lastKey\) \{\n\s+gl\.activeTexture\(gl\.TEXTURE0\);\n\s+gl\.bindTexture\(gl\.TEXTURE_2D, tex\);/, 'a repeated key binds nothing');
+  // PERF-TEX3: the unit goes through the selector's funnel; the KEY skip
+  // is untouched and is still what makes a repeated billboard free. This
+  // path binds its own texture and clears the unit-0 shadow rather than
+  // sharing it - routing it through the shared one is what broke MAC4's
+  // record key and this very pin the first time PERF-TEX was written.
+  assert.match(r, /if \(key !== lastKey\) \{\n\s+this\._activeTexture\(gl\.TEXTURE0\);\n\s+gl\.bindTexture\(gl\.TEXTURE_2D, tex\);/, 'a repeated key binds nothing');
   assert.match(r, /opaque\.sort\(\(a, b\) => \(a\._bbKey < b\._bbKey \? -1 : a\._bbKey > b\._bbKey \? 1 : 0\)\);\n\s+for \(const b of opaque\) drawOne\(b\);/, 'the cutout pass is sorted by key');
   assert.match(r, /blended\.sort\(\(a, b\) => d2\(b\) - d2\(a\)\);/, 'the blended pass keeps its back-to-front order');
   assert.match(r, /this\.stats\.texBinds \+= 2;\n\s+lastKey = key;/, 'the stat counts the binds that happen');

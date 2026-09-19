@@ -18,6 +18,7 @@
 import { maxFatigue, maxBreath, liveStat } from '../systems/statMods.js';
 import { isEnhanced } from '../systems/uiSkin.js';   // PX30: the HUD is a skin too
 import { drawEnhancedHud } from './enhancedHud.js';   // PX30
+import { drawLevelNotices } from './levelNotice.js';   // LV2: the level-up notification, on the same one call
 import { drawCrosshairAndModeIcon } from './hudCrosshair.js';   // U38
 import { playerDamageFlash } from './damageFlash.js';   // AUDIT 24 (wave 39): ShowPlayerDamage rides the one HUD call
 import { hudFade } from './fadeLayer.js';   // D4: FadeBehaviour's target IS the HUD's parent panel
@@ -580,7 +581,14 @@ export function drawHud(renderer, canvas, art, vitals, heading01, dt = 0,
   if (hudDrawn) midScreenText.draw(renderer, canvas, font); else midScreenText.hide();
   // Above the `!art` return, like the flash: the enhanced HUD reads no
   // ARENA2, and a player whose HUD art failed to load still has vitals.
+  // LV2: THE RISING rides the same one call, for the reason the flash
+  // and the enhanced HUD above it do - drawHud is what all four hosts
+  // already make. It takes the HUD's own hide gate (AUDIT 64 F37: a
+  // persistent DOM overlay must REACH its hide door rather than be
+  // skipped) and reads whether a level is still owed off the one
+  // player entity itself.
   if (isEnhanced() && typeof document !== 'undefined') {
+    drawLevelNotices({ hidden: cursorActive || !hudRenderEnabled() });
     drawEnhancedHud(vitals, heading01, dt, {
       // AUDIT 64 F37: the enhanced skin is a persistent DOM overlay -
       // it stays painted unless told otherwise - so a hidden HUD must

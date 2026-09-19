@@ -363,8 +363,20 @@ test('a11: an all-max character closes with the pool unspent', () => {
 
 test('a11: the door sends the CLASSIC skin to the sheet and keeps the screen for enhanced', () => {
   const door = src('src/ui/charSheetDoor.js');
-  assert.match(door, /if \(deps\.entity\?\.readyToLevelUp && isEnhanced\(\)\) return new LevelUpScreen\(deps\.entity\);/,
-    'the separate screen is the ENHANCED skin door only');
+  // LV1 MOVED THIS PIN, and only this far: the enhanced skin's
+  // level-up is now its own window (ui/enhancedLevelUp.js) rather than
+  // the canvas rollout, so the arm this used to quote verbatim is the
+  // HEADLESS enhanced path - node drives these hosts with no document
+  // and keeps the canvas window, exactly as the sheet fork above it
+  // does. What a11 is about is unchanged and is still asserted: the
+  // separate screen is never the classic skin's, and the classic skin
+  // falls through to the sheet where DFU levels you up.
+  assert.match(door, /if \(isEnhanced\(\) && typeof document !== 'undefined'\) return enhancedLevelUpOverlay\(rollout\(\), deps\.entity\);/,
+    'the enhanced skin gets its own window');
+  assert.match(door, /if \(isEnhanced\(\)\) return new LevelUpScreen\(deps\.entity\);/,
+    'and the canvas screen remains the enhanced skin\'s headless fallback');
+  assert.match(door, /\/\/ \.\.\.and the CLASSIC lane falls through to the sheet/,
+    'the classic lane still levels on the sheet (AUDIT 44)');
   // and the classic sheet reads the same two flags DFU reads
   assert.match(src('src/ui/charsheet.js'), /if \(!e\?\.readyToLevelUp\) return;/);
   assert.match(src('src/ui/charsheet.js'), /applyLevelUp\(e, \(\) => \{\}, rolls, this\.pool\);/,

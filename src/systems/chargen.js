@@ -25,7 +25,7 @@ import { liveStat } from './statMods.js';   // wave 28: MaxMagicka reads LiveInt
 //     our uniform slot matches the role, approved stance)
 //   - reflexes default Average (2)
 // THE UI ARC SHIPPED, so the pools are distributed BY HAND, as
-// classic does: ui/chargen.js:48-63 is the verbatim rollout
+// classic does: ui/chargen.js:48-83 is the verbatim rollout
 // arithmetic (statUp clamped at MAX_STAT_VALUE, statDown floored at
 // the rolled value, skillUp/skillDown per group pool - StatsRollout /
 // SkillsRollout), spent per spinner at :1147 spendStat and :1173

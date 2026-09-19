@@ -38,14 +38,56 @@
 
 import { isEnhanced } from '../systems/uiSkin.js';
 import { actionOf } from './input.js';   // MAC-C: the REGISTRY's answer for the two window keys
-import { mountEnhancedChunk } from './enhancedChunk.js';   // MENU1: the one lazy-chunk door
+import { mountEnhancedChunk, paintChunkNotice } from './enhancedChunk.js';   // MENU1: the one lazy-chunk door, and the notice it paints when a chunk is gone
 import { registerOverlay } from './enhancedOverlays.js';   // PX28: Tab puts it away
 import { CharSheet, LevelUpScreen, charSheetArtLoaded } from './charsheet.js';
 import { charSheetHooks } from './charSheetNav.js';
 import { VirtueLevelUpScreen } from './virtueLevelUp.js';   // ORL1
+import { levelNotices } from './levelNotice.js';   // LV2: who already played the fanfare
 import { usesVirtueLeveling } from '../systems/oblivionLeveling.js';   // ORL1
+import { spendPoolLowest } from '../systems/chargen.js';   // LV1: the headless pool policy, for the font-less escape
 
 export { charSheetArtLoaded };
+
+/**
+ * LV1's AUDIT, finding "RECORDED, NOT FIXED", closed: WARM THE
+ * LEVEL-UP CHUNK AT BOOT.
+ *
+ * Every enhanced screen is a lazy chunk fetched the first time a
+ * player opens that door (MENU1), and for every OTHER door that is
+ * paid for by a key the player pressed - a fetch inside a press reads
+ * as the window opening. This one opens because the GAME decided: a
+ * skill check crossed a threshold while you were walking, and the host
+ * pauses behind a transparent div until the chunk lands. Nothing was
+ * pressed, so nothing explains the pause.
+ *
+ * So the chunk is warmed where INFO00I0.IMG already is - at host boot,
+ * "lazy - ready by the next open at worst" (U8a's own words). It is
+ * ~13 KB, the enhanced skin alone pays for it, and a rejection is
+ * SWALLOWED: a stale chunk after a deploy is the door's problem to
+ * report when a player actually opens it (ui/enhancedChunk.js's whole
+ * header), never a warning at boot about a screen nobody has asked
+ * for. Returns the promise so a test can await it.
+ *
+ * THE FOUR HOSTS: world.js and exterior.js warm at boot beside the
+ * sheet's art; dungeonContext.js warms in `makeCharSheet`, where it
+ * already warms that art ("ready by the next open at worst");
+ * worldModes.js needs none, and is NAMED here rather than left
+ * unmentioned - it builds no windows of its own, borrows
+ * `host.makeCharSheet`, and boots inside one of the three above.
+ * (NAMED and not the F-word the rule usually uses: that word is
+ * tools/regenOpenFlags.mjs's marker, and this is not open work.)
+ */
+export function warmLevelUpWindow() {
+  if (!isEnhanced() || typeof document === 'undefined') return null;
+  // `.catch(() => null)` IS THE GATE'S OWN VOCABULARY, not a shortcut
+  // around it: test/menu1_enhanced_chunk.test.js allows a bare dynamic
+  // import on exactly that shape - "a feature that is off rather than
+  // a screen that failed" - and a warm is precisely that. Nothing
+  // waits on it; the MOUNT still goes through the one home below, with
+  // its retry, its notice and its refusal to hand the keys back.
+  return import('./enhancedLevelUp.js').catch(() => null);
+}
 
 /** The gate a host asks before it opens the sheet. The classic window
  *  has a text fallback and survives a failed art load; the enhanced
@@ -89,10 +131,38 @@ export function createCharSheetWindow(deps = {}) {
   // three-attribute cap, is FALSE at the mod's own defaults: three rows
   // at five apiece with Luck at four is exactly thirty. ORL1's deep
   // audit.)
-  if (deps.entity?.readyToLevelUp && !deps.entity?.oghmaLevelUp && usesVirtueLeveling(deps.entity)) {
-    return new VirtueLevelUpScreen(deps.entity);
+  //
+  // LV1 (Mac, 2026-09-18: "the next enhanced UI window... a replication
+  // of the skyrim level up UI in our own constellation vision"): AND
+  // THE ENHANCED SKIN HAS A FACE FOR BOTH LAWS NOW. Until this slice
+  // the skin fork stopped at the sheet: a level-up in the enhanced skin
+  // mounted the CLASSIC LevelUpScreen - eight drawText rows on the
+  // canvas - because there was nothing else to mount. The window that
+  // replaced it (ui/enhancedLevelUp.js) is a FACE, not a third rollout:
+  // it drives whichever of these two screens this character's law
+  // wants, through that screen's own `input`, so the Level++, the
+  // health roll and the mod's caps stay exactly where a11 and ORL1 put
+  // them.
+  if (deps.entity?.readyToLevelUp) {
+    const virtue = !deps.entity?.oghmaLevelUp && usesVirtueLeveling(deps.entity);
+    // LV2: ...and whether the WINDOW still owes the fanfare. On the
+    // enhanced skin ui/levelNotice.js played it at the moment the level
+    // was earned, which may be long before this window is asked for;
+    // playing it again here would announce one event twice. The notice
+    // answers for the level it announced and for no other, so a second
+    // level earned while the first was unspent still sounds.
+    const fanfare = levelNotices.fanfareOwed(deps.entity?.pendingLevel ?? null);
+    const rollout = () => (virtue
+      ? new VirtueLevelUpScreen(deps.entity, { fanfare })
+      : new LevelUpScreen(deps.entity, undefined, { fanfare }));
+    // `document` for the reason this file's other fork gives: node
+    // drives these hosts headless and keeps the canvas windows.
+    if (isEnhanced() && typeof document !== 'undefined') return enhancedLevelUpOverlay(rollout(), deps.entity);
+    if (virtue) return new VirtueLevelUpScreen(deps.entity);
+    if (isEnhanced()) return new LevelUpScreen(deps.entity);
+    // ...and the CLASSIC lane falls through to the sheet, which mounts
+    // DFU's own rollout on itself (AUDIT 44 / a11). Unchanged.
   }
-  if (deps.entity?.readyToLevelUp && isEnhanced()) return new LevelUpScreen(deps.entity);
   const hooks = charSheetHooks(deps);
   // `document` for the reason chargenSession's and pauseDoor's forks
   // give: node drives these hosts headless and keeps the canvas window
@@ -233,6 +303,153 @@ function enhancedSheetPageOverlay(hooks) {
     close,
     // `dispose` and `destroy` are both the hosts' words for the same
     // act; the overlay this replaced answered both, so this does too.
+    dispose: close,
+    destroy: close,
+  };
+}
+
+/**
+ * LV1: THE ASCENSION, in the overlay shape the hosts already push.
+ *
+ * The rollout `screen` is built by the caller above and is the LAW;
+ * this is the host contract around a DOM window that drives it. The
+ * shape is ui/charSheetDoor.js's own `enhancedSheetPageOverlay` -
+ * fixed div, lazy chunk, the hosts' arms - with three differences,
+ * each of which is a rule rather than a preference:
+ *
+ *   NO CROSS-OVER KEY. The sheet answers F5 and F6 because a sheet is
+ *   a thing you toggle. A level-up is not: DFU's sheet refuses to
+ *   close while points are unspent (CheckIfDoneLeveling :433-455), so
+ *   there is no key that dismisses this and the window owns the
+ *   keyboard whole.
+ *
+ *   NO OUTSIDE TAP. OT1's rule is that a tap on the scrim closes the
+ *   window, and it is right for every framed window - but this screen
+ *   has no scrim, because there is nothing behind it to return to.
+ *
+ *   A HEADLESS SPEND. `spendRemainingHeadless` is the font-less
+ *   escape's arm (scenes/dungeonContext.js's drawOverlay): a level-up
+ *   that cannot draw must not silently eat the pool. It lives HERE
+ *   rather than in the chunk on purpose - the escape has to work in
+ *   the one case where the chunk is what failed.
+ */
+/** What the wait says, per lane. The book grants no level (AUDIT 39),
+ *  so it must not be announced as one even for the half second before
+ *  the window can say it properly. */
+export const RISEN_WAIT_TEXT = 'You have risen.';
+export const OGHMA_WAIT_TEXT = 'The Oghma Infinium.';
+/** How long a paused game may sit blank before the wait is drawn. A
+ *  warmed chunk mounts inside this, so the common case never flashes
+ *  it; a cold one shows it almost at once. */
+export const LEVELUP_WAIT_MS = 120;
+
+/**
+ * THE WAIT, painted into the door's own host with INLINE STYLE ONLY -
+ * no chunk, no font, no stylesheet, nothing that could be the thing
+ * that is still loading. Exactly `paintChunkNotice`'s doctrine, for
+ * exactly its reason.
+ */
+export function paintLevelUpWait(host, { oghma = false } = {}) {
+  if (!host?.ownerDocument) return null;
+  const doc = host.ownerDocument;
+  const el = doc.createElement('div');
+  el.id = 'levelup-wait';
+  el.style.cssText = 'position:fixed;inset:0;display:flex;align-items:center;justify-content:center;'
+    + 'background:#0a0c11;color:#d8cfae;font:20px/1.6 system-ui,sans-serif;letter-spacing:0.18em;'
+    + 'text-transform:uppercase;text-align:center;padding:24px';
+  el.textContent = oghma ? OGHMA_WAIT_TEXT : RISEN_WAIT_TEXT;
+  host.append(el);
+  return el;
+}
+
+function enhancedLevelUpOverlay(screen, entity) {
+  let fired = false;
+  let view = null;
+  const host = document.createElement('div');
+  host.id = 'enhanced-levelup';
+  // z-index 14 - above the sheet's 13. They are never both up (a
+  // level-up is the door's answer INSTEAD of a sheet), and the order
+  // says which would win if a host ever pushed both.
+  host.style.cssText = 'position:fixed;inset:0;z-index:14;background:transparent;overflow:hidden';
+  document.body.append(host);
+  // THE WAIT (LV1's audit). The host pauses the game the moment this
+  // returns, and the chunk lands a fetch later; until this slice that
+  // was a frozen frame with nothing on it, for a window the player did
+  // not ask for. Armed rather than drawn, so a warm chunk - which is
+  // the case `warmLevelUpWindow` makes the common one - never flashes
+  // it. The timer is owned: every exit below clears it.
+  let wait = null;
+  let waitTimer = setTimeout(() => { wait = paintLevelUpWait(host, { oghma: !!screen?.oghma }); }, LEVELUP_WAIT_MS);
+  const stopWaiting = () => {
+    if (waitTimer) { clearTimeout(waitTimer); waitTimer = null; }
+    try { wait?.remove(); } catch { /* already gone */ }
+    wait = null;
+  };
+  const close = () => {
+    if (fired) return;
+    stopWaiting();
+    try { view?.destroy?.(); } catch { /* already gone */ }
+    view = null;
+    host.remove();
+    fired = true;   // last: `done` must not be true while the DOM is up
+  };
+  // MENU1: the ONE lazy-chunk door. A deploy that moved this chunk
+  // leaves the notice up and the door OPEN - `done` stays false and
+  // the host keeps the slot, so the game does not hand the keys back
+  // to a player who is owed a level. Dismissing it closes this window
+  // and nothing else: `readyToLevelUp` is still set, so the next
+  // 360-minute check and the next F5 both re-offer it (the cost is one
+  // discarded BonusPool draw, which AUDIT 23 minds about the RNG
+  // stream and which no player can observe).
+  mountEnhancedChunk({
+    load: () => import('./enhancedLevelUp.js'),
+    alive: () => !fired, host, onDismiss: close, label: 'levelup',
+    mount: ({ mountEnhancedLevelUp }) => {
+      stopWaiting();   // the window is the wait's successor, and takes the slot before it is torn down
+      view = mountEnhancedLevelUp(host, { screen, entity, onExit: close });
+    },
+    // ...and the NOTICE is the other successor. Without this arm a
+    // failed chunk left the wait underneath it saying "You have
+    // risen." over a message that says the screen could not be
+    // loaded - two answers to one event.
+    notice: (h, o) => { stopWaiting(); return paintChunkNotice(h, o); },
+  });
+  return {
+    /** The duck type the font-less escape asks for, in this file's own
+     *  idiom (`isVirtueLevelUp`, `isRestWindow`): a scene must not
+     *  import a UI class for a type test. */
+    isEnhancedLevelUp: true,
+    isChoiceWindow: true,
+    get done() { return fired; },
+    input() { /* the view's own capture keydown owns the keyboard */ },
+    click() { /* the view is a fixed div over the canvas; pointers never get here */ },
+    wheel() { /* the view scrolls itself */ },
+    hover() { /* the view has its own :hover, and no canvas to hit-test */ },
+    tick() { /* the sky owns its own clock */ },
+    draw() { /* DOM, not canvas */ },
+    /**
+     * THE FONT-LESS ESCAPE, per lane. The mod's purse is not a DFU
+     * bonus pool - spending it with spendPoolLowest would ignore the
+     * three-attribute cap, the +5 ceiling and Luck's price - so its own
+     * planner runs and commits through the same `confirm` a player's
+     * Enter uses. The classic pool takes the policy every other
+     * headless path takes (systems/chargen.js's spendPoolLowest), which
+     * is what scenes/dungeonContext.js's `.leveling` arm already does
+     * to the sheet's rollout; the shape is the same because the state
+     * is the same.
+     */
+    spendRemainingHeadless() {
+      if (screen?.isVirtueLevelUp) { screen.spendRemainingHeadless(); close(); return true; }
+      if (screen?.working) {
+        spendPoolLowest(screen.working, Object.keys(screen.working), screen.pool ?? 0);
+        screen.pool = 0;
+        screen.input('confirm');   // applyLevelUp writes the working stats home, with the PRE-ROLLED pool
+      }
+      close();
+      return true;
+    },
+    close,
+    // `dispose` and `destroy` are both the hosts' words for the same act.
     dispose: close,
     destroy: close,
   };

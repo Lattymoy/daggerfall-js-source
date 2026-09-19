@@ -64,7 +64,11 @@ const ENTITY_FIELDS = [
   'health', 'maxHealth', 'magicka', 'maxMagicka', 'fatigue',
   'currentBreath',   // P12 (SerializablePlayer carries it; missing = 0/surfaced on old saves)
   'startingLevelUpSkillSum', 'currentLevelUpSkillSum',
-  'readyToLevelUp', 'pendingLevel', 'chargenDone',
+  // `pendingBonusPool` rides beside `pendingLevel` for the reason the
+  // roll was moved onto the entity at all (AUDIT LV2, reopened): a
+  // pool that did not survive the save would be re-rolled by a save
+  // and a load, which is the same exploit through a slower door.
+  'readyToLevelUp', 'pendingLevel', 'pendingBonusPool', 'chargenDone',
   // ORL1 (2026-09-17): WHICH LEVELING SYSTEM THIS CHARACTER LEVELS BY,
   // and the mod's bar. `levelingSystem` is answered ONCE, at chargen,
   // and is a property of the CHARACTER rather than of the install -

@@ -3585,6 +3585,323 @@ body:has(.dfchat.touch) .hudtext-stack { top: ${HUD_TEXT_TOP_CHAT_TOUCH_PX}px; }
 .shell .ft-tile-drawer { border-top: 2px solid rgba(125,116,96,0.3); }
 .shell .ft-rail { background: rgba(10,12,17,0.55); border: 2px solid rgba(125,116,96,0.35); }
 .shell .ft-rail-kv { border-top: 2px solid rgba(125,116,96,0.3); }
+/* ── LV2: THE RISING ── the enhanced level-up notification. Mac:
+   "Next up, I want to implement a new element. The enhanced level up
+   notification", with the window deferred - "Notify, then you choose".
+
+   WHERE IT SITS, AND WHY NOT WHERE THE REFERENCE PUTS IT. Skyrim's
+   notification is top-centre; this HUD's top-centre is taken twice
+   over - the compass strip at 18 and the popup column at
+   HUD_TEXT_TOP_PX, which is the surface every other line in the game
+   arrives on. A second centred stack there would sit on the first the
+   first time an ambient line and a level-up landed together. So it
+   goes where THIS hud already puts what is happening to YOU: above
+   the bottom block, with the vitals and the quickslots, growing
+   upward from a fixed foot so a flurry of skill rows never walks down
+   into them.
+
+   It is pointer-transparent like the rest of the HUD (the key is the
+   way in, and a pointer-locked player has no cursor to click with
+   anyway - ui/player/pointerLock.js's whole subject). */
+/* THE STRIP HANGS IN \`.hud-bottom\`, above every row the HUD carries -
+   see ui/levelNotice.js's rehome and AUDIT LV2 F4. These are the
+   FALLBACK's numbers, for the frame before the HUD host exists: a
+   body-level strip needs a place, and 150px clears an empty block. The
+   rule below takes over the moment it is home, and inside the column
+   no number here is consulted. */
+#enhanced-levelnotice {
+  position: fixed; left: 50%; bottom: 150px; transform: translateX(-50%);
+  z-index: 4; pointer-events: none;
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  font-family: ${PIXEL_STACK}; -webkit-font-smoothing: none;
+  font-variant-ligatures: none; font-feature-settings: 'liga' 0, 'clig' 0;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.85);
+  max-width: min(560px, 92vw);
+}
+.lv-note {
+  display: flex; align-items: center; gap: 10px;
+  padding: 5px 14px; color: #d8cfae;
+  background: rgba(10,12,17,0.55); border: 2px solid rgba(125,116,96,0.55);
+}
+.lv-note-gem { font-size: 15px; line-height: 1; color: #7d7460; }
+.lv-note-body { display: flex; align-items: baseline; gap: 10px; min-width: 0; }
+.lv-note-title { font-size: 15px; letter-spacing: 0.16em; text-indent: 0.16em; text-transform: uppercase; }
+.lv-note-sub { font-size: 17px; color: #d8cfae; }
+/* The key the level's row names, in the plate the controls pane uses
+   for a binding - it IS a binding, and a player who has seen it there
+   reads it here without being told. */
+.lv-note-key {
+  font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase;
+  color: #7d7460; border: 2px solid rgba(125,116,96,0.45); padding: 1px 7px;
+}
+/* THE LEVEL'S ROW WEARS THE CLASSIC GOLD PAIR, because it is the one
+   row that is asking for something. A skill line reports; this one
+   invites. */
+.lv-note-level { border-color: rgb(243,239,44); }
+.lv-note-level .lv-note-gem,
+.lv-note-level .lv-note-title { color: rgb(243,239,44); text-shadow: 2px 2px 0 rgb(93,77,12); }
+.lv-note-level .lv-note-sub { font-size: 19px; color: rgb(243,239,44); text-shadow: 2px 2px 0 rgb(93,77,12); }
+.lv-note-level .lv-note-key { color: #d8cfae; border-color: rgba(243,239,44,0.55); }
+/* A MASTERY is the rarest thing this strip ever says - a primary skill
+   at 100, once per skill per character - so it is the only row that
+   takes the brass. */
+.lv-note-mastery { border-color: var(--brass); }
+.lv-note-mastery .lv-note-gem, .lv-note-mastery .lv-note-title { color: var(--brass); }
+/* STANDING: the announcement has had its moment and the level is still
+   unspent, so the row folds down to a quiet reminder that stays. It is
+   the same element, not a second one - a reminder drawn somewhere else
+   is a second thing to keep in step with the first. */
+.lv-note.lv-standing { padding: 3px 10px; background: rgba(10,12,17,0.42); border-color: rgba(125,116,96,0.4); }
+.lv-note.lv-standing .lv-note-title { font-size: 12px; letter-spacing: 0.2em; text-indent: 0.2em; }
+.lv-note.lv-standing .lv-note-sub { font-size: 13px; }
+.lv-note.lv-standing .lv-note-gem { font-size: 12px; }
+.lv-note.lv-standing.lv-note-level { border-color: rgba(243,239,44,0.55); }
+/* ...AND AT HOME IT IS A ROW LIKE THE OTHERS. The column places it,
+   the column's own transform scales it, and the block's height - which
+   changes with the breath bar, the effect chips and the needs strip -
+   is the flex box's business and not a constant in this sheet. The
+   gap is \`.hud-bottom\`'s 10px, so it stands off the vitals the same
+   distance the effects row stands off them. */
+.hud-bottom > #enhanced-levelnotice {
+  position: static; transform: none; left: auto; bottom: auto; z-index: auto;
+}
+@media (max-width: 720px) {
+  #enhanced-levelnotice { bottom: 128px; gap: 3px; max-width: 94vw; }
+  .lv-note { padding: 4px 10px; gap: 8px; }
+  .lv-note-title { font-size: 13px; letter-spacing: 0.1em; text-indent: 0.1em; }
+  .lv-note-sub { font-size: 15px; }
+  .lv-note-level .lv-note-sub { font-size: 16px; }
+}
+@media (max-height: 620px) {
+  #enhanced-levelnotice { bottom: 118px; }
+}
+
+/* ── LV1: THE ASCENSION ── the level-up window, on the sky the enhanced
+   skin already stands on (ui/pixelGround.js). Mac's brief: Skyrim's
+   level-up screen "in our own constellation vision".
+
+   THE LAYOUT IS A COLUMN AND NOT A WINDOW. Every other enhanced screen
+   is a .px-win framed panel over the paused game, because every other
+   screen is a thing you OPEN. This one is a thing that HAPPENS to you:
+   the game has stopped to tell you something, and a frame around it
+   would put it in the same class as the inventory. The reference does
+   the same - Skyrim's level-up is the whole screen, no window at all -
+   and it is why the sky is opaque here rather than the pause scrim.
+
+   WHOLE PIXELS AND NO TWEENS, per the .px-home block above: states
+   snap, the gold pair is the classic shadowed label, and the only
+   motion on screen is the sky's own 8fps dither. */
+.lv-sky { position: fixed; inset: 0; overflow: hidden; z-index: 14;
+  display: grid; grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto auto minmax(0,1fr) auto auto auto;
+  align-content: stretch; }
+/* EVERY BAND MAY SHRINK. A grid item's default min-width is auto - its
+   MIN-CONTENT - so the ribbon, which is a scroller with thirty-five
+   skills in it, sized the whole column at 1776px inside a 1400px
+   window: the race cell and the Ascend button were both drawn off the
+   right-hand edge, on a screen whose only button that one is. Caught by
+   the geometry probe, which is why it measures boxes rather than
+   reading text. */
+.lv-sky > * { min-width: 0; }
+.lv-sky .px-ground, .lv-sky .px-vignette { position: absolute; }
+/* Every band of the column sits over the sky, not in it. */
+.lv-crown, .lv-plate, .lv-stage, .lv-choice, .lv-ribbonwrap, .lv-foot { position: relative; z-index: 1; }
+
+/* THE CROWN: name | level | race, the three the classic sheet leads
+   with (DaggerfallCharacterSheetWindow.cs:134-204) and the three
+   Skyrim's own rail carries. Rules above and below, nothing boxed. */
+.lv-crown { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center;
+  gap: 18px; padding: 14px 26px 12px; border-bottom: 2px solid rgba(125,116,96,0.45); }
+.lv-crown .k { color: #7d7460; font-size: 13px; letter-spacing: 0.22em; text-indent: 0.22em;
+  text-transform: uppercase; display: block; margin-bottom: 2px;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
+.lv-crown .v { font-size: 22px; letter-spacing: 0.06em; text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
+.lv-crown .lv-race { text-align: right; }
+.lv-level { text-align: center; min-width: min(360px, 46vw); }
+.lv-level .lv-jump { font-size: 26px; letter-spacing: 0.1em; white-space: nowrap;
+  color: rgb(243,239,44); text-shadow: 2px 2px 0 rgb(93,77,12); }
+.lv-level .px-meter { margin-top: 6px; }
+.lv-level .lv-barnote { color: #7d7460; font-size: 12px; letter-spacing: 0.12em;
+  text-transform: uppercase; margin-top: 4px; text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
+
+/* THE PLATE: what is left to spend. Skyrim's "Perks to increase: 12"
+   sits in exactly this slot, and it is the number this screen is
+   about, so it is the largest thing on it after the figure. */
+.lv-plate { text-align: center; padding: 12px 20px 6px; }
+.lv-plate .lv-count { font-size: 40px; line-height: 1; letter-spacing: 0.06em;
+  color: rgb(243,239,44); text-shadow: 2px 2px 0 rgb(93,77,12); }
+.lv-plate .lv-countk { display: block; color: #7d7460; font-size: 13px; letter-spacing: 0.22em;
+  text-indent: 0.22em; text-transform: uppercase; margin-top: 4px;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
+.lv-plate.spent .lv-count { color: #d8cfae; text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
+.lv-refuse { color: var(--ruby); font-size: 15px; letter-spacing: 0.06em; margin: 6px 0 0;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
+.lv-hint { color: #d8cfae; font-size: 14px; margin: 3px 0 0; text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
+
+/* THE FIGURE. The stage is a fixed 100x62 coordinate space
+   (STAR_FIGURE.box) laid out as an aspect box, so the lines and the
+   stars read the SAME numbers - ui/levelingChoice.js's law about a
+   picture and its hit test, applied to a drawing that has both in one
+   element tree. */
+.lv-stage { display: flex; align-items: center; justify-content: center; padding: 6px 20px; min-height: 0; }
+.lv-figure { position: relative; width: min(880px, 92vw); aspect-ratio: 100 / 62; max-height: 100%; }
+.lv-lines { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.lv-lines line { stroke: rgba(125,116,96,0.55); stroke-width: 0.35; }
+.lv-lines line.lit { stroke: rgb(243,239,44); stroke-width: 0.45; }
+/* THE ANCHOR IS THE GEM, NOT THE BOX. A star is a diamond with a name
+   and a number stacked under it, so centring the whole BOX on the
+   figure's point ran every line through the labels and left the gems
+   floating above them - the drawing said the lines connected the
+   words. Translating by half a gem instead puts the diamond itself on
+   the point, which is what a constellation is: the lines meet at the
+   stars. */
+.lv-star { position: absolute; transform: translate(-50%, calc(-1 * var(--lv-anchor, 15px)));
+  display: flex; flex-direction: column; align-items: center; gap: 1px;
+  min-width: 68px; min-height: 44px; padding: 4px 8px;
+  font: inherit; color: #d8cfae; background: none; border: 0; cursor: pointer;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.8); transition: none; }
+.lv-star .lv-gem { font-size: 20px; line-height: 1; color: #d8cfae; }
+.lv-star .lv-name { font-size: 12px; letter-spacing: 0.16em; text-indent: 0.16em; text-transform: uppercase; color: #7d7460; }
+.lv-star .lv-val { font-size: 19px; letter-spacing: 0.04em; }
+.lv-star .lv-delta { font-size: 13px; color: rgb(243,239,44); text-shadow: 2px 2px 0 rgb(93,77,12); }
+.lv-star:hover, .lv-star:focus-visible { outline: none; color: rgb(243,239,44); text-shadow: 2px 2px 0 rgb(93,77,12); }
+.lv-star:hover .lv-name, .lv-star:focus-visible .lv-name { color: rgb(243,239,44); text-shadow: 2px 2px 0 rgb(93,77,12); }
+.lv-star.on { color: rgb(243,239,44); text-shadow: 2px 2px 0 rgb(93,77,12); }
+.lv-star.on .lv-name { color: rgb(243,239,44); text-shadow: 2px 2px 0 rgb(93,77,12); }
+.lv-star.on .lv-gem, .lv-star.raised .lv-gem { color: rgb(243,239,44); text-shadow: 2px 2px 0 rgb(93,77,12); }
+/* A RAISED star wears a ring of its own, so the figure still says what
+   was spent when the focus has moved on. */
+.lv-star.raised { color: rgb(243,239,44); }
+.lv-star.full .lv-val { color: #7d7460; }
+
+/* THE CHOICE: the focused star, spelled out, with the two presses.
+   The mod's HIDE-DO-NOT-GREY rule is the STARS' business (a star with
+   no legal press simply does not light); these two are the window's
+   furniture and stay put, dimmed, because a button that vanishes under
+   the pointer is worse than one that says no - ui/virtueLevelUp.js's
+   own words for its own pair. */
+.lv-choice { display: flex; flex-direction: column; align-items: center; gap: 6px;
+  padding: 4px 20px 10px; }
+.lv-ask { color: #7d7460; font-size: 14px; letter-spacing: 0.2em; text-indent: 0.2em;
+  text-transform: uppercase; text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
+.lv-pick { display: flex; align-items: center; gap: 10px; }
+.lv-pick .lv-arrow, .lv-pick .lv-press { font: inherit; font-size: 22px; line-height: 1;
+  min-width: 48px; min-height: 44px; color: #d8cfae; background: none;
+  border: 2px solid rgba(125,116,96,0.55); cursor: pointer;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.8); transition: none; }
+.lv-pick .lv-arrow:hover, .lv-pick .lv-press:hover,
+.lv-pick .lv-arrow:focus-visible, .lv-pick .lv-press:focus-visible {
+  outline: none; color: rgb(243,239,44); border-color: rgb(243,239,44); text-shadow: 2px 2px 0 rgb(93,77,12); }
+.lv-pick .lv-press[disabled] { color: #4a463d; border-color: rgba(125,116,96,0.25); cursor: not-allowed; }
+.lv-pick .lv-press[disabled]:hover { color: #4a463d; border-color: rgba(125,116,96,0.25); text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
+.lv-pickname { min-width: min(320px, 60vw); text-align: center; }
+.lv-pickname .n { display: block; font-size: 26px; letter-spacing: 0.12em; text-indent: 0.12em;
+  text-transform: uppercase; color: rgb(243,239,44); text-shadow: 2px 2px 0 rgb(93,77,12); }
+.lv-pickname .f { display: block; font-size: 17px; margin-top: 2px; text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
+.lv-pickname .c { display: block; font-size: 12px; color: #7d7460; letter-spacing: 0.14em;
+  text-transform: uppercase; margin-top: 2px; text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
+.lv-blurb { color: #c5bda2; font-size: 16px; line-height: 1.5; margin: 2px 0 0; max-width: 62ch;
+  text-align: center; text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
+
+/* THE RIBBON: the skills, and what each did for this level. Skyrim
+   scrolls its skills across the foot of the sky; ours does the same,
+   and the focused one is the one that is spelled out beneath. */
+.lv-ribbonwrap { border-top: 2px solid rgba(125,116,96,0.45); padding: 8px 0 4px; }
+.lv-ribbon { display: flex; gap: 0; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; min-width: 0;
+  padding: 0 20px; scroll-snap-type: x proximity; }
+.lv-ribbon::-webkit-scrollbar { display: none; }
+.lv-sk { flex: 0 0 auto; scroll-snap-align: center; font: inherit; color: #7d7460;
+  background: none; border: 0; cursor: pointer; min-height: 44px; padding: 4px 14px;
+  display: flex; align-items: baseline; gap: 8px;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.8); transition: none; }
+.lv-sk .n { font-size: 14px; letter-spacing: 0.14em; text-transform: uppercase; }
+.lv-sk .v { font-size: 17px; color: #d8cfae; }
+.lv-sk:hover, .lv-sk:focus-visible { outline: none; color: #d8cfae; }
+.lv-sk.on { color: rgb(243,239,44); text-shadow: 2px 2px 0 rgb(93,77,12); }
+.lv-sk.on .n { font-size: 20px; }
+.lv-sk.on .v { font-size: 24px; color: rgb(243,239,44); text-shadow: 2px 2px 0 rgb(93,77,12); }
+/* A skill that ROSE since the last sheet carries DFU's own mark - the
+   uint[2] mask the classic sheet highlights (PlayerEntity.
+   SetSkillRecentlyIncreased). */
+.lv-sk .lv-up { font-size: 12px; color: rgb(243,239,44); text-shadow: 2px 2px 0 rgb(93,77,12); }
+.lv-skrole { text-align: center; color: #7d7460; font-size: 14px; margin: 2px 0 0;
+  letter-spacing: 0.04em; text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
+.lv-skrole .g { color: #c5bda2; letter-spacing: 0.16em; text-transform: uppercase; font-size: 12px; }
+
+/* THE FOOT: the three bars, and the one way out. */
+.lv-foot { display: flex; align-items: flex-end; gap: 22px; flex-wrap: wrap;
+  padding: 10px 26px 16px; border-top: 2px solid rgba(125,116,96,0.45); }
+.lv-vitals { display: flex; gap: 22px; flex: 1 1 320px; min-width: 0; }
+.lv-vitals .px-mrow { flex: 1 1 0; margin: 0; min-width: 0; }
+.lv-acts { display: flex; gap: 10px; align-items: center; }
+.lv-ok { font: inherit; font-size: 20px; letter-spacing: 0.16em; text-indent: 0.16em;
+  text-transform: uppercase; min-height: 48px; padding: 8px 26px;
+  color: rgb(243,239,44); background: none; border: 2px solid rgb(243,239,44);
+  cursor: pointer; text-shadow: 2px 2px 0 rgb(93,77,12); transition: none; }
+.lv-ok:hover, .lv-ok:focus-visible { outline: none; background: rgba(243,239,44,0.14); }
+/* NOT YET - the paint of a disabled control on a button that is not
+   disabled. The refusal has to be REACHABLE (see the window's own note
+   beside its classList toggle), so this is a look and an aria state,
+   never the attribute. */
+.lv-ok.notyet { color: #7d7460; border-color: rgba(125,116,96,0.5);
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.8); background: none; }
+.lv-ok.notyet:hover, .lv-ok.notyet:focus-visible { color: #d8cfae; background: rgba(0,0,0,0.3); }
+
+/* PHONE. The figure keeps its aspect and gives up height; the crown
+   drops to two rows so the name never truncates; the ribbon is already
+   a scroller and needs nothing. Targets stay at 44px throughout - they
+   are sized that way above, not shrunk here. */
+@media (max-width: 720px) {
+  .lv-crown { grid-template-columns: 1fr 1fr; gap: 8px 14px; padding: 10px 14px 8px; }
+  .lv-level { grid-column: 1 / -1; order: -1; min-width: 0; }
+  .lv-crown .v { font-size: 18px; }
+  .lv-plate { padding: 8px 14px 4px; }
+  .lv-plate .lv-count { font-size: 32px; }
+  .lv-stage { padding: 4px 8px; }
+  .lv-figure { width: 96vw; }
+  /* THE NAMES COME OFF THE STARS. A star's box is as wide as the word
+     in it - Intelligence is eighty-odd pixels - and at this width that
+     is a fifth of the whole figure, so two of them touch and a press
+     lands on the wrong attribute (the probe's phone run). The name is
+     not lost: the focused attribute is spelled out below the figure in
+     type twice this size, which is where a player reads it anyway. */
+  .lv-star { min-width: 56px; padding: 2px 4px; --lv-anchor: 12px; }
+  .lv-star .lv-name { display: none; }
+  .lv-star .lv-val { font-size: 16px; }
+  .lv-star .lv-gem { font-size: 16px; }
+  .lv-pickname { min-width: 0; }
+  .lv-pickname .n { font-size: 21px; }
+  .lv-blurb { font-size: 14px; padding: 0 12px; }
+  .lv-foot { padding: 8px 14px 12px; gap: 10px; }
+  .lv-vitals { flex: 1 1 100%; gap: 10px; }
+  .lv-acts { flex: 1 1 100%; justify-content: center; }
+  /* THE THREE BARS STACK THEIR OWN LABELS. Side by side in 390px the
+     label and the value of each meter ran into the next meter's label
+     - "HEALTH96 / 118FATIGUE104 / 120" - which is three numbers a
+     player cannot read at the moment the window is telling them their
+     health went up. The row stays three columns (the comparison is the
+     point); it is each meter's HEAD that goes vertical. */
+  .lv-vitals .px-mtop { flex-direction: column; align-items: flex-start; gap: 1px; margin-bottom: 3px; }
+  .lv-vitals .px-mtop .k { font-size: 10px; letter-spacing: 0.1em; }
+  .lv-vitals .px-mtop .v { font-size: 14px; }
+}
+/* SHORT AND WIDE - a laptop in a hotel room, the aspect ratio the
+   enhanced menu's own probe measures at. The figure is what gives:
+   it is the only band on the column that can. */
+@media (max-height: 620px) {
+  .lv-plate { padding: 6px 20px 2px; }
+  .lv-plate .lv-count { font-size: 30px; }
+  .lv-crown { padding: 8px 20px 6px; }
+  .lv-blurb { font-size: 14px; }
+  .lv-ribbonwrap { padding: 4px 0 2px; }
+  /* ...and the same answer vertically: a short stage squeezes the
+     figure's ROWS together, so the tall part of a star - its name -
+     goes, and the box falls back to its 44px floor. */
+  .lv-star { min-height: 44px; padding: 2px 6px; --lv-anchor: 12px; }
+  .lv-star .lv-name { display: none; }
+  .lv-star .lv-val { font-size: 17px; }
+  .lv-star .lv-gem { font-size: 15px; }
+}
 `;
 
 export const ENHANCED_STYLE_ID = 'dagger-enhanced-style';

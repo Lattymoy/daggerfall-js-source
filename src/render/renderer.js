@@ -958,6 +958,7 @@ export class Renderer {
     // (uniforms are program state, so this survives a program switch).
     this._emissionColorUp = null;
     this._tex1Bound = null;   // PERF-TEX: cleared with its sibling
+    this._tex0Bound = null; this._activeUnit = null;   // PERF-TEX3: unit 0 and the selector, with it
     this._sq = {};
     this._tArrayTex = null;
     this._tTileSize = null;
@@ -1037,6 +1038,7 @@ export class Renderer {
     // 1x1 black bound for every non-window submesh (branchless shader).
     this._blackTex = gl.createTexture();
     gl.bindTexture(gl.TEXTURE_2D, this._blackTex);
+    this._tex0Bound = null;   // PERF-TEX3: this path owns unit 0 - the shadow may not speak for it
     gl.texImage2D(
       gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE,
       new Uint8Array([0, 0, 0, 255])
@@ -1176,8 +1178,10 @@ export class Renderer {
    * the world pass did.
    */
   endWorldPass() {
+    this._close2D();   // PERF-2D: the baseline back, before anything that needs it
     if (!this._worldViewportPx) return;
     this._tex1Bound = null;   // PERF-TEX: the 2D path and the post passes own the units past here
+    this._tex0Bound = null; this._activeUnit = null;   // PERF-TEX3: unit 0 and the selector, with it
     this._sq = {};   // PERF-UI: ...and this is the 2D pass's own door, so it starts knowing nothing
     this._tArrayTex = null;
     this._tTileSize = null;
@@ -1207,10 +1211,50 @@ export class Renderer {
   _bindEmission(tex) {
     if (this._tex1Bound === tex) return;
     const gl = this.gl;
-    gl.activeTexture(gl.TEXTURE1);
+    this._activeTexture(gl.TEXTURE1);
     gl.bindTexture(gl.TEXTURE_2D, tex);
-    gl.activeTexture(gl.TEXTURE0);
+    this._activeTexture(gl.TEXTURE0);
     this._tex1Bound = tex;
+    this.stats.texBinds++;
+  }
+
+  /** PERF-TEX3: THE UNIT THAT WAS ALREADY ACTIVE.
+   *
+   *  Measured over a frame of 25 loose models, 3 batched meshes and a
+   *  hundred-odd HUD quads: **97% of every `activeTexture` call set the
+   *  unit that was already selected** (117 of 121). It is not an
+   *  accident - every path in this file that reaches for a unit above 0
+   *  puts unit 0 back the moment it is done (`_bindEmission`, the
+   *  contact and adapt uploads, the cloud-shadow slot, the terrain's
+   *  tilemap), so unit 0 is what is active almost always, and almost
+   *  every call re-selects it.
+   *
+   *  `activeTexture` is a pure selector - it has no effect but to say
+   *  which unit the next `bindTexture` means - so this shadow cannot
+   *  change a picture on its own. What it CAN do is go stale, which is
+   *  why the funnel law (`test/glstate.test.js`) allows exactly one raw
+   *  `gl.activeTexture` in this file, inside here. */
+  _activeTexture(unit) {
+    if (this._activeUnit === unit) return;
+    this.gl.activeTexture(unit);
+    this._activeUnit = unit;
+  }
+
+  /** PERF-TEX3: THE TEXTURE THAT WAS ALREADY ON UNIT 0 - `_bindEmission`
+   *  for the unit every pass shares. 55% of the frame's `bindTexture`
+   *  calls re-bound the texture already on the unit: a mesh bundle whose
+   *  sub-meshes repeat an archive, and a HUD drawing ninety quads off
+   *  one sheet.
+   *
+   *  Cleared wherever something else may own unit 0 - the same points
+   *  `_tex1Bound` is cleared at, and for the same reason: a shadow that
+   *  speaks for a unit it no longer owns is a WRONG TEXTURE, which is
+   *  the one thing a performance change may never cost. */
+  _bindTex0(tex) {
+    if (this._tex0Bound === tex) return;
+    this._activeTexture(this.gl.TEXTURE0);
+    this.gl.bindTexture(this.gl.TEXTURE_2D, tex);
+    this._tex0Bound = tex;
     this.stats.texBinds++;
   }
 
@@ -1241,6 +1285,33 @@ export class Renderer {
    *  cost is one upload per program key per seam; no draw, program or
    *  VAO count moves. */
   markForeignPass() {
+    // PERF-2D: THE ONE GAP THIS CHANGE CANNOT GUARD, MADE LOUD.
+    //
+    // Every path inside this file closes the 2D run before it needs the
+    // baseline, and `test/glstate.test.js` reads that law out of the
+    // source. The SKY, the rain, the wisps, the sand and the grass are
+    // not inside this file: the hosts hand them `renderer.gl` at
+    // construction and call `draw` on them directly, so nothing here can
+    // stand in front of those. They assume the baseline - precipitation's
+    // draw, for one, sets BLEND and depthMask and never touches
+    // DEPTH_TEST, so an open run would give it rain that draws through
+    // walls.
+    //
+    // Today they cannot collide: in both hosts every foreign pass runs in
+    // the world section and the first screen quad is what ENDS it
+    // (ROAD-E E5). But that is the hosts' running order, not a law, and
+    // the two regressions this bracket already caused (the 2026-08-23
+    // sky-blue screen; the `gl.enable(gl.CULL_FACE)` a mutation campaign
+    // deleted with the whole suite still green) were both silent.
+    //
+    // So: a host calls this AFTER its foreign pass. If the run is still
+    // open when it does, a foreign pass just drew inside one - the exact
+    // bug - and it says so, once, instead of rendering wrong all session.
+    if (this._2dVao && !this._warned2dForeign) {
+      this._warned2dForeign = true;
+      console.warn('PERF-2D: a foreign pass ran inside an open 2D run - it drew with DEPTH_TEST and CULL_FACE off. Call renderer.endUiRun() before the pass.');
+    }
+    this._close2D();
     this.gl.bindVertexArray(null);
     this._lastProgram = null;
     this._lastVao = null;
@@ -1250,6 +1321,7 @@ export class Renderer {
     // shadow that speaks for a unit it no longer owns is a WRONG TEXTURE,
     // which is the one thing a performance change may never cost.
     this._tex1Bound = null;
+    this._tex0Bound = null; this._activeUnit = null;   // PERF-TEX3
     this._tArrayTex = null;
     this._tTileSize = null;
     this._sq = {};
@@ -1407,6 +1479,7 @@ export class Renderer {
     this._csUploaded = {};
     this._emissionColorUp = null;
     this._tex1Bound = null;   // PERF-TEX: cleared with its sibling
+    this._tex0Bound = null; this._activeUnit = null;   // PERF-TEX3: unit 0 and the selector, with it
     this._sq = {};
     this._tArrayTex = null;
     this._tTileSize = null;
@@ -1514,9 +1587,9 @@ export class Renderer {
   _uploadNoContact(loc) {
     if (!loc?.prevDepth) return;
     const gl = this.gl;
-    gl.activeTexture(gl.TEXTURE0 + CONTACT_UNIT);
+    this._activeTexture(gl.TEXTURE0 + CONTACT_UNIT);
     gl.bindTexture(gl.TEXTURE_2D, this._adaptOne());
-    gl.activeTexture(gl.TEXTURE0);
+    this._activeTexture(gl.TEXTURE0);
     gl.uniform1i(loc.prevDepth, CONTACT_UNIT);
     gl.uniform4fv(loc.contactParams, ZERO_CONTACT);
   }
@@ -1532,9 +1605,9 @@ export class Renderer {
     if (!loc?.adapt) return;
     const gl = this.gl;
     const tex = this._air && this._studioDepth === 0 ? this._air.adaptTexture : this._adaptOne();
-    gl.activeTexture(gl.TEXTURE0 + ADAPT_UNIT);
+    this._activeTexture(gl.TEXTURE0 + ADAPT_UNIT);
     gl.bindTexture(gl.TEXTURE_2D, tex);
-    gl.activeTexture(gl.TEXTURE0);
+    this._activeTexture(gl.TEXTURE0);
     gl.uniform1i(loc.adapt, ADAPT_UNIT);
   }
   /** AUDIT-EL F12: THE AO SAMPLER IS ALWAYS ON ITS UNIT. With the air off
@@ -1546,10 +1619,12 @@ export class Renderer {
     if (this._adaptOneTex) return this._adaptOneTex;
     const gl = this.gl, tex = gl.createTexture();
     gl.bindTexture(gl.TEXTURE_2D, tex);
+    this._tex0Bound = null;   // PERF-TEX3: this path owns unit 0 - the shadow may not speak for it
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([128, 128, 128, 255]));   // the log encoding's midpoint: a multiplier of 1
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
     gl.bindTexture(gl.TEXTURE_2D, null);
+    this._tex0Bound = null;   // PERF-TEX3: this path owns unit 0 - the shadow may not speak for it
     return (this._adaptOneTex = tex);
   }
 
@@ -1616,6 +1691,12 @@ export class Renderer {
 
   _compositeAir() {
     if (!this._air?.pending) return;
+    // PERF-2D: AFTER the early return, and that ordering is the whole
+    // saving. drawScreenQuad calls this at the head of EVERY quad, so a
+    // close before the return would shut the run a hundred times a
+    // frame and hand the per-quad bracket straight back. The air pass
+    // only needs the baseline when it actually resolves.
+    this._close2D();
     this._perf?.mark('air');   // VC6d: the AO, the bloom, the shafts and the resolve
     this._air.setCloudShadow(this._cloudShadow ?? this._deckOwed);   // VC6c: the FRAME's deck - the host sets it after beginFrame, so the shafts can only read it here
     this._air.composite();   // EL4: the resolve - the frame to the canvas
@@ -1638,6 +1719,64 @@ export class Renderer {
   /** EL2: the ShadowPass or null - a probe's read. */
   get shadows() { return this._shadows; }
 
+  /** PERF-2D: THE BRACKET THAT WAS PER QUAD.
+   *
+   *  Every screen quad used to disable DEPTH_TEST and CULL_FACE, bind
+   *  its VAO, draw, then re-enable both and unbind - four cap calls and
+   *  two VAO binds a quad, for a HUD that draws a hundred-odd of them.
+   *  Measured against a dungeon frame that is otherwise 3 batched level
+   *  meshes and 25 loose models, that bracket alone was **43% of every
+   *  GL call in the frame**, in every scene there is.
+   *
+   *  It is a RUN's state, not a quad's, so it is opened once and closed
+   *  once. The renderer still OWNS it - this is not the contract change
+   *  PERF-UI weighed and refused, where the world paths would have had
+   *  to own their own caps. What changed is only WHEN the restore
+   *  happens: on demand, at the head of everything that needs the
+   *  baseline back, instead of eagerly after every quad.
+   *
+   *  The law, and `test/glstate.test.js` reads it out of the source:
+   *  **every method in this file that issues a `gl.draw*` either is one
+   *  of the three 2D primitives or calls `_close2D()` first**, and so
+   *  does every seam where foreign GL can run (`beginFrame`,
+   *  `endWorldPass`, `markForeignPass`, the panel frames). Miss one and
+   *  a world draw runs with no depth test and no culling, which is the
+   *  2026-08-23 "sky-blue screen" regression wearing the other face -
+   *  so the pin is a source pin and cannot go vacuous. */
+  _open2D(vao) {
+    if (!this._2dVao) {
+      const gl = this.gl;
+      gl.disable(gl.DEPTH_TEST);
+      // HANDEDNESS REGRESSION (2026-08-23, "the sky-blue screen"): a 2D
+      // blit has no facing, but with CULL_FACE left ON the global
+      // frontFace(CW) swap culled EVERY screen quad - the whole UI
+      // layer, title screen to fonts - leaving only the clear color.
+      // tools/cullProbe.mjs is the real-GL repro.
+      gl.disable(gl.CULL_FACE);
+    }
+    // The three primitives have three different VAOs, and switching
+    // between them inside one run is a bind and NOT a cap toggle.
+    this._bindVao(vao);
+    this._2dVao = vao;
+  }
+
+  /** PERF-2D: the host's own door onto `_close2D`, for a frame that has
+   *  to run a foreign pass after a screen quad. Nothing needs it today;
+   *  it exists so that the warning in `markForeignPass` names a remedy
+   *  rather than a bug report. */
+  endUiRun() { this._close2D(); }
+
+  /** Hand the baseline back, if a run is open. Idempotent, and cheap
+   *  enough to call at the head of anything: one property read. */
+  _close2D() {
+    if (!this._2dVao) return;
+    const gl = this.gl;
+    this._bindVao(null);
+    gl.enable(gl.CULL_FACE);
+    gl.enable(gl.DEPTH_TEST);
+    this._2dVao = null;
+  }
+
   _buildProgram(vsSrc, fsSrc) {
     const gl = this.gl;
     const compile = (type, src) => {
@@ -1657,6 +1796,34 @@ export class Renderer {
       throw new Error(gl.getProgramInfoLog(prog));
     }
     return prog;
+  }
+
+  /** PERF-WARM: the programs this renderer builds ON DEMAND, each as its
+   *  own step, so a caller can pay for them while the browser is idle
+   *  instead of on the frame that first needs them.
+   *
+   *  Five programs were compiled inside a draw call: the particle
+   *  effects' (first spell), the character-sprite quad's (first classic
+   *  sprite), the screen quad's, the instanced screen quad's and the
+   *  overlay's. A compile and link is a DRIVER operation - it can take
+   *  tens of milliseconds and there is no way to make it cheaper, only
+   *  to move it. Every step is idempotent: the block each one wraps
+   *  still begins with its own `if (!this.xProgram)`, so the draw path
+   *  is unchanged for anyone who never warms, and a warm that has
+   *  already run costs one property read.
+   *
+   *  Not warmed: the world, sky, billboard and terrain programs, which
+   *  the constructor already builds, and the lab's programs, which
+   *  render/precipitation.js owns and only the enhanced lane compiles
+   *  (AUDIT 58 - warming them here would undo that). */
+  warmSteps() {
+    return [
+      () => this._ensureScreenQuadProgram(),
+      () => this._ensureScreenQuadRunProgram(),
+      () => this._ensureCharQuadProgram(),
+      () => this._ensureParticleProgram(),
+      () => this._ensureOverlayProgram(),
+    ];
   }
 
   /**
@@ -1709,6 +1876,7 @@ export class Renderer {
     const gl = this.gl;
     const tex = gl.createTexture();
     gl.bindTexture(gl.TEXTURE_2D, tex);
+    this._tex0Bound = null;   // PERF-TEX3: this path owns unit 0 - the shadow may not speak for it
     for (let i = 0; i < mips.length; i++) {
       const m = mips[i];
       gl.texImage2D(gl.TEXTURE_2D, i, gl.RGBA, m.width, m.height, 0, gl.RGBA, gl.UNSIGNED_BYTE, m.rgba);
@@ -1723,6 +1891,7 @@ export class Renderer {
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, wrapS);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, wrapT);
     gl.bindTexture(gl.TEXTURE_2D, null);
+    this._tex0Bound = null;   // PERF-TEX3: this path owns unit 0 - the shadow may not speak for it
     return tex;
   }
 
@@ -1780,17 +1949,11 @@ export class Renderer {
    *  body that was just drawn and never writing over it. State is
    *  returned to the character pass's baseline on the way out. */
   _drawParticleEffects(mesh, modelMatrix) {
+    this._close2D();   // PERF-2D: the baseline back, before anything that needs it
     const gl = this.gl;
     const list = mesh.effects;
     if (!list || !list.length) return;
-    if (!this.particleProgram) {
-      this.particleProgram = this._buildProgram(PARTICLE_VS, PARTICLE_FS);
-      const pp = this.particleProgram;
-      this._particle = {
-        proj: gl.getUniformLocation(pp, 'uProj'), view: gl.getUniformLocation(pp, 'uView'), model: gl.getUniformLocation(pp, 'uModel'),
-        tex: gl.getUniformLocation(pp, 'uTex'), useTex: gl.getUniformLocation(pp, 'uUseTex'), alphaCut: gl.getUniformLocation(pp, 'uAlphaCut'),
-      };
-    }
+    this._ensureParticleProgram();
     let any = false;
     for (const e of list) {
       if (!e || e.hidden || !e.count) continue;
@@ -1801,7 +1964,7 @@ export class Renderer {
         gl.uniformMatrix4fv(u.proj, false, this._proj);
         gl.uniformMatrix4fv(u.view, false, this._view);
         gl.uniformMatrix4fv(u.model, false, modelMatrix);
-        gl.activeTexture(gl.TEXTURE0);
+        this._activeTexture(gl.TEXTURE0);
         gl.uniform1i(u.tex, 0);
         gl.depthMask(false);
       }
@@ -1809,6 +1972,7 @@ export class Renderer {
       gl.uniform1f(u.useTex, e.tex ? 1 : 0);
       gl.uniform1f(u.alphaCut, e.alphaCut || 0);
       gl.bindTexture(gl.TEXTURE_2D, e.tex || this._blackTex);
+      this._tex0Bound = null;   // PERF-TEX3: this path owns unit 0 - the shadow may not speak for it
       if (e.blend) { gl.enable(gl.BLEND); gl.blendFunc(gl[nifBlendMode(e.srcBlend)], gl[nifBlendMode(e.dstBlend)]); }
       else gl.disable(gl.BLEND);
       if (e.depthTest) gl.enable(gl.DEPTH_TEST); else gl.disable(gl.DEPTH_TEST);
@@ -1823,8 +1987,25 @@ export class Renderer {
       gl.depthMask(true);
       gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
       gl.bindTexture(gl.TEXTURE_2D, null);
+      this._tex0Bound = null;   // PERF-TEX3: this path owns unit 0 - the shadow may not speak for it
       this._bindVao(null);
       this._use(this.charProgram);   // the pass's own program back, for the caller's next draw
+    }
+  }
+
+  /** PERF-WARM: build the particle program. Was inline in
+   *  _drawParticleEffects and so compiled on the frame the first spell
+   *  effect drew; it is its own step now so warmSteps() can pay for it
+   *  at idle. The body is the block that stood there, unchanged. */
+  _ensureParticleProgram() {
+    const gl = this.gl;
+    if (!this.particleProgram) {
+      this.particleProgram = this._buildProgram(PARTICLE_VS, PARTICLE_FS);
+      const pp = this.particleProgram;
+      this._particle = {
+        proj: gl.getUniformLocation(pp, 'uProj'), view: gl.getUniformLocation(pp, 'uView'), model: gl.getUniformLocation(pp, 'uModel'),
+        tex: gl.getUniformLocation(pp, 'uTex'), useTex: gl.getUniformLocation(pp, 'uUseTex'), alphaCut: gl.getUniformLocation(pp, 'uAlphaCut'),
+      };
     }
   }
 
@@ -1844,6 +2025,7 @@ export class Renderer {
    * the water/billboard paths.
    */
   drawCharacter(mesh, modelMatrix) {
+    this._close2D();   // PERF-2D: the baseline back, before anything that needs it
     const gl = this.gl;
     const c = this._char;
     if (this._casting && this._spriteDepth === 0 && this._studioDepth === 0) this._shadows.recordCharacter(mesh, modelMatrix);   // EL7: the rigs cast - never from the sprite target or the studio bake
@@ -1878,7 +2060,7 @@ export class Renderer {
     // the whole draw. Measured the moment this landed - the arm's
     // offscreen target went from 203 lit texels to 0 with no error, no
     // warning and a program that links clean.
-    gl.activeTexture(gl.TEXTURE0);
+    this._activeTexture(gl.TEXTURE0);
     gl.uniform1i(c.tex, 0);
     if (mesh.ranges && mesh.ranges.length) {
       for (const r of mesh.ranges) {
@@ -1890,6 +2072,7 @@ export class Renderer {
         gl.uniform1f(c.useTex, r.tex ? 1 : 0);
         gl.uniform1f(c.alphaCut, r.alphaCut || 0);
         gl.bindTexture(gl.TEXTURE_2D, r.tex || this._blackTex);
+        this._tex0Bound = null;   // PERF-TEX3: this path owns unit 0 - the shadow may not speak for it
         gl.drawArrays(gl.TRIANGLES, r.first, r.count);
         this.stats.texBinds++; this.stats.draws++;
       }
@@ -1897,10 +2080,12 @@ export class Renderer {
       gl.uniform1f(c.useTex, 0);
       gl.uniform1f(c.alphaCut, 0);
       gl.bindTexture(gl.TEXTURE_2D, this._blackTex);
+      this._tex0Bound = null;   // PERF-TEX3: this path owns unit 0 - the shadow may not speak for it
       gl.drawArrays(gl.TRIANGLES, 0, mesh.count);
       this.stats.texBinds++; this.stats.draws++;
     }
     gl.bindTexture(gl.TEXTURE_2D, null);
+    this._tex0Bound = null;   // PERF-TEX3: this path owns unit 0 - the shadow may not speak for it
     gl.uniform1f(c.useTex, 0);
     gl.uniform1f(c.alphaCut, 0);
     this._bindVao(null);
@@ -1934,6 +2119,7 @@ export class Renderer {
       const S = CHAR_SPRITE_RT_SIZE;
       const tex = gl.createTexture();
       gl.bindTexture(gl.TEXTURE_2D, tex);
+      this._tex0Bound = null;   // PERF-TEX3: this path owns unit 0 - the shadow may not speak for it
       gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, S, S, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
@@ -2088,6 +2274,7 @@ export class Renderer {
    *  to leave the GPU as an image. Y is flipped on the way out (GL rows
    *  run bottom-up); the RT is borrowed and returned exactly as above. */
   renderCharacterSpriteImage(mesh, modelMatrix, proj, view, pw, ph, { studio = true } = {}) {
+    this._close2D();   // PERF-2D: the baseline back, before anything that needs it
     const gl = this.gl;
     // PX23 (Mac: the new sprites and the character display are quite
     // dark in the inventory): THE IMAGE IS LIT BY A STUDIO, NOT BY THE
@@ -2140,6 +2327,37 @@ export class Renderer {
   /** Composite the sprite into the world: camera-facing quad at the
    *  character's position, alpha-cut, fogged, depth-tested. */
   drawCharacterSpriteQuad(tex, center, halfW, halfH, right, u1 = 1, v1 = 1) {
+    this._close2D();   // PERF-2D: the baseline back, before anything that needs it
+    const gl = this.gl;
+    this._ensureCharQuadProgram();
+    const [cx, cy, cz] = center, [rx, , rz] = right;
+    const v = new Float32Array([
+      cx - rx*halfW, cy - halfH, cz - rz*halfW, 0, 0,
+      cx - rx*halfW, cy + halfH, cz - rz*halfW, 0, v1,
+      cx + rx*halfW, cy + halfH, cz + rz*halfW, u1, v1,
+      cx + rx*halfW, cy - halfH, cz + rz*halfW, u1, 0,
+    ]);
+    this._use(this.charQuadProgram);
+    const c = this._charQuad;
+    gl.uniformMatrix4fv(c.proj, false, this._proj);
+    gl.uniformMatrix4fv(c.view, false, this._view);
+    this._bindTex0(tex);   // PERF-TEX3
+    gl.uniform1i(c.tex, 0);
+    this._uploadFog(this._charQuad);
+    this._bindVao(this._charQuadVAO);
+    gl.bindBuffer(gl.ARRAY_BUFFER, this._charQuadVBO);
+    gl.bufferSubData(gl.ARRAY_BUFFER, 0, v);
+    gl.disable(gl.CULL_FACE);
+    gl.drawArrays(gl.TRIANGLE_FAN, 0, 4);
+    this.stats.texBinds++; this.stats.draws++;
+    gl.enable(gl.CULL_FACE);
+    this._bindVao(null);
+  }
+
+  /** PERF-WARM: build the character-sprite quad's program and VAO -
+   *  the block that stood at the head of drawCharacterSpriteQuad,
+   *  unchanged, so the first classic sprite does not compile it. */
+  _ensureCharQuadProgram() {
     const gl = this.gl;
     if (!this.charQuadProgram) {
       const vs = `#version 300 es
@@ -2196,29 +2414,6 @@ void main() {
       this._bindVao(null);
       this._charQuadVAO = vao; this._charQuadVBO = vbo;
     }
-    const [cx, cy, cz] = center, [rx, , rz] = right;
-    const v = new Float32Array([
-      cx - rx*halfW, cy - halfH, cz - rz*halfW, 0, 0,
-      cx - rx*halfW, cy + halfH, cz - rz*halfW, 0, v1,
-      cx + rx*halfW, cy + halfH, cz + rz*halfW, u1, v1,
-      cx + rx*halfW, cy - halfH, cz + rz*halfW, u1, 0,
-    ]);
-    this._use(this.charQuadProgram);
-    const c = this._charQuad;
-    gl.uniformMatrix4fv(c.proj, false, this._proj);
-    gl.uniformMatrix4fv(c.view, false, this._view);
-    gl.activeTexture(gl.TEXTURE0);
-    gl.bindTexture(gl.TEXTURE_2D, tex);
-    gl.uniform1i(c.tex, 0);
-    this._uploadFog(this._charQuad);
-    this._bindVao(this._charQuadVAO);
-    gl.bindBuffer(gl.ARRAY_BUFFER, this._charQuadVBO);
-    gl.bufferSubData(gl.ARRAY_BUFFER, 0, v);
-    gl.disable(gl.CULL_FACE);
-    gl.drawArrays(gl.TRIANGLE_FAN, 0, 4);
-    this.stats.texBinds++; this.stats.draws++;
-    gl.enable(gl.CULL_FACE);
-    this._bindVao(null);
   }
 
   /** Fullscreen overlay of a sprite-RT sub-rect: no depth, no fog,
@@ -2281,6 +2476,69 @@ void main() {
     // call every host has to remember (and forget once).
     if (this._worldViewportPx) this.endWorldPass();
     this._compositeAir();   // EL3: a no-op unless a render is owed
+    this._ensureScreenQuadProgram();
+    this._use(this.screenQuadProgram);
+    this._open2D(this._screenQuadVao);   // PERF-2D: a RUN's bracket, not a quad's
+    const ox = this._screenOffset?.[0] ?? 0, oy = this._screenOffset?.[1] ?? 0;
+    gl.uniform4f(this._screenQuad.dst, dst.x + ox, dst.y + oy, dst.w, dst.h);
+    // PERF-UI: THE FOUR THAT ARE NOT A QUAD'S OWN. `dst` and `src` above
+    // and below really do change every call; the canvas size is the
+    // FRAME's, and useTex/blendTex/rotOn/colour are the same for every
+    // quad of a run - a row of icons, a bar, a panel's backdrop. The HUD
+    // draws a hundred-odd of these a frame in every scene there is, so
+    // each was going up a hundred-odd times to say what it already said.
+    // Shadowed on VALUE, so a caller that really changes one still
+    // uploads: setting a uniform to what it already holds is a no-op by
+    // definition, and this is only the removal of those.
+    const q = this._sq;
+    if (q.cw !== gl.drawingBufferWidth || q.ch !== gl.drawingBufferHeight) {
+      gl.uniform2f(this._screenQuad.canvas, gl.drawingBufferWidth, gl.drawingBufferHeight);
+      q.cw = gl.drawingBufferWidth; q.ch = gl.drawingBufferHeight;
+    }
+    gl.uniform4f(this._screenQuad.src, src.u0, src.v0, src.u1, src.v1);
+    if (q.r !== color[0] || q.g !== color[1] || q.b !== color[2] || q.a !== color[3]) {
+      gl.uniform4f(this._screenQuad.color, color[0], color[1], color[2], color[3]);
+      q.r = color[0]; q.g = color[1]; q.b = color[2]; q.a = color[3];
+    }
+    const useTex = tex ? 1 : 0, blendTex = (tex && opts.blend) ? 1 : 0;
+    if (q.useTex !== useTex) { gl.uniform1i(this._screenQuad.useTex, useTex); q.useTex = useTex; }
+    if (q.blendTex !== blendTex) { gl.uniform1i(this._screenQuad.blendTex, blendTex); q.blendTex = blendTex; }
+    // c2/S10: opts.rotate = { rad, px, py } - the pivot is in the SAME
+    // space dst is (the screen offset applies to both, so a rotated
+    // quad and its unrotated siblings letterbox together).
+    const rot = opts.rotate ?? null;
+    const rotOn = rot ? 1 : 0;
+    if (q.rotOn !== rotOn) { gl.uniform1i(this._screenQuad.rotOn, rotOn); q.rotOn = rotOn; }
+    if (rot) {
+      gl.uniform4f(this._screenQuad.rot, Math.cos(rot.rad), Math.sin(rot.rad), rot.px + ox, rot.py + oy);
+    }
+    // The sampler binding went up with the program; only the texture is a
+    // quad's own. (Not `_bindEmission`'s shadow: that one speaks for unit
+    // 1, this is unit 0, and the 2D pass is the far side of endWorldPass.)
+    if (tex) this._bindTex0(tex);   // PERF-TEX3: a HUD draws ninety quads off one sheet
+    // U10: a SOLID quad's alpha was written straight out with blending
+    // OFF, so every translucent UI panel in the port drew OPAQUE -
+    // DaggerfallUI.ScreenDimColor (0,0,0,0.5) blacked the screen out
+    // behind a modal window instead of dimming it, and the same went
+    // for the talk/rest/action panels and the char-sheet backdrops.
+    // Sixteen call sites had been authoring alpha that never applied.
+    // Textured quads keep their existing law (discard a<0.5, opaque
+    // rgb) so no art path changes - unless the CALLER opts in with
+    // { blend: true }, which only ui/titleScreen.js does (U21c).
+    const blend = screenQuadBlends(tex, color, opts);
+    if (blend) { gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA); }
+    gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_SHORT, 0);
+    this.stats.draws++;
+    if (blend) gl.disable(gl.BLEND);
+    // PERF-2D: the run stays open - _close2D hands the baseline back at
+    // the head of whatever needs it next.
+  }
+
+  /** PERF-WARM: build the screen-quad program, its sampler binding and
+   *  its VAO - the block that stood at the head of drawScreenQuad,
+   *  unchanged. This is the 2D blit every UI surface goes through. */
+  _ensureScreenQuadProgram() {
+    const gl = this.gl;
     if (!this.screenQuadProgram) {
       const vs = `#version 300 es
 layout(location=0) in vec2 aPos;
@@ -2363,70 +2621,6 @@ void main() {
       this._bindVao(null);
       this._screenQuadVao = vao;
     }
-    this._use(this.screenQuadProgram);
-    this._bindVao(this._screenQuadVao);
-    gl.disable(gl.DEPTH_TEST);
-    // HANDEDNESS REGRESSION (2026-08-23, "the sky-blue screen"): a 2D
-    // blit has no facing, but with CULL_FACE left ON the global
-    // frontFace(CW) swap culled EVERY screen quad - the whole UI
-    // layer, title screen to fonts - leaving only the clear color.
-    // tools/cullProbe.mjs is the real-GL repro; the bracket is the
-    // overlay pass's own idiom.
-    gl.disable(gl.CULL_FACE);
-    const ox = this._screenOffset?.[0] ?? 0, oy = this._screenOffset?.[1] ?? 0;
-    gl.uniform4f(this._screenQuad.dst, dst.x + ox, dst.y + oy, dst.w, dst.h);
-    // PERF-UI: THE FOUR THAT ARE NOT A QUAD'S OWN. `dst` and `src` above
-    // and below really do change every call; the canvas size is the
-    // FRAME's, and useTex/blendTex/rotOn/colour are the same for every
-    // quad of a run - a row of icons, a bar, a panel's backdrop. The HUD
-    // draws a hundred-odd of these a frame in every scene there is, so
-    // each was going up a hundred-odd times to say what it already said.
-    // Shadowed on VALUE, so a caller that really changes one still
-    // uploads: setting a uniform to what it already holds is a no-op by
-    // definition, and this is only the removal of those.
-    const q = this._sq;
-    if (q.cw !== gl.drawingBufferWidth || q.ch !== gl.drawingBufferHeight) {
-      gl.uniform2f(this._screenQuad.canvas, gl.drawingBufferWidth, gl.drawingBufferHeight);
-      q.cw = gl.drawingBufferWidth; q.ch = gl.drawingBufferHeight;
-    }
-    gl.uniform4f(this._screenQuad.src, src.u0, src.v0, src.u1, src.v1);
-    if (q.r !== color[0] || q.g !== color[1] || q.b !== color[2] || q.a !== color[3]) {
-      gl.uniform4f(this._screenQuad.color, color[0], color[1], color[2], color[3]);
-      q.r = color[0]; q.g = color[1]; q.b = color[2]; q.a = color[3];
-    }
-    const useTex = tex ? 1 : 0, blendTex = (tex && opts.blend) ? 1 : 0;
-    if (q.useTex !== useTex) { gl.uniform1i(this._screenQuad.useTex, useTex); q.useTex = useTex; }
-    if (q.blendTex !== blendTex) { gl.uniform1i(this._screenQuad.blendTex, blendTex); q.blendTex = blendTex; }
-    // c2/S10: opts.rotate = { rad, px, py } - the pivot is in the SAME
-    // space dst is (the screen offset applies to both, so a rotated
-    // quad and its unrotated siblings letterbox together).
-    const rot = opts.rotate ?? null;
-    const rotOn = rot ? 1 : 0;
-    if (q.rotOn !== rotOn) { gl.uniform1i(this._screenQuad.rotOn, rotOn); q.rotOn = rotOn; }
-    if (rot) {
-      gl.uniform4f(this._screenQuad.rot, Math.cos(rot.rad), Math.sin(rot.rad), rot.px + ox, rot.py + oy);
-    }
-    // The sampler binding went up with the program; only the texture is a
-    // quad's own. (Not `_bindEmission`'s shadow: that one speaks for unit
-    // 1, this is unit 0, and the 2D pass is the far side of endWorldPass.)
-    if (tex) { gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, tex); this.stats.texBinds++; }
-    // U10: a SOLID quad's alpha was written straight out with blending
-    // OFF, so every translucent UI panel in the port drew OPAQUE -
-    // DaggerfallUI.ScreenDimColor (0,0,0,0.5) blacked the screen out
-    // behind a modal window instead of dimming it, and the same went
-    // for the talk/rest/action panels and the char-sheet backdrops.
-    // Sixteen call sites had been authoring alpha that never applied.
-    // Textured quads keep their existing law (discard a<0.5, opaque
-    // rgb) so no art path changes - unless the CALLER opts in with
-    // { blend: true }, which only ui/titleScreen.js does (U21c).
-    const blend = screenQuadBlends(tex, color, opts);
-    if (blend) { gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA); }
-    gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_SHORT, 0);
-    this.stats.draws++;
-    if (blend) gl.disable(gl.BLEND);
-    gl.enable(gl.CULL_FACE);
-    gl.enable(gl.DEPTH_TEST);
-    this._bindVao(null);
   }
 
   drawScreenQuadRun(tex, quads, color = [1, 1, 1, 1]) {
@@ -2437,6 +2631,32 @@ void main() {
     // primitive after a shrunk world pass is where the canvas returns.
     if (this._worldViewportPx) this.endWorldPass();
     this._compositeAir();   // EL3: a no-op unless a render is owed
+    this._ensureScreenQuadRunProgram();
+    if (this._screenQuadRunData.length < n * 8) this._screenQuadRunData = new Float32Array(n * 8);
+    const a = this._screenQuadRunData;
+    const ox = this._screenOffset?.[0] ?? 0, oy = this._screenOffset?.[1] ?? 0;
+    for (let i = 0; i < n; i++) {
+      const { dst, src } = quads[i], o = i * 8;
+      a[o] = dst.x + ox; a[o + 1] = dst.y + oy; a[o + 2] = dst.w; a[o + 3] = dst.h;
+      a[o + 4] = src.u0; a[o + 5] = src.v0; a[o + 6] = src.u1; a[o + 7] = src.v1;
+    }
+    this._use(this.screenQuadRunProgram);
+    this._open2D(this._screenQuadRunVao);   // PERF-2D
+    gl.bindBuffer(gl.ARRAY_BUFFER, this._screenQuadRunVbo);
+    if (this._screenQuadRunCap < n) { gl.bufferData(gl.ARRAY_BUFFER, a.byteLength, gl.STREAM_DRAW); this._screenQuadRunCap = a.length / 8; }
+    gl.bufferSubData(gl.ARRAY_BUFFER, 0, a, 0, n * 8);
+    gl.uniform2f(this._screenQuadRun.canvas, gl.drawingBufferWidth, gl.drawingBufferHeight);
+    gl.uniform4f(this._screenQuadRun.color, color[0], color[1], color[2], color[3]);
+    this._bindTex0(tex); gl.uniform1i(this._screenQuadRun.tex, 0);   // PERF-TEX3
+    gl.drawElementsInstanced(gl.TRIANGLES, 6, gl.UNSIGNED_SHORT, 0, n);
+    this.stats.draws++;
+  }
+
+  /** PERF-WARM: build the instanced screen-quad program and its two
+   *  VAO streams - the block that stood at the head of
+   *  drawScreenQuadRun, unchanged. */
+  _ensureScreenQuadRunProgram() {
+    const gl = this.gl;
     if (!this.screenQuadRunProgram) {
       const vs = `#version 300 es
 layout(location=0) in vec2 aPos;
@@ -2495,33 +2715,26 @@ void main() {
       this._screenQuadRunData = new Float32Array(0);
       this._screenQuadRunCap = 0;
     }
-    if (this._screenQuadRunData.length < n * 8) this._screenQuadRunData = new Float32Array(n * 8);
-    const a = this._screenQuadRunData;
-    const ox = this._screenOffset?.[0] ?? 0, oy = this._screenOffset?.[1] ?? 0;
-    for (let i = 0; i < n; i++) {
-      const { dst, src } = quads[i], o = i * 8;
-      a[o] = dst.x + ox; a[o + 1] = dst.y + oy; a[o + 2] = dst.w; a[o + 3] = dst.h;
-      a[o + 4] = src.u0; a[o + 5] = src.v0; a[o + 6] = src.u1; a[o + 7] = src.v1;
-    }
-    this._use(this.screenQuadRunProgram);
-    this._bindVao(this._screenQuadRunVao);
-    gl.bindBuffer(gl.ARRAY_BUFFER, this._screenQuadRunVbo);
-    if (this._screenQuadRunCap < n) { gl.bufferData(gl.ARRAY_BUFFER, a.byteLength, gl.STREAM_DRAW); this._screenQuadRunCap = a.length / 8; }
-    gl.bufferSubData(gl.ARRAY_BUFFER, 0, a, 0, n * 8);
-    gl.disable(gl.DEPTH_TEST);
-    gl.disable(gl.CULL_FACE);   // the same handedness bracket drawScreenQuad keeps
-    gl.uniform2f(this._screenQuadRun.canvas, gl.drawingBufferWidth, gl.drawingBufferHeight);
-    gl.uniform4f(this._screenQuadRun.color, color[0], color[1], color[2], color[3]);
-    gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, tex); gl.uniform1i(this._screenQuadRun.tex, 0);
-    this.stats.texBinds++;
-    gl.drawElementsInstanced(gl.TRIANGLES, 6, gl.UNSIGNED_SHORT, 0, n);
-    this.stats.draws++;
-    gl.enable(gl.CULL_FACE);
-    gl.enable(gl.DEPTH_TEST);
-    this._bindVao(null);
   }
 
     drawScreenOverlayQuad(tex, u1, v1) {
+    const gl = this.gl;
+    this._ensureOverlayProgram();
+    this._use(this.overlayProgram);
+    this._activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, tex);
+    this._tex0Bound = null;   // PERF-TEX3: this path owns unit 0 - the shadow may not speak for it
+    gl.uniform1i(this._overlay.tex, 0);
+    gl.uniform2f(this._overlay.uv1, u1, v1);
+    this._open2D(this._overlayVAO);   // PERF-2D
+    gl.drawArrays(gl.TRIANGLE_FAN, 0, 4);
+    this.stats.texBinds++; this.stats.draws++;
+  }
+
+  /** PERF-WARM: build the full-screen overlay program and its VAO -
+   *  the block that stood at the head of drawScreenOverlayQuad,
+   *  unchanged. */
+  _ensureOverlayProgram() {
     const gl = this.gl;
     if (!this.overlayProgram) {
       const vs = `#version 300 es
@@ -2550,19 +2763,6 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
       this._bindVao(null);
       this._overlayVAO = vao;
     }
-    this._use(this.overlayProgram);
-    gl.activeTexture(gl.TEXTURE0);
-    gl.bindTexture(gl.TEXTURE_2D, tex);
-    gl.uniform1i(this._overlay.tex, 0);
-    gl.uniform2f(this._overlay.uv1, u1, v1);
-    gl.disable(gl.DEPTH_TEST);
-    gl.disable(gl.CULL_FACE);
-    this._bindVao(this._overlayVAO);
-    gl.drawArrays(gl.TRIANGLE_FAN, 0, 4);
-    this.stats.texBinds++; this.stats.draws++;
-    this._bindVao(null);
-    gl.enable(gl.CULL_FACE);
-    gl.enable(gl.DEPTH_TEST);
   }
 
   /** Upload a getColor32 result as a REPEAT/NEAREST texture, keyed and cached.
@@ -2603,6 +2803,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     const gl = this.gl;
     const tex = gl.createTexture();
     gl.bindTexture(gl.TEXTURE_2D, tex);
+    this._tex0Bound = null;   // PERF-TEX3: this path owns unit 0 - the shadow may not speak for it
     gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
     gl.texImage2D(
       gl.TEXTURE_2D, 0, gl.RGBA, color32.width, color32.height, 0,
@@ -2730,6 +2931,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
   }
 
   beginFrame(proj, view, lightDir, opts = null) {
+    this._close2D();   // PERF-2D: the baseline back, before anything that needs it
     const s = this.stats;
     s.draws = 0; s.programBinds = 0; s.vaoBinds = 0; s.texBinds = 0;
     // VC4: the cloud shadow deck is a FRAME's, not the renderer's - a host
@@ -2792,6 +2994,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     gl.uniform3fv(this.uEmissionColor, this._c3(this._windowEmission));
     this._emissionColorUp = this._windowEmission;   // F49: the per-sub-mesh shadow starts the frame true
     this._tex1Bound = null;   // PERF-TEX: a frame's; the post passes (air, clouds) own unit 1 between frames
+    this._tex0Bound = null; this._activeUnit = null;   // PERF-TEX3: unit 0 and the selector, with it
     this._sq = {};   // PERF-UI: the screen-quad uniform shadow is a frame's too
     this._tArrayTex = null;
     this._tTileSize = null;
@@ -2808,7 +3011,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     this._camPos[1] = -(v[4] * v[12] + v[5] * v[13] + v[6] * v[14]);
     this._camPos[2] = -(v[8] * v[12] + v[9] * v[13] + v[10] * v[14]);
     this._uploadFog(this._solidFog);
-    gl.activeTexture(gl.TEXTURE0);
+    this._activeTexture(gl.TEXTURE0);
     this._proj = proj;
     this._view = view;
   }
@@ -2846,6 +3049,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
    * space, with the letterbox offset already applied by the caller.
    */
   beginPanelFrame(proj, view, lightDir, rect, clearRGBA = PANEL_CLEAR_RGBA, setup = null) {
+    this._close2D();   // PERF-2D: the baseline back, before anything that needs it
     if (this._panelSaved) throw new Error('beginPanelFrame: already inside a panel frame');
     const gl = this.gl;
     // EVERY global this pass can touch, saved by name. A thirteenth
@@ -2934,6 +3138,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
    *  the renderer's baseline, and ONE markForeignPass - the pass ran
    *  its own programs and the shadows must not be trusted. */
   endPanelFrame() {
+    this._close2D();   // PERF-2D: the baseline back, before anything that needs it
     const s = this._panelSaved;
     if (!s) return;
     this._panelSaved = null;
@@ -3330,9 +3535,10 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     if (this.emissionTextures.has(key)) return this.emissionTextures.get(key);
     const gl = this.gl;
     const tex = gl.createTexture();
-    gl.activeTexture(gl.TEXTURE1);
+    this._activeTexture(gl.TEXTURE1);
     gl.bindTexture(gl.TEXTURE_2D, tex);
     this._tex1Bound = null;   // PERF-TEX: an upload owns unit 1 and leaves it active - the shadow cannot speak for it
+    this._tex0Bound = null; this._activeUnit = null;   // PERF-TEX3: unit 0 and the selector, with it
     gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
     gl.texImage2D(
       gl.TEXTURE_2D, 0, gl.RGBA, color32.width, color32.height, 0,
@@ -3348,7 +3554,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     gl.generateMipmap?.(gl.TEXTURE_2D);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST_MIPMAP_NEAREST ?? gl.NEAREST);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-    gl.activeTexture(gl.TEXTURE0);
+    this._activeTexture(gl.TEXTURE0);
     this.emissionTextures.set(key, tex);
     this._texGen++;   // EV2: cached sub-mesh lookups refresh
     return tex;
@@ -3530,6 +3736,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     const gl = this.gl;
     const tex = gl.createTexture();
     gl.bindTexture(gl.TEXTURE_2D, tex);
+    this._tex0Bound = null;   // PERF-TEX3: this path owns unit 0 - the shadow may not speak for it
     gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.R8UI, dim, dim, 0, gl.RED_INTEGER, gl.UNSIGNED_BYTE, bytes);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
@@ -3583,17 +3790,18 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     if (!loc || this._csUploaded[key] === this._csStamp) return;
     this._csUploaded[key] = this._csStamp;
     const gl = this.gl, cs = this._cloudShadow, [mapLoc, rectLoc] = loc;
-    gl.activeTexture(gl.TEXTURE0 + CLOUD_SHADOW_UNIT);   // AUDIT 65 RS-3: reserved, above every foreign pass's slots
+    this._activeTexture(gl.TEXTURE0 + CLOUD_SHADOW_UNIT);   // AUDIT 65 RS-3: reserved, above every foreign pass's slots
     gl.bindTexture(gl.TEXTURE_2D, cs?.map ?? this._blackTex);
     gl.uniform1i(mapLoc, CLOUD_SHADOW_UNIT);
     const r = cs?.map ? cs.rect : null;
     this._csRect[0] = r ? r[0] : 0; this._csRect[1] = r ? r[1] : 0; this._csRect[2] = r ? r[2] : 0; this._csRect[3] = r ? r[3] : 0;
     gl.uniform4fv(rectLoc, this._csRect);
-    gl.activeTexture(gl.TEXTURE0);
+    this._activeTexture(gl.TEXTURE0);
   }
 
   /** Draw one terrain surface with its tilemap + tile array. */
   drawTerrain(surface, modelMatrix, arrayTex, tilemapTex, tileSize) {
+    this._close2D();   // PERF-2D: the baseline back, before anything that needs it
     const gl = this.gl;
     this._use(this.terrainProgram);
     if (this._casting) this._shadows.recordTerrain(surface, modelMatrix, arrayTex, tilemapTex, tileSize);   // EL2
@@ -3641,14 +3849,14 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     // tile ARRAY is the world's single atlas, the same object for every
     // pixel of the frame, so it is shadowed like unit 1's emission map.
     if (this._tArrayTex !== arrayTex) {
-      gl.activeTexture(gl.TEXTURE0);
+      this._activeTexture(gl.TEXTURE0);
       gl.bindTexture(gl.TEXTURE_2D_ARRAY, arrayTex);
       this._tArrayTex = arrayTex;
       this.stats.texBinds++;
     }
-    gl.activeTexture(gl.TEXTURE2);
+    this._activeTexture(gl.TEXTURE2);
     gl.bindTexture(gl.TEXTURE_2D, tilemapTex);
-    gl.activeTexture(gl.TEXTURE0);
+    this._activeTexture(gl.TEXTURE0);
     this.stats.texBinds++;
     this._bindVao(surface.vao);
     gl.drawElements(gl.TRIANGLES, surface.indexCount, gl.UNSIGNED_INT, 0);
@@ -3663,14 +3871,16 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
    * @param {number[]} color - rgba
    */
   drawWater(quads, color, waterTex, scrollTiles = 0) {
+    this._close2D();   // PERF-2D: the baseline back, before anything that needs it
     if (!quads.length) return;
     const gl = this.gl;
     this._use(this.waterProgram);
     gl.uniformMatrix4fv(this.waterUProj, false, this._proj);
     gl.uniformMatrix4fv(this.waterUView, false, this._view);
     gl.uniform4fv(this.waterUColor, color);
-    gl.activeTexture(gl.TEXTURE0);
+    this._activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, waterTex);
+    this._tex0Bound = null;   // PERF-TEX3: this path owns unit 0 - the shadow may not speak for it
     gl.uniform1i(this.waterUTex, 0);
     gl.uniform1f(this.waterUScroll, scrollTiles);
     this._uploadFog(this._waterFog);
@@ -3717,6 +3927,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
   }
 
   drawWaterSurface(surface, modelMatrix, arrayTex, tilemapTex, tileSize, u, tileDim = 128) {
+    this._close2D();   // PERF-2D: the baseline back, before anything that needs it
     const gl = this.gl;
     const laneWater = !!(this._lane?.shadows && this.waterSurfaceProgramLane && this._shadows);   // EL7: the lane's water receives the sun map
     const L = laneWater ? this._wsLane : this._ws;
@@ -3764,13 +3975,13 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     if (count > 0) gl.uniform3fv(L.pointColors, this._pointColorData(count, true));
     gl.uniform4fv(L.indirect, this._indirect);
     gl.uniform3fv(L.indirectColor, this._indirectColor);
-    gl.activeTexture(gl.TEXTURE0);
+    this._activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D_ARRAY, arrayTex);
     gl.uniform1i(L.tileArr, 0);
-    gl.activeTexture(gl.TEXTURE2);
+    this._activeTexture(gl.TEXTURE2);
     gl.bindTexture(gl.TEXTURE_2D, tilemapTex);
     gl.uniform1i(L.tilemap, 2);
-    gl.activeTexture(gl.TEXTURE0);
+    this._activeTexture(gl.TEXTURE0);
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
     gl.depthMask(false);
@@ -3806,6 +4017,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
 
   /** Draw billboard batches facing the camera. Call after solid geometry. */
   drawBillboards(batches, camRight, camUp) {
+    this._close2D();   // PERF-2D: the baseline back, before anything that needs it
     const gl = this.gl;
     if (this._casting) this._shadows.recordBillboards(batches, this._flatWind, camRight, camUp);   // EL2 (EL3: with the basis)
     this._use(this.bbProgram);
@@ -3883,10 +4095,11 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
       const tex = this.textures.get(key);
       if (!tex) return;
       if (key !== lastKey) {
-        gl.activeTexture(gl.TEXTURE0);
+        this._activeTexture(gl.TEXTURE0);
         gl.bindTexture(gl.TEXTURE_2D, tex);
-        gl.activeTexture(gl.TEXTURE1);
+        this._activeTexture(gl.TEXTURE1);
         gl.bindTexture(gl.TEXTURE_2D, this.emissionTextures.get(key) || this._blackTex);
+        this._tex0Bound = null;   // PERF-TEX3: and unit 0 with it - this path binds its own and keeps its own `lastKey` skip
         this._tex1Bound = null;   // PERF-TEX: this path has skipped on `lastKey` since it was written, so it needs no shadow of its own - but it OWNS unit 1 while it runs, and the mesh loop's shadow cannot speak for it afterwards
         this.stats.texBinds += 2;
         lastKey = key;
@@ -3936,7 +4149,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
       gl.depthMask(true);
       gl.disable(gl.BLEND);
     }
-    gl.activeTexture(gl.TEXTURE0);
+    this._activeTexture(gl.TEXTURE0);
     this._bindVao(null);
     gl.enable(gl.CULL_FACE);
     this._use(this.program);
@@ -4025,10 +4238,12 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
   }
 
   drawMesh(mesh, modelMatrix, texRemap = null) {
+    this._close2D();   // PERF-2D: the baseline back, before anything that needs it
     this._drawMeshBundle(mesh, modelMatrix, texRemap, false);
   }
 
   _drawMeshBundle(mesh, modelMatrix, texRemap, wire) {
+    this._close2D();   // PERF-2D: the baseline back, before anything that needs it
     // NEVER TRAPS. A mesh that is absent, or one whose subMeshes never
     // arrived, is game DATA missing - a model id the player's ARCH3D
     // does not carry, a record the ingest diet dropped - and the rule
@@ -4105,8 +4320,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
         this._emissionColorUp = emisColor;
       }
       this._bindEmission(sm._evEmis);   // PERF-TEX: skipped when it is already the one on the unit, which it usually is
-      gl.bindTexture(gl.TEXTURE_2D, tex);
-      this.stats.texBinds++;
+      this._bindTex0(tex);   // PERF-TEX3: a bundle whose sub-meshes repeat an archive re-bound the same texture every time
       if (wire) {
         const range = wireMesh.ranges[smi];
         gl.drawElements(gl.LINES, range.count, gl.UNSIGNED_INT, range.start * 4);

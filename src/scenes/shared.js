@@ -29,6 +29,10 @@ import { weatherSunlightScale } from '../world/weather.js';   // DS1: WeatherMan
 import { seasonValue, SEASONS, dateFromClassicMinutes } from '../systems/gameDate.js';   // DS1: the winter arm of that scale
 import { hasActiveEffect, isBlending, isInvisible, isAShade } from '../systems/effects.js';
 import { skillValue, tallySkill, SKILLS, SKILL_NAMES } from '../systems/skills.js';
+// LV2: the level-up notification's seams. The CLASSIC lane's line and
+// box are still this file's - the seam takes them and uses them - so
+// nothing about the old skin is decided in a UI module.
+import { announceSkillRaise, announceMastery } from '../ui/levelNotice.js';
 import { DOOR_SPELL_TEXT, castBySkeletonKey } from '../systems/mysticism.js';   // X1: the door-spell alert lines; D9: Open.CheckCastByItem
 import { raiseSkills } from '../systems/advancement.js';   // AUDIT 23 (entity-1): the rest-end raise
 import { tickPlayerMinutes, runMagicRoundsFor, worldMinutes, setWorldMinutes, advanceWorldMinutes, MINUTES_PER_DAY, CLASSIC_MINUTES_PER_SECOND, sharedClockOn } from '../systems/worldTick.js';
@@ -1242,13 +1246,27 @@ export function raisePlayerSkills(entity, { say = () => {}, onLevelUp = null, ro
   // Interleaved, not batched: DFU pops the skillImprove message and
   // then, for that same skill, the master box - so a pass that raises
   // two skills reads in the source's order.
+  // LV2 - THE RISING (Mac, 2026-09-19: the enhanced level-up
+  // notification, "all of the above"): on the ENHANCED skin the two
+  // presentations below move to the notice strip (ui/levelNotice.js).
+  // The raise leaves the popup column - a skill going up is a change
+  // to the CHARACTER, not another thing the world said - and the
+  // mastery leaves its click-anywhere box, which carries news and no
+  // choice and is therefore the same interruption the level-up window
+  // was. THE FANFARE STAYS IN BOTH LANES: it is the reward, not the
+  // interruption. The CLASSIC skin takes both arms exactly as written
+  // before this slice, which is why they are still written here.
   return raiseSkills(entity, Math.floor(worldMinutes()), rolls, onLevelUp,
-    () => {
-      const rows = plainLines(lines?.(MASTERY_TEXT_ID));
-      if (rows?.length) box?.(rows);
+    (id) => {
+      // AUDIT LV2 F3: the TEXT.RSC read is a THUNK, so it happens on
+      // the lane that shows it. Passed by value it ran on BOTH - the
+      // enhanced skin read record 4020 off disk at every mastery and
+      // dropped it, under a surface that promises to read no game
+      // data to announce one.
+      announceMastery(id, { box, rows: () => plainLines(lines?.(MASTERY_TEXT_ID)) });
       audio.playOneShot(SOUND.ArenaFanfareLevelUp, 1);
     },
-    (id) => say(`Your ${SKILL_NAMES[id]} skill has improved.`)) ?? [];
+    (id) => announceSkillRaise(id, skillValue(entity, id), { say })) ?? [];
 }
 
 /**

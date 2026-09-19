@@ -317,7 +317,7 @@ half the lanes' own mutation tallies could not see.
 - *Review round:* the new spellbook seam itself was unpinned (deleting
   `_now()` left 255 tests green and would throw on the first click in
   the game), and a fifth suite still minted the old shape. Flagged, not
-  fixed: `chargen.js:987` and `:1927` still spend the stamp.
+  fixed: `chargen.js:1007` and `:1947` still spend the stamp.
 
 ### Three small seams (small-seams: MC-3, MC-4, XL-6)
 
@@ -354,7 +354,7 @@ half the lanes' own mutation tallies could not see.
   permanent `entity.skills` array while the hand-to-hand damage row four
   lines below it (AUDIT 63 F34) already read live, so a lycanthrope read
   `Hand-to-Hand 30%` on one line and a damage range computed from 60 on
-  the next. `charsheet.js:667` and `enhancedCharSheet.js:145` read
+  the next. `charsheet.js:704` and `enhancedCharSheet.js:152` read
   `skillValue` now, which moves the enhanced skin's meter with its
   number (`enhancedMenu.js:2000-2001`) - correctly, since the attribute
   bars beside it were already live. The art-less `_drawFallback` pane
@@ -667,7 +667,7 @@ cites that were already wrong at the base (the mapper renumbers a wrong
 number onto a differently wrong line), the renderer's `setClearColor`
 self-cite (a bare `:N` inside its own file, which the mapper does not
 spell), and two escaped-regex cites in tests (`dungeon\.js:483`,
-`worldModes\.js:492`), which the mapper cannot see - the CS1 edge AUDIT
+`worldModes\.js:504`), which the mapper cannot see - the CS1 edge AUDIT
 64's integration hit first. The Suite line restamped once; the full
 suite green over the merged tree. Round two (after the reset) took the
 five remaining reviews and the activation lane, merged onto round one's

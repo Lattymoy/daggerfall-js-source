@@ -21,6 +21,7 @@
     "x11c": "node tools/identifyOutdoorsProbe.mjs",
     "trademodes": "node tools/tradeModeProbe.mjs",
     "peoplegate": "node tools/peopleGateProbe.mjs",
+    "levelup": "node tools/levelUpProbe.mjs",
     "deeds": "node tools/deedProbe.mjs",
     "mwinspect": "node tools/mwInspectProbe.mjs",
     "mwarm": "node tools/mwArmProbe.mjs",

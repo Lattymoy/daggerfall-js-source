@@ -104,9 +104,9 @@ export { getSkillRecentlyIncreased as skillRecentlyIncreased, setSkillRecentlyIn
  * NOT A GAP (closeout): `onLevelUp` IS DFU's char-sheet route.
  * RaiseSkills' tail is `if (CheckForLevelUp()) DaggerfallUI.PostMessage(
  * dfuiOpenCharacterSheetWindow)` (PlayerEntity.cs:1413-1414), and every
- * live host supplies that message as the hook - world.js:2021/:3798,
- * exterior.js:993/:1711, worldModes.js:407/:7185,
- * dungeonContext.js:1682. The immediate arm below is taken only when
+ * live host supplies that message as the hook - world.js:2027/:3803,
+ * exterior.js:1006/:1732, worldModes.js:406/:7185,
+ * dungeonContext.js:1688. The immediate arm below is taken only when
  * onLevelUp is null: a headless/test path (and the ?class= skip) that
  * DFU has no counterpart for, so there is nothing to diverge from.
  *
@@ -209,6 +209,40 @@ export function checkForLevelUp(entity) {
   return levelUp;
 }
 
+/**
+ * THE LEVEL'S BONUS POOL, ROLLED ONCE PER LEVEL AND REMEMBERED.
+ *
+ * FormulaHelper.BonusPool is a 4..6 draw and DFU takes it at the
+ * ROLLOUT'S SETUP - so in DFU, and in this port until now, closing the
+ * level-up window and opening it again drew a new one. On the classic
+ * lane that is unreachable in practice: DFU's rollout mounts on the
+ * character sheet and `applyLevelUp` commits the level AT MOUNT, so
+ * there is no unspent level left to re-open. LV2 made it reachable and
+ * then obvious - the enhanced window is now a thing the player OPENS,
+ * deliberately, whenever they like, and `readyToLevelUp` stays set
+ * until they spend - so "escape, press the key again, until it says 6"
+ * became one keystroke away and a player would find it without looking.
+ *
+ * AUDIT LV2 recorded that rather than fixing it, on the grounds that
+ * the re-roll is DFU's own shape. Mac's answer: "Yes fucking fix it."
+ * So the draw is the LEVEL'S, not the WINDOW'S. It is taken on the
+ * first screen that needs one, remembered on the entity beside
+ * `pendingLevel`, handed to every screen after that, saved with the
+ * character, and cleared where `pendingLevel` is cleared - which is
+ * the one place a level stops being pending.
+ *
+ * This is a DEPARTURE and it is deliberate: the port draws FEWER
+ * numbers from the stream than DFU does, where AUDIT 23's rule was
+ * about never drawing MORE (a shown pool must be the spent pool, so a
+ * second discarded draw never burns a number). One level, one pool.
+ */
+export function bonusPoolFor(entity, rolls = Math.random) {
+  if (entity.pendingBonusPool == null) {
+    entity.pendingBonusPool = LEVELUP_BONUS_POOL_MIN + Math.floor(rolls() * (LEVELUP_BONUS_POOL_MAX + 1 - LEVELUP_BONUS_POOL_MIN));
+  }
+  return entity.pendingBonusPool;
+}
+
 /** Apply the pending level: HP roll + the 4..6 bonus pool handed to
  *  `distribute(stats, pool)` - the U3 screen distributes by hand;
  *  the headless path uses lowest-first. */
@@ -223,6 +257,7 @@ export function applyLevelUp(entity, distribute, rolls = Math.random, prerolledP
     entity.readyToLevelUp = false;
     entity.oghmaLevelUp = false;
     entity.pendingLevel = null;
+    entity.pendingBonusPool = null;   // the book's thirty is fixed, but a level owed UNDER it was pending too
     return true;
   }
   entity.level += 1;   // L-slice (entity-9): Level++, never a jump to the calculated level
@@ -231,9 +266,10 @@ export function applyLevelUp(entity, distribute, rolls = Math.random, prerolledP
   // AUDIT 23 (ui-native-1): DFU rolls BonusPool() exactly ONCE, at the
   // level-up screen's setup - the UI hands its shown pool back here so
   // a second, discarded draw never burns a number from the stream.
-  const pool = prerolledPool ?? (LEVELUP_BONUS_POOL_MIN + Math.floor(rolls() * (LEVELUP_BONUS_POOL_MAX + 1 - LEVELUP_BONUS_POOL_MIN)));
+  const pool = prerolledPool ?? bonusPoolFor(entity, rolls);
   distribute(entity.stats, pool);
   entity.readyToLevelUp = false;
   entity.pendingLevel = null;
+  entity.pendingBonusPool = null;   // the level is spent, so its pool is not pending either
   return true;
 }
