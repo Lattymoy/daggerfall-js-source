@@ -32,6 +32,8 @@ import { dfWornEquipment } from '../formats/mwItemMap.js';   // MW-D32
 import { ARMOR_ENUM } from './enemyEquipment.js';   // MW-D32
 import { loadFpsWeaponArt, drawFpsWeapon, weaponTypeForItem, WEAPON_TYPES, fpLightingOn } from './fpsWeapon.js';
 import { loadThunderlockArt } from './thunderlockArt.js';
+import { createRecoil, createScreenShake, GUN_FEEL } from './gunFeel.js';   // FIELD-GUN6: the lab's own feel, in the game at last
+import { betterAmbience } from '../systems/betterAmbience.js';   // FIELD-GUN6: the ONE camera shaker in the port, already wired through all four hosts
 import { installThunderlockSounds, SFX as TL_SFX } from '../systems/thunderlock.js';   // AUDIT-THUNDERLOCK F8: the weapon's own clips, through the mod-sound door   // the port's own weapon: its art is a sheet, not a CIF   // MAC-I: the tint's switch, with the sprite it tints
 // ROAD-tail (FPSSpellCasting.cs): the classic spellcasting HANDS. A
 // separate component in DFU and a separate module here, drawn by the
@@ -601,6 +603,18 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
 
   // ── THE THUNDERLOCK'S VOICE (AUDIT-THUNDERLOCK F8) ────────────────
   let _tlState = 'Idle', _tlOpened = false, _tlClosed = false, _tlSounds = false;
+  // FIELD-GUN6 (Mac, from play: "This isn't 1 to 1 with the
+  // prototype"). It was not. The lab drove a recoil spring, a trauma
+  // shake and a reload lower, and NONE of the three was ever carried
+  // across - the sprite arrived, the sounds arrived, and the weapon
+  // sat dead still while it fired. These are the lab's own two
+  // machines, from the one home they both read (combat/gunFeel.js),
+  // on Mac's own numbers.
+  const _tlRecoil = createRecoil();
+  const _tlShake = createScreenShake();
+  /** The frame's rect delta for the weapon, in native (320x200)
+   *  units: the spring, plus the reload lower under it. */
+  let _tlAdjust = null;
   /** The close lands this long before the weapon is ready - the clip's
    *  own length, so the lock-up is finishing as the sprite arrives. */
   const TL_CLOSE_LEAD = 0.42;
@@ -612,14 +626,57 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
     }
     if (!_tlSounds) { _tlSounds = true; installThunderlockSounds(audio); }
     const m = playerWeapon.machine;
-    // the shot, on the trigger's own edge
-    if (m.state !== 'Idle' && _tlState === 'Idle') audio.playOneShot(TL_SFX.fire, 1);
+    // the shot, on the trigger's own edge - and the kick and the
+    // shake ride the SAME edge, which is what makes them read as one
+    // event rather than three things that happened near each other.
+    if (m.state !== 'Idle' && _tlState === 'Idle') {
+      audio.playOneShot(TL_SFX.fire, 1);
+      _tlRecoil.punch();
+      _tlShake.punch();
+      // THE SHAKE MOVES THE ROOM, NOT THE WEAPON, because the camera
+      // carries the weapon - the lab's own finding, in its probe's
+      // words. The port has exactly one camera shaker (Better
+      // Ambience's, CameraShaker.cs), already wired through all four
+      // hosts by `betterAmbience.view`, so the gun borrows it rather
+      // than threading a second one through four scenes. Its own
+      // trauma curve above still drives the WEAPON's rattle; this is
+      // the room's half.
+      betterAmbience.weaponKick?.(GUN_FEEL.shake / 10);
+    }
     _tlState = m.state;
     // the reload, on the cooldown the shot left behind
     const cooling = m.now < m.cooldownUntil;
     if (!cooling) { _tlOpened = false; _tlClosed = false; return; }
     if (!_tlOpened) { _tlOpened = true; audio.playOneShot(TL_SFX.open, 0.9); }
     if (!_tlClosed && m.now >= m.cooldownUntil - TL_CLOSE_LEAD) { _tlClosed = true; audio.playOneShot(TL_SFX.close, 0.95); }
+  }
+
+  /** FIELD-GUN6: the frame's rect delta, stepped once and read by
+   *  whichever draw path is live - the mod's clone or the classic
+   *  sprite. Null for every weapon that is not this one, which is what
+   *  both draws take to mean "nothing of mine".
+   *
+   *  THE RELOAD LOWER is the other half. There is no reload ANIMATION
+   *  to play - the art is six fire frames and an idle - so the weapon
+   *  drops out of frame while the pump runs and rides back up as it
+   *  finishes, which reads as a reload because that is what a reload
+   *  looks like from behind the gun. It eases rather than steps, on
+   *  the cooldown's own clock, so it is finishing exactly as the
+   *  weapon becomes ready. */
+  function thunderlockFeel(dt) {
+    const type = weaponTypeForItem(playerWeapon.weapon);
+    if (type !== WEAPON_TYPES.Thunderlock && type !== WEAPON_TYPES.Thunderlock_Magic) { _tlAdjust = null; return; }
+    const kick = _tlRecoil.step(dt);
+    const m = playerWeapon.machine;
+    const total = Math.max(0.001, GUN_FEEL.reloadMs / 1000);
+    const left = Math.max(0, m.cooldownUntil - m.now);
+    // 0 at the ends, 1 at the bottom of the dip - a smoothstep either
+    // way, so the weapon neither snaps down nor snaps back
+    const t = 1 - Math.min(1, left / total);           // 0..1 across the pump
+    const dip = left > 0 ? Math.sin(Math.PI * t) : 0;  // down and back up
+    const smooth = dip * dip * (3 - 2 * dip);
+    const drop = smooth * GUN_FEEL.hiddenTarget[1] * 200;   // the lab's fraction, in native units
+    _tlAdjust = { x: kick.x, y: kick.y + drop };
   }
 
   /** FPSWeapon.UpdateWeapon's bow guard: an UNsheathed bow with zero
@@ -930,6 +987,7 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
       // weapon coming back up - the lab's law, off the numbers the
       // machine already keeps.
       thunderlockVoice(dt);
+      thunderlockFeel(dt);   // FIELD-GUN6: the kick, the shake and the reload lower, stepped once for the frame
       // WW1: the clone's LateUpdate, after the original's frame advance -
       // the same order DFU's LateUpdate has against FPSWeapon's Update.
       const _torchesOn = handheldOn();
@@ -1289,9 +1347,13 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
       // returned, `sheetOnly` needs `fpArm.active()` which returned at the
       // seam - so this line stops the shield-only frame and nothing else.
       if (!shown()) return;
-      if (widgetOn() && c && widget.draw(renderer, c, fpTint)) return;
+      // FIELD-GUN6: the Thunderlock's own movement rides EITHER draw -
+      // the mod's clone or the classic sprite - because the weapon's
+      // feel is the weapon's, not a mod's, and a player with Weapon
+      // Widget off should not be holding a different gun.
+      if (widgetOn() && c && widget.draw(renderer, c, fpTint, _tlAdjust)) return;
       const art = c && artFor(playerWeapon.weapon);
-      if (art) drawFpsWeapon(renderer, c, art, playerWeapon.machine.state, playerWeapon.machine.frame, { tint: fpTint });
+      if (art) drawFpsWeapon(renderer, c, art, playerWeapon.machine.state, playerWeapon.machine.frame, { tint: fpTint, adjust: _tlAdjust });
     }
   }
 }

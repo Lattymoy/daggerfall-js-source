@@ -67,6 +67,7 @@ import {
 } from '../combat/weaponWidgetMotion.js';
 import { MOD_SETTINGS } from '../systems/modSettings.js';
 import { walkSpeed, runSpeed } from '../player/motor.js';   // GetBaseSpeed's walk arm, the bob's baseSpeed
+export { createRecoil, createScreenShake, shakeNoise, GUN_FEEL } from '../combat/gunFeel.js';   // FIELD-GUN6: the one home
 export { widgetTransformRect };
 
 /**
@@ -182,30 +183,7 @@ export function muzzleLight(state, frame) {
  * not the obvious setting - a big slow kick is what a first pass
  * reaches for, and it fights the 1.7s reload for the frame.
  */
-export function createRecoil({ kick = 5, stiff = 400, damp = 36, back = 0 } = {}) {
-  const r = { x: 0, y: 0, vx: 0, vy: 0, kick, stiff, damp, back };
-  /** The shot, as a DISPLACEMENT rather than an impulse: the barrel is
-   *  already up by `kick` on the frame the trigger breaks, and the
-   *  spring's job is the ride down. An impulse (`vy += kick`) reads as
-   *  a soft push - the peak lands two frames late and a third of the
-   *  size, which is the first thing the probe caught. A second shot
-   *  fired into the recovery stacks on what is left, which is the
-   *  reason this is a spring at all. */
-  r.punch = (amount = r.kick) => { r.y += amount; r.x -= amount * r.back; };
-  r.step = (dt) => {
-    // sub-stepped: a spring this stiff integrated on a 30ms frame
-    // explodes, and a lab that only feels right at 120fps is no lab
-    const n = Math.max(1, Math.ceil(dt / 0.004));
-    const h = dt / n;
-    for (let i = 0; i < n; i++) {
-      r.vx += (-r.stiff * r.x - r.damp * r.vx) * h;
-      r.vy += (-r.stiff * r.y - r.damp * r.vy) * h;
-      r.x += r.vx * h; r.y += r.vy * h;
-    }
-    return { x: r.x, y: -r.y };   // +y is up in the impulse, down on screen
-  };
-  return r;
-}
+// FIELD-GUN6: createRecoil moved to combat/gunFeel.js - see above.
 
 /**
  * THE SOUND, and the slots it fills.
@@ -336,29 +314,11 @@ export function createSfxPlayer({ base = 'sfx/', vary = 0.06, volume = 0.7 } = {
  * in degrees, `decay` the trauma bled off per second, `freq` how fast
  * it rattles.
  */
-const shakeNoise = (p, seed) => (
-  Math.sin(p * seed * 1.7) * 0.6
-  + Math.sin(p * seed * 3.1 + 1.3) * 0.3
-  + Math.sin(p * seed * 7.3 + 2.7) * 0.1
-);
-
-export function createScreenShake({ amount = 7, decay = 3.2, freq = 26, rot = 0.7 } = {}) {
-  const s = { trauma: 0, t: 0, amount, decay, freq, rot };
-  s.punch = (a = 1) => { s.trauma = Math.min(1, s.trauma + a); };
-  s.step = (dt) => {
-    s.t += dt;
-    s.trauma = Math.max(0, s.trauma - s.decay * dt);
-    const k = s.trauma * s.trauma;
-    if (k === 0) return { x: 0, y: 0, rot: 0 };
-    const p = s.t * s.freq;
-    return {
-      x: s.amount * k * shakeNoise(p, 1),
-      y: s.amount * k * shakeNoise(p, 1.7),
-      rot: s.rot * k * shakeNoise(p, 2.3) * Math.PI / 180,
-    };
-  };
-  return s;
-}
+// FIELD-GUN6: THE MACHINE MOVED. `createScreenShake` and its noise
+// live in combat/gunFeel.js now, with `createRecoil`, because the GAME
+// needs them - the lab settled these numbers and then kept them, so
+// the weapon fired dead still in all four hosts while the prototype
+// kicked. The lab reads the one home, so tuning here tunes there.
 
 /**
  * THE WEAPON WIDGET'S OWN MOVEMENT, ON THE GUN.
@@ -456,7 +416,7 @@ export function widgetRigStep(rig, s, dt, {
 
 /**
  * THE MOTOR'S FRAME, as the rig assembles it for the clone
- * (weaponRig.js:953-960) - baseSpeed from GetBaseSpeed's walk arm,
+ * (weaponRig.js:1011-1018) - baseSpeed from GetBaseSpeed's walk arm,
  * speedRatio the live speed over it, and localVel the eye's motion
  * turned into the body's frame (right, up, forward). The lab has no
  * motor, so `walking`/`running` stand in for one and the vector is
