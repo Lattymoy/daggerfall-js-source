@@ -706,10 +706,10 @@
     ]
   },
   {
-    "name": "world-no-online-standdown",
+    "name": "to-online-the-journey-stands-down-again",
     "file": "src/scenes/world.js",
-    "old": "    if (!travelOptions || sharedClockOn()) return false;",
-    "new": "    if (!travelOptions) return false;",
+    "old": "    if (!travelOptions) return false;\n    if (coords) travelOptions.beginTravelToCoords",
+    "new": "    if (!travelOptions || sharedClockOn()) return false;\n    if (coords) travelOptions.beginTravelToCoords",
     "tests": [
       "test/to1_travelOptions.test.js"
     ]
@@ -905,10 +905,10 @@
     ]
   },
   {
-    "name": "i3-follow-key-online",
+    "name": "to-online-the-follow-key-stands-down-again",
     "file": "src/scenes/world.js",
-    "old": "    if (sharedClockOn()) return false;\n    const code = key.length === 1",
-    "new": "    const code = key.length === 1",
+    "old": "    const code = key.length === 1 ? `Key${key.toUpperCase()}` : key;",
+    "new": "    if (sharedClockOn()) return false;\n    const code = key.length === 1 ? `Key${key.toUpperCase()}` : key;",
     "tests": [
       "test/to1_travelOptions.test.js"
     ]
@@ -1136,6 +1136,33 @@
     "file": "src/scenes/world.js",
     "old": "    if (_mode() === 'exterior') hunting.tick();   // SURV6: the minute's hunting roll; the window takes the slot",
     "new": "    if (_mode() === 'exterior' && worldTimeScale() <= 1) hunting.tick();   // SURV6: the minute's hunting roll; the window takes the slot",
+    "tests": [
+      "test/to1_travelOptions.test.js"
+    ]
+  },
+  {
+    "name": "to-online-the-coordinates-door-stands-down-again",
+    "file": "src/scenes/world.js",
+    "old": "      coordsAllowed: () => !!travelOptions,",
+    "new": "      coordsAllowed: () => !!travelOptions && !sharedClockOn(),",
+    "tests": [
+      "test/to1_travelOptions.test.js"
+    ]
+  },
+  {
+    "name": "to-online-the-teleport-line-sits-over-a-walked-ride",
+    "file": "src/ui/travelPopUp.js",
+    "old": "    if (this.noWorldTime() && !this.walkedTrip) shadowText(renderer, font, ONLINE_TRAVEL_LINE,",
+    "new": "    if (this.noWorldTime()) shadowText(renderer, font, ONLINE_TRAVEL_LINE,",
+    "tests": [
+      "test/to1_travelOptions.test.js"
+    ]
+  },
+  {
+    "name": "to-online-the-teleport-line-sits-over-a-walked-ride-on-the-held-map",
+    "file": "src/ui/heldMap.js",
+    "old": "      if (t?.online && !t.walked) card.append(el('p', 'hmmeta', ONLINE_TRAVEL_LINE));",
+    "new": "      if (t?.online) card.append(el('p', 'hmmeta', ONLINE_TRAVEL_LINE));",
     "tests": [
       "test/to1_travelOptions.test.js"
     ]

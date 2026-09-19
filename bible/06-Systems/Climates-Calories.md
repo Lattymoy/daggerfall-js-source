@@ -78,7 +78,8 @@ away longer than a day comes back fed, watered and rested rather than
 charged). Stages: hunger peckish at 240 minutes, hungry at 720,
 starving at 1440 (then -2 to seven stats a day and rations eaten by
 themselves); thirst thirsty 50, parched 80, dehydrated 100 (fatigue
-taxes, then stats, then health in heat); sleep tired 4, drowsy 8,
+taxes, then stats, then health at 120 - SURV-THIRST1's departure: the
+mod asked for heat too and the port does not); sleep tired 4, drowsy 8,
 exhausted 12 (the debt grows past sixteen hours awake; a bed pays 1.5
 an hour, a rough rest 0.5 and never below tired); wet damp 5, wet 30,
 soaked 100, drenched 200. Heat and cold charge fatigue by the band (16
@@ -443,3 +444,154 @@ Not driven (no ARENA2 in the container): the 3D fire and tent, the
 activation ray, the inventory windows in situ, dungeon-floor camps,
 online camp sharing. The probe's scripts and screenshots are in the
 session scratchpad, not the tree.
+
+## AUDIT-DEATH1 - DEHYDRATION KILLED NOBODY, BECAUSE NOTHING KILLED ANYBODY (2026-09-19)
+
+> Mac: *"You should also should die on dehydration and sometimes get
+> stuck at 0% health and live"*, with a dungeon screenshot: **Dehydrated,
+> FATIGUE 0%, HEALTH 0%, still playing.**
+
+Two complaints, **one bug**, and it is not in this arc's code at all.
+
+**The chain works.** Dehydrated (thirst 100+) taxes 12 fatigue units a
+minute (`DRAIN.dehydrated`). Fatigue reaches nought. That raises
+`onExhausted`, and `exhaustionOutcome` (systems/rest.js) answers `rest`
+with dry feet and no enemies near - an hour's collapse, health back -
+or **kills** near enemies or in water. So dehydration does kill; it
+kills through the collapse, which is DFU's own route.
+
+**What broke is the death itself.** `hurtPlayer`
+(characters/playerEntity.js) raises the death presenter on the
+TRANSITION - `wasAlive && entity.health === 0` - so a caller that writes
+health directly kills the player and tells nobody: no DeathScreen, no
+end of run, a corpse walking at 0%. `dungeonContext.js` wrote
+
+```js
+playerEntity.health = 0;   // SetHealth(0): the fatal collapse
+```
+
+while `world.js`, `exterior.js` and `worldModes.js` all wrote
+
+```js
+hurtPlayer(playerEntity, playerEntity.health, { bypassShield: true });
+```
+
+It was the last raw writer in the tree, **in the one host that owns the
+DeathScreen**, and ninety lines above its own bug sits the note that
+names the trap exactly: *"it was the only one of the four writers that
+checked for death, which is exactly why the other three could go on
+writing health raw and nobody noticed."* The presenter was centralised;
+this host's own call was not moved with it.
+
+`bypassShield` is the SetHealth(0) door's own flag - no shield pool
+stands between a player and a lethal collapse - and dropping it is a
+second, quieter bug, so the mutation campaign carries it.
+
+**The pin is sliced to the collapse's own branch**, not the file: the
+dungeon host also drowns the player through the same door two thousand
+lines away, and a file-wide grep passed on THAT call while this one was
+mutated back to a raw zero. `tools/mutants/audit_air1.json` carries
+three DEATH1 records; 7 mutants, 7 dead.
+
+## SURV-THIRST1 - WATER IS NOT A CLIMATE (2026-09-19) - A DEPARTURE
+
+> Mac, asked whether the heat gate should stay: **"Do the thirst
+> change"**.
+
+The audit above named this as the one thing it would not change without
+being told, because it is not a defect - it is Climates & Calories'
+actual law, and this file recorded it: *"fatigue taxes, then stats, then
+health in heat"*. The mod bleeds you for thirst only when
+`temp.felt > NEED.EXPOSURE_AT`, so a cool dungeon taxed fatigue for ever
+and never a drop of blood. **The port departs.** A body past dehydrated
+fails wherever it stands.
+
+**Measured, before and after**, walking a clothed 25-health character
+with no drink (the bare-skin harms are dressed away, so this is thirst
+alone):
+
+| | dehydrated | first blood | dead |
+|---|---|---|---|
+| cool dungeon, the mod's gate | 6.0h | **never** | **never** |
+| cool dungeon, SURV-THIRST1 | 6.0h | 7.3h | **9.2h** (46 real min) |
+| desert afternoon, the mod's gate | 0.9h | 0.2h | 1.3h |
+| desert afternoon, SURV-THIRST1 | 0.9h | 0.2h | 1.5h |
+
+**HEAT STILL KILLS YOU FASTEST, through the mod's own mechanism rather
+than a second rule.** The thirst RATE already scales with the felt heat
+(felt 40 is four times as fast), which is why the desert reaches
+dehydrated in under an hour and the cellar takes six. What heat no
+longer buys is a separate, harsher damage law.
+
+**The shape is AUDIT SURV E's, not a new one.** That audit established
+that a harm which can kill comes on the HARM TICK and not every minute -
+*"a starting character walked a clear winter afternoon and died in two
+hours"*. The old thirst line ignored it and fired sixty times an hour;
+carried straight into cool weather it would have taken a starting
+character out in twenty-five game-minutes. So the new harm:
+
+- comes every `HARM_EVERY_MINUTES`, like exposure and the bare-skin harms;
+- escalates off how far past the threshold you are, as exposure escalates
+  off how far past `DAMAGE_AT` the temperature is - 1 a tick at 120, 4 at
+  the 150 ceiling;
+- takes **no** `HEALTH_FLOOR`, because the bare-skin harms leave the last
+  five points precisely *because* they are not meant to kill, and this
+  one is;
+- and is refused **asleep or resting**. Nothing in `systems/rest.js`
+  refuses a rest for thirst, so a sleeper who cannot wake to drink would
+  be killed by a window the game let him open.
+
+`NEED.THIRST_HARM` (120) is the number the mod's own heat-only line
+used, kept rather than invented: twenty past dehydrated, which leaves a
+player game-hours of `Dehydrated` warnings before the first blood.
+
+**The one cost, named:** in heat the harm is now gentler per tick
+(1-4 every ten minutes, escalating) than the flat 1-a-minute it
+replaced, so a desert death takes 1.5 game-hours where it took 1.3. That
+is the price of one rule instead of two, and the rule that remains is
+the one AUDIT SURV E wrote.
+
+### THE AUDIT BEFORE MERGE - AND THIS DEPARTURE'S OWN REGRESSION
+
+The slice shipped green and killed the player on arrival from a fast
+travel.
+
+`playerTicker.advance` (scenes/shared.js) runs the SAME tick with a
+fabricated dt - "DFU's clock and its per-minute laws are the same loop,
+so a rest, a training session and a fast travel all owe the world those
+minutes" - so `runSurvivalMinutes` REPLAYS every minute a clock jump
+crossed. Six game-hours is thirty-six harm ticks inside one frame.
+Measured, a dressed 25-health character leaving with thirst at **zero**:
+
+| jump | damage | arrives |
+|---|---|---|
+| 6h | 86 | **dead** |
+| 12h | 230 | **dead** |
+| 24h | 518 | **dead** |
+
+Under the mod's heat gate this could not happen in a cool climate, so
+the departure is what introduced it - and no warning ever reached the
+player, because thirst had been nought when they set out.
+
+**The fix is the walk, not the harm.** `runSurvivalMinutes` marks every
+minute but the LAST as a `replay` (one object mutated for the whole
+walk, not one per minute - the loop runs up to `MAX_CATCHUP_MINUTES`
+times, and EV2's rule holds here as anywhere). A replayed minute may
+wound only to `HEALTH_FLOOR`; the last minute is the one the player is
+standing in, and that one may finish them. So a thirsty journey lands
+you at death's door and the next minute you do not drink is the one
+that kills - the behaviour asked for, without the arrival being a coin
+flip. A longer jump now costs no more than a shorter one, because the
+floor is where the replay stops whatever its length.
+
+**PRE-EXISTING AND NOT CHANGED, named so it is a decision:** the
+temperature harm (`abs > NEED.DAMAGE_AT`) has the same shape and the
+same exposure to a replayed jump, in a desert or a deep winter where it
+bites at all. It is older than this slice and outside what was asked
+for; if it is to take the same floor it wants its own pass.
+
+`tools/mutants/surv_thirst1.json`: 10 mutants, 10 dead - the heat gate
+back, the per-minute cadence, the health floor, a flat rate, death in
+your sleep, the threshold dropped to dehydrated, and four on the walk
+(a jump lethal again, the replayed bite unclamped, every minute live,
+every minute a replay).

@@ -17,8 +17,7 @@ import {
   SHADOW_SUN_SIZE, SHADOW_POINT_SIZE, SHADOW_CASCADES, SHADOW_SUN_DEPTH, SHADOW_MIN_SUN_Y, SHADOW_POINT_NEAR,
   SHADOW_CASTER_MIN_DISTANCE, SHADOW_SUN_UNIT, SHADOW_POINT_UNIT, SHADOW_RECORD_MAX,
   sunCascadeMatrices, sunTexelWorld, pointFaceMatrices, cubeDepthRef, pickShadowCaster, shadowKind,
-  SHADOW_GLSL, DEPTH_FS, DEPTH_BB_FS, ShadowPass,
-} from '../src/render/shadowPass.js';
+  SHADOW_GLSL, DEPTH_FS, DEPTH_BB_FS, ShadowPass, shadowFarFor } from '../src/render/shadowPass.js';
 import { EL_LANE, EL_MESH_FS, EL_BB_FS, EL_TERRAIN_FS, EL_CHAR_FS, EL_FAR_RING_FS } from '../src/render/enhancedLighting.js';
 import { Renderer, CLOUD_SHADOW_UNIT, WORLD_FRAME } from '../src/render/renderer.js';
 import { transformPoint } from '../src/world/mat4.js';
@@ -246,7 +245,18 @@ test('EL2: the renderer builds the pass with the lane, records the three draw ki
   calls.length = 0;
   r.beginFrame(I, I, new Float32Array([0.45, 0.8, 0.35]), WORLD_FRAME);
   assert.equal(sp.kind, 'point'); assert.deepEqual([...sp.shadowIndex], [1, -1, -1, -1, -1, -1], 'the eye\'s own light (at the origin, where the identity view puts the eye) is skipped');
-  assert.deepEqual([...sp.pointParams], [6, 2, 1, 14, ...new Array(20).fill(0)]); assert.equal(sp.casters, 1);
+  // PERF-FLICKER (2026-09-19): the w is the CUBE MAP's far plane, not the
+  // lantern's live range - the light's range is animated (CityLightAnimator
+  // wanders it inside a one-unit band, fourteen steps a second) and the
+  // shadow pass compared that number to decide whether a slot had changed,
+  // so every caster rebuilt all six faces every frame and EL8's schedule
+  // was dead. It is rounded UP to SHADOW_FAR_QUANTUM, which the matrices,
+  // the change test and this array all take - the map and the shader must
+  // agree, because the fragment stage reconstructs depth from P.w - and
+  // rounding UP means the far plane is never inside the lantern's reach,
+  // so no shadow is clipped short. 14 -> 16.
+  assert.deepEqual([...sp.pointParams], [6, 2, 1, shadowFarFor(14), ...new Array(20).fill(0)]); assert.equal(sp.casters, 1);
+  assert.equal(shadowFarFor(14), 16, 'the quantum, by name and by value');
   assert.equal(sp.stats.pointDraws, 6 * 3, 'six faces of the two sub-meshes and the terrain (the fake bundles carry no bounds: nothing is culled); EL6: the flat is a light flat (archive 210) and never casts from a lantern');
   assert.equal(calls.filter((c) => c[0] === 'clear' && c[1] === 256).length, 6);
   assert.ok(calls.some((c) => c[0] === 'uniform1iv' && c[1] === 'uShadowIndex' && c[2][0] === 1 && c[2].length === 6), 'EL5: the indices go up as one int array');

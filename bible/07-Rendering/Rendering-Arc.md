@@ -1905,3 +1905,479 @@ container, so nothing here was measured the way PERF-ON's names were.
 Said rather than implied.
 
 **Pinned** in `test/grasspath.test.js`.
+## AUDIT-AIR1 - THE SIXTH SEAM (2026-09-19)
+
+> Mac, with a screenshot: *"the screenshot shows a bug where sometimes
+> unsheathing, it spawns a weird water texture"*.
+
+It was not water. It was the resolved frame buffer, pasted into the
+weapon sprite's quad.
+
+**PERF-TEX3's own trap, one seam further on.** That slice's audit found
+13 raw unit-0 binds that answered to nothing, wrote the unit-0 twin of
+PERF-TEX's law, and pinned it. What neither pass asked was the other
+question: **who takes the context away from the renderer entirely?**
+`markForeignPass` is the answer the file already had, and it forgets
+every texture shadow for exactly this reason - its own comment says a
+shadow that speaks for a unit it no longer owns is a wrong texture.
+
+`_compositeAir` is the same kind of seam and never said so.
+`airPass.composite()` is the post-processing resolve: it binds units 0
+to 3 (frame, bloom, shafts, AO) and leaves its own unit selected.
+`_compositeAir` forgot `_lastProgram` and `_lastVao` after it and **not
+the texture shadows** - so the first screen quad after a resolve found
+
+- `_activeUnit` still claiming `TEXTURE0`, when the resolve left unit 3
+  selected, and
+- `_tex0Bound` still naming the sprite the quad wanted.
+
+Either one alone is a wrong texture. Together they are a guarantee: the
+quad skipped its bind, or bound to unit 3, and sampled whatever the
+resolve left on unit 0. On an unsheathe that is the weapon sprite
+painted with a blurred picture of the room - a soft blue-grey smear with
+the room's own edges in it, which is what a water plane looks like.
+
+**Why "sometimes".** `_compositeAir` returns early unless
+`this._air.pending`, and `drawScreenQuad` calls it at the head of every
+quad - so only the FIRST quad after a resolve is ever wrong, and which
+quad that is depends on what else the frame drew. It also needs the
+enhanced lane on, since there is no air pass without it.
+
+**The root cause is not the missing line, it is the six copies.** The
+same six-field block was hand-written at five seams (the constructor,
+`endWorldPass`, `_installWorldSet`, `markForeignPass`, `beginFrame`) and
+a sixth was owed at `_compositeAir`. Six copies of a rule is five
+chances to miss one, and one was missed. It is now
+`_forgetTextureShadows()` and **seven** seams call it -
+`uploadEmissionTexture` was a seventh hand-copy, clearing three of the
+six, which the sweep also found.
+
+**Proved by replay, not by grep.** The pin drives the real `Renderer`
+over the logging GL stub with an air pass that binds what the real one
+binds, replays the call log through the GL state machine, and asks what
+the GPU would have on unit 0 - and which unit is selected - AT THE DRAW.
+A source pin could not have caught this: every line it would have
+grepped for was present and correct.
+
+The three older pins that grepped for the hand-written block are
+re-aimed at the call, with the helper's own contents pinned where it
+lives, so neither half can go vacuous. The unit-1 source law now accepts
+`_forgetTextureShadows` as a third way to answer, and only because the
+assertion above it proves the helper really clears `_tex1Bound`.
+
+`tools/mutants/audit_air1.json`: 7 mutants, 7 dead - including the
+ordering (a forget BEFORE the composite is forgetting shadows the
+resolve then invalidates again).
+
+**What this says about the whole PERF arc.** Three slices, three audits,
+three shipping bugs found after a green gate, every one of them a
+*shadow that outlived its claim*. The shadows are still right and the
+64% saving is still real, but the pattern is now explicit: **every new
+shadow owes a list of who can take the thing it shadows away.** Both
+audits found their bug by asking it; the gate never did.
+
+## PERF-ON2 + PERF-CPU - the others are culled, and the frame can be timed on the clock it is losing (2026-09-19)
+
+Mac: *"Online mode needs further performance improvements"*, then a
+readout from the running game:
+
+```
+51 fps
+19.7 ms   worst 40
+script 23.3 ms   worst 44
+draws 1365   binds 820
+```
+
+**A frame whose SCRIPT outruns its frame time is CPU-bound.** That one
+line reorders everything: the cost is not the GPU finishing the work, it
+is JavaScript issuing it.
+
+### Measured first, and two hypotheses died
+
+`tools/onlinePerfProbe.mjs` is the measurement that did not exist. Three
+arms, all over the real modules:
+
+| arm | what it measures | answer |
+|---|---|---|
+| session | `OnlineSession.tick()` + `drawable()` over a real session on `test/fakeSocket.mjs` | **0.04 ms/frame at 100 peers** |
+| names | the real `namePoints` + the real `ui/nameLayer.js` over a counting document | **1.65 inline style writes a name a frame** |
+| draw | `drawBillboards` under PERF-ON's own recording Proxy | **6.3 GL calls a peer a frame** |
+
+The first arm killed a fix before it was written. The per-frame
+allocation churn in `net/` - the peer map spread every tick, a fresh
+pose object a peer a frame, half a dozen collections rebuilt - is real,
+and it costs **0.04 ms at a hundred peers**. It is not the problem and
+it is not worth touching.
+
+The second arm was measured twice, because the first fixture was
+dishonest: a camera that strafed a metre and a half on the spot changed
+only each name's `left`, and reported 0.94 `left` against 0.04 `top` and
+0.005 `fontSize`. A player walks and turns, which moves every name in x,
+in y and in depth. Against an honest walk it is 1.65 writes a name.
+
+Then `tools/nameLayerBrowserProbe.mjs` asked Chromium what those writes
+COST, through `Performance.getMetrics` - and **refuted the fix**:
+
+| mode | layout ms/frame | layouts in 600 frames |
+|---|---|---|
+| `left`/`top` + font-size (today) | 0.123 | 600 |
+| `transform` + font-size | 0.119 | 599 |
+| `left`/`top`, font-size fixed | 0.079 | 599 |
+| `transform`, font-size fixed | **0.000** | **0** |
+
+Moving to `transform` alone buys nothing, because the per-frame
+`font-size` dirties layout by itself. Only moving BOTH takes the layer
+off the layout path entirely - and the prize is 0.12 ms a frame at 72
+names, which is under one per cent of a frame. **Recorded, not taken:
+the win is real, small, and costs a visual change to how a name is
+sized. It is not where 23 ms went.**
+
+### What the measurement did find: the peers were never culled
+
+Every world flat gets a frustum test against its own box before it is
+submitted (EV3). The peers did not:
+
+```js
+if (remotePlayers) for (const b of remotePlayers.batches()) allBatches.push(b);
+```
+
+A peer behind the camera, or one at the far edge of the relay's range -
+`RANGE_PIXELS` is 3 map pixels, nearly 2,500 units - was a draw, two
+texture binds and its uniforms, every frame, whatever the camera was
+looking at. At 6.3 GL calls a peer that is 630 calls a frame in a
+hundred-peer room, and **every one of them is script time**, which is
+the budget the readout says is gone.
+
+PERF-ON passed over this in a line - *"a peer's doll is one billboard
+batch created once, with only its `origin` written afterwards"* - which
+is true of the batch's CREATION and says nothing about its per-frame
+DRAW. The box is the billboard shader's own: bottom-anchored, standing
+`size.h` up from the origin and reaching `size.w / 2` in any horizontal
+direction, because the quad turns to face the eye. One scratch box,
+reused, because the test runs once a peer a frame.
+
+A culled peer casts no shadow while off screen - exactly what the
+world's own flats have done since EV3, since the shadow pass reads the
+list this builds.
+
+### And the instrument that was missing
+
+`?perf` times the frame on the GPU; `?perf=zones` breaks that number
+into passes. **Neither can see a millisecond of JavaScript.** So a
+script-bound frame could be investigated in this session only by reading
+the code and guessing which half of the work was which - the exact trap
+VC6d's own lesson names.
+
+`?perf=cpu` tiles the same zones on the main thread's clock. Same
+`mark(name)` call sites, no extension needed (so it answers on every
+browser, including the ones the GPU timer refuses), and `markCpu(name)`
+lets a host mark a phase that issues no GL at all - which is most of a
+simulation frame. The world host now marks `online`, `sim`, `batches`,
+`flats`, `people` beside the existing `grass` and `world`, and the line
+names its clock so no reader can mistake a CPU zone for a GPU one:
+
+```
+[perf] cpu 16.00ms | world 8.00 | sim 5.00 | online 2.00 | grass 1.00 | draws 1365
+```
+
+The two clocks do not run together: under `?perf=cpu` the GPU clock
+stands down, because the CPU arm reports before the GPU branch is
+reached and a clock left running there pushes a sample a frame into a
+list nothing drains.
+
+**The lesson: PERF-ON measured the online name pass at 153 GL calls a
+name and took it to 14 on 15 September. NAME1 landed twenty-six hours
+later and moved the face a player actually sees off that pass entirely -
+online forces the enhanced lane, the enhanced lane has a `document`, and
+`nameFrame` returns through the DOM layer before `drawNamePoints` is
+reached. The measured win is real and it is on a path players do not
+take. Nobody re-measured, because there was no instrument that could.**
+
+**Pinned** in `test/perfon2_peercull.test.js` (6). Mutants
+`tools/mutants/perfon2.json`: 13 - 13 dead, 0 survived.
+
+
+## PERF-FLICKER + PERF-LIGHTS - two costs the night was paying for nothing (2026-09-19)
+
+Mac: *"I don't want more tests, I want actual performance fixes."* Fair.
+Two, both on the frame's critical path, both found by reading the hot
+path with the readout's own verdict in hand - script 23.3 ms on a
+19.7 ms frame, so the CPU is the budget and GL calls issued from JS are
+how it is spent.
+
+### PERF-FLICKER - the lantern flicker was rebuilding every shadow cube, every frame
+
+EL8 spends the point casters carefully. The nearest `SHADOW_NEAR_CASTERS`
+redraw their six cube faces every frame; the rest every
+`SHADOW_FAR_CASTER_EVERY`. Six casters, so about **twenty** face replays
+a frame out of thirty-six. A slot also redraws when its light **changed**,
+which is right - a new lantern in a slot needs its own map:
+
+```js
+const changed = !(sl[o] === pos[0] && sl[o+1] === pos[1] && sl[o+2] === pos[2] && sl[o+3] === far);
+```
+
+But `far` is the light's range, and **a lantern's range is animated**.
+`CityLightAnimator` (world/worldClock.js) wanders every light's range
+inside a one-unit band at fourteen steps a second - that is the flicker.
+So `changed` was true for every caster on almost every frame, every slot
+rebuilt all six faces, and EL8's whole schedule was dead: **thirty-six
+face replays a frame instead of twenty**, each one a full replay of the
+casters within that lantern's reach.
+
+The saving was designed, measured, and then quietly given back by an
+animation in another file. Nothing in either file was wrong on its own.
+
+The fix is one line plus a law: the cube map's far plane is the light's
+range **rounded UP** to `SHADOW_FAR_QUANTUM`, and the rounded value is
+what the face matrices, the change test and `pointParams` all take - they
+must agree, because the fragment stage reconstructs depth from `P.w`.
+Rounding UP means the far plane is never inside the lantern's reach, so
+no shadow is ever clipped short; the cost is depth spread over a slightly
+longer range, which at 512 square on a 24-bit buffer is nothing. A
+quantum of 4 swallows the whole one-unit wobble of an 18-unit lantern:
+the pin drives the real animator for 600 frames, checks the range really
+does move, and holds that every one of those frames maps to ONE far
+plane.
+
+### PERF-LIGHTS - a fresh object per lantern per frame, all night
+
+The night branch built its light list from scratch every frame:
+
+```js
+const sceneLights = [];
+for (const p of built.values()) {
+  const t = state.pixelTranslation(p.px, p.py);        // a triple a pixel
+  for (const l of p.lights) sceneLights.push({ x: …, y: …, z: … });   // an object a lantern
+}
+```
+
+A town at night is hundreds of lanterns, sixty times a second, every one
+of them thrown away the moment `nearestLights` had picked its sixteen -
+in a frame that is already script-bound. The objects are refilled in
+place now, the translation writes into one reused triple, and the live
+count rides into the selector as a new trailing argument whose default
+(`-1`) keeps every other caller's meaning exactly. A night frame
+allocates nothing here at all.
+
+The selection is untouched, and that is pinned rather than asserted: 60
+random towns, each selected both ways - a freshly built list, and the
+pool with stale entries past the live count - **identical every time**.
+
+**Pinned** in `test/perfon2_peercull.test.js`. Mutants
+`tools/mutants/perfon2.json`: 19 - 19 dead, 0 survived.
+
+**The lesson: EL8's schedule and the lantern flicker were each correct,
+and the pair was not. A cache key that includes an animated value is not
+a cache, and nothing in either file could see the other.**
+
+
+## PERF-CROWD + PERF-BASIS - the town was never culled, and the sun's basis went up once a flat (2026-09-19)
+
+Continuing on fixes. Two more, both found by reading the submission path
+with the readout's verdict in hand - 1365 draws, script 23.3 ms.
+
+### PERF-CROWD - the whole live crowd was submitted uncut
+
+PERF-ON2 culled the peers. It turns out they were not the only list the
+host hands the renderer by hand:
+
+```js
+if (livePersonBatches.length) renderer.drawBillboards(livePersonBatches, camRight, UP_Y);
+```
+
+`livePersonBatches` is the townspeople, the city watch, the exterior
+foes, the dropped ground piles, the blow effects, the dropped torches and
+the camps. **Not one of them was frustum-tested.** Every townsman behind
+the camera was a draw, two texture binds and its uniforms, every frame -
+and in a town that list is most of the frame's billboards. The world's
+own flats have had this test since EV3; these never did.
+
+Same one-line shape as the peers, so both now take the same test, and the
+peers' hand-rolled box is retired with it.
+
+**The sphere had to be lifted, and that is the whole correctness of it.**
+`createBillboardBatch` stores a sphere over the placement points with the
+sprite's half-diagonal added to the radius. But the billboard vertex
+shader is BOTTOM-ANCHORED - `uUp * ((aCorner.y + 0.5) * uSize.y)` - so a
+sprite stands its full height ABOVE its placement point, and a sphere of
+radius `hypot(w, h) / 2` about that point does not reach the top of
+anything taller than it is wide. A person is exactly that shape: at
+w = 1, h = 3 the stored radius is 1.58 against a head at 3.0. Culling by
+the stored sphere would clip heads at the top of the screen. Lifting the
+centre by half the height bounds the quad exactly, and the pin holds both
+halves - that the unlifted sphere fails and the lifted one does not.
+
+(The shadow replay's own `batchVisible` has the same unlifted sphere. It
+is left alone: a shadow popping at a cascade edge is not a head
+disappearing, and changing it would move EL5's pinned culling counts.
+Recorded here rather than fixed quietly.)
+
+### PERF-BASIS - two uniform uploads a flat, for two numbers that could not change
+
+Inside the shadow replay's billboard loop:
+
+```js
+gl.uniform3fv(P.bb.right, recordBasis ? r.right : this._right);
+gl.uniform3fv(P.bb.up,    recordBasis ? r.up    : this._up);
+```
+
+Four cases, and only ONE of them varies per flat. `up` is the constant
+`[0,1,0]`, or the record's own basis which is fixed for the record.
+`right` is the frame's sun basis, computed once in `frame()` before the
+cascade loop - **unless** this is a lantern's replay, where each flat
+turns to face the lantern (EL6). So a sun cascade was paying two uniform
+uploads a flat for two numbers that could not change, three cascades
+deep, every frame. On a script-bound frame a GL call that cannot change
+anything is the purest waste there is.
+
+Both are hoisted to once a record; the lantern arm keeps its per-flat
+upload, because flattening every sprite's shadow to one direction is a
+bug, not a saving. And the texture bind now skips its repeats, as the
+main pass's has since PERF3.
+
+**The campaign found a hole that was there before this change**: nothing
+in the suite could fail a mutant that stopped the lantern's flats turning
+to face it. It is pinned now.
+
+**Pinned** in `test/perfon2_peercull.test.js`. Mutants
+`tools/mutants/perfon2.json`: 22 - 22 dead, 0 survived.
+
+
+## PERF-CROWD2 - the billboard pass culls, so no host can forget to (2026-09-19)
+
+PERF-ON2 found the peers submitted uncut. PERF-CROWD found the whole town
+beside them. Then the same shape turned up everywhere else:
+
+| host | list |
+|---|---|
+| `dungeonContext.js:5033` | the mobiles, the drops, the spells |
+| `worldModes.js:6095` | the dungeon's flats, camps, torches and peers |
+| `worldModes.js:6258` | the interior's flats and peers |
+| `worldModes.js:6264-6298` | blood, torches, drops, foes, guards - **five separate uncut calls** |
+| `exterior.js:4776`, `world.js:10615` | the spell missiles |
+| `exterior.js:4838` | the fixed city's townspeople |
+| `interior.js:352`, `dungeon.js:1006` | the flats, the camps, the torches |
+
+Seven call sites, and an eighth waiting to be written next year. **Fixing
+them one at a time is how this bug got to be in eight places.** The test
+belongs in the pass, so `drawBillboards` takes it and every host is
+correct by construction.
+
+**It culls AFTER the shadow record, on purpose.** `recordBillboards` runs
+first and takes the whole list, so everything still CASTS - only the
+drawing is culled. Nothing goes dark because its caster stepped off
+screen. (The world host's own lists are culled a step earlier, before
+they are even collected; that is EV3's existing behaviour for its flats
+and the peers and crowd now match it.)
+
+The planes are recomputed once a CALL rather than cached on the frame
+stamp, because the panel bracket swaps `_proj`/`_view` without bumping
+it - one 4x4 multiply a call against what it saves is not a trade worth
+thinking about. The sphere is the batch's own, lifted half a height for
+the bottom anchor, exactly as PERF-CROWD's is and for the same reason.
+`?cull=off` turns it off with everything else, and `stats.bbCulled` says
+how many the frame skipped.
+
+**Pinned** in `test/perfon2_peercull.test.js`. Mutants
+`tools/mutants/perfon2.json`: 28 - 28 dead, 0 survived.
+
+**The lesson: the same one-line omission in eight places is not eight
+bugs, it is one bug in the wrong layer.**
+
+
+## GRAIN1 - the distant ground was unfiltered, and the shader is why (2026-09-19)
+
+Mac: *"distance terrian has a weird grain look"* - and, before asking for
+it, *"im not sure if we can tackle this without taking a performance
+hit"*. **It costs nothing, and it may give some back.** That is worth
+saying first because the worry was reasonable.
+
+### What the grain is
+
+Minification aliasing. The tile array was `TEXTURE_MIN_FILTER = NEAREST`
+with no mipmap, so past a few tiles out a screen pixel covers a dozen
+texels and NEAREST picks exactly one of them - a *different* one each
+time the camera drifts a fraction. The ground boils. A mipmap is the
+only cure for it.
+
+### Why there wasn't one
+
+Not an oversight. The terrain shaders sample a per-tile UV:
+
+```glsl
+vec2 tileUV = fract(unwrapped);          // jumps 1 -> 0 at every tile edge
+vec2 tuv = ROT[t] * tileUV + TRANS[t];
+texture(uTileArr, vec3(tuv, float(layer)));
+```
+
+`texture()` picks its mip from the screen-space derivative of the
+coordinate it is handed. At each of those `fract` jumps the derivative is
+a whole tile wide, the hardware reads that as *"this pixel covers the
+entire texture"*, and it samples the coarsest mip. Turn mipmapping on
+naively and you get a blurred line drawn around all 16,384 tiles of every
+streamed pixel - far worse than the grain.
+
+### The fix
+
+`unwrapped` does not jump. Its derivative is the true footprint, and
+`ROT[t]` is constant across the fragment, so rotating it gives that
+footprint in the rotated tile's own frame:
+
+```glsl
+vec2 gx = ROT[t] * dFdx(unwrapped);
+vec2 gy = ROT[t] * dFdy(unwrapped);
+textureGrad(uTileArr, vec3(tuv, float(layer)), gx, gy);
+```
+
+One sample either way. Both terrain shaders take it, and so does the
+water pass, which samples the same array through the same `fract` wrap
+(its own rollover would have drawn the same line).
+
+Then the texture side: `generateMipmap`, `LINEAR_MIPMAP_LINEAR` on
+minification, and **`NEAREST` left exactly where it was on
+magnification** - the near field is where Daggerfall's texels are meant
+to be square and visible, a mipmap has no say there, and LINEAR would
+smear the one place the art is read at full size. The distance is bought
+and the near field is untouched.
+
+A 2D ARRAY mipmaps each layer independently, so no tile can bleed into
+another the way an atlas would - the other reason atlases ship unmipped
+and this need not.
+
+Anisotropy where the driver has it, capped at 4. Terrain is read at a
+grazing angle almost everywhere, and an isotropic mip must take the wider
+of the two footprints - so it over-blurs along the view and still aliases
+across it. This is the one term that buys back the sharpness the mipmap
+costs. Optional: a driver without the extension still draws, and the
+mipmap alone already removes the grain.
+
+### The cost, honestly
+
+- `textureGrad` against `texture`: one sample either way. Explicit
+  gradients can cost a little on some hardware; it is one instruction's
+  worth, not a pass.
+- The mipmap **reduces** texture bandwidth at distance. Unmipped
+  minification is the worst case for a texture cache - every neighbouring
+  pixel reads a scattered texel. Mipped, it reads a coherent block. At
+  distance this is a saving, not a cost.
+- Memory: +33% on the tile array. 56 layers at 64x64 RGBA is under a
+  megabyte, so the chain is a third of that.
+- Anisotropy at 4x is real fill-rate work, and it is the only line here
+  that spends anything.
+
+And the frame this ships into is **CPU-bound** - the readout that opened
+this arc was script 23.3 ms against a 19.7 ms frame. GPU filtering is
+not what it is short of.
+
+**Verified in real WebGL2** (headless Chromium, not asserted from
+memory): the construct compiles, and `EXT_texture_filter_anisotropic`
+reports a maximum of 16 there.
+
+**Pinned** in `test/grain1_terrainmip.test.js` (4). Mutants
+`tools/mutants/grain1.json`: 10 - 10 dead, 0 survived.
+
+**The lesson: "we cannot filter this" was true of the sampler it was
+written against, and had been carried as a property of the terrain ever
+since. The wrap was never the obstacle - handing the wrapped coordinate
+to the hardware was.**

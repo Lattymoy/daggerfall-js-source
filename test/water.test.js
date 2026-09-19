@@ -159,7 +159,14 @@ test('WATER1: the shader - the terrain\'s own grid lifted, the corner lookup by 
   assert.match(fs, /float F = uF0 \+ \(0\.72 - uF0\) \* pow\(1\.0 - NdV, 5\.0\);/, 'Schlick, capped');
   assert.match(fs, /float alpha = \(uOpacity \+ \(1\.0 - uOpacity\) \* F\) \* edge;/);
   assert.match(fs, /outColor = vec4\(mix\(uFogColor, col, fogFactorAt\(vWorldPos\)\), alpha\);/, 'the fog every world pass takes');
-  assert.match(fs, /vec2 uv = fract\(f \+ vec2\(uScroll\)\);\s*\n\s*vec3 tex = texture\(uTileArr, vec3\(uv, 0\.0\)\)\.rgb \* uTint;/, 'the classic water texel, layer 0, scrolled');
+  // GRAIN1 (2026-09-19): the same texel, the same layer, the same scroll -
+  // but sampled with the UNWRAPPED gradient, because the tile array is
+  // mipmapped now and `fract` jumps. Taking the footprint from the
+  // wrapped coordinate would draw a blurred line wherever the scroll
+  // rolls over, which is the artefact the mipmap exists to remove.
+  assert.match(fs, /vec2 uv = fract\(f \+ vec2\(uScroll\)\);/, 'the classic water texel, layer 0, scrolled');
+  assert.match(fs, /vec2 wgx = dFdx\(unwrapped\), wgy = dFdy\(unwrapped\);\s*\n\s*vec3 tex = textureGrad\(uTileArr, vec3\(uv, 0\.0\), wgx, wgy\)\.rgb \* uTint;/,
+    'and its footprint comes from the coordinate that does not wrap');
   // the trains fade with distance on their own scale - the far sea keeps the swell
   assert.match(fs, /exp\(-dist \* 0\.0015\)\) \* cos\(dot\(p, d0\)/);
   assert.match(fs, /exp\(-dist \* 0\.006\)\) \* cos\(dot\(p, d1\)/);
