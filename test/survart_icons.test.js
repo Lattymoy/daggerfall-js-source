@@ -61,7 +61,7 @@ function installFakeIcons() {
   clearVendorTextures();
   addVendorTextures(VENDOR_ICON_FILES.map((f) => {
     const m = /^(\d+)_(\d+)-(\d+)$/.exec(f);
-    return { archive: Number(m[1]), record: Number(m[2]), frame: Number(m[3]), fileName: f, load: async () => new Uint8Array(8) };
+    return { archive: Number(m[1]), record: Number(m[2]), frame: Number(m[3]), fileName: f, standIn: true, load: async () => new Uint8Array(8) };   // SURV-TENT: the icons are the stand-in kind
   }));
 }
 const ARCHIVES = [...new Set(VENDOR_ICON_FILES.map((f) => Number(f.split('_')[0])))];
@@ -162,4 +162,61 @@ test('SURV-ART: both doors keep the arm that reaches the vendored art', () => {
   const dom = read('src/ui/textureCanvas.js');
   assert.ok(dom.indexOf('if (isVendorArchive(archive)) {') < dom.indexOf('getArchive(archive).then('), 'the vendor arm comes first');
   assert.match(dom, /const canvas = color32Canvas\(img, \{ scale \}\);/, 'and draws the decoded PNG without a palette');
+});
+
+// SURV-TENT (2026-09-19, Mac handed over the shipped bundle) - THE
+// TENT'S TWO RESKINS, AND THE KIND OF VENDORED FILE THEY ARE.
+//
+// The camp stands the mod's tent as model 41606 (survival/camp.js
+// TENT_MODEL) and the mod dresses it by overriding two records of REAL
+// ARENA2 archives: a 32x32 tan canvas at 50_7-0 and a 64x8 dark pole
+// at 67_10-0. They were the last two of the mod's twenty pictures left
+// out, so the tent wore whatever the base game put on that model.
+//
+// THEY ARE NOT THE SAME KIND OF FILE AS THE ICONS ABOVE, and the
+// difference is the whole of this pin. An icon's archive (532-539)
+// exists ONLY as the port's art - there is no TEXTURE.532 and never
+// will be - so the pipeline stands a shell in for the file. TEXTURE.050
+// and TEXTURE.067 are real files carrying dozens of other records, and
+// a stand-in for either would answer 1x1 for every one of them: every
+// wall and floor drawn from archive 50, gone. Nothing about the archive
+// NUMBER says which it is, so the registration says, and this holds it.
+
+import { installSurvivalIcons, VENDOR_TENT_FILES } from '../src/systems/survival/items.js';
+import { hasTextureReplacement } from '../src/systems/textureReplacement.js';
+import { TENT_MODEL } from '../src/systems/survival/camp.js';
+
+test('SURV-TENT: the tent’s art is carried, and does NOT stand in for its archive', async () => {
+  assert.deepEqual([...VENDOR_TENT_FILES], ['50_7-0', '67_10-0']);
+  for (const f of VENDOR_TENT_FILES) {
+    const b = readFileSync(`vendor/climates-calories/Textures/${f}.png`);
+    assert.equal(b[25], 6, `${f} is RGBA, as the other sixteen are`);
+  }
+  // the sizes the shipped bundle's Texture2Ds carry
+  const sizeOf = (f) => { const b = readFileSync(`vendor/climates-calories/Textures/${f}.png`); return { width: b.readUInt32BE(16), height: b.readUInt32BE(20) }; };
+  assert.deepEqual(sizeOf('50_7-0'), { width: 32, height: 32 }, 'the canvas');
+  assert.deepEqual(sizeOf('67_10-0'), { width: 64, height: 8 }, 'the pole');
+
+  clearVendorTextures();
+  const n = installSurvivalIcons({ fetchBytes: async () => new Uint8Array(readFileSync('vendor/climates-calories/Textures/50_7-0.png')) });
+  assert.equal(n, 18, 'sixteen icons and the tent’s two');
+
+  // the swap arm finds them, ungated - they are the port's own art
+  assert.equal(hasTextureReplacement(50, 7), true, 'the canvas is registered');
+  assert.equal(hasTextureReplacement(67, 10), true, 'and the pole');
+
+  // ...and THE ARCHIVES ARE STILL REAL. This answering true would send
+  // TEXTURE.050 down the stand-in branch in scenes/dataPipeline.js and
+  // cost every other record in it.
+  assert.equal(isVendorArchive(50), false, 'TEXTURE.050 is still fetched');
+  assert.equal(isVendorArchive(67), false, 'and TEXTURE.067');
+  assert.equal(vendorRecordCount(50), 0, 'no stand-in shell for a real archive');
+  assert.equal(vendorRecordCount(67), 0);
+  // the icons' archives, by contrast, are the port's own whole
+  assert.equal(isVendorArchive(532), true);
+  assert.equal(isVendorArchive(539), true);
+
+  // and the tent they dress is the mod's own model
+  assert.equal(TENT_MODEL, 41606);
+  clearVendorTextures();
 });

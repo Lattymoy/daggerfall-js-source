@@ -131,29 +131,52 @@ export const textureReplacementCount = () => _index.size;
 // stand-in TextureFile for them (vendorTextureStandIn) and draws the
 // decoded PNGs through the same swap arm a replacement uses.
 const _vendor = new Map();
-/** Register vendored files: [{ archive, record, frame?, load }] where
- *  `load()` resolves to the PNG bytes. */
+/** Register vendored files: [{ archive, record, frame?, load, standIn? }]
+ *  where `load()` resolves to the PNG bytes.
+ *
+ *  `standIn` IS THE WHOLE DIFFERENCE BETWEEN THE TWO KINDS, and it is
+ *  declared rather than guessed at (SURV-TENT). A vendored file is
+ *  either
+ *    - the ONLY thing its archive is (Climates & Calories' item icons
+ *      at 532-539: no TEXTURE.532 exists or ever will, so the pipeline
+ *      must stand a shell in for the file) - `standIn: true`; or
+ *    - ONE RECORD of a real ARENA2 archive, overridden the way a
+ *      texture pack overrides one (the same mod's tent reskins at
+ *      50_7-0 and 67_10-0, where TEXTURE.050 is a real file carrying
+ *      dozens of other records) - `standIn` absent.
+ *  Nothing about the archive number tells them apart. */
 export function addVendorTextures(entries) {
   let n = 0;
   for (const e of entries ?? []) {
     if (!Number.isFinite(e?.archive) || !Number.isFinite(e?.record) || typeof e.load !== 'function') continue;
     const key = textureKey(e.archive, e.record, e.frame ?? 0, 'Albedo');
-    _vendor.set(key, { archive: Number(e.archive), record: Number(e.record), frame: Number(e.frame ?? 0), map: 'Albedo', fileName: e.fileName ?? key, load: e.load });
+    _vendor.set(key, { archive: Number(e.archive), record: Number(e.record), frame: Number(e.frame ?? 0), map: 'Albedo', fileName: e.fileName ?? key, load: e.load, standIn: e.standIn === true });
     n++;
   }
   return n;
 }
 export const vendorTextureCount = () => _vendor.size;
 export function clearVendorTextures() { for (const k of _vendor.keys()) _decoded.delete(k); _vendor.clear(); }
-/** An archive that exists ONLY as vendored art (no ARENA2 file). */
-export const isVendorArchive = (archive) => { for (const e of _vendor.values()) if (e.archive === Number(archive)) return true; return false; };
+/** An archive that exists ONLY as vendored art (no ARENA2 file), which
+ *  is what sends the pipeline down the stand-in branch instead of
+ *  fetching TEXTURE.###.
+ *
+ *  SURV-TENT (2026-09-19): this used to answer true if ANY record of
+ *  the archive was vendored, which was harmless only while every
+ *  vendored file happened to be of the first kind. Registering one
+ *  record of a REAL archive - the tent's 50_7-0 - would have sent
+ *  TEXTURE.050 down the stand-in branch too, and every other record in
+ *  it (every wall and floor drawn from archive 50) would have come
+ *  back as a 1x1 nothing. The archive number cannot tell you; only the
+ *  registration can, so it says. */
+export const isVendorArchive = (archive) => { for (const e of _vendor.values()) if (e.standIn && e.archive === Number(archive)) return true; return false; };
 /** One past the highest RECORD vendored for an archive, off the
  *  REGISTRY and not the decoded map - a PNG that has not been fetched
  *  yet, or would not decode, must not shrink the archive underneath a
  *  caller that is about to ask for its record. */
 export function vendorRecordCount(archive) {
   let n = 0;
-  for (const e of _vendor.values()) if (e.archive === Number(archive)) n = Math.max(n, e.record + 1);
+  for (const e of _vendor.values()) if (e.standIn && e.archive === Number(archive)) n = Math.max(n, e.record + 1);
   return n;
 }
 /** A TextureFile stand-in for a vendor-only archive: sizes from the

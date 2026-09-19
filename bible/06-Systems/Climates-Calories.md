@@ -659,15 +659,50 @@ second runs `requestIcon` against a canvas stub and reads the pixels
 back out to check which way up they landed, the third holds both doors'
 arms in place. Mutants: `tools/mutants/survart.json`, 5, 5 dead.
 
-**What is still NOT imported**, and deliberately, per
-`vendor/climates-calories/README.md`: the tent model's two reskins
-(`50_7-0`, `67_10-0`) and the two tavern menu backgrounds
-(`RALZARTAVERN`, `BLANKMENU_TAVERN`). The tavern pair has nowhere to go
-- the port draws its own panel. The tent pair is a real gap: the camp
-stands the mod's model 41606 wearing classic Daggerfall's textures
-rather than the mod's canvas. Importing them is not just a copy:
-`isVendorArchive` answers true if ANY record of an archive is vendored,
-and archives 50 and 67 are real ARENA2 files, so registering one record
-from each would send the whole archive down the stand-in branch and
-lose every other texture in it. That check has to learn the difference
-between "this archive is ours" and "this record is ours" first.
+## SURV-TENT - THE TENT'S TWO RESKINS (2026-09-19)
+
+Mac handed over the shipped zip, so the last two of the mod's twenty
+pictures could be read out of the bundle rather than guessed at.
+
+`src/formats/unityBundle.js` opens the `.dfmod` directly - it is a
+UnityFS container - and all twenty Texture2Ds come out by name. Two
+checks came with that, and both were worth running:
+
+- **The sixteen already vendored are EXACT.** Every pixel of every one
+  matches the bundle's own texture, size and orientation included. No
+  SW4 here: `decodeTexture2D` reverses Unity's bottom-up rows on the way
+  out, and whoever extracted them first did the same.
+- **The two missing ones are the tent's.** `50_7-0` is a 32x32 tan
+  canvas of three colours; `67_10-0` is a 64x8 dark wooden strip. The
+  camp stands the mod's model 41606 (`survival/camp.js` TENT_MODEL) and
+  these are how the mod dresses it - the mod ships no other model and no
+  other override, so that is what they are for. Without them the tent
+  wore whatever the base game put on that model.
+
+**THEY ARE A DIFFERENT KIND OF VENDORED FILE, and that is the whole of
+the work.** An icon's archive (532-539) exists ONLY as this art: there
+is no `TEXTURE.532` and never will be, so the pipeline stands a shell
+in for the file. `TEXTURE.050` and `TEXTURE.067` are real files
+carrying dozens of other records, and these override ONE record of
+each, the way a texture pack does.
+
+`isVendorArchive` answered true if ANY record of an archive was
+vendored, which was harmless only while every vendored file happened to
+be of the first kind. Registering `50_7-0` under it would have sent
+`TEXTURE.050` down the stand-in branch as well, and every other record
+in that archive - every wall and floor drawn from 50 - would have come
+back as a 1x1 nothing. The archive NUMBER cannot tell you which kind a
+file is, so the registration says: `addVendorTextures` takes a
+`standIn` flag, the icons pass it, the tent's two do not, and
+`isVendorArchive` and `vendorRecordCount` both read it.
+
+Pinned in `test/survart_icons.test.js` (the files, their sizes, that
+the swap arm finds both, and that 50 and 67 are still fetched while 532
+and 539 are not) and in the SURV2 icon pin. Mutants:
+`tools/mutants/survart.json` grew three - the flag ignored, the tent
+art registered AS a stand-in, and the tent art not registered at all -
+8 in total, 8 dead.
+
+**Still not imported**, and with nowhere to go: the two tavern menu
+backgrounds (`RALZARTAVERN`, `BLANKMENU_TAVERN`). The port draws its
+tavern menu in its own panel.
