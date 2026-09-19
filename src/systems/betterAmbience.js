@@ -605,6 +605,21 @@ export function createBetterAmbience({ audio = defaultAudio, settings = readBett
     },
     view(view) { return s?.Enabled ? shakeView(view, shaker.posAddShake, shaker.rotAddShake) : view; },
     removeHealth(amount, maxHealth) { syncSettings(); if (s.Enabled) damageShake(shaker, s, amount, maxHealth); },
+    /** FIELD-GUN6: a shake that is not a wound. DamageShaker is the
+     *  mod's only producer and it prices a blow by how much of you it
+     *  took; the Dwarven Thunderlock going off is neither damage nor
+     *  the mod's, but the camera it wants to move is this one - the
+     *  port has exactly one shaker and `view()` is already wired
+     *  through all four hosts. So the magnitude arrives made, rather
+     *  than derived from a health fraction, and it is still clamped by
+     *  the player's own maxShake: a person who turned the shake down
+     *  turned it down for everything that shakes. */
+    weaponKick(magnitude) {
+      syncSettings();
+      if (!s.Enabled) return;
+      const m = Math.max(0, Math.min(s.maxShake, Number(magnitude) || 0));
+      shaker.shakeOnce(m, s.roughness, s.fadeInTime, s.fadeOutTime);
+    },
     onStartGame() { syncSettings(); owe(); },
     onLoad() { syncSettings(); owe(); },
     onTransition(next) { syncSettings(); place = { dungeon: next?.dungeon ?? null, building: !!next?.building }; fogState = null; stopRain(); owe(); footsteps.rebase(); },

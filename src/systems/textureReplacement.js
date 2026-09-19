@@ -150,7 +150,7 @@ export function addVendorTextures(entries) {
   for (const e of entries ?? []) {
     if (!Number.isFinite(e?.archive) || !Number.isFinite(e?.record) || typeof e.load !== 'function') continue;
     const key = textureKey(e.archive, e.record, e.frame ?? 0, 'Albedo');
-    _vendor.set(key, { archive: Number(e.archive), record: Number(e.record), frame: Number(e.frame ?? 0), map: 'Albedo', fileName: e.fileName ?? key, load: e.load, standIn: e.standIn === true });
+    _vendor.set(key, { archive: Number(e.archive), record: Number(e.record), frame: Number(e.frame ?? 0), map: 'Albedo', fileName: e.fileName ?? key, load: e.load, standIn: e.standIn === true, offset: e.offset ?? null });   // FIELD-GUN4: a WORN stand-in needs a place on the doll, which only its registration knows
     n++;
   }
   return n;
@@ -194,6 +194,19 @@ export function vendorRecordCount(archive) {
  *  drawn. The mod's art was registered, fetched and decoded, and then
  *  fell off the last step. A stand-in for a file must answer like the
  *  file. */
+/** FIELD-GUN4: a decoded vendor record's pixels with the rows put
+ *  back the way the PNG had them. `_decoded` holds `toColor32` of the
+ *  file - row 0 the picture's BOTTOM - and a caller compositing into a
+ *  top-down buffer needs the reverse. Null in, null out. */
+function topDownRgba(decoded) {
+  if (!decoded?.colors) return null;
+  const { width, height, colors } = decoded;
+  const row = width * 4;
+  const out = new Uint8ClampedArray(colors.length);
+  for (let y = 0; y < height; y++) out.set(colors.subarray(y * row, (y + 1) * row), (height - 1 - y) * row);
+  return out;
+}
+
 export function vendorTextureStandIn(archive) {
   const recordCount = vendorRecordCount(archive);
   const size = (record) => { const d = _decoded.get(textureKey(archive, record, 0)); return d ? { width: d.width, height: d.height } : { width: 1, height: 1 }; };
@@ -202,11 +215,37 @@ export function vendorTextureStandIn(archive) {
     recordCount,
     getSize: (record) => (record >= 0 && record < recordCount ? size(record) : { width: 0, height: 0 }),   // TextureFile.getSize's own out-of-range answer
     getScale: () => ({ x: 0, y: 0 }),
-    getOffset: () => ({ x: 0, y: 0 }),
+    // FIELD-GUN4: a classic record carries its own paper-doll offset
+    // and this one has nowhere else to get one, so the registration
+    // supplies it. Zero stays the answer for art that is never worn -
+    // every icon door measures from its own rect and never asks.
+    getOffset: (record) => _vendor.get(textureKey(archive, record ?? 0, 0))?.offset ?? { x: 0, y: 0 },
     getFrameCount: () => 1,
     getWidth: (record) => size(record).width,
     getHeight: (record) => size(record).height,
-    getDFBitmap: (record) => ({ ...size(record), data: null }),
+    // FIELD-GUN4 (Mac, from play: "The paperdoll doesn't equip the
+    // texture"). This used to answer `data: null` under the comment
+    // "a bitmap the swap arm never reads" - true of every door that
+    // existed when SURV-ART wrote it, because the mod's art is never
+    // WORN. The paper doll is the one door that reads the bitmap
+    // itself: composeDoll blits palette INDICES through the doll's
+    // own palette, and it got null and drew nothing.
+    //
+    // Our art is truecolor and has no index to give, so the honest
+    // answer is the RGBA beside the shape - `rgba` is what the doll's
+    // own vendor arm blits, and `data` stays null because there is
+    // genuinely no indexed bitmap here, rather than a zero-filled one
+    // that would draw as a black rectangle.
+    //
+    // TOP-DOWN, because the doll's composite is. The decode-ahead
+    // stores `toColor32` of the PNG (H4, "into the port's color32
+    // contract at the door"), which is the BOTTOM-UP order a world
+    // billboard wants; the paper doll composites into a top-down RGBA
+    // buffer that ends on a screen quad. So this hands back the rows
+    // the other way round - the same HT3 fork the sprite itself just
+    // paid, one pipeline over, and the reason it is resolved HERE is
+    // that only this function knows which order it is holding.
+    getDFBitmap: (record) => ({ ...size(record), data: null, rgba: topDownRgba(_decoded.get(textureKey(archive, record, 0))) }),
     getColor32: (record) => _decoded.get(textureKey(archive, record?.record ?? 0, 0)) ?? null,
   };
 }
@@ -262,11 +301,11 @@ export async function textureReplacementBytes(archive, record, frame = 0, map = 
 // ROAD-H H4: WHAT IS IN THIS MAP IS A COLOR32, NOT A DECODED PNG.
 //
 // The upload path is `renderer.uploadTexture(archive, record, color32)`,
-// which reads `color32.colors` and `asBytes` of it (renderer.js:2482),
+// which reads `color32.colors` and `asBytes` of it (renderer.js:2490),
 // and every texture it uploads is BOTTOM-UP - `getColor32` writes
 // `dstRow = (dstHeight - 1 - border - y) * dstWidth`
 // (baseImageFile.js:143, BaseImageFile.cs:250) and the upload leaves
-// UNPACK_FLIP_Y_WEBGL off (renderer.js:2472). A browser decode hands
+// UNPACK_FLIP_Y_WEBGL off (renderer.js:2480). A browser decode hands
 // back `{ width, height, data }` with the TOP row first, so a swap
 // stored raw was BOTH the wrong field name - `color32.colors` was
 // `undefined` and `asBytes` threw on the first swapped record a pack

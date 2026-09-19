@@ -11,6 +11,7 @@
 // Dye tables (C5b) and the GetEquipSlot assignment rules (C5c) follow.
 
 import templates from './itemTemplates.json' with { type: 'json' };
+import { templateByIndex } from '../systems/itemTemplates.js';   // FIELD-GUN5: the custom rows too - see getTemplate
 
 export const EQUIP_SLOTS = Object.freeze({
   None: -1,
@@ -39,9 +40,23 @@ export const EQUIP_SLOTS = Object.freeze({
 
 export const ITEM_TEMPLATES = templates;
 
-/** Template by classic index (templates are index-keyed but sparse-safe). */
+/** Template by classic index (templates are index-keyed but sparse-safe).
+ *
+ *  FIELD-GUN5 (Mac, from play: "The paperdoll doesn't equip the
+ *  texture"). This map is built ONCE from the frozen DFU JSON, so it
+ *  is blind to `registerCustomTemplates` - and the doll's compose
+ *  filters `worn` on `getTemplate` answering, so the port's own
+ *  weapon was dropped from the draw list before anything could fail
+ *  further down. A second copy of a lookup that a registration door
+ *  can extend is a copy that goes stale the first time anyone uses
+ *  the door.
+ *
+ *  So it asks the ONE home. The DFU rows are still this module's
+ *  own - `templateByIndex` reads the same frozen table first and the
+ *  custom map only after it - and nothing about a classic item's
+ *  answer changes. */
 const byIndex = new Map(templates.map((t) => [t.index, t]));
-export const getTemplate = (index) => byIndex.get(index);
+export const getTemplate = (index) => byIndex.get(index) ?? templateByIndex(index) ?? undefined;
 
 /** Equipped list -> paperdoll draw order (BlitItems verbatim: ascending drawOrder). */
 export function paperdollOrder(items) {

@@ -559,7 +559,7 @@ test('WW1: the Morrowind arms take the frame\'s Position and Scale over their ow
 
 test('WW1: the rig runs the clone beside the machine - the late update after the machine\'s step with the frame\'s inputs, the draw seam after the arms and before the classic sprite, the end-of-frame resume, the recoil fed from resolveHit, the arms\' transform, the hosts\' motion words, the look latch, the miss billboard', () => {
   const rig = rd('src/combat/weaponRig.js');
-  assert.match(rig, /const widget = createWeaponWidget\(\{ audio, envHit: envCast, missEffect \}\);/);
+  assert.match(rig, /const widget = createWeaponWidget\(\{\s*audio, envHit: envCast, missEffect,/);
   assert.match(rig, /const widgetOn = \(\) => modSetting\('weapon-widget', 'Enabled'\);/);
   assert.match(rig, /playerWeapon\.onAttackResult = \(\{ foe, damage \}\) => widget\.onAttackDamageCalculated\(\{ damage, parrySounds: !!foe\?\.basics\?\.parrySounds, pos: foe\?\.pos \?\? foe\?\.ai\?\.pos \?\? null, isEnemy: true \}\);/);
   // SW1 widened the inner span from 2800: the shield widget's own frame
@@ -583,7 +583,7 @@ test('WW1: the rig runs the clone beside the machine - the late update after the
   // (the arm's branch has returned above it, so the held-sheet pose is
   // untouched). The ORDER of the four is what this pin holds, and it did
   // not move.
-  assert.match(rig, /if \(fpArm\.active\(\)\) \{[^}]*fpArm\.draw\(c\);[^}]*return; \}\s*(?:\/\/[^\n]*\n\s*)*if \(sheetWindowUp\(\)\) return;\s*(?:\/\/[^\n]*\n\s*)*if \(shieldRect\) shield\.draw\(\(index, rect, uv\) => drawShieldSprite\(index, rect, uv, fpTint\)\);\s*if \(handheldOn\(\) && c\) handheld\.draw\(renderer, c, fpTint\);\s*if \(torchOnly\) return;[^\n]*\n\s*(?:\/\/[^\n]*\n\s*)*if \(!shown\(\)\) return;\s*if \(widgetOn\(\) && c && widget\.draw\(renderer, c, fpTint\)\) return;/, 'the arms first, MAP-WEAPON\\u2019s map gate, SW1\\u2019s shield (the off hand, behind both), the torch, the clone, the classic sprite last');
+  assert.match(rig, /if \(fpArm\.active\(\)\) \{[^}]*fpArm\.draw\(c\);[^}]*return; \}\s*(?:\/\/[^\n]*\n\s*)*if \(sheetWindowUp\(\)\) return;\s*(?:\/\/[^\n]*\n\s*)*if \(shieldRect\) shield\.draw\(\(index, rect, uv\) => drawShieldSprite\(index, rect, uv, fpTint\)\);\s*if \(handheldOn\(\) && c\) handheld\.draw\(renderer, c, fpTint\);\s*if \(torchOnly\) return;[^\n]*\n\s*(?:\/\/[^\n]*\n\s*)*if \(!shown\(\)\) return;\s*(?:\/\/[^\n]*\n\s*)*if \(widgetOn\(\) && c && widget\.draw\(renderer, c, fpTint, _tlAdjust\)\) return;/, 'the arms first, MAP-WEAPON\\u2019s map gate, SW1\\u2019s shield (the off hand, behind both), the torch, the clone, the classic sprite last');
   assert.match(rig, /const envCast = envHit \?\? \(\(reach\) => \{/, 'CheckForEnvDamage\'s cast from the host\'s collider');
   const pw = rd('src/combat/playerWeapon.js');
   assert.match(pw, /this\.onAttackResult\?\.\(\{ foe, damage \}\);/, 'OnAttackDamageCalculated\'s one consumer');
@@ -665,7 +665,7 @@ test('WW4 (Mac\'s curated fix): a clone that chooses silence OWNS the draw seam 
   const none = bench({ weaponType: T.None }); none.frame();
   assert.equal(none.widget.draw(none.renderer, none.ctx.canvas), false, 'no weapon type: not the clone\'s');
   // and the rig's seam reads the answer exactly that way
-  assert.match(rd('src/combat/weaponRig.js'), /if \(widgetOn\(\) && c && widget\.draw\(renderer, c, fpTint\)\) return;/);
+  assert.match(rd('src/combat/weaponRig.js'), /if \(widgetOn\(\) && c && widget\.draw\(renderer, c, fpTint, _tlAdjust\)\) return;/);
 });
 
 test('WW4b (Mac\'s curated fix): after a swing under Recovery = Hide the melee idle re-enters on a DRAWABLE frame, so it slides back into view instead of staying at -1 for ever', () => {

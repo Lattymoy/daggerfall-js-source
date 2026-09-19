@@ -816,7 +816,7 @@ test('HT1: the rig runs the component beside the widget - one per rig, the pool 
   // MAP-WEAPON: one more rung between the arms and the shield - a map
   // holding the screen stops the classic body's four painters, the torch
   // hand among them (hands holding a map hold no torch either).
-  assert.match(rig, /if \(fpArm\.active\(\)\) \{[^}]*fpArm\.draw\(c\);[^}]*return; \}\s*(?:\/\/[^\n]*\n\s*)*if \(sheetWindowUp\(\)\) return;\s*(?:\/\/[^\n]*\n\s*)*if \(shieldRect\) shield\.draw\(\(index, rect, uv\) => drawShieldSprite\(index, rect, uv, fpTint\)\);\s*if \(handheldOn\(\) && c\) handheld\.draw\(renderer, c, fpTint\);\s*if \(torchOnly\) return;[^\n]*\n\s*(?:\/\/[^\n]*\n\s*)*if \(!shown\(\)\) return;\s*if \(widgetOn\(\) && c && widget\.draw\(renderer, c, fpTint\)\) return;/, 'the arms return first (no classic hand under the Morrowind arms), the shield behind the torch hand, the torch hand under the weapon');
+  assert.match(rig, /if \(fpArm\.active\(\)\) \{[^}]*fpArm\.draw\(c\);[^}]*return; \}\s*(?:\/\/[^\n]*\n\s*)*if \(sheetWindowUp\(\)\) return;\s*(?:\/\/[^\n]*\n\s*)*if \(shieldRect\) shield\.draw\(\(index, rect, uv\) => drawShieldSprite\(index, rect, uv, fpTint\)\);\s*if \(handheldOn\(\) && c\) handheld\.draw\(renderer, c, fpTint\);\s*if \(torchOnly\) return;[^\n]*\n\s*(?:\/\/[^\n]*\n\s*)*if \(!shown\(\)\) return;\s*(?:\/\/[^\n]*\n\s*)*if \(widgetOn\(\) && c && widget\.draw\(renderer, c, fpTint, _tlAdjust\)\) return;/, 'the arms return first (no classic hand under the Morrowind arms), the shield behind the torch hand, the torch hand under the weapon');
   assert.match(rig, /keyDown = null, torches = \(\) => null, sheetWindowUp = \(\) => false \}\)/, 'the two deps the hosts feed, and MAP-WEAPON\'s third - defaulted so a host that never heard of it draws what it always drew');
   assert.match(rig, /if \(!_torchesOn && _handheldWasOn\) handheld\.dispose\(\);/, 'AUDIT 66 F8: the switch off is a teardown - update() runs only while the mod is on, so the burning loop could not stop itself');
   assert.match(rig, /dispose\(\) \{ handheld\.dispose\(\); _handheldWasOn = false; \}/, 'AUDIT 66 F8: and the host has a door to call');
@@ -1083,7 +1083,7 @@ test('TORCH-VIS (the ladder): a lit hand draws while merely sheathed, the weapon
   const draw = rig.slice(rig.indexOf('const torchOnly ='));
   const torchAt = draw.indexOf('handheld.draw(renderer, c, fpTint)');
   const stopAt = draw.indexOf('if (torchOnly) return;');
-  const cloneAt = draw.indexOf('widget.draw(renderer, c, fpTint)');
+  const cloneAt = draw.indexOf('widget.draw(renderer, c, fpTint');   // FIELD-GUN6 added the Thunderlock's rect delta after the tint
   const spriteAt = draw.indexOf('drawFpsWeapon(');
   assert.ok(torchAt > 0 && stopAt > 0 && cloneAt > 0 && spriteAt > 0, 'all four are in the ladder');
   assert.ok(torchAt < stopAt, 'the lit hand draws first...');
