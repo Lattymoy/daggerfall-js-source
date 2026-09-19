@@ -25,7 +25,7 @@
 // The level-up screen stays on the text idiom (its retrofit rides
 // a later U8 slice).
 
-import { statUp, statDown, MAX_STAT_VALUE } from './chargen.js';
+import { statUp, statDown, allStatsMax } from './chargen.js';   // LV1's audit: DaggerfallStats.IsAllMax has ONE home now (and MAX_STAT_VALUE left with the copy that used it - this file's last reader was that copy)
 import { actionForCode } from '../systems/inputActions.js';   // MAC-C: the sheet's toggle key is the registry's
 import { bindings } from './input.js';
 import { carriedWeight } from '../systems/inventory.js';   // AUDIT 17e F30; E4: PlayerEntity.CarriedWeight, one home
@@ -110,6 +110,10 @@ export class LevelUpScreen {
     this._rolls = rolls;
   }
 
+  /** DaggerfallStats.IsAllMax over the working stats - the same law
+   *  the sheet's rollout reads, from the same home. */
+  allMax() { return allStatsMax(this.working); }
+
   input(action) {
     const key = STAT_KEYS_ORDER[this.cursor];
     if (action === 'up') this.cursor = (this.cursor + 7) % 8;
@@ -127,7 +131,17 @@ export class LevelUpScreen {
     // LevelUpScreen has no click of its own to fall back on.
     // StatsRollout.cs:255's down-spinner is the same door.
     else if (action === 'minus' || action === 'char:-') { audio.playOneShot(SOUND.ButtonClick, 1); const r = statDown(this.working[key], this.base[key], this.pool); this.working[key] = r.working; this.pool = r.pool; }
-    else if (action === 'confirm' && this.pool === 0) {
+    // LV1's audit: `|| this.allMax()`. CheckIfDoneLeveling's refusal
+    // has TWO terms (:437-443) and this screen only ever carried one,
+    // so a character at 100 across the board could not leave it: every
+    // `statUp` is refused at the ceiling, the pool can never reach
+    // zero, and the only exit tested for zero. The sheet's own rollout
+    // has had the second term since AUDIT 44 (`_workingAllMax`); this
+    // screen - the one the enhanced skin mounted until LV1 - did not.
+    // The leftover points are VOIDED, which is what DFU does on the
+    // same branch: it writes the working stats home and drops the
+    // pool, because there is nowhere left to put it.
+    else if (action === 'confirm' && (this.pool === 0 || this.allMax())) {
       // applyLevelUp rolls HP; our pre-rolled pool distributes here -
       // the distribute hook writes the hand-built stats.
       applyLevelUp(this.entity, (stats) => Object.assign(stats, this.working), this._rolls, this._rolledPool);
@@ -146,7 +160,11 @@ export class LevelUpScreen {
     STAT_KEYS_ORDER.forEach((k, i) => drawText(renderer, font,
       `${i === this.cursor ? '> ' : '  '}${k.slice(0, 3).toUpperCase()}  ${this.working[k]}`,
       40 * s, (56 + i * 12) * s, s, i === this.cursor ? hot : white));
-    drawText(renderer, font, '+/- assign   ENTER when pool 0', 40 * s, (56 + 10 * 12) * s, s, dim);
+    // ...and the foot says which of CheckIfDoneLeveling's two terms is
+    // open, because at the ceiling "ENTER when pool 0" is an
+    // instruction this screen will never honour (LV1's audit).
+    drawText(renderer, font, this.allMax() ? 'every attribute is at its maximum   ENTER to continue'
+      : '+/- assign   ENTER when pool 0', 40 * s, (56 + 10 * 12) * s, s, dim);
   }
 }
 
@@ -326,9 +344,10 @@ export class CharSheet {
     applyLevelUp(e, () => {}, rolls, this.pool);
   }
 
-  /** DaggerfallStats.IsAllMax (:85-97) over the working stats. */
+  /** DaggerfallStats.IsAllMax (:85-97) over the working stats - the
+   *  shared law (ui/chargen.js), not a second copy of it. */
   _workingAllMax() {
-    return STAT_KEYS_ORDER.every((k) => this.working[k] === MAX_STAT_VALUE);
+    return allStatsMax(this.working);
   }
 
   /** CheckIfDoneLeveling (:433-455). Levelling: an unspent pool

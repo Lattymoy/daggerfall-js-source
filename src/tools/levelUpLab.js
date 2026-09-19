@@ -76,6 +76,12 @@ export function mount(lane = 'classic') {
   entity = labEntity();
   if (lane === 'oghma') { entity.oghmaLevelUp = true; entity.pendingLevel = null; }
   if (lane === 'virtue') entity.levelingSystem = 'virtue';
+  // LV1's AUDIT: the character the window could not let go of. Every
+  // attribute at the ceiling means `statUp` refuses every press, so
+  // the pool never reaches zero - and the first cut's only exit tested
+  // for zero. DFU's own CheckIfDoneLeveling has the IsAllMax term for
+  // exactly this character, and the lab can now stand one up.
+  if (lane === 'allmax') for (const k of Object.keys(entity.stats)) entity.stats[k] = 100;
   const screen = lane === 'virtue' ? new VirtueLevelUpScreen(entity) : new LevelUpScreen(entity);
   // THE DOOR'S OWN onExit IS A CLOSE (ui/charSheetDoor.js's
   // enhancedLevelUpOverlay), so the lab's must be too - the first
@@ -106,7 +112,7 @@ function done(lane) {
 // The lane picker. Kept out of the window's own tree so nothing on
 // screen belongs to the lab except this one strip.
 const bar = document.getElementById('lanes');
-for (const lane of ['classic', 'oghma', 'virtue']) {
+for (const lane of ['classic', 'oghma', 'virtue', 'allmax']) {
   const b = document.createElement('button');
   b.textContent = lane;
   b.dataset.lane = lane;

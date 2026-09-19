@@ -30,8 +30,8 @@ door, U50 the character-creation wizard, U51 the PAUSE DOOR - and each
 is the same `ui/enhancedMenu.js` or `ui/enhancedChargen.js` mounted by
 the game and by its prototype page, never a second copy of the design.
 U52 opened the first IN-GAME screen (the CHARACTER SHEET) and U53 the
-second (the PACK, with the SLOT MAP). LV1 closed the last one that had none: THE
-ASCENSION, the level-up window, which is not a framed panel but the whole
+second (the PACK, with the SLOT MAP). LV1 gave the LEVEL-UP its own face: THE
+ASCENSION, which is not a framed panel but the whole
 screen over the skin's own dithered night - the eight attributes as one
 constellation, a point lighting a star - and which holds no law, driving
 the rollout screen `ui/charSheetDoor.js` built through that screen's own

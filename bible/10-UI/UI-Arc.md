@@ -9961,7 +9961,7 @@ c2 flight 2 caught the same pair driving the town map's chrome.
   row 0.
 
 **THE FIX.** `vy >= 0 &&` in front of the `update` call in both hovers
-- the arm `ui/chargen.js:1103` and `ui/spellbookWindow.js:429` already
+- the arm `ui/chargen.js:1123` and `ui/spellbookWindow.js:429` already
 carry. (The third guarded sibling is not the same arm:
 `ui/spellIconPickerWindow.js:227` tests `vx >= 0 && vy >= 0`, and
 `test/citedrift.test.js`'s CD8c pins that two-part shape by name.)
@@ -10004,7 +10004,7 @@ mutants - the guard deleted from either new window, "ALL THREE" restored
 to the Ledger, "both" restored to Testing.md - all go red.
 
 **AND THE THREE SIBLINGS ARE NOT ONE ARM.** The first draft of the
-section above called `ui/chargen.js:1103`, `ui/spellbookWindow.js:429`
+section above called `ui/chargen.js:1123`, `ui/spellbookWindow.js:429`
 and `ui/spellIconPickerWindow.js:227` "the same arm". They are not:
 the icon picker tests `vx >= 0 && vy >= 0`, the two-part shape CD8c
 pins by regex, while the other two test `vy` alone. The two new guards
@@ -15856,7 +15856,17 @@ level-up in the enhanced skin mounted `ui/charsheet.js`'s
 `LevelUpScreen` - eight `drawText` rows over a 92% dim, on the canvas,
 in FONT0003 - and `ui/enhancedCharSheet.js`'s own header said so in as
 many words ("THE LEVEL-UP SCREEN stays classic... Not this door's
-business"). That was the last screen in the game with no enhanced face.
+business"). That was the last screen the CHARACTER-SHEET DOOR still
+drew classic: `ui/charSheetDoor.js` has forked on the skin for every
+other screen it owns since U52. **LV1's own audit corrected this
+sentence, which first read "the last screen in the game with no
+enhanced face" - and that is false.** The bank teller, the spell maker,
+the potion and item makers, the tavern, the coven, the guild and
+merchant service popups, the automap and the transport window are all
+still the classic native windows in both skins. What was true of this
+one is narrower and worse: it is the only screen a player is *given*
+rather than opening, so the enhanced skin handed them a canvas text
+screen at the one moment they had not asked for anything.
 The sentence is retired where it stood, per Home.md's RETIRING A FLAG
 DELETES THE SENTENCE.
 
@@ -15982,3 +15992,127 @@ BonusPool draw (AUDIT 23's RNG-stream note; no player can observe it).
 `test/enhancedLevelUp.test.js` - 22 pins. `tools/mutants/lv1.json` -
 14 mutants, 14 dead, 0 survived. `tools/levelUpProbe.mjs` - 76/76
 (`npm run levelup`, against `npx vite --port 5199`).
+
+## AUDIT LV1 - eight findings against the frozen tree (2026-09-19)
+
+Mac: "Do a comprehensive audit on this. I want it to be perfect."
+
+Read as the bible asks an adversarial review to be read - over the
+WORKING TREE, with nothing fixed until the pass was finished, because
+a verdict against a tree that moved under it is indistinguishable from
+a wrong verdict (17l). Eight lenses: the law, the host contract, the
+lifetime, the input routing, the words, the records, the pins, and the
+probe.
+
+**F1 - THE WALL. `CheckIfDoneLeveling` has two terms and this window
+had one.** `if (statsRollout.BonusPool > 0 && !PlayerEntity.Stats.
+IsAllMax())` (DaggerfallCharacterSheetWindow.cs:437-443). At 100 across
+the board `statUp` refuses every press, so the pool can never reach
+zero - and the window's only exit tested zero. A maxed character who
+levelled was SEALED IN: no Escape, no Tab, no button, nothing but a
+reload and the loss of everything since the last save. The near miss is
+wider than the extreme: any character with less ROOM than pool (seven
+at the ceiling and one at 98 against a roll of six; the Oghma
+Infinium's thirty on exactly the late character who would read one)
+strands the remainder the same way.
+
+It is not a new hole. `ui/charsheet.js`'s LevelUpScreen - the screen
+the enhanced skin mounted from U52 until this slice - never had the
+term either, and the sheet's own rollout has had it since AUDIT 44
+under a PRIVATE name (`_workingAllMax`), which is precisely how the
+other two faces came to ship without it. So the fix is the port's usual
+one: `DaggerfallStats.IsAllMax` has ONE home now (`ui/chargen.js`'s
+`allStatsMax`, beside statUp/statDown), the sheet's private copy
+delegates to it, LevelUpScreen's confirm carries both terms, and the
+enhanced window asks the screen rather than re-deriving. The leftover
+points are VOIDED, which is what DFU does on that branch - it writes
+the working stats home and drops the pool, there being nowhere to put
+it - and the window SAYS so (`ALL_MAX_LINE`) rather than showing an
+enabled button over an unspent plate.
+
+**F2 - and it told them the wrong way out.** `corneredHint` was
+lane-blind, so a maxed classic character was advised to "take a point
+back with - and place it elsewhere": an instruction with no elsewhere
+in it, on a window that would not have let them out either way. The
+hint is the MOD's answer to the MOD's corner and now appears only
+there; all-max gets the sentence that is true of it.
+
+**F3 - two of the eight descriptions named numbers that do nothing.**
+The window's own promise is that each attribute line is true of code
+that runs. Willpower cited `questMacros.js:543`, which only PRINTS
+MagicResist for the `%mr` macro - the consumer is `spellcast.js:158`'s
+saving throw. Agility cited `toHitModifier` (formulas.js:118), which is
+the CHARACTER SHEET's display modifier and is read by chargen's derived
+block and the quest macros and by nothing in the hit roll; the term
+that actually rides a swing is `statsToHit` (:306-307), a tenth of the
+GAP with no minus five in it. Both lines are rewritten off the
+consumers, and the pins now hold the module against the consumers' own
+paths rather than against prose.
+
+**F4 - and one promised a penalty the game does not apply.** Strength's
+line read "what you can carry before you stagger". MAC-E established
+that nothing in this port - or in DFU - charges for encumbrance: the
+figure is drawn and never spent against. A level-up screen is the one
+place a player converts a sentence into a permanent choice, so a
+consequence that does not exist is the worst possible thing to write
+there.
+
+**F5 - the overclaim in the records.** Three pages said this was "the
+last screen in the game with no enhanced face". It is not: the bank,
+the spell maker, the potion and item makers, the tavern, the coven, the
+guild and merchant service popups, the automap and the transport window
+are all still the classic native windows in both skins. Corrected where
+each was written, with what IS true in its place.
+
+**F6 - the repaint rebuilt the character sheet on every keystroke.**
+`paint` read the whole model, which walks the ribbon and rebuilds
+`sheetModel` - gold, encumbrance, all thirty-five skills, the class
+specials - for two fields it does not read, because both bands are
+built once at mount. Split: `levelUpFrame` is what moves under a press,
+`levelUpModel` is the frame plus the two that do not.
+
+**F7 - the keyboard's focus and the selection disagreed.** The
+highlight walked with the arrows and the focus ring stayed on whichever
+star was last clicked, so a keyboard user and a screen reader were told
+two different things about which attribute was live. The focus follows
+the selection now. With it: `aria-pressed` came off the stars - a star
+is not a toggle, and the same fact is in the label in words.
+
+**F8 - a vacuous pin, and a probe field that pointed at the wrong
+element.** The cornered-state test read `if (w.purse > 0)` over a
+virtue character with every attribute at 100 - whose purse
+`virtuePurse` clamps to ZERO - so its body had never run. It drives a
+REAL corner now, found by walking every reachable spend rather than
+assumed: at 98 across the board the mod mints twelve virtues that only
+LUCK's four-a-point price can absorb, so a player who spends the three
+cheap rows instead lands on six and nothing that will take them. The
+probe's `boxes()` carried a `plus` read by `:last-of-type`, which
+selects the arrow rather than the plus and which nothing asserted on;
+removed.
+
+**REFUTED, and written down because the next reader will wonder.**
+A window key (F5/F6/L) pressed during a level-up cannot stack a second
+one. The overlay carries `isChoiceWindow`, and both key seams - the
+dungeon/interior `routeKey` (ui/input.js:534-547) and townTalk's own
+(:371-381) - hand the raw code to the OVERLAY and return before any
+toggle arm can run. The same guard is why QuickLoad, which routeKey
+otherwise allows from under any overlay, cannot reach past this one
+either. The pointer is likewise not a hazard: `pauseWhileOpen` is true
+for this window (it declares no opt-out), so every host's `gamePaused`
+is true and the look gate releases the lock the frame after it opens -
+the cursor is free to click the stars without anything new being
+written.
+
+**RECORDED, NOT FIXED.** Two adjacent holes this slice is not the place
+to close. The chunk gap: between the door returning and the lazy chunk
+mounting, the host holds a paused game behind a transparent div - one
+frame on a warm cache, longer on a cold one - and unlike every other
+enhanced door, this window opens without the player having pressed
+anything. And `ui/enhancedChronicle.js` answers only `back`, so a
+window key pressed over it falls through to the host exactly as this
+one's would have; it is guarded today by the same seams, and it is that
+window's slice to state.
+
+The audit's own arithmetic: 25 pins (up from 22), `tools/mutants/lv1.json`
+21 mutants - 21 dead, 0 survived - and `tools/levelUpProbe.mjs` 85/85,
+which now stands a maxed character up and proves the way out is open.

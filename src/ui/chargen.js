@@ -56,6 +56,26 @@ export function statDown(working, rolled, pool) {
   if (working === rolled || working === 0) return { working, pool };   // minWorkingValue 0 is the freeEdit floor
   return { working: working - 1, pool: pool + 1 };
 }
+
+/**
+ * DaggerfallStats.IsAllMax (:85-97) - are all eight at the ceiling?
+ *
+ * THE LAW THIS SERVES IS AN ESCAPE, not a display.
+ * CheckIfDoneLeveling (DaggerfallCharacterSheetWindow.cs:437-443)
+ * refuses to close a levelling sheet while the pool is unspent - `if
+ * (statsRollout.BonusPool > 0 && !PlayerEntity.Stats.IsAllMax())` -
+ * and that second term is the whole of what keeps a maxed character
+ * from being sealed inside the window forever: at 100 across the
+ * board `statUp` refuses every press, so the pool can never reach
+ * zero and the refusal would never stop.
+ *
+ * ONE HOME (LV1's audit). `ui/charsheet.js` had it as a private
+ * method on CharSheet and NOWHERE else, so `LevelUpScreen` - the
+ * screen the enhanced skin mounted for four months - shipped the wall
+ * the sheet was protected from, and the enhanced level-up window
+ * inherited it. Both read this now.
+ */
+export const allStatsMax = (stats) => STAT_KEYS_ORDER.every((k) => (stats?.[k] ?? 0) >= MAX_STAT_VALUE);
 export function skillUp(working, pool) {
   if (pool === 0) return { working, pool };
   return { working: working + 1, pool: pool - 1 };

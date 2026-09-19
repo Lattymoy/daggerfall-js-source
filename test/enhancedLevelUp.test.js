@@ -24,6 +24,9 @@ import { STAT_KEYS_ORDER, createCharacter } from '../src/systems/chargen.js';
 import { MAX_STAT_VALUE } from '../src/ui/chargen.js';
 import { SKILLS, SKILL_NAMES, setSkillRecentlyIncreased } from '../src/systems/skills.js';
 import { levelUpSkillSum, LEVELUP_SKILL_SUM_PER_LEVEL, LEVELUP_BONUS_POOL_MIN, LEVELUP_BONUS_POOL_MAX } from '../src/systems/advancement.js';
+import { sheetModel } from '../src/ui/enhancedCharSheet.js';
+import { damageModifier, magicResist } from '../src/combat/formulas.js';
+import { FATIGUE_MULTIPLIER } from '../src/systems/statMods.js';
 import { LevelUpScreen, MUST_DISTRIBUTE_BONUS_POINTS } from '../src/ui/charsheet.js';
 import { VirtueLevelUpScreen, REMAINING_POINTS_ERROR } from '../src/ui/virtueLevelUp.js';
 import { OGHMA_BONUS_POOL } from '../src/systems/artifactEffects.js';
@@ -36,6 +39,7 @@ import { ORL_VENDOR } from '../src/systems/oblivionLeveling.js';
 import {
   LANE_CLASSIC, LANE_OGHMA, LANE_VIRTUE, levelUpLane, rolloutRows, rolloutPool, poolLabel,
   canAscend, refusalText, corneredHint, pressAt, raiseAt, lowerAt, focusAt, focusedKey, ascend,
+  allMaxed, ALL_MAX_LINE, levelUpFrame,
   levelUpCrown, levelProgress, levelSumRoles, riseRibbon, levelUpVitals, levelUpModel,
   STAR_FIGURE, STAR_MIN_APART_X, STAR_MIN_APART_Y, crowdedStarPairs,
   ATTRIBUTE_BLURB, attributeLabel, starBrightness,
@@ -221,19 +225,97 @@ test('LV1: the commit is the screen\'s, and it is refused until the pool is spen
   );
 });
 
-test('LV1: IN A CORNER, the window names the control that still works', () => {
-  // Only the mod's priced purse can reach the state where points are
-  // left and no row will take one. The classic pool cannot, so it must
-  // never print the hint.
+test('LV1: IN A CORNER, the window names the control that still works - and the corner is REAL', () => {
+  // THE PIN THAT ASSERTED NOTHING. This read "if (w.purse > 0)" over a
+  // virtue character with every attribute at 100 - and `virtuePurse`
+  // clamps such a character's purse to ZERO (ORL1's own fix), so the
+  // body never ran and the hint was never checked. LV1's audit found
+  // it vacuous and replaced it with a corner a player can actually
+  // spend their way into.
   const classic = new LevelUpScreen(player(), seq(0));
-  assert.equal(corneredHint(classic), null);
+  assert.equal(corneredHint(classic), null, 'nothing is cornered before a point is spent');
+
+  // A REAL CORNER, found by walking every reachable spend rather than
+  // assumed: a character at 98 across the board is minted a purse of
+  // twelve, and that purse IS fully spendable - but only through LUCK,
+  // whose four-a-point price is the only way to lay twelve on three
+  // rows that can take two points each. A player who spends the three
+  // CHEAP rows instead - which is the obvious move - lands on six
+  // virtues and nothing that will take them.
   const p = virtuePlayer();
-  for (const k of STAT_KEYS_ORDER) p.stats[k] = MAX_STAT_VALUE;   // every row at the ceiling
+  for (const k of STAT_KEYS_ORDER) p.stats[k] = MAX_STAT_VALUE - 2;
   const w = new VirtueLevelUpScreen(p, { settings: S(), rolls: seq(0) });
-  if (w.purse > 0) {
-    assert.ok(rolloutRows(w).every((r) => !r.canRaise), 'nothing can rise at 100');
-    assert.match(corneredHint(w) ?? '', /take a point back/i);
-  }
+  assert.ok(w.purse > 0);
+  for (const k of ['endurance', 'personality', 'speed']) { raiseAt(w, k); raiseAt(w, k); }
+  const rows = rolloutRows(w);
+  const stuck = w.purse > 0 && rows.every((r) => !r.canRaise);
+  assert.ok(stuck, `a reachable corner: purse ${w.purse}, raisable ${rows.filter((r) => r.canRaise).map((r) => r.key)}`);
+  assert.match(corneredHint(w) ?? '', /take a point back/i, 'and the minus is what still works');
+  assert.equal(canAscend(w), false, 'a corner is not an exit - the mod\'s window refuses');
+  // ...and the way out the hint names really is one.
+  assert.equal(lowerAt(w, 'endurance'), true);
+  assert.equal(corneredHint(w), null, 'one point back re-opens the row it came from');
+});
+
+test('LV1: ALL-MAX IS THE OTHER TERM OF CheckIfDoneLeveling, and the first cut had only one', () => {
+  // `if (statsRollout.BonusPool > 0 && !PlayerEntity.Stats.IsAllMax())`
+  // (DaggerfallCharacterSheetWindow.cs:437-443). Without the second
+  // term a character at 100 across the board is SEALED IN: statUp
+  // refuses every press, the pool never reaches zero, and the only
+  // exit tested zero. The classic SHEET has had the term since AUDIT
+  // 44; ui/charsheet.js's LevelUpScreen - what the enhanced skin
+  // mounted until LV1 - did not, and the window inherited the wall.
+  const p = player();
+  for (const k of STAT_KEYS_ORDER) p.stats[k] = MAX_STAT_VALUE;
+  const w = new LevelUpScreen(p, seq(0));
+  assert.ok(w.pool > 0, 'the pool is still rolled');
+  assert.ok(rolloutRows(w).every((r) => !r.canRaise), 'and nothing can take a point of it');
+  assert.equal(allMaxed(w), true);
+  assert.equal(canAscend(w), true, 'so the way out is open');
+  assert.equal(corneredHint(w), ALL_MAX_LINE, 'and it says THAT, not "take a point back" - there is no elsewhere');
+  const level = p.level;
+  assert.equal(ascend(w), true);
+  assert.equal(p.level, level + 1, 'the level still lands');
+  assert.ok(STAT_KEYS_ORDER.every((k) => p.stats[k] === MAX_STAT_VALUE), 'and nothing went past the ceiling');
+
+  // LESS ROOM THAN POOL, which is the same wall one step in: seven at
+  // the ceiling and one at 98 against a roll of four or more.
+  const q = player();
+  for (const k of STAT_KEYS_ORDER) q.stats[k] = MAX_STAT_VALUE;
+  q.stats.luck = MAX_STAT_VALUE - 2;
+  const v = new LevelUpScreen(q, seq(0));
+  const pool = v.pool;
+  assert.equal(canAscend(v), false, 'while a row can still take one, the pool must be spent');
+  raiseAt(v, 'luck'); raiseAt(v, 'luck');
+  assert.equal(rolloutPool(v), pool - 2);
+  assert.equal(canAscend(v), true, 'and the moment the room runs out, the leftover is voided');
+  assert.equal(ascend(v), true);
+  assert.equal(q.stats.luck, MAX_STAT_VALUE);
+
+  // THE MOD'S LANE NEEDS NO SUCH ARM: virtuePurse clamps an all-max
+  // character's purse to what a legal spend can pay for, which is
+  // nothing, so the first term answers on its own.
+  const m = virtuePlayer();
+  for (const k of STAT_KEYS_ORDER) m.stats[k] = MAX_STAT_VALUE;
+  const mw = new VirtueLevelUpScreen(m, { settings: S(), rolls: seq(0) });
+  assert.equal(mw.purse, 0, 'ORL1\'s clamp is the mod lane\'s answer to the same wall');
+  assert.equal(allMaxed(mw), false, 'and the window does not invent a branch the mod has not got');
+  assert.equal(canAscend(mw), true);
+});
+
+test('LV1: DaggerfallStats.IsAllMax has ONE home, and both faces read it', () => {
+  const cs = src('src/ui/charsheet.js');
+  assert.match(cs, /import \{ statUp, statDown, allStatsMax \} from '\.\/chargen\.js'/,
+    'and MAX_STAT_VALUE left with the copy that used it - this file\'s last reader WAS that copy');
+  assert.match(cs, /_workingAllMax\(\) \{\n\s*return allStatsMax\(this\.working\);/,
+    'the sheet\'s private copy delegates rather than restating the law');
+  assert.match(cs, /action === 'confirm' && \(this\.pool === 0 \|\| this\.allMax\(\)\)/,
+    'and the canvas screen carries both of CheckIfDoneLeveling\'s terms');
+  assert.doesNotMatch(cs, /STAT_KEYS_ORDER\.every\(\(k\) => this\.working\[k\] === MAX_STAT_VALUE\)/,
+    'no second copy of IsAllMax');
+  assert.match(src('src/ui/chargen.js'), /export const allStatsMax =/, 'the one home is beside statUp/statDown');
+  // The VIEW asks the screen rather than re-deriving it from the rows.
+  assert.match(src('src/ui/levelUpView.js'), /typeof screen\?\.allMax === 'function' && screen\.allMax\(\)/);
 });
 
 // ── THE CROWN AND THE BAR ─────────────────────────────────────────
@@ -385,6 +467,33 @@ test('LV1: every attribute has the port\'s OWN sentence, and no ARENA2 is read t
     // named - as the thing these words exist INSTEAD of.
     assert.doesNotMatch(src(f), /^import[^\n]*(textRsc|formats\/|variantLinesById)/m, `${f} reads no game data`);
   }
+
+  // AND EVERY LINE NAMES A CONSUMER, not a display. LV1's audit found
+  // two that did not: willpower cited the %mr QUEST MACRO (which only
+  // prints the number) where the consumer is the saving throw, and
+  // agility cited `toHitModifier` - the CHARACTER SHEET's display
+  // modifier, which the hit roll does not read - so the sentence
+  // described a number that rides nothing. A blurb is a promise about
+  // the code, so the code it points at has to be the code that runs.
+  const v = src('src/ui/levelUpView.js');
+  assert.match(v, /systems\/spellcast\.js:158/, 'willpower names the saving throw that consumes MagicResist');
+  assert.match(v, /formulas\.js:306-307 statsToHit/, 'agility names the term inside the hit roll');
+  assert.match(v, /player\/motor\.js:470 walkSpeed/, 'speed names the motor that reads it');
+  assert.match(v, /unleveledLoot\.js:95/, 'luck names the rarity roll a player actually notices');
+  assert.doesNotMatch(v, /toHitModifier = floor\(agility \/ 10\) - 5\.\n\s*agility:/,
+    'and the sheet\'s display modifier is no longer offered as what rides a swing');
+  // ...and no line promises a consequence this port does not apply:
+  // encumbrance is DRAWN and never charged for (MAC-E).
+  assert.doesNotMatch(ATTRIBUTE_BLURB.strength, /stagger|slow|encumber/i,
+    'the strength line no longer promises an encumbrance penalty nothing implements');
+  // THE CONSUMERS ARE NOT RE-DRIVEN HERE, and the first attempt to do
+  // it is the reason why: `damageModifier` goes through PCO1's
+  // override registry, so a vendored mod loaded by another import in
+  // this file can legitimately answer something else, and the pin
+  // failed against the port working correctly. The formulas have their
+  // own suites; what this file owns is that the WORDS point at them.
+  assert.equal(typeof magicResist, 'function');
+  assert.equal(typeof damageModifier, 'function');
 });
 
 // ── THE SEAMS ─────────────────────────────────────────────────────
@@ -469,11 +578,38 @@ test('LV1: levelUpModel is the whole window, and it holds together in every lane
   assert.equal(w.refused, undefined, 'the latch is the window\'s, not a new field on the law');
 });
 
-test('LV1: the vitals are the SHEET\'s numbers, including the /64 fatigue divisor', () => {
+test('LV1: the vitals are the SHEET\'s numbers, read from the SHEET\'s own model', () => {
+  // The first cut restated maxFatigue's arithmetic here, which is a
+  // pin that cannot fail: it agreed with itself. The claim the file
+  // makes is that this window and the pause window's Stats page read
+  // ONE model, so that is what is held (LV1's audit).
   const p = player();
   const v = levelUpVitals(p);
+  const sheet = sheetModel(p);
   assert.deepEqual(v.map((r) => r.label), ['Health', 'Fatigue', 'Magicka']);
-  assert.equal(v[0].max, p.maxHealth);
-  assert.ok(v[1].max < p.maxHealth * 64, 'fatigue is drawn in points/64, as both sheets draw it');
-  assert.equal(v[1].max, Math.trunc(((p.stats.strength + p.stats.endurance) * 64) / 64));
+  assert.deepEqual(v.map((r) => [r.now, r.max]), [
+    [sheet.health.now, sheet.health.max],
+    [sheet.fatigue.now, sheet.fatigue.max],
+    [sheet.magicka.now, sheet.magicka.max],
+  ], 'field for field, the sheet\'s');
+  assert.ok(sheet.fatigue.max * FATIGUE_MULTIPLIER === (p.stats.strength + p.stats.endurance) * FATIGUE_MULTIPLIER,
+    'and the sheet is the one that owns the /64 display divisor');
+});
+
+test('LV1: a repaint reads the FRAME, and the frame carries nothing a repaint does not use', () => {
+  // The window painted the whole model on every keystroke - which put
+  // riseRibbon and sheetModel (gold, encumbrance, thirty-five skills,
+  // the class specials) on the keyboard's repeat rate for two fields
+  // the repaint never reads, because both bands are built once at
+  // mount (LV1's audit).
+  const p = player();
+  const w = new LevelUpScreen(p, seq(0));
+  const frame = levelUpFrame(p, w);
+  const model = levelUpModel(p, w);
+  assert.equal('ribbon' in frame, false);
+  assert.equal('vitals' in frame, false);
+  assert.deepEqual(Object.keys(model).filter((k) => !(k in frame)), ['ribbon', 'vitals']);
+  for (const k of Object.keys(frame)) assert.deepEqual(model[k], frame[k], `${k} agrees`);
+  assert.match(src('src/ui/enhancedLevelUp.js'), /const m = levelUpFrame\(entity, screen, refused\);/,
+    'and the repaint takes the frame');
 });

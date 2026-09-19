@@ -116,23 +116,47 @@ export const attributeLabel = (k) => (k ? k.charAt(0).toUpperCase() + k.slice(1)
  * own words - as ui/settingsCopy.js's are.
  */
 export const ATTRIBUTE_BLURB = Object.freeze({
-  // combat/formulas.js damageModifier = floor((strength - 50) / 5);
-  // statMods.js maxFatigue = (strength + endurance) * 64.
-  strength: 'Adds to every blow you land, and to what you can carry before you stagger.',
-  // systems/chargen.js:191 - spellPoints(intelligence, multiplier) is the whole magicka pool.
-  intelligence: 'Sets your pool of spell points, by your class’s own multiplier.',
-  // systems/quest/questMacros.js:543 - PlayerEntity.MagicResist = floor(willpower / 10).
-  willpower: 'Hardens you against magic: a tenth of it is your resistance.',
-  // combat/formulas.js:118 toHitModifier = floor(agility / 10) - 5.
-  agility: 'Steadies your aim - a tenth of it, less five, rides on every swing.',
+  // combat/formulas.js:80-82 damageModifier = floor((strength - 50) / 5),
+  // which calculateAttackDamage adds to every landed blow;
+  // entityMaxEncumbrance over liveStat strength is the pack's ceiling.
+  //
+  // LV1's AUDIT CORRECTED THE SECOND CLAUSE. It read "what you can
+  // carry before you stagger", and nothing in this port charges for
+  // encumbrance - MAC-E established that DFU does not either ("neither
+  // PlayerSpeedChanger.cs nor PlayerEntity.cs mentions encumbrance at
+  // all; DFU draws the figure and never charges for it"). A window
+  // that promises a penalty the game does not apply is teaching a
+  // player to spend a point on nothing.
+  strength: 'Adds to every blow you land, and to the weight your pack will hold.',
+  // systems/chargen.js:211 - spellPoints(intelligence, multiplier) is the whole magicka pool.
+  intelligence: 'Sets your pool of spell points, by your class\'s own multiplier.',
+  // systems/spellcast.js:158 - `saving += magicResist(liveStat(target,
+  // 'willpower'))`, the CONSUMER of DFU's MagicResist. The first cut
+  // cited systems/quest/questMacros.js:543, which only PRINTS the same
+  // figure for %mr, and a display is not evidence that a number does
+  // anything (LV1's audit).
+  willpower: 'Hardens you against magic: a tenth of it goes into every saving throw.',
+  // combat/formulas.js:306-307 statsToHit = floor((your luck - theirs) / 10)
+  // + floor((your agility - theirs) / 10), read INSIDE the hit roll.
+  //
+  // LV1's AUDIT CORRECTED THIS ONE TOO. It described `toHitModifier`
+  // (:118, floor(agility/10) - 5), which is the CHARACTER SHEET's
+  // display modifier - ui/chargen.js:450 and the quest macros are its
+  // only readers - so "a tenth of it, less five, rides on every swing"
+  // named a number that rides nothing.
+  agility: 'Rides every swing: a tenth of the gap between your agility and your foe\'s.',
   // systems/chargen.js hitPointsPerLevelUp reads hitPointsModifier = floor(endurance / 10) - 5.
   endurance: 'Rolls into the health you gain at every level from here on.',
   // combat/formulas.js:828 - merchant reaction takes personality / 5; systems/court.js:435 takes it again.
   personality: 'Warms merchants, judges and anyone else weighing what you are worth.',
-  // read live by the weapon rig (combat/weaponRig.js) and by every enemy's motor.
+  // player/motor.js:470 walkSpeed(stats.speed) is how fast you move;
+  // combat/weaponRig.js:312 reads liveStat speed for the swing.
   speed: 'Quickens your weapon and closes the ground between you and a fight.',
-  // combat/formulas.js:307 - the to-hit line takes floor((your luck - theirs) / 10).
-  luck: 'Tilts the rolls nothing else touches, a tenth of the gap at a time.',
+  // combat/formulas.js:306-307 again - the same term agility rides -
+  // and systems/unleveledLoot.js:95, where the vendored ladder rolls
+  // rarity against the player's luck, which is where a player actually
+  // notices it.
+  luck: 'Rides every swing beside agility - and tilts what the dead and the dungeons are carrying.',
 });
 
 /**
@@ -260,10 +284,42 @@ export const rolloutPool = (screen) =>
 export const poolLabel = (screen) =>
   (levelUpLane(screen) === LANE_VIRTUE ? REMAINING_POINTS_LABEL : 'Bonus points left');
 
-/** The OK button's gate, in both lanes: DFU's CheckIfDoneLeveling
- *  (:437-443) and the mod's validateLevelUp (player.lua:532-552) are
- *  the same sentence - all of it, or nothing. */
-export const canAscend = (screen) => !!screen && rolloutPool(screen) === 0;
+/**
+ * THE OK BUTTON'S GATE - and BOTH of CheckIfDoneLeveling's terms.
+ *
+ * `if (statsRollout.BonusPool > 0 && !PlayerEntity.Stats.IsAllMax())`
+ * (DaggerfallCharacterSheetWindow.cs:437-443). The first cut of this
+ * window carried the first term alone, which is a WALL: at 100 across
+ * the board `statUp` refuses every press, so the pool can never reach
+ * zero, and a window whose only exit tests for zero can never be left.
+ * A character can also arrive with LESS ROOM THAN POOL - seven maxed
+ * attributes and one at 98 against a roll of six - and the last points
+ * are just as stuck. The Oghma Infinium's thirty make it likelier
+ * still, on exactly the late character who would read one.
+ *
+ * DFU's answer is to let them out and VOID what has nowhere to go, and
+ * the port's classic sheet has carried that since AUDIT 44
+ * (`_workingAllMax`). `ui/charsheet.js`'s LevelUpScreen did NOT - the
+ * screen the enhanced skin mounted until this slice - so this is a
+ * hole closed in both faces at once, from ui/chargen.js's one home.
+ *
+ * THE MOD'S LANE NEEDS NO SUCH ARM and must not get one: `virtuePurse`
+ * clamps the purse to what a legal spend can actually pay for (ORL1's
+ * own fix for its own wall), so an all-max virtue character is minted
+ * a purse of nothing and this reads zero by the first term.
+ */
+export const canAscend = (screen) => !!screen && (rolloutPool(screen) === 0 || allMaxed(screen));
+
+/** DaggerfallStats.IsAllMax, asked of whichever screen is live - the
+ *  classic rollout answers it from ui/chargen.js's one home, and the
+ *  mod's window does not answer it at all (it has no such branch, and
+ *  its purse is clamped instead). */
+export const allMaxed = (screen) => typeof screen?.allMax === 'function' && screen.allMax();
+
+/** ...and what the window SAYS on that branch, because a plate reading
+ *  "5 bonus points left" over an enabled button is a screen that looks
+ *  broken. The port's own words: DFU shows nothing here at all. */
+export const ALL_MAX_LINE = 'Every attribute is at its maximum. What is left has nowhere to go.';
 
 /** The refusal each lane already ships, so the window quotes rather
  *  than invents. */
@@ -275,7 +331,13 @@ export const refusalText = (screen) =>
  *  `cornered`), and its answer - take one back - is the same here. */
 export function corneredHint(screen) {
   if (!screen || rolloutPool(screen) <= 0) return null;
-  return rolloutRows(screen).some((r) => r.canRaise) ? null : TAKE_ONE_BACK_HINT;
+  if (rolloutRows(screen).some((r) => r.canRaise)) return null;
+  // ALL-MAX IS NOT A CORNER, and the first cut told a maxed classic
+  // character to "take a point back and place it elsewhere" - an
+  // instruction with no elsewhere in it, on a window that would not
+  // have let them out either way. There the truth is the other line
+  // and the button is open (LV1's audit).
+  return allMaxed(screen) ? ALL_MAX_LINE : TAKE_ONE_BACK_HINT;
 }
 
 /**
@@ -524,9 +586,18 @@ export function levelUpVitals(entity) {
  *  they have, and a maxed attribute is visibly a maxed attribute. */
 export const starBrightness = (value) => Math.max(0, Math.min(1, (value ?? 0) / MAX_STAT_VALUE));
 
-/** THE WHOLE WINDOW, as data. Pure, so the pins can drive every state
- *  this screen can be in without a DOM. */
-export function levelUpModel(entity, screen, refused = false) {
+/**
+ * WHAT MOVES UNDER A PRESS - the reading the window repaints from.
+ *
+ * SPLIT FROM `levelUpModel` BY LV1's AUDIT. The window painted the
+ * whole model on every keystroke, which meant `riseRibbon` walking the
+ * skills and `sheetModel` rebuilding gold, encumbrance, every skill
+ * and the class specials eight times a second at the keyboard's repeat
+ * rate - for two fields the repaint does not even read, because the
+ * ribbon and the vitals are built ONCE at mount and nothing in a
+ * level-up moves them.
+ */
+export function levelUpFrame(entity, screen, refused = false) {
   return {
     lane: levelUpLane(screen),
     crown: levelUpCrown(entity, screen),
@@ -535,8 +606,6 @@ export function levelUpModel(entity, screen, refused = false) {
     poolLabel: poolLabel(screen),
     rows: rolloutRows(screen),
     focus: focusedKey(screen),
-    ribbon: riseRibbon(entity),
-    vitals: levelUpVitals(entity),
     canAscend: canAscend(screen),
     // BOTH LATCHES. The mod's screen keeps `refused` itself
     // (player.lua:532-552); the classic rollout has no latch at all -
@@ -547,5 +616,16 @@ export function levelUpModel(entity, screen, refused = false) {
     // header is about.
     refusal: (refused || screen?.refused) ? refusalText(screen) : null,
     cornered: corneredHint(screen),
+  };
+}
+
+/** THE WHOLE WINDOW, as data - the frame plus the two bands that are
+ *  read once at mount. Pure, so the pins can drive every state this
+ *  screen can be in without a DOM. */
+export function levelUpModel(entity, screen, refused = false) {
+  return {
+    ...levelUpFrame(entity, screen, refused),
+    ribbon: riseRibbon(entity),
+    vitals: levelUpVitals(entity),
   };
 }

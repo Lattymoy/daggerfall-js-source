@@ -85,7 +85,7 @@ import { RACE_TEMPLATES, raceById } from '../systems/races.js';     // MAC-G: th
 export const SKILL_GROUPS = Object.freeze(['Primary', 'Major', 'Minor', 'Miscellaneous']);
 
 /** MAC-G: the entity's RaceTemplate, however the character was made.
- *  Chargen writes the race KEY (ui/chargen.js:2139 - `this.race.key`)
+ *  Chargen writes the race KEY (ui/chargen.js:2159 - `this.race.key`)
  *  and a classic save may only carry the id, so both roads are taken
  *  and the display NAME is accepted too rather than trusting one
  *  writer. No template means no racial rows, not a crash. */

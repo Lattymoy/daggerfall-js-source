@@ -50,7 +50,7 @@ import { registerOverlay } from './enhancedOverlays.js';   // PX28: Tab, which t
 import { overlayAction } from './input.js';
 import { STAT_KEYS_ORDER } from '../systems/chargen.js';
 import {
-  STAR_FIGURE, ATTRIBUTE_BLURB, attributeLabel, levelUpModel, levelUpVitals,
+  STAR_FIGURE, ATTRIBUTE_BLURB, attributeLabel, levelUpModel, levelUpFrame, levelUpVitals,
   focusAt, raiseAt, lowerAt, ascend, focusedKey, starBrightness, refusalText,
   LANE_OGHMA,
 } from './levelUpView.js';
@@ -261,6 +261,17 @@ export function mountEnhancedLevelUp(hostEl, d = {}) {
     const i = STAT_KEYS_ORDER.indexOf(focusedKey(screen));
     focusAt(screen, STAT_KEYS_ORDER[(i + by + STAT_KEYS_ORDER.length) % STAT_KEYS_ORDER.length]);
     paint();
+    // THE DOM FOCUS FOLLOWS THE SELECTION. Without this the ring stays
+    // on whichever star was last clicked while the highlight walks
+    // away from it, so a keyboard user and a screen reader are told
+    // two different things about which attribute is live (LV1's
+    // audit). `focusStar` is a no-op when nothing was focused inside
+    // the window, so an arrow press cannot steal focus from the page.
+    focusStar();
+  };
+  const focusStar = () => {
+    const at = stars.find((s) => s.key === focusedKey(screen));
+    try { at?.node?.focus?.({ preventScroll: true }); } catch { /* no layout yet */ }
   };
   prev.onclick = () => step(-1);
   next.onclick = () => step(1);
@@ -323,7 +334,12 @@ export function mountEnhancedLevelUp(hostEl, d = {}) {
 
   function paint() {
     if (dead) return;
-    const m = levelUpModel(entity, screen, refused);
+    // THE FRAME, not the whole model: the ribbon and the vitals are
+    // built once at mount and nothing a press does moves them, and
+    // rebuilding them here put `sheetModel` - gold, encumbrance, all
+    // thirty-five skills, the class specials - on every keystroke
+    // (LV1's audit).
+    const m = levelUpFrame(entity, screen, refused);
     whoName.textContent = m.crown.name;
     raceName.textContent = [m.crown.race, m.crown.career].filter(Boolean).join(' ');
     levelJump.textContent = crownTitle(m.crown);
@@ -348,9 +364,12 @@ export function mountEnhancedLevelUp(hostEl, d = {}) {
       // The star's own brightness is its VALUE - the figure is the
       // character, not the spend.
       s.gem.style.opacity = String(0.45 + 0.55 * starBrightness(r.value));
+      // NOT `aria-pressed`: a star is not a toggle, and a control that
+      // announces itself pressed when a point happens to sit in it
+      // tells a screen reader the wrong kind of thing. The label
+      // carries the same fact in words (LV1's audit).
       s.node.setAttribute('aria-label',
         `${r.label} ${r.value}${r.delta > 0 ? `, raised by ${r.delta}` : ''}${r.canRaise ? '' : ', cannot raise'}`);
-      s.node.setAttribute('aria-pressed', String(r.delta > 0));
     }
     // A LINE LIGHTS WHEN BOTH ITS STARS HAVE RISEN. It is the one
     // thing on this screen that is pure celebration and it is also
@@ -451,6 +470,13 @@ export function mountEnhancedLevelUp(hostEl, d = {}) {
     e.stopPropagation();
   }
 
+  /** A RESIZE REDRAWS THE SKY. The interval reads the viewport every
+   *  tick, so a moving sky follows a resize on its own - but under
+   *  prefers-reduced-motion there IS no interval, and the canvas kept
+   *  the old viewport's backing store stretched over the new one
+   *  (LV1's audit). One listener, owned by the teardown below. */
+  const onResize = () => { if (!dead) drawPixelGround(ground, vw(), vh(), 0); };
+  if (still) globalThis.addEventListener?.('resize', onResize);
   globalThis.addEventListener?.('keydown', onKey, true);
   unregister = registerOverlay(closeArm);
   paint();
@@ -467,6 +493,7 @@ export function mountEnhancedLevelUp(hostEl, d = {}) {
       if (groundTimer) clearInterval(groundTimer);
       groundTimer = null;
       globalThis.removeEventListener?.('keydown', onKey, true);
+      if (still) globalThis.removeEventListener?.('resize', onResize);
       unregister();
       root.remove();
     },

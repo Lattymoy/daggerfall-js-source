@@ -62,7 +62,7 @@ export const REMAINING_POINTS_LABEL = 'Virtues left';
 
 /** The mod prints Morrowind's `sAttributeStrength` GMSTs; Daggerfall's
  *  own attribute names are the port's stat keys, and the sheet already
- *  prints them as three-letter heads (charsheet.js:145). This screen
+ *  prints them as three-letter heads (charsheet.js:159). This screen
  *  has the room for the whole word. */
 const label = (k) => k.charAt(0).toUpperCase() + k.slice(1);
 

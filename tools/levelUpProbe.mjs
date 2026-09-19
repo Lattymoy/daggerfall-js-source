@@ -64,7 +64,7 @@ async function boxes(page) {
       vw: window.innerWidth, vh: window.innerHeight,
       crown: r('.lv-crown'), plate: r('.lv-plate'), figure: r('.lv-figure'),
       pick: r('.lv-pick'), ribbon: r('.lv-ribbonwrap'), foot: r('.lv-foot'),
-      ok: r('.lv-ok'), plus: r('.lv-press:last-of-type'), stars,
+      ok: r('.lv-ok'), stars,
       scrollW: document.documentElement.scrollWidth, scrollH: document.documentElement.scrollHeight,
     };
   });
@@ -248,6 +248,49 @@ for (const [label, viewport] of [
   check(`${label}: a star still takes a point`, (await model(page)).pool === before.pool - 1);
   check(`${label}: no page errors`, errors.length === 0, errors.join(' | '));
   await page.screenshot({ path: `${shots}/levelup-${label.replace(/\W+/g, '-')}.png` });
+  await ctx.close();
+}
+
+// ── 10. THE CHARACTER THE WINDOW COULD NOT LET GO OF ─────────────
+//
+// LV1's audit found CheckIfDoneLeveling's SECOND term missing
+// (DaggerfallCharacterSheetWindow.cs:437-443:
+// `BonusPool > 0 && !Stats.IsAllMax()`). At 100 across the board every
+// press is refused, the pool never reaches zero, and an exit that
+// tests for zero alone never opens: the game is over, on a screen with
+// no other way out. This is that character, driven.
+{
+  const { ctx, page, errors } = await open('allmax', { width: 1400, height: 900 });
+  const m = await model(page);
+  check('all-max: the pool is real and NOTHING can take it', m.pool > 0 && m.rows.every((r) => !r.canRaise), `pool ${m.pool}`);
+  check('all-max: the window says so rather than telling them to take a point back',
+    /maximum/i.test((await page.textContent('.lv-hint')) ?? ''), await page.textContent('.lv-hint'));
+  check('all-max: the way out is OPEN', m.canAscend && (await page.locator('.lv-ok.notyet').count()) === 0);
+  const start = await entity(page);
+  await page.locator('.lv-ok').click();
+  await page.waitForTimeout(150);
+  const end = await entity(page);
+  check('all-max: it closes', (await page.locator('.lv-star').count()) === 0);
+  check('all-max: and the level still lands - the points are voided, not the level-up',
+    end.level === start.level + 1 && end.ready === false, `${start.level} -> ${end.level}`);
+  const st = await stats(page);
+  check('all-max: no stat was pushed past the ceiling', Object.values(st).every((v) => v === 100), JSON.stringify(st));
+  check('all-max: no page errors', errors.length === 0, errors.join(' | '));
+  await page.screenshot({ path: `${shots}/levelup-allmax.png` });
+  await ctx.close();
+}
+
+// ── 11. THE KEYBOARD'S OWN FOCUS ─────────────────────────────────
+{
+  const { ctx, page } = await open('classic', { width: 1400, height: 900 });
+  await page.locator('.lv-star').nth(3).click();
+  await page.keyboard.press('ArrowRight');
+  const focused = await page.evaluate(() => document.activeElement?.getAttribute('aria-label') ?? '');
+  const m = await model(page);
+  check('focus: the ring follows the selection, so the keyboard and the reader agree',
+    focused.toLowerCase().startsWith(m.focus), `${m.focus} vs "${focused}"`);
+  check('focus: and a star is not announced as a toggle',
+    (await page.locator('.lv-star[aria-pressed]').count()) === 0);
   await ctx.close();
 }
 
