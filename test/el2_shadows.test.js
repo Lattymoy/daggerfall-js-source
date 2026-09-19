@@ -190,7 +190,12 @@ test('EL2: the receiver block and the depth shaders - six uniforms, no dynamic m
   assert.ok(EL_BB_FS.includes(SHADOW_GLSL));
   assert.match(EL_BB_FS, /in vec3 vBBBase;/);
   assert.match(EL_BB_FS, /vec3 base = vBBBase \+ vec3\(0\.0, 0\.5, 0\.0\);/, 'a flat reads its shadow half a unit up its base');
-  assert.match(EL_BB_FS, /uBBSun \* cloudShadowAt\(vBBWorld\) \* sunShadowAt\(base, vec3\(0\.0, 1\.0, 0\.0\)\)/);
+  // TREES1 (2026-09-19): a flat reads the SOFT lookup - the kernel at
+  // every distance - because it samples once for a whole sprite and the
+  // far cascade's one-tap trade is an antialiasing one that only holds
+  // for a surface shading per fragment. EL2's own law here is unchanged:
+  // the flat's sun term still wears both shadows, read at its base.
+  assert.match(EL_BB_FS, /uBBSun \* cloudShadowAt\(vBBWorld\) \* sunShadowSoftAt\(base, vec3\(0\.0, 1\.0, 0\.0\)\)/);
   assert.match(EL_BB_FS, /elPointFlat\(vBBWorld, base\)/);
   assert.ok(!EL_FAR_RING_FS.includes('uSunShadow'), 'the far ring receives no shadow');
   assert.equal(EL_LANE.shadows, true);

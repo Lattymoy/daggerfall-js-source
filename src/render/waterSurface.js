@@ -308,7 +308,10 @@ void main() {
   float F = uF0 + (0.72 - uF0) * pow(1.0 - NdV, 5.0);
   vec3 R = reflect(-V, n);
   vec3 skyRefl = mix(uSkyHorizon, uSkyZenith, clamp(0.2 + R.y * 1.4, 0.0, 1.0));
-  float shadow = cloudShadowAt(vWorldPos)${shadowGlsl ? ' * sunShadowAt(vWorldPos, n)' : ''};   // EL7: a quay's shadow lies on the water under the lane
+  // PERF-SUN2: the water reads its shadow only while the sun is up. A
+  // UNIFORM branch, and shadow reaches the light exactly once through
+  // uSunColor * (uSunScale * diff), so this is output-identical.
+  float shadow = uSunScale > 0.0 ? cloudShadowAt(vWorldPos)${shadowGlsl ? ' * sunShadowAt(vWorldPos, n)' : ''} : 0.0;   // EL7: a quay's shadow lies on the water under the lane
   // the classic texel, the body of the water, lit as the ground is lit
   vec2 uv = fract(f + vec2(uScroll));
   // GRAIN1: the same wrap, the same cure - the scrolled coordinate before

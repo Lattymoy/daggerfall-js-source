@@ -2461,3 +2461,233 @@ your case is not interchangeable with it. `spherePlanes` sat next to
 reached past it. And when two passes cull the same object by two copies
 of one rule, the bug does not hide - it draws.**
 
+## PERF-SUN (2026-09-19) - THE EXTERIOR WAS PAYING PER FRAGMENT, AND THE SKY PROVED IT
+
+Mac: *"exterior shadows at a distance, tree sway at a distance, and
+whatever else can cause insane performance issues. On the outside, I'm
+receiving over 1000 calls and looking up in the sky restores frame
+rate."*
+
+### Looking up is the diagnosis
+
+The sun cascades are built around the **eye**, not the view direction,
+and each shadow replay culls by its own cascade's frustum. None of that
+changes when the camera tilts. The air pass, the sky, the sim: all
+unchanged. The one thing that collapses when you look at the sky is the
+number of **shaded fragments**.
+
+So the >1000 draw calls, whatever else they cost, are not what the sky
+gives back. The exterior was spending itself per fragment, on ground
+that fills nearly the whole screen.
+
+### PERF-SUN1 - the far cascade took nine taps for a texel two pixels wide
+
+`sunShadowAt` filtered 3x3 in every cascade. And each of those nine
+samples is **already a 2x2**: the sun map is `COMPARE_REF_TO_TEXTURE`
+with `LINEAR` filtering, so one `texture()` on it is a hardware bilinear
+PCF over four texels and the loop was an effective 4x4 filter.
+
+That is worth it where the texel is coarse against the pixel. Cascade 0
+is 12 units over 2048 - a 1.2 cm texel, EL7's contact hairline, the
+whole reason the near cascade exists. The **far** cascade is 240 units:
+a 23 cm texel, which at a hundred metres on a 60-degree field is about
+two pixels across. One hardware tap there is already a 2x2 over a
+two-pixel texel; the other eight soften nothing anyone can see - over
+**most of an outdoor screen**, because cascade 2 is everything past 48
+units.
+
+The nearest two cascades keep the kernel. The far one returns on one
+tap, before the loop.
+
+### PERF-SUN2 - the shadow was read where the sun cannot reach
+
+Every lane shader wrote the sun term as one flat product:
+
+```glsl
+float diff = max(dot(n, uLightDir), 0.0) * cloudShadowAt(vWorldPos) * sunShadowAt(vWorldPos, n);
+```
+
+**GLSL evaluates every operand of a product.** A surface whose normal
+faces away from the sun paid nine hardware-PCF compares and a cloud-deck
+sample, and then multiplied them by the zero sitting in front of them.
+Every north-facing wall, every back slope, and the whole world whenever
+the sun is low.
+
+`diff` reaches the light exactly once, as `uSunColor * (uSunScale *
+diff)` - so gating it on `ndl > 0.0` **or** on `uSunScale > 0.0` cannot
+move a pixel; it only skips arriving at the same zero. The `uSunScale`
+half is a uniform branch, free and coherent, and it takes out dusk, dawn
+and the whole night as well. A FLAT has no normal, so its gate is
+`uBBSun` - the sun's entire share of the tint, and zero at night - which
+stops every sprite in the world reading the sun map after dark.
+
+Verified in a real WebGL2 driver rather than asserted:
+`tools/perfSunShaderProbe.mjs` compiles all four lane shaders and both
+water variants.
+
+### The tree sway is cleared
+
+It is not a per-frame cost. `floraSwayOf` runs once per BATCH when the
+pixel is built, each host uploads **one** wind vector a frame for every
+flat in the world, and the lean is a few instructions on four vertices a
+sprite. Recorded so the next reader does not go looking.
+
+What was wrong beside it: `floraSwayOn` minted a `URLSearchParams` and
+parsed the query string **once a frame** to answer a question that
+cannot change while the page is open. Read once now, as `?cull=off` is;
+the pref beside it stays live, because the player can toggle that
+mid-session.
+
+### RECORDED, NOT FIXED - the >1000 draw calls
+
+Named here because it is a real finding and this slice is not its fix.
+
+A streamed pixel's static models are merged by PERF4 into one mesh with
+**one sub-mesh per texture**, and that is where the draw count lives: a
+town pixel with thirty distinct wall and roof textures is thirty draws,
+times every visible pixel. The obvious saving - cull the merged batch
+per sub-mesh, using the bounds `createMesh` already computes and the
+shadow replay already tests - **does not work here**, and the reason is
+worth writing down: a merged sub-mesh is one texture's geometry across
+the WHOLE pixel, and a pixel is 128 tiles at 6.4 units, or 819 units
+across. Its bounding sphere spans the pixel, so the test would almost
+never fire.
+
+**CORRECTED 2026-09-19, same day:** the remedy first written here -
+merge per texture *and* per spatial cluster - is wrong, and the
+arithmetic says so in one line. The current scheme is already the
+MINIMUM draw count: one per distinct texture. Splitting a pixel into
+sixteen cells turns thirty textures into up to 480 sub-meshes, and even
+if only three cells are in the frustum that is ninety draws where there
+were thirty. Clustering trades draw calls AWAY to buy vertex work; it is
+a fill win and a draw-call LOSS, and this finding was about the draw
+count.
+
+What the draw count actually is, recounted: terrain is one per visible
+pixel, the merged static batch is one per texture per visible pixel, and
+**the flats are one per (archive, record) per pixel** - which across the
+streamed grid is the largest single source, and the one MAC1 already
+cut the small far ones out of. Collapsing those would need either a
+texture array over an archive's records (so one draw covers many
+records) or world-space centres merged across pixels (which costs the
+per-pixel frustum cull that EV3 pays for). Both are real projects with a
+real trade, and neither is a line of code. Recorded as an open question
+rather than a plan.
+
+**Pinned** in `test/perfsun_fragment.test.js` (4). Mutants
+`tools/mutants/perfsun.json`: 15 - 15 dead, 0 survived. Two older
+records re-aimed by content (`el2.json`, `el7.json`) and EL7's own water
+pin with them.
+
+**The lesson: "over 1000 calls" named the thing that was easiest to
+count, and the sky named the thing that was actually being paid. A
+product in a shader is not a series of conditions - it is a promise to
+evaluate all of them.**
+
+## PERF-FOG (2026-09-19) - A UNIFORM WAS BEING DECODED ONCE A FRAGMENT
+
+Found by keeping on looking after PERF-SUN, in the same place and for
+the same reason: what does every exterior fragment actually run?
+
+`elFinish` is the lane's output - the tonemap, the fog blend, the
+in-scatter, the encode, the dither - and it runs in **every lane shader
+there is**: the terrain, the meshes, the rigs and every flat in the
+world. It opened with:
+
+```glsl
+vec3 col = mix(elDecode(uFogColor), tm, fogFactorAt(wp));
+```
+
+`elDecode` is the piecewise sRGB curve - three `pow()` calls. **On a
+uniform.** The value is identical for every pixel of the frame and it
+was being recomputed for every one of them, all day, everywhere.
+
+GLSL has nowhere to hoist a uniform-only expression to: there is no
+per-draw stage between the uniform and the fragment. So the only place
+it can be computed once is the host, and the only way to say that is to
+send the colour already decoded. `uFogColorLin` is declared in the
+shared block (so a fifth lane shader cannot be written without it),
+`_fogLocs` looks it up with the rest of the fog, and `_uploadFog` sends
+it only to a program that asked - a classic program does not declare it,
+and a lane program that never calls `elFinish` has it optimised out, so
+both read null and skip.
+
+**The law is not restated.** The lane already carries the decoder the
+shader compiles - `decode3` - and the renderer reaches it through the
+lane it was handed, so there is no second copy of the sRGB constants
+here, only a place to keep the answer. The cache is keyed on the display
+triple it came from, starts at NaN (a zero triple would match a
+legitimately black fog and never recompute), keeps its own scratch
+rather than `_c3`'s (which is handed to whoever asks next), and is
+invalidated on a lane swap - a cache keyed on its input alone cannot see
+that the *function* changed.
+
+The far ring pastes the same block but has its own finish and its own
+upload path, so it keeps its own decode. Named so the asymmetry reads as
+a decision.
+
+**The failure this could not be allowed to have is a black fog.** A
+uniform the optimiser drops reads back as null, the upload skips it, and
+`elFinish` mixes toward black - which compiles clean and shows only on a
+foggy day. Source cannot answer that, so `tools/perfSunShaderProbe.mjs`
+links all four lane programs in a real driver and asks for the location.
+
+**Pinned** in `test/perffog_uniform.test.js` (4). Mutants
+`tools/mutants/perffog.json`: 11 - 11 dead, 0 survived. EL1's fog pin
+and its `glsl-fog-blend-raw` mutant re-aimed by content: the law EL1
+states - the fog is blended in linear and re-encoded, so a fogged
+fragment IS the fog colour - is unchanged; only where the decode happens
+moved.
+
+**The lesson: a shader is the one place where "it's just a constant"
+costs you two million times a frame. The exterior's real bill was never
+in the things that were easy to count.**
+
+## TREES1 (2026-09-19) - THE DARKENING ON THE TREES WAS PERF-SUN1 MEETING A SPRITE
+
+Mac, the day PERF-SUN shipped: *"There's this weird darkening effect
+happening to trees."*
+
+Mine, and the argument that produced it was **half right**.
+
+PERF-SUN1 gave the far cascade one shadow tap instead of nine, on this
+reasoning: each tap is already a hardware 2x2, the far cascade's texel is
+about two pixels at a hundred metres, so the extra eight soften nothing
+anyone can resolve. That is an **antialiasing** argument, and it holds
+perfectly for the terrain, the meshes, the rigs and the water - every one
+of which shades **per fragment**, so neighbouring pixels smooth a coarse
+filter whatever the lookup returns.
+
+**A flat is not like that.** `EL_BB_FS` reads the sun map ONCE, at the
+sprite's base, and wears that single value over the entire quad - which
+is EL2's own decision, because a sprite sampled at its own fragment would
+shadow itself. For a tree the kernel is therefore not softening an edge.
+It is the only gradation the tree has.
+
+So with one tap: a tree whose foot sits near a shadow edge stops being
+*partly* shaded and becomes fully lit or fully dark, the whole sprite at
+once - and jumps again at the cascade boundary as you walk toward it. A
+weird darkening effect happening to trees.
+
+`sunShadowSoftAt` keeps the kernel at every distance, and the flat is its
+only caller. One body, one early return, behind `!soft`. The saving
+stands almost entirely: the ground is where the fragments are, and flats
+are a thin slice beside it.
+
+**Pinned** in `test/perfsun_fragment.test.js`. The pin asks the CALL
+SITES, not the shader text: every one of these shaders pastes
+`SHADOW_GLSL` and therefore contains *both* function names, so "which
+does this shader use" can only be asked of what is left when the block is
+removed. It holds that the flat takes the soft one and never the cheap
+one, that every per-fragment surface takes the cheap one and never the
+soft one (or the saving goes), and that the body has exactly one early
+return - a soft path that still fell through to the cheap tap would be
+this very bug wearing the name of its own fix. 5 more mutants, all dead.
+EL2's flat pin re-aimed by content: its law - the flat's sun term wears
+both shadows, read at its base - is unchanged.
+
+**The lesson: the optimisation was correct about the pixels and wrong
+about one caller, because that caller does not have pixels in the sense
+the argument assumed. "It's below the resolution of a pixel" means
+nothing to a surface that takes one sample for ten thousand of them.**
+

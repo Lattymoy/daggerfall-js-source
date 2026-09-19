@@ -27,7 +27,7 @@ for (const b of batches) if (!spectral && !conceal) {
 ```
 
 `keyOf` is not this pass's private bookkeeping. **Two other passes read
-`b._bbKey`** — the shadow replay (`shadowPass.js:655`) and the air pass's
+`b._bbKey`** — the shadow replay (`shadowPass.js:700`) and the air pass's
 emitters (`airPass.js:1049`) — and both take it as it stands:
 
 ```js
@@ -85,7 +85,7 @@ Recorded rather than fixed: shrinking it costs a re-mint the next time
 the player walks back into town, which is the allocation PERF-LIGHTS
 exists to remove.
 
-## F4 — the shadow replay still culls by the UNLIFTED sphere. RECORDED, as it was.
+## F4 — the shadow replay still culls by the UNLIFTED sphere. RECORDED, then **CLOSED by GHOST1 (2026-09-19)**.
 
 PERF-CROWD established that the stored sphere is centred on the
 placement point while the sprite stands its full height above it, so it
@@ -95,6 +95,21 @@ does not. Left alone on the record: a shadow clipped at a cascade edge is
 not a head disappearing, and changing it moves EL5's pinned culling
 counts. Stated here so the inconsistency is a decision and not an
 oversight.
+
+**CLOSED, same day, by the field rather than by this argument.** GHOST1
+found that the inconsistency this row decided to keep was not a
+cosmetic one: the main pass and the emission replay answering different
+questions about the same sprite is what produced Clerical Error's
+"ghost campfires" - the main pass dropped a flat the emitters kept, and
+what was left on screen was the bloom of a sprite that never drew. The
+lift lives in `batchVisible` now and the two hand-written copies
+delegate to it, so all four readers agree. EL5's counts moved and were
+re-pinned with it.
+
+The reasoning above was sound about shadows and wrong about the
+consequence, because it weighed only the cost it could name. Kept as
+written, with this note, because "a decision that turned out to be a
+bug" is worth more on the record than a tidy one.
 
 ---
 

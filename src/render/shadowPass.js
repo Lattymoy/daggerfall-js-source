@@ -114,6 +114,44 @@ export const SHADOW_NEAR_CASTERS = 2;
  *  1.2 cm at 2048: the hairline at an eave's contact is four times thinner
  *  than EL2's 40-unit cascade left it), the street, and the town. */
 export const SHADOW_CASCADES = Object.freeze([12, 48, 240]);
+/**
+ * PERF-SUN (2026-09-19, Mac: "exterior shadows at a distance ... over 1000
+ * calls and looking up in the sky restores frame rate"): HOW MANY OF THE
+ * NEAREST CASCADES TAKE THE 3x3 KERNEL.
+ *
+ * `sunShadowAt` filtered 3x3 in EVERY cascade - nine samples per lit
+ * fragment, over the whole visible ground, which outdoors is nearly the
+ * whole screen. That is why looking up gives the frame back: it is not a
+ * draw-call cost at all, it is a per-FRAGMENT one, and the sky has no
+ * fragments to pay it.
+ *
+ * AND EACH OF THOSE NINE IS ALREADY A 2x2. The sun map is
+ * COMPARE_REF_TO_TEXTURE with LINEAR filtering (see the sampler below), so
+ * one `texture()` on it is a hardware bilinear PCF over four texels - the
+ * 3x3 loop is an effective 4x4 filter, not a 3x3.
+ *
+ * That filter is worth it where the texel is coarse against the pixel.
+ * Cascade 0 is 12 units over 2048, a texel of 1.2 cm - EL7's contact
+ * hairline, and the whole reason the near cascade exists. The FAR cascade
+ * is 240 units: a 23 cm texel, which at a hundred metres and a 60-degree
+ * field is about two pixels across. One hardware tap there is already a
+ * 2x2 over a two-pixel texel, and the eight extra samples buy a softening
+ * nobody can see at that range - while covering most of an outdoor screen,
+ * because cascade 2 is everything past 43 units.
+ *
+ * So: the nearest two cascades keep the kernel, the far one takes the one
+ * tap.
+ *
+ * AUDIT F2: the test is `c >= SHADOW_PCF_CASCADES`, so EVERY cascade from
+ * this index outward takes the cheap tap - not just the last. The comment
+ * first written here claimed the opposite ("a cascade count this does not
+ * cover keeps the kernel"), which is false, and a false claim about the
+ * safe direction is exactly what this slice's own lesson was about. The
+ * behaviour the code actually has is the right one: cascades are ordered
+ * by radius, so a further one is always coarser than the one before it and
+ * can only want the tap less. A fourth cascade would be cheap, and should be.
+ */
+export const SHADOW_PCF_CASCADES = 2;
 /** The ortho box's half-depth along the light: enough to take a mountain
  *  pixel's height above or below the eye. */
 export const SHADOW_SUN_DEPTH = 600;
@@ -295,7 +333,7 @@ uniform vec4 uPointShadowParams[${SHADOW_POINT_CASTERS}];  // xyz the light, w i
 uniform int uShadowIndex[${SHADOW_POINT_CASTERS}];         // the lantern each caster's layers belong to, -1 for none
 uniform int uCasterOf[${SHADOW_CASTER_TABLE}];              // EL8: light i's caster slot, -1 for none - one lookup
 ${faceBasisGlsl()}
-float sunShadowAt(vec3 wp, vec3 n) {
+float sunShadowTap(vec3 wp, vec3 n, bool soft) {
   if (uSunShadowParams.w <= 0.0) return 1.0;
   float d = length(wp - uCamPos);
   int c = d < uSunShadowParams.x * 0.9 ? 0 : d < uSunShadowParams.y * 0.9 ? 1 : 2;
@@ -306,6 +344,27 @@ float sunShadowAt(vec3 wp, vec3 n) {
   if (p.x < 0.0 || p.x > 1.0 || p.y < 0.0 || p.y > 1.0 || p.z > 1.0) return 1.0;
   float ref = p.z - ${SHADOW_SUN_BIAS};   // AUDIT-EL F15: ~0.06 world units over the 1200-unit box (0.0004 was half a unit - feet floated off their shadows)
   float texelUv = 1.0 / ${SHADOW_SUN_SIZE}.0;   // AUDIT-EL F17: not 'step' - a built-in's name
+  // PERF-SUN: the far cascade takes ONE tap, which the sampler already
+  // makes a hardware 2x2 (COMPARE_REF_TO_TEXTURE + LINEAR). Its texel is
+  // 23 cm - about two pixels at a hundred metres - so the eight extra
+  // samples soften nothing the eye can resolve, over most of an outdoor
+  // screen. The near cascades keep the kernel: that is EL7's contact
+  // hairline, at a texel of 1.2 cm.
+  //
+  // TREES1 (2026-09-19, Mac: "there's this weird darkening effect
+  // happening to trees"): UNLESS THE CALLER IS A FLAT. The trade above
+  // is an ANTIALIASING one, and it only holds for a surface that shades
+  // PER FRAGMENT - the terrain and the meshes, where neighbouring pixels
+  // smooth a coarse filter whatever this returns. A flat is not like
+  // that. It reads ONE value at its base and wears it over the whole
+  // sprite (EL2: a sprite sampled at its own fragment would shadow
+  // itself), so the kernel is not softening an edge there - it is the
+  // only gradation the tree has. With one tap a tree whose foot sits
+  // near a shadow edge flips between fully lit and fully dark, and jumps
+  // again at the cascade boundary as you walk toward it. Flats keep the
+  // kernel at every distance, and they are a thin slice of the frame's
+  // fragments beside the ground, so nearly all of the saving stands.
+  if (!soft && c >= ${SHADOW_PCF_CASCADES}) return texture(uSunShadow, vec4(p.xy, float(c), ref));
   float lit = 0.0;
   for (int y = -1; y <= 1; y++) {
     for (int x = -1; x <= 1; x++) {
@@ -314,6 +373,10 @@ float sunShadowAt(vec3 wp, vec3 n) {
   }
   return lit / 9.0;
 }
+/** A surface that shades per fragment: the cheap tap past SHADOW_PCF_CASCADES. */
+float sunShadowAt(vec3 wp, vec3 n) { return sunShadowTap(wp, n, false); }
+/** A FLAT, which reads once for a whole sprite: the kernel at every distance (TREES1). */
+float sunShadowSoftAt(vec3 wp, vec3 n) { return sunShadowTap(wp, n, true); }
 // the face's depth of a point whose major-axis distance is m (cubeDepthRef in shadowPass.js)
 float cubeDepthOfM(float m, float far) {
   float near = ${SHADOW_POINT_NEAR};
