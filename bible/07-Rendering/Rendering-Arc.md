@@ -2691,3 +2691,123 @@ about one caller, because that caller does not have pixels in the sense
 the argument assumed. "It's below the resolution of a pixel" means
 nothing to a surface that takes one sample for ten thousand of them.**
 
+## WEEDS1 (2026-09-19) - EVERY WEED IN THE WORLD WAS CASTING INTO THE 240-UNIT CASCADE
+
+Mac, after TREES1: *"its better, what else can we do?"*
+
+F5 already culls a caster too small to shadow a texel of the cascade it
+is being replayed into. It has been there since the field report that
+found the standing shadows. And for flats it was **dead**, for a reason
+that is only obvious once said out loud:
+
+> F5 measures the BATCH'S SPHERE. A billboard batch is every flat of one
+> (archive, record) across a whole streamed pixel - and a pixel is 128
+> tiles at 6.4 units, **819 across**.
+
+So a batch of ankle-high weeds scattered over a pixel carries a bounding
+sphere of several hundred units and sails straight through a test looking
+for things under 47 cm, while every sprite in it is thirty centimetres.
+Three orders of magnitude apart. Every weed, flower, pebble and ground
+prop in the world was replayed into the far cascade, where its shadow is
+one texel.
+
+The right measure for a flat is the **sprite**, which the batch already
+carries as `size`. This is MAC1's argument - *"all the billboards in the
+distance ESPECIALLY ALL THE SMALL ONES"* - applied to the pass that never
+got it.
+
+### Four texels, and why that number confines the change
+
+Against each cascade's texel:
+
+| cascade | radius | texel | four texels |
+| --- | --- | --- | --- |
+| 0 | 12 | 1.2 cm | 4.7 cm |
+| 1 | 48 | 4.7 cm | 19 cm |
+| 2 | 240 | 23 cm | **94 cm** |
+
+The near two land *below* the existing `SHADOW_FLAT_MIN_HEIGHT` of 0.5,
+so they cannot move - the change is confined to the far cascade by
+construction rather than by intent. There, nothing under about a metre
+casts any more. A tree, a person and a fence post all clear it; a weed, a
+flower and a small bush do not, and the largest shadow removed is a few
+screen pixels at a hundred metres.
+
+The **lantern** replays pass no texel and are untouched, which is right
+and not merely convenient: a cube face is 512 over a range of about
+eighteen units, so four of its texels is 28 cm - under the floor anyway.
+
+### F5's batch line is retired with it
+
+Once the sprite test exists, F5 can no longer decide anything about a
+flat. A single-flat batch's radius is `hypot(w, h) / 2`, so F5 fired only
+when `hypot(w, h) < 4 texels` - and that implies `h < 4 texels`, which is
+the sprite test itself. A multi-flat batch's sphere spans its pixel and
+F5 never fired on it at all.
+
+**How that was found is the useful part.** F5's own behavioural pin in
+`bugs5_field.test.js` kept passing after WEEDS1 landed - but for the
+wrong reason: the same flat was now culled by the height test instead.
+Its MUTANT survived, which is what said so. The pin is re-aimed onto
+WEEDS1 with a WIDE short flat added (the one shape F5 could never catch),
+and F5's test over MESHES and terrain, at the top of the replay loop, is
+untouched and still live.
+
+**Pinned** in `test/weeds1_flatcasters.test.js` (4), including the
+subsumption checked arithmetically over five sprite shapes rather than
+argued. Mutants `tools/mutants/weeds1.json`: 8 - 8 dead. Six `bugs5.json`
+records re-aimed by content and one retired with the line it mutated.
+
+**The lesson: a cull that measures the wrong extent is not a weak cull,
+it is no cull at all - and it will sit there for months looking like one,
+because the code that would have caught it is the code it is standing in
+for.**
+
+## GRAIN2 - "Why dont we crank it to 16?" (2026-09-19)
+
+The honest answer to that question is: **4 was a guess, and the 16 I
+quoted was not your hardware.**
+
+GRAIN1 reported `EXT_texture_filter_anisotropic` at a maximum of 16,
+"verified in real WebGL2". That WebGL2 is **SwiftShader** - ANGLE's
+software rasteriser, which is the only GL this container has. It reports
+16 because it can do 16 in software; it says nothing about any GPU, and
+its cost profile for anisotropic taps is nothing like one. The number was
+reported honestly and read further than it should have been.
+
+So the two things worth knowing:
+
+**Why not just set 16.** Anisotropy is paid in fill rate, on the pass
+that covers more screen than any other. Most of the sharpness arrives by
+4x and the curve flattens hard after it - but "flattens" is not "free",
+and the machine that pays is not always the one asking. This is a
+multiplayer port; a laptop on integrated graphics is a player too.
+
+**Why 16 is probably fine anyway, on this texture.** The expensive case
+for anisotropy is a large working set streaming from VRAM. The terrain
+tile array is 56 layers of 64x64 - under a megabyte with its mipmap
+chain, small enough to stay resident in cache. Sixteen taps of a texture
+that never leaves L2 is a very different proposition from sixteen taps of
+a 4K album. The folklore is about the latter.
+
+Neither of those is a measurement, and this session cannot make one. So
+the number stops being a number chosen once for everybody and becomes a
+**dial**: `groundSharpness`, off / default (4x) / maximum, on the
+Features page beside the cloud dial, the player's own online, landing on
+the next world load as every quality dial does.
+
+`anisotropyFor(tier, driverMax)` is the whole law and it is pure:
+`off` is 1 (the extension's own word for none - not 0, which is not a
+legal value), `max` is whatever the driver allows, `default` is 4 capped
+by the driver, and an unknown tier - a pref written by a future build -
+falls back to the default rather than to the maximum. A driver with no
+extension answers 1 for every tier and the renderer then asks for
+nothing at all.
+
+**Pinned** in `test/grain1_terrainmip.test.js`. Mutants
+`tools/mutants/grain1.json`: 15 - 15 dead, 0 survived.
+
+**The lesson: a number nobody can measure should not be spelled into the
+source as though somebody had. GRAIN1's 4 was defensible and its 16 was
+a software rasteriser talking - the fix for both is the same, and it is
+not a better guess.**
