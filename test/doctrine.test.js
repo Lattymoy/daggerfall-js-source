@@ -67,6 +67,8 @@ const PUBLIC_ALLOWLIST = new Map([
   ['public/art/held-map.png', "OURS - Mac's own painting of the held parchment (MAP0, 2026-09-18); no ARENA2 pixel in it"],
   ['public/art/gun-idle.png', "OURS - Mac's own weapon art for the gun lab (2026-09-19); no ARENA2 pixel in it"],
   ['public/art/gun-fire-sheet.webp', "OURS - Mac's own six-frame fire sheet for the gun lab (2026-09-19); no ARENA2 pixel in it"],
+  ['public/art/gun-paperdoll.png', "OURS - Mac's own weapon art for the gun lab (2026-09-19), baked down and cut for the doll's hand by tools/gunPaperdoll.mjs; no ARENA2 pixel in it"],
+  ['public/art/gun-ammo.png', "OURS - Mac's own ammunition art for the gun lab (2026-09-19), baked down by tools/gunPaperdoll.mjs; no ARENA2 pixel in it"],
   ['public/sfx/SOURCES.md', 'documentation - where every sound in this folder came from, with its license'],
   ['public/sfx/fire-shotgun.wav', 'CC0 (Freesound 473846, LilMati), public domain - baked to DAGGER.SND\'s 11025Hz 8-bit by tools/sndify.mjs; see public/sfx/SOURCES.md'],
   ['public/sfx/fire-20gauge.wav', 'CC0 (Freesound 427595, michorvath), public domain - baked to DAGGER.SND\'s 11025Hz 8-bit by tools/sndify.mjs; see public/sfx/SOURCES.md'],

@@ -226,6 +226,61 @@ plays a clip at its own rate every time, but a gun fired six times in
 four seconds is exactly where the ear catches a sample repeating. Zero
 the slider and the clip is the file.
 
+## The paperdoll and the inventory
+
+Mac: *"treat this like the other weapon sprites, it needs a gap for it
+to fit into the paperdoll's right hand."*
+
+**One sprite does both jobs, which is why the gap is not optional.** A
+weapon's paperdoll layer and its inventory icon are the *same record*
+in Daggerfall — `GetInventoryTextureArchive` hands back the item's
+`PlayerTextureArchive`, the very field the doll draws from
+(`src/characters/paperdollArt.js`) — so whatever is cut out of the
+sprite is cut out of both. That is exactly why classic weapon icons
+have a notch in them: it is not an icon with a hole, it is a doll
+layer being shown in a list.
+
+**The gap.** The doll composites bottom-up and weapons carry
+`drawOrder` 100, so the weapon lands *on top of* the body, hand
+included. Transparent pixels are the only way the fist reads through.
+It is cut as a **band across the grip at the grip's own angle**, not
+as a circle punched into it, and the reason is what it leaves behind:
+a band severs the grip cleanly so the receiver stays above the hand
+and the butt stays below it, and the eye reads two ends of one grip
+with a fist between them. A circle leaves a ragged crescent and reads
+as damage — which is how the first pass looked.
+
+`tools/gunPaperdoll.mjs` (`npm run gunart`) does it, with
+`tools/pngIO.mjs` for the PNG (no image library in this container, and
+two functions that are mostly zlib are not worth a dependency):
+
+- **trim** to the alpha box, then **box-average downscale weighted by
+  alpha**. Nearest-neighbour is the reflex for pixel art and it is
+  wrong in this direction — 1790px to 72 keeps one pixel in
+  twenty-five and turns every rivet into aliasing confetti. The alpha
+  weighting is what stops the outline bleeding toward black at the
+  edge.
+- **harden the alpha to 1 bit**, because the port's own law is 1 bit:
+  `drawScreenQuad` discards texels under 0.5 and the classic art is an
+  indexed bitmap where index 0 is simply absent. A soft edge looks
+  right in a PNG viewer and wrong the moment the game draws it.
+- **punch the band**, then write `public/art/gun-paperdoll.png` (72×22)
+  and `public/art/gun-ammo.png` (22×22 — it has to fit the 50×38 list
+  cell).
+
+**72px wide is not a look, it is the grip.** The doll's fist is about
+8px across and the grip is a quarter of the art's height; the gun has
+to be big enough that a fist-sized hole lands *on the grip* instead of
+eating the receiver with it. At 56px the first attempt severed the
+receiver and left the butt as a floating chip.
+
+**What this container cannot answer:** there is no ARENA2 here, so
+there is no real doll to lay the sprite over and the exact hand pixel
+is a judgement call. `--sheet` renders four candidate bands side by
+side with a stand-in fist behind the gap, for whoever has the game to
+pick; `--band=cx,cy,deg,thick,length` sets it (cx,cy as fractions of
+the trimmed art, so they survive a change of `--width`).
+
 ## Running it, and deploying it on its own
 
     npx vite            # then open /gun-proto.html

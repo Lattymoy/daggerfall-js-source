@@ -319,3 +319,25 @@ test('the recoil is a DISPLACEMENT that settles, and a second shot stacks on wha
   for (let i = 0; i < 40; i++) r2.step(0.1);
   assert.ok(Number.isFinite(r2.y) && Math.abs(r2.y) < 1, 'a 100ms frame does not blow it up');
 });
+
+test('the paperdoll sprite is cut for the doll’s hand, and both icons are 1-bit', () => {
+  // ONE SPRITE, TWO JOBS: a weapon's paperdoll layer and its inventory
+  // icon are the same record in Daggerfall (GetInventoryTextureArchive
+  // hands back PlayerTextureArchive - characters/paperdollArt.js), so
+  // the gap the doll needs is in the icon too. That is why classic
+  // weapon icons have a notch: they are doll layers shown in a list.
+  const read = (f) => {
+    const b = readFileSync(`public/art/${f}`);
+    assert.equal(b.readUInt32BE(0), 0x89504E47, `${f} is a PNG`);
+    return { w: b.readUInt32BE(16), h: b.readUInt32BE(20), depth: b[24], type: b[25] };
+  };
+  const gun = read('gun-paperdoll.png');
+  const ammo = read('gun-ammo.png');
+  for (const [name, m] of [['gun-paperdoll.png', gun], ['gun-ammo.png', ammo]]) {
+    assert.equal(m.depth, 8, `${name} is 8-bit`);
+    assert.equal(m.type, 6, `${name} is RGBA`);
+  }
+  // sized for the panel, not for a screen: PAPERDOLL_W is 110
+  assert.ok(gun.w > 40 && gun.w <= 110, `the gun fits the doll's panel (${gun.w}px of 110)`);
+  assert.ok(ammo.w <= 50 && ammo.h <= 38, `the ammo fits the 50x38 list cell (${ammo.w}x${ammo.h})`);
+});
