@@ -157,7 +157,7 @@ import {
   SHEET_GRID, FIRE_FRAMES, ALIGN, cellRect, keyBackground, contentBox,
   unionBox, unionDrawRect, placeSprite, createGunMachine, muzzleLight,
   createRecoil, createScreenShake, createWidgetRig, widgetRigStep, labWidgetSettings, labMotion,
-  widgetTransformRect, SFX, createSfxPlayer,
+  widgetTransformRect, SFX_CANDIDATES, createSfxPlayer,
 } from '/src/tools/gunLab.js';
 
 const canvas = document.getElementById('c');
@@ -169,7 +169,7 @@ const state = {
   fps: 14, cool: 1700, hit: 1, auto: false,
   kick: 5, back: 0, stiff: 400, damp: 36,
   shake: 30, shakeRot: 4, shakeFreq: 60, shakeDecay: 5,
-  sfxFire: SFX.fire[0][0], sfxOpen: SFX['reload-open'][0][0], sfxClose: SFX['reload-close'][0][0],
+  sfxFire: SFX_CANDIDATES.fire[0][0], sfxOpen: SFX_CANDIDATES['reload-open'][0][0], sfxClose: SFX_CANDIDATES['reload-close'][0][0],
   sfxVol: 0.7, sfxVary: 0.06, sfxOn: true,
   drop: 0.55, offsetSpeed: 1, modOffset: true,
   modBob: true, bobLength: 100, bobSizeX: 1, bobSizeY: 1, bobSpeedMove: 1, bobSpeedState: 1, bobShape: 0, bobIdle: true,
@@ -278,10 +278,10 @@ const shake = createScreenShake();
 // misses the shot it was fired for.
 const sfx = createSfxPlayer();
 for (const [id, slot] of [['sfxFire', 'fire'], ['sfxOpen', 'reload-open'], ['sfxClose', 'reload-close']]) {
-  $(id).innerHTML = SFX[slot].map(([v, label]) => `<option value="${v}">${label}</option>`).join('');
+  $(id).innerHTML = SFX_CANDIDATES[slot].map(([v, label]) => `<option value="${v}">${label}</option>`).join('');
 }
-for (const list of Object.values(SFX)) for (const [name] of list) sfx.load(name).catch(() => {});
-globalThis.__gunLabSfx = SFX;   // tools/gunProtoProbe.mjs resolves every one of them
+for (const list of Object.values(SFX_CANDIDATES)) for (const [name] of list) sfx.load(name).catch(() => {});
+globalThis.__gunLabSfx = SFX_CANDIDATES;   // tools/gunProtoProbe.mjs resolves every one of them
 let scrub = -1;          // frame held while idle (arrow keys), -1 = live
 let hitFlash = 0;        // the target's tell, so the hit frame can be judged
 let look = [0, 0];       // the frame's look, as takeFrameLook hands it over

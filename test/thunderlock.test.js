@@ -19,12 +19,15 @@ import { weaponSkillUsed, weaponMinDamage, weaponMaxDamage } from '../src/charac
 import { SKILLS } from '../src/systems/skills.js';
 import { templateByIndex, ITEM_TEMPLATES } from '../src/systems/itemTemplates.js';
 import { weaponTypeForItem, WEAPON_TYPES, getWeaponAnims } from '../src/combat/fpsWeapon.js';
-import { THUNDERLOCK_NUM_FRAMES, MELEE_NUM_FRAMES, BOW_NUM_FRAMES } from '../src/characters/weaponStates.js';
+import {
+  THUNDERLOCK_NUM_FRAMES, MELEE_NUM_FRAMES, BOW_NUM_FRAMES,
+  createWeaponMachine, machineAttack, machineStep,
+} from '../src/characters/weaponStates.js';
 import { isBowWeapon, attackSkillOf, WEAPON_SKILL_BY_TEMPLATE } from '../src/scenes/hostCombat.js';
 import { spendAmmoFor, ammoCountFor } from '../src/systems/inventory.js';
 import { playerArchiveFor } from '../src/characters/paperdollArt.js';
 import { shimmer } from '../src/combat/thunderlockArt.js';
-import { uniqueFinds, uniqueFindChance, rollLootRarity, legendariesFor } from '../src/systems/lootRarity.js';
+import { uniqueFinds, uniqueFindChance, rollLootRarity, legendariesFor, rarityEligible } from '../src/systems/lootRarity.js';
 import { GROUP_TEMPLATE_INDICES } from '../src/systems/itemTemplates.js';
 import { FIND_MIN_TIER } from '../src/systems/thunderlock.js';
 
@@ -225,4 +228,125 @@ test('the find adds to a list rather than promoting one, and claims its own lege
   assert.deepEqual(legendariesFor({ group: 'Weapons', templateIndex: 113 }).map((l) => l.name),
     ['Wyrmbane', 'Nightwhisper'], 'a dagger is still both of its own');
   assert.deepEqual(legendariesFor({ group: 'Weapons', templateIndex: 120 }).map((l) => l.name), ['Wyrmbane']);
+});
+
+// ── THE AUDIT'S OWN PINS (2026-09-19) ───────────────────────────────
+// Six findings, and the first is the one every test above missed for
+// the same reason: they import systems/thunderlock.js, and importing
+// the module under test brings its side effects with it. The GAME
+// imported nothing, so in the running game the weapon had no template
+// row, could never drop, and had no icons - while a green suite said
+// otherwise. These pins ask the question the way the game asks it.
+
+test('F1: the weapon EXISTS when the game boots, not only when a test imports it', async () => {
+  // A HOST, not the weapon's own module. Nothing below names
+  // systems/thunderlock.js - if the wire is pulled, every assertion
+  // here fails and the suite finally notices.
+  await import('../src/systems/worldTick.js');
+  const { templateByIndex } = await import('../src/systems/itemTemplates.js');
+  const lr = await import('../src/systems/lootRarity.js');
+  assert.equal(templateByIndex(THUNDERLOCK_TEMPLATE)?.name, 'Dwarven Thunderlock', 'the template registered');
+  assert.equal(templateByIndex(PELLET_TEMPLATE)?.name, 'Dwemer Pellet');
+  assert.ok(lr.uniqueFinds().some((f) => f.id === 'dwarven-thunderlock'), 'the find registered');
+  assert.ok(lr.isAmmunition({ templateIndex: PELLET_TEMPLATE }), 'the pellet registered as ammunition');
+  assert.ok(lr.legendariesFor({ group: 'Weapons', templateIndex: THUNDERLOCK_TEMPLATE }).length, 'the legendary registered');
+  // and the wire itself, named, so deleting it is a decision
+  const tick = readFileSync('src/systems/worldTick.js', 'utf8');
+  assert.match(tick, /import \{ installThunderlockIcons \} from '\.\/thunderlock\.js'/, 'a host carries the import');
+  assert.match(tick, /^installThunderlockIcons\(\);/m, 'and calls it');
+});
+
+test('F2: it pays the bow’s cooldown without drawing like a bow', () => {
+  const gun = createWeaponMachine(false);
+  gun.ranged = true; gun.frames = THUNDERLOCK_NUM_FRAMES;
+  assert.equal(machineAttack(gun, 'StrikeDown'), true);
+  for (let i = 0; i < 400 && gun.state !== 'Idle'; i++) machineStep(gun, 0.02, 50);
+  assert.equal(gun.state, 'Idle');
+  assert.ok(gun.cooldownUntil > gun.now, 'the shot leaves a cooldown behind it');
+  assert.equal(machineAttack(gun, 'StrikeDown'), false, 'and a second shot inside it is refused');
+  // the classic machines are exactly what they were
+  const melee = createWeaponMachine(false);
+  machineAttack(melee, 'StrikeDown');
+  for (let i = 0; i < 400 && melee.state !== 'Idle'; i++) machineStep(melee, 0.02, 50);
+  assert.equal(melee.cooldownUntil, 0, 'a melee swing still has no cooldown');
+  const bow = createWeaponMachine(true);
+  assert.equal(bow.ranged, true, 'and a bow is ranged by construction, so nothing had to be told about it');
+});
+
+test('F3/F5: ALL FOUR HOSTS fire it, and it says when it is empty', () => {
+  // THE FOUR HOSTS RULE. Three were converted and the fourth was not,
+  // which is the exact shape of bug this repo has a rule about: the
+  // exterior host kept `=== WEAPON_TYPES.Bow` and spendArrow, so the
+  // gun fell to the melee arc in the open world alone.
+  for (const host of ['src/scenes/world.js', 'src/scenes/worldModes.js', 'src/scenes/dungeonContext.js', 'src/scenes/exterior.js']) {
+    const s = readFileSync(host, 'utf8');
+    assert.ok(!s.includes('spendArrow('), `${host} does not spend an Arrow by name`);
+    assert.match(s, /spendAmmoFor\(/, `${host} asks the weapon what it spends`);
+  }
+  // and the out-of-ammo guard is not bow-only either
+  const rig = readFileSync('src/combat/weaponRig.js', 'utf8');
+  assert.match(rig, /WEAPON_TYPES\.Thunderlock/, 'the guard knows the ranged weapons');
+  assert.match(rig, /'You have no pellets\.'/, 'and names what it is out of');
+  assert.match(rig, /'You have no arrows\.'/, 'without losing the classic line');
+});
+
+test('F4: a found stack of ammunition is never promoted, because promoting it would shatter it', () => {
+  // an enchanted item does not stack (isStackable refuses one), so a
+  // promoted find of twenty becomes twenty rows to carry
+  assert.equal(rarityEligible(createPellets(20)), false);
+  assert.equal(rarityEligible({ templateIndex: 131, group: 'Weapons' }), false, 'the Arrow’s own rule, unchanged');
+  assert.equal(rarityEligible(createThunderlock()), true, 'the weapon itself still rolls');
+});
+
+test('F6: the deploy does not point a loaded gun at production', () => {
+  const yml = readFileSync('.github/workflows/deploy.yml', 'utf8');
+  // checking out a FEATURE BRANCH by name means deleting that branch
+  // after the merge fails the step and takes the whole Pages deploy
+  // down with it - the game's, not only the lab's
+  assert.ok(!/ref:\s*claude\//.test(yml), 'no feature branch is checked out by name');
+  assert.match(yml, /Build gun lab[\s\S]*?working-directory: production/, 'the lab builds from the production checkout');
+});
+
+test('F8: the game plays the weapon’s own clips - all four hosts, through the mod-sound door', async () => {
+  // A SOUND NOBODY HEARS IS NOT A SOUND. The clips were baked,
+  // allow-listed, documented and wired into the LAB - and the machine
+  // only emits `bowSound` for a bow, so the weapon fired in silence in
+  // the game. The lab having them made that harder to notice, not
+  // easier.
+  const { SFX, SFX_FILES, installThunderlockSounds } = await import('../src/systems/thunderlock.js');
+  assert.deepEqual(Object.keys(SFX_FILES).sort(), [SFX.close, SFX.fire, SFX.open].sort());
+  for (const file of Object.values(SFX_FILES)) {
+    const b = readFileSync(`public/sfx/${file}`);
+    const dv = new DataView(b.buffer, b.byteOffset, b.byteLength);
+    assert.equal(dv.getUint32(24, true), 11025, `${file} is the classic rate`);
+  }
+  // the registration is the MOD-SOUND door (MW-D40), so no new audio
+  // path exists and every entry point takes the key
+  const registered = new Map();
+  const audio = { registerSound: (key, bytes) => { registered.set(key, bytes); return true; } };
+  const n = await installThunderlockSounds(audio, { fetchBytes: async (f) => new Uint8Array([102, f.length]) });
+  assert.equal(n, 3, 'three clips registered');
+  assert.deepEqual([...registered.keys()].sort(), [SFX.close, SFX.fire, SFX.open].sort());
+  // and the ONE place all four hosts share plays them
+  const rig = readFileSync('src/combat/weaponRig.js', 'utf8');
+  assert.match(rig, /thunderlockVoice\(dt\);/, 'the rig has a per-frame voice');
+  assert.match(rig, /audio\.playOneShot\(TL_SFX\.fire/, 'the shot');
+  assert.match(rig, /audio\.playOneShot\(TL_SFX\.open/, 'the reload opening');
+  assert.match(rig, /audio\.playOneShot\(TL_SFX\.close/, 'and the lock-up');
+});
+
+test('F7: the art is fetched off the SITE root, not the document - the held map’s own lesson', async () => {
+  const { appRootFrom } = await import('../src/systems/appRoot.js');
+  // the built game's document is /play/index.html and its chunk is at
+  // /assets/ - so the document's base is the wrong root and the
+  // module's is the right one. This is not hypothetical: it is
+  // MAP-FIELD, four weeks earlier, on Mac's own sprite.
+  assert.equal(appRootFrom('https://mac.dev/assets/main-99h17hA7.js'), 'https://mac.dev/');
+  assert.equal(appRootFrom('https://mac.dev/src/combat/thunderlockArt.js'), 'https://mac.dev/');
+  assert.equal(appRootFrom('blob:nope'), null, 'and an unbaseable URL answers null rather than throwing');
+  for (const f of ['src/combat/thunderlockArt.js', 'src/systems/thunderlock.js']) {
+    const s = readFileSync(f, 'utf8');
+    assert.match(s, /APP_ROOT/, `${f} resolves against the site root`);
+    assert.ok(!/new URL\([^)]*globalThis\.document\?\.baseURI\s*\)/.test(s), `${f} does not resolve against the document alone`);
+  }
 });

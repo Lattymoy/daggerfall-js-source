@@ -297,6 +297,6 @@ test('MW-D19: the rig hands the worn item to the arm every frame, in machine ord
   assert.ok(sheatheAt >= 0 && sheatheAt < swapAt, 'sheathe state before the swap');
   assert.ok(swapAt < tickAt, 'and the swap before the tick');
   // ONE home for the arrow test - the rig's own guard rides the export.
-  assert.match(rig, /hasAmmoFor\(entity\.items, playerWeapon\.weapon\)/, 'the ranged guard rides the same export, asked of the weapon in hand');
+  assert.match(rig, /hasAmmoFor\(entity\.items, weapon\)/, 'the ranged guard rides the same export, asked of the weapon in hand');
   assert.ok(!/templateIndex === 131/.test(rig), 'no third literal copy of the arrow template');
 });

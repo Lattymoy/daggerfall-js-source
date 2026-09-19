@@ -108,9 +108,26 @@ const ARROW_TEMPLATE = 131;
  *  armour, a piece of jewellery. Never a quest item, an artifact, a
  *  DFU magic item (it is already Magic and keeps DFU's name), an item
  *  that already rolled (LR4: one roll per item, ever), or a worn one. */
+/** AMMUNITION IS NEVER PROMOTED. DFU's own reason is the Arrow's: a
+ *  stack is not an item you compare, and promoting one ENCHANTS it,
+ *  which makes it unstackable (isStackable refuses an enchanted item)
+ *  - so a quiver of twenty becomes twenty rows the player has to
+ *  carry one at a time. The Arrow was named by its index here; a mod
+ *  that adds ammunition registers it, since this file has no business
+ *  knowing what a Dwemer Pellet is.
+ *
+ *  AUDIT-THUNDERLOCK F4: the Pellet was eligible. A found stack could
+ *  roll Magic and shatter itself. */
+const _ammunition = new Set([ARROW_TEMPLATE]);
+export function registerAmmunition(templateIndex) {
+  if (Number.isFinite(templateIndex)) _ammunition.add(templateIndex);
+  return _ammunition.size;
+}
+export const isAmmunition = (item) => _ammunition.has(item?.templateIndex);
+
 export function rarityEligible(item) {
   if (!item || item.questItem || item.artifact || item.magic || item.rarity || enchanted(item) || item.equipSlot != null) return false;
-  if (item.group === 'Weapons') return item.templateIndex !== ARROW_TEMPLATE;
+  if (item.group === 'Weapons') return !isAmmunition(item);
   return item.group === 'Armor' || item.group === 'Jewellery';
 }
 

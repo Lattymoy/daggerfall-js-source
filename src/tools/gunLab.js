@@ -225,10 +225,13 @@ export function createRecoil({ kick = 5, stiff = 400, damp = 36, back = 0 } = {}
  * finished early. `fire` plays on the shot, `reload-open` when the
  * weapon starts down, `reload-close` as it comes back up.
  *
- * The lists are the LAB's, in the order the audition put them - the
- * dropdowns open on the first, which is the pick.
+ * The lists are the LAB's CANDIDATES, in the order the audition put
+ * them - the dropdowns open on the first, which is the pick. Named
+ * apart from systems/thunderlock.js's SFX, which is the three CLIP
+ * KEYS the game plays: two different things, and one name for both is
+ * what audit24's ratchet is for.
  */
-export const SFX = Object.freeze({
+export const SFX_CANDIDATES = Object.freeze({
   fire: Object.freeze([
     ['fire-shotgun', 'shotgun (clean crack)'],
     ['fire-20gauge', '20 gauge (the real one)'],
@@ -453,7 +456,7 @@ export function widgetRigStep(rig, s, dt, {
 
 /**
  * THE MOTOR'S FRAME, as the rig assembles it for the clone
- * (weaponRig.js:907-914) - baseSpeed from GetBaseSpeed's walk arm,
+ * (weaponRig.js:953-960) - baseSpeed from GetBaseSpeed's walk arm,
  * speedRatio the live speed over it, and localVel the eye's motion
  * turned into the body's frame (right, up, forward). The lab has no
  * motor, so `walking`/`running` stand in for one and the vector is

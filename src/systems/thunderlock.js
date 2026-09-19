@@ -32,8 +32,9 @@
 
 import { registerCustomTemplates, templateByIndex, mintCondition, setItemFields } from './itemTemplates.js';
 import { addVendorTextures, vendorTextureCount } from './textureReplacement.js';
-import { registerUniqueFind, registerLegendary } from './lootRarity.js';
+import { registerUniqueFind, registerLegendary, registerAmmunition } from './lootRarity.js';
 import { SKILLS } from './skills.js';
+import { APP_ROOT } from './appRoot.js';   // AUDIT-THUNDERLOCK F7
 // The indices live in a LEAF (characters/thunderlockIds.js) because
 // characters/weapons.js needs them too and importing this file from
 // there would close a cycle through systems/itemTemplates.js. Said out
@@ -190,7 +191,10 @@ export const ICON_FILES = Object.freeze([
   { archive: ART.ammoArchive, record: 0, frame: 0, file: 'gun-ammo.png' },
 ]);
 
-export const iconUrl = (file) => new URL(`art/${file}`, globalThis.document?.baseURI ?? 'http://localhost/').href;
+/** AUDIT-THUNDERLOCK F7: the SITE root, not the document's - the
+ *  game's document is `/play/index.html` and these live at
+ *  `<root>/art/`. See systems/appRoot.js, and the held map before it. */
+export const iconUrl = (file) => new URL(`art/${file}`, APP_ROOT ?? globalThis.document?.baseURI ?? 'http://localhost/').href;
 
 let _installed = false;
 /** Register the icons once. `fetchBytes` is the test's door. */
@@ -234,6 +238,11 @@ export function installThunderlockIcons({ fetchBytes = null } = {}) {
 export const FIND_MIN_TIER = 4;
 export const FIND_PELLETS = Object.freeze({ min: 6, max: 18 });
 
+// The pellet is AMMUNITION: never rarity-promoted, for the Arrow's own
+// reason - promoting a stack enchants it, and an enchanted item does
+// not stack, so a find of twenty becomes twenty rows to carry.
+registerAmmunition(PELLET_TEMPLATE);
+
 registerUniqueFind({
   id: 'dwarven-thunderlock',
   minTier: FIND_MIN_TIER,
@@ -259,3 +268,50 @@ registerLegendary({
   enchantment: { type: 3, param: 20 },   // CastWhenStrikes - the shot carries a spell
   lore: 'The Dwemer left no instructions and no second one.',
 });
+
+// ── THE SOUND ───────────────────────────────────────────────────────
+//
+// AUDIT-THUNDERLOCK F8: the clips existed and the GAME NEVER PLAYED
+// ONE. They were baked, allow-listed, documented and wired into the
+// lab - and the machine only emits `bowSound` for a bow, so the
+// weapon fired in silence in all four hosts. A sound nobody hears is
+// not a sound, and the lab having it made that harder to notice
+// rather than easier.
+//
+// They go in through the door a mod's WAV already uses:
+// audio.registerSound(key, bytes) registers a decoded clip under a
+// string key, and every entry point that takes a DAGGER.SND index
+// takes that key instead (MW-D40). So the weapon's clips are played
+// by `audio.playOneShot('thunderlock:fire')` - no new audio path, and
+// no host learns that this weapon has sounds of its own.
+export const SFX = Object.freeze({
+  fire: 'thunderlock:fire',
+  open: 'thunderlock:open',
+  close: 'thunderlock:close',
+});
+/** The picks from public/sfx (see its SOURCES.md - all CC0, all baked
+ *  to DAGGER.SND's own 11025Hz 8-bit mono). */
+export const SFX_FILES = Object.freeze({
+  [SFX.fire]: 'fire-shotgun.wav',
+  [SFX.open]: 'open-winchester.wav',
+  [SFX.close]: 'close-ready.wav',
+});
+export const sfxUrl = (file) => new URL(`sfx/${file}`, APP_ROOT ?? globalThis.document?.baseURI ?? 'http://localhost/').href;
+
+let _sounds = null;
+/** Register the three clips, once. Answers how many took. */
+export function installThunderlockSounds(audio, { fetchBytes = null } = {}) {
+  if (!audio?.registerSound) return Promise.resolve(0);
+  return (_sounds ??= (async () => {
+    const load = fetchBytes ?? (async (file) => {
+      const r = await fetch(sfxUrl(file));
+      if (!r.ok) throw new Error(`${file}: ${r.status}`);
+      return new Uint8Array(await r.arrayBuffer());
+    });
+    let n = 0;
+    for (const [key, file] of Object.entries(SFX_FILES)) {
+      try { if (await audio.registerSound(key, await load(file))) n++; } catch { /* the weapon still fires, silently */ }
+    }
+    return n;
+  })());
+}

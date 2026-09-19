@@ -31,7 +31,8 @@ import { EQUIP_SLOTS, equipTableOf } from '../systems/equip.js';   // AUDIT 17e 
 import { dfWornEquipment } from '../formats/mwItemMap.js';   // MW-D32
 import { ARMOR_ENUM } from './enemyEquipment.js';   // MW-D32
 import { loadFpsWeaponArt, drawFpsWeapon, weaponTypeForItem, WEAPON_TYPES, fpLightingOn } from './fpsWeapon.js';
-import { loadThunderlockArt } from './thunderlockArt.js';   // the port's own weapon: its art is a sheet, not a CIF   // MAC-I: the tint's switch, with the sprite it tints
+import { loadThunderlockArt } from './thunderlockArt.js';
+import { installThunderlockSounds, SFX as TL_SFX } from '../systems/thunderlock.js';   // AUDIT-THUNDERLOCK F8: the weapon's own clips, through the mod-sound door   // the port's own weapon: its art is a sheet, not a CIF   // MAC-I: the tint's switch, with the sprite it tints
 // ROAD-tail (FPSSpellCasting.cs): the classic spellcasting HANDS. A
 // separate component in DFU and a separate module here, drawn by the
 // same rig because this is the one surface every FPS-weapon host
@@ -598,18 +599,50 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
     }
   }
 
+  // ── THE THUNDERLOCK'S VOICE (AUDIT-THUNDERLOCK F8) ────────────────
+  let _tlState = 'Idle', _tlOpened = false, _tlClosed = false, _tlSounds = false;
+  /** The close lands this long before the weapon is ready - the clip's
+   *  own length, so the lock-up is finishing as the sprite arrives. */
+  const TL_CLOSE_LEAD = 0.42;
+  function thunderlockVoice(dt) {
+    const type = weaponTypeForItem(playerWeapon.weapon);
+    if (type !== WEAPON_TYPES.Thunderlock && type !== WEAPON_TYPES.Thunderlock_Magic) {
+      _tlState = 'Idle'; _tlOpened = false; _tlClosed = false;
+      return;
+    }
+    if (!_tlSounds) { _tlSounds = true; installThunderlockSounds(audio); }
+    const m = playerWeapon.machine;
+    // the shot, on the trigger's own edge
+    if (m.state !== 'Idle' && _tlState === 'Idle') audio.playOneShot(TL_SFX.fire, 1);
+    _tlState = m.state;
+    // the reload, on the cooldown the shot left behind
+    const cooling = m.now < m.cooldownUntil;
+    if (!cooling) { _tlOpened = false; _tlClosed = false; return; }
+    if (!_tlOpened) { _tlOpened = true; audio.playOneShot(TL_SFX.open, 0.9); }
+    if (!_tlClosed && m.now >= m.cooldownUntil - TL_CLOSE_LEAD) { _tlClosed = true; audio.playOneShot(TL_SFX.close, 0.95); }
+  }
+
   /** FPSWeapon.UpdateWeapon's bow guard: an UNsheathed bow with zero
-   *  Arrows auto-sheathes with the classic line. */
+   *  Arrows auto-sheathes with the classic line.
+   *
+   *  AUDIT-THUNDERLOCK F5: EVERY RANGED WEAPON, and the line names
+   *  what it is out of. This gated on WeaponTypes.Bow, so the port's
+   *  own weapon at zero pellets never sheathed and fired in silence -
+   *  a trigger that does nothing and says nothing, which is the worst
+   *  of both. The classic weapon's classic line is untouched. */
   function bowArrowGuard() {
     if (playerWeapon.sheathed) return;
-    if (weaponTypeForItem(playerWeapon.weapon) !== WEAPON_TYPES.Bow) return;
-    if (hasAmmoFor(entity.items, playerWeapon.weapon)) return;
+    const weapon = playerWeapon.weapon;
+    const type = weaponTypeForItem(weapon);
+    const ranged = type === WEAPON_TYPES.Bow || type === WEAPON_TYPES.Thunderlock || type === WEAPON_TYPES.Thunderlock_Magic;
+    if (!ranged) return;
+    if (hasAmmoFor(entity.items, weapon)) return;
     playerWeapon.sheathed = true;
     // AUDIT 64 F34: FPSWeapon.cs:365 is SetMidScreenText, not the popup
     // queue - and `say` here is shared with the shield refusal below,
     // which really is a PopupMessage, so this line takes the label
     // directly rather than re-pointing the sink.
-    setMidScreenText('You have no arrows.');
+    setMidScreenText(type === WEAPON_TYPES.Bow ? 'You have no arrows.' : 'You have no pellets.');
   }
 
   return {
@@ -884,6 +917,19 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
       // The rule's own reason was the hit frame - it never argued the
       // arrow should leave before the string does.
       const evs = playerWeapon.update(dt);
+      // AUDIT-THUNDERLOCK F8: THE WEAPON'S OWN VOICE, in the one place
+      // all four hosts share. The machine emits `bowSound` for a bow
+      // and nothing for anything else, so the port's own weapon fired
+      // in silence everywhere - with three baked clips sitting in
+      // public/sfx and a lab that played them.
+      //
+      // The trigger, not the hit frame: the flash is what the ear is
+      // matching, and the hit lands a tick later. The reload's two
+      // ends ride the machine's own cooldown clock, so a slower
+      // character reloads slower and the lock-up still lands with the
+      // weapon coming back up - the lab's law, off the numbers the
+      // machine already keeps.
+      thunderlockVoice(dt);
       // WW1: the clone's LateUpdate, after the original's frame advance -
       // the same order DFU's LateUpdate has against FPSWeapon's Update.
       const _torchesOn = handheldOn();

@@ -27,13 +27,22 @@ import { FIRE_FRAMES, cellRect, keyBackground, contentBox, unionBox } from './gu
 import { decodePng } from '../systems/textureReplacement.js';
 import { toColor32 } from '../formats/color32Order.js';   // WW3: the ORDER *and* the shape uploadTexture reads
 import { WEAPON_TYPES, getWeaponAnims } from './fpsWeapon.js';
+import { APP_ROOT } from '../systems/appRoot.js';   // AUDIT-THUNDERLOCK F7: the SITE root, not the document's
 
-/** The sheet, beside the page that ships it - relative to the
- *  document, so the same build serves from a site root and from a
- *  preview directory (the gun lab's own lesson). */
+/** The sheet, off the SITE ROOT rather than the document.
+ *
+ *  AUDIT-THUNDERLOCK F7: this resolved against `document.baseURI`,
+ *  which is right on the lab's own page and WRONG in the game - the
+ *  game's document is `/play/index.html`, so the browser would have
+ *  asked for `/play/art/gun-fire-sheet.webp`, been handed the page
+ *  itself, failed to decode it, and drawn no weapon at all. That is
+ *  not a guess: it is exactly what happened to the held map four
+ *  weeks earlier (MAP-FIELD, "The sprite I gave to be used is nowhere
+ *  to be seen at all"), and systems/appRoot.js is that fix's law,
+ *  moved to a leaf so combat/ can afford to import it. */
 export const SHEET_FILE = 'art/gun-fire-sheet.webp';
 export const sheetUrl = (file = SHEET_FILE) =>
-  new URL(file, globalThis.document?.baseURI ?? 'http://localhost/').href;
+  new URL(file, APP_ROOT ?? globalThis.document?.baseURI ?? 'http://localhost/').href;
 
 /** The key's defaults, the numbers the lab's slider settled on. */
 export const KEY_THRESHOLD = 244, KEY_CHROMA = 10;

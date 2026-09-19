@@ -95,7 +95,12 @@ export function canChangeState(isBow, currentState, nextState) {
  *  the caller must re-read it every step - a sheathed sword flips the
  *  rig between armed and bare-handed while the machine lives on. */
 export function createWeaponMachine(isBow, isUnarmed = false) {
-  return { isBow, isUnarmed, state: 'Idle', frame: 0, ticks: 0, acc: 0, cooldownUntil: 0, now: 0, animIndex: 0, damageDone: false };
+  // `ranged` and `frames` are the port's own two fields (the Dwarven
+  // Thunderlock): a weapon that pays the bow's cooldown without
+  // drawing like one, and one whose cycle is not five frames. Both
+  // default to the classic answer, so a machine that never sets them
+  // is the machine that has always been here.
+  return { isBow, isUnarmed, ranged: isBow, frames: null, state: 'Idle', frame: 0, ticks: 0, acc: 0, cooldownUntil: 0, now: 0, animIndex: 0, damageDone: false };
 }
 
 export function machineAttack(m, strikeState) {
@@ -164,7 +169,12 @@ export function machineStep(m, dt, liveSpeed) {
       if (m.frame >= frames) {
         m.state = 'Idle'; m.frame = 0; m.ticks = 0;
         events.push('done');
-        if (m.isBow) m.cooldownUntil = m.now + getBowCooldownTime(liveSpeed);
+        // AUDIT-THUNDERLOCK F2: `m.ranged`, not `m.isBow`. A bow and
+        // the port's own weapon both pay the ranged cooldown at the
+        // end of a shot; only the bow DRAWS. Written as `?? m.isBow`
+        // so a machine minted before this field existed - every
+        // classic one - still reads exactly as it did.
+        if (m.ranged ?? m.isBow) m.cooldownUntil = m.now + getBowCooldownTime(liveSpeed);
         break;
       }
     }
