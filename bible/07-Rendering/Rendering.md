@@ -173,6 +173,26 @@ directory by `test/audit18_bible_docs.test.js`:
   applied by the pin to the lab's own slice before comparing - so a
   fourth change, or a fourth edit nobody declared, still fails. The
   fragment stage is untouched.
+  **GRASS4 (2026-09-18): THE PLACER'S COST WAS A STRING.** Opened as a
+  sweep of the whole outdoor frame for GRASS2's defect - work submitted
+  whose output is discarded - and the frame turned out to be well swept
+  already: flats culled by ring and frustum (MAC1, EV3), terrain by
+  pixel, the sun's cascades by texel radius (EL8), the lanterns gated to
+  17:00-08:00, the AO at half resolution and the bloom at a quarter. The
+  one that was left is on the CPU, in the placer: `pieceIndex` answers
+  once per blade CANDIDATE - six thousand a cell, two cells a frame
+  while the eye walks - and it built a template string for each of them.
+  Twelve thousand strings a frame, hashed, looked up and dropped; the
+  allocation was the work and the answer never needed it. `pieceKey` is
+  `px * 65536 + py` now, injective three orders of magnitude past the
+  Daggerfall map, and the placer went from 1.22 ms a cell to 0.40 - 67%
+  off, output byte-identical. AND ONE CHANGE MEASURED AND NOT MADE:
+  `ground()` repeats `keep()`'s lookup for every kept blade, which looks
+  like the same class of waste and is not - caching it across the two
+  saves nothing once the key is a number, because the duplicate was only
+  ever expensive because of the string. It was written, measured,
+  reverted, and `world.js` carries a comment saying so, because the next
+  reader will see the duplicate too.
 - `systems/wind.js` - **WIND1 (2026-09-02) THE WIND IS ITS OWN THING.**
   Mac: "wind should be something different from the weather. Imagine a
   time-lapse, seeing a storm rolling in as the wind kicks up, and the

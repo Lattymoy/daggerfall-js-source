@@ -374,6 +374,20 @@ export function grassCellSeed(cx, cz, seed = LAB_GRASS.seed) {
   return (h || 1) >>> 0;
 }
 
+/** GRASS4: the map pixel's key as a NUMBER, not a string.
+ *
+ *  `pieceIndex` is asked once per blade candidate - six thousand a cell,
+ *  two cells a frame while the eye walks - and it was building a fresh
+ *  template string for every one of them. Twelve thousand strings a
+ *  frame, each one hashed, looked up and thrown away: the allocation is
+ *  the work, and the answer never needed it. Measured on the placer,
+ *  the key alone was 0.42 ms of its 1.83 ms a cell.
+ *
+ *  px * 65536 + py is injective for any integer px and |py| < 32768,
+ *  which the Daggerfall map (1000 x 500 pixels) is nowhere near, and it
+ *  is one multiply and one add with nothing left behind. */
+export const pieceKey = (px, py) => px * 65536 + py;
+
 /** PERF8: THE PIECE UNDER A POINT, BY ARITHMETIC. The placer asks
  *  `keep(x, z)` and `ground(x, z)` once per blade - six thousand a
  *  cell, two cells a frame while the eye walks - and each answered by
@@ -392,11 +406,11 @@ export function pieceIndex(pieces, size) {
   if (!pieces.length) return () => null;
   const ref = pieces[0];
   const byKey = new Map();
-  for (const piece of pieces) byKey.set(`${piece.p.px},${piece.p.py}`, piece);
+  for (const piece of pieces) byKey.set(pieceKey(piece.p.px, piece.p.py), piece);
   return (x, z) => {
     const px = ref.p.px + Math.floor((x - ref.t[0]) / size);
     const py = ref.p.py - Math.floor((z - ref.t[2]) / size);   // z runs the other way: t[2] = -(py - origin) * size + c
-    return byKey.get(`${px},${py}`) ?? null;
+    return byKey.get(pieceKey(px, py)) ?? null;
   };
 }
 

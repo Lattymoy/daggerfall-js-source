@@ -10391,6 +10391,14 @@ export async function bootWorld(canvas, renderer, params, status) {
       const near = [...built.values()].filter((p) => p._stride === 1 && p.tilemapBytes && p.season !== SEASON.Winter);
       const pieces = near.map((p) => ({ p, t: state.pixelTranslation(p.px, p.py, [0, 0, 0]), grass: grassRecords.get(p.groundArchive) }));
       const pieceAt = pieceIndex(pieces, TERRAIN_SIZE);   // PERF8: one Map read per blade instead of a scan of every near pixel
+      // GRASS4 measured this pair and left it alone, which is worth
+      // recording so nobody "fixes" it again: `ground` repeats the
+      // lookup `keep` just did, and caching the answer across the two
+      // saves NOTHING once pieceIndex's key is a number rather than a
+      // string (labGrass.js pieceKey). The duplicate was only ever
+      // expensive because of the string it built; the arithmetic it
+      // repeats is free. A stash here would be mutable state and a
+      // coordinate guard bought for no measured gain.
       const keep = (x, z) => {
         const hit = pieceAt(x, z);
         if (!hit) return null;
