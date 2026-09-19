@@ -421,3 +421,51 @@ test('SURV-THIRST1: the harm follows AUDIT SURV E’s shape - the harm TICK, esc
   assert.doesNotMatch(line.slice(0, line.indexOf(')')), /temp\.|felt|EXPOSURE_AT/,
     'thirst no longer asks the weather - that was the mod’s law and is the port’s departure');
 });
+
+test('SURV-THIRST1 AUDIT: a clock JUMP wounds to the floor and does not kill on arrival', () => {
+  // THE REGRESSION THIS CAUGHT, found auditing SURV-THIRST1 before merge.
+  // `playerTicker.advance` (scenes/shared.js) runs the SAME tick with a
+  // fabricated dt, so a fast travel, a rest or a training session replays
+  // every minute it crossed. Six game-hours is thirty-six harm ticks in
+  // ONE frame: a starting character left at full health and arrived DEAD,
+  // from thirst zero at departure, having never been warned.
+  //
+  // Every minute but the last is a replay and may wound only to
+  // HEALTH_FLOOR; the last is the minute the player is standing in, and
+  // that one may finish them. So a thirsty journey lands you at death's
+  // door and the next minute you do not drink is the one that kills.
+  const dressed = worn({ [S.ChestClothes]: item(158), [S.LegsClothes]: item(151), [S.Feet]: item(149) });
+  const jump = (hours, startThirst, health = 25) => {
+    const e = {
+      stats: { strength: 50, intelligence: 50, willpower: 50, agility: 50, endurance: 50, personality: 50, speed: 50, luck: 50 },
+      raceId: RACES.Breton, items: [], activeEffects: [], health, maxHealth: health, fatigue: 6400,
+    };
+    const s = survivalOf(e, 0);
+    s.thirst = startThirst; s.lastMinute = 0; s.lastAte = 0; s.awakeSince = 0;
+    const sinks = { hurt: (n) => { e.health = Math.max(0, e.health - n); }, drainFatigue: () => {}, restoreFatigue: () => {}, say: () => {} };
+    runSurvivalMinutes(e, 0, hours * 60, { climateIndex: CLIMATES.Woodlands, month: 6, hour: 13 },
+      { worn: dressed, sinks, autoDrink: false, autoEat: false, ctx: { raceId: RACES.Breton } });
+    return e.health;
+  };
+  // the case that killed: a healthy player, not even thirsty, fast travelling
+  for (const hours of [6, 12, 24]) {
+    assert.ok(jump(hours, 0) > 0, `a ${hours}h jump from thirst 0 must not be fatal - it was`);
+    assert.ok(jump(hours, NEED.DEHYDRATED) > 0, `a ${hours}h jump already dehydrated must not be fatal either`);
+  }
+  // it HURTS, though - arriving at death's door is the whole point
+  assert.ok(jump(12, 0) < 5, 'and it really does wound - the floor is not a free pass');
+  // and the walk is bounded: a longer jump costs no more, because the
+  // replayed minutes stop at the floor whatever their number
+  assert.equal(jump(24, 0), jump(12, 0), 'a longer jump cannot cost more than the floor allows');
+});
+
+test('SURV-THIRST1 AUDIT: the replay flag is the WALK’s, and only the last minute is live', () => {
+  const src = readFileSync(new URL('../src/systems/survival/needs.js', import.meta.url), 'utf8');
+  // one object for the whole walk, not one per minute (EV2: this loop
+  // runs up to MAX_CATCHUP_MINUTES times)
+  assert.match(src, /const walk = \{ \.\.\.deps, replay: true \};\s*\n\s*for \(let m = start \+ 1; m <= end; m\+\+\) \{ walk\.replay = m < end;/,
+    'the walk marks every minute but the last as a replay, from one object');
+  // a bare survivalMinute - the live per-minute call every host makes -
+  // is NOT a replay, or nothing would ever die of thirst
+  assert.match(src, /replay = false \} = deps;/, 'a caller that says nothing is live');
+});

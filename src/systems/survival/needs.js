@@ -206,7 +206,7 @@ const clearNote = (s, key) => { if (s.notes[key] === 'on') delete s.notes[key]; 
  */
 export function survivalMinute(entity, now, env = {}, deps = {}) {
   const s = survivalOf(entity, now);
-  const { worn = null, sinks = {}, rolls = Math.random, autoDrink = true, autoEat = true } = deps;
+  const { worn = null, sinks = {}, rolls = Math.random, autoDrink = true, autoEat = true, replay = false } = deps;
   const say = sinks.say ?? deps.say ?? null;
   const items = entity.items ?? [];
   const ctx = { ...(deps.ctx ?? {}), wet: s.wet, hasWater: !!findDrink(items) };
@@ -280,8 +280,21 @@ export function survivalMinute(entity, now, env = {}, deps = {}) {
     // temperature harm below uses. Nothing in `systems/rest.js` refuses a
     // rest for thirst, so a sleeper who could not wake to drink would be
     // killed by a window they were allowed to open.
+    //
+    // AND NOT DEAD INSIDE A JUMP. `runSurvivalMinutes` replays every
+    // minute a clock jump crossed - a fast travel, a rest, a training
+    // session - so six game-hours of travel is thirty-six harm ticks in
+    // one frame, which took a starting character from full health to
+    // dead ON ARRIVAL. A replayed minute may wound to the floor and no
+    // further; the LAST minute of the walk is the one the player is
+    // standing in, and that one may finish them. So a thirsty journey
+    // still lands you at death's door, and the next minute you do not
+    // drink is the one that kills - which is the behaviour asked for,
+    // without the arrival being a coin flip.
     if (s.thirst >= NEED.THIRST_HARM && !sleeping && !resting && now % HARM_EVERY_MINUTES === 0) {
-      sinks.hurt?.(Math.max(1, Math.trunc((s.thirst - NEED.THIRST_HARM + 10) / 10)));
+      const bite = Math.max(1, Math.trunc((s.thirst - NEED.THIRST_HARM + 10) / 10));
+      if (!replay) sinks.hurt?.(bite);
+      else if ((entity.health ?? 0) > HEALTH_FLOOR) sinks.hurt?.(Math.min(bite, (entity.health ?? 0) - HEALTH_FLOOR));
     }
   }
 
@@ -410,7 +423,18 @@ export function runSurvivalMinutes(entity, from, to, env, deps) {
   let last = Number.isFinite(s.lastMinute) ? s.lastMinute : Math.floor(from);
   if (last > end + MAX_CATCHUP_MINUTES) last = Math.floor(from);
   const start = Math.max(Math.floor(from), last, end - MAX_CATCHUP_MINUTES);
-  for (let m = start + 1; m <= end; m++) temp = survivalMinute(entity, m, env, deps);
+  // SURV-THIRST1 AUDIT: WHICH MINUTE IS THE PLAYER ACTUALLY LIVING IN.
+  // Every minute but the last is a REPLAY - a jump's minutes, fabricated
+  // by `playerTicker.advance` (scenes/shared.js) for a fast travel, a
+  // rest or a training session, all of which run this same loop. A harm
+  // that may kill must not be charged hundreds of times inside one
+  // frame: six game-hours of fast travel is 36 harm ticks, and that
+  // killed a starting character dead on arrival. The last minute is the
+  // one the player is standing in, and it is the one that may finish
+  // them. ONE object, mutated - this loop runs up to 2,880 times and a
+  // fresh deps per minute would be 2,880 objects a jump (EV2's rule).
+  const walk = { ...deps, replay: true };
+  for (let m = start + 1; m <= end; m++) { walk.replay = m < end; temp = survivalMinute(entity, m, env, walk); }
   if (end > (s.lastMinute ?? -Infinity)) s.lastMinute = end;
   return temp;
 }

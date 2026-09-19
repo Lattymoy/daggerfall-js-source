@@ -551,6 +551,47 @@ replaced, so a desert death takes 1.5 game-hours where it took 1.3. That
 is the price of one rule instead of two, and the rule that remains is
 the one AUDIT SURV E wrote.
 
-`tools/mutants/surv_thirst1.json`: 6 mutants, 6 dead - the heat gate
+### THE AUDIT BEFORE MERGE - AND THIS DEPARTURE'S OWN REGRESSION
+
+The slice shipped green and killed the player on arrival from a fast
+travel.
+
+`playerTicker.advance` (scenes/shared.js) runs the SAME tick with a
+fabricated dt - "DFU's clock and its per-minute laws are the same loop,
+so a rest, a training session and a fast travel all owe the world those
+minutes" - so `runSurvivalMinutes` REPLAYS every minute a clock jump
+crossed. Six game-hours is thirty-six harm ticks inside one frame.
+Measured, a dressed 25-health character leaving with thirst at **zero**:
+
+| jump | damage | arrives |
+|---|---|---|
+| 6h | 86 | **dead** |
+| 12h | 230 | **dead** |
+| 24h | 518 | **dead** |
+
+Under the mod's heat gate this could not happen in a cool climate, so
+the departure is what introduced it - and no warning ever reached the
+player, because thirst had been nought when they set out.
+
+**The fix is the walk, not the harm.** `runSurvivalMinutes` marks every
+minute but the LAST as a `replay` (one object mutated for the whole
+walk, not one per minute - the loop runs up to `MAX_CATCHUP_MINUTES`
+times, and EV2's rule holds here as anywhere). A replayed minute may
+wound only to `HEALTH_FLOOR`; the last minute is the one the player is
+standing in, and that one may finish them. So a thirsty journey lands
+you at death's door and the next minute you do not drink is the one
+that kills - the behaviour asked for, without the arrival being a coin
+flip. A longer jump now costs no more than a shorter one, because the
+floor is where the replay stops whatever its length.
+
+**PRE-EXISTING AND NOT CHANGED, named so it is a decision:** the
+temperature harm (`abs > NEED.DAMAGE_AT`) has the same shape and the
+same exposure to a replayed jump, in a desert or a deep winter where it
+bites at all. It is older than this slice and outside what was asked
+for; if it is to take the same floor it wants its own pass.
+
+`tools/mutants/surv_thirst1.json`: 10 mutants, 10 dead - the heat gate
 back, the per-minute cadence, the health floor, a flat rate, death in
-your sleep, and the threshold dropped to dehydrated.
+your sleep, the threshold dropped to dehydrated, and four on the walk
+(a jump lethal again, the replayed bite unclamped, every minute live,
+every minute a replay).
