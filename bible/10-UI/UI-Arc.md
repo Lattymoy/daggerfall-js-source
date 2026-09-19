@@ -31,6 +31,42 @@ little scatter so a flurry fans out. Enhanced only: the enhanced HUD
 registers the hook; the classic path never has one.
 
 
+
+## MENU1-WARM - THE MENU BYTES ARE ASKED FOR EARLY (2026-09-19)
+
+Mac: *"Also look for any elements of hitching, or hiccups."*
+
+MENU1 is about a lazy chunk that FAILS. This is its other half: one that
+merely arrives LATE, which is a hitch rather than a refusal and so was
+never reported as a bug at all.
+
+Every enhanced menu is its own content-hashed chunk, reached by a dynamic
+`import()` **the first time that door opens** - and that is the frame the
+player pressed the key, mid-dungeon, with the stream running. The browser
+fetches it (28 KB for the inventory, 78 KB for the menu, 18 KB for the
+book), parses and compiles it, and the game holds still until the overlay
+can mount. On a slow link, or against the 404-then-400ms-retry MENU1
+documents, it is not subtle. There was no `modulepreload` on either page
+and nothing warmed them.
+
+So they are asked for IDLY instead, once a session, from the world boot:
+the module map is a cache, and a door awaiting an import already in it
+resolves without a round trip. **Nothing about the doors changed** - they
+still call `mountEnhancedChunk`, still await the same `import()`, still
+retry once and still speak through MENU1's notice if it fails. Only WHEN
+the bytes are asked for moved, from the keypress to the first idle moment.
+
+Its four rules, each pinned: it waits for `requestIdleCallback` (the
+browser's own answer to "not now", so it cannot race the stream's build
+queue); ONE chunk at a time, because seven parallel fetches would be the
+stall it exists to remove; it swallows every failure silently, because
+the player should hear about a broken chunk from the door's overlay and
+not from a console line for a fetch nobody asked for; and it runs once,
+fire-and-forget - an awaited warm at the boot would BE the hitch.
+
+**Pinned** in `test/menu1_enhanced_chunk.test.js` (4).
+
+
 ## INTRO2 THE SCORE-LED INTRO (2026-09-18)
 
 Mac requested a complete overhaul of the unfinished intro, his supplied
