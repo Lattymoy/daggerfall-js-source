@@ -215,7 +215,7 @@ flags of `Home.md`. Wave E retired SEVEN of them (E2, landing last, took the cha
 blind to the others until the squash: E6 took the spell hands' release
 frame (`combat/fpsSpellCasting.js:178`) and the clear-path term
 (`characters/enemyCasting.js:91`), closing section C's `playSound` row
-with them; E4 took gold-as-a-bag-stack (`systems/inventory.js:48`);
+with them; E4 took gold-as-a-bag-stack (`systems/inventory.js:49`);
 E7 took `GetValue`'s empty-string arm (`systems/talkMacros.js:314`);
 E5 took the docked bar's occlusion (`ui/hudLarge.js:75`); and E1
 narrowed while E3 closed the two console verbs

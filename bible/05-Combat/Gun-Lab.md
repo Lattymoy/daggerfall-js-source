@@ -331,11 +331,17 @@ lab's link down with it. The page asks for its art and its sounds
 relative to `document.baseURI`, which is what makes one build work at
 the site root and under a preview path.
 
-## If it graduates
+## It graduated
 
-What the lab does NOT answer, and what building the type for real
-would have to: an `itemTemplates.json` entry and a template index, the
-damage/skill table rows, ammunition, the hitscan or projectile the
-shot becomes, loot and shop reachability, and the sound. None of that
-is prototyped here, and none of it should be written until the pose
-and the cadence are settled.
+**The Dwarven Thunderlock** (2026-09-19), and the **Dwemer Pellet** it
+spends. `src/systems/thunderlock.js` is the weapon;
+`bible/05-Combat/Dwarven-Thunderlock.md` is the record of how it
+reaches the game. The lab stays: it is where the pose, the cadence,
+the recoil, the shake and the sounds were settled, and it is still the
+fastest way to change any of them.
+
+What the lab settled and the weapon inherited: the sprite sheet and
+its slicing (moved to `src/combat/gunSheet.js`, the game's home now -
+the lab reads it from there), the six-frame cycle, the sounds, and the
+art. What the weapon needed that the lab could not give it: the
+templates, the skill, the damage, the ammunition and the hosts.

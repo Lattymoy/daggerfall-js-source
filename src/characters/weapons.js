@@ -12,6 +12,7 @@ import templates from './itemTemplates.json' with { type: 'json' };
 import { DYE_COLORS, DYE_TARGETS, getDyeColorTable } from './dyes.js';
 import { SKILLS } from '../systems/skills.js';   // GetWeaponSkillIDAsShort's return set
 import { SOUND } from '../systems/soundClips.js';   // F023: GetEquipSound's clips (soundClips is a leaf)
+import { THUNDERLOCK_TEMPLATE } from './thunderlockIds.js';   // the port's own weapon - a leaf, so no cycle (see the file)
 
 export const WEAPONS = Object.freeze({
   Dagger: 113, Tanto: 114, Staff: 115, Shortsword: 116, Wakazashi: 117,
@@ -75,7 +76,10 @@ const MIN_DAMAGE = new Map([
   [[W.Saber, W.Katana, W.Dai_Katana, W.Warhammer], 3],
   [[W.Short_Bow, W.Long_Bow], 4],
 ].flatMap(([ws, v]) => ws.map((w) => [w, v])));
-export function weaponMinDamage(weapon) { return MIN_DAMAGE.get(weapon) ?? 0; }
+export function weaponMinDamage(weapon) {
+  if (weapon === THUNDERLOCK_TEMPLATE) return THUNDERLOCK_SPAN.min;   // THE DEPARTURE, below
+  return MIN_DAMAGE.get(weapon) ?? 0;
+}
 
 // FormulaHelper.CalculateWeaponMaxDamage, verbatim case groups.
 const MAX_DAMAGE = new Map([
@@ -88,7 +92,29 @@ const MAX_DAMAGE = new Map([
   [[W.Claymore, W.Warhammer, W.Long_Bow], 18],
   [[W.Dai_Katana], 21],
 ].flatMap(([ws, v]) => ws.map((w) => [w, v])));
-export function weaponMaxDamage(weapon) { return MAX_DAMAGE.get(weapon) ?? 0; }
+export function weaponMaxDamage(weapon) {
+  if (weapon === THUNDERLOCK_TEMPLATE) return THUNDERLOCK_SPAN.max;   // THE DEPARTURE, below
+  return MAX_DAMAGE.get(weapon) ?? 0;
+}
+
+/**
+ * THE ONE WEAPON IN THIS FILE THAT DAGGERFALL DOES NOT HAVE.
+ *
+ * The Dwarven Thunderlock (systems/thunderlock.js) is the port's own,
+ * prototyped in the gun lab before it was built. Its three laws touch
+ * this file because this file is where a weapon's damage and skill
+ * are answered, and they are written as EXPLICIT ARMS ahead of the
+ * verbatim tables rather than as rows inside them - so the DFU tables
+ * above and below stay exactly what CalculateWeaponMin/MaxDamage and
+ * GetWeaponSkillUsed say, and the departure is one thing a reader can
+ * see and delete.
+ *
+ * The span is 7-26 against a Long Bow's 4-18 and a Dai-Katana's 3-21,
+ * and it is paid for elsewhere: the heaviest weapon in the game, ammo
+ * that costs twice an arrow, and a cycle with a visible reload in it.
+ * The numbers themselves live with the weapon; only the hook is here.
+ */
+const THUNDERLOCK_SPAN = Object.freeze({ min: 7, max: 26 });
 
 /** DaggerfallUnityItem.GetWeaponSkillUsed + GetWeaponSkillIDAsShort
  *  (DaggerfallUnityItem.cs:910-962), verbatim: the switch is on
@@ -103,14 +129,22 @@ export function weaponMaxDamage(weapon) { return MAX_DAMAGE.get(weapon) ?? 0; }
  *  an enchanted broadsword swung with LongBlade 70 was scored on
  *  HandToHand 20. Returns null (not HandToHand) for an unmapped
  *  template so callers keep DFU's own fallthrough. */
-const WEAPON_SKILL_USED = new Map([
+export const WEAPON_SKILL_USED = new Map([
   [[W.Dagger, W.Tanto, W.Wakazashi, W.Shortsword], SKILLS.ShortBlade],
   [[W.Broadsword, W.Longsword, W.Saber, W.Katana, W.Claymore, W.Dai_Katana], SKILLS.LongBlade],
   [[W.Battle_Axe, W.War_Axe], SKILLS.Axe],
   [[W.Flail, W.Mace, W.Warhammer, W.Staff], SKILLS.BluntWeapon],
   [[W.Short_Bow, W.Long_Bow], SKILLS.Archery],
 ].flatMap(([ws, v]) => ws.map((w) => [w, v])));
-export function weaponSkillUsed(templateIndex) { return WEAPON_SKILL_USED.get(templateIndex) ?? null; }
+export function weaponSkillUsed(templateIndex) {
+  // THE DEPARTURE (see THUNDERLOCK_SPAN above): Mac's call - "should
+  // work with the archery skill" - and its own nature. It is fired
+  // rather than swung and it spends ammunition, so every law that asks
+  // which skill a hit was scored on answers Archery from here, without
+  // any of them learning that a new weapon exists.
+  if (templateIndex === THUNDERLOCK_TEMPLATE) return SKILLS.Archery;
+  return WEAPON_SKILL_USED.get(templateIndex) ?? null;
+}
 
 // DaggerfallUnityItem.GetWeaponMaterialModifier, verbatim.
 export function weaponMaterialModifier(material) {

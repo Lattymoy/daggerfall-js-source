@@ -30,7 +30,8 @@ import { racialFpsWeapon } from '../systems/lycanthropy.js';   // V4: the transf
 import { EQUIP_SLOTS, equipTableOf } from '../systems/equip.js';   // AUDIT 17e F17; MW-D32 the worn read
 import { dfWornEquipment } from '../formats/mwItemMap.js';   // MW-D32
 import { ARMOR_ENUM } from './enemyEquipment.js';   // MW-D32
-import { loadFpsWeaponArt, drawFpsWeapon, weaponTypeForItem, WEAPON_TYPES, fpLightingOn } from './fpsWeapon.js';   // MAC-I: the tint's switch, with the sprite it tints
+import { loadFpsWeaponArt, drawFpsWeapon, weaponTypeForItem, WEAPON_TYPES, fpLightingOn } from './fpsWeapon.js';
+import { loadThunderlockArt } from './thunderlockArt.js';   // the port's own weapon: its art is a sheet, not a CIF   // MAC-I: the tint's switch, with the sprite it tints
 // ROAD-tail (FPSSpellCasting.cs): the classic spellcasting HANDS. A
 // separate component in DFU and a separate module here, drawn by the
 // same rig because this is the one surface every FPS-weapon host
@@ -40,7 +41,7 @@ import { fpsSpellCasting, loadSpellCastArt, drawSpellCastHands, magicAnimFilenam
 // and runs untouched otherwise. The Morrowind arm below is an opt-in
 // layer that either draws whole or does not draw at all - there is no
 // state in which both reach the screen, and none in which neither does.
-import { fpArm, hasDaggerfallArrows, daggerfallArrowCount } from './fpArm.js';
+import { fpArm, hasAmmoFor, ammoCountOf } from './fpArm.js';
 import { getPref } from '../systems/uiPrefs.js';   // MWA1: the arms switch
 import { morrowindDataCount, morrowindDataFingerprint, registerMorrowindData } from '../scenes/dataSource.js';   // MWA1: are the archives attached; AUDIT 65 XL-6: and measured
 import { mwRaceId } from '../formats/mwNpc.js';   // TR2: the one race-id spelling
@@ -87,14 +88,17 @@ import { walkSpeed } from '../player/motor.js';   // WW1: GetBaseSpeed's walk ar
  * the same one every other consumer makes.
  */
 export function armBuildOptsOf(entity) {
+  // the ammunition question is asked OF THE WEAPON, and the weapon this
+  // function has is the worn one - there is no live rig here
+  const worn = entity.equip?.slots?.[EQUIP_SLOTS.RightHand] ?? null;
   return {
     race: mwRaceId(entity.race),
     female: entity.gender === 'female',
     faceIndex: entity.faceIndex | 0,
     armor: dfWornEquipment(equipTableOf(entity), EQUIP_SLOTS, ARMOR_ENUM),
-    weapon: entity.equip?.slots?.[EQUIP_SLOTS.RightHand] ?? null,
-    hasAmmo: hasDaggerfallArrows(entity.items),
-    ammoCount: daggerfallArrowCount(entity.items),   // WS1: the quiver
+    weapon: worn,
+    hasAmmo: hasAmmoFor(entity.items, worn),
+    ammoCount: ammoCountOf(entity.items, worn),   // WS1: the quiver
     torch: isLitTorch(entity.lightSource),   // MW-D51: the lit light, in the left hand
     sheathing: getPref('mwSheathing'),   // WS1: the holster on the third-person body
   };
@@ -435,13 +439,21 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
   let _dx = 0, _dy = 0, _held = false;
 
   function artFor(item) {
-    if (!palette) return null;
     const type = weaponTypeForItem(item);
     if (type === WEAPON_TYPES.None) return null;
+    // THE PORT'S OWN WEAPON takes the OTHER loader. Its art is ours,
+    // shipped with the build, and needs no palette - which is also why
+    // this test sits ahead of the palette guard: a Thunderlock draws
+    // in a host that has not loaded ARENA2's palette yet, and a
+    // classic weapon still cannot.
+    const thunderlock = type === WEAPON_TYPES.Thunderlock;
+    if (!thunderlock && !palette) return null;
     const key = `${type}:${item?.material ?? 0}`;
     if (!cache.has(key)) {
       cache.set(key, null);
-      loadFpsWeaponArt(fetchBytes, palette, renderer, type, item?.material ?? 0)
+      (thunderlock
+        ? loadThunderlockArt(renderer)
+        : loadFpsWeaponArt(fetchBytes, palette, renderer, type, item?.material ?? 0))
         .then((art) => cache.set(key, art))
         .catch((e) => console.warn('[weaponRig] art load failed', key, e));
     }
@@ -591,7 +603,7 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
   function bowArrowGuard() {
     if (playerWeapon.sheathed) return;
     if (weaponTypeForItem(playerWeapon.weapon) !== WEAPON_TYPES.Bow) return;
-    if (hasDaggerfallArrows(entity.items)) return;
+    if (hasAmmoFor(entity.items, playerWeapon.weapon)) return;
     playerWeapon.sheathed = true;
     // AUDIT 64 F34: FPSWeapon.cs:365 is SetMidScreenText, not the popup
     // queue - and `say` here is shared with the shield refusal below,
@@ -789,7 +801,7 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
       const c = cv();
       // MW-D12: THE RETURN VALUE WAS BEING THROWN AWAY, and it is the
       // only signal that a blow has started. gesture() answers with the
-      // strike the drag resolved to (playerWeapon.js:225-228) and
+      // strike the drag resolved to (playerWeapon.js:226-229) and
       // clickAttack() with the one the click rolled - the Morrowind arm
       // needs exactly that to pick rule 11's attack type.
       const strike = !paralyzed && c
@@ -829,7 +841,7 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
         // Morrowind arm now rides the same read. setWeapon's fast path
         // is one key compare - the swap itself runs only when the item
         // in the hand actually changed.
-        fpArm.setWeapon(playerWeapon.weapon, { hasAmmo: hasDaggerfallArrows(entity?.items), ammoCount: daggerfallArrowCount(entity?.items) });   // WS1: the quiver's count rides the swap
+        fpArm.setWeapon(playerWeapon.weapon, { hasAmmo: hasAmmoFor(entity?.items, playerWeapon.weapon), ammoCount: ammoCountOf(entity?.items, playerWeapon.weapon) });   // WS1: the quiver's count rides the swap
         // MW-D51: THE LIGHT FOLLOWS THE HAND. The same per-frame read
         // Handheld Torches' hand law writes (PlayerEntity.LightSource -
         // lit by use, stowed when no hand is free) hands the Morrowind

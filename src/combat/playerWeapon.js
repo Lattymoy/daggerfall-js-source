@@ -23,7 +23,7 @@
 
 import {
   createWeaponMachine, machineAttack, machineStep, gestureDirection,
-  MAX_GESTURE_SECONDS, BOW_DRAWN_HOLD_FRAME, machineCancelBowDraw,
+  MAX_GESTURE_SECONDS, BOW_DRAWN_HOLD_FRAME, machineCancelBowDraw, THUNDERLOCK_NUM_FRAMES,
 } from '../characters/weaponStates.js';
 import { DIRECTION_TO_STRIKE, ATTACKS_FP, sampleClip } from '../characters/anims.js';
 import { combinePose } from '../characters/animate.js';
@@ -496,6 +496,17 @@ export class PlayerWeapon {
     // was shipped but nothing ever set isBow - bows swung on the melee
     // clock. Read per step, exactly like the unarmed gate above.
     this.machine.isBow = t === WEAPON_TYPES.Bow;
+    // THE PORT'S OWN WEAPON is RANGED but not a BOW, and the
+    // difference is the whole of why it is worth saying: a bow DRAWS -
+    // StrikeUp winds up, the string holds at frame 3, StrikeDown
+    // looses - and a gun has a trigger. So it keeps the melee
+    // one-shot (`isBow` false, six frames instead of five through
+    // `machine.frames`) and takes the RANGED half of the bow's laws -
+    // the cooldown, and a shot that spends ammunition - through
+    // `machine.ranged`. The skill it is scored on is Archery either
+    // way; that is weaponSkillUsed's answer, not the machine's.
+    this.machine.ranged = t === WEAPON_TYPES.Bow || t === WEAPON_TYPES.Thunderlock;
+    this.machine.frames = t === WEAPON_TYPES.Thunderlock ? THUNDERLOCK_NUM_FRAMES : null;
     return machineStep(this.machine, dt, this.liveSpeed);
   }
 

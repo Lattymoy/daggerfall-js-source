@@ -27,6 +27,7 @@ import { getInt } from '../systems/settings.js';   // AUDIT 28 W13: Controls/Han
 import { getPref } from '../systems/uiPrefs.js';   // MAC-I: the first-person lighting switch
 import { isEnchanted } from '../systems/inventory.js';   // AUDIT 17e C2
 import { WEAPONS, WEAPON_MATERIALS, weaponDyeColor } from '../characters/weapons.js';
+import { THUNDERLOCK_TEMPLATE } from '../characters/thunderlockIds.js';   // the port's own weapon (a leaf - see the file)
 import { applyDyeToIndex, DYE_TARGETS } from '../characters/dyes.js';
 
 // WeaponTypes (DaggerfallUnityEnums), the animation-set ids.
@@ -40,6 +41,12 @@ export const WEAPON_TYPES = Object.freeze({
   Warhammer: 10, Warhammer_Magic: 11,
   Battleaxe: 12, Battleaxe_Magic: 13,
   Bow: 14, Melee: 15, Werecreature: 16,
+  // THE PORT'S OWN, past the end of DFU's enum so nothing classic
+  // shifts: the Dwarven Thunderlock (systems/thunderlock.js). It has
+  // no WEAPON*.CIF - its frames come off one sheet, which is why
+  // WEAPON_FILE below has no row for it and combat/thunderlockArt.js
+  // loads it instead.
+  Thunderlock: 17,
 });
 
 // GetWeaponFilename, verbatim.
@@ -149,9 +156,26 @@ export const WERECREATURE_ANIMS = Object.freeze([
   A(6, 5, WERE_FPS, ALIGN.Left, 0.2),
 ]);
 
+/** The Thunderlock's table. Not a WeaponBasics row - there is no such
+ *  row - but the same five columns, so everything that reads an anim
+ *  reads this one too. Record 0 is the idle pose, record 1 the six
+ *  fire frames, and every strike direction plays the same six: a gun
+ *  does not care which way you dragged. AlignRight, because that is
+ *  where the lab settled it and where the classic weapons sit. */
+export const THUNDERLOCK_ANIMS = Object.freeze([
+  A(0, 1, IDLE_FPS, ALIGN.Right, 0),
+  A(1, 6, STRIKE_FPS, ALIGN.Right, 0),
+  A(1, 6, STRIKE_FPS, ALIGN.Right, 0),
+  A(1, 6, STRIKE_FPS, ALIGN.Right, 0),
+  A(1, 6, STRIKE_FPS, ALIGN.Right, 0),
+  A(1, 6, STRIKE_FPS, ALIGN.Right, 0),
+  A(1, 6, STRIKE_FPS, ALIGN.Right, 0),
+]);
+
 /** GetWeaponAnims, verbatim routing. */
 export function getWeaponAnims(weaponType) {
   const T = WEAPON_TYPES;
+  if (weaponType === T.Thunderlock) return THUNDERLOCK_ANIMS;   // the port's own, ahead of the verbatim routing
   if (weaponType === T.Melee) return MELEE_ANIMS;
   if (weaponType === T.Dagger || weaponType === T.Dagger_Magic) return DAGGER_ANIMS;
   if (weaponType === T.Staff || weaponType === T.Staff_Magic) return STAFF_ANIMS;
@@ -170,6 +194,10 @@ export function weaponTypeForItem(item) {
   // transformed rig binds the WERECLAWS_ITEM marker, which is not a
   // template at all
   if (item.werecreatureClaws) return T.Werecreature;
+  // THE PORT'S OWN WEAPON, ahead of the verbatim switch so the switch
+  // stays exactly ConvertItemToAPIWeaponType. It takes no enchanted
+  // promotion: there is no WEAPO1xx sheet for it.
+  if (item.templateIndex === THUNDERLOCK_TEMPLATE) return T.Thunderlock;
   let result;
   switch (item.templateIndex) {
     case W.Dagger: result = T.Dagger; break;

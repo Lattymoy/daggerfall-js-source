@@ -961,6 +961,21 @@ export const DF_ARROW_TEMPLATE = 131;
 export function hasDaggerfallArrows(items) {
   return !!items?.some((it) => it.templateIndex === DF_ARROW_TEMPLATE && (it.stackCount ?? 1) > 0);
 }
+/** THE SAME QUESTION, ASKED OF THE WEAPON. A bow is out of ammunition
+ *  when there are no Arrows; the Dwarven Thunderlock when there are no
+ *  Dwemer Pellets. Everything that is not a ranged weapon answers with
+ *  the arrow test it always did, so no caller has to know which it is
+ *  holding to keep behaving. */
+export function hasAmmoFor(items, weapon) {
+  const template = ammoTemplateFor(weapon) ?? DF_ARROW_TEMPLATE;
+  return !!items?.some((it) => it.templateIndex === template && (it.stackCount ?? 1) > 0);
+}
+export function ammoCountOf(items, weapon) {
+  const template = ammoTemplateFor(weapon) ?? DF_ARROW_TEMPLATE;
+  let n = 0;
+  for (const it of items ?? []) if (it.templateIndex === template) n += Math.max(0, it.stackCount ?? 1);
+  return n;
+}
 /** WS1: how many arrows the pack carries - the quiver shows min(count, its slots). */
 export function daggerfallArrowCount(items) {
   let n = 0;
@@ -1067,6 +1082,8 @@ export const archiveHas = (archives) => (p) => (archives ?? []).some((a) => a.ha
  *  bow that resolves with ammunition in the pack and no arrow on it is
  *  a fault the player sees from the chair and could not name - the
  *  card's note is the same sentence, but the card is a menu away. */
+import { ammoTemplateFor } from '../characters/thunderlockIds.js';   // what a ranged weapon spends - a leaf (see the file)
+
 const saidArrow = new Set();
 function sayNoArrow(notes) {
   const why = notes.filter((n) => n.startsWith('arrow')).join('; ') || 'no reason recorded';
