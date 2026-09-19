@@ -695,7 +695,12 @@ test('PERF-WARM: an unwarmed renderer still builds on the draw, and a warmed one
   // the draw path is what it always was for anyone who never warms
   const cold = countingRenderer({});
   cold.beginFrame(identity(), identity(), new Float32Array([0, 1, 0]));
-  cold.drawScreenQuad(null, 0, 0, 10, 10);
+  // a REAL quad: drawScreenQuad's signature is (tex, dst, src, color, opts)
+  // and a pin that feeds it numbers is only passing because the stub
+  // swallows them - `src.u0`, `color[0]` and `opts.blend` would all be
+  // undefined, which is not the call the draw path actually gets.
+  const QUAD = [{ x: 4, y: 8, w: 32, h: 16 }, { u0: 0, v0: 0, u1: 1, v1: 1 }, [1, 1, 1, 1], {}];
+  cold.drawScreenQuad({ fake: true }, ...QUAD);
   assert.ok(cold.screenQuadProgram, 'the draw built it, exactly as before');
 
   // and a warmed one does not pay a second time on the frame
@@ -703,7 +708,7 @@ test('PERF-WARM: an unwarmed renderer still builds on the draw, and a warmed one
   warm._ensureScreenQuadProgram();
   const built = warm.screenQuadProgram;
   warm.beginFrame(identity(), identity(), new Float32Array([0, 1, 0]));
-  warm.drawScreenQuad(null, 0, 0, 10, 10);
+  warm.drawScreenQuad({ fake: true }, ...QUAD);
   assert.equal(warm.screenQuadProgram, built, 'the frame found it already there');
 });
 

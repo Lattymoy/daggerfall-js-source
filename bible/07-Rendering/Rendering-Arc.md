@@ -1537,6 +1537,73 @@ stops when its host is gone; and the pixel-snow program is the
 constructor's on the lane that can draw it and nobody's on the lane that
 cannot.
 
+### PERF-WARM AUDIT (same day) - what held, and four things the section above got ahead of
+
+**The refactor is proved, not asserted.** Each of the five blocks was
+replayed out of the commit before and the commit after and compared line
+for line: **all five byte-identical**, call sites in place and in order.
+And the warm is proved harmless the way PERF-TEX/UI were - a logging GL
+stub, a scene that exercises all five programs, once on a renderer nobody
+warmed and once on one warmed BETWEEN FRAMES, where a real
+`requestIdleCallback` lands. The steady-state frame is **call for call
+identical**. It cannot be otherwise, and for a reason worth writing down:
+`beginFrame` already forgets every shadow it owns ("whatever ran between
+frames is not trusted"), `frame()` is synchronous with no `await` so an
+idle callback can never land mid-frame, and every draw path - the video
+player's own loop included - opens with `beginFrame`. Every ARRAY_BUFFER
+upload in `src/` rebinds first (all 33 checked), so the dirty binding a
+build leaves behind is nobody's input.
+
+**1. Two of the five are probably already built before the warm fires.**
+`requestAnimationFrame` outranks `requestIdleCallback`, and the world's
+first frame draws the HUD. So `screenQuadProgram` and
+`screenQuadRunProgram` are almost certainly compiled by frame 1, during
+the boot, before the first idle callback runs. The table above reads as
+if all seven moved; what actually moves is `particleProgram` (first
+spell), `charQuadProgram` (first classic sprite), `overlayProgram` and
+the rain's renderer. The other two were never the hitch a player feels -
+they land in the loading screen either way.
+
+**2. The warm compiles programs a session may never bind - the AUDIT 58
+objection, not applied to the renderer's five.** Measured: 11 links
+warmed against 10 unwarmed, for a scene that never draws a particle
+effect. `charQuadProgram` is the CLASSIC sprite path, so an
+enhanced-visuals player now compiles one they will never use; so is
+`particleProgram` for a player who never casts. The section above cites
+AUDIT 58 as the reason not to warm the lab's programs and then does not
+hold itself to it. The trade is defensible - idle time is free and five
+small programs is negligible VRAM - but it is a trade, and it was made
+silently.
+
+**3. A player who never sees rain now pays for the rain.** Precipitation's
+constructor runs at boot instead of at the weather change: ~176 KB of GPU
+buffers on the classic lane (1,000 particles x 4 verts x 5 floats, plus
+6,000 indices), ~600 KB on the enhanced one (`LAB_COUNTS.rain` = 26,000
+instances). Before, that was paid only if the weather turned. It is the
+right trade for a game where it rains, but it is a new steady cost and
+the section above only counted the saving.
+
+**4. `stats.programBinds` is incremented outside a frame.**
+`_ensureScreenQuadProgram` ends in `this._use(...)`, which counts - so
+one warm adds 1 to the frame counters after that frame reported and
+before `beginFrame` zeroes them. Cosmetic, and `?perf` is the readout
+PERF-TEX and PERF-UI were measured with, so it is worth knowing it can
+be off by one for exactly one frame.
+
+**Not a finding, checked anyway.** No leak: the hosts are one per PAGE
+LOAD (a scene change is a navigation, and dungeons and interiors are mode
+swaps inside `bootWorld`), so the warm's closure cannot outlive its
+context and `alive` has nothing to guard. Normal play always routes
+through `bootWorld` (`main.js`), so players are warmed; the standalone
+`?dungeon`/`?interior`/`?shot` hosts are not, which is a dev and probe
+path and arguably right - a probe wants no idle work.
+
+**Fixed by the audit.** The pin for "an unwarmed renderer still builds on
+the draw" was calling `drawScreenQuad(null, 0, 0, 10, 10)` against a
+signature of `(tex, dst, src, color, opts)` - `src.u0`, `color[0]` and
+`opts.blend` were all `undefined` and it passed only because the stub
+swallows anything. It draws a real quad now.
+
 ## PERF-ON - ONE DRAW A STRING (2026-09-15)
 
 Mac: *"Next thing I want to tackle is improving online performance. I
