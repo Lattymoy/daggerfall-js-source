@@ -178,8 +178,38 @@ Nothing in DFU's own pool sets that flag, so the classic pairings are
 exactly what they were: a dagger can still be Wyrmbane or
 Nightwhisper.
 
+## The test characters carry one
+
+TSR-GUN (Mac, 2026-09-19: *"Put this weapon and ammo inside the test
+characters"*). Every preset in the test room walks in with a Dwarven
+Thunderlock and thirty Dwemer Pellets, on two rows in
+`testGearRows` minted through the weapon's own two constructors.
+
+This is the one weapon the armory could not reach any other way. Its
+"one of every weapon type" loop walks `WEAPONS_ENUM`, which is DFU's
+table and does not have a gun in it; the shops do not stock it; and
+its only door in the running game is the rarest roll there is. Without
+a row here, the way to hold one on purpose was to get lucky.
+
+It comes loaded for the same reason the bow comes with a quiver: a
+ranged weapon with no ammunition tests the refusal, not the weapon.
+
+One pin moved to make room. `TSR1`'s "every row is a real template"
+asked `ITEM_TEMPLATES[index]`, and a custom template lives above 288
+in the custom map, not in the frozen DFU array — so the array answers
+`undefined` for a template the game resolves fine. It asks
+`templateByIndex` now, which is the question every reader in the game
+asks.
+
+And the damage pin asks `formulas.js`, not the item. AUDIT 18 F1's law
+is that DFU never stores a weapon's damage *on* the item — it resolves
+the template on every swing — so a `thunder.maxDamage` assertion would
+have passed only for the one constructor that bakes the field and said
+nothing about what the gun hits for.
+
 ## Still not wired
 
 Said plainly so nobody assumes it: **loot *tables* and starting gear
-do not offer it** (the unique find is its only door), and neither does
-a smith's repair list.
+do not offer it** (the unique find is its only door — the test room is
+a door out of the game, not into it), and neither does a smith's
+repair list.
