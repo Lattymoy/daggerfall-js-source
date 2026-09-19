@@ -19,6 +19,7 @@ import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { SKILLS, SKILL_NAMES } from '../src/systems/skills.js';
+import { bonusPoolFor, applyLevelUp, LEVELUP_BONUS_POOL_MIN, LEVELUP_BONUS_POOL_MAX } from '../src/systems/advancement.js';
 import { audio } from '../src/systems/audio.js';
 import { SOUND } from '../src/systems/soundClips.js';
 import { loadOrCreateBindings, codeForAction, actionForCode } from '../src/systems/inputActions.js';
@@ -249,6 +250,43 @@ test('LV2: the ENHANCED skin ANNOUNCES, and the window does not open itself', ()
 });
 
 // ── AUDIT LV2 (2026-09-19), the pre-merge sweep ───────────────────
+
+test('AUDIT LV2 (reopened): the bonus pool is the LEVEL\'s, so re-opening the window cannot re-roll it', () => {
+  // AUDIT LV2 recorded this rather than fixing it - FormulaHelper's
+  // 4..6 draw is taken at the rollout's setup in DFU too. Mac reopened
+  // it: "Yes fucking fix it." The reason it is LV2's to close is that
+  // LV2 is what made it reachable. DFU's own rollout mounts on the
+  // character sheet and commits the level AT MOUNT, so there is never
+  // an unspent level to re-open on; the enhanced window is a thing the
+  // player OPENS, and `readyToLevelUp` stays set until they spend.
+  const stats = () => ({ strength: 50, intelligence: 50, willpower: 50, agility: 50, endurance: 50, personality: 50, speed: 50, luck: 50 });
+  const e = { level: 5, readyToLevelUp: true, pendingLevel: 6, stats: stats(), health: 40, maxHealth: 40, career: { hitPointsPerLevel: 8, primarySkills: [] } };
+  // SIX OPENS, each handed a roll that would answer differently.
+  const seen = [];
+  for (let i = 0; i < 6; i++) seen.push(bonusPoolFor(e, () => i / 6));
+  assert.equal(new Set(seen).size, 1, `re-opening re-rolled the pool: ${seen.join(',')}`);
+  assert.ok(seen[0] >= LEVELUP_BONUS_POOL_MIN && seen[0] <= LEVELUP_BONUS_POOL_MAX, 'and it is still FormulaHelper.BonusPool');
+  assert.equal(e.pendingBonusPool, seen[0], 'remembered on the entity, beside pendingLevel');
+
+  // SPENDING IT clears the pool with the level, so the NEXT level is a
+  // fresh draw and not this one again.
+  applyLevelUp(e, (st, pool) => { st.strength += pool; }, () => 0.5, e.pendingBonusPool);
+  assert.equal(e.readyToLevelUp, false);
+  assert.equal(e.pendingBonusPool, null, 'the pool is not pending when the level is not');
+  assert.equal(bonusPoolFor(e, () => 0.99), LEVELUP_BONUS_POOL_MAX, 'a new level draws again');
+
+  // ...and the OGHMA arm clears it too: a level owed UNDER the book is
+  // pending, and the book's thirty is not this draw.
+  const o = { level: 5, readyToLevelUp: true, pendingLevel: 6, pendingBonusPool: 5, oghmaLevelUp: true, stats: stats(), health: 40, maxHealth: 40, career: { hitPointsPerLevel: 8, primarySkills: [] } };
+  applyLevelUp(o, (st, pool) => { st.strength += pool; }, () => 0.5);
+  assert.equal(o.pendingBonusPool, null);
+
+  // IT RIDES THE SAVE, or a save and a load would be the same exploit
+  // through a slower door.
+  assert.match(src('src/systems/save.js'), /'readyToLevelUp', 'pendingLevel', 'pendingBonusPool', 'chargenDone',/);
+  // ...and neither screen rolls one of its own any more.
+  assert.doesNotMatch(src('src/ui/charsheet.js'), /LEVELUP_BONUS_POOL_MIN \+ Math\.floor\(rolls\(\)/);
+});
 
 test('AUDIT LV2 F1: a door with no caller says so, rather than naming one', () => {
   // This module's teardown named "ui/hud.js's own destroy path", and

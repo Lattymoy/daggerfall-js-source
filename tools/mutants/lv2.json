@@ -245,5 +245,55 @@
       "test/levelNotice.test.js"
     ],
     "why": "AUDIT LV2 F5. buttonText(null) is KeyCode.None's own string, so a player who cleared the sheet binding was told to press NONE."
+  },
+  {
+    "name": "the-pool-is-re-rolled-on-every-open-again",
+    "file": "src/systems/advancement.js",
+    "old": "  if (entity.pendingBonusPool == null) {\n    entity.pendingBonusPool = LEVELUP_BONUS_POOL_MIN + Math.floor(rolls() * (LEVELUP_BONUS_POOL_MAX + 1 - LEVELUP_BONUS_POOL_MIN));\n  }\n  return entity.pendingBonusPool;",
+    "new": "  entity.pendingBonusPool = LEVELUP_BONUS_POOL_MIN + Math.floor(rolls() * (LEVELUP_BONUS_POOL_MAX + 1 - LEVELUP_BONUS_POOL_MIN));\n  return entity.pendingBonusPool;",
+    "tests": [
+      "test/levelNotice.test.js"
+    ],
+    "why": "AUDIT LV2, reopened (Mac: 'Yes fucking fix it'). The draw is the LEVEL'S, not the window's: without the memo, closing the enhanced level-up window and pressing the sheet key again rolls a new 4..6, so a player escapes and re-opens until it says 6."
+  },
+  {
+    "name": "the-spent-level-keeps-its-pool",
+    "file": "src/systems/advancement.js",
+    "old": "  entity.pendingLevel = null;\n  entity.pendingBonusPool = null;   // the level is spent, so its pool is not pending either",
+    "new": "  entity.pendingLevel = null;",
+    "tests": [
+      "test/levelNotice.test.js"
+    ],
+    "why": "The other half: a pool that outlives its level hands the NEXT level the number the last one rolled, so a lucky 6 is a 6 forever."
+  },
+  {
+    "name": "the-oghma-arm-keeps-the-pool-it-did-not-spend",
+    "file": "src/systems/advancement.js",
+    "old": "    entity.pendingLevel = null;\n    entity.pendingBonusPool = null;   // the book's thirty is fixed, but a level owed UNDER it was pending too",
+    "new": "    entity.pendingLevel = null;",
+    "tests": [
+      "test/levelNotice.test.js"
+    ],
+    "why": "The Infinium's thirty is fixed and is not this draw, but the level it eats WAS pending - and AUDIT 39's finding is that this arm is the one that clears the shared flag. Its pool goes with it."
+  },
+  {
+    "name": "the-window-rolls-its-own-pool-again",
+    "file": "src/ui/charsheet.js",
+    "old": "    this.pool = this.oghma ? OGHMA_BONUS_POOL : bonusPoolFor(entity, rolls);",
+    "new": "    this.pool = this.oghma ? OGHMA_BONUS_POOL : LEVELUP_BONUS_POOL_MIN + Math.floor(rolls() * (LEVELUP_BONUS_POOL_MAX + 1 - LEVELUP_BONUS_POOL_MIN));",
+    "tests": [
+      "test/levelNotice.test.js"
+    ],
+    "why": "One home for the draw. A screen that rolls its own is the exploit back, whatever the entity remembers."
+  },
+  {
+    "name": "the-pool-does-not-ride-the-save",
+    "file": "src/systems/save.js",
+    "old": "  'readyToLevelUp', 'pendingLevel', 'pendingBonusPool', 'chargenDone',",
+    "new": "  'readyToLevelUp', 'pendingLevel', 'chargenDone',",
+    "tests": [
+      "test/levelNotice.test.js"
+    ],
+    "why": "A pool that does not survive the save is re-rolled by a save and a load - the same exploit through a slower door."
   }
 ]

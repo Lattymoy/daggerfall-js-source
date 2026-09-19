@@ -4124,7 +4124,7 @@ literal with no duplicates; all 71 display labels match DFU's recovered
 FALL.EXE text exactly; every secondary list matches its DFU array in
 order; the builder is reconstructed on re-entry on both sides, so the
 pick lists reset; a career's flags survive the save round trip (the
-career is spread as plain CFG data, save.js:67,88 - worth checking
+career is spread as plain CFG data, save.js:246,529 - worth checking
 because AUDIT 17h caught exactly this shape dropping player
 reputation); and parseCareerData leaves every numeric field finite and
 unsigned under the maximal fourteen-pick set.
@@ -16254,8 +16254,8 @@ read HEAD's number at the same position in the same file, resolve it
 BY CONTENT in the working tree, and write that. Forty-seven cites came
 back. Run the tool once per base, or pair against HEAD - never both.
 
-`test/levelNotice.test.js` - 20 pins. `tools/mutants/lv2.json` - 25
-mutants, 23 dead, 2 recorded equivalent. `tools/levelUpProbe.mjs` -
+`test/levelNotice.test.js` - 21 pins. `tools/mutants/lv2.json` - 30
+mutants, 28 dead, 2 recorded equivalent. `tools/levelUpProbe.mjs` -
 137/137, whose notice lanes mount the real enhanced HUD under the strip
 at desktop, on a phone and at the top of the HUD's own scale, and drive
 its whole life: announce, fold, spend, gone. (Those figures are AUDIT
@@ -16360,7 +16360,38 @@ not exist, which is the bug the registry lookup was there to prevent
 one layer up. The row still says a level is waiting; it just stops
 naming a way in it does not have.
 
-**RECORDED, NOT FIXED: THE BONUS POOL RE-ROLLS ON EVERY OPEN.**
+**RECORDED, THEN FIXED ON MAC'S WORD: THE BONUS POOL RE-ROLLED ON
+EVERY OPEN.** It went into this audit as the one finding left standing,
+for the reason below. Mac read the record and answered: "Yes fucking
+fix it." So it is fixed, and the reasoning that had kept it is worth
+keeping too, because it is the reasoning that was wrong.
+
+`FormulaHelper.BonusPool` is a 4-6 draw and DFU takes it at the
+ROLLOUT'S SETUP, so re-opening re-rolls in DFU as well - which is why
+this looked like faithfulness rather than a hole. It is not reachable
+in DFU. DFU's rollout mounts on the CHARACTER SHEET and `applyLevelUp`
+commits the level AT MOUNT (`ui/charsheet.js`'s own rollout still does,
+:355), so there is never an unspent level to re-open on: escape the
+sheet and the points are already yours. LV2 is what made it reachable,
+by design - the enhanced window is now a thing the player OPENS, and
+`readyToLevelUp` stays set until they spend - and "escape, press the
+key again, until it says 6" is one keystroke away and discoverable
+without looking for it. A departure that hands the player free points
+is not faithfulness to anything.
+
+THE DRAW IS THE LEVEL'S NOW, NOT THE WINDOW'S. `bonusPoolFor`
+(`systems/advancement.js`) takes it on the first screen that needs one,
+remembers it on the entity beside `pendingLevel`, hands it to every
+screen after that, rides the save with it, and is cleared where
+`pendingLevel` is cleared - both arms, the Oghma's included, because
+the book eats a pending level and its pool goes with it. The port draws
+FEWER numbers from the stream than DFU does, which is the opposite of
+the thing AUDIT 23's rule guards (a shown pool must be the spent pool,
+so a second DISCARDED draw never burns a number). One level, one pool.
+The save field is not optional: without it a save and a load is the
+same exploit through a slower door.
+
+**THE ORIGINAL RECORD, KEPT:**
 `LevelUpScreen`'s constructor draws the 4-6 pool (`ui/charsheet.js`:113-115)
 and `ui/charSheetDoor.js` builds a fresh screen per opening, so closing
 the window and re-opening it rolls again. That is DFU's own shape -

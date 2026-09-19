@@ -34,7 +34,7 @@ import { entityMaxEncumbrance, handToHandMinDamage, handToHandMaxDamage } from '
 import { STAT_KEYS_ORDER } from '../systems/chargen.js';
 import { statDescriptionRows } from '../systems/talkMacros.js';   // ATTRMACRO1: SetTextTokens' macro pass over TEXT.RSC records 0..7
 import { SKILLS, SKILL_NAMES, skillValue, getSkillRecentlyIncreased, resetSkillsRecentlyRaised } from '../systems/skills.js';
-import { applyLevelUp, LEVELUP_BONUS_POOL_MIN, LEVELUP_BONUS_POOL_MAX } from '../systems/advancement.js';
+import { applyLevelUp, bonusPoolFor } from '../systems/advancement.js';
 import { usesVirtueLeveling } from '../systems/oblivionLeveling.js';   // ORL1: whose law levels this character
 import { ActionTextBox } from './actionText.js';   // the mustDistributeBonusPoints refusal, ClickAnywhereToClose
 import { OGHMA_BONUS_POOL } from '../systems/artifactEffects.js';   // AUDIT 39: the sheet's oghmaBonusPool (:44)
@@ -111,8 +111,13 @@ export class LevelUpScreen {
     // reached by the next GENUINE level-up, which it then ate (no
     // Level++, no health roll).
     this.oghma = !!entity.oghmaLevelUp;
-    this.pool = this.oghma ? OGHMA_BONUS_POOL
-      : LEVELUP_BONUS_POOL_MIN + Math.floor(rolls() * (LEVELUP_BONUS_POOL_MAX + 1 - LEVELUP_BONUS_POOL_MIN));
+    // AUDIT LV2, reopened (Mac): the pool is THE LEVEL'S, not this
+    // window's. Rolled here it was re-rolled on every open, and since
+    // LV2 the player opens this window themselves - so closing it and
+    // pressing the key again until it said 6 was free points.
+    // `bonusPoolFor` draws once and remembers, on the entity, until
+    // the level is spent.
+    this.pool = this.oghma ? OGHMA_BONUS_POOL : bonusPoolFor(entity, rolls);
     this._rolledPool = this.pool;
     this.base = { ...entity.stats };
     this.working = { ...entity.stats };
@@ -347,8 +352,10 @@ export class CharSheet {
     this.leveling = true;
     audio.playOneShot(SOUND.LevelUp, 1);   // levelUpSound (:46, :373)
     this.oghma = !!e.oghmaLevelUp;
-    this.pool = this.oghma ? OGHMA_BONUS_POOL
-      : LEVELUP_BONUS_POOL_MIN + Math.floor(rolls() * (LEVELUP_BONUS_POOL_MAX + 1 - LEVELUP_BONUS_POOL_MIN));
+    // The same one home. This rollout commits at mount (applyLevelUp
+    // below), so it never re-opened on an unspent level - but the draw
+    // is the level's wherever it is taken.
+    this.pool = this.oghma ? OGHMA_BONUS_POOL : bonusPoolFor(e, rolls);
     this.base = { ...e.stats };
     this.working = { ...e.stats };
     this.cursor = 0;
