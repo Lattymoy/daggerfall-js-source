@@ -10,7 +10,7 @@ import { readFileSync } from 'node:fs';
 import {
   SHEET_GRID, FIRE_FRAMES, ALIGN, cellRect, keyBackground, contentBox,
   unionBox, unionDrawRect, placeSprite, createGunMachine, muzzleLight,
-  createRecoil, createWidgetRig, widgetRigStep, labWidgetSettings, labMotion, widgetDefaults,
+  createRecoil, createScreenShake, createWidgetRig, widgetRigStep, labWidgetSettings, labMotion, widgetDefaults,
 } from '../src/tools/gunLab.js';
 import { ALIGN as FPS_ALIGN } from '../src/combat/fpsWeapon.js';
 import { bobStep, offsetStep, inertiaStep } from '../src/combat/weaponWidgetMotion.js';
@@ -162,6 +162,39 @@ test('placeSprite is FPSWeapon’s OnGUI rect: bottom-anchored, aligned, and Ali
   const kick = { x: 0, y: -10 };
   assert.equal(placeSprite({ ...base, widthPct: 0.5, align: ALIGN.Center, kick }).y, 400 - 160 - 10 * 2);
   assert.equal(placeSprite({ ...base, canvasH: 800, widthPct: 0.5, align: ALIGN.Center, kick }).y, 800 - 160 - 10 * 4);
+});
+
+test('the screenshake is TRAUMA SQUARED, smooth, and dead silent at rest', () => {
+  const sh = createScreenShake({ amount: 8, decay: 4, rot: 1 });
+  // exactly nothing at rest - not a small number, nothing: the room is
+  // drawn through this every frame and a jitter with no shot behind it
+  // is a bug you would chase for an hour
+  assert.deepEqual(sh.step(1 / 60), { x: 0, y: 0, rot: 0 });
+  sh.punch();
+  assert.equal(sh.trauma, 1);
+  const first = sh.step(1 / 60);
+  assert.ok(Math.abs(first.x) > 0 && Math.abs(first.x) <= 8, `inside its peak (${first.x.toFixed(2)})`);
+  assert.ok(Math.abs(first.rot) <= 1 * Math.PI / 180);
+  // trauma SQUARED: at half the trauma the shake is a quarter, which is
+  // what makes the tail fall away instead of stopping dead
+  const half = createScreenShake({ amount: 8, decay: 0, rot: 1 });
+  half.punch(0.5);
+  const full = createScreenShake({ amount: 8, decay: 0, rot: 1 });
+  full.punch(1);
+  half.t = full.t = 1.234;   // same point of the noise, different trauma
+  const a = half.step(0), b = full.step(0);
+  assert.ok(Math.abs(b.x / a.x - 4) < 1e-9, 'a quarter of the shake at half the trauma');
+  // and two shots close together stack, capped
+  const stack = createScreenShake({ decay: 0 });
+  stack.punch(0.7); stack.punch(0.7);
+  assert.equal(stack.trauma, 1, 'capped at 1, so a held trigger cannot shake the screen off its hinges');
+  // it settles, and the settling does not depend on the frame rate
+  const slow = createScreenShake({ amount: 8, decay: 4 }); slow.punch();
+  const fast = createScreenShake({ amount: 8, decay: 4 }); fast.punch();
+  for (let i = 0; i < 30; i++) slow.step(1 / 30);
+  for (let i = 0; i < 60; i++) fast.step(1 / 60);
+  assert.ok(Math.abs(slow.trauma - fast.trauma) < 1e-9, 'trauma bleeds by time, not by frames');
+  assert.deepEqual(slow.step(0.4), { x: 0, y: 0, rot: 0 }, 'and it comes back to exactly nothing');
 });
 
 test('the cycle: one shot at a time, six frames, a pump, and a hit frame that fires once', () => {

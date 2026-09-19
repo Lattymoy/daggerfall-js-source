@@ -294,6 +294,57 @@ export function createRecoil({ kick = 16, stiff = 120, damp = 14, back = 0.42 } 
 }
 
 /**
+ * THE SCREENSHAKE, which is the CAMERA and not the weapon.
+ *
+ * Worth being exact about, because the obvious build is wrong: a shake
+ * that moves the sprite is the recoil again, louder. A gun going off
+ * kicks the HEAD - so the room moves and the weapon, which is carried
+ * by that head, does not move on screen at all. The lab draws the room
+ * and the target through this offset and leaves the sprite and the
+ * crosshair where they were, and the probe pins exactly that: the
+ * world shifts, the weapon's rect does not.
+ *
+ * TRAUMA, not a timer (Squirrel Eiserloh's "Juicing Your Cameras With
+ * Math"): a shot ADDS trauma, capped at 1, trauma decays linearly, and
+ * the shake is trauma SQUARED - so two shots close together are much
+ * more than twice one shot, and the tail falls off rather than
+ * stopping dead.
+ *
+ * The displacement is smooth noise rather than a fresh random each
+ * frame: per-frame randomness reads as static at 60fps and, worse,
+ * shakes twice as hard on a machine drawing twice as many frames.
+ * Three sines per axis are continuous, frame-rate independent, and
+ * cost nothing.
+ *
+ * `amount` is the peak in NATIVE (320x200) units, `rot` the peak roll
+ * in degrees, `decay` the trauma bled off per second, `freq` how fast
+ * it rattles.
+ */
+const shakeNoise = (p, seed) => (
+  Math.sin(p * seed * 1.7) * 0.6
+  + Math.sin(p * seed * 3.1 + 1.3) * 0.3
+  + Math.sin(p * seed * 7.3 + 2.7) * 0.1
+);
+
+export function createScreenShake({ amount = 7, decay = 3.2, freq = 26, rot = 0.7 } = {}) {
+  const s = { trauma: 0, t: 0, amount, decay, freq, rot };
+  s.punch = (a = 1) => { s.trauma = Math.min(1, s.trauma + a); };
+  s.step = (dt) => {
+    s.t += dt;
+    s.trauma = Math.max(0, s.trauma - s.decay * dt);
+    const k = s.trauma * s.trauma;
+    if (k === 0) return { x: 0, y: 0, rot: 0 };
+    const p = s.t * s.freq;
+    return {
+      x: s.amount * k * shakeNoise(p, 1),
+      y: s.amount * k * shakeNoise(p, 1.7),
+      rot: s.rot * k * shakeNoise(p, 2.3) * Math.PI / 180,
+    };
+  };
+  return s;
+}
+
+/**
  * THE WEAPON WIDGET'S OWN MOVEMENT, ON THE GUN.
  *
  * Mac: "all the idle, bob enhancements from our in-game weapon mods

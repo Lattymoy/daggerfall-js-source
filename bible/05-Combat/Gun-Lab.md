@@ -45,7 +45,9 @@ screen, not a CIF record's native size — these frames are PNG/WebP,
 not `WEAPON*.CIF` records sized in native pixels.
 
 The weapon sits on the **right** (`AlignRight`, offset 0), which is
-where the classic weapons sit and where Mac asked for it.
+where the classic weapons sit and where Mac asked for it. The page's
+opening numbers are HIS, off the panel (2026-09-19): size 54, raise
+-8, fire 14fps, reload 700ms, hit frame 1.
 
 ## Weapon Widget's own movement, on the gun
 
@@ -79,9 +81,9 @@ Three departures, all of them the gun's:
   the lab's own — straight down, not the mod's diagonal sheathe.
 - **The recoil** is not a channel at all (below).
 
-## The recoil, and the reload
+## The recoil, the reload, and the shake
 
-Neither is something a mod could lend.
+None of the three is something a mod could lend.
 
 The mod's `Recoil` module recoils a **swing** — it replays the strike
 animation in reverse when the blow lands — and a gun has no swing to
@@ -101,6 +103,27 @@ with `shown` false: the weapon drops out of frame on the mod's own
 easing and comes back up when it is ready. `Reload ms` is the
 machine's cooling phase; `drop` is the target in units of the sprite's
 own height.
+
+**The screenshake is the CAMERA, not the weapon** (Mac, 2026-09-19).
+The obvious build is wrong: a shake that moves the sprite is the
+recoil again, louder. A gun going off kicks the *head* — so the room
+and the target are drawn through the offset and the weapon, carried by
+that head, does not move on screen at all. The crosshair is
+screen-space and stays put. The probe pins exactly that pair: with the
+kick, the bob, the inertia and the lower all off, the camera moves and
+the weapon's rect moves 0.00px.
+
+It is **trauma**, not a timer (Eiserloh, *Juicing Your Cameras With
+Math*): a shot adds trauma capped at 1, trauma decays linearly, and
+the shake is trauma **squared** — so two shots close together are much
+more than twice one shot, and the tail falls away instead of stopping
+dead. The displacement is three sines per axis rather than a fresh
+random per frame, because per-frame randomness reads as static at
+60fps and shakes twice as hard on a machine drawing twice the frames;
+the pins hold both (a quarter of the shake at half the trauma, and
+identical trauma after a second at 30fps and at 60fps), and that it
+returns to *exactly* zero — the room is drawn through this every
+frame, and a jitter with no shot behind it is an hour of chasing.
 
 ## What the lab has that the classic machine does not
 

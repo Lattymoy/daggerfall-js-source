@@ -10,9 +10,10 @@
 // measures the drawn rect on every frame of a live shot and fails if
 // it drifts a pixel.
 //
-// Then the three things that SHOULD move it: Weapon Widget's Bob while
-// walking, the reload lower on the mod's Offset easing, and the gun's
-// own recoil spring.
+// Then the things that SHOULD move: Weapon Widget's Bob while walking,
+// the reload lower on the mod's Offset easing, the gun's own recoil
+// spring, and the screenshake - which must move the ROOM and not the
+// weapon, since the camera carries the weapon.
 //
 // Boots vite in-process, so:
 //     node tools/gunProtoProbe.mjs [shots-dir]
@@ -185,6 +186,37 @@ await page.waitForTimeout(1600);
 const settled = (await read()).anchorRect.y;
 check('and the spring brings it home', Math.abs(settled - restY) < 4,
   `settled at y=${settled.toFixed(0)} against ${restY.toFixed(0)}`);
+
+// ── THE SCREENSHAKE ──────────────────────────────────────────────────
+// The camera, not the weapon: the room moves and the sprite - carried
+// by that camera - does not. Measured as the pair, because a shake
+// that moved the sprite would pass a "did anything move" check.
+// Everything that legitimately moves the sprite goes off - the kick,
+// the bob, the inertia and the reload lower - so "the weapon did not
+// move" means the shake and nothing else. A long, slow shake, because
+// a round trip per sample is slower than a frame and a 3-tenths
+// rattle would be over before the probe saw its peak.
+await set({ kick: 0, shake: 20, shakeDecay: 0.8, cool: 700, modBob: false, modInertia: false, modOffset: false });
+await page.waitForTimeout(500);
+const calmRect = (await read()).anchorRect;
+await fireClick();
+let peak = 0, weaponMoved = 0, sawTrauma = 0;
+for (let i = 0; i < 30; i++) {
+  const s2 = await read();
+  peak = Math.max(peak, Math.hypot(s2.cam.x, s2.cam.y));
+  sawTrauma = Math.max(sawTrauma, s2.trauma);
+  weaponMoved = Math.max(weaponMoved, Math.abs(s2.anchorRect.x - calmRect.x) + Math.abs(s2.anchorRect.y - calmRect.y));
+  await page.waitForTimeout(12);
+}
+check('the shot SHAKES THE CAMERA', peak > 3 && sawTrauma > 0.5,
+  `peak ${peak.toFixed(1)} native px, trauma ${sawTrauma.toFixed(2)}`);
+check('and the weapon rides it rather than being shaken by it', weaponMoved < 1.5,
+  `weapon moved ${weaponMoved.toFixed(2)}px with the kick off`);
+await page.waitForTimeout(3000);
+const calm = await read();
+check('the shake settles to exactly nothing', calm.cam.x === 0 && calm.cam.y === 0 && calm.cam.rot === 0,
+  `trauma ${calm.trauma.toFixed(3)}`);
+await set({ kick: 16, shake: 7, shakeDecay: 3.2, modBob: true, modInertia: true, modOffset: true });
 
 // The mirror, and the alignment swap under it.
 await set({ flip: true, align: 2 });

@@ -30,11 +30,14 @@
     - the mod's GetWeaponRect transform, which is what applies those
       three channels to the rect.
 
-  The gun's OWN two, which no mod could lend it: a spring RECOIL (the
+  The gun's OWN three, which no mod could lend it: a spring RECOIL (the
   mod's Recoil module replays a SWING in reverse, and a gun has no
-  swing), and the RELOAD LOWER - there is no reload animation, so the
+  swing); the RELOAD LOWER - there is no reload animation, so the
   weapon drops out of frame on the mod's own Offset easing and comes
-  back up when it is ready.
+  back up when it is ready; and a trauma-driven SCREENSHAKE, which
+  moves the CAMERA - the room and the target - and leaves the sprite
+  where it is, because a head that is kicked carries the weapon with
+  it.
 
   Controls: click fires, and the same click asks for the pointer lock
   (the Inertia module needs a look to lag; where the lock is refused -
@@ -73,8 +76,8 @@
   <label><span>idle pose</span><select id="idleSrc"><option value="sheet">sheet frame 1</option><option value="art">gun-idle.png</option></select></label>
   <label><span>align</span><select id="align"><option value="2">Right</option><option value="1">Center</option><option value="0">Left</option></select></label>
   <label><span>offset</span><input id="offset" type="range" min="0" max="0.4" step="0.005" value="0"><span class="v" id="voffset"></span></label>
-  <label><span>size %</span><input id="size" type="range" min="20" max="120" step="1" value="66"><span class="v" id="vsize"></span></label>
-  <label><span>raise</span><input id="raise" type="range" min="-60" max="60" step="1" value="0"><span class="v" id="vraise"></span></label>
+  <label><span>size %</span><input id="size" type="range" min="20" max="120" step="1" value="54"><span class="v" id="vsize"></span></label>
+  <label><span>raise</span><input id="raise" type="range" min="-60" max="60" step="1" value="-8"><span class="v" id="vraise"></span></label>
   <label><span>left hand</span><input id="flip" type="checkbox"><span class="v">mirror</span></label>
 
   <h2>Cycle</h2>
@@ -88,6 +91,12 @@
   <label><span>back</span><input id="back" type="range" min="0" max="1.5" step="0.02" value="0.42"><span class="v" id="vback"></span></label>
   <label><span>stiffness</span><input id="stiff" type="range" min="20" max="400" step="5" value="120"><span class="v" id="vstiff"></span></label>
   <label><span>damping</span><input id="damp" type="range" min="2" max="60" step="1" value="14"><span class="v" id="vdamp"></span></label>
+
+  <h2>Screenshake &mdash; the camera</h2>
+  <label><span>shake</span><input id="shake" type="range" min="0" max="30" step="0.5" value="7"><span class="v" id="vshake"></span></label>
+  <label><span>roll&deg;</span><input id="shakeRot" type="range" min="0" max="4" step="0.1" value="0.7"><span class="v" id="vshakeRot"></span></label>
+  <label><span>rattle</span><input id="shakeFreq" type="range" min="6" max="60" step="1" value="26"><span class="v" id="vshakeFreq"></span></label>
+  <label><span>decay</span><input id="shakeDecay" type="range" min="0.5" max="10" step="0.1" value="3.2"><span class="v" id="vshakeDecay"></span></label>
 
   <h2>Reload lower &mdash; the Offset module</h2>
   <label><span>drop</span><input id="drop" type="range" min="0" max="1.5" step="0.05" value="0.55"><span class="v" id="vdrop"></span></label>
@@ -132,7 +141,7 @@
 import {
   SHEET_GRID, FIRE_FRAMES, ALIGN, cellRect, keyBackground, contentBox,
   unionBox, unionDrawRect, placeSprite, createGunMachine, muzzleLight,
-  createRecoil, createWidgetRig, widgetRigStep, labWidgetSettings, labMotion,
+  createRecoil, createScreenShake, createWidgetRig, widgetRigStep, labWidgetSettings, labMotion,
   widgetTransformRect,
 } from '/src/tools/gunLab.js';
 
@@ -141,9 +150,10 @@ const ctx = canvas.getContext('2d');
 const $ = (id) => document.getElementById(id);
 
 const state = {
-  idleSrc: 'sheet', align: ALIGN.Right, offset: 0, size: 66, raise: 0, flip: false,
+  idleSrc: 'sheet', align: ALIGN.Right, offset: 0, size: 54, raise: -8, flip: false,
   fps: 14, cool: 700, hit: 1, auto: false,
   kick: 16, back: 0.42, stiff: 120, damp: 14,
+  shake: 7, shakeRot: 0.7, shakeFreq: 26, shakeDecay: 3.2,
   drop: 0.55, offsetSpeed: 1, modOffset: true,
   modBob: true, bobLength: 100, bobSizeX: 1, bobSizeY: 1, bobSpeedMove: 1, bobSpeedState: 1, bobShape: 0, bobIdle: true,
   modInertia: true, inScale: 1, inSpeed: 1, inFwd: 1, inFwdSpeed: 1,
@@ -152,6 +162,7 @@ const state = {
 };
 const NUM = {
   offset:1, size:1, raise:1, fps:1, cool:1, hit:1, kick:1, back:1, stiff:1, damp:1,
+  shake:1, shakeRot:1, shakeFreq:1, shakeDecay:1,
   drop:1, offsetSpeed:1, bobLength:1, bobSizeX:1, bobSizeY:1, bobSpeedMove:1, bobSpeedState:1,
   inScale:1, inSpeed:1, inFwd:1, inFwdSpeed:1, spd:1, key:1, chroma:1, light:1, room:1,
 };
@@ -242,13 +253,14 @@ idleImg.src = artUrl('gun-idle.png');
 const gun = createGunMachine({ fps: state.fps, cooldownMs: state.cool, hitFrame: state.hit });
 const rig = createWidgetRig();
 const recoil = createRecoil();
+const shake = createScreenShake();
 let scrub = -1;          // frame held while idle (arrow keys), -1 = live
 let hitFlash = 0;        // the target's tell, so the hit frame can be judged
 let look = [0, 0];       // the frame's look, as takeFrameLook hands it over
 const LOOK_RADIANS_PER_PX = 0.0025;
 
 const CONTROLS = ['idleSrc','align','offset','size','raise','flip','fps','cool','hit','auto',
-  'kick','back','stiff','damp','drop','offsetSpeed','modOffset',
+  'kick','back','stiff','damp','shake','shakeRot','shakeFreq','shakeDecay','drop','offsetSpeed','modOffset',
   'modBob','bobLength','bobSizeX','bobSizeY','bobSpeedMove','bobSpeedState','bobShape','bobIdle',
   'modInertia','inScale','inSpeed','inFwd','inFwdSpeed',
   'walk','run','crouch','spd','light','room','grid'];
@@ -267,7 +279,7 @@ const widgetSettings = () => labWidgetSettings({
   'Inertia.ForwardDepth': state.inFwd, 'Inertia.ForwardSpeed': state.inFwdSpeed,
 });
 
-const fire = () => { if (gun.fire()) recoil.punch(state.kick); };
+const fire = () => { if (gun.fire()) { recoil.punch(state.kick); shake.punch(); } };
 const press = () => { gun.trigger = true; scrub = -1; fire(); };
 const release = () => { gun.trigger = false; };
 
@@ -367,11 +379,13 @@ function frame(now) {
   const wasIdle = gun.state === 'Idle';
   const event = gun.step(dt);
   if (event === 'hit') hitFlash = 1;
-  if (gun.state === 'Firing' && wasIdle) recoil.punch(state.kick);   // the auto trigger's own shots
+  if (gun.state === 'Firing' && wasIdle) { recoil.punch(state.kick); shake.punch(); }   // the auto trigger's own shots
   hitFlash = Math.max(0, hitFlash - dt * 4);
 
   recoil.stiff = state.stiff; recoil.damp = state.damp; recoil.back = state.back;
   const kick = recoil.step(dt);
+  shake.amount = state.shake; shake.rot = state.shakeRot; shake.freq = state.shakeFreq; shake.decay = state.shakeDecay;
+  const cam = shake.step(dt);
 
   const showFrame = gun.state === 'Firing' ? gun.frame : (scrub >= 0 ? scrub : 0);
   const lit = state.room * (1 + muzzleLight(gun.state, showFrame) * state.light * 1.9);
@@ -379,7 +393,18 @@ function frame(now) {
 
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.imageSmoothingEnabled = false;
-  drawRoom(lit); drawTarget(lit); drawCrosshair();
+  // THE CAMERA SHAKES, NOT THE WEAPON. The room and the target are
+  // drawn through the offset; the sprite is carried BY that camera, so
+  // on screen it does not move, and the crosshair is a screen-space
+  // overlay in any case. Native units, scaled with the surface.
+  const sx0 = canvas.width / 320, sy0 = canvas.height / 200;
+  ctx.save();
+  ctx.translate(canvas.width / 2 + cam.x * sx0, canvas.height / 2 + cam.y * sy0);
+  ctx.rotate(cam.rot);
+  ctx.translate(-canvas.width / 2, -canvas.height / 2);
+  drawRoom(lit); drawTarget(lit);
+  ctx.restore();
+  drawCrosshair();
 
   // THE MOD'S FRAME. Bob and Inertia run while the machine idles, which
   // is the gate FPSWeaponClone puts on them; the reload lowers the
@@ -444,7 +469,7 @@ function frame(now) {
     ready: !!art, state: gun.state, frame: showFrame, shots: gun.shots, reloading,
     rect: art ? r : null, anchorRect: art ? anchorRect : null,
     channels: { position: [...rig.position], scale: [...rig.scale], offset: [...rig.offset] },
-    kick,
+    kick, cam, trauma: shake.trauma,
     art: art && { union: art.union, anchor: art.anchor, frames: art.frames.length, idle: !!art.idle },
   };
 
@@ -453,7 +478,7 @@ function frame(now) {
     `${(reloading ? 'RELOAD' : gun.state).padEnd(8)} frame ${showFrame + 1}/${FIRE_FRAMES}${scrub >= 0 && gun.state === 'Idle' ? ' (held)' : ''}\n` +
     `shots ${gun.shots}   cycle ${cycle.toFixed(0)}ms   ${(60000 / cycle).toFixed(0)} rpm\n` +
     `bob ${rig.position[0].toFixed(0)},${rig.position[1].toFixed(0)}  ` +
-    `off ${rig.offset[1].toFixed(2)}  kick ${kick.y.toFixed(1)}`;
+    `off ${rig.offset[1].toFixed(2)}  kick ${kick.y.toFixed(1)}  shake ${shake.trauma.toFixed(2)}`;
 
   requestAnimationFrame(frame);
 }
