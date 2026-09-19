@@ -414,7 +414,7 @@ export function classify(x, y, mask) {
  *  HEIGHTMAP is JobA.Idx(y, x, hDim) = y + x*hDim (TerrainSampler
  *  .cs:123) - which is what terrainSampler.js:144 writes and what every
  *  consumer in this tree reads (terrainTiles.js:146 and :317,
- *  terrainSurface.js:105-106, terrainNature.js:68 and :136). The mod
+ *  terrainSurface.js:160-161, terrainNature.js:68 and :136). The mod
  *  reads its tile at Idx(x, y, tDim) and its corner base at
  *  Idx(y, x, hDim) - BOTH in the layout that owns them - and so does
  *  this: the tile at y*tDim + x, the base at x*hDim + y. Byte for byte

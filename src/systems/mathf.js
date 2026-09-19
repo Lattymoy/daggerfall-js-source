@@ -29,3 +29,22 @@ export function roundToInt(v) {
   if (d !== 0.5) return Math.round(v);
   return f % 2 === 0 ? f : f + 1;
 }
+
+/** GLSL's `smoothstep`, on the CPU: the Hermite step, clamped - 0 at or
+ *  below `a`, 1 at or above `b`.
+ *
+ *  ONE HOME (GRASS2, 2026-09-18), and the ratchet caught it exactly as
+ *  it caught `roundToInt` above. GRASS2 needed this because the grass
+ *  field's HOST now has to predict what its own vertex shader will keep:
+ *  the blade budget is a bound on the shader's fade, so the two must be
+ *  the SAME curve - a host curve that fell faster than the shader's
+ *  would cut blades the shader wanted, which is a visible thinning
+ *  rather than a saving. A second copy of a curve that has to agree
+ *  with a third party (GLSL) is two chances to disagree with it.
+ *
+ *  It was written a second time in `render/labGrass.js` and a first time
+ *  in `systems/weatherFront.js`; both now import it from here. */
+export function smoothstep(a, b, x) {
+  const u = Math.min(1, Math.max(0, (x - a) / (b - a)));
+  return u * u * (3 - 2 * u);
+}
