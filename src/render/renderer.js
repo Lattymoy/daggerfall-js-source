@@ -633,7 +633,27 @@ void main() {
   int t = int(data & 3u);
   vec2 tileUV = fract(unwrapped);
   vec2 tuv = ROT[t] * tileUV + TRANS[t];
-  vec3 tex = texture(uTileArr, vec3(tuv, float(layer))).rgb;
+  // GRAIN1 (2026-09-19, Mac: "distance terrian has a weird grain look"):
+  // THE TILE ARRAY IS MIPMAPPED, AND THE GRADIENT IS THE UNWRAPPED ONE.
+  //
+  // The grain is minification aliasing: past a few tiles out a screen
+  // pixel covers many texels and NEAREST picks one of them, so the ground
+  // boils as the camera moves. The cure is a mipmap - and the reason
+  // there was none is right here. tileUV is fract(unwrapped), so it
+  // jumps 1 -> 0 at every tile edge, and texture() picks its mip from
+  // the screen-space derivative of the coordinate it is handed: at each
+  // of those jumps the derivative is a whole tile wide, the hardware
+  // reads that as "this pixel covers the entire texture", and it samples
+  // the coarsest mip. That is a blurred line drawn around all 16,384
+  // tiles of every pixel - far worse than the grain.
+  //
+  // unwrapped does not jump. Its derivative is the true footprint, and
+  // ROT[t] is constant across the fragment, so rotating it gives the
+  // footprint in the rotated tile's own frame. textureGrad takes that
+  // directly and the seams cannot happen. One sample either way.
+  vec2 gx = ROT[t] * dFdx(unwrapped);
+  vec2 gy = ROT[t] * dFdy(unwrapped);
+  vec3 tex = textureGrad(uTileArr, vec3(tuv, float(layer)), gx, gy).rgb;
   vec3 n = normalize(vNormal);
   float diff = max(dot(n, uLightDir), 0.0);
   // EE5: the deck's field, sampled where this ground's ray to the sun
@@ -989,6 +1009,10 @@ export class Renderer {
     // worldModes' five separate lists (blood, torches, drops, foes,
     // guards), each its own uncut call. Fixing seven call sites leaves an
     // eighth to be written next year. The test belongs here.
+    /** GRAIN1: the anisotropy extension and its ceiling, fetched once -
+     *  not once an archive. null when the driver has neither. */
+    this._anisoExt = null;
+    this._anisoMax = 0;
     this._bbPlanes = new Float32Array(24);
     this._bbPv = new Float32Array(16);
     this._bbCullOff = cullDisabled();   // the ?cull=off door, read once
@@ -3816,8 +3840,40 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     for (let i = 0; i < layers.length; i++) {
       gl.texSubImage3D(gl.TEXTURE_2D_ARRAY, 0, 0, 0, i, w, h, 1, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array(layers[i].colors.buffer, layers[i].colors.byteOffset, w * h * 4));
     }
-    gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+    // GRAIN1 (2026-09-19, Mac: "distance terrian has a weird grain look"):
+    // THE MIPMAP, AND WHY THE MAGNIFIER DOES NOT MOVE.
+    //
+    // MIN was NEAREST, so a distant pixel covering a dozen texels picked
+    // ONE of them and picked a different one as the camera drifted: the
+    // ground boiled. That is minification aliasing and a mipmap is its
+    // only cure. The terrain shaders take textureGrad with the UNWRAPPED
+    // gradient (see TERRAIN_FS), so the mip is chosen from the real
+    // footprint and the fract() wrap cannot blur a line round every tile.
+    //
+    // MAG stays NEAREST, deliberately. Magnification is the ground under
+    // the player's feet, where Daggerfall's texels are meant to be square
+    // and visible; a mipmap has no say there (there is no mip above
+    // level 0) and LINEAR would smear the one place the art is read at
+    // full size. So this buys the distance and spends nothing on the
+    // near field.
+    //
+    // A 2D ARRAY mipmaps each layer on its own, so no tile can bleed into
+    // another the way an atlas would - which is the other reason atlases
+    // ship unmipped and this need not.
+    gl.generateMipmap(gl.TEXTURE_2D_ARRAY);
+    gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
     gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    // GRAIN1: and anisotropy where the driver has it. Terrain is read at
+    // a grazing angle almost everywhere, and an isotropic mip has to take
+    // the WIDER of the two footprints - so it over-blurs along the view
+    // and still aliases across it. This is the one filtering term that
+    // buys back the sharpness the mipmap costs. Capped at 4: the returns
+    // fall off a cliff after that and the frame is CPU-bound anyway.
+    const aniso = this._anisoExt ||= (gl.getExtension('EXT_texture_filter_anisotropic') ?? null);
+    if (aniso) {
+      this._anisoMax ||= gl.getParameter(aniso.MAX_TEXTURE_MAX_ANISOTROPY_EXT) || 1;
+      gl.texParameterf(gl.TEXTURE_2D_ARRAY, aniso.TEXTURE_MAX_ANISOTROPY_EXT, Math.min(4, this._anisoMax));
+    }
     // DFU's terrain texture array wraps Clamp (TextureReader) - keeps
     // the far edge texel at transformed-uv 1.0 boundary ties.
     gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
