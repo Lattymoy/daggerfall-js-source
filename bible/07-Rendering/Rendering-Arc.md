@@ -2553,10 +2553,26 @@ the WHOLE pixel, and a pixel is 128 tiles at 6.4 units, or 819 units
 across. Its bounding sphere spans the pixel, so the test would almost
 never fire.
 
-The fix that would work is to merge per texture **and per spatial
-cluster**, so a sub-mesh bounds a quarter of a pixel rather than all of
-it. That is a change to `staticBatch.js`'s builder and to what a pixel
-stores, and it belongs in its own slice with its own measurement.
+**CORRECTED 2026-09-19, same day:** the remedy first written here -
+merge per texture *and* per spatial cluster - is wrong, and the
+arithmetic says so in one line. The current scheme is already the
+MINIMUM draw count: one per distinct texture. Splitting a pixel into
+sixteen cells turns thirty textures into up to 480 sub-meshes, and even
+if only three cells are in the frustum that is ninety draws where there
+were thirty. Clustering trades draw calls AWAY to buy vertex work; it is
+a fill win and a draw-call LOSS, and this finding was about the draw
+count.
+
+What the draw count actually is, recounted: terrain is one per visible
+pixel, the merged static batch is one per texture per visible pixel, and
+**the flats are one per (archive, record) per pixel** - which across the
+streamed grid is the largest single source, and the one MAC1 already
+cut the small far ones out of. Collapsing those would need either a
+texture array over an archive's records (so one draw covers many
+records) or world-space centres merged across pixels (which costs the
+per-pixel frustum cull that EV3 pays for). Both are real projects with a
+real trade, and neither is a line of code. Recorded as an open question
+rather than a plan.
 
 **Pinned** in `test/perfsun_fragment.test.js` (4). Mutants
 `tools/mutants/perfsun.json`: 15 - 15 dead, 0 survived. Two older
@@ -2567,4 +2583,63 @@ pin with them.
 count, and the sky named the thing that was actually being paid. A
 product in a shader is not a series of conditions - it is a promise to
 evaluate all of them.**
+
+## PERF-FOG (2026-09-19) - A UNIFORM WAS BEING DECODED ONCE A FRAGMENT
+
+Found by keeping on looking after PERF-SUN, in the same place and for
+the same reason: what does every exterior fragment actually run?
+
+`elFinish` is the lane's output - the tonemap, the fog blend, the
+in-scatter, the encode, the dither - and it runs in **every lane shader
+there is**: the terrain, the meshes, the rigs and every flat in the
+world. It opened with:
+
+```glsl
+vec3 col = mix(elDecode(uFogColor), tm, fogFactorAt(wp));
+```
+
+`elDecode` is the piecewise sRGB curve - three `pow()` calls. **On a
+uniform.** The value is identical for every pixel of the frame and it
+was being recomputed for every one of them, all day, everywhere.
+
+GLSL has nowhere to hoist a uniform-only expression to: there is no
+per-draw stage between the uniform and the fragment. So the only place
+it can be computed once is the host, and the only way to say that is to
+send the colour already decoded. `uFogColorLin` is declared in the
+shared block (so a fifth lane shader cannot be written without it),
+`_fogLocs` looks it up with the rest of the fog, and `_uploadFog` sends
+it only to a program that asked - a classic program does not declare it,
+and a lane program that never calls `elFinish` has it optimised out, so
+both read null and skip.
+
+**The law is not restated.** The lane already carries the decoder the
+shader compiles - `decode3` - and the renderer reaches it through the
+lane it was handed, so there is no second copy of the sRGB constants
+here, only a place to keep the answer. The cache is keyed on the display
+triple it came from, starts at NaN (a zero triple would match a
+legitimately black fog and never recompute), keeps its own scratch
+rather than `_c3`'s (which is handed to whoever asks next), and is
+invalidated on a lane swap - a cache keyed on its input alone cannot see
+that the *function* changed.
+
+The far ring pastes the same block but has its own finish and its own
+upload path, so it keeps its own decode. Named so the asymmetry reads as
+a decision.
+
+**The failure this could not be allowed to have is a black fog.** A
+uniform the optimiser drops reads back as null, the upload skips it, and
+`elFinish` mixes toward black - which compiles clean and shows only on a
+foggy day. Source cannot answer that, so `tools/perfSunShaderProbe.mjs`
+links all four lane programs in a real driver and asks for the location.
+
+**Pinned** in `test/perffog_uniform.test.js` (4). Mutants
+`tools/mutants/perffog.json`: 11 - 11 dead, 0 survived. EL1's fog pin
+and its `glsl-fog-blend-raw` mutant re-aimed by content: the law EL1
+states - the fog is blended in linear and re-encoded, so a fogged
+fragment IS the fog colour - is unchanged; only where the decode happens
+moved.
+
+**The lesson: a shader is the one place where "it's just a constant"
+costs you two million times a frame. The exterior's real bill was never
+in the things that were easy to count.**
 

@@ -39,6 +39,21 @@ const r = await page.evaluate(async () => {
     if (typeof src === 'string') compile(`WATER_FS(lane=${withLane})`, src, gl.FRAGMENT_SHADER);
     else out.push([`WATER_FS(lane=${withLane})`, null, 'no factory export - checked by the renderer build instead']);
   }
+  // PERF-FOG: the four lane programs must LINK with uFogColorLin still in
+  // them. A uniform the optimiser drops reads back as null, the upload
+  // skips it, and the shader then mixes toward a BLACK fog - a failure
+  // that compiles clean and only shows on a foggy day.
+  const rend = await import('/src/render/renderer.js');
+  const cv2 = document.createElement('canvas'); cv2.width = 64; cv2.height = 64; document.body.append(cv2);
+  const r = new rend.Renderer(cv2);
+  r.setLightingLane(el.EL_LANE);
+  const set = r._laneSet;
+  for (const k of ['mesh', 'terrain', 'char', 'bb']) {
+    const prog = set?.[k];
+    const linked = !!prog && r.gl.getProgramParameter(prog, r.gl.LINK_STATUS) === true;
+    const loc = linked ? r.gl.getUniformLocation(prog, 'uFogColorLin') : null;
+    out.push([`lane ${k}: links and keeps uFogColorLin`, linked && !!loc, linked ? (loc ? '' : 'the uniform was optimised out - the fog would go black') : 'did not link']);
+  }
   return out;
 });
 let bad = 0;

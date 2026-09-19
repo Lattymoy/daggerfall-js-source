@@ -196,6 +196,7 @@ export function elScatterDensity(mode, density, start, end) {
 export const EL_GLSL = `
 uniform float uELExposure;   // EL1: scene exposure before the tonemap
 uniform float uELScatter;    // EL1: in-scatter gain x the fog's density (0 = no fog, no glow)
+uniform vec3 uFogColorLin;   // PERF-FOG: the fog colour ALREADY DECODED - see elFinish
 ${BAYER_GLSL}
 ${AIR_ADAPT_GLSL}
 vec3 elDecode(vec3 c) {
@@ -313,7 +314,17 @@ vec3 elInScatter(vec3 wp) {
 vec3 elFinish(vec3 lit, vec3 wp) {
   float ex = uELExposure * elAdapt();   // EL4: the eye's own multiplier rides the scene's exposure
   vec3 tm = elTonemap(lit * ex);
-  vec3 col = mix(elDecode(uFogColor), tm, fogFactorAt(wp));
+  // PERF-FOG (2026-09-19): THE FOG COLOUR ARRIVES DECODED. This line read
+  // elDecode(uFogColor) - three pow() calls, per fragment, on a UNIFORM.
+  // The value is the same for every pixel of the frame and it was being
+  // recomputed for every one of them, in every lane shader there is: the
+  // terrain, the meshes, the rigs and every flat in the world. GLSL has
+  // nowhere to hoist a uniform-only expression to, so the only place it
+  // can be done once is the host. The lane already carries that decoder -
+  // elDecode3, the same piecewise sRGB curve as elDecode above, which the
+  // renderer reaches through the lane it was handed - so this needs no
+  // second copy of the law, only a place to keep the answer.
+  vec3 col = mix(uFogColorLin, tm, fogFactorAt(wp));
   col += elTonemap(elInScatter(wp) * ex);
   return elEncode(col) + (bayer4(gl_FragCoord.xy) - ${BAYER_MEAN}) / 255.0;   // EL6: dithered at the byte, zero-mean - a lantern's falloff on a dark floor is bands without it
 }
