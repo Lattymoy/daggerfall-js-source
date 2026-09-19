@@ -80,17 +80,18 @@ const out = await page.evaluate(async () => {
 
   const at200 = frame(200);
   const at110 = frame(110);
+  const shipped = frame(LAB_GRASS.range);   // GRASS2: and the config a player actually gets
   return {
     perCell: grassPerCell(), cell: GRASS_CELL, slots: field.slots, verts: grass.verts,
     labRange: LAB_GRASS.range, labHeight: LAB_GRASS.height, density: LAB_GRASS.density,
-    liveCells: field.live.size, at200, at110, glError: gl.getError(),
+    liveCells: field.live.size, at200, at110, shipped, glError: gl.getError(),
   };
 });
 
 if (out.error) { console.log('FAIL', out.error); await browser.close(); await server.close(); process.exit(1); }
 console.log(`  cell ${out.cell}m, ${out.perCell} blades/slot, ${out.slots} slots, ${out.verts} verts/blade, lab range ${out.labRange}m height ${out.labHeight}`);
 console.log(`  cells filled ${out.liveCells}`);
-for (const [k, f] of [['range 200', out.at200], ['range 110', out.at110]]) {
+for (const [k, f] of [[`SHIPPED (range ${out.labRange})`, out.shipped], ['range 200', out.at200], ['range 110', out.at110]]) {
   const cap = f.drawn.slotCapacity ?? f.drawn.slots * out.perCell;
   const verts = f.drawn.verts ?? f.drawn.blades * out.verts;
   console.log(`  ${k}: ${f.drawn.slots} slots (${f.drawn.farSlots ?? 0} on the far blade), ${f.drawn.blades} blades submitted (slot-sized would be ${cap}), ${(verts / 1e6).toFixed(2)}M verts, ${f.green} green px`);
@@ -106,6 +107,12 @@ check('the field grew and the frame has grass in it', out.liveCells > 0 && out.a
 // count the host chose, never on the slot's size.
 check('the field submits FEWER blades than it holds - the fade is paid on the host, not in the vertex shader',
   out.at200.drawn.blades < out.at200.drawn.kept, JSON.stringify(out.at200.drawn));
+// THE SHIPPED CONFIG, stated on its own line: the two measurements above
+// it are a controlled comparison against the lab's old 200 m range, and
+// this is what the player's frame actually submits.
+check('the shipped range submits less vertex work than a five-quad blade for every held blade would',
+  out.shipped.drawn.verts < out.shipped.drawn.kept * out.verts * 0.55,
+  `${(out.shipped.drawn.verts / 1e6).toFixed(2)}M against ${(out.shipped.drawn.kept * out.verts / 1e6).toFixed(2)}M at range ${out.labRange}`);
 check('the far cells drop to the one-quad blade', (out.at200.drawn.farSlots ?? 0) > 0 && out.at200.drawn.farSlots < out.at200.drawn.slots,
   `${out.at200.drawn.farSlots} of ${out.at200.drawn.slots} slots`);
 {

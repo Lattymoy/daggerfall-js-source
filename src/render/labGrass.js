@@ -559,10 +559,17 @@ export function labBladeCorners(segments = 5) {
  *  by which vertex array is bound and nothing else. */
 export const GRASS_FAR_SEGMENTS = 1;
 /** Where the far blade takes over, as a fraction of the draw range.
- *  0.5 is inside the fade's own start (0.55), so a blade is already
- *  thinning by the time its curve goes - the two changes never land on
- *  the same blade at the same distance, which is what would read as a
- *  line across the field. */
+ *
+ *  THE REASON IS THE PIXEL, not the fade. At half of a 250 m range a
+ *  blade stands 125 m off, which is 2 to 6 pixels tall at 1080p - and
+ *  it is 0.66 of a pixel WIDE, so the bend the four extra segments
+ *  exist to draw is a fraction of a pixel of sideways travel. There is
+ *  nothing there to see, whatever the fade is doing.
+ *
+ *  (An earlier note here claimed 0.5 sat inside the fade's own start of
+ *  0.55 so that a blade was "already thinning by the time its curve
+ *  goes". That is backwards - 0.5 is BEFORE 0.55, so the curve goes
+ *  first - and it was never the argument anyway.) */
 export const GRASS_FAR_AT = 0.5;
 
 /**
@@ -621,7 +628,6 @@ export class LabGrassRenderer {
     this.u = {};
     for (const n of ['uVP', 'uTime', 'uWind', 'uRange', 'uEye', 'uSunDir', 'uWindDir', 'uSnowFull', 'uSlotN', 'uGField', 'uGFieldOrigin', 'uGFieldM', 'uSnowGlobal', 'uWindV', 'uAmb', 'uSunCol', 'uDim', 'uSunScale', 'uMoonDir', 'uMoonScale', 'uMoonCol']) this.u[n] = gl.getUniformLocation(prog, n);
     // the blade, and three instance streams the lab's layout plus the game's root height
-    this.vao = gl.createVertexArray();
     // GRASS2: the instance buffers are made ONCE and shared by both
     // levels of detail - only the corner buffer differs between them, so
     // a cell drops to the far blade by binding the other array. Nothing
@@ -768,7 +774,10 @@ export class LabGrassRenderer {
     gl.uniform3fv(u.uMoonCol, light.moonCol ?? WHITE);
     gl.bindVertexArray(this.vao);
     if (this.slotBox) this._drawVisibleSlots(o, eye, range);   // PERF2: the field, culled by cell
-    else { gl.uniform1f(u.uSlotN, this.count); this._point(0); gl.drawArraysInstanced(gl.TRIANGLES, 0, this.verts, this.count); this.drawn.slots = 1; this.drawn.blades = this.count; this.drawn.kept = this.count; }   // the lab's one scatter
+    else { gl.uniform1f(u.uSlotN, this.count); this._point(0); gl.drawArraysInstanced(gl.TRIANGLES, 0, this.verts, this.count); this.drawn.slots = 1; this.drawn.blades = this.count; this.drawn.kept = this.count;
+      // GRASS2: every field of `drawn` is written on EVERY path, or a
+      // reader gets the last cell-drawn frame's numbers for this one.
+      this.drawn.verts = this.count * this.verts; this.drawn.farSlots = 0; this.drawn.slotCapacity = this.count; }   // the lab's one scatter
     gl.bindVertexArray(null);
     gl.disable(gl.BLEND);
     if (culled) gl.enable(gl.CULL_FACE);

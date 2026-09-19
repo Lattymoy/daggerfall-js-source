@@ -145,10 +145,16 @@ directory by `test/audit18_bible_docs.test.js`:
   blade instead of the lab's five stacked quads: the five exist so the
   stalk can curve, and at that distance the curve is not resolvable.
   Same instance buffers, same shader, a different vertex array. 30 of
-  the 46 cells qualify. Together: **8.45M to 3.54M, 58% off.** Height is
-  54 to 38 on Mac's word, range 200 to 250, and the tint is pulled
-  toward a low-frequency world-space noise so the sward has patches
-  instead of reading as one flat carpet of per-blade noise.
+  the 46 cells qualify. Together, like for like at the lab's own 200 m:
+  **8.45M to 3.54M, 58% off.** AND WHAT ACTUALLY SHIPS, which is the
+  number that matters to a player: the range is 250 m, where the frame
+  submits **4.97M** - still 41% under what the old field cost at 200 m,
+  while seeing a quarter further. (It submits slightly MORE blades there,
+  290k against 282k; the vertices fall anyway because two thirds of the
+  cells are on the one-quad blade.) Height is 54 to 38 on Mac's word and
+  the tint is pulled toward a low-frequency world-space noise so the
+  sward has patches instead of reading as one flat carpet of per-blade
+  noise.
   THREE THINGS THIS COST, all caught by pins and probe rather than by
   eye. Widening the span THINNED the grass, because `density` is a count
   over the window and not a rate - `densitySpan` now holds the lab's own
