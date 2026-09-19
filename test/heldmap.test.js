@@ -40,7 +40,7 @@ import {
   buildInkModel, buildInkMarks, paintInk, placeNames, zoomBand, clampView, scaleMinOf, zoomAt, viewCentredOn,
   toPaper, toMap, boundarySegments, linkSegments, landAt, roadChains, markKind, roundCorners,
   paintInkStatic, paintInkOverlay, nameFont,
-  BAND_MARKS, BAND_NAMES, SCALE_MAX, PEN,
+  BAND_MARKS, BAND_NAMES, SCALE_MAX, PEN, GLYPH_R,
 } from '../src/ui/inkMap.js';
 import { PARTY_MARK_CSS } from '../src/ui/partyMapMarks.js';
 import { quadPlacement } from '../src/ui/quadMap.js';   // MAP3
@@ -801,13 +801,28 @@ test('MAP1 ink: the zoom bands - far shows the cities alone, mid the towns, temp
   // ...and the painter honours them: at far a hamlet is not drawn, at near it is
   const summaries = [summaryOf(1, 1, LOCATION_TYPES.TownCity), summaryOf(3, 1, LOCATION_TYPES.TownHamlet)];
   const model = buildInkModel({ width: 6, height: 4, heightBytes: new Uint8Array(24).fill(40), climateAt: () => CLIMATES.Woodlands, summaries });
-  const glyphs = (band, scale) => {
+  const arcs = (band, scale) => {
     const ctx = recordingCtx();
     paintInk(ctx, model, { ox: 0, oy: 0, scale }, { paperW: 100, paperH: 60, band });
-    return ctx.calls.filter((c) => c.fn === 'arc').length;
+    return ctx.calls.filter((c) => c.fn === 'arc');
   };
-  assert.equal(glyphs('far', 1), 2, 'far: the city (a dot and a ring) alone');
-  assert.equal(glyphs('near', 8), 3, 'near: the hamlet\'s dot joins it');
+  // MAP-FIELD6: each glyph is laid TWICE - once in the halo, once in
+  // ink - so every count here is doubled against the reading before it.
+  // A city is a dot and a ring, so four arcs; near, the hamlet's dot
+  // adds two more.
+  assert.equal(arcs('far', 1).length, 4, 'far: the city (a dot and a ring, haloed then inked) alone');
+  assert.equal(arcs('near', 8).length, 6, 'near: the hamlet\'s dot joins it');
+  // and EVERY halo is laid before ANY ink. This needs two marks to say
+  // at all: with one, halo-then-ink per mark and halo-pass-then-ink-pass
+  // are the same sequence. With two it is the whole point - a halo laid
+  // per mark falls on the ink of the neighbour already drawn, and bites
+  // a hole in it.
+  const near = arcs('near', 8);
+  const lastHalo = near.map((c) => c.strokeStyle).lastIndexOf(PEN.halo);
+  const firstInk = near.map((c) => c.strokeStyle).indexOf(PEN.line);
+  assert.ok(near.some((c) => c.strokeStyle === PEN.halo) && near.some((c) => c.strokeStyle === PEN.line), 'both passes ran');
+  assert.ok(lastHalo < firstInk, 'every halo is down before the first ink - not halo-then-ink one mark at a time');
+  assert.ok(near[lastHalo].lineWidth > near[firstInk].lineWidth, 'and the halo is the fatter pen, or it would clear nothing');
 });
 
 test('MAP1 ink: the clamp never lets the map leave the parchment - contain at rest, centred where smaller, panned only to the edge where larger, capped at SCALE_MAX (mutants: clamp-lets-edge-in, clamp-no-centre, ceiling-dropped)', () => {
@@ -848,6 +863,21 @@ test('MAP1 ink: names compete for room in rank order - a city\'s beats a hamlet\
   const view = { ox: 0, oy: 0, scale: 4 };
   const near = placeNames(marks, view, 'near', { paperW: 300, paperH: 100, measure });
   assert.deepEqual(near.map((n) => n.mark.name), ['Cityville', 'Farvale'], 'the city won the room, the hamlet under it was dropped, the off-sheet city never placed');
+  // MAP-FIELD6: and what RANK buys is now the better side rather than
+  // the only one - a loser has three more places to try, so the law has
+  // to be read where it still shows. Set a city and a hamlet close
+  // enough that only one can take the right-hand side, hamlet first in
+  // the list so that ignoring rank would hand it the spot.
+  const sided = [
+    { x: 25, y: 7.5, colorIndex: 12, kind: 'hamlet', name: 'Hamletton', summary: {} },
+    { x: 25, y: 5, colorIndex: 11, kind: 'city', name: 'Cityville', summary: {} },
+  ];
+  const bySide = placeNames(sided, view, 'near', { paperW: 300, paperH: 100, measure });
+  const city = bySide.find((n) => n.mark.name === 'Cityville');
+  const hamlet = bySide.find((n) => n.mark.name === 'Hamletton');
+  assert.ok(city && hamlet, 'both are named - neither is squeezed out');
+  assert.ok(city.x > toPaper(view, 25, 5)[0], 'the CITY takes the right-hand side, where a label is looked for');
+  assert.ok(hamlet.x + hamlet.w < toPaper(view, 25, 7.5)[0], '...and the hamlet, ranked under it, is set to the left');
   const mid = placeNames(marks, view, 'mid', { paperW: 300, paperH: 100, measure });
   assert.deepEqual(mid.map((n) => n.mark.name), ['Cityville'], 'mid names cities and hamlets only - and the hamlet still loses the room');
   const far = placeNames(marks, view, 'far', { paperW: 300, paperH: 100, measure });
@@ -859,6 +889,51 @@ test('MAP1 ink: names compete for room in rank order - a city\'s beats a hamlet\
   const texts = ctx.calls.filter((c) => c.fn === 'fillText');
   assert.deepEqual(texts.map((c) => c.args[0]), ['Cityville', 'Farvale']);
   assert.ok(texts.every((c) => c.font.includes('Cormorant')), 'in the display face');
+  // MAP-FIELD6: and each is HALOED first, in the same face, so the two
+  // passes cannot drift apart and leave a name stroked in one size and
+  // filled in another
+  const haloed = ctx.calls.filter((c) => c.fn === 'strokeText');
+  assert.deepEqual(haloed.map((c) => c.args[0]), ['Cityville', 'Farvale'], 'every name laid in halo first');
+  assert.ok(haloed.every((c) => c.strokeStyle === PEN.halo), 'in the halo, not the pen');
+  assert.deepEqual(haloed.map((c) => c.font), texts.map((c) => c.font), 'and in the face the ink uses');
+});
+
+test('MAP-FIELD6: a name never lands on another mark\'s GLYPH - it takes another side of its own, or it is dropped (mutants: MAPFIELD6-names-ignore-glyphs, MAPFIELD6-one-candidate-only)', () => {
+  // Mac: "Some of the glyphs are hard to read." The fault he could see
+  // rather than name: placeNames tested a label only against other
+  // LABELS, so it was free to run straight through the next town's mark.
+  const measure = (t, size) => t.length * size * 0.5;
+  const view = { ox: 0, oy: 0, scale: 4 };
+  const box = (n) => ({ x: n.x, y: n.y - n.size * 1.1 * 0.55, w: n.w, h: n.size * 1.1 });
+  const clear = (n, m) => {
+    const [gx, gy] = toPaper(view, m.x, m.y);
+    const r = GLYPH_R[m.kind], b = box(n);
+    return !(gx - r < b.x + b.w && gx + r > b.x && gy - r < b.y + b.h && gy + r > b.y);
+  };
+  // two cities close enough that the first's label, set to the right as
+  // every label was, would run through the second's ring
+  const pair = [
+    { x: 50, y: 5, colorIndex: 11, kind: 'city', name: 'Wayrest', summary: {} },
+    { x: 57.5, y: 5, colorIndex: 11, kind: 'city', name: 'Daggerfall', summary: {} },
+  ];
+  const placed = placeNames(pair, view, 'near', { paperW: 400, paperH: 120, measure });
+  assert.equal(placed.length, 2, 'BOTH are named - a blocked label has other sides to try, and silence is the last resort');
+  for (const n of placed) for (const m of pair) {
+    assert.ok(clear(n, m), `${n.mark.name} must not be written over ${m.name}'s glyph`);
+  }
+  const way = placed.find((n) => n.mark.name === 'Wayrest');
+  assert.ok(way.x + way.w <= toPaper(view, 50, 5)[0] - GLYPH_R.city,
+    'Wayrest had to leave the right-hand side, where its label would have crossed Daggerfall\'s ring, and set itself to the left');
+  // and when there is NOWHERE clear, the name goes rather than the mark:
+  // a town ringed by glyphs on all four sides keeps its mark and loses
+  // its label, which is the trade that makes the sheet readable
+  const boxed = [
+    { x: 20, y: 20, colorIndex: 12, kind: 'hamlet', name: 'Hemmed In', summary: {} },
+    ...[[14, 20], [26, 20], [20, 16], [20, 24]].map(([x, y], i) => ({ x, y, colorIndex: 11, kind: 'city', name: `R${i}`, summary: {} })),
+  ];
+  const tight = placeNames(boxed, view, 'near', { paperW: 200, paperH: 200, measure: (t) => t.length * 4 });
+  assert.ok(!tight.some((n) => n.mark.name === 'Hemmed In'), 'no room anywhere: the label is dropped, not smeared over a neighbour');
+  assert.ok(tight.length > 0, '...while the neighbours that DO have room keep theirs - the drop is per name, not a bail-out');
 });
 
 test('MAP1 ink: the paint clears the sheet, strokes the coast twice (a wash under the pen), honours the road and track flags, skips the tracks at far, and inks the player, the selection and the party in their own colours (mutants: no-clear, wash-dropped, roads-flag-ignored, tracks-at-far, party-in-ink-colour)', () => {

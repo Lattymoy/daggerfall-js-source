@@ -119,8 +119,8 @@
   {
     "name": "overlap-drawn",
     "file": "src/ui/inkMap.js",
-    "old": "    if (boxes.some((b) => b.x < box.x + box.w && b.x + b.w > box.x && b.y < box.y + box.h && b.y + b.h > box.y)) continue;",
-    "new": "    if (false) continue;",
+    "old": "  const hits = (box) => boxes.some((b) => b.x < box.x + box.w && b.x + b.w > box.x && b.y < box.y + box.h && b.y + b.h > box.y);",
+    "new": "  const hits = () => false;",
     "tests": [
       "test/heldmap.test.js"
     ]
@@ -518,6 +518,60 @@
     "file": "src/ui/heldMap.js",
     "old": "  const col = side === 'right' ? w - 1 : 0;",
     "new": "  const col = 0;",
+    "tests": [
+      "test/heldmap.test.js"
+    ]
+  },
+  {
+    "name": "MAPFIELD6-names-ignore-glyphs",
+    "file": "src/ui/inkMap.js",
+    "old": "  for (const m of marks) {\n    if (!shown.has(m.colorIndex) || !onSheet(m)) continue;\n    const [px, py] = toPaper(view, m.x, m.y);\n    const r = (GLYPH_R[m.kind] ?? 4) + 1;\n    boxes.push({ x: px - r, y: py - r, w: r * 2, h: r * 2 });\n  }",
+    "new": "",
+    "tests": [
+      "test/heldmap.test.js"
+    ]
+  },
+  {
+    "name": "MAPFIELD6-one-candidate-only",
+    "file": "src/ui/inkMap.js",
+    "old": "    const fit = cands.find((c) => c.x >= 2 && c.x + w <= paperW - 2 && !hits({ x: c.x, y: c.y, w, h }));",
+    "new": "    const fit = [cands[0]].find((c) => c.x >= 2 && c.x + w <= paperW - 2 && !hits({ x: c.x, y: c.y, w, h }));",
+    "tests": [
+      "test/heldmap.test.js"
+    ]
+  },
+  {
+    "name": "MAPFIELD6-the-glyphs-lose-their-halo",
+    "file": "src/ui/inkMap.js",
+    "old": "  for (const [m, x, y] of inked) paintGlyph(ctx, m.kind, x, y, true);",
+    "new": "",
+    "tests": [
+      "test/heldmap.test.js"
+    ]
+  },
+  {
+    "name": "MAPFIELD6-the-halo-is-drawn-per-mark-not-per-pass",
+    "file": "src/ui/inkMap.js",
+    "old": "  for (const [m, x, y] of inked) paintGlyph(ctx, m.kind, x, y, true);\n  for (const [m, x, y] of inked) {\n    paintGlyph(ctx, m.kind, x, y);",
+    "new": "  for (const [m, x, y] of inked) {\n    paintGlyph(ctx, m.kind, x, y, true);\n    paintGlyph(ctx, m.kind, x, y);",
+    "tests": [
+      "test/heldmap.test.js"
+    ]
+  },
+  {
+    "name": "MAPFIELD6-the-names-lose-their-halo",
+    "file": "src/ui/inkMap.js",
+    "old": "    for (const n of opts.names) {\n      ctx.font = nameFont(n.mark, n.size);\n      ctx.strokeText(n.mark.name, n.x, n.y);\n    }",
+    "new": "",
+    "tests": [
+      "test/heldmap.test.js"
+    ]
+  },
+  {
+    "name": "MAPFIELD6-the-halo-is-no-fatter-than-the-pen",
+    "file": "src/ui/inkMap.js",
+    "old": "export const HALO_PEN = 3.2;",
+    "new": "export const HALO_PEN = 0;",
     "tests": [
       "test/heldmap.test.js"
     ]

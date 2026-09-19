@@ -838,3 +838,63 @@ Pins: `test/heldmap.test.js` (the colour key over a zone with a crack
 speck, the seeded side, clear ground, and the cut cuffs driven through
 `_paintSheet` itself). Mutants: `map1.json`, `MAPFIELD4-*` x4 plus the
 re-aimed `MAPFIELD2-*`. Browser: `tools/heldMapArtProbe.mjs`, 19 checks.
+
+## MAP-FIELD6 - readable glyphs (2026-09-19)
+
+Mac: *"Some of the glyphs are hard to read. I want to make everything
+more readable, without clutter and keeping the same design"*.
+
+**It was never contrast.** The pen sits at luma 43 on parchment at 172,
+which is as strong a difference as print. Three things were actually
+wrong, and only one of them is about the glyphs themselves.
+
+**1. A label was free to land on another town's mark.** `placeNames`
+tested a candidate box against the boxes of labels already placed - and
+against nothing else. So a city's name ran straight through the ring of
+the city beside it, and a cluster of hamlets sat on top of its own
+label. This is the fault Mac could SEE without being able to name it:
+the glyph was not faint, it was buried. Every glyph the band inks now
+seeds the same greedy test, before any name is placed.
+
+That alone silenced the two names that most needed saying, because a
+blocked label had exactly one place to go. So a name now has FOUR
+candidates - right, left, above, below - and takes the first clear one.
+Right stays first, because that is where the eye looks and where every
+label sat before. Only a name with nowhere clear at all is dropped, and
+that trade is deliberate: the mark is still there to hover, and one
+unreadable label is worth less than the mark it was covering.
+
+RANK still decides, but what it buys has changed. It used to decide who
+got a label at all; now it decides who gets the BETTER SIDE, since the
+loser has three more to try. The pin had to move with it - the old
+fixture could no longer tell a ranked run from an unranked one, and the
+mutant that proves the law went quiet until it was re-aimed.
+
+**2. The ink had nothing to hold it apart from the paper.** The
+parchment is not a flat ground: it is painted with brown cracks and
+stains of very nearly the pen's own hue. A 1.2px line over that tangles
+with the texture. Every glyph and every name is now drawn TWICE - once
+in `PEN.halo`, a wide soft parchment-light pass, then in ink. This is a
+cartographer's halo, and it takes clutter AWAY rather than adding it:
+the page keeps exactly the marks it had and they stop competing with the
+sheet's own marks. Nothing about the design moves.
+
+The halo is laid as a PASS, not per mark. Per mark, a neighbour's halo
+falls on ink already drawn and bites a hole in it - which on a crowded
+coast is worse than the tangle it set out to fix.
+
+**3. The relief hatch was reading as ink.** The high ground's carets
+were drawn in `PEN.soft`, the same tone as borders and tracks, and at
+the near band they are dense. They have their own `PEN.relief` now, at
+about two thirds the weight. They are meant to be felt, not read, and
+quieting them is most of what "without clutter" asked for.
+
+The pen went 1.2 -> 1.5 with all this, which is what makes a village's
+dot and a track's dashes hold together at the far band at all.
+
+Pins: `test/heldmap.test.js` - the halo pass ahead of every ink stroke
+(which takes two marks to state at all), a name kept off every glyph
+with the four candidates driving it, rank read at the SIDE it now
+decides, and a town ringed on all four sides losing its label and
+keeping its mark. Mutants: `map1.json` `MAPFIELD6-*` x6, with
+`overlap-drawn` and `rank-ignored` re-aimed by content.
