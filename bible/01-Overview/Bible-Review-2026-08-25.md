@@ -59,7 +59,7 @@ FM-bank audit. Audio.md also still disowns `ActivateLockUnlock = 316`
 (`:158` "NOT OURS... neither of which is ported") - it sits in
 `soundClips.js:10` with three consumers (R1) - and still claims
 `deps.inCastle` stays false (`:105`), live since AUDIT 21
-(`dungeonContext.js:2418`). This is the one page whose live-queue
+(`dungeonContext.js:2420`). This is the one page whose live-queue
 claims actively contradict the code, the Ledger, and the rest of the
 bible at once.
 
@@ -106,7 +106,7 @@ direction). The real staleness is where the sweep cannot see:
   row's own title records the previous three.
 - `:340` residue "a static NPC currently answers with the
   no-response line" - contradicts the same row's own head and row
-  `:446` (B7); `worldModes.js:1291-1302` opens the real talk window.
+  `:446` (B7); `worldModes.js:1296-1307` opens the real talk window.
 - `:339` "house/ship PURCHASE popups... still out" - contradicts row
   `:441` ("this row is now CLOSED", H1-H3) and
   `ui/bankPurchaseWindow.js`.
@@ -131,7 +131,7 @@ per arc:
   first-arm); S40's "house ledger is unported" flag
   (`banking.js:172 isHouseOwned` feeds the rest seam); S16's
   "monsters 0-42 still spawn as billboards" (C11 pivoted them to real
-  foes, `dungeonContext.js:717-776`); the mid-file Queue
+  foes, `dungeonContext.js:719-778`); the mid-file Queue
   (`:742-748`) still carries FreeAction / Create Item / enchantment
   value / rest-UI / "Later: guilds, shops, dialog, calendar" - all
   shipped, list actively maintained (it struck its fatigue line).
@@ -163,7 +163,7 @@ per arc:
   `:3368`); `:4722` is now flatly false ("the interior host's
   char-sheet and inventory panels swallow their click and do
   nothing") and contradicts U43 in the same file
-  (`worldModes.js:4349-4350` routes them). UI-Arc carries no records
+  (`worldModes.js:4354-4355` routes them). UI-Arc carries no records
   at all for H1-H3 - the banking windows exist only in the Ledger.
 - *Combat.md*: the status head (first 51 lines) is the stale part -
   DrainMagicka "INTERIM no-op" (`:19`, real since S4a and
@@ -234,8 +234,8 @@ opposite of their own code and deserve a slice's attention:
 ## Line-citation drift (low, batched)
 
 `Port-Ledger.md:533` (save.js:29/:510/:519 → :28/:543/:573), `:530`
-(world.js:2348 → :2412); `Quest-Arc.md:719`/`:2905`
-(worldModes.js:511 → :903); `Player-Arc.md:955` (worldModes.js:729 →
+(world.js:2350 → :2412); `Quest-Arc.md:719`/`:2905`
+(worldModes.js:513 → :903); `Player-Arc.md:955` (worldModes.js:734 →
 :2764), `:304` (world.js "531 lines" → 3,564); `Characters-Arc.md:190`
 (CHAR_PIXEL "7" - `renderer.js:556` ships 9, and the doc missed two
 later revisions recorded in `paperdollViewer.js:138`), `:2114`

@@ -700,6 +700,33 @@ export const FEATURES = Object.freeze([
   // the food, water and camping items the store shelves and a new
   // character carries, camps and campfires, the costed rest, hunting.
   // Off is the classic game: no needs, no provisions minted.
+  // BLOOD1 (2026-09-19, Mac: "I really want to try and build our own
+  // version as close to 1:1 as possible" / "read in how their module
+  // works so we can achieve our own type of parity") - THE PORT'S OWN
+  // blood, and an ENHANCED row rather than a mod row because no mod is
+  // vendored for it. DaggerBlood is the reference for the feel and
+  // nothing else: no code, no art, no Mod-Registry row
+  // (bible/05-Combat/Blood-Arc.md carries the whole of that reasoning),
+  // so there is no author's name to put in the title the way every
+  // `modFeature` row carries one.
+  //
+  // ON by default: the splash has always played, and the mark is what a
+  // player expects to still be there when they walk back through.
+  Object.freeze({
+    id: 'blood-marks',
+    group: 'combat',
+    title: 'Blood stays',
+    note: 'Blood marks the floor and the walls where it landed, and stays there. A glancing blow leaves a spatter and a '
+      + 'near-lethal one a pool; a bloodless foe leaves nothing. The marks are a fixed set that recycles oldest-first, so '
+      + 'they cost the same whether you have fought once or all day. Off keeps the classic splash, which plays and goes.',
+    effect: 'Takes effect at once. The marks already laid stay until the room changes.',
+    kinds: Object.freeze(['enhanced']),
+    // ONLINE IT IS THE PLAYER'S. A mark is a local picture with no
+    // gameplay in it - nobody else's floor changes - so unlike the
+    // survival row, which the room has to agree on, this one every
+    // player answers for themselves.
+    control: Object.freeze({ store: 'prefs', key: 'blood-marks', initial: true, online: 'player' }),
+  }),
   Object.freeze({
     id: 'mod-climates-calories',   // a mod-row id: WM3's law reaches the credits' vendor through it
     group: 'character',

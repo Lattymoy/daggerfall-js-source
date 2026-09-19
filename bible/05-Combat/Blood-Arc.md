@@ -136,7 +136,8 @@ varied procedurally (rotation, scale, colour jitter).
 Slices, each behind its own `features.js` row:
 
 1. **BLOOD1a - the decal pool.** SHIPPED (`src/combat/bloodDecals.js`,
-   `test/blood1_decals.test.js`, `tools/mutants/blood1.json` 8/8 dead).
+   `src/combat/bloodMarks.js`, `src/combat/bloodSwitch.js`,
+   `test/blood1_decals.test.js`, `tools/mutants/blood1.json` 31/31 dead).
    A fixed ring of oriented quads laid on the surface a hit or a
    particle met, recycled oldest-first, offset with the floating
    origin, cleared on a mode change; the rate ladder drives the count.
@@ -194,6 +195,36 @@ Slices, each behind its own `features.js` row:
    mutation-recorded; both survived the first cut of the pins and named
    real holes (the origin-shift pin's delta had a zero height term, and
    the basis was never exercised near horizontal).
+
+   THE HOSTS, under the FOUR HOSTS RULE. The switch is ONE BAG
+   (`bloodDecalDeps` in `src/combat/bloodSwitch.js`), built once and
+   passed whole by all four: four hosts spelling three settings three
+   ways is that rule's own hazard. The collider goes in as a GETTER and
+   is never captured, because every host rebuilds its own - a mode
+   change swaps it and the streaming world swaps it again on every
+   pixel load - while the pool outlives all of it.
+
+   THE MARKS GO DOWN BEFORE THE BILLBOARDS, so a body standing in its
+   own blood is over it and not under it. THE SHIFT RIDES `offsetAll`,
+   which every host already calls; a second line beside it is a line
+   four hosts have to remember, and the one that forgot would strand
+   its blood 819.2 units behind - the exact fault AUDIT 17e F23 wrote
+   that block's comment about. A room thrown away takes its blood on
+   the `clear()` every host already makes, and its GL on `dispose()`.
+
+   THE MARK'S ART IS THE SPLASH'S SETTLED FRAME. A splash plays out to
+   the stain and then vanishes, so that last frame IS the mark; it is
+   recorded at the upload because nothing else can see `frameCount`.
+   The port ships no blood picture of its own and the pin greps for
+   one.
+
+   HARD1 FIRED TWICE IN THIS SLICE AND WAS RIGHT BOTH TIMES. The mark
+   pool is its OWN binding rather than a property of the splash pool,
+   because `hitEffects` is a HAND-OFF and the three ownership answers
+   are exclusive - the thing that holds a vertex buffer ends by its own
+   name. And the interior host's pool was never named in `tryExit()` or
+   `forceExitToExterior()`, so blood laid in a building would have
+   followed the player into the street.
 2. **BLOOD1b - overkill and gibs.** The 175% rung, the burst, the
    corpse swap.
 3. **BLOOD1c - bleeding.** The 2..5s cadence and the ramp above.

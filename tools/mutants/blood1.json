@@ -154,7 +154,7 @@
   },
   {
     "name": "BLOOD1a-a-bloodless-foe-stains-the-floor",
-    "file": "src/scenes/hitEffects.js",
+    "file": "src/combat/bloodMarks.js",
     "old": "    if (!marksBlood(bloodIndex)) return null;",
     "new": "",
     "tests": [
@@ -163,16 +163,16 @@
   },
   {
     "name": "BLOOD1a-the-surface-is-assumed-instead-of-found",
-    "file": "src/scenes/hitEffects.js",
-    "old": "      [pos[0], pos[1] - h.dist, pos[2]],",
-    "new": "      [pos[0], pos[1], pos[2]],",
+    "file": "src/combat/bloodMarks.js",
+    "old": "    const d = _pool.place([pos[0], pos[1] - h.dist, pos[2]], h.normal ?? [0, 1, 0], { size: markSize(rate) });",
+    "new": "    const d = _pool.place([pos[0], pos[1], pos[2]], h.normal ?? [0, 1, 0], { size: markSize(rate) });",
     "tests": [
       "test/blood1_decals.test.js"
     ]
   },
   {
     "name": "BLOOD1a-blood-over-open-air-still-marks",
-    "file": "src/scenes/hitEffects.js",
+    "file": "src/combat/bloodMarks.js",
     "old": "    if (!h || !Number.isFinite(h.dist) || h.dist > MARK_DROP) return null;",
     "new": "    if (!h) return null;",
     "tests": [
@@ -181,16 +181,16 @@
   },
   {
     "name": "BLOOD1a-the-mark-takes-the-surfaces-normal-from-nowhere",
-    "file": "src/scenes/hitEffects.js",
-    "old": "      h.normal ?? [0, 1, 0],",
-    "new": "      [0, 1, 0],",
+    "file": "src/combat/bloodMarks.js",
+    "old": "    const d = _pool.place([pos[0], pos[1] - h.dist, pos[2]], h.normal ?? [0, 1, 0], { size: markSize(rate) });",
+    "new": "    const d = _pool.place([pos[0], pos[1] - h.dist, pos[2]], [0, 1, 0], { size: markSize(rate) });",
     "tests": [
       "test/blood1_decals.test.js"
     ]
   },
   {
     "name": "BLOOD1a-a-mode-change-frees-the-ring-instead-of-blanking-it",
-    "file": "src/scenes/hitEffects.js",
+    "file": "src/combat/bloodMarks.js",
     "old": "    for (const d of _pool.decals()) {\n      clearDecalQuad(_scratch, 0);\n      renderer.writeDecalSlot(_batch, d.slot, _scratch);\n    }",
     "new": "",
     "tests": [
@@ -199,7 +199,7 @@
   },
   {
     "name": "BLOOD1a-the-draw-runs-without-art",
-    "file": "src/scenes/hitEffects.js",
+    "file": "src/combat/bloodMarks.js",
     "old": "    if (!tex) return false;",
     "new": "",
     "tests": [
@@ -213,6 +213,79 @@
     "new": "  const lo = 30, hi = 200;",
     "tests": [
       "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1a-the-collider-is-captured-not-asked",
+    "file": "src/combat/bloodMarks.js",
+    "old": "  const liveCollider = () => (typeof collider === 'function' ? collider() : null);",
+    "new": "  const _captured = typeof collider === 'function' ? collider() : null;\n  const liveCollider = () => _captured;",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1a-the-marks-do-not-ride-the-origin-shift",
+    "file": "src/scenes/hitEffects.js",
+    "old": "      marks?.shiftOrigin?.(offset);",
+    "new": "",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1a-a-room-thrown-away-keeps-its-blood",
+    "file": "src/scenes/hitEffects.js",
+    "old": "      marks?.clear?.();   // BLOOD1a: a room thrown away takes its blood with it, on the call every host already makes",
+    "new": "",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1a-the-marks-draw-OVER-the-billboards",
+    "file": "src/scenes/world.js",
+    "old": "    bloodMarks.draw();   // BLOOD1a: the marks go down BEFORE the billboards, so a body standing in its own blood is over it and not under it. ABOVE setFlatWind for the reason its own neighbour gives: WIND3 pins the wind and the draw as ADJACENT.\n    renderer.setFlatWind(floraSwayOn() && wd.on ? [wd.windV[0], wd.windV[1], now / 1000, wd.gust] : null);   // WIND3: the flats lean with the one wind; the flora batches carry their share (sway)\n    renderer.drawBillboards(allBatches, camRight, UP_Y);",
+    "new": "    renderer.setFlatWind(floraSwayOn() && wd.on ? [wd.windV[0], wd.windV[1], now / 1000, wd.gust] : null);   // WIND3: the flats lean with the one wind; the flora batches carry their share (sway)\n    renderer.drawBillboards(allBatches, camRight, UP_Y);\n    bloodMarks.draw();",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1a-the-shift-moves-the-ring-but-not-the-buffer",
+    "file": "src/combat/bloodMarks.js",
+    "old": "    for (const d of _pool.decals()) {\n      writeDecalQuad(_scratch, 0, d);\n      renderer.writeDecalSlot(_batch, d.slot, _scratch);\n    }\n    return n;",
+    "new": "    return n;",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1a-the-row-is-forced-for-the-room-online",
+    "file": "src/systems/features.js",
+    "old": "    control: Object.freeze({ store: 'prefs', key: 'blood-marks', initial: true, online: 'player' }),",
+    "new": "    control: Object.freeze({ store: 'prefs', key: 'blood-marks', initial: true, online: true }),",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1a-the-capacity-is-unclamped",
+    "file": "src/combat/bloodSwitch.js",
+    "old": "  return Math.max(BLOOD_CAPACITY_MIN, Math.min(BLOOD_CAPACITY_MAX, Math.round(v)));",
+    "new": "  return Math.round(v);",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1a-HARD1-the-hand-off-pool-owns-the-ring-again",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "      bloodMarks.dispose();   // BLOOD1a (HARD1): the ring is OURS - a vertex buffer and a VAO handed to nobody - so it ends here, by its own name and not through the hand-off pool",
+    "new": "      hitEffects.dispose();",
+    "tests": [
+      "test/blood1_decals.test.js",
+      "test/hard1_ownership.test.js"
     ]
   }
 ]

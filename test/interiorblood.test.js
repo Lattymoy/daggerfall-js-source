@@ -73,8 +73,14 @@ test('HE1: clear() on an empty pool is a no-op, and a warming splash is retired 
 test('HE1: the interior host mounts the pool and hands it to its foes', () => {
   const wm = read('src/scenes/worldModes.js');
   assert.match(wm, /import \{ createHitEffects \} from '\.\/hitEffects\.js';/);
-  assert.match(wm, /const interiorHitEffects = createHitEffects\(\{ renderer, getTexture, uploadRecordFrame \}\);/,
-    'the same three handles the other three hosts pass');
+  // BLOOD1a: the same three handles the other three hosts pass, plus
+  // the mark pool - which is its OWN binding and not a property of this
+  // one, because HARD1's three answers are exclusive and a splash pool
+  // that hands its batches away must own no GL of its own.
+  assert.match(wm, /const interiorHitEffects = createHitEffects\(\{ renderer, getTexture, uploadRecordFrame, marks: interiorBloodMarks \}\);/,
+    'the same three handles the other three hosts pass, and the ring beside them');
+  assert.match(wm, /const interiorBloodMarks = createBloodMarks\(\{ renderer, collider: \(\) => player\.collider, settings: bloodDecalDeps \}\);/,
+    'an interior bleeds too, on the live collider');
   assert.match(wm, /hitEffects: interiorHitEffects,/, 'into the foe pool');
   assert.doesNotMatch(wm, /hitEffects: null,/, 'and the recorded absence is DELETED, not annotated');
 });

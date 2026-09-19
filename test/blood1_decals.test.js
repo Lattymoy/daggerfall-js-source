@@ -293,7 +293,8 @@ test('BLOOD1a by source: the decal pass is ONE draw call, depth-tested and depth
 
 // ---- the mark, on the seam the splash already uses ------------------
 
-import { createHitEffects, MARK_DROP } from '../src/scenes/hitEffects.js';
+import { createHitEffects } from '../src/scenes/hitEffects.js';
+import { createBloodMarks, MARK_DROP } from '../src/combat/bloodMarks.js';
 import { markSize, marksBlood, MARK_SIZE_MIN, MARK_SIZE_MAX, BLOODLESS_INDEX } from '../src/combat/bloodDecals.js';
 
 /** A renderer stub that records what the mark asked of it. */
@@ -306,31 +307,37 @@ function rigHitEffects(over = {}) {
     drawDecals: (batch, tex) => { drew.push({ batch, tex }); },
     createBillboardBatch: () => ({}),
   };
+  const o = {
+    collider: () => ({ raycastHit: () => ({ dist: 1.5, normal: [0, 1, 0], key: 'floor' }) }),
+    settings: { enabled: () => true, capacity: () => 4, density: () => 1 },
+    texture: () => 'blood-tex',
+    ...over,
+  };
+  // HARD1: the ring is its OWN binding, HANDED to the splash pool -
+  // which is a hand-off and so must never own GL.
+  const marks = createBloodMarks({ renderer: o.renderer ?? renderer, collider: o.collider, settings: o.settings, texture: o.texture });
   const fx = createHitEffects({
     renderer,
     getTexture: () => new Promise(() => {}),   // the splash half never warms here
     uploadRecordFrame: () => {},
-    collider: { raycastHit: () => ({ dist: 1.5, normal: [0, 1, 0], key: 'floor' }) },
-    decals: { enabled: () => true, capacity: () => 4, density: () => 1 },
-    decalTexture: () => 'blood-tex',
-    ...over,
+    marks,
   });
-  return { fx, wrote, drew, renderer };
+  return { fx, marks, wrote, drew, renderer };
 }
 
 test('BLOOD1a: the mark rides the splash’s own call, finds its surface, and a bloodless foe stains nothing', () => {
-  const { fx, wrote } = rigHitEffects();
+  const { fx, marks, wrote } = rigHitEffects();
 
   // the splash's eight call sites across four hosts are the events
   // where blood happens - the mark comes off the same call rather than
   // a ninth seam nobody would remember to feed
   fx.showBloodSplash(0, [10, 5, 10], null, { damage: 10, maxHealth: 40 });
-  assert.equal(fx.decals.count(), 1);
+  assert.equal(marks.count(), 1);
   assert.equal(wrote.length, 1, 'one slot written, at its own offset');
 
   // THE SURFACE IS FOUND, NOT ASSUMED. Blood spawns at chest height, so
   // the mark is where the ray DOWN landed - 1.5 below, plus the 2cm lift.
-  const d = fx.decals._pool().decals()[0];
+  const d = marks._pool().decals()[0];
   assert.deepEqual(d.pos, [10, 5 - 1.5 + 0.02, 10]);
   // ...and the rate sized it: 25% of max health is the bottom rung
   assert.ok(Math.abs(d.size - markSize(30)) < 1e-9, 'a glancing blow leaves the small spatter');
@@ -341,7 +348,7 @@ test('BLOOD1a: the mark rides the splash’s own call, finds its surface, and a 
   // 40 and called it near-lethal; 97.5% is the SEVENTY rung. The ladder
   // is not intuition.
   fx.showBloodSplash(0, [0, 5, 0], null, { damage: 50, maxHealth: 40 });
-  const big = fx.decals._pool().decals().at(-1);
+  const big = marks._pool().decals().at(-1);
   assert.ok(big.size > d.size, 'more damage, more blood');
   assert.ok(Math.abs(big.size - markSize(150)) < 1e-9, `125% is the 150 band (got ${big.size})`);
 
@@ -352,9 +359,9 @@ test('BLOOD1a: the mark rides the splash’s own call, finds its surface, and a 
   // one tilts - the first cut of these pins used the level collider
   // for everything and could not tell the two apart.
   const tilt = [0, Math.SQRT1_2, Math.SQRT1_2];   // a 45-degree ramp
-  const { fx: slope } = rigHitEffects({ collider: { raycastHit: () => ({ dist: 1, normal: tilt }) } });
+  const { fx: slope, marks: slopeMarks } = rigHitEffects({ collider: () => ({ raycastHit: () => ({ dist: 1, normal: tilt }) }) });
   slope.showBloodSplash(0, [0, 5, 0], null, { damage: 10, maxHealth: 40 });
-  const on = slope.decals._pool().decals()[0];
+  const on = slopeMarks._pool().decals()[0];
   // to a TOLERANCE, not exactly: the module re-normalises what it is
   // handed, and hypot of two Math.SQRT1_2 is 1.0000000000000002, so a
   // unit vector in comes back a bit different in the last place
@@ -369,66 +376,75 @@ test('BLOOD1a: the mark rides the splash’s own call, finds its surface, and a 
   // six, and enemyBasics.js has carried it since long before this arc
   assert.equal(BLOODLESS_INDEX, 2);
   assert.equal(marksBlood(2), false);
-  const before = fx.decals.count();
+  const before = marks.count();
   fx.showBloodSplash(2, [1, 5, 1], null, { damage: 39, maxHealth: 40 });
-  assert.equal(fx.decals.count(), before, 'a skeleton bleeds nothing');
+  assert.equal(marks.count(), before, 'a skeleton bleeds nothing');
 });
 
 test('BLOOD1a: blood over open air leaves no mark, and a host that wires none of it draws what it always drew', () => {
   // NOTHING WITHIN REACH is no mark, not one hanging in space - a body
   // on a bridge with a chasm under it
-  const { fx: over } = rigHitEffects({ collider: { raycastHit: () => ({ dist: Infinity, normal: null }) } });
+  const { fx: over, marks: overMarks } = rigHitEffects({ collider: () => ({ raycastHit: () => ({ dist: Infinity, normal: null }) }) });
   over.showBloodSplash(0, [0, 50, 0], null, { damage: 10, maxHealth: 40 });
-  assert.equal(over.decals.count(), 0);
+  assert.equal(overMarks.count(), 0);
   // ...and the reach is a body's height and a bit, because that is how
   // far the floor is from where blood spawns
   assert.equal(MARK_DROP, 3);
-  const { fx: far } = rigHitEffects({ collider: { raycastHit: () => ({ dist: MARK_DROP + 0.01, normal: [0, 1, 0] }) } });
+  const { fx: far, marks: farMarks } = rigHitEffects({ collider: () => ({ raycastHit: () => ({ dist: MARK_DROP + 0.01, normal: [0, 1, 0] }) }) });
   far.showBloodSplash(0, [0, 5, 0], null, { damage: 10, maxHealth: 40 });
-  assert.equal(far.decals.count(), 0, 'past the reach is past it');
+  assert.equal(farMarks.count(), 0, 'past the reach is past it');
 
   // THE SWITCH, and every way a host can decline: off, no collider, a
   // renderer too old to know the pass
   for (const off of [
-    { decals: { enabled: () => false, capacity: () => 4, density: () => 1 } },
+    { settings: { enabled: () => false, capacity: () => 4, density: () => 1 } },
     { collider: null },
-    { renderer: { createBillboardBatch: () => ({}) } },
+    { renderer: { createBillboardBatch: () => ({}) } },   // a renderer too old to know the decal pass
   ]) {
-    const { fx } = rigHitEffects(off);
+    const { fx, marks: m } = rigHitEffects(off);
     assert.doesNotThrow(() => fx.showBloodSplash(0, [0, 5, 0], null, { damage: 10, maxHealth: 40 }));
-    assert.equal(fx.decals.count(), 0, 'no marks, no throw');
+    assert.equal(m.count(), 0, 'no marks, no throw');
   }
   // ...and a host that passes NO decal deps at all is the old signature
   const bare = createHitEffects({ renderer: { createBillboardBatch: () => ({}) }, getTexture: () => new Promise(() => {}), uploadRecordFrame: () => {} });
   assert.doesNotThrow(() => bare.showBloodSplash(0, [0, 5, 0]));
-  assert.equal(bare.decals.count(), 0);
+
 });
 
 test('BLOOD1a: the ring recycles under the mark, the draw needs a texture, and a mode change blanks the buffer', () => {
-  const { fx, wrote, drew } = rigHitEffects();
+  const { fx, marks, wrote, drew } = rigHitEffects();
   for (let i = 0; i < 6; i++) fx.showBloodSplash(0, [i, 5, 0], null, { damage: 10, maxHealth: 40 });
-  assert.equal(fx.decals.count(), 4, 'the ring is four and stays four');
+  assert.equal(marks.count(), 4, 'the ring is four and stays four');
   assert.deepEqual(wrote.map((w) => w.slot), [0, 1, 2, 3, 0, 1], 'and the oldest slot is the one rewritten');
 
   // the draw is one call, and it needs art: no texture, no pass
-  assert.equal(fx.decals.draw(), true);
+  assert.equal(marks.draw(), true);
   assert.deepEqual(drew.at(-1), { batch: { capacity: 4, id: 'batch' }, tex: 'blood-tex' });
-  const { fx: noArt } = rigHitEffects({ decalTexture: () => null });
+  const { fx: noArt, marks: noArtMarks } = rigHitEffects({ texture: () => null });
   noArt.showBloodSplash(0, [0, 5, 0], null, { damage: 10, maxHealth: 40 });
-  assert.equal(noArt.decals.draw(), false, 'no art, no draw - and no throw');
+  assert.equal(noArtMarks.draw(), false, 'no art, no draw - and no throw');
 
-  // the streaming world moves them
-  assert.equal(fx.decals.shiftOrigin([100, 0, 0]), 4);
+  // THE STREAMING WORLD MOVES THEM - and the BUFFER has to move with
+  // the ring. A decal's four corners are baked into the vertex buffer,
+  // so shifting the pool alone would leave every mark drawn 819.2 units
+  // from where it now is: the pool would be right and the picture wrong.
+  const beforeShift = wrote.length;
+  assert.equal(marks.shiftOrigin([100, 7, -3]), 4);
+  assert.equal(wrote.length - beforeShift, 4, 'every live slot rewritten, not just the ring moved');
+  // ...with the MOVED corners in them
+  const moved = marks._pool().decals()[0];
+  assert.ok(Math.abs(wrote.at(-4).floats[0] - (moved.pos[0] - moved.size / 2 * 1)) < 1, 'the corners are the new ones');
+  assert.ok(wrote.slice(-4).every((w) => w.floats.some((v) => v !== 0)), 'and none of them is a blank');
 
   // A MODE CHANGE blanks the buffer SLOT BY SLOT rather than freeing
   // it: the ring is the same ring next time, and rebuilding would cost
   // an allocation every time the player opens a door.
   const n = wrote.length;
-  assert.equal(fx.decals.clear(), 4);
-  assert.equal(fx.decals.count(), 0);
+  assert.equal(marks.clear(), 4);
+  assert.equal(marks.count(), 0);
   assert.equal(wrote.length - n, 4, 'four blanks written, no batch rebuilt');
   assert.deepEqual(wrote.at(-1).floats, new Array(DECAL_FLOATS).fill(0));
-  assert.equal(fx.decals.draw(), false, 'and nothing draws after');
+  assert.equal(marks.draw(), false, 'and nothing draws after');
 });
 
 test('BLOOD1a: the mark’s size band is the port’s own choice, and it reads the ladder’s ends rather than copying them', () => {
@@ -450,4 +466,144 @@ test('BLOOD1a: the mark’s size band is the port’s own choice, and it reads t
   // reads the ladder's ends is allowed to say which ends it means.
   const code = fn.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');
   assert.doesNotMatch(code, /\b(30|200)\b/, 'no second copy of the ladder’s ends');
+});
+
+test('BLOOD1a: the collider is a GETTER, and the mark survives the world being swapped under it', () => {
+  // Every host rebuilds its collider - a mode change swaps it, the
+  // streaming world swaps it again on every pixel load - and this pool
+  // outlives all of that. A captured reference would be marking a world
+  // that no longer exists within one doorway.
+  let live = { raycastHit: () => ({ dist: 1, normal: [0, 1, 0] }) };
+  const { fx, marks } = rigHitEffects({ collider: () => live });
+  fx.showBloodSplash(0, [0, 5, 0], null, { damage: 10, maxHealth: 40 });
+  assert.equal(marks.count(), 1);
+
+  // the world is swapped: the NEW collider is the one asked
+  live = { raycastHit: () => ({ dist: 2, normal: [0, 1, 0] }) };
+  fx.showBloodSplash(0, [0, 5, 0], null, { damage: 10, maxHealth: 40 });
+  assert.ok(Math.abs(marks._pool().decals().at(-1).pos[1] - (5 - 2 + 0.02)) < 1e-9, 'the live collider, not the one captured at mount');
+
+  // ...and BETWEEN two worlds - a pixel unloaded, a mode half changed -
+  // it marks nothing rather than throwing into a frame
+  for (const gone of [null, undefined, {}]) {
+    live = gone;
+    const before = marks.count();
+    assert.doesNotThrow(() => fx.showBloodSplash(0, [0, 5, 0], null, { damage: 10, maxHealth: 40 }));
+    assert.equal(marks.count(), before, 'no world, no mark');
+  }
+});
+
+test('BLOOD1a: the mark wears the SPLASH’S SETTLED FRAME, so the port ships no blood art at all', () => {
+  const src = readFileSync(new URL('../src/scenes/hitEffects.js', import.meta.url), 'utf8');
+  // A splash plays out to the settled splat and then vanishes; that
+  // last frame IS the stain. Recorded at the upload because nothing
+  // else in the file can see `frameCount`.
+  // Only the splash pool can see the frame count, so it TELLS the mark
+  // pool rather than the mark pool guessing.
+  assert.match(src, /if \(archive === BLOOD_ARCHIVE && record !== BLOODLESS_INDEX\) marks\?\.useArt\?\.\(archive, record, frameCount\);/);
+  const mk = readFileSync(new URL('../src/combat/bloodMarks.js', import.meta.url), 'utf8');
+  assert.match(mk, /_texKey = `\$\{archive\}_\$\{record\}#\$\{Math\.max\(0, frameCount - 1\)\}`;/);
+  // ...and the default means no host spells a texture key, so the four
+  // of them cannot spell it four ways
+  assert.match(mk, /const markTexture = texture \?\? \(\(\) => \(_texKey \? renderer\?\.textures\?\.get\?\.\(_texKey\) \?\? null : null\)\);/);
+  // the port ships NO blood picture: the only archive named is the
+  // classic one the splash already reads out of the player's ARENA2
+  const code = src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+  assert.ok(!/public\/art|\.png|BloodPool|Gibs|Corpseplosion/i.test(code), 'no art asset, ours or anybody else’s');
+});
+
+test('BLOOD1a by source: FOUR HOSTS, one spelling - the switch bag, the draw under the billboards, the shift on the call they already make', () => {
+  const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
+
+  // THE SWITCH IS ONE BAG. Four hosts spelling three deps three ways is
+  // the FOUR HOSTS RULE's own hazard, so `bloodDecalDeps` is built once
+  // and every host passes the same object.
+  for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js', 'src/scenes/dungeonContext.js', 'src/scenes/worldModes.js']) {
+    const h = read(host);
+    assert.match(h, /import \{ bloodDecalDeps \} from '\.\.\/combat\/bloodSwitch\.js';/, `${host}: the one bag`);
+    assert.match(h, /import \{ createBloodMarks \} from '\.\.\/combat\/bloodMarks\.js';/, `${host}: the ring's own home`);
+    // HARD1: the ring is the HOST'S binding, not a property of the
+    // splash pool - that pool is a hand-off and must own no GL.
+    assert.match(h, /const \w*[bB]loodMarks = createBloodMarks\(\{ renderer, collider: \(\) => (collider|player\.collider), settings: bloodDecalDeps \}\)/,
+      `${host}: its own binding, the one bag, and the collider by a GETTER`);
+    assert.match(h, /marks: \w*[bB]loodMarks/, `${host}: handed to the splash pool`);
+  }
+
+  // THE MARKS GO DOWN BEFORE THE BILLBOARDS, so a body standing in its
+  // own blood is over it and not under it.
+  for (const [host, bb] of [
+    ['src/scenes/world.js', 'renderer.drawBillboards(allBatches, camRight, UP_Y);'],
+    ['src/scenes/exterior.js', 'renderer.drawBillboards(_visBatches, camRight, UP_Y);'],
+    ['src/scenes/dungeonContext.js', 'renderer.drawBillboards([..._mobileBatches, ..._dropBatches, ..._spellBatches],'],
+  ]) {
+    const h = read(host);
+    const d = h.indexOf('loodMarks.draw()');
+    assert.ok(d > 0, `${host}: draws its marks`);
+    assert.ok(d < h.indexOf(bb), `${host}: the marks go down BEFORE the billboards`);
+  }
+  // ...and the world-hosted dungeon draws the CONTEXT's ring on its own pass
+  assert.match(read('src/scenes/worldModes.js'), /dungeonCtx\.bloodMarks\?\.draw\?\.\(\);/);
+
+  // THE SHIFT RIDES offsetAll, which every host already calls. A second
+  // line beside it is a line four hosts have to remember, and the one
+  // that forgot would strand its blood 819.2 units behind - the exact
+  // fault AUDIT 17e F23 wrote that block's comment about.
+  const fx = read('src/scenes/hitEffects.js');
+  const off = fx.slice(fx.indexOf('    offsetAll(offset) {'), fx.indexOf('\n    },', fx.indexOf('    offsetAll(offset) {')));
+  assert.match(off, /marks\?\.shiftOrigin\?\.\(offset\);/, 'the marks ride the splash’s own shift');
+  assert.match(read('src/scenes/world.js'), /hitEffects\.offsetAll\(r\.offset\);/, 'and the host calls it exactly as it did');
+
+  // a room thrown away takes its blood, and its GL, with it
+  assert.match(fx, /marks\?\.clear\?\.\(\);   \/\/ BLOOD1a: a room thrown away takes its blood with it/);
+  // HARD1: ended by ITS OWN NAME in destroy(), never through the
+  // hand-off pool - that is the double free the gate exists for.
+  assert.match(read('src/scenes/dungeonContext.js'), /bloodMarks\.dispose\(\);   \/\/ BLOOD1a \(HARD1\)/);
+  assert.doesNotMatch(read('src/scenes/dungeonContext.js'), /hitEffects\.dispose\(\)/, 'the hand-off pool is never ended by hand');
+});
+
+test('BLOOD1a: the feature row owns the key and the default, and online it is the player’s own', async () => {
+  const { FEATURES } = await import('../src/systems/features.js');
+  const { BLOOD_PREF, bloodMarksOn, bloodCapacity, bloodDensity, BLOOD_CAPACITY_DEFAULT, BLOOD_CAPACITY_MIN, BLOOD_CAPACITY_MAX } =
+    await import('../src/combat/bloodSwitch.js');
+  const row = FEATURES.find((f) => f.id === 'blood-marks');
+  assert.ok(row, 'the row exists');
+  assert.equal(row.control.key, BLOOD_PREF, 'RF4: the row owns the key the switch reads');
+  assert.equal(row.control.initial, true, 'on by default - the splash always played, and the mark is what a player expects to still be there');
+  // AN ENHANCED ROW, NOT A MOD ROW: no mod is vendored for this, so
+  // there is no author's name to carry in the title the way every
+  // `modFeature` row does.
+  assert.deepEqual([...row.kinds], ['enhanced']);
+  assert.ok(!/by /i.test(row.title), 'no author in the title - it is the port’s own');
+  // ONLINE IT IS THE PLAYER'S: a mark is a local picture with no
+  // gameplay in it, unlike the survival row the room has to agree on.
+  assert.equal(row.control.online, 'player');
+
+  // the defaults hold with nothing stored
+  assert.equal(bloodMarksOn(), true);
+  assert.equal(bloodCapacity(), BLOOD_CAPACITY_DEFAULT);
+  assert.equal(bloodDensity(), 1);
+  assert.ok(BLOOD_CAPACITY_MIN < BLOOD_CAPACITY_DEFAULT && BLOOD_CAPACITY_DEFAULT < BLOOD_CAPACITY_MAX);
+
+  // THE CAPACITY IS CLAMPED, and that is not tidiness: the ring is
+  // ALLOCATED to this number at boot and a vertex buffer is built
+  // beside it, so a stored 5,000,000 is 180 MB of floats and a stored
+  // zero is a pool that divides by its own size. Neither can be
+  // reached from the panel; both can be reached from a hand-edited
+  // store, which is where settings come from often enough.
+  const { setPref } = await import('../src/systems/uiPrefs.js');
+  const { BLOOD_CAPACITY_PREF, BLOOD_DENSITY_PREF } = await import('../src/combat/bloodSwitch.js');
+  const restore = [];
+  try {
+    for (const [stored, want] of [[5e6, BLOOD_CAPACITY_MAX], [0, BLOOD_CAPACITY_MIN], [-40, BLOOD_CAPACITY_MIN], [1200.6, 1201], ['nonsense', BLOOD_CAPACITY_DEFAULT]]) {
+      setPref(BLOOD_CAPACITY_PREF, stored); restore.push(BLOOD_CAPACITY_PREF);
+      assert.equal(bloodCapacity(), want, `a stored ${stored} answers ${want}`);
+    }
+    // ...and the density is a FRACTION, clamped the same way
+    for (const [stored, want] of [[2, 1], [-1, 0], [0.5, 0.5], ['x', 1]]) {
+      setPref(BLOOD_DENSITY_PREF, stored); restore.push(BLOOD_DENSITY_PREF);
+      assert.equal(bloodDensity(), want, `a stored ${stored} answers ${want}`);
+    }
+  } finally {
+    for (const k of restore) setPref(k, undefined);
+  }
 });
