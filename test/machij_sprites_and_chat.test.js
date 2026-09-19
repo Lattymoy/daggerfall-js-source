@@ -221,11 +221,14 @@ test('MAC-I: the switch, and every sprite in the seam wearing the tint', () => {
   assert.match(rig, /handheld\.draw\(renderer, c, fpTint\)/);
   assert.match(rig, /widget\.draw\(renderer, c, fpTint, _tlAdjust\)/);   // FIELD-GUN6: the tint, then the Thunderlock's rect delta
   // FIELD-GUN6: `adjust` joined the tint - the Thunderlock's recoil and reload lower, null for every classic weapon
-  assert.match(rig, /drawFpsWeapon\(renderer, c, art, playerWeapon\.machine\.state, playerWeapon\.machine\.frame, \{ tint: fpTint, adjust: _tlAdjust, offsetHeight \}\)/);   // FIELD-GUN7: and the lab's raise
+  assert.match(rig, /drawFpsWeapon\(renderer, c, art, playerWeapon\.machine\.state, playerWeapon\.machine\.frame, \{ tint: fpTint, adjust: _tlAdjust \}\)/);   // FIELD-GUN11: the raise rides the adjust, the one channel both draws read
   // and each draw passes it THROUGH to the quad rather than accepting and dropping it
-  assert.match(read('src/combat/fpsWeapon.js'), /renderer\.drawScreenQuad\(tex, \{ x, y, w, h \}, src, tint \?\? undefined\);/);
+  // FIELD-GUN11: the rect is expanded from the weapon's own box to
+  // the drawn box first (art that declares one - the Thunderlock's
+  // sheet). The TINT riding through untouched is what this holds.
+  assert.match(read('src/combat/fpsWeapon.js'), /renderer\.drawScreenQuad\(tex, q, src, tint \?\? undefined\);/);
   // FIELD-GUN6: the rect is taken into a local first so the gun's kick can move it; the TINT still rides through untouched, which is what this pin is about
-  assert.match(read('src/combat/weaponWidget.js'), /const rect = getWeaponRect\(\);[\s\S]*renderer\.drawScreenQuad\(tex, rect, w\.curAnimRect, tint \?\? undefined\);/);
+  assert.match(read('src/combat/weaponWidget.js'), /const rect = getWeaponRect\(\);[\s\S]*renderer\.drawScreenQuad\(tex, q, w\.curAnimRect, tint \?\? undefined\);/);
   assert.match(read('src/combat/fpsSpellCasting.js'), /renderer\.drawScreenQuad\(rec\.tex, right, RIGHT_HAND_UV, tint \?\? undefined\);/);
   // the Morrowind arms are a LIT MESH and are not in this seam at all
   const seam = rig.slice(rig.indexOf('const fpTint ='), rig.indexOf('drawFpsWeapon('));

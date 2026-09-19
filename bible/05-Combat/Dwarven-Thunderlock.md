@@ -376,6 +376,68 @@ lab's own source, and `GUN10` pins the drawn rect against the lab's
 drawn rect. Between them there is no number left that can be copied
 wrongly without a test saying so.
 
+## FIELD-GUN11: the path nobody was testing
+
+Mac, a fifth time: *"Thats not the only issue. How many times do I
+have to say 1:1"*.
+
+FIELD-GUN10 pinned **one frame of one path**, and it was the path a
+player is *not* on. **Weapon Widget ships enabled**, so the draw goes
+through the clone's `getWeaponRect`, and the clone reads
+`weaponOffsetHeight()` for itself — the HUD bar and nothing else. The
+raise never reached it.
+
+Measured on that path:
+
+```
+at rest    LAB y=475.0   CLONE y=444.0   dy=-31.0
+sheathing  LAB y=575.3   CLONE y=550.8   dy=-24.5
+```
+
+**Thirty-one pixels high** — and feeding the raise through closed only
+part of it, because a second divergence sat underneath.
+
+### The clone was transforming the wrong box
+
+The lab lays out and transforms the **anchor** — the gun with no flash
+on it — and derives the drawn rect from it. The game handed Weapon
+Widget the **union**, which is 21 native pixels taller. Everything in
+that transform proportional to the rect's height came out ~6% large,
+so the Offset module's slide was 7.5px adrift the moment the weapon
+moved.
+
+`thunderlockArt.js` hands over an **anchor-sized record** now, with
+the union beside it, and both draw sites expand at the moment of
+drawing — exactly the shape the lab has always had. `unionDrawRect`
+moved into `combat/gunSheet.js` so the lab reads the game's copy
+rather than keeping its own.
+
+And the raise moved onto `_tlAdjust`, the one channel **both** draws
+read, instead of an `offsetHeight` only one of them sees.
+
+### After
+
+Both paths, four channel states across a cycle:
+
+```
+at rest         dy=-1.5    sheathing    dy=-1.1
+mid-bob         dy=-1.5    reload dip   dy=-0.7
+classic sprite  dy=-1.5
+```
+
+All inside the rounding the record's integer size can explain.
+
+### The pin
+
+`FIELD-GUN11` is that whole matrix — both paths, every channel — with
+a derived tolerance. Run against either fault it names it: `clone, at
+rest: y is -33.52px out` for the missing raise, `clone, sheathing: y
+is -15.07px out` for the union base.
+
+**Five rounds of "not 1:1" and the cause was the same every time: I
+pinned one path, one frame, one number at a time.** The matrix is what
+should have existed at the first integration.
+
 ## The test characters carry one
 
 TSR-GUN (Mac, 2026-09-19: *"Put this weapon and ammo inside the test
