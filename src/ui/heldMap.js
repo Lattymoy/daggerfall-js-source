@@ -432,6 +432,10 @@ export class HeldMapWindow {
     this.deps = deps;
     this.done = false;
     this.isChoiceWindow = true;
+    // MAP-WEAPON: the scene's tick tag, this file's own idiom
+    // (`isRestWindow`, `isVirtueLevelUp`): the weapon rig asks whether
+    // a map holds the screen and must not import a UI class to ask.
+    this.isTravelMap = true;
     // MAP-FIELD2: the vitals and the status icons go while the sheet is
     // out - it is held in the player's own hands, and a bar drawn over
     // the knuckles is not a HUD under a window (windowStack.hidesHud).

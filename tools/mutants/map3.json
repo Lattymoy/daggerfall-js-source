@@ -670,5 +670,32 @@
     "tests": [
       "test/map3_heldpose.test.js"
     ]
+  },
+  {
+    "name": "MAP-WEAPON-the-gate-is-dropped",
+    "file": "src/combat/weaponRig.js",
+    "old": "      if (sheetWindowUp()) return;",
+    "new": "",
+    "tests": [
+      "test/map3_heldpose.test.js"
+    ]
+  },
+  {
+    "name": "MAP-WEAPON-the-gate-stands-above-the-arm-branch",
+    "file": "src/combat/weaponRig.js",
+    "old": "      if (fpArm.active()) { fpArm.draw(c); return; }",
+    "new": "      if (sheetWindowUp()) return;\n      if (fpArm.active()) { fpArm.draw(c); return; }",
+    "tests": [
+      "test/map3_heldpose.test.js"
+    ]
+  },
+  {
+    "name": "MAP-WEAPON-the-host-raises-a-flag-instead-of-asking-the-slot",
+    "file": "src/scenes/world.js",
+    "old": "    sheetWindowUp: () => townTalk.overlay?.isTravelMap === true,",
+    "new": "    sheetWindowUp: () => !!_travelMap,",
+    "tests": [
+      "test/map3_heldpose.test.js"
+    ]
   }
 ]

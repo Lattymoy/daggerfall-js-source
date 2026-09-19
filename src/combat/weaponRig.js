@@ -198,7 +198,7 @@ export async function autoBuildArms(entity, { wanted = () => getPref('mwArms'), 
  *                     must hand it over or Z cannot put one away,
  * }
  */
-export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, entity, camera = null, say = () => {}, spellArmed = () => false, abortSpell = () => {}, bindWorn = true, activateHeld = () => false, envHit = null, missEffect = null, collider = null, keyDown = null, torches = () => null }) {   // HT1: the hosts' raw key set and their dropped-torch pool   // AUDIT 28 W12: HasAction(ActivateCenterObject) - the drawn bow's un-draw; WW1: the widget's recoil doors
+export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, entity, camera = null, say = () => {}, spellArmed = () => false, abortSpell = () => {}, bindWorn = true, activateHeld = () => false, envHit = null, missEffect = null, collider = null, keyDown = null, torches = () => null, sheetWindowUp = () => false }) {   // HT1: the hosts' raw key set and their dropped-torch pool   // MAP-WEAPON: whether the travel map window holds the screen   // AUDIT 28 W12: HasAction(ActivateCenterObject) - the drawn bow's un-draw; WW1: the widget's recoil doors
   const playerWeapon = new PlayerWeapon({});
   // WW1: WEAPON WIDGET. One clone per rig, as DFU has one FPSWeaponClone
   // beside its one FPSWeapon; it reads the machine every frame and draws
@@ -1192,6 +1192,27 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
       _armDrewLast = !eotbHidesWeapon() && fpArm.active();   // MAP3: the two lines below draw the arm exactly when this is true
       if (eotbHidesWeapon()) return;
       if (fpArm.active()) { fpArm.draw(c); return; }
+      // MAP-WEAPON (2026-09-19, Mac: "when opening up the enhanced map,
+      // your unsheathed weapon can still be seen") - THE SPRITE LANE HAS
+      // NO ANSWER FOR A WINDOW THAT DOES NOT COVER THE SCREEN.
+      //
+      // MAP-FIELD gave the MORROWIND arm its held-sheet pose, and
+      // fpArm.holdPaper hides the weapon, the arrow and the torch while
+      // it holds - so the arm's own branch, one line up, was already
+      // right. The classic body never had that: it has no pose to take,
+      // so it just kept drawing. Under DFU's own travel map that is
+      // invisible - TRAV0I00 is a full-screen window and the weapon is
+      // behind it - but the enhanced map is the port's own sprite, two
+      // hands holding a parchment with REAL ALPHA around them and
+      // bottom-anchored by MAP-FIELD5, so the weapon shows through and
+      // around it. Hands holding a map are not also holding a sword.
+      //
+      // It stands HERE, below the arm's branch and above the shield,
+      // the torch hand, the clone and the sprite, so it takes exactly
+      // the four the classic body would have painted and nothing the
+      // arm draws. A sheathed frame already drew none of them, so on
+      // that path this line changes nothing.
+      if (sheetWindowUp()) return;
       // HT1: the torch hand draws FIRST, the weapon over it - two OnGUIs
       // with no order between them in DFU; the port picks the one that
       // keeps the weapon whole. Under the Morrowind arms it is not drawn
