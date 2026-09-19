@@ -170,3 +170,44 @@ The mod's eight sections (36 keys) are restated flat in
 with a dot, with the bundle's own defaults, ranges and descriptions. Six
 keys ship with no description of their own and carry the port's words
 instead. Plus the port's `Enabled` (MO1: on).
+
+## Hosts
+
+`combat/weaponRig.js` owns one, beside the weapon's clone, and drives it
+on the same frame from the same assembled answers - Unity handed the
+MonoBehaviour the motor, the look and the weapon manager, and so does
+the rig.
+
+**The draw seam.** The arms branch returns first (under the Morrowind
+arms no classic sprite is drawn, for the reason the torch hand is not);
+then the SHIELD, because it is the OFF hand and sits behind both; then
+the torch hand; then the weapon. Two OnGUIs with no order between them
+in DFU, and this is the order that keeps all three whole.
+
+**The Recoil trigger.** PCAAO's `onAttackDamageCalculated` reaches the
+port as a new registration seam in `combat/formulas.js`,
+`setAttackOnPlayerHook`, fired at the tail of `calculateAttackDamage`
+beside V3's Ring-of-Namira hook. It is deliberately NOT gated on damage
+the way V3's is - three of the six Recoil conditions are MISS
+conditions - and it carries the struck body part, because three of the
+six ask whether the shield covers it.
+
+**The sprites** register at the same two doors Weapon Widget's do
+(`scenes/dataSource.js`'s texture pick and `scenes/shared.js`'s boot),
+and their sizes are primed in one pass at registration: the widget's
+rect maths measures the sprite BEFORE any texture is uploaded, so a
+shield with no measured size draws nothing.
+
+## SW1a - THE READ THAT WROTE (found while wiring)
+
+`shieldItem()` first asked the equip table through `equipTableOf`, which
+is `entity.equip ??= createEquipTable()` - a materialising read. Asking
+it every frame GREW an empty equip table on an entity that had none, and
+`syncWorn` two functions up then read that empty table and nulled the
+player's weapon. The symptom was the unsheathe going silent:
+`PlayerWeapon.toggleSheath` returns "play the draw clip" only for a real
+weapon, and by then there was none.
+
+It is read with an optional chain now - the same shape `syncWorn` itself
+uses for the right hand - which asks without writing, and a pin holds
+both halves.

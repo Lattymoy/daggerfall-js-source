@@ -26,7 +26,7 @@ import { readUnityBundle } from '../formats/unityBundle.js';
 import { toColor32, toScreenOrder } from '../formats/color32Order.js';
 import { decodePng } from '../systems/textureReplacement.js';
 import { DFMOD_KEY_PREFIX } from '../systems/seasonsIliacBayAssets.js';
-import { SHIELD_ARCHIVE_FIRST, SHIELD_FRAMES, SHIELD_RECORDS, SHIELD_TEXTURE_COUNT, shieldTextureName } from './shieldWidget.js';
+import { SHIELD_ARCHIVE_FIRST, SHIELD_TEXTURE_COUNT, shieldTextureName } from './shieldWidget.js';
 
 export { DFMOD_KEY_PREFIX };
 
@@ -184,4 +184,8 @@ export async function shieldWidgetTexturesAttached() {
 
 /** The four archives, for a probe or a pin. */
 export const SHIELD_ARCHIVES = Object.freeze([0, 1, 2, 3].map((i) => SHIELD_ARCHIVE_FIRST + i));
-export { SHIELD_FRAMES, SHIELD_RECORDS, SHIELD_TEXTURE_COUNT };
+// TDZ2: the counts are NOT re-exported from here. shieldWidget.js is a
+// cycle partner (it is imported above and imports nothing back, but the
+// pin's law is the shape, not the direction), and a namespace taken over
+// this module would throw at boot in the bundle where no node test can
+// see it. Import them from combat/shieldWidget.js, their one home.

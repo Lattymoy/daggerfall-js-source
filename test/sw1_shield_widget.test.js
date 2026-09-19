@@ -314,7 +314,7 @@ test('SW1: the FPS-models seam is recorded and not carried', () => {
 import {
   setShieldWidgetSources, clearShieldWidgetSources, shieldWidgetSourcesCount,
   shieldTextureFileName, shieldWidgetSize, shieldWidgetTexturesAttached,
-  SHIELD_WIDGET_MOD, SHIELD_ARCHIVES, DFMOD_KEY_PREFIX,
+  SHIELD_WIDGET_MOD, SHIELD_ARCHIVES, DFMOD_KEY_PREFIX,   // TDZ2: the counts come from shieldWidget.js, their one home
 } from '../src/combat/shieldWidgetAssets.js';
 
 test('SW1: the sprite door takes the mod’s own bundle and its own PNG names, and nothing else', async () => {
@@ -356,4 +356,42 @@ test('SW1: the widget measures from the door, and draws nothing when the door is
   });
   for (let i = 0; i < 20; i++) bare.lateUpdate(frame());
   assert.equal(bare.drawRect(), null, 'no sprite, no draw');
+});
+
+// ---- the rig ---------------------------------------------------------
+
+test('SW1: the rig runs the shield beside the weapon’s clone - its own frame, its own draw step, the same end-of-frame edge', () => {
+  const rig = readFileSync('src/combat/weaponRig.js', 'utf8');
+  assert.match(rig, /const shield = createShieldWidget\(\{ textures: shieldWidgetTextures, audio \}\);/);
+  assert.match(rig, /const shieldOn = \(\) => modSetting\('shield-widget', 'Enabled'\);/);
+  // the Recoil module's trigger: PCAAO's event, at the tail of every
+  // resolution of an enemy's attack on the player
+  assert.match(rig, /setAttackOnPlayerHook\(\(attacker, target, damage, struckBodyPart\) => \{/);
+  assert.match(rig, /shield\.onAttackDamageCalculated\(\{ targetIsPlayer: true, bodyPart: struckBodyPart, damage, item: shieldItem\(\) \}\);/);
+  // the frame feed, and the draw before the torch hand
+  assert.match(rig, /if \(shieldOn\(\)\) shield\.lateUpdate\(\{/);
+  assert.match(rig, /shield\.setThirdPerson\(eotbHidesWeapon\(\)\);/);
+  assert.match(rig, /shield\.endOfFrame\(\);/);
+});
+
+test('SW1: the left hand is read WITHOUT materialising the equip table', () => {
+  // `equipTableOf` is `entity.equip ??= createEquipTable()`. Asking it
+  // every frame GREW an empty table on an entity that had none, and
+  // syncWorn then read that empty table and nulled the player's weapon -
+  // the unsheathe went silent. The optional chain asks without writing.
+  const rig = readFileSync('src/combat/weaponRig.js', 'utf8');
+  const fn = rig.slice(rig.indexOf('const shieldItem = () => {'));
+  const body = fn.slice(0, fn.indexOf('\n  };'));
+  assert.match(body, /entity\?\.equip\?\.slots\?\.\[EQUIP_SLOTS\.LeftHand\] \?\? null/, 'read, not created');
+  assert.doesNotMatch(body, /equipTableOf\(/, 'and never through the materialising helper');
+});
+
+test('SW1: the attack-resolution seam fires on EVERY resolution, hit or miss, with the struck part', () => {
+  const f = readFileSync('src/combat/formulas.js', 'utf8');
+  // V3's hook above it is gated on damage; this one must not be - three
+  // of the six Recoil conditions are MISS conditions.
+  assert.match(f, /if \(target\?\.isPlayer && !attacker\.isPlayer\) \{\s*_attackOnPlayerHook\?\.\(attacker, target, damage, struckPart\);/);
+  assert.match(f, /export function setAttackOnPlayerHook\(fn\) \{ _attackOnPlayerHook = fn \?\? null; \}/);
+  // and the struck part is carried out of the block the roll is made in
+  assert.match(f, /struckPart = struck;/);
 });

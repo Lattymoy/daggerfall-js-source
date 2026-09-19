@@ -562,13 +562,18 @@ test('WW1: the rig runs the clone beside the machine - the late update after the
   assert.match(rig, /const widget = createWeaponWidget\(\{ audio, envHit: envCast, missEffect \}\);/);
   assert.match(rig, /const widgetOn = \(\) => modSetting\('weapon-widget', 'Enabled'\);/);
   assert.match(rig, /playerWeapon\.onAttackResult = \(\{ foe, damage \}\) => widget\.onAttackDamageCalculated\(\{ damage, parrySounds: !!foe\?\.basics\?\.parrySounds, pos: foe\?\.pos \?\? foe\?\.ai\?\.pos \?\? null, isEnemy: true \}\);/);
-  assert.match(rig, /playerWeapon\.update\(dt\);[\s\S]{0,400}if \(widgetOn\(\) \|\| _torchesOn\) \{[\s\S]{0,2800}if \(widgetOn\(\)\) widget\.lateUpdate\(dt, \{/, 'LateUpdate after the machine\'s Update (HT1: the torch component shares the frame\'s inputs)');
+  // SW1 widened the inner span from 2800: the shield widget's own frame
+  // feed now sits inside it, between the torch component's and this one's.
+  // What the pin holds is the ORDER - the machine steps, then the clone's
+  // LateUpdate - and that is untouched.
+  assert.match(rig, /playerWeapon\.update\(dt\);[\s\S]{0,400}if \(widgetOn\(\) \|\| _torchesOn\) \{[\s\S]{0,4200}if \(widgetOn\(\)\) widget\.lateUpdate\(dt, \{/, 'LateUpdate after the machine\'s Update (HT1: the torch component shares the frame\'s inputs)');
   assert.match(rig, /const look = takeFrameLook\(\);/, 'the look read once a frame'); assert.match(rig, /look, swingHeld: _held, cursorActive: cursorActive\(\), camera: camThunk,/);
-  assert.match(rig, /try \{ return drawInner\(\{ paralyzed \}\); \} finally \{ widget\.endOfFrame\(\); \}/, 'WaitForEndOfFrame resumes after the draw');
+  // SW1: the shield's coroutines resume on the same edge, in the same finally
+  assert.match(rig, /try \{ return drawInner\(\{ paralyzed \}\); \} finally \{ widget\.endOfFrame\(\); shield\.endOfFrame\(\); \}/, 'WaitForEndOfFrame resumes after the draw');
   assert.match(rig, /fpArm\.setScreenTransform\(widgetOn\(\) \? \(base\) => widget\.armsTransform\(base\) : null\);/);
   // MAC-I: every sprite in this seam takes the frame's TINT now (FPSWeapon.Tint, off the room's light);
   // the ORDER and the returns are what this pin holds, and neither moved.
-  assert.match(rig, /if \(fpArm\.active\(\)\) \{[^}]*fpArm\.draw\(c\);[^}]*return; \}\s*(?:\/\/[^\n]*\n\s*)*if \(handheldOn\(\) && c\) handheld\.draw\(renderer, c, fpTint\);\s*if \(torchOnly\) return;[^\n]*\n\s*if \(widgetOn\(\) && c && widget\.draw\(renderer, c, fpTint\)\) return;/, 'the arms first, the torch (HT1: DFU draws it in OnGUI before the widget) second, the clone third, the classic sprite last');
+  assert.match(rig, /if \(fpArm\.active\(\)\) \{[^}]*fpArm\.draw\(c\);[^}]*return; \}\s*(?:\/\/[^\n]*\n\s*)*if \(shieldOn\(\) && c\) \{\s*shield\.setThirdPerson\(eotbHidesWeapon\(\)\);\s*shield\.draw\(\(index, rect, uv\) => drawShieldSprite\(index, rect, uv, fpTint\)\);\s*\}\s*(?:\/\/[^\n]*\n\s*)*if \(handheldOn\(\) && c\) handheld\.draw\(renderer, c, fpTint\);\s*if \(torchOnly\) return;[^\n]*\n\s*if \(widgetOn\(\) && c && widget\.draw\(renderer, c, fpTint\)\) return;/, 'the arms first, SW1\\u2019s shield second (the off hand, behind both), the torch third, the clone fourth, the classic sprite last');
   assert.match(rig, /const envCast = envHit \?\? \(\(reach\) => \{/, 'CheckForEnvDamage\'s cast from the host\'s collider');
   const pw = rd('src/combat/playerWeapon.js');
   assert.match(pw, /this\.onAttackResult\?\.\(\{ foe, damage \}\);/, 'OnAttackDamageCalculated\'s one consumer');

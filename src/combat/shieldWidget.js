@@ -59,6 +59,11 @@ import { shieldProtectedBodyParts } from './enemyEquipment.js';
 // the classic 320x200 the sprite's scale is measured against (SetGuard
 // IL 0x0d / 0x3b) - one home, the weapon sprite's
 import { NATIVE_W, NATIVE_H } from './fpsWeapon.js';
+// SW1: the large HUD's height, the sprite's floor. Read HERE and not in
+// the rig: weaponWidget.js reads it the same way, and importing
+// ui/hudLarge.js into weaponRig.js directly reorders that module graph
+// enough to break the rig's own boot (the unsheathe went silent).
+import { weaponOffsetHeight } from '../ui/hudLarge.js';
 
 export const SHIELD_WIDGET_VENDOR = 'shield-widget';
 
@@ -595,7 +600,7 @@ export function createShieldWidget({
 
     const sr = ctx.screenRect ?? { x: 0, y: 0, width: NATIVE_W, height: NATIVE_H };
     w.screenRect = { x: sr.x ?? 0, y: sr.y ?? 0, width: sr.width ?? NATIVE_W, height: sr.height ?? NATIVE_H };
-    w.weaponOffsetHeight = Math.trunc(Number(ctx.largeHudHeight) || 0);
+    w.weaponOffsetHeight = Math.trunc(Number(ctx.largeHudHeight ?? weaponOffsetHeight()) || 0);
     if (!rectEq(w.screenRect, w.screenRectLast) || w.weaponOffsetHeight !== w.weaponOffsetHeightLast) refreshShield();
     w.screenRectLast = { ...w.screenRect };
     w.weaponOffsetHeightLast = w.weaponOffsetHeight;

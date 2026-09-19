@@ -175,7 +175,8 @@ test('MWFIX: the classic sprite path is the ONLY path, and fpsWeapon never hears
   // written from the room's light) - the order and the return are what
   // this pin is for, and they are unchanged.
   assert.match(rig,
-    /if \(fpArm\.active\(\)\) \{ fpArm\.draw\(c\); return; \}\s*(?:\/\/[^\n]*\n\s*)*if \(handheldOn\(\) && c\) handheld\.draw\(renderer, c, fpTint\);\s*if \(torchOnly\) return;[^\n]*\n\s*if \(widgetOn\(\) && c && widget\.draw\(renderer, c, fpTint\)\) return;\s*const art = c && artFor\(playerWeapon\.weapon\);/,
+    // SW1: the shield's own step sits between them, and returns nothing
+    /if \(fpArm\.active\(\)\) \{ fpArm\.draw\(c\); return; \}\s*(?:\/\/[^\n]*\n\s*)*if \(shieldOn\(\) && c\) \{\s*shield\.setThirdPerson\(eotbHidesWeapon\(\)\);\s*shield\.draw\(\(index, rect, uv\) => drawShieldSprite\(index, rect, uv, fpTint\)\);\s*\}\s*(?:\/\/[^\n]*\n\s*)*if \(handheldOn\(\) && c\) handheld\.draw\(renderer, c, fpTint\);\s*if \(torchOnly\) return;[^\n]*\n\s*if \(widgetOn\(\) && c && widget\.draw\(renderer, c, fpTint\)\) return;\s*const art = c && artFor\(playerWeapon\.weapon\);/,
     'an inactive arm falls through to the clone-or-sprite (TORCH-VIS: unless it is the lit hand alone, which stops at its own return), and an active one returns so the two never both draw');
   // and the branch must name a module the file actually imports, or it is
   // a literal that satisfies a regex and does nothing.

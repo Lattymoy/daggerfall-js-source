@@ -1010,6 +1010,7 @@ export async function pickTextureFolder() {
   const { setTextureReplacements } = await import('../systems/textureReplacement.js');
   const { setSeasonsSources } = await import('../systems/seasonsIliacBayAssets.js');
   const { setWeaponWidgetSources } = await import('../combat/weaponWidgetAssets.js');   // WW1
+  const { setShieldWidgetSources, primeShieldWidgetSizes } = await import('../combat/shieldWidgetAssets.js');   // SW1
   return pickAssetFolder({
     title: 'Your own textures',
     blurb: `<p>Pick a folder of PNGs to draw instead of Daggerfall's
@@ -1030,6 +1031,11 @@ export async function pickTextureFolder() {
       const names = await storedTextureNames();
       const n = setTextureReplacements(names, loadTextureFile);
       setWeaponWidgetSources(names, loadTextureFile);   // WW1: Weapon Widget's bundle, its double-scale textures
+      // SW1: Shield Widget's bundle. The sizes are primed at once because
+      // the widget's rect maths measures the sprite BEFORE a texture has
+      // been uploaded - a shield with no measured size draws nothing.
+      setShieldWidgetSources(names, loadTextureFile);
+      void primeShieldWidgetSizes();
       return n + setSeasonsSources(names, loadTextureFile);   // SIB1: the mod's own files (its bundle counts one)
     },
   });
