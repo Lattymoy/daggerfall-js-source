@@ -140,8 +140,16 @@ export const SHADOW_CASCADES = Object.freeze([12, 48, 240]);
  * because cascade 2 is everything past 43 units.
  *
  * So: the nearest two cascades keep the kernel, the far one takes the one
- * tap. A cascade count this does not cover keeps the kernel, which is the
- * safe direction if the cascades are ever re-cut.
+ * tap.
+ *
+ * AUDIT F2: the test is `c >= SHADOW_PCF_CASCADES`, so EVERY cascade from
+ * this index outward takes the cheap tap - not just the last. The comment
+ * first written here claimed the opposite ("a cascade count this does not
+ * cover keeps the kernel"), which is false, and a false claim about the
+ * safe direction is exactly what this slice's own lesson was about. The
+ * behaviour the code actually has is the right one: cascades are ordered
+ * by radius, so a further one is always coarser than the one before it and
+ * can only want the tap less. A fourth cascade would be cheap, and should be.
  */
 export const SHADOW_PCF_CASCADES = 2;
 /** The ortho box's half-depth along the light: enough to take a mountain

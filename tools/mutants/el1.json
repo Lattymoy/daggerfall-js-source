@@ -319,7 +319,7 @@
  {
   "name": "renderer-bb-tint-raw",
   "file": "src/render/renderer.js",
-  "old": "      const am = this._c3(this._ambient, this._decA), mc = this._c3(this._moonColor, this._decB), sc = this._c3(this._sunColor, this._decB);",
+  "old": "      const am = this._c3(this._ambient, this._decA), mc = this._c3(this._moonColor, this._decB), sc = this._c3(this._sunColor, this._decC);",
   "new": "      const am = this._ambient, mc = this._moonColor, sc = this._sunColor;",
   "tests": [
    "test/el1_enhancedlighting.test.js"

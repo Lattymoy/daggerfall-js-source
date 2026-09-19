@@ -109,6 +109,7 @@ export function floraSwayOn(search = globalThis.location?.search ?? '') {
  *  in render/frustum.js. Tiny, and it is the kind of thing that is only
  *  ever tiny one call site at a time. */
 let _swayOff;
+let _swaySearch;   // AUDIT F1: declared ABOVE its reader - a `let` below one is in the temporal dead zone until the module finishes evaluating, and this port has already lost a boot to one end of a module cycle reaching the other too early
 export function swayDisabled(search = globalThis.location?.search ?? '') {
   if (_swayOff === undefined || search !== _swaySearch) {
     _swaySearch = search;
@@ -116,4 +117,3 @@ export function swayDisabled(search = globalThis.location?.search ?? '') {
   }
   return _swayOff;
 }
-let _swaySearch;

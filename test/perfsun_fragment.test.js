@@ -69,10 +69,17 @@ test('PERF-SUN2: the sun’s shadow is not read where the sun cannot reach', () 
   // cloud-deck sample and multiplied them by the zero in front of them:
   // every north-facing wall, every back slope, and the whole world
   // whenever the sun is low.
-  // count over the CODE, not the prose: the note above each of these
+  // COUNT OVER THE CODE, NOT THE PROSE. The note above each of these
   // quotes the expression it is about, and a pin that counts its own
-  // explanation is measuring the wrong thing.
-  const code = (src) => src.split('\n').filter((l) => !l.trim().startsWith('//')).join('\n');
+  // explanation is measuring the wrong thing - the first draft did. So
+  // whole comment lines go, and so do TRAILING ones: the water's own
+  // `#version` line ends in "the water receives the lane's sun shadow",
+  // which a word-boundary search for `shadow` counted as a use of the
+  // variable. GLSL has no string literals, so cutting at `//` is safe.
+  const code = (src) => src.split('\n')
+    .map((l) => l.replace(/\/\/.*$/, ''))
+    .filter((l) => l.trim())
+    .join('\n');
   for (const [name, raw] of [['mesh', EL_MESH_FS], ['terrain', EL_TERRAIN_FS], ['char', EL_CHAR_FS]]) {
     const src = code(raw);
     assert.match(src, /float ndl = max\(dot\(n, uLightDir\), 0\.0\);/, `${name}: n.L is taken first`);
@@ -89,7 +96,19 @@ test('PERF-SUN2: the sun’s shadow is not read where the sun cannot reach', () 
   // own and the ndl gate would be a second question about it
   const water = code(waterSurfaceFs('', SHADOW_GLSL));
   assert.match(water, /float shadow = uSunScale > 0\.0 \? cloudShadowAt\(vWorldPos\) \* sunShadowAt\(vWorldPos, n\) : 0\.0;/);
-  assert.equal((water.match(/\buSunScale\s*\*\s*diff\b/g) ?? []).length, 1, 'the water’s diff has one consumer too');
+  // AUDIT F3: `shadow` IS THE LOAD-BEARING VARIABLE HERE, NOT `diff`, and
+  // the first draft of this pin counted the wrong one. The water has TWO
+  // consumers of `shadow` - the diffuse term and a sun SPECULAR - so
+  // proving `diff` has a single consumer proved nothing about the second.
+  // It is still output-identical, and this is why: every consumer of
+  // `shadow` is itself multiplied by `uSunScale`, so forcing it to zero
+  // where uSunScale is zero cannot move a pixel. Found by looking for
+  // them all rather than by assuming there was one.
+  const shadowUses = water.split('\n').filter((l) => /\bshadow\b/.test(l) && !/float shadow =/.test(l));
+  assert.equal(shadowUses.length, 2, `the water has ${shadowUses.length} consumers of shadow - every one must be under uSunScale`);
+  assert.ok(shadowUses.some((l) => /spec .*uSunScale \* shadow/.test(l)), 'the sun specular is one of them, and it carries uSunScale itself');
+  assert.ok(shadowUses.some((l) => /float diff = max\(dot\(n, uLightDir\), 0\.0\) \* shadow;/.test(l)), 'the diffuse term is the other');
+  assert.equal((water.match(/\buSunScale\s*\*\s*diff\b/g) ?? []).length, 1, 'and the diffuse term reaches the light exactly once');
   // and the water WITHOUT the lane still compiles as an expression - the
   // gate must not depend on the block that is not pasted in
   const plain = code(waterSurfaceFs('', ''));
@@ -131,4 +150,79 @@ test('PERF-SUN: the tree sway is CLEARED as a suspect - the lean is baked at bui
   assert.equal(swayDisabled('?sway=off'), true);
   assert.equal(swayDisabled('?sway=on'), false, 'and it re-reads when the search really changes');
   assert.equal(typeof floraSwayOn(''), 'boolean');
+});
+
+
+// ---- AUDIT PERF-SUN / PERF-FOG (2026-09-19) ------------------------------
+
+test('AUDIT F4: three decoded colours, three scratches - the billboard tint\u2019s moon term was reading the SUN', async () => {
+  // PRE-EXISTING, found by the audit that had just pinned `_fogLin`
+  // against this exact hazard one method away. `_c3` writes into a scratch
+  // the caller names, and the billboard tint site named `_decB` TWICE: so
+  // `mc` and `sc` were the same Float32Array, `sc`'s decode overwrote
+  // `mc`'s contents, and the very next statement built uBBTint from a
+  // "moon colour" that held the sun's. Every flat in the world, at night.
+  const r = read('src/render/renderer.js');
+  assert.match(r, /const am = this\._c3\(this\._ambient, this\._decA\), mc = this\._c3\(this\._moonColor, this\._decB\), sc = this\._c3\(this\._sunColor, this\._decC\);/,
+    'three colours, three scratches');
+  assert.match(r, /this\._decA = new Float32Array\(3\); this\._decB = new Float32Array\(3\); this\._decC = new Float32Array\(3\);/);
+  // AND THE RULE, held generally rather than at the one site: no statement
+  // may take two decoded colours into the same scratch. That is what makes
+  // this a law instead of a patch - the next caller who needs a fourth
+  // colour fails here rather than in the field.
+  for (const line of r.split('\n')) {
+    const scratches = [...line.matchAll(/this\._c3\([^)]*?,\s*this\.(_dec[A-Z])\)/g)].map((m) => m[1]);
+    assert.equal(new Set(scratches).size, scratches.length, `two decodes into one scratch: ${line.trim()}`);
+  }
+});
+
+test('AUDIT F2: the cheap tap runs OUTWARD from its index, and the note says so', () => {
+  const sp = read('src/render/shadowPass.js');
+  // The test is `c >= SHADOW_PCF_CASCADES`, so a fourth cascade would be
+  // cheap too. That is the RIGHT behaviour - the cascades ascend by
+  // radius, so a further one is always the coarser map - but the note
+  // first written here claimed the opposite, and a false claim about a
+  // safe direction is exactly what this slice's own lesson was about.
+  assert.match(SHADOW_GLSL, /if \(c >= 2\) return/, 'outward from the index, not the last cascade alone');
+  assert.doesNotMatch(sp, /A cascade count this does not cover keeps the kernel/, 'the false note is gone');
+  assert.match(sp, /EVERY cascade from/, '...and the true one is there');
+  for (let i = 1; i < SHADOW_CASCADES.length; i++) {
+    assert.ok(SHADOW_CASCADES[i] > SHADOW_CASCADES[i - 1], 'the cascades ascend, so a later index is always the coarser map');
+  }
+});
+
+test('AUDIT F5/F6: the numbers behind what was taken and what was left', () => {
+  // F6 (REFUTED): the seam at the cascade 1/2 boundary gets LESS visible,
+  // not more. A hardware tap is a 2x2 and the 3x3 loop an effective 4x4,
+  // so the blur width in world units is texel x kernel.
+  const blur = (r, taps) => (2 * r / SHADOW_SUN_SIZE) * (taps === 9 ? 4 : 2);
+  const near = blur(SHADOW_CASCADES[1], 9);
+  const farWas = blur(SHADOW_CASCADES[2], 9), farNow = blur(SHADOW_CASCADES[2], 1);
+  assert.ok(farNow < farWas, 'the far cascade is SHARPER than it was, not blurrier');
+  assert.ok(farNow / near < farWas / near,
+    `the step across the boundary fell from ${(farWas / near).toFixed(1)}x to ${(farNow / near).toFixed(1)}x`);
+  // F5 (RECORDED, NOT TAKEN): cascade 1's texel is about a pixel and a
+  // half at thirty metres, so the same arithmetic that made the far
+  // cascade cheap applies to it too. It keeps the kernel anyway, because
+  // there the 3x3 is a soft EDGE - a look - and not only antialiasing.
+  // Written in numbers so the next reader re-opens it as a choice rather
+  // than rediscovering it as an oversight.
+  const pixelAt = (d) => d * (2 * Math.tan(Math.PI / 6)) / 1080;
+  const c1Texel = 2 * SHADOW_CASCADES[1] / SHADOW_SUN_SIZE;
+  assert.ok(c1Texel / pixelAt(30) < 2, `cascade 1's texel is ${(c1Texel / pixelAt(30)).toFixed(1)} pixels at 30 m - the same case, and it keeps the kernel by choice`);
+  assert.equal(SHADOW_PCF_CASCADES, 2, 'the choice, written down');
+});
+
+test('AUDIT F1: the sway door\u2019s state is declared ABOVE its reader', () => {
+  // A `let` below the function that reads it is in the temporal dead zone
+  // until the module finishes evaluating. Nothing calls this during module
+  // init today - but this port has already lost a boot to one end of a
+  // module cycle reaching the other too early (the HOTFIX black screen),
+  // and the fix for that class is to not write the shape at all.
+  const w = read('src/systems/windDrive.js');
+  const decl = w.indexOf('let _swaySearch;');
+  const reader = w.indexOf('export function swayDisabled');
+  assert.ok(decl > 0 && reader > 0, 'both are there');
+  assert.ok(decl < reader, 'the state is declared before the function that reads it');
+  assert.ok(w.indexOf('let _swayOff;') < reader, '...and so is its sibling');
 });

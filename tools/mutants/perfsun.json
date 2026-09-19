@@ -133,5 +133,50 @@
   "tests": [
    "test/perfsun_fragment.test.js"
   ]
+ },
+ {
+  "name": "AUDIT-F4-the-billboard-tint-decodes-the-moon-and-the-sun-into-ONE-scratch-again",
+  "file": "src/render/renderer.js",
+  "old": "sc = this._c3(this._sunColor, this._decC);",
+  "new": "sc = this._c3(this._sunColor, this._decB);",
+  "tests": [
+   "test/perfsun_fragment.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-F4-the-third-scratch-is-an-alias-of-the-second-so-the-fix-is-cosmetic",
+  "file": "src/render/renderer.js",
+  "old": "this._decC = new Float32Array(3);",
+  "new": "this._decC = this._decB;",
+  "tests": [
+   "test/perfsun_fragment.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-F2-the-note-goes-back-to-claiming-the-opposite-of-what-the-code-does",
+  "file": "src/render/shadowPass.js",
+  "old": " * AUDIT F2: the test is `c >= SHADOW_PCF_CASCADES`, so EVERY cascade from\n * this index outward takes the cheap tap - not just the last. The comment\n * first written here claimed the opposite (\"a cascade count this does not\n * cover keeps the kernel\"), which is false, and a false claim about the\n * safe direction is exactly what this slice's own lesson was about. The\n * behaviour the code actually has is the right one: cascades are ordered\n * by radius, so a further one is always coarser than the one before it and\n * can only want the tap less. A fourth cascade would be cheap, and should be.",
+  "new": " * A cascade count this does not cover keeps the kernel, which is the\n * safe direction if the cascades are ever re-cut.",
+  "tests": [
+   "test/perfsun_fragment.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-F1-the-sway-doors-state-goes-back-below-its-reader",
+  "file": "src/systems/windDrive.js",
+  "old": "let _swaySearch;   // AUDIT F1: declared ABOVE its reader - a `let` below one is in the temporal dead zone until the module finishes evaluating, and this port has already lost a boot to one end of a module cycle reaching the other too early\nexport function swayDisabled",
+  "new": "export function swayDisabled",
+  "tests": [
+   "test/perfsun_fragment.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-F3-the-water-pin-counts-diff-again-instead-of-the-variable-that-bears-the-load",
+  "file": "src/render/waterSurface.js",
+  "old": "  float spec = pow(max(dot(n, H), 0.0), 180.0) * uSunScale * shadow;",
+  "new": "  float spec = pow(max(dot(n, H), 0.0), 180.0) * shadow;",
+  "tests": [
+   "test/perfsun_fragment.test.js"
+  ]
  }
 ]

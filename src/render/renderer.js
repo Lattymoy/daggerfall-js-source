@@ -962,7 +962,7 @@ export class Renderer {
     this._studioDepth = 0;   // AUDIT-EL F1: inside the studio bake (a UI picture: no eye)
     this._adaptOneTex = null;
     this.maxPointLights = CLASSIC_MAX_LIGHTS;
-    this._decA = new Float32Array(3); this._decB = new Float32Array(3);   // EL1: the decode scratch (two, for the billboard tint's two terms)
+    this._decA = new Float32Array(3); this._decB = new Float32Array(3); this._decC = new Float32Array(3);   // AUDIT F4: three, because one site decodes the ambient, the moon AND the sun and holds all three   // EL1: the decode scratch (two, for the billboard tint's two terms)
     this._pointColorDec = new Float32Array(CLASSIC_MAX_LIGHTS * 3);
     this._classicSet = this._buildWorldSet({ key: 'classic', meshFs: FS, bbFs: BB_FS, terrainFs: TERRAIN_FS, charFs: CHAR_FS });
     this._installWorldSet(this._classicSet);
@@ -4202,7 +4202,16 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
       // Lambert-average half the sun does - a scalar on the tint.
       // EL1: under the lane the two terms are decoded FIRST and added in
       // linear (_c3 on each, into the two scratch triples).
-      const am = this._c3(this._ambient, this._decA), mc = this._c3(this._moonColor, this._decB), sc = this._c3(this._sunColor, this._decB);
+      // AUDIT PERF-SUN/FOG F4 (2026-09-19, pre-existing): THREE COLOURS,
+      // THREE SCRATCHES. `mc` and `sc` were both handed `_decB`, so they
+      // were the SAME Float32Array - and `sc`'s decode overwrote `mc`'s
+      // contents before the very next statement read `mc`. The billboard
+      // tint's MOON term was therefore computed from the SUN's colour, on
+      // every flat in the world. This is the only site in the file that
+      // holds more than one decoded colour live at once, which is why it
+      // is the only one that could have it; found by the audit that had
+      // just pinned `_fogLin` against the same hazard one method away.
+      const am = this._c3(this._ambient, this._decA), mc = this._c3(this._moonColor, this._decB), sc = this._c3(this._sunColor, this._decC);
       gl.uniform3f(
         this.bbUTint,
         am[0] + mc[0] * this._moonScale * 0.5,
