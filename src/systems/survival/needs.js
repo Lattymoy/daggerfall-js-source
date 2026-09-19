@@ -34,6 +34,9 @@ import { MINUTES_PER_DAY } from '../gameDate.js';
 export const NEED = Object.freeze({
   PECKISH_AT: 240, HUNGRY_AT: 720, STARVING_AT: 1440,   // minutes since a meal
   THIRSTY: 50, PARCHED: 80, DEHYDRATED: 100, THIRST_MAX: 150,
+  /** SURV-THIRST1: where thirst starts costing BLOOD - twenty past dehydrated,
+   *  which is the number the mod's own heat-only line used. */
+  THIRST_HARM: 120,
   SLEEP_TIRED: 4, SLEEP_DROWSY: 8, SLEEP_EXHAUSTED: 12, SLEEP_DEBT_MAX: 24, AWAKE_FREE_HOURS: 16,
   WET_DAMP: 5, WET_WET: 30, WET_SOAKED: 100, WET_DRENCHED: 200, WET_MAX: 300,
   EXPOSURE_AT: 30, DAMAGE_AT: 50,
@@ -249,7 +252,37 @@ export function survivalMinute(entity, now, env = {}, deps = {}) {
       if (thirstNow === 'parched') sinks.drainFatigue?.(DRAIN.parched);
       else if (thirstNow === 'dehydrated') sinks.drainFatigue?.(DRAIN.dehydrated);
     }
-    if (s.thirst >= 120 && temp.felt > NEED.EXPOSURE_AT) sinks.hurt?.(1);
+    // SURV-THIRST1 (2026-09-19, Mac: "You should also should die on
+    // dehydration"). THE DEPARTURE, and the only one in this block.
+    //
+    // Climates & Calories bleeds you for thirst only in HEAT - this line
+    // read `s.thirst >= 120 && temp.felt > NEED.EXPOSURE_AT`, so a cool
+    // dungeon taxed fatigue for ever and never a drop of blood. Water is
+    // not a climate: a body past dehydrated fails wherever it stands, and
+    // the port says so. (bible/06-Systems/Climates-Calories.md carries the
+    // departure; it is NOT the mod's law and must not be tidied back.)
+    //
+    // The shape is AUDIT SURV E's, not a new one. A harm that can kill
+    // comes on the HARM TICK and not every minute - the old line fired
+    // sixty times an hour, which is how a starting character loses
+    // twenty-five points in twenty-five game-minutes - and it escalates
+    // the way exposure's does, off how far past the threshold you are.
+    // No `hurtFloored`: the bare-skin harms leave the last five points
+    // BECAUSE they are not meant to kill, and this one is.
+    //
+    // HEAT STILL KILLS YOU FASTER, through the mod's own mechanism rather
+    // than a second rule: the thirst RATE above already scales with the
+    // felt heat (felt 40 is four times as fast), so a desert reaches 150
+    // and stays there while a cellar crawls. What heat no longer does is
+    // buy a separate, harsher damage law.
+    //
+    // Not in your sleep, and not sat by a fire - the same two words the
+    // temperature harm below uses. Nothing in `systems/rest.js` refuses a
+    // rest for thirst, so a sleeper who could not wake to drink would be
+    // killed by a window they were allowed to open.
+    if (s.thirst >= NEED.THIRST_HARM && !sleeping && !resting && now % HARM_EVERY_MINUTES === 0) {
+      sinks.hurt?.(Math.max(1, Math.trunc((s.thirst - NEED.THIRST_HARM + 10) / 10)));
+    }
   }
 
   // SLEEP: the debt grows past the free hours; sleep pays it by quality.

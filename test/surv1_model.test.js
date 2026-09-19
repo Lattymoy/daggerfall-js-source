@@ -334,3 +334,90 @@ test('SURV1: by source - liveStat reads the survival entry, and the model is thr
   }
   assert.match(read('src/systems/survival/needs.js'), /export const MAX_CATCHUP_MINUTES = 2 \* MINUTES_PER_DAY;/);
 });
+
+// ── SURV-THIRST1: A BODY PAST DEHYDRATED FAILS WHEREVER IT STANDS ──
+//
+// Mac, 2026-09-19: "You should also should die on dehydration".
+//
+// Climates & Calories bleeds you for thirst only in HEAT. THE PORT
+// DEPARTS: water is not a climate. The mod's own line is recorded in
+// bible/06-Systems/Climates-Calories.md, so a tidy-up cannot put the
+// gate back by mistake - these pins are what stop it.
+const thirstRig = () => {
+  const mk = () => ({
+    stats: { strength: 50, intelligence: 50, willpower: 50, agility: 50, endurance: 50, personality: 50, speed: 50, luck: 50 },
+    raceId: RACES.Breton, items: [], activeEffects: [], health: 25, maxHealth: 25, fatigue: 6400,
+  });
+  // dressed, so the bare-skin harms (which leave the last five points and
+  // are NOT what this measures) never fire
+  const dressed = worn({ [S.ChestClothes]: item(158), [S.LegsClothes]: item(151), [S.Feet]: item(149) });
+  /** Walk a cool dungeon minute by minute with no drink, and answer the
+   *  minute the player dies of thirst - or null. */
+  const walk = (env, minutes = 60 * 24) => {
+    const e = mk(); let dead = null;
+    const sinks = { hurt: (n) => { e.health = Math.max(0, e.health - n); }, drainFatigue: () => {}, restoreFatigue: () => {}, say: () => {} };
+    for (let m = 1; m <= minutes && dead === null; m++) {
+      survivalMinute(e, m, { ...env, month: 6, hour: 13 }, { worn: dressed, sinks, autoDrink: false, autoEat: false, ctx: { raceId: RACES.Breton } });
+      if (e.health <= 0) dead = m;
+    }
+    return { dead, thirst: e.survival.thirst };
+  };
+  return { walk };
+};
+
+test('SURV-THIRST1: a cool dungeon KILLS a player who never drinks - the mod would have let him walk for ever', () => {
+  const { walk } = thirstRig();
+  const cool = walk({ insideDungeon: true, climateIndex: CLIMATES.Woodlands });
+  assert.equal(cool.thirst, NEED.THIRST_MAX, 'thirst reached its ceiling with no drink');
+  assert.ok(cool.dead !== null, 'and the player died of it, out of the sun');
+  // and it is not instant: dehydrated at six hours, blood later, death
+  // later still - a player has game-hours of warnings and a chance to drink
+  assert.ok(cool.dead > 8 * 60, `death at ${(cool.dead / 60).toFixed(1)}h - it must not be a sudden one`);
+  assert.ok(cool.dead < 14 * 60, `death at ${(cool.dead / 60).toFixed(1)}h - but thirst must really be fatal`);
+});
+
+test('SURV-THIRST1: the harm follows AUDIT SURV E’s shape - the harm TICK, escalating, and it may kill', () => {
+  const log = [];
+  const e = {
+    stats: { strength: 50, intelligence: 50, willpower: 50, agility: 50, endurance: 50, personality: 50, speed: 50, luck: 50 },
+    raceId: RACES.Breton, items: [], activeEffects: [], health: 50, maxHealth: 50, fatigue: 6400,
+  };
+  const dressed = worn({ [S.ChestClothes]: item(158), [S.LegsClothes]: item(151), [S.Feet]: item(149) });
+  const cool = { insideDungeon: true, climateIndex: CLIMATES.Woodlands, month: 6, hour: 13 };
+  const sinks = { hurt: (n) => log.push(n), drainFatigue: () => {}, restoreFatigue: () => {}, say: () => {} };
+  const step = (minute, thirst) => {
+    log.length = 0;
+    survivalOf(e, minute).thirst = thirst;
+    survivalMinute(e, minute, cool, { worn: dressed, sinks, autoDrink: false, autoEat: false, ctx: { raceId: RACES.Breton } });
+    return log;
+  };
+  // the TICK: ten minutes apart, not every minute (the old line fired sixty
+  // times an hour, which takes a starting character out in twenty-five)
+  assert.deepEqual(step(101, NEED.THIRST_HARM), [], 'a minute that is not the harm tick costs nothing');
+  assert.deepEqual(step(100, NEED.THIRST_HARM), [1], 'the harm tick does');
+  // ESCALATING, as exposure's does - off how far past the threshold
+  assert.deepEqual(step(200, NEED.THIRST_HARM + 10), [2]);
+  assert.deepEqual(step(300, NEED.THIRST_MAX), [4], 'at the ceiling, four a tick');
+  // and BELOW the threshold, nothing - dehydrated alone is a fatigue tax
+  assert.deepEqual(step(400, NEED.DEHYDRATED), [], 'dehydrated is not yet bleeding');
+  // NOT in your sleep, and not sat resting: nothing in systems/rest.js
+  // refuses a rest for thirst, so a sleeper who cannot wake to drink must
+  // not be killed by a window he was allowed to open
+  survivalOf(e, 500).thirst = NEED.THIRST_MAX;
+  log.length = 0;
+  survivalMinute(e, 500, { ...cool, sleeping: 'bed' }, { worn: dressed, sinks, autoDrink: false, autoEat: false, ctx: { raceId: RACES.Breton } });
+  assert.deepEqual(log, [], 'asleep, thirst takes no blood');
+  survivalOf(e, 600).thirst = NEED.THIRST_MAX;
+  log.length = 0;
+  survivalMinute(e, 600, { ...cool, resting: true }, { worn: dressed, sinks, autoDrink: false, autoEat: false, ctx: { raceId: RACES.Breton } });
+  assert.deepEqual(log, [], 'resting, thirst takes no blood');
+  // and it may KILL: no HEALTH_FLOOR, because the bare-skin harms leave the
+  // last five points BECAUSE they are not meant to kill, and this one is
+  const src = readFileSync(new URL('../src/systems/survival/needs.js', import.meta.url), 'utf8');
+  const line = src.slice(src.indexOf('if (s.thirst >= NEED.THIRST_HARM'));
+  assert.match(line.slice(0, line.indexOf('\n    }')), /sinks\.hurt\?\.\(/, 'the raw sink, not hurtFloored');
+  assert.doesNotMatch(line.slice(0, line.indexOf('\n    }')), /hurtFloored/);
+  // THE DEPARTURE ITSELF: no climate term anywhere in the condition
+  assert.doesNotMatch(line.slice(0, line.indexOf(')')), /temp\.|felt|EXPOSURE_AT/,
+    'thirst no longer asks the weather - that was the mod’s law and is the port’s departure');
+});
