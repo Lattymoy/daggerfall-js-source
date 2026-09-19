@@ -35,25 +35,41 @@ import { survivalOn } from '../systems/survival/switch.js';   // AUDIT SURV B: t
 import {
   TENT_MODEL, FIRE_FLAT, FIRE_LIGHT_RANGE, CAMP_REACH, CAMP_KIND, CAMP_TEXT, CAMPS_PER_OWNER,
   placeCampItem, packCamp, stokeFire, fireLit, campExpired, tentPos, nearestFire, campInfoText, campMenu,
-  cookables, cookFood, hasSkillet, campWire, mergeOwnerCamps,
+  cookables, cookFood, hasSkillet, campWire, mergeOwnerCamps, BY_FIRE_REACH,
 } from '../systems/survival/camp.js';
+import { nearestHearth, hearthNear } from '../systems/survival/hearth.js';   // HEARTH1: the world's own fires answer the same question this pool does
 
 /** The light hangs this far over the flame's base. */
 export const FIRE_LIGHT_UP = 0.6;
 /** The eye's box over a fire (a flame is about a metre tall) and a tent (its mesh's own bounds, or this). */
 export const FIRE_HALF = 0.5;
+/** HEARTH1: the eye's box over a world fire - a brazier's bowl is about this wide. */
+export const HEARTH_HALF = 0.6;
+/** HEARTH1 / AUDIT F3: how far the eye's box reaches BELOW a world fire.
+ *  The position a host hands over is its LIGHT - the flame - and the
+ *  three collectors put that anywhere from the middle of the flat to
+ *  its top (survival/hearth.js says which is which), never at its foot.
+ *  So the box reaches a sprite's height down to cover the bowl under
+ *  the flame, and only HEARTH_HALF up, where there is nothing to aim
+ *  at. It is deliberately not larger than that: a taller box would
+ *  start eating clicks meant for whatever stands behind the fire. */
+export const HEARTH_DROP = 1.8;
 
 /**
  * deps = { renderer, getTexture, uploadRecordFrame, meshes ({ getGpuMesh, cpuModels } - the host's pipeline), entity (the player),
  *          camera() -> { feet, yaw }, collider() (raycast(origin, dir, max) -> distance), place() -> { insideBuilding,
  *          insideDungeon, inTown, enemiesNearby, inWater }, pixelKeyAt(pos) (the streaming host's, or null),
  *          say(line), showOverlay(win), openRest(camp), advanceMinutes(n) (offline; online the clock is nobody's),
- *          selfId() (this player's online id, or null), onChanged() (the host's online publish) }
+ *          selfId() (this player's online id, or null), onChanged() (the host's online publish),
+ *          hearths() -> [{x, y, z}] (HEARTH1: the world's own cooking fires in the host's frame - the braziers
+ *            and fire bowls survival/hearth.js picks out of the lantern list the host already builds; a host
+ *            that passes none has none, which is what every caller did before this) }
  */
 export function createCamps({
   renderer = null, getTexture = null, uploadRecordFrame = null, meshes = null, entity = null,
   camera = () => null, collider = () => null, place = () => ({}), pixelKeyAt = () => null,
   say = () => {}, showOverlay = null, openRest = null, advanceMinutes = null, selfId = () => null, onChanged = null,
+  hearths = null,   // HEARTH1: the host's own braziers and fire bowls, in the host's frame - see below
 } = {}) {
   const camps = [];   // { rec, batch, anim, pixelKey, mine }
   let _nextId = 0;
@@ -152,9 +168,22 @@ export function createCamps({
     return n;
   }
 
-  /** The eye's targets: the fire's box and, for a tent, the mesh's bounds. */
+  /** The eye's targets: the fire's box and, for a tent, the mesh's bounds.
+   *  HEARTH1: and a box on every world fire, so a brazier answers the
+   *  ray as a camp does - HEARTH_HALF either way, HEARTH_DROP below
+   *  (AUDIT F3: the position is the FLAME and the bowl is under it, by
+   *  a distance the three hosts each measure differently). */
   function targets() {
     const out = [];
+    const wf = worldFires();
+    if (wf) for (let i = 0; i < wf.length; i++) {
+      const h = wf[i];
+      out.push({
+        key: `hearth:${i}`,
+        aabb: { min: [h.x - HEARTH_HALF, h.y - HEARTH_DROP, h.z - HEARTH_HALF], max: [h.x + HEARTH_HALF, h.y + HEARTH_HALF, h.z + HEARTH_HALF] },
+        distance: RAY_DISTANCE, reach: CAMP_REACH,
+      });
+    }
     for (const c of camps) {
       const p = c.rec.pos;
       out.push({ key: `camp:${c.rec.id}`, aabb: { min: [p[0] - FIRE_HALF, p[1], p[2] - FIRE_HALF], max: [p[0] + FIRE_HALF, p[1] + 1, p[2] + FIRE_HALF] }, distance: RAY_DISTANCE, reach: CAMP_REACH });
@@ -170,6 +199,15 @@ export function createCamps({
   const forKey = (key) => camps.find((c) => `camp:${c.rec.id}` === key) ?? null;
   /** Info and Talk name it; Grab and Steal open the menu. */
   function activate(key, mode) {
+    // HEARTH1: a world fire is not a camp. It cannot be rested AT as an
+    // act (the rest window reads `byFire` and already sees it), stoked
+    // or packed - it is nobody's - so the only thing it opens is the
+    // cooking list, and Info and Talk say what it is.
+    if (typeof key === 'string' && key.startsWith('hearth:')) {
+      if (mode === 'info' || mode === 'dialogue') { say(CAMP_TEXT.seeHearth); return true; }
+      openCook(null);
+      return true;
+    }
     const c = forKey(key);
     if (!c) return false;
     if (mode === 'info' || mode === 'dialogue') { say(campInfoText(c.rec, now(), mine(c.rec))); return true; }
@@ -195,11 +233,14 @@ export function createCamps({
     }
     if (key === 'cook') openCook(c);
   }
+  /** The cooking list. HEARTH1: `c` is the camp whose fire this is, or
+   *  NULL for one of the world's own - a brazier burns for ever and
+   *  belongs to nobody, so there is no burn-down test to make. */
   function openCook(c) {
     const items = entity?.items ?? [];
     const raw = cookables(items);
     if (!raw.length) { say(CAMP_TEXT.nothingToCook); return null; }
-    if (!fireLit(c.rec, now())) { say(CAMP_TEXT.cold); return null; }
+    if (c && !fireLit(c.rec, now())) { say(CAMP_TEXT.cold); return null; }
     const win = new ListPickerWindow({
       items: raw.map((it) => ((it.stackCount ?? 1) > 1 ? `${it.name} (${it.stackCount})` : it.name)),
       onPick: (i) => {
@@ -213,8 +254,39 @@ export function createCamps({
     return win;
   }
 
-  /** The needs law's `byFire`: within BY_FIRE_REACH of a lit fire, anyone's. */
-  const byFire = (pos) => !!nearestFire(camps.map((c) => c.rec), pos, now());
+  /**
+   * HEARTH1: the world's own fires, live off the host's door.
+   *
+   * A brazier does not move, burn down or belong to anyone, so there is
+   * no pool and no record - the host hands over the positions it read
+   * out of the block it was already reading, and this asks them the
+   * same question it asks the camps.
+   *
+   * AUDIT HEARTH1 F1: AND IT IS BEHIND THE MOD'S OWN SWITCH. The camps
+   * never needed one here - nothing can be PLACED with Climates &
+   * Calories off, so the pool is empty and every question about it
+   * answers no by itself. A brazier is in the world whether the mod is
+   * on or not, so without this gate the survival arc leaked out through
+   * it: a fire bowl answered the activation ray with a cooking list and
+   * reported `byFire` to a law nobody had turned on. Off, every seam is
+   * DFU's - that is the arc's own sentence and this is where it was
+   * about to stop being true.
+   */
+  const worldFires = () => (survivalOn() && hearths ? hearths() : null);
+  const hearthAt = (pos) => nearestHearth(worldFires(), pos, BY_FIRE_REACH);
+
+  /**
+   * The needs law's `byFire`: within BY_FIRE_REACH of a lit fire.
+   *
+   * HEARTH1 (Mac: "Does this version of C&C not let you use braziers as
+   * extra campfires to cook from?"): anyone's CAMP, and now the world's
+   * own braziers and fire bowls with them. A fire is a fire - it warms
+   * you, dries you and makes a rest a camp's rest (SURV4 reads this
+   * through `restKind`), and a player standing over a roaring brazier
+   * had been as cold and as roughly rested as one standing in a field.
+   */
+  const byFire = (pos) => !!nearestFire(camps.map((c) => c.rec), pos, now())
+    || hearthNear(worldFires(), pos, BY_FIRE_REACH);   // AUDIT HEARTH1 F2: the FIRST fire in reach, not the nearest - this runs every frame
   const campAt = (pos) => nearestFire(camps.map((c) => c.rec), pos, now());
 
   /** DestroyLightSources' twin: every transition and every load. */

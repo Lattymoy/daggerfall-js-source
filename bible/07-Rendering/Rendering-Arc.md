@@ -2251,12 +2251,12 @@ beside them. Then the same shape turned up everywhere else:
 
 | host | list |
 |---|---|
-| `dungeonContext.js:5033` | the mobiles, the drops, the spells |
-| `worldModes.js:6095` | the dungeon's flats, camps, torches and peers |
-| `worldModes.js:6258` | the interior's flats and peers |
-| `worldModes.js:6264-6298` | blood, torches, drops, foes, guards - **five separate uncut calls** |
-| `exterior.js:4776`, `world.js:10615` | the spell missiles |
-| `exterior.js:4838` | the fixed city's townspeople |
+| `dungeonContext.js:5047` | the mobiles, the drops, the spells |
+| `worldModes.js:6140` | the dungeon's flats, camps, torches and peers |
+| `worldModes.js:6303` | the interior's flats and peers |
+| `worldModes.js:6309-6343` | blood, torches, drops, foes, guards - **five separate uncut calls** |
+| `exterior.js:4785`, `world.js:10718` | the spell missiles |
+| `exterior.js:4847` | the fixed city's townspeople |
 | `interior.js:352`, `dungeon.js:1006` | the flats, the camps, the torches |
 
 Seven call sites, and an eighth waiting to be written next year. **Fixing
@@ -2382,6 +2382,386 @@ written against, and had been carried as a property of the terrain ever
 since. The wrap was never the obstacle - handing the wrapped coordinate
 to the hardware was.**
 
+## GHOST1 (2026-09-19) - THE SPRITES THAT WERE CULLED WHILE THEY WERE ON SCREEN - SHIPPED
+
+Two reports in `#bug-reports`, the same afternoon:
+
+> **Clerical Error:** "loaded from a save and we have ghost campfires now"
+> - with a screenshot of a flame that is a blurred glow and nothing else.
+
+> **kurkku:** "sprites disappear and reappear at certain(?) angles"
+
+One bug, in the billboard frustum cull PERF-CROWD and PERF-CROWD2 had
+added the same day. Two things were wrong with it.
+
+### 1. The planes were not normalised
+
+`frustumPlanes` (EV3) returns its Gribb/Hartmann planes **unnormalised**,
+on purpose and with its own note saying so: `aabbOutside` only reads the
+SIGN of `a*px + b*py + c*pz + d`, and normalising would spend four square
+roots a frame on nothing.
+
+`sphereInPlanes` is not that test. It compares `dot + d < -r`, and that
+is a world distance against a world radius **only when the normal is a
+unit vector**. That is exactly why `spherePlanes` exists beside it, and
+why the shadow replay and the air pass have always gone through it.
+
+Both new culls skipped it. On a 60-degree frustum the side planes carry
+`|n|` = 1.40 and the top and bottom exactly 2.00, so a sprite's radius
+counted for as little as **half of itself** and the cull ate a band
+around the frustum's edge proportional to the sprite's own size. Swept
+over ~440,000 placements whose quad genuinely lands inside the clip box,
+the raw planes throw some away at every sprite size tested; the
+normalised ones throw away none. The band is widest where the planes
+converge - close to the eye, which is where you stand when you look at a
+campfire - and at the screen edge, which is what turning does to
+everything else. Both reports, one cause.
+
+### 2. The lift was in the wrong place, which is what made it a GHOST
+
+A billboard's stored sphere is over the PLACEMENT points, and the vertex
+shader is bottom-anchored (`uUp * ((aCorner.y + 0.5) * uSize.y)`), so the
+quad stands its full height above that point. PERF-CROWD lifted the
+centre half a height to bound it - correctly - and PERF-CROWD2 wrote the
+same lift again in the renderer. Neither put it in `batchVisible`, which
+is the copy the shadow replay and the **air pass's emission replay** cull
+by.
+
+So two passes asked different questions about one sprite. The main pass
+dropped a flat the emitters kept, and what was left on screen was the
+BLOOM of a sprite that never drew: a blurred, sourceless glow where the
+fire should be. A ghost campfire, exactly as reported and exactly as
+photographed.
+
+The lift lives in `batchVisible` now and the two hand copies are gone -
+`renderer._bbVisible` and `world.js`'s `billboardOutside` both delegate.
+A negative height (`droppedTorches`' flame, drawn on a negated
+`localScale.y`) lifts DOWNWARD by the same rule, which is where its quad
+actually hangs.
+
+### The change that had to be free
+
+`world.js`'s `_planes` now serve both tests, so EV3's box culling reads
+normalised planes too. Dividing four coefficients by a positive length
+cannot move a sign, so every `aabbOutside` decision is bit-for-bit what
+it was - pinned over 10,000 boxes rather than argued. The cost is six
+square roots a frame.
+
+**Pinned** in `test/ghost1_spritecull.test.js` (6) - the measurement of
+`|n|`, the over-cull sweep from the outside (quad corners projected
+through the same proj*view the shader uses), the conservative direction,
+the lift and its one home, and the EV3 equivalence. Mutants
+`tools/mutants/ghost1.json`: 10 - 10 dead, 0 survived. Four
+`perfon2.json` records retired: their laws moved into `bounds.js` and
+`ghost1.json` kills them there.
+
+**The lesson: a helper that exists BECAUSE the other one is wrong for
+your case is not interchangeable with it. `spherePlanes` sat next to
+`frustumPlanes` with a comment saying precisely why, and two new callers
+reached past it. And when two passes cull the same object by two copies
+of one rule, the bug does not hide - it draws.**
+
+## PERF-SUN (2026-09-19) - THE EXTERIOR WAS PAYING PER FRAGMENT, AND THE SKY PROVED IT
+
+Mac: *"exterior shadows at a distance, tree sway at a distance, and
+whatever else can cause insane performance issues. On the outside, I'm
+receiving over 1000 calls and looking up in the sky restores frame
+rate."*
+
+### Looking up is the diagnosis
+
+The sun cascades are built around the **eye**, not the view direction,
+and each shadow replay culls by its own cascade's frustum. None of that
+changes when the camera tilts. The air pass, the sky, the sim: all
+unchanged. The one thing that collapses when you look at the sky is the
+number of **shaded fragments**.
+
+So the >1000 draw calls, whatever else they cost, are not what the sky
+gives back. The exterior was spending itself per fragment, on ground
+that fills nearly the whole screen.
+
+### PERF-SUN1 - the far cascade took nine taps for a texel two pixels wide
+
+`sunShadowAt` filtered 3x3 in every cascade. And each of those nine
+samples is **already a 2x2**: the sun map is `COMPARE_REF_TO_TEXTURE`
+with `LINEAR` filtering, so one `texture()` on it is a hardware bilinear
+PCF over four texels and the loop was an effective 4x4 filter.
+
+That is worth it where the texel is coarse against the pixel. Cascade 0
+is 12 units over 2048 - a 1.2 cm texel, EL7's contact hairline, the
+whole reason the near cascade exists. The **far** cascade is 240 units:
+a 23 cm texel, which at a hundred metres on a 60-degree field is about
+two pixels across. One hardware tap there is already a 2x2 over a
+two-pixel texel; the other eight soften nothing anyone can see - over
+**most of an outdoor screen**, because cascade 2 is everything past 48
+units.
+
+The nearest two cascades keep the kernel. The far one returns on one
+tap, before the loop.
+
+### PERF-SUN2 - the shadow was read where the sun cannot reach
+
+Every lane shader wrote the sun term as one flat product:
+
+```glsl
+float diff = max(dot(n, uLightDir), 0.0) * cloudShadowAt(vWorldPos) * sunShadowAt(vWorldPos, n);
+```
+
+**GLSL evaluates every operand of a product.** A surface whose normal
+faces away from the sun paid nine hardware-PCF compares and a cloud-deck
+sample, and then multiplied them by the zero sitting in front of them.
+Every north-facing wall, every back slope, and the whole world whenever
+the sun is low.
+
+`diff` reaches the light exactly once, as `uSunColor * (uSunScale *
+diff)` - so gating it on `ndl > 0.0` **or** on `uSunScale > 0.0` cannot
+move a pixel; it only skips arriving at the same zero. The `uSunScale`
+half is a uniform branch, free and coherent, and it takes out dusk, dawn
+and the whole night as well. A FLAT has no normal, so its gate is
+`uBBSun` - the sun's entire share of the tint, and zero at night - which
+stops every sprite in the world reading the sun map after dark.
+
+Verified in a real WebGL2 driver rather than asserted:
+`tools/perfSunShaderProbe.mjs` compiles all four lane shaders and both
+water variants.
+
+### The tree sway is cleared
+
+It is not a per-frame cost. `floraSwayOf` runs once per BATCH when the
+pixel is built, each host uploads **one** wind vector a frame for every
+flat in the world, and the lean is a few instructions on four vertices a
+sprite. Recorded so the next reader does not go looking.
+
+What was wrong beside it: `floraSwayOn` minted a `URLSearchParams` and
+parsed the query string **once a frame** to answer a question that
+cannot change while the page is open. Read once now, as `?cull=off` is;
+the pref beside it stays live, because the player can toggle that
+mid-session.
+
+### RECORDED, NOT FIXED - the >1000 draw calls
+
+Named here because it is a real finding and this slice is not its fix.
+
+A streamed pixel's static models are merged by PERF4 into one mesh with
+**one sub-mesh per texture**, and that is where the draw count lives: a
+town pixel with thirty distinct wall and roof textures is thirty draws,
+times every visible pixel. The obvious saving - cull the merged batch
+per sub-mesh, using the bounds `createMesh` already computes and the
+shadow replay already tests - **does not work here**, and the reason is
+worth writing down: a merged sub-mesh is one texture's geometry across
+the WHOLE pixel, and a pixel is 128 tiles at 6.4 units, or 819 units
+across. Its bounding sphere spans the pixel, so the test would almost
+never fire.
+
+**CORRECTED 2026-09-19, same day:** the remedy first written here -
+merge per texture *and* per spatial cluster - is wrong, and the
+arithmetic says so in one line. The current scheme is already the
+MINIMUM draw count: one per distinct texture. Splitting a pixel into
+sixteen cells turns thirty textures into up to 480 sub-meshes, and even
+if only three cells are in the frustum that is ninety draws where there
+were thirty. Clustering trades draw calls AWAY to buy vertex work; it is
+a fill win and a draw-call LOSS, and this finding was about the draw
+count.
+
+What the draw count actually is, recounted: terrain is one per visible
+pixel, the merged static batch is one per texture per visible pixel, and
+**the flats are one per (archive, record) per pixel** - which across the
+streamed grid is the largest single source, and the one MAC1 already
+cut the small far ones out of. Collapsing those would need either a
+texture array over an archive's records (so one draw covers many
+records) or world-space centres merged across pixels (which costs the
+per-pixel frustum cull that EV3 pays for). Both are real projects with a
+real trade, and neither is a line of code. Recorded as an open question
+rather than a plan.
+
+**Pinned** in `test/perfsun_fragment.test.js` (4). Mutants
+`tools/mutants/perfsun.json`: 15 - 15 dead, 0 survived. Two older
+records re-aimed by content (`el2.json`, `el7.json`) and EL7's own water
+pin with them.
+
+**The lesson: "over 1000 calls" named the thing that was easiest to
+count, and the sky named the thing that was actually being paid. A
+product in a shader is not a series of conditions - it is a promise to
+evaluate all of them.**
+
+## PERF-FOG (2026-09-19) - A UNIFORM WAS BEING DECODED ONCE A FRAGMENT
+
+Found by keeping on looking after PERF-SUN, in the same place and for
+the same reason: what does every exterior fragment actually run?
+
+`elFinish` is the lane's output - the tonemap, the fog blend, the
+in-scatter, the encode, the dither - and it runs in **every lane shader
+there is**: the terrain, the meshes, the rigs and every flat in the
+world. It opened with:
+
+```glsl
+vec3 col = mix(elDecode(uFogColor), tm, fogFactorAt(wp));
+```
+
+`elDecode` is the piecewise sRGB curve - three `pow()` calls. **On a
+uniform.** The value is identical for every pixel of the frame and it
+was being recomputed for every one of them, all day, everywhere.
+
+GLSL has nowhere to hoist a uniform-only expression to: there is no
+per-draw stage between the uniform and the fragment. So the only place
+it can be computed once is the host, and the only way to say that is to
+send the colour already decoded. `uFogColorLin` is declared in the
+shared block (so a fifth lane shader cannot be written without it),
+`_fogLocs` looks it up with the rest of the fog, and `_uploadFog` sends
+it only to a program that asked - a classic program does not declare it,
+and a lane program that never calls `elFinish` has it optimised out, so
+both read null and skip.
+
+**The law is not restated.** The lane already carries the decoder the
+shader compiles - `decode3` - and the renderer reaches it through the
+lane it was handed, so there is no second copy of the sRGB constants
+here, only a place to keep the answer. The cache is keyed on the display
+triple it came from, starts at NaN (a zero triple would match a
+legitimately black fog and never recompute), keeps its own scratch
+rather than `_c3`'s (which is handed to whoever asks next), and is
+invalidated on a lane swap - a cache keyed on its input alone cannot see
+that the *function* changed.
+
+The far ring pastes the same block but has its own finish and its own
+upload path, so it keeps its own decode. Named so the asymmetry reads as
+a decision.
+
+**The failure this could not be allowed to have is a black fog.** A
+uniform the optimiser drops reads back as null, the upload skips it, and
+`elFinish` mixes toward black - which compiles clean and shows only on a
+foggy day. Source cannot answer that, so `tools/perfSunShaderProbe.mjs`
+links all four lane programs in a real driver and asks for the location.
+
+**Pinned** in `test/perffog_uniform.test.js` (4). Mutants
+`tools/mutants/perffog.json`: 11 - 11 dead, 0 survived. EL1's fog pin
+and its `glsl-fog-blend-raw` mutant re-aimed by content: the law EL1
+states - the fog is blended in linear and re-encoded, so a fogged
+fragment IS the fog colour - is unchanged; only where the decode happens
+moved.
+
+**The lesson: a shader is the one place where "it's just a constant"
+costs you two million times a frame. The exterior's real bill was never
+in the things that were easy to count.**
+
+## TREES1 (2026-09-19) - THE DARKENING ON THE TREES WAS PERF-SUN1 MEETING A SPRITE
+
+Mac, the day PERF-SUN shipped: *"There's this weird darkening effect
+happening to trees."*
+
+Mine, and the argument that produced it was **half right**.
+
+PERF-SUN1 gave the far cascade one shadow tap instead of nine, on this
+reasoning: each tap is already a hardware 2x2, the far cascade's texel is
+about two pixels at a hundred metres, so the extra eight soften nothing
+anyone can resolve. That is an **antialiasing** argument, and it holds
+perfectly for the terrain, the meshes, the rigs and the water - every one
+of which shades **per fragment**, so neighbouring pixels smooth a coarse
+filter whatever the lookup returns.
+
+**A flat is not like that.** `EL_BB_FS` reads the sun map ONCE, at the
+sprite's base, and wears that single value over the entire quad - which
+is EL2's own decision, because a sprite sampled at its own fragment would
+shadow itself. For a tree the kernel is therefore not softening an edge.
+It is the only gradation the tree has.
+
+So with one tap: a tree whose foot sits near a shadow edge stops being
+*partly* shaded and becomes fully lit or fully dark, the whole sprite at
+once - and jumps again at the cascade boundary as you walk toward it. A
+weird darkening effect happening to trees.
+
+`sunShadowSoftAt` keeps the kernel at every distance, and the flat is its
+only caller. One body, one early return, behind `!soft`. The saving
+stands almost entirely: the ground is where the fragments are, and flats
+are a thin slice beside it.
+
+**Pinned** in `test/perfsun_fragment.test.js`. The pin asks the CALL
+SITES, not the shader text: every one of these shaders pastes
+`SHADOW_GLSL` and therefore contains *both* function names, so "which
+does this shader use" can only be asked of what is left when the block is
+removed. It holds that the flat takes the soft one and never the cheap
+one, that every per-fragment surface takes the cheap one and never the
+soft one (or the saving goes), and that the body has exactly one early
+return - a soft path that still fell through to the cheap tap would be
+this very bug wearing the name of its own fix. 5 more mutants, all dead.
+EL2's flat pin re-aimed by content: its law - the flat's sun term wears
+both shadows, read at its base - is unchanged.
+
+**The lesson: the optimisation was correct about the pixels and wrong
+about one caller, because that caller does not have pixels in the sense
+the argument assumed. "It's below the resolution of a pixel" means
+nothing to a surface that takes one sample for ten thousand of them.**
+
+## WEEDS1 (2026-09-19) - EVERY WEED IN THE WORLD WAS CASTING INTO THE 240-UNIT CASCADE
+
+Mac, after TREES1: *"its better, what else can we do?"*
+
+F5 already culls a caster too small to shadow a texel of the cascade it
+is being replayed into. It has been there since the field report that
+found the standing shadows. And for flats it was **dead**, for a reason
+that is only obvious once said out loud:
+
+> F5 measures the BATCH'S SPHERE. A billboard batch is every flat of one
+> (archive, record) across a whole streamed pixel - and a pixel is 128
+> tiles at 6.4 units, **819 across**.
+
+So a batch of ankle-high weeds scattered over a pixel carries a bounding
+sphere of several hundred units and sails straight through a test looking
+for things under 47 cm, while every sprite in it is thirty centimetres.
+Three orders of magnitude apart. Every weed, flower, pebble and ground
+prop in the world was replayed into the far cascade, where its shadow is
+one texel.
+
+The right measure for a flat is the **sprite**, which the batch already
+carries as `size`. This is MAC1's argument - *"all the billboards in the
+distance ESPECIALLY ALL THE SMALL ONES"* - applied to the pass that never
+got it.
+
+### Four texels, and why that number confines the change
+
+Against each cascade's texel:
+
+| cascade | radius | texel | four texels |
+| --- | --- | --- | --- |
+| 0 | 12 | 1.2 cm | 4.7 cm |
+| 1 | 48 | 4.7 cm | 19 cm |
+| 2 | 240 | 23 cm | **94 cm** |
+
+The near two land *below* the existing `SHADOW_FLAT_MIN_HEIGHT` of 0.5,
+so they cannot move - the change is confined to the far cascade by
+construction rather than by intent. There, nothing under about a metre
+casts any more. A tree, a person and a fence post all clear it; a weed, a
+flower and a small bush do not, and the largest shadow removed is a few
+screen pixels at a hundred metres.
+
+The **lantern** replays pass no texel and are untouched, which is right
+and not merely convenient: a cube face is 512 over a range of about
+eighteen units, so four of its texels is 28 cm - under the floor anyway.
+
+### F5's batch line is retired with it
+
+Once the sprite test exists, F5 can no longer decide anything about a
+flat. A single-flat batch's radius is `hypot(w, h) / 2`, so F5 fired only
+when `hypot(w, h) < 4 texels` - and that implies `h < 4 texels`, which is
+the sprite test itself. A multi-flat batch's sphere spans its pixel and
+F5 never fired on it at all.
+
+**How that was found is the useful part.** F5's own behavioural pin in
+`bugs5_field.test.js` kept passing after WEEDS1 landed - but for the
+wrong reason: the same flat was now culled by the height test instead.
+Its MUTANT survived, which is what said so. The pin is re-aimed onto
+WEEDS1 with a WIDE short flat added (the one shape F5 could never catch),
+and F5's test over MESHES and terrain, at the top of the replay loop, is
+untouched and still live.
+
+**Pinned** in `test/weeds1_flatcasters.test.js` (4), including the
+subsumption checked arithmetically over five sprite shapes rather than
+argued. Mutants `tools/mutants/weeds1.json`: 8 - 8 dead. Six `bugs5.json`
+records re-aimed by content and one retired with the line it mutated.
+
+**The lesson: a cull that measures the wrong extent is not a weak cull,
+it is no cull at all - and it will sit there for months looking like one,
+because the code that would have caught it is the code it is standing in
+for.**
 
 ## GRAIN2 - "Why dont we crank it to 16?" (2026-09-19)
 

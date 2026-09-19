@@ -848,13 +848,25 @@ more readable, without clutter and keeping the same design"*.
 which is as strong a difference as print. Three things were actually
 wrong, and only one of them is about the glyphs themselves.
 
-**1. A label was free to land on another town's mark.** `placeNames`
-tested a candidate box against the boxes of labels already placed - and
-against nothing else. So a city's name ran straight through the ring of
-the city beside it, and a cluster of hamlets sat on top of its own
-label. This is the fault Mac could SEE without being able to name it:
-the glyph was not faint, it was buried. Every glyph the band inks now
-seeds the same greedy test, before any name is placed.
+**1. A label was free to land on another town's mark** - LATENT, and
+this is the correction that matters most on this page. `placeNames`
+tested a candidate box against the boxes of labels already placed and
+against nothing else, so a city's name ran straight through the ring of
+the city beside it. Every glyph the band inks now seeds the same greedy
+test, before any name is placed.
+
+But **this sheet inks no names at all**. MAP-FIELD2 took them off at
+Mac's word and the window has passed `names: null` ever since;
+`placeNames` has no caller in `src/`. The first draft of this section
+called the buried glyph "the fault Mac could SEE", and it was not - it
+could not have been, because there are no labels on the sheet to bury
+it. The before-and-after pictures that went with it were rendered
+through a fixture that passes `names`, which is not the game.
+
+What Mac actually saw is #2 and #3 below. This first part is a fix to
+`inkMap`'s law, kept because the law is kept (see the import in
+`heldMap.js`, which says so), and reachable the day anything inks names
+again - not a fix to anything on screen today.
 
 That alone silenced the two names that most needed saying, because a
 blocked label had exactly one place to go. So a name now has FOUR
@@ -889,8 +901,16 @@ the near band they are dense. They have their own `PEN.relief` now, at
 about two thirds the weight. They are meant to be felt, not read, and
 quieting them is most of what "without clutter" asked for.
 
-The pen went 1.2 -> 1.5 with all this, which is what makes a village's
-dot and a track's dashes hold together at the far band at all.
+The pen went 1.2 -> 1.5 with all this, which thickens every STROKED
+glyph and the halo that carries it.
+
+(The first draft of that sentence said the weight was what made "a
+village's dot and a track's dashes hold together at the far band". It
+was wrong three times over: the dot is `fill()` alone, so the pen never
+touches it - what changed the dot is its radius, 2 -> 2.2, which no
+record mentioned; a track's dashes are stroked at a width of 1 written
+into the paint; and the far band draws neither, inking cities only and
+skipping the tracks.)
 
 Pins: `test/heldmap.test.js` - the halo pass ahead of every ink stroke
 (which takes two marks to state at all), a name kept off every glyph
@@ -898,3 +918,147 @@ with the four candidates driving it, rank read at the SIDE it now
 decides, and a town ringed on all four sides losing its label and
 keeping its mark. Mutants: `map1.json` `MAPFIELD6-*` x6, with
 `overlap-drawn` and `rank-ignored` re-aimed by content.
+
+## MAP-FIELD7 - the sheet travels (2026-09-19)
+
+Mac: *"when you open or close your map, I want the sprite to come in and
+go out at the bottom of the screen instead of fading in"*.
+
+The two clocks had SAID this since MAP-FIELD2 - `OPEN_S` was commented
+"the sheet rises into view" and `CLOSE_S` "...and lowers" - and the code
+under them was a fade on the root. It really moves now.
+
+**The stage is carried on its own height.** `translateY(100%)` needs no
+viewport number and is right at every size: the stage's top sits at
+`vh - (SPRITE_ART_FOOT - HELD_MAP_BITE) * h`, so moving it down by a
+full `h` always puts its top past the bottom edge and the whole painting
+with it. It is eased on `smoothstep` - the port's own, from
+`systems/mathf.js` - because a held thing has weight: it leaves and
+arrives slowly and crosses quickly.
+
+**The chrome does not travel.** The top bar and the card are anchored to
+the viewport's own edges, and sliding them up from the floor reads as a
+mistake. They keep the fade the sheet used to have - but the fade had to
+move OFF the root, because the root carries the stage and fading it
+would fade the sprite, which is the thing Mac asked to stop. `_setRaise`
+walks the root's children and skips the stage by identity.
+
+A CSS rule (`.hmroot > :not(.hmstage)`) driven by a custom property was
+tried first and is a departure worth recording, because it failed for a
+reason worth knowing: the suite has SIXTEEN separate fake documents,
+each with `style` as a bare object, and a custom property can only be
+set through `setProperty`. Upgrading one stub fixed one file and broke
+eleven pins in another. The rule was not wrong, but a law that only
+holds where the harness happens to be rich enough is a law with a hole
+in it - so it moved into JS, where every stub can already see it.
+
+**And in the hands lane nothing slides at all.** There the arm brings
+the sheet in itself and the ink is laid on the rig's projected corners
+by a matrix3d of its own; a translate on the stage would drag the whole
+sheet off the paper the arm is holding - a worse bug than the fade it
+replaced. `_setRaise` returns early on that lane, and the pin drives a
+real holder to prove it.
+
+The clocks grew a little with the change (0.3 -> 0.42 opening, 0.36
+closing). A fade of a third of a second reads as instant; a travelling
+thing at the same length reads as hurried, and leaving should be a touch
+quicker than arriving.
+
+Pins: `test/heldmap.test.js` - mounted DOWN before the first tick, a
+monotonic rise that ends with NO transform left on the stage, the root
+never carrying an opacity, the fade rule excluding the stage by name, a
+close mid-rise lowering from where it was, and the hands lane never
+sliding. Mutants: `map1.json` `MAPFIELD7-*` x6.
+
+## AUDIT MAP-FIELD (2026-09-19) - the audit before the merge
+
+Mac: *"Audit first"*. Four reviewers over the whole held-map arc. What
+they found is folded into the sections above; what follows is what the
+audit itself is worth remembering for.
+
+**Two real bugs, both in the window's lifecycle.** `_tryHands()` was
+phase-guarded on one of its two arms only, so the retry could take the
+sheet into the arm MID-CLOSE - hiding the painting on the spot and, via
+`_setRaise`'s hands-lane early return, snapping the lowering sheet back
+to its held place. And the travel/teleport/coords hook only ever fired
+from `tick()`'s closing arm, so a host that disposed the window while
+the sheet was lowering DROPPED the journey the player had committed to,
+silently; MAP-FIELD7's longer `CLOSE_S` had widened that window by a
+fifth. Both are fixed and both have behavioural pins.
+
+**Three claims of ours that measurement disproved.** The "nothing ends
+in between" premise for `CUFF_BAND` (64 columns do). The pen's
+justification (wrong on all three of its counts). And the whole first
+half of MAP-FIELD6, which fixed a fault the shipping sheet cannot have.
+Every one of them was written with the confidence of a measurement and
+none of them had been measured.
+
+**And the lesson about PINS, which is the one to keep.** Four probe
+checks could not fail on any art: they classified their populations BY
+the constant under test, so `extendCuffs` was asked whether it had
+painted exactly the columns it is defined to paint. Shift the art eight
+pixels and six hand-silhouette columns really are streaked off the
+bottom of the screen - and the probe still said 19/19. The populations
+are measured off the PICTURE now (the sheet by where the sheet is, the
+cuts by the art's own foot), and dropping `CUFF_BAND` to 0.80 fails
+three checks where it used to fail none.
+
+The same shape had eaten a real law elsewhere: `border-through-unnamed`
+had been anchored on a line that occurs TWICE in `inkMap.js`, so the
+record could not apply and the law it is the only killer of was checked
+by nothing. A departure guarded by SPELLING went the same way - the
+matte key's `doesNotMatch(src, /MATTE_LUM|.../)` let a real brightness
+key written under any other name through all 84 pins. The cuff fixture
+carries a near-black pixel in the arm now, so any such key breaks it.
+
+Laws that were argued at length in a commit and pinned by nothing:
+MAP-FIELD5 end to end, `PEN.relief`, `GLYPH_PEN`, `PEN.halo`'s colour,
+the halo's stroke on filled kinds, and the easing. All six have pins and
+mutants now. A law worth a paragraph is worth a pin.
+
+## MAP-WEAPON - the sprite lane had no answer for this window (2026-09-19)
+
+Mac: *"when opening up the enhanced map, your unsheathed weapon can
+still be seen"*.
+
+MAP-FIELD gave the MORROWIND arm its held-sheet pose, and
+`fpArm.holdPaper` hides the weapon, the arrow and the torch while it
+holds - so the arm's own branch of the draw ladder was already right.
+THE CLASSIC BODY HAS NO POSE TO TAKE, so it just kept drawing.
+
+Under DFU's own travel map that is invisible: TRAV0I00 is a
+full-screen window and the weapon is behind it. The enhanced map is
+the port's own SPRITE - two hands holding a parchment, with real alpha
+around them, bottom-anchored by MAP-FIELD5 - so a drawn weapon shows
+through and around it. Hands holding a map are not also holding a
+sword.
+
+**THE LAW IS A POSITION IN THE LADDER.** `if (sheetWindowUp()) return;`
+stands BELOW the arm's branch (which returns, so the Morrowind lane is
+untouched) and ABOVE the shield, the torch hand, the widget's clone and
+the sprite - exactly the four the classic body would have painted, and
+nothing else. On a sheathed frame none of those drew anyway, so on that
+path the line changes nothing.
+
+It is NOT a leg of `shown()`. AUDIT-FIELD F1's warning one door along
+applies here too: `shown()`'s four legs are the WEAPON's own state - a
+readied spell, a cast animation, an equip countdown, the sheathe - and
+an open window is not one of them. Folding it in would relax every
+reader of that predicate.
+
+The host reads it PER FRAME off the live overlay slot
+(`townTalk.overlay?.isTravelMap === true`), never a flag raised at the
+open: the window can be closed by Escape, by a travel, by a quest popup
+taking the slot, or by a teardown, and a flag would have to be lowered
+at every one of them. `isTravelMap` is the window's own duck tag, this
+file's established idiom (`isRestWindow`, `isVirtueLevelUp`) - the
+combat rig imports no UI class to ask a UI question. The dep defaults
+to `() => false`, so a host that never heard of it draws what it always
+drew.
+
+Pins: `map3_heldpose.test.js` (the gate's position against all five
+neighbours, the default, and that `shown()` does not carry it; plus the
+host's read and the window's tag). Mutants: `tools/mutants/map3.json`
+grew three - the gate dropped, the gate hoisted above the arm branch,
+and the host raising a flag instead of asking the slot - 77 in total,
+75 dead and 2 equivalent as recorded.

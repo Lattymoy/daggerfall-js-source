@@ -2,50 +2,67 @@
   {
     "name": "CAMP1REST-the-world-host-rolls-a-group-under-a-rest",
     "file": "src/scenes/world.js",
-    "old": "      if (!isResting && getPref('wildernessCamps') !== false && amGroupRollOwner(online?.id ?? null, playerFeet, peersNear())) {",
-    "new": "      if (getPref('wildernessCamps') !== false && amGroupRollOwner(online?.id ?? null, playerFeet, peersNear())) {",
-    "tests": ["test/camp1_groups.test.js"]
+    "old": "      if ((modes?.mode ?? 'exterior') === 'exterior' && !playerEntity.isResting && getPref('wildernessCamps') !== false && amGroupRollOwner(online?.id ?? null, player.feetAt(), peersNear())) {   // CAMP-REST: never while the player is resting or waiting",
+    "new": "      if ((modes?.mode ?? 'exterior') === 'exterior' && getPref('wildernessCamps') !== false && amGroupRollOwner(online?.id ?? null, player.feetAt(), peersNear())) {   // CAMP-REST: never while the player is resting or waiting",
+    "tests": [
+      "test/camp1_groups.test.js"
+    ]
   },
   {
     "name": "CAMP1REST-the-exterior-host-rolls-a-group-under-a-rest",
     "file": "src/scenes/exterior.js",
     "old": "      if (!isResting && getPref('wildernessCamps') !== false) {",
     "new": "      if (getPref('wildernessCamps') !== false) {",
-    "tests": ["test/camp1_groups.test.js"]
+    "tests": [
+      "test/camp1_groups.test.js"
+    ]
   },
   {
     "name": "CAMP1REST-the-world-rest-stops-saying-it-is-a-rest",
     "file": "src/scenes/world.js",
     "old": "runEncounterTick(walkMode && playerSpawned ? player.pos : cam.pos, sharedEnd, true); },   // CAMP1-REST: every tick this drives IS a rest",
     "new": "runEncounterTick(walkMode && playerSpawned ? player.pos : cam.pos, sharedEnd); },   // CAMP1-REST: every tick this drives IS a rest",
-    "tests": ["test/camp1_groups.test.js", "test/restx2_online_rest.test.js"]
+    "tests": [
+      "test/camp1_groups.test.js",
+      "test/restx2_online_rest.test.js"
+    ]
   },
   {
     "name": "CAMP1REST-the-exterior-rest-stops-saying-it-is-a-rest",
     "file": "src/scenes/exterior.js",
     "old": "runEncounterTick(walkMode ? player.pos : cam.pos, sharedEnd, true); },   // CAMP1-REST: every tick this drives IS a rest",
     "new": "runEncounterTick(walkMode ? player.pos : cam.pos, sharedEnd); },   // CAMP1-REST: every tick this drives IS a rest",
-    "tests": ["test/camp1_groups.test.js", "test/restx2_online_rest.test.js"]
+    "tests": [
+      "test/camp1_groups.test.js",
+      "test/restx2_online_rest.test.js"
+    ]
   },
   {
     "name": "CAMP1REST-the-gate-defaults-on-so-the-walking-roll-dies-too",
     "file": "src/scenes/world.js",
     "old": "  function runEncounterTick(playerFeet, simMinutesEnd = null, isResting = false) {",
     "new": "  function runEncounterTick(playerFeet, simMinutesEnd = null, isResting = true) {",
-    "tests": ["test/camp1_groups.test.js", "test/restx2_online_rest.test.js"]
+    "tests": [
+      "test/camp1_groups.test.js",
+      "test/restx2_online_rest.test.js"
+    ]
   },
   {
     "name": "CAMP1REST-the-camp-band-slides-inside-the-rest-interrupts-reach",
     "file": "src/systems/campEncounters.js",
     "old": "export const MIN_CAMP_SPAWN_DISTANCE = 14;   // a cluster wants more clearance than one foe",
     "new": "export const MIN_CAMP_SPAWN_DISTANCE = 11;   // a cluster wants more clearance than one foe",
-    "tests": ["test/camp1_groups.test.js"]
+    "tests": [
+      "test/camp1_groups.test.js"
+    ]
   },
   {
     "name": "CAMP1REST-the-resting-arm-reads-the-mark-before-the-reach",
     "file": "src/systems/encounters.js",
     "old": "    if (resting && !canSee && (f.ai._distLocal ?? f.ai._dist ?? Infinity) > RESTING_DISTANCE) continue;",
     "new": "    if (resting && !canSee && !f.ai.wouldBeSpawned && (f.ai._distLocal ?? f.ai._dist ?? Infinity) > RESTING_DISTANCE) continue;",
-    "tests": ["test/camp1_groups.test.js"]
+    "tests": [
+      "test/camp1_groups.test.js"
+    ]
   }
 ]

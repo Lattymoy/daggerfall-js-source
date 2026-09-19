@@ -91,8 +91,26 @@ test('SPAWNED-DUNGEONS by source: ONE choke point (buildPixelNow), online-only o
   assert.match(w, /const _spawnSalt = WORLD_SALT;/, 'one salt for every client: everyone sees the same dungeons');
 });
 
-test('SPAWNED-DUNGEONS by source: the HUD line is said on entering a spawned dungeon\'s pixel', async () => {
+test('SPAWNED-DUNGEONS2b by source: ONE line per crossing, the CLOSEST spawn, with a compass word', async () => {
   const { readFileSync } = await import('node:fs');
   const w = readFileSync(new URL('../src/scenes/world.js', import.meta.url), 'utf8');
-  assert.match(w, /queue\.push\(\.\.\.r\.load\);\s*\n\s*if \(locationIndex\.get\(`\$\{r\.current\.x\},\$\{r\.current\.y\}`\)\?\.spawned\) townTalk\.say\('There is a dungeon entrance nearby\.'\);/);
+  assert.match(w, /queue\.push\(\.\.\.r\.load\);\s*\n\s*announceNearbySpawns\(r\.current\.x, r\.current\.y\);/);
+  // the whole point of the rewrite: a crossing can find several at once
+  // (the search is a 5x5 block), and the old code said a line per hit
+  assert.match(w, /for \(const f of found\) _announcedSpawnPixels\.add\(f\.key\);/, 'every hit this crossing is spent, even the ones left unsaid - never re-nags later');
+  assert.match(w, /found\.sort\(\(a, b\) => a\.d2 - b\.d2\);/, 'closest first');
+  const i = w.indexOf('function announceNearbySpawns(px, py) {');
+  const fn = w.slice(i, w.indexOf('\n  }\n', i));
+  assert.equal((fn.match(/townTalk\.say\(/g) ?? []).length, 2, 'two spellings, one of them said: on the pixel, or with a direction');
+  assert.match(fn, /directionHintString\(nearest\.dx, -nearest\.dy\)/, 'py is south-positive, so north flips the sign');
+  assert.match(fn, /You see a Dungeon nearby, in the \$\{_capitalize\(directionHintString/, 'the phrasing');
+});
+
+test('SPAWNED-DUNGEONS2b: the compass word - talk.js\'s own eight bands, off the map-pixel delta', async () => {
+  const { directionHintString } = await import('../src/systems/talk.js');
+  // px east-positive, py south-positive, so the call flips dy:
+  assert.equal(directionHintString(1, -0), 'east', 'due east: +dx');
+  assert.equal(directionHintString(0, -1), 'south', 'due south: py larger, so -dy is negative');
+  assert.equal(directionHintString(-1, -1), 'southwest');
+  assert.equal(directionHintString(1, 1), 'northeast', 'py smaller is north');
 });

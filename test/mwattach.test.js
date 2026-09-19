@@ -178,7 +178,10 @@ test('MWFIX: the classic sprite path is the ONLY path, and fpsWeapon never hears
     // SW1: the shield's own step sits between them, and returns nothing.
     // SW1b: its verdict is taken above the gate, so the step is one line,
     // and `if (!shown()) return;` stops the shield-only frame here.
-    /if \(fpArm\.active\(\)\) \{ fpArm\.draw\(c\); return; \}\s*(?:\/\/[^\n]*\n\s*)*if \(shieldRect\) shield\.draw\(\(index, rect, uv\) => drawShieldSprite\(index, rect, uv, fpTint\)\);\s*if \(handheldOn\(\) && c\) handheld\.draw\(renderer, c, fpTint\);\s*if \(torchOnly\) return;[^\n]*\n\s*(?:\/\/[^\n]*\n\s*)*if \(!shown\(\)\) return;\s*if \(widgetOn\(\) && c && widget\.draw\(renderer, c, fpTint\)\) return;\s*const art = c && artFor\(playerWeapon\.weapon\);/,
+    // MAP-WEAPON: one more rung between them - a map holding the screen
+    // stops the classic body's four painters, BELOW the arm's own return
+    // so the held-sheet pose is untouched.
+    /if \(fpArm\.active\(\)\) \{ fpArm\.draw\(c\); return; \}\s*(?:\/\/[^\n]*\n\s*)*if \(sheetWindowUp\(\)\) return;\s*(?:\/\/[^\n]*\n\s*)*if \(shieldRect\) shield\.draw\(\(index, rect, uv\) => drawShieldSprite\(index, rect, uv, fpTint\)\);\s*if \(handheldOn\(\) && c\) handheld\.draw\(renderer, c, fpTint\);\s*if \(torchOnly\) return;[^\n]*\n\s*(?:\/\/[^\n]*\n\s*)*if \(!shown\(\)\) return;\s*(?:\/\/[^\n]*\n\s*)*if \(widgetOn\(\) && c && widget\.draw\(renderer, c, fpTint, _tlAdjust\)\) return;\s*const art = c && artFor\(playerWeapon\.weapon\);/,
     'an inactive arm falls through to the clone-or-sprite (TORCH-VIS: unless it is the lit hand alone, which stops at its own return), and an active one returns so the two never both draw');
   // and the branch must name a module the file actually imports, or it is
   // a literal that satisfies a regex and does nothing.
@@ -289,7 +292,7 @@ test('MW-D19: the rig hands the worn item to the arm every frame, in machine ord
   // the reference's updateWeaponState reads stance before weapon), the
   // swap next, the tick last so a swapped arm poses its OWN clip.
   assert.match(rig,
-    /fpArm\.setWeapon\(playerWeapon\.weapon, \{ hasAmmo: hasDaggerfallArrows\(entity\?\.items\), ammoCount: daggerfallArrowCount\(entity\?\.items\) \}\);/,   // WS1: the quiver's count rides the same read
+    /fpArm\.setWeapon\(playerWeapon\.weapon, \{ hasAmmo: hasAmmoFor\(entity\?\.items, playerWeapon\.weapon\), ammoCount: ammoCountOf\(entity\?\.items, playerWeapon\.weapon\) \}\);/,   // WS1: the quiver's count rides the same read; THUNDERLOCK: asked OF THE WEAPON, since a gun spends pellets
     'the swap seam reads the same worn item the sprite does, ammo included');
   const sheatheAt = rig.indexOf('fpArm.setSheathed(');
   const swapAt = rig.indexOf('fpArm.setWeapon(');
@@ -297,6 +300,6 @@ test('MW-D19: the rig hands the worn item to the arm every frame, in machine ord
   assert.ok(sheatheAt >= 0 && sheatheAt < swapAt, 'sheathe state before the swap');
   assert.ok(swapAt < tickAt, 'and the swap before the tick');
   // ONE home for the arrow test - the rig's own guard rides the export.
-  assert.match(rig, /hasDaggerfallArrows\(entity\.items\)/, 'the bow guard rides the same export');
+  assert.match(rig, /hasAmmoFor\(entity\.items, weapon\)/, 'the ranged guard rides the same export, asked of the weapon in hand');
   assert.ok(!/templateIndex === 131/.test(rig), 'no third literal copy of the arrow template');
 });

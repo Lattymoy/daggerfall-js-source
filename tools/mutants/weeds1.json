@@ -1,0 +1,75 @@
+[
+ {
+  "name": "WEEDS1-the-far-cascade-carries-every-weed-again",
+  "file": "src/render/shadowPass.js",
+  "old": "    const minFlatH = texel > 0 ? Math.max(SHADOW_FLAT_MIN_HEIGHT, texel * SHADOW_FLAT_MIN_TEXELS) : SHADOW_FLAT_MIN_HEIGHT;",
+  "new": "    const minFlatH = SHADOW_FLAT_MIN_HEIGHT;",
+  "tests": [
+   "test/weeds1_flatcasters.test.js"
+  ]
+ },
+ {
+  "name": "WEEDS1-the-threshold-reaches-the-NEAR-cascades-and-a-fence-post-stops-casting-at-your-feet",
+  "file": "src/render/shadowPass.js",
+  "old": "export const SHADOW_FLAT_MIN_TEXELS = 4;",
+  "new": "export const SHADOW_FLAT_MIN_TEXELS = 60;",
+  "tests": [
+   "test/weeds1_flatcasters.test.js"
+  ]
+ },
+ {
+  "name": "WEEDS1-the-threshold-is-so-low-it-changes-nothing",
+  "file": "src/render/shadowPass.js",
+  "old": "export const SHADOW_FLAT_MIN_TEXELS = 4;",
+  "new": "export const SHADOW_FLAT_MIN_TEXELS = 1;",
+  "tests": [
+   "test/weeds1_flatcasters.test.js"
+  ]
+ },
+ {
+  "name": "WEEDS1-the-floor-is-dropped-so-a-lantern-replay-loses-its-own-guard",
+  "file": "src/render/shadowPass.js",
+  "old": "const minFlatH = texel > 0 ? Math.max(SHADOW_FLAT_MIN_HEIGHT, texel * SHADOW_FLAT_MIN_TEXELS) : SHADOW_FLAT_MIN_HEIGHT;",
+  "new": "const minFlatH = texel * SHADOW_FLAT_MIN_TEXELS;",
+  "tests": [
+   "test/weeds1_flatcasters.test.js"
+  ]
+ },
+ {
+  "name": "WEEDS1-the-sun-cascade-stops-passing-its-texel-so-the-saving-never-happens",
+  "file": "src/render/shadowPass.js",
+  "old": "SHADOW_CASCADE_MIN_RADIUS_TEXELS * sunTexelWorld(c), sunTexelWorld(c));",
+  "new": "SHADOW_CASCADE_MIN_RADIUS_TEXELS * sunTexelWorld(c));",
+  "tests": [
+   "test/weeds1_flatcasters.test.js"
+  ]
+ },
+ {
+  "name": "WEEDS1-the-LANTERN-replay-starts-passing-a-texel-and-props-stop-shadowing-by-lamplight",
+  "file": "src/render/shadowPass.js",
+  "old": "this.replay(f, this.faceVP[face], pos);",
+  "new": "this.replay(f, this.faceVP[face], pos, false, 0, 0.5);",
+  "tests": [
+   "test/weeds1_flatcasters.test.js"
+  ]
+ },
+ {
+  "name": "WEEDS1-the-height-test-takes-the-magnitude-so-an-upside-down-flame-starts-casting",
+  "file": "src/render/shadowPass.js",
+  "old": "(b.size && b.size.h < minFlatH)",
+  "new": "(b.size && Math.abs(b.size.h) < minFlatH)",
+  "tests": [
+   "test/weeds1_flatcasters.test.js"
+  ]
+ },
+ {
+  "name": "WEEDS1-the-sprite-test-is-deleted-and-nothing-is-left-to-decide-it",
+  "file": "src/render/shadowPass.js",
+  "old": "          if (b.noShadow || SHADOW_NO_CAST_ARCHIVES.has(b.archive) || (b.size && b.size.h < minFlatH)) { this.stats.culled++; continue; }",
+  "new": "          if (b.noShadow || SHADOW_NO_CAST_ARCHIVES.has(b.archive)) { this.stats.culled++; continue; }",
+  "tests": [
+   "test/weeds1_flatcasters.test.js",
+   "test/bugs5_field.test.js"
+  ]
+ }
+]

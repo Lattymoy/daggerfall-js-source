@@ -31,8 +31,8 @@
   {
     "name": "SW1b-2c-the-shield-alone-lets-the-weapon-through",
     "file": "src/combat/weaponRig.js",
-    "old": "      if (!shown()) return;\n      if (widgetOn() && c && widget.draw(renderer, c, fpTint)) return;",
-    "new": "      if (widgetOn() && c && widget.draw(renderer, c, fpTint)) return;",
+    "old": "      if (!shown()) return;\n      // FIELD-GUN6: the Thunderlock's own movement rides EITHER draw -\n      // the mod's clone or the classic sprite - because the weapon's\n      // feel is the weapon's, not a mod's, and a player with Weapon\n      // Widget off should not be holding a different gun.\n      if (widgetOn() && c && widget.draw(renderer, c, fpTint, _tlAdjust)) return;",
+    "new": "      if (widgetOn() && c && widget.draw(renderer, c, fpTint, _tlAdjust)) return;",
     "tests": [
       "test/sw1_shield_widget.test.js",
       "test/ht1_handheldtorches.test.js",
@@ -72,6 +72,15 @@
     "file": "src/combat/weaponRig.js",
     "old": "          look: { x: look?.[0] ?? 0, y: look?.[1] ?? 0, cursorActive: cursorActive(), swingAction: _held },",
     "new": "          look: { x: look?.x ?? 0, y: look?.y ?? 0, cursorActive: cursorActive(), swingAction: _held },",
+    "tests": [
+      "test/sw1_shield_widget.test.js"
+    ]
+  },
+  {
+    "name": "SW4-1-the-shield-door-flips-the-png",
+    "file": "src/combat/shieldWidgetAssets.js",
+    "old": "        return toScreenOrder(await decodePng(new Uint8Array(await res.arrayBuffer())));",
+    "new": "        return toColor32(await decodePng(new Uint8Array(await res.arrayBuffer())));",
     "tests": [
       "test/sw1_shield_widget.test.js"
     ]

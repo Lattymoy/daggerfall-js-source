@@ -117,7 +117,7 @@ export function interiorLightProperties(record) {
  * @param {Array<{archive:number,record:number,x:number,y:number,z:number}>} flats
  * @param {(record:number) => {w:number,h:number}} getScaledSize -
  *   scaledBillboardSize for archive 210 records (world units).
- * @returns {Array<{x:number,y:number,z:number,range:number,intensity:number,color:readonly number[]}>}
+ * @returns {Array<{record:number,x:number,y:number,z:number,range:number,intensity:number,color:readonly number[]}>}
  */
 export function collectInteriorLights(flats, getScaledSize) {
   const lights = [];
@@ -129,6 +129,7 @@ export function collectInteriorLights(flats, getScaledSize) {
     else if (f.record === 21) offset = h / 2.4;
     const light = interiorLightProperties(f.record);
     lights.push({
+      record: f.record,   // HEARTH1: a lantern and a brazier are one point light here and two things to the survival law (survival/hearth.js)
       x: f.x,
       y: f.y + h / 2 + offset,
       z: f.z,

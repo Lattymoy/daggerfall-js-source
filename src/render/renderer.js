@@ -409,7 +409,8 @@ void main() {
 }`;
 
 import { ShadowPass, SHADOW_GLSL } from './shadowPass.js';   // EL7: the receiver block, for the water surface's lane program
-import { boundsOf, sphereInPlanes } from './bounds.js';
+import { boundsOf, spherePlanes, batchVisible } from './bounds.js';
+import { cullDisabled } from './frustum.js';   // PERF-CROWD2: the billboard pass culls for every host, so no host can forget to
 import { getPref } from '../systems/uiPrefs.js';   // GRAIN2: the ground-sharpness dial, read where the tile array is built
 
 /**
@@ -434,7 +435,6 @@ export function anisotropyFor(tier, driverMax = 1) {
   if (tier === 'max') return cap;
   return Math.min(4, cap);
 }
-import { frustumPlanes, cullDisabled } from './frustum.js';   // PERF-CROWD2: the billboard pass culls for every host, so no host can forget to
 import { multiply as mat4Multiply } from '../world/mat4.js';   // PERF-CROWD2: proj * view, for this call's planes
 import { PerfMeter, perfOn, perfZones, perfCpu, setMeter } from './perfMeter.js';   // EL8: `?perf`   // EL5: the bounds every bundle carries for the replays' culling   // EL2: the lane's shadow maps - a leaf that compiles nothing until a lane asks
 import { AirPass, AIR_ADAPT_UNIT as ADAPT_UNIT, AIR_CONTACT_UNIT as CONTACT_UNIT } from './airPass.js';   // EL3: the ambient occlusion, the bloom and the shafts - the same kind of leaf; EL4: the eye's unit; EL6: all of it off the frame's own depth, at the resolve
@@ -986,7 +986,7 @@ export class Renderer {
     this._studioDepth = 0;   // AUDIT-EL F1: inside the studio bake (a UI picture: no eye)
     this._adaptOneTex = null;
     this.maxPointLights = CLASSIC_MAX_LIGHTS;
-    this._decA = new Float32Array(3); this._decB = new Float32Array(3);   // EL1: the decode scratch (two, for the billboard tint's two terms)
+    this._decA = new Float32Array(3); this._decB = new Float32Array(3); this._decC = new Float32Array(3);   // AUDIT F4: three, because one site decodes the ambient, the moon AND the sun and holds all three   // EL1: the decode scratch (two, for the billboard tint's two terms)
     this._pointColorDec = new Float32Array(CLASSIC_MAX_LIGHTS * 3);
     this._classicSet = this._buildWorldSet({ key: 'classic', meshFs: FS, bbFs: BB_FS, terrainFs: TERRAIN_FS, charFs: CHAR_FS });
     this._installWorldSet(this._classicSet);
@@ -1323,23 +1323,19 @@ export class Renderer {
   /**
    * PERF-CROWD2: is this billboard batch inside the frame?
    *
-   * The batch's own sphere (`createBillboardBatch` stores one over the
-   * placement points with the sprite's half-diagonal added), offset by
-   * its live origin and LIFTED half a height - because the billboard VS
-   * is bottom-anchored (`uUp * ((aCorner.y + 0.5) * uSize.y)`), so a
-   * sprite stands its full height above its placement point and the
-   * stored sphere does not reach the top of anything taller than it is
-   * wide. A person is exactly that shape; without the lift this culls
-   * heads at the top of the screen.
+   * GHOST1: `batchVisible` IS the test - the batch's own sphere, offset
+   * by its live origin and lifted half a height for the bottom anchor,
+   * with the whole argument for the lift written where it lives
+   * (bounds.js). This method used to hand-roll it, and the shadow replay
+   * and the air pass's emitters - which cull through `batchVisible` -
+   * therefore answered a DIFFERENT question about the same sprite: this
+   * pass dropped a flat the emission replay kept, leaving the bloom of a
+   * sprite that never drew. A ghost campfire. One home, one answer.
    *
    * A batch with no bounds is always drawn, as `batchVisible` has it.
    */
   _bbVisible(b) {
-    const s = b.bounds;
-    if (!s) return true;
-    const o = b.origin;
-    return sphereInPlanes(this._bbPlanes,
-      s[0] + (o ? o[0] : 0), s[1] + (o ? o[1] : 0) + (b.size?.h ?? 0) * 0.5, s[2] + (o ? o[2] : 0), s[3]);
+    return batchVisible(this._bbPlanes, b);
   }
 
   _bindVao(vao) {
@@ -1415,6 +1411,11 @@ export class Renderer {
     const gl = this.gl;
     return {
       fogColor: gl.getUniformLocation(program, 'uFogColor'),
+      // PERF-FOG: the lane's own, already decoded. A classic program does
+      // not declare it and a lane program that never calls elFinish has it
+      // optimised out, so this is null for both and the upload skips - the
+      // shader that wants linear fog is the one that asks for it.
+      fogColorLin: gl.getUniformLocation(program, 'uFogColorLin'),
       fogMode: gl.getUniformLocation(program, 'uFogMode'),
       clipY: gl.getUniformLocation(program, 'uClipY'),
       amMode: gl.getUniformLocation(program, 'uAutomapMode'),
@@ -1571,6 +1572,9 @@ export class Renderer {
       this._installWorldSet(this._classicSet);
     }
     this._lane = lane;
+    // PERF-FOG: the cached linear fog is the OLD lane's answer - a cache
+    // keyed on its input alone cannot see that the function changed.
+    if (this._fogLinFrom) this._fogLinFrom[0] = NaN;
     // EL2: the shadow pass rides a lane that asks for it; built once, kept
     if (lane?.shadows) {
       this._shadows = this._shadowPass ??= new ShadowPass(this.gl, { build: (vs, fs) => this._buildProgram(vs, fs), vs: { mesh: VS, bb: BB_VS, terrain: TERRAIN_VS, char: CHAR_VS } });   // EL7: the rigs cast
@@ -3399,6 +3403,12 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
   _uploadFog(prog) {
     const gl = this.gl;
     gl.uniform3fv(prog.fogColor, this._fogColor);
+    // PERF-FOG (2026-09-19): the lane's fog colour, decoded ONCE where the
+    // value changes rather than once per fragment in every lane shader
+    // there is. Cached against the display triple it was made from: the
+    // fog colour moves with the weather and the hour, which is a handful
+    // of times a minute, and this ran for every pixel of every frame.
+    if (prog.fogColorLin) gl.uniform3fv(prog.fogColorLin, this._fogColorLinear());
     gl.uniform1i(prog.fogMode, this._fogMode);
     gl.uniform1f(prog.fogDensity, this._fogDensity);
     gl.uniform2fv(prog.fogRange, this._fogRange);
@@ -3407,6 +3417,26 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     if (prog.amMode) gl.uniform1f(prog.amMode, this._automapMode);   // A2: and the automap presentation
     if (prog.amWaterLevel) gl.uniform1f(prog.amWaterLevel, this._automapWaterLevel);   // c2/S6: with its water tint
     if (prog.amWaterColor) gl.uniform4fv(prog.amWaterColor, this._automapWaterColor);
+  }
+
+  /** PERF-FOG: `_fogColor` in linear, decoded only when it MOVES.
+   *
+   *  Through the lane's own `decode3`, which is the curve `elDecode`
+   *  compiles into every lane shader - so there is no second copy of the
+   *  law here, only a place to keep its answer. The fog colour changes
+   *  with the weather and the hour; this used to be recomputed for every
+   *  pixel of every frame. Its own scratch, never `_c3`'s, because that
+   *  one is handed out to whoever asks next. */
+  _fogColorLinear() {
+    const c = this._fogColor;
+    const was = this._fogLinFrom ?? (this._fogLinFrom = new Float32Array([NaN, NaN, NaN]));
+    if (!this._fogLin) this._fogLin = new Float32Array(3);
+    if (was[0] !== c[0] || was[1] !== c[1] || was[2] !== c[2]) {
+      was[0] = c[0]; was[1] = c[1]; was[2] = c[2];
+      if (this._lane) this._lane.decode3(c, this._fogLin);
+      else this._fogLin.set(c);
+    }
+    return this._fogLin;
   }
 
   /** A1: the automap slice plane - fragments of the SOLID mesh pass
@@ -4172,8 +4202,21 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     // screen. The planes are recomputed rather than cached on the frame
     // stamp because the panel bracket swaps _proj/_view without bumping
     // it; one 4x4 multiply a call is nothing beside what it saves.
+    // GHOST1 (2026-09-19): the planes are SPHERE planes - normalised.
+    // `frustumPlanes` leaves them unnormalised on purpose (frustum.js's
+    // own note: the box test only asks for the sign, and normalising
+    // would spend four square roots on nothing), and `sphereInPlanes`
+    // compares `dot + d < -r`, which is only a world-space distance
+    // against a world-space radius once the normal is a unit vector.
+    // Fed the raw planes, the radius counts for 1/|n| of what it should
+    // and a flat whose centre is just past a plane is culled while its
+    // quad is still on screen - sprites popping as the camera turns, and
+    // a small flat (a campfire) gone entirely while the air pass's
+    // emitter, which culls through `spherePlanes`, still drew its bloom.
+    // A ghost campfire. `spherePlanes` is the one home for this and
+    // every other sphere cull in the tree already goes through it.
     const bbCull = !this._bbCullOff && !!this._proj && !!this._view;
-    if (bbCull) frustumPlanes(mat4Multiply(this._proj, this._view, this._bbPv), this._bbPlanes);
+    if (bbCull) spherePlanes(mat4Multiply(this._proj, this._view, this._bbPv), this._bbPlanes);
     this._use(this.bbProgram);
     this._uploadCloudShadow('bb');   // VC4
     gl.uniformMatrix4fv(this.bbUProj, false, this._proj);
@@ -4191,7 +4234,16 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
       // Lambert-average half the sun does - a scalar on the tint.
       // EL1: under the lane the two terms are decoded FIRST and added in
       // linear (_c3 on each, into the two scratch triples).
-      const am = this._c3(this._ambient, this._decA), mc = this._c3(this._moonColor, this._decB), sc = this._c3(this._sunColor, this._decB);
+      // AUDIT PERF-SUN/FOG F4 (2026-09-19, pre-existing): THREE COLOURS,
+      // THREE SCRATCHES. `mc` and `sc` were both handed `_decB`, so they
+      // were the SAME Float32Array - and `sc`'s decode overwrote `mc`'s
+      // contents before the very next statement read `mc`. The billboard
+      // tint's MOON term was therefore computed from the SUN's colour, on
+      // every flat in the world. This is the only site in the file that
+      // holds more than one decoded colour live at once, which is why it
+      // is the only one that could have it; found by the audit that had
+      // just pinned `_fogLin` against the same hazard one method away.
+      const am = this._c3(this._ambient, this._decA), mc = this._c3(this._moonColor, this._decB), sc = this._c3(this._sunColor, this._decC);
       gl.uniform3f(
         this.bbUTint,
         am[0] + mc[0] * this._moonScale * 0.5,

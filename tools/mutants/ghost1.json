@@ -1,0 +1,72 @@
+[
+ {
+  "name": "GHOST1-the-billboard-pass-takes-the-RAW-planes-again-so-a-sprites-radius-counts-for-half-of-itself",
+  "file": "src/render/renderer.js",
+  "old": "    if (bbCull) spherePlanes(mat4Multiply(this._proj, this._view, this._bbPv), this._bbPlanes);",
+  "new": "    if (bbCull) frustumPlanes(mat4Multiply(this._proj, this._view, this._bbPv), this._bbPlanes);",
+  "tests": ["test/ghost1_spritecull.test.js", "test/perfon2_peercull.test.js"]
+ },
+ {
+  "name": "GHOST1-the-streaming-host-takes-the-RAW-planes-again-and-its-crowd-pops-at-the-screen-edge",
+  "file": "src/scenes/world.js",
+  "old": "    if (cullOn) spherePlanes(multiply(proj, view, _pv), _planes);",
+  "new": "    if (cullOn) frustumPlanes(multiply(proj, view, _pv), _planes);",
+  "tests": ["test/ghost1_spritecull.test.js", "test/perfon2_peercull.test.js"]
+ },
+ {
+  "name": "GHOST1-spherePlanes-stops-normalising-so-every-sphere-cull-in-the-tree-reads-a-scaled-distance",
+  "file": "src/render/bounds.js",
+  "old": "    const l = Math.hypot(out[k * 4], out[k * 4 + 1], out[k * 4 + 2]) || 1;",
+  "new": "    const l = 1;",
+  "tests": ["test/ghost1_spritecull.test.js"]
+ },
+ {
+  "name": "GHOST1-batchVisible-drops-the-lift-so-the-emission-replay-and-the-main-pass-disagree-again",
+  "file": "src/render/bounds.js",
+  "old": "    s[1] + (o ? o[1] : 0) + (b.size?.h ?? 0) * 0.5,",
+  "new": "    s[1] + (o ? o[1] : 0),",
+  "tests": ["test/ghost1_spritecull.test.js", "test/perfon2_peercull.test.js"]
+ },
+ {
+  "name": "GHOST1-batchVisible-lifts-a-WHOLE-height-so-the-sphere-leaves-the-sprite-below-it",
+  "file": "src/render/bounds.js",
+  "old": "    s[1] + (o ? o[1] : 0) + (b.size?.h ?? 0) * 0.5,",
+  "new": "    s[1] + (o ? o[1] : 0) + (b.size?.h ?? 0),",
+  "tests": ["test/ghost1_spritecull.test.js"]
+ },
+ {
+  "name": "GHOST1-the-lift-takes-the-magnitude-so-the-upside-down-flame-is-bounded-where-it-is-not",
+  "file": "src/render/bounds.js",
+  "old": "    s[1] + (o ? o[1] : 0) + (b.size?.h ?? 0) * 0.5,",
+  "new": "    s[1] + (o ? o[1] : 0) + Math.abs(b.size?.h ?? 0) * 0.5,",
+  "tests": ["test/ghost1_spritecull.test.js"]
+ },
+ {
+  "name": "GHOST1-the-billboard-pass-hand-rolls-the-sphere-again-instead-of-asking-the-one-home",
+  "file": "src/render/renderer.js",
+  "old": "    return batchVisible(this._bbPlanes, b);",
+  "new": "    const s = b.bounds; if (!s) return true; const o = b.origin;\n    return sphereInPlanes(this._bbPlanes, s[0] + (o ? o[0] : 0), s[1] + (o ? o[1] : 0), s[2] + (o ? o[2] : 0), s[3]);",
+  "tests": ["test/ghost1_spritecull.test.js", "test/perfon2_peercull.test.js"]
+ },
+ {
+  "name": "GHOST1-the-streaming-host-hand-rolls-it-again-so-its-lists-answer-a-different-question",
+  "file": "src/scenes/world.js",
+  "old": "  const billboardOutside = (b) => !batchVisible(_planes, b);",
+  "new": "  const billboardOutside = (b) => { const s = b.bounds; if (!s) return false; const o = b.origin; return !sphereInPlanes(_planes, s[0] + (o ? o[0] : 0), s[1] + (o ? o[1] : 0), s[2] + (o ? o[2] : 0), s[3]); };",
+  "tests": ["test/ghost1_spritecull.test.js", "test/perfon2_peercull.test.js"]
+ },
+ {
+  "name": "GHOST1-a-batch-with-no-bounds-is-culled-instead-of-drawn-so-the-cull-becomes-a-gate",
+  "file": "src/render/bounds.js",
+  "old": "  const s = b.bounds;\n  if (!s) return true;\n  const o = b.origin;\n  return sphereInPlanes(planes,",
+  "new": "  const s = b.bounds;\n  if (!s) return false;\n  const o = b.origin;\n  return sphereInPlanes(planes,",
+  "tests": ["test/ghost1_spritecull.test.js"]
+ },
+ {
+  "name": "GHOST1-sphereInPlanes-drops-the-radius-margin-so-the-cull-tests-the-centre-alone",
+  "file": "src/render/bounds.js",
+  "old": "    if (planes[k * 4] * x + planes[k * 4 + 1] * y + planes[k * 4 + 2] * z + planes[k * 4 + 3] < -r) return false;",
+  "new": "    if (planes[k * 4] * x + planes[k * 4 + 1] * y + planes[k * 4 + 2] * z + planes[k * 4 + 3] < 0) return false;",
+  "tests": ["test/ghost1_spritecull.test.js"]
+ }
+]

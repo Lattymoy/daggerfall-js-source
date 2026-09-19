@@ -56,3 +56,47 @@ export function bitmapCanvas(bmp, palette, { scale = 1 } = {}) {
   octx.drawImage(c, 0, 0, out.width, out.height);
   return out;
 }
+
+
+/**
+ * SURV-ART: THE SAME THING FOR ART THAT NEVER HAD A PALETTE.
+ *
+ * A vendored mod's picture is a decoded PNG, not a palettized DFBitmap
+ * - there is no index to look up and no cutout rule to apply, because
+ * it carries its own alpha. It arrives in the port's color32 order
+ * (`{ width, height, colors }`, row 0 the picture's BOTTOM - see
+ * formats/color32Order.js), which is what the GL path wants and the
+ * OPPOSITE of what a canvas wants, so the rows are reversed on the way
+ * in. NEAREST scaling for the same reason as above.
+ *
+ * @param {{width:number,height:number,colors:Uint8ClampedArray|Uint8Array}} image
+ * @param {{scale?:number}} opts
+ * @returns {HTMLCanvasElement|null}
+ */
+export function color32Canvas(image, { scale = 1 } = {}) {
+  const w = image?.width | 0, h = image?.height | 0;
+  const src = image?.colors;
+  if (!w || !h || !src || src.length < w * h * 4) return null;
+  const c = document.createElement('canvas');
+  c.width = w;
+  c.height = h;
+  const ctx = c.getContext('2d');
+  if (!ctx) return null;
+  const img = ctx.createImageData(w, h);
+  const row = w * 4;
+  for (let y = 0; y < h; y++) {       // row 0 of `colors` is the picture's bottom
+    const from = (h - 1 - y) * row;
+    for (let i = 0; i < row; i++) img.data[y * row + i] = src[from + i];
+  }
+  ctx.putImageData(img, 0, 0);
+  if (scale === 1) return c;
+
+  const out = document.createElement('canvas');
+  out.width = w * scale;
+  out.height = h * scale;
+  const octx = out.getContext('2d');
+  if (!octx) return c;
+  octx.imageSmoothingEnabled = false;
+  octx.drawImage(c, 0, 0, out.width, out.height);
+  return out;
+}

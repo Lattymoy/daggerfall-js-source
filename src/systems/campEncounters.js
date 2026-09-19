@@ -102,14 +102,21 @@ export const rollCampKind = (roll01 = Math.random()) => (roll01 < 0.5 ? 'camp' :
 // streaming fires a `pixelChanged` event each time the player crosses
 // into a new map pixel (819.2 scene units on a side - world/streamingWorld.js's
 // own header), which is this port's nearest thing to "a new chunk
-// loaded". The 5% CHANCE doesn't change - what changes is the CHECK: a
-// player who explores gets a roll every new pixel entered, on top of
-// (not instead of) the 15-real-minute timer below, so standing still
-// in one place still gets checked and covering ground quickly gets
-// checked more.
-// Mac (2026-09-17): "set the camp encounter chance to 15% per chunk" -
-// its own rate, separate from the timer's 5%, since a chunk is entered far
-// more often than a 15-real-minute window comes around.
+// loaded". A player who explores gets a roll every new pixel entered.
+//
+// CAMP-NOTIMER (2026-09-19, Lost's package): scenes/world.js - the real
+// streaming open world - dropped the 15-real-minute guaranteed timer
+// trigger entirely, so this chunk-load roll is now that host's ONLY
+// camp/pack trigger. The rate stays where Mac set it (2026-09-17: "set
+// the camp encounter chance to 15% per chunk") rather than dropping to
+// match the timer's 5%: a chunk is entered far less often than a
+// background timer ticks, so carrying the whole load alone at the
+// higher figure is what keeps the frequency the host had before.
+//
+// BOTH entry points stay exported. scenes/exterior.js is the fixed
+// single-location preview host (`?exterior`/`?region=`/`?loc=`) with no
+// chunk streaming to hang a roll off, so the timer below is the only
+// trigger it can have, and it still calls it.
 export const CAMP_CHANCE_ON_CHUNK_LOAD = 0.15;   // 15% per chunk entered
 export const rollCampChanceOnChunkLoad = (roll01 = Math.random()) => roll01 < CAMP_CHANCE_ON_CHUNK_LOAD;
 

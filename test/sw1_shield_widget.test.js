@@ -7,6 +7,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync, existsSync } from 'node:fs';
+import { inflateSync } from 'node:zlib';
 
 import {
   createShieldWidget, readShieldWidgetSettings, shieldTextureIndex, shieldTextureName,
@@ -338,6 +339,106 @@ test('SW1: the 600 sprites are VENDORED, and every one is on disk under the name
   }
 });
 
+// ---- SW4: WHICH WAY UP ------------------------------------------------
+//
+// SW4 (2026-09-19, Mac: "the new shield mod we integrated shows the
+// shields upside down") - THE ART WAS MIRRORED, NOT THE CODE.
+//
+// The door reads `toScreenOrder`, which is right: a screen quad hands
+// p.y = 0 (the rect's TOP) the pair `v0`, nothing flips at upload, so
+// row 0 of the PNG lands at the top of the sprite (HT3's law, the same
+// one the held torch and the weapon widget's loose arm take). What was
+// wrong was the 600 files: they had been written straight out of the
+// mod's Unity texture buffer, which is bottom-up, without the flip that
+// a PNG's top-down rows need. Every sprite shipped vertically mirrored,
+// so the shield's rim sat at the bottom of the screen and the arm
+// reached DOWN into it from the sky.
+//
+// The picture says which way up it is, and says it the same way for all
+// 600: a first-person shield is held, so the gauntleted forearm runs off
+// the BOTTOM edge of the sprite, while the top edge - open air above the
+// rim - is empty. Measured over the whole set, right way up:
+//   - the top row is 100% transparent in all 600 (max opaque pixels: 0);
+//   - the bottom row is opaque in all 600, never below 69 pixels, which
+//     is 44% of the narrowest sprite's width.
+// Mirrored, that reads exactly backwards - 600 touching the top, 0
+// touching the bottom - so this pin is what a re-extraction that forgets
+// the flip runs into.
+
+/** A minimal reader for the shape these 600 are in - indexed (colour
+ *  type 3), 8 bits, not interlaced - handed back as index rows plus the
+ *  set of indices tRNS calls fully transparent. Enough to ask which rows
+ *  hold paint, which is the only question SW4 has. */
+function readIndexedPng(buf) {
+  let p = 8, w = 0, h = 0, depth = 0, colourType = -1, trns = null;
+  const idat = [];
+  while (p + 8 <= buf.length) {
+    const len = buf.readUInt32BE(p);
+    const type = buf.toString('latin1', p + 4, p + 8);
+    const data = buf.subarray(p + 8, p + 8 + len);
+    if (type === 'IHDR') {
+      w = data.readUInt32BE(0); h = data.readUInt32BE(4); depth = data[8]; colourType = data[9];
+      assert.equal(data[12], 0, 'not interlaced');
+    } else if (type === 'IDAT') idat.push(Buffer.from(data));
+    else if (type === 'tRNS') trns = Buffer.from(data);
+    else if (type === 'IEND') break;
+    p += 12 + len;
+  }
+  assert.equal(colourType, 3, 'indexed');
+  assert.equal(depth, 8, '8 bits an index');
+  const raw = inflateSync(Buffer.concat(idat));
+  const stride = w + 1;   // one filter byte a row, then one index a pixel
+  assert.equal(raw.length, stride * h, `${w}x${h} unpacks to ${raw.length}`);
+  const rows = [];
+  let prev = Buffer.alloc(w);
+  for (let y = 0; y < h; y++) {
+    const f = raw[y * stride];
+    const cur = Buffer.from(raw.subarray(y * stride + 1, y * stride + 1 + w));
+    for (let x = 0; x < w; x++) {       // bpp is 1, so `a` and `c` are one byte back
+      const a = x > 0 ? cur[x - 1] : 0, b = prev[x], c = x > 0 ? prev[x - 1] : 0;
+      if (f === 1) cur[x] = (cur[x] + a) & 255;
+      else if (f === 2) cur[x] = (cur[x] + b) & 255;
+      else if (f === 3) cur[x] = (cur[x] + ((a + b) >> 1)) & 255;
+      else if (f === 4) {
+        const pa = Math.abs(b - c), pb = Math.abs(a - c), pc = Math.abs(a + b - 2 * c);
+        cur[x] = (cur[x] + (pa <= pb && pa <= pc ? a : pb <= pc ? b : c)) & 255;
+      } else assert.equal(f, 0, `filter ${f}`);
+    }
+    rows.push(cur); prev = cur;
+  }
+  const clear = new Set();
+  if (trns) for (let i = 0; i < trns.length; i++) if (trns[i] === 0) clear.add(i);
+  return { width: w, height: h, rows, clear };
+}
+
+test('SW4: all 600 sprites are the right way up - the arm runs off the bottom edge and the top edge is empty', () => {
+  const dir = 'vendor/shield-widget/Textures';
+  let topTouch = 0, worstBottom = Infinity, worstName = '';
+  for (let i = 0; i < SHIELD_TEXTURE_COUNT; i++) {
+    const name = `${shieldTextureFileName(i)}.png`;
+    const { width, height, rows, clear } = readIndexedPng(readFileSync(`${dir}/${name}`));
+    assert.deepEqual({ width, height }, shieldWidgetSize(i), `${name} is not the size the registry promises`);
+    const opaque = (row) => { let c = 0; for (let x = 0; x < width; x++) if (!clear.has(row[x])) c++; return c; };
+    const top = opaque(rows[0]), bottom = opaque(rows[height - 1]);
+    if (top > 0) topTouch++;
+    if (bottom < worstBottom) { worstBottom = bottom; worstName = name; }
+    assert.equal(top, 0, `${name} paints ${top} pixels on its TOP row - the art is mirrored`);
+    assert.ok(bottom >= width * 0.4, `${name} paints only ${bottom} of ${width} on its BOTTOM row - the arm is not there`);
+  }
+  assert.equal(topTouch, 0, 'no sprite touches the top edge');
+  assert.equal(worstBottom, 69, `the thinnest arm is 69 pixels (${worstName})`);
+});
+
+test('SW4: the shield door keeps the PNG’s rows, as the port’s other two screen sprites do', () => {
+  // The third member of HT3's list. `toColor32` here would flip a
+  // top-down raster into a bottom-up one and mirror all 600 again, this
+  // time in code.
+  const door = readFileSync('src/combat/shieldWidgetAssets.js', 'utf8');
+  assert.match(door, /import \{ toScreenOrder \} from '\.\.\/formats\/color32Order\.js';/);
+  assert.match(door, /return toScreenOrder\(await decodePng\(new Uint8Array\(await res\.arrayBuffer\(\)\)\)\);/);
+  assert.equal((door.match(/toColor32/g) ?? []).length, 1, 'named once, in the comment that says why it is not used');
+});
+
 test('SW1: a flat index spells TextureReplacement\u2019s own name, and every size is known up front', () => {
   assert.equal(shieldTextureFileName(0), '112360_0-0');
   assert.equal(shieldTextureFileName(4), '112360_0-4', 'five frames to a record');
@@ -546,8 +647,10 @@ test('SW1-LOOK: the frame’s look reaches the shield as the ARRAY it is, or Ine
   const body = feed.slice(0, feed.indexOf('\n        });'));
   assert.match(body, /look: \{ x: look\?\.\[0\] \?\? 0, y: look\?\.\[1\] \?\? 0,/, 'indexed, as the clone reads it');
   assert.doesNotMatch(body, /look\?\.x/, 'and never by a name the value does not carry');
-  // not vacuous: the clone really does read it positionally
-  assert.match(readFileSync('src/combat/weaponWidget.js', 'utf8'), /\(look\[0\] \+ mx\)/);
+  // not vacuous: the clone really does read it positionally. The
+  // module moved to weaponWidgetMotion.js on 2026-09-19 (the gun lab
+  // runs it); the LAW did not, which is what this reads.
+  assert.match(readFileSync('src/combat/weaponWidgetMotion.js', 'utf8'), /\(look\[0\] \+ mx\)/);
   // and the widget really does spend both terms
   const sw = readFileSync('src/combat/shieldWidget.js', 'utf8');
   assert.match(sw, /\(\(Number\(look\.x\) \|\| 0\) \+ mx\) \* -0\.5 \* w\.s\.inertiaScale,/);

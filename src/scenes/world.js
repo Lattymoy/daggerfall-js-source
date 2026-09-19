@@ -25,13 +25,14 @@ import { waterUniforms, buildWaterIndices, waterSwitchOn } from '../render/water
 import { waterCorners, WATER_DRAW_MASK_TABLE } from '../world/waterCorners.js';   // GRASS-WET1: the one table that says which of a tile's corners stand in water - the DRAW's, because a blade in a puddle is a picture, not a physics
 import { windowEmissionRGB } from '../render/windowEmission.js';
 import { CITY_LIGHT_COLOR, CITY_LIGHT_RANGE, LIGHTS_ARCHIVE, collectCityLights, nearestLights } from '../world/cityLights.js';
+import { isHearthFlat, HEARTH_NEAR } from '../systems/survival/hearth.js';   // HEARTH1: which of those lanterns is a fire you could cook on, and how far one can matter
 import { withPlayerLights } from './magicCandle.js';   // X11/T1: the lights the PLAYER carries
 import { playerTorchLight } from '../systems/playerTorch.js';   // T1
 import { applyClimate, getGroundArchive, getTerrainGroundArchive, getNatureArchive, SEASON, climateSeasonFromMinutes, INTERIOR_SEASON } from '../world/climateSwaps.js';   // A1: the season is the calendar's, and an interior's is Summer whatever the date
 import { RMB_SIDE, layoutLocation } from '../world/locationLayout.js';
 import { lookAt, multiply, perspective, mirrorProjectionX, trs, identity, UP_Y, wrapAngle } from '../world/mat4.js';   // HANDEDNESS: the one mirror (mat4's law)
-import { frustumPlanes, aabbOutside, localAabb, transformedAabb, flatBatchAabb, cullDisabled } from '../render/frustum.js';
-import { sphereInPlanes } from '../render/bounds.js';   // PERF-CROWD: the batch's own bounding sphere, the test the shadow replay already uses   // EV3: the frustum
+import { aabbOutside, localAabb, transformedAabb, flatBatchAabb, cullDisabled } from '../render/frustum.js';   // GHOST1: the plane extraction comes through bounds.js's `spherePlanes` now - `_planes` serves the sphere test too
+import { spherePlanes, batchVisible } from '../render/bounds.js';   // PERF-CROWD: the batch's own bounding sphere, the test the shadow replay already uses   // GHOST1: through its ONE home, on the NORMALISED planes it needs   // EV3: the frustum
 import { withMoonAmbient } from '../render/enhancedSky.js';   // EV5: secunda rides the ambient
 import { FarRingRenderer, ringDisabled } from '../render/farRing.js';   // EV8: the province's mountains on the horizon
 import { syncLightingLane, lanternColor } from '../render/enhancedLighting.js';   // EL1: the Enhanced Lighting lane, installed at mount
@@ -69,7 +70,7 @@ import { calculateCastCost } from '../systems/spellcost.js';   // M2   // T3b
 import { rangedDamageSpells } from '../systems/spellcast.js';   // U42: the flight probe's picker
 import { worldMinutes, setWorldMinutes, setSharedClock, sharedClockOn, alignEntityClocks, setWorldPriceTilt } from '../systems/worldTick.js';   // ECON1 / AUDIT ALL E1: the world's tilt off the file's base powers   // AUDIT 23 (C2): the ONE clock
 import { setSyntheticTimeIncrease } from '../systems/effectBroker.js';   // AUDIT 63 F13: DaggerfallTravelPopUp_OnPostFastTravel (EntityEffectBroker.cs:846-847)
-import { tallySwingSkills, SWING_WEAPON_FATIGUE_LOSS, playerPainVoice, playPlayerVoice, makeEnemiesHostile } from './hostCombat.js';   // ROAD-B: GameManager.MakeEnemiesHostile
+import { tallySwingSkills, SWING_WEAPON_FATIGUE_LOSS, playerPainVoice, playPlayerVoice, makeEnemiesHostile, isBowWeapon } from './hostCombat.js';   // ROAD-B: GameManager.MakeEnemiesHostile
 import { flashPlayerDamage } from '../ui/damageFlash.js';   // AUDIT 24 (wave 46): the arrow owes the flash too   // AUDIT 23 (C14)
 import { hudFade } from '../ui/fadeLayer.js';   // D4: performFastTravel's and TeleportAway's fade from black
 import { exhaustionOutcome, EXHAUSTED_IN_WATER } from '../systems/rest.js';   // AUDIT 23 (C5)
@@ -141,7 +142,7 @@ import { createHunting } from './hunting.js';   // SURV6: hunting, foraging and 
 import { alignSurvival } from '../systems/survival/needs.js';   // SURV7: the needs' markers at an arrival
 import { liveLycanthropy } from '../systems/lycanthropy.js';   // SURV7: the env's lycanthrope and beast-form flags
 import { elementalResistanceChance, ELEMENTS } from '../systems/spellcast.js';   // SURV7: the env's fire and frost resistances
-import { rollCampEncounter, rollCampEncounterOnChunkLoad, amGroupRollOwner } from '../systems/campEncounters.js';   // CAMP1: the group-encounter roll - camps and packs, riding the same tick, and the chunk-load twin
+import { rollCampEncounterOnChunkLoad, amGroupRollOwner } from '../systems/campEncounters.js';   // CAMP1: the group-encounter roll - camps and packs; CAMP-NOTIMER: the chunk-load twin is this host's ONLY trigger now, so the timer's entry point is gone from here
 import { WORLD_SALT, spawnsDungeon, pickTemplate, synthesizeDungeonLocation, spawnTemplates } from '../world/spawnedDungeons.js';   // SPAWNED-DUNGEONS1: online, a pixel may hold a dungeon
 import { isMainStoryDungeon } from '../world/dungeonTextures.js';   // SPAWNED-DUNGEONS1: the main story's own dungeons are never cloned
 import { nearestSafeLocation, respawnFlavorText, respawnHealth, undergroundWakeSpot, undergroundWakeText } from '../systems/deathRespawn.js';   // D-ONLINE1: online, a death respawns instead of ending the run   // X-slice; the rest refusal raises the alert and asks the RESTING variant, the townsfolk idle the STRICT one; the catch-up loop's watch arm
@@ -150,7 +151,7 @@ import { saveSlot, loadSlot, quickLoadSlot, mostRecentRestorable, QUICK_SAVE_NAM
 import { frameBegin, frameEnd } from '../systems/frameClock.js';   // PERF1: the frame's script time
 import { arrivalClampMinutes, playerTravelPosition } from '../systems/travel.js';   // F-slice; F114: the ship-aware travel origin
 import { hasSpecialAbility, SPECIAL_ABILITY } from '../systems/rest.js';   // F-slice: the NoRegen restore gate
-import { locationCompassDirection, buildingCompassDirection, findFactionByTypeAndRegion } from '../systems/talk.js';   // wave 26: %di's remote arm + the region-faction search; the LOCAL arm beside it
+import { locationCompassDirection, buildingCompassDirection, findFactionByTypeAndRegion, directionHintString } from '../systems/talk.js';   // wave 26: %di's remote arm + the region-faction search; the LOCAL arm beside it; SPAWNED-DUNGEONS2b: the same eight-word compass
 import { seasonValue, SEASONS, MINUTES_PER_DAY, dateFromClassicMinutes, dateTimeString, midDateTimeString, lunarPhasesFromMinutes, LUNAR_PHASES, isDayFromMinutes } from '../systems/gameDate.js';   // AUDIT 23 (wts-1); Q4-v: the notebook's header shapes; V2c: the enchant ctx's moon arms
 import { regionPriceAdjustment, worldPriceTiltOf, TRANSPORT_HORSE, TRANSPORT_SMALL_CART } from '../systems/shopStock.js';   // Q4-v: CreateGold's regional term (the shops' own producer); U41: Items.Contains(Transportation, ...)
 import { getNameBankOfRegion, getRandomFullName } from '../characters/nameHelper.js';   // AUDIT 23 (characters-5); AUDIT 58: MacroHelper.GetRandomFullName, one home
@@ -244,7 +245,7 @@ import { SOUND } from '../systems/soundClips.js';
 import { createWeaponRig, autoBuildArms, armIdentityOf, armBuiltFor, armsReady } from '../combat/weaponRig.js';   // MWA1: the arms at boot; MWA3: the identity the arm should stand for, beside the one it does
 import { weaponPoseOf, applyWeaponPose, mergeWeaponPose } from '../combat/playerWeapon.js';   // HARD2c: the sheath+hand pair as ONE law, and SL-2's per-field merge with the mode host's live rig
 import { ArrowFlight, playerArrowHitFoe } from '../combat/arrowFlight.js';   // C13: visible exterior arrows; AUDIT 39 (#64): and the shaft that LANDS
-import { addItem, spendArrow, carriedWeight } from '../systems/inventory.js';   // E4: PlayerEntity.CarriedWeight carries the gold counter's own term
+import { addItem, spendAmmoFor, carriedWeight } from '../systems/inventory.js';   // E4: PlayerEntity.CarriedWeight carries the gold counter's own term
 import { calculateAttackDamage } from '../combat/formulas.js';   // X2-slice: enemy-arrow impacts
 import { inflictPoison } from '../systems/poisons.js';   // X2-slice: poisoned enemy arrows
 import { weaponTypeForItem, WEAPON_TYPES } from '../combat/fpsWeapon.js';
@@ -580,6 +581,38 @@ export async function bootWorld(canvas, renderer, params, status) {
   // any location. The page flag is read off `params`, not `onlineOn` - that const is declared far below this build.
   // Wrapped: a failure here costs one pixel its dungeon, never the stream.
   const _spawnSalt = WORLD_SALT;   // one salt for every client: the same pixels, the same dungeons, the same rooms
+  // SPAWNED-DUNGEONS2b (Lost's package, 2026-09-19): NEARBY, WITH A
+  // DIRECTION, AND ONE LINE PER CROSSING.
+  //
+  // A crossing can put several unannounced spawns inside the radius at
+  // once - the search covers a 5x5 block of pixels - and a line per hit
+  // stacked them up the log back to back. Every pixel found this
+  // crossing is still marked announced, so none of them nags again
+  // later; only the CLOSEST is ever actually said.
+  //
+  // The compass word is talk.js's own eight-band `directionHintString`,
+  // off the map-pixel delta. `px` is east-positive already; `py` is
+  // SOUTH-positive (mapsFile.js longitudeLatitudeToMapPixel writes
+  // `y = 499 - lat/128`), so north needs the sign flipped on the way in.
+  const _announcedSpawnPixels = new Set();
+  const SPAWN_NEARBY_RADIUS = 2;
+  const _capitalize = (s) => s.charAt(0).toUpperCase() + s.slice(1);
+  function announceNearbySpawns(px, py) {
+    const found = [];
+    for (let dy = -SPAWN_NEARBY_RADIUS; dy <= SPAWN_NEARBY_RADIUS; dy++) {
+      for (let dx = -SPAWN_NEARBY_RADIUS; dx <= SPAWN_NEARBY_RADIUS; dx++) {
+        const key = `${px + dx},${py + dy}`;
+        if (_announcedSpawnPixels.has(key) || !locationIndex.get(key)?.spawned) continue;
+        found.push({ key, dx, dy, d2: dx * dx + dy * dy });
+      }
+    }
+    if (!found.length) return;
+    found.sort((a, b) => a.d2 - b.d2);   // closest first
+    for (const f of found) _announcedSpawnPixels.add(f.key);   // every hit this crossing is spent, even the ones left unsaid
+    const nearest = found[0];
+    if (nearest.dx === 0 && nearest.dy === 0) { townTalk.say('You see a Dungeon nearby!'); return; }
+    townTalk.say(`You see a Dungeon nearby, in the ${_capitalize(directionHintString(nearest.dx, -nearest.dy))}!`);
+  }
   let _spawnTemplates = null;
   const spawnedDungeonAt = (px, py) => {
     if (!params.has('online')) return null;
@@ -1091,6 +1124,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // Flat groups: pixel-local base positions.
     const groups = new Map();
     const pixelLights = []; // archive-210 lanterns, pixel-local (R3)
+    const pixelHearths = []; // HEARTH1: the braziers and fire bowls among them, pixel-local
     const pixelAnimals = []; // A4: archive-201 town animals, pixel-local {pos, sound}
     const pixelSprings = []; // SURV3: the mod's water sources - fountains and wells (212: 0, 2, 8, 9; 85: 0), the dry fountain (212: 3), the troughs (41220-41222) - pixel-local {pos, dry}
     const pixelNpcFlats = []; // AUDIT 26 (F019): the flats RMBLayout stands as StaticNPCs, pixel-local
@@ -1324,11 +1358,17 @@ export async function bootWorld(canvas, renderer, params, status) {
             locLocal[0] + b.originX + flat.x, locLocal[1] + flat.y, locLocal[2] + b.originZ + flat.z);
         }
         for (const light of collectCityLights(b.dfBlock, lightSize)) {
-          pixelLights.push([
+          const lp = [
             locLocal[0] + b.originX + light.x,
             locLocal[1] + light.y,
             locLocal[2] + b.originZ + light.z,
-          ]);
+          ];
+          pixelLights.push(lp);
+          // HEARTH1: a town brazier is a fire, so the survival law wants
+          // it. Split off the SAME walk that builds the lanterns - the
+          // record is the only thing that tells the two apart and this
+          // is the one place that has it.
+          if (isHearthFlat(LIGHTS_ARCHIVE, light.record)) pixelHearths.push(lp);
         }
       }
 
@@ -1483,7 +1523,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       // (TravelOptionsMod.cs:541-551). Null for a pixel with no location.
       locationRect,
       _seasonsGen: seasonsGen,   // SIB1: the install this pixel's flats were built under (AUDIT 61: captured at the lookups)
-      px, py, terrain, water, tilemapTex, tilemap, groundArchive, models, windmills, batches, flatAnims, texRemap, lights: pixelLights, animals: pixelAnimals, springs: pixelSprings, skyBase: climate.skyBase, samples, natureCount: nature.length,
+      px, py, terrain, water, tilemapTex, tilemap, groundArchive, models, windmills, batches, flatAnims, texRemap, lights: pixelLights, hearths: pixelHearths, animals: pixelAnimals, springs: pixelSprings, skyBase: climate.skyBase, samples, natureCount: nature.length,
       tilemapBytes, season,   // GR1: the placer reads the tiles and the season
       paths,   // GRASS-PATH1: which tiles the road painter wrote; null on a pixel built before the network arrived
       withRoads,   // ROADS 25: painted with the network present, or before it arrived (see below)
@@ -2638,8 +2678,55 @@ export async function bootWorld(canvas, renderer, params, status) {
   // Online, in a cell, my camps ride my foes frame and a peer's arrive
   // with theirs (applyOwner in onFoes below); an owner gone quiet is
   // swept as their puppets are.
+  /**
+   * HEARTH1: THE WORLD'S OWN FIRES, in this host's frame.
+   *
+   * The braziers and fire bowls the pixels carry (`p.hearths`, collected
+   * off the same block walk that builds the lanterns), translated
+   * through the floating origin at the moment they are asked for. Only
+   * the pixels within a light's reach of the player can matter - a
+   * brazier two kilometres off is not one you are standing at - so the
+   * walk is cut at HEARTH_NEAR and what survives is a handful.
+   *
+   * AUDIT HEARTH1 F2: IT IS A POOL, because this runs EVERY FRAME. The
+   * first draft minted an array and an object per fire and said in this
+   * comment that it ran "on the survival tick and the activation ray",
+   * so a pool would be bookkeeping bought with nothing. That was simply
+   * wrong about the frame: the player ticker calls its host's
+   * `survivalEnv` on every frame - it is the ticker, not the caller,
+   * that decides whether a minute has rolled - so `byFire` and this walk
+   * with it ran sixty times a second, allocating each time. That is the
+   * exact churn PERF-LIGHTS took out of the lanterns two thousand lines
+   * below, reintroduced by a comment that reasoned from a cadence
+   * nobody had checked. The objects live in `_hearthStore` and are
+   * refilled in place; `_hearthOut` is the answer's own length, and
+   * setting ITS length frees nothing, because the store still holds
+   * every object it ever made.
+   */
+  const _hearthT = [0, 0, 0];
+  const _hearthStore = [];   // the objects, grown once and never freed
+  const _hearthOut = [];     // this frame's answer - the first n of the store
+  const hearthsNear = () => {
+    let n = 0;
+    const eye = walkMode && playerSpawned ? player.pos : cam.pos;
+    for (const p of built.values()) {
+      if (!p.hearths?.length) continue;
+      const t = state.pixelTranslation(p.px, p.py, _hearthT);
+      for (const h of p.hearths) {
+        const x = h[0] + t[0], y = h[1] + t[1], z = h[2] + t[2];
+        if (Math.abs(x - eye[0]) > HEARTH_NEAR || Math.abs(z - eye[2]) > HEARTH_NEAR) continue;
+        const e = _hearthStore[n] ?? (_hearthStore[n] = { x: 0, y: 0, z: 0 });
+        e.x = x; e.y = y; e.z = z;
+        _hearthOut[n] = e;
+        n++;
+      }
+    }
+    _hearthOut.length = n;
+    return _hearthOut;
+  };
   const camps = createCamps({
     renderer, getTexture, uploadRecordFrame, meshes: { getGpuMesh, cpuModels }, entity: playerEntity,
+    hearths: hearthsNear,   // HEARTH1
     camera: () => ({ feet: walkMode && playerSpawned ? player.pos : cam.pos, yaw: cam.yaw }), collider: () => collider,
     place: () => ({ insideBuilding: _mode() === 'interior', insideDungeon: _mode() === 'dungeon', inTown: _isPlayerInTownStrict(), enemiesNearby: areEnemiesNearby(exteriorFoePool(), { resting: true }), inWater: !!player.isPlayerSwimming }),
     pixelKeyAt: () => `${playerTravelPixel().x},${playerTravelPixel().y}`, say: (l) => townTalk.say(l), showOverlay: (w) => townTalk.showOverlay(w),
@@ -2891,16 +2978,22 @@ export async function bootWorld(canvas, renderer, params, status) {
       // while the owner sleeps the whole cluster rolls no groups. Handing the
       // roll to the next waking peer needs a rest flag on the wire, which this
       // does not add.
-      if (!isResting && getPref('wildernessCamps') !== false && amGroupRollOwner(online?.id ?? null, playerFeet, peersNear())) {
-        const campHit = rollCampEncounter({
-          gameMinutes: _lastEncMinutes + l + 1, inside: _m !== 'exterior',
-          inLocationRect: _musicInLocationRect(),
-          climateIndex: maps.getClimateIndex(playerTravelPixel().x, playerTravelPixel().y),
-          playerLevel: playerEntity.level,
-          preventEnemySpawns: playerEntity.preventEnemySpawns,
-        });
-        if (campHit) { _standCampEncounter(campHit, playerFeet); break; }
-      }
+      // CAMP-NOTIMER (Lost's package, 2026-09-19): THE GUARANTEED TIMER
+      // TRIGGER IS GONE FROM THIS HOST. CAMP1 gave the streaming world
+      // two ways to raise a group - this per-minute tick, which fired a
+      // guaranteed one every 15 REAL minutes of play even while the
+      // player stood still, and the chunk-load roll on the stream's own
+      // "entered" event. A camp or a pack must be a consequence of
+      // walking onto new ground, never a background clock dropping one
+      // on a stationary player, so the chunk-load roll is now this
+      // host's ONLY camp trigger and the whole timer arm is removed
+      // (with it, `rollCampEncounter` leaves this file's imports).
+      //
+      // exterior.js keeps its own timer arm, unchanged: that host is the
+      // fixed single-location preview (`?exterior`/`?region=`/`?loc=`)
+      // and has no chunk streaming to hang a roll off, so the timer is
+      // the only trigger it can have. campEncounters.js still exports
+      // both entry points for it.
       // PlayerEntity.Update:498-511 - the SAME minute's second arm,
       // which the port had never called: SpawnCityGuards(FALSE) had no
       // production caller at all, so the witness law (a civilian sees
@@ -3051,6 +3144,14 @@ export async function bootWorld(canvas, renderer, params, status) {
       bob: [0, player.bobOffset ? player.bobOffset[1] : 0],
       move: motionBagOf(player) }),   // MW-D26: the movement-settings vector, the reference's own selection source; MW-D39 added the jump-state inputs; WW2: the one bag (a partial copy left the bob's idle gate unsent)
     spellArmed: () => magic.spellArmed(), abortSpell: () => magic.abortReadySpell(),   // M2; MAC-O1: WeaponManager.Update:251 - the ReadyWeapon key puts a readied spell away and draws
+    // MAP-WEAPON: the enhanced map is a SPRITE with alpha around it,
+    // not a full-screen window, so the weapon the classic body keeps
+    // drawing shows through it. Asked per frame off the live overlay
+    // slot rather than a flag raised at the open: the window can be
+    // closed by Escape, by a travel, by a quest popup taking the slot
+    // or by a teardown, and a flag would have to be lowered at all of
+    // them. The tag is the window's own (`isTravelMap`).
+    sheetWindowUp: () => townTalk.overlay?.isTravelMap === true,
   });
   autoBuildArms(playerEntity);   // MWA1: a continuing session's arms, at boot (a new character's come after the wizard, a load's after the restore)
   // WEAPON-VIS1: a live read of exactly what shown() gates on, always
@@ -3219,10 +3320,10 @@ export async function bootWorld(canvas, renderer, params, status) {
   // ?dungeon host RAN every CastWhenUsed / CastWhenStrikes / SoulBound
   // / affinity arm against no ctx at all. They are optional-chained, so
   // it WAS silent. WAVE D closed it: the body is scenes/hostEnchant.js
-  // and dungeonContext.js:2221 mounts the same one, gated on
+  // and dungeonContext.js:2231 mounts the same one, gated on
   // `opts.enchantCtx !== false` because setDefaultEnchantCtx is a
   // session singleton and EC1 already routes THIS host's mount into
-  // that context through modes.dungeonCtx - so worldModes.js:4666
+  // that context through modes.dungeonCtx - so worldModes.js:4700
   // passes false beside its `chargen: false` and only the standalone
   // ?dungeon route mounts its own. S40 filled isResting
   // in - the sentence that stood here said it "stays absent above
@@ -5025,7 +5126,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // so an F9 pressed inside a shop recorded the street's sheath and
     // hand. The mode host answers for the rig that is actually drawn
     // and null outside interior mode (the dungeon owns its own
-    // composer, dungeonContext.js:5620), so exterior mode and a
+    // composer, dungeonContext.js:5634), so exterior mode and a
     // pre-seam mode host compose exactly as before, per field.
     const wp = modes?.weaponPose?.() ?? null;
     const snap = snapshotPlayer(playerEntity, {
@@ -6870,7 +6971,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // exterior -> the townTalk overlay, interior OR dungeon -> the mode
   // machine's slot. U43-ii shipped the dungeon half: showQuestBox
   // offers the window to `modes.showQuestOverlay` below, and
-  // worldModes answers it in BOTH modes (worldModes.js:7518-7581 -
+  // worldModes answers it in BOTH modes (worldModes.js:7565-7628 -
   // dungeon routes to dungeonCtx.showOverlay), so a dungeon popup is
   // shown rather than logged loudly and dropped.
   // AUDIT 24 (wave 21): DaggerfallMessageBox.Show() is a
@@ -9350,26 +9451,17 @@ export async function bootWorld(canvas, renderer, params, status) {
    * townsman behind the camera was a draw, two texture binds and its
    * uniforms every frame, and a town is full of them.
    *
-   * THE SPHERE IS THE BATCH'S OWN, LIFTED. `createBillboardBatch` stores a
-   * sphere over the placement points with the sprite's half-diagonal added
-   * to the radius - and that is the sphere the shadow replay already culls
-   * by. But the billboard VS is BOTTOM-ANCHORED (`uUp * ((aCorner.y + 0.5)
-   * * uSize.y)`): a sprite stands its full height ABOVE its placement
-   * point, and a sphere of radius hypot(w, h) / 2 about that point does
-   * not reach the top of anything taller than it is wide. A person is
-   * exactly that shape. Lifting the centre by half the height bounds the
-   * quad exactly - from there it spans w/2 sideways and h/2 either way in
-   * y, which is what the stored radius already covers - and without the
-   * lift this would cull heads at the top of the screen.
+   * GHOST1: THE TEST IS `batchVisible`, not a copy of it. The batch's own
+   * sphere, lifted half a height for the bottom anchor, with the whole
+   * argument for the lift written where it lives (render/bounds.js). This
+   * host and the billboard pass each hand-rolled that lift while the
+   * shadow replay and the air pass's emitters - the other readers of the
+   * same sphere - had none, so the passes disagreed about the same sprite
+   * and a culled flat kept its bloom. A ghost campfire.
    *
    * A batch with no bounds is always drawn, as `batchVisible` has it.
    */
-  const billboardOutside = (b) => {
-    const s = b.bounds; if (!s) return false;
-    const o = b.origin;
-    const h = b.size?.h ?? 0;
-    return !sphereInPlanes(_planes, s[0] + (o ? o[0] : 0), s[1] + (o ? o[1] : 0) + h * 0.5, s[2] + (o ? o[2] : 0), s[3]);
-  };
+  const billboardOutside = (b) => !batchVisible(_planes, b);
   // A4: the streaming world's animal sources - pixel-local positions
   // translated through the floating origin at roll time (16 Hz over
   // a handful of animals; recenters are free).
@@ -10188,7 +10280,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         clearSceneCache(playerEntity.sceneCache, { start: false });
       }
       queue.push(...r.load);
-      if (locationIndex.get(`${r.current.x},${r.current.y}`)?.spawned) townTalk.say('There is a dungeon entrance nearby.');   // SPAWNED-DUNGEONS2: said on ENTERING its pixel, not when it is rolled (that is three pixels ahead)
+      announceNearbySpawns(r.current.x, r.current.y);   // SPAWNED-DUNGEONS2: said on ENTERING the pixel, not when it is rolled (that is three pixels ahead)
       for (const u of r.unload) {
         destroyPixel(u.px, u.py);
         state.release(u.px, u.py);
@@ -10431,7 +10523,18 @@ export async function bootWorld(canvas, renderer, params, status) {
 
     // WM2b: read the eased wind ONCE a frame, not once a mill.
     const windNow = sky.wind();
-    if (cullOn) frustumPlanes(multiply(proj, view, _pv), _planes);   // EV3
+    // GHOST1 (2026-09-19): NORMALISED, because `_planes` now serves TWO
+    // tests. EV3's `aabbOutside` only reads the sign of `a*px+b*py+c*pz+d`
+    // and dividing all four coefficients by a positive length cannot
+    // change a sign, so every box test below is bit-for-bit the decision
+    // it was. `billboardOutside` is the one that needs it: `sphereInPlanes`
+    // compares that dot product against `-r`, and that is only a distance
+    // against a radius when the normal is a unit vector. Unnormalised, the
+    // radius counted for 1/|n| of what it should and a flat still on
+    // screen was culled - the sprites popping as the camera turned, and
+    // the campfires that left only their bloom behind. Six square roots a
+    // frame.
+    if (cullOn) spherePlanes(multiply(proj, view, _pv), _planes);   // EV3 (GHOST1: normalised - the sphere test shares these)
     meterFor(renderer.gl)?.markCpu('batches');   // PERF-CPU: the pixel walk that fills allBatches, culling as it goes
     const allBatches = [];
     // PERF-ON2 (2026-09-19, Mac: "Online mode needs further performance
@@ -11046,8 +11149,10 @@ export async function bootWorld(canvas, renderer, params, status) {
         // AUDIT 23 (combat-2): the bow machine's frame-4 loose sound.
         if (ev === 'bowSound') { audio.playOneShot(SOUND.ArrowShoot, 1.1); continue; }
         if (ev !== 'hit') continue;
-        if (weaponTypeForItem(weaponRig.playerWeapon.weapon) === WEAPON_TYPES.Bow) {
-          if (spendArrow(playerEntity.items)) {
+        // EVERY RANGED WEAPON, not only the bow: `isBowWeapon` is
+        // "scored on Archery", which is what the Thunderlock is too.
+        if (isBowWeapon(weaponRig.playerWeapon.weapon)) {
+          if (spendAmmoFor(playerEntity.items, weaponRig.playerWeapon.weapon)) {
             // AUDIT 23 (C14): the swing fatigue + the FULL bow tally
             // arm (Archery AND CriticalStrike) - see exterior.js.
             drainExteriorFatigue(SWING_WEAPON_FATIGUE_LOSS);

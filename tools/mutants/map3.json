@@ -482,7 +482,7 @@
   {
     "name": "no-retry",
     "file": "src/ui/heldMap.js",
-    "old": "    } else if (!first && this._handsTries > 0 && this._handsTries < 30) { this._handsTries++; this._tryHands(); }",
+    "old": "    } else if (!first && this._phase !== 'closing' && this._handsTries > 0 && this._handsTries < 30) { this._handsTries++; this._tryHands(); }",
     "new": "    } else if (false) { this._handsTries++; this._tryHands(); }",
     "tests": [
       "test/heldmap.test.js"
@@ -491,8 +491,8 @@
   {
     "name": "retry-forever",
     "file": "src/ui/heldMap.js",
-    "old": "    } else if (!first && this._handsTries > 0 && this._handsTries < 30) { this._handsTries++; this._tryHands(); }",
-    "new": "    } else if (!first && this._handsTries > 0) { this._handsTries++; this._tryHands(); }",
+    "old": "    } else if (!first && this._phase !== 'closing' && this._handsTries > 0 && this._handsTries < 30) { this._handsTries++; this._tryHands(); }",
+    "new": "    } else if (!first && this._phase !== 'closing' && this._handsTries > 0) { this._handsTries++; this._tryHands(); }",
     "tests": [
       "test/heldmap.test.js"
     ]
@@ -667,6 +667,33 @@
     "file": "src/combat/weaponRig.js",
     "old": "      const sheetOnly = playerWeapon.sheathed && !spellArmed() && !fpsSpellCasting.isPlayingAnim\n        && (entity?.equipCountdown ?? 0) <= 0 && fpArm.active() && fpArm.holdingPaper();",
     "new": "      const sheetOnly = !shown() && fpArm.active() && fpArm.holdingPaper();",
+    "tests": [
+      "test/map3_heldpose.test.js"
+    ]
+  },
+  {
+    "name": "MAP-WEAPON-the-gate-is-dropped",
+    "file": "src/combat/weaponRig.js",
+    "old": "      if (sheetWindowUp()) return;",
+    "new": "",
+    "tests": [
+      "test/map3_heldpose.test.js"
+    ]
+  },
+  {
+    "name": "MAP-WEAPON-the-gate-stands-above-the-arm-branch",
+    "file": "src/combat/weaponRig.js",
+    "old": "      if (fpArm.active()) { fpArm.draw(c); return; }",
+    "new": "      if (sheetWindowUp()) return;\n      if (fpArm.active()) { fpArm.draw(c); return; }",
+    "tests": [
+      "test/map3_heldpose.test.js"
+    ]
+  },
+  {
+    "name": "MAP-WEAPON-the-host-raises-a-flag-instead-of-asking-the-slot",
+    "file": "src/scenes/world.js",
+    "old": "    sheetWindowUp: () => townTalk.overlay?.isTravelMap === true,",
+    "new": "    sheetWindowUp: () => !!_travelMap,",
     "tests": [
       "test/map3_heldpose.test.js"
     ]

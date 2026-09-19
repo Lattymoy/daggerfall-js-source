@@ -151,6 +151,62 @@ rest will), a kit's cannot, and a kit's camp is swept when its fire
 dies while a cold tent stands. Within four metres of a lit fire you
 are BY it - the needs law's warmth and drying, and SURV4's sleep.
 
+### The world's own fires (HEARTH1)
+
+Mac, 2026-09-19: *"Does this version of C&C not let you use braziers as
+extra campfires to cook from?"* It did not, and that was a gap rather
+than a rule. `byFire` looked at exactly one pool - camps somebody had
+PLACED - so every brazier, fire bowl and tavern hearth in Daggerfall was
+a sprite and a point light and nothing else: a player standing over a
+roaring brazier was as cold, as wet and as roughly rested as one
+standing in a field, and had to burn a Campfire Kit two feet from it to
+cook a fish.
+
+`survival/hearth.js` is the law, and it is mostly its own exclusions.
+Three archive-210 records are a fire you can stand over - 0 (bowl with
+fire), 1 (the flame a camp itself stands, so a block that places one is
+placing a campfire) and 20 (the brazier torch). Everything else in the
+lights archive is out: the fourteen candles, lanterns and chandeliers
+obviously, the eleven records DFU's own `AddLight` switch leaves as
+unnamed "todo" arms for want of evidence, and - the one worth writing
+down - the two WALL TORCHES (6, 17). Those are a real flame, and they
+are excluded because they are bracketed at head height: counting them
+would make every lit corridor in every dungeon a kitchen and every
+torchlit street a campsite. A fire you cook on is one you can stand
+over.
+
+All four hosts collect their own, off walks they were already doing.
+The two exterior hosts split theirs out of the lantern list
+(`collectCityLights` carries the texture record now, in both its arms);
+the dungeon reads its own flats, because a dungeon's lights are RDB
+Light RESOURCES with no texture at all; the interior takes the list its
+context built. The streaming host's are pixel-local and ride the
+floating origin like every other coordinate it carries, and its walk is
+cut at `HEARTH_NEAR` (16 m), which clears both questions the pool is
+asked.
+
+What a hearth IS: `byFire` - the fifteen degrees of warmth, the drying,
+and SURV4's sleep, so a rest by a brazier is a camp's rest. And a target
+under the activation ray at a camp's own reach, whose box reaches DOWN
+as well as up because the position is the flame and the bowl is under
+it; Info and Talk name it, and every other mode opens the cooking list.
+
+What it is NOT: a camp. `campAt` still answers with camps alone, because
+the menu, the packing and the online record all key on a camp record and
+a brazier has none - it is nobody's to pack, stoke or put out, and it
+does not burn down, so the cooking list skips the embers test a camp
+needs.
+
+The INTERIOR host is the one that changed shape. It has no camp pool and
+may not have one (the mod refuses to pitch or light indoors), and its
+survival reader had said `byFire: false` outright since AUDIT SURV B -
+correct while a camp was the only fire the law knew, and wrong the
+moment a tavern's hearth counts. It carries a pool now that can never
+STAND anything: `place()` says `insideBuilding`, which is the camp law's
+own refusal, and it is handed no texture door to mount a fire with. It
+exists for two answers - `byFire`, and the ray's cooking list - and its
+fires leave with the room on every way out.
+
 Under the one activation ray (the race takes it, at 3.2) Info and Talk
 name the camp and any other mode opens a list picker: rest here, cook
 food (the raw fish and meat, cooked a stage nearer fresh in half an
@@ -595,3 +651,114 @@ back, the per-minute cadence, the health floor, a flat rate, death in
 your sleep, the threshold dropped to dehydrated, and four on the walk
 (a jump lethal again, the replayed bite unclamped, every minute live,
 every minute a replay).
+
+## SURV-ART - THE ART NEVER REACHED THE SCREEN (2026-09-19)
+
+Mac: *"the sprites aren't showing at all"*.
+
+Sixteen of the mod's twenty PNGs are vendored at
+`vendor/climates-calories/Textures/`, registered at boot by
+`installSurvivalIcons`, fetched and decoded. They drew NOTHING. Both of
+the port's icon doors dropped them on the last step, and each did it in
+its own way - which is why nothing in the suite noticed: every pin the
+SURV2 work wrote held the registration, the decode and the addressing,
+and all three were correct.
+
+**THE GL DOOR** (`ui/itemScroller.js`, `ui/nativeInventory.js`) asks the
+pipeline for the archive and then gates on
+
+```js
+if (img.record < tex.recordCount) {
+  icons.uploadRecord(img.archive, img.record, ...);
+  sizes.set(key, tex.getSize(img.record));
+}
+```
+
+For a vendored archive `getTexture` hands back `vendorTextureStandIn`,
+and that object carried `getWidth`, `getHeight`, `getDFBitmap` and
+`getColor32` - but neither `recordCount` nor `getSize`. So the gate read
+`0 < undefined`, which is FALSE for every record of every vendored
+archive, and the upload it guards never ran: no texture, no size, and
+`if (!glTex || !size?.width) return false` a few lines later drew
+nothing. A stand-in for a file must answer like the file. It now
+carries `recordCount`, `getSize` (with `TextureFile.getSize`'s own
+out-of-range answer), `getOffset`, `getScale` and `getFrameCount`.
+
+`vendorRecordCount` reads the REGISTRY, not the decoded map. The
+pipeline builds the stand-in inside the same await that preloads, and a
+PNG still in flight - or one that would not decode - must not shrink
+the archive underneath the caller about to ask for its record; that
+reads as "no such record" and is this bug again by another route.
+
+**THE DOM DOOR** (`ui/textureCanvas.js` `requestIcon`, which the
+enhanced HUD's quickslots and the enhanced inventory's tiles both draw
+through) had no vendor arm at all. It went straight to `getArchive`,
+which fetches `TEXTURE.539` - a file that does not exist, for an
+archive that is only ever the port's own art - warned, and cached the
+failure as a PERMANENT miss, so every repaint after it drew the
+two-letter initials fallback. The arm now stands FIRST, before the
+fetch that cannot succeed, and takes `decodedTexture`'s color32 shape
+straight to a canvas through the new `color32Canvas`, because a PNG has
+no palette index to look up and no cutout rule to apply - it carries
+its own alpha.
+
+`color32Canvas` REVERSES THE ROWS, and that is not incidental. The port
+stores every texture in color32 order (row 0 the picture's bottom,
+`formats/color32Order.js`); a canvas is top-down. Without the reversal
+every mod icon in the DOM would have drawn upside down - SW4's fault
+one door along, and pinned here so it cannot arrive.
+
+**The pins** (`test/survart_icons.test.js`, 3) drive the real modules,
+because a source-text pin would have matched the broken code too: the
+first walks all sixteen through the GL door's own expression, the
+second runs `requestIcon` against a canvas stub and reads the pixels
+back out to check which way up they landed, the third holds both doors'
+arms in place. Mutants: `tools/mutants/survart.json`, 5, 5 dead.
+
+## SURV-TENT - THE TENT'S TWO RESKINS (2026-09-19)
+
+Mac handed over the shipped zip, so the last two of the mod's twenty
+pictures could be read out of the bundle rather than guessed at.
+
+`src/formats/unityBundle.js` opens the `.dfmod` directly - it is a
+UnityFS container - and all twenty Texture2Ds come out by name. Two
+checks came with that, and both were worth running:
+
+- **The sixteen already vendored are EXACT.** Every pixel of every one
+  matches the bundle's own texture, size and orientation included. No
+  SW4 here: `decodeTexture2D` reverses Unity's bottom-up rows on the way
+  out, and whoever extracted them first did the same.
+- **The two missing ones are the tent's.** `50_7-0` is a 32x32 tan
+  canvas of three colours; `67_10-0` is a 64x8 dark wooden strip. The
+  camp stands the mod's model 41606 (`survival/camp.js` TENT_MODEL) and
+  these are how the mod dresses it - the mod ships no other model and no
+  other override, so that is what they are for. Without them the tent
+  wore whatever the base game put on that model.
+
+**THEY ARE A DIFFERENT KIND OF VENDORED FILE, and that is the whole of
+the work.** An icon's archive (532-539) exists ONLY as this art: there
+is no `TEXTURE.532` and never will be, so the pipeline stands a shell
+in for the file. `TEXTURE.050` and `TEXTURE.067` are real files
+carrying dozens of other records, and these override ONE record of
+each, the way a texture pack does.
+
+`isVendorArchive` answered true if ANY record of an archive was
+vendored, which was harmless only while every vendored file happened to
+be of the first kind. Registering `50_7-0` under it would have sent
+`TEXTURE.050` down the stand-in branch as well, and every other record
+in that archive - every wall and floor drawn from 50 - would have come
+back as a 1x1 nothing. The archive NUMBER cannot tell you which kind a
+file is, so the registration says: `addVendorTextures` takes a
+`standIn` flag, the icons pass it, the tent's two do not, and
+`isVendorArchive` and `vendorRecordCount` both read it.
+
+Pinned in `test/survart_icons.test.js` (the files, their sizes, that
+the swap arm finds both, and that 50 and 67 are still fetched while 532
+and 539 are not) and in the SURV2 icon pin. Mutants:
+`tools/mutants/survart.json` grew three - the flag ignored, the tent
+art registered AS a stand-in, and the tent art not registered at all -
+8 in total, 8 dead.
+
+**Still not imported**, and with nowhere to go: the two tavern menu
+backgrounds (`RALZARTAVERN`, `BLANKMENU_TAVERN`). The port draws its
+tavern menu in its own panel.

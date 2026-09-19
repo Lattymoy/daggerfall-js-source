@@ -565,3 +565,60 @@ test('MAP3 world.js: the holder rides the ONE dep bag, asked per open through th
   assert.doesNotMatch(css, /\.hmroot[^{]*\{[^}]*background: #000/, 'and no lane paints a black over it');
   assert.match(css, /\.hmroot\.hmlanehands \.hmink \{ will-change: transform; \}/);
 });
+
+// MAP-WEAPON (2026-09-19, Mac: "when opening up the enhanced map, your
+// unsheathed weapon can still be seen") - THE CLASSIC BODY HAD NO
+// ANSWER FOR A WINDOW THAT DOES NOT COVER THE SCREEN.
+//
+// MAP-FIELD gave the MORROWIND arm the held-sheet pose, and
+// `fpArm.holdPaper` hides the weapon, the arrow and the torch while it
+// holds - so the arm's own branch was already right. The classic body
+// has no pose to take and simply kept drawing. Under DFU's own travel
+// map that is invisible: TRAV0I00 is a full-screen window and the
+// weapon is behind it. The enhanced map is the port's own SPRITE - two
+// hands holding a parchment, real alpha around them, bottom-anchored by
+// MAP-FIELD5 - so the weapon shows through and around it.
+//
+// The law is a POSITION in the draw ladder, which is what these pins
+// hold: below the arm's branch (which returns, so the arm is untouched)
+// and above the shield, the torch hand, the widget's clone and the
+// sprite - the four the classic body would have painted.
+test('MAP-WEAPON: the sprite lane stands down while a map holds the screen, below the arm and above all four painters (mutant: map-weapon-gate-dropped)', async () => {
+  const { readFileSync } = await import('node:fs');
+  const rig = readFileSync(new URL('../src/combat/weaponRig.js', import.meta.url), 'utf8');
+
+  // the dep, defaulted FALSE - a host that never heard of it draws
+  // exactly what it drew before
+  assert.match(rig, /sheetWindowUp = \(\) => false \}\) \{/, 'the dep defaults to "no map"');
+
+  const i = rig.indexOf('if (fpArm.active()) { fpArm.draw(c); return; }');
+  assert.ok(i > 0, 'the arm branch');
+  const gate = rig.indexOf('if (sheetWindowUp()) return;');
+  assert.ok(gate > i, 'the gate stands BELOW the arm branch, or the held-sheet pose never draws');
+  for (const [what, needle] of [
+    ['the shield', 'if (shieldRect) shield.draw('],
+    ['the torch hand', 'if (handheldOn() && c) handheld.draw('],
+    ['the clone', 'if (widgetOn() && c && widget.draw('],
+    // FIELD-GUN7: the sprite's call took a block so the Thunderlock's
+    // raise can be computed for it, so the needle is the CALL
+    ['the sprite', 'drawFpsWeapon(renderer, c, art,'],
+  ]) {
+    assert.ok(gate < rig.indexOf(needle), `the gate stands ABOVE ${what}`);
+  }
+  // ...and it is NOT folded into shown(), whose four legs are the
+  // WEAPON's own state (AUDIT-FIELD F1's warning, one door along)
+  const shownFn = rig.slice(rig.indexOf('function shown() {'), rig.indexOf('function shown() {') + 900);
+  assert.doesNotMatch(shownFn, /sheetWindowUp/, 'a window is not a leg of the weapon’s own predicate');
+});
+
+test('MAP-WEAPON: the host asks the live overlay slot, and the window carries the tag it asks for', async () => {
+  const { readFileSync } = await import('node:fs');
+  const w = readFileSync(new URL('../src/scenes/world.js', import.meta.url), 'utf8');
+  // Read PER FRAME off the slot, never a flag raised at the open: the
+  // window can be closed by Escape, by a travel, by a quest popup
+  // taking the slot, or by a teardown, and a flag would have to be
+  // lowered at every one of them.
+  assert.match(w, /sheetWindowUp: \(\) => townTalk\.overlay\?\.isTravelMap === true,/);
+  const held = readFileSync(new URL('../src/ui/heldMap.js', import.meta.url), 'utf8');
+  assert.match(held, /this\.isTravelMap = true;/, 'the window’s own duck tag - the rig imports no UI class to ask');
+});

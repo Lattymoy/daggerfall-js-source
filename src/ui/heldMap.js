@@ -113,53 +113,15 @@ import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
 import { quadPlacement } from './quadMap.js';   // MAP3: the sheet over the held paper's corners
 import { bindings } from './input.js';
 import { actionForCode } from '../systems/inputActions.js';
+import { smoothstep } from '../systems/mathf.js';   // MAP-FIELD7: the ONE easing, so the sheet travels like everything else in the port
 
 // ── THE SPRITE (Mac's, public/art/held-map.png) ──────────────────
-/** MAP-FIELD (2026-09-18, Mac: "The sprite I gave to be used is nowhere
- *  to be seen at all"): THE SITE ROOT, READ OFF THIS MODULE.
- *
- *  The sprite lives in `public/`, so it is served at `<root>/art/held-map.png`.
- *  A bare relative `art/held-map.png` is resolved against the DOCUMENT,
- *  and the game's document is `/play/index.html` - so the browser asked
- *  for `/play/art/held-map.png`, the host answered with the page itself,
- *  the decode failed, `onload` never fired, and the window stood with no
- *  parchment and no hands: ink on black. The build's `base` is './', so
- *  there is no absolute path to hardcode either.
- *
- *  The MODULE's own URL knows where the root is under any base: a build
- *  serves it from `<root>/assets/`, the dev server from `<root>/src/`.
- *  Cutting that segment off gives the root, and the sprite hangs off it.
- *  Pure, so the pin can drive it with the shapes both lanes produce. */
-export function appRootFrom(moduleUrl) {
-  let u;
-  // AUDIT-FIELD F4: a module URL that cannot be a base (blob:, data:)
-  // has no pathname to cut, and `new URL('art/...', it)` THROWS - at
-  // module evaluation, in a file scenes/world.js imports statically
-  // through travelMapDoor.js, so the throw would not cost the map, it
-  // would cost the whole scene. There is no root to find in such a URL.
-  try { u = new URL(moduleUrl); } catch { return null; }
-  if (!u.pathname.startsWith('/')) return null;   // an opaque path: cannot-be-a-base
-  u.search = ''; u.hash = '';
-  // AUDIT-FIELD F3: THE LAST such segment, not the first. JS regex
-  // matching is leftmost-first, and `.*$` being greedy only decides the
-  // tail - so the first cut cut at the FIRST `/assets/` or `/src/` on
-  // the path. Unpack `dist/` into `~/public_html/assets/dfjs/` - or any
-  // tree with a directory named exactly `assets` or `src` above the
-  // build's own - and `/assets/dfjs/assets/main-x.js` collapsed to `/`,
-  // and the sprite 404'd again, one directory up from where it lives. A
-  // greedy leading group takes the last one instead. A path with neither
-  // segment is not a shape this app is served from, and guessing the
-  // module's own directory there is how the bug this helper exists for
-  // looked; answer null and let the caller fall back out loud.
-  const cut = u.pathname.replace(/^(.*)\/(?:assets|src)\/[^/]*(?:\/.*)?$/, '$1/');
-  if (cut === u.pathname) return null;
-  u.pathname = cut;
-  return u.href;
-}
-/** The root the sprite hangs off, or null when this module's URL names
- *  none - the sprite then falls back to the document's own base, which
- *  is right at a site root and is at least a URL rather than a throw. */
-export const APP_ROOT = appRootFrom(import.meta.url);
+// THE SITE ROOT lives in systems/appRoot.js now (AUDIT-THUNDERLOCK
+// F7: the port's own weapon needed the same law and could not import
+// this module to get it). Re-exported here, where MAP-FIELD put it.
+export { appRootFrom, APP_ROOT } from '../systems/appRoot.js';
+import { APP_ROOT } from '../systems/appRoot.js';
+
 export const HELD_MAP_URL = new URL('art/held-map.png', APP_ROOT ?? globalThis.document?.baseURI ?? 'https://invalid.invalid/').href;
 /** Its own pixels, and the stage's aspect. */
 export const SPRITE = Object.freeze({ w: 1448, h: 1086 });
@@ -194,7 +156,7 @@ export const SPRITE = Object.freeze({ w: 1448, h: 1086 });
  *  sides off the rows ABOVE the thumbs (where the sheet is the only
  *  opaque thing on the row, so alpha alone gives the edge) and its top
  *  and bottom down the middle columns, then shrinks until no row or
- *  column overhangs. The sheet measures x 271-1189, y 211-766; these
+ *  column overhangs. The sheet measures x 270-1189, y 210-766; these
  *  are inset a few thousandths inside that for the ragged border. */
 export const PAPER = Object.freeze({ x0: 0.192, x1: 0.818, y0: 0.198, y1: 0.703 });
 /** Where the thumbs rest ON the sheet, as fractions of the sprite. In
@@ -243,8 +205,10 @@ export const THUMB_ZONES = Object.freeze([
  *  three paintings of brightness-keying left parchment on the map. */
 export const HAND_CHROMA = 75;
 /** The radius of the CLOSE in step 3 of keyThumbPixels, in sprite
- *  pixels: gaps narrower than twice this are bridged, and the thumb's
- *  outline is left where it was. */
+ *  pixels: a gap of at most twice this is bridged, and the thumb's
+ *  outline is left where it was - except against a zone's own edge,
+ *  where the erode treats off-zone as kept and so cannot pull the blob
+ *  back, so a blob within `grow` of an edge keeps its bulge. */
 export const THUMB_GROW = 4;
 /** MAP-FIELD2 (Mac, 2026-09-18): "...and is full screen with a BLACK
  *  BACKGROUND" - and MAP-FIELD4, which ended that law.
@@ -287,12 +251,24 @@ export const THUMB_GROW = 4;
  *  outside PAPER's x range smears the sheet's own torn edge, because
  *  PAPER is inset a few pixels inside the parchment. Asking whether it
  *  ends below the sheet smears the whole parchment, because the sheet's
- *  ragged bottom (to 0.732) hangs lower than PAPER's foot. The band
- *  works because the file separates cleanly: every column under the
- *  sheet ends by 0.737, every cuff column at 0.866 or below, and
- *  NOTHING ends in between. What lies between are the hand's own
- *  silhouette columns, which end in mid-air on purpose and must never
- *  be streaked - the arm is not cut there, it is drawn there.
+ *  ragged bottom (to 0.7330) hangs lower than PAPER's foot.
+ *
+ *  AUDIT MAP-FIELD: THE BAND'S MARGIN IS SMALL, and the first draft of
+ *  this comment said the opposite. It claimed every column under the
+ *  sheet ends by 0.737, every cuff at 0.866, and NOTHING in between -
+ *  then contradicted itself in its own next sentence, which named what
+ *  does end in between. Measured: 64 columns end between the sheet's
+ *  lowest row (0.7330) and the highest cut cuff (0.8656), running up
+ *  to 0.8435. They are the HAND'S OWN SILHOUETTE - the arm beside the
+ *  sheet, drawn to end where it ends, which a streak would ruin.
+ *
+ *  So the empty band is 0.8435 to 0.8656 - twenty-three rows, not a
+ *  hundred and forty-five - and CUFF_BAND sits in it with about six
+ *  rows of headroom above and seventeen below. Enough for this
+ *  painting; not enough to be casual about, since a repainted arm
+ *  eight pixels lower puts silhouette columns under the band and
+ *  streaks them. The art probe measures the gap and pins the band
+ *  inside it, which is the only reason to trust the number.
  *
  *  `alphaMin` is MORE THAN HALF OPAQUE, not merely visible. A column's
  *  foot has to be a pixel the painter put there: the anti-aliased
@@ -324,13 +300,14 @@ export function extendCuffs(data, w, h, foot = CUFF_BAND, alphaMin = 128) {
  *  HELD sprite now, on the law every other held thing in this port
  *  takes: anchored to the BOTTOM edge, the world behind it, and pushed
  *  a little further down so the arms leave the frame instead of ending
- *  in mid-air above it. `OVERHANG` is that push, as a fraction of the
+ *  in mid-air above it. `HELD_MAP_BITE` is that push, as a fraction of the
  *  sprite's own height, so it is the same crop at every size.
  *
  *  `HEIGHT` is the sprite's height as a fraction of the viewport's.
- *  It is what the paper's size follows from - PAPER is 0.617 of the
- *  sprite - so it is the one number to turn if the map reads too small
- *  to use or too big to see past. */
+ *  It is what the paper's size follows from - PAPER is 0.626 of the
+ *  sprite wide and 0.505 of it tall - so it is the one number to turn
+ *  if the map reads too small to use or too big to see past. (AUDIT
+ *  MAP-FIELD: it read 0.617, a PAPER two paintings old.) */
 export const HELD_MAP_HEIGHT = 0.92;
 // MAP-FIELD5 (2026-09-19, Mac: "Can you lower it on the screen more").
 // 0.03 to 0.11 - about 60px further down a 720p screen. This is the
@@ -356,16 +333,26 @@ export const HELD_MAP_BITE = 0.11;
 export const SPRITE_ART_FOOT = 0.895;
 /** Where the CUFF BAND begins, as a fraction of the sprite's height:
  *  the line above which a column's art ends because it was DRAWN to end
- *  there, and below which it ends because the frame cut it. Measured -
- *  every column under the sheet ends by 0.737 and every cuff column at
- *  0.866 or below, with nothing at all in between, so this sits in that
- *  empty band. It is what tells extendCuffs an arm to carry off the
- *  screen from a silhouette to leave alone. */
+ *  there, and below which it ends because the frame cut it. It is what
+ *  tells extendCuffs an arm to carry off the screen from a silhouette
+ *  to leave alone.
+ *
+ *  Measured: the hand's silhouette columns end as low as 0.8435 and
+ *  the cut cuffs begin at 0.8656, so the gap this sits in is 23 rows
+ *  and this line has about six rows of headroom. See extendCuffs for
+ *  why that margin is smaller than it first looks. */
 export const CUFF_BAND = 0.85;
 
 // ── THE CLOCKS (skin) ────────────────────────────────────────────
-const OPEN_S = 0.3;      // the sheet rises into view
-const CLOSE_S = 0.3;     // ...and lowers on a commit or a close
+/** MAP-FIELD7 (2026-09-19, Mac: "when you open or close your map, I
+ *  want the sprite to come in and go out at the bottom of the screen
+ *  instead of fading in"). These two always SAID the sheet rises and
+ *  lowers - the comment was the intent and the code was a fade. It
+ *  really moves now (`_setRaise`), and it takes a little longer than
+ *  the fade did, because a fade of a third of a second reads as instant
+ *  while a travelling thing reads as hurried. */
+const OPEN_S = 0.42;     // the sheet rises into view
+const CLOSE_S = 0.36;    // ...and lowers on a commit or a close, a touch quicker: leaving is not a flourish
 // SOC6: how often the window ASKS the host for its party, in seconds -
 // well under the eye's patience and well over the pose rate the hub
 // relays at (net/wire.js PARTY_SEND_MS). The classic window polls at
@@ -406,6 +393,10 @@ export class HeldMapWindow {
     this.deps = deps;
     this.done = false;
     this.isChoiceWindow = true;
+    // MAP-WEAPON: the scene's tick tag, this file's own idiom
+    // (`isRestWindow`, `isVirtueLevelUp`): the weapon rig asks whether
+    // a map holds the screen and must not import a UI class to ask.
+    this.isTravelMap = true;
     // MAP-FIELD2: the vitals and the status icons go while the sheet is
     // out - it is held in the player's own hands, and a bar drawn over
     // the knuckles is not a HUD under a window (windowStack.hidesHud).
@@ -625,26 +616,28 @@ export class HeldMapWindow {
       // painting comes back, for the rest of this open
       if (this._placement) this._handsLost = 0;
       else if (this._phase === 'map' && ++this._handsLost > HANDS_LOST_TICKS) this._leaveHands();
-    } else if (!first && this._handsTries > 0 && this._handsTries < 30) { this._handsTries++; this._tryHands(); }
+    // AUDIT MAP-FIELD: ...and NOT while the sheet is leaving. The guard
+    // on the first arm said "closing: the sheet was let go at
+    // _beginClose", but it only guarded that arm - the retry fell
+    // through to here at any phase. Taking the arm mid-close hid the
+    // painting on the spot and, since _setRaise leaves the hands lane
+    // untransformed, SNAPPED the lowering sheet back to its held place.
+    } else if (!first && this._phase !== 'closing' && this._handsTries > 0 && this._handsTries < 30) { this._handsTries++; this._tryHands(); }
     this._t += dt;
     switch (this._phase) {
       case 'opening': {
-        this._setOpacity(clamp(this._t / OPEN_S, 0, 1));
+        this._setRaise(clamp(this._t / OPEN_S, 0, 1));
         if (this._t >= OPEN_S) { this._phase = 'map'; this._t = 0; this._renderCard(); }
         break;
       }
       case 'map': break;
       case 'closing': {
-        this._setOpacity(clamp((this._closeFrom ?? 1) * (1 - this._t / CLOSE_S), 0, 1));
+        this._setRaise(clamp((this._closeFrom ?? 1) * (1 - this._t / CLOSE_S), 0, 1));
         if (this._t >= CLOSE_S) {
           // THE COMMIT, with the sheet down: the hooks are read while
           // this window is still alive (the pack's lesson), and the
           // host's own travel runs from here.
-          const c = this._commit;
-          this._commit = null;
-          if (c?.kind === 'travel') this.deps.onTravel?.(c.pick, c.opts, c.computed);
-          else if (c?.kind === 'teleport') this.deps.onTeleport?.(c.pick);
-          else if (c?.kind === 'coords') this.deps.onTravelToCoords?.(c.pick, c.opts);   // MAP2: a bare pixel, the mod's own journey
+          this._fireCommit();
           this._close();
           return;
         }
@@ -678,7 +671,32 @@ export class HeldMapWindow {
 
   dispose() {
     this._dead = true;
+    // AUDIT MAP-FIELD: THE JOURNEY SURVIVES A TEARDOWN. The commit only
+    // ever fired from tick()'s closing arm, so a host that disposed the
+    // window while the sheet was still lowering - a mode change, an
+    // overlay cleared, closeTravelWindows from anywhere - dropped the
+    // travel the player had already paid for and committed to, with no
+    // sign that anything had happened. It is fired here instead, one
+    // shot, before _close() tears the window down.
+    //
+    // It fires BEFORE _close() rather than inside it so re-entry is
+    // safe: a host whose onTravel disposes us again runs the whole of
+    // _close() on that inner call, and the outer _close() then sees
+    // `done` and returns - so onClose is still owed exactly once.
+    this._fireCommit();
     this._close();
+  }
+
+  /** The commit the player made, fired once and then forgotten. ONE
+   *  HOME for the three hooks: the closing arm and dispose() both come
+   *  here, so a journey cannot be committed down one path and lost down
+   *  the other. A second call is a no-op. */
+  _fireCommit() {
+    const c = this._commit;
+    this._commit = null;
+    if (c?.kind === 'travel') this.deps.onTravel?.(c.pick, c.opts, c.computed);
+    else if (c?.kind === 'teleport') this.deps.onTeleport?.(c.pick);
+    else if (c?.kind === 'coords') this.deps.onTravelToCoords?.(c.pick, c.opts);   // MAP2: a bare pixel, the mod's own journey
   }
 
   /** Everything the window holds, released once - in close() rather
@@ -731,17 +749,48 @@ export class HeldMapWindow {
       this._cornersKey = '';
       if (this._chrome?.ink) this._chrome.ink.style.opacity = '0';
     }
-    // the fade starts from where the sheet IS - a close answered during
-    // the opening fade must not snap to full before lowering
-    this._closeFrom = parseFloat(this._chrome?.root?.style?.opacity ?? '1');
-    if (!Number.isFinite(this._closeFrom)) this._closeFrom = 1;
+    // the close starts from where the sheet IS - one answered while it
+    // is still rising must lower from there, not snap up first
+    this._closeFrom = Number.isFinite(this._raise) ? this._raise : 1;
     this._phase = 'closing';
     this._t = 0;
     this._renderCard();
   }
 
-  _setOpacity(a) {
-    if (this._chrome?.root) this._chrome.root.style.opacity = String(Math.round(a * 100) / 100);
+  /** MAP-FIELD7: HOW FAR UP THE SHEET IS, 0 (clear off the bottom edge)
+   *  to 1 (held). The stage is carried on its OWN height - `translateY`
+   *  of 100% - which needs no viewport number and is right at every
+   *  size: the stage's top sits at `vh - (SPRITE_ART_FOOT -
+   *  HELD_MAP_BITE) * h`, so moving it down by a full `h` always puts
+   *  its top past the bottom edge and the whole painting with it.
+   *
+   *  Eased rather than linear, because a held thing has weight - it is
+   *  smoothstep, the port's own (systems/mathf.js), so the sheet leaves
+   *  and arrives slowly and crosses quickly.
+   *
+   *  The chrome does NOT travel. The top bar and the card are anchored
+   *  to the viewport's edges, and sliding them up from the floor reads
+   *  as a mistake; they keep the fade the sheet used to have, through
+   *  the one CSS rule that excludes the stage.
+   *
+   *  IN THE HANDS LANE (MAP3) NOTHING SLIDES. The arm brings the sheet
+   *  in itself, and a transform on the stage would drag the ink's own
+   *  matrix3d off the paper the rig is holding. */
+  _setRaise(a) {
+    this._raise = a;
+    const c = this._chrome;
+    if (!c?.root) return;
+    // the chrome fades where it stands, child by child. NOT through the
+    // root: the root carries the stage, so its opacity would fade the
+    // sprite - the very thing this replaced. Walking the children keeps
+    // the law in JS where a pin can read it, and covers a box or a card
+    // appended later, which the next tick reaches.
+    const o = String(Math.round(a * 100) / 100);
+    for (const n of c.root.children ?? []) { if (n !== c.stage) n.style.opacity = o; }
+    if (!c.stage) return;
+    if (this._lane === 'hands') { c.stage.style.transform = ''; return; }
+    const e = smoothstep(0, 1, a);
+    c.stage.style.transform = e >= 1 ? '' : `translateY(${Math.round((1 - e) * 1000) / 10}%)`;
   }
 
   // ── THE SHEET ──────────────────────────────────────────────────
@@ -1611,7 +1660,11 @@ export class HeldMapWindow {
     injectEnhancedFonts();
     const root = el('div', 'hmroot');
     root.id = 'enhanced-travelmap';
-    root.style.opacity = '0';
+    // MAP-FIELD7: the sheet starts DOWN (on the stage, below) and the
+    // chrome starts clear - each child is given its 0 as it is appended,
+    // by the _setRaise(0) at the end of the mount. The root itself never
+    // carries an opacity again: it carries the stage, and fading it is
+    // what faded the sprite.
 
     // the stage: the sprite, the ink canvas over its paper, the hands
     // keyed back over the ink
@@ -1660,6 +1713,10 @@ export class HeldMapWindow {
     root.append(stage, top, card, foot, box);
     document.body.append(root);
     this._chrome = { root, stage, sprite, sheet, ink, hands, label, search, searchInput, results, close, card, hint, band, legend, ports, box };
+    // MAP-FIELD7: down and clear before the first tick, or the sheet
+    // shows for one frame in its held place and then jumps to the floor
+    // to start travelling.
+    this._setRaise(0);
     this._renderPorts();
     this._refreshParty();   // SOC6: the marks stand with the window, not a quarter second after it
     // the names are inked in the web display face; the first paint may
@@ -2097,17 +2154,19 @@ export function rgbaCss(rgba) {
  *  What parts them here is WARMTH, and then SHAPE, on four steps:
  *
  *  1. SEED on red-minus-blue under `chroma`. The sheet is parchment and
- *     warm everywhere, border included; the steel is not. Measured, no
- *     sheet pixel at all falls under this line (HAND_CHROMA), so a
- *     seeded pixel is certainly glove.
+ *     warm everywhere, border included; the steel is not. Five pixels
+ *     of 340,918 of sheet fall under this line - see HAND_CHROMA. An
+ *     earlier draft of THIS sentence said none at all, which was the
+ *     narrower sample, and is corrected at the constant itself.
  *  2. FLOOD from the zone's outer column - `side` names the one nearer
  *     that thumb's own hand. The thumb reaches in from there, so
  *     whatever the flood cannot reach is sheet and goes clear, however
  *     dark it is. This is what drops the sheet's own cracks and stains.
  *  3. CLOSE by `grow`, which bridges the warm lit bands inside the
  *     steel that step 1 would not claim - grow then shrink by the same,
- *     so a gap narrower than twice `grow` is bridged while it is
- *     interior and the outline returns to where the paint put it.
+ *     so a gap of at most twice `grow` is bridged while it is interior
+ *     and the outline returns to where the paint put it - bar a zone's
+ *     own edge, where it stays out (see THUMB_GROW).
  *     Growing alone does not answer it: it bridges nothing that reaches
  *     the silhouette and leaves a pale rim round the thumb.
  *  4. FILL what is enclosed, which takes the warm highlights left

@@ -40,7 +40,7 @@ import {
   buildInkModel, buildInkMarks, paintInk, placeNames, zoomBand, clampView, scaleMinOf, zoomAt, viewCentredOn,
   toPaper, toMap, boundarySegments, linkSegments, landAt, roadChains, markKind, roundCorners,
   paintInkStatic, paintInkOverlay, nameFont,
-  BAND_MARKS, BAND_NAMES, SCALE_MAX, PEN, GLYPH_R,
+  BAND_MARKS, BAND_NAMES, SCALE_MAX, PEN, GLYPH_R, paintGlyph,
 } from '../src/ui/inkMap.js';
 import { PARTY_MARK_CSS } from '../src/ui/partyMapMarks.js';
 import { quadPlacement } from '../src/ui/quadMap.js';   // MAP3
@@ -395,9 +395,209 @@ test('MAP1: the relief map, its renderer and its probe are RETIRED - no file, no
 // ── THE WINDOW'S LAWS ────────────────────────────────────────────
 
 const mkWin = (extra = {}) => new HeldMapWindow(winDeps(extra));
-/** Tick the sheet up: the window opens through a short fade and its
- *  card is phase-gated on 'map'. */
+/** Tick the sheet up: the window opens as the sheet RISES (MAP-FIELD7)
+ *  and its card is phase-gated on 'map'. */
 const open = (win) => { for (let i = 0; i < 20; i++) win.tick(0.05); return win; };
+
+/** How far up the sheet is, read off the stage the way a browser would:
+ *  no transform is held, `translateY(N%)` is N per cent down. */
+const raiseOf = (win) => {
+  const t = win._chrome.stage.style.transform;
+  if (!t) return 1;
+  const m = /translateY\(([-\d.]+)%\)/.exec(t);
+  return m ? 1 - Number(m[1]) / 100 : 1;
+};
+
+test('AUDIT MAP-FIELD: the laws these commits argued for, which nothing was checking (mutants: AUDITMAPFIELD-the-bite-is-the-old-one, AUDITMAPFIELD-the-carets-are-ink-again, AUDITMAPFIELD-the-halo-is-the-pen, AUDITMAPFIELD-the-filled-halo-is-not-stroked, AUDITMAPFIELD-the-travel-is-linear)', () => {
+  // Every law below was argued at length in a commit message and the
+  // arc, and a mutant flipping it SURVIVED the whole file. Found by the
+  // pre-merge audit, which is the only reason they are here.
+
+  // MAP-FIELD5, which was unpinned end to end: Mac asked for the sheet
+  // LOWER, and every viewport's answer follows from the bite alone. The
+  // law is not the literal 0.11 - it is that the painting's foot is
+  // carried a real distance past the bottom edge, which 0.03 is not.
+  assert.ok(HELD_MAP_BITE >= 0.08, `the sheet sits low: the bite is ${HELD_MAP_BITE}`);
+  for (const [vw, vh] of [[1600, 900], [1280, 720], [800, 1200], [640, 360]]) {
+    let sh = vh * HELD_MAP_HEIGHT / SPRITE_ART_FOOT, sw = sh * SPRITE.w / SPRITE.h;
+    if (sw > vw) { sw = vw; sh = sw * SPRITE.h / SPRITE.w; }
+    const sy = vh - ((SPRITE_ART_FOOT - HELD_MAP_BITE) * sh);
+    // the foot lands BITE * sh past the bottom edge, at every size
+    assert.ok((sy + (SPRITE_ART_FOOT * sh)) - vh >= 0.07 * sh,
+      `${vw}x${vh}: the painting's foot is carried well past the edge, not just over it`);
+  }
+
+  // MAP-FIELD6 #3: the carets are RELIEF, not ink. The commit called
+  // quieting them "most of what 'without clutter' asked for", and
+  // PEN.relief -> PEN.soft passed every pin.
+  assert.ok(PEN.relief !== PEN.soft, 'the relief has a tone of its own');
+  const alphaOf = (c) => Number(/,\s*([\d.]+)\)$/.exec(c)[1]);
+  assert.ok(alphaOf(PEN.relief) < alphaOf(PEN.soft) * 0.8, 'and it is decidedly lighter than the pen that draws borders and tracks');
+  {
+    const fx = island();
+    const model = buildInkModel({ ...fx, roads: { roads: new Uint8Array(24), tracks: new Uint8Array(24), source: 'basic-roads' } });
+    model.high = [{ x: 2, y: 1, peak: false }];
+    model.highBands = { far: model.high, mid: model.high, near: model.high };
+    const ctx = recordingCtx();
+    paintInk(ctx, model, { ox: 0, oy: 0, scale: 8 }, { paperW: 200, paperH: 120, band: 'near' });
+    const caret = ctx.calls.find((c) => c.fn === 'moveTo' && c.strokeStyle === PEN.relief);
+    assert.ok(caret, 'the high ground is drawn in the relief tone, not the pen that draws everything else');
+  }
+
+  // MAP-FIELD6 #2: the halo QUIETS the paper. Setting it to the pen's
+  // own colour - a halo that darkens - passed every pin, because every
+  // halo assertion compared against PEN.halo itself.
+  const rgbOf = (c) => /\((\d+),\s*(\d+),\s*(\d+)/.exec(c).slice(1, 4).map(Number);
+  const lumaOf = (c) => { const [r, g, b] = rgbOf(c); return (0.299 * r) + (0.587 * g) + (0.114 * b); };
+  assert.ok(lumaOf(PEN.halo) > lumaOf(PEN.line) + 100, 'the halo is PARCHMENT-light, not another pen - it lifts the ink off the sheet rather than ringing it');
+  assert.ok(lumaOf(PEN.halo) > lumaOf(PEN.name) + 100, '...lighter than the names it carries too');
+
+  // ...and a FILLED glyph's halo has to be stroked as well as filled,
+  // or it sits inside the glyph and shows nothing. The code says so;
+  // nothing checked it.
+  {
+    const ctx = recordingCtx();
+    paintGlyph(ctx, 'village', 10, 10, true);
+    assert.ok(ctx.calls.some((c) => c.fn === 'stroke' && c.strokeStyle === PEN.halo),
+      'a filled glyph is STROKED on the halo pass, or its halo is hidden under it');
+    const ink = recordingCtx();
+    paintGlyph(ink, 'village', 10, 10, false);
+    assert.ok(!ink.calls.some((c) => c.fn === 'stroke'), '...and not on the ink pass, which would fatten the dot');
+  }
+
+  // MAP-FIELD7: the sheet is EASED, not linear - "a held thing has
+  // weight". smoothstep -> identity passed every pin.
+  withDocument(() => {
+    // the clock the window actually uses, read off it rather than guessed
+    const openS = Number(/const OPEN_S = ([\d.]+);/.exec(read('src/ui/heldMap.js'))[1]);
+    const win = mkWin();
+    const at = [];
+    for (let i = 0; i < 7; i++) { win.tick(openS / 7); at.push(raiseOf(win)); }
+    // an eased curve is BELOW the straight line early and above it late
+    assert.ok(at[1] < (2 / 7) - 0.02, `eased in: after two sevenths of the clock the sheet is only ${at[1].toFixed(3)} up`);
+    assert.ok(at[4] > (5 / 7) + 0.02, `...and eased out: after five sevenths it is already ${at[4].toFixed(3)} up`);
+    win.dispose();
+  });
+});
+
+test('AUDIT MAP-FIELD: a commit survives a teardown, and the retry never takes the sheet into the arm while it is leaving (mutants: AUDITMAPFIELD-dispose-drops-the-commit, AUDITMAPFIELD-the-retry-runs-while-closing)', () => {
+  // Both found auditing MAP-FIELD7 before merge.
+  //
+  // 1. THE JOURNEY SURVIVES A TEARDOWN. The travel/teleport/coords hook
+  // only ever fired from tick()'s closing arm, so a host that disposed
+  // the window mid-lower - a mode change, an overlay cleared - dropped
+  // the trip the player had already paid for, silently.
+  withDocument(() => {
+    const fired = [];
+    const win = open(mkWin({ onTravel: (...a) => fired.push(['travel', ...a]), onClose: () => fired.push(['close']) }));
+    win._beginClose({ kind: 'travel', pick: { mapId: 7 }, opts: {}, computed: {} });
+    win.tick(0.05);   // mid-lower, the sheet still on its way down
+    assert.deepEqual(fired, [], 'nothing has fired yet - the sheet is still coming down');
+    win.dispose();
+    assert.equal(fired.filter((f) => f[0] === 'travel').length, 1, 'the journey fires rather than being dropped');
+    assert.equal(fired.filter((f) => f[0] === 'close').length, 1, 'and onClose is still owed exactly once');
+    assert.equal(fired[0][0], 'travel', '...with the travel first, while the window was still alive');
+  });
+  // ...once, whichever way it goes: a full lower must not fire twice
+  withDocument(() => {
+    const fired = [];
+    const win = open(mkWin({ onTeleport: () => fired.push('teleport'), onClose: () => fired.push('close') }));
+    win._beginClose({ kind: 'teleport', pick: { mapId: 9 } });
+    for (let i = 0; i < 20; i++) win.tick(0.05);
+    win.dispose();
+    assert.deepEqual(fired, ['teleport', 'close'], 'the lower fired it, and dispose after found nothing left to fire');
+  });
+
+  // 2. THE RETRY DOES NOT RUN WHILE THE SHEET IS LEAVING. The guard on
+  // the hands-lane arm said so, but only guarded that arm - the retry
+  // fell through at any phase. Taking the arm mid-close hid the
+  // painting on the spot and SNAPPED the lowering sheet back up, since
+  // _setRaise leaves the hands lane untransformed.
+  withDocument(() => {
+    let armed = false;
+    const holder = holderStub({ corners: () => TRAPEZIUM });
+    holder.available = () => armed;
+    const win = open(mkWin({ ...bayDeps(), holder }));
+    assert.equal(win._lane, 'sprite', 'the arm was not drawn, so the painting stood');
+    win._beginClose(null);
+    win.tick(0.05);
+    const partWay = win._chrome.stage.style.transform;
+    assert.match(partWay, /translateY/, 'the sheet is on its way down');
+    armed = true;             // the rig poses mid-close - the case the retry exists for
+    win.tick(0.05);
+    assert.equal(win._lane, 'sprite', 'the arm is NOT taken while the sheet is leaving');
+    assert.match(win._chrome.stage.style.transform, /translateY/, '...so the sheet keeps lowering instead of snapping back to held');
+    assert.notEqual(win._chrome.stage.style.transform, partWay, 'and it really moved on');
+    win.dispose();
+  });
+});
+
+test('MAP-FIELD7: the sheet TRAVELS in and out at the bottom edge, and the chrome fades where it stands (mutants: MAPFIELD7-the-sheet-fades-again, MAPFIELD7-the-sheet-starts-held, MAPFIELD7-the-chrome-travels-too, MAPFIELD7-a-close-mid-rise-snaps-up)', () => {
+  // Mac: "when you open or close your map, I want the sprite to come in
+  // and go out at the bottom of the screen instead of fading in".
+  withDocument(() => {
+    const win = mkWin();
+    const c = win._chrome;
+    // BEFORE THE FIRST TICK the sheet is already off the bottom, or it
+    // shows for one frame in its held place and then jumps down to start
+    assert.equal(raiseOf(win), 0, 'mounted DOWN, not mounted held');
+    assert.equal(c.card.style.opacity, '0', 'and the chrome is clear with it');
+    assert.equal(c.stage.style.opacity, undefined, '...but the STAGE is never faded - that is the whole point');
+
+    const seen = [];
+    for (let i = 0; i < 12; i++) { win.tick(0.05); seen.push(raiseOf(win)); }
+    assert.ok(seen[0] > 0 && seen[0] < 1, 'it is part way up after one tick - a travel, not a cut');
+    for (let i = 1; i < seen.length; i++) assert.ok(seen[i] >= seen[i - 1], 'and it only ever rises while opening');
+    assert.equal(raiseOf(win), 1, 'and it ends HELD, with no transform left on the stage');
+    assert.equal(c.stage.style.transform, '', 'exactly none - a stale translateY(0%) is a compositor layer for nothing');
+    assert.equal(c.card.style.opacity, '1', 'the chrome arrived too');
+    assert.equal(c.stage.style.opacity, undefined, 'and the sheet was never faded on the way, only carried');
+    // THE SHEET IS NOT FADED. The fade lives on the chrome rule now, and
+    // the root carries the stage, so fading the root would fade the
+    // sprite - which is the thing Mac asked to stop.
+    assert.ok(!win._chrome.root.style.opacity, 'the root never carries an opacity - that is what faded the sprite');
+    assert.match(read('src/ui/heldMap.js'), /for \(const n of c\.root\.children \?\? \[\]\) \{ if \(n !== c\.stage\) n\.style\.opacity = o; \}/,
+      'the fade walks the root\'s children and skips the stage BY IDENTITY');
+
+    // ...AND OUT THE SAME WAY
+    win._beginClose(null);
+    const down = [];
+    for (let i = 0; i < 5; i++) { win.tick(0.05); down.push(raiseOf(win)); }
+    for (let i = 1; i < down.length; i++) assert.ok(down[i] <= down[i - 1], 'it only ever lowers while closing');
+    assert.ok(down[down.length - 1] < 1, 'and it really left');
+    win.dispose();
+  });
+
+  // A CLOSE ANSWERED MID-RISE lowers from where the sheet IS. The old
+  // fade read its start off the DOM; this reads the number the window
+  // already holds, and the law is the same - no snap to full first.
+  withDocument(() => {
+    const win = mkWin();
+    win.tick(0.05);
+    const caught = raiseOf(win);
+    assert.ok(caught > 0 && caught < 1, 'caught it part way up');
+    win._beginClose(null);
+    win.tick(0.01);
+    assert.ok(raiseOf(win) <= caught, 'it lowers from where it was, never jumping to held first');
+    win.dispose();
+  });
+
+  // ...AND IN THE HANDS LANE NOTHING SLIDES. The arm brings the sheet in
+  // itself, and the ink there is laid on the rig's corners by a
+  // matrix3d of its own - a translate on the stage would drag the whole
+  // sheet off the paper the arm is holding, which is a worse bug than
+  // the fade this replaced.
+  withDocument(() => {
+    const holder = holderStub({ corners: () => TRAPEZIUM });
+    const win = open(mkWin({ ...bayDeps(), holder }));
+    assert.equal(win._lane, 'hands', 'the fixture really is in the hands lane, or this proves nothing');
+    assert.equal(win._chrome.stage.style.transform, '', 'held by the arm: the stage carries no travel of its own');
+    win._beginClose(null);
+    win.tick(0.05);
+    assert.equal(win._chrome.stage.style.transform, '', '...and none on the way out either');
+    win.dispose();
+  });
+});
 
 test('U61: the filters are the LIVE store object, edited in place', () => {
   withDocument(() => {
@@ -904,7 +1104,12 @@ test('MAP-FIELD6: a name never lands on another mark\'s GLYPH - it takes another
   // LABELS, so it was free to run straight through the next town's mark.
   const measure = (t, size) => t.length * size * 0.5;
   const view = { ox: 0, oy: 0, scale: 4 };
-  const box = (n) => ({ x: n.x, y: n.y - n.size * 1.1 * 0.55, w: n.w, h: n.size * 1.1 });
+  // AUDIT MAP-FIELD: the box placeNames RESERVED, not a fourth one
+  // invented here. This pin used to rebuild the rectangle from the
+  // baseline with its own guessed offset, which matched none of the
+  // three the code was using - so it was testing a rectangle nothing
+  // drew, ~4px below what was reserved. It is returned now.
+  const box = (n) => n.box;
   const clear = (n, m) => {
     const [gx, gy] = toPaper(view, m.x, m.y);
     const r = GLYPH_R[m.kind], b = box(n);
@@ -924,6 +1129,35 @@ test('MAP-FIELD6: a name never lands on another mark\'s GLYPH - it takes another
   const way = placed.find((n) => n.mark.name === 'Wayrest');
   assert.ok(way.x + way.w <= toPaper(view, 50, 5)[0] - GLYPH_R.city,
     'Wayrest had to leave the right-hand side, where its label would have crossed Daggerfall\'s ring, and set itself to the left');
+  // AUDIT MAP-FIELD: BOUNDED ON BOTH AXES. The four candidates bounded
+  // x alone at first, so a label with both sides blocked was placed
+  // wholly off the top of the sheet - painted where nobody can see it
+  // AND holding a box that then blocked a neighbour that could have
+  // been drawn, which is strictly worse than the drop the design
+  // intends. A fault this work introduced: the one candidate it
+  // replaced always sat at the mark's own height.
+  const high = [
+    { x: 25, y: 1, colorIndex: 11, kind: 'city', name: 'Northmost', summary: {} },
+    { x: 25, y: 6, colorIndex: 11, kind: 'city', name: 'Blocker', summary: {} },
+  ];
+  const narrow = placeNames(high, { ox: 0, oy: 0, scale: 2 }, 'near', { paperW: 100, paperH: 200, measure: () => 60 });
+  assert.ok(!narrow.some((n) => n.mark.name === 'Northmost'),
+    'a label with no room on either side, and none above without leaving the sheet, is DROPPED - not painted off the top');
+  for (const n of narrow) {
+    assert.ok(n.box.y >= 0 && n.box.y + n.box.h <= 200, `${n.mark.name}'s box is on the paper vertically`);
+    assert.ok(n.box.x >= 0 && n.box.x + n.box.w <= 100, `${n.mark.name}'s box is on the paper horizontally`);
+  }
+  // ...and the box a placement RESERVES is the box its ink fills. The
+  // first draft related each candidate's box to its baseline by a
+  // different offset and then threw the box away, so no consumer could
+  // rebuild it and this pin invented a fourth rectangle of its own.
+  for (const n of [...narrow, ...placed]) {
+    assert.ok(n.box.y <= n.y - (n.size * 0.75), `${n.mark.name}: the box covers the ASCENDERS above the baseline`);
+    assert.ok(n.box.y + n.box.h >= n.y + (n.size * 0.25), `${n.mark.name}: ...and the DESCENDERS below it`);
+    assert.equal(n.box.x, n.x, `${n.mark.name}: the box starts where the text starts`);
+    assert.equal(n.box.w, n.w, `${n.mark.name}: ...and is as wide as the text measured`);
+  }
+
   // and when there is NOWHERE clear, the name goes rather than the mark:
   // a town ringed by glyphs on all four sides keeps its mark and loses
   // its label, which is the trade that makes the sheet readable
@@ -2398,6 +2632,13 @@ test('MAP-FIELD2: the sheet is HELD - bottom-anchored with the arms past the edg
 test('MAP-FIELD2/4: the cut cuffs are AUTHORED down to the foot, and nothing else is - through the window itself (mutants: MAPFIELD2-the-cuffs-end-in-mid-air, MAPFIELD2-the-extension-smears-the-parchment, MAPFIELD4-the-extension-streaks-the-silhouette)', () => {
   const W = 100, H = 100;
   const ARM = [96, 88, 92], PAPER_RGB = [206, 183, 141];
+  // AUDIT MAP-FIELD: a gauntlet pixel dark enough that ANY brightness
+  // key would eat it. The departure recorded at MAP-FIELD4 was guarded
+  // by spelling alone - `doesNotMatch(src, /MATTE_LUM|.../)` - and a
+  // real key written under any other name sailed through all 84 pins.
+  // This pixel is the behavioural half: the painting's own alpha says
+  // it is there, and nothing may decide otherwise from its brightness.
+  const SHADOW = [6, 5, 7];
   const band = Math.round(CUFF_BAND * H);
   assert.ok(band > 0 && band < H - 2, 'the band is inside the file, or this fixture proves nothing');
   // a sprite the shape of the real one: TRANSPARENT ground (MAP-FIELD4
@@ -2410,6 +2651,7 @@ test('MAP-FIELD2/4: the cut cuffs are AUTHORED down to the foot, and nothing els
     const px0 = Math.floor(PAPER.x0 * W), px1 = Math.ceil(PAPER.x1 * W);
     for (let y = 14; y <= band - 10; y++) for (let x = px0; x < px1; x++) put(x, y, PAPER_RGB);
     for (let y = 50; y <= band + 3; y++) put(5, y, ARM);      // the left forearm, cut just past the band
+    for (let y = 54; y <= 58; y++) put(5, y, SHADOW);         // ...and the deep shadow inside its folds
     for (let y = 50; y <= band + 9; y++) put(95, y, ARM);     // the right one, cut lower
     for (let y = 40; y <= band - 20; y++) put(2, y, ARM);     // a hand's silhouette, DRAWN to end there
     return d;
@@ -2435,6 +2677,10 @@ test('MAP-FIELD2/4: the cut cuffs are AUTHORED down to the foot, and nothing els
   // handed through exactly as the painter left it.
   assert.equal(at(50, 5)[3], 0, 'the clear ground above the paper is still clear');
   assert.deepEqual(at(50, 40), [...PAPER_RGB, 255], 'and the parchment is untouched');
+  // MAP-FIELD4's departure, pinned by BEHAVIOUR: these gauntlets are
+  // grey and reach luma 0, so any brightness key - whatever it is
+  // called - punches a hole straight through the arm.
+  assert.deepEqual(at(5, 56), [...SHADOW, 255], 'the deep shadow in the arm survives: nothing keys on brightness any more');
 
   // 2. THE CUT CUFFS RUN OFF THE BOTTOM. Every row under the forearm's
   // last painted one carries its colour, to the file's foot.
