@@ -169,8 +169,8 @@
   {
     "name": "CAMP1-the-world-host-rolls-without-asking-who-owns-the-group",
     "file": "src/scenes/world.js",
-    "old": "      if (!isResting && getPref('wildernessCamps') !== false && amGroupRollOwner(online?.id ?? null, playerFeet, peersNear())) {\n        const campHit = rollCampEncounter({",
-    "new": "      if (!isResting && getPref('wildernessCamps') !== false) {\n        const campHit = rollCampEncounter({",
+    "old": "      if ((modes?.mode ?? 'exterior') === 'exterior' && !playerEntity.isResting && getPref('wildernessCamps') !== false && amGroupRollOwner(online?.id ?? null, player.feetAt(), peersNear())) {   // CAMP-REST: never while the player is resting or waiting",
+    "new": "      if ((modes?.mode ?? 'exterior') === 'exterior' && !playerEntity.isResting && getPref('wildernessCamps') !== false) {   // CAMP-REST: never while the player is resting or waiting",
     "tests": [
       "test/camp1_groups.test.js"
     ]

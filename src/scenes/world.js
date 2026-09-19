@@ -141,7 +141,7 @@ import { createHunting } from './hunting.js';   // SURV6: hunting, foraging and 
 import { alignSurvival } from '../systems/survival/needs.js';   // SURV7: the needs' markers at an arrival
 import { liveLycanthropy } from '../systems/lycanthropy.js';   // SURV7: the env's lycanthrope and beast-form flags
 import { elementalResistanceChance, ELEMENTS } from '../systems/spellcast.js';   // SURV7: the env's fire and frost resistances
-import { rollCampEncounter, rollCampEncounterOnChunkLoad, amGroupRollOwner } from '../systems/campEncounters.js';   // CAMP1: the group-encounter roll - camps and packs, riding the same tick, and the chunk-load twin
+import { rollCampEncounterOnChunkLoad, amGroupRollOwner } from '../systems/campEncounters.js';   // CAMP1: the group-encounter roll - camps and packs; CAMP-NOTIMER: the chunk-load twin is this host's ONLY trigger now, so the timer's entry point is gone from here
 import { WORLD_SALT, spawnsDungeon, pickTemplate, synthesizeDungeonLocation, spawnTemplates } from '../world/spawnedDungeons.js';   // SPAWNED-DUNGEONS1: online, a pixel may hold a dungeon
 import { isMainStoryDungeon } from '../world/dungeonTextures.js';   // SPAWNED-DUNGEONS1: the main story's own dungeons are never cloned
 import { nearestSafeLocation, respawnFlavorText, respawnHealth, undergroundWakeSpot, undergroundWakeText } from '../systems/deathRespawn.js';   // D-ONLINE1: online, a death respawns instead of ending the run   // X-slice; the rest refusal raises the alert and asks the RESTING variant, the townsfolk idle the STRICT one; the catch-up loop's watch arm
@@ -150,7 +150,7 @@ import { saveSlot, loadSlot, quickLoadSlot, mostRecentRestorable, QUICK_SAVE_NAM
 import { frameBegin, frameEnd } from '../systems/frameClock.js';   // PERF1: the frame's script time
 import { arrivalClampMinutes, playerTravelPosition } from '../systems/travel.js';   // F-slice; F114: the ship-aware travel origin
 import { hasSpecialAbility, SPECIAL_ABILITY } from '../systems/rest.js';   // F-slice: the NoRegen restore gate
-import { locationCompassDirection, buildingCompassDirection, findFactionByTypeAndRegion } from '../systems/talk.js';   // wave 26: %di's remote arm + the region-faction search; the LOCAL arm beside it
+import { locationCompassDirection, buildingCompassDirection, findFactionByTypeAndRegion, directionHintString } from '../systems/talk.js';   // wave 26: %di's remote arm + the region-faction search; the LOCAL arm beside it; SPAWNED-DUNGEONS2b: the same eight-word compass
 import { seasonValue, SEASONS, MINUTES_PER_DAY, dateFromClassicMinutes, dateTimeString, midDateTimeString, lunarPhasesFromMinutes, LUNAR_PHASES, isDayFromMinutes } from '../systems/gameDate.js';   // AUDIT 23 (wts-1); Q4-v: the notebook's header shapes; V2c: the enchant ctx's moon arms
 import { regionPriceAdjustment, worldPriceTiltOf, TRANSPORT_HORSE, TRANSPORT_SMALL_CART } from '../systems/shopStock.js';   // Q4-v: CreateGold's regional term (the shops' own producer); U41: Items.Contains(Transportation, ...)
 import { getNameBankOfRegion, getRandomFullName } from '../characters/nameHelper.js';   // AUDIT 23 (characters-5); AUDIT 58: MacroHelper.GetRandomFullName, one home
@@ -580,6 +580,38 @@ export async function bootWorld(canvas, renderer, params, status) {
   // any location. The page flag is read off `params`, not `onlineOn` - that const is declared far below this build.
   // Wrapped: a failure here costs one pixel its dungeon, never the stream.
   const _spawnSalt = WORLD_SALT;   // one salt for every client: the same pixels, the same dungeons, the same rooms
+  // SPAWNED-DUNGEONS2b (Lost's package, 2026-09-19): NEARBY, WITH A
+  // DIRECTION, AND ONE LINE PER CROSSING.
+  //
+  // A crossing can put several unannounced spawns inside the radius at
+  // once - the search covers a 5x5 block of pixels - and a line per hit
+  // stacked them up the log back to back. Every pixel found this
+  // crossing is still marked announced, so none of them nags again
+  // later; only the CLOSEST is ever actually said.
+  //
+  // The compass word is talk.js's own eight-band `directionHintString`,
+  // off the map-pixel delta. `px` is east-positive already; `py` is
+  // SOUTH-positive (mapsFile.js longitudeLatitudeToMapPixel writes
+  // `y = 499 - lat/128`), so north needs the sign flipped on the way in.
+  const _announcedSpawnPixels = new Set();
+  const SPAWN_NEARBY_RADIUS = 2;
+  const _capitalize = (s) => s.charAt(0).toUpperCase() + s.slice(1);
+  function announceNearbySpawns(px, py) {
+    const found = [];
+    for (let dy = -SPAWN_NEARBY_RADIUS; dy <= SPAWN_NEARBY_RADIUS; dy++) {
+      for (let dx = -SPAWN_NEARBY_RADIUS; dx <= SPAWN_NEARBY_RADIUS; dx++) {
+        const key = `${px + dx},${py + dy}`;
+        if (_announcedSpawnPixels.has(key) || !locationIndex.get(key)?.spawned) continue;
+        found.push({ key, dx, dy, d2: dx * dx + dy * dy });
+      }
+    }
+    if (!found.length) return;
+    found.sort((a, b) => a.d2 - b.d2);   // closest first
+    for (const f of found) _announcedSpawnPixels.add(f.key);   // every hit this crossing is spent, even the ones left unsaid
+    const nearest = found[0];
+    if (nearest.dx === 0 && nearest.dy === 0) { townTalk.say('You see a Dungeon nearby!'); return; }
+    townTalk.say(`You see a Dungeon nearby, in the ${_capitalize(directionHintString(nearest.dx, -nearest.dy))}!`);
+  }
   let _spawnTemplates = null;
   const spawnedDungeonAt = (px, py) => {
     if (!params.has('online')) return null;
@@ -2891,16 +2923,22 @@ export async function bootWorld(canvas, renderer, params, status) {
       // while the owner sleeps the whole cluster rolls no groups. Handing the
       // roll to the next waking peer needs a rest flag on the wire, which this
       // does not add.
-      if (!isResting && getPref('wildernessCamps') !== false && amGroupRollOwner(online?.id ?? null, playerFeet, peersNear())) {
-        const campHit = rollCampEncounter({
-          gameMinutes: _lastEncMinutes + l + 1, inside: _m !== 'exterior',
-          inLocationRect: _musicInLocationRect(),
-          climateIndex: maps.getClimateIndex(playerTravelPixel().x, playerTravelPixel().y),
-          playerLevel: playerEntity.level,
-          preventEnemySpawns: playerEntity.preventEnemySpawns,
-        });
-        if (campHit) { _standCampEncounter(campHit, playerFeet); break; }
-      }
+      // CAMP-NOTIMER (Lost's package, 2026-09-19): THE GUARANTEED TIMER
+      // TRIGGER IS GONE FROM THIS HOST. CAMP1 gave the streaming world
+      // two ways to raise a group - this per-minute tick, which fired a
+      // guaranteed one every 15 REAL minutes of play even while the
+      // player stood still, and the chunk-load roll on the stream's own
+      // "entered" event. A camp or a pack must be a consequence of
+      // walking onto new ground, never a background clock dropping one
+      // on a stationary player, so the chunk-load roll is now this
+      // host's ONLY camp trigger and the whole timer arm is removed
+      // (with it, `rollCampEncounter` leaves this file's imports).
+      //
+      // exterior.js keeps its own timer arm, unchanged: that host is the
+      // fixed single-location preview (`?exterior`/`?region=`/`?loc=`)
+      // and has no chunk streaming to hang a roll off, so the timer is
+      // the only trigger it can have. campEncounters.js still exports
+      // both entry points for it.
       // PlayerEntity.Update:498-511 - the SAME minute's second arm,
       // which the port had never called: SpawnCityGuards(FALSE) had no
       // production caller at all, so the witness law (a civilian sees
@@ -10179,7 +10217,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         clearSceneCache(playerEntity.sceneCache, { start: false });
       }
       queue.push(...r.load);
-      if (locationIndex.get(`${r.current.x},${r.current.y}`)?.spawned) townTalk.say('There is a dungeon entrance nearby.');   // SPAWNED-DUNGEONS2: said on ENTERING its pixel, not when it is rolled (that is three pixels ahead)
+      announceNearbySpawns(r.current.x, r.current.y);   // SPAWNED-DUNGEONS2: said on ENTERING the pixel, not when it is rolled (that is three pixels ahead)
       for (const u of r.unload) {
         destroyPixel(u.px, u.py);
         state.release(u.px, u.py);
