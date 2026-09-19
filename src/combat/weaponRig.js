@@ -446,13 +446,13 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
     // this test sits ahead of the palette guard: a Thunderlock draws
     // in a host that has not loaded ARENA2's palette yet, and a
     // classic weapon still cannot.
-    const thunderlock = type === WEAPON_TYPES.Thunderlock;
+    const thunderlock = type === WEAPON_TYPES.Thunderlock || type === WEAPON_TYPES.Thunderlock_Magic;
     if (!thunderlock && !palette) return null;
     const key = `${type}:${item?.material ?? 0}`;
     if (!cache.has(key)) {
       cache.set(key, null);
       (thunderlock
-        ? loadThunderlockArt(renderer)
+        ? loadThunderlockArt(renderer, { magic: type === WEAPON_TYPES.Thunderlock_Magic })
         : loadFpsWeaponArt(fetchBytes, palette, renderer, type, item?.material ?? 0))
         .then((art) => cache.set(key, art))
         .catch((e) => console.warn('[weaponRig] art load failed', key, e));

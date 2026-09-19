@@ -46,7 +46,7 @@ export const WEAPON_TYPES = Object.freeze({
   // no WEAPON*.CIF - its frames come off one sheet, which is why
   // WEAPON_FILE below has no row for it and combat/thunderlockArt.js
   // loads it instead.
-  Thunderlock: 17,
+  Thunderlock: 17, Thunderlock_Magic: 18,
 });
 
 // GetWeaponFilename, verbatim.
@@ -175,7 +175,7 @@ export const THUNDERLOCK_ANIMS = Object.freeze([
 /** GetWeaponAnims, verbatim routing. */
 export function getWeaponAnims(weaponType) {
   const T = WEAPON_TYPES;
-  if (weaponType === T.Thunderlock) return THUNDERLOCK_ANIMS;   // the port's own, ahead of the verbatim routing
+  if (weaponType === T.Thunderlock || weaponType === T.Thunderlock_Magic) return THUNDERLOCK_ANIMS;   // the port's own, ahead of the verbatim routing
   if (weaponType === T.Melee) return MELEE_ANIMS;
   if (weaponType === T.Dagger || weaponType === T.Dagger_Magic) return DAGGER_ANIMS;
   if (weaponType === T.Staff || weaponType === T.Staff_Magic) return STAFF_ANIMS;
@@ -195,9 +195,13 @@ export function weaponTypeForItem(item) {
   // template at all
   if (item.werecreatureClaws) return T.Werecreature;
   // THE PORT'S OWN WEAPON, ahead of the verbatim switch so the switch
-  // stays exactly ConvertItemToAPIWeaponType. It takes no enchanted
-  // promotion: there is no WEAPO1xx sheet for it.
-  if (item.templateIndex === THUNDERLOCK_TEMPLATE) return T.Thunderlock;
+  // stays exactly ConvertItemToAPIWeaponType. It takes the enchanted
+  // promotion the classic weapons take - there is no WEAPO1xx sheet
+  // for it, so the magic art is the same sheet through a shimmer
+  // (combat/thunderlockArt.js) rather than a second set of frames.
+  if (item.templateIndex === THUNDERLOCK_TEMPLATE) {
+    return isEnchanted(item) ? T.Thunderlock_Magic : T.Thunderlock;
+  }
   let result;
   switch (item.templateIndex) {
     case W.Dagger: result = T.Dagger; break;

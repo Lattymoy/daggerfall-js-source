@@ -32,6 +32,7 @@
 
 import { registerCustomTemplates, templateByIndex, mintCondition, setItemFields } from './itemTemplates.js';
 import { addVendorTextures, vendorTextureCount } from './textureReplacement.js';
+import { registerUniqueFind, registerLegendary } from './lootRarity.js';
 import { SKILLS } from './skills.js';
 // The indices live in a LEAF (characters/thunderlockIds.js) because
 // characters/weapons.js needs them too and importing this file from
@@ -205,3 +206,56 @@ export function installThunderlockIcons({ fetchBytes = null } = {}) {
     archive, record, frame, fileName: file, load: () => load(file),
   })));
 }
+
+// ── HOW YOU GET ONE ─────────────────────────────────────────────────
+//
+// Mac: "This weapon wont be available for purchase and should be one
+// of the rarest items to find in the game."
+//
+// NOT FOR SALE, and that takes no code: a shop's shelf is built from
+// GROUP_TEMPLATE_INDICES, which is DFU's own enum table, and a custom
+// template is not in it. The survival mod had to ADD its provisions to
+// the shelves deliberately; this one simply never appears there.
+// test/thunderlock.test.js pins that as a law rather than an accident.
+//
+// FOUND, THEN, and by the port's own loot ladder (systems/lootRarity.js
+// LR1-LR5). It registers as a UNIQUE FIND, which is a different
+// question from a rarity tier: a tier decorates an item DFU's loot
+// roll already produced, and no DFU roll can produce this weapon at
+// all. So it is its own roll - once per loot list, adding rather than
+// promoting - and it begins at NOTHING below source tier 4. A rat in a
+// shallow crypt cannot drop it at any luck; the Daedra Lord at the
+// bottom of a Volcanic Cave is what the number is for.
+//
+// IT ARRIVES LOADED. A gun found with no ammunition is a gun the
+// player cannot fire and cannot buy shot for, which reads as a broken
+// drop rather than a rare one. The find mints a handful of pellets
+// with it - few enough that the weapon still sends you looking.
+export const FIND_MIN_TIER = 4;
+export const FIND_PELLETS = Object.freeze({ min: 6, max: 18 });
+
+registerUniqueFind({
+  id: 'dwarven-thunderlock',
+  minTier: FIND_MIN_TIER,
+  weight: 1,
+  mint: (rolls = Math.random) => {
+    const n = FIND_PELLETS.min + Math.floor(rolls() * (FIND_PELLETS.max - FIND_PELLETS.min + 1));
+    return [createThunderlock(), createPellets(n)];
+  },
+});
+
+/** And its LEGENDARY record, for the roll that finds one and then
+ *  rolls it up: the named, storied one. The affixes are the weapon's
+ *  own case - it is already the hardest hitter, so its signature is
+ *  what it does to the user rather than more damage. */
+registerLegendary({
+  id: 'the-last-lock', name: 'The Last Lock', group: WEAPON_GROUP, templates: [THUNDERLOCK_TEMPLATE],
+  exclusive: true,   // a gun does not roll up as a blade forged for a dragon hunt
+  affixes: [
+    { id: 'damage', value: 20 },
+    { id: 'stat', param: 'agility', value: 10 },
+    { id: 'skill', param: 33, value: 30 },   // Archery
+  ],
+  enchantment: { type: 3, param: 20 },   // CastWhenStrikes - the shot carries a spell
+  lore: 'The Dwemer left no instructions and no second one.',
+});

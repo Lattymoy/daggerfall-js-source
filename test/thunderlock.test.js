@@ -23,6 +23,10 @@ import { THUNDERLOCK_NUM_FRAMES, MELEE_NUM_FRAMES, BOW_NUM_FRAMES } from '../src
 import { isBowWeapon, attackSkillOf, WEAPON_SKILL_BY_TEMPLATE } from '../src/scenes/hostCombat.js';
 import { spendAmmoFor, ammoCountFor } from '../src/systems/inventory.js';
 import { playerArchiveFor } from '../src/characters/paperdollArt.js';
+import { shimmer } from '../src/combat/thunderlockArt.js';
+import { uniqueFinds, uniqueFindChance, rollLootRarity, legendariesFor } from '../src/systems/lootRarity.js';
+import { GROUP_TEMPLATE_INDICES } from '../src/systems/itemTemplates.js';
+import { FIND_MIN_TIER } from '../src/systems/thunderlock.js';
 
 const GUN = { templateIndex: THUNDERLOCK_TEMPLATE, group: 'Weapons' };
 const BOW = { templateIndex: 130, group: 'Weapons' };
@@ -129,4 +133,96 @@ test('the mint: a weapon, an ammunition, and the paperdoll archive that is its o
   const swordT = templateByIndex(120);
   assert.equal(playerArchiveFor(sword, swordT, { gender: 'male' }), 234);
   assert.equal(playerArchiveFor(sword, swordT, { gender: 'female' }), 233);
+});
+
+test('THE ENCHANTED VARIANT: the promotion classic weapons take, on a sheet that has no second archive', () => {
+  const plain = { templateIndex: THUNDERLOCK_TEMPLATE, group: 'Weapons' };
+  const enchanted = { ...plain, enchantments: [{ type: 3, param: 20 }] };
+  assert.equal(weaponTypeForItem(plain), WEAPON_TYPES.Thunderlock);
+  assert.equal(weaponTypeForItem(enchanted), WEAPON_TYPES.Thunderlock_Magic,
+    'ConvertItemToAPIWeaponType promotes an enchanted weapon; this one promotes too');
+  // there is no WEAPO1xx sheet for it, so the magic art is the SAME
+  // frames through a shimmer - which means the same anim table
+  assert.equal(getWeaponAnims(WEAPON_TYPES.Thunderlock_Magic), getWeaponAnims(WEAPON_TYPES.Thunderlock));
+  // and the classic promotion is exactly what it was
+  assert.equal(weaponTypeForItem({ templateIndex: 120, enchantments: [{ type: 3 }] }), WEAPON_TYPES.LongBlade_Magic);
+  assert.equal(weaponTypeForItem({ templateIndex: 130, enchantments: [{ type: 3 }] }), WEAPON_TYPES.Bow,
+    'a bow has no magic set in DFU and still does not');
+});
+
+test('the shimmer cools the metal and lights the highlights, and touches no transparent pixel', () => {
+  // brass in shadow, brass lit, the flash's near-white core, and a hole
+  const px = new Uint8ClampedArray([
+    120, 96, 54, 255,
+    210, 178, 104, 255,
+    255, 246, 208, 255,
+    99, 99, 99, 0,
+  ]);
+  const before = Uint8ClampedArray.from(px);
+  shimmer({ width: 4, height: 1, data: px });
+  const warmth = (d, i) => d[i * 4] - d[i * 4 + 2];   // red over blue
+  for (const i of [0, 1, 2]) {
+    assert.ok(warmth(px, i) < warmth(before, i), `texel ${i} came out cooler than it went in`);
+  }
+  assert.ok(px[2 * 4 + 2] > before[2 * 4 + 2], 'the flash core gains blue rather than losing it');
+  assert.ok(px[1 * 4 + 2] > px[0 * 4 + 2], 'and the lit metal takes more of it than the shadowed');
+  assert.deepEqual([...px.slice(12, 16)], [...before.slice(12, 16)], 'a transparent texel is left alone');
+  for (let i = 3; i < px.length; i += 4) assert.equal(px[i], before[i], 'alpha is never written');
+});
+
+test('THE RAREST THING IN THE GAME: impossible below its tier, and never for sale', () => {
+  const find = uniqueFinds().find((f) => f.id === 'dwarven-thunderlock');
+  assert.ok(find, 'it registers itself with the loot ladder rather than the ladder naming it');
+  // BASE ZERO. A rat in a shallow crypt cannot drop it at any luck -
+  // not "rarely", never. That is the difference between rare and
+  // gated, and it is the half a probability alone cannot say.
+  for (const tier of [0, 1, 2, 3]) {
+    for (const luck of [0, 50, 100]) {
+      assert.equal(uniqueFindChance(find, { kind: 'pile', tier, boss: true, luck }), 0,
+        `tier ${tier} at luck ${luck} is nothing`);
+    }
+  }
+  const qualifying = uniqueFindChance(find, { kind: 'corpse', tier: FIND_MIN_TIER, luck: 50 });
+  assert.ok(qualifying > 0 && qualifying < 2, `and at its own tier it is ${qualifying.toFixed(2)} per mille - about 1 in 700`);
+  // luck helps, measured BELOW the cap - a maxed boss source is
+  // already at the ceiling and nothing can raise it further, which is
+  // the point of having one
+  assert.ok(uniqueFindChance(find, { kind: 'corpse', tier: 5, luck: 100 })
+    > uniqueFindChance(find, { kind: 'corpse', tier: 5, luck: 0 }), 'luck helps');
+  assert.ok(uniqueFindChance(find, { kind: 'corpse', tier: 99, boss: true, luck: 100 }) <= 6, 'and the cap holds');
+
+  // IT ARRIVES LOADED: a gun found with no ammunition is a gun that
+  // cannot be fired and cannot be bought shot for.
+  const minted = find.mint(() => 0.5);
+  assert.equal(minted.length, 2);
+  assert.ok(isThunderlock(minted[0]) && isPellet(minted[1]));
+  assert.ok(minted[1].stackCount >= 6 && minted[1].stackCount <= 18);
+
+  // NOT FOR SALE, and it takes no code: a shelf is built from DFU's
+  // own group enum table, and a custom template is not in it.
+  const shelf = readFileSync('src/systems/shopStock.js', 'utf8');
+  assert.ok(!shelf.includes('Thunderlock') && !shelf.includes('thunderlock'),
+    'the shop stock knows nothing about it');
+  assert.ok(!GROUP_TEMPLATE_INDICES.Weapons?.includes(THUNDERLOCK_TEMPLATE),
+    'and it is not in the Weapons enum a shelf draws from');
+});
+
+test('the find adds to a list rather than promoting one, and claims its own legendary', () => {
+  // a roll that always lands: the find is added, with its ammunition
+  const items = [];
+  const always = () => 0;
+  rollLootRarity(items, { kind: 'pile', tier: 8, boss: true, luck: 100 }, { rolls: always, luck: 100 });
+  assert.ok(items.some(isThunderlock), 'the weapon arrived');
+  assert.ok(items.some(isPellet), 'and so did something to fire');
+  // a roll that never lands leaves the list exactly as it was
+  const none = [];
+  rollLootRarity(none, { kind: 'pile', tier: 8, boss: true, luck: 100 }, { rolls: () => 0.999, luck: 100 });
+  assert.deepEqual(none, [], 'and otherwise nothing is added at all');
+  // THE EXCLUSIVE CLAIM: a gun does not roll up as a blade forged for
+  // a dragon hunt, and the classic pairings are untouched.
+  assert.deepEqual(legendariesFor({ group: 'Weapons', templateIndex: THUNDERLOCK_TEMPLATE }).map((l) => l.name),
+    ['The Last Lock']);
+  assert.deepEqual(legendariesFor({ group: 'Weapons', templateIndex: 113 }).map((l) => l.name),
+    ['Wyrmbane', 'Nightwhisper'], 'a dagger is still both of its own');
+  assert.deepEqual(legendariesFor({ group: 'Weapons', templateIndex: 120 }).map((l) => l.name), ['Wyrmbane']);
 });

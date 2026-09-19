@@ -38,6 +38,40 @@ export const sheetUrl = (file = SHEET_FILE) =>
 /** The key's defaults, the numbers the lab's slider settled on. */
 export const KEY_THRESHOLD = 244, KEY_CHROMA = 10;
 
+/**
+ * THE ENCHANTED VARIANT.
+ *
+ * Every classic weapon has a second archive for this - WEAPON04.CIF
+ * becomes WEAPO104.CIF, the same frames repainted with a glow - and
+ * ItemHelper.ConvertItemToAPIWeaponType promotes an enchanted item to
+ * the *_Magic type that reads it. This weapon has no second sheet, so
+ * the promotion lands here instead: the SAME frames through a
+ * shimmer.
+ *
+ * Not a hue rotation, which turns brass into a bruise. Luminance is
+ * kept and the colour is pulled toward a cold Dwemer blue-violet, with
+ * the BRIGHT parts pulled hardest - so the highlights read as charged
+ * and the shadowed housing stays metal. The muzzle flash, already at
+ * the top of the range, goes white-blue, which is what tells the
+ * player at a glance that this one is enchanted.
+ */
+export const MAGIC_TINT = Object.freeze({ r: 0.42, g: 0.70, b: 1.85, lift: 64, pull: 0.88 });
+
+export function shimmer(rgba) {
+  const d = rgba.data;
+  const { r: tr, g: tg, b: tb, lift, pull } = MAGIC_TINT;
+  for (let i = 0; i < d.length; i += 4) {
+    if (d[i + 3] === 0) continue;
+    const lum = (d[i] * 0.299 + d[i + 1] * 0.587 + d[i + 2] * 0.114) / 255;
+    const k = pull * (0.35 + 0.65 * lum);   // the bright parts take it hardest
+    const glow = lift * lum * lum;
+    d[i] = d[i] * (1 - k) + (d[i] * tr + glow) * k;
+    d[i + 1] = d[i + 1] * (1 - k) + (d[i + 1] * tg + glow) * k;
+    d[i + 2] = d[i + 2] * (1 - k) + Math.min(255, d[i + 2] * tb + glow) * k;
+  }
+  return rgba;
+}
+
 /** One cell of the sheet, decoded and keyed, as RGBA + its content box. */
 function bakeCell(sheet, i) {
   const r = cellRect(i, sheet.width, sheet.height);
@@ -78,7 +112,7 @@ export const NATIVE_WIDTH = 0.54 * 320;
  * the sheet is fetched from the build beside the page.
  * @returns the same shape loadFpsWeaponArt answers, or null.
  */
-export async function loadThunderlockArt(renderer, { fetch: fetchSheet = null, decode = decodePng } = {}) {
+export async function loadThunderlockArt(renderer, { fetch: fetchSheet = null, decode = decodePng, magic = false } = {}) {
   const bytes = fetchSheet
     ? await fetchSheet(SHEET_FILE)
     : await (async () => {
@@ -102,12 +136,16 @@ export async function loadThunderlockArt(renderer, { fetch: fetchSheet = null, d
   const width = Math.round(union.w * scale);
   const height = Math.round(union.h * scale);
 
-  const frames = baked.map((b, i) =>
-    renderer.uploadTexture('img', `thunderlock:${i}`, toColor32(crop(b.img, union))));
+  const type = magic ? WEAPON_TYPES.Thunderlock_Magic : WEAPON_TYPES.Thunderlock;
+  const frames = baked.map((b, i) => {
+    const rgba = crop(b.img, union);
+    return renderer.uploadTexture('img', `thunderlock${magic ? ':magic' : ''}:${i}`,
+      toColor32(magic ? shimmer(rgba) : rgba));
+  });
 
   return {
-    weaponType: WEAPON_TYPES.Thunderlock,
-    anims: getWeaponAnims(WEAPON_TYPES.Thunderlock),
+    weaponType: type,
+    anims: getWeaponAnims(type),
     records: [
       { width, height, frames: [frames[0]] },   // 0: idle
       { width, height, frames },                // 1: the fire cycle

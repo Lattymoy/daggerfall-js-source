@@ -117,9 +117,69 @@ Harder per shot than anything classic, and paid for everywhere else:
 the weight, ammunition at twice an arrow's price, and a cycle with a
 visible reload in it.
 
-## Not yet wired
+## The enchanted variant
 
-Said plainly so nobody assumes it: **shop stock, loot tables and
-starting gear do not offer it yet**, and neither does a smith's repair
-list. The rarity fields are set for when they do. There is no
-enchanted variant and no `WEAPO1xx` sheet for one.
+Every classic weapon has a second archive for this — `WEAPON04.CIF`
+becomes `WEAPO104.CIF`, the same frames repainted with a glow — and
+`ConvertItemToAPIWeaponType` promotes an enchanted item to the
+`*_Magic` type that reads it. This weapon has no second sheet, so the
+promotion lands in the art loader instead: **the same frames through a
+shimmer**.
+
+Not a hue rotation, which turns brass into a bruise. Luminance is
+kept and the colour pulled toward a cold Dwemer blue-violet with the
+**bright parts pulled hardest**, so the highlights read as charged and
+the shadowed housing stays metal. The muzzle flash, already at the top
+of the range, goes white-blue — which is what tells the player at a
+glance that this one is enchanted. Pinned on four texels (shadowed
+brass, lit brass, the flash core, a hole): each comes out cooler than
+it went in, the flash *gains* blue, the lit metal takes more than the
+shadowed, and alpha is never written.
+
+## How you get one
+
+> "This weapon wont be available for purchase and should be one of the
+> rarest items to find in the game."
+
+**Not for sale, and that takes no code.** A shop's shelf is built from
+`GROUP_TEMPLATE_INDICES`, DFU's own group enum table, and a custom
+template is not in it — the survival mod had to *add* its provisions
+to the shelves deliberately. `test/thunderlock.test.js` pins that as a
+law rather than an accident.
+
+**Found, then** — by the port's own loot ladder (`lootRarity.js`,
+LR1-LR5), as a **unique find**. That is a different question from a
+rarity tier: a tier decorates an item DFU's loot roll already
+produced, and no DFU roll can produce this weapon at all. So it is its
+own roll — once per loot list, **adding** rather than promoting — and
+it is *registered*, not named: the loot ladder has no business knowing
+a gun exists, the same shape `registerCustomTemplates` already has.
+
+**Base zero.** Below source tier 4 the chance is *nothing*, at any
+luck — not "small". That is the difference between rare and gated, and
+it is the half a probability alone cannot say.
+
+| source | chance | |
+| --- | --- | --- |
+| anything below tier 4 | **0** | never, at any luck |
+| tier-4 corpse | 1.4‰ | about 1 in 700 |
+| tier-6 pile | 2.7‰ | about 1 in 370 |
+| tier-8 boss, luck 100 | 6‰ (the cap) | about 1 in 170 |
+
+**It arrives loaded.** 6-18 pellets with it: a gun found with no
+ammunition is a gun that cannot be fired and cannot be bought shot
+for, which reads as a broken drop rather than a rare one. Few enough
+that it still sends you looking.
+
+**And it claims its own legendary.** `The Last Lock` — 20% damage, +10
+agility, +30 Archery, Cast When Strikes — marked `exclusive`, so a gun
+does not roll up as *Wyrmbane*, a blade forged for a dragon hunt.
+Nothing in DFU's own pool sets that flag, so the classic pairings are
+exactly what they were: a dagger can still be Wyrmbane or
+Nightwhisper.
+
+## Still not wired
+
+Said plainly so nobody assumes it: **loot *tables* and starting gear
+do not offer it** (the unique find is its only door), and neither does
+a smith's repair list.

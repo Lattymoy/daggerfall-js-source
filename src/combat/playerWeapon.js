@@ -505,8 +505,9 @@ export class PlayerWeapon {
     // the cooldown, and a shot that spends ammunition - through
     // `machine.ranged`. The skill it is scored on is Archery either
     // way; that is weaponSkillUsed's answer, not the machine's.
-    this.machine.ranged = t === WEAPON_TYPES.Bow || t === WEAPON_TYPES.Thunderlock;
-    this.machine.frames = t === WEAPON_TYPES.Thunderlock ? THUNDERLOCK_NUM_FRAMES : null;
+    const thunderlock = t === WEAPON_TYPES.Thunderlock || t === WEAPON_TYPES.Thunderlock_Magic;
+    this.machine.ranged = t === WEAPON_TYPES.Bow || thunderlock;
+    this.machine.frames = thunderlock ? THUNDERLOCK_NUM_FRAMES : null;
     return machineStep(this.machine, dt, this.liveSpeed);
   }
 
