@@ -163,67 +163,149 @@ export const APP_ROOT = appRootFrom(import.meta.url);
 export const HELD_MAP_URL = new URL('art/held-map.png', APP_ROOT ?? globalThis.document?.baseURI ?? 'https://invalid.invalid/').href;
 /** Its own pixels, and the stage's aspect. */
 export const SPRITE = Object.freeze({ w: 1448, h: 1086 });
-/** The parchment's rectangle, as fractions of the sprite - measured
- *  off the painting (the sheet's outermost non-black column and row on
- *  each side, thumbs excluded). The ink canvas is laid exactly here. */
-export const PAPER = Object.freeze({ x0: 0.123, x1: 0.870, y0: 0.138, y1: 0.755 });
-/** Where the thumbs rest ON the sheet, as fractions of the sprite. In
- *  these two zones a sprite pixel darker than HAND_LUM is a gauntlet
- *  and is keyed back OVER the ink; anything lighter is paper and lets
- *  the ink through. Measured: the sheet's pixels sit at luminance
- *  144-192 (its creases 112-160), the thumbs almost wholly under 144. */
-export const THUMB_ZONES = Object.freeze([
-  Object.freeze({ x0: 0.10, x1: 0.29, y0: 0.42, y1: 0.76 }),
-  Object.freeze({ x0: 0.71, x1: 0.90, y0: 0.42, y1: 0.76 }),
-]);
-export const HAND_LUM = 144;
-/** MAP-FIELD2 (Mac, 2026-09-18): "...and is full screen with a BLACK
- *  BACKGROUND". The black is not the page's - it is the painting's own
- *  matte, and the picture is fully opaque: measured off the file,
- *  `held-map.png` carries no alpha at all and 47.5% of its pixels sit
- *  in the bottom sixteenth of the luminance range. Anchoring the sprite
- *  to the foot of the screen without keying that matte out would have
- *  moved a black rectangle down the screen, not put hands on it.
+/** MAP-FIELD4 (2026-09-19, Mac: "Try this instead"): THE SECOND
+ *  PAINTING, and it changes the rules this module was built on.
  *
- *  The separation is clean and was measured, not guessed: in the two
- *  gauntlet columns the median pixel is 187 and only 154 of 47,499
- *  non-black pixels lie anywhere between 8 and 32, so a key here costs
- *  about a tenth of a per cent of the hands. `MATTE_LUM` is where the
- *  matte ends and `MATTE_EDGE` where the art begins - alpha ramps
- *  between them rather than cutting, so the anti-aliased rim of the
- *  gauntlets does not become a black fringe on the sky. */
-export const MATTE_LUM = 8;
-export const MATTE_EDGE = 24;
+ *  It carries a real ALPHA CHANNEL - 857,265 of its pixels are exactly
+ *  transparent and nothing is matted - where the first was a fully
+ *  opaque picture on its own black. So the black key is gone (see the
+ *  departure recorded where that key used to live, in
+ *  bible/10-UI/Held-Map-Arc.md): the painting says what is picture and
+ *  what is not, and this module no longer has to guess it from
+ *  brightness. Guessing it here would now be actively wrong, because
+ *  the gauntlets in this painting are grey and run down to luma 0 - a
+ *  black key would have punched holes straight through them.
+ *
+ *  It is also far kinder to the thumb key. The gloves are desaturated
+ *  pewter against cream parchment, and the two part cleanly: over the
+ *  middle of the sheet only 0.26% of pixels fall under luma 154, while
+ *  the two thumb boxes are 45% under it. The first painting had no such
+ *  line anywhere (bronze up to 148, shaded parchment down to 130). */
+/** The parchment's rectangle, as fractions of the sprite: the largest
+ *  upright rectangle that lies WHOLLY on the sheet.
+ *
+ *  MAP-FIELD3 (Mac: "the ingame map on the map appears going off the
+ *  edge") - the ink canvas is laid EXACTLY here, so a rectangle larger
+ *  than the sheet prints the map onto the torn edge and out over the
+ *  sky. That bug predates both new paintings: on the ORIGINAL art this
+ *  constant sat about 10 px left and 12 px above the sheet's real edge.
+ *
+ *  Measured by tools/heldMapArtProbe.mjs, which reads the sheet's own
+ *  sides off the rows ABOVE the thumbs (where the sheet is the only
+ *  opaque thing on the row, so alpha alone gives the edge) and its top
+ *  and bottom down the middle columns, then shrinks until no row or
+ *  column overhangs. The sheet measures x 271-1189, y 211-766; these
+ *  are inset a few thousandths inside that for the ragged border. */
+export const PAPER = Object.freeze({ x0: 0.192, x1: 0.818, y0: 0.198, y1: 0.703 });
+/** Where the thumbs rest ON the sheet, as fractions of the sprite. In
+ *  each zone the sprite's own thumb is found and keyed back OVER the
+ *  ink (keyThumbPixels); the rest of the zone is paper and lets the ink
+ *  through. `side` names the edge the thumb reaches in from - the one
+ *  nearer its own hand - which is what the search is seeded on, so each
+ *  zone is drawn to START on that hand, outside the sheet.
+ *
+ *  The zones are drawn GENEROUSLY on purpose. Under a bare threshold a
+ *  wide zone was a liability, because every dark speck it swept up
+ *  landed on the map; under the blob key an island is dropped however
+ *  dark it is, so the only cost of a wide zone is the work, and the
+ *  only cost of a narrow one is a clipped thumb. */
+export const THUMB_ZONES = Object.freeze([
+  Object.freeze({ x0: 0.165, x1: 0.295, y0: 0.410, y1: 0.725, side: 'left' }),
+  Object.freeze({ x0: 0.710, x1: 0.845, y0: 0.410, y1: 0.725, side: 'right' }),
+]);
+/** What a pixel's RED minus its BLUE must be under to SEED the thumb's
+ *  blob. NOT a brightness - MAP-FIELD4's measurement is that brightness
+ *  cannot do this job on any of the three paintings, and that on this
+ *  one colour can.
+ *
+ *  The sheet is parchment: warm all the way through, from its cream
+ *  middle to its burnt border, so red runs well ahead of blue
+ *  everywhere on it. The gauntlets are steel under a warm light: warmed
+ *  at their highlights but neutral, and at times cold, in their body.
+ *
+ *  Measured by tools/heldMapArtProbe.mjs over the two THUMBS - the only
+ *  part of the glove this key ever sees - and over 340,918 pixels of
+ *  sheet, its burnt border all round included: under this line sit 36%
+ *  of the thumb and 5 pixels of the sheet. Five in three hundred
+ *  thousand, and each of them a speck in a crack, which the flood in
+ *  keyThumbPixels drops as an island. So what this line claims is glove
+ *  very nearly always IS glove, and the two thirds of the thumb it
+ *  misses are recovered by shape rather than by loosening it.
+ *
+ *  (An earlier draft of this comment claimed 61% and ZERO. Both came
+ *  from a narrower sample - it took in the forearms, which are darker
+ *  than the thumbs, and missed the cracks. The probe measures the
+ *  population the key actually works on.)
+ *
+ *  A luma cut cannot do this at all: measured on the same art, the
+ *  sheet's burnt border falls to 37 while the glove's lit ridges reach
+ *  212. That is not a near miss, it is a total overlap - which is why
+ *  three paintings of brightness-keying left parchment on the map. */
+export const HAND_CHROMA = 75;
+/** The radius of the CLOSE in step 3 of keyThumbPixels, in sprite
+ *  pixels: gaps narrower than twice this are bridged, and the thumb's
+ *  outline is left where it was. */
+export const THUMB_GROW = 4;
+/** MAP-FIELD2 (Mac, 2026-09-18): "...and is full screen with a BLACK
+ *  BACKGROUND" - and MAP-FIELD4, which ended that law.
+ *
+ *  The first painting was fully opaque and carried its own black matte,
+ *  so this module keyed the black out by brightness to put hands on the
+ *  world rather than a black rectangle. Mac's second painting carries a
+ *  real alpha channel instead: 857,265 pixels exactly transparent, no
+ *  matte at all. So the key is GONE, not merely unused - on this art it
+ *  would be a bug, because these gauntlets are grey and reach luma 0,
+ *  and a brightness key would punch holes through them. The painting
+ *  states its own silhouette now; nothing here guesses it.
+ *
+ *  Recorded as a departure in bible/10-UI/Held-Map-Arc.md. If a
+ *  matted painting is ever supplied again it comes back from there,
+ *  keyed to that file - it must not be revived by feel. */
 
 /** MAP-FIELD2, Mac's second look: "there's still a gap at the bottom of
  *  the arms, any way you can author the gap?"
  *
- *  There is, and cropping alone could not have closed it. Measured by
- *  column (tools/heldMapArtProbe.mjs), MOST of the forearm reaches
- *  SPRITE_ART_FOOT, and HELD_MAP_BITE carries those columns off the
- *  bottom edge on its own - which is why the first fix looked right.
- *  But 69 of the 366 columns outside the paper stop short, the outer
- *  edges of the cuffs worst of all: on a 900px screen they end up to
- *  68px above the bottom, leaving notches bitten out of the arms. No
- *  further crop closes those - pushing the sprite down far enough to
- *  bury them takes the paper off the screen with it.
+ *  There is, and cropping alone could not close it. The cuffs are CUT
+ *  BY THE FRAME - the painting simply stops partway down the forearms -
+ *  but not on one row: measured by column (tools/heldMapArtProbe.mjs),
+ *  the cut ends run from 0.866 to 0.893 of the file. HELD_MAP_BITE
+ *  carries the lowest of them off the bottom edge on its own, which is
+ *  why the first fix looked right and Mac still saw a gap; the ones
+ *  that end higher leave notches bitten out of the arms, and no further
+ *  crop closes those - pushing the sprite down far enough to bury them
+ *  takes the paper off the screen with it.
  *
- *  So the pixels are AUTHORED. Every column OUTSIDE the paper's own
- *  rectangle - which is where the two forearms show, and where there is
- *  no parchment to smear - has its lowest opaque pixel carried straight
- *  down to the foot of the sprite. The arms read as continuing off the
- *  bottom edge, which is what a held thing does, and nothing under the
- *  paper is touched (the parchment's torn bottom edge is art, and
- *  streaking it would be vandalism).
+ *  So the pixels are AUTHORED. A column whose art ends in the CUFF BAND
+ *  - at or below `foot`, which is to say a column the frame cut - has
+ *  its lowest opaque pixel carried straight down to the foot of the
+ *  sprite. The arms read as continuing off the bottom edge, which is
+ *  what a held thing does.
  *
- *  Pure, in place, over RGBA bytes - the same shape as the two keys. */
-export function extendCuffs(data, w, h, paper = PAPER, alphaMin = 8) {
-  const x0 = Math.floor(paper.x0 * w), x1 = Math.ceil(paper.x1 * w);
+ *  MAP-FIELD4: the test is WHERE THE COLUMN ENDS, and the band is the
+ *  measurement that makes it safe. Two other tests were tried on this
+ *  painting and both were wrong. Asking whether the column falls
+ *  outside PAPER's x range smears the sheet's own torn edge, because
+ *  PAPER is inset a few pixels inside the parchment. Asking whether it
+ *  ends below the sheet smears the whole parchment, because the sheet's
+ *  ragged bottom (to 0.732) hangs lower than PAPER's foot. The band
+ *  works because the file separates cleanly: every column under the
+ *  sheet ends by 0.737, every cuff column at 0.866 or below, and
+ *  NOTHING ends in between. What lies between are the hand's own
+ *  silhouette columns, which end in mid-air on purpose and must never
+ *  be streaked - the arm is not cut there, it is drawn there.
+ *
+ *  `alphaMin` is MORE THAN HALF OPAQUE, not merely visible. A column's
+ *  foot has to be a pixel the painter put there: the anti-aliased
+ *  fringe below it is half air, and carrying a fringe pixel's colour
+ *  down the screen at full opacity paints a streak the arm never had.
+ *
+ *  Pure, in place, over RGBA bytes - the same shape as the key. */
+export function extendCuffs(data, w, h, foot = CUFF_BAND, alphaMin = 128) {
+  const band = foot * h;
   for (let x = 0; x < w; x++) {
-    if (x >= x0 && x < x1) continue;   // under the parchment: leave the art alone
     let last = -1;
     for (let y = h - 1; y >= 0; y--) if (data[((y * w) + x) * 4 + 3] > alphaMin) { last = y; break; }
-    if (last < 0 || last >= h - 1) continue;
+    if (last < band || last >= h - 1) continue;   // not a column the frame cut
     const i = ((last * w) + x) * 4;
     const r = data[i], g = data[i + 1], b = data[i + 2];
     for (let y = last + 1; y < h; y++) {
@@ -234,16 +316,6 @@ export function extendCuffs(data, w, h, paper = PAPER, alphaMin = 8) {
   return data;
 }
 
-/** The matte keyed out of the sprite IN PLACE, over RGBA bytes. Pure -
- *  the same shape as `keyHandPixels`, and pinned the same way. */
-export function keyMattePixels(data, lum = MATTE_LUM, edge = MATTE_EDGE) {
-  for (let i = 0; i < data.length; i += 4) {
-    const l = Math.max(data[i], data[i + 1], data[i + 2]);
-    if (l <= lum) data[i + 3] = 0;
-    else if (l < edge) data[i + 3] = Math.round(data[i + 3] * ((l - lum) / (edge - lum)));
-  }
-  return data;
-}
 /** MAP-FIELD2 (Mac, 2026-09-18): "the held map should be at the bottom
  *  of the screen, arms should sit slighty below where there is no gap".
  *
@@ -260,16 +332,36 @@ export function keyMattePixels(data, lum = MATTE_LUM, edge = MATTE_EDGE) {
  *  sprite - so it is the one number to turn if the map reads too small
  *  to use or too big to see past. */
 export const HELD_MAP_HEIGHT = 0.92;
-export const HELD_MAP_BITE = 0.03;
+// MAP-FIELD5 (2026-09-19, Mac: "Can you lower it on the screen more").
+// 0.03 to 0.11 - about 60px further down a 720p screen. This is the
+// number to turn for that, and the only one: HEIGHT sets how big the
+// sheet is, BITE sets how far down it sits, and neither disturbs the
+// other. One consequence is recorded at the cuff pins - the bite now
+// carries the cut cuffs well past the bottom edge rather than by half a
+// pixel, so extendCuffs is a guarantee against a future change rather
+// than the thing standing between this art and a notch.
+export const HELD_MAP_BITE = 0.11;
 /** Where the PAINTING's content ends, as a fraction of the sprite's own
- *  height - measured off the file, not guessed: below 0.7864 every row
- *  is matte, so a fifth of `held-map.png` is empty. Anchoring the FILE
- *  to the foot of the screen therefore left the arms ending in mid-air
- *  with a fifth of the screen empty under them, which is the gap Mac
- *  named. The anchor is taken on this line instead, and `HELD_MAP_BITE`
- *  carries it a little past so the stumps are cropped by the edge
- *  rather than stopping at it. */
-export const SPRITE_ART_FOOT = 0.7864;
+ *  height - measured off the file, not guessed: below this line every
+ *  row is empty, so the bottom tenth of `held-map.png` is nothing.
+ *  Anchoring the FILE to the foot of the screen would leave the arms
+ *  ending in mid-air with that tenth of the screen empty under them,
+ *  which is the gap Mac named at MAP-FIELD2. The anchor is taken on
+ *  this line instead, and `HELD_MAP_BITE` carries it a little past so
+ *  the cuffs are cropped by the edge rather than stopping at it.
+ *
+ *  MAP-FIELD4: measured off the alpha channel now (the lowest row with
+ *  an opaque pixel is 971 of 1086), where on the matted paintings it
+ *  had to be read off the brightness. */
+export const SPRITE_ART_FOOT = 0.895;
+/** Where the CUFF BAND begins, as a fraction of the sprite's height:
+ *  the line above which a column's art ends because it was DRAWN to end
+ *  there, and below which it ends because the frame cut it. Measured -
+ *  every column under the sheet ends by 0.737 and every cuff column at
+ *  0.866 or below, with nothing at all in between, so this sits in that
+ *  empty band. It is what tells extendCuffs an arm to carry off the
+ *  screen from a silhouette to leave alone. */
+export const CUFF_BAND = 0.85;
 
 // ── THE CLOCKS (skin) ────────────────────────────────────────────
 const OPEN_S = 0.3;      // the sheet rises into view
@@ -1535,7 +1627,7 @@ export class HeldMapWindow {
     const sheet = el('canvas', 'hmsprite');
     stage.append(sheet, ink, hands);
     // the handler BEFORE the source, so a cached picture cannot land first
-    sprite.onload = () => { this._keyMatte(sprite, sheet); this._keyHands(sprite, hands); };
+    sprite.onload = () => { this._paintSheet(sprite, sheet); this._keyHands(sprite, hands); };
     sprite.src = HELD_MAP_URL;
 
     const top = el('div', 'hmtop');
@@ -1724,15 +1816,22 @@ export class HeldMapWindow {
     this._chrome = null;
   }
 
-  /** The thumbs, keyed back over the ink: the sprite's pixels inside
-   *  THUMB_ZONES darker than HAND_LUM are copied onto the hands canvas,
-   *  everything else left clear. Runs once, when the sprite has
-   *  loaded; a document with no 2D context (node) skips it. */
-  /** MAP-FIELD2: the painting's black matte, keyed off into the canvas
-   *  the stage actually shows. The <img> is the loader; this is the
-   *  sprite. A failure here leaves the canvas blank rather than putting
-   *  a black rectangle over the world, which is the safer of the two. */
-  _keyMatte(sprite, sheet) {
+  /** The thumbs, keyed back over the ink: inside each of THUMB_ZONES
+   *  the sprite's own thumb is found as one blob reaching in from that
+   *  hand's side (keyThumbPixels) and copied onto the hands canvas,
+   *  everything else left clear. The painting's matte is keyed here too
+   *  Runs once, when the sprite has loaded; a document with no 2D
+   *  context (node) skips it. */
+  /** The sprite as the stage actually shows it: the painting, with the
+   *  arms carried off the bottom edge. The <img> is only the loader.
+   *
+   *  MAP-FIELD4: this used to key the first painting's black matte out
+   *  here as well. That art is gone and so is the key - Mac's second
+   *  painting carries its own alpha, and keying grey gauntlets by
+   *  brightness would punch holes through them. A failure here leaves
+   *  the canvas blank rather than putting a slab over the world, which
+   *  is the safer of the two. */
+  _paintSheet(sprite, sheet) {
     try {
       const w = sprite.naturalWidth || SPRITE.w, h = sprite.naturalHeight || SPRITE.h;
       const ctx = sheet.getContext?.('2d');
@@ -1740,11 +1839,10 @@ export class HeldMapWindow {
       sheet.width = w; sheet.height = h;
       ctx.drawImage(sprite, 0, 0, w, h);
       const img = ctx.getImageData(0, 0, w, h);
-      keyMattePixels(img.data);
       extendCuffs(img.data, w, h);   // MAP-FIELD2: the arms run off the bottom edge instead of ending above it
       ctx.putImageData(img, 0, 0);
     } catch (e) {
-      console.warn('[heldmap] the matte would not key', e);
+      console.warn('[heldmap] the sheet would not paint', e);
     }
   }
 
@@ -1762,7 +1860,7 @@ export class HeldMapWindow {
         const x0 = Math.floor(z.x0 * w), y0 = Math.floor(z.y0 * h);
         const zw = Math.ceil((z.x1 - z.x0) * w), zh = Math.ceil((z.y1 - z.y0) * h);
         const img = octx.getImageData(x0, y0, zw, zh);
-        keyHandPixels(img.data);
+        keyThumbPixels(img.data, zw, zh, z.side);
         hctx.putImageData(img, x0, y0);
       }
     } catch (e) {
@@ -1931,7 +2029,7 @@ export class HeldMapWindow {
         }
         card.append(dl);
       }
-      if (t?.online) card.append(el('p', 'hmmeta', ONLINE_TRAVEL_LINE));   // OL2: the popup's own line
+      if (t?.online && !t.walked) card.append(el('p', 'hmmeta', ONLINE_TRAVEL_LINE));   // OL2: the popup's own line   // TO-ONLINE: and not over a walked trip, which online is a real ride now and not an arrival at once
       // TO-FIELD (2026-09-18, Mac: "it... doesn't travel on the road"):
       // THE FOLLOW KEY, SAID WHERE THE TRIP IS BOUGHT. Travel Options
       // does not route along roads to a destination - it beelines, and
@@ -1984,13 +2082,104 @@ export function rgbaCss(rgba) {
   return `rgba(${rgba[0]}, ${rgba[1]}, ${rgba[2]}, ${Math.round(a * 1000) / 1000})`;
 }
 
-/** The key, on RGBA bytes in place: a pixel at or above HAND_LUM is
- *  paper and goes clear; a darker one is gauntlet and stays. Pure, so
- *  the threshold is pinned without a canvas. */
-export function keyHandPixels(data, lum = HAND_LUM) {
-  for (let i = 0; i < data.length; i += 4) {
-    const l = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
-    if (l >= lum) data[i + 3] = 0;
+
+/** MAP-FIELD3/4: THE THUMB IS ONE BLOB, AND IT IS FOUND BY COLOUR.
+ *
+ *  Three paintings in, the lesson is that BRIGHTNESS never parted glove
+ *  from parchment. On Mac's first two it could not: bronze up to luma
+ *  148 against shaded parchment down to 130, and saturation no better
+ *  (sheet 0.45-0.50, glove 0.50-0.68). Keying on it kept slabs of
+ *  shadowed sheet and laid them over the ink. On this painting the
+ *  sheet's middle is bright enough to cut, but its BURNT BORDER is not
+ *  - so a luma cut kept the border instead, in a ragged halo round each
+ *  thumb.
+ *
+ *  What parts them here is WARMTH, and then SHAPE, on four steps:
+ *
+ *  1. SEED on red-minus-blue under `chroma`. The sheet is parchment and
+ *     warm everywhere, border included; the steel is not. Measured, no
+ *     sheet pixel at all falls under this line (HAND_CHROMA), so a
+ *     seeded pixel is certainly glove.
+ *  2. FLOOD from the zone's outer column - `side` names the one nearer
+ *     that thumb's own hand. The thumb reaches in from there, so
+ *     whatever the flood cannot reach is sheet and goes clear, however
+ *     dark it is. This is what drops the sheet's own cracks and stains.
+ *  3. CLOSE by `grow`, which bridges the warm lit bands inside the
+ *     steel that step 1 would not claim - grow then shrink by the same,
+ *     so a gap narrower than twice `grow` is bridged while it is
+ *     interior and the outline returns to where the paint put it.
+ *     Growing alone does not answer it: it bridges nothing that reaches
+ *     the silhouette and leaves a pale rim round the thumb.
+ *  4. FILL what is enclosed, which takes the warm highlights left
+ *     inside the blob. Without this the thumb's own shine comes out as
+ *     pinholes of map showing through the glove.
+ *
+ *  Pure, in place, over one zone's RGBA bytes - the same shape as the
+ *  other key, and pinned the same way. */
+export function keyThumbPixels(data, w, h, side = 'left', chroma = HAND_CHROMA, grow = THUMB_GROW) {
+  const n = w * h;
+  if (n <= 0 || data.length < 4 * n) return data;
+  const keep = new Uint8Array(n);
+  const stack = [];
+  // MAP-FIELD4: OFF THE PAINTING IS NOT GLOVE. A transparent pixel has
+  // no colour to read - it comes back as red 0, blue 0, so a difference
+  // of 0 - and without this the flood would run out through the clear
+  // ground around the hand and call the whole zone thumb.
+  const steel = (i) => {
+    const j = i * 4;
+    return data[j + 3] > 128 && data[j] - data[j + 2] < chroma;
+  };
+  // 2. the flood, seeded down the column nearest this thumb's own hand
+  const col = side === 'right' ? w - 1 : 0;
+  for (let y = 0; y < h; y++) { const i = (y * w) + col; if (steel(i)) { keep[i] = 1; stack.push(i); } }
+  while (stack.length) {
+    const i = stack.pop();
+    const x = i % w, y = (i - x) / w;
+    if (x > 0 && !keep[i - 1] && steel(i - 1)) { keep[i - 1] = 1; stack.push(i - 1); }
+    if (x < w - 1 && !keep[i + 1] && steel(i + 1)) { keep[i + 1] = 1; stack.push(i + 1); }
+    if (y > 0 && !keep[i - w] && steel(i - w)) { keep[i - w] = 1; stack.push(i - w); }
+    if (y < h - 1 && !keep[i + w] && steel(i + w)) { keep[i + w] = 1; stack.push(i + w); }
   }
+  // 3a. the CLOSE: grow by `grow` rings, then shrink by the same. A gap
+  // narrower than twice `grow` is bridged by the growing and cannot be
+  // reopened by the shrinking - it is interior by then - while the
+  // silhouette itself comes back to where it was. Each ring is
+  // collected in full BEFORE any of it is taken, so one pass moves the
+  // edge by exactly one pixel and not by the width of the zone.
+  for (let g = 0; g < grow; g++) {
+    const ring = [];
+    for (let i = 0; i < n; i++) {
+      if (keep[i]) continue;
+      const x = i % w, y = (i - x) / w;
+      if ((x > 0 && keep[i - 1]) || (x < w - 1 && keep[i + 1])
+        || (y > 0 && keep[i - w]) || (y < h - 1 && keep[i + w])) ring.push(i);
+    }
+    for (const i of ring) keep[i] = 1;
+  }
+  for (let g = 0; g < grow; g++) {
+    const ring = [];
+    for (let i = 0; i < n; i++) {
+      if (!keep[i]) continue;
+      const x = i % w, y = (i - x) / w;
+      // off the zone counts as kept: the thumb runs on into the hand,
+      // and eating its outer edge would peel the blob off that side
+      if ((x > 0 && !keep[i - 1]) || (x < w - 1 && !keep[i + 1])
+        || (y > 0 && !keep[i - w]) || (y < h - 1 && !keep[i + w])) ring.push(i);
+    }
+    for (const i of ring) keep[i] = 0;
+  }
+  // 3b. the fill: whatever the outside cannot reach is inside the thumb
+  const open = new Uint8Array(n);
+  for (let y = 0; y < h; y++) for (const x of [0, w - 1]) { const i = (y * w) + x; if (!keep[i] && !open[i]) { open[i] = 1; stack.push(i); } }
+  for (let x = 0; x < w; x++) for (const y of [0, h - 1]) { const i = (y * w) + x; if (!keep[i] && !open[i]) { open[i] = 1; stack.push(i); } }
+  while (stack.length) {
+    const i = stack.pop();
+    const x = i % w, y = (i - x) / w;
+    if (x > 0 && !keep[i - 1] && !open[i - 1]) { open[i - 1] = 1; stack.push(i - 1); }
+    if (x < w - 1 && !keep[i + 1] && !open[i + 1]) { open[i + 1] = 1; stack.push(i + 1); }
+    if (y > 0 && !keep[i - w] && !open[i - w]) { open[i - w] = 1; stack.push(i - w); }
+    if (y < h - 1 && !keep[i + w] && !open[i + w]) { open[i + w] = 1; stack.push(i + w); }
+  }
+  for (let i = 0; i < n; i++) if (open[i]) data[i * 4 + 3] = 0;
   return data;
 }

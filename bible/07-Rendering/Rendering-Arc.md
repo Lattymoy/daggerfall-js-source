@@ -1905,6 +1905,76 @@ container, so nothing here was measured the way PERF-ON's names were.
 Said rather than implied.
 
 **Pinned** in `test/grasspath.test.js`.
+## AUDIT-AIR1 - THE SIXTH SEAM (2026-09-19)
+
+> Mac, with a screenshot: *"the screenshot shows a bug where sometimes
+> unsheathing, it spawns a weird water texture"*.
+
+It was not water. It was the resolved frame buffer, pasted into the
+weapon sprite's quad.
+
+**PERF-TEX3's own trap, one seam further on.** That slice's audit found
+13 raw unit-0 binds that answered to nothing, wrote the unit-0 twin of
+PERF-TEX's law, and pinned it. What neither pass asked was the other
+question: **who takes the context away from the renderer entirely?**
+`markForeignPass` is the answer the file already had, and it forgets
+every texture shadow for exactly this reason - its own comment says a
+shadow that speaks for a unit it no longer owns is a wrong texture.
+
+`_compositeAir` is the same kind of seam and never said so.
+`airPass.composite()` is the post-processing resolve: it binds units 0
+to 3 (frame, bloom, shafts, AO) and leaves its own unit selected.
+`_compositeAir` forgot `_lastProgram` and `_lastVao` after it and **not
+the texture shadows** - so the first screen quad after a resolve found
+
+- `_activeUnit` still claiming `TEXTURE0`, when the resolve left unit 3
+  selected, and
+- `_tex0Bound` still naming the sprite the quad wanted.
+
+Either one alone is a wrong texture. Together they are a guarantee: the
+quad skipped its bind, or bound to unit 3, and sampled whatever the
+resolve left on unit 0. On an unsheathe that is the weapon sprite
+painted with a blurred picture of the room - a soft blue-grey smear with
+the room's own edges in it, which is what a water plane looks like.
+
+**Why "sometimes".** `_compositeAir` returns early unless
+`this._air.pending`, and `drawScreenQuad` calls it at the head of every
+quad - so only the FIRST quad after a resolve is ever wrong, and which
+quad that is depends on what else the frame drew. It also needs the
+enhanced lane on, since there is no air pass without it.
+
+**The root cause is not the missing line, it is the six copies.** The
+same six-field block was hand-written at five seams (the constructor,
+`endWorldPass`, `_installWorldSet`, `markForeignPass`, `beginFrame`) and
+a sixth was owed at `_compositeAir`. Six copies of a rule is five
+chances to miss one, and one was missed. It is now
+`_forgetTextureShadows()` and **seven** seams call it -
+`uploadEmissionTexture` was a seventh hand-copy, clearing three of the
+six, which the sweep also found.
+
+**Proved by replay, not by grep.** The pin drives the real `Renderer`
+over the logging GL stub with an air pass that binds what the real one
+binds, replays the call log through the GL state machine, and asks what
+the GPU would have on unit 0 - and which unit is selected - AT THE DRAW.
+A source pin could not have caught this: every line it would have
+grepped for was present and correct.
+
+The three older pins that grepped for the hand-written block are
+re-aimed at the call, with the helper's own contents pinned where it
+lives, so neither half can go vacuous. The unit-1 source law now accepts
+`_forgetTextureShadows` as a third way to answer, and only because the
+assertion above it proves the helper really clears `_tex1Bound`.
+
+`tools/mutants/audit_air1.json`: 7 mutants, 7 dead - including the
+ordering (a forget BEFORE the composite is forgetting shadows the
+resolve then invalidates again).
+
+**What this says about the whole PERF arc.** Three slices, three audits,
+three shipping bugs found after a green gate, every one of them a
+*shadow that outlived its claim*. The shadows are still right and the
+64% saving is still real, but the pattern is now explicit: **every new
+shadow owes a list of who can take the thing it shadows away.** Both
+audits found their bug by asking it; the gate never did.
 
 ## PERF-ON2 + PERF-CPU - the others are culled, and the frame can be timed on the clock it is losing (2026-09-19)
 
@@ -2181,11 +2251,11 @@ beside them. Then the same shape turned up everywhere else:
 
 | host | list |
 |---|---|
-| `dungeonContext.js:5021` | the mobiles, the drops, the spells |
+| `dungeonContext.js:5033` | the mobiles, the drops, the spells |
 | `worldModes.js:6095` | the dungeon's flats, camps, torches and peers |
 | `worldModes.js:6258` | the interior's flats and peers |
 | `worldModes.js:6264-6298` | blood, torches, drops, foes, guards - **five separate uncut calls** |
-| `exterior.js:4776`, `world.js:10594` | the spell missiles |
+| `exterior.js:4776`, `world.js:10615` | the spell missiles |
 | `exterior.js:4838` | the fixed city's townspeople |
 | `interior.js:352`, `dungeon.js:1006` | the flats, the camps, the torches |
 

@@ -1,0 +1,65 @@
+[
+  {
+    "name": "AIR1-the-resolve-forgets-nothing",
+    "file": "src/render/renderer.js",
+    "old": "this._air.composite();   // EL4: the resolve - the frame to the canvas\n    // AUDIT-AIR1: THE RESOLVE IS A FOREIGN PASS, and this seam - alone of\n    // the seven - never said so. `composite()` binds units 0..3 and\n    // leaves its own unit selected, exactly what `markForeignPass`\n    // exists for; the first screen quad after it found `_activeUnit`\n    // still claiming TEXTURE0 and `_tex0Bound` still naming the sprite\n    // it wanted, so it skipped the bind (or bound to unit 3) and sampled\n    // the RESOLVED FRAME BUFFER. On an unsheathe that is the weapon\n    // sprite painted with a blurred picture of the room - the \"weird\n    // water texture\". AFTER the composite, because the composite is what\n    // invalidates them. (VC6c/VC6d pin the two lines above this one as\n    // adjacent, which is why the reason is written here and not there.)\n    this._forgetTextureShadows();",
+    "new": "this._air.composite();   // EL4: the resolve - the frame to the canvas\n    // AUDIT-AIR1: THE RESOLVE IS A FOREIGN PASS, and this seam - alone of\n    // the seven - never said so. `composite()` binds units 0..3 and\n    // leaves its own unit selected, exactly what `markForeignPass`\n    // exists for; the first screen quad after it found `_activeUnit`\n    // still claiming TEXTURE0 and `_tex0Bound` still naming the sprite\n    // it wanted, so it skipped the bind (or bound to unit 3) and sampled\n    // the RESOLVED FRAME BUFFER. On an unsheathe that is the weapon\n    // sprite painted with a blurred picture of the room - the \"weird\n    // water texture\". AFTER the composite, because the composite is what\n    // invalidates them. (VC6c/VC6d pin the two lines above this one as\n    // adjacent, which is why the reason is written here and not there.)",
+    "tests": [
+      "test/glstate.test.js"
+    ]
+  },
+  {
+    "name": "AIR1-the-resolve-forgets-them-BEFORE-the-composite",
+    "file": "src/render/renderer.js",
+    "old": "this._air.composite();   // EL4: the resolve - the frame to the canvas\n    // AUDIT-AIR1: THE RESOLVE IS A FOREIGN PASS, and this seam - alone of\n    // the seven - never said so. `composite()` binds units 0..3 and\n    // leaves its own unit selected, exactly what `markForeignPass`\n    // exists for; the first screen quad after it found `_activeUnit`\n    // still claiming TEXTURE0 and `_tex0Bound` still naming the sprite\n    // it wanted, so it skipped the bind (or bound to unit 3) and sampled\n    // the RESOLVED FRAME BUFFER. On an unsheathe that is the weapon\n    // sprite painted with a blurred picture of the room - the \"weird\n    // water texture\". AFTER the composite, because the composite is what\n    // invalidates them. (VC6c/VC6d pin the two lines above this one as\n    // adjacent, which is why the reason is written here and not there.)\n    this._forgetTextureShadows();",
+    "new": "this._forgetTextureShadows();\n    this._air.composite();   // EL4: the resolve - the frame to the canvas\n    // AUDIT-AIR1: THE RESOLVE IS A FOREIGN PASS, and this seam - alone of\n    // the seven - never said so. `composite()` binds units 0..3 and\n    // leaves its own unit selected, exactly what `markForeignPass`\n    // exists for; the first screen quad after it found `_activeUnit`\n    // still claiming TEXTURE0 and `_tex0Bound` still naming the sprite\n    // it wanted, so it skipped the bind (or bound to unit 3) and sampled\n    // the RESOLVED FRAME BUFFER. On an unsheathe that is the weapon\n    // sprite painted with a blurred picture of the room - the \"weird\n    // water texture\". AFTER the composite, because the composite is what\n    // invalidates them. (VC6c/VC6d pin the two lines above this one as\n    // adjacent, which is why the reason is written here and not there.)",
+    "tests": [
+      "test/glstate.test.js"
+    ]
+  },
+  {
+    "name": "AIR1-the-one-home-keeps-the-selector",
+    "file": "src/render/renderer.js",
+    "old": "    this._tex0Bound = null; this._activeUnit = null;\n    this._sq = {};",
+    "new": "    this._tex0Bound = null;\n    this._sq = {};",
+    "tests": [
+      "test/glstate.test.js"
+    ]
+  },
+  {
+    "name": "AIR1-the-one-home-keeps-unit-1",
+    "file": "src/render/renderer.js",
+    "old": "  _forgetTextureShadows() {\n    this._tex1Bound = null;",
+    "new": "  _forgetTextureShadows() {\n    this._tex1Bound = this._tex1Bound;",
+    "tests": [
+      "test/glstate.test.js"
+    ]
+  },
+  {
+    "name": "DEATH1-the-dungeon-collapse-writes-health-raw-again",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "      hurtEntity(playerEntity, playerEntity.health, { bypassShield: true });   // SetHealth(0): the fatal collapse",
+    "new": "      playerEntity.health = 0;   // SetHealth(0): the fatal collapse",
+    "tests": [
+      "test/playerdeath.test.js"
+    ]
+  },
+  {
+    "name": "DEATH1-a-shield-makes-the-lethal-collapse-survivable",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "      hurtEntity(playerEntity, playerEntity.health, { bypassShield: true });   // SetHealth(0): the fatal collapse",
+    "new": "      hurtEntity(playerEntity, playerEntity.health);   // SetHealth(0): the fatal collapse",
+    "tests": [
+      "test/playerdeath.test.js"
+    ]
+  },
+  {
+    "name": "DEATH1-the-presenter-fires-on-the-state-not-the-transition",
+    "file": "src/characters/playerEntity.js",
+    "old": "  if (wasAlive && entity.health === 0) {",
+    "new": "  if (entity.health === 0) {",
+    "tests": [
+      "test/playerdeath.test.js"
+    ]
+  }
+]
