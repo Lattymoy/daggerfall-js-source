@@ -1531,6 +1531,56 @@ AUDIT 65 RS-3, PERF-TEX's own unit-1 law, WATER1's two-unit assertion and
 PERF3's billboard key. None of them was a behavioural failure, which the
 equality proof above is what establishes rather than the re-aiming.
 
+### PERF-TEX3 AUDIT - THE LAW THAT WAS SKIPPED (same day, before merge)
+
+PERF-TEX wrote this law for unit 1:
+
+> and no site binds TEXTURE_2D to unit 1 outside the helper without
+> clearing it
+
+It is why that slice never shipped a wrong texture. **Its unit-0 twin was
+not written**, and the audit found what that cost: **13 raw binds to unit
+0 answered to nothing.** The repro is three lines of ordinary world pass -
+
+```js
+r.drawMesh(bundle, m);        // binds MESH_TEX through the shadow
+r.drawCharacter(char, m);     // owns unit 0 raw, hands it back EMPTY
+r.drawMesh(bundle, m);        // shadow still says MESH_TEX -> skips
+```
+
+→ **the model after the character drew with nothing bound.** Untextured
+geometry in the world pass, every frame a character is on screen, which
+is every frame.
+
+`drawWater` would have handed the next model the water's texture;
+`uploadTexture` and `uploadTilemapTexture` the same, mid-stream.
+
+**Why the equality proof missed it.** The proof scene ran terrain, then
+meshes, then billboards, then UI - it never put a path that owns unit 0
+raw BETWEEN two paths that share the shadow, which is the only place the
+bug lives. A proof is only as wide as its scene, and "identical across
+462 draws" was true and useless. The scene is the world host's real shape
+now - ground, models, a character, more models, an upload, billboards,
+more models, six pixels of it - and both slices are proved against the
+commit before PERF-2D on it: **672 draws, identical in caps, VAO,
+program, every texture unit and every draw argument.**
+
+**Fixed and pinned twice.** Every raw unit-0 bind clears the shadow
+beside it; the twin law walks `renderer.js` tracking the active unit and
+requires every TEXTURE_2D bind landing on unit 0 outside `_bindTex0` to
+answer the shadow within four lines; and the repro is kept as its own
+behavioural pin. Both were mutation-tested against the real fix - removing
+one clear fails the law, removing all three of `drawCharacter`'s fails
+both.
+
+**The lesson, which is the same one this file keeps learning.** A state
+shadow is only ever as good as the list of places that invalidate it, and
+that list is not a thing to be reasoned out once - it is a law to be read
+out of the source by a test. PERF-TEX knew that. PERF-TEX3 shipped the
+shadow and skipped the law, and only an audit stood between that and a
+merge.
+
+
 ## PERF-2D - THE BRACKET THAT WAS PER QUAD (2026-09-19)
 
 PERF-UI ended by naming what it had left on the table and why:

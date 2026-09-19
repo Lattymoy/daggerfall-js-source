@@ -1023,3 +1023,50 @@ test('PERF-TEX3: a mesh bundle whose sub-meshes repeat an archive binds each tex
   assert.equal(log.slice(from).filter(([k]) => k === 'drawElements').length, 6, 'all six sub-meshes drew');
   assert.equal(binds, 3, `six sub-meshes over two textures bound ${binds} times - one a RUN, not one a sub-mesh`);
 });
+
+test('PERF-TEX3 AUDIT: no site binds TEXTURE_2D to unit 0 outside the helper without clearing the shadow', () => {
+  // PERF-TEX wrote exactly this law for unit 1 and it is why that slice
+  // never shipped a wrong texture. Writing its twin was skipped when the
+  // unit-0 shadow went in, and the audit found what that cost: a model
+  // drawn after a CHARACTER came out untextured, because drawCharacter
+  // binds unit 0 raw, ends on `bindTexture(TEXTURE_2D, null)`, and the
+  // shadow went on claiming the texture it had before.
+  const src = readFileSync('src/render/renderer.js', 'utf8');
+  const lines = src.split('\n');
+  let unit = 'TEXTURE0', method = null;
+  const offenders = [];
+  for (let i = 0; i < lines.length; i++) {
+    const m = /^  (_?[A-Za-z][A-Za-z0-9_]*)\(.*\)\s*\{\s*$/.exec(lines[i]);
+    if (m) { method = m[1]; unit = 'TEXTURE0'; }       // unit 0 is the baseline every method opens on
+    const am = /_activeTexture\(gl\.(TEXTURE\d+|TEXTURE0 \+ \w+)\)/.exec(lines[i]);
+    if (am) unit = am[1];
+    if (!/gl\.bindTexture\(gl\.TEXTURE_2D,/.test(lines[i])) continue;
+    if (unit !== 'TEXTURE0' || method === '_bindTex0') continue;
+    const window = lines.slice(i, i + 4).join('\n');
+    if (!/_tex0Bound|_bindTex0/.test(window)) offenders.push(`renderer.js:${i + 1} (${method})`);
+  }
+  assert.deepEqual(offenders, [], `these bind unit 0 without answering to the shadow: ${offenders.join(', ')}`);
+});
+
+test('PERF-TEX3 AUDIT: a model drawn after a character still has its texture', () => {
+  // The repro, kept: drawCharacter owns unit 0 while it runs and hands it
+  // back EMPTY. A mesh either side of it shares the shadow, so a shadow
+  // that survived the character would skip the bind and draw nothing.
+  const { r, log } = glLogRig();
+  r.textures.set('4_4', { id: 'MESH_TEX' });
+  r.beginFrame(new Float32Array(identity()), new Float32Array(identity()), new Float32Array([0, -1, 0]));
+  const bundle = { vao: { id: 'v' }, subMeshes: [{ textureArchive: 4, textureRecord: 4, primitiveCount: 4, startIndex: 0 }] };
+  r.drawMesh(bundle, identity());
+  r.drawCharacter({ vao: { id: 'cv' }, ranges: [{ start: 0, count: 3, tex: { id: 'CHAR_TEX' } }] }, identity());
+  r.drawMesh(bundle, identity());
+
+  let unit = r.gl.TEXTURE0; const on = new Map(); const sawAt = [];
+  for (const [k, ...a] of log) {
+    if (k === 'activeTexture') unit = a[0];
+    else if (k === 'bindTexture') on.set(unit + '/' + a[0], a[1]);
+    else if (k === 'drawElements') sawAt.push(on.get(r.gl.TEXTURE0 + '/' + r.gl.TEXTURE_2D));
+  }
+  assert.ok(sawAt.length >= 2, 'both meshes drew');
+  assert.equal(sawAt[sawAt.length - 1]?.id, 'MESH_TEX',
+    'the model after the character drew with ' + JSON.stringify(sawAt[sawAt.length - 1]) + ' on unit 0');
+});
