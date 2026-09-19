@@ -121,6 +121,84 @@ directory by `test/audit18_bible_docs.test.js`:
   whole-field upload, ever. The blade laws are unchanged. Measured
   headless: five metres of walking touches nothing; forty frees one
   edge column of 15 cells and fills the other, of 225 live.
+  **GRASS2 (2026-09-18, Mac: "improve grass, improve grass performance,
+  and also have it be seen at long ranges... I also want to shorten the
+  grass length"): THE FADE IS PAID ON THE HOST.** Measured first, on a
+  real GL context through `tools/grassFieldProbe.mjs` (this container has
+  no ARENA2, so the field is driven over a synthetic all-grass plane -
+  the blade COUNTS are exact and deterministic, the milliseconds are
+  SwiftShader's and are never quoted): 46 cells in frustum, 281,612
+  blades, **8.45M vertex shader invocations a frame**. The same field at
+  range 110 costs 3.31M and shows 2.1% fewer lit pixels - so 61% of the
+  vertex work was buying 2% of the grass. The cause: the fade discarded
+  blades INSIDE the vertex shader (`gl_Position = vec4(2,2,2,1)`), so a
+  blade culled at 180 m cost exactly what one at 5 m cost, and the band
+  where that happens is 70% of the field's area. Two changes, and the
+  picture does not move (67,833 lit pixels to 67,846). **(1)** The
+  fade's threshold is the blade's INDEX rather than a hash of its phase.
+  Same distribution - the placer already emits a cell's blades in random
+  order, so the first k are a uniform random k - but an index is
+  knowable to the HOST, which can then submit only the prefix that can
+  survive and decline the rest before they cost anything. The bound is
+  taken at the cell's NEAREST corner, so it never cuts a blade the
+  shader wanted. **(2)** Cells past half the range bind a ONE-QUAD
+  blade instead of the lab's five stacked quads: the five exist so the
+  stalk can curve, and at that distance the curve is not resolvable.
+  Same instance buffers, same shader, a different vertex array. 30 of
+  the 46 cells qualify. Together, like for like at the lab's own 200 m:
+  **8.45M to 3.54M, 58% off.** AND WHAT ACTUALLY SHIPS, which is the
+  number that matters to a player: the range is 250 m, where the frame
+  submits **4.97M** - still 41% under what the old field cost at 200 m,
+  while seeing a quarter further. (It submits slightly MORE blades there,
+  290k against 282k; the vertices fall anyway because two thirds of the
+  cells are on the one-quad blade.) Height is 54 to 38 on Mac's word and
+  the tint is pulled toward a low-frequency world-space noise so the
+  sward has patches instead of reading as one flat carpet of per-blade
+  noise.
+  THREE THINGS THIS COST, all caught by pins and probe rather than by
+  eye. Widening the span THINNED the grass, because `density` is a count
+  over the window and not a rate - `densitySpan` now holds the lab's own
+  420 m so blades-a-square-metre is the invariant. The noise variable
+  could not be called `patch`: that is a reserved word in GLSL ES 3.00
+  and took the whole program down, which is the trap that took the sky
+  down at VC6 under the name `flat`. And GR5's own pin caught that the
+  new span was not a whole number of cells, so the window's two edges
+  floored out of phase and a step that added one column dropped two -
+  the lab's 210 was a multiple of the cell by luck, 270 is by intent.
+  WHAT IS NOT DONE, and why, so nobody re-derives it: the range stops at
+  250 m because the DRAW cost no longer tracks the area but the STORAGE
+  still does. Every cell holds near-field density at 48 bytes a blade
+  whether it is underfoot or at the horizon - 75 MB of GPU buffer at
+  200 m, 106 MB at 250, 169 MB at 320. 320 m is what "long range" really
+  wants, and reaching it needs the instance data PACKED (twelve floats a
+  blade is mostly byte-sized information) or the far ring stored sparser
+  than the near one. Either is its own slice; neither is a reason to
+  ship 169 MB quietly. GR1'S LAW IS DEPARTED FROM, on the record: the
+  vertex stage is no longer the lab's text byte for byte. It is the
+  lab's text plus THREE named edits, exported as `GRASS2_VS_EDITS` and
+  applied by the pin to the lab's own slice before comparing - so a
+  fourth change, or a fourth edit nobody declared, still fails. The
+  fragment stage is untouched.
+  **GRASS4 (2026-09-18): THE PLACER'S COST WAS A STRING.** Opened as a
+  sweep of the whole outdoor frame for GRASS2's defect - work submitted
+  whose output is discarded - and the frame turned out to be well swept
+  already: flats culled by ring and frustum (MAC1, EV3), terrain by
+  pixel, the sun's cascades by texel radius (EL8), the lanterns gated to
+  17:00-08:00, the AO at half resolution and the bloom at a quarter. The
+  one that was left is on the CPU, in the placer: `pieceIndex` answers
+  once per blade CANDIDATE - six thousand a cell, two cells a frame
+  while the eye walks - and it built a template string for each of them.
+  Twelve thousand strings a frame, hashed, looked up and dropped; the
+  allocation was the work and the answer never needed it. `pieceKey` is
+  `px * 65536 + py` now, injective three orders of magnitude past the
+  Daggerfall map, and the placer went from 1.22 ms a cell to 0.40 - 67%
+  off, output byte-identical. AND ONE CHANGE MEASURED AND NOT MADE:
+  `ground()` repeats `keep()`'s lookup for every kept blade, which looks
+  like the same class of waste and is not - caching it across the two
+  saves nothing once the key is a number, because the duplicate was only
+  ever expensive because of the string. It was written, measured,
+  reverted, and `world.js` carries a comment saying so, because the next
+  reader will see the duplicate too.
 - `systems/wind.js` - **WIND1 (2026-09-02) THE WIND IS ITS OWN THING.**
   Mac: "wind should be something different from the weather. Imagine a
   time-lapse, seeing a storm rolling in as the wind kicks up, and the
@@ -348,6 +426,17 @@ directory by `test/audit18_bible_docs.test.js`:
   + Worley at 8/16/32) and a 32^3 detail volume (Worley at 4/8/16), tiling on
   every axis, generated on the GPU one layer per draw; the lab's slice viewer
   (`?noise=`) behind tools/cloudNoiseProbe.mjs.
+- `warmPrograms.js` - PERF-WARM THE COMPILE THAT NO LONGER HAPPENS MID-FRAME:
+  the idle driver for the programs a renderer builds ON DEMAND. Five of
+  renderer.js's were compiled inside a draw call (the particle effects' on the
+  first spell, the character-sprite quad's on the first classic sprite, the
+  screen quad's, the instanced screen quad's and the overlay's), and a
+  compile-and-link is a DRIVER stall of tens of milliseconds that nothing here
+  can make cheaper - only MOVE. `renderer.warmSteps()` names them, one step
+  each; this walks them behind `requestIdleCallback`, one per callback, the
+  shape `ui/enhancedChunk.js` settled on and for the same reason. Both exterior
+  hosts add the rain's whole renderer to the walk. A leaf: no renderer type,
+  no lane, no GL.
 - `perfMeter.js` - EL8 THE PERF READOUT: `?perf` - the frame's GPU time on
   `EXT_disjoint_timer_query_webgl2` and the lane's counts, one console line
   every PERF_EVERY world frames. A leaf: no renderer, no lane. See

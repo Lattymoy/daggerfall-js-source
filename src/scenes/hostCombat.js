@@ -120,7 +120,7 @@ export const hasBowAttack = (basics) =>
 const HUMANOID_LOOT_ITEM_SCALE = 0.25;   // MOD: keep a quarter of the item chance (drop 75%)
 export function spawnEnemyLoot(entity, mobileType, basics, player, { rolls = Math.random } = {}) {
   const itemChanceScale = isHumanoid(entity) ? HUMANOID_LOOT_ITEM_SCALE : 1;
-  entity.items = generateItems(basics?.lootTableKey ?? '-', { level: player.level, gender: player.gender }, undefined, { itemChanceScale });
+  entity.items = generateItems(basics?.lootTableKey ?? '-', { level: player.level, gender: player.gender }, undefined, { itemChanceScale, mobileType });
   equipEnemy(entity, mobileType, player.level, rolls);
   addEnemyLootExtras(entity.items, basics, rolls);
   rollCorpseLoot(entity, basics, { rolls, luck: liveStat(player, 'luck') });

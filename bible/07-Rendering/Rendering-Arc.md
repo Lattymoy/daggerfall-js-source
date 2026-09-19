@@ -1318,6 +1318,487 @@ disease probehygiene's T3 names.
 
 **Pinned** in `test/perf9.test.js` (2). Not a departure.
 
+## PERF-TEX - THE UNIT THAT WAS ALREADY BOUND (2026-09-19)
+
+Mac: *"Receiving reports of heavy performance issues across the game... I
+want players to get maximum performance with maximum quality. No
+exceptions."* So: no setting, no tier, no preset. Deleted work, or
+nothing.
+
+**MEASURED, not read out of the frame.** PERF1-8 were argued from the
+code because this session has no GPU; PERF-ON showed the way round that
+for the part that is CPU - drive the REAL `Renderer` over a logging GL
+stub and count what it actually calls. Over the batched static mesh path
+(what PERF4/5/6 built, and the bulk of any scene's draws), 60 meshes of
+four sub-meshes each:
+
+| | GL calls | a draw | bindTexture | of which redundant |
+|---|---|---|---|---|
+| before | 1385 | 5.8 | 480 | **239 (50%)** |
+| after | 1034 | 4.3 | 363 | 0 |
+
+Half of every texture bind in the path set a unit to the texture it
+already held. The cause is that `_evEmis` is `_blackTex` for everything
+that is not a window or an auto-emissive record - which is nearly every
+sub-mesh in a street or a dungeon - and the loop bound it, and switched
+the active unit to reach it, unconditionally, for all of them.
+
+**`drawBillboards` had already solved this.** It has skipped the whole
+texture setup on `lastKey` since it was written, and the line directly
+above the mesh loop's bind caches the emission COLOUR the same way
+(`_emissionColorUp`, F49, cleared in `beginFrame`). The mesh loop simply
+never got the treatment its neighbour and its own sibling already had.
+
+So `_bindEmission(tex)` is EV6's `_use(program)` for a texture unit: bind
+unless the shadow says it already is, and leave unit 0 active, which
+every draw path expects on entry and on exit. The shadow is cleared
+wherever something else can own unit 1 - `beginFrame`, `endWorldPass`,
+a texture upload, a context rebuild, and `drawBillboards`, which owns the
+unit while it runs and is left exactly as it was.
+
+**IT MOVES NO PIXEL, AND THAT IS PROVEN RATHER THAN ASSERTED.** Binding a
+texture that is already bound is a no-op by definition, but the argument
+that matters is the one the suite makes: the GL log is replayed through a
+state machine and what the GPU would SEE at every draw - the program, the
+VAO, the texture on each unit, the draw's own arguments - is compared
+against the same scene with the shadow defeated. 80 draws, identical, in
+a scene whose emission maps deliberately change every few sub-meshes
+where a real one barely changes at all. A faster path that moves a pixel
+is a bug, not a faster path (PERF-ON's law).
+
+**What this is worth.** GL call count is CPU-side driver cost, so it
+converts to frames when a scene is draw-call bound - a streamed exterior
+at the default land view of 5 (121 pixels) usually is - and not when it
+is fill-bound. It is a floor raise, not a ceiling raise, and it is free.
+
+**Pinned** in `test/glstate.test.js` (4, EV6's own home): no bind in the
+path is redundant, the saving is real against the unshadowed 4-a-draw,
+the effective GPU state is unchanged draw for draw, and every site in
+`renderer.js` that binds unit 1 either goes through the helper or clears
+the shadow - a source sweep, because a shadow that speaks for a unit it
+no longer owns is a wrong texture on screen.
+
+## PERF-TEX2 - THE ATLAS AND THE TILE SIZE, ONCE A WORLD (2026-09-19)
+
+The same sweep over `drawTerrain`, which runs once per streamed pixel -
+121 of them at the default land view of 5. 121 pixels, each with a model
+matrix and a tilemap of its own as the streamer gives them, sharing the
+world's one tile atlas:
+
+| | GL calls | a pixel | redundant state writes |
+|---|---|---|---|
+| before | 1239 | 10.2 | **361 (29%)** |
+| after | 879 | 7.3 | 0 |
+
+Two values were being set 121 times to say one thing. The TILEMAP is the
+pixel's own and always binds. The tile ARRAY is the world's single atlas -
+the same object for every pixel of the frame. And the TILE SIZE is the
+world's one number: PERF3 left it outside its frame-constant block as one
+of "the per-pixel two", and it is passed per pixel, but it is 128 every
+time.
+
+Both are SHADOWED, not hoisted, and the distinction is the whole safety
+argument. Hoisting either into PERF3's once-a-frame block would be wrong -
+that block runs once, and a pixel's own model matrix belongs beside them -
+so the guard stays where the upload was and only skips when the value is
+already there. A world that really does change its atlas or its tile size
+still uploads, which the suite proves by driving two.
+
+**The third redundancy was left alone.** `drawTerrain` ends with
+`_bindVao(null)`, which unbinds after every pixel - 121 extra binds a
+frame. It is not a mistake: a dozen sites in `renderer.js` do the same,
+and the foreign passes (the skies, precipitation) run against a context
+they expect to find clean. 121 calls is not worth breaking a convention
+the whole file keeps, and a subtle state bug is exactly the cost this
+campaign is not allowed to pay.
+
+**AND A GAP IN PERF-TEX, FOUND BY LOOKING FOR THIS ONE.** EV6's
+`markForeignPass` forgets the program and VAO shadows when a pass outside
+the renderer takes the context - and PERF-TEX's texture shadow had not
+joined them. A sky that binds its own texture to unit 1 would have left
+the shadow speaking for a unit it no longer owned: a wrong texture on
+screen, from a change whose entire claim is that it cannot move a pixel.
+All three shadows are cleared there now, and pinned to be.
+
+**Pinned** in `test/glstate.test.js` (3): no redundant bind or upload in
+the pixel loop, a world that changes either still uploads, and every
+texture shadow is forgotten on a foreign pass. PERF3's own pin was
+re-aimed: its law is that the two stay OUT of the frame-constant block,
+which they do, and it now says that rather than quoting two lines.
+
+## PERF-UI - THE SCREEN QUAD'S FOUR THAT ARE NOT A QUAD'S OWN (2026-09-19)
+
+`drawScreenQuad` is the UI arc's primitive (U1), and the HUD draws a
+hundred-odd of them a frame in EVERY scene there is - a dungeon and a
+building interior included, which is where "heavy performance issues
+across the game" lands, because none of the exterior's passes run there.
+
+| | GL calls | a quad | redundant state writes |
+|---|---|---|---|
+| before | 2056 | 17.1 | **1071 (52%)** |
+| after | 1342 | 11.2 | 357 |
+
+More than half of every call set state that was already set:
+
+- **the canvas size** is the FRAME's, not a quad's - `drawingBufferWidth`
+  and `Height` are read and uploaded on every one.
+- **the sampler binding** is a CONSTANT for the life of the program:
+  `uTex` is unit 0 and has never been anything else. It goes up with the
+  program now, once, instead of once a quad.
+- **useTex, blendTex, rotOn and the colour** are the same for every quad
+  of a RUN - a row of icons, a bar, a panel's backdrop, a page of a book.
+
+PERF-ON gave the TEXT case one draw a string. This is the same saving for
+every quad that is not text, and it needed no new API and no new call
+shape: the three flags and the colour are shadowed ON VALUE, so a caller
+that really changes one still uploads.
+
+**What was left, and why.** 240 cap toggles and 242 VAO binds remain -
+each quad disables DEPTH_TEST and CULL_FACE, draws, then re-enables both,
+and binds and unbinds the same VAO. Removing them means not restoring the
+state a quad found, which is a CONTRACT change: the world paths after it
+would have to own their own caps. That is a real optimisation and a real
+risk, and it does not belong in a slice whose whole claim is that it
+cannot move a pixel.
+
+**Proven, not asserted.** The scene the suite drives deliberately changes
+each shadowed field at least twice - runs of same-colour icons, a tinted
+bar, a solid untextured panel, a blended logo, a rotated needle - because
+the colour and flag shadows are the ones that could bite: skip an upload
+the caller meant and the quad draws in the last one's colour. Every
+uniform and every texture at all 55 draws is compared against the same
+scene with nothing remembered between quads. Identical.
+
+**Pinned** in `test/glstate.test.js` (2): the canvas, sampler and shared
+flags stop repeating while `dst` and `src` - which really are a quad's
+own - still go up every single time; and the equality above.
+
+## PERF-TEX3 - THE UNIT THAT WAS ALREADY ACTIVE (2026-09-19)
+
+With the 2D bracket gone, the same frame was measured again and asked the
+question PERF-TEX asked of unit 1: how much of what is left sets state to
+the value it already holds?
+
+| | calls | redundant |
+|---|---|---|
+| `activeTexture` | 121 | **117 (97%)** |
+| `bindTexture` | 202 | **111 (55%)** |
+
+**97% is not an accident.** Every path in `renderer.js` that reaches for a
+unit above 0 puts unit 0 back the moment it is done - `_bindEmission`, the
+contact and adapt uploads, the reserved cloud-shadow slot, the terrain's
+tilemap. So unit 0 is what is active almost always, and almost every
+`activeTexture` call re-selected it. The other half is texture locality
+nobody was exploiting: a mesh bundle whose sub-meshes repeat an archive,
+and a HUD drawing ninety quads off one sheet.
+
+Two shadows, both the `_bindEmission` idiom:
+
+- **`_activeTexture(unit)`** - a pure selector, so it cannot change a
+  picture on its own; what it can do is go stale, which is why the funnel
+  law allows exactly ONE raw `gl.activeTexture` in the file, inside it.
+  27 call sites routed.
+- **`_bindTex0(tex)`** - `_bindEmission` for the unit every pass shares,
+  cleared at every point `_tex1Bound` is cleared at.
+
+**Where it was NOT applied, and why.** `drawBillboards` clears the unit-0
+shadow instead of sharing it. That path already skips on its own
+`lastKey`, and routing it through the shared shadow is exactly what broke
+MAC4's record key and PERF3's sorted-cutout pin the first time PERF-TEX
+was written - a lesson worth paying for once.
+
+| the same dungeon frame | GL calls |
+|---|---|
+| before PERF-2D | 1,760 |
+| after PERF-2D | 1,043 |
+| **after PERF-TEX3** | **640** |
+
+**64% off the frame across the two slices**, and the frame now has no
+redundant texture traffic left in it at all: the same measurement run
+again answers 1 redundant call out of 640.
+
+**Proved, not asserted.** A scene covering every pass the shadows can
+touch - 20 terrain pixels sharing a world atlas, mesh bundles with
+emission moving under unit 0, billboards, a character sprite quad, a HUD
+with realistic locality, an instanced run, an overlay and a foreign seam -
+replayed against the previous commit in a worktree, recording what is on
+EVERY texture unit at every draw along with the program, the VAO and the
+draw's own arguments. **462 draws, all identical.**
+
+**Four existing pins were re-aimed, and all four were source-TEXT pins**
+broken by the rename (`gl.activeTexture(` to `this._activeTexture(`) -
+AUDIT 65 RS-3, PERF-TEX's own unit-1 law, WATER1's two-unit assertion and
+PERF3's billboard key. None of them was a behavioural failure, which the
+equality proof above is what establishes rather than the re-aiming.
+
+### PERF-TEX3 AUDIT - THE LAW THAT WAS SKIPPED (same day, before merge)
+
+PERF-TEX wrote this law for unit 1:
+
+> and no site binds TEXTURE_2D to unit 1 outside the helper without
+> clearing it
+
+It is why that slice never shipped a wrong texture. **Its unit-0 twin was
+not written**, and the audit found what that cost: **13 raw binds to unit
+0 answered to nothing.** The repro is three lines of ordinary world pass -
+
+```js
+r.drawMesh(bundle, m);        // binds MESH_TEX through the shadow
+r.drawCharacter(char, m);     // owns unit 0 raw, hands it back EMPTY
+r.drawMesh(bundle, m);        // shadow still says MESH_TEX -> skips
+```
+
+→ **the model after the character drew with nothing bound.** Untextured
+geometry in the world pass, every frame a character is on screen, which
+is every frame.
+
+`drawWater` would have handed the next model the water's texture;
+`uploadTexture` and `uploadTilemapTexture` the same, mid-stream.
+
+**Why the equality proof missed it.** The proof scene ran terrain, then
+meshes, then billboards, then UI - it never put a path that owns unit 0
+raw BETWEEN two paths that share the shadow, which is the only place the
+bug lives. A proof is only as wide as its scene, and "identical across
+462 draws" was true and useless. The scene is the world host's real shape
+now - ground, models, a character, more models, an upload, billboards,
+more models, six pixels of it - and both slices are proved against the
+commit before PERF-2D on it: **672 draws, identical in caps, VAO,
+program, every texture unit and every draw argument.**
+
+**Fixed and pinned twice.** Every raw unit-0 bind clears the shadow
+beside it; the twin law walks `renderer.js` tracking the active unit and
+requires every TEXTURE_2D bind landing on unit 0 outside `_bindTex0` to
+answer the shadow within four lines; and the repro is kept as its own
+behavioural pin. Both were mutation-tested against the real fix - removing
+one clear fails the law, removing all three of `drawCharacter`'s fails
+both.
+
+**The lesson, which is the same one this file keeps learning.** A state
+shadow is only ever as good as the list of places that invalidate it, and
+that list is not a thing to be reasoned out once - it is a law to be read
+out of the source by a test. PERF-TEX knew that. PERF-TEX3 shipped the
+shadow and skipped the law, and only an audit stood between that and a
+merge.
+
+
+## PERF-2D - THE BRACKET THAT WAS PER QUAD (2026-09-19)
+
+PERF-UI ended by naming what it had left on the table and why:
+
+> **What was left, and why.** 240 cap toggles and 242 VAO binds remain [...]
+> Removing them means not restoring the state a quad found, which is a
+> CONTRACT change: the world paths after it would have to own their own
+> caps. That is a real optimisation and a real risk.
+
+It was measured this time, and the number is why it is no longer being
+left. A dungeon frame - 3 batched level meshes, 25 loose models and a
+hundred-odd HUD quads, which is what a player is looking at in the scenes
+where "heavy performance issues across the game" was reported:
+
+| | GL calls | share |
+|---|---|---|
+| world meshes | 232 | 13% |
+| billboards | 34 | 2% |
+| **the HUD (120 quads)** | **1,494** | **85%** |
+| whole frame | 1,760 | |
+| *of which the per-quad cap/VAO bracket* | *763* | ***43%*** |
+
+**The UI is the frame.** Not the terrain, not the models - the 2D pass,
+in every scene there is, and 43% of the whole frame's GL traffic was one
+bracket opened and shut around every single quad.
+
+| | GL calls a frame | a quad |
+|---|---|---|
+| before | 1,760 | 12.4 |
+| after | 1,043 | 6.5 |
+
+**41% off the frame; 48% off the UI pass.** The bracket itself: 763 calls
+to 46.
+
+**It is NOT the contract change PERF-UI refused.** That one would have
+made the world paths own their caps. The renderer still owns them here -
+what changed is only WHEN the restore happens. `_open2D(vao)` disables
+the caps and binds; `_close2D()` hands the baseline back; and `_close2D`
+is called at the head of everything that needs it. The quad no longer
+carries the bracket, the RUN does.
+
+**The law it replaces was installed after a mutation campaign, so the
+replacement had to be at least as strong.** `perfon_text_run.test.js`
+says it plainly: deleting `gl.enable(gl.CULL_FACE)` from drawScreenQuad
+*passed the entire suite* - "leaving it off means every back face in the
+world pass that follows draws, for the rest of the session." Three things
+carry that weight now:
+
+1. **The source law.** Every method in `renderer.js` that issues a
+   `gl.draw*` is one of the three 2D primitives or calls `_close2D()`
+   first, and so do the five seams where foreign GL runs. Read out of
+   the source, so it cannot go vacuous.
+2. **The equality proof.** A mixed scene - UI runs interleaved with
+   meshes, a character sprite quad, an instanced run, an overlay and
+   foreign seams, because the transition OUT of an open run is the only
+   thing this can break - replayed twice, once with the run and once
+   with `_close2D()` forced after every quad, which IS the old bracket.
+   The full effective state at every draw (program, VAO, both texture
+   units, the caps, the draw's own arguments) is identical. Proved the
+   same way against the previous commit in a worktree: **366 draws, all
+   identical.**
+3. **The gap, made loud.** The sky, the rain, the wisps, the sand and the
+   grass are NOT in this file - the hosts hold `renderer.gl` and call
+   them directly, and they assume the baseline (precipitation's draw sets
+   BLEND and depthMask and never touches DEPTH_TEST, so an open run would
+   give it rain that draws through walls). Today they cannot collide:
+   every foreign pass runs in the world section and the first screen quad
+   is what ENDS it (ROAD-E E5). But that is the hosts' running order and
+   not a law. So `markForeignPass` - which a host calls AFTER its foreign
+   pass - checks whether the run is still open, and if it is, says so
+   once, naming `endUiRun()` as the remedy. The two regressions this
+   bracket has already caused were both silent; this one would not be.
+
+**The trap, and it is worth writing down.** `drawScreenQuad` calls
+`_compositeAir()` at the head of EVERY quad. Putting `_close2D()` at the
+top of `_compositeAir` - where every other guard goes - shuts the run a
+hundred times a frame and hands the entire saving back, while every test
+still passes, because nothing about the picture changes. It belongs after
+that function's early return, and there is a pin that says so.
+
+**What is left now.** 777 calls for 120 quads: `dst` and `src` per quad
+(262), the texture binds (204), the draws (120). The next real cut is
+batching same-texture quads into `drawScreenQuadRun`, which already
+exists and already does one draw for a whole string - but that is a
+CALLER change across some thirty UI files, not a renderer change, and it
+wants its own slice.
+
+## PERF-WARM - THE COMPILE THAT HAPPENS MID-FRAME (2026-09-19)
+
+PERF-TEX, PERF-TEX2 and PERF-UI took redundant GL calls out of the steady
+frame. This slice is about a different cost and the one a player actually
+notices: a **hitch**. Seven programs were compiled the first time
+something needed them, and "the first time" is always inside a draw call,
+which is always inside a frame.
+
+| program | the frame that paid for it |
+|---|---|
+| `particleProgram` | the first spell effect that draws |
+| `charQuadProgram` | the first classic character sprite |
+| `screenQuadProgram` | the first 2D blit of the session |
+| `screenQuadRunProgram` | the first instanced 2D run |
+| `overlayProgram` | the first full-screen overlay |
+| the lab's `pixelProgram` | the first frame of Dynamic Skies' snow |
+| the rain's whole renderer | the weather change that turns rain on |
+
+A compile-and-link is not a few hundred small calls that add up - it is
+ONE call into the **driver's own compiler**, which can hold the calling
+thread for tens of milliseconds, and nothing in this codebase can make it
+cheaper. The only thing that can be done with it is to **move it**: off
+the frame that needs the program and onto time the browser was going to
+spend idle.
+
+**The refactor is the whole change.** Each `if (!this.xProgram) { ... }`
+block came out of its draw function into an `_ensureXProgram()` method
+byte for byte, guard included - so the draw path is EXACTLY what it was
+for anyone who never warms, and warming twice costs one property read.
+`renderer.warmSteps()` names the five; `render/warmPrograms.js` walks
+them one per `requestIdleCallback`, the shape `ui/enhancedChunk.js`
+settled on for MENU1 and for the same reason (five compiles back to back
+in one callback is the stall this exists to remove, moved somewhere less
+visible).
+
+**The rain is the expensive one.** `applyWeather` built the whole
+`PrecipitationRenderer` - a program, a 1000-particle vertex volume and its
+index buffer - inside a game frame, the moment the weather turned. Both
+exterior hosts add that construction to the idle walk. The draw gate is
+the MODE and never the object (the draw site's own law, W1 review: "the
+renderer outlives a clear-up"), so a renderer that exists before any rain
+does draws nothing. The pixel-snow program joins `_buildLab` in the
+constructor on the **enhanced lane only** - `drawPixelSnow` is reachable
+only through `drawLab`, so AUDIT 58's rule that the classic lane compiles
+nothing it cannot bind still holds, and `drawPixelSnow` keeps its own
+on-demand build for the renderer handed the enhanced deck without the
+lane's flag.
+
+**WHAT THIS DOES NOT CLAIM.** Unlike the three slices above, the SIZE of
+this win is not measured here and cannot be: `test/glstate.test.js` drives
+a Proxy stub, and a stub does not compile shaders. The claim is
+STRUCTURAL - the program is built before the first draw needs it rather
+than during it - and the number belongs to whatever driver the player is
+running. Saying otherwise would be inventing a figure, which is the one
+thing the three measured slices above were careful not to do.
+
+**Pinned** in `test/glstate.test.js` (6): `warmSteps` names exactly five
+and warming builds every one; the steps are idempotent; an unwarmed
+renderer still builds on the draw and a warmed one does not build again;
+a step that throws does not take the rest of the warm with it; a warm
+stops when its host is gone; and the pixel-snow program is the
+constructor's on the lane that can draw it and nobody's on the lane that
+cannot.
+
+### PERF-WARM AUDIT (same day) - what held, and four things the section above got ahead of
+
+**The refactor is proved, not asserted.** Each of the five blocks was
+replayed out of the commit before and the commit after and compared line
+for line: **all five byte-identical**, call sites in place and in order.
+And the warm is proved harmless the way PERF-TEX/UI were - a logging GL
+stub, a scene that exercises all five programs, once on a renderer nobody
+warmed and once on one warmed BETWEEN FRAMES, where a real
+`requestIdleCallback` lands. The steady-state frame is **call for call
+identical**. It cannot be otherwise, and for a reason worth writing down:
+`beginFrame` already forgets every shadow it owns ("whatever ran between
+frames is not trusted"), `frame()` is synchronous with no `await` so an
+idle callback can never land mid-frame, and every draw path - the video
+player's own loop included - opens with `beginFrame`. Every ARRAY_BUFFER
+upload in `src/` rebinds first (all 33 checked), so the dirty binding a
+build leaves behind is nobody's input.
+
+**1. Two of the five are probably already built before the warm fires.**
+`requestAnimationFrame` outranks `requestIdleCallback`, and the world's
+first frame draws the HUD. So `screenQuadProgram` and
+`screenQuadRunProgram` are almost certainly compiled by frame 1, during
+the boot, before the first idle callback runs. The table above reads as
+if all seven moved; what actually moves is `particleProgram` (first
+spell), `charQuadProgram` (first classic sprite), `overlayProgram` and
+the rain's renderer. The other two were never the hitch a player feels -
+they land in the loading screen either way.
+
+**2. The warm compiles programs a session may never bind - the AUDIT 58
+objection, not applied to the renderer's five.** Measured: 11 links
+warmed against 10 unwarmed, for a scene that never draws a particle
+effect. `charQuadProgram` is the CLASSIC sprite path, so an
+enhanced-visuals player now compiles one they will never use; so is
+`particleProgram` for a player who never casts. The section above cites
+AUDIT 58 as the reason not to warm the lab's programs and then does not
+hold itself to it. The trade is defensible - idle time is free and five
+small programs is negligible VRAM - but it is a trade, and it was made
+silently.
+
+**3. A player who never sees rain now pays for the rain.** Precipitation's
+constructor runs at boot instead of at the weather change: **~102 KB** of
+GPU buffers on the classic lane (1,000 particles x 4 verts x 5 floats =
+78 KB, plus 6,000 indices = 23 KB) and **~508 KB** on the enhanced one,
+which adds `_buildLab`'s 26,000 instances x 4 floats = 406 KB. Before, that was paid only if the weather turned. It is the
+right trade for a game where it rains, but it is a new steady cost and
+the section above only counted the saving.
+
+**4. `stats.programBinds` is incremented outside a frame.**
+`_ensureScreenQuadProgram` ends in `this._use(...)`, which counts - so
+one warm adds 1 to the frame counters after that frame reported and
+before `beginFrame` zeroes them. Cosmetic, and `?perf` is the readout
+PERF-TEX and PERF-UI were measured with, so it is worth knowing it can
+be off by one for exactly one frame.
+
+**Not a finding, checked anyway.** No leak: the hosts are one per PAGE
+LOAD (a scene change is a navigation, and dungeons and interiors are mode
+swaps inside `bootWorld`), so the warm's closure cannot outlive its
+context and `alive` has nothing to guard. Normal play always routes
+through `bootWorld` (`main.js`), so players are warmed; the standalone
+`?dungeon`/`?interior`/`?shot` hosts are not, which is a dev and probe
+path and arguably right - a probe wants no idle work.
+
+**Fixed by the audit.** The pin for "an unwarmed renderer still builds on
+the draw" was calling `drawScreenQuad(null, 0, 0, 10, 10)` against a
+signature of `(tex, dst, src, color, opts)` - `src.u0`, `color[0]` and
+`opts.blend` were all `undefined` and it passed only because the stub
+swallows anything. It draws a real quad now.
+
 ## PERF-ON - ONE DRAW A STRING (2026-09-15)
 
 Mac: *"Next thing I want to tackle is improving online performance. I

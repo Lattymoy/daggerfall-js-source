@@ -2,19 +2,34 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { LAB_GRASS_HEAD, LAB_GRASS_VS, LAB_GRASS_FS, LAB_GRASS, LAB_DIM, placeLabGrass, grassRecordsOf, labBladeCorners } from '../src/render/labGrass.js';
+import { LAB_GRASS_HEAD, LAB_GRASS_VS, LAB_GRASS_FS, LAB_GRASS, LAB_DIM, placeLabGrass, grassRecordsOf, labBladeCorners, GRASS2_VS_EDITS, GRASS_FAR_SEGMENTS } from '../src/render/labGrass.js';
 
 const lab = () => readFileSync('grass-proto.html', 'utf8');
 
-test('GR1: the shaders are the lab\u2019s own, verbatim, and the lab\u2019s height is 54', () => {
+test('GR1/GRASS2: the shaders are the lab\u2019s own but for three DECLARED edits, and the port\u2019s height and range are its own', () => {
   const src = lab();
   const vsStart = src.indexOf('layout(location=0) in vec2 aCorner;      // one blade quad, 0..1\nlayout(location=1) in vec4 aInst;        // xz, height, phase');
   const vsEnd = src.indexOf('}`, HEAD + `', vsStart) + 1;
   const fsStart = src.indexOf('in float vT; in float vTint; in float vFade; in float vLam; in float vSnow; in float vWet;', vsEnd);
   const fsEnd = src.indexOf('}`);', fsStart) + 1;
   assert.ok(vsStart > 0 && fsStart > 0);
-  assert.equal(LAB_GRASS_VS, src.slice(vsStart, vsEnd), 'the vertex stage is the lab\u2019s text, byte for byte');
-  assert.equal(LAB_GRASS_FS, src.slice(fsStart, fsEnd), 'the fragment stage is the lab\u2019s text, byte for byte');
+  // GRASS2: the vertex stage is the lab's text plus THREE DECLARED
+  // EDITS, and the pin is still byte-exact - it applies the edits to the
+  // lab's own slice and compares the result. A fourth change, or a
+  // fourth edit nobody declared, still fails here, which is the whole
+  // value of GR1's law: it is departed from on the record, never
+  // loosened. The comments around each edit are the port's own and are
+  // not compared; the CODE is.
+  const noComments = (t) => t.split('\n').filter((l) => !l.trim().startsWith('//')).join('\n');
+  let want = src.slice(vsStart, vsEnd);
+  assert.equal(GRASS2_VS_EDITS.length, 3, 'three departures, no more - a fourth is a decision, not a detail');
+  for (const e of GRASS2_VS_EDITS) {
+    assert.ok(want.includes(e.from), `the lab still carries the line this edit replaces: ${e.why}`);
+    assert.ok(e.why && e.why.length > 20, 'every departure says why, on the departure itself');
+    want = want.replace(e.from, e.to);
+  }
+  assert.equal(noComments(LAB_GRASS_VS), noComments(want), 'the vertex stage is the lab\u2019s text with the three declared edits, and nothing else');
+  assert.equal(LAB_GRASS_FS, src.slice(fsStart, fsEnd), 'the fragment stage is the lab\u2019s text, byte for byte - GRASS2 changed no fragment law');
   const headStart = src.indexOf('const HEAD = `');
   assert.equal(LAB_GRASS_HEAD, src.slice(headStart + 'const HEAD = `'.length, src.indexOf('`;', headStart)));
   // the lab itself: height 54, and the maxima the game uses
@@ -22,8 +37,16 @@ test('GR1: the shaders are the lab\u2019s own, verbatim, and the lab\u2019s heig
   assert.match(src, /id="height" type="range" min="10" max="120" step="1" value="54"/);
   assert.match(src, /id="density" type="range" min="20000" max="1200000"/);
   assert.match(src, /id="range" type="range" min="10" max="200"/);
-  assert.deepEqual({ ...LAB_GRASS }, { density: 1200000, height: 54, range: 200, span: 210, seed: 0x2f6e2b1 }, 'max blades, max range, no exceptions');
+  // GRASS2: the lab's DENSITY is kept and its height and range are not.
+  // `densitySpan` is the lab's own span, kept as the rate the field is
+  // dense by, so pushing the range out never thins the grass.
+  assert.deepEqual({ ...LAB_GRASS }, { density: 1200000, height: 38, range: 250, span: 270, densitySpan: 210, seed: 0x2f6e2b1 },
+    'the lab\u2019s blade count, at Mac\u2019s height and a longer range');
+  assert.equal((LAB_GRASS.span * 2) % 30, 0, 'the window is a whole number of cells, so its two edges move in step');
+  assert.equal(LAB_GRASS.densitySpan, 210, 'the rate is measured over the lab\u2019s own window, never the window in force');
+  assert.ok(LAB_GRASS.span > LAB_GRASS.range, 'the window holds the range - a window shorter than the range has a wall at its edge');
   assert.equal(labBladeCorners().length / 2, 30, 'five stacked quads, the lab\u2019s blade');
+  assert.equal(labBladeCorners(GRASS_FAR_SEGMENTS).length / 2, 6, 'and one quad for the far blade, a fifth of the vertices');
   assert.deepEqual({ ...LAB_DIM }, { sunny: 1.00, cloudy: 0.90, overcast: 0.72, fog: 0.66, rain: 0.60, thunder: 0.46, snow: 0.80, sandstorm: 0.55 });   // WEATHER2d: the port's own row appended; the lab's seven verbatim
 });
 
@@ -37,9 +60,9 @@ test('GR1: the placer is the lab\u2019s law - same seed, span, clustering, heigh
   const g = placeLabGrass({ centre: [0, 0], keep: () => 0 });
   let s = 0x2f6e2b1;
   const rnd = () => { s ^= s << 13; s ^= s >>> 17; s ^= s << 5; s >>>= 0; return s / 4294967296; };
-  const cx = (rnd() - 0.5) * 420, cz = (rnd() - 0.5) * 420; const a = rnd() * 6.283, rr = rnd() * rnd() * 0.55;
+  const cx = (rnd() - 0.5) * LAB_GRASS.span * 2, cz = (rnd() - 0.5) * LAB_GRASS.span * 2; const a = rnd() * 6.283, rr = rnd() * rnd() * 0.55;
   assert.ok(Math.abs(g.inst[0] - (cx + Math.cos(a) * rr)) < 1e-3 && Math.abs(g.inst[1] - (cz + Math.sin(a) * rr)) < 1e-3   /* Float32 storage */, 'the first blade is where the lab puts it');
-  assert.ok(Math.abs(g.inst[2] - (0.22 + rnd() * 0.42) * (54 / 34)) < 1e-4, 'at the lab\u2019s height');
+  assert.ok(Math.abs(g.inst[2] - (0.22 + rnd() * 0.42) * (LAB_GRASS.height / 34)) < 1e-4, 'at the port\u2019s height, on the lab\u2019s law');
   assert.equal(g.count, 1200000, 'all 1,200,000 candidates when every one may stand');
   // and a candidate that may not stand is dropped without disturbing the sequence
   const h = placeLabGrass({ centre: [0, 0], keep: (x, z) => (x > 0 ? 0 : null) });

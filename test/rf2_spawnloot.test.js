@@ -66,9 +66,10 @@ test('RF2: one seam, one home - each host calls it once per spawn branch and non
   const hc = read('src/scenes/hostCombat.js');
   // MOD (the loot rebalance): the chain's SHAPE is what this pins, and it is
   // unchanged - table roll, equip, extras, the port's arm last. What moved is
-  // arguments: the humanoid item-chance scale into generateItems, and `rolls`
-  // into equipEnemy so its worn-gear drop is on the caller's stream too.
-  assert.match(hc, /export function spawnEnemyLoot\(entity, mobileType, basics, player, \{ rolls = Math\.random \} = \{\}\) \{\n  const itemChanceScale = isHumanoid\(entity\) \? HUMANOID_LOOT_ITEM_SCALE : 1;\n  entity\.items = generateItems\(basics\?\.lootTableKey \?\? '-', \{ level: player\.level, gender: player\.gender \}, undefined, \{ itemChanceScale \}\);\n  equipEnemy\(entity, mobileType, player\.level, rolls\);\n  addEnemyLootExtras\(entity\.items, basics, rolls\);\n  rollCorpseLoot\(entity, basics, \{ rolls, luck: liveStat\(player, 'luck'\) \}\);\n  return entity\.items;\n\}/, 'the chain, in DFU\'s order, the port\'s arm last');
+  // arguments: the humanoid item-chance scale and the dead creature's own
+  // mobileType into generateItems (lootThemes.js reads it), and `rolls` into
+  // equipEnemy so its worn-gear drop is on the caller's stream too.
+  assert.match(hc, /export function spawnEnemyLoot\(entity, mobileType, basics, player, \{ rolls = Math\.random \} = \{\}\) \{\n  const itemChanceScale = isHumanoid\(entity\) \? HUMANOID_LOOT_ITEM_SCALE : 1;\n  entity\.items = generateItems\(basics\?\.lootTableKey \?\? '-', \{ level: player\.level, gender: player\.gender \}, undefined, \{ itemChanceScale, mobileType \}\);\n  equipEnemy\(entity, mobileType, player\.level, rolls\);\n  addEnemyLootExtras\(entity\.items, basics, rolls\);\n  rollCorpseLoot\(entity, basics, \{ rolls, luck: liveStat\(player, 'luck'\) \}\);\n  return entity\.items;\n\}/, 'the chain, in DFU\'s order, the port\'s arm last');
   for (const [f, n] of [['src/scenes/dungeonContext.js', 2], ['src/scenes/exteriorFoes.js', 1], ['src/scenes/cityGuards.js', 1]]) {
     const src = read(f);
     assert.equal((src.match(/^\s*spawnEnemyLoot\(entity, /gm) ?? []).length, n, `${f}: once per branch`);

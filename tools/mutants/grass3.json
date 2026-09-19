@@ -1,0 +1,44 @@
+[
+ {
+  "name": "GRASS3-the-placer-reads-a-bilinear-patch-again-so-blades-float-on-hills",
+  "file": "src/world/terrainSurface.js",
+  "old": "  const h = az >= ax\n    ? h00 + az * (h01 - h00) + ax * (h11 - h01)\n    : h00 + ax * (h10 - h00) + az * (h11 - h10);",
+  "new": "  const h = (h00 * (1 - ax) + h10 * ax) * (1 - az) + (h01 * (1 - ax) + h11 * ax) * az;",
+  "tests": ["test/grass3_surface.test.js"]
+ },
+ {
+  "name": "GRASS3-the-quad-is-cut-on-the-other-diagonal",
+  "file": "src/world/terrainSurface.js",
+  "old": "  const h = az >= ax\n    ? h00 + az * (h01 - h00) + ax * (h11 - h01)\n    : h00 + ax * (h10 - h00) + az * (h11 - h10);",
+  "new": "  const h = az >= ax\n    ? h00 + ax * (h10 - h00) + az * (h11 - h10)\n    : h00 + az * (h01 - h00) + ax * (h11 - h01);",
+  "tests": ["test/grass3_surface.test.js"]
+ },
+ {
+  "name": "GRASS3-the-height-ignores-the-rings-stride-so-far-ground-is-read-at-the-wrong-resolution",
+  "file": "src/world/terrainSurface.js",
+  "old": "  const quad = (TERRAIN_SIZE / (hDim - 1)) * stride;",
+  "new": "  const quad = TERRAIN_SIZE / (hDim - 1);",
+  "tests": ["test/grass3_surface.test.js"]
+ },
+ {
+  "name": "GRASS3-the-corner-samples-are-one-apart-rather-than-a-stride-apart",
+  "file": "src/world/terrainSurface.js",
+  "old": "  const x0 = qx * stride, z0 = qz * stride, x1 = x0 + stride, z1 = z0 + stride;",
+  "new": "  const x0 = qx * stride, z0 = qz * stride, x1 = x0 + 1, z1 = z0 + 1;",
+  "tests": ["test/grass3_surface.test.js"]
+ },
+ {
+  "name": "GRASS3-the-heightmap-is-read-z-major-so-the-ground-is-transposed",
+  "file": "src/world/terrainSurface.js",
+  "old": "  const at = (x, z) => heightmapData[Math.max(0, Math.min(hDim - 1, x)) * hDim\n    + Math.max(0, Math.min(hDim - 1, z))];",
+  "new": "  const at = (x, z) => heightmapData[Math.max(0, Math.min(hDim - 1, z)) * hDim\n    + Math.max(0, Math.min(hDim - 1, x))];",
+  "tests": ["test/grass3_surface.test.js"]
+ },
+ {
+  "name": "GRASS3-the-grass-placer-goes-back-to-its-own-bilinear-read",
+  "file": "src/scenes/world.js",
+  "old": "        const h = surfaceHeightAt(p.samples, lx, lz, p._stride ?? 1);",
+  "new": "        const hDim = HEIGHTMAP_DIMENSION; const s2 = p.samples;\n        const fx = lx / 6.4; const fz = lz / 6.4; const x0 = Math.min(hDim - 2, tx); const z0 = Math.min(hDim - 2, tz); const ax = fx - x0; const az = fz - z0;\n        const h = ((s2[x0 * hDim + z0] * (1 - ax) + s2[(x0 + 1) * hDim + z0] * ax) * (1 - az) + (s2[x0 * hDim + z0 + 1] * (1 - ax) + s2[(x0 + 1) * hDim + z0 + 1] * ax) * az) * scale;",
+  "tests": ["test/grass3_surface.test.js"]
+ }
+]

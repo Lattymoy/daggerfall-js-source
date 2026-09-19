@@ -96,9 +96,17 @@ test('handedness: every non-world pass CULLS OFF - the sky-blue-screen regressio
   // else brackets CULL_FACE off. tools/cullProbe.mjs is the real-GL
   // repro; these pins keep the brackets present.
   const rend = read('src/render/renderer.js');
+  // PERF-2D (2026-09-19): the bracket is a RUN's now, not a quad's - it
+  // was 43% of every GL call in a dungeon frame. The law is unchanged
+  // and the pin follows it to where it lives: _open2D culls off,
+  // _close2D restores, and every 2D primitive goes through the pair.
+  const open2d = rend.slice(rend.indexOf('  _open2D(vao) {'), rend.indexOf('  _close2D() {'));
+  const close2d = rend.slice(rend.indexOf('  _close2D() {'), rend.indexOf('  _close2D() {') + 400);
+  assert.match(open2d, /gl\.disable\(gl\.CULL_FACE\);/, 'the 2D pass culls off');
+  assert.match(close2d, /gl\.enable\(gl\.CULL_FACE\);/, '...and restores');
   const quad = rend.slice(rend.indexOf('drawScreenQuad(tex'), rend.indexOf('drawScreenOverlayQuad'));
-  assert.match(quad, /gl\.disable\(gl\.CULL_FACE\);/, 'the 2D screen-quad pass culls off');
-  assert.match(quad, /gl\.enable\(gl\.CULL_FACE\);/, '...and restores');
+  assert.match(quad, /this\._open2D\(this\._screenQuadVao\)/, 'the screen quad goes through the pair');
+  assert.doesNotMatch(quad, /gl\.disable\(gl\.CULL_FACE\);/, 'and not around it - one home for the bracket');
   const sky = read('src/render/skyRenderer.js');
   const skyDraw = sky.slice(sky.indexOf('draw(yaw'), sky.length);
   assert.match(skyDraw, /gl\.disable\(gl\.CULL_FACE\);[\s\S]*drawArrays/, 'the sky triangle culls off');

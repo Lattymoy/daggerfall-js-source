@@ -7,7 +7,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { pieceIndex } from '../src/render/labGrass.js';
+import { pieceIndex, pieceKey } from '../src/render/labGrass.js';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const read = (p) => readFileSync(join(root, p), 'utf8');
@@ -43,6 +43,48 @@ test('PERF8 pieceIndex: answers exactly what the scan answered, for every point 
   const shuffled = [...pieces].reverse();
   const at2 = pieceIndex(shuffled, TS);
   for (let i = 0; i < 500; i++) { const x = Math.random() * 6 * TS - TS, z = Math.random() * 6 * TS - TS; assert.equal(at2(x, z), at(x, z)); }
+});
+
+// GRASS4 (2026-09-18): THE KEY IS A NUMBER, and the whole point of it is
+// that it allocates nothing. `pieceIndex` is asked once per blade
+// candidate - six thousand a cell, two cells a frame while the eye walks
+// - and it was minting a template string for every one of them, twelve
+// thousand a frame, each hashed, looked up and dropped. Measured on the
+// placer: 1.22 ms a cell to 0.40, 67% off, with byte-identical output.
+test('GRASS4 pieceKey: a map pixel is one NUMBER, distinct for every pixel the map has, and no string is built to look one up', () => {
+  // INJECTIVE over the Daggerfall map and well past it. The formula is
+  // px * 65536 + py, which is unique for any integer px and a py inside
+  // +/-32768; the map is 1000 x 500.
+  const seen = new Map();
+  for (let px = -600; px <= 600; px += 7) {
+    for (let py = -600; py <= 600; py += 11) {
+      const k = pieceKey(px, py);
+      assert.equal(typeof k, 'number', 'a number, so the Map hashes it without allocating');
+      assert.ok(Number.isSafeInteger(k), `${px},${py} stays a safe integer`);
+      const prev = seen.get(k);
+      assert.equal(prev, undefined, `${px},${py} collides with ${prev}`);
+      seen.set(k, `${px},${py}`);
+    }
+  }
+  // THE NEGATIVE HALF MATTERS: z runs the other way, so py goes below
+  // zero for every pixel north of the reference, and a key that only
+  // worked for positive py would fold half the world onto the other.
+  assert.notEqual(pieceKey(1, -1), pieceKey(0, 1));
+  assert.notEqual(pieceKey(-1, 0), pieceKey(0, 0));
+  assert.notEqual(pieceKey(0, -1), pieceKey(-1, 65535 - 65536 + 1));
+  // AND THE BOUND IS REAL, stated here rather than assumed: at |py| of
+  // 32768 the halves meet and the formula stops being injective. That is
+  // why 65536 is the stride and why this is safe - the Daggerfall map is
+  // 1000 x 500 pixels, three orders of magnitude inside it.
+  assert.equal(pieceKey(1, -1), pieceKey(0, 65535), 'out of range, the halves collide - the bound is not decoration');
+  for (const py of [-32767, -1, 0, 1, 32767]) {
+    assert.notEqual(pieceKey(0, py), pieceKey(1, py), 'inside the bound, neighbours never collide');
+  }
+  // and the source builds NO key string - the allocation was the cost
+  const src = read('src/render/labGrass.js');
+  assert.match(src, /byKey\.set\(pieceKey\(piece\.p\.px, piece\.p\.py\), piece\);/);
+  assert.match(src, /return byKey\.get\(pieceKey\(px, py\)\) \?\? null;/);
+  assert.ok(!/byKey\.get\(`/.test(src) && !/byKey\.set\(`/.test(src), 'no template string reaches the index');
 });
 
 test('PERF8 pins: keep and ground take the piece from the index and no longer loop the pieces (mutant: the scan back)', () => {

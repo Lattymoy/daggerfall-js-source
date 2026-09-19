@@ -532,7 +532,7 @@ test('audit18 sweep: enemy loot rolls the PLAYER gender at both dungeon spawn si
   const src = hostSrc('dungeonContext.js');
   assert.equal((src.match(/spawnEnemyLoot\(entity, e\.mobileType, basics, D\.playerEntity\)/g) ?? []).length, 2);
   assert.equal(/generateItems\([^)]*gender: e\.gender/.test(src), false);
-  assert.match(hostSrc('hostCombat.js'), /generateItems\(basics\?\.lootTableKey \?\? '-', \{ level: player\.level, gender: player\.gender \}, undefined, \{ itemChanceScale \}\)/, 'the PLAYER\'s gender, LootTables.cs:212/:229/:237');
+  assert.match(hostSrc('hostCombat.js'), /generateItems\(basics\?\.lootTableKey \?\? '-', \{ level: player\.level, gender: player\.gender \}, undefined, \{ itemChanceScale, mobileType \}\)/, 'the PLAYER\'s gender, LootTables.cs:212/:229/:237');
 });
 
 test('audit18 sweep: the swing fatigue and the tally arm are wired into the dungeon rig', () => {
