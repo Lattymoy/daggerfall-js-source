@@ -414,6 +414,7 @@ import { cullDisabled } from './frustum.js';   // PERF-CROWD2: the billboard pas
 import { multiply as mat4Multiply } from '../world/mat4.js';   // PERF-CROWD2: proj * view, for this call's planes
 import { PerfMeter, perfOn, perfZones, perfCpu, setMeter } from './perfMeter.js';   // EL8: `?perf`   // EL5: the bounds every bundle carries for the replays' culling   // EL2: the lane's shadow maps - a leaf that compiles nothing until a lane asks
 import { AirPass, AIR_ADAPT_UNIT as ADAPT_UNIT, AIR_CONTACT_UNIT as CONTACT_UNIT } from './airPass.js';   // EL3: the ambient occlusion, the bloom and the shafts - the same kind of leaf; EL4: the eye's unit; EL6: all of it off the frame's own depth, at the resolve
+import { decalIndices, DECAL_FLOATS_PER_VERTEX } from '../combat/bloodDecals.js';   // BLOOD1a: the index winding and the vertex stride are the decal module's, so the writer and the buffer cannot disagree about the format
 import { SHADE_DARK } from '../systems/concealDraw.js';   // ECV1 / AUDIT 65 PN-3: the shade's pull toward black, interpolated into BB_FS below - the shader restated 0.12 as a second literal. The LEAF, not systems/combatVisuals.js, which re-exports it: that module's graph would take this file's closure from 13 modules to 69
 
 const BB_FS = `#version 300 es
@@ -691,6 +692,8 @@ const ZERO_ORIGIN = [0, 0, 0];
 export const WORLD_FRAME = Object.freeze({ world: true });
 /** The classic world programs' point-light cap (uPointLights[16] in every shader above); a lane brings its own. */
 const CLASSIC_MAX_LIGHTS = 16;
+/** BLOOD1a: pos3 + uv2 + rgba4, in bytes. */
+const DECAL_STRIDE = DECAL_FLOATS_PER_VERTEX * 4;
 const ZERO_FLAT_WIND = new Float32Array(4);   // WIND3: a bare prototype (the crash-report tests) has no wind
 // MaterialReader.cs:448-453: the auto-emissive arm's EmissionColor.
 const EMISSION_WHITE = new Float32Array([1, 1, 1]);
@@ -2497,6 +2500,152 @@ void main() {
       this._bindVao(null);
       this._charQuadVAO = vao; this._charQuadVBO = vbo;
     }
+  }
+
+  // ---- BLOOD1a: THE DECAL PASS ---------------------------------------
+  //
+  // A thousand marks in ONE draw call. `drawCharacterSpriteQuad` above
+  // cannot serve them: it pins its up-axis to world Y (`cy +- halfH`),
+  // so its quad is always vertical, and a decal's whole point is to lie
+  // on the surface it landed on. These take a full surface basis -
+  // right and up both in the plane - which combat/bloodDecals.js works
+  // out and writes as four vertices.
+  //
+  // THE BUFFER IS THE RING. One slot per decal, written in place when
+  // that slot is placed or cleared (`writeDecalSlot`), never rebuilt:
+  // the ring recycles oldest-first, so a placement touches exactly 36
+  // floats and the draw touches nothing. An empty slot is a zero-area
+  // quad rather than a gap, so the index buffer is built once at boot
+  // and the draw is always the whole capacity.
+  //
+  // DEPTH TESTED, DEPTH NOT WRITTEN, and blended. A decal sits 2cm off
+  // the surface it marks (bloodDecals.js SURFACE_LIFT) so it wins the
+  // depth test against that surface; writing depth would make two
+  // overlapping marks fight each other instead of layering, which is
+  // what blood does.
+
+  /** @param {number} capacity quads */
+  createDecalBatch(capacity) {
+    const gl = this.gl;
+    const cap = Math.max(1, Math.floor(capacity));
+    this._ensureDecalProgram();
+    const vao = gl.createVertexArray();
+    this._bindVao(vao);
+    const vb = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, vb);
+    gl.bufferData(gl.ARRAY_BUFFER, cap * 4 * DECAL_STRIDE, gl.DYNAMIC_DRAW);
+    gl.enableVertexAttribArray(0);
+    gl.vertexAttribPointer(0, 3, gl.FLOAT, false, DECAL_STRIDE, 0);
+    gl.enableVertexAttribArray(1);
+    gl.vertexAttribPointer(1, 2, gl.FLOAT, false, DECAL_STRIDE, 12);
+    gl.enableVertexAttribArray(2);
+    gl.vertexAttribPointer(2, 4, gl.FLOAT, false, DECAL_STRIDE, 20);
+    const ib = gl.createBuffer();
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ib);
+    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, decalIndices(cap), gl.STATIC_DRAW);
+    this._bindVao(null);
+    return { vao, vb, ib, capacity: cap };
+  }
+
+  /** One slot's 36 floats, in place. `floats` is what
+   *  `writeDecalQuad`/`clearDecalQuad` filled. */
+  writeDecalSlot(batch, slot, floats) {
+    if (!batch || slot < 0 || slot >= batch.capacity) return false;
+    const gl = this.gl;
+    gl.bindBuffer(gl.ARRAY_BUFFER, batch.vb);
+    gl.bufferSubData(gl.ARRAY_BUFFER, slot * 4 * DECAL_STRIDE, floats);
+    return true;
+  }
+
+  drawDecals(batch, tex) {
+    if (!batch || !tex) return;
+    this._close2D();   // PERF-2D: the baseline back, before anything that needs it
+    const gl = this.gl;
+    this._use(this.decalProgram);
+    const d = this._decal;
+    gl.uniformMatrix4fv(d.proj, false, this._proj);
+    gl.uniformMatrix4fv(d.view, false, this._view);
+    this._bindTex0(tex);   // PERF-TEX3
+    gl.uniform1i(d.tex, 0);
+    this._uploadFog(this._decal);
+    // The scene's own light, so a mark on a dungeon floor is as dark as
+    // the floor. Clockless scenes keep full bright, as the flats do.
+    if (this._clockLit) gl.uniform3fv(d.tint, this._c3(this._ambient, this._decA));
+    else gl.uniform3f(d.tint, 1, 1, 1);
+    this._bindVao(batch.vao);
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+    gl.depthMask(false);
+    gl.disable(gl.CULL_FACE);   // a mark on a ceiling is seen from behind its own normal
+    gl.drawElements(gl.TRIANGLES, batch.capacity * 6, gl.UNSIGNED_INT, 0);
+    gl.depthMask(true);
+    gl.enable(gl.CULL_FACE);
+    gl.disable(gl.BLEND);
+    this._bindVao(null);
+    this.stats.texBinds++; this.stats.draws++;
+  }
+
+  destroyDecalBatch(batch) {
+    if (!batch) return;
+    const gl = this.gl;
+    gl.deleteBuffer(batch.vb);
+    gl.deleteBuffer(batch.ib);
+    gl.deleteVertexArray(batch.vao);
+  }
+
+  /** PERF-WARM: built once, off the draw path, like every other
+   *  program in this file. */
+  _ensureDecalProgram() {
+    const gl = this.gl;
+    if (this.decalProgram) return;
+    const vs = `#version 300 es
+layout(location=0) in vec3 aPos;
+layout(location=1) in vec2 aUV;
+layout(location=2) in vec4 aColor;
+uniform mat4 uProj, uView;
+out vec2 vUV; out vec4 vColor; out vec3 vWorld;
+void main() { vUV = aUV; vColor = aColor; vWorld = aPos; gl_Position = uProj * uView * vec4(aPos, 1.0); }`;
+    const fs = `#version 300 es
+precision highp float;
+in vec2 vUV; in vec4 vColor; in vec3 vWorld;
+uniform sampler2D uTex;
+uniform vec3 uTint;
+uniform vec3 uFogColor;
+uniform int uFogMode;
+uniform float uFogDensity;
+uniform vec2 uFogRange;
+uniform vec3 uCamPos;
+out vec4 outColor;
+float fogFactorAt(vec3 worldPos) {
+  if (uFogMode == 0) return 1.0;
+  float d = length(worldPos - uCamPos);
+  if (uFogMode == 1) return clamp((uFogRange.y - d) / max(uFogRange.y - uFogRange.x, 1e-4), 0.0, 1.0);
+  if (uFogMode == 3) { float f = uFogDensity * d; return exp(-f * f); }
+  return exp(-uFogDensity * d);
+}
+void main() {
+  vec4 t = texture(uTex, vUV);
+  // A DEGENERATE SLOT still rasterises nothing, but a live one whose
+  // texel is fully clear must not draw a black square either.
+  if (t.a < 0.01) discard;
+  vec3 rgb = t.rgb * vColor.rgb * uTint;
+  float a = t.a * vColor.a;
+  float f = fogFactorAt(vWorld);
+  outColor = vec4(mix(uFogColor, rgb, f), a);
+}`;
+    this.decalProgram = this._buildProgram(vs, fs);
+    const P = this.decalProgram;
+    this._decal = {
+      proj: gl.getUniformLocation(P, 'uProj'),
+      view: gl.getUniformLocation(P, 'uView'),
+      tex: gl.getUniformLocation(P, 'uTex'),
+      tint: gl.getUniformLocation(P, 'uTint'),
+      fogColor: gl.getUniformLocation(P, 'uFogColor'),
+      fogMode: gl.getUniformLocation(P, 'uFogMode'),
+      fogDensity: gl.getUniformLocation(P, 'uFogDensity'),
+      fogRange: gl.getUniformLocation(P, 'uFogRange'),
+      camPos: gl.getUniformLocation(P, 'uCamPos'),
+    };
   }
 
   /** Fullscreen overlay of a sprite-RT sub-rect: no depth, no fog,

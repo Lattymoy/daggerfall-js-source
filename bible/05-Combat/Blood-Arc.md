@@ -146,6 +146,21 @@ Slices, each behind its own `features.js` row:
    camp.js/camps.js split, and it is what lets every law here be driven
    on a table instead of through a GL context.
 
+   **THE DRAW came with it.** `drawCharacterSpriteQuad` could not
+   serve a decal: it pins its up-axis to world Y (`cy +- halfH`), so
+   its quad is always vertical, and a decal's whole point is to lie on
+   the surface it landed on. So the module works out the four corners
+   from a full surface basis and the renderer's `createDecalBatch` /
+   `writeDecalSlot` / `drawDecals` are plumbing over that. ONE draw
+   call for the whole ring, depth TESTED but not WRITTEN (the 2cm lift
+   wins the test against the surface; writing depth would make two
+   overlapping marks fight instead of layer), a placement touching one
+   slot's 36 floats through `bufferSubData` at its own offset, and the
+   index buffer built once at boot because an empty slot is a zero-area
+   quad rather than a gap. `decalIndices` and `DECAL_FLOATS_PER_VERTEX`
+   are imported BY the renderer FROM the module, so the format has one
+   home and the writer cannot disagree with the buffer.
+
    Two things the writing settled that the reading had not. THE
    LADDER'S TOP RUNG AND THE OVERKILL LINE ARE ONE NUMBER (175): the
    first cut had them as separate table rows and the boundary came out

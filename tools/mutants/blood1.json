@@ -4,55 +4,152 @@
     "file": "src/combat/bloodDecals.js",
     "old": "  return Math.max(1, Math.round(rate * d));",
     "new": "  return Math.round(rate * d);",
-    "tests": ["test/blood1_decals.test.js"]
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
   },
   {
     "name": "BLOOD1a-overkill-is-the-200-the-setting-text-claims",
     "file": "src/combat/bloodDecals.js",
     "old": "export const OVERKILL_PERCENT = 175;",
     "new": "export const OVERKILL_PERCENT = 200;",
-    "tests": ["test/blood1_decals.test.js"]
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
   },
   {
     "name": "BLOOD1a-the-threshold-is-exclusive",
     "file": "src/combat/bloodDecals.js",
     "old": "export const isOverkill = (damage, maxHealth) => damagePercent(damage, maxHealth) >= OVERKILL_PERCENT;",
     "new": "export const isOverkill = (damage, maxHealth) => damagePercent(damage, maxHealth) > OVERKILL_PERCENT;",
-    "tests": ["test/blood1_decals.test.js"]
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
   },
   {
     "name": "BLOOD1a-a-zero-max-health-divides",
     "file": "src/combat/bloodDecals.js",
     "old": "  if (!(maxHealth > 0) || !(damage > 0)) return 0;",
     "new": "  if (!(damage > 0)) return 0;",
-    "tests": ["test/blood1_decals.test.js"]
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
   },
   {
     "name": "BLOOD1a-the-floor-basis-collapses",
     "file": "src/combat/bloodDecals.js",
     "old": "  const seed = Math.abs(n[1]) > 0.9 ? [0, 0, 1] : [0, 1, 0];",
     "new": "  const seed = [0, 1, 0];",
-    "tests": ["test/blood1_decals.test.js"]
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
   },
   {
     "name": "BLOOD1a-the-mark-is-lifted-along-world-up",
     "file": "src/combat/bloodDecals.js",
     "old": "        point[0] + basis.normal[0] * SURFACE_LIFT,\n        point[1] + basis.normal[1] * SURFACE_LIFT,\n        point[2] + basis.normal[2] * SURFACE_LIFT,",
     "new": "        point[0],\n        point[1] + SURFACE_LIFT,\n        point[2],",
-    "tests": ["test/blood1_decals.test.js"]
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
   },
   {
     "name": "BLOOD1a-the-ring-grows-instead-of-recycling",
     "file": "src/combat/bloodDecals.js",
     "old": "    next = (next + 1) % cap;",
     "new": "    next = next + 1;",
-    "tests": ["test/blood1_decals.test.js"]
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
   },
   {
     "name": "BLOOD1a-the-origin-shift-is-dropped",
     "file": "src/combat/bloodDecals.js",
     "old": "      d.pos[0] += delta[0]; d.pos[1] += delta[1]; d.pos[2] += delta[2];",
     "new": "      d.pos[0] += delta[0]; d.pos[2] += delta[2];",
-    "tests": ["test/blood1_decals.test.js"]
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1a-size-is-the-half-width",
+    "file": "src/combat/bloodDecals.js",
+    "old": "  const h = decal.size / 2;",
+    "new": "  const h = decal.size;",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1a-a-corner-leaves-the-surface-plane",
+    "file": "src/combat/bloodDecals.js",
+    "old": "    out[o + 1] = py + ry * sx + uy * sy;",
+    "new": "    out[o + 1] = py + ry * sx + uy * sy + 0.05;",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1a-the-uv-corners-are-transposed",
+    "file": "src/combat/bloodDecals.js",
+    "old": "  corner(1, -1, 1, u0, v1);",
+    "new": "  corner(1, -1, 1, u1, v0);",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1a-an-empty-slot-clears-the-whole-buffer",
+    "file": "src/combat/bloodDecals.js",
+    "old": "  out.fill(0, offset, offset + DECAL_FLOATS);",
+    "new": "  out.fill(0);",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1a-the-second-quad-reuses-the-first-quads-vertices",
+    "file": "src/combat/bloodDecals.js",
+    "old": "    const b = q * DECAL_VERTS, o = q * 6;",
+    "new": "    const b = 0, o = q * 6;",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1a-the-decal-pass-writes-depth",
+    "file": "src/render/renderer.js",
+    "old": "    gl.depthMask(false);\n    gl.disable(gl.CULL_FACE);   // a mark on a ceiling is seen from behind its own normal",
+    "new": "    gl.disable(gl.CULL_FACE);   // a mark on a ceiling is seen from behind its own normal",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1a-the-decal-pass-turns-the-depth-test-off",
+    "file": "src/render/renderer.js",
+    "old": "    gl.enable(gl.BLEND);\n    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);",
+    "new": "    gl.enable(gl.BLEND);\n    gl.disable(gl.DEPTH_TEST);\n    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1a-a-placement-rewrites-the-whole-buffer",
+    "file": "src/render/renderer.js",
+    "old": "    gl.bufferSubData(gl.ARRAY_BUFFER, slot * 4 * DECAL_STRIDE, floats);",
+    "new": "    gl.bufferSubData(gl.ARRAY_BUFFER, 0, floats);",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1a-the-renderer-keeps-its-own-copy-of-the-stride",
+    "file": "src/render/renderer.js",
+    "old": "const DECAL_STRIDE = DECAL_FLOATS_PER_VERTEX * 4;",
+    "new": "const DECAL_STRIDE = 36;",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
   }
 ]

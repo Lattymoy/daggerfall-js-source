@@ -15,7 +15,8 @@ import { readFileSync } from 'node:fs';
 
 import {
   createBloodDecalPool, bloodRate, ladderRate, scaleRate, damagePercent, isOverkill,
-  surfaceBasis, RATE_LADDER, RATE_NEAR_LETHAL, RATE_MAX, OVERKILL_PERCENT, OVERKILL_BURST, OVERKILL_UNDER, SURFACE_LIFT,
+  surfaceBasis, writeDecalQuad, clearDecalQuad, decalIndices,
+  DECAL_FLOATS, DECAL_FLOATS_PER_VERTEX, RATE_LADDER, RATE_NEAR_LETHAL, RATE_MAX, OVERKILL_PERCENT, OVERKILL_BURST, OVERKILL_UNDER, SURFACE_LIFT,
 } from '../src/combat/bloodDecals.js';
 
 const dot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
@@ -174,10 +175,118 @@ test('BLOOD1a: a mark can ride a moving body, and the module knows no renderer',
   assert.deepEqual(d.tint, [1, 0, 0, 1]);
 
   // NO GL IN HERE. The split is camp.js/camps.js's: this answers where
-  // a mark goes, the host draws it - which is what lets every law above
-  // be driven on a table.
+  // a mark goes and what its four corners are, the host draws it -
+  // which is what lets every law above be driven on a table.
+  //
+  // THE COMMENTS ARE STRIPPED FIRST, and that is not a loosening. The
+  // law is that this module CALLS no GL, not that it never says the
+  // word: the file's own header has to be able to explain what the
+  // host does with what it answers, and the first cut of this pin
+  // failed on the sentence "the renderer's pass is plumbing over it".
+  // A pin that cannot tell code from prose reports the prose.
   const src = readFileSync(new URL('../src/combat/bloodDecals.js', import.meta.url), 'utf8');
-  for (const forbidden of ['renderer', 'drawScreenQuad', 'gl.', 'uploadTexture', 'import ']) {
-    assert.ok(!src.includes(forbidden), `bloodDecals.js must not reach for \`${forbidden}\``);
+  const code = src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+  for (const forbidden of ['renderer', 'drawScreenQuad', 'gl.', 'uploadTexture', 'import ', 'document', 'window.']) {
+    assert.ok(!code.includes(forbidden), `bloodDecals.js must not reach for \`${forbidden}\``);
   }
+  // ...and the stripper has to actually strip, or the check above is a
+  // pin that cannot fail
+  assert.ok(src.includes('renderer'), 'the header explains what the host does with this');
+  assert.ok(code.length < src.length * 0.75, 'the comments really came out');
+});
+
+test('BLOOD1a: a decal is FOUR CORNERS around its own centre, and an empty slot is a zero-area quad', () => {
+  const pool = createBloodDecalPool({ capacity: 3, rng: () => 0 });
+  // a floor mark at the origin, one metre across, with turn 0 so the
+  // basis is the deterministic one
+  const d = pool.place([0, 0, 0], [0, 1, 0], { size: 2, turn: 0 });
+  const out = new Float32Array(DECAL_FLOATS * 3);
+  const next = writeDecalQuad(out, 0, d);
+  assert.equal(next, DECAL_FLOATS, 'the writer chains');
+  assert.equal(DECAL_FLOATS_PER_VERTEX, 9, 'pos3 + uv2 + rgba4');
+  assert.equal(DECAL_FLOATS, 36);
+
+  const vert = (i) => [...out.slice(i * 9, i * 9 + 9)];
+  const pos = (i) => vert(i).slice(0, 3);
+  const uv = (i) => vert(i).slice(3, 5);
+
+  // SIZE IS THE FULL WIDTH, so a size-2 decal reaches one unit each
+  // way - a caller passing a metre expects to cover a metre of floor.
+  const h = 1;
+  for (let i = 0; i < 4; i++) {
+    const p = pos(i);
+    // every corner is the centre plus +-h of right and +-h of up...
+    const dx = [p[0] - d.pos[0], p[1] - d.pos[1], p[2] - d.pos[2]];
+    assert.ok(Math.abs(Math.hypot(...dx) - Math.hypot(h, h)) < 1e-6, `corner ${i} is at the half-diagonal`);
+    // ...and LIES IN THE SURFACE: the offset has no component along the normal
+    assert.ok(Math.abs(dot(dx, d.normal)) < 1e-6, `corner ${i} lies in the plane of the surface`);
+  }
+  // the corners go BL, TL, TR, BR - the uv order says so, and the
+  // index buffer below is wound to match
+  assert.deepEqual([uv(0), uv(1), uv(2), uv(3)], [[0, 0], [0, 1], [1, 1], [1, 0]]);
+  // ...and opposite corners are opposite: 0/2 and 1/3 straddle the centre
+  for (const [a, b] of [[0, 2], [1, 3]]) {
+    const mid = pos(a).map((v, i) => (v + pos(b)[i]) / 2);
+    for (let i = 0; i < 3; i++) assert.ok(Math.abs(mid[i] - d.pos[i]) < 1e-6, `${a}/${b} straddle the centre`);
+  }
+
+  // the tint rides per vertex, so one call can draw decals of
+  // different colours and fades
+  const red = pool.place([0, 0, 0], [0, 1, 0], { size: 1, tint: [1, 0, 0, 0.5], turn: 0 });
+  writeDecalQuad(out, DECAL_FLOATS, red);
+  for (let i = 4; i < 8; i++) assert.deepEqual(vert(i).slice(5), [1, 0, 0, 0.5]);
+  // ...and a decal with no tint of its own is white and opaque
+  assert.deepEqual(vert(0).slice(5), [1, 1, 1, 1]);
+
+  // AN EMPTY SLOT IS A DEGENERATE QUAD, not a gap. The ring is drawn
+  // whole in one call, so a hole has to be something the rasteriser
+  // throws away - skipping would cost either a draw call per run of
+  // live decals or an index rebuild on every placement.
+  clearDecalQuad(out, 0);
+  assert.deepEqual([...out.slice(0, DECAL_FLOATS)], new Array(DECAL_FLOATS).fill(0));
+  assert.deepEqual(vert(4).slice(5), [1, 0, 0, 0.5], 'and it clears its OWN slot only');
+
+  // the index buffer winds both triangles off the corner order above
+  const idx = decalIndices(2);
+  assert.equal(idx.length, 12);
+  assert.deepEqual([...idx.slice(0, 6)], [0, 2, 1, 0, 3, 2]);
+  assert.deepEqual([...idx.slice(6)], [4, 6, 5, 4, 7, 6], 'the second quad is the first plus four');
+});
+
+test('BLOOD1a by source: the decal pass is ONE draw call, depth-tested and depth-UNWRITTEN, and it shares the module’s format', () => {
+  const r = readFileSync(new URL('../src/render/renderer.js', import.meta.url), 'utf8');
+
+  // THE FORMAT HAS ONE HOME. The winding and the stride come from
+  // bloodDecals.js, so the writer that fills a slot and the buffer that
+  // reads it cannot disagree about what 36 floats mean.
+  assert.match(r, /import \{ decalIndices, DECAL_FLOATS_PER_VERTEX \} from '\.\.\/combat\/bloodDecals\.js';/);
+  assert.match(r, /const DECAL_STRIDE = DECAL_FLOATS_PER_VERTEX \* 4;/);
+  assert.match(r, /gl\.bufferData\(gl\.ELEMENT_ARRAY_BUFFER, decalIndices\(cap\), gl\.STATIC_DRAW\);/);
+
+  const i = r.indexOf('  drawDecals(batch, tex) {');
+  assert.ok(i > 0, 'the pass exists');
+  const fn = r.slice(i, r.indexOf('\n  }\n', i));
+
+  // ONE CALL for the whole ring - an empty slot is a zero-area quad, so
+  // the draw never has to skip a hole and the index buffer is built
+  // once at boot.
+  assert.equal((fn.match(/gl\.draw(Elements|Arrays)/g) ?? []).length, 1, 'one draw call for the whole ring');
+  assert.match(fn, /gl\.drawElements\(gl\.TRIANGLES, batch\.capacity \* 6, gl\.UNSIGNED_INT, 0\);/);
+
+  // DEPTH TESTED, DEPTH NOT WRITTEN. The 2cm lift wins the test against
+  // the surface; writing depth would make two overlapping marks fight
+  // instead of layering, which is not what blood does.
+  assert.match(fn, /gl\.depthMask\(false\);[\s\S]*gl\.drawElements[\s\S]*gl\.depthMask\(true\);/, 'depth write off ACROSS the draw, and restored');
+  assert.doesNotMatch(fn, /gl\.disable\(gl\.DEPTH_TEST\)/, 'a decal is still occluded by the world in front of it');
+
+  // ...and every state it changes, it puts back
+  for (const [off, on] of [[/gl\.enable\(gl\.BLEND\)/, /gl\.disable\(gl\.BLEND\)/], [/gl\.disable\(gl\.CULL_FACE\)/, /gl\.enable\(gl\.CULL_FACE\)/]]) {
+    assert.match(fn, off); assert.match(fn, on);
+  }
+
+  // a placement touches ONE slot, never the whole buffer
+  assert.match(r, /gl\.bufferSubData\(gl\.ARRAY_BUFFER, slot \* 4 \* DECAL_STRIDE, floats\);/);
+  // the program is built off the draw path, like every other one here
+  assert.match(r, /_ensureDecalProgram\(\) \{/);
+  assert.match(r, /createDecalBatch\(capacity\) \{\s*\n\s*const gl = this\.gl;[\s\S]{0,200}?this\._ensureDecalProgram\(\);/);
 });

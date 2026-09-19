@@ -119,6 +119,85 @@ function unit(v) {
   return l > 1e-6 ? [v[0] / l, v[1] / l, v[2] / l] : null;
 }
 
+// ---- the geometry the host uploads ---------------------------------
+//
+// A decal is FOUR VERTICES and the host draws a thousand of them in one
+// call, so the corner maths lives here - pure, pinned, and nowhere near
+// a GL context - and the renderer's pass is plumbing over it. The same
+// reason the rest of this module has no renderer in it.
+
+/** pos(3) + uv(2) + rgba(4). */
+export const DECAL_FLOATS_PER_VERTEX = 9;
+/** A quad, drawn as two triangles through an index buffer. */
+export const DECAL_VERTS = 4;
+/** One decal's stride into the batch's vertex buffer. */
+export const DECAL_FLOATS = DECAL_VERTS * DECAL_FLOATS_PER_VERTEX;
+
+const WHITE = Object.freeze([1, 1, 1, 1]);
+
+/**
+ * Write one decal's four corners into `out` at `offset` (in FLOATS).
+ *
+ * The corners go BL, TL, TR, BR - counter-clockwise seen from the
+ * front, which is the side the surface normal points at. The host
+ * draws with culling off (a decal on a ceiling is seen from behind its
+ * own normal as often as not), so the winding is for the index buffer's
+ * sake and for anything that ever wants to cull, not for correctness
+ * today.
+ *
+ * `size` is the decal's FULL width, so the half-extent is half of it -
+ * a decal of size 1 covers a metre of floor, which is what a caller
+ * passing a metre expects.
+ *
+ * Answers the next free offset, so a loop over the ring can chain.
+ */
+export function writeDecalQuad(out, offset, decal, uv = null) {
+  const u0 = uv?.u0 ?? 0, v0 = uv?.v0 ?? 0, u1 = uv?.u1 ?? 1, v1 = uv?.v1 ?? 1;
+  const [px, py, pz] = decal.pos;
+  const h = decal.size / 2;
+  const rx = decal.right[0] * h, ry = decal.right[1] * h, rz = decal.right[2] * h;
+  const ux = decal.up[0] * h, uy = decal.up[1] * h, uz = decal.up[2] * h;
+  const c = decal.tint ?? WHITE;
+  const corner = (i, sx, sy, u, v) => {
+    const o = offset + i * DECAL_FLOATS_PER_VERTEX;
+    out[o] = px + rx * sx + ux * sy;
+    out[o + 1] = py + ry * sx + uy * sy;
+    out[o + 2] = pz + rz * sx + uz * sy;
+    out[o + 3] = u; out[o + 4] = v;
+    out[o + 5] = c[0]; out[o + 6] = c[1]; out[o + 7] = c[2]; out[o + 8] = c[3] ?? 1;
+  };
+  corner(0, -1, -1, u0, v0);
+  corner(1, -1, 1, u0, v1);
+  corner(2, 1, 1, u1, v1);
+  corner(3, 1, -1, u1, v0);
+  return offset + DECAL_FLOATS;
+}
+
+/**
+ * A SLOT WITH NOTHING IN IT IS A ZERO-AREA QUAD, not a gap in the
+ * buffer. The ring is written by slot and drawn whole in one call, so
+ * a hole has to be something the rasteriser throws away rather than
+ * something the draw has to skip - skipping would mean either a second
+ * draw call per run of live decals or an index rebuild on every
+ * placement, and this costs four degenerate vertices.
+ */
+export function clearDecalQuad(out, offset) {
+  out.fill(0, offset, offset + DECAL_FLOATS);
+  return offset + DECAL_FLOATS;
+}
+
+/** The index buffer for `capacity` quads: two triangles each, BL-TR-TL
+ *  and BL-BR-TR, matching the corner order above. */
+export function decalIndices(capacity) {
+  const out = new Uint32Array(capacity * 6);
+  for (let q = 0; q < capacity; q++) {
+    const b = q * DECAL_VERTS, o = q * 6;
+    out[o] = b; out[o + 1] = b + 2; out[o + 2] = b + 1;
+    out[o + 3] = b; out[o + 4] = b + 3; out[o + 5] = b + 2;
+  }
+  return out;
+}
+
 /**
  * The ring.
  *
