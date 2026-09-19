@@ -63,15 +63,6 @@
   ]
  },
  {
-  "name": "GRAIN1-anisotropy-is-uncapped-so-a-16x-driver-pays-for-it-everywhere",
-  "file": "src/render/renderer.js",
-  "old": "Math.min(4, this._anisoMax)",
-  "new": "this._anisoMax",
-  "tests": [
-   "test/grain1_terrainmip.test.js"
-  ]
- },
- {
   "name": "GRAIN1-the-extension-is-refetched-for-every-archive",
   "file": "src/render/renderer.js",
   "old": "    const aniso = this._anisoExt ||= (gl.getExtension('EXT_texture_filter_anisotropic') ?? null);",
@@ -88,6 +79,60 @@
   "tests": [
    "test/grain1_terrainmip.test.js",
    "test/water.test.js"
+  ]
+ },
+ {
+  "name": "GRAIN2-the-dials-maximum-ignores-what-the-driver-allows",
+  "file": "src/render/renderer.js",
+  "old": "  if (tier === 'max') return cap;",
+  "new": "  if (tier === 'max') return 16;",
+  "tests": [
+   "test/grain1_terrainmip.test.js"
+  ]
+ },
+ {
+  "name": "GRAIN2-off-asks-for-zero-which-is-not-a-legal-anisotropy",
+  "file": "src/render/renderer.js",
+  "old": "  if (tier === 'off') return 1;",
+  "new": "  if (tier === 'off') return 0;",
+  "tests": [
+   "test/grain1_terrainmip.test.js"
+  ]
+ },
+ {
+  "name": "GRAIN2-an-unknown-tier-falls-back-to-the-MAXIMUM-instead-of-the-default",
+  "file": "src/render/renderer.js",
+  "old": "  return Math.min(4, cap);",
+  "new": "  return cap;",
+  "tests": [
+   "test/grain1_terrainmip.test.js"
+  ]
+ },
+ {
+  "name": "GRAIN2-a-driver-without-the-extension-is-read-as-allowing-anything",
+  "file": "src/render/renderer.js",
+  "old": "  const cap = Math.max(1, driverMax || 1);",
+  "new": "  const cap = driverMax;",
+  "tests": [
+   "test/grain1_terrainmip.test.js"
+  ]
+ },
+ {
+  "name": "GRAIN2-the-renderer-stops-reading-the-dial-and-hardcodes-a-number-again",
+  "file": "src/render/renderer.js",
+  "old": "      const want = anisotropyFor(getPref('groundSharpness'), this._anisoMax);",
+  "new": "      const want = Math.min(4, this._anisoMax);",
+  "tests": [
+   "test/grain1_terrainmip.test.js"
+  ]
+ },
+ {
+  "name": "GRAIN2-the-row-is-everyones-instead-of-the-players-own",
+  "file": "src/systems/features.js",
+  "old": "    control: Object.freeze({ store: 'prefs', key: 'groundSharpness', initial: 'default', online: 'player',",
+  "new": "    control: Object.freeze({ store: 'prefs', key: 'groundSharpness', initial: 'max', online: 'host',",
+  "tests": [
+   "test/grain1_terrainmip.test.js"
   ]
  }
 ]
