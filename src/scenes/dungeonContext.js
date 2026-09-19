@@ -89,7 +89,7 @@ import { preloadMessageBoxArt } from '../ui/messageBox.js';   // U11
 import { ChargenFlow } from '../ui/chargen.js';
 import { LevelUpScreen, preloadCharSheetArt } from '../ui/charsheet.js';
 import { createCharSheetWindow, warmLevelUpWindow } from '../ui/charSheetDoor.js';
-import { announceLevelUp } from '../ui/levelNotice.js';   // LV2: the level-up notification, and the skin fork over whether the window opens itself   // U52: the sheet's ONE seam, and the skin fork in front of it
+import { announceLevelUp, levelOwed } from '../ui/levelNotice.js';   // LV2: the level-up notification, and the skin fork over whether the window opens itself   // U52: the sheet's ONE seam, and the skin fork in front of it
 import { QuestJournalWindow, preloadQuestJournalArt } from '../ui/questJournal.js';   // U43: the LogBook and NoteBook doors
 import { createChronicleWindow } from '../ui/chronicleDoor.js';   // PX24d: the chronicle's one door
 import { DeathScreen } from '../ui/deathScreen.js';
@@ -217,7 +217,7 @@ const q3 = (v) => Math.round(v * 1000) / 1000; const GENDER_BIT = ['male', 'fema
 const HIT_POS_MAX = 1e6;
 // AUDIT FOES FOE5: the most damage one peer's blow may claim. The host TRUSTS the number (it never recomputes - the
 // striker's own calc is the game's), so without a bound any joiner could one-shot every foe in the room and empty it
-// through the kill door. The exterior twin has carried this bound since WORLD6b (exteriorFoes.js:1694); the dungeon
+// through the kill door. The exterior twin has carried this bound since WORLD6b (exteriorFoes.js:1703); the dungeon
 // had none. Past anything a legal swing, shaft or blast can roll.
 const HIT_DMG_MAX = 10000;
 /** AUDIT WORLD3 E3: can the ONE build chain actually stand this species? Both of buildFoeAt's branches need a truthy
@@ -1482,7 +1482,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // owned, and destroy() hands it back (the _prevPassiveHost idiom this
   // file already uses for its other process-global seams). A bare null
   // would not do: on ?world and ?exterior the previous holder is the
-  // host's own townTalk sink (world.js:7789 / exterior.js:3282), set
+  // host's own townTalk sink (world.js:7883 / exterior.js:3301), set
   // once at boot and never again, so nulling on the way out of the
   // first dungeon would silently un-file every mid-screen label above
   // ground for the rest of the session - MC-1's own bug, re-opened.
@@ -2990,8 +2990,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
               // AUDIT 39 (#64) / THE FOUR HOSTS RULE - SHIPPED (wave D):
               // this host was the FOURTH BODY of the player-arrow law
               // and is now the fourth CALLER. combat/arrowFlight.js's
-              // playerArrowHitFoe is the one copy world.js:10724,
-              // exterior.js:4708 and worldModes.js:6234 already ran;
+              // playerArrowHitFoe is the one copy world.js:10876,
+              // exterior.js:4727 and worldModes.js:6234 already ran;
               // the flag said the divergence would bite and it already
               // had. This copy splashed at the ARROW TIP
               // (`[m.pos[0], m.pos[1], m.pos[2]]`) on the claim that
@@ -3345,7 +3345,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     if (!_authority || !data || typeof data !== 'object') return false;
     const i = data.i | 0, dmg = Number(data.dmg);
     const f = foes[i];
-    // AUDIT FOES FOE5: BOUNDED, as the exterior twin's applyHit is (exteriorFoes.js:1694). The number is a peer's
+    // AUDIT FOES FOE5: BOUNDED, as the exterior twin's applyHit is (exteriorFoes.js:1703). The number is a peer's
     // word and the host trusts it without recomputing, so an unbounded one let any joiner one-shot every foe in the
     // room - and, through the kill door, empty it. 10000 is past anything a legal swing, shaft or blast can roll.
     if (!f || i >= _layoutFoes || f.dead || !Number.isFinite(dmg) || dmg < 0 || dmg > HIT_DMG_MAX) return false;
@@ -3823,7 +3823,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // InstantiatePrefab's a fresh GameObject per saved record, so
     // EnemyEntity's `PickpocketByPlayerAttempted` default is the loaded
     // truth for every enemy. The re-minting pools match that by
-    // construction (exteriorFoes.js:1333's restoreWorld goes through
+    // construction (exteriorFoes.js:1342's restoreWorld goes through
     // spawnFoe), but this host patches the LIVE foes in place, so a
     // same-dungeon reload kept a raised latch and a failed pickpocket
     // could never be retried - falsifying the law
@@ -5257,7 +5257,24 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // three columns against the left edge. The pause window's Stats
     // page IS that sheet, off the same sheetModel, and is centred by
     // construction. This host's own pause flow, landed on it.
-    openSheetPage() { this.togglePause({ at: 'stats' }); },
+    // LV2 FIX (2026-09-19, Mac: "when you close the levelup screen
+    // without adding stat points you cant open it again"): THE DIAL'S
+    // STATS ARM ASKS THE DOOR TOO. LV2's own records claim "every route
+    // to the sheet - the key, the dial's Stats arm, the pause page - is
+    // already this door", and that sentence was written without
+    // checking two of the three. The KEY goes through
+    // `createCharSheetWindow` and gets the Ascension; this arm and the
+    // pause page went straight to the menu's Stats tab, which reads
+    // `sheetModel` and has never heard of `readyToLevelUp`. So a player
+    // whose level-up window was closed by anything (a pause, a map, a
+    // peer's window) and who then reached for their sheet the way this
+    // skin invites - the dial - got the ordinary sheet and no way back
+    // to the level they were owed.
+    //
+    // `levelOwed` is ui/levelNotice.js's, which is the same live read
+    // the HUD's own standing reminder uses: one answer to "is a level
+    // waiting", not a second copy of the flag.
+    openSheetPage() { if (levelOwed(playerEntity)) this.toggleCharSheet(); else this.togglePause({ at: 'stats' }); },
     // MAC-L1: ONE SIGNATURE ACROSS THE FOUR HOSTS. This was the odd one
     // out - `togglePause(setPlayerPos = null, opts = {})` against the
     // other three's `togglePause(opts = {})` - and `routeAction` spelt
@@ -5304,7 +5321,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         questLog: () => opts.questBridge?.questLog() ?? { active: [], finished: [] },
         quickSave: () => ctx.quickSave?.(),
         // MAC1 J: the pointer comes back INSIDE the resume gesture
-        // (ui/pauseDoor.js:207-224). THIS CONTEXT OWNS NO CANVAS OF ITS
+        // (ui/pauseDoor.js:270-287). THIS CONTEXT OWNS NO CANVAS OF ITS
         // OWN (:4701), so the relock arrives from whichever dungeon host
         // mounted it - the way hudMessageSink is threaded (:1349) - and
         // both of them hand it in: dungeon.js's opts bag and

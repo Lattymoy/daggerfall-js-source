@@ -47,6 +47,7 @@
 import { liveStat } from '../systems/statMods.js';   // AUDIT 23 (characters-11)
 import { damageShieldPool } from '../characters/playerEntity.js';   // AUDIT 58: DecreaseHealth's shield hook is the BASE class's (DaggerfallEntity.cs:313-328)
 import { lycanthropeAttackVoice, isTransformedLycanthrope } from '../systems/lycanthropy.js';   // V4: the beast's attack voice   // GUARD1: EnemyEntity.cs:188's FOURTH despawn term
+import { sharedClockOn } from '../systems/worldTick.js';   // MOD: the "waiting for freedom" despawn is online-only, same door as arrestFlow's guard-hit fix
 import { setCrimeCommitted } from '../systems/court.js';   // V4: the one crime setter (SuppressCrime)
 import { tallyCrimeGuildRequirements } from '../systems/crimeGuilds.js';   // CG2: the TG/DB tally
 import { entityIsParalyzed, applyEnemyMotorEffectFlags, concealmentFlags } from '../systems/effects.js';   // AUDIT 24 (wave 32): the watch is paralysable too   // A5: the enemy Levitate arm, the foe-target concealment closure + EntityConcealmentBehaviour's visual
@@ -576,7 +577,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
    *  which arrowFlight.js calls unconditionally (arrowFlight.js:230)
    *  because `dealDamage` is inside its own `dmg > 0` fork - so the
    *  door is PUBLIC (the returned surface below), exactly as the
-   *  encounter pool's is (exteriorFoes.js:1785). */
+   *  encounter pool's is (exteriorFoes.js:1794). */
   function handleAttackFromPlayer(g, playerFeet = null) {
     if (!g?.ai) return;
     if (!g.ai.isHostile) makeAreaHostile?.();
@@ -767,7 +768,19 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
     // transformed player was simply immune to the city watch, free to
     // murder a whole village unopposed. DFU's fourth clause is what
     // holds the watch standing through exactly that window.
-    if (!playerEntity.crimeCommitted && !isTransformedLycanthrope(playerEntity)) {
+    // MOD (player follow-up, online mode): once arrestFlow's guard-hit
+    // fix has taken effect the watch can no longer land a hit while
+    // the player waits out the surrender/court/prison sequence, but
+    // vanilla's own despawn law above only fires on the CRIME clearing
+    // (release, at the very end) - so online, other clients still saw
+    // a harmless but very present watch standing over an arrested
+    // player for the whole wait. `playerEntity.arrested` (arrestFlow's
+    // own flag, set the instant the surrender is accepted and cleared
+    // on every court exit) covers exactly that window, so the watch
+    // despawns for its length rather than only at the door. Offline is
+    // untouched - vanilla's own crime-clear law already stands alone
+    // there, the same way arrestFlow's fix leaves offline alone.
+    if ((!playerEntity.crimeCommitted || (sharedClockOn() && playerEntity.arrested)) && !isTransformedLycanthrope(playerEntity)) {
       for (const g of guards) if (!g.dead) { g.dead = true; releaseGuardBatch(g); }   // no corpse - they walk away
     }
     // AUDIT 17e F7 - PlayerEntity.cs:533-537 verbatim: the surrender

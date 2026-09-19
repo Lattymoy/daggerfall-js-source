@@ -52,8 +52,8 @@
 // DEMOTION, DFU refuses the lower rank's gift because the load
 // already marked it claimed, and the port used to offer it again.
 // The one door is restoreKnightlyOrderFlags below, run by save.js's
-// restoreMembershipBook (save.js:52) from restorePlayer's single load
-// door (save.js:646-647) - RestoreMembershipData's own per-guild
+// restoreMembershipBook (save.js:54) from restorePlayer's single load
+// door (save.js:652-653) - RestoreMembershipData's own per-guild
 // RestoreGuildData call, GuildManager.cs:332.
 
 import { ARMOR_MATERIAL } from './armorMaterials.js';

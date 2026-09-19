@@ -1,0 +1,79 @@
+[
+  {
+    "name": "SW1b-1-the-shield-gets-no-frame-of-its-own",
+    "file": "src/combat/weaponRig.js",
+    "old": "      if (widgetOn() || _torchesOn || shieldOn()) {",
+    "new": "      if (widgetOn() || _torchesOn) {",
+    "tests": [
+      "test/sw1_shield_widget.test.js"
+    ]
+  },
+  {
+    "name": "SW1b-2-the-draw-seam-returns-before-the-shield",
+    "file": "src/combat/weaponRig.js",
+    "old": "      if (paralyzed || (!shown() && !torchOnly && !sheetOnly && !shieldRect)) return;",
+    "new": "      if (paralyzed || (!shown() && !torchOnly && !sheetOnly)) return;",
+    "tests": [
+      "test/sw1_shield_widget.test.js"
+    ]
+  },
+  {
+    "name": "SW1b-2b-the-shield-relaxes-the-gate-under-the-morrowind-arm-too",
+    "file": "src/combat/weaponRig.js",
+    "old": "      const shieldRect = (shieldOn() && c && !eotbHidesWeapon() && !fpArm.active())\n        ? shield.drawRect() : null;",
+    "new": "      const shieldRect = (shieldOn() && c) ? shield.drawRect() : null;",
+    "tests": [
+      "test/sw1_shield_widget.test.js",
+      "test/map3_heldpose.test.js",
+      "test/mwattach.test.js"
+    ]
+  },
+  {
+    "name": "SW1b-2c-the-shield-alone-lets-the-weapon-through",
+    "file": "src/combat/weaponRig.js",
+    "old": "      if (!shown()) return;\n      if (widgetOn() && c && widget.draw(renderer, c, fpTint)) return;",
+    "new": "      if (widgetOn() && c && widget.draw(renderer, c, fpTint)) return;",
+    "tests": [
+      "test/sw1_shield_widget.test.js",
+      "test/ht1_handheldtorches.test.js",
+      "test/ww1_weaponwidget.test.js"
+    ]
+  },
+  {
+    "name": "SW1b-3-the-geometry-runs-on-the-320x200-fallback",
+    "file": "src/combat/weaponRig.js",
+    "old": "          screenRect: { x: 0, y: 0, width: c?.width ?? 320, height: c?.height ?? 200 },",
+    "new": "          screenRect: { x: 0, y: 0, width: c?.canvas?.width ?? 320, height: c?.canvas?.height ?? 200 },",
+    "tests": [
+      "test/sw1_shield_widget.test.js"
+    ]
+  },
+  {
+    "name": "SW1-the-shield-hides-on-a-pose-the-mod-would-draw",
+    "file": "src/combat/shieldWidget.js",
+    "old": "    const hidden = (mode) => (a ? (mode === SHIELD_POSE.Hide || mode === SHIELD_POSE.OffScreen) && !animating\n      : mode === SHIELD_POSE.Hide);",
+    "new": "    const hidden = (mode) => mode !== SHIELD_POSE.Ready;",
+    "tests": [
+      "test/sw1_shield_widget.test.js"
+    ]
+  },
+  {
+    "name": "SW1-the-left-hand-is-read-through-the-materialising-helper",
+    "file": "src/combat/weaponRig.js",
+    "old": "    const item = entity?.equip?.slots?.[EQUIP_SLOTS.LeftHand] ?? null;",
+    "new": "    const item = equipTableOf(entity)?.slots?.[EQUIP_SLOTS.LeftHand] ?? null;",
+    "tests": [
+      "test/sw1_shield_widget.test.js",
+      "test/weaponrig.test.js"
+    ]
+  },
+  {
+    "name": "SW1b-4-the-look-reaches-the-shield-by-a-name-it-does-not-carry",
+    "file": "src/combat/weaponRig.js",
+    "old": "          look: { x: look?.[0] ?? 0, y: look?.[1] ?? 0, cursorActive: cursorActive(), swingAction: _held },",
+    "new": "          look: { x: look?.x ?? 0, y: look?.y ?? 0, cursorActive: cursorActive(), swingAction: _held },",
+    "tests": [
+      "test/sw1_shield_widget.test.js"
+    ]
+  }
+]

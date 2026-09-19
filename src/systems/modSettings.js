@@ -161,6 +161,58 @@ export const MOD_SETTINGS = Object.freeze({
   // is a SliderFloatKey and reads as a number on its range; `step` is
   // the Mods pane's stepper for it. Descriptions are the mod's own where
   // it wrote one. Plus the port's `Enabled` (MO1: on).
+  // SW1 (2026-09-19) - SHIELD WIDGET 1.6, RedRoryOTheGlen. The mod's own
+  // eight sections restated flat, section and name joined with a dot, in
+  // the bundle's own order with the bundle's own defaults, ranges and
+  // descriptions. The six keys the mod ships with no description carry
+  // the port's words instead. Plus the port's `Enabled` (MO1: on).
+  'shield-widget': Object.freeze({
+    title: 'Shield Widget',
+    author: 'RedRoryOTheGlen',
+    keys: Object.freeze({
+      Enabled: Object.freeze({
+        default: true,
+        description: 'A shield in the first-person view, which classic Daggerfall never drew: the one in your hand, in its own '
+          + 'metal, battering as it wears and moving aside when you sheathe, swing or cast.',
+      }),
+      'Shield.Scale': Object.freeze({ default: 1.0, min: 0.8, max: 1.2, float: true, step: 0.1, description: 'Size of the sprite' }),
+      'Shield.OffsetHorizontal': Object.freeze({ default: 0.5, min: -1.0, max: 1.0, float: true, step: 0.1, description: 'Offsets the sprite relative to the left edge of the screen' }),
+      'Shield.OffsetVertical': Object.freeze({ default: 0.5, min: -1.0, max: 1.0, float: true, step: 0.1, description: 'Offsets the sprite relative to the bottom edge of the screen' }),
+      'Shield.Speed': Object.freeze({ default: 1.0, min: 0.0, max: 2.0, float: true, step: 0.1, description: 'Speed of stance transition when attacking' }),
+      'Shield.WhenSheathed': Object.freeze({ default: 1, options: Object.freeze(['Hide', 'Off-screen', 'Corner', 'Ready']), description: 'The shield\'s behavior when sheathing your weapon' }),
+      'Shield.WhenAttacking': Object.freeze({ default: 1, options: Object.freeze(['Hide', 'Off-screen', 'Corner', 'Ready']), description: 'The shield\'s behavior when attacking with a weapon' }),
+      'Shield.WhenCasting': Object.freeze({ default: 1, options: Object.freeze(['Hide', 'Off-screen', 'Corner', 'Ready']), description: 'The shield\'s behavior when readying or while casting a spell' }),
+      'Shield.LockAspectRatio': Object.freeze({ default: true, description: 'Enable to prevent the sprite from stretching or squishing depending on the screen\'s aspect rato' }),
+      'Shield.ConditionThresholdUpper': Object.freeze({ default: 75, min: 55, max: 95, description: 'The first condition threshold for the changing of the sprite.' }),
+      'Shield.ConditionThresholdLower': Object.freeze({ default: 25, min: 5, max: 45, description: 'The second condition threshold for the changing of the sprite' }),
+      'Modules.Bob': Object.freeze({ default: true, description: 'Bob: the shield sways as you walk.' }),
+      'Modules.Inertia': Object.freeze({ default: false, description: 'Inertia: the shield lags the look and your movement.' }),
+      'Modules.Animation': Object.freeze({ default: false, description: 'Animation: the shield is raised and lowered frame by frame instead of sliding (art by WilhelmBlack).' }),
+      'Modules.Step': Object.freeze({ default: false, description: 'Step: the shield\u2019s position is rounded so it moves in steps.' }),
+      'Modules.Recoil': Object.freeze({ default: false, description: 'Recoil: a blow that lands on the shield rocks it and rings it. Needs Physical Combat and Armor Overhaul, which is what raises the event.' }),
+      'Bob.Length': Object.freeze({ default: 100, min: 0, max: 200, description: 'Amount of bobs in a single stride' }),
+      'Bob.Offset': Object.freeze({ default: 0.0, min: 0.0, max: 3.0, float: true, step: 0.1, description: 'Advances the bob timing. For use with weapon bob.' }),
+      'Bob.SizeX': Object.freeze({ default: 1.0, min: 0.0, max: 2.0, float: true, step: 0.1, description: 'Extent of horizontal movement when bobbing' }),
+      'Bob.SizeY': Object.freeze({ default: 1.0, min: 0.0, max: 2.0, float: true, step: 0.1, description: 'Extent of vertical movement when bobbing' }),
+      'Bob.SpeedMove': Object.freeze({ default: 1.0, min: 0.0, max: 2.0, float: true, step: 0.1, description: 'Speed of transition between stationary and moving' }),
+      'Bob.SpeedState': Object.freeze({ default: 1.0, min: 0.0, max: 2.0, float: true, step: 0.1, description: 'Speed of transition between movement states' }),
+      'Bob.Shape': Object.freeze({ default: 0, options: Object.freeze(['U', 'Sideways 8', 'Inverted U']), description: 'Shape of bob' }),
+      'Bob.BobWhileIdle': Object.freeze({ default: true, description: 'Whether the shield will slightly bob while stationary' }),
+      'Inertia.Scale': Object.freeze({ default: 1.0, min: 0.0, max: 2.0, float: true, step: 0.1, description: 'The maximum distance that the sprite will be offset' }),
+      'Inertia.Speed': Object.freeze({ default: 1.0, min: 0.0, max: 2.0, float: true, step: 0.1, description: 'The speed that the sprite will move at towards the target offset' }),
+      'Inertia.ForwardDepth': Object.freeze({ default: 1.0, min: 0.0, max: 2.0, float: true, step: 0.1, description: 'Multiplier for the change in scale when moving forward or backward' }),
+      'Inertia.ForwardSpeed': Object.freeze({ default: 1.0, min: 0.0, max: 2.0, float: true, step: 0.1, description: 'The speed that the sprite will scale towards the target depth' }),
+      'Animation.Speed': Object.freeze({ default: 1.0, min: 0.0, max: 2.0, float: true, step: 0.1, description: 'Determines how fast the animation plays' }),
+      'Animation.Direction': Object.freeze({ default: 0, options: Object.freeze(['Both', 'Forward Only', 'Reverse Only']), description: 'Set which animations will play during actions' }),
+      'Step.Length': Object.freeze({ default: 1, min: 1, max: 10, description: 'The number (x8) whose multiples will be used for snapping' }),
+      'Step.Condition': Object.freeze({ default: 0, options: Object.freeze(['Sheathe/Attack Only', 'All Transforms']), description: 'Whether the snapping only affects Sheathing or also other options like Bob, Inertia and Recoil' }),
+      'Recoil.Scale': Object.freeze({ default: 1.0, min: 0.0, max: 2.0, float: true, step: 0.1, description: 'The amount the shield will recoil' }),
+      'Recoil.Offset': Object.freeze({ default: false, description: 'Whether the shield should be moved to the center when recoiling' }),
+      'Recoil.Speed': Object.freeze({ default: 1.0, min: 0.0, max: 2.0, float: true, step: 0.1, description: 'The speed that the shield recovers from recoil' }),
+      'Recoil.Condition': Object.freeze({ default: 2, options: Object.freeze(['Hit On Shield', 'Miss On Shield', 'Attack On Shield', 'Any Hit', 'Any Miss', 'Any Attack']), description: 'Event required for the shield to recoil' }),
+      'Compatibility.TextureScaleFactor': Object.freeze({ default: 1, min: 0, max: 8, description: 'Divides the sprite\u2019s pixel size. Raise it if a replacement texture pack draws the shield too large.' }),
+    }),
+  }),
   'weapon-widget': Object.freeze({
     title: 'Weapon Widget',
     author: 'RedRoryOTheGlen',

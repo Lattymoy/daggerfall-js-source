@@ -89,7 +89,11 @@ test('GRASS4 pieceKey: a map pixel is one NUMBER, distinct for every pixel the m
 
 test('PERF8 pins: keep and ground take the piece from the index and no longer loop the pieces (mutant: the scan back)', () => {
   const w = read('src/scenes/world.js');
-  assert.match(w, /const pieceAt = pieceIndex\(pieces, TERRAIN_SIZE\);/);
+  // PERF10 widened this from the old one-line spelling: the index is
+  // built lazily now (a frame that fills no cell builds none at all), so
+  // the law is that `pieceAt` IS pieceIndex over TERRAIN_SIZE, not which
+  // statement mints it.
+  assert.match(w, /pieceIndex\([\s\S]{0,400}TERRAIN_SIZE\)/);
   assert.match(w, /const keep = \(x, z\) => \{\n\s+const hit = pieceAt\(x, z\);\n\s+if \(!hit\) return null;\n\s+const \{ p, t, grass \} = hit;/);
   assert.match(w, /const ground = \(x, z\) => \{\n\s+const hit = pieceAt\(x, z\);[^\n]*\n\s+if \(!hit\) return null;/);
   assert.doesNotMatch(w, /for \(const \{ p, t(, grass)? \} of pieces\)/, 'no scan left');

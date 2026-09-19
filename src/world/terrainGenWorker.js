@@ -80,10 +80,9 @@ function handle(m) {
     // silently dropped at the wire (the audit found the explicit list
     // was the one place a field could rot with every test green).
     const out = generatePixelTerrain({ ...m, woods, roads });
-    globalThis.postMessage(
-      { t: 'done', ...out },
-      [out.samples.buffer, out.tilemap.buffer, out.positions.buffer, out.normals.buffer, out.tilemapBytes.buffer]
-    );
+    const transfer = [out.samples.buffer, out.tilemap.buffer, out.positions.buffer, out.normals.buffer, out.tilemapBytes.buffer];
+    if (out.paths) transfer.push(out.paths.buffer);   // GRASS-PATH1: null on a roadless pixel, and a null is not a buffer
+    globalThis.postMessage({ t: 'done', ...out }, transfer);
   } catch (e) {
     globalThis.postMessage({ t: 'error', message: e?.message ?? String(e) });
   }

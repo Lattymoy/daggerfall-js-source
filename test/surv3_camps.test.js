@@ -347,7 +347,7 @@ test('SURV3: by source - the three hosts stand the pool, feed the race, draw the
   assert.match(world, /if \(cell && full\) frame\.c = camps\.wireRecords\(campToWire\);/, 'my camps ride my full foes frame (AUDIT SURV B: an empty list too)');
   assert.match(world, /exteriorFoes\.setOnCamps\(\(from, c, at\) => camps\.applyOwner\(from, c, campToScene, at\)\);/, 'a peer\'s arrive with their foes, off the pool\'s own apply');
   assert.match(read('src/scenes/exteriorFoes.js'), /if \(Array\.isArray\(data\.c\)\) _onCamps\?\.\(from, data\.c, _now\(\)\);[^\n]*\n\s*return true;/, 'past the pool\'s room test');
-  assert.match(world, /if \(isCellRoom\(online\.room\)\) \{ const near = peersNear\(\); if \(near\) camps\.sweepOwners\(new Set\(near\.map\(\(p\) => p\.id\)\), now, FOES_STALE_MS\); \}/, 'and go as their puppets do - the same liveness');
+  assert.match(world, /if \(isCellRoom\(online\.room\)\) \{ const ids = ownerIds\(\); if \(ids\) camps\.sweepOwners\(ids, now, FOES_STALE_MS\); \}/, 'and go as their puppets do - the same liveness');
   assert.match(world, /if \(Array\.isArray\(data\?\.c\) && !\(data\?\.a\?\.length\) && !\(data\?\.l\?\.length\)\) return actFrameFits\(data\) \? online\.sendAct\(data\) : false;/, 'a camp frame stands alone - goes now or is said again');
   assert.doesNotMatch(world, /_torchesMode\) \{ droppedTorches\.destroyAll\(\); camps/, 'a camp survives a building visit; the torches\' sweep is theirs');
   // dungeon: fire only, the act and the memory

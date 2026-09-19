@@ -244,20 +244,29 @@ test('GR5: a cell grows the same blades whoever is looking, and walking touches 
   const f = createGrassField(r, { keep: () => 0, perFrame: 1e9 });
   assert.equal(w[0][0], 'a', 'the buffers are sized once, up front');
   // GRASS5: the start is SNAPPED to the cell grid rather than a round
-  // number. The window's edges are floored, so whether a five-metre step
-  // crosses a boundary depends on where in a cell it begins - and the
-  // old fixture's 1,000 only held still because the span happened to
-  // land it mid-cell. Snapping states the law being tested (a step
-  // INSIDE a cell touches nothing) instead of relying on the arithmetic
-  // of whatever span is in force.
+  // number, so the fixture states a law rather than relying on the
+  // arithmetic of whatever span is in force.
   const start = LAB_GRASS.span + GRASS_CELL * 22;
   assert.equal((start - LAB_GRASS.span) % GRASS_CELL, 0, 'the walk starts on a cell boundary');
   f.update(start, start); const live = w.filter((x) => x[0] === 'w').length; w.length = 0;
+  // PERF10: STANDING STILL COSTS NOTHING. The window is a disc now, so
+  // its rim is not snapped to the cell grid the way the square's floored
+  // bounds were and a step of any size can bring a cell in. What must
+  // still hold - and is the law the square's version was reaching for -
+  // is that a frame which does not move the eye does not move a blade.
+  f.update(start, start);
+  assert.equal(w.length, 0, 'the eye did not move: nothing moves');
+  // ...and a five-metre step reaches only the leading rim, and frees
+  // nothing at all: the fill radius is the draw's range and cells are
+  // held out to `span`, so nothing churns at the trailing edge.
   f.update(start + 5, start);
-  assert.equal(w.length, 0, 'five metres inside a cell: nothing moves');
+  const near = w.filter((x) => x[0] === 'w').length;
+  assert.ok(near > 0 && near < live / 20, `five metres: the leading rim only (${near} of ${live})`);
+  assert.equal(w.filter((x) => x[0] === 'c').length, 0, 'five metres frees nothing - the hysteresis holds the trailing rim');
+  w.length = 0;
   f.update(start + 40, start);
   const writes = w.filter((x) => x[0] === 'w').length, clears = w.filter((x) => x[0] === 'c').length;
-  assert.ok(writes > 0 && writes < live / 4 && clears === writes, `forty metres: one edge in, one out (${writes}/${clears} of ${live})`);
+  assert.ok(writes > 0 && writes < live / 4 && clears > 0 && clears < live / 4, `forty metres: one edge in, one out (${writes}/${clears} of ${live})`);
   // ...and a frame fills at most perFrame, so the walk cannot hitch.
   const g = createGrassField(r, { keep: () => 0, perFrame: 2 }); w.length = 0;
   const pending = g.update(0, 0);

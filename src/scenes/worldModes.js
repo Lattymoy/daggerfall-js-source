@@ -120,7 +120,7 @@ import { identifySpellPass, identifiedTallyText, NOT_ENOUGH_SPELL_POINTS_TEXT } 
 import { liveBundles, dispelBundle, dispellableBundles, DISPEL_MAGIC_TEXT } from '../systems/mysticism.js';   // X10: the Dispel Magic picker
 import { ListPickerWindow, listPickerArtLoaded } from '../ui/listPicker.js';   // X10
 import { createItemLabels, grantCreatedItem, lastCreateItemIndex, setLastCreateItemIndex } from '../systems/createItem.js';   // X11b
-import { announceLevelUp } from '../ui/levelNotice.js';   // LV2: the level-up notification, and the skin fork over whether the window opens itself
+import { announceLevelUp, levelOwed } from '../ui/levelNotice.js';   // LV2: the level-up notification, and the skin fork over whether the window opens itself
 import { createCharSheetWindow } from '../ui/charSheetDoor.js';   // AUDIT 21 hosts F3: levelling in a building; LV1: through the ONE seam, so this host wears the skin's face like the other three
 import { NativeTradeWindow, preloadTradeArt, tradeArtLoaded, TRADE_RECTS } from '../ui/nativeTrade.js';   // U8c
 // U23: the static-NPC seam and the guild service popup.
@@ -982,8 +982,8 @@ export function createWorldModes(host) {
    *  This host owned two pools and ran NO fan-out at all - no
    *  runMagicRoundsFor, so no tickActiveEffects and no updatePoisons
    *  (worldTick.js:306-307), and no killIfAnyLiveStatZero. Both pools
-   *  READ the effect list every frame (exteriorFoes.js:847-847 and
-   *  cityGuards.js:811-812 each take `entityIsParalyzed` +
+   *  READ the effect list every frame (exteriorFoes.js:856-856 and
+   *  cityGuards.js:824-825 each take `entityIsParalyzed` +
    *  `applyEnemyMotorEffectFlags`), and nothing ever ended one: a
    *  Continuous Damage bundle on a foe in a shop never took a round,
    *  a poison inflicted at this host's own onInflictPoison never
@@ -5247,11 +5247,11 @@ export function createWorldModes(host) {
           hudMessageSink: (t) => questBridge?.notebook?.addMessage(t),
           // MAC1 J: and the relock the dungeon's pause door needs, on
           // the same threading - the context owns no canvas of its own
-          // (dungeonContext.js:5611), so the OUTER host's one rides in.
+          // (dungeonContext.js:5628), so the OUTER host's one rides in.
           // This is the most-played pause door of the six: world.js
           // gates its own Escape ladder on exterior mode, so underground
           // the key falls to routeKey -> ui/input.js:637 -> the
-          // context's togglePause (ui/pauseDoor.js:207-224).
+          // context's togglePause (ui/pauseDoor.js:270-287).
           relock: () => host.relock?.(),
           // B4: the dungeon quicksave rides the ONE composer - DFU
           // saves quest + conversation wherever the player stands
@@ -6209,7 +6209,7 @@ export function createWorldModes(host) {
           // AUDIT 39r: and the FLASH, which this arm was copied without.
           // An arrow reaches the player through BowDamage ->
           // ApplyDamageToPlayer -> SendDamageToPlayer, the same door as
-          // a blow (world.js:7577's own wave-46 note); the interior
+          // a blow (world.js:7671's own wave-46 note); the interior
           // MELEE hit already flashes inside exteriorFoes, so only this
           // arm - which applies its own damage - was missing it.
           flashPlayerDamage(dmg);   // BA1: RemoveHealth carries the amount
@@ -6244,10 +6244,10 @@ export function createWorldModes(host) {
         // AUDIT 58: WeaponManager.cs:630 after the damage fork - a
         // zero-damage shaft still enrages its mark and the room.
         // ROAD-G G1 (review): the interior WATCH carries the pair now
-        // (cityGuards.js:580-585), so this seam splits by pool exactly
+        // (cityGuards.js:581-586), so this seam splits by pool exactly
         // as `dealDamage` above it does rather than dropping the
         // non-encounter half - the zero-damage SWING already reaches
-        // that door (cityGuards.js:1057) and the shaft owes the same.
+        // that door (cityGuards.js:1070) and the shaft owes the same.
         onAttackFromPlayer: (f) => (f._encounter
           ? interiorFoes?.attackFromPlayer(f, player.pos, 'arrow')   // AUDIT WORLD6b-iii(e) A2: the pool's one door, the shaft's kind on it
           : interiorGuards?.handleAttackFromPlayer(f, player.pos)),
@@ -7015,7 +7015,7 @@ export function createWorldModes(host) {
   addEventListener('mousedown', (e) => {
     // AUDIT-MACK F2: THIS HOST DOES NOT FEED THE HELD SET, and MAC-K1
     // briefly made it. `keys` is not this host's - it arrives on the
-    // host bag (`exterior.js:3352`, `world.js`'s twin), and the OUTER
+    // host bag (`exterior.js:3371`, `world.js`'s twin), and the OUTER
     // host's own mousedown writes `keys.add(mouseCode(e.button))`
     // UNGATED, before any mode test, on a listener that is never
     // removed. So the three button codes were already in the Set while
@@ -7269,7 +7269,24 @@ export function createWorldModes(host) {
     // three columns against the left edge. The pause window's Stats
     // page IS that sheet, off the same sheetModel, and is centred by
     // construction. This host's own pause flow, landed on it.
-    openSheetPage() { this.togglePause({ at: 'stats' }); },
+    // LV2 FIX (2026-09-19, Mac: "when you close the levelup screen
+    // without adding stat points you cant open it again"): THE DIAL'S
+    // STATS ARM ASKS THE DOOR TOO. LV2's own records claim "every route
+    // to the sheet - the key, the dial's Stats arm, the pause page - is
+    // already this door", and that sentence was written without
+    // checking two of the three. The KEY goes through
+    // `createCharSheetWindow` and gets the Ascension; this arm and the
+    // pause page went straight to the menu's Stats tab, which reads
+    // `sheetModel` and has never heard of `readyToLevelUp`. So a player
+    // whose level-up window was closed by anything (a pause, a map, a
+    // peer's window) and who then reached for their sheet the way this
+    // skin invites - the dial - got the ordinary sheet and no way back
+    // to the level they were owed.
+    //
+    // `levelOwed` is ui/levelNotice.js's, which is the same live read
+    // the HUD's own standing reminder uses: one answer to "is a level
+    // waiting", not a second copy of the flag.
+    openSheetPage() { if (levelOwed(playerEntity)) this.toggleCharSheet(); else this.togglePause({ at: 'stats' }); },
     // MAC-L1: ONE SIGNATURE ACROSS THE FOUR HOSTS, and ONE READER of
     // its options. `routeAction`'s Escape arm used to hand a position
     // applier over positionally, and this host reads argument one as
@@ -8462,9 +8479,9 @@ export function createWorldModes(host) {
      *  .cs:175-176 writes `weaponDrawn`/`usingLeftHand` off it,
      *  :420-421 restores them onto it. The port has FOUR PlayerWeapons
      *  (world.js's, this file's `interiorWeapon` :538, dungeonContext's
-     *  and exterior.js's - which this seam does not reach: that host has no save path at all, its charter exterior.js:2942-2964), and IS1 routed the inside-a-building save to
+     *  and exterior.js's - which this seam does not reach: that host has no save path at all, its charter exterior.js:2961-2983), and IS1 routed the inside-a-building save to
      *  the WORLD host's composer - which reads its own exterior rig
-     *  unconditionally (world.js:4989). So an F9 pressed in a shop
+     *  unconditionally (world.js:5037). So an F9 pressed in a shop
      *  recorded the street's sheath and hand, and the load wrote them
      *  back into the street's rig; the rig actually in the player's
      *  hands was in no envelope at all.
@@ -8491,7 +8508,7 @@ export function createWorldModes(host) {
      *  presenter for the whole visit) or the interior's? world.js's gate read townTalk's slot alone. */
     deathUp() { return mode === 'dungeon' ? !!dungeonCtx?.deathUp?.() : interiorOverlay instanceof DeathScreen; },
     /** The restore half - and NOT gated on the mode, deliberately.
-     *  worldQuickLoad calls forceExitToExterior FIRST (world.js:5081)
+     *  worldQuickLoad calls forceExitToExterior FIRST (world.js:5129)
      *  and only re-enters the building at :4217, so the mode at apply
      *  time is whatever the LOAD landed in, not whatever the SAVE was
      *  taken in: an outdoor save loaded while the player was indoors
@@ -8501,8 +8518,8 @@ export function createWorldModes(host) {
      *
      *  FLAG ONLY and presence-gated - both laws now stated once, in
      *  combat/playerWeapon.js's applyWeaponPose, with the citation.
-     *  HARD2c: this used to spell them out, and named `world.js:5194`
-     *  and `dungeonContext.js:5685` for its two sibling copies - lines
+     *  HARD2c: this used to spell them out, and named `world.js:5242`
+     *  and `dungeonContext.js:5702` for its two sibling copies - lines
      *  that had moved to :4418 and :5457. Three copies of a two-line
      *  law, and even the comment pointing between them had gone stale. */
     applyWeaponPose(pose) {

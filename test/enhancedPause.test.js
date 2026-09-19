@@ -557,11 +557,16 @@ test('PX26 / THE FOUR HOSTS: north opens a REAL arm on every host', () => {
     assert.match(s, /togglePause(?::\s*)?\(doorOpts = \{\}\)/, `${host}'s togglePause takes ONE options bag, spelt the same as every other host`);
   }
   // Each host calls its OWN pause flow - no host reaches into another's.
-  assert.match(read('src/scenes/world.js'), /openSheetPage: \(\) => hudCtx\.togglePause\(\{ at: 'stats' \}\),/);
+  // LV2 FIX (2026-09-19): ...and each now asks `levelOwed` FIRST, so an
+  // owed level takes the sheet door instead of the stats page. The
+  // pause call is unchanged and still each host's own; this pin used to
+  // spell the whole line, which made it a pin on the IMPLEMENTATION
+  // rather than on the law it is named for.
+  assert.match(read('src/scenes/world.js'), /openSheetPage: \(\) => \(levelOwed\(playerEntity\) \? hudCtx\.toggleCharSheet\(\) : hudCtx\.togglePause\(\{ at: 'stats' \}\)\),/);
   // MAC-L1: ...and this host spells it the same way as the other three
   // now. It used to pass `null` positionally, which is the signature
   // that made `routeAction` hand the other three a hard null.
-  assert.match(read('src/scenes/dungeonContext.js'), /openSheetPage\(\) \{ this\.togglePause\(\{ at: 'stats' \}\); \},/);
+  assert.match(read('src/scenes/dungeonContext.js'), /openSheetPage\(\) \{ if \(levelOwed\(playerEntity\)\) this\.toggleCharSheet\(\); else this\.togglePause\(\{ at: 'stats' \}\); \},/);
 });
 
 test('PX28b: TAB ITSELF closes an open window - the registry answers the key', () => {

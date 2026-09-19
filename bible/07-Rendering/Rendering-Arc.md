@@ -1872,3 +1872,36 @@ bytes that would reach the driver. Mac's eye is the next gate.
 
 **Pinned** in `test/perfon_text_run.test.js` (7). Campaign: 13 mutants,
 13 killed, plus the fourteenth against the sibling. Not a departure.
+
+## PERF11 - one owner list a frame (2026-09-19)
+
+Mac: *"Online mode needs further performance improvements"*.
+
+PERF-ON capped the per-peer DRAW. This is a per-peer cost on the CPU
+side of the same frame, and it is the plainest kind: the same answer
+computed twice. `scenes/world.js`'s online frame runs two owner sweeps -
+`exteriorFoes.pruneOwners` for the peers' foe puppets and
+`camps.sweepOwners` for their camps - and each one opened with
+
+```js
+const near = peersNear(); if (near) ...(new Set(near.map((p) => p.id)), ...)
+```
+
+`peersNear()` walks every peer in the room, asks `peerBodies.heightOf`
+for each and mints an object plus a scene-space triple apiece; the `.map`
+mints an array and the `Set` a set. All of it, twice, every frame, for
+one list that cannot differ between the two calls. A lazy per-frame memo
+(`ownerIds()`) builds it at most once and hands the SAME Set to both, so
+a room that is not a cell room still builds nothing at all. Both call
+sites keep their own `isCellRoom(online.room)` gate, so the frame's
+shape is unchanged.
+
+**What this is not.** It is a constant factor on a list that is already
+O(peers), not a change of slope; the slope in online mode is the peer
+bodies and sprites, and both are capped and range-culled already. The
+honest next step for "online is heavy" is a profile with a real room
+behind it, not more guessing - there is no ARENA2 and no relay in this
+container, so nothing here was measured the way PERF-ON's names were.
+Said rather than implied.
+
+**Pinned** in `test/grasspath.test.js`.

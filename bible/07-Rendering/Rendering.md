@@ -199,6 +199,56 @@ directory by `test/audit18_bible_docs.test.js`:
   ever expensive because of the string. It was written, measured,
   reverted, and `world.js` carries a comment saying so, because the next
   reader will see the duplicate too.
+  **GRASS-PATH1 / GRASS-WET1 (2026-09-19): THE PLACER WAS ASKING THE
+  WRONG THING.** Mac, two bugs in one breath: "The grass is causing
+  issues with dirtroads etc it just overgrows them. Grass shouldnt be on
+  dirt paths", and "some textures not taking the water tile ... might be
+  because it registers as ground". They are one fault. The placer keeps a
+  blade where the tile's RECORD is in `grassRecordsOf`'s set - and the
+  record cannot answer either question. A TRACK across grass writes
+  10/11/12/51 (`roadPainter.js` TRACK_TILES, the grass column), and those
+  are the very records `createLookupTable`'s dirt-grass ring writes for a
+  natural field edge, so excluding them by number would have stripped the
+  grass off every dirt boundary in the world to clear one path. And the
+  WATER-GRASS shore records a stream or a town's own ground tiles write
+  (20-22, 49) are mostly-grass by texel count, so `grassRecordsOf` took
+  them and blades grew straight up out of the water - a green mottled
+  patch in a pond, which is what "not taking the water tile" looks like
+  from the ground. Two laws, each asked of the thing that owns it: the
+  painter now MARKS the tiles it writes (`opts.paths`, one byte a tile,
+  set at the moment of the write - it is the only thing that knows), and
+  the water question goes to `waterCorners.js`, the one table the water
+  pass and the player's feet already read. No blade stands on a painted
+  tile, and none stands on a tile with ANY corner in water. **The lesson:
+  the record was never the question. It had been answering a THIRD one -
+  "what does this tile look like" - and two different callers had been
+  reading that as "is it a path" and "is it dry" for as long as the
+  field has existed.**
+  **PERF10 (2026-09-19): THE WINDOW WAS A SQUARE AND THE DRAW WAS A
+  DISC.** Mac: "when youre further out in the wilderniss it loaded many
+  chunks and grass the performance still degrades." Three costs, all
+  paid for nothing. `createGrassField` filled the SQUARE
+  [eye - span, eye + span], and PERF2's draw skips any cell whose nearest
+  point is past `range` - so the square's corners, out at 445 m against a
+  300 m fade, were placed (6,122 `keep()` lookups apiece), packed,
+  uploaded and then skipped every frame of their life: 484 slots of which
+  92 could never draw a fragment. A cell is filled inside `range` and
+  held out to `span` now - the same hysteresis the square had along its
+  axes, so nothing churns while the eye stands still - and the field is
+  392 slots, 8.6 MB less held on the GPU, with the world's first fill 360
+  cells rather than 484. Second: the `live` map was keyed by
+  `${cx},${cz}` and the free sweep ran `key.split(',').map(Number)` over
+  every live cell EVERY frame - four hundred odd string splits, arrays
+  and boxed numbers a frame to decide that nothing had moved. GRASS4's
+  own lesson one level up: the key is a number and cx/cz ride the entry.
+  Third, and the one that actually grows with "many chunks": the host
+  spread every streamed pixel into an array, mapped it into a second one
+  and built a `pieceIndex` Map over it every frame, whether or not the
+  field had a cell to place - and `keep`/`ground` are called ONLY from
+  `placeLabGrassCell`. One lazy memo a frame: a frame that fills nothing
+  now allocates nothing. Not one blade changes where it stands.
+  **The lesson: GR5's cell budget made the FILL cheap and nobody went
+  back to ask whether the frame was still paying to decide what to fill.**
 - `systems/wind.js` - **WIND1 (2026-09-02) THE WIND IS ITS OWN THING.**
   Mac: "wind should be something different from the weather. Imagine a
   time-lapse, seeing a storm rolling in as the wind kicks up, and the

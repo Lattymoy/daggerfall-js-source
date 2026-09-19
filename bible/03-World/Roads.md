@@ -650,3 +650,41 @@ One thing for Mac: `vendor/roads-hazelnut/README.md` still carries the
 placeholder `[Mac: paste the text of the permission, or the link to it,
 here.]` under the permission record. The pin (`modsettings.test.js`)
 asserts only `/by Hazelnut/`.
+
+## GRASS-PATH1 - the painter says which tiles it wrote (2026-09-19)
+
+Mac: *"The grass is causing issues with dirtroads etc it just overgrows
+them. Grass shouldnt be on dirt paths"*.
+
+The grass placer (`render/labGrass.js` `grassRecordsOf`, run by
+`scenes/world.js`) decides by tile RECORD, and excluded 46/47/55 - the
+ROAD family. A TRACK is not in that family. Its tiles on grass ground are
+`TRACK_TILES`' grass column: 11 cardinal inner, 51 diagonal inner, 12
+diagonal outer, 10 the inside corner. Those are the same records
+`terrainTiles.js` `createLookupTable` writes for the natural dirt-grass
+marching-squares ring (shapeStart 10, saddle 51), so:
+
+- a track through a field is a run of record-11 tiles, half dirt by art,
+  and the placer grew a full-density lawn down every one of them;
+- excluding 10/11/12/51 by NUMBER would have stripped the grass off every
+  dirt boundary in the world to clear one path.
+
+Only the painter knows which is which, and it knows it exactly. It now
+says so: `paintRoads(..., { paths })` takes a 128x128 `Uint8Array` and
+sets a byte at the moment of every write - in `tile()`, in the river's
+bare-water `water()` join, and in the "paint roads around locations"
+rect fill. `generatePixelTerrain` allocates it when a network is present
+(null otherwise - a roadless pixel has nothing to mark), returns it
+beside `withRoads`, and the worker transfers it. The host keeps it on the
+built pixel as `p.paths`, and `keep()` refuses a blade on a marked tile.
+
+Nothing about the tilemap the painter writes changes; without the array
+the painter is byte-for-byte what it was, which `test/grasspath.test.js`
+pins directly.
+
+The water half of the same report - *"some textures not taking the water
+tile"* - is GRASS-WET1, in `07-Rendering/Rendering.md`: the water-grass
+shore records a stream writes over grass (20-22, 49) are mostly-grass by
+texel count, so they passed `grassRecordsOf` and blades grew up out of
+the water. That one needed no new data: `world/waterCorners.js` already
+owns the question, and the placer asks it now.
