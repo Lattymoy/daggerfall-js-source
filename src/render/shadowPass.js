@@ -114,6 +114,36 @@ export const SHADOW_NEAR_CASTERS = 2;
  *  1.2 cm at 2048: the hairline at an eave's contact is four times thinner
  *  than EL2's 40-unit cascade left it), the street, and the town. */
 export const SHADOW_CASCADES = Object.freeze([12, 48, 240]);
+/**
+ * PERF-SUN (2026-09-19, Mac: "exterior shadows at a distance ... over 1000
+ * calls and looking up in the sky restores frame rate"): HOW MANY OF THE
+ * NEAREST CASCADES TAKE THE 3x3 KERNEL.
+ *
+ * `sunShadowAt` filtered 3x3 in EVERY cascade - nine samples per lit
+ * fragment, over the whole visible ground, which outdoors is nearly the
+ * whole screen. That is why looking up gives the frame back: it is not a
+ * draw-call cost at all, it is a per-FRAGMENT one, and the sky has no
+ * fragments to pay it.
+ *
+ * AND EACH OF THOSE NINE IS ALREADY A 2x2. The sun map is
+ * COMPARE_REF_TO_TEXTURE with LINEAR filtering (see the sampler below), so
+ * one `texture()` on it is a hardware bilinear PCF over four texels - the
+ * 3x3 loop is an effective 4x4 filter, not a 3x3.
+ *
+ * That filter is worth it where the texel is coarse against the pixel.
+ * Cascade 0 is 12 units over 2048, a texel of 1.2 cm - EL7's contact
+ * hairline, and the whole reason the near cascade exists. The FAR cascade
+ * is 240 units: a 23 cm texel, which at a hundred metres and a 60-degree
+ * field is about two pixels across. One hardware tap there is already a
+ * 2x2 over a two-pixel texel, and the eight extra samples buy a softening
+ * nobody can see at that range - while covering most of an outdoor screen,
+ * because cascade 2 is everything past 43 units.
+ *
+ * So: the nearest two cascades keep the kernel, the far one takes the one
+ * tap. A cascade count this does not cover keeps the kernel, which is the
+ * safe direction if the cascades are ever re-cut.
+ */
+export const SHADOW_PCF_CASCADES = 2;
 /** The ortho box's half-depth along the light: enough to take a mountain
  *  pixel's height above or below the eye. */
 export const SHADOW_SUN_DEPTH = 600;
@@ -306,6 +336,13 @@ float sunShadowAt(vec3 wp, vec3 n) {
   if (p.x < 0.0 || p.x > 1.0 || p.y < 0.0 || p.y > 1.0 || p.z > 1.0) return 1.0;
   float ref = p.z - ${SHADOW_SUN_BIAS};   // AUDIT-EL F15: ~0.06 world units over the 1200-unit box (0.0004 was half a unit - feet floated off their shadows)
   float texelUv = 1.0 / ${SHADOW_SUN_SIZE}.0;   // AUDIT-EL F17: not 'step' - a built-in's name
+  // PERF-SUN: the far cascade takes ONE tap, which the sampler already
+  // makes a hardware 2x2 (COMPARE_REF_TO_TEXTURE + LINEAR). Its texel is
+  // 23 cm - about two pixels at a hundred metres - so the eight extra
+  // samples soften nothing the eye can resolve, over most of an outdoor
+  // screen. The near cascades keep the kernel: that is EL7's contact
+  // hairline, at a texel of 1.2 cm.
+  if (c >= ${SHADOW_PCF_CASCADES}) return texture(uSunShadow, vec4(p.xy, float(c), ref));
   float lit = 0.0;
   for (int y = -1; y <= 1; y++) {
     for (int x = -1; x <= 1; x++) {

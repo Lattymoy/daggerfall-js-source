@@ -2461,3 +2461,110 @@ your case is not interchangeable with it. `spherePlanes` sat next to
 reached past it. And when two passes cull the same object by two copies
 of one rule, the bug does not hide - it draws.**
 
+## PERF-SUN (2026-09-19) - THE EXTERIOR WAS PAYING PER FRAGMENT, AND THE SKY PROVED IT
+
+Mac: *"exterior shadows at a distance, tree sway at a distance, and
+whatever else can cause insane performance issues. On the outside, I'm
+receiving over 1000 calls and looking up in the sky restores frame
+rate."*
+
+### Looking up is the diagnosis
+
+The sun cascades are built around the **eye**, not the view direction,
+and each shadow replay culls by its own cascade's frustum. None of that
+changes when the camera tilts. The air pass, the sky, the sim: all
+unchanged. The one thing that collapses when you look at the sky is the
+number of **shaded fragments**.
+
+So the >1000 draw calls, whatever else they cost, are not what the sky
+gives back. The exterior was spending itself per fragment, on ground
+that fills nearly the whole screen.
+
+### PERF-SUN1 - the far cascade took nine taps for a texel two pixels wide
+
+`sunShadowAt` filtered 3x3 in every cascade. And each of those nine
+samples is **already a 2x2**: the sun map is `COMPARE_REF_TO_TEXTURE`
+with `LINEAR` filtering, so one `texture()` on it is a hardware bilinear
+PCF over four texels and the loop was an effective 4x4 filter.
+
+That is worth it where the texel is coarse against the pixel. Cascade 0
+is 12 units over 2048 - a 1.2 cm texel, EL7's contact hairline, the
+whole reason the near cascade exists. The **far** cascade is 240 units:
+a 23 cm texel, which at a hundred metres on a 60-degree field is about
+two pixels across. One hardware tap there is already a 2x2 over a
+two-pixel texel; the other eight soften nothing anyone can see - over
+**most of an outdoor screen**, because cascade 2 is everything past 48
+units.
+
+The nearest two cascades keep the kernel. The far one returns on one
+tap, before the loop.
+
+### PERF-SUN2 - the shadow was read where the sun cannot reach
+
+Every lane shader wrote the sun term as one flat product:
+
+```glsl
+float diff = max(dot(n, uLightDir), 0.0) * cloudShadowAt(vWorldPos) * sunShadowAt(vWorldPos, n);
+```
+
+**GLSL evaluates every operand of a product.** A surface whose normal
+faces away from the sun paid nine hardware-PCF compares and a cloud-deck
+sample, and then multiplied them by the zero sitting in front of them.
+Every north-facing wall, every back slope, and the whole world whenever
+the sun is low.
+
+`diff` reaches the light exactly once, as `uSunColor * (uSunScale *
+diff)` - so gating it on `ndl > 0.0` **or** on `uSunScale > 0.0` cannot
+move a pixel; it only skips arriving at the same zero. The `uSunScale`
+half is a uniform branch, free and coherent, and it takes out dusk, dawn
+and the whole night as well. A FLAT has no normal, so its gate is
+`uBBSun` - the sun's entire share of the tint, and zero at night - which
+stops every sprite in the world reading the sun map after dark.
+
+Verified in a real WebGL2 driver rather than asserted:
+`tools/perfSunShaderProbe.mjs` compiles all four lane shaders and both
+water variants.
+
+### The tree sway is cleared
+
+It is not a per-frame cost. `floraSwayOf` runs once per BATCH when the
+pixel is built, each host uploads **one** wind vector a frame for every
+flat in the world, and the lean is a few instructions on four vertices a
+sprite. Recorded so the next reader does not go looking.
+
+What was wrong beside it: `floraSwayOn` minted a `URLSearchParams` and
+parsed the query string **once a frame** to answer a question that
+cannot change while the page is open. Read once now, as `?cull=off` is;
+the pref beside it stays live, because the player can toggle that
+mid-session.
+
+### RECORDED, NOT FIXED - the >1000 draw calls
+
+Named here because it is a real finding and this slice is not its fix.
+
+A streamed pixel's static models are merged by PERF4 into one mesh with
+**one sub-mesh per texture**, and that is where the draw count lives: a
+town pixel with thirty distinct wall and roof textures is thirty draws,
+times every visible pixel. The obvious saving - cull the merged batch
+per sub-mesh, using the bounds `createMesh` already computes and the
+shadow replay already tests - **does not work here**, and the reason is
+worth writing down: a merged sub-mesh is one texture's geometry across
+the WHOLE pixel, and a pixel is 128 tiles at 6.4 units, or 819 units
+across. Its bounding sphere spans the pixel, so the test would almost
+never fire.
+
+The fix that would work is to merge per texture **and per spatial
+cluster**, so a sub-mesh bounds a quarter of a pixel rather than all of
+it. That is a change to `staticBatch.js`'s builder and to what a pixel
+stores, and it belongs in its own slice with its own measurement.
+
+**Pinned** in `test/perfsun_fragment.test.js` (4). Mutants
+`tools/mutants/perfsun.json`: 15 - 15 dead, 0 survived. Two older
+records re-aimed by content (`el2.json`, `el7.json`) and EL7's own water
+pin with them.
+
+**The lesson: "over 1000 calls" named the thing that was easiest to
+count, and the sky named the thing that was actually being paid. A
+product in a shader is not a series of conditions - it is a promise to
+evaluate all of them.**
+

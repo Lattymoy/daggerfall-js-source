@@ -1,0 +1,137 @@
+[
+ {
+  "name": "PERF-SUN1-every-cascade-takes-the-3x3-again-so-the-far-ground-pays-nine-taps-a-fragment",
+  "file": "src/render/shadowPass.js",
+  "old": "  if (c >= ${SHADOW_PCF_CASCADES}) return texture(uSunShadow, vec4(p.xy, float(c), ref));",
+  "new": "",
+  "tests": [
+   "test/perfsun_fragment.test.js"
+  ]
+ },
+ {
+  "name": "PERF-SUN1-the-cheap-tap-reaches-the-NEAR-cascade-and-EL7s-contact-hairline-goes",
+  "file": "src/render/shadowPass.js",
+  "old": "export const SHADOW_PCF_CASCADES = 2;",
+  "new": "export const SHADOW_PCF_CASCADES = 0;",
+  "tests": [
+   "test/perfsun_fragment.test.js"
+  ]
+ },
+ {
+  "name": "PERF-SUN1-no-cascade-is-cheap-so-the-change-does-nothing",
+  "file": "src/render/shadowPass.js",
+  "old": "export const SHADOW_PCF_CASCADES = 2;",
+  "new": "export const SHADOW_PCF_CASCADES = 3;",
+  "tests": [
+   "test/perfsun_fragment.test.js"
+  ]
+ },
+ {
+  "name": "PERF-SUN1-the-sampler-stops-comparing-so-one-tap-really-is-one-texel",
+  "file": "src/render/shadowPass.js",
+  "old": "    gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_COMPARE_MODE, gl.COMPARE_REF_TO_TEXTURE);",
+  "new": "",
+  "tests": [
+   "test/perfsun_fragment.test.js"
+  ]
+ },
+ {
+  "name": "PERF-SUN1-the-sun-map-samples-NEAREST-so-a-single-tap-is-no-longer-a-2x2",
+  "file": "src/render/shadowPass.js",
+  "old": "    gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MIN_FILTER, gl.LINEAR);",
+  "new": "    gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MIN_FILTER, gl.NEAREST);",
+  "tests": [
+   "test/perfsun_fragment.test.js"
+  ]
+ },
+ {
+  "name": "PERF-SUN1-the-cheap-tap-returns-AFTER-the-kernel-so-it-saves-nothing",
+  "file": "src/render/shadowPass.js",
+  "old": "  if (c >= ${SHADOW_PCF_CASCADES}) return texture(uSunShadow, vec4(p.xy, float(c), ref));\n  float lit = 0.0;",
+  "new": "  float lit = 0.0;",
+  "tests": [
+   "test/perfsun_fragment.test.js"
+  ]
+ },
+ {
+  "name": "PERF-SUN2-the-gate-drops-the-n-dot-L-half-so-every-wall-facing-away-still-pays",
+  "file": "src/render/enhancedLighting.js",
+  "old": "  float diff = (uSunScale > 0.0 && ndl > 0.0) ? ndl * cloudShadowAt(vWorldPos) * sunShadowAt(vWorldPos, n) : 0.0;   // EL2: the sun map",
+  "new": "  float diff = (uSunScale > 0.0) ? ndl * cloudShadowAt(vWorldPos) * sunShadowAt(vWorldPos, n) : 0.0;   // EL2: the sun map",
+  "tests": [
+   "test/perfsun_fragment.test.js"
+  ]
+ },
+ {
+  "name": "PERF-SUN2-the-gate-drops-the-uniform-half-so-dusk-and-night-still-pay",
+  "file": "src/render/enhancedLighting.js",
+  "old": "  float diff = (uSunScale > 0.0 && ndl > 0.0) ? ndl * cloudShadowAt(vWorldPos) * sunShadowAt(vWorldPos, n) : 0.0;   // EL2: the sun map",
+  "new": "  float diff = (ndl > 0.0) ? ndl * cloudShadowAt(vWorldPos) * sunShadowAt(vWorldPos, n) : 0.0;   // EL2: the sun map",
+  "tests": [
+   "test/perfsun_fragment.test.js"
+  ]
+ },
+ {
+  "name": "PERF-SUN2-the-gated-branch-answers-ONE-instead-of-zero-so-an-unlit-face-is-fully-lit",
+  "file": "src/render/enhancedLighting.js",
+  "old": "  float diff = (uSunScale > 0.0 && ndl > 0.0) ? ndl * cloudShadowAt(vWorldPos) * sunShadowAt(vWorldPos, n) : 0.0;   // EL2: the sun map",
+  "new": "  float diff = (uSunScale > 0.0 && ndl > 0.0) ? ndl * cloudShadowAt(vWorldPos) * sunShadowAt(vWorldPos, n) : 1.0;   // EL2: the sun map",
+  "tests": [
+   "test/perfsun_fragment.test.js"
+  ]
+ },
+ {
+  "name": "PERF-SUN2-the-flats-gate-goes-so-every-sprite-in-the-world-reads-the-sun-map-at-midnight",
+  "file": "src/render/enhancedLighting.js",
+  "old": "  vec3 sunLit = dot(uBBSun, uBBSun) > 0.0 ? uBBSun * cloudShadowAt(vBBWorld) * sunShadowAt(base, vec3(0.0, 1.0, 0.0)) : vec3(0.0);",
+  "new": "  vec3 sunLit = uBBSun * cloudShadowAt(vBBWorld) * sunShadowAt(base, vec3(0.0, 1.0, 0.0));",
+  "tests": [
+   "test/perfsun_fragment.test.js"
+  ]
+ },
+ {
+  "name": "PERF-SUN2-the-flat-reads-its-shadow-at-its-own-fragment-so-a-sprite-shadows-itself",
+  "file": "src/render/enhancedLighting.js",
+  "old": "sunShadowAt(base, vec3(0.0, 1.0, 0.0)) : vec3(0.0);",
+  "new": "sunShadowAt(vBBWorld, vec3(0.0, 1.0, 0.0)) : vec3(0.0);",
+  "tests": [
+   "test/perfsun_fragment.test.js"
+  ]
+ },
+ {
+  "name": "PERF-SUN2-the-water-reads-its-shadow-all-night",
+  "file": "src/render/waterSurface.js",
+  "old": "  float shadow = uSunScale > 0.0 ? cloudShadowAt(vWorldPos)${shadowGlsl ? ' * sunShadowAt(vWorldPos, n)' : ''} : 0.0;",
+  "new": "  float shadow = cloudShadowAt(vWorldPos)${shadowGlsl ? ' * sunShadowAt(vWorldPos, n)' : ''};",
+  "tests": [
+   "test/perfsun_fragment.test.js"
+  ]
+ },
+ {
+  "name": "PERF-SUN-the-sway-door-parses-the-query-string-once-a-frame-again",
+  "file": "src/systems/windDrive.js",
+  "old": "let _swayOff;",
+  "new": "",
+  "tests": [
+   "test/perfsun_fragment.test.js"
+  ]
+ },
+ {
+  "name": "PERF-SUN-the-sway-door-caches-too-hard-and-cannot-see-a-changed-search",
+  "file": "src/systems/windDrive.js",
+  "old": "  if (_swayOff === undefined || search !== _swaySearch) {",
+  "new": "  if (_swayOff === undefined) {",
+  "tests": [
+   "test/perfsun_fragment.test.js"
+  ]
+ },
+ {
+  "name": "PERF-SUN-a-tall-flora-flat-stops-leaning",
+  "file": "src/systems/windDrive.js",
+  "old": "  return height >= TALL_FLAT_HEIGHT ? 1 : 0.6;",
+  "new": "  return 0.6;",
+  "tests": [
+   "test/perfsun_fragment.test.js"
+  ]
+ }
+]
