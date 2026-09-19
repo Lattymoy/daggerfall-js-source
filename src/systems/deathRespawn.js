@@ -91,3 +91,36 @@ export function respawnFlavorText(kind, roll = Math.random) {
 // to be able to walk away from whatever killed them).
 export const RESPAWN_HEALTH_FRACTION = 0.5;
 export const respawnHealth = (maxHealth) => Math.max(1, Math.floor((maxHealth ?? 0) * RESPAWN_HEALTH_FRACTION));
+
+// ONLINE-UNDERGROUND-LOAD1 (Lost, 2026-09-19: "online mode only saves the game if you close it - when closed in a
+// dungeon it should spawn you near a city, graveyard, temple etc when loading into an online game again").
+//
+// Online, leaving the page saves every slot the character has (world.js's beforeunload arm), and a save made
+// underground is keyed `dungeon:<id>` with the dungeon's own map pixel in its envelope (dungeonContext's
+// dungeonHome). Loading it used to put the player back inside that dungeon, at the saved spot. Online the boot load
+// now takes the SAME search a death takes - the nearest temple, town or graveyard, over the region the dungeon
+// stands in - and lands on that place's start marker. Not a death: no health is taken and no line about dying is
+// said (the wake lines below are their own pool, not FLAVOR's).
+//
+// The one dungeon this never applies to is the tutorial's (D-ONLINE2's own reading: it is the one door out that is
+// not a mercy) - that exception is the CALLER's, because it is read off the configured start cell, which is a
+// setting and not this module's business.
+
+/** Where an online load lands a character saved underground: the nearest safe place to the dungeon's pixel, or,
+ *  when the region carries none of the three, the dungeon's own door (the pixel itself). `kind` names the place. */
+export function undergroundWakeSpot(mapTable, pixel) {
+  const safe = nearestSafeLocation(mapTable, pixel);
+  return safe
+    ? { kind: safe.kind, mapPixel: safe.mapPixel }
+    : { kind: 'dungeon', mapPixel: { x: pixel.x, y: pixel.y } };
+}
+
+const WAKE_FLAVOR = Object.freeze({
+  temple: 'You went to sleep underground and wake on the temple steps - someone carried you out while you were away.',
+  city: 'You went to sleep underground and wake just outside the city gate - someone carried you out while you were away.',
+  graveyard: 'You went to sleep underground and wake among the headstones - someone carried you out while you were away.',
+  dungeon: 'You went to sleep underground and wake outside the dungeon door - someone carried you out while you were away.',
+});
+
+/** The one line said when an online load wakes a character above ground; an unknown kind reads as the city's. */
+export const undergroundWakeText = (kind) => WAKE_FLAVOR[kind] ?? WAKE_FLAVOR.city;
