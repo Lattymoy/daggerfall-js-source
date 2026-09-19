@@ -178,7 +178,10 @@ test('MWFIX: the classic sprite path is the ONLY path, and fpsWeapon never hears
     // SW1: the shield's own step sits between them, and returns nothing.
     // SW1b: its verdict is taken above the gate, so the step is one line,
     // and `if (!shown()) return;` stops the shield-only frame here.
-    /if \(fpArm\.active\(\)\) \{ fpArm\.draw\(c\); return; \}\s*(?:\/\/[^\n]*\n\s*)*if \(shieldRect\) shield\.draw\(\(index, rect, uv\) => drawShieldSprite\(index, rect, uv, fpTint\)\);\s*if \(handheldOn\(\) && c\) handheld\.draw\(renderer, c, fpTint\);\s*if \(torchOnly\) return;[^\n]*\n\s*(?:\/\/[^\n]*\n\s*)*if \(!shown\(\)\) return;\s*if \(widgetOn\(\) && c && widget\.draw\(renderer, c, fpTint\)\) return;\s*const art = c && artFor\(playerWeapon\.weapon\);/,
+    // MAP-WEAPON: one more rung between them - a map holding the screen
+    // stops the classic body's four painters, BELOW the arm's own return
+    // so the held-sheet pose is untouched.
+    /if \(fpArm\.active\(\)\) \{ fpArm\.draw\(c\); return; \}\s*(?:\/\/[^\n]*\n\s*)*if \(sheetWindowUp\(\)\) return;\s*(?:\/\/[^\n]*\n\s*)*if \(shieldRect\) shield\.draw\(\(index, rect, uv\) => drawShieldSprite\(index, rect, uv, fpTint\)\);\s*if \(handheldOn\(\) && c\) handheld\.draw\(renderer, c, fpTint\);\s*if \(torchOnly\) return;[^\n]*\n\s*(?:\/\/[^\n]*\n\s*)*if \(!shown\(\)\) return;\s*if \(widgetOn\(\) && c && widget\.draw\(renderer, c, fpTint\)\) return;\s*const art = c && artFor\(playerWeapon\.weapon\);/,
     'an inactive arm falls through to the clone-or-sprite (TORCH-VIS: unless it is the lit hand alone, which stops at its own return), and an active one returns so the two never both draw');
   // and the branch must name a module the file actually imports, or it is
   // a literal that satisfies a regex and does nothing.
