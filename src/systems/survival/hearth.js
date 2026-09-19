@@ -43,6 +43,22 @@
 // cooking fire it is a different lookup - by model id, at the sites
 // that place models - and it belongs in its own slice.
 
+// AUDIT HEARTH1 F3 - WHERE A HEARTH IS, VERTICALLY, and that the three
+// hosts do not agree. Each collector places its light where DFU's own
+// AddLight puts it, and that is a different height on the sprite in
+// each case: the two exterior hosts use `-yPos * scale + size.h`, the
+// TOP of the flat (cityLights.js), the interior uses the centre plus a
+// per-record offset (interiorLights.js), and a dungeon flat's stored y
+// is already its CENTRE (its batch shifts down by h/2 to get the base).
+// None of that is worth normalising - they are each right about where
+// the LIGHT is, which is the flame - but it means the position this law
+// is handed sits anywhere from the middle of a flat to its top, never
+// at its foot. `BY_FIRE_REACH` is four metres and swallows the
+// difference whole; the ACTIVATION BOX does not, which is why the box
+// in scenes/camps.js reaches a sprite's height DOWNWARD from this point
+// and only a little up. A player aiming at the bowl is aiming at the
+// fire.
+
 /** The lights archive - the same one camp.js's FIRE_FLAT comes from. */
 export const HEARTH_ARCHIVE = 210;
 
@@ -104,11 +120,38 @@ export function collectHearths(flats) {
  * host asks one question ("am I at a fire") of two pools and takes
  * whichever answers first.
  */
-export function nearestHearth(hearths, pos, reach) {
+export function nearestHearth(hearths, pos, reach, n = -1) {
   let best = null, bestD = reach;
-  for (const h of hearths ?? []) {
+  const len = n < 0 ? (hearths?.length ?? 0) : Math.min(n, hearths?.length ?? 0);
+  for (let i = 0; i < len; i++) {
+    const h = hearths[i];
     const d = Math.hypot(h.x - pos[0], h.y - pos[1], h.z - pos[2]);
     if (d <= bestD) { best = h; bestD = d; }
   }
   return best;
+}
+
+/**
+ * Is there ANY fire within `reach` of `pos`? The first hit, and stop.
+ *
+ * AUDIT HEARTH1 F2: `byFire` asked `nearestHearth`, which cannot stop -
+ * it has to see every entry to know which is nearest. But `byFire` does
+ * not want the nearest, it wants a yes, and it runs EVERY FRAME (the
+ * player ticker calls its host's `survivalEnv` on every frame, not on
+ * the minute it rolls). A big city's lantern list is hundreds long, so
+ * a question with a one-entry answer was walking all of them sixty
+ * times a second. This stops at the first fire in reach.
+ *
+ * `n` is how much of `hearths` is live, for a caller that refills a
+ * pool rather than minting a list (the streaming host does); the
+ * default -1 means the whole array, which is every other caller.
+ */
+export function hearthNear(hearths, pos, reach, n = -1) {
+  const len = n < 0 ? (hearths?.length ?? 0) : Math.min(n, hearths?.length ?? 0);
+  for (let i = 0; i < len; i++) {
+    const h = hearths[i];
+    const dx = h.x - pos[0], dy = h.y - pos[1], dz = h.z - pos[2];
+    if (dx * dx + dy * dy + dz * dz <= reach * reach) return true;
+  }
+  return false;
 }

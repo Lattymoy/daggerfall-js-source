@@ -10,8 +10,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { HEARTH_ARCHIVE, HEARTH_RECORDS, HEARTH_NEAR, isHearthFlat, collectHearths, nearestHearth } from '../src/systems/survival/hearth.js';
+import { HEARTH_ARCHIVE, HEARTH_RECORDS, HEARTH_NEAR, isHearthFlat, collectHearths, nearestHearth, hearthNear } from '../src/systems/survival/hearth.js';
 import { BY_FIRE_REACH, FIRE_FLAT, CAMP_REACH, CAMP_TEXT } from '../src/systems/survival/camp.js';
+import { HEARTH_DROP, HEARTH_HALF } from '../src/scenes/camps.js';
 import { interiorLightProperties } from '../src/world/interiorLights.js';
 
 const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
@@ -101,7 +102,7 @@ test('HEARTH1: all four hosts answer with their own fires - THE FOUR HOSTS RULE'
   assert.match(ex, /hearths: \(\) => cityHearths,/);
   assert.match(dung, /if \(isHearthFlat\(f\.archive, f\.record\)\) dungeonHearths\.push\(/);
   assert.match(dung, /hearths: \(\) => dungeonHearths,/);
-  assert.match(wm, /if \(isHearthFlat\(HEARTH_ARCHIVE, l\.record\)\) interiorHearths\.push\(/);
+  assert.match(wm, /interiorHearths\.push\(\.\.\.collectHearths\(ctx\.lights\)\);/, 'AUDIT F4: through the law\u2019s own collection, not a fourth copy of its test');
   assert.match(wm, /hearths: \(\) => interiorHearths,/);
   // and the room's fires leave with the room
   // ...and they leave on EVERY way out. HT1 learned this the hard way
@@ -143,13 +144,13 @@ test('HEARTH1: a world fire is nobody’s - it opens the cooking list and nothin
   // camp needs - a brazier does not go out.
   assert.match(c, /if \(c && !fireLit\(c\.rec, now\(\)\)\) \{ say\(CAMP_TEXT\.cold\); return null; \}/, 'the embers test is the CAMP’s');
   // byFire asks both pools
-  assert.match(c, /const byFire = \(pos\) => !!nearestFire\(camps\.map\(\(c\) => c\.rec\), pos, now\(\)\) \|\| !!hearthAt\(pos\);/);
+  assert.match(c, /const byFire = \(pos\) => !!nearestFire\(camps\.map\(\(c\) => c\.rec\), pos, now\(\)\)\n\s*\|\| hearthNear\(worldFires\(\), pos, BY_FIRE_REACH\);/, 'both pools, the cheap question of the big one (AUDIT F2)');
   // ...and campAt does NOT - a hearth is not a camp, and the menu,
   // the pack and the online record all key on a camp record.
   assert.match(c, /const campAt = \(pos\) => nearestFire\(camps\.map\(\(c\) => c\.rec\), pos, now\(\)\);/, 'campAt stays the camps’ own');
   // a host that passes no door has no world fires, which is every
   // caller's behaviour before this shipped
-  assert.match(c, /const worldFires = \(\) => \(hearths \? hearths\(\) : null\);/);
+  assert.match(c, /const worldFires = \(\) => \(survivalOn\(\) && hearths \? hearths\(\) : null\);/, 'and a host that passes no door has no world fires - as every caller did before this shipped');
 });
 
 test('HEARTH1: the pool really does answer byFire and cook off a bare hearth list', async () => {
@@ -166,7 +167,7 @@ test('HEARTH1: the pool really does answer byFire and cook off a bare hearth lis
   assert.equal(t.length, 1, 'one target for one fire');
   assert.equal(t[0].key, 'hearth:0');
   assert.equal(t[0].reach, CAMP_REACH);
-  assert.ok(t[0].aabb.min[1] < 10 * 0 + hearths[0].y, 'the box reaches DOWN - the position is the flame, and the bowl is under it');
+  assert.equal(t[0].aabb.min[1], hearths[0].y - HEARTH_DROP, 'AUDIT F3: the box reaches a sprite\u2019s height DOWN - the position is the flame and the bowl is under it');
   // Info names it; a cook with nothing raw says so rather than throwing
   assert.equal(pool.activate('hearth:0', 'info'), true);
   assert.equal(said.at(-1), CAMP_TEXT.seeHearth);
@@ -199,4 +200,85 @@ test('HEARTH1: warmth and drying follow, because they are the same reader', asyn
   assert.equal(cold.fire, 0, 'no fire is no term');
   assert.equal(warm.fire, 15, 'and it is the law’s own fifteen degrees, not a new number');
   assert.match(read('src/systems/survival/needs.js'), /if \(env\.byFire \|\| env\.insideBuilding\) dry \+= 2;/, 'the drying rides the same flag');
+});
+
+
+// ---- AUDIT HEARTH1 (2026-09-19) - four findings over the slice ------------
+
+test('AUDIT HEARTH1 F1: the world\u2019s fires are behind the mod\u2019s own switch', async () => {
+  const { createCamps } = await import('../src/scenes/camps.js');
+  const { setPref } = await import('../src/systems/uiPrefs.js');
+  const { SURVIVAL_PREF, survivalOn } = await import('../src/systems/survival/switch.js');
+  // The camps never needed a gate here: nothing can be PLACED with the
+  // mod off, so the pool is empty and answers no by itself. A brazier is
+  // in the world either way - without the gate a fire bowl answered the
+  // activation ray with a cooking list and reported byFire to a law
+  // nobody had turned on. "Off, every seam is DFU's" is the arc's own
+  // sentence, and this is where it was about to stop being true.
+  const before = survivalOn();
+  const pool = createCamps({ hearths: () => [{ x: 0, y: 0, z: 0 }], entity: { items: [] }, say: () => {} });
+  try {
+    setPref(SURVIVAL_PREF, true);
+    assert.equal(pool.byFire([0, 0, 0]), true, 'with the mod ON, a fire is a fire');
+    assert.equal(pool.targets().length, 1, '...and the ray sees it');
+    setPref(SURVIVAL_PREF, false);
+    assert.equal(pool.byFire([0, 0, 0]), false, 'with the mod OFF, there is no such law to answer');
+    assert.deepEqual(pool.targets(), [], '...and nothing to activate');
+  } finally { setPref(SURVIVAL_PREF, before); }
+  assert.match(read('src/scenes/camps.js'), /const worldFires = \(\) => \(survivalOn\(\) && hearths \? hearths\(\) : null\);/, 'one gate, at the one door');
+});
+
+test('AUDIT HEARTH1 F2: byFire takes the FIRST fire in reach, because it runs every frame', () => {
+  // `nearestHearth` cannot stop - it has to see every entry to know
+  // which is nearest - and byFire does not want the nearest, it wants a
+  // yes. The player ticker calls its host's survivalEnv on EVERY frame
+  // (the ticker decides whether a minute rolled, not the caller), so a
+  // city's lantern list was being walked end to end sixty times a second
+  // for a question whose answer was in the first entry.
+  let seen = 0;
+  const list = [];
+  for (let i = 0; i < 500; i++) list.push({ get x() { seen++; return i === 0 ? 0 : 900; }, y: 0, z: 0 });
+  assert.equal(hearthNear(list, [0, 0, 0], BY_FIRE_REACH), true);
+  assert.equal(seen, 1, `stopped at the first fire in reach, after ${seen} reads`);
+  // ...and it agrees with nearestHearth everywhere it is asked
+  const fires = [{ x: 9, y: 0, z: 0 }, { x: 3, y: 0, z: 0 }, { x: 0, y: 0, z: 30 }];
+  for (const p of [[0, 0, 0], [3, 0, 0], [6, 0, 0], [50, 0, 50], [0, 0, 26]]) {
+    assert.equal(hearthNear(fires, p, BY_FIRE_REACH), !!nearestHearth(fires, p, BY_FIRE_REACH), `the two agree at ${p}`);
+  }
+  // the live-count argument, for a caller that refills a pool
+  const pooled = [{ x: 0, y: 0, z: 0 }, { x: 0, y: 0, z: 0 }];
+  assert.equal(hearthNear(pooled, [0, 0, 0], BY_FIRE_REACH, 0), false, 'nothing live is no fire, whatever the pool still holds');
+  assert.equal(nearestHearth(pooled, [0, 0, 0], BY_FIRE_REACH, 0), null);
+  assert.match(read('src/scenes/camps.js'), /\|\| hearthNear\(worldFires\(\), pos, BY_FIRE_REACH\)/, 'byFire asks the cheap question');
+  // and the streaming host's walk is a POOL, not a fresh list a frame
+  const w = read('src/scenes/world.js');
+  assert.match(w, /const _hearthStore = \[\];/, 'the objects are kept');
+  assert.match(w, /_hearthStore\[n\] \?\? \(_hearthStore\[n\] = \{ x: 0, y: 0, z: 0 \}\)/, '...and refilled in place');
+  assert.doesNotMatch(w, /const out = \[\];\n\s*const eye = walkMode/, 'the per-frame array is gone');
+});
+
+test('AUDIT HEARTH1 F3: the three hosts measure a hearth\u2019s height differently, and the box covers all three', () => {
+  // Each collector puts its light where DFU's AddLight puts it, and
+  // that is a different height on the sprite in each case. None of it
+  // is worth normalising - they are each right about where the FLAME is
+  // - but nothing had said so, and the activation box was sized as if
+  // one convention held everywhere.
+  assert.match(read('src/world/cityLights.js'), /y: -obj\.yPos \* GLOBAL_SCALE \+ size\.h,/, 'the exterior pair: the TOP of the flat');
+  assert.match(read('src/world/interiorLights.js'), /y: f\.y \+ h \/ 2 \+ offset,/, 'the interior: the centre, plus a per-record offset');
+  assert.match(read('src/scenes/dungeonContext.js'), /const based = centers\.map\(\(\[x, y, z\]\) => \[x, y - size\.h \/ 2, z\]\);/, 'a dungeon flat\u2019s stored y is its CENTRE - its own batch shifts down to find the base');
+  assert.match(read('src/systems/survival/hearth.js'), /AUDIT HEARTH1 F3 - WHERE A HEARTH IS, VERTICALLY/, 'and the law says so');
+  // the box covers a flat under EITHER convention: from a point at the
+  // top of a sprite it still reaches the bowl, and from the centre it
+  // reaches well past the foot.
+  const h = 1.6;   // a brazier at GLOBAL_SCALE
+  assert.ok(HEARTH_DROP >= h, `the drop (${HEARTH_DROP}) clears a sprite's height (${h}) from its top`);
+  assert.ok(HEARTH_DROP > HEARTH_HALF, 'and it reaches further down than up, where there is nothing to aim at');
+  assert.ok(HEARTH_DROP < BY_FIRE_REACH, 'but not so far that the box starts eating clicks meant for what stands behind the fire');
+});
+
+test('AUDIT HEARTH1 F4: the law\u2019s collection is used, not exported for its own test', () => {
+  // `collectHearths` shipped exported and called by nothing but this
+  // file, beside three hand-written copies of the test it performs.
+  assert.match(read('src/scenes/worldModes.js'), /collectHearths\(ctx\.lights\)/, 'the interior takes the law\u2019s own');
+  assert.equal(collectHearths([{ record: 20, x: 1, y: 2, z: 3 }, { record: 22, x: 0, y: 0, z: 0 }]).length, 1);
 });

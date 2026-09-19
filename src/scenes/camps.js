@@ -37,7 +37,7 @@ import {
   placeCampItem, packCamp, stokeFire, fireLit, campExpired, tentPos, nearestFire, campInfoText, campMenu,
   cookables, cookFood, hasSkillet, campWire, mergeOwnerCamps, BY_FIRE_REACH,
 } from '../systems/survival/camp.js';
-import { nearestHearth } from '../systems/survival/hearth.js';   // HEARTH1: the world's own fires answer the same question this pool does
+import { nearestHearth, hearthNear } from '../systems/survival/hearth.js';   // HEARTH1: the world's own fires answer the same question this pool does
 
 /** The light hangs this far over the flame's base. */
 export const FIRE_LIGHT_UP = 0.6;
@@ -45,6 +45,15 @@ export const FIRE_LIGHT_UP = 0.6;
 export const FIRE_HALF = 0.5;
 /** HEARTH1: the eye's box over a world fire - a brazier's bowl is about this wide. */
 export const HEARTH_HALF = 0.6;
+/** HEARTH1 / AUDIT F3: how far the eye's box reaches BELOW a world fire.
+ *  The position a host hands over is its LIGHT - the flame - and the
+ *  three collectors put that anywhere from the middle of the flat to
+ *  its top (survival/hearth.js says which is which), never at its foot.
+ *  So the box reaches a sprite's height down to cover the bowl under
+ *  the flame, and only HEARTH_HALF up, where there is nothing to aim
+ *  at. It is deliberately not larger than that: a taller box would
+ *  start eating clicks meant for whatever stands behind the fire. */
+export const HEARTH_DROP = 1.8;
 
 /**
  * deps = { renderer, getTexture, uploadRecordFrame, meshes ({ getGpuMesh, cpuModels } - the host's pipeline), entity (the player),
@@ -161,10 +170,9 @@ export function createCamps({
 
   /** The eye's targets: the fire's box and, for a tent, the mesh's bounds.
    *  HEARTH1: and a box on every world fire, so a brazier answers the
-   *  ray as a camp does. Its box is HEARTH_HALF either way and reaches
-   *  DOWN as well as up, because the position the light list carries is
-   *  the FLAME - at the top of the flat, not at its foot - and a player
-   *  aiming at the bowl under it is aiming at the same fire. */
+   *  ray as a camp does - HEARTH_HALF either way, HEARTH_DROP below
+   *  (AUDIT F3: the position is the FLAME and the bowl is under it, by
+   *  a distance the three hosts each measure differently). */
   function targets() {
     const out = [];
     const wf = worldFires();
@@ -172,7 +180,7 @@ export function createCamps({
       const h = wf[i];
       out.push({
         key: `hearth:${i}`,
-        aabb: { min: [h.x - HEARTH_HALF, h.y - HEARTH_HALF * 2, h.z - HEARTH_HALF], max: [h.x + HEARTH_HALF, h.y + HEARTH_HALF, h.z + HEARTH_HALF] },
+        aabb: { min: [h.x - HEARTH_HALF, h.y - HEARTH_DROP, h.z - HEARTH_HALF], max: [h.x + HEARTH_HALF, h.y + HEARTH_HALF, h.z + HEARTH_HALF] },
         distance: RAY_DISTANCE, reach: CAMP_REACH,
       });
     }
@@ -253,8 +261,18 @@ export function createCamps({
    * no pool and no record - the host hands over the positions it read
    * out of the block it was already reading, and this asks them the
    * same question it asks the camps.
+   *
+   * AUDIT HEARTH1 F1: AND IT IS BEHIND THE MOD'S OWN SWITCH. The camps
+   * never needed one here - nothing can be PLACED with Climates &
+   * Calories off, so the pool is empty and every question about it
+   * answers no by itself. A brazier is in the world whether the mod is
+   * on or not, so without this gate the survival arc leaked out through
+   * it: a fire bowl answered the activation ray with a cooking list and
+   * reported `byFire` to a law nobody had turned on. Off, every seam is
+   * DFU's - that is the arc's own sentence and this is where it was
+   * about to stop being true.
    */
-  const worldFires = () => (hearths ? hearths() : null);
+  const worldFires = () => (survivalOn() && hearths ? hearths() : null);
   const hearthAt = (pos) => nearestHearth(worldFires(), pos, BY_FIRE_REACH);
 
   /**
@@ -267,7 +285,8 @@ export function createCamps({
    * through `restKind`), and a player standing over a roaring brazier
    * had been as cold and as roughly rested as one standing in a field.
    */
-  const byFire = (pos) => !!nearestFire(camps.map((c) => c.rec), pos, now()) || !!hearthAt(pos);
+  const byFire = (pos) => !!nearestFire(camps.map((c) => c.rec), pos, now())
+    || hearthNear(worldFires(), pos, BY_FIRE_REACH);   // AUDIT HEARTH1 F2: the FIRST fire in reach, not the nearest - this runs every frame
   const campAt = (pos) => nearestFire(camps.map((c) => c.rec), pos, now());
 
   /** DestroyLightSources' twin: every transition and every load. */
