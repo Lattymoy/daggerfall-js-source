@@ -165,6 +165,11 @@ export default defineConfig({
         // the tileset tools/groundProto.mjs writes into
         // public/prototype/ground/.
         grassProto: 'grass-proto.html',
+        // LV1: THE ASCENSION LAB - the enhanced level-up window over a
+        // made-up character, so the screen a player sees once a level
+        // can be opened on demand, at any size, with no ARENA2 on disk.
+        // tools/levelUpProbe.mjs drives this page.
+        levelUp: 'levelup.html',
       },
     },
   },

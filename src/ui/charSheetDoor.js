@@ -44,6 +44,7 @@ import { CharSheet, LevelUpScreen, charSheetArtLoaded } from './charsheet.js';
 import { charSheetHooks } from './charSheetNav.js';
 import { VirtueLevelUpScreen } from './virtueLevelUp.js';   // ORL1
 import { usesVirtueLeveling } from '../systems/oblivionLeveling.js';   // ORL1
+import { spendPoolLowest } from '../systems/chargen.js';   // LV1: the headless pool policy, for the font-less escape
 
 export { charSheetArtLoaded };
 
@@ -89,10 +90,29 @@ export function createCharSheetWindow(deps = {}) {
   // three-attribute cap, is FALSE at the mod's own defaults: three rows
   // at five apiece with Luck at four is exactly thirty. ORL1's deep
   // audit.)
-  if (deps.entity?.readyToLevelUp && !deps.entity?.oghmaLevelUp && usesVirtueLeveling(deps.entity)) {
-    return new VirtueLevelUpScreen(deps.entity);
+  //
+  // LV1 (Mac, 2026-09-18: "the next enhanced UI window... a replication
+  // of the skyrim level up UI in our own constellation vision"): AND
+  // THE ENHANCED SKIN HAS A FACE FOR BOTH LAWS NOW. Until this slice
+  // the skin fork stopped at the sheet: a level-up in the enhanced skin
+  // mounted the CLASSIC LevelUpScreen - eight drawText rows on the
+  // canvas - because there was nothing else to mount. The window that
+  // replaced it (ui/enhancedLevelUp.js) is a FACE, not a third rollout:
+  // it drives whichever of these two screens this character's law
+  // wants, through that screen's own `input`, so the Level++, the
+  // health roll and the mod's caps stay exactly where a11 and ORL1 put
+  // them.
+  if (deps.entity?.readyToLevelUp) {
+    const virtue = !deps.entity?.oghmaLevelUp && usesVirtueLeveling(deps.entity);
+    const rollout = () => (virtue ? new VirtueLevelUpScreen(deps.entity) : new LevelUpScreen(deps.entity));
+    // `document` for the reason this file's other fork gives: node
+    // drives these hosts headless and keeps the canvas windows.
+    if (isEnhanced() && typeof document !== 'undefined') return enhancedLevelUpOverlay(rollout(), deps.entity);
+    if (virtue) return new VirtueLevelUpScreen(deps.entity);
+    if (isEnhanced()) return new LevelUpScreen(deps.entity);
+    // ...and the CLASSIC lane falls through to the sheet, which mounts
+    // DFU's own rollout on itself (AUDIT 44 / a11). Unchanged.
   }
-  if (deps.entity?.readyToLevelUp && isEnhanced()) return new LevelUpScreen(deps.entity);
   const hooks = charSheetHooks(deps);
   // `document` for the reason chargenSession's and pauseDoor's forks
   // give: node drives these hosts headless and keeps the canvas window
@@ -233,6 +253,104 @@ function enhancedSheetPageOverlay(hooks) {
     close,
     // `dispose` and `destroy` are both the hosts' words for the same
     // act; the overlay this replaced answered both, so this does too.
+    dispose: close,
+    destroy: close,
+  };
+}
+
+/**
+ * LV1: THE ASCENSION, in the overlay shape the hosts already push.
+ *
+ * The rollout `screen` is built by the caller above and is the LAW;
+ * this is the host contract around a DOM window that drives it. The
+ * shape is ui/charSheetDoor.js's own `enhancedSheetPageOverlay` -
+ * fixed div, lazy chunk, the hosts' arms - with three differences,
+ * each of which is a rule rather than a preference:
+ *
+ *   NO CROSS-OVER KEY. The sheet answers F5 and F6 because a sheet is
+ *   a thing you toggle. A level-up is not: DFU's sheet refuses to
+ *   close while points are unspent (CheckIfDoneLeveling :433-455), so
+ *   there is no key that dismisses this and the window owns the
+ *   keyboard whole.
+ *
+ *   NO OUTSIDE TAP. OT1's rule is that a tap on the scrim closes the
+ *   window, and it is right for every framed window - but this screen
+ *   has no scrim, because there is nothing behind it to return to.
+ *
+ *   A HEADLESS SPEND. `spendRemainingHeadless` is the font-less
+ *   escape's arm (scenes/dungeonContext.js's drawOverlay): a level-up
+ *   that cannot draw must not silently eat the pool. It lives HERE
+ *   rather than in the chunk on purpose - the escape has to work in
+ *   the one case where the chunk is what failed.
+ */
+function enhancedLevelUpOverlay(screen, entity) {
+  let fired = false;
+  let view = null;
+  const host = document.createElement('div');
+  host.id = 'enhanced-levelup';
+  // z-index 14 - above the sheet's 13. They are never both up (a
+  // level-up is the door's answer INSTEAD of a sheet), and the order
+  // says which would win if a host ever pushed both.
+  host.style.cssText = 'position:fixed;inset:0;z-index:14;background:transparent;overflow:hidden';
+  document.body.append(host);
+  const close = () => {
+    if (fired) return;
+    try { view?.destroy?.(); } catch { /* already gone */ }
+    view = null;
+    host.remove();
+    fired = true;   // last: `done` must not be true while the DOM is up
+  };
+  // MENU1: the ONE lazy-chunk door. A deploy that moved this chunk
+  // leaves the notice up and the door OPEN - `done` stays false and
+  // the host keeps the slot, so the game does not hand the keys back
+  // to a player who is owed a level. Dismissing it closes this window
+  // and nothing else: `readyToLevelUp` is still set, so the next
+  // 360-minute check and the next F5 both re-offer it (the cost is one
+  // discarded BonusPool draw, which AUDIT 23 minds about the RNG
+  // stream and which no player can observe).
+  mountEnhancedChunk({
+    load: () => import('./enhancedLevelUp.js'),
+    alive: () => !fired, host, onDismiss: close, label: 'levelup',
+    mount: ({ mountEnhancedLevelUp }) => {
+      view = mountEnhancedLevelUp(host, { screen, entity, onExit: close });
+    },
+  });
+  return {
+    /** The duck type the font-less escape asks for, in this file's own
+     *  idiom (`isVirtueLevelUp`, `isRestWindow`): a scene must not
+     *  import a UI class for a type test. */
+    isEnhancedLevelUp: true,
+    isChoiceWindow: true,
+    get done() { return fired; },
+    input() { /* the view's own capture keydown owns the keyboard */ },
+    click() { /* the view is a fixed div over the canvas; pointers never get here */ },
+    wheel() { /* the view scrolls itself */ },
+    hover() { /* the view has its own :hover, and no canvas to hit-test */ },
+    tick() { /* the sky owns its own clock */ },
+    draw() { /* DOM, not canvas */ },
+    /**
+     * THE FONT-LESS ESCAPE, per lane. The mod's purse is not a DFU
+     * bonus pool - spending it with spendPoolLowest would ignore the
+     * three-attribute cap, the +5 ceiling and Luck's price - so its own
+     * planner runs and commits through the same `confirm` a player's
+     * Enter uses. The classic pool takes the policy every other
+     * headless path takes (systems/chargen.js's spendPoolLowest), which
+     * is what scenes/dungeonContext.js's `.leveling` arm already does
+     * to the sheet's rollout; the shape is the same because the state
+     * is the same.
+     */
+    spendRemainingHeadless() {
+      if (screen?.isVirtueLevelUp) { screen.spendRemainingHeadless(); close(); return true; }
+      if (screen?.working) {
+        spendPoolLowest(screen.working, Object.keys(screen.working), screen.pool ?? 0);
+        screen.pool = 0;
+        screen.input('confirm');   // applyLevelUp writes the working stats home, with the PRE-ROLLED pool
+      }
+      close();
+      return true;
+    },
+    close,
+    // `dispose` and `destroy` are both the hosts' words for the same act.
     dispose: close,
     destroy: close,
   };

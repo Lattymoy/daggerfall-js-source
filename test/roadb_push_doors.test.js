@@ -188,10 +188,14 @@ test('B5: the LEVEL-UP screen keeps its slot test - it is the other half of PopT
   // carry it - the count is here because a guard restored on one arm
   // and lost on the other is exactly the half-fix the FOUR HOSTS rule
   // keeps finding.
+  // LV1 re-shaped the TAIL again - the last resort is now
+  // ui/charSheetDoor.js itself, which answers lane AND skin - so the
+  // pin holds the same two things it was written to hold, over the
+  // arm's current spelling.
   const wm = src('src/scenes/worldModes.js');
-  const guarded = wm.match(/if \(!interiorOverlay\) \{\n\s*interiorOverlay = host\.makeCharSheet\?\.\(\)\n/g) ?? [];
+  const guarded = wm.match(/if \(!interiorOverlay\) \{\n\s*interiorOverlay = host\.makeCharSheet\?\.\(\)/g) ?? [];
   assert.equal(guarded.length, 2, 'both interior level-up arms fill only an EMPTY slot, and ask the host\'s builder first');
-  assert.match(wm, /\?\? \(usesVirtueLeveling\(playerEntity\) && !playerEntity\.oghmaLevelUp/,
-    'and the last resort knows whose law levels this character (ORL1)');
+  assert.match(wm, /host\.makeCharSheet\?\.\(\) \?\? createCharSheetWindow\(\{ entity: playerEntity \}\)/,
+    'and the last resort is the ONE seam, which knows whose law levels this character (ORL1) and which skin draws it (LV1)');
   assert.match(src('src/ui/restWindow.js'), /PopToHUD\(\); RaiseSkills\(\);/);
 });

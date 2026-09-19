@@ -1,0 +1,107 @@
+[
+  {
+    "name": "canRaise-restates-the-law-instead-of-asking-it",
+    "file": "src/ui/levelUpView.js",
+    "old": "      canRaise: statUp(value, pool).working !== value,",
+    "new": "      canRaise: pool > 0,",
+    "tests": ["test/enhancedLevelUp.test.js"],
+    "why": "The restatement agrees with statUp everywhere except its clamp, which is exactly where a player would be offered a press the law refuses."
+  },
+  {
+    "name": "canLower-always-true",
+    "file": "src/ui/levelUpView.js",
+    "old": "      canLower: statDown(value, base, pool).working !== value,",
+    "new": "      canLower: true,",
+    "tests": ["test/enhancedLevelUp.test.js"]
+  },
+  {
+    "name": "a-press-does-not-aim-before-it-presses",
+    "file": "src/ui/levelUpView.js",
+    "old": "  screen.cursor = index;\n  screen.input(action);",
+    "new": "  screen.input(action);",
+    "tests": ["test/enhancedLevelUp.test.js"],
+    "why": "ORL1's incident one layer up: a press that acts on whatever the cursor was left on raises the wrong attribute, silently, on every click."
+  },
+  {
+    "name": "the-HIGHEST-major-is-dropped-from-the-sum",
+    "file": "src/ui/levelUpView.js",
+    "old": "    for (const id of majors) if (value(id) < value(lowest)) lowest = id;",
+    "new": "    for (const id of majors) if (value(id) > value(lowest)) lowest = id;",
+    "tests": ["test/enhancedLevelUp.test.js"],
+    "why": "The ribbon would teach a player the opposite of PlayerEntity.SetCurrentLevelUpSkillSum."
+  },
+  {
+    "name": "the-WORST-minor-is-the-one-that-counts",
+    "file": "src/ui/levelUpView.js",
+    "old": "    for (const id of minors) if (value(id) > value(best)) best = id;",
+    "new": "    for (const id of minors) if (value(id) < value(best)) best = id;",
+    "tests": ["test/enhancedLevelUp.test.js"]
+  },
+  {
+    "name": "the-ribbon-does-not-lead-with-what-rose",
+    "file": "src/ui/levelUpView.js",
+    "old": "    .sort((a, b) => (Number(b.r.risen) - Number(a.r.risen)) || (a.i - b.i))",
+    "new": "    .sort((a, b) => (a.i - b.i))",
+    "tests": ["test/enhancedLevelUp.test.js"]
+  },
+  {
+    "name": "the-bar-shows-the-whole-sum-instead-of-the-remainder",
+    "file": "src/ui/levelUpView.js",
+    "old": "    now: ((span % per) + per) % per,",
+    "new": "    now: span,",
+    "tests": ["test/enhancedLevelUp.test.js"]
+  },
+  {
+    "name": "the-oghma-is-promised-a-level-it-does-not-grant",
+    "file": "src/ui/levelUpView.js",
+    "old": "    to: lane === LANE_OGHMA ? from : (e.pendingLevel ?? from + 1),",
+    "new": "    to: e.pendingLevel ?? from + 1,",
+    "tests": ["test/enhancedLevelUp.test.js"],
+    "why": "applyLevelUp's oghma arm takes no Level++ (AUDIT 39), so this is the window lying about the one thing it is for."
+  },
+  {
+    "name": "the-commit-is-allowed-with-points-unspent",
+    "file": "src/ui/levelUpView.js",
+    "old": "export const canAscend = (screen) => !!screen && rolloutPool(screen) === 0;",
+    "new": "export const canAscend = (screen) => !!screen && rolloutPool(screen) >= 0;",
+    "tests": ["test/enhancedLevelUp.test.js"],
+    "why": "DFU's CheckIfDoneLeveling and the mod's validateLevelUp are the same sentence: all of it, or nothing."
+  },
+  {
+    "name": "each-lane-is-refused-in-the-other-lanes-words",
+    "file": "src/ui/levelUpView.js",
+    "old": "  (levelUpLane(screen) === LANE_VIRTUE ? REMAINING_POINTS_ERROR : MUST_DISTRIBUTE_BONUS_POINTS);",
+    "new": "  (levelUpLane(screen) === LANE_VIRTUE ? MUST_DISTRIBUTE_BONUS_POINTS : REMAINING_POINTS_ERROR);",
+    "tests": ["test/enhancedLevelUp.test.js"]
+  },
+  {
+    "name": "two-stars-are-drawn-on-the-same-point",
+    "file": "src/ui/levelUpView.js",
+    "old": "    luck: Object.freeze({ x: 64, y: 51 }),",
+    "new": "    luck: Object.freeze({ x: 40, y: 31 }),",
+    "tests": ["test/enhancedLevelUp.test.js"],
+    "why": "The figure is stretched to the stage, so a pair this close is two overlapping buttons on a phone - a point spent on the wrong attribute."
+  },
+  {
+    "name": "a-fortified-attribute-overflows-its-star",
+    "file": "src/ui/levelUpView.js",
+    "old": "export const starBrightness = (value) => Math.max(0, Math.min(1, (value ?? 0) / MAX_STAT_VALUE));",
+    "new": "export const starBrightness = (value) => (value ?? 0) / MAX_STAT_VALUE;",
+    "tests": ["test/enhancedLevelUp.test.js"]
+  },
+  {
+    "name": "the-enhanced-skin-loses-its-level-up-window",
+    "file": "src/ui/charSheetDoor.js",
+    "old": "    if (isEnhanced() && typeof document !== 'undefined') return enhancedLevelUpOverlay(rollout(), deps.entity);",
+    "new": "    if (false) return enhancedLevelUpOverlay(rollout(), deps.entity);",
+    "tests": ["test/advancementui.test.js", "test/enhancedLevelUp.test.js"]
+  },
+  {
+    "name": "the-font-less-escape-cannot-recognise-the-DOM-window",
+    "file": "src/ui/charSheetDoor.js",
+    "old": "    isEnhancedLevelUp: true,",
+    "new": "    isEnhancedLevelUp: false,",
+    "tests": ["test/enhancedLevelUp.test.js"],
+    "why": "scenes/dungeonContext.js asks by this name; a window it cannot recognise is nulled rather than closed, and stays on the screen over a game already handed back."
+  }
+]

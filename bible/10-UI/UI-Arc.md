@@ -224,7 +224,7 @@ still push CLASSIC canvas windows as children under the DOM, and so
 does the pack's USE arm.
 
     THE SPELLBOOK       FIVE construction sites across FOUR hosts:
-                        worldModes.js:1861 (the factory) and :1904 (a
+                        worldModes.js:1864 (the factory) and :1904 (a
                         HAND-ROLLED second one, 342 lines below it in
                         the same file),
                         dungeonContext.js:965, world.js:1850,
@@ -234,7 +234,7 @@ does the pack's USE arm.
                         close-then-hand-over ordering U55 got
                         backwards. No law needs extracting first.
     THE LOGBOOK         THREE sites: charSheetNav.js:53,
-    / NOTEBOOK          world.js:5868, dungeonContext.js:6095. A seam
+    / NOTEBOOK          world.js:5868, dungeonContext.js:6108. A seam
                         wants making, as U52's and U53's did.
     HISTORY             ONE site (charSheetNav.js:61), and it reads
                         only the entity's backStory. The small one.
@@ -7962,7 +7962,7 @@ same answer: `ui/spellbookDoor.js`, with each host handing it only
 what that host knows.
 
 THE "HAND-ROLLED DUPLICATE" WAS NOT ONE. The board recorded
-worldModes.js:2678 as a second book built by hand 342 lines below the
+worldModes.js:2681 as a second book built by hand 342 lines below the
 factory. Read closely it is the SPELL MERCHANT'S SHOP - buyMode, with
 `offered`, the building's quality, the shop name, the haggling skills
 and the classic clock. A different question with different deps, and
@@ -8672,7 +8672,7 @@ and firing THAT twice is a second PopToHUD.
 
 ### Why only two of the four hosts crashed
 
-`worldModes.js:5589` and `dungeonContext.js:1468` answer the same
+`worldModes.js:5592` and `dungeonContext.js:1468` answer the same
 `onClose` by nulling their slot and never disposing - nothing to
 re-enter. Only the two hosts that come through `townTalk.closeOverlay`
 dispose. **The four-hosts rule caught this one by accident**: the two
@@ -15843,3 +15843,142 @@ the image" - in it the sky and trees show through the dark blade. So
 the computed style.
 
 `test/foebar1_blade.test.js` - 2 pins. `tools/mutants/foebar1.json`.
+
+## LV1 - THE ASCENSION: the enhanced skin's level-up window (2026-09-18, Mac)
+
+Mac: "We're going to be working on the next enhanced UI window. It's
+been awhile. Our gold standard is a replication of the skyrim level up
+UI in our own constellation vision."
+
+**What was there.** Nothing of the enhanced skin. `ui/charSheetDoor.js`
+has forked on the skin for every screen since U52 EXCEPT this one: a
+level-up in the enhanced skin mounted `ui/charsheet.js`'s
+`LevelUpScreen` - eight `drawText` rows over a 92% dim, on the canvas,
+in FONT0003 - and `ui/enhancedCharSheet.js`'s own header said so in as
+many words ("THE LEVEL-UP SCREEN stays classic... Not this door's
+business"). That was the last screen in the game with no enhanced face.
+The sentence is retired where it stood, per Home.md's RETIRING A FLAG
+DELETES THE SENTENCE.
+
+**Why a constellation, and why it is not Skyrim's.** Skyrim's level-up
+screen is a sky: your skills are stars and the camera is already
+pointed at them when you gain a level. What the port borrows from
+Skyrim is the INTERACTION MODEL `src/tools/enhancedUI.js` names - one
+thing at a time, targets big enough for a thumb, four directions and a
+confirm - and that model is exactly right for a screen whose whole job
+is "choose one of eight". What it does NOT borrow is the information
+architecture, for the reason that file gives: Skyrim advances ONE of
+three pools, and Daggerfall hands you a POOL of four to six points to
+spread over EIGHT attributes (FormulaHelper.BonusPool; thirty from the
+Oghma Infinium; a priced purse under the vendored
+Oblivion-Remaster-Like Leveling). A screen offering "Magicka / Health /
+Stamina" would be a picture of another game's law.
+
+So the sky is ours. The eight attributes are ONE ASTERISM - a figure
+whose stars are the things this character is made of - drawn on the
+same dithered night the enhanced menu and the wizard already stand on
+(`ui/pixelGround.js`: procedural, seeded, no game data). Spending a
+point LIGHTS a star, and a line between two raised stars lights with
+them. Around it, in the reference's own anatomy: the crown (name |
+level -> level with the bar to the next | race), the plate (what is
+left to spend, where Skyrim puts "Perks to increase"), the choice
+(the focused attribute spelled out between its two presses, with the
+port's own one-line description of what that attribute DOES, each
+line annotated in the source with the formula it is true of), the
+ribbon of skills across the foot, and the three vitals - health,
+fatigue, magicka, out of `sheetModel`, so this screen and the pause
+window's Stats page cannot disagree about a number.
+
+**The window writes nothing.** a11's law is that the Level++ and the
+health roll live in ONE place and never in a window, and this one does
+not even hold a rollout: it is a second FACE on the live screen the
+door built. `ui/levelUpView.js` READS that screen and every act goes
+back through the screen's own `input` - select, then press, which is
+the same two moves the keyboard makes.
+
+    classic / oghma   ui/charsheet.js LevelUpScreen
+    virtue            ui/virtueLevelUp.js VirtueLevelUpScreen
+
+That is what keeps the mod's three-attribute cap, its +5 ceiling and
+Luck's price answerable only by the module that owns them, and it is
+why `.done`, the hosts' overlay contract and the dungeon's font-less
+escape all keep working on a DOM window.
+
+**ASK THE LAW, NEVER RESTATE IT.** `canRaise` on the classic lane is
+not `pool > 0 && value < 100`; it is `statUp(value, pool)` asked
+whether it moved. A restatement agrees with the law everywhere except
+its clamp, and the copy that draws the button is the one a player
+believes.
+
+**The one thing this screen teaches.** The ribbon leads with the skills
+that actually rose - DFU's own `skillsRecentlyRaised` mask - and says,
+per skill, what it did for the level: every primary counts, your
+weakest major is dropped from the sum, only your best minor counts, a
+miscellaneous skill counts for nothing. That is
+`PlayerEntity.SetCurrentLevelUpSkillSum`, which Daggerfall states
+nowhere and which decides how the whole game advances. Because it is a
+SECOND reading of one law, `test/enhancedLevelUp.test.js` reconstructs
+`levelUpSkillSum` out of those roles over 200 generated careers and
+holds it against the function itself: a drift fails there rather than
+teaching a player the wrong rule.
+
+**Refusing out loud.** DFU's sheet refuses to close while bonus points
+are unspent (CheckIfDoneLeveling) and the mod's window refuses the same
+way; so does this one, in every vocabulary a player has - the button,
+Escape, and PX28's Tab (which puts itself back on the registry when it
+is refused, since the stack pops before it calls the close arm). THE
+REFUSAL IS REACHABLE, and that took two goes: the first build set
+`disabled` on the Ascend button, so the one control on the screen could
+not be pressed and never said why; the second set `aria-disabled`,
+which Playwright - and a screen reader, and a keyboard user taking it
+at its word - also declines to press. It now wears a not-yet paint,
+carries the reason in its title, and says it in a live region when
+pressed.
+
+**What the probe found that no sweep would have.** `tools/levelUpProbe.mjs`
+drives the real window in Chromium over `levelup.html` (the lab:
+`src/tools/levelUpLab.js`, the shipping module over a made-up
+character, no ARENA2), in all three lanes, at four viewport sizes, by
+pointer and by keyboard alone - and it MEASURES BOXES, not words:
+
+  - the whole column sized itself at 1776px inside a 1400px window,
+    because a grid item's default min-width is its min-content and the
+    ribbon is a scroller with a dozen skills in it. The race cell and
+    the Ascend button were both drawn past the right-hand edge. Every
+    text assertion passed while that was true.
+  - two stars overlapped at 390x844 and at 800x600. The figure is
+    authored in normalized coordinates and stretched to the stage, so
+    its gaps shrink with the window, and a star drawn under another
+    star is a point spent on the wrong attribute. The figure was
+    re-authored to a spacing floor the tests now walk (`crowdedStarPairs`),
+    and the star NAMES come off under 720px and under 620px tall - a
+    star's box is as wide as the word in it, and the focused attribute
+    is spelled out below the figure in type twice the size anyway.
+  - the three vitals ran into each other on a phone
+    ("HEALTH96 / 118FATIGUE104 / 120"), so each meter's head stacks
+    there while the row stays three columns.
+
+**The four hosts.** THE FOUR HOSTS RULE, and this slice is another
+instance of exactly what it is for: `scenes/worldModes.js` reached for
+a level-up screen WITHOUT the door, in two places (its own comment said
+so), so when the enhanced face landed three hosts would have worn it
+and the interior host would have kept handing out canvas rollouts.
+Both arms now ask `createCharSheetWindow({ entity })`, which answers
+the whole fork - lane, skin and book - and `scenes/dungeonContext.js`'s
+font-less escape learned the DOM wrapper FIRST, because nulling it
+rather than closing it would leave the window on screen over a game
+already handed back. `scenes/world.js` and `scenes/exterior.js` were
+already through the door.
+
+**Losses and limits, named.** The star names are hidden on a phone
+(above). The figure stretches rather than keeping its aspect when the
+stage is short, which is self-consistent - the lines and the stars read
+the same coordinates - but it is a stretch and not a rotation. And a
+chunk load that fails leaves the level-up owed rather than spent: the
+notice stays up, the door keeps the host's slot, and dismissing it
+re-offers the level-up on the next check at the cost of one discarded
+BonusPool draw (AUDIT 23's RNG-stream note; no player can observe it).
+
+`test/enhancedLevelUp.test.js` - 22 pins. `tools/mutants/lv1.json` -
+14 mutants, 14 dead, 0 survived. `tools/levelUpProbe.mjs` - 76/76
+(`npm run levelup`, against `npx vite --port 5199`).

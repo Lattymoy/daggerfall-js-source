@@ -120,9 +120,7 @@ import { identifySpellPass, identifiedTallyText, NOT_ENOUGH_SPELL_POINTS_TEXT } 
 import { liveBundles, dispelBundle, dispellableBundles, DISPEL_MAGIC_TEXT } from '../systems/mysticism.js';   // X10: the Dispel Magic picker
 import { ListPickerWindow, listPickerArtLoaded } from '../ui/listPicker.js';   // X10
 import { createItemLabels, grantCreatedItem, lastCreateItemIndex, setLastCreateItemIndex } from '../systems/createItem.js';   // X11b
-import { LevelUpScreen } from '../ui/charsheet.js';   // AUDIT 21 hosts F3: levelling in a building
-import { VirtueLevelUpScreen } from '../ui/virtueLevelUp.js';   // ORL1: ...and the mod's own, for the same two arms
-import { usesVirtueLeveling } from '../systems/oblivionLeveling.js';   // ORL1
+import { createCharSheetWindow } from '../ui/charSheetDoor.js';   // AUDIT 21 hosts F3: levelling in a building; LV1: through the ONE seam, so this host wears the skin's face like the other three
 import { NativeTradeWindow, preloadTradeArt, tradeArtLoaded, TRADE_RECTS } from '../ui/nativeTrade.js';   // U8c
 // U23: the static-NPC seam and the guild service popup.
 import { STATIC_NPC_ACTIVATION_DISTANCE, DEFAULT_ACTIVATION_DISTANCE, RAY_DISTANCE } from '../systems/talk.js';
@@ -413,15 +411,20 @@ export function createWorldModes(host) {
       // host.makeCharSheet is the outer host's own builder, the same
       // one toggleCharSheet mounts.
       // ORL1: ...and the LAST-RESORT screen, for a host that hands no
-      // builder, is the mod's window when the mod's law is this
-      // character's. The builder route already knows (it is
-      // ui/charSheetDoor.js's one seam); this arm is the only place
-      // in the tree that reaches for a level-up screen without it.
+      // builder, must obey this character's law too.
+      // LV1: WHICH IS THE DOOR'S QUESTION, SO IT IS ASKED THERE. This
+      // arm used to re-answer it inline - the mod's window when the mod
+      // levels this character, the classic rollout otherwise - and its
+      // own comment said it was "the only place in the tree that
+      // reaches for a level-up screen without" the door. That was true
+      // and it is exactly what THE FOUR HOSTS rule is about: when the
+      // enhanced skin grew a level-up face, three hosts got it through
+      // ui/charSheetDoor.js and this one, in both of its copies, kept
+      // handing out canvas rollouts. The door takes `entity` alone and
+      // answers the whole fork - skin, lane and book - so a face added
+      // to it is a face every host wears.
       if (!interiorOverlay) {
-        interiorOverlay = host.makeCharSheet?.()
-          ?? (usesVirtueLeveling(playerEntity) && !playerEntity.oghmaLevelUp
-            ? new VirtueLevelUpScreen(playerEntity)
-            : new LevelUpScreen(playerEntity));
+        interiorOverlay = host.makeCharSheet?.() ?? createCharSheetWindow({ entity: playerEntity });
       }
     },
     // SURV7: the outer host's env with the roof this host owns - sheltered, no sun, no water, no fire
@@ -7202,15 +7205,20 @@ export function createWorldModes(host) {
       // host.makeCharSheet is the outer host's own builder, the same
       // one toggleCharSheet mounts.
       // ORL1: ...and the LAST-RESORT screen, for a host that hands no
-      // builder, is the mod's window when the mod's law is this
-      // character's. The builder route already knows (it is
-      // ui/charSheetDoor.js's one seam); this arm is the only place
-      // in the tree that reaches for a level-up screen without it.
+      // builder, must obey this character's law too.
+      // LV1: WHICH IS THE DOOR'S QUESTION, SO IT IS ASKED THERE. This
+      // arm used to re-answer it inline - the mod's window when the mod
+      // levels this character, the classic rollout otherwise - and its
+      // own comment said it was "the only place in the tree that
+      // reaches for a level-up screen without" the door. That was true
+      // and it is exactly what THE FOUR HOSTS rule is about: when the
+      // enhanced skin grew a level-up face, three hosts got it through
+      // ui/charSheetDoor.js and this one, in both of its copies, kept
+      // handing out canvas rollouts. The door takes `entity` alone and
+      // answers the whole fork - skin, lane and book - so a face added
+      // to it is a face every host wears.
       if (!interiorOverlay) {
-        interiorOverlay = host.makeCharSheet?.()
-          ?? (usesVirtueLeveling(playerEntity) && !playerEntity.oghmaLevelUp
-            ? new VirtueLevelUpScreen(playerEntity)
-            : new LevelUpScreen(playerEntity));
+        interiorOverlay = host.makeCharSheet?.() ?? createCharSheetWindow({ entity: playerEntity });
       }
     },
     day: () => false, inside: () => true,   // a building interior, always

@@ -352,11 +352,12 @@
   {
     "name": "the-door-hands-the-oghma-to-the-mods-window",
     "file": "src/ui/charSheetDoor.js",
-    "old": "  if (deps.entity?.readyToLevelUp && !deps.entity?.oghmaLevelUp && usesVirtueLeveling(deps.entity)) {",
-    "new": "  if (deps.entity?.readyToLevelUp && usesVirtueLeveling(deps.entity)) {",
+    "old": "    const virtue = !deps.entity?.oghmaLevelUp && usesVirtueLeveling(deps.entity);",
+    "new": "    const virtue = usesVirtueLeveling(deps.entity);",
     "tests": [
       "test/orl1_leveling.test.js"
-    ]
+    ],
+    "why": "LV1 re-aimed BY CONTENT: the door's fork is one block now (the enhanced skin needs the same answer to build its window with), so the Oghma exclusion lives on this line."
   },
   {
     "name": "the-window-commits-on-an-unspent-purse",
@@ -523,15 +524,15 @@
     ]
   },
   {
-    "name": "the-interior-hosts-FIRST-last-resort-forgets-the-mod",
+    "name": "the-interior-hosts-FIRST-last-resort-skips-the-door",
     "file": "src/scenes/worldModes.js",
-    "old": "          ?? (usesVirtueLeveling(playerEntity) && !playerEntity.oghmaLevelUp\n            ? new VirtueLevelUpScreen(playerEntity)\n            : new LevelUpScreen(playerEntity));",
-    "new": "          ?? new LevelUpScreen(playerEntity);",
+    "old": "        interiorOverlay = host.makeCharSheet?.() ?? createCharSheetWindow({ entity: playerEntity });",
+    "new": "        interiorOverlay = host.makeCharSheet?.();",
     "tests": [
       "test/orl1_leveling.test.js"
     ],
     "firstOfTwo": true,
-    "why": "mutate.mjs replaces the FIRST match and the two interior arms are identical, so this one names the first. The second has its own mutant below (ORL1's deep audit: one mutant was standing for two arms)."
+    "why": "LV1 re-aimed BY CONTENT. The arm no longer answers the mod's question itself - it asks the door, which answers lane AND skin - so the law to kill is that it asks at all: without the door a host that hands no builder levels a player with NOTHING on screen. mutate.mjs replaces the FIRST match and the two interior arms are identical, so this one names the first; the second carries trailing context below."
   },
   {
     "name": "the-dungeons-font-less-virtue-escape-is-dropped",
@@ -661,13 +662,14 @@
     "why": "NOT EQUIVALENT, and it was recorded as though it were. The escape assigns the plan WHOLESALE (`this.deltas = plan`) and sets `purse = fullPurse - cost`, so re-planning against the REMAINING purse over the live deltas leaves the purse non-zero, `confirm` refuses, and the window never closes - the host drops it anyway and the level-up is lost with everything already spent. The first record called that an equivalence because no pin drove the escape from a PARTLY SPENT window; one does now (ORL1's deep audit)."
   },
   {
-    "name": "the-interior-hosts-SECOND-last-resort-forgets-the-mod",
+    "name": "the-interior-hosts-SECOND-last-resort-skips-the-door",
     "file": "src/scenes/worldModes.js",
-    "old": "          ?? (usesVirtueLeveling(playerEntity) && !playerEntity.oghmaLevelUp\n            ? new VirtueLevelUpScreen(playerEntity)\n            : new LevelUpScreen(playerEntity));\n      }\n    },\n    day: () => false, inside: () => true,",
-    "new": "          ?? new LevelUpScreen(playerEntity);\n      }\n    },\n    day: () => false, inside: () => true,",
+    "old": "        interiorOverlay = host.makeCharSheet?.() ?? createCharSheetWindow({ entity: playerEntity });\n      }\n    },\n    day: () => false, inside: () => true,",
+    "new": "        interiorOverlay = host.makeCharSheet?.();\n      }\n    },\n    day: () => false, inside: () => true,",
     "tests": [
       "test/orl1_leveling.test.js"
-    ]
+    ],
+    "why": "LV1 re-aimed BY CONTENT, with the trailing context that names the SECOND arm."
   },
   {
     "name": "the-plan-takes-the-fewest-rows-instead-of-the-most-points",
@@ -834,11 +836,12 @@
   {
     "name": "the-door-sends-a-virtue-character-to-daggerfalls-own-screen",
     "file": "src/ui/charSheetDoor.js",
-    "old": "  if (deps.entity?.readyToLevelUp && !deps.entity?.oghmaLevelUp && usesVirtueLeveling(deps.entity)) {",
-    "new": "  if (false && deps.entity?.readyToLevelUp && !deps.entity?.oghmaLevelUp && usesVirtueLeveling(deps.entity)) {",
+    "old": "    if (virtue) return new VirtueLevelUpScreen(deps.entity);",
+    "new": "    if (false) return new VirtueLevelUpScreen(deps.entity);",
     "tests": [
       "test/orl1_leveling.test.js"
-    ]
+    ],
+    "why": "LV1 re-aimed BY CONTENT: same law, on the line that now carries it."
   },
   {
     "name": "the-re-offer-fires-on-top-of-a-pending-oghma",

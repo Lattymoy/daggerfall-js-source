@@ -59,9 +59,16 @@
 // inventory slice with the equip map it explains. Recorded as a real
 // loss rather than dropped quietly.
 //
-// THE LEVEL-UP SCREEN stays classic: it is a different window
-// (LevelUpScreen), the hosts push it themselves, and it mutates stats
-// through chargen's verbatim clamps. Not this door's business.
+// THE LEVEL-UP SCREEN: RETIRED, LV1 (2026-09-18). This paragraph said
+// it stays classic - "a different window (LevelUpScreen), the hosts
+// push it themselves... not this door's business" - and that was the
+// last screen in the game with no enhanced face. It has one now
+// (ui/enhancedLevelUp.js, over ui/levelUpView.js's reading), the hosts
+// all reach it through ui/charSheetDoor.js, and it still mutates
+// nothing: the window drives the same LevelUpScreen this sentence
+// named, through that screen's own input. The sentence is replaced
+// rather than appended to, per bible/Home.md's RETIRING A FLAG DELETES
+// THE SENTENCE.
 // ═══════════════════════════════════════════════════════════════════
 
 import { STAT_KEYS_ORDER } from '../systems/chargen.js';
