@@ -81,10 +81,11 @@ const out = await page.evaluate(async () => {
   const at200 = frame(200);
   const at110 = frame(110);
   const shipped = frame(LAB_GRASS.range);   // GRASS2: and the config a player actually gets
+  const sweep = [200, 250, 280, 300, 320, 350].map((r) => ({ r, ...frame(r) }));
   return {
     perCell: grassPerCell(), cell: GRASS_CELL, slots: field.slots, verts: grass.verts,
     labRange: LAB_GRASS.range, labHeight: LAB_GRASS.height, density: LAB_GRASS.density,
-    liveCells: field.live.size, at200, at110, shipped, glError: gl.getError(),
+    liveCells: field.live.size, at200, at110, shipped, sweep, glError: gl.getError(),
   };
 });
 
@@ -96,6 +97,10 @@ for (const [k, f] of [[`SHIPPED (range ${out.labRange})`, out.shipped], ['range 
   const verts = f.drawn.verts ?? f.drawn.blades * out.verts;
   console.log(`  ${k}: ${f.drawn.slots} slots (${f.drawn.farSlots ?? 0} on the far blade), ${f.drawn.blades} blades submitted (slot-sized would be ${cap}), ${(verts / 1e6).toFixed(2)}M verts, ${f.green} green px`);
   console.log(`         a five-quad blade for every held blade would have been ${(f.drawn.kept * out.verts / 1e6).toFixed(2)}M verts`);
+}
+console.log('\n  RANGE AGAINST COST, on this flat test ground:');
+for (const w of out.sweep ?? []) {
+  console.log(`    ${String(w.r).padStart(3)} m: ${(w.drawn.verts / 1e6).toFixed(2).padStart(5)}M verts, ${String(w.green).padStart(6)} lit px`);
 }
 check('no page errors and no GL error', pageErrors.length === 0 && out.glError === 0, `${pageErrors.join(' | ')} gl=${out.glError}`);
 check('the field grew and the frame has grass in it', out.liveCells > 0 && out.at200.green > 500, `${out.liveCells} cells, ${out.at200.green} green px`);

@@ -77,11 +77,12 @@
  {
   "name": "GRASS2-the-window-is-not-a-whole-number-of-cells-so-its-edges-fall-out-of-phase",
   "file": "src/render/labGrass.js",
-  "old": "export const LAB_GRASS = Object.freeze({ density: 1200000, height: 38, range: 250, span: 270, densitySpan: 210, seed: 0x2f6e2b1 });",
-  "new": "export const LAB_GRASS = Object.freeze({ density: 1200000, height: 38, range: 250, span: 260, densitySpan: 210, seed: 0x2f6e2b1 });",
+  "old": "export const LAB_GRASS = Object.freeze({ density: 1200000, height: 38, range: 300, span: 315, densitySpan: 210, seed: 0x2f6e2b1 });",
+  "new": "export const LAB_GRASS = Object.freeze({ density: 1200000, height: 38, range: 300, span: 310, densitySpan: 210, seed: 0x2f6e2b1 });",
   "tests": [
    "test/labGrass.test.js"
-  ]
+  ],
+  "why": "GRASS5 re-aimed by content: the range and span moved when the pack lifted the memory cap."
  },
  {
   "name": "GRASS2-the-tint-is-per-blade-noise-again-so-the-field-is-a-flat-carpet",
@@ -95,11 +96,12 @@
  {
   "name": "GRASS2-the-blade-is-the-labs-height-again",
   "file": "src/render/labGrass.js",
-  "old": "export const LAB_GRASS = Object.freeze({ density: 1200000, height: 38, range: 250, span: 270, densitySpan: 210, seed: 0x2f6e2b1 });",
-  "new": "export const LAB_GRASS = Object.freeze({ density: 1200000, height: 54, range: 250, span: 270, densitySpan: 210, seed: 0x2f6e2b1 });",
+  "old": "export const LAB_GRASS = Object.freeze({ density: 1200000, height: 38, range: 300, span: 315, densitySpan: 210, seed: 0x2f6e2b1 });",
+  "new": "export const LAB_GRASS = Object.freeze({ density: 1200000, height: 54, range: 300, span: 315, densitySpan: 210, seed: 0x2f6e2b1 });",
   "tests": [
    "test/labGrass.test.js"
-  ]
+  ],
+  "why": "GRASS5 re-aimed by content: same line, same law, new numbers around it."
  },
  {
   "name": "GRASS2-the-field-has-no-zone-of-its-own-so-its-cost-hides-inside-the-worlds",

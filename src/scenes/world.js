@@ -1519,7 +1519,15 @@ export async function bootWorld(canvas, renderer, params, status) {
     // Re-check at publish, or a wrong-class chunk stands until the
     // NEXT crossing (which a player who stops walking never makes).
     const wantStride = strideFor(px, py);
-    if (wantStride !== entry._stride) restrideTerrain(entry, wantStride);
+    // STREAM1: a promotion here is the same 3.12 ms as one in the
+    // crossing sweep, and this runs inside a publish that is already
+    // doing GPU uploads - so it goes on the same queue. A DEMOTION is
+    // 0.11 ms and settles now, because a pixel left at stride 1 in the
+    // far ring costs every frame until it is spent.
+    if (wantStride !== entry._stride) {
+      if (wantStride === 1) restridePending.set(key, entry);
+      else restrideTerrain(entry, wantStride);
+    }
     // E3: RMBLayout's THIRD act on an exterior StaticNPC, and the stand
     // of its billboard, in that order (:372-377).
     await standPixelNpcs(entry);
@@ -1612,6 +1620,34 @@ export async function bootWorld(canvas, renderer, params, status) {
   // re-builds from the pixel's own cached samples (blended, so a
   // location's flattening survives the round trip); the culling box is
   // already deep enough for either class (the skirt drop at build).
+
+  /** STREAM1: promotions to stride 1 waiting their turn, keyed by pixel
+   *  so a pixel that changes class twice before its turn comes is queued
+   *  once and settles on whatever `strideFor` says when it is spent. */
+  const restridePending = new Map();
+  /** How many stride-1 grids the frame loop will build in one frame. One
+   *  is 3.12 ms; two would be most of a 60 Hz budget on its own. */
+  const RESTRIDE_PER_FRAME = 1;
+
+  /** STREAM1: spend the queue, nearest pixel first - the near ring is
+   *  what the player is walking into. A pixel whose class changed back
+   *  while it waited is dropped without building anything. */
+  function spendRestrides() {
+    if (!restridePending.size) return;
+    let budget = RESTRIDE_PER_FRAME;
+    const want = [...restridePending.values()]
+      .sort((a, b) => (Math.abs(a.px - state.current.x) + Math.abs(a.py - state.current.y))
+        - (Math.abs(b.px - state.current.x) + Math.abs(b.py - state.current.y)));
+    for (const p of want) {
+      if (budget <= 0) break;
+      restridePending.delete(`${p.px},${p.py}`);
+      if (!built.has(`${p.px},${p.py}`)) continue;        // evicted while it waited
+      const s = strideFor(p.px, p.py);
+      if (s === p._stride) continue;                       // walked back out of the near ring
+      restrideTerrain(p, s);
+      budget--;
+    }
+  }
 
   function restrideTerrain(p, stride) {
     const grid = buildTerrainGrid(p.samples, stride, ghostSampler(woods, p.px, p.py));
@@ -9918,6 +9954,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     }
 
     // Streaming step: recentre, enqueue new pixels, drop far ones.
+    spendRestrides();   // STREAM1: a promoted pixel's grid, one a frame, off the crossing's own frame
     const wasMapPixel = { x: state.current.x, y: state.current.y };   // state.update overwrites it; PlayerGPS's lastMapPixelX/Y
     const r = state.update(cam.pos);
     if (r.offset) {
@@ -9985,9 +10022,24 @@ export async function bootWorld(canvas, renderer, params, status) {
       }
       // EV4: surviving pixels whose ring class changed with the walk
       // swap their terrain surface (full-res core <-> strided far ring).
+      //
+      // STREAM1 (2026-09-19): A PROMOTION IS QUEUED, NOT PAID HERE.
+      // Measured, `buildTerrainGrid` at stride 1 is 3.12 ms of main
+      // thread - 16,641 vertices, each with a central-difference normal
+      // - and a crossing promotes FIVE pixels at once, whatever the land
+      // view distance is (the ring boundary is Chebyshev 3, not the
+      // radius). Paying all five inline is 15.6 ms in a single frame, a
+      // dropped frame every 819 units walked. Demotions are 0.11 ms and
+      // stay inline; promotions go on a queue the frame loop spends a
+      // budget of, nearest first, exactly as GR5 fills grass cells. A
+      // pixel waiting its turn keeps the coarser surface it already had,
+      // which is the same heightfield at a tessellation nobody can
+      // resolve 1,600 units out.
       for (const p of built.values()) {
         const want = strideFor(p.px, p.py);
-        if (want !== p._stride) restrideTerrain(p, want);
+        if (want === p._stride) continue;
+        if (want === 1) restridePending.set(`${p.px},${p.py}`, p);   // the dear way round
+        else { restridePending.delete(`${p.px},${p.py}`); restrideTerrain(p, want); }
       }
       console.log(`stream: entered ${r.current.x},${r.current.y} (load ${r.load.length}, unload ${r.unload.length})`);
       // CAMP1 - GROUP ENCOUNTERS ON CHUNK LOAD (Mac, 2026-09-17: "this
