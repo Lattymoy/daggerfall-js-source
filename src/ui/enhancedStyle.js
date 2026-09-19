@@ -3585,6 +3585,82 @@ body:has(.dfchat.touch) .hudtext-stack { top: ${HUD_TEXT_TOP_CHAT_TOUCH_PX}px; }
 .shell .ft-tile-drawer { border-top: 2px solid rgba(125,116,96,0.3); }
 .shell .ft-rail { background: rgba(10,12,17,0.55); border: 2px solid rgba(125,116,96,0.35); }
 .shell .ft-rail-kv { border-top: 2px solid rgba(125,116,96,0.3); }
+/* ── LV2: THE RISING ── the enhanced level-up notification. Mac:
+   "Next up, I want to implement a new element. The enhanced level up
+   notification", with the window deferred - "Notify, then you choose".
+
+   WHERE IT SITS, AND WHY NOT WHERE THE REFERENCE PUTS IT. Skyrim's
+   notification is top-centre; this HUD's top-centre is taken twice
+   over - the compass strip at 18 and the popup column at
+   HUD_TEXT_TOP_PX, which is the surface every other line in the game
+   arrives on. A second centred stack there would sit on the first the
+   first time an ambient line and a level-up landed together. So it
+   goes where THIS hud already puts what is happening to YOU: above
+   the bottom block, with the vitals and the quickslots, growing
+   upward from a fixed foot so a flurry of skill rows never walks down
+   into them.
+
+   It is pointer-transparent like the rest of the HUD (the key is the
+   way in, and a pointer-locked player has no cursor to click with
+   anyway - ui/player/pointerLock.js's whole subject). */
+#enhanced-levelnotice {
+  position: fixed; left: 50%; bottom: 150px; transform: translateX(-50%);
+  z-index: 4; pointer-events: none;
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  font-family: ${PIXEL_STACK}; -webkit-font-smoothing: none;
+  font-variant-ligatures: none; font-feature-settings: 'liga' 0, 'clig' 0;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.85);
+  max-width: min(560px, 92vw);
+}
+.lv-note {
+  display: flex; align-items: center; gap: 10px;
+  padding: 5px 14px; color: #d8cfae;
+  background: rgba(10,12,17,0.55); border: 2px solid rgba(125,116,96,0.55);
+}
+.lv-note-gem { font-size: 15px; line-height: 1; color: #7d7460; }
+.lv-note-body { display: flex; align-items: baseline; gap: 10px; min-width: 0; }
+.lv-note-title { font-size: 15px; letter-spacing: 0.16em; text-indent: 0.16em; text-transform: uppercase; }
+.lv-note-sub { font-size: 17px; color: #d8cfae; }
+/* The key the level's row names, in the plate the controls pane uses
+   for a binding - it IS a binding, and a player who has seen it there
+   reads it here without being told. */
+.lv-note-key {
+  font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase;
+  color: #7d7460; border: 2px solid rgba(125,116,96,0.45); padding: 1px 7px;
+}
+/* THE LEVEL'S ROW WEARS THE CLASSIC GOLD PAIR, because it is the one
+   row that is asking for something. A skill line reports; this one
+   invites. */
+.lv-note-level { border-color: rgb(243,239,44); }
+.lv-note-level .lv-note-gem,
+.lv-note-level .lv-note-title { color: rgb(243,239,44); text-shadow: 2px 2px 0 rgb(93,77,12); }
+.lv-note-level .lv-note-sub { font-size: 19px; color: rgb(243,239,44); text-shadow: 2px 2px 0 rgb(93,77,12); }
+.lv-note-level .lv-note-key { color: #d8cfae; border-color: rgba(243,239,44,0.55); }
+/* A MASTERY is the rarest thing this strip ever says - a primary skill
+   at 100, once per skill per character - so it is the only row that
+   takes the brass. */
+.lv-note-mastery { border-color: var(--brass); }
+.lv-note-mastery .lv-note-gem, .lv-note-mastery .lv-note-title { color: var(--brass); }
+/* STANDING: the announcement has had its moment and the level is still
+   unspent, so the row folds down to a quiet reminder that stays. It is
+   the same element, not a second one - a reminder drawn somewhere else
+   is a second thing to keep in step with the first. */
+.lv-note.lv-standing { padding: 3px 10px; background: rgba(10,12,17,0.42); border-color: rgba(125,116,96,0.4); }
+.lv-note.lv-standing .lv-note-title { font-size: 12px; letter-spacing: 0.2em; text-indent: 0.2em; }
+.lv-note.lv-standing .lv-note-sub { font-size: 13px; }
+.lv-note.lv-standing .lv-note-gem { font-size: 12px; }
+.lv-note.lv-standing.lv-note-level { border-color: rgba(243,239,44,0.55); }
+@media (max-width: 720px) {
+  #enhanced-levelnotice { bottom: 128px; gap: 3px; max-width: 94vw; }
+  .lv-note { padding: 4px 10px; gap: 8px; }
+  .lv-note-title { font-size: 13px; letter-spacing: 0.1em; text-indent: 0.1em; }
+  .lv-note-sub { font-size: 15px; }
+  .lv-note-level .lv-note-sub { font-size: 16px; }
+}
+@media (max-height: 620px) {
+  #enhanced-levelnotice { bottom: 118px; }
+}
+
 /* ── LV1: THE ASCENSION ── the level-up window, on the sky the enhanced
    skin already stands on (ui/pixelGround.js). Mac's brief: Skyrim's
    level-up screen "in our own constellation vision".

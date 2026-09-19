@@ -120,6 +120,7 @@ import { identifySpellPass, identifiedTallyText, NOT_ENOUGH_SPELL_POINTS_TEXT } 
 import { liveBundles, dispelBundle, dispellableBundles, DISPEL_MAGIC_TEXT } from '../systems/mysticism.js';   // X10: the Dispel Magic picker
 import { ListPickerWindow, listPickerArtLoaded } from '../ui/listPicker.js';   // X10
 import { createItemLabels, grantCreatedItem, lastCreateItemIndex, setLastCreateItemIndex } from '../systems/createItem.js';   // X11b
+import { announceLevelUp } from '../ui/levelNotice.js';   // LV2: the level-up notification, and the skin fork over whether the window opens itself
 import { createCharSheetWindow } from '../ui/charSheetDoor.js';   // AUDIT 21 hosts F3: levelling in a building; LV1: through the ONE seam, so this host wears the skin's face like the other three
 import { NativeTradeWindow, preloadTradeArt, tradeArtLoaded, TRADE_RECTS } from '../ui/nativeTrade.js';   // U8c
 // U23: the static-NPC seam and the guild service popup.
@@ -405,27 +406,35 @@ export function createWorldModes(host) {
     onExhausted: onExhaustedInterior,   // AUDIT 23 (C5)
     say,
     onLevelUp: () => {
-      say('You have gained a level!');
-      // dfuiOpenCharacterSheetWindow (RaiseSkills :1414): the SHEET
-      // levels the player in classic. This host builds no windows -
-      // host.makeCharSheet is the outer host's own builder, the same
-      // one toggleCharSheet mounts.
-      // ORL1: ...and the LAST-RESORT screen, for a host that hands no
-      // builder, must obey this character's law too.
-      // LV1: WHICH IS THE DOOR'S QUESTION, SO IT IS ASKED THERE. This
-      // arm used to re-answer it inline - the mod's window when the mod
-      // levels this character, the classic rollout otherwise - and its
-      // own comment said it was "the only place in the tree that
-      // reaches for a level-up screen without" the door. That was true
-      // and it is exactly what THE FOUR HOSTS rule is about: when the
-      // enhanced skin grew a level-up face, three hosts got it through
-      // ui/charSheetDoor.js and this one, in both of its copies, kept
-      // handing out canvas rollouts. The door takes `entity` alone and
-      // answers the whole fork - skin, lane and book - so a face added
-      // to it is a face every host wears.
-      if (!interiorOverlay) {
-        interiorOverlay = host.makeCharSheet?.() ?? createCharSheetWindow({ entity: playerEntity });
-      }
+      // LV2 - THE RISING: the classic skin says its line and fills the
+      // slot below; the enhanced one announces on the HUD strip and
+      // leaves the level owed, so this host's ONE overlay slot is not
+      // taken from a player mid-anything.
+      announceLevelUp(playerEntity, { say, open: () => {
+        // dfuiOpenCharacterSheetWindow (RaiseSkills :1414): the SHEET
+        // levels the player in classic. This host builds no windows -
+        // host.makeCharSheet is the outer host's own builder, the same
+        // one toggleCharSheet mounts.
+        // ORL1: ...and the LAST-RESORT screen, for a host that hands no
+        // builder, must obey this character's law too.
+        // LV1: WHICH IS THE DOOR'S QUESTION, SO IT IS ASKED THERE. This
+        // arm used to re-answer it inline - the mod's window when the
+        // mod levels this character, the classic rollout otherwise -
+        // and its own comment said it was "the only place in the tree
+        // that reaches for a level-up screen without" the door. That
+        // was true and it is exactly what THE FOUR HOSTS rule is
+        // about: when the enhanced skin grew a level-up face, three
+        // hosts got it through ui/charSheetDoor.js and this one, in
+        // both of its copies, kept handing out canvas rollouts. The
+        // door takes `entity` alone and answers the whole fork - skin,
+        // lane and book - so a face added to it is a face every host
+        // wears.
+        // LV2: ...and the ENHANCED skin does not call this thunk at
+        // all until the player asks the sheet for it.
+        if (!interiorOverlay) {
+          interiorOverlay = host.makeCharSheet?.() ?? createCharSheetWindow({ entity: playerEntity });
+        }
+      } });
     },
     // SURV7: the outer host's env with the roof this host owns - sheltered, no sun, no water, no fire
     survivalEnv: () => (mode === 'interior' && host.survivalEnv ? { ...host.survivalEnv(), insideBuilding: true, insideDungeon: false, inSunlight: false, swimming: false, byFire: false } : null),   // AUDIT SURV B: the interior's reader answers in the interior alone (its gate claimed a roof outdoors)
@@ -1301,10 +1310,10 @@ export function createWorldModes(host) {
    *  billboard is CENTRE-anchored, so the base ends up ON the marker
    *  inside a building and half a height BELOW it inside a dungeon.
    *  This port's billboard shader is BOTTOM-anchored (position = base,
-   *  the C11 law dungeonContext.js:1613 states), so the same visual
+   *  the C11 law dungeonContext.js:1614 states), so the same visual
    *  result needs the shift on the DUNGEON side - which is exactly the
    *  shift the dungeon's own RDB flats already take
-   *  (dungeonContext.js:1518, `y - size.h / 2`), and which a building's
+   *  (dungeonContext.js:1519, `y - size.h / 2`), and which a building's
    *  flats correctly do not (interiorContext.js passes its centers
    *  straight through).
    *
@@ -5238,7 +5247,7 @@ export function createWorldModes(host) {
           hudMessageSink: (t) => questBridge?.notebook?.addMessage(t),
           // MAC1 J: and the relock the dungeon's pause door needs, on
           // the same threading - the context owns no canvas of its own
-          // (dungeonContext.js:5605), so the OUTER host's one rides in.
+          // (dungeonContext.js:5611), so the OUTER host's one rides in.
           // This is the most-played pause door of the six: world.js
           // gates its own Escape ladder on exterior mode, so underground
           // the key falls to routeKey -> ui/input.js:637 -> the
@@ -6200,7 +6209,7 @@ export function createWorldModes(host) {
           // AUDIT 39r: and the FLASH, which this arm was copied without.
           // An arrow reaches the player through BowDamage ->
           // ApplyDamageToPlayer -> SendDamageToPlayer, the same door as
-          // a blow (world.js:7508's own wave-46 note); the interior
+          // a blow (world.js:7528's own wave-46 note); the interior
           // MELEE hit already flashes inside exteriorFoes, so only this
           // arm - which applies its own damage - was missing it.
           flashPlayerDamage(dmg);   // BA1: RemoveHealth carries the amount
@@ -6379,7 +6388,7 @@ export function createWorldModes(host) {
     // last, over the viewmodel, under the overlay.
     // AUDIT 39: THE CALL IS UNCONDITIONAL. drawHud runs the damage
     // flash and the enhanced DOM HUD ABOVE its own `!art` return
-    // (hud.js:401-426) because neither reads ARENA2 - "a player whose
+    // (hud.js:402-430) because neither reads ARENA2 - "a player whose
     // HUD art failed to load still has vitals". Wrapping the whole
     // call in `if (hudArt)` inverted that: hudArt starts null and is
     // filled by a fire-and-forget load whose failure leaves it null
@@ -7006,7 +7015,7 @@ export function createWorldModes(host) {
   addEventListener('mousedown', (e) => {
     // AUDIT-MACK F2: THIS HOST DOES NOT FEED THE HELD SET, and MAC-K1
     // briefly made it. `keys` is not this host's - it arrives on the
-    // host bag (`exterior.js:3341`, `world.js`'s twin), and the OUTER
+    // host bag (`exterior.js:3355`, `world.js`'s twin), and the OUTER
     // host's own mousedown writes `keys.add(mouseCode(e.button))`
     // UNGATED, before any mode test, on a listener that is never
     // removed. So the three button codes were already in the Set while
@@ -7199,27 +7208,35 @@ export function createWorldModes(host) {
     onClose: () => { if (interiorOverlay?.isRestWindow) interiorOverlay = null; },
     say,
     onLevelUp: () => {
-      say('You have gained a level!');
-      // dfuiOpenCharacterSheetWindow (RaiseSkills :1414): the SHEET
-      // levels the player in classic. This host builds no windows -
-      // host.makeCharSheet is the outer host's own builder, the same
-      // one toggleCharSheet mounts.
-      // ORL1: ...and the LAST-RESORT screen, for a host that hands no
-      // builder, must obey this character's law too.
-      // LV1: WHICH IS THE DOOR'S QUESTION, SO IT IS ASKED THERE. This
-      // arm used to re-answer it inline - the mod's window when the mod
-      // levels this character, the classic rollout otherwise - and its
-      // own comment said it was "the only place in the tree that
-      // reaches for a level-up screen without" the door. That was true
-      // and it is exactly what THE FOUR HOSTS rule is about: when the
-      // enhanced skin grew a level-up face, three hosts got it through
-      // ui/charSheetDoor.js and this one, in both of its copies, kept
-      // handing out canvas rollouts. The door takes `entity` alone and
-      // answers the whole fork - skin, lane and book - so a face added
-      // to it is a face every host wears.
-      if (!interiorOverlay) {
-        interiorOverlay = host.makeCharSheet?.() ?? createCharSheetWindow({ entity: playerEntity });
-      }
+      // LV2 - THE RISING: the classic skin says its line and fills the
+      // slot below; the enhanced one announces on the HUD strip and
+      // leaves the level owed, so this host's ONE overlay slot is not
+      // taken from a player mid-anything.
+      announceLevelUp(playerEntity, { say, open: () => {
+        // dfuiOpenCharacterSheetWindow (RaiseSkills :1414): the SHEET
+        // levels the player in classic. This host builds no windows -
+        // host.makeCharSheet is the outer host's own builder, the same
+        // one toggleCharSheet mounts.
+        // ORL1: ...and the LAST-RESORT screen, for a host that hands no
+        // builder, must obey this character's law too.
+        // LV1: WHICH IS THE DOOR'S QUESTION, SO IT IS ASKED THERE. This
+        // arm used to re-answer it inline - the mod's window when the
+        // mod levels this character, the classic rollout otherwise -
+        // and its own comment said it was "the only place in the tree
+        // that reaches for a level-up screen without" the door. That
+        // was true and it is exactly what THE FOUR HOSTS rule is
+        // about: when the enhanced skin grew a level-up face, three
+        // hosts got it through ui/charSheetDoor.js and this one, in
+        // both of its copies, kept handing out canvas rollouts. The
+        // door takes `entity` alone and answers the whole fork - skin,
+        // lane and book - so a face added to it is a face every host
+        // wears.
+        // LV2: ...and the ENHANCED skin does not call this thunk at
+        // all until the player asks the sheet for it.
+        if (!interiorOverlay) {
+          interiorOverlay = host.makeCharSheet?.() ?? createCharSheetWindow({ entity: playerEntity });
+        }
+      } });
     },
     day: () => false, inside: () => true,   // a building interior, always
     restKind: () => { const p = interiorRestPlaceHere(); return p.houseOwned || p.isShip || !!p.room ? 'bed' : 'rough'; },   // SURV4: a rented room, your house or your ship is a bed; a guild hall's boards are rough
@@ -8445,9 +8462,9 @@ export function createWorldModes(host) {
      *  .cs:175-176 writes `weaponDrawn`/`usingLeftHand` off it,
      *  :420-421 restores them onto it. The port has FOUR PlayerWeapons
      *  (world.js's, this file's `interiorWeapon` :538, dungeonContext's
-     *  and exterior.js's - which this seam does not reach: that host has no save path at all, its charter exterior.js:2916-2938), and IS1 routed the inside-a-building save to
+     *  and exterior.js's - which this seam does not reach: that host has no save path at all, its charter exterior.js:2930-2994), and IS1 routed the inside-a-building save to
      *  the WORLD host's composer - which reads its own exterior rig
-     *  unconditionally (world.js:4920). So an F9 pressed in a shop
+     *  unconditionally (world.js:4940). So an F9 pressed in a shop
      *  recorded the street's sheath and hand, and the load wrote them
      *  back into the street's rig; the rig actually in the player's
      *  hands was in no envelope at all.
@@ -8474,7 +8491,7 @@ export function createWorldModes(host) {
      *  presenter for the whole visit) or the interior's? world.js's gate read townTalk's slot alone. */
     deathUp() { return mode === 'dungeon' ? !!dungeonCtx?.deathUp?.() : interiorOverlay instanceof DeathScreen; },
     /** The restore half - and NOT gated on the mode, deliberately.
-     *  worldQuickLoad calls forceExitToExterior FIRST (world.js:5033)
+     *  worldQuickLoad calls forceExitToExterior FIRST (world.js:5053)
      *  and only re-enters the building at :4217, so the mode at apply
      *  time is whatever the LOAD landed in, not whatever the SAVE was
      *  taken in: an outdoor save loaded while the player was indoors
@@ -8484,8 +8501,8 @@ export function createWorldModes(host) {
      *
      *  FLAG ONLY and presence-gated - both laws now stated once, in
      *  combat/playerWeapon.js's applyWeaponPose, with the citation.
-     *  HARD2c: this used to spell them out, and named `world.js:5146`
-     *  and `dungeonContext.js:5679` for its two sibling copies - lines
+     *  HARD2c: this used to spell them out, and named `world.js:5166`
+     *  and `dungeonContext.js:5685` for its two sibling copies - lines
      *  that had moved to :4418 and :5457. Three copies of a two-line
      *  law, and even the comment pointing between them had gone stale. */
     applyWeaponPose(pose) {

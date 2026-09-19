@@ -224,17 +224,17 @@ still push CLASSIC canvas windows as children under the DOM, and so
 does the pack's USE arm.
 
     THE SPELLBOOK       FIVE construction sites across FOUR hosts:
-                        worldModes.js:1864 (the factory) and :1904 (a
+                        worldModes.js:1873 (the factory) and :1904 (a
                         HAND-ROLLED second one, 342 lines below it in
                         the same file),
-                        dungeonContext.js:965, world.js:1850,
-                        exterior.js:2221. It is the only window TWO
+                        dungeonContext.js:966, world.js:1851,
+                        exterior.js:2235. It is the only window TWO
                         enhanced screens already push - the sheet's
                         button and the pack's USE hand-off, whose
                         close-then-hand-over ordering U55 got
                         backwards. No law needs extracting first.
     THE LOGBOOK         THREE sites: charSheetNav.js:53,
-    / NOTEBOOK          world.js:5869, dungeonContext.js:6108. A seam
+    / NOTEBOOK          world.js:5889, dungeonContext.js:6114. A seam
                         wants making, as U52's and U53's did.
     HISTORY             ONE site (charSheetNav.js:61), and it reads
                         only the entity's backStory. The small one.
@@ -7962,7 +7962,7 @@ same answer: `ui/spellbookDoor.js`, with each host handing it only
 what that host knows.
 
 THE "HAND-ROLLED DUPLICATE" WAS NOT ONE. The board recorded
-worldModes.js:2681 as a second book built by hand 342 lines below the
+worldModes.js:2690 as a second book built by hand 342 lines below the
 factory. Read closely it is the SPELL MERCHANT'S SHOP - buyMode, with
 `offered`, the building's quality, the shop name, the haggling skills
 and the classic clock. A different question with different deps, and
@@ -8045,7 +8045,7 @@ mutations, 4 dead.
 
 PX24 (Mac: "with the logbook and history, I want them as one detailed
 UI"): THE CHRONICLE. Two classic windows built at four sites -
-questJournal.js from charSheetNav:53, world.js:2255 and
+questJournal.js from charSheetNav:53, world.js:2263 and
 dungeonContext.js, playerHistory.js from charSheetNav:61 - become ONE
 seam (ui/chronicleDoor.js, the U52/U53/PX23 shape a sixth time) and,
 on the enhanced skin, ONE WINDOW.
@@ -8672,7 +8672,7 @@ and firing THAT twice is a second PopToHUD.
 
 ### Why only two of the four hosts crashed
 
-`worldModes.js:5592` and `dungeonContext.js:1468` answer the same
+`worldModes.js:5601` and `dungeonContext.js:1469` answer the same
 `onClose` by nulling their slot and never disposing - nothing to
 re-enter. Only the two hosts that come through `townTalk.closeOverlay`
 dispose. **The four-hosts rule caught this one by accident**: the two
@@ -9380,7 +9380,7 @@ than because the screen agrees with a narrower port.
 stays unbuilt - an owner call, unchanged: the port has no gamepad layer
 at all, the serialized joystick blocks are simply absent from
 `KeyBindData_v1`, and the flag that says so is
-`src/systems/inputActions.js:708`. The JOYSTICK tab still answers with
+`src/systems/inputActions.js:730`. The JOYSTICK tab still answers with
 its note, and Ledger `:593`'s live clause now names that window alone.
 `weaponSensitivitySlider` is commented out in DFU itself (:42, :355) -
 nine controls are built, the tenth is a stub - and
@@ -9916,9 +9916,9 @@ re-resolved the `exterior.js` half of a three-file sentence and left the
 `ExteriorAutomapWindow` construction, `:4101` on a `locationName:`
 field). Both halves are now read by `test/citedrift.test.js` - the
 existing entries only ever captured the exterior number, which is how
-the other half went stale unnoticed. (The rest cite named `world.js:6163`,
+the other half went stale unnoticed. (The rest cite named `world.js:6183`,
 the first of the host's TWO identical `act === 'Rest'` arms; ROAD-H H5
-deleted the second and the cite is `world.js:6169` now.)
+deleted the second and the cite is `world.js:6189` now.)
 
 ## AUDIT 62 F24/F25 - THE SENTINEL SWEEP WAS TWO WINDOWS SHORT (2026-09-07)
 
@@ -10103,7 +10103,7 @@ if (!dict.ContainsKey(key) && actionVal != Actions.Unknown)
     dict.Add(key, actionVal);                       // InputManager.cs:1950-1969
 ```
 
-- ported at `inputActions.js:557-567`, whose own comment already said
+- ported at `inputActions.js:579-589`, whose own comment already said
 "Raw map-set, NOT setBinding". So a hand-edited `KeyBindings.txt` that
 puts Jump on the run key as a SECONDARY, with the primary `Space` spent
 on something else, loads exactly as written; and it SURVIVES the
@@ -14704,9 +14704,9 @@ whether an entry MATCHES and asserts nothing.
 Following it out was worse than the symptom. Five Ledger rows cite a
 PAIR - `` `world.js:N`, `exterior.js:M` `` - and the table captured `M`
 alone. So `M` was re-resolved at every wave for a year and `N` was never
-read: `world.js:4388` named a line that is 8950, `:673` one that is
+read: `world.js:4405` named a line that is 8950, `:674` one that is
 1215, `:1094` one that is 2194, `:3903` one that is 3066, `:3920` one
-that is 8907. `world.js:4124-4156` and `dungeonContext.js:1316` were
+that is 8907. `world.js:4141-4173` and `dungeonContext.js:1317` were
 stale the same way. Seven numbers re-resolved BY CONTENT, every
 uncaptured half de-baked to `\d+`, and eight new entries added so every
 number in a pair is captured. The half nobody reads cannot rot in
@@ -16157,3 +16157,110 @@ The audit's own arithmetic: 28 pins (up from 22), `tools/mutants/lv1.json`
 which now stands a maxed character up and proves the way out is open,
 holds the chunk back and proves the pause is never blank, and proves a
 warm chunk never flashes the wait it makes unnecessary.
+
+## LV2 - THE RISING: the enhanced level-up notification (2026-09-19, Mac)
+
+Mac: "Next up, I want to implement a new element. The enhanced level up
+notification" - and, asked what it should do about the window that
+opened itself: **"Notify, then you choose"**, over all three events
+(the level, the skill raises under it, and a mastery).
+
+**What it replaces.** Until this slice a level-up SLAMMED a full-screen
+window over the game the instant the skill sum crossed a threshold -
+mid-swing, mid-chase, mid-sentence with a guard. That is DFU's own law
+(RaiseSkills' tail posts `dfuiOpenCharacterSheetWindow`,
+PlayerEntity.cs:1413-1414) and it is the right law for a 1996 window
+that paints in a tenth of a second. It is the wrong law for a skin
+whose level-up is a full-screen constellation (LV1), and it was the
+one screen in the game a player was GIVEN rather than opening.
+
+So on the enhanced skin the game tells you and lets you choose. The
+notice announces, the fanfare plays, and `readyToLevelUp` stays exactly
+where DFU leaves it - set. The window arrives when the player asks the
+sheet for it, which is where DFU levels you up anyway: since LV1
+`ui/charSheetDoor.js` returns the Ascension for a pending level, so the
+sheet key, the dial's Stats arm and the pause page are all already this
+door. **The classic skin is untouched, byte for byte** - the line, the
+sheet, and the mastery's click-anywhere box. This is a departure the
+enhanced skin makes on purpose and it has a Ledger A row.
+
+**The element is TWO HALVES, and keeping them apart is the design.** An
+ANNOUNCEMENT is an EVENT: it holds for `ANNOUNCE_MS` and goes. A
+REMINDER is a STATE: the level's row folds down to a quiet standing
+line and stays until the points are spent - and it is drawn from
+`entity.readyToLevelUp` read LIVE, not from a latch, so a level spent
+by any road this module never watches (the window, the font-less
+escape, a headless roll, a load) takes the reminder with it. A level
+OWED but never announced here - a save loaded with the flag set, a
+level earned while the surface was not mounted - still says so, because
+the strip is the only place that says a level is waiting.
+
+**What it says, and where.** Skyrim's notification is top-centre; this
+HUD's top-centre is taken twice over, by the compass strip and by the
+popup column every other line in the game arrives on. So it goes where
+this HUD already puts what is happening to YOU: above the bottom block,
+with the vitals and the quickslots, growing upward from a fixed foot so
+a flurry of skill rows never walks down into them. The level's row is
+drawn LAST - nearest the vitals, where the eye already is - and it is
+the only row that carries a KEY, because a skill line with a key on it
+reads as an instruction. The key is the REGISTRY's answer
+(`codeForAction`, the inverse of `actionForCode`, added in one home
+beside it), never a literal F5: a rebound key named by its default is
+FIX-F's bug and MAC-C's, one layer down.
+
+**ONE EVENT, ONE FANFARE.** `UpdatePlayerValues` plays the level-up
+sound when the rollout mounts (:373) because in DFU the rollout mounts
+AT the level-up. Here the two moments have come apart, so the sound
+moves to the MOMENT - the notice plays it - and the door asks
+`fanfareOwed` before the window, which may not open for another ten
+minutes, plays it again. A SECOND level earned while the first is
+unspent still sounds. Both rollout screens take `fanfare` as an
+argument and default to DFU's own behaviour, so the classic lane is
+unchanged.
+
+**The raises and the mastery moved with it.** A skill going up is a
+change to the CHARACTER, not another thing the world said, so on the
+enhanced skin it leaves the popup column for the strip. A mastery's
+box carries news and no choice, which makes it the same interruption
+the level-up window was, so it takes the same answer - and the FANFARE
+stays in both lanes, because it is the reward and not the interruption.
+The classic box and the classic line are still written in
+`scenes/shared.js`, where they always were; the seam takes them.
+
+**THE FOUR HOSTS RULE, and the fork written once.** Every level-up arm
+in the tree - world.js's ticker and rest arms and its arrival raise,
+exterior.js's two, worldModes.js's two and dungeonContext.js's -
+announces through `announceLevelUp` and hands it the host's OWN `open`
+thunk, because only a host knows how to put a window in its slot. The
+paint rides `ui/hud.js`'s `drawHud`, the one host-agnostic call all
+four already make, with the enhanced HUD's own hide gate.
+
+**What the pins had to be taught.** The most important mutant this
+slice has - THE WINDOW OPENS ITSELF AGAIN - survived the first suite:
+under node `typeof document === 'undefined'`, so every call took the
+CLASSIC arm and the arm the whole slice is about was unreachable. The
+three seams take a `doc` now, which is this tree's own idiom for "the
+page, or whatever a caller hands me" (ui/enhancedHudText.js's draws
+take it), and the enhanced arm is driven.
+
+**And a bookkeeping lesson worth writing down.** `tools/citeShift.mjs`
+says in its own header that a second `--apply` against the same base
+moves every cite AGAIN. Recovering this slice's line shifts by
+reverting the tree except the files it had edited re-created exactly
+that: the kept files still carried the first pass's moves, and the
+second pass moved them a second time - `dungeonContext.js:2209` became
+2221 where the line had gone to 2215. The repair is a pairing walk:
+read HEAD's number at the same position in the same file, resolve it
+BY CONTENT in the working tree, and write that. Forty-seven cites came
+back. Run the tool once per base, or pair against HEAD - never both.
+
+`test/levelNotice.test.js` - 16 pins. `tools/mutants/lv2.json` - 18
+mutants, 17 dead, 1 recorded equivalent. `tools/levelUpProbe.mjs` -
+121/121, whose notice lanes mount the real enhanced HUD under the strip
+at desktop and phone and drive its whole life: announce, fold, spend,
+gone. Those two lanes WAIT FOR the fold and the sweep rather than
+waiting them OUT: the first draft slept a flat 4700ms over
+`ANNOUNCE_MS`'s 4500 and went red three checks deep on a machine also
+running the suite, because the fold rides the HUD's own tick and a
+loaded tick runs late. A probe that sleeps a fixed margin over a
+deadline is a probe that measures the machine.

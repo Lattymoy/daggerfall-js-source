@@ -168,7 +168,8 @@ import { tryMobileEnemyActivate } from '../player/mobileEnemyActivate.js';
 import { FOUND_NOTHING_VALUABLE_TEXT_ID } from '../systems/talk.js';   // GetRandomText(8999)
 import { spellRecordOfIndex } from '../systems/loot.js';   // QG1: CastSpellDo's classic-record read (the G4 registry)
 import { preloadCharSheetArt } from '../ui/charsheet.js';   // U8a. AUDIT 44 (a11): no LevelUpScreen here - a level-up opens the SHEET, and the skin fork behind charSheetDoor decides which face it wears.
-import { createCharSheetWindow, charSheetDoorReady, warmLevelUpWindow } from '../ui/charSheetDoor.js';   // U52: the sheet's ONE seam, and the skin fork in front of it
+import { createCharSheetWindow, charSheetDoorReady, warmLevelUpWindow } from '../ui/charSheetDoor.js';
+import { announceLevelUp } from '../ui/levelNotice.js';   // LV2: the level-up notification, and the skin fork over whether the window opens itself   // U52: the sheet's ONE seam, and the skin fork in front of it
 import { QuestJournalWindow, preloadQuestJournalArt } from '../ui/questJournal.js';   // U43: the LogBook and NoteBook doors
 import { createChronicleWindow } from '../ui/chronicleDoor.js';   // PX24d: the chronicle's one door
 import { openPixelDial } from '../ui/pixelDial.js';   // PX15: the Tab compass rose
@@ -1971,10 +1972,17 @@ export async function bootWorld(canvas, renderer, params, status) {
     say: (msg, delay) => townTalk.say(msg, delay),
     onLevelUp: () => {
       console.log('[player] You have gained a level!');
-      // DFU posts dfuiOpenCharacterSheetWindow (RaiseSkills :1414) -
-      // the SHEET is where classic levels you up, and the door picks
-      // the skin's face for it.
-      townTalk.showOverlay(makeCharSheetWindow());
+      // LV2 - THE RISING (Mac: "Notify, then you choose"). DFU posts
+      // dfuiOpenCharacterSheetWindow here (RaiseSkills :1414) and the
+      // CLASSIC skin still does exactly that - the seam takes this
+      // host's own `open` thunk and calls it. The ENHANCED skin
+      // announces instead and leaves `readyToLevelUp` set, so the
+      // constellation window arrives when the player asks the sheet
+      // for it rather than over whatever they were doing.
+      announceLevelUp(playerEntity, {
+        say: (m) => townTalk.say(m),
+        open: () => townTalk.showOverlay(makeCharSheetWindow()),
+      });
     },
   });   // AUDIT 18: the per-minute tick every host owes
   // AUDIT 21 (hosts lane, F6): this host's death presenter. Guard damage,
@@ -3106,10 +3114,10 @@ export async function bootWorld(canvas, renderer, params, status) {
   // ?dungeon host RAN every CastWhenUsed / CastWhenStrikes / SoulBound
   // / affinity arm against no ctx at all. They are optional-chained, so
   // it WAS silent. WAVE D closed it: the body is scenes/hostEnchant.js
-  // and dungeonContext.js:2203 mounts the same one, gated on
+  // and dungeonContext.js:2209 mounts the same one, gated on
   // `opts.enchantCtx !== false` because setDefaultEnchantCtx is a
   // session singleton and EC1 already routes THIS host's mount into
-  // that context through modes.dungeonCtx - so worldModes.js:4657
+  // that context through modes.dungeonCtx - so worldModes.js:4666
   // passes false beside its `chargen: false` and only the standalone
   // ?dungeon route mounts its own. S40 filled isResting
   // in - the sentence that stood here said it "stays absent above
@@ -3770,8 +3778,17 @@ export async function bootWorld(canvas, renderer, params, status) {
     onClose: () => { if (townTalk.overlay?.isRestWindow) townTalk.closeOverlay?.(); },
     say: (msg) => townTalk.say(msg),
     onLevelUp: () => {
-      townTalk.say('You have gained a level!');
-      townTalk.showOverlay(makeCharSheetWindow());   // dfuiOpenCharacterSheetWindow (RaiseSkills :1414)
+      // LV2 - THE RISING (Mac: "Notify, then you choose"). DFU posts
+      // dfuiOpenCharacterSheetWindow here (RaiseSkills :1414) and the
+      // CLASSIC skin still does exactly that - the seam takes this
+      // host's own `open` thunk and calls it. The ENHANCED skin
+      // announces instead and leaves `readyToLevelUp` set, so the
+      // constellation window arrives when the player asks the sheet
+      // for it rather than over whatever they were doing.
+      announceLevelUp(playerEntity, {
+        say: (m) => townTalk.say(m),
+        open: () => townTalk.showOverlay(makeCharSheetWindow()),
+      });
     },
     // CalculateHealthRecoveryRate's flags, live: outdoors, and day by
     // the clock - which is the ONE place RapidHealing InLight differs.
@@ -4821,7 +4838,10 @@ export async function bootWorld(canvas, renderer, params, status) {
         // arrival raise owes it exactly as the rest-end raise does.
         lines: (id) => townTalk.lines(id),
         box: (rows) => townTalk.showOverlay(new ActionTextBox(rows)),
-        onLevelUp: () => townTalk.showOverlay(makeCharSheetWindow()),
+        onLevelUp: () => announceLevelUp(playerEntity, {   // LV2: the arrival raise takes the same fork as the other two
+          say: (m) => townTalk.say(m),
+          open: () => townTalk.showOverlay(makeCharSheetWindow()),
+        }),
       });
       // D4 - performFastTravel's very last line before the event
       // (:381). The popup smashed the screen to black on the frame the
@@ -4900,7 +4920,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // so an F9 pressed inside a shop recorded the street's sheath and
     // hand. The mode host answers for the rig that is actually drawn
     // and null outside interior mode (the dungeon owns its own
-    // composer, dungeonContext.js:5585), so exterior mode and a
+    // composer, dungeonContext.js:5591), so exterior mode and a
     // pre-seam mode host compose exactly as before, per field.
     const wp = modes?.weaponPose?.() ?? null;
     const snap = snapshotPlayer(playerEntity, {
@@ -6678,7 +6698,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // exterior -> the townTalk overlay, interior OR dungeon -> the mode
   // machine's slot. U43-ii shipped the dungeon half: showQuestBox
   // offers the window to `modes.showQuestOverlay` below, and
-  // worldModes answers it in BOTH modes (worldModes.js:7484-7496 -
+  // worldModes answers it in BOTH modes (worldModes.js:7501-7564 -
   // dungeon routes to dungeonCtx.showOverlay), so a dungeon popup is
   // shown rather than logged loudly and dropped.
   // AUDIT 24 (wave 21): DaggerfallMessageBox.Show() is a
@@ -10723,7 +10743,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // layer, because a talk window is a modal above the vitals.
     // AUDIT 39: THE CALL IS UNCONDITIONAL. drawHud runs the damage
     // flash and the enhanced DOM HUD ABOVE its own `!art` return
-    // (hud.js:401-426) because neither reads ARENA2 - "a player whose
+    // (hud.js:402-430) because neither reads ARENA2 - "a player whose
     // HUD art failed to load still has vitals". Wrapping the whole
     // call in `if (hudArt)` inverted that: hudArt starts null and is
     // filled by a fire-and-forget load whose failure leaves it null

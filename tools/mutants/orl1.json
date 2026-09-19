@@ -664,12 +664,12 @@
   {
     "name": "the-interior-hosts-SECOND-last-resort-skips-the-door",
     "file": "src/scenes/worldModes.js",
-    "old": "        interiorOverlay = host.makeCharSheet?.() ?? createCharSheetWindow({ entity: playerEntity });\n      }\n    },\n    day: () => false, inside: () => true,",
-    "new": "        interiorOverlay = host.makeCharSheet?.();\n      }\n    },\n    day: () => false, inside: () => true,",
+    "old": "          interiorOverlay = host.makeCharSheet?.() ?? createCharSheetWindow({ entity: playerEntity });\n        }\n      } });\n    },\n    day: () => false, inside: () => true,",
+    "new": "          interiorOverlay = host.makeCharSheet?.();\n        }\n      } });\n    },\n    day: () => false, inside: () => true,",
     "tests": [
       "test/orl1_leveling.test.js"
     ],
-    "why": "LV1 re-aimed BY CONTENT, with the trailing context that names the SECOND arm."
+    "why": "LV2 re-aimed BY CONTENT: the arm is inside announceLevelUp's `open` thunk now (the enhanced skin does not call it until the player asks), and the trailing context still names the SECOND of the two."
   },
   {
     "name": "the-plan-takes-the-fewest-rows-instead-of-the-most-points",

@@ -1,0 +1,178 @@
+[
+  {
+    "name": "the-window-opens-itself-again",
+    "file": "src/ui/levelNotice.js",
+    "old": "  levelNotices.announceLevel(entity?.pendingLevel ?? ((entity?.level ?? 0) + 1), now);\n  audio.playOneShot(SOUND.LevelUp, 1);   // UpdatePlayerValues (:373) - moved to the MOMENT, which is what a notification is\n  return true;",
+    "new": "  say?.('You have gained a level!');\n  open?.();\n  return false;",
+    "tests": [
+      "test/levelNotice.test.js"
+    ],
+    "why": "The whole slice: 'Notify, then you choose' (Mac). The enhanced skin must not slam a full-screen window over a player mid-swing."
+  },
+  {
+    "name": "the-classic-skin-loses-its-sheet",
+    "file": "src/ui/levelNotice.js",
+    "old": "    say?.('You have gained a level!');\n    open?.();\n    return false;",
+    "new": "    say?.('You have gained a level!');\n    return false;",
+    "tests": [
+      "test/levelNotice.test.js"
+    ],
+    "why": "DFU posts dfuiOpenCharacterSheetWindow (RaiseSkills :1414) and the classic lane is byte-for-byte what it was before this slice."
+  },
+  {
+    "name": "the-reminder-is-remembered-instead-of-read",
+    "file": "src/ui/levelNotice.js",
+    "old": "        if (!owed) continue;                         // spent, by any road - the reminder is state, not memory",
+    "new": "        if (false) continue;",
+    "tests": [
+      "test/levelNotice.test.js"
+    ],
+    "why": "A level spent by the window, the font-less escape, a headless roll or a load leaves a line on screen telling the player to spend it again."
+  },
+  {
+    "name": "a-level-owed-but-never-announced-says-nothing",
+    "file": "src/ui/levelNotice.js",
+    "old": "    if (owed && !out.some((r) => r.kind === NOTICE_LEVEL)) {",
+    "new": "    if (false) {",
+    "tests": [
+      "test/levelNotice.test.js"
+    ],
+    "why": "A save loaded with the flag set, or a level earned while the surface was not mounted: the strip is the only place that says a level is waiting."
+  },
+  {
+    "name": "the-standing-reminder-still-calls-itself-news",
+    "file": "src/ui/levelNotice.js",
+    "old": "        out.push({ ...r, standing, title: standing ? AWAITS_TITLE : r.title });",
+    "new": "        out.push({ ...r, standing });",
+    "tests": [
+      "test/levelNotice.test.js"
+    ]
+  },
+  {
+    "name": "the-level-row-moves-under-the-player",
+    "file": "src/ui/levelNotice.js",
+    "old": "    return out.sort((a, b) => (Number(a.kind === NOTICE_LEVEL) - Number(b.kind === NOTICE_LEVEL)) || (b.seq - a.seq));",
+    "new": "    return out.sort((a, b) => b.seq - a.seq);",
+    "tests": [
+      "test/levelNotice.test.js"
+    ],
+    "why": "raiseSkills raises the skills and THEN levels the player, so a plain newest-first sort puts the one row that asks for something in a different place every time."
+  },
+  {
+    "name": "the-cap-eats-the-level",
+    "file": "src/ui/levelNotice.js",
+    "old": "      const drop = this.rows.findIndex((r) => r.kind !== NOTICE_LEVEL);",
+    "new": "      const drop = 0;",
+    "tests": [
+      "test/levelNotice.test.js"
+    ],
+    "why": "A rest raises a handful of skills in one pass; the row a player is looking for must not be the one pushed off the strip."
+  },
+  {
+    "name": "a-second-raise-stacks-a-second-row",
+    "file": "src/ui/levelNotice.js",
+    "old": "    const at = this.rows.findIndex((r) => r.key === key);",
+    "new": "    const at = -1;",
+    "tests": [
+      "test/levelNotice.test.js"
+    ]
+  },
+  {
+    "name": "the-window-replays-the-fanfare-the-strip-played",
+    "file": "src/ui/levelNotice.js",
+    "old": "    return this.announcedLevel == null || this.announcedLevel !== level;",
+    "new": "    return true;",
+    "tests": [
+      "test/levelNotice.test.js"
+    ],
+    "why": "One event, one sound: the strip plays it where the level was earned and the window may not open for ten minutes."
+  },
+  {
+    "name": "the-fanfare-latch-outlives-the-level",
+    "file": "src/ui/levelNotice.js",
+    "old": "    if (!owed) this.announcedLevel = null;",
+    "new": "    if (false) this.announcedLevel = null;",
+    "tests": [
+      "test/levelNotice.test.js"
+    ]
+  },
+  {
+    "name": "the-hidden-HUD-keeps-its-strip",
+    "file": "src/ui/levelNotice.js",
+    "old": "  const rows = hidden ? [] : levelNotices.frame(now, { owed });",
+    "new": "  const rows = levelNotices.frame(now, { owed });",
+    "tests": [
+      "test/levelNotice.test.js"
+    ],
+    "why": "AUDIT 64 F37: a persistent DOM overlay stays painted unless told otherwise."
+  },
+  {
+    "name": "the-strip-names-a-key-nobody-bound",
+    "file": "src/ui/levelNotice.js",
+    "old": "export const sheetKeyText = () => buttonText(codeForAction(bindings(), 'CharacterSheet'), true);",
+    "new": "export const sheetKeyText = () => 'F5';",
+    "tests": [
+      "test/levelNotice.test.js"
+    ],
+    "why": "FIX-F's bug and MAC-C's, one layer down: a rebound key the screen still names by its default."
+  },
+  {
+    "name": "the-key-chip-rides-every-row",
+    "file": "src/ui/levelNotice.js",
+    "old": "  if (r.kind === NOTICE_LEVEL) {\n    const k = doc.createElement('span');",
+    "new": "  if (true) {\n    const k = doc.createElement('span');",
+    "tests": [
+      "test/levelNotice.test.js"
+    ],
+    "why": "A skill line with a key on it reads as an instruction."
+  },
+  {
+    "name": "the-inverse-lookup-answers-the-secondary-first",
+    "file": "src/systems/inputActions.js",
+    "old": "  for (const dict of [store?.primary, store?.secondary]) {",
+    "new": "  for (const dict of [store?.secondary, store?.primary]) {",
+    "tests": [
+      "test/levelNotice.test.js"
+    ],
+    "equivalent": true,
+    "why": "EQUIVALENT at the shipped bindings, where no action carries a secondary code - and the ORDER is still the law (actionForCode resolves primary first, so the key this names must be the key that answers). Recorded rather than chased: a pin that needed a second binding to exist would be pinning the fixture, not the port."
+  },
+  {
+    "name": "a-host-stops-announcing",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    announceLevelUp(playerEntity, {\n      say: (m) => hudText.add(m),\n      open: () => api.toggleCharSheet(),\n    });",
+    "new": "    hudText.add('You have gained a level!');\n    api.toggleCharSheet();",
+    "tests": [
+      "test/levelNotice.test.js"
+    ],
+    "why": "THE FOUR HOSTS RULE: the answer to 'does the window open itself' is written once, or it is written four times and drifts."
+  },
+  {
+    "name": "the-raise-goes-back-to-the-popup-column",
+    "file": "src/scenes/shared.js",
+    "old": "    (id) => announceSkillRaise(id, skillValue(entity, id), { say })) ?? [];",
+    "new": "    (id) => say(`Your ${SKILL_NAMES[id]} skill has improved.`)) ?? [];",
+    "tests": [
+      "test/levelNotice.test.js"
+    ]
+  },
+  {
+    "name": "the-mastery-box-interrupts-the-enhanced-skin-again",
+    "file": "src/scenes/shared.js",
+    "old": "      announceMastery(id, { box, rows: plainLines(lines?.(MASTERY_TEXT_ID)) });",
+    "new": "      const rows = plainLines(lines?.(MASTERY_TEXT_ID)); if (rows?.length) box?.(rows);",
+    "tests": [
+      "test/levelNotice.test.js"
+    ]
+  },
+  {
+    "name": "the-HUD-stops-driving-the-strip",
+    "file": "src/ui/hud.js",
+    "old": "    drawLevelNotices({ hidden: cursorActive || !hudRenderEnabled() });",
+    "new": "    /* no strip */",
+    "tests": [
+      "test/levelNotice.test.js",
+      "test/enhancedHud.test.js"
+    ]
+  }
+]

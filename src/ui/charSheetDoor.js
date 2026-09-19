@@ -43,6 +43,7 @@ import { registerOverlay } from './enhancedOverlays.js';   // PX28: Tab puts it 
 import { CharSheet, LevelUpScreen, charSheetArtLoaded } from './charsheet.js';
 import { charSheetHooks } from './charSheetNav.js';
 import { VirtueLevelUpScreen } from './virtueLevelUp.js';   // ORL1
+import { levelNotices } from './levelNotice.js';   // LV2: who already played the fanfare
 import { usesVirtueLeveling } from '../systems/oblivionLeveling.js';   // ORL1
 import { spendPoolLowest } from '../systems/chargen.js';   // LV1: the headless pool policy, for the font-less escape
 
@@ -144,7 +145,16 @@ export function createCharSheetWindow(deps = {}) {
   // them.
   if (deps.entity?.readyToLevelUp) {
     const virtue = !deps.entity?.oghmaLevelUp && usesVirtueLeveling(deps.entity);
-    const rollout = () => (virtue ? new VirtueLevelUpScreen(deps.entity) : new LevelUpScreen(deps.entity));
+    // LV2: ...and whether the WINDOW still owes the fanfare. On the
+    // enhanced skin ui/levelNotice.js played it at the moment the level
+    // was earned, which may be long before this window is asked for;
+    // playing it again here would announce one event twice. The notice
+    // answers for the level it announced and for no other, so a second
+    // level earned while the first was unspent still sounds.
+    const fanfare = levelNotices.fanfareOwed(deps.entity?.pendingLevel ?? null);
+    const rollout = () => (virtue
+      ? new VirtueLevelUpScreen(deps.entity, { fanfare })
+      : new LevelUpScreen(deps.entity, undefined, { fanfare }));
     // `document` for the reason this file's other fork gives: node
     // drives these hosts headless and keeps the canvas windows.
     if (isEnhanced() && typeof document !== 'undefined') return enhancedLevelUpOverlay(rollout(), deps.entity);

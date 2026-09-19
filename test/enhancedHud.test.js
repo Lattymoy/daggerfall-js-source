@@ -59,7 +59,14 @@ test('PX30: the HUD rides the ONE host-agnostic call, and the classic keeps its 
   // viewmodel" - the same reasoning the damage flash rides.
   // PX30b gave the call the two hands; the shape it guards is
   // unchanged - one branch, on the skin, and it RETURNS.
-  assert.match(hud, /if \(isEnhanced\(\) && typeof document !== 'undefined'\) \{\s*\n\s*drawEnhancedHud\(vitals, heading01, dt, \{/);
+  // LV2 re-aimed this BY CONTENT: the branch is still ONE branch on the
+  // skin and it still returns, but the enhanced skin now has a second
+  // surface inside it - ui/levelNotice.js's strip, which rides the same
+  // one call for the same reason and takes the same hide gate. What the
+  // pin is about is the BRANCH, not the number of lines in it.
+  assert.match(hud, /if \(isEnhanced\(\) && typeof document !== 'undefined'\) \{\s*\n\s*drawLevelNotices\(\{ hidden: cursorActive \|\| !hudRenderEnabled\(\) \}\);\s*\n\s*drawEnhancedHud\(vitals, heading01, dt, \{/);
+  assert.equal((hud.match(/if \(isEnhanced\(\) && typeof document !== 'undefined'\) \{/g) ?? []).length, 1,
+    'ONE branch on the skin, not one per surface');
   const branch = hud.slice(hud.indexOf('if (isEnhanced() && typeof document'));
   assert.ok(branch.indexOf('return;') < branch.indexOf('if (!art) return;'), 'the enhanced branch returns');
   // ABOVE the `!art` return, like the flash: the enhanced HUD reads no

@@ -86,8 +86,19 @@ export const charSheetArtLoaded = () => !!_art;
 export { carriedWeight };
 
 export class LevelUpScreen {
-  constructor(entity, rolls = Math.random) {
-    audio.playOneShot(SOUND.LevelUp, 1);   // UpdatePlayerValues (:373) - the level-up fanfare
+  /**
+   * LV2: `fanfare` is the third argument and it is a QUESTION ABOUT
+   * WHO ALREADY SPOKE. UpdatePlayerValues plays the level-up sound
+   * when the rollout mounts (:373) because in DFU the rollout mounts
+   * AT the level-up. On the enhanced skin the two moments have come
+   * apart: the notice announces and plays it where the player earned
+   * it, and this window may not open for another ten minutes. One
+   * event, one sound - so the door that knows the notice already spoke
+   * passes false, and every other caller keeps DFU's own behaviour by
+   * default.
+   */
+  constructor(entity, rolls = Math.random, { fanfare = true } = {}) {
+    if (fanfare) audio.playOneShot(SOUND.LevelUp, 1);   // UpdatePlayerValues (:373) - the level-up fanfare
     this.entity = entity;
     // Roll the pool NOW so the screen can show it; the base stats are
     // the floors (statDown returns points only above them).

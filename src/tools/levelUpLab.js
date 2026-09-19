@@ -87,6 +87,37 @@ export async function mount(lane = 'classic') {
   // for zero. DFU's own CheckIfDoneLeveling has the IsAllMax term for
   // exactly this character, and the lab can now stand one up.
   if (lane === 'allmax') for (const k of Object.keys(entity.stats)) entity.stats[k] = 100;
+  // LV2 - THE RISING. The notification is a HUD element, so the lane
+  // mounts the REAL enhanced HUD under it: placement is the whole
+  // question and a strip judged over an empty page would be judged
+  // against nothing. Everything below the fake vitals is shipping
+  // code.
+  if (lane === 'notice') {
+    const [{ drawEnhancedHud }, notice] = await Promise.all([
+      import('../ui/enhancedHud.js'),
+      import('../ui/levelNotice.js'),
+    ]);
+    entity.readyToLevelUp = true;
+    notice.announceLevelUp(entity, {});
+    notice.announceSkillRaise(SKILLS.Archery, 26, {});
+    notice.announceSkillRaise(SKILLS.Climbing, 41, {});
+    notice.announceMastery(SKILLS.LongBlade, {});
+    const vitals = {
+      health: 96, maxHealth: 118, fatigue: 104 * 64, maxFatigue: 120 * 64,
+      magicka: 0, maxMagicka: 0, breath: null,
+    };
+    let heading = 0;
+    const tick = () => {
+      if (globalThis.__lv?.lane !== 'notice') return;
+      heading = (heading + 0.0004) % 1;
+      drawEnhancedHud(vitals, heading, 16, { hidden: false });
+      notice.drawLevelNotices({ owed: !!entity.readyToLevelUp });
+      globalThis.requestAnimationFrame(tick);
+    };
+    globalThis.__lv = { entity, lane, notice, spend: () => { entity.readyToLevelUp = false; } };
+    tick();
+    return null;
+  }
   if (lane === 'door') {
     // THE REAL DOOR. It builds its own rollout, its own host div and
     // its own wait; the lab holds the overlay so a probe can read the
@@ -133,7 +164,7 @@ function done(lane) {
 // The lane picker. Kept out of the window's own tree so nothing on
 // screen belongs to the lab except this one strip.
 const bar = document.getElementById('lanes');
-for (const lane of ['classic', 'oghma', 'virtue', 'allmax', 'door']) {
+for (const lane of ['classic', 'oghma', 'virtue', 'allmax', 'door', 'notice']) {
   const b = document.createElement('button');
   b.textContent = lane;
   b.dataset.lane = lane;

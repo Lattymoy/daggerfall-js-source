@@ -355,6 +355,80 @@ for (const [label, viewport] of [
   await ctx.close();
 }
 
+// ── 14. LV2: THE RISING, over the real HUD ───────────────────────
+//
+// The notification is a HUD element and placement is its whole
+// question, so the lab mounts the REAL enhanced HUD under it and this
+// reads the boxes: a strip judged over an empty page is judged against
+// nothing.
+for (const [label, viewport] of [
+  ['notice', { width: 1400, height: 900 }],
+  ['notice phone', { width: 390, height: 844 }],
+]) {
+  const ctx = await browser.newContext({ viewport });
+  const page = await ctx.newPage();
+  const errors = [];
+  page.on('pageerror', (e) => errors.push(e.message));
+  await page.goto(`${BASE}/levelup.html?lane=notice`, { waitUntil: 'load' });
+  await page.waitForSelector('#enhanced-levelnotice .lv-note', { timeout: 20000 });
+  const rows = (await page.locator('.lv-note').allInnerTexts()).map((s) => s.replace(/\s+/g, ' ').trim());
+  check(`${label}: all three events are on the strip`, rows.length === 4, rows.join(' / '));
+  check(`${label}: the level's row is LAST - nearest the vitals, where the eye is`,
+    /risen/i.test(rows.at(-1) ?? ''), rows.at(-1));
+  check(`${label}: and it names the key that opens the window`,
+    (await page.locator('.lv-note-level .lv-note-key').innerText()).trim().length > 0,
+    await page.locator('.lv-note-level .lv-note-key').innerText());
+  check(`${label}: a skill row carries no key - a line that reports is not an instruction`,
+    (await page.locator('.lv-note-skill .lv-note-key').count()) === 0);
+
+  const geo = await page.evaluate(() => {
+    const r = (s) => { const n = document.querySelector(s); if (!n) return null; const b = n.getBoundingClientRect(); return { x: b.x, y: b.y, w: b.width, h: b.height, r: b.right, b: b.bottom }; };
+    const strip = r('#enhanced-levelnotice');
+    return { vw: window.innerWidth, vh: window.innerHeight, strip, bottom: r('.hud-bottom'), top: r('.hud-top'),
+      events: strip ? getComputedStyle(document.querySelector('#enhanced-levelnotice')).pointerEvents : null,
+      scrollW: document.documentElement.scrollWidth, scrollH: document.documentElement.scrollHeight };
+  });
+  check(`${label}: the strip is on screen`, geo.strip && geo.strip.x >= 0 && geo.strip.r <= geo.vw + 1 && geo.strip.y >= 0 && geo.strip.b <= geo.vh + 1,
+    geo.strip ? `${Math.round(geo.strip.x)},${Math.round(geo.strip.y)} ${Math.round(geo.strip.w)}x${Math.round(geo.strip.h)}` : 'missing');
+  // IT MUST NOT SIT ON THE HUD. The bottom block is the vitals and the
+  // quickslots - the two things a player reads in a fight.
+  const clear = !geo.bottom || geo.strip.b <= geo.bottom.y;
+  check(`${label}: it clears the vitals and the quickslots`, clear,
+    `strip bottom ${Math.round(geo.strip.b)} vs hud top ${Math.round(geo.bottom?.y ?? 0)}`);
+  check(`${label}: and the compass`, !geo.top || geo.strip.y >= geo.top.b,
+    `strip top ${Math.round(geo.strip.y)} vs compass bottom ${Math.round(geo.top?.b ?? 0)}`);
+  check(`${label}: no overflow`, geo.scrollW <= geo.vw + 1 && geo.scrollH <= geo.vh + 1,
+    `${geo.scrollW}x${geo.scrollH} vs ${geo.vw}x${geo.vh}`);
+  // IT CANNOT EAT A CLICK. The HUD is pointer-transparent and this is
+  // part of the HUD: the key is the way in, and a player at mouselook
+  // has no cursor to click with anyway.
+  check(`${label}: it is pointer-transparent, like the rest of the HUD`, geo.events === 'none', geo.events);
+  await page.screenshot({ path: `${shots}/levelnotice-${label.replace(/\W+/g, '-')}.png` });
+
+  // THE ANNOUNCEMENT IS AN EVENT: past its hold, the chatter goes and
+  // the level FOLDS to a reminder that says something else.
+  // Waited FOR rather than waited OUT: ANNOUNCE_MS is 4500 but the fold
+  // rides the HUD's own tick, and a loaded machine can run that tick late
+  // enough that a flat 4700 reads the strip mid-announcement (caught under
+  // a parallel `npm run check`). The deadline is generous; the happy path
+  // still leaves the moment the chatter goes.
+  await page.waitForFunction(() => document.querySelectorAll('.lv-note').length <= 1, null, { timeout: 15000 })
+    .catch(() => {});
+  const after = (await page.locator('.lv-note').allInnerTexts()).map((s) => s.replace(/\s+/g, ' ').trim());
+  check(`${label}: the chatter expires`, after.length === 1, after.join(' / '));
+  check(`${label}: and the level folds to a standing reminder, in different words`,
+    /awaits/i.test(after[0] ?? '') && (await page.locator('.lv-note.lv-standing').count()) === 1, after[0]);
+
+  // THE REMINDER IS A STATE: spend the level by any road and it goes.
+  await page.evaluate(() => globalThis.__lv.spend());
+  await page.waitForFunction(() => !document.querySelector('#enhanced-levelnotice'), null, { timeout: 5000 })
+    .catch(() => {});
+  check(`${label}: spending the level takes the reminder with it`,
+    (await page.locator('#enhanced-levelnotice').count()) === 0);
+  check(`${label}: no page errors`, errors.length === 0, errors.join(' | '));
+  await ctx.close();
+}
+
 await browser.close();
 
 const failed = results.filter((r) => !r.ok);

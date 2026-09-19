@@ -1126,7 +1126,12 @@ test('ORL1: the mod\'s window is the door\'s, in BOTH lanes, and the classic she
   // what the classic lane gets.
   assert.match(door, /const virtue = !deps\.entity\?\.oghmaLevelUp && usesVirtueLeveling\(deps\.entity\);/,
     'the mod\'s question is asked first, and the book is not the mod\'s');
-  assert.match(door, /const rollout = \(\) => \(virtue \? new VirtueLevelUpScreen\(deps\.entity\) : new LevelUpScreen\(deps\.entity\)\);/,
+  // LV2 re-aimed this BY CONTENT: both constructions now carry the
+  // fanfare answer (ui/levelNotice.js played it at the moment the level
+  // was earned, which on the enhanced skin is not this moment), and the
+  // law this pin holds - WHICH screen the answer above chooses - is
+  // unchanged.
+  assert.match(door, /const rollout = \(\) => \(virtue\n\s*\? new VirtueLevelUpScreen\(deps\.entity, \{ fanfare \}\)\n\s*: new LevelUpScreen\(deps\.entity, undefined, \{ fanfare \}\)\);/,
     'and the screen either skin drives is chosen by that answer');
   assert.match(door, /if \(virtue\) return new VirtueLevelUpScreen\(deps\.entity\);\n\s*if \(isEnhanced\(\)\) return new LevelUpScreen\(deps\.entity\);/,
     'the mod\'s window still comes ahead of the enhanced lane\'s canvas screen');
