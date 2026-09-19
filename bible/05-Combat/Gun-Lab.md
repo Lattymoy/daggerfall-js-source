@@ -161,14 +161,93 @@ CONTROL, and the key is the whole problem:
   `tools/gunProtoProbe.mjs` measures the drawn rect on every frame of
   a live shot and fails on any drift.
 
-## Running it
+## The sound
+
+Mac handed over a Freesound key: *"comprehensively find some great
+sounds to fit in for shooting and reloading. Needs to match the
+daggerfall aesthetic."*
+
+**The aesthetic is not a search term.** Every classic effect is raw
+unsigned 8-bit mono at 11025 Hz — `DAGGER.SND`'s parameters, stated at
+`src/formats/sndFile.js:3` — and that grit and that missing top octave
+are what the ear reads as this game. A 48kHz shotgun sample sits on
+top of this world rather than in it. So the search looks for a good
+*recording* and `tools/sndify.mjs` makes it Daggerfall's:
+
+    trim → lowpass at 4961Hz → resample to 11025 → quantise to 8 bits
+
+No dither. The quantisation noise is not a defect to smooth away — it
+is the texture every classic effect has, and a dithered bake sounds
+cleaner *and* more wrong. The trim matters as much: a field recording
+routinely carries 50–400ms of room before the shot, and a trigger that
+answers 200ms late does not feel late, it feels *broken*.
+
+**The pipeline**, all four steps re-runnable:
+
+| tool | what it does |
+| --- | --- |
+| `tools/freesoundPick.mjs` | searches Freesound over 27 curated queries across three slots, CC0 only, ranks by damped rating × downloads × brevity, downloads the previews. `npm run gunsfx:find` |
+| `tools/sfxBake.mjs` | decodes them **in headless Chromium** (`decodeAudioData` — there is no ffmpeg here, and Freesound's token auth only reaches the mp3 preview), bakes each one, and measures what it *is* |
+| `tools/gunSfxInstall.mjs` | the curated end: 13 picks → `public/sfx/`, with `SOURCES.md` written from the search report |
+| `tools/gunSfx.mjs` | our own synthesised set, through the same bake — nothing recorded, nothing to attribute. `npm run gunsfx` runs both |
+
+**Judged on four numbers before it is judged by ear**, because the
+bake changes what matters: *attack* (a shot is under 10ms; the bake
+blunts a 200ms onset into a swell), *crest* (a single event is 15dB+;
+a squashed one goes flat once 8 bits take the top off), *tail* (past a
+second it smears the next shot, and the cap fades over 30ms so the cut
+is not a click), and *brightness after the bake* (a recording whose
+character lives at 6kHz arrives thin, because that octave is gone).
+The picks sit between 900Hz and 1.8kHz of centroid, which is where the
+classic effects sit.
+
+**Three slots, because the reload has two ends.** A gun that goes
+clack… clack across 1.7 seconds reads as a mechanism; one clip fired
+at the start of a long reload reads as a sound effect that finished
+early. `fire` plays on the shot, `reload-open` as the weapon starts
+down, `reload-close` timed off the machine's own `cooledMs` so the
+lock-up lands *with* the sprite arriving.
+
+**Every pick is CC0** — the only license that clears
+`public/README.md`'s bar for what ships out of `public/` without an
+attribution trail to maintain. All 16 files are on
+`test/doctrine.test.js`'s allow-list, `public/sfx/SOURCES.md` names
+every one with its uploader and link, and the probe fetches all 16 and
+fails if any is not RIFF / 11025 / 8-bit / mono.
+
+The one liberty is **pitch variance** (±6% by default): Daggerfall
+plays a clip at its own rate every time, but a gun fired six times in
+four seconds is exactly where the ear catches a sample repeating. Zero
+the slider and the clip is the file.
+
+## Running it, and deploying it on its own
 
     npx vite            # then open /gun-proto.html
     npm run gunproto    # the probe: boots vite, drives Chromium, writes
-                        # idle + the six frames to scratch/gun-proto/
+                        # idle, the six frames, the bob and the reload
+                        # to scratch/gun-proto/
 
-Click or Space fires (hold for auto), W/S toggles the walk bob, arrows
-scrub frames while idle, G draws the slice boxes, Tab hides the panels.
+Controls: click fires, and the same click asks for the pointer lock
+(the Inertia module needs a look to lag; where the lock is refused —
+an embedded frame, headless — the shot still goes off). Space fires
+too, hold either for auto. W walks, Shift runs, C crouches, S stops.
+Arrows scrub frames while idle, G draws the slice boxes, Tab hides the
+panels.
+
+**Its own deploy** (Mac: *"I want to test this as its own deploy"*).
+`vite.config.gun.js` builds the lab AND NOTHING ELSE into `dist-gun/`
+— the page, its module, its art, its sounds, an `index.html` — with a
+RELATIVE base, so the output runs from any directory:
+
+    npx vite build --config vite.config.gun.js
+
+`deploy.yml` mounts that build at **`/preview/gun-lab/`**, the same
+shape the exact-face-atlas preview uses and for the same reason: Pages
+serves one site per repository and only `main` may publish. The lab
+builds from its own config, so a broken game build cannot take the
+lab's link down with it. The page asks for its art and its sounds
+relative to `document.baseURI`, which is what makes one build work at
+the site root and under a preview path.
 
 ## If it graduates
 

@@ -214,6 +214,10 @@ export function createGunMachine({ fps = 14, cooldownMs = 1700, hitFrame = 1 } =
     state: 'Idle', frame: 0, fps, cooldownMs, hitFrame,
     trigger: false, shots: 0,
     _t: 0, _cool: 0, _hitThisShot: false,
+    /** How far into the pump we are, in ms - what a caller needs to
+     *  land a sound or a second animation ON the reload rather than
+     *  after it. Zero outside Cooling. */
+    get cooledMs() { return m.state === 'Cooling' ? m._cool : 0; },
   };
   m.fire = () => {
     if (m.state !== 'Idle') return false;   // the one-shot cannot be replaced
@@ -291,6 +295,105 @@ export function createRecoil({ kick = 16, stiff = 120, damp = 14, back = 0.42 } 
     return { x: r.x, y: -r.y };   // +y is up in the impulse, down on screen
   };
   return r;
+}
+
+/**
+ * THE SOUND, and the slots it fills.
+ *
+ * Mac asked for shooting and reloading sounds off Freesound that match
+ * the Daggerfall aesthetic, and the aesthetic is not a search term:
+ * every classic effect is raw unsigned 8-bit mono at 11025 Hz
+ * (src/formats/sndFile.js), and that grit and that missing top octave
+ * are what the ear reads as this game. So the search found good
+ * RECORDINGS (tools/freesoundPick.mjs, CC0 only) and tools/sndify.mjs
+ * made them Daggerfall's. The files are in public/sfx/ with their
+ * provenance in public/sfx/SOURCES.md.
+ *
+ * THREE SLOTS, because the reload has two ends. A gun that goes
+ * clack... clack across 1.7 seconds reads as a mechanism; one clip
+ * fired at the start of a long reload reads as a sound effect that
+ * finished early. `fire` plays on the shot, `reload-open` when the
+ * weapon starts down, `reload-close` as it comes back up.
+ *
+ * The lists are the LAB's, in the order the audition put them - the
+ * dropdowns open on the first, which is the pick.
+ */
+export const SFX = Object.freeze({
+  fire: Object.freeze([
+    ['fire-shotgun', 'shotgun (clean crack)'],
+    ['fire-20gauge', '20 gauge (the real one)'],
+    ['fire-musket', 'musket (black powder)'],
+    ['fire-blast', 'blast (short tail)'],
+    ['fire-dry', 'dry (no room)'],
+    ['gun-fire-synth', 'synth (ours)'],
+  ]),
+  'reload-open': Object.freeze([
+    ['open-winchester', 'winchester cock'],
+    ['open-rack', 'shotgun rack'],
+    ['open-gunrack', 'gun rack (dark)'],
+    ['open-shell', 'shell'],
+    ['gun-reload-open-synth', 'synth (ours)'],
+  ]),
+  'reload-close': Object.freeze([
+    ['close-ready', 'ready (snaps shut)'],
+    ['close-rack2', 'rack 2'],
+    ['close-rack3', 'rack 3'],
+    ['close-shell', 'shell home'],
+    ['gun-reload-close-synth', 'synth (ours)'],
+  ]),
+});
+
+/**
+ * A tiny one-shot player: decode once, keep the buffer, and start a
+ * fresh source per shot so a fast second shot layers over the first
+ * rather than cutting it - which is what a real one does, and what the
+ * recoil spring already assumes.
+ *
+ * PITCH VARIANCE is the one liberty. Daggerfall plays a clip at its
+ * own rate every time, but a gun fired six times in four seconds is
+ * the case where the ear notices a sample repeating, and DFU's own
+ * weapon code varies the swing pitch for exactly this reason
+ * (playbackRate here, ±`vary`). Zero it and the clip is the file.
+ */
+export function createSfxPlayer({ base = 'sfx/', vary = 0.06, volume = 0.7 } = {}) {
+  const buffers = new Map();   // name -> AudioBuffer (or a pending promise)
+  let ctx = null;
+  const p = {
+    vary, volume, enabled: true,
+    /** A gesture is what a browser wants before it will make noise. */
+    resume() {
+      ctx ??= new (globalThis.AudioContext ?? globalThis.webkitAudioContext)();
+      if (ctx.state === 'suspended') ctx.resume();
+      return ctx;
+    },
+    load(name) {
+      if (buffers.has(name)) return buffers.get(name);
+      const c = p.resume();
+      const url = new URL(`${base}${name}.wav`, globalThis.document?.baseURI ?? 'http://localhost/').href;
+      const pending = fetch(url)
+        .then((r) => (r.ok ? r.arrayBuffer() : Promise.reject(new Error(`${r.status} ${name}`))))
+        .then((b) => c.decodeAudioData(b))
+        .then((buf) => { buffers.set(name, buf); return buf; })
+        .catch((e) => { buffers.delete(name); throw e; });
+      buffers.set(name, pending);
+      return pending;
+    },
+    play(name, gain = 1) {
+      if (!p.enabled || !name) return false;
+      const buf = buffers.get(name);
+      if (!buf || typeof buf.then === 'function') { p.load(name).catch(() => {}); return false; }
+      const c = p.resume();
+      const src = c.createBufferSource();
+      src.buffer = buf;
+      src.playbackRate.value = 1 + (Math.random() * 2 - 1) * p.vary;
+      const g = c.createGain();
+      g.gain.value = p.volume * gain;
+      src.connect(g).connect(c.destination);
+      src.start();
+      return true;
+    },
+  };
+  return p;
 }
 
 /**

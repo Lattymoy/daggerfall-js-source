@@ -229,6 +229,36 @@ const right = (await read()).anchorRect;
 check('the handedness mirror swaps the weapon to the other side', flipped.x < right.x,
   `left-hand x=${flipped.x.toFixed(0)} vs right-hand x=${right.x.toFixed(0)}`);
 
+// ── THE SOUND ────────────────────────────────────────────────────────
+// Not "is it audible" - headless Chromium has no speakers and the page
+// would sound the same either way. What is checkable is the thing that
+// actually breaks: every clip named in the lab's own lists RESOLVES,
+// and the dropdowns open on the pick. A renamed or un-copied .wav is a
+// silent 404 in a lab whose whole job is judging feel.
+const sfx = await page.evaluate(async () => {
+  const names = Object.values(globalThis.__gunLabSfx ?? {}).flat().map(([n]) => n);
+  const out = [];
+  for (const n of names) {
+    const url = new URL(`sfx/${n}.wav`, document.baseURI).href;
+    const r = await fetch(url);
+    const b = r.ok ? await r.arrayBuffer() : null;
+    // the classic file's own shape: RIFF, mono, 11025, 8-bit
+    let ok = false, rate = 0, bits = 0, ch = 0;
+    if (b && b.byteLength > 44) {
+      const dv = new DataView(b);
+      ch = dv.getUint16(22, true); rate = dv.getUint32(24, true); bits = dv.getUint16(34, true);
+      ok = String.fromCharCode(...new Uint8Array(b, 0, 4)) === 'RIFF';
+    }
+    out.push({ n, status: r.status, ok, rate, bits, ch, bytes: b?.byteLength ?? 0 });
+  }
+  const sel = (id) => document.getElementById(id).value;
+  return { clips: out, picks: [sel('sfxFire'), sel('sfxOpen'), sel('sfxClose')] };
+});
+const bad = sfx.clips.filter((c) => !c.ok || c.rate !== 11025 || c.bits !== 8 || c.ch !== 1);
+check('every sound the lab offers loads, in the classic format', bad.length === 0,
+  bad.length ? bad.map((c) => `${c.n}:${c.status}/${c.rate}/${c.bits}bit/${c.ch}ch`).join(' ') : `${sfx.clips.length} clips, all 11025Hz 8-bit mono`);
+check('the dropdowns open on the picks', sfx.picks.join(',') === 'fire-shotgun,open-winchester,close-ready', sfx.picks.join(', '));
+
 check('no page errors', errors.length === 0, errors.slice(0, 3).join(' | '));
 
 await browser.close();

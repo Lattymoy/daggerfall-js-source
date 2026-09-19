@@ -39,6 +39,13 @@
   where it is, because a head that is kicked carries the weapon with
   it.
 
+  The SOUND is CC0 off Freesound (tools/freesoundPick.mjs) baked to
+  DAGGER.SND's own 11025 Hz unsigned 8-bit mono by tools/sndify.mjs -
+  which IS the Daggerfall aesthetic, as far as a sound file is
+  concerned. Three slots, because the reload has two ends: the shot,
+  the weapon going down, and the lock-up as it comes back up.
+  public/sfx/SOURCES.md says where each file came from.
+
   Controls: click fires, and the same click asks for the pointer lock
   (the Inertia module needs a look to lag; where the lock is refused -
   an embedded frame, headless - the shot still goes off). Space fires
@@ -98,6 +105,14 @@
   <label><span>rattle</span><input id="shakeFreq" type="range" min="6" max="60" step="1" value="60"><span class="v" id="vshakeFreq"></span></label>
   <label><span>decay</span><input id="shakeDecay" type="range" min="0.5" max="10" step="0.1" value="5"><span class="v" id="vshakeDecay"></span></label>
 
+  <h2>Sound &mdash; CC0, baked to 11kHz 8-bit</h2>
+  <label><span>fire</span><select id="sfxFire"></select></label>
+  <label><span>reload open</span><select id="sfxOpen"></select></label>
+  <label><span>reload close</span><select id="sfxClose"></select></label>
+  <label><span>volume</span><input id="sfxVol" type="range" min="0" max="1" step="0.02" value="0.7"><span class="v" id="vsfxVol"></span></label>
+  <label><span>pitch vary</span><input id="sfxVary" type="range" min="0" max="0.3" step="0.01" value="0.06"><span class="v" id="vsfxVary"></span></label>
+  <label><span>sound</span><input id="sfxOn" type="checkbox" checked><span class="v">on</span></label>
+
   <h2>Reload lower &mdash; the Offset module</h2>
   <label><span>drop</span><input id="drop" type="range" min="0" max="1.5" step="0.05" value="0.55"><span class="v" id="vdrop"></span></label>
   <label><span>Offset.Speed</span><input id="offsetSpeed" type="range" min="0" max="5" step="0.25" value="1"><span class="v" id="voffsetSpeed"></span></label>
@@ -142,7 +157,7 @@ import {
   SHEET_GRID, FIRE_FRAMES, ALIGN, cellRect, keyBackground, contentBox,
   unionBox, unionDrawRect, placeSprite, createGunMachine, muzzleLight,
   createRecoil, createScreenShake, createWidgetRig, widgetRigStep, labWidgetSettings, labMotion,
-  widgetTransformRect,
+  widgetTransformRect, SFX, createSfxPlayer,
 } from '/src/tools/gunLab.js';
 
 const canvas = document.getElementById('c');
@@ -154,6 +169,8 @@ const state = {
   fps: 14, cool: 1700, hit: 1, auto: false,
   kick: 16, back: 0.42, stiff: 120, damp: 14,
   shake: 30, shakeRot: 4, shakeFreq: 60, shakeDecay: 5,
+  sfxFire: SFX.fire[0][0], sfxOpen: SFX['reload-open'][0][0], sfxClose: SFX['reload-close'][0][0],
+  sfxVol: 0.7, sfxVary: 0.06, sfxOn: true,
   drop: 0.55, offsetSpeed: 1, modOffset: true,
   modBob: true, bobLength: 100, bobSizeX: 1, bobSizeY: 1, bobSpeedMove: 1, bobSpeedState: 1, bobShape: 0, bobIdle: true,
   modInertia: true, inScale: 1, inSpeed: 1, inFwd: 1, inFwdSpeed: 1,
@@ -162,7 +179,7 @@ const state = {
 };
 const NUM = {
   offset:1, size:1, raise:1, fps:1, cool:1, hit:1, kick:1, back:1, stiff:1, damp:1,
-  shake:1, shakeRot:1, shakeFreq:1, shakeDecay:1,
+  shake:1, shakeRot:1, shakeFreq:1, shakeDecay:1, sfxVol:1, sfxVary:1,
   drop:1, offsetSpeed:1, bobLength:1, bobSizeX:1, bobSizeY:1, bobSpeedMove:1, bobSpeedState:1,
   inScale:1, inSpeed:1, inFwd:1, inFwdSpeed:1, spd:1, key:1, chroma:1, light:1, room:1,
 };
@@ -254,6 +271,17 @@ const gun = createGunMachine({ fps: state.fps, cooldownMs: state.cool, hitFrame:
 const rig = createWidgetRig();
 const recoil = createRecoil();
 const shake = createScreenShake();
+
+// THE SOUND. The dropdowns are filled from the lab's own lists before
+// the controls are bound, so each one opens on its pick; every clip is
+// pre-loaded, because a gun that decodes its sample on the trigger
+// misses the shot it was fired for.
+const sfx = createSfxPlayer();
+for (const [id, slot] of [['sfxFire', 'fire'], ['sfxOpen', 'reload-open'], ['sfxClose', 'reload-close']]) {
+  $(id).innerHTML = SFX[slot].map(([v, label]) => `<option value="${v}">${label}</option>`).join('');
+}
+for (const list of Object.values(SFX)) for (const [name] of list) sfx.load(name).catch(() => {});
+globalThis.__gunLabSfx = SFX;   // tools/gunProtoProbe.mjs resolves every one of them
 let scrub = -1;          // frame held while idle (arrow keys), -1 = live
 let hitFlash = 0;        // the target's tell, so the hit frame can be judged
 let look = [0, 0];       // the frame's look, as takeFrameLook hands it over
@@ -263,7 +291,8 @@ const CONTROLS = ['idleSrc','align','offset','size','raise','flip','fps','cool',
   'kick','back','stiff','damp','shake','shakeRot','shakeFreq','shakeDecay','drop','offsetSpeed','modOffset',
   'modBob','bobLength','bobSizeX','bobSizeY','bobSpeedMove','bobSpeedState','bobShape','bobIdle',
   'modInertia','inScale','inSpeed','inFwd','inFwdSpeed',
-  'walk','run','crouch','spd','light','room','grid'];
+  'walk','run','crouch','spd','light','room','grid',
+  'sfxFire','sfxOpen','sfxClose','sfxVol','sfxVary','sfxOn'];
 for (const id of CONTROLS) bind(id);
 for (const id of ['key','chroma']) bind(id, scheduleRebuild);
 
@@ -279,7 +308,11 @@ const widgetSettings = () => labWidgetSettings({
   'Inertia.ForwardDepth': state.inFwd, 'Inertia.ForwardSpeed': state.inFwdSpeed,
 });
 
-const fire = () => { if (gun.fire()) { recoil.punch(state.kick); shake.punch(); } };
+const fire = () => {
+  if (!gun.fire()) return;
+  recoil.punch(state.kick); shake.punch();
+  sfx.play(state.sfxFire);
+};
 const press = () => { gun.trigger = true; scrub = -1; fire(); };
 const release = () => { gun.trigger = false; };
 
@@ -366,6 +399,7 @@ function drawCrosshair() {
 
 // ── the frame ────────────────────────────────────────────────────────
 let last = performance.now();
+let _reloadOpened = false, _reloadClosed = false;
 let bobWorld = 0;   // the ROOM's answer to the look, so a flick has something to move against
 
 function frame(now) {
@@ -379,13 +413,23 @@ function frame(now) {
   const wasIdle = gun.state === 'Idle';
   const event = gun.step(dt);
   if (event === 'hit') hitFlash = 1;
-  if (gun.state === 'Firing' && wasIdle) { recoil.punch(state.kick); shake.punch(); }   // the auto trigger's own shots
+  if (gun.state === 'Firing' && wasIdle) { recoil.punch(state.kick); shake.punch(); sfx.play(state.sfxFire); }   // the auto trigger's own shots
   hitFlash = Math.max(0, hitFlash - dt * 4);
 
   recoil.stiff = state.stiff; recoil.damp = state.damp; recoil.back = state.back;
   const kick = recoil.step(dt);
   shake.amount = state.shake; shake.rot = state.shakeRot; shake.freq = state.shakeFreq; shake.decay = state.shakeDecay;
   const cam = shake.step(dt);
+
+  // THE RELOAD'S TWO ENDS. Open on the edge into Cooling, close as the
+  // weapon comes back up - `close` is timed off the clip's own length
+  // so the lock-up lands WITH the sprite arriving, not after it.
+  sfx.enabled = state.sfxOn; sfx.volume = state.sfxVol; sfx.vary = state.sfxVary;
+  if (gun.state === 'Cooling' && !_reloadOpened) { _reloadOpened = true; sfx.play(state.sfxOpen, 0.9); }
+  if (gun.state === 'Cooling' && !_reloadClosed && gun.cooledMs >= Math.max(0, state.cool - 420)) {
+    _reloadClosed = true; sfx.play(state.sfxClose, 0.95);
+  }
+  if (gun.state !== 'Cooling') { _reloadOpened = false; _reloadClosed = false; }
 
   const showFrame = gun.state === 'Firing' ? gun.frame : (scrub >= 0 ? scrub : 0);
   const lit = state.room * (1 + muzzleLight(gun.state, showFrame) * state.light * 1.9);

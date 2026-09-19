@@ -11,6 +11,7 @@ import {
   SHEET_GRID, FIRE_FRAMES, ALIGN, cellRect, keyBackground, contentBox,
   unionBox, unionDrawRect, placeSprite, createGunMachine, muzzleLight,
   createRecoil, createScreenShake, createWidgetRig, widgetRigStep, labWidgetSettings, labMotion, widgetDefaults,
+  SFX, createSfxPlayer,
 } from '../src/tools/gunLab.js';
 import { ALIGN as FPS_ALIGN } from '../src/combat/fpsWeapon.js';
 import { bobStep, offsetStep, inertiaStep } from '../src/combat/weaponWidgetMotion.js';
@@ -195,6 +196,52 @@ test('the screenshake is TRAUMA SQUARED, smooth, and dead silent at rest', () =>
   for (let i = 0; i < 60; i++) fast.step(1 / 60);
   assert.ok(Math.abs(slow.trauma - fast.trauma) < 1e-9, 'trauma bleeds by time, not by frames');
   assert.deepEqual(slow.step(0.4), { x: 0, y: 0, rot: 0 }, 'and it comes back to exactly nothing');
+});
+
+test('the sounds are Daggerfall\u2019s own format, and every clip the lab offers exists', () => {
+  const dir = 'public/sfx';
+  const names = Object.values(SFX).flatMap((list) => list.map(([n]) => n));
+  assert.ok(names.length >= 12, `${names.length} clips across three slots`);
+  for (const n of names) {
+    const b = readFileSync(`${dir}/${n}.wav`);
+    const dv = new DataView(b.buffer, b.byteOffset, b.byteLength);
+    // DAGGER.SND's parameters, src/formats/sndFile.js:3 - 11025Hz,
+    // unsigned 8-bit, mono. The bake is the whole aesthetic claim and
+    // this is where it stops being a claim.
+    assert.equal(b.toString('latin1', 0, 4), 'RIFF', `${n} is a RIFF file`);
+    assert.equal(dv.getUint16(22, true), 1, `${n} is mono`);
+    assert.equal(dv.getUint32(24, true), 11025, `${n} is 11025Hz`);
+    assert.equal(dv.getUint16(34, true), 8, `${n} is 8-bit`);
+    assert.ok(b.length > 1000 && b.length < 40000, `${n} is a one-shot, not a performance (${b.length} bytes)`);
+  }
+  // the provenance ships with them, and every picked file is named in it
+  const sources = readFileSync(`${dir}/SOURCES.md`, 'utf8');
+  for (const n of names) assert.ok(sources.includes(`\`${n}.wav\``), `SOURCES.md accounts for ${n}.wav`);
+  assert.match(sources, /CC0/, 'and says the license');
+  // every shipped file is on the doctrine allow-list - public/ is the
+  // static root, so anything here is published
+  const doctrine = readFileSync('test/doctrine.test.js', 'utf8');
+  for (const n of names) assert.ok(doctrine.includes(`public/sfx/${n}.wav`), `${n}.wav is allow-listed`);
+});
+
+test('the one-shot player layers rather than cutting, and stays silent when told to', () => {
+  // a stub context: what the player does is assert-able without audio
+  const started = [];
+  const node = () => ({ connect(next) { return next; }, start(...a) { started.push(a); } });
+  const ctx = {
+    state: 'running', resume() { this.state = 'running'; },
+    createBufferSource() { return { ...node(), playbackRate: { value: 1 }, buffer: null }; },
+    createGain() { return { ...node(), gain: { value: 0 } }; },
+    destination: {},
+  };
+  const p = createSfxPlayer({ vary: 0 });
+  p.resume = () => ctx;
+  // nothing loaded yet: a play is a miss, not a throw
+  assert.equal(p.play('nope'), false);
+  assert.equal(p.play(null), false);
+  assert.equal(p.play(''), false);
+  p.enabled = false;
+  assert.equal(p.play('fire-shotgun'), false, 'the switch is obeyed before anything else');
 });
 
 test('the cycle: one shot at a time, six frames, a pump, and a hit frame that fires once', () => {
