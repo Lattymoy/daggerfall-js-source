@@ -395,9 +395,85 @@ test('MAP1: the relief map, its renderer and its probe are RETIRED - no file, no
 // ── THE WINDOW'S LAWS ────────────────────────────────────────────
 
 const mkWin = (extra = {}) => new HeldMapWindow(winDeps(extra));
-/** Tick the sheet up: the window opens through a short fade and its
- *  card is phase-gated on 'map'. */
+/** Tick the sheet up: the window opens as the sheet RISES (MAP-FIELD7)
+ *  and its card is phase-gated on 'map'. */
 const open = (win) => { for (let i = 0; i < 20; i++) win.tick(0.05); return win; };
+
+/** How far up the sheet is, read off the stage the way a browser would:
+ *  no transform is held, `translateY(N%)` is N per cent down. */
+const raiseOf = (win) => {
+  const t = win._chrome.stage.style.transform;
+  if (!t) return 1;
+  const m = /translateY\(([-\d.]+)%\)/.exec(t);
+  return m ? 1 - Number(m[1]) / 100 : 1;
+};
+
+test('MAP-FIELD7: the sheet TRAVELS in and out at the bottom edge, and the chrome fades where it stands (mutants: MAPFIELD7-the-sheet-fades-again, MAPFIELD7-the-sheet-starts-held, MAPFIELD7-the-chrome-travels-too, MAPFIELD7-a-close-mid-rise-snaps-up)', () => {
+  // Mac: "when you open or close your map, I want the sprite to come in
+  // and go out at the bottom of the screen instead of fading in".
+  withDocument(() => {
+    const win = mkWin();
+    const c = win._chrome;
+    // BEFORE THE FIRST TICK the sheet is already off the bottom, or it
+    // shows for one frame in its held place and then jumps down to start
+    assert.equal(raiseOf(win), 0, 'mounted DOWN, not mounted held');
+    assert.equal(c.card.style.opacity, '0', 'and the chrome is clear with it');
+    assert.equal(c.stage.style.opacity, undefined, '...but the STAGE is never faded - that is the whole point');
+
+    const seen = [];
+    for (let i = 0; i < 12; i++) { win.tick(0.05); seen.push(raiseOf(win)); }
+    assert.ok(seen[0] > 0 && seen[0] < 1, 'it is part way up after one tick - a travel, not a cut');
+    for (let i = 1; i < seen.length; i++) assert.ok(seen[i] >= seen[i - 1], 'and it only ever rises while opening');
+    assert.equal(raiseOf(win), 1, 'and it ends HELD, with no transform left on the stage');
+    assert.equal(c.stage.style.transform, '', 'exactly none - a stale translateY(0%) is a compositor layer for nothing');
+    assert.equal(c.card.style.opacity, '1', 'the chrome arrived too');
+    assert.equal(c.stage.style.opacity, undefined, 'and the sheet was never faded on the way, only carried');
+    // THE SHEET IS NOT FADED. The fade lives on the chrome rule now, and
+    // the root carries the stage, so fading the root would fade the
+    // sprite - which is the thing Mac asked to stop.
+    assert.ok(!win._chrome.root.style.opacity, 'the root never carries an opacity - that is what faded the sprite');
+    assert.match(read('src/ui/heldMap.js'), /for \(const n of c\.root\.children \?\? \[\]\) \{ if \(n !== c\.stage\) n\.style\.opacity = o; \}/,
+      'the fade walks the root\'s children and skips the stage BY IDENTITY');
+
+    // ...AND OUT THE SAME WAY
+    win._beginClose(null);
+    const down = [];
+    for (let i = 0; i < 5; i++) { win.tick(0.05); down.push(raiseOf(win)); }
+    for (let i = 1; i < down.length; i++) assert.ok(down[i] <= down[i - 1], 'it only ever lowers while closing');
+    assert.ok(down[down.length - 1] < 1, 'and it really left');
+    win.dispose();
+  });
+
+  // A CLOSE ANSWERED MID-RISE lowers from where the sheet IS. The old
+  // fade read its start off the DOM; this reads the number the window
+  // already holds, and the law is the same - no snap to full first.
+  withDocument(() => {
+    const win = mkWin();
+    win.tick(0.05);
+    const caught = raiseOf(win);
+    assert.ok(caught > 0 && caught < 1, 'caught it part way up');
+    win._beginClose(null);
+    win.tick(0.01);
+    assert.ok(raiseOf(win) <= caught, 'it lowers from where it was, never jumping to held first');
+    win.dispose();
+  });
+
+  // ...AND IN THE HANDS LANE NOTHING SLIDES. The arm brings the sheet in
+  // itself, and the ink there is laid on the rig's corners by a
+  // matrix3d of its own - a translate on the stage would drag the whole
+  // sheet off the paper the arm is holding, which is a worse bug than
+  // the fade this replaced.
+  withDocument(() => {
+    const holder = holderStub({ corners: () => TRAPEZIUM });
+    const win = open(mkWin({ ...bayDeps(), holder }));
+    assert.equal(win._lane, 'hands', 'the fixture really is in the hands lane, or this proves nothing');
+    assert.equal(win._chrome.stage.style.transform, '', 'held by the arm: the stage carries no travel of its own');
+    win._beginClose(null);
+    win.tick(0.05);
+    assert.equal(win._chrome.stage.style.transform, '', '...and none on the way out either');
+    win.dispose();
+  });
+});
 
 test('U61: the filters are the LIVE store object, edited in place', () => {
   withDocument(() => {

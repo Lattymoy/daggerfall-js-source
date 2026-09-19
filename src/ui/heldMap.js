@@ -113,6 +113,7 @@ import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
 import { quadPlacement } from './quadMap.js';   // MAP3: the sheet over the held paper's corners
 import { bindings } from './input.js';
 import { actionForCode } from '../systems/inputActions.js';
+import { smoothstep } from '../systems/mathf.js';   // MAP-FIELD7: the ONE easing, so the sheet travels like everything else in the port
 
 // ── THE SPRITE (Mac's, public/art/held-map.png) ──────────────────
 /** MAP-FIELD (2026-09-18, Mac: "The sprite I gave to be used is nowhere
@@ -364,8 +365,15 @@ export const SPRITE_ART_FOOT = 0.895;
 export const CUFF_BAND = 0.85;
 
 // ── THE CLOCKS (skin) ────────────────────────────────────────────
-const OPEN_S = 0.3;      // the sheet rises into view
-const CLOSE_S = 0.3;     // ...and lowers on a commit or a close
+/** MAP-FIELD7 (2026-09-19, Mac: "when you open or close your map, I
+ *  want the sprite to come in and go out at the bottom of the screen
+ *  instead of fading in"). These two always SAID the sheet rises and
+ *  lowers - the comment was the intent and the code was a fade. It
+ *  really moves now (`_setRaise`), and it takes a little longer than
+ *  the fade did, because a fade of a third of a second reads as instant
+ *  while a travelling thing reads as hurried. */
+const OPEN_S = 0.42;     // the sheet rises into view
+const CLOSE_S = 0.36;    // ...and lowers on a commit or a close, a touch quicker: leaving is not a flourish
 // SOC6: how often the window ASKS the host for its party, in seconds -
 // well under the eye's patience and well over the pose rate the hub
 // relays at (net/wire.js PARTY_SEND_MS). The classic window polls at
@@ -629,13 +637,13 @@ export class HeldMapWindow {
     this._t += dt;
     switch (this._phase) {
       case 'opening': {
-        this._setOpacity(clamp(this._t / OPEN_S, 0, 1));
+        this._setRaise(clamp(this._t / OPEN_S, 0, 1));
         if (this._t >= OPEN_S) { this._phase = 'map'; this._t = 0; this._renderCard(); }
         break;
       }
       case 'map': break;
       case 'closing': {
-        this._setOpacity(clamp((this._closeFrom ?? 1) * (1 - this._t / CLOSE_S), 0, 1));
+        this._setRaise(clamp((this._closeFrom ?? 1) * (1 - this._t / CLOSE_S), 0, 1));
         if (this._t >= CLOSE_S) {
           // THE COMMIT, with the sheet down: the hooks are read while
           // this window is still alive (the pack's lesson), and the
@@ -731,17 +739,48 @@ export class HeldMapWindow {
       this._cornersKey = '';
       if (this._chrome?.ink) this._chrome.ink.style.opacity = '0';
     }
-    // the fade starts from where the sheet IS - a close answered during
-    // the opening fade must not snap to full before lowering
-    this._closeFrom = parseFloat(this._chrome?.root?.style?.opacity ?? '1');
-    if (!Number.isFinite(this._closeFrom)) this._closeFrom = 1;
+    // the close starts from where the sheet IS - one answered while it
+    // is still rising must lower from there, not snap up first
+    this._closeFrom = Number.isFinite(this._raise) ? this._raise : 1;
     this._phase = 'closing';
     this._t = 0;
     this._renderCard();
   }
 
-  _setOpacity(a) {
-    if (this._chrome?.root) this._chrome.root.style.opacity = String(Math.round(a * 100) / 100);
+  /** MAP-FIELD7: HOW FAR UP THE SHEET IS, 0 (clear off the bottom edge)
+   *  to 1 (held). The stage is carried on its OWN height - `translateY`
+   *  of 100% - which needs no viewport number and is right at every
+   *  size: the stage's top sits at `vh - (SPRITE_ART_FOOT -
+   *  HELD_MAP_BITE) * h`, so moving it down by a full `h` always puts
+   *  its top past the bottom edge and the whole painting with it.
+   *
+   *  Eased rather than linear, because a held thing has weight - it is
+   *  smoothstep, the port's own (systems/mathf.js), so the sheet leaves
+   *  and arrives slowly and crosses quickly.
+   *
+   *  The chrome does NOT travel. The top bar and the card are anchored
+   *  to the viewport's edges, and sliding them up from the floor reads
+   *  as a mistake; they keep the fade the sheet used to have, through
+   *  the one CSS rule that excludes the stage.
+   *
+   *  IN THE HANDS LANE (MAP3) NOTHING SLIDES. The arm brings the sheet
+   *  in itself, and a transform on the stage would drag the ink's own
+   *  matrix3d off the paper the rig is holding. */
+  _setRaise(a) {
+    this._raise = a;
+    const c = this._chrome;
+    if (!c?.root) return;
+    // the chrome fades where it stands, child by child. NOT through the
+    // root: the root carries the stage, so its opacity would fade the
+    // sprite - the very thing this replaced. Walking the children keeps
+    // the law in JS where a pin can read it, and covers a box or a card
+    // appended later, which the next tick reaches.
+    const o = String(Math.round(a * 100) / 100);
+    for (const n of c.root.children ?? []) { if (n !== c.stage) n.style.opacity = o; }
+    if (!c.stage) return;
+    if (this._lane === 'hands') { c.stage.style.transform = ''; return; }
+    const e = smoothstep(0, 1, a);
+    c.stage.style.transform = e >= 1 ? '' : `translateY(${Math.round((1 - e) * 1000) / 10}%)`;
   }
 
   // ── THE SHEET ──────────────────────────────────────────────────
@@ -1611,7 +1650,11 @@ export class HeldMapWindow {
     injectEnhancedFonts();
     const root = el('div', 'hmroot');
     root.id = 'enhanced-travelmap';
-    root.style.opacity = '0';
+    // MAP-FIELD7: the sheet starts DOWN (on the stage, below) and the
+    // chrome starts clear - each child is given its 0 as it is appended,
+    // by the _setRaise(0) at the end of the mount. The root itself never
+    // carries an opacity again: it carries the stage, and fading it is
+    // what faded the sprite.
 
     // the stage: the sprite, the ink canvas over its paper, the hands
     // keyed back over the ink
@@ -1660,6 +1703,10 @@ export class HeldMapWindow {
     root.append(stage, top, card, foot, box);
     document.body.append(root);
     this._chrome = { root, stage, sprite, sheet, ink, hands, label, search, searchInput, results, close, card, hint, band, legend, ports, box };
+    // MAP-FIELD7: down and clear before the first tick, or the sheet
+    // shows for one frame in its held place and then jumps to the floor
+    // to start travelling.
+    this._setRaise(0);
     this._renderPorts();
     this._refreshParty();   // SOC6: the marks stand with the window, not a quarter second after it
     // the names are inked in the web display face; the first paint may

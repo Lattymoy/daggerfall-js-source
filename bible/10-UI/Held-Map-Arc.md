@@ -898,3 +898,54 @@ with the four candidates driving it, rank read at the SIDE it now
 decides, and a town ringed on all four sides losing its label and
 keeping its mark. Mutants: `map1.json` `MAPFIELD6-*` x6, with
 `overlap-drawn` and `rank-ignored` re-aimed by content.
+
+## MAP-FIELD7 - the sheet travels (2026-09-19)
+
+Mac: *"when you open or close your map, I want the sprite to come in and
+go out at the bottom of the screen instead of fading in"*.
+
+The two clocks had SAID this since MAP-FIELD2 - `OPEN_S` was commented
+"the sheet rises into view" and `CLOSE_S` "...and lowers" - and the code
+under them was a fade on the root. It really moves now.
+
+**The stage is carried on its own height.** `translateY(100%)` needs no
+viewport number and is right at every size: the stage's top sits at
+`vh - (SPRITE_ART_FOOT - HELD_MAP_BITE) * h`, so moving it down by a
+full `h` always puts its top past the bottom edge and the whole painting
+with it. It is eased on `smoothstep` - the port's own, from
+`systems/mathf.js` - because a held thing has weight: it leaves and
+arrives slowly and crosses quickly.
+
+**The chrome does not travel.** The top bar and the card are anchored to
+the viewport's own edges, and sliding them up from the floor reads as a
+mistake. They keep the fade the sheet used to have - but the fade had to
+move OFF the root, because the root carries the stage and fading it
+would fade the sprite, which is the thing Mac asked to stop. `_setRaise`
+walks the root's children and skips the stage by identity.
+
+A CSS rule (`.hmroot > :not(.hmstage)`) driven by a custom property was
+tried first and is a departure worth recording, because it failed for a
+reason worth knowing: the suite has SIXTEEN separate fake documents,
+each with `style` as a bare object, and a custom property can only be
+set through `setProperty`. Upgrading one stub fixed one file and broke
+eleven pins in another. The rule was not wrong, but a law that only
+holds where the harness happens to be rich enough is a law with a hole
+in it - so it moved into JS, where every stub can already see it.
+
+**And in the hands lane nothing slides at all.** There the arm brings
+the sheet in itself and the ink is laid on the rig's projected corners
+by a matrix3d of its own; a translate on the stage would drag the whole
+sheet off the paper the arm is holding - a worse bug than the fade it
+replaced. `_setRaise` returns early on that lane, and the pin drives a
+real holder to prove it.
+
+The clocks grew a little with the change (0.3 -> 0.42 opening, 0.36
+closing). A fade of a third of a second reads as instant; a travelling
+thing at the same length reads as hurried, and leaving should be a touch
+quicker than arriving.
+
+Pins: `test/heldmap.test.js` - mounted DOWN before the first tick, a
+monotonic rise that ends with NO transform left on the stage, the root
+never carrying an opacity, the fade rule excluding the stage by name, a
+close mid-rise lowering from where it was, and the hands lane never
+sliding. Mutants: `map1.json` `MAPFIELD7-*` x6.

@@ -575,5 +575,59 @@
     "tests": [
       "test/heldmap.test.js"
     ]
+  },
+  {
+    "name": "MAPFIELD7-the-sheet-fades-again",
+    "file": "src/ui/heldMap.js",
+    "old": "    c.stage.style.transform = e >= 1 ? '' : `translateY(${Math.round((1 - e) * 1000) / 10}%)`;",
+    "new": "    c.root.style.opacity = String(a);",
+    "tests": [
+      "test/heldmap.test.js"
+    ]
+  },
+  {
+    "name": "MAPFIELD7-the-sheet-starts-held",
+    "file": "src/ui/heldMap.js",
+    "old": "    this._setRaise(0);",
+    "new": "",
+    "tests": [
+      "test/heldmap.test.js"
+    ]
+  },
+  {
+    "name": "MAPFIELD7-the-chrome-travels-too",
+    "file": "src/ui/heldMap.js",
+    "old": "    for (const n of c.root.children ?? []) { if (n !== c.stage) n.style.opacity = o; }",
+    "new": "    for (const n of c.root.children ?? []) { n.style.opacity = o; }",
+    "tests": [
+      "test/heldmap.test.js"
+    ]
+  },
+  {
+    "name": "MAPFIELD7-a-close-mid-rise-snaps-up",
+    "file": "src/ui/heldMap.js",
+    "old": "    this._closeFrom = Number.isFinite(this._raise) ? this._raise : 1;",
+    "new": "    this._closeFrom = 1;",
+    "tests": [
+      "test/heldmap.test.js"
+    ]
+  },
+  {
+    "name": "MAPFIELD7-the-held-sheet-keeps-a-transform",
+    "file": "src/ui/heldMap.js",
+    "old": "    c.stage.style.transform = e >= 1 ? '' : `translateY(${Math.round((1 - e) * 1000) / 10}%)`;",
+    "new": "    c.stage.style.transform = `translateY(${Math.round((1 - e) * 1000) / 10}%)`;",
+    "tests": [
+      "test/heldmap.test.js"
+    ]
+  },
+  {
+    "name": "MAPFIELD7-the-hands-lane-slides-too",
+    "file": "src/ui/heldMap.js",
+    "old": "    if (this._lane === 'hands') { c.stage.style.transform = ''; return; }",
+    "new": "",
+    "tests": [
+      "test/heldmap.test.js"
+    ]
   }
 ]
