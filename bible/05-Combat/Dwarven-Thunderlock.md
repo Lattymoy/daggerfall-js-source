@@ -321,6 +321,61 @@ so nothing anywhere went red. The audit's eight findings were all
 *registration*; a registration pin cannot fail for a weapon that
 registers perfectly and is then dropped by the next table down.
 
+## FIELD-GUN10: why byte-level parity kept failing
+
+Mac, a fourth time: *"It's still not 1:1. I don't get why it's so hard
+to have byte level parity."*
+
+The honest answer is not that it is hard. It is that **there are two
+implementations of the placement, and every round before this one
+checked their inputs instead of their output.**
+
+The lab lays the rect out with `placeSprite` + `unionDrawRect`. The
+game lays it out inside `drawFpsWeapon`. Those are different
+functions. Copying numbers between two functions cannot converge —
+it only moves the chance of being wrong around, and each round of
+"still not the proto" was me moving it somewhere new.
+
+### What was actually left
+
+Measured by driving both paths with the same inputs and diffing the
+rect:
+
+```
+LAB  x=652.8 y=475.0 w=628.3 h=357.0
+GAME x=652.0 y=452.0 w=628.0 h=356.0
+DELTA dx=-0.8 dy=-23.0 dw=-0.3 dh=-1.0
+```
+
+**Twenty-three pixels high.** `offsetHeight` is in SCREEN pixels — it
+is `weaponOffsetHeight()`, the large HUD bar's own drawn height — and
+the lab's `raise` is in NATIVE 320×200 units, which is what the panel
+means by `-8`. Passed raw it applied at a *quarter* of its size on an
+800px-tall window. Everything else already agreed to within rounding.
+
+### The pin is the point
+
+`FIELD-GUN10` is that measurement, kept. It drives both paths and
+compares all four coordinates, with a tolerance **derived** from the
+one honest source of disagreement — `loadThunderlockArt` rounds the
+record to whole native pixels where the lab keeps a float, and the
+surface scale multiplies that by four — so a real divergence cannot
+hide inside it.
+
+Run against the code before the fix it says so in its own words:
+
+```
+the game's y is -22.98px from the prototype's, past the 2.5px
+rounding can explain (game 452.00, lab 474.98)
+```
+
+That is the lesson of all ten FIELD-GUN rounds in one line: **pin the
+output, not the inputs.** `GUN7` pins the machine's timeline against
+the lab's machine, `GUN8` pins every knob on the panel against the
+lab's own source, and `GUN10` pins the drawn rect against the lab's
+drawn rect. Between them there is no number left that can be copied
+wrongly without a test saying so.
+
 ## The test characters carry one
 
 TSR-GUN (Mac, 2026-09-19: *"Put this weapon and ammo inside the test

@@ -1395,7 +1395,17 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
         // large HUD's bar and still sits where the lab put it
         // relative to that. Undefined for every other weapon, which
         // leaves drawFpsWeapon's own default reading the bar alone.
-        const offsetHeight = _tlAdjust ? weaponOffsetHeight() + GUN_FEEL.raise : undefined;
+        //
+        // FIELD-GUN10: TIMES THE SURFACE SCALE, and this was the last
+        // of the "still not the proto" faults. `offsetHeight` is in
+        // SCREEN pixels - it is `weaponOffsetHeight()`, the large
+        // HUD bar's own drawn height - and the raise is in NATIVE
+        // 320x200 units, which is what the lab's panel means by -8.
+        // Passed raw it was applied at a QUARTER of its size on a
+        // 800px-tall window, and the gun sat 23 pixels high of where
+        // the prototype puts it. Measured, not guessed: the pin below
+        // drives both placement paths and diffs the rect.
+        const offsetHeight = _tlAdjust ? weaponOffsetHeight() + GUN_FEEL.raise * (c.height / 200) : undefined;
         drawFpsWeapon(renderer, c, art, playerWeapon.machine.state, playerWeapon.machine.frame, { tint: fpTint, adjust: _tlAdjust, offsetHeight });
       }
     }
