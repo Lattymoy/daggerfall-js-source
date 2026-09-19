@@ -957,6 +957,7 @@ export class Renderer {
     // The value last uploaded to the solid program's uEmissionColor
     // (uniforms are program state, so this survives a program switch).
     this._emissionColorUp = null;
+    this._tex1Bound = null;   // PERF-TEX: cleared with its sibling
     // EV2: the sub-mesh texture cache's generation. drawMesh used to
     // mint a `${archive}_${record}` string per sub-mesh per frame -
     // thousands of short-lived strings a frame, the render loop's
@@ -1173,8 +1174,38 @@ export class Renderer {
    */
   endWorldPass() {
     if (!this._worldViewportPx) return;
+    this._tex1Bound = null;   // PERF-TEX: the 2D path and the post passes own the units past here
     this._worldViewportPx = null;
     this.gl.viewport(0, 0, this.canvas.width, this.canvas.height);
+  }
+
+  /** PERF-TEX: bind `tex` to unit 1 - the emission map - unless the
+   *  shadow says it already is, and leave unit 0 active, which every
+   *  draw path expects on entry and on exit. EV6's `_use`, for a
+   *  texture unit.
+   *
+   *  WHY IT IS FREE. `_evEmis` is `_blackTex` for everything that is not
+   *  a window or an auto-emissive record, so the mesh loop was binding
+   *  the texture already on the unit for all but a handful of the
+   *  scene's sub-meshes: measured over the batched static path, HALF of
+   *  every bindTexture in it - 239 of 481 over 240 draws - set a unit to
+   *  what it already held. Binding a texture that is already bound is a
+   *  no-op by definition, so removing it cannot move a pixel; this is
+   *  not a quality trade, it is deleted work. `drawBillboards` has
+   *  skipped it on `lastKey` since it was written - this is the same
+   *  skip, shared, so the two paths cannot disagree about the unit.
+   *
+   *  The shadow is cleared wherever something else may own unit 1 or
+   *  leave another unit active: the frame's start, the world/2D bracket,
+   *  a texture upload, and a context rebuild. */
+  _bindEmission(tex) {
+    if (this._tex1Bound === tex) return;
+    const gl = this.gl;
+    gl.activeTexture(gl.TEXTURE1);
+    gl.bindTexture(gl.TEXTURE_2D, tex);
+    gl.activeTexture(gl.TEXTURE0);
+    this._tex1Bound = tex;
+    this.stats.texBinds++;
   }
 
   /** EV6: bind `program` unless the shadow says it already is. */
@@ -1361,6 +1392,7 @@ export class Renderer {
     this._tFrameStamp = -1;
     this._csUploaded = {};
     this._emissionColorUp = null;
+    this._tex1Bound = null;   // PERF-TEX: cleared with its sibling
     this._lastProgram = null;
   }
 
@@ -2713,6 +2745,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     gl.uniform1i(this.uEmissionTex, 1);
     gl.uniform3fv(this.uEmissionColor, this._c3(this._windowEmission));
     this._emissionColorUp = this._windowEmission;   // F49: the per-sub-mesh shadow starts the frame true
+    this._tex1Bound = null;   // PERF-TEX: a frame's; the post passes (air, clouds) own unit 1 between frames
     const count = this._pointLights.length / 4;
     gl.uniform1i(this.uPointCount, count);
     if (count > 0) gl.uniform4fv(this.uPointLights, this._pointLights);
@@ -3250,6 +3283,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     const tex = gl.createTexture();
     gl.activeTexture(gl.TEXTURE1);
     gl.bindTexture(gl.TEXTURE_2D, tex);
+    this._tex1Bound = null;   // PERF-TEX: an upload owns unit 1 and leaves it active - the shadow cannot speak for it
     gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
     gl.texImage2D(
       gl.TEXTURE_2D, 0, gl.RGBA, color32.width, color32.height, 0,
@@ -3789,6 +3823,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
         gl.bindTexture(gl.TEXTURE_2D, tex);
         gl.activeTexture(gl.TEXTURE1);
         gl.bindTexture(gl.TEXTURE_2D, this.emissionTextures.get(key) || this._blackTex);
+        this._tex1Bound = null;   // PERF-TEX: this path has skipped on `lastKey` since it was written, so it needs no shadow of its own - but it OWNS unit 1 while it runs, and the mesh loop's shadow cannot speak for it afterwards
         this.stats.texBinds += 2;
         lastKey = key;
       }
@@ -4005,11 +4040,9 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
         gl.uniform3fv(this.uEmissionColor, this._c3(emisColor));   // EL1
         this._emissionColorUp = emisColor;
       }
-      gl.activeTexture(gl.TEXTURE1);
-      gl.bindTexture(gl.TEXTURE_2D, sm._evEmis);
-      gl.activeTexture(gl.TEXTURE0);
+      this._bindEmission(sm._evEmis);   // PERF-TEX: skipped when it is already the one on the unit, which it usually is
       gl.bindTexture(gl.TEXTURE_2D, tex);
-      this.stats.texBinds += 2;
+      this.stats.texBinds++;
       if (wire) {
         const range = wireMesh.ranges[smi];
         gl.drawElements(gl.LINES, range.count, gl.UNSIGNED_INT, range.start * 4);

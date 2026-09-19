@@ -1318,6 +1318,66 @@ disease probehygiene's T3 names.
 
 **Pinned** in `test/perf9.test.js` (2). Not a departure.
 
+## PERF-TEX - THE UNIT THAT WAS ALREADY BOUND (2026-09-19)
+
+Mac: *"Receiving reports of heavy performance issues across the game... I
+want players to get maximum performance with maximum quality. No
+exceptions."* So: no setting, no tier, no preset. Deleted work, or
+nothing.
+
+**MEASURED, not read out of the frame.** PERF1-8 were argued from the
+code because this session has no GPU; PERF-ON showed the way round that
+for the part that is CPU - drive the REAL `Renderer` over a logging GL
+stub and count what it actually calls. Over the batched static mesh path
+(what PERF4/5/6 built, and the bulk of any scene's draws), 60 meshes of
+four sub-meshes each:
+
+| | GL calls | a draw | bindTexture | of which redundant |
+|---|---|---|---|---|
+| before | 1385 | 5.8 | 480 | **239 (50%)** |
+| after | 1034 | 4.3 | 363 | 0 |
+
+Half of every texture bind in the path set a unit to the texture it
+already held. The cause is that `_evEmis` is `_blackTex` for everything
+that is not a window or an auto-emissive record - which is nearly every
+sub-mesh in a street or a dungeon - and the loop bound it, and switched
+the active unit to reach it, unconditionally, for all of them.
+
+**`drawBillboards` had already solved this.** It has skipped the whole
+texture setup on `lastKey` since it was written, and the line directly
+above the mesh loop's bind caches the emission COLOUR the same way
+(`_emissionColorUp`, F49, cleared in `beginFrame`). The mesh loop simply
+never got the treatment its neighbour and its own sibling already had.
+
+So `_bindEmission(tex)` is EV6's `_use(program)` for a texture unit: bind
+unless the shadow says it already is, and leave unit 0 active, which
+every draw path expects on entry and on exit. The shadow is cleared
+wherever something else can own unit 1 - `beginFrame`, `endWorldPass`,
+a texture upload, a context rebuild, and `drawBillboards`, which owns the
+unit while it runs and is left exactly as it was.
+
+**IT MOVES NO PIXEL, AND THAT IS PROVEN RATHER THAN ASSERTED.** Binding a
+texture that is already bound is a no-op by definition, but the argument
+that matters is the one the suite makes: the GL log is replayed through a
+state machine and what the GPU would SEE at every draw - the program, the
+VAO, the texture on each unit, the draw's own arguments - is compared
+against the same scene with the shadow defeated. 80 draws, identical, in
+a scene whose emission maps deliberately change every few sub-meshes
+where a real one barely changes at all. A faster path that moves a pixel
+is a bug, not a faster path (PERF-ON's law).
+
+**What this is worth.** GL call count is CPU-side driver cost, so it
+converts to frames when a scene is draw-call bound - a streamed exterior
+at the default land view of 5 (121 pixels) usually is - and not when it
+is fill-bound. It is a floor raise, not a ceiling raise, and it is free.
+
+**Pinned** in `test/glstate.test.js` (4, EV6's own home): no bind in the
+path is redundant, the saving is real against the unshadowed 4-a-draw,
+the effective GPU state is unchanged draw for draw, and every site in
+`renderer.js` that binds unit 1 either goes through the helper or clears
+the shadow - a source sweep, because a shadow that speaks for a unit it
+no longer owns is a wrong texture on screen.
+
 ## PERF-ON - ONE DRAW A STRING (2026-09-15)
 
 Mac: *"Next thing I want to tackle is improving online performance. I

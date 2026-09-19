@@ -320,3 +320,169 @@ test('AUDIT 47: no shader in the tree uses a uniform it did not declare in its o
     assert.ok(seen > 0, `${file}: no shader templates found - the reader is broken, not the shaders`);
   }
 });
+
+// ═══ PERF-TEX: THE EMISSION UNIT GETS EV6's TREATMENT ═══════════════
+//
+// Mac, 2026-09-18: "maximum performance with maximum quality. No
+// exceptions." So: not a setting, not a tier - deleted work.
+//
+// MEASURED, not guessed, over a real `Renderer` on a logging GL stub
+// (PERF-ON's precedent). The batched static mesh path - what PERF4/5/6
+// built, and the bulk of any scene's draws - bound TWO textures and
+// switched the active unit twice for every sub-mesh. But `_evEmis` is
+// `_blackTex` for everything that is not a window or an auto-emissive
+// record, so over 240 draws, 239 of its 481 bindTexture calls set a
+// unit to the texture it already held. `drawBillboards` had skipped
+// exactly this on `lastKey` since it was written; the mesh loop never
+// did.
+//
+// Binding a texture that is already bound is a no-op BY DEFINITION, so
+// this cannot move a pixel - which is what the equality test below
+// exists to prove rather than assert.
+const glLogRig = (size = { w: 640, h: 400 }) => {
+  const log = [];
+  const ids = new Map();
+  const glEnum = (k) => { if (!ids.has(k)) ids.set(k, 0x9000 + ids.size); return ids.get(k); };
+  const stub = new Proxy({}, { get: (o, k) => {
+    if (k === 'getProgramParameter' || k === 'getShaderParameter') return () => true;
+    if (k === 'getUniformLocation') return (p, name) => ({ name });
+    if (k === 'getAttribLocation') return () => 0;
+    if (k === 'createTexture' || k === 'createBuffer' || k === 'createVertexArray'
+      || k === 'createProgram' || k === 'createShader' || k === 'createFramebuffer'
+      || k === 'createRenderbuffer' || k === 'createQuery') return () => ({ id: Math.random() });
+    if (k === 'getParameter') return () => new Float32Array([0, 0, 0, 0]);
+    if (k === 'getExtension') return () => null;
+    if (k === 'drawingBufferWidth') return size.w;
+    if (k === 'drawingBufferHeight') return size.h;
+    if (typeof k === 'string' && k.toUpperCase() === k) return glEnum(k);
+    return (...args) => { log.push([k, ...args.map((v) => (ArrayBuffer.isView(v) ? v.slice() : v))]); };
+  } });
+  const canvas = { getContext: () => stub, clientWidth: size.w, clientHeight: size.h, width: size.w, height: size.h };
+  const r = new Renderer(canvas);
+  log.length = 0;
+  return { r, log };
+};
+
+/** What the GPU would actually see at every draw: the program, the VAO
+ *  and the texture on each unit, replayed through the GL state machine. */
+const effectiveDraws = (log) => {
+  let unit = 0, prog = null, vao = null;
+  const units = new Map();
+  const out = [];
+  const id = (t) => (t && t.id) ? t.id : String(t);
+  for (const [k, ...a] of log) {
+    if (k === 'activeTexture') unit = a[0];
+    else if (k === 'bindTexture') units.set(unit, a[1]);
+    else if (k === 'useProgram') prog = a[0];
+    else if (k === 'bindVertexArray') vao = a[0];
+    else if (k === 'drawElements') out.push([id(prog), id(vao), id(units.get(0)), id(units.get(1)), a[1], a[3]].join('|'));
+  }
+  return out;
+};
+
+/** A scene whose emission maps really do change between sub-meshes - a
+ *  constant black would prove nothing about the shadow's correctness. */
+const meshScene = (r, log) => {
+  const M = () => new Float32Array(identity());
+  for (let i = 0; i < 8; i++) r.textures.set(`${100 + i}_0`, { id: `albedo${i}` });
+  r.emissionTextures.set('102_0', { id: 'emisWindow' });
+  r.emissionTextures.set('105_0', { id: 'emisLamp' });
+  r.emissionWhite.add('105_0');
+  r.beginFrame(M(), M(), new Float32Array([0, -1, 0]));
+  const from = log.length;
+  for (let i = 0; i < 20; i++) {
+    r.drawMesh({
+      vao: { id: `vao${i}` },
+      subMeshes: Array.from({ length: 4 }, (_, k) => ({
+        startIndex: k * 300, primitiveCount: 100, textureArchive: 100 + ((k + i) % 8), textureRecord: 0,
+      })),
+    }, M());
+  }
+  return log.slice(from);
+};
+
+test('PERF-TEX: no draw in the mesh path binds a texture to the unit that already holds it', () => {
+  const { r, log } = glLogRig();
+  const slice = meshScene(r, log);
+  let unit = 0, redundant = 0, total = 0;
+  const held = new Map();
+  for (const [k, ...a] of slice) {
+    if (k === 'activeTexture') unit = a[0];
+    else if (k === 'bindTexture') { total++; if (held.get(unit) === a[1]) redundant++; held.set(unit, a[1]); }
+  }
+  assert.equal(r.stats.draws, 80, 'the scene really drew');
+  assert.ok(total > 0, 'and really bound textures');
+  assert.equal(redundant, 0, `${redundant} of ${total} binds set a unit to what it already held`);
+});
+
+test('PERF-TEX: the shadow is EV6’s, so the saving is real - fewer GL calls for the same draws', () => {
+  const { r, log } = glLogRig();
+  const slice = meshScene(r, log);
+  const draws = slice.filter((e) => e[0] === 'drawElements').length;
+  assert.equal(draws, 80);
+  // Before the shadow this path spent 2 activeTexture + 2 bindTexture a
+  // sub-mesh, unconditionally: 4 texture-state calls a draw, always.
+  const texState = slice.filter((e) => e[0] === 'activeTexture' || e[0] === 'bindTexture').length;
+  // Unshadowed this path spent exactly 4 a draw. This scene is
+  // deliberately adversarial - its emission map changes every few
+  // sub-meshes, where a real one is `_blackTex` for nearly all of them -
+  // so the floor here is well above what a street or a dungeon sees.
+  assert.ok(texState < draws * 4, `texture state is still ${texState} for ${draws} draws - the shadow is not skipping`);
+  assert.ok(texState < draws * 3, `${(texState / draws).toFixed(2)} texture calls a draw, against 4 unshadowed`);
+});
+
+test('PERF-TEX: it moves NO PIXEL - the effective GPU state at every draw is what the unshadowed path produced', () => {
+  // THE PIN THAT MATTERS, and the reason this is a performance change
+  // and not a rendering change. The unshadowed path is reconstructed
+  // here rather than remembered: every sub-mesh binds both units, which
+  // is exactly what the loop did before. If the shadow ever skips a bind
+  // it should not have, these two sequences diverge.
+  const { r, log } = glLogRig();
+  const shadowed = effectiveDraws(meshScene(r, log));
+
+  const { r: r2, log: log2 } = glLogRig();
+  const raw = [];
+  {
+    const M = () => new Float32Array(identity());
+    for (let i = 0; i < 8; i++) r2.textures.set(`${100 + i}_0`, { id: `albedo${i}` });
+    r2.emissionTextures.set('102_0', { id: 'emisWindow' });
+    r2.emissionTextures.set('105_0', { id: 'emisLamp' });
+    r2.emissionWhite.add('105_0');
+    r2.beginFrame(M(), M(), new Float32Array([0, -1, 0]));
+    // the same scene, with the shadow defeated before every draw
+    for (let i = 0; i < 20; i++) {
+      const from = log2.length;
+      r2._tex1Bound = null;   // "always bind", i.e. the path as it was
+      r2.drawMesh({
+        vao: { id: `vao${i}` },
+        subMeshes: Array.from({ length: 4 }, (_, k) => ({
+          startIndex: k * 300, primitiveCount: 100, textureArchive: 100 + ((k + i) % 8), textureRecord: 0,
+        })),
+      }, M());
+      raw.push(...log2.slice(from));
+    }
+  }
+  assert.deepEqual(shadowed, effectiveDraws(raw), 'the shadow changed what a draw sees');
+  assert.equal(shadowed.length, 80);
+});
+
+test('PERF-TEX: the shadow is cleared wherever something else can own unit 1', () => {
+  const src = readFileSync(new URL('../src/render/renderer.js', import.meta.url), 'utf8');
+  // Every bind of unit 1 in the renderer either goes THROUGH the helper
+  // or clears the shadow - otherwise it can speak for a unit it no
+  // longer owns, which is a wrong texture, which is a visual bug.
+  const body = src.split('_bindEmission(tex) {')[1].split('\n  }')[0];
+  assert.match(body, /if \(this\._tex1Bound === tex\) return;/, 'the helper is a shadow, not a wrapper');
+  assert.match(body, /gl\.activeTexture\(gl\.TEXTURE0\);/, 'and it leaves unit 0 active, as every draw path expects');
+  for (const site of ['beginFrame', 'endWorldPass']) {
+    const fn = src.split(`  ${site}(`)[1]?.split('\n  }')[0] ?? '';
+    assert.match(fn, /_tex1Bound = null/, `${site} does not clear the shadow`);
+  }
+  // and no site binds TEXTURE_2D to unit 1 outside the helper without clearing it
+  const lines = src.split('\n');
+  for (let i = 0; i < lines.length; i++) {
+    if (!/activeTexture\(gl\.TEXTURE1\)/.test(lines[i])) continue;
+    const window = lines.slice(i, i + 4).join('\n');
+    assert.match(window, /_tex1Bound|_bindEmission/, `renderer.js:${i + 1} binds unit 1 without answering to the shadow`);
+  }
+});
