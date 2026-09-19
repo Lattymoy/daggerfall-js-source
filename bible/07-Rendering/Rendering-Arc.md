@@ -1576,10 +1576,10 @@ small programs is negligible VRAM - but it is a trade, and it was made
 silently.
 
 **3. A player who never sees rain now pays for the rain.** Precipitation's
-constructor runs at boot instead of at the weather change: ~176 KB of GPU
-buffers on the classic lane (1,000 particles x 4 verts x 5 floats, plus
-6,000 indices), ~600 KB on the enhanced one (`LAB_COUNTS.rain` = 26,000
-instances). Before, that was paid only if the weather turned. It is the
+constructor runs at boot instead of at the weather change: **~102 KB** of
+GPU buffers on the classic lane (1,000 particles x 4 verts x 5 floats =
+78 KB, plus 6,000 indices = 23 KB) and **~508 KB** on the enhanced one,
+which adds `_buildLab`'s 26,000 instances x 4 floats = 406 KB. Before, that was paid only if the weather turned. It is the
 right trade for a game where it rains, but it is a new steady cost and
 the section above only counted the saving.
 
