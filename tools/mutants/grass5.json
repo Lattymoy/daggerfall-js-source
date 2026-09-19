@@ -1,0 +1,58 @@
+[
+ {
+  "name": "GRASS5-the-cell-origin-is-floored-so-a-clustered-blade-throws-the-slot-a-cell-out",
+  "file": "src/render/labGrass.js",
+  "old": "    const ox = n > 0 ? x0 : 0;\n    const oz = n > 0 ? z0 : 0;",
+  "new": "    const ox = n > 0 ? Math.floor(x0 / (this.cellSize ?? GRASS_CELL)) * (this.cellSize ?? GRASS_CELL) : 0;\n    const oz = n > 0 ? Math.floor(z0 / (this.cellSize ?? GRASS_CELL)) * (this.cellSize ?? GRASS_CELL) : 0;",
+  "tests": ["test/labGrass.test.js"]
+ },
+ {
+  "name": "GRASS5-the-span-is-one-axis-so-the-wider-one-is-clipped",
+  "file": "src/render/labGrass.js",
+  "old": "    const xSpan = n > 0 ? Math.max(1e-3, Math.max(x1 - x0, z1 - z0)) : 1;",
+  "new": "    const xSpan = n > 0 ? Math.max(1e-3, x1 - x0) : 1;",
+  "tests": ["test/labGrass.test.js"]
+ },
+ {
+  "name": "GRASS5-the-pointer-forgets-the-type-so-a-slot-is-read-as-floats",
+  "file": "src/render/labGrass.js",
+  "old": "      gl.vertexAttribPointer(loc, 4, type, true, 0, slot * p * bytes);",
+  "new": "      gl.vertexAttribPointer(loc, 4, gl.FLOAT, false, 0, slot * p * bytes);",
+  "tests": ["test/labGrass.test.js"]
+ },
+ {
+  "name": "GRASS5-the-attributes-are-not-normalized-so-every-lane-is-a-raw-integer",
+  "file": "src/render/labGrass.js",
+  "old": "        gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 4, type, true, 0, 0);",
+  "new": "        gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 4, type, false, 0, 0);",
+  "tests": ["test/labGrass.test.js"]
+ },
+ {
+  "name": "GRASS5-the-buffers-are-sized-as-floats-again-so-three-quarters-is-wasted",
+  "file": "src/render/labGrass.js",
+  "old": "    const sizes = [slots * perCell * 8, slots * perCell * 4, slots * perCell * 4];",
+  "new": "    const sizes = [slots * perCell * 4 * 4, slots * perCell * 4 * 4, slots * perCell * 3 * 4];",
+  "tests": ["test/labGrass.test.js"]
+ },
+ {
+  "name": "GRASS5-the-height-floor-is-dropped-so-every-blade-is-short-by-its-minimum",
+  "file": "src/render/labGrass.js",
+  "old": "export const heightFloor = (height = LAB_GRASS.height) => 0.22 * (height / 34);",
+  "new": "export const heightFloor = () => 0;",
+  "tests": ["test/labGrass.test.js"]
+ },
+ {
+  "name": "GRASS5-the-height-span-is-the-whole-height-so-the-pack-loses-half-its-range",
+  "file": "src/render/labGrass.js",
+  "old": "export const heightSpan = (height = LAB_GRASS.height) => 0.42 * (height / 34);",
+  "new": "export const heightSpan = (height = LAB_GRASS.height) => height / 34;",
+  "tests": ["test/labGrass.test.js"]
+ },
+ {
+  "name": "GRASS5-a-blade-is-still-forty-eight-bytes-so-the-range-is-still-capped",
+  "file": "src/render/labGrass.js",
+  "old": "export const GRASS_PACK_BYTES = 16;",
+  "new": "export const GRASS_PACK_BYTES = 48;",
+  "tests": ["test/labGrass.test.js"]
+ }
+]

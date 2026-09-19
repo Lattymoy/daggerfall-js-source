@@ -301,7 +301,13 @@ test('AUDIT 47: no shader in the tree uses a uniform it did not declare in its o
       assert.deepEqual(missing, [], `${label} uses undeclared: ${missing.join(', ')}`);
       assert.ok(/terrain\(/.test(body) === (label === 'labGrass VS'), `${label}: terrain() belongs to the vertex stage`);
     }
-    assert.ok(/float terrain\(vec2 p\)\{ return aRootY; \}/.test(vs), 'the game’s terrain() is the baked root height');
+    // GRASS5: the root height is no longer an attribute of its own - it
+    // is a lane of the packed A stream, decoded in main() into a global
+    // that terrain() reads. Still the baked height; no longer a baked
+    // ATTRIBUTE, which is the whole point of the pack.
+    assert.ok(/float terrain\(vec2 p\)\{ return gRootY; \}/.test(vs), 'the game’s terrain() is the baked root height');
+    assert.ok(/gRootY = uCellFrame\.z \+ aPA\.z \* uCellFrame\.w;/.test(vs), '...unpacked from the cell’s own frame');
+    assert.ok(!/in float aRootY;/.test(vs), 'and it costs no attribute of its own');
   }
   for (const file of files) {
     const s = readFileSync(file, 'utf8');

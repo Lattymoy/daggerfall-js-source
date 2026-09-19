@@ -46,12 +46,41 @@ export const GRASS2_VS_EDITS = Object.freeze([
   Object.freeze({
     why: 'uSlotN: the shader is told how many blades the cell holds, so an index can be a fraction of it',
     from: 'uniform float uSnowFull;           // PROTO-22: the SAME line the ground draws\n',
-    to: 'uniform float uSnowFull;           // PROTO-22: the SAME line the ground draws\nuniform float uSlotN;              // GRASS2: how many blades this slot holds, so the index can be a fraction\n',
+    to: 'uniform float uSnowFull;           // PROTO-22: the SAME line the ground draws\n'
+      + 'uniform float uSlotN;              // GRASS2: how many blades this slot holds, so the index can be a fraction\n'
+      + 'uniform vec4 uCellFrame;           // GRASS5: the cell\'s origin.xz, its ground\'s floor and its span\n'
+      + 'uniform vec4 uBladeScale;          // GRASS5: the height law\'s floor/span, then the width\'s\n'
+      + 'uniform float uCellSize;           // GRASS5: how wide a cell is, so a 0..1 lane is metres\n',
   }),
   Object.freeze({
     why: 'the fade threshold is the blade INDEX, not a hash of its phase - so the host can decline the blades that will fail it',
     from: '  if (vFade <= 0.001 || fract(aInst.w * 91.7) > vFade * 1.15) { gl_Position = vec4(2,2,2,1); return; }',
     to: '  float u = uSlotN > 0.5 ? float(gl_InstanceID) / uSlotN : 0.0;\n  if (vFade <= 0.001 || u > vFade * 1.15) { gl_Position = vec4(2,2,2,1); return; }',
+  }),
+  Object.freeze({
+    why: 'GRASS5: the three instance lanes are PACKED integers, not twelve floats - a blade is 16 bytes on the GPU instead of 48',
+    from: 'layout(location=1) in vec4 aInst;        // xz, height, phase\n'
+      + 'layout(location=2) in vec4 aInst2;       // lean.xz, tint, width\n'
+      + 'layout(location=4) in vec3 aGround;      // GR4: the ground\'s own colour under this blade, baked by the placer',
+    to: 'layout(location=1) in vec4 aPA;          // GRASS5: u16 x, z, rootY, height - all cell-local, all normalized\n'
+      + 'layout(location=2) in vec4 aPB;          // GRASS5: u8 lean.x, lean.z, tint, width\n'
+      + 'layout(location=4) in vec4 aPC;          // GRASS5: u8 ground.rgb, phase',
+  }),
+  Object.freeze({
+    why: 'GRASS5: and they are unpacked into the lab\'s own names at the top of main, so every line of the body below is untouched',
+    from: 'void main(){\n  vec2 root = aInst.xy;',
+    to: 'void main(){\n'
+      + '  // GRASS5: UNPACK. The GPU has already turned the integer lanes into\n'
+      + '  // 0..1 floats; this is two multiply-adds and a cell origin, and it\n'
+      + '  // rebuilds exactly the four values the lab\'s body reads. The names\n'
+      + '  // below are the lab\'s own, so nothing after this line had to change.\n'
+      + '  vec4 aInst = vec4(uCellFrame.xy + aPA.xy * uCellSize,\n'
+      + '                    uBladeScale.x + aPA.w * uBladeScale.y,\n'
+      + '                    aPC.a * 6.283185307179586);\n'
+      + '  vec4 aInst2 = vec4(aPB.xy * 0.5 - 0.25, aPB.z, uBladeScale.z + aPB.w * uBladeScale.w);\n'
+      + '  vec3 aGround = aPC.rgb;\n'
+      + '  gRootY = uCellFrame.z + aPA.z * uCellFrame.w;\n'
+      + '  vec2 root = aInst.xy;',
   }),
   Object.freeze({
     why: 'the tint is pulled toward a low-frequency world-space noise, so the field has patches instead of reading as one flat carpet',
@@ -72,21 +101,38 @@ float vnoise(vec2 p){
   vec2 i = floor(p), f = fract(p); f = f*f*(3.0-2.0*f);
   return mix(mix(hash(i),hash(i+vec2(1,0)),f.x), mix(hash(i+vec2(0,1)),hash(i+vec2(1,1)),f.x), f.y);
 }
-layout(location=3) in float aRootY;      // GR1: the real ground under this blade, baked by the placer
-float terrain(vec2 p){ return aRootY; }`;
+// GRASS5: the root height is no longer an attribute of its own - it
+// rides the packed A lane and is decoded in main(), so terrain() reads
+// a global the decode fills. The port's prelude was always its own
+// (GR1's one declared difference), so this costs the lab nothing.
+float gRootY;
+float terrain(vec2 p){ return gRootY; }`;
 export const LAB_GRASS_VS = `layout(location=0) in vec2 aCorner;      // one blade quad, 0..1
-layout(location=1) in vec4 aInst;        // xz, height, phase
-layout(location=2) in vec4 aInst2;       // lean.xz, tint, width
-layout(location=4) in vec3 aGround;      // GR4: the ground's own colour under this blade, baked by the placer
+layout(location=1) in vec4 aPA;          // GRASS5: u16 x, z, rootY, height - all cell-local, all normalized
+layout(location=2) in vec4 aPB;          // GRASS5: u8 lean.x, lean.z, tint, width
+layout(location=4) in vec4 aPC;          // GRASS5: u8 ground.rgb, phase
 uniform mat4 uVP; uniform float uTime, uWind, uRange; uniform vec3 uEye, uSunDir, uMoonDir;   // WIND4: the moon lights the field at night, as it lights the ground under it
 uniform vec2 uWindDir;
 uniform float uSnowFull;           // PROTO-22: the SAME line the ground draws
 uniform float uSlotN;              // GRASS2: how many blades this slot holds, so the index can be a fraction
+uniform vec4 uCellFrame;           // GRASS5: the cell's origin.xz, its ground's floor and its span
+uniform vec4 uBladeScale;          // GRASS5: the height law's floor/span, then the width's
+uniform float uCellSize;           // GRASS5: how wide a cell is, so a 0..1 lane is metres
 uniform sampler2D uGField; uniform vec2 uGFieldOrigin; uniform float uGFieldM, uSnowGlobal; uniform vec2 uWindV;
 out float vT; out float vTint; out float vFade; out float vLam; out float vSnow; out float vWet;
 out vec3 vGround;                       // GR4
 out float vMoonLam;                     // WIND4: the moon's lambert, beside the sun's
 void main(){
+  // GRASS5: UNPACK. The GPU has already turned the integer lanes into
+  // 0..1 floats; this is two multiply-adds and a cell origin, and it
+  // rebuilds exactly the four values the lab's body reads. The names
+  // below are the lab's own, so nothing after this line had to change.
+  vec4 aInst = vec4(uCellFrame.xy + aPA.xy * uCellSize,
+                    uBladeScale.x + aPA.w * uBladeScale.y,
+                    aPC.a * 6.283185307179586);
+  vec4 aInst2 = vec4(aPB.xy * 0.5 - 0.25, aPB.z, uBladeScale.z + aPB.w * uBladeScale.w);
+  vec3 aGround = aPC.rgb;
+  gRootY = uCellFrame.z + aPA.z * uCellFrame.w;
   vec2 root = aInst.xy;
   float d = distance(root, uEye.xz);
   vFade = 1.0 - smoothstep(uRange*0.55, uRange, d);
@@ -273,22 +319,39 @@ void main(){
 // nothing else about the field moves.
 //
 // GRASS2 (Mac: "have it be seen at long ranges"): the range was the
-// lab's 200 and is 250. `span` follows it, because the window has to
-// hold the range or the window's edge is a visible wall.
+// lab's 200 and is 300 - GRASS5's pack is what paid for it. `span`
+// follows it, because the window has to hold the range or the window's
+// edge is a visible wall, and stays a whole number of cells.
 //
-// WHY 250 AND NOT FURTHER, stated plainly so the next reader does not
-// have to re-derive it. The DRAW cost no longer tracks the area - the
-// host declines the blades the fade would throw away and the far cells
-// take a one-quad blade, so this range submits fewer vertices than the
-// lab's 200 m did. The STORAGE still does: every cell in the window
-// holds near-field density, 48 bytes a blade, whether it is under the
-// player's feet or at the horizon. That is 75 MB of GPU buffer at 200 m,
-// 106 MB here, and 169 MB at 320 m - and 320 m is what "long range"
-// really wants. Going further needs the instance data PACKED (12 floats
-// a blade is x, z, height, phase, lean.xz, tint, width, rootY and an
-// RGB ground colour, most of which are a byte's worth of information)
-// or the far ring stored at a lower density than the near one. Either
-// is its own slice; neither is a reason to ship 169 MB quietly.
+// WHY 300 AND NOT FURTHER, which is no longer a memory question.
+//
+// MEMORY IS NOT THE CAP ANY MORE. GRASS5's pack took a blade from 48
+// bytes to 16, so this range holds 47 MB of buffer where the lab's own
+// 200 m held 75. Even 350 m would be 61 MB. The wall that stopped
+// GRASS2 at 250 is gone.
+//
+// WHAT STOPS IT IS THE TRADE, measured rather than assumed
+// (tools/grassFieldProbe.mjs prints the curve):
+//
+//     200 m  3.54M verts   55,982 lit pixels
+//     250 m  4.97M         56,386
+//     300 m  6.80M         56,693
+//     350 m  8.73M         56,763
+//
+// Every extra 50 m costs about a million vertices and buys a tenth of a
+// per cent of grass. That is what a UNIFORM world density does: the
+// field keeps the same blades a square metre at the horizon as underfoot,
+// where they are sub-pixel and pile up behind each other. 300 m is the
+// balance point - half again the lab's range, still a fifth under its
+// vertex cost - and spending further at this density would buy nothing
+// anyone can see.
+//
+// THE NEXT STEP IS NOT MORE RANGE, IT IS LESS DENSITY AT RANGE: a field
+// whose blades-per-square-metre falls with distance so the SCREEN
+// density stays constant. That is a different placer, and GRASS3 already
+// proved the hard part of it - a shader can work out where the ground is
+// to within a thousandth of a blade, so the blades need not be stored
+// at all.
 // `density` is a COUNT over `densitySpan`, not a rate - so the range and
 // the span may move only if the rate is held. 1,200,000 blades over the
 // lab's 420 m window is 6.80 blades a square metre, and that is the
@@ -303,7 +366,7 @@ void main(){
 // correctly - it just churns cells it did not need to, which is the
 // hitch GR5 was built to remove. The lab's 210 was a multiple by luck
 // (420 = 14 x 30); this one is by intent.
-export const LAB_GRASS = Object.freeze({ density: 1200000, height: 38, range: 250, span: 270, densitySpan: 210, seed: 0x2f6e2b1 });
+export const LAB_GRASS = Object.freeze({ density: 1200000, height: 38, range: 300, span: 315, densitySpan: 210, seed: 0x2f6e2b1 });
 
 /**
  * GR2 (Mac: there is no wind movement). The lab's wind is a SLIDER,
@@ -373,6 +436,50 @@ export function grassCellSeed(cx, cz, seed = LAB_GRASS.seed) {
   h ^= h >>> 15;
   return (h || 1) >>> 0;
 }
+
+/** GRASS5 (2026-09-19): THE BLADE, PACKED.
+ *
+ *  A blade was twelve floats on the GPU - 48 bytes - and almost none of
+ *  it needed that much. The DRAW cost stopped tracking the field's area
+ *  at GRASS2, but the STORAGE never did: every cell in the window holds
+ *  near-field density whether it is underfoot or at the horizon, which
+ *  is 106 MB of buffer at a 250 m range and 169 at 320. That, and not
+ *  the frame, is what capped the range.
+ *
+ *  What each field actually needs, measured against what it was given:
+ *
+ *    x, z     cell-local, so 16 bits over 30 m is 0.46 mm
+ *    rootY    cell-local over the cell's own height span, 16 bits
+ *    height   0.25..0.72 units, so 8 bits is 1.8 mm
+ *    phase    a wind phase, 8 bits is 0.025 rad
+ *    lean     +/-0.25, 8 bits is 0.002
+ *    tint     0..1, 8 bits
+ *    width    0.052..0.107, 8 bits is 0.2 mm
+ *    ground   an RGB that was averaged from 8-bit texels to begin with
+ *
+ *  Sixteen bytes, and every one of them is finer than the eye or the
+ *  float32 it replaced can tell. Three times the field for the same
+ *  memory: a 390 m range now costs less than 250 m did.
+ *
+ *  THE PLACER STILL WORKS IN FLOATS. Its laws - the heights, the leans,
+ *  the clustering, the seed - are pinned as floats and stay that way;
+ *  the packing happens at `writeSlot`, the one place where a blade
+ *  crosses to the GPU. A cell's worth of float scratch is transient and
+ *  reused; the buffers are what the wall was made of.
+ *
+ *  The cell's ORIGIN and its height base ride as per-slot uniforms, not
+ *  per blade, because every blade in a cell shares them - which is the
+ *  whole reason 16 bits is enough for a position. */
+export const GRASS_PACK_BYTES = 16;
+/** The lean's half-range: the placer draws (rnd - 0.5) * 0.5. */
+export const LEAN_SPAN = 0.5;
+/** The width's floor and span: the placer draws 0.052 + rnd * 0.055. */
+export const WIDTH_MIN = 0.052;
+export const WIDTH_SPAN = 0.055;
+/** A blade's height floor and span for a given `height` setting - the
+ *  placer's own (0.22 + rnd * 0.42) * (height / 34). */
+export const heightFloor = (height = LAB_GRASS.height) => 0.22 * (height / 34);
+export const heightSpan = (height = LAB_GRASS.height) => 0.42 * (height / 34);
 
 /** GRASS4: the map pixel's key as a NUMBER, not a string.
  *
@@ -468,7 +575,7 @@ export function createGrassField(renderer, { keep, ground = null, span = LAB_GRA
   const perCell = grassPerCell(density);   // GRASS2: the RATE, off the lab's own span - `span` below is the window, and the two are not the same question
   const side = Math.ceil((span * 2) / cell) + 1;
   const slots = side * side;
-  renderer.allocSlots(perCell, slots);
+  renderer.allocSlots(perCell, slots, cell, height);   // GRASS5: the pack's frame
   const live = new Map();     // 'cx,cz' -> slot
   const free = [];
   for (let i = 0; i < slots; i++) free.push(i);
@@ -626,13 +733,15 @@ export class LabGrassRenderer {
     if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(prog));
     this.program = prog;
     this.u = {};
-    for (const n of ['uVP', 'uTime', 'uWind', 'uRange', 'uEye', 'uSunDir', 'uWindDir', 'uSnowFull', 'uSlotN', 'uGField', 'uGFieldOrigin', 'uGFieldM', 'uSnowGlobal', 'uWindV', 'uAmb', 'uSunCol', 'uDim', 'uSunScale', 'uMoonDir', 'uMoonScale', 'uMoonCol']) this.u[n] = gl.getUniformLocation(prog, n);
+    for (const n of ['uVP', 'uTime', 'uWind', 'uRange', 'uEye', 'uSunDir', 'uWindDir', 'uSnowFull', 'uSlotN', 'uCellFrame', 'uBladeScale', 'uCellSize', 'uGField', 'uGFieldOrigin', 'uGFieldM', 'uSnowGlobal', 'uWindV', 'uAmb', 'uSunCol', 'uDim', 'uSunScale', 'uMoonDir', 'uMoonScale', 'uMoonCol']) this.u[n] = gl.getUniformLocation(prog, n);
     // the blade, and three instance streams the lab's layout plus the game's root height
     // GRASS2: the instance buffers are made ONCE and shared by both
     // levels of detail - only the corner buffer differs between them, so
     // a cell drops to the far blade by binding the other array. Nothing
     // is uploaded twice and nothing is kept in step by hand.
-    this.bufs = [1, 2, 3, 4].map(() => gl.createBuffer());   // GR4: 4 is the ground colour
+    // GRASS5: THREE buffers, not four - the root height rides in the
+    // first one's spare lane now, so there is no attribute of its own.
+    this.bufs = [1, 2, 4].map(() => gl.createBuffer());
     for (const b of this.bufs) { gl.bindBuffer(gl.ARRAY_BUFFER, b); gl.bufferData(gl.ARRAY_BUFFER, 4, gl.DYNAMIC_DRAW); }
     /** one vertex array over a corner buffer of `segments` quads */
     const buildVao = (segments) => {
@@ -642,9 +751,12 @@ export class LabGrassRenderer {
       const corners = labBladeCorners(segments);
       gl.bufferData(gl.ARRAY_BUFFER, corners, gl.STATIC_DRAW);
       gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
-      for (const [i, loc] of [[0, 1], [1, 2], [2, 3], [3, 4]]) {
+      // GRASS5: NORMALIZED integer attributes - the GPU does the unpack,
+      // so the shader reads floats in 0..1 and the decode is two
+      // multiply-adds rather than a fetch per field.
+      for (const [i, loc, type] of [[0, 1, gl.UNSIGNED_SHORT], [1, 2, gl.UNSIGNED_BYTE], [2, 4, gl.UNSIGNED_BYTE]]) {
         gl.bindBuffer(gl.ARRAY_BUFFER, this.bufs[i]);
-        gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, loc === 3 ? 1 : loc === 4 ? 3 : 4, gl.FLOAT, false, 0, 0);
+        gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 4, type, true, 0, 0);
         gl.vertexAttribDivisor(loc, 1);
       }
       gl.bindVertexArray(null);
@@ -672,11 +784,17 @@ export class LabGrassRenderer {
 
   /** GR5: size the buffers for `slots` cells of `perCell` blades each,
    *  all zero - a slot draws nothing until a cell is written into it. */
-  allocSlots(perCell, slots) {
+  allocSlots(perCell, slots, cell = GRASS_CELL, height = LAB_GRASS.height) {
     const gl = this.gl;
     this.perCell = perCell; this.slots = slots;
-    const sizes = [slots * perCell * 4 * 4, slots * perCell * 4 * 4, slots * perCell * 4, slots * perCell * 3 * 4];
-    for (let i = 0; i < 4; i++) {
+    // GRASS5: the two the pack is measured against - a cell's width and
+    // the height law's own scale. The field knows both; the renderer did
+    // not have to until a blade became sixteen bytes.
+    this.cellSize = cell; this.height = height;
+    // GRASS5: 8 bytes of u16 and two lots of 4 bytes of u8 - sixteen a
+    // blade, where twelve floats were forty-eight.
+    const sizes = [slots * perCell * 8, slots * perCell * 4, slots * perCell * 4];
+    for (let i = 0; i < 3; i++) {
       gl.bindBuffer(gl.ARRAY_BUFFER, this.bufs[i]);
       gl.bufferData(gl.ARRAY_BUFFER, sizes[i], gl.DYNAMIC_DRAW);
     }
@@ -684,6 +802,13 @@ export class LabGrassRenderer {
     this.count = slots * perCell;
     this.slotBox = new Array(slots).fill(null);   // PERF2
     this.slotCount = new Int32Array(slots);       // GRASS2: every slot starts empty, so every slot starts at zero blades
+    // GRASS5: the per-slot frame a packed blade is decoded against -
+    // origin x, origin z, the cell's height floor and its height span.
+    this.slotFrame = new Float32Array(slots * 4);
+    this.slotSpan = new Float32Array(slots);   // GRASS5: the cell's own xz extent, which is NOT the cell size
+    this._packA = new Uint16Array(perCell * 4);   // the scratch a cell is packed through, reused
+    this._packB = new Uint8Array(perCell * 4);
+    this._packC = new Uint8Array(perCell * 4);
   }
 
   /** GR5: one cell into its slot - one bufferSubData per buffer, no repack. */
@@ -701,9 +826,53 @@ export class LabGrassRenderer {
     }
     if (this.slotBox) this.slotBox[slot] = n > 0 ? [x0, y0, z0, x1, y1, z1] : null;
     if (this.slotCount) this.slotCount[slot] = n;   // GRASS2: what this cell actually grew
-    for (const [i, data, stride] of [[0, placed.inst, 4], [1, placed.inst2, 4], [2, placed.rootY, 1], [3, placed.ground, 3]]) {
-      gl.bindBuffer(gl.ARRAY_BUFFER, this.bufs[i]);
-      gl.bufferSubData(gl.ARRAY_BUFFER, slot * p * stride * 4, data);
+
+    // GRASS5: THE PACK, and the only place a blade crosses to the GPU.
+    // The cell's own frame - where it starts and how tall its ground
+    // runs - is what makes sixteen bits enough for a position, so it is
+    // measured from the blades themselves and uploaded once per slot.
+    // THE FRAME IS THE DATA'S OWN BOUNDS, not the cell's coordinates.
+    // A blade does not stay inside its cell: the placer clusters each
+    // one about a centre with a radius of up to 0.55, so the lowest
+    // blade can sit just past the boundary - and deriving the origin
+    // with floor(minX / cell) then names the cell NEXT DOOR and puts
+    // every blade in the slot 30 m out. (It did, and the probe found
+    // it: the field drew 79 lit pixels instead of 56,000.) The bounds
+    // are already measured above for the culling box; a square frame
+    // over the wider of the two axes keeps the decode to one span.
+    const xSpan = n > 0 ? Math.max(1e-3, Math.max(x1 - x0, z1 - z0)) : 1;
+    const ox = n > 0 ? x0 : 0;
+    const oz = n > 0 ? z0 : 0;
+    const yBase = n > 0 ? y0 : 0;
+    const ySpan = n > 0 ? Math.max(1e-3, y1 - y0) : 1;
+    if (this.slotFrame) this.slotFrame.set([ox, oz, yBase, ySpan], slot * 4);
+    if (this.slotSpan) this.slotSpan[slot] = xSpan;
+    const hFloor = heightFloor(this.height), hSpan = Math.max(1e-6, heightSpan(this.height));
+    const A = this._packA, B = this._packB, C = this._packC;
+    A.fill(0); B.fill(0); C.fill(0);
+    const u16 = (v) => Math.max(0, Math.min(65535, Math.round(v * 65535)));
+    const u8 = (v) => Math.max(0, Math.min(255, Math.round(v * 255)));
+    for (let i = 0; i < n; i++) {
+      const x = placed.inst[i * 4], z = placed.inst[i * 4 + 1], h = placed.inst[i * 4 + 2], ph = placed.inst[i * 4 + 3];
+      A[i * 4] = u16((x - ox) / xSpan);
+      A[i * 4 + 1] = u16((z - oz) / xSpan);
+      A[i * 4 + 2] = u16((placed.rootY[i] - yBase) / ySpan);
+      A[i * 4 + 3] = u16((h - hFloor) / hSpan);
+      B[i * 4] = u8((placed.inst2[i * 4] + LEAN_SPAN / 2) / LEAN_SPAN);
+      B[i * 4 + 1] = u8((placed.inst2[i * 4 + 1] + LEAN_SPAN / 2) / LEAN_SPAN);
+      B[i * 4 + 2] = u8(placed.inst2[i * 4 + 2]);
+      B[i * 4 + 3] = u8((placed.inst2[i * 4 + 3] - WIDTH_MIN) / WIDTH_SPAN);
+      C[i * 4] = u8(placed.ground[i * 3]);
+      C[i * 4 + 1] = u8(placed.ground[i * 3 + 1]);
+      C[i * 4 + 2] = u8(placed.ground[i * 3 + 2]);
+      C[i * 4 + 3] = u8(ph / 6.283185307179586);
+    }
+    // HARD3's lesson again: a mixed [number, TypedArray, number] literal
+    // widens to (number | Uint16Array | Uint8Array)[], and then `i` is
+    // not an index and `bytes` is not a number. A named shape keeps both.
+    for (const w of [{ i: 0, data: A, bytes: 8 }, { i: 1, data: B, bytes: 4 }, { i: 2, data: C, bytes: 4 }]) {
+      gl.bindBuffer(gl.ARRAY_BUFFER, this.bufs[w.i]);
+      gl.bufferSubData(gl.ARRAY_BUFFER, slot * p * w.bytes, w.data);
     }
     gl.bindBuffer(gl.ARRAY_BUFFER, null);
   }
@@ -713,9 +882,12 @@ export class LabGrassRenderer {
     const gl = this.gl; const p = this.perCell;
     if (this.slotBox) this.slotBox[slot] = null;   // PERF2
     if (this.slotCount) this.slotCount[slot] = 0;   // GRASS2
-    if (!this._zeros || this._zeros.length !== p * 4) this._zeros = new Float32Array(p * 4);
+    // GRASS5: zeroing A zeroes the packed HEIGHT, and a blade of the
+    // cell's height FLOOR still draws - so a cleared slot is also
+    // dropped by slotCount, which is what really keeps it off the GPU.
+    if (!this._zeros || this._zeros.length !== p * 4) this._zeros = new Uint16Array(p * 4);
     gl.bindBuffer(gl.ARRAY_BUFFER, this.bufs[0]);
-    gl.bufferSubData(gl.ARRAY_BUFFER, slot * p * 4 * 4, this._zeros);
+    gl.bufferSubData(gl.ARRAY_BUFFER, slot * p * 8, this._zeros);
     gl.bindBuffer(gl.ARRAY_BUFFER, null);
   }
 
@@ -760,6 +932,10 @@ export class LabGrassRenderer {
     gl.activeTexture(gl.TEXTURE0);
     gl.uniform2f(u.uWindV, wind.windV[0], wind.windV[1]);
     gl.uniform1f(u.uRange, range);
+    // GRASS5: the pack's decode frame. The blade scale and the cell size
+    // are the same for every slot, so they go once a draw; the cell's own
+    // origin and ground span go per slot, below.
+    gl.uniform4f(u.uBladeScale, heightFloor(this.height), Math.max(1e-6, heightSpan(this.height)), WIDTH_MIN, WIDTH_SPAN);
     gl.uniform3fv(u.uEye, eye);
     gl.uniform3fv(u.uSunDir, light.sunDir);
     gl.uniform3fv(u.uAmb, light.amb);
@@ -788,9 +964,16 @@ export class LabGrassRenderer {
    *  four calls, no upload. */
   _point(slot) {
     const gl = this.gl; const p = this.perCell ?? 0;
-    for (const [i, loc, size] of [[0, 1, 4], [1, 2, 4], [2, 3, 1], [3, 4, 3]]) {
+    // GRASS5: the TYPE has to be re-stated here, not just the offset.
+    // This call is what moves the pointers to a slot's run, and
+    // `vertexAttribPointer` sets the format as well as the offset - so
+    // pointing with the old float shape silently un-packed every
+    // attribute and the draw took INVALID_OPERATION with an empty
+    // frame. The probe caught it; no pin could, because the pins run on
+    // a fake GL that draws nothing.
+    for (const [i, loc, type, bytes] of [[0, 1, gl.UNSIGNED_SHORT, 8], [1, 2, gl.UNSIGNED_BYTE, 4], [2, 4, gl.UNSIGNED_BYTE, 4]]) {
       gl.bindBuffer(gl.ARRAY_BUFFER, this.bufs[i]);
-      gl.vertexAttribPointer(loc, size, gl.FLOAT, false, 0, slot * p * size * 4);
+      gl.vertexAttribPointer(loc, 4, type, true, 0, slot * p * bytes);
     }
   }
 
@@ -847,6 +1030,11 @@ export class LabGrassRenderer {
       const budget = Math.min(n, Math.ceil(n * fade * 1.15));
       if (budget <= 0) continue;
       gl.uniform1f(this.u.uSlotN, n);   // the fraction is over the CELL, not over the prefix
+      // GRASS5: this cell's own frame - without it the packed 16-bit
+      // lanes are 0..1 numbers with no idea where in the world they are
+      const f = slot * 4, F = this.slotFrame;
+      gl.uniform4f(this.u.uCellFrame, F[f], F[f + 1], F[f + 2], F[f + 3]);
+      gl.uniform1f(this.u.uCellSize, this.slotSpan ? this.slotSpan[slot] : (this.cellSize ?? GRASS_CELL));
       // GRASS2: the far blade, past GRASS_FAR_AT of the range. Bound per
       // slot, which is why the level of detail is a CELL's and not a
       // blade's - one bind for six thousand blades rather than a branch
