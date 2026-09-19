@@ -21,6 +21,29 @@ import { VirtueLevelUpScreen } from '../ui/virtueLevelUp.js';
 // to see what a player sees between the level-up landing and the
 // window arriving.
 import { createCharSheetWindow } from '../ui/charSheetDoor.js';
+// HOTFIX (2026-09-19): STATIC, AND THE REASON IS A BLACK SCREEN.
+//
+// This lane used to `await import('../ui/enhancedHud.js')`. A DYNAMIC
+// import makes the bundler build a NAMESPACE OBJECT for the target, and
+// a namespace object reads EVERY binding the module exports the moment
+// it is built - including the ones a module re-exports from somewhere
+// else. `ui/enhancedHud.js:974` re-exports `compassScroll`, which is
+// `ui/hud.js`'s, and hud.js and enhancedHud.js import each other. So
+// the namespace read hud.js's `const compassScroll` while hud.js was
+// still initialising: "can't access lexical declaration before
+// initialization", thrown out of a chunk `/play/` loads, and the game
+// black-screened for everyone.
+//
+// A NAMED STATIC IMPORT TAKES NO NAMESPACE - it binds the one export
+// and reads it when it is used. This file is only ever loaded by
+// `levelup.html`, so nothing is added to the player's bundle by moving
+// it up here. The cycle underneath is older than this arc and is not
+// what changed; what changed is that something asked for a namespace
+// over one end of it.
+import { drawEnhancedHud } from '../ui/enhancedHud.js';
+// ...and NAMED here too, for the same reason: `import * as` is a
+// namespace object as surely as a dynamic import is.
+import { announceLevelUp, announceSkillRaise, announceMastery, drawLevelNotices } from '../ui/levelNotice.js';
 import { SKILLS } from '../systems/skills.js';
 import { LEVELUP_TOTAL } from '../systems/oblivionLeveling.js';
 
@@ -93,15 +116,11 @@ export async function mount(lane = 'classic') {
   // against nothing. Everything below the fake vitals is shipping
   // code.
   if (lane === 'notice') {
-    const [{ drawEnhancedHud }, notice] = await Promise.all([
-      import('../ui/enhancedHud.js'),
-      import('../ui/levelNotice.js'),
-    ]);
     entity.readyToLevelUp = true;
-    notice.announceLevelUp(entity, {});
-    notice.announceSkillRaise(SKILLS.Archery, 26, {});
-    notice.announceSkillRaise(SKILLS.Climbing, 41, {});
-    notice.announceMastery(SKILLS.LongBlade, {});
+    announceLevelUp(entity, {});
+    announceSkillRaise(SKILLS.Archery, 26, {});
+    announceSkillRaise(SKILLS.Climbing, 41, {});
+    announceMastery(SKILLS.LongBlade, {});
     const vitals = {
       health: 96, maxHealth: 118, fatigue: 104 * 64, maxFatigue: 120 * 64,
       magicka: 0, maxMagicka: 0, breath: null,
@@ -116,11 +135,11 @@ export async function mount(lane = 'classic') {
       // it builds that host. A lab that drew them the other way round
       // would never take the fallback the shipping order takes on the
       // first frame of every session.
-      notice.drawLevelNotices({ owed: !!entity.readyToLevelUp });
+      drawLevelNotices({ owed: !!entity.readyToLevelUp });
       drawEnhancedHud(vitals, heading, 16, { hidden: false });
       globalThis.requestAnimationFrame(tick);
     };
-    globalThis.__lv = { entity, lane, notice, spend: () => { entity.readyToLevelUp = false; } };
+    globalThis.__lv = { entity, lane, spend: () => { entity.readyToLevelUp = false; } };
     tick();
     return null;
   }
