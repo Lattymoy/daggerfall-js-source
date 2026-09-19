@@ -298,9 +298,30 @@ try {
   await page.mouse.move(mid.x, mid.y);
   await page.mouse.wheel(0, -600);
   await page.mouse.wheel(0, -600);   // past the ceiling: the clamp must not move the point under the cursor
-  await page.waitForTimeout(80);
+  // AUDIT MAP-FIELD (2026-09-19): MEASURE THE DRIFT ON THE SCREEN.
+  //
+  // The tolerance was 0.05 MAP pixels, and a map pixel shrinks as the
+  // scale grows - so the same drift in the only units a player has,
+  // screen pixels, got a tolerance fourteen times tighter at SCALE_MAX
+  // than at the rest scale. MAP-FIELD3's new PAPER moved the fixture's
+  // rest scale, the wheel then landed on the ceiling, and a drift of
+  // ONE PAPER PIXEL failed a check about whether the eye sees the point
+  // move. It is measured in paper pixels now, against what a person
+  // could actually see.
+  //
+  // The settle below is belt and braces, not the fix: the numbers were
+  // identical before and after it was added, so the glide had already
+  // finished inside the old fixed wait. It is here so the measurement
+  // cannot become a race on a slower machine.
+  await page.waitForFunction(() => {
+    const w = globalThis.__win, v = w._view, g = w._goal;
+    return Math.abs(v.ox - g.ox) < 1e-3 && Math.abs(v.oy - g.oy) < 1e-3 && Math.abs(v.scale - g.scale) < 1e-4;
+  }, null, { timeout: 4000 }).catch(() => {});
   const after = await page.evaluate(([x, y]) => { const w = globalThis.__win; const r = w._chrome.ink.getBoundingClientRect(); return { under: globalThis.__law.ink.toMap(w._view, x - r.left, y - r.top), scale: w._view.scale }; }, [mid.x, mid.y]);
-  check('the wheel zooms IN toward the cursor - the map point under it holds', after.scale > before.scale && Math.abs(after.under[0] - under[0]) < 0.05 && Math.abs(after.under[1] - under[1]) < 0.05, JSON.stringify({ under, after }));
+  const driftPx = [Math.abs(after.under[0] - under[0]) * after.scale, Math.abs(after.under[1] - under[1]) * after.scale];
+  check('the wheel zooms IN toward the cursor - the map point under it holds, to within a screen pixel',
+    after.scale > before.scale && driftPx[0] < 1.5 && driftPx[1] < 1.5,
+    JSON.stringify({ under, after, driftPaperPx: driftPx.map((v) => Math.round(v * 100) / 100) }));
   const st1 = await state(page);
   check('the band moved with the scale', st1.band === (await page.evaluate((s) => globalThis.__law.ink.zoomBand(s), after.scale)), st1.band);
   // pick the village (visible at mid/near)

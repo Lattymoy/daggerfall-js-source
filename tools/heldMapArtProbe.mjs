@@ -135,32 +135,57 @@ const out = await page.evaluate(async () => {
   });
 
   // 6. THE CUFFS. extendCuffs carries a column the FRAME CUT, and the
-  // band it tests is only safe because the file separates: the columns
-  // under the sheet all end high, the cut cuffs all end low, and
-  // nothing ends in between. Measure that gap, it is the whole premise.
+  // band it tests is only safe if the painting really leaves a gap
+  // there. AUDIT MAP-FIELD: this section used to classify its
+  // populations BY THE BAND, which made its safety checks tautologies -
+  // it recomputed `colB` with extendCuffs' own predicate and then asked
+  // whether extendCuffs had painted exactly the columns at or below the
+  // band, which it had, by construction, on any art at all. Three
+  // checks that could never fail. The populations are measured off the
+  // PICTURE now: the sheet by where the sheet is, the silhouette by
+  // what is left, and the band is judged against both.
   const band = CUFF_BAND * H;
-  const armCols = [], sheetCols = [], between = [];
-  let underSheetLowest = 0, cuffHighest = H;
-  for (let px = 0; px < W; px++) { const last = colB[px]; if (last < 0) continue;
-    const underSheet = px >= sheetL && px <= sheetR;
-    if (underSheet) { sheetCols.push(last / H); if (last > underSheetLowest) underSheetLowest = last; }
-    if (last >= band) { armCols.push(last / H); if (last < cuffHighest) cuffHighest = last; }
-    else if (!underSheet && last / H > 0.75) between.push(last / H); }
-  armCols.sort((a, b) => a - b);
+  const sheetFoot = sheetB;   // the sheet's own lowest row, measured in 3 above
+  const sheetCols = [], silhouette = [], cut = [];
+  for (let px = 0; px < W; px++) {
+    const last = colB[px];
+    if (last < 0) continue;
+    // under the sheet's x span AND ending no lower than the sheet does:
+    // that is parchment, whatever any constant says
+    if (px >= sheetL && px <= sheetR && last <= sheetFoot + 32) sheetCols.push([px, last / H]);
+    else if (last >= H - 4) continue;                     // already at the file's foot
+    else cut.push([px, last / H]);
+  }
+  // of what is NOT sheet, the ones the frame cut end low and the hand's
+  // own outline ends high - the gap between them is the thing CUFF_BAND
+  // has to sit in, and it is the measurement worth printing
+  // CUT vs SILHOUETTE, off the picture and NOT off the band. A column
+  // the frame cut ends at the art's own foot; one the painter ended
+  // ends far above it. Splitting these by CUFF_BAND - which the first
+  // pass of this audit fix still did - rebuilds the same tautology one
+  // level down, because extendCuffs paints exactly the columns at or
+  // below the band. Measured, the cuts sit in the 31 rows above the
+  // art's foot and the silhouette stops 24 rows clear of them, so the
+  // foot minus 40 separates them with room and owes nothing to the
+  // constant under test.
+  cut.sort((a, b) => a[1] - b[1]);
+  const cutLine = lastRow - 40;
+  const cutLow = cut.filter((c) => c[1] * H >= cutLine);
+  for (const c of cut) if (c[1] * H < cutLine) silhouette.push(c);
+  const gapTop = silhouette.length ? Math.max(...silhouette.map((c) => c[1])) : 0;
+  const gapBot = cutLow.length ? Math.min(...cutLow.map((c) => c[1])) : 1;
   const vh = 900, sh = vh * HELD_MAP_HEIGHT / SPRITE_ART_FOOT, sy = vh - ((SPRITE_ART_FOOT - HELD_MAP_BITE) * sh);
-  const short = armCols.map((f) => vh - (sy + (f * sh))).filter((v) => v > 0.5).sort((a, b) => b - a);
-  // ...and that the fix reaches them: after extendCuffs none stops short
+  // ...and every column that is NOT sheet must clear the bottom edge on
+  // screen once extendCuffs has run - silhouette included, which is the
+  // half the band-classified version could not see
   const ext = x.getImageData(0, 0, W, H);
   extendCuffs(ext.data, W, H);
-  let armColsLeftShort = 0;
-  for (let px = 0; px < W; px++) { if (colB[px] < band) continue;
-    if (ext.data[((((H - 1) * W) + px) * 4) + 3] <= 8) armColsLeftShort++; }
-  // the parchment must NOT have been smeared, nor the hand's own
-  // silhouette: only a cut column may be carried down
-  let sheetColsTouched = 0, silhouetteTouched = 0;
-  for (let px = 0; px < W; px++) { const last = colB[px]; if (last < 0 || last >= band) continue;
-    if (ext.data[((((H - 1) * W) + px) * 4) + 3] <= 8) continue;
-    if (px >= sheetL && px <= sheetR) sheetColsTouched++; else silhouetteTouched++; }
+  const painted = (px) => ext.data[((((H - 1) * W) + px) * 4) + 3] > 8;
+  let armShort = 0, sheetSmeared = 0, silhouetteSmeared = 0;
+  for (const [px, f] of cutLow) if (!painted(px) && sy + (f * sh) < vh) armShort++;
+  for (const [px] of sheetCols) if (painted(px)) sheetSmeared++;
+  for (const [px] of silhouette) if (painted(px)) silhouetteSmeared++;
+  const short = cutLow.map(([, f]) => vh - (sy + (f * sh))).filter((v) => v > 0.5).sort((a, b) => b - a);
 
   return { loaded: true, size: [W, H], spriteConst: SPRITE,
     clearFrac: +(clear / (raw.length / 4)).toFixed(4), solidFrac: +(solid / (raw.length / 4)).toFixed(4),
@@ -171,12 +196,13 @@ const out = await page.evaluate(async () => {
     chromaConst: HAND_CHROMA, gN, gUnderFrac: +(gUnder / gN).toFixed(4), gLumMax: Math.round(gLumMax),
     sN, sUnder, sUnderFrac: +(sUnder / sN).toFixed(6), sLumMin: Math.round(sLumMin),
     zones,
-    armCols: armCols.length, sheetCols: sheetCols.length, between: between.length,
-    bandConst: CUFF_BAND, underSheetLowest: +(underSheetLowest / H).toFixed(4), cuffHighest: +(cuffHighest / H).toFixed(4),
-    armLowMin: +armCols[0].toFixed(4), armLowMax: +armCols[armCols.length - 1].toFixed(4),
+    bandConst: CUFF_BAND, sheetCols: sheetCols.length, silhouette: silhouette.length, cutCols: cutLow.length,
+    gapTop: +gapTop.toFixed(4), gapBot: +gapBot.toFixed(4), gapRows: Math.round((gapBot - gapTop) * H),
+    headroomRows: Math.round((CUFF_BAND - gapTop) * H),
+    armLowMin: +(cutLow[0]?.[1] ?? 0).toFixed(4), armLowMax: +(cutLow[cutLow.length - 1]?.[1] ?? 0).toFixed(4),
     colsShortOfBottom: short.length, worstShortfallPx: +(short[0] ?? 0).toFixed(1), screenHeight: vh,
-    cuffClearancePx: +Math.min(...armCols.map((f) => (sy + (f * sh)) - vh)).toFixed(1),
-    armColsLeftShort, sheetColsTouched, silhouetteTouched };
+    cuffClearancePx: +Math.min(...cutLow.map(([, f]) => (sy + (f * sh)) - vh)).toFixed(1),
+    armShort, sheetSmeared, silhouetteSmeared };
 });
 
 check('the art loads at all', out.loaded === true && pageErrors.length === 0, pageErrors.join(' | '));
@@ -184,8 +210,8 @@ if (!out.loaded) { await browser.close(); await server.close(); process.exit(1);
 console.log(`  ${out.size[0]}x${out.size[1]}  clear ${(out.clearFrac * 100).toFixed(1)}%  art foot ${out.lastInkedRowFrac}`);
 console.log(`  sheet ${JSON.stringify(out.sheetFrac)}  PAPER ${JSON.stringify(out.paperConst)}  overhang ${out.overhang}px`);
 console.log(`  r-b < ${out.chromaConst}: ${(out.gUnderFrac * 100).toFixed(1)}% of ${out.gN} glove px, ${out.sUnder} of ${out.sN} sheet px`);
-console.log(`  cut cuffs: ${out.armCols} columns ending ${out.armLowMin}..${out.armLowMax}; ${out.colsShortOfBottom} stop short of a ${out.screenHeight}px screen, by up to ${out.worstShortfallPx}px`);
-console.log(`  sheet columns end by ${out.underSheetLowest}, cut cuffs from ${out.cuffHighest}, CUFF_BAND ${out.bandConst}`);
+console.log(`  ${out.sheetCols} sheet columns, ${out.silhouette} hand-silhouette, ${out.cutCols} cut cuffs ending ${out.armLowMin}..${out.armLowMax}`);
+console.log(`  the gap CUFF_BAND must sit in: ${out.gapTop}..${out.gapBot} (${out.gapRows} rows); band ${out.bandConst}, headroom ${out.headroomRows} rows`);
 out.zones.forEach((z) => console.log(`  thumb ${z.side}: keeps ${(z.keptFrac * 100).toFixed(1)}% of its box inside PAPER, ${(z.warmFrac * 100).toFixed(1)}% of that warm`));
 
 check('SPRITE matches the file the port actually ships', out.size[0] === out.spriteConst.w && out.size[1] === out.spriteConst.h, `${out.size} vs ${out.spriteConst.w}x${out.spriteConst.h}`);
@@ -239,17 +265,31 @@ for (const z of out.zones) {
 // not the margin, which is a number Mac moves whenever the sheet should
 // sit higher or lower. extendCuffs is what keeps the law true when he
 // does: raise the bite far enough and the margin goes back to nothing.
-check('no cut cuff is left short of the screen\'s bottom edge - the gap Mac saw', out.worstShortfallPx <= 0, `${out.colsShortOfBottom} of ${out.armCols} cut columns short; the highest clears by ${out.cuffClearancePx.toFixed(1)}px on a ${out.screenHeight}px screen`);
-check('extendCuffs closes ALL of them - no cut column is left ending in mid-air', out.armColsLeftShort === 0, `${out.armColsLeftShort} still short`);
+check('no cut cuff is left short of the screen\'s bottom edge - the gap Mac saw', out.worstShortfallPx <= 0, `${out.colsShortOfBottom} of ${out.cutCols} cut columns short; the highest clears by ${out.cuffClearancePx.toFixed(1)}px on a ${out.screenHeight}px screen`);
+check('extendCuffs closes ALL of them - no cut column is left ending in mid-air', out.armShort === 0, `${out.armShort} still short`);
 // MAP-FIELD4: the test is where the column ENDS, not where it sits. The
 // right forearm crosses UNDER the sheet in this painting, so the old
 // x-range test would have left a notch bitten out of it.
-check('...and it smears no parchment: the sheet\'s own columns are untouched', out.sheetColsTouched === 0, `${out.sheetColsTouched} sheet columns streaked to the foot`);
-check('...nor the hand\'s own silhouette, which is DRAWN to end where it ends', out.silhouetteTouched === 0, `${out.silhouetteTouched} silhouette columns streaked to the foot`);
+// AUDIT MAP-FIELD: these two are measured off the PICTURE - the sheet
+// by where the sheet is, the silhouette by what is left over - and NOT
+// by the band. Classified by the band they were tautologies: extendCuffs
+// paints exactly the columns at or below the band, so asking whether it
+// had left the ones above it alone could only ever answer yes. Shifting
+// the art down eight pixels really does put silhouette columns under the
+// band and streak them, and the old form of these checks still passed.
+check('...and it smears no parchment: the sheet\'s own columns are untouched', out.sheetSmeared === 0, `${out.sheetSmeared} of ${out.sheetCols} sheet columns streaked to the foot`);
+check('...nor the hand\'s own silhouette, which is DRAWN to end where it ends', out.silhouetteSmeared === 0, `${out.silhouetteSmeared} of ${out.silhouette} silhouette columns streaked to the foot`);
 // THE PREMISE OF THE BAND, and the reason the other two tests failed.
-check('CUFF_BAND falls in a gap the painting really leaves - nothing ends between the sheet and the cut cuffs',
-  out.underSheetLowest < out.bandConst && out.cuffHighest > out.bandConst,
-  `sheet columns end by ${out.underSheetLowest}, cut cuffs from ${out.cuffHighest}, band at ${out.bandConst}`);
+// THE PREMISE OF THE BAND, and the number the record got wrong. The gap
+// is between the HAND'S SILHOUETTE and the cut cuffs - not between the
+// sheet and the cut cuffs, which is what the first draft claimed and
+// which would have made the gap 145 rows instead of 23. Half of the old
+// form was also `x >= x`: it compared the cuffs' highest against the
+// band, and the cuffs were DEFINED as the columns at or below it.
+check('CUFF_BAND falls in a gap the painting really leaves', out.gapTop < out.bandConst && out.bandConst < out.gapBot,
+  `the silhouette ends by ${out.gapTop}, the cut cuffs begin at ${out.gapBot}, band at ${out.bandConst}`);
+check('...and the gap is wide enough to hold it with room either side', out.gapRows >= 12 && out.headroomRows >= 4,
+  `${out.gapRows} rows of gap, ${out.headroomRows} rows of headroom above the silhouette`);
 
 await browser.close();
 await server.close();
