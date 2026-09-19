@@ -15,7 +15,12 @@
 
 import { LevelUpScreen } from '../ui/charsheet.js';
 import { VirtueLevelUpScreen } from '../ui/virtueLevelUp.js';
-import { mountEnhancedLevelUp } from '../ui/enhancedLevelUp.js';
+// LV1's audit: the DOOR lane drives ui/charSheetDoor.js itself - the
+// skin fork, the overlay the hosts are handed, the lazy chunk and the
+// wait in front of it - rather than the view alone. It is the only way
+// to see what a player sees between the level-up landing and the
+// window arriving.
+import { createCharSheetWindow } from '../ui/charSheetDoor.js';
 import { SKILLS } from '../systems/skills.js';
 import { LEVELUP_TOTAL } from '../systems/oblivionLeveling.js';
 
@@ -71,7 +76,7 @@ let entity = null;
 /** Mount a lane. `oghma` is the classic screen with the book's flag
  *  latched - a fixed thirty, no Level++ - which is the arm AUDIT 39
  *  found unreachable, so the lab can see it. */
-export function mount(lane = 'classic') {
+export async function mount(lane = 'classic') {
   view?.destroy?.();
   entity = labEntity();
   if (lane === 'oghma') { entity.oghmaLevelUp = true; entity.pendingLevel = null; }
@@ -82,6 +87,22 @@ export function mount(lane = 'classic') {
   // for zero. DFU's own CheckIfDoneLeveling has the IsAllMax term for
   // exactly this character, and the lab can now stand one up.
   if (lane === 'allmax') for (const k of Object.keys(entity.stats)) entity.stats[k] = 100;
+  if (lane === 'door') {
+    // THE REAL DOOR. It builds its own rollout, its own host div and
+    // its own wait; the lab holds the overlay so a probe can read the
+    // host contract off it.
+    const win = createCharSheetWindow({ entity });
+    globalThis.__lv = { door: win, entity, lane, view: null, screen: null };
+    return win;
+  }
+  // THE VIEW IS A DYNAMIC IMPORT HERE TOO, exactly as the door loads
+  // it (MENU1's lazy chunk). A static import at the top of this file
+  // put the module in the lab's own graph, so the DOOR lane resolved
+  // it from the registry before the page had finished loading and the
+  // wait could never be seen - the probe's first run read a green
+  // "never blank" against a gap that had been closed by the lab
+  // itself.
+  const { mountEnhancedLevelUp } = await import('../ui/enhancedLevelUp.js');
   const screen = lane === 'virtue' ? new VirtueLevelUpScreen(entity) : new LevelUpScreen(entity);
   // THE DOOR'S OWN onExit IS A CLOSE (ui/charSheetDoor.js's
   // enhancedLevelUpOverlay), so the lab's must be too - the first
@@ -112,11 +133,11 @@ function done(lane) {
 // The lane picker. Kept out of the window's own tree so nothing on
 // screen belongs to the lab except this one strip.
 const bar = document.getElementById('lanes');
-for (const lane of ['classic', 'oghma', 'virtue', 'allmax']) {
+for (const lane of ['classic', 'oghma', 'virtue', 'allmax', 'door']) {
   const b = document.createElement('button');
   b.textContent = lane;
   b.dataset.lane = lane;
-  b.onclick = () => { document.getElementById('lab-done')?.remove(); mount(lane); };
+  b.onclick = () => { document.getElementById('lab-done')?.remove(); mount(lane); };   // fire and forget: the lane strip is the lab's, not a law
   bar.append(b);
 }
 

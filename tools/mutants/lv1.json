@@ -201,5 +201,92 @@
       "test/enhancedLevelUp.test.js"
     ],
     "why": "riseRibbon and sheetModel - gold, encumbrance, thirty-five skills, the class specials - on the keyboard's repeat rate, for two fields the repaint does not read."
+  },
+  {
+    "name": "the-paused-game-is-blank-again",
+    "file": "src/ui/charSheetDoor.js",
+    "old": "  let waitTimer = setTimeout(() => { wait = paintLevelUpWait(host, { oghma: !!screen?.oghma }); }, LEVELUP_WAIT_MS);",
+    "new": "  let waitTimer = null;",
+    "tests": [
+      "test/enhancedLevelUp.test.js"
+    ],
+    "why": "The window opens because the GAME decided, so a chunk in flight is a frozen frame with nothing on it and nothing the player pressed to explain it."
+  },
+  {
+    "name": "the-wait-outlives-the-window-it-was-waiting-for",
+    "file": "src/ui/charSheetDoor.js",
+    "old": "      stopWaiting();   // the window is the wait's successor, and takes the slot before it is torn down",
+    "new": "      /* stopWaiting */",
+    "tests": [
+      "test/enhancedLevelUp.test.js"
+    ]
+  },
+  {
+    "name": "the-notice-is-drawn-over-a-wait-that-says-you-have-risen",
+    "file": "src/ui/charSheetDoor.js",
+    "old": "    notice: (h, o) => { stopWaiting(); return paintChunkNotice(h, o); },",
+    "new": "    notice: paintChunkNotice,",
+    "tests": [
+      "test/enhancedLevelUp.test.js"
+    ],
+    "why": "Two answers to one event: 'You have risen.' behind 'This screen could not be loaded.'"
+  },
+  {
+    "name": "the-book-is-announced-as-a-level-it-does-not-grant",
+    "file": "src/ui/charSheetDoor.js",
+    "old": "  el.textContent = oghma ? OGHMA_WAIT_TEXT : RISEN_WAIT_TEXT;",
+    "new": "  el.textContent = RISEN_WAIT_TEXT;",
+    "tests": [
+      "test/enhancedLevelUp.test.js"
+    ],
+    "why": "AUDIT 39: the Infinium takes no Level++ and no health roll."
+  },
+  {
+    "name": "the-warm-shouts-about-a-stale-chunk-at-boot",
+    "file": "src/ui/charSheetDoor.js",
+    "old": "  return import('./enhancedLevelUp.js').catch(() => null);",
+    "new": "  return import('./enhancedLevelUp.js');",
+    "tests": [
+      "test/enhancedLevelUp.test.js"
+    ],
+    "why": "An unhandled rejection at boot about a screen nobody has asked for is the silence-and-noise pair ui/enhancedChunk.js exists to get right."
+  },
+  {
+    "name": "the-warm-fires-in-the-classic-skin-too",
+    "file": "src/ui/charSheetDoor.js",
+    "old": "  if (!isEnhanced() || typeof document === 'undefined') return null;",
+    "new": "  if (typeof document === 'undefined') return null;",
+    "tests": [
+      "test/enhancedLevelUp.test.js"
+    ]
+  },
+  {
+    "name": "a-host-stops-warming-the-level-up-window",
+    "file": "src/scenes/world.js",
+    "old": "  warmLevelUpWindow();   // LV1's audit: the level-up window opens because the GAME decided, so its chunk warms at boot rather than inside a pause nobody asked for",
+    "new": "  /* no warm */",
+    "tests": [
+      "test/enhancedLevelUp.test.js"
+    ]
+  },
+  {
+    "name": "the-chronicle-forgets-the-key-it-is-named-after",
+    "file": "src/ui/enhancedChronicle.js",
+    "old": "  if (actionOf(e) === 'LogBook') {",
+    "new": "  if (false) {",
+    "tests": [
+      "test/enhancedLevelUp.test.js"
+    ],
+    "why": "L opened the window and L did nothing - a press the host consumed and nobody answered (MAC-C's law, the door it was never applied to)."
+  },
+  {
+    "name": "the-chronicle-reads-the-literal-instead-of-the-registry",
+    "file": "src/ui/enhancedChronicle.js",
+    "old": "  if (actionOf(e) === 'LogBook') {",
+    "new": "  if (e.code === 'KeyL') {",
+    "tests": [
+      "test/enhancedLevelUp.test.js"
+    ],
+    "why": "A rebound key that cannot close the window it opened is FIX-F's bug one layer down."
   }
 ]

@@ -228,13 +228,13 @@ does the pack's USE arm.
                         HAND-ROLLED second one, 342 lines below it in
                         the same file),
                         dungeonContext.js:965, world.js:1850,
-                        exterior.js:2220. It is the only window TWO
+                        exterior.js:2221. It is the only window TWO
                         enhanced screens already push - the sheet's
                         button and the pack's USE hand-off, whose
                         close-then-hand-over ordering U55 got
                         backwards. No law needs extracting first.
     THE LOGBOOK         THREE sites: charSheetNav.js:53,
-    / NOTEBOOK          world.js:5868, dungeonContext.js:6108. A seam
+    / NOTEBOOK          world.js:5869, dungeonContext.js:6108. A seam
                         wants making, as U52's and U53's did.
     HISTORY             ONE site (charSheetNav.js:61), and it reads
                         only the entity's backStory. The small one.
@@ -8045,7 +8045,7 @@ mutations, 4 dead.
 
 PX24 (Mac: "with the logbook and history, I want them as one detailed
 UI"): THE CHRONICLE. Two classic windows built at four sites -
-questJournal.js from charSheetNav:53, world.js:2254 and
+questJournal.js from charSheetNav:53, world.js:2255 and
 dungeonContext.js, playerHistory.js from charSheetNav:61 - become ONE
 seam (ui/chronicleDoor.js, the U52/U53/PX23 shape a sixth time) and,
 on the enhanced skin, ONE WINDOW.
@@ -9916,9 +9916,9 @@ re-resolved the `exterior.js` half of a three-file sentence and left the
 `ExteriorAutomapWindow` construction, `:4101` on a `locationName:`
 field). Both halves are now read by `test/citedrift.test.js` - the
 existing entries only ever captured the exterior number, which is how
-the other half went stale unnoticed. (The rest cite named `world.js:6162`,
+the other half went stale unnoticed. (The rest cite named `world.js:6163`,
 the first of the host's TWO identical `act === 'Rest'` arms; ROAD-H H5
-deleted the second and the cite is `world.js:6168` now.)
+deleted the second and the cite is `world.js:6169` now.)
 
 ## AUDIT 62 F24/F25 - THE SENTINEL SWEEP WAS TWO WINDOWS SHORT (2026-09-07)
 
@@ -14704,9 +14704,9 @@ whether an entry MATCHES and asserts nothing.
 Following it out was worse than the symptom. Five Ledger rows cite a
 PAIR - `` `world.js:N`, `exterior.js:M` `` - and the table captured `M`
 alone. So `M` was re-resolved at every wave for a year and `N` was never
-read: `world.js:4387` named a line that is 8950, `:673` one that is
+read: `world.js:4388` named a line that is 8950, `:673` one that is
 1215, `:1094` one that is 2194, `:3903` one that is 3066, `:3920` one
-that is 8907. `world.js:4123-4155` and `dungeonContext.js:1316` were
+that is 8907. `world.js:4124-4156` and `dungeonContext.js:1316` were
 stale the same way. Seven numbers re-resolved BY CONTENT, every
 uncaptured half de-baked to `\d+`, and eight new entries added so every
 number in a pair is captured. The half nobody reads cannot rot in
@@ -16103,16 +16103,57 @@ is true and the look gate releases the lock the frame after it opens -
 the cursor is free to click the stars without anything new being
 written.
 
-**RECORDED, NOT FIXED.** Two adjacent holes this slice is not the place
-to close. The chunk gap: between the door returning and the lazy chunk
-mounting, the host holds a paused game behind a transparent div - one
-frame on a warm cache, longer on a cold one - and unlike every other
-enhanced door, this window opens without the player having pressed
-anything. And `ui/enhancedChronicle.js` answers only `back`, so a
-window key pressed over it falls through to the host exactly as this
-one's would have; it is guarded today by the same seams, and it is that
-window's slice to state.
+**RECORDED, THEN CLOSED (LV1b, 2026-09-19, Mac: "Take care of the 2
+recorded").** The audit left two adjacent holes named and standing;
+they are both shut now, and the paragraph that carried them is replaced
+rather than appended to (RETIRING A FLAG DELETES THE SENTENCE).
 
-The audit's own arithmetic: 25 pins (up from 22), `tools/mutants/lv1.json`
-21 mutants - 21 dead, 0 survived - and `tools/levelUpProbe.mjs` 85/85,
-which now stands a maxed character up and proves the way out is open.
+THE CHUNK GAP. Every enhanced screen is a lazy chunk fetched on first
+open (MENU1), and for every other door that fetch is paid for inside a
+key the player pressed - it reads as the window opening. This one opens
+because the GAME decided, so the host paused behind a transparent div
+with nothing on it and nothing the player had done to explain it. Two
+halves, because either alone is a half-fix: the chunk is WARMED at boot
+where INFO00I0.IMG already warms (`warmLevelUpWindow`, wired in
+world.js and exterior.js beside the sheet's art and in
+dungeonContext.js's `makeCharSheet`, with worldModes.js named as
+needing none - it builds no windows and boots inside one of the three),
+so the common case has nothing to wait for; and if there IS a wait, it
+is DRAWN - `paintLevelUpWait`, inline style only, no chunk, no font, no
+stylesheet, because the thing that is loading must not be a thing the
+message needs. Armed at 120ms rather than painted at once, so a warm
+chunk never flashes it. It says "You have risen." - and "The Oghma
+Infinium." over the book, which grants no level and must not be
+announced as one even for half a second. Every successor clears it: the
+window, the notice (without that arm a failed chunk drew "could not be
+loaded" over "You have risen.", two answers to one event), and a close
+that beat both.
+
+THE CHRONICLE'S OWN KEY. `ui/enhancedChronicle.js` answered `back` and
+nothing else, so L opened it and L did NOTHING - and not harmlessly:
+the overlay is `isChoiceWindow`, so both key seams hand the raw code to
+the window and return, which means the press was CONSUMED and answered
+by nobody. MAC-C gave the sheet and the pack exactly this arm ("you can
+exit out of the F6 menu by pressing F6 again, but you cannot do the
+same for the F5 one") and the chronicle was the door it was never
+applied to. It closes on `LogBook` now, off the REGISTRY rather than
+the literal - a rebound key that cannot close the window it opened is
+FIX-F's bug one layer down - and below the text-entry guard, because
+the note composer is a real `<input>` and 'l' belongs to it (CG2).
+
+The lab grew a DOOR lane for the first of these, and that is how the
+probe can see it at all: it drives `createCharSheetWindow` itself, with
+the chunk held back 900ms, and reads the wait off the page and then the
+window that replaces it. It also reads the HOST CONTRACT off the object
+the hosts are handed - all ten arms - which no node test can do. The
+lab's own static import of the view had to go for that: it put the
+module in the lab's graph, so the door resolved it from the registry
+before the page had finished loading and the gap could never be seen.
+The probe's first run read a green "never blank" against a gap the LAB
+had closed.
+
+The audit's own arithmetic: 28 pins (up from 22), `tools/mutants/lv1.json`
+30 mutants - 30 dead, 0 survived - and `tools/levelUpProbe.mjs` 95/95,
+which now stands a maxed character up and proves the way out is open,
+holds the chunk back and proves the pause is never blank, and proves a
+warm chunk never flashes the wait it makes unnecessary.

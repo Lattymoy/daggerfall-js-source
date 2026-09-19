@@ -183,7 +183,13 @@ test('MENU1: no ui/*Door.js mounts a lazy chunk on its own', () => {
       if (/load: \(\) =>/.test(line) || /\.catch\(\(\) => null\)/.test(line)) continue;
       rogue.push(`${f}: ${line.trim()}`);
     }
-    assert.match(text, /import \{ mountEnhancedChunk \} from '\.\/enhancedChunk\.js'/, `${f} imports the one home`);
+    // THE ONE HOME, however many of its exports a door takes. This read
+    // the import line VERBATIM and so failed the first door to need a
+    // second export from the same module - ui/charSheetDoor.js takes
+    // `paintChunkNotice` as well, to clear its own wait before the
+    // notice is drawn over it (LV1b). What the gate is about is the
+    // HOME, not the spelling of the list.
+    assert.match(text, /import \{[^}]*\bmountEnhancedChunk\b[^}]*\} from '\.\/enhancedChunk\.js'/, `${f} imports the one home`);
   }
   assert.ok(lazy.length >= 7, `every enhanced door is a lazy chunk: ${lazy.join(', ')}`);
   assert.deepEqual(rogue, [],

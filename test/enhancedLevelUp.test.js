@@ -28,6 +28,7 @@ import { sheetModel } from '../src/ui/enhancedCharSheet.js';
 import { damageModifier, magicResist } from '../src/combat/formulas.js';
 import { FATIGUE_MULTIPLIER } from '../src/systems/statMods.js';
 import { LevelUpScreen, MUST_DISTRIBUTE_BONUS_POINTS } from '../src/ui/charsheet.js';
+import { paintLevelUpWait, RISEN_WAIT_TEXT, OGHMA_WAIT_TEXT, LEVELUP_WAIT_MS } from '../src/ui/charSheetDoor.js';
 import { VirtueLevelUpScreen, REMAINING_POINTS_ERROR } from '../src/ui/virtueLevelUp.js';
 import { OGHMA_BONUS_POOL } from '../src/systems/artifactEffects.js';
 import {
@@ -546,8 +547,13 @@ test('LV1: the lab page is a real route, or it is dead the moment it is deployed
   // The lab mounts the SHIPPING window over a fake entity - not a copy
   // of it, which would be a second window to keep in step.
   const lab = src('src/tools/levelUpLab.js');
-  assert.match(lab, /from '\.\.\/ui\/enhancedLevelUp\.js'/);
+  // ...and it loads the view the way the DOOR loads it - a dynamic
+  // import. A static one put the module in the lab's own graph, which
+  // closed the very gap the door lane exists to show (LV1b).
+  assert.match(lab, /await import\('\.\.\/ui\/enhancedLevelUp\.js'\)/);
+  assert.doesNotMatch(lab, /^import \{ mountEnhancedLevelUp \}/m);
   assert.match(lab, /new LevelUpScreen|new VirtueLevelUpScreen/);
+  assert.match(lab, /createCharSheetWindow\(\{ entity \}\)/, 'and one lane drives the real door');
 });
 
 // ── THE WHOLE READING ─────────────────────────────────────────────
@@ -612,4 +618,92 @@ test('LV1: a repaint reads the FRAME, and the frame carries nothing a repaint do
   for (const k of Object.keys(frame)) assert.deepEqual(model[k], frame[k], `${k} agrees`);
   assert.match(src('src/ui/enhancedLevelUp.js'), /const m = levelUpFrame\(entity, screen, refused\);/,
     'and the repaint takes the frame');
+});
+
+// ── THE TWO THE AUDIT RECORDED, AND MAC ASKED FOR ────────────────
+
+test('LV1b: the pause in front of the window is never blank, and never flashes either', () => {
+  // AUDIT LV1 recorded this and did not fix it: every other enhanced
+  // screen pays for its lazy chunk inside a key the player pressed,
+  // and this one opens because the GAME decided - so the host paused
+  // behind a transparent div with nothing on it, for a window nobody
+  // asked for.
+  //
+  // THE WAIT IS ARMED, NOT DRAWN. A warmed chunk mounts inside
+  // LEVELUP_WAIT_MS, so the common case never sees it; a cold one
+  // shows it almost at once.
+  assert.ok(LEVELUP_WAIT_MS > 0 && LEVELUP_WAIT_MS <= 250, `${LEVELUP_WAIT_MS}ms`);
+
+  // INLINE STYLE ONLY - paintChunkNotice's doctrine, for its reason:
+  // the thing that is still loading must not be a thing this needs.
+  const made = [];
+  const doc = { createElement: () => { const n = { style: {}, append() {}, remove() {} }; made.push(n); return n; } };
+  const host = { ownerDocument: doc, append() {} };
+  const risen = paintLevelUpWait(host, {});
+  assert.equal(risen.textContent, RISEN_WAIT_TEXT);
+  assert.equal(risen.id, 'levelup-wait');
+  assert.match(risen.style.cssText, /position:fixed/);
+  assert.doesNotMatch(risen.style.cssText, /var\(--/, 'it cannot depend on the skin sheet it may be waiting for');
+  // THE BOOK GRANTS NO LEVEL (AUDIT 39), so it is not announced as one
+  // even for the half second before the window can say it properly.
+  assert.equal(paintLevelUpWait(host, { oghma: true }).textContent, OGHMA_WAIT_TEXT);
+  assert.notEqual(RISEN_WAIT_TEXT, OGHMA_WAIT_TEXT);
+  // A host with no document is no crash - the same guard
+  // paintChunkNotice carries.
+  assert.equal(paintLevelUpWait(null), null);
+  assert.equal(paintLevelUpWait({}), null);
+
+  // ...and the door clears it on ALL THREE exits: the window mounting,
+  // the notice taking over, and a close that beat both.
+  const door = src('src/ui/charSheetDoor.js');
+  assert.match(door, /let waitTimer = setTimeout\(\(\) => \{ wait = paintLevelUpWait\(host, \{ oghma: !!screen\?\.oghma \}\); \}, LEVELUP_WAIT_MS\);/);
+  assert.match(door, /mount: \(\{ mountEnhancedLevelUp \}\) => \{\n\s*stopWaiting\(\);/, 'the window is the wait\'s successor');
+  assert.match(door, /notice: \(h, o\) => \{ stopWaiting\(\); return paintChunkNotice\(h, o\); \}/,
+    'and so is the notice - two answers to one event is what this arm prevents');
+  assert.match(door, /const close = \(\) => \{\n\s*if \(fired\) return;\n\s*stopWaiting\(\);/, 'and the timer has an owner');
+});
+
+test('LV1b: the chunk warms at boot, in the three hosts that warm the sheet - and the fourth is named', () => {
+  const door = src('src/ui/charSheetDoor.js');
+  assert.match(door, /export function warmLevelUpWindow\(\) \{/);
+  assert.match(door, /if \(!isEnhanced\(\) \|\| typeof document === 'undefined'\) return null;/,
+    'the classic skin pays for nothing, and node has no window to warm');
+  assert.match(door, /import\('\.\/enhancedLevelUp\.js'\)\.catch\(/,
+    'a rejection is SWALLOWED: a stale chunk is the door\'s to report when a player opens it, not the boot\'s');
+  // THE FOUR HOSTS RULE: three wire it, the fourth is FLAGGED by name
+  // rather than left unmentioned.
+  for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js', 'src/scenes/dungeonContext.js']) {
+    assert.match(src(host), /warmLevelUpWindow\(\);/, `${host} warms it`);
+    assert.match(src(host), /import \{[^}]*warmLevelUpWindow[^}]*\} from '\.\.\/ui\/charSheetDoor\.js'/, `${host} imports it`);
+  }
+  assert.doesNotMatch(src('src/scenes/worldModes.js'), /warmLevelUpWindow/,
+    'the interior host builds no windows and boots inside one of the other three');
+  assert.match(door, /worldModes\.js needs none, and is NAMED here/, 'and the door says so where a reader will look');
+  assert.doesNotMatch(door, /is FLAGGED here/,
+    'in the FOUR HOSTS sense, not the open-flags one - that word is tools/regenOpenFlags.mjs\'s marker and this is not open work');
+  // Beside the art it rides with, in both boot hosts.
+  for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
+    assert.match(src(host), /preloadCharSheetArt\(\{ renderer, fetchBytes, palette \}\);[^\n]*\n\s*warmLevelUpWindow\(\);/,
+      `${host}: the chunk warms where INFO00I0 warms`);
+  }
+});
+
+test('LV1b: the CHRONICLE answers the key it is named after, off the registry', () => {
+  // The audit's other recorded finding. MAC-C gave the sheet and the
+  // pack this arm ("you can exit out of the F6 menu by pressing F6
+  // again, but you cannot do the same for the F5 one") and the
+  // chronicle was left out - so L opened it and L did nothing, a press
+  // the host consumed (the overlay is `isChoiceWindow`, so both key
+  // seams hand it the raw code and return) and nobody answered.
+  const cr = src('src/ui/enhancedChronicle.js');
+  assert.match(cr, /import \{ overlayAction, actionOf \} from '\.\/input\.js'/);
+  assert.match(cr, /if \(actionOf\(e\) === 'LogBook'\) \{/, 'off the REGISTRY, never the literal KeyL');
+  assert.doesNotMatch(cr, /e\.code === 'KeyL'/, 'a rebound key that cannot close its own window is the same bug one layer down');
+  // The arm sits BELOW the text-entry guard: the note composer is a
+  // real <input> and 'l' belongs to it (CG2).
+  const guard = cr.indexOf("t.tagName === 'INPUT'");
+  const arm = cr.indexOf("actionOf(e) === 'LogBook'");
+  assert.ok(guard > 0 && arm > guard, 'the composer keeps its own letters');
+  // ...and it exits through the door's own close, not a second path.
+  assert.match(cr, /if \(actionOf\(e\) === 'LogBook'\) \{\n\s*e\.preventDefault\(\);\n\s*e\.stopPropagation\(\);\n\s*onExit\(\);/);
 });

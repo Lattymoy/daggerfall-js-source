@@ -22,7 +22,7 @@
 // player opens this window with before they have clicked anything.
 import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
 import { closeOnOutsideTap } from './enhancedOverlays.js';   // OT1
-import { overlayAction } from './input.js';
+import { overlayAction, actionOf } from './input.js';   // LV1's audit: `actionOf` is the REGISTRY's answer for the key this window is named after
 import { questRail, questTitleOf } from './questRail.js';   // MAC-K2: the ONE quest walk, shared with the pause window's Quests tab
 
 const el = (tag, cls, text) => {
@@ -340,6 +340,31 @@ function onKey(e) {
     const n = CHRONICLE_SECTIONS.length;
     section = CHRONICLE_SECTIONS[(i + (e.key === 'ArrowDown' ? 1 : n - 1)) % n][0];
     render();
+    return;
+  }
+  // LV1's AUDIT, recorded there and closed here: THE KEY THAT OPENED
+  // THIS WINDOW PUTS IT AWAY.
+  //
+  // MAC-C gave the sheet and the pack exactly this arm ("you can exit
+  // out of the F6 menu (inventory) by pressing F6 again, but you
+  // cannot do the same for the F5 one") and the chronicle was left
+  // out - so L opened it and L did NOTHING, which is worse than it
+  // sounds: the host swallows the key for an `isChoiceWindow` overlay
+  // (ui/input.js's routeKey and townTalk's own seam both hand the raw
+  // code to the window and return), so the press was consumed and
+  // answered by nobody. A key that is eaten in silence is
+  // indistinguishable from a key that was not received.
+  //
+  // OFF THE REGISTRY, never the literal: `LogBook` is InputManager's
+  // own name for this door, and a rebound key that cannot close the
+  // window it opened is the same bug one layer down (FIX-F's, and I2's
+  // before it). A text field keeps its own keys - the note composer is
+  // a real <input> and 'l' belongs to it (CG2) - which the guard at
+  // the top of this handler already ensures.
+  if (actionOf(e) === 'LogBook') {
+    e.preventDefault();
+    e.stopPropagation();
+    onExit();
     return;
   }
   if (overlayAction(e) !== 'back') return;

@@ -38,7 +38,7 @@
 
 import { isEnhanced } from '../systems/uiSkin.js';
 import { actionOf } from './input.js';   // MAC-C: the REGISTRY's answer for the two window keys
-import { mountEnhancedChunk } from './enhancedChunk.js';   // MENU1: the one lazy-chunk door
+import { mountEnhancedChunk, paintChunkNotice } from './enhancedChunk.js';   // MENU1: the one lazy-chunk door, and the notice it paints when a chunk is gone
 import { registerOverlay } from './enhancedOverlays.js';   // PX28: Tab puts it away
 import { CharSheet, LevelUpScreen, charSheetArtLoaded } from './charsheet.js';
 import { charSheetHooks } from './charSheetNav.js';
@@ -47,6 +47,46 @@ import { usesVirtueLeveling } from '../systems/oblivionLeveling.js';   // ORL1
 import { spendPoolLowest } from '../systems/chargen.js';   // LV1: the headless pool policy, for the font-less escape
 
 export { charSheetArtLoaded };
+
+/**
+ * LV1's AUDIT, finding "RECORDED, NOT FIXED", closed: WARM THE
+ * LEVEL-UP CHUNK AT BOOT.
+ *
+ * Every enhanced screen is a lazy chunk fetched the first time a
+ * player opens that door (MENU1), and for every OTHER door that is
+ * paid for by a key the player pressed - a fetch inside a press reads
+ * as the window opening. This one opens because the GAME decided: a
+ * skill check crossed a threshold while you were walking, and the host
+ * pauses behind a transparent div until the chunk lands. Nothing was
+ * pressed, so nothing explains the pause.
+ *
+ * So the chunk is warmed where INFO00I0.IMG already is - at host boot,
+ * "lazy - ready by the next open at worst" (U8a's own words). It is
+ * ~13 KB, the enhanced skin alone pays for it, and a rejection is
+ * SWALLOWED: a stale chunk after a deploy is the door's problem to
+ * report when a player actually opens it (ui/enhancedChunk.js's whole
+ * header), never a warning at boot about a screen nobody has asked
+ * for. Returns the promise so a test can await it.
+ *
+ * THE FOUR HOSTS: world.js and exterior.js warm at boot beside the
+ * sheet's art; dungeonContext.js warms in `makeCharSheet`, where it
+ * already warms that art ("ready by the next open at worst");
+ * worldModes.js needs none, and is NAMED here rather than left
+ * unmentioned - it builds no windows of its own, borrows
+ * `host.makeCharSheet`, and boots inside one of the three above.
+ * (NAMED and not the F-word the rule usually uses: that word is
+ * tools/regenOpenFlags.mjs's marker, and this is not open work.)
+ */
+export function warmLevelUpWindow() {
+  if (!isEnhanced() || typeof document === 'undefined') return null;
+  // `.catch(() => null)` IS THE GATE'S OWN VOCABULARY, not a shortcut
+  // around it: test/menu1_enhanced_chunk.test.js allows a bare dynamic
+  // import on exactly that shape - "a feature that is off rather than
+  // a screen that failed" - and a warm is precisely that. Nothing
+  // waits on it; the MOUNT still goes through the one home below, with
+  // its retry, its notice and its refusal to hand the keys back.
+  return import('./enhancedLevelUp.js').catch(() => null);
+}
 
 /** The gate a host asks before it opens the sheet. The classic window
  *  has a text fallback and survives a failed art load; the enhanced
@@ -283,6 +323,35 @@ function enhancedSheetPageOverlay(hooks) {
  *   rather than in the chunk on purpose - the escape has to work in
  *   the one case where the chunk is what failed.
  */
+/** What the wait says, per lane. The book grants no level (AUDIT 39),
+ *  so it must not be announced as one even for the half second before
+ *  the window can say it properly. */
+export const RISEN_WAIT_TEXT = 'You have risen.';
+export const OGHMA_WAIT_TEXT = 'The Oghma Infinium.';
+/** How long a paused game may sit blank before the wait is drawn. A
+ *  warmed chunk mounts inside this, so the common case never flashes
+ *  it; a cold one shows it almost at once. */
+export const LEVELUP_WAIT_MS = 120;
+
+/**
+ * THE WAIT, painted into the door's own host with INLINE STYLE ONLY -
+ * no chunk, no font, no stylesheet, nothing that could be the thing
+ * that is still loading. Exactly `paintChunkNotice`'s doctrine, for
+ * exactly its reason.
+ */
+export function paintLevelUpWait(host, { oghma = false } = {}) {
+  if (!host?.ownerDocument) return null;
+  const doc = host.ownerDocument;
+  const el = doc.createElement('div');
+  el.id = 'levelup-wait';
+  el.style.cssText = 'position:fixed;inset:0;display:flex;align-items:center;justify-content:center;'
+    + 'background:#0a0c11;color:#d8cfae;font:20px/1.6 system-ui,sans-serif;letter-spacing:0.18em;'
+    + 'text-transform:uppercase;text-align:center;padding:24px';
+  el.textContent = oghma ? OGHMA_WAIT_TEXT : RISEN_WAIT_TEXT;
+  host.append(el);
+  return el;
+}
+
 function enhancedLevelUpOverlay(screen, entity) {
   let fired = false;
   let view = null;
@@ -293,8 +362,22 @@ function enhancedLevelUpOverlay(screen, entity) {
   // says which would win if a host ever pushed both.
   host.style.cssText = 'position:fixed;inset:0;z-index:14;background:transparent;overflow:hidden';
   document.body.append(host);
+  // THE WAIT (LV1's audit). The host pauses the game the moment this
+  // returns, and the chunk lands a fetch later; until this slice that
+  // was a frozen frame with nothing on it, for a window the player did
+  // not ask for. Armed rather than drawn, so a warm chunk - which is
+  // the case `warmLevelUpWindow` makes the common one - never flashes
+  // it. The timer is owned: every exit below clears it.
+  let wait = null;
+  let waitTimer = setTimeout(() => { wait = paintLevelUpWait(host, { oghma: !!screen?.oghma }); }, LEVELUP_WAIT_MS);
+  const stopWaiting = () => {
+    if (waitTimer) { clearTimeout(waitTimer); waitTimer = null; }
+    try { wait?.remove(); } catch { /* already gone */ }
+    wait = null;
+  };
   const close = () => {
     if (fired) return;
+    stopWaiting();
     try { view?.destroy?.(); } catch { /* already gone */ }
     view = null;
     host.remove();
@@ -312,8 +395,14 @@ function enhancedLevelUpOverlay(screen, entity) {
     load: () => import('./enhancedLevelUp.js'),
     alive: () => !fired, host, onDismiss: close, label: 'levelup',
     mount: ({ mountEnhancedLevelUp }) => {
+      stopWaiting();   // the window is the wait's successor, and takes the slot before it is torn down
       view = mountEnhancedLevelUp(host, { screen, entity, onExit: close });
     },
+    // ...and the NOTICE is the other successor. Without this arm a
+    // failed chunk left the wait underneath it saying "You have
+    // risen." over a message that says the screen could not be
+    // loaded - two answers to one event.
+    notice: (h, o) => { stopWaiting(); return paintChunkNotice(h, o); },
   });
   return {
     /** The duck type the font-less escape asks for, in this file's own

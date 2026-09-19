@@ -294,6 +294,67 @@ for (const [label, viewport] of [
   await ctx.close();
 }
 
+// ── 12. THE DOOR, AND THE PAUSE IN FRONT OF THE WINDOW ───────────
+//
+// LV1's audit recorded this and Mac asked for it closed: every other
+// enhanced screen pays for its lazy chunk inside a key the player
+// pressed, and this one opens because the GAME decided - so the host
+// pauses behind a transparent div with nothing on it. Here the chunk
+// is held back deliberately, and what a player sees in that gap is
+// read off the page.
+{
+  const ctx = await browser.newContext({ viewport: { width: 1400, height: 900 } });
+  const page = await ctx.newPage();
+  const errors = [];
+  page.on('pageerror', (e) => errors.push(e.message));
+  // The chunk, delayed. The warm at boot is the real fix; this proves
+  // the OTHER half - that a cold fetch is not a blank frozen game.
+  await page.route('**/enhancedLevelUp.js*', async (route) => {
+    await new Promise((r) => setTimeout(r, 900));
+    await route.continue();
+  });
+  await page.goto(`${BASE}/levelup.html?lane=door`, { waitUntil: 'commit' });
+  const waited = await page.waitForSelector('#levelup-wait', { timeout: 5000 }).then(() => true, () => false);
+  check('door: a paused game is never blank - the wait is drawn while the chunk is in flight', waited);
+  if (waited) {
+    const said = (await page.textContent('#levelup-wait'))?.trim();
+    check('door: and it says what happened', /risen/i.test(said ?? ''), said);
+  }
+  await page.waitForSelector('.lv-star', { timeout: 20000 });
+  check('door: the window arrives and the wait is gone', (await page.locator('#levelup-wait').count()) === 0);
+  check('door: the door built the window the skin asks for', (await page.locator('#enhanced-levelup .lv-sky').count()) === 1);
+  // THE HOST CONTRACT, off the object the hosts are actually handed.
+  const arms = await page.evaluate(() => {
+    const w = globalThis.__lv.door;
+    return { done: w.done, isChoice: w.isChoiceWindow === true, marker: w.isEnhancedLevelUp === true,
+      has: ['input', 'click', 'wheel', 'hover', 'tick', 'draw', 'close', 'dispose', 'destroy', 'spendRemainingHeadless']
+        .filter((k) => typeof w[k] === 'function') };
+  });
+  check('door: the overlay answers every arm a host calls unguarded', arms.has.length === 10, arms.has.join(','));
+  check('door: and is not done while its DOM is up', arms.done === false && arms.isChoice && arms.marker);
+  check('door: no page errors', errors.length === 0, errors.join(' | '));
+  await ctx.close();
+}
+
+// ── 13. A WARM CHUNK NEVER FLASHES THE WAIT ──────────────────────
+{
+  const { ctx, page, errors } = await open('classic', { width: 1400, height: 900 });
+  // The view lane has already imported the module, so the door lane
+  // that follows mounts from the module registry - which is what the
+  // boot warm buys every player.
+  await page.evaluate(async () => {
+    const { createCharSheetWindow } = await import('/src/ui/charSheetDoor.js');
+    globalThis.__lv.view.destroy();
+    globalThis.__warm = createCharSheetWindow({ entity: globalThis.__lv.entity });
+  });
+  await page.waitForTimeout(300);   // twice LEVELUP_WAIT_MS, and then some
+  check('warm: the wait is never drawn when the chunk is already in hand',
+    (await page.locator('#levelup-wait').count()) === 0);
+  check('warm: and the window is up', (await page.locator('#enhanced-levelup .lv-star').count()) === 8);
+  check('warm: no page errors', errors.length === 0, errors.join(' | '));
+  await ctx.close();
+}
+
 await browser.close();
 
 const failed = results.filter((r) => !r.ok);
