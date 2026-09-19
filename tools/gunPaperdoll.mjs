@@ -18,7 +18,7 @@
 // small and the gun floats in front of a fist; too large and the hand
 // is holding air.
 //
-//     node tools/gunPaperdoll.mjs [--width=72] [--ammo=22]
+//     node tools/gunPaperdoll.mjs [--length=72] [--angle=35] [--ammo=22]
 //                                 [--band=cx,cy,deg,thick,length] [--no-gap]
 //                                 [--sheet]
 //
@@ -99,6 +99,70 @@ export function downscale(img, tw, th) {
     }
   }
   return { width: tw, height: th, data: out };
+}
+
+/**
+ * ROTATION, at full resolution and before the downscale.
+ *
+ * Mac: "when the paperdoll handles it, aim it angled downwards" - which
+ * is how every classic weapon hangs on the doll: a sword is not drawn
+ * lying flat, it drops from the fist. `deg` is how far the MUZZLE
+ * falls, so a positive number always means more downward and nobody
+ * has to reason about which way a rotation matrix turns.
+ *
+ * Done on the source art, not on the finished sprite: rotating 72x22
+ * pixels resamples an image that has already thrown away everything it
+ * had, and the diagonals come out as staircases with holes in them.
+ * Rotate 1790x550 and let the downscale do what it is good at.
+ *
+ * Bilinear, and WEIGHTED BY ALPHA for the same reason the downscale
+ * is - sampling the colour of transparent pixels at an edge drags the
+ * outline toward black.
+ */
+export function rotate(img, deg) {
+  if (!deg) return { img, map: (x, y) => [x, y] };
+  const { width: w, height: h, data } = img;
+  // screen coords have y downward, so the muzzle (at the LEFT of the
+  // art) falls when the image turns anticlockwise: negate here once,
+  // and `deg` stays "how far down the muzzle points" everywhere else
+  const a = -deg * Math.PI / 180, ca = Math.cos(a), sa = Math.sin(a);
+  const cx = w / 2, cy = h / 2;
+  const nw = Math.ceil(Math.abs(w * ca) + Math.abs(h * sa));
+  const nh = Math.ceil(Math.abs(w * sa) + Math.abs(h * ca));
+  const ncx = nw / 2, ncy = nh / 2;
+  const out = new Uint8ClampedArray(nw * nh * 4);
+  for (let y = 0; y < nh; y++) {
+    for (let x = 0; x < nw; x++) {
+      // inverse map: where in the source does this destination pixel look
+      const dx = x + 0.5 - ncx, dy = y + 0.5 - ncy;
+      const sx = dx * ca + dy * sa + cx - 0.5;
+      const sy = -dx * sa + dy * ca + cy - 0.5;
+      const x0 = Math.floor(sx), y0 = Math.floor(sy);
+      if (x0 < -1 || y0 < -1 || x0 > w || y0 > h) continue;
+      const fx = sx - x0, fy = sy - y0;
+      let r = 0, g = 0, b = 0, al = 0;
+      for (let j = 0; j < 2; j++) {
+        for (let i = 0; i < 2; i++) {
+          const px = x0 + i, py = y0 + j;
+          if (px < 0 || py < 0 || px >= w || py >= h) continue;
+          const wgt = (i ? fx : 1 - fx) * (j ? fy : 1 - fy);
+          const p = (py * w + px) * 4, pa = data[p + 3] / 255;
+          r += data[p] * pa * wgt; g += data[p + 1] * pa * wgt; b += data[p + 2] * pa * wgt;
+          al += pa * wgt;
+        }
+      }
+      const d = (y * nw + x) * 4;
+      if (al > 0) { out[d] = r / al; out[d + 1] = g / al; out[d + 2] = b / al; }
+      out[d + 3] = Math.round(Math.min(1, al) * 255);
+    }
+  }
+  // where a point of the SOURCE ended up, so the hand gap - tuned on
+  // the art lying flat - follows the grip round
+  const map = (x, y) => {
+    const px = x - cx, py = y - cy;
+    return [px * ca - py * sa + ncx, px * sa + py * ca + ncy];
+  };
+  return { img: { width: nw, height: nh, data: out }, map };
 }
 
 /**
@@ -230,16 +294,42 @@ function preview(sprite, zoom, withPanel, gap = null) {
 
 const load = (name) => readPng(readFileSync(join(SRC, name)));
 
-function bake(name, targetW, { gap = null, band = null, out } = {}) {
+/**
+ * `length` is the WEAPON'S OWN LENGTH in sprite pixels, not the
+ * bounding box's width - once the art is angled those are different
+ * numbers, and the one worth holding steady is the gun. Tilt it
+ * further and it should get taller, not shorter.
+ */
+export function makeSprite(name, length, { band = null, angle = 0 } = {}) {
   const img = load(name);
   const box = alphaBox(img);
   if (!box) throw new Error(`${name} is empty`);
-  const cropped = crop(img, box);
-  const th = Math.max(1, Math.round(targetW * cropped.height / cropped.width));
-  const small = hardenAlpha(downscale(cropped, targetW, th));
-  const cut = band ? punchBand(small, band) : gap ? punchGap(small, gap) : 0;
-  writeFileSync(join(OUT, out), writePng(small));
-  return { name, out, source: `${img.width}x${img.height}`, trimmed: `${cropped.width}x${cropped.height}`, size: `${targetW}x${th}`, cut, sprite: small };
+  const flat = crop(img, box);
+  const scale = length / flat.width;
+  const { img: turned, map } = rotate(flat, angle);
+  const tb = alphaBox(turned) ?? { x: 0, y: 0, w: turned.width, h: turned.height };
+  const trimmed = crop(turned, tb);
+  const tw = Math.max(1, Math.round(trimmed.width * scale));
+  const th = Math.max(1, Math.round(trimmed.height * scale));
+  const small = hardenAlpha(downscale(trimmed, tw, th));
+  let cut = 0, placed = null;
+  if (band) {
+    // the band was tuned on the art lying flat: carry its centre round
+    // with the rotation and add the tilt to its own angle
+    const [rx, ry] = map(band.cx * flat.width, band.cy * flat.height);
+    placed = {
+      cx: (rx - tb.x) / trimmed.width, cy: (ry - tb.y) / trimmed.height,
+      deg: band.deg - angle, thick: band.thick, length: band.length,
+    };
+    cut = punchBand(small, placed);
+  }
+  return { name, source: `${img.width}x${img.height}`, trimmed: `${flat.width}x${flat.height}`, size: `${tw}x${th}`, angle, cut, sprite: small, band: placed };
+}
+
+function bake(name, length, opts) {
+  const r = makeSprite(name, length, opts);
+  writeFileSync(join(OUT, opts.out), writePng(r.sprite));
+  return { ...r, out: opts.out };
 }
 
 mkdirSync(OUT, { recursive: true });
@@ -248,7 +338,7 @@ mkdirSync(PREVIEW, { recursive: true });
 // THE GRIP, in fractions of the trimmed art: the wooden pistol grip
 // runs down-right from about (0.90, 0.42) to the butt, so the band
 // that severs it runs across at about 30 degrees, a fist thick.
-const bandArg = arg('band', '0.935,0.555,28,8,18').split(',').map(Number);
+const bandArg = arg('band', '0.935,0.555,-30,8,16').split(',').map(Number);
 const band = process.argv.includes('--no-gap') ? null : {
   cx: bandArg[0], cy: bandArg[1], deg: bandArg[2], thick: bandArg[3], length: bandArg[4],
 };
@@ -258,57 +348,56 @@ const gap = band;
 // 8px across, the grip is a quarter of the art's height, and the gun
 // has to be big enough that a fist-sized hole lands on the grip
 // instead of eating the receiver with it.
-const gun = bake('gun-side.png', num('width', 72), { band, out: 'gun-paperdoll.png' });
+// ANGLED DOWN (Mac, 2026-09-19), because that is how a weapon hangs
+// off a fist - the classic doll never draws one lying flat. The
+// muzzle falls; `angle` is how far, so more is always more downward.
+const ANGLE = num('angle', 35);
+const gun = bake('gun-side.png', num('length', 72), { band, angle: ANGLE, out: 'gun-paperdoll.png' });
 
 /** THE AUDITION. Where a fist sits on a grip is a judgement call made
  *  against a doll this container does not have (no ARENA2 here), so
  *  the four candidates go on one sheet and whoever has the game picks.
  *  The default is A. */
 export const GAP_CANDIDATES = [
-  ['A', { cx: 0.935, cy: 0.555, deg: 28, thick: 8, length: 18 }, 'a fist-wide band across the grip - the default'],
-  ['B', { cx: 0.925, cy: 0.510, deg: 28, thick: 7, length: 18 }, 'a shade forward and narrower'],
-  ['C', { cx: 0.945, cy: 0.600, deg: 28, thick: 9, length: 18 }, 'lower down the grip, a bigger hand'],
-  ['D', { cx: 0.935, cy: 0.555, deg: 45, thick: 8, length: 18 }, 'the same place, cut at a steeper angle'],
+  ['A', { cx: 0.935, cy: 0.555, deg: -30, thick: 8, length: 16 }, 'a fist-wide band square across the grip - the default'],
+  ['B', { cx: 0.920, cy: 0.500, deg: -30, thick: 7, length: 16 }, 'forward and narrower, nearer the trigger'],
+  ['C', { cx: 0.950, cy: 0.620, deg: -30, thick: 9, length: 16 }, 'lower down the grip, a bigger hand'],
+  ['D', { cx: 0.935, cy: 0.555, deg: 28, thick: 8, length: 18 }, 'the first pass: not square to the grip'],
 ];
 
 if (process.argv.includes('--sheet')) {
-  const src = crop(load('gun-side.png'), alphaBox(load('gun-side.png')));
   const zoom = 6, pad = 10, labelH = 12;
-  const tiles = GAP_CANDIDATES.map(([, g]) => {
-    const th = Math.max(1, Math.round(num('width', 72) * src.height / src.width));
-    const sprite = hardenAlpha(downscale(src, num('width', 72), th));
-    punchBand(sprite, g);
-    return { sprite, g };
-  });
-  const tw = tiles[0].sprite.width * zoom, thh = tiles[0].sprite.height * zoom;
+  const tiles = GAP_CANDIDATES.map(([, g]) => makeSprite('gun-side.png', num('length', 72), { band: g, angle: ANGLE }));
+  const tw = Math.max(...tiles.map((t) => t.sprite.width)) * zoom;
+  const thh = Math.max(...tiles.map((t) => t.sprite.height)) * zoom;
   const W = pad + (tw + pad) * 2, H = pad + (thh + labelH + pad) * 2;
   const out = new Uint8ClampedArray(W * H * 4);
   for (let i = 0; i < out.length; i += 4) { out[i] = 20; out[i + 1] = 22; out[i + 2] = 26; out[i + 3] = 255; }
   tiles.forEach((t, i) => {
     const x = pad + (i % 2) * (tw + pad), y = pad + labelH + Math.floor(i / 2) * (thh + labelH + pad);
-    fistOn(out, W, H, x, y, zoom, t.g, t.sprite);
-    for (let py = 0; py < thh; py++) for (let px = 0; px < tw; px++) {
+    fistOn(out, W, H, x, y, zoom, t.band, t.sprite);
+    for (let py = 0; py < t.sprite.height * zoom; py++) for (let px = 0; px < t.sprite.width * zoom; px++) {
       const sp = ((py / zoom | 0) * t.sprite.width + (px / zoom | 0)) * 4;
       if (!t.sprite.data[sp + 3]) continue;
       const d = ((y + py) * W + x + px) * 4;
       out[d] = t.sprite.data[sp]; out[d + 1] = t.sprite.data[sp + 1]; out[d + 2] = t.sprite.data[sp + 2]; out[d + 3] = 255;
     }
-    // a bar of dots per label, A=1 B=2 C=3 D=4, because this file
-    // cannot draw text and a legend in the console is enough
+    // a bar of dots per label, A=1 B=2 C=3 D=4: this file cannot draw
+    // text and a legend in the console is enough
     for (let k = 0; k <= i; k++) for (let py = 0; py < 6; py++) for (let px = 0; px < 6; px++) {
       const d = ((y - labelH + py + 2) * W + x + k * 9 + px) * 4;
       out[d] = 200; out[d + 1] = 150; out[d + 2] = 70; out[d + 3] = 255;
     }
   });
   writeFileSync(join(PREVIEW, 'gap-candidates.png'), writePng({ width: W, height: H, data: out }));
-  console.log('\nsheet: scratch/gun-paperdoll/gap-candidates.png  (dots = A B C D, left-right then down)');
+  console.log(`\nsheet: scratch/gun-paperdoll/gap-candidates.png  (dots = A B C D, left-right then down)`);
   for (const [k, g, why] of GAP_CANDIDATES) console.log(`  ${k}  --band=${g.cx},${g.cy},${g.deg},${g.thick},${g.length}  ${why}`);
 }
 const ammo = bake('gun-ammo-src.png', num('ammo', 22), { out: 'gun-ammo.png' });
 
 for (const r of [gun, ammo]) {
-  console.log(`${r.out.padEnd(20)} ${r.source} -> trimmed ${r.trimmed} -> ${r.size}${r.cut ? `, ${r.cut} px cut for the hand` : ''}`);
+  console.log(`${r.out.padEnd(20)} ${r.source} -> trimmed ${r.trimmed} -> ${r.size}${r.angle ? ` at ${r.angle}\u00b0 down` : ''}${r.cut ? `, ${r.cut} px cut for the hand` : ''}`);
 }
-writeFileSync(join(PREVIEW, 'gun-paperdoll-preview.png'), writePng(preview(gun.sprite, 8, true, gap)));
+writeFileSync(join(PREVIEW, 'gun-paperdoll-preview.png'), writePng(preview(gun.sprite, 8, true, gun.band)));
 writeFileSync(join(PREVIEW, 'gun-ammo-preview.png'), writePng(preview(ammo.sprite, 8, false)));
 console.log(`preview: ${PREVIEW}/`);

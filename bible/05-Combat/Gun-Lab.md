@@ -264,22 +264,43 @@ two functions that are mostly zlib are not worth a dependency):
   `drawScreenQuad` discards texels under 0.5 and the classic art is an
   indexed bitmap where index 0 is simply absent. A soft edge looks
   right in a PNG viewer and wrong the moment the game draws it.
-- **punch the band**, then write `public/art/gun-paperdoll.png` (72×22)
+- **angle it down 35°** (Mac: *"when the paperdoll handles it, aim it
+  angled downwards"*), because that is how a weapon hangs off a fist —
+  the classic doll never draws one lying flat. The rotation happens on
+  the SOURCE art, before the downscale: turning a finished 68×42
+  sprite resamples an image that has already thrown everything away,
+  and the diagonals come out as staircases with holes in them. `angle`
+  is how far the MUZZLE falls, so more is always more downward and
+  nobody has to reason about which way a rotation matrix turns.
+- **punch the band**, then write `public/art/gun-paperdoll.png` (68×42)
   and `public/art/gun-ammo.png` (22×22 — it has to fit the 50×38 list
   cell).
 
-**72px wide is not a look, it is the grip.** The doll's fist is about
+**`--length` is the weapon's own length, not the bounding box's
+width** — once the art is angled those are different numbers, and the
+one worth holding steady is the gun. Tilt it further and it should get
+taller, not shorter.
+
+**72px long is not a look, it is the grip.** The doll's fist is about
 8px across and the grip is a quarter of the art's height; the gun has
 to be big enough that a fist-sized hole lands *on the grip* instead of
 eating the receiver with it. At 56px the first attempt severed the
 receiver and left the butt as a floating chip.
+
+**The band is square to the grip.** It is tuned on the art lying flat
+and carried round by the rotation — its centre through the same
+transform, its angle less the tilt — so the tuning survives a change
+of angle. A band that is not perpendicular to the grip leaves a
+wedge-shaped cut that reads as a chip out of the wood (candidate D on
+the sheet is that mistake, kept so it stays visible).
 
 **What this container cannot answer:** there is no ARENA2 here, so
 there is no real doll to lay the sprite over and the exact hand pixel
 is a judgement call. `--sheet` renders four candidate bands side by
 side with a stand-in fist behind the gap, for whoever has the game to
 pick; `--band=cx,cy,deg,thick,length` sets it (cx,cy as fractions of
-the trimmed art, so they survive a change of `--width`).
+the trimmed FLAT art, so they survive a change of `--length` or
+`--angle`).
 
 ## Running it, and deploying it on its own
 
