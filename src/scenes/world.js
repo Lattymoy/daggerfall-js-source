@@ -16,7 +16,7 @@ import { attachTouch } from '../ui/touch.js';
 import { attachGamepad } from '../ui/gamepadInput.js';   // GP1: the pad speaks the same hooks
 import { BlocksFile } from '../formats/blocksFile.js';
 import { DFPalette } from '../formats/dfPalette.js';
-import { MapsFile, getWorldClimateSettings, longitudeLatitudeToMapPixel, getPixelFromPixelID, REGION_RACES, LOCATION_TYPES } from '../formats/mapsFile.js';
+import { MapsFile, getWorldClimateSettings, longitudeLatitudeToMapPixel, getPixelFromPixelID, REGION_RACES, LOCATION_TYPES, CLIMATES, REGION_NAMES } from '../formats/mapsFile.js';   // SPAWNED-DUNGEONS1: the ocean gate and the synthesized location's region name
 import { settlementsOf, loadModRoads } from '../world/roadsProducer.js';   // ROADS 3 / AUDIT ROADS F2 / ROADS 22
 import { modSetting } from '../systems/modSettings.js';   // ROADS 24
 import { WoodsFile, MAP_WIDTH, MAP_HEIGHT } from '../formats/woodsFile.js';
@@ -140,7 +140,9 @@ import { alignSurvival } from '../systems/survival/needs.js';   // SURV7: the ne
 import { liveLycanthropy } from '../systems/lycanthropy.js';   // SURV7: the env's lycanthrope and beast-form flags
 import { elementalResistanceChance, ELEMENTS } from '../systems/spellcast.js';   // SURV7: the env's fire and frost resistances
 import { rollCampEncounter, rollCampEncounterOnChunkLoad, amGroupRollOwner } from '../systems/campEncounters.js';   // CAMP1: the group-encounter roll - camps and packs, riding the same tick, and the chunk-load twin
-import { nearestSafeLocation, respawnFlavorText, respawnHealth } from '../systems/deathRespawn.js';   // D-ONLINE1: online, a death respawns instead of ending the run   // X-slice; the rest refusal raises the alert and asks the RESTING variant, the townsfolk idle the STRICT one; the catch-up loop's watch arm
+import { WORLD_SALT, spawnsDungeon, pickTemplate, synthesizeDungeonLocation, spawnTemplates } from '../world/spawnedDungeons.js';   // SPAWNED-DUNGEONS1: online, a pixel may hold a dungeon
+import { isMainStoryDungeon } from '../world/dungeonTextures.js';   // SPAWNED-DUNGEONS1: the main story's own dungeons are never cloned
+import { nearestSafeLocation, respawnFlavorText, respawnHealth, undergroundWakeSpot, undergroundWakeText } from '../systems/deathRespawn.js';   // D-ONLINE1: online, a death respawns instead of ending the run   // X-slice; the rest refusal raises the alert and asks the RESTING variant, the townsfolk idle the STRICT one; the catch-up loop's watch arm
 import { snapshotPlayer, restorePlayer, resolvePendingSpells, composeSessionState, restoreSessionState, dungeonPixelFor } from '../systems/save.js';   // P-slice: the above-ground quicksave; B4: the ONE quest+talk composer
 import { saveSlot, loadSlot, quickLoadSlot, mostRecentRestorable, QUICK_SAVE_NAME, saveKeysOfCharacter, saveInfoOf, requestScreenshot, capturePendingScreenshot } from '../systems/saveSlots.js';   // SAV4: the quicksave is a SLOT named QuickSave (SaveLoadManager.QuickSave/QuickLoad); SS1: the shot arms at save and lands at frame end   // ONLINE-AUTOSAVE1: saveKeysOfCharacter/saveInfoOf - every slot this character already has, kept in sync on an online exit too
 import { frameBegin, frameEnd } from '../systems/frameClock.js';   // PERF1: the frame's script time
@@ -569,6 +571,30 @@ export async function bootWorld(canvas, renderer, params, status) {
     }
   }
 
+  // SPAWNED-DUNGEONS1 (Lost, 2026-09-19: "one dungeon per loaded chunk when wandering around with a chance of 30% per
+  // chunk ... online mode only for now"). ONE choke point - buildPixelNow, which every build reaches (boot, teleport,
+  // streaming): an empty land pixel may stand a clone of a real dungeon (world/spawnedDungeons.js) in `locationIndex`,
+  // and everything that reads the index (the door registry, the quest location, the save's dungeon pixel) sees it as
+  // any location. The page flag is read off `params`, not `onlineOn` - that const is declared far below this build.
+  // Wrapped: a failure here costs one pixel its dungeon, never the stream.
+  const _spawnSalt = WORLD_SALT;   // one salt for every client: the same pixels, the same dungeons, the same rooms
+  let _spawnTemplates = null;
+  const spawnedDungeonAt = (px, py) => {
+    if (!params.has('online')) return null;
+    try {
+      if (!spawnsDungeon(_spawnSalt, px, py) || maps.getClimateIndex(px, py) === CLIMATES.Ocean) return null;
+      _spawnTemplates ??= spawnTemplates(locationIndex.values(), isMainStoryDungeon);
+      const template = pickTemplate(_spawnTemplates, _spawnSalt, px, py);
+      if (!template) return null;
+      const regionIndex = maps.getRegionIndexAt(px, py);
+      const loc = synthesizeDungeonLocation(template, { salt: _spawnSalt, px, py, where: {
+        regionIndex, regionName: REGION_NAMES[regionIndex], politic: maps.getPoliticIndex(px, py), climate: getWorldClimateSettings(maps.getClimateIndex(px, py)),
+      } });
+      locationIndex.set(`${px},${py}`, loc);
+      return loc;
+    } catch (e) { console.warn('[spawned dungeons]', px, py, e?.message ?? e); return null; }
+  };
+
   // U31 / THE CLASSIC START. StartGameBehaviour (:371-401) does not
   // resolve the start by NAME - it reads a map pixel out of settings
   // (StartCellX/StartCellY, 109/158 = Privateer's Hold) and asks the
@@ -983,7 +1009,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   async function buildPixelNow(px, py, { roadsRetry = false } = {}) {
     breather.reset();   // PERF7
     const key = `${px},${py}`;
-    const dfLocation = locationIndex.get(key) || null;
+    const dfLocation = locationIndex.get(key) || spawnedDungeonAt(px, py) || null;   // SPAWNED-DUNGEONS1: an empty pixel may stand one
     // EV7: the LOCATION half stays here - setLocationTiles reads
     // BlocksFile + MapsFile, file objects that do not cross a
     // postMessage boundary - and its tilemap + rect ride into the job
@@ -5224,7 +5250,15 @@ export async function bootWorld(canvas, renderer, params, status) {
         // from before it did is found by its id across the index.
         const pixel = extras.dungeon?.pixel ?? dungeonPixelFor(extras.locationKey, locationIndex.values(), (mt) => longitudeLatitudeToMapPixel(mt.longitude, mt.latitude));
         if (!pixel) townTalk.say('(saved in a dungeon this world cannot find - character restored; travel there yourself)');
-        else {
+        else if (onlineOn && !(pixel.x === getInt('Startup', 'StartCellX') && pixel.y === getInt('Startup', 'StartCellY'))) {
+          // ONLINE-UNDERGROUND-LOAD1 (Lost, 2026-09-19): an online page never puts a character back INSIDE a dungeon -
+          // it wakes them at the nearest temple, town or graveyard to it (the death respawn's own search, over the
+          // region the dungeon stands in), on that place's start marker. The tutorial dungeon is the exception
+          // (D-ONLINE2's reading, off the configured start cell): a character saved in the Hold reloads into it.
+          const wake = undergroundWakeSpot(maps.getRegion(maps.getRegionIndexAt(pixel.x, pixel.y))?.mapTable ?? [], pixel);
+          await _teleportToPixel(wake.mapPixel.x, wake.mapPixel.y, null, { modEvent: 'load', reposition: REPOSITION.RandomStartMarker });
+          townTalk.say(undergroundWakeText(wake.kind));
+        } else {
           await _teleportToPixel(pixel.x, pixel.y, null, { modEvent: 'load' });   // SIB2: SaveLoadManager.OnLoad
           const entered = await (modes?.startInDungeon?.() ?? false);   // StartDungeonInterior: the enter marker first, the saved position over it
           if (entered) { playerSpawned = true; modes?.restoreDungeonSave?.(extras); }
@@ -10058,6 +10092,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         clearSceneCache(playerEntity.sceneCache, { start: false });
       }
       queue.push(...r.load);
+      if (locationIndex.get(`${r.current.x},${r.current.y}`)?.spawned) townTalk.say('There is a dungeon entrance nearby.');   // SPAWNED-DUNGEONS2: said on ENTERING its pixel, not when it is rolled (that is three pixels ahead)
       for (const u of r.unload) {
         destroyPixel(u.px, u.py);
         state.release(u.px, u.py);
