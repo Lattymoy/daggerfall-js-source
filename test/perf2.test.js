@@ -67,7 +67,10 @@ test('PERF2 grass: only the cells in the frustum and inside the range are drawn 
   assert.equal(draws[0][4], perCell, 'a cell is one instanced draw of its own blades');
   // the pointers moved to the drawn slot's run: buffer 0 holds 4 floats a blade
   const ptr = calls.filter((c) => c[0] === 'vertexAttribPointer' && c[1] === 1).pop();
-  assert.equal(ptr[6], slotOf.ahead * perCell * 4 * 4, 'the instance pointer is the ahead cell\'s byte offset');
+  // GRASS5: the offset is in BYTES over the PACKED stride - eight for
+  // the u16 lane, not sixteen for four floats.
+  assert.equal(ptr[6], slotOf.ahead * perCell * 8, 'the instance pointer is the ahead cell\'s byte offset');
+  assert.equal(ptr[2], 4, 'four components'); assert.equal(ptr[4], true, 'NORMALIZED, so the GPU unpacks');
   // GRASS2: `drawn` carries what the frame actually submitted against
   // what it holds - the pad and the fade are both measurable from here.
   // This cell is 90 m out with a 200 m range, inside the fade's own
@@ -80,7 +83,7 @@ test('PERF2 grass: only the cells in the frustum and inside the range are drawn 
   r.draw(proj, lookAt(eye, [0, 12, -1], [0, 1, 0]), new Float32Array(eye), 0, { sunDir: [0, 1, 0], amb: [0.2, 0.2, 0.2], sunCol: [1, 1, 1], dim: 1 }, { dir: [1, 0], speed: 0, windV: [0, 0] }, 200);
   const ptr2 = calls.filter((c) => c[0] === 'vertexAttribPointer' && c[1] === 1).pop();
   assert.equal(calls.filter((c) => c[0] === 'drawArraysInstanced').length, 1);
-  assert.equal(ptr2[6], slotOf.behind * perCell * 4 * 4, 'the behind cell');
+  assert.equal(ptr2[6], slotOf.behind * perCell * 8, 'the behind cell');
   // a wider range brings the far cell in; the left cell stays outside the cone either way
   calls.length = 0;
   r.draw(proj, view, new Float32Array(eye), 0, { sunDir: [0, 1, 0], amb: [0.2, 0.2, 0.2], sunCol: [1, 1, 1], dim: 1 }, { dir: [1, 0], speed: 0, windV: [0, 0] }, 400);

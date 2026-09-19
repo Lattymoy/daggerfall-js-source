@@ -175,7 +175,7 @@ export async function autoBuildArms(entity, { wanted = () => getPref('mwArms'), 
  *                     pass console is retired: every call site hands
  *                     over a real one - hudText.add
  *                     (dungeonContext.js:2654), townTalk.say
- *                     (exterior.js:1789, world.js:2913) and
+ *                     (exterior.js:1789, world.js:2949) and
  *                     worldModes' own interior sink (worldModes.js:392,
  *                     which warns to console only where a host mounts
  *                     no townTalk at all), so the empty default below
