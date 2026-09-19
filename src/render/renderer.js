@@ -958,6 +958,7 @@ export class Renderer {
     // (uniforms are program state, so this survives a program switch).
     this._emissionColorUp = null;
     this._tex1Bound = null;   // PERF-TEX: cleared with its sibling
+    this._sq = {};
     this._tArrayTex = null;
     this._tTileSize = null;
     // EV2: the sub-mesh texture cache's generation. drawMesh used to
@@ -1177,6 +1178,7 @@ export class Renderer {
   endWorldPass() {
     if (!this._worldViewportPx) return;
     this._tex1Bound = null;   // PERF-TEX: the 2D path and the post passes own the units past here
+    this._sq = {};   // PERF-UI: ...and this is the 2D pass's own door, so it starts knowing nothing
     this._tArrayTex = null;
     this._tTileSize = null;
     this._worldViewportPx = null;
@@ -1250,6 +1252,7 @@ export class Renderer {
     this._tex1Bound = null;
     this._tArrayTex = null;
     this._tTileSize = null;
+    this._sq = {};
   }
 
   /** EL1: compile one world program set from its four fragment shaders
@@ -1404,6 +1407,7 @@ export class Renderer {
     this._csUploaded = {};
     this._emissionColorUp = null;
     this._tex1Bound = null;   // PERF-TEX: cleared with its sibling
+    this._sq = {};
     this._tArrayTex = null;
     this._tTileSize = null;
     this._lastProgram = null;
@@ -2338,6 +2342,14 @@ void main() {
         rot: gl.getUniformLocation(this.screenQuadProgram, 'uRot'),
         rotOn: gl.getUniformLocation(this.screenQuadProgram, 'uRotOn'),
       };
+      // PERF-UI: the sampler binding is a CONSTANT for the life of the
+      // program - uTex is unit 0 and never anything else - so it goes up
+      // once here instead of once a quad. The shadow is born empty with
+      // it: an empty shadow knows nothing, so the next quad uploads the
+      // lot, which is exactly what every reset point below wants.
+      this._sq = {};
+      this._use(this.screenQuadProgram);
+      gl.uniform1i(this._screenQuad.tex, 0);
       const vao = gl.createVertexArray();
       this._bindVao(vao);
       const vbo = gl.createBuffer();
@@ -2363,20 +2375,41 @@ void main() {
     gl.disable(gl.CULL_FACE);
     const ox = this._screenOffset?.[0] ?? 0, oy = this._screenOffset?.[1] ?? 0;
     gl.uniform4f(this._screenQuad.dst, dst.x + ox, dst.y + oy, dst.w, dst.h);
-    gl.uniform2f(this._screenQuad.canvas, gl.drawingBufferWidth, gl.drawingBufferHeight);
+    // PERF-UI: THE FOUR THAT ARE NOT A QUAD'S OWN. `dst` and `src` above
+    // and below really do change every call; the canvas size is the
+    // FRAME's, and useTex/blendTex/rotOn/colour are the same for every
+    // quad of a run - a row of icons, a bar, a panel's backdrop. The HUD
+    // draws a hundred-odd of these a frame in every scene there is, so
+    // each was going up a hundred-odd times to say what it already said.
+    // Shadowed on VALUE, so a caller that really changes one still
+    // uploads: setting a uniform to what it already holds is a no-op by
+    // definition, and this is only the removal of those.
+    const q = this._sq;
+    if (q.cw !== gl.drawingBufferWidth || q.ch !== gl.drawingBufferHeight) {
+      gl.uniform2f(this._screenQuad.canvas, gl.drawingBufferWidth, gl.drawingBufferHeight);
+      q.cw = gl.drawingBufferWidth; q.ch = gl.drawingBufferHeight;
+    }
     gl.uniform4f(this._screenQuad.src, src.u0, src.v0, src.u1, src.v1);
-    gl.uniform4f(this._screenQuad.color, color[0], color[1], color[2], color[3]);
-    gl.uniform1i(this._screenQuad.useTex, tex ? 1 : 0);
-    gl.uniform1i(this._screenQuad.blendTex, tex && opts.blend ? 1 : 0);
+    if (q.r !== color[0] || q.g !== color[1] || q.b !== color[2] || q.a !== color[3]) {
+      gl.uniform4f(this._screenQuad.color, color[0], color[1], color[2], color[3]);
+      q.r = color[0]; q.g = color[1]; q.b = color[2]; q.a = color[3];
+    }
+    const useTex = tex ? 1 : 0, blendTex = (tex && opts.blend) ? 1 : 0;
+    if (q.useTex !== useTex) { gl.uniform1i(this._screenQuad.useTex, useTex); q.useTex = useTex; }
+    if (q.blendTex !== blendTex) { gl.uniform1i(this._screenQuad.blendTex, blendTex); q.blendTex = blendTex; }
     // c2/S10: opts.rotate = { rad, px, py } - the pivot is in the SAME
     // space dst is (the screen offset applies to both, so a rotated
     // quad and its unrotated siblings letterbox together).
     const rot = opts.rotate ?? null;
-    gl.uniform1i(this._screenQuad.rotOn, rot ? 1 : 0);
+    const rotOn = rot ? 1 : 0;
+    if (q.rotOn !== rotOn) { gl.uniform1i(this._screenQuad.rotOn, rotOn); q.rotOn = rotOn; }
     if (rot) {
       gl.uniform4f(this._screenQuad.rot, Math.cos(rot.rad), Math.sin(rot.rad), rot.px + ox, rot.py + oy);
     }
-    if (tex) { gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, tex); gl.uniform1i(this._screenQuad.tex, 0); this.stats.texBinds++; }
+    // The sampler binding went up with the program; only the texture is a
+    // quad's own. (Not `_bindEmission`'s shadow: that one speaks for unit
+    // 1, this is unit 0, and the 2D pass is the far side of endWorldPass.)
+    if (tex) { gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, tex); this.stats.texBinds++; }
     // U10: a SOLID quad's alpha was written straight out with blending
     // OFF, so every translucent UI panel in the port drew OPAQUE -
     // DaggerfallUI.ScreenDimColor (0,0,0,0.5) blacked the screen out
@@ -2759,6 +2792,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     gl.uniform3fv(this.uEmissionColor, this._c3(this._windowEmission));
     this._emissionColorUp = this._windowEmission;   // F49: the per-sub-mesh shadow starts the frame true
     this._tex1Bound = null;   // PERF-TEX: a frame's; the post passes (air, clouds) own unit 1 between frames
+    this._sq = {};   // PERF-UI: the screen-quad uniform shadow is a frame's too
     this._tArrayTex = null;
     this._tTileSize = null;
     const count = this._pointLights.length / 4;

@@ -565,3 +565,87 @@ test('PERF-TEX: every texture shadow is forgotten when a foreign pass takes the 
     assert.match(fn, new RegExp(`${shadow} = null`), `markForeignPass does not clear ${shadow}`);
   }
 });
+
+// ═══ PERF-UI: THE SCREEN QUAD'S FOUR THAT ARE NOT A QUAD'S OWN ══════
+//
+// `drawScreenQuad` is the UI arc's primitive, and the HUD draws a
+// hundred-odd of them a frame in EVERY scene there is - a dungeon and a
+// building interior included, which is where "across the game" lands.
+// Measured at 17.1 GL calls a quad, of which more than half set state
+// that was already set: the canvas size (the FRAME's), the sampler
+// binding (a CONSTANT - uTex is unit 0 and never anything else), and
+// useTex / blendTex / rotOn / colour, which are the same for every quad
+// of a run - a row of icons, a bar, a panel's backdrop.
+//
+// PERF-ON gave the TEXT case one draw a string. This is the same saving
+// for every quad that is not text, and it needs no new API: the sampler
+// goes up once with the program, and the rest are shadowed ON VALUE, so
+// a caller that really changes one still uploads.
+const uiScene = (r, log) => {
+  const from = log.length;
+  const A = { id: 'iconsheet' }, B = { id: 'bars' };
+  for (let i = 0; i < 20; i++) r.drawScreenQuad(A, { x: i * 8, y: 4, w: 8, h: 8 });
+  for (let i = 0; i < 10; i++) r.drawScreenQuad(B, { x: i, y: 20, w: 40, h: 4 }, { u0: 0, v0: 0, u1: 1, v1: 1 }, [1, 0.2, 0.2, 1]);
+  for (let i = 0; i < 5; i++) r.drawScreenQuad(null, { x: i, y: 30, w: 60, h: 20 }, undefined, [0, 0, 0, 0.5]);
+  for (let i = 0; i < 5; i++) r.drawScreenQuad(A, { x: i, y: 60, w: 16, h: 16 }, undefined, [1, 1, 1, 1], { blend: true });
+  for (let i = 0; i < 5; i++) r.drawScreenQuad(B, { x: i, y: 80, w: 8, h: 8 }, undefined, [1, 1, 1, 1], { rotate: { rad: i, px: 4, py: 4 } });
+  for (let i = 0; i < 10; i++) r.drawScreenQuad(A, { x: i, y: 100, w: 8, h: 8 });
+  return log.slice(from);
+};
+
+/** Every uniform and texture the quad program would be drawing WITH, at
+ *  each draw - the only thing that decides the pixels. */
+const uiEffective = (r, slice) => {
+  const U = r._screenQuad;
+  const nameOf = (loc) => Object.keys(U).find((k) => U[k] === loc) ?? '?';
+  let unit = 0; const units = new Map(); const uni = new Map(); const out = [];
+  for (const [k, ...a] of slice) {
+    if (k === 'activeTexture') unit = a[0];
+    else if (k === 'bindTexture') units.set(unit, a[1]);
+    else if (k.startsWith('uniform')) uni.set(nameOf(a[0]), a.slice(1).join(','));
+    else if (k === 'drawElements') out.push(JSON.stringify({ t: units.get(0)?.id ?? null, u: Object.fromEntries([...uni].sort()) }));
+  }
+  return out;
+};
+
+test('PERF-UI: the screen quad stops re-uploading the frame’s canvas, the constant sampler, and a run’s shared flags', () => {
+  const { r, log } = glLogRig();
+  r.beginFrame(new Float32Array(identity()), new Float32Array(identity()), new Float32Array([0, -1, 0]));
+  const slice = uiScene(r, log);
+  const quads = slice.filter((e) => e[0] === 'drawElements').length;
+  assert.equal(quads, 55, 'the scene really drew');
+  const U = r._screenQuad;
+  const count = (loc) => slice.filter((e) => e[0].startsWith('uniform') && e[1] === loc).length;
+  assert.equal(count(U.canvas), 1, `the canvas size went up ${count(U.canvas)} times for one frame`);
+  // Once, with the program - which is built lazily inside the first
+  // drawScreenQuad, so that one upload falls inside this slice. Never again.
+  assert.ok(count(U.tex) <= 1, `the sampler binding went up ${count(U.tex)} times - it is the program's, not a quad's`);
+  // dst and src ARE a quad's own and must still go up every time
+  assert.equal(count(U.dst), quads, 'the destination rect is per-quad and must never be shadowed');
+  assert.equal(count(U.src), quads, 'nor the source rect');
+  // ...and the shared ones go up only when they change
+  assert.ok(count(U.color) < quads, `the colour went up ${count(U.color)} times for ${quads} quads`);
+  assert.ok(count(U.useTex) < quads && count(U.rotOn) < quads && count(U.blendTex) < quads);
+});
+
+test('PERF-UI: it moves NO PIXEL - every uniform and texture at every quad is what the unshadowed path produced', () => {
+  // The colour and flag shadows are the ones that could bite: skip an
+  // upload the caller meant and the quad draws in the last one's colour.
+  // So the scene above deliberately changes each of them at least twice,
+  // and the two sequences are compared field for field.
+  const { r: a, log: la } = glLogRig();
+  a.beginFrame(new Float32Array(identity()), new Float32Array(identity()), new Float32Array([0, -1, 0]));
+  const shadowed = uiEffective(a, uiScene(a, la));
+
+  const { r: b, log: lb } = glLogRig();
+  b.beginFrame(new Float32Array(identity()), new Float32Array(identity()), new Float32Array([0, -1, 0]));
+  // the path as it was: nothing remembered between quads
+  const raw = [];
+  const from = lb.length;
+  const orig = b.drawScreenQuad.bind(b);
+  b.drawScreenQuad = (...args) => { b._sq = {}; return orig(...args); };
+  uiScene(b, lb);
+  raw.push(...lb.slice(from));
+  assert.deepEqual(shadowed, uiEffective(b, raw), 'a shadow skipped an upload the caller meant');
+  assert.equal(shadowed.length, 55);
+});

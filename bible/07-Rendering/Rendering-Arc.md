@@ -1426,6 +1426,53 @@ texture shadow is forgotten on a foreign pass. PERF3's own pin was
 re-aimed: its law is that the two stay OUT of the frame-constant block,
 which they do, and it now says that rather than quoting two lines.
 
+## PERF-UI - THE SCREEN QUAD'S FOUR THAT ARE NOT A QUAD'S OWN (2026-09-19)
+
+`drawScreenQuad` is the UI arc's primitive (U1), and the HUD draws a
+hundred-odd of them a frame in EVERY scene there is - a dungeon and a
+building interior included, which is where "heavy performance issues
+across the game" lands, because none of the exterior's passes run there.
+
+| | GL calls | a quad | redundant state writes |
+|---|---|---|---|
+| before | 2056 | 17.1 | **1071 (52%)** |
+| after | 1342 | 11.2 | 357 |
+
+More than half of every call set state that was already set:
+
+- **the canvas size** is the FRAME's, not a quad's - `drawingBufferWidth`
+  and `Height` are read and uploaded on every one.
+- **the sampler binding** is a CONSTANT for the life of the program:
+  `uTex` is unit 0 and has never been anything else. It goes up with the
+  program now, once, instead of once a quad.
+- **useTex, blendTex, rotOn and the colour** are the same for every quad
+  of a RUN - a row of icons, a bar, a panel's backdrop, a page of a book.
+
+PERF-ON gave the TEXT case one draw a string. This is the same saving for
+every quad that is not text, and it needed no new API and no new call
+shape: the three flags and the colour are shadowed ON VALUE, so a caller
+that really changes one still uploads.
+
+**What was left, and why.** 240 cap toggles and 242 VAO binds remain -
+each quad disables DEPTH_TEST and CULL_FACE, draws, then re-enables both,
+and binds and unbinds the same VAO. Removing them means not restoring the
+state a quad found, which is a CONTRACT change: the world paths after it
+would have to own their own caps. That is a real optimisation and a real
+risk, and it does not belong in a slice whose whole claim is that it
+cannot move a pixel.
+
+**Proven, not asserted.** The scene the suite drives deliberately changes
+each shadowed field at least twice - runs of same-colour icons, a tinted
+bar, a solid untextured panel, a blended logo, a rotated needle - because
+the colour and flag shadows are the ones that could bite: skip an upload
+the caller meant and the quad draws in the last one's colour. Every
+uniform and every texture at all 55 draws is compared against the same
+scene with nothing remembered between quads. Identical.
+
+**Pinned** in `test/glstate.test.js` (2): the canvas, sampler and shared
+flags stop repeating while `dst` and `src` - which really are a quad's
+own - still go up every single time; and the equality above.
+
 ## PERF-ON - ONE DRAW A STRING (2026-09-15)
 
 Mac: *"Next thing I want to tackle is improving online performance. I
