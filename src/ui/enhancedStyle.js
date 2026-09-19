@@ -1248,7 +1248,7 @@ body.draglock .wornrow, body.draglock .wornmap { touch-action: none; }
    needs its own scrim - MAP-FIELD2: on BOTH lanes now, for the same
    reason, because neither has a black behind it any more */
 .hmroot .hmfoot { background: rgba(10, 12, 17, 0.72); padding: 6px 10px; border-radius: 4px; }
-.hmstage { position: absolute; }
+.hmstage { position: absolute; will-change: transform; }
 /* the painting is 1448x1086 and is only ever shown SMALLER than that, so
    it is scaled smooth - a pixelated downscale would alias its dither.
    MAP-FIELD2: it is a CANVAS now, not an <img> - the painting's own

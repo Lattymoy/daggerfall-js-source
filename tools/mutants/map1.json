@@ -534,8 +534,8 @@
   {
     "name": "MAPFIELD6-one-candidate-only",
     "file": "src/ui/inkMap.js",
-    "old": "    const fit = cands.find((c) => c.x >= 2 && c.x + w <= paperW - 2 && !hits({ x: c.x, y: c.y, w, h }));",
-    "new": "    const fit = [cands[0]].find((c) => c.x >= 2 && c.x + w <= paperW - 2 && !hits({ x: c.x, y: c.y, w, h }));",
+    "old": "    const fit = cands.map((c) => ({ ...c, box: nameBox(c.x, c.base, w, size) }))",
+    "new": "    const fit = [cands[0]].map((c) => ({ ...c, box: nameBox(c.x, c.base, w, size) }))",
     "tests": [
       "test/heldmap.test.js"
     ]
@@ -570,8 +570,161 @@
   {
     "name": "MAPFIELD6-the-halo-is-no-fatter-than-the-pen",
     "file": "src/ui/inkMap.js",
-    "old": "export const HALO_PEN = 3.2;",
+    "old": "export const HALO_PEN = 1.6;",
     "new": "export const HALO_PEN = 0;",
+    "tests": [
+      "test/heldmap.test.js"
+    ]
+  },
+  {
+    "name": "MAPFIELD7-the-sheet-fades-again",
+    "file": "src/ui/heldMap.js",
+    "old": "    c.stage.style.transform = e >= 1 ? '' : `translateY(${Math.round((1 - e) * 1000) / 10}%)`;",
+    "new": "    c.root.style.opacity = String(a);",
+    "tests": [
+      "test/heldmap.test.js"
+    ]
+  },
+  {
+    "name": "MAPFIELD7-the-sheet-starts-held",
+    "file": "src/ui/heldMap.js",
+    "old": "    this._setRaise(0);",
+    "new": "",
+    "tests": [
+      "test/heldmap.test.js"
+    ]
+  },
+  {
+    "name": "MAPFIELD7-the-chrome-travels-too",
+    "file": "src/ui/heldMap.js",
+    "old": "    for (const n of c.root.children ?? []) { if (n !== c.stage) n.style.opacity = o; }",
+    "new": "    for (const n of c.root.children ?? []) { n.style.opacity = o; }",
+    "tests": [
+      "test/heldmap.test.js"
+    ]
+  },
+  {
+    "name": "MAPFIELD7-a-close-mid-rise-snaps-up",
+    "file": "src/ui/heldMap.js",
+    "old": "    this._closeFrom = Number.isFinite(this._raise) ? this._raise : 1;",
+    "new": "    this._closeFrom = 1;",
+    "tests": [
+      "test/heldmap.test.js"
+    ]
+  },
+  {
+    "name": "MAPFIELD7-the-held-sheet-keeps-a-transform",
+    "file": "src/ui/heldMap.js",
+    "old": "    c.stage.style.transform = e >= 1 ? '' : `translateY(${Math.round((1 - e) * 1000) / 10}%)`;",
+    "new": "    c.stage.style.transform = `translateY(${Math.round((1 - e) * 1000) / 10}%)`;",
+    "tests": [
+      "test/heldmap.test.js"
+    ]
+  },
+  {
+    "name": "MAPFIELD7-the-hands-lane-slides-too",
+    "file": "src/ui/heldMap.js",
+    "old": "    if (this._lane === 'hands') { c.stage.style.transform = ''; return; }",
+    "new": "",
+    "tests": [
+      "test/heldmap.test.js"
+    ]
+  },
+  {
+    "name": "MAPFIELD6-a-name-may-sit-off-the-paper",
+    "file": "src/ui/inkMap.js",
+    "old": "      .find((c) => c.box.x >= 2 && c.box.x + c.box.w <= paperW - 2\n        && c.box.y >= 2 && c.box.y + c.box.h <= paperH - 2 && !hits(c.box));",
+    "new": "      .find((c) => c.box.x >= 2 && c.box.x + c.box.w <= paperW - 2 && !hits(c.box));",
+    "tests": [
+      "test/heldmap.test.js"
+    ]
+  },
+  {
+    "name": "MAPFIELD6-the-reserved-box-is-not-the-inks",
+    "file": "src/ui/inkMap.js",
+    "old": "  return { x, y: baseline - (size * NAME_ASC), w, h: size * (NAME_ASC + NAME_DESC) };",
+    "new": "  return { x, y: baseline - (size * 0.55), w, h: size * 1.1 };",
+    "tests": [
+      "test/heldmap.test.js"
+    ]
+  },
+  {
+    "name": "AUDITMAPFIELD-dispose-drops-the-commit",
+    "file": "src/ui/heldMap.js",
+    "old": "    this._fireCommit();\n    this._close();\n  }\n\n  /** The commit the player made, fired once and then forgotten.",
+    "new": "    this._close();\n  }\n\n  /** The commit the player made, fired once and then forgotten.",
+    "tests": [
+      "test/heldmap.test.js"
+    ]
+  },
+  {
+    "name": "AUDITMAPFIELD-the-retry-runs-while-closing",
+    "file": "src/ui/heldMap.js",
+    "old": "    } else if (!first && this._phase !== 'closing' && this._handsTries > 0 && this._handsTries < 30) { this._handsTries++; this._tryHands(); }",
+    "new": "    } else if (!first && this._handsTries > 0 && this._handsTries < 30) { this._handsTries++; this._tryHands(); }",
+    "tests": [
+      "test/heldmap.test.js"
+    ]
+  },
+  {
+    "name": "AUDITMAPFIELD-the-commit-fires-twice",
+    "file": "src/ui/heldMap.js",
+    "old": "  _fireCommit() {\n    const c = this._commit;\n    this._commit = null;",
+    "new": "  _fireCommit() {\n    const c = this._commit;",
+    "tests": [
+      "test/heldmap.test.js"
+    ]
+  },
+  {
+    "name": "AUDITMAPFIELD-the-bite-is-the-old-one",
+    "file": "src/ui/heldMap.js",
+    "old": "export const HELD_MAP_BITE = 0.11;",
+    "new": "export const HELD_MAP_BITE = 0.03;",
+    "tests": [
+      "test/heldmap.test.js"
+    ]
+  },
+  {
+    "name": "AUDITMAPFIELD-the-carets-are-ink-again",
+    "file": "src/ui/inkMap.js",
+    "old": "  ctx.strokeStyle = PEN.relief;",
+    "new": "  ctx.strokeStyle = PEN.soft;",
+    "tests": [
+      "test/heldmap.test.js"
+    ]
+  },
+  {
+    "name": "AUDITMAPFIELD-the-halo-is-the-pen",
+    "file": "src/ui/inkMap.js",
+    "old": "  halo: 'rgba(238, 222, 190, 0.80)',",
+    "new": "  halo: 'rgba(58, 40, 22, 0.80)',",
+    "tests": [
+      "test/heldmap.test.js"
+    ]
+  },
+  {
+    "name": "AUDITMAPFIELD-the-filled-halo-is-not-stroked",
+    "file": "src/ui/inkMap.js",
+    "old": "  const solid = () => { ctx.fill(); if (halo) ctx.stroke(); };",
+    "new": "  const solid = () => { ctx.fill(); };",
+    "tests": [
+      "test/heldmap.test.js"
+    ]
+  },
+  {
+    "name": "AUDITMAPFIELD-the-travel-is-linear",
+    "file": "src/ui/heldMap.js",
+    "old": "    const e = smoothstep(0, 1, a);",
+    "new": "    const e = a;",
+    "tests": [
+      "test/heldmap.test.js"
+    ]
+  },
+  {
+    "name": "AUDITMAPFIELD-the-brightness-key-comes-back-unnamed",
+    "file": "src/ui/heldMap.js",
+    "old": "      const img = ctx.getImageData(0, 0, w, h);\n      extendCuffs(img.data, w, h);",
+    "new": "      const img = ctx.getImageData(0, 0, w, h);\n      for (let i = 0; i < img.data.length; i += 4) if (img.data[i] + img.data[i + 1] + img.data[i + 2] < 72) img.data[i + 3] = 0;\n      extendCuffs(img.data, w, h);",
     "tests": [
       "test/heldmap.test.js"
     ]

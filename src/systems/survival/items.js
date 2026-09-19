@@ -52,14 +52,31 @@ export const VENDOR_ICON_FILES = Object.freeze([
   '532_0-0', '532_1-0', '533_0-0', '533_1-0', '534_0-0', '534_1-0', '535_0-0', '535_1-0',
   '536_0-0', '536_1-0', '537_0-0', '537_1-0', '538_0-0', '538_1-0', '538_2-0', '539_0-0',
 ]);
+/** SURV-TENT: the mod's TENT RESKINS, which are a different KIND of
+ *  vendored file from the icons above. The camp stands the mod's own
+ *  model (41606, `camp.js` TENT_MODEL) and the mod dresses it by
+ *  overriding two records of REAL ARENA2 archives - a 32x32 tan canvas
+ *  at 50_7-0 and a 64x8 dark pole at 67_10-0 - the way a texture pack
+ *  overrides one. TEXTURE.050 and TEXTURE.067 are real files carrying
+ *  dozens of other records, so these register WITHOUT `standIn`: the
+ *  pipeline must still load the archive and swap only these two
+ *  records. Without them the tent wore whatever the base game put on
+ *  that model. */
+export const VENDOR_TENT_FILES = Object.freeze(['50_7-0', '67_10-0']);
 export const vendorIconUrl = (name) => new URL(`../../../vendor/climates-calories/Textures/${name}.png`, import.meta.url).href;
 let _iconsInstalled = false;
-/** Register the icons with the texture pipeline (once; a test may pass its own fetch). */
+const vendorEntry = (f, load, standIn) => { const m = /^(\d+)_(\d+)-(\d+)$/.exec(f); return { archive: Number(m[1]), record: Number(m[2]), frame: Number(m[3]), fileName: f, standIn, load: () => load(f) }; };
+/** Register the mod's own art with the texture pipeline (once; a test
+ *  may pass its own fetch). The icons are archives that exist ONLY as
+ *  this art (`standIn`); the tent's two are records of real archives. */
 export function installSurvivalIcons({ fetchBytes = null } = {}) {
   if (_iconsInstalled && vendorTextureCount() > 0) return 0;   // once - unless the registry was cleared under it (a test's reset)
   _iconsInstalled = true;
   const load = fetchBytes ?? (async (name) => { const r = await fetch(vendorIconUrl(name)); if (!r.ok) throw new Error(`${name}: ${r.status}`); return new Uint8Array(await r.arrayBuffer()); });
-  return addVendorTextures(VENDOR_ICON_FILES.map((f) => { const m = /^(\d+)_(\d+)-(\d+)$/.exec(f); return { archive: Number(m[1]), record: Number(m[2]), frame: Number(m[3]), fileName: f, load: () => load(f) }; }));
+  return addVendorTextures([
+    ...VENDOR_ICON_FILES.map((f) => vendorEntry(f, load, true)),
+    ...VENDOR_TENT_FILES.map((f) => vendorEntry(f, load, false)),
+  ]);
 }
 
 export const isSurvivalItem = (item) => !!item && item.templateIndex >= TEMPLATE.CampingEquipment && item.templateIndex <= TEMPLATE.Campfire && (item.group == null || item.group === SURVIVAL_GROUP);
