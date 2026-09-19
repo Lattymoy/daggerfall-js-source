@@ -89,6 +89,7 @@ not the date the slice shipped, where those differ.
 | `unleveledLoot` | manifest, settings | Ralzar | 1.1.2 | shipped zip; code from `Ralzar81/Unleveled-Loot` | MIT (source header) | UL1 | 2026-09-12 | `06-Systems/Unleveled-Loot.md` |
 | `weapon-sheathing` | the 71 `_sh` scabbard meshes, the three `xbase_anim_sh.nif` skeleton addons, the shipped readme | Greatness7 (art by akortunov, Greatness7, Heinrich, London Rook, Lord Berandas, Melchior Dahrk, MementoMoritius, Petethegoat, PikachunoTM, Remiros) | 1.6 | shipped `.7z` `WeaponSheathing1.6-OpenMW-46069-1-6`; the mechanism is OpenMW's, ported | the mod's own: free to use with credit and no fee (`WeaponSheathing.txt`) | WS1 | 2026-09-17 | `06-Systems/Weapon-Sheathing.md` |
 | `weapon-widget` | manifest, settings | RedRoryOTheGlen | 1.6 | shipped zip `Weapon_Widget-860-1-6`; behaviour off the DLL's IL | granted (Mac handed the zip over 2026-09-14) - **RECORD OPEN** | WW1-WW4 | 2026-09-14 | `05-Combat/Weapon-Widget.md` |
+| `shield-widget` | manifest, settings, presets | RedRoryOTheGlen | 1.6 | shipped zip `Shield_Widget-733-1-6`; behaviour off the DLL's IL | granted (Mac handed the zip over 2026-09-19) - **RECORD OPEN** | SW1 | 2026-09-19 | `05-Combat/Shield-Widget.md` |
 | `windmills-kamer` | five `.dae` meshes + placements | Kamer | 2.0 | `WindMills.rar`, supplied by Mac 2026-08-29 | granted by the author, confirmed by Mac 2026-08-29 | WM1 | 2026-08-29 | `03-World/Windmills.md` |
 
 ## Known deviations, per row
@@ -106,7 +107,8 @@ full account; this is the index to it.
 - **`dynamic-skies`** - the repository's `Resources/*Night.json` presets
   are NOT carried, because they are not in the shipped manifest and the
   mod therefore never loads them.
-- **`handheld-torches`**, **`weapon-widget`**, **`seasons-iliac-bay`**,
+- **`handheld-torches`**, **`weapon-widget`**, **`shield-widget`**,
+  **`seasons-iliac-bay`**,
   **`pcaao`**, **`meanerMonsters`**, **`ambient-text`** - the mods' compiled DLLs are not
   vendored and never were. Behaviour was read method by method (IL, or
   the upstream source where one exists) and rewritten; the port's own

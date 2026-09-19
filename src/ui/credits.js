@@ -96,6 +96,16 @@ export const CREDITS = Object.freeze({
       link: 'https://www.nexusmods.com/daggerfallunity/mods/860',
     }),
     Object.freeze({
+      title: 'Shield Widget',
+      version: '1.6',
+      author: 'RedRoryOTheGlen',
+      what: 'A shield in the first-person view (SW1), which classic Daggerfall never drew: the equipped shield\u2019s own sprite in its metal, battering through three tiers of art as its condition falls, sliding off-screen or into the corner when you sheathe, swing or cast, with a walking bob, look inertia, stepped movement, a frame-by-frame raise and lower, and a recoil that rings and rocks it when a blow lands on the arm it covers.',
+      terms: 'Ported 1:1 from the shipped bundle, read off its compiled script method by method; see vendor/shield-widget/README.md for the permission record.',
+      contact: 'RedRoryOTheGlen, through the Nexus page (daggerfallunity mod 733)',
+      vendor: Object.freeze(['shield-widget']),
+      link: 'https://www.nexusmods.com/daggerfallunity/mods/733',
+    }),
+    Object.freeze({
       title: 'Weapon Sheathing',
       version: '1.6',
       author: 'Greatness7',

@@ -1,0 +1,359 @@
+// SW1 - SHIELD WIDGET 1.6, RedRoryOTheGlen, ported 1:1 off the shipped
+// DLL's IL (bible/05-Combat/Shield-Widget.md). These pin the arithmetic
+// the IL states, the four bugs kept bug for bug, and the gate ladder -
+// the part of the mod a reader is most likely to "tidy" into something
+// that is no longer the mod.
+
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+
+import {
+  createShieldWidget, readShieldWidgetSettings, shieldTextureIndex, shieldTextureName,
+  shieldArchiveBase, shieldMaterialOffset, shieldConditionOffset, shieldAnimationGroup,
+  isPartShielded, SHIELD_TEMPLATES, SHIELD_POSE, ANIM_DIRECTION, SHIELD_RECOIL_CONDITION,
+  SHIELD_TEXTURE_COUNT, PARRY_CLIP_FIRST, PARRY_CLIP_COUNT,
+} from '../src/combat/shieldWidget.js';
+
+const RAW = {
+  Enabled: true, 'Shield.OffsetHorizontal': 0.5, 'Shield.OffsetVertical': 0.5, 'Shield.Scale': 1,
+  'Shield.Speed': 1, 'Shield.WhenSheathed': 1, 'Shield.WhenAttacking': 1, 'Shield.WhenCasting': 1,
+  'Shield.LockAspectRatio': true, 'Shield.ConditionThresholdUpper': 75, 'Shield.ConditionThresholdLower': 25,
+  'Modules.Bob': true, 'Modules.Inertia': false, 'Modules.Animation': false, 'Modules.Step': false, 'Modules.Recoil': false,
+  'Bob.Length': 100, 'Bob.Offset': 0, 'Bob.SizeX': 1, 'Bob.SizeY': 1, 'Bob.SpeedMove': 1, 'Bob.SpeedState': 1,
+  'Bob.Shape': 0, 'Bob.BobWhileIdle': true,
+  'Inertia.Scale': 1, 'Inertia.Speed': 1, 'Inertia.ForwardDepth': 1, 'Inertia.ForwardSpeed': 1,
+  'Animation.Speed': 1, 'Animation.Direction': 0, 'Step.Length': 1, 'Step.Condition': 0,
+  'Recoil.Scale': 1, 'Recoil.Offset': false, 'Recoil.Speed': 1, 'Recoil.Condition': 2,
+  'Compatibility.TextureScaleFactor': 1,
+};
+const settingsOf = (over = {}) => () => readShieldWidgetSettings(() => ({ ...RAW, ...over }));
+const SHIELD = { templateIndex: SHIELD_TEMPLATES.Kite, nativeMaterialValue: 513, conditionPercentage: 100, isShield: true };
+
+function rig(over = {}, deps = {}) {
+  const sounds = [];
+  const widget = createShieldWidget({
+    settings: settingsOf(over),
+    textures: { size: () => ({ width: 100, height: 100 }) },
+    audio: { playOneShot: (clip, vol, pitch) => sounds.push({ clip, vol, pitch }) },
+    rolls: () => 0.5, handedness: () => false, ...deps,
+  });
+  return { widget, sounds };
+}
+const frame = (o = {}) => ({
+  dt: 1 / 60, time: 0, screenRect: { x: 0, y: 0, width: 640, height: 400 }, largeHudHeight: 0,
+  item: SHIELD, attacking: false, sheathed: false, castingAnim: false, hasReadySpell: false,
+  equipCountdownLeftHand: 0, isClimbing: false, isPaused: false, loadInProgress: false,
+  entity: { stats: { speed: 50 } },   // LiveSpeed drives both the ease and the animation clock
+  motor: { speed: 0, baseSpeed: 3, isGrounded: true, isCrouching: false, isRiding: false, isStandingStill: true, moveDirectionLocal: [0, 0, 0] },
+  look: { x: 0, y: 0, cursorActive: false, swingAction: false }, ...o,
+});
+const settle = (widget, o = {}, n = 200) => { for (let i = 0; i < n; i++) widget.lateUpdate(frame(o)); };
+
+test('SW1: the sheet index is archive x 150 + record x 5 + frame, and a record is a material group plus a condition tier', () => {
+  // the four templates' bases (UpdateShieldTextures IL 0x15)
+  assert.equal(shieldArchiveBase(SHIELD_TEMPLATES.Buckler), 0);
+  assert.equal(shieldArchiveBase(SHIELD_TEMPLATES.Round), 150);
+  assert.equal(shieldArchiveBase(SHIELD_TEMPLATES.Kite), 300);
+  assert.equal(shieldArchiveBase(SHIELD_TEMPLATES.Tower), 450);
+  // a template that is not one of the four falls to the Buckler's block,
+  // as the switch's own default does
+  assert.equal(shieldArchiveBase(-1), 0);
+
+  // the material table (IL 0x51), INCLUDING the author's silver
+  assert.deepEqual([0, 256, 512, 513, 514, 515, 516, 517, 518, 519, 520, 521].map(shieldMaterialOffset),
+    [0, 0, 5, 10, 0, 15, 20, 25, 30, 35, 40, 45]);
+  // KEPT BUG FOR BUG: silver (514) lands on group 0 with leather and
+  // chain, so a silver shield draws the leather art.
+  assert.equal(shieldMaterialOffset(514), shieldMaterialOffset(0), 'silver shares leather’s group, as the mod has it');
+
+  // the three tiers (IL 0xcf)
+  assert.equal(shieldConditionOffset(100, 75, 25), 0);
+  assert.equal(shieldConditionOffset(75, 75, 25), 50, 'at the upper threshold is already the worn art');
+  assert.equal(shieldConditionOffset(26, 75, 25), 50);
+  assert.equal(shieldConditionOffset(25, 75, 25), 100, 'at the lower threshold is already the battered art');
+
+  // and the whole walk back out to archive/record/frame
+  const i = shieldTextureIndex(SHIELD, 75, 25);
+  assert.equal(i, 310);
+  assert.deepEqual(shieldTextureName(i), { archive: 112362, record: 2, frame: 0 });
+  assert.deepEqual(shieldTextureName(SHIELD_TEXTURE_COUNT - 1), { archive: 112363, record: 29, frame: 4 },
+    'the last of the 600 is the Tower’s last record, last frame');
+});
+
+test('SW1: LoadSettings’ multipliers, and the INVERTED animation speed', () => {
+  const s = readShieldWidgetSettings(() => RAW);
+  assert.equal(s.offsetSpeed, 5000, 'Shield.Speed x5000');
+  assert.equal(s.bobLength, 1, 'Bob.Length /100');
+  assert.equal(s.bobSizeXMod, 2); assert.equal(s.bobSizeYMod, 2);
+  assert.equal(s.moveSmoothSpeed, 4); assert.equal(s.bobSmoothSpeed, 500);
+  assert.equal(s.inertiaScale, 500); assert.equal(s.inertiaSpeed, 500);
+  assert.equal(s.inertiaForwardScale, 0.2); assert.equal(s.inertiaForwardSpeed, 0.2);
+  assert.equal(s.recoilScale, 2); assert.equal(s.recoilSpeed, 0.5);
+  // a BIGGER Animation.Speed is a SHORTER animation: `1 - v * 0.5`
+  assert.equal(s.animationTime, 0.5);
+  assert.equal(readShieldWidgetSettings(() => ({ ...RAW, 'Animation.Speed': 0 })).animationTime, 1);
+  assert.equal(readShieldWidgetSettings(() => ({ ...RAW, 'Animation.Speed': 2 })).animationTime, 0);
+  // TextureScaleFactor is floored at 1 - the mod's range opens at 0 and
+  // a 0 would divide the sprite's size by nothing
+  assert.equal(readShieldWidgetSettings(() => ({ ...RAW, 'Compatibility.TextureScaleFactor': 0 })).scaleTextureFactor, 1);
+});
+
+test('SW1: the guard rect is the settings’ own offsets, and the sprite scales off 320x200', () => {
+  const { widget } = rig();
+  settle(widget);
+  // x = screenX + width * 0.5 * offsetX; y = bottom - height * 0.25 * offsetY
+  assert.equal(widget.target.x, 640 * 0.5 * 0.5);
+  assert.equal(widget.target.y, 400 - 400 * 0.25 * 0.5);
+  // 100px sprite, scale 1, weaponScaleX = 640/320 = 2
+  assert.equal(widget.target.width, 200);
+  assert.equal(widget.target.height, 200, 'LockAspectRatio takes the X scale for Y');
+
+  // without the lock, Y measures against 200
+  const { widget: w2 } = rig({ 'Shield.LockAspectRatio': false });
+  settle(w2);
+  assert.equal(w2.target.height, 100 * (400 / 200));
+
+  // left-handed mirrors the x about the screen's right edge
+  const { widget: w3 } = rig({}, { handedness: () => true });
+  settle(w3);
+  assert.equal(w3.target.x, 640 - 640 * 0.5 * 0.5);
+  assert.ok(w3.flipped);
+});
+
+test('SW1: the three away poses - Corner sits on the edge, Off-screen sits past it, Ready keeps the guard rect', () => {
+  const corner = rig({ 'Shield.WhenSheathed': SHIELD_POSE.Corner });
+  settle(corner.widget, { sheathed: true });
+  assert.equal(corner.widget.target.x, 0, 'Corner: the screen’s own x');
+  assert.equal(corner.widget.target.y, 400, 'Corner: the bottom, with no offset applied');
+
+  const off = rig({ 'Shield.WhenSheathed': SHIELD_POSE.OffScreen });
+  settle(off.widget, { sheathed: true });
+  assert.equal(off.widget.target.x, -200, 'Off-screen: a full sprite width past the edge');
+  assert.equal(off.widget.target.y, 400 + 200);
+
+  // Ready (3) names no rect of its own, so the guard rect stands
+  const ready = rig({ 'Shield.WhenSheathed': SHIELD_POSE.Ready });
+  settle(ready.widget, { sheathed: true });
+  assert.equal(ready.widget.target.x, 640 * 0.5 * 0.5);
+  assert.ok(ready.widget.drawRect(), 'and Ready still draws');
+});
+
+test('SW1: the gate ladder - Hide hides, Off-screen still draws while it leaves, and each state yields in the IL’s order', () => {
+  // without the Animation module: only Hide hides
+  for (const [pose, shows] of [[SHIELD_POSE.Hide, false], [SHIELD_POSE.OffScreen, true], [SHIELD_POSE.Corner, true], [SHIELD_POSE.Ready, true]]) {
+    const { widget } = rig({ 'Shield.WhenSheathed': pose });
+    settle(widget, { sheathed: true });
+    assert.equal(!!widget.drawRect(), shows, `sheathed, pose ${pose}`);
+  }
+  // attacking and casting have their own, and they are read from their
+  // own settings rather than the sheathed one
+  const a = rig({ 'Shield.WhenAttacking': SHIELD_POSE.Hide, 'Shield.WhenSheathed': SHIELD_POSE.Ready });
+  settle(a.widget, { attacking: true });
+  assert.equal(a.widget.drawRect(), null, 'attacking reads WhenAttacking');
+  const c = rig({ 'Shield.WhenCasting': SHIELD_POSE.Hide, 'Shield.WhenSheathed': SHIELD_POSE.Ready });
+  settle(c.widget, { hasReadySpell: true });
+  assert.equal(c.widget.drawRect(), null, 'casting reads WhenCasting');
+
+  // the four refusals that come before any of that
+  for (const o of [{ equipCountdownLeftHand: 1 }, { isClimbing: true }, { isPaused: true }, { loadInProgress: true }]) {
+    const { widget } = rig();
+    settle(widget);                       // settle FIRST, then raise the gate
+    widget.lateUpdate(frame(o));
+    assert.equal(widget.drawRect(), null, `gated by ${Object.keys(o)[0]}`);
+  }
+  // no shield in the hand draws nothing, and forgets the template
+  const { widget } = rig();
+  settle(widget);
+  widget.lateUpdate(frame({ item: null }));
+  assert.equal(widget.drawRect(), null);
+  assert.equal(widget._w.lastTemplate, -1, 'the next shield re-reads the sheet');
+  // third person draws nothing (Eye of the Beholder's onToggleOffset)
+  const eye = rig();
+  settle(eye.widget);
+  eye.widget.setThirdPerson(true);
+  assert.equal(eye.widget.drawRect(), null);
+});
+
+test('SW1: with the Animation module a leaving sprite still draws, because `animating` holds it on screen', () => {
+  // the raise plays on an AWAY pose: Hide and Ready call SetGuard, which
+  // at frame 0 has nothing to animate, and the sprite simply stops being
+  // drawn. Off-screen is the pose that plays out and then leaves.
+  const { widget } = rig({ 'Modules.Animation': true, 'Shield.WhenSheathed': SHIELD_POSE.OffScreen });
+  settle(widget);
+  assert.ok(widget.drawRect(), 'the guard draws');
+  widget.lateUpdate(frame({ sheathed: true }));
+  assert.ok(widget.animating, 'sheathing starts the raise');
+  assert.ok(widget.drawRect(), 'and it is still on screen while it plays');
+  // once the animation is done the Hide pose hides it
+  for (let i = 0; i < 40; i++) widget.lateUpdate(frame({ sheathed: true, dt: 0.1 }));
+  assert.equal(widget.animating, false);
+  assert.equal(widget.drawRect(), null);
+});
+
+test('SW1: Animation.Direction - Forward Only and Reverse Only snap instead of playing', () => {
+  // Forward Only (1): the return to guard SNAPS to frame 0
+  const fwd = rig({ 'Modules.Animation': true, 'Animation.Direction': ANIM_DIRECTION.ForwardOnly, 'Shield.WhenSheathed': SHIELD_POSE.OffScreen });
+  settle(fwd.widget, { sheathed: true }, 400);
+  assert.equal(fwd.widget.frame, 4, 'sheathing played out to frame 4');
+  fwd.widget.lateUpdate(frame());
+  assert.equal(fwd.widget.frame, 0, 'and the return snapped');
+  assert.equal(fwd.widget.animating, false, 'with no coroutine');
+
+  // Reverse Only (2): the sheathe SNAPS to frame 4 and the return plays
+  const rev = rig({ 'Modules.Animation': true, 'Animation.Direction': ANIM_DIRECTION.ReverseOnly, 'Shield.WhenSheathed': SHIELD_POSE.OffScreen });
+  settle(rev.widget);
+  rev.widget.lateUpdate(frame({ sheathed: true }));
+  assert.equal(rev.widget.frame, 4);
+  assert.equal(rev.widget.animating, false);
+});
+
+test('SW1: the recoil conditions, and the ring is one of the nine parry clips', () => {
+  const hit = { targetIsPlayer: true, bodyPart: 2, damage: 7, item: SHIELD };   // Buckler/Round/Kite cover LeftArm(2)
+  const miss = { ...hit, damage: 0 };
+
+  // AnyAttack (5): hit or miss, it rings
+  for (const ev of [hit, miss]) {
+    const { widget, sounds } = rig({ 'Modules.Recoil': true, 'Recoil.Condition': SHIELD_RECOIL_CONDITION.AnyAttack });
+    settle(widget);
+    widget.onAttackDamageCalculated(ev);
+    assert.equal(sounds.length, 1, 'AnyAttack rings either way');
+    assert.ok(sounds[0].clip >= PARRY_CLIP_FIRST && sounds[0].clip < PARRY_CLIP_FIRST + PARRY_CLIP_COUNT);
+    assert.equal(sounds[0].pitch, 1.1);
+    assert.equal(sounds[0].vol, 0, 'the IL really does pass volume 0');
+  }
+  // AnyHit (3) wants damage, AnyMiss (4) wants none
+  const anyHit = rig({ 'Modules.Recoil': true, 'Recoil.Condition': SHIELD_RECOIL_CONDITION.AnyHit });
+  settle(anyHit.widget);
+  anyHit.widget.onAttackDamageCalculated(miss);
+  assert.equal(anyHit.sounds.length, 0);
+  anyHit.widget.onAttackDamageCalculated(hit);
+  assert.equal(anyHit.sounds.length, 1);
+
+  const anyMiss = rig({ 'Modules.Recoil': true, 'Recoil.Condition': SHIELD_RECOIL_CONDITION.AnyMiss });
+  settle(anyMiss.widget);
+  anyMiss.widget.onAttackDamageCalculated(hit);
+  assert.equal(anyMiss.sounds.length, 0);
+  anyMiss.widget.onAttackDamageCalculated(miss);
+  assert.equal(anyMiss.sounds.length, 1);
+
+  // the first three ask whether the shield COVERS the part that was struck
+  const onShield = rig({ 'Modules.Recoil': true, 'Recoil.Condition': SHIELD_RECOIL_CONDITION.AttackOnShield });
+  settle(onShield.widget);
+  onShield.widget.onAttackDamageCalculated({ ...hit, bodyPart: 0 });   // Head - a Kite does not cover it
+  assert.equal(onShield.sounds.length, 0, 'a blow to a part the shield does not cover does not ring');
+  onShield.widget.onAttackDamageCalculated(hit);
+  assert.equal(onShield.sounds.length, 1);
+  // ...and the last three do not
+  assert.ok(isPartShielded(SHIELD, 2));
+  assert.ok(!isPartShielded(SHIELD, 0));
+
+  // the module off rings nothing at all
+  const off = rig();
+  settle(off.widget);
+  off.widget.onAttackDamageCalculated(hit);
+  assert.equal(off.sounds.length, 0);
+});
+
+test('SW1: a DOWNWARD crossing of either threshold repoints the sheet mid-fight', () => {
+  const { widget } = rig({ 'Modules.Recoil': true, 'Recoil.Condition': SHIELD_RECOIL_CONDITION.AnyAttack });
+  settle(widget);
+  const pristine = widget.indexCurrent;
+  // a blow that leaves it above the upper threshold changes nothing
+  widget.onAttackDamageCalculated({ targetIsPlayer: true, bodyPart: 2, damage: 1, item: { ...SHIELD, conditionPercentage: 80 } });
+  assert.equal(widget.indexCurrent, pristine);
+  // one that takes it under the upper threshold moves to the worn art
+  widget.onAttackDamageCalculated({ targetIsPlayer: true, bodyPart: 2, damage: 1, item: { ...SHIELD, conditionPercentage: 70 } });
+  assert.equal(widget.indexCurrent, pristine + 50, 'the worn tier');
+  // and under the lower, the battered
+  widget.onAttackDamageCalculated({ targetIsPlayer: true, bodyPart: 2, damage: 1, item: { ...SHIELD, conditionPercentage: 20 } });
+  assert.equal(widget.indexCurrent, pristine + 100, 'the battered tier');
+});
+
+test('SW1 KEPT BUG FOR BUG: SetBlock’s left-handed animated branch writes CURRENT, not TARGET', () => {
+  // The other three branches ease; this one snaps, and BlockCoroutine -
+  // which waits for current to reach target - therefore falls straight
+  // through its wait. Pinned so a tidy-up cannot quietly "fix" the mod.
+  const src = readFileSync('src/combat/shieldWidget.js', 'utf8');
+  assert.match(src, /if \(w\.s\.animated && w\.flipped\) w\.shieldPositionCurrent = rect;/,
+    'the slip is still written, and still named as the author’s');
+  assert.match(src, /KEPT BUG FOR BUG/, 'and still labelled');
+
+  const left = rig({ 'Modules.Animation': true, 'Modules.Recoil': true, 'Recoil.Offset': true, 'Recoil.Condition': SHIELD_RECOIL_CONDITION.AnyAttack },
+    { handedness: () => true });
+  settle(left.widget);
+  const before = { ...left.widget.rect };
+  left.widget.onAttackDamageCalculated({ targetIsPlayer: true, bodyPart: 2, damage: 5, item: SHIELD });
+  assert.notDeepEqual({ ...left.widget.rect }, before, 'the left-handed animated block SNAPPED current');
+});
+
+test('SW1: the shield opens in its stance rather than sliding in from the origin (Awake’s tail)', () => {
+  const { widget } = rig();
+  widget.lateUpdate(frame());
+  assert.deepEqual(widget.rect, widget.target, 'the first frame that knows a shield snaps current to target');
+  assert.ok(widget.rect.width > 0);
+});
+
+test('SW1: the FPS-models seam is recorded and not carried', () => {
+  // The animation-group helper is kept because the day that mod lands it
+  // is the row it needs; nothing calls it now.
+  assert.equal(shieldAnimationGroup({ templateIndex: SHIELD_TEMPLATES.Buckler }), 'ShieldHand_');
+  for (const t of [SHIELD_TEMPLATES.Round, SHIELD_TEMPLATES.Kite, SHIELD_TEMPLATES.Tower]) {
+    assert.equal(shieldAnimationGroup({ templateIndex: t }), 'ShieldArm_');
+  }
+  assert.equal(shieldAnimationGroup(null), 'Unarmed_');
+  assert.equal(shieldAnimationGroup({ templateIndex: 999 }), 'Unarmed_');
+  const src = readFileSync('src/combat/shieldWidget.js', 'utf8');
+  assert.match(src, /41284af0-81c7-4630-bbc5-a976efa162a0/, 'the GUID is recorded in the source');
+  const live = src.split('\n').filter((l) => /fpsModelsAnimator/.test(l) && !/^\s*(\/\/|\*|\/\*)/.test(l));
+  assert.deepEqual(live, [], 'the animator is named in a comment and nowhere else');
+});
+
+// ---- the sprite door -------------------------------------------------
+
+import {
+  setShieldWidgetSources, clearShieldWidgetSources, shieldWidgetSourcesCount,
+  shieldTextureFileName, shieldWidgetSize, shieldWidgetTexturesAttached,
+  SHIELD_WIDGET_MOD, SHIELD_ARCHIVES, DFMOD_KEY_PREFIX,
+} from '../src/combat/shieldWidgetAssets.js';
+
+test('SW1: the sprite door takes the mod’s own bundle and its own PNG names, and nothing else', async () => {
+  clearShieldWidgetSources();
+  assert.equal(shieldWidgetSourcesCount(), 0);
+  assert.equal(await shieldWidgetTexturesAttached(), false, 'nothing attached, nothing claimed');
+
+  const n = setShieldWidgetSources([
+    `${DFMOD_KEY_PREFIX}shield widget.dfmod`,      // the mod's bundle
+    `${DFMOD_KEY_PREFIX}weapon widget.dfmod`,      // the sibling's - not this door's
+    `${DFMOD_KEY_PREFIX}seasons of the iliac bay.dfmod`,
+    'textures/112362_24-1.png',                     // a loose sprite of this mod's
+    'textures/112364_0-0.png',                      // an archive outside the four
+    'textures/WEAPON04.CIF_0-0_Elven.png',          // the sibling's loose art
+  ], async () => new Uint8Array(0));
+  assert.equal(n, 2, 'the bundle and the one loose sprite');
+  clearShieldWidgetSources();
+});
+
+test('SW1: a flat index spells TextureReplacement’s own name', () => {
+  assert.equal(shieldTextureFileName(0), '112360_0-0');
+  assert.equal(shieldTextureFileName(4), '112360_0-4', 'five frames to a record');
+  assert.equal(shieldTextureFileName(5), '112360_1-0');
+  assert.equal(shieldTextureFileName(149), '112360_29-4', 'thirty records to an archive');
+  assert.equal(shieldTextureFileName(150), '112361_0-0');
+  assert.equal(shieldTextureFileName(599), '112363_29-4');
+  assert.deepEqual([...SHIELD_ARCHIVES], [112360, 112361, 112362, 112363]);
+  assert.equal(SHIELD_WIDGET_MOD.guid, 'e59d8114-e9a2-4e8e-84e8-4666475dbb9f');
+  assert.equal(SHIELD_WIDGET_MOD.version, '1.6');
+  // nothing is known until a bundle is open
+  assert.equal(shieldWidgetSize(0), null);
+});
+
+test('SW1: the widget measures from the door, and draws nothing when the door is empty', () => {
+  // no bundle attached is the mod without its sprites, and there is no
+  // classic shield art to fall back to
+  const bare = createShieldWidget({
+    settings: settingsOf(), textures: { size: () => null }, audio: null, rolls: () => 0.5, handedness: () => false,
+  });
+  for (let i = 0; i < 20; i++) bare.lateUpdate(frame());
+  assert.equal(bare.drawRect(), null, 'no sprite, no draw');
+});
