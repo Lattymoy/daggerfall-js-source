@@ -236,3 +236,92 @@ weapon, and by then there was none.
 It is read with an optional chain now - the same shape `syncWorn` itself
 uses for the right hand - which asks without writing, and a pin holds
 both halves.
+
+## SW1b - THE DEEP AUDIT (three shipping bugs, all past a green gate)
+
+`npm run check` was green on the wiring commit and the mod was, in three
+separate ways, dead or wrong on a real profile. Each is recorded here
+with the pin that now holds it and the mutation that proves the pin.
+
+**1. THE FRAME NEVER ARRIVED.** `weaponRig`'s per-frame block -
+the one that assembles the camera, the motor's local velocity and the
+look delta, shared by all three first-person mods - opened on
+`if (widgetOn() || _torchesOn)`. The Shield Widget was a third consumer
+inside a gate written for the other two, so a player who enabled only
+Shield Widget never got a single `shield.lateUpdate`: `ctx` stayed null,
+`drawRect()` answered null, and nothing ever appeared. The gate now
+reads `if (widgetOn() || _torchesOn || shieldOn())`; every consumer
+inside was already on its own switch, so this costs the assembly and
+nothing else. Pin: *SW1-FEED*, with both siblings switched OFF.
+
+**2. THE DRAW SEAM RETURNED FIRST.** `shown()` is the WEAPON's
+predicate - false for a readied spell, a cast animation, an equip
+countdown and the sheathe - and the early return that reads it sat ABOVE
+the shield's draw step. But `Shield.WhenSheathed` (Off-screen by
+default; Corner and Ready are what people pick) and `Shield.WhenCasting`
+describe precisely the frames in which `shown()` is false. So the two
+headline settings in the mod were dead and `WhenAttacking` was the only
+one that did anything, because `shown()` is true mid-swing.
+
+TORCH-VIS said this for the light and MAP-FIELD said it for the map, and
+the shield is the third to ask the same question. Fixed the same way:
+the shield's own verdict, `drawRect()` - the DLL's gate ladder itself,
+which already answers null for the countdown, the climb, the pause, the
+load, third person and every Hide/Off-screen pose - is computed before
+the gate and relaxes it. AUDIT-FIELD F1's warning applies: the verdict
+carries the draw step's own two conditions (`!eotbHidesWeapon()`,
+`!fpArm.active()`), or a sheathed frame that used to draw nothing would
+have started drawing the Morrowind arm. And `if (!shown()) return;`
+below the torch's own return stops the shield-only frame before the
+weapon's clone and sprite - a no-op for every path that predates it.
+Pins: *SW1-GATE* x4 (Ready draws sheathed, Hide still hides, the switch
+off is still off, the seam still stops).
+
+**3. THE WHOLE GEOMETRY RAN ON 320x200.** The rig fed
+`screenRect: { width: c?.canvas?.width ?? 320, ... }`. `c` IS the canvas
+element - `drawFpsWeapon` two lines away reads `canvas.width` off the
+same object - so `c.canvas` was undefined and the fallback won every
+frame in every host. `weaponScaleX` came out 1, so the sprite drew at
+its native ~134px whatever the window was, and `GetShieldRect`'s clamp
+(`y` at most `sr.height`) pinned it around y=200 - up near the top-left
+corner of an 800-tall canvas instead of down in the hand. DFU reads
+`DaggerfallUI.CustomScreenRect ?? new Rect(0, 0, Screen.width,
+Screen.height)`; the drawing buffer is this port's Screen, so it is
+`c?.width`. Pin: *SW1-RECT*, which asserts the rect hangs in the lower
+half and scales with the window.
+
+**4. THE LOOK NEVER ARRIVED.** `takeFrameLook()` answers an ARRAY,
+`[yaw, pitch]` - the weapon's clone one block below reads `look[0]` and
+`look[1]` off the very same value. The shield's feed asked it for `.x`
+and `.y`, which on an array is `undefined`, so the Inertia module's lean
+carried the movement term and a constant zero for the look. It is a
+quieter bug than the other three only because `Modules.Inertia` is off by
+default; with it on the shield leaned when you walked and never when you
+turned, which is half the module. Pin: *SW1-LOOK*, which also reads the
+clone's positional access so it cannot pass on a name nobody uses.
+
+**What the audit CLEARED.** `uploadTexture('img', 'sw:<index>', img)`
+matches its three first-person peers exactly, mips and all.
+`curAnimRect` is already in the renderer's `{u0,v0,u1,v1}` shape and the
+left-handed mirror is the u0/u1 swap, which is how `drawFpsWeapon` flips
+too. The sprites go through `toScreenOrder` and not `toColor32`, which
+is HT3's law for anything drawn on a screen quad. `w.s = settings()`
+per frame is the cadence `weaponWidget` already runs at. `attacking` is
+fed from `playerWeapon.machine.state !== 'Idle'`, the same answer the
+clone takes for `IsAttacking()`. `handedness()` reads the real
+`Controls/Handedness == 1`, unoverridden by the rig. SetAttack's pose
+ladder, GetShieldRect's clamps, the inertia/recoil ordering and the
+recoil block's early `return` (IL_08b1's own `ret`) were re-read against
+the disassembly opcode by opcode and match.
+
+**One approximation, named.** `equipCountdownLeftHand` is fed from
+`entity.equipCountdown`. DFU keeps a countdown per hand; this port keeps
+one clock that sums them (`systems/equip.js` says so, and says why).
+The shield inherits that approximation rather than inventing a second
+clock: it hides for a moment longer than DFU would when the RIGHT hand
+is what is being equipped, and never for less.
+
+**The `_shieldTex` cache** is bounded at the 600 vendored sprites and
+keyed by index, the same shape the clone's own cache has. A save that
+has worn all four shield types in every material with the Animation
+module on would hold all 600 (~42 MB); a normal one holds three.

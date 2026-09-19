@@ -350,6 +350,17 @@ const BUNDLE_ART = new Map([
   ['vendor/travel-options/Textures/',
     { manifest: 'vendor/travel-options/travel-options.dfmod.json',
       why: "THIRD-PARTY - Travel Options 1.11 (Hazelnut, MIT); the mod's own UI chrome - the 320x27 control strip and the two ports-filter buttons - re-encoded from the bundle's Texture2D objects by tools/travelOptionsAssets.mjs (see the vendor README: these are the PIXELS, not the author's file bytes)" }],
+  // SW1b (2026-09-19, the deep audit): the 600 shield sprites landed and
+  // this row did not, so the wider raster rule reddened on 600 files the
+  // moment they were tracked. The art itself is fine and is WHY they are
+  // vendored at all rather than read from the player's own .dfmod the way
+  // Weapon Widget's are: classic Daggerfall draws NO first-person shield,
+  // so there is no ARENA2 original for these to be a render of - they are
+  // the modder's own pixel art, not repainted game data, and
+  // Port-Doctrine's rule is about renders of game data.
+  ['vendor/shield-widget/Textures/',
+    { manifest: 'vendor/shield-widget/shield-widget.dfmod.json',
+      why: "THIRD-PARTY - Shield Widget 1.6 (RedRoryOTheGlen, animation art by WilhelmBlack); the mod's own first-person shield sprites - four shield shapes x twelve materials x three condition tiers x five animation frames - re-encoded from the bundle's Texture2D objects as indexed PNG (lossless for every drawn pixel; see the vendor README)" }],
 ]);
 /** The basenames each bundle manifest names, lowercased. Memoised: the
  *  membership test runs once per tracked raster and the manifest is

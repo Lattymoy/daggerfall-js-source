@@ -173,8 +173,7 @@ export const MOD_SETTINGS = Object.freeze({
       Enabled: Object.freeze({
         default: true,
         description: 'A shield in the first-person view, which classic Daggerfall never drew: the one in your hand, in its own '
-          + 'metal, battering as it wears and moving aside when you sheathe, swing or cast. Needs the mod\u2019s .dfmod attached '
-          + 'through the textures pick for its sprites.',
+          + 'metal, battering as it wears and moving aside when you sheathe, swing or cast.',
       }),
       'Shield.Scale': Object.freeze({ default: 1.0, min: 0.8, max: 1.2, float: true, step: 0.1, description: 'Size of the sprite' }),
       'Shield.OffsetHorizontal': Object.freeze({ default: 0.5, min: -1.0, max: 1.0, float: true, step: 0.1, description: 'Offsets the sprite relative to the left edge of the screen' }),

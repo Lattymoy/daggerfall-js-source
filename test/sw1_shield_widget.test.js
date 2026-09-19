@@ -411,3 +411,145 @@ test('SW1: the attack-resolution seam fires on EVERY resolution, hit or miss, wi
   // and the struck part is carried out of the block the roll is made in
   assert.match(f, /struckPart = struck;/);
 });
+
+// ---- the two gates the rig kept shut (audit, 2026-09-19) -------------
+//
+// Both were found by AUDIT after `npm run check` was green, and both
+// killed the mod outright on a plain profile. They are pinned here
+// BEHAVIOURALLY - a real rig, the real mod settings, the real draw seam -
+// because a source-text pin would have matched the broken code too.
+
+import { createWeaponRig } from '../src/combat/weaponRig.js';
+import { EQUIP_SLOTS } from '../src/systems/equip.js';
+import { setModSetting, _resetModSettings } from '../src/systems/modSettings.js';
+
+/** A rig with a kite shield in the left hand and the weapon SHEATHED,
+ *  watched at the shield's own draw call. `drawRect` is left REAL, so
+ *  the mod's gate ladder is what decides; only the paint is spied. */
+function shieldRig({ sheathed = true, whenSheathed = 3, enabled = true, weaponWidget = false, torches = false } = {}) {
+  _resetModSettings();
+  setModSetting('shield-widget', 'Enabled', enabled);
+  setModSetting('shield-widget', 'Shield.WhenSheathed', whenSheathed);
+  setModSetting('weapon-widget', 'Enabled', weaponWidget);
+  setModSetting('handheld-torches', 'Enabled', torches);
+  const entity = {
+    items: [], stats: { speed: 50 },
+    equip: { slots: { [EQUIP_SLOTS.LeftHand]: { templateIndex: SHIELD_TEMPLATES.Kite, nativeMaterialValue: 513, currentCondition: 100, maxCondition: 100 } } },
+  };
+  const r = createWeaponRig({
+    renderer: { uploadTexture: () => null, drawScreenQuad: () => {} },
+    canvas: { width: 1280, height: 800, clientWidth: 1280, clientHeight: 800 },   // the ELEMENT, as every host passes it
+    fetchBytes: () => { throw new Error('no art in tests'); }, palette: null,
+    audio: { playOneShot() {} }, entity,
+    camera: () => ({ pos: [0, 0, 0], yaw: 0, pitch: 0, move: { baseSpeed: 3, grounded: true, standing: true } }),
+  });
+  if (!sheathed) r.toggleSheath();
+  const seen = [];
+  const realDraw = r.shield.draw;
+  r.shield.draw = (paint) => { const v = realDraw(paint); if (v) seen.push('shield'); return v; };
+  for (let i = 0; i < 240; i++) r.frame(1 / 60);   // settle the ease into its sheathed stance
+  r.draw();
+  return { rig: r, seen, entity };
+}
+
+test('SW1-FEED: the shield gets a frame on its OWN switch, not on the weapon clone’s or the torch’s', () => {
+  // The frame block (`if (widgetOn() || _torchesOn || shieldOn())`)
+  // assembles the camera, the motor and the look that all three mods
+  // share. It used to be opened by the other two alone, so a profile
+  // that enabled ONLY Shield Widget never called `shield.lateUpdate` -
+  // `ctx` stayed null and `drawRect()` answered null for ever.
+  const { rig: r } = shieldRig({ weaponWidget: false, torches: false });
+  assert.ok(r.shield.settings, 'the widget exists');
+  assert.notEqual(r.shield.position[0], undefined);
+  // the proof the frame arrived: a settled sheathed widget has left the
+  // origin for its stance, which only LateUpdate can do
+  assert.ok(r.shield.drawRect(), 'the mod would draw, with no other mod enabled');
+});
+
+test('SW1-GATE: a SHEATHED player sees the shield in Ready, and still sees no weapon', () => {
+  // `Shield.WhenSheathed` and `Shield.WhenCasting` describe frames in
+  // which the WEAPON's `shown()` is false. Gating the shield behind that
+  // early return left `WhenAttacking` the only live setting in the mod.
+  const { rig: r, seen } = shieldRig({ sheathed: true, whenSheathed: 3 });
+  assert.equal(r.playerWeapon.sheathed, true, 'sheathed, so `shown()` is false');
+  assert.deepEqual(seen, ['shield'], 'the shield drew anyway');
+});
+
+test('SW1-GATE: and Hide still hides - the relaxation is the mod’s own verdict, not a hole', () => {
+  const { seen } = shieldRig({ sheathed: true, whenSheathed: 0 });   // Hide
+  assert.deepEqual(seen, [], 'nothing drawn, and the seam returned as it always did');
+});
+
+test('SW1-GATE: the switch off is still off', () => {
+  const { seen } = shieldRig({ sheathed: true, whenSheathed: 3, enabled: false });
+  assert.deepEqual(seen, [], 'no frame, no draw');
+});
+
+test('SW1-GATE: the shield alone is not a weapon - the seam stops before the clone and the sprite', () => {
+  // `if (!shown()) return;` after the torch's own return. A no-op for
+  // every path that predates it, and the whole point for the new one.
+  const rigSrc = readFileSync('src/combat/weaponRig.js', 'utf8');
+  const seam = rigSrc.slice(rigSrc.indexOf('if (shieldRect) shield.draw('));
+  const upTo = seam.slice(0, seam.indexOf('if (widgetOn() && c && widget.draw('));
+  assert.match(upTo, /if \(torchOnly\) return;/, 'the torch still stops first');
+  assert.match(upTo, /if \(!shown\(\)\) return;/, 'and the shield-only frame stops here');
+});
+
+test('SW1-RECT: the screen rect is the CANVAS\u2019s, not the 320x200 fallback', () => {
+  // `c` is the canvas ELEMENT - `drawFpsWeapon` beside this reads
+  // `canvas.width` off the same object - so `c.canvas.width` was
+  // undefined and the mod ran its whole geometry on 320x200: the sprite
+  // drew at native size whatever the window was, and the rect's own
+  // clamp (`y <= sr.height`) pinned it near the TOP of a tall canvas.
+  const { rig: r } = shieldRig({ sheathed: true, whenSheathed: 3 });
+  const rect = r.shield.drawRect();
+  assert.ok(rect, 'it draws');
+  assert.ok(rect.y > 400, `the shield hangs in the LOWER half of an 800px canvas, got y=${rect.y}`);
+  assert.ok(rect.width > 200, `and it is scaled up with the window (1280/320 = 4x a ~134px sprite), got w=${rect.width}`);
+});
+
+test('SW1-GATE: the shield’s verdict carries the draw step’s OWN two conditions, or the arm draws in a frame that drew nothing', () => {
+  // AUDIT-FIELD F1's shape, and the one law here no behavioural pin can
+  // hold: `fpArm` is a module singleton with a real skeleton behind it and
+  // cannot be made active headlessly, so a `shieldRect` computed WITHOUT
+  // `!fpArm.active()` survives every test in the repo - while in a browser
+  // it opens the early return on a sheathed Morrowind frame and
+  // `fpArm.draw(c); return;` takes it, above the shield's own step. The
+  // mutant is recorded (tools/mutants/sw1.json, SW1b-2b) and this is what
+  // kills it, read out of the source so it cannot go vacuous.
+  const rig = readFileSync('src/combat/weaponRig.js', 'utf8');
+  const at = rig.indexOf('const shieldRect =');
+  assert.ok(at > 0, 'the verdict is computed before the gate');
+  const decl = rig.slice(at, rig.indexOf(';', at) + 1);
+  for (const leg of ['shieldOn()', '&& c', '!eotbHidesWeapon()', '!fpArm.active()']) {
+    assert.ok(decl.includes(leg), `the verdict must carry ${leg} - the draw step below re-imposes it`);
+  }
+  // ...and it is not a literal that satisfies a regex: each of those two
+  // really does return above the shield's step in the seam below.
+  const seam = rig.slice(rig.indexOf('if (paralyzed || (!shown()'));
+  const eotbAt = seam.indexOf('if (eotbHidesWeapon()) return;');
+  const armAt = seam.indexOf('if (fpArm.active()) { fpArm.draw(c); return; }');
+  const shieldAt = seam.indexOf('if (shieldRect) shield.draw(');
+  assert.ok(eotbAt > 0 && armAt > eotbAt && shieldAt > armAt,
+    'the EotB body returns, then the arm returns, and only then does the shield paint');
+});
+
+test('SW1-LOOK: the frame’s look reaches the shield as the ARRAY it is, or Inertia only ever sees the feet', () => {
+  // `takeFrameLook()` answers `[yaw, pitch]` - the clone one block below
+  // reads `look[0]` and `look[1]` off the very same value. The shield's
+  // feed asked it for `.x`/`.y`, which on an array is undefined, so the
+  // Inertia module's lean had the movement term and a constant zero for
+  // the look. `Modules.Inertia` is off by default, which is the only
+  // reason no pin and no player said so.
+  const rig = readFileSync('src/combat/weaponRig.js', 'utf8');
+  const feed = rig.slice(rig.indexOf('if (shieldOn()) shield.lateUpdate({'));
+  const body = feed.slice(0, feed.indexOf('\n        });'));
+  assert.match(body, /look: \{ x: look\?\.\[0\] \?\? 0, y: look\?\.\[1\] \?\? 0,/, 'indexed, as the clone reads it');
+  assert.doesNotMatch(body, /look\?\.x/, 'and never by a name the value does not carry');
+  // not vacuous: the clone really does read it positionally
+  assert.match(readFileSync('src/combat/weaponWidget.js', 'utf8'), /\(look\[0\] \+ mx\)/);
+  // and the widget really does spend both terms
+  const sw = readFileSync('src/combat/shieldWidget.js', 'utf8');
+  assert.match(sw, /\(\(Number\(look\.x\) \|\| 0\) \+ mx\) \* -0\.5 \* w\.s\.inertiaScale,/);
+  assert.match(sw, /\(\(Number\(look\.y\) \|\| 0\) \+ my\) \* 0\.5 \* w\.s\.inertiaScale,/);
+});
