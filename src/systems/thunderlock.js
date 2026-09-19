@@ -203,8 +203,14 @@ export function spendPellet(items) {
  * MAC'S EYE IS THE GATE ON THIS ONE. It is a placement, not a law -
  * there is no DFU number to be right or wrong against - so it is one
  * constant, named, for him to move.
+ *
+ * FIELD-GUN9: and he moved it. The first guess hung the grip three
+ * pixels below the hand ("close, really close, but not quite"), so
+ * the sprite rises by that much. `y` is the only number that changed
+ * and the panel origin stays written out beside it, because
+ * `8 + 93` says "93 down the panel" where `101` says nothing.
  */
-export const PAPERDOLL_OFFSET = Object.freeze({ x: 200 + 8, y: 8 + 96 });
+export const PAPERDOLL_OFFSET = Object.freeze({ x: 200 + 8, y: 8 + 93 });
 
 export const ICON_FILES = Object.freeze([
   { archive: ART.weaponArchive, record: 0, frame: 0, file: 'gun-paperdoll.png', offset: PAPERDOLL_OFFSET },

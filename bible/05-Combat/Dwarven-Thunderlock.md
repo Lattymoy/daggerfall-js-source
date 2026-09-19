@@ -268,6 +268,12 @@ edge, which is the other half of drawing nothing. That number is a
 placement, not a law — there is no DFU value to be right against — so
 it is one named constant for Mac to move.
 
+**FIELD-GUN9: and he moved it.** *"Close, really close, but not quite
+on the mark"* — the grip hung three pixels below the hand, so the
+sprite rises by that much. `y` is the only number that changed, and
+the panel origin stays spelled out beside it (`8 + 93`, not `101`),
+because the second form says nothing about where on the doll it is.
+
 ### "This isn't 1 to 1 with the prototype"
 
 The largest of the three, and the one that says most about how this
