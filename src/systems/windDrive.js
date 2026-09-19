@@ -96,5 +96,24 @@ export function floraSwayOf(archive, natureArchive, height) {
  *  the Features home, the player's own online), and `?sway=off` the
  *  kill door. Read once a frame by the two exterior hosts. */
 export function floraSwayOn(search = globalThis.location?.search ?? '') {
-  return isEnhanced() && !!getPref('floraSway') && new URLSearchParams(search).get('sway') !== 'off';
+  return isEnhanced() && !!getPref('floraSway') && !swayDisabled(search);
+}
+
+/** PERF-SUN (2026-09-19): the `?sway=off` door, READ ONCE.
+ *
+ *  `floraSwayOn` is called once a frame by each exterior host, and it was
+ *  minting a URLSearchParams and parsing the query string every time to
+ *  ask a question whose answer cannot change while the page is open. The
+ *  pref beside it stays live - the player can toggle that mid-session -
+ *  and only the URL door is cached, which is `cullDisabled`'s own shape
+ *  in render/frustum.js. Tiny, and it is the kind of thing that is only
+ *  ever tiny one call site at a time. */
+let _swayOff;
+let _swaySearch;   // AUDIT F1: declared ABOVE its reader - a `let` below one is in the temporal dead zone until the module finishes evaluating, and this port has already lost a boot to one end of a module cycle reaching the other too early
+export function swayDisabled(search = globalThis.location?.search ?? '') {
+  if (_swayOff === undefined || search !== _swaySearch) {
+    _swaySearch = search;
+    _swayOff = new URLSearchParams(search).get('sway') === 'off';
+  }
+  return _swayOff;
 }

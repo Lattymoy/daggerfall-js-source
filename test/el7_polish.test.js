@@ -68,8 +68,14 @@ test('EL7: the constants and the shader laws - the glare\'s presence test and it
   // the water surface with the receiver block: the shadow rides the cloud's
   const ws = waterSurfaceFs('float cloudShadowAt(vec3 p) { return 1.0; }', SHADOW_GLSL);
   assert.ok(ws.includes(SHADOW_GLSL) && ws.indexOf('uniform vec3 uCamPos;') < ws.indexOf(SHADOW_GLSL), 'the block after uCamPos, which it reads');
-  assert.match(ws, /float shadow = cloudShadowAt\(vWorldPos\) \* sunShadowAt\(vWorldPos, n\);/);
-  assert.match(waterSurfaceFs('float cloudShadowAt(vec3 p) { return 1.0; }'), /float shadow = cloudShadowAt\(vWorldPos\);/, 'the classic water takes none');
+  // PERF-SUN2 (2026-09-19) put a UNIFORM gate in front of both - the
+  // water reads its shadow only while the sun is up, and `shadow` reaches
+  // the light exactly once through `uSunColor * (uSunScale * diff)`, so
+  // the picture is unchanged. What EL7 pins here is unchanged with it:
+  // that the lane's water takes the sun map and the classic water does
+  // not.
+  assert.match(ws, /float shadow = uSunScale > 0\.0 \? cloudShadowAt\(vWorldPos\) \* sunShadowAt\(vWorldPos, n\) : 0\.0;/);
+  assert.match(waterSurfaceFs('float cloudShadowAt(vec3 p) { return 1.0; }'), /float shadow = uSunScale > 0\.0 \? cloudShadowAt\(vWorldPos\) : 0\.0;/, 'the classic water takes none');
 });
 
 test('EL7: boundsOf with a stride - a rig\'s interleaved vertices', () => {

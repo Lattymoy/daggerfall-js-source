@@ -170,7 +170,13 @@ test('EL1: the five lane shaders declare the 48-light arrays and the lane\'s two
     assert.match(fs, /uniform float uELExposure;/, `${name}: the exposure`);
     assert.match(fs, /uniform float uELScatter;/, `${name}: the in-scatter`);
     assert.match(fs, /elDecode\(/, `${name}: decodes`); assert.match(fs, /elEncode\(col\)/, `${name}: encodes`);
-    assert.match(fs, /mix\(elDecode\(uFogColor\), tm, fogFactorAt\(wp\)\)/, `${name}: the fog colour is blended decoded and re-encoded, so a fogged fragment IS the fog colour`);
+    // PERF-FOG (2026-09-19) moved the DECODE, not the law: the fog colour
+    // is still blended in linear and re-encoded, so a fogged fragment is
+    // still exactly the fog colour - it just arrives decoded, because
+    // three pow() on a uniform, once a fragment, in every lane shader
+    // there is, was the thing being paid for saying it here.
+    assert.match(fs, /mix\(uFogColorLin, tm, fogFactorAt\(wp\)\)/, `${name}: the fog colour is blended in LINEAR and re-encoded, so a fogged fragment IS the fog colour`);
+    assert.match(fs, /uniform vec3 uFogColorLin;/, `${name}: ...and it is the decoded one the host sends`);
     assert.ok(!/\(1\.0 - d \/ uPointLights/.test(fs), `${name}: no classic falloff`);
     assert.match(fs, /uCloudShadowRect/, `${name}: the cloud shadow`);
   }

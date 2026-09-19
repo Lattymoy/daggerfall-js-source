@@ -196,6 +196,7 @@ export function elScatterDensity(mode, density, start, end) {
 export const EL_GLSL = `
 uniform float uELExposure;   // EL1: scene exposure before the tonemap
 uniform float uELScatter;    // EL1: in-scatter gain x the fog's density (0 = no fog, no glow)
+uniform vec3 uFogColorLin;   // PERF-FOG: the fog colour ALREADY DECODED - see elFinish
 ${BAYER_GLSL}
 ${AIR_ADAPT_GLSL}
 vec3 elDecode(vec3 c) {
@@ -313,7 +314,17 @@ vec3 elInScatter(vec3 wp) {
 vec3 elFinish(vec3 lit, vec3 wp) {
   float ex = uELExposure * elAdapt();   // EL4: the eye's own multiplier rides the scene's exposure
   vec3 tm = elTonemap(lit * ex);
-  vec3 col = mix(elDecode(uFogColor), tm, fogFactorAt(wp));
+  // PERF-FOG (2026-09-19): THE FOG COLOUR ARRIVES DECODED. This line read
+  // elDecode(uFogColor) - three pow() calls, per fragment, on a UNIFORM.
+  // The value is the same for every pixel of the frame and it was being
+  // recomputed for every one of them, in every lane shader there is: the
+  // terrain, the meshes, the rigs and every flat in the world. GLSL has
+  // nowhere to hoist a uniform-only expression to, so the only place it
+  // can be done once is the host. The lane already carries that decoder -
+  // elDecode3, the same piecewise sRGB curve as elDecode above, which the
+  // renderer reaches through the lane it was handed - so this needs no
+  // second copy of the law, only a place to keep the answer.
+  vec3 col = mix(uFogColorLin, tm, fogFactorAt(wp));
   col += elTonemap(elInScatter(wp) * ex);
   return elEncode(col) + (bayer4(gl_FragCoord.xy) - ${BAYER_MEAN}) / 255.0;   // EL6: dithered at the byte, zero-mean - a lantern's falloff on a dark floor is bands without it
 }
@@ -377,7 +388,20 @@ void main() {
   else if (vWorldPos.y > uClipY) discard;
   vec4 tex = texture(uTex, vUV);
   vec3 n = normalize(vNormal);
-  float diff = max(dot(n, uLightDir), 0.0) * cloudShadowAt(vWorldPos) * sunShadowAt(vWorldPos, n);   // EL2: the sun map
+  // PERF-SUN2 (2026-09-19, Mac: "over 1000 calls and looking up in the sky
+  // restores frame rate"): THE SUN'S SHADOW IS NOT READ WHERE THE SUN
+  // CANNOT REACH. This was one flat product, and GLSL evaluates every
+  // operand of one: a surface whose normal faces AWAY from the sun paid
+  // nine hardware-PCF compares and a cloud-deck sample, and then
+  // multiplied them by the zero sitting in front of them. Every
+  // north-facing wall, every back slope, and the whole world whenever the
+  // sun is low. The uSunScale half is a UNIFORM branch, so it is free
+  // and it takes out dusk and dawn as well, where the map is still drawn
+  // but the sun contributes nothing; diff reaches the light exactly
+  // once, as uSunColor * (uSunScale * diff), so gating it on either is
+  // output-identical rather than an approximation.
+  float ndl = max(dot(n, uLightDir), 0.0);
+  float diff = (uSunScale > 0.0 && ndl > 0.0) ? ndl * cloudShadowAt(vWorldPos) * sunShadowAt(vWorldPos, n) : 0.0;   // EL2: the sun map
   float mdiff = max(dot(n, uMoonDir), 0.0);
   float l3diff = max(dot(n, uLight3Dir), 0.0);
   // emission cancels other light (DaggerfallDefault.shader:83-85), in linear
@@ -451,7 +475,12 @@ void main() {
   vec3 emission = elDecode(texture(uEmissionTex, uv).rgb);
   vec3 albedo = max(elDecode(tex.rgb) - emission, vec3(0.0));
   vec3 base = vBBBase + vec3(0.0, 0.5, 0.0);   // EL2: the shadow is read a half unit up the sprite's base, once for the whole flat
-  vec3 lit = albedo * (uTint + uBBSun * cloudShadowAt(vBBWorld) * sunShadowAt(base, vec3(0.0, 1.0, 0.0)) + elPointFlat(vBBWorld, base) + elIndirectFlat(vBBWorld)) + emission;
+  // PERF-SUN2: a flat has no normal, so there is no n.L to gate on - but
+  // there is still uBBSun, which is the sun's whole share of the tint
+  // and is ZERO at night. A uniform branch, so every sprite in the world
+  // stops paying nine shadow compares for a term that is not there.
+  vec3 sunLit = dot(uBBSun, uBBSun) > 0.0 ? uBBSun * cloudShadowAt(vBBWorld) * sunShadowAt(base, vec3(0.0, 1.0, 0.0)) : vec3(0.0);
+  vec3 lit = albedo * (uTint + sunLit + elPointFlat(vBBWorld, base) + elIndirectFlat(vBBWorld)) + emission;
   if (uConceal.x == 2.0) lit *= ${SHADE_DARK};   // AUDIT-EL F14: a uniform nothing uploaded read 0 - every shade a black cut-out
   if (uConceal.x == 4.0) lit = vec3(0.0);
   float alpha = uSpectral == 1 ? tex.a : 1.0;
@@ -539,7 +568,20 @@ void main() {
   vec2 gy = ROT[t] * dFdy(unwrapped);
   vec3 tex = elDecode(textureGrad(uTileArr, vec3(tuv, float(layer)), gx, gy).rgb);
   vec3 n = normalize(vNormal);
-  float diff = max(dot(n, uLightDir), 0.0) * cloudShadowAt(vWorldPos) * sunShadowAt(vWorldPos, n);   // EL2: the sun map
+  // PERF-SUN2 (2026-09-19, Mac: "over 1000 calls and looking up in the sky
+  // restores frame rate"): THE SUN'S SHADOW IS NOT READ WHERE THE SUN
+  // CANNOT REACH. This was one flat product, and GLSL evaluates every
+  // operand of one: a surface whose normal faces AWAY from the sun paid
+  // nine hardware-PCF compares and a cloud-deck sample, and then
+  // multiplied them by the zero sitting in front of them. Every
+  // north-facing wall, every back slope, and the whole world whenever the
+  // sun is low. The uSunScale half is a UNIFORM branch, so it is free
+  // and it takes out dusk and dawn as well, where the map is still drawn
+  // but the sun contributes nothing; diff reaches the light exactly
+  // once, as uSunColor * (uSunScale * diff), so gating it on either is
+  // output-identical rather than an approximation.
+  float ndl = max(dot(n, uLightDir), 0.0);
+  float diff = (uSunScale > 0.0 && ndl > 0.0) ? ndl * cloudShadowAt(vWorldPos) * sunShadowAt(vWorldPos, n) : 0.0;   // EL2: the sun map
   float mdiff = max(dot(n, uMoonDir), 0.0);
   vec3 lit = tex * (uAmbient + uSunColor * (uSunScale * diff) + uMoonColor * (uMoonScale * mdiff)
     + elPointLit(vWorldPos, n) + elIndirectLit(vWorldPos, n));   // EL3: the ambient under the AO image
@@ -594,7 +636,20 @@ void main() {
   vec4 texel = uUseTex > 0.5 ? texture(uTex, vUV) : vec4(1.0);
   if (uAlphaCut > 0.0 && texel.a < uAlphaCut) discard;
   vec3 albedo = elDecode(vColor * texel.rgb);
-  float diff = max(dot(n, uLightDir), 0.0) * cloudShadowAt(vWorldPos) * sunShadowAt(vWorldPos, n);   // EL2: the sun map
+  // PERF-SUN2 (2026-09-19, Mac: "over 1000 calls and looking up in the sky
+  // restores frame rate"): THE SUN'S SHADOW IS NOT READ WHERE THE SUN
+  // CANNOT REACH. This was one flat product, and GLSL evaluates every
+  // operand of one: a surface whose normal faces AWAY from the sun paid
+  // nine hardware-PCF compares and a cloud-deck sample, and then
+  // multiplied them by the zero sitting in front of them. Every
+  // north-facing wall, every back slope, and the whole world whenever the
+  // sun is low. The uSunScale half is a UNIFORM branch, so it is free
+  // and it takes out dusk and dawn as well, where the map is still drawn
+  // but the sun contributes nothing; diff reaches the light exactly
+  // once, as uSunColor * (uSunScale * diff), so gating it on either is
+  // output-identical rather than an approximation.
+  float ndl = max(dot(n, uLightDir), 0.0);
+  float diff = (uSunScale > 0.0 && ndl > 0.0) ? ndl * cloudShadowAt(vWorldPos) * sunShadowAt(vWorldPos, n) : 0.0;   // EL2: the sun map
   float mdiff = max(dot(n, uMoonDir), 0.0);
   vec3 lit = albedo * (uAmbient + uSunColor * (uSunScale * diff) + uMoonColor * (uMoonScale * mdiff)
     + elPointLit(vWorldPos, n) + elIndirectLit(vWorldPos, n));   // EL3
