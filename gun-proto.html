@@ -94,10 +94,10 @@
   <label><span>auto</span><input id="auto" type="checkbox"><span class="v">hold</span></label>
 
   <h2>Recoil &mdash; the lab's own</h2>
-  <label><span>kick</span><input id="kick" type="range" min="0" max="60" step="1" value="16"><span class="v" id="vkick"></span></label>
-  <label><span>back</span><input id="back" type="range" min="0" max="1.5" step="0.02" value="0.42"><span class="v" id="vback"></span></label>
-  <label><span>stiffness</span><input id="stiff" type="range" min="20" max="400" step="5" value="120"><span class="v" id="vstiff"></span></label>
-  <label><span>damping</span><input id="damp" type="range" min="2" max="60" step="1" value="14"><span class="v" id="vdamp"></span></label>
+  <label><span>kick</span><input id="kick" type="range" min="0" max="60" step="1" value="5"><span class="v" id="vkick"></span></label>
+  <label><span>back</span><input id="back" type="range" min="0" max="1.5" step="0.02" value="0"><span class="v" id="vback"></span></label>
+  <label><span>stiffness</span><input id="stiff" type="range" min="20" max="400" step="5" value="400"><span class="v" id="vstiff"></span></label>
+  <label><span>damping</span><input id="damp" type="range" min="2" max="60" step="1" value="36"><span class="v" id="vdamp"></span></label>
 
   <h2>Screenshake &mdash; the camera</h2>
   <label><span>shake</span><input id="shake" type="range" min="0" max="30" step="0.5" value="30"><span class="v" id="vshake"></span></label>
@@ -167,7 +167,7 @@ const $ = (id) => document.getElementById(id);
 const state = {
   idleSrc: 'sheet', align: ALIGN.Right, offset: 0, size: 49, raise: -8, flip: false,
   fps: 14, cool: 1700, hit: 1, auto: false,
-  kick: 16, back: 0.42, stiff: 120, damp: 14,
+  kick: 5, back: 0, stiff: 400, damp: 36,
   shake: 30, shakeRot: 4, shakeFreq: 60, shakeDecay: 5,
   sfxFire: SFX.fire[0][0], sfxOpen: SFX['reload-open'][0][0], sfxClose: SFX['reload-close'][0][0],
   sfxVol: 0.7, sfxVary: 0.06, sfxOn: true,

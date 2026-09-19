@@ -174,7 +174,10 @@ check('and it comes back up when the weapon is ready', Math.abs(afterY - beforeY
 // ── THE RECOIL ───────────────────────────────────────────────────────
 // The spring the mod cannot lend: a shot throws the sprite UP the
 // screen (a smaller y) and the spring pulls it home.
-await set({ kick: 30, cool: 700, modBob: false, modInertia: false });
+// a kick bigger than the panel's 5, and softer, so the rise is still
+// measurable through a round trip per sample - the DEFAULT recoil is
+// home in under a tenth of a second by design
+await set({ kick: 30, stiff: 120, damp: 14, cool: 700, modBob: false, modInertia: false });
 await page.waitForTimeout(500);
 const restY = (await read()).anchorRect.y;
 await fireClick();
@@ -196,7 +199,7 @@ check('and the spring brings it home', Math.abs(settled - restY) < 4,
 // move" means the shake and nothing else. A long, slow shake, because
 // a round trip per sample is slower than a frame and a 3-tenths
 // rattle would be over before the probe saw its peak.
-await set({ kick: 0, shake: 20, shakeDecay: 0.8, cool: 700, modBob: false, modInertia: false, modOffset: false });
+await set({ kick: 0, stiff: 400, damp: 36, shake: 20, shakeDecay: 0.8, cool: 700, modBob: false, modInertia: false, modOffset: false });
 await page.waitForTimeout(500);
 const calmRect = (await read()).anchorRect;
 await fireClick();
@@ -216,7 +219,7 @@ await page.waitForTimeout(3000);
 const calm = await read();
 check('the shake settles to exactly nothing', calm.cam.x === 0 && calm.cam.y === 0 && calm.cam.rot === 0,
   `trauma ${calm.trauma.toFixed(3)}`);
-await set({ kick: 16, shake: 30, shakeDecay: 5, modBob: true, modInertia: true, modOffset: true });
+await set({ kick: 5, shake: 30, shakeDecay: 5, modBob: true, modInertia: true, modOffset: true });
 
 // The mirror, and the alignment swap under it.
 await set({ flip: true, align: 2 });

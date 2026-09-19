@@ -267,12 +267,21 @@ export function muzzleLight(state, frame) {
  * curve cannot do.
  *
  * Native (320x200) units throughout, so a kick tuned in a small window
- * is the same kick in a big one. `kick` is the impulse's rise, `stiff`
- * how hard the spring pulls home, `damp` how much it fights the
- * overshoot (around 2*sqrt(stiff) is critical - under it the barrel
- * bounces, over it it wallows).
+ * is the same kick in a big one. `kick` is the rise, `stiff` how hard
+ * the spring pulls home, `damp` how much it fights the overshoot
+ * (2*sqrt(stiff) is critical - under it the barrel bounces, over it it
+ * wallows).
+ *
+ * THE DEFAULTS ARE MAC'S, off the panel (2026-09-19): a SMALL, FAST
+ * kick - 5 units, stiffness at the top of its slider and damping just
+ * under critical (36 against 2*sqrt(400) = 40), so the barrel jumps
+ * and is home inside a tenth of a second with a single small
+ * overshoot. And `back` at 0: the weapon rises straight, with no
+ * drift toward the shoulder. It is worth knowing this is a CHOICE and
+ * not the obvious setting - a big slow kick is what a first pass
+ * reaches for, and it fights the 1.7s reload for the frame.
  */
-export function createRecoil({ kick = 16, stiff = 120, damp = 14, back = 0.42 } = {}) {
+export function createRecoil({ kick = 5, stiff = 400, damp = 36, back = 0 } = {}) {
   const r = { x: 0, y: 0, vx: 0, vy: 0, kick, stiff, damp, back };
   /** The shot, as a DISPLACEMENT rather than an impulse: the barrel is
    *  already up by `kick` on the frame the trigger breaks, and the

@@ -282,7 +282,9 @@ test('the muzzle light peaks on the flash frame and falls away over the smoke', 
 });
 
 test('the recoil is a DISPLACEMENT that settles, and a second shot stacks on what is left', () => {
-  const r = createRecoil({ kick: 16 });
+  // the PHYSICS is pinned on its own numbers, not on the panel's - a
+  // tuning change is Mac's to make and must not fail a law
+  const r = createRecoil({ kick: 16, stiff: 120, damp: 14, back: 0.42 });
   assert.deepEqual(r.step(1 / 60), { x: 0, y: -0 }, 'nothing until the trigger breaks');
   r.punch();
   // the rise is there on the shot's own frame - an impulse would put
@@ -300,6 +302,17 @@ test('the recoil is a DISPLACEMENT that settles, and a second shot stacks on wha
   assert.ok(r.y > mid + 15, 'a second shot into the recovery stacks on what is left - the reason this is a spring');
   for (let i = 0; i < 400; i++) r.step(1 / 60);
   assert.ok(Math.abs(r.y) < 0.01 && Math.abs(r.x) < 0.01, 'and it comes fully to rest');
+  // Mac's own numbers (2026-09-19), which are the module's defaults:
+  // a small fast kick that rises STRAIGHT - `back` 0 means the weapon
+  // does not drift toward the shoulder at all
+  const tuned = createRecoil();
+  assert.deepEqual([tuned.kick, tuned.back, tuned.stiff, tuned.damp], [5, 0, 400, 36]);
+  tuned.punch();
+  const up = tuned.step(1 / 60);
+  assert.equal(up.x, 0, 'straight up, no lateral');
+  assert.ok(up.y < 0, 'and up the screen');
+  for (let i = 0; i < 6; i++) tuned.step(1 / 60);
+  assert.ok(Math.abs(tuned.y) < 5 * 0.35, 'stiff 400 against damp 36 is home inside a tenth of a second');
   // a big dt must not explode the spring (the sub-step)
   const r2 = createRecoil({ kick: 16, stiff: 400 });
   r2.punch();
