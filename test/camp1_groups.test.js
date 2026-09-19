@@ -134,20 +134,20 @@ test('CAMP1 by source: both exterior hosts roll it after the single roll comes b
   // CAMP1-REST re-aimed both of these: the timer roll now stands down under a rest as well (its own test below)
   assert.match(w, /if \(!isResting && getPref\('wildernessCamps'\) !== false && amGroupRollOwner\(online\?\.id \?\? null, playerFeet, peersNear\(\)\)\) \{\s*\n\s*const campHit = rollCampEncounter\(/, 'world.js: the timer roll is gated on group ownership - and on not resting');
   assert.match(e, /if \(!isResting && getPref\('wildernessCamps'\) !== false\) \{\s*\n\s*const campHit = rollCampEncounter\(/, 'exterior.js: no peers on this route, no guard - the rest gate stands alone');
-  // ...and the CHUNK-LOAD twin below takes NO rest gate, deliberately: it fires on a pixel crossing and a
-  // resting player crosses none, so a gate there would be a law with no case (the assertion two lines down
-  // is the one that would redden if someone added one).
-  assert.ok(!/isResting/.test(w.slice(w.indexOf('stream: entered ${r.current.x}'), w.indexOf('\n    pump();', w.indexOf('stream: entered ${r.current.x}')))), 'the chunk-load roll needs no rest gate');
+  // CAMP-REST (2026-09-19, Dudey: "the camp enemies should just not appear when resting"): the CHUNK-LOAD twin takes
+  // a rest gate too now. The old note said a resting player crosses no pixel, so a gate was a law with no case - but
+  // the rule the player asked for is unconditional, and the gate costs one flag read.
+  assert.ok(/!playerEntity\.isResting/.test(w.slice(w.indexOf('stream: entered ${r.current.x}'), w.indexOf('\n    pump();', w.indexOf('stream: entered ${r.current.x}')))), 'the chunk-load roll stands down while resting');
   assert.match(e, /const _standCampEncounter = \(hit, feet\) => \{\s*\n\s*if \(!walkMode\) return;/, 'exterior.js: the fly camera has no capsule to place around');
   // the chunk-load twin, on the stream's own "entered" event, outdoors only
   const ci = w.indexOf('stream: entered ${r.current.x}');
   const chunk = w.slice(ci, w.indexOf('\n    pump();', ci));
-  assert.match(chunk, /if \(\(modes\?\.mode \?\? 'exterior'\) === 'exterior' && getPref\('wildernessCamps'\) !== false && amGroupRollOwner\(online\?\.id \?\? null, player\.feetAt\(\), peersNear\(\)\)\) \{/, 'outdoors, switched on, and mine to roll');
+  assert.match(chunk, /if \(\(modes\?\.mode \?\? 'exterior'\) === 'exterior' && !playerEntity\.isResting && getPref\('wildernessCamps'\) !== false && amGroupRollOwner\(online\?\.id \?\? null, player\.feetAt\(\), peersNear\(\)\)\) \{/, 'outdoors, not resting, switched on, and mine to roll');
   assert.match(chunk, /const chunkCampHit = rollCampEncounterOnChunkLoad\(\{\s*\n\s*inside: false, inLocationRect: _musicInLocationRect\(\),\s*\n\s*climateIndex: maps\.getClimateIndex\(r\.current\.x, r\.current\.y\),/, 'the entered pixel\'s own climate');
   assert.match(chunk, /if \(chunkCampHit\) _standCampEncounter\(chunkCampHit, player\.feetAt\(\)\);/);
   // the shout across the camp
   const ef = read('src/scenes/exteriorFoes.js');
-  assert.match(ef, /targeting: \(ai, pf, cdt\) => \{\s*\n\s*const hadTarget = !!ai\.target;\s*\n\s*const result = runTargetMachine\(f, \[\.\.\.senses\.candidates\(\), PLAYER_TARGET, \.\.\.peerCandidates\(\)\], pf, cdt, \{/, 'the machine runs as it did, with the before-state remembered');
+  assert.match(ef, /targeting: \(ai, pf, cdt\) => \{\s*\n\s*const hadTarget = !!ai\.target;[\s\S]*?const result = runTargetMachine\(f, \[\.\.\.senses\.candidates\(\), PLAYER_TARGET, \.\.\.peerCandidates\(\)\], pf, cdt, \{/, 'the machine runs as it did, with the before-state remembered');
   assert.match(ef, /if \(!hadTarget && ai\.target && f\.campId != null\) wakeCampmates\(f\);\s*\n\s*return result;/, 'a member that JUST noticed someone, and only a group member, wakes the rest');
   const wi = ef.indexOf('function wakeCampmates(f) {');
   const wake = ef.slice(wi, ef.indexOf('\n  }\n', wi));
@@ -235,4 +235,17 @@ test('CAMP1-REST: the rest interrupt is SIGHT first - a seen foe reports at any 
     'the classic wandering monster is minted inside the reach and still wakes the player - the lone roll is left alone');
   assert.equal(areEnemiesNearby([foe(MAX_CAMP_SPAWN_DISTANCE, { detected: true, inSight: true })], { resting: true }), true,
     'and a foe that HAS seen the player wakes them at any distance');
+});
+
+// CAMP-REST (2026-09-19): time skips that are not the rest window must not be replayed as walking time. The exhaustion
+// collapse, a camp meal and a forage/hunt search advance the clock without touching the encounter cursor, so the next
+// frame's catch-up rolled them with isResting=false and the timer's 180-minute boundary fired a guaranteed group.
+test('CAMP-REST by source: every time skip is spent through the tick as a rest, and a campmate does not notice a sleeping player', () => {
+  const w = read('src/scenes/world.js'), e = read('src/scenes/exterior.js'), ef = read('src/scenes/exteriorFoes.js');
+  assert.match(w, /playerTicker\.advance\(60\);\s*\n[^\n]*\n[^\n]*\n\s*runEncounterTick\(walkMode && playerSpawned \? player\.pos : cam\.pos, null, true\);/, 'world.js: the collapse hour is spent as a rest');
+  assert.equal((w.match(/advanceMinutes: \(n\) => \{ playerTicker\.advance\(n\); runEncounterTick\(walkMode && playerSpawned \? player\.pos : cam\.pos, null, true\); \}/g) ?? []).length, 2, 'world.js: the camp meal and the forage/hunt search');
+  assert.match(e, /playerTicker\.advance\(60\);[^\n]*\n\s*runEncounterTick\(walkMode \? player\.pos : cam\.pos, null, true\);/, 'exterior.js: the collapse hour');
+  assert.match(e, /advanceMinutes: \(n\) => \{ playerTicker\.advance\(n\); runEncounterTick\(walkMode \? player\.pos : cam\.pos, null, true\); \}/, 'exterior.js: the camp meal');
+  assert.match(ef, /const campAsleep = f\.campId != null && !!senses\.playerEntity\?\.isResting && !isLocalPlayerTarget\(ai\.target\);/, 'a campmate, not already on the player, while the player rests');
+  assert.match(ef, /noTargetMode: campAsleep,/, 'the target machine leaves the player off its list for it');
 });

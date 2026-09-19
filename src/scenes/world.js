@@ -1472,6 +1472,21 @@ export async function bootWorld(canvas, renderer, params, status) {
       centerHeight: samples[64 * HEIGHTMAP_DIMENSION + 64] * worldHeight,
       avgY: dfLocation ? avg * worldHeight : 0,
     });
+    // GRASS-STALE1 (2026-09-19, Discord: "grass is flying and not on the
+    // ground" around graveyards and other POIs): this pixel's own
+    // samples may have just been flattened toward its location's avgY
+    // (blendLocationTerrain, terrainGen.js) - a grass cell placed nearby
+    // BEFORE this pixel finished (the world streams nearest-first) read
+    // the terrain as it stood then, and nothing else would ever tell it
+    // the ground under it moved. Invalidated over this pixel's own world
+    // bounds, which is also blendLocationTerrain's own falloff extent -
+    // the blend never reaches past the pixel that carries the location -
+    // so the next grass update() re-reads `keep`/`ground` fresh here and
+    // only here.
+    if (dfLocation && labGrassField) {
+      const t = state.pixelTranslation(px, py);
+      labGrassField.invalidate(t[0], t[2], t[0] + TERRAIN_SIZE, t[2] + TERRAIN_SIZE);
+    }
     // AUDIT-TO1 B3: the second hook. BOOT-TDZ2: THE MOD IS ASKED FIRST,
     // because this builder runs inside the boot's OWN first build and
     // `playerTravelPixel()` reads `walkMode`, `player` and `cam` - three
@@ -1938,6 +1953,9 @@ export async function bootWorld(canvas, renderer, params, status) {
       townTalk.pushOverlay(new ActionTextBox(lines));
       if (out.kind === 'rest') {
         playerTicker.advance(60);
+        // CAMP-REST: the forced hour is a rest - its minutes are spent HERE, through the same tick the rest window uses, so the
+        // frame never replays them as walking time (which is what let the 15-minute camp timer fire on waking)
+        runEncounterTick(walkMode && playerSpawned ? player.pos : cam.pos, null, true);
         playerEntity.health = Math.min(playerEntity.maxHealth, playerEntity.health + out.health);
         playerEntity.fatigue = Math.min(maxFatigue(playerEntity), (playerEntity.fatigue ?? 0) + out.fatigue);
         playerEntity.magicka = Math.min(playerEntity.maxMagicka ?? Infinity, (playerEntity.magicka ?? 0) + out.magicka);
@@ -2597,7 +2615,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     place: () => ({ insideBuilding: _mode() === 'interior', insideDungeon: _mode() === 'dungeon', inTown: _isPlayerInTownStrict(), enemiesNearby: areEnemiesNearby(exteriorFoePool(), { resting: true }), inWater: !!player.isPlayerSwimming }),
     pixelKeyAt: () => `${playerTravelPixel().x},${playerTravelPixel().y}`, say: (l) => townTalk.say(l), showOverlay: (w) => townTalk.showOverlay(w),
     openRest: () => { townTalk.closeOverlay(); toggleRest(); },   // the menu's picker leaves the slot first (toggleRest refuses under a window); SURV4 takes the camp's own rest law from here
-    advanceMinutes: (n) => playerTicker.advance(n),   // offline the cook's minutes pass; online the clock is nobody's (WORLD5) and advance() stands
+    advanceMinutes: (n) => { playerTicker.advance(n); runEncounterTick(walkMode && playerSpawned ? player.pos : cam.pos, null, true); },   // offline the cook's minutes pass; online the clock is nobody's (WORLD5) and advance() stands   // CAMP-REST: spent through the tick as a skip, never replayed as walking time (no group roll)
     selfId: () => online?.id ?? null, onChanged: () => { _foesFullAt = -Infinity; },   // a change asks for a full frame, which carries the camps
   });
   // SURV6 - HUNTING, FORAGING AND THE WATER SEARCH (survival/hunting.js,
@@ -2619,7 +2637,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       skills: { archery: skillValue(playerEntity, SKILLS.Archery), stealth: skillValue(playerEntity, SKILLS.Stealth), criticalStrike: skillValue(playerEntity, SKILLS.CriticalStrike), climbing: skillValue(playerEntity, SKILLS.Climbing) },
     }),
     showOverlay: (w) => townTalk.showOverlay(w), overlayActive: () => townTalk.overlayActive,
-    advanceMinutes: (n) => playerTicker.advance(n),
+    advanceMinutes: (n) => { playerTicker.advance(n); runEncounterTick(walkMode && playerSpawned ? player.pos : cam.pos, null, true); },   // CAMP-REST: the search's minutes are spent through the tick as a skip - no group roll on the replay
     spawnBeast: ({ mobileType, count }) => { const feet = walkMode && playerSpawned ? player.pos : cam.pos; for (let i = 0; i < count; i++) _standEncounterFoe({ mobileType, ...SPAWNER_ARMS.wilderness }, feet); },
     inflictPoison, inflictDisease, tally: (id) => tallySkill(playerEntity, id, 1),
   });
@@ -2735,6 +2753,8 @@ export async function bootWorld(canvas, renderer, params, status) {
   // Fast travel resets the anchor (PreventEnemySpawns parity - DFU
   // suppresses the whole post-travel window).
   let _lastEncMinutes = null;
+  // `isResting` = "these minutes are a skip, not a walk": a rest window's sub-tick, but also the exhaustion collapse, a
+  // camp meal and a forage/hunt search (CAMP-REST, 2026-09-19). Only the GROUP roll reads it; lone wanderers still roll.
   function runEncounterTick(playerFeet, simMinutesEnd = null, isResting = false) {
     // RESTX2: online, playerTicker.classicMinutes stands (WORLD5 - playerTicker.advance in shared.js fabricates
     // nothing under the shared clock), so reading it here under a rest made `span` zero and the loop below never
@@ -3260,9 +3280,9 @@ export async function bootWorld(canvas, renderer, params, status) {
     // encounter pool's remover for both. That was not a leak: removeFoe
     // (exteriorFoes.js:368-373) never looks the record up in `foes`, and
     // both pools share this host's one renderer, so a struck WATCHMAN
-    // got exactly what removeGuard (cityGuards.js:1268-1270) gives it -
+    // got exactly what removeGuard (cityGuards.js:1281-1283) gives it -
     // batch freed, `dead = true`, no corpse, skipped by the next AI pass
-    // (cityGuards.js:803) and spliced out at the end of it (:992).
+    // (cityGuards.js:816) and spliced out at the end of it (:1005).
     // Routing by POOL MEMBERSHIP is an OWNERSHIP fix: each pool owns the
     // teardown of its own records so the two can diverge safely, and
     // removeFoe's `questBehaviour?.notifyDestroyed()` (exteriorFoes.js
@@ -8015,7 +8035,12 @@ export async function bootWorld(canvas, renderer, params, status) {
   // streamed area), which `_actLive` has never counted. A death OUTDOORS - where a camp or a pack lives - read
   // as "not live" and fell straight to endRunToTitleMenu. This is the predicate the death screen needs: any
   // real streamed play space, dungeon, interior or the open world alike.
-  const _onlineWorldSession = () => !!(online && online.status === 'open' && (isWorldRoom(online.room) || isCellRoom(online.room)));
+  // ONLINE-DEATH-FIX: an online PAGE is an online death, whatever the socket is doing at that instant. The old test
+  // asked for an OPEN socket in a world/cell room, which a dungeon's room does not always satisfy (a room named by slug
+  // rather than map id, a socket mid-reconnect), so the death fell through to the death video and the title menu.
+  // (`onlineOn` is the URL flag; worldQuickLoad's own header rejects it for the LOAD gate, which is a different
+  // question - a boot load runs before any session exists. A DEATH only happens in play, where the flag is the truth.)
+  const _onlineWorldSession = () => onlineOn || !!(online && online.status === 'open' && (isWorldRoom(online.room) || isCellRoom(online.room)));
   // AUDIT WORLD34 C3: a refused act was CLEARED whenever the socket was not open - a reconnect's second or a room hold
   // lost every door touched inside it for good (the seam is a delta, nothing re-sends). The pending set now outlives
   // the socket and is flushed when it comes back; it is cleared only when the room is no world room at all
@@ -8647,7 +8672,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // worldModes.js). False (not handled) when this session is not
     // live online play, so the caller falls back to endRunToTitleMenu
     // exactly as it always did offline.
-    onlineRespawn: () => { if (!_deathWasOnline) return false; respawnOnlinePlayer(); return true; },
+    onlineRespawn: () => { if (!(_deathWasOnline ?? _onlineWorldSession())) return false; respawnOnlinePlayer(); return true; },   // ONLINE-DEATH-FIX: a reset that beats the frame's backstop (Enter on the first frame) has no snapshot yet - ask the live answer rather than read null as offline
     activateDir: () => _tapDir,   // TI1: the tap's ray for the modal ladders (eyeDir)
     activateLockOnly: () => _tapLockOnly,   // TS1: the stick-half tap - the modal ladders stop after the lock pick
     currentRegionIndex: () => _questRegionIndex(),   // UL1: PlayerGPS.CurrentRegionIndex for the mode machine's mods
@@ -10051,7 +10076,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       // same online group-ownership guard; and only with the player
       // actually OUTDOORS - a pixel crossed by a dungeon's own streaming
       // is not a chunk the player walked into.
-      if ((modes?.mode ?? 'exterior') === 'exterior' && getPref('wildernessCamps') !== false && amGroupRollOwner(online?.id ?? null, player.feetAt(), peersNear())) {
+      if ((modes?.mode ?? 'exterior') === 'exterior' && !playerEntity.isResting && getPref('wildernessCamps') !== false && amGroupRollOwner(online?.id ?? null, player.feetAt(), peersNear())) {   // CAMP-REST: never while the player is resting or waiting
         const chunkCampHit = rollCampEncounterOnChunkLoad({
           inside: false, inLocationRect: _musicInLocationRect(),
           climateIndex: maps.getClimateIndex(r.current.x, r.current.y),
@@ -10732,11 +10757,11 @@ export async function bootWorld(canvas, renderer, params, status) {
         // AFTER the damage fork closes (:615), so a shaft that lost the
         // roll still enrages what it hit and wakes the area. ROAD-G G1
         // (review): the WATCH carries the pair now
-        // (cityGuards.js:580-585), so this seam ROUTES by pool exactly
+        // (cityGuards.js:581-586), so this seam ROUTES by pool exactly
         // as `dealDamage` above it does, instead of excluding the
         // guards - a zero-damage shaft into a pacified watchman has to
         // reach the same door the zero-damage SWING already reaches
-        // (cityGuards.js:1057). DFU makes no pool distinction:
+        // (cityGuards.js:1070). DFU makes no pool distinction:
         // AssignBowDamageToTarget's player arm (DaggerfallMissile.cs
         // :660-688) calls WeaponDamage, so :630 runs for the shaft as
         // for the swing.
