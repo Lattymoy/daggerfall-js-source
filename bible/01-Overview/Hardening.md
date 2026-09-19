@@ -253,7 +253,7 @@ three collapsed on verification.**
    `OnLoadEvent`). The quickload caller goes through
    `restoreSessionState` instead. Calling it in both places would be the
    redundancy, not the fix.
-3. *"`worldModes.js:8257` disposes the dungeon overlay that
+3. *"`worldModes.js:8259` disposes the dungeon overlay that
    `dungeonCtx.destroy()` disposes again - HARD1's double free."* Already
    known, already written down, at `dungeonContext.js:6361-6362`:
    *"dispose() is idempotent (A2), which is what makes the outer host's
@@ -639,7 +639,7 @@ extraction changed.
 ### One thing left standing, deliberately
 
 `citeShift` reports two citations "for a person" in a STRUCK row of
-`Port-Ledger.md` - `combat/playerWeapon.js:118-160` and its `:808`
+`Port-Ledger.md` - `combat/playerWeapon.js:119-161` and its `:808`
 continuation. Read at the commit before this branch, **that span was
 already stale**: it claims to name the port's own gesture path and
 actually pointed at the sheath-and-hand region. HARD2c's insertion moved

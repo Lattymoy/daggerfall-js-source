@@ -647,8 +647,10 @@ test('SW1-LOOK: the frame’s look reaches the shield as the ARRAY it is, or Ine
   const body = feed.slice(0, feed.indexOf('\n        });'));
   assert.match(body, /look: \{ x: look\?\.\[0\] \?\? 0, y: look\?\.\[1\] \?\? 0,/, 'indexed, as the clone reads it');
   assert.doesNotMatch(body, /look\?\.x/, 'and never by a name the value does not carry');
-  // not vacuous: the clone really does read it positionally
-  assert.match(readFileSync('src/combat/weaponWidget.js', 'utf8'), /\(look\[0\] \+ mx\)/);
+  // not vacuous: the clone really does read it positionally. The
+  // module moved to weaponWidgetMotion.js on 2026-09-19 (the gun lab
+  // runs it); the LAW did not, which is what this reads.
+  assert.match(readFileSync('src/combat/weaponWidgetMotion.js', 'utf8'), /\(look\[0\] \+ mx\)/);
   // and the widget really does spend both terms
   const sw = readFileSync('src/combat/shieldWidget.js', 'utf8');
   assert.match(sw, /\(\(Number\(look\.x\) \|\| 0\) \+ mx\) \* -0\.5 \* w\.s\.inertiaScale,/);

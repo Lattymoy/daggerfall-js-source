@@ -229,7 +229,7 @@ test('audit24 wave38: PlayerActivate\'s CorpseMarker arm - empty, arrows, and th
   assert.equal(takeCorpseLoot(rich, player, s), 2, 'the pile still counts toward the line');
   assert.deepEqual(say, ['You take 2 items.']);
   assert.equal(player.items.some((it) => it.group === 'Currency'), false,
-    'the player\'s collection can NEVER hold Currency (inventory.js:48-56)');
+    'the player\'s collection can NEVER hold Currency (inventory.js:49-57)');
   assert.equal(player.items.length, 1);
   assert.equal(player.goldPieces, 550, 'playerEntity.GoldPieces += item.stackCount');
   assert.equal(goldAmount(player), 550, 'and it is spendable');

@@ -377,7 +377,7 @@ test('WS1: the wiring, by source - the third-person build takes the addons and t
   assert.match(rd('src/systems/weaponSheathingAssets.js'), /\{ eager: true, query: '\?url', import: 'default' \}/, 'AUDIT-WS: the table is eager - no chunk per file');
   assert.match(fp, /sheathing = true, ammoCount = null,/);
   const rig = rd('src/combat/weaponRig.js');
-  assert.match(rig, /sheathing: getPref\('mwSheathing'\),/); assert.match(rig, /ammoCount: daggerfallArrowCount\(entity\.items\),/);
+  assert.match(rig, /sheathing: getPref\('mwSheathing'\),/); assert.match(rig, /ammoCount: ammoCountOf\(entity\.items, worn\),/);
   const feat = rd('src/systems/features.js');
   assert.match(feat, /id: 'mod-weapon-sheathing',/);
   assert.match(feat, /control: Object\.freeze\(\{ store: 'prefs', key: 'mwSheathing', initial: true, online: true \}\),/, 'RF4: the switch declared once, on its row, on by default and forced on online');

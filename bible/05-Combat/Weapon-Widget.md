@@ -15,8 +15,13 @@ vendored under `vendor/weapon-widget/` (the manifest, the shipped
 modsettings, a README with the provenance and the permission line), it
 is credited on the About screen, it has a Mod Authored row on the
 Features home (FT9's shape) and its 41 keys under its card on the Mods
-page, and it is ported as `src/combat/weaponWidget.js` (the component)
-and `src/combat/weaponWidgetAssets.js` (the door for its textures). On
+page, and it is ported as `src/combat/weaponWidget.js` (the component),
+`src/combat/weaponWidgetMotion.js` (the parts that are arithmetic
+rather than component - LoadSettings, the Offset/Bob/Inertia modules
+and GetWeaponRect's transform, split out 2026-09-19 so the gun lab can
+RUN them rather than copy them; the component imports them back and
+the arithmetic is untouched) and `src/combat/weaponWidgetAssets.js`
+(the door for its textures). On
 by default (MO1). Pins: 14 in `test/ww1_weaponwidget.test.js`.
 
 ## The source the port reads

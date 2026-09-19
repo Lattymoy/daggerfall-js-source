@@ -38,6 +38,9 @@ test('WW2: by source - the five host sites read the one bag and none is written 
   }
   const m = rd('src/player/motor.js');
   assert.match(m, /export function motionBagOf\(player\) \{\s*\n\s*return \{\s*\n\s*forward: player\.moveForward \|\| 0, strafe: player\.moveStrafe \|\| 0, running: !!player\.isRunning, speed: player\.moveSpeed \|\| 0,\s*\n\s*grounded: player\.grounded !== false, jumping: !!player\.jumping, swimming: !!player\.swimming, levitating: !!player\.levitating,\s*\n\s*crouching: !!player\.crouching, riding: !!player\.riding, standing: !!player\.standing, speedField: player\.speed \|\| 0,\s*\n(?:\s*\/\/[^\n]*\n)*\s*sneaking: !!player\.isSneaking, freeze: player\.freezeMotor \|\| 0, onExteriorWater: !!player\.onExteriorWater,\s*\n\s*height: Number\.isFinite\(player\.height\) \? player\.height : 0,\s*\n\s*\};/, 'the one bag, every field');
-  assert.match(rd('src/combat/weaponWidget.js'), /if \(m\.standing\) s = w\.s\.bobWhileIdle \? 0\.1 : 0;/, 'the mod\'s idle gate, unchanged');
+  // the Bob module moved to weaponWidgetMotion.js on 2026-09-19 (the
+  // gun lab runs it rather than copying it) and the locals lost the
+  // component's `w.` - the GATE is the same line and is what this pins
+  assert.match(rd('src/combat/weaponWidgetMotion.js'), /if \(m\.standing\) sp = s\.bobWhileIdle \? 0\.1 : 0;/, 'the mod\'s idle gate, unchanged');
   assert.match(rd('bible/05-Combat/Weapon-Widget.md'), /through the one motion bag \(`motionBagOf`, WW2\)/);
 });

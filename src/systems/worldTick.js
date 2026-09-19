@@ -52,11 +52,22 @@ installPcaao();
 installUnleveledLoot();   // UL1: after everything it would override (its manifest orders it after Roleplay Realism)
 installSurvivalIcons();   // SURV2: the mod's spoiled-food and waterskin icons ride the texture pipeline as the port's own art
 installSurvivalLoot({ enabled: survivalOn });   // SURV2: an animal's corpse carries meat, a humanoid's sometimes a meal (after UL1, which walks the gold); off with the one switch
+// AUDIT-THUNDERLOCK F1: the port's own weapon was DEAD. Its module
+// registers everything it is at import - the two custom templates, the
+// pellet as ammunition, the unique find, its legendary - and NOTHING
+// IN THE APP IMPORTED IT. The tests did, which is exactly why they all
+// passed: a suite that imports the module under test brings the side
+// effects with it. In the running game the weapon had no template row,
+// could never drop, and had no icons. This call is what carries the
+// import, the same wire SURV2's icons come in by - AFTER the survival
+// pair, whose adjacency that mod's own pin holds.
+installThunderlockIcons();   // THUNDERLOCK: the templates, the find and the legendary register at its import; the icons here
 import { normalizeReputations, NORMALIZE_INTERVAL_MINUTES } from './court.js';   // AUDIT 23 (C4)
 // S43: the entity update's 7-day and 38-day arms (PlayerEntity.cs:460-472).
 import { regionPowerUpdate } from './regionPower.js';
 import { runSurvivalMinutes, clearSurvivalMods } from './survival/needs.js';   // SURV1: the needs, a world minute at a time; AUDIT SURV A: and the drains dropped when the feed stops
 import { installSurvivalIcons } from './survival/items.js';   // SURV2: the templates register at its import; the icons here
+import { installThunderlockIcons } from './thunderlock.js';   // THUNDERLOCK: same wire - the import IS the registration (AUDIT-THUNDERLOCK F1)
 import { installSurvivalLoot } from './survival/loot.js';   // SURV2: the corpse's food
 import { survivalOn } from './survival/switch.js';   // SURV2: the one switch
 /** :462 - `% 10080`, seven days of game minutes. */

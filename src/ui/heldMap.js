@@ -116,51 +116,12 @@ import { actionForCode } from '../systems/inputActions.js';
 import { smoothstep } from '../systems/mathf.js';   // MAP-FIELD7: the ONE easing, so the sheet travels like everything else in the port
 
 // ── THE SPRITE (Mac's, public/art/held-map.png) ──────────────────
-/** MAP-FIELD (2026-09-18, Mac: "The sprite I gave to be used is nowhere
- *  to be seen at all"): THE SITE ROOT, READ OFF THIS MODULE.
- *
- *  The sprite lives in `public/`, so it is served at `<root>/art/held-map.png`.
- *  A bare relative `art/held-map.png` is resolved against the DOCUMENT,
- *  and the game's document is `/play/index.html` - so the browser asked
- *  for `/play/art/held-map.png`, the host answered with the page itself,
- *  the decode failed, `onload` never fired, and the window stood with no
- *  parchment and no hands: ink on black. The build's `base` is './', so
- *  there is no absolute path to hardcode either.
- *
- *  The MODULE's own URL knows where the root is under any base: a build
- *  serves it from `<root>/assets/`, the dev server from `<root>/src/`.
- *  Cutting that segment off gives the root, and the sprite hangs off it.
- *  Pure, so the pin can drive it with the shapes both lanes produce. */
-export function appRootFrom(moduleUrl) {
-  let u;
-  // AUDIT-FIELD F4: a module URL that cannot be a base (blob:, data:)
-  // has no pathname to cut, and `new URL('art/...', it)` THROWS - at
-  // module evaluation, in a file scenes/world.js imports statically
-  // through travelMapDoor.js, so the throw would not cost the map, it
-  // would cost the whole scene. There is no root to find in such a URL.
-  try { u = new URL(moduleUrl); } catch { return null; }
-  if (!u.pathname.startsWith('/')) return null;   // an opaque path: cannot-be-a-base
-  u.search = ''; u.hash = '';
-  // AUDIT-FIELD F3: THE LAST such segment, not the first. JS regex
-  // matching is leftmost-first, and `.*$` being greedy only decides the
-  // tail - so the first cut cut at the FIRST `/assets/` or `/src/` on
-  // the path. Unpack `dist/` into `~/public_html/assets/dfjs/` - or any
-  // tree with a directory named exactly `assets` or `src` above the
-  // build's own - and `/assets/dfjs/assets/main-x.js` collapsed to `/`,
-  // and the sprite 404'd again, one directory up from where it lives. A
-  // greedy leading group takes the last one instead. A path with neither
-  // segment is not a shape this app is served from, and guessing the
-  // module's own directory there is how the bug this helper exists for
-  // looked; answer null and let the caller fall back out loud.
-  const cut = u.pathname.replace(/^(.*)\/(?:assets|src)\/[^/]*(?:\/.*)?$/, '$1/');
-  if (cut === u.pathname) return null;
-  u.pathname = cut;
-  return u.href;
-}
-/** The root the sprite hangs off, or null when this module's URL names
- *  none - the sprite then falls back to the document's own base, which
- *  is right at a site root and is at least a URL rather than a throw. */
-export const APP_ROOT = appRootFrom(import.meta.url);
+// THE SITE ROOT lives in systems/appRoot.js now (AUDIT-THUNDERLOCK
+// F7: the port's own weapon needed the same law and could not import
+// this module to get it). Re-exported here, where MAP-FIELD put it.
+export { appRootFrom, APP_ROOT } from '../systems/appRoot.js';
+import { APP_ROOT } from '../systems/appRoot.js';
+
 export const HELD_MAP_URL = new URL('art/held-map.png', APP_ROOT ?? globalThis.document?.baseURI ?? 'https://invalid.invalid/').href;
 /** Its own pixels, and the stage's aspect. */
 export const SPRITE = Object.freeze({ w: 1448, h: 1086 });

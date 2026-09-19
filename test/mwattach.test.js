@@ -289,7 +289,7 @@ test('MW-D19: the rig hands the worn item to the arm every frame, in machine ord
   // the reference's updateWeaponState reads stance before weapon), the
   // swap next, the tick last so a swapped arm poses its OWN clip.
   assert.match(rig,
-    /fpArm\.setWeapon\(playerWeapon\.weapon, \{ hasAmmo: hasDaggerfallArrows\(entity\?\.items\), ammoCount: daggerfallArrowCount\(entity\?\.items\) \}\);/,   // WS1: the quiver's count rides the same read
+    /fpArm\.setWeapon\(playerWeapon\.weapon, \{ hasAmmo: hasAmmoFor\(entity\?\.items, playerWeapon\.weapon\), ammoCount: ammoCountOf\(entity\?\.items, playerWeapon\.weapon\) \}\);/,   // WS1: the quiver's count rides the same read; THUNDERLOCK: asked OF THE WEAPON, since a gun spends pellets
     'the swap seam reads the same worn item the sprite does, ammo included');
   const sheatheAt = rig.indexOf('fpArm.setSheathed(');
   const swapAt = rig.indexOf('fpArm.setWeapon(');
@@ -297,6 +297,6 @@ test('MW-D19: the rig hands the worn item to the arm every frame, in machine ord
   assert.ok(sheatheAt >= 0 && sheatheAt < swapAt, 'sheathe state before the swap');
   assert.ok(swapAt < tickAt, 'and the swap before the tick');
   // ONE home for the arrow test - the rig's own guard rides the export.
-  assert.match(rig, /hasDaggerfallArrows\(entity\.items\)/, 'the bow guard rides the same export');
+  assert.match(rig, /hasAmmoFor\(entity\.items, weapon\)/, 'the ranged guard rides the same export, asked of the weapon in hand');
   assert.ok(!/templateIndex === 131/.test(rig), 'no third literal copy of the arrow template');
 });

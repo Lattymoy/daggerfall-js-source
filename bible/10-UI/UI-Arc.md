@@ -4187,7 +4187,7 @@ actually use. DFU has one call taking the target entity
 that apart and only carried the group down one of the two forks.
 
 The target half of the player's swing was PARTLY correct -
-playerWeapon.js:256 passed `enemyGroupOf(foe.entity.affinity)` - which
+playerWeapon.js:257 passed `enemyGroupOf(foe.entity.affinity)` - which
 is precisely why this looked wired. AUDIT 18 corrected the rest: DFU
 uses TWO discriminants, not one. The Humanoid arm keys on
 `MobileEnemy.Affinity == MobileAffinity.Human`, as the port did, but

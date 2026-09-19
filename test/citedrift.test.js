@@ -392,7 +392,7 @@ test('CD2: both status pages state the open-flag count Home.md actually holds', 
   // readable only as long as nobody asked which two.
   const roadText = read(ROAD);
   for (const site of ['combat/fpsSpellCasting.js:178', 'characters/enemyCasting.js:91',
-    'systems/inventory.js:48', 'systems/talkMacros.js:314', 'ui/hudLarge.js:75',
+    'systems/inventory.js:49', 'systems/talkMacros.js:314', 'ui/hudLarge.js:75',
     'ui/exteriorAutomapWindow.js:96']) {
     assert.ok(roadText.includes(site), `Road-To-1-1.md does not name the retired flag ${site}`);
   }

@@ -51,6 +51,12 @@ export const BOW_DRAWN_HOLD_FRAME = 3;             // fully drawn; drawback hold
 // mechanics rather than read, which cut frame 6 off every release and
 // started the bow cooldown one classic tick early.
 export const BOW_NUM_FRAMES = { Idle: 1, StrikeUp: 4, StrikeDown: 7 };
+/** The Dwarven Thunderlock's, the port's own weapon: one trigger pull
+ *  is six frames - flash, flash, smoke, smoke, wisp - on every strike
+ *  direction, because a gun does not care which way you dragged. */
+export const THUNDERLOCK_NUM_FRAMES = Object.freeze({
+  Idle: 1, StrikeDown: 6, StrikeDownLeft: 6, StrikeLeft: 6, StrikeRight: 6, StrikeDownRight: 6, StrikeUp: 6,
+});
 
 // FPSWeapon.cs:71 verbatim: the unarmed strike-to-the-LEFT plays its
 // own eight-tick frame list - up and back down again - instead of the
@@ -89,7 +95,12 @@ export function canChangeState(isBow, currentState, nextState) {
  *  the caller must re-read it every step - a sheathed sword flips the
  *  rig between armed and bare-handed while the machine lives on. */
 export function createWeaponMachine(isBow, isUnarmed = false) {
-  return { isBow, isUnarmed, state: 'Idle', frame: 0, ticks: 0, acc: 0, cooldownUntil: 0, now: 0, animIndex: 0, damageDone: false };
+  // `ranged` and `frames` are the port's own two fields (the Dwarven
+  // Thunderlock): a weapon that pays the bow's cooldown without
+  // drawing like one, and one whose cycle is not five frames. Both
+  // default to the classic answer, so a machine that never sets them
+  // is the machine that has always been here.
+  return { isBow, isUnarmed, ranged: isBow, frames: null, state: 'Idle', frame: 0, ticks: 0, acc: 0, cooldownUntil: 0, now: 0, animIndex: 0, damageDone: false };
 }
 
 export function machineAttack(m, strikeState) {
@@ -124,7 +135,12 @@ export function machineStep(m, dt, liveSpeed) {
   m.now += dt;
   const events = [];
   if (m.state === 'Idle') return events;
-  const frames = (m.isBow ? BOW_NUM_FRAMES : MELEE_NUM_FRAMES)[m.state] ?? 5;
+  // `m.frames` is the ONE departure this file carries: a weapon whose
+  // animation is not five melee frames or the bow's draw-and-loose.
+  // The Dwarven Thunderlock's fire cycle is six (combat/thunderlockArt.js
+  // slices them off one sheet), and a machine that does not set it
+  // reads exactly the two classic tables it always did.
+  const frames = (m.frames ?? (m.isBow ? BOW_NUM_FRAMES : MELEE_NUM_FRAMES))[m.state] ?? 5;
   const tick = m.isBow ? CLASSIC_UPDATE_INTERVAL : getMeleeWeaponAnimTime(liveSpeed);
   m.acc += dt;
   while (m.acc >= tick) {
@@ -153,7 +169,12 @@ export function machineStep(m, dt, liveSpeed) {
       if (m.frame >= frames) {
         m.state = 'Idle'; m.frame = 0; m.ticks = 0;
         events.push('done');
-        if (m.isBow) m.cooldownUntil = m.now + getBowCooldownTime(liveSpeed);
+        // AUDIT-THUNDERLOCK F2: `m.ranged`, not `m.isBow`. A bow and
+        // the port's own weapon both pay the ranged cooldown at the
+        // end of a shot; only the bow DRAWS. Written as `?? m.isBow`
+        // so a machine minted before this field existed - every
+        // classic one - still reads exactly as it did.
+        if (m.ranged ?? m.isBow) m.cooldownUntil = m.now + getBowCooldownTime(liveSpeed);
         break;
       }
     }
