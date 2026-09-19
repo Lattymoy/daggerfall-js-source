@@ -32,7 +32,8 @@ import { dfWornEquipment } from '../formats/mwItemMap.js';   // MW-D32
 import { ARMOR_ENUM } from './enemyEquipment.js';   // MW-D32
 import { loadFpsWeaponArt, drawFpsWeapon, weaponTypeForItem, WEAPON_TYPES, fpLightingOn } from './fpsWeapon.js';
 import { loadThunderlockArt } from './thunderlockArt.js';
-import { createRecoil, createScreenShake, GUN_FEEL } from './gunFeel.js';   // FIELD-GUN6: the lab's own feel, in the game at last
+import { createRecoil, createScreenShake, GUN_FEEL, gunPitch } from './gunFeel.js';
+import { readWidgetSettings } from './weaponWidgetMotion.js';   // FIELD-GUN8: the mod's own reader, so the Thunderlock's Inertia rides its multipliers   // FIELD-GUN6: the lab's own feel, in the game at last
 import { weaponOffsetHeight } from '../ui/hudLarge.js';   // FIELD-GUN7: the lab's raise rides the bar's offset rather than replacing it
 import { betterAmbience } from '../systems/betterAmbience.js';   // FIELD-GUN6: the ONE camera shaker in the port, already wired through all four hosts
 import { installThunderlockSounds, SFX as TL_SFX } from '../systems/thunderlock.js';   // AUDIT-THUNDERLOCK F8: the weapon's own clips, through the mod-sound door   // the port's own weapon: its art is a sheet, not a CIF   // MAC-I: the tint's switch, with the sprite it tints
@@ -227,7 +228,37 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
     if (!Number.isFinite(d)) return null;
     return [cam.pos[0] + fwd[0] * d, cam.pos[1] + fwd[1] * d, cam.pos[2] + fwd[2] * d];
   });
-  const widget = createWeaponWidget({ audio, envHit: envCast, missEffect });
+  /** FIELD-GUN8: declared ABOVE the widget, not beside `widgetOn`
+   *  below it. `createWeaponWidget` calls `settings()` inside its own
+   *  constructor, so a `const` arrow declared after it is still in
+   *  the temporal dead zone when that call lands - every rig in the
+   *  game threw on construction, which the rig's own suites caught at
+   *  once. The same trap systems/effectBroker.js's header describes
+   *  one import away. */
+  const thunderlockHeld = () => {
+    const t = weaponTypeForItem(playerWeapon.weapon);
+    return t === WEAPON_TYPES.Thunderlock || t === WEAPON_TYPES.Thunderlock_Magic;
+  };
+  /** FIELD-GUN8 (Mac: "Yes, 1:1"). THE LAB'S ONE MODULE DEPARTURE,
+   *  carried. Weapon Widget ships Inertia OFF - "requires
+   *  double-scaled weapon textures" - and the lab turns it ON for
+   *  this weapon because this art IS high resolution, which makes it
+   *  precisely the case the mod's warning is about. The sway is part
+   *  of how the gun reads, so a game without it is not the prototype.
+   *
+   *  It is forced for THIS WEAPON ONLY and only upward: every other
+   *  weapon, and every other module, reads the player's own settings
+   *  untouched. A mod's switch is the player's to throw; this is the
+   *  port's own weapon asking for the one module it was designed
+   *  around, not a mod being overridden behind their back. */
+  const widget = createWeaponWidget({
+    audio, envHit: envCast, missEffect,
+    settings: () => {
+      const s = readWidgetSettings();
+      if (!s.inertia && thunderlockHeld()) return { ...s, inertia: true };
+      return s;
+    },
+  });
   const widgetOn = () => modSetting('weapon-widget', 'Enabled');
   // SW1: the shield's own component. Its sprites come from the player's
   // own copy of the mod (combat/shieldWidgetAssets.js); with none
@@ -631,7 +662,11 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
     // shake ride the SAME edge, which is what makes them read as one
     // event rather than three things that happened near each other.
     if (m.state !== 'Idle' && _tlState === 'Idle') {
-      audio.playOneShot(TL_SFX.fire, 1);
+      // FIELD-GUN8: the lab's own volume and pitch jitter. The game
+      // played all three clips at full gain with no variance, and a
+      // gun fired six times in four seconds is exactly where an ear
+      // hears a sample repeating.
+      audio.playOneShot(TL_SFX.fire, GUN_FEEL.sfxVolume, gunPitch());
       _tlRecoil.punch();
       _tlShake.punch();
       // THE SHAKE MOVES THE ROOM, NOT THE WEAPON, because the camera
@@ -642,14 +677,14 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
       // than threading a second one through four scenes. Its own
       // trauma curve above still drives the WEAPON's rattle; this is
       // the room's half.
-      betterAmbience.weaponKick?.(GUN_FEEL.shake / 10);
+      betterAmbience.weaponKick?.(GUN_FEEL.roomShake);
     }
     _tlState = m.state;
     // the reload, on the cooldown the shot left behind
     const cooling = m.now < m.cooldownUntil;
     if (!cooling) { _tlOpened = false; _tlClosed = false; return; }
-    if (!_tlOpened) { _tlOpened = true; audio.playOneShot(TL_SFX.open, 0.9); }
-    if (!_tlClosed && m.now >= m.cooldownUntil - TL_CLOSE_LEAD) { _tlClosed = true; audio.playOneShot(TL_SFX.close, 0.95); }
+    if (!_tlOpened) { _tlOpened = true; audio.playOneShot(TL_SFX.open, GUN_FEEL.sfxVolume * 0.9, gunPitch()); }
+    if (!_tlClosed && m.now >= m.cooldownUntil - TL_CLOSE_LEAD) { _tlClosed = true; audio.playOneShot(TL_SFX.close, GUN_FEEL.sfxVolume * 0.95, gunPitch()); }
   }
 
   /** FIELD-GUN6: the frame's rect delta, stepped once and read by

@@ -61,9 +61,32 @@ export const GUN_FEEL = Object.freeze({
   kick: 5, back: 0, stiff: 400, damp: 36,
   // ── THE SHAKE ("All screenshake values max with decay at 5")
   shake: 30, shakeRot: 4, shakeFreq: 60, shakeDecay: 5,
+  /** FIELD-GUN8: what the ROOM's shake is worth, in the camera
+   *  shaker's own units rather than the lab's.
+   *
+   *  These two scales are NOT convertible and pretending otherwise
+   *  would be a made-up number wearing a derivation. The lab's
+   *  `shake: 30` is a peak in native 320x200 PIXELS of a 2D canvas;
+   *  Better Ambience's shaker is a 3D magnitude whose own producer
+   *  (DamageShaker) answers 10 for a blow that took your whole
+   *  health bar, clamped there by the player's maxShake. So this is
+   *  a JUDGEMENT stated as one: a shot is worth about a third of
+   *  dying, which reads as a hard kick without throwing the view.
+   *  It is one named number for Mac to move, like the doll's offset. */
+  roomShake: 3,
+  // ── THE VOICE (the lab's panel: volume 0.7, pitch vary 0.06) ─────
+  // A gun fired six times in four seconds is exactly the case where
+  // the ear notices a sample repeating, so the lab varies playback
+  // rate - and DFU's own weapon code varies swing pitch for the same
+  // reason. The game was playing all three clips at full volume with
+  // no variance at all.
+  sfxVolume: 0.7, sfxVary: 0.06,
   // how far the weapon drops while the reload runs
   hiddenTarget: Object.freeze([0, 0.55]),
 });
+
+/** The lab's pitch jitter, as the one line both sides read. */
+export const gunPitch = (rolls = Math.random) => 1 + (rolls() * 2 - 1) * GUN_FEEL.sfxVary;
 
 /** The lab's frame clock as a tick, which is what the machine reads. */
 export const GUN_TICK_SECONDS = 1 / GUN_FEEL.fps;

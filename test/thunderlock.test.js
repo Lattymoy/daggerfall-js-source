@@ -18,7 +18,7 @@ import {
 import { weaponSkillUsed, weaponMinDamage, weaponMaxDamage } from '../src/characters/weapons.js';
 import { SKILLS } from '../src/systems/skills.js';
 import { templateByIndex, ITEM_TEMPLATES } from '../src/systems/itemTemplates.js';
-import { weaponTypeForItem, WEAPON_TYPES, getWeaponAnims } from '../src/combat/fpsWeapon.js';
+import { weaponTypeForItem, WEAPON_TYPES, getWeaponAnims, THUNDERLOCK_ANIMS, ALIGN } from '../src/combat/fpsWeapon.js';
 import {
   THUNDERLOCK_NUM_FRAMES, MELEE_NUM_FRAMES, BOW_NUM_FRAMES,
   createWeaponMachine, machineAttack, machineStep,
@@ -41,6 +41,7 @@ import { paperdollItemImage, PAPERDOLL_ORIGIN } from '../src/ui/paperDoll.js';
 import { PAPERDOLL_OFFSET } from '../src/systems/thunderlock.js';
 import { createRecoil, createScreenShake, GUN_FEEL, GUN_TICK_SECONDS, GUN_COOLDOWN_SECONDS } from '../src/combat/gunFeel.js';   // FIELD-GUN6
 import { createGunMachine } from '../src/tools/gunLab.js';   // FIELD-GUN7: the PROTOTYPE's own machine, as the oracle
+import { gunPitch } from '../src/combat/gunFeel.js';   // FIELD-GUN8
 import { GROUP_TEMPLATE_INDICES } from '../src/systems/itemTemplates.js';
 import { FIND_MIN_TIER } from '../src/systems/thunderlock.js';
 
@@ -721,4 +722,124 @@ test('FIELD-GUN7: the POSE is the lab\'s too - size 49, and the raise rides the 
     'the bar\'s offset is kept and the lab\'s raise rides it');
   assert.match(rig, /_tlAdjust \? weaponOffsetHeight\(\) \+ GUN_FEEL\.raise : undefined/,
     'and only this weapon takes it - every other keeps drawFpsWeapon\'s own default');
+});
+
+/** FIELD-GUN8: THE PANEL, READ OFF THE LAB'S OWN SOURCE.
+ *
+ *  Every control in gun-proto.html's `state` is a decision somebody
+ *  made about how this weapon feels. The four rounds of "it still
+ *  isn't the proto" were each one of them found by hand, one at a
+ *  time, after shipping - so this walks the WHOLE panel and makes the
+ *  game account for every knob on it.
+ *
+ *  A knob is accounted for when it is either carried (the game has
+ *  the same number) or DELIBERATELY not (it is on the list below with
+ *  a reason). Adding a control to the lab and not deciding which it
+ *  is turns this red, which is the point. */
+const PANEL_NOT_CARRIED = Object.freeze({
+  idleSrc: 'a lab switch between the idle PNG and the sheet\'s first cell; the game always slices the sheet',
+  flip: 'the player\'s own Controls/Handedness, which the classic draw already reads',
+  auto: 'a lab convenience for holding the trigger down; the game fires on the attack gesture',
+  walk: 'the lab\'s fake motor - the game has a real one', run: 'as walk', crouch: 'as walk', spd: 'as walk',
+  key: 'the background key threshold, baked into combat/gunSheet.js at load rather than live',
+  chroma: 'as key',
+  light: 'the lab\'s muzzle-light preview; the game lights the room through its own renderer',
+  room: 'the lab backdrop\'s brightness - there is no backdrop in the game',
+  grid: 'the lab\'s alignment grid',
+  sfxFire: 'which CANDIDATE clip is auditioned; the weapon\'s three picks are systems/thunderlock.js SFX',
+  sfxOpen: 'as sfxFire', sfxClose: 'as sfxFire',
+  sfxOn: 'a lab mute',
+  offsetSpeed: 'the mod\'s own Offset.Speed - the game reads the player\'s setting',
+  modOffset: 'the mod\'s own module switch', modBob: 'as modOffset',
+  bobLength: 'the mod\'s own Bob setting', bobSizeX: 'as bobLength', bobSizeY: 'as bobLength',
+  bobSpeedMove: 'as bobLength', bobSpeedState: 'as bobLength', bobShape: 'as bobLength', bobIdle: 'as bobLength',
+  inScale: 'the mod\'s own Inertia setting', inSpeed: 'as inScale', inFwd: 'as inScale', inFwdSpeed: 'as inScale',
+});
+
+/** knob -> the game's answer for it, so the pin compares VALUES. */
+const PANEL_CARRIED = Object.freeze({
+  align: () => THUNDERLOCK_ANIMS[1].Alignment,
+  offset: () => THUNDERLOCK_ANIMS[1].Offset,
+  size: () => GUN_FEEL.widthPct * 100,
+  raise: () => GUN_FEEL.raise,
+  fps: () => GUN_FEEL.fps,
+  cool: () => GUN_FEEL.reloadMs,
+  hit: () => GUN_FEEL.hitFrame,
+  kick: () => GUN_FEEL.kick,
+  back: () => GUN_FEEL.back,
+  stiff: () => GUN_FEEL.stiff,
+  damp: () => GUN_FEEL.damp,
+  shake: () => GUN_FEEL.shake,
+  shakeRot: () => GUN_FEEL.shakeRot,
+  shakeFreq: () => GUN_FEEL.shakeFreq,
+  shakeDecay: () => GUN_FEEL.shakeDecay,
+  sfxVol: () => GUN_FEEL.sfxVolume,
+  sfxVary: () => GUN_FEEL.sfxVary,
+  drop: () => GUN_FEEL.hiddenTarget[1],
+  modInertia: () => true,   // FIELD-GUN8: forced on for this weapon - see the rig
+});
+
+test('FIELD-GUN8: EVERY knob on the lab\'s panel is either carried or deliberately not', () => {
+  // Mac, four rounds in: "Yes, 1:1".
+  //
+  // The three rounds before this each found ONE missing number by
+  // hand, after shipping. This reads the lab's own `state` object out
+  // of its source and requires the game to account for every key in
+  // it - so the next control someone adds to the panel cannot be
+  // quietly left behind.
+  const lab = readFileSync('gun-proto.html', 'utf8');
+  const block = /const state = \{([\s\S]*?)\n\};/.exec(lab);
+  assert.ok(block, 'the lab still declares its panel state in one object');
+  const keys = [...block[1].matchAll(/(?:^|[\s,{])([A-Za-z][A-Za-z0-9]*)\s*:/g)].map((m) => m[1]);
+  assert.ok(keys.length > 30, `only ${keys.length} controls found - the reader lost the panel`);
+
+  const unaccounted = keys.filter((k) => !(k in PANEL_CARRIED) && !(k in PANEL_NOT_CARRIED));
+  assert.deepEqual(unaccounted, [],
+    `the lab has controls the game has never decided about:\n${unaccounted.join('\n')}`);
+  // ...and the lists may not outlive the panel either
+  const gone = [...Object.keys(PANEL_CARRIED), ...Object.keys(PANEL_NOT_CARRIED)].filter((k) => !keys.includes(k));
+  assert.deepEqual(gone, [], `these name controls the lab no longer has:\n${gone.join('\n')}`);
+
+  // THE VALUES, read off the lab's own literals - not restated here,
+  // because a pin that quotes the number it is checking checks nothing.
+  const literal = (k) => {
+    const m = new RegExp(`(?:^|[\\s,{])${k}\\s*:\\s*([^,\\n]+)`).exec(block[1]);
+    return m ? m[1].trim() : null;
+  };
+  const mismatched = [];
+  for (const [k, answer] of Object.entries(PANEL_CARRIED)) {
+    const raw = literal(k);
+    if (raw === null) { mismatched.push(`${k}: the lab no longer sets it`); continue; }
+    const want = raw === 'true' ? true : raw === 'false' ? false
+      : raw.startsWith('ALIGN.') ? ALIGN[raw.slice(6)] : Number(raw);
+    const got = answer();
+    if (want !== got && !(Number.isFinite(want) && Math.abs(want - got) < 1e-9)) {
+      mismatched.push(`${k}: the lab says ${raw} and the game says ${got}`);
+    }
+  }
+  assert.deepEqual(mismatched, [], `the game disagrees with the prototype:\n${mismatched.join('\n')}`);
+});
+
+test('FIELD-GUN8: the voice and the one module the lab turns on', () => {
+  // the clips take the lab's volume and its jitter, not full gain
+  const rig = readFileSync('src/combat/weaponRig.js', 'utf8');
+  assert.match(rig, /playOneShot\(TL_SFX\.fire, GUN_FEEL\.sfxVolume, gunPitch\(\)\)/);
+  assert.match(rig, /playOneShot\(TL_SFX\.open, GUN_FEEL\.sfxVolume \* 0\.9, gunPitch\(\)\)/);
+  assert.match(rig, /playOneShot\(TL_SFX\.close, GUN_FEEL\.sfxVolume \* 0\.95, gunPitch\(\)\)/);
+  // the jitter is the lab's line, and it is BOUNDED - a pitch that
+  // can wander is a clip that stops sounding like the same gun
+  for (const r of [0, 0.5, 1]) {
+    const p = gunPitch(() => r);
+    assert.ok(Math.abs(p - 1) <= GUN_FEEL.sfxVary + 1e-9, `pitch ${p} is inside +/-${GUN_FEEL.sfxVary}`);
+  }
+  assert.equal(gunPitch(() => 0.5), 1, 'the middle roll is the clip as recorded');
+
+  // INERTIA: the mod ships it off ("requires double-scaled weapon
+  // textures") and the lab turns it on because this art IS that case.
+  // Forced for THIS WEAPON ONLY and only upward, so no other weapon
+  // and no other module stops reading the player's own settings.
+  assert.match(rig, /if \(!s\.inertia && thunderlockHeld\(\)\) return \{ \.\.\.s, inertia: true \};/);
+  assert.match(rig, /return s;/, 'and everything else is handed back untouched');
+  const decl = rig.slice(rig.indexOf('const widget = createWeaponWidget('), rig.indexOf('const widgetOn ='));
+  assert.ok(!/Modules\.(Bob|Offset|Step)/.test(decl), 'no other module is touched');
 });
