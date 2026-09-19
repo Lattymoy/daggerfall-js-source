@@ -69,8 +69,19 @@ import { dateFromClassicMinutes } from '../systems/gameDate.js';   // OL2: the w
  *  translucent veil over the world instead of DFU's opaque black, so
  *  the time-lapse Mac chose - the sun sweeping, the clouds streaming,
  *  a front building and passing on the clock - is a thing the player
- *  watches. The selection page and the classic skin keep DFU's "Hide
- *  world while resting" verbatim. */
+ *  watches. The classic skin keeps DFU's "Hide world while resting"
+ *  verbatim.
+ *
+ *  REST-VEIL2 (2026-09-19, Mac: "opening up the rest menu has a black
+ *  background behind it") - AND THE SELECTION PAGE TOO. CLK4 relaxed
+ *  the RESTING page only, so the page a player actually opens with the
+ *  key still blacked the world out whole: press it and the world is
+ *  gone, pick a rest and the world comes back under the veil. One skin
+ *  cannot hold both answers to "does this window hide the world" three
+ *  keystrokes apart. The veil is now the enhanced skin's answer for
+ *  every page of this window; the classic skin is untouched, because
+ *  the opaque black IS DFU there (Setup :137-138,
+ *  ParentPanel.BackgroundColor = Color.black). */
 export const REST_VEIL = Object.freeze([0, 0, 0, 0.35]);
 
 const PANEL = [0.05, 0.05, 0.09, 0.92];
@@ -216,7 +227,7 @@ export class RestWindow {
     // (InputManager.cs:634-637) - so the opening release is already
     // spent when DFU's window first runs, and :193's bare `GetKeyUp`
     // is safe there. Every host here opens on the key DOWN
-    // (world.js:6461, exterior.js:2720, ui/input.js:418), and that same
+    // (world.js:6485, exterior.js:2720, ui/input.js:418), and that same
     // key's release is then routed straight into the freshly mounted
     // window, so the release door needs the deferral DFU gives every
     // window whose open edge IS the down: DaggerfallAutomapWindow.cs
@@ -754,9 +765,14 @@ export class RestWindow {
     const m = nativeMetrics(canvas);
     // Setup :137-138, DFU's own comment: "Hide world while resting" -
     // ParentPanel.BackgroundColor = Color.black, opaque, so the world
-    // AND the HUD the host painted under this overlay go away. CLK4: a
-    // veil instead while RESTING on the enhanced skin (see REST_VEIL).
-    if (this.state === 'resting' && isEnhanced()) drawMenuBackdrop(renderer, canvas, REST_VEIL);
+    // AND the HUD the host painted under this overlay go away. That is
+    // what the CLASSIC skin draws, here as there.
+    //
+    // REST-VEIL2: the enhanced skin draws the veil on EVERY page of
+    // this window, not just the resting one (see REST_VEIL). The
+    // per-state test CLK4 left here is what made opening the menu black
+    // the world out and picking a rest bring it back.
+    if (isEnhanced()) drawMenuBackdrop(renderer, canvas, REST_VEIL);
     else drawMenuBackdrop(renderer, canvas);
     const st = this.status();
     if (st.panel === 'main') {

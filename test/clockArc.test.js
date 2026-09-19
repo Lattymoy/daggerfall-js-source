@@ -347,10 +347,14 @@ test('CLK4: the review - a distant zone never moves the player\'s stale clock, a
   const dome = read('src/render/enhancedSky.js');
   assert.match(dome, /float hash21\(vec2 p\) \{ p = mod\(p, \$\{DECK_LATTICE\}\.0\);/, 'the shader\'s lattice, the same period');
   assert.doesNotMatch(dome, /2\.03/, 'the octave is exactly two');
-  // (6) THE REST IS A VEIL on the enhanced skin while resting; DFU's opaque black on the classic skin and the selection page
+  // (6) THE REST IS A VEIL on the enhanced skin; DFU's opaque black on the classic one.
+  // REST-VEIL2 (2026-09-19) took the per-state test OUT: CLK4 veiled the RESTING page
+  // only, so the page the key actually opens still blacked the world out whole and
+  // picking a rest brought it back three keystrokes later. One skin, one answer.
   const rest = read('src/ui/restWindow.js');
   assert.match(rest, /export const REST_VEIL = Object\.freeze\(\[0, 0, 0, 0\.35\]\);/);
-  assert.match(rest, /if \(this\.state === 'resting' && isEnhanced\(\)\) drawMenuBackdrop\(renderer, canvas, REST_VEIL\);/);
+  assert.match(rest, /if \(isEnhanced\(\)\) drawMenuBackdrop\(renderer, canvas, REST_VEIL\);\s*\n\s*else drawMenuBackdrop\(renderer, canvas\);/);
+  assert.doesNotMatch(rest, /this\.state === 'resting' && isEnhanced\(\)/, 'no page of this window is veiled while another is blacked out');
   // (7) WHAT STAYS ON THE WALL, by decision - pinned so the next audit does not "fix" it
   for (const h of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
     const s = read(h);

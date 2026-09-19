@@ -74,7 +74,7 @@
  {
   "name": "HEARTH1-byFire-forgets-the-world-fires-again-and-only-a-placed-camp-counts",
   "file": "src/scenes/camps.js",
-  "old": "  const byFire = (pos) => !!nearestFire(camps.map((c) => c.rec), pos, now()) || !!hearthAt(pos);",
+  "old": "  const byFire = (pos) => !!nearestFire(camps.map((c) => c.rec), pos, now())\n    || hearthNear(worldFires(), pos, BY_FIRE_REACH);   // AUDIT HEARTH1 F2: the FIRST fire in reach, not the nearest - this runs every frame",
   "new": "  const byFire = (pos) => !!nearestFire(camps.map((c) => c.rec), pos, now());",
   "tests": [
    "test/hearth1_worldfires.test.js"
@@ -101,7 +101,7 @@
  {
   "name": "HEARTH1-the-hearths-box-does-not-reach-down-so-aiming-at-the-bowl-misses-the-fire",
   "file": "src/scenes/camps.js",
-  "old": "        aabb: { min: [h.x - HEARTH_HALF, h.y - HEARTH_HALF * 2, h.z - HEARTH_HALF], max: [h.x + HEARTH_HALF, h.y + HEARTH_HALF, h.z + HEARTH_HALF] },",
+  "old": "        aabb: { min: [h.x - HEARTH_HALF, h.y - HEARTH_DROP, h.z - HEARTH_HALF], max: [h.x + HEARTH_HALF, h.y + HEARTH_HALF, h.z + HEARTH_HALF] },",
   "new": "        aabb: { min: [h.x - HEARTH_HALF, h.y, h.z - HEARTH_HALF], max: [h.x + HEARTH_HALF, h.y + HEARTH_HALF, h.z + HEARTH_HALF] },",
   "tests": [
    "test/hearth1_worldfires.test.js"
@@ -211,6 +211,87 @@
   "file": "src/scenes/world.js",
   "old": "        const x = h[0] + t[0], y = h[1] + t[1], z = h[2] + t[2];",
   "new": "        const x = h[0], y = h[1], z = h[2];",
+  "tests": [
+   "test/hearth1_worldfires.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-HEARTH1-F1-the-worlds-fires-ignore-the-mods-switch-so-a-brazier-cooks-with-C-and-C-off",
+  "file": "src/scenes/camps.js",
+  "old": "  const worldFires = () => (survivalOn() && hearths ? hearths() : null);",
+  "new": "  const worldFires = () => (hearths ? hearths() : null);",
+  "tests": [
+   "test/hearth1_worldfires.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-HEARTH1-F2-byFire-walks-the-whole-city-to-find-the-nearest-fire-when-it-wants-a-yes",
+  "file": "src/scenes/camps.js",
+  "old": "    || hearthNear(worldFires(), pos, BY_FIRE_REACH);",
+  "new": "    || !!nearestHearth(worldFires(), pos, BY_FIRE_REACH);",
+  "tests": [
+   "test/hearth1_worldfires.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-HEARTH1-F2-hearthNear-cannot-stop-early-so-the-saving-is-given-back",
+  "file": "src/systems/survival/hearth.js",
+  "old": "    if (dx * dx + dy * dy + dz * dz <= reach * reach) return true;\n  }\n  return false;",
+  "new": "  }\n  for (let i = 0; i < len; i++) {\n    const h = hearths[i];\n    const dx = h.x - pos[0], dy = h.y - pos[1], dz = h.z - pos[2];\n    if (dx * dx + dy * dy + dz * dz <= reach * reach) return true;\n  }\n  return false;",
+  "tests": [
+   "test/hearth1_worldfires.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-HEARTH1-F2-hearthNear-disagrees-with-nearestHearth-at-the-bound",
+  "file": "src/systems/survival/hearth.js",
+  "old": "    if (dx * dx + dy * dy + dz * dz <= reach * reach) return true;",
+  "new": "    if (dx * dx + dy * dy + dz * dz < reach * reach) return true;",
+  "tests": [
+   "test/hearth1_worldfires.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-HEARTH1-F2-the-live-count-is-ignored-so-a-pools-stale-tail-is-a-fire",
+  "file": "src/systems/survival/hearth.js",
+  "old": "export function hearthNear(hearths, pos, reach, n = -1) {\n  const len = n < 0 ? (hearths?.length ?? 0) : Math.min(n, hearths?.length ?? 0);",
+  "new": "export function hearthNear(hearths, pos, reach, n = -1) {\n  const len = hearths?.length ?? 0;",
+  "tests": [
+   "test/hearth1_worldfires.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-HEARTH1-F2-the-streaming-walk-mints-a-list-a-frame-again",
+  "file": "src/scenes/world.js",
+  "old": "        const e = _hearthStore[n] ?? (_hearthStore[n] = { x: 0, y: 0, z: 0 });\n        e.x = x; e.y = y; e.z = z;\n        _hearthOut[n] = e;",
+  "new": "        const e = { x, y, z };\n        _hearthOut[n] = e;",
+  "tests": [
+   "test/hearth1_worldfires.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-HEARTH1-F3-the-drop-is-a-half-so-the-bowl-under-a-town-braziers-flame-is-not-a-target",
+  "file": "src/scenes/camps.js",
+  "old": "export const HEARTH_DROP = 1.8;",
+  "new": "export const HEARTH_DROP = 0.5;",
+  "tests": [
+   "test/hearth1_worldfires.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-HEARTH1-F3-the-box-reaches-as-far-up-as-down-and-starts-eating-clicks-behind-the-fire",
+  "file": "src/scenes/camps.js",
+  "old": "export const HEARTH_DROP = 1.8;",
+  "new": "export const HEARTH_DROP = 0.6;",
+  "tests": [
+   "test/hearth1_worldfires.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-HEARTH1-F4-the-interior-hand-writes-the-laws-test-a-fourth-time",
+  "file": "src/scenes/worldModes.js",
+  "old": "      interiorHearths.push(...collectHearths(ctx.lights));",
+  "new": "      for (const l of ctx.lights ?? []) if (l.record === 20) interiorHearths.push({ x: l.x, y: l.y, z: l.z });",
   "tests": [
    "test/hearth1_worldfires.test.js"
   ]

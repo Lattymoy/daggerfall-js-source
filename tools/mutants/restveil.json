@@ -1,0 +1,23 @@
+[
+  {
+    "name": "REST-VEIL2-the-selection-page-blacks-the-world-out-again",
+    "file": "src/ui/restWindow.js",
+    "old": "    if (isEnhanced()) drawMenuBackdrop(renderer, canvas, REST_VEIL);",
+    "new": "    if (this.state === 'resting' && isEnhanced()) drawMenuBackdrop(renderer, canvas, REST_VEIL);",
+    "tests": ["test/clockArc.test.js", "test/restlodging.test.js"]
+  },
+  {
+    "name": "REST-VEIL2-the-classic-skin-takes-the-veil-too",
+    "file": "src/ui/restWindow.js",
+    "old": "    if (isEnhanced()) drawMenuBackdrop(renderer, canvas, REST_VEIL);\n    else drawMenuBackdrop(renderer, canvas);",
+    "new": "    drawMenuBackdrop(renderer, canvas, REST_VEIL);",
+    "tests": ["test/clockArc.test.js", "test/restlodging.test.js"]
+  },
+  {
+    "name": "REST-VEIL2-the-veil-is-opaque",
+    "file": "src/ui/restWindow.js",
+    "old": "export const REST_VEIL = Object.freeze([0, 0, 0, 0.35]);",
+    "new": "export const REST_VEIL = Object.freeze([0, 0, 0, 1]);",
+    "tests": ["test/clockArc.test.js"]
+  }
+]

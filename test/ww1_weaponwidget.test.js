@@ -578,7 +578,12 @@ test('WW1: the rig runs the clone beside the machine - the late update after the
   // the ORDER and the returns are what this pin holds, and neither moved.
   // SW1b: the shield's verdict moved ABOVE the gate (its poses live in the frames `shown()` calls hidden), so the
   // step here is the one line, and `if (!shown()) return;` stops a shield-only frame before the clone and the sprite
-  assert.match(rig, /if \(fpArm\.active\(\)\) \{[^}]*fpArm\.draw\(c\);[^}]*return; \}\s*(?:\/\/[^\n]*\n\s*)*if \(shieldRect\) shield\.draw\(\(index, rect, uv\) => drawShieldSprite\(index, rect, uv, fpTint\)\);\s*if \(handheldOn\(\) && c\) handheld\.draw\(renderer, c, fpTint\);\s*if \(torchOnly\) return;[^\n]*\n\s*(?:\/\/[^\n]*\n\s*)*if \(!shown\(\)\) return;\s*(?:\/\/[^\n]*\n\s*)*if \(widgetOn\(\) && c && widget\.draw\(renderer, c, fpTint, _tlAdjust\)\) return;/, 'the arms first, SW1\\u2019s shield second (the off hand, behind both), the torch third, the clone fourth, the classic sprite last');
+  // MAP-WEAPON put one more rung between the arms and the shield: while a
+  // map holds the screen the classic body paints none of the four below
+  // (the arm's branch has returned above it, so the held-sheet pose is
+  // untouched). The ORDER of the four is what this pin holds, and it did
+  // not move.
+  assert.match(rig, /if \(fpArm\.active\(\)\) \{[^}]*fpArm\.draw\(c\);[^}]*return; \}\s*(?:\/\/[^\n]*\n\s*)*if \(sheetWindowUp\(\)\) return;\s*(?:\/\/[^\n]*\n\s*)*if \(shieldRect\) shield\.draw\(\(index, rect, uv\) => drawShieldSprite\(index, rect, uv, fpTint\)\);\s*if \(handheldOn\(\) && c\) handheld\.draw\(renderer, c, fpTint\);\s*if \(torchOnly\) return;[^\n]*\n\s*(?:\/\/[^\n]*\n\s*)*if \(!shown\(\)\) return;\s*(?:\/\/[^\n]*\n\s*)*if \(widgetOn\(\) && c && widget\.draw\(renderer, c, fpTint, _tlAdjust\)\) return;/, 'the arms first, MAP-WEAPON\\u2019s map gate, SW1\\u2019s shield (the off hand, behind both), the torch, the clone, the classic sprite last');
   assert.match(rig, /const envCast = envHit \?\? \(\(reach\) => \{/, 'CheckForEnvDamage\'s cast from the host\'s collider');
   const pw = rd('src/combat/playerWeapon.js');
   assert.match(pw, /this\.onAttackResult\?\.\(\{ foe, damage \}\);/, 'OnAttackDamageCalculated\'s one consumer');

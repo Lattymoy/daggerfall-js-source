@@ -1015,3 +1015,50 @@ Laws that were argued at length in a commit and pinned by nothing:
 MAP-FIELD5 end to end, `PEN.relief`, `GLYPH_PEN`, `PEN.halo`'s colour,
 the halo's stroke on filled kinds, and the easing. All six have pins and
 mutants now. A law worth a paragraph is worth a pin.
+
+## MAP-WEAPON - the sprite lane had no answer for this window (2026-09-19)
+
+Mac: *"when opening up the enhanced map, your unsheathed weapon can
+still be seen"*.
+
+MAP-FIELD gave the MORROWIND arm its held-sheet pose, and
+`fpArm.holdPaper` hides the weapon, the arrow and the torch while it
+holds - so the arm's own branch of the draw ladder was already right.
+THE CLASSIC BODY HAS NO POSE TO TAKE, so it just kept drawing.
+
+Under DFU's own travel map that is invisible: TRAV0I00 is a
+full-screen window and the weapon is behind it. The enhanced map is
+the port's own SPRITE - two hands holding a parchment, with real alpha
+around them, bottom-anchored by MAP-FIELD5 - so a drawn weapon shows
+through and around it. Hands holding a map are not also holding a
+sword.
+
+**THE LAW IS A POSITION IN THE LADDER.** `if (sheetWindowUp()) return;`
+stands BELOW the arm's branch (which returns, so the Morrowind lane is
+untouched) and ABOVE the shield, the torch hand, the widget's clone and
+the sprite - exactly the four the classic body would have painted, and
+nothing else. On a sheathed frame none of those drew anyway, so on that
+path the line changes nothing.
+
+It is NOT a leg of `shown()`. AUDIT-FIELD F1's warning one door along
+applies here too: `shown()`'s four legs are the WEAPON's own state - a
+readied spell, a cast animation, an equip countdown, the sheathe - and
+an open window is not one of them. Folding it in would relax every
+reader of that predicate.
+
+The host reads it PER FRAME off the live overlay slot
+(`townTalk.overlay?.isTravelMap === true`), never a flag raised at the
+open: the window can be closed by Escape, by a travel, by a quest popup
+taking the slot, or by a teardown, and a flag would have to be lowered
+at every one of them. `isTravelMap` is the window's own duck tag, this
+file's established idiom (`isRestWindow`, `isVirtueLevelUp`) - the
+combat rig imports no UI class to ask a UI question. The dep defaults
+to `() => false`, so a host that never heard of it draws what it always
+drew.
+
+Pins: `map3_heldpose.test.js` (the gate's position against all five
+neighbours, the default, and that `shown()` does not carry it; plus the
+host's read and the window's tag). Mutants: `tools/mutants/map3.json`
+grew three - the gate dropped, the gate hoisted above the arm branch,
+and the host raising a flag instead of asking the slot - 77 in total,
+75 dead and 2 equivalent as recorded.
