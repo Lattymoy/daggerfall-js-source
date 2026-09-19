@@ -45,13 +45,41 @@ export const RATE_NEAR_LETHAL = 150;
  *  ITSELF, which is why this is not a fourth row in the table above:
  *  the two are one number, and a table would let them drift apart. */
 export const RATE_MAX = 200;
-/** The overkill burst, in the order it goes off. */
-export const OVERKILL_BURST = Object.freeze([
-  Object.freeze({ rate: 450, min: 5, max: 10 }),
-  Object.freeze({ rate: 350, min: 5, max: 10 }),
-]);
-/** ...and the ladder's own spawn, underneath it. */
-export const OVERKILL_UNDER = Object.freeze({ min: 1, max: 5 });
+/**
+ * THE OVERKILL BURST. Re-read off the assembly for BLOOD1b, and the
+ * first reading was wrong TWICE - both corrections are here rather
+ * than quietly fixed, because a fact the port builds on has to be one
+ * a person can check.
+ *
+ * WRONG 1: "450 particles, then 350 more". The IL is an if/ELSE, not a
+ * sequence. Which one fires depends on the WEAPON: 450 for a warhammer
+ * (or the joke weapon below), 350 for everything else. A hit never
+ * spawns both.
+ *
+ * WRONG 2: "at size 5..10". `SpawnBlood(pos, rate, a, b)` sets
+ * `main.startSpeed = MinMaxCurve(a, b)` - a SPEED, not a size. The
+ * decal sizes are fixed on the printer (0.05 default, 0.01..0.1
+ * metres) and never vary with the blow at all. So what the burst's
+ * 5..10 against the ordinary spawn's 1..5 buys is REACH: the same
+ * blood thrown two and a half times as fast, which lands further out.
+ */
+export const OVERKILL_RATE_HEAVY = 450;
+export const OVERKILL_RATE = 350;
+/** The two speed bands, whose RATIO is the fact the port can use. */
+export const OVERKILL_SPEED = Object.freeze({ min: 5, max: 10 });
+export const ORDINARY_SPEED = Object.freeze({ min: 1, max: 5 });
+/** 7.5 over 3 - the midpoints of the two bands above, and the whole of
+ *  what the burst does to where the blood goes. */
+export const OVERKILL_REACH_SCALE = (OVERKILL_SPEED.min + OVERKILL_SPEED.max)
+  / (ORDINARY_SPEED.min + ORDINARY_SPEED.max);
+
+/** THE WEAPON THAT ALWAYS THROWS THE BIG ONE. Item template 126 is the
+ *  WARHAMMER - not a joke weapon, which the first reading assumed from
+ *  the `"horse"` short-name test beside it. That second test is for a
+ *  weapon some OTHER mod adds and this port does not have, so it has
+ *  nowhere to go and is not carried; the warhammer is real here and
+ *  is. */
+export const HEAVY_WEAPON_TEMPLATE = 126;
 
 /** `damage / maxHealth * 100`, or 0 where the target has no health to
  *  measure against (a divide by zero is not an overkill). */
@@ -188,6 +216,30 @@ export function dropSize(i, rate, rng = Math.random) {
   return Math.max(0, base * (1 + (rng() - 0.5) * 2 * SIZE_JITTER));
 }
 
+/**
+ * BLOOD1b - THE BURST'S OWN SPRAY, laid BESIDE the ladder's and not
+ * instead of it. The assembly runs `SpawnBlood(pos, rate, 1, 5)` under
+ * both overkill branches AND under neither, so the ordinary spawn is
+ * never replaced - the burst is a second spawn on top of it.
+ *
+ * Its own ceiling is higher than `SPRAY_MAX` for a reason the cap
+ * would otherwise erase: 450 and 350 both come out past twenty-four,
+ * so a shared cap would make a warhammer and a dagger leave the same
+ * mess. An overkill is rare, spectacular, and worth the rays.
+ */
+export const BURST_DROPS_MAX = 48;
+/** How much blood the burst throws: the heavy branch or the other one. */
+export const burstRate = (heavy, density = 1) => scaleRate(heavy ? OVERKILL_RATE_HEAVY : OVERKILL_RATE, density);
+/** ...and how many drops of it reach a surface. */
+export function burstCount(heavy, density = 1) {
+  return Math.max(1, Math.min(BURST_DROPS_MAX, Math.round(burstRate(heavy, density) * SPRAY_SHARE)));
+}
+/** THE SPEED IS THE REACH. The burst's particles start at 5..10 where
+ *  the ordinary spawn's start at 1..5, and since the decal sizes never
+ *  vary at all in the reference, that ratio is the WHOLE of what the
+ *  burst does to where the blood goes. */
+export const burstReach = (heavy, density = 1) => sprayRadius(burstRate(heavy, density)) * OVERKILL_REACH_SCALE;
+
 /** DFU's `bloodIndex` of 2 is the BLOODLESS six (skeletons and the
  *  like), and `characters/enemyBasics.js` has carried it from DFU
  *  since long before this arc. They bleed nothing, so they mark
@@ -214,17 +266,27 @@ export const isOverkill = (damage, maxHealth) => damagePercent(damage, maxHealth
  * and holds that each one hands its blow over. A site that forgets is
  * the failure this whole seam exists to make impossible.
  */
-export const bloodHit = (damage, entity) => Object.freeze({
-  damage: Number.isFinite(damage) ? damage : 0,
-  maxHealth: Number.isFinite(entity?.maxHealth) ? entity.maxHealth : 0,
-});
+export function bloodHit(damage, entity, { fromPlayer = false, weapon = null } = {}) {
+  return Object.freeze({
+    damage: Number.isFinite(damage) ? damage : 0,
+    maxHealth: Number.isFinite(entity?.maxHealth) ? entity.maxHealth : 0,
+    // BLOOD1b, THE OVERKILL BRANCH. The assembly asks two more things
+    // of a blow and both are decided at the site rather than here: was
+    // the attacker the PLAYER (only the player's blow can take the
+    // heavy branch) and was the weapon the WARHAMMER (which is what
+    // takes it). A site that knows neither answers no to both, which
+    // is the 350 branch - the one everything else takes anyway.
+    fromPlayer: !!fromPlayer,
+    heavy: (weapon?.templateIndex ?? -1) === HEAVY_WEAPON_TEMPLATE,
+  });
+}
 
 /** A blow that kills whatever it lands on, for the one site with no
  *  entity to measure against. WeaponManager.cs:504-508's wandering
  *  civilian dies to ONE weapon hit whatever the weapon was, so the
  *  share of their health it took is all of it - which the ladder reads
  *  as its hundred rung, not as an overkill. */
-export const LETHAL_HIT = Object.freeze({ damage: 1, maxHealth: 1 });
+export const LETHAL_HIT = Object.freeze({ damage: 1, maxHealth: 1, fromPlayer: true, heavy: false });
 
 /** How far off the surface a mark floats, so it does not fight the
  *  wall it is on. hitEffects.js nudges its splash by the same 2cm for

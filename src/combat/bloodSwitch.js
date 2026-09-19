@@ -42,6 +42,15 @@ export function bloodDensity() {
   return Math.max(0, Math.min(1, v));
 }
 
+/** BLOOD1b - THE OVERKILL SWITCH, the reference's `settingsAllowOverkill`.
+ *  A blow for 175% of a body's health throws a second, far wider spray
+ *  on top of the ordinary one; this is the row that says whether it
+ *  does. ON by default, like the marks themselves: the threshold is
+ *  high enough that an ordinary fight never reaches it, so what the
+ *  row really turns off is the spectacle of a killing blow. */
+export const BLOOD_OVERKILL_PREF = 'blood-overkill';
+export const bloodOverkillOn = () => getPref(BLOOD_OVERKILL_PREF) !== false;
+
 /** The dep bag `createHitEffects` takes, built once so four hosts
  *  cannot each spell it differently (the FOUR HOSTS RULE's own
  *  hazard). */
@@ -49,4 +58,5 @@ export const bloodDecalDeps = Object.freeze({
   enabled: bloodMarksOn,
   capacity: bloodCapacity,
   density: bloodDensity,
+  overkill: bloodOverkillOn,
 });

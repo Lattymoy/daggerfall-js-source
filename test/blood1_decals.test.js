@@ -16,8 +16,8 @@ import { readFileSync, readdirSync, statSync } from 'node:fs';
 import {
   createBloodDecalPool, bloodRate, ladderRate, scaleRate, damagePercent, isOverkill,
   surfaceBasis, writeDecalQuad, clearDecalQuad, decalIndices,
-  DECAL_FLOATS, DECAL_FLOATS_PER_VERTEX, RATE_LADDER, RATE_NEAR_LETHAL, RATE_MAX, OVERKILL_PERCENT, OVERKILL_BURST, OVERKILL_UNDER, SURFACE_LIFT,
-  bloodHit, LETHAL_HIT, sprayCount, sprayRadius, sprayOffset, dropSize, SPRAY_SHARE, SPRAY_MAX, SPATTER_SCALE, SIZE_JITTER, SPRAY_WOBBLE, SPRAY_RADIUS_MIN, SPRAY_RADIUS_MAX,   // BLOOD1b
+  DECAL_FLOATS, DECAL_FLOATS_PER_VERTEX, RATE_LADDER, RATE_NEAR_LETHAL, RATE_MAX, OVERKILL_PERCENT, OVERKILL_RATE, OVERKILL_RATE_HEAVY, OVERKILL_SPEED, ORDINARY_SPEED, OVERKILL_REACH_SCALE, HEAVY_WEAPON_TEMPLATE, SURFACE_LIFT,
+  bloodHit, LETHAL_HIT, burstCount, burstRate, burstReach, BURST_DROPS_MAX, sprayCount, sprayRadius, sprayOffset, dropSize, SPRAY_SHARE, SPRAY_MAX, SPATTER_SCALE, SIZE_JITTER, SPRAY_WOBBLE, SPRAY_RADIUS_MIN, SPRAY_RADIUS_MAX,   // BLOOD1b
 } from '../src/combat/bloodDecals.js';
 
 const dot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
@@ -73,9 +73,39 @@ test('BLOOD1a: overkill is 175%, NOT the 200 the reference’s own setting text 
   assert.equal(isOverkill(70, 40), true, '175% exactly is');
   assert.equal(isOverkill(80, 40), true);
   assert.equal(isOverkill(10, 0), false);
-  // the burst, in the order it goes off, with the ladder's spawn under it
-  assert.deepEqual(OVERKILL_BURST.map((b) => [b.rate, b.min, b.max]), [[450, 5, 10], [350, 5, 10]]);
-  assert.deepEqual([OVERKILL_UNDER.min, OVERKILL_UNDER.max], [1, 5]);
+  // THE BURST, RE-READ FOR BLOOD1b - and the first reading was wrong
+  // twice. It is an if/ELSE, not a sequence: 450 for a warhammer, 350
+  // for everything else, never both.
+  assert.equal(OVERKILL_RATE_HEAVY, 450);
+  assert.equal(OVERKILL_RATE, 350);
+  // ...and 5..10 against 1..5 are SPEEDS, not sizes. `SpawnBlood` sets
+  // `main.startSpeed`; the decal sizes are fixed on the printer (0.05
+  // default, 0.01..0.1 metres) and never vary with the blow at all.
+  // So the burst buys REACH, and the ratio of the midpoints is the
+  // whole of what it buys.
+  assert.deepEqual([OVERKILL_SPEED.min, OVERKILL_SPEED.max], [5, 10]);
+  assert.deepEqual([ORDINARY_SPEED.min, ORDINARY_SPEED.max], [1, 5]);
+  assert.equal(OVERKILL_REACH_SCALE, 2.5);
+  // ...and it is DERIVED from the two bands rather than typed again,
+  // so a re-read that moves a band moves the scale with it
+  const src = readFileSync(new URL('../src/combat/bloodDecals.js', import.meta.url), 'utf8');
+  const decl = src.slice(src.indexOf('export const OVERKILL_REACH_SCALE'), src.indexOf('/** THE WEAPON THAT ALWAYS'));
+  assert.doesNotMatch(decl.replace(/\/\/.*$/gm, ''), /\b2\.5\b/, 'the scale is read off the bands, not typed');
+
+  // ITEM TEMPLATE 126 IS THE WARHAMMER, not the joke weapon the first
+  // reading assumed from the `"horse"` short-name test beside it.
+  assert.equal(HEAVY_WEAPON_TEMPLATE, 126);
+});
+
+test('BLOOD1b: the heavy-weapon number is the WARHAMMER’s, and the one copy of it is deliberate', async () => {
+  // bloodDecals.js imports NOTHING - that is the law the no-GL pin
+  // holds and the reason every rule in it can be driven on a table -
+  // so it cannot reach `characters/weapons.js` for the name. The
+  // number is therefore written twice, and THIS is what keeps the two
+  // honest rather than an import that the module is not allowed.
+  const { WEAPONS } = await import('../src/characters/weapons.js');
+  assert.equal(HEAVY_WEAPON_TEMPLATE, WEAPONS.Warhammer,
+    'the blood arc’s heavy weapon and the game’s warhammer are one number');
 });
 
 test('BLOOD1a: the surface basis spans the plane, and a FLOOR is the case it is written for', () => {
@@ -310,7 +340,7 @@ function rigHitEffects(over = {}) {
   };
   const o = {
     collider: () => ({ raycastHit: () => ({ dist: 1.5, normal: [0, 1, 0], key: 'floor' }) }),
-    settings: { enabled: () => true, capacity: () => 4, density: () => 1 },
+    settings: { enabled: () => true, capacity: () => 4, density: () => 1, overkill: () => true },
     texture: () => 'blood-tex',
     // BLOOD1b: THE CHANCE HELD STILL. The spray wobbles each drop's
     // angle and jitters each drop's size, both off this one seam; a
@@ -699,16 +729,24 @@ test('BLOOD1b: EVERY splash site hands its blow over, so the rate ladder actuall
   // object literal is the FOUR HOSTS RULE's hazard with five more
   // hosts; `bloodHit` is the one home and takes the ENTITY, because
   // what a site has to hand is the body it just hurt, not a field of it.
-  assert.deepEqual(bloodHit(12, { maxHealth: 40 }), { damage: 12, maxHealth: 40 });
-  assert.deepEqual(bloodHit(undefined, undefined), { damage: 0, maxHealth: 0 }, 'nothing known is a graze, never a NaN');
-  assert.deepEqual(bloodHit(NaN, { maxHealth: NaN }), { damage: 0, maxHealth: 0 });
+  assert.deepEqual(bloodHit(12, { maxHealth: 40 }), { damage: 12, maxHealth: 40, fromPlayer: false, heavy: false });
+  assert.deepEqual(bloodHit(undefined, undefined), { damage: 0, maxHealth: 0, fromPlayer: false, heavy: false }, 'nothing known is a graze, never a NaN');
+  assert.deepEqual(bloodHit(NaN, { maxHealth: NaN }), { damage: 0, maxHealth: 0, fromPlayer: false, heavy: false });
   assert.ok(Object.isFrozen(bloodHit(1, { maxHealth: 2 })), 'and it is read, never edited downstream');
+
+  // BLOOD1b: and the two things the overkill branch asks, both
+  // decided at the SITE - a site that knows neither answers no to
+  // both, which is the branch nearly every overkill takes anyway.
+  assert.equal(bloodHit(1, null, { fromPlayer: true }).fromPlayer, true);
+  assert.equal(bloodHit(1, null, { weapon: { templateIndex: HEAVY_WEAPON_TEMPLATE } }).heavy, true);
+  assert.equal(bloodHit(1, null, { weapon: { templateIndex: 125 } }).heavy, false, 'a flail is not a warhammer');
+  assert.equal(bloodHit(1, null, { weapon: null }).heavy, false, 'and a bare fist is not either');
 
   // A CIVILIAN DIES TO ONE HIT whatever the weapon was
   // (WeaponManager.cs:504-508), and has no entity to measure against -
   // so the blow took ALL of them. That is the HUNDRED rung, not an
   // overkill: a murder is not a gibbing.
-  assert.deepEqual(LETHAL_HIT, { damage: 1, maxHealth: 1 });
+  assert.deepEqual(LETHAL_HIT, { damage: 1, maxHealth: 1, fromPlayer: true, heavy: false });
   assert.equal(damagePercent(LETHAL_HIT.damage, LETHAL_HIT.maxHealth), 100);
   assert.equal(ladderRate(100), 70);
   assert.equal(isOverkill(LETHAL_HIT.damage, LETHAL_HIT.maxHealth), false);
@@ -827,4 +865,117 @@ test('BLOOD1b: the ring and the spray roll ONE set of dice', () => {
   const { fx: other, marks: otherMarks } = rigHitEffects({ rng: () => 0.75 });
   other.showBloodSplash(0, [0, 5, 0], null, { damage: 10, maxHealth: 40 });
   assert.ok(dot(otherMarks._pool().decals()[0].right, d.right) < 0.99, 'a different roll turns it elsewhere');
+});
+
+test('BLOOD1b: a killing blow throws a SECOND spray over the first, wider and only for a player’s warhammer', () => {
+  // THE BURST IS NEVER A REPLACEMENT. The assembly runs its ordinary
+  // `SpawnBlood(pos, rate, 1, 5)` under BOTH overkill branches and
+  // under NEITHER, so the ladder's own spray lands whatever happens
+  // and the burst is an extra spawn on top of it.
+  assert.equal(burstRate(true), OVERKILL_RATE_HEAVY);
+  assert.equal(burstRate(false), OVERKILL_RATE);
+  // ...and the two rates SURVIVE the count, which is why the burst has
+  // a ceiling of its own: both come out past SPRAY_MAX, so the
+  // ordinary cap would make a warhammer and a dagger leave one mess.
+  assert.equal(BURST_DROPS_MAX, 48);
+  assert.ok(burstCount(true) > burstCount(false), 'a warhammer throws more than everything else');
+  assert.ok(sprayCount(OVERKILL_RATE_HEAVY) === sprayCount(OVERKILL_RATE),
+    'which the ordinary cap could not tell apart - hence the burst’s own');
+  assert.deepEqual([burstCount(true), burstCount(false)], [48, 42]);
+  // the density slider scales it, with the same floor of one
+  assert.equal(burstCount(true, 0), 1, 'turned right down is less blood, never none');
+  assert.ok(burstCount(true, 0.5) < burstCount(true, 1));
+  // THE SPEED IS THE REACH, and both branches fly at the same speed -
+  // the 450/350 difference is how MUCH, not how far.
+  assert.ok(Math.abs(burstReach(true) - sprayRadius(RATE_MAX) * OVERKILL_REACH_SCALE) < 1e-9);
+  assert.equal(burstReach(true), burstReach(false));
+  assert.ok(burstReach(false) > sprayRadius(RATE_MAX), 'and it carries further than any ordinary hit');
+
+  // ---- and now on a live pool
+  const wide = { enabled: () => true, capacity: () => 512, density: () => 1, overkill: () => true };
+  const kill = { damage: 70, maxHealth: 40, fromPlayer: true, heavy: false };   // 175% exactly
+  assert.equal(isOverkill(kill.damage, kill.maxHealth), true);
+
+  const { fx, marks } = rigHitEffects({ settings: wide });
+  fx.showBloodSplash(0, [0, 5, 0], null, kill);
+  assert.equal(marks.count(), burstCount(false) + sprayCount(RATE_MAX), 'the burst AND the ladder’s own spray');
+
+  // A PLAYER'S WARHAMMER TAKES THE HEAVY BRANCH, and nothing else does
+  const { fx: hammer, marks: hammerMarks } = rigHitEffects({ settings: wide });
+  hammer.showBloodSplash(0, [0, 5, 0], null, { ...kill, heavy: true });
+  assert.equal(hammerMarks.count(), burstCount(true) + sprayCount(RATE_MAX));
+  assert.ok(hammerMarks.count() > marks.count(), 'a warhammer leaves more of them');
+  // ...a FOE swinging the same warhammer does not: the assembly asks
+  // both questions and only the player's blow can answer the first
+  const { fx: foe, marks: foeMarks } = rigHitEffects({ settings: wide });
+  foe.showBloodSplash(0, [0, 5, 0], null, { ...kill, fromPlayer: false, heavy: true });
+  assert.equal(foeMarks.count(), marks.count(), 'a foe’s warhammer throws the ordinary burst');
+
+  // THE BURST GOES DOWN FIRST so the ordinary spray's pool lands ON
+  // TOP of it - the assembly's own order, and the one that reads
+  // right: the wide thin spatter, then the pool under the body.
+  const all = hammerMarks._pool().decals();
+  assert.equal(all.length, hammerMarks.count());
+  const lastOfBurst = all[burstCount(true) - 1], firstOfSpray = all[burstCount(true)];
+  assert.ok(firstOfSpray.serial > lastOfBurst.serial, 'the ladder’s spray is laid after the burst');
+  assert.deepEqual([firstOfSpray.pos[0], firstOfSpray.pos[2]], [0, 0], 'and its drop zero is the body’s own spot');
+  // ...and the burst really did carry further than the ordinary spray
+  const reachOf = (d) => Math.hypot(d.pos[0], d.pos[2]);
+  assert.ok(Math.max(...all.slice(0, burstCount(true)).map(reachOf)) > Math.max(...all.slice(burstCount(true)).map(reachOf)),
+    'the burst is the wider of the two');
+
+  // UNDER THE LINE, NOTHING EXTRA. 172.5% is not an overkill.
+  const { fx: under, marks: underMarks } = rigHitEffects({ settings: wide });
+  under.showBloodSplash(0, [0, 5, 0], null, { damage: 69, maxHealth: 40, fromPlayer: true, heavy: true });
+  assert.equal(underMarks.count(), sprayCount(ladderRate(172.5)), 'the ladder’s spray alone');
+
+  // AND THE ROW TURNS IT OFF, read LIVE - a player who turns it off
+  // mid-fight gets the next blow plain.
+  const off = { enabled: () => true, capacity: () => 512, density: () => 1, overkill: () => false };
+  const { fx: plain, marks: plainMarks } = rigHitEffects({ settings: off });
+  plain.showBloodSplash(0, [0, 5, 0], null, { ...kill, heavy: true });
+  assert.equal(plainMarks.count(), sprayCount(RATE_MAX), 'off, a killing blow bleeds like any other hit');
+  // ...and a host wiring no overkill dep at all is the same as off
+  const none = { enabled: () => true, capacity: () => 512, density: () => 1 };
+  const { fx: bare, marks: bareMarks } = rigHitEffects({ settings: none });
+  bare.showBloodSplash(0, [0, 5, 0], null, { ...kill, heavy: true });
+  assert.equal(bareMarks.count(), sprayCount(RATE_MAX));
+});
+
+test('BLOOD1b: a site that knows nothing about the swing says so, and gets the ordinary branch', () => {
+  // The two overkill questions are the SITE'S to answer, and eleven
+  // sites means a default that leans the wrong way is eleven silent
+  // wrong answers. `fromPlayer` therefore defaults to NO: a fall, a
+  // foe's blow, a peer's blow over the wire and anything written next
+  // year all take the ordinary branch until someone says otherwise.
+  assert.equal(bloodHit(1, null).fromPlayer, false);
+  assert.equal(bloodHit(1, null, {}).fromPlayer, false);
+  assert.equal(bloodHit(1, null, { fromPlayer: undefined }).fromPlayer, false, 'unknown is not yes');
+  assert.equal(bloodHit(1, null, { fromPlayer: null }).fromPlayer, false);
+  assert.equal(bloodHit(1, null, { fromPlayer: 0 }).fromPlayer, false);
+  assert.equal(bloodHit(1, null, { fromPlayer: true }).fromPlayer, true, 'only a site that says yes gets yes');
+
+  // ...and the seven sites that are NOT the player's own blow really
+  // do leave it unsaid, rather than saying yes by copying a neighbour
+  const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8')
+    .replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+  const argsAt = (s, i) => {
+    let depth = 0;
+    for (let j = i; j < s.length; j++) {
+      if (s[j] === '(') depth++;
+      else if (s[j] === ')') { depth--; if (!depth) return s.slice(i + 1, j); }
+    }
+    return null;
+  };
+  let claimed = 0;
+  for (const f of ['src/combat/arrowFlight.js', 'src/scenes/dungeonContext.js', 'src/scenes/cityGuards.js',
+    'src/scenes/exteriorFoes.js', 'src/scenes/hostCombat.js']) {
+    const s = read(f);
+    for (const m of s.matchAll(/showBloodSplash\??\.?\(/g)) {
+      if (/fromPlayer: true/.test(argsAt(s, m.index + m[0].length - 1) ?? '')) claimed++;
+    }
+  }
+  // the player's four: a melee swing in each of the three foe pools,
+  // and the shaft that all three share
+  assert.equal(claimed, 4, 'exactly the four sites that ARE the player’s own blow');
 });

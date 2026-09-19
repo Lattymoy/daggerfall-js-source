@@ -727,6 +727,23 @@ export const FEATURES = Object.freeze([
     // player answers for themselves.
     control: Object.freeze({ store: 'prefs', key: 'blood-marks', initial: true, online: 'player' }),
   }),
+  // BLOOD1b: the killing blow's own row. 175% of a body's health in
+  // one hit is a blow an ordinary fight never lands, so what this
+  // really turns off is the spectacle - which is why it is its own
+  // row and not a second meaning for the one above.
+  Object.freeze({
+    id: 'blood-overkill',
+    group: 'combat',
+    title: 'Overkill',
+    note: 'A blow that takes nearly twice a body\u2019s whole health throws blood far wider than an ordinary kill, and a '
+      + 'warhammer throws it wider still. Off, a killing blow bleeds like any other hit. The marks it leaves are the same '
+      + 'set as every other mark, so this costs nothing extra to keep on.',
+    effect: 'Takes effect at once. Blood already thrown stays where it landed.',
+    kinds: Object.freeze(['enhanced']),
+    // the same reading as the row above: a mark is a local picture
+    // with no gameplay in it, so every player answers for themselves.
+    control: Object.freeze({ store: 'prefs', key: 'blood-overkill', initial: true, online: 'player' }),
+  }),
   Object.freeze({
     id: 'mod-climates-calories',   // a mod-row id: WM3's law reaches the credits' vendor through it
     group: 'character',

@@ -80,16 +80,78 @@ never scales a hit down to nothing.
 
 ### Overkill
 
-**The threshold is 175%, not the 200% the mod's own setting text
-says.** A hit for >= 1.75x the target's max health, with overkill
-enabled, replaces the single spawn with a burst: 450 particles at size
-5..10, then 350 more at 5..10, a splash sound, and the rate-ladder
-spawn at size 1..5 underneath. The kill sound is deferred to a
-callback so it lands on the death rather than the hit.
+**RE-READ 2026-09-19 (BLOOD1b), and the first reading was wrong twice.**
+What follows is the assembly, decompiled to its shape:
 
-A weapon whose item template index is 126, or whose short name
-lowercases to `"horse"`, forces the overkill branch whatever the
-damage was - a joke weapon with a guaranteed gib.
+    if (!target || damage <= 0) return;
+    if (target is EnemyEntity e) {                     // the blood-type gate
+      var t = GetBloodType(e.MobileEnemy.ID);
+      if (t == 0) { SpawnDust(pos); return; }          // no blood -> dust
+      if (t == 2) return;                              // suppressed -> nothing
+    }
+    percent = damage / target.MaxHealth * 100;
+    rate    = GetBloodRateByPercentage(percent);
+    pos     = target.EntityBehaviour.transform.position;
+    heavy   = weapon != null && weapon.ItemTemplate.index == 126;
+    isHorse = weapon != null && weapon.shortName.ToLower() == "horse";
+
+    if (attacker == PlayerEntity) {
+      if (percent >= 175 && (settingsAllowOverkill || isHorse)) {
+        audioSource.Stop();
+        if (heavy || isHorse) {
+          SpawnBlood(pos, ScaleRate(450), 5, 10);
+          lastKilled = target;
+          soundToPlayOnKillCallback = <the splash, deferred>;
+        } else {
+          SpawnBlood(pos, ScaleRate(350), 5, 10);
+          PlayRandomBloodAudio(BloodSplashAudio, audioSource);
+        }
+      }
+      SpawnBlood(pos, rate, 1, 5);
+      return;
+    }
+    if (percent >= 175 && settingsAllowOverkill) {
+      var src = target's own AudioSource (added if absent);
+      src.Stop();
+      PlayRandomBloodAudio(BloodSplashAudio, src);
+      SpawnBlood(pos, ScaleRate(350), 5, 10);
+    }
+    SpawnBlood(pos, rate, 1, 5);
+
+**The threshold is 175%, not the 200% the mod's own setting text
+says.** That part of the first reading stands.
+
+**WRONG 1: "450 particles, then 350 more."** It is an if/ELSE, not a
+sequence. 450 for a WARHAMMER (item template 126) or the joke weapon;
+350 for everything else. A hit never spawns both. And the burst does
+not REPLACE the ordinary spawn - the ladder's own `SpawnBlood(pos,
+rate, 1, 5)` runs underneath either way, and runs alone when the blow
+is under the line or the setting is off.
+
+**WRONG 2: "at size 5..10."** `SpawnBlood(pos, rate, a, b)` sets
+`main.startSpeed = MinMaxCurve(a, b)`. Those are SPEEDS. The decal
+sizes are fixed on the printer - `defaultSize` 0.05, `minSize` 0.01,
+`maxSize` 0.1 metres - and never vary with the blow at all. So the
+burst's 5..10 against the ordinary 1..5 buys REACH, not bigger marks:
+the same blood thrown two and a half times as fast lands further out.
+
+**Item template 126 is the WARHAMMER**, not a joke weapon - the first
+reading assumed one from the `"horse"` short-name test beside it. That
+second test is for a weapon some other mod adds; this port has no such
+item, so it has nowhere to go, like Climates & Calories' two tavern
+backgrounds. The warhammer is real here and is carried.
+
+Two more facts the re-read turned up, neither yet built:
+
+- **THE SWING THROWS THE SPRAY.** `SpawnBlood` rotates the particle
+  system to the PLAYER's rotation and then pushes it with a
+  `forceOverLifetime` chosen by `WeaponManager.ScreenWeapon.WeaponState`
+  - a different axis and sign for each of the six strike directions. A
+  downward cut throws the blood differently from a left swing. The port
+  has weapon states; what none of its eleven splash sites carries is
+  which one was live, so this is a thread rather than a line.
+- **CEILING DRIPS.** `ParticleCollisionPrinter.GenerateCeilingDrips` is
+  set true on every spawn.
 
 ### Gibs
 
@@ -276,7 +338,38 @@ Slices, each behind its own `features.js` row:
    ring, so the mark's own turn and the spray's offsets come from one
    seam. Mutants: 49, 49 dead.
 
-   STILL TO COME IN THIS SLICE: the 175% burst and the corpse swap.
+   THEN THE OVERKILL. Re-reading the assembly for it found the first
+   reading wrong twice; both corrections are in THE FACTS above rather
+   than quietly fixed, because a fact the port builds on has to be one
+   a person can check.
+
+   What the port does with the corrected reading: a blow at or past
+   175% throws a SECOND spray over the ordinary one. The burst has a
+   ceiling of its own (48 drops against the ordinary 24) because 450
+   and 350 both come out past the ordinary cap, so sharing it would
+   make a warhammer and a dagger leave one mess. Both branches fly at
+   the same speed, so the 450/350 difference is how MUCH and the
+   speed band is how FAR: two and a half times the ordinary reach,
+   derived from the two bands rather than typed, so a later re-read
+   that moves a band moves the scale with it.
+
+   ONLY A PLAYER'S WARHAMMER takes the heavy branch, because the
+   assembly asks both questions. Both are the SITE'S to answer, and
+   `fromPlayer` defaults to NO - eleven sites means a default leaning
+   the wrong way is eleven silent wrong answers. Four sites say yes:
+   a melee swing in each of the three foe pools, and the shaft all
+   three share.
+
+   THE BURST GOES DOWN FIRST so the ladder's pool lands on top of it,
+   which is the assembly's order and the one that reads right: the
+   wide thin spatter, then the pool under the body. `blood-overkill`
+   is its own feature row, read live, and off is a killing blow that
+   bleeds like any other hit. Mutants: 60, 60 dead.
+
+   STILL TO COME IN THIS SLICE: the splash sound (immediate for the
+   350 branch, deferred to the DEATH for the 450 one), the corpse
+   swap and the gibs, and the two facts the re-read turned up - the
+   swing direction throwing the spray, and the ceiling drips.
 3. **BLOOD1c - bleeding.** The 2..5s cadence and the ramp above.
 
 The numbers in THE FACTS are the target to feel like. The code that

@@ -291,7 +291,7 @@
   {
     "name": "BLOOD1b-a-splash-site-forgets-its-blow",
     "file": "src/scenes/exteriorFoes.js",
-    "old": "          bloodCentre(foe.ai.feet, foe.ai.height), null, bloodHit(damage, foe.entity));   // BLOOD1b: the blow drives the ladder",
+    "old": "          bloodCentre(foe.ai.feet, foe.ai.height), null, bloodHit(damage, foe.entity, { fromPlayer: true, weapon: playerWeapon.weapon }));   // BLOOD1b: the blow drives the ladder, and only a PLAYER'S warhammer takes the heavy branch",
     "new": "          bloodCentre(foe.ai.feet, foe.ai.height));",
     "tests": [
       "test/blood1_decals.test.js"
@@ -309,8 +309,8 @@
   {
     "name": "BLOOD1b-the-hit-shape-lets-a-NaN-through",
     "file": "src/combat/bloodDecals.js",
-    "old": "  damage: Number.isFinite(damage) ? damage : 0,\n  maxHealth: Number.isFinite(entity?.maxHealth) ? entity.maxHealth : 0,",
-    "new": "  damage: damage ?? 0,\n  maxHealth: entity?.maxHealth ?? 0,",
+    "old": "    damage: Number.isFinite(damage) ? damage : 0,\n    maxHealth: Number.isFinite(entity?.maxHealth) ? entity.maxHealth : 0,",
+    "new": "    damage: damage ?? 0,\n    maxHealth: entity?.maxHealth ?? 0,",
     "tests": [
       "test/blood1_decals.test.js"
     ]
@@ -318,8 +318,8 @@
   {
     "name": "BLOOD1b-a-murdered-civilian-is-an-overkill",
     "file": "src/combat/bloodDecals.js",
-    "old": "export const LETHAL_HIT = Object.freeze({ damage: 1, maxHealth: 1 });",
-    "new": "export const LETHAL_HIT = Object.freeze({ damage: 2, maxHealth: 1 });",
+    "old": "export const LETHAL_HIT = Object.freeze({ damage: 1, maxHealth: 1, fromPlayer: true, heavy: false });",
+    "new": "export const LETHAL_HIT = Object.freeze({ damage: 2, maxHealth: 1, fromPlayer: true, heavy: false });",
     "tests": [
       "test/blood1_decals.test.js"
     ]
@@ -426,8 +426,8 @@
   {
     "name": "BLOOD1b-the-rate-sizes-one-mark-again-instead-of-counting-them",
     "file": "src/combat/bloodMarks.js",
-    "old": "    const n = sprayCount(rate);",
-    "new": "    const n = 1;",
+    "old": "    return spray(col, pos, sprayCount(rate), sprayRadius(rate), rate);",
+    "new": "    return spray(col, pos, 1, sprayRadius(rate), rate);",
     "tests": [
       "test/blood1_decals.test.js"
     ]
@@ -437,6 +437,105 @@
     "file": "src/combat/bloodMarks.js",
     "old": "    _pool = createBloodDecalPool({ capacity: cap, rng });",
     "new": "    _pool = createBloodDecalPool({ capacity: cap });",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-the-burst-REPLACES-the-ladder-s-spray",
+    "file": "src/combat/bloodMarks.js",
+    "old": "      spray(col, pos, burstCount(heavy, density), burstReach(heavy, density), burstRate(heavy, density));\n    }\n    const rate = bloodRate(damage, maxHealth, density);\n    return spray(col, pos, sprayCount(rate), sprayRadius(rate), rate);",
+    "new": "      const h2 = !!hit?.fromPlayer && !!hit?.heavy;\n      return spray(col, pos, burstCount(h2, density), burstReach(h2, density), burstRate(h2, density));\n    }\n    const rate = bloodRate(damage, maxHealth, density);\n    return spray(col, pos, sprayCount(rate), sprayRadius(rate), rate);",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-a-FOE-s-warhammer-takes-the-heavy-branch-too",
+    "file": "src/combat/bloodMarks.js",
+    "old": "      const heavy = !!hit?.fromPlayer && !!hit?.heavy;",
+    "new": "      const heavy = !!hit?.heavy;",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-every-overkill-takes-the-heavy-branch",
+    "file": "src/combat/bloodMarks.js",
+    "old": "      const heavy = !!hit?.fromPlayer && !!hit?.heavy;",
+    "new": "      const heavy = true;",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-the-overkill-row-is-ignored",
+    "file": "src/combat/bloodMarks.js",
+    "old": "    if (overkillOn() && isOverkill(damage, maxHealth)) {",
+    "new": "    if (isOverkill(damage, maxHealth)) {",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-a-host-that-wires-no-overkill-dep-gets-one-anyway",
+    "file": "src/combat/bloodMarks.js",
+    "old": "  const overkillOn = () => !!(settings?.overkill?.() ?? false);",
+    "new": "  const overkillOn = () => !!(settings?.overkill?.() ?? true);",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-the-burst-shares-the-ordinary-spray-s-cap",
+    "file": "src/combat/bloodDecals.js",
+    "old": "  return Math.max(1, Math.min(BURST_DROPS_MAX, Math.round(burstRate(heavy, density) * SPRAY_SHARE)));",
+    "new": "  return sprayCount(burstRate(heavy, density));",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-the-burst-does-not-carry-further",
+    "file": "src/combat/bloodDecals.js",
+    "old": "export const burstReach = (heavy, density = 1) => sprayRadius(burstRate(heavy, density)) * OVERKILL_REACH_SCALE;",
+    "new": "export const burstReach = (heavy, density = 1) => sprayRadius(burstRate(heavy, density));",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-the-reach-scale-is-typed-instead-of-read-off-the-bands",
+    "file": "src/combat/bloodDecals.js",
+    "old": "export const OVERKILL_REACH_SCALE = (OVERKILL_SPEED.min + OVERKILL_SPEED.max)\n  / (ORDINARY_SPEED.min + ORDINARY_SPEED.max);",
+    "new": "export const OVERKILL_REACH_SCALE = 2.5;",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-the-heavy-weapon-is-not-the-warhammer",
+    "file": "src/combat/bloodDecals.js",
+    "old": "export const HEAVY_WEAPON_TEMPLATE = 126;",
+    "new": "export const HEAVY_WEAPON_TEMPLATE = 125;",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-the-burst-has-no-density-floor",
+    "file": "src/combat/bloodDecals.js",
+    "old": "  return Math.max(1, Math.min(BURST_DROPS_MAX, Math.round(burstRate(heavy, density) * SPRAY_SHARE)));",
+    "new": "  return Math.min(BURST_DROPS_MAX, Math.round(burstRate(heavy, density) * SPRAY_SHARE));",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-a-site-that-knows-nothing-claims-the-player-swung",
+    "file": "src/combat/bloodDecals.js",
+    "old": "    fromPlayer: !!fromPlayer,",
+    "new": "    fromPlayer: fromPlayer !== false,",
     "tests": [
       "test/blood1_decals.test.js"
     ]

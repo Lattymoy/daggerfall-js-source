@@ -26,6 +26,7 @@
 import {
   createBloodDecalPool, writeDecalQuad, clearDecalQuad, bloodRate, marksBlood, DECAL_FLOATS,
   sprayCount, sprayRadius, sprayOffset, dropSize,   // BLOOD1b: the scatter BLOOD1a left to this slice
+  isOverkill, burstCount, burstRate, burstReach,    // BLOOD1b: and the killing blow's own spray
 } from './bloodDecals.js';
 
 /** How far down a mark looks for something to stain. Blood spawns at
@@ -55,6 +56,9 @@ export function createBloodMarks({ renderer = null, collider = null, settings = 
 
   const liveCollider = () => (typeof collider === 'function' ? collider() : null);
   const on = () => !!(settings?.enabled?.() ?? false) && typeof collider === 'function' && !!renderer?.createDecalBatch;
+  // BLOOD1b: the killing blow's own row, read LIVE like the rest - a
+  // player who turns it off mid-fight gets the next blow plain.
+  const overkillOn = () => !!(settings?.overkill?.() ?? false);
   const markTexture = texture ?? (() => (_texKey ? renderer?.textures?.get?.(_texKey) ?? null : null));
 
   function ensure() {
@@ -78,34 +82,19 @@ export function createBloodMarks({ renderer = null, collider = null, settings = 
   }
 
   /**
-   * Lay the marks one blood event leaves. THE SURFACE IS FOUND, NOT
-   * ASSUMED: blood spawns at chest height, which is nowhere near
-   * anything to stain, so every ray goes DOWN. Nothing within reach -
-   * a body over a chasm, a foe on a bridge - leaves no mark rather
-   * than one hanging in space, and that is judged PER DROP: spatter
-   * thrown past the edge of a walkway falls into the dark while the
-   * pool under the body still lands.
+   * Lay ONE spray: `n` drops inside `radius` of `pos`, each at the
+   * size `rate` asks for. THE SURFACE IS FOUND, NOT ASSUMED: blood
+   * spawns at chest height, which is nowhere near anything to stain,
+   * so every ray goes DOWN. Nothing within reach - a body over a
+   * chasm, a foe on a bridge - leaves no mark rather than one hanging
+   * in space, and that is judged PER DROP: spatter thrown past the
+   * edge of a walkway falls into the dark while the pool under the
+   * body still lands.
    *
-   * BLOOD1b: THE RATE IS A COUNT AGAIN. BLOOD1a had it size a single
-   * mark, because the scatter belonged to this slice and inventing a
-   * decals-per-hit law there would have been inventing one to
-   * un-invent here. Now the ladder says how many drops reach the
-   * floor and how far they carry, and the size band sizes each.
-   *
-   * Answers the POOL - drop zero, the body's own spot - or null when
-   * nothing landed at all.
+   * Answers DROP ZERO - the body's own spot - or null when nothing in
+   * this spray landed at all.
    */
-  function place(bloodIndex, pos, hit = null) {
-    if (!on() || !pos) return null;
-    // A BLOODLESS FOE MARKS NOTHING. DFU's own bloodIndex says which
-    // six, and characters/enemyBasics.js has carried it since long
-    // before this arc.
-    if (!marksBlood(bloodIndex)) return null;
-    const col = liveCollider();
-    if (!col?.raycastHit) return null;   // between two worlds: a pixel unloaded, a mode half changed
-    const rate = bloodRate(hit?.damage ?? 0, hit?.maxHealth ?? 0, settings?.density?.() ?? 1);
-    const n = sprayCount(rate);
-    const radius = sprayRadius(rate);
+  function spray(col, pos, n, radius, rate) {
     let pool = null;
     for (let i = 0; i < n; i++) {
       const [dx, dz] = sprayOffset(i, n, radius, rng);
@@ -120,6 +109,49 @@ export function createBloodMarks({ renderer = null, collider = null, settings = 
       if (i === 0) pool = d;
     }
     return pool;
+  }
+
+  /**
+   * Lay the marks one blood event leaves.
+   *
+   * BLOOD1b: THE RATE IS A COUNT AGAIN. BLOOD1a had it size a single
+   * mark, because the scatter belonged to this slice and inventing a
+   * decals-per-hit law there would have been inventing one to
+   * un-invent here. Now the ladder says how many drops reach the
+   * floor and how far they carry, and the size band sizes each.
+   *
+   * AND A KILLING BLOW THROWS A SECOND SPRAY OVER THE FIRST. The
+   * assembly runs its ordinary `SpawnBlood(pos, rate, 1, 5)` under
+   * both overkill branches AND under neither, so the burst is never a
+   * replacement - it is an extra spawn, thrown two and a half times
+   * as fast and therefore two and a half times as wide. THE BURST
+   * GOES DOWN FIRST so the ordinary spray's pool lands on top of it,
+   * which is the order the assembly has and the order that reads
+   * right: the wide thin spatter, then the pool under the body.
+   *
+   * Answers the POOL - the ordinary spray's drop zero - or null when
+   * nothing landed at all.
+   */
+  function place(bloodIndex, pos, hit = null) {
+    if (!on() || !pos) return null;
+    // A BLOODLESS FOE MARKS NOTHING. DFU's own bloodIndex says which
+    // six, and characters/enemyBasics.js has carried it since long
+    // before this arc.
+    if (!marksBlood(bloodIndex)) return null;
+    const col = liveCollider();
+    if (!col?.raycastHit) return null;   // between two worlds: a pixel unloaded, a mode half changed
+    const damage = hit?.damage ?? 0, maxHealth = hit?.maxHealth ?? 0;
+    const density = settings?.density?.() ?? 1;
+    if (overkillOn() && isOverkill(damage, maxHealth)) {
+      // ONLY A PLAYER'S WARHAMMER TAKES THE HEAVY BRANCH. The
+      // assembly asks both questions and a foe's blow can answer
+      // neither, so everything else is the other branch - which is
+      // the one nearly every overkill takes anyway.
+      const heavy = !!hit?.fromPlayer && !!hit?.heavy;
+      spray(col, pos, burstCount(heavy, density), burstReach(heavy, density), burstRate(heavy, density));
+    }
+    const rate = bloodRate(damage, maxHealth, density);
+    return spray(col, pos, sprayCount(rate), sprayRadius(rate), rate);
   }
 
   /** The ring is in WORLD space, which in the streaming host is the
