@@ -10,15 +10,80 @@ import { readFileSync } from 'node:fs';
 import {
   SHEET_GRID, FIRE_FRAMES, ALIGN, cellRect, keyBackground, contentBox,
   unionBox, unionDrawRect, placeSprite, createGunMachine, muzzleLight,
-  recoilOffset, bobOffset,
+  createRecoil, createWidgetRig, widgetRigStep, labWidgetSettings, labMotion, widgetDefaults,
 } from '../src/tools/gunLab.js';
 import { ALIGN as FPS_ALIGN } from '../src/combat/fpsWeapon.js';
+import { bobStep, offsetStep, inertiaStep } from '../src/combat/weaponWidgetMotion.js';
 
 test('the lab is a lab: nothing the game runs imports it, and it changes no weapon law', () => {
-  const rg = readFileSync('src/combat/weaponRig.js', 'utf8');
-  const fp = readFileSync('src/combat/fpsWeapon.js', 'utf8');
-  assert.ok(!rg.includes('gunLab') && !fp.includes('gunLab'), 'the weapon rig and FPSWeapon know nothing about it');
+  // The arrow points ONE WAY. The lab reads FPSWeapon's alignment and
+  // Weapon Widget's movement modules; neither may ever read back, or
+  // the prototype has quietly become a dependency of the game.
+  // an IMPORT, not the word: weaponWidgetMotion.js names the lab in
+  // its header, which is the point of the split being written down
+  for (const f of ['src/combat/weaponRig.js', 'src/combat/fpsWeapon.js', 'src/combat/weaponWidget.js', 'src/combat/weaponWidgetMotion.js']) {
+    assert.doesNotMatch(readFileSync(f, 'utf8'), /^\s*import[\s\S]*?from\s+'[^']*gunLab/m, `${f} does not import the lab`);
+  }
   assert.ok(readFileSync('gun-proto.html', 'utf8').includes('/src/tools/gunLab.js'), 'the page is the only consumer');
+});
+
+test('the mod\u2019s movement is RUN, not copied - the lab imports the modules themselves', () => {
+  const lab = readFileSync('src/tools/gunLab.js', 'utf8');
+  assert.match(lab, /import \{[\s\S]*?offsetStep, bobStep, inertiaStep, widgetTransformRect,[\s\S]*?\} from '\.\.\/combat\/weaponWidgetMotion\.js'/,
+    'Offset, Bob, Inertia and the rect transform come from the mod\u2019s own module');
+  // and they are the same functions, not same-named ones
+  assert.equal(typeof bobStep, 'function');
+  assert.equal(typeof offsetStep, 'function');
+  assert.equal(typeof inertiaStep, 'function');
+});
+
+test('the lab reads the mod\u2019s own settings, with the mod\u2019s own multipliers', () => {
+  const d = widgetDefaults();
+  assert.equal(d['Bob.Length'], 100, 'the declared default, not a number the lab made up');
+  assert.equal(d['Modules.Inertia'], false, 'the MOD ships Inertia off');
+  const s = labWidgetSettings();
+  assert.equal(s.bobLength, 1, 'Bob.Length / 100, LoadSettings\u2019 own multiplier');
+  assert.equal(s.inertiaScale, 500, 'Inertia.Scale x 500');
+  assert.equal(s.offsetSpeed, 10, 'Offset.Speed x 10');
+  assert.equal(s.bobSmoothSpeed, 500, 'Bob.SpeedState x 500');
+  assert.equal(s.inertia, true, 'and the LAB turns Inertia on - its declared departure, this art being the case the mod\u2019s warning is about');
+  assert.equal(labWidgetSettings({ 'Modules.Bob': false }).bob, false, 'a panel switch reaches the derived field');
+});
+
+test('Weapon Widget\u2019s Bob sways the gun while walking and barely breathes while standing', () => {
+  const s = labWidgetSettings();
+  const screenRect = { width: 1280, height: 800 };
+  const span = (motion) => {
+    const rig = createWidgetRig();
+    let lo = Infinity, hi = -Infinity;
+    for (let i = 0; i < 400; i++) {
+      widgetRigStep(rig, s, 1 / 60, { screenRect, motion, idle: true });
+      if (i > 120) { lo = Math.min(lo, rig.position[0]); hi = Math.max(hi, rig.position[0]); }
+    }
+    return hi - lo;
+  };
+  const walking = span(labMotion({ walking: true }));
+  const standing = span(labMotion({ walking: false }));
+  assert.ok(walking > 10, `the walk sways the sprite (${walking.toFixed(1)}px)`);
+  assert.ok(standing > 0 && standing < walking / 3, `BobWhileIdle is a tenth of a stride, not a stride (${standing.toFixed(1)}px)`);
+  // the motor's frame is the rig's own shape (weaponRig.js:895-902)
+  const m = labMotion({ walking: true, running: true });
+  assert.ok(m.speedRatio > 1 && m.baseSpeed > 0 && m.localVel[2] > 0, 'running is faster than the walk base, and it is forward motion');
+  assert.equal(labMotion({ walking: false }).standing, true);
+});
+
+test('the reload lowers the weapon on the Offset module\u2019s easing, and brings it back', () => {
+  const s = labWidgetSettings();
+  const rig = createWidgetRig();
+  const step = (shown) => widgetRigStep(rig, s, 1 / 60, {
+    screenRect: { width: 1280, height: 800 }, motion: labMotion(), idle: true,
+    shown, hiddenTarget: [0, 0.55],
+  });
+  for (let i = 0; i < 120; i++) step(false);
+  assert.ok(rig.offset[1] > 0.5, `the weapon is down (offset ${rig.offset[1].toFixed(2)} of its own height)`);
+  assert.equal(rig.offset[0], 0, 'straight down - the lab\u2019s target, not the mod\u2019s diagonal sheathe');
+  for (let i = 0; i < 200; i++) step(true);
+  assert.ok(Math.abs(rig.offset[1]) < 0.01, 'and back to rest when it is ready');
 });
 
 test('ALIGN is FPSWeapon\u2019s own enum, not a copy of it - an offset means the same thing in both', () => {
@@ -125,18 +190,39 @@ test('the cycle: one shot at a time, six frames, a pump, and a hit frame that fi
   assert.equal(m.shots, 2);
 });
 
-test('the feel curves stay inside the frame and settle to nothing at rest', () => {
+test('the muzzle light peaks on the flash frame and falls away over the smoke', () => {
   assert.equal(muzzleLight('Idle', 1), 0);
-  assert.equal(muzzleLight('Firing', 1), 1, 'the flash is brightest on the sheet’s frame 2');
+  assert.equal(muzzleLight('Firing', 1), 1, 'the flash is brightest on the sheet\u2019s frame 2');
   assert.equal(muzzleLight('Firing', 99), 0);
   for (let f = 0; f < FIRE_FRAMES; f++) {
     const l = muzzleLight('Firing', f);
     assert.ok(l >= 0 && l <= 1);
     if (f > 1) assert.ok(l < muzzleLight('Firing', f - 1), 'the light falls away over the smoke');
   }
-  assert.deepEqual(recoilOffset('Idle', 0, 12), { x: 0, y: 0 });
-  assert.deepEqual(recoilOffset('Firing', 0, 0), { x: 0, y: 0 });
-  assert.ok(recoilOffset('Firing', 0, 12).y > recoilOffset('Firing', 4, 12).y, 'the kick settles');
-  assert.deepEqual(bobOffset(1.2, 4, false), { x: 0, y: 0 });
-  assert.ok(Math.abs(bobOffset(1.2, 4, true).x) <= 4);
+});
+
+test('the recoil is a DISPLACEMENT that settles, and a second shot stacks on what is left', () => {
+  const r = createRecoil({ kick: 16 });
+  assert.deepEqual(r.step(1 / 60), { x: 0, y: -0 }, 'nothing until the trigger breaks');
+  r.punch();
+  // the rise is there on the shot's own frame - an impulse would put
+  // the peak two frames late and a third of the size
+  const first = r.step(1 / 60);
+  assert.ok(first.y < -12, `up the screen immediately (${first.y.toFixed(1)})`);
+  // back toward the shoulder, which for a weapon held on the RIGHT is
+  // toward the middle of the screen
+  assert.ok(first.x < 0, `and back toward the shoulder (${first.x.toFixed(1)})`);
+  let last = first.y;
+  for (let i = 0; i < 20; i++) last = r.step(1 / 60).y;
+  assert.ok(last > first.y, 'the spring pulls it home');
+  const mid = r.y;
+  r.punch();
+  assert.ok(r.y > mid + 15, 'a second shot into the recovery stacks on what is left - the reason this is a spring');
+  for (let i = 0; i < 400; i++) r.step(1 / 60);
+  assert.ok(Math.abs(r.y) < 0.01 && Math.abs(r.x) < 0.01, 'and it comes fully to rest');
+  // a big dt must not explode the spring (the sub-step)
+  const r2 = createRecoil({ kick: 16, stiff: 400 });
+  r2.punch();
+  for (let i = 0; i < 40; i++) r2.step(0.1);
+  assert.ok(Number.isFinite(r2.y) && Math.abs(r2.y) < 1, 'a 100ms frame does not blow it up');
 });

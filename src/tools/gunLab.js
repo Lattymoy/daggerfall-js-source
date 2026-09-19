@@ -147,13 +147,26 @@ export function unionBox(boxes) {
   return { x: x0, y: y0, w: x1 - x0, h: y1 - y0 };
 }
 
-// ONE HOME: the alignment enum is FPSWeapon's, imported rather than
-// restated, so an offset tuned in the lab means in the lab exactly
-// what it means in the game. The arrow points ONE WAY - the lab reads
-// the port's law and the port does not know the lab exists
-// (test/gunLab.test.js fails if that ever stops being true).
-export { ALIGN } from '../combat/fpsWeapon.js';
-import { ALIGN } from '../combat/fpsWeapon.js';
+// ONE HOME: the alignment enum is FPSWeapon's own, imported rather
+// than restated, so an offset tuned in the lab means in the lab
+// exactly what it means in the game. From the LEAF it lives in
+// (combat/weaponAlign.js, which fpsWeapon.js re-exports), because
+// three integers are not worth this lab's build pulling the CIF
+// reader, the inventory and a mod's mesh folder in behind them. The
+// arrow points ONE WAY - the lab reads the port's law and the port
+// does not know the lab exists (test/gunLab.test.js fails if that
+// ever stops being true).
+export { ALIGN } from '../combat/weaponAlign.js';
+import { ALIGN } from '../combat/weaponAlign.js';
+
+// THE MOD'S OWN MODULES (WW1's 1:1 port of FPSWeaponClone) - run, not
+// imitated. The arrow points one way, as it does for ALIGN.
+import {
+  WEAPON_WIDGET_VENDOR, readWidgetSettings, offsetStep, bobStep, inertiaStep, widgetTransformRect,
+} from '../combat/weaponWidgetMotion.js';
+import { MOD_SETTINGS } from '../systems/modSettings.js';
+import { walkSpeed, runSpeed } from '../player/motor.js';   // GetBaseSpeed's walk arm, the bob's baseSpeed
+export { widgetTransformRect };
 
 /**
  * FPSWeapon's OnGUI rect (:378-388), with the width taken as a
@@ -240,19 +253,157 @@ export function muzzleLight(state, frame) {
 }
 
 /**
- * The recoil, in native units: a hard kick on the shot, settling back
- * exponentially. `amount` is the peak rise in 320x200 pixels.
+ * THE RECOIL, and the one thing in this file the Weapon Widget cannot
+ * lend. The mod's Recoil module recoils a SWING - it replays the strike
+ * animation in reverse when the blow lands - and a gun has no swing to
+ * replay. So this is the lab's own, and it is a spring rather than a
+ * curve keyed to the frame: the shot delivers an IMPULSE, the sprite
+ * carries it, and the spring pulls it back. That is what makes a fast
+ * second shot stack on a barrel still coming down, which a per-frame
+ * curve cannot do.
+ *
+ * Native (320x200) units throughout, so a kick tuned in a small window
+ * is the same kick in a big one. `kick` is the impulse's rise, `stiff`
+ * how hard the spring pulls home, `damp` how much it fights the
+ * overshoot (around 2*sqrt(stiff) is critical - under it the barrel
+ * bounces, over it it wallows).
  */
-export function recoilOffset(state, frame, amount = 10) {
-  if (state !== 'Firing' || amount === 0) return { x: 0, y: 0 };
-  const fall = Math.exp(-frame * 0.62);
-  return { x: -amount * 0.28 * fall, y: amount * fall };
+export function createRecoil({ kick = 16, stiff = 120, damp = 14, back = 0.42 } = {}) {
+  const r = { x: 0, y: 0, vx: 0, vy: 0, kick, stiff, damp, back };
+  /** The shot, as a DISPLACEMENT rather than an impulse: the barrel is
+   *  already up by `kick` on the frame the trigger breaks, and the
+   *  spring's job is the ride down. An impulse (`vy += kick`) reads as
+   *  a soft push - the peak lands two frames late and a third of the
+   *  size, which is the first thing the probe caught. A second shot
+   *  fired into the recovery stacks on what is left, which is the
+   *  reason this is a spring at all. */
+  r.punch = (amount = r.kick) => { r.y += amount; r.x -= amount * r.back; };
+  r.step = (dt) => {
+    // sub-stepped: a spring this stiff integrated on a 30ms frame
+    // explodes, and a lab that only feels right at 120fps is no lab
+    const n = Math.max(1, Math.ceil(dt / 0.004));
+    const h = dt / n;
+    for (let i = 0; i < n; i++) {
+      r.vx += (-r.stiff * r.x - r.damp * r.vx) * h;
+      r.vy += (-r.stiff * r.y - r.damp * r.vy) * h;
+      r.x += r.vx * h; r.y += r.vy * h;
+    }
+    return { x: r.x, y: -r.y };   // +y is up in the impulse, down on screen
+  };
+  return r;
 }
 
-/** The walk bob - the lab's own, so the pose can be judged moving. */
-export function bobOffset(t, amount, moving) {
-  if (!moving || !amount) return { x: 0, y: 0 };
-  return { x: Math.sin(t * 5.2) * amount, y: Math.abs(Math.sin(t * 10.4)) * amount * 0.6 };
+/**
+ * THE WEAPON WIDGET'S OWN MOVEMENT, ON THE GUN.
+ *
+ * Mac: "all the idle, bob enhancements from our in-game weapon mods
+ * need to be applied". They are - by RUNNING them, not by imitating
+ * them. Offset, Bob and Inertia are imported from combat/weaponWidget.js,
+ * which is the 1:1 port of FPSWeaponClone's own modules, and the
+ * settings come from the mod's own declared defaults through
+ * readWidgetSettings, so the multipliers the mod applies (Offset.Speed
+ * x10, Bob.Length /100, SizeX/Y x2, SpeedMove x4, SpeedState x500,
+ * Inertia.Scale/Speed x500, Forward x0.2) are applied here too.
+ *
+ * Three departures, all of them the gun's:
+ *   - INERTIA IS ON by default. The mod ships it off ("requires
+ *     double-scaled weapon textures"); this art IS high resolution, so
+ *     the lab is the case the warning is about and the module is the
+ *     point of the exercise.
+ *   - THE RELOAD LOWER rides the Offset module's easing to a target of
+ *     the lab's own - straight down, not the mod's diagonal [2, 2] -
+ *     because there is no reload animation to play and a weapon that
+ *     drops out of frame and comes back reads as one.
+ *   - THE RECOIL is the spring above, applied AFTER
+ *     widgetTransformRect. The mod's transform ends in a floor - the
+ *     rect never rises above its resting place - and a gun's kick
+ *     rises, so it cannot be a position channel.
+ */
+export const WIDGET_VENDOR = WEAPON_WIDGET_VENDOR;
+
+/** The mod's declared defaults, as the store would answer them. */
+export function widgetDefaults() {
+  const keys = MOD_SETTINGS[WEAPON_WIDGET_VENDOR].keys;
+  const out = {};
+  for (const k of Object.keys(keys)) out[k] = keys[k].default;
+  return out;
+}
+
+/** The mod's settings with the lab's overrides on top, derived through
+ *  readWidgetSettings so every multiplier is the mod's own. */
+export function labWidgetSettings(overrides = {}) {
+  return readWidgetSettings(() => ({ ...widgetDefaults(), 'Modules.Inertia': true, ...overrides }));
+}
+
+/** FPSWeaponClone's .ctor fields, the ones the three modules carry
+ *  between frames. */
+export function createWidgetRig() {
+  return {
+    time: 0,
+    position: [0, 0], scale: [1, 1], offset: [0, 0],
+    offsetCurrent: [0, 0], offsetTarget: [0, 0],
+    moveSmooth: 0, bobSmooth: [0, 0],
+    inertiaCurrent: [0, 0], inertiaTarget: [0, 0], inertiaSpeedMod: 1,
+    inertiaForwardCurrent: [0, 0], inertiaForwardTarget: [0, 0],
+  };
+}
+
+/**
+ * One frame of the three modules, in the component's own order -
+ * Offset, then Bob, then Inertia - writing the same three channels the
+ * clone publishes. `idle` is the machine's Idle, which is what the mod
+ * gates Bob and Inertia on; `shown` false is the reload lower.
+ */
+export function widgetRigStep(rig, s, dt, {
+  screenRect, motion, look = [0, 0], flip = false, idle = true,
+  shown = true, hiddenTarget = [0, 0.55], liveSpeed = 50, cursorActive = false, swingHeld = false,
+}) {
+  rig.time += dt;
+  rig.position = [0, 0]; rig.scale = [1, 1]; rig.offset = [0, 0];
+  if (s.offset) {
+    const o = offsetStep({
+      offsetCurrent: rig.offsetCurrent, offsetTarget: rig.offsetTarget,
+      animating: false, shown, equipCountdown: 0, hiddenTarget,
+    }, dt, liveSpeed / 100 * s.offsetSpeed);   // get_offsetSpeedLive
+    rig.offsetCurrent = o.offsetCurrent; rig.offsetTarget = o.offsetTarget;
+    rig.offset = [rig.offset[0] + o.delta[0], rig.offset[1] + o.delta[1]];
+  }
+  if (s.bob && idle) {
+    const b = bobStep({ moveSmooth: rig.moveSmooth, bobSmooth: rig.bobSmooth, time: rig.time, screenRect }, s, motion, dt);
+    rig.moveSmooth = b.moveSmooth; rig.bobSmooth = b.bobSmooth;
+    rig.position = [rig.position[0] + b.delta[0], rig.position[1] + b.delta[1]];
+  }
+  if (s.inertia && idle) {
+    const i = inertiaStep({
+      inertiaCurrent: rig.inertiaCurrent, inertiaTarget: rig.inertiaTarget,
+      inertiaForwardCurrent: rig.inertiaForwardCurrent, inertiaForwardTarget: rig.inertiaForwardTarget,
+      screenRect, flip, look, cursorActive, swingHeld,
+    }, s, motion, dt);
+    rig.inertiaCurrent = i.inertiaCurrent; rig.inertiaTarget = i.inertiaTarget; rig.inertiaSpeedMod = i.inertiaSpeedMod;
+    rig.inertiaForwardCurrent = i.inertiaForwardCurrent; rig.inertiaForwardTarget = i.inertiaForwardTarget;
+    rig.scale = [rig.scale[0] + i.scale[0], rig.scale[1] + i.scale[1]];
+    rig.position = [rig.position[0] + i.delta[0], rig.position[1] + i.delta[1]];
+  }
+  return rig;
+}
+
+/**
+ * THE MOTOR'S FRAME, as the rig assembles it for the clone
+ * (weaponRig.js:895-902) - baseSpeed from GetBaseSpeed's walk arm,
+ * speedRatio the live speed over it, and localVel the eye's motion
+ * turned into the body's frame (right, up, forward). The lab has no
+ * motor, so `walking`/`running` stand in for one and the vector is
+ * built the same way round.
+ */
+export function labMotion({ walking = false, running = false, crouching = false, liveSpeed = 50, strafe = 0 } = {}) {
+  const base = walkSpeed(liveSpeed);
+  const speed = walking ? (running ? runSpeed(liveSpeed, 50, crouching) : base) : 0;
+  return {
+    grounded: true, crouching, riding: false, standing: !walking,
+    speedRatio: base > 0 ? speed / base : 1,
+    baseSpeed: base,
+    localVel: [strafe * speed, 0, walking ? speed : 0],
+  };
 }
 
 /**

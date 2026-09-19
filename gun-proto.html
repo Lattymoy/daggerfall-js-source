@@ -10,47 +10,58 @@
   came through.
 
   NOTHING HERE TOUCHES THE GAME. It is its own page over its own art;
-  no module the game runs imports it, and combat/fpsWeapon.js is
-  untouched. The port is a 1:1 DFU translation and a gun is not in
-  Daggerfall - so the place to find out what one FEELS like on the
-  classic surface is a lab, and only what survives the lab is worth
-  building into the weapon rig.
+  combat/fpsWeapon.js and combat/weaponRig.js do not know it exists.
+  The port is a 1:1 DFU translation and a gun is not in Daggerfall - so
+  the place to find out what one FEELS like is a lab, and only what
+  survives the lab is worth building into the weapon rig.
 
-  What it borrows on purpose is the PLACEMENT LAW, so the numbers you
-  tune here transfer: the 320x200 design surface bottom-anchored and
-  stretched to the window, Left/Center/Right alignment with a
-  fractional offset, the hard 1-bit cutout every screen quad in this
-  port gets, and the handedness mirror. src/tools/gunLab.js carries
-  that arithmetic with its citations, and test/gunLab.test.js pins it.
+  What it BORROWS it RUNS rather than imitates:
 
-  The art is TWO FILES, not a CIF: public/art/gun-idle.png (one pose)
-  and public/art/gun-fire-sheet.webp (a 3x2 contact sheet, six fire
-  frames, numbered). The sheet is sliced in the browser rather than
-  pre-cut, which is what lets the background key be a live control -
-  the threshold that kills a white page and spares a muzzle flash is
-  exactly the thing that wants a slider.
+    - FPSWeapon's placement (:378-388) through src/tools/gunLab.js
+      placeSprite: the 320x200 design surface, bottom-anchored and
+      stretched to the window, aligned with a fractional offset. The
+      gun sits on the RIGHT, which is where the classic weapons sit.
 
-  Controls: click or Space fires (hold for auto), W/S walk-bob toggle,
-  arrow keys scrub frames while idle, G shows the slice boxes, Tab
-  hides the panels so the pose can be judged with nothing over it.
+    - WEAPON WIDGET's Offset, Bob and Inertia - the actual modules out
+      of src/combat/weaponWidgetMotion.js, WW1's 1:1 port of
+      FPSWeaponClone, with the mod's own declared defaults and its own
+      multipliers. The sliders below are the mod's own switches.
+
+    - the mod's GetWeaponRect transform, which is what applies those
+      three channels to the rect.
+
+  The gun's OWN two, which no mod could lend it: a spring RECOIL (the
+  mod's Recoil module replays a SWING in reverse, and a gun has no
+  swing), and the RELOAD LOWER - there is no reload animation, so the
+  weapon drops out of frame on the mod's own Offset easing and comes
+  back up when it is ready.
+
+  Controls: click fires, and the same click asks for the pointer lock
+  (the Inertia module needs a look to lag; where the lock is refused -
+  an embedded frame, headless - the shot still goes off). Space fires
+  too, hold either for auto. W walks, Shift runs, C crouches, S stops.
+  Arrows scrub frames while idle, G shows the slice boxes, Tab hides
+  the panels, Esc releases the mouse.
 -->
 <style>
   html,body { margin:0; height:100%; background:#0d0f12; color:#cdc4a8;
     font:13px/1.5 ui-monospace, Menlo, Consolas, monospace; overflow:hidden; }
   canvas { display:block; width:100vw; height:100vh; cursor:crosshair; }
-  .hud { position:fixed; left:12px; top:12px; background:rgba(10,12,16,.78);
-    border:1px solid #55503f; padding:10px 12px; max-width:min(360px,46vw);
+  .hud { position:fixed; left:12px; top:12px; background:rgba(10,12,16,.82);
+    border:1px solid #55503f; padding:10px 12px; width:min(330px,44vw);
     max-height:calc(100vh - 40px); overflow:auto; }
   .hud h1 { margin:0 0 6px; font-size:12px; letter-spacing:.14em; text-transform:uppercase; color:#e0d5ad; }
   .hud h2 { margin:10px 0 4px; font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:#9c9378; border-top:1px solid #33302a; padding-top:8px; }
-  .hud label { display:flex; align-items:center; gap:8px; margin:3px 0; }
-  .hud label > span:first-child { width:88px; color:#a89e80; }
-  .hud input[type=range] { flex:1; min-width:70px; }
+  .hud label { display:flex; align-items:center; gap:8px; margin:2px 0; }
+  .hud label > span:first-child { width:96px; color:#a89e80; flex:none; }
+  .hud input[type=range] { flex:1; min-width:60px; }
   .hud select { flex:1; background:#15181d; color:#cdc4a8; border:1px solid #454033; }
-  .hud .v { width:50px; text-align:right; color:#c08a3e; }
+  .hud .v { width:46px; text-align:right; color:#c08a3e; flex:none; }
   .hud p { margin:6px 0 0; color:#8d836c; font-size:12px; }
-  .stat { position:fixed; right:12px; top:12px; background:rgba(10,12,16,.78);
+  .stat { position:fixed; right:12px; top:12px; background:rgba(10,12,16,.82);
     border:1px solid #55503f; padding:8px 10px; color:#9c9378; white-space:pre; }
+  .lock { position:fixed; left:50%; bottom:22px; transform:translateX(-50%);
+    background:rgba(10,12,16,.82); border:1px solid #55503f; padding:5px 12px; color:#b9ad8b; }
 </style>
 </head>
 <body>
@@ -58,58 +69,99 @@
 <div class="hud">
   <h1>New weapon type &mdash; gun</h1>
 
-  <h2>Placement (classic law)</h2>
+  <h2>Placement &mdash; FPSWeapon</h2>
   <label><span>idle pose</span><select id="idleSrc"><option value="sheet">sheet frame 1</option><option value="art">gun-idle.png</option></select></label>
-  <label><span>align</span><select id="align"><option value="1">Center</option><option value="2">Right</option><option value="0">Left</option></select></label>
+  <label><span>align</span><select id="align"><option value="2">Right</option><option value="1">Center</option><option value="0">Left</option></select></label>
   <label><span>offset</span><input id="offset" type="range" min="0" max="0.4" step="0.005" value="0"><span class="v" id="voffset"></span></label>
-  <label><span>size %</span><input id="size" type="range" min="20" max="120" step="1" value="62"><span class="v" id="vsize"></span></label>
+  <label><span>size %</span><input id="size" type="range" min="20" max="120" step="1" value="66"><span class="v" id="vsize"></span></label>
   <label><span>raise</span><input id="raise" type="range" min="-60" max="60" step="1" value="0"><span class="v" id="vraise"></span></label>
   <label><span>left hand</span><input id="flip" type="checkbox"><span class="v">mirror</span></label>
 
   <h2>Cycle</h2>
   <label><span>fire fps</span><input id="fps" type="range" min="4" max="30" step="1" value="14"><span class="v" id="vfps"></span></label>
-  <label><span>pump ms</span><input id="cool" type="range" min="0" max="1200" step="20" value="260"><span class="v" id="vcool"></span></label>
+  <label><span>reload ms</span><input id="cool" type="range" min="0" max="2000" step="20" value="700"><span class="v" id="vcool"></span></label>
   <label><span>hit frame</span><input id="hit" type="range" min="0" max="5" step="1" value="1"><span class="v" id="vhit"></span></label>
   <label><span>auto</span><input id="auto" type="checkbox"><span class="v">hold</span></label>
 
-  <h2>Feel</h2>
-  <label><span>recoil</span><input id="recoil" type="range" min="0" max="40" step="1" value="12"><span class="v" id="vrecoil"></span></label>
-  <label><span>muzzle light</span><input id="light" type="range" min="0" max="1" step="0.02" value="0.6"><span class="v" id="vlight"></span></label>
-  <label><span>walk bob</span><input id="bob" type="range" min="0" max="12" step="0.5" value="4"><span class="v" id="vbob"></span></label>
-  <label><span>walking</span><input id="walk" type="checkbox"><span class="v">W/S</span></label>
+  <h2>Recoil &mdash; the lab's own</h2>
+  <label><span>kick</span><input id="kick" type="range" min="0" max="60" step="1" value="16"><span class="v" id="vkick"></span></label>
+  <label><span>back</span><input id="back" type="range" min="0" max="1.5" step="0.02" value="0.42"><span class="v" id="vback"></span></label>
+  <label><span>stiffness</span><input id="stiff" type="range" min="20" max="400" step="5" value="120"><span class="v" id="vstiff"></span></label>
+  <label><span>damping</span><input id="damp" type="range" min="2" max="60" step="1" value="14"><span class="v" id="vdamp"></span></label>
 
-  <h2>Art</h2>
+  <h2>Reload lower &mdash; the Offset module</h2>
+  <label><span>drop</span><input id="drop" type="range" min="0" max="1.5" step="0.05" value="0.55"><span class="v" id="vdrop"></span></label>
+  <label><span>Offset.Speed</span><input id="offsetSpeed" type="range" min="0" max="5" step="0.25" value="1"><span class="v" id="voffsetSpeed"></span></label>
+  <label><span>Modules.Offset</span><input id="modOffset" type="checkbox" checked><span class="v"></span></label>
+
+  <h2>Weapon Widget &mdash; Bob</h2>
+  <label><span>Modules.Bob</span><input id="modBob" type="checkbox" checked><span class="v"></span></label>
+  <label><span>Bob.Length</span><input id="bobLength" type="range" min="0" max="200" step="1" value="100"><span class="v" id="vbobLength"></span></label>
+  <label><span>Bob.SizeX</span><input id="bobSizeX" type="range" min="0" max="2" step="0.1" value="1"><span class="v" id="vbobSizeX"></span></label>
+  <label><span>Bob.SizeY</span><input id="bobSizeY" type="range" min="0" max="2" step="0.1" value="1"><span class="v" id="vbobSizeY"></span></label>
+  <label><span>Bob.SpeedMove</span><input id="bobSpeedMove" type="range" min="0" max="2" step="0.1" value="1"><span class="v" id="vbobSpeedMove"></span></label>
+  <label><span>Bob.SpeedState</span><input id="bobSpeedState" type="range" min="0" max="2" step="0.1" value="1"><span class="v" id="vbobSpeedState"></span></label>
+  <label><span>Bob.Shape</span><select id="bobShape"><option value="0">U</option><option value="1">Sideways 8</option><option value="2">Inverted U</option></select></label>
+  <label><span>BobWhileIdle</span><input id="bobIdle" type="checkbox" checked><span class="v"></span></label>
+
+  <h2>Weapon Widget &mdash; Inertia</h2>
+  <label><span>Modules.Inertia</span><input id="modInertia" type="checkbox" checked><span class="v"></span></label>
+  <label><span>Scale</span><input id="inScale" type="range" min="0" max="2" step="0.1" value="1"><span class="v" id="vinScale"></span></label>
+  <label><span>Speed</span><input id="inSpeed" type="range" min="0" max="2" step="0.1" value="1"><span class="v" id="vinSpeed"></span></label>
+  <label><span>ForwardDepth</span><input id="inFwd" type="range" min="0" max="2" step="0.1" value="1"><span class="v" id="vinFwd"></span></label>
+  <label><span>ForwardSpeed</span><input id="inFwdSpeed" type="range" min="0" max="2" step="0.1" value="1"><span class="v" id="vinFwdSpeed"></span></label>
+
+  <h2>Movement</h2>
+  <label><span>walking</span><input id="walk" type="checkbox"><span class="v">W/S</span></label>
+  <label><span>running</span><input id="run" type="checkbox"><span class="v">Shift</span></label>
+  <label><span>crouching</span><input id="crouch" type="checkbox"><span class="v">C</span></label>
+  <label><span>SPD</span><input id="spd" type="range" min="10" max="100" step="1" value="50"><span class="v" id="vspd"></span></label>
+
+  <h2>Art &amp; room</h2>
   <label><span>key white</span><input id="key" type="range" min="180" max="255" step="1" value="244"><span class="v" id="vkey"></span></label>
   <label><span>chroma</span><input id="chroma" type="range" min="0" max="40" step="1" value="10"><span class="v" id="vchroma"></span></label>
+  <label><span>muzzle light</span><input id="light" type="range" min="0" max="1" step="0.02" value="0.6"><span class="v" id="vlight"></span></label>
   <label><span>room</span><input id="room" type="range" min="0.15" max="1.2" step="0.01" value="0.62"><span class="v" id="vroom"></span></label>
   <label><span>boxes</span><input id="grid" type="checkbox"><span class="v">G</span></label>
   <p id="note">loading art&hellip;</p>
 </div>
 <div class="stat" id="stat"></div>
+<div class="lock" id="lockHint">click to lock the mouse &mdash; the inertia needs a look to lag</div>
 
 <script type="module">
 import {
   SHEET_GRID, FIRE_FRAMES, ALIGN, cellRect, keyBackground, contentBox,
   unionBox, unionDrawRect, placeSprite, createGunMachine, muzzleLight,
-  recoilOffset, bobOffset,
+  createRecoil, createWidgetRig, widgetRigStep, labWidgetSettings, labMotion,
+  widgetTransformRect,
 } from '/src/tools/gunLab.js';
 
 const canvas = document.getElementById('c');
 const ctx = canvas.getContext('2d');
 const $ = (id) => document.getElementById(id);
 
-// ── the controls, one state bag ──────────────────────────────────────
 const state = {
-  idleSrc: 'sheet', align: ALIGN.Center, offset: 0, size: 62, raise: 0, flip: false,
-  fps: 14, cool: 260, hit: 1, auto: false,
-  recoil: 12, light: 0.6, bob: 4, walk: false,
-  key: 244, chroma: 10, room: 0.62, grid: false,
+  idleSrc: 'sheet', align: ALIGN.Right, offset: 0, size: 66, raise: 0, flip: false,
+  fps: 14, cool: 700, hit: 1, auto: false,
+  kick: 16, back: 0.42, stiff: 120, damp: 14,
+  drop: 0.55, offsetSpeed: 1, modOffset: true,
+  modBob: true, bobLength: 100, bobSizeX: 1, bobSizeY: 1, bobSpeedMove: 1, bobSpeedState: 1, bobShape: 0, bobIdle: true,
+  modInertia: true, inScale: 1, inSpeed: 1, inFwd: 1, inFwdSpeed: 1,
+  walk: false, run: false, crouch: false, spd: 50,
+  key: 244, chroma: 10, light: 0.6, room: 0.62, grid: false,
 };
-const NUM = { offset:1, size:1, raise:1, fps:1, cool:1, hit:1, recoil:1, light:1, bob:1, key:1, chroma:1, room:1 };
+const NUM = {
+  offset:1, size:1, raise:1, fps:1, cool:1, hit:1, kick:1, back:1, stiff:1, damp:1,
+  drop:1, offsetSpeed:1, bobLength:1, bobSizeX:1, bobSizeY:1, bobSpeedMove:1, bobSpeedState:1,
+  inScale:1, inSpeed:1, inFwd:1, inFwdSpeed:1, spd:1, key:1, chroma:1, light:1, room:1,
+};
+const ENUMS = { align:1, bobShape:1 };
 const bind = (id, after = () => {}) => {
   const el = $(id), out = $('v' + id);
   const read = () => {
-    state[id] = el.type === 'checkbox' ? el.checked : (NUM[id] ? parseFloat(el.value) : (id === 'align' ? parseInt(el.value, 10) : el.value));
+    state[id] = el.type === 'checkbox' ? el.checked
+      : NUM[id] ? parseFloat(el.value)
+      : ENUMS[id] ? parseInt(el.value, 10) : el.value;
     if (out) out.textContent = el.type === 'checkbox' ? '' : el.value;
     after();
   };
@@ -177,32 +229,80 @@ function scheduleRebuild() {
 }
 
 sheetImg.onload = scheduleRebuild; idleImg.onload = scheduleRebuild;
-sheetImg.onerror = () => { $('note').textContent = 'public/art/gun-fire-sheet.webp did not load'; };
-sheetImg.src = '/art/gun-fire-sheet.webp';
-idleImg.src = '/art/gun-idle.png';
+sheetImg.onerror = () => { $('note').textContent = 'art/gun-fire-sheet.webp did not load'; };
+// RELATIVE to the page, not the site root: the lab is deployed on its
+// own as well as beside the game (deploy.yml mounts it under
+// /preview/gun-lab/), and an absolute '/art/...' only resolves at a
+// root. document.baseURI is the page's own home in both.
+const artUrl = (name) => new URL(`art/${name}`, document.baseURI).href;
+sheetImg.src = artUrl('gun-fire-sheet.webp');
+idleImg.src = artUrl('gun-idle.png');
 
-// ── the machine ──────────────────────────────────────────────────────
+// ── the machine, the mod's rig, the gun's spring ─────────────────────
 const gun = createGunMachine({ fps: state.fps, cooldownMs: state.cool, hitFrame: state.hit });
+const rig = createWidgetRig();
+const recoil = createRecoil();
 let scrub = -1;          // frame held while idle (arrow keys), -1 = live
 let hitFlash = 0;        // the target's tell, so the hit frame can be judged
+let look = [0, 0];       // the frame's look, as takeFrameLook hands it over
+const LOOK_RADIANS_PER_PX = 0.0025;
 
-for (const id of ['idleSrc','align','offset','size','raise','flip','fps','cool','hit','auto','recoil','light','bob','walk','room','grid']) bind(id);
+const CONTROLS = ['idleSrc','align','offset','size','raise','flip','fps','cool','hit','auto',
+  'kick','back','stiff','damp','drop','offsetSpeed','modOffset',
+  'modBob','bobLength','bobSizeX','bobSizeY','bobSpeedMove','bobSpeedState','bobShape','bobIdle',
+  'modInertia','inScale','inSpeed','inFwd','inFwdSpeed',
+  'walk','run','crouch','spd','light','room','grid'];
+for (const id of CONTROLS) bind(id);
 for (const id of ['key','chroma']) bind(id, scheduleRebuild);
 
-const press = () => { gun.trigger = true; scrub = -1; gun.fire(); };
+/** The mod's switches, live off the panel - read per frame exactly as
+ *  the component re-reads its settings per frame. */
+const widgetSettings = () => labWidgetSettings({
+  'Modules.Offset': state.modOffset, 'Modules.Bob': state.modBob, 'Modules.Inertia': state.modInertia,
+  'Offset.Speed': state.offsetSpeed,
+  'Bob.Length': state.bobLength, 'Bob.SizeX': state.bobSizeX, 'Bob.SizeY': state.bobSizeY,
+  'Bob.SpeedMove': state.bobSpeedMove, 'Bob.SpeedState': state.bobSpeedState,
+  'Bob.Shape': state.bobShape, 'Bob.BobWhileIdle': state.bobIdle,
+  'Inertia.Scale': state.inScale, 'Inertia.Speed': state.inSpeed,
+  'Inertia.ForwardDepth': state.inFwd, 'Inertia.ForwardSpeed': state.inFwdSpeed,
+});
+
+const fire = () => { if (gun.fire()) recoil.punch(state.kick); };
+const press = () => { gun.trigger = true; scrub = -1; fire(); };
 const release = () => { gun.trigger = false; };
-canvas.addEventListener('mousedown', press);
+
+canvas.addEventListener('mousedown', () => {
+  // The lock is asked for on the same click that fires, not instead of
+  // it: a click that only grabs the mouse reads as a dead trigger, and
+  // headless Chromium (the probe) may refuse the grab outright - a
+  // refusal must not cost the shot.
+  if (document.pointerLockElement !== canvas) canvas.requestPointerLock?.();
+  press();
+});
 addEventListener('mouseup', release);
+addEventListener('mousemove', (e) => {
+  if (document.pointerLockElement !== canvas) return;
+  look = [look[0] + e.movementX * LOOK_RADIANS_PER_PX, look[1] - e.movementY * LOOK_RADIANS_PER_PX];
+});
+document.addEventListener('pointerlockchange', () => {
+  $('lockHint').style.display = document.pointerLockElement === canvas ? 'none' : '';
+});
+const setTick = (id, v) => { state[id] = v; $(id).checked = v; };
 addEventListener('keydown', (e) => {
   if (e.code === 'Space') { e.preventDefault(); press(); }
-  if (e.code === 'KeyW') { state.walk = true; $('walk').checked = true; }
-  if (e.code === 'KeyS') { state.walk = false; $('walk').checked = false; }
+  if (e.code === 'KeyW') setTick('walk', true);
+  if (e.code === 'KeyS') setTick('walk', false);
+  if (e.code === 'KeyC') setTick('crouch', !state.crouch);
+  if (e.shiftKey) setTick('run', true);
   if (e.code === 'Tab') { e.preventDefault(); for (const el of document.querySelectorAll('.hud,.stat')) el.style.display = el.style.display === 'none' ? '' : 'none'; }
   if (e.code === 'KeyG') { state.grid = !state.grid; $('grid').checked = state.grid; }
   if (e.code === 'ArrowRight') scrub = (scrub + 1 + FIRE_FRAMES) % FIRE_FRAMES;
   if (e.code === 'ArrowLeft') scrub = (scrub - 1 + FIRE_FRAMES) % FIRE_FRAMES;
 });
-addEventListener('keyup', (e) => { if (e.code === 'Space') release(); });
+addEventListener('keyup', (e) => {
+  if (e.code === 'Space') release();
+  if (e.key === 'Shift') setTick('run', false);
+});
 
 // ── the room ─────────────────────────────────────────────────────────
 // A plain lit corridor, not a render of anything: the sprite has to be
@@ -219,7 +319,6 @@ function drawRoom(lit) {
   f.addColorStop(0, `rgb(${58 * lit | 0},${50 * lit | 0},${40 * lit | 0})`);
   f.addColorStop(1, `rgb(${22 * lit | 0},${19 * lit | 0},${16 * lit | 0})`);
   ctx.fillStyle = f; ctx.fillRect(0, horizon, w, h - horizon);
-  // block courses, vanishing to the centre - enough parallax to read scale
   ctx.strokeStyle = `rgba(${12 * lit | 0},${11 * lit | 0},${9 * lit | 0},0.85)`;
   ctx.lineWidth = Math.max(1, w / 640);
   for (let i = 1; i < 7; i++) {
@@ -227,14 +326,14 @@ function drawRoom(lit) {
     ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
   }
   for (let i = -6; i <= 6; i++) {
-    ctx.beginPath(); ctx.moveTo(w / 2 + i * w * 0.09, horizon); ctx.lineTo(w / 2 + i * w * 0.42, h); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(w / 2 + i * w * 0.09 + bobWorld, horizon); ctx.lineTo(w / 2 + i * w * 0.42 + bobWorld * 2, h); ctx.stroke();
   }
 }
 
 function drawTarget(lit) {
   const { width: w, height: h } = canvas;
   const tw = w * 0.055, th = tw * 2.6;
-  const x = w / 2 - tw / 2, y = h * 0.56 - th * 0.86;
+  const x = w / 2 - tw / 2 + bobWorld, y = h * 0.56 - th * 0.86;
   ctx.fillStyle = hitFlash > 0 ? `rgba(190,60,44,${0.35 + 0.65 * hitFlash})` : `rgb(${52 * lit | 0},${46 * lit | 0},${42 * lit | 0})`;
   ctx.fillRect(x, y, tw, th);
   ctx.fillStyle = `rgba(${18 * lit | 0},${16 * lit | 0},${14 * lit | 0},0.9)`;
@@ -254,31 +353,50 @@ function drawCrosshair() {
 }
 
 // ── the frame ────────────────────────────────────────────────────────
-let last = performance.now(), t = 0;
+let last = performance.now();
+let bobWorld = 0;   // the ROOM's answer to the look, so a flick has something to move against
 
 function frame(now) {
-  const dt = Math.min(0.1, (now - last) / 1000); last = now; t += dt;
+  const dt = Math.min(0.1, (now - last) / 1000); last = now;
   const dpr = Math.min(2, devicePixelRatio || 1);
   const w = Math.round(innerWidth * dpr), h = Math.round(innerHeight * dpr);
   if (canvas.width !== w || canvas.height !== h) { canvas.width = w; canvas.height = h; }
 
   gun.fps = state.fps; gun.cooldownMs = state.cool; gun.hitFrame = state.hit;
   gun.trigger = gun.trigger && state.auto;
+  const wasIdle = gun.state === 'Idle';
   const event = gun.step(dt);
   if (event === 'hit') hitFlash = 1;
+  if (gun.state === 'Firing' && wasIdle) recoil.punch(state.kick);   // the auto trigger's own shots
   hitFlash = Math.max(0, hitFlash - dt * 4);
+
+  recoil.stiff = state.stiff; recoil.damp = state.damp; recoil.back = state.back;
+  const kick = recoil.step(dt);
 
   const showFrame = gun.state === 'Firing' ? gun.frame : (scrub >= 0 ? scrub : 0);
   const lit = state.room * (1 + muzzleLight(gun.state, showFrame) * state.light * 1.9);
+  bobWorld = bobWorld * 0.86 - look[0] * canvas.width * 0.18;
 
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.imageSmoothingEnabled = false;
   drawRoom(lit); drawTarget(lit); drawCrosshair();
 
+  // THE MOD'S FRAME. Bob and Inertia run while the machine idles, which
+  // is the gate FPSWeaponClone puts on them; the reload lowers the
+  // weapon by driving the Offset module's `shown` false.
+  const s = widgetSettings();
+  const reloading = gun.state === 'Cooling';
+  widgetRigStep(rig, s, dt, {
+    screenRect: { width: canvas.width, height: canvas.height },
+    motion: labMotion({ walking: state.walk, running: state.run, crouching: state.crouch, liveSpeed: state.spd }),
+    look, flip: state.flip, idle: gun.state === 'Idle',
+    shown: !reloading, hiddenTarget: [0, state.drop], liveSpeed: state.spd,
+    cursorActive: document.pointerLockElement !== canvas,
+  });
+  look = [0, 0];   // takeFrameLook: handed over once, zeroed for the next
+
   let r = null, anchorRect = null;
   if (art) {
-    // Frame 1 with the idle art swapped in is the only case where the
-    // drawn image is NOT on the union box, so it carries its own.
     const useIdleArt = state.idleSrc === 'art' && art.idle && gun.state !== 'Firing' && scrub < 0;
     const src = useIdleArt ? art.idle.cv : art.frames[showFrame];
     const union = useIdleArt ? art.idle.box : art.union;
@@ -289,15 +407,23 @@ function frame(now) {
     const anc = state.flip
       ? { ...anchor, x: 2 * union.x + union.w - anchor.x - anchor.w }
       : anchor;
-    const kickR = recoilOffset(gun.state, showFrame, state.recoil);
-    const kickB = bobOffset(t, state.bob, state.walk);
-    anchorRect = placeSprite({
+    // FPSWeapon's rect, then the mod's three channels over it, then the
+    // gun's own kick - which has to come AFTER, because the mod's
+    // transform ends in a floor the rect may never rise above.
+    const base = placeSprite({
       canvasW: canvas.width, canvasH: canvas.height,
       frameW: anchor.w, frameH: anchor.h,
       widthPct: state.size / 100, align: state.align, offset: state.offset,
       flip: state.flip, offsetHeight: state.raise * (canvas.height / 200),
-      kick: { x: kickR.x + kickB.x, y: kickR.y + kickB.y },
     });
+    anchorRect = widgetTransformRect(base, {
+      position: rig.position, scale: rig.scale, offset: rig.offset,
+      flip: state.flip, screenHeight: canvas.height,
+      weaponOffsetHeight: state.raise * (canvas.height / 200),
+    });
+    const sx = canvas.width / 320, sy = canvas.height / 200;
+    anchorRect.x += kick.x * sx * (state.flip ? -1 : 1);
+    anchorRect.y += kick.y * sy;
     r = unionDrawRect(anchorRect, anc, union);
     ctx.save();
     if (state.flip) { ctx.translate(r.x + r.w / 2, 0); ctx.scale(-1, 1); ctx.translate(-(r.x + r.w / 2), 0); }
@@ -315,15 +441,19 @@ function frame(now) {
   // page has no DOM to measure - it is one canvas - so what it draws
   // is claimed HERE, where it was computed, and asserted there.
   globalThis.__gunLab = {
-    ready: !!art, state: gun.state, frame: showFrame, shots: gun.shots,
+    ready: !!art, state: gun.state, frame: showFrame, shots: gun.shots, reloading,
     rect: art ? r : null, anchorRect: art ? anchorRect : null,
+    channels: { position: [...rig.position], scale: [...rig.scale], offset: [...rig.offset] },
+    kick,
     art: art && { union: art.union, anchor: art.anchor, frames: art.frames.length, idle: !!art.idle },
   };
 
+  const cycle = FIRE_FRAMES / state.fps * 1000 + state.cool;
   $('stat').textContent =
-    `${gun.state.padEnd(8)} frame ${showFrame + 1}/${FIRE_FRAMES}${scrub >= 0 && gun.state === 'Idle' ? ' (held)' : ''}\n` +
-    `shots ${gun.shots}   cycle ${(FIRE_FRAMES / state.fps * 1000 + state.cool).toFixed(0)}ms\n` +
-    `rate  ${(60000 / (FIRE_FRAMES / state.fps * 1000 + state.cool)).toFixed(0)} rpm`;
+    `${(reloading ? 'RELOAD' : gun.state).padEnd(8)} frame ${showFrame + 1}/${FIRE_FRAMES}${scrub >= 0 && gun.state === 'Idle' ? ' (held)' : ''}\n` +
+    `shots ${gun.shots}   cycle ${cycle.toFixed(0)}ms   ${(60000 / cycle).toFixed(0)} rpm\n` +
+    `bob ${rig.position[0].toFixed(0)},${rig.position[1].toFixed(0)}  ` +
+    `off ${rig.offset[1].toFixed(2)}  kick ${kick.y.toFixed(1)}`;
 
   requestAnimationFrame(frame);
 }

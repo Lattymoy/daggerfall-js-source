@@ -77,6 +77,34 @@ jobs:
           mkdir -p site/preview/exact-face-atlas
           cp -a exact-face-atlas/dist/. site/preview/exact-face-atlas/
 
+      # THE GUN LAB, ON ITS OWN (Mac, 2026-09-19: "I want to test this
+      # as its own deploy"). Same shape as the preview above and for
+      # the same reason: Pages serves ONE site per repository, so a
+      # thing that wants its own link gets its own directory under it,
+      # and only main publishes. It builds from its OWN config
+      # (vite.config.gun.js) - the page, its module and its two art
+      # files, nothing of the game - so the lab's link does not ride on
+      # the game's build, and the directory carries an index.html so
+      # /preview/gun-lab/ opens it.
+      - name: Checkout gun lab
+        uses: actions/checkout@v4
+        with:
+          ref: claude/wizardly-darwin-sclukf
+          path: gun-lab
+
+      - name: Install gun lab dependencies
+        run: npm ci
+        working-directory: gun-lab
+
+      - name: Build gun lab
+        run: npx vite build --config vite.config.gun.js
+        working-directory: gun-lab
+
+      - name: Mount the gun lab under production site
+        run: |
+          mkdir -p site/preview/gun-lab
+          cp -a gun-lab/dist-gun/. site/preview/gun-lab/
+
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

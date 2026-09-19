@@ -1,7 +1,7 @@
 # The gun lab — a new weapon type, prototyped before it exists
 
 `gun-proto.html` + `src/tools/gunLab.js` + `tools/gunProtoProbe.mjs`
-(Mac, 2026-09-19)
++ `vite.config.gun.js` (Mac, 2026-09-19)
 
 ## What it is, and what it is not
 
@@ -27,8 +27,13 @@ ever built for real:
   rect (FPSWeapon.cs:378-388, ported at `drawFpsWeapon`):
   bottom-anchored, stretched to the window, aligned
   Left/Center/Right with a fractional offset, with the large-HUD
-  offset lifting it. `test/gunLab.test.js` compares it against the
-  port's own `ALIGN` rather than restating it.
+  offset lifting it. The alignment enum is the port's OWN — asserted
+  identical, not equal — and it moved to a leaf
+  (`src/combat/weaponAlign.js`, which `fpsWeapon.js` re-exports, so
+  its surface is unchanged) because three integers living in a module
+  that reaches the CIF reader, the inventory and the Morrowind arms
+  cost the lab's standalone build four megabytes of `.nif` it never
+  loads. 656KB now, one chunk.
 - **The handedness mirror** (:459-464): AlignRight becomes AlignLeft
   under the flip, AlignLeft is left alone.
 - **The 1-bit cutout.** `drawScreenQuad` discards texels under 0.5
@@ -38,6 +43,64 @@ ever built for real:
 ONE declared departure: the sprite's width is a fraction of the
 screen, not a CIF record's native size — these frames are PNG/WebP,
 not `WEAPON*.CIF` records sized in native pixels.
+
+The weapon sits on the **right** (`AlignRight`, offset 0), which is
+where the classic weapons sit and where Mac asked for it.
+
+## Weapon Widget's own movement, on the gun
+
+Mac: *"all the idle, bob enhancements from our in-game weapon mods
+need to be applied"*. They are — by **running** them. `Offset`, `Bob`
+and `Inertia`, and `GetWeaponRect`'s transform, are imported from
+`src/combat/weaponWidgetMotion.js`, which is WW1's 1:1 port of
+FPSWeaponClone's own modules; the settings come from the mod's
+declared defaults through `readWidgetSettings`, so every multiplier
+LoadSettings applies (Offset.Speed ×10, Bob.Length ÷100, SizeX/Y ×2,
+SpeedMove ×4, SpeedState ×500, Inertia.Scale/Speed ×500, Forward
+×0.2) is applied here too. The sliders in the lab's panel ARE the
+mod's switches.
+
+**The split.** Those four functions were inline in
+`combat/weaponWidget.js`; the arithmetic is untouched, the component
+imports them back and calls them where it used to do the work itself,
+and `test/ww1_weaponwidget.test.js` passes unchanged. They are their
+own file for two reasons: a second copy of a bob pinned to an IL
+offset would be a second copy to drift, and the component reaches the
+inventory, the equip tables and a vendored mod's mesh folder — four
+megabytes of `.nif` the lab has no use for. `offsetStep` gained one
+parameter, `hiddenTarget`, defaulted to the mod's own `[2, 2]`.
+
+Three departures, all of them the gun's:
+
+- **Inertia is ON.** The mod ships it off ("requires double-scaled
+  weapon textures"); this art *is* high resolution, so the lab is the
+  case that warning is about.
+- **The reload lower** rides the Offset module's easing to a target of
+  the lab's own — straight down, not the mod's diagonal sheathe.
+- **The recoil** is not a channel at all (below).
+
+## The recoil, and the reload
+
+Neither is something a mod could lend.
+
+The mod's `Recoil` module recoils a **swing** — it replays the strike
+animation in reverse when the blow lands — and a gun has no swing to
+replay. So `createRecoil` is the lab's own, and it is a **spring**
+rather than a curve keyed to the frame: the shot is a DISPLACEMENT
+(the barrel is already up on the frame the trigger breaks; an impulse
+puts the peak two frames late and a third of the size, which is the
+first thing the probe caught), and the spring's job is the ride down.
+A second shot fired into the recovery stacks on what is left, which a
+per-frame curve cannot do. It is applied AFTER `widgetTransformRect`,
+because the mod's transform ends in a floor — the rect may never rise
+above its resting place — and a kick rises. Sub-stepped at 4ms so a
+slow frame does not blow the spring up.
+
+There is no reload animation, so the reload is the **Offset module**
+with `shown` false: the weapon drops out of frame on the mod's own
+easing and comes back up when it is ready. `Reload ms` is the
+machine's cooling phase; `drop` is the target in units of the sprite's
+own height.
 
 ## What the lab has that the classic machine does not
 

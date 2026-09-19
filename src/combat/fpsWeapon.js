@@ -56,7 +56,11 @@ export const WEAPON_FILE = Object.freeze({
   [WEAPON_TYPES.Werecreature]: 'WEAPON11.CIF',
 });
 
-export const ALIGN = Object.freeze({ Left: 0, Center: 1, Right: 2 });
+// WeaponBasics' Alignment - a leaf now (combat/weaponAlign.js), so a
+// reader that wants only the enum does not take this module's world
+// with it. Re-exported here: this is still the enum's front door.
+export { ALIGN } from './weaponAlign.js';
+import { ALIGN } from './weaponAlign.js';
 
 // The classic 320x200 design surface every weapon image overlays.
 // AUDIT 24 (wave 24): the classic 320x200 panel has one home in
