@@ -337,6 +337,22 @@ must be assigned there, never re-declared. Mutants
    online it buys both. Named here rather than capped: capping it would
    be an online rule, and this slice was asked not to make one.
 
+   AUDITED BEFORE MERGE, and one consequence named rather than fixed.
+   The journey machinery itself is online-agnostic - `travelOptions`,
+   `travelControlUI`, the junction map and the autopilot never ask about
+   the shared clock - so nothing was put into an unhandled state by
+   letting it run; a walked trip charges no fare online exactly as it
+   charges none offline, and a SHIP trip is not player-controlled, so it
+   still takes DFU's arm and still says the online line. What
+   acceleration does stress is the WIRE: the online world is sharded
+   into `WORLD_CELL` squares and a crossing is cheap only when the next
+   cell was already hello'd as a halo (`net/online.js`, WORLD6b-iii(b)
+   promotion). At x30 the player can outrun the halo, and each crossing
+   is then a full join rather than a promotion. That is connection
+   churn, not a correctness bug, and capping the spinner to stop it
+   would be the online rule this slice was asked not to make - so it is
+   written down here for whoever meets it.
+
    THE POPUP SAYS SO. `ONLINE_TRAVEL_LINE` - "the world's clock does
    not wait. You arrive now, and no inn is paid" - is DFU's fast travel
    talking, and it was true of every online trip while the journey stood

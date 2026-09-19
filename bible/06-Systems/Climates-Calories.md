@@ -443,3 +443,60 @@ Not driven (no ARENA2 in the container): the 3D fire and tent, the
 activation ray, the inventory windows in situ, dungeon-floor camps,
 online camp sharing. The probe's scripts and screenshots are in the
 session scratchpad, not the tree.
+
+## AUDIT-DEATH1 - DEHYDRATION KILLED NOBODY, BECAUSE NOTHING KILLED ANYBODY (2026-09-19)
+
+> Mac: *"You should also should die on dehydration and sometimes get
+> stuck at 0% health and live"*, with a dungeon screenshot: **Dehydrated,
+> FATIGUE 0%, HEALTH 0%, still playing.**
+
+Two complaints, **one bug**, and it is not in this arc's code at all.
+
+**The chain works.** Dehydrated (thirst 100+) taxes 12 fatigue units a
+minute (`DRAIN.dehydrated`). Fatigue reaches nought. That raises
+`onExhausted`, and `exhaustionOutcome` (systems/rest.js) answers `rest`
+with dry feet and no enemies near - an hour's collapse, health back -
+or **kills** near enemies or in water. So dehydration does kill; it
+kills through the collapse, which is DFU's own route.
+
+**What broke is the death itself.** `hurtPlayer`
+(characters/playerEntity.js) raises the death presenter on the
+TRANSITION - `wasAlive && entity.health === 0` - so a caller that writes
+health directly kills the player and tells nobody: no DeathScreen, no
+end of run, a corpse walking at 0%. `dungeonContext.js` wrote
+
+```js
+playerEntity.health = 0;   // SetHealth(0): the fatal collapse
+```
+
+while `world.js`, `exterior.js` and `worldModes.js` all wrote
+
+```js
+hurtPlayer(playerEntity, playerEntity.health, { bypassShield: true });
+```
+
+It was the last raw writer in the tree, **in the one host that owns the
+DeathScreen**, and ninety lines above its own bug sits the note that
+names the trap exactly: *"it was the only one of the four writers that
+checked for death, which is exactly why the other three could go on
+writing health raw and nobody noticed."* The presenter was centralised;
+this host's own call was not moved with it.
+
+`bypassShield` is the SetHealth(0) door's own flag - no shield pool
+stands between a player and a lethal collapse - and dropping it is a
+second, quieter bug, so the mutation campaign carries it.
+
+**The pin is sliced to the collapse's own branch**, not the file: the
+dungeon host also drowns the player through the same door two thousand
+lines away, and a file-wide grep passed on THAT call while this one was
+mutated back to a raw zero. `tools/mutants/audit_air1.json` carries
+three DEATH1 records; 7 mutants, 7 dead.
+
+**NOT CHANGED, and named so it is a decision rather than an oversight:**
+thirst's direct health damage stays gated on heat
+(`s.thirst >= 120 && temp.felt > NEED.EXPOSURE_AT`). That is the mod's
+own law and this file already recorded it - *"fatigue taxes, then stats,
+then health in heat"*. A cool dungeon starves you of fatigue and kills
+you through the collapse; it does not bleed health on its own. If that
+should change, it is a departure from Climates & Calories and wants its
+own record, not a quiet edit here.

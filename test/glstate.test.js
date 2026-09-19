@@ -493,16 +493,25 @@ test('PERF-TEX: the shadow is cleared wherever something else can own unit 1', (
   // calls selected the unit already selected, so the raw call lives in
   // _activeTexture alone and everything else asks it.
   assert.match(body, /this\._activeTexture\(gl\.TEXTURE0\);/, 'and it leaves unit 0 active, as every draw path expects');
+  // AUDIT-AIR1: ...through the ONE HOME now. The clear was hand-copied at
+  // five seams and missing at the sixth (the air resolve), which is the
+  // bug that made it a function - so what these sites must show is the
+  // CALL, and the helper's own contents are pinned where it lives.
   for (const site of ['beginFrame', 'endWorldPass']) {
     const fn = src.split(`  ${site}(`)[1]?.split('\n  }')[0] ?? '';
-    assert.match(fn, /_tex1Bound = null/, `${site} does not clear the shadow`);
+    assert.match(fn, /this\._forgetTextureShadows\(\);/, `${site} does not forget the shadows`);
   }
+  assert.match(src, /_forgetTextureShadows\(\) \{[\s\S]{0,240}?this\._tex1Bound = null;/, 'and the one home clears unit 1');
   // and no site binds TEXTURE_2D to unit 1 outside the helper without clearing it
   const lines = src.split('\n');
   for (let i = 0; i < lines.length; i++) {
     if (!/activeTexture\(gl\.TEXTURE1\)/.test(lines[i])) continue;
     const window = lines.slice(i, i + 4).join('\n');
-    assert.match(window, /_tex1Bound|_bindEmission/, `renderer.js:${i + 1} binds unit 1 without answering to the shadow`);
+    // AUDIT-AIR1: `_forgetTextureShadows()` is a third way to answer -
+    // and a stronger one, since it clears the whole set. It only counts
+    // because the assertion above proves the helper really clears
+    // `_tex1Bound`; without that this arm would be a name, not a law.
+    assert.match(window, /_tex1Bound|_bindEmission|_forgetTextureShadows/, `renderer.js:${i + 1} binds unit 1 without answering to the shadow`);
   }
 });
 
@@ -572,8 +581,10 @@ test('PERF-TEX: every texture shadow is forgotten when a foreign pass takes the 
   assert.equal(r._tTileSize, null, 'the tile size shadow survived a foreign pass');
   const src = readFileSync(new URL('../src/render/renderer.js', import.meta.url), 'utf8');
   const fn = src.split('  markForeignPass(')[1].split('\n  }')[0];
+  assert.match(fn, /this\._forgetTextureShadows\(\);/, 'markForeignPass forgets them through the one home (AUDIT-AIR1)');
+  const home = src.split('_forgetTextureShadows() {')[1].split('\n  }')[0];
   for (const shadow of ['_tex1Bound', '_tArrayTex', '_tTileSize']) {
-    assert.match(fn, new RegExp(`${shadow} = null`), `markForeignPass does not clear ${shadow}`);
+    assert.match(home, new RegExp(`${shadow} = null`), `the one home does not clear ${shadow}`);
   }
 });
 
@@ -974,13 +985,18 @@ test('PERF-TEX3: the selector funnel - exactly one raw gl.activeTexture survives
     'only _activeTexture may touch activeTexture');
   const body = src.split('_activeTexture(unit) {')[1].split('\n  }')[0];
   assert.match(body, /if \(this\._activeUnit === unit\) return;/, 'it is a shadow, not a wrapper');
-  // and it is cleared wherever unit 1's shadow is - the two go together
+  // and it is cleared wherever unit 1's shadow is - the two go together,
+  // which AUDIT-AIR1 made literal: one helper clears the pair and every
+  // seam calls it. The path sites (a draw that OWNS unit 0 for its own
+  // bind) still clear `_tex0Bound` alone, and there are many.
   const clears = (src.match(/this\._tex0Bound = null/g) || []).length;
   assert.ok(clears >= 5, `unit 0's shadow is cleared at only ${clears} sites - _tex1Bound's every site is the floor`);
   for (const site of ['beginFrame', 'endWorldPass', 'markForeignPass']) {
     const fn = src.split(`  ${site}(`)[1]?.split('\n  }')[0] ?? '';
-    assert.match(fn, /_tex0Bound = null/, `${site} does not clear the unit-0 shadow`);
+    assert.match(fn, /this\._forgetTextureShadows\(\);/, `${site} does not forget the unit-0 shadow`);
   }
+  const home = src.split('_forgetTextureShadows() {')[1].split('\n  }')[0];
+  assert.match(home, /this\._tex0Bound = null; this\._activeUnit = null;/, 'the one home clears unit 0 AND the selector');
 });
 
 test('PERF-TEX3: the shadows skip what is already there, and a real change still binds', () => {
@@ -1075,4 +1091,101 @@ test('PERF-TEX3 AUDIT: a model drawn after a character still has its texture', (
   assert.ok(sawAt.length >= 2, 'both meshes drew');
   assert.equal(sawAt[sawAt.length - 1]?.id, 'MESH_TEX',
     'the model after the character drew with ' + JSON.stringify(sawAt[sawAt.length - 1]) + ' on unit 0');
+});
+
+// ── AUDIT-AIR1: THE RESOLVE IS A FOREIGN PASS ──────────────────────
+//
+// Mac, 2026-09-19: "the screenshot shows a bug where sometimes
+// unsheathing, it spawns a weird water texture".
+//
+// It was not water. `airPass.composite()` binds units 0..3 and leaves
+// its own unit selected; `_compositeAir` forgot the PROGRAM and VAO
+// shadows after it and not the TEXTURE ones - the only one of six
+// seams that did not. So the first screen quad after a resolve found
+// `_activeUnit` still claiming TEXTURE0 and `_tex0Bound` still naming
+// the sprite it wanted: it skipped the bind, or bound to unit 3, and
+// sampled the RESOLVED FRAME BUFFER. On an unsheathe that is the
+// weapon sprite painted with a blurred picture of the room.
+//
+// Pinned by REPLAY, not by grep: the real Renderer over the logging
+// stub, with an air pass that binds what the real one binds, and the
+// question asked of the GL state machine - what is on unit 0, and
+// which unit is selected, at the draw.
+const airRig = () => {
+  const { r, log } = glLogRig();
+  const FRAME = { id: 'airResolvedFrame' };
+  r._air = {
+    pending: true,
+    setCloudShadow() {}, beginFrameTarget: () => null,
+    composite() {
+      const gl = r.gl;
+      gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, FRAME);
+      gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, { id: 'bloom' });
+      gl.activeTexture(gl.TEXTURE2); gl.bindTexture(gl.TEXTURE_2D, { id: 'shaft' });
+      gl.activeTexture(gl.TEXTURE3); gl.bindTexture(gl.TEXTURE_2D, { id: 'ao' });
+    },
+  };
+  return { r, log, FRAME };
+};
+/** Unit 0's texture and the selected unit as the GPU would have them at
+ *  the first draw in `log`. */
+const atFirstDraw = (log, TEXTURE0) => {
+  let unit = null; const units = new Map();
+  for (const [k, ...a] of log) {
+    if (k === 'activeTexture') unit = a[0];
+    else if (k === 'bindTexture') units.set(unit, a[1]);
+    else if (typeof k === 'string' && k.startsWith('draw')) return { tex0: units.get(TEXTURE0) ?? null, unit };
+  }
+  return null;
+};
+
+test('AUDIT-AIR1: the first screen quad after the air resolve draws its OWN texture, on unit 0', () => {
+  const { r, log, FRAME } = airRig();
+  const WEAPON = { id: 'weaponSprite' };
+  // the frame drew this sprite already, so the shadow honestly held it -
+  // and then the resolve happened underneath it
+  r._tex0Bound = WEAPON; r._activeUnit = r.gl.TEXTURE0;
+  log.length = 0;
+  r.drawScreenQuad(WEAPON, { x: 0, y: 0, w: 100, h: 100 });
+  const seen = atFirstDraw(log, r.gl.TEXTURE0);
+  assert.ok(seen, 'the quad drew');
+  assert.equal(seen.tex0, WEAPON, 'unit 0 holds the sprite, NOT the air pass’s resolved frame');
+  assert.notEqual(seen.tex0, FRAME, 'the "weird water texture" is the resolved frame buffer');
+  assert.equal(seen.unit, r.gl.TEXTURE0, 'and the selected unit is 0, not whatever the resolve left');
+});
+
+test('AUDIT-AIR1: the resolve forgets every texture shadow, exactly as a foreign pass does', () => {
+  const { r } = airRig();
+  r._tex0Bound = { id: 'x' }; r._tex1Bound = { id: 'y' }; r._activeUnit = r.gl.TEXTURE3;
+  r._tArrayTex = { id: 'arr' }; r._tTileSize = 64; r._sq = { r: 1 };
+  r.resolveFrame();
+  for (const k of ['_tex0Bound', '_tex1Bound', '_activeUnit', '_tArrayTex', '_tTileSize']) {
+    assert.equal(r[k], null, `${k} may not speak for a unit the resolve took`);
+  }
+  assert.deepEqual(r._sq, {}, 'and the screen quad knows none of its uniforms');
+});
+
+test('AUDIT-AIR1: the shadow reset is ONE HOME - six copies of a rule is five chances to miss one', () => {
+  // The bug WAS the sixth copy that never got written. A source pin, so
+  // a seventh seam cannot be added with its own hand-copied block.
+  const src = readFileSync(new URL('../src/render/renderer.js', import.meta.url), 'utf8');
+  assert.match(src, /_forgetTextureShadows\(\) \{\s*\n\s*this\._tex1Bound = null;\s*\n\s*this\._tex0Bound = null; this\._activeUnit = null;\s*\n\s*this\._sq = \{\};\s*\n\s*this\._tArrayTex = null;\s*\n\s*this\._tTileSize = null;\s*\n\s*\}/,
+    'the one home exists and clears all six');
+  // nobody clears them by hand any more
+  const decl = src.indexOf('_forgetTextureShadows() {');
+  const after = src.slice(src.indexOf('\n  }', decl));
+  assert.doesNotMatch(after, /this\._tex0Bound = null; this\._activeUnit = null;/,
+    'no site outside the helper clears the pair by hand');
+  // and every seam that can lose the units calls it
+  assert.equal((src.match(/this\._forgetTextureShadows\(\);/g) || []).length, 7,
+    'the constructor, endWorldPass, _installWorldSet, markForeignPass, beginFrame, uploadEmissionTexture and the air resolve');
+  // the air resolve's call sits AFTER the composite, because the
+  // composite is what invalidates them
+  const air = src.slice(src.indexOf('_compositeAir() {'));
+  // (the comment between them carries the reason - VC6c/VC6d pin
+  // `setCloudShadow` and `composite` as adjacent, so it cannot go above)
+  assert.match(air.slice(0, air.indexOf('\n  }')), /this\._air\.composite\(\);[\s\S]{0,900}?this\._forgetTextureShadows\(\);/,
+    'the forget follows the composite - the composite is what invalidates them');
+  assert.doesNotMatch(air.slice(0, air.indexOf('this._air.composite();')), /_forgetTextureShadows/,
+    '...and never precedes it, which would forget shadows the resolve then invalidates again');
 });
