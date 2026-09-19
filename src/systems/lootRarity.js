@@ -108,9 +108,26 @@ const ARROW_TEMPLATE = 131;
  *  armour, a piece of jewellery. Never a quest item, an artifact, a
  *  DFU magic item (it is already Magic and keeps DFU's name), an item
  *  that already rolled (LR4: one roll per item, ever), or a worn one. */
+/** AMMUNITION IS NEVER PROMOTED. DFU's own reason is the Arrow's: a
+ *  stack is not an item you compare, and promoting one ENCHANTS it,
+ *  which makes it unstackable (isStackable refuses an enchanted item)
+ *  - so a quiver of twenty becomes twenty rows the player has to
+ *  carry one at a time. The Arrow was named by its index here; a mod
+ *  that adds ammunition registers it, since this file has no business
+ *  knowing what a Dwemer Pellet is.
+ *
+ *  AUDIT-THUNDERLOCK F4: the Pellet was eligible. A found stack could
+ *  roll Magic and shatter itself. */
+const _ammunition = new Set([ARROW_TEMPLATE]);
+export function registerAmmunition(templateIndex) {
+  if (Number.isFinite(templateIndex)) _ammunition.add(templateIndex);
+  return _ammunition.size;
+}
+export const isAmmunition = (item) => _ammunition.has(item?.templateIndex);
+
 export function rarityEligible(item) {
   if (!item || item.questItem || item.artifact || item.magic || item.rarity || enchanted(item) || item.equipSlot != null) return false;
-  if (item.group === 'Weapons') return item.templateIndex !== ARROW_TEMPLATE;
+  if (item.group === 'Weapons') return !isAmmunition(item);
   return item.group === 'Armor' || item.group === 'Jewellery';
 }
 
@@ -188,6 +205,78 @@ export function rollRarity(source, rolls = Math.random) {
   if (r < c.rare) return 'rare';
   if (r < c.magic) return 'magic';
   return 'common';
+}
+
+// ── THE UNIQUE FIND ─────────────────────────────────────────────────
+//
+// Mac, 2026-09-19, of the Dwarven Thunderlock: "This weapon wont be
+// available for purchase and should be one of the rarest items to find
+// in the game."
+//
+// A TIER IS NOT A THING. Everything above decorates an item that DFU's
+// own loot roll already produced - a Legendary is a sword the matrices
+// minted, wearing a name. A unique find is the other question: an item
+// that DFU's roll CANNOT produce, appearing at all. So it is its own
+// roll, once per list rather than once per item, and it ADDS to the
+// list instead of promoting something in it.
+//
+// AND IT IS REGISTERED, NOT NAMED. This file is the port's loot
+// ladder; it has no business knowing that a gun exists. A weapon that
+// wants to be findable registers itself (systems/thunderlock.js does,
+// at import), which is the same shape registerCustomTemplates and the
+// equip-sound sink already have.
+//
+// THE NUMBERS. Base zero: at source tier 0 - a rat, a shallow crypt -
+// the chance is NOTHING, not "small". It only begins at `minTier`, and
+// even then it is per mille of a per mille's worth of drops: 0.35 per
+// tier point, capped at 6 (0.6%), times the source multiplier, plus
+// luck. A Daedra Lord in a Volcanic Cave is the case this is for.
+const _uniqueFinds = [];
+export const UNIQUE_WEIGHTS = Object.freeze({ base: 0, perTier: 0.35, cap: 6 });
+
+/**
+ * Register a find. `mint(rolls)` answers the ITEMS to add (a list, so
+ * a weapon can arrive with the ammunition it would be useless
+ * without); `minTier` is the source tier it first becomes possible at;
+ * `weight` scales its own chance against the others.
+ */
+export function registerUniqueFind(find) {
+  if (!find?.id || typeof find.mint !== 'function') return _uniqueFinds.length;
+  if (!_uniqueFinds.some((f) => f.id === find.id)) {
+    _uniqueFinds.push(Object.freeze({ minTier: 4, weight: 1, ...find }));
+  }
+  return _uniqueFinds.length;
+}
+export const uniqueFinds = () => _uniqueFinds.slice();
+
+/** Per mille that a qualifying source yields THIS find. */
+export function uniqueFindChance(find, { kind = 'corpse', tier = 0, boss = false, luck = 50 } = {}) {
+  if (!find || tier < (find.minTier ?? 4)) return 0;
+  const mult = boss ? SOURCE_MULT.boss : (SOURCE_MULT[kind] ?? 1);
+  const luckMod = (Math.max(0, Math.min(100, luck | 0)) - 50) * 0.02;   // a hundredth of the tier roll's - luck helps, it does not hand it over
+  const w = UNIQUE_WEIGHTS;
+  return Math.max(0, Math.min(w.cap, (w.base + w.perTier * Math.max(0, tier)) * mult * (find.weight ?? 1) + luckMod));
+}
+
+/** Roll every registered find against one source. Answers the items to
+ *  add - almost always none. */
+export function rollUniqueFinds(source, rolls = Math.random) {
+  const out = [];
+  for (const find of _uniqueFinds) {
+    const chance = uniqueFindChance(find, source);
+    if (chance <= 0) continue;
+    if (rolls() * 1000 < chance) out.push(...(find.mint(rolls) ?? []));
+  }
+  return out;
+}
+
+/** A legendary record a mod adds - the pool is DFU-shaped but not
+ *  DFU's, so it is allowed to grow. */
+const _customLegendaries = [];
+export function registerLegendary(record) {
+  if (!record?.id) return _customLegendaries.length;
+  if (!_customLegendaries.some((l) => l.id === record.id)) _customLegendaries.push(Object.freeze(record));
+  return _customLegendaries.length;
 }
 
 // ── the affixes ─────────────────────────────────────────────────────
@@ -408,9 +497,22 @@ export const LEGENDARIES = Object.freeze([
     enchantment: { type: T.ExtraSpellPts, param: 8 },   // Near Daedra
     lore: 'One of the rings the Mages Guild does not admit to having made.' },
 ]);
-export const legendaryById = (id) => LEGENDARIES.find((l) => l.id === id) ?? null;
-/** The records an item may become. */
-export const legendariesFor = (item) => LEGENDARIES.filter((l) => l.group === item?.group && (!l.templates || l.templates.includes(item.templateIndex)));
+export const legendaryById = (id) => allLegendaries().find((l) => l.id === id) ?? null;
+/** DFU-shaped, but not DFU's - the pool is the port's own, so it is
+ *  allowed to grow (registerLegendary, below). */
+export const allLegendaries = () => [...LEGENDARIES, ..._customLegendaries];
+/** The records an item may become.
+ *
+ *  `exclusive` SHADOWS the rest: a registered record that names its
+ *  templates and claims them outright, so the port's own weapon does
+ *  not roll up as a blade forged for a dragon hunt. Nothing in DFU's
+ *  own pool sets it, so the classic pairings are exactly what they
+ *  were - a dagger can still be Wyrmbane or Nightwhisper. */
+export function legendariesFor(item) {
+  const pool = allLegendaries().filter((l) => l.group === item?.group && (!l.templates || l.templates.includes(item.templateIndex)));
+  const claimed = pool.filter((l) => l.exclusive);
+  return claimed.length ? claimed : pool;
+}
 
 // ── the mint ────────────────────────────────────────────────────────
 /** The item's name for a tier: "Sentinel's Cuirass of the Bear"
@@ -471,6 +573,17 @@ export function rollLootRarity(items, source, { rolls = Math.random, luck = 50 }
     if (!rarityEligible(it)) continue;
     const tier = rollRarity({ ...source, luck }, rolls);
     if (tier !== 'common') applyRarity(it, tier, rolls);
+  }
+  // THE UNIQUE FIND, after the tiers and ONCE for the list: it adds an
+  // item DFU's roll cannot produce rather than promoting one it did.
+  // The added item is rolled for its own tier too, so the rarest thing
+  // in the game can still turn up legendary.
+  for (const found of rollUniqueFinds({ ...source, luck }, rolls)) {
+    if (rarityEligible(found)) {
+      const tier = rollRarity({ ...source, luck }, rolls);
+      if (tier !== 'common') applyRarity(found, tier, rolls);
+    }
+    items.push(found);
   }
   return items;
 }

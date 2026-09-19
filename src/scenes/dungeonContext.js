@@ -47,7 +47,7 @@ import { registerPreventRestCondition, unregisterPreventRestCondition } from '..
 import { runSurvivalMinutes } from '../systems/survival/needs.js';   // AUDIT SURV B: the dungeon's rest pays its night asleep
 import { dateFromClassicMinutes } from '../systems/gameDate.js';   // SURV7: the env's month
 import { playerEntity, surfacePlayer, hurtPlayer as hurtEntity, damageShieldPool, setDeathPresenter, setAvoidDeathHook } from '../characters/playerEntity.js';   // AUDIT 58: DecreaseHealth's shield hook is the BASE class's, so every entity's door owes it
-import { addItem, spendArrow, isEnchanted } from '../systems/inventory.js';
+import { addItem, spendAmmoFor, isEnchanted } from '../systems/inventory.js';
 import { useQuickslot, swapQuickslot, offHandQuickslot, spellQuickslotPress, offHandOffersSwap, tickQuickslotHold } from '../systems/quickslots.js';   // QS2/QS4: the diamond's performers   // QS6: the spell slot, the off hand's swap question, and the hold machine
 import { worldAabb, objectAabb } from '../player/activate.js';   // AUDIT 63 F37/F38: objectAabb is the LIVE box a ray or a collision meets
 import { createWeaponRig, envAttack } from '../combat/weaponRig.js';   // C10: the shared FP-weapon surface
@@ -4645,7 +4645,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
           // look instead of the melee arc (WeaponManager verbatim
           // shape).
           const lookDir = [-view[2], -view[6], -view[10]];   // the view-matrix forward this file already uses for the viewmodel
-          if (!spendArrow(playerEntity.items)) continue;   // one Arrow per loose, verbatim (the arrow guard normally pre-sheathes at zero)
+          // one round per loose, verbatim (the ammo guard normally
+          // pre-sheathes at zero). WHICH round is the weapon's answer:
+          // a bow spends an Arrow, the Thunderlock a Dwemer Pellet.
+          if (!spendAmmoFor(playerEntity.items, playerWeapon.weapon)) continue;
           fireArrow(eye, lookDir, playerWeapon.weapon, true);   // ROAD-H H1c: fireArrow applies GetAimPosition's player arm (the bow hand), as DFU's missile does its own
           // WeaponManager.cs:419-436, in DFU's order: the swing costs
           // fatigue whatever it hits, and a BOW always takes the tally

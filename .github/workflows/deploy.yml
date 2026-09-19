@@ -77,6 +77,31 @@ jobs:
           mkdir -p site/preview/exact-face-atlas
           cp -a exact-face-atlas/dist/. site/preview/exact-face-atlas/
 
+      # THE GUN LAB, ON ITS OWN (Mac, 2026-09-19: "I want to test this
+      # as its own deploy"). Pages serves ONE site per repository, so a
+      # thing that wants its own link gets its own directory under it,
+      # and only main publishes. It builds from its OWN config
+      # (vite.config.gun.js) - the page, its module, its art and its
+      # sounds, nothing of the game - so the lab's link does not ride
+      # on the game's build, and the directory carries an index.html so
+      # /preview/gun-lab/ opens it.
+      #
+      # AUDIT-THUNDERLOCK F6: this checked out the FEATURE BRANCH by
+      # name, which is a loaded gun pointed at production - deleting
+      # that branch after the merge would fail this step and take the
+      # whole Pages deploy down with it, game and all. It builds from
+      # the production checkout instead: the lab is on main once this
+      # merges, and a preview that needs its own branch is what the
+      # `exact-face-atlas` block above is for.
+      - name: Build gun lab
+        run: npx vite build --config vite.config.gun.js
+        working-directory: production
+
+      - name: Mount the gun lab under production site
+        run: |
+          mkdir -p site/preview/gun-lab
+          cp -a production/dist-gun/. site/preview/gun-lab/
+
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

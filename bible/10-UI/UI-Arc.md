@@ -270,7 +270,7 @@ does the pack's USE arm.
                         close-then-hand-over ordering U55 got
                         backwards. No law needs extracting first.
     THE LOGBOOK         THREE sites: charSheetNav.js:53,
-    / NOTEBOOK          world.js:6053, dungeonContext.js:6142. A seam
+    / NOTEBOOK          world.js:6053, dungeonContext.js:6145. A seam
                         wants making, as U52's and U53's did.
     HISTORY             ONE site (charSheetNav.js:61), and it reads
                         only the entity's backStory. The small one.
@@ -4187,7 +4187,7 @@ actually use. DFU has one call taking the target entity
 that apart and only carried the group down one of the two forks.
 
 The target half of the player's swing was PARTLY correct -
-playerWeapon.js:256 passed `enemyGroupOf(foe.entity.affinity)` - which
+playerWeapon.js:257 passed `enemyGroupOf(foe.entity.affinity)` - which
 is precisely why this looked wired. AUDIT 18 corrected the rest: DFU
 uses TWO discriminants, not one. The Humanoid arm keys on
 `MobileEnemy.Affinity == MobileAffinity.Human`, as the port did, but
