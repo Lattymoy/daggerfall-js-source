@@ -135,10 +135,31 @@ varied procedurally (rotation, scale, colour jitter).
 
 Slices, each behind its own `features.js` row:
 
-1. **BLOOD1a - the decal pool.** A ring of N screen-space-projected
-   quads laid on the surface a hit or a particle lands on, recycled
-   oldest-first, offset with the floating origin, cleared on a mode
-   change. The rate ladder above drives the count.
+1. **BLOOD1a - the decal pool.** SHIPPED (`src/combat/bloodDecals.js`,
+   `test/blood1_decals.test.js`, `tools/mutants/blood1.json` 8/8 dead).
+   A fixed ring of oriented quads laid on the surface a hit or a
+   particle met, recycled oldest-first, offset with the floating
+   origin, cleared on a mode change; the rate ladder drives the count.
+
+   NO RENDERER IN IT. The module answers WHERE a mark goes and WHICH
+   one is next out of the ring; the host draws it. That is the
+   camp.js/camps.js split, and it is what lets every law here be driven
+   on a table instead of through a GL context.
+
+   Two things the writing settled that the reading had not. THE
+   LADDER'S TOP RUNG AND THE OVERKILL LINE ARE ONE NUMBER (175): the
+   first cut had them as separate table rows and the boundary came out
+   wrong, so `ladderRate` asks `OVERKILL_PERCENT` directly and the two
+   cannot drift apart. And THE SEED AXIS FOR THE SURFACE BASIS swaps
+   near horizontal not because the maths breaks there - `up x normal`
+   collapsing falls to a fallback that is still a valid basis - but
+   because just BESIDE the collapse the cross product is
+   ill-conditioned: two floors tilted a thousandth of a unit either way
+   would disagree about which way is right. A dungeon floor is never
+   exactly level, so that is the case and not the corner. Both are
+   mutation-recorded; both survived the first cut of the pins and named
+   real holes (the origin-shift pin's delta had a zero height term, and
+   the basis was never exercised near horizontal).
 2. **BLOOD1b - overkill and gibs.** The 175% rung, the burst, the
    corpse swap.
 3. **BLOOD1c - bleeding.** The 2..5s cadence and the ramp above.

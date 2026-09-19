@@ -1,0 +1,58 @@
+[
+  {
+    "name": "BLOOD1a-the-density-slider-can-scale-a-hit-to-nothing",
+    "file": "src/combat/bloodDecals.js",
+    "old": "  return Math.max(1, Math.round(rate * d));",
+    "new": "  return Math.round(rate * d);",
+    "tests": ["test/blood1_decals.test.js"]
+  },
+  {
+    "name": "BLOOD1a-overkill-is-the-200-the-setting-text-claims",
+    "file": "src/combat/bloodDecals.js",
+    "old": "export const OVERKILL_PERCENT = 175;",
+    "new": "export const OVERKILL_PERCENT = 200;",
+    "tests": ["test/blood1_decals.test.js"]
+  },
+  {
+    "name": "BLOOD1a-the-threshold-is-exclusive",
+    "file": "src/combat/bloodDecals.js",
+    "old": "export const isOverkill = (damage, maxHealth) => damagePercent(damage, maxHealth) >= OVERKILL_PERCENT;",
+    "new": "export const isOverkill = (damage, maxHealth) => damagePercent(damage, maxHealth) > OVERKILL_PERCENT;",
+    "tests": ["test/blood1_decals.test.js"]
+  },
+  {
+    "name": "BLOOD1a-a-zero-max-health-divides",
+    "file": "src/combat/bloodDecals.js",
+    "old": "  if (!(maxHealth > 0) || !(damage > 0)) return 0;",
+    "new": "  if (!(damage > 0)) return 0;",
+    "tests": ["test/blood1_decals.test.js"]
+  },
+  {
+    "name": "BLOOD1a-the-floor-basis-collapses",
+    "file": "src/combat/bloodDecals.js",
+    "old": "  const seed = Math.abs(n[1]) > 0.9 ? [0, 0, 1] : [0, 1, 0];",
+    "new": "  const seed = [0, 1, 0];",
+    "tests": ["test/blood1_decals.test.js"]
+  },
+  {
+    "name": "BLOOD1a-the-mark-is-lifted-along-world-up",
+    "file": "src/combat/bloodDecals.js",
+    "old": "        point[0] + basis.normal[0] * SURFACE_LIFT,\n        point[1] + basis.normal[1] * SURFACE_LIFT,\n        point[2] + basis.normal[2] * SURFACE_LIFT,",
+    "new": "        point[0],\n        point[1] + SURFACE_LIFT,\n        point[2],",
+    "tests": ["test/blood1_decals.test.js"]
+  },
+  {
+    "name": "BLOOD1a-the-ring-grows-instead-of-recycling",
+    "file": "src/combat/bloodDecals.js",
+    "old": "    next = (next + 1) % cap;",
+    "new": "    next = next + 1;",
+    "tests": ["test/blood1_decals.test.js"]
+  },
+  {
+    "name": "BLOOD1a-the-origin-shift-is-dropped",
+    "file": "src/combat/bloodDecals.js",
+    "old": "      d.pos[0] += delta[0]; d.pos[1] += delta[1]; d.pos[2] += delta[2];",
+    "new": "      d.pos[0] += delta[0]; d.pos[2] += delta[2];",
+    "tests": ["test/blood1_decals.test.js"]
+  }
+]
