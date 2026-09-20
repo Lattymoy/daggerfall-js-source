@@ -437,7 +437,19 @@ export class RemotePlayers {
    *  does in dungeonContext.js), retried after DOLL_RETRY_MS on a failure (a missing texture, a build that threw) -
    *  same shape as `dollFor`, so a peer this fails for just keeps the paperdoll rather than never being drawn.
    *  `mobileType`/`gender` changing (a peer's class - or, mid-look, their sex - changed) tears down and rebuilds:
-   *  a MobileUnit is built FOR one type/gender pair, and does not re-type itself the way a foe's async retypeFoe can. */
+   *  a MobileUnit is built FOR one type/gender pair, and does not re-type itself the way a foe's async retypeFoe can.
+   *
+   *  BUGFIX (2026-09-20, "sprites on, still see a stiff paperdoll"): `have` is a PENDING PROMISE for every frame the
+   *  build has not landed on yet - `_buildMobile` is async and its result is stored in `this._mobiles` the moment it
+   *  is CALLED, not when it resolves (see below). A bare Promise carries none of the bundle's own fields, so
+   *  `have.mobileType` read off it was always `undefined` and never matched the requested `mobileType` - every frame
+   *  that found a still-pending build misread it as "wrong type", fell through, and started a BRAND NEW build,
+   *  discarding the one already in flight. `_mobileFor` is called once a peer, every sync(): any texture load that
+   *  does not land inside a single frame's own microtask queue (the common case - a first-ever load of that class's
+   *  archive, a slow connection, several peers loading at once) never got the chance to finish at all, and the peer
+   *  sat on the paperdoll fallback (the documented "composing" state) forever, not just for the one frame it was
+   *  meant to. The promise now carries the type/gender it is building for, exactly as a landed bundle already does,
+   *  so the SAME check above recognizes and returns an in-flight build instead of restarting it. */
   _mobileFor(peerId, mobileType, gender) {
     const have = this._mobiles.get(peerId);
     if (have && have.failedUntil != null) {
@@ -445,9 +457,14 @@ export class RemotePlayers {
       this._mobiles.delete(peerId);
     } else if (have) {
       if (have.mobileType === mobileType && have.gender === gender) return have;
-      // a ready bundle for the WRONG type/gender - fall through and rebuild, same as a look-key miss for a doll
+      // a ready bundle, OR A BUILD ALREADY IN FLIGHT, for the WRONG type/gender - fall through and rebuild, same as
+      // a look-key miss for a doll
     }
-    const p = this._buildMobile(mobileType, gender).catch(() => null);
+    // BUGFIX: tag the in-flight promise so THIS SAME peer/type/gender is recognized as already building, next frame
+    // and every frame after, instead of being mistaken for "no build yet" and restarted. Object.assign rather than
+    // two property writes because a bare `p.mobileType = ...` is a write to a property Promise does not declare, and
+    // `npm run types` refuses it (TS2339); assigning at the point of creation gives the binding the tagged type.
+    const p = Object.assign(this._buildMobile(mobileType, gender).catch(() => null), { mobileType, gender });
     this._mobiles.set(peerId, p);
     p.then((bundle) => {
       if (this._mobiles.get(peerId) !== p) return;   // SLAM12's own race: a peer released or rebuilt while this was in flight

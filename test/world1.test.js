@@ -187,7 +187,18 @@ test('WORLD1: the hosts by source - the dungeon host\'s shared world is the layo
   assert.match(d, /for \(let i = foes\.length - 1; truncate && i >= \(w\.foes\?\.length \?\? 0\); i--\) \{/, 'the cut is the save\'s alone');
   assert.match(d, /sharedWorld\(\) \{\s*const w = collectWorld\(\);\s*w\.foes = w\.foes\.slice\(0, _layoutFoes\);\s*delete w\.teleportedIntoDungeon;\s*delete w\.droppedLoot;\s*delete w\.droppedTorches;\s*(?:\/\/[^\n]*\n\s*)*(?:\/\/[^\n]*\n\s*)*delete w\.piles;\s*for \(const f of w\.foes\) delete f\.items;\s*w\.loot = lootRecords\(\[\.\.\._lootSeen\]\);\s*(?:\/\/[^\n]*\n\s*)*w\.actions = \(w\.actions \?\? \[\]\)\.map\(sharedRecord\);\s*(?:w\.camps = campMemory\(\);[^\n]*\n\s*)?return \{ locationKey: _locationKey, stamp: _sharedStamp, world: w \};\s*\},/, 'the layout\'s run alone (AUDIT WORLD B2), nothing of the player\'s own - not the drops (B3) - keyed and stamped (B1); and since WORLD4 the containers the room has OPENED in place of every pile\'s contents, and since AUDIT WORLD4 D4 no foe item list either - `corpse:<i>` reads exactly that array');
   assert.match(d, /restoreSharedWorld\(shared\) \{\s*if \(!shared \|\| shared\.locationKey !== _locationKey \|\| !shared\.world \|\| typeof shared\.world !== 'object'\) return false;\s*if \(shared\.stamp === _sharedStamp \|\| _sharedApplied\) return false;\s*(?:\/\/[^\n]*\n\s*)*const acts = [^\n]*\n\s*(?:\/\/[^\n]*\n\s*)*const sfoes = [^\n]*\n\s*(?:\/\/[^\n]*\n\s*)*applyWorld\(\{ \.\.\.shared\.world, piles: undefined, actions: acts, foes: sfoes \}, \{ truncate: false, wire: true \}\);\s*applyLoot\(shared\.world\.loot\);[^\n]*\n\s*(?:applyCampMemory\(shared\.world\.camps\);[^\n]*\n\s*)?_sharedApplied = true;\s*return true;\s*\},/, 'another dungeon\'s memory refused, its own refused (B1), once (B7), the layout\'s run alone in (B2), the rest left standing; and since WORLD4 the room\'s opened containers through the live door');
-  assert.match(d, /for \(const e of enemies\) await buildFoeAt\(e\);\s*const _layoutFoes = foes\.length;/, 'the run measured right after the markers\' build');
+  // The law is that NO CODE runs between the markers' build and the measure -
+  // anything that appended a foe in between would be counted into the layout's
+  // run and streamed as if the layout had placed it. The pin used to spell that
+  // as `\s*`, which also forbade a COMMENT, and ONLINE-DUNGEON-FOES put a
+  // twenty-line FLAGGED note on that very line. Comment lines are allowed
+  // through and statements are still not, so the pin now forbids what it means.
+  const between = /for \(const e of enemies\) await buildFoeAt\(e\);\n([\s\S]*?)\n\s*const _layoutFoes = foes\.length;/.exec(d);
+  assert.ok(between, 'the run measured right after the markers\' build');
+  for (const l of between[1].split('\n')) {
+    assert.match(l, /^\s*(\/\/.*)?$/,
+      `a STATEMENT stands between the markers' build and the run's measure, and it would be counted into the layout: ${l.trim()}`);
+  }
   const m = rd('src/scenes/worldModes.js');
   assert.match(m, /dungeonSharedWorld\(\) \{ return mode === 'dungeon' && dungeonCtx \? dungeonCtx\.sharedWorld\(\) : null; \},/);
   assert.match(m, /restoreDungeonSharedWorld\(shared\) \{ return mode === 'dungeon' && dungeonCtx \? dungeonCtx\.restoreSharedWorld\(shared\) : false; \},/);

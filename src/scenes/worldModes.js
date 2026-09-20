@@ -127,7 +127,9 @@ import { ListPickerWindow, listPickerArtLoaded } from '../ui/listPicker.js';   /
 import { createItemLabels, grantCreatedItem, lastCreateItemIndex, setLastCreateItemIndex } from '../systems/createItem.js';   // X11b
 import { announceLevelUp, levelOwed } from '../ui/levelNotice.js';   // LV2: the level-up notification, and the skin fork over whether the window opens itself
 import { createCharSheetWindow } from '../ui/charSheetDoor.js';   // AUDIT 21 hosts F3: levelling in a building; LV1: through the ONE seam, so this host wears the skin's face like the other three
-import { NativeTradeWindow, preloadTradeArt, tradeArtLoaded, TRADE_RECTS } from '../ui/nativeTrade.js';   // U8c
+import { NativeTradeWindow, preloadTradeArt, TRADE_RECTS } from '../ui/nativeTrade.js';   // U8c
+import { createTradeWindow, tradeDoorReady } from '../ui/tradeDoor.js';   // the enhanced/native fork, same law as ui/inventoryDoor.js
+import { isEnhanced } from '../systems/uiSkin.js';
 // U23: the static-NPC seam and the guild service popup.
 import { STATIC_NPC_ACTIVATION_DISTANCE, DEFAULT_ACTIVATION_DISTANCE, RAY_DISTANCE } from '../systems/talk.js';
 // PlayerActivate.ActivateBulletinBoard (:706-739) - the town sign's arm
@@ -187,8 +189,10 @@ import {
   INTERRUPT_REPAIR_TEXT,
 } from '../systems/repairService.js';
 import { GuildServiceWindow, preloadGuildServiceArt, guildServiceArtLoaded } from '../ui/guildServiceWindow.js';
-import { MerchantServiceWindow, preloadMerchantServiceArt, merchantServiceArtLoaded } from '../ui/merchantServiceWindow.js';   // UI2: the merchant's own panel
-import { MerchantRepairWindow, preloadMerchantRepairArt, merchantRepairArtLoaded } from '../ui/merchantRepairWindow.js';   // AUDIT 58: the repair shop's four-button popup
+import { preloadMerchantServiceArt } from '../ui/merchantServiceWindow.js';   // UI2: the merchant's own panel
+import { createMerchantServiceWindow, merchantServiceDoorReady } from '../ui/merchantServiceDoor.js';   // the enhanced/native fork, same law as ui/tradeDoor.js
+import { preloadMerchantRepairArt } from '../ui/merchantRepairWindow.js';   // AUDIT 58: the repair shop's four-button popup
+import { createMerchantRepairWindow, merchantRepairDoorReady } from '../ui/merchantRepairDoor.js';   // the enhanced/native fork, same law as ui/tradeDoor.js
 import { CovenWindow, preloadCovenArt, covenArtLoaded } from '../ui/covenWindow.js';   // CW1: DaggerfallWitchesCovenPopupWindow
 import { openPauseFlow, preloadPauseFlowArt, pauseDoorReady, pauseOpts } from '../ui/pauseDoor.js';   // I3/I4; U51 picks the skin; MAC-L1: pauseOpts is the ONE reader of the door's options
 import { openPixelDial } from '../ui/pixelDial.js';   // PX15b: the Tab compass rose
@@ -217,9 +221,10 @@ import { MoveAxes } from '../player/moveAxes.js';   // AUDIT 28 W8: MovementAcce
 // U39: the tavern - the window, the knightly free-room perk and the
 // two guild readers that recover the player's own order.
 import {
-  TavernWindow, preloadTavernArt, tavernArtLoaded,
+  TavernWindow, preloadTavernArt,
   TAVERN_RECTS, TAVERN_PANEL_X, TAVERN_PANEL_Y,
 } from '../ui/tavernWindow.js';
+import { createTavernWindow, tavernDoorReady } from '../ui/tavernDoor.js';   // the enhanced/native fork, same law as ui/tradeDoor.js
 import { freeTavernRooms } from '../systems/guildServices.js';
 // B2: the bank - the window, the per-region accounts and the purse seam.
 import { BankWindow, preloadBankArt, bankArtLoaded, BANK_RECTS, BANK_PANEL_X, BANK_PANEL_Y } from '../ui/bankWindow.js';
@@ -1349,10 +1354,10 @@ export function createWorldModes(host) {
    *  billboard is CENTRE-anchored, so the base ends up ON the marker
    *  inside a building and half a height BELOW it inside a dungeon.
    *  This port's billboard shader is BOTTOM-anchored (position = base,
-   *  the C11 law dungeonContext.js:1646 states), so the same visual
+   *  the C11 law dungeonContext.js:1667 states), so the same visual
    *  result needs the shift on the DUNGEON side - which is exactly the
    *  shift the dungeon's own RDB flats already take
-   *  (dungeonContext.js:1551, `y - size.h / 2`), and which a building's
+   *  (dungeonContext.js:1572, `y - size.h / 2`), and which a building's
    *  flats correctly do not (interiorContext.js passes its centers
    *  straight through).
    *
@@ -1803,8 +1808,10 @@ export function createWorldModes(host) {
       return;
     }
     // U8c: the native trade screen when the art is up (the E2/E3
-    // loop on INVE00I0 + TRAD00I0 + SHOP00I0; keyed fallback stays)
-    if (tradeArtLoaded()) {
+    // loop on INVE00I0 + TRAD00I0 + SHOP00I0; keyed fallback stays);
+    // enhanced mode reads no ARENA2 at all, so its own gate is
+    // ui/tradeDoor.js's `tradeDoorReady`, not the classic art flag.
+    if (tradeDoorReady()) {
       interiorOverlay = openTradeWindow(shelf, b, 'Buy');
       interiorLootOpened(`shelf:${i}`, interiorOverlay, { fresh });   // WORLD6a: and so from the trade window - its close is the frame's settle
       return;
@@ -1819,7 +1826,11 @@ export function createWorldModes(host) {
    *  with no shelf yet gets one lazily, exactly as openShelf does. */
   function openMerchantSell() {
     const b = interiorBuilding;
-    if (!b || !tradeArtLoaded() || !_shopFont) return false;
+    // `_shopFont` is the CLASSIC window's own draw-time font (its
+    // `.draw(renderer, canvas, font)` param, :6540) - the enhanced
+    // counter draws no canvas at all, so it is a native-only condition;
+    // `tradeDoorReady` is the one gate both skins answer to.
+    if (!b || !tradeDoorReady() || (!isEnhanced() && !_shopFont)) return false;
     const shelf = (interiorCtx?.shelves ?? [])[0] ?? (interiorCtx ? (interiorCtx.shelves ??= [])[0] : null);
     const target = shelf ?? { items: null };
     // A2: the same stockedDate gate the shelf arm takes - this IS that
@@ -1872,7 +1883,7 @@ export function createWorldModes(host) {
       mercantile: skillValue(playerEntity, SKILLS.Mercantile),
       personality: playerEntity.stats?.personality == null ? 50 : liveStat(playerEntity, 'personality'),
     });
-    return new NativeTradeWindow({
+    return createTradeWindow({
       mode,
       shelfItems: () => shelf.items,
       // AUDIT 17e F4: an EQUIPPED item never reaches either list -
@@ -2426,9 +2437,9 @@ export function createWorldModes(host) {
     // as the fallback for a session with no REPR01I0 - the never-trap
     // idiom the merchant/tavern/coven arms all take.
     if (!forceTalk && route.kind === 'merchant' && route.service === 'repair') {
-      if (merchantRepairArtLoaded()) {
+      if (merchantRepairDoorReady()) {
         let win = null;
-        win = new MerchantRepairWindow({
+        win = createMerchantRepairWindow({
           onRepair: () => openRepairService({}),
           onTalk: () => openStaticNpc(pn, { forceTalk: true }),
           onSell: () => openMerchantSell(),
@@ -2452,9 +2463,9 @@ export function createWorldModes(host) {
     // merchant's own panel, and its Talk row, never appeared.
     if (!forceTalk && route.kind === 'merchant'
       && (route.service === 'banking' || route.service === 'sell')
-      && merchantServiceArtLoaded() && _shopFont) {
+      && merchantServiceDoorReady() && (isEnhanced() || _shopFont)) {
       const banking = route.service === 'banking';
-      mountInterior(new MerchantServiceWindow({
+      mountInterior(createMerchantServiceWindow({
         service: banking ? 'Banking' : 'Sell',
         onTalk: () => openStaticNpc(pn, { forceTalk: true }),
         onService: () => { if (banking) openBank(); else openMerchantSell(); },
@@ -3044,7 +3055,7 @@ export function createWorldModes(host) {
    *  opened - a host with no art or no font falls through to TALK,
    *  which is the U8 idiom and keeps the NPC answering. */
   function openTavern(pn) {
-    if (!tavernArtLoaded() || !_shopFont) return false;
+    if (!tavernDoorReady() || (!isEnhanced() && !_shopFont)) return false;
     const dict = townTalk?.factionDict ?? null;
     const b = interiorBuilding;
     // GuildManager.GetGuild(KnightlyOrder).FreeTavernRooms() - the
@@ -3056,7 +3067,7 @@ export function createWorldModes(host) {
     const km = joinedGuildOfGroup(memberships, GUILD_GROUPS.KnightlyOrder);
     const knightGuild = km?.guild?.startsWith('Order:') ? orderOf(km.guild.slice('Order:'.length)) : null;
     let win = null;
-    win = new TavernWindow({
+    win = createTavernWindow({
       entity: playerEntity,
       rows: (id, pick) => townTalk?.lines?.(id, pick) ?? [],
       now: () => Math.floor(worldMinutes()),
@@ -3423,7 +3434,7 @@ export function createWorldModes(host) {
     // back, so there is no shop shelf at all - the empty one below is
     // what the window's Buy-side plumbing expects to find and never
     // reads in this mode.
-    if (destination === 'guildServiceIdentify' && tradeArtLoaded()) {
+    if (destination === 'guildServiceIdentify' && tradeDoorReady()) {
       // G4: ...and the guild's OWN faction id, which is what a guild
       // store has to price with.
       flow = openTradeWindow({ items: [] }, b ?? {}, 'Identify', { guildFactionId: guild?.factionId ?? null });
@@ -3443,7 +3454,7 @@ export function createWorldModes(host) {
     // every time player opens window"); the restock is its
     // consequence. Making it persist would be a silent departure, so
     // it is left as DFU has it and recorded here instead.
-    if (destination === 'guildServiceBuySoulgems' && tradeArtLoaded()) {
+    if (destination === 'guildServiceBuySoulgems' && tradeDoorReady()) {
       const shelf = { items: stockSoulGems(
         { quality: b?.quality ?? 0, gameMinutes: Math.floor(worldMinutes()) },
         { soulPointsOf: (t) => ENEMY_BASICS[t]?.soulPts ?? 0 }) };
@@ -3461,7 +3472,7 @@ export function createWorldModes(host) {
     // nothing else. All of them - and X6's and X7's arms above - pass
     // the guild's OWN faction id, which is what makes the holiday
     // clause reachable at all.
-    if (destination === 'guildServiceSellMagicItems' && tradeArtLoaded()) {
+    if (destination === 'guildServiceSellMagicItems' && tradeDoorReady()) {
       // SellMagic works off the PLAYER'S PACK - there is no shelf to
       // stock, which is why DFU passes the trade window a mode and a
       // guild and nothing else (:409-411). X7 took the Identify arm
@@ -3469,12 +3480,12 @@ export function createWorldModes(host) {
       flow = openTradeWindow({ items: [] }, b ?? {}, 'SellMagic', { guildFactionId: guild?.factionId ?? null });
       return flow;
     }
-    if (destination === 'guildServiceBuyPotions' && tradeArtLoaded()) {
+    if (destination === 'guildServiceBuyPotions' && tradeDoorReady()) {
       const shelf = { items: stockGuildPotions({ quality: b?.quality ?? 0, gameMinutes: Math.floor(worldMinutes()) }) };
       flow = openTradeWindow(shelf, b ?? {}, 'Buy', { guildFactionId: guild?.factionId ?? null });
       return flow;
     }
-    if (destination === 'guildServiceBuyMagicItems' && tradeArtLoaded()) {
+    if (destination === 'guildServiceBuyMagicItems' && tradeDoorReady()) {
       // The soul-gem arm rides ALONG when this guild also sells them
       // (:248) - one shelf, two services' stock - and it walks the
       // day's sequence AFTER the magic items, so these gems are not
@@ -3968,7 +3979,7 @@ export function createWorldModes(host) {
    *  the street with no building record. */
   function openRepairService(ctx = {}) {
     const b = interiorBuilding;
-    if (b && tradeArtLoaded() && _shopFont) {
+    if (b && tradeDoorReady() && (isEnhanced() || _shopFont)) {
       const shelf = (interiorCtx?.shelves ?? [])[0] ?? { items: [] };
       return mountServiceWindow(openTradeWindow(shelf, b, 'Repair', { reducedRepairCost: ctx.reducedRepairCost ?? null }));
     }
@@ -5118,6 +5129,23 @@ export function createWorldModes(host) {
       [player.pos[0], player.pos[1] + 1.8 * 0.65, player.pos[2]],
       exitReturn.siblings.map((e) => e.door));
     if (!landing) { console.error('exit: no exterior landing (empty sibling doors)'); return false; }   // tryEnter guards its landing; this path was unguarded - a null here killed the frame loop
+    return exitInteriorNow(landing);
+  }
+  /** UNSTUCK1: split from tryExit's tail so a caller with no ray at all
+   *  (the console command below) can leave through the SAME door the
+   *  player walked in by - `exitReturn.siblings` never depended on
+   *  which door was clicked, only on which one was entered, so a
+   *  landing can always be recomputed from the player's CURRENT
+   *  position with no click at all. `landing` is an optional
+   *  precomputed one so tryExit above does not pay for a second
+   *  `exteriorLanding` call it already made. */
+  function exitInteriorNow(landing = null) {
+    if (!landing) {
+      landing = exteriorLanding(
+        [player.pos[0], player.pos[1] + 1.8 * 0.65, player.pos[2]],
+        exitReturn.siblings.map((e) => e.door));
+      if (!landing) { console.error('unstuck: no exterior landing (empty sibling doors)'); return false; }
+    }
     // P1: CacheScene (:860) - BEFORE the teardown, while the shelves
     // and the action objects are still alive to be read.
     unleveledLootPreTransition();   // UL1: OnPreTransition (TransitionExterior)
@@ -5311,7 +5339,7 @@ export function createWorldModes(host) {
           hudMessageSink: (t) => questBridge?.notebook?.addMessage(t),
           // MAC1 J: and the relock the dungeon's pause door needs, on
           // the same threading - the context owns no canvas of its own
-          // (dungeonContext.js:5743), so the OUTER host's one rides in.
+          // (dungeonContext.js:5764), so the OUTER host's one rides in.
           // This is the most-played pause door of the six: world.js
           // gates its own Escape ladder on exterior mode, so underground
           // the key falls to routeKey -> ui/input.js:637 -> the
@@ -5603,6 +5631,7 @@ export function createWorldModes(host) {
     return exitDungeonNow();
   }
   let pendingDungeonExit = false;   // F-A5: the wagon prompt's No, taken a frame later
+  let pendingInteriorExit = false;   // UNSTUCK1: exitInteriorNow's own deferral, F-A5's twin - see unstuck() below
   /** TransitionDungeonExterior(true): the exit itself, split from the
    *  activation so the wagon prompt's No can take it a frame later. */
   /** JAN1 (Janome: a fist under the torch on the way out): THE POSE IS THE PLAYER'S, NOT THE RIG'S - four
@@ -6192,6 +6221,12 @@ export function createWorldModes(host) {
     // the world sleeps untouched underneath (the modal frame also
     // freezes streaming - the interior-local player position must
     // never feed the recenter logic).
+    // UNSTUCK1: exitInteriorNow's own deferral, F-A5's exact shape -
+    // outside any overlay dispatch, same reasoning as pendingDungeonExit
+    // just above: tearing the interior down from INSIDE a click/command
+    // dispatch that is itself running off interiorCtx would pull the
+    // rug out from under its own caller.
+    if (pendingInteriorExit) { pendingInteriorExit = false; exitInteriorNow(); return true; }
     // AUDIT 23 (C12: cross-6 = wts-3) - PlayerAmbientLight.cs:75-80: a
     // night interior takes the darker purple-tinted ambient.
     renderer.setLighting(new Float32Array(isNight(worldMinutes() % 1440) ? INTERIOR_NIGHT_AMBIENT : INTERIOR_AMBIENT), 0);
@@ -6280,7 +6315,7 @@ export function createWorldModes(host) {
           // AUDIT 39r: and the FLASH, which this arm was copied without.
           // An arrow reaches the player through BowDamage ->
           // ApplyDamageToPlayer -> SendDamageToPlayer, the same door as
-          // a blow (world.js:7843's own wave-46 note); the interior
+          // a blow (world.js:7844's own wave-46 note); the interior
           // MELEE hit already flashes inside exteriorFoes, so only this
           // arm - which applies its own damage - was missing it.
           flashPlayerDamage(dmg);   // BA1: RemoveHealth carries the amount
@@ -7097,7 +7132,7 @@ export function createWorldModes(host) {
   addEventListener('mousedown', (e) => {
     // AUDIT-MACK F2: THIS HOST DOES NOT FEED THE HELD SET, and MAC-K1
     // briefly made it. `keys` is not this host's - it arrives on the
-    // host bag (`exterior.js:3434`, `world.js`'s twin), and the OUTER
+    // host bag (`exterior.js:3435`, `world.js`'s twin), and the OUTER
     // host's own mousedown writes `keys.add(mouseCode(e.button))`
     // UNGATED, before any mode test, on a listener that is never
     // removed. So the three button codes were already in the Set while
@@ -7881,6 +7916,22 @@ export function createWorldModes(host) {
   }
   return {
     get mode() { return mode; },
+    // UNSTUCK1 (per-request, online-chat command): teleports the
+    // player to the door they came in by - the SAME exterior spot
+    // tryExit/tryExitDungeon land on, just reached with no ray and no
+    // wagon prompt. Deferred through the pending-exit flags rather than
+    // called straight (F-A5's own reasoning): the chat panel that will
+    // call this fires from a DOM key event, not from inside a frame's
+    // own dispatch, but draining at the safe point the dungeon arm
+    // already proved out costs nothing and keeps both exits on one
+    // rule. Answers false in the exterior - open air has no door to
+    // send the player back through, and the request is explicit that
+    // this is an indoors/underground command only.
+    unstuck: () => {
+      if (mode === 'dungeon' && dungeonCtx) { pendingDungeonExit = true; return true; }
+      if (mode === 'interior' && interiorCtx) { pendingInteriorExit = true; return true; }
+      return false;
+    },
     // ONLINE-AUTOSAVE1: a mode-aware save for callers OUTSIDE any key
     // route (world.js's own beforeunload hook) that need "whatever F9
     // would do right now" without knowing which of the three save
@@ -7998,7 +8049,7 @@ export function createWorldModes(host) {
      *  window's own commit closure now, so its lifetime is the
      *  window's and no slot has to remember it. */
     openIdentifyWindow({ chance, refund } = {}) {
-      if (!tradeArtLoaded()) return false;
+      if (!tradeDoorReady()) return false;
       // The magicka the window will charge on the Identify click IS
       // the cost the effect just refunded (Identify.cs:74's
       // IdentifySpellCost = cost.spellPointCost) - the refund and the
@@ -8563,9 +8614,9 @@ export function createWorldModes(host) {
      *  .cs:175-176 writes `weaponDrawn`/`usingLeftHand` off it,
      *  :420-421 restores them onto it. The port has FOUR PlayerWeapons
      *  (world.js's, this file's `interiorWeapon` :538, dungeonContext's
-     *  and exterior.js's - which this seam does not reach: that host has no save path at all, its charter exterior.js:3024-3046), and IS1 routed the inside-a-building save to
+     *  and exterior.js's - which this seam does not reach: that host has no save path at all, its charter exterior.js:3025-3047), and IS1 routed the inside-a-building save to
      *  the WORLD host's composer - which reads its own exterior rig
-     *  unconditionally (world.js:5188). So an F9 pressed in a shop
+     *  unconditionally (world.js:5189). So an F9 pressed in a shop
      *  recorded the street's sheath and hand, and the load wrote them
      *  back into the street's rig; the rig actually in the player's
      *  hands was in no envelope at all.
@@ -8592,7 +8643,7 @@ export function createWorldModes(host) {
      *  presenter for the whole visit) or the interior's? world.js's gate read townTalk's slot alone. */
     deathUp() { return mode === 'dungeon' ? !!dungeonCtx?.deathUp?.() : interiorOverlay instanceof DeathScreen; },
     /** The restore half - and NOT gated on the mode, deliberately.
-     *  worldQuickLoad calls forceExitToExterior FIRST (world.js:5280)
+     *  worldQuickLoad calls forceExitToExterior FIRST (world.js:5281)
      *  and only re-enters the building at :4217, so the mode at apply
      *  time is whatever the LOAD landed in, not whatever the SAVE was
      *  taken in: an outdoor save loaded while the player was indoors
@@ -8602,8 +8653,8 @@ export function createWorldModes(host) {
      *
      *  FLAG ONLY and presence-gated - both laws now stated once, in
      *  combat/playerWeapon.js's applyWeaponPose, with the citation.
-     *  HARD2c: this used to spell them out, and named `world.js:5393`
-     *  and `dungeonContext.js:5805` for its two sibling copies - lines
+     *  HARD2c: this used to spell them out, and named `world.js:5394`
+     *  and `dungeonContext.js:5826` for its two sibling copies - lines
      *  that had moved to :4418 and :5457. Three copies of a two-line
      *  law, and even the comment pointing between them had gone stale. */
     applyWeaponPose(pose) {

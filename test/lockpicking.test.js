@@ -11,7 +11,7 @@ import {
   interiorLockpickingChance, exteriorLockpickingChance,
 } from '../src/world/actionSystem.js';
 import {
-  OPEN_HOURS, CLOSE_HOURS, classicBuildingOpen, buildingHoursState,
+  OPEN_HOURS, CLOSE_HOURS, classicBuildingOpen, buildingHoursState, onlineReliefBuilding,
   SHOP_STAFFING, isBuildingOpen, buildingIsUnlocked, buildingLockValue,
   LOCKED_EXTERIOR_DOOR_TEXT,
 } from '../src/systems/buildingLocks.js';
@@ -128,6 +128,47 @@ test('R1 hours: the verbatim tables and their edge rows (PlayerActivate.cs:91-10
     'online staffing does not flatten residence hours');
   assert.equal(isBuildingOpen(BUILDING_TYPES.Palace, 23, { online: true }), false,
     'online staffing does not flatten palace hours');
+
+  // OL5 (Mac, 2026-09-20): the guild hall JOINS the relief, and nothing else
+  // does. Held as a SWEEP over every building type rather than a list of the
+  // ones that changed - an enumeration would go stale the moment a type was
+  // added, and the point of the predicate is that it is the only place the
+  // membership is written down.
+  assert.equal(onlineReliefBuilding(BUILDING_TYPES.GuildHall), true);
+  const relieved = [];
+  for (let t = 0; t < OPEN_HOURS.length; t++) {
+    if (onlineReliefBuilding(t)) relieved.push(t);
+    // the thing that actually matters to a player: whichever types are
+    // relieved, a relieved one is enterable at 3am online and an unrelieved
+    // one answers exactly what classic answers.
+    const online3 = isBuildingOpen(t, 3, { online: true });
+    if (onlineReliefBuilding(t)) assert.equal(online3, true, `type ${t} is relieved and must open at 3am online`);
+    else assert.equal(online3, classicBuildingOpen(t, 3), `type ${t} is not relieved - online must not change its answer at all`);
+  }
+  assert.ok(relieved.includes(BUILDING_TYPES.GuildHall), 'the guild hall is in the relieved set');
+  assert.ok(!relieved.includes(BUILDING_TYPES.House1) && !relieved.includes(BUILDING_TYPES.House2)
+    && !relieved.includes(BUILDING_TYPES.Palace) && !relieved.includes(BUILDING_TYPES.Ship),
+    'residences, palaces and ships keep R1 whole');
+
+  // The staffing answer follows the widened subject, so a later night-clerk
+  // slice can tell a staffed guild hall from a classic one.
+  assert.equal(buildingHoursState(BUILDING_TYPES.GuildHall, { hour: 3, online: true }).staffing, SHOP_STAFFING.ONLINE_SHIFT);
+  assert.equal(buildingHoursState(BUILDING_TYPES.GuildHall, { hour: 12, online: true }).staffing, SHOP_STAFFING.CLASSIC);
+  assert.equal(buildingHoursState(BUILDING_TYPES.GuildHall, { hour: 3, online: true }).classicOpen, false,
+    'and the preserved classic answer is still beside it');
+
+  // Suns Rest is a SHOP closure in DFU and stays one - the holiday must not
+  // start shutting guild halls just because they joined the relief.
+  assert.equal(buildingHoursState(BUILDING_TYPES.GuildHall, { hour: 12, holidayId: HOLIDAYS.Suns_Rest, online: false }).open, true,
+    'Suns Rest never shut a guild hall in classic and must not start now');
+
+  // OL5: the GuildHall arm THREADS `online` - it read the module default
+  // before, so an explicit `online` handed to buildingIsUnlocked was ignored
+  // by this one arm. Pinned by driving the two answers apart.
+  const hall = { buildingType: BUILDING_TYPES.GuildHall, factionId: 41, buildingKey: 7, quality: 12 };
+  const noAnytime = { guildForBuilding: () => ({ hallAccessAnytime: false, isMember: false }) };
+  assert.equal(buildingIsUnlocked(hall, { hour: 3, online: true, ...noAnytime }), true);
+  assert.equal(buildingIsUnlocked(hall, { hour: 3, online: false, ...noAnytime }), false);
 });
 
 test('R1 unlocked ladder: guild bypasses, the quest override, Suns Rest, ships (PlayerActivate.cs:1258-1312)', () => {
@@ -141,9 +182,19 @@ test('R1 unlocked ladder: guild bypasses, the quest override, Suns Rest, ships (
   // through buildingHoursState/classicBuildingOpen above.
   assert.ok(buildingIsUnlocked(b(BUILDING_TYPES.Alchemist), { hour: 3, online: true }), 'the online night shift did not open the shop');
   assert.ok(buildingIsUnlocked(b(BUILDING_TYPES.Alchemist), { hour: 12, holidayId: HOLIDAYS.Suns_Rest, online: true }), 'Suns Rest shut the shared-world shop for a real-time day');
-  // guild hall at 3am: only anytime access opens it, online included
-  assert.ok(!buildingIsUnlocked(b(BUILDING_TYPES.GuildHall, 41), { hour: 3, online: true, guildForBuilding: () => ({ hallAccessAnytime: false, isMember: true }) }));
-  assert.ok(buildingIsUnlocked(b(BUILDING_TYPES.GuildHall, 41), { hour: 3, guildForBuilding: () => ({ hallAccessAnytime: true, isMember: true }) }));
+  // guild hall at 3am OFFLINE: only anytime access opens it. This pin read
+  // `online: true` until OL5 and asserted the door stayed shut - OL4 stopped
+  // at storefronts deliberately and said so. Mac reversed that on 2026-09-20
+  // ("guild services... should all be open at night time online mode"), so the
+  // pin is inverted rather than deleted: the classic answer is still held here,
+  // and the departure is held beside it.
+  assert.ok(!buildingIsUnlocked(b(BUILDING_TYPES.GuildHall, 41), { hour: 3, online: false, guildForBuilding: () => ({ hallAccessAnytime: false, isMember: true }) }));
+  assert.ok(buildingIsUnlocked(b(BUILDING_TYPES.GuildHall, 41), { hour: 3, online: false, guildForBuilding: () => ({ hallAccessAnytime: true, isMember: true }) }));
+  // OL5: online the hall keeps the relief shift, with no anytime access and no
+  // membership needed to reach the DOOR (what is sold inside is still the
+  // guild's own business - canAccessService is rank and membership, untouched).
+  assert.ok(buildingIsUnlocked(b(BUILDING_TYPES.GuildHall, 41), { hour: 3, online: true, guildForBuilding: () => ({ hallAccessAnytime: false, isMember: false }) }),
+    'OL5: a guild hall is staffed around the clock in the shared world');
   // a factioned House2 (TG/DB) is members-only, hours notwithstanding
   assert.ok(!buildingIsUnlocked(b(BUILDING_TYPES.House2, 42), { hour: 12, guildForBuilding: () => ({ hallAccessAnytime: false, isMember: false }) }));
   assert.ok(buildingIsUnlocked(b(BUILDING_TYPES.House2, 42), { hour: 3, guildForBuilding: () => ({ hallAccessAnytime: false, isMember: true }) }));

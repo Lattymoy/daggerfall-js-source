@@ -348,8 +348,8 @@ test('AUDIT 58 talk: DaggerfallMerchantRepairPopupWindow, its four buttons and i
   const wm = src('src/scenes/worldModes.js');
   const arm = wm.slice(wm.indexOf("route.service === 'repair'"));
   const armBody = arm.slice(0, arm.indexOf('\n    }\n') + 7);
-  assert.ok(armBody.includes('merchantRepairArtLoaded()'), 'the art gate, the never-trap idiom');
-  assert.ok(armBody.includes('new MerchantRepairWindow('));
+  assert.ok(armBody.includes('merchantRepairDoorReady()'), 'the art gate, the never-trap idiom');
+  assert.ok(armBody.includes('createMerchantRepairWindow('));
   assert.ok(armBody.includes('onRepair: () => openRepairService({})'), 'Repair is the ONLY route to the screen');
   assert.ok(armBody.includes("openStaticNpc(pn, { forceTalk: true })") && armBody.includes('openMerchantSell()'),
     'Talk and Sell live on the popup now');

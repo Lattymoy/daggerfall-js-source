@@ -4234,7 +4234,7 @@ room exists.
 
 **The boundary that makes that safe is `_layoutFoes`** - the dungeon
 host's index of where the layout's own run ends. Every foe past it "is
-this player's own" (`dungeonContext.js:1087`, AUDIT WORLD B2): a quest
+this player's own" (`dungeonContext.js:1088`, AUDIT WORLD B2): a quest
 foe is minted above it, never streamed, never puppet-ised by the room's
 authority switch, and never touched by a joiner's stream. So a joiner's
 quest foe really does spawn and really can be killed by the player whose
@@ -4603,7 +4603,7 @@ with a marked top-left pixel on its last row).
 
 *"During online play, certain enemies cant be damaged."*
 
-`src/scenes/worldModes.js:5179` read, on one physical line:
+`src/scenes/worldModes.js:5207` read, on one physical line:
 
 ```js
 useMagicItem: (item) => host.useMagicItem?.(item),   // HT1: the torch keys onFoeHit: (hit) => host.onFoeHit?.(hit),   // WORLD2: a puppet's blow goes to the host
@@ -4618,7 +4618,7 @@ appended its own note to the end of the line that already carried
 **Why that is an invulnerable enemy.** Online, a joiner applies no local
 damage to a layout foe - `damageFoe`'s non-authority arm hands the blow
 to the room's host through `opts.onFoeHit?.(...)` and RETURNS
-(`dungeonContext.js:4020`). With the property missing that call is a
+(`dungeonContext.js:4041`). With the property missing that call is a
 no-op on `undefined`: no damage, no frame, no warning, nothing on the
 console. Every layout foe in every online dungeon absorbed every blow
 from everyone but the room's authority, for eight slices, in silence.
@@ -4745,7 +4745,7 @@ arrival, that is not rare. The blow is dropped instead.
   foe's maul, and your own Daedroth all do literally nothing to a
   puppet. The first two are WORLD2's law on purpose; the third is a gap
   in it.
-- **A foe's blast on a puppet is credited to ME.** `world.js:3286` and
+- **A foe's blast on a puppet is credited to ME.** `world.js:3287` and
   `:2925` pass `foeSinks: (f) => enchantFoeSinks(f)`, dropping the
   provenance argument `applySpellToFoe` hands them (`hostMagic.js:187`)
   - the same shape AUDIT WORLD6b-iii(a) B2 fixed one layer down.
@@ -6925,6 +6925,93 @@ beside `watch.hurt`, granting out of cityGuards' own emptying door) - a
 slice of its own if a peer is ever to loot the watch; the foes' hit
 arm's reach; the striker's routing door pinned by source (an executed
 pin would have to stand world.js's own `dealDamage` closure).
+
+## ONLINE-DUNGEON-FOES (2026-09-20): the non-layout run is private, and that is two of Mac's bugs
+
+**Mac: "Issues with non-reactive enemies in dungeons in the online mode" and
+"The lysander ghost enemy isn't synced online between players."** Two reports,
+one line. RECORDED, NOT CLOSED - the fix is a slice, and half of it would be
+worse than the bug.
+
+`dungeonContext.js` takes `_layoutFoes = foes.length` once, when the layout's
+run has been built. Every foe appended after that - a quest foe through
+`spawnQuestFoe`, an encounter through IntermittentEnemySpawn, a summon - lives
+past that bound, and the bound is load-bearing in two places at once:
+
+- **It is not streamed.** `foesFrame` loops `for (let i = 0; i < _layoutFoes;
+  i++)`. A foe past the run is in no frame any peer ever receives. The Lysandus
+  ghost is quest-placed, so it stands only on the client whose quest placed it;
+  nobody else has it to see, let alone to see move.
+- **It is not peer-aware.** The target machine's candidate list admits peers
+  only under `_authority && streamed`, and `streamed` IS `_fi < _layoutFoes`.
+  So a foe past the run never sees another player as a target at all. It
+  ignores everyone but the client it belongs to - which is what "non-reactive"
+  looks like from the other player's side.
+
+**The two halves must be paid together.** Arming a non-layout foe against peers
+while it is still unsynced is worse than leaving it alone: it would chase and
+swing at a player who cannot see it and has no damage frame to resolve the blow
+with. `test/world2.test.js` pins exactly that - the puppet gate and the
+targeting bound are one expression, and widening either alone goes red.
+
+**The answer already exists and is proven.** WORLD6b built it for the open
+country, in `scenes/exteriorFoes.js`: a cell has no host simulation, so A FOE IS
+ITS SPAWNER'S - the spawner steps it and streams it, everyone else puppets it by
+(owner, seq), and a blow on another's foe goes to its owner as a hit. The
+dungeon's non-layout run wants the same law: a new frame shape beside WORLD2's
+index-keyed one, puppet build and teardown, hit routing to the owner, and a
+stale sweep for an owner who leaves. That is the slice, and it is not small -
+exteriorFoes.js is 1,809 lines of it.
+
+## OL5 (2026-09-20): the town gate and the guild hall, open at night online
+
+**Mac: "Town gates online, guild services, should all be open at night time
+online mode."** OL4's own reasoning, applied to the two subjects it
+deliberately left out. OL4 gave the relief shift to storefronts and its pin
+said so in as many words - "guild access unchanged online". That was the right
+call for one slice and the wrong answer for a player: an online player cannot
+move the shared clock, so any classic schedule is a real-time lockout. A guild
+hall shut at 18:00 is a service nobody can buy for two real hours. A town gate
+is worse, because a gate is not a door - `SetOpen` swaps the MeshCollider along
+with the mesh (GameObjectHelper.cs:246-250), so the closed model is a WALL and
+a walled city at night is sealed with no way to sleep the clock forward.
+
+**The relief is a PREDICATE, not a second table.** `onlineReliefBuilding(type)`
+is the one place the membership is written down, and every caller - the door,
+the people, the shelves - already asks `buildingHoursState`, so naming a type
+there is the whole change. Today it is shops plus the guild hall. Houses stay
+out (a residence is not a service); palaces and ships stay out; temples and
+taverns were never in, because 0/25 means they never closed. Suns Rest remains
+a SHOP closure, so widening the relief did not quietly hand the holiday power
+over guild halls it never had.
+
+**Two things this slice FOUND rather than shipped.**
+
+The first: `buildingIsUnlocked`'s GuildHall arm called `isBuildingOpen(type,
+hour)` with no opts. The function takes an `online` and every other arm passes
+it; this one read the module default instead, so a caller handing
+`buildingIsUnlocked` an explicit `online` was silently ignored by exactly one
+arm. Harmless while guild halls had no relief - the answer was the same either
+way - and a lie the moment they do. It is threaded now, and pinned by driving
+the two answers apart.
+
+The second killed the first draft of the gate law. The obvious online arm is
+"the classic machine with `night` forced false", and it is wrong. `isOpen` is
+born TRUE whatever model the block laid (DaggerfallCityGate.cs:19), and the
+classic machine only ever reconciles that flag with the drawn model by
+CYCLING: a gate the block laid CLOSED starts as `isOpen: true` standing on 447,
+and it is the first 18:00 that notices. Take night away and nothing ever
+notices - the wall stands for the whole session, in the exact mode the change
+was meant to fix. The online arm is therefore stated on the MODEL, which is the
+thing that blocks: this gate is open, and it is open now. Its own pin is what
+caught it.
+
+**The law is the component's.** Two hosts tick city gates - `scenes/world.js`
+and `scenes/exterior.js` - and a rule both of them have to remember is a rule
+one of them forgets. `updateCityGate` owns it; both hosts still call it with a
+bare `night` and are pinned to carry no online rule of their own.
+
+NOT VERIFIED IN A BROWSER: no online session exists in this container.
 
 ## OL4 (2026-09-17): shops staffed around the clock online
 

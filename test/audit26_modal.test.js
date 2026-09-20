@@ -170,8 +170,12 @@ test('AUDIT 26 F211 + F064: the forced exit caches the interior and disposes the
     'the dungeon context is destroyed without popping its own window');
   assert.ok(force.indexOf('dungeonCtx.overlayWindow?.()?.dispose?.();') < force.indexOf('dungeonCtx.destroy()'),
     'and it is popped before the context that holds it is torn down');
-  // the real door has always done both - the pin is that they agree
-  const door = bodyOf(WM, 'function tryExit() {');
+  // the real door has always done both - the pin is that they agree.
+  // UNSTUCK1: the caching call itself moved out of tryExit() into its
+  // own exitInteriorNow() (so /unstuck's no-ray exit reaches it too);
+  // tryExit still ends every real walk-through-the-door exit by calling
+  // it, so this is the body that actually holds the call now.
+  const door = bodyOf(WM, 'function exitInteriorNow(landing = null) {');
   assert.match(door, /cacheInteriorScene\(\);/, 'the real door still caches it too (PlayerEnterExit.cs:860)');
 });
 
