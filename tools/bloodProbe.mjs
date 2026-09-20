@@ -116,6 +116,46 @@ const out = await page.evaluate(async () => {
   };
   frames.push(foeShot('a SPRITE (not the pool) in the same dungeon', dungeon));
 
+  // ── THE DECAL PASS (BLOOD1a) ────────────────────────────────────
+  // The mark on the floor and the gib in the air above it are the same
+  // blood from the same blow, and they go through DIFFERENT passes:
+  // bloodMarks.draw calls drawDecals for the marks and drawBillboards
+  // for the chunks. This reads the mark's pixel in the same light the
+  // rows above read a sprite's.
+  const { createDecalBatch: _mk } = r;
+  const decalTex = r.uploadTexture(777, 'mark', red);
+  const batch = r.createDecalBatch(1);
+  {
+    const quad = new Float32Array(4 * 9);
+    const corner = (i, x, y) => {
+      const o = i * 9;
+      quad[o] = x; quad[o + 1] = y; quad[o + 2] = 0;
+      quad[o + 3] = i === 0 || i === 1 ? 0 : 1; quad[o + 4] = i === 0 || i === 3 ? 0 : 1;
+      quad[o + 5] = 1; quad[o + 6] = 1; quad[o + 7] = 1; quad[o + 8] = 1;
+    };
+    corner(0, -1, -1); corner(1, -1, 1); corner(2, 1, 1); corner(3, 1, -1);
+    r.writeDecalSlot(batch, 0, quad);
+  }
+  const decalShot = (label, setup, lights = null) => {
+    setup();
+    r.setPointLights(lights ?? new Float32Array(0), [1, 1, 1], null);
+    const proj = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, -1.02, -1, 0, 0, -0.2, 0];
+    const view = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, -3, 1];
+    r.beginFrame(proj, view, new Float32Array([0, 1, 0]));
+    const gl = r.gl;
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    gl.viewport(0, 0, 128, 128);
+    gl.clearColor(0, 0, 1, 1);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    r.drawDecals(batch, decalTex);
+    const px = new Uint8Array(4);
+    gl.readPixels(64, 64, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, px);
+    return { label, px: [...px] };
+  };
+  frames.push(decalShot('DECAL: dungeon ambient, no lights', dungeon));
+  frames.push(decalShot('DECAL: dungeon ambient + a torch on it', dungeon, new Float32Array([0, 0, 0, 14])));
+  frames.push(decalShot('DECAL: exterior noon', () => r.setLighting([0.55, 0.55, 0.55], 1, [1, 0.96, 0.9])));
+
   return {
     archive: BLOOD_ARCHIVE,
     uploaded,
@@ -148,6 +188,17 @@ check('dungeon ambient with NO light: a splash is ambient x albedo, which reads 
 check('...and a TORCH on it brings it back', torch[0] > dark[0] * 3, `rgba ${torch.join(',')}`);
 check('A SPRITE IN THE SAME LIGHT IS EXACTLY AS DARK - the pool is not the difference',
   Math.abs(sprite[0] - dark[0]) <= 1, `splash ${dark.join(',')} vs sprite ${sprite.join(',')}`);
+// MAC-BUG W4: the mark and the chunk are the same blood from the same
+// blow, through two passes. They have to agree about the light.
+const dDark = out.frames[5]?.px ?? [];
+const dTorch = out.frames[6]?.px ?? [];
+const dNoon = out.frames[7]?.px ?? [];
+check('DECAL in a dark dungeon is as dark as the sprite beside it - no darker',
+  Math.abs(dDark[0] - dark[0]) <= 2, `decal ${dDark.join(',')} vs sprite ${dark.join(',')}`);
+check('A TORCH LIGHTS THE MARK, as it lights the chunk above it',
+  Math.abs(dTorch[0] - torch[0]) <= 2, `decal ${dTorch.join(',')} vs sprite ${torch.join(',')}`);
+check('and at noon the mark takes the SUN, not the ambient alone',
+  Math.abs(dNoon[0] - noon[0]) <= 2, `decal ${dNoon.join(',')} vs sprite ${noon.join(',')}`);
 check('no page errors', errors.length === 0, errors.join(' | '));
 
 await browser.close();

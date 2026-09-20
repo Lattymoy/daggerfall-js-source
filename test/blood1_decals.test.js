@@ -1724,3 +1724,67 @@ test('BLOOD1 AUDIT: the chunks’ centre list is the chunks’ OWN arrays, so a 
     assert.doesNotMatch(body, /\.pos = /, `${what} must not replace it`);
   }
 });
+
+// ── MAC-BUG W4 (2026-09-20, Mac: "Also blood is black") ────────────
+test('MAC-BUG W4: a MARK takes the same light a CHUNK takes - the two passes of one blow agree, term for term', () => {
+  // ONE BLOW, TWO PASSES. `bloodMarks.draw` sends the marks through
+  // `drawDecals` and the gibs through `drawBillboards` - and the decal
+  // pass took AMBIENT AND NOTHING ELSE. Its own comment said what it
+  // was for ("so a mark on a dungeon floor is as dark as the floor"),
+  // and it was darker than the floor by every term it left out: the
+  // floor is a mesh lit by ambient AND the sun AND the point lights,
+  // and a dungeon's ambient is 0.12. A red mark came out at about two
+  // units of red - black - with lit chunks landing on top of it.
+  //
+  // `npm run blood` reads the pixels in a real GL context and the
+  // numbers are the finding: before the fix a torch standing ON the
+  // mark left it at 20,2,2 while the sprite beside it was 187,18,18,
+  // and noon drew it at 92,9,9 against the sprite's 176,16,16. This
+  // holds the SHAPE of the fix, which is the half a suite can hold:
+  // the decal shader's light must be the billboard shader's, term for
+  // term, because a mark and a chunk are the same blood.
+  const r = readFileSync(new URL('../src/render/renderer.js', import.meta.url), 'utf8');
+
+  const decalFs = r.slice(r.indexOf('_ensureDecalProgram()'), r.indexOf('this.decalProgram = this._buildProgram'));
+  const bbFs = r.slice(r.indexOf('vec3 pointAcc = vec3(0.0);'));
+
+  // THE POINT-LIGHT TERM, character for character with the flats'.
+  // Attenuation-only squared linear falloff - a decal has no normal,
+  // exactly as a billboard has none.
+  const loop = /for \(int i = 0; i < 16; i\+\+\) \{\s*if \(i >= uPointCount\) break;\s*float d = length\(uPointLights\[i\]\.xyz - (vWorld|vBBWorld)\);\s*float att = clamp\(1\.0 - d \/ uPointLights\[i\]\.w, 0\.0, 1\.0\);\s*pointAcc \+= att \* att \* uPointColors\[i\];\s*\}/;
+  assert.match(decalFs, loop, 'the decal pass has the flats’ own point-light loop');
+  assert.match(bbFs, loop, '...and the flats still have it, so the two were compared against something real');
+
+  // THE INDIRECT TERM, the same attenuation-only shape.
+  assert.match(decalFs, /float iD = length\(uIndirect\.xyz - vWorld\);/);
+  assert.match(decalFs, /float iAtt = clamp\(1\.0 - iD \/ max\(uIndirect\.w, 1e-4\), 0\.0, 1\.0\);/);
+
+  // ...and they are SUMMED, not one of them used.
+  assert.match(decalFs, /vec3 lightAcc = uTint \+ uDecalSun \+ pointAcc \+ iAtt \* iAtt \* uIndirectColor;/);
+  assert.match(decalFs, /vec3 rgb = t\.rgb \* vColor\.rgb \* lightAcc;/);
+  assert.doesNotMatch(decalFs, /vec3 rgb = t\.rgb \* vColor\.rgb \* uTint;/,
+    'ambient alone is what made the mark black');
+
+  // THE UPLOAD, and the same three-scratch rule the flats' own pass
+  // had to learn the hard way (AUDIT PERF-SUN/FOG F4: two decodes into
+  // one scratch computed the moon term from the sun's colour).
+  const fn = r.slice(r.indexOf('  drawDecals(batch, tex) {'), r.indexOf('\n  }\n', r.indexOf('  drawDecals(batch, tex) {')));
+  assert.match(fn, /const am = this\._c3\(this\._ambient, this\._decA\);/);
+  assert.match(fn, /const mc = this\._c3\(this\._moonColor, this\._decB\);/);
+  assert.match(fn, /const sc = this\._c3\(this\._sunColor, this\._decC\);/);
+  assert.equal(new Set(['_decA', '_decB', '_decC'].map((k) => fn.includes(k))).size, 1, 'three colours, three scratches');
+  assert.match(fn, /gl\.uniform3f\(d\.sun, sc\[0\] \* this\._sunScale \* 0\.5, sc\[1\] \* this\._sunScale \* 0\.5, sc\[2\] \* this\._sunScale \* 0\.5\);/,
+    'the sun’s Lambert-average HALF, which is the flats’ own number');
+  assert.match(fn, /gl\.uniform1i\(d\.pointCount, dCount\);/);
+  assert.match(fn, /gl\.uniform4fv\(d\.pointLights, this\._pointLights\);/);
+  assert.match(fn, /gl\.uniform3fv\(d\.pointColors, this\._pointColorData\(dCount\)\);/);
+
+  // A CLOCKLESS SCENE keeps full bright, as the flats do - and its sun
+  // goes to zero with it, or a scene with no clock would carry the last
+  // one's sun.
+  assert.match(fn, /gl\.uniform3f\(d\.tint, 1, 1, 1\);\s*\n\s*gl\.uniform3f\(d\.sun, 0, 0, 0\);/);
+
+  // and the probe that measured it is committed, so the next person
+  // reads pixels rather than the shader
+  assert.match(readFileSync(new URL('../package.json', import.meta.url), 'utf8'), /"blood": "node tools\/bloodProbe\.mjs"/);
+});

@@ -134,14 +134,18 @@ asserting that nothing threw.
 
 ---
 
-## W4 — "Also blood is black": what the probe rules out
+## W4 — "Also blood is black": the mark took ambient and nothing else
 
 Mac, same day: *"Also blood is black."*
 
-**Not diagnosed. What follows is what has been ELIMINATED**, by a real
-WebGL2 context rather than by reading — `tools/bloodProbe.mjs`
-(`npm run blood`), which drives the port's own `createHitEffects` pool
-and `drawBillboards` over a texture whose colour is known.
+**FOUND.** It is not `TEXTURE.380` and it is not the splash — it is
+**BLOOD1's decals**, which landed on `main` while this branch was
+elsewhere and which this report arrived on top of.
+
+What follows is the elimination first, because that is what found it:
+`tools/bloodProbe.mjs` (`npm run blood`) drives the port's own
+`createHitEffects` pool and `drawBillboards` over a texture whose
+colour is known, in a real WebGL2 context.
 
 | frame | pixel |
 |---|---|
@@ -164,19 +168,57 @@ So, ruled out:
   a sprite standing in the same light comes back **the same 20,2,2**.
   A blood splash is exactly as dark as everything else beside it.
 
-That leaves two possibilities, and they are distinguished by one
-question — **is it black outdoors at noon too?**
+### ...and then main brought BLOOD1
 
-- **Yes** → the fault is in what `TEXTURE.380` record 0 *decodes to*,
-  which this container cannot test (no ARENA2). The decode path is
-  shared with every other archive and the palette is the one
-  `ART_PAL.COL` every texture file gets, so this would be something
-  about the archive itself.
-- **Only underground** → it is the ambient, it is not specific to
-  blood, and the row above says so: whatever makes a splash black in a
-  dark room makes the corpse beside it black too. That is a lighting
-  question about dungeons, not a blood one.
+The merge that took this branch to `main` brought **BLOOD1 — "the
+port's own blood, gore and bleeding"** — a whole decal system the probe
+above knew nothing about. Pointed at *that* pass, it answers in one
+run.
 
-The probe stays because it is the part of this that does not need the
-data, and it now answers in seconds what an afternoon of reading could
-not settle.
+`bloodMarks.draw` sends **one blow through two passes**: the marks go
+through `renderer.drawDecals`, the gibs through `drawBillboards`. And
+the decal pass was lit by **ambient and nothing else**:
+
+```js
+// The scene's own light, so a mark on a dungeon floor is as dark as
+// the floor. Clockless scenes keep full bright, as the flats do.
+if (this._clockLit) gl.uniform3fv(d.tint, this._c3(this._ambient, this._decA));
+```
+
+The comment says exactly what it is for, and it is the one thing it
+does not do. A floor is a **mesh**, lit by ambient *and* the sun *and*
+the point lights. A dungeon's ambient is `0.12`. A red mark came out at
+about two units of red — **black** — while the chunks from the same
+kill landed on top of it in full light.
+
+Measured, before and after:
+
+| | before | after | a sprite beside it |
+|---|---|---|---|
+| dark dungeon | `20,2,2` | `20,2,2` | `20,2,2` |
+| **a torch standing on it** | `20,2,2` | `187,18,18` | `187,18,18` |
+| **exterior noon** | `92,9,9` | `176,16,16` | `176,16,16` |
+
+The first row is why it was never caught: with no light at all the two
+passes agree, and the fault appears *the moment there is anything to
+see by* — torchlight on a dungeon floor, or daylight. Exactly where a
+player is looking.
+
+**The fix is the flats' own light, term for term.** A decal has no
+normal, precisely as a billboard has none, so it takes the billboard
+model: the ambient-plus-moon-half tint, the sun's Lambert-average half,
+attenuation-only point lights on a squared linear falloff, and the
+indirect term on the same attenuation. Written to mirror that shader
+line for line so the two cannot drift — and the pin compares the two
+loops against each other rather than quoting either.
+
+It also honours a lesson that pass had to learn the hard way: **three
+colours, three scratches**. `AUDIT PERF-SUN/FOG F4` found the billboard
+tint computing its *moon* term from the *sun's* colour because both
+decodes shared one scratch array. The new upload takes `_decA`, `_decB`
+and `_decC`, and a mutant holds it there.
+
+Campaign `tools/mutants/macbugw4.json`: 5 mutants, 5 dead.
+
+The probe stays, and it earned its keep: it ruled out four suspects in
+one run and then named the fifth the moment there was a fifth to name.
