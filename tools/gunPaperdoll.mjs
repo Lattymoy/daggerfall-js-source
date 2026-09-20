@@ -18,7 +18,7 @@
 // small and the gun floats in front of a fist; too large and the hand
 // is holding air.
 //
-//     node tools/gunPaperdoll.mjs [--length=72] [--angle=35] [--ammo=16]
+//     node tools/gunPaperdoll.mjs [--length=72] [--angle=35] [--ammo=12]
 //                                 [--band=cx,cy,deg,thick,length] [--no-gap]
 //                                 [--sheet]
 //
@@ -394,7 +394,9 @@ if (process.argv.includes('--sheet')) {
   for (const [k, g, why] of GAP_CANDIDATES) console.log(`  ${k}  --band=${g.cx},${g.cy},${g.deg},${g.thick},${g.length}  ${why}`);
 }
 // THE PELLET (FIELD-GUN16, 2026-09-20, Mac: "Shrink the inventory
-// icon for the pellet ammo"). 16px, down from 22.
+// icon for the pellet ammo"; FIELD-GUN18, the same day: "Shrink the
+// orb pellet ammo sprite in the inventory. It's too large"). 12px,
+// down from 16, down from 22.
 //
 // THE DEFAULT IS THE SHIPPED SIZE, so a re-bake reproduces what is in
 // public/art rather than quietly restoring the old one - the same law
@@ -402,15 +404,21 @@ if (process.argv.includes('--sheet')) {
 // reason: a tool whose default is not what shipped is a trap laid for
 // whoever runs it next.
 //
-// WHY 16 AND NOT ANOTHER NUMBER. The list cell is 50x38 and
+// WHY 12 AND NOT ANOTHER NUMBER. The list cell is 50x38 and
 // `makeIconDrawer` never ENLARGES (`fit = Math.min(1, ...)`), so an
-// icon is drawn at its own size and 22 filled nearly half the cell
-// width - a pellet the size of a helmet. 16 is where the dwarven
-// banding and the central boss still read at 1:1 on the classic
-// surface; 14 starts eating the engraving and 12 is a brown dot. The
-// source is 1254px square, so any of these is a clean downscale rather
-// than a resample of a resample.
-const ammo = bake('gun-ammo-src.png', num('ammo', 16), { out: 'gun-ammo.png' });
+// icon is drawn at its own size: 22 filled nearly half the cell width
+// - a pellet the size of a helmet - and 16 was still reading as a
+// cannonball beside a quiver of arrows.
+//
+// FIELD-GUN16's note claimed here that "14 starts eating the
+// engraving and 12 is a brown dot". THAT JUDGEMENT WAS WRONG, and it
+// is worth saying why rather than quietly moving the number: it was
+// made against an 8x PREVIEW in a container with no game in it, where
+// a sprite is inspected instead of glanced at. At 12 the dwarven
+// banding and the central boss both still read, and the person with
+// the game says 16 does not. The source is 1254px square, so any of
+// these is a clean downscale rather than a resample of a resample.
+const ammo = bake('gun-ammo-src.png', num('ammo', 12), { out: 'gun-ammo.png' });
 
 for (const r of [gun, ammo]) {
   console.log(`${r.out.padEnd(20)} ${r.source} -> trimmed ${r.trimmed} -> ${r.size}${r.angle ? ` at ${r.angle}\u00b0 down` : ''}${r.cut ? `, ${r.cut} px cut for the hand` : ''}`);

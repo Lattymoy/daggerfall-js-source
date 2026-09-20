@@ -152,7 +152,20 @@ export function createHitEffects({
       // every other pixel here comes from.
       if (archive === BLOOD_ARCHIVE && record !== BLOODLESS_INDEX) marks?.useArt?.(archive, record, frameCount);
       entry.size = billboardSize(t, record);
-      if (scale !== 1 && entry.size) entry.size = Array.isArray(entry.size) ? entry.size.map((v) => v * scale) : entry.size * scale;   // WW1: DoClang/DoThud's localScale x2
+      // WW1: DoClang/DoThud's localScale x2 - and FIELD-GUN18's orb,
+      // which is the same knob asked the other way.
+      //
+      // THIS BRANCH NEVER RAN CORRECTLY. `billboardSize` answers a
+      // {w, h} RECORD (rmbFlats.js:79, and billboardXml's override
+      // keeps the shape), and neither arm of the old ternary was that:
+      // an object is not an Array, so every scaled flat took
+      // `entry.size * scale` - object times number, which is NaN. A
+      // NaN size is not a visible wrong size, it is `size.w ===
+      // undefined` at the batch and a quad with NaN corners, so the
+      // ONE caller that used it - showMissEffect, whose scale is 2 BY
+      // DEFAULT - drew nothing at all, at every host, since WW1. A
+      // shape the value never had, in a branch nothing measured.
+      if (scale !== 1 && entry.size) entry.size = { w: entry.size.w * scale, h: entry.size.h * scale };
       entry.batch = renderer.createBillboardBatch(archive, record, entry.size, [entry.pos]);
       entry.batch.frame = 0;
       onSpawn?.(entry.batch);

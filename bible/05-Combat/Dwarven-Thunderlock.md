@@ -747,7 +747,7 @@ the orb is, so the two answers cannot drift apart.
 **One residual, named rather than half-fixed:** the multiplayer wire
 carries a hit's `kind` (`'arrow'`), not its weapon, so a peer-owned
 puppet struck by a Thunderlock still gains a shaft on its owner's
-client (`exteriorFoes.js:1776`, `dungeonContext.js:3471`, both gated on
+client (`exteriorFoes.js:1776`, `dungeonContext.js:3478`, both gated on
 `data.ar === 1`). Fixing it means widening the hit packet, which is a
 protocol change and not this slice's.
 
@@ -963,6 +963,71 @@ equivalent (both recorded with their reason: the centroid's brightness
 weighting, which no fixture in the tree can distinguish from a count,
 and the alpha weighting, which is a no-op on the binary-alpha sprites
 every classic archive decodes to).
+
+## FIELD-GUN18: two sizes, and a branch that had never run
+
+Mac, 2026-09-20: *"1. shrink the projectile orb slighty  2. Shrink the
+orb pellet ammo sprite in the inventory. It's too large"*
+
+### The orb
+
+It flies on TEXTURE.378 record 0 — a classic **missile** archive,
+sized for a spell. A fireball is meant to fill the corridor it is
+coming down; a pellet out of a barrel is not, and at the archive's own
+size the shot read as a thrown spell rather than as ammunition.
+
+`ORB_SCALE` is **a scale, not a size**. `billboardSize` is DFU's own
+law — RMBLayout's `scaleDivisor`, plus any billboard XML the player
+has installed for that archive — and a width typed into the leaf would
+quietly opt the orb out of both. Multiplying whatever that law answers
+means a texture pack that resizes 378 still resizes the orb. 0.85: a
+sixth off, which is *slightly*, as asked.
+
+Both lanes take it, and the fourth host takes it **twice over**: its
+missiles build their own batch and never touch `hitEffects`' pool, so
+the pool's `scale` cannot reach them and the multiply is written a
+second time — gated on the same `flatArchive` the picture and the
+colour already fork on, so that a spell missile is not shrunk with it.
+
+### The branch that had never run
+
+Handing the orb to the pool's `scale` walked into a bug in that knob.
+`billboardSize` answers a `{w, h}` **record**, and the branch applying
+`scale` read:
+
+```js
+Array.isArray(size) ? size.map(v => v * scale) : size * scale
+```
+
+An object is not an Array, so every scaled flat took the second arm —
+**object times number, which is `NaN`**. And a `NaN` size is not a
+visibly wrong size: it is `size.w === undefined` at the batch and a
+quad with `NaN` corners, so the flat is not drawn at all.
+
+The one caller that used it is `showMissEffect`, whose scale is **2 by
+default** and which all four hosts wire to the weapon widget's
+DoClang/DoThud. So that effect has drawn nothing, at every host, since
+WW1 shipped — a shape the value never had, in a branch nothing
+measured. The pin asserts the shape *where it is produced* now, so it
+cannot rot back into a guess about what `billboardSize` answers.
+
+### The pellet icon, again
+
+12px, down from 16, down from 22.
+
+FIELD-GUN16's note in `tools/gunPaperdoll.mjs` claimed that "14 starts
+eating the engraving and 12 is a brown dot". **That judgement was
+wrong**, and it is worth saying why rather than quietly moving the
+number: it was made against an 8× *preview* in a container with no
+game in it, where a sprite is inspected instead of glanced at. At 12
+the dwarven banding and the central boss both still read — and the
+person with the game says 16 does not.
+
+A judgement made at 8× about a thing seen at 1× is a guess. The
+default in the baker is the shipped size, as ever, so a re-bake
+reproduces what is committed.
+
+Campaign `tools/mutants/fieldgun18.json`: 11 mutants, 11 dead.
 
 ## The test characters carry one
 

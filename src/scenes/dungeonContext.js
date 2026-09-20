@@ -177,7 +177,7 @@ import { ENEMY_BASICS, enemyDisplayName } from '../characters/enemyBasics.js';
 import { bloodDecalDeps } from '../combat/bloodSwitch.js';   // BLOOD1a
 import { createBloodMarks } from '../combat/bloodMarks.js';   // BLOOD1a: HARD1 - the ring is this context's to own and to end
 import { createHitEffects, bloodCentre } from './hitEffects.js';
-import { orbArchiveFor, ORB_RECORD, noteOrbColour } from '../characters/thunderlockIds.js';   // FIELD-GUN14: what this weapon's shot LOOKS like - the leaf, so no cycle   // FIELD-GUN17: ...and its colour
+import { orbArchiveFor, ORB_RECORD, noteOrbColour, ORB_SCALE } from '../characters/thunderlockIds.js';   // FIELD-GUN14: what this weapon's shot LOOKS like - the leaf, so no cycle   // FIELD-GUN17: ...and its colour   // FIELD-GUN18: ...and how big it is drawn
 import { bloodHit } from '../combat/bloodDecals.js';   // BLOOD1b: the blow, in the shape the mark's ladder reads
 import { createDroppedTorches } from './droppedTorches.js';
 import { createCamps } from './camps.js';   // SURV3: a fire on the dungeon floor (no tent below - the camp law says so)
@@ -2954,7 +2954,14 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // colour. `noteOrbColour` is once-only, so whichever host fires
     // first answers for all of them.
     if (m.flatArchive) noteOrbColour(t.getColor32(t.getDFBitmap(record, 0), 0));
-    const size = billboardSize(t, record);
+    // FIELD-GUN18 (Mac: "shrink the projectile orb slighty"). The
+    // FOURTH HOST again: its missiles build their own batch and never
+    // touch hitEffects' pool, so the pool's `scale` cannot reach them
+    // and the same multiply has to be written here. The SPELLS are
+    // untouched - this is the orb's arm, gated on the same
+    // `flatArchive` the picture and the colour fork on.
+    const raw = billboardSize(t, record);
+    const size = m.flatArchive ? { w: raw.w * ORB_SCALE, h: raw.h * ORB_SCALE } : raw;
     m.firePos = [...m.pos];
     m.batch = renderer.createBillboardBatch(archive, record, size, [[m.firePos[0], m.firePos[1], m.firePos[2]]]);
     // FA1 slice 2: the missile flat ANIMATES while it flies -

@@ -29,6 +29,8 @@ import { playerArchiveFor } from '../src/characters/paperdollArt.js';
 import { shimmer, NATIVE_WIDTH } from '../src/combat/thunderlockArt.js';
 import { muzzlePoint, MUZZLE_GAIN } from '../src/combat/thunderlockArt.js';   // FIELD-GUN17
 import { orbColour, orbColourFrom, noteOrbColour, resetOrbColour } from '../src/characters/thunderlockIds.js';   // FIELD-GUN17
+import { ORB_SCALE } from '../src/characters/thunderlockIds.js';   // FIELD-GUN18
+import { scaledBillboardSize } from '../src/world/rmbFlats.js';   // FIELD-GUN18: the shape the pool's scale branch never had
 import { playerMuzzleOrigin } from '../src/systems/spellcast.js';   // FIELD-GUN17
 import { muzzleRay } from '../src/combat/weaponRig.js';   // FIELD-GUN17
 import { uniqueFinds, uniqueFindChance, rollLootRarity, legendariesFor, rarityEligible } from '../src/systems/lootRarity.js';
@@ -1343,4 +1345,81 @@ test('FIELD-GUN17b: the flash and its light are the ORB’s colour, sampled off 
   assert.match(fx, /if \(onTexture\) \{ try \{ onTexture\(t, archive, record\); \} catch/);
 
   resetOrbColour();
+});
+
+// ── FIELD-GUN18 (2026-09-20, Mac: "1. shrink the projectile orb
+// slighty  2. Shrink the orb pellet ammo sprite in the inventory. It's
+// too large")
+//
+// The icon half is gunLab.test.js's (12px, down from 16, down from
+// 22 - and the note about why the 16 was wrong). This is the orb.
+test('FIELD-GUN18: the orb is scaled off the archive’s own size, at BOTH lanes', () => {
+  // A SCALE, NOT A SIZE. `billboardSize` is DFU's own law - RMBLayout's
+  // scaleDivisor, plus any billboard XML the player has installed for
+  // that archive - and a width typed here would quietly opt the orb
+  // out of both. Multiplying what that law answers keeps a texture
+  // pack's resize of 378 applying to the orb too.
+  assert.ok(ORB_SCALE > 0 && ORB_SCALE < 1, 'smaller, and a scale');
+  assert.equal(ORB_SCALE, 0.85, 'slightly, as asked - a sixth off, not a different object');
+
+  // the pool lane hands it over as the pool's own `scale`, which is
+  // the knob WW1 already put there for DoClang/DoThud
+  const af = readFileSync('src/combat/arrowFlight.js', 'utf8');
+  assert.match(af, /scale: ORB_SCALE,/, 'the three-host lane scales its flat');
+
+  // THE FOURTH HOST AGAIN. Its missiles build their own batch and
+  // never touch hitEffects' pool, so the pool's scale cannot reach
+  // them - the multiply has to be written a second time, and gated on
+  // the same `flatArchive` the picture and the colour already fork on
+  // so that a SPELL is not shrunk with it.
+  const dc = readFileSync('src/scenes/dungeonContext.js', 'utf8');
+  assert.match(dc, /const raw = billboardSize\(t, record\);\s*\n\s*const size = m\.flatArchive \? \{ w: raw\.w \* ORB_SCALE, h: raw\.h \* ORB_SCALE \} : raw;/,
+    'the dungeon scales the ORB and leaves every spell missile alone');
+
+  // and both read the one leaf rather than a number each
+  for (const f of ['src/combat/arrowFlight.js', 'src/scenes/dungeonContext.js']) {
+    assert.match(readFileSync(f, 'utf8'), /ORB_SCALE \} from '\.\.\/characters\/thunderlockIds\.js'/, `${f} imports it`);
+  }
+});
+
+test('FIELD-GUN18: the pool’s scale really scales - it was multiplying an OBJECT by a number', () => {
+  // THE BUG THIS ASK WALKED INTO. `billboardSize` answers a {w, h}
+  // RECORD (rmbFlats.js:79; billboardXml's override keeps the shape),
+  // and the branch that applied `scale` read:
+  //
+  //     Array.isArray(size) ? size.map(v => v * scale) : size * scale
+  //
+  // An object is not an Array, so every scaled flat took the SECOND
+  // arm - object times number, which is NaN. And a NaN size is not a
+  // visibly wrong size: it is `size.w === undefined` at the batch and
+  // a quad with NaN corners, so the flat is not drawn at all. The one
+  // caller that used it is `showMissEffect`, whose scale is 2 BY
+  // DEFAULT and which all four hosts wire to the weapon widget's
+  // DoClang/DoThud - so that effect has drawn NOTHING, at every host,
+  // since WW1 shipped. A shape the value never had, in a branch
+  // nothing measured.
+  const he = readFileSync('src/scenes/hitEffects.js', 'utf8');
+  assert.match(he, /entry\.size = \{ w: entry\.size\.w \* scale, h: entry\.size\.h \* scale \};/);
+  assert.doesNotMatch(he, /Array\.isArray\(entry\.size\)/, 'the shape it never had is gone');
+
+  // the shape is asserted where it is PRODUCED, so this cannot rot
+  // back into a guess about what billboardSize answers
+  const size = scaledBillboardSize({ width: 40, height: 40 }, { width: 0, height: 0 });
+  assert.ok(!Array.isArray(size), 'a record, not an array');
+  assert.equal(typeof size.w, 'number');
+  assert.equal(typeof size.h, 'number');
+  assert.ok(Number.isNaN(size * 2), 'which is exactly why the old arm produced NaN');
+  // and the arithmetic the pool now does on it survives
+  const scaled = { w: size.w * 2, h: size.h * 2 };
+  assert.equal(scaled.w, size.w * 2);
+  assert.ok(Number.isFinite(scaled.w) && Number.isFinite(scaled.h));
+
+  // the default that made it reach the game: a miss effect is scaled
+  // unless a caller says otherwise, so the broken arm was the NORMAL
+  // path rather than an option nobody took
+  assert.match(he, /showMissEffect: \(kind, pos, \{ archive = BLOOD_ARCHIVE, record = 2, fps = 20, scale = 2 \} = \{\}\) =>/);
+  // ...and all four hosts wire it, which is how many were affected
+  for (const f of ['src/scenes/world.js', 'src/scenes/exterior.js', 'src/scenes/worldModes.js', 'src/scenes/dungeonContext.js']) {
+    assert.match(readFileSync(f, 'utf8'), /missEffect: \(k, p, o\) => \w+\.showMissEffect\(k, p, o\)/, `${f} wires it`);
+  }
 });

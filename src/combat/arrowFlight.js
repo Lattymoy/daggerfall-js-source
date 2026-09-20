@@ -30,7 +30,7 @@ import { backstabChanceOf, enemyPainVoice } from '../scenes/hostCombat.js';
 import { isBackFacing } from '../characters/enemyMotor.js';
 import { hitSoundFor, ENEMY_HIT_VOLUME } from '../systems/soundClips.js';
 import { addItem } from '../systems/inventory.js';
-import { orbArchiveFor, ORB_RECORD, noteOrbColour } from '../characters/thunderlockIds.js';   // FIELD-GUN14: what this weapon's shot LOOKS like - the leaf, so no cycle   // FIELD-GUN17: ...and what colour it is, sampled the one moment the texture is in hand
+import { orbArchiveFor, ORB_RECORD, noteOrbColour, ORB_SCALE } from '../characters/thunderlockIds.js';   // FIELD-GUN14: what this weapon's shot LOOKS like - the leaf, so no cycle   // FIELD-GUN17: ...and what colour it is, sampled the one moment the texture is in hand   // FIELD-GUN18: ...and how big it is drawn
 
 export const ARROW_MODEL_ID = 99800;
 
@@ -115,6 +115,7 @@ export class ArrowFlight {
           // ORB_ARCHIVE if it ever changes.
           m.orbFlat = this._effects?.showFlyingFlat?.(m.orb, m.pos, {
             record: ORB_RECORD,
+            scale: ORB_SCALE,   // FIELD-GUN18: a pellet, not a fireball
             onTexture: (t, archive, record) => noteOrbColour(t?.getColor32?.(t.getDFBitmap(record, 0), 0)),
           }) ?? false;
         }

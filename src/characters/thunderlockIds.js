@@ -151,3 +151,22 @@ export function resetOrbColour() { _orb.colour = [1, 1, 1]; _orb.sampled = false
  * enough not to be born inside the viewmodel.
  */
 export const MUZZLE_FORWARD = 0.5;
+
+/**
+ * FIELD-GUN18 (Mac: "shrink the projectile orb slighty").
+ *
+ * The orb flies on TEXTURE.378 record 0 - a classic MISSILE archive,
+ * sized for a spell. A fireball is meant to fill the corridor it is
+ * coming down; a pellet out of a barrel is not, and at the archive's
+ * own size the shot read as a thrown spell rather than as ammunition.
+ *
+ * A SCALE, not a second size: `billboardSize` is DFU's own law
+ * (RMBLayout's scaleDivisor, plus any billboard XML the player has
+ * installed for that archive), and hard-coding a width here would
+ * quietly opt the orb out of both. This multiplies whatever that law
+ * answers, so a texture pack that resizes 378 still resizes the orb.
+ *
+ * Slightly, as asked: a sixth off, which is a smaller pellet and not a
+ * different object.
+ */
+export const ORB_SCALE = 0.85;
