@@ -623,6 +623,54 @@ test('BLOOD1a by source: FOUR HOSTS, one spelling - the switch bag, the draw und
   // ...and the world-hosted dungeon draws the CONTEXT's ring on its own pass
   assert.match(read('src/scenes/worldModes.js'), /dungeonCtx\.bloodMarks\?\.draw\?\.\(camRight, UP_Y\);/);
 
+  // BLOOD1 AUDIT (2026-09-20) - EVERY POOL BUILT IS A POOL DRAWN, and
+  // this is the pin that was missing.
+  //
+  // The check above counts four draws and one of them is worldModes
+  // drawing the DUNGEON'S pool. Nothing asked whether worldModes drew
+  // its OWN - and it did not: `interiorBloodMarks` was built, fed,
+  // ticked and cleared on the way out, and never once rendered. Every
+  // mark laid in a shop, a tavern or a house went into a GPU buffer
+  // that no pass ever read. Four hosts, four pools, three draws, and
+  // a pin that counted to four on the wrong objects.
+  //
+  // So this one is by BINDING rather than by count: whatever
+  // `createBloodMarks` is assigned to anywhere in `src/` has to be
+  // drawn by that same name.
+  const pools = [];
+  const srcFiles = [];
+  (function walk(dir) {
+    for (const name of readdirSync(dir)) {
+      const q = `${dir}/${name}`;
+      if (statSync(new URL(`../${q}`, import.meta.url)).isDirectory()) walk(q);
+      else if (name.endsWith('.js')) srcFiles.push(q);
+    }
+  })('src');
+  for (const f of srcFiles) {
+    for (const m of read(f).matchAll(/const (\w+) = createBloodMarks\(/g)) pools.push([f, m[1]]);
+  }
+  assert.equal(pools.length, 4, `four hosts build a pool (found ${pools.length})`);
+  for (const [f, binding] of pools) {
+    const h = read(f);
+    const at = h.search(new RegExp(`\\b${binding}\\.draw\\(`));
+    assert.ok(at > 0, `${f}: builds \`${binding}\` and never draws it - the marks would be computed and never rendered`);
+    // ...and UNDER the sprites, wherever it is: a body standing in its
+    // own blood is over it, not under it. The interior host's own pass
+    // is held to the same order as the three above.
+    const firstSprite = h.indexOf('renderer.drawBillboards(', at > 0 ? 0 : 0);
+    assert.ok(firstSprite < 0 || at < h.indexOf('renderer.drawBillboards(', at) || at < firstSprite
+      || h.slice(0, at).lastIndexOf('renderer.drawBillboards(') < h.indexOf(`${binding}.draw(`),
+      `${f}: the marks must go down before this host’s sprites`);
+  }
+  // the interior's is the one this audit added, so it is named outright
+  {
+    const wm = read('src/scenes/worldModes.js');
+    const draw = wm.indexOf('interiorBloodMarks.draw(camRight, UP_Y);');
+    const sprites = wm.indexOf("renderer.drawBillboards([...interiorCtx.billboardBatches");
+    assert.ok(draw > 0 && sprites > 0 && draw < sprites,
+      'the interior marks go down before the room’s own sprites');
+  }
+
   // THE SHIFT RIDES offsetAll, which every host already calls. A second
   // line beside it is a line four hosts have to remember, and the one
   // that forgot would strand its blood 819.2 units behind - the exact
@@ -1298,8 +1346,21 @@ test('BLOOD1b by source: a moved batch moves its BOUNDS, and the corner table ha
   // own sphere, so a batch whose quads moved and whose bounds did not
   // would be culled while it is on screen - and chunks fly far enough
   // to leave the sphere they were born in within a frame or two.
-  assert.match(fn, /batch\.bounds = bounds;/, 'the sphere is rewritten');
-  assert.match(fn, /bounds\[3\] \+= Math\.hypot\(batch\.size\.w, batch\.size\.h\) \* 0\.5;/, 'with the quad’s own half-diagonal, as the birth does');
+  assert.match(fn, /bounds\[0\] = cx; bounds\[1\] = cy; bounds\[2\] = cz;/, 'the sphere is rewritten');
+  // BOTH TERMS. The extent of the centres AND the quad's own
+  // half-diagonal - a radius that forgot the first would cull a
+  // spread-out flight the moment its centre left the frustum.
+  assert.match(fn, /bounds\[3\] = Math\.hypot\(hi0 - cx, hi1 - cy, hi2 - cz\) \+ Math\.hypot\(batch\.size\.w, batch\.size\.h\) \* 0\.5;/,
+    'the centres’ extent plus the quad’s own half-diagonal, as the birth does');
+  // BLOOD1 AUDIT: and IN PLACE. This runs every frame of every flight,
+  // so the box is walked here rather than packed into a flat list for
+  // `boundsOf` to unpack, and the sphere is written into the batch's
+  // own array rather than a fresh one each time.
+  assert.doesNotMatch(fn, /boundsOf\(/, 'the sphere is walked here, not packed and handed off');
+  // ...and the array is REUSED, minted only when the batch has none:
+  // this runs every frame of every flight.
+  assert.match(fn, /const bounds = \(batch\.bounds && batch\.bounds\.length === 4\) \? batch\.bounds : \(batch\.bounds = new Float32Array\(4\)\);/,
+    'minted once, on the first move only, and written in place after');
   // ...and it writes rather than reallocating
   assert.match(fn, /gl\.bufferSubData\(gl\.ARRAY_BUFFER, 0, verts, 0, count \* 20\);/);
   assert.doesNotMatch(fn, /createBuffer|createVertexArray|bufferData\(/, 'nothing is rebuilt on a move');
@@ -1544,4 +1605,122 @@ test('BLOOD1b by source: the three melee sites hand the swing over, and the shaf
     }
   }
   assert.equal(swung, 3, 'exactly the three sites that ARE a player’s melee swing');
+});
+
+test('BLOOD1 AUDIT: dispose is TERMINAL, the art may arrive after the throw, and an empty list is not a full one', () => {
+  const made = [], killed = [];
+  const renderer = {
+    createDecalBatch: (capacity) => ({ capacity, id: `decals${made.length}` }),
+    writeDecalSlot: () => true,
+    drawDecals: () => {},
+    createBillboardBatch: (archive, record, size, centers, opts) => {
+      const b = { archive, record, size, centers, opts, frame: null, id: made.length };
+      made.push(b); return b;
+    },
+    moveBillboardBatch: () => true,
+    destroyBillboardBatch: (b) => { killed.push(b); },
+    drawBillboards: () => {},
+  };
+  const floor = () => ({
+    raycastHit: (from, dir, max) => (dir[1] < 0 && from[1] <= max ? { dist: from[1], normal: [0, 1, 0] } : null),
+  });
+  const rig = () => rigHitEffects({
+    renderer,
+    settings: { enabled: () => true, capacity: () => 256, density: () => 1, overkill: () => true },
+    collider: floor,
+  });
+  const kill = { damage: 70, maxHealth: 40, fromPlayer: true, heavy: true };
+
+  // ---- DISPOSE IS TERMINAL.
+  // Without this, a `place` or a `tick` arriving after teardown - a
+  // peer's blow landing over the wire as the room goes, a splash whose
+  // art resolved late - would run `ensure()` and mint a FRESH ring and
+  // a FRESH GPU batch on a pool nobody will ever free again. That is
+  // the HARD1 fault from the other end: not a thing freed twice, but a
+  // thing BUILT after its owner had gone.
+  {
+    const { fx, marks } = rig();
+    marks.useArt(380, 1, 6);
+    fx.showBloodSplash(0, [0, 2, 0], null, kill);
+    assert.ok(marks.count() > 0);
+    const decalsBefore = made.length;
+    marks.dispose();
+    assert.equal(marks.count(), 0);
+    // everything after is a no-op, and NOTHING is built
+    assert.doesNotThrow(() => fx.showBloodSplash(0, [0, 2, 0], null, kill));
+    assert.doesNotThrow(() => fx.tick(1 / 60));
+    assert.doesNotThrow(() => marks.draw(new Float32Array([1, 0, 0]), new Float32Array([0, 1, 0])));
+    assert.equal(marks.count(), 0, 'no ring is minted on a disposed pool');
+    assert.equal(marks.gibs().length, 0, 'and no chunks are thrown');
+    assert.equal(made.length, decalsBefore, 'and no GPU batch is built that nothing would free');
+    assert.doesNotThrow(() => marks.dispose(), 'and it stays idempotent');
+  }
+
+  // ---- THE ART CAN ARRIVE AFTER THE THROW.
+  // `_gibArt` is set when a splash's texture resolves, and on the
+  // FIRST blood of a session that resolution lands after `place` has
+  // already thrown - so the batch was built with no art, and nothing
+  // ever built it again. A player whose first blood was a warhammer
+  // overkill watched ten invisible chunks fly.
+  {
+    const { fx, marks } = rig();
+    const before = made.length;
+    fx.showBloodSplash(0, [0, 2, 0], null, kill);        // art not known yet
+    assert.equal(marks.gibs().length, GIB_COUNT, 'the chunks fly either way');
+    assert.equal(made.length, before, 'but with no art there is no batch to draw them with');
+    marks.useArt(380, 1, 6);                              // ...and now the splash's texture lands
+    fx.tick(1 / 60);
+    assert.equal(made.length, before + 1, 'the next frame seats the batch the art was missing for');
+    assert.equal(made.at(-1).archive, 380);
+    // ...and it is seated ONCE, not re-minted every frame after
+    const seated = made.length;
+    fx.tick(1 / 60); fx.tick(1 / 60);
+    assert.equal(made.length, seated, 'once seated, it is written and not rebuilt');
+  }
+
+  // ---- AN EMPTY LIST IS NOT A FULL ONE. `[].every()` is TRUE, so
+  // with no chunks and a drip still falling the bare `every` ran a
+  // reseat on every frame of the fall. It no-opped, which is how it
+  // went unseen.
+  {
+    const CEIL = 2;
+    const { fx, marks } = rigHitEffects({
+      renderer,
+      settings: { enabled: () => true, capacity: () => 256, density: () => 1, overkill: () => false },
+      collider: () => ({
+        raycastHit: (from, dir, max) => (dir[1] > 0
+          ? (CEIL - from[1] <= max ? { dist: CEIL - from[1], normal: [0, -1, 0] } : null)
+          : (from[1] <= max ? { dist: from[1], normal: [0, 1, 0] } : null)),
+      }),
+    });
+    marks.useArt(380, 1, 6);
+    fx.showBloodSplash(0, [0, 1, 0], null, { damage: 10, maxHealth: 40 });
+    assert.ok(marks.drips().length > 0, 'drips falling');
+    assert.equal(marks.gibs().length, 0, 'and no chunks at all');
+    const churn = killed.length + made.length;
+    fx.tick(1 / 60); fx.tick(1 / 60); fx.tick(1 / 60);
+    assert.equal(killed.length + made.length, churn, 'a drip falling reseats nothing');
+  }
+});
+
+test('BLOOD1 AUDIT: the chunks’ centre list is the chunks’ OWN arrays, so a flight allocates nothing a frame', () => {
+  const src = readFileSync(new URL('../src/combat/bloodMarks.js', import.meta.url), 'utf8');
+  // Every entry of `_gibPos` is the chunk's own `pos` ARRAY, and
+  // gibStep / gibFly / gibLand / shiftGibs all write through it in
+  // place - so the references stay live for the whole flight and the
+  // per-frame move hands the same list over rather than building one.
+  assert.match(src, /_gibPos = _gibs\.map\(\(g\) => g\.pos\);/, 'built once, with the batch');
+  assert.match(src, /moveBillboardBatch\?\.\(_gibBatch, _gibPos\)/, 'and handed over as it stands');
+  const tick = src.slice(src.indexOf('  function tick(dt) {'), src.indexOf('\n  }', src.indexOf('  function tick(dt) {')));
+  assert.doesNotMatch(tick, /_gibs\.map\(/, 'the frame builds no list of its own');
+
+  // ...and the writers really do write THROUGH the array rather than
+  // replacing it, or the references above would go stale on the first
+  // step and every chunk would draw at its birthplace for ever.
+  const gibs = readFileSync(new URL('../src/combat/bloodGibs.js', import.meta.url), 'utf8');
+  for (const [fn, what] of [['gibFly', 'flying on'], ['gibLand', 'landing'], ['shiftGibs', 'the origin shift']]) {
+    const body = gibs.slice(gibs.indexOf(`export function ${fn}(`), gibs.indexOf('\n}', gibs.indexOf(`export function ${fn}(`)));
+    assert.match(body, /\.pos\[0\] [+]?= /, `${what} writes through the chunk’s own array`);
+    assert.doesNotMatch(body, /\.pos = /, `${what} must not replace it`);
+  }
 });

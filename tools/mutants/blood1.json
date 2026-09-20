@@ -696,7 +696,7 @@
   {
     "name": "BLOOD1b-the-flying-quads-are-rebuilt-every-frame",
     "file": "src/combat/bloodMarks.js",
-    "old": "    if (_gibBatch) renderer?.moveBillboardBatch?.(_gibBatch, _gibs.map((g) => g.pos));",
+    "old": "    if (_gibBatch) renderer?.moveBillboardBatch?.(_gibBatch, _gibPos);",
     "new": "    if (_gibBatch) reseatGibs();",
     "tests": [
       "test/blood1_decals.test.js"
@@ -705,7 +705,7 @@
   {
     "name": "BLOOD1b-the-quads-do-not-follow-the-chunks",
     "file": "src/combat/bloodMarks.js",
-    "old": "    if (_gibBatch) renderer?.moveBillboardBatch?.(_gibBatch, _gibs.map((g) => g.pos));",
+    "old": "    if (_gibBatch) renderer?.moveBillboardBatch?.(_gibBatch, _gibPos);",
     "new": "",
     "tests": [
       "test/blood1_decals.test.js"
@@ -714,8 +714,8 @@
   {
     "name": "BLOOD1b-the-flight-s-batch-outlives-the-flight",
     "file": "src/combat/bloodMarks.js",
-    "old": "    if (_gibs.every((g) => g.still)) { _gibs = []; reseatGibs(); }",
-    "new": "    if (_gibs.every((g) => g.still)) { _gibs = []; }",
+    "old": "    if (_gibs.length && _gibs.every((g) => g.still)) { _gibs = []; reseatGibs(); }",
+    "new": "    if (_gibs.length && _gibs.every((g) => g.still)) { _gibs = []; }",
     "tests": [
       "test/blood1_decals.test.js"
     ]
@@ -723,8 +723,8 @@
   {
     "name": "BLOOD1b-the-chunks-are-a-batch-each",
     "file": "src/combat/bloodMarks.js",
-    "old": "      _gibArt.archive, _gibArt.record, GIB_QUAD, _gibs.map((g) => g.pos), { dynamic: true },",
-    "new": "      _gibArt.archive, _gibArt.record, GIB_QUAD, [_gibs[0].pos], { dynamic: true },",
+    "old": "      _gibArt.archive, _gibArt.record, GIB_QUAD, _gibPos, { dynamic: true },",
+    "new": "      _gibArt.archive, _gibArt.record, GIB_QUAD, [_gibPos[0]], { dynamic: true },",
     "tests": [
       "test/blood1_decals.test.js"
     ]
@@ -732,8 +732,8 @@
   {
     "name": "BLOOD1b-the-chunks-batch-is-not-dynamic",
     "file": "src/combat/bloodMarks.js",
-    "old": "      _gibArt.archive, _gibArt.record, GIB_QUAD, _gibs.map((g) => g.pos), { dynamic: true },",
-    "new": "      _gibArt.archive, _gibArt.record, GIB_QUAD, _gibs.map((g) => g.pos),",
+    "old": "      _gibArt.archive, _gibArt.record, GIB_QUAD, _gibPos, { dynamic: true },",
+    "new": "      _gibArt.archive, _gibArt.record, GIB_QUAD, _gibPos,",
     "tests": [
       "test/blood1_decals.test.js"
     ]
@@ -768,7 +768,7 @@
   {
     "name": "BLOOD1b-a-moved-batch-keeps-the-sphere-it-was-born-in",
     "file": "src/render/renderer.js",
-    "old": "    batch.bounds = bounds;\n    return true;",
+    "old": "    bounds[0] = cx; bounds[1] = cy; bounds[2] = cz;\n    bounds[3] = Math.hypot(hi0 - cx, hi1 - cy, hi2 - cz) + Math.hypot(batch.size.w, batch.size.h) * 0.5;",
     "new": "    return true;",
     "tests": [
       "test/blood1_decals.test.js"
@@ -777,8 +777,8 @@
   {
     "name": "BLOOD1b-a-moved-batch-s-sphere-forgets-the-quad-s-own-size",
     "file": "src/render/renderer.js",
-    "old": "    bounds[3] += Math.hypot(batch.size.w, batch.size.h) * 0.5;\n    batch.bounds = bounds;",
-    "new": "    batch.bounds = bounds;",
+    "old": "    bounds[3] = Math.hypot(hi0 - cx, hi1 - cy, hi2 - cz) + Math.hypot(batch.size.w, batch.size.h) * 0.5;",
+    "new": "    bounds[3] = Math.hypot(hi0 - cx, hi1 - cy, hi2 - cz);",
     "tests": [
       "test/blood1_decals.test.js"
     ]
@@ -1058,6 +1058,116 @@
     "file": "src/combat/arrowFlight.js",
     "old": "bloodHit(dmg, foe.entity, { fromPlayer: true, weapon: m.weapon ?? null })",
     "new": "bloodHit(dmg, foe.entity, { fromPlayer: true, weapon: m.weapon ?? null, swing: 'StrikeRight', forward: [0, 0, 1] })",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-the-interior-host-builds-a-pool-and-never-draws-it",
+    "file": "src/scenes/worldModes.js",
+    "old": "    interiorBloodMarks.draw(camRight, UP_Y);",
+    "new": "",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-the-interior-marks-draw-OVER-the-room-s-sprites",
+    "file": "src/scenes/worldModes.js",
+    "old": "    interiorBloodMarks.draw(camRight, UP_Y);\n    renderer.drawBillboards([...interiorCtx.billboardBatches, ...(host.extraBillboards?.() ?? [])], camRight, UP_Y);   // ONLINE1: the peers on the interior's own pass",
+    "new": "    renderer.drawBillboards([...interiorCtx.billboardBatches, ...(host.extraBillboards?.() ?? [])], camRight, UP_Y);   // ONLINE1: the peers on the interior's own pass\n    interiorBloodMarks.draw(camRight, UP_Y);",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-dispose-is-not-terminal",
+    "file": "src/combat/bloodMarks.js",
+    "old": "  const on = () => !_dead && !!(settings?.enabled?.() ?? false)",
+    "new": "  const on = () => !!(settings?.enabled?.() ?? false)",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-dispose-leaves-the-pool-alive",
+    "file": "src/combat/bloodMarks.js",
+    "old": "      _dead = true;   // BLOOD1 AUDIT: and nothing this pool owns is ever built again",
+    "new": "",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-the-art-arriving-late-never-seats-the-batch",
+    "file": "src/combat/bloodMarks.js",
+    "old": "    if (_gibs.length && !_gibBatch && _gibArt) reseatGibs();",
+    "new": "",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-the-batch-is-reseated-every-frame-once-the-art-lands",
+    "file": "src/combat/bloodMarks.js",
+    "old": "    if (_gibs.length && !_gibBatch && _gibArt) reseatGibs();",
+    "new": "    if (_gibs.length && _gibArt) reseatGibs();",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-an-empty-chunk-list-reseats-every-frame",
+    "file": "src/combat/bloodMarks.js",
+    "old": "    if (_gibs.length && _gibs.every((g) => g.still)) { _gibs = []; reseatGibs(); }",
+    "new": "    if (_gibs.every((g) => g.still)) { _gibs = []; reseatGibs(); }",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ],
+    "equivalent": true,
+    "why": "with no chunks and no batch, `reseatGibs` calls NOTHING on the renderer and rebuilds an empty list - so the wasted call is real but unobservable from outside the pool. The guard stays because `[].every()` being TRUE is the trap, and because the drips' line beside it already checks length; the mutation of it is not something a pin can honestly catch."
+  },
+  {
+    "name": "AUDIT-the-flight-builds-a-centre-list-every-frame",
+    "file": "src/combat/bloodMarks.js",
+    "old": "    if (_gibBatch) renderer?.moveBillboardBatch?.(_gibBatch, _gibPos);",
+    "new": "    if (_gibBatch) renderer?.moveBillboardBatch?.(_gibBatch, _gibs.map((g) => g.pos));",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-the-centre-list-is-copied-and-goes-stale",
+    "file": "src/combat/bloodMarks.js",
+    "old": "    _gibPos = _gibs.map((g) => g.pos);   // the chunks' OWN arrays, written through in place",
+    "new": "    _gibPos = _gibs.map((g) => [...g.pos]);",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-a-moved-batch-mints-a-sphere-every-frame",
+    "file": "src/render/renderer.js",
+    "old": "    const bounds = (batch.bounds && batch.bounds.length === 4) ? batch.bounds : (batch.bounds = new Float32Array(4));",
+    "new": "    const bounds = (batch.bounds = new Float32Array(4));",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-a-moved-batch-s-sphere-forgets-the-centres",
+    "file": "src/render/renderer.js",
+    "old": "    bounds[3] = Math.hypot(hi0 - cx, hi1 - cy, hi2 - cz) + Math.hypot(batch.size.w, batch.size.h) * 0.5;",
+    "new": "    bounds[3] = Math.hypot(batch.size.w, batch.size.h) * 0.5;",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-a-gib-writer-replaces-the-array-instead-of-writing-through-it",
+    "file": "src/combat/bloodGibs.js",
+    "old": "  g.pos[0] = step.to[0]; g.pos[1] = step.to[1]; g.pos[2] = step.to[2];",
+    "new": "  g.pos = [step.to[0], step.to[1], step.to[2]];",
     "tests": [
       "test/blood1_decals.test.js"
     ]

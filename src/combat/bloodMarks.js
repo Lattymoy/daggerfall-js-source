@@ -19,9 +19,11 @@
 // they are two bindings, and the host that owns a context ends this one
 // by name.
 //
-// It still rides `showBloodSplash`'s own call - eight sites across four
-// hosts, and the event either way is "blood happened here" - but as a
-// collaborator the pool is handed, not a thing it owns.
+// It still rides `showBloodSplash`'s own call - ELEVEN sites across
+// five files, and the event either way is "blood happened here" - but
+// as a collaborator the pool is handed, not a thing it owns.
+// (BLOOD1b counted them; this header said eight, from a count taken
+// before the arc reached the peer and fall seams.)
 
 import {
   createBloodDecalPool, writeDecalQuad, clearDecalQuad, bloodRate, marksBlood, DECAL_FLOATS,
@@ -103,10 +105,25 @@ export function createBloodMarks({ renderer = null, collider = null, settings = 
    *  two, so it is its OWN list - the chunks' batch has one quad per
    *  entry and a drip in that list would draw a flying gib. */
   let _drips = [];
+  /** BLOOD1 AUDIT: DISPOSE IS TERMINAL. Without this, a `place` or a
+   *  `tick` arriving after teardown - a peer's blow landing over the
+   *  wire as the room goes, a splash whose art resolved late - would
+   *  run `ensure()` and mint a FRESH ring and a FRESH GPU batch on a
+   *  pool nobody will ever free again. That is the HARD1 fault this
+   *  arc has been careful about everywhere else, arrived at from the
+   *  other end: not a thing freed twice, but a thing built after its
+   *  owner had gone. */
+  let _dead = false;
+  /** The chunks' centre list, built ONCE per flight rather than per
+   *  frame. Every entry is the chunk's own `pos` ARRAY, and gibStep /
+   *  gibFly / gibLand / shiftGibs all write through it in place - so
+   *  the references stay live for the whole flight and the move below
+   *  allocates nothing. */
+  let _gibPos = [];
   const _scratch = new Float32Array(DECAL_FLOATS);
 
   const liveCollider = () => (typeof collider === 'function' ? collider() : null);
-  const on = () => !!(settings?.enabled?.() ?? false) && typeof collider === 'function' && !!renderer?.createDecalBatch;
+  const on = () => !_dead && !!(settings?.enabled?.() ?? false) && typeof collider === 'function' && !!renderer?.createDecalBatch;
   // BLOOD1b: the killing blow's own row, read LIVE like the rest - a
   // player who turns it off mid-fight gets the next blow plain.
   //
@@ -147,11 +164,12 @@ export function createBloodMarks({ renderer = null, collider = null, settings = 
    * Lay ONE spray: `n` drops inside `radius` of `pos`, each at the
    * size `rate` asks for. THE SURFACE IS FOUND, NOT ASSUMED: blood
    * spawns at chest height, which is nowhere near anything to stain,
-   * so every ray goes DOWN. Nothing within reach - a body over a
-   * chasm, a foe on a bridge - leaves no mark rather than one hanging
-   * in space, and that is judged PER DROP: spatter thrown past the
-   * edge of a walkway falls into the dark while the pool under the
-   * body still lands.
+   * so every drop rays for one - DOWN for the floor, and one in four
+   * UP for a ceiling (see `looksUp` below). Nothing within reach - a
+   * body over a chasm, a foe on a bridge, a hall too high to stain -
+   * leaves no mark rather than one hanging in space, and that is
+   * judged PER DROP: spatter thrown past the edge of a walkway falls
+   * into the dark while the pool under the body still lands.
    *
    * Answers DROP ZERO - the body's own spot - or null when nothing in
    * this spray landed at all.
@@ -249,17 +267,6 @@ export function createBloodMarks({ renderer = null, collider = null, settings = 
     return spray(col, pos, sprayCount(rate), sprayRadius(rate), rate, hit?.throw);
   }
 
-  /**
-   * BLOOD1b: fly the chunks. THIS RIDES `hitEffects.tick`, the call
-   * every host already makes each frame - the same reading as the
-   * origin shift below, and for the same reason: a second call beside
-   * it is a line four hosts have to remember.
-   *
-   * A chunk is a POINT that rays its own step. Nothing in the way and
-   * it flies on; something and it stops there for good and sprays
-   * what it was carrying - twenty, which is below the ladder's bottom
-   * rung, because one piece landing is not a body opening.
-   */
   /** The chunks' batch is built to the live count and rebuilt when
    *  that changes, which is once a gibbing and once when the last one
    *  comes to rest. A billboard quad has no per-vertex size, so there
@@ -267,9 +274,10 @@ export function createBloodMarks({ renderer = null, collider = null, settings = 
    *  blanked - the batch is exactly as long as the flight. */
   function reseatGibs() {
     if (_gibBatch) { renderer?.destroyBillboardBatch?.(_gibBatch); _gibBatch = null; }
+    _gibPos = _gibs.map((g) => g.pos);   // the chunks' OWN arrays, written through in place
     if (!_gibs.length || !renderer?.createBillboardBatch || !_gibArt) return;
     _gibBatch = renderer.createBillboardBatch(
-      _gibArt.archive, _gibArt.record, GIB_QUAD, _gibs.map((g) => g.pos), { dynamic: true },
+      _gibArt.archive, _gibArt.record, GIB_QUAD, _gibPos, { dynamic: true },
     );
     if (_gibBatch) _gibBatch.frame = GIB_FRAME;
   }
@@ -298,6 +306,13 @@ export function createBloodMarks({ renderer = null, collider = null, settings = 
 
   function tick(dt) {
     if ((!_gibs.length && !_drips.length) || !(dt > 0)) return 0;
+    // BLOOD1 AUDIT: THE ART CAN ARRIVE AFTER THE THROW. `_gibArt` is
+    // set when a splash's texture resolves, and on the FIRST blood of
+    // a session that resolution lands after `place` has already
+    // thrown - so the batch was built with no art, and nothing ever
+    // built it again. A player whose first blood was a warhammer
+    // overkill watched ten invisible chunks fly.
+    if (_gibs.length && !_gibBatch && _gibArt) reseatGibs();
     const col = liveCollider();
     const density = settings?.density?.() ?? 1;
     const rate = scaleRate(GIB_SPLASH_RATE, density);
@@ -309,10 +324,16 @@ export function createBloodMarks({ renderer = null, collider = null, settings = 
     // THE QUADS FOLLOW THE CHUNKS, written rather than rebuilt: ten of
     // them at sixty frames is 2,400 batch rebuilds for one death, each
     // a VAO and two buffers, where this is one bufferSubData.
-    if (_gibBatch) renderer?.moveBillboardBatch?.(_gibBatch, _gibs.map((g) => g.pos));
+    if (_gibBatch) renderer?.moveBillboardBatch?.(_gibBatch, _gibPos);
     // a chunk whose four seconds are up is done with, and the list is
-    // not a place to keep them - nor the GL
-    if (_gibs.every((g) => g.still)) { _gibs = []; reseatGibs(); }
+    // not a place to keep them - nor the GL.
+    //
+    // THE LENGTH IS CHECKED FIRST because `[].every()` is TRUE: with
+    // no chunks and a drip still falling, the bare `every` ran a
+    // reseat on every frame of the fall. It no-opped, which is how it
+    // went unseen, and it is the same guard the drips' line above
+    // already had.
+    if (_gibs.length && _gibs.every((g) => g.still)) { _gibs = []; reseatGibs(); }
     return moved;
   }
 
@@ -382,7 +403,8 @@ export function createBloodMarks({ renderer = null, collider = null, settings = 
     dispose() {
       clear();   // BLOOD1b: which drops the chunks and, through reseatGibs, their batch
       if (_batch) renderer?.destroyDecalBatch?.(_batch);
-      _batch = null; _pool = null; _texKey = null;
+      _batch = null; _pool = null; _texKey = null; _gibArt = null;
+      _dead = true;   // BLOOD1 AUDIT: and nothing this pool owns is ever built again
     },
     _pool: () => _pool,
   };

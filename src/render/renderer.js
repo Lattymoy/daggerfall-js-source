@@ -3897,11 +3897,22 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     }
     gl.bindBuffer(gl.ARRAY_BUFFER, batch.buffers[0]);
     gl.bufferSubData(gl.ARRAY_BUFFER, 0, verts, 0, count * 20);
-    const flat = [];
-    for (let f = 0; f < count; f++) flat.push(centers[f][0], centers[f][1], centers[f][2]);
-    const bounds = boundsOf(flat);
-    bounds[3] += Math.hypot(batch.size.w, batch.size.h) * 0.5;
-    batch.bounds = bounds;
+    // THE SPHERE, WITHOUT BUILDING A FLAT ARRAY TO ASK FOR IT. This
+    // runs every frame of every flight, and `boundsOf` wants one
+    // packed list - so the box is walked here and the sphere written
+    // into the batch's OWN bounds rather than a fresh one each time.
+    let lo0 = Infinity, lo1 = Infinity, lo2 = Infinity;
+    let hi0 = -Infinity, hi1 = -Infinity, hi2 = -Infinity;
+    for (let f = 0; f < count; f++) {
+      const c = centers[f];
+      if (c[0] < lo0) lo0 = c[0]; if (c[0] > hi0) hi0 = c[0];
+      if (c[1] < lo1) lo1 = c[1]; if (c[1] > hi1) hi1 = c[1];
+      if (c[2] < lo2) lo2 = c[2]; if (c[2] > hi2) hi2 = c[2];
+    }
+    const cx = (lo0 + hi0) * 0.5, cy = (lo1 + hi1) * 0.5, cz = (lo2 + hi2) * 0.5;
+    const bounds = (batch.bounds && batch.bounds.length === 4) ? batch.bounds : (batch.bounds = new Float32Array(4));
+    bounds[0] = cx; bounds[1] = cy; bounds[2] = cz;
+    bounds[3] = Math.hypot(hi0 - cx, hi1 - cy, hi2 - cz) + Math.hypot(batch.size.w, batch.size.h) * 0.5;
     return true;
   }
 

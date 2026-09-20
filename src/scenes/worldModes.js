@@ -6309,6 +6309,15 @@ export function createWorldModes(host) {
     });
     interiorArrows.draw(renderer, interiorCtx.texRemap);
     interiorCtx.flatAnims.tick(dt);   // FA1
+    // BLOOD1 AUDIT (2026-09-20): THE INTERIOR'S OWN MARKS, and they
+    // were missing. This host builds a pool like the other three,
+    // feeds it, ticks it and clears it on the way out - and never drew
+    // it, so every mark laid in a shop, a tavern or a house was
+    // computed, written into a GPU buffer and never rendered. It goes
+    // FIRST in the interior's billboard run, under every sprite, for
+    // the same reason the exterior hosts put it above their own draw:
+    // a body standing in its own blood is over it, not under it.
+    interiorBloodMarks.draw(camRight, UP_Y);
     renderer.drawBillboards([...interiorCtx.billboardBatches, ...(host.extraBillboards?.() ?? [])], camRight, UP_Y);   // ONLINE1: the peers on the interior's own pass
     // HE1: the blood, on the same axis and the same call the exterior
     // host makes for its own pool.

@@ -292,7 +292,7 @@ Slices, each behind its own `features.js` row:
    home and the writer cannot disagree with the buffer.
 
    **THE MARK RIDES THE SPLASH'S OWN CALL.** `showBloodSplash` has
-   eight call sites across four hosts and IS the event "blood happened
+   eleven call sites across five files and IS the event "blood happened
    here", so the stain comes off it rather than a ninth seam nobody
    would remember to feed. The surface is FOUND, not assumed: blood
    spawns at chest height, so the ray goes down and the mark wears
@@ -578,6 +578,54 @@ Slices, each behind its own `features.js` row:
    the air is whatever the player's arm happens to be doing now - a
    quirk of reading a global at spawn time, not a thing to carry. A
    shaft's blood is thrown by the shaft.
+   **THE AUDIT (2026-09-20, Mac: "Lets do a comprehensive audit on
+   everything so far"), and what it found.**
+
+   BLOOD NEVER APPEARED INSIDE BUILDINGS. `worldModes.js` builds an
+   interior pool like the other three hosts, hands it to the splash
+   pool, ticks it every frame and clears it on the way out - and never
+   DREW it. Every mark laid in a shop, a tavern or a house was
+   computed, written into a GPU buffer and never rendered. The comment
+   three lines above that pool says "the whole payload - sound,
+   knockback, death, corpse, loot AND the splash - runs indoors
+   exactly as it does in the other three hosts."
+
+   THE FOUR HOSTS PIN IS WHY IT WENT UNSEEN, and the failure is worth
+   keeping: it counted four draws, and the fourth was worldModes
+   drawing the DUNGEON'S pool. Nothing asked whether worldModes drew
+   its own. Four hosts, four pools, three draws, and a pin that
+   counted to four on the wrong objects. The replacement is by
+   BINDING, not by count: it walks `src/`, finds every
+   `const X = createBloodMarks(`, and holds that each X is drawn by
+   that same name and under its host's own sprites.
+
+   THREE MORE:
+
+   - **DISPOSE WAS NOT TERMINAL.** A `place` or `tick` after teardown
+     ran `ensure()` and minted a fresh ring and GPU batch on a pool
+     nobody would free again - HARD1 from the other end: not a thing
+     freed twice, but a thing BUILT after its owner had gone.
+   - **THE ART COULD ARRIVE AFTER THE THROW.** `_gibArt` is set when a
+     splash's texture resolves, and on the first blood of a session
+     that lands after `place` has thrown. The batch was built with no
+     art and nothing built it again, so a player whose first blood was
+     a warhammer overkill watched ten invisible chunks fly.
+   - **`[].every()` IS TRUE**, so with no chunks and a drip still
+     falling the bare guard reseated every frame. It no-opped, which
+     is how it went unseen; the mutation of it is recorded EQUIVALENT
+     rather than pinned, because nothing outside the pool can see it.
+
+   The flight stopped allocating with it: the chunks' centre list is
+   built once with the batch and holds the chunks' OWN `pos` arrays,
+   which every writer mutates in place - pinned both ways, since a
+   writer that replaced an array would leave every chunk drawing at
+   its birthplace for ever. Two stale records went with them: this
+   file and `bloodMarks.js` both said "eight call sites across four
+   hosts", a count taken before the arc reached the peer and fall
+   seams. It is eleven, across five files.
+
+   Mutants: 130, 129 dead, 1 equivalent as recorded.
+
 3. **BLOOD1c - bleeding.** The 2..5s cadence and the ramp above.
 
 The numbers in THE FACTS are the target to feel like. The code that
