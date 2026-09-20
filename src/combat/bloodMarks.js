@@ -192,6 +192,22 @@ export function createBloodMarks({ renderer = null, collider = null, settings = 
       // is the pool under the body.
       const up = looksUp(i);
       const dir = up ? UP : DOWN, reach = up ? CEILING_REACH : MARK_DROP;
+      // BLOOD1 AUDIT 3: BLOOD DOES NOT PASS THROUGH WALLS. The drop's
+      // XZ is the body's plus the spray's offset plus the swing's throw
+      // - up to four metres and more for a warhammer overkill - and the
+      // ray went straight down from THERE, so a foe killed against a
+      // partition sprayed the next corridor's floor. The reference flies
+      // particles that meet the wall first; this port rays the same
+      // segment, from the body to the drop, and a drop that would have
+      // to pass through something lands nowhere.
+      if (i > 0) {
+        const ox = fromX - pos[0], oz = fromZ - pos[2];
+        const run = Math.hypot(ox, oz);
+        if (run > 1e-6 && col.raycastHit) {
+          const wall = col.raycastHit(pos, [ox / run, 0, oz / run], run);
+          if (wall && Number.isFinite(wall.dist) && wall.dist <= run) continue;
+        }
+      }
       // MAC-BUG W5 (Mac: "blood doesn't work outside"). THIS RAY WAS
       // THE WHOLE BUG, and it is the fault class this month has been
       // made of: `raycastHit` walks the collider's TRIANGLE BUCKETS,
@@ -324,6 +340,9 @@ export function createBloodMarks({ renderer = null, collider = null, settings = 
 
   function tick(dt) {
     if ((!_gibs.length && !_drips.length) || !(dt > 0)) return 0;
+    // BLOOD1 AUDIT 3: the switch drops what is in the air - the row the
+    // gibs ride (see `overkillOn`) is off, so they stop, and their quads go.
+    if (!on()) { _gibs = []; _drips = []; reseatGibs(); return 0; }
     // BLOOD1 AUDIT: THE ART CAN ARRIVE AFTER THE THROW. `_gibArt` is
     // set when a splash's texture resolves, and on the FIRST blood of
     // a session that resolution lands after `place` has already
@@ -362,6 +381,10 @@ export function createBloodMarks({ renderer = null, collider = null, settings = 
   function shiftOrigin(offset) {
     shiftGibs(_gibs, offset);    // BLOOD1b: a chunk mid-flight is in world space too
     shiftGibs(_drips, offset);   // ...and so is a drip still falling
+    // BLOOD1 AUDIT 3: and their QUADS move now, not next tick. The host
+    // shifts, then draws, then ticks - so for the one frame between, the
+    // chunks drew from the buffer of the old frame, 819.2 units behind.
+    if (_gibBatch) renderer?.moveBillboardBatch?.(_gibBatch, _gibPos);
     if (!_pool || !_pool.count || !offset) return 0;
     const n = _pool.shiftOrigin(offset);
     for (const d of _pool.decals()) {
@@ -380,9 +403,13 @@ export function createBloodMarks({ renderer = null, collider = null, settings = 
    * `drawBillboards` - so nothing is fetched for it.
    */
   function draw(camRight = null, camUp = null) {
+    // BLOOD1 AUDIT 3: THE SWITCH GATES THE DRAW. `on()` was read by place
+    // alone, so a player who turned blood off mid-fight kept every mark
+    // on the floor and watched the chunks finish their flight.
+    if (!on()) return false;
     let drew = false;
     const tex = markTexture();
-    if (_batch && _pool && _pool.count && tex) { renderer.drawDecals(_batch, tex); drew = true; }
+    if (_batch && _pool && _pool.count && tex) { renderer.drawDecals(_batch, tex, _pool.ranges?.() ?? null); drew = true; }   // BLOOD1 AUDIT 3: the touched slots alone, oldest first
     // BLOOD1b: the chunks are BILLBOARDS and go through the pass every
     // other sprite does - over the marks, because a chunk in the air is
     // above the blood it will become.
@@ -409,6 +436,15 @@ export function createBloodMarks({ renderer = null, collider = null, settings = 
     _pool.clear();
     return n;
   }
+
+  // BLOOD1 AUDIT 3: BUILT AT BOOT, as bloodSwitch.js has always said
+  // ("allocated once at boot: the ring is built to this size and never
+  // grows"). It was built at the first drop that LANDED, so the
+  // capacity read was whatever the store held then - and three pools
+  // that had bled kept one size while the next dungeon took another.
+  // A host that wires no renderer (a stub) still gets a pool with no
+  // ring, and `on()` refuses it exactly as before.
+  if (renderer?.createDecalBatch) ensure();
 
   return {
     place, draw, tick, shiftOrigin, clear, useArt,

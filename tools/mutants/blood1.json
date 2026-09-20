@@ -200,8 +200,8 @@
   {
     "name": "BLOOD1a-the-draw-runs-without-art",
     "file": "src/combat/bloodMarks.js",
-    "old": "    if (_batch && _pool && _pool.count && tex) { renderer.drawDecals(_batch, tex); drew = true; }",
-    "new": "    if (_batch && _pool && _pool.count) { renderer.drawDecals(_batch, tex); drew = true; }",
+    "old": "    if (_batch && _pool && _pool.count && tex) { renderer.drawDecals(_batch, tex, _pool.ranges?.() ?? null); drew = true; }   // BLOOD1 AUDIT 3: the touched slots alone, oldest first",
+    "new": "    if (_batch && _pool && _pool.count) { renderer.drawDecals(_batch, tex, _pool.ranges?.() ?? null); drew = true; }",
     "tests": [
       "test/blood1_decals.test.js"
     ]
@@ -372,7 +372,7 @@
   {
     "name": "BLOOD1b-the-drops-take-a-random-angle-and-clump",
     "file": "src/combat/bloodDecals.js",
-    "old": "  const turn = (i / n) * Math.PI * 2 + (rng() - 0.5) * SPRAY_WOBBLE;",
+    "old": "  const turn = (i / n) * Math.PI * 2 + (rng() - 0.5) * SPRAY_WOBBLE * (Math.PI * 2 / n);   // BLOOD1 AUDIT 3: the wobble is a share of the slot, not an angle",
     "new": "  const turn = rng() * Math.PI * 2;",
     "tests": [
       "test/blood1_decals.test.js"
@@ -597,8 +597,8 @@
   {
     "name": "BLOOD1b-the-drag-is-not-applied",
     "file": "src/combat/bloodGibs.js",
-    "old": "  const damp = Math.max(0, 1 - GIB_DRAG * dt);",
-    "new": "  const damp = 1;",
+    "old": "    const damp = Math.max(0, 1 - GIB_DRAG * GIB_FIXED_DT);",
+    "new": "    const damp = 1;",
     "tests": [
       "test/blood1_decals.test.js"
     ]
@@ -912,8 +912,8 @@
   {
     "name": "BLOOD1b-a-drip-is-thrown-like-a-chunk",
     "file": "src/combat/bloodGibs.js",
-    "old": "  return { pos: [point[0], point[1], point[2]], vel: [0, 0, 0], age: 0, still: false };",
-    "new": "  return { pos: [point[0], point[1], point[2]], vel: [0, GIB_THROW_UP.min, 0], age: 0, still: false };",
+    "old": "  return { pos: [point[0], point[1], point[2]], vel: [0, 0, 0], age: 0, acc: 0, still: false };",
+    "new": "  return { pos: [point[0], point[1], point[2]], vel: [0, GIB_THROW_UP.min, 0], age: 0, acc: 0, still: false };",
     "tests": [
       "test/blood1_decals.test.js"
     ]
@@ -1195,6 +1195,262 @@
     "file": "src/combat/bloodMarks.js",
     "old": "    for (const d of _pool.decals()) {\n      clearDecalQuad(_scratch, 0);\n      renderer.writeDecalSlot(_batch, d.slot, _scratch);\n    }\n    _pool.clear();",
     "new": "    _pool.clear();",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT3-the-standalone-dungeon-host-draws-no-blood",
+    "file": "src/scenes/dungeon.js",
+    "old": "    ctx.bloodMarks?.draw?.(camRight, UP_Y);   // BLOOD1 AUDIT 3: the context's ring, drawn by THIS host beside the level's flats and under them - it used to ride drawFoes' gate, so a cleared level drew no blood at all\n",
+    "new": "",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT3-the-fall-site-s-mark-index-is-ignored",
+    "file": "src/scenes/hitEffects.js",
+    "old": "      marks?.place?.(hit?.markIndex ?? bloodIndex, pos, hit);",
+    "new": "      marks?.place?.(bloodIndex, pos, hit);",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT3-the-dungeon-clears-its-splash-pool-below-the-hand-off-list",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "      hitEffects.clear();\n      for (const b of billboardBatches) renderer.destroyBatch(b);\n",
+    "new": "      for (const b of billboardBatches) renderer.destroyBatch(b);\n      hitEffects.clear();\n",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT3-the-switch-does-not-gate-the-draw",
+    "file": "src/combat/bloodMarks.js",
+    "old": "    if (!on()) return false;\n    let drew = false;",
+    "new": "    let drew = false;",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT3-the-switch-does-not-drop-the-chunks",
+    "file": "src/combat/bloodMarks.js",
+    "old": "    if (!on()) { _gibs = []; _drips = []; reseatGibs(); return 0; }\n",
+    "new": "",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT3-the-ring-is-built-at-first-blood-again",
+    "file": "src/combat/bloodMarks.js",
+    "old": "  if (renderer?.createDecalBatch) ensure();\n",
+    "new": "",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT3-a-recentre-leaves-the-chunks-quads-behind-for-a-frame",
+    "file": "src/combat/bloodMarks.js",
+    "old": "    if (_gibBatch) renderer?.moveBillboardBatch?.(_gibBatch, _gibPos);\n    if (!_pool || !_pool.count || !offset) return 0;",
+    "new": "    if (!_pool || !_pool.count || !offset) return 0;",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT3-the-pool-hands-no-ranges-to-the-pass",
+    "file": "src/combat/bloodMarks.js",
+    "old": "renderer.drawDecals(_batch, tex, _pool.ranges?.() ?? null);",
+    "new": "renderer.drawDecals(_batch, tex);",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT3-the-ranges-are-the-whole-ring-in-slot-order",
+    "file": "src/combat/bloodDecals.js",
+    "old": "    if (touched < cap) return touched > 0 ? [[0, touched]] : [];\n    return next > 0 ? [[next, cap], [0, next]] : [[0, cap]];",
+    "new": "    return touched > 0 ? [[0, cap]] : [];",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT3-the-high-water-mark-never-rises",
+    "file": "src/combat/bloodDecals.js",
+    "old": "    if (slot + 1 > touched) touched = slot + 1;\n",
+    "new": "",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT3-the-wobble-is-radians-again",
+    "file": "src/combat/bloodDecals.js",
+    "old": "(rng() - 0.5) * SPRAY_WOBBLE * (Math.PI * 2 / n);",
+    "new": "(rng() - 0.5) * SPRAY_WOBBLE;",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT3-a-nan-capacity-throws-again",
+    "file": "src/combat/bloodDecals.js",
+    "old": "  const cap = Math.max(1, Math.floor(Number.isFinite(Number(capacity)) ? Number(capacity) : 1000));",
+    "new": "  const cap = Math.max(1, Math.floor(capacity));",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT3-a-nan-size-poisons-the-slot",
+    "file": "src/combat/bloodDecals.js",
+    "old": "      size: Number.isFinite(size) ? Math.max(0, size) : 0,",
+    "new": "      size: Math.max(0, size),",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT3-a-nan-delta-poisons-every-mark",
+    "file": "src/combat/bloodDecals.js",
+    "old": "    if (!Number.isFinite(delta[0]) || !Number.isFinite(delta[1]) || !Number.isFinite(delta[2])) return 0;\n",
+    "new": "",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT3-a-prototype-key-is-a-swing",
+    "file": "src/combat/bloodDecals.js",
+    "old": "  const p = Object.hasOwn(SWING_PUSH, state) ? SWING_PUSH[state] : null;",
+    "new": "  const p = SWING_PUSH[state];",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT3-an-endless-throw-loops",
+    "file": "src/combat/bloodGibs.js",
+    "old": "  const n = Math.min(Math.floor(Number.isFinite(count) ? count : GIB_COUNT), GIB_COUNT * 10);   // BLOOD1 AUDIT 3: an Infinity looped for ever",
+    "new": "  const n = Math.min(Math.floor(count), GIB_COUNT * 10);",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT3-the-integrator-steps-at-the-frame-s-dt",
+    "file": "src/combat/bloodGibs.js",
+    "old": "  g.acc = (g.acc ?? 0) + dt;\n  while (g.acc >= GIB_FIXED_DT - 1e-9) {\n    g.acc -= GIB_FIXED_DT;\n    const damp = Math.max(0, 1 - GIB_DRAG * GIB_FIXED_DT);\n    g.vel[0] *= damp; g.vel[1] *= damp; g.vel[2] *= damp;\n    g.vel[1] -= GIB_GRAVITY * GIB_FIXED_DT;\n    dx += g.vel[0] * GIB_FIXED_DT; dy += g.vel[1] * GIB_FIXED_DT; dz += g.vel[2] * GIB_FIXED_DT;\n  }",
+    "new": "  {\n    const damp = Math.max(0, 1 - GIB_DRAG * dt);\n    g.vel[0] *= damp; g.vel[1] *= damp; g.vel[2] *= damp;\n    g.vel[1] -= GIB_GRAVITY * dt;\n    dx += g.vel[0] * dt; dy += g.vel[1] * dt; dz += g.vel[2] * dt;\n  }",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT3-the-remainder-is-not-carried",
+    "file": "src/combat/bloodGibs.js",
+    "old": "  while (g.acc >= GIB_FIXED_DT - 1e-9) {\n    g.acc -= GIB_FIXED_DT;",
+    "new": "  while (g.acc >= GIB_FIXED_DT - 1e-9) {\n    g.acc = 0;",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT3-the-spray-passes-through-walls",
+    "file": "src/combat/bloodMarks.js",
+    "old": "          if (wall && Number.isFinite(wall.dist) && wall.dist <= run) continue;",
+    "new": "          if (wall && Number.isFinite(wall.dist) && wall.dist <= run) { /* nothing */ }",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT3-the-mark-lands-on-the-bilinear-floor-again",
+    "file": "src/player/collider.js",
+    "old": "    const floor = (this.surfaceAt ?? this.heightAt)(origin[0], origin[2]);",
+    "new": "    const floor = this.heightAt(origin[0], origin[2]);",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT3-the-slope-is-the-capsule-s-floor-s",
+    "file": "src/player/collider.js",
+    "old": "    const at = this.surfaceAt ?? this.heightAt;",
+    "new": "    const at = this.heightAt;",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT3-the-world-host-hands-no-drawn-surface",
+    "file": "src/scenes/world.js",
+    "old": "  const collider = new Collider(heightAt, surfaceAt);",
+    "new": "  const collider = new Collider(heightAt);",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT3-the-classic-decal-ignores-the-cloud",
+    "file": "src/render/renderer.js",
+    "old": "  vec3 lightAcc = uTint + uDecalSun * cloudShadowAt(vWorld) + pointAcc + iAtt * iAtt * uIndirectColor;",
+    "new": "  vec3 lightAcc = uTint + uDecalSun + pointAcc + iAtt * iAtt * uIndirectColor;",
+    "tests": [
+      "test/blood1_decals.test.js",
+      "test/el1_enhancedlighting.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT3-the-foreign-lane-uploads-forty-eight-into-sixteen",
+    "file": "src/render/renderer.js",
+    "old": "      decalLights: src.decalFs ? (src.maxLights ?? CLASSIC_MAX_LIGHTS) : CLASSIC_MAX_LIGHTS,",
+    "new": "      decalLights: src.maxLights ?? CLASSIC_MAX_LIGHTS,",
+    "tests": [
+      "test/blood1_decals.test.js",
+      "test/el1_enhancedlighting.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT3-the-twin-decodes-the-product",
+    "file": "src/render/enhancedLighting.js",
+    "old": "  vec3 albedo = elDecode(t.rgb) * elDecode(vColor.rgb);",
+    "new": "  vec3 albedo = elDecode(t.rgb * vColor.rgb);",
+    "tests": [
+      "test/blood1_decals.test.js",
+      "test/el1_enhancedlighting.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT3-the-twin-s-normal-can-be-nan",
+    "file": "src/render/enhancedLighting.js",
+    "old": "  vec3 n = dot(c, c) > 1e-12 ? normalize(c) : vec3(0.0, 1.0, 0.0);",
+    "new": "  vec3 n = normalize(c);",
+    "tests": [
+      "test/blood1_decals.test.js",
+      "test/el1_enhancedlighting.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT3-blood-off-does-not-exist",
+    "file": "src/combat/bloodSwitch.js",
+    "old": "  getPref(BLOOD_PREF) !== false && new URLSearchParams(search).get('blood') !== 'off';",
+    "new": "  getPref(BLOOD_PREF) !== false;",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT3-the-box-test-boxes-its-origin-again",
+    "file": "src/player/collider.js",
+    "old": "    const ok = k === 0 ? ox : k === 1 ? oy : oz;",
+    "new": "    const ok = [ox, oy, oz][k];",
     "tests": [
       "test/blood1_decals.test.js"
     ]

@@ -45,6 +45,13 @@ export const GIB_GRAVITY = UNITY_GRAVITY * GIB_GRAVITY_SCALE;
 export const GIB_DRAG = 0.1;
 /** When the physics is destroyed and the chunk freezes where it lies. */
 export const GIB_LIFE = 4;
+/** BLOOD1 AUDIT 3: UNITY'S FIXED STEP. A rigidbody integrates at
+ *  Time.fixedDeltaTime (0.02) whatever the frame rate, and an explicit
+ *  Euler step at the FRAME'S dt is a different arc at every frame rate:
+ *  a chunk thrown at 10 m/s peaked at 1.58 m at 60 fps and 1.19 m at
+ *  10 fps. The step below integrates in these substeps and answers the
+ *  whole segment, so the arc is the same arc on every machine. */
+export const GIB_FIXED_DT = 0.02;
 /** What it sprays where it hits: `SpawnBlood(here, 20, 2, 4)`. Twenty
  *  is BELOW the rate ladder's bottom rung, so a chunk's splat is
  *  smaller than any blow's - which is right, it is one piece landing
@@ -71,7 +78,8 @@ export const GIB_SPRAY_LIFT = 0.1;
 export function throwGibs(pos, rng = Math.random, count = GIB_COUNT) {
   const out = [];
   if (!pos || !(count > 0)) return out;
-  for (let i = 0; i < count; i++) {
+  const n = Math.min(Math.floor(Number.isFinite(count) ? count : GIB_COUNT), GIB_COUNT * 10);   // BLOOD1 AUDIT 3: an Infinity looped for ever
+  for (let i = 0; i < n; i++) {
     out.push({
       pos: [pos[0], pos[1], pos[2]],
       vel: [
@@ -80,6 +88,7 @@ export function throwGibs(pos, rng = Math.random, count = GIB_COUNT) {
         (rng() * 2 - 1) * GIB_THROW_SIDE,
       ],
       age: 0,
+      acc: 0,   // BLOOD1 AUDIT 3: the fixed-step accumulator
       still: false,
     });
   }
@@ -98,11 +107,22 @@ export function gibStep(g, dt) {
   g.age += dt;
   if (g.age >= GIB_LIFE) { g.still = true; return null; }   // the physics is destroyed and it freezes where it lies
   // Unity's `Rigidbody.drag` damps the WHOLE velocity, gravity is
-  // added as an acceleration, and both land before the move.
-  const damp = Math.max(0, 1 - GIB_DRAG * dt);
-  g.vel[0] *= damp; g.vel[1] *= damp; g.vel[2] *= damp;
-  g.vel[1] -= GIB_GRAVITY * dt;
-  const dx = g.vel[0] * dt, dy = g.vel[1] * dt, dz = g.vel[2] * dt;
+  // added as an acceleration, and both land before the move - at the
+  // FIXED step (GIB_FIXED_DT), as many times as the frame's dt holds,
+  // the remainder as one short step.
+  // WHOLE steps only, the remainder carried to the next frame (Unity's
+  // own accumulator): a frame shorter than a step moves nothing and
+  // banks its time, so the trajectory is the same list of points on
+  // every machine and a frame only decides how many of them it sees.
+  let dx = 0, dy = 0, dz = 0;
+  g.acc = (g.acc ?? 0) + dt;
+  while (g.acc >= GIB_FIXED_DT - 1e-9) {
+    g.acc -= GIB_FIXED_DT;
+    const damp = Math.max(0, 1 - GIB_DRAG * GIB_FIXED_DT);
+    g.vel[0] *= damp; g.vel[1] *= damp; g.vel[2] *= damp;
+    g.vel[1] -= GIB_GRAVITY * GIB_FIXED_DT;
+    dx += g.vel[0] * GIB_FIXED_DT; dy += g.vel[1] * GIB_FIXED_DT; dz += g.vel[2] * GIB_FIXED_DT;
+  }
   const dist = Math.hypot(dx, dy, dz);
   if (!(dist > 0)) return null;
   return {
@@ -147,7 +167,7 @@ export const gibSprayOrigin = (g) => [g.pos[0], g.pos[1] + GIB_SPRAY_LIFT, g.pos
  */
 export function dripFrom(point) {
   if (!point) return null;
-  return { pos: [point[0], point[1], point[2]], vel: [0, 0, 0], age: 0, still: false };
+  return { pos: [point[0], point[1], point[2]], vel: [0, 0, 0], age: 0, acc: 0, still: false };
 }
 
 /** What a drip leaves where it lands: ONE mark. A chunk carries a
@@ -160,6 +180,6 @@ export const DRIP_SPLASH_RATE = 1;
 export function shiftGibs(gibs, delta) {
   if (!gibs || !delta) return 0;
   let n = 0;
-  for (const g of gibs) { g.pos[0] += delta[0]; g.pos[1] += delta[1]; g.pos[2] += delta[2]; n++; }
+  for (const g of gibs) { if (!g) continue; g.pos[0] += delta[0]; g.pos[1] += delta[1]; g.pos[2] += delta[2]; n++; }
   return n;
 }

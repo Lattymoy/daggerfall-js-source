@@ -312,7 +312,7 @@ test('audit24 wave39: the two DFU call sites deliberately NOT ported, and why', 
     // BLOOD1b carried the BLOW in beside it - a fall bleeds by what it
     // cost, like any other blow - and what this pin holds is unchanged:
     // record 0, at the transform.
-    assert.match(rd(f), /hitEffects\?\.showBloodSplash\(0, f\.ai\._centre\(\), null, bloodHit\(\w+, f\.entity\)\);/, `${f}: fall damage bleeds at index 0, at the transform, carrying its blow`);
+    assert.match(rd(f), /hitEffects\?\.showBloodSplash\(0, f\.ai\._centre\(\), null, \{ \.\.\.bloodHit\(\w+, f\.entity\), markIndex: ENEMY_BASICS\[f\.mobileType\]\?\.bloodIndex \?\? 0 \}\);/, `${f}: fall damage bleeds at index 0, at the transform, carrying its blow - and (BLOOD1 AUDIT 3) the MARK is the foe's own, so a skeleton's fall stains nothing`);
     assert.doesNotMatch(rd(f), /showBloodSplash\(0, \[f\.ai\.feet\[0\], f\.ai\.feet\[1\], f\.ai\.feet\[2\]\]\)/, `${f}: not at the feet`);
     assert.match(rd(f), /SOUND\.FallDamage, \[f\.ai\.feet\[0\], f\.ai\.feet\[1\], f\.ai\.feet\[2\]\]/, `${f}: the FallDamage clip stays at FindGroundPosition() (EnemyMotor.cs:1409)`);
   }

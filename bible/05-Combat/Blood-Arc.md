@@ -660,10 +660,26 @@ Slices, each behind its own `features.js` row:
      the bottom rung, never the top, and never the burst (which is the
      player's alone).
    - The decal pass: depth-tested, depth-unwritten, blended, cull off
-     (a ceiling mark is seen from behind its normal), the classic
-     sixteen lights clamped, fog on the same terms as the flats. An
-     empty ring draws nothing; a full one is one draw of capacity
-     quads with the empty slots degenerate.
+     (a ceiling mark is seen from behind its normal), fog on the same
+     terms as the flats. An empty ring draws nothing; a full one is one
+     draw of capacity quads with the empty slots degenerate.
+
+   **AND THE ONE THAT WAS NOT CLEARED - MAC-BUG W6** (Mac, pushing:
+   "super dark coloring instead of red"). The first pass of this audit
+   read the decal shader and called it sound. It is sound ON THE
+   CLASSIC SET, and the port ships with the Enhanced Lighting lane on:
+   under the lane the renderer decodes every colour it uploads to
+   linear, and the decal - "a fifth classic program with no lane twin",
+   as W4 pinned it - drew an undecoded texel times that linear light
+   with no exposure, tonemap or encode. Measured beside a sprite: dusk
+   25 against 69, a dark dungeon 2 against 17. The decal has its twin
+   now (`EL_DECAL_FS`, the flat's model on the lane's pipeline, the
+   shadow read along the mark's own surface), the renderer builds it
+   as the set's fifth program, and the probe reads both sets.
+   bible/01-Overview/Mac-Bugs-W.md W6 carries the whole of it. The
+   lesson for the next audit is written there too: "the pass renders
+   correctly" is a claim about a SET, and the shipped default is the
+   lane.
    - The four hosts' lifetimes: the world and exterior hosts are page
      lifetime and never dispose (nothing else of theirs does either);
      the dungeon disposes by name; the interior clears at every door.
@@ -683,6 +699,117 @@ Slices, each behind its own `features.js` row:
      of its own.
 
    Mutants: 133, 132 dead, 1 equivalent as recorded.
+
+   **THE THIRD AUDIT (2026-09-20, Mac: "I think this deserves a real
+   audit. I doubt there's only one issue" / "the blood system needs to
+   be as visceral and detailed as possible. I noticed inconsistencies
+   with blood with the exterior and super dark coloring instead of
+   red") - three Opus lenses (the pure law; the pool, the splash pool
+   and the hosts; the renderer and the collider), every finding
+   verified against the code before it was paid, and paid.**
+
+   THE DARK MARKS were MAC-BUG W6 (Mac-Bugs-W.md): the lane. THE
+   EXTERIOR'S INCONSISTENCIES were several things at once, each below.
+
+   THE POOL AND THE HOSTS:
+
+   - THE DUNGEON'S RING WAS DRAWN TWICE A FRAME in the world-hosted
+     dungeon (worldModes drew it by handle, and `drawFoes` drew it
+     again behind its own gate) and ONLY WHILE A FOE, A DROP OR A SPELL
+     WAS ALIVE in the standalone `?dungeon` host, which had no draw of
+     its own - clear the level and the floor went clean, and a
+     warhammer overkill on the last foe threw ten chunks nobody saw.
+     The hosts own the pass now, once each, beside the level's flats;
+     the context draws its own ring nowhere.
+   - THE BLOODLESS GATE WAS BYPASSED AT THE FALL SITES. EnemyMotor's
+     fall damage splashes record 0 for every foe (its own literal), and
+     the two generic sites handed that 0 to the marks too - a skeleton
+     walking off a ledge left a pool. The hit carries `markIndex`, the
+     foe's own; the splash stays record 0.
+   - THE DUNGEON'S SPLASH POOL HAD NO DEAD LATCH. `entry.dead` is set by
+     retire() alone and the dungeon never called clear() (HARD1's first
+     pass put one BELOW the destroy loop and it was a double free). A
+     splash whose archive was still warming when the dungeon went
+     minted a batch into the orphaned list. The clear goes ABOVE the
+     loop: retire() splices each batch out before freeing it, so every
+     batch is freed exactly once and every warming entry is dead first.
+   - THE SWITCH GATED PLACEMENT ALONE: off mid-fight, the marks stayed
+     drawn and the chunks finished their flight. It gates the draw and
+     drops what is in the air now.
+   - THE RING WAS BUILT AT FIRST BLOOD, not at boot as bloodSwitch.js
+     said, so the capacity read was whatever the store held then and
+     four pools could hold two sizes. Built at construction.
+   - A RECENTRE MOVED THE CHUNKS BUT NOT THEIR QUADS until the next
+     tick - the host shifts, draws, then ticks - so they drew one frame
+     819.2 units behind. The quads move at the shift.
+
+   THE PURE LAW:
+
+   - THE WHOLE CAPACITY WAS DRAWN for a ring holding three marks. The
+     pool keeps a high-water mark and hands the pass its RANGES.
+   - ...AND IN SLOT ORDER, so once the ring wrapped the OLDEST marks
+     composited last, over the newest - the burst over its own pool,
+     the one ordering this module argues for at length. The ranges are
+     in age order: [next, cap) then [0, next).
+   - THE WOBBLE WAS 0.9 RADIANS on a 15-degree slot at the top rung:
+     the even turn the comment argues for was swamped and every big
+     spray had drops on top of each other. It is nine tenths of the
+     slot now, whatever the count.
+   - `parent` WAS A DEAD FIELD - stored, never read, and pinned under
+     the title "a mark can ride a moving body". Gone, and the pin says
+     so.
+   - `?blood=off` DID NOT EXIST though the switch's comment promised
+     it. It does.
+   - THE GUARDS: a NaN capacity threw at the array; a NaN size wrote
+     twelve NaN floats into the slot; a non-finite delta poisoned every
+     mark in place; `swingThrow('constructor')` answered NaN off the
+     prototype; `throwGibs(.., Infinity)` looped for ever; `shiftGibs`
+     fell over a hole. Each refused now.
+   - THE GIB ARC WAS FRAME-RATE DEPENDENT: explicit Euler at the frame's
+     dt, so a chunk thrown at 10 m/s peaked at 1.58 m at 60 fps and
+     1.19 m at 10 fps. It integrates at Unity's fixed step (0.02, whole
+     steps only, the remainder carried) and is the same list of points
+     on every machine.
+   - Two comments corrected (the top rung lands EXACTLY on SPRAY_MAX;
+     a spray under four drops never looks up).
+
+   THE RENDERER AND THE COLLIDER:
+
+   - THE CLASSIC DECAL HAD NO CLOUD-SHADOW TERM where every other
+     classic world shader has one, and the deck rides a different pref
+     from the lane: with Environments on and Lighting off the ground
+     went dark under a cloud and the blood on it stayed bright. It has
+     the term.
+   - THE LIGHT CAP WAS THE LANE'S, NOT THE PROGRAM'S: a foreign lane
+     with no decal twin would have run the classic sixteen-slot program
+     under forty-eight and uploaded forty-eight into a vec4[16]. The
+     set carries the cap its decal program declares.
+   - A MARK ON STREAMED TERRAIN LAY ON THE BILINEAR HEIGHT, and the
+     terrain is drawn as two triangles a quad - up to 0.08 apart on
+     real grades (terrainSurface.js measured it), four times the 2cm
+     lift. On a hillside a mark lay clipped into the slope on one half
+     of a quad and floated over it on the other. The collider takes a
+     second sampler, `surfaceAt`, for what is PLACED (surfaceHit and
+     groundNormal); the world host hands it the grass placer's own
+     `surfaceHeightAt`; the capsule keeps its floor. THIS is the
+     exterior inconsistency a player on a hill would have seen.
+   - THE SPRAY RAYED THROUGH WALLS: the drop's XZ is the body's plus
+     the offset plus the throw (four metres and more for an overkill),
+     cast straight down from there. A foe killed against a partition
+     sprayed the next corridor. A ray from the body to the drop first;
+     a drop that would pass through something lands nowhere.
+   - THE RAY WALK ALLOCATED per bucket per ray - the bucket translation
+     (the no-`out` overload streamingWorld.js had already named as
+     measurable GC) and the box test boxing its origin - and the blood
+     multiplies rays: 72 a hit, 74 a frame for four seconds after an
+     overkill. One array a bucket; the origin read in place.
+   - The lane twin's derived normal could be NaN edge-on; it takes up.
+     It decoded the PRODUCT of texel and tint; each on its own now.
+     `drawDecals` reaches `.subarray` with drawTerrain's own guard.
+
+   Pins: 48 in test/blood1_decals.test.js (eight new, the rest re-aimed
+   where a law changed), the lane's set in test/el1_enhancedlighting
+   .test.js. Mutants: tools/mutants/blood1.json is 161 now - 160 dead, 1 equivalent as recorded (twenty-nine of them this audit's, each one a finding above put back); the W4, W5 and W6 campaigns re-run beside it, 27 dead, 1 equivalent, with the four whose anchors this audit moved re-spelled.
 
 3. **BLOOD1c - bleeding.** The 2..5s cadence and the ramp above.
 

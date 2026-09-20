@@ -131,7 +131,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
       // below, after this context; null falls to standing defaults.
       motorState: () => (_motorRef ? { eyeLevel: _motorRef.eye[1] - _motorRef.pos[1], capsule: _motorRef.height } : null),
       // MAC1 J: this host's canvas, for the pause door's relock. The
-      // context owns none of its own (dungeonContext.js:5764), so each
+      // context owns none of its own (dungeonContext.js:5770), so each
       // dungeon host hands its own in and the resume gesture carries
       // the pointer back with it (ui/pauseDoor.js:270-287).
       relock: () => requestLook(canvas) });
@@ -1004,6 +1004,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
     ctx.flatAnims.tick(dt);   // FA1: whoever draws the flats runs their clock
     // (the blood pool's clock runs inside ctx.drawFoes now - both dungeon
     // hosts call it, so neither can forget it; 2026-08-27)
+    ctx.bloodMarks?.draw?.(camRight, UP_Y);   // BLOOD1 AUDIT 3: the context's ring, drawn by THIS host beside the level's flats and under them - it used to ride drawFoes' gate, so a cleared level drew no blood at all
     renderer.drawBillboards([...ctx.billboardBatches, ...ctx.campBatches(), ...ctx.torchBatches()], camRight, UP_Y);   // HT1: the dropped torches on the same pass
     // AUDIT 23 (hosts-9 = audio-3) - SongManager.cs:193: Update() runs
     // every frame, windows open or not - THE MUSIC CONTEXT IS FED

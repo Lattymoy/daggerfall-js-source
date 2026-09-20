@@ -881,7 +881,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
         if (fdmg > 0) {
           audio?.play3d?.(SOUND.FallDamage, [f.ai.feet[0], f.ai.feet[1], f.ai.feet[2]], 1, { maxDistance: 16 });
           // AUDIT 62 F20: the TRANSFORM (feet + centreOffset), per the note above.
-          hitEffects?.showBloodSplash(0, f.ai._centre(), null, bloodHit(fdmg, f.entity));   // BLOOD1b: a fall bleeds by what it cost
+          hitEffects?.showBloodSplash(0, f.ai._centre(), null, { ...bloodHit(fdmg, f.entity), markIndex: ENEMY_BASICS[f.mobileType]?.bloodIndex ?? 0 });   // BLOOD1b: a fall bleeds by what it cost   // BLOOD1 AUDIT 3: the splash is record 0 for everyone (EnemyMotor.cs:1403-1407), the mark is the foe's own
           damageFoe(f, fdmg, null, null, { fromPlayer: false });   // F041: a fall is nobody's attack
         }
       }

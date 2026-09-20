@@ -23,7 +23,7 @@ import {
 import {
   throwGibs, gibStep, gibFly, gibLand, gibSprayOrigin, shiftGibs,
   GIB_COUNT, GIB_THROW_SIDE, GIB_THROW_UP, GIB_GRAVITY, GIB_GRAVITY_SCALE, UNITY_GRAVITY,
-  GIB_DRAG, GIB_LIFE, GIB_SPLASH_RATE, GIB_SPLASH_SPEED, GIB_SPRAY_LIFT, DRIP_SPLASH_RATE,
+  GIB_DRAG, GIB_LIFE, GIB_SPLASH_RATE, GIB_SPLASH_SPEED, GIB_SPRAY_LIFT, DRIP_SPLASH_RATE, GIB_FIXED_DT,
 } from '../src/combat/bloodGibs.js';
 import { GRAVITY as PLAYER_GRAVITY } from '../src/player/motor.js';
 
@@ -207,11 +207,14 @@ test('BLOOD1a: a mark is lifted off its surface, and the streaming world moves i
   assert.equal(pool.count, 0);
 });
 
-test('BLOOD1a: a mark can ride a moving body, and the module knows no renderer', () => {
+test('BLOOD1a: a mark carries its size and tint, rides NOTHING, and the module knows no renderer', () => {
   const pool = createBloodDecalPool({ capacity: 2, rng: () => 0.5 });
-  const body = { pos: [0, 0, 0] };
-  const d = pool.place([0, 1, 0], [0, 0, 1], { size: 2, tint: [1, 0, 0, 1], parent: body });
-  assert.equal(d.parent, body, 'blood on a body travels with the body');
+  const d = pool.place([0, 1, 0], [0, 0, 1], { size: 2, tint: [1, 0, 0, 1] });
+  // BLOOD1 AUDIT 3: this pin was titled "a mark can ride a moving body"
+  // and held a `parent` field that nothing read - the corners are baked
+  // into the GPU slot at place and shiftOrigin moved a parented mark
+  // too, so the capability never existed. The field is gone.
+  assert.ok(!('parent' in d), 'no parent - a mark rides nothing');
   assert.equal(d.size, 2);
   assert.deepEqual(d.tint, [1, 0, 0, 1]);
 
@@ -304,15 +307,18 @@ test('BLOOD1a by source: the decal pass is ONE draw call, depth-tested and depth
   assert.match(r, /const DECAL_STRIDE = DECAL_FLOATS_PER_VERTEX \* 4;/);
   assert.match(r, /gl\.bufferData\(gl\.ELEMENT_ARRAY_BUFFER, decalIndices\(cap\), gl\.STATIC_DRAW\);/);
 
-  const i = r.indexOf('  drawDecals(batch, tex) {');
+  const i = r.indexOf('  drawDecals(batch, tex, ranges = null) {');
   assert.ok(i > 0, 'the pass exists');
   const fn = r.slice(i, r.indexOf('\n  }\n', i));
 
-  // ONE CALL for the whole ring - an empty slot is a zero-area quad, so
-  // the draw never has to skip a hole and the index buffer is built
-  // once at boot.
-  assert.equal((fn.match(/gl\.draw(Elements|Arrays)/g) ?? []).length, 1, 'one draw call for the whole ring');
-  assert.match(fn, /gl\.drawElements\(gl\.TRIANGLES, batch\.capacity \* 6, gl\.UNSIGNED_INT, 0\);/);
+  // ONE CALL for the whole ring, or one per RANGE (BLOOD1 AUDIT 3: the
+  // pool hands its touched slots in age order - one prefix unwrapped,
+  // two ranges wrapped - so a ring of three marks draws three quads and
+  // the oldest go down first). Never one per slot: an empty slot is a
+  // zero-area quad, and the index buffer is built once at boot.
+  assert.equal((fn.match(/gl\.draw(Elements|Arrays)/g) ?? []).length, 2, 'the ranged draw and the whole-ring fallback, nothing per slot');
+  assert.match(fn, /gl\.drawElements\(gl\.TRIANGLES, \(hi - lo\) \* 6, gl\.UNSIGNED_INT, lo \* 6 \* 4\);/, 'a range: its quads’ indices, from its own byte offset');
+  assert.match(fn, /gl\.drawElements\(gl\.TRIANGLES, batch\.capacity \* 6, gl\.UNSIGNED_INT, 0\);/, 'and the whole ring for a caller that hands no ranges');
 
   // DEPTH TESTED, DEPTH NOT WRITTEN. The 2cm lift wins the test against
   // the surface; writing depth would make two overlapping marks fight
@@ -327,9 +333,13 @@ test('BLOOD1a by source: the decal pass is ONE draw call, depth-tested and depth
 
   // a placement touches ONE slot, never the whole buffer
   assert.match(r, /gl\.bufferSubData\(gl\.ARRAY_BUFFER, slot \* 4 \* DECAL_STRIDE, floats\);/);
-  // the program is built off the draw path, like every other one here
-  assert.match(r, /_ensureDecalProgram\(\) \{/);
-  assert.match(r, /createDecalBatch\(capacity\) \{\s*\n\s*const gl = this\.gl;[\s\S]{0,200}?this\._ensureDecalProgram\(\);/);
+  // the program is built off the draw path, like every other one here -
+  // MAC-BUG W6: as the SET'S fifth program, the classic one at boot and
+  // the lane's twin at install, never lazily on the first batch
+  assert.match(r, /decal: this\._buildProgram\(DECAL_VS, src\.decalFs \?\? DECAL_FS\),/);
+  assert.match(r, /decalFs: DECAL_FS \}\);/, 'the classic set names its own');
+  assert.doesNotMatch(r, /_ensureDecalProgram/, 'no lazy build left');
+  assert.match(r, /this\.decalProgram = set\.decal;/, 'the draw uses whichever set is installed');
 });
 
 // ---- the mark, on the seam the splash already uses ------------------
@@ -615,7 +625,6 @@ test('BLOOD1a by source: FOUR HOSTS, one spelling - the switch bag, the draw und
   for (const [host, bb] of [
     ['src/scenes/world.js', 'renderer.drawBillboards(allBatches, camRight, UP_Y);'],
     ['src/scenes/exterior.js', 'renderer.drawBillboards(_visBatches, camRight, UP_Y);'],
-    ['src/scenes/dungeonContext.js', 'renderer.drawBillboards([..._mobileBatches, ..._dropBatches, ..._spellBatches],'],
   ]) {
     const h = read(host);
     // BLOOD1b gave it the camera basis, because the chunks over the
@@ -626,8 +635,27 @@ test('BLOOD1a by source: FOUR HOSTS, one spelling - the switch bag, the draw und
     assert.match(h.slice(d, d + 80), /loodMarks\.draw\(\s*(camRight|new Float32Array\(\[-view)/, `${host}: on the basis the draw below uses`);
     assert.ok(d < h.indexOf(bb), `${host}: the marks go down BEFORE the billboards`);
   }
-  // ...and the world-hosted dungeon draws the CONTEXT's ring on its own pass
-  assert.match(read('src/scenes/worldModes.js'), /dungeonCtx\.bloodMarks\?\.draw\?\.\(camRight, UP_Y\);/);
+  // ...and the CONTEXT's ring is drawn by its HOSTS - the world-hosted
+  // dungeon and the standalone one - once each, on their own pass,
+  // beside the level's own flats and under them. BLOOD1 AUDIT 3: it was
+  // also drawn inside drawFoes, behind that function's gate, so the
+  // world-hosted dungeon drew it twice a frame and the standalone host
+  // drew it only while a foe, a drop or a spell was alive.
+  assert.equal((read('src/scenes/dungeonContext.js').match(/loodMarks\.draw\(/g) ?? []).length, 0, 'the context draws its own ring nowhere - the hosts own the pass');
+  for (const [host, line, bb] of [
+    ['src/scenes/worldModes.js', 'dungeonCtx.bloodMarks?.draw?.(camRight, UP_Y);', 'renderer.drawBillboards([...dungeonCtx.billboardBatches'],
+    ['src/scenes/dungeon.js', 'ctx.bloodMarks?.draw?.(camRight, UP_Y);', 'renderer.drawBillboards([...ctx.billboardBatches'],
+  ]) {
+    const h = read(host);
+    assert.equal(h.split(line).length - 1, 1, `${host}: draws the context’s ring exactly once`);
+    const d = h.indexOf(line);
+    assert.ok(d < h.indexOf(bb) && h.indexOf(bb) - d < 400, `${host}: beside and before the level’s flats`);
+    // ...at the SAME depth as the flats' own draw beside it: not behind
+    // a gate of its own (drawFoes' was `if (_mobileBatches.length || ...)`)
+    const indentOf = (at) => h.slice(h.lastIndexOf('\n', at) + 1, at);
+    assert.equal(indentOf(d), indentOf(h.indexOf(bb)), `${host}: at the flats’ own depth - unconditional, not behind a gate`);
+    assert.ok(!/^\s*if \(/.test(h.slice(h.lastIndexOf('\n', d) + 1, d + line.length)), `${host}: no gate on the line`);
+  }
 
   // BLOOD1 AUDIT (2026-09-20) - EVERY POOL BUILT IS A POOL DRAWN, and
   // this is the pin that was missing.
@@ -657,6 +685,7 @@ test('BLOOD1a by source: FOUR HOSTS, one spelling - the switch bag, the draw und
   }
   assert.equal(pools.length, 4, `four hosts build a pool (found ${pools.length})`);
   for (const [f, binding] of pools) {
+    if (f === 'src/scenes/dungeonContext.js') continue;   // BLOOD1 AUDIT 3: the context's ring is its two hosts' to draw, held above
     const h = read(f);
     const at = h.search(new RegExp(`\\b${binding}\\.draw\\(`));
     assert.ok(at > 0, `${f}: builds \`${binding}\` and never draws it - the marks would be computed and never rendered`);
@@ -1093,11 +1122,16 @@ test('BLOOD1b: the gib law - ten chunks thrown UP, falling at three times gravit
   assert.deepEqual([g.vel[0], g.vel[2]], [0, 0]);
   const up0 = g.vel[1];
   const step = gibStep(g, 0.5);
-  assert.ok(Math.abs(g.vel[1] - (up0 * (1 - GIB_DRAG * 0.5) - GIB_GRAVITY * 0.5)) < 1e-9, 'damped, then pulled down');
+  // BLOOD1 AUDIT 3: at UNITY'S FIXED STEP, twenty-five of them in half a
+  // second - the frame's dt is not the physics' dt, so the same throw
+  // is the same arc at every frame rate (pinned on its own below).
+  let v = up0, moved = 0;
+  for (let k = 0; k < 25; k++) { v *= 1 - GIB_DRAG * GIB_FIXED_DT; v -= GIB_GRAVITY * GIB_FIXED_DT; moved += v * GIB_FIXED_DT; }
+  assert.ok(Math.abs(g.vel[1] - v) < 1e-9, 'damped, then pulled down, at the fixed step');
   assert.ok(g.vel[1] < 0, 'half a second and a chunk is already falling - three gravities is heavy');
   // the step is a SEGMENT for the host to ray, and nothing is committed
   assert.deepEqual(step.from, [0, 10, 0], 'the step starts where the chunk still is');
-  assert.ok(Math.abs(step.dist - Math.abs(g.vel[1]) * 0.5) < 1e-9);
+  assert.ok(Math.abs(step.dist - Math.abs(moved)) < 1e-9, 'the whole half second’s travel, as one segment');
   assert.ok(Math.abs(Math.hypot(...step.dir) - 1) < 1e-12, 'a unit direction, for the ray');
   assert.deepEqual(g.pos, [0, 10, 0], 'and the chunk has NOT moved until the host says so');
   gibFly(g, step);
@@ -1124,7 +1158,9 @@ test('BLOOD1b: the gib law - ten chunks thrown UP, falling at three times gravit
   const forever = throwGibs([0, 1e6, 0], () => 0.5)[0];
   const cap = Math.ceil((GIB_LIFE * 4) * 60);
   let frames = 0;
-  while (frames < cap && gibStep(forever, 1 / 60)) frames++;
+  // BLOOD1 AUDIT 3: a null answer is "nothing to move THIS frame" (a
+  // frame shorter than the fixed step banks its time); `still` is the stop.
+  while (frames < cap && !forever.still) { gibStep(forever, 1 / 60); frames++; }
   assert.ok(frames < cap, 'a chunk that never stopped is the bug this pin exists for');
   assert.ok(forever.still, 'it stops');
   assert.ok(Math.abs(frames / 60 - GIB_LIFE) < 0.05, `and it stops at four seconds (got ${(frames / 60).toFixed(2)})`);
@@ -1155,6 +1191,11 @@ test('BLOOD1b: a warhammer takes the body apart, and the chunks stain where they
         return drop >= 0 && drop <= max ? { dist: drop, normal: [0, 1, 0] } : null;
       },
     }),
+    // BLOOD1 AUDIT 3: VARIED throws. The rig's rng of one half threw
+    // ten identical chunks that landed on one frame with one overshoot,
+    // and two mutants - a landed chunk stepping on, a chunk landing at
+    // its segment's end rather than the hit - lived in that coincidence.
+    rng: (() => { let k = 0; return () => (k++ * 0.6180339887498949) % 1; })(),
     ...over,
   });
   const kill = { damage: 70, maxHealth: 40, fromPlayer: true, heavy: true };
@@ -1173,6 +1214,7 @@ test('BLOOD1b: a warhammer takes the body apart, and the chunks stain where they
   const flown = marks.gibs().length;
   for (let i = 0; i < Math.ceil(GIB_LIFE * 60) && marks.gibs().some((g) => !g.still); i++) fx.tick(1 / 60);
   assert.ok(marks.gibs().length === 0 || marks.gibs().every((g) => g.still), 'they all come to rest');
+  assert.equal(marks.gibs().length, 0, 'and once every chunk is still the list is dropped, and their quads with it');
 
   // ...AND EACH ONE STAINED WHERE IT LANDED, with what it was
   // carrying. Twenty is BELOW the rate ladder's bottom rung, so a
@@ -1836,7 +1878,7 @@ test('MAC-BUG W4: a MARK takes the same light a CHUNK takes - the two passes of 
   // term, because a mark and a chunk are the same blood.
   const r = readFileSync(new URL('../src/render/renderer.js', import.meta.url), 'utf8');
 
-  const decalFs = r.slice(r.indexOf('_ensureDecalProgram()'), r.indexOf('this.decalProgram = this._buildProgram'));
+  const decalFs = r.slice(r.indexOf('const DECAL_FS = `'), r.indexOf('`;', r.indexOf('const DECAL_FS = `')));   // MAC-BUG W6: the classic one, a module const now
   const bbFs = r.slice(r.indexOf('vec3 pointAcc = vec3(0.0);'));
 
   // THE POINT-LIGHT TERM, character for character with the flats'.
@@ -1851,7 +1893,7 @@ test('MAC-BUG W4: a MARK takes the same light a CHUNK takes - the two passes of 
   assert.match(decalFs, /float iAtt = clamp\(1\.0 - iD \/ max\(uIndirect\.w, 1e-4\), 0\.0, 1\.0\);/);
 
   // ...and they are SUMMED, not one of them used.
-  assert.match(decalFs, /vec3 lightAcc = uTint \+ uDecalSun \+ pointAcc \+ iAtt \* iAtt \* uIndirectColor;/);
+  assert.match(decalFs, /vec3 lightAcc = uTint \+ uDecalSun \* cloudShadowAt\(vWorld\) \+ pointAcc \+ iAtt \* iAtt \* uIndirectColor;/);   // BLOOD1 AUDIT 3: and under the cloud's shadow, as BB_FS's sun term is
   assert.match(decalFs, /vec3 rgb = t\.rgb \* vColor\.rgb \* lightAcc;/);
   assert.doesNotMatch(decalFs, /vec3 rgb = t\.rgb \* vColor\.rgb \* uTint;/,
     'ambient alone is what made the mark black');
@@ -1859,7 +1901,7 @@ test('MAC-BUG W4: a MARK takes the same light a CHUNK takes - the two passes of 
   // THE UPLOAD, and the same three-scratch rule the flats' own pass
   // had to learn the hard way (AUDIT PERF-SUN/FOG F4: two decodes into
   // one scratch computed the moon term from the sun's colour).
-  const fn = r.slice(r.indexOf('  drawDecals(batch, tex) {'), r.indexOf('\n  }\n', r.indexOf('  drawDecals(batch, tex) {')));
+  const fn = r.slice(r.indexOf('  drawDecals(batch, tex, ranges = null) {'), r.indexOf('\n  }\n', r.indexOf('  drawDecals(batch, tex, ranges = null) {')));
   assert.match(fn, /const am = this\._c3\(this\._ambient, this\._decA\);/);
   assert.match(fn, /const mc = this\._c3\(this\._moonColor, this\._decB\);/);
   assert.match(fn, /const sc = this\._c3\(this\._sunColor, this\._decC\);/);
@@ -1867,17 +1909,15 @@ test('MAC-BUG W4: a MARK takes the same light a CHUNK takes - the two passes of 
   assert.match(fn, /gl\.uniform3f\(d\.sun, sc\[0\] \* this\._sunScale \* 0\.5, sc\[1\] \* this\._sunScale \* 0\.5, sc\[2\] \* this\._sunScale \* 0\.5\);/,
     'the sun’s Lambert-average HALF, which is the flats’ own number');
   assert.match(fn, /gl\.uniform1i\(d\.pointCount, dCount\);/);
-  assert.match(fn, /gl\.uniform4fv\(d\.pointLights, this\._pointLights\.subarray\(0, dCount \* 4\)\);/);
+  assert.match(fn, /gl\.uniform4fv\(d\.pointLights, this\._pointLights\.subarray \? this\._pointLights\.subarray\(0, dCount \* 4\) : this\._pointLights\.slice\(0, dCount \* 4\)\);/, 'BLOOD1 AUDIT 3: with drawTerrain’s own guard for a plain array');
   assert.match(fn, /gl\.uniform3fv\(d\.pointColors, this\._pointColorData\(dCount\)\);/);
-  // THE DECAL IS A FIFTH CLASSIC PROGRAM WITH NO LANE TWIN, and that is
-  // pinned here as well as in EL1 because it is a LIMIT rather than an
-  // oversight: `_pointLights` holds 48 under the Enhanced Lighting
-  // lane, and a shader declaring `uPointLights[16]` handed a count of
-  // 48 reads off the end of its own array. The sixteen it takes are the
-  // sixteen NEAREST - `nearestLights` sorted them before any of this -
-  // which is what the whole renderer had before the lane existed.
-  assert.match(fn, /const dCount = Math\.min\(this\._pointLights\.length >> 2, CLASSIC_MAX_LIGHTS\);/,
-    'the decal cuts to the classic cap rather than trusting the lane\u2019s count');
+  // W4 pinned the decal as "a fifth classic program with no lane twin",
+  // cutting to CLASSIC_MAX_LIGHTS under the lane's forty-eight. MAC-BUG
+  // W6 gave it the twin, so the cut is to the INSTALLED set's cap - the
+  // classic sixteen or the lane's forty-eight, whichever `maxPointLights`
+  // says - and the W6 pins below hold the twin itself.
+  assert.match(fn, /const dCount = Math\.min\(this\._pointLights\.length >> 2, this\._decalLights\);/,
+    'the decal cuts to the installed decal PROGRAM\u2019s cap (BLOOD1 AUDIT 3: a lane with no twin runs the classic program under forty-eight)');
 
   // A CLOCKLESS SCENE keeps full bright, as the flats do - and its sun
   // goes to zero with it, or a scene with no clock would carry the last
@@ -1887,6 +1927,329 @@ test('MAC-BUG W4: a MARK takes the same light a CHUNK takes - the two passes of 
   // and the probe that measured it is committed, so the next person
   // reads pixels rather than the shader
   assert.match(readFileSync(new URL('../package.json', import.meta.url), 'utf8'), /"blood": "node tools\/bloodProbe\.mjs"/);
+});
+
+// ── MAC-BUG W6 (2026-09-20, Mac: "super dark coloring instead of red") ──
+test('MAC-BUG W6 by source: the decal has a LANE TWIN, the flat’s model on the lane’s pipeline, and the renderer builds and feeds it as the set’s fifth program', async () => {
+  // THE FAULT. The port ships with the Enhanced Lighting lane ON, and
+  // under it the renderer DECODES every colour it uploads to linear
+  // (`_c3`, `_pointColorData`) because the lane's shaders light in
+  // linear and encode at the end. The decal pass was a classic program
+  // with, as W4 pinned it, "no lane twin": it took those linear values
+  // as display ones, multiplied an UNDECODED texel by them and wrote the
+  // product raw - no exposure, no tonemap, no encode. Measured beside a
+  // sprite in the same light (tools/bloodProbe.mjs, the LANE rows): dusk
+  // 25 against 69, a dark dungeon 2 against 17. W4's probe read the
+  // classic set alone, and was green the whole time.
+  const el = readFileSync(new URL('../src/render/enhancedLighting.js', import.meta.url), 'utf8');
+  const r = readFileSync(new URL('../src/render/renderer.js', import.meta.url), 'utf8');
+  const { EL_LANE, EL_DECAL_FS, EL_BB_FS, EL_MAX_LIGHTS } = await import('../src/render/enhancedLighting.js');
+
+  // the lane carries it, by the key the set builder reads
+  assert.equal(EL_LANE.decalFs, EL_DECAL_FS, 'EL_LANE.decalFs is the twin');
+  assert.match(r, /decal: this\._buildProgram\(DECAL_VS, src\.decalFs \?\? DECAL_FS\),/, 'the set builds it from the lane’s key, the classic FS only for a lane that brings none');
+
+  // THE FLAT'S MODEL, TERM FOR TERM WITH EL_BB_FS - a mark and a chunk
+  // are the same blood, and under this lane they were not.
+  assert.match(EL_DECAL_FS, /vec3 albedo = elDecode\(t\.rgb\) \* elDecode\(vColor\.rgb\);/, 'the texel AND the tint decode - each on its own, the curve being what it is (BLOOD1 AUDIT 3)');
+  assert.match(EL_BB_FS, /vec3 albedo = max\(elDecode\(tex\.rgb\) - emission, vec3\(0\.0\)\);/, '(the flat decodes its texel - the comparison is against something real)');
+  assert.match(EL_DECAL_FS, /vec3 lit = albedo \* \(uTint \+ sunLit \+ elPointFlat\(vWorld, base\) \+ elIndirectFlat\(vWorld\)\);/, 'the flat’s lantern and indirect terms, attenuation only');
+  assert.match(EL_BB_FS, /vec3 lit = albedo \* \(uTint \+ sunLit \+ elPointFlat\(vBBWorld, base\) \+ elIndirectFlat\(vBBWorld\)\) \+ emission;/, '(the flat’s own line)');
+  assert.match(EL_DECAL_FS, /uDecalSun \* cloudShadowAt\(vWorld\) \* sunShadowSoftAt\(base, n\)/, 'the sun’s half, under the cloud’s shadow and the sun map');
+  assert.match(EL_DECAL_FS, /outColor = vec4\(elFinish\(lit, vWorld\), t\.a \* vColor\.a\);/, 'exposure, tonemap, fog in linear, in-scatter, ENCODE - the lane’s finish, with the mark’s own alpha');
+  assert.match(EL_DECAL_FS, new RegExp(`uniform vec4 uPointLights\\[${EL_MAX_LIGHTS}\\];`), 'the lane’s forty-eight');
+  assert.doesNotMatch(EL_DECAL_FS, /uPointLights\[16\]/, 'not the classic sixteen');
+  // THE ONE THING A MARK HAS THAT A FLAT DOES NOT is a surface: a flat
+  // reads its shadow half a unit UP from its base; a ceiling's mark read
+  // that way reads inside the rock. The mark's normal comes from its own
+  // quad, faces the eye, and the shadow is read half a unit out along it.
+  assert.match(EL_DECAL_FS, /vec3 c = cross\(dFdx\(vWorld\), dFdy\(vWorld\)\);\s*\n\s*vec3 n = dot\(c, c\) > 1e-12 \? normalize\(c\) : vec3\(0\.0, 1\.0, 0\.0\);/, 'the quad’s own normal - and up, not NaN, for a quad seen edge-on (BLOOD1 AUDIT 3)');
+  assert.match(EL_DECAL_FS, /if \(dot\(n, uCamPos - vWorld\) < 0\.0\) n = -n;/, 'facing the eye');
+  assert.match(EL_DECAL_FS, /vec3 base = vWorld \+ n \* 0\.5;/, 'read along the surface, not up');
+  // the shared blocks the flat has - the decode/encode, the shadow
+  // receiver, the contact block, the fog, the lantern loop
+  for (const block of ['${EL_GLSL}', '${SHADOW_GLSL}', '${AIR_CONTACT_GLSL}', '${EL_FOG_GLSL}', '${EL_POINT_LIT_GLSL}']) {
+    const decalSrc = el.slice(el.indexOf('export const EL_DECAL_FS = `'), el.indexOf('`;', el.indexOf('export const EL_DECAL_FS = `')));
+    assert.ok(decalSrc.includes(block), `the twin interpolates ${block}`);
+  }
+  // and the same alpha law the classic program has: a clear texel draws nothing
+  assert.match(EL_DECAL_FS, /if \(t\.a < 0\.01\) discard;/);
+
+  // THE RENDERER FEEDS IT WHAT IT FEEDS THE FLATS. `_uploadEl` is the
+  // exposure, the in-scatter, the shadow maps and the eye; the cloud
+  // shadow is its own pair; both are keyed by program and the decal's
+  // entries ride the same tables the other four do.
+  const fn = r.slice(r.indexOf('  drawDecals(batch, tex, ranges = null) {'), r.indexOf('\n  }\n', r.indexOf('  drawDecals(batch, tex, ranges = null) {')));
+  assert.match(fn, /this\._uploadEl\('decal'\);/, 'the lane’s own uniforms');
+  assert.match(fn, /this\._uploadCloudShadow\('decal'\);/, 'the cloud’s shadow');
+  assert.ok(fn.indexOf("this._uploadEl('decal');") < fn.indexOf('gl.drawElements('), 'uploaded BEFORE the draw');
+  assert.ok(fn.indexOf("this._uploadCloudShadow('decal');") < fn.indexOf('gl.drawElements('), 'and so is the cloud');
+  assert.match(fn, /const dCount = Math\.min\(this\._pointLights\.length >> 2, this\._decalLights\);/, 'the installed decal program’s cap: sixteen classic, forty-eight lane, sixteen for a foreign lane with no twin');
+  assert.match(r, /decalLights: src\.decalFs \? \(src\.maxLights \?\? CLASSIC_MAX_LIGHTS\) : CLASSIC_MAX_LIGHTS,/, 'the set carries the cap its decal program declares');
+  assert.match(r, /decal: elLocs\(set\.decal\)/, 'the decal’s lane uniforms are looked up with the set');
+  assert.match(r, /this\._csLoc\.decal = \[gl\.getUniformLocation\(set\.decal, 'uCloudShadowMap'\), gl\.getUniformLocation\(set\.decal, 'uCloudShadowRect'\)\];/, 'and its cloud pair');
+  assert.match(r, /this\.decalProgram = set\.decal;\s*\n\s*this\._decal = this\._decalLocs\(set\.decal\);/, 'the program and its table are the installed set’s');
+  assert.match(r, /\.\.\.this\._fogLocs\(P\),/, 'the fog table is the one that knows uFogColorLin - the lane’s finish blends the DECODED fog');
+  // the classic program is untouched by all of this: no lane uniform in it
+  const classicFs = r.slice(r.indexOf('const DECAL_FS = `'), r.indexOf('`;', r.indexOf('const DECAL_FS = `')));
+  assert.ok(!/uELExposure|elFinish|elDecode/.test(classicFs), 'the classic decal stays classic');
+  assert.match(classicFs, /uniform vec4 uPointLights\[16\];/);
+
+  // and the probe reads BOTH sets now - W4's rows were all classic, and
+  // that is how a fault in the shipped default went unread
+  const probe = readFileSync(new URL('../tools/bloodProbe.mjs', import.meta.url), 'utf8');
+  assert.match(probe, /r\.setLightingLane\(EL_LANE\);/, 'the probe installs the lane');
+  assert.match(probe, /LANE \$\{x\.what\}: the mark is lit as the sprite beside it is/, 'and holds the mark to the sprite under it');
+});
+
+// ── BLOOD1 AUDIT 3 (2026-09-20, Mac: "I think this deserves a real audit.
+// I doubt there's only one issue" / "the blood system needs to be as
+// visceral and detailed as possible ... inconsistencies with blood with
+// the exterior") - three lenses, the findings paid ──────────────────
+test('BLOOD1 AUDIT 3: the mark is the FOE’S even where the splash is record 0 - a skeleton’s fall stains nothing', () => {
+  // EnemyMotor's fall damage shows record 0 for EVERY foe (its own
+  // literal), and the two generic fall sites passed that 0 on to the
+  // marks too - so the bloodless gate, the whole point of
+  // BLOODLESS_INDEX, was bypassed for a skeleton walking off a ledge.
+  const { fx, marks } = rigHitEffects();
+  marks.useArt(380, 1, 6);
+  fx.showBloodSplash(0, [0, 2, 0], null, { damage: 10, maxHealth: 40, markIndex: BLOODLESS_INDEX });
+  assert.equal(marks.count(), 0, 'record 0 splashes, the bloodless mark index marks nothing');
+  fx.showBloodSplash(0, [0, 2, 0], null, { damage: 10, maxHealth: 40, markIndex: 0 });
+  assert.ok(marks.count() > 0, 'and a bleeding foe’s fall stains as any blow does');
+  fx.showBloodSplash(0, [0, 2, 0], null, { damage: 10, maxHealth: 40 });
+  assert.ok(marks.count() > 0, 'a site naming no mark index keeps the splash’s own');
+  const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
+  assert.match(read('src/scenes/hitEffects.js'), /marks\?\.place\?\.\(hit\?\.markIndex \?\? bloodIndex, pos, hit\);/);
+  for (const f of ['src/scenes/dungeonContext.js', 'src/scenes/exteriorFoes.js']) {
+    assert.match(read(f), /showBloodSplash\(0, f\.ai\._centre\(\), null, \{ \.\.\.bloodHit\(\w+, f\.entity\), markIndex: ENEMY_BASICS\[f\.mobileType\]\?\.bloodIndex \?\? 0 \}\)/, `${f}: the fall site names the foe’s own mark index`);
+  }
+});
+
+test('BLOOD1 AUDIT 3: the dungeon’s hand-off splash pool is cleared ABOVE the list it hands to, so a warming splash cannot mint an orphan', async () => {
+  // THE HOLE: `entry.dead` is set by retire() alone, and the dungeon
+  // never called clear() (a clear BELOW the destroy loop was a double
+  // free). So a splash whose archive was still warming when the dungeon
+  // went minted a batch into the orphaned list, and nothing freed it.
+  // ABOVE the loop it is one free per batch: retire() splices the batch
+  // out of the list before it frees it.
+  const src = readFileSync(new URL('../src/scenes/dungeonContext.js', import.meta.url), 'utf8');
+  const d = src.indexOf('    destroy() {');
+  const body = src.slice(d, src.indexOf('\n    },\n', d));
+  const clear = body.indexOf('      hitEffects.clear();');
+  const loop = body.indexOf('      for (const b of billboardBatches) renderer.destroyBatch(b);');
+  assert.ok(clear > 0 && loop > 0 && clear < loop, 'the splash pool is cleared before the hand-off list is freed');
+  assert.ok(body.indexOf('bloodMarks.dispose();') < clear, 'and the ring, its own, is ended by its own name first');
+
+  // driven: a splash warming at teardown, with the hand-off wiring the
+  // dungeon uses - the continuation lands on a dead entry and builds
+  // nothing, and the list it would have pushed into is empty
+  const list = [];
+  let resolveTex = null;
+  const made = [];
+  const renderer = {
+    createBillboardBatch: (a, r, size, centers) => { const b = { a, r, centers }; made.push(b); return b; },
+    destroyBillboardBatch: () => {},
+    uploadTexture: () => {},
+  };
+  const fx = createHitEffects({
+    renderer,
+    getTexture: () => new Promise((res) => { resolveTex = res; }),
+    uploadRecordFrame: () => {},
+    onSpawn: (b) => list.push(b),
+    onRetire: (b) => { const i = list.indexOf(b); if (i >= 0) list.splice(i, 1); },
+  });
+  fx.showBloodSplash(0, [0, 1, 0]);
+  assert.equal(made.length, 0, 'warming: nothing built yet');
+  fx.clear();   // the dungeon goes
+  resolveTex({ recordCount: 8, getFrameCount: () => 6, getSize: () => ({ width: 8, height: 8 }), getScale: () => ({ width: 0, height: 0 }) });
+  await new Promise((r) => setTimeout(r, 0));
+  assert.equal(made.length, 0, 'the continuation builds nothing for a dead entry');
+  assert.equal(list.length, 0, 'and hands nothing to the orphaned list');
+});
+
+test('BLOOD1 AUDIT 3: the switch gates the DRAW and the TICK, the ring is built at boot, and a recentre moves the chunks’ quads before the draw', () => {
+  let enabled = true;
+  const made = [], moves = [];
+  const renderer = {
+    createDecalBatch: (capacity) => { const b = { capacity }; made.push(b); return b; },
+    writeDecalSlot: () => true,
+    drawDecals: () => {},
+    createBillboardBatch: (a, r, size, centers) => ({ a, r, centers }),
+    moveBillboardBatch: (batch, centers) => { moves.push(centers.map((c) => [...c])); return true; },
+    destroyBillboardBatch: () => {},
+    drawBillboards: () => {},
+  };
+  let capacityReads = 0;
+  const { fx, marks } = rigHitEffects({
+    renderer,
+    settings: { enabled: () => enabled, capacity: () => { capacityReads++; return 64; }, density: () => 1, overkill: () => true },
+    collider: () => ({ surfaceHit: (from, dir, max) => (dir[1] < 0 && from[1] <= max ? { dist: from[1], normal: [0, 1, 0] } : null), raycastHit: () => ({ dist: Infinity }) }),
+  });
+  // BUILT AT BOOT, as bloodSwitch.js always said - it was built at the
+  // first drop that landed, reading the capacity then.
+  assert.equal(made.length, 1, 'the ring exists before any blood');
+  assert.equal(capacityReads, 1, 'the capacity was read once, at boot');
+  marks.useArt(380, 1, 6);
+  fx.showBloodSplash(0, [0, 1, 0], null, { damage: 70, maxHealth: 40, fromPlayer: true, heavy: true, throw: [0, 0] });
+  fx.showBloodSplash(0, [3, 1, 3], null, { damage: 10, maxHealth: 40 });
+  assert.equal(capacityReads, 1, 'and never again');
+  assert.ok(marks.count() > 0 && marks.gibs().length === GIB_COUNT);
+  // A RECENTRE MOVES THE QUADS NOW: the host shifts, then draws, then
+  // ticks, so the chunks drew one frame from the old buffer.
+  moves.length = 0;
+  fx.offsetAll([819.2, 0, 0]);
+  assert.equal(moves.length, 1, 'the chunks’ quads are rewritten at the shift');
+  assert.ok(moves[0].every((c) => c[0] >= 819.2 - 15), 'to the shifted positions');
+  assert.ok(marks.draw(new Float32Array([1, 0, 0]), new Float32Array([0, 1, 0])), 'drawn while on');
+  // THE SWITCH OFF MID-FIGHT: nothing drawn, the chunks and drips dropped
+  enabled = false;
+  assert.equal(marks.draw(new Float32Array([1, 0, 0]), new Float32Array([0, 1, 0])), false, 'off: nothing drawn, marks included');
+  fx.tick(1 / 60);
+  assert.equal(marks.gibs().length, 0, 'off: the chunks in the air are dropped');
+  assert.equal(marks.drips().length, 0, 'and the drips');
+  enabled = true;
+  assert.ok(marks.draw(new Float32Array([1, 0, 0]), new Float32Array([0, 1, 0])), 'on again: the marks that were laid are still there');
+});
+
+test('BLOOD1 AUDIT 3: the ring draws its TOUCHED slots in AGE order - one range unwrapped, two once wrapped - and the pool hands them to the pass', () => {
+  const pool = createBloodDecalPool({ capacity: 4, rng: () => 0.5 });
+  assert.deepEqual(pool.ranges(), [], 'empty: nothing to draw');
+  for (let i = 0; i < 3; i++) pool.place([i, 0, 0], [0, 1, 0]);
+  assert.deepEqual(pool.ranges(), [[0, 3]], 'three marks: the prefix, not the capacity');
+  assert.equal(pool.touched, 3);
+  pool.place([3, 0, 0], [0, 1, 0]);
+  assert.deepEqual(pool.ranges(), [[0, 4]], 'full and unwrapped: the whole ring, oldest first');
+  pool.place([4, 0, 0], [0, 1, 0]);   // wraps: slot 0 is now the NEWEST
+  assert.deepEqual(pool.ranges(), [[1, 4], [0, 1]], 'wrapped: the oldest slots first, the newest last - the burst under the pool holds');
+  // ...which is exactly decals()' order, range by range
+  const order = pool.ranges().flatMap(([a, b]) => Array.from({ length: b - a }, (_, k) => a + k));
+  assert.deepEqual(order, pool.decals().map((d) => d.slot));
+  pool.clear();
+  assert.deepEqual(pool.ranges(), []);
+  assert.equal(pool.touched, 0);
+  // the pass is handed the ranges
+  const drew = [];
+  const { fx, marks } = rigHitEffects({ renderer: { createDecalBatch: (capacity) => ({ capacity }), writeDecalSlot: () => true, drawDecals: (b, t, ranges) => { drew.push(ranges); }, createBillboardBatch: () => ({}) } });
+  marks.useArt(380, 1, 6);
+  fx.showBloodSplash(0, [0, 2, 0], null, { damage: 10, maxHealth: 40 });
+  marks.draw();
+  assert.ok(Array.isArray(drew[0]) && drew[0].length >= 1 && drew[0][0][0] === 0, 'the pool’s own ranges reach drawDecals');
+});
+
+test('BLOOD1 AUDIT 3: the spray’s wobble is a share of the SLOT, so the top rung’s drops never cross - and blood does not pass through walls', () => {
+  // 0.9 RADIANS of wobble on a 15-degree slot (the top rung's 24 drops)
+  // put drops on top of each other; nine tenths of a slot cannot.
+  for (const n of [4, 24, SPRAY_MAX]) {
+    for (let i = 1; i < n - 1; i++) {
+      const hi = Math.atan2(...sprayOffset(i, n, 1, () => 1).reverse());
+      const lo = Math.atan2(...sprayOffset(i + 1, n, 1, () => 0).reverse());
+      assert.ok(lo - hi > 1e-9 || lo - hi < -Math.PI, `n=${n}: drop ${i} at its widest never reaches drop ${i + 1} at its narrowest`);
+    }
+  }
+  assert.ok(SPRAY_WOBBLE < 1, 'a share of the slot');
+
+  // A WALL BETWEEN THE BODY AND THE DROP: the drop lands nowhere. The
+  // stub's wall stands at x = +0.3 for any ray heading +x.
+  const wallAt = 0.3;
+  const collider = (walled) => () => ({
+    surfaceHit: (from, dir, max) => (dir[1] < 0 && from[1] <= max ? { dist: from[1], normal: [0, 1, 0] } : null),
+    raycastHit: (from, dir, max) => (walled && dir[0] > 0 && from[0] < wallAt ? { dist: Math.min(max, (wallAt - from[0]) / dir[0]), normal: [-1, 0, 0] } : { dist: Infinity, normal: null }),
+  });
+  const hit = { damage: 30, maxHealth: 40, fromPlayer: true, heavy: false, throw: [0, 0] };   // the top rung: 24 drops over 1.8 m
+  const open = rigHitEffects({ collider: collider(false), settings: { enabled: () => true, capacity: () => 256, density: () => 1, overkill: () => false } });
+  open.marks.useArt(380, 1, 6); open.fx.showBloodSplash(0, [0, 1, 0], null, hit);
+  const walled = rigHitEffects({ collider: collider(true), settings: { enabled: () => true, capacity: () => 256, density: () => 1, overkill: () => false } });
+  walled.marks.useArt(380, 1, 6); walled.fx.showBloodSplash(0, [0, 1, 0], null, hit);
+  assert.ok(open.marks.count() > walled.marks.count(), 'the wall took some drops');
+  assert.ok(walled.marks._pool().decals().every((d) => d.pos[0] <= wallAt + 1e-9), 'and none landed past it');
+  assert.ok(walled.marks._pool().decals().some((d) => d.pos[0] === 0 && d.pos[2] === 0), 'the pool under the body still lands');
+});
+
+test('BLOOD1 AUDIT 3: the pure law refuses what would poison it - a NaN capacity, size or delta, a prototype swing, an endless throw - and `?blood=off` exists', async () => {
+  assert.doesNotThrow(() => createBloodDecalPool({ capacity: NaN }));
+  assert.doesNotThrow(() => createBloodDecalPool({ capacity: Infinity }));
+  const nanCap = createBloodDecalPool({ capacity: NaN, rng: () => 0.5 });
+  for (let i = 0; i < 1001; i++) nanCap.place([0, 0, 0], [0, 1, 0]);
+  assert.equal(nanCap.count, 1000, 'not a number is the default, as it is for the switch');
+  const pool = createBloodDecalPool({ capacity: 4, rng: () => 0.5 });
+  assert.equal(pool.place([0, 0, 0], [0, 1, 0], { size: NaN }).size, 0, 'a NaN size is a size of zero, not twelve NaN floats in the slot');
+  const d = pool.place([1, 2, 3], [0, 1, 0]);
+  assert.equal(pool.shiftOrigin([NaN, 0, 0]), 0, 'a non-finite delta moves nothing');
+  assert.deepEqual(d.pos.map((v) => Math.round(v * 1000) / 1000), [1, 2.02, 3], 'and the mark is where it was');
+  assert.deepEqual(swingThrow('constructor', [0, 0, 1]), [0, 0], 'a prototype key is not a swing');
+  assert.deepEqual(swingThrow('toString', [0, 0, 1]), [0, 0]);
+  assert.equal(throwGibs([0, 0, 0], () => 0.5, Infinity).length, GIB_COUNT, 'an endless throw is the default throw');
+  assert.equal(shiftGibs([null, { pos: [0, 0, 0] }], [1, 0, 0]), 1, 'a hole in the list is skipped');
+  assert.ok(!('parent' in pool.place([0, 0, 0], [0, 1, 0])), 'the dead field is gone');
+  const { bloodMarksOn } = await import('../src/combat/bloodSwitch.js');
+  assert.equal(bloodMarksOn('?blood=off'), false, 'the door the comment promised');
+  assert.equal(bloodMarksOn('?blood=on'), true);
+  assert.equal(bloodMarksOn(''), true);
+});
+
+test('BLOOD1 AUDIT 3: a chunk’s arc is the same arc at every frame rate - Unity’s fixed step, whole steps only, the remainder carried', () => {
+  // the SAME trajectory, sampled at whatever times a frame rate happens
+  // to land on: at every time two rates share, the chunk is in the same
+  // place. (The apex a frame SEES differs by a few millimetres, because
+  // a coarser rate looks between the steps less often - that is the
+  // frame's business, not the physics'.)
+  const fly = (dt, seconds, at) => {
+    const g = throwGibs([0, 0, 0], () => 0.5)[0];   // straight up at 10 m/s
+    const seen = [];
+    let frames = 0;
+    for (let t = 0; t < seconds - 1e-9; t += dt) {
+      const step = gibStep(g, dt); if (step) gibFly(g, step);
+      frames++;
+      if (at.some((a) => Math.abs(frames * dt - a) < 1e-9)) seen.push([...g.pos]);
+    }
+    return { seen, vel: [...g.vel] };
+  };
+  const times = [0.5, 1, 1.5, 2];
+  const at60 = fly(1 / 60, 2, times), at10 = fly(1 / 10, 2, times), at30 = fly(1 / 30, 2, times);
+  assert.equal(at60.seen.length, 4); assert.equal(at10.seen.length, 4); assert.equal(at30.seen.length, 4);
+  for (let k = 0; k < 4; k++) {
+    assert.ok(Math.abs(at60.seen[k][1] - at10.seen[k][1]) < 1e-6, `at ${times[k]}s: 60 fps ${at60.seen[k][1].toFixed(5)} is 10 fps ${at10.seen[k][1].toFixed(5)}`);
+    assert.ok(Math.abs(at60.seen[k][1] - at30.seen[k][1]) < 1e-6, `at ${times[k]}s: and 30 fps`);
+  }
+  assert.ok(Math.abs(at60.vel[1] - at10.vel[1]) < 1e-6);
+  assert.ok(at60.seen[0][1] > 1.0, 'and it really flew - past a metre, already on the way down by the half second');
+  // a frame shorter than a step banks its time rather than moving
+  const g = throwGibs([0, 0, 0], () => 0.5)[0];
+  assert.equal(gibStep(g, GIB_FIXED_DT / 2), null, 'half a step: nothing yet');
+  assert.ok(gibStep(g, GIB_FIXED_DT / 2), 'the other half: one whole step');
+  assert.equal(GIB_FIXED_DT, 0.02, 'Time.fixedDeltaTime');
+});
+
+test('BLOOD1 AUDIT 3: a mark on streamed terrain lies on the DRAWN ground, and the ray walk allocates nothing per bucket', () => {
+  // The world host's `heightAt` is a bilinear read the capsule walks on;
+  // the terrain is two triangles a quad, up to 0.08 apart from it - four
+  // times a mark's 2cm lift. The collider takes a second sampler for
+  // what is PLACED, and the capsule keeps its floor.
+  const c = new Collider(() => 5, () => 5.06);
+  const h = c.surfaceHit([0, 10, 0], [0, -1, 0], 20);
+  assert.ok(Math.abs(h.dist - 4.94) < 1e-9, 'the drawn ground, not the bilinear one');
+  assert.deepEqual(c.groundNormal(0, 0), [0, 1, 0]);
+  const slope = new Collider(() => 0, (x) => x * 0.5);   // the drawn ground rises with x; the capsule floor is flat
+  const n = slope.groundNormal(0, 0);
+  assert.ok(n[0] < 0 && Math.abs(n[0] / n[1] + 0.5) < 1e-9, 'the slope is the DRAWN surface’s');
+  assert.equal(new Collider(() => 5).surfaceHit([0, 10, 0], [0, -1, 0], 20).dist, 5, 'no second sampler: the floor as before');
+  const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
+  const world = read('src/scenes/world.js');
+  assert.match(world, /const collider = new Collider\(heightAt, surfaceAt\);/, 'the world host hands both');
+  assert.match(world, /return surfaceHeightAt\(p\.samples, lx, lz, p\._stride \?\? 1\) \+ t\[1\];/, 'the drawn ground is the grass placer’s own sampler, on the pixel the point is in');
+  // the ray walk: one translation array a bucket, and no boxed origin
+  assert.equal((world.match(/\(\(o\) => \(\) => state\.pixelTranslation\(px, py, o\)\)\(\[0, 0, 0\]\)/g) ?? []).length, 3, 'every bucket translation reuses its own array');
+  assert.doesNotMatch(world, /\(\) => state\.pixelTranslation\(px, py\)[,)]/, 'no bucket allocates a translation per call');
+  const col = read('src/player/collider.js');
+  const box = col.slice(col.indexOf('export function segmentHitsBox('), col.indexOf('\n}', col.indexOf('export function segmentHitsBox(')));
+  assert.doesNotMatch(box, /\[ox, oy, oz\]/, 'the box test reads its origin in place - no array of it in any spelling');
+  assert.match(box, /const ok = k === 0 \? ox : k === 1 \? oy : oz;/, 'the component by index, without a list');
+  // and the classic decal shader takes the cloud's shadow on its sun term
+  const r = read('src/render/renderer.js');
+  const classicFs = r.slice(r.indexOf('const DECAL_FS = `'), r.indexOf('`;', r.indexOf('const DECAL_FS = `')));
+  assert.ok(classicFs.includes('${CLOUD_SHADOW_GLSL}'), 'the classic decal reads the cloud map');
+  assert.match(classicFs, /uDecalSun \* cloudShadowAt\(vWorld\)/, 'on the sun term, as BB_FS has it');
 });
 
 // ── MAC-BUG W5 (2026-09-20, Mac: "Also blood doesn't work outside")

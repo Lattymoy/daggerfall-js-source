@@ -239,6 +239,10 @@ sixteen closer ones. The alternative is a fifth lane shader with its
 own exposure, in-scatter and encode, which is a slice rather than a bug
 fix.
 
+**W6 (same day) paid that slice, and the limit was the small half of
+it** — see below: under the lane the classic decal was not merely short
+of lanterns, it was handed *linear* light and drew it raw.
+
 Campaign `tools/mutants/macbugw4.json`: 6 mutants, 6 dead.
 
 The probe stays, and it earned its keep: it ruled out four suspects in
@@ -322,6 +326,89 @@ is left alone and written down here instead.
 Campaign `tools/mutants/macbugw5.json`: 13 mutants, 12 dead, 1
 equivalent as recorded.
 
+
+---
+
+## W6 — "super dark coloring instead of red": the decal under the lane
+
+Mac, 2026-09-20, pushing for a real audit of the blood system: *"I
+noticed inconsistencies with blood with the exterior and super dark
+coloring instead of red."*
+
+### What it was
+
+**The port ships with the Enhanced Lighting lane ON** (`features.js`,
+`enhanced-lighting`, `initial: true`). Under the lane the renderer
+**decodes every colour it uploads** to linear — the ambient, the sun,
+the moon, the lanterns, the indirect (`_c3`, `_pointColorData`) —
+because the lane's five shaders light in linear space and encode back
+to sRGB at the end (`elFinish`: exposure, tonemap, fog in linear,
+in-scatter, encode, dither).
+
+The decal pass was, as W4 pinned it, *"a fifth classic program with no
+lane twin."* So under the lane it took those linear values as display
+ones, multiplied an **undecoded** texel by them, and wrote the product
+straight to the canvas — no exposure, no tonemap, no encode. A
+dungeon's `0.12` ambient decodes to `0.013`, and `0.013` written raw is
+three units of red.
+
+W4's probe read the classic set and was green the whole time. Read
+again with the lane installed, a sprite and a mark side by side in the
+same light:
+
+| state | sprite | mark (before) | mark (after) |
+|---|---|---|---|
+| noon | `137,13,12` | `128,12,11` | `137,13,12` |
+| dusk | `69,1,1` | **`25,1,1`** | `69,1,1` |
+| dungeon + a torch on it | `186,27,27` | `169,16,16` | `186,27,27` |
+| dungeon, no lights | `17,0,0` | **`2,0,0`** | `17,0,0` |
+
+Every mark the port has drawn under its default lighting has been
+darker than the blood it came from — a little at noon, three times at
+dusk, eight times in the dark. "Super dark instead of red."
+
+### The fix
+
+**A lane twin: `EL_DECAL_FS`** in `render/enhancedLighting.js`, the
+classic `DECAL_FS`'s every term on the lane's pipeline — the water
+surface's precedent (EL7) for a program the lane did not replace. It is
+the **flat's model, term for term with `EL_BB_FS`**: the texel and the
+decal's tint decode together (as the rig's vertex colour does), the
+sun's Lambert-average half under the cloud's shadow and the sun map,
+`elPointFlat` and `elIndirectFlat`, then `elFinish`. Forty-eight
+lanterns, as the flats have.
+
+The one thing a mark has that a flat does not is a **surface**. A flat
+reads its shadows half a unit *up* from its base so the sprite cannot
+shadow itself; a mark on a ceiling read that way reads inside the
+rock. The mark's normal is derived from its own quad (a planar quad's
+screen derivatives are exact), turned to face the eye, and the shadow
+is read half a unit out *along it* — a floor's mark reads up, a
+ceiling's down, a wall's into the room.
+
+**The renderer builds the decal as the set's fifth program** — the
+classic one at boot, the lane's on install, kept across swaps like the
+other four — instead of lazily on the first batch. `drawDecals` cuts
+its lanterns to the installed set's cap (`maxPointLights`), uploads
+the cloud shadow pair and the lane's own uniforms (`_uploadEl('decal')`
+— the exposure, the in-scatter, the shadow maps, the eye) by the same
+tables the other four use. The classic program is untouched: no lane
+uniform in it, sixteen lights, and the classic rows of the probe read
+what they always read.
+
+### What the pins were saying
+
+W4's parity pin held the decal to the *classic* billboard shader, and
+the probe read the *classic* set. Both were true and neither was the
+shipped default. The probe reads both sets now, and the lane rows hold
+the mark to the sprite beside it at every state, to the unit.
+
+Campaign `tools/mutants/macbugw6.json`: 9 mutants, 9 dead — the twin
+missing from the lane, an undecoded texel, no finish, the classic
+sixteen declared under forty-eight, the lane uniforms never uploaded,
+the cut to the classic cap, the cloud shadow never reaching the mark,
+the set failing to install the program, and the ceiling's mark reading
+its shadow inside the rock.
 
 ---
 

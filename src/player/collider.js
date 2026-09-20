@@ -45,15 +45,15 @@ const BOX_SKIN = 1e-3;
  *  @returns {boolean} true when the box must be walked */
 export function segmentHitsBox(ox, oy, oz, dir, min, max, limit) {
   if (!(limit >= 0)) return false;
-  const o = [ox, oy, oz];
   let tMin = 0, tMax = limit;
   for (let k = 0; k < 3; k++) {
     const lo = min[k] - BOX_SKIN, hi = max[k] + BOX_SKIN;
     if (!(hi >= lo)) return false;           // an empty bucket has no box and nothing to walk
     const d = dir[k];
-    if (d === 0) { if (o[k] < lo || o[k] > hi) return false; continue; }
+    const ok = k === 0 ? ox : k === 1 ? oy : oz;   // BLOOD1 AUDIT 3: read in place - this ran per bucket per ray, and boxed the origin into a fresh array each time
+    if (d === 0) { if (ok < lo || ok > hi) return false; continue; }
     const inv = 1 / d;
-    let t1 = (lo - o[k]) * inv, t2 = (hi - o[k]) * inv;
+    let t1 = (lo - ok) * inv, t2 = (hi - ok) * inv;
     if (t1 > t2) { const s = t1; t1 = t2; t2 = s; }
     if (t1 > tMin) tMin = t1;
     if (t2 < tMax) tMax = t2;
@@ -114,9 +114,18 @@ function closestPointOnTriangle(p, a, b, c, out) {
 const GROUND_NORMAL_STEP = 0.5;
 
 export class Collider {
-  /** @param {(x:number,z:number)=>number} heightAt floor beneath everything */
-  constructor(heightAt = () => -Infinity) {
+  /** @param {(x:number,z:number)=>number} heightAt floor beneath everything
+   *  @param {((x:number,z:number)=>number)|null} [surfaceAt] BLOOD1 AUDIT 3:
+   *  the DRAWN ground, where it differs from the floor the capsule
+   *  walks on. The world host's `heightAt` is a bilinear read of the
+   *  heightmap; the terrain it draws is two triangles a quad, and the
+   *  two surfaces are up to 0.08 apart on real grades (terrainSurface.js
+   *  measured it) - four times a mark's 2cm lift. The capsule keeps
+   *  the bilinear floor it has always had; a thing PLACED on the ground
+   *  (surfaceHit, groundNormal) asks where the ground is drawn. */
+  constructor(heightAt = () => -Infinity, surfaceAt = null) {
     this.heightAt = heightAt;
+    this.surfaceAt = typeof surfaceAt === 'function' ? surfaceAt : null;
     this._buckets = new Map(); // key -> {tris, grid: Map, t: () => [x,y,z], min: [x,y,z], max: [x,y,z]}   // AUDIT NAME1 F2: the bounds are the ray's broad phase
   }
 
@@ -302,7 +311,7 @@ export class Collider {
   surfaceHit(origin, dir, maxDist, filter = null) {
     const mesh = this.raycastHit(origin, dir, maxDist, filter);
     if (!(dir[1] < 0)) return mesh;
-    const floor = this.heightAt(origin[0], origin[2]);
+    const floor = (this.surfaceAt ?? this.heightAt)(origin[0], origin[2]);   // BLOOD1 AUDIT 3: the drawn ground, where the host draws one
     if (!Number.isFinite(floor)) return mesh;
     const d = (origin[1] - floor) / -dir[1];
     if (!(d >= 0) || d > maxDist) return mesh;
@@ -318,8 +327,9 @@ export class Collider {
    *  the safe one for no ground at all. */
   groundNormal(x, z) {
     const h = GROUND_NORMAL_STEP;
-    const hx = this.heightAt(x + h, z) - this.heightAt(x - h, z);
-    const hz = this.heightAt(x, z + h) - this.heightAt(x, z - h);
+    const at = this.surfaceAt ?? this.heightAt;   // BLOOD1 AUDIT 3: the slope of the DRAWN ground - inside one triangle the difference is its plane exactly
+    const hx = at(x + h, z) - at(x - h, z);
+    const hz = at(x, z + h) - at(x, z - h);
     if (!Number.isFinite(hx) || !Number.isFinite(hz)) return [0, 1, 0];
     // `|| 0` is not belt and braces: -0 over flat ground is a real
     // answer that compares unequal to 0 and reads as a negative

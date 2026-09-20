@@ -147,7 +147,19 @@ const CONTEXTS = [
     // down this very list.
     handedOff: {
       hitEffects: ['the pool is built with `onSpawn: (b) => billboardBatches.push(b)`, so every splash it mints joins the list destroy() frees',
-        /onSpawn: \(b\) => billboardBatches\.push\(b\)/, /for \(const b of billboardBatches\) renderer\.destroyBatch\(b\)/],
+        /onSpawn: \(b\) => billboardBatches\.push\(b\)/, /for \(const b of billboardBatches\) renderer\.destroyBatch\(b\)/,
+        // BLOOD1 AUDIT 3: ...AND IT IS DRAINED FIRST, which is not the
+        // double free AUDIT-HARD caught - that clear stood BELOW the loop.
+        // This pool also hands its batches BACK (`onRetire` splices them
+        // out of the same list), so a clear() ABOVE the loop retires each
+        // live splash out of the list and frees it once, and the loop
+        // frees what is left once. What the drain buys is the one thing
+        // a hand-off cannot do for itself: `entry.dead` on a splash whose
+        // archive is still warming when the room goes - retire() is the
+        // only thing that sets it, and without it the continuation minted
+        // a batch into the orphaned list that nothing ever freed.
+        { retires: /onRetire: \(b\) => \{ const i = billboardBatches\.indexOf\(b\); if \(i >= 0\) billboardBatches\.splice\(i, 1\); \}/,
+          drain: 'hitEffects.clear();', free: 'for (const b of billboardBatches) renderer.destroyBatch(b);' }],
     },
     declared: {
       animalAmbience: 'createAnimalAmbience returns { update } alone - it plays one-shots off the world clock and holds no handle',
@@ -272,14 +284,31 @@ test('HARD1: a HAND-OFF is not also ended by hand - that is a double free, not a
   // Read as a rule rather than as an incident: END IT WHERE IT IS OWNED,
   // ONCE. The three answers HARD1 offers - ends it, holds nothing, hands
   // it off - are EXCLUSIVE, and this is the pin that says so.
+  //
+  // BLOOD1 AUDIT 3 - THE ONE EXCEPTION, AND WHAT MAKES IT ONE. A pool
+  // that hands its batches back as well as away (an `onRetire` that
+  // splices from the same list) may be DRAINED before the list is freed:
+  // its clear() retires each live batch out of the list and frees it,
+  // and the loop frees only what is left - one free each. Such a pool
+  // says so with a fourth element, and all three of its halves are
+  // required: the splice-back, the drain line, and the drain ABOVE the
+  // free in every teardown. A drain below the free is the double free.
   const doubled = [];
   for (const { file, teardowns, handedOff = {} } of CONTEXTS) {
     const src = read(file);
-    for (const binding of Object.keys(handedOff)) {
+    for (const [binding, [, , , drained]] of Object.entries(handedOff)) {
+      if (drained) assert.match(src, drained.retires, `${file}: ${binding} is declared drained-first and no longer hands its batches back on retire`);
       for (const path of teardowns) {
         const body = codeOf(teardownBody(src, path));
         const ends = body.split('\n').filter((l) => new RegExp(`\\b${binding}\\b`).test(l) && ENDS_IT.test(l));
-        for (const l of ends) doubled.push(`${file}: ${binding} is declared a hand-off AND ended in ${path}() - "${l.trim()}"`);
+        for (const l of ends) {
+          if (drained && l.trim() === drained.drain) {
+            const at = body.indexOf(drained.drain), free = body.indexOf(drained.free);
+            assert.ok(at >= 0 && free >= 0 && at < free, `${file}: ${binding}'s drain must stand ABOVE the free of the list it hands to in ${path}() - below it is the double free`);
+            continue;
+          }
+          doubled.push(`${file}: ${binding} is declared a hand-off AND ended in ${path}() - "${l.trim()}"`);
+        }
       }
     }
   }
