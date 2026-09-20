@@ -1934,7 +1934,19 @@ re-export would put the hub edge back for whoever took the shortcut, and
 **Measured.** The entry's static reach: 259 files / 4,991 KB -> 43 files /
 841 KB. What remains is the renderer, the settings, the data source and the
 crash/stale-chunk law - the things an entry genuinely needs before it knows
-which door it is going through. The bundle numbers are in the commit.
+which door it is going through. The bundle's boot set: 28 chunks / 492 KB ->
+**12 chunks / 104 KB gzipped**.
+
+**What did NOT move, said plainly.** The bytes a player waits for before the
+MENU is interactive - the entry's set plus the menu chunk's own static
+closure plus the intro - are ~656 KB gzipped, the same as before this slice.
+The menu chunk reaches the world tick directly AND through
+`ui/enhancedHud.js`, and reaches `travel` through `systems/saveSlots.js ->
+save.js -> weatherSim.js`; with several roots, no single cut helps, which is
+exactly what the exclusive-cost table said at the start. That is the next
+lever and a different shape of work: the clock (`worldMinutes`,
+`sharedClockOn`) split out of the world tick as a LEAF, so the nineteen
+modules that only want the time stop importing the heartbeat.
 
 **Three laws, derived, not listed.** One home (exactly one definition in the
 tree, in the leaf; nobody under src/ or test/ imports it from hud.js; hud.js
