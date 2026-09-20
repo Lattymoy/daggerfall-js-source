@@ -15,7 +15,7 @@
 import { mapPixelToLongitudeLatitude } from '../formats/mapsFile.js';
 
 /** The chance a pixel holds a spawned dungeon. */
-export const SPAWN_CHANCE = 0.3;
+export const SPAWN_CHANCE = 0.10;
 /** The salt fills the id's high 12 bits; 0 is left out so an id is never below 2^20. */
 export const SALT_MAX = 4095;
 /** The one salt every client rolls with. Changing it moves every spawned dungeon in the world (and their rooms). */

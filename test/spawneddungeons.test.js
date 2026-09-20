@@ -6,11 +6,11 @@ import { isWorldRoom } from '../src/net/wire.js';
 import { getMapPixelID, longitudeLatitudeToMapPixel } from '../src/formats/mapsFile.js';
 
 test('SPAWNED-DUNGEONS: the roll is a pure function of (salt, pixel) and lands near the chance', () => {
-  assert.equal(SPAWN_CHANCE, 0.3);
+  assert.equal(SPAWN_CHANCE, 0.10);
   assert.equal(spawnsDungeon(7, 100, 200), spawnsDungeon(7, 100, 200), 'the same pixel answers the same, load after load');
   let hits = 0, n = 0;
   for (let x = 0; x < 200; x++) for (let y = 0; y < 100; y++) { n++; if (spawnsDungeon(1234, x, y)) hits++; }
-  assert.ok(Math.abs(hits / n - 0.3) < 0.02, `~30% of ${n} pixels, got ${(hits / n).toFixed(3)}`);
+  assert.ok(Math.abs(hits / n - SPAWN_CHANCE) < 0.02, `~${SPAWN_CHANCE * 100}% of ${n} pixels, got ${(hits / n).toFixed(3)}`);
   assert.equal(spawnsDungeon(5, 1, 1, 0), false);
   assert.equal(spawnsDungeon(5, 1, 1, 1), true);
   assert.ok(hash32(1, 2, 3) !== hash32(1, 3, 2), 'order matters');

@@ -65,3 +65,38 @@ test('AIWATER: the flag the skip reads is the one the spawner sets, and no real 
     assert.doesNotMatch(s, /spawned: true/, `${f}: a real location never claims to be a spawn`);
   }
 });
+
+// SPAWNED-DUNGEONS-TTL (2026-09-20, the rest of Mac's patch). Two
+// notices a host MAY wire: one when a context is built for a dungeon
+// this client's own hash synthesized, one the first time that dungeon
+// is fully cleared. Both are optional - nothing in this tree wires
+// them yet - so what is pinned here is that they cost nothing until
+// something does, and that the clear notice is told ONCE.
+test('AIWATER/TTL: the spawn notice is for spawns only, and the clear notice is told once', () => {
+  const src = read('src/scenes/dungeonContext.js');
+
+  // THE SPAWN NOTICE fires only for a synthesized location, and is
+  // optional-chained - a host that passes nothing pays nothing.
+  assert.match(src, /if \(dfLocation\?\.spawned\) opts\.onDungeonSpawned\?\.\(\);/,
+    'told for a spawn, and only for a spawn');
+
+  // THE CLEAR NOTICE rides `automapTick`, the call every host already
+  // makes each gameplay frame - a new per-frame call site would be one
+  // that scenes/dungeon.js and scenes/worldModes.js both have to
+  // remember, and the one that forgot would never expire its dungeon.
+  const tick = src.slice(src.indexOf('    automapTick(dt, eye, fwd) {'));
+  const body = tick.slice(0, tick.indexOf('\n    },'));
+  assert.match(body, /if \(!_clearedSent && opts\.onDungeonCleared\) \{/, 'gated on a host having asked for it');
+  assert.match(body, /_clearedSent = true;/, 'and latched, so the host is told ONCE and not once a frame after');
+  // ...AHEAD of the scan's own early return, or it would only run on
+  // the frames the automap happened not to skip.
+  assert.ok(body.indexOf('_clearedCheckT') < body.indexOf('if (automapScanT < SCAN_INTERVAL_S) return;'),
+    'the clear throttle runs before the scan’s early return, not after it');
+
+  // CLEARED MEANS BOTH: every foe dead AND every pile empty. Either
+  // half alone would expire a dungeon the player is still looting, or
+  // still fighting through.
+  assert.match(body, /foes\.every\(\(f\) => f\.dead\) && lootPiles\.every\(\(p\) => p\.items\.length === 0\)/,
+    'every foe dead and every pile empty');
+  assert.match(src, /const CLEARED_CHECK_INTERVAL_S = 5;/, 'on a slow throttle, not every frame');
+});

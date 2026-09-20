@@ -248,6 +248,12 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   const dungeon = layoutDungeon(dfLocation, blocks, getModelPre);
   const remap = (archive) => applyTextureTable(archive, dungeon.textureTable, climateBaseType);
 
+  // SPAWNED-DUNGEONS-TTL: told once, the moment this context is built for a dungeon this client's own
+  // hash synthesized (world/spawnedDungeons.js's `spawned: true` - never true for any real location).
+  // The host wires this to the online room's spawn notice, which is itself a no-op outside a world
+  // room, so it costs nothing offline or in a real dungeon - and nothing at all until a host passes it.
+  if (dfLocation?.spawned) opts.onDungeonSpawned?.();
+
   const drawList = [];
   const dynamicDraws = [];
   // PERF5: THE LEVEL'S STATIC MODELS AS ONE MESH. drawList draws every
@@ -5224,6 +5230,11 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // dungeon IS that moment.
   signalAutomapReset();
 
+  // SPAWNED-DUNGEONS-TTL: the clear scan's own throttle and its latch - the
+  // host is told ONCE, not once a frame for the rest of the visit.
+  let _clearedCheckT = 0, _clearedSent = false;
+  const CLEARED_CHECK_INTERVAL_S = 5;
+
   const api = {
     // AUDIT 19 / 1:1: SelectCurrentSong's dungeon arm seeds DFRandom with
     // the dungeon record header's Unknown2 XOR the region byte
@@ -5300,6 +5311,21 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
      *  lives here, and the eye is cached for the window's slice. */
     automapTick(dt, eye, fwd) {
       _automapEye = eye;
+      // SPAWNED-DUNGEONS-TTL: "fully cleared" - every foe dead, every loot pile empty - on its own slow
+      // throttle, piggybacked here because every host already calls this each gameplay frame; a new
+      // per-frame call site would be one scenes/dungeon.js and scenes/worldModes.js both have to
+      // remember. It sits AHEAD of the scan's early return below so it still runs on the frames the
+      // automap scan itself skips. Empty lists count as cleared trivially - there is nothing to clear.
+      if (!_clearedSent && opts.onDungeonCleared) {
+        _clearedCheckT += dt;
+        if (_clearedCheckT >= CLEARED_CHECK_INTERVAL_S) {
+          _clearedCheckT = 0;
+          if (foes.every((f) => f.dead) && lootPiles.every((p) => p.items.length === 0)) {
+            _clearedSent = true;
+            opts.onDungeonCleared();
+          }
+        }
+      }
       automapScanT += dt;
       if (automapScanT < SCAN_INTERVAL_S) return;
       automapScanT = 0;
