@@ -176,7 +176,7 @@ export class SocialState {
         // invitation that never lapses
         invite.got = this.now();
         if (!this.invites.has(invite.party) && this.invites.size >= PENDING_MAX) {
-          let oldest = null;
+          /** @type {[string, Invite]|null} */ let oldest = null;   // a TUPLE, said so: inferred as an array of string|Invite it failed `npm run types` on main (BA-CRASH1 found it in the way)
           for (const [id, inv] of this.invites) if (!oldest || inv.got < oldest[1].got) oldest = [id, inv];
           if (oldest) this.invites.delete(oldest[0]);
         }

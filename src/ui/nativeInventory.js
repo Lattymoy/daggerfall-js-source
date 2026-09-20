@@ -99,6 +99,7 @@ import { SOUND } from '../systems/soundClips.js';
 import { makeFont, drawText } from './text.js';
 import { typedChar } from './input.js';   // U26: one reader for both hosts' key routing
 import { firstHotkey } from '../systems/dialogShortcuts.js';   // A8: the DaggerfallShortcut table
+import { expandRowValues } from '../systems/quest/questMacros.js';   // MACROS1: a used item's record through its own context (%map)
 
 export const INV_RECTS = Object.freeze({
   tabWeapons: [0, 0, 92, 10],        // weaponsAndArmorRect
@@ -664,7 +665,7 @@ export class NativeInventoryWindow {
       return;
     }
     if (r.text) this.boxes = [{ rows: [{ text: r.text, center: true }] }];
-    else if (r.textId && this.hooks.rows) this.boxes = [{ rows: this.hooks.rows(r.textId) ?? [] }];
+    else if (r.textId && this.hooks.rows) this.boxes = [{ rows: expandRowValues(this.hooks.rows(r.textId) ?? [], r.macros ?? null) }];   // MACROS1: %map is the map's name
     else if (r.pending) this.boxes = [{ rows: [{ text: USE_PENDING[r.kind] ?? 'Nothing happens.', center: true }] }];
     if (r.kind === 'variant' && this.hooks.entity) refreshPaperDoll(this.hooks.entity);
     // AUDIT 22 F9: `enchanted` is now a RIDER on the arm's own result

@@ -222,3 +222,34 @@ caller passes two arguments.
 and the view fold's handedness remain unheard and unseen on a GPU; the
 fold's rotation sign against Unity's left-handed euler is noise either
 way, and is said so.
+
+## BA-CRASH1 (2026-09-20, Mac's screenshot) - leaving a dungeon into rain crashed the tab
+
+`CRASH TypeError: Cannot read properties of null (reading 'exitPos')`,
+at the component's `frame`.
+
+**What it was.** `onTransition` replaced the place and stopped the
+rain loop, but `rainKind` - `'exit'`, the answer for the dungeon just
+left - stayed until `settle4()` recomputed it four frames later. In
+those four frames `frame()` saw a kind, a weather that differed from
+the stopped loop's (`stopRain` forgets it), and asked `updateSource()`
+for the 3D source at `place.dungeon.exitPos` with `place.dungeon`
+already null. Any step out of a dungeon while it rained, with Better
+Ambience on, and the tab died. In DFU the `InteriorAmbientSoundSource`
+is destroyed with the scene and `Start` makes the next one after the
+wait; here the kind IS the component, so it goes with the place and
+settle makes it again.
+
+**Not a null-guard.** A guard on `place.dungeon?.exitPos` at the call
+would have stopped the crash and hidden the next stale kind; the kind
+of `'exit'` is a promise that settle read a dungeon with an exit, and
+dropping the kind with the place is what keeps the promise. The call
+stays unguarded, on purpose, with the reason beside it.
+
+**Driven.** `test/bacrash1.test.js` (2): a dungeon in the rain has its
+3D source; the step out stops it, the four wait frames and the fifth
+neither throw nor start a source, the weather turning outdoors starts
+nothing, a building afterwards has its 2D source and the next dungeon
+its 3D one at ITS exit; and the load path and an exit-less dungeon
+start nothing. Mutant (`tools/mutants/bacrash1.json`): the kind kept
+across the transition - the crash verbatim - dead.

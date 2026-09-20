@@ -177,6 +177,18 @@ export function expandMacroValues(text, values = {}, questLike = null) {
   });
 }
 
+/** MACROS1 (2026-09-20, kurkku on Discord: "%map" and "%pcn / %fon" printed raw): TEXT.RSC ROWS through the value
+ *  expander. A record read through the host's `lines(id)` is `[{ text, center }]` (or bare strings), and the boxes
+ *  that show one - an item's use, a guild's join prompt - showed the record verbatim where DFU's MessageBox runs
+ *  MacroHelper over it with a context (the map's revealed location, the guild as %fon's provider). The values are the
+ *  caller's, as `expandMacroValues` takes them; a row keeps its shape and its `center`. Nothing to expand: the rows
+ *  come back as they were. */
+export function expandRowValues(rows, values = null) {
+  if (!Array.isArray(rows) || !values || !Object.keys(values).length) return rows;
+  return rows.map((row) => (typeof row === 'string' ? expandMacroValues(row, values)
+    : row && typeof row === 'object' ? { ...row, text: expandMacroValues(row.text ?? '', values) } : row));
+}
+
 // ---- the quest's macro data source (QuestMCP.cs) ----
 
 // The NotImplemented sentinel: a source method C#'s MacroDataSource
