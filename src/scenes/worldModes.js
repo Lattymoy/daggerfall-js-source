@@ -635,7 +635,7 @@ export function createWorldModes(host) {
   });
   // C13: the interior arrow flights (collider late-resolved - each
   // building brings its own).
-  const interiorArrows = new ArrowFlight({ getGpuMesh: pipeline.getGpuMesh, collider: () => interiorCtx?.collider });
+  const interiorArrows = new ArrowFlight({ getGpuMesh: pipeline.getGpuMesh, collider: () => interiorCtx?.collider, effects: interiorHitEffects });   // FIELD-GUN14: the orb's flat rides the host's own one-shot pool, which this frame already draws
   let _arrowsCtx = null;
   let interiorCtx = null;
   // WORLD6a (Mac: "Lets tackle #1 next"): THE BUILDING IS A WORLD ROOM. The live wiring the pure half
@@ -1344,10 +1344,10 @@ export function createWorldModes(host) {
    *  billboard is CENTRE-anchored, so the base ends up ON the marker
    *  inside a building and half a height BELOW it inside a dungeon.
    *  This port's billboard shader is BOTTOM-anchored (position = base,
-   *  the C11 law dungeonContext.js:1624 states), so the same visual
+   *  the C11 law dungeonContext.js:1626 states), so the same visual
    *  result needs the shift on the DUNGEON side - which is exactly the
    *  shift the dungeon's own RDB flats already take
-   *  (dungeonContext.js:1529, `y - size.h / 2`), and which a building's
+   *  (dungeonContext.js:1531, `y - size.h / 2`), and which a building's
    *  flats correctly do not (interiorContext.js passes its centers
    *  straight through).
    *
@@ -5293,7 +5293,7 @@ export function createWorldModes(host) {
           hudMessageSink: (t) => questBridge?.notebook?.addMessage(t),
           // MAC1 J: and the relock the dungeon's pause door needs, on
           // the same threading - the context owns no canvas of its own
-          // (dungeonContext.js:5654), so the OUTER host's one rides in.
+          // (dungeonContext.js:5688), so the OUTER host's one rides in.
           // This is the most-played pause door of the six: world.js
           // gates its own Escape ladder on exterior mode, so underground
           // the key falls to routeKey -> ui/input.js:637 -> the
@@ -6230,7 +6230,13 @@ export function createWorldModes(host) {
     for (const d of interiorCtx.dynamicDraws) renderer.drawMesh(d.gpu, d.object.matrix, interiorCtx.texRemap);
     // C13: interior arrows fly and draw with the meshes; a new
     // interior (different ctx) drops the stale flights.
-    if (_arrowsCtx !== interiorCtx) { interiorArrows.arrows.length = 0; _arrowsCtx = interiorCtx; }
+    // FIELD-GUN14: through the flight's own door, not by emptying the
+    // array - a shot in the air owns a BILLBOARD in this host's one
+    // hitEffects pool (the pool is kept across every building the
+    // player walks through, which is what `interiorHitEffects.clear()`
+    // elsewhere in this file is for), and dropping the record without
+    // releasing the flat leaves an orb hanging in the next room.
+    if (_arrowsCtx !== interiorCtx) { interiorArrows.clear(); _arrowsCtx = interiorCtx; }
     // AUDIT 39 (#65): with no options this call was pure geometry -
     // every arm of ArrowFlight's impact is gated on the seams it takes
     // here, so the bow-armed quest foe this host mounts shot at the
@@ -6267,7 +6273,7 @@ export function createWorldModes(host) {
       // AUDIT 58 (review): BOTH pools, through the one join. This read
       // `interiorFoes.foes` alone, so a shaft loosed at a watchman
       // `spawnCityGuardsInside` had stood in the room met nothing and
-      // died on geometry (arrowFlight.js:116-129 is a shaft's ONLY
+      // died on geometry (arrowFlight.js:201-214 is a shaft's ONLY
       // foe-contact path) - after the loose had already spent the
       // Arrow and tallied Archery, and while this host's MELEE ray hit
       // the same watchman. DFU makes no pool distinction: DoCollision
@@ -8568,7 +8574,7 @@ export function createWorldModes(host) {
      *  FLAG ONLY and presence-gated - both laws now stated once, in
      *  combat/playerWeapon.js's applyWeaponPose, with the citation.
      *  HARD2c: this used to spell them out, and named `world.js:5347`
-     *  and `dungeonContext.js:5716` for its two sibling copies - lines
+     *  and `dungeonContext.js:5750` for its two sibling copies - lines
      *  that had moved to :4418 and :5457. Three copies of a two-line
      *  law, and even the comment pointing between them had gone stale. */
     applyWeaponPose(pose) {

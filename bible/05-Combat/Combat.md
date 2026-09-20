@@ -625,7 +625,7 @@ the DEFAULT state, because starting weapons land in the bag unequipped
 `WEAPON_SKILL[playerWeapon.weapon.name]` raw at both its swing sites
 where the exterior hosts guarded with `?.`: the strike-frame bow test
 threw on EVERY bare-handed swing (reproduced live at
-dungeonContext.js:1807 by tools/fistProbe.mjs), the melee tally on
+dungeonContext.js:1809 by tools/fistProbe.mjs), the melee tally on
 every resolved fist hit. Fixed with the rule enforced, not remembered:
 a source sweep over src/scenes fails on any unguarded
 `playerWeapon.weapon.` deref, the bare-handed path is driven
@@ -1356,7 +1356,7 @@ the step, and the dip only ever makes `|dir|` larger.
 
 **Four stale cites, re-resolved by content rather than by offset.**
 `roadg_pools.test.js` had half of a re-resolved pair left behind
-(`arrowFlight.js:209` is a `backstabChance:` field; the unconditional
+(`arrowFlight.js:261` is a `backstabChance:` field; the unconditional
 `onAttackFromPlayer` the sentence is about is `:215`, which is where the
 sibling comment in `cityGuards.js` was pointed in the same round). The
 dungeon's three-host sentence had its `exterior.js` number re-resolved
@@ -1368,11 +1368,11 @@ review had to apply to `pauseWindow`/`restWindow`. And `listPicker.js`'s
 which was a router — the round bumped the dungeon's `:4112` to `:4113`
 mechanically, and a wrong number moved by the right offset is still
 wrong. All three are resolved by content (`townTalk.js:1156`,
-`worldModes.js:7638`, `dungeonContext.js:5935`) and pinned as a set.
+`worldModes.js:7644`, `dungeonContext.js:5969`) and pinned as a set.
 
 The `worldModes.js` fix inserts one line, so cites into that host past
-it move by one: the dungeon's `worldModes.js:6266` and
-`chargenSession.js`'s `worldModes.js:7751` are bumped and pinned. Four
+it move by one: the dungeon's `worldModes.js:6272` and
+`chargenSession.js`'s `worldModes.js:7757` are bumped and pinned. Four
 `worldModes.js` cites elsewhere (`interior.js`, `world.js`,
 `tradeModes.js`, `saveWindow.js`) and `UI-Arc.md`'s notebook trio were
 ALREADY stale before this round and are left as found rather than

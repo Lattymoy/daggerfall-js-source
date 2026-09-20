@@ -641,6 +641,125 @@ own arm, `if (gunSliding && !shown()) return;` stops the clone and the
 classic sprite, so every other weapon's ladder is byte-for-byte what it
 was.
 
+## FIELD-GUN14: the projectile is an orb
+
+Mac, 2026-09-20: *"The projectile that shoots out should be an orb, not
+an arrow."*
+
+It was an arrow, and the reason is the one this weapon keeps finding:
+
+> **A law written over DFU's own range, asked about index 560,
+> answering its default.**
+
+`isBowWeapon` is "scored on Archery", and that is the whole reason
+every host's ranged gate took this weapon without being told it exists
+(FIELD-GUN's own finding, one file over). The cost of that door is that
+the weapon inherited the bow's **picture** along with the bow's
+physics: `combat/arrowFlight.js` and `dungeonContext.js`'s missile
+system each draw exactly one thing for a shaft — model **99800**,
+oriented along its flight — because until now a shaft was the only
+thing either of them carried.
+
+### The orb is Daggerfall's own
+
+Archives **375–379** are the spell missiles (`spellcast.js`'s
+`missileArchive`), each an animated glowing ball the game already loads
+and both flight systems already know how to draw. **378 is the shock
+missile**, and the pick is the weapon's own name: a *Thunder*lock
+firing a crackling orb is the thing it says on the tin. It is one
+constant on the leaf, so it is one edit to make it fire (375) or frost
+(376) instead.
+
+No new art. Nothing committed. The port picks one of the game's own
+flats rather than drawing a sixth.
+
+### One question, asked of the weapon, in one place
+
+`characters/thunderlockIds.js` — the leaf with no imports of its own,
+for the reason its header gives: the two askers are
+`combat/arrowFlight.js` and `scenes/dungeonContext.js`, and both are
+upstream of everything `systems/thunderlock.js` touches.
+
+```js
+export const orbArchiveFor = (item) =>
+  (item?.templateIndex === THUNDERLOCK_TEMPLATE ? ORB_ARCHIVE : null);
+```
+
+**The flight does not change.** Same speed, same swept raycast, same
+contact law, same lifespan, same damage, same recovery rules. What
+forks is the draw, and it forks on the weapon the record already
+carries.
+
+### Two flight systems, two shapes of the same fork
+
+| | how a shaft draws | how the orb draws |
+|---|---|---|
+| `combat/arrowFlight.js` (world, exterior, worldModes) | `getGpuMesh(99800)`, `drawMesh` in the mesh pass | a billboard through the host's **own `hitEffects` pool** |
+| `dungeonContext.js`'s S5 missiles (the fourth host) | `ensureArrowModel`, `dynamicDraws` | `ensureMissileBatch`, riding the batch's origin |
+
+The dungeon needed almost nothing: that system **already** draws both
+kinds, because a spell missile is a billboard and an arrow is a mesh.
+One field — `flatArchive` — says which, and everything else about the
+arrow stays the arrow's.
+
+`ArrowFlight` had no billboard lane at all, and the temptation was to
+build one. It did not need one either: every host already constructs a
+`createHitEffects` pool, already ticks it, and already pushes its
+batches into a billboard pass every frame. So the pool grew **one**
+new kind of entry.
+
+### A flat that flies
+
+Every other entry in `hitEffects` is a one-shot: it plays where it was
+born and ends on its own animation. A projectile is neither. So
+`showFlyingFlat` adds a **tracked** entry, and `tracked` is one word
+rather than two on purpose — a projectile loops *by the same fact* that
+makes it caller-retired. There is no "end" for an animation to reach;
+the flight ends it.
+
+It rides `batch.origin` rather than rebuilding, which is the dungeon
+missile's own trick and zero GL churn, and the recenter carries it: a
+floating-origin shift rebuilds the batch from its baked centres, so the
+flight's delta has to be put back or the orb snaps to the muzzle it
+left.
+
+And it has to be taken down by whoever took the shot down. Two places
+drop a flight: the record dying mid-update (`arrows` is not compacted
+until *every* record is dead, so a spent orb released only by that
+sweep hangs in the world for as long as anything else is in the air),
+and worldModes swapping buildings, which used to empty the array
+directly — now `ArrowFlight.clear()`, because that host keeps one
+`hitEffects` pool across every room the player walks through.
+
+Campaign `tools/mutants/fieldgun14.json`: 14 mutants, 13 dead, 1
+recorded equivalent.
+
+### And a gun leaves no shaft to pull out
+
+Found while wiring the above, in the same function. `BowDamage`
+(`DaggerfallMissile.cs:679-687`) adds the arrow back to whatever it
+struck **because an arrow survives being shot** — that is what makes it
+recoverable. The port had that keyed on the **lane** rather than on the
+**round**, so every foe the Thunderlock struck gained Arrows it had
+never been shot with. A Dwemer Pellet is spent. Said off the same leaf
+the orb is, so the two answers cannot drift apart.
+
+**One residual, named rather than half-fixed:** the multiplayer wire
+carries a hit's `kind` (`'arrow'`), not its weapon, so a peer-owned
+puppet struck by a Thunderlock still gains a shaft on its owner's
+client (`exteriorFoes.js:1775`, `dungeonContext.js:3447`, both gated on
+`data.ar === 1`). Fixing it means widening the hit packet, which is a
+protocol change and not this slice's.
+
+### Not carried
+
+The **impact** is untouched. `showImpactFlash` is gated on the
+missile's `spell` (an arrow never flashes — `DoCollision`'s own
+`elementType != None` arm), and an orb is still an arrow as far as the
+impact is concerned. A crackling ball that vanishes into a wall with
+nothing is a fair thing to want next; it is a second decision, and this
+one is the projectile.
+
 ## The test characters carry one
 
 TSR-GUN (Mac, 2026-09-19: *"Put this weapon and ammo inside the test

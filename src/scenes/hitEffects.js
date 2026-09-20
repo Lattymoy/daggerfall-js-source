@@ -35,10 +35,10 @@
 // A third has no port equivalent yet rather than being unported here:
 // EnemyAttack.cs:332 is `ApplyDamageToNonPlayer`, foe-vs-foe melee,
 // which the port's pools do not do (documented at enemyCasting.js:149
-// and dungeonContext.js:1298). When friendly fire lands, its splash is
+// and dungeonContext.js:1300). When friendly fire lands, its splash is
 // `showBloodSplash(targetBloodIndex, bloodCentre(...))`.
 
-import { FlatAnim, isAnimatedFlat, IMPACT_FPS } from '../render/flatAnimation.js';   // AUDIT 26 F033: ImpactBillboardFramesPerSecond
+import { FlatAnim, isAnimatedFlat, IMPACT_FPS, MISSILE_FPS } from '../render/flatAnimation.js';   // AUDIT 26 F033: ImpactBillboardFramesPerSecond   // FIELD-GUN14: a flying flat's own rate, which is the missile's
 import { billboardSize } from '../world/rmbFlats.js';
 
 /** EnemyBlood.cs:23. */
@@ -91,7 +91,7 @@ export function createHitEffects({ renderer, getTexture, uploadRecordFrame, onSp
   // list per frame and use batches() instead. One pool either way.
   const live = [];   // { batch, anim }
 
-  function spawn(record, pos, facing = null, { archive = BLOOD_ARCHIVE, fps = BLOOD_FPS, scale = 1 } = {}) {
+  function spawn(record, pos, facing = null, { archive = BLOOD_ARCHIVE, fps = BLOOD_FPS, scale = 1, tracked = false } = {}) {
     if (!(record >= 0) || !pos) return null;
     const at = [pos[0], pos[1], pos[2]];
     if (facing) {
@@ -105,7 +105,14 @@ export function createHitEffects({ renderer, getTexture, uploadRecordFrame, onSp
     // AUDIT 26 F033: `archive` and `fps` ride on the ENTRY for the same
     // reason record/size/pos do - a recenter REBUILDS the batch and
     // cannot read them back out of the one it destroys.
-    const entry = { batch: null, anim: null, dead: false, record, pos: at, size: null, archive, fps, scale };
+    // FIELD-GUN14: `tracked` is a FLYING flat - one the caller moves
+    // and retires itself, rather than a one-shot that ends on its own
+    // animation. `at` is its live world position; `pos` stays the
+    // position the batch was BUILT at, because a billboard batch bakes
+    // its centres into a STATIC_DRAW buffer and flight rides the
+    // batch's origin uniform instead (the dungeon missile's own trick -
+    // zero GL churn).
+    const entry = { batch: null, anim: null, dead: false, record, pos: at, at: [...at], size: null, archive, fps, scale, tracked };
     live.push(entry);
     getTexture(archive).then((t) => {
       // the pool can be cleared while the archive warms (a scene torn
@@ -124,9 +131,18 @@ export function createHitEffects({ renderer, getTexture, uploadRecordFrame, onSp
       // when the coroutine falls out, and a one-frame coroutine falls
       // out immediately - so a still splash is retired on the next
       // tick rather than kept.
+      // FIELD-GUN14: ONE WORD, NOT TWO. A tracked flat LOOPS by the
+      // same fact that makes it caller-retired: it is a projectile, so
+      // there is no "end" for an animation to reach - the flight ends
+      // it. Carrying `loop` beside `tracked` would have been two
+      // switches that are only ever thrown together, and the second
+      // one a guard no test could fail on its own.
       entry.anim = isAnimatedFlat(frameCount)
-        ? new FlatAnim(archive, frameCount, true, fps)
+        ? new FlatAnim(archive, frameCount, !tracked, fps)
         : null;
+      // FIELD-GUN14: a flat that arrived mid-flight takes the position
+      // it is at NOW, not the one it was asked for a frame ago.
+      if (tracked) entry.batch.origin = [entry.at[0] - entry.pos[0], entry.at[1] - entry.pos[1], entry.at[2] - entry.pos[2]];
     }).catch(() => {});
     return entry;
   }
@@ -170,13 +186,44 @@ export function createHitEffects({ renderer, getTexture, uploadRecordFrame, onSp
      *  (`_EMISSION` on the billboard) has no twin in this renderer's
      *  flat batches and is not carried. */
     showMissEffect: (kind, pos, { archive = BLOOD_ARCHIVE, record = 2, fps = 20, scale = 2 } = {}) => spawn(record, pos, null, { archive, fps, scale }),
+    /**
+     * FIELD-GUN14 (Mac: "The projectile that shoots out should be an
+     * orb, not an arrow") - A FLAT THAT FLIES.
+     *
+     * Every other entry in this pool is a one-shot that plays where it
+     * was born and ends on its own animation. A projectile does
+     * neither: it MOVES, it LOOPS, and what ends it is the flight
+     * meeting something. So it is the same pool - the same warm, the
+     * same batch, the same recenter, the same teardown, which is the
+     * whole reason it is here rather than in a fifth body of billboard
+     * bookkeeping - with the caller holding the handle.
+     *
+     * Answers { move(pos), retire() }, both safe to call before the
+     * archive has warmed and after the flat is gone.
+     */
+    showFlyingFlat(archive, pos, { record = 0, fps = MISSILE_FPS, scale = 1 } = {}) {
+      const e = spawn(record, pos, null, { archive, fps, scale, tracked: true });
+      return {
+        move(at) {
+          if (!e || e.dead || !at) return;
+          e.at[0] = at[0]; e.at[1] = at[1]; e.at[2] = at[2];
+          // The batch was built ONCE at the fire position; flight rides
+          // the origin uniform (dungeonContext's missile does the same).
+          if (e.batch) e.batch.origin = [at[0] - e.pos[0], at[1] - e.pos[1], at[2] - e.pos[2]];
+        },
+        retire() { if (e && !e.dead) retire(e); },
+      };
+    },
     tick(dt) {
       for (let i = live.length - 1; i >= 0; i--) {
         const e = live[i];
         if (!e.batch) continue;             // still warming
-        if (!e.anim) { retire(e); continue; }   // single-frame: one tick and gone
+        // FIELD-GUN14: a TRACKED flat outlives its animation - it is a
+        // projectile, and the thing that ends it is the flight, not the
+        // clock. A single-frame one is not "one tick and gone" either.
+        if (!e.anim) { if (!e.tracked) retire(e); continue; }   // single-frame: one tick and gone - but a PROJECTILE drawn from a one-frame record is still in the air (FIELD-GUN14)
         e.batch.frame = e.anim.tick(dt);
-        if (e.anim.done) retire(e);
+        if (e.anim.done) retire(e);   // never true for a tracked flat: it is not a one-shot
       }
     },
     batches: () => live.map((e) => e.batch).filter(Boolean),
@@ -187,6 +234,7 @@ export function createHitEffects({ renderer, getTexture, uploadRecordFrame, onSp
       for (let i = live.length - 1; i >= 0; i--) {
         const e = live[i];
         e.pos[0] += dx; e.pos[1] += dy; e.pos[2] += dz;
+        e.at[0] += dx; e.at[1] += dy; e.at[2] += dz;   // FIELD-GUN14: the live position moves with the built one, so the origin delta below is unchanged
         // Still warming: the batch would be built from the moved pos
         // anyway, so nothing to rebuild. (The pos array is the one the
         // continuation closes over, so the move carries.)
@@ -195,6 +243,7 @@ export function createHitEffects({ renderer, getTexture, uploadRecordFrame, onSp
         renderer.destroyBillboardBatch(e.batch);
         e.batch = renderer.createBillboardBatch(e.archive, e.record, e.size, [e.pos]);
         e.batch.frame = e.anim?.frame ?? 0;
+        if (e.tracked) e.batch.origin = [e.at[0] - e.pos[0], e.at[1] - e.pos[1], e.at[2] - e.pos[2]];   // FIELD-GUN14: a rebuilt batch starts at its centres again - the flight's delta has to be put back
         onSpawn?.(e.batch);
       }
     },

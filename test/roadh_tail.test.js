@@ -145,7 +145,7 @@ test('ROAD-H tail: the dungeon archer takes BowDamage\'s two-arm split - the sha
     'the crouch dip keys on WHO the target is (DaggerfallMissile.cs:584), not on a constant');
   assert.match(d, /fireArrow\(from, dir, f\.entity\.weapon, false, f, _atPlayer \? null : _at\);/, 'a foe target rides the missile');
   assert.match(d, /function fireArrow\(from, dir, weapon, fromPlayer, shooterFoe = null, aimFoe = null\)/, 'fireArrow carries aimFoe');
-  assert.match(d, /missiles\.push\(\{ arrow: true, weapon, fromPlayer, shooterFoe, aimFoe, pos:/, 'and stores it, so the impact fork\'s `m.aimFoe` arm (BowDamage\'s non-player arm) can run for an arrow');
+  assert.match(d, /missiles\.push\(\{ arrow: true, flatArchive: orbArchiveFor\(weapon\), weapon, fromPlayer, shooterFoe, aimFoe, pos:/, 'and stores it, so the impact fork\'s `m.aimFoe` arm (BowDamage\'s non-player arm) can run for an arrow (FIELD-GUN14: `flatArchive` rides beside it - the PICTURE forks, the arrow does not)');
   // the exterior pool's arm is the model - it reads the same law
   const x = src('src/scenes/exteriorFoes.js');
   assert.match(x, /const aim = _targetAim\(f, playerFeet, senses\.playerHeight \?\? CAPSULE_HEIGHT\);/);
