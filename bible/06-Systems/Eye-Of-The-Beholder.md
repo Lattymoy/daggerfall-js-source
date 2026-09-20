@@ -399,6 +399,7 @@ host is covered without an edit.
 
 Vite inlines any asset under `assetsInlineLimit` (4 KB) as a base64
 data URI. These sprites average **2.8 KB**, so all 3035 qualified:
+INLINE1 (2026-09-20) retired the by-path exclusion this paragraph describes: the rule is the CLASS now - nothing under vendor/ is inlined - because the allow-list it had become was an enumeration, and Shield Widget's 275 small sprites proved it (bible/07-Rendering/Rendering-Arc.md, INLINE1). This mod's art is excluded exactly as before; the sentence "every other vendored texture keeps the default" no longer holds.
 
     dist/assets/weaponRig-CltnXuFm.js   12,112,043 bytes
 

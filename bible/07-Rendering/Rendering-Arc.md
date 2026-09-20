@@ -1905,6 +1905,53 @@ container, so nothing here was measured the way PERF-ON's names were.
 Said rather than implied.
 
 **Pinned** in `test/grasspath.test.js`.
+## INLINE1 - NOTHING UNDER vendor/ IS INLINED: A MEGABYTE OFF FIRST PAINT (2026-09-20)
+
+**Mac: "Want to talk about overall performance improvements."** The first
+thing measurable from the tree, and the cheapest: the JavaScript on the
+wire was 2,870 KB gzipped, and 1,002 KB of it was ONE chunk, `weaponRig`.
+Its raw size was 1,921 KB, and 1,343 KB of that was **432 PNGs inlined as
+base64** - Shield Widget's 275 under-4 KB sprites, Handheld Torches' 31,
+Climates & Calories' 18 and the rest. Base64 is nearly incompressible, which
+is why that chunk gzipped 1.9 -> 1.0 MB while `main` went 1.5 -> 0.5. And
+`scenes/world.js` imports the rig STATICALLY, so the chunk is on the boot
+path: every player pulled a megabyte of shield art before the menu drew.
+
+**The rule that let it happen was an enumeration.** EOTB5 met this class
+first - 3,035 sprites, a twelve-megabyte chunk - and excluded that mod's
+folder from Vite's `assetsInlineLimit` by path, narrow on purpose: "every
+other vendored texture keeps the default, because inlining a handful of
+small files is a win and the problem here is only ever the COUNT."
+AUDIT-IF F1 added Immersive Footsteps the same way. The premise was wrong -
+a vendored mod is never a handful of files, it ships in the hundreds - and
+the shape was the project's own named hazard: a rule enforced by memory.
+Twenty vendor folders landed after the allow-list of three, and not one
+joined it. The build exited 0 and said nothing, exactly as EOTB5 records it
+did the first time.
+
+**The rule is the class now.** `/[\/]vendor[\/]/` - nothing under
+vendor/ is ever inlined; everything outside it keeps Vite's default (a rule
+that inlined nothing anywhere would be the opposite mistake, and is pinned
+against). The pins that held the old rule named the folders it held OUT -
+"every other vendor asset keeps the default", with dynamic-skies and
+handheld-torches as the examples - and are INVERTED rather than deleted.
+The new pin, `test/vendorinline.test.js`, is GENERATIVE: it walks vendor/
+itself, puts every file under the 4 KB default through the real rule read
+out of vite.config.js, and holds that every one is refused and every vendor
+folder is covered whether or not it has small art today. The next mod holds
+without anyone remembering.
+
+**Measured over a real build.** `weaponRig` 1,921 KB -> 596 KB raw, 1,002
+KB -> 96 KB gzipped. Total JS on the wire 2,870 KB -> 1,945 KB (-32%). 357
+more files emitted to `dist/assets` (2,074 -> 2,431 PNGs), zero base64 PNGs
+left in any chunk. The sprites load the way EOTB's 2,000 and Immersive
+Footsteps' 210 clips already did - as files, when the mod asks for them.
+
+**What this does not do.** `weaponRig` is still 596 KB of code on the boot
+path because `world.js` imports it statically; nothing in it is needed
+before a game starts. Making the rig lazy is the next lever and is not
+this slice. `tools/mutants/inline1.json`: 2 dead, 0 survived.
+
 ## AUDIT-AIR1 - THE SIXTH SEAM (2026-09-19)
 
 > Mac, with a screenshot: *"the screenshot shows a bug where sometimes

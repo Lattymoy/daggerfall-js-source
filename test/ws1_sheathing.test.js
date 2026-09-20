@@ -389,6 +389,17 @@ test('WS1: the wiring, by source - the third-person build takes the addons and t
   const bsaPush = ds.indexOf('archives.push(await MwBsaFile.open(blob));');
   assert.ok(loosePush > 0 && vendPush > loosePush && bsaPush > vendPush, 'loose, then vendored, then the .bsa archives');
   assert.match(ds, /'animations\/'\]/);
-  assert.match(rd('vite.config.js'), /eye-of-the-beholder\|immersive-footsteps\|weapon-sheathing/);
+  // INLINE1 (2026-09-20): this pin matched the allow-list's literal text -
+  // `eye-of-the-beholder|immersive-footsteps|weapon-sheathing` - which is the
+  // enumeration INLINE1 retired. Re-aimed at what it MEANS: this mod's art is
+  // never inlined, through the real rule; and a folder no list has ever named
+  // is refused too, so the pin goes red if the enumeration ever comes back.
+  const vite = rd('vite.config.js');
+  const m = /assetsInlineLimit: \(filePath\) => \((.*?)\),/.exec(vite);
+  assert.ok(m, 'the inline rule is a callback');
+  // eslint-disable-next-line no-new-func
+  const rule = new Function('filePath', `return (${m[1]});`);
+  assert.equal(rule('/x/vendor/weapon-sheathing/Textures/a.png'), false, 'this mod\'s art is a file, never base64');
+  assert.equal(rule('/x/vendor/a-mod-no-list-has-named/a.png'), false, 'and so is every mod\'s - the rule is the class (test/vendorinline.test.js walks it)');
   assert.match(rd('src/formats/mwFirstPerson.js'), /if \(part\.slot === 'sheath'\) sheathBoneOffset = bound\.boneOffset \|\| null;/);
 });
