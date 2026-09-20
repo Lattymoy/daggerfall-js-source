@@ -34,7 +34,8 @@
 import { CifRciFile } from '../formats/cifRciFile.js';
 import { GENDERS } from '../characters/nameHelper.js';
 import { RACES, raceArt } from '../systems/races.js';
-import { bitmapToColor32, hudScale } from './hud.js';   // AUDIT 64 F38: the ParentPanel scale every screen-anchored HUD member reads
+import { bitmapToColor32 } from '../formats/color32Order.js';
+import { hudScale } from './hud.js';   // AUDIT 64 F38: the ParentPanel scale every screen-anchored HUD member reads
 // FactionFile.FactionIDs.Children (514) - the one faction whose
 // Persons portrait as children; ONE home, characters/staticNpc.js.
 import { CHILDREN_FACTION_ID } from '../characters/staticNpc.js';

@@ -1501,7 +1501,7 @@ import {
 import {
   importClimateWeathers, resetWeatherSim, tickWeather, currentWeatherEnum, WEATHER_ENUM, setSnowGroundLaw, currentWeatherRaw,
 } from '../src/systems/weatherSim.js';
-import { bitmapToColor32 } from '../src/ui/hud.js';
+import { bitmapToColor32 } from '../src/formats/color32Order.js';
 import {
   setPendingClassicSave, takePendingClassicSave, peekPendingClassicSave,
 } from '../src/systems/classicSave.js';

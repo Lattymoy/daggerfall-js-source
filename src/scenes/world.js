@@ -6240,7 +6240,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     toggleAutomap: () => toggleExteriorAutomap(),
     openTravelMap: () => toggleTravelMap(),
     /** AUDIT 58 (f2/hosts): THE SHEATH PANEL'S DOOR - the eleventh
-     *  panel of the large HUD (ui/hudLarge.js:231), which until now
+     *  panel of the large HUD (ui/hudLarge.js:232), which until now
      *  answered in ONE host of four. HUDLarge.cs:477-484's
      *  SheathPanel_OnMouseClick calls
      *  GameManager.Instance.WeaponManager.ToggleSheath() - a SINGLETON
@@ -11340,7 +11340,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // layer, because a talk window is a modal above the vitals.
     // AUDIT 39: THE CALL IS UNCONDITIONAL. drawHud runs the damage
     // flash and the enhanced DOM HUD ABOVE its own `!art` return
-    // (hud.js:402-430) because neither reads ARENA2 - "a player whose
+    // (hud.js:386-414) because neither reads ARENA2 - "a player whose
     // HUD art failed to load still has vitals". Wrapping the whole
     // call in `if (hudArt)` inverted that: hudArt starts null and is
     // filled by a fire-and-forget load whose failure leaves it null

@@ -569,7 +569,7 @@ test('AUDIT-IF F2: a tile of -1 (off terrain, StreamingWorld.PlayerTileMapIndex\
   assert.equal(checkClimateTileTables('Shallow_Water', -1), false);
 });
 
-test('AUDIT-IF F1: the build never inlines a clip as base64 - the vite rule names this vendor beside Eye Of The Beholder\'s and falls through for everything else', () => {
+test('AUDIT-IF F1: the build never inlines a clip as base64 - the vite rule covers this vendor (since INLINE1, every vendor) and falls through outside vendor/', () => {
   const viteConfig = rd('vite.config.js');
   const m = /assetsInlineLimit: \(filePath\) => \((.*?)\),/.exec(viteConfig);
   assert.ok(m, 'the callback');
@@ -577,7 +577,8 @@ test('AUDIT-IF F1: the build never inlines a clip as base64 - the vite rule name
   assert.equal(rule('/x/vendor/immersive-footsteps/Audio/Low_Quality/Climate/LQ_Grass_Footstep_1.mp3'), false, 'never inline a clip');
   assert.equal(rule('C:\\x\\vendor\\immersive-footsteps\\Audio\\High_Quality\\Fall_Landing\\HQ_Water_Landing_1.mp3'), false, 'and on a Windows path');
   assert.equal(rule('/x/vendor/eye-of-the-beholder/Textures/112364/112364_0-0.png'), false, 'EOTB5\'s rule still holds');
-  assert.equal(rule('/x/vendor/handheld-torches/Textures/112359_0-0.png'), undefined, 'every other vendor asset keeps the default');
+  assert.equal(rule('/x/vendor/handheld-torches/Textures/112359_0-0.png'), false, 'INLINE1: every vendor asset is a file - this pin held handheld-torches OUT until Shield Widget\'s 275 sprites showed the allow-list was the bug');
+  assert.equal(rule('/x/src/ui/icons/diamond.png'), undefined, 'everything outside vendor/ keeps the default');
   // the measurement that found it: 123 of the 210 clips are under Vite's 4 KB default and were inlined (250 KB of base64)
   let small = 0;
   for (const q of [SOUND_CLIP_QUALITY.Low, SOUND_CLIP_QUALITY.High]) for (const name of clipNames(q)) if (readFileSync(join(root, clipPath(name))).length < 4096) small++;

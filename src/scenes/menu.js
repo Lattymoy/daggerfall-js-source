@@ -41,7 +41,7 @@ import { DFPalette } from '../formats/dfPalette.js';
 import { FntFile } from '../formats/fntFile.js';
 import { loadImg, nativeMetrics, pointToNative } from '../ui/nativePanel.js';
 import { makeFont } from '../ui/text.js';
-import { bitmapToColor32 } from '../ui/hud.js';
+import { bitmapToColor32 } from '../formats/color32Order.js';
 import { SaveWindow } from '../ui/saveWindow.js';   // SAV4: the start menu's Load door
 
 const TITLE_SONGS = ['5STRONG.HMI', '03.HMI'];   // DFU start scene song, then the stand-in

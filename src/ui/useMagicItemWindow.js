@@ -5,7 +5,7 @@
 // picking one uses it.
 //
 // The port had the door and not the room: input.js:606 routes the
-// action to `ctx.openUseMagicItem`, hudLarge.js:151 gives the large
+// action to `ctx.openUseMagicItem`, hudLarge.js:152 gives the large
 // HUD's button its rect, inputActions.js binds KeyU - and no host
 // implemented the method, so a bound key did nothing. The anti-lie law
 // says a deferred feature shows as deferred; a live binding that
