@@ -1064,3 +1064,122 @@ Said plainly so nobody assumes it: **loot *tables* and starting gear
 do not offer it** (the unique find is its only door — the test room is
 a door out of the game, not into it), and neither does a smith's
 repair list.
+
+## FIELD-GUN-MW1: in Morrowind mode the gun is not there
+
+2026-09-20, Mac, uploading `Pellet_Shot.fbx`: *"Next up is texturing
+and rigging this for the morrowind model (We recently integrated a new
+weapon called Thundershot)."*
+
+**THE WEAPON IS INVISIBLE IN THE MORROWIND ARM, AND THE PORT ALREADY
+SAYS SO.** `resolveWeaponParts` (`src/combat/fpArm.js`) resolves the
+held weapon through `dfWeaponToMw`, which walks `characters/weapons.js`'s
+`WEAPONS` table and looks the name up in `DF_TO_MW_WEAPON`. The
+Thunderlock is in neither — it is template 560, registered at runtime
+by `registerCustomTemplates`, and `WEAPONS` is DFU's own frozen list —
+so the lookup answers `MW_WEAPON_TYPE.None`, the function falls to its
+last arm, and the note it pushes is verbatim:
+
+> `weapon: Morrowind has no weapon type for what you are holding`
+
+No part is pushed. In Morrowind first person the player holds **empty
+hands**. This is not a bug in the resolve: it is the resolve being
+exactly right about a weapon Morrowind does not have. Every mesh in
+that lane comes out of the PLAYER'S OWN INSTALL by search token
+(`pickWeaponRecord`), and no search token finds a dwemer firearm in
+data that has none. Nothing in `mwItemMap.js` can fix it either — its
+"TOTAL, AND HONEST" coverage walk enumerates `WEAPONS` x
+`WEAPON_MATERIALS`, so the one weapon in the port that is genuinely
+unmapped is the one weapon its census never asks about. **A rule
+enforced by an enumeration is a rule enforced by memory**, and this is
+the enumeration's blind spot, named here so the next slice can close
+it rather than re-find it.
+
+**SO THE MODEL HAS TO BE OURS**, which is why Mac sent an FBX — and
+the file, despite its name, is **the gun**: 124 polygons, and rendered
+(`tools/meshSheets.mjs --preview`) it is unmistakably a short
+pistol-grip firearm, barrel forward, sight on top. `Bolt Shot.blend`
+is its Blender source.
+
+### The bake, and why it is a tool and not a format
+
+`tools/fbxRead.mjs` reads the binary FBX container; `tools/fbxMesh.mjs`
+bakes one Geometry/Model pair into **the shape `flattenNif` already
+emits** (`src/formats/mwNifMesh.js:385-387` — positions / normals /
+uvs / colors / indices / material). Not a second mesh format: the same
+one, so the Morrowind lane's whole downstream needs no new consumer.
+
+Nothing FBX ships to a player. `src/formats/` holds the runtime's
+parsers because the bytes they read are on the player's disk; an FBX
+exists once, on Mac's machine, and the game never sees it. The
+precedent is `tools/gunPaperdoll.mjs` one dimension down — raw art in
+`scratch/` (ignored), the port's own asset out, the source never
+committed.
+
+Four things the bake does, each one a place a wrong answer looks
+plausible on screen:
+
+- **Triangulates.** FBX stores n-gons, ended by a ones'-complement
+  index. A fan is only a triangulation of a CONVEX polygon, so a
+  concave one is **refused by name** rather than folded inside out —
+  the shard of stray geometry that is invisible in a diff.
+- **Welds on the (position, normal, uv) TRIPLE.** 543 corners, 199
+  positions, 539 vertices: a hard edge and a UV seam are splits that
+  have to survive, and a shared corner is a split that must not.
+- **Bakes the scale, drops the placement.** Blender exported with the
+  transform unapplied, and the scale is NON-UNIFORM (43.75 / 35.45 /
+  84.59), so it is geometry and not a scalar a caller can carry.
+  Normals take the **inverse transpose**, or an 8:1 stretch tilts every
+  highlight on the barrel. `Lcl Rotation` and `Lcl Translation` are
+  where the object sat in Mac's scene and are dropped — recorded as
+  dropped, not silently ignored.
+- **Lands in a stated frame.** `--forward` / `--up` name which local
+  axes become Morrowind's +Y and +Z; the third is their CROSS PRODUCT,
+  which is what makes a mirrored basis impossible to write by accident.
+  The default is MEASURED: sliced along its long axis one half is a
+  uniform 0.12 x 0.14 tube and the other carries everything 0.21 and
+  0.26 deep — a barrel and a receiver — so forward is `-Z`; and `-X`
+  up is the one of the two signs that renders as a firearm the right
+  way up. Then centred on its own bounds and scaled so the longest
+  axis is 1, so the port sizes it with ONE number.
+
+### What the bake found in the asset
+
+Verified, not assumed:
+
+- **No texture exists.** The FBX carries `Geometry` and `Model` and
+  nothing else — no `Material`, `Texture`, `Video`, `Deformer`, `Skin`,
+  `Cluster`, `LimbNode`, `BindPose` or `AnimationCurve`. There is a UV
+  unwrap (`UVMap`, exactly 0..1) and no image to put on it. So
+  `tools/meshSheets.mjs --uv` draws the unwrap at texture resolution:
+  that sheet is the deliverable to paint on, and it is the only half of
+  "texturing" this side can do.
+- **No bones.** Nothing to skin to, which means "rigging" here is the
+  ATTACH — `parts.push({ slot: 'weapon', bones: [bone] })` against the
+  arm's weapon bone — and not a skin cluster.
+- **The mesh is OPEN.** 410 edges are shared by two triangles and
+  **65 by one**; 65 of its 199 positions sit on a boundary, at the
+  rear and around the receiver. Winding is consistent (295 of 295
+  faces agree with their normals) and no face is degenerate, so this
+  is holes and not a broken bake. Backface culling will see through
+  them.
+
+### The pins
+
+The fixture is **written by the test**, not recorded: a forty-line
+binary-FBX writer, so the pin drives the reader against bytes and no
+blob nobody can read in a diff enters the tree. 9 pins, 29 mutants, 29
+killed — **after two of them were re-aimed, both for being vacuous**.
+The handedness assertion recomputed `f x u` from `f` and `u`, which the
+mirror mutant never touched, so a flipped cross product passed; and the
+weld fixture varied only ONE part of its key, so a key that dropped
+either of the other two passed. Both now ask the thing that actually
+moves.
+
+### What is not done
+
+The bake exists; **nothing draws it yet**, on purpose. The wiring needs
+a texture that does not exist, an answer on the open boundary, and an
+orientation settled against a real Morrowind weapon bone rather than
+guessed — and a mesh in `public/` that nothing loads is the dead seam
+this project keeps deleting.
