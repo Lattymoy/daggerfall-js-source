@@ -1183,3 +1183,186 @@ a texture that does not exist, an answer on the open boundary, and an
 orientation settled against a real Morrowind weapon bone rather than
 guessed — and a mesh in `public/` that nothing loads is the dead seam
 this project keeps deleting.
+
+## FIELD-GUN-MW2: the gun is in the hand
+
+2026-09-20, Mac: *"Continue. Figure this out yourself."*
+
+MW1 said the bake existed and nothing drew it. This draws it.
+
+### The mesh becomes a NIF, because that is where a part goes in
+
+`bindPartsInto` (`src/formats/mwFirstPerson.js`) does
+`parseNif(part.bytes)` and hands the result to `bindPart`. **A part IS
+NIF bytes.** The obvious alternative — teach the bind to take
+pre-flattened batches beside NIF bytes — is the wrong one, and this
+file's own history says why: *"MW7 failed by carrying a second port of
+one rule, and two copies of a rule drift."* Everything a part gets on
+the way in is behind that door: rule 34's discarded root transform,
+rule 14's BoneOffset, rule 13's mirror, the property chain, the attach.
+A second entrance would have to re-implement or skip every one of them,
+for ever, for one mesh.
+
+So `tools/nifWrite.mjs` writes a Morrowind 4.0.0.2 NIF, and the port's
+own weapon is a part like any other. The check is the strictest one
+available: the pin parses what the writer wrote with **the port's own
+`parseNif`** and flattens it with **the port's own `flattenNif`**. A
+4.0.0.2 stream carries no record sizes, so one byte wrong anywhere
+desynchronises the rest of the file, and `parseNif`'s own
+trailing-byte check means a writer four bytes out cannot produce a file
+that parses at all.
+
+Seven records, each there for a reason: an `NiNode` root (rule 34 wipes
+record 0's transform **in the parser**, so identity is not a
+simplification, it is the only thing that survives), a **nameless**
+`NiTriShape` (MW-D6: a nameless shape binds once for the part, a named
+one binds once per side and is filtered), the geometry, a white
+material (the texture carries the colour; a tint here would be a second
+place to change it), the texturing property, an external
+`NiSourceTexture`, and an `NiStencilProperty` with **DrawMode 3
+(Both)** — rule 65's only two-sided value, and the honest answer to a
+shell with 65 single-shared edges. Morrowind's own artists reach for
+exactly that record when a model has an open side, and the alternative
+— inventing geometry to close somebody else's mesh — is worse than
+drawing what they made.
+
+### The FBX has no unwrap at all
+
+This is the finding the slice turns on, and it is a measurement rather
+than an opinion. The export carries a `LayerElementUV` named "UVMap",
+which looks like an unwrap until it is counted:
+
+> **45 distinct UV coordinates** over 539 vertices, every one on an
+> exact eighth, and the triangles' UV areas **totalling 8.49** — the
+> atlas covered eight and a half times over. Every single covered texel
+> is claimed by more than one triangle, and one texel by **thirty-nine**.
+
+That is Blender's factory cylinder mapping: the UVs a `Cylinder`
+primitive is born with. Every section extruded or duplicated to build
+the gun inherited the same eight strips, so the barrel, the receiver
+and the grip all sit on top of each other in texture space, and **any
+texture at all puts the same pixels on every part of the weapon.** The
+first bake proved it — four deliberately different bands came back
+within three levels of each other on all four, because the last
+triangle to rasterise a texel won and which one that was is arbitrary.
+
+So `tools/meshUnwrap.mjs` computes one. Islands by shared edge and a
+66-degree fold — walked over **welded position indices**, because the
+export splits a vertex at every hard edge and UV seam and a walk by
+vertex index would make every face its own island. Each island
+projected onto the plane of its area-weighted average normal, rotated
+to its minimum-area bounding rectangle, and shelf-packed at **one
+global scale**, so a texel is the same size in world units everywhere
+on the gun. 49 islands, coverage 8.49 → 0.57, nothing overlapping.
+
+### The texture is baked off the geometry, not painted blind
+
+There is no image in the FBX and no image to bake from. Painting one by
+hand into an atlas, sight unseen, is guessing where the barrel is.
+
+A texel is not a blank square: the mesh says exactly which point of
+which triangle it covers. `tools/meshTexture.mjs` rasterises the model
+**into its own UV space**, so every texel knows its position, its
+normal and how enclosed it is — and those three answer the questions a
+metal texture asks. Position along the long axis separates muzzle from
+barrel from receiver from grip. **Ambient occlusion, cast for real**
+against the mesh's own triangles, is the one shading term that belongs
+in a texture: it is view- and light-independent, where a baked
+highlight would fight the renderer's own lighting and follow the gun
+around the room. The normal gives the lengthwise brushing on a turned
+barrel and keeps the top plates cleaner than the undersides, which is
+where a carried weapon actually wears.
+
+Deterministic throughout — a fixed integer hash, no seeded RNG, no
+clock — so the same mesh bakes the same bytes.
+
+**Three bugs the pins caught that an eye would have called art:**
+
+- the packer's scale bisection was **capped at its starting bound**,
+  returning exactly 1 for a mesh whose longest axis is 1 by
+  construction, and leaving sixty per cent of the atlas empty;
+- the bands were measured from the axis **minimum** — which after the
+  MW1 bake is the butt — so the sooted-muzzle band painted the grip.
+  Both ends are dark, so it looked plausible and only the two middle
+  bands were visibly wrong;
+- the palette was typed in screen values. Linear 0.30 encodes to sRGB
+  0.59, so it came out pale and chalky.
+
+**And one thing was taken out rather than tuned.** A verdigris keyed on
+occlusion fired over most of the gun (this mesh's mean AO is 0.60, so
+"the deepest crevices" was nearly all of it); tightening the threshold
+moved the green blotches without removing them, because the recessed
+plates along the barrel are exactly the places that are both occluded
+*and* the most visible surface on the weapon. There is no threshold
+that tells "a crevice" from "a machined channel" out of occlusion
+alone. A patina on the parts a player looks at all day is worse than no
+patina.
+
+### It reaches the arm through the doors that already exist
+
+Three seams, and not one of them is new machinery:
+
+1. **`src/characters/ownWeaponModels.js`** — the weapons Morrowind does
+   not have, by template index. A **table, not a branch**: the
+   Thunderlock is explicitly *"THE FIRST ONE OF ITS KIND"*, and the
+   second one must not be a second `if` in somebody else's function. A
+   leaf, for the same reason `thunderlockIds.js` is one. It hangs on
+   **"Weapon Bone"**, the reference's own untyped fallback — the typed
+   left/right names belong to Morrowind's weapon *types* (MW-D32,
+   npcanimation.cpp:787-795) and this weapon has none.
+2. **`src/systems/ownMwAssets.js`** — the NIF and the DDS, through
+   Vite's glob door, as WS1's vendored scabbards already are. It mounts
+   in `dataSource.js`'s archive list **after the player's loose files**
+   (MW-D40's data-files-over-BSA law, so Mac dropping his own texture
+   in replaces ours without a rebuild) and **before every .bsa**, where
+   these names do not exist.
+3. **`src/systems/urlArchive.js`** — `makeVendoredArchive`, moved out
+   of `weaponSheathing.js` body-unchanged and re-exported from there so
+   no caller moved. Twice is a law: a generic archive living inside one
+   vendored mod's module is a home that only looks like one until
+   something else needs it.
+
+`resolveWeaponParts` gains one arm, **before** the type lookup rather
+than after it, so the note below it — "Morrowind has no weapon type for
+what you are holding" — stays true of the items it is actually about.
+It cannot shadow a Morrowind weapon: `ownWeaponModelFor` answers only
+for template indices `registerCustomTemplates` minted, which are past
+every DFU index, and the pin walks all eighteen to say so. When our own
+file is missing, the note blames **the build** and not the player's
+archives — sending somebody hunting through a Morrowind install for a
+file that was never going to be there is its own bug.
+
+### Two gates were blind, and both are paid
+
+**`itemMapCoverage` never asked about the gun.** Its population was
+`WEAPONS` — DFU's frozen eighteen — so the one weapon in the port that
+genuinely had no Morrowind model was the one weapon the census never
+walked. It reported total coverage while the gun drew empty hands, for
+every player, for the life of the arc. This file's header promises a
+row "must SAY it, never fall through silently"; an item outside the
+population cannot even fall through. It now walks the port's own table
+too, and the pin's count is **derived off that table** rather than
+typed, because being outside a hand-counted population was the defect.
+
+**The allow-list was only checked one way for `src/assets/`.** AUDIT 27
+added the reverse read precisely because *"the list was only ever read
+one way"* makes it mean less than it claims — and its own comment says
+the intro "ships from src/assets through Vite. Read each row's own
+directory so bundled art has the same ownership check as public/." The
+reverse read did. The forward read did not, so a new file bundled out
+of `src/assets/` needed no row at all. It covers both directories now.
+
+### What ships, and what it is
+
+`src/assets/mw/meshes/thunderlock.nif` (19 KB) and
+`src/assets/mw/textures/thunderlock.dds` (256×256, nine mip levels —
+Morrowind's own weapon-texture size). **Both are Bethesda formats
+containing no Bethesda data**, which is the distinction the allow-list
+exists for: the mesh is Mac's model and the texture is generated from
+that mesh's own geometry with no image input at all. Re-run the chain
+on the same `.fbx` and the same bytes come out.
+
+The texture is **a material, not artwork** — believable dwemer bronze
+with its own occlusion, so the gun reads as a solid object in the hand.
+`tools/meshSheets.mjs --uv` still draws the unwrap for painting over,
+and now it is an unwrap worth painting.

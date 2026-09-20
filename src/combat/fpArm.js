@@ -998,6 +998,13 @@ export function daggerfallArrowCount(items) {
  */
 export function weaponPartPaths({ weapon, hasAmmo = false, allWeapons, has = null }) {
   const paths = [];
+  // FIELD-GUN-MW2: the same first question resolveWeaponParts asks, in
+  // the same order. A preload that skipped this would leave the read
+  // below it calling `arc.get` on a lazy archive that had not loaded -
+  // which MW-LOAD's findLoaded exists to catch and name, and which is a
+  // defect in THIS file every time it fires.
+  const own = ownWeaponModelFor(weapon);
+  if (own) return [`meshes/${own.model}`];
   const mwType = dfWeaponToMw(weapon, WEAPONS);
   if (mwType === MW_WEAPON_TYPE.None) return paths;
   const rec = pickWeaponRecord(allWeapons, mwType, weapon ? materialName(weapon) : null, { has });   // MW-D50: a record the archives carry
@@ -1083,6 +1090,7 @@ export const archiveHas = (archives) => (p) => (archives ?? []).some((a) => a.ha
  *  a fault the player sees from the chair and could not name - the
  *  card's note is the same sentence, but the card is a menu away. */
 import { ammoTemplateFor } from '../characters/thunderlockIds.js';   // what a ranged weapon spends - a leaf (see the file)
+import { ownWeaponModelFor } from '../characters/ownWeaponModels.js';   // FIELD-GUN-MW2: the weapons Morrowind does not have - a leaf too
 
 const saidArrow = new Set();
 function sayNoArrow(notes) {
@@ -1098,6 +1106,33 @@ export function resolveWeaponParts({ weapon, hasAmmo = false, allWeapons, find, 
   let weaponInfo = null;
   let arrowInfo = null;
   const mwType = dfWeaponToMw(weapon, WEAPONS);
+  // FIELD-GUN-MW2: THE PORT'S OWN WEAPONS FIRST, because Morrowind has
+  // no record for them and no type to look one up by. This arm cannot
+  // shadow a Morrowind weapon - `ownWeaponModelFor` answers only for
+  // template indices `registerCustomTemplates` minted, which are past
+  // every DFU index - and it returns before the type lookup rather than
+  // after it, so the note below ("Morrowind has no weapon type for what
+  // you are holding") stays true of the items it is actually about.
+  const own = ownWeaponModelFor(weapon);
+  if (own) {
+    const path = `meshes/${own.model}`;
+    const arc = find(path);
+    if (!arc) {
+      // Not "your archives do not carry it": ours is SHIPPED, so a miss
+      // here is the build's fault and not the player's, and saying so
+      // is the difference between a bug report and a wild goose chase.
+      notes.push(`weapon: ${path} ships with the port and did not load - this is a build problem, not your data`);
+    } else if (!skeletonHasBone(skeletonBytes, own.bone)) {
+      notes.push(`weapon: this skeleton has no "${own.bone}" bone to hang ${own.name} on`);
+    } else {
+      parts.push({ slot: 'weapon', bones: [own.bone], bytes: arc.get(path).slice() });
+      weaponInfo = { id: own.id, name: own.name, model: own.model, type: mwType, bone: own.bone, speed: own.speed, own: true };
+    }
+    // It spends ammunition, but Morrowind has no record for that
+    // either, so there is nothing to instance on the arrow bone. Said
+    // out loud so a reader does not go looking for the arm.
+    return { mwType, parts, weaponInfo, arrowInfo, notes };
+  }
   if (mwType !== MW_WEAPON_TYPE.None) {
     const rec = pickWeaponRecord(allWeapons, mwType, weapon ? materialName(weapon) : null, { has });   // MW-D38; MW-D50: a record the archives carry
     if (!rec) {

@@ -2,6 +2,7 @@
 //
 //     node tools/meshSheets.mjs <mesh.json> [--uv=out.png] [--size=1024]
 //                                           [--preview=out.png]
+//                                           [--texture=atlas.png]
 //
 // FIELD-GUN-MW1. tools/fbxMesh.mjs turns an FBX into numbers, and
 // numbers are exactly the wrong thing to review a MODEL in: a bake
@@ -27,7 +28,7 @@
 // to run in the same `node` a test does.
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
-import { writePng } from './pngIO.mjs';
+import { readPng, writePng } from './pngIO.mjs';
 
 /** An RGBA canvas, and the two operations these sheets need. */
 export function canvas(width, height, fill = [0, 0, 0, 0]) {
@@ -103,7 +104,7 @@ export const VIEWS = [
  * scale error behind a distance, and scale is one of the things this
  * is here to check.
  */
-export function previewSheet(mesh, size = 384) {
+export function previewSheet(mesh, size = 384, texture = null) {
   const c = canvas(size * VIEWS.length, size, [18, 18, 22, 255]);
   const P = mesh.positions; const N = mesh.normals; const I = mesh.indices;
   const dot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
@@ -146,7 +147,23 @@ export function previewSheet(mesh, size = 384) {
       // about whether the bake tore it.
       const lambert = 0.5 + 0.5 * dot(n, light.map((x) => x / ll));
       const shade = 30 + 225 * Math.max(0, Math.min(1, lambert));
-      fillTri(c, depth, size, ox, s, [shade, shade * 0.88, shade * 0.66, 255]);
+      // WITH A TEXTURE, the shade MODULATES the atlas instead of
+      // standing in for it - which is the only way to see whether the
+      // bake landed on the right islands. PER PIXEL, not per triangle:
+      // one sample at the UV centroid was enough while the unwrap was
+      // the factory one (every island held the same pixels anyway) and
+      // became a lie the moment there was a real unwrap - a plate the
+      // size of the receiver came back one flat colour, which is not
+      // what the model does.
+      // The textured branch keys off the SAME half-lambert but with a
+      // lift, because here the shade is a light on a surface that
+      // already has a colour - the untextured branch's range would
+      // crush an albedo that is legitimately dark to black.
+      const k = 0.42 + 0.78 * Math.max(0, Math.min(1, lambert));
+      const sample = texture && mesh.uvs
+        ? { texture, uv: tri.map((v) => [mesh.uvs[v * 2], mesh.uvs[v * 2 + 1]]), k }
+        : null;
+      fillTri(c, depth, size, ox, s, [shade, shade * 0.88, shade * 0.66, 255], sample);
     }
     // The frame, and a tick at the origin, so "centred on its bounds"
     // is a thing the eye can check.
@@ -157,8 +174,10 @@ export function previewSheet(mesh, size = 384) {
   return c;
 }
 
-/** A z-buffered flat triangle. Half-space test, top-left-ish fill. */
-function fillTri(c, depth, size, ox, s, rgba) {
+/** A z-buffered triangle. Half-space test, top-left-ish fill. With
+ *  `sample` it takes its colour from the atlas at the pixel's own
+ *  interpolated UV instead of the flat `rgba`. */
+function fillTri(c, depth, size, ox, s, rgba, sample = null) {
   const minX = Math.max(ox, Math.floor(Math.min(s[0][0], s[1][0], s[2][0])));
   const maxX = Math.min(ox + size - 1, Math.ceil(Math.max(s[0][0], s[1][0], s[2][0])));
   const minY = Math.max(0, Math.floor(Math.min(s[0][1], s[1][1], s[2][1])));
@@ -180,7 +199,16 @@ function fillTri(c, depth, size, ox, s, rgba) {
       const at = y * size + (x - ox);
       if (zz >= depth[at]) continue;
       depth[at] = zz;
-      put(c, x, y, rgba);
+      if (!sample) { put(c, x, y, rgba); continue; }
+      // Same opposite-edge rule as the depth above: w0 belongs to
+      // vertex 2, w1 to vertex 0, w2 to vertex 1.
+      const u = sample.uv[2][0] * w0 + sample.uv[0][0] * w1 + sample.uv[1][0] * w2;
+      const v = sample.uv[2][1] * w0 + sample.uv[0][1] * w1 + sample.uv[1][1] * w2;
+      const t = sample.texture;
+      const tx = Math.min(t.width - 1, Math.max(0, Math.round(u * (t.width - 1))));
+      const ty = Math.min(t.height - 1, Math.max(0, Math.round((1 - v) * (t.height - 1))));
+      const ti = (ty * t.width + tx) * 4;
+      put(c, x, y, [t.data[ti] * sample.k, t.data[ti + 1] * sample.k, t.data[ti + 2] * sample.k, 255]);
     }
   }
 }
@@ -193,7 +221,8 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   const mesh = JSON.parse(readFileSync(src, 'utf8'));
   const size = Number(opt('size', 0)) || 0;
   const save = (path, img) => { mkdirSync(dirname(path), { recursive: true }); writeFileSync(path, writePng(img)); console.log(`${path}  ${img.width}x${img.height}`); };
+  const texture = opt('texture') ? readPng(readFileSync(opt('texture'))) : null;
   if (opt('uv')) save(opt('uv'), uvSheet(mesh, size || 1024));
-  if (opt('preview')) save(opt('preview'), previewSheet(mesh, size || 384));
+  if (opt('preview')) save(opt('preview'), previewSheet(mesh, size || 384, texture));
   if (!opt('uv') && !opt('preview')) console.error('nothing asked for: pass --uv= and/or --preview=');
 }

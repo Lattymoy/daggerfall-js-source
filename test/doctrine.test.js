@@ -299,12 +299,32 @@ const PUBLIC_ALLOWLIST = new Map([
   // alone; Vite bundles them with the page (the workers' pattern).
   ['src/ui/assets/foe-blade-empty.png', "FOEBAR1: the blade face's empty bar - a friend's original art, given for the port, cropped by us"],
   ['src/ui/assets/foe-blade-full.png', "FOEBAR1: the blade face's fill - a friend's original art, given for the port, cropped by us"],
+  // FIELD-GUN-MW2 (2026-09-20): THE PORT'S OWN MORROWIND ASSETS. Both
+  // are in Bethesda FORMATS and neither contains one byte of Bethesda
+  // DATA - which is the distinction this list is for. The mesh is
+  // Mac's own Blender model, baked to a 4.0.0.2 NIF by
+  // tools/fbxMesh.mjs -> tools/meshUnwrap.mjs -> tools/nifWrite.mjs;
+  // the texture is generated from that mesh's own geometry by
+  // tools/meshTexture.mjs, deterministically, with no image input at
+  // all. Re-run the chain on the same .fbx and the same bytes come out.
+  // They ship because Morrowind has no firearm: no player's archives
+  // can carry a model for the port's own weapon.
+  ['src/assets/mw/meshes/thunderlock.nif', "OURS - Mac's own Dwarven Thunderlock model, baked to a Morrowind NIF by tools/nifWrite.mjs; a Bethesda format, no Bethesda data"],
+  ['src/assets/mw/textures/thunderlock.dds', 'OURS - generated from that mesh\'s own geometry by tools/meshTexture.mjs (position, normal and cast occlusion); no image input, no ARENA2 or Morrowind pixel in it'],
 ]);
 
-test('doctrine: nothing ships out of public/ that is not provably ours', () => {
-  const unexplained = tracked('public').filter((f) => !PUBLIC_ALLOWLIST.has(f));
+test('doctrine: nothing ships out of public/ or src/assets/ that is not provably ours', () => {
+  // FIELD-GUN-MW2: `src/assets/` IS THE OTHER HALF, and it was only
+  // ever checked one way. AUDIT 27 below added the reverse read
+  // precisely because "the list was only ever read one way" makes it
+  // mean less than it claims - and its own comment says the intro
+  // "ships from src/assets through Vite. Read each row's own directory
+  // so bundled art has the same ownership check as public/". The
+  // reverse read did; this one did not, so a NEW file bundled out of
+  // src/assets needed no row at all and nobody would have noticed.
+  const unexplained = [...tracked('public'), ...tracked('src/assets')].filter((f) => !PUBLIC_ALLOWLIST.has(f));
   assert.deepEqual(unexplained, [],
-    'these files are tracked under public/, which Vite copies verbatim into dist/ and\n'
+    'these files are tracked under public/ or src/assets/, which Vite copies into dist/ and\n'
     + 'deploy.yml uploads to GitHub Pages. Every one of them is PUBLISHED. If the pixels\n'
     + 'came from ARENA2 - including a screenshot, a gallery frame, or a re-shaded sprite\n'
     + 'that keeps the original silhouette - it may not be here at all. If it is genuinely\n'
