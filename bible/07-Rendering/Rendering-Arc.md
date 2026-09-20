@@ -1905,6 +1905,67 @@ container, so nothing here was measured the way PERF-ON's names were.
 Said rather than implied.
 
 **Pinned** in `test/grasspath.test.js`.
+## BOOT1 - THE GAME HOSTS BEHIND A DOOR: THE BOOT GRAPH UN-INVERTED (2026-09-20)
+
+**INLINE1's "next lever" turned out to be the wrong lever.** The plan was to
+make `weaponRig` lazy (96 KB gzipped on the boot path). Walking the entry's
+static import graph first showed why that was small change: `src/main.js`
+imported all four scene hosts - `bootExterior`, `bootInterior`,
+`bootDungeon`, `bootWorld` - STATICALLY, and a static import of a host is the
+host's whole graph at module-evaluation time. **623 files and 13.4 MB of
+source were reached from the entry before `boot()` ran a line** - every
+scene, every system, every window - while the menu a player actually sees
+first (`ui/enhancedMenu.js`, `ui/introScreen.js`) was the thing loaded
+dynamically. The boot graph was inverted. Over the built bundle: 54 chunks,
+1,349 KB gzipped, had to arrive before the entry finished evaluating, and
+`main` alone was 517 KB of it.
+
+**The change is four lines, and every route reads as before.** Each host is
+a door now - a dynamic import at the moment of use, bound to the SAME name
+and called with the SAME shape the routes always used, so the routes and
+the pins that hold them (classicstart, hard2s, macn) are untouched. The
+hosts carry no import-time side effects (nothing at their top level runs),
+so evaluating them later changes nothing but WHEN.
+
+**And a warm-up.** Every door out of the enhanced menu ends in `bootWorld`,
+so the world host's import is kicked off - not awaited - the moment the
+menu branch is entered, behind the cinematic and the menu where the player
+is looking at something else; Play then finds the chunks in cache instead
+of paying for them at the click. It carries a `.catch`, and that is not
+optional: a deploy between page load and Play renames every chunk
+(`systems/staleChunk.js`), and a warm-up that rejected unhandled would be a
+console error for a failure the real import at Play reports properly
+through the same law.
+
+**Measured over the build.** The chunks a browser must fetch before the
+entry finishes evaluating: **54 -> 28; 1,349 KB -> 492 KB gzipped (-64%)**.
+Total JavaScript is unchanged (1,959 KB) - nothing was removed, it moved
+off the critical path. `test/boot1.test.js` walks the entry's static graph
+itself, transitively, with the host set derived from the tree, and holds a
+ceiling on the entry's reach so the graph cannot quietly re-invert. 3
+mutants, 3 killed.
+
+**And one thing the change found.** `test/moduleload_smoke.test.js` imports
+every module under src/ in node and keeps a list of the eleven that cannot
+load, each with its reason. `src/main.js` was on it as "import.meta.glob" -
+and that was only ever true by inheritance: its static import of world.js
+rejected the entry at LINK time, before a line of its body ran. With the
+hosts behind doors the entry's body runs in node, `boot()` reached for
+`document`, and its own catch reached for `document` again to report it -
+an unhandled rejection after the test ended, for a page that does not
+exist. The chain now starts from a resolved promise when there is no
+document; the entry stays on the list for what it is genuinely excluded for
+(the crash listeners at its module scope), and the "three modules fail for
+the glob" count is two, held there so a static host import returning to the
+entry reads as the regression it is.
+
+**What is still on the boot path, and why.** `travel` (257 KB gzipped, the
+largest chunk left) and `spellcast` (55 KB) are reached statically from the
+menu floor - `ui/enhancedMenu.js`'s own static graph is 315 files and 6.2 MB
+of source, and it pulls `world/windmillMesh.js` (250 KB) and 2.4 MB of
+`systems/` for things a menu does not draw. That is the next lever, and it
+is the menu's own import list, not the entry's.
+
 ## INLINE1 - NOTHING UNDER vendor/ IS INLINED: A MEGABYTE OFF FIRST PAINT (2026-09-20)
 
 **Mac: "Want to talk about overall performance improvements."** The first

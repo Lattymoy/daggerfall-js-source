@@ -137,7 +137,9 @@ test('AUDIT 58 (f3/input): every ENTRY host binds ActivateCursor at most once (T
   // src/main.js boots, and the registrations that reach one of them are
   // whatever its scenes/ import closure calls.
   const main = readFileSync(join(HERE, '..', 'src', 'main.js'), 'utf8');
-  const hosts = [...main.matchAll(/import \{ boot\w+ \} from '\.\/scenes\/(\w+\.js)'/g)].map((m) => m[1]);
+  // BOOT1 (2026-09-20): a host is a DOOR now - `import('./scenes/x.js').then((m) => m.bootX(` -
+  // not a static import; the sweep derives the same set from the new spelling. Still discovered.
+  const hosts = [...main.matchAll(/import\('\.\/scenes\/(\w+\.js)'\)\.then\(\(m\) => m\.boot\w+\(/g)].map((m) => m[1]);
   assert.deepEqual(hosts.sort(), ['dungeon.js', 'exterior.js', 'interior.js', 'world.js'],
     'the hosts main.js boots - a fifth joins this sweep by existing, not by being remembered');
 
