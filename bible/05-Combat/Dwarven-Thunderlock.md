@@ -1366,3 +1366,112 @@ The texture is **a material, not artwork** — believable dwemer bronze
 with its own occlusion, so the gun reads as a solid object in the hand.
 `tools/meshSheets.mjs --uv` still draws the unwrap for painting over,
 and now it is an unwrap worth painting.
+
+## FIELD-GUN-MW3: "and this is rigged properly?"
+
+2026-09-20, Mac, in as many words. **No — it was attached, which is not
+the same thing.** Three gaps, each measured rather than guessed, and
+all three now closed.
+
+### It was a centimetre and a half long
+
+Morrowind is **69.99 units to the metre** (`MW_UNITS_PER_METER`). MW2's
+bake normalised the mesh to a longest axis of exactly 1, which is a
+tidy number for a *mesh* and a meaningless one for a *weapon*: the gun
+was **1.43 cm**, about 1/38th of what a hand could hold.
+
+The bake takes `--units` now and `tools/bakeThunderlock.mjs` asks for
+**0.75 m × 69.99 = 52.5 units**. That length is the weapon's own row,
+not a preference: `isOneHanded: false` (both hands on it in the art the
+lab settled) and `baseWeight` 6.0, the heaviest weapon in the game — a
+short two-handed carbine. Longer would out-reach a claymore; shorter
+would be a pistol, and the port already decided it is not one.
+
+### The fist closed around the receiver
+
+The bone it hangs on is a **hand**, and MW2 pivoted the mesh on its
+bounds centre — so the middle of the weapon sat at the bone and the
+hand gripped the receiver. `--origin=grip` puts the origin at the
+**centroid of the rearmost band of the long axis**, derived from the
+geometry rather than typed. The muzzle now sits 47.4 units ahead of the
+hand and the butt 5.1 behind it.
+
+### The arms were punching
+
+This is the one that "it attaches to the right bone" hides completely.
+`resolveWeaponParts` returned `MW_WEAPON_TYPE.None`, and
+`animWeaponType` turns None into **HandToHand** (`fpArm.js:285`) —
+correct for empty hands, absurd for a man holding a dwemer firearm. The
+rig played unarmed stances and the gun went along for the ride:
+`composeWeaponGroup` returned no group at all, `weaponShortGroup` the
+empty string.
+
+**A weapon TYPE is not a MODEL.** The model had to be ours because
+Morrowind has no gun; the *animation* does not, because Morrowind has
+something shaped exactly like this act. The row names a type to
+**borrow** — `MarksmanCrossbow` — and it matches on every axis the
+animation system asks about:
+
+| | Thunderlock | MarksmanCrossbow |
+|---|---|---|
+| hands | `isOneHanded: false` | two-handed |
+| motion | fired, not swung | `shootsRatherThanSwings` true |
+| cycle | a visible reload (the lab's finding) | `reloadsItself` true — and it is the **only** type that is |
+| ammunition | a Dwemer Pellet | a bolt |
+
+It resolves to the `crossbow` group, the `shoot start` / `shoot max
+attack` / `shoot release` keys, and a left hand that carries nothing.
+**Its ammunition is not borrowed**: `ammoTypeFor(crossbow)` is Bolt,
+and the arm would instance a Morrowind quarrel on the arrow bone, so
+the resolve returns before that arm and `borrowsAmmo: false` on the row
+says so where somebody changing this will read it.
+
+### And a fourth thing the model found on the way
+
+Re-baking at the right size put a **black rectangle on the receiver**.
+Not a texture bug — an unwrap bug, and a bad one.
+
+MW2's island walk compared each face to **the neighbour it joined
+across**. Fold tolerance *chains*: on an eight-sided barrel every
+adjacent pair is 45° apart, comfortably inside 66°, so the walk went all
+the way round and made the whole ring **one island**. The average normal
+of a closed ring is nearly zero, so the far side projects on top of the
+near side and the faces at right angles to it **collapse to a line** —
+**78 of 295 triangles with real 3D area and zero UV area**, the largest
+fifty square units. A triangle with no UV area samples one texel and
+paints its whole face with it.
+
+Islands grow against their **own running average** now — which is what
+Blender's Smart UV Project does, and what makes the projection sound by
+construction: every face is within the threshold of the plane it is
+actually projected onto, so under 90° nothing can collapse. 49 islands
+became 74, and the count of collapsed faces is 0.
+
+### The pin that makes every other pin load-bearing
+
+A mutation campaign over the bake chain left **six survivors**, and they
+had one cause between them: **the committed `.nif` and `.dds` are the
+output of a run that already happened.** Islands could go back to
+growing against the neighbour, the scale back to a normalised 1, the
+pivot back to the bounds centre — and the suite stayed green, because
+every pin was reading an artefact rather than a derivation.
+
+So **Mac's `.fbx` is committed** (17 KB, at `src/assets/mw/source/`)
+and the suite re-runs the entire chain over it and compares the result
+to the shipped bytes, twice, so determinism is asserted too. That is a
+departure from `tools/gunPaperdoll.mjs`, whose thousand-pixel PNGs stay
+in the ignored `scratch/`, and it is made on purpose: the allow-list row
+for these files claims *"re-run the chain on the same .fbx and the same
+bytes come out"*, and **a derivation you cannot re-run is a claim you
+cannot check.** All six survivors died the moment that pin existed.
+
+60 mutants over the two slices, 60 killed.
+
+### What is still not done
+
+The gun is the right size, hangs from its grip, and plays the crossbow's
+animations. What nobody has done is **look at it in the arm**: the
+`BoneOffset` a Morrowind weapon can carry to nudge itself on the bone is
+absent, so the grip sits exactly at the bone's origin, and whether that
+reads as *held* rather than *floating* is a question for eyes on a
+running build, not for a pin.

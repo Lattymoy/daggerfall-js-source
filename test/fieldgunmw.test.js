@@ -22,7 +22,12 @@ import { flattenNif } from '../src/formats/mwNifMesh.js';
 import { buildSkeleton } from '../src/formats/mwSkin.js';
 import { bindPart } from '../src/formats/mwCharacter.js';
 import { resolveWeaponParts, weaponPartPaths, archiveHas, collectArmTextures } from '../src/combat/fpArm.js';
-import { dfWeaponToMw, MW_WEAPON_TYPE } from '../src/formats/mwFirstPerson.js';
+import {
+  dfWeaponToMw, MW_WEAPON_TYPE, MW_UNITS_PER_METER,
+  composeWeaponGroup, shootsRatherThanSwings, reloadsItself, ammoTypeFor,
+} from '../src/formats/mwFirstPerson.js';
+import { animWeaponType } from '../src/combat/fpArm.js';
+import { MW_UNITS_PER_METRE, THUNDERLOCK_METRES, SETTINGS, OUT, SOURCE_FBX, bakeThunderlock } from '../tools/bakeThunderlock.mjs';
 import { WEAPONS } from '../src/characters/weapons.js';
 import { THUNDERLOCK_TEMPLATE } from '../src/characters/thunderlockIds.js';
 import { OWN_MW_MODELS, ownWeaponModelFor, ownWeaponModelPaths } from '../src/characters/ownWeaponModels.js';
@@ -281,4 +286,117 @@ test('FIELD-GUN-MW2: the archive is MOUNTED, and in the rank that lets Mac overr
   assert.ok(loose > 0 && bsa > 0, 'the two ranks this sits between are still here');
   assert.ok(loose < at, 'the player\'s own loose files rank AHEAD of ours, so they can override the gun');
   assert.ok(at < bsa, 'and ours ranks ahead of every .bsa, which carries none of these names');
+});
+
+test('FIELD-GUN-MW2: the gun is MORROWIND-SIZED, and pivoted on the grip', () => {
+  // RIGGING, not bookkeeping, and the first bake got both wrong. It
+  // normalised the mesh to a longest axis of 1 - a tidy number for a
+  // MESH and a meaningless one for a WEAPON, because Morrowind is
+  // seventy units to the metre and 1 unit is a gun one and a half
+  // CENTIMETRES long.
+  const b = flattenNif(parseNif(shipped('meshes/thunderlock.nif')))[0];
+  const min = [Infinity, Infinity, Infinity]; const max = [-Infinity, -Infinity, -Infinity];
+  for (let i = 0; i < b.positions.length; i += 3) {
+    for (let k = 0; k < 3; k++) { min[k] = Math.min(min[k], b.positions[i + k]); max[k] = Math.max(max[k], b.positions[i + k]); }
+  }
+  // THE BAKE'S CONSTANT IS THE PORT'S. It is restated in the tool
+  // rather than imported (a bake must not drag the first-person module
+  // in behind it), so it is held against the real one here - a number
+  // with a pin on it cannot drift from the name it stands for.
+  assert.ok(Math.abs(MW_UNITS_PER_METRE - MW_UNITS_PER_METER) < 1e-6,
+    `the bake thinks a metre is ${MW_UNITS_PER_METRE} units and the port thinks it is ${MW_UNITS_PER_METER}`);
+
+  const lengthUnits = max[1] - min[1];
+  const metres = lengthUnits / MW_UNITS_PER_METER;
+  assert.ok(Math.abs(metres - THUNDERLOCK_METRES) < 0.02,
+    `the gun is ${metres.toFixed(2)} m; the bake says it should be ${THUNDERLOCK_METRES} m`);
+  // A BAND rather than the exact number, so a deliberate retune of the
+  // length does not redden this - but a return to the old normalise-to-1
+  // does, by three orders of magnitude.
+  assert.ok(lengthUnits > 20 && lengthUnits < 90,
+    `${lengthUnits.toFixed(1)} units is not a weapon a hand could hold`);
+
+  // THE PIVOT IS THE GRIP. Centred on its bounds - the first bake's
+  // default - puts the MIDDLE of the receiver in the fist. The bone
+  // this hangs on is a HAND, so the origin has to be where a hand goes:
+  // near the butt, far from the muzzle.
+  assert.equal(SETTINGS.origin, 'grip');
+  assert.ok(max[1] > 0 && min[1] < 0, 'the origin is inside the weapon');
+  assert.ok(max[1] > -min[1] * 4,
+    `the origin sits ${(-min[1]).toFixed(1)} behind and ${max[1].toFixed(1)} ahead - that is the middle of the gun, not its grip`);
+});
+
+test('FIELD-GUN-MW2: it ANIMATES as a crossbow, or the arms punch while holding it', () => {
+  // The gap that "it attaches to the right bone" hides. `animWeaponType`
+  // turns MW_WEAPON_TYPE.None into HandToHand (fpArm.js:285) - right
+  // for empty hands, absurd for a man holding a dwemer firearm - so
+  // returning None from the resolve left the rig playing unarmed
+  // stances with a gun along for the ride.
+  const arc = shippedArchive();
+  const res = resolveWeaponParts({
+    weapon: GUN, hasAmmo: true, allWeapons: [], find: (p) => (arc.has(p) ? arc : null),
+    skeletonBytes: fixture('armfp.nif'), has: archiveHas([arc]),
+  });
+  assert.equal(res.mwType, MW_WEAPON_TYPE.MarksmanCrossbow,
+    'the row carries the number 10; it must BE MarksmanCrossbow, or the leaf has drifted from the name it stands for');
+  assert.notEqual(animWeaponType(res.mwType, false), MW_WEAPON_TYPE.HandToHand);
+  assert.equal(animWeaponType(res.mwType, false), MW_WEAPON_TYPE.MarksmanCrossbow, 'drawn, it is a crossbow');
+  assert.equal(animWeaponType(res.mwType, true), MW_WEAPON_TYPE.None, 'sheathed, it is nothing - the stance law is untouched');
+
+  // The four things the borrow buys, asked of the reference's own
+  // functions rather than of the number.
+  assert.deepEqual(composeWeaponGroup(res.mwType, () => true), { group: 'crossbow', fallback: null },
+    'a real animation group, where None resolved to no group at all');
+  assert.equal(shootsRatherThanSwings(res.mwType), true, 'the attack keys are "shoot", not a chop\'s follow-through');
+  assert.equal(reloadsItself(res.mwType), true, 'and it has a reload in the cycle, which the lab found and only the crossbow has');
+
+  // ...AND THE AMMUNITION IS NOT BORROWED. ammoTypeFor(crossbow) is
+  // Bolt, and the arm would instance a Morrowind quarrel on the arrow
+  // bone. The early return is what stops it, and `hasAmmo: true` above
+  // is what makes this a question rather than a coincidence.
+  assert.equal(ammoTypeFor(res.mwType), MW_WEAPON_TYPE.Bolt, 'the type it borrows DOES carry ammunition');
+  assert.equal(res.arrowInfo, null, 'and we take none of it');
+  assert.equal(res.parts.filter((p) => p.slot === 'arrow').length, 0);
+});
+
+test('FIELD-GUN-MW2: the shipped assets are REPRODUCED from the committed source, byte for byte', () => {
+  // THE PIN THAT MAKES EVERY OTHER TOOL PIN LOAD-BEARING.
+  //
+  // A mutation campaign over the bake chain left SIX survivors, and
+  // they had one cause between them: the committed .nif and .dds are
+  // the output of a run that already happened, so changing the tool
+  // that made them changes nothing any pin can see. Islands could go
+  // back to growing against the neighbour, the scale back to a
+  // normalised 1, the pivot back to the bounds centre - and the suite
+  // stayed green, because it was reading an artefact rather than a
+  // derivation.
+  //
+  // The allow-list row for these files says "re-run the chain on the
+  // same .fbx and the same bytes come out". This is that sentence as a
+  // test. It is also the whole reason the .fbx is committed: a
+  // derivation you cannot re-run is a claim you cannot check.
+  const source = readFileSync(new URL(`../${SOURCE_FBX}`, import.meta.url));
+  const r = bakeThunderlock(source);
+  const onDisk = (p) => readFileSync(new URL(`../${p}`, import.meta.url));
+
+  const nif = onDisk(OUT.mesh);
+  assert.equal(r.nif.length, nif.length, `the baked mesh is ${r.nif.length} bytes and ${OUT.mesh} is ${nif.length}`);
+  assert.equal(Buffer.compare(Buffer.from(r.nif), Buffer.from(nif)), 0,
+    `${OUT.mesh} is not what tools/bakeThunderlock.mjs produces from ${SOURCE_FBX} - re-run it`);
+
+  const dds = onDisk(OUT.texture);
+  assert.equal(r.dds.length, dds.length, `the baked texture is ${r.dds.length} bytes and ${OUT.texture} is ${dds.length}`);
+  assert.equal(Buffer.compare(Buffer.from(r.dds), Buffer.from(dds)), 0,
+    `${OUT.texture} is not what tools/bakeThunderlock.mjs produces from ${SOURCE_FBX} - re-run it`);
+
+  // And the bake is DETERMINISTIC, which is the property the sentence
+  // above rests on: a second run of the same input is the same bytes.
+  // Without this, "matches the committed file" could be luck.
+  const again = bakeThunderlock(source);
+  assert.equal(Buffer.compare(Buffer.from(r.nif), Buffer.from(again.nif)), 0, 'two runs, one mesh');
+  assert.equal(Buffer.compare(Buffer.from(r.dds), Buffer.from(again.dds)), 0, 'two runs, one texture');
+
+  // The source is what it claims to be, so a swapped file is a red
+  // suite rather than a silently different gun.
+  assert.equal(r.before.overlapping, true, 'the committed FBX still carries the factory cylinder mapping this chain exists to replace');
 });

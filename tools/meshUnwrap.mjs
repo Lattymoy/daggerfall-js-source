@@ -98,16 +98,35 @@ export function unwrapQuality(mesh) {
   };
 }
 
-/** Union-find, small and flat. */
-function makeUnion(n) {
-  const parent = new Int32Array(n).map((_, i) => i);
-  const find = (i) => { while (parent[i] !== i) { parent[i] = parent[parent[i]]; i = parent[i]; } return i; };
-  return { find, join(a, b) { const ra = find(a); const rb = find(b); if (ra !== rb) parent[ra] = rb; } };
-}
-
 /**
- * Group the triangles into islands: shared edge AND a fold no sharper
- * than `angleDeg`.
+ * Group the triangles into islands: shared edge, and a normal no
+ * further than `angleDeg` from THE ISLAND'S OWN RUNNING AVERAGE.
+ *
+ * ═══ THE AVERAGE, NOT THE NEIGHBOUR ═══════════════════════════════
+ *
+ * The first version of this compared each face to the NEIGHBOUR it was
+ * joining across, with union-find, and that is a different rule than it
+ * looks. Fold tolerance CHAINS: on the Thunderlock's eight-sided barrel
+ * every adjacent pair is 45 degrees apart, comfortably inside 66, so
+ * the walk went all the way round the tube and made the whole ring ONE
+ * island. An island is then projected onto its average normal - and the
+ * average of a closed ring is nearly zero, so the far side lands on top
+ * of the near side and the faces at right angles to it collapse to a
+ * LINE.
+ *
+ * Measured on this model: 78 of 295 triangles came out with real 3D
+ * area and ZERO UV area, the largest of them fifty square units. A
+ * triangle with no UV area is not a small error - it samples ONE texel
+ * and paints its whole face with it, which on screen is a flat patch of
+ * whatever happened to be at that coordinate. It is what put a black
+ * rectangle on the receiver in the preview.
+ *
+ * Growing against the island's own average is the standard answer (it
+ * is what Blender's Smart UV Project does) and it makes the projection
+ * SOUND BY CONSTRUCTION: every face is within `angleDeg` of the plane
+ * it is projected onto, so as long as that is under ninety degrees no
+ * face can collapse. At 66 the worst case keeps cos(66) = 41% of its
+ * area, which is squashed and perfectly paintable.
  */
 export function islandsOf(mesh, angleDeg = 66) {
   const P = mesh.positions; const I = mesh.indices;
@@ -127,26 +146,68 @@ export function islandsOf(mesh, angleDeg = 66) {
     faceNormal.push(cross(sub(b, a), sub(c, a)));
   }
   const cosLimit = Math.cos((angleDeg * Math.PI) / 180);
+
+  // Edge -> the faces on it. A manifold edge has two; an open one has
+  // one and joins nothing, which is correct for a shell.
   const edges = new Map();
-  const u = makeUnion(faces);
   for (let f = 0; f < faces; f++) {
     for (let e = 0; e < 3; e++) {
       const a = posId[I[f * 3 + e]]; const b = posId[I[f * 3 + ((e + 1) % 3)]];
       if (a === b) continue;                                   // a degenerate edge joins nothing
       const k = a < b ? `${a}_${b}` : `${b}_${a}`;
-      const prev = edges.get(k);
-      if (prev === undefined) { edges.set(k, f); continue; }
-      const n1 = norm(faceNormal[prev]); const n2 = norm(faceNormal[f]);
-      if (dot(n1, n2) >= cosLimit) u.join(prev, f);
+      if (!edges.has(k)) edges.set(k, []);
+      edges.get(k).push(f);
     }
   }
-  const groups = new Map();
-  for (let f = 0; f < faces; f++) {
-    const r = u.find(f);
-    if (!groups.has(r)) groups.set(r, []);
-    groups.get(r).push(f);
+  const neighbours = (f) => {
+    const out = [];
+    for (let e = 0; e < 3; e++) {
+      const a = posId[I[f * 3 + e]]; const b = posId[I[f * 3 + ((e + 1) % 3)]];
+      if (a === b) continue;
+      const k = a < b ? `${a}_${b}` : `${b}_${a}`;
+      for (const g of edges.get(k) ?? []) if (g !== f) out.push(g);
+    }
+    return out;
+  };
+
+  // BIGGEST FIRST. An island's plane is set by whatever seeds it, so
+  // seeding on the largest unassigned face means the plane belongs to
+  // the face that has the most to lose by being squashed. Deterministic
+  // (area, then index) so the same mesh gives the same atlas.
+  const area2 = faceNormal.map((n) => Math.hypot(...n));
+  const order = [...faceNormal.keys()].sort((a, b) => area2[b] - area2[a] || a - b);
+
+  const island = new Int32Array(faces).fill(-1);
+  const islands = [];
+  for (const seed of order) {
+    if (island[seed] >= 0) continue;
+    const id = islands.length;
+    const members = [seed];
+    island[seed] = id;
+    // The running average, area-weighted: the un-normalised face normal
+    // IS twice the area times the unit normal, so summing gives the
+    // weighting for free.
+    let acc = [...faceNormal[seed]];
+    let avg = norm(acc);
+    const queue = [seed];
+    while (queue.length) {
+      const f = queue.shift();
+      for (const g of neighbours(f)) {
+        if (island[g] >= 0) continue;
+        if (dot(norm(faceNormal[g]), avg) < cosLimit) continue;
+        island[g] = id;
+        members.push(g);
+        acc = [acc[0] + faceNormal[g][0], acc[1] + faceNormal[g][1], acc[2] + faceNormal[g][2]];
+        // A ring that has come most of the way round can drive the sum
+        // to nothing; keep the last good plane rather than projecting
+        // onto a zero vector.
+        if (Math.hypot(...acc) > 1e-9) avg = norm(acc);
+        queue.push(g);
+      }
+    }
+    islands.push(members);
   }
-  return { islands: [...groups.values()], faceNormal, posId };
+  return { islands, faceNormal, posId };
 }
 
 /** The minimum-area bounding rectangle of a 2D point set, by sampling

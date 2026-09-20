@@ -1126,12 +1126,21 @@ export function resolveWeaponParts({ weapon, hasAmmo = false, allWeapons, find, 
       notes.push(`weapon: this skeleton has no "${own.bone}" bone to hang ${own.name} on`);
     } else {
       parts.push({ slot: 'weapon', bones: [own.bone], bytes: arc.get(path).slice() });
-      weaponInfo = { id: own.id, name: own.name, model: own.model, type: mwType, bone: own.bone, speed: own.speed, own: true };
+      weaponInfo = { id: own.id, name: own.name, model: own.model, type: own.animateAs, bone: own.bone, speed: own.speed, own: true };
     }
-    // It spends ammunition, but Morrowind has no record for that
-    // either, so there is nothing to instance on the arrow bone. Said
-    // out loud so a reader does not go looking for the arm.
-    return { mwType, parts, weaponInfo, arrowInfo, notes };
+    // THE BORROWED TYPE IS WHAT GOES BACK, not None, and it is the
+    // difference between a rig and a mesh on a bone: every caller of
+    // this function's `mwType` is an ANIMATION question - the stance
+    // group, the wind-up and release keys, whether the left hand
+    // carries anything - and `animWeaponType` turns None into
+    // HandToHand, so the arms would punch while holding the gun.
+    //
+    // ITS AMMUNITION IS NOT BORROWED. `ammoTypeFor` of a crossbow is
+    // Bolt, and the arm below would instance a Morrowind quarrel on
+    // the arrow bone. Returning here is what stops it, and `borrowsAmmo`
+    // on the row says so where somebody deciding to change this will
+    // read it.
+    return { mwType: own.animateAs, parts, weaponInfo, arrowInfo, notes };
   }
   if (mwType !== MW_WEAPON_TYPE.None) {
     const rec = pickWeaponRecord(allWeapons, mwType, weapon ? materialName(weapon) : null, { has });   // MW-D38; MW-D50: a record the archives carry

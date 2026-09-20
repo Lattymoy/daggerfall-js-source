@@ -2,6 +2,7 @@
 //
 //     node tools/fbxMesh.mjs <in.fbx> <out.json> [--name=X]
 //                            [--forward=-z] [--up=-x]
+//                            [--units=52.5] [--origin=centre|grip]
 //                            [--keep-rotation] [--no-normalise]
 //
 // FIELD-GUN-MW1 (2026-09-20, Mac: "texturing and rigging this for the
@@ -70,10 +71,18 @@
 //    top. A model authored along different axes says so on the command
 //    line rather than shipping upside down.
 //
-//    Then the mesh is CENTRED on its own bounds and scaled so its
-//    longest axis is exactly 1, so the port sizes it with ONE number
-//    and the day Mac re-exports at a different scale nothing
-//    downstream moves.
+//    Then the mesh is scaled so its longest axis is exactly `--units`
+//    long - so the day Mac re-exports at a different Blender scale
+//    nothing downstream moves - and moved so `--origin` sits at zero.
+//
+//    BOTH OF THOSE ARE RIGGING, not bookkeeping, and the first bake got
+//    both wrong. Morrowind is 69.99 units to the metre
+//    (MW_UNITS_PER_METER), so a mesh normalised to a longest axis of 1
+//    is a gun ONE AND A HALF CENTIMETRES long - invisible in the hand.
+//    And `centre` puts the MIDDLE of the weapon on the bone, so the
+//    hand closes around the receiver rather than the grip. `grip` is
+//    derived, not typed: the centroid of the rearmost band of the long
+//    axis, which is the part a hand actually holds.
 //
 // THE SOURCE IS NOT COMMITTED, exactly as tools/gunPaperdoll.mjs's
 // PNGs are not: scratch/ is ignored, Mac keeps his .blend, and what
@@ -195,7 +204,7 @@ function layerReader(layer, stride, valueKey, indexKey) {
  * Bake one Geometry/Model pair out of a parsed FBX tree.
  * Pure: bytes in, numbers out, nothing touched on disk.
  */
-export function bakeMesh(tree, { name = null, keepRotation = false, normalise = true, forward = '-z', up = '-x' } = {}) {
+export function bakeMesh(tree, { name = null, keepRotation = false, normalise = true, forward = '-z', up = '-x', units = 1, origin = 'centre' } = {}) {
   const toBasis = basisMap(forward, up);
   const objects = nodeAt(tree.nodes, 'Objects');
   if (!objects) throw new Error('no Objects section in this FBX');
@@ -283,12 +292,16 @@ export function bakeMesh(tree, { name = null, keepRotation = false, normalise = 
   for (let i = 0; i < outPos.length; i += 3) {
     for (let k = 0; k < 3; k++) { min[k] = Math.min(min[k], outPos[i + k]); max[k] = Math.max(max[k], outPos[i + k]); }
   }
-  const centre = [0, 1, 2].map((k) => (min[k] + max[k]) / 2);
   const size = [0, 1, 2].map((k) => max[k] - min[k]);
   const longest = Math.max(...size);
-  const unit = normalise && longest > 0 ? 1 / longest : 1;
+  const unit = normalise && longest > 0 ? units / longest : 1;
+  // THE PIVOT, measured BEFORE the scale is applied so the anchor is in
+  // the mesh's own units and the two decisions stay independent.
+  const anchor = origin === 'grip'
+    ? gripAnchor(outPos, min, max)
+    : [0, 1, 2].map((k) => (min[k] + max[k]) / 2);
   for (let i = 0; i < outPos.length; i += 3) {
-    for (let k = 0; k < 3; k++) outPos[i + k] = (outPos[i + k] - centre[k]) * unit;
+    for (let k = 0; k < 3; k++) outPos[i + k] = (outPos[i + k] - anchor[k]) * unit;
   }
 
   const round = (a, n) => a.map((v) => +v.toFixed(n));
@@ -311,14 +324,49 @@ export function bakeMesh(tree, { name = null, keepRotation = false, normalise = 
       // divide: what one unit of the shipped mesh is worth.
       sizeBeforeNormalise: round(size, 4),
       unitDivisor: +(1 / unit).toFixed(6),
+      units,
+      origin,
+      // Where the pivot landed in the mesh's own pre-scale space, so a
+      // re-bake that moved it is visible in the diff.
+      anchor: round(anchor, 4),
     },
     // Bounds AFTER the frame, which is what a consumer places against.
-    bounds: { min: round([0, 1, 2].map((k) => (min[k] - centre[k]) * unit), 6), max: round([0, 1, 2].map((k) => (max[k] - centre[k]) * unit), 6) },
+    bounds: { min: round([0, 1, 2].map((k) => (min[k] - anchor[k]) * unit), 6), max: round([0, 1, 2].map((k) => (max[k] - anchor[k]) * unit), 6) },
     positions: round(outPos, 6),
     normals: outNrm.length ? round(outNrm, 6) : null,
     uvs: outUv.length ? round(outUv, 6) : null,
     indices,
   };
+}
+
+/**
+ * THE GRIP, derived rather than typed: the centroid of the vertices in
+ * the rearmost `band` of the long axis.
+ *
+ * After the basis map +Y is forward (the muzzle), so the grip is the
+ * MINIMUM end - the same direction `tools/meshTexture.mjs` measures its
+ * bands from, said in both places because getting it backwards puts the
+ * hand on the barrel.
+ *
+ * A CENTROID and not a bounds centre, so a grip that is a wedge rather
+ * than a box anchors where the material is, and the cross-axes come
+ * from the same vertices for the same reason: a hand closes around the
+ * middle of the GRIP, not the middle of the weapon.
+ */
+export function gripAnchor(positions, min, max, band = 0.18) {
+  const cut = min[1] + (max[1] - min[1]) * band;
+  let n = 0; const sum = [0, 0, 0];
+  for (let i = 0; i < positions.length; i += 3) {
+    if (positions[i + 1] > cut) continue;
+    for (let k = 0; k < 3; k++) sum[k] += positions[i + k];
+    n++;
+  }
+  // No vertex in the band cannot happen for a real mesh; a caller
+  // handing this a plane would get a divide by zero rather than an
+  // answer, so it falls back to the bounds centre. The bake record
+  // prints the anchor either way.
+  if (!n) return [0, 1, 2].map((k) => (min[k] + max[k]) / 2);
+  return sum.map((v) => v / n);
 }
 
 /**
@@ -363,13 +411,14 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   const opt = (k, d = null) => args.find((a) => a.startsWith(`--${k}=`))?.split('=').slice(1).join('=') ?? d;
   const files = args.filter((a) => !a.startsWith('--'));
   if (files.length !== 2) {
-    console.error('usage: node tools/fbxMesh.mjs <in.fbx> <out.json> [--name=X] [--forward=-z] [--up=-x] [--keep-rotation] [--no-normalise]');
+    console.error('usage: node tools/fbxMesh.mjs <in.fbx> <out.json> [--name=X] [--forward=-z] [--up=-x] [--units=N] [--origin=centre|grip] [--keep-rotation] [--no-normalise]');
     process.exit(2);
   }
   const [inPath, outPath] = files;
   const mesh = bakeMesh(readFbx(readFileSync(inPath)), {
     name: opt('name'), keepRotation: flag('keep-rotation'), normalise: !flag('no-normalise'),
     forward: opt('forward', '-z'), up: opt('up', '-x'),
+    units: Number(opt('units', 1)), origin: opt('origin', 'centre'),
   });
   mkdirSync(dirname(outPath), { recursive: true });
   writeFileSync(outPath, `${JSON.stringify(mesh)}\n`);
@@ -377,7 +426,8 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   console.log(`${inPath} -> ${outPath}`);
   console.log(`  ${mesh.name}: ${b.polygons} polygons (${b.ngons} n-gons) -> ${mesh.indices.length / 3} triangles`);
   console.log(`  ${b.sourceCorners} corners welded to ${mesh.positions.length / 3} vertices`);
-  console.log(`  scale ${b.appliedScale.join(' x ')} baked; size ${b.sizeBeforeNormalise.join(' x ')} / ${b.unitDivisor} -> longest axis 1`);
+  console.log(`  scale ${b.appliedScale.join(' x ')} baked; size ${b.sizeBeforeNormalise.join(' x ')} / ${b.unitDivisor} -> longest axis ${b.units}`);
+  console.log(`  origin ${b.origin} at ${JSON.stringify(b.anchor)}`);
   console.log(`  ${b.basis}`);
   console.log(`  bounds ${JSON.stringify(mesh.bounds.min)} .. ${JSON.stringify(mesh.bounds.max)}`);
 }

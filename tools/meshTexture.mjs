@@ -152,9 +152,14 @@ function rayTri(o, d, a, b, c) {
  * crevices, and on a mesh normalised to a longest axis of 1 a crevice
  * is a few hundredths.
  */
-export function vertexAO(mesh, { rays = 64, range = 0.12 } = {}) {
+export function vertexAO(mesh, { rays = 64, range = null } = {}) {
   const P = mesh.positions; const N = mesh.normals; const I = mesh.indices;
   const n = P.length / 3;
+  // THE RANGE IS RELATIVE TO THE MODEL, or it is a constant that only
+  // works at one scale - and the scale changed the moment the bake
+  // started emitting Morrowind units instead of a normalised 1. A
+  // crevice is a proportion of the object, not a number of units.
+  const reach = range ?? 0.12 * longestAxis(mesh.bounds);
   const tris = [];
   for (let t = 0; t < I.length; t += 3) {
     tris.push([
@@ -194,8 +199,8 @@ export function vertexAO(mesh, { rays = 64, range = 0.12 } = {}) {
         if (dist < hit) hit = dist;
         if (hit < 1e-4) break;
       }
-      // A hit beyond `range` is the other side of the gun, not a crevice.
-      open += hit >= range ? 1 : hit / range;
+      // A hit beyond `reach` is the other side of the gun, not a crevice.
+      open += hit >= reach ? 1 : hit / reach;
     }
     out[v] = open / rays;
   }
@@ -266,6 +271,11 @@ export function bakeAttributes(mesh, size, ao) {
   return { pos, nrm, occ, covered, size };
 }
 
+/** The model's longest extent. One home, because the occlusion reach
+ *  and the noise frequencies below are both PROPORTIONS of it. */
+export const longestAxis = (bounds) =>
+  Math.max(...[0, 1, 2].map((k) => bounds.max[k] - bounds.min[k])) || 1;
+
 /** How far back from the MUZZLE a point is, 0 at the muzzle and 1 at
  *  the butt. One home, because the bands and the pins both ask it. */
 export function muzzleFraction(y, bounds) {
@@ -285,8 +295,16 @@ export function shadeTexel(p, n, ao, bounds) {
   // BRUSHING, along the barrel. The frequency is high across the gun
   // and low along it, which is what a turned surface looks like: rings
   // and lengthwise drag, not blobs.
-  const brush = valueNoise(p[0] * 220, p[1] * 26, p[2] * 220) - 0.5;
-  const grain = valueNoise(p[0] * 60, p[1] * 60, p[2] * 60) - 0.5;
+  //
+  // MEASURED IN MODEL LENGTHS, not in units, for the same reason the
+  // occlusion reach is: these numbers were tuned against a mesh
+  // normalised to 1, and the bake now emits Morrowind units - at 52
+  // units a frequency of 220 is eleven thousand cycles across the
+  // barrel, which is not brushing, it is static.
+  const L = longestAxis(bounds);
+  const q = [p[0] / L, p[1] / L, p[2] / L];
+  const brush = valueNoise(q[0] * 220, q[1] * 26, q[2] * 220) - 0.5;
+  const grain = valueNoise(q[0] * 60, q[1] * 60, q[2] * 60) - 0.5;
   const tone = 1 + brush * 0.34 * band.rough + grain * 0.16;
 
   // WHICH WAY DO I FACE: the top plates of a carried weapon are

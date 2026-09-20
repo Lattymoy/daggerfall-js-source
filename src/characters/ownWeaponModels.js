@@ -55,6 +55,41 @@ export const OWN_MW_MODELS = Object.freeze({
   [THUNDERLOCK_TEMPLATE]: Object.freeze({
     model: 'thunderlock.nif',
     bone: 'Weapon Bone',
+    // THE ANIMATION IT BORROWS, and without this the rig plays HAND TO
+    // HAND: `animWeaponType` turns MW_WEAPON_TYPE.None into HandToHand
+    // (fpArm.js:285), which is right for empty hands and absurd for a
+    // man holding a dwemer firearm - the arms punch, and the gun goes
+    // along for the ride.
+    //
+    // A weapon TYPE is not a MODEL. The model had to be ours because
+    // Morrowind has no gun; the ANIMATION does not, because Morrowind
+    // has something shaped exactly like this act. MarksmanCrossbow (10,
+    // weapontype.hpp) matches the Thunderlock on every axis the
+    // animation system asks about:
+    //
+    //   two-handed      isOneHanded: false, both hands on it
+    //   ranged          fired, not swung - so `shootsRatherThanSwings`
+    //                   is true and the attack keys are "shoot start"
+    //                   / "shoot max attack" / "shoot release" rather
+    //                   than a chop's small/medium/large follow
+    //   reloads itself  `reloadsItself` is true ONLY for the crossbow,
+    //                   and the Thunderlock's cycle has a visible
+    //                   reload in it - which is the lab's own finding
+    //   spends ammo     a pellet, where the crossbow spends a bolt
+    //
+    // THE NUMBER, NOT THE IMPORT, because this file is a leaf on
+    // purpose (see the header) and `MW_WEAPON_TYPE` lives in
+    // mwFirstPerson.js, which would drag the whole Morrowind
+    // first-person module into `mwItemMap.js`'s graph for one integer.
+    // test/fieldgunmw.test.js asserts it IS
+    // MW_WEAPON_TYPE.MarksmanCrossbow, so the number cannot drift from
+    // the name it stands for.
+    animateAs: 10,
+    // ...AND ITS AMMUNITION IS NOT BORROWED. `ammoTypeFor(10)` is Bolt,
+    // and instancing a Morrowind bolt on the arrow bone would put a
+    // quarrel through a dwemer gun. `resolveWeaponParts` returns before
+    // its ammunition arm for exactly this reason, and says so there.
+    borrowsAmmo: false,
     // What the arm's card says it is holding, where a Morrowind record
     // would have supplied an id and a name.
     id: 'daggerfall_thunderlock',

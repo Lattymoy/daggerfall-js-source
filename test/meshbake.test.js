@@ -49,6 +49,25 @@ function cube() {
   };
 }
 
+/** A closed n-sided prism: the shape that broke the first unwrap. Every
+ *  adjacent side is 360/n degrees from the next, so at n = 8 the whole
+ *  ring is inside a 66-degree neighbour test and chains into one
+ *  island - which is the case the average-normal growth exists for. */
+function ngonPrism(n = 8, r = 1, h = 4) {
+  const positions = []; const normals = []; const uvs = []; const indices = [];
+  for (let i = 0; i < n; i++) {
+    const a0 = (i / n) * 2 * Math.PI; const a1 = ((i + 1) / n) * 2 * Math.PI;
+    const p = [[Math.cos(a0) * r, -h / 2, Math.sin(a0) * r], [Math.cos(a1) * r, -h / 2, Math.sin(a1) * r],
+      [Math.cos(a1) * r, h / 2, Math.sin(a1) * r], [Math.cos(a0) * r, h / 2, Math.sin(a0) * r]];
+    const mid = (a0 + a1) / 2;
+    const nrm = [Math.cos(mid), 0, Math.sin(mid)];
+    const base = positions.length / 3;
+    for (const v of p) { positions.push(...v); normals.push(...nrm); uvs.push(0, 0); }
+    indices.push(base, base + 1, base + 2, base, base + 2, base + 3);
+  }
+  return { name: 'prism', positions, normals, uvs, indices, bounds: { min: [-r, -h / 2, -r], max: [r, h / 2, r] } };
+}
+
 const maxDiff = (a, b) => { let d = 0; for (let i = 0; i < a.length; i++) d = Math.max(d, Math.abs(a[i] - b[i])); return d; };
 
 // ── nifWrite ─────────────────────────────────────────────────────────
@@ -154,14 +173,78 @@ test('FIELD-GUN-MW2: an overlapping unwrap is CONDEMNED by measurement, not by e
   assert.equal(unwrap(cube(), { size: 64 }).unwrap.quality.overlapping, false);
 });
 
-test('FIELD-GUN-MW2: islands break at a hard angle, walked over WELDED positions', () => {
-  // A cube is six faces at ninety degrees. Under the default threshold
-  // they are six islands; open the threshold past ninety and the whole
-  // cube is one.
+test('FIELD-GUN-MW2: islands grow against their OWN AVERAGE, not against the neighbour', () => {
+  // A cube is six faces at ninety degrees, so at the default threshold
+  // they are six islands.
   assert.equal(islandsOf(cube(), 66).islands.length, 6);
-  assert.equal(islandsOf(cube(), 120).islands.length, 1,
-    'the adjacency is over WELDED positions - by vertex index every face is its own island and this would still say 6');
   assert.equal(islandsOf(cube(), 0).islands.length, 6);
+  // ...and the walk is over WELDED positions. By vertex index every
+  // face of this cube is disconnected (it is authored split) and this
+  // would still say 6, so the case that tells them apart is one where
+  // faces SHOULD join: a flat strip, authored split, is one island.
+  const flat = {
+    positions: [0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1, 0, 0, 1, 0],
+    normals: new Array(18).fill(0).map((_, i) => (i % 3 === 2 ? 1 : 0)),
+    uvs: new Array(12).fill(0),
+    indices: [0, 1, 2, 3, 4, 5],
+    bounds: { min: [0, 0, 0], max: [1, 1, 0] },
+  };
+  assert.equal(islandsOf(flat, 66).islands.length, 1,
+    'two coplanar triangles sharing an edge by POSITION are one island, however the exporter split them');
+
+  // THE PROPERTY THAT MAKES A PROJECTION SOUND. Fold tolerance CHAINS:
+  // the first version of this compared each face to the NEIGHBOUR it
+  // joined across, so on the Thunderlock's eight-sided barrel - every
+  // adjacent pair 45 degrees apart, inside 66 - the walk went all the
+  // way round and made the ring ONE island. The average normal of a
+  // closed ring is nearly zero, and the faces at right angles to it
+  // COLLAPSED. Every face must be within the threshold of the plane it
+  // is actually projected onto, and nothing weaker will do.
+  const ring = ngonPrism(8);
+  for (const angle of [45, 66, 89]) {
+    const { islands, faceNormal } = islandsOf(ring, angle);
+    const limit = Math.cos((angle * Math.PI) / 180) - 1e-9;
+    for (const faces of islands) {
+      let acc = [0, 0, 0];
+      for (const f of faces) acc = [acc[0] + faceNormal[f][0], acc[1] + faceNormal[f][1], acc[2] + faceNormal[f][2]];
+      const len = Math.hypot(...acc);
+      if (len < 1e-9) continue;
+      const avg = acc.map((v) => v / len);
+      for (const f of faces) {
+        const n = faceNormal[f];
+        const nl = Math.hypot(...n) || 1;
+        const d = (n[0] * avg[0] + n[1] * avg[1] + n[2] * avg[2]) / nl;
+        assert.ok(d >= limit,
+          `at ${angle} degrees a face sits ${(Math.acos(Math.max(-1, Math.min(1, d))) * 180 / Math.PI).toFixed(0)} degrees off its island's own plane`);
+      }
+    }
+  }
+});
+
+test('FIELD-GUN-MW2: no face comes out of the unwrap with ZERO area in texture space', () => {
+  // The bug the average-normal growth exists to stop, asked as the
+  // thing a player would see rather than as the rule that prevents it.
+  // A triangle with real 3D area and no UV area samples ONE texel and
+  // paints its whole face with it - a flat patch of whatever happened
+  // to be at that coordinate. On the Thunderlock's barrel it was 78 of
+  // 295 faces, the largest fifty square units, and it put a black
+  // rectangle on the receiver.
+  const ring = ngonPrism(8);
+  const out = unwrap(ring, { size: 256 });
+  let collapsed = 0;
+  for (let t = 0; t < out.indices.length; t += 3) {
+    const [a, b, c] = [out.indices[t], out.indices[t + 1], out.indices[t + 2]];
+    const uv = (i) => [out.uvs[i * 2], out.uvs[i * 2 + 1]];
+    const [A, B, C] = [uv(a), uv(b), uv(c)];
+    const texels = Math.abs((B[0] - A[0]) * (C[1] - A[1]) - (C[0] - A[0]) * (B[1] - A[1])) / 2 * 255 * 255;
+    const p = (i) => [out.positions[i * 3], out.positions[i * 3 + 1], out.positions[i * 3 + 2]];
+    const [pa, pb, pc] = [p(a), p(b), p(c)];
+    const e1 = [pb[0] - pa[0], pb[1] - pa[1], pb[2] - pa[2]];
+    const e2 = [pc[0] - pa[0], pc[1] - pa[1], pc[2] - pa[2]];
+    const n = [e1[1] * e2[2] - e1[2] * e2[1], e1[2] * e2[0] - e1[0] * e2[2], e1[0] * e2[1] - e1[1] * e2[0]];
+    if (Math.hypot(...n) / 2 > 1e-6 && texels < 0.5) collapsed++;
+  }
+  assert.equal(collapsed, 0, `${collapsed} faces have real area and no texture area`);
 });
 
 test('FIELD-GUN-MW2: one scale for every island, and nothing overlaps after it', () => {
