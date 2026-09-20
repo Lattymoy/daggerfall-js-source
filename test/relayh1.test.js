@@ -37,7 +37,10 @@ function fakeSocketClass() {
 const pose = (x, z = 0, mv = 0) => ({ x, y: 0, z, yaw: 0, pitch: 0, mv });
 // The one request the runtime answers without waking the object - read off the relay, so the client's bytes are
 // held to the relay's law and not to a copy of it here.
-const AUTO_PING = /new WebSocketRequestResponsePair\('(\{"t":"ping"\})', '(\{"t":"pong"\})'\)/.exec(rd('server/src/index.js'))?.[1];
+// AUDIT RELAY-H1 F3: the strings are CAPTURED, not spelled here - a relay that registers another spelling moves
+// the law this test holds the client to, instead of failing a regex that had the old spelling in it.
+const AUTO_PAIR = /new WebSocketRequestResponsePair\('([^']*)', '([^']*)'\)/.exec(rd('server/src/index.js'));
+const AUTO_PING = AUTO_PAIR?.[1];
 
 test('RELAY-H1: the numbers are one family - a pose no oftener than 20 s standing, four pings to a pose, the timeout four heartbeats, and none of them a literal beside the other', () => {
   assert.ok(HEARTBEAT_MS >= 20000, `HEARTBEAT_MS is ${HEARTBEAT_MS} - under 20 s a standing player wakes the object too often to let it sleep`);
@@ -51,13 +54,18 @@ test('RELAY-H1: the numbers are one family - a pose no oftener than 20 s standin
 
 test('RELAY-H1: the ping the client sends is the one the relay tells the runtime to answer in its sleep - two spellings, one string', () => {
   const relay = rd('server/src/index.js');
-  const m = /new WebSocketRequestResponsePair\('(\{"t":"ping"\})', '(\{"t":"pong"\})'\)/.exec(relay);
+  const m = AUTO_PAIR;
   assert.ok(m, 'the relay no longer registers the auto-response pair - every ping wakes the object');
-  assert.equal(AUTO_PING, m[1]);
+  assert.equal(JSON.parse(m[1]).t, 'ping'); assert.equal(JSON.parse(m[2]).t, 'pong');
   assert.equal(JSON.stringify({ t: 'ping' }), m[1], 'the client\'s ping, serialised, IS the request the runtime matches byte for byte - a key added, a space, a different order, and every ping wakes the object again');
-  assert.match(rd('src/net/online.js'), /this\._send\(\{ t: 'ping' \}\)/, 'and the client sends exactly that object');
-  assert.match(rd('src/net/online.js'), /h\.ws\.send\('\{"t":"ping"\}'\)/, 'the halo sockets too, as the same bytes');
-  assert.match(relay, /if \(m\.t === 'ping'\) \{ this\._send\(ws, '\{"t":"pong"\}'\); return; \}/, 'an older runtime that delivers the ping still gets the same pong from the object');
+  const online = rd('src/net/online.js');
+  assert.match(online, /this\._send\(\{ t: 'ping' \}\)/, 'and the client sends exactly that object');
+  const halo = /h\.ws\.send\('([^']*)'\)/.exec(online);
+  assert.ok(halo, 'the halo sockets are pinged');
+  assert.equal(halo[1], m[1], 'the halo sockets too, as the same bytes');
+  const fallback = /if \(m\.t === 'ping'\) \{ this\._send\(ws, '([^']*)'\); return; \}/.exec(relay);
+  assert.ok(fallback, 'an older runtime that delivers the ping still gets a pong from the object');
+  assert.equal(fallback[1], m[2], 'and it is the same pong the runtime would have sent');
 });
 
 test('RELAY-H1: a standing presence session pings at PING_MS and poses only at HEARTBEAT_MS; a move goes at once; the ping never delays the pose', () => {
