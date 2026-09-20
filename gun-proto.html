@@ -109,8 +109,8 @@
   <label><span>fire</span><select id="sfxFire"></select></label>
   <label><span>reload open</span><select id="sfxOpen"></select></label>
   <label><span>reload close</span><select id="sfxClose"></select></label>
-  <label><span>volume</span><input id="sfxVol" type="range" min="0" max="1" step="0.02" value="0.7"><span class="v" id="vsfxVol"></span></label>
-  <label><span>pitch vary</span><input id="sfxVary" type="range" min="0" max="0.3" step="0.01" value="0.06"><span class="v" id="vsfxVary"></span></label>
+  <label><span>volume</span><input id="sfxVol" type="range" min="0" max="1" step="0.02" value="1"><span class="v" id="vsfxVol"></span></label>
+  <label><span>pitch vary</span><input id="sfxVary" type="range" min="0" max="0.3" step="0.01" value="0.19"><span class="v" id="vsfxVary"></span></label>
   <label><span>sound</span><input id="sfxOn" type="checkbox" checked><span class="v">on</span></label>
 
   <h2>Reload lower &mdash; the Offset module</h2>
@@ -170,7 +170,7 @@ const state = {
   kick: 5, back: 0, stiff: 400, damp: 36,
   shake: 30, shakeRot: 4, shakeFreq: 60, shakeDecay: 5,
   sfxFire: SFX_CANDIDATES.fire[0][0], sfxOpen: SFX_CANDIDATES['reload-open'][0][0], sfxClose: SFX_CANDIDATES['reload-close'][0][0],
-  sfxVol: 0.7, sfxVary: 0.06, sfxOn: true,
+  sfxVol: 1, sfxVary: 0.19, sfxOn: true,   // FIELD-GUN15: Mac's, against the three picks below - the game reads them from combat/gunFeel.js and test/thunderlock.test.js fails if the two disagree
   drop: 0.55, offsetSpeed: 1, modOffset: true,
   modBob: true, bobLength: 100, bobSizeX: 1, bobSizeY: 1, bobSpeedMove: 1, bobSpeedState: 1, bobShape: 0, bobIdle: true,
   modInertia: true, inScale: 1, inSpeed: 1, inFwd: 1, inFwdSpeed: 1,

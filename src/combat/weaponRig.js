@@ -679,8 +679,17 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
   /** The frame's rect delta for the weapon, in native (320x200)
    *  units: the spring, plus the reload lower under it. */
   let _tlAdjust = null;
-  /** The close lands this long before the weapon is ready - the clip's
-   *  own length, so the lock-up is finishing as the sprite arrives. */
+  /** The close lands this long before the weapon is ready, so the
+   *  lock-up is finishing as the sprite comes back up rather than
+   *  after it.
+   *
+   *  It is the LAB's own lead - `gun.cooledMs >= state.cool - 420` in
+   *  gun-proto.html's frame - and FIELD-GUN15 corrected what this
+   *  comment used to claim, which was "the clip's own length". It
+   *  never was: the clip it was written for (`close-ready`) is 98ms.
+   *  The number is a judgement about where in the pump the mechanism
+   *  should sound, and it is the prototype's, which is the only reason
+   *  it is this number and not another. */
   const TL_CLOSE_LEAD = 0.42;
   function thunderlockVoice(dt) {
     const type = weaponTypeForItem(playerWeapon.weapon);

@@ -74,13 +74,23 @@ export const GUN_FEEL = Object.freeze({
    *  dying, which reads as a hard kick without throwing the view.
    *  It is one named number for Mac to move, like the doll's offset. */
   roomShake: 3,
-  // ── THE VOICE (the lab's panel: volume 0.7, pitch vary 0.06) ─────
+  // ── THE VOICE (the lab's panel: volume 1, pitch vary 0.19) ──────
   // A gun fired six times in four seconds is exactly the case where
   // the ear notices a sample repeating, so the lab varies playback
   // rate - and DFU's own weapon code varies swing pitch for the same
   // reason. The game was playing all three clips at full volume with
   // no variance at all.
-  sfxVolume: 0.7, sfxVary: 0.06,
+  //
+  // FIELD-GUN15 (2026-09-20, Mac, with the panel open: "Use these
+  // sounds"). Both moved, and they moved TOGETHER for one reason: the
+  // three picks changed (systems/thunderlock.js SFX_FILES), and
+  // `fire-dry` is a flat crack with no room tail where `fire-shotgun`
+  // carried a real room's. A drier, quieter sample wants the gain back
+  // - hence 1 - and a sample with no tail to hide a repeat behind wants
+  // three times the pitch jitter, which is what 0.19 is. Tuned on the
+  // lab's own sliders against the clips they are for, not adjusted in
+  // the abstract.
+  sfxVolume: 1, sfxVary: 0.19,
   // how far the weapon drops while the reload runs
   hiddenTarget: Object.freeze([0, 0.55]),
   /** FIELD-GUN13 (Mac: "The weapon should come up from the bottom

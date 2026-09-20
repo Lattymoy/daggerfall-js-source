@@ -760,6 +760,61 @@ impact is concerned. A crackling ball that vanishes into a wall with
 nothing is a fair thing to want next; it is a second decision, and this
 one is the projectile.
 
+## FIELD-GUN15: the three picks, and the sentence that was true by luck
+
+Mac, 2026-09-20, with the lab's panel open on his phone — a screenshot
+of the three sound dropdowns and: *"Use these sounds."*
+
+| slot | was | is |
+|---|---|---|
+| fire | `fire-shotgun` (shotgun, clean crack) | **`fire-dry`** (dry, no room) |
+| reload open | `open-winchester` (winchester cock) | **`open-gunrack`** (gun rack, dark) |
+| reload close | `close-ready` (ready, snaps shut) | **`close-shell`** (shell home) |
+| volume | 0.7 | **1** |
+| pitch vary | 0.06 | **0.19** |
+
+Not the obvious picks, and they hang together. `fire-shotgun` carries a
+real room's tail; this weapon is fired in a dungeon the engine
+reverberates for itself, so the tail was a room played over a room.
+`fire-dry` is the flat crack with nothing after it — and a drier,
+quieter sample wants the gain back (hence 1) and has **nothing to hide
+a repeat behind**, which is what three times the pitch jitter is for.
+The two sliders moved *because* the clips did.
+
+### The sentence nobody was keeping
+
+`SFX_CANDIDATES`'s own header has said since it was written that the
+dropdowns open on the first entry, *"which is the pick"*. It was true.
+It was true because the same person typed the pick into
+`systems/thunderlock.js`'s `SFX_FILES` on the same afternoon — two
+places holding one decision, agreeing because nothing had yet made them
+disagree.
+
+That is the exact drift class this weapon has paid for at every round
+since FIELD-GUN6, and the whole lesson of FIELD-GUN12 (*a prototype is
+not a specification to copy; it is code to move*). So the sentence is a
+**pin** now: the game's three clips must be the head of their candidate
+list, and the panel must open on that head. Reordering the audition is
+how you change what ships, which is what the header always claimed.
+
+The volume and the jitter needed nothing new — FIELD-GUN8's panel pin
+already reads the lab's own `state` literal and requires the game to
+agree with it, so moving one without the other is already red.
+
+### And a comment that was lying
+
+`TL_CLOSE_LEAD = 0.42` said it was *"the clip's own length, so the
+lock-up is finishing as the sprite arrives"*. The clip it was written
+for, `close-ready`, is **98ms**. The 420 is the prototype's own
+(`gun.cooledMs >= state.cool - 420`) — a judgement about where in the
+pump the mechanism should sound, and the only reason it is this number
+rather than another. Corrected in place and pinned both ways, because a
+comment that explains a number with a fact that isn't true is worse
+than no comment: the next person tunes the clip and expects the lead to
+follow.
+
+Campaign `tools/mutants/fieldgun15.json`: 7 mutants, 7 dead.
+
 ## The test characters carry one
 
 TSR-GUN (Mac, 2026-09-19: *"Put this weapon and ammo inside the test

@@ -47,6 +47,8 @@ import { widgetTransformRect } from '../src/combat/weaponWidgetMotion.js';   // 
 import { equipSoundFor } from '../src/characters/weapons.js';
 import { SOUND } from '../src/systems/soundClips.js';
 import { SFX as TL_SFX, SFX_FILES, thunderlockMuzzleLight, MUZZLE_OFFSET } from '../src/systems/thunderlock.js';
+import { SFX_CANDIDATES } from '../src/tools/gunLab.js';   // FIELD-GUN15: the audition's own lists, whose HEAD is the pick
+import { existsSync } from 'node:fs';
 import { MUZZLE_CURVE, muzzleGlow } from '../src/combat/gunFeel.js';
 import { muzzleLight } from '../src/tools/gunLab.js';
 import { createGunRig, gunRigStep, gunWidgetSettings, gunMotion, gunFrameRect } from '../src/combat/gunViewmodel.js';
@@ -1080,4 +1082,58 @@ test('FIELD-GUN13 #3 - the weapon rides in, it does not pop', () => {
   // the module is told, rather than a second curve being written
   assert.match(src, /shown: !reloading && !sheathed,/);
   assert.match(src, /hiddenTarget: sheathed \? GUN_FEEL\.sheathTarget : GUN_FEEL\.hiddenTarget,/);
+});
+
+// ── FIELD-GUN15 (2026-09-20, Mac, with the lab's panel open on his
+// phone: "Use these sounds" over a screenshot of the three dropdowns)
+test('FIELD-GUN15: the weapon plays the HEAD of each candidate list, which is what the lab opens on', () => {
+  // THE CONVENTION WAS TRUE BY NOBODY'S DOING. `SFX_CANDIDATES`'s own
+  // header has said since it was written that the dropdowns open on
+  // the first entry "which is the pick" - and the pick was ALSO typed
+  // into `SFX_FILES` in the weapon's home, by the same person, on the
+  // same afternoon. Two places holding one decision, agreeing because
+  // nothing had yet made them disagree. That is the drift class this
+  // weapon has paid for at every round since FIELD-GUN6, so the
+  // sentence is a pin now.
+  const lab = readFileSync('src/tools/gunLab.js', 'utf8');
+  const heads = Object.fromEntries(Object.entries(SFX_CANDIDATES).map(([slot, list]) => [slot, list[0][0]]));
+  for (const [key, slot] of [[TL_SFX.fire, 'fire'], [TL_SFX.open, 'reload-open'], [TL_SFX.close, 'reload-close']]) {
+    assert.equal(SFX_FILES[key], `${heads[slot]}.wav`,
+      `${key}: the game plays ${SFX_FILES[key]} and the lab opens on ${heads[slot]}`);
+  }
+  // ...and the lab really does default to the head, rather than to a
+  // name that happens to match one.
+  assert.match(lab, /SFX_CANDIDATES/);
+  const proto = readFileSync('gun-proto.html', 'utf8');
+  assert.match(proto, /sfxFire: SFX_CANDIDATES\.fire\[0\]\[0\], sfxOpen: SFX_CANDIDATES\['reload-open'\]\[0\]\[0\], sfxClose: SFX_CANDIDATES\['reload-close'\]\[0\]\[0\],/,
+    'the panel opens on the head of each list - which is what makes the head the pick');
+
+  // MAC'S THREE, by name, so a reorder that changes what ships says so
+  // out loud rather than passing on the pin above alone.
+  assert.equal(SFX_FILES[TL_SFX.fire], 'fire-dry.wav', 'a flat crack with no room tail');
+  assert.equal(SFX_FILES[TL_SFX.open], 'open-gunrack.wav', 'the dark rack');
+  assert.equal(SFX_FILES[TL_SFX.close], 'close-shell.wav', 'a shell seating');
+  // every one of them is a file that exists, baked to DAGGER.SND's own
+  // parameters (gunLab.test.js holds that law for all sixteen)
+  for (const f of Object.values(SFX_FILES)) {
+    assert.ok(existsSync(`public/sfx/${f}`), `public/sfx/${f} is missing`);
+  }
+
+  // THE VOICE MOVED WITH THEM, and it had to: `fire-dry` carries no
+  // room tail where `fire-shotgun` carried a real one, so a drier,
+  // quieter sample wants the gain back and has nothing to hide a
+  // repeat behind. The FIELD-GUN8 panel pin already holds these two
+  // against the lab's own literals; this says what they now ARE.
+  assert.equal(GUN_FEEL.sfxVolume, 1);
+  assert.equal(GUN_FEEL.sfxVary, 0.19);
+  assert.ok(GUN_FEEL.sfxVary > 0.06 * 2, 'three times the jitter, for a sample with no tail');
+
+  // AND THE CLOSE'S LEAD IS THE LAB'S, not a clip length. The comment
+  // in weaponRig.js used to claim it was "the clip's own length"; the
+  // clip it was written for is 98ms and the lead is 420.
+  const rig = readFileSync('src/combat/weaponRig.js', 'utf8');
+  assert.match(rig, /const TL_CLOSE_LEAD = 0\.42;/);
+  assert.match(proto, /gun\.cooledMs >= Math\.max\(0, state\.cool - 420\)/, 'the prototype’s own 420ms');
+  assert.doesNotMatch(rig, /The close lands this long before the weapon is ready - the clip's\n\s+\*\s+own length/,
+    'and the sentence that said otherwise is gone');
 });

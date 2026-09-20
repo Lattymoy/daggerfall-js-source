@@ -334,11 +334,18 @@ export const SFX = Object.freeze({
   close: 'thunderlock:close',
 });
 /** The picks from public/sfx (see its SOURCES.md - all CC0, all baked
- *  to DAGGER.SND's own 11025Hz 8-bit mono). */
+ *  to DAGGER.SND's own 11025Hz 8-bit mono).
+ *
+ *  FIELD-GUN15 (2026-09-20, Mac, with the lab's panel open: "Use these
+ *  sounds"). These three ARE the head of their candidate list in
+ *  src/tools/gunLab.js, which is where the audition happens and what
+ *  the lab's dropdowns open on - and that is pinned now rather than
+ *  just said, because two places holding one decision is how every
+ *  earlier round of this weapon went wrong. */
 export const SFX_FILES = Object.freeze({
-  [SFX.fire]: 'fire-shotgun.wav',
-  [SFX.open]: 'open-winchester.wav',
-  [SFX.close]: 'close-ready.wav',
+  [SFX.fire]: 'fire-dry.wav',
+  [SFX.open]: 'open-gunrack.wav',
+  [SFX.close]: 'close-shell.wav',
 });
 export const sfxUrl = (file) => new URL(`sfx/${file}`, APP_ROOT ?? globalThis.document?.baseURI ?? 'http://localhost/').href;
 

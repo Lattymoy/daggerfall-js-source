@@ -199,32 +199,50 @@ export function muzzleLight(state, frame) {
  * weapon starts down, `reload-close` as it comes back up.
  *
  * The lists are the LAB's CANDIDATES, in the order the audition put
- * them - the dropdowns open on the first, which is the pick. Named
+ * them - the dropdowns open on the first, WHICH IS THE PICK. Named
  * apart from systems/thunderlock.js's SFX, which is the three CLIP
  * KEYS the game plays: two different things, and one name for both is
  * what audit24's ratchet is for.
+ *
+ * FIELD-GUN15 (2026-09-20, Mac, with the panel open: "Use these
+ * sounds" over a screenshot of the three dropdowns). The heads moved,
+ * and THAT SENTENCE ABOVE IS NOW ENFORCED rather than merely written:
+ * `SFX_FILES` in the weapon's home has to name the head of each list
+ * (test/thunderlock.test.js). It was true by nobody's doing before -
+ * two places holding one decision, agreeing because the same person
+ * typed both - which is the drift class this weapon has paid for at
+ * every round since FIELD-GUN6.
+ *
+ * Mac's picks, and they are not the obvious ones:
+ *   - fire      `fire-dry`     a flat crack with NO room tail. The
+ *                              shotgun's tail is a real room's, and
+ *                              this weapon is fired in a dungeon the
+ *                              engine reverberates itself.
+ *   - open      `open-gunrack` the dark rack, over the winchester's
+ *                              brighter cock.
+ *   - close     `close-shell`  a shell seating, over the snap.
  */
 export const SFX_CANDIDATES = Object.freeze({
   fire: Object.freeze([
+    ['fire-dry', 'dry (no room)'],
     ['fire-shotgun', 'shotgun (clean crack)'],
     ['fire-20gauge', '20 gauge (the real one)'],
     ['fire-musket', 'musket (black powder)'],
     ['fire-blast', 'blast (short tail)'],
-    ['fire-dry', 'dry (no room)'],
     ['gun-fire-synth', 'synth (ours)'],
   ]),
   'reload-open': Object.freeze([
+    ['open-gunrack', 'gun rack (dark)'],
     ['open-winchester', 'winchester cock'],
     ['open-rack', 'shotgun rack'],
-    ['open-gunrack', 'gun rack (dark)'],
     ['open-shell', 'shell'],
     ['gun-reload-open-synth', 'synth (ours)'],
   ]),
   'reload-close': Object.freeze([
+    ['close-shell', 'shell home'],
     ['close-ready', 'ready (snaps shut)'],
     ['close-rack2', 'rack 2'],
     ['close-rack3', 'rack 3'],
-    ['close-shell', 'shell home'],
     ['gun-reload-close-synth', 'synth (ours)'],
   ]),
 });
