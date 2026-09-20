@@ -66,7 +66,7 @@ test('worldsave: the world host wires F9/F11 with the native envelope and the lo
   // B4: the quest+talk envelope moved into the ONE composer both hosts
   // call (the laws themselves are pinned in sessionsave.test.js) - this
   // host must still ride it, with the live bridge and the full trio
-  assert.ok(fn.includes('...composeSessionState({ questBridge, talk: { mill: rumorMill, tree: topicTree, session: npcSession } })'), 'Q4-v/TK-iv via B4: quest + SaveDataConversation ride the quicksave through the composer');
+  assert.ok(fn.includes('...composeSessionState({ questBridge, talk: { mill: rumorMill, tree: topicTree, session: npcSession }, spawnLedger: _spawnLedger })'), 'Q4-v/TK-iv via B4: quest + SaveDataConversation ride the quicksave through the composer');
   const j = s.indexOf('async function worldQuickLoad');
   // AUDIT 39r R28: BOUND BY THE FUNCTION, NOT BY A MAGIC NUMBER. This
   // was widened by hand three times (Q4-v's quest envelope, TK-iv's
@@ -80,7 +80,7 @@ test('worldsave: the world host wires F9/F11 with the native envelope and the lo
   // AUDIT 63 F28: `entity` joined the composer's bag - the orphaned
   // quest-item sweep (SaveLoadManager.cs:1518) runs inside it, after
   // the quest machine is restored.
-  assert.ok(lf.includes('restoreSessionState(extras, { questBridge, talk: { mill: rumorMill, tree: topicTree, session: npcSession }, entity: playerEntity })'), 'Q4-v via B4: the quest envelope restores through the composer');
+  assert.ok(lf.includes('restoreSessionState(extras, { questBridge, talk: { mill: rumorMill, tree: topicTree, session: npcSession }, entity: playerEntity, spawnLedger: _spawnLedger })'), 'Q4-v via B4: the quest envelope restores through the composer');
   assert.ok(lf.includes('_questStarted = true'), 'a restored quest latches the start guard - initAtGameStart must not re-run over it');
   assert.ok(lf.includes("await _teleportToPixel(w.pixel.x, w.pixel.y, null, { modEvent: 'load' })"), 'the load teleports through the travel core - as a LOAD (SIB2: the Seasons mod hears SaveLoadManager.OnLoad, not the travel)');
   assert.ok(lf.includes('state.localFromWorld(w.nativeX, w.nativeZ)'), 'and lands at the exact native spot');
