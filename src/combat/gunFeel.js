@@ -83,7 +83,58 @@ export const GUN_FEEL = Object.freeze({
   sfxVolume: 0.7, sfxVary: 0.06,
   // how far the weapon drops while the reload runs
   hiddenTarget: Object.freeze([0, 0.55]),
+  /** FIELD-GUN13 (Mac: "The weapon should come up from the bottom
+   *  screen into frame when unholstering, not pop in") - and how far
+   *  it drops when it is PUT AWAY, which is a different distance for
+   *  a reason. The reload lower is a dip: the weapon has to stay
+   *  readable while the pump runs, which is what 0.55 buys. A holster
+   *  has to LEAVE, so its target is a full frame height down - past
+   *  `widgetTransformRect`'s own floor clamp, which parks the sprite's
+   *  top on the bottom edge and no further. Same easing, same module,
+   *  one number apart. */
+  sheathTarget: Object.freeze([0, 1]),
+
+  // ── THE FLASH (the lab's panel: light 0.6, over its own 1.9 gain)
+  /** FIELD-GUN13 (Mac: "The muzzle flash itself shouldn't be affected
+   *  by the darkening lighting. It should produce lighting").
+   *
+   *  `flashLight` x `flashGain` is `gun-proto.html`'s own expression -
+   *  `state.room * (1 + muzzleLight(...) * state.light * 1.9)` - and
+   *  the lab's panel defaults for the two. In the lab that lands on
+   *  1.33 at the peak against a room lit 0.62, which SATURATES: the
+   *  flash frame is drawn at full brightness there. The port lerps to
+   *  white rather than multiplying so it saturates in a black dungeon
+   *  too, which is the half of the ask a multiply would quietly drop
+   *  (0.15 x 2.14 is still dark). Everything below the peak rides the
+   *  same curve down. */
+  flashLight: 0.6, flashGain: 1.9,
+  /** How far the flash throws light into the room, at the peak. A
+   *  JUDGEMENT stated as one, like `roomShake`: the classic torch is a
+   *  14-unit radius and the lantern 16 (their templates' own
+   *  capacityOrTarget), and a barrel going off in a corridor lights it
+   *  further than a lantern does - for two frames. It falls with the
+   *  curve, so frame 3 is already under a candle. */
+  flashRange: 20,
 });
+
+/**
+ * THE MUZZLE CURVE. The flash is on frames 1-2 of the sheet
+ * (0-indexed), so the room it lights brightens on those and falls away
+ * over the smoke - a lamp, not a step.
+ *
+ * FIELD-GUN13: this moved out of `src/tools/gunLab.js` for the reason
+ * everything else in this file did - the game needs it now, and a
+ * number that appears in two places is a number that will disagree
+ * with itself. The lab re-exports its own `muzzleLight(state, frame)`
+ * over this, so `gun-proto.html` is unchanged.
+ */
+export const MUZZLE_CURVE = Object.freeze([0, 1, 0.82, 0.3, 0.12, 0.04]);
+
+/** The curve, read. `firing` is the machine off Idle; answers 0..1. */
+export function muzzleGlow(firing, frame) {
+  if (!firing) return 0;
+  return MUZZLE_CURVE[frame] ?? 0;
+}
 
 /** The lab's pitch jitter, as the one line both sides read. */
 export const gunPitch = (rolls = Math.random) => 1 + (rolls() * 2 - 1) * GUN_FEEL.sfxVary;

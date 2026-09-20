@@ -81,6 +81,8 @@ import {
 import { MOD_SETTINGS } from '../systems/modSettings.js';
 import { walkSpeed, runSpeed } from '../player/motor.js';   // GetBaseSpeed's walk arm, the bob's baseSpeed
 export { createRecoil, createScreenShake, shakeNoise, GUN_FEEL } from '../combat/gunFeel.js';   // FIELD-GUN6: the one home
+export { MUZZLE_CURVE, muzzleGlow } from '../combat/gunFeel.js';   // FIELD-GUN13: the flash's curve, the same way
+import { muzzleGlow } from '../combat/gunFeel.js';
 export { widgetTransformRect };
 
 // FIELD-GUN12: placeSprite moved to combat/gunPlacement.js, which
@@ -139,11 +141,16 @@ export function createGunMachine({ fps = 14, cooldownMs = 1700, hitFrame = 1 } =
  * The muzzle light. The flash is on frames 1-2 of the sheet
  * (0-indexed), so the room it lights brightens on those and falls
  * away over the smoke - a lamp, not a step. Answers 0..1.
+ *
+ * FIELD-GUN13: THE CURVE MOVED, this signature did not. The game
+ * paints the flash and throws its light now, so the six numbers live
+ * in combat/gunFeel.js with the rest of the feel and this is the
+ * lab's own reading of them - `state` is this page's machine
+ * ('Firing'), which the game's machine does not have. One home, two
+ * spellings of the same question.
  */
 export function muzzleLight(state, frame) {
-  if (state !== 'Firing') return 0;
-  const curve = [0, 1, 0.82, 0.3, 0.12, 0.04];
-  return curve[frame] ?? 0;
+  return muzzleGlow(state === 'Firing', frame);
 }
 
 /**

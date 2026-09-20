@@ -509,6 +509,138 @@ assembled above the gate now, `_lastEye` included.
 Every round of "it still isn't 1:1" was the distance between those two
 sentences.
 
+## FIELD-GUN13: the flash, the clack and the draw
+
+Mac, 2026-09-19, the first play *after* the prototype was ported rather
+than resembled — three asks in one message:
+
+> 1. The muzzle flasg itself shouldnt be affected by the darkening
+>    lighting. It should produce lighting
+> 2. The sound for holstering is a sword
+> 3. The weapon should come up from the bottom screen into frame when
+>    unholstering, not pop in
+
+None of the three is a feel argument. FIELD-GUN12 ended those. All
+three are the same fault the twelve rounds before them were, and it is
+worth naming one more time because it is the fault this weapon will
+keep producing:
+
+> **A law written over DFU's own range, asked about index 560,
+> answering its default — and a default is not an error, so nothing
+> goes red.**
+
+### #2 — the sword in the scabbard
+
+`equipSoundFor` is `DaggerfallUnityItem.GetEquipSound` (:839-867), a
+switch over DFU's nineteen weapon templates whose `default:` arm is
+`SoundClips.None`. That answer is **correct**: Daggerfall has no row
+for this weapon, so its table has nothing to say about it. The
+departure is one line further out, in `rawToggleSheath`, where the
+port had written DFU's own fallback:
+
+```js
+audio.playOneShot(equipSoundFor(playerWeapon.weapon) ?? SOUND.DrawWeapon);
+```
+
+`SOUND.DrawWeapon` is `FPSWeapon.DrawWeaponSound = 78`, the declared
+default `WeaponManager.SetWeapon` (:780) overwrites whenever
+`GetEquipSound` answers — and it is a blade coming out of a scabbard.
+A gun has no scabbard.
+
+**The departure is a named arm ahead of the verbatim call**, not a row
+inside it. `equipSoundFor`'s domain is `SoundClips`; this weapon's clip
+is a registered *string key* through the mod-sound door (MW-D40), and
+widening a 1:1 port's return type to carry one departure is exactly how
+a table stops being a table. The clip is `thunderlock:close` — the
+lock-up clack the reload already closes on, which is what this weapon
+does instead of a scabbard, going out and coming back alike.
+
+DFU plays this only on the **unsheathe** (`toggleSheath()` answers
+truthy on the draw), and that law stands: putting the weapon away is
+silent, as it is for every classic weapon.
+
+### #1 — the flash was being darkened, and lit nothing
+
+**Why it was darkened:** `fpTint` is MAC-I's flat light, the room's
+answer at the camera, and it multiplies the whole quad. A dungeon at
+0.15 drew the brightest thing in the room at 0.15. There is no second
+draw call to exempt — **the barrel and the fire coming out of it are
+one texture**.
+
+So the tint rises on the muzzle curve instead. The prototype composes
+its room as `state.room * (1 + muzzleLight(...) * state.light * 1.9)`,
+and at the lab's own room level (0.62) that **saturates** — its flash
+frame really is drawn white. A multiply in a black room stays black,
+which is the half of the ask that would quietly go missing, so the port
+**lerps toward white** on the same two numbers. Same answer where the
+lab was; the asked-for answer everywhere else.
+
+It is the right shape anyway: the thing lighting the gun on those two
+frames *is* the gun. Barrel, hand and flash brighten together and fall
+away over the smoke — one lamp switching on, not a sprite special-cased.
+
+**Why it lit nothing:** because the curve lived in `src/tools/`. It has
+moved to `combat/gunFeel.js` with the rest of the feel (`MUZZLE_CURVE`,
+`muzzleGlow`), and the lab's own `muzzleLight(state, frame)` now asks
+the same question in its machine's words — one home, two spellings.
+
+The emission is **`playerTorchLight`'s own shape**, deliberately. That
+function is the port's one worked example of a light the player
+carries: a module-level read of state the frame already parked on the
+entity, answering the `{x, y, z, range, carried}` record
+`magicCandle.withPlayerLights` prepends to a host's array. Written that
+way, six light arrays across four hosts gain one argument each and no
+host learns that a weapon can be a lamp.
+
+Yaw only, for the reason the torch is: the offset is in the player
+*body*'s space and the pitch belongs to the camera. A gun does not fire
+into the ceiling because you glanced up — the shot's trajectory is the
+ranged lane's business, and this is only where the flash sits.
+
+No colour: `withPlayerLights` gives a light with no `color` the white
+of the shared channel, and a muzzle flash is white-hot. Saying nothing
+beats inventing a temperature.
+
+### #3 — `shown()` is a boolean and a slide is not
+
+The draw ladder's `if (!shown()) return;` is FPSWeapon's own
+`ShowWeapon`. DFU's sprite has no draw animation — it is there or it is
+not — so there was never anything to ease, and the port inherited the
+cut.
+
+The mod that *does* have one was already running on this weapon. Weapon
+Widget's **Offset module** is what the reload lower rides
+(`shown: false`, `hiddenTarget`), and it was being handed
+`shown: !reloading` — so it eased the pump beautifully and never saw
+the sheathe at all. The holster was decided one gate above it.
+
+Two distances, one easing:
+
+| | target | why |
+|---|---|---|
+| reload dip | `hiddenTarget` `[0, 0.55]` | the weapon has to stay readable while the pump runs |
+| holster | `sheathTarget` `[0, 1]` | it has to **leave** — past `widgetTransformRect`'s floor clamp, which parks the sprite's top on the bottom edge |
+
+The draw is the same curve run backwards, for free. At the mod's own
+settings it takes 0.2s. The holster wins when both are true: a shot
+fired on the frame the weapon is put away leaves, it does not dip.
+
+**And the gate lets it — the sheathe leg alone.** This is the fourth
+relaxation of `if (paralyzed || (!shown() && ...)) return;`, after
+TORCH-VIS's lit hand, MAP-FIELD's held sheet and SW1-GATE's shield, and
+it follows AUDIT-FIELD F1's rule for the reason that finding exists:
+`shown()` is false for **four** things and only one of them is the
+sheathe. A readied spell, a cast in flight and an equip countdown all
+mean *empty hands by construction*, and a gun sliding out of frame
+across them would be the port inventing a state DFU has never drawn. So
+`thunderlockSliding()` tests `playerWeapon.sheathed` **positively** —
+a leg added to `shown()` later cannot be relaxed here by accident — and
+the other three are re-stated at the gate, with both lanes' bodies
+(`!eotbHidesWeapon()`, `!fpArm.active()`) beside them. Below the gun's
+own arm, `if (gunSliding && !shown()) return;` stops the clone and the
+classic sprite, so every other weapon's ladder is byte-for-byte what it
+was.
+
 ## The test characters carry one
 
 TSR-GUN (Mac, 2026-09-19: *"Put this weapon and ammo inside the test

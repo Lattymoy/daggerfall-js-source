@@ -35,6 +35,7 @@ import { addVendorTextures, vendorTextureCount } from './textureReplacement.js';
 import { registerUniqueFind, registerLegendary, registerAmmunition } from './lootRarity.js';
 import { SKILLS } from './skills.js';
 import { APP_ROOT } from './appRoot.js';   // AUDIT-THUNDERLOCK F7
+import { GUN_FEEL } from '../combat/gunFeel.js';   // FIELD-GUN13: the flash's reach, from the one home the feel lives in (a leaf - no imports of its own)
 // The indices live in a LEAF (characters/thunderlockIds.js) because
 // characters/weapons.js needs them too and importing this file from
 // there would close a cycle through systems/itemTemplates.js. Said out
@@ -357,4 +358,73 @@ export function installThunderlockSounds(audio, { fetchBytes = null } = {}) {
     }
     return n;
   })());
+}
+
+// ── THE MUZZLE'S LIGHT ───────────────────────────────────────────────
+//
+// FIELD-GUN13 (2026-09-19, Mac: "The muzzle flash itself shouldn't be
+// affected by the darkening lighting. It should produce lighting").
+//
+// TWO ASKS IN ONE SENTENCE, and they are opposite ends of the same
+// fact. The flash is the brightest thing in the room for two frames,
+// so (a) it cannot be DARKENED by the room - combat/weaponRig.js's
+// `drawThunderlock` lifts the sprite's tint to white on the curve -
+// and (b) it must LIGHT the room, which is this.
+//
+// IT IS THE TORCH'S OWN SHAPE, deliberately. `playerTorchLight`
+// (systems/playerTorch.js) is the port's one worked example of a
+// light the PLAYER carries: a module-level read of state the frame
+// already parked on the entity, answering the `{x, y, z, range,
+// carried}` record `magicCandle.withPlayerLights` prepends to a
+// host's array. Written that way, the six light arrays across the
+// four hosts add one argument each and no host learns that a weapon
+// can be a lamp. A
+// second mechanism for the same job would be a second thing to keep
+// in step.
+//
+// THE BASIS IS YAW ONLY, for the reason the torch's is (see its
+// header): the offset is in the player BODY's space and the pitch
+// belongs to the camera. A gun does not fire into the ceiling because
+// you glanced up - the shot's own trajectory is the ranged lane's
+// business, and this is only where the flash sits.
+//
+// NO COLOUR. `withPlayerLights` gives a light with no `color` the
+// white of the shared channel, and a muzzle flash is white-hot - so
+// the honest answer here is to say nothing rather than invent a
+// temperature.
+
+/** Where the barrel is, in the player body's frame. The torch's own
+ *  two numbers (0.3 out, 1.2 up) put the hand where the hand is; the
+ *  forward reach is the barrel's, which is most of an arm further out
+ *  than a torch is held. To the RIGHT because that is the hand the
+ *  classic sprite draws in - the handedness mirror is a picture, not
+ *  a body (FPSWeapon.cs:378 flips the IMAGE). */
+export const MUZZLE_OFFSET = Object.freeze({ right: 0.3, up: 1.2, forward: 0.9 });
+
+/**
+ * The light the flash throws, or null. Read AFTER the rig's frame,
+ * off the glow it parked - so every host answers the same frame's
+ * shot, and a host that never runs a weapon rig answers null.
+ *
+ * @param {object} entity the player
+ * @param {number[]} feet the player's feet, the host's `player.pos`
+ * @param {number} yaw the camera's yaw
+ */
+export function thunderlockMuzzleLight(entity, feet, yaw = 0) {
+  const glow = entity?._thunderlockFlash;
+  if (!(glow > 0) || !feet) return null;
+  const sy = Math.sin(yaw), cy = Math.cos(yaw);
+  const f = [sy, 0, cy];              // forward
+  const r = [cy, 0, -sy];             // right
+  const o = MUZZLE_OFFSET;
+  return {
+    x: feet[0] + r[0] * o.right + f[0] * o.forward,
+    y: feet[1] + o.up,
+    z: feet[2] + r[2] * o.right + f[2] * o.forward,
+    range: GUN_FEEL.flashRange * glow,
+    // MAC-T1: a flash in your own hand gets no bloom glare either -
+    // the same exemption the carried torch takes, for the same reason
+    // (a torso-sized additive ball painted over the third-person body).
+    carried: true,
+  };
 }

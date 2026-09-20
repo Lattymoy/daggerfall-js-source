@@ -43,6 +43,13 @@ import { createRecoil, createScreenShake, GUN_FEEL, GUN_TICK_SECONDS, GUN_COOLDO
 import { createGunMachine, placeSprite } from '../src/tools/gunLab.js';
 import { unionDrawRect } from '../src/combat/gunSheet.js';   // FIELD-GUN11: the one home both sides read
 import { widgetTransformRect } from '../src/combat/weaponWidgetMotion.js';   // FIELD-GUN7/10: the PROTOTYPE's own machine and its placement, as the oracle
+// FIELD-GUN13: the three asks - the draw's clip, the flash's light, the sheathe's slide.
+import { equipSoundFor } from '../src/characters/weapons.js';
+import { SOUND } from '../src/systems/soundClips.js';
+import { SFX as TL_SFX, SFX_FILES, thunderlockMuzzleLight, MUZZLE_OFFSET } from '../src/systems/thunderlock.js';
+import { MUZZLE_CURVE, muzzleGlow } from '../src/combat/gunFeel.js';
+import { muzzleLight } from '../src/tools/gunLab.js';
+import { createGunRig, gunRigStep, gunWidgetSettings, gunMotion, gunFrameRect } from '../src/combat/gunViewmodel.js';
 import { drawFpsWeapon } from '../src/combat/fpsWeapon.js';   // FIELD-GUN10
 import { gunPitch } from '../src/combat/gunFeel.js';   // FIELD-GUN8
 import { GROUP_TEMPLATE_INDICES } from '../src/systems/itemTemplates.js';
@@ -890,7 +897,7 @@ test('FIELD-GUN12: the lab and the game are the SAME function, not two that agre
   const rig = readFileSync('src/combat/weaponRig.js', 'utf8');
   assert.match(rig, /const \{ rect \} = gunFrameRect\(\{/, 'the draw takes the prototype\'s rect');
   assert.match(rig, /gunRigStep\(_tlRig, gunWidgetSettings\(\), dt, \{/, 'and the prototype\'s module step');
-  assert.match(rig, /renderer\.drawScreenQuad\(tex, rect, undefined, tint \?\? undefined\)/, 'and puts it on the screen');
+  assert.match(rig, /renderer\.drawScreenQuad\(tex, rect, undefined, lit \?\? undefined\)/, 'and puts it on the screen');   // FIELD-GUN13: `lit` is the tint with the muzzle's own lift on it
 
   // THE FRAME IS STILL THE PROTOTYPE'S SHAPE: anchor placed and
   // transformed, union derived, kick after the transform (the mod's
@@ -918,4 +925,159 @@ test('FIELD-GUN12: the lab and the game are the SAME function, not two that agre
   assert.ok(rect.h > anchorRect.h, 'the union is taller than the gun - the flash has its room');
   assert.ok(Math.abs((rect.x + rect.w) - (anchorRect.x + anchorRect.w)) < 2,
     'and they share a right edge, which is what AlignRight aligned');
+});
+
+
+// ── FIELD-GUN13 (2026-09-19, Mac, three asks in one message) ────────
+//
+//   "1. The muzzle flash itself shouldn't be affected by the darkening
+//    lighting. It should produce lighting
+//    2. The sound for holstering is a sword
+//    3. The weapon should come up from the bottom screen into frame
+//    when unholstering, not pop in"
+//
+// ALL THREE ARE THE SAME FAULT AS FIELD-GUN1-12: a law written over
+// DFU's own range, asked about this weapon, answering its default -
+// and a default is not an error, so nothing went red. The draw sound
+// fell through GetEquipSound's `default: None` onto FPSWeapon's
+// declared blade; the sprite's tint was the room's flat light with
+// nothing to say a muzzle flash is not a room surface; the sheathe was
+// `shown()`, a boolean, because DFU's sprite has no draw animation to
+// ease. The pins below are the three defaults, named.
+
+test('FIELD-GUN13 #2 - the draw is the gun’s own clack, not a scabbard', () => {
+  // THE DEPARTURE IS AN ARM AHEAD OF THE VERBATIM TABLE, not a row in
+  // it: GetEquipSound's domain is SoundClips and this clip is a
+  // registered string key, so `equipSoundFor` stays exactly what DFU
+  // has - including the `default: None` that is the right answer for a
+  // weapon Daggerfall does not have.
+  assert.equal(equipSoundFor(createThunderlock()), null,
+    'the 1:1 table still answers SoundClips.None for a weapon DFU has no row for');
+  // and every classic weapon still gets its own, untouched
+  assert.equal(equipSoundFor({ templateIndex: 120 }), SOUND.EquipLongBlade, 'the Longsword is untouched');
+  assert.equal(equipSoundFor({ templateIndex: 129 }), SOUND.EquipBow, 'and so is the bow');
+
+  const rig = readFileSync('src/combat/weaponRig.js', 'utf8');
+  const toggle = rig.slice(rig.indexOf('function rawToggleSheath()'), rig.indexOf('THE THUNDERLOCK’S VOICE'.replace('’', "'")));
+  assert.ok(toggle.includes('if (thunderlockHeld()) {'), 'the departure is named in the toggle');
+  assert.ok(toggle.indexOf('thunderlockHeld()') < toggle.indexOf('equipSoundFor('),
+    'and it stands AHEAD of the verbatim call, which is what makes it a departure and not a patch');
+  assert.ok(toggle.includes('TL_SFX.close'), 'the clip is the breech coming home');
+  // the key it plays is one the weapon actually registers
+  assert.equal(TL_SFX.close, 'thunderlock:close');
+  assert.ok(SFX_FILES[TL_SFX.close], 'and it has a file behind it');
+});
+
+test('FIELD-GUN13 #1 - the muzzle curve is one home, and it throws light', () => {
+  // the curve moved out of the lab; the lab's own signature still reads it
+  assert.deepEqual([...MUZZLE_CURVE], [0, 1, 0.82, 0.3, 0.12, 0.04]);
+  assert.equal(muzzleGlow(false, 1), 0, 'an idle weapon does not flash');
+  assert.equal(muzzleGlow(true, 1), 1, 'the flash is brightest on the sheet’s frame 2');
+  assert.equal(muzzleGlow(true, 99), 0, 'and off the end of the curve there is none');
+  assert.equal(muzzleLight('Firing', 2), muzzleGlow(true, 2),
+    'the lab asks the same question in its own machine’s words - two spellings, one home');
+
+  // THE FLASH IS NOT DARKENED. The lift is a lerp toward white, so the
+  // peak frame saturates in a BLACK room, which is the half of the ask
+  // the prototype's multiply would drop (0.15 x 2.14 is still dark).
+  const lift = (v, g) => v + (1 - v) * Math.min(1, g * GUN_FEEL.flashLight * GUN_FEEL.flashGain);
+  assert.equal(lift(0.15, 1), 1, 'the peak frame is full brightness however dark the room is');
+  assert.equal(lift(0.15, 0), 0.15, 'and an idle gun is lit by the room exactly as it always was');
+  assert.ok(lift(0.15, 0.3) > 0.15 && lift(0.15, 0.3) < 1, 'the smoke falls away between the two');
+  // the lab's own two numbers, not a second pair
+  assert.equal(GUN_FEEL.flashLight, 0.6);
+  assert.equal(GUN_FEEL.flashGain, 1.9);
+  assert.match(readFileSync('gun-proto.html', 'utf8'), /state\.light \* 1\.9/,
+    'which is still the expression the prototype composes its room with');
+
+  // IT PRODUCES LIGHT, in the shape playerTorchLight already answers -
+  // so `withPlayerLights` takes it with no host learning anything new.
+  const entity = {};
+  assert.equal(thunderlockMuzzleLight(entity, [10, 0, 10], 0), null, 'no shot, no light');
+  entity._thunderlockFlash = 0;
+  assert.equal(thunderlockMuzzleLight(entity, [10, 0, 10], 0), null, 'nor a zero one');
+  entity._thunderlockFlash = 1;
+  const L = thunderlockMuzzleLight(entity, [10, 0, 10], 0);
+  assert.equal(L.range, GUN_FEEL.flashRange, 'the peak throws the flash’s whole reach');
+  assert.equal(L.carried, true, 'and takes the carried-light exemption a torch in the hand takes');
+  assert.ok(L.z > 10, 'the barrel is in FRONT of the player at yaw 0');
+  assert.equal(L.y, 10 * 0 + MUZZLE_OFFSET.up, 'and at the hand’s height');
+  // yaw only - a gun does not fire into the ceiling because you looked up
+  const half = thunderlockMuzzleLight(entity, [10, 0, 10], Math.PI);
+  assert.ok(half.z < 10, 'turn around and the barrel is behind you');
+  entity._thunderlockFlash = 0.3;
+  assert.ok(Math.abs(thunderlockMuzzleLight(entity, [0, 0, 0], 0).range - GUN_FEEL.flashRange * 0.3) < 1e-9,
+    'and the reach falls with the curve');
+
+  // EVERY HOST ADDS IT. Four files, five arrays - the FOUR HOSTS RULE,
+  // plus worldModes' interior arm, which is the one a corridor shot is
+  // most likely to happen in.
+  let sites = 0;
+  for (const [file, n] of [['src/scenes/world.js', 2], ['src/scenes/worldModes.js', 2],
+    ['src/scenes/dungeon.js', 1], ['src/scenes/exterior.js', 1]]) {
+    const src = readFileSync(file, 'utf8');
+    const hits = src.split('thunderlockMuzzleLight(playerEntity, player.pos, cam.yaw)').length - 1;
+    assert.equal(hits, n, `${file} composes the muzzle light into all ${n} of its light arrays`);
+    // beside the torch, every time - the same frame's carried lights
+    assert.equal(src.split('playerTorchLight(playerEntity, player.pos, cam.yaw)').length - 1, n,
+      `${file}: the torch and the flash ride the same call sites`);
+    sites += hits;
+  }
+  assert.equal(sites, 6, 'six light arrays in four hosts');
+});
+
+test('FIELD-GUN13 #3 - the weapon rides in, it does not pop', () => {
+  // TWO DISTANCES, ONE EASING. The reload dip has to stay readable;
+  // the holster has to leave.
+  assert.deepEqual([...GUN_FEEL.hiddenTarget], [0, 0.55]);
+  assert.deepEqual([...GUN_FEEL.sheathTarget], [0, 1]);
+  assert.ok(GUN_FEEL.sheathTarget[1] > GUN_FEEL.hiddenTarget[1],
+    'a weapon put away goes further than one being pumped');
+
+  const anchor = { x: 0, y: 21, w: 585, h: 312 };
+  const union = { x: 0, y: 0, w: 586, h: 333 };
+  const rig = createGunRig();
+  const s = gunWidgetSettings({});
+  const step = (shown) => gunRigStep(rig, s, 1 / 60, {
+    screenRect: { width: 1280, height: 800 }, motion: gunMotion({}),
+    shown, hiddenTarget: shown ? GUN_FEEL.hiddenTarget : GUN_FEEL.sheathTarget, liveSpeed: 50,
+  });
+  const y = () => gunFrameRect({ canvasW: 1280, canvasH: 800, anchor, union, rig }).anchorRect.y;
+
+  const drawnY = y();
+  assert.ok(drawnY < 800, 'a drawn weapon is on the screen');
+  // sheathe: it LEAVES, and it takes frames to do it
+  const seen = [];
+  for (let i = 0; i < 60; i++) { step(false); seen.push(y()); }
+  assert.equal(y(), 800, 'and a sheathed one has its top on the bottom edge - fully out of frame');
+  assert.ok(seen.slice(0, 6).every((v, i) => i === 0 || v >= seen[i - 1]),
+    'it goes DOWN, monotonically - a slide, not a cut');
+  assert.ok(seen[2] > drawnY && seen[2] < 800, 'and three frames in it is still partly on screen');
+
+  // draw: back up the same way, in the mod's own time
+  let n = 0;
+  while (Math.abs(rig.offsetCurrent[1]) > 1e-3 && n < 600) { step(true); n++; }
+  assert.ok(n > 6 && n < 30, `the draw eases over ${n} frames, not one`);
+  // within a pixel rather than exactly: Bob is running underneath (it
+  // is gated on the machine's Idle, not on the Offset module), so the
+  // rest point breathes. The OFFSET channel is the one that has to be
+  // home, and it is, which is what ends the loop above.
+  assert.ok(Math.abs(y() - drawnY) < 1, 'and lands where a drawn weapon sits');
+
+  // AND THE GATE LETS IT. `shown()` is false the whole way, so the
+  // rig's own sheathe leg has to relax it - and relax ONLY it.
+  const src = readFileSync('src/combat/weaponRig.js', 'utf8');
+  assert.match(src, /function thunderlockSliding\(\) \{\n\s*if \(!playerWeapon\.sheathed\) return false;/,
+    'the leg is said POSITIVELY, so a leg added to shown() later cannot be relaxed by accident');
+  const gate = src.slice(src.indexOf('const gunSliding = '), src.indexOf('const gunSliding = ') + 400);
+  for (const other of ['!spellArmed()', '!fpsSpellCasting.isPlayingAnim', 'equipCountdown', '!eotbHidesWeapon()', '!fpArm.active()']) {
+    assert.ok(gate.includes(other), `AUDIT-FIELD F1: the gate must re-state ${other} - empty hands stay empty`);
+  }
+  assert.match(src, /if \(paralyzed \|\| \(!shown\(\) && !torchOnly && !sheetOnly && !shieldRect && !gunSliding\)\) return;/);
+  assert.match(src, /if \(!shown\(\) && !gunSliding\) return;/);
+  assert.match(src, /if \(gunSliding && !shown\(\)\) return;/,
+    'and nothing below the gun’s own arm draws on a sliding frame');
+  // the module is told, rather than a second curve being written
+  assert.match(src, /shown: !reloading && !sheathed,/);
+  assert.match(src, /hiddenTarget: sheathed \? GUN_FEEL\.sheathTarget : GUN_FEEL\.hiddenTarget,/);
 });
