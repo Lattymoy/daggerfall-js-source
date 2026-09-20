@@ -12,6 +12,7 @@ import {
   QUALITY, SWEEP_FRAMES, WORLD_PER_DRIFT, VC_PROFILE, easeProfile, cloudLight, MARCH_FS, COMPOSITE_FS, SHADOW_FS, MARCH_UNIFORMS, COMPOSITE_UNIFORMS, SHADOW_UNIFORMS,
   SHADOW_EXTENT, PIXEL_METRES, shadowOrigin,
   horizonDip, EARTH_RADIUS_M, MARCH_SLACK, WARP_METRES, FIELD_PERIOD_METRES, VARIATION_METRES, SHAPE_METRES, CLOUD_FIELD_GLSL,   // VC6
+  HORIZON_SKIRT,   // DSH1
 } from '../src/render/volumetricClouds.js';
 import { easeWeather, WEATHER_SKY, WEATHER_EASE_MINUTES } from '../src/render/enhancedSky.js';
 import { WEATHER_TYPES } from '../src/world/weather.js';
@@ -106,8 +107,10 @@ test('VC3: the shaders - the composite\'s ray is the dome\'s line for line, ever
     'float cy = cos(uYaw), sy = sin(uYaw);',
     'vec3 dir = normalize(vec3(r1.x * cy + r1.z * sy, r1.y, -r1.x * sy + r1.z * cy));'];
   for (const l of rayLines) { assert.ok(dome.includes(l), `the dome carries: ${l}`); assert.ok(COMPOSITE_FS.includes(l), `the composite carries: ${l}`); }
-  assert.match(COMPOSITE_FS, /vec2 uv = vec2\(az \/ \(2\.0 \* PI\), el \/ \(0\.5 \* PI\)\);/, 'azimuth across, elevation up');
-  assert.match(COMPOSITE_FS, /if \(el <= 0\.0\) discard;/, 'below the horizon the dome stands');
+  assert.match(COMPOSITE_FS, /vec2 uv = vec2\(az \/ \(2\.0 \* PI\), max\(el, 0\.0\) \/ \(0\.5 \* PI\)\);/, 'azimuth across, elevation up - and the bottom row over the skirt');
+  // DSH1: the lid clears the horizon by a skirt, then the dome stands again.
+  assert.match(COMPOSITE_FS, new RegExp(`if \\(el <= -${HORIZON_SKIRT}\\) discard;`), 'past the skirt the dome stands');
+  assert.ok(HORIZON_SKIRT > 0.01 && HORIZON_SKIRT < 0.03, 'the skirt clears Unity\'s 0.01 sky-to-ground strip and is still under two degrees');
   assert.match(MARCH_FS, /vec3 dir = vec3\(sin\(az\) \* cos\(el\), sin\(el\), cos\(az\) \* cos\(el\)\);/, 'the march reads the same map coordinates back into a direction');
   for (const [fs, names] of [[MARCH_FS, MARCH_UNIFORMS], [COMPOSITE_FS, COMPOSITE_UNIFORMS], [SHADOW_FS, SHADOW_UNIFORMS]]) {   // all THREE marched programs (the review: a drifted SHADOW_UNIFORMS was silent)
     const declared = [...fs.matchAll(/uniform\s+\w+\s+(\w+)/g)].map((m) => m[1]);
