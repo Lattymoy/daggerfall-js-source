@@ -4618,7 +4618,7 @@ appended its own note to the end of the line that already carried
 **Why that is an invulnerable enemy.** Online, a joiner applies no local
 damage to a layout foe - `damageFoe`'s non-authority arm hands the blow
 to the room's host through `opts.onFoeHit?.(...)` and RETURNS
-(`dungeonContext.js:4021`). With the property missing that call is a
+(`dungeonContext.js:4041`). With the property missing that call is a
 no-op on `undefined`: no damage, no frame, no warning, nothing on the
 console. Every layout foe in every online dungeon absorbed every blow
 from everyone but the room's authority, for eight slices, in silence.
@@ -6925,6 +6925,43 @@ beside `watch.hurt`, granting out of cityGuards' own emptying door) - a
 slice of its own if a peer is ever to loot the watch; the foes' hit
 arm's reach; the striker's routing door pinned by source (an executed
 pin would have to stand world.js's own `dealDamage` closure).
+
+## ONLINE-DUNGEON-FOES (2026-09-20): the non-layout run is private, and that is two of Mac's bugs
+
+**Mac: "Issues with non-reactive enemies in dungeons in the online mode" and
+"The lysander ghost enemy isn't synced online between players."** Two reports,
+one line. RECORDED, NOT CLOSED - the fix is a slice, and half of it would be
+worse than the bug.
+
+`dungeonContext.js` takes `_layoutFoes = foes.length` once, when the layout's
+run has been built. Every foe appended after that - a quest foe through
+`spawnQuestFoe`, an encounter through IntermittentEnemySpawn, a summon - lives
+past that bound, and the bound is load-bearing in two places at once:
+
+- **It is not streamed.** `foesFrame` loops `for (let i = 0; i < _layoutFoes;
+  i++)`. A foe past the run is in no frame any peer ever receives. The Lysandus
+  ghost is quest-placed, so it stands only on the client whose quest placed it;
+  nobody else has it to see, let alone to see move.
+- **It is not peer-aware.** The target machine's candidate list admits peers
+  only under `_authority && streamed`, and `streamed` IS `_fi < _layoutFoes`.
+  So a foe past the run never sees another player as a target at all. It
+  ignores everyone but the client it belongs to - which is what "non-reactive"
+  looks like from the other player's side.
+
+**The two halves must be paid together.** Arming a non-layout foe against peers
+while it is still unsynced is worse than leaving it alone: it would chase and
+swing at a player who cannot see it and has no damage frame to resolve the blow
+with. `test/world2.test.js` pins exactly that - the puppet gate and the
+targeting bound are one expression, and widening either alone goes red.
+
+**The answer already exists and is proven.** WORLD6b built it for the open
+country, in `scenes/exteriorFoes.js`: a cell has no host simulation, so A FOE IS
+ITS SPAWNER'S - the spawner steps it and streams it, everyone else puppets it by
+(owner, seq), and a blow on another's foe goes to its owner as a hit. The
+dungeon's non-layout run wants the same law: a new frame shape beside WORLD2's
+index-keyed one, puppet build and teardown, hit routing to the owner, and a
+stale sweep for an owner who leaves. That is the slice, and it is not small -
+exteriorFoes.js is 1,809 lines of it.
 
 ## OL5 (2026-09-20): the town gate and the guild hall, open at night online
 

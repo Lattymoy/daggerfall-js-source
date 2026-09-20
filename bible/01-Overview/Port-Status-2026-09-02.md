@@ -15,7 +15,7 @@ the method and the old one is named as corrected.*
 superseded page was written as an audit's evidence file and carried its
 166 confirmed defects inline; this one carries none, because they are
 closed and their record is `Audit-44.md`. What this page is for is the
-three lists at the bottom: the **19 open flags** (6 stand after Wave E,
+three lists at the bottom: the **19 open flags** (7 stand after Wave E,
 the ship landing, ROAD-F and QX1/TP2 - list 1 strikes the rest, and
 `node tools/regenOpenFlags.mjs --check` is the arbiter) with the blocker the
 closeout triage assigned each, the **Port-Ledger section C rows still
@@ -34,7 +34,7 @@ class AUDIT 44 named - and what remains is no longer a list of defects
 but a list of **nineteen sites with a named blocker, fourteen ledger
 rows that still owe work - six of them stale under the campaign that
 ran past them - and a set of departures that were never on the road.**
-Wave E and the closures after it worked that list down to **six sites
+Wave E and the closures after it worked that list down to **seven sites
 and six rows** (five, since OT1 struck `:604`),
 which is what lists 1 and 2 now record; the paragraph above is the
 measurement as taken, kept because the two lists are read against it.
@@ -49,7 +49,7 @@ measurement as taken, kept because the two lists are read against it.
 | `src/` lines | 164,220 | **186,438** | same list, concatenated through `wc -l` |
 | test files | 529 | **588** | `git ls-tree -r <sha> --name-only \| grep -c '^test/.*\.test\.js$'` |
 | suite | 5,110 tests | **6,050 tests, 5,841 pass, 0 fail, 208 data-gated skips** | `node --test` at the close |
-| open flags | 151 | **6** | `node tools/regenOpenFlags.mjs --check` answers 6 ("6 entries, up to date"). It answered 19 when this table was taken - 17 at `c3c12ee`, plus the two the closeout tail's spell-hand port added - Wave E then retired six, named in list 1, the ship landing a seventh, ROAD-F three more (GS1 `scenes/worldModes.js`, GS2 `systems/skills.js`, DR1 `scenes/dungeonContext.js`), and QX1 the next (`scenes/exterior.js`'s PX3, struck in list 1); the same grep over `git show 6881171:bible/Home.md` returns 151 |
+| open flags | 151 | **6** | `node tools/regenOpenFlags.mjs --check` answers 7 ("6 entries, up to date"). It answered 19 when this table was taken - 17 at `c3c12ee`, plus the two the closeout tail's spell-hand port added - Wave E then retired six, named in list 1, the ship landing a seventh, ROAD-F three more (GS1 `scenes/worldModes.js`, GS2 `systems/skills.js`, DR1 `scenes/dungeonContext.js`), and QX1 the next (`scenes/exterior.js`'s PX3, struck in list 1); the same grep over `git show 6881171:bible/Home.md` returns 151 |
 | ARENA2-gated tests | 199 | **207** | the runner's own `# skipped` line |
 
 Both volume figures reproduce the superseded page exactly at its own
@@ -373,14 +373,14 @@ became Wave D's 42 slices.
 
 # What remains
 
-## 1. The nineteen open flags this was measured over - SIX STAND
+## 1. The nineteen open flags this was measured over - SEVEN STAND
 
 The list is `bible/Home.md`'s "Open flags", regenerated from `src/` by
 `tools/regenOpenFlags.mjs` and pinned both ways by
 `test/audit18_bible_docs.test.js`. It cannot be edited into agreement.
 The nineteen sorted, AS MEASURED, into the four groups below; each
 bullet a later slice closed is struck at its own entry, and what stands
-unstruck here is the six the tool answers today (GP3, 2026-09-11, retired the joystick flag).
+unstruck here is the seven the tool answers today (GP3, 2026-09-11, retired the joystick flag; ONLINE-DUNGEON-FOES, 2026-09-20, added one after this page's measurement).
 Ten carry a **blocked** verdict from the closeout triage
 (`closeout-audit.json`, `triage` rows with `verdict: "blocked"`); six
 are the **narrowed remainders** Wave D recorded rather than shipped
@@ -388,7 +388,7 @@ are the **narrowed remainders** Wave D recorded rather than shipped
 
 **Blocked - no 1:1 target.**
 
-- ~~**`src/scenes/dungeonContext.js:1954`** - the two window seams this
+- ~~**`src/scenes/dungeonContext.js:1974`** - the two window seams this
   host cannot mount (`onTeleport`'s INTERIM shape). *There is no
   standalone dungeon scene in DFU to port from; `?dungeon` is the
   port's own dev route. Closing it means porting the trade window and
@@ -623,11 +623,34 @@ are the **narrowed remainders** Wave D recorded rather than shipped
   it records, and `flagLines()` answering empty over the file -
   mutation-checked by putting the token back.*
 
+**Added after this page's measurement, and counted here so the tally follows the tree.**
+
+- **`src/scenes/dungeonContext.js:1113`** - the dungeon's non-layout foe
+  run is private (ONLINE-DUNGEON-FOES, 2026-09-20). *Mac's two online
+  reports - "non-reactive enemies in dungeons" and "the lysander ghost
+  enemy isn't synced between players" - are one line. `_layoutFoes` is
+  measured once, and every foe appended past it (a quest foe, an
+  encounter, a summon) is outside BOTH the stream (`foesFrame` loops
+  `i < _layoutFoes`) and the target machine's peer candidates
+  (`_authority && streamed`, where `streamed` is that same bound). So a
+  quest-placed foe exists only on the client that placed it, and no
+  non-layout foe ever sees another player as a target. RECORDED, NOT
+  CLOSED: the two halves must be paid together - arming an unsynced foe
+  against peers is worse than the bug, because it would chase and swing
+  at a player who cannot see it and has no damage frame to resolve the
+  blow. The answer is WORLD6b's owner law (`scenes/exteriorFoes.js`, a
+  cell's foe is its spawner's) brought into the dungeon, which is a
+  slice: a frame shape beside WORLD2's index-keyed one, puppet build and
+  teardown, hit routing to the owner and a stale sweep. Recorded in
+  Online-Arc; the "both halves together" law is pinned in
+  `test/world2.test.js`.*
+
 **The arithmetic.** 10 blocked + 6 narrowed + 1 false positive = 17
 when this was measured, over the 19 the list then held. Every bullet the
 tree has closed since is struck at its own entry above, and the sites
-still standing there are exactly the six `bible/Home.md` lists (GP3 retired the seventh). **As of Wave E, the ship
-landing, ROAD-F (GS1, GS2, DR1) and QX1/TP2, `node tools/regenOpenFlags.mjs --check` answers 6**,
+still standing there are the six `bible/Home.md` listed then (GP3 retired the seventh), plus the one
+added above after this page was measured - seven in all, which is what the tool answers. **As of Wave E, the ship
+landing, ROAD-F (GS1, GS2, DR1) and QX1/TP2, `node tools/regenOpenFlags.mjs --check` answers 7**,
 and no count in
 this file or in `Road-To-1-1.md` may state another figure: the tool is
 the measurement, and `test/citedrift.test.js` holds both documents to
@@ -1034,7 +1057,7 @@ into a module-and-host one costs.
 
 What is genuinely left is small, and it is now named to the line.
 
-**Six sites carry a blocker** - the six `node
+**seven sites carry a blocker** - the six `node
 tools/regenOpenFlags.mjs --check` answers and `bible/Home.md` lists.
 Three cannot move at all while the surrounding decisions stand: there
 is no `PlayerTorch.prefab` anywhere in the reference tree (twice), and

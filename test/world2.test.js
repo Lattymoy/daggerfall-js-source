@@ -214,3 +214,49 @@ test('WORLD2: the hosts by source - the dungeon host\'s hit door (the striker\'s
     if (AI === EnhancedEnemyAI) assert.deepEqual([ai.path, ai.pathI, ai.repathT, ai.pathEpoch], [null, 1, 0, undefined], 'and the cached path with it');
   }
 });
+
+// ── THE NON-LAYOUT RUN: MAC'S TWO ONLINE-DUNGEON REPORTS, PINNED AS ONE HOLE ──
+
+test('ONLINE-DUNGEON-FOES: a foe past the layout run is neither streamed nor peer-aware, and the two must stay in step', () => {
+  // Mac, 2026-09-20: "Issues with non-reactive enemies in dungeons in the
+  // online mode" and "The lysander ghost enemy isn't synced online between
+  // players". Both are the SAME line - `_layoutFoes` - and this pin exists
+  // because the hole is recorded rather than closed (bible/Home.md's open
+  // flags carry it, from the FLAGGED note at the site). It is not a pin on
+  // the bug being present; it is a pin on the two halves being paid TOGETHER,
+  // which is the thing a future edit can quietly get wrong.
+  const dc = readFileSync(new URL('../src/scenes/dungeonContext.js', import.meta.url), 'utf8');
+
+  // HALF ONE - the stream. `foesFrame` walks the layout run and stops. A foe
+  // appended past it (spawnQuestFoe, the encounter spawner, a summon) is in no
+  // frame any peer receives, which is why a quest-placed ghost exists only on
+  // the client whose quest placed it.
+  const frame = /function foesFrame\(full = false\) \{([\s\S]*?)\n  \}/.exec(dc);
+  assert.ok(frame, 'foesFrame is gone - re-aim this pin');
+  assert.match(frame[1], /for \(let i = 0; i < _layoutFoes; i\+\+\) \{/,
+    'the stream walks the layout run; if this bound widened, the sync half has moved');
+
+  // HALF TWO - the targeting. Peers reach the target machine only for a foe
+  // the stream carries, so a foe past the run never sees another player.
+  const cands = /candidates: foeDeps \? \(streamed = false\) =>([^\n]*)/.exec(dc);
+  assert.ok(cands, 'the candidates seam is gone - re-aim this pin');
+  assert.match(cands[1], /_authority && streamed \? peerCandidates\(\) : \[\]/,
+    'peers are candidates only for a streamed foe');
+  assert.match(dc, /_armed\(f, _senses, _fi < _layoutFoes\)/,
+    '...and `streamed` IS the layout bound');
+
+  // THE LAW THE FLAG STATES: arming a non-layout foe against peers while it is
+  // still unsynced is WORSE than the bug - it would chase and swing at a player
+  // who cannot see it and has no damage frame to resolve the blow. So the two
+  // bounds must be the same expression. The day someone widens the targeting
+  // bound alone, this goes red.
+  const puppet = /const _puppet = !_authority && ([^;]+);/.exec(dc);
+  assert.ok(puppet, 'the puppet gate is gone - re-aim this pin');
+  assert.equal(puppet[1].trim(), '_fi < _layoutFoes',
+    'the puppet gate and the targeting bound are one expression - widen them together or not at all');
+
+  // And the flag itself is still at the site, naming both halves, so the
+  // record cannot quietly outlive the code it describes.
+  assert.match(dc, /ONLINE-DUNGEON-FOES \(2026-09-20, Mac:/, 'the FLAGGED note is gone from the site');
+  assert.match(dc, /NOT SYNCED\./); assert.match(dc, /NOT REACTIVE\./);
+});

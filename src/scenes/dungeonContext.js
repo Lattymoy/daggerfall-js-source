@@ -1090,6 +1090,26 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     flatGroups.get(key).push([e.x, e.y, e.z]);
   }
   for (const e of enemies) await buildFoeAt(e);
+  // ONLINE-DUNGEON-FOES (2026-09-20, Mac: "Issues with non-reactive enemies in dungeons in the
+  // online mode" and "The lysander ghost enemy isn't synced online between players"). BOTH
+  // REPORTS ARE THIS ONE LINE, and it is FLAGGED rather than fixed because the fix is a slice,
+  // not an edit. `_layoutFoes` is the layout's run, and every foe appended past it - a quest
+  // foe (spawnQuestFoe), an encounter (IntermittentEnemySpawn), a summon - is a PRIVATE object
+  // in a shared dungeon, two ways at once:
+  //   NOT SYNCED. `foesFrame` loops `i < _layoutFoes`, so a foe past the run is in no frame any
+  //   peer ever receives. The Lysandus ghost is quest-placed, so it exists only on the client
+  //   whose quest placed it - nobody else has it to see.
+  //   NOT REACTIVE. The target machine's `candidates(streamed)` admits peers only under
+  //   `_authority && streamed`, and `streamed` IS `_fi < _layoutFoes`, so a foe past the run
+  //   never sees another player as a target at all - it ignores everyone but the client it
+  //   belongs to.
+  // The two halves must be paid TOGETHER: arming a foe against peers while it is still unsynced
+  // is worse than the bug, because it would chase and swing at a player who cannot see it and
+  // has no damage frame to resolve the blow with. The shape of the answer already exists and is
+  // proven - WORLD6b's owner law in scenes/exteriorFoes.js, where a cell's foe is ITS SPAWNER'S:
+  // the spawner steps and streams it, everyone else puppets it by (owner, seq), and a blow on
+  // another's foe goes to its owner as a hit. The dungeon needs that law for its non-layout run,
+  // which is a new frame shape, puppet build/teardown, hit routing and a stale sweep.
   const _layoutFoes = foes.length;   // AUDIT WORLD B2: the layout's run - every foe past it (an encounter's, a summon's, a quest's) is this player's own
 
   /** B1: one QUEST foe through the SAME build chain as the load loop
