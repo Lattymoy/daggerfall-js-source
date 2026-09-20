@@ -1,0 +1,20 @@
+[
+  {
+    "name": "FIELD-GUN16-1-the-pellet-goes-back-to-22",
+    "file": "tools/gunPaperdoll.mjs",
+    "old": "const ammo = bake('gun-ammo-src.png', num('ammo', 16), { out: 'gun-ammo.png' });",
+    "new": "const ammo = bake('gun-ammo-src.png', num('ammo', 22), { out: 'gun-ammo.png' });",
+    "tests": [
+      "test/gunLab.test.js"
+    ]
+  },
+  {
+    "name": "FIELD-GUN16-2-a-small-icon-is-blown-up-to-fill-the-cell",
+    "file": "src/ui/itemScroller.js",
+    "old": "    const fit = Math.min(1, (CELL_W - CELL_MARGIN * 2) / size.width, (SLOT_H - CELL_MARGIN * 2) / size.height);",
+    "new": "    const fit = Math.min((CELL_W - CELL_MARGIN * 2) / size.width, (SLOT_H - CELL_MARGIN * 2) / size.height);",
+    "tests": [
+      "test/nativetrade.test.js"
+    ]
+  }
+]

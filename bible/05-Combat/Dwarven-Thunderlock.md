@@ -815,6 +815,55 @@ follow.
 
 Campaign `tools/mutants/fieldgun15.json`: 7 mutants, 7 dead.
 
+## FIELD-GUN16: the pellet was the size of a helmet
+
+Mac, 2026-09-20: *"Shrink the inventory icon for the pellet ammo."*
+
+`gun-ammo.png` was **22x22**. It is **16x16** now.
+
+### Fitting the cell was never the question
+
+The list cell is 50x38, and `makeIconDrawer` (`src/ui/itemScroller.js`)
+never *enlarges*:
+
+```js
+const fit = Math.min(1, (CELL_W - CELL_MARGIN * 2) / size.width, ...);
+```
+
+So an icon is drawn at **its own size**, exactly as a classic record
+is — the art's size *is* the icon's size. 22x22 fit the cell perfectly
+well and still read as a pellet the size of a helmet, 44% of the row's
+width.
+
+The pin that was there could not have caught it: `ammo.w <= 50 &&
+ammo.h <= 38` only says *not bigger than the cell*, and the defect was
+a thing that fit and was still too big. A bound cannot catch that, so
+the pin is the **size** now, with the cell's own numbers beside it
+stating what fraction of the row it is.
+
+### Why 16
+
+Baked at 22, 18, 16, 14 and 12 and looked at them side by side in a
+50x38 cell at 6x. 16 is where the dwarven banding and the central boss
+still read at 1:1 on the classic surface; 14 starts eating the
+engraving and 12 is a brown dot. The source is 1254px square, so every
+one of those is a clean downscale rather than a resample of a resample
+— nothing was lost, and going back up is one flag away.
+
+### The tool's default is the shipped size
+
+`tools/gunPaperdoll.mjs --ammo` defaulted to 22, which is now what
+*isn't* in `public/art`. It defaults to 16, and that is pinned.
+
+This is the same law FIELD-GUN15 had just made a pin of for the sound
+picks, one round earlier, for the same reason: **a tool whose default
+is not what shipped is a trap laid for whoever runs it next** — they
+re-bake for an unrelated reason and quietly restore the thing that was
+fixed. `gun-paperdoll.png` came out byte-identical across the re-bake,
+which is the other half of that claim.
+
+Campaign `tools/mutants/fieldgun16.json`: 2 mutants, 2 dead.
+
 ## The test characters carry one
 
 TSR-GUN (Mac, 2026-09-19: *"Put this weapon and ammo inside the test
