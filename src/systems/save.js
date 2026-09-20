@@ -189,7 +189,7 @@ export const copyEffectEntry = (a) => {
 };
 
 /** A plain-object snapshot of the player + scene extras. */
-export function snapshotPlayer(entity, { position = null, pose = null, classicMinutes = 0, readiedSpellIndex = null, world = null, locationKey = null, quest = null, talk = null, interior = null, dungeon = null, travelMap = null, escortingFaces = null, smallerDungeonsState = 0 } = {}) {
+export function snapshotPlayer(entity, { position = null, pose = null, classicMinutes = 0, readiedSpellIndex = null, world = null, locationKey = null, quest = null, talk = null, interior = null, dungeon = null, travelMap = null, escortingFaces = null, quickslots = null, spawns = null, smallerDungeonsState = 0 } = {}) {
   // Q4-v: `quest` is the bridge's whole envelope (machine + notebook +
   // the one-time list) - opaque here, exactly like `world`.
   // TK-i: `talk` is TalkManager's SaveDataConversation (the rumor
@@ -225,7 +225,21 @@ export function snapshotPlayer(entity, { position = null, pose = null, classicMi
   // before it restores the position (PlayerEnterExit.cs:534-537). Null
   // anywhere but a dungeon; a save from before it was carried reads
   // null and the world host finds the dungeon by its id instead.
-  const snap = { v: SAVE_VERSION, position, pose, classicMinutes, readiedSpellIndex, world, locationKey, quest, talk, interior, dungeon, travelMap, escortingFaces, smallerDungeonsState };
+  // AUDIT TTL1 (found while adding `spawns`): `quickslots` was NOT
+  // among the names above, and this envelope's own comment says what
+  // that costs - "an unnamed option is dropped in silence". QS1's
+  // composer built the block, every save threw it away, and
+  // restoreQuickslotSaveData read undefined and CLEARED the diamond:
+  // the quickslots have never survived a load since QS1 landed.
+  //
+  // TTL1: `spawns` is the spawned-dungeon ledger (world/spawnedDungeons
+  // .js createSpawnLedger().toJSON()) - the two clocks are about time
+  // passing, so a reload with no memory of them would restart both and
+  // nothing would ever expire across a session. Named here rather than
+  // in the `world` bag because that bag is written in EXTERIOR mode
+  // alone, and the dungeon a spawn's clock is counting is exactly
+  // where a player saves.
+  const snap = { v: SAVE_VERSION, position, pose, classicMinutes, readiedSpellIndex, world, locationKey, quest, talk, interior, dungeon, travelMap, escortingFaces, quickslots, spawns, smallerDungeonsState };
   // W1: DFU persists exactly ONE weather value (playerPosition.weather)
   // and re-rolls the six-zone array on the next date change - the sim
   // is a module singleton, so the envelope reads it here and every
@@ -796,7 +810,7 @@ export function restorePlayer(entity, snap, spellsByIndex = null) {
   if (sharedClockOn()) alignSurvival(entity, Math.floor(worldMinutes()), Math.floor(snap.classicMinutes ?? 0));   // SURV7: the needs' markers - a save from more than a day ago starts fed, watered and rested (WORLD5's law for these)
   // AUDIT 39: the three extras above ride back out too - a save from
   // before they were carried reads the same null/0 they used to.
-  return { position: snap.position, pose: snap.pose ?? null, classicMinutes: snap.classicMinutes, readiedSpellIndex: snap.readiedSpellIndex, world: snap.world ?? null, locationKey: snap.locationKey ?? null, quest: snap.quest ?? null, talk: snap.talk ?? null, interior: snap.interior ?? null, dungeon: snap.dungeon ?? null, travelMap: snap.travelMap ?? null, escortingFaces: snap.escortingFaces ?? null, smallerDungeonsState: snap.smallerDungeonsState ?? 0 };
+  return { position: snap.position, pose: snap.pose ?? null, classicMinutes: snap.classicMinutes, readiedSpellIndex: snap.readiedSpellIndex, world: snap.world ?? null, locationKey: snap.locationKey ?? null, quest: snap.quest ?? null, talk: snap.talk ?? null, interior: snap.interior ?? null, dungeon: snap.dungeon ?? null, travelMap: snap.travelMap ?? null, escortingFaces: snap.escortingFaces ?? null, quickslots: snap.quickslots ?? null, spawns: snap.spawns ?? null, smallerDungeonsState: snap.smallerDungeonsState ?? 0 };
 }
 
 /** MAC6 #1: the dungeon a save was taken in, found by its id across
@@ -828,7 +842,7 @@ export function dungeonPixelFor(locationKey, locations, toPixel) {
  *  machine and rumor mill. `talk` is the trio world.js already
  *  composes: { mill, tree, session } (rumorMill + topicTree +
  *  npcSession = SaveDataConversation whole, TK-i/ii/iv). */
-export function composeSessionState({ questBridge = null, talk = null } = {}) {
+export function composeSessionState({ questBridge = null, talk = null, spawnLedger = null } = {}) {
   return {
     quest: questBridge ? questBridge.snapshot() : null,
     talk: talk ? { ...talk.mill.getSaveData(), ...talk.tree.getSaveData(), ...talk.session.getSaveData() } : null,
@@ -846,6 +860,13 @@ export function composeSessionState({ questBridge = null, talk = null } = {}) {
     // (systems/quickslots.js) - per-character state, so it rides the
     // save and not the browser's prefs shelf.
     quickslots: quickslotSaveData(),
+    // TTL1: the spawned-dungeon ledger. Passed in rather than read off
+    // a module singleton like its neighbours because it belongs to the
+    // ONE world host that owns `locationIndex`; the dungeon host
+    // forwards the same object in, so a save made underground carries
+    // it too. Null in the standalone ?dungeon scene, which has no
+    // overworld and therefore no spawns.
+    spawns: spawnLedger ? spawnLedger.toJSON() : null,
   };
 }
 
@@ -920,7 +941,7 @@ export function removeAllOrphanedItems(entity, getQuest) {
  *  standing on a pre-TK save (world.js quickLoad, recorded there).
  *  Returns whether a quest envelope was present, for the world host's
  *  _questStarted latch. */
-export function restoreSessionState(extras, { questBridge = null, talk = null, entity = null } = {}) {
+export function restoreSessionState(extras, { questBridge = null, talk = null, entity = null, spawnLedger = null } = {}) {
   // restore(null) is a no-op and the live machine stands (Q4-v law).
   questBridge?.restore(extras?.quest ?? null);
   // U41: SetTravelMapFromSaveData(null) is DFU's own arm for a save
@@ -935,6 +956,11 @@ export function restoreSessionState(extras, { questBridge = null, talk = null, e
   // QS1: the same arm - a save without the block CLEARS the slots, so
   // a pre-QS save and another character's never carry a stale kind.
   restoreQuickslotSaveData(extras?.quickslots ?? null);
+  // TTL1: a save with no ledger LOADS AN EMPTY ONE, the same arm its
+  // neighbours take. That is not a loss: an unknown spawn is noted on
+  // the next build of its pixel and simply starts its seven days over,
+  // which is what every pre-TTL1 save has to mean.
+  spawnLedger?.load(extras?.spawns ?? null);
   if (extras?.talk && talk) {
     talk.mill.restoreSaveData(extras.talk);
     talk.tree.restoreSaveData(extras.talk);   // the orphan sweep + relink + TellMeAbout tail run inside

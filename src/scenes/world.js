@@ -146,7 +146,7 @@ import { alignSurvival } from '../systems/survival/needs.js';   // SURV7: the ne
 import { liveLycanthropy } from '../systems/lycanthropy.js';   // SURV7: the env's lycanthrope and beast-form flags
 import { elementalResistanceChance, ELEMENTS } from '../systems/spellcast.js';   // SURV7: the env's fire and frost resistances
 import { rollCampEncounterOnChunkLoad, amGroupRollOwner } from '../systems/campEncounters.js';   // CAMP1: the group-encounter roll - camps and packs; CAMP-NOTIMER: the chunk-load twin is this host's ONLY trigger now, so the timer's entry point is gone from here
-import { WORLD_SALT, spawnsDungeon, pickTemplate, synthesizeDungeonLocation, spawnTemplates } from '../world/spawnedDungeons.js';   // SPAWNED-DUNGEONS1: online, a pixel may hold a dungeon
+import { WORLD_SALT, spawnsDungeon, pickTemplate, synthesizeDungeonLocation, spawnTemplates, createSpawnLedger } from '../world/spawnedDungeons.js';   // SPAWNED-DUNGEONS1: online, a pixel may hold a dungeon; TTL1: ...and it does not hold it for ever
 import { isMainStoryDungeon } from '../world/dungeonTextures.js';   // SPAWNED-DUNGEONS1: the main story's own dungeons are never cloned
 import { nearestSafeLocation, respawnFlavorText, respawnHealth, undergroundWakeSpot, undergroundWakeText } from '../systems/deathRespawn.js';   // D-ONLINE1: online, a death respawns instead of ending the run   // X-slice; the rest refusal raises the alert and asks the RESTING variant, the townsfolk idle the STRICT one; the catch-up loop's watch arm
 import { snapshotPlayer, restorePlayer, resolvePendingSpells, composeSessionState, restoreSessionState, dungeonPixelFor } from '../systems/save.js';   // P-slice: the above-ground quicksave; B4: the ONE quest+talk composer
@@ -617,10 +617,58 @@ export async function bootWorld(canvas, renderer, params, status) {
     townTalk.say(`You see a Dungeon nearby, in the ${_capitalize(directionHintString(nearest.dx, -nearest.dy))}!`);
   }
   let _spawnTemplates = null;
+  // TTL1: what this client has met, and when. The roll above is a pure
+  // hash every client shares, so nobody needs telling a spawn is THERE -
+  // but the two clocks below are about time passing, which is this
+  // session's own.
+  const _spawnLedger = createSpawnLedger();
+  /** TTL1: the clock, ASKED rather than read. `playerTicker` is declared
+   *  far below, and the boot builds the player's own pixel through this
+   *  same function BEFORE it exists - reading the const there is a
+   *  temporal dead zone, which `?.` cannot save (bootorder.js's BOOT-TDZ2
+   *  gate catches exactly this). Until the ticker stands this answers
+   *  NaN, and the pure law's own guards make every call a no-op: nothing
+   *  expires on a clock that has not started, and the start pixel's
+   *  first sight is simply recorded the next time it streams in - or the
+   *  moment the player enters it, which is what onDungeonSpawned is for. */
+  let _spawnClock = () => NaN;
+  /** TTL1: is the player standing in the spawn on this pixel RIGHT NOW?
+   *  The creator's rule says "when there is no player in it" of both
+   *  clocks, so this is the one thing that can hold a spawn past its
+   *  time. A dungeon freezes the streamer's pixel at the ENTRANCE
+   *  (playerTravelPixel's A10 note), and a spawn's dungeon is entered
+   *  from its own pixel, so the entrance pixel IS the spawn's key - no
+   *  map id needs comparing. Outside a dungeon nothing is "in" one, so
+   *  the mode is asked first. */
+  const _insideSpawn = (key) => (modes?.mode ?? 'exterior') === 'dungeon'
+    && `${playerTravelPixel().x},${playerTravelPixel().y}` === key;
+  /** TTL1: the short clock starts here - the dungeon context tells the
+   *  host the place is empty (every foe dead, every pile taken), and
+   *  the pixel is the entrance's, which is the spawn's key. A real
+   *  dungeon's key is simply not in the ledger and `clear` on it would
+   *  invent a row, so the spawn flag is checked before the ledger is
+   *  touched. */
+  const _noteSpawnCleared = () => {
+    const p = playerTravelPixel();
+    const key = `${p.x},${p.y}`;
+    if (!locationIndex.get(key)?.spawned) return;
+    _spawnLedger.clear(key, _spawnClock());
+  };
   const spawnedDungeonAt = (px, py) => {
     if (!params.has('online')) return null;
     try {
       if (!spawnsDungeon(_spawnSalt, px, py) || maps.getClimateIndex(px, py) === CLIMATES.Ocean) return null;
+      // TTL1: ...AND NOT WHILE THE PLAYER IS IN IT. The creator's rule
+      // says so twice ("when there is no player in it"), and this is
+      // where it is kept: a pixel is only rebuilt from the overworld, so
+      // the one dungeon that could be underfoot is the one the mode
+      // machine is standing in. Its time runs out the moment they leave.
+      const key = `${px},${py}`;
+      if (_spawnLedger.expired(key, _spawnClock()) && !_insideSpawn(key)) {
+        _spawnLedger.forget(key);
+        locationIndex.delete(key);
+        return null;
+      }
       _spawnTemplates ??= spawnTemplates(locationIndex.values(), isMainStoryDungeon);
       const template = pickTemplate(_spawnTemplates, _spawnSalt, px, py);
       if (!template) return null;
@@ -628,7 +676,8 @@ export async function bootWorld(canvas, renderer, params, status) {
       const loc = synthesizeDungeonLocation(template, { salt: _spawnSalt, px, py, where: {
         regionIndex, regionName: REGION_NAMES[regionIndex], politic: maps.getPoliticIndex(px, py), climate: getWorldClimateSettings(maps.getClimateIndex(px, py)),
       } });
-      locationIndex.set(`${px},${py}`, loc);
+      locationIndex.set(key, loc);
+      _spawnLedger.note(key, _spawnClock());   // TTL1: first sight starts the seven-day clock
       return loc;
     } catch (e) { console.warn('[spawned dungeons]', px, py, e?.message ?? e); return null; }
   };
@@ -2164,6 +2213,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // ticker's classicMinutes is the only clock in this host that keeps
   // counting past midnight - minuteNow() wraps at 1440 by design (it
   // drives the sun and the window styles, which want a time of day).
+  _spawnClock = () => Math.floor(playerTicker.classicMinutes);   // TTL1: the ticker stands, so the spawned-dungeon clocks start
   const gameDaysNow = () => Math.floor(playerTicker.classicMinutes / 1440);
 
   // AUDIT 19 / 1:1: the MUSIC DIRECTOR replaces this host's three ad-hoc
@@ -3328,7 +3378,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // ?dungeon host RAN every CastWhenUsed / CastWhenStrikes / SoulBound
   // / affinity arm against no ctx at all. They are optional-chained, so
   // it WAS silent. WAVE D closed it: the body is scenes/hostEnchant.js
-  // and dungeonContext.js:2236 mounts the same one, gated on
+  // and dungeonContext.js:2253 mounts the same one, gated on
   // `opts.enchantCtx !== false` because setDefaultEnchantCtx is a
   // session singleton and EC1 already routes THIS host's mount into
   // that context through modes.dungeonCtx - so worldModes.js:4712
@@ -5134,7 +5184,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // so an F9 pressed inside a shop recorded the street's sheath and
     // hand. The mode host answers for the rig that is actually drawn
     // and null outside interior mode (the dungeon owns its own
-    // composer, dungeonContext.js:5701), so exterior mode and a
+    // composer, dungeonContext.js:5723), so exterior mode and a
     // pre-seam mode host compose exactly as before, per field.
     const wp = modes?.weaponPose?.() ?? null;
     const snap = snapshotPlayer(playerEntity, {
@@ -5147,7 +5197,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       // castleNPCsSpokenTo (TK-iv)) through the ONE composer both
       // hosts call - two inline copies of this envelope is exactly
       // how the dungeon half drifted to saving neither.
-      ...composeSessionState({ questBridge, talk: { mill: rumorMill, tree: topicTree, session: npcSession } }),
+      ...composeSessionState({ questBridge, talk: { mill: rumorMill, tree: topicTree, session: npcSession }, spawnLedger: _spawnLedger }),   // TTL1: the spawned-dungeon clocks ride every save
       // AUDIT 26 F222/F223/F101: the POSE - weaponDrawn
       // (SerializablePlayer :175, restored Sheathed = !weaponDrawn),
       // yaw/pitch/isCrouching (PlayerPositionData_v1 :212-214).
@@ -5295,7 +5345,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       // subject - RemoveAllOrphanedItems (SaveLoadManager.cs:1518)
       // runs inside the composer, after the quest machine is restored,
       // exactly where LoadGame runs it.
-      if (restoreSessionState(extras, { questBridge, talk: { mill: rumorMill, tree: topicTree, session: npcSession }, entity: playerEntity })) _questStarted = true;
+      if (restoreSessionState(extras, { questBridge, talk: { mill: rumorMill, tree: topicTree, session: npcSession }, entity: playerEntity, spawnLedger: _spawnLedger })) _questStarted = true;
       if (extras.locationKey === 'world' && extras.world?.pixel) {
         const w = extras.world;
         await _teleportToPixel(w.pixel.x, w.pixel.y, null, { modEvent: 'load' });   // SIB2: SaveLoadManager.OnLoad
@@ -8886,6 +8936,13 @@ export async function bootWorld(canvas, renderer, params, status) {
     peers: peersNear,
     selfId: () => online?.id ?? null,
     dungeonAuthority,   // WORLD2: a dungeon built while another hosts starts as puppets
+    // TTL1: the two spawned-dungeon clocks, from the mode machine's
+    // dungeon. `onDungeonSpawned` only fires for a synthesized one, so
+    // the note is unconditional; `onDungeonCleared` fires for ANY
+    // dungeon, so _noteSpawnCleared checks the pixel first.
+    onDungeonSpawned: () => { const p = playerTravelPixel(); _spawnLedger.note(`${p.x},${p.y}`, _spawnClock()); },
+    onDungeonCleared: _noteSpawnCleared,
+    spawnLedger: () => _spawnLedger,   // TTL1: so a save made INSIDE a dungeon carries the clocks too
     dungeonOnline: () => onlineOn,   // AUDIT WORLD34 B2: online, the dungeon that gets built is the WHOLE dungeon - the room's layout is one layout
     // D-ONLINE1: the death screen's door for the deaths this host does
     // not present itself (a dungeon's, a building interior's -

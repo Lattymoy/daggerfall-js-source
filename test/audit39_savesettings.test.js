@@ -72,9 +72,9 @@ test('AUDIT 39 #121: a save from before them restores the null/0 the arms alread
 test('AUDIT 39 #121: snapshotPlayer NAMES the three, and the hosts that own them pass them', () => {
   const s = read('src/systems/save.js');
   // the callee half - the line the fix changed
-  assert.match(s, /interior = null, dungeon = null, travelMap = null, escortingFaces = null, smallerDungeonsState = 0 \} = \{\}\)/,
+  assert.match(s, /interior = null, dungeon = null, travelMap = null, escortingFaces = null, quickslots = null, spawns = null, smallerDungeonsState = 0 \} = \{\}\)/,
     'the destructured options name all three, or they are dropped in silence');
-  assert.match(s, /const snap = \{[^\n]*travelMap, escortingFaces, smallerDungeonsState \}/,
+  assert.match(s, /const snap = \{[^\n]*travelMap, escortingFaces, quickslots, spawns, smallerDungeonsState \}/,
     'and the envelope literal carries them out');
   // the caller half, which was always right
   assert.match(s, /travelMap: travelMapSaveData\(\),/, 'composeSessionState composes the travel map');
