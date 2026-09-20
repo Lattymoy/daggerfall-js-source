@@ -1,0 +1,44 @@
+[
+  {
+    "name": "RIDE-POV-saddle-rule-gone",
+    "file": "src/player/mwView.js",
+    "old": "  if (mounted) { mwIntoHead(); pendingClicks = 0; }\n",
+    "new": "",
+    "tests": ["test/ridepov.test.js"]
+  },
+  {
+    "name": "RIDE-POV-queued-notch-kept-into-the-saddle",
+    "file": "src/player/mwView.js",
+    "old": "  if (mounted) { mwIntoHead(); pendingClicks = 0; }\n",
+    "new": "  if (mounted) { mwIntoHead(); }\n",
+    "tests": ["test/ridepov.test.js"]
+  },
+  {
+    "name": "RIDE-POV-saddle-rule-after-the-flush",
+    "file": "src/player/mwView.js",
+    "old": "  mounted = !!state.riding;\n  if (mounted) { mwIntoHead(); pendingClicks = 0; }\n  if (pendingClicks) {\n    mwCamera.wheel(pendingClicks, { ready: fpArm.upperBodyReady() });\n    pendingClicks = 0;\n  }",
+    "new": "  if (pendingClicks) {\n    mwCamera.wheel(pendingClicks, { ready: fpArm.upperBodyReady() });\n    pendingClicks = 0;\n  }\n  mounted = !!state.riding;\n  if (mounted) { mwIntoHead(); pendingClicks = 0; }",
+    "tests": ["test/ridepov.test.js"]
+  },
+  {
+    "name": "RIDE-POV-wheel-ignores-the-saddle",
+    "file": "src/player/mwView.js",
+    "old": "clicks < 0 && (!fpArm.canThirdPerson() || mounted)) return false;",
+    "new": "clicks < 0 && !fpArm.canThirdPerson()) return false;",
+    "tests": ["test/ridepov.test.js"]
+  },
+  {
+    "name": "RIDE-POV-saddle-forgotten-on-dismount-never-cleared",
+    "file": "src/player/mwView.js",
+    "old": "  mounted = !!state.riding;\n",
+    "new": "  mounted = mounted || !!state.riding;\n",
+    "tests": ["test/ridepov.test.js"]
+  },
+  {
+    "name": "RIDE-POV-saddle-empties-the-eotb-lane-too",
+    "file": "src/player/mwView.js",
+    "old": "  if (eotbLane()) {\n    // AUDIT-EOTB F1/F3/F4: the frame's REAL state.",
+    "new": "  if (state.riding) eotbCamera.toggleOffset(false);\n  if (eotbLane()) {\n    // AUDIT-EOTB F1/F3/F4: the frame's REAL state.",
+    "tests": ["test/ridepov.test.js"]
+  }
+]

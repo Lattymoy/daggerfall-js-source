@@ -89,7 +89,9 @@ test('MAP-POV by source: the seam\'s door takes the restore, never the wheel\'s 
   const s = rd('src/player/mwView.js');
   const fn = s.slice(s.indexOf('export function mwViewFirstPerson()'), s.indexOf('\n}\n', s.indexOf('export function mwViewFirstPerson()')) + 3);
   assert.match(fn, /if \(eotbLane\(\)\) \{[\s\S]*?eotbCamera\.toggleOffset\(false\);[\s\S]*?\}/, 'the sprite body through its own toggle');
-  assert.match(fn, /mwCamera\.restore\(\{ firstPerson: true, baseDistance: mwCamera\.baseDistance\(\) \}\);/, 'the Morrowind camera through the restore door, its distance kept');
-  assert.doesNotMatch(fn, /mwCamera\.wheel|pendingClicks/, 'not the wheel - that crossing waits for the upper body');
-  assert.match(fn, /fpArm\.setViewMode\('first'\)/, 'and the rig is moved with it');
+  assert.match(fn, /return mwIntoHead\(\);/, 'the Morrowind lane through the ONE door into the head (RIDE-POV shares it)');
+  const head = s.slice(s.indexOf('function mwIntoHead()'), s.indexOf('\n}\n', s.indexOf('function mwIntoHead()')) + 3);
+  assert.match(head, /mwCamera\.restore\(\{ firstPerson: true, baseDistance: mwCamera\.baseDistance\(\) \}\);/, 'the Morrowind camera through the restore door, its distance kept');
+  assert.doesNotMatch(fn + head, /mwCamera\.wheel|pendingClicks/, 'not the wheel - that crossing waits for the upper body');
+  assert.match(head, /fpArm\.setViewMode\('first'\)/, 'and the rig is moved with it');
 });

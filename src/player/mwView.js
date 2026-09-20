@@ -129,6 +129,9 @@ export function mwViewFrame({ fpEye, feet, yaw, pitch, heightScale = null, rayca
     eotbWagon.tick(frame.dt ?? 0, { feet, yaw, height: frame.motion?.height, cart: !!frame.cart, onExteriorPath: !!frame.onExteriorPath, raycast });
     return out;
   }
+  // RIDE-POV: the saddle first, before any queued notch can cross out of the head
+  mounted = !!state.riding;
+  if (mounted) { mwIntoHead(); pendingClicks = 0; }
   if (pendingClicks) {
     mwCamera.wheel(pendingClicks, { ready: fpArm.upperBodyReady() });
     pendingClicks = 0;
@@ -166,7 +169,7 @@ export function mwViewWheel(deltaY) {
   // ladders read a click the same way round - negative is out of the
   // head - so nothing about the sign moves at the seam.
   if (eotbLane()) return eotbCamera.wheel(clicks);
-  if (mwCamera.mode() === 'first' && clicks < 0 && !fpArm.canThirdPerson()) return false;
+  if (mwCamera.mode() === 'first' && clicks < 0 && (!fpArm.canThirdPerson() || mounted)) return false;   // RIDE-POV: no saddle to show
   pendingClicks += clicks;   // flushed once per frame (actionbindings.lua:113-114)
   return true;
 }
@@ -198,11 +201,28 @@ export function mwViewFirstPerson() {
     eotbCamera.toggleOffset(false);
     return true;
   }
+  return mwIntoHead();
+}
+
+/** The Morrowind lane's own door into the head (MAP-POV's, and RIDE-POV's): the restore door, the rig moved with
+ *  it, the zoom distance kept. Answers whether the view moved. */
+function mwIntoHead() {
   if (!mwCamera.thirdPerson()) return false;
   mwCamera.restore({ firstPerson: true, baseDistance: mwCamera.baseDistance() });
   fpArm.setViewMode('first');
   return true;
 }
+
+// RIDE-POV (2026-09-20, Mac: "When riding the horse with the morrowind
+// model, you should be exempt from using 3rd person"): THE MORROWIND BODY
+// HAS NO SADDLE. The sprite body rides (EOTB's own saddle states); the
+// Morrowind third-person body has no riding animation and would stand
+// through the horse, so while the host says `riding` the Morrowind lane
+// stays in the head - a rider in third person is put there, and the wheel
+// cannot take one out. The frame remembers the saddle for the wheel, which
+// has no state of its own. Read off the seam's own frame, so every host
+// that rides the seam gets the rule and none has to know it.
+let mounted = false;
 
 // ═══ AUDIT-EOTB2: THE FOUR DOORS THE BODY'S OTHER HALF NEEDED ════════
 //
