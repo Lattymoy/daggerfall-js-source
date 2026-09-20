@@ -200,8 +200,8 @@
   {
     "name": "BLOOD1a-the-draw-runs-without-art",
     "file": "src/combat/bloodMarks.js",
-    "old": "    if (!tex) return false;",
-    "new": "",
+    "old": "    if (_batch && _pool && _pool.count && tex) { renderer.drawDecals(_batch, tex); drew = true; }",
+    "new": "    if (_batch && _pool && _pool.count) { renderer.drawDecals(_batch, tex); drew = true; }",
     "tests": [
       "test/blood1_decals.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "BLOOD1a-the-marks-draw-OVER-the-billboards",
     "file": "src/scenes/world.js",
-    "old": "    bloodMarks.draw();   // BLOOD1a: the marks go down BEFORE the billboards, so a body standing in its own blood is over it and not under it. ABOVE setFlatWind for the reason its own neighbour gives: WIND3 pins the wind and the draw as ADJACENT.\n    renderer.setFlatWind(floraSwayOn() && wd.on ? [wd.windV[0], wd.windV[1], now / 1000, wd.gust] : null);   // WIND3: the flats lean with the one wind; the flora batches carry their share (sway)\n    renderer.drawBillboards(allBatches, camRight, UP_Y);",
-    "new": "    renderer.setFlatWind(floraSwayOn() && wd.on ? [wd.windV[0], wd.windV[1], now / 1000, wd.gust] : null);   // WIND3: the flats lean with the one wind; the flora batches carry their share (sway)\n    renderer.drawBillboards(allBatches, camRight, UP_Y);\n    bloodMarks.draw();",
+    "old": "    bloodMarks.draw(camRight, UP_Y);   // BLOOD1a: the marks go down BEFORE the billboards, so a body standing in its own blood is over it and not under it. ABOVE setFlatWind for the reason its own neighbour gives: WIND3 pins the wind and the draw as ADJACENT.\n    renderer.setFlatWind(floraSwayOn() && wd.on ? [wd.windV[0], wd.windV[1], now / 1000, wd.gust] : null);   // WIND3: the flats lean with the one wind; the flora batches carry their share (sway)\n    renderer.drawBillboards(allBatches, camRight, UP_Y);",
+    "new": "    renderer.setFlatWind(floraSwayOn() && wd.on ? [wd.windV[0], wd.windV[1], now / 1000, wd.gust] : null);   // WIND3: the flats lean with the one wind; the flora batches carry their share (sway)\n    renderer.drawBillboards(allBatches, camRight, UP_Y);\n    bloodMarks.draw(camRight, UP_Y);",
     "tests": [
       "test/blood1_decals.test.js"
     ]
@@ -444,8 +444,8 @@
   {
     "name": "BLOOD1b-the-burst-REPLACES-the-ladder-s-spray",
     "file": "src/combat/bloodMarks.js",
-    "old": "      if (heavy && _gibs.length < GIB_COUNT * MAX_BODIES) _gibs = _gibs.concat(throwGibs(pos, rng));\n    }\n    const rate = bloodRate(damage, maxHealth, density);\n    return spray(col, pos, sprayCount(rate), sprayRadius(rate), rate);",
-    "new": "      if (heavy && _gibs.length < GIB_COUNT * MAX_BODIES) _gibs = _gibs.concat(throwGibs(pos, rng));\n      const h2 = !!hit?.fromPlayer && !!hit?.heavy;\n      return spray(col, pos, burstCount(h2, density), burstReach(h2, density), burstRate(h2, density));\n    }\n    const rate = bloodRate(damage, maxHealth, density);\n    return spray(col, pos, sprayCount(rate), sprayRadius(rate), rate);",
+    "old": "      if (heavy && _gibs.length < GIB_COUNT * MAX_BODIES) { _gibs = _gibs.concat(throwGibs(pos, rng)); reseatGibs(); }\n    }\n    const rate = bloodRate(damage, maxHealth, density);\n    return spray(col, pos, sprayCount(rate), sprayRadius(rate), rate);",
+    "new": "      if (heavy && _gibs.length < GIB_COUNT * MAX_BODIES) { _gibs = _gibs.concat(throwGibs(pos, rng)); reseatGibs(); }\n      const h2 = !!hit?.fromPlayer && !!hit?.heavy;\n      return spray(col, pos, burstCount(h2, density), burstReach(h2, density), burstRate(h2, density));\n    }\n    const rate = bloodRate(damage, maxHealth, density);\n    return spray(col, pos, sprayCount(rate), sprayRadius(rate), rate);",
     "tests": [
       "test/blood1_decals.test.js"
     ]
@@ -624,7 +624,7 @@
   {
     "name": "BLOOD1b-a-room-thrown-away-keeps-the-chunks-in-the-air",
     "file": "src/combat/bloodMarks.js",
-    "old": "    _gibs = [];   // BLOOD1b: a room thrown away takes the chunks still in the air with it",
+    "old": "    _gibs = []; reseatGibs();   // BLOOD1b: a room thrown away takes the chunks still in the air with it, and their quads",
     "new": "",
     "tests": [
       "test/blood1_decals.test.js"
@@ -633,8 +633,8 @@
   {
     "name": "BLOOD1b-an-ordinary-overkill-takes-the-body-apart-too",
     "file": "src/combat/bloodMarks.js",
-    "old": "      if (heavy && _gibs.length < GIB_COUNT * MAX_BODIES) _gibs = _gibs.concat(throwGibs(pos, rng));",
-    "new": "      if (_gibs.length < GIB_COUNT * MAX_BODIES) _gibs = _gibs.concat(throwGibs(pos, rng));",
+    "old": "      if (heavy && _gibs.length < GIB_COUNT * MAX_BODIES) { _gibs = _gibs.concat(throwGibs(pos, rng)); reseatGibs(); }",
+    "new": "      if (_gibs.length < GIB_COUNT * MAX_BODIES) { _gibs = _gibs.concat(throwGibs(pos, rng)); reseatGibs(); }",
     "tests": [
       "test/blood1_decals.test.js"
     ]
@@ -642,8 +642,8 @@
   {
     "name": "BLOOD1b-the-bodies-in-the-air-are-uncapped",
     "file": "src/combat/bloodMarks.js",
-    "old": "      if (heavy && _gibs.length < GIB_COUNT * MAX_BODIES) _gibs = _gibs.concat(throwGibs(pos, rng));",
-    "new": "      if (heavy) _gibs = _gibs.concat(throwGibs(pos, rng));",
+    "old": "      if (heavy && _gibs.length < GIB_COUNT * MAX_BODIES) { _gibs = _gibs.concat(throwGibs(pos, rng)); reseatGibs(); }",
+    "new": "      if (heavy) { _gibs = _gibs.concat(throwGibs(pos, rng)); reseatGibs(); }",
     "tests": [
       "test/blood1_decals.test.js"
     ]
@@ -689,6 +689,123 @@
     "file": "src/scenes/hitEffects.js",
     "old": "      marks?.tick?.(dt);",
     "new": "",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-the-flying-quads-are-rebuilt-every-frame",
+    "file": "src/combat/bloodMarks.js",
+    "old": "    if (_gibBatch) renderer?.moveBillboardBatch?.(_gibBatch, _gibs.map((g) => g.pos));",
+    "new": "    if (_gibBatch) reseatGibs();",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-the-quads-do-not-follow-the-chunks",
+    "file": "src/combat/bloodMarks.js",
+    "old": "    if (_gibBatch) renderer?.moveBillboardBatch?.(_gibBatch, _gibs.map((g) => g.pos));",
+    "new": "",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-the-flight-s-batch-outlives-the-flight",
+    "file": "src/combat/bloodMarks.js",
+    "old": "    if (_gibs.every((g) => g.still)) { _gibs = []; reseatGibs(); }",
+    "new": "    if (_gibs.every((g) => g.still)) { _gibs = []; }",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-the-chunks-are-a-batch-each",
+    "file": "src/combat/bloodMarks.js",
+    "old": "      _gibArt.archive, _gibArt.record, GIB_QUAD, _gibs.map((g) => g.pos), { dynamic: true },",
+    "new": "      _gibArt.archive, _gibArt.record, GIB_QUAD, [_gibs[0].pos], { dynamic: true },",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-the-chunks-batch-is-not-dynamic",
+    "file": "src/combat/bloodMarks.js",
+    "old": "      _gibArt.archive, _gibArt.record, GIB_QUAD, _gibs.map((g) => g.pos), { dynamic: true },",
+    "new": "      _gibArt.archive, _gibArt.record, GIB_QUAD, _gibs.map((g) => g.pos),",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-a-chunk-wears-the-settled-stain-not-the-burst",
+    "file": "src/combat/bloodMarks.js",
+    "old": "export const GIB_FRAME = 0;",
+    "new": "export const GIB_FRAME = 5;",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-the-chunks-draw-without-a-basis",
+    "file": "src/combat/bloodMarks.js",
+    "old": "    if (_gibBatch && camRight && camUp && renderer?.drawBillboards) {",
+    "new": "    if (_gibBatch && renderer?.drawBillboards) {",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-a-reseat-leaks-the-batch-it-replaces",
+    "file": "src/combat/bloodMarks.js",
+    "old": "    if (_gibBatch) { renderer?.destroyBillboardBatch?.(_gibBatch); _gibBatch = null; }",
+    "new": "    _gibBatch = null;",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-a-moved-batch-keeps-the-sphere-it-was-born-in",
+    "file": "src/render/renderer.js",
+    "old": "    batch.bounds = bounds;\n    return true;",
+    "new": "    return true;",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-a-moved-batch-s-sphere-forgets-the-quad-s-own-size",
+    "file": "src/render/renderer.js",
+    "old": "    bounds[3] += Math.hypot(batch.size.w, batch.size.h) * 0.5;\n    batch.bounds = bounds;",
+    "new": "    batch.bounds = bounds;",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-a-move-can-write-past-the-buffer",
+    "file": "src/render/renderer.js",
+    "old": "    const count = Math.min(centers.length, batch._quads ?? 0);",
+    "new": "    const count = centers.length;",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-the-move-and-the-birth-keep-two-corner-tables",
+    "file": "src/render/renderer.js",
+    "old": "    const corners = BB_CORNERS;",
+    "new": "    const corners = [[-0.5, -0.5], [-0.5, 0.5], [0.5, 0.5], [0.5, -0.5]];",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-every-batch-in-the-tree-becomes-dynamic",
+    "file": "src/render/renderer.js",
+    "old": "    gl.bufferData(gl.ARRAY_BUFFER, verts, dynamic ? gl.DYNAMIC_DRAW : gl.STATIC_DRAW);",
+    "new": "    gl.bufferData(gl.ARRAY_BUFFER, verts, gl.DYNAMIC_DRAW);",
     "tests": [
       "test/blood1_decals.test.js"
     ]

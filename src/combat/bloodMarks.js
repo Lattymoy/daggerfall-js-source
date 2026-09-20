@@ -51,6 +51,17 @@ const DOWN = Object.freeze([0, -1, 0]);
  *  holds at once. */
 export const MAX_BODIES = 4;
 
+/** BLOOD1b: how big a flying chunk is drawn. The port's own choice and
+ *  said to be - the reference's gib sheet is art this port has no
+ *  permission to carry, so a chunk wears a frame of TEXTURE.380, the
+ *  same archive the splash and the mark already come from, at a size
+ *  that reads as a piece rather than as a splash still playing. */
+export const GIB_QUAD = Object.freeze({ w: 0.28, h: 0.28 });
+/** ...and it wears the splash's FIRST frame, not its last. The mark
+ *  takes the settled stain because that is what a stain looks like; a
+ *  chunk in the air is the burst, which is frame zero. */
+export const GIB_FRAME = 0;
+
 /**
  * @param {{renderer?:any, collider?:(() => any)|null, settings?:any, texture?:(() => any)|null, rng?:(() => number)}} [deps]
  *
@@ -67,6 +78,11 @@ export function createBloodMarks({ renderer = null, collider = null, settings = 
   /** BLOOD1b: chunks in flight. Plain data this pool owns outright,
    *  emptied by `clear()` with the room they were thrown in. */
   let _gibs = [];
+  /** The chunks' own batch: one quad each, centres rewritten every
+   *  frame. HARD1 - this pool OWNS it, like the ring, and ends it by
+   *  name in `dispose()` and whenever the last chunk comes to rest. */
+  let _gibBatch = null;
+  let _gibArt = null;   // { archive, record } - the splash pool tells us
   const _scratch = new Float32Array(DECAL_FLOATS);
 
   const liveCollider = () => (typeof collider === 'function' ? collider() : null);
@@ -100,6 +116,11 @@ export function createBloodMarks({ renderer = null, collider = null, settings = 
    *  this one. */
   function useArt(archive, record, frameCount) {
     _texKey = `${archive}_${record}#${Math.max(0, frameCount - 1)}`;
+    // BLOOD1b: and the chunks take the FIRST frame of the same record.
+    // Every frame of it is uploaded by the splash that told us this, so
+    // a chunk needs no art of its own either and the port still ships
+    // none.
+    _gibArt = { archive, record };
   }
 
   /**
@@ -180,7 +201,7 @@ export function createBloodMarks({ renderer = null, collider = null, settings = 
       // of a body's whole health is ALWAYS lethal, so here the hit IS
       // the death and four hosts are spared a wire they would each
       // have had to remember.
-      if (heavy && _gibs.length < GIB_COUNT * MAX_BODIES) _gibs = _gibs.concat(throwGibs(pos, rng));
+      if (heavy && _gibs.length < GIB_COUNT * MAX_BODIES) { _gibs = _gibs.concat(throwGibs(pos, rng)); reseatGibs(); }
     }
     const rate = bloodRate(damage, maxHealth, density);
     return spray(col, pos, sprayCount(rate), sprayRadius(rate), rate);
@@ -197,6 +218,20 @@ export function createBloodMarks({ renderer = null, collider = null, settings = 
    * what it was carrying - twenty, which is below the ladder's bottom
    * rung, because one piece landing is not a body opening.
    */
+  /** The chunks' batch is built to the live count and rebuilt when
+   *  that changes, which is once a gibbing and once when the last one
+   *  comes to rest. A billboard quad has no per-vertex size, so there
+   *  is no way to blank a spare one the way an empty decal slot is
+   *  blanked - the batch is exactly as long as the flight. */
+  function reseatGibs() {
+    if (_gibBatch) { renderer?.destroyBillboardBatch?.(_gibBatch); _gibBatch = null; }
+    if (!_gibs.length || !renderer?.createBillboardBatch || !_gibArt) return;
+    _gibBatch = renderer.createBillboardBatch(
+      _gibArt.archive, _gibArt.record, GIB_QUAD, _gibs.map((g) => g.pos), { dynamic: true },
+    );
+    if (_gibBatch) _gibBatch.frame = GIB_FRAME;
+  }
+
   function tick(dt) {
     if (!_gibs.length || !(dt > 0)) return 0;
     const col = liveCollider();
@@ -218,9 +253,13 @@ export function createBloodMarks({ renderer = null, collider = null, settings = 
       ]);
       if (on() && col) spray(col, gibSprayOrigin(g), sprayCount(rate), sprayRadius(rate), rate);
     }
+    // THE QUADS FOLLOW THE CHUNKS, written rather than rebuilt: ten of
+    // them at sixty frames is 2,400 batch rebuilds for one death, each
+    // a VAO and two buffers, where this is one bufferSubData.
+    if (_gibBatch) renderer?.moveBillboardBatch?.(_gibBatch, _gibs.map((g) => g.pos));
     // a chunk whose four seconds are up is done with, and the list is
-    // not a place to keep them
-    if (_gibs.every((g) => g.still)) _gibs = [];
+    // not a place to keep them - nor the GL
+    if (_gibs.every((g) => g.still)) { _gibs = []; reseatGibs(); }
     return moved;
   }
 
@@ -239,12 +278,26 @@ export function createBloodMarks({ renderer = null, collider = null, settings = 
     return n;
   }
 
-  function draw() {
-    if (!_batch || !_pool || !_pool.count) return false;
+  /**
+   * The marks, then the chunks over them.
+   *
+   * THE CAMERA BASIS IS HANDED IN because a billboard needs one and
+   * this pool has no camera. Every host already holds both at the line
+   * it calls this from - the very next statement is its own
+   * `drawBillboards` - so nothing is fetched for it.
+   */
+  function draw(camRight = null, camUp = null) {
+    let drew = false;
     const tex = markTexture();
-    if (!tex) return false;
-    renderer.drawDecals(_batch, tex);
-    return true;
+    if (_batch && _pool && _pool.count && tex) { renderer.drawDecals(_batch, tex); drew = true; }
+    // BLOOD1b: the chunks are BILLBOARDS and go through the pass every
+    // other sprite does - over the marks, because a chunk in the air is
+    // above the blood it will become.
+    if (_gibBatch && camRight && camUp && renderer?.drawBillboards) {
+      renderer.drawBillboards([_gibBatch], camRight, camUp);
+      drew = true;
+    }
+    return drew;
   }
 
   /** A MODE CHANGE THROWS THE ROOM AWAY. The marks go with it, and the
@@ -252,7 +305,7 @@ export function createBloodMarks({ renderer = null, collider = null, settings = 
    *  same ring next time, and rebuilding it would cost an allocation
    *  every time the player opens a door. */
   function clear() {
-    _gibs = [];   // BLOOD1b: a room thrown away takes the chunks still in the air with it
+    _gibs = []; reseatGibs();   // BLOOD1b: a room thrown away takes the chunks still in the air with it, and their quads
     if (!_pool) return 0;
     const n = _pool.count;
     for (const d of _pool.decals()) {
@@ -271,7 +324,7 @@ export function createBloodMarks({ renderer = null, collider = null, settings = 
      *  of vertex data and a VAO, handed to nobody, so the context that
      *  built it frees it here by this binding's own name. */
     dispose() {
-      clear();
+      clear();   // BLOOD1b: which drops the chunks and, through reseatGibs, their batch
       if (_batch) renderer?.destroyDecalBatch?.(_batch);
       _batch = null; _pool = null; _texKey = null;
     },

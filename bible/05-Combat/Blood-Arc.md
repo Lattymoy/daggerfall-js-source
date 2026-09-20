@@ -453,11 +453,39 @@ Slices, each behind its own `features.js` row:
      rather than a port: a body that vanishes reads worse than one
      that lies there.
 
-   STILL TO COME: the chunks are invisible in flight - what a player
-   sees is the blood appearing as they land. Giving them a quad needs
-   art, and the only honest source is TEXTURE.380's own frames, the
-   archive every other drop of blood in this arc comes from. Also
-   still open, both from the re-read: the swing direction throwing the
+   AND THE CHUNKS GOT A QUAD (Mac, 2026-09-20: "So why dont you
+   create it"). "It needs art we do not have" was overstated: the art
+   is TEXTURE.380, the archive the splash and the mark already come
+   from and the one the player's own ARENA2 supplies. A chunk wears
+   its FIRST frame - the mark takes the settled stain because that is
+   what a stain looks like, and a chunk in the air is the burst - at
+   0.28m, a size that reads as a piece rather than a splash still
+   playing. The port still ships no gore art of its own.
+
+   THE QUADS ARE WRITTEN, NOT REBUILT, and that is why
+   `renderer.moveBillboardBatch` now exists. Destroy-and-rebuild is
+   what `hitEffects.offsetAll` does and it is right for a splash that
+   moves once in a recentre; ten chunks at sixty frames is 2,400 batch
+   rebuilds for ONE death, each a VAO and two buffers. The move writes
+   the vertices and the bounds and nothing else - and the bounds
+   MATTER, because `_bbVisible` culls on the batch's own sphere and a
+   chunk leaves the sphere it was born in within a frame or two.
+
+   The DYNAMIC hint is taken at birth, because a buffer's usage hint
+   cannot be changed afterwards; every other batch in the tree stays
+   STATIC. The corner table has ONE home (`BB_CORNERS`), since the
+   birth bakes the corners and the move rewrites them and the two
+   disagreeing about the winding would tear every moved quad.
+
+   The batch is exactly as long as the flight - a billboard quad has
+   no per-vertex size, so there is no blanking a spare one the way an
+   empty decal slot is blanked - so it is built on the throw and ended
+   by name when the last chunk comes to rest, and again in `dispose()`
+   for a flight still in the air. The camera basis is handed IN,
+   because a billboard needs one and this pool has no camera; every
+   host already holds both at the line it calls from.
+
+   STILL OPEN, both from the re-read: the swing direction throwing the
    spray, and the ceiling drips.
 3. **BLOOD1c - bleeding.** The 2..5s cadence and the ramp above.
 

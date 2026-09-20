@@ -5055,7 +5055,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     const _dropBatches = droppedLoot.batches();
     const _spellBatches = magic.batches();   // M3: player spell missiles
     if (_mobileBatches.length || _dropBatches.length || _spellBatches.length) {
-      bloodMarks.draw();   // BLOOD1a: under the billboards, as the exterior hosts have it
+      bloodMarks.draw(new Float32Array([-view[0], -view[4], -view[8]]), UP_Y);   // BLOOD1a: under the billboards, as the exterior hosts have it   // BLOOD1b: and the chunks over them, on the basis the draw below uses
       renderer.drawBillboards([..._mobileBatches, ..._dropBatches, ..._spellBatches],
         new Float32Array([-view[0], -view[4], -view[8]]), UP_Y);
     }

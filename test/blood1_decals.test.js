@@ -332,7 +332,7 @@ test('BLOOD1a by source: the decal pass is ONE draw call, depth-tested and depth
 // ---- the mark, on the seam the splash already uses ------------------
 
 import { createHitEffects } from '../src/scenes/hitEffects.js';
-import { createBloodMarks, MARK_DROP, MAX_BODIES } from '../src/combat/bloodMarks.js';
+import { createBloodMarks, MARK_DROP, MAX_BODIES, GIB_QUAD, GIB_FRAME } from '../src/combat/bloodMarks.js';
 import { markSize, marksBlood, MARK_SIZE_MIN, MARK_SIZE_MAX, BLOODLESS_INDEX } from '../src/combat/bloodDecals.js';
 
 /** A renderer stub that records what the mark asked of it. */
@@ -606,12 +606,16 @@ test('BLOOD1a by source: FOUR HOSTS, one spelling - the switch bag, the draw und
     ['src/scenes/dungeonContext.js', 'renderer.drawBillboards([..._mobileBatches, ..._dropBatches, ..._spellBatches],'],
   ]) {
     const h = read(host);
-    const d = h.indexOf('loodMarks.draw()');
+    // BLOOD1b gave it the camera basis, because the chunks over the
+    // marks are billboards and a billboard needs one; every host
+    // already holds both at this very line.
+    const d = h.indexOf('loodMarks.draw(');
     assert.ok(d > 0, `${host}: draws its marks`);
+    assert.match(h.slice(d, d + 80), /loodMarks\.draw\(\s*(camRight|new Float32Array\(\[-view)/, `${host}: on the basis the draw below uses`);
     assert.ok(d < h.indexOf(bb), `${host}: the marks go down BEFORE the billboards`);
   }
   // ...and the world-hosted dungeon draws the CONTEXT's ring on its own pass
-  assert.match(read('src/scenes/worldModes.js'), /dungeonCtx\.bloodMarks\?\.draw\?\.\(\);/);
+  assert.match(read('src/scenes/worldModes.js'), /dungeonCtx\.bloodMarks\?\.draw\?\.\(camRight, UP_Y\);/);
 
   // THE SHIFT RIDES offsetAll, which every host already calls. A second
   // line beside it is a line four hosts have to remember, and the one
@@ -1184,4 +1188,123 @@ test('BLOOD1b by source: the chunks ride the tick every host already makes', () 
   }
   assert.ok(src.includes('collider'), 'the header explains what the host does with a step');
   assert.ok(code.length < src.length * 0.75, 'the comments really came out');
+});
+
+test('BLOOD1b: a chunk in the air is a QUAD, written rather than rebuilt, and it wears the splash’s first frame', () => {
+  // THE PORT SHIPS NO GORE ART AND WILL NOT. The reference's gib sheet
+  // is art there is no permission to carry, so a chunk wears a frame
+  // of TEXTURE.380 - the same archive the splash and the mark already
+  // come from, and the one the player's own ARENA2 supplies.
+  //
+  // THE FIRST FRAME, not the last. The mark takes the settled stain
+  // because that is what a stain looks like; a chunk in the air is the
+  // burst, which is frame zero.
+  assert.equal(GIB_FRAME, 0);
+  assert.deepEqual(GIB_QUAD, { w: 0.28, h: 0.28 });
+
+  const made = [], moved = [], killed = [], drewBb = [];
+  const renderer = {
+    createDecalBatch: (capacity) => ({ capacity, id: 'decals' }),
+    writeDecalSlot: () => true,
+    drawDecals: () => {},
+    createBillboardBatch: (archive, record, size, centers, opts) => {
+      const b = { archive, record, size, centers: centers.map((c) => [...c]), opts, frame: null, id: made.length };
+      made.push(b); return b;
+    },
+    moveBillboardBatch: (batch, centers) => { moved.push({ batch, centers: centers.map((c) => [...c]) }); return true; },
+    destroyBillboardBatch: (b) => { killed.push(b); },
+    drawBillboards: (batches, right, up) => { drewBb.push({ batches, right, up }); },
+  };
+  const { fx, marks } = rigHitEffects({
+    renderer,
+    settings: { enabled: () => true, capacity: () => 512, density: () => 1, overkill: () => true },
+    collider: () => ({
+      raycastHit: (from, dir, max) => {
+        if (dir[1] >= 0) return null;
+        const drop = from[1] / -dir[1];
+        return drop >= 0 && drop <= max ? { dist: drop, normal: [0, 1, 0] } : null;
+      },
+    }),
+  });
+  // the splash pool is what can see the frame count, so it is what
+  // tells this pool which record the chunks wear
+  marks.useArt(380, 1, 6);
+  fx.showBloodSplash(0, [0, 2, 0], null, { damage: 70, maxHealth: 40, fromPlayer: true, heavy: true });
+
+  assert.equal(made.length, 1, 'one batch for the flight, not one per chunk');
+  const batch = made[0];
+  assert.equal(batch.archive, 380);
+  assert.equal(batch.record, 1);
+  assert.equal(batch.frame, GIB_FRAME);
+  assert.deepEqual(batch.size, GIB_QUAD);
+  assert.equal(batch.centers.length, GIB_COUNT, 'a quad each');
+  assert.equal(batch.opts?.dynamic, true, 'born DYNAMIC_DRAW - the hint is the buffer’s and cannot change after');
+
+  // THE QUADS ARE WRITTEN, NOT REBUILT. Ten chunks at sixty frames is
+  // 2,400 batch rebuilds for one death, each a VAO and two buffers.
+  const madeBefore = made.length;
+  fx.tick(1 / 60);
+  assert.equal(moved.length, 1, 'one write a frame');
+  assert.equal(made.length, madeBefore, 'and nothing rebuilt');
+  assert.deepEqual(moved[0].centers, marks.gibs().map((g) => g.pos), 'the quads are where the chunks are');
+
+  // THE CHUNKS DRAW OVER THE MARKS, on the basis the host hands in -
+  // this pool has no camera, and every host holds one at the line it
+  // calls from.
+  const right = new Float32Array([1, 0, 0]), up = new Float32Array([0, 1, 0]);
+  assert.equal(marks.draw(right, up), true);
+  assert.equal(drewBb.at(-1).batches[0], batch);
+  assert.equal(drewBb.at(-1).right, right);
+  assert.equal(drewBb.at(-1).up, up);
+  // ...and a host that hands in no basis draws the marks and no chunks
+  const before = drewBb.length;
+  marks.draw();
+  assert.equal(drewBb.length, before, 'no basis, no billboard pass - and no throw');
+
+  // WHEN THE LAST CHUNK COMES TO REST the batch goes with them: a
+  // billboard quad has no per-vertex size, so there is no blanking a
+  // spare one the way an empty decal slot is blanked.
+  for (let i = 0; i < Math.ceil(GIB_LIFE * 60) && marks.gibs().length; i++) fx.tick(1 / 60);
+  assert.equal(marks.gibs().length, 0);
+  assert.ok(killed.includes(batch), 'the flight’s batch is ended by name');
+  const drawsBefore = drewBb.length;
+  marks.draw(right, up);
+  assert.equal(drewBb.length, drawsBefore, 'and no billboard pass runs for a flight that is over');
+
+  // HARD1: dispose ends everything this pool owns, the chunks' batch
+  // among it - and it is idempotent
+  marks.useArt(380, 1, 6);
+  fx.showBloodSplash(0, [0, 2, 0], null, { damage: 70, maxHealth: 40, fromPlayer: true, heavy: true });
+  const live = made.at(-1);
+  marks.dispose();
+  assert.ok(killed.includes(live), 'a flight still in the air ends with the pool');
+  assert.doesNotThrow(() => marks.dispose());
+});
+
+test('BLOOD1b by source: a moved batch moves its BOUNDS, and the corner table has one home', () => {
+  const r = readFileSync(new URL('../src/render/renderer.js', import.meta.url), 'utf8');
+  const fn = r.slice(r.indexOf('  moveBillboardBatch(batch, centers) {'), r.indexOf('\n  }', r.indexOf('  moveBillboardBatch(batch, centers) {')));
+  // THE BOUNDS MOVE WITH THE QUADS. `_bbVisible` culls on the batch's
+  // own sphere, so a batch whose quads moved and whose bounds did not
+  // would be culled while it is on screen - and chunks fly far enough
+  // to leave the sphere they were born in within a frame or two.
+  assert.match(fn, /batch\.bounds = bounds;/, 'the sphere is rewritten');
+  assert.match(fn, /bounds\[3\] \+= Math\.hypot\(batch\.size\.w, batch\.size\.h\) \* 0\.5;/, 'with the quad’s own half-diagonal, as the birth does');
+  // ...and it writes rather than reallocating
+  assert.match(fn, /gl\.bufferSubData\(gl\.ARRAY_BUFFER, 0, verts, 0, count \* 20\);/);
+  assert.doesNotMatch(fn, /createBuffer|createVertexArray|bufferData\(/, 'nothing is rebuilt on a move');
+  // ...and it cannot write past the buffer it was given
+  assert.match(fn, /Math\.min\(centers\.length, batch\._quads \?\? 0\)/, 'bounded by the quads the batch actually holds');
+
+  // ONE CORNER TABLE. The birth bakes the corners and the move
+  // rewrites them; the two disagreeing about the winding would tear
+  // every moved quad.
+  assert.match(r, /const BB_CORNERS = Object\.freeze\(\[/);
+  const birth = r.slice(r.indexOf('  createBillboardBatch(archive'), r.indexOf('\n  }', r.indexOf('  createBillboardBatch(archive')));
+  assert.match(birth, /const corners = BB_CORNERS;/, 'the birth reads the one table');
+  assert.match(fn, /BB_CORNERS\[k\]\[0\]/, 'and so does the move');
+
+  // THE DYNAMIC HINT IS THE BUFFER'S and cannot change after, so it is
+  // taken at birth - and everything else in the tree stays STATIC.
+  assert.match(birth, /dynamic \? gl\.DYNAMIC_DRAW : gl\.STATIC_DRAW/);
 });

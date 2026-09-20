@@ -688,6 +688,15 @@ void main() {
 
 const ZERO_CONTACT = new Float32Array(4);   // EL8: the contact params with the air off
 const ZERO_ORIGIN = [0, 0, 0];
+/** BLOOD1b: a billboard quad's four corners, ONE copy. `createBillboardBatch`
+ *  bakes them and `moveBillboardBatch` rewrites them, and the two disagreeing
+ *  about the winding would tear every moved quad. */
+const BB_CORNERS = Object.freeze([
+  Object.freeze([-0.5, -0.5]),
+  Object.freeze([-0.5, 0.5]),
+  Object.freeze([0.5, 0.5]),
+  Object.freeze([0.5, -0.5]),
+]);
 /** AUDIT-EL F5: what a WORLD host passes beginFrame - the lane replays its records for this frame and not for a map's, a video's or a menu's. */
 export const WORLD_FRAME = Object.freeze({ world: true });
 /** The classic world programs' point-light cap (uPointLights[16] in every shader above); a lane brings its own. */
@@ -3798,17 +3807,12 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
    * @param {number[][]} centers   one [x, y, z] per flat, the BASE
    * @returns {import('./contract.js').BillboardBatch}
    */
-  createBillboardBatch(archive, record, size, centers) {
+  createBillboardBatch(archive, record, size, centers, { dynamic = false } = {}) {
     const gl = this.gl;
     const count = centers.length;
     const verts = new Float32Array(count * 4 * 5);
     const indices = new Uint32Array(count * 6);
-    const corners = [
-      [-0.5, -0.5],
-      [-0.5, 0.5],
-      [0.5, 0.5],
-      [0.5, -0.5],
-    ];
+    const corners = BB_CORNERS;
     for (let f = 0; f < count; f++) {
       const [cx, cy, cz] = centers[f];
       for (let c = 0; c < 4; c++) {
@@ -3833,7 +3837,10 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     this._bindVao(vao);
     const vb = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, vb);
-    gl.bufferData(gl.ARRAY_BUFFER, verts, gl.STATIC_DRAW);
+    // BLOOD1b: a batch whose centres MOVE says so at birth, because the
+    // hint is the buffer's and cannot be changed after. Everything else
+    // in the tree is still STATIC_DRAW, which is what it is.
+    gl.bufferData(gl.ARRAY_BUFFER, verts, dynamic ? gl.DYNAMIC_DRAW : gl.STATIC_DRAW);
     gl.enableVertexAttribArray(0);
     gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 20, 0);
     gl.enableVertexAttribArray(1);
@@ -3851,7 +3858,51 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     // flat's own half-diagonal (a flat is drawn about its centre, any facing)
     const bounds = boundsOf(centers.flat());
     bounds[3] += Math.hypot(size.w, size.h) * 0.5;
-    return { vao, indexCount: count * 6, archive, record, size, buffers: [vb, ib], origin: null, frame: null, bounds };
+    return { vao, indexCount: count * 6, archive, record, size, buffers: [vb, ib], origin: null, frame: null, bounds, _quads: count, _dyn: !!dynamic };
+  }
+
+  /**
+   * BLOOD1b - MOVE A BATCH'S CENTRES, for the one thing in this tree
+   * that flies: a gibbed body's chunks.
+   *
+   * The alternative was what `hitEffects.offsetAll` does - destroy the
+   * batch and build another - and for a splash that moves once in a
+   * recentre that is right. A chunk moves EVERY FRAME for four
+   * seconds: ten of them at sixty frames is 2,400 batch rebuilds for
+   * one death, each a VAO and two buffers. This writes the vertices
+   * and nothing else.
+   *
+   * THE BOUNDS MOVE WITH THEM. `_bbVisible` culls on the batch's own
+   * sphere, so a batch whose quads moved but whose bounds did not
+   * would be culled while it is on screen - or, worse, kept while it
+   * is not. Chunks fly far enough to leave the sphere they were born
+   * in within a frame or two.
+   */
+  moveBillboardBatch(batch, centers) {
+    const gl = this.gl;
+    if (!batch?.vao || !centers) return false;
+    const count = Math.min(centers.length, batch._quads ?? 0);
+    if (!count) return false;
+    const verts = (batch._moveScratch && batch._moveScratch.length >= count * 20)
+      ? batch._moveScratch
+      : (batch._moveScratch = new Float32Array(count * 20));
+    for (let f = 0; f < count; f++) {
+      const c = centers[f];
+      for (let k = 0; k < 4; k++) {
+        const o = (f * 4 + k) * 5;
+        verts[o] = c[0]; verts[o + 1] = c[1]; verts[o + 2] = c[2];
+        verts[o + 3] = BB_CORNERS[k][0];
+        verts[o + 4] = BB_CORNERS[k][1];
+      }
+    }
+    gl.bindBuffer(gl.ARRAY_BUFFER, batch.buffers[0]);
+    gl.bufferSubData(gl.ARRAY_BUFFER, 0, verts, 0, count * 20);
+    const flat = [];
+    for (let f = 0; f < count; f++) flat.push(centers[f][0], centers[f][1], centers[f][2]);
+    const bounds = boundsOf(flat);
+    bounds[3] += Math.hypot(batch.size.w, batch.size.h) * 0.5;
+    batch.bounds = bounds;
+    return true;
   }
 
   /** Free one billboard batch's GL objects (S2 pickup removes piles;
