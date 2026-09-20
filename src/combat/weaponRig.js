@@ -37,6 +37,7 @@ import { createGunRig, gunRigStep, gunWidgetSettings, gunMotion, gunFrameRect } 
 import { readWidgetSettings } from './weaponWidgetMotion.js';   // FIELD-GUN8: the mod's own reader, so the Thunderlock's Inertia rides its multipliers   // FIELD-GUN6: the lab's own feel, in the game at last
 import { weaponOffsetHeight } from '../ui/hudLarge.js';   // FIELD-GUN7: the lab's raise rides the bar's offset rather than replacing it
 import { betterAmbience } from '../systems/betterAmbience.js';   // FIELD-GUN6: the ONE camera shaker in the port, already wired through all four hosts
+import { orbColour, MUZZLE_FORWARD } from '../characters/thunderlockIds.js';   // FIELD-GUN17: the flash wears the orb's own colour, sampled rather than named
 import { installThunderlockSounds, SFX as TL_SFX } from '../systems/thunderlock.js';   // AUDIT-THUNDERLOCK F8: the weapon's own clips, through the mod-sound door   // the port's own weapon: its art is a sheet, not a CIF   // MAC-I: the tint's switch, with the sprite it tints
 // ROAD-tail (FPSSpellCasting.cs): the classic spellcasting HANDS. A
 // separate component in DFU and a separate module here, drawn by the
@@ -192,7 +193,7 @@ export async function autoBuildArms(entity, { wanted = () => getPref('mwArms'), 
  *                     The note that hosts without a HUD text layer
  *                     pass console is retired: every call site hands
  *                     over a real one - hudText.add
- *                     (dungeonContext.js:2699), townTalk.say
+ *                     (dungeonContext.js:2706), townTalk.say
  *                     (exterior.js:1835, world.js:3115) and
  *                     worldModes' own interior sink (worldModes.js:396,
  *                     which warns to console only where a host mounts
@@ -208,6 +209,37 @@ export async function autoBuildArms(entity, { wanted = () => getPref('mwArms'), 
  *                     must hand it over or Z cannot put one away,
  * }
  */
+/**
+ * FIELD-GUN17 - THE PIXEL, AS A RAY. The whole of thunderlockMuzzle's
+ * arithmetic, pulled out of the rig so it can be driven without a
+ * renderer, a canvas or a held weapon: it is four numbers and a
+ * projection, and it is the part that can be silently wrong.
+ *
+ * `drawn` is the record drawThunderlock parks - the rect it drew at,
+ * the canvas it drew on, the art's own muzzle point (fractions of the
+ * drawn rect, y from the TOP, `thunderlockArt.muzzlePoint`) and
+ * whether the handedness mirror was on. Null for anything missing,
+ * which is how a host that has not drawn the gun yet - or a bow -
+ * keeps GetAimPosition's verbatim arm.
+ */
+export function muzzleRay(drawn, fovRad, forward = MUZZLE_FORWARD) {
+  if (!drawn?.muzzle) return null;
+  const { rect, canvasW, canvasH, muzzle, flip } = drawn;
+  if (!(canvasW > 0) || !(canvasH > 0) || !(fovRad > 0)) return null;
+  // the mirror flips the whole composite about the rect's own centre,
+  // so the muzzle goes with it (gunFrameRect's own law)
+  const fx = flip ? 1 - muzzle.x : muzzle.x;
+  const px = rect.x + fx * rect.w;
+  const py = rect.y + muzzle.y * rect.h;
+  const tanY = Math.tan(fovRad / 2);
+  const tanX = tanY * (canvasW / canvasH);   // the CANVAS's aspect, not the world viewport's - the viewmodel is drawn over the whole frame
+  return {
+    right: ((px / canvasW) * 2 - 1) * tanX * forward,
+    up: (1 - (py / canvasH) * 2) * tanY * forward,   // screen y counts DOWN, camera up counts UP
+    forward,
+  };
+}
+
 export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, entity, camera = null, say = () => {}, spellArmed = () => false, abortSpell = () => {}, bindWorn = true, activateHeld = () => false, envHit = null, missEffect = null, collider = null, keyDown = null, torches = () => null, sheetWindowUp = () => false }) {   // HT1: the hosts' raw key set and their dropped-torch pool   // MAP-WEAPON: whether the travel map window holds the screen   // AUDIT 28 W12: HasAction(ActivateCenterObject) - the drawn bow's un-draw; WW1: the widget's recoil doors
   const playerWeapon = new PlayerWeapon({});
   // WW1: WEAPON WIDGET. One clone per rig, as DFU has one FPSWeaponClone
@@ -676,6 +708,10 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
    *  frames exactly as the lab's page carries it. */
   const _tlRig = createGunRig();
   let _tlKick = { x: 0, y: 0 };
+  /** FIELD-GUN17: the last frame this weapon was drawn at, for the
+   *  muzzle. Null until it has been drawn once, which is also the
+   *  honest answer for "where is the barrel" before there is one. */
+  let _tlDrawn = null;
   /** The frame's rect delta for the weapon, in native (320x200)
    *  units: the spring, plus the reload lower under it. */
   let _tlAdjust = null;
@@ -754,6 +790,11 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
       anchor: art.anchor, union: art.unionBox, rig: _tlRig,
       kick: _tlKick, flip: handedFlip(),
     });
+    // FIELD-GUN17: the frame the muzzle is measured against, kept as
+    // it is DRAWN - with the bob, the sway and the kick already in it.
+    // A shot leaves the barrel where the barrel IS on that frame, and
+    // the frame a gun fires on is the one the recoil has just moved.
+    _tlDrawn = { rect, canvasW: canvas.width, canvasH: canvas.height, muzzle: art.muzzle ?? null, flip: handedFlip() };
     // FIELD-GUN13 (Mac: "The muzzle flash itself shouldn't be affected
     // by the darkening lighting").
     //
@@ -776,9 +817,19 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
     // the gun on those two frames is the gun. The barrel, the hand and
     // the flash all brighten together and fall away over the smoke,
     // which is one lamp switching on, not a sprite being special-cased.
+    // FIELD-GUN17 (Mac: "can we can the color of the muzzle flash and
+    // the light emitted to the same color as the orb?"). IT LERPED TO
+    // WHITE, which is the right SHAPE and the wrong colour: a shock
+    // orb leaves the barrel and the flash that threw it was a different
+    // hue from the thing it threw. The target is the ORB'S OWN colour
+    // now, sampled off its archive the first time one flies
+    // (characters/thunderlockIds.js), so the two cannot disagree and
+    // nobody typed a number. White until it has been seen, which is
+    // exactly what this line was before.
     const glow = muzzleGlow(m.state !== 'Idle', m.frame);
+    const flash = orbColour();
     const lit = (tint && glow > 0)
-      ? tint.map((v) => v + (1 - v) * Math.min(1, glow * GUN_FEEL.flashLight * GUN_FEEL.flashGain))
+      ? tint.map((v, i) => v + (flash[i] - v) * Math.min(1, glow * GUN_FEEL.flashLight * GUN_FEEL.flashGain))
       : tint;
     renderer.drawScreenQuad(tex, rect, undefined, lit ?? undefined);
   }
@@ -887,6 +938,35 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
      *  diamond, a pin) would see the weapon that just left the hand. This is
      *  the same read, on demand; it is idempotent, so calling it costs the
      *  frame's own call nothing. */
+    /**
+     * FIELD-GUN17 (Mac: "the orb doesnt allign with the barrel when
+     * firing. Its above the barrel") - WHERE THE SHOT LEAVES, in the
+     * camera's own axes, or null for every weapon that is not this one.
+     *
+     * The ranged lane looses from `playerArrowOrigin`, which is DFU's
+     * GetAimPosition: 0.11 below the eye and 0.15 to the side, the nock
+     * of a DRAWN BOW. This gun is drawn low and right with its barrel
+     * lower still, so the orb came out well above it - FIELD-GUN14's
+     * own sentence one field further along, the lane written for the
+     * one ranged weapon Daggerfall has.
+     *
+     * THE ANSWER IS WHERE THE GUN IS DRAWN, not a number: the art
+     * measures its own muzzle off the flash (`thunderlockArt.muzzlePoint`)
+     * and this turns that point on the drawn rect into a direction in
+     * camera space. So it follows the bob, the sway, the recoil, the
+     * handedness mirror, the canvas and the player's own field of view
+     * - a baked offset would be right at one aspect and one FOV and
+     * wrong at every other.
+     *
+     * Proportional to `forward` on purpose: the offset IS the ray
+     * through the muzzle's pixel, so the orb sits on the barrel at any
+     * distance the caller picks, and `forward` only chooses how far
+     * out it starts.
+     */
+    thunderlockMuzzle(fovRad, forward = MUZZLE_FORWARD) {
+      if (!thunderlockHeld()) return null;
+      return muzzleRay(_tlDrawn, fovRad, forward);
+    },
     refreshWorn() { syncWorn(); },
     /** QS4 - THE OFF-HAND KEY'S LIGHT ARM. The quickslot diamond's
      *  off-hand cell presses the same thing Handheld Torches' own toggle

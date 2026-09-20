@@ -100,7 +100,11 @@ test('audit26 F033: the flash is record 1 of the MISSILE\'s archive at 15fps, wi
   assert.equal(missileArchive(4), 379);
   // the pool takes them per-spawn, and the blood defaults are untouched
   const he = src('src/scenes/hitEffects.js');
-  assert.match(he, /function spawn\(record, pos, facing = null, \{ archive = BLOOD_ARCHIVE, fps = BLOOD_FPS, scale = 1, tracked = false \} = \{\}\)/);   // WW1: DoClang/DoThud's x2 rides `scale`, 1 by default - the flash is unscaled
+  // FIELD-GUN17 added `onTexture` to the tail - a callback about a
+  // TEXTURE, defaulting to null, which changes nothing this arm claims:
+  // the blood defaults are still the defaults and the flash is still
+  // unscaled (WW1: DoClang/DoThud's x2 rides `scale`, 1 by default).
+  assert.match(he, /function spawn\(record, pos, facing = null, \{ archive = BLOOD_ARCHIVE, fps = BLOOD_FPS, scale = 1, tracked = false, onTexture = null \} = \{\}\)/);
   assert.match(he, /showImpactFlash: \(archive, pos\) => spawn\(IMPACT_RECORD, pos, null, \{ archive, fps: IMPACT_FPS \}\)/);
   assert.equal(BLOOD_ARCHIVE, 380);
   assert.equal(BLOOD_FPS, 10);

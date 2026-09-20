@@ -122,7 +122,7 @@ import { createItemLabels, grantCreatedItem, lastCreateItemIndex, setLastCreateI
 import {
   missileArchive, MISSILE_SPEED, MISSILE_COLLIDER_RADIUS, missileReach,   // ROAD-H tail: the reach along the normalised direction
   MISSILE_LIFESPAN_S,
-  EXPLOSION_RADIUS, pickTouchTarget, sweepFoes, missileHitsFoe, missileHitsCapsule, playerArrowOrigin, PLAYER_BODY_RADIUS,   // AUDIT 62 F21: the capsule contact test DFU spherecasts against   // ROAD-H H1c: GetAimPosition's player arrow arm (DaggerfallMissile.cs:540-550)   // AUDIT 65 CV-2: measured at the player's own controller radius
+  EXPLOSION_RADIUS, pickTouchTarget, sweepFoes, missileHitsFoe, missileHitsCapsule, playerArrowOrigin, playerMuzzleOrigin, PLAYER_BODY_RADIUS,   // FIELD-GUN17: playerMuzzleOrigin - the gun's own barrel, where GetAimPosition speaks for the bow   // AUDIT 62 F21: the capsule contact test DFU spherecasts against   // ROAD-H H1c: GetAimPosition's player arrow arm (DaggerfallMissile.cs:540-550)   // AUDIT 65 CV-2: measured at the player's own controller radius
 } from '../systems/spellcast.js';
 import { silenceBlocksCast, SILENCED_TEXT, attemptSoulTrap, SOUL_TRAP_TEXT, dispelNearby, fillEmptyTrap, liveBundles, dispelBundle, dispellableBundles, DISPEL_MAGIC_TEXT } from '../systems/mysticism.js';   // S27; X5 the soul trap's kill intercept; DR1: X10's bundle picker, in this host too
 import { NativeTradeWindow, preloadTradeArt, tradeArtLoaded } from '../ui/nativeTrade.js';   // DR1: X7's Identify window - the SPELL's, castable underground
@@ -177,7 +177,7 @@ import { ENEMY_BASICS, enemyDisplayName } from '../characters/enemyBasics.js';
 import { bloodDecalDeps } from '../combat/bloodSwitch.js';   // BLOOD1a
 import { createBloodMarks } from '../combat/bloodMarks.js';   // BLOOD1a: HARD1 - the ring is this context's to own and to end
 import { createHitEffects, bloodCentre } from './hitEffects.js';
-import { orbArchiveFor, ORB_RECORD } from '../characters/thunderlockIds.js';   // FIELD-GUN14: what this weapon's shot LOOKS like - the leaf, so no cycle
+import { orbArchiveFor, ORB_RECORD, noteOrbColour } from '../characters/thunderlockIds.js';   // FIELD-GUN14: what this weapon's shot LOOKS like - the leaf, so no cycle   // FIELD-GUN17: ...and its colour
 import { bloodHit } from '../combat/bloodDecals.js';   // BLOOD1b: the blow, in the shape the mark's ladder reads
 import { createDroppedTorches } from './droppedTorches.js';
 import { createCamps } from './camps.js';   // SURV3: a fire on the dungeon floor (no tent below - the camp law says so)
@@ -2445,7 +2445,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // along flight (DFU ShootBow / WeaponManager verbatim shape). On a
   // landed enemy arrow, ONE recoverable Arrow joins the TARGET'S
   // items (BowDamage's classic charm). Crouch pass-over pends.
-  function fireArrow(from, dir, weapon, fromPlayer, shooterFoe = null, aimFoe = null) {   // ROAD-H tail: aimFoe - BowDamage's non-player arm (EnemyAttack.cs:141-143), the foe this shaft was loosed AT
+  function fireArrow(from, dir, weapon, fromPlayer, shooterFoe = null, aimFoe = null, muzzle = null) {   // FIELD-GUN17: muzzle - a camera-space barrel offset from the host, or null for the bow-hand arm   // ROAD-H tail: aimFoe - BowDamage's non-player arm (EnemyAttack.cs:141-143), the foe this shaft was loosed AT
     // FIELD-GUN14 (Mac: "The projectile that shoots out should be an
     // orb, not an arrow"). The FOURTH HOST's own copy of the fork
     // combat/arrowFlight.js takes - and here it is one field, because
@@ -2454,7 +2454,14 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // `flatArchive` says "this arrow is drawn the second way", and
     // everything else about it - the physics, the contact, the
     // player-arrow impact arm, the recovery - stays the arrow's.
-    missiles.push({ arrow: true, flatArchive: orbArchiveFor(weapon), weapon, fromPlayer, shooterFoe, aimFoe, pos: fromPlayer ? playerArrowOrigin(from, dir) : [...from], dir: [...dir], age: 0, batch: null, draw: null });   // ROAD-H H1c: a PLAYER shaft leaves the BOW HAND - GetAimPosition (DaggerfallMissile.cs:540-550) offsets the camera position 0.11 DOWN the camera's own up and 0.15 to the hand (the other way under FPSWeapon.FlipHorizontal), and it runs INSIDE the missile in DFU (:471), so it runs here rather than at each host's loose; an ENEMY shaft arrives with its own origin already applied (enemyTargets.enemyArrowOrigin)
+    // FIELD-GUN17 (Mac: "the orb doesnt allign with the barrel when
+    // firing. Its above the barrel"). The FOURTH HOST's own copy of
+    // the origin fork combat/arrowFlight.js takes: a supplied muzzle
+    // wins, nothing supplied keeps GetAimPosition's verbatim arm.
+    const pos = fromPlayer
+      ? (muzzle ? playerMuzzleOrigin(from, dir, muzzle) : playerArrowOrigin(from, dir))
+      : [...from];
+    missiles.push({ arrow: true, flatArchive: orbArchiveFor(weapon), weapon, fromPlayer, shooterFoe, aimFoe, pos, dir: [...dir], age: 0, batch: null, draw: null });   // ROAD-H H1c: a PLAYER shaft leaves the BOW HAND - GetAimPosition (DaggerfallMissile.cs:540-550) offsets the camera position 0.11 DOWN the camera's own up and 0.15 to the hand (the other way under FPSWeapon.FlipHorizontal), and it runs INSIDE the missile in DFU (:471), so it runs here rather than at each host's loose; an ENEMY shaft arrives with its own origin already applied (enemyTargets.enemyArrowOrigin)
   }
   // S16: the enemy cast - "enemies always cast ready spell instantly
   // once queued" (EntityEffectManager.Update): spend the S10 cost
@@ -2941,6 +2948,12 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // the scene. Check before publishing.
     if (m.dead) { m.batch = null; return; }
     uploadRecord(archive, record);
+    // FIELD-GUN17: the FOURTH HOST samples the orb too - its missiles
+    // never go through hitEffects' pool, so without this the dungeon's
+    // flash would stay white while the other three took the orb's own
+    // colour. `noteOrbColour` is once-only, so whichever host fires
+    // first answers for all of them.
+    if (m.flatArchive) noteOrbColour(t.getColor32(t.getDFBitmap(record, 0), 0));
     const size = billboardSize(t, record);
     m.firePos = [...m.pos];
     m.batch = renderer.createBillboardBatch(archive, record, size, [[m.firePos[0], m.firePos[1], m.firePos[2]]]);
@@ -4677,7 +4690,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
           // pre-sheathes at zero). WHICH round is the weapon's answer:
           // a bow spends an Arrow, the Thunderlock a Dwemer Pellet.
           if (!spendAmmoFor(playerEntity.items, playerWeapon.weapon)) continue;
-          fireArrow(eye, lookDir, playerWeapon.weapon, true);   // ROAD-H H1c: fireArrow applies GetAimPosition's player arm (the bow hand), as DFU's missile does its own
+          fireArrow(eye, lookDir, playerWeapon.weapon, true, null, null, weaponRig.thunderlockMuzzle(fieldOfView()));   // FIELD-GUN17: the barrel's own offset when the hand holds the gun, null for every bow - the rig answers, the lane forks   // ROAD-H H1c: fireArrow applies GetAimPosition's player arm (the bow hand), as DFU's missile does its own
           // WeaponManager.cs:419-436, in DFU's order: the swing costs
           // fatigue whatever it hits, and a BOW always takes the tally
           // arm (`!hitEnemy && WeaponType != Bow` is false for a bow),

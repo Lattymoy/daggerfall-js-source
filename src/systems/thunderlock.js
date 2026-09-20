@@ -42,6 +42,7 @@ import { GUN_FEEL } from '../combat/gunFeel.js';   // FIELD-GUN13: the flash's r
 // loud on the leaf itself.
 import {
   THUNDERLOCK_TEMPLATE, PELLET_TEMPLATE, THUNDERLOCK_ARCHIVE, PELLET_ARCHIVE,
+  orbColour,   // FIELD-GUN17: the muzzle light wears the orb's own colour, sampled rather than named
 } from '../characters/thunderlockIds.js';
 
 /** The two indices, from the leaf that holds them - re-exported so
@@ -395,10 +396,17 @@ export function installThunderlockSounds(audio, { fetchBytes = null } = {}) {
 // you glanced up - the shot's own trajectory is the ranged lane's
 // business, and this is only where the flash sits.
 //
-// NO COLOUR. `withPlayerLights` gives a light with no `color` the
-// white of the shared channel, and a muzzle flash is white-hot - so
-// the honest answer here is to say nothing rather than invent a
-// temperature.
+// THE COLOUR IS THE ORB'S, and FIELD-GUN17 (Mac: "can we can the
+// color of the muzzle flash and the light emitted to the same color as
+// the orb?") is what put one here at all. This used to say NO COLOUR,
+// on the reading that saying nothing beat inventing a temperature -
+// which was right, and stopped one step short: the orb is a texture
+// the game loads, so it can be ASKED rather than guessed. It is
+// sampled off its own archive the first time one flies
+// (characters/thunderlockIds.js orbColour) and the muzzle FLASH is
+// painted in the same answer, so the light a shot throws and the thing
+// it throws cannot be two different colours. White until the orb has
+// been seen, which is what the shared channel gave it before.
 
 /** Where the barrel is, in the player body's frame. The torch's own
  *  two numbers (0.3 out, 1.2 up) put the hand where the hand is; the
@@ -429,6 +437,7 @@ export function thunderlockMuzzleLight(entity, feet, yaw = 0) {
     y: feet[1] + o.up,
     z: feet[2] + r[2] * o.right + f[2] * o.forward,
     range: GUN_FEEL.flashRange * glow,
+    color: orbColour(),   // FIELD-GUN17: `withPlayerLights` takes a light's own colour where it has one
     // MAC-T1: a flash in your own hand gets no bloom glare either -
     // the same exemption the carried torch takes, for the same reason
     // (a torso-sized additive ball painted over the third-person body).

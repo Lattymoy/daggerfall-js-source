@@ -27,6 +27,10 @@ import { isBowWeapon, attackSkillOf, WEAPON_SKILL_BY_TEMPLATE } from '../src/sce
 import { spendAmmoFor, ammoCountFor } from '../src/systems/inventory.js';
 import { playerArchiveFor } from '../src/characters/paperdollArt.js';
 import { shimmer, NATIVE_WIDTH } from '../src/combat/thunderlockArt.js';
+import { muzzlePoint, MUZZLE_GAIN } from '../src/combat/thunderlockArt.js';   // FIELD-GUN17
+import { orbColour, orbColourFrom, noteOrbColour, resetOrbColour } from '../src/characters/thunderlockIds.js';   // FIELD-GUN17
+import { playerMuzzleOrigin } from '../src/systems/spellcast.js';   // FIELD-GUN17
+import { muzzleRay } from '../src/combat/weaponRig.js';   // FIELD-GUN17
 import { uniqueFinds, uniqueFindChance, rollLootRarity, legendariesFor, rarityEligible } from '../src/systems/lootRarity.js';
 // FIELD-GUN: the two the audit could not see, because every pin it
 // wrote asked about REGISTRATION and none of them picked the thing up.
@@ -1136,4 +1140,207 @@ test('FIELD-GUN15: the weapon plays the HEAD of each candidate list, which is wh
   assert.match(proto, /gun\.cooledMs >= Math\.max\(0, state\.cool - 420\)/, 'the prototype’s own 420ms');
   assert.doesNotMatch(rig, /The close lands this long before the weapon is ready - the clip's\n\s+\*\s+own length/,
     'and the sentence that said otherwise is gone');
+});
+
+// ── FIELD-GUN17 (2026-09-20, Mac: "On the thunderlock, the orb doesnt
+// allign with the barrel when firing. Its above the barrel. Also can
+// we can the color of the muzzle flash and the light emitted to the
+// same color as the orb?")
+//
+// TWO HALVES, ONE FAULT CLASS, and it is this port's oldest one: a law
+// written over DFU's own range, asked about THIS weapon, answering its
+// DEFAULT - and a default is not an error, so nothing went red.
+//
+//   the orb's ORIGIN came from GetAimPosition, which is right about
+//   the nock of a DRAWN BOW and says nothing about a gun barrel;
+//
+//   the flash's COLOUR came from the muzzle-glow arm's white, which is
+//   right about a powder flash and says nothing about the orb.
+test('FIELD-GUN17a: the shot leaves the BARREL, and the barrel is measured off the drawn frame', () => {
+  // THE ART MEASURES ITS OWN MUZZLE. Not a baked number: the fired
+  // frame is brighter than the idle one exactly where the flash is,
+  // and the difference's own centroid IS the muzzle.
+  const art = readFileSync('src/combat/thunderlockArt.js', 'utf8');
+  assert.match(art, /export function muzzlePoint\(dark, lit\)/);
+  assert.match(art, /export const MUZZLE_GAIN = \d+;/);
+  assert.match(art, /muzzle,?\s*$|muzzle[,}]/m, 'and it rides the art record');
+
+  // fractions of the UNION box, y from the TOP - the same axes
+  // `gunFrameRect` hands the draw, so the point can be multiplied
+  // straight onto the rect with no second convention to keep.
+  assert.ok(typeof muzzlePoint === 'function');
+  const W = 8, H = 8;
+  const flat = (v) => { const data = new Uint8ClampedArray(W * H * 4); data.fill(v); for (let i = 3; i < data.length; i += 4) data[i] = 255; return { width: W, height: H, data }; };
+  const dark = flat(10);
+  const lit = flat(10);
+  // one hot pixel, column 2 of 8, row 6 of 8 (from the top)
+  const idx = ((6 * W) + 2) * 4;
+  lit.data[idx] = lit.data[idx + 1] = lit.data[idx + 2] = 255;
+  const p = muzzlePoint(dark, lit);
+  assert.ok(p, 'a flash gives a point');
+  assert.ok(Math.abs(p.x - 2 / W) < 1e-6, `x is the column in fractions of the width (got ${p.x})`);
+  assert.ok(Math.abs(p.y - 6 / H) < 1e-6, `y counts DOWN from the top - crop answers PNG order (got ${p.y})`);
+  // a rise no bigger than MUZZLE_GAIN is not a flash: the whole point
+  // of the threshold is that the two frames differ a little EVERYWHERE
+  const warm = flat(10);
+  for (let i = 0; i < warm.data.length; i += 4) { warm.data[i] = warm.data[i + 1] = warm.data[i + 2] = 10 + MUZZLE_GAIN; }
+  assert.equal(muzzlePoint(dark, warm), null);
+  // and no rise at all is not a muzzle at (0,0) - it is no muzzle, and
+  // the fire path falls back to the verbatim bow arm
+  assert.equal(muzzlePoint(dark, flat(10)), null);
+  // mismatched frames answer nothing rather than reading off the end
+  // a LARGER second frame is the dangerous shape: every index the loop
+  // builds is in range, so nothing throws and nothing comes back NaN -
+  // it just reads the wrong pixels and answers with confidence.
+  const big = { width: 16, height: 16, data: new Uint8ClampedArray(16 * 16 * 4).fill(255) };
+  assert.equal(muzzlePoint(dark, big), null);
+  assert.equal(muzzlePoint(dark, { width: 4, height: 4, data: new Uint8ClampedArray(64) }), null);
+
+  // THE LANE FORKS, it does not replace. Both missile systems prefer a
+  // supplied muzzle and keep GetAimPosition for everything else -
+  // which is every bow, at every host, unchanged.
+  const spell = readFileSync('src/systems/spellcast.js', 'utf8');
+  assert.match(spell, /export function playerMuzzleOrigin\(eye, lookDir, muzzle\)/);
+  for (const f of ['src/combat/arrowFlight.js', 'src/scenes/dungeonContext.js']) {
+    const src = readFileSync(f, 'utf8');
+    assert.match(src, /muzzle\s*\?\s*playerMuzzleOrigin\([^)]*\)\s*:\s*playerArrowOrigin\(from, dir\)/,
+      `${f}: a muzzle wins, nothing supplied keeps the verbatim arm`);
+  }
+
+  // ALL FOUR HOSTS hand it over - the FOUR HOSTS RULE, which this
+  // weapon has paid for at every round it forgot one.
+  const HOSTS = [
+    ['src/scenes/world.js', /arrows\.fire\(cam\.pos, fwd, \{ fromPlayer: true, weapon: weaponRig\.playerWeapon\.weapon, muzzle: weaponRig\.thunderlockMuzzle\(fieldOfView\(\)\) \}\)/],
+    ['src/scenes/exterior.js', /arrows\.fire\(eye, fwd, \{ fromPlayer: true, weapon: weaponRig\.playerWeapon\.weapon, muzzle: weaponRig\.thunderlockMuzzle\(fieldOfView\(\)\) \}\)/],
+    ['src/scenes/worldModes.js', /interiorArrows\.fire\(player\.eye, eyeDir\(\), \{ fromPlayer: true, weapon: interiorWeapon\.playerWeapon\.weapon, muzzle: interiorWeapon\.thunderlockMuzzle\(fieldOfView\(\)\) \}\)/],
+    ['src/scenes/dungeonContext.js', /fireArrow\(eye, lookDir, playerWeapon\.weapon, true, null, null, weaponRig\.thunderlockMuzzle\(fieldOfView\(\)\)\)/],
+  ];
+  for (const [f, re] of HOSTS) assert.match(readFileSync(f, 'utf8'), re, `${f} passes the muzzle`);
+
+  // AND THE OFFSET IS A RAY, not a point: the muzzle's pixel is a
+  // DIRECTION, so the orb sits on the barrel at whatever distance the
+  // caller starts it from. Proved by projecting the world origin back
+  // through the same camera and landing on the same pixel.
+  const eye = [10, 3, -4];
+  const look = [0.6, -0.2, 0.77];
+  const fl = Math.hypot(...look);
+  const f = look.map((v) => v / fl);
+  let rx = f[2], rz = -f[0];
+  const rl = Math.hypot(rx, rz); rx /= rl; rz /= rl;
+  const ux = f[1] * rz, uy = f[2] * rx - f[0] * rz, uz = -f[1] * rx;
+  const muzzle = { right: 0.27, up: -0.48, forward: 0.5 };
+  const o = playerMuzzleOrigin(eye, look, muzzle);
+  const d = [o[0] - eye[0], o[1] - eye[1], o[2] - eye[2]];
+  const dot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+  assert.ok(Math.abs(dot(d, [rx, 0, rz]) - muzzle.right) < 1e-9, 'the right term survives the basis');
+  assert.ok(Math.abs(dot(d, [ux, uy, uz]) - muzzle.up) < 1e-9, 'and so does the up term');
+  assert.ok(Math.abs(dot(d, f) - muzzle.forward) < 1e-9, 'and the forward term');
+  // no handedness flip HERE - the mirror is a fact about the drawn
+  // rect and thunderlockMuzzle has already applied it, where
+  // PLAYER_ARROW_SIDE is a bare number that has to be flipped.
+  assert.doesNotMatch(spell.slice(spell.indexOf('export function playerMuzzleOrigin')), /flipHorizontal/);
+
+  // the rig's door refuses for everything that is not this weapon, and
+  // for a frame it has not drawn - a bow keeps GetAimPosition because
+  // it gets NOTHING, not because the fork spells its name.
+  const rig = readFileSync('src/combat/weaponRig.js', 'utf8');
+  assert.match(rig, /thunderlockMuzzle\(fovRad, forward = MUZZLE_FORWARD\) \{\s*\n\s*if \(!thunderlockHeld\(\)\) return null;/,
+    'the weapon gate is the rig’s; the arithmetic is muzzleRay’s');
+
+  // AND THE ARITHMETIC IS DRIVEN, not read. `muzzleRay` is the whole
+  // of it, pulled out of the rig so a suite can hand it a rect and a
+  // canvas with no renderer in the room.
+  const DRAWN = { rect: { x: 640, y: 400, w: 320, h: 200 }, canvasW: 1280, canvasH: 800, muzzle: { x: 0.25, y: 0.75 }, flip: false };
+  const FOV = 65 * Math.PI / 180;
+  const ray = muzzleRay(DRAWN, FOV, 1);
+  const tanY = Math.tan(FOV / 2), tanX = tanY * (1280 / 800);
+  // the muzzle's pixel: 640 + 0.25*320 = 720 across, 400 + 0.75*200 = 550 down
+  assert.ok(Math.abs(ray.right - ((720 / 1280) * 2 - 1) * tanX) < 1e-12);
+  assert.ok(Math.abs(ray.up - (1 - (550 / 800) * 2) * tanY) < 1e-12);
+  // THE SIGNS, said out loud, because they are the half of this that
+  // can be silently wrong: the muzzle is LEFT of centre and BELOW it
+  // on the screen, so the ray goes left and DOWN in camera space.
+  assert.ok(ray.right > 0, 'right of centre (720 of 1280) is a positive right');
+  assert.ok(ray.up < 0, 'below centre (550 of 800) is a NEGATIVE up - screen y counts down, camera up counts up');
+  // and the other way about, so the sign is a law and not this
+  // fixture's accident
+  assert.ok(muzzleRay({ ...DRAWN, rect: { x: 100, y: 100, w: 320, h: 200 } }, FOV, 1).right < 0, 'left of centre is negative');
+  assert.ok(muzzleRay({ ...DRAWN, rect: { x: 100, y: 100, w: 320, h: 200 } }, FOV, 1).up > 0, 'above centre is positive');
+  // a taller pixel is a HIGHER ray, monotonically
+  assert.ok(muzzleRay({ ...DRAWN, muzzle: { x: 0.25, y: 0.1 } }, FOV, 1).up > ray.up);
+  // the mirror moves it to the other side of the rect's own centre
+  assert.ok(Math.abs(muzzleRay({ ...DRAWN, flip: true }, FOV, 1).right
+    - ((640 + 0.75 * 320) / 1280 * 2 - 1) * tanX) < 1e-12, 'the mirror goes with the rect');
+  // the aspect is the CANVAS's: a wider canvas widens the sideways
+  // term and leaves the vertical one alone
+  const wide = muzzleRay({ ...DRAWN, canvasW: 2560, rect: { x: 1280, y: 400, w: 640, h: 200 } }, FOV, 1);
+  assert.ok(Math.abs(wide.up - ray.up) < 1e-12, 'the vertical term does not move with the width');
+  assert.ok(Math.abs(wide.right - ray.right * 2) < 1e-9, 'and the sideways one scales with the aspect');
+  // and it really is a RAY: doubling the distance doubles all three
+  const far = muzzleRay(DRAWN, FOV, 2);
+  for (const k of ['right', 'up', 'forward']) assert.ok(Math.abs(far[k] - ray[k] * 2) < 1e-12, k);
+  // nothing measured, nothing drawn on, nothing to answer
+  assert.equal(muzzleRay(null, FOV, 1), null);
+  assert.equal(muzzleRay({ ...DRAWN, muzzle: null }, FOV, 1), null);
+  assert.equal(muzzleRay({ ...DRAWN, canvasH: 0 }, FOV, 1), null);
+  assert.equal(muzzleRay(DRAWN, 0, 1), null);
+});
+
+test('FIELD-GUN17b: the flash and its light are the ORB’s colour, sampled off the orb', () => {
+  // THE ORB TELLS US ITS COLOUR, once, the one moment its texture is
+  // warm - rather than a hex typed twice and kept in step by hand.
+  assert.equal(resetOrbColour(), undefined);
+  assert.deepEqual(orbColour(), [1, 1, 1], 'white until something is sampled - a default, and it is the right one');
+
+  // alpha-weighted mean, peak-normalised: a dim orb and a bright orb
+  // of the same hue give the same colour, because this is a TINT.
+  const c32 = (...px) => ({ colors: Uint8ClampedArray.from(px.flat()), width: px.length, height: 1 });
+  const r3 = (c) => c.map((v) => Math.round(v * 1000) / 1000);
+  const blue = c32([60, 90, 128, 255], [0, 0, 0, 0]);
+  assert.deepEqual(r3(orbColourFrom(blue)), [0.469, 0.703, 1]);
+  const dim = c32([30, 45, 64, 255], [0, 0, 0, 0]);
+  assert.deepEqual(r3(orbColourFrom(dim)), r3(orbColourFrom(blue)),
+    'half as bright, the same hue, the same tint');
+  // the CLEAR half of the sprite is most of the sprite, and it must
+  // not drag the mean towards black: alpha is the weight
+  assert.deepEqual(r3(orbColourFrom(c32([60, 90, 128, 255], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]))), [0.469, 0.703, 1]);
+  // fully transparent is no colour at all, not black
+  assert.equal(orbColourFrom(c32([0, 0, 0, 0])), null);
+  assert.equal(orbColourFrom({ colors: new Uint8ClampedArray(0) }), null);
+  assert.equal(orbColourFrom(null), null);
+  // and neither is a black sprite that IS opaque - there is no tint
+  // that makes black, so the white default is the honest answer
+  assert.equal(orbColourFrom(c32([0, 0, 0, 255])), null);
+
+  // ONCE. A second archive does not get to repaint the gun.
+  assert.equal(noteOrbColour(blue), true);
+  assert.deepEqual(r3(orbColour()), [0.469, 0.703, 1]);
+  assert.equal(noteOrbColour(c32([255, 0, 0, 255])), false, 'the second sample is refused');
+  assert.deepEqual(r3(orbColour()), [0.469, 0.703, 1]);
+  // a sample that answers nothing does not COUNT as the sample, or a
+  // clear first frame would lock the gun to white for ever
+  resetOrbColour();
+  assert.equal(noteOrbColour(c32([0, 0, 0, 0])), false);
+  assert.equal(noteOrbColour(blue), true, 'the real one still lands');
+
+  // BOTH consumers read the one leaf - the sprite's own tint and the
+  // light the shot throws on the world.
+  const rig = readFileSync('src/combat/weaponRig.js', 'utf8');
+  assert.match(rig, /const flash = orbColour\(\);/);
+  assert.match(rig, /tint\.map\(\(v, i\) => v \+ \(flash\[i\] - v\) \*/, 'the frame LERPS to the orb, so an unlit room still darkens the gun');
+  const gun = readFileSync('src/systems/thunderlock.js', 'utf8');
+  assert.match(gun, /color: orbColour\(\)/, 'and the point light carries it too');
+
+  // AND THE SAMPLE IS TAKEN AT BOTH MISSILE LANES, because the orb is
+  // uploaded in two places and only one of them is the dungeon's.
+  for (const f of ['src/combat/arrowFlight.js', 'src/scenes/dungeonContext.js']) {
+    assert.match(readFileSync(f, 'utf8'), /noteOrbColour\(/, `${f} samples the orb it just uploaded`);
+  }
+  // the effects pool grew the door rather than the pool learning about
+  // guns: `onTexture` is a callback about a TEXTURE, and a throw in it
+  // does not cost the flat its flight.
+  const fx = readFileSync('src/scenes/hitEffects.js', 'utf8');
+  assert.match(fx, /if \(onTexture\) \{ try \{ onTexture\(t, archive, record\); \} catch/);
+
+  resetOrbColour();
 });

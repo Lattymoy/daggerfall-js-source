@@ -747,7 +747,7 @@ the orb is, so the two answers cannot drift apart.
 **One residual, named rather than half-fixed:** the multiplayer wire
 carries a hit's `kind` (`'arrow'`), not its weapon, so a peer-owned
 puppet struck by a Thunderlock still gains a shaft on its owner's
-client (`exteriorFoes.js:1776`, `dungeonContext.js:3458`, both gated on
+client (`exteriorFoes.js:1776`, `dungeonContext.js:3471`, both gated on
 `data.ar === 1`). Fixing it means widening the hit packet, which is a
 protocol change and not this slice's.
 
@@ -863,6 +863,106 @@ fixed. `gun-paperdoll.png` came out byte-identical across the re-bake,
 which is the other half of that claim.
 
 Campaign `tools/mutants/fieldgun16.json`: 2 mutants, 2 dead.
+
+## FIELD-GUN17: the orb came out above the barrel, and the flash was the wrong colour
+
+Mac, 2026-09-20: *"On the thunderlock, the orb doesnt allign with the
+barrel when firing. Its above the barrel. Also can we can the color of
+the muzzle flash and the light emitted to the same color as the orb?"*
+
+Two halves, one fault class — and it is this port's oldest one:
+
+> a law written over DFU's own range, asked about **this** weapon,
+> answering its **default** — and a default is not an error, so
+> nothing goes red.
+
+### Where the shot leaves
+
+The orb left from `playerArrowOrigin`, which is DFU's `GetAimPosition`
+(`DaggerfallMissile.cs:540-550`): the eye, 0.11 down the camera's own
+up and 0.15 to the bow hand. That is exactly right about the one
+ranged weapon Daggerfall has, because it is *the nock of a drawn bow*.
+
+The Thunderlock reaches this lane the way it reaches every other one —
+`isBowWeapon` is "scored on Archery", which is why no host had to be
+told the gun exists. It inherited the shaft's physics (right), its
+picture (FIELD-GUN14 forked that) and its **origin** (this). The gun
+is drawn low and to the right with its barrel lower still, so the orb
+came out well above it.
+
+**The answer is where the gun is drawn, not a number.** A baked offset
+would be right at one canvas, one aspect and one field of view and
+wrong at every other, and it would not move with the bob, the sway,
+the recoil or the handedness mirror. So:
+
+1. **The art measures its own muzzle.** `thunderlockArt.muzzlePoint`
+   takes the idle frame and the fired frame — which are the same
+   picture except where the flash is — and answers the *brightness-
+   weighted centroid of the difference*, in fractions of the union
+   box, y from the top. `MUZZLE_GAIN` is the threshold that makes it a
+   flash rather than a compression wobble. No flash to find is `null`,
+   not a muzzle at (0,0).
+
+2. **`muzzleRay` turns that point into a direction.** It is the rig's
+   whole arithmetic, exported on its own so it can be driven with a
+   rect and a canvas and no renderer in the room: the drawn rect, the
+   canvas, the mirror, and the player's live FOV, out to a camera-space
+   `{right, up, forward}`. It is a **ray**, proportional to `forward`
+   on purpose, so the orb lies on the barrel at whatever distance the
+   caller chooses to start it from — `MUZZLE_FORWARD` (0.5) only picks
+   how far out.
+
+3. **`playerMuzzleOrigin` composes it onto the world**, on the same
+   basis `playerArrowOrigin` rebuilds. No handedness term here: the
+   mirror is a fact about the *drawn rect* and `muzzleRay` has already
+   applied it, where `PLAYER_ARROW_SIDE` is a bare number that has to
+   be flipped at the point of use.
+
+4. **Both missile lanes fork, they do not replace.** A supplied muzzle
+   wins; nothing supplied keeps `GetAimPosition` verbatim — which is
+   every bow, at every host, untouched. And all four hosts hand it
+   over (the FOUR HOSTS RULE, which this weapon has paid for at every
+   round it forgot one): `world.js`, `exterior.js`, `worldModes.js`,
+   `dungeonContext.js`.
+
+The rig's door refuses for anything that is not this weapon, and for a
+frame it has not drawn. A bow keeps the verbatim arm because it is
+handed **nothing** — not because the fork spells the gun's name.
+
+### What colour the flash is
+
+The muzzle flash and the point light it throws were white, because
+white is what a powder flash is. This gun does not fire powder; it
+fires the orb, and the flash should be the orb going off.
+
+**The orb tells us its colour** rather than a hex being typed in two
+places and kept in step by hand. `hitEffects` grew one door —
+`onTexture`, a callback about a *texture*, not about guns — and the
+two places the orb is uploaded (`arrowFlight`, `dungeonContext`) hand
+the decoded sprite to `noteOrbColour` the one moment it is warm.
+
+`orbColourFrom` is an **alpha-weighted mean, peak-normalised**: a dim
+orb and a bright orb of the same hue give the same answer, because
+this is a *tint*, not a brightness. Transparent pixels weigh nothing
+(the clear half of a sprite is most of a sprite and must not drag the
+mean towards black), and a sample that answers nothing does not count
+as the sample — otherwise a clear first frame would lock the gun to
+white for ever. It takes **once**: a second archive does not get to
+repaint the weapon.
+
+Both consumers read the one leaf. The frame *lerps* toward the orb
+rather than being assigned it, so an unlit room still darkens the gun;
+and `thunderlockMuzzleLight` carries the same colour out to the world,
+so the wall the shot lights up is lit in the orb's colour too.
+
+White until something is sampled — a default, and this time it is the
+right one.
+
+Campaign `tools/mutants/fieldgun17.json`: 19 mutants, 17 dead, 2
+equivalent (both recorded with their reason: the centroid's brightness
+weighting, which no fixture in the tree can distinguish from a count,
+and the alpha weighting, which is a no-op on the binary-alpha sprites
+every classic archive decodes to).
 
 ## The test characters carry one
 

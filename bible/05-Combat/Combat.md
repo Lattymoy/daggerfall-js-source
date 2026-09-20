@@ -1356,7 +1356,7 @@ the step, and the dip only ever makes `|dir|` larger.
 
 **Four stale cites, re-resolved by content rather than by offset.**
 `roadg_pools.test.js` had half of a re-resolved pair left behind
-(`arrowFlight.js:262` is a `backstabChance:` field; the unconditional
+(`arrowFlight.js:282` is a `backstabChance:` field; the unconditional
 `onAttackFromPlayer` the sentence is about is `:215`, which is where the
 sibling comment in `cityGuards.js` was pointed in the same round). The
 dungeon's three-host sentence had its `exterior.js` number re-resolved
@@ -1368,7 +1368,7 @@ review had to apply to `pauseWindow`/`restWindow`. And `listPicker.js`'s
 which was a router — the round bumped the dungeon's `:4112` to `:4113`
 mechanically, and a wrong number moved by the right offset is still
 wrong. All three are resolved by content (`townTalk.js:1156`,
-`worldModes.js:7666`, `dungeonContext.js:5982`) and pinned as a set.
+`worldModes.js:7666`, `dungeonContext.js:5995`) and pinned as a set.
 
 The `worldModes.js` fix inserts one line, so cites into that host past
 it move by one: the dungeon's `worldModes.js:6285` and

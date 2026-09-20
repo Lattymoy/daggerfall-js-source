@@ -294,10 +294,19 @@ test('ROAD-H H1c: BOTH arrow spawn seams apply it, so every host inherits the bo
   // which is why the four hosts' loose lines are untouched and no host
   // can forget it. An ENEMY shaft arrives with its own origin already
   // applied (enemyArrowOrigin) and must NOT be offset again.
+  //
+  // FIELD-GUN17 re-aimed this pin. The seams now FORK first - a weapon
+  // that knows where its own muzzle is (the Thunderlock, and nothing
+  // else in the game) supplies a camera-space offset and gets it - but
+  // the claim this arm makes is unchanged and is asserted whole: a
+  // PLAYER shaft with no muzzle supplied still takes GetAimPosition,
+  // and an ENEMY shaft still takes its origin bare, at both seams.
   assert.match(src('combat/arrowFlight.js'),
-    /pos: meta\.fromPlayer \? playerArrowOrigin\(from, dir\) : \[\.\.\.from\],/);
+    /const origin = meta\.fromPlayer\s*\n\s*\? \(meta\.muzzle \? playerMuzzleOrigin\(from, dir, meta\.muzzle\) : playerArrowOrigin\(from, dir\)\)\s*\n\s*: \[\.\.\.from\];/);
+  assert.match(src('combat/arrowFlight.js'), /this\.arrows\.push\(\{ pos: origin,/);
   assert.match(src('scenes/dungeonContext.js'),
-    /pos: fromPlayer \? playerArrowOrigin\(from, dir\) : \[\.\.\.from\],/);
+    /const pos = fromPlayer\s*\n\s*\? \(muzzle \? playerMuzzleOrigin\(from, dir, muzzle\) : playerArrowOrigin\(from, dir\)\)\s*\n\s*: \[\.\.\.from\];/);
+  assert.match(src('scenes/dungeonContext.js'), /missiles\.push\(\{ arrow: true, flatArchive: orbArchiveFor\(weapon\), weapon, fromPlayer, shooterFoe, aimFoe, pos,/);
   // FlipHorizontal is read LIVE at the loose, off the same stored
   // Controls/Handedness the screen weapon draws by (StartGameBehaviour
   // :269) - DFU reads the one ScreenWeapon field in both places too.

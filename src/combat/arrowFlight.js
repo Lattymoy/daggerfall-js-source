@@ -19,7 +19,7 @@
 // player is standing. The player arm and its damage law live here
 // now, one copy for the three hosts that share this flight.
 
-import { MISSILE_SPEED, MISSILE_COLLIDER_RADIUS, MISSILE_LIFESPAN_S, playerArrowOrigin, missileHitsCapsule, missileReach, PLAYER_BODY_RADIUS } from '../systems/spellcast.js';   // AUDIT 65 CV-2: the player's own controller radius
+import { MISSILE_SPEED, MISSILE_COLLIDER_RADIUS, MISSILE_LIFESPAN_S, playerArrowOrigin, playerMuzzleOrigin, missileHitsCapsule, missileReach, PLAYER_BODY_RADIUS } from '../systems/spellcast.js';   // FIELD-GUN17: playerMuzzleOrigin - the gun's own barrel, where GetAimPosition speaks for the bow   // AUDIT 65 CV-2: the player's own controller radius
 import { CAPSULE_HEIGHT } from '../player/motor.js';   // ROAD-H tail: the standing capsule, the contact's default height   // ROAD-H H1c: GetAimPosition's player arrow arm
 import { trs } from '../world/mat4.js';
 import { SWING_MODS } from './playerWeapon.js';   // CalculateSwingModifiers, read live at the arrow's impact
@@ -30,7 +30,7 @@ import { backstabChanceOf, enemyPainVoice } from '../scenes/hostCombat.js';
 import { isBackFacing } from '../characters/enemyMotor.js';
 import { hitSoundFor, ENEMY_HIT_VOLUME } from '../systems/soundClips.js';
 import { addItem } from '../systems/inventory.js';
-import { orbArchiveFor, ORB_RECORD } from '../characters/thunderlockIds.js';   // FIELD-GUN14: what this weapon's shot LOOKS like - the leaf, so no cycle
+import { orbArchiveFor, ORB_RECORD, noteOrbColour } from '../characters/thunderlockIds.js';   // FIELD-GUN14: what this weapon's shot LOOKS like - the leaf, so no cycle   // FIELD-GUN17: ...and what colour it is, sampled the one moment the texture is in hand
 
 export const ARROW_MODEL_ID = 99800;
 
@@ -81,7 +81,18 @@ export class ArrowFlight {
     // WEAPON, which the record already carries: a shaft takes the mesh
     // lane below, an orb takes the billboard lane.
     const orb = orbArchiveFor(meta.weapon);
-    this.arrows.push({ pos: meta.fromPlayer ? playerArrowOrigin(from, dir) : [...from], dir: [...dir], age: 0, gpu: null, dead: false, orb, orbFlat: null, ...meta });   // ROAD-H H1c: a PLAYER shaft leaves the BOW HAND - GetAimPosition (DaggerfallMissile.cs:540-550) offsets the camera position 0.11 DOWN the camera's own up and 0.15 to the hand (the other way under FPSWeapon.FlipHorizontal), and it runs INSIDE the missile in DFU (:471), so it runs here rather than at each host's loose; an ENEMY shaft arrives with its own origin already applied (enemyTargets.enemyArrowOrigin)
+    // FIELD-GUN17 (Mac: "the orb doesnt allign with the barrel when
+    // firing. Its above the barrel"). THE SAME SENTENCE ONE FIELD ON
+    // from FIELD-GUN14's: the lane was written for the one ranged
+    // weapon Daggerfall has, so its ORIGIN is the bow's too. A host
+    // that knows where its weapon's muzzle is hands the offset over
+    // and it is used INSTEAD of GetAimPosition's bow-hand arm; a host
+    // that does not - and every bow, at every host - hands over
+    // nothing and gets the verbatim arm, unchanged.
+    const origin = meta.fromPlayer
+      ? (meta.muzzle ? playerMuzzleOrigin(from, dir, meta.muzzle) : playerArrowOrigin(from, dir))
+      : [...from];
+    this.arrows.push({ pos: origin, dir: [...dir], age: 0, gpu: null, dead: false, orb, orbFlat: null, ...meta });   // ROAD-H H1c: a PLAYER shaft leaves the BOW HAND - GetAimPosition (DaggerfallMissile.cs:540-550) offsets the camera position 0.11 DOWN the camera's own up and 0.15 to the hand (the other way under FPSWeapon.FlipHorizontal), and it runs INSIDE the missile in DFU (:471), so it runs here rather than at each host's loose; an ENEMY shaft arrives with its own origin already applied (enemyTargets.enemyArrowOrigin)
   }
 
   update(dt, { playerFeet = null, playerHeight = CAPSULE_HEIGHT, onPlayerHit = null, foeTargets = null, onFoeHit = null,
@@ -96,7 +107,16 @@ export class ArrowFlight {
         // guard the mesh uses - and then MOVED every step, which is
         // the one thing this pool's other entries never do.
         if (m.orbFlat === null) {
-          m.orbFlat = this._effects?.showFlyingFlat?.(m.orb, m.pos, { record: ORB_RECORD }) ?? false;
+          // FIELD-GUN17: THE ORB TELLS US ITS COLOUR. The pool hands
+          // the archive over the one moment it is warm, and the leaf
+          // reduces it to the single colour the muzzle flash is painted
+          // in and the muzzle light is thrown in. Sampled rather than
+          // named, so "the same colour as the orb" is exact and follows
+          // ORB_ARCHIVE if it ever changes.
+          m.orbFlat = this._effects?.showFlyingFlat?.(m.orb, m.pos, {
+            record: ORB_RECORD,
+            onTexture: (t, archive, record) => noteOrbColour(t?.getColor32?.(t.getDFBitmap(record, 0), 0)),
+          }) ?? false;
         }
       } else if (m.gpu === null) {   // lazy model fetch, in-flight guard
         m.gpu = false;
@@ -203,7 +223,7 @@ export class ArrowFlight {
  *
  * WAVE D: four bodies became FOUR CALLERS. dungeonContext.js's
  * `m.fromPlayer` block - the arm this function was extracted FROM -
- * now calls it (dungeonContext.js:2614), so the copy that survived
+ * now calls it (dungeonContext.js:2621), so the copy that survived
  * the extraction is gone. It was not a harmless copy: it still
  * splashed at the arrow tip, the exact bug AUDIT 39r/R16 fixed here.
  * DaggerfallMissile.cs:681-687 routes an arrow into

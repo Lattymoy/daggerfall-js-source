@@ -105,7 +105,7 @@ export function createHitEffects({
   // list per frame and use batches() instead. One pool either way.
   const live = [];   // { batch, anim }
 
-  function spawn(record, pos, facing = null, { archive = BLOOD_ARCHIVE, fps = BLOOD_FPS, scale = 1, tracked = false } = {}) {
+  function spawn(record, pos, facing = null, { archive = BLOOD_ARCHIVE, fps = BLOOD_FPS, scale = 1, tracked = false, onTexture = null } = {}) {
     if (!(record >= 0) || !pos) return null;
     const at = [pos[0], pos[1], pos[2]];
     if (facing) {
@@ -135,6 +135,14 @@ export function createHitEffects({
       if (t.recordCount != null && record >= t.recordCount) { retire(entry); return; }
       const frameCount = t.getFrameCount?.(record) ?? 1;
       for (let f = 0; f < frameCount; f++) uploadRecordFrame(archive, record, f);
+      // FIELD-GUN17: the archive, once it is warm, to whoever asked for
+      // the flat. The pool does not care what a caller does with it -
+      // the Thunderlock reduces its orb to one colour and paints its
+      // muzzle flash in it - and this is the only moment the texture is
+      // in hand, so it is the only place the offer can be made. Never
+      // throws into the pool's own warm: a caller's arithmetic is not
+      // the reason a splash fails to appear.
+      if (onTexture) { try { onTexture(t, archive, record); } catch { /* the flat still flies */ } }
       // BLOOD1a: THE MARK'S ART IS THIS SPLASH'S LAST FRAME, and this
       // is the ONE place that can see the frame count - so it tells the
       // mark pool rather than the mark pool guessing. A splash plays out
@@ -228,8 +236,8 @@ export function createHitEffects({
      * Answers { move(pos), retire() }, both safe to call before the
      * archive has warmed and after the flat is gone.
      */
-    showFlyingFlat(archive, pos, { record = 0, fps = MISSILE_FPS, scale = 1 } = {}) {
-      const e = spawn(record, pos, null, { archive, fps, scale, tracked: true });
+    showFlyingFlat(archive, pos, { record = 0, fps = MISSILE_FPS, scale = 1, onTexture = null } = {}) {
+      const e = spawn(record, pos, null, { archive, fps, scale, tracked: true, onTexture });
       return {
         move(at) {
           if (!e || e.dead || !at) return;
