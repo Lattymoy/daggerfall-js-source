@@ -22,11 +22,12 @@
   {
     "name": "X3-heartbeat-9000",
     "file": "src/net/wire.js",
-    "old": "export const HEARTBEAT_MS = 5000;",
+    "old": "export const HEARTBEAT_MS = 20000;",
     "new": "export const HEARTBEAT_MS = 9000;",
     "tests": [
       "test/slam13.test.js",
-      "test/slam8.test.js"
+      "test/slam8.test.js",
+      "test/relayh1.test.js"
     ]
   },
   {
