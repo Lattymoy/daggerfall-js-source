@@ -174,8 +174,11 @@ import { Collider } from '../player/collider.js';
 import { ActionSystem } from '../world/actionSystem.js';
 import { collectDungeonEnemies } from '../characters/dungeonEnemies.js';
 import { ENEMY_BASICS, enemyDisplayName } from '../characters/enemyBasics.js';
+import { bloodDecalDeps } from '../combat/bloodSwitch.js';   // BLOOD1a
+import { createBloodMarks } from '../combat/bloodMarks.js';   // BLOOD1a: HARD1 - the ring is this context's to own and to end
 import { createHitEffects, bloodCentre } from './hitEffects.js';
 import { orbArchiveFor, ORB_RECORD } from '../characters/thunderlockIds.js';   // FIELD-GUN14: what this weapon's shot LOOKS like - the leaf, so no cycle
+import { bloodHit } from '../combat/bloodDecals.js';   // BLOOD1b: the blow, in the shape the mark's ladder reads
 import { createDroppedTorches } from './droppedTorches.js';
 import { createCamps } from './camps.js';   // SURV3: a fire on the dungeon floor (no tent below - the camp law says so)
 import { campWire, validCampRecord, mergeOwnerCamps } from '../systems/survival/camp.js';   // SURV3: the room's memory carries the camps as the wire says them   // HT1: Handheld Torches' dropped lights in the dungeon   // AUDIT 24 (wave 39): EnemyBlood.ShowBloodSplash
@@ -219,7 +222,7 @@ const q3 = (v) => Math.round(v * 1000) / 1000; const GENDER_BIT = ['male', 'fema
 const HIT_POS_MAX = 1e6;
 // AUDIT FOES FOE5: the most damage one peer's blow may claim. The host TRUSTS the number (it never recomputes - the
 // striker's own calc is the game's), so without a bound any joiner could one-shot every foe in the room and empty it
-// through the kill door. The exterior twin has carried this bound since WORLD6b (exteriorFoes.js:1703); the dungeon
+// through the kill door. The exterior twin has carried this bound since WORLD6b (exteriorFoes.js:1704); the dungeon
 // had none. Past anything a legal swing, shaft or blast can roll.
 const HIT_DMG_MAX = 10000;
 /** AUDIT WORLD3 E3: can the ONE build chain actually stand this species? Both of buildFoeAt's branches need a truthy
@@ -1493,7 +1496,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // owned, and destroy() hands it back (the _prevPassiveHost idiom this
   // file already uses for its other process-global seams). A bare null
   // would not do: on ?world and ?exterior the previous holder is the
-  // host's own townTalk sink (world.js:8009 / exterior.js:3311), set
+  // host's own townTalk sink (world.js:8016 / exterior.js:3318), set
   // once at boot and never again, so nulling on the way out of the
   // first dungeon would silently un-file every mid-screen label above
   // ground for the rest of the session - MC-1's own bug, re-opened.
@@ -1996,7 +1999,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // copied mount would have diverged the first time an arm grew.
   /** DR1: THE TWO SPELL WINDOWS THIS HOST MOUNTS NOW, and the one door
    *  they go through. `mountSpellWindow` is worldModes'
-   *  mountSpellWindow DUNGEON ARM (worldModes.js:1101,
+   *  mountSpellWindow DUNGEON ARM (worldModes.js:1106,
    *  `dungeonCtx?.showOverlay(win)`) resolved to what it actually
    *  calls here - this file's own pushDungeonWindow, which IS
    *  UserInterfaceManager.PushWindow. So a spell window raised over an
@@ -2493,7 +2496,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // NEXT updateMissiles pass to fill. But the push lands in a
     // MICROTASK - this is async and its one caller does not await it -
     // and both hosts draw dynamicDraws BEFORE they call drawFoes
-    // (dungeon.js:1002 against :1039; worldModes.js:6145 against :6163).   // QS6: both pairs' SECOND half was stale before this slice - they named neither `drawFoes` call, and a positional bump would have moved a wrong number by the right offset; re-resolved by content
+    // (dungeon.js:1002 against :1039; worldModes.js:6151 against :6163).   // QS6: both pairs' SECOND half was stale before this slice - they named neither `drawFoes` call, and a positional bump would have moved a wrong number by the right offset; re-resolved by content
     // So the very next frame drew the arrow with a NULL matrix, and
     // `uniformMatrix4fv(uModel, false, null)` throws - Float32List is
     // a non-nullable WebIDL union. Firing a bow killed the frame loop,
@@ -2554,8 +2557,16 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // AUDIT 24 (wave 39): the blood pool registers into the SAME
   // persistent draw list the missile impact uses (:1395/:1404), so a
   // splash appears and disappears the way an impact flash does.
+  // BLOOD1a: THE MARK POOL IS ITS OWN BINDING, and HARD1 is why. The
+  // splash pool below is a HAND-OFF - every batch it mints joins
+  // `billboardBatches`, which destroy() frees - so it must not also be
+  // ended by hand, and a ring of decal quads is a thing it would OWN.
+  // The gate's three answers are exclusive by design; a splash plays
+  // and goes, a mark stays and costs a vertex buffer for the session.
+  // Two lifetimes, two bindings, and destroy() ends this one by name.
+  const bloodMarks = createBloodMarks({ renderer, collider: () => collider, settings: bloodDecalDeps });
   const hitEffects = createHitEffects({
-    renderer, getTexture, uploadRecordFrame,
+    renderer, getTexture, uploadRecordFrame, marks: bloodMarks,
     onSpawn: (b) => billboardBatches.push(b),
     onRetire: (b) => { const i = billboardBatches.indexOf(b); if (i >= 0) billboardBatches.splice(i, 1); },
   });
@@ -2875,7 +2886,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // cone and distance, so the body centre (DFU's own no-raycast
       // formula, EnemyAttack.cs:326-328) stands in.
       hitEffects?.showBloodSplash(ENEMY_BASICS[foe.mobileType]?.bloodIndex ?? 0,
-        bloodCentre(foe.ai.feet, foe.ai.height));
+        bloodCentre(foe.ai.feet, foe.ai.height), null, bloodHit(damage, foe.entity, { fromPlayer: true, weapon: playerWeapon.weapon, swing: playerWeapon.machine?.state, forward: lookDir }));   // BLOOD1b: the blow drives the ladder, and only a PLAYER'S warhammer takes the heavy branch
       // C2-slice (combat-17): a damaged CLASS foe cries out 40% of
       // the time (heavyDamage = a quarter of max health in one hit).
       const pain = enemyPainVoice(foe, damage);
@@ -3030,8 +3041,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
               // AUDIT 39 (#64) / THE FOUR HOSTS RULE - SHIPPED (wave D):
               // this host was the FOURTH BODY of the player-arrow law
               // and is now the fourth CALLER. combat/arrowFlight.js's
-              // playerArrowHitFoe is the one copy world.js:11096,
-              // exterior.js:4737 and worldModes.js:6292 already ran;
+              // playerArrowHitFoe is the one copy world.js:11104,
+              // exterior.js:4744 and worldModes.js:6299 already ran;
               // the flag said the divergence would bite and it already
               // had. This copy splashed at the ARROW TIP
               // (`[m.pos[0], m.pos[1], m.pos[2]]`) on the claim that
@@ -3385,7 +3396,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     if (!_authority || !data || typeof data !== 'object') return false;
     const i = data.i | 0, dmg = Number(data.dmg);
     const f = foes[i];
-    // AUDIT FOES FOE5: BOUNDED, as the exterior twin's applyHit is (exteriorFoes.js:1703). The number is a peer's
+    // AUDIT FOES FOE5: BOUNDED, as the exterior twin's applyHit is (exteriorFoes.js:1704). The number is a peer's
     // word and the host trusts it without recomputing, so an unbounded one let any joiner one-shot every foe in the
     // room - and, through the kill door, empty it. 10000 is past anything a legal swing, shaft or blast can roll.
     if (!f || i >= _layoutFoes || f.dead || !Number.isFinite(dmg) || dmg < 0 || dmg > HIT_DMG_MAX) return false;
@@ -3404,7 +3415,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // striker's callers play these before their own door; here the door is all there is)
     if (dmg > 0) {
       audio.play3d(hitSoundFor(null), f.ai.feet, ENEMY_HIT_VOLUME, { maxDistance: 16 });
-      hitEffects?.showBloodSplash(ENEMY_BASICS[f.mobileType]?.bloodIndex ?? 0, bloodCentre(f.ai.feet, f.ai.height));
+      hitEffects?.showBloodSplash(ENEMY_BASICS[f.mobileType]?.bloodIndex ?? 0, bloodCentre(f.ai.feet, f.ai.height), null, bloodHit(dmg, f.entity));   // BLOOD1b: a peer's blow is still a blow
       const pain = enemyPainVoice(f, dmg);
       if (pain && pain.clip >= 0) audio.play3d(pain.clip, [f.ai.feet[0], f.ai.feet[1] + 0.9, f.ai.feet[2]], 1, { maxDistance: 16, pitch: 1 + pain.pitchLift });
     }
@@ -3863,7 +3874,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // InstantiatePrefab's a fresh GameObject per saved record, so
     // EnemyEntity's `PickpocketByPlayerAttempted` default is the loaded
     // truth for every enemy. The re-minting pools match that by
-    // construction (exteriorFoes.js:1342's restoreWorld goes through
+    // construction (exteriorFoes.js:1343's restoreWorld goes through
     // spawnFoe), but this host patches the LIVE foes in place, so a
     // same-dungeon reload kept a raised latch and a failed pickpocket
     // could never be retried - falsifying the law
@@ -4762,7 +4773,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         if (dmg > 0) {
           audio.play3d(SOUND.FallDamage, [f.ai.feet[0], f.ai.feet[1], f.ai.feet[2]], 1, { maxDistance: 16 });
           // AUDIT 62 F20: the TRANSFORM (feet + centreOffset), per the note above.
-          hitEffects?.showBloodSplash(0, f.ai._centre());
+          hitEffects?.showBloodSplash(0, f.ai._centre(), null, bloodHit(dmg, f.entity));   // BLOOD1b: a fall bleeds by what it cost, like any other blow
           damageFoe(f, dmg, null, null, { fromPlayer: false });   // F041: a fall is nobody's attack
         }
       }
@@ -5061,6 +5072,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     const _dropBatches = droppedLoot.batches();
     const _spellBatches = magic.batches();   // M3: player spell missiles
     if (_mobileBatches.length || _dropBatches.length || _spellBatches.length) {
+      bloodMarks.draw(new Float32Array([-view[0], -view[4], -view[8]]), UP_Y);   // BLOOD1a: under the billboards, as the exterior hosts have it   // BLOOD1b: and the chunks over them, on the basis the draw below uses
       renderer.drawBillboards([..._mobileBatches, ..._dropBatches, ..._spellBatches],
         new Float32Array([-view[0], -view[4], -view[8]]), UP_Y);
     }
@@ -5245,6 +5257,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     billboardBatches,
     flatAnims,   // FA1: the host ticks the flats it draws
     hitEffects,  // AUDIT 24 (wave 39): and the blood splashes it draws
+    bloodMarks,  // BLOOD1a: the marks under them, for the world host’s own pass
     droppedTorches, torchBatches: () => droppedTorches.batches(), torchLights: () => droppedTorches.lights(),   // HT1: the dropped torches, for the hosts' draw pass and light channel
     camps, campBatches: () => camps.batches(), campLights: () => camps.lights(),   // SURV3: the campfires, on the same two passes; the pool itself for the hosts' env (byFire) and the probes
     lights,
@@ -6436,6 +6449,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // player outside and, at AutomapNumberOfDungeons = 0, forgets
       // the map the moment you leave (Automap.cs:2530-2534).
       exitDungeonAutomap();
+      bloodMarks.dispose();   // BLOOD1a (HARD1): the ring is OURS - a vertex buffer and a VAO handed to nobody - so it ends here, by its own name and not through the hand-off pool
       // ROAD-B B1: RemoveWindow runs OnPop on every window it removes
       // (UserInterfaceManager.cs:189-196) and ChangeWindow removes them
       // all (:125-126). The outer host disposes the TOP before calling

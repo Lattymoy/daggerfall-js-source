@@ -180,7 +180,9 @@ test('F040: a falling watchman bleeds, like every other falling enemy', () => {
   // its controller on the transform (m_Center 0) while
   // SetupDemoEnemy.cs:98-115 moves only controller.center. The clip
   // above stays at the feet: :1409 rings it at FindGroundPosition().
-  assert.ok(arm.slice(0, 2600).includes('hitEffects?.showBloodSplash(0, g.ai._centre());'),
+  // BLOOD1b carried the BLOW in beside it; what this pin holds -
+  // record 0, at the transform - is unchanged.
+  assert.ok(arm.slice(0, 2600).includes('hitEffects?.showBloodSplash(0, g.ai._centre(), null, bloodHit(gdmg, g.entity));'),
     'ShowBloodSplash(0, transform.position) on every fall past the threshold');
   assert.equal(arm.slice(0, 2600).includes('showBloodSplash(0, [g.ai.feet[0], g.ai.feet[1], g.ai.feet[2]])'), false,
     'not at the feet - that was the pre-F20 reading');
@@ -189,7 +191,7 @@ test('F040: a falling watchman bleeds, like every other falling enemy', () => {
   // the sibling pool has done this since CH3 - one law, both pools
   const xf = src('scenes/exteriorFoes.js');
   const xarm = xf.slice(xf.indexOf('if (f.ai.landedFall > 0'));
-  assert.ok(xarm.slice(0, 2000).includes('hitEffects?.showBloodSplash(0, f.ai._centre());'));
+  assert.ok(xarm.slice(0, 2000).includes('hitEffects?.showBloodSplash(0, f.ai._centre(), null, bloodHit(fdmg, f.entity));'));
 });
 
 test('F206: a damaging fall in a dungeon flashes the screen', () => {

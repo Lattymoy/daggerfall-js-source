@@ -75,6 +75,8 @@ import { tallySwingSkills, SWING_WEAPON_FATIGUE_LOSS, playerPainVoice, playPlaye
 import { flashPlayerDamage } from '../ui/damageFlash.js';   // AUDIT 24 (wave 46): the arrow owes the flash too   // AUDIT 23 (C14)
 import { hudFade } from '../ui/fadeLayer.js';   // D4: performFastTravel's and TeleportAway's fade from black
 import { exhaustionOutcome, EXHAUSTED_IN_WATER } from '../systems/rest.js';   // AUDIT 23 (C5)
+import { bloodDecalDeps } from '../combat/bloodSwitch.js';
+import { createBloodMarks } from '../combat/bloodMarks.js';   // BLOOD1a: the ring, owned by this host and ended by its own name
 import { RestWindow, preloadRestArt } from '../ui/restWindow.js';   // S40: rest above ground   // D3: REST00I0/01I0/02I0
 import { ActionTextBox } from '../ui/actionText.js';   // AUDIT 23 (C5)
 import { healthStatusRows, statusInfoRows } from '../systems/healthStatus.js';   // BS1/F198: the Status health box
@@ -2659,7 +2661,12 @@ export async function bootWorld(canvas, renderer, params, status) {
   // enemy pools - a splash is a world billboard and the host owns the
   // draw. EnemyBlood is per-entity in DFU only because Unity hangs a
   // component off each enemy; there is one archive and one clock.
-  const hitEffects = createHitEffects({ renderer, getTexture, uploadRecordFrame });
+  // BLOOD1a: the mark pool is its OWN binding, not the splash pool's
+  // property - HARD1's three answers are exclusive and the splash pool
+  // is a hand-off, so the thing that owns a vertex buffer is separate
+  // and ends by its own name.
+  const bloodMarks = createBloodMarks({ renderer, collider: () => collider, settings: bloodDecalDeps });
+  const hitEffects = createHitEffects({ renderer, getTexture, uploadRecordFrame, marks: bloodMarks });
   // HT1: the exterior host's dropped-torch pool. Destroyed whole on
   // every mode change (the mod's OnTransition* handlers), swept with a
   // pixel outdoors (TrackLooseObject), aged by the world clock.
@@ -3321,10 +3328,10 @@ export async function bootWorld(canvas, renderer, params, status) {
   // ?dungeon host RAN every CastWhenUsed / CastWhenStrikes / SoulBound
   // / affinity arm against no ctx at all. They are optional-chained, so
   // it WAS silent. WAVE D closed it: the body is scenes/hostEnchant.js
-  // and dungeonContext.js:2233 mounts the same one, gated on
+  // and dungeonContext.js:2236 mounts the same one, gated on
   // `opts.enchantCtx !== false` because setDefaultEnchantCtx is a
   // session singleton and EC1 already routes THIS host's mount into
-  // that context through modes.dungeonCtx - so worldModes.js:4707
+  // that context through modes.dungeonCtx - so worldModes.js:4712
   // passes false beside its `chargen: false` and only the standalone
   // ?dungeon route mounts its own. S40 filled isResting
   // in - the sentence that stood here said it "stays absent above
@@ -3409,11 +3416,11 @@ export async function bootWorld(canvas, renderer, params, status) {
     // through the one that owns the billboard - `exteriorFoePool` is
     // the watch AND the encounter foes, and this arm reached the
     // encounter pool's remover for both. That was not a leak: removeFoe
-    // (exteriorFoes.js:368-373) never looks the record up in `foes`, and
+    // (exteriorFoes.js:369-374) never looks the record up in `foes`, and
     // both pools share this host's one renderer, so a struck WATCHMAN
-    // got exactly what removeGuard (cityGuards.js:1281-1283) gives it -
+    // got exactly what removeGuard (cityGuards.js:1283-1285) gives it -
     // batch freed, `dead = true`, no corpse, skipped by the next AI pass
-    // (cityGuards.js:816) and spliced out at the end of it (:1005).
+    // (cityGuards.js:817) and spliced out at the end of it (:1006).
     // Routing by POOL MEMBERSHIP is an OWNERSHIP fix: each pool owns the
     // teardown of its own records so the two can diverge safely, and
     // removeFoe's `questBehaviour?.notifyDestroyed()` (exteriorFoes.js
@@ -5127,7 +5134,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // so an F9 pressed inside a shop recorded the street's sheath and
     // hand. The mode host answers for the rig that is actually drawn
     // and null outside interior mode (the dungeon owns its own
-    // composer, dungeonContext.js:5668), so exterior mode and a
+    // composer, dungeonContext.js:5681), so exterior mode and a
     // pre-seam mode host compose exactly as before, per field.
     const wp = modes?.weaponPose?.() ?? null;
     const snap = snapshotPlayer(playerEntity, {
@@ -6972,7 +6979,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // exterior -> the townTalk overlay, interior OR dungeon -> the mode
   // machine's slot. U43-ii shipped the dungeon half: showQuestBox
   // offers the window to `modes.showQuestOverlay` below, and
-  // worldModes answers it in BOTH modes (worldModes.js:7578-7641 -
+  // worldModes answers it in BOTH modes (worldModes.js:7594-7657 -
   // dungeon routes to dungeonCtx.showOverlay), so a dungeon popup is
   // shown rather than logged loudly and dropped.
   // AUDIT 24 (wave 21): DaggerfallMessageBox.Show() is a
@@ -10714,6 +10721,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       }
     }
     meterFor(renderer.gl)?.markCpu('flats');   // PERF-CPU: submitting the billboards - the draws themselves, from JS. ABOVE setFlatWind, not between it and the draw: WIND3 pins the two as ADJACENT, and the wind is part of this phase anyway.
+    bloodMarks.draw(camRight, UP_Y);   // BLOOD1a: the marks go down BEFORE the billboards, so a body standing in its own blood is over it and not under it. ABOVE setFlatWind for the reason its own neighbour gives: WIND3 pins the wind and the draw as ADJACENT.
     renderer.setFlatWind(floraSwayOn() && wd.on ? [wd.windV[0], wd.windV[1], now / 1000, wd.gust] : null);   // WIND3: the flats lean with the one wind; the flora batches carry their share (sway)
     renderer.drawBillboards(allBatches, camRight, UP_Y);
     if (magic.batches().length) renderer.drawBillboards(magic.batches(), camRight, UP_Y);   // M2: spell missiles
@@ -11104,11 +11112,11 @@ export async function bootWorld(canvas, renderer, params, status) {
         // AFTER the damage fork closes (:615), so a shaft that lost the
         // roll still enrages what it hit and wakes the area. ROAD-G G1
         // (review): the WATCH carries the pair now
-        // (cityGuards.js:581-586), so this seam ROUTES by pool exactly
+        // (cityGuards.js:582-587), so this seam ROUTES by pool exactly
         // as `dealDamage` above it does, instead of excluding the
         // guards - a zero-damage shaft into a pacified watchman has to
         // reach the same door the zero-damage SWING already reaches
-        // (cityGuards.js:1070). DFU makes no pool distinction:
+        // (cityGuards.js:1071). DFU makes no pool distinction:
         // AssignBowDamageToTarget's player arm (DaggerfallMissile.cs
         // :660-688) calls WeaponDamage, so :630 runs for the shaft as
         // for the swing.

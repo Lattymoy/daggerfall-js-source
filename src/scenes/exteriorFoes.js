@@ -51,6 +51,7 @@ import { WEAPON_REACH } from '../combat/playerWeapon.js';   // AUDIT WATCH1 B2: 
 import { createWeapon, bowDamageArrow } from '../combat/enemyEquipment.js';   // MAC-N1: the recovered shaft is CreateWeapon's arrow, value and all   // AUDIT WORLD6b-ii B2: a puppet's weapon is its owner's word, rebuilt from the descriptor   // AUDIT WORLD6b B3/C2: a cell's record projected and its puppets capped, the wire's law
 import { mintCorpseMarker, playBodyFall, playRareDrop, corpseLootTargets, takeCorpseLoot, openCorpseLoot, sayEnemyDied, raiseEnemyDeath } from './corpseMarker.js';
 import { bloodCentre } from './hitEffects.js';   // AUDIT 24 (wave 39): EnemyBlood.ShowBloodSplash
+import { bloodHit } from '../combat/bloodDecals.js';   // BLOOD1b: the blow, in the shape the mark's ladder reads
 import { addItem } from '../systems/inventory.js';   // AR1: BowDamage's recoverable arrow, in the TARGET's items
 import { EnemySoundSource, acuteHearingMultiplier } from '../characters/enemySounds.js';   // AUDIT 24 (wave 41): EnemySounds.cs, one home
 import { flashPlayerDamage } from '../ui/damageFlash.js';   // AUDIT 24 (wave 39): ShowPlayerDamage   // AUDIT 24 (wave 38): EnemyDeath's one home
@@ -880,7 +881,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
         if (fdmg > 0) {
           audio?.play3d?.(SOUND.FallDamage, [f.ai.feet[0], f.ai.feet[1], f.ai.feet[2]], 1, { maxDistance: 16 });
           // AUDIT 62 F20: the TRANSFORM (feet + centreOffset), per the note above.
-          hitEffects?.showBloodSplash(0, f.ai._centre());
+          hitEffects?.showBloodSplash(0, f.ai._centre(), null, bloodHit(fdmg, f.entity));   // BLOOD1b: a fall bleeds by what it cost
           damageFoe(f, fdmg, null, null, { fromPlayer: false });   // F041: a fall is nobody's attack
         }
       }
@@ -1091,7 +1092,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
         // cone and distance, so the body centre (DFU's own formula at
         // its no-raycast site, EnemyAttack.cs:326-328) stands in.
         hitEffects?.showBloodSplash(ENEMY_BASICS[foe.mobileType]?.bloodIndex ?? 0,
-          bloodCentre(foe.ai.feet, foe.ai.height));
+          bloodCentre(foe.ai.feet, foe.ai.height), null, bloodHit(damage, foe.entity, { fromPlayer: true, weapon: playerWeapon.weapon, swing: playerWeapon.machine?.state, forward: lookDir }));   // BLOOD1b: the blow drives the ladder, and only a PLAYER'S warhammer takes the heavy branch
         // C2-slice (combat-17): the struck class foe cries out 40%
         const pain = enemyPainVoice(foe, damage);
         if (pain && pain.clip >= 0) audio?.play3d?.(pain.clip, [foe.ai.feet[0], foe.ai.feet[1] + 0.9, foe.ai.feet[2]], 1, { maxDistance: 16, pitch: 1 + pain.pitchLift });   // AUDIT 58: EnemySounds.cs:172-175
@@ -1754,7 +1755,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     // AUDIT WORLD2 B8/C4's law: the blow is seen and heard at the owner too - the hit's ring, the blood, the pain
     if (dmg > 0) {
       audio?.play3d?.(hitSoundFor(null), f.ai.feet, ENEMY_HIT_VOLUME, { maxDistance: 16 });
-      hitEffects?.showBloodSplash(ENEMY_BASICS[f.mobileType]?.bloodIndex ?? 0, bloodCentre(f.ai.feet, f.ai.height));
+      hitEffects?.showBloodSplash(ENEMY_BASICS[f.mobileType]?.bloodIndex ?? 0, bloodCentre(f.ai.feet, f.ai.height), null, bloodHit(dmg, f.entity));   // BLOOD1b: a peer's blow is still a blow
       const pain = enemyPainVoice(f, dmg);
       if (pain && pain.clip >= 0) audio?.play3d?.(pain.clip, [f.ai.feet[0], f.ai.feet[1] + 0.9, f.ai.feet[2]], 1, { maxDistance: 16, pitch: 1 + pain.pitchLift });
     }
