@@ -57,20 +57,22 @@
   {
     "name": "FIELD-GUN17-7-the-offset-forgets-the-aspect-ratio",
     "file": "src/combat/weaponRig.js",
-    "old": "  const tanX = tanY * (canvasW / canvasH);",
+    "old": "  const tanX = tanY * (r.w / r.h);",
     "new": "  const tanX = tanY;",
     "tests": [
       "test/thunderlock.test.js"
-    ]
+    ],
+    "note": "FIELD-GUN19 re-aimed BY CONTENT: the aspect is the WORLD STRIP's now, not the canvas's (the docked large HUD shrinks the world pass), so the line this mutates moved from `canvasW / canvasH` to `r.w / r.h`. Same law, same killer, new anchor."
   },
   {
     "name": "FIELD-GUN17-8-the-screen-y-flip-is-dropped",
     "file": "src/combat/weaponRig.js",
-    "old": "    up: (1 - (py / canvasH) * 2) * tanY * forward,",
-    "new": "    up: ((py / canvasH) * 2 - 1) * tanY * forward,",
+    "old": "    up: (1 - ((py - r.y) / r.h) * 2) * tanY * forward,",
+    "new": "    up: (((py - r.y) / r.h) * 2 - 1) * tanY * forward,",
     "tests": [
       "test/thunderlock.test.js"
-    ]
+    ],
+    "note": "FIELD-GUN19 re-aimed BY CONTENT: the pixel is mapped through the world strip now, so the denominator is the strip's height and the strip's top edge is subtracted first. The flip this mutates is the same flip."
   },
   {
     "name": "FIELD-GUN17-9-every-weapon-claims-a-muzzle",
@@ -113,13 +115,13 @@
   {
     "name": "FIELD-GUN17-13-the-colour-is-a-flat-mean-with-no-alpha-weight",
     "file": "src/characters/thunderlockIds.js",
-    "old": "    r += d[i] * a; g += d[i + 1] * a; b += d[i + 2] * a; w += a;",
-    "new": "    r += d[i]; g += d[i + 1]; b += d[i + 2]; w += 1;",
+    "old": "    const k = a * chroma;",
+    "new": "    const k = chroma;",
     "tests": [
       "test/thunderlock.test.js"
     ],
-    "equivalent": true,
-    "why": "`a` is skipped when zero one line above, so every pixel this sum reaches is a pixel with SOME alpha - and DFU's decoded sprites are binary-alpha (255 or 0, the palette's index-0 key), so the weight is 255 on every term and divides straight back out at the peak normalisation. The two are equal on every input the game can hand it. They differ on a partially transparent orb, which the weighting is written for and which no classic archive produces."
+    "why": "`a` is skipped when zero one line above, so every pixel this sum reaches is a pixel with SOME alpha - and DFU's decoded sprites are binary-alpha (255 or 0, the palette's index-0 key), so the weight is 255 on every term and divides straight back out at the peak normalisation. The two are equal on every input the game can hand it. They differ on a partially transparent orb, which the weighting is written for and which no classic archive produces.",
+    "note": "FIELD-GUN19: THIS RECORD USED TO BE MARKED EQUIVALENT AND IS NOT ANY MORE. Its old reasoning was sound and is now stale: it said the alpha weight divides straight back out because DFU's decoded sprites are binary-alpha, so every term carried the same 255. That held while the weight was alpha ALONE. The weight is alpha TIMES CHROMA now - the blown-out white core of a missile sprite has no opinion about hue and must not vote - and the two factors do not cancel: a few almost-transparent texels of a stray palette colour are very saturated and cover nothing, and chroma alone lets them repaint the orb. test/thunderlock.test.js carries that fixture (a red rim at alpha 6) and kills this mutant."
   },
   {
     "name": "FIELD-GUN17-14-the-peak-normalisation-goes-and-the-tint-carries-brightness",

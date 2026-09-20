@@ -38,6 +38,7 @@ import { readWidgetSettings } from './weaponWidgetMotion.js';   // FIELD-GUN8: t
 import { weaponOffsetHeight } from '../ui/hudLarge.js';   // FIELD-GUN7: the lab's raise rides the bar's offset rather than replacing it
 import { betterAmbience } from '../systems/betterAmbience.js';   // FIELD-GUN6: the ONE camera shaker in the port, already wired through all four hosts
 import { orbColour, MUZZLE_FORWARD } from '../characters/thunderlockIds.js';   // FIELD-GUN17: the flash wears the orb's own colour, sampled rather than named
+import { worldRectPx } from '../player/tapRay.js';   // FIELD-GUN19: the docked HUD's world strip, in canvas pixels - ROAD-E E5's one home for that flip
 import { installThunderlockSounds, SFX as TL_SFX } from '../systems/thunderlock.js';   // AUDIT-THUNDERLOCK F8: the weapon's own clips, through the mod-sound door   // the port's own weapon: its art is a sheet, not a CIF   // MAC-I: the tint's switch, with the sprite it tints
 // ROAD-tail (FPSSpellCasting.cs): the classic spellcasting HANDS. A
 // separate component in DFU and a separate module here, drawn by the
@@ -224,18 +225,45 @@ export async function autoBuildArms(entity, { wanted = () => getPref('mwArms'), 
  */
 export function muzzleRay(drawn, fovRad, forward = MUZZLE_FORWARD) {
   if (!drawn?.muzzle) return null;
-  const { rect, canvasW, canvasH, muzzle, flip } = drawn;
+  const { rect, canvasW, canvasH, muzzle, flip, viewport = null } = drawn;
   if (!(canvasW > 0) || !(canvasH > 0) || !(fovRad > 0)) return null;
   // the mirror flips the whole composite about the rect's own centre,
   // so the muzzle goes with it (gunFrameRect's own law)
   const fx = flip ? 1 - muzzle.x : muzzle.x;
   const px = rect.x + fx * rect.w;
   const py = rect.y + muzzle.y * rect.h;
+  // FIELD-GUN19 (Mac: "the orb projectile that shoots doesnt line up
+  // with the muzzle. It shoots out high on the screen").
+  //
+  // THE MUZZLE IS A CANVAS PIXEL AND THE ORB IS A WORLD OBJECT, and
+  // ROAD-E E5 made those two different spaces: the docked large HUD
+  // SHRINKS the world pass (`setWorldViewport`, ViewportChanger.cs
+  // :52-67) while the 2D pass takes the whole canvas back, so the gun
+  // is drawn over the full frame and the shot is projected into a
+  // strip. This line used to divide by `canvasH` and say so in a
+  // comment - "the viewmodel is drawn over the whole frame", which is
+  // TRUE OF THE GUN and says nothing about where the orb lands.
+  //
+  // The strip is shorter than the canvas, so the same pixel divided by
+  // the taller of the two gives a LARGER `up` - the shot came out
+  // above the barrel, by about half the bar's height, exactly as
+  // reported. E5 converted the crosshair (hudCrosshair.crosshairCentreY)
+  // and the tap pick (player/tapRay.js) for this reason and the
+  // viewmodel's muzzle was the third consumer nobody had counted.
+  //
+  // `worldRectPx` is that file's own arithmetic - the normalized
+  // bottom-left rect into top-left canvas pixels, which is the part
+  // with a flip in it and the part worth having one home for. What is
+  // NOT taken from there is its bounds test: a tap outside the strip
+  // is not a pick, but a muzzle below it is a real point below the
+  // bottom of the view, and clamping it would move the shot.
+  const r = worldRectPx(viewport, canvasW, canvasH);
+  if (!(r.w > 0) || !(r.h > 0)) return null;
   const tanY = Math.tan(fovRad / 2);
-  const tanX = tanY * (canvasW / canvasH);   // the CANVAS's aspect, not the world viewport's - the viewmodel is drawn over the whole frame
+  const tanX = tanY * (r.w / r.h);   // the WORLD STRIP's aspect - the same one the host's own perspective() takes (hudLarge.largeHudWorldAspect)
   return {
-    right: ((px / canvasW) * 2 - 1) * tanX * forward,
-    up: (1 - (py / canvasH) * 2) * tanY * forward,   // screen y counts DOWN, camera up counts UP
+    right: (((px - r.x) / r.w) * 2 - 1) * tanX * forward,
+    up: (1 - ((py - r.y) / r.h) * 2) * tanY * forward,   // screen y counts DOWN, camera up counts UP
     forward,
   };
 }
@@ -794,7 +822,12 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
     // it is DRAWN - with the bob, the sway and the kick already in it.
     // A shot leaves the barrel where the barrel IS on that frame, and
     // the frame a gun fires on is the one the recoil has just moved.
-    _tlDrawn = { rect, canvasW: canvas.width, canvasH: canvas.height, muzzle: art.muzzle ?? null, flip: handedFlip() };
+    // FIELD-GUN19: ...and the STRIP THE WORLD WAS DRAWN INTO on this
+    // frame, because the muzzle is a canvas pixel and the shot is a
+    // world object. `worldViewportRect` outlives endWorldPass for
+    // exactly this reader; null is the full canvas, which is what
+    // every host without a docked large HUD hands back.
+    _tlDrawn = { rect, canvasW: canvas.width, canvasH: canvas.height, muzzle: art.muzzle ?? null, flip: handedFlip(), viewport: renderer.worldViewportRect ?? null };
     // FIELD-GUN13 (Mac: "The muzzle flash itself shouldn't be affected
     // by the darkening lighting").
     //

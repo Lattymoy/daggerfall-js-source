@@ -1475,3 +1475,101 @@ animations. What nobody has done is **look at it in the arm**: the
 absent, so the grip sits exactly at the bone's origin, and whether that
 reads as *held* rather than *floating* is a question for eyes on a
 running build, not for a pin.
+
+## FIELD-GUN19: the flash was white and the shot came out high
+
+2026-09-20, Mac: *"The muzzle flash texture itself needs to be blue like
+the orb and the lighting thats emitted needs to be blue"* and *"the orb
+projectile that shoots doesnt line up with the muzzle. It shoots out
+high on the screen"*.
+
+Two reports, **one species of bug**: a number that answered a question
+nobody had asked. Both had already been "fixed" — FIELD-GUN17 built the
+colour channel and named the muzzle ray — and both were still wrong,
+which is the useful part.
+
+### The shot: a canvas pixel is not a world position
+
+`muzzleRay` turns the barrel's pixel into a camera-space offset. It
+divided by `canvasH` and said so in a comment: *"the CANVAS's aspect,
+not the world viewport's — the viewmodel is drawn over the whole
+frame."*
+
+That sentence is **true of the gun and says nothing about where the orb
+lands.** ROAD-E E5 made the two different spaces: the docked large HUD
+**shrinks the world pass** (`setWorldViewport`, ViewportChanger.cs
+:52-67) while the 2D pass takes the whole canvas back at the first
+`drawScreenQuad`. So the gun really is drawn over the full frame, and
+the shot is projected into a strip that is shorter than it.
+
+Dividing the pixel by the taller of the two gives a **larger** `up`.
+Measured on a bar a fifth of the screen high: the shot sat **96% too
+high**, which is very nearly "at the centre of the screen instead of at
+the barrel" — exactly the report.
+
+**E5 already knew about this class.** It converted the crosshair
+(`hudCrosshair.crosshairCentreY`, or the reticle points where the camera
+is not) and the tap pick (`player/tapRay.js`). The viewmodel's muzzle
+was the **third consumer**, and nobody counted it.
+
+`worldRectPx` is tapRay's own arithmetic — the normalized bottom-left
+rect into top-left canvas pixels, which is the part with a flip in it —
+and it is reused rather than re-derived. What is deliberately **not**
+reused is its bounds test: a tap outside the strip is not a pick, but a
+muzzle below it is a real point below the bottom of the view, and
+clamping it would move the shot.
+
+The rect has to survive to the 2D pass, so the renderer now keeps
+`worldViewportRect` — a **record**, where `_worldViewportPx` is GL
+**state** and is rightly cleared by `endWorldPass` (EV6: state the
+renderer owns must not leak between passes).
+
+### The flash: a blown-out core has no opinion about hue
+
+FIELD-GUN17 wired this end to end — the orb tells the flash and the
+light what colour it is, sampled off its own archive, so nobody types a
+number. All of that was right. **The statistic was wrong.**
+
+It took the alpha-weighted **mean** of every opaque texel, and a glowing
+missile sprite is an over-exposed white core inside a coloured halo. The
+core is the brightest thing in the record and the most opaque, so it
+dominated the mean; peak-normalising a near-white mean makes it paler
+still. The answer was a lavender indistinguishable from the white it
+replaced — which is why the whole channel looked like it had never been
+wired at all.
+
+**The core is white because it is over-exposed, not because the orb is
+white.** A texel with no saturation carries no information about what
+colour the thing is, so it is not allowed to vote: the weight is alpha
+**times chroma**. What is left voting is the halo, which is where a
+viewer reads the colour from anyway. On a shock-orb-shaped record the
+old mean gave `125,152,255` and this gives `68,107,255`.
+
+Falling back to the plain mean for a genuinely greyscale record is part
+of the rule and not a guard: a white orb should answer white.
+
+### Three campaign survivors, each a fixture that could not see its hole
+
+- **The strip's top edge.** The large HUD's bar is at the **bottom**, so
+  the strip starts at canvas row 0 and `r.y` is zero — a mutant that
+  dropped the `- r.y` term passed everything. The renderer's rect is
+  general, so the pin is now a strip pushed *down* the canvas.
+- **A getter over a field nobody assigns** answers null for ever, which
+  is the full canvas, which is the bug. The pin only asked whether the
+  getter existed.
+- **Chroma alone**, without alpha, passed because everything chromatic
+  in the fixture was blue. The pin now carries an almost-transparent red
+  rim — very saturated, covering nothing — which chroma alone would let
+  repaint the whole orb.
+
+10 mutants, 10 killed.
+
+### One thing left, said plainly
+
+The colour is learned the first time an orb's texture resolves, and that
+load is asynchronous, so **the very first Thunderlock shot of a session
+can start white and turn blue partway through its own flash.** That is
+FIELD-GUN17's stated "white until warmed" design and it is a far smaller
+thing than what was reported; making even the first shot blue means
+warming the archive when the weapon is equipped rather than when a shot
+flies, which is a wiring change across the hosts and its own slice.
