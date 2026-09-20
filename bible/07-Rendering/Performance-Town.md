@@ -113,6 +113,31 @@ survived the first run — dropping the frame from the key index, which
 freezes a walking sprite on whatever was uploaded first — because the
 pin tested a local copy of the index rather than the host's own line.
 
+## Two things this change got wrong first
+
+**A temporal dead zone, and a real one.** The scratch is built near the
+top of each scene; the foe pools it asks are `const`s declared hundreds
+of lines below. Handing the pool function over directly reads it in its
+dead zone and throws *"Cannot access 'enchantFoes' before
+initialization"* the moment the scene runs — the exterior would not
+have booted at all. Lint passed. The vite build passed. The whole suite
+passed. `test/tdz.test.js` is the one thing that caught it, which is
+exactly what it was written for. Both hosts wrap their pool in a thunk
+now, and a mutant holds the shape.
+
+**The first cut put the scratch inline in both hosts** — about fifty
+lines in `world.js` and thirty in `exterior.js`, in the middle of the
+two most heavily *cited* files in the port. Every line number below the
+insertion moved, `citeShift` could content-resolve most of them but not
+the generic ones (`say: (l) => townTalk.say(l)` appears six times in one
+file), and the tail took dozens of comments re-pointed by hand.
+
+Extracting the scratch to `scenes/townScratch.js` cut the shift from
++82/+110 lines to +28/+30 — and it was the better factoring anyway,
+since the two hosts had the same scratch twice. **The module header says
+this out loud**, so the next person to add a block to a host knows what
+it costs.
+
 ## Still open
 
 `world` is the other spiky zone (2.25 → 8.51) and is untouched here.

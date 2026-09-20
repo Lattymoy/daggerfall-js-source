@@ -31,6 +31,7 @@ import { readFileSync } from 'node:fs';
 import { mobileBillboardSize } from '../src/world/rmbFlats.js';
 import { MobilePerson } from '../src/characters/mobilePerson.js';
 import { CityNavigation } from '../src/world/cityNavigation.js';
+import { createTownScratch, createPersonTextureKeys } from '../src/scenes/townScratch.js';
 
 const src = (f) => readFileSync(new URL(`../${f}`, import.meta.url), 'utf8');
 const HOSTS = ['src/scenes/world.js', 'src/scenes/exterior.js'];
@@ -99,31 +100,37 @@ test('PERF-TOWN1: both outdoor hosts stopped minting per person per frame', () =
     const s = src(f);
     // the activation rows and the batch's two vectors are written
     // through - all three are read within the frame and held by nothing
-    assert.match(s, /const _personSeat = \(i\) => \(_personSeats\[i\] \?\?= \{ person: null, pos: null \}\);/, f);
+    assert.match(s, /const town = createTownScratch\(/, f);
+    assert.match(s, /town\.seat\(_livePersons\.length\)/, f);
     assert.match(s, /_livePersons\.length = 0;/, f);
     assert.doesNotMatch(s, /_livePersons = live\.map\(/, `${f} still rebuilds the activation list`);
     assert.match(s, /bs\.w = out\.flip \? -sz\.w : sz\.w; bs\.h = sz\.h;/, `${f} writes the size through`);
     // the stop question's options and its closure are hoisted
-    assert.match(s, /return personWantsToStop\(_stopOpts\);/, f);
+    assert.match(s, /isDay, town\.stops\)|minute\), town\.stops\)/, f);
     assert.doesNotMatch(s, /\(person\) => personWantsToStop\(\{/, `${f} still mints the options per person`);
-    // hypot is written to survive overflow at the extremes of the float
-    // range; these are two world coordinates a few hundred units apart
-    assert.match(s, /Math\.sqrt\(dx \* dx \+ dz \* dz\)/, f);
     assert.doesNotMatch(s, /distanceToPlayer: Math\.hypot\(/, `${f} still calls hypot per person`);
     // the texture key is memoised on the three numbers it is made of
-    assert.match(s, /const personTextureKey = \(archive, record, frame\) => \{/, f);
+    assert.match(s, /const personTextureKey = createPersonTextureKeys\(\);/, f);
     assert.match(s, /renderer\.textures\.has\(personTextureKey\(person\.archive, out\.record, out\.frame\)\)/, f);
-    // ...and the key it builds is the one the uploader wrote, or every
-    // frame would miss the cache and re-upload
-    assert.match(s, /v = `\$\{archive\}_\$\{record\}#\$\{frame\}`;/, f);
-    // ...and the index it memoises on carries all THREE fields. Drop
-    // the frame and a walking sprite keeps the first frame's key for
-    // ever: the `.has()` answers true, the upload never runs again, and
-    // the animation freezes on whatever was uploaded first. The pin has
-    // to be on the host's own line, because the widths are the fields.
-    assert.match(s, /const k = \(archive \* 4096 \+ record\) \* 1024 \+ frame;/, f);
     // MAC4's shape is untouched: the record still CARRIES its frame
     assert.match(s, /const rkey = `\$\{out\.record\}#\$\{out\.frame\}`;/, f);
+  }
+  // THE SCRATCH ITSELF - one body for both hosts, and the two things a
+  // shared seat can get wrong.
+  {
+    const s = src('src/scenes/townScratch.js');
+    // hypot guards overflow these coordinates never reach
+    assert.match(s, /Math\.sqrt\(dx \* dx \+ dz \* dz\)/);
+    // ...and the key it builds is the one the uploader wrote, or every
+    // frame would miss the cache and re-upload
+    assert.match(s, /v = `\$\{archive\}_\$\{record\}#\$\{frame\}`;/);
+    // ...and the index carries all THREE fields. Drop the frame and a
+    // walking sprite keeps the first frame's key for ever: the `.has()`
+    // answers true, the upload never runs again, and the animation
+    // freezes on whatever was uploaded first.
+    assert.match(s, /const k = \(archive \* 4096 \+ record\) \* 1024 \+ frame;/);
+    // the seats are minted once and refilled
+    assert.match(s, /seat\(i\) \{ return seats\[i\] \?\?= \{ person: null, pos: null \}; \},/);
   }
 });
 
@@ -159,4 +166,61 @@ test('PERF-TOWN1: the memoised texture key is byte-for-byte the one the uploader
   }
   assert.equal(seen.size, 4 * 4 * 4);
   assert.ok(Number.isSafeInteger(idx(1000, R - 1, F - 1)), 'and the widest key is still an exact integer');
+});
+
+test('PERF-TOWN1: the hoisted gate is a HOIST, not a shared answer', () => {
+  // The whole risk of hoisting an argument object is that a term stops
+  // being re-read and silently freezes at whatever it was when the
+  // scratch was made. So the gate is DRIVEN here rather than pinned by
+  // its call site: every term must be able to change between frames and
+  // be seen on the next one.
+  let pool = [];
+  const town = createTownScratch({ areEnemiesNearby: (p) => p.length > 0, foes: () => pool });
+  const near = { pos: [0, 0, 0] };
+  town.local[0] = 0; town.local[2] = 0;
+
+  // standing still, sheathed, visible, human, nobody hostile -> stops
+  town.gate(true, true, false, false);
+  assert.equal(town.stops(near), true);
+
+  // ...and each of the four terms turns it off on the NEXT frame
+  town.gate(false, true, false, false);
+  assert.equal(town.stops(near), false, 'a moving player');
+  town.gate(true, false, false, false);
+  assert.equal(town.stops(near), false, 'a drawn weapon');
+  town.gate(true, true, true, false);
+  assert.equal(town.stops(near), false, 'an invisible player');
+  town.gate(true, true, false, true);
+  assert.equal(town.stops(near), false, 'a player in beast form - MobilePersonMotor.cs:222,224');
+  // and back on again, which is what a stuck term could never do
+  town.gate(true, true, false, false);
+  assert.equal(town.stops(near), true);
+
+  // the foe pool is asked LIVE, not snapshotted when the scratch was made
+  pool = [{}];
+  assert.equal(town.stops(near), false, 'a hostile in the street');
+  pool = [];
+  assert.equal(town.stops(near), true);
+
+  // distance is measured per person, off the scratch the host rewrites
+  // per pixel - and the far one is not merely "not stopped by accident"
+  const far = { pos: [500, 0, 500] };
+  assert.equal(town.stops(far), false, 'too far to stop and chat');
+  town.local[0] = 500; town.local[2] = 500;
+  assert.equal(town.stops(far), true, 'the same person, once the camera is beside them');
+
+  // the seats are per index and minted once
+  assert.notEqual(town.seat(0), town.seat(1));
+  assert.equal(town.seat(0), town.seat(0));
+});
+
+test('PERF-TOWN1: the key memo answers the same string every time, and a different one per field', () => {
+  const key = createPersonTextureKeys();
+  assert.equal(key(385, 2, 3), '385_2#3');
+  assert.equal(key(385, 2, 3), key(385, 2, 3));
+  assert.notEqual(key(385, 2, 3), key(385, 3, 2));
+  assert.notEqual(key(385, 2, 3), key(386, 2, 3));
+  assert.notEqual(key(385, 2, 3), key(385, 2, 4));
+  // two memos do not share a table
+  assert.equal(createPersonTextureKeys()(1, 1, 1), '1_1#1');
 });

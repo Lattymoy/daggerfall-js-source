@@ -303,20 +303,22 @@ test('politeness gate: the motor obeys it, and both exterior hosts feed it their
   // _stopOpts)` over a `_stopOpts` filled just above. The claim is
   // unchanged and is still asserted whole: each host calls the law, and
   // hands it its own live pool.
+  // PERF-TOWN1 re-aimed these. The gate's argument lives in
+  // scenes/townScratch.js now, one body for both hosts, and each host
+  // hands it its own live pool and its own four terms every frame.
+  assert.match(src('src/scenes/townScratch.js'), /return personWantsToStop\(opts\);/);
   for (const f of ['src/scenes/exterior.js', 'src/scenes/world.js']) {
-    assert.match(src(f), /return personWantsToStop\(_stopOpts\);/, f);
-    assert.match(src(f), /enemiesNearby: \(\) => areEnemiesNearby\(/, f);
+    assert.match(src(f), /town\.gate\(_playerStill, weaponRig\.playerWeapon\.sheathed, isInvisible\(playerEntity\), !!playerEntity\.isInBeastForm\);/, f);
+    assert.match(src(f), /createTownScratch\(\{ areEnemiesNearby, foes: \(\) => \w+\(\) \}\)/, f);
     assert.doesNotMatch(src(f), /_playerStill && pd < 2\.5/, `${f} still hand-rolls the gate`);
-    // and the hoist is a hoist, not a SHARED answer: the four terms
-    // that do not vary by person are still written every frame, so a
-    // sheathed weapon or a beast form that changes is seen at once.
-    assert.match(src(f), /_stopOpts\.playerStandingStill = _playerStill;/, f);
-    assert.match(src(f), /_stopOpts\.sheathed = weaponRig\.playerWeapon\.sheathed;/, f);
   }
   // ROAD-G G2: the fixed-city host's pool is the JOIN now (it named
   // the watch alone, which was its whole database until it mounted an
   // encounter pool) - a townsperson must not stand chatting beside a
   // quest foe stood in the street by CreateFoe's exterior arm.
-  assert.match(src('src/scenes/exterior.js'), /enemiesNearby: \(\) => areEnemiesNearby\(exteriorFoePool\(\)\)/);
-  assert.match(src('src/scenes/world.js'), /enemiesNearby: \(\) => areEnemiesNearby\(enchantFoes\(\)\)/);
+  assert.match(src('src/scenes/exterior.js'), /createTownScratch\(\{ areEnemiesNearby, foes: \(\) => exteriorFoePool\(\) \}\)/);
+  assert.match(src('src/scenes/world.js'), /createTownScratch\(\{ areEnemiesNearby, foes: \(\) => enchantFoes\(\) \}\)/);
+  // ...and the scratch really does ask that pool, rather than taking a
+  // snapshot when it was made
+  assert.match(src('src/scenes/townScratch.js'), /enemiesNearby: \(\) => areEnemiesNearby\(foes\(\)\)/);
 });

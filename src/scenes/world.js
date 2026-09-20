@@ -159,6 +159,7 @@ import { seasonValue, SEASONS, MINUTES_PER_DAY, dateFromClassicMinutes, dateTime
 import { regionPriceAdjustment, worldPriceTiltOf, TRANSPORT_HORSE, TRANSPORT_SMALL_CART } from '../systems/shopStock.js';   // Q4-v: CreateGold's regional term (the shops' own producer); U41: Items.Contains(Transportation, ...)
 import { getNameBankOfRegion, getRandomFullName } from '../characters/nameHelper.js';   // AUDIT 23 (characters-5); AUDIT 58: MacroHelper.GetRandomFullName, one home
 import { createHitEffects } from './hitEffects.js';
+import { createTownScratch, createPersonTextureKeys } from './townScratch.js';   // PERF-TOWN1: the town loop's per-frame seats, and the memoised texture key
 import { createDroppedTorches } from './droppedTorches.js';
 import { createCamps } from './camps.js';   // SURV3: the camps this host stands - the tent and the fire
 import { drinkAtSource, isWaterSourceFlat, isDrySourceFlat, WATER_SOURCE_MODELS, DRY_SOURCE_TEXT } from '../systems/survival/items.js';   // SURV3: the mod's water sources under the one ray
@@ -2655,31 +2656,9 @@ export async function bootWorld(canvas, renderer, params, status) {
   }, buildingKey);
   surfacePlayer();   // the probe surface exists from boot (T3b: pickpocket gold reads)
   const _livePersons = [];
-  // PERF-TOWN1 (2026-09-20): the town loop minted THIRTEEN objects per
-  // person per frame, none outliving it - which is why `people` swung
-  // 1.14 to 7.36 ms on Mac's ?perf=cpu line. The scratch below is every
-  // one of them, written through instead. See
-  // bible/07-Rendering/Performance-Town.md for the count and the why.
-  const _personLocal = [0, 0, 0];
-  const _personSeats = [];
-  const _personSeat = (i) => (_personSeats[i] ??= { person: null, pos: null });
-  const _stopOpts = {
-    playerStandingStill: false, distanceToPlayer: Infinity, sheathed: false,
-    invisible: false, inBeastForm: false,
-    enemiesNearby: () => areEnemiesNearby(enchantFoes()),
-  };
-  const _personStops = (person) => {
-    const dx = person.pos[0] - _personLocal[0], dz = person.pos[2] - _personLocal[2];
-    _stopOpts.distanceToPlayer = Math.sqrt(dx * dx + dz * dz);   // not hypot: it guards overflow these coordinates never reach
-    return personWantsToStop(_stopOpts);
-  };
-  const _texKeys = new Map();
-  const personTextureKey = (archive, record, frame) => {
-    const k = (archive * 4096 + record) * 1024 + frame;
-    let v = _texKeys.get(k);
-    if (v === undefined) { v = `${archive}_${record}#${frame}`; _texKeys.set(k, v); }
-    return v;
-  };
+  // PERF-TOWN1: the town loop's scratch - see scenes/townScratch.js
+  const town = createTownScratch({ areEnemiesNearby, foes: () => enchantFoes() });   // the pool is read at the CALL, not here: `enchantFoes` is declared below this line
+  const personTextureKey = createPersonTextureKeys();
   // G1: the city watch (SpawnCityGuards verbatim) - the streaming
   // host's guards ride the world collider (terrain heightAt included).
   // AUDIT 24 (wave 39): ONE blood pool for the host, shared by both
@@ -10810,26 +10789,18 @@ export async function bootWorld(canvas, renderer, params, status) {
     const isDay = !isNight(minute);
     const livePersonBatches = [];
     meterFor(renderer.gl)?.markCpu('people');   // PERF-CPU: the towns' own pools
-    _livePersons.length = 0;   // T3b: rebuilt each frame in WORLD space   // PERF-TOWN1: the SAME array and the same entries, refilled - see _personSeat
+    _livePersons.length = 0;   // T3b: rebuilt each frame in WORLD space   // PERF-TOWN1: the SAME array and the same entries, refilled
     for (const p of built.values()) {
       if (!p.population) continue;
       const t = state.pixelTranslation(p.px, p.py);
-      const local = _personLocal;   // PERF-TOWN1: one scratch, rewritten per pixel - `update` reads it and keeps nothing
+      const local = town.local;   // PERF-TOWN1: one scratch, rewritten per pixel - `update` reads it and keeps nothing
       local[0] = cam.pos[0] - t[0] - p.locOrigin[0];
       local[1] = cam.pos[1] - t[1];
       local[2] = cam.pos[2] - t[2] - p.locOrigin[2];
-      // PERF-TOWN1: the stop question's options are HOISTED. This object
-      // and the `enemiesNearby` closure beside it were minted per
-      // person per frame, for a predicate that reads them once and
-      // keeps nothing - and the four fields that do not vary by person
-      // were re-read for each of them too.
-      _stopOpts.playerStandingStill = _playerStill;
-      _stopOpts.sheathed = weaponRig.playerWeapon.sheathed;
-      _stopOpts.invisible = isInvisible(playerEntity);
-      _stopOpts.inBeastForm = !!playerEntity.isInBeastForm;   // MobilePersonMotor.cs:222,224 - PlayerEntity.IsInBeastForm (PlayerEntity.cs:193), written every ConstantEffect round (LycanthropyEffect.cs:241)
+      town.gate(_playerStill, weaponRig.playerWeapon.sheathed, isInvisible(playerEntity), !!playerEntity.isInBeastForm);   // PERF-TOWN1: hoisted, but re-read every frame
       // audit 2026-08-17: the population freezes under the talk
       // overlay (DFU pauses the sim under UI windows)
-      const live = p.population.update(townTalk.overlayActive ? 0 : dt, local, cam.yaw, local, isDay, _personStops);
+      const live = p.population.update(townTalk.overlayActive ? 0 : dt, local, cam.yaw, local, isDay, town.stops);
       for (const { person, out } of live) {
         const batch = p.personBatches.get(person);
         batch.archive = person.archive;   // audit 2026-08-17: identity re-rolls per spawn - re-point the batch
@@ -10854,7 +10825,7 @@ export async function bootWorld(canvas, renderer, params, status) {
             person.pos[2] + p.locOrigin[2] + t[2],
           ];
         }
-        const seat = _personSeat(_livePersons.length);   // T3b: world-space activation target
+        const seat = town.seat(_livePersons.length);   // T3b: world-space activation target
         seat.person = person; seat.pos = batch.origin;
         _livePersons.push(seat);
         livePersonBatches.push(batch);

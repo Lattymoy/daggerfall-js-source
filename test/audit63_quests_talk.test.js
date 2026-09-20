@@ -39,14 +39,14 @@ test('AUDIT 63 F46: both exterior hosts hand personWantsToStop the live IsInBeas
     const s = src(f);
     // the term must be INSIDE the personWantsToStop argument object,
     // beside the sibling PlayerEntity read DFU takes on the line above
-    // PERF-TOWN1 re-aimed this. The argument object is hoisted out of
-    // the per-person callback at both hosts, so the terms are WRITTEN
-    // rather than declared - but the law is the same one and is asserted
-    // the same way: the fifth term must sit beside the sibling
-    // PlayerEntity read DFU takes on the line above, and must be read
-    // EVERY frame rather than once at the hoist.
-    const call = s.slice(s.indexOf('_stopOpts.playerStandingStill'));
-    assert.match(call.slice(0, 600), /_stopOpts\.invisible = isInvisible\(playerEntity\);\s*\n\s*_stopOpts\.inBeastForm = !!playerEntity\.isInBeastForm;/,
+    // PERF-TOWN1 re-aimed this. The argument object is hoisted into
+    // scenes/townScratch.js - it was minted per person per frame for a
+    // predicate that reads it once - so each host now HANDS the terms
+    // over positionally. The law is the same and is asserted the same
+    // way: the fifth term must arrive beside the sibling PlayerEntity
+    // read DFU takes with it, and must be handed over EVERY frame
+    // rather than once when the scratch is made.
+    assert.match(s, /town\.gate\(_playerStill, weaponRig\.playerWeapon\.sheathed, isInvisible\(playerEntity\), !!playerEntity\.isInBeastForm\);/,
       `${f} drops MobilePersonMotor.cs:222`);
   }
   // ...and the flag is the PlayerEntity property (PlayerEntity.cs:193),
