@@ -6926,6 +6926,82 @@ slice of its own if a peer is ever to loot the watch; the foes' hit
 arm's reach; the striker's routing door pinned by source (an executed
 pin would have to stand world.js's own `dealDamage` closure).
 
+## RELAY-H1 (2026-09-20, Mac: "cloudflare hit its limit"): a standing player is heard by the runtime, not the room
+
+**The bill's root cause was the heartbeat.** Cloudflare bills a Durable Object
+for every second it is awake, and its own words are "billable duration does
+not accrue during hibernation" and "incoming requests prevent hibernation".
+The presence session sent a POSE every five seconds whether or not the player
+had moved (`HEARTBEAT_MS`, 5000) - a message, an event, a wake - so a room
+with anyone in it never slept. At a player's ~4 rooms (cell, halo, world,
+chat) the free tier's 13,000 GB-s a day was ~7 player-hours, and it was gone
+mid-stream. Paying (400,000 GB-s for $5) buys ~220 player-hours of the same
+waste; the waste is what this slice removes.
+
+**The relay already had the door.** `server/src/index.js:234` registers
+`setWebSocketAutoResponse('{"t":"ping"}', '{"t":"pong"}')`: the RUNTIME
+answers that exact string in the object's sleep, no event, no wake. Only a
+CHANNEL session (chat, `presence: false`) used it. A presence session's
+liveness rode the pose.
+
+**Now (`src/net/wire.js:712`, `src/net/online.js:1104`):**
+
+- `HEARTBEAT_MS` 5000 -> 20000. The pose goes when it MOVED (at POSE_HZ, as
+  before) or every 20 s standing, as the peers' proof of life and the silence
+  law's net. Four times fewer wakes from a standing player, and gaps a
+  hibernation can fit in.
+- `PING_MS = HEARTBEAT_MS / 4`, new. A presence session sends `{ t: 'ping' }`
+  - serialised, byte for byte the auto-response request - when nothing has
+  gone for PING_MS, through the halo sockets too (each is its own object,
+  each intermediary idles a quiet socket by its own rule). The five-second
+  on-wire cadence the phones and proxies were proven against is kept; it
+  just no longer wakes anything.
+- The ping is on ITS OWN clock (`_lastPingAt`). A ping that touched
+  `_lastSentAt` would push the heartbeat pose back by a ping's width every
+  time, and the pose would drift off the grid the peers' silence law counts.
+- `PEER_TIMEOUT_MS = 4 * HEARTBEAT_MS` (80000), DERIVED. It was the literal
+  20000 beside a 5000 heartbeat, and moving the heartbeat alone would have
+  hidden every standing peer at their first missed pose - SLAM8's zero-margin
+  blind spot, back by a different door. Four heartbeats is the margin the old
+  pair had; SLAM8's `>= 3` ratio pin holds. The cost: a half-open socket (a
+  peer whose leave never arrived) lingers as a ghost for 80 s where it was
+  20 s; a clean close still fans `{t:'leave'}` at once.
+- `KEEPALIVE_FAN_MS = HEARTBEAT_MS / 2` follows (10000), so the relay's
+  whole-fan floor for a standing pose still sits under the heartbeat.
+- `RELAY_VERSION` world83 -> world84: the relay bundle's bytes moved.
+
+**A channel session is unchanged**: one ping per HEARTBEAT_MS, no pose
+(CHAT1), now 20 s apart.
+
+**Against the OLD relay, until Mac redeploys** ('Deploy relay' is a
+workflow-dispatch I cannot fire): the client is whole. The deployed relay
+answers the ping in its sleep already (that pair has been registered since
+CHAT1), fans a standing pose whole under a 2500 ms floor, and has no
+time-based reaping of its own. The redeploy brings world84's floor and the
+comment; nothing a player would notice.
+
+**Pins** (`test/relayh1.test.js`, 4): the numbers are one family (the
+heartbeat >= 20 s, PING_MS and PEER_TIMEOUT_MS derived and not a literal beside
+it, the timeout under two minutes); the client's ping serialised IS the
+relay's auto-response request, read off `server/src/index.js` rather than a
+copy here, and the older-runtime fallback still pongs it from the object; a
+standing session driven over a fake socket for a minute sends
+floor(60000/HEARTBEAT_MS) poses on the heartbeat grid with pings between and
+NO OTHER BYTES - a WAKE is counted as any raw frame that is not the
+auto-response request, so a ping with a key added is a wake; a channel session
+pings every HEARTBEAT_MS and never poses. Re-aimed: `chat1`'s "a presence
+session heartbeats with its pose, not a ping" (the law it pinned is the law
+this slice repeals; it now asserts the ping AND the undelayed pose),
+`watch1`'s RELAY_VERSION literal (world84), `slam13`'s `held()` helper (a
+literal 5000 that meant the heartbeat).
+
+**Mutants** (`tools/mutants/relayh1.json`): 5 mutations, 5 dead - the
+heartbeat back to 5000; the timeout a literal 80000 again; the ping spelled
+`{ t: 'ping', at: now }` (SURVIVED the first draft: a by-source regex found
+the channel's ping and was satisfied; the behavioural pin now counts wakes by
+raw bytes against the relay's registered string, and it dies); the ping
+touching `_lastSentAt`; no presence ping at all.
+
 ## ONLINE-DUNGEON-FOES (2026-09-20): the non-layout run is private, and that is two of Mac's bugs
 
 **Mac: "Issues with non-reactive enemies in dungeons in the online mode" and

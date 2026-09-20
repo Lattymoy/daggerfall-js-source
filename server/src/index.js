@@ -877,7 +877,8 @@ export class Room {
       // to see.
       // SLAM8: AND A KEEPALIVE IS NEVER TIERED. A standing player sends only on the heartbeat, so a far listener under
       // SLAM6 heard one in POSE_FAR_SHARE of those - HEARTBEAT_MS * POSE_FAR_SHARE = 20000ms, which is
-      // PEER_TIMEOUT_MS TO THE MILLISECOND. Zero margin: the silence law hid every standing peer past the bound at
+      // PEER_TIMEOUT_MS TO THE MILLISECOND (at the day's 5000/20000; RELAY-H1 moved the pair to 20000/80000 and
+      // derived the timeout from the heartbeat, so the ratio is the law and this arm is what keeps it from mattering). Zero margin: the silence law hid every standing peer past the bound at
       // the exact moment its next pose was due, so a crowd standing still to listen to somebody - which is what an
       // event IS - watched itself blink in and out, and one late heartbeat hid a peer for a full twenty seconds.
       // The tier is a bandwidth saving for MOTION; a keepalive is the one frame whose whole job is to be heard, and

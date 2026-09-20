@@ -1,0 +1,47 @@
+[
+  {
+    "name": "RELAY-H1-the-heartbeat-back-to-five-seconds",
+    "file": "src/net/wire.js",
+    "old": "export const HEARTBEAT_MS = 20000;",
+    "new": "export const HEARTBEAT_MS = 5000;",
+    "tests": [
+      "test/relayh1.test.js"
+    ]
+  },
+  {
+    "name": "RELAY-H1-the-peer-timeout-a-literal-again",
+    "file": "src/net/online.js",
+    "old": "export const PEER_TIMEOUT_MS = 4 * HEARTBEAT_MS;",
+    "new": "export const PEER_TIMEOUT_MS = 80000;",
+    "tests": [
+      "test/relayh1.test.js"
+    ]
+  },
+  {
+    "name": "RELAY-H1-the-client-ping-spelled-differently",
+    "file": "src/net/online.js",
+    "old": "      const went = this._send({ t: 'ping' });",
+    "new": "      const went = this._send({ t: 'ping', at: now });",
+    "tests": [
+      "test/relayh1.test.js"
+    ]
+  },
+  {
+    "name": "RELAY-H1-the-ping-touches-the-heartbeat-clock",
+    "file": "src/net/online.js",
+    "old": "      if (went) this._lastPingAt = now;",
+    "new": "      if (went) this._lastPingAt = this._lastSentAt = now;",
+    "tests": [
+      "test/relayh1.test.js"
+    ]
+  },
+  {
+    "name": "RELAY-H1-no-presence-ping-at-all",
+    "file": "src/net/online.js",
+    "old": "    if (this.presence && this.status === 'open' && now - Math.max(this._lastSentAt, this._lastPingAt) >= PING_MS) {",
+    "new": "    if (false) {",
+    "tests": [
+      "test/relayh1.test.js"
+    ]
+  }
+]
