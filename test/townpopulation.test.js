@@ -297,10 +297,21 @@ test('politeness gate: the motor obeys it, and both exterior hosts feed it their
   // must call the law and hand it its OWN live pool, and neither may
   // keep a hand-rolled four-term gate.
   const src = (f) => readFileSync(new URL(`../${f}`, import.meta.url), 'utf8');
+  // PERF-TOWN1 re-aimed these three. The argument object is HOISTED at
+  // both hosts now - it was minted per person per frame for a predicate
+  // that reads it once - so the call site reads `personWantsToStop(
+  // _stopOpts)` over a `_stopOpts` filled just above. The claim is
+  // unchanged and is still asserted whole: each host calls the law, and
+  // hands it its own live pool.
   for (const f of ['src/scenes/exterior.js', 'src/scenes/world.js']) {
-    assert.match(src(f), /personWantsToStop\(\{/, f);
+    assert.match(src(f), /return personWantsToStop\(_stopOpts\);/, f);
     assert.match(src(f), /enemiesNearby: \(\) => areEnemiesNearby\(/, f);
     assert.doesNotMatch(src(f), /_playerStill && pd < 2\.5/, `${f} still hand-rolls the gate`);
+    // and the hoist is a hoist, not a SHARED answer: the four terms
+    // that do not vary by person are still written every frame, so a
+    // sheathed weapon or a beast form that changes is seen at once.
+    assert.match(src(f), /_stopOpts\.playerStandingStill = _playerStill;/, f);
+    assert.match(src(f), /_stopOpts\.sheathed = weaponRig\.playerWeapon\.sheathed;/, f);
   }
   // ROAD-G G2: the fixed-city host's pool is the JOIN now (it named
   // the watch alone, which was its whole database until it mounted an

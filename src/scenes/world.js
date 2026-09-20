@@ -2654,7 +2654,32 @@ export async function bootWorld(canvas, renderer, params, status) {
     currentBuildingKey: modes?.interiorBuilding?.buildingKey ?? 0,
   }, buildingKey);
   surfacePlayer();   // the probe surface exists from boot (T3b: pickpocket gold reads)
-  let _livePersons = [];
+  const _livePersons = [];
+  // PERF-TOWN1 (2026-09-20): the town loop minted THIRTEEN objects per
+  // person per frame, none outliving it - which is why `people` swung
+  // 1.14 to 7.36 ms on Mac's ?perf=cpu line. The scratch below is every
+  // one of them, written through instead. See
+  // bible/07-Rendering/Performance-Town.md for the count and the why.
+  const _personLocal = [0, 0, 0];
+  const _personSeats = [];
+  const _personSeat = (i) => (_personSeats[i] ??= { person: null, pos: null });
+  const _stopOpts = {
+    playerStandingStill: false, distanceToPlayer: Infinity, sheathed: false,
+    invisible: false, inBeastForm: false,
+    enemiesNearby: () => areEnemiesNearby(enchantFoes()),
+  };
+  const _personStops = (person) => {
+    const dx = person.pos[0] - _personLocal[0], dz = person.pos[2] - _personLocal[2];
+    _stopOpts.distanceToPlayer = Math.sqrt(dx * dx + dz * dz);   // not hypot: it guards overflow these coordinates never reach
+    return personWantsToStop(_stopOpts);
+  };
+  const _texKeys = new Map();
+  const personTextureKey = (archive, record, frame) => {
+    const k = (archive * 4096 + record) * 1024 + frame;
+    let v = _texKeys.get(k);
+    if (v === undefined) { v = `${archive}_${record}#${frame}`; _texKeys.set(k, v); }
+    return v;
+  };
   // G1: the city watch (SpawnCityGuards verbatim) - the streaming
   // host's guards ride the world collider (terrain heightAt included).
   // AUDIT 24 (wave 39): ONE blood pool for the host, shared by both
@@ -10785,36 +10810,53 @@ export async function bootWorld(canvas, renderer, params, status) {
     const isDay = !isNight(minute);
     const livePersonBatches = [];
     meterFor(renderer.gl)?.markCpu('people');   // PERF-CPU: the towns' own pools
-    _livePersons = [];   // T3b: rebuilt each frame in WORLD space
+    _livePersons.length = 0;   // T3b: rebuilt each frame in WORLD space   // PERF-TOWN1: the SAME array and the same entries, refilled - see _personSeat
     for (const p of built.values()) {
       if (!p.population) continue;
       const t = state.pixelTranslation(p.px, p.py);
-      const local = [cam.pos[0] - t[0] - p.locOrigin[0], cam.pos[1] - t[1], cam.pos[2] - t[2] - p.locOrigin[2]];
+      const local = _personLocal;   // PERF-TOWN1: one scratch, rewritten per pixel - `update` reads it and keeps nothing
+      local[0] = cam.pos[0] - t[0] - p.locOrigin[0];
+      local[1] = cam.pos[1] - t[1];
+      local[2] = cam.pos[2] - t[2] - p.locOrigin[2];
+      // PERF-TOWN1: the stop question's options are HOISTED. This object
+      // and the `enemiesNearby` closure beside it were minted per
+      // person per frame, for a predicate that reads them once and
+      // keeps nothing - and the four fields that do not vary by person
+      // were re-read for each of them too.
+      _stopOpts.playerStandingStill = _playerStill;
+      _stopOpts.sheathed = weaponRig.playerWeapon.sheathed;
+      _stopOpts.invisible = isInvisible(playerEntity);
+      _stopOpts.inBeastForm = !!playerEntity.isInBeastForm;   // MobilePersonMotor.cs:222,224 - PlayerEntity.IsInBeastForm (PlayerEntity.cs:193), written every ConstantEffect round (LycanthropyEffect.cs:241)
       // audit 2026-08-17: the population freezes under the talk
       // overlay (DFU pauses the sim under UI windows)
-      const live = p.population.update(townTalk.overlayActive ? 0 : dt, local, cam.yaw, local, isDay, (person) => personWantsToStop({
-        playerStandingStill: _playerStill,
-        distanceToPlayer: Math.hypot(person.pos[0] - local[0], person.pos[2] - local[2]),
-        sheathed: weaponRig.playerWeapon.sheathed,
-        invisible: isInvisible(playerEntity),
-        inBeastForm: !!playerEntity.isInBeastForm,   // MobilePersonMotor.cs:222,224 - PlayerEntity.IsInBeastForm (PlayerEntity.cs:193), written every ConstantEffect round (LycanthropyEffect.cs:241)
-        enemiesNearby: () => areEnemiesNearby(enchantFoes()),
-      }));
+      const live = p.population.update(townTalk.overlayActive ? 0 : dt, local, cam.yaw, local, isDay, _personStops);
       for (const { person, out } of live) {
         const batch = p.personBatches.get(person);
         batch.archive = person.archive;   // audit 2026-08-17: identity re-rolls per spawn - re-point the batch
         const pt = personTex.get(person.archive);
-        const rkey = `${out.record}#${out.frame}`;
-        if (!renderer.textures.has(`${person.archive}_${rkey}`)) uploadRecordFrame(person.archive, out.record, out.frame);
+        const rkey = `${out.record}#${out.frame}`;   // MAC4: the record CARRIES its frame
+        if (!renderer.textures.has(personTextureKey(person.archive, out.record, out.frame))) uploadRecordFrame(person.archive, out.record, out.frame);
         const sz = mobileBillboardSize(pt, out.record);   // AUDIT MM1: MobilePersonBillboard.cs:343 - the xml scale, on every record
         batch.record = rkey;
-        batch.size = { w: out.flip ? -sz.w : sz.w, h: sz.h };
-        batch.origin = [
-          person.pos[0] + p.locOrigin[0] + t[0],
-          person.pos[1] + t[1],
-          person.pos[2] + p.locOrigin[2] + t[2],
-        ];
-        _livePersons.push({ person, pos: batch.origin });   // T3b: world-space activation target
+        // PERF-TOWN1: written through, not replaced - both are read by
+        // value and nothing holds either across a frame.
+        const bs = batch.size, bo = batch.origin;
+        if (bs && bo) {
+          bs.w = out.flip ? -sz.w : sz.w; bs.h = sz.h;
+          bo[0] = person.pos[0] + p.locOrigin[0] + t[0];
+          bo[1] = person.pos[1] + t[1];
+          bo[2] = person.pos[2] + p.locOrigin[2] + t[2];
+        } else {
+          batch.size = { w: out.flip ? -sz.w : sz.w, h: sz.h };
+          batch.origin = [
+            person.pos[0] + p.locOrigin[0] + t[0],
+            person.pos[1] + t[1],
+            person.pos[2] + p.locOrigin[2] + t[2],
+          ];
+        }
+        const seat = _personSeat(_livePersons.length);   // T3b: world-space activation target
+        seat.person = person; seat.pos = batch.origin;
+        _livePersons.push(seat);
         livePersonBatches.push(batch);
       }
     }

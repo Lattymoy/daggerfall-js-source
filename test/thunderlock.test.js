@@ -1384,7 +1384,7 @@ test('FIELD-GUN18: the orb is scaled off the archive’s own size, at BOTH lanes
 
 test('FIELD-GUN18: the pool’s scale really scales - it was multiplying an OBJECT by a number', () => {
   // THE BUG THIS ASK WALKED INTO. `billboardSize` answers a {w, h}
-  // RECORD (rmbFlats.js:79; billboardXml's override keeps the shape),
+  // RECORD (rmbFlats.js:133; billboardXml's override keeps the shape),
   // and the branch that applied `scale` read:
   //
   //     Array.isArray(size) ? size.map(v => v * scale) : size * scale
