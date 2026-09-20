@@ -220,39 +220,12 @@ export function holsterHidden(slot, weaponShown, { arrowShown = false, tag = nul
   return null;
 }
 
-/** A `{ has, get, load, loaded, names }` archive over the vendored tree:
- *  `urls` maps each canonical data-files path (`meshes/w/x_sh.nif`,
- *  `animations/xbase_anim/xbase_anim_sh.nif`) to a function answering
- *  its URL; `fetchBytes(url)` brings the bytes. Pure and node-testable. */
-export function makeVendoredArchive(urls, fetchBytes) {
-  const norm = (p) => String(p).replace(/\\/g, '/').toLowerCase();
-  const table = new Map(Object.entries(urls).map(([k, v]) => [norm(k), v]));
-  const bytes = new Map();
-  const inflight = new Map();
-  return {
-    vendored: true,
-    names: [...table.keys()],
-    has: (p) => table.has(norm(p)),
-    loaded: (p) => bytes.has(norm(p)),
-    get: (p) => bytes.get(norm(p)) ?? null,
-    load: async (p) => {
-      const key = norm(p);
-      if (bytes.has(key)) return bytes.get(key);
-      if (!table.has(key)) return null;
-      if (!inflight.has(key)) {
-        inflight.set(key, (async () => {
-          const entry = table.get(key);
-          const url = typeof entry === 'function' ? await entry() : entry;   // AUDIT-WS: the eager table hands URLs, a lazy one loaders
-          const b = await fetchBytes(url);
-          bytes.set(key, b);
-          inflight.delete(key);
-          return b;
-        })());
-      }
-      return inflight.get(key);
-    },
-  };
-}
+/** WS1's archive door. MOVED to `systems/urlArchive.js` at FIELD-GUN-MW2,
+ *  when the port's own Morrowind assets became its second caller, and
+ *  RE-EXPORTED here so every existing import still resolves - one home,
+ *  both names, which is the same shape `server/src/relay.js` uses for
+ *  the wire. */
+export { makeVendoredArchive } from './urlArchive.js';
 
 /** `vendor/weapon-sheathing/Data Files/Meshes/w/x_sh.nif` -> `meshes/w/x_sh.nif`:
  *  the canonical data-files path the loose store keys by. */

@@ -44,6 +44,7 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { WEAPONS, WEAPON_MATERIALS } from '../characters/weapons.js';
+import { OWN_MW_MODELS } from '../characters/ownWeaponModels.js';   // FIELD-GUN-MW2: the weapons Morrowind does not have
 import { ARMOR_MATERIAL } from '../systems/armorMaterials.js';
 import { ARMOR_ENUM } from '../combat/enemyEquipment.js';
 import templates from '../characters/itemTemplates.json' with { type: 'json' };
@@ -262,11 +263,32 @@ export function mwArmorRecords(armorRecords, templateIndex, material) {
 /**
  * THE TOTALITY ANSWER: one entry for every weapon template x weapon
  * material and every armor template x armor material. Each entry is
- * either { kind:'mapped', ... } or { kind:'sprite', reason } - and the
- * pin fails the build if any combination answers neither.
+ * { kind:'mapped', ... }, { kind:'sprite', reason } or - since
+ * FIELD-GUN-MW2 - { kind:'own', model } for a weapon of the port's own
+ * that carries its own shipped mesh; and the pin fails the build if any
+ * combination answers none of them.
  */
 export function itemMapCoverage() {
   const out = [];
+  // FIELD-GUN-MW2: THE PORT'S OWN WEAPONS, and the reason they are
+  // FIRST is the hole they were found in.
+  //
+  // This walk's population was `WEAPONS` alone - DFU's frozen eighteen
+  // - and the Dwarven Thunderlock is template 560, minted at runtime by
+  // registerCustomTemplates. So the one weapon in the whole port that
+  // genuinely had no Morrowind model was the one weapon this census
+  // never asked about: it reported total coverage while the gun drew
+  // EMPTY HANDS in Morrowind first person, for every player, for the
+  // life of the arc. The guarantee in this file's header says a row
+  // "must SAY it, never fall through silently"; an item outside the
+  // population cannot even fall through.
+  //
+  // A row per model, not per material: the port's own weapons have no
+  // material ladder to walk - `pickWeaponRecord` is not reached at all
+  // - and inventing one would be a census that reports work nobody did.
+  for (const [index, own] of Object.entries(OWN_MW_MODELS)) {
+    out.push({ kind: 'own', item: own.name, material: 'n/a', via: 'ownWeaponModels', index: Number(index), model: own.model });
+  }
   for (const [wName] of Object.entries(WEAPONS)) {
     for (const [mName, m] of Object.entries(WEAPON_MATERIALS)) {
       if (m === WEAPON_MATERIALS.None) continue;

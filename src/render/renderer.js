@@ -1202,6 +1202,14 @@ export class Renderer {
     // DFU's own `standardViewportRect = new Rect(0, 0, 1, 1)`.
     this._worldViewportPending = null;
     this._worldViewportPx = null;
+    // FIELD-GUN19: what the frame's world pass ACTUALLY used, kept
+    // past `endWorldPass`. `_worldViewportPx` is GL STATE and is
+    // cleared there on purpose (EV6: state the renderer owns must not
+    // leak between passes); this is a RECORD, and the 2D pass needs it
+    // because anything it draws in canvas pixels that has to line up
+    // with the world has to be mapped through the rect the world was
+    // drawn into. Normalized and bottom-left, exactly as it arrived.
+    this._worldViewportFrame = null;
   }
 
   /**
@@ -1225,8 +1233,24 @@ export class Renderer {
   }
 
   /** The pixel rect the frame's world pass is drawing into, or null
-   *  for the full canvas. */
+   *  for the full canvas. Cleared by `endWorldPass` - it is the GL
+   *  viewport, and it stops being true the moment the 2D pass starts. */
   get worldViewportPx() { return this._worldViewportPx ? [...this._worldViewportPx] : null; }
+
+  /**
+   * FIELD-GUN19: the NORMALIZED rect this frame's world pass used, and
+   * it OUTLIVES `endWorldPass` because it is a record rather than GL
+   * state. Null is the full canvas.
+   *
+   * The 2D pass draws in canvas pixels; the world pass draws into a
+   * rect the docked large HUD shrinks (ROAD-E E5). Anything drawn in
+   * the first that has to line up with something in the second must be
+   * mapped through this, and `player/tapRay.js` is the one home for
+   * that arithmetic (`worldRectPx`). The crosshair and the tap pick
+   * were converted when E5 shipped; the viewmodel's muzzle was not,
+   * and its shot came out of the barrel high up the screen.
+   */
+  get worldViewportRect() { return this._worldViewportFrame ? { ...this._worldViewportFrame } : null; }
 
   /** gl.viewport back to whatever this frame's world pass owns - the
    *  reduced rect if one is live, the full canvas otherwise. The
@@ -3322,6 +3346,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     {
       const r = this._worldViewportPending;
       this._worldViewportPending = null;
+      this._worldViewportFrame = r ? { ...r } : null;   // FIELD-GUN19: the record, for the 2D pass
       const W = this.canvas.width, H = this.canvas.height;
       this._worldViewportPx = r
         ? [Math.round(r.x * W), Math.round(r.y * H),

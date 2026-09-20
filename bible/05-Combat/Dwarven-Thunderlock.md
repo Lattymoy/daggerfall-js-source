@@ -1064,3 +1064,512 @@ Said plainly so nobody assumes it: **loot *tables* and starting gear
 do not offer it** (the unique find is its only door — the test room is
 a door out of the game, not into it), and neither does a smith's
 repair list.
+
+## FIELD-GUN-MW1: in Morrowind mode the gun is not there
+
+2026-09-20, Mac, uploading `Pellet_Shot.fbx`: *"Next up is texturing
+and rigging this for the morrowind model (We recently integrated a new
+weapon called Thundershot)."*
+
+**THE WEAPON IS INVISIBLE IN THE MORROWIND ARM, AND THE PORT ALREADY
+SAYS SO.** `resolveWeaponParts` (`src/combat/fpArm.js`) resolves the
+held weapon through `dfWeaponToMw`, which walks `characters/weapons.js`'s
+`WEAPONS` table and looks the name up in `DF_TO_MW_WEAPON`. The
+Thunderlock is in neither — it is template 560, registered at runtime
+by `registerCustomTemplates`, and `WEAPONS` is DFU's own frozen list —
+so the lookup answers `MW_WEAPON_TYPE.None`, the function falls to its
+last arm, and the note it pushes is verbatim:
+
+> `weapon: Morrowind has no weapon type for what you are holding`
+
+No part is pushed. In Morrowind first person the player holds **empty
+hands**. This is not a bug in the resolve: it is the resolve being
+exactly right about a weapon Morrowind does not have. Every mesh in
+that lane comes out of the PLAYER'S OWN INSTALL by search token
+(`pickWeaponRecord`), and no search token finds a dwemer firearm in
+data that has none. Nothing in `mwItemMap.js` can fix it either — its
+"TOTAL, AND HONEST" coverage walk enumerates `WEAPONS` x
+`WEAPON_MATERIALS`, so the one weapon in the port that is genuinely
+unmapped is the one weapon its census never asks about. **A rule
+enforced by an enumeration is a rule enforced by memory**, and this is
+the enumeration's blind spot, named here so the next slice can close
+it rather than re-find it.
+
+**SO THE MODEL HAS TO BE OURS**, which is why Mac sent an FBX — and
+the file, despite its name, is **the gun**: 124 polygons, and rendered
+(`tools/meshSheets.mjs --preview`) it is unmistakably a short
+pistol-grip firearm, barrel forward, sight on top. `Bolt Shot.blend`
+is its Blender source.
+
+### The bake, and why it is a tool and not a format
+
+`tools/fbxRead.mjs` reads the binary FBX container; `tools/fbxMesh.mjs`
+bakes one Geometry/Model pair into **the shape `flattenNif` already
+emits** (`src/formats/mwNifMesh.js:385-387` — positions / normals /
+uvs / colors / indices / material). Not a second mesh format: the same
+one, so the Morrowind lane's whole downstream needs no new consumer.
+
+Nothing FBX ships to a player. `src/formats/` holds the runtime's
+parsers because the bytes they read are on the player's disk; an FBX
+exists once, on Mac's machine, and the game never sees it. The
+precedent is `tools/gunPaperdoll.mjs` one dimension down — raw art in
+`scratch/` (ignored), the port's own asset out, the source never
+committed.
+
+Four things the bake does, each one a place a wrong answer looks
+plausible on screen:
+
+- **Triangulates.** FBX stores n-gons, ended by a ones'-complement
+  index. A fan is only a triangulation of a CONVEX polygon, so a
+  concave one is **refused by name** rather than folded inside out —
+  the shard of stray geometry that is invisible in a diff.
+- **Welds on the (position, normal, uv) TRIPLE.** 543 corners, 199
+  positions, 539 vertices: a hard edge and a UV seam are splits that
+  have to survive, and a shared corner is a split that must not.
+- **Bakes the scale, drops the placement.** Blender exported with the
+  transform unapplied, and the scale is NON-UNIFORM (43.75 / 35.45 /
+  84.59), so it is geometry and not a scalar a caller can carry.
+  Normals take the **inverse transpose**, or an 8:1 stretch tilts every
+  highlight on the barrel. `Lcl Rotation` and `Lcl Translation` are
+  where the object sat in Mac's scene and are dropped — recorded as
+  dropped, not silently ignored.
+- **Lands in a stated frame.** `--forward` / `--up` name which local
+  axes become Morrowind's +Y and +Z; the third is their CROSS PRODUCT,
+  which is what makes a mirrored basis impossible to write by accident.
+  The default is MEASURED: sliced along its long axis one half is a
+  uniform 0.12 x 0.14 tube and the other carries everything 0.21 and
+  0.26 deep — a barrel and a receiver — so forward is `-Z`; and `-X`
+  up is the one of the two signs that renders as a firearm the right
+  way up. Then centred on its own bounds and scaled so the longest
+  axis is 1, so the port sizes it with ONE number.
+
+### What the bake found in the asset
+
+Verified, not assumed:
+
+- **No texture exists.** The FBX carries `Geometry` and `Model` and
+  nothing else — no `Material`, `Texture`, `Video`, `Deformer`, `Skin`,
+  `Cluster`, `LimbNode`, `BindPose` or `AnimationCurve`. There is a UV
+  unwrap (`UVMap`, exactly 0..1) and no image to put on it. So
+  `tools/meshSheets.mjs --uv` draws the unwrap at texture resolution:
+  that sheet is the deliverable to paint on, and it is the only half of
+  "texturing" this side can do.
+- **No bones.** Nothing to skin to, which means "rigging" here is the
+  ATTACH — `parts.push({ slot: 'weapon', bones: [bone] })` against the
+  arm's weapon bone — and not a skin cluster.
+- **The mesh is OPEN.** 410 edges are shared by two triangles and
+  **65 by one**; 65 of its 199 positions sit on a boundary, at the
+  rear and around the receiver. Winding is consistent (295 of 295
+  faces agree with their normals) and no face is degenerate, so this
+  is holes and not a broken bake. Backface culling will see through
+  them.
+
+### The pins
+
+The fixture is **written by the test**, not recorded: a forty-line
+binary-FBX writer, so the pin drives the reader against bytes and no
+blob nobody can read in a diff enters the tree. 9 pins, 29 mutants, 29
+killed — **after two of them were re-aimed, both for being vacuous**.
+The handedness assertion recomputed `f x u` from `f` and `u`, which the
+mirror mutant never touched, so a flipped cross product passed; and the
+weld fixture varied only ONE part of its key, so a key that dropped
+either of the other two passed. Both now ask the thing that actually
+moves.
+
+### What is not done
+
+The bake exists; **nothing draws it yet**, on purpose. The wiring needs
+a texture that does not exist, an answer on the open boundary, and an
+orientation settled against a real Morrowind weapon bone rather than
+guessed — and a mesh in `public/` that nothing loads is the dead seam
+this project keeps deleting.
+
+## FIELD-GUN-MW2: the gun is in the hand
+
+2026-09-20, Mac: *"Continue. Figure this out yourself."*
+
+MW1 said the bake existed and nothing drew it. This draws it.
+
+### The mesh becomes a NIF, because that is where a part goes in
+
+`bindPartsInto` (`src/formats/mwFirstPerson.js`) does
+`parseNif(part.bytes)` and hands the result to `bindPart`. **A part IS
+NIF bytes.** The obvious alternative — teach the bind to take
+pre-flattened batches beside NIF bytes — is the wrong one, and this
+file's own history says why: *"MW7 failed by carrying a second port of
+one rule, and two copies of a rule drift."* Everything a part gets on
+the way in is behind that door: rule 34's discarded root transform,
+rule 14's BoneOffset, rule 13's mirror, the property chain, the attach.
+A second entrance would have to re-implement or skip every one of them,
+for ever, for one mesh.
+
+So `tools/nifWrite.mjs` writes a Morrowind 4.0.0.2 NIF, and the port's
+own weapon is a part like any other. The check is the strictest one
+available: the pin parses what the writer wrote with **the port's own
+`parseNif`** and flattens it with **the port's own `flattenNif`**. A
+4.0.0.2 stream carries no record sizes, so one byte wrong anywhere
+desynchronises the rest of the file, and `parseNif`'s own
+trailing-byte check means a writer four bytes out cannot produce a file
+that parses at all.
+
+Seven records, each there for a reason: an `NiNode` root (rule 34 wipes
+record 0's transform **in the parser**, so identity is not a
+simplification, it is the only thing that survives), a **nameless**
+`NiTriShape` (MW-D6: a nameless shape binds once for the part, a named
+one binds once per side and is filtered), the geometry, a white
+material (the texture carries the colour; a tint here would be a second
+place to change it), the texturing property, an external
+`NiSourceTexture`, and an `NiStencilProperty` with **DrawMode 3
+(Both)** — rule 65's only two-sided value, and the honest answer to a
+shell with 65 single-shared edges. Morrowind's own artists reach for
+exactly that record when a model has an open side, and the alternative
+— inventing geometry to close somebody else's mesh — is worse than
+drawing what they made.
+
+### The FBX has no unwrap at all
+
+This is the finding the slice turns on, and it is a measurement rather
+than an opinion. The export carries a `LayerElementUV` named "UVMap",
+which looks like an unwrap until it is counted:
+
+> **45 distinct UV coordinates** over 539 vertices, every one on an
+> exact eighth, and the triangles' UV areas **totalling 8.49** — the
+> atlas covered eight and a half times over. Every single covered texel
+> is claimed by more than one triangle, and one texel by **thirty-nine**.
+
+That is Blender's factory cylinder mapping: the UVs a `Cylinder`
+primitive is born with. Every section extruded or duplicated to build
+the gun inherited the same eight strips, so the barrel, the receiver
+and the grip all sit on top of each other in texture space, and **any
+texture at all puts the same pixels on every part of the weapon.** The
+first bake proved it — four deliberately different bands came back
+within three levels of each other on all four, because the last
+triangle to rasterise a texel won and which one that was is arbitrary.
+
+So `tools/meshUnwrap.mjs` computes one. Islands by shared edge and a
+66-degree fold — walked over **welded position indices**, because the
+export splits a vertex at every hard edge and UV seam and a walk by
+vertex index would make every face its own island. Each island
+projected onto the plane of its area-weighted average normal, rotated
+to its minimum-area bounding rectangle, and shelf-packed at **one
+global scale**, so a texel is the same size in world units everywhere
+on the gun. 49 islands, coverage 8.49 → 0.57, nothing overlapping.
+
+### The texture is baked off the geometry, not painted blind
+
+There is no image in the FBX and no image to bake from. Painting one by
+hand into an atlas, sight unseen, is guessing where the barrel is.
+
+A texel is not a blank square: the mesh says exactly which point of
+which triangle it covers. `tools/meshTexture.mjs` rasterises the model
+**into its own UV space**, so every texel knows its position, its
+normal and how enclosed it is — and those three answer the questions a
+metal texture asks. Position along the long axis separates muzzle from
+barrel from receiver from grip. **Ambient occlusion, cast for real**
+against the mesh's own triangles, is the one shading term that belongs
+in a texture: it is view- and light-independent, where a baked
+highlight would fight the renderer's own lighting and follow the gun
+around the room. The normal gives the lengthwise brushing on a turned
+barrel and keeps the top plates cleaner than the undersides, which is
+where a carried weapon actually wears.
+
+Deterministic throughout — a fixed integer hash, no seeded RNG, no
+clock — so the same mesh bakes the same bytes.
+
+**Three bugs the pins caught that an eye would have called art:**
+
+- the packer's scale bisection was **capped at its starting bound**,
+  returning exactly 1 for a mesh whose longest axis is 1 by
+  construction, and leaving sixty per cent of the atlas empty;
+- the bands were measured from the axis **minimum** — which after the
+  MW1 bake is the butt — so the sooted-muzzle band painted the grip.
+  Both ends are dark, so it looked plausible and only the two middle
+  bands were visibly wrong;
+- the palette was typed in screen values. Linear 0.30 encodes to sRGB
+  0.59, so it came out pale and chalky.
+
+**And one thing was taken out rather than tuned.** A verdigris keyed on
+occlusion fired over most of the gun (this mesh's mean AO is 0.60, so
+"the deepest crevices" was nearly all of it); tightening the threshold
+moved the green blotches without removing them, because the recessed
+plates along the barrel are exactly the places that are both occluded
+*and* the most visible surface on the weapon. There is no threshold
+that tells "a crevice" from "a machined channel" out of occlusion
+alone. A patina on the parts a player looks at all day is worse than no
+patina.
+
+### It reaches the arm through the doors that already exist
+
+Three seams, and not one of them is new machinery:
+
+1. **`src/characters/ownWeaponModels.js`** — the weapons Morrowind does
+   not have, by template index. A **table, not a branch**: the
+   Thunderlock is explicitly *"THE FIRST ONE OF ITS KIND"*, and the
+   second one must not be a second `if` in somebody else's function. A
+   leaf, for the same reason `thunderlockIds.js` is one. It hangs on
+   **"Weapon Bone"**, the reference's own untyped fallback — the typed
+   left/right names belong to Morrowind's weapon *types* (MW-D32,
+   npcanimation.cpp:787-795) and this weapon has none.
+2. **`src/systems/ownMwAssets.js`** — the NIF and the DDS, through
+   Vite's glob door, as WS1's vendored scabbards already are. It mounts
+   in `dataSource.js`'s archive list **after the player's loose files**
+   (MW-D40's data-files-over-BSA law, so Mac dropping his own texture
+   in replaces ours without a rebuild) and **before every .bsa**, where
+   these names do not exist.
+3. **`src/systems/urlArchive.js`** — `makeVendoredArchive`, moved out
+   of `weaponSheathing.js` body-unchanged and re-exported from there so
+   no caller moved. Twice is a law: a generic archive living inside one
+   vendored mod's module is a home that only looks like one until
+   something else needs it.
+
+`resolveWeaponParts` gains one arm, **before** the type lookup rather
+than after it, so the note below it — "Morrowind has no weapon type for
+what you are holding" — stays true of the items it is actually about.
+It cannot shadow a Morrowind weapon: `ownWeaponModelFor` answers only
+for template indices `registerCustomTemplates` minted, which are past
+every DFU index, and the pin walks all eighteen to say so. When our own
+file is missing, the note blames **the build** and not the player's
+archives — sending somebody hunting through a Morrowind install for a
+file that was never going to be there is its own bug.
+
+### Two gates were blind, and both are paid
+
+**`itemMapCoverage` never asked about the gun.** Its population was
+`WEAPONS` — DFU's frozen eighteen — so the one weapon in the port that
+genuinely had no Morrowind model was the one weapon the census never
+walked. It reported total coverage while the gun drew empty hands, for
+every player, for the life of the arc. This file's header promises a
+row "must SAY it, never fall through silently"; an item outside the
+population cannot even fall through. It now walks the port's own table
+too, and the pin's count is **derived off that table** rather than
+typed, because being outside a hand-counted population was the defect.
+
+**The allow-list was only checked one way for `src/assets/`.** AUDIT 27
+added the reverse read precisely because *"the list was only ever read
+one way"* makes it mean less than it claims — and its own comment says
+the intro "ships from src/assets through Vite. Read each row's own
+directory so bundled art has the same ownership check as public/." The
+reverse read did. The forward read did not, so a new file bundled out
+of `src/assets/` needed no row at all. It covers both directories now.
+
+### What ships, and what it is
+
+`src/assets/mw/meshes/thunderlock.nif` (19 KB) and
+`src/assets/mw/textures/thunderlock.dds` (256×256, nine mip levels —
+Morrowind's own weapon-texture size). **Both are Bethesda formats
+containing no Bethesda data**, which is the distinction the allow-list
+exists for: the mesh is Mac's model and the texture is generated from
+that mesh's own geometry with no image input at all. Re-run the chain
+on the same `.fbx` and the same bytes come out.
+
+The texture is **a material, not artwork** — believable dwemer bronze
+with its own occlusion, so the gun reads as a solid object in the hand.
+`tools/meshSheets.mjs --uv` still draws the unwrap for painting over,
+and now it is an unwrap worth painting.
+
+## FIELD-GUN-MW3: "and this is rigged properly?"
+
+2026-09-20, Mac, in as many words. **No — it was attached, which is not
+the same thing.** Three gaps, each measured rather than guessed, and
+all three now closed.
+
+### It was a centimetre and a half long
+
+Morrowind is **69.99 units to the metre** (`MW_UNITS_PER_METER`). MW2's
+bake normalised the mesh to a longest axis of exactly 1, which is a
+tidy number for a *mesh* and a meaningless one for a *weapon*: the gun
+was **1.43 cm**, about 1/38th of what a hand could hold.
+
+The bake takes `--units` now and `tools/bakeThunderlock.mjs` asks for
+**0.75 m × 69.99 = 52.5 units**. That length is the weapon's own row,
+not a preference: `isOneHanded: false` (both hands on it in the art the
+lab settled) and `baseWeight` 6.0, the heaviest weapon in the game — a
+short two-handed carbine. Longer would out-reach a claymore; shorter
+would be a pistol, and the port already decided it is not one.
+
+### The fist closed around the receiver
+
+The bone it hangs on is a **hand**, and MW2 pivoted the mesh on its
+bounds centre — so the middle of the weapon sat at the bone and the
+hand gripped the receiver. `--origin=grip` puts the origin at the
+**centroid of the rearmost band of the long axis**, derived from the
+geometry rather than typed. The muzzle now sits 47.4 units ahead of the
+hand and the butt 5.1 behind it.
+
+### The arms were punching
+
+This is the one that "it attaches to the right bone" hides completely.
+`resolveWeaponParts` returned `MW_WEAPON_TYPE.None`, and
+`animWeaponType` turns None into **HandToHand** (`fpArm.js:285`) —
+correct for empty hands, absurd for a man holding a dwemer firearm. The
+rig played unarmed stances and the gun went along for the ride:
+`composeWeaponGroup` returned no group at all, `weaponShortGroup` the
+empty string.
+
+**A weapon TYPE is not a MODEL.** The model had to be ours because
+Morrowind has no gun; the *animation* does not, because Morrowind has
+something shaped exactly like this act. The row names a type to
+**borrow** — `MarksmanCrossbow` — and it matches on every axis the
+animation system asks about:
+
+| | Thunderlock | MarksmanCrossbow |
+|---|---|---|
+| hands | `isOneHanded: false` | two-handed |
+| motion | fired, not swung | `shootsRatherThanSwings` true |
+| cycle | a visible reload (the lab's finding) | `reloadsItself` true — and it is the **only** type that is |
+| ammunition | a Dwemer Pellet | a bolt |
+
+It resolves to the `crossbow` group, the `shoot start` / `shoot max
+attack` / `shoot release` keys, and a left hand that carries nothing.
+**Its ammunition is not borrowed**: `ammoTypeFor(crossbow)` is Bolt,
+and the arm would instance a Morrowind quarrel on the arrow bone, so
+the resolve returns before that arm and `borrowsAmmo: false` on the row
+says so where somebody changing this will read it.
+
+### And a fourth thing the model found on the way
+
+Re-baking at the right size put a **black rectangle on the receiver**.
+Not a texture bug — an unwrap bug, and a bad one.
+
+MW2's island walk compared each face to **the neighbour it joined
+across**. Fold tolerance *chains*: on an eight-sided barrel every
+adjacent pair is 45° apart, comfortably inside 66°, so the walk went all
+the way round and made the whole ring **one island**. The average normal
+of a closed ring is nearly zero, so the far side projects on top of the
+near side and the faces at right angles to it **collapse to a line** —
+**78 of 295 triangles with real 3D area and zero UV area**, the largest
+fifty square units. A triangle with no UV area samples one texel and
+paints its whole face with it.
+
+Islands grow against their **own running average** now — which is what
+Blender's Smart UV Project does, and what makes the projection sound by
+construction: every face is within the threshold of the plane it is
+actually projected onto, so under 90° nothing can collapse. 49 islands
+became 74, and the count of collapsed faces is 0.
+
+### The pin that makes every other pin load-bearing
+
+A mutation campaign over the bake chain left **six survivors**, and they
+had one cause between them: **the committed `.nif` and `.dds` are the
+output of a run that already happened.** Islands could go back to
+growing against the neighbour, the scale back to a normalised 1, the
+pivot back to the bounds centre — and the suite stayed green, because
+every pin was reading an artefact rather than a derivation.
+
+So **Mac's `.fbx` is committed** (17 KB, at `src/assets/mw/source/`)
+and the suite re-runs the entire chain over it and compares the result
+to the shipped bytes, twice, so determinism is asserted too. That is a
+departure from `tools/gunPaperdoll.mjs`, whose thousand-pixel PNGs stay
+in the ignored `scratch/`, and it is made on purpose: the allow-list row
+for these files claims *"re-run the chain on the same .fbx and the same
+bytes come out"*, and **a derivation you cannot re-run is a claim you
+cannot check.** All six survivors died the moment that pin existed.
+
+60 mutants over the two slices, 60 killed.
+
+### What is still not done
+
+The gun is the right size, hangs from its grip, and plays the crossbow's
+animations. What nobody has done is **look at it in the arm**: the
+`BoneOffset` a Morrowind weapon can carry to nudge itself on the bone is
+absent, so the grip sits exactly at the bone's origin, and whether that
+reads as *held* rather than *floating* is a question for eyes on a
+running build, not for a pin.
+
+## FIELD-GUN19: the flash was white and the shot came out high
+
+2026-09-20, Mac: *"The muzzle flash texture itself needs to be blue like
+the orb and the lighting thats emitted needs to be blue"* and *"the orb
+projectile that shoots doesnt line up with the muzzle. It shoots out
+high on the screen"*.
+
+Two reports, **one species of bug**: a number that answered a question
+nobody had asked. Both had already been "fixed" — FIELD-GUN17 built the
+colour channel and named the muzzle ray — and both were still wrong,
+which is the useful part.
+
+### The shot: a canvas pixel is not a world position
+
+`muzzleRay` turns the barrel's pixel into a camera-space offset. It
+divided by `canvasH` and said so in a comment: *"the CANVAS's aspect,
+not the world viewport's — the viewmodel is drawn over the whole
+frame."*
+
+That sentence is **true of the gun and says nothing about where the orb
+lands.** ROAD-E E5 made the two different spaces: the docked large HUD
+**shrinks the world pass** (`setWorldViewport`, ViewportChanger.cs
+:52-67) while the 2D pass takes the whole canvas back at the first
+`drawScreenQuad`. So the gun really is drawn over the full frame, and
+the shot is projected into a strip that is shorter than it.
+
+Dividing the pixel by the taller of the two gives a **larger** `up`.
+Measured on a bar a fifth of the screen high: the shot sat **96% too
+high**, which is very nearly "at the centre of the screen instead of at
+the barrel" — exactly the report.
+
+**E5 already knew about this class.** It converted the crosshair
+(`hudCrosshair.crosshairCentreY`, or the reticle points where the camera
+is not) and the tap pick (`player/tapRay.js`). The viewmodel's muzzle
+was the **third consumer**, and nobody counted it.
+
+`worldRectPx` is tapRay's own arithmetic — the normalized bottom-left
+rect into top-left canvas pixels, which is the part with a flip in it —
+and it is reused rather than re-derived. What is deliberately **not**
+reused is its bounds test: a tap outside the strip is not a pick, but a
+muzzle below it is a real point below the bottom of the view, and
+clamping it would move the shot.
+
+The rect has to survive to the 2D pass, so the renderer now keeps
+`worldViewportRect` — a **record**, where `_worldViewportPx` is GL
+**state** and is rightly cleared by `endWorldPass` (EV6: state the
+renderer owns must not leak between passes).
+
+### The flash: a blown-out core has no opinion about hue
+
+FIELD-GUN17 wired this end to end — the orb tells the flash and the
+light what colour it is, sampled off its own archive, so nobody types a
+number. All of that was right. **The statistic was wrong.**
+
+It took the alpha-weighted **mean** of every opaque texel, and a glowing
+missile sprite is an over-exposed white core inside a coloured halo. The
+core is the brightest thing in the record and the most opaque, so it
+dominated the mean; peak-normalising a near-white mean makes it paler
+still. The answer was a lavender indistinguishable from the white it
+replaced — which is why the whole channel looked like it had never been
+wired at all.
+
+**The core is white because it is over-exposed, not because the orb is
+white.** A texel with no saturation carries no information about what
+colour the thing is, so it is not allowed to vote: the weight is alpha
+**times chroma**. What is left voting is the halo, which is where a
+viewer reads the colour from anyway. On a shock-orb-shaped record the
+old mean gave `125,152,255` and this gives `68,107,255`.
+
+Falling back to the plain mean for a genuinely greyscale record is part
+of the rule and not a guard: a white orb should answer white.
+
+### Three campaign survivors, each a fixture that could not see its hole
+
+- **The strip's top edge.** The large HUD's bar is at the **bottom**, so
+  the strip starts at canvas row 0 and `r.y` is zero — a mutant that
+  dropped the `- r.y` term passed everything. The renderer's rect is
+  general, so the pin is now a strip pushed *down* the canvas.
+- **A getter over a field nobody assigns** answers null for ever, which
+  is the full canvas, which is the bug. The pin only asked whether the
+  getter existed.
+- **Chroma alone**, without alpha, passed because everything chromatic
+  in the fixture was blue. The pin now carries an almost-transparent red
+  rim — very saturated, covering nothing — which chroma alone would let
+  repaint the whole orb.
+
+10 mutants, 10 killed.
+
+### One thing left, said plainly
+
+The colour is learned the first time an orb's texture resolves, and that
+load is asynchronous, so **the very first Thunderlock shot of a session
+can start white and turn blue partway through its own flash.** That is
+FIELD-GUN17's stated "white until warmed" design and it is a far smaller
+thing than what was reported; making even the first shot blue means
+warming the archive when the weapon is equipped rather than when a shot
+flies, which is a wiring change across the hosts and its own slice.

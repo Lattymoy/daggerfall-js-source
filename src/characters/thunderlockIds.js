@@ -97,27 +97,58 @@ export const orbArchiveFor = (item) =>
  */
 const _orb = { colour: [1, 1, 1], sampled: false };
 
-/** The reduction: the MEAN of the opaque texels, normalised so the
- *  brightest channel is 1.
+/**
+ * The reduction: the CHROMA-WEIGHTED mean of the opaque texels,
+ * normalised so the brightest channel is 1.
  *
- *  NORMALISED, not averaged raw, because this is a LIGHT's colour and a
- *  tint's direction - not its strength. The strength is
- *  `GUN_FEEL.flashRange` and the muzzle curve, which are already tuned;
- *  handing them a dim mean would darken the flash as a side effect of
- *  asking what colour it is. A black or empty record leaves white
- *  alone, because "no answer" is not "no light".
+ * NORMALISED, not averaged raw, because this is a LIGHT's colour and a
+ * tint's direction - not its strength. The strength is
+ * `GUN_FEEL.flashRange` and the muzzle curve, which are already tuned;
+ * handing them a dim mean would darken the flash as a side effect of
+ * asking what colour it is. A black or empty record leaves white
+ * alone, because "no answer" is not "no light".
  *
- *  Alpha-weighted so a soft edge counts for what it covers, and the
- *  cutout texels (alpha 0, the palette's index 0) count for nothing. */
+ * ═══ A GREY PIXEL HAS NO OPINION ABOUT HUE ════════════════════════
+ *
+ * FIELD-GUN19 (Mac: "The muzzle flash texture itself needs to be blue
+ * like the orb and the lighting thats emitted needs to be blue").
+ *
+ * FIELD-GUN17 built this whole channel and the flash still came out
+ * white, and the reason is the statistic rather than the wiring. This
+ * took the alpha-weighted MEAN of every opaque texel - and a glowing
+ * missile sprite is a BLOWN-OUT WHITE CORE inside a coloured halo. The
+ * core is the brightest thing in the record and the most opaque, so it
+ * dominated the mean; peak-normalising a near-white mean makes it
+ * paler still, and the answer was a lavender indistinguishable from
+ * the white it replaced.
+ *
+ * The core is white because it is over-exposed, not because the orb is
+ * white. A texel with no saturation carries no information about what
+ * colour the thing is, so it is not allowed to vote: the weight is
+ * alpha TIMES CHROMA (max channel minus min). What is left voting is
+ * the halo, which is where a viewer reads the colour from anyway.
+ *
+ * FALLING BACK IS PART OF THE RULE, not a guard: a genuinely
+ * greyscale record has no chromatic texel at all, and the honest
+ * answer there is the plain alpha-weighted mean it always gave - a
+ * white orb should answer white, not nothing.
+ */
 export function orbColourFrom(color32) {
   const d = color32?.colors;
   if (!d || !d.length) return null;
-  let r = 0, g = 0, b = 0, w = 0;
+  let r = 0, g = 0, b = 0, w = 0;          // chroma-weighted
+  let pr = 0, pg = 0, pb = 0, pw = 0;      // plain alpha-weighted, for the greyscale fallback
   for (let i = 0; i < d.length; i += 4) {
     const a = d[i + 3];
     if (!a) continue;
-    r += d[i] * a; g += d[i + 1] * a; b += d[i + 2] * a; w += a;
+    const R = d[i], G = d[i + 1], B = d[i + 2];
+    pr += R * a; pg += G * a; pb += B * a; pw += a;
+    const chroma = Math.max(R, G, B) - Math.min(R, G, B);
+    if (!chroma) continue;
+    const k = a * chroma;
+    r += R * k; g += G * k; b += B * k; w += k;
   }
+  if (!w) { r = pr; g = pg; b = pb; w = pw; }   // nothing chromatic: the old answer, on purpose
   if (!w) return null;
   const peak = Math.max(r, g, b);
   if (peak <= 0) return null;

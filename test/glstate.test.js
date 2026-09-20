@@ -80,6 +80,28 @@ test('EV6: the shadows skip redundant binds; a foreign pass and beginFrame reset
   assert.equal(counts.useProgram, 1, 'the frame opens with a real bind');
 });
 
+/**
+ * A method's body, by MATCHING ITS BRACES.
+ *
+ * FIELD-GUN19: this used to be `slice(at, at + 2600)` - a window in
+ * characters - and a ONE-LINE addition inside beginFrame pushed the
+ * last thing it looks for out the far end, reddening a gate about
+ * program binds for a change that touched none. A window measured in
+ * characters is a rule enforced by a magic number: it fails when the
+ * function grows and, worse, it passes when the function grows PAST
+ * something it should still have been reading.
+ */
+function bodyOf(src, signature) {
+  const at = src.indexOf(signature);
+  if (at < 0) throw new Error(`glstate: renderer.js no longer declares \`${signature}\``);
+  let depth = 0;
+  for (let i = at + signature.length - 1; i < src.length; i++) {
+    if (src[i] === '{') depth++;
+    else if (src[i] === '}' && --depth === 0) return src.slice(at, i + 1);
+  }
+  throw new Error(`glstate: \`${signature}\` never closes`);
+}
+
 test('EV6: every program and VAO bind in renderer.js funnels through the shadows', () => {
   const r = readFileSync('src/render/renderer.js', 'utf8');
   // exactly ONE raw useProgram (inside _use) and TWO raw
@@ -89,7 +111,7 @@ test('EV6: every program and VAO bind in renderer.js funnels through the shadows
   assert.equal((r.match(/gl\.bindVertexArray\(/g) || []).length, 2, 'only _bindVao and markForeignPass touch bindVertexArray');
   // the element-buffer upload that owns no VAO unbinds first, or it
   // would capture its buffer into whatever drawMesh left bound
-  const ti = r.slice(r.indexOf('_terrainIndices(indices) {'), r.indexOf('_terrainIndices(indices) {') + 900);
+  const ti = bodyOf(r, '_terrainIndices(indices) {');
   assert.ok(ti.indexOf('this._bindVao(null);') > 0 && ti.indexOf('this._bindVao(null);') < ti.indexOf('ELEMENT_ARRAY_BUFFER'),
     '_terrainIndices unbinds before touching the element buffer');
   // AUDIT EV F-DOC5: beginFrame's internal ORDER - shadow reset, then
@@ -97,8 +119,7 @@ test('EV6: every program and VAO bind in renderer.js funnels through the shadows
   // _use would land in whatever foreign program the sky or the ring
   // left bound, and the counting stub's uniform no-ops would never see
   // it.
-  const bfStart = r.indexOf('beginFrame(proj, view, lightDir, opts = null) {');   // AUDIT-EL F5: the world flag
-  const bf = r.slice(bfStart, bfStart + 2600);
+  const bf = bodyOf(r, 'beginFrame(proj, view, lightDir, opts = null) {');   // AUDIT-EL F5: the world flag
   const reset = bf.indexOf('this._lastProgram = null;');
   const use = bf.indexOf('this._use(this.program);');
   const firstUniform = bf.indexOf('gl.uniformMatrix4fv(this.uProj');
