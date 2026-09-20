@@ -626,6 +626,64 @@ Slices, each behind its own `features.js` row:
 
    Mutants: 130, 129 dead, 1 equivalent as recorded.
 
+   **THE SECOND AUDIT (2026-09-20, Mac: "I want you to audit the new
+   blood system we integrated"), and what it found.**
+
+   THE BLOOD DID NOT GO WITH THE WORLD. `world.js`'s `_teleportToPixel`
+   is the ClearStreamingWorld twin: a fast travel, a quickload and
+   every teleport go through it. It clears the live foes, the guards,
+   the missiles and the arrows, destroys every pixel and then
+   `state.init`s a NEW scene frame - mapOrigin moved, x/z compensation
+   zeroed - with no recentre offset for anything to ride. The splash
+   pool and its ring were the one world-space thing it did not clear,
+   so every mark, chunk and drip laid before the jump kept its old
+   local coordinates in the new frame: a fight's blood at the same
+   spot in the next town, floating or buried wherever the ground
+   differed. The interior host clears its pool on every door for
+   exactly this reason; the world host's door now does the same, and
+   it is a FREE rather than a double free - that pool is built with no
+   `onSpawn`, so it owns its splash batches, where the dungeon's hands
+   every batch to its billboard list and must never make the call
+   (HARD1's own catch, recorded at its teardown).
+
+   READ AND CLEARED, so the next audit need not re-read them:
+
+   - The interior ring rays the room it is in: `player.collider` is
+     swapped onto the interior's collider at both doors (worldModes
+     4801/5443) and back at both exits, and the ring reads it by a
+     getter.
+   - A drip born on a ceiling never lands on that ceiling: its first
+     ray starts ON the plane and `rayTriangle` refuses t under 1e-4.
+   - The puppet-side sites (a peer's blow, seen here) measure against
+     the puppet's own `maxHealth`, and `damagePercent` answers 0 to a
+     zero one - a record that has not carried the number yet stains at
+     the bottom rung, never the top, and never the burst (which is the
+     player's alone).
+   - The decal pass: depth-tested, depth-unwritten, blended, cull off
+     (a ceiling mark is seen from behind its normal), the classic
+     sixteen lights clamped, fog on the same terms as the flats. An
+     empty ring draws nothing; a full one is one draw of capacity
+     quads with the empty slots degenerate.
+   - The four hosts' lifetimes: the world and exterior hosts are page
+     lifetime and never dispose (nothing else of theirs does either);
+     the dungeon disposes by name; the interior clears at every door.
+
+   TWO LATENCIES RECORDED RATHER THAN PAID:
+
+   - THE RING HOLDS ONE TEXTURE KEY. `useArt` overwrites it on every
+     upload, so a second blood record would repaint every mark in the
+     last record's colour. `enemyBasics.js` carries exactly two
+     values - 0 and the bloodless 2 - so today there is no second
+     record and nothing to see. A per-mark record would split the one
+     draw into one per texture; it is a slice if a second record ever
+     comes.
+   - `blood-capacity` AND `blood-density` HAVE NO ROW. Both are read,
+     clamped and pinned, and both are reachable from the store alone:
+     the feature registry's rows are toggles, and a slider is a slice
+     of its own.
+
+   Mutants: 133, 132 dead, 1 equivalent as recorded.
+
 3. **BLOOD1c - bleeding.** The 2..5s cadence and the ramp above.
 
 The numbers in THE FACTS are the target to feel like. The code that

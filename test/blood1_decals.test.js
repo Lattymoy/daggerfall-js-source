@@ -1731,6 +1731,91 @@ test('BLOOD1 AUDIT: the chunks’ centre list is the chunks’ OWN arrays, so a 
   }
 });
 
+test('BLOOD1 AUDIT 2: the blood goes with the world - a teleport clears the ring, the chunks and the drips, and the ring is the same ring after', () => {
+  // THE FAULT. `_teleportToPixel` is the world host's ClearStreamingWorld:
+  // a fast travel, a quickload and every teleport go through it. It
+  // clears the live foes, the guards, the missiles and the arrows,
+  // destroys every pixel and then `state.init`s a NEW scene frame -
+  // mapOrigin moved, x/z compensation zeroed - with no recentre offset
+  // for anything to ride. The splash pool and its ring were the one
+  // world-space thing it did not clear, so every mark laid before the
+  // jump kept its old local coordinates in the new frame: a fight's
+  // blood at the same spot in the next town, floating or buried
+  // wherever the ground differed.
+  const world = readFileSync(new URL('../src/scenes/world.js', import.meta.url), 'utf8');
+  const start = world.indexOf('  async function _teleportToPixel(');
+  assert.ok(start > 0, 'the world host has the one teleport door');
+  const body = world.slice(start, world.indexOf('\n  }\n', start));
+  const clear = body.indexOf('    hitEffects.clear();');
+  assert.ok(clear > 0, 'the teleport clears the splash pool, and the ring with it');
+  // ...in the SAME sweep as the rest of the world, before the pixels go
+  // and before the new frame is initialised
+  assert.ok(clear > body.indexOf('exteriorFoes.clearLive();'), 'beside the sweep that clears the foes');
+  assert.ok(clear < body.indexOf('for (const key of [...built.keys()])'), 'before the pixels are destroyed');
+  assert.ok(clear < body.indexOf('queue.push(...state.init(px, py));'), 'before the new frame is begun');
+  // ...and clear() is a FREE here and not a double free: this pool is
+  // built with no `onSpawn`, so it owns its splash batches (the
+  // dungeon's hands every batch to its billboard list, which is why
+  // its teardown must NOT call this - HARD1's own catch).
+  assert.match(world, /const hitEffects = createHitEffects\(\{ renderer, getTexture, uploadRecordFrame, marks: bloodMarks \}\);/, 'the world pool owns its batches');
+  assert.doesNotMatch(world.slice(start, start + 6000), /hitEffects\.dispose\(\)/, 'and it is cleared, never ended - the host lives on');
+
+  // THE LAW, DRIVEN ON THE POOL: everything in scene space goes, the
+  // ring's slots are blanked (a stale quad in a live buffer is a mark
+  // at the old place), and the ring is the SAME ring afterwards - the
+  // next blood reuses it rather than minting a batch.
+  const CEIL = 2.2;
+  const made = [];
+  const wrote = [];
+  const renderer = {
+    createDecalBatch: (capacity) => { const b = { capacity, id: `decals${made.length}` }; made.push(b); return b; },
+    writeDecalSlot: (batch, slot, floats) => { wrote.push({ slot, zero: floats.every((f) => f === 0) }); return true; },
+    drawDecals: () => {},
+    createBillboardBatch: () => ({}),
+    moveBillboardBatch: () => true,
+    destroyBillboardBatch: () => {},
+    drawBillboards: () => {},
+  };
+  const { fx, marks } = rigHitEffects({
+    renderer,
+    settings: { enabled: () => true, capacity: () => 256, density: () => 1, overkill: () => true },
+    collider: () => ({
+      surfaceHit: (from, dir, max) => (dir[1] > 0
+        ? (CEIL - from[1] <= max ? { dist: CEIL - from[1], normal: [0, -1, 0] } : null)
+        : (from[1] <= max ? { dist: from[1], normal: [0, 1, 0] } : null)),
+    }),
+  });
+  marks.useArt(380, 1, 6);
+  fx.showBloodSplash(0, [3, 1, 3], null, { damage: 70, maxHealth: 40, fromPlayer: true, heavy: true, throw: [0, 0] });
+  fx.tick(1 / 60);
+  assert.ok(marks.count() > 0, 'marks on the floor and the ceiling');
+  assert.ok(marks.gibs().length > 0, 'chunks in the air');
+  assert.ok(marks.drips().length > 0, 'and drips the ceiling has not let go of');
+  // a recentre mid-fight moves everything (the streaming case - pinned
+  // elsewhere; here it only proves the sweep below is not the shift)
+  fx.offsetAll([819.2, 0, 0]);
+  assert.equal(made.length, 1, 'one ring');
+  const placed = marks.count();
+  wrote.length = 0;
+
+  fx.clear();   // the teleport's line
+  assert.equal(marks.count(), 0, 'no marks');
+  assert.equal(marks.gibs().length, 0, 'no chunks');
+  assert.equal(marks.drips().length, 0, 'no drips');
+  assert.equal(marks.draw(new Float32Array([1, 0, 0]), new Float32Array([0, 1, 0])), false, 'nothing to draw');
+  // every slot that held a mark was BLANKED in the buffer - not
+  // merely forgotten by the pool
+  const blanked = wrote.filter((w) => w.zero);
+  assert.equal(blanked.length, placed, 'each placed slot written back as a zero-area quad');
+  assert.equal(new Set(blanked.map((w) => w.slot)).size, placed, 'each its own slot');
+
+  // ...and the ring is the same ring: the next blood, in the new
+  // frame, lands in it without a second batch
+  fx.showBloodSplash(0, [0, 1, 0], null, { damage: 10, maxHealth: 40 });
+  assert.ok(marks.count() > 0, 'blood in the new place');
+  assert.equal(made.length, 1, 'on the ring it always had');
+});
+
 // ── MAC-BUG W4 (2026-09-20, Mac: "Also blood is black") ────────────
 test('MAC-BUG W4: a MARK takes the same light a CHUNK takes - the two passes of one blow agree, term for term', () => {
   // ONE BLOW, TWO PASSES. `bloodMarks.draw` sends the marks through

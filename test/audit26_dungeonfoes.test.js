@@ -529,7 +529,10 @@ test('F212: the world host collects both pools with the pixel, which is also wha
   // PIN MOVED AGAIN (CLOSEOUT), 2600 -> 2800: the straightening now
   // raises a latch the frame's season poll honours across the awaited
   // destination build, which is two more statements above the needles.
-  const core = WORLD.slice(t, t + 2800);
+  // PIN MOVED AGAIN (BLOOD1 AUDIT 2), 2800 -> 3700: the sweep now
+  // clears the splash pool and its ring beside the missiles and the
+  // arrows, with its own note, above the needles.
+  const core = WORLD.slice(t, t + 3700);
   assert.ok(core.includes('destroyPixel(bx, by);'),
     'so a fast travel or a teleport takes every corpse with it');
   assert.ok(core.includes('exteriorFoes.clearLive();') && core.includes('cityGuards.clearLive();'),

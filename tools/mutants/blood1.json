@@ -1171,5 +1171,32 @@
     "tests": [
       "test/blood1_decals.test.js"
     ]
+  },
+  {
+    "name": "AUDIT2-a-teleport-leaves-the-blood-where-it-was",
+    "file": "src/scenes/world.js",
+    "old": "    hitEffects.clear();\n    for (const key of [...built.keys()]) {",
+    "new": "    for (const key of [...built.keys()]) {",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-a-teleport-clears-the-blood-after-the-new-frame-begins",
+    "file": "src/scenes/world.js",
+    "old": "    hitEffects.clear();\n    for (const key of [...built.keys()]) {\n      const [bx, by] = key.split(',').map(Number);\n      destroyPixel(bx, by);\n      state.release(bx, by);\n    }\n    queue.length = 0;\n    queue.push(...state.init(px, py));",
+    "new": "    for (const key of [...built.keys()]) {\n      const [bx, by] = key.split(',').map(Number);\n      destroyPixel(bx, by);\n      state.release(bx, by);\n    }\n    queue.length = 0;\n    queue.push(...state.init(px, py));\n    hitEffects.clear();",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-clear-forgets-the-marks-but-leaves-the-quads-in-the-buffer",
+    "file": "src/combat/bloodMarks.js",
+    "old": "    for (const d of _pool.decals()) {\n      clearDecalQuad(_scratch, 0);\n      renderer.writeDecalSlot(_batch, d.slot, _scratch);\n    }\n    _pool.clear();",
+    "new": "    _pool.clear();",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
   }
 ]

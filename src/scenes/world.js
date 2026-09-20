@@ -4350,6 +4350,19 @@ export async function bootWorld(canvas, renderer, params, status) {
     lockOn.unlock();   // AUDIT 62 F16: destroy()/removeFoe empties the pool WITHOUT flagging `dead`, so lockOn's death break never fires on the orphan the lock still holds
     magic.clearMissiles();
     arrows.arrows.length = 0;   // the flights own no GL objects - the mesh is the host's cache
+    // BLOOD1 AUDIT 2 (2026-09-20): THE BLOOD GOES WITH THE WORLD. The
+    // ring, the chunks in the air and the ceilings' drips are all in
+    // SCENE space, and `state.init` below starts a NEW scene frame -
+    // mapOrigin moved, x/z compensation zeroed - with no recentre
+    // offset to ride. Every mark laid before a fast travel, a quickload
+    // or a teleport kept its old local coordinates in the new frame, so
+    // a fight's blood reappeared at the same spot in the next town,
+    // floating or buried wherever the ground differed. The interior
+    // host clears its pool on every door for this reason; this is the
+    // world host's door. clear() is safe HERE (the dungeon's is not):
+    // this pool is built with no `onSpawn`, so it owns its splash
+    // batches and this is the one place they are freed.
+    hitEffects.clear();
     for (const key of [...built.keys()]) {
       const [bx, by] = key.split(',').map(Number);
       destroyPixel(bx, by);
