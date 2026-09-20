@@ -131,3 +131,52 @@ was missing, because none of the three could have been caught by
 asserting that nothing threw.
 
 **Campaign** `tools/mutants/macbugs-20260920.json`: 9 mutants, 9 dead.
+
+---
+
+## W4 — "Also blood is black": what the probe rules out
+
+Mac, same day: *"Also blood is black."*
+
+**Not diagnosed. What follows is what has been ELIMINATED**, by a real
+WebGL2 context rather than by reading — `tools/bloodProbe.mjs`
+(`npm run blood`), which drives the port's own `createHitEffects` pool
+and `drawBillboards` over a texture whose colour is known.
+
+| frame | pixel |
+|---|---|
+| clockless (full bright) | `168,16,16` — exactly the texel |
+| exterior noon | `176,16,16` |
+| dungeon ambient, no lights | `20,2,2` |
+| dungeon ambient **+ a torch on it** | `187,18,18` |
+| **a plain sprite in the same dungeon light** | `20,2,2` |
+
+So, ruled out:
+
+- **the pool** — it uploads, and the batch reaches the draw;
+- **the key** — `380_0#0` is uploaded and `380_0#0` is what the
+  billboard pass asks for (the two are minted in different files and
+  this is the first thing that checks they agree);
+- **the shader's emission arm** — a non-emissive record gets the black
+  emission texture and draws at `albedo × tint`, which the first two
+  rows show is its own colour;
+- **anything specific to blood.** The last row is the one that matters:
+  a sprite standing in the same light comes back **the same 20,2,2**.
+  A blood splash is exactly as dark as everything else beside it.
+
+That leaves two possibilities, and they are distinguished by one
+question — **is it black outdoors at noon too?**
+
+- **Yes** → the fault is in what `TEXTURE.380` record 0 *decodes to*,
+  which this container cannot test (no ARENA2). The decode path is
+  shared with every other archive and the palette is the one
+  `ART_PAL.COL` every texture file gets, so this would be something
+  about the archive itself.
+- **Only underground** → it is the ambient, it is not specific to
+  blood, and the row above says so: whatever makes a splash black in a
+  dark room makes the corpse beside it black too. That is a lighting
+  question about dungeons, not a blood one.
+
+The probe stays because it is the part of this that does not need the
+data, and it now answers in seconds what an afternoon of reading could
+not settle.
