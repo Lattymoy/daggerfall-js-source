@@ -46,7 +46,7 @@ async function held(n, key, poseOf = (i) => at(i * 2, 0)) {
   const realNow = Date.now; let clock = 1_000_000_000; Date.now = () => clock;
   const ws = [];
   for (let i = 0; i < n; i++) { if (i % 7 === 6) clock += 1000; const s = r.connect(); await r.hello(s, `p${String(i).padStart(4, '0')}`, poseOf(i)); ws.push(s); }
-  clock += 5000;
+  clock += HEARTBEAT_MS;   // RELAY-H1: past the keepalive floor by the heartbeat's own name, not a literal that was 5000 when the heartbeat was
   for (const s of ws) s.sent.length = 0;
   return { r, ws, tick: (ms) => { clock += ms; }, get clock() { return clock; }, done: () => { Date.now = realNow; } };
 }

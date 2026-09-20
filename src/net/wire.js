@@ -697,10 +697,23 @@ export const POSE_FAN_MAX = 32;
  *  carries is unmeasured (AUDIT SLAM C1). */
 export const POSE_FAR_SHARE = 4;
 
-/** A pose goes out at least this often, moved or not: the socket's keepalive and the peers' clock. SLAM13 moved it
- *  here from net/online.js, because the relay's keepalive floor (KEEPALIVE_FAN_MS) is a fraction of it and the two
- *  must never be tuned apart. */
-export const HEARTBEAT_MS = 5000;
+/** A pose goes out at least this often, moved or not: the peers' clock and the silence law's safety net. SLAM13 moved
+ *  it here from net/online.js, because the relay's keepalive floor (KEEPALIVE_FAN_MS) is a fraction of it and the two
+ *  must never be tuned apart.
+ *
+ *  RELAY-H1 (2026-09-20, Mac: "cloudflare hit its limit"): 5000 -> 20000, AND THE SOCKET'S LIVENESS IS NO LONGER THIS
+ *  FRAME'S JOB. A pose is a message, a message is an event at the Durable Object, and Cloudflare bills duration for
+ *  every second an object is awake; "billable duration does not accrue during hibernation" and "incoming requests
+ *  prevent hibernation" are the platform's own words. A standing player sent one every five seconds, so a room with
+ *  anyone in it never slept - the whole free tier (13,000 GB-s a day) was ~7 player-hours, and it was gone mid-stream.
+ *  The runtime answers `{"t":"ping"}` in the object's SLEEP (server/src/index.js setWebSocketAutoResponse), so the
+ *  socket's liveness rides a ping at PING_MS and the pose is sent only when it MOVED, or every HEARTBEAT_MS as the
+ *  peers' proof of life. Four times fewer wakes from a standing player, and gaps a hibernation can fit in. */
+export const HEARTBEAT_MS = 20000;
+/** RELAY-H1: the socket's own keepalive - a ping the runtime answers without waking the object. Derived from the
+ *  heartbeat so the two cannot be tuned apart: four pings to a pose, which keeps today's five-second on-wire cadence
+ *  (the cadence intermediaries and phones were already proven against) while the object sleeps between poses. */
+export const PING_MS = HEARTBEAT_MS / 4;
 /** SLAM13 (2026-09-16, AUDIT SLAM A2): A KEEPALIVE IS HEARD BY THE WHOLE CROWD AT MOST THIS OFTEN. SLAM8 fans an
  *  unmoved pose to everyone in range, untiered, because a standing player's heartbeat is the one frame whose whole job
  *  is to be heard - and it assumed that frame comes every HEARTBEAT_MS, which is what the port's client does. A
@@ -720,7 +733,7 @@ export const KEEPALIVE_FAN_MS = HEARTBEAT_MS / 2;
  *  carries it (`v`), and a client whose wire.js was built against another version says so on the console: the client
  *  is deployed by CI and the relay by hand, so a skew between them is the ordinary state of a release day, and until
  *  now nothing on either end could see it. */
-export const RELAY_VERSION = 'world83';   // ONLINE-CLASS1: a look carries the character's class name, so a peer without a Morrowind body stands as its class-enemy sprite
+export const RELAY_VERSION = 'world84';   // RELAY-H1: KEEPALIVE_FAN_MS follows HEARTBEAT_MS 5000 -> 20000 (the floor is 10 s now)   // ONLINE-CLASS1: a look carries the character's class name, so a peer without a Morrowind body stands as its class-enemy sprite
 
 /** The listeners sorted by distance from `from`, nearest first; one with no pose yet sorts last, because a peer that
  *  has never said where it is cannot be near. The ordering is Euclidean in the POSE'S OWN FRAME, which is a cell's

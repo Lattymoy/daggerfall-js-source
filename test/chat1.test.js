@@ -327,8 +327,12 @@ test('CHAT1 / AUDIT CHAT: the session as a CHANNEL (presence: false) - the hello
   const pw = sockets[4]; pw.open();
   assert.deepEqual(pw.sent[0].pose, { x: 1, y: 2, z: 3, yaw: 0, pitch: 0, mv: 1 });
   assert.equal(p.sendPose({ x: 2, y: 2, z: 3, yaw: 0, pitch: 0, mv: 1 }), true, 'a presence session sends its pose');
+  // RELAY-H1 re-aimed this: a presence session now ALSO pings (PING_MS, runtime-answered in the object's sleep) so the
+  // socket's liveness no longer costs a wake; its proof of life to the PEERS is still the pose, which a ping never delays.
+  const pingsBefore = pw.sent.filter((m) => m.t === 'ping').length;
   clock += HEARTBEAT_MS * 2; p.tick();
-  assert.equal(pw.sent.filter((m) => m.t === 'ping').length, 0, 'a presence session heartbeats with its pose, not a ping');
+  assert.equal(pw.sent.filter((m) => m.t === 'ping').length - pingsBefore, 1, 'a standing presence session pings (RELAY-H1) - one per tick that finds PING_MS elapsed');
+  assert.equal(p.sendPose({ x: 2, y: 2, z: 3, yaw: 0, pitch: 0, mv: 1 }), true, 'and the heartbeat pose still goes at HEARTBEAT_MS, unmoved by the ping');
 });
 
 // ── THE LOG ──────────────────────────────────────────────────────────
