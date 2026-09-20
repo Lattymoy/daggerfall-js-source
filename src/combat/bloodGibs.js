@@ -131,6 +131,29 @@ export function gibLand(g, point) {
 /** Where a chunk's splat is sprayed from - see GIB_SPRAY_LIFT. */
 export const gibSprayOrigin = (g) => [g.pos[0], g.pos[1] + GIB_SPRAY_LIFT, g.pos[2]];
 
+/**
+ * BLOOD1b - A DRIP: blood that stuck to a ceiling and let go.
+ *
+ * It is a chunk with no throw at all. Everything after the first
+ * frame - three times gravity, the drag, the four-second freeze, the
+ * splat where it lands - is a chunk's, because a falling drop and a
+ * falling piece fall the same way and a second integrator would be a
+ * second thing to get wrong.
+ *
+ * What it does NOT get is a quad. A chunk is a piece of a body and
+ * reads at 28cm; a drip at that size is a water balloon. It falls
+ * unseen and what a player sees is the floor beneath a ceiling stain
+ * darkening a moment later, which is the whole of the effect.
+ */
+export function dripFrom(point) {
+  if (!point) return null;
+  return { pos: [point[0], point[1], point[2]], vel: [0, 0, 0], age: 0, still: false };
+}
+
+/** What a drip leaves where it lands: ONE mark. A chunk carries a
+ *  body's worth and sprays twenty; a drop carries a drop. */
+export const DRIP_SPLASH_RATE = 1;
+
 /** THE STREAMING WORLD MOVES THEM TOO. A chunk mid-flight is in world
  *  space like every mark, so a recentre takes it along - one that
  *  stayed behind would land its splat 819.2 units away. */

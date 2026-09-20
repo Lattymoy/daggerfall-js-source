@@ -240,6 +240,51 @@ export function burstCount(heavy, density = 1) {
  *  burst does to where the blood goes. */
 export const burstReach = (heavy, density = 1) => sprayRadius(burstRate(heavy, density)) * OVERKILL_REACH_SCALE;
 
+/**
+ * BLOOD1b - THE CEILING, and how blood gets there.
+ *
+ * `ParticleCollisionPrinter.HandleCollision`, read off the assembly:
+ *
+ *     var point  = e.intersection;
+ *     var normal = e.normal;
+ *     bool isCeiling   = Dot(normal, Vector3.down) > 0.7;
+ *     bool aboveSource = point.y > particleSystem.transform.position.y;
+ *     ... SetupDecal(...) ...
+ *     if (GenerateCeilingDrips && isCeiling && aboveSource) {
+ *       decal.transform.rotation = Quaternion.Euler(180, 0, 0);
+ *       SpawnBloodDripParticles(normal);
+ *     }
+ *
+ * So a ceiling is a SURFACE TEST, not a position test: a normal within
+ * 0.7 of straight down, which is about forty-five degrees - a steep
+ * overhang counts and a wall does not. The second test is what stops a
+ * FLOOR under a source that is itself below it from being treated as
+ * one.
+ */
+export const CEILING_DOT = 0.7;
+/** `raycastHit` answers the normal already turned to face the ray, so
+ *  a ceiling met by a ray going UP faces back down at it. */
+export function isCeilingNormal(normal) {
+  const n = unit(normal);
+  return !!n && -n[1] > CEILING_DOT;
+}
+
+/**
+ * WHICH DROPS OF A SPRAY LOOK UP.
+ *
+ * The reference's particles fly in every direction and the ones that
+ * go up find the ceiling; this port rays instead of flying, so the
+ * share that looks up has to be a number rather than something that
+ * emerges. One in four, BY INDEX rather than by chance, so a spray
+ * always has some of both and a test can say which.
+ *
+ * DROP ZERO NEVER LOOKS UP. It is the pool under the body, and a hit
+ * that stained the ceiling instead of the floor where it happened
+ * would be the one drop of this arc a player would call a bug.
+ */
+export const CEILING_EVERY = 4;
+export const looksUp = (i) => i > 0 && (i + 1) % CEILING_EVERY === 0;
+
 /** DFU's `bloodIndex` of 2 is the BLOODLESS six (skeletons and the
  *  like), and `characters/enemyBasics.js` has carried it from DFU
  *  since long before this arc. They bleed nothing, so they mark

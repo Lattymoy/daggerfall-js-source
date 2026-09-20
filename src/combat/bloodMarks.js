@@ -27,12 +27,12 @@ import {
   createBloodDecalPool, writeDecalQuad, clearDecalQuad, bloodRate, marksBlood, DECAL_FLOATS,
   sprayCount, sprayRadius, sprayOffset, dropSize,   // BLOOD1b: the scatter BLOOD1a left to this slice
   isOverkill, burstCount, burstRate, burstReach,    // BLOOD1b: and the killing blow's own spray
-  scaleRate,
+  scaleRate, looksUp, isCeilingNormal,              // BLOOD1b: and the drops that find a ceiling
 } from './bloodDecals.js';
 import {
-  throwGibs, gibStep, gibFly, gibLand, gibSprayOrigin, shiftGibs,
-  GIB_SPLASH_RATE, GIB_COUNT,
-} from './bloodGibs.js';   // BLOOD1b: what a warhammer leaves of a body
+  throwGibs, gibStep, gibFly, gibLand, gibSprayOrigin, shiftGibs, dripFrom,
+  GIB_SPLASH_RATE, GIB_COUNT, DRIP_SPLASH_RATE,
+} from './bloodGibs.js';   // BLOOD1b: what a warhammer leaves of a body, and what a ceiling lets go of
 
 /** How far down a mark looks for something to stain. Blood spawns at
  *  chest height (`bloodCentre` is five eighths up the capsule), so the
@@ -43,6 +43,16 @@ export const MARK_DROP = 3;
 /** Straight down, once. BLOOD1b casts up to SPRAY_MAX rays for one
  *  blow, and the collider reads this direction and never writes it. */
 const DOWN = Object.freeze([0, -1, 0]);
+/** ...and the other way, for the one drop in four that looks for a
+ *  ceiling instead of a floor. */
+const UP = Object.freeze([0, 1, 0]);
+
+/** How far UP a drop looks. A dungeon ceiling is a body's height or
+ *  two above where blood spawns; past that the room is too big for a
+ *  hit to reach and the blood is somebody else's problem. It is longer
+ *  than MARK_DROP because blood spawns at chest height: the floor is
+ *  close and the ceiling is not. */
+export const CEILING_REACH = 4;
 
 /** BLOOD1b: how many bodies' worth of chunks may be in the air at
  *  once. Each chunk rays its own step every frame, so this is the
@@ -50,6 +60,11 @@ const DOWN = Object.freeze([0, -1, 0]);
  *  how fast a player can swing. Four is more than a corridor ever
  *  holds at once. */
 export const MAX_BODIES = 4;
+
+/** How many drips may be falling at once. A drip is cheaper than a
+ *  chunk - no quad, one mark - but it still rays a step a frame, and
+ *  a burst over a low ceiling can hang a lot of them. */
+export const MAX_DRIPS = 64;
 
 /** BLOOD1b: how big a flying chunk is drawn. The port's own choice and
  *  said to be - the reference's gib sheet is art this port has no
@@ -83,6 +98,11 @@ export function createBloodMarks({ renderer = null, collider = null, settings = 
    *  name in `dispose()` and whenever the last chunk comes to rest. */
   let _gibBatch = null;
   let _gibArt = null;   // { archive, record } - the splash pool tells us
+  /** Blood a ceiling has not finished with. A drip falls exactly as a
+   *  chunk does, but wears no quad and leaves one mark rather than
+   *  two, so it is its OWN list - the chunks' batch has one quad per
+   *  entry and a drip in that list would draw a flying gib. */
+  let _drips = [];
   const _scratch = new Float32Array(DECAL_FLOATS);
 
   const liveCollider = () => (typeof collider === 'function' ? collider() : null);
@@ -141,13 +161,28 @@ export function createBloodMarks({ renderer = null, collider = null, settings = 
     for (let i = 0; i < n; i++) {
       const [dx, dz] = sprayOffset(i, n, radius, rng);
       const fromX = pos[0] + dx, fromZ = pos[2] + dz;
-      const h = col.raycastHit([fromX, pos[1], fromZ], DOWN, MARK_DROP);
-      if (!h || !Number.isFinite(h.dist) || h.dist > MARK_DROP) continue;
+      // ONE DROP IN FOUR LOOKS UP. The reference's particles fly in
+      // every direction and the ones that go up find the ceiling; this
+      // port rays, so the share is a number. Drop zero never does - it
+      // is the pool under the body.
+      const up = looksUp(i);
+      const dir = up ? UP : DOWN, reach = up ? CEILING_REACH : MARK_DROP;
+      const h = col.raycastHit([fromX, pos[1], fromZ], dir, reach);
+      if (!h || !Number.isFinite(h.dist) || h.dist > reach) continue;
+      const at = [fromX, pos[1] + dir[1] * h.dist, fromZ];
+      // A CEILING IS A SURFACE TEST, not a position one: the
+      // reference's own `Dot(normal, down) > 0.7`. A drop that went up
+      // and met something that is NOT a ceiling - the underside of a
+      // stair, a slope it can run off - leaves nothing, because blood
+      // does not stick to a wall it hit from below.
+      if (up && !isCeilingNormal(h.normal)) continue;
       ensure();
-      const d = _pool.place([fromX, pos[1] - h.dist, fromZ], h.normal ?? [0, 1, 0], { size: dropSize(i, rate, rng) });
+      const d = _pool.place(at, h.normal ?? (up ? DOWN : [0, 1, 0]), { size: dropSize(i, rate, rng) });
       if (!d) continue;
       writeDecalQuad(_scratch, 0, d);
       renderer.writeDecalSlot(_batch, d.slot, _scratch);   // ONE slot, at its own offset
+      // ...and what a ceiling holds, it eventually lets go of.
+      if (up && _drips.length < MAX_DRIPS) _drips.push(dripFrom(at));
       if (i === 0) pool = d;
     }
     return pool;
@@ -232,18 +267,16 @@ export function createBloodMarks({ renderer = null, collider = null, settings = 
     if (_gibBatch) _gibBatch.frame = GIB_FRAME;
   }
 
-  function tick(dt) {
-    if (!_gibs.length || !(dt > 0)) return 0;
-    const col = liveCollider();
-    const density = settings?.density?.() ?? 1;
-    const rate = scaleRate(GIB_SPLASH_RATE, density);
+  /** One faller, one frame. A chunk and a drip fall the same way, so
+   *  they walk the same code and differ only in what they carry. */
+  function fall(list, dt, col, rate) {
     let moved = 0;
-    for (const g of _gibs) {
+    for (const g of list) {
       const step = gibStep(g, dt);
       if (!step) continue;
       moved++;
       // Between two worlds - a pixel unloaded, a mode half changed -
-      // a chunk flies on rather than landing on nothing.
+      // it flies on rather than landing on nothing.
       const h = col?.raycastHit ? col.raycastHit(step.from, step.dir, step.dist) : null;
       if (!h || !Number.isFinite(h.dist) || h.dist > step.dist) { gibFly(g, step); continue; }
       gibLand(g, [
@@ -253,6 +286,19 @@ export function createBloodMarks({ renderer = null, collider = null, settings = 
       ]);
       if (on() && col) spray(col, gibSprayOrigin(g), sprayCount(rate), sprayRadius(rate), rate);
     }
+    return moved;
+  }
+
+  function tick(dt) {
+    if ((!_gibs.length && !_drips.length) || !(dt > 0)) return 0;
+    const col = liveCollider();
+    const density = settings?.density?.() ?? 1;
+    const rate = scaleRate(GIB_SPLASH_RATE, density);
+    let moved = fall(_gibs, dt, col, rate);
+    // A DRIP CARRIES A DROP, not a body's worth: one mark where it
+    // lands, against a chunk's twenty particles' worth.
+    moved += fall(_drips, dt, col, scaleRate(DRIP_SPLASH_RATE, density));
+    if (_drips.length && _drips.every((g) => g.still)) _drips = [];
     // THE QUADS FOLLOW THE CHUNKS, written rather than rebuilt: ten of
     // them at sixty frames is 2,400 batch rebuilds for one death, each
     // a VAO and two buffers, where this is one bufferSubData.
@@ -268,7 +314,8 @@ export function createBloodMarks({ renderer = null, collider = null, settings = 
    *  and the VERTEX BUFFER moves with it, because a decal's corners are
    *  baked into it. */
   function shiftOrigin(offset) {
-    shiftGibs(_gibs, offset);   // BLOOD1b: a chunk mid-flight is in world space too
+    shiftGibs(_gibs, offset);    // BLOOD1b: a chunk mid-flight is in world space too
+    shiftGibs(_drips, offset);   // ...and so is a drip still falling
     if (!_pool || !_pool.count || !offset) return 0;
     const n = _pool.shiftOrigin(offset);
     for (const d of _pool.decals()) {
@@ -306,6 +353,7 @@ export function createBloodMarks({ renderer = null, collider = null, settings = 
    *  every time the player opens a door. */
   function clear() {
     _gibs = []; reseatGibs();   // BLOOD1b: a room thrown away takes the chunks still in the air with it, and their quads
+    _drips = [];                // ...and the blood its ceilings had not finished with
     if (!_pool) return 0;
     const n = _pool.count;
     for (const d of _pool.decals()) {
@@ -319,6 +367,7 @@ export function createBloodMarks({ renderer = null, collider = null, settings = 
   return {
     place, draw, tick, shiftOrigin, clear, useArt,
     gibs: () => _gibs.slice(),
+    drips: () => _drips.slice(),
     count: () => (_pool ? _pool.count : 0),
     /** HARD1: this pool ENDS WHAT IT OWNS. The ring is a thousand quads
      *  of vertex data and a VAO, handed to nobody, so the context that

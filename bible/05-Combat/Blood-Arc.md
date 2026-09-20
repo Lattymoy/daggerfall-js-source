@@ -151,7 +151,28 @@ Two more facts the re-read turned up, neither yet built:
   has weapon states; what none of its eleven splash sites carries is
   which one was live, so this is a thread rather than a line.
 - **CEILING DRIPS.** `ParticleCollisionPrinter.GenerateCeilingDrips` is
-  set true on every spawn.
+  set true on every spawn, and `HandleCollision` is what reads it:
+
+      var point  = e.intersection;
+      var normal = e.normal;
+      bool isCeiling   = Dot(normal, Vector3.down) > 0.7;
+      bool aboveSource = point.y > particleSystem.transform.position.y;
+      ... SetupDecal(...) ...
+      if (GenerateCeilingDrips && isCeiling && aboveSource) {
+        decal.transform.rotation = Quaternion.Euler(180, 0, 0);
+        SpawnBloodDripParticles(normal);
+      }
+
+  So a CEILING IS A SURFACE TEST, not a position one: a normal within
+  0.7 of straight down, which is about forty-five degrees - a steep
+  overhang counts and a wall does not. The second test is what stops a
+  floor under a source below it from being treated as one.
+
+  The same method also settles how a decal is ORIENTED, which BLOOD1a
+  arrived at independently: `Cross(normal, up)` when that is not
+  degenerate and `FromToRotation(up, normal)` when it is, plus a random
+  spin of `rotationRandomness`. That is `surfaceBasis` - the seed swap
+  near horizontal and the turn - by another route.
 
 ### Gibs
 
@@ -485,8 +506,48 @@ Slices, each behind its own `features.js` row:
    because a billboard needs one and this pool has no camera; every
    host already holds both at the line it calls from.
 
-   STILL OPEN, both from the re-read: the swing direction throwing the
-   spray, and the ceiling drips.
+   AND THE BLOOD REACHES THE CEILING. One drop in four looks UP
+   instead of down - the reference's particles fly in every direction
+   and the ones that go up find the ceiling, but this port RAYS, so
+   the share has to be a number rather than something that emerges,
+   and by INDEX rather than by chance so a spray always has some of
+   both. Drop zero never does: it is the pool under the body. A drop
+   that went up and met something that is not a ceiling leaves
+   nothing, because blood does not stick to a wall it hit from below.
+   The reach up is longer than the reach down (4 against 3), because
+   blood spawns at chest height: the floor is close and the ceiling is
+   not.
+
+   WHAT A CEILING HOLDS IT LETS GO OF. Each ceiling mark hangs a DRIP,
+   which is a chunk with no throw at all - three times gravity, the
+   drag, the four-second freeze and the splat where it lands are all a
+   chunk's, because a falling drop and a falling piece fall the same
+   way and a second integrator would be a second thing to get wrong. A
+   drip carries a DROP: one mark where it lands, against a chunk's
+   twenty particles' worth. It gets no quad - a chunk is a piece of a
+   body and reads at 28cm; a drip at that size is a water balloon - so
+   it falls unseen, and what a player sees is the floor beneath a
+   ceiling stain darkening a moment later. Mutants: 106, 106 dead.
+
+   STILL OPEN, the last of the re-read: the swing direction throwing
+   the spray. `SpawnBlood` rotates its particle system to the PLAYER's
+   rotation and pushes it with a `forceOverLifetime` chosen by the
+   live `WeaponState`, and with the port's own enum
+   (`fpsWeapon.js`: Idle 0, StrikeDown 1, StrikeDownLeft 2, StrikeLeft
+   3, StrikeRight 4, StrikeDownRight 5, StrikeUp 6) the switch reads:
+
+   | state | push |
+   |---|---|
+   | StrikeDown | y +2..+4 - a straight chop sprays it back UP |
+   | StrikeDownLeft | y -5..-10, x -5..-10 |
+   | StrikeLeft | x -5..-10 |
+   | StrikeRight | x +5..+10 |
+   | StrikeDownRight | y -5..-10, x +5..+10 |
+   | StrikeUp | z -2..-8 - an upward cut throws it back at you |
+   | Idle, anything else | nothing |
+
+   What none of the eleven splash sites carries is which state was
+   live, so this is a thread rather than a line.
 3. **BLOOD1c - bleeding.** The 2..5s cadence and the ramp above.
 
 The numbers in THE FACTS are the target to feel like. The code that

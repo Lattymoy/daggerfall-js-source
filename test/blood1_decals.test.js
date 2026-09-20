@@ -17,17 +17,20 @@ import {
   createBloodDecalPool, bloodRate, ladderRate, scaleRate, damagePercent, isOverkill,
   surfaceBasis, writeDecalQuad, clearDecalQuad, decalIndices,
   DECAL_FLOATS, DECAL_FLOATS_PER_VERTEX, RATE_LADDER, RATE_NEAR_LETHAL, RATE_MAX, OVERKILL_PERCENT, OVERKILL_RATE, OVERKILL_RATE_HEAVY, OVERKILL_SPEED, ORDINARY_SPEED, OVERKILL_REACH_SCALE, HEAVY_WEAPON_TEMPLATE, SURFACE_LIFT,
-  bloodHit, LETHAL_HIT, burstCount, burstRate, burstReach, BURST_DROPS_MAX, sprayCount, sprayRadius, sprayOffset, dropSize, SPRAY_SHARE, SPRAY_MAX, SPATTER_SCALE, SIZE_JITTER, SPRAY_WOBBLE, SPRAY_RADIUS_MIN, SPRAY_RADIUS_MAX,   // BLOOD1b
+  bloodHit, LETHAL_HIT, looksUp, isCeilingNormal, CEILING_DOT, CEILING_EVERY, burstCount, burstRate, burstReach, BURST_DROPS_MAX, sprayCount, sprayRadius, sprayOffset, dropSize, SPRAY_SHARE, SPRAY_MAX, SPATTER_SCALE, SIZE_JITTER, SPRAY_WOBBLE, SPRAY_RADIUS_MIN, SPRAY_RADIUS_MAX,   // BLOOD1b
 } from '../src/combat/bloodDecals.js';
 
 import {
   throwGibs, gibStep, gibFly, gibLand, gibSprayOrigin, shiftGibs,
   GIB_COUNT, GIB_THROW_SIDE, GIB_THROW_UP, GIB_GRAVITY, GIB_GRAVITY_SCALE, UNITY_GRAVITY,
-  GIB_DRAG, GIB_LIFE, GIB_SPLASH_RATE, GIB_SPLASH_SPEED, GIB_SPRAY_LIFT,
+  GIB_DRAG, GIB_LIFE, GIB_SPLASH_RATE, GIB_SPLASH_SPEED, GIB_SPRAY_LIFT, DRIP_SPLASH_RATE,
 } from '../src/combat/bloodGibs.js';
 import { GRAVITY as PLAYER_GRAVITY } from '../src/player/motor.js';
 
 const dot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+/** BLOOD1b: of a spray of `n`, how many look DOWN - which under an
+ *  open sky is how many leave a mark at all. */
+const onFloor = (n) => n - [...Array(n).keys()].filter(looksUp).length;
 const len = (a) => Math.hypot(a[0], a[1], a[2]);
 
 test('BLOOD1a: the rate ladder is five rungs off damage over max health, and the density floor is one', () => {
@@ -332,7 +335,7 @@ test('BLOOD1a by source: the decal pass is ONE draw call, depth-tested and depth
 // ---- the mark, on the seam the splash already uses ------------------
 
 import { createHitEffects } from '../src/scenes/hitEffects.js';
-import { createBloodMarks, MARK_DROP, MAX_BODIES, GIB_QUAD, GIB_FRAME } from '../src/combat/bloodMarks.js';
+import { createBloodMarks, MARK_DROP, MAX_BODIES, MAX_DRIPS, CEILING_REACH, GIB_QUAD, GIB_FRAME } from '../src/combat/bloodMarks.js';
 import { markSize, marksBlood, MARK_SIZE_MIN, MARK_SIZE_MAX, BLOODLESS_INDEX } from '../src/combat/bloodDecals.js';
 
 /** A renderer stub that records what the mark asked of it. */
@@ -346,7 +349,10 @@ function rigHitEffects(over = {}) {
     createBillboardBatch: () => ({}),
   };
   const o = {
-    collider: () => ({ raycastHit: () => ({ dist: 1.5, normal: [0, 1, 0], key: 'floor' }) }),
+    // BLOOD1b: A FLOOR AND NO CEILING - an outdoor fight. One drop in
+    // four looks UP now, and a stub that answered every direction
+    // would put blood on a sky.
+    collider: () => ({ raycastHit: (from, dir) => (dir[1] < 0 ? { dist: 1.5, normal: [0, 1, 0], key: 'floor' } : null) }),
     settings: { enabled: () => true, capacity: () => 4, density: () => 1, overkill: () => true },
     texture: () => 'blood-tex',
     // BLOOD1b: THE CHANCE HELD STILL. The spray wobbles each drop's
@@ -381,8 +387,8 @@ test('BLOOD1a: the mark rides the splash’s own call, finds its surface, and a 
   fx.showBloodSplash(0, [10, 5, 10], null, { damage: 10, maxHealth: 40 });
   // BLOOD1b: ONE EVENT IS A SPRAY NOW. 25% of max health is the bottom
   // rung, and the bottom rung's share of the floor is four drops.
-  assert.equal(marks.count(), sprayCount(30));
-  assert.equal(wrote.length, sprayCount(30), 'a slot written for each, each at its own offset');
+  assert.equal(marks.count(), onFloor(sprayCount(30)));
+  assert.equal(wrote.length, onFloor(sprayCount(30)), 'a slot written for each that landed, each at its own offset');
 
   // THE SURFACE IS FOUND, NOT ASSUMED. Blood spawns at chest height, so
   // the mark is where the ray DOWN landed - 1.5 below, plus the 2cm lift.
@@ -408,7 +414,7 @@ test('BLOOD1a: the mark rides the splash’s own call, finds its surface, and a 
   const { fx: hard, marks: hardMarks } = rigHitEffects({ settings: wide });
   hard.showBloodSplash(0, [0, 5, 0], null, { damage: 50, maxHealth: 40 });
   const big = hardMarks._pool().decals()[0];
-  assert.equal(hardMarks.count(), sprayCount(150));
+  assert.equal(hardMarks.count(), onFloor(sprayCount(150)));
   assert.ok(hardMarks.count() > marks.count(), 'more damage, more blood');
   assert.ok(big.size > d.size, 'and a bigger pool under it');
   assert.ok(Math.abs(big.size - markSize(150)) < 1e-9, `125% is the 150 band (got ${big.size})`);
@@ -479,7 +485,7 @@ test('BLOOD1a: the ring recycles under the mark, the draw needs a texture, and a
   // first blow and everything after it is recycling - which is what
   // the ring is for, and what "a count and not a lifetime" means once
   // the count is small enough to see.
-  const per = sprayCount(30);
+  const per = onFloor(sprayCount(30));
   for (let i = 0; i < 6; i++) fx.showBloodSplash(0, [i, 5, 0], null, { damage: 10, maxHealth: 40 });
   assert.equal(marks.count(), 4, 'the ring is four and stays four');
   assert.equal(wrote.length, 6 * per, 'a slot written for every drop of every spray');
@@ -545,7 +551,7 @@ test('BLOOD1a: the collider is a GETTER, and the mark survives the world being s
   let live = { raycastHit: () => ({ dist: 1, normal: [0, 1, 0] }) };
   const { fx, marks } = rigHitEffects({ collider: () => live });
   fx.showBloodSplash(0, [0, 5, 0], null, { damage: 10, maxHealth: 40 });
-  assert.equal(marks.count(), sprayCount(30));
+  assert.equal(marks.count(), onFloor(sprayCount(30)));
 
   // the world is swapped: the NEW collider is the one asked
   live = { raycastHit: () => ({ dist: 2, normal: [0, 1, 0] }) };
@@ -845,11 +851,15 @@ test('BLOOD1b: a drop over open air falls past it while the pool under the body 
     // the floor stops at x = 0: everything thrown to the left is over
     // the edge (the stub answers a miss), everything to the right lands
     collider: () => ({
-      raycastHit: (from) => { reach.push(from[0]); return from[0] >= 0 ? { dist: 1, normal: [0, 1, 0] } : { dist: Infinity, normal: null }; },
+      raycastHit: (from, dir) => {
+        if (dir[1] > 0) return null;                    // BLOOD1b: open sky over the walkway
+        reach.push(from[0]);
+        return from[0] >= 0 ? { dist: 1, normal: [0, 1, 0] } : { dist: Infinity, normal: null };
+      },
     }),
   });
   fx.showBloodSplash(0, [0, 5, 0], null, { damage: 50, maxHealth: 40 });   // 125%: the 150 band, eighteen drops
-  assert.equal(reach.length, sprayCount(150), 'a ray for every drop the ladder asked for');
+  assert.equal(reach.length, onFloor(sprayCount(150)), 'a DOWNWARD ray for every drop that looked down');
   const landed = marks._pool().decals();
   assert.ok(landed.length > 0 && landed.length < reach.length, 'some landed, some fell past the edge');
   assert.equal(landed.length, reach.filter((x) => x >= 0).length, 'exactly the ones over stone');
@@ -909,12 +919,12 @@ test('BLOOD1b: a killing blow throws a SECOND spray over the first, wider and on
 
   const { fx, marks } = rigHitEffects({ settings: wide });
   fx.showBloodSplash(0, [0, 5, 0], null, kill);
-  assert.equal(marks.count(), burstCount(false) + sprayCount(RATE_MAX), 'the burst AND the ladder’s own spray');
+  assert.equal(marks.count(), onFloor(burstCount(false)) + onFloor(sprayCount(RATE_MAX)), 'the burst AND the ladder’s own spray');
 
   // A PLAYER'S WARHAMMER TAKES THE HEAVY BRANCH, and nothing else does
   const { fx: hammer, marks: hammerMarks } = rigHitEffects({ settings: wide });
   hammer.showBloodSplash(0, [0, 5, 0], null, { ...kill, heavy: true });
-  assert.equal(hammerMarks.count(), burstCount(true) + sprayCount(RATE_MAX));
+  assert.equal(hammerMarks.count(), onFloor(burstCount(true)) + onFloor(sprayCount(RATE_MAX)));
   assert.ok(hammerMarks.count() > marks.count(), 'a warhammer leaves more of them');
   // ...a FOE swinging the same warhammer does not: the assembly asks
   // both questions and only the player's blow can answer the first
@@ -927,30 +937,30 @@ test('BLOOD1b: a killing blow throws a SECOND spray over the first, wider and on
   // right: the wide thin spatter, then the pool under the body.
   const all = hammerMarks._pool().decals();
   assert.equal(all.length, hammerMarks.count());
-  const lastOfBurst = all[burstCount(true) - 1], firstOfSpray = all[burstCount(true)];
+  const lastOfBurst = all[onFloor(burstCount(true)) - 1], firstOfSpray = all[onFloor(burstCount(true))];
   assert.ok(firstOfSpray.serial > lastOfBurst.serial, 'the ladder’s spray is laid after the burst');
   assert.deepEqual([firstOfSpray.pos[0], firstOfSpray.pos[2]], [0, 0], 'and its drop zero is the body’s own spot');
   // ...and the burst really did carry further than the ordinary spray
   const reachOf = (d) => Math.hypot(d.pos[0], d.pos[2]);
-  assert.ok(Math.max(...all.slice(0, burstCount(true)).map(reachOf)) > Math.max(...all.slice(burstCount(true)).map(reachOf)),
+  assert.ok(Math.max(...all.slice(0, onFloor(burstCount(true))).map(reachOf)) > Math.max(...all.slice(onFloor(burstCount(true))).map(reachOf)),
     'the burst is the wider of the two');
 
   // UNDER THE LINE, NOTHING EXTRA. 172.5% is not an overkill.
   const { fx: under, marks: underMarks } = rigHitEffects({ settings: wide });
   under.showBloodSplash(0, [0, 5, 0], null, { damage: 69, maxHealth: 40, fromPlayer: true, heavy: true });
-  assert.equal(underMarks.count(), sprayCount(ladderRate(172.5)), 'the ladder’s spray alone');
+  assert.equal(underMarks.count(), onFloor(sprayCount(ladderRate(172.5))), 'the ladder’s spray alone');
 
   // AND THE ROW TURNS IT OFF, read LIVE - a player who turns it off
   // mid-fight gets the next blow plain.
   const off = { enabled: () => true, capacity: () => 512, density: () => 1, overkill: () => false };
   const { fx: plain, marks: plainMarks } = rigHitEffects({ settings: off });
   plain.showBloodSplash(0, [0, 5, 0], null, { ...kill, heavy: true });
-  assert.equal(plainMarks.count(), sprayCount(RATE_MAX), 'off, a killing blow bleeds like any other hit');
+  assert.equal(plainMarks.count(), onFloor(sprayCount(RATE_MAX)), 'off, a killing blow bleeds like any other hit');
   // ...and a host wiring no overkill dep at all is the same as off
   const none = { enabled: () => true, capacity: () => 512, density: () => 1 };
   const { fx: bare, marks: bareMarks } = rigHitEffects({ settings: none });
   bare.showBloodSplash(0, [0, 5, 0], null, { ...kill, heavy: true });
-  assert.equal(bareMarks.count(), sprayCount(RATE_MAX));
+  assert.equal(bareMarks.count(), onFloor(sprayCount(RATE_MAX)));
 });
 
 test('BLOOD1b: a site that knows nothing about the swing says so, and gets the ordinary branch', () => {
@@ -1307,4 +1317,123 @@ test('BLOOD1b by source: a moved batch moves its BOUNDS, and the corner table ha
   // THE DYNAMIC HINT IS THE BUFFER'S and cannot change after, so it is
   // taken at birth - and everything else in the tree stays STATIC.
   assert.match(birth, /dynamic \? gl\.DYNAMIC_DRAW : gl\.STATIC_DRAW/);
+});
+
+test('BLOOD1b: blood reaches the CEILING, and what a ceiling holds it eventually lets go of', () => {
+  // A CEILING IS A SURFACE TEST, not a position one - the reference's
+  // own `Dot(normal, Vector3.down) > 0.7`, which is about forty-five
+  // degrees: a steep overhang counts and a wall does not.
+  assert.equal(CEILING_DOT, 0.7);
+  assert.equal(isCeilingNormal([0, -1, 0]), true, 'straight down is');
+  assert.equal(isCeilingNormal([0, 1, 0]), false, 'a floor is not');
+  assert.equal(isCeilingNormal([1, 0, 0]), false, 'a wall is not');
+  assert.equal(isCeilingNormal([0.5, -Math.sqrt(0.75), 0]), true, 'thirty degrees off is');
+  assert.equal(isCeilingNormal([0.8, -0.6, 0]), false, 'and past the cone is not');
+  assert.equal(isCeilingNormal(null), false);
+  assert.equal(isCeilingNormal([0, 0, 0]), false, 'and nothing is nothing');
+
+  // ONE DROP IN FOUR LOOKS UP, by INDEX and not by chance, so a spray
+  // always has some of both and a pin can say which.
+  assert.equal(CEILING_EVERY, 4);
+  assert.deepEqual([...Array(8).keys()].filter(looksUp), [3, 7]);
+  // DROP ZERO NEVER DOES. It is the pool under the body, and a hit
+  // that stained the ceiling instead of the floor where it happened
+  // would be the one drop of this arc a player would call a bug.
+  assert.equal(looksUp(0), false);
+
+  // ---- a room with a ceiling two metres up
+  const CEIL = 2;
+  const rig = (over = {}) => rigHitEffects({
+    settings: { enabled: () => true, capacity: () => 1024, density: () => 1, overkill: () => true },
+    collider: () => ({
+      raycastHit: (from, dir, max) => {
+        if (dir[1] > 0) return CEIL - from[1] <= max ? { dist: CEIL - from[1], normal: [0, -1, 0] } : null;
+        return from[1] <= max ? { dist: from[1], normal: [0, 1, 0] } : null;   // floor at y = 0
+      },
+    }),
+    ...over,
+  });
+
+  const { fx, marks } = rig();
+  fx.showBloodSplash(0, [0, 1, 0], null, { damage: 10, maxHealth: 40 });
+  const n = sprayCount(30);
+  assert.equal(marks.count(), n, 'with a ceiling overhead, every drop of the spray lands somewhere');
+  const up = marks._pool().decals().filter((d) => d.pos[1] > 1);
+  assert.equal(up.length, n - onFloor(n), 'and the ones that looked up are on the ceiling');
+  for (const d of up) {
+    assert.ok(Math.abs(d.pos[1] - (CEIL - SURFACE_LIFT)) < 1e-9, 'lifted DOWN off the ceiling, along its own normal');
+    assert.ok(dot(d.normal, [0, -1, 0]) > 1 - 1e-12, 'wearing the ceiling’s normal, not the floor’s');
+  }
+
+  // WHAT A CEILING HOLDS IT LETS GO OF. Each ceiling mark hangs a
+  // drip, which falls exactly as a chunk does - a falling drop and a
+  // falling piece fall the same way, and a second integrator would be
+  // a second thing to get wrong.
+  assert.equal(marks.drips().length, up.length, 'a drip for every ceiling mark');
+  for (const d of marks.drips()) assert.deepEqual(d.vel, [0, 0, 0], 'a drip is a chunk with no throw at all');
+  assert.equal(marks.gibs().length, 0, 'and a drip is not a chunk - no quad, its own list');
+
+  // it falls, and stains the floor beneath a moment later
+  const beforeFall = marks.count();
+  for (let i = 0; i < Math.ceil(GIB_LIFE * 60) && marks.drips().length; i++) fx.tick(1 / 60);
+  assert.equal(marks.drips().length, 0, 'they all come down');
+  // A DRIP CARRIES A DROP: one mark each, against a chunk's twenty
+  // particles' worth.
+  assert.equal(DRIP_SPLASH_RATE, 1);
+  assert.equal(sprayCount(DRIP_SPLASH_RATE), 1);
+  assert.equal(marks.count() - beforeFall, up.length, 'one mark for each, and no more');
+
+  // A DROP THAT WENT UP AND MET SOMETHING THAT IS NOT A CEILING leaves
+  // nothing: blood does not stick to a wall it hit from below.
+  const { fx: wall, marks: wallMarks } = rig({
+    collider: () => ({
+      raycastHit: (from, dir, max) => (dir[1] > 0
+        ? { dist: 1, normal: [1, 0, 0] }                    // the underside of a stair, near vertical
+        : (from[1] <= max ? { dist: from[1], normal: [0, 1, 0] } : null)),
+    }),
+  });
+  wall.showBloodSplash(0, [0, 1, 0], null, { damage: 10, maxHealth: 40 });
+  assert.equal(wallMarks.count(), onFloor(n), 'only the drops that looked down');
+  assert.equal(wallMarks.drips().length, 0, 'and nothing to drip');
+
+  // THE REACH UP IS LONGER THAN THE REACH DOWN, because blood spawns
+  // at chest height: the floor is close and the ceiling is not.
+  assert.equal(CEILING_REACH, 4);
+  assert.ok(CEILING_REACH > MARK_DROP);
+  const overhead = (h) => rig({
+    collider: () => ({
+      raycastHit: (from, dir, max) => (dir[1] > 0
+        ? (h <= max ? { dist: h, normal: [0, -1, 0] } : null)
+        : (from[1] <= max ? { dist: from[1], normal: [0, 1, 0] } : null)),
+    }),
+  });
+  const { fx: tall, marks: tallMarks } = overhead(CEILING_REACH + 0.01);
+  tall.showBloodSplash(0, [0, 1, 0], null, { damage: 10, maxHealth: 40 });
+  assert.equal(tallMarks.count(), onFloor(n), 'a hall too high to stain stains nothing overhead');
+  // ...and a ceiling BETWEEN the two reaches is stained, which is the
+  // whole point of their being two numbers. The first cut of this pin
+  // only drove a ceiling closer than MARK_DROP and one past
+  // CEILING_REACH, so a mutant that gave the up-ray the DOWN-ray's
+  // reach survived: both cases answered the same either way.
+  const { fx: mid, marks: midMarks } = overhead((MARK_DROP + CEILING_REACH) / 2);
+  mid.showBloodSplash(0, [0, 1, 0], null, { damage: 10, maxHealth: 40 });
+  assert.equal(midMarks.count(), n, 'a ceiling past the floor’s reach but inside its own is still stained');
+  assert.ok(midMarks.drips().length > 0, 'and it drips');
+
+  // A ROOM THROWN AWAY takes the blood its ceilings had not finished
+  // with, and the streaming world moves a drip still falling
+  const { fx: door, marks: doorMarks } = rig();
+  door.showBloodSplash(0, [0, 1, 0], null, { damage: 10, maxHealth: 40 });
+  assert.ok(doorMarks.drips().length > 0);
+  const at = doorMarks.drips()[0].pos.slice();
+  door.offsetAll([100, 7, -100]);
+  assert.deepEqual(doorMarks.drips()[0].pos, [at[0] + 100, at[1] + 7, at[2] - 100]);
+  door.clear();
+  assert.equal(doorMarks.drips().length, 0);
+
+  // ...and the count of them in the air is capped, like the chunks'
+  assert.equal(MAX_DRIPS, 64);
+  const { fx: many, marks: manyMarks } = rig();
+  for (let i = 0; i < 60; i++) many.showBloodSplash(0, [0, 1, 0], null, { damage: 70, maxHealth: 40, fromPlayer: true, heavy: true });
+  assert.ok(manyMarks.drips().length <= MAX_DRIPS, `at most ${MAX_DRIPS} falling (got ${manyMarks.drips().length})`);
 });

@@ -164,8 +164,8 @@
   {
     "name": "BLOOD1a-the-surface-is-assumed-instead-of-found",
     "file": "src/combat/bloodMarks.js",
-    "old": "      const d = _pool.place([fromX, pos[1] - h.dist, fromZ], h.normal ?? [0, 1, 0], { size: dropSize(i, rate, rng) });",
-    "new": "      const d = _pool.place([fromX, pos[1], fromZ], h.normal ?? [0, 1, 0], { size: dropSize(i, rate, rng) });",
+    "old": "      const at = [fromX, pos[1] + dir[1] * h.dist, fromZ];",
+    "new": "      const at = [fromX, pos[1], fromZ];",
     "tests": [
       "test/blood1_decals.test.js"
     ]
@@ -173,7 +173,7 @@
   {
     "name": "BLOOD1a-blood-over-open-air-still-marks",
     "file": "src/combat/bloodMarks.js",
-    "old": "      if (!h || !Number.isFinite(h.dist) || h.dist > MARK_DROP) continue;",
+    "old": "      if (!h || !Number.isFinite(h.dist) || h.dist > reach) continue;",
     "new": "      if (!h) continue;",
     "tests": [
       "test/blood1_decals.test.js"
@@ -182,8 +182,8 @@
   {
     "name": "BLOOD1a-the-mark-takes-the-surfaces-normal-from-nowhere",
     "file": "src/combat/bloodMarks.js",
-    "old": "      const d = _pool.place([fromX, pos[1] - h.dist, fromZ], h.normal ?? [0, 1, 0], { size: dropSize(i, rate, rng) });",
-    "new": "      const d = _pool.place([fromX, pos[1] - h.dist, fromZ], [0, 1, 0], { size: dropSize(i, rate, rng) });",
+    "old": "      const d = _pool.place(at, h.normal ?? (up ? DOWN : [0, 1, 0]), { size: dropSize(i, rate, rng) });",
+    "new": "      const d = _pool.place(at, [0, 1, 0], { size: dropSize(i, rate, rng) });",
     "tests": [
       "test/blood1_decals.test.js"
     ]
@@ -408,8 +408,8 @@
   {
     "name": "BLOOD1b-the-whole-spray-takes-ONE-ray",
     "file": "src/combat/bloodMarks.js",
-    "old": "      const h = col.raycastHit([fromX, pos[1], fromZ], DOWN, MARK_DROP);",
-    "new": "      const h = col.raycastHit([pos[0], pos[1], pos[2]], DOWN, MARK_DROP);",
+    "old": "      const h = col.raycastHit([fromX, pos[1], fromZ], dir, reach);",
+    "new": "      const h = col.raycastHit([pos[0], pos[1], pos[2]], dir, reach);",
     "tests": [
       "test/blood1_decals.test.js"
     ]
@@ -417,8 +417,8 @@
   {
     "name": "BLOOD1b-the-drop-is-laid-where-the-body-is-not-where-the-ray-went",
     "file": "src/combat/bloodMarks.js",
-    "old": "      const d = _pool.place([fromX, pos[1] - h.dist, fromZ], h.normal ?? [0, 1, 0], { size: dropSize(i, rate, rng) });",
-    "new": "      const d = _pool.place([pos[0], pos[1] - h.dist, pos[2]], h.normal ?? [0, 1, 0], { size: dropSize(i, rate, rng) });",
+    "old": "      const at = [fromX, pos[1] + dir[1] * h.dist, fromZ];",
+    "new": "      const at = [pos[0], pos[1] + dir[1] * h.dist, pos[2]];",
     "tests": [
       "test/blood1_decals.test.js"
     ]
@@ -615,7 +615,7 @@
   {
     "name": "BLOOD1b-the-streaming-world-leaves-the-chunks-behind",
     "file": "src/combat/bloodMarks.js",
-    "old": "    shiftGibs(_gibs, offset);   // BLOOD1b: a chunk mid-flight is in world space too",
+    "old": "    shiftGibs(_gibs, offset);    // BLOOD1b: a chunk mid-flight is in world space too",
     "new": "",
     "tests": [
       "test/blood1_decals.test.js"
@@ -806,6 +806,150 @@
     "file": "src/render/renderer.js",
     "old": "    gl.bufferData(gl.ARRAY_BUFFER, verts, dynamic ? gl.DYNAMIC_DRAW : gl.STATIC_DRAW);",
     "new": "    gl.bufferData(gl.ARRAY_BUFFER, verts, gl.DYNAMIC_DRAW);",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-nothing-looks-up",
+    "file": "src/combat/bloodDecals.js",
+    "old": "export const looksUp = (i) => i > 0 && (i + 1) % CEILING_EVERY === 0;",
+    "new": "export const looksUp = () => false;",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-drop-zero-looks-up-too",
+    "file": "src/combat/bloodDecals.js",
+    "old": "export const looksUp = (i) => i > 0 && (i + 1) % CEILING_EVERY === 0;",
+    "new": "export const looksUp = (i) => (i + 1) % CEILING_EVERY === 0 || i === 0;",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-a-wall-counts-as-a-ceiling",
+    "file": "src/combat/bloodDecals.js",
+    "old": "  return !!n && -n[1] > CEILING_DOT;",
+    "new": "  return !!n && n[1] < 0;",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-a-floor-counts-as-a-ceiling",
+    "file": "src/combat/bloodDecals.js",
+    "old": "  return !!n && -n[1] > CEILING_DOT;",
+    "new": "  return !!n && Math.abs(n[1]) > CEILING_DOT;",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-the-ceiling-cone-is-a-right-angle",
+    "file": "src/combat/bloodDecals.js",
+    "old": "export const CEILING_DOT = 0.7;",
+    "new": "export const CEILING_DOT = 0.99;",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-a-drop-that-looked-up-marks-whatever-it-met",
+    "file": "src/combat/bloodMarks.js",
+    "old": "      if (up && !isCeilingNormal(h.normal)) continue;",
+    "new": "",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-the-up-ray-reaches-only-as-far-as-the-down-one",
+    "file": "src/combat/bloodMarks.js",
+    "old": "      const dir = up ? UP : DOWN, reach = up ? CEILING_REACH : MARK_DROP;",
+    "new": "      const dir = up ? UP : DOWN, reach = MARK_DROP;",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-a-ceiling-mark-is-laid-at-the-body-s-own-height",
+    "file": "src/combat/bloodMarks.js",
+    "old": "      const at = [fromX, pos[1] + dir[1] * h.dist, fromZ];",
+    "new": "      const at = [fromX, pos[1] - h.dist, fromZ];",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-a-ceiling-never-lets-go",
+    "file": "src/combat/bloodMarks.js",
+    "old": "      if (up && _drips.length < MAX_DRIPS) _drips.push(dripFrom(at));",
+    "new": "",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-the-drips-in-the-air-are-uncapped",
+    "file": "src/combat/bloodMarks.js",
+    "old": "      if (up && _drips.length < MAX_DRIPS) _drips.push(dripFrom(at));",
+    "new": "      if (up) _drips.push(dripFrom(at));",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-a-floor-mark-hangs-a-drip-too",
+    "file": "src/combat/bloodMarks.js",
+    "old": "      if (up && _drips.length < MAX_DRIPS) _drips.push(dripFrom(at));",
+    "new": "      if (_drips.length < MAX_DRIPS) _drips.push(dripFrom(at));",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-a-drip-is-thrown-like-a-chunk",
+    "file": "src/combat/bloodGibs.js",
+    "old": "  return { pos: [point[0], point[1], point[2]], vel: [0, 0, 0], age: 0, still: false };",
+    "new": "  return { pos: [point[0], point[1], point[2]], vel: [0, GIB_THROW_UP.min, 0], age: 0, still: false };",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-a-drip-carries-a-body-s-worth",
+    "file": "src/combat/bloodMarks.js",
+    "old": "    moved += fall(_drips, dt, col, scaleRate(DRIP_SPLASH_RATE, density));",
+    "new": "    moved += fall(_drips, dt, col, rate);",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-the-drips-never-fall",
+    "file": "src/combat/bloodMarks.js",
+    "old": "    moved += fall(_drips, dt, col, scaleRate(DRIP_SPLASH_RATE, density));",
+    "new": "",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-a-room-thrown-away-keeps-the-blood-on-its-ceilings",
+    "file": "src/combat/bloodMarks.js",
+    "old": "    _drips = [];                // ...and the blood its ceilings had not finished with",
+    "new": "",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-the-streaming-world-leaves-the-drips-behind",
+    "file": "src/combat/bloodMarks.js",
+    "old": "    shiftGibs(_drips, offset);   // ...and so is a drip still falling",
+    "new": "",
     "tests": [
       "test/blood1_decals.test.js"
     ]
