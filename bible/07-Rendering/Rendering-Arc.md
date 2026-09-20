@@ -2251,12 +2251,12 @@ beside them. Then the same shape turned up everywhere else:
 
 | host | list |
 |---|---|
-| `dungeonContext.js:5113` | the mobiles, the drops, the spells |
+| `dungeonContext.js:5115` | the mobiles, the drops, the spells |
 | `worldModes.js:6154` | the dungeon's flats, camps, torches and peers |
 | `worldModes.js:6332` | the interior's flats and peers |
 | `worldModes.js:6338-6372` | blood, torches, drops, foes, guards - **five separate uncut calls** |
-| `exterior.js:4808`, `world.js:10798` | the spell missiles |
-| `exterior.js:4923` | the fixed city's townspeople |
+| `exterior.js:4794`, `world.js:10773` | the spell missiles |
+| `exterior.js:4856` | the fixed city's townspeople |
 | `interior.js:352`, `dungeon.js:1007` | the flats, the camps, the torches |
 
 Seven call sites, and an eighth waiting to be written next year. **Fixing
@@ -2811,3 +2811,90 @@ nothing at all.
 source as though somebody had. GRAIN1's 4 was defensible and its 16 was
 a software rasteriser talking - the fix for both is the same, and it is
 not a better guess.**
+
+## DSH1 - "The far away horizon is still viewable even though it's cloudy" (2026-09-20)
+
+A screenshot of an overcast evening: a grey lid from the zenith down, and
+under it a **hard red line along the whole horizon**, the same colour in
+every direction, with the tree line below it. The first read was that the
+weather was not reaching the sky. That was right about the symptom and
+wrong about the sky - because **the sky in that frame is not the port's**.
+
+### The port's own dome cannot make this picture
+
+Before touching anything, the dome was swept in the sky lab (`sky.html`,
+no game data) across seven weathers and nine hours, sampling one pixel
+just above the horizon and one just below. The below-horizon reading is
+never more saturated than `(172, 144, 135)` and never red - `pal.horizon`
+has no such colour in it, and `skyState` greys what it does have by the
+weather before anybody reads it. **So the frame was not the port's dome**,
+and the same sweep under `?sky=dynamic` answered in one run: `(231, 119,
+48)`, `(211, 100, 48)`, `(82, 18, 40)` - saturated warm colours that do
+not move when the weather does.
+
+The sky was **Dynamic Skies**, which is `Enabled: true` by default and is
+the third tier of the Enhanced Environments row, so a player who never
+opened the mod's panel is running it.
+
+### Two causes, one line
+
+**1. The colour the deck fades into.** The volumetric march closes every
+far bank on `uHorizonColor` (aerial perspective: `fade = 1 - exp(-t0 /
+14000)`, which saturates within a couple of degrees of the horizon), and
+`cloudsStateUnderMod` handed it `st.clearColor` - the mod's
+`RenderSettings.fogColor` - unchanged. At dusk that colour is a saturated
+red. The mod's own dome shows it only in the half-degree strip where
+Unity's procedural skybox lerps sky to ground (`SKY_GROUND_THRESHOLD`,
+0.01 in sine); the port's deck was painting it across the entire far ring.
+
+The port's dome has never had this problem, and not by luck: `skyState`
+greys its horizon by the row's `grey` before it becomes anything's
+`clearColor`. So the mod's colour takes **the same greying**, toward the
+deck's OWN shade rather than a fixed grey, because the far end of an
+overcast lid is its near end seen through air. Sunny is `grey 0` and comes
+through **1:1**, which is the whole point: this is not a rewrite of the
+mod's sky, it is the port's own weather law applied to a number the port
+was already choosing on the mod's behalf.
+
+**2. The last half-degree.** With the colour fixed the line got fainter
+and did not go away, because the lid stopped short of the ground twice
+over: the composite `discard`ed at `el <= 0.0`, and the march answered its
+own near early-out (`dir.y <= 0.004`) with `vec4(0, 0, 0, 1)` - "no cloud,
+nothing absorbed" - so the dome came through the lid in the strip where
+the mod's hot band lives. Both are closed: the near early-out gives
+`vec4(uHorizonColor, 0.0)`, the same answer the FAR early-out beside it
+already gave, and the composite carries the map's bottom row over a
+**skirt** of `HORIZON_SKIRT` (0.012 rad) below the horizon before letting
+the dome stand again.
+
+A skirt, not a floor. An earlier cut held the bottom row all the way to
+the nadir and it showed at once on a **clear** dusk: the deck is thin
+above the horizon (yellow sky through the gaps) and the held row is fully
+covering, so the ground half became a flat opaque slab with a hard edge -
+a new artefact traded for the old one. The skirt is sized to the one strip
+it exists to cover: Unity's 0.01, with room.
+
+### What the lab was actually testing
+
+Three earlier attempts changed nothing on screen, twice in the mod's own
+shader and once in the composite, and none of them was checked before the
+next was written. A **green marker** settled it in one run - paint below
+the horizon pure green and screenshot - and it showed the red line
+surviving ABOVE the green, which is the fact that pointed at the
+composite's own bottom rows rather than at the mod's cloud fade. The
+reverted work is not in the diff; the habit that produced it is the thing
+worth recording.
+
+**Pinned** in `test/dsh1_horizon.test.js` (5): the greying at 0, at 1 and
+monotone between; `modHorizon` total against a missing shade, a missing
+row and a greyness off either end; the EASED row winning over the
+weather's name (the controller hands one and the name beside it is stale
+mid-front); the skirt's bounds argued against the number it exists to
+clear; and the two early-outs holding the same answer so the lid has no
+seam. Mutants `tools/mutants/dsh1.json`: 18 - 18 dead. DS2's own horizon
+pin re-aimed by content, and VC3's two composite pins with it.
+
+**The lesson: the port chooses numbers on a vendored mod's behalf, and
+those choices are the PORT'S, not the mod's - "1:1" covers the mod's
+shader, not the state the port synthesises to feed its own passes. The
+red line was in nobody's code and in one of our decisions.**

@@ -193,8 +193,8 @@ export async function autoBuildArms(entity, { wanted = () => getPref('mwArms'), 
  *                     The note that hosts without a HUD text layer
  *                     pass console is retired: every call site hands
  *                     over a real one - hudText.add
- *                     (dungeonContext.js:2706), townTalk.say
- *                     (exterior.js:1843, world.js:3140) and
+ *                     (dungeonContext.js:2716), townTalk.say
+ *                     (exterior.js:1835, world.js:3154) and
  *                     worldModes' own interior sink (worldModes.js:396,
  *                     which warns to console only where a host mounts
  *                     no townTalk at all), so the empty default below

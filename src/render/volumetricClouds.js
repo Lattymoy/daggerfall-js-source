@@ -494,7 +494,14 @@ void main() {
   vec2 uv = gl_FragCoord.xy / uMapSize;
   float az = uv.x * 2.0 * PI, el = uv.y * 0.5 * PI;
   vec3 dir = vec3(sin(az) * cos(el), sin(el), cos(az) * cos(el));
-  if (dir.y <= 0.004) { outColor = vec4(0.0, 0.0, 0.0, 1.0); return; }
+  // DSH1: the rows the slab cannot be reached from are the AERIAL FADE'S
+  // colour at full opacity, not clear sky. They used to write "no cloud,
+  // nothing absorbed", which let whatever the dome drew in the last
+  // quarter-degree through the lid - under Dynamic Skies the bare
+  // in-scattering strip, a hard red line at dusk under a full overcast.
+  // The far early-out below already answers uHorizonColor; this is the
+  // same answer for the near one.
+  if (dir.y <= 0.004) { outColor = vec4(uHorizonColor, 0.0); return; }
   // the march covers the slab, or the first 24 km of it at a grazing
   // angle - the aerial fade takes the rest, so the deck reaches the
   // horizon instead of stopping short of it in a rim of bare dome
@@ -613,6 +620,13 @@ void main() {
   outColor = vec4(T, T, T, 1.0);
 }`;
 
+/** DSH1: how far BELOW the horizon the lid is carried, radians. The
+ *  number to clear is Unity's SKY_GROUND_THRESHOLD (0.01 in sine, the
+ *  width of the strip Dynamic Skies lerps its sky to its ground over);
+ *  this is that with a little room, and small enough that a clear sky's
+ *  ground half is unchanged to the eye. */
+export const HORIZON_SKIRT = 0.012;
+
 /** The composite: the whole sky, one sample per pixel, over the dome. */
 export const COMPOSITE_FS = `#version 300 es
 precision highp float;
@@ -632,9 +646,21 @@ void main() {
   float cy = cos(uYaw), sy = sin(uYaw);
   vec3 dir = normalize(vec3(r1.x * cy + r1.z * sy, r1.y, -r1.x * sy + r1.z * cy));
   float el = asin(clamp(dir.y, -1.0, 1.0));
-  if (el <= 0.0) discard;
+  // DSH1 (2026-09-20, Mac: "The far away horizon is still viewable even
+  // though it's cloudy"): THE LID CLEARS THE HORIZON BY A SKIRT. The
+  // composite discarded at the horizon exactly, and a dome's own last
+  // half-degree is not a half-degree of nothing: under Dynamic Skies it
+  // is the bare in-scattering strip (Unity's procedural skybox lerps sky
+  // to ground over SKY_GROUND_THRESHOLD, 0.57 degrees), which is red at
+  // dusk - so a full overcast lid ended in a hard sunset line wherever
+  // the streamed world did not reach the horizon. The lid now carries
+  // the map's bottom row down over that strip and stops. It is a skirt,
+  // not a floor: past it the dome is the dome again, so nothing about a
+  // clear sky's ground half changes, and only sky pixels reach this pass
+  // at all (the far plane under LEQUAL).
+  if (el <= -${HORIZON_SKIRT}) discard;
   float az = atan(dir.x, dir.z);
-  vec2 uv = vec2(az / (2.0 * PI), el / (0.5 * PI));
+  vec2 uv = vec2(az / (2.0 * PI), max(el, 0.0) / (0.5 * PI));   // DSH1: the bottom row over the skirt
   vec4 c = texture(uMap, uv);
   outColor = vec4(c.rgb * (1.0 + uFlash * 2.0), c.a);
 }`;
