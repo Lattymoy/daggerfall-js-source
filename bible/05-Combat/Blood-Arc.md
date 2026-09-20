@@ -354,8 +354,9 @@ Slices, each behind its own `features.js` row:
    name. And the interior host's pool was never named in `tryExit()` or
    `forceExitToExterior()`, so blood laid in a building would have
    followed the player into the street.
-2. **BLOOD1b - the blow, the scatter, then overkill and gibs.**
-   IN PROGRESS. The first two shipped together.
+2. **BLOOD1b - the blow, the scatter, overkill, gibs, ceilings and
+   the swing.** SHIPPED, whole (`src/combat/bloodGibs.js` joined the
+   modules above; `tools/mutants/blood1.json` 118/118 dead).
 
    THE LADDER WAS DEAD. `showBloodSplash` took the blow as its fourth
    argument and not one of the eleven call sites passed it, so every
@@ -529,25 +530,54 @@ Slices, each behind its own `features.js` row:
    it falls unseen, and what a player sees is the floor beneath a
    ceiling stain darkening a moment later. Mutants: 106, 106 dead.
 
-   STILL OPEN, the last of the re-read: the swing direction throwing
-   the spray. `SpawnBlood` rotates its particle system to the PLAYER's
-   rotation and pushes it with a `forceOverLifetime` chosen by the
-   live `WeaponState`, and with the port's own enum
-   (`fpsWeapon.js`: Idle 0, StrikeDown 1, StrikeDownLeft 2, StrikeLeft
-   3, StrikeRight 4, StrikeDownRight 5, StrikeUp 6) the switch reads:
+   AND LAST, THE SWING THROWS THE SPRAY. `SpawnBlood` rotates its
+   particle system to the PLAYER's rotation and pushes it with a
+   `forceOverLifetime` chosen by the live `WeaponState`; the IL
+   switches on `state - 1` with six arms, and against the port's own
+   enum (`fpsWeapon.js` STATE_INDEX, which is DFU's order) they read:
 
-   | state | push |
-   |---|---|
-   | StrikeDown | y +2..+4 - a straight chop sprays it back UP |
-   | StrikeDownLeft | y -5..-10, x -5..-10 |
-   | StrikeLeft | x -5..-10 |
-   | StrikeRight | x +5..+10 |
-   | StrikeDownRight | y -5..-10, x +5..+10 |
-   | StrikeUp | z -2..-8 - an upward cut throws it back at you |
-   | Idle, anything else | nothing |
+   | state | push | what it looks like |
+   |---|---|---|
+   | StrikeDown | y +2..+4 | a straight chop sprays it back UP |
+   | StrikeDownLeft | y -5..-10, x -5..-10 | down and to the left |
+   | StrikeLeft | x -5..-10 | to the left |
+   | StrikeRight | x +5..+10 | to the right |
+   | StrikeDownRight | y -5..-10, x +5..+10 | down and to the right |
+   | StrikeUp | z -2..-8 | an upward cut throws it back at you |
+   | Idle, anything else | nothing | |
 
-   What none of the eleven splash sites carries is which state was
-   live, so this is a thread rather than a line.
+   `SWING_PUSH` is the MIDPOINT of each band, in the player's own frame
+   (x their right, y up, z their forward), and its keys are checked
+   against `STATE_INDEX` so an entry for a state the machine cannot be
+   in fails rather than sitting dead.
+
+   THE VERTICAL TERM IS DROPPED, and `StrikeDown` is the case that
+   shows that is right rather than a shortcut: its whole push is
+   upward, so the spatter is thrown NOWHERE - a straight chop sprays
+   straight up and it comes straight back down. A mark lies on a
+   SURFACE, so an up or down push changes how long blood is in the air
+   rather than where on the floor it lands, and modelling that would
+   mean flying the spray, which this arc flies only for the chunks.
+
+   The conversion from the reference's force to the port's metres is a
+   CHOICE, not a derivation - its number is a force on a particle over
+   its lifetime and ours is a displacement - so `SWING_LEAN` says so:
+   a full side swipe leans the spatter about two thirds of a metre.
+
+   THE HANDEDNESS IS THE TREE'S, taken from the forward handed in
+   rather than from a yaw, because the sites that know one do not all
+   hold the other: forward is (sin yaw, ., cos yaw) and right is
+   (cos yaw, 0, -sin yaw), which is (f.z, 0, -f.x). THE POOL DOES NOT
+   LEAN - drop zero is blood running off the body, not blood thrown
+   from it, so it stays at the body's own spot whatever the swing did.
+
+   EXACTLY THREE SITES HAND A SWING OVER: the player's melee in each
+   of the three foe pools, each of which holds both halves at the line.
+   THE SHAFT DELIBERATELY DOES NOT. The reference reads the LIVE
+   weapon state when blood spawns, which for an arrow that has been in
+   the air is whatever the player's arm happens to be doing now - a
+   quirk of reading a global at spawn time, not a thing to carry. A
+   shaft's blood is thrown by the shaft.
 3. **BLOOD1c - bleeding.** The 2..5s cadence and the ramp above.
 
 The numbers in THE FACTS are the target to feel like. The code that

@@ -2877,7 +2877,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // cone and distance, so the body centre (DFU's own no-raycast
       // formula, EnemyAttack.cs:326-328) stands in.
       hitEffects?.showBloodSplash(ENEMY_BASICS[foe.mobileType]?.bloodIndex ?? 0,
-        bloodCentre(foe.ai.feet, foe.ai.height), null, bloodHit(damage, foe.entity, { fromPlayer: true, weapon: playerWeapon.weapon }));   // BLOOD1b: the blow drives the ladder, and only a PLAYER'S warhammer takes the heavy branch
+        bloodCentre(foe.ai.feet, foe.ai.height), null, bloodHit(damage, foe.entity, { fromPlayer: true, weapon: playerWeapon.weapon, swing: playerWeapon.machine?.state, forward: lookDir }));   // BLOOD1b: the blow drives the ladder, and only a PLAYER'S warhammer takes the heavy branch
       // C2-slice (combat-17): a damaged CLASS foe cries out 40% of
       // the time (heavyDamage = a quarter of max health in one hit).
       const pain = enemyPainVoice(foe, damage);

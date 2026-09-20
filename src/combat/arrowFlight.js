@@ -221,7 +221,7 @@ export function playerArrowHitFoe(m, foe, {
     : at;
   if (dmg > 0) {
     audio?.play3d?.(hitSoundFor(m.weapon ?? null), at, ENEMY_HIT_VOLUME, { maxDistance: 16 });
-    hitEffects?.showBloodSplash?.(foe.entity?.basics?.bloodIndex ?? 0, bloodAt, null, bloodHit(dmg, foe.entity, { fromPlayer: true, weapon: m.weapon ?? null }));   // BLOOD1b: the player's shaft drives the ladder, and the bow it came off decides the heavy branch
+    hitEffects?.showBloodSplash?.(foe.entity?.basics?.bloodIndex ?? 0, bloodAt, null, bloodHit(dmg, foe.entity, { fromPlayer: true, weapon: m.weapon ?? null }));   // BLOOD1b: the player's shaft drives the ladder, and the bow it came off decides the heavy branch   // ...and NO SWING: the reference reads the LIVE weapon state when blood spawns, which for a shaft that has been in the air is whatever the player's arm happens to be doing now. A shaft's blood is thrown by the shaft.
     const pain = enemyPainVoice(foe, dmg, rolls);
     if (pain && pain.clip >= 0) audio?.play3d?.(pain.clip, [at[0], at[1] + 0.9, at[2]], 1, { maxDistance: 16, pitch: 1 + pain.pitchLift });   // AUDIT 58: EnemySounds.cs:172-175
     dealDamage?.(foe, dmg);

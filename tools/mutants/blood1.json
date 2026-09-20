@@ -291,7 +291,7 @@
   {
     "name": "BLOOD1b-a-splash-site-forgets-its-blow",
     "file": "src/scenes/exteriorFoes.js",
-    "old": "          bloodCentre(foe.ai.feet, foe.ai.height), null, bloodHit(damage, foe.entity, { fromPlayer: true, weapon: playerWeapon.weapon }));   // BLOOD1b: the blow drives the ladder, and only a PLAYER'S warhammer takes the heavy branch",
+    "old": "          bloodCentre(foe.ai.feet, foe.ai.height), null, bloodHit(damage, foe.entity, { fromPlayer: true, weapon: playerWeapon.weapon, swing: playerWeapon.machine?.state, forward: lookDir }));   // BLOOD1b: the blow drives the ladder, and only a PLAYER'S warhammer takes the heavy branch",
     "new": "          bloodCentre(foe.ai.feet, foe.ai.height));",
     "tests": [
       "test/blood1_decals.test.js"
@@ -318,8 +318,8 @@
   {
     "name": "BLOOD1b-a-murdered-civilian-is-an-overkill",
     "file": "src/combat/bloodDecals.js",
-    "old": "export const LETHAL_HIT = Object.freeze({ damage: 1, maxHealth: 1, fromPlayer: true, heavy: false });",
-    "new": "export const LETHAL_HIT = Object.freeze({ damage: 2, maxHealth: 1, fromPlayer: true, heavy: false });",
+    "old": "export const LETHAL_HIT = Object.freeze({ damage: 1, maxHealth: 1, fromPlayer: true, heavy: false, throw: Object.freeze([0, 0]) });",
+    "new": "export const LETHAL_HIT = Object.freeze({ damage: 2, maxHealth: 1, fromPlayer: true, heavy: false, throw: Object.freeze([0, 0]) });",
     "tests": [
       "test/blood1_decals.test.js"
     ]
@@ -426,8 +426,8 @@
   {
     "name": "BLOOD1b-the-rate-sizes-one-mark-again-instead-of-counting-them",
     "file": "src/combat/bloodMarks.js",
-    "old": "    return spray(col, pos, sprayCount(rate), sprayRadius(rate), rate);",
-    "new": "    return spray(col, pos, 1, sprayRadius(rate), rate);",
+    "old": "    return spray(col, pos, sprayCount(rate), sprayRadius(rate), rate, hit?.throw);",
+    "new": "    return spray(col, pos, 1, sprayRadius(rate), rate, hit?.throw);",
     "tests": [
       "test/blood1_decals.test.js"
     ]
@@ -444,8 +444,8 @@
   {
     "name": "BLOOD1b-the-burst-REPLACES-the-ladder-s-spray",
     "file": "src/combat/bloodMarks.js",
-    "old": "      if (heavy && _gibs.length < GIB_COUNT * MAX_BODIES) { _gibs = _gibs.concat(throwGibs(pos, rng)); reseatGibs(); }\n    }\n    const rate = bloodRate(damage, maxHealth, density);\n    return spray(col, pos, sprayCount(rate), sprayRadius(rate), rate);",
-    "new": "      if (heavy && _gibs.length < GIB_COUNT * MAX_BODIES) { _gibs = _gibs.concat(throwGibs(pos, rng)); reseatGibs(); }\n      const h2 = !!hit?.fromPlayer && !!hit?.heavy;\n      return spray(col, pos, burstCount(h2, density), burstReach(h2, density), burstRate(h2, density));\n    }\n    const rate = bloodRate(damage, maxHealth, density);\n    return spray(col, pos, sprayCount(rate), sprayRadius(rate), rate);",
+    "old": "      if (heavy && _gibs.length < GIB_COUNT * MAX_BODIES) { _gibs = _gibs.concat(throwGibs(pos, rng)); reseatGibs(); }\n    }\n    const rate = bloodRate(damage, maxHealth, density);\n    return spray(col, pos, sprayCount(rate), sprayRadius(rate), rate, hit?.throw);",
+    "new": "      if (heavy && _gibs.length < GIB_COUNT * MAX_BODIES) { _gibs = _gibs.concat(throwGibs(pos, rng)); reseatGibs(); }\n      const h2 = !!hit?.fromPlayer && !!hit?.heavy;\n      return spray(col, pos, burstCount(h2, density), burstReach(h2, density), burstRate(h2, density), hit?.throw);\n    }\n    const rate = bloodRate(damage, maxHealth, density);\n    return spray(col, pos, sprayCount(rate), sprayRadius(rate), rate, hit?.throw);",
     "tests": [
       "test/blood1_decals.test.js"
     ]
@@ -950,6 +950,114 @@
     "file": "src/combat/bloodMarks.js",
     "old": "    shiftGibs(_drips, offset);   // ...and so is a drip still falling",
     "new": "",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-a-straight-chop-throws-the-spatter-sideways",
+    "file": "src/combat/bloodDecals.js",
+    "old": "  StrikeDown: Object.freeze([0, 3, 0]),",
+    "new": "  StrikeDown: Object.freeze([3, 0, 0]),",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-left-and-right-are-swapped",
+    "file": "src/combat/bloodDecals.js",
+    "old": "  StrikeLeft: Object.freeze([-7.5, 0, 0]),\n  StrikeRight: Object.freeze([7.5, 0, 0]),",
+    "new": "  StrikeLeft: Object.freeze([7.5, 0, 0]),\n  StrikeRight: Object.freeze([-7.5, 0, 0]),",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-an-upward-cut-throws-it-AWAY",
+    "file": "src/combat/bloodDecals.js",
+    "old": "  StrikeUp: Object.freeze([0, 0, -5]),",
+    "new": "  StrikeUp: Object.freeze([0, 0, 5]),",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-the-swing-s-handedness-is-mirrored",
+    "file": "src/combat/bloodDecals.js",
+    "old": "  const rx = f[2], rz = -f[0];",
+    "new": "  const rx = -f[2], rz = f[0];",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-the-vertical-push-becomes-a-ground-offset",
+    "file": "src/combat/bloodDecals.js",
+    "old": "  return [(rx * p[0] + f[0] * p[2]) * SWING_LEAN, (rz * p[0] + f[2] * p[2]) * SWING_LEAN];",
+    "new": "  return [(rx * p[0] + f[0] * p[1]) * SWING_LEAN, (rz * p[0] + f[2] * p[1]) * SWING_LEAN];",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-the-swing-leans-nothing",
+    "file": "src/combat/bloodDecals.js",
+    "old": "export const SWING_LEAN = 0.08;",
+    "new": "export const SWING_LEAN = 0;",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-a-look-straight-up-throws-the-spray-anyway",
+    "file": "src/combat/bloodDecals.js",
+    "old": "  const f = unit([forward?.[0] ?? 0, 0, forward?.[2] ?? 0]);\n  if (!f) return [0, 0];",
+    "new": "  const f = unit([forward?.[0] ?? 0, 0, forward?.[2] ?? 0]) ?? [0, 0, 1];",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-the-pool-leans-with-the-spatter",
+    "file": "src/combat/bloodMarks.js",
+    "old": "      const fromX = pos[0] + dx + (i > 0 ? tx : 0), fromZ = pos[2] + dz + (i > 0 ? tz : 0);",
+    "new": "      const fromX = pos[0] + dx + tx, fromZ = pos[2] + dz + tz;",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-the-spray-ignores-the-swing",
+    "file": "src/combat/bloodMarks.js",
+    "old": "      const fromX = pos[0] + dx + (i > 0 ? tx : 0), fromZ = pos[2] + dz + (i > 0 ? tz : 0);",
+    "new": "      const fromX = pos[0] + dx, fromZ = pos[2] + dz;",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-the-ladder-s-spray-is-not-thrown-by-the-swing",
+    "file": "src/combat/bloodMarks.js",
+    "old": "    return spray(col, pos, sprayCount(rate), sprayRadius(rate), rate, hit?.throw);",
+    "new": "    return spray(col, pos, sprayCount(rate), sprayRadius(rate), rate);",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-a-melee-site-forgets-the-swing",
+    "file": "src/scenes/cityGuards.js",
+    "old": ", swing: playerWeapon.machine?.state, forward: lookDir })",
+    "new": " })",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-the-shaft-claims-a-swing",
+    "file": "src/combat/arrowFlight.js",
+    "old": "bloodHit(dmg, foe.entity, { fromPlayer: true, weapon: m.weapon ?? null })",
+    "new": "bloodHit(dmg, foe.entity, { fromPlayer: true, weapon: m.weapon ?? null, swing: 'StrikeRight', forward: [0, 0, 1] })",
     "tests": [
       "test/blood1_decals.test.js"
     ]

@@ -1046,7 +1046,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
         // in exteriorFoes: no raycast impact point here, so the body
         // centre stands in - DFU's own no-raycast formula).
         hitEffects?.showBloodSplash(ENEMY_BASICS[GUARD_MOBILE_TYPE]?.bloodIndex ?? 0,
-          bloodCentre(foe.ai.feet, foe.ai.height), null, bloodHit(damage, foe.entity, { fromPlayer: true, weapon: playerWeapon.weapon }));   // BLOOD1b: the blow drives the ladder, and only a PLAYER'S warhammer takes the heavy branch
+          bloodCentre(foe.ai.feet, foe.ai.height), null, bloodHit(damage, foe.entity, { fromPlayer: true, weapon: playerWeapon.weapon, swing: playerWeapon.machine?.state, forward: lookDir }));   // BLOOD1b: the blow drives the ladder, and only a PLAYER'S warhammer takes the heavy branch
         // C2-slice (combat-17): the struck watchman cries out 40%
         const pain = enemyPainVoice(foe, damage);
         if (pain && pain.clip >= 0) audio?.play3d?.(pain.clip, [foe.ai.feet[0], foe.ai.feet[1] + 0.9, foe.ai.feet[2]], 1, { maxDistance: 16, pitch: 1 + pain.pitchLift });   // AUDIT 58: EnemySounds.cs:172-175

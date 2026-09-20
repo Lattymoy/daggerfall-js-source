@@ -17,7 +17,7 @@ import {
   createBloodDecalPool, bloodRate, ladderRate, scaleRate, damagePercent, isOverkill,
   surfaceBasis, writeDecalQuad, clearDecalQuad, decalIndices,
   DECAL_FLOATS, DECAL_FLOATS_PER_VERTEX, RATE_LADDER, RATE_NEAR_LETHAL, RATE_MAX, OVERKILL_PERCENT, OVERKILL_RATE, OVERKILL_RATE_HEAVY, OVERKILL_SPEED, ORDINARY_SPEED, OVERKILL_REACH_SCALE, HEAVY_WEAPON_TEMPLATE, SURFACE_LIFT,
-  bloodHit, LETHAL_HIT, looksUp, isCeilingNormal, CEILING_DOT, CEILING_EVERY, burstCount, burstRate, burstReach, BURST_DROPS_MAX, sprayCount, sprayRadius, sprayOffset, dropSize, SPRAY_SHARE, SPRAY_MAX, SPATTER_SCALE, SIZE_JITTER, SPRAY_WOBBLE, SPRAY_RADIUS_MIN, SPRAY_RADIUS_MAX,   // BLOOD1b
+  bloodHit, LETHAL_HIT, SWING_PUSH, SWING_LEAN, swingThrow, looksUp, isCeilingNormal, CEILING_DOT, CEILING_EVERY, burstCount, burstRate, burstReach, BURST_DROPS_MAX, sprayCount, sprayRadius, sprayOffset, dropSize, SPRAY_SHARE, SPRAY_MAX, SPATTER_SCALE, SIZE_JITTER, SPRAY_WOBBLE, SPRAY_RADIUS_MIN, SPRAY_RADIUS_MAX,   // BLOOD1b
 } from '../src/combat/bloodDecals.js';
 
 import {
@@ -746,9 +746,9 @@ test('BLOOD1b: EVERY splash site hands its blow over, so the rate ladder actuall
   // object literal is the FOUR HOSTS RULE's hazard with five more
   // hosts; `bloodHit` is the one home and takes the ENTITY, because
   // what a site has to hand is the body it just hurt, not a field of it.
-  assert.deepEqual(bloodHit(12, { maxHealth: 40 }), { damage: 12, maxHealth: 40, fromPlayer: false, heavy: false });
-  assert.deepEqual(bloodHit(undefined, undefined), { damage: 0, maxHealth: 0, fromPlayer: false, heavy: false }, 'nothing known is a graze, never a NaN');
-  assert.deepEqual(bloodHit(NaN, { maxHealth: NaN }), { damage: 0, maxHealth: 0, fromPlayer: false, heavy: false });
+  assert.deepEqual(bloodHit(12, { maxHealth: 40 }), { damage: 12, maxHealth: 40, fromPlayer: false, heavy: false, throw: [0, 0] });
+  assert.deepEqual(bloodHit(undefined, undefined), { damage: 0, maxHealth: 0, fromPlayer: false, heavy: false, throw: [0, 0] }, 'nothing known is a graze, never a NaN');
+  assert.deepEqual(bloodHit(NaN, { maxHealth: NaN }), { damage: 0, maxHealth: 0, fromPlayer: false, heavy: false, throw: [0, 0] });
   assert.ok(Object.isFrozen(bloodHit(1, { maxHealth: 2 })), 'and it is read, never edited downstream');
 
   // BLOOD1b: and the two things the overkill branch asks, both
@@ -763,7 +763,7 @@ test('BLOOD1b: EVERY splash site hands its blow over, so the rate ladder actuall
   // (WeaponManager.cs:504-508), and has no entity to measure against -
   // so the blow took ALL of them. That is the HUNDRED rung, not an
   // overkill: a murder is not a gibbing.
-  assert.deepEqual(LETHAL_HIT, { damage: 1, maxHealth: 1, fromPlayer: true, heavy: false });
+  assert.deepEqual(LETHAL_HIT, { damage: 1, maxHealth: 1, fromPlayer: true, heavy: false, throw: [0, 0] });
   assert.equal(damagePercent(LETHAL_HIT.damage, LETHAL_HIT.maxHealth), 100);
   assert.equal(ladderRate(100), 70);
   assert.equal(isOverkill(LETHAL_HIT.damage, LETHAL_HIT.maxHealth), false);
@@ -1436,4 +1436,112 @@ test('BLOOD1b: blood reaches the CEILING, and what a ceiling holds it eventually
   const { fx: many, marks: manyMarks } = rig();
   for (let i = 0; i < 60; i++) many.showBloodSplash(0, [0, 1, 0], null, { damage: 70, maxHealth: 40, fromPlayer: true, heavy: true });
   assert.ok(manyMarks.drips().length <= MAX_DRIPS, `at most ${MAX_DRIPS} falling (got ${manyMarks.drips().length})`);
+});
+
+test('BLOOD1b: the SWING throws the spray, and the pool under the body does not move', async () => {
+  // The IL switches on `state - 1` with six arms; against the port's
+  // own enum (fpsWeapon.js STATE_INDEX, which is DFU's order) they are
+  // these. The table is the MIDPOINT of each band, in the player's own
+  // frame: x their right, y up, z their forward.
+  assert.deepEqual(SWING_PUSH.StrikeDown, [0, 3, 0], 'a straight chop sprays it back UP');
+  assert.deepEqual(SWING_PUSH.StrikeDownLeft, [-7.5, -7.5, 0]);
+  assert.deepEqual(SWING_PUSH.StrikeLeft, [-7.5, 0, 0]);
+  assert.deepEqual(SWING_PUSH.StrikeRight, [7.5, 0, 0]);
+  assert.deepEqual(SWING_PUSH.StrikeDownRight, [7.5, -7.5, 0]);
+  assert.deepEqual(SWING_PUSH.StrikeUp, [0, 0, -5], 'an upward cut throws it back at you');
+  assert.equal(SWING_PUSH.Idle, undefined, 'and standing still throws nothing');
+
+  // ...and the table's keys are the GAME'S state names, not a second
+  // spelling of them - the site hands `machine.state` straight in.
+  const { STATE_INDEX } = await import('../src/combat/fpsWeapon.js');
+  for (const k of Object.keys(SWING_PUSH)) {
+    assert.ok(k in STATE_INDEX, `${k} is a weapon state the machine can actually be in`);
+  }
+
+  // THE HANDEDNESS IS THE TREE'S. Forward is (sin yaw, ., cos yaw) and
+  // right is (cos yaw, 0, -sin yaw), which is (f.z, 0, -f.x).
+  const north = [0, 0, 1];                       // yaw 0
+  assert.deepEqual(swingThrow('StrikeRight', north), [SWING_PUSH.StrikeRight[0] * SWING_LEAN, 0], 'facing +z, right is +x');
+  assert.deepEqual(swingThrow('StrikeLeft', north), [SWING_PUSH.StrikeLeft[0] * SWING_LEAN, 0]);
+  const east = [1, 0, 0];                        // yaw 90
+  const [ex, ez] = swingThrow('StrikeRight', east);
+  assert.ok(Math.abs(ex) < 1e-12 && Math.abs(ez + 0.6) < 1e-12, 'facing +x, right is -z');
+  // ...and an upward cut throws it BACKWARD along the look
+  const [ux, uz] = swingThrow('StrikeUp', north);
+  assert.ok(Math.abs(ux) < 1e-12 && uz < 0, 'toward the player, not away');
+
+  // THE VERTICAL TERM IS DROPPED, and StrikeDown is the case that
+  // shows why it is still right: its whole push is upward, so the
+  // spatter is thrown NOWHERE - a straight chop sprays straight up and
+  // it comes straight back down. A mark lies on a surface; an up or
+  // down push changes how LONG blood is in the air, not where on the
+  // floor it lands.
+  assert.deepEqual(swingThrow('StrikeDown', north), [0, 0]);
+  // ...nothing to throw it, nothing to throw it with, and nothing to
+  // throw it along, all answer the same
+  assert.deepEqual(swingThrow('Idle', north), [0, 0]);
+  assert.deepEqual(swingThrow(null, north), [0, 0]);
+  assert.deepEqual(swingThrow('StrikeRight', null), [0, 0]);
+  assert.deepEqual(swingThrow('StrikeRight', [0, 1, 0]), [0, 0], 'a look straight up has no flat part');
+
+  assert.equal(SWING_LEAN, 0.08);
+  assert.ok(Math.abs(Math.hypot(...swingThrow('StrikeRight', north)) - 0.6) < 1e-12,
+    'a full side swipe leans the spatter about two thirds of a metre');
+
+  // ---- and on a live pool
+  const wide = { enabled: () => true, capacity: () => 512, density: () => 1, overkill: () => true };
+  const swung = (state) => {
+    const { fx, marks } = rigHitEffects({ settings: wide });
+    fx.showBloodSplash(0, [0, 5, 0], null, bloodHit(10, { maxHealth: 40 }, { swing: state, forward: north }));
+    return marks._pool().decals();
+  };
+  const mid = (ds) => ds.slice(1).reduce((a, d) => a + d.pos[0], 0) / Math.max(1, ds.length - 1);
+
+  const right = swung('StrikeRight'), left = swung('StrikeLeft'), still = swung('Idle');
+  assert.ok(mid(right) > mid(still), 'a right swipe throws the spatter right');
+  assert.ok(mid(left) < mid(still), 'and a left swipe throws it left');
+  assert.ok(Math.abs(mid(right) - mid(still) - SWING_PUSH.StrikeRight[0] * SWING_LEAN) < 1e-9,
+    'by exactly what the push says, since the ring is the same ring either way');
+
+  // THE POOL DOES NOT LEAN. Drop zero is blood running off the body,
+  // not blood thrown from it, so it stays at the body's own spot
+  // whatever the swing did - which is what keeps "a hit stains where
+  // it happened" true.
+  for (const ds of [right, left, still]) assert.deepEqual([ds[0].pos[0], ds[0].pos[2]], [0, 0]);
+});
+
+test('BLOOD1b by source: the three melee sites hand the swing over, and the shaft deliberately does not', () => {
+  const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8')
+    .replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+  // A SWING IS THE PLAYER'S MELEE AND NOTHING ELSE. The three foe
+  // pools each resolve one and each holds both halves at the line -
+  // the machine's live state and the look it was thrown along.
+  for (const host of ['src/scenes/dungeonContext.js', 'src/scenes/cityGuards.js', 'src/scenes/exteriorFoes.js']) {
+    assert.match(read(host), /swing: playerWeapon\.machine\?\.state, forward: lookDir/,
+      `${host}: the live state and the look it was thrown along`);
+  }
+  // THE SHAFT DOES NOT. The reference reads the LIVE weapon state when
+  // blood spawns, which for an arrow that has been in the air is
+  // whatever the player's arm happens to be doing now - a quirk of
+  // reading a global at spawn time, not a thing to carry.
+  assert.doesNotMatch(read('src/combat/arrowFlight.js'), /swing:/, 'a shaft’s blood is thrown by the shaft');
+  // ...and neither does anything that is not the player's blow: a
+  // fall, a foe's swing, a peer's blow over the wire.
+  const argsAt = (s, i) => {
+    let depth = 0;
+    for (let j = i; j < s.length; j++) {
+      if (s[j] === '(') depth++;
+      else if (s[j] === ')') { depth--; if (!depth) return s.slice(i + 1, j); }
+    }
+    return null;
+  };
+  let swung = 0;
+  for (const f of ['src/combat/arrowFlight.js', 'src/scenes/dungeonContext.js', 'src/scenes/cityGuards.js',
+    'src/scenes/exteriorFoes.js', 'src/scenes/hostCombat.js']) {
+    const s = read(f);
+    for (const m of s.matchAll(/showBloodSplash\??\.?\(/g)) {
+      if (/swing:/.test(argsAt(s, m.index + m[0].length - 1) ?? '')) swung++;
+    }
+  }
+  assert.equal(swung, 3, 'exactly the three sites that ARE a player’s melee swing');
 });

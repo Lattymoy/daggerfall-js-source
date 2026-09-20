@@ -156,11 +156,18 @@ export function createBloodMarks({ renderer = null, collider = null, settings = 
    * Answers DROP ZERO - the body's own spot - or null when nothing in
    * this spray landed at all.
    */
-  function spray(col, pos, n, radius, rate) {
+  function spray(col, pos, n, radius, rate, thrown = null) {
     let pool = null;
+    // BLOOD1b: WHICH WAY THE SWING THREW IT. The site worked the two
+    // numbers out, because only it knows the state and the basis.
+    const tx = thrown?.[0] ?? 0, tz = thrown?.[1] ?? 0;
     for (let i = 0; i < n; i++) {
       const [dx, dz] = sprayOffset(i, n, radius, rng);
-      const fromX = pos[0] + dx, fromZ = pos[2] + dz;
+      // THE POOL DOES NOT LEAN. Drop zero is blood running off the
+      // body, not blood thrown from it, so it stays at the body's own
+      // spot whatever the swing did - and that is what keeps "a hit
+      // stains where it happened" true.
+      const fromX = pos[0] + dx + (i > 0 ? tx : 0), fromZ = pos[2] + dz + (i > 0 ? tz : 0);
       // ONE DROP IN FOUR LOOKS UP. The reference's particles fly in
       // every direction and the ones that go up find the ceiling; this
       // port rays, so the share is a number. Drop zero never does - it
@@ -225,7 +232,7 @@ export function createBloodMarks({ renderer = null, collider = null, settings = 
       // neither, so everything else is the other branch - which is
       // the one nearly every overkill takes anyway.
       const heavy = !!hit?.fromPlayer && !!hit?.heavy;
-      spray(col, pos, burstCount(heavy, density), burstReach(heavy, density), burstRate(heavy, density));
+      spray(col, pos, burstCount(heavy, density), burstReach(heavy, density), burstRate(heavy, density), hit?.throw);
       // ...AND THE BODY COMES APART. Only the heavy branch: the
       // assembly gibs the death it marked with `lastKilled`, and the
       // player's warhammer is what marks one.
@@ -239,7 +246,7 @@ export function createBloodMarks({ renderer = null, collider = null, settings = 
       if (heavy && _gibs.length < GIB_COUNT * MAX_BODIES) { _gibs = _gibs.concat(throwGibs(pos, rng)); reseatGibs(); }
     }
     const rate = bloodRate(damage, maxHealth, density);
-    return spray(col, pos, sprayCount(rate), sprayRadius(rate), rate);
+    return spray(col, pos, sprayCount(rate), sprayRadius(rate), rate, hit?.throw);
   }
 
   /**

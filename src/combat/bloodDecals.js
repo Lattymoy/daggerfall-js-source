@@ -285,6 +285,71 @@ export function isCeilingNormal(normal) {
 export const CEILING_EVERY = 4;
 export const looksUp = (i) => i > 0 && (i + 1) % CEILING_EVERY === 0;
 
+/**
+ * BLOOD1b - THE SWING THROWS THE SPRAY.
+ *
+ * `SpawnBlood` rotates its particle system to the PLAYER'S rotation
+ * and then pushes it with a `forceOverLifetime` chosen by the live
+ * `WeaponManager.ScreenWeapon.WeaponState`. The IL switches on
+ * `state - 1` with six arms, and against the port's own enum
+ * (`fpsWeapon.js` STATE_INDEX, which is DFU's order) they read:
+ *
+ *   StrikeDown       y +2..+4      a straight chop sprays it back UP
+ *   StrikeDownLeft   y -5..-10, x -5..-10
+ *   StrikeLeft       x -5..-10
+ *   StrikeRight      x +5..+10
+ *   StrikeDownRight  y -5..-10, x +5..+10
+ *   StrikeUp         z -2..-8      an upward cut throws it back at you
+ *   Idle, anything else            nothing
+ *
+ * The table below is the MIDPOINT of each band, in the player's own
+ * frame: x is their right, y is up, z is their forward.
+ */
+export const SWING_PUSH = Object.freeze({
+  StrikeDown: Object.freeze([0, 3, 0]),
+  StrikeDownLeft: Object.freeze([-7.5, -7.5, 0]),
+  StrikeLeft: Object.freeze([-7.5, 0, 0]),
+  StrikeRight: Object.freeze([7.5, 0, 0]),
+  StrikeDownRight: Object.freeze([7.5, -7.5, 0]),
+  StrikeUp: Object.freeze([0, 0, -5]),
+});
+
+/** THE PORT'S OWN, and said to be: how far a unit of the reference's
+ *  push moves a spray. Its number is a force on a particle over its
+ *  lifetime and ours is a displacement in metres, so there is no
+ *  conversion to derive - only a choice. A full side swipe (7.5)
+ *  leans the spatter about two thirds of a metre, which is enough to
+ *  read as "it went that way" and not so much that the blood leaves
+ *  the body behind. */
+export const SWING_LEAN = 0.08;
+
+/**
+ * Where a swing throws a spray, as a HORIZONTAL offset [dx, dz].
+ *
+ * THE VERTICAL TERM IS DROPPED, and deliberately. A mark lies on a
+ * surface; an up or down push changes how LONG the blood is in the
+ * air, not where on the floor it lands. Modelling that would mean
+ * flying the spray, and this arc flies only the chunks - which is why
+ * `StrikeDown`, whose whole push is upward, throws the spatter
+ * NOWHERE and is still the right answer: a straight chop sprays
+ * straight up and it comes straight back down.
+ */
+export function swingThrow(state, forward) {
+  const p = SWING_PUSH[state];
+  if (!p) return [0, 0];
+  // The push is in the player's frame, so it needs their basis - and
+  // only the FLAT part of it, since the answer is a ground offset.
+  const f = unit([forward?.[0] ?? 0, 0, forward?.[2] ?? 0]);
+  if (!f) return [0, 0];
+  // HANDEDNESS (mat4's law): the tree builds forward as
+  // (sin yaw, ., cos yaw) and right as (cos yaw, 0, -sin yaw), which
+  // is (f.z, 0, -f.x). Taken from the forward handed in rather than
+  // from a yaw, because the sites that know one do not all hold the
+  // other.
+  const rx = f[2], rz = -f[0];
+  return [(rx * p[0] + f[0] * p[2]) * SWING_LEAN, (rz * p[0] + f[2] * p[2]) * SWING_LEAN];
+}
+
 /** DFU's `bloodIndex` of 2 is the BLOODLESS six (skeletons and the
  *  like), and `characters/enemyBasics.js` has carried it from DFU
  *  since long before this arc. They bleed nothing, so they mark
@@ -311,7 +376,7 @@ export const isOverkill = (damage, maxHealth) => damagePercent(damage, maxHealth
  * and holds that each one hands its blow over. A site that forgets is
  * the failure this whole seam exists to make impossible.
  */
-export function bloodHit(damage, entity, { fromPlayer = false, weapon = null } = {}) {
+export function bloodHit(damage, entity, { fromPlayer = false, weapon = null, swing = null, forward = null } = {}) {
   return Object.freeze({
     damage: Number.isFinite(damage) ? damage : 0,
     maxHealth: Number.isFinite(entity?.maxHealth) ? entity.maxHealth : 0,
@@ -323,6 +388,13 @@ export function bloodHit(damage, entity, { fromPlayer = false, weapon = null } =
     // is the 350 branch - the one everything else takes anyway.
     fromPlayer: !!fromPlayer,
     heavy: (weapon?.templateIndex ?? -1) === HEAVY_WEAPON_TEMPLATE,
+    // ...and WHICH WAY THE SWING THREW IT, worked out HERE rather than
+    // carried as a state and a basis for the pool to combine. Only the
+    // site knows both, the answer is two numbers, and a pool that took
+    // the raw pair would have to know the tree's handedness to use
+    // them - which is exactly the knowledge this module is kept clear
+    // of everywhere else.
+    throw: Object.freeze(swingThrow(swing, forward)),
   });
 }
 
@@ -331,7 +403,7 @@ export function bloodHit(damage, entity, { fromPlayer = false, weapon = null } =
  *  civilian dies to ONE weapon hit whatever the weapon was, so the
  *  share of their health it took is all of it - which the ladder reads
  *  as its hundred rung, not as an overkill. */
-export const LETHAL_HIT = Object.freeze({ damage: 1, maxHealth: 1, fromPlayer: true, heavy: false });
+export const LETHAL_HIT = Object.freeze({ damage: 1, maxHealth: 1, fromPlayer: true, heavy: false, throw: Object.freeze([0, 0]) });
 
 /** How far off the surface a mark floats, so it does not fight the
  *  wall it is on. hitEffects.js nudges its splash by the same 2cm for
