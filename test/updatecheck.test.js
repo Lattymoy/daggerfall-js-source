@@ -13,6 +13,44 @@ const require = createRequire(import.meta.url);
 const { parseReleaseTag, parseVersion, isNewerRelease } = require('../app/lib/updateCheck.cjs');
 const root = path.join(path.dirname(new URL(import.meta.url).pathname), '..');
 
+test('DA6/REL1: the tag the marker cuts IS the version the app reports', () => {
+  // THE NAG THIS FILE EXISTS TO PREVENT, arriving through the one door
+  // DA6 never watched.
+  //
+  // Two files carry this one number and nothing held them together:
+  // `.github/DESKTOP_RELEASE` names the TAG the release is cut at, and
+  // `app/package.json`'s version is what electron-builder stamps into
+  // the installers and what `app.getVersion()` answers at runtime
+  // (app/main.cjs:258). Bump the marker alone and the release is built
+  // from the right commit, named for the wrong version, and - because
+  // `isNewerRelease(app.getVersion(), latest.tag)` is then TRUE - every
+  // fresh install of it announces an update it already has. A
+  // permanent nag on a brand new download.
+  //
+  // That is exactly the "wrong-newer" failure this file's own header
+  // names, and every pin here was aimed at the COMPARE. The compare was
+  // never wrong; the two numbers it compares had drifted apart, which
+  // no amount of testing `isNewerRelease` can see.
+  //
+  // It happened on app-v0.1.3, and app-v0.1.1 and app-v0.1.2 were both
+  // correct - so this is not a standing bug, it is a step somebody has
+  // to remember, which is the definition of a rule that wants a gate.
+  const marker = fs.readFileSync(path.join(root, '.github/DESKTOP_RELEASE'), 'utf8').split('\n')[0].trim();
+  const appVersion = JSON.parse(fs.readFileSync(path.join(root, 'app/package.json'), 'utf8')).version;
+  assert.equal(marker, `app-v${appVersion}`,
+    `.github/DESKTOP_RELEASE says "${marker}" and app/package.json says "${appVersion}". `
+    + 'A release cut here would be named for one version and report the other, and every fresh '
+    + 'install would nag about an update it already has. Bump BOTH.');
+  // ...and the tag it names has to be one this file's own parser takes,
+  // or the update check reads the newest release as nothing at all.
+  assert.deepEqual(parseReleaseTag(marker), parseVersion(appVersion),
+    'the marker and the app version must parse to the SAME triple');
+  assert.notEqual(parseReleaseTag(marker), null, 'the marker is a tag release-desktop can cut');
+  // The compare against ITSELF is never newer - which is the property
+  // that makes a correctly-stamped install quiet.
+  assert.equal(isNewerRelease(appVersion, marker), false, 'a build of this very release must not nag');
+});
+
 test('DA6: only the app-v shape release-desktop cuts parses as a release tag', () => {
   assert.deepEqual(parseReleaseTag('app-v0.1.0'), [0, 1, 0]);
   assert.deepEqual(parseReleaseTag(' app-v12.34.56 '), [12, 34, 56]);
