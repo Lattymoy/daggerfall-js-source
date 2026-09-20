@@ -210,6 +210,7 @@ wiring.
   component imports for its Horse and Cart gate, and that is a cycle.
   Pinned both ways - each skin's close carries the call, and
   inventorySession.js carries no reference.
+  INLINE1 (2026-09-20): the vendor-by-vendor exclusion F1 joined is gone - the rule refuses to inline anything under vendor/, so this mod's clips are files as before and no future mod has to be named (Rendering-Arc, INLINE1).
 
 **Checked and standing.** The outer world host returns before its own
 stride once the modal host has taken the frame, so no frame ticks the

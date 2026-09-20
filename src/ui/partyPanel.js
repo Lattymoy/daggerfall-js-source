@@ -37,7 +37,7 @@
 // Not a DFU member: Daggerfall Unity has no parties. Ledger A row (ONLINE).
 import { CifRciFile } from '../formats/cifRciFile.js';
 import { raceArt, FACES_PER_RACE } from '../systems/races.js';
-import { bitmapToColor32 } from './hud.js';   // the same indexed-to-RGBA door every classic screen reads
+import { bitmapToColor32 } from '../formats/color32Order.js';   // the same indexed-to-RGBA door every classic screen reads
 import { isTouchDevice } from './touch.js';
 import { PARTY_GREEN_CSS, lastOnlineText } from '../net/social.js';   // one home for the green - "should turn green"
 import { PIXELIFY_FIVE_FACE, PIXEL_FONT_CSS, PIXEL_TEXT_SHADOW } from './pixelifyFive.js';   // FONT1: the enhanced skin's own face, unsmoothed, with Silkscreen's five

@@ -31,7 +31,7 @@ const walk = (d, out = []) => {
 
 /** The known-unimportable ELEVEN, with the reason each is excluded. */
 export const NOT_IMPORTABLE = Object.freeze({
-  'src/main.js': 'import.meta.glob',
+  'src/main.js': 'addEventListener/document at module scope',   // BOOT1: it used to reject at LINK time, through world.js's import.meta.glob - the hosts are behind doors now, its body runs, and the crash listeners at its module scope are what node lacks
   'src/scenes/questData.js': 'import.meta.glob',
   'src/scenes/world.js': 'import.meta.glob',
   'src/tools/enhancedChargen.js': 'document at module scope',
@@ -75,5 +75,14 @@ test('the blind spot is exactly eleven modules, each with a reason', () => {
   // the least coverage, which is exactly the combination that produced
   // the boot failure. Recorded here so the next reader sees the cost.
   const globbed = Object.entries(NOT_IMPORTABLE).filter(([, why]) => why === 'import.meta.glob');
-  assert.equal(globbed.length, 3);
+  // BOOT1 (2026-09-20): two, not three. main.js was the third only by
+  // inheritance - it statically imported world.js, so world.js's glob
+  // rejected the entry at link time before a line of it ran. With the
+  // hosts behind dynamic doors the entry's body runs in node, and what
+  // it is excluded for is its own: the crash listeners at module scope.
+  // The count is held at two so the next static import of a host into
+  // the entry (which would put the glob back in front of it) reads as
+  // the regression it is, here as well as in test/boot1.test.js.
+  assert.equal(globbed.length, 2);
+  assert.equal(NOT_IMPORTABLE['src/main.js'], 'addEventListener/document at module scope');
 });

@@ -1905,6 +1905,163 @@ container, so nothing here was measured the way PERF-ON's names were.
 Said rather than implied.
 
 **Pinned** in `test/grasspath.test.js`.
+## BOOT2 - A CURSOR MUST NOT NEED THE HUD: ONE EDGE, 4.1 MB (2026-09-20)
+
+**Where BOOT1 left the entry.** With the four hosts behind doors, the
+entry's static graph was still 259 files and 4.9 MB of source, and the
+bundle's boot set 28 chunks / 492 KB gzipped - `travel` (257 KB) and
+`spellcast` (55 KB) the largest of them. The menu's own direct imports were
+not the cause (no single one costs more than 88 KB exclusively); the cause
+was a hub edge further down. Cutting edges one at a time on the entry's
+graph and measuring each: **`ui/cursor.js -> ui/hud.js` carries 216 files
+and 4,141 KB on its own** - `main.js` imports the cursor to install the
+document pointer, the cursor imports ONE pure function from the HUD
+(`bitmapToColor32`, an indexed bitmap through a palette), and the HUD
+imports the enhanced HUD, which imports the world tick, which imports the
+game. Cutting `worldTick -> weatherSim`/`diseases` instead saves nothing:
+the same modules arrive through `court.js -> factionRep.js -> save.js`. The
+edge that matters is the first one.
+
+**The helper was in the wrong home.** A conversion from a palette is a
+formats concern; the HUD was only where it happened to be written, and
+eleven modules imported it from there. It lives in
+`formats/color32Order.js` now - the file that already owns how a picture
+becomes color32 (the row-order doors of AUDIT 62 F26 and HT3) - and every
+importer takes it from the leaf, `hud.js` included. No re-export: a
+re-export would put the hub edge back for whoever took the shortcut, and
+`test/boot2.test.js` holds that as a law rather than a hope.
+
+**Measured.** The entry's static reach: 259 files / 4,991 KB -> 43 files /
+841 KB. What remains is the renderer, the settings, the data source and the
+crash/stale-chunk law - the things an entry genuinely needs before it knows
+which door it is going through. The bundle's boot set: 28 chunks / 492 KB ->
+**12 chunks / 104 KB gzipped**.
+
+**What did NOT move, said plainly.** The bytes a player waits for before the
+MENU is interactive - the entry's set plus the menu chunk's own static
+closure plus the intro - are ~656 KB gzipped, the same as before this slice.
+The menu chunk reaches the world tick directly AND through
+`ui/enhancedHud.js`, and reaches `travel` through `systems/saveSlots.js ->
+save.js -> weatherSim.js`; with several roots, no single cut helps, which is
+exactly what the exclusive-cost table said at the start. That is the next
+lever and a different shape of work: the clock (`worldMinutes`,
+`sharedClockOn`) split out of the world tick as a LEAF, so the nineteen
+modules that only want the time stop importing the heartbeat.
+
+**Three laws, derived, not listed.** One home (exactly one definition in the
+tree, in the leaf; nobody under src/ or test/ imports it from hud.js; hud.js
+exports it to nobody). The cursor is a leaf (its imports are read; none is
+under ui/). The entry's reach touches neither hub and stays under a ceiling
+the cut measured. 3 mutants, 3 killed.
+
+## BOOT1 - THE GAME HOSTS BEHIND A DOOR: THE BOOT GRAPH UN-INVERTED (2026-09-20)
+
+**INLINE1's "next lever" turned out to be the wrong lever.** The plan was to
+make `weaponRig` lazy (96 KB gzipped on the boot path). Walking the entry's
+static import graph first showed why that was small change: `src/main.js`
+imported all four scene hosts - `bootExterior`, `bootInterior`,
+`bootDungeon`, `bootWorld` - STATICALLY, and a static import of a host is the
+host's whole graph at module-evaluation time. **623 files and 13.4 MB of
+source were reached from the entry before `boot()` ran a line** - every
+scene, every system, every window - while the menu a player actually sees
+first (`ui/enhancedMenu.js`, `ui/introScreen.js`) was the thing loaded
+dynamically. The boot graph was inverted. Over the built bundle: 54 chunks,
+1,349 KB gzipped, had to arrive before the entry finished evaluating, and
+`main` alone was 517 KB of it.
+
+**The change is four lines, and every route reads as before.** Each host is
+a door now - a dynamic import at the moment of use, bound to the SAME name
+and called with the SAME shape the routes always used, so the routes and
+the pins that hold them (classicstart, hard2s, macn) are untouched. The
+hosts carry no import-time side effects (nothing at their top level runs),
+so evaluating them later changes nothing but WHEN.
+
+**And a warm-up.** Every door out of the enhanced menu ends in `bootWorld`,
+so the world host's import is kicked off - not awaited - the moment the
+menu branch is entered, behind the cinematic and the menu where the player
+is looking at something else; Play then finds the chunks in cache instead
+of paying for them at the click. It carries a `.catch`, and that is not
+optional: a deploy between page load and Play renames every chunk
+(`systems/staleChunk.js`), and a warm-up that rejected unhandled would be a
+console error for a failure the real import at Play reports properly
+through the same law.
+
+**Measured over the build.** The chunks a browser must fetch before the
+entry finishes evaluating: **54 -> 28; 1,349 KB -> 492 KB gzipped (-64%)**.
+Total JavaScript is unchanged (1,959 KB) - nothing was removed, it moved
+off the critical path. `test/boot1.test.js` walks the entry's static graph
+itself, transitively, with the host set derived from the tree, and holds a
+ceiling on the entry's reach so the graph cannot quietly re-invert. 3
+mutants, 3 killed.
+
+**And one thing the change found.** `test/moduleload_smoke.test.js` imports
+every module under src/ in node and keeps a list of the eleven that cannot
+load, each with its reason. `src/main.js` was on it as "import.meta.glob" -
+and that was only ever true by inheritance: its static import of world.js
+rejected the entry at LINK time, before a line of its body ran. With the
+hosts behind doors the entry's body runs in node, `boot()` reached for
+`document`, and its own catch reached for `document` again to report it -
+an unhandled rejection after the test ended, for a page that does not
+exist. The chain now starts from a resolved promise when there is no
+document; the entry stays on the list for what it is genuinely excluded for
+(the crash listeners at its module scope), and the "three modules fail for
+the glob" count is two, held there so a static host import returning to the
+entry reads as the regression it is.
+
+**What is still on the boot path, and why.** `travel` (257 KB gzipped, the
+largest chunk left) and `spellcast` (55 KB) are reached statically from the
+menu floor - `ui/enhancedMenu.js`'s own static graph is 315 files and 6.2 MB
+of source, and it pulls `world/windmillMesh.js` (250 KB) and 2.4 MB of
+`systems/` for things a menu does not draw. That is the next lever, and it
+is the menu's own import list, not the entry's.
+
+## INLINE1 - NOTHING UNDER vendor/ IS INLINED: A MEGABYTE OFF FIRST PAINT (2026-09-20)
+
+**Mac: "Want to talk about overall performance improvements."** The first
+thing measurable from the tree, and the cheapest: the JavaScript on the
+wire was 2,870 KB gzipped, and 1,002 KB of it was ONE chunk, `weaponRig`.
+Its raw size was 1,921 KB, and 1,343 KB of that was **432 PNGs inlined as
+base64** - Shield Widget's 275 under-4 KB sprites, Handheld Torches' 31,
+Climates & Calories' 18 and the rest. Base64 is nearly incompressible, which
+is why that chunk gzipped 1.9 -> 1.0 MB while `main` went 1.5 -> 0.5. And
+`scenes/world.js` imports the rig STATICALLY, so the chunk is on the boot
+path: every player pulled a megabyte of shield art before the menu drew.
+
+**The rule that let it happen was an enumeration.** EOTB5 met this class
+first - 3,035 sprites, a twelve-megabyte chunk - and excluded that mod's
+folder from Vite's `assetsInlineLimit` by path, narrow on purpose: "every
+other vendored texture keeps the default, because inlining a handful of
+small files is a win and the problem here is only ever the COUNT."
+AUDIT-IF F1 added Immersive Footsteps the same way. The premise was wrong -
+a vendored mod is never a handful of files, it ships in the hundreds - and
+the shape was the project's own named hazard: a rule enforced by memory.
+Twenty vendor folders landed after the allow-list of three, and not one
+joined it. The build exited 0 and said nothing, exactly as EOTB5 records it
+did the first time.
+
+**The rule is the class now.** `/[\/]vendor[\/]/` - nothing under
+vendor/ is ever inlined; everything outside it keeps Vite's default (a rule
+that inlined nothing anywhere would be the opposite mistake, and is pinned
+against). The pins that held the old rule named the folders it held OUT -
+"every other vendor asset keeps the default", with dynamic-skies and
+handheld-torches as the examples - and are INVERTED rather than deleted.
+The new pin, `test/vendorinline.test.js`, is GENERATIVE: it walks vendor/
+itself, puts every file under the 4 KB default through the real rule read
+out of vite.config.js, and holds that every one is refused and every vendor
+folder is covered whether or not it has small art today. The next mod holds
+without anyone remembering.
+
+**Measured over a real build.** `weaponRig` 1,921 KB -> 596 KB raw, 1,002
+KB -> 96 KB gzipped. Total JS on the wire 2,870 KB -> 1,945 KB (-32%). 357
+more files emitted to `dist/assets` (2,074 -> 2,431 PNGs), zero base64 PNGs
+left in any chunk. The sprites load the way EOTB's 2,000 and Immersive
+Footsteps' 210 clips already did - as files, when the mod asks for them.
+
+**What this does not do.** `weaponRig` is still 596 KB of code on the boot
+path because `world.js` imports it statically; nothing in it is needed
+before a game starts. Making the rig lazy is the next lever and is not
+this slice. `tools/mutants/inline1.json`: 2 dead, 0 survived.
+
 ## AUDIT-AIR1 - THE SIXTH SEAM (2026-09-19)
 
 > Mac, with a screenshot: *"the screenshot shows a bug where sometimes

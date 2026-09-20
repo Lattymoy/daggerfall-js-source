@@ -145,7 +145,8 @@ import { BssFile } from '../formats/bssFile.js';
 // hudCrosshair rule ("must not import back into it") is about that
 // module's two GEOMETRY CONSTANTS, which travel as arguments here too:
 // see drawHudLarge's barFill.
-import { bitmapToColor32, largeHudBar } from './hud.js';
+import { bitmapToColor32 } from '../formats/color32Order.js';
+import { largeHudBar } from './hud.js';
 import { drawVitalsBars } from './hudVitals.js';   // VB1: the nine-bar law - no cycle, hudVitals reads only the settings store
 import { raceArt } from '../systems/races.js';
 import { racialOverrideHeadArt } from '../systems/vampirism.js';   // V5: the curse heads, DFU's override-first order

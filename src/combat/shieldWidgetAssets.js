@@ -63,9 +63,13 @@ export const shieldSpritePath = (index) => `vendor/shield-widget/Textures/${shie
 /** The vendored sprite's URL - the shape handheldTorches.js uses for its
  *  own, which is what lets the bundler carry them. The archive, record
  *  and frame are interpolated separately, as that door does: measured
- *  over a real build, all 600 names reach the bundle (201 as files and
+ *  over a real build, all 600 names reach the bundle. INLINE1
+ *  (2026-09-20): ALL 600 AS FILES. This used to read "201 as files and
  *  the rest inlined under Vite's 4 KB limit, which is the project's
- *  setting and not this mod's business). */
+ *  setting and not this mod's business" - and that deference is exactly
+ *  how 275 of these went into the boot chunk as 1.34 MB of base64. The
+ *  project's setting now refuses to inline anything under vendor/
+ *  (vite.config.js, test/vendorinline.test.js). */
 export const shieldSpriteUrl = (index) => {
   const { archive, record, frame } = shieldTextureName(index);
   return new URL(`../../vendor/shield-widget/Textures/${archive}_${record}-${frame}.png`, import.meta.url).href;
