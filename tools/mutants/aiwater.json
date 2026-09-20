@@ -1,0 +1,51 @@
+[
+  {
+    "name": "AIWATER-a-spawned-dungeon-still-builds-its-water-quads",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    if (b.layout.waterLevel !== 10000 && !dfLocation?.spawned) {",
+    "new": "    if (b.layout.waterLevel !== 10000) {",
+    "tests": ["test/aiwater.test.js"]
+  },
+  {
+    "name": "AIWATER-a-spawned-dungeon-keeps-its-fog-and-swimming-state",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    if (dfLocation?.spawned) return 10000;",
+    "new": "",
+    "tests": ["test/aiwater.test.js"]
+  },
+  {
+    "name": "AIWATER-a-REAL-dungeon-loses-its-water-too",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    if (b.layout.waterLevel !== 10000 && !dfLocation?.spawned) {",
+    "new": "    if (false) {",
+    "tests": ["test/aiwater.test.js"]
+  },
+  {
+    "name": "AIWATER-the-degenerate-bake-is-cached-anyway",
+    "file": "src/ai/navClient.js",
+    "old": "    if (input.tris >= DEGENERATE_MIN_TRIS && (polys < DEGENERATE_MIN_POLYS || polys < input.tris * DEGENERATE_POLY_SHARE)) {",
+    "new": "    if (false) {",
+    "tests": ["test/enhancedAI.test.js"]
+  },
+  {
+    "name": "AIWATER-an-honestly-small-dungeon-is-refused-the-cache",
+    "file": "src/ai/navClient.js",
+    "old": "    if (input.tris >= DEGENERATE_MIN_TRIS && (polys < DEGENERATE_MIN_POLYS || polys < input.tris * DEGENERATE_POLY_SHARE)) {",
+    "new": "    if (polys < DEGENERATE_MIN_POLYS || polys < input.tris * DEGENERATE_POLY_SHARE) {",
+    "tests": ["test/enhancedAI.test.js"]
+  },
+  {
+    "name": "AIWATER-the-guard-measures-the-voxelizer-instead-of-the-input",
+    "file": "src/ai/navClient.js",
+    "old": "    const polys = result.stats?.polys ?? 0;",
+    "new": "    const polys = result.stats?.boxes ?? result.stats?.polys ?? 0;",
+    "tests": ["test/enhancedAI.test.js"]
+  },
+  {
+    "name": "AIWATER-a-degenerate-bake-is-silent",
+    "file": "src/ai/navClient.js",
+    "old": "      console.warn(`[enhanced-ai] navmesh bake looks degenerate (${polys} polys from ${input.tris} triangles) - not caching, so the next entry gets a fresh retry instead of being stuck with this one`);",
+    "new": "",
+    "tests": ["test/enhancedAI.test.js"]
+  }
+]

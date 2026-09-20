@@ -56,6 +56,14 @@ export function hydrateHere(baked, cs, input, agent = AGENT) {
   return chf;
 }
 
+/** A bake this far below its own input is not a navmesh, it is a
+ *  voxelizer accident - see the guard in `bake()` for the whole of why.
+ *  Named rather than inline because the three together ARE the rule, and
+ *  a rule spelled at its use site is one nobody can find again. */
+export const DEGENERATE_MIN_TRIS = 1000;
+export const DEGENERATE_MIN_POLYS = 20;
+export const DEGENERATE_POLY_SHARE = 0.02;
+
 export class NavClient {
   constructor({ store = idbStore(), WorkerCtor = globalThis.Worker } = {}) {
     this._store = store;
@@ -105,7 +113,38 @@ export class NavClient {
       }).catch(() => null);
     }
     if (!result) result = bakeHere(input, anchor, agent);
-    if (this._store) await this._store.set(ck, { baked: result.baked, cs: result.cs, stats: result.stats }).catch(() => null);
+    // DEGENERATE-BAKE GUARD (2026-09-20, Mac's patch - a report of foes
+    // standing idle across most of a dungeon, with the console showing a
+    // CACHED bake of 11 polys against 17,450 collision triangles).
+    //
+    // `buildRegions` keeps ONLY the component the anchor's foot reaches and
+    // culls every other region as unreachable - right when that is true, but
+    // a voxelizer that misses one real connection (a thin or irregular
+    // passage, which is exactly what an organic cave or mine layout is prone
+    // to) throws the WHOLE rest of the level away as a false positive. Every
+    // enhanced-AI foe outside that surviving patch is then left with no
+    // navmesh to path on at all.
+    //
+    // The cost was that a bad bake was PERMANENTLY cached: IndexedDB survives
+    // a reload, and the key is otherwise stable for the same dungeon and
+    // geometry, so one unlucky voxelization broke that dungeon's AI for as
+    // long as it existed. So a bake that culled almost everything is not
+    // cached, and the next entry gets a fresh attempt instead of being stuck
+    // with this one.
+    //
+    // MEASURED AGAINST `input.tris` - the same stable count the cache key is
+    // built from - and NOT the voxelizer's own box count. A first pass used
+    // boxes and a tall thin wall voxelizes into far more of them than its
+    // floor does, so an honestly small room tripped it: boxes conflate
+    // non-walkable wall geometry with the floor area the polys are actually
+    // drawn from. Gated on a genuinely large input too, so a real small
+    // dungeon - few triangles, honestly few polys - is never touched.
+    const polys = result.stats?.polys ?? 0;
+    if (input.tris >= DEGENERATE_MIN_TRIS && (polys < DEGENERATE_MIN_POLYS || polys < input.tris * DEGENERATE_POLY_SHARE)) {
+      console.warn(`[enhanced-ai] navmesh bake looks degenerate (${polys} polys from ${input.tris} triangles) - not caching, so the next entry gets a fresh retry instead of being stuck with this one`);
+    } else if (this._store) {
+      await this._store.set(ck, { baked: result.baked, cs: result.cs, stats: result.stats }).catch(() => null);
+    }
     return { chf: hydrateHere(result.baked, result.cs, input, agent), stats: { ...result.stats, cached: false }, cached: false };
   }
 

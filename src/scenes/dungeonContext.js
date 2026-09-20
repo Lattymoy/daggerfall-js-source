@@ -675,7 +675,18 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     for (const l of collectDungeonLights(b.dfBlock)) {
       lights.push({ x: l.x + b.originX, y: l.y, z: l.z + b.originZ, range: l.range });
     }
-    if (b.layout.waterLevel !== 10000) {
+    // WATER OFF IN A SPAWNED DUNGEON (2026-09-20, Mac's patch). A
+    // spawn's water has been reported wrong every time - shown well
+    // below the floor, in patches, reading like a no-clip glitch - and
+    // rather than keep chasing the placement, a spawn simply gets no
+    // water quads. A REAL dungeon is untouched.
+    //
+    // `b.layout.waterLevel` itself is left alone, and that is the
+    // point: `dungeon.blocks` is the TEMPLATE'S own shared array (see
+    // world/spawnedDungeons.js's synthesizeDungeonLocation), so
+    // writing the sentinel into it here would corrupt the real dungeon
+    // this was cloned from and every other spawn sharing that template.
+    if (b.layout.waterLevel !== 10000 && !dfLocation?.spawned) {
       waterQuads.push({
         x: b.originX, z: b.originZ, size: RDB_SIDE,
         y: -b.layout.waterLevel * GLOBAL_SCALE,
@@ -4344,6 +4355,11 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
    *  Off every block DFU reports playerBlockIndex == -1 and simply
    *  does not call UpdateFog that frame (:349-352); null says so. */
   function blockWaterLevelAt(x, z) {
+    // ...and no water means none of what water implies: this feeds the
+    // underwater fog and the "am I swimming" check, so without it a
+    // spawn would keep the green murk and a half-submerged player with
+    // nothing on screen to explain either.
+    if (dfLocation?.spawned) return 10000;
     for (const b of dungeon.blocks) {
       if (x >= b.originX && x < b.originX + RDB_SIDE && z >= b.originZ && z < b.originZ + RDB_SIDE) {
         return b.layout.waterLevel;
