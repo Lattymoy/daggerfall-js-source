@@ -1,7 +1,7 @@
 # Testing
 
 Runner: `node --test` (bare - a trailing `test/` path breaks discovery on
-Node 22). Suite: 9278 tests across 923 files.
+Node 22). Suite: 9284 tests across 924 files.
 PROBE (no suite row - it needs a browser): `npm run blood` (tools/bloodProbe.mjs) drives `createHitEffects` and `drawBillboards` over a texture whose colour is known, in a real WebGL2 context, and reads the pixel back at five lighting states. It exists because MAC-BUG W4 ("Also blood is black") could not be settled by reading: it clears the pool, the texture KEY (`380_0#0` is minted in scenes/dataPipeline.js and asked for in render/renderer.js, and nothing had ever checked the two agree), the shader's emission arm, and anything specific to blood - a plain sprite in the same dungeon light comes back the same 20,2,2. 9 checks.
 
 **THE ARENA2-GATED PINS ARE HALF-BLIND, AND THAT IS A KNOWN COST.** A

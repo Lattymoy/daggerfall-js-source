@@ -264,7 +264,7 @@ does the pack's USE arm.
                         HAND-ROLLED second one, 342 lines below it in
                         the same file),
                         dungeonContext.js:997, world.js:2028,
-                        exterior.js:2266. It is the only window TWO
+                        exterior.js:2274. It is the only window TWO
                         enhanced screens already push - the sheet's
                         button and the pack's USE hand-off, whose
                         close-then-hand-over ordering U55 got
