@@ -296,7 +296,10 @@ test('U41: the world host mounts the art window and keeps performFastTravel\'s o
   // PIN MOVED AGAIN (SIB2, 2026-09-08), 3200 -> 4000: the core's head
   // carries the `modEvent` note (which of the Seasons mod's events a
   // teleport IS in DFU) and the load arm beside the travel arm.
-  const core = src.slice(k, k + 4000);
+  // PIN MOVED (BLOOD1 AUDIT 2), 4000 -> 4900: the sweep clears the
+  // splash pool and its ring beside the missiles and the arrows, with
+  // its own note, above the needles.
+  const core = src.slice(k, k + 4900);
   for (const needle of ['destroyPixel(bx, by)', 'state.init(px, py)', 'buildPixel(first.px']) {
     assert.ok(core.includes(needle), `the core carries ${needle}`);
   }
