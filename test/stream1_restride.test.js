@@ -50,11 +50,44 @@ test('STREAM1: the expensive direction is the one that is queued, and it is expe
   const samples = new Float32Array(hDim * hDim);
   for (let x = 0; x < hDim; x++) for (let z = 0; z < hDim; z++) samples[x * hDim + z] = 0.5 + 0.006 * Math.sin(x * 0.025) * Math.cos(z * 0.02);
   const ghost = () => 0.5;
+  // HOW IT IS MEASURED, and why it is measured that way. This arm took
+  // the MEDIAN of nine single builds, and it went red on a CI runner
+  // at 1.34 ms against 0.54 - the stride-1 figure matching this
+  // machine's exactly, and the stride-4 one FIVE TIMES its honest
+  // cost. Nothing about the code had changed: a stride-4 build is
+  // about 0.1 ms, which is below a shared runner's noise floor, and a
+  // median of nine does not survive a scheduler that preempts a few of
+  // them. The denominator was inflated, so the ratio collapsed.
+  //
+  // Two changes, and they are the standard two for a microbenchmark:
+  //
+  //   TIME A BATCH, so the measured unit is milliseconds rather than
+  //   tenths of one and the noise is proportionally smaller;
+  //
+  //   take the MINIMUM across repetitions, because noise only ever
+  //   ADDS time - the fastest run is the closest thing to the work
+  //   itself, where a median is a statement about the machine's mood.
+  //
+  // The ratio this reads on an idle machine is 11-22x. The bar below
+  // is 4x, which is not a tight fit round a measurement; it is the
+  // loosest bar that still says "far dearer", and it now has three
+  // orders of headroom over the noise that broke it.
+  // Twenty-four puts the stride-4 window - the one that broke - at
+  // about 2.5 ms rather than 0.1, so the ratio can only collapse if a
+  // THREEFOLD inflation survives the best of seven batches instead of
+  // a few preempted singles moving a median. The whole arm costs
+  // about a quarter of a second.
+  const BATCH = 24;
   const time = (stride) => {
-    for (let i = 0; i < 5; i++) buildTerrainGrid(samples, stride, ghost);
-    const xs = [];
-    for (let i = 0; i < 9; i++) { const t = process.hrtime.bigint(); buildTerrainGrid(samples, stride, ghost); xs.push(Number(process.hrtime.bigint() - t) / 1e6); }
-    return xs.sort((a, b) => a - b)[4];
+    for (let i = 0; i < 5; i++) buildTerrainGrid(samples, stride, ghost);   // warm the JIT before anything is timed
+    let best = Infinity;
+    for (let r = 0; r < 7; r++) {
+      const t = process.hrtime.bigint();
+      for (let i = 0; i < BATCH; i++) buildTerrainGrid(samples, stride, ghost);
+      const ms = Number(process.hrtime.bigint() - t) / 1e6 / BATCH;
+      if (ms < best) best = ms;
+    }
+    return best;
   };
   const one = time(1), four = time(4);
   assert.ok(one > four * 4, `a stride-1 grid is far dearer than a stride-4 one (${one.toFixed(2)} ms against ${four.toFixed(2)})`);

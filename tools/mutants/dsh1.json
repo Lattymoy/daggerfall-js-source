@@ -1,0 +1,128 @@
+[
+ {
+  "name": "DSH1-the-mod-s-fog-colour-goes-back-in-raw-and-the-red-line-returns",
+  "file": "src/render/dynamicSkiesBridge.js",
+  "old": "    horizon: modHorizon(st.clearColor ?? base.horizon, base.cloudShade, row ?? WEATHER_SKY[weather] ?? WEATHER_SKY.sunny),",
+  "new": "    horizon: st.clearColor ?? base.horizon,",
+  "tests": ["test/dsh1_horizon.test.js", "test/ds2_cloudsUnderMod.test.js"]
+ },
+ {
+  "name": "DSH1-the-greying-reads-the-weather-s-NAME-and-ignores-the-eased-row",
+  "file": "src/render/dynamicSkiesBridge.js",
+  "old": "row ?? WEATHER_SKY[weather] ?? WEATHER_SKY.sunny),",
+  "new": "WEATHER_SKY[weather] ?? WEATHER_SKY.sunny),",
+  "tests": ["test/dsh1_horizon.test.js"]
+ },
+ {
+  "name": "DSH1-the-deck-fades-into-its-LIT-colour-instead-of-its-shade",
+  "file": "src/render/dynamicSkiesBridge.js",
+  "old": "modHorizon(st.clearColor ?? base.horizon, base.cloudShade,",
+  "new": "modHorizon(st.clearColor ?? base.horizon, base.cloudLit,",
+  "tests": ["test/dsh1_horizon.test.js", "test/ds2_cloudsUnderMod.test.js"]
+ },
+ {
+  "name": "DSH1-the-port-s-own-horizon-no-longer-stands-in-when-the-mod-has-no-colour",
+  "file": "src/render/dynamicSkiesBridge.js",
+  "old": "modHorizon(st.clearColor ?? base.horizon, base.cloudShade,",
+  "new": "modHorizon(st.clearColor ?? [0, 0, 0], base.cloudShade,",
+  "tests": ["test/ds2_cloudsUnderMod.test.js"]
+ },
+ {
+  "name": "DSH1-the-greying-is-inverted-so-a-clear-sky-is-the-one-that-loses-the-mod-s-colour",
+  "file": "src/render/dynamicSkiesBridge.js",
+  "old": "  const g = Math.max(0, Math.min(1, w?.grey ?? 0));",
+  "new": "  const g = 1 - Math.max(0, Math.min(1, w?.grey ?? 0));",
+  "tests": ["test/dsh1_horizon.test.js"]
+ },
+ {
+  "name": "DSH1-the-greyness-is-never-clamped-so-a-row-past-one-overshoots-the-shade",
+  "file": "src/render/dynamicSkiesBridge.js",
+  "old": "  const g = Math.max(0, Math.min(1, w?.grey ?? 0));",
+  "new": "  const g = w?.grey ?? 0;",
+  "tests": ["test/dsh1_horizon.test.js"]
+ },
+ {
+  "name": "DSH1-a-missing-row-reads-as-fully-grey-instead-of-not-at-all",
+  "file": "src/render/dynamicSkiesBridge.js",
+  "old": "  const g = Math.max(0, Math.min(1, w?.grey ?? 0));",
+  "new": "  const g = Math.max(0, Math.min(1, w?.grey ?? 1));",
+  "tests": ["test/dsh1_horizon.test.js"]
+ },
+ {
+  "name": "DSH1-a-missing-shade-crashes-instead-of-standing-the-mod-s-colour",
+  "file": "src/render/dynamicSkiesBridge.js",
+  "old": "  if (g === 0 || !shade) return modColor;",
+  "new": "  if (g === 0) return modColor;",
+  "tests": ["test/dsh1_horizon.test.js"]
+ },
+ {
+  "name": "DSH1-the-mix-is-a-half-step-so-the-greying-never-reaches-the-lid",
+  "file": "src/render/dynamicSkiesBridge.js",
+  "old": "    modColor[0] + (shade[0] - modColor[0]) * g,",
+  "new": "    modColor[0] + (shade[0] - modColor[0]) * g * 0.5,",
+  "tests": ["test/dsh1_horizon.test.js", "test/ds2_cloudsUnderMod.test.js"]
+ },
+ {
+  "name": "DSH1-the-green-channel-takes-the-red-s-mix-so-the-colour-skews",
+  "file": "src/render/dynamicSkiesBridge.js",
+  "old": "    modColor[1] + (shade[1] - modColor[1]) * g,",
+  "new": "    modColor[1] + (shade[0] - modColor[1]) * g,",
+  "tests": ["test/dsh1_horizon.test.js", "test/ds2_cloudsUnderMod.test.js"]
+ },
+ {
+  "name": "DSH1-the-lid-discards-at-the-horizon-again-and-the-mod-s-strip-comes-through",
+  "file": "src/render/volumetricClouds.js",
+  "old": "  if (el <= -${HORIZON_SKIRT}) discard;",
+  "new": "  if (el <= 0.0) discard;",
+  "tests": ["test/dsh1_horizon.test.js", "test/volumetricClouds.test.js"]
+ },
+ {
+  "name": "DSH1-the-skirt-is-narrower-than-the-strip-it-exists-to-cover",
+  "file": "src/render/volumetricClouds.js",
+  "old": "export const HORIZON_SKIRT = 0.012;",
+  "new": "export const HORIZON_SKIRT = 0.004;",
+  "tests": ["test/dsh1_horizon.test.js", "test/volumetricClouds.test.js"]
+ },
+ {
+  "name": "DSH1-the-skirt-swallows-the-whole-ground-half",
+  "file": "src/render/volumetricClouds.js",
+  "old": "export const HORIZON_SKIRT = 0.012;",
+  "new": "export const HORIZON_SKIRT = 0.5;",
+  "tests": ["test/dsh1_horizon.test.js", "test/volumetricClouds.test.js"]
+ },
+ {
+  "name": "DSH1-the-skirt-samples-off-the-end-of-the-map-instead-of-holding-the-bottom-row",
+  "file": "src/render/volumetricClouds.js",
+  "old": "  vec2 uv = vec2(az / (2.0 * PI), max(el, 0.0) / (0.5 * PI));   // DSH1: the bottom row over the skirt",
+  "new": "  vec2 uv = vec2(az / (2.0 * PI), el / (0.5 * PI));",
+  "tests": ["test/dsh1_horizon.test.js", "test/volumetricClouds.test.js"]
+ },
+ {
+  "name": "DSH1-the-near-early-out-goes-back-to-clear-sky-and-the-last-quarter-degree-opens",
+  "file": "src/render/volumetricClouds.js",
+  "old": "  if (dir.y <= 0.004) { outColor = vec4(uHorizonColor, 0.0); return; }",
+  "new": "  if (dir.y <= 0.004) { outColor = vec4(0.0, 0.0, 0.0, 1.0); return; }",
+  "tests": ["test/dsh1_horizon.test.js"]
+ },
+ {
+  "name": "DSH1-the-near-early-out-covers-but-with-nothing-in-it",
+  "file": "src/render/volumetricClouds.js",
+  "old": "  if (dir.y <= 0.004) { outColor = vec4(uHorizonColor, 0.0); return; }",
+  "new": "  if (dir.y <= 0.004) { outColor = vec4(0.0, 0.0, 0.0, 0.0); return; }",
+  "tests": ["test/dsh1_horizon.test.js"]
+ },
+ {
+  "name": "DSH1-the-two-early-outs-disagree-so-the-lid-seams-where-one-takes-over",
+  "file": "src/render/volumetricClouds.js",
+  "old": "  if (t0 > 120000.0) { outColor = vec4(uHorizonColor, 0.0); return; }",
+  "new": "  if (t0 > 120000.0) { outColor = vec4(uHorizonColor, 1.0); return; }",
+  "tests": ["test/dsh1_horizon.test.js"]
+ },
+ {
+  "name": "DSH1-the-greying-is-done-in-the-controller-instead-of-the-bridge",
+  "file": "src/scenes/shared.js",
+  "old": "import { cloudsStateUnderMod, dynamicMoonState, dynamicMoonlight } from '../render/dynamicSkiesBridge.js';",
+  "new": "import { cloudsStateUnderMod, dynamicMoonState, dynamicMoonlight, modHorizon } from '../render/dynamicSkiesBridge.js';",
+  "tests": ["test/dsh1_horizon.test.js"]
+ }
+]

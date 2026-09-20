@@ -11,7 +11,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { cloudsStateUnderMod, dynamicMoonState } from '../src/render/dynamicSkiesBridge.js';
-import { skyState } from '../src/render/enhancedSky.js';
+import { skyState, WEATHER_SKY } from '../src/render/enhancedSky.js';   // DSH1: the row's greyness
 import { MATERIAL_DEFAULTS } from '../src/systems/dynamicSkies.js';
 
 const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
@@ -24,13 +24,32 @@ test('DS2: the clouds’ state under the mod - the port’s colours, the MOD’s
   const base = skyState({ minuteOfDay, weather, seconds: 10, drift: [1, 2] });
   assert.deepEqual(s.sunDir, st.sunDir, 'the sun is the mod’s (SunlightManager’s direction)');
   assert.deepEqual(s.masser, moons.masser); assert.deepEqual(s.secunda, moons.secunda);
-  assert.deepEqual(s.horizon, st.clearColor, 'the horizon the clouds fade to is the mod’s fog colour');
+  // DSH1: the horizon the clouds fade into is the mod's fog colour GREYED
+  // BY THE WEATHER, toward the deck's own shade - `cloudy` is grey 0.25,
+  // so a quarter of the way. Verbatim at grey 0 (sunny) is pinned below.
+  const g = WEATHER_SKY.cloudy.grey;
+  assert.ok(g > 0, 'the row this case runs on has greyness to apply');
+  for (let i = 0; i < 3; i++) {
+    assert.ok(Math.abs(s.horizon[i] - (st.clearColor[i] + (base.cloudShade[i] - st.clearColor[i]) * g)) < 1e-12,
+      'the mod’s fog colour, a `grey` of the way toward the deck’s shade');
+  }
+  const sunny = cloudsStateUnderMod(st, moons, { minuteOfDay, weather: 'sunny', seconds: 10, drift: [1, 2] });
+  assert.deepEqual(sunny.horizon, st.clearColor, 'a clear sky is grey 0 - the mod’s fog colour, untouched');
+  // and the eased row the controller hands wins over the weather's name
+  const eased = cloudsStateUnderMod(st, moons, { minuteOfDay, weather: 'sunny', seconds: 10, drift: [1, 2], row: { ...WEATHER_SKY.sunny, grey: 1 } });
+  assert.deepEqual(eased.horizon.map((v) => Math.round(v * 1e12) / 1e12),
+    cloudsStateUnderMod(st, moons, { minuteOfDay, weather: 'sunny', seconds: 10, drift: [1, 2], row: { ...WEATHER_SKY.sunny, grey: 1 } }).cloudShade.map((v) => Math.round(v * 1e12) / 1e12),
+    'at grey 1 the deck fades into its own shade and the mod’s colour is gone');
   assert.deepEqual(s.cloudLit, base.cloudLit); assert.deepEqual(s.cloudShade, base.cloudShade);
   assert.deepEqual(s.sun, base.sun, 'the port’s palette lights the cloud at the hour');
   assert.equal(s.cloudCover, base.cloudCover);
   // without moons or a clear colour the port's own stand
   const t = cloudsStateUnderMod({ sunDir: [0, 1, 0] }, null, { minuteOfDay, weather });
-  assert.deepEqual(t.horizon, base.horizon); assert.deepEqual(t.masser, base.masser);
+  for (let i = 0; i < 3; i++) {
+    assert.ok(Math.abs(t.horizon[i] - (base.horizon[i] + (base.cloudShade[i] - base.horizon[i]) * g)) < 1e-12,
+      'with no clear colour the port’s own horizon stands in, greyed by the same row');
+  }
+  assert.deepEqual(t.masser, base.masser);
   // and the moon state the world's moonlight takes is the same object the clouds get
   const dyn = { mat: { ...MATERIAL_DEFAULTS }, _sunDir: [0, -0.5, 0], phases: null, moonDirection: (w) => (w === 'Moon' ? [0, 0.7, 0.7] : [0, -1, 0]) };
   const m = dynamicMoonState(dyn, 23 * 60, 0.5);

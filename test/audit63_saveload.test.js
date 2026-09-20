@@ -514,8 +514,8 @@ test('AUDIT 63 F28: the sweep runs in the ONE composer, AFTER the quest machine 
   assert.equal(e3.items.length, 1, 'and a pre-Q4-v save, which carries items but no quest block, is left alone');
   // both hosts hand the entity in; the classic import does NOT sweep
   // (StartFromClassicSave is not LoadGame).
-  assert.match(WORLD, /restoreSessionState\(extras, \{ questBridge, talk: \{ mill: rumorMill, tree: topicTree, session: npcSession \}, entity: playerEntity \}\)/);
-  assert.match(DC, /restoreSessionState\(extras, \{ questBridge: opts\.questBridge, talk: opts\.talkSave, entity: playerEntity \}\)/);
+  assert.match(WORLD, /restoreSessionState\(extras, \{ questBridge, talk: \{ mill: rumorMill, tree: topicTree, session: npcSession \}, entity: playerEntity, spawnLedger: _spawnLedger \}\)/);
+  assert.match(DC, /restoreSessionState\(extras, \{ questBridge: opts\.questBridge, talk: opts\.talkSave, entity: playerEntity, spawnLedger: opts\.spawnLedger\?\.\(\) \?\? null \}\)/);
   assert.equal([...WORLD.matchAll(/removeAllOrphanedItems/g)].length, 0, 'no second copy of the sweep in a host');
 });
 

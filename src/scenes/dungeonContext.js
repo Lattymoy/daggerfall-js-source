@@ -248,6 +248,12 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   const dungeon = layoutDungeon(dfLocation, blocks, getModelPre);
   const remap = (archive) => applyTextureTable(archive, dungeon.textureTable, climateBaseType);
 
+  // SPAWNED-DUNGEONS-TTL: told once, the moment this context is built for a dungeon this client's own
+  // hash synthesized (world/spawnedDungeons.js's `spawned: true` - never true for any real location).
+  // The host wires this to the online room's spawn notice, which is itself a no-op outside a world
+  // room, so it costs nothing offline or in a real dungeon - and nothing at all until a host passes it.
+  if (dfLocation?.spawned) opts.onDungeonSpawned?.();
+
   const drawList = [];
   const dynamicDraws = [];
   // PERF5: THE LEVEL'S STATIC MODELS AS ONE MESH. drawList draws every
@@ -675,7 +681,18 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     for (const l of collectDungeonLights(b.dfBlock)) {
       lights.push({ x: l.x + b.originX, y: l.y, z: l.z + b.originZ, range: l.range });
     }
-    if (b.layout.waterLevel !== 10000) {
+    // WATER OFF IN A SPAWNED DUNGEON (2026-09-20, Mac's patch). A
+    // spawn's water has been reported wrong every time - shown well
+    // below the floor, in patches, reading like a no-clip glitch - and
+    // rather than keep chasing the placement, a spawn simply gets no
+    // water quads. A REAL dungeon is untouched.
+    //
+    // `b.layout.waterLevel` itself is left alone, and that is the
+    // point: `dungeon.blocks` is the TEMPLATE'S own shared array (see
+    // world/spawnedDungeons.js's synthesizeDungeonLocation), so
+    // writing the sentinel into it here would corrupt the real dungeon
+    // this was cloned from and every other spawn sharing that template.
+    if (b.layout.waterLevel !== 10000 && !dfLocation?.spawned) {
       waterQuads.push({
         x: b.originX, z: b.originZ, size: RDB_SIDE,
         y: -b.layout.waterLevel * GLOBAL_SCALE,
@@ -1496,7 +1513,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // owned, and destroy() hands it back (the _prevPassiveHost idiom this
   // file already uses for its other process-global seams). A bare null
   // would not do: on ?world and ?exterior the previous holder is the
-  // host's own townTalk sink (world.js:8016 / exterior.js:3318), set
+  // host's own townTalk sink (world.js:8055 / exterior.js:3318), set
   // once at boot and never again, so nulling on the way out of the
   // first dungeon would silently un-file every mid-screen label above
   // ground for the rest of the session - MC-1's own bug, re-opened.
@@ -3061,8 +3078,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
               // AUDIT 39 (#64) / THE FOUR HOSTS RULE - SHIPPED (wave D):
               // this host was the FOURTH BODY of the player-arrow law
               // and is now the fourth CALLER. combat/arrowFlight.js's
-              // playerArrowHitFoe is the one copy world.js:11104,
-              // exterior.js:4744 and worldModes.js:6299 already ran;
+              // playerArrowHitFoe is the one copy world.js:11174,
+              // exterior.js:4752 and worldModes.js:6305 already ran;
               // the flag said the divergence would bite and it already
               // had. This copy splashed at the ARROW TIP
               // (`[m.pos[0], m.pos[1], m.pos[2]]`) on the claim that
@@ -4364,6 +4381,11 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
    *  Off every block DFU reports playerBlockIndex == -1 and simply
    *  does not call UpdateFog that frame (:349-352); null says so. */
   function blockWaterLevelAt(x, z) {
+    // ...and no water means none of what water implies: this feeds the
+    // underwater fog and the "am I swimming" check, so without it a
+    // spawn would keep the green murk and a half-submerged player with
+    // nothing on screen to explain either.
+    if (dfLocation?.spawned) return 10000;
     for (const b of dungeon.blocks) {
       if (x >= b.originX && x < b.originX + RDB_SIDE && z >= b.originZ && z < b.originZ + RDB_SIDE) {
         return b.layout.waterLevel;
@@ -5228,6 +5250,11 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // dungeon IS that moment.
   signalAutomapReset();
 
+  // SPAWNED-DUNGEONS-TTL: the clear scan's own throttle and its latch - the
+  // host is told ONCE, not once a frame for the rest of the visit.
+  let _clearedCheckT = 0, _clearedSent = false;
+  const CLEARED_CHECK_INTERVAL_S = 5;
+
   const api = {
     // AUDIT 19 / 1:1: SelectCurrentSong's dungeon arm seeds DFRandom with
     // the dungeon record header's Unknown2 XOR the region byte
@@ -5304,6 +5331,21 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
      *  lives here, and the eye is cached for the window's slice. */
     automapTick(dt, eye, fwd) {
       _automapEye = eye;
+      // SPAWNED-DUNGEONS-TTL: "fully cleared" - every foe dead, every loot pile empty - on its own slow
+      // throttle, piggybacked here because every host already calls this each gameplay frame; a new
+      // per-frame call site would be one scenes/dungeon.js and scenes/worldModes.js both have to
+      // remember. It sits AHEAD of the scan's early return below so it still runs on the frames the
+      // automap scan itself skips. Empty lists count as cleared trivially - there is nothing to clear.
+      if (!_clearedSent && opts.onDungeonCleared) {
+        _clearedCheckT += dt;
+        if (_clearedCheckT >= CLEARED_CHECK_INTERVAL_S) {
+          _clearedCheckT = 0;
+          if (foes.every((f) => f.dead) && lootPiles.every((p) => p.items.length === 0)) {
+            _clearedSent = true;
+            opts.onDungeonCleared();
+          }
+        }
+      }
       automapScanT += dt;
       if (automapScanT < SCAN_INTERVAL_S) return;
       automapScanT = 0;
@@ -5696,7 +5738,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         // and talk trio ride in as opts (null in the standalone
         // ?dungeon scene, which mounts no quest machine - the composer
         // writes nulls there, same as every pre-B4 save).
-        ...composeSessionState({ questBridge: opts.questBridge, talk: opts.talkSave }),
+        ...composeSessionState({ questBridge: opts.questBridge, talk: opts.talkSave, spawnLedger: opts.spawnLedger?.() ?? null }),   // TTL1: the spawned-dungeon clocks, from the world host that owns them (null in the standalone ?dungeon scene)
         // AUDIT 26 F222/F223/F101: the pose. The HOST owns yaw/pitch/
         // crouch (opts.pose.read); this context owns the weapon, so
         // weaponDrawn lands here whichever host mounted it.
@@ -5765,7 +5807,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // initAtGameStart never re-runs over the restored machine.
       // AUDIT 63 F28: the orphaned-quest-item sweep rides the ONE
       // composer, so this host runs it too (SaveLoadManager.cs:1518).
-      if (session && restoreSessionState(extras, { questBridge: opts.questBridge, talk: opts.talkSave, entity: playerEntity })) opts.onQuestRestored?.();
+      if (session && restoreSessionState(extras, { questBridge: opts.questBridge, talk: opts.talkSave, entity: playerEntity, spawnLedger: opts.spawnLedger?.() ?? null })) opts.onQuestRestored?.();
       if (extras.world && extras.locationKey === _locationKey) applyWorld(extras.world);
       else if (extras.world) hudText.add('(different dungeon - world state left as built)');   // cross-location travel-on-load pends
       // A1: restorePlayer replaced the automap store, so the live
