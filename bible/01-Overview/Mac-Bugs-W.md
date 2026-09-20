@@ -243,3 +243,81 @@ Campaign `tools/mutants/macbugw4.json`: 6 mutants, 6 dead.
 
 The probe stays, and it earned its keep: it ruled out four suspects in
 one run and then named the fifth the moment there was a fifth to name.
+
+---
+
+## W5: blood doesn't work outside
+
+Mac, 2026-09-20: *"Also blood doesn't work outside"*
+
+### What it was
+
+`bloodMarks.spray` casts a ray straight down from each drop and puts a
+decal where it lands. That ray was `collider.raycastHit`, and
+**`raycastHit` walks the triangle buckets and nothing else** — meshes
+registered with `addMesh`.
+
+Indoors and underground that is the entire world: a floor is a mesh.
+Outside it is not.
+
+| host | collider | where the ground is |
+|---|---|---|
+| `dungeonContext.js:263` | `new Collider(() => -Infinity)` | floor meshes |
+| `interiorContext.js:320` | `new Collider(() => -Infinity)` | floor meshes |
+| `exterior.js:506` | `new Collider(() => GROUND_OFFSET * 0.025)` | **`heightAt`** |
+| `world.js:979` | `new Collider(heightAt)` | **`heightAt`** |
+
+`heightAt` is applied to the **capsule**, in `_resolveSphere`, and
+nowhere else. So every drop cast down outdoors met nothing — and
+*nothing is not an error*: `continue` is the correct answer for
+spatter thrown off a walkway, so the pool under the body took the same
+silent arm. No blood has marked the ground outside since BLOOD1a
+shipped.
+
+The same ray runs the gibs and the drips, so a chunk outdoors fell for
+ever — `gibFly` reads a miss as "still in the air", which is right for
+a thing thrown off a ledge.
+
+This is the month's fault class again, worn one more way: *a law
+written over DFU's own range, asked about the outdoors, answering its
+default.*
+
+### The fix
+
+`Collider.surfaceHit` — **a second door, not a change to the first**.
+Every caller that wants a wall, a ceiling, a head-bump or a line of
+sight wants exactly the buckets, which is why `raycastHit` is
+untouched. `surfaceHit` is that ray plus the `heightAt` floor, **nearer
+wins**, and the floor is only ever met on the way *down*: a walkway
+over a valley still catches what lands on it, the valley still catches
+what misses the walkway, and a ray cast up from below the ground finds
+no surface overhead.
+
+The ground's normal is its own **slope**, by central difference on the
+sampler, because a hillside is a surface and a quad laid flat on a
+hill stands in it. A sampler with no slope answers straight up by
+construction, so the flat case costs four lookups and nothing else.
+
+### What the pins were saying
+
+Every blood-mark stub in `blood1_decals.test.js` answers a floor for
+any downward ray, and one of them calls itself *"an outdoor fight"*.
+That stub is the **indoor** collider wearing an outdoor name — which
+is why forty pins were green while the feature did not exist outside.
+
+The stubs are kept (the ladder is what those arms are about) and the
+new pins drive a **real `Collider`**, built the way the two outdoor
+hosts build theirs, because that is the one thing a stub cannot
+misrepresent. One of them reproduces the bug directly: the same
+ladder, on a collider whose `surfaceHit` is the bare bucket ray, marks
+nothing.
+
+### Not changed, but noticed
+
+`droppedTorches.js:245` casts the same bucket ray to find what a
+thrown torch hit, with a `raycast` fallback that has the same blind
+spot outdoors. It is not what was reported and it is not blood, so it
+is left alone and written down here instead.
+
+Campaign `tools/mutants/macbugw5.json`: 13 mutants, 12 dead, 1
+equivalent as recorded.

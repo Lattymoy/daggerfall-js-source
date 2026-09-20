@@ -106,6 +106,13 @@ function closestPointOnTriangle(p, a, b, c, out) {
   out[2] = a[2] + ab[2] * v + ac[2] * w;
 }
 
+/** MAC-BUG W5: how far apart the two samples of a central difference
+ *  are. Half a unit - wide enough that the terrain sampler's own
+ *  interpolation answers two different heights on a real slope,
+ *  narrow enough that a drop of blood reads the hill it is on rather
+ *  than the one over the ridge. */
+const GROUND_NORMAL_STEP = 0.5;
+
 export class Collider {
   /** @param {(x:number,z:number)=>number} heightAt floor beneath everything */
   constructor(heightAt = () => -Infinity) {
@@ -263,6 +270,63 @@ export class Collider {
       normal = [nx, ny, nz];
     }
     return { dist: best, key: bestKey, normal };
+  }
+
+  /**
+   * MAC-BUG W5 (Mac, 2026-09-20: "blood doesn't work outside") - THE
+   * SAME RAY, PLUS THE GROUND.
+   *
+   * `raycastHit` walks BUCKETS ALONE: triangles, registered by
+   * `addMesh`. That is the whole of the world indoors and underground,
+   * where a floor is a mesh - and it is why every caller that wants a
+   * wall, a ceiling, a head-bump or a line of sight wants exactly
+   * that, and why this is a SECOND door rather than a change to it.
+   *
+   * Outside, the ground is not a mesh. It is `heightAt` - the terrain
+   * sampler in the world host, a flat constant in the exterior one -
+   * applied to the capsule in `_resolveSphere` and nowhere else. So a
+   * ray cast straight down from something standing on the ground hits
+   * NOTHING, and a caller that reads "nothing" as "no surface" is
+   * right indoors and silently wrong in the whole outdoors.
+   *
+   * This answers whichever is NEARER, so a walkway over a valley still
+   * catches what lands on it, and the terrain still catches what
+   * misses the walkway. The floor is only ever met on the way DOWN.
+   *
+   * The ground's normal is its own SLOPE, by central difference on the
+   * sampler rather than a flat up: a hillside is a surface, and a quad
+   * laid flat on a hill stands in it. A sampler with no slope (the
+   * exterior host's constant) answers straight up by construction, so
+   * the flat case costs nothing but the four lookups.
+   */
+  surfaceHit(origin, dir, maxDist, filter = null) {
+    const mesh = this.raycastHit(origin, dir, maxDist, filter);
+    if (!(dir[1] < 0)) return mesh;
+    const floor = this.heightAt(origin[0], origin[2]);
+    if (!Number.isFinite(floor)) return mesh;
+    const d = (origin[1] - floor) / -dir[1];
+    if (!(d >= 0) || d > maxDist) return mesh;
+    if (mesh && Number.isFinite(mesh.dist) && mesh.dist <= d) return mesh;
+    return { dist: d, key: null, normal: this.groundNormal(origin[0], origin[2]) };
+  }
+
+  /** The ground's slope where it is asked, as a unit normal. Central
+   *  difference over GROUND_NORMAL_STEP: the gradient of a height
+   *  field is (-dh/dx, 1, -dh/dz), normalised. A sampler that answers
+   *  a constant - or one that runs off the edge of what is streamed -
+   *  gives straight up, which is the right answer for flat ground and
+   *  the safe one for no ground at all. */
+  groundNormal(x, z) {
+    const h = GROUND_NORMAL_STEP;
+    const hx = this.heightAt(x + h, z) - this.heightAt(x - h, z);
+    const hz = this.heightAt(x, z + h) - this.heightAt(x, z - h);
+    if (!Number.isFinite(hx) || !Number.isFinite(hz)) return [0, 1, 0];
+    // `|| 0` is not belt and braces: -0 over flat ground is a real
+    // answer that compares unequal to 0 and reads as a negative
+    // gradient to anything that tests the sign.
+    const nx = (-hx / (2 * h)) || 0, nz = (-hz / (2 * h)) || 0;
+    const l = Math.hypot(nx, 1, nz) || 1;
+    return [nx / l, 1 / l, nz / l];
   }
 
   /**

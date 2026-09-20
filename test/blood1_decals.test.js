@@ -352,7 +352,13 @@ function rigHitEffects(over = {}) {
     // BLOOD1b: A FLOOR AND NO CEILING - an outdoor fight. One drop in
     // four looks UP now, and a stub that answered every direction
     // would put blood on a sky.
-    collider: () => ({ raycastHit: (from, dir) => (dir[1] < 0 ? { dist: 1.5, normal: [0, 1, 0], key: 'floor' } : null) }),
+    // MAC-BUG W5: and this stub was the bug wearing the bug's own
+    // name. It answers a floor for any downward ray and calls itself
+    // "an outdoor fight" - which is the INDOOR collider, where a floor
+    // is a mesh. The real one outside answers nothing to that ray.
+    // Kept, because the ladder is what these arms are about; the pin
+    // at the bottom of this file drives a REAL Collider instead.
+    collider: () => ({ surfaceHit: (from, dir) => (dir[1] < 0 ? { dist: 1.5, normal: [0, 1, 0], key: 'floor' } : null) }),
     settings: { enabled: () => true, capacity: () => 4, density: () => 1, overkill: () => true },
     texture: () => 'blood-tex',
     // BLOOD1b: THE CHANCE HELD STILL. The spray wobbles each drop's
@@ -427,7 +433,7 @@ test('BLOOD1a: the mark rides the splash’s own call, finds its surface, and a 
   // one tilts - the first cut of these pins used the level collider
   // for everything and could not tell the two apart.
   const tilt = [0, Math.SQRT1_2, Math.SQRT1_2];   // a 45-degree ramp
-  const { fx: slope, marks: slopeMarks } = rigHitEffects({ collider: () => ({ raycastHit: () => ({ dist: 1, normal: tilt }) }) });
+  const { fx: slope, marks: slopeMarks } = rigHitEffects({ collider: () => ({ surfaceHit: () => ({ dist: 1, normal: tilt }) }) });
   slope.showBloodSplash(0, [0, 5, 0], null, { damage: 10, maxHealth: 40 });
   const on = slopeMarks._pool().decals()[0];
   // to a TOLERANCE, not exactly: the module re-normalises what it is
@@ -452,13 +458,13 @@ test('BLOOD1a: the mark rides the splash’s own call, finds its surface, and a 
 test('BLOOD1a: blood over open air leaves no mark, and a host that wires none of it draws what it always drew', () => {
   // NOTHING WITHIN REACH is no mark, not one hanging in space - a body
   // on a bridge with a chasm under it
-  const { fx: over, marks: overMarks } = rigHitEffects({ collider: () => ({ raycastHit: () => ({ dist: Infinity, normal: null }) }) });
+  const { fx: over, marks: overMarks } = rigHitEffects({ collider: () => ({ surfaceHit: () => ({ dist: Infinity, normal: null }) }) });
   over.showBloodSplash(0, [0, 50, 0], null, { damage: 10, maxHealth: 40 });
   assert.equal(overMarks.count(), 0);
   // ...and the reach is a body's height and a bit, because that is how
   // far the floor is from where blood spawns
   assert.equal(MARK_DROP, 3);
-  const { fx: far, marks: farMarks } = rigHitEffects({ collider: () => ({ raycastHit: () => ({ dist: MARK_DROP + 0.01, normal: [0, 1, 0] }) }) });
+  const { fx: far, marks: farMarks } = rigHitEffects({ collider: () => ({ surfaceHit: () => ({ dist: MARK_DROP + 0.01, normal: [0, 1, 0] }) }) });
   far.showBloodSplash(0, [0, 5, 0], null, { damage: 10, maxHealth: 40 });
   assert.equal(farMarks.count(), 0, 'past the reach is past it');
 
@@ -548,13 +554,13 @@ test('BLOOD1a: the collider is a GETTER, and the mark survives the world being s
   // streaming world swaps it again on every pixel load - and this pool
   // outlives all of that. A captured reference would be marking a world
   // that no longer exists within one doorway.
-  let live = { raycastHit: () => ({ dist: 1, normal: [0, 1, 0] }) };
+  let live = { surfaceHit: () => ({ dist: 1, normal: [0, 1, 0] }) };
   const { fx, marks } = rigHitEffects({ collider: () => live });
   fx.showBloodSplash(0, [0, 5, 0], null, { damage: 10, maxHealth: 40 });
   assert.equal(marks.count(), onFloor(sprayCount(30)));
 
   // the world is swapped: the NEW collider is the one asked
-  live = { raycastHit: () => ({ dist: 2, normal: [0, 1, 0] }) };
+  live = { surfaceHit: () => ({ dist: 2, normal: [0, 1, 0] }) };
   fx.showBloodSplash(0, [0, 5, 0], null, { damage: 10, maxHealth: 40 });
   assert.ok(Math.abs(marks._pool().decals().at(-1).pos[1] - (5 - 2 + 0.02)) < 1e-9, 'the live collider, not the one captured at mount');
 
@@ -899,7 +905,7 @@ test('BLOOD1b: a drop over open air falls past it while the pool under the body 
     // the floor stops at x = 0: everything thrown to the left is over
     // the edge (the stub answers a miss), everything to the right lands
     collider: () => ({
-      raycastHit: (from, dir) => {
+      surfaceHit: (from, dir) => {
         if (dir[1] > 0) return null;                    // BLOOD1b: open sky over the walkway
         reach.push(from[0]);
         return from[0] >= 0 ? { dist: 1, normal: [0, 1, 0] } : { dist: Infinity, normal: null };
@@ -1143,7 +1149,7 @@ test('BLOOD1b: a warhammer takes the body apart, and the chunks stain where they
   const floorRig = (over = {}) => rigHitEffects({
     settings: { enabled: () => true, capacity: () => 1024, density: () => 1, overkill: () => true },
     collider: () => ({
-      raycastHit: (from, dir, max) => {
+      surfaceHit: (from, dir, max) => {
         if (dir[1] >= 0) return null;                       // going up: nothing above
         const drop = from[1] / -dir[1];                     // where the ray meets y = 0
         return drop >= 0 && drop <= max ? { dist: drop, normal: [0, 1, 0] } : null;
@@ -1277,7 +1283,7 @@ test('BLOOD1b: a chunk in the air is a QUAD, written rather than rebuilt, and it
     renderer,
     settings: { enabled: () => true, capacity: () => 512, density: () => 1, overkill: () => true },
     collider: () => ({
-      raycastHit: (from, dir, max) => {
+      surfaceHit: (from, dir, max) => {
         if (dir[1] >= 0) return null;
         const drop = from[1] / -dir[1];
         return drop >= 0 && drop <= max ? { dist: drop, normal: [0, 1, 0] } : null;
@@ -1407,7 +1413,7 @@ test('BLOOD1b: blood reaches the CEILING, and what a ceiling holds it eventually
   const rig = (over = {}) => rigHitEffects({
     settings: { enabled: () => true, capacity: () => 1024, density: () => 1, overkill: () => true },
     collider: () => ({
-      raycastHit: (from, dir, max) => {
+      surfaceHit: (from, dir, max) => {
         if (dir[1] > 0) return CEIL - from[1] <= max ? { dist: CEIL - from[1], normal: [0, -1, 0] } : null;
         return from[1] <= max ? { dist: from[1], normal: [0, 1, 0] } : null;   // floor at y = 0
       },
@@ -1448,7 +1454,7 @@ test('BLOOD1b: blood reaches the CEILING, and what a ceiling holds it eventually
   // nothing: blood does not stick to a wall it hit from below.
   const { fx: wall, marks: wallMarks } = rig({
     collider: () => ({
-      raycastHit: (from, dir, max) => (dir[1] > 0
+      surfaceHit: (from, dir, max) => (dir[1] > 0
         ? { dist: 1, normal: [1, 0, 0] }                    // the underside of a stair, near vertical
         : (from[1] <= max ? { dist: from[1], normal: [0, 1, 0] } : null)),
     }),
@@ -1463,7 +1469,7 @@ test('BLOOD1b: blood reaches the CEILING, and what a ceiling holds it eventually
   assert.ok(CEILING_REACH > MARK_DROP);
   const overhead = (h) => rig({
     collider: () => ({
-      raycastHit: (from, dir, max) => (dir[1] > 0
+      surfaceHit: (from, dir, max) => (dir[1] > 0
         ? (h <= max ? { dist: h, normal: [0, -1, 0] } : null)
         : (from[1] <= max ? { dist: from[1], normal: [0, 1, 0] } : null)),
     }),
@@ -1622,7 +1628,7 @@ test('BLOOD1 AUDIT: dispose is TERMINAL, the art may arrive after the throw, and
     drawBillboards: () => {},
   };
   const floor = () => ({
-    raycastHit: (from, dir, max) => (dir[1] < 0 && from[1] <= max ? { dist: from[1], normal: [0, 1, 0] } : null),
+    surfaceHit: (from, dir, max) => (dir[1] < 0 && from[1] <= max ? { dist: from[1], normal: [0, 1, 0] } : null),
   });
   const rig = () => rigHitEffects({
     renderer,
@@ -1688,7 +1694,7 @@ test('BLOOD1 AUDIT: dispose is TERMINAL, the art may arrive after the throw, and
       renderer,
       settings: { enabled: () => true, capacity: () => 256, density: () => 1, overkill: () => false },
       collider: () => ({
-        raycastHit: (from, dir, max) => (dir[1] > 0
+        surfaceHit: (from, dir, max) => (dir[1] > 0
           ? (CEIL - from[1] <= max ? { dist: CEIL - from[1], normal: [0, -1, 0] } : null)
           : (from[1] <= max ? { dist: from[1], normal: [0, 1, 0] } : null)),
       }),
@@ -1796,4 +1802,121 @@ test('MAC-BUG W4: a MARK takes the same light a CHUNK takes - the two passes of 
   // and the probe that measured it is committed, so the next person
   // reads pixels rather than the shader
   assert.match(readFileSync(new URL('../package.json', import.meta.url), 'utf8'), /"blood": "node tools\/bloodProbe\.mjs"/);
+});
+
+// ── MAC-BUG W5 (2026-09-20, Mac: "Also blood doesn't work outside")
+//
+// EVERY STUB IN THIS FILE ANSWERS A FLOOR, and one of them calls
+// itself "an outdoor fight". That is the indoor collider: indoors and
+// underground a floor is a MESH, registered with `addMesh` and found
+// by `raycastHit`, which walks the triangle buckets and nothing else.
+//
+// Outside there is no such mesh. The world host's ground is its
+// terrain sampler and the exterior host's is a flat constant, both
+// handed to `new Collider(heightAt)` and applied to the CAPSULE
+// alone - so a drop cast straight down met nothing, and nothing is
+// the right answer for spatter thrown off a walkway. The pool under
+// the body took that same silent arm, at every hit, outdoors, always.
+//
+// So these pins use a REAL Collider, built the way the two outdoor
+// hosts build theirs, because that is the one thing a stub cannot
+// misrepresent.
+import { Collider } from '../src/player/collider.js';
+const IDENTITY = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
+
+test('MAC-BUG W5: the ground outside is heightAt, and surfaceHit is the ray that knows it', () => {
+  // exterior.js:506 - `new Collider(() => GROUND_OFFSET * 0.025)`,
+  // and not one triangle under the player's feet.
+  const outside = new Collider(() => 0);
+  assert.equal(outside.raycastHit([0, 2, 0], [0, -1, 0], 8).dist, Infinity,
+    'the bucket ray finds nothing outdoors - which is TRUE, and was read as "no surface"');
+  const h = outside.surfaceHit([0, 2, 0], [0, -1, 0], 8);
+  assert.ok(Number.isFinite(h.dist), 'the ground is a surface');
+  assert.ok(Math.abs(h.dist - 2) < 1e-9, 'two units down to a floor at y=0');
+  assert.deepEqual(h.normal, [0, 1, 0], 'flat ground stands up');
+
+  // ...and out of reach is still out of reach, so spatter thrown off a
+  // walkway falls into the dark exactly as it did
+  assert.equal(outside.surfaceHit([0, 50, 0], [0, -1, 0], 8).dist, Infinity);
+  // UP is untouched: a sky is not a ceiling, and the floor is only
+  // ever met on the way down
+  assert.equal(outside.surfaceHit([0, 2, 0], [0, 1, 0], 8).dist, Infinity);
+  // ...and that has to be said about the ray's DIRECTION and not about
+  // the arithmetic, because a ray cast upward from BELOW the ground
+  // would otherwise solve to a positive distance and stick blood to
+  // the underside of the world.
+  assert.equal(outside.surfaceHit([0, -3, 0], [0, 1, 0], 8).dist, Infinity,
+    'no surface overhead when the "surface" is the ground you are under');
+  assert.equal(outside.surfaceHit([0, -3, 0], [0, 1, 0], 8).normal, null);
+
+  // A DUNGEON IS UNCHANGED. dungeonContext.js:263 hands `-Infinity`,
+  // so there is no floor to find and the answer is the bucket ray's,
+  // byte for byte - which is what keeps this a second door rather
+  // than a change to the first.
+  const under = new Collider(() => -Infinity);
+  assert.deepEqual(under.surfaceHit([0, 2, 0], [0, -1, 0], 8), under.raycastHit([0, 2, 0], [0, -1, 0], 8));
+});
+
+test('MAC-BUG W5: nearer wins, so a walkway over a valley still catches what lands on it', () => {
+  // a mesh ONE unit down, over ground FIVE units down
+  const c = new Collider(() => -5);
+  c.addMesh('walkway',
+    [-4, -1, -4, 4, -1, -4, 4, -1, 4, -4, -1, 4],
+    [0, 1, 2, 0, 2, 3], IDENTITY);
+  const on = c.surfaceHit([0, 0, 0], [0, -1, 0], 10);
+  assert.ok(Math.abs(on.dist - 1) < 1e-6, 'the plank is nearer than the valley floor');
+  assert.equal(on.key, 'walkway', 'and it is the plank that answers');
+  // step off the edge and the ground catches it instead
+  const off = c.surfaceHit([9, 0, 9], [0, -1, 0], 10);
+  assert.ok(Math.abs(off.dist - 5) < 1e-6, 'past the plank, the valley floor');
+  assert.equal(off.key, null, 'which is the ground, not a bucket');
+});
+
+test('MAC-BUG W5: a hillside is a surface, so the mark lies on the slope', () => {
+  // a ramp that falls one unit for every two along x
+  const hill = new Collider((x) => -x / 2);
+  const n = hill.groundNormal(0, 0);
+  assert.ok(Math.abs(Math.hypot(n[0], n[1], n[2]) - 1) < 1e-9, 'a unit normal');
+  assert.ok(n[0] > 0, 'the ground falls towards +x, so its normal leans back towards -x... ');
+  assert.ok(Math.abs(n[0] - 0.5 / Math.hypot(0.5, 1, 0)) < 1e-9, '...by exactly the gradient');
+  assert.ok(n[1] > 0, 'and it still points up');
+  // the same slope reaches the hit
+  assert.deepEqual(hill.surfaceHit([0, 3, 0], [0, -1, 0], 8).normal, n);
+  // flat ground costs the four lookups and answers straight up
+  assert.deepEqual(new Collider(() => 7).groundNormal(3, 4), [0, 1, 0]);
+  // and a sampler that runs off what is streamed does not produce a
+  // NaN normal for a decal to be built on. BOTH shapes of "off the
+  // edge": a NaN, and the -Infinity that means "no floor here" -
+  // which is the one that matters, because Infinity/Infinity is NaN
+  // and a NaN normal is a decal with no orientation at all.
+  assert.deepEqual(new Collider(() => NaN).groundNormal(0, 0), [0, 1, 0]);
+  const edge = new Collider((x) => (x > 0 ? -Infinity : 0));
+  assert.deepEqual(edge.groundNormal(0, 0), [0, 1, 0], 'half a sample off the streamed edge is flat, not NaN');
+  for (const v of edge.groundNormal(0, 0)) assert.ok(Number.isFinite(v));
+});
+
+test('MAC-BUG W5: and the blood really lands - the whole ladder, on an outdoor collider', () => {
+  const outside = new Collider(() => 0);
+  const { fx, marks, wrote } = rigHitEffects({
+    collider: () => outside,
+    settings: { enabled: () => true, capacity: () => 64, density: () => 1, overkill: () => true },
+  });
+  // a foe bleeding at head height on open ground - the exact event
+  // that has marked nothing since BLOOD1a shipped
+  fx.showBloodSplash(0, [10, 1.2, 10], null, { damage: 10, maxHealth: 40 });
+  assert.ok(marks.count() > 0, 'blood outside leaves a mark');
+  assert.ok(wrote.length > 0, 'and a slot is written for each that landed');
+  // every drop that landed is ON THE GROUND, not hanging at the
+  // height the foe was hit at
+  for (const w of wrote) {
+    const y = w.floats[1];
+    assert.ok(Math.abs(y) < 0.5, `a drop settled at y=${y}, which is the ground and not the wound`);
+  }
+  // run it against the ray that caused the report and it marks nothing
+  const { fx: old, marks: oldMarks } = rigHitEffects({
+    collider: () => ({ surfaceHit: (from, dir, max) => outside.raycastHit(from, dir, max) }),
+    settings: { enabled: () => true, capacity: () => 64, density: () => 1, overkill: () => true },
+  });
+  old.showBloodSplash(0, [10, 1.2, 10], null, { damage: 10, maxHealth: 40 });
+  assert.equal(oldMarks.count(), 0, 'the bucket ray alone is the bug, reproduced');
 });
