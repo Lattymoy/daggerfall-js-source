@@ -1,0 +1,1175 @@
+[
+  {
+    "name": "BLOOD1a-the-density-slider-can-scale-a-hit-to-nothing",
+    "file": "src/combat/bloodDecals.js",
+    "old": "  return Math.max(1, Math.round(rate * d));",
+    "new": "  return Math.round(rate * d);",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1a-overkill-is-the-200-the-setting-text-claims",
+    "file": "src/combat/bloodDecals.js",
+    "old": "export const OVERKILL_PERCENT = 175;",
+    "new": "export const OVERKILL_PERCENT = 200;",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1a-the-threshold-is-exclusive",
+    "file": "src/combat/bloodDecals.js",
+    "old": "export const isOverkill = (damage, maxHealth) => damagePercent(damage, maxHealth) >= OVERKILL_PERCENT;",
+    "new": "export const isOverkill = (damage, maxHealth) => damagePercent(damage, maxHealth) > OVERKILL_PERCENT;",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1a-a-zero-max-health-divides",
+    "file": "src/combat/bloodDecals.js",
+    "old": "  if (!(maxHealth > 0) || !(damage > 0)) return 0;",
+    "new": "  if (!(damage > 0)) return 0;",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1a-the-floor-basis-collapses",
+    "file": "src/combat/bloodDecals.js",
+    "old": "  const seed = Math.abs(n[1]) > 0.9 ? [0, 0, 1] : [0, 1, 0];",
+    "new": "  const seed = [0, 1, 0];",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1a-the-mark-is-lifted-along-world-up",
+    "file": "src/combat/bloodDecals.js",
+    "old": "        point[0] + basis.normal[0] * SURFACE_LIFT,\n        point[1] + basis.normal[1] * SURFACE_LIFT,\n        point[2] + basis.normal[2] * SURFACE_LIFT,",
+    "new": "        point[0],\n        point[1] + SURFACE_LIFT,\n        point[2],",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1a-the-ring-grows-instead-of-recycling",
+    "file": "src/combat/bloodDecals.js",
+    "old": "    next = (next + 1) % cap;",
+    "new": "    next = next + 1;",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1a-the-origin-shift-is-dropped",
+    "file": "src/combat/bloodDecals.js",
+    "old": "      d.pos[0] += delta[0]; d.pos[1] += delta[1]; d.pos[2] += delta[2];",
+    "new": "      d.pos[0] += delta[0]; d.pos[2] += delta[2];",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1a-size-is-the-half-width",
+    "file": "src/combat/bloodDecals.js",
+    "old": "  const h = decal.size / 2;",
+    "new": "  const h = decal.size;",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1a-a-corner-leaves-the-surface-plane",
+    "file": "src/combat/bloodDecals.js",
+    "old": "    out[o + 1] = py + ry * sx + uy * sy;",
+    "new": "    out[o + 1] = py + ry * sx + uy * sy + 0.05;",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1a-the-uv-corners-are-transposed",
+    "file": "src/combat/bloodDecals.js",
+    "old": "  corner(1, -1, 1, u0, v1);",
+    "new": "  corner(1, -1, 1, u1, v0);",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1a-an-empty-slot-clears-the-whole-buffer",
+    "file": "src/combat/bloodDecals.js",
+    "old": "  out.fill(0, offset, offset + DECAL_FLOATS);",
+    "new": "  out.fill(0);",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1a-the-second-quad-reuses-the-first-quads-vertices",
+    "file": "src/combat/bloodDecals.js",
+    "old": "    const b = q * DECAL_VERTS, o = q * 6;",
+    "new": "    const b = 0, o = q * 6;",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1a-the-decal-pass-writes-depth",
+    "file": "src/render/renderer.js",
+    "old": "    gl.depthMask(false);\n    gl.disable(gl.CULL_FACE);   // a mark on a ceiling is seen from behind its own normal",
+    "new": "    gl.disable(gl.CULL_FACE);   // a mark on a ceiling is seen from behind its own normal",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1a-the-decal-pass-turns-the-depth-test-off",
+    "file": "src/render/renderer.js",
+    "old": "    gl.enable(gl.BLEND);\n    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);",
+    "new": "    gl.enable(gl.BLEND);\n    gl.disable(gl.DEPTH_TEST);\n    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1a-a-placement-rewrites-the-whole-buffer",
+    "file": "src/render/renderer.js",
+    "old": "    gl.bufferSubData(gl.ARRAY_BUFFER, slot * 4 * DECAL_STRIDE, floats);",
+    "new": "    gl.bufferSubData(gl.ARRAY_BUFFER, 0, floats);",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1a-the-renderer-keeps-its-own-copy-of-the-stride",
+    "file": "src/render/renderer.js",
+    "old": "const DECAL_STRIDE = DECAL_FLOATS_PER_VERTEX * 4;",
+    "new": "const DECAL_STRIDE = 36;",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1a-a-bloodless-foe-stains-the-floor",
+    "file": "src/combat/bloodMarks.js",
+    "old": "    if (!marksBlood(bloodIndex)) return null;",
+    "new": "",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1a-the-surface-is-assumed-instead-of-found",
+    "file": "src/combat/bloodMarks.js",
+    "old": "      const at = [fromX, pos[1] + dir[1] * h.dist, fromZ];",
+    "new": "      const at = [fromX, pos[1], fromZ];",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1a-blood-over-open-air-still-marks",
+    "file": "src/combat/bloodMarks.js",
+    "old": "      if (!h || !Number.isFinite(h.dist) || h.dist > reach) continue;",
+    "new": "      if (!h) continue;",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1a-the-mark-takes-the-surfaces-normal-from-nowhere",
+    "file": "src/combat/bloodMarks.js",
+    "old": "      const d = _pool.place(at, h.normal ?? (up ? DOWN : [0, 1, 0]), { size: dropSize(i, rate, rng) });",
+    "new": "      const d = _pool.place(at, [0, 1, 0], { size: dropSize(i, rate, rng) });",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1a-a-mode-change-frees-the-ring-instead-of-blanking-it",
+    "file": "src/combat/bloodMarks.js",
+    "old": "    for (const d of _pool.decals()) {\n      clearDecalQuad(_scratch, 0);\n      renderer.writeDecalSlot(_batch, d.slot, _scratch);\n    }",
+    "new": "",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1a-the-draw-runs-without-art",
+    "file": "src/combat/bloodMarks.js",
+    "old": "    if (_batch && _pool && _pool.count && tex) { renderer.drawDecals(_batch, tex); drew = true; }",
+    "new": "    if (_batch && _pool && _pool.count) { renderer.drawDecals(_batch, tex); drew = true; }",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1a-the-mark-size-reads-a-second-copy-of-the-ladder",
+    "file": "src/combat/bloodDecals.js",
+    "old": "  const lo = ladderRate(0), hi = RATE_MAX;",
+    "new": "  const lo = 30, hi = 200;",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1a-the-collider-is-captured-not-asked",
+    "file": "src/combat/bloodMarks.js",
+    "old": "  const liveCollider = () => (typeof collider === 'function' ? collider() : null);",
+    "new": "  const _captured = typeof collider === 'function' ? collider() : null;\n  const liveCollider = () => _captured;",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1a-the-marks-do-not-ride-the-origin-shift",
+    "file": "src/scenes/hitEffects.js",
+    "old": "      marks?.shiftOrigin?.(offset);",
+    "new": "",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1a-a-room-thrown-away-keeps-its-blood",
+    "file": "src/scenes/hitEffects.js",
+    "old": "      marks?.clear?.();   // BLOOD1a: a room thrown away takes its blood with it, on the call every host already makes",
+    "new": "",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1a-the-marks-draw-OVER-the-billboards",
+    "file": "src/scenes/world.js",
+    "old": "    bloodMarks.draw(camRight, UP_Y);   // BLOOD1a: the marks go down BEFORE the billboards, so a body standing in its own blood is over it and not under it. ABOVE setFlatWind for the reason its own neighbour gives: WIND3 pins the wind and the draw as ADJACENT.\n    renderer.setFlatWind(floraSwayOn() && wd.on ? [wd.windV[0], wd.windV[1], now / 1000, wd.gust] : null);   // WIND3: the flats lean with the one wind; the flora batches carry their share (sway)\n    renderer.drawBillboards(allBatches, camRight, UP_Y);",
+    "new": "    renderer.setFlatWind(floraSwayOn() && wd.on ? [wd.windV[0], wd.windV[1], now / 1000, wd.gust] : null);   // WIND3: the flats lean with the one wind; the flora batches carry their share (sway)\n    renderer.drawBillboards(allBatches, camRight, UP_Y);\n    bloodMarks.draw(camRight, UP_Y);",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1a-the-shift-moves-the-ring-but-not-the-buffer",
+    "file": "src/combat/bloodMarks.js",
+    "old": "    for (const d of _pool.decals()) {\n      writeDecalQuad(_scratch, 0, d);\n      renderer.writeDecalSlot(_batch, d.slot, _scratch);\n    }\n    return n;",
+    "new": "    return n;",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1a-the-row-is-forced-for-the-room-online",
+    "file": "src/systems/features.js",
+    "old": "    control: Object.freeze({ store: 'prefs', key: 'blood-marks', initial: true, online: 'player' }),",
+    "new": "    control: Object.freeze({ store: 'prefs', key: 'blood-marks', initial: true, online: true }),",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1a-the-capacity-is-unclamped",
+    "file": "src/combat/bloodSwitch.js",
+    "old": "  return Math.max(BLOOD_CAPACITY_MIN, Math.min(BLOOD_CAPACITY_MAX, Math.round(v)));",
+    "new": "  return Math.round(v);",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1a-HARD1-the-hand-off-pool-owns-the-ring-again",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "      bloodMarks.dispose();   // BLOOD1a (HARD1): the ring is OURS - a vertex buffer and a VAO handed to nobody - so it ends here, by its own name and not through the hand-off pool",
+    "new": "      hitEffects.dispose();",
+    "tests": [
+      "test/blood1_decals.test.js",
+      "test/hard1_ownership.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-a-splash-site-forgets-its-blow",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "          bloodCentre(foe.ai.feet, foe.ai.height), null, bloodHit(damage, foe.entity, { fromPlayer: true, weapon: playerWeapon.weapon, swing: playerWeapon.machine?.state, forward: lookDir }));   // BLOOD1b: the blow drives the ladder, and only a PLAYER'S warhammer takes the heavy branch",
+    "new": "          bloodCentre(foe.ai.feet, foe.ai.height));",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-the-civilian-site-forgets-its-blow",
+    "file": "src/scenes/cityGuards.js",
+    "old": "        null, LETHAL_HIT);   // BLOOD1b: one hit kills a civilian, so the blow took ALL of them - the hundred rung, not an overkill",
+    "new": "        );",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-the-hit-shape-lets-a-NaN-through",
+    "file": "src/combat/bloodDecals.js",
+    "old": "    damage: Number.isFinite(damage) ? damage : 0,\n    maxHealth: Number.isFinite(entity?.maxHealth) ? entity.maxHealth : 0,",
+    "new": "    damage: damage ?? 0,\n    maxHealth: entity?.maxHealth ?? 0,",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-a-murdered-civilian-is-an-overkill",
+    "file": "src/combat/bloodDecals.js",
+    "old": "export const LETHAL_HIT = Object.freeze({ damage: 1, maxHealth: 1, fromPlayer: true, heavy: false, throw: Object.freeze([0, 0]) });",
+    "new": "export const LETHAL_HIT = Object.freeze({ damage: 2, maxHealth: 1, fromPlayer: true, heavy: false, throw: Object.freeze([0, 0]) });",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-the-spray-has-no-floor-of-one",
+    "file": "src/combat/bloodDecals.js",
+    "old": "  return Math.max(1, Math.min(SPRAY_MAX, Math.round(rate * SPRAY_SHARE)));",
+    "new": "  return Math.min(SPRAY_MAX, Math.round(rate * SPRAY_SHARE));",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-the-spray-has-no-ceiling",
+    "file": "src/combat/bloodDecals.js",
+    "old": "  return Math.max(1, Math.min(SPRAY_MAX, Math.round(rate * SPRAY_SHARE)));",
+    "new": "  return Math.max(1, Math.round(rate * SPRAY_SHARE));",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-the-reach-does-not-grow-with-the-blow",
+    "file": "src/combat/bloodDecals.js",
+    "old": "  return SPRAY_RADIUS_MIN + (SPRAY_RADIUS_MAX - SPRAY_RADIUS_MIN) * t;",
+    "new": "  return SPRAY_RADIUS_MIN;",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-drop-zero-is-thrown-clear-of-the-body",
+    "file": "src/combat/bloodDecals.js",
+    "old": "  if (!(i > 0)) return [0, 0];",
+    "new": "  if (i < 0) return [0, 0];",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-the-drops-are-laid-by-radius-and-the-middle-fills-in",
+    "file": "src/combat/bloodDecals.js",
+    "old": "  const r = (radius > 0 ? radius : 0) * Math.sqrt(Math.min(1, (i + rng()) / n));",
+    "new": "  const r = (radius > 0 ? radius : 0) * Math.min(1, (i + rng()) / n);",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-the-drops-take-a-random-angle-and-clump",
+    "file": "src/combat/bloodDecals.js",
+    "old": "  const turn = (i / n) * Math.PI * 2 + (rng() - 0.5) * SPRAY_WOBBLE;",
+    "new": "  const turn = rng() * Math.PI * 2;",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-every-drop-is-the-pool-s-own-size",
+    "file": "src/combat/bloodDecals.js",
+    "old": "  const base = markSize(rate) * (i > 0 ? SPATTER_SCALE : 1);",
+    "new": "  const base = markSize(rate);",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-the-drop-sizes-are-not-jittered",
+    "file": "src/combat/bloodDecals.js",
+    "old": "  return Math.max(0, base * (1 + (rng() - 0.5) * 2 * SIZE_JITTER));",
+    "new": "  return Math.max(0, base);",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-a-jitter-can-drive-a-drop-negative",
+    "file": "src/combat/bloodDecals.js",
+    "old": "  return Math.max(0, base * (1 + (rng() - 0.5) * 2 * SIZE_JITTER));",
+    "new": "  return base * (1 + (rng() - 0.5) * 6 * SIZE_JITTER);",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-the-whole-spray-takes-ONE-ray",
+    "file": "src/combat/bloodMarks.js",
+    "old": "      const h = col.raycastHit([fromX, pos[1], fromZ], dir, reach);",
+    "new": "      const h = col.raycastHit([pos[0], pos[1], pos[2]], dir, reach);",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-the-drop-is-laid-where-the-body-is-not-where-the-ray-went",
+    "file": "src/combat/bloodMarks.js",
+    "old": "      const at = [fromX, pos[1] + dir[1] * h.dist, fromZ];",
+    "new": "      const at = [pos[0], pos[1] + dir[1] * h.dist, pos[2]];",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-the-rate-sizes-one-mark-again-instead-of-counting-them",
+    "file": "src/combat/bloodMarks.js",
+    "old": "    return spray(col, pos, sprayCount(rate), sprayRadius(rate), rate, hit?.throw);",
+    "new": "    return spray(col, pos, 1, sprayRadius(rate), rate, hit?.throw);",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-the-ring-and-the-spray-roll-different-dice",
+    "file": "src/combat/bloodMarks.js",
+    "old": "    _pool = createBloodDecalPool({ capacity: cap, rng });",
+    "new": "    _pool = createBloodDecalPool({ capacity: cap });",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-the-burst-REPLACES-the-ladder-s-spray",
+    "file": "src/combat/bloodMarks.js",
+    "old": "      if (heavy && _gibs.length < GIB_COUNT * MAX_BODIES) { _gibs = _gibs.concat(throwGibs(pos, rng)); reseatGibs(); }\n    }\n    const rate = bloodRate(damage, maxHealth, density);\n    return spray(col, pos, sprayCount(rate), sprayRadius(rate), rate, hit?.throw);",
+    "new": "      if (heavy && _gibs.length < GIB_COUNT * MAX_BODIES) { _gibs = _gibs.concat(throwGibs(pos, rng)); reseatGibs(); }\n      const h2 = !!hit?.fromPlayer && !!hit?.heavy;\n      return spray(col, pos, burstCount(h2, density), burstReach(h2, density), burstRate(h2, density), hit?.throw);\n    }\n    const rate = bloodRate(damage, maxHealth, density);\n    return spray(col, pos, sprayCount(rate), sprayRadius(rate), rate, hit?.throw);",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-a-FOE-s-warhammer-takes-the-heavy-branch-too",
+    "file": "src/combat/bloodMarks.js",
+    "old": "      const heavy = !!hit?.fromPlayer && !!hit?.heavy;",
+    "new": "      const heavy = !!hit?.heavy;",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-every-overkill-takes-the-heavy-branch",
+    "file": "src/combat/bloodMarks.js",
+    "old": "      const heavy = !!hit?.fromPlayer && !!hit?.heavy;",
+    "new": "      const heavy = true;",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-the-overkill-row-is-ignored",
+    "file": "src/combat/bloodMarks.js",
+    "old": "    if (overkillOn() && isOverkill(damage, maxHealth)) {",
+    "new": "    if (isOverkill(damage, maxHealth)) {",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-a-host-that-wires-no-overkill-dep-gets-one-anyway",
+    "file": "src/combat/bloodMarks.js",
+    "old": "  const overkillOn = () => !!(settings?.overkill?.() ?? false);",
+    "new": "  const overkillOn = () => !!(settings?.overkill?.() ?? true);",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-the-burst-shares-the-ordinary-spray-s-cap",
+    "file": "src/combat/bloodDecals.js",
+    "old": "  return Math.max(1, Math.min(BURST_DROPS_MAX, Math.round(burstRate(heavy, density) * SPRAY_SHARE)));",
+    "new": "  return sprayCount(burstRate(heavy, density));",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-the-burst-does-not-carry-further",
+    "file": "src/combat/bloodDecals.js",
+    "old": "export const burstReach = (heavy, density = 1) => sprayRadius(burstRate(heavy, density)) * OVERKILL_REACH_SCALE;",
+    "new": "export const burstReach = (heavy, density = 1) => sprayRadius(burstRate(heavy, density));",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-the-reach-scale-is-typed-instead-of-read-off-the-bands",
+    "file": "src/combat/bloodDecals.js",
+    "old": "export const OVERKILL_REACH_SCALE = (OVERKILL_SPEED.min + OVERKILL_SPEED.max)\n  / (ORDINARY_SPEED.min + ORDINARY_SPEED.max);",
+    "new": "export const OVERKILL_REACH_SCALE = 2.5;",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-the-heavy-weapon-is-not-the-warhammer",
+    "file": "src/combat/bloodDecals.js",
+    "old": "export const HEAVY_WEAPON_TEMPLATE = 126;",
+    "new": "export const HEAVY_WEAPON_TEMPLATE = 125;",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-the-burst-has-no-density-floor",
+    "file": "src/combat/bloodDecals.js",
+    "old": "  return Math.max(1, Math.min(BURST_DROPS_MAX, Math.round(burstRate(heavy, density) * SPRAY_SHARE)));",
+    "new": "  return Math.min(BURST_DROPS_MAX, Math.round(burstRate(heavy, density) * SPRAY_SHARE));",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-a-site-that-knows-nothing-claims-the-player-swung",
+    "file": "src/combat/bloodDecals.js",
+    "old": "    fromPlayer: !!fromPlayer,",
+    "new": "    fromPlayer: fromPlayer !== false,",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-a-gib-can-be-thrown-downward",
+    "file": "src/combat/bloodGibs.js",
+    "old": "        GIB_THROW_UP.min + rng() * (GIB_THROW_UP.max - GIB_THROW_UP.min),",
+    "new": "        (rng() * 2 - 1) * GIB_THROW_UP.max,",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-the-gibs-fall-at-the-port-s-walking-gravity",
+    "file": "src/combat/bloodGibs.js",
+    "old": "export const UNITY_GRAVITY = 9.81;",
+    "new": "export const UNITY_GRAVITY = 20;",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-the-gibs-fall-at-plain-gravity",
+    "file": "src/combat/bloodGibs.js",
+    "old": "export const GIB_GRAVITY_SCALE = 3;",
+    "new": "export const GIB_GRAVITY_SCALE = 1;",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-a-gib-never-runs-out-of-time",
+    "file": "src/combat/bloodGibs.js",
+    "old": "  if (g.age >= GIB_LIFE) { g.still = true; return null; }   // the physics is destroyed and it freezes where it lies",
+    "new": "  if (false) { g.still = true; return null; }",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-the-step-commits-the-move-before-the-host-rays-it",
+    "file": "src/combat/bloodGibs.js",
+    "old": "  return {\n    from: [g.pos[0], g.pos[1], g.pos[2]],",
+    "new": "  g.pos[0] += dx; g.pos[1] += dy; g.pos[2] += dz;\n  return {\n    from: [g.pos[0], g.pos[1], g.pos[2]],",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-a-landed-gib-flies-on",
+    "file": "src/combat/bloodGibs.js",
+    "old": "  if (!g || g.still || !(dt > 0)) return null;",
+    "new": "  if (!g || !(dt > 0)) return null;",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-the-drag-is-not-applied",
+    "file": "src/combat/bloodGibs.js",
+    "old": "  const damp = Math.max(0, 1 - GIB_DRAG * dt);",
+    "new": "  const damp = 1;",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-a-gib-sprays-from-exactly-on-the-surface",
+    "file": "src/combat/bloodGibs.js",
+    "old": "export const gibSprayOrigin = (g) => [g.pos[0], g.pos[1] + GIB_SPRAY_LIFT, g.pos[2]];",
+    "new": "export const gibSprayOrigin = (g) => [g.pos[0], g.pos[1], g.pos[2]];",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-the-streaming-world-leaves-the-chunks-behind",
+    "file": "src/combat/bloodMarks.js",
+    "old": "    shiftGibs(_gibs, offset);    // BLOOD1b: a chunk mid-flight is in world space too",
+    "new": "",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-a-room-thrown-away-keeps-the-chunks-in-the-air",
+    "file": "src/combat/bloodMarks.js",
+    "old": "    _gibs = []; reseatGibs();   // BLOOD1b: a room thrown away takes the chunks still in the air with it, and their quads",
+    "new": "",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-an-ordinary-overkill-takes-the-body-apart-too",
+    "file": "src/combat/bloodMarks.js",
+    "old": "      if (heavy && _gibs.length < GIB_COUNT * MAX_BODIES) { _gibs = _gibs.concat(throwGibs(pos, rng)); reseatGibs(); }",
+    "new": "      if (_gibs.length < GIB_COUNT * MAX_BODIES) { _gibs = _gibs.concat(throwGibs(pos, rng)); reseatGibs(); }",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-the-bodies-in-the-air-are-uncapped",
+    "file": "src/combat/bloodMarks.js",
+    "old": "      if (heavy && _gibs.length < GIB_COUNT * MAX_BODIES) { _gibs = _gibs.concat(throwGibs(pos, rng)); reseatGibs(); }",
+    "new": "      if (heavy) { _gibs = _gibs.concat(throwGibs(pos, rng)); reseatGibs(); }",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-a-chunk-lands-where-it-aimed-not-where-it-hit",
+    "file": "src/combat/bloodMarks.js",
+    "old": "      gibLand(g, [\n        step.from[0] + step.dir[0] * h.dist,\n        step.from[1] + step.dir[1] * h.dist,\n        step.from[2] + step.dir[2] * h.dist,\n      ]);",
+    "new": "      gibLand(g, step.to);",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-a-chunk-lands-on-nothing-between-two-worlds",
+    "file": "src/combat/bloodMarks.js",
+    "old": "      if (!h || !Number.isFinite(h.dist) || h.dist > step.dist) { gibFly(g, step); continue; }",
+    "new": "      if (!h) { gibLand(g, null); continue; }",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-a-chunk-leaves-no-splat-where-it-landed",
+    "file": "src/combat/bloodMarks.js",
+    "old": "      if (on() && col) spray(col, gibSprayOrigin(g), sprayCount(rate), sprayRadius(rate), rate);",
+    "new": "",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-a-chunk-s-splat-is-a-whole-blow-s-worth",
+    "file": "src/combat/bloodMarks.js",
+    "old": "    const rate = scaleRate(GIB_SPLASH_RATE, density);",
+    "new": "    const rate = scaleRate(200, density);",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-the-chunks-do-not-ride-the-splash-pool-s-tick",
+    "file": "src/scenes/hitEffects.js",
+    "old": "      marks?.tick?.(dt);",
+    "new": "",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-the-flying-quads-are-rebuilt-every-frame",
+    "file": "src/combat/bloodMarks.js",
+    "old": "    if (_gibBatch) renderer?.moveBillboardBatch?.(_gibBatch, _gibPos);",
+    "new": "    if (_gibBatch) reseatGibs();",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-the-quads-do-not-follow-the-chunks",
+    "file": "src/combat/bloodMarks.js",
+    "old": "    if (_gibBatch) renderer?.moveBillboardBatch?.(_gibBatch, _gibPos);",
+    "new": "",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-the-flight-s-batch-outlives-the-flight",
+    "file": "src/combat/bloodMarks.js",
+    "old": "    if (_gibs.length && _gibs.every((g) => g.still)) { _gibs = []; reseatGibs(); }",
+    "new": "    if (_gibs.length && _gibs.every((g) => g.still)) { _gibs = []; }",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-the-chunks-are-a-batch-each",
+    "file": "src/combat/bloodMarks.js",
+    "old": "      _gibArt.archive, _gibArt.record, GIB_QUAD, _gibPos, { dynamic: true },",
+    "new": "      _gibArt.archive, _gibArt.record, GIB_QUAD, [_gibPos[0]], { dynamic: true },",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-the-chunks-batch-is-not-dynamic",
+    "file": "src/combat/bloodMarks.js",
+    "old": "      _gibArt.archive, _gibArt.record, GIB_QUAD, _gibPos, { dynamic: true },",
+    "new": "      _gibArt.archive, _gibArt.record, GIB_QUAD, _gibPos,",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-a-chunk-wears-the-settled-stain-not-the-burst",
+    "file": "src/combat/bloodMarks.js",
+    "old": "export const GIB_FRAME = 0;",
+    "new": "export const GIB_FRAME = 5;",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-the-chunks-draw-without-a-basis",
+    "file": "src/combat/bloodMarks.js",
+    "old": "    if (_gibBatch && camRight && camUp && renderer?.drawBillboards) {",
+    "new": "    if (_gibBatch && renderer?.drawBillboards) {",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-a-reseat-leaks-the-batch-it-replaces",
+    "file": "src/combat/bloodMarks.js",
+    "old": "    if (_gibBatch) { renderer?.destroyBillboardBatch?.(_gibBatch); _gibBatch = null; }",
+    "new": "    _gibBatch = null;",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-a-moved-batch-keeps-the-sphere-it-was-born-in",
+    "file": "src/render/renderer.js",
+    "old": "    bounds[0] = cx; bounds[1] = cy; bounds[2] = cz;\n    bounds[3] = Math.hypot(hi0 - cx, hi1 - cy, hi2 - cz) + Math.hypot(batch.size.w, batch.size.h) * 0.5;",
+    "new": "    return true;",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-a-moved-batch-s-sphere-forgets-the-quad-s-own-size",
+    "file": "src/render/renderer.js",
+    "old": "    bounds[3] = Math.hypot(hi0 - cx, hi1 - cy, hi2 - cz) + Math.hypot(batch.size.w, batch.size.h) * 0.5;",
+    "new": "    bounds[3] = Math.hypot(hi0 - cx, hi1 - cy, hi2 - cz);",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-a-move-can-write-past-the-buffer",
+    "file": "src/render/renderer.js",
+    "old": "    const count = Math.min(centers.length, batch._quads ?? 0);",
+    "new": "    const count = centers.length;",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-the-move-and-the-birth-keep-two-corner-tables",
+    "file": "src/render/renderer.js",
+    "old": "    const corners = BB_CORNERS;",
+    "new": "    const corners = [[-0.5, -0.5], [-0.5, 0.5], [0.5, 0.5], [0.5, -0.5]];",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-every-batch-in-the-tree-becomes-dynamic",
+    "file": "src/render/renderer.js",
+    "old": "    gl.bufferData(gl.ARRAY_BUFFER, verts, dynamic ? gl.DYNAMIC_DRAW : gl.STATIC_DRAW);",
+    "new": "    gl.bufferData(gl.ARRAY_BUFFER, verts, gl.DYNAMIC_DRAW);",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-nothing-looks-up",
+    "file": "src/combat/bloodDecals.js",
+    "old": "export const looksUp = (i) => i > 0 && (i + 1) % CEILING_EVERY === 0;",
+    "new": "export const looksUp = () => false;",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-drop-zero-looks-up-too",
+    "file": "src/combat/bloodDecals.js",
+    "old": "export const looksUp = (i) => i > 0 && (i + 1) % CEILING_EVERY === 0;",
+    "new": "export const looksUp = (i) => (i + 1) % CEILING_EVERY === 0 || i === 0;",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-a-wall-counts-as-a-ceiling",
+    "file": "src/combat/bloodDecals.js",
+    "old": "  return !!n && -n[1] > CEILING_DOT;",
+    "new": "  return !!n && n[1] < 0;",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-a-floor-counts-as-a-ceiling",
+    "file": "src/combat/bloodDecals.js",
+    "old": "  return !!n && -n[1] > CEILING_DOT;",
+    "new": "  return !!n && Math.abs(n[1]) > CEILING_DOT;",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-the-ceiling-cone-is-a-right-angle",
+    "file": "src/combat/bloodDecals.js",
+    "old": "export const CEILING_DOT = 0.7;",
+    "new": "export const CEILING_DOT = 0.99;",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-a-drop-that-looked-up-marks-whatever-it-met",
+    "file": "src/combat/bloodMarks.js",
+    "old": "      if (up && !isCeilingNormal(h.normal)) continue;",
+    "new": "",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-the-up-ray-reaches-only-as-far-as-the-down-one",
+    "file": "src/combat/bloodMarks.js",
+    "old": "      const dir = up ? UP : DOWN, reach = up ? CEILING_REACH : MARK_DROP;",
+    "new": "      const dir = up ? UP : DOWN, reach = MARK_DROP;",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-a-ceiling-mark-is-laid-at-the-body-s-own-height",
+    "file": "src/combat/bloodMarks.js",
+    "old": "      const at = [fromX, pos[1] + dir[1] * h.dist, fromZ];",
+    "new": "      const at = [fromX, pos[1] - h.dist, fromZ];",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-a-ceiling-never-lets-go",
+    "file": "src/combat/bloodMarks.js",
+    "old": "      if (up && _drips.length < MAX_DRIPS) _drips.push(dripFrom(at));",
+    "new": "",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-the-drips-in-the-air-are-uncapped",
+    "file": "src/combat/bloodMarks.js",
+    "old": "      if (up && _drips.length < MAX_DRIPS) _drips.push(dripFrom(at));",
+    "new": "      if (up) _drips.push(dripFrom(at));",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-a-floor-mark-hangs-a-drip-too",
+    "file": "src/combat/bloodMarks.js",
+    "old": "      if (up && _drips.length < MAX_DRIPS) _drips.push(dripFrom(at));",
+    "new": "      if (_drips.length < MAX_DRIPS) _drips.push(dripFrom(at));",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-a-drip-is-thrown-like-a-chunk",
+    "file": "src/combat/bloodGibs.js",
+    "old": "  return { pos: [point[0], point[1], point[2]], vel: [0, 0, 0], age: 0, still: false };",
+    "new": "  return { pos: [point[0], point[1], point[2]], vel: [0, GIB_THROW_UP.min, 0], age: 0, still: false };",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-a-drip-carries-a-body-s-worth",
+    "file": "src/combat/bloodMarks.js",
+    "old": "    moved += fall(_drips, dt, col, scaleRate(DRIP_SPLASH_RATE, density));",
+    "new": "    moved += fall(_drips, dt, col, rate);",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-the-drips-never-fall",
+    "file": "src/combat/bloodMarks.js",
+    "old": "    moved += fall(_drips, dt, col, scaleRate(DRIP_SPLASH_RATE, density));",
+    "new": "",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-a-room-thrown-away-keeps-the-blood-on-its-ceilings",
+    "file": "src/combat/bloodMarks.js",
+    "old": "    _drips = [];                // ...and the blood its ceilings had not finished with",
+    "new": "",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-the-streaming-world-leaves-the-drips-behind",
+    "file": "src/combat/bloodMarks.js",
+    "old": "    shiftGibs(_drips, offset);   // ...and so is a drip still falling",
+    "new": "",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-a-straight-chop-throws-the-spatter-sideways",
+    "file": "src/combat/bloodDecals.js",
+    "old": "  StrikeDown: Object.freeze([0, 3, 0]),",
+    "new": "  StrikeDown: Object.freeze([3, 0, 0]),",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-left-and-right-are-swapped",
+    "file": "src/combat/bloodDecals.js",
+    "old": "  StrikeLeft: Object.freeze([-7.5, 0, 0]),\n  StrikeRight: Object.freeze([7.5, 0, 0]),",
+    "new": "  StrikeLeft: Object.freeze([7.5, 0, 0]),\n  StrikeRight: Object.freeze([-7.5, 0, 0]),",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-an-upward-cut-throws-it-AWAY",
+    "file": "src/combat/bloodDecals.js",
+    "old": "  StrikeUp: Object.freeze([0, 0, -5]),",
+    "new": "  StrikeUp: Object.freeze([0, 0, 5]),",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-the-swing-s-handedness-is-mirrored",
+    "file": "src/combat/bloodDecals.js",
+    "old": "  const rx = f[2], rz = -f[0];",
+    "new": "  const rx = -f[2], rz = f[0];",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-the-vertical-push-becomes-a-ground-offset",
+    "file": "src/combat/bloodDecals.js",
+    "old": "  return [(rx * p[0] + f[0] * p[2]) * SWING_LEAN, (rz * p[0] + f[2] * p[2]) * SWING_LEAN];",
+    "new": "  return [(rx * p[0] + f[0] * p[1]) * SWING_LEAN, (rz * p[0] + f[2] * p[1]) * SWING_LEAN];",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-the-swing-leans-nothing",
+    "file": "src/combat/bloodDecals.js",
+    "old": "export const SWING_LEAN = 0.08;",
+    "new": "export const SWING_LEAN = 0;",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-a-look-straight-up-throws-the-spray-anyway",
+    "file": "src/combat/bloodDecals.js",
+    "old": "  const f = unit([forward?.[0] ?? 0, 0, forward?.[2] ?? 0]);\n  if (!f) return [0, 0];",
+    "new": "  const f = unit([forward?.[0] ?? 0, 0, forward?.[2] ?? 0]) ?? [0, 0, 1];",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-the-pool-leans-with-the-spatter",
+    "file": "src/combat/bloodMarks.js",
+    "old": "      const fromX = pos[0] + dx + (i > 0 ? tx : 0), fromZ = pos[2] + dz + (i > 0 ? tz : 0);",
+    "new": "      const fromX = pos[0] + dx + tx, fromZ = pos[2] + dz + tz;",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-the-spray-ignores-the-swing",
+    "file": "src/combat/bloodMarks.js",
+    "old": "      const fromX = pos[0] + dx + (i > 0 ? tx : 0), fromZ = pos[2] + dz + (i > 0 ? tz : 0);",
+    "new": "      const fromX = pos[0] + dx, fromZ = pos[2] + dz;",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-the-ladder-s-spray-is-not-thrown-by-the-swing",
+    "file": "src/combat/bloodMarks.js",
+    "old": "    return spray(col, pos, sprayCount(rate), sprayRadius(rate), rate, hit?.throw);",
+    "new": "    return spray(col, pos, sprayCount(rate), sprayRadius(rate), rate);",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-a-melee-site-forgets-the-swing",
+    "file": "src/scenes/cityGuards.js",
+    "old": ", swing: playerWeapon.machine?.state, forward: lookDir })",
+    "new": " })",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD1b-the-shaft-claims-a-swing",
+    "file": "src/combat/arrowFlight.js",
+    "old": "bloodHit(dmg, foe.entity, { fromPlayer: true, weapon: m.weapon ?? null })",
+    "new": "bloodHit(dmg, foe.entity, { fromPlayer: true, weapon: m.weapon ?? null, swing: 'StrikeRight', forward: [0, 0, 1] })",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-the-interior-host-builds-a-pool-and-never-draws-it",
+    "file": "src/scenes/worldModes.js",
+    "old": "    interiorBloodMarks.draw(camRight, UP_Y);",
+    "new": "",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-the-interior-marks-draw-OVER-the-room-s-sprites",
+    "file": "src/scenes/worldModes.js",
+    "old": "    interiorBloodMarks.draw(camRight, UP_Y);\n    renderer.drawBillboards([...interiorCtx.billboardBatches, ...(host.extraBillboards?.() ?? [])], camRight, UP_Y);   // ONLINE1: the peers on the interior's own pass",
+    "new": "    renderer.drawBillboards([...interiorCtx.billboardBatches, ...(host.extraBillboards?.() ?? [])], camRight, UP_Y);   // ONLINE1: the peers on the interior's own pass\n    interiorBloodMarks.draw(camRight, UP_Y);",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-dispose-is-not-terminal",
+    "file": "src/combat/bloodMarks.js",
+    "old": "  const on = () => !_dead && !!(settings?.enabled?.() ?? false)",
+    "new": "  const on = () => !!(settings?.enabled?.() ?? false)",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-dispose-leaves-the-pool-alive",
+    "file": "src/combat/bloodMarks.js",
+    "old": "      _dead = true;   // BLOOD1 AUDIT: and nothing this pool owns is ever built again",
+    "new": "",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-the-art-arriving-late-never-seats-the-batch",
+    "file": "src/combat/bloodMarks.js",
+    "old": "    if (_gibs.length && !_gibBatch && _gibArt) reseatGibs();",
+    "new": "",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-the-batch-is-reseated-every-frame-once-the-art-lands",
+    "file": "src/combat/bloodMarks.js",
+    "old": "    if (_gibs.length && !_gibBatch && _gibArt) reseatGibs();",
+    "new": "    if (_gibs.length && _gibArt) reseatGibs();",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-an-empty-chunk-list-reseats-every-frame",
+    "file": "src/combat/bloodMarks.js",
+    "old": "    if (_gibs.length && _gibs.every((g) => g.still)) { _gibs = []; reseatGibs(); }",
+    "new": "    if (_gibs.every((g) => g.still)) { _gibs = []; reseatGibs(); }",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ],
+    "equivalent": true,
+    "why": "with no chunks and no batch, `reseatGibs` calls NOTHING on the renderer and rebuilds an empty list - so the wasted call is real but unobservable from outside the pool. The guard stays because `[].every()` being TRUE is the trap, and because the drips' line beside it already checks length; the mutation of it is not something a pin can honestly catch."
+  },
+  {
+    "name": "AUDIT-the-flight-builds-a-centre-list-every-frame",
+    "file": "src/combat/bloodMarks.js",
+    "old": "    if (_gibBatch) renderer?.moveBillboardBatch?.(_gibBatch, _gibPos);",
+    "new": "    if (_gibBatch) renderer?.moveBillboardBatch?.(_gibBatch, _gibs.map((g) => g.pos));",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-the-centre-list-is-copied-and-goes-stale",
+    "file": "src/combat/bloodMarks.js",
+    "old": "    _gibPos = _gibs.map((g) => g.pos);   // the chunks' OWN arrays, written through in place",
+    "new": "    _gibPos = _gibs.map((g) => [...g.pos]);",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-a-moved-batch-mints-a-sphere-every-frame",
+    "file": "src/render/renderer.js",
+    "old": "    const bounds = (batch.bounds && batch.bounds.length === 4) ? batch.bounds : (batch.bounds = new Float32Array(4));",
+    "new": "    const bounds = (batch.bounds = new Float32Array(4));",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-a-moved-batch-s-sphere-forgets-the-centres",
+    "file": "src/render/renderer.js",
+    "old": "    bounds[3] = Math.hypot(hi0 - cx, hi1 - cy, hi2 - cz) + Math.hypot(batch.size.w, batch.size.h) * 0.5;",
+    "new": "    bounds[3] = Math.hypot(batch.size.w, batch.size.h) * 0.5;",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-a-gib-writer-replaces-the-array-instead-of-writing-through-it",
+    "file": "src/combat/bloodGibs.js",
+    "old": "  g.pos[0] = step.to[0]; g.pos[1] = step.to[1]; g.pos[2] = step.to[2];",
+    "new": "  g.pos = [step.to[0], step.to[1], step.to[2]];",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  }
+]

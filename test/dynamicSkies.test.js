@@ -706,7 +706,10 @@ test('DS1 seam: the controller stands the mod beside the dome on the one lane, a
 
 test('DS1 renderer: exp2 fog in every world pass, and the flash composes first under the cap of sixteen', () => {
   const r = read('src/render/renderer.js');
-  assert.equal((r.match(/if \(uFogMode == 3\) \{ float f = uFogDensity \* d; return exp\(-f \* f\); \}/g) || []).length, 6, 'every fogFactorAt');
+  // SEVEN since BLOOD1a: the decal pass is a world pass too - a mark on
+  // a floor a hundred units off has to fade into the same fog the floor
+  // does, or it hangs in the murk brighter than the ground it is on.
+  assert.equal((r.match(/if \(uFogMode == 3\) \{ float f = uFogDensity \* d; return exp\(-f \* f\); \}/g) || []).length, 7, 'every fogFactorAt');
   assert.match(r, /mode === 'exp2' \? 3 : 0/);
   assert.match(r, /const FOG_MODE_NAMES = \['off', 'linear', 'exp', 'exp2'\];/);
   // the composition, on a state object with the renderer's fields

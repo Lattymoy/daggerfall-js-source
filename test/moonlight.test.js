@@ -86,7 +86,18 @@ test('EV5: the wiring - three lit shaders, the latched flat tint, the studio, th
   assert.equal((r.match(/uMoonColor \* \(uMoonScale \* mdiff\)/g) || []).length, 3);
   // the flats: the Lambert-average half, INSIDE the _clockLit latch -
   // clockless scenes keep their full-bright flats
-  const litBranch = r.slice(r.indexOf('if (this._clockLit)'), r.indexOf('gl.uniform3f(this.bbUTint, 1, 1, 1)'));
+  // ANCHORED INSIDE drawBillboards, which is what this pin has always
+  // meant. It used to take `indexOf('if (this._clockLit)')` - the
+  // FIRST one in the file - and that held only while the billboard
+  // pass was the first thing to ask the latch. BLOOD1a's decal pass
+  // asks it too, and legitimately (a mark on a dungeon floor is as
+  // dark as the floor, and a clockless scene keeps it bright), which
+  // stretched the slice from one branch to eighty-nine thousand
+  // characters and swept up a second triple. The law is the FLATS'
+  // half, so the slice is the flats' draw.
+  const bbAt = r.indexOf('  drawBillboards(batches');
+  assert.ok(bbAt > 0, 'the billboard pass');
+  const litBranch = r.slice(r.indexOf('if (this._clockLit)', bbAt), r.indexOf('gl.uniform3f(this.bbUTint, 1, 1, 1)'));
   assert.equal((litBranch.match(/mc\[\d\] \* this\._moonScale \* 0\.5/g) || []).length, 3);   // EL1: `mc` is _moonColor as the installed set wants it (_c3)
   assert.match(litBranch, /mc = this\._c3\(this\._moonColor, this\._decB\)/);
   // the studio borrow zeroes the moon and returns it - no moonlight on
