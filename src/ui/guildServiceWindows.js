@@ -209,9 +209,30 @@ const line = (text) => [{ text, center: true }];
  *  the whole MacroHelper table over each one. The tavern's own prompt
  *  is where a live probe finally read one raw, but these three windows
  *  speak the same records and had the same hole. */
-const identity = (entity) => ({
+/** MAC-BUG2 (2026-09-20, Mac, over a screenshot of the temple's cure
+ *  box: "curing disease in temple gives this %cpn thing") - AND IT IS
+ *  U39'S OWN ARGUMENT, ONE TABLE ROW FURTHER ALONG.
+ *
+ *  U39 put `%ra` and `%hnr` here because "DFU expands the WHOLE
+ *  MacroHelper table over each record", and a service window that
+ *  fills only the symbols it expects to see leaves the rest raw. The
+ *  same sentence covers `%cpn` (MacroHelper.cs:69, ShopName) and
+ *  `%cn` (the city), and they were not here - so the cure offer, which
+ *  speaks a TRADE record (cureDiseaseOffer answers
+ *  TRADE_MESSAGE_BASE_ID + an offset, and those records quote the shop
+ *  and the town back at you), printed the token verbatim and an empty
+ *  city: *"%cpn prides itself on having the lowest prices in ."*
+ *
+ *  Both ride `identity` rather than each flow's own ctx for the reason
+ *  the first two do: the next record to quote a symbol nobody expected
+ *  is answered by the table, not by a fix at one call site. The host
+ *  passes what it has; an absent name leaves the token alone, which is
+ *  `expandGuildMacros`'s null rule and is what a service reached from
+ *  the street (no building at all) honestly has to say. */
+const identity = (entity, { shopName = null, cityName = null } = {}) => ({
   race: raceDisplayName(entity?.race),
   honorific: honorificOf(entity?.gender),
+  shopName, cityName,
 });
 
 // ── TRAINING ──────────────────────────────────────────────────────
@@ -223,9 +244,9 @@ const identity = (entity) => ({
  *  the host's - the clock advance and the fatigue drain belong to its
  *  ticker, not to a window. */
 export function buildTrainingFlow(entity, guild, membership, deps) {
-  const { rows, now, applyTraining, onClose, rolls = Math.random, guildTitle = '' } = deps;
+  const { rows, now, applyTraining, onClose, rolls = Math.random, guildTitle = '', shopName = null, cityName = null } = deps;
   const offer = trainingOffer(entity, guild, membership, now());
-  const ctx = { amount: offer.price, gold: goldAmount(entity), guildTitle, playerName: entity.name ?? '', ...identity(entity) };
+  const ctx = { amount: offer.price, gold: goldAmount(entity), guildTitle, playerName: entity.name ?? '', ...identity(entity, { shopName, cityName }) };
   if (offer.kind === 'tooSoon') {
     return new ServiceFlowWindow([{ rows: macroRows(rows, offer.textId, ctx) }], { onClose });
   }
@@ -259,7 +280,7 @@ export function buildTrainingFlow(entity, guild, membership, deps) {
 /** DonationService (:44-83). The field opens pre-filled with 1000 and
  *  is numeric-only. */
 export function buildDonationFlow(entity, store, divineFactionId, deps) {
-  const { rows, onClose, rolls = Math.random, godName = '' } = deps;
+  const { rows, onClose, rolls = Math.random, godName = '', shopName = null, cityName = null } = deps;
   return new ServiceFlowWindow([{
     rows: line(DONATE_HOW_MUCH),
     field: DONATION_FIELD,   // its `initial` IS TextBox.Text = "1000" (:51)
@@ -270,7 +291,7 @@ export function buildDonationFlow(entity, store, divineFactionId, deps) {
       if (amount === null) return null;
       const r = donate(entity, store, divineFactionId, amount, rolls);
       if (r.kind === 'invalid') return null;
-      const ctx = { amount, gold: goldAmount(entity), god: godName, playerName: entity.name ?? '', ...identity(entity) };
+      const ctx = { amount, gold: goldAmount(entity), god: godName, playerName: entity.name ?? '', ...identity(entity, { shopName, cityName }) };
       return [{ rows: macroRows(rows, r.textId, ctx) }];
     },
   }], { onClose });
@@ -284,11 +305,11 @@ export function buildCureDiseaseFlow(entity, guild, membership, deps) {
   // cureDiseaseOffer reads TimeToBecomeVampireOrWerebeast off the
   // entity, exactly as DaggerfallGuildServiceCureDisease.cs:58 reads
   // it off playerEntity. One less thing for a host to remember.
-  const { rows, onClose, quality = 0, regionIndex = 0, now, godName = '', priceAdjustment = 1000 } = deps;
+  const { rows, onClose, quality = 0, regionIndex = 0, now, godName = '', priceAdjustment = 1000, shopName = null, cityName = null } = deps;
   const offer = cureDiseaseOffer(entity, guild, membership, {
     quality, regionIndex, nowClassicMinutes: now(), priceAdjustment,
   });
-  const ctxFor = (amount) => ({ amount, gold: goldAmount(entity), god: godName, playerName: entity.name ?? '', ...identity(entity) });
+  const ctxFor = (amount) => ({ amount, gold: goldAmount(entity), god: godName, playerName: entity.name ?? '', ...identity(entity, { shopName, cityName }) });
 
   if (offer.kind === 'freeHoliday') {
     cureForFree(entity);

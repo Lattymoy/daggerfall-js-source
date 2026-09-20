@@ -3846,6 +3846,7 @@ export function createWorldModes(host) {
       flow = buildTrainingFlow(playerEntity, guild, membership, {
         rows, now, onClose: () => closeSelf(),
         guildTitle: getTitle(membership, playerEntity, guild),
+        shopName: b?.name ?? null, cityName: townTalk?.cityName?.() ?? null,   // MAC-BUG2: NOT_ENOUGH_GOLD_ID is a TRADE record too
         // The clock advance and the fatigue drain are the HOST's -
         // trainSkill hands them back rather than reaching for a ticker.
         applyTraining: (result, price) => {
@@ -3864,10 +3865,15 @@ export function createWorldModes(host) {
       const divine = getDivine(townTalk?.factionDict ?? null, route.buildingFactionId);
       flow = buildDonationFlow(playerEntity, store, DIVINES[divine] ?? route.buildingFactionId, {
         rows, onClose: () => closeSelf(), godName: divine ?? '',
+        shopName: b?.name ?? null, cityName: townTalk?.cityName?.() ?? null,   // MAC-BUG2
       });
     } else if (destination === 'guildServiceCureDisease') {
       flow = buildCureDiseaseFlow(playerEntity, guild, membership, {
         rows, now, onClose: () => closeSelf(), godName,
+        // MAC-BUG2: the cure offer speaks a TRADE record, and those
+        // quote the SHOP and the TOWN back at the player - see the
+        // `identity` note in ui/guildServiceWindows.js.
+        shopName: b?.name ?? null, cityName: townTalk?.cityName?.() ?? null,
         quality: b?.quality ?? 0, regionIndex: b?.regionIndex ?? 0,
         // F113: CalculateCost applies the regional adjustment itself.
         priceAdjustment: regionPriceAdjustment(playerEntity, b?.regionIndex ?? 0),
