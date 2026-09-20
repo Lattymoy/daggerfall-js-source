@@ -2,7 +2,7 @@
   {
     "name": "OL4-the-online-shift-never-opens",
     "file": "src/systems/buildingLocks.js",
-    "old": "  if (shop && online && !classicOpen) {",
+    "old": "  if (relieved && online && !classicOpen) {",
     "new": "  if (false) {",
     "tests": [
       "test/lockpicking.test.js"
@@ -11,7 +11,7 @@
   {
     "name": "OL4-every-building-takes-the-shift",
     "file": "src/systems/buildingLocks.js",
-    "old": "  if (shop && online && !classicOpen) {",
+    "old": "  if (relieved && online && !classicOpen) {",
     "new": "  if (online && !classicOpen) {",
     "tests": [
       "test/lockpicking.test.js"
@@ -20,8 +20,8 @@
   {
     "name": "OL4-offline-takes-the-shift-too",
     "file": "src/systems/buildingLocks.js",
-    "old": "  if (shop && online && !classicOpen) {",
-    "new": "  if (shop && !classicOpen) {",
+    "old": "  if (relieved && online && !classicOpen) {",
+    "new": "  if (relieved && !classicOpen) {",
     "tests": [
       "test/lockpicking.test.js"
     ]
@@ -29,7 +29,7 @@
   {
     "name": "OL4-suns-rest-is-a-real-time-outage",
     "file": "src/systems/buildingLocks.js",
-    "old": "  const classicOpen = classicBuildingOpen(type, hour) && !holidayClosed;\n  if (shop && online && !classicOpen) {",
+    "old": "  const classicOpen = classicBuildingOpen(type, hour) && !holidayClosed;",
     "new": "  const classicOpen = classicBuildingOpen(type, hour) && !holidayClosed;\n  if (shop && online && !classicOpen && !holidayClosed) {",
     "tests": [
       "test/lockpicking.test.js"
@@ -103,6 +103,33 @@
     "file": "src/systems/buildingLocks.js",
     "old": "  return buildingHoursState(buildingType, { ...opts, hour }).open;",
     "new": "  return buildingHoursState(buildingType, { hour, ...opts }).open;",
+    "tests": [
+      "test/lockpicking.test.js"
+    ]
+  },
+  {
+    "name": "OL5-the-guild-hall-is-dropped-from-the-relief",
+    "file": "src/systems/buildingLocks.js",
+    "old": "export const onlineReliefBuilding = (type) => isShop(type) || type === BUILDING_TYPES.GuildHall;",
+    "new": "export const onlineReliefBuilding = (type) => isShop(type);",
+    "tests": [
+      "test/lockpicking.test.js"
+    ]
+  },
+  {
+    "name": "OL5-suns-rest-widened-to-every-relieved-building",
+    "file": "src/systems/buildingLocks.js",
+    "old": "  const holidayClosed = shop && holidayId === HOLIDAYS.Suns_Rest;",
+    "new": "  const holidayClosed = relieved && holidayId === HOLIDAYS.Suns_Rest;",
+    "tests": [
+      "test/lockpicking.test.js"
+    ]
+  },
+  {
+    "name": "OL5-the-guild-arm-stops-threading-the-callers-word",
+    "file": "src/systems/buildingLocks.js",
+    "old": "    return (g?.hallAccessAnytime ?? false) || isBuildingOpen(type, hour, { online });",
+    "new": "    return (g?.hallAccessAnytime ?? false) || isBuildingOpen(type, hour);",
     "tests": [
       "test/lockpicking.test.js"
     ]

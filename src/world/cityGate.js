@@ -29,6 +29,20 @@
 // (:246-250) - a closed gate BLOCKS - and then re-runs
 // mesh.ApplyCurrentClimate(). The hosts supply that swap; this leaf owns
 // the state.
+//
+// OL5 (2026-09-20, Mac: "Town gates online... should all be open at night time
+// online mode"). A closed gate is not decoration - SetOpen swaps the
+// MeshCollider with the mesh (:246-250), so 447 is a wall. Offline that is
+// classic and the player sleeps to morning; online the clock is the world's,
+// nobody can move it, and a shut gate is a walled city sealed for two real
+// hours. So the shared world never lets the gate shut - the same departure
+// OL4 made for a shop door and OL5 makes for a guild hall's, and it is made
+// HERE, in the component, rather than in the two hosts that tick it: a rule
+// `scenes/world.js` and `scenes/exterior.js` each had to remember is a rule
+// one of them forgets. The classic state machine above is untouched; `online`
+// only decides whether NIGHT is a thing this gate is told about, and it is
+// injectable so the law is testable without a clock.
+import { sharedClockOn } from '../systems/worldTick.js';   // the one predicate every clock-derived online law reads (RESTX2, OL3, OL4, ECON1)
 import { CITY_GATE_OPEN_MODEL_ID, CITY_GATE_CLOSED_MODEL_ID } from './rmbLayout.js';
 
 /**
@@ -49,7 +63,22 @@ export function makeCityGate(placedModelId) {
  * @param {boolean} night - WorldTime.Now.IsNight
  *   (DaggerfallDateTime.cs:171-174: Hour < DawnHour || Hour >= DuskHour).
  */
-export function updateCityGate(gate, night) {
+export function updateCityGate(gate, night, { online = sharedClockOn() } = {}) {
+  // OL5: the shared world's arm, and it is NOT "the classic machine with night
+  // forced false". That was the first draft and its own pin killed it. The
+  // classic machine reconciles the FLAG with the MODEL only by cycling - and
+  // `isOpen` is born true whatever the block laid (:19, the header above). A
+  // gate laid CLOSED therefore starts as `isOpen: true` standing on 447, a
+  // wall, and it is the first 18:00 that notices. Take night away and nothing
+  // ever notices: the wall stands for the whole session. So online the law is
+  // stated on the MODEL, which is the thing that blocks, not on the flag:
+  // this gate is open, and it is open now.
+  if (online) {
+    if (gate.isOpen && gate.modelId === CITY_GATE_OPEN_MODEL_ID) return false;
+    gate.isOpen = true;
+    gate.modelId = CITY_GATE_OPEN_MODEL_ID;
+    return true;
+  }
   if (!((night && gate.isOpen) || (!night && !gate.isOpen))) return false;
   gate.isOpen = !gate.isOpen;
   gate.modelId = gate.isOpen ? CITY_GATE_OPEN_MODEL_ID : CITY_GATE_CLOSED_MODEL_ID;

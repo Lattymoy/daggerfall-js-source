@@ -8,7 +8,7 @@
 // arms, which had stood open since E1 and are answered here: the two
 // readers below are wired into the enchant ctx at world.js:3026-3027
 // off the host seam that worldModes.js:1015 and dungeonContext.js:2433
-// register (bible/01-Overview/Port-Ledger.md:669 strikes the pair
+// register (bible/01-Overview/Port-Ledger.md:670 strikes the pair
 // through as closed, V2c 2026-08-27).
 //
 // THE TWO FLAGS ARE SMALL LAWS, verbatim:

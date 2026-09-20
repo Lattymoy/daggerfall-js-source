@@ -6926,6 +6926,56 @@ slice of its own if a peer is ever to loot the watch; the foes' hit
 arm's reach; the striker's routing door pinned by source (an executed
 pin would have to stand world.js's own `dealDamage` closure).
 
+## OL5 (2026-09-20): the town gate and the guild hall, open at night online
+
+**Mac: "Town gates online, guild services, should all be open at night time
+online mode."** OL4's own reasoning, applied to the two subjects it
+deliberately left out. OL4 gave the relief shift to storefronts and its pin
+said so in as many words - "guild access unchanged online". That was the right
+call for one slice and the wrong answer for a player: an online player cannot
+move the shared clock, so any classic schedule is a real-time lockout. A guild
+hall shut at 18:00 is a service nobody can buy for two real hours. A town gate
+is worse, because a gate is not a door - `SetOpen` swaps the MeshCollider along
+with the mesh (GameObjectHelper.cs:246-250), so the closed model is a WALL and
+a walled city at night is sealed with no way to sleep the clock forward.
+
+**The relief is a PREDICATE, not a second table.** `onlineReliefBuilding(type)`
+is the one place the membership is written down, and every caller - the door,
+the people, the shelves - already asks `buildingHoursState`, so naming a type
+there is the whole change. Today it is shops plus the guild hall. Houses stay
+out (a residence is not a service); palaces and ships stay out; temples and
+taverns were never in, because 0/25 means they never closed. Suns Rest remains
+a SHOP closure, so widening the relief did not quietly hand the holiday power
+over guild halls it never had.
+
+**Two things this slice FOUND rather than shipped.**
+
+The first: `buildingIsUnlocked`'s GuildHall arm called `isBuildingOpen(type,
+hour)` with no opts. The function takes an `online` and every other arm passes
+it; this one read the module default instead, so a caller handing
+`buildingIsUnlocked` an explicit `online` was silently ignored by exactly one
+arm. Harmless while guild halls had no relief - the answer was the same either
+way - and a lie the moment they do. It is threaded now, and pinned by driving
+the two answers apart.
+
+The second killed the first draft of the gate law. The obvious online arm is
+"the classic machine with `night` forced false", and it is wrong. `isOpen` is
+born TRUE whatever model the block laid (DaggerfallCityGate.cs:19), and the
+classic machine only ever reconciles that flag with the drawn model by
+CYCLING: a gate the block laid CLOSED starts as `isOpen: true` standing on 447,
+and it is the first 18:00 that notices. Take night away and nothing ever
+notices - the wall stands for the whole session, in the exact mode the change
+was meant to fix. The online arm is therefore stated on the MODEL, which is the
+thing that blocks: this gate is open, and it is open now. Its own pin is what
+caught it.
+
+**The law is the component's.** Two hosts tick city gates - `scenes/world.js`
+and `scenes/exterior.js` - and a rule both of them have to remember is a rule
+one of them forgets. `updateCityGate` owns it; both hosts still call it with a
+bare `night` and are pinned to carry no online rule of their own.
+
+NOT VERIFIED IN A BROWSER: no online session exists in this container.
+
 ## OL4 (2026-09-17): shops staffed around the clock online
 
 **A player complaint relayed by Mac: players could not shop at night
