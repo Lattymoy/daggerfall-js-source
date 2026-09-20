@@ -176,6 +176,7 @@ import { canRest, HAVE_NOT_RENTED_ROOM, REST_TEXT } from '../systems/restSession
 import { isPlayerInTown } from '../systems/nearbyObjects.js';
 import { giveOffer } from '../ui/pendingOffer.js';   // AUDIT 58: DaggerfallUI.GiveOffer, the rung in front of the rest press
 import { plainLines } from './shared.js';   // V5b: TEXT.RSC answers ROWS, and these windows iterate strings
+import { expandGuildRows } from '../systems/guildServiceActions.js';   // MACROS1: a guild window's records through the guild's context (MH1's one walk)
 import { hallAccessAnytime } from '../systems/guildServices.js';
 import { resolveVariantGuild } from '../systems/guildVariants.js';
 import { getBool, getInt } from '../systems/settings.js';   // R1: InstantRepairs / AllowMagicRepairs go LIVE
@@ -3304,7 +3305,12 @@ export function createWorldModes(host) {
     // `store.dict`.
     const store = ensureFactionRep(playerEntity, dict);
     const service = npcServiceKind(pn.factionID);
-    const rows = (id) => townTalk?.lines?.(id) ?? [];
+    // MACROS1 (kurkku on Discord: "Ah, %pcn, your reputation precedes you. %fon always has room for a skillful
+    // knight..."): every record this window shows goes through the guild's macro context, as DFU's
+    // GuildServicePopupWindow hands ITSELF to MacroHelper for every box - %pcn/%pcf are the player, %fon (and %kno,
+    // the same source) is the guild's faction name off FACTION.TXT. MH1's one walk (expandGuildMacros), not a second.
+    const orderName = dict?.get?.(guild.factionId)?.name ?? null;
+    const rows = (id) => expandGuildRows(townTalk?.lines?.(id) ?? [], { playerName: playerEntity.name, factionName: orderName });
     // U24: a window that dispatches to another window must not be
     // nulled by its OWN onClose - DFU closes the popup and pushes the
     // next one, and the port's overlay slot is single. The identity
@@ -6315,7 +6321,7 @@ export function createWorldModes(host) {
           // AUDIT 39r: and the FLASH, which this arm was copied without.
           // An arrow reaches the player through BowDamage ->
           // ApplyDamageToPlayer -> SendDamageToPlayer, the same door as
-          // a blow (world.js:7844's own wave-46 note); the interior
+          // a blow (world.js:7849's own wave-46 note); the interior
           // MELEE hit already flashes inside exteriorFoes, so only this
           // arm - which applies its own damage - was missing it.
           flashPlayerDamage(dmg);   // BA1: RemoveHealth carries the amount
@@ -8616,7 +8622,7 @@ export function createWorldModes(host) {
      *  (world.js's, this file's `interiorWeapon` :538, dungeonContext's
      *  and exterior.js's - which this seam does not reach: that host has no save path at all, its charter exterior.js:3025-3047), and IS1 routed the inside-a-building save to
      *  the WORLD host's composer - which reads its own exterior rig
-     *  unconditionally (world.js:5189). So an F9 pressed in a shop
+     *  unconditionally (world.js:5193). So an F9 pressed in a shop
      *  recorded the street's sheath and hand, and the load wrote them
      *  back into the street's rig; the rig actually in the player's
      *  hands was in no envelope at all.
@@ -8643,7 +8649,7 @@ export function createWorldModes(host) {
      *  presenter for the whole visit) or the interior's? world.js's gate read townTalk's slot alone. */
     deathUp() { return mode === 'dungeon' ? !!dungeonCtx?.deathUp?.() : interiorOverlay instanceof DeathScreen; },
     /** The restore half - and NOT gated on the mode, deliberately.
-     *  worldQuickLoad calls forceExitToExterior FIRST (world.js:5281)
+     *  worldQuickLoad calls forceExitToExterior FIRST (world.js:5285)
      *  and only re-enters the building at :4217, so the mode at apply
      *  time is whatever the LOAD landed in, not whatever the SAVE was
      *  taken in: an outdoor save loaded while the player was indoors
@@ -8653,7 +8659,7 @@ export function createWorldModes(host) {
      *
      *  FLAG ONLY and presence-gated - both laws now stated once, in
      *  combat/playerWeapon.js's applyWeaponPose, with the citation.
-     *  HARD2c: this used to spell them out, and named `world.js:5394`
+     *  HARD2c: this used to spell them out, and named `world.js:5398`
      *  and `dungeonContext.js:5826` for its two sibling copies - lines
      *  that had moved to :4418 and :5457. Three copies of a two-line
      *  law, and even the comment pointing between them had gone stale. */

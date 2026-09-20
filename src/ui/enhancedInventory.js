@@ -110,6 +110,7 @@ import { audio } from '../systems/audio.js';   // MAC-O6: the pack's own transfe
 import { enhancedSoundsOn } from '../systems/enhancedSounds.js';   // ES1: both cues ride the Enhanced sounds switch
 import { SOUND } from '../systems/soundClips.js';
 
+import { expandRowValues } from '../systems/quest/questMacros.js';   // MACROS1: a used item's record through its own context (%map)
 /** Slot id -> where it sits on the body, and what to call it.
  *
  *  THE FIGURE FACES THE READER, so the character's RIGHT arm is drawn
@@ -495,7 +496,7 @@ export function useResultAction(r, { openBook = null, openSpellbook = null, plac
   const out = { kind: 'message', text: null, textId: null,
     repaint: r.kind === 'variant', closesWindow: !!r.closesWindow };
   if (r.text) out.text = r.text;
-  else if (r.textId) out.textId = r.textId;
+  else if (r.textId) { out.textId = r.textId; if (r.macros) out.macros = r.macros; }   // MACROS1: the record's context rides with its id
   else if (r.pending) out.text = USE_PENDING[r.kind] ?? 'Nothing happens.';
   if (r.enchanted && !r.text && !r.textId) out.text = USE_PENDING.enchanted;
   return out;
@@ -1134,7 +1135,7 @@ function use(item, collection = deps.items?.() ?? []) {
     return;
   }
   if (act.textId && deps.rows) {
-    const rows = deps.rows(act.textId) ?? [];
+    const rows = expandRowValues(deps.rows(act.textId) ?? [], act.macros ?? null);   // MACROS1: %map is the map's name
     notice = rows.map((row) => (typeof row === 'string' ? row : row?.text ?? '')).join(' ').trim() || null;
   } else if (act.text) {
     notice = act.text;
@@ -1196,7 +1197,7 @@ function stow(item) {
   // 26 F156: planStore answers `{ ok: true, map: true }` for a
   // MiscItems.Map - the reveal runs, the paper is consumed, nothing
   // lands in the destination. The classic window routes it
-  // (nativeInventory.js:787) and this one did not, so dragging a
+  // (nativeInventory.js:788) and this one did not, so dragging a
   // treasure map out of the pack dropped the paper on the floor and
   // revealed nothing.
   if (plan.map) { use(item, deps.items?.() ?? []); return; }
@@ -1211,7 +1212,7 @@ function stow(item) {
   // again on the other side, and a tip that stays open after every
   // press is the quirk being fixed.
   // AUDIT INV2 B-F1: THE ENTITY AND THE PROVENANCE RIDE, as they do at
-  // the classic window's own call (nativeInventory.js:789). Without them
+  // the classic window's own call (nativeInventory.js:790). Without them
   // `clearLightSourceOnLeave` - AUDIT 26 F157's first statement inside
   // applyTransfer - is a no-op, so a LIT TORCH dropped on the ground
   // went on lighting the player from where it lay. INV2 made that a
@@ -1245,7 +1246,7 @@ function take(item) {
   if (plan.map) { use(item, remoteTarget(deps, sessionState())); return; }
   // MAC-O6 (report: "looting gold/items makes no sound"): DoTransferItem's
   // own cue (:1569 gold's clink, :1583 everything else), which the classic
-  // window plays (nativeInventory.js:855) and this one never did - the ONLY
+  // window plays (nativeInventory.js:856) and this one never did - the ONLY
   // difference between the two windows' calls to planTake/applyTransfer was
   // that this one dropped `plan.sound` on the floor. Played here, ahead of
   // the gold interception below, exactly as DFU's own PlayOneShot sits

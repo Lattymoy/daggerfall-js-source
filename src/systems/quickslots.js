@@ -49,6 +49,7 @@ import { equipItem, equipTableOf, EQUIP_SLOTS, isBrokenItem, isForbiddenEquip, i
 import { isShieldTemplate } from './armorMaterials.js';
 import { itemLongName, conditionPercentage } from './itemInfo.js';
 
+import { expandRowValues } from './quest/questMacros.js';   // MACROS1: a used item's record through its own context (%map)
 /** The slots a player fills. The two consumables are what the diamond's
  *  top and bottom cells show; `swap` is the second weapon the off-hand
  *  cell offers when the off hand is empty. */
@@ -305,7 +306,7 @@ export function useQuickslot(slot, { entity = null, items = null, hooks = {}, sa
   // F9). A potion drunk through a live hook says nothing - the effect
   // is the HUD's, and the count is the slot's.
   const text = res.text
-    ?? (res.textId && hooks.rows ? (hooks.rows(res.textId) ?? []).map((row) => (typeof row === 'string' ? row : row?.text ?? '')).join(' ').trim() : null)
+    ?? (res.textId && hooks.rows ? expandRowValues(hooks.rows(res.textId) ?? [], res.macros ?? null).map((row) => (typeof row === 'string' ? row : row?.text ?? '')).join(' ').trim() : null)   // MACROS1
     ?? (res.pending ? (USE_PENDING[res.kind] ?? 'Nothing happens.') : null)
     ?? (res.enchanted ? USE_PENDING.enchanted : null);
   if (text) say?.(text);

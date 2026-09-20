@@ -3386,7 +3386,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // and dungeonContext.js:2274 mounts the same one, gated on
   // `opts.enchantCtx !== false` because setDefaultEnchantCtx is a
   // session singleton and EC1 already routes THIS host's mount into
-  // that context through modes.dungeonCtx - so worldModes.js:4723
+  // that context through modes.dungeonCtx - so worldModes.js:4729
   // passes false beside its `chargen: false` and only the standalone
   // ?dungeon route mounts its own. S40 filled isResting
   // in - the sentence that stood here said it "stays absent above
@@ -3898,8 +3898,12 @@ export async function bootWorld(canvas, renderer, params, status) {
     // ThievesGuild.cs:114-116 / DarkBrotherhood.cs:107-109 -
     // `GetLocalizedText(noteKey).Replace("%map", name)`, verbatim.
     if (picked) questBridge?.notebook?.addNote(REVEAL_NOTE_TEXT[noteKey]?.replace('%map', picked.name) ?? '');
+    // MACROS1: PlayerGPS.LocationRevealedByMapItem (DiscoverRandomLocation :1092-1095 sets it) - the quest macro
+    // table's %map reads it through the world hook below; it answered null here since the table was written
+    if (picked) _locationRevealedByMapItem = picked.name;
     return picked?.name ?? null;
   };
+  let _locationRevealedByMapItem = null;
 
   let _spellbook = null;   // U42: the live window, for the probe surface
   // PX23: the book's ONE door (ui/spellbookDoor.js). This host hands it
@@ -7034,7 +7038,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // exterior -> the townTalk overlay, interior OR dungeon -> the mode
   // machine's slot. U43-ii shipped the dungeon half: showQuestBox
   // offers the window to `modes.showQuestOverlay` below, and
-  // worldModes answers it in BOTH modes (worldModes.js:7629-7692 -
+  // worldModes answers it in BOTH modes (worldModes.js:7635-7698 -
   // dungeon routes to dungeonCtx.showOverlay), so a dungeon popup is
   // shown rather than logged loudly and dropped.
   // AUDIT 24 (wave 21): DaggerfallMessageBox.Show() is a
@@ -7285,6 +7289,7 @@ export async function bootWorld(canvas, renderer, params, status) {
      *  read this seam since Q4-iv and nothing answered it, so the
      *  port's own "Journal Countdowns" switch did nothing. */
     showClocksAsCountdown: () => getBool('GUI', 'ShowQuestJournalClocksAsCountdown'),
+    locationRevealedByMapItem: () => _locationRevealedByMapItem,   // MACROS1: %map (questMacros.js) - PlayerGPS's field, set by the map reveal above
     getFactionData: (id) => _questStore()?.dict.get(id) ?? null,
     findFactionsOfType: (type) => { const s = _questStore(); return s ? [...s.dict.values()].filter((f) => f.type === type) : []; },
     /** FindFactionByTypeAndRegion (PersistentFactionData.cs:236-265):
@@ -7447,7 +7452,7 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  :3552), so the in-place pass is right for both. Also: C# calls
    *  this whether or not GetQuest found anything - the null-parent arm
    *  is a DFU forum-bug fix INSIDE ExpandQuestMessage, not a caller
-   *  guard, and expandQuestMessage carries it (questMacros.js:478). */
+   *  guard, and expandQuestMessage carries it (questMacros.js:490). */
   const expandQuestTokens = (questID, tokens) => {
     expandQuestMessage(questBridge?.machine.getQuest(questID) ?? null, tokens, true);
     return tokensToString(tokens);

@@ -2697,6 +2697,12 @@ function pauseQuests(body) {
 }
 
 function render() {
+  // MENU-EXIT1 (2026-09-20, rabid.rivas on Discord: "Crash when exiting..." - TypeError reading innerHTML of null):
+  // a click handler may run an ACTION and then repaint - the confirm card's yes runs `onAction('exit')` and repaints
+  // after it - and an action can tear this screen down synchronously (exit unwinds to the front door, destroy()
+  // nulls `app`). A screen that is gone has nothing to paint; the repaint after it was the crash, on every exit
+  // through the confirm.
+  if (!app) return;
   repaintKeepingScroll(app, () => renderInto());
 }
 

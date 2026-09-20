@@ -1,0 +1,65 @@
+[
+  {
+    "name": "X1-menu-guard-removed",
+    "file": "src/ui/enhancedMenu.js",
+    "old": "  if (!app) return;\n  repaintKeepingScroll(app, () => renderInto());",
+    "new": "  repaintKeepingScroll(app, () => renderInto());",
+    "tests": [
+      "test/fieldbugs_x.test.js"
+    ]
+  },
+  {
+    "name": "X2-map-macro-dropped",
+    "file": "src/systems/useItem.js",
+    "old": "{ kind: 'map', textId: MAP_TEXT_ID, revealed, macros: { map: revealed } }",
+    "new": "{ kind: 'map', textId: MAP_TEXT_ID, revealed }",
+    "tests": [
+      "test/fieldbugs_x.test.js"
+    ]
+  },
+  {
+    "name": "X2-inventory-drops-the-macro",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "else if (r.textId) { out.textId = r.textId; if (r.macros) out.macros = r.macros; }",
+    "new": "else if (r.textId) out.textId = r.textId;",
+    "tests": [
+      "test/fieldbugs_x.test.js"
+    ]
+  },
+  {
+    "name": "X2-rows-shape-lost",
+    "file": "src/systems/quest/questMacros.js",
+    "old": "    : row && typeof row === 'object' ? { ...row, text: expandMacroValues(row.text ?? '', values) } : row));",
+    "new": "    : row && typeof row === 'object' ? expandMacroValues(row.text ?? '', values) : row));",
+    "tests": [
+      "test/fieldbugs_x.test.js"
+    ]
+  },
+  {
+    "name": "X2-world-hook-unanswered",
+    "file": "src/scenes/world.js",
+    "old": "    if (picked) _locationRevealedByMapItem = picked.name;\n",
+    "new": "",
+    "tests": [
+      "test/fieldbugs_x.test.js"
+    ]
+  },
+  {
+    "name": "X3-fon-dropped",
+    "file": "src/systems/guildServiceActions.js",
+    "old": "    fon: factionName, kno: factionName,\n",
+    "new": "",
+    "tests": [
+      "test/fieldbugs_x.test.js"
+    ]
+  },
+  {
+    "name": "X3-join-rows-verbatim-again",
+    "file": "src/scenes/worldModes.js",
+    "old": "const rows = (id) => expandGuildRows(townTalk?.lines?.(id) ?? [], { playerName: playerEntity.name, factionName: orderName });",
+    "new": "const rows = (id) => townTalk?.lines?.(id) ?? [];",
+    "tests": [
+      "test/fieldbugs_x.test.js"
+    ]
+  }
+]

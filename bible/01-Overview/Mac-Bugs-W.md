@@ -321,3 +321,74 @@ is left alone and written down here instead.
 
 Campaign `tools/mutants/macbugw5.json`: 13 mutants, 12 dead, 1
 equivalent as recorded.
+
+
+---
+
+# MAC-BUGS X (2026-09-20) — three from Discord
+
+Mac, three screenshots: rabid.rivas *"Crash when exiting..."*, kurkku
+*"A finely drawn vellum reveals the secret location of %map, which you
+record."*, kurkku *"same kind of thing"* — *"Ah, %pcn, your reputation
+precedes you. %fon always has room for a skillful knight of high moral
+standing."*
+
+## X1 — MENU-EXIT1: a repaint after the action that tore the screen down
+
+**What the player saw.** `TypeError: can't access property "innerHTML",
+j is null` in the enhanced menu, on the way out of a game.
+
+**Why.** The confirm card's yes runs the confirmed action and then
+repaints: `f(); render();`. For "Leave this game" the action is
+`onAction('exit')`, which unwinds to the front door and destroys the
+menu synchronously — `destroy()` nulls `app` — and `renderInto` began
+with `app.innerHTML = ''`. Every exit through the confirm crashed at
+the last line of the handler.
+
+**Fix.** `render()` answers nothing for a screen that is gone (`if
+(!app) return`). The handler order stands — the action first, as DFU's
+yes-button — because the guard belongs at the one entry every handler
+repaints through, not in each handler. Pinned by source in
+`test/fieldbugs_x.test.js`; the mutant (guard removed) dies.
+
+## X2 — MACROS1 `%map`: the record was shown, the context was not
+
+**What the player saw.** Record 499 verbatim after reading a map.
+
+**Why.** `useItem`'s map arm answers `{ textId: 499, revealed }` and
+the three consumers of a textId (the enhanced inventory, the native
+inventory, the quick slots) hand `lines(499)` straight to the box. DFU's
+box runs MacroHelper with `PlayerGPS.LocationRevealedByMapItem`. The
+quest macro table's own `%map` read a world hook
+(`locationRevealedByMapItem`) that no host ever provided, so a quest
+message with `%map` printed `%map[nullMCP]` as well.
+
+**Fix.** The outcome carries `macros: { map: revealed }`, every textId
+consumer expands its rows with the outcome's macros
+(`questMacros.expandRowValues` — a row keeps its shape and its
+`center`), and the map reveal sets the field the world hook answers.
+
+## X3 — MACROS1 `%pcn`/`%fon`: the guild window's rows were verbatim
+
+**What the player saw.** The knightly order's invitation with the
+player's name and the order's name as tokens.
+
+**Why.** The join flow's `rows` was `townTalk.lines(id)` — TEXT.RSC
+rows, no context — while DFU's `GuildServicePopupWindow` hands *itself*
+to MacroHelper for every box it shows (`%fon`/`%kno` are the guild's
+`FactionOrderName`, `%pcn` the player). MAC-BUGS W1's lesson one symbol
+on: MH1's `expandGuildMacros` was filled for the symbols somebody
+expected, and `%fon` was not among them.
+
+**Fix.** `expandGuildMacros` takes `factionName` (→ `%fon`, `%kno`);
+`expandGuildRows` maps a record through it; the join flow's rows go
+through it with the player's name and the guild's FACTION.TXT name.
+One walk, as MH1 meant. Two other verbatim `rows` sites stand
+(the witches' coven window, the repair list) — no report names them
+and their records were not read for macros here; they are the next
+place this class will be found.
+
+**Pins.** `test/fieldbugs_x.test.js` (4). Mutants
+(`tools/mutants/fieldbugs_x.json`): the guard removed, the map's macro
+dropped, the inventory dropping it, the row shape lost, the world hook
+unanswered, `%fon` dropped, the join rows verbatim again — 7, all dead.

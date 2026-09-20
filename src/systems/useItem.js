@@ -315,8 +315,11 @@ export function useItem(item, collection, {
       const i = collection.indexOf(item);
       if (i >= 0) collection.splice(i, 1);   // RemoveItem, not RemoveOne
       const revealed = revealMap();
+      // MACROS1: record 499 says "...the secret location of %map...", and DFU's box runs MacroHelper over it with
+      // PlayerGPS.LocationRevealedByMapItem - the name DiscoverRandomLocation just set. The outcome carries the value
+      // and every consumer of a textId expands its rows with it (questMacros.js expandRowValues).
       out = revealed
-        ? { kind: 'map', textId: MAP_TEXT_ID, revealed }
+        ? { kind: 'map', textId: MAP_TEXT_ID, revealed, macros: { map: revealed } }
         : { kind: 'map', text: named('readMapFail') };
     }
   }
