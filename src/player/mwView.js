@@ -175,6 +175,35 @@ export function mwViewWheel(deltaY) {
  *  counter measures the copy. */
 export function mwViewPendingClicks() { return pendingClicks; }
 
+/**
+ * MAP-POV (2026-09-20, Mac: "If you're in 3rd person and decide to use
+ * the map, it should transition you to first person and then open the
+ * map. Both for the morrowind/non morrowind"): INTO THE HEAD NOW, for
+ * whichever body answers. The map is read in first person - the held
+ * map's hands lane needs the first-person arm (AUDIT-MAP2: the
+ * third-person body holds nothing), and from third person the window
+ * fell to its painted sprite for the whole open, which is what Mac saw.
+ *
+ * The EOTB lane takes the mod's own ToggleOffset(false). The Morrowind
+ * lane takes the camera's restore door and NOT the wheel's crossing:
+ * the wheel queues the boundary behind the upper body (camera.cpp:
+ * 225-232) and the map is opening THIS frame - so the rig is moved with
+ * it, and the arm is first-person before the window's first tick asks.
+ * The remembered zoom distance is kept, so a wheel out afterwards lands
+ * where the player left the camera. Answers whether the view moved.
+ */
+export function mwViewFirstPerson() {
+  if (eotbLane()) {
+    if (!eotbCamera.thirdPerson()) return false;
+    eotbCamera.toggleOffset(false);
+    return true;
+  }
+  if (!mwCamera.thirdPerson()) return false;
+  mwCamera.restore({ firstPerson: true, baseDistance: mwCamera.baseDistance() });
+  fpArm.setViewMode('first');
+  return true;
+}
+
 // ═══ AUDIT-EOTB2: THE FOUR DOORS THE BODY'S OTHER HALF NEEDED ════════
 //
 // Each is the seam's answer to a question ONE consumer asks, routed by

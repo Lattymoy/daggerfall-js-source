@@ -1,0 +1,51 @@
+[
+  {
+    "name": "MAP-POV-eotb-toggled-back-into-third",
+    "file": "src/player/mwView.js",
+    "old": "    eotbCamera.toggleOffset(false);\n    return true;",
+    "new": "    eotbCamera.toggleOffset(true);\n    return true;",
+    "tests": ["test/mappov.test.js"]
+  },
+  {
+    "name": "MAP-POV-eotb-lane-never-moves",
+    "file": "src/player/mwView.js",
+    "old": "    if (!eotbCamera.thirdPerson()) return false;\n    eotbCamera.toggleOffset(false);",
+    "new": "    return false;\n    eotbCamera.toggleOffset(false);",
+    "tests": ["test/mappov.test.js"]
+  },
+  {
+    "name": "MAP-POV-mw-lane-inverted",
+    "file": "src/player/mwView.js",
+    "old": "  if (!mwCamera.thirdPerson()) return false;\n  mwCamera.restore(",
+    "new": "  if (mwCamera.thirdPerson()) return false;\n  mwCamera.restore(",
+    "tests": ["test/mappov.test.js"]
+  },
+  {
+    "name": "MAP-POV-mw-lane-takes-the-wheel",
+    "file": "src/player/mwView.js",
+    "old": "  mwCamera.restore({ firstPerson: true, baseDistance: mwCamera.baseDistance() });\n  fpArm.setViewMode('first');",
+    "new": "  mwCamera.wheel(1, { ready: false });\n  fpArm.setViewMode('first');",
+    "tests": ["test/mappov.test.js"]
+  },
+  {
+    "name": "MAP-POV-rig-not-moved-with-the-camera",
+    "file": "src/player/mwView.js",
+    "old": "  mwCamera.restore({ firstPerson: true, baseDistance: mwCamera.baseDistance() });\n  fpArm.setViewMode('first');\n  return true;",
+    "new": "  mwCamera.restore({ firstPerson: true, baseDistance: mwCamera.baseDistance() });\n  return true;",
+    "tests": ["test/mappov.test.js"]
+  },
+  {
+    "name": "MAP-POV-builder-forgets-the-move",
+    "file": "src/scenes/world.js",
+    "old": "    mwViewFirstPerson();\n    return createTravelMapWindow({",
+    "new": "    return createTravelMapWindow({",
+    "tests": ["test/mappov.test.js"]
+  },
+  {
+    "name": "MAP-POV-the-move-at-the-door-above-the-refusals",
+    "file": "src/scenes/world.js",
+    "old": "    if (!gotoPlace && townTalk.overlayActive) return;\n    // W1/U61: the DOOR decides which map this skin wears.",
+    "new": "    if (!gotoPlace && townTalk.overlayActive) return;\n    mwViewFirstPerson();\n    // W1/U61: the DOOR decides which map this skin wears.",
+    "tests": ["test/mappov.test.js"]
+  }
+]

@@ -1062,3 +1062,63 @@ host's read and the window's tag). Mutants: `tools/mutants/map3.json`
 grew three - the gate dropped, the gate hoisted above the arm branch,
 and the host raising a flag instead of asking the slot - 77 in total,
 75 dead and 2 equivalent as recorded.
+
+## MAP-POV - the map is read in the head (2026-09-20)
+
+Mac: *"on the morrowind model the new enhanced map feature isnt working.
+It shows the enhanced classic map sprite"*, then, once the state was
+named: *"If you're in 3rd person and decide to use the map, it should
+transition you to first person and then open the map. Both for the
+morrowind/non morrowind"*.
+
+**What was found, and how.** The shipped held-map probe drives `fpArm`
+directly with a synthetic holder, so it proves the lane and not the seam.
+A reproduction through the CALLER'S CONDITION - the real
+`createWeaponRig`, the world host's holder verbatim
+(`armsAvailable` / `holdPaper` / `armsDrawn() ? paperCorners() : null`),
+and the world's frame order (rig.frame, rig.draw, then the window's
+tick) - took the hands lane on the second tick and held it for the whole
+open in every first-person condition: sheathed, drawn, the default pose,
+and with Weapon Widget, Shield Widget and Handheld Torches on. The one
+state that gave the sprite was third person. `fpArm.active()` is
+first-person only, and AUDIT-MAP2 decided the third-person body holds
+nothing, so from third person `armsAvailable()` answered no thirty times
+and the window stayed on the painting - which is what Mac saw. (The
+first run of the reproduction hit it by accident: Eye of the Beholder
+defaults to enabled and to `StartInThirdPerson`, and on a page with no
+Morrowind third-person body `eotbHidesWeapon()` hid the arm outright.)
+No record before this one says the hands lane was seen live; MAP3 left
+the pose to be tuned in the game and the bone tuning never landed.
+
+**The change.** `player/mwView.js` gains `mwViewFirstPerson()`: INTO THE
+HEAD NOW, for whichever body answers. The EOTB lane takes the mod's own
+`ToggleOffset(false)`. The Morrowind lane takes the camera's restore
+door, not the wheel's crossing - the wheel queues the first-person
+boundary behind the upper body (camera.cpp:225-232) and the map is
+opening this frame - and moves the rig with it (`fpArm.setViewMode
+('first')`), so the arm is first-person before the window's first tick
+asks. The remembered zoom distance is kept: a wheel out afterwards lands
+where the player left the camera. `scenes/world.js`'s
+`buildTravelMapWindow` calls it first, then builds the window the skin
+wears - the held map or the classic sheet. It stands in the BUILDER and
+not at the doors: every door into the map (the key, the journal's goto,
+the guild's teleport) reaches the builder, and only after its own
+refusals (enemies near, the sun, a pending offer), so the camera moves
+for a map that opens and never for a press that was refused. The view
+is not put back when the map closes - Mac asked for a transition, and
+the wheel is where it was.
+
+**Pins** (`test/mappov.test.js`, 4): the Morrowind lane goes first at
+once with nothing queued, keeps its distance and moves the rig, and a
+view already first is left alone; the EOTB lane through its own toggle
+with the other camera untouched; by source, the builder is the one mint
+of the window and the only home of the move, both doors build through
+it, the key's door holds no copy and its refusals stand above the build;
+the seam's door takes the restore and never the wheel.
+
+**Mutants** (`tools/mutants/mappov.json`): 7 mutations, 7 dead - the
+EOTB toggle reversed; the EOTB lane never moving; the Morrowind test
+inverted; the wheel in place of the restore; the rig left behind the
+camera; the builder forgetting the move; a copy of the move at the door
+above the refusals.
+
