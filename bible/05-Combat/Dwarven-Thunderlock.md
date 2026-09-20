@@ -864,6 +864,171 @@ which is the other half of that claim.
 
 Campaign `tools/mutants/fieldgun16.json`: 2 mutants, 2 dead.
 
+## FIELD-GUN17: the orb came out above the barrel, and the flash was the wrong colour
+
+Mac, 2026-09-20: *"On the thunderlock, the orb doesnt allign with the
+barrel when firing. Its above the barrel. Also can we can the color of
+the muzzle flash and the light emitted to the same color as the orb?"*
+
+Two halves, one fault class — and it is this port's oldest one:
+
+> a law written over DFU's own range, asked about **this** weapon,
+> answering its **default** — and a default is not an error, so
+> nothing goes red.
+
+### Where the shot leaves
+
+The orb left from `playerArrowOrigin`, which is DFU's `GetAimPosition`
+(`DaggerfallMissile.cs:540-550`): the eye, 0.11 down the camera's own
+up and 0.15 to the bow hand. That is exactly right about the one
+ranged weapon Daggerfall has, because it is *the nock of a drawn bow*.
+
+The Thunderlock reaches this lane the way it reaches every other one —
+`isBowWeapon` is "scored on Archery", which is why no host had to be
+told the gun exists. It inherited the shaft's physics (right), its
+picture (FIELD-GUN14 forked that) and its **origin** (this). The gun
+is drawn low and to the right with its barrel lower still, so the orb
+came out well above it.
+
+**The answer is where the gun is drawn, not a number.** A baked offset
+would be right at one canvas, one aspect and one field of view and
+wrong at every other, and it would not move with the bob, the sway,
+the recoil or the handedness mirror. So:
+
+1. **The art measures its own muzzle.** `thunderlockArt.muzzlePoint`
+   takes the idle frame and the fired frame — which are the same
+   picture except where the flash is — and answers the *brightness-
+   weighted centroid of the difference*, in fractions of the union
+   box, y from the top. `MUZZLE_GAIN` is the threshold that makes it a
+   flash rather than a compression wobble. No flash to find is `null`,
+   not a muzzle at (0,0).
+
+2. **`muzzleRay` turns that point into a direction.** It is the rig's
+   whole arithmetic, exported on its own so it can be driven with a
+   rect and a canvas and no renderer in the room: the drawn rect, the
+   canvas, the mirror, and the player's live FOV, out to a camera-space
+   `{right, up, forward}`. It is a **ray**, proportional to `forward`
+   on purpose, so the orb lies on the barrel at whatever distance the
+   caller chooses to start it from — `MUZZLE_FORWARD` (0.5) only picks
+   how far out.
+
+3. **`playerMuzzleOrigin` composes it onto the world**, on the same
+   basis `playerArrowOrigin` rebuilds. No handedness term here: the
+   mirror is a fact about the *drawn rect* and `muzzleRay` has already
+   applied it, where `PLAYER_ARROW_SIDE` is a bare number that has to
+   be flipped at the point of use.
+
+4. **Both missile lanes fork, they do not replace.** A supplied muzzle
+   wins; nothing supplied keeps `GetAimPosition` verbatim — which is
+   every bow, at every host, untouched. And all four hosts hand it
+   over (the FOUR HOSTS RULE, which this weapon has paid for at every
+   round it forgot one): `world.js`, `exterior.js`, `worldModes.js`,
+   `dungeonContext.js`.
+
+The rig's door refuses for anything that is not this weapon, and for a
+frame it has not drawn. A bow keeps the verbatim arm because it is
+handed **nothing** — not because the fork spells the gun's name.
+
+### What colour the flash is
+
+The muzzle flash and the point light it throws were white, because
+white is what a powder flash is. This gun does not fire powder; it
+fires the orb, and the flash should be the orb going off.
+
+**The orb tells us its colour** rather than a hex being typed in two
+places and kept in step by hand. `hitEffects` grew one door —
+`onTexture`, a callback about a *texture*, not about guns — and the
+two places the orb is uploaded (`arrowFlight`, `dungeonContext`) hand
+the decoded sprite to `noteOrbColour` the one moment it is warm.
+
+`orbColourFrom` is an **alpha-weighted mean, peak-normalised**: a dim
+orb and a bright orb of the same hue give the same answer, because
+this is a *tint*, not a brightness. Transparent pixels weigh nothing
+(the clear half of a sprite is most of a sprite and must not drag the
+mean towards black), and a sample that answers nothing does not count
+as the sample — otherwise a clear first frame would lock the gun to
+white for ever. It takes **once**: a second archive does not get to
+repaint the weapon.
+
+Both consumers read the one leaf. The frame *lerps* toward the orb
+rather than being assigned it, so an unlit room still darkens the gun;
+and `thunderlockMuzzleLight` carries the same colour out to the world,
+so the wall the shot lights up is lit in the orb's colour too.
+
+White until something is sampled — a default, and this time it is the
+right one.
+
+Campaign `tools/mutants/fieldgun17.json`: 19 mutants, 17 dead, 2
+equivalent (both recorded with their reason: the centroid's brightness
+weighting, which no fixture in the tree can distinguish from a count,
+and the alpha weighting, which is a no-op on the binary-alpha sprites
+every classic archive decodes to).
+
+## FIELD-GUN18: two sizes, and a branch that had never run
+
+Mac, 2026-09-20: *"1. shrink the projectile orb slighty  2. Shrink the
+orb pellet ammo sprite in the inventory. It's too large"*
+
+### The orb
+
+It flies on TEXTURE.378 record 0 — a classic **missile** archive,
+sized for a spell. A fireball is meant to fill the corridor it is
+coming down; a pellet out of a barrel is not, and at the archive's own
+size the shot read as a thrown spell rather than as ammunition.
+
+`ORB_SCALE` is **a scale, not a size**. `billboardSize` is DFU's own
+law — RMBLayout's `scaleDivisor`, plus any billboard XML the player
+has installed for that archive — and a width typed into the leaf would
+quietly opt the orb out of both. Multiplying whatever that law answers
+means a texture pack that resizes 378 still resizes the orb. 0.85: a
+sixth off, which is *slightly*, as asked.
+
+Both lanes take it, and the fourth host takes it **twice over**: its
+missiles build their own batch and never touch `hitEffects`' pool, so
+the pool's `scale` cannot reach them and the multiply is written a
+second time — gated on the same `flatArchive` the picture and the
+colour already fork on, so that a spell missile is not shrunk with it.
+
+### The branch that had never run
+
+Handing the orb to the pool's `scale` walked into a bug in that knob.
+`billboardSize` answers a `{w, h}` **record**, and the branch applying
+`scale` read:
+
+```js
+Array.isArray(size) ? size.map(v => v * scale) : size * scale
+```
+
+An object is not an Array, so every scaled flat took the second arm —
+**object times number, which is `NaN`**. And a `NaN` size is not a
+visibly wrong size: it is `size.w === undefined` at the batch and a
+quad with `NaN` corners, so the flat is not drawn at all.
+
+The one caller that used it is `showMissEffect`, whose scale is **2 by
+default** and which all four hosts wire to the weapon widget's
+DoClang/DoThud. So that effect has drawn nothing, at every host, since
+WW1 shipped — a shape the value never had, in a branch nothing
+measured. The pin asserts the shape *where it is produced* now, so it
+cannot rot back into a guess about what `billboardSize` answers.
+
+### The pellet icon, again
+
+12px, down from 16, down from 22.
+
+FIELD-GUN16's note in `tools/gunPaperdoll.mjs` claimed that "14 starts
+eating the engraving and 12 is a brown dot". **That judgement was
+wrong**, and it is worth saying why rather than quietly moving the
+number: it was made against an 8× *preview* in a container with no
+game in it, where a sprite is inspected instead of glanced at. At 12
+the dwarven banding and the central boss both still read — and the
+person with the game says 16 does not.
+
+A judgement made at 8× about a thing seen at 1× is a guess. The
+default in the baker is the shipped size, as ever, so a re-bake
+reproduces what is committed.
+
+Campaign `tools/mutants/fieldgun18.json`: 11 mutants, 11 dead.
+
 ## The test characters carry one
 
 TSR-GUN (Mac, 2026-09-19: *"Put this weapon and ammo inside the test

@@ -949,8 +949,8 @@ export function setWorldMinutes(v) {
   return _worldMinutes;
 }
 
-/** WORLD5: a player's own time markers set to the world's - the day marker, the broker's, every disease's day and
- *  every poison's minute - so a save from another time (a month behind, a year ahead) neither catches up a month of
+/** WORLD5: a player's own time markers set to the world's - the day marker, the broker's, every disease's day,
+ *  every poison's minute and (MAC-BUG3) every repair job's clock - so a save from another time (a month behind, a year ahead) neither catches up a month of
  *  loans and diseases on its first online frame nor reads a negative day. The world's time is not this save's
  *  continuation; it is where the player has arrived. */
 export function alignEntityClocks(entity, nowMinutes) {
@@ -983,7 +983,37 @@ export function alignEntityClocks(entity, nowMinutes) {
   if (vamp && Number.isFinite(vamp.lastTimeFed)) vamp.lastTimeFed = past(vamp.lastTimeFed);
   for (const acct of entity.bankAccounts ?? []) if (acct && acct.loanTotal > 0) acct.loanDueDate = due(acct.loanDueDate);
   for (const room of entity.rentedRooms ?? []) if (room) room.expiryMinutes = due(room.expiryMinutes);
-  for (const it of entity.items ?? []) if (it && Number.isFinite(it.timeForItemToDisappear)) it.timeForItemToDisappear = due(it.timeForItemToDisappear);
+  // MAC-BUG3 (2026-09-20, Mac: "repairing items doesn't work. he just
+  // takes your gold and doesn't actually repair anything (for armor,
+  // and when online, at least)") - AND THE "WHEN ONLINE" IS THIS LINE.
+  //
+  // A REPAIR JOB IS A DEADLINE LIKE ANY OTHER. `item.repairData
+  // .timeStarted` is stamped from `worldMinutes()` at the counter and
+  // read back by `isRepairFinished` against `worldMinutes()` later -
+  // which is exactly the shape of a loan's due date and a rented
+  // room's expiry, both of which this function already shifts. It was
+  // not in the list, so going online (where the clock is rebased onto
+  // the shared one) left every booked job dated by the save's own
+  // clock: a world reading BEHIND the save never reaches the due time
+  // and the smith keeps the item for ever, which is a player paying
+  // gold and getting nothing back.
+  //
+  // AND THE COLLECTION MATTERS. An in-repair item lives in
+  // `entity.otherItems` (DFU's PlayerEntity.OtherItems), not in
+  // `items`, so the walk below had never so much as looked at one -
+  // and the wagon is the same shape of oversight for the disappear
+  // clock it already carries. All three collections, one walk.
+  for (const bag of [entity.items, entity.otherItems, entity.wagonItems]) {
+    for (const it of bag ?? []) {
+      if (!it) continue;
+      if (Number.isFinite(it.timeForItemToDisappear)) it.timeForItemToDisappear = due(it.timeForItemToDisappear);
+      // `due` keeps a zero, which is the right answer here too: the
+      // port's ABSENT repairData is DFU's timeStarted = 0 sentinel
+      // (systems/repairService.js says so), so a zero means "not in
+      // repair" and must not be shifted into a date.
+      if (Number.isFinite(it.repairData?.timeStarted)) it.repairData.timeStarted = due(it.repairData.timeStarted);
+    }
+  }
   const store = entity.guildMemberships;
   const books = store && typeof store === 'object' ? (Object.hasOwn(store, 'mortal') && Object.hasOwn(store, 'vampire') ? [store.mortal, store.vampire] : [store]) : [];
   for (const book of books) for (const m of Object.values(book ?? {})) if (m && Number.isFinite(m.lastRankChange)) m.lastRankChange = pastDay(m.lastRankChange);

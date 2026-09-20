@@ -87,6 +87,13 @@ test('AUDIT WORLD5 C3: the alignment is a SHIFT of every marker the save carries
     bankAccounts: [{ regionIndex: 0, loanTotal: 500, loanDueDate: save + 5000 }, { regionIndex: 1, loanTotal: 0, loanDueDate: 0 }],
     rentedRooms: [{ expiryMinutes: save + 1200 }],
     items: [{ timeForItemToDisappear: save + 30 }, { timeForItemToDisappear: 0 }],
+    // MAC-BUG3: a REPAIR JOB is a deadline like the loan and the room,
+    // and it lives in a collection this walk had never looked at.
+    otherItems: [
+      { name: 'Steel Cuirass', currentCondition: 1843, maxCondition: 6144, repairData: { buildingKey: 4242, timeStarted: save - 200, repairTime: 4 * MINUTES_PER_DAY } },
+      { name: 'not in repair', repairData: { buildingKey: 0, timeStarted: 0, repairTime: 0 } },
+    ],
+    wagonItems: [{ timeForItemToDisappear: save + 90 }],
     guildMemberships: { mortal: { FightersGuild: { guild: 'Fighters', rank: 1, lastRankChange: day(save) - 3 } }, vampire: {} },
   });
   for (const [label, now] of [['a young world, the save far ahead of it', save - 30 * MINUTES_PER_DAY], ['an old world, the save far behind it', save + 375 * MINUTES_PER_DAY + 17]]) {
@@ -110,6 +117,20 @@ test('AUDIT WORLD5 C3: the alignment is a SHIFT of every marker the save carries
       assert.equal(e.rentedRooms[0].expiryMinutes, save + 1200 + d, 'the room keeps its twenty hours');
       assert.equal(e.items[0].timeForItemToDisappear, save + 30 + d, 'the summoned item its half hour');
       assert.equal(e.items[1].timeForItemToDisappear, 0, 'an item that never disappears still never does');
+      // MAC-BUG3 (2026-09-20, Mac: "repairing items doesn't work. he
+      // just takes your gold and doesn't actually repair anything...
+      // when online, at least"). The smith's job is dated by the same
+      // clock `isRepairFinished` reads back, so a world behind the save
+      // never reached the due time and the item was never handed over -
+      // a player paying gold and getting nothing. Two collections were
+      // missing from this walk entirely, not just one field.
+      assert.equal(e.otherItems[0].repairData.timeStarted, save - 200 + d, 'the armour at the smith keeps its place in the queue');
+      assert.equal(e.otherItems[1].repairData.timeStarted, 0, 'a zero timeStarted is DFU\'s "not in repair" sentinel and stays zero');
+      assert.equal(e.wagonItems[0].timeForItemToDisappear, save + 90 + d, 'and the WAGON is a collection too');
+      // the whole point, stated as the player sees it: the job is due
+      // the same distance away as it was before the clock moved
+      assert.equal((e.otherItems[0].repairData.timeStarted + e.otherItems[0].repairData.repairTime) - now,
+        (save - 200 + 4 * MINUTES_PER_DAY) - save, 'four days out before, four days out after');
       assert.equal(e.guildMemberships.mortal.FightersGuild.lastRankChange, day(now) - 3, 'the rank changed three days ago');
       assert.equal(now - e.lastSkillCheckTime, 100, 'the skill check is a hundred minutes old on the world\'s clock - before C3 an old save in a young world read it as days in the future and raised nothing for real days');
     } finally { offline(); }

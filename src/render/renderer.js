@@ -2611,8 +2611,52 @@ void main() {
     this._uploadFog(this._decal);
     // The scene's own light, so a mark on a dungeon floor is as dark as
     // the floor. Clockless scenes keep full bright, as the flats do.
-    if (this._clockLit) gl.uniform3fv(d.tint, this._c3(this._ambient, this._decA));
-    else gl.uniform3f(d.tint, 1, 1, 1);
+    //
+    // MAC-BUG W4: and it is the FLATS' light, term for term - the same
+    // ambient + moon-half tint, the same sun half, the same point
+    // lights and the same indirect the billboard pass uploads a few
+    // hundred lines below. Ambient alone was a mark darker than
+    // anything it could possibly lie on.
+    if (this._clockLit) {
+      // AUDIT PERF-SUN/FOG F4's lesson, honoured here rather than
+      // rediscovered: THREE COLOURS, THREE SCRATCHES. Two decodes into
+      // one scratch is the bug that pass carried for the whole world's
+      // flats until an audit found it.
+      const am = this._c3(this._ambient, this._decA);
+      const mc = this._c3(this._moonColor, this._decB);
+      const sc = this._c3(this._sunColor, this._decC);
+      gl.uniform3f(d.tint,
+        am[0] + mc[0] * this._moonScale * 0.5,
+        am[1] + mc[1] * this._moonScale * 0.5,
+        am[2] + mc[2] * this._moonScale * 0.5);
+      gl.uniform3f(d.sun, sc[0] * this._sunScale * 0.5, sc[1] * this._sunScale * 0.5, sc[2] * this._sunScale * 0.5);
+    } else {
+      gl.uniform3f(d.tint, 1, 1, 1);
+      gl.uniform3f(d.sun, 0, 0, 0);
+    }
+    // MAC-BUG W4 - THE DECAL IS A FIFTH CLASSIC PROGRAM AND HAS NO LANE
+    // TWIN, so it takes the CLASSIC SIXTEEN even where the Enhanced
+    // Lighting lane gives the other four forty-eight. Said out loud and
+    // clamped rather than left to be discovered: `_pointLights` really
+    // does hold 48 under the lane, and a shader declaring
+    // `uPointLights[16]` handed a count of 48 reads off the end of its
+    // own array.
+    //
+    // WHAT IT COSTS, honestly: the sixteen a decal gets are the sixteen
+    // NEAREST, because `nearestLights` has already sorted them by
+    // distance before any of this - the same sixteen the whole renderer
+    // had before the lane existed. A mark under the seventeenth lantern
+    // in a forty-eight-light hall is lit by the sixteen closer ones.
+    // The alternative is a fifth lane shader with its own exposure,
+    // in-scatter and encode, which is a slice rather than a bug fix.
+    const dCount = Math.min(this._pointLights.length >> 2, CLASSIC_MAX_LIGHTS);
+    gl.uniform1i(d.pointCount, dCount);
+    if (dCount > 0) {
+      gl.uniform4fv(d.pointLights, this._pointLights.subarray(0, dCount * 4));
+      gl.uniform3fv(d.pointColors, this._pointColorData(dCount));   // already cut to the slot count (AUDIT-EL F3)
+    }
+    gl.uniform4fv(d.indirect, this._indirect);
+    gl.uniform3fv(d.indirectColor, this._c3(this._indirectColor));
     this._bindVao(batch.vao);
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
@@ -2651,6 +2695,16 @@ precision highp float;
 in vec2 vUV; in vec4 vColor; in vec3 vWorld;
 uniform sampler2D uTex;
 uniform vec3 uTint;
+// MAC-BUG W4: the SAME terms the billboard pass gives a flat, and
+// spelled the same way on purpose - a mark on a floor and a chunk in
+// the air above it are the same blood, and they were lit by different
+// amounts of the scene.
+uniform vec3 uDecalSun;
+uniform int uPointCount;
+uniform vec4 uPointLights[16];   // xyz scene-space, w range
+uniform vec3 uPointColors[16];
+uniform vec4 uIndirect;
+uniform vec3 uIndirectColor;
 uniform vec3 uFogColor;
 uniform int uFogMode;
 uniform float uFogDensity;
@@ -2669,7 +2723,32 @@ void main() {
   // A DEGENERATE SLOT still rasterises nothing, but a live one whose
   // texel is fully clear must not draw a black square either.
   if (t.a < 0.01) discard;
-  vec3 rgb = t.rgb * vColor.rgb * uTint;
+  // MAC-BUG W4 (Mac: "Also blood is black"). THIS TOOK AMBIENT AND
+  // NOTHING ELSE, and the line that set it said what it was for - "the
+  // scene's own light, so a mark on a dungeon floor is as dark as the
+  // floor". It was darker than the floor by every term it left out: the
+  // floor is a mesh lit by ambient AND the sun AND the point lights,
+  // and a dungeon's ambient is 0.12, so a red mark came out at about
+  // two units of red. Black. Worse, the GIBS from the same kill go
+  // through drawBillboards and were lit in full, so one hit put lit
+  // chunks over a black smear.
+  //
+  // A decal has no normal, exactly as a billboard has none, so it takes
+  // the billboard's model: attenuation-only point lights (squared
+  // linear falloff), the sun's Lambert-average half, and the indirect
+  // term on the same attenuation. Written to mirror that shader term
+  // for term so the two cannot drift.
+  vec3 pointAcc = vec3(0.0);
+  for (int i = 0; i < 16; i++) {
+    if (i >= uPointCount) break;
+    float d = length(uPointLights[i].xyz - vWorld);
+    float att = clamp(1.0 - d / uPointLights[i].w, 0.0, 1.0);
+    pointAcc += att * att * uPointColors[i];
+  }
+  float iD = length(uIndirect.xyz - vWorld);
+  float iAtt = clamp(1.0 - iD / max(uIndirect.w, 1e-4), 0.0, 1.0);
+  vec3 lightAcc = uTint + uDecalSun + pointAcc + iAtt * iAtt * uIndirectColor;
+  vec3 rgb = t.rgb * vColor.rgb * lightAcc;
   float a = t.a * vColor.a;
   float f = fogFactorAt(vWorld);
   outColor = vec4(mix(uFogColor, rgb, f), a);
@@ -2681,6 +2760,12 @@ void main() {
       view: gl.getUniformLocation(P, 'uView'),
       tex: gl.getUniformLocation(P, 'uTex'),
       tint: gl.getUniformLocation(P, 'uTint'),
+      sun: gl.getUniformLocation(P, 'uDecalSun'),                 // MAC-BUG W4
+      pointCount: gl.getUniformLocation(P, 'uPointCount'),
+      pointLights: gl.getUniformLocation(P, 'uPointLights'),
+      pointColors: gl.getUniformLocation(P, 'uPointColors'),
+      indirect: gl.getUniformLocation(P, 'uIndirect'),
+      indirectColor: gl.getUniformLocation(P, 'uIndirectColor'),
       fogColor: gl.getUniformLocation(P, 'uFogColor'),
       fogMode: gl.getUniformLocation(P, 'uFogMode'),
       fogDensity: gl.getUniformLocation(P, 'uFogDensity'),

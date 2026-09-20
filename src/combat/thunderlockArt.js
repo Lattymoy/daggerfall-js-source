@@ -172,11 +172,14 @@ export async function loadThunderlockArt(renderer, { fetch: fetchSheet = null, d
   // same door the held torch and the weapon widget's loose arm take.
   // The held torch (HT3) and the shield mod (SW4) each found this the
   // same way - a person looking at the picture.
-  const frames = baked.map((b, i) => {
-    const rgba = crop(b.img, union);
-    return renderer.uploadTexture('img', `thunderlock${magic ? ':magic' : ''}:${i}`,
-      toScreenOrder(magic ? shimmer(rgba) : rgba));
-  });
+  // FIELD-GUN17: THE MUZZLE, MEASURED OFF THE ART. Kept before the
+  // upload because it wants the PIXELS, and after this loop they are
+  // GL handles.
+  const cropped = baked.map((b) => crop(b.img, union));
+  const muzzle = muzzlePoint(cropped[0], cropped[1]);
+  const frames = cropped.map((rgba, i) =>
+    renderer.uploadTexture('img', `thunderlock${magic ? ':magic' : ''}:${i}`,
+      toScreenOrder(magic ? shimmer(rgba) : rgba)));
 
   return {
     weaponType: type,
@@ -211,5 +214,60 @@ export async function loadThunderlockArt(renderer, { fetch: fetchSheet = null, d
     // rect the whole image is drawn at
     anchor: { x: (anchor.x - union.x) * scale, y: (anchor.y - union.y) * scale, w: anchor.w * scale, h: anchor.h * scale },
     unionBox: { x: 0, y: 0, w: width, h: height },
+    // FIELD-GUN17: where the barrel ends, as fractions of the UNION
+    // box - so a caller that knows where the union is drawn knows
+    // where the muzzle is. Null if the art has no flash to measure.
+    muzzle,
   };
+}
+
+/**
+ * WHERE THE BARREL ENDS - and the art answers it, so nobody types a
+ * number.
+ *
+ * FIELD-GUN17 (2026-09-20, Mac: "the orb doesnt allign with the barrel
+ * when firing. Its above the barrel").
+ *
+ * It was above the barrel because the shot left the BOW'S HAND. The
+ * Thunderlock rides the ranged lane, and that lane's origin is
+ * `playerArrowOrigin` - DFU's GetAimPosition, 0.11 below the eye and
+ * 0.15 to the side, which is where a drawn bow's nock is. This gun is
+ * drawn low and to the right with its barrel lower still, so a shot
+ * from the bow's nock came out well above it. FIELD-GUN14's own
+ * sentence, one field further along: the lane was written for the one
+ * ranged weapon Daggerfall has.
+ *
+ * THE FLASH IS THE MEASUREMENT. Frame 1 is the gun with the muzzle
+ * flash on it and frame 0 is the gun without; the pixels frame 1
+ * GAINED are the flash, and their brightness-weighted centroid is
+ * where it comes out of the barrel. Weighted by the gain rather than
+ * counted, so the bright core near the muzzle outvotes the plume that
+ * spreads away from it.
+ *
+ * Answers fractions of the union box (x from its left, y from its
+ * TOP), which is the frame `unionDrawRect` hands back - or null if the
+ * two frames differ nowhere bright enough to be a flash, in which case
+ * the caller keeps whatever origin it had.
+ */
+export const MUZZLE_GAIN = 60;   // how much brighter a texel must get to count as flash, 0..255
+export function muzzlePoint(dark, lit) {
+  if (!dark?.data || !lit?.data || dark.width !== lit.width || dark.height !== lit.height) return null;
+  const { width: w, height: h } = dark;
+  let sx = 0, sy = 0, total = 0;
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const i = (y * w + x) * 4;
+      if (!lit.data[i + 3]) continue;
+      const l1 = (lit.data[i] + lit.data[i + 1] + lit.data[i + 2]) / 3;
+      const l0 = dark.data[i + 3] ? (dark.data[i] + dark.data[i + 1] + dark.data[i + 2]) / 3 : 0;
+      const gain = l1 - l0;
+      if (gain <= MUZZLE_GAIN) continue;
+      sx += x * gain; sy += y * gain; total += gain;
+    }
+  }
+  if (!total) return null;
+  // `crop` answers a PNG-ordered buffer (row 0 is the picture's top),
+  // which is the order the union rect is drawn in - so no flip here.
+  // The one that needs it is `toScreenOrder` above, on the way to GL.
+  return { x: (sx / total) / w, y: (sy / total) / h };
 }

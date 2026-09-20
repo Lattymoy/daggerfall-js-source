@@ -1,0 +1,57 @@
+[
+  {
+    "name": "MACBUGW4-1-the-mark-takes-ambient-alone-again",
+    "file": "src/render/renderer.js",
+    "old": "  vec3 lightAcc = uTint + uDecalSun + pointAcc + iAtt * iAtt * uIndirectColor;",
+    "new": "  vec3 lightAcc = uTint;",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "MACBUGW4-2-the-mark-loses-the-sun",
+    "file": "src/render/renderer.js",
+    "old": "  vec3 lightAcc = uTint + uDecalSun + pointAcc + iAtt * iAtt * uIndirectColor;",
+    "new": "  vec3 lightAcc = uTint + pointAcc + iAtt * iAtt * uIndirectColor;",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "MACBUGW4-3-the-mark-loses-the-torches",
+    "file": "src/render/renderer.js",
+    "old": "    gl.uniform1i(d.pointCount, dCount);",
+    "new": "    gl.uniform1i(d.pointCount, 0);",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "MACBUGW4-4-two-decodes-into-one-scratch",
+    "file": "src/render/renderer.js",
+    "old": "      const mc = this._c3(this._moonColor, this._decB);",
+    "new": "      const mc = this._c3(this._moonColor, this._decA);",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "MACBUGW4-5-a-clockless-scene-keeps-the-last-suns",
+    "file": "src/render/renderer.js",
+    "old": "      gl.uniform3f(d.tint, 1, 1, 1);\n      gl.uniform3f(d.sun, 0, 0, 0);",
+    "new": "      gl.uniform3f(d.tint, 1, 1, 1);",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "MACBUGW4-6-the-decal-reads-off-the-end-of-its-array-under-the-lane",
+    "file": "src/render/renderer.js",
+    "old": "    const dCount = Math.min(this._pointLights.length >> 2, CLASSIC_MAX_LIGHTS);",
+    "new": "    const dCount = this._pointLights.length >> 2;",
+    "tests": [
+      "test/blood1_decals.test.js",
+      "test/el1_enhancedlighting.test.js"
+    ]
+  }
+]

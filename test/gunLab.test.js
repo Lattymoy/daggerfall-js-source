@@ -67,7 +67,7 @@ test('Weapon Widget\u2019s Bob sways the gun while walking and barely breathes w
   const standing = span(labMotion({ walking: false }));
   assert.ok(walking > 10, `the walk sways the sprite (${walking.toFixed(1)}px)`);
   assert.ok(standing > 0 && standing < walking / 3, `BobWhileIdle is a tenth of a stride, not a stride (${standing.toFixed(1)}px)`);
-  // the motor's frame is the rig's own shape (weaponRig.js:1155-1162)
+  // the motor's frame is the rig's own shape (weaponRig.js:1235-1242)
   const m = labMotion({ walking: true, running: true });
   assert.ok(m.speedRatio > 1 && m.baseSpeed > 0 && m.localVel[2] > 0, 'running is faster than the walk base, and it is forward motion');
   assert.equal(labMotion({ walking: false }).standing, true);
@@ -349,12 +349,27 @@ test('the paperdoll sprite is cut for the doll’s hand, and both icons are 1-bi
   // big, so the pin is the SIZE, with the cell's own numbers beside it
   // saying what fraction of the cell it is.
   assert.ok(ammo.w <= 50 && ammo.h <= 38, `the ammo fits the 50x38 list cell (${ammo.w}x${ammo.h})`);
-  assert.equal(ammo.w, 16, 'the pellet is 16px - Mac\'s size, and tools/gunPaperdoll.mjs\'s own default');
-  assert.equal(ammo.h, 16, 'and square, as the source is');
-  assert.ok(ammo.w / 50 < 0.4, `a pellet is a small round thing in a list, not a third of the row (${(ammo.w / 50 * 100).toFixed(0)}% of the cell)`);
+  // FIELD-GUN18 (2026-09-20, Mac again: "Shrink the orb pellet ammo
+  // sprite in the inventory. It's too large") - 12, down from 16, down
+  // from 22. Worth one line on WHY the second round was needed: the 16
+  // was chosen against an 8x PREVIEW in a container with no game in
+  // it, where a sprite is INSPECTED rather than glanced at, and the
+  // note left behind claimed 12 would be "a brown dot". It is not; the
+  // banding and the boss still read. A judgement made at 8x about a
+  // thing seen at 1x is a guess, and the person with the game is the
+  // measurement.
+  assert.equal(ammo.w, 12, 'the pellet is 12px - Mac\'s size, and tools/gunPaperdoll.mjs\'s own default');
+  assert.equal(ammo.h, 12, 'and square, as the source is');
+  assert.ok(ammo.w / 50 < 0.25, `a pellet is a small round thing in a list, not a quarter of the row (${(ammo.w / 50 * 100).toFixed(0)}% of the cell)`);
+  // ...and it is still an ICON and not a smudge: the trimmed source is
+  // 461x471, so 12 is a clean downscale of real art rather than a
+  // resample of a resample, and the sprite is not blank.
+  assert.ok(ammo.w >= 8, 'below about 8px there is no dwarven banding left to read');
   // THE TOOL'S DEFAULT IS THE SHIPPED SIZE, so a re-bake reproduces
   // what is committed instead of quietly restoring the last one.
-  assert.match(readFileSync('tools/gunPaperdoll.mjs', 'utf8'),
-    /const ammo = bake\('gun-ammo-src\.png', num\('ammo', 16\), \{ out: 'gun-ammo\.png' \}\);/,
+  const baker = readFileSync('tools/gunPaperdoll.mjs', 'utf8');
+  assert.match(baker,
+    /const ammo = bake\('gun-ammo-src\.png', num\('ammo', 12\), \{ out: 'gun-ammo\.png' \}\);/,
     'the baker defaults to the size that shipped');
+  assert.match(baker, /\[--ammo=12\]/, 'and its usage line says the same number');
 });

@@ -71,3 +71,102 @@ export const ORB_RECORD = 0;
  *  every weapon whose shot is a shaft - which is all of DFU's. */
 export const orbArchiveFor = (item) =>
   (item?.templateIndex === THUNDERLOCK_TEMPLATE ? ORB_ARCHIVE : null);
+
+/**
+ * THE ORB'S OWN COLOUR, SAMPLED RATHER THAN NAMED.
+ *
+ * FIELD-GUN17 (2026-09-20, Mac: "can we can the color of the muzzle
+ * flash and the light emitted to the same color as the orb?").
+ *
+ * "The same colour as the orb" is answerable exactly or approximately,
+ * and a constant here would be the approximate answer - a number
+ * somebody typed after looking at a screenshot, which is then wrong the
+ * day ORB_ARCHIVE changes. So the orb TELLS US: the first time its flat
+ * is warmed, the archive's own texels are reduced to one colour and
+ * parked, and the muzzle flash and the light it throws both read it.
+ * Change the archive above and the flash follows on the next shot.
+ *
+ * WHITE UNTIL WARMED, which is the colour these two had before this
+ * existed - so a shot fired on the frame the texture is still loading
+ * looks exactly like the port did yesterday rather than like nothing.
+ *
+ * Here on the leaf because BOTH askers are: combat/weaponRig.js paints
+ * the flash, systems/thunderlock.js answers the light, and
+ * combat/arrowFlight.js is what sees the texture. A parked value and a
+ * pure reducer add no imports, which is this file's whole rule.
+ */
+const _orb = { colour: [1, 1, 1], sampled: false };
+
+/** The reduction: the MEAN of the opaque texels, normalised so the
+ *  brightest channel is 1.
+ *
+ *  NORMALISED, not averaged raw, because this is a LIGHT's colour and a
+ *  tint's direction - not its strength. The strength is
+ *  `GUN_FEEL.flashRange` and the muzzle curve, which are already tuned;
+ *  handing them a dim mean would darken the flash as a side effect of
+ *  asking what colour it is. A black or empty record leaves white
+ *  alone, because "no answer" is not "no light".
+ *
+ *  Alpha-weighted so a soft edge counts for what it covers, and the
+ *  cutout texels (alpha 0, the palette's index 0) count for nothing. */
+export function orbColourFrom(color32) {
+  const d = color32?.colors;
+  if (!d || !d.length) return null;
+  let r = 0, g = 0, b = 0, w = 0;
+  for (let i = 0; i < d.length; i += 4) {
+    const a = d[i + 3];
+    if (!a) continue;
+    r += d[i] * a; g += d[i + 1] * a; b += d[i + 2] * a; w += a;
+  }
+  if (!w) return null;
+  const peak = Math.max(r, g, b);
+  if (peak <= 0) return null;
+  return [r / peak, g / peak, b / peak];
+}
+
+/** Park it, once. Answers whether this call is the one that did. */
+export function noteOrbColour(color32) {
+  if (_orb.sampled) return false;
+  const c = orbColourFrom(color32);
+  if (!c) return false;
+  _orb.colour = c; _orb.sampled = true;
+  return true;
+}
+
+/** What the flash and its light are painted in. White until the orb
+ *  has been seen, which is what they were before it was asked. */
+export const orbColour = () => _orb.colour;
+/** Test seam: the port never un-samples, but a suite drives more than
+ *  one archive through this and must not inherit the last one's. */
+export function resetOrbColour() { _orb.colour = [1, 1, 1]; _orb.sampled = false; }
+
+/**
+ * How far in front of the eye a shot is born.
+ *
+ * FIELD-GUN17: the muzzle offset is PROPORTIONAL to this - it is the
+ * ray through the barrel's own pixel, so the orb lies on the barrel at
+ * any distance and this only picks how far out it starts. Half a unit
+ * is a little over one step of MISSILE_SPEED at 60fps and comfortably
+ * past the 0.2 near plane: near enough to read as leaving the gun, far
+ * enough not to be born inside the viewmodel.
+ */
+export const MUZZLE_FORWARD = 0.5;
+
+/**
+ * FIELD-GUN18 (Mac: "shrink the projectile orb slighty").
+ *
+ * The orb flies on TEXTURE.378 record 0 - a classic MISSILE archive,
+ * sized for a spell. A fireball is meant to fill the corridor it is
+ * coming down; a pellet out of a barrel is not, and at the archive's
+ * own size the shot read as a thrown spell rather than as ammunition.
+ *
+ * A SCALE, not a second size: `billboardSize` is DFU's own law
+ * (RMBLayout's scaleDivisor, plus any billboard XML the player has
+ * installed for that archive), and hard-coding a width here would
+ * quietly opt the orb out of both. This multiplies whatever that law
+ * answers, so a texture pack that resizes 378 still resizes the orb.
+ *
+ * Slightly, as asked: a sixth off, which is a smaller pellet and not a
+ * different object.
+ */
+export const ORB_SCALE = 0.85;

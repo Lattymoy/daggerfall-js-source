@@ -150,7 +150,7 @@ export const ATTRIBUTE_BLURB = Object.freeze({
   // combat/formulas.js:828 - merchant reaction takes personality / 5; systems/court.js:435 takes it again.
   personality: 'Warms merchants, judges and anyone else weighing what you are worth.',
   // player/motor.js:470 walkSpeed(stats.speed) is how fast you move;
-  // combat/weaponRig.js:353 reads liveStat speed for the swing.
+  // combat/weaponRig.js:385 reads liveStat speed for the swing.
   speed: 'Quickens your weapon and closes the ground between you and a fight.',
   // combat/formulas.js:306-307 again - the same term agility rides -
   // and systems/unleveledLoot.js:95, where the vendored ladder rolls

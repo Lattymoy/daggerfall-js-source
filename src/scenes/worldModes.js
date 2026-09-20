@@ -3851,6 +3851,7 @@ export function createWorldModes(host) {
       flow = buildTrainingFlow(playerEntity, guild, membership, {
         rows, now, onClose: () => closeSelf(),
         guildTitle: getTitle(membership, playerEntity, guild),
+        shopName: b?.name ?? null, cityName: townTalk?.cityName?.() ?? null,   // MAC-BUG2: NOT_ENOUGH_GOLD_ID is a TRADE record too
         // The clock advance and the fatigue drain are the HOST's -
         // trainSkill hands them back rather than reaching for a ticker.
         applyTraining: (result, price) => {
@@ -3869,10 +3870,15 @@ export function createWorldModes(host) {
       const divine = getDivine(townTalk?.factionDict ?? null, route.buildingFactionId);
       flow = buildDonationFlow(playerEntity, store, DIVINES[divine] ?? route.buildingFactionId, {
         rows, onClose: () => closeSelf(), godName: divine ?? '',
+        shopName: b?.name ?? null, cityName: townTalk?.cityName?.() ?? null,   // MAC-BUG2
       });
     } else if (destination === 'guildServiceCureDisease') {
       flow = buildCureDiseaseFlow(playerEntity, guild, membership, {
         rows, now, onClose: () => closeSelf(), godName,
+        // MAC-BUG2: the cure offer speaks a TRADE record, and those
+        // quote the SHOP and the TOWN back at the player - see the
+        // `identity` note in ui/guildServiceWindows.js.
+        shopName: b?.name ?? null, cityName: townTalk?.cityName?.() ?? null,
         quality: b?.quality ?? 0, regionIndex: b?.regionIndex ?? 0,
         // F113: CalculateCost applies the regional adjustment itself.
         priceAdjustment: regionPriceAdjustment(playerEntity, b?.regionIndex ?? 0),
@@ -6286,7 +6292,7 @@ export function createWorldModes(host) {
       // AUDIT 58 (review): BOTH pools, through the one join. This read
       // `interiorFoes.foes` alone, so a shaft loosed at a watchman
       // `spawnCityGuardsInside` had stood in the room met nothing and
-      // died on geometry (arrowFlight.js:202-215 is a shaft's ONLY
+      // died on geometry (arrowFlight.js:223-236 is a shaft's ONLY
       // foe-contact path) - after the loose had already spent the
       // Arrow and tallied Archery, and while this host's MELEE ray hit
       // the same watchman. DFU makes no pool distinction: DoCollision
@@ -6422,7 +6428,7 @@ export function createWorldModes(host) {
         if (spendAmmoFor(playerEntity.items, interiorWeapon.playerWeapon.weapon)) {
           drainInteriorFatigue(SWING_WEAPON_FATIGUE_LOSS);
           tallySwingSkills(playerEntity, interiorWeapon.playerWeapon.weapon);
-          interiorArrows.fire(player.eye, eyeDir(), { fromPlayer: true, weapon: interiorWeapon.playerWeapon.weapon });   // #64: LastBowUsed rides the shaft - the impact prices off it   // ROAD-H H1c: ArrowFlight.fire applies GetAimPosition's player arm (the bow hand), as DFU's missile does its own
+          interiorArrows.fire(player.eye, eyeDir(), { fromPlayer: true, weapon: interiorWeapon.playerWeapon.weapon, muzzle: interiorWeapon.thunderlockMuzzle(fieldOfView()) });   // FIELD-GUN17: the barrel's own offset when the hand holds the gun, null for every bow - the rig answers, the lane forks   // #64: LastBowUsed rides the shaft - the impact prices off it   // ROAD-H H1c: ArrowFlight.fire applies GetAimPosition's player arm (the bow hand), as DFU's missile does its own
         }
         continue;
       }

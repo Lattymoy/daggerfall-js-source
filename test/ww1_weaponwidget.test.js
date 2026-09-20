@@ -601,7 +601,16 @@ test('WW1: the rig runs the clone beside the machine - the late update after the
   }
   assert.match(rd('src/scenes/dungeonContext.js'), /missEffect: \(k, p, o\) => hitEffects\.showMissEffect\(k, p, o\)/);
   assert.match(rd('src/scenes/hitEffects.js'), /showMissEffect: \(kind, pos, \{ archive = BLOOD_ARCHIVE, record = 2, fps = 20, scale = 2 \} = \{\}\) => spawn\(record, pos, null, \{ archive, fps, scale \}\)/);
-  assert.match(rd('src/scenes/hitEffects.js'), /entry\.size\.map\(\(v\) => v \* scale\)/, 'DoClang/DoThud\'s localScale x2');
+  // FIELD-GUN18 re-aimed this line, and it is worth saying what it was
+  // holding. It matched `entry.size.map((v) => v * scale)` - the ARRAY
+  // arm of a ternary whose value is a {w, h} RECORD, so the arm this
+  // pin named had never once executed and the other arm was `size *
+  // scale`, which is NaN. The x2 was pinned by SOURCE TEXT for a
+  // branch that could not run, and a NaN size draws nothing, so
+  // DoClang/DoThud has been invisible since WW1 shipped while this
+  // assertion stayed green. It asks for the arithmetic that runs now.
+  assert.match(rd('src/scenes/hitEffects.js'), /entry\.size = \{ w: entry\.size\.w \* scale, h: entry\.size\.h \* scale \};/, 'DoClang/DoThud\'s localScale x2');
+  assert.match(rd('src/scenes/hitEffects.js'), /scale = 2 \} = \{\}\)/, '...and a miss effect is scaled unless a caller says otherwise');
   const lf = rd('src/player/lookFilter.js');
   assert.match(lf, /export function takeFrameLook\(\) \{ const v = \[_frameYaw, _framePitch\]; _frameYaw = 0; _framePitch = 0; return v; \}/);
   assert.match(lf, /_frameYaw \+= dyaw; _framePitch \+= dpitch;/, 'latched where the look is applied');

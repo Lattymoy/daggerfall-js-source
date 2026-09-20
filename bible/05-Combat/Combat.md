@@ -1356,7 +1356,7 @@ the step, and the dip only ever makes `|dir|` larger.
 
 **Four stale cites, re-resolved by content rather than by offset.**
 `roadg_pools.test.js` had half of a re-resolved pair left behind
-(`arrowFlight.js:262` is a `backstabChance:` field; the unconditional
+(`arrowFlight.js:283` is a `backstabChance:` field; the unconditional
 `onAttackFromPlayer` the sentence is about is `:215`, which is where the
 sibling comment in `cityGuards.js` was pointed in the same round). The
 dungeon's three-host sentence had its `exterior.js` number re-resolved

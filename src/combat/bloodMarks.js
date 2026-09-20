@@ -192,7 +192,21 @@ export function createBloodMarks({ renderer = null, collider = null, settings = 
       // is the pool under the body.
       const up = looksUp(i);
       const dir = up ? UP : DOWN, reach = up ? CEILING_REACH : MARK_DROP;
-      const h = col.raycastHit([fromX, pos[1], fromZ], dir, reach);
+      // MAC-BUG W5 (Mac: "blood doesn't work outside"). THIS RAY WAS
+      // THE WHOLE BUG, and it is the fault class this month has been
+      // made of: `raycastHit` walks the collider's TRIANGLE BUCKETS,
+      // which is the entire world indoors and underground - a floor
+      // there is a mesh - and outside it is not. The world host's
+      // ground is its terrain sampler and the exterior host's is a
+      // flat constant, both handed to the collider as `heightAt` and
+      // applied to the CAPSULE alone. So every drop cast straight down
+      // outdoors met nothing, and "nothing" is not an error: `continue`
+      // is the right answer for spatter thrown off a walkway, so the
+      // pool under the body took the same silent arm and no blood has
+      // ever marked the ground outside.
+      //
+      // `surfaceHit` is the same ray plus that floor, nearer wins.
+      const h = col.surfaceHit([fromX, pos[1], fromZ], dir, reach);
       if (!h || !Number.isFinite(h.dist) || h.dist > reach) continue;
       const at = [fromX, pos[1] + dir[1] * h.dist, fromZ];
       // A CEILING IS A SURFACE TEST, not a position one: the
@@ -241,7 +255,7 @@ export function createBloodMarks({ renderer = null, collider = null, settings = 
     // before this arc.
     if (!marksBlood(bloodIndex)) return null;
     const col = liveCollider();
-    if (!col?.raycastHit) return null;   // between two worlds: a pixel unloaded, a mode half changed
+    if (!col?.surfaceHit) return null;   // between two worlds: a pixel unloaded, a mode half changed   // MAC-BUG W5: surfaceHit, not raycastHit - the ground outside is `heightAt`, not a mesh
     const damage = hit?.damage ?? 0, maxHealth = hit?.maxHealth ?? 0;
     const density = settings?.density?.() ?? 1;
     if (overkillOn() && isOverkill(damage, maxHealth)) {
@@ -292,7 +306,11 @@ export function createBloodMarks({ renderer = null, collider = null, settings = 
       moved++;
       // Between two worlds - a pixel unloaded, a mode half changed -
       // it flies on rather than landing on nothing.
-      const h = col?.raycastHit ? col.raycastHit(step.from, step.dir, step.dist) : null;
+      // MAC-BUG W5: the same ray, and the same reason - a chunk or a
+      // drip that met no mesh outdoors fell for ever, which `gibFly`
+      // reads as "still in the air" exactly as it should for a thing
+      // thrown off a ledge.
+      const h = col?.surfaceHit ? col.surfaceHit(step.from, step.dir, step.dist) : null;
       if (!h || !Number.isFinite(h.dist) || h.dist > step.dist) { gibFly(g, step); continue; }
       gibLand(g, [
         step.from[0] + step.dir[0] * h.dist,

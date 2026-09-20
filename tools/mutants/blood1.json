@@ -408,8 +408,8 @@
   {
     "name": "BLOOD1b-the-whole-spray-takes-ONE-ray",
     "file": "src/combat/bloodMarks.js",
-    "old": "      const h = col.raycastHit([fromX, pos[1], fromZ], dir, reach);",
-    "new": "      const h = col.raycastHit([pos[0], pos[1], pos[2]], dir, reach);",
+    "old": "      const h = col.surfaceHit([fromX, pos[1], fromZ], dir, reach);",
+    "new": "      const h = col.surfaceHit([pos[0], pos[1], pos[2]], dir, reach);",
     "tests": [
       "test/blood1_decals.test.js"
     ]

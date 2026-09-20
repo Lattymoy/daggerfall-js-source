@@ -109,8 +109,15 @@ test('F113: the cure quote scales by the regional price adjustment', () => {
 
 test('F113: the host hands the cure flow the live regional adjustment', () => {
   const wm = readFileSync(new URL('../src/scenes/worldModes.js', import.meta.url), 'utf8');
-  const site = wm.slice(wm.indexOf("destination === 'guildServiceCureDisease'"));
-  assert.ok(site.slice(0, 600).includes('priceAdjustment: regionPriceAdjustment(playerEntity,'),
+  // MAC-BUG2 widened this window's contents (the shop and the town
+  // ride the same call now), so the cut is CONTENT-ANCHORED rather
+  // than a byte count: the call's own block, from the branch to the
+  // `});` that closes it. A byte count is a pin that fails when
+  // someone adds a line, which is not what it is for.
+  const from = wm.indexOf("destination === 'guildServiceCureDisease'");
+  const site = wm.slice(from, wm.indexOf('\n      });', from));
+  assert.ok(site.includes('buildCureDiseaseFlow('), 'the slice really is the call');
+  assert.ok(site.includes('priceAdjustment: regionPriceAdjustment(playerEntity,'),
     'buildCureDiseaseFlow receives regionPriceAdjustment, not the neutral default');
 });
 
