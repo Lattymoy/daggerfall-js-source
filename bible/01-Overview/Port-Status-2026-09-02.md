@@ -774,10 +774,11 @@ held there by `test/citedrift.test.js` - the wave that wrote this
 section moved every one of them by inserting rows above section C, and
 a line number nobody re-resolves is a pointer at a stranger.
 
-Section C's table is **247 rows** between `Port-Ledger.md:533` and `:779`
-(`awk '/^\|/ && !/^\|---/'`). **228 are struck.** Of the 19 that are not,
+Section C's table is **248 rows** between `Port-Ledger.md:533` and `:780`
+(`awk '/^\|/ && !/^\|---/'`). **228 are struck.** Of the 20 that are not,
 four are VidFile quirks filed under the wrong section (ported-as-is, no
-route), three carry a **Kept** verdict (the climate swap dimensions, the
+route), one is the DAGGERFALL UNITY SAVE's not-yet-carried halves
+(DFUSAVE, 2026-09-20, routed to the arc's next slice), three carry a **Kept** verdict (the climate swap dimensions, the
 secondary picker's cancel path, the rep window's stale-bar quirk), two are
 **Not planned** (`TangentSolver`/lightmap UVs; AssetInjection's model and
 world-data halves - M-TEX took the TEXTURE half), three are declared

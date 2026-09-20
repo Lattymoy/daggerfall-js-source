@@ -4502,7 +4502,7 @@ all four with a no-raw-constant assertion.
 
 **F2 - THE LAUNCHER TRAPPED EVERY TOUCH DEVICE (severe).**
 `launcherScene.js` registered only `keydown`, while every other
-pre-game screen takes `pointerdown` (menu.js:96, :143) and every
+pre-game screen takes `pointerdown` (menu.js:98, :154) and every
 playable scene calls `attachTouch`. With `ShowOptionsAtStart` shipping
 True, a phone booted straight into a screen it could not dismiss - the
 game was unreachable. PROVEN on an emulated Pixel 5 before the fix

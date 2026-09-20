@@ -37,6 +37,8 @@ import { SAVETREE_FILENAME } from '../formats/saveTreeFile.js';
 import { SAVE_IMAGE_FILENAME } from '../formats/saveImageFile.js';
 import { SAVEVARS_FILENAME } from '../formats/saveVarsFile.js';
 import { setPendingClassicSave } from '../systems/classicSave.js';
+import { collectDfuSaveFiles, dfuSaveFilesFromZip } from '../formats/dfuSave.js';   // DFUSAVE3: a Daggerfall Unity Saves folder through the same picker
+import { importDfuSaves, importSummary } from '../systems/dfuSaveDoor.js';   // DFUSAVE3: each DFU save becomes a port slot
 import { DFPalette } from '../formats/dfPalette.js';
 import { FntFile } from '../formats/fntFile.js';
 import { loadImg, nativeMetrics, pointToNative } from '../ui/nativePanel.js';
@@ -95,7 +97,16 @@ export async function runMenu(canvas, renderer, status) {
           : 'classic';
         let resolved = null;
         if (picked === 'classic') {
-          resolved = (await runClassicLoad(canvas, renderer, status)) ? 'classicload' : null;
+          const r = await runClassicLoad(canvas, renderer, status);
+          if (r === 'imported') {
+            // DFUSAVE3: the picker imported Daggerfall Unity saves into
+            // the slot store; they are port saves now, so the slot
+            // window lists them and the ordinary load arm boots one.
+            const key = await runSaveLoadWindow(canvas, renderer, status);
+            if (key != null && key !== 'classic') { _pickedLoadKey = key; resolved = 'load'; }
+          } else if (r) {
+            resolved = 'classicload';
+          }
         } else if (picked != null) {
           _pickedLoadKey = picked;
           resolved = 'load';
@@ -249,13 +260,16 @@ function pickClassicSaveFiles() {
     ui.style.cssText = 'position:fixed;inset:0;background:#111;color:#ddd;font:14px monospace;display:flex;align-items:center;justify-content:center;z-index:10';
     ui.innerHTML = `
       <div style="max-width:460px;text-align:center;border:1px solid #444;padding:24px">
-        <h2 style="margin-top:0">Load Classic Save</h2>
+        <h2 style="margin-top:0">Load Classic or Daggerfall Unity Save</h2>
         <p>Select your classic <b>Daggerfall</b> folder (the one holding
-        SAVE0-SAVE5 beside ARENA2), or drop it here. Saves are read for
-        this load only - nothing is stored.</p>
+        SAVE0-SAVE5 beside ARENA2), or your <b>Daggerfall Unity</b>
+        <code>Saves</code> folder (SAVE0, SAVE1... each with a
+        SaveData.txt), or drop either here. A classic save is read for
+        this load only; a Daggerfall Unity save is imported into your
+        save slots and loads from the Load window from then on.</p>
         <input type="file" id="picksaves" webkitdirectory multiple style="margin:8px">
         <p style="margin:4px 0">on a phone: pick a <b>.zip</b> instead
-        (your Daggerfall folder, or a SAVE# folder, zipped)</p>
+        (either folder, or a SAVE# folder, zipped)</p>
         <input type="file" id="picksaveszip" accept=".zip,application/zip" style="margin:8px">
         <p><button id="cancelsaves" style="font:inherit;padding:4px 12px">Cancel</button></p>
         <p id="savemsg" style="color:#8a8"></p>
@@ -265,9 +279,19 @@ function pickClassicSaveFiles() {
     const finish = (result) => { ui.remove(); resolve(result); };
 
     const ingest = async (files) => {
+      // DFUSAVE3: a Daggerfall Unity Saves folder takes the import door.
+      const dfu = collectDfuSaveFiles(files);
+      if (Object.keys(dfu).length) {
+        msg.textContent = `importing ${Object.keys(dfu).length} Daggerfall Unity save(s)...`;
+        const results = await importDfuSaves(dfu);
+        msg.textContent = importSummary(results);
+        console.log('[menu] DFU import:', results);
+        if (results.some((r) => r.ok)) { setTimeout(() => finish({ imported: results }), 1500); }
+        return;
+      }
       const saves = collectClassicSaveFiles(files);
       const indexes = Object.keys(saves);
-      if (!indexes.length) { msg.textContent = 'no SAVE0-SAVE5 folders in that selection'; return; }
+      if (!indexes.length) { msg.textContent = 'no SAVE0-SAVE5 folders (classic) or SAVE# folders with SaveData.txt (Daggerfall Unity) in that selection'; return; }
       msg.textContent = `reading ${indexes.length} save slot(s)...`;
       for (const files2 of Object.values(saves)) {
         for (const [name, file] of Object.entries(files2)) {
@@ -282,7 +306,7 @@ function pickClassicSaveFiles() {
       const f = e.target.files[0];
       if (!f) return;
       msg.textContent = `unpacking ${f.name}...`;
-      try { await ingest(await classicSaveFilesFromZip(f)); }
+      try { await ingest([...await classicSaveFilesFromZip(f), ...await dfuSaveFilesFromZip(readZipEntries, f)]); }
       catch (err) { msg.textContent = `zip failed: ${err.message}`; }
     });
     ui.querySelector('#cancelsaves').addEventListener('click', () => finish(null));
@@ -296,7 +320,7 @@ function pickClassicSaveFiles() {
         if (entry.isFile) {
           const f = await new Promise((r) => entry.file(r));
           // OT1: a dropped archive is the phone path by another gesture
-          if (/\.zip$/i.test(entry.name)) { files.push(...await classicSaveFilesFromZip(f)); return; }
+          if (/\.zip$/i.test(entry.name)) { files.push(...await classicSaveFilesFromZip(f), ...await dfuSaveFilesFromZip(readZipEntries, f)); return; }
           files.push({ webkitRelativePath: prefix + entry.name, arrayBuffer: () => f.arrayBuffer() });
         } else if (entry.isDirectory) {
           const reader = entry.createReader();
@@ -324,6 +348,9 @@ export async function runClassicLoad(canvas, renderer, status) {
   status('classic saves');
   const saves = await pickClassicSaveFiles();
   if (!saves) return false;
+  // DFUSAVE3: the picker imported Daggerfall Unity saves instead - they
+  // are slots now, and the caller opens the slot window over them.
+  if (saves.imported) { status('daggerfall unity saves imported'); return 'imported'; }
 
   const saveGames = new SaveGames();
   if (!saveGames.openSavesPath(saves)) {

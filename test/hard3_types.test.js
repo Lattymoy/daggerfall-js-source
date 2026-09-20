@@ -120,7 +120,7 @@ test('HARD3: every file at a seam opts in, and the seam sets are read out of the
   // and gating nothing at all.
   assert.ok(render.length >= 20, `the renderer seam is src/render/ - found ${render.length} files`);
   assert.ok(net.length >= 4, `the wire seam is src/net/ - found ${net.length} files`);
-  assert.deepEqual(save.sort(), ['src/systems/classicSave.js', 'src/systems/save.js', 'src/systems/saveSlots.js'],
+  assert.deepEqual(save.sort(), ['src/systems/classicSave.js', 'src/systems/dfuSaveImport.js', 'src/systems/save.js', 'src/systems/saveSlots.js'],   // DFUSAVE2: the DFU converter mints the envelope, so it knows the version
     'the save seam is every systems/ module that knows SAVE_VERSION; if this list grew, the new module opts in too');
 
   const missing = all.filter((f) => !/^\/\/ @ts-check\r?\n/.test(read(f)));

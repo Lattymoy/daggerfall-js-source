@@ -149,7 +149,7 @@ test('DFUSAVE1: the folder walk - a SAVE<n> segment of any index, the roster cas
     f('Saves/SAVE0/SaveInfo.txt'), f('Saves/SAVE0/SaveData.txt'), f('Saves/SAVE0/Screenshot.jpg'),
     f('Saves/SAVE7/SaveData.txt'),                                      // no SaveInfo -> not a save (:751)
     { name: 'SAVE2/SaveInfo.txt', arrayBuffer: async () => new ArrayBuffer(0) },   // a bare name works too
-    f('Saves/ARENA2/MAPS.BSA'),
+    f('Saves/Backup/MAPS.BSA'),
   ]);
   assert.deepEqual(Object.keys(saves), ['0', '2']);
   assert.deepEqual(Object.keys(saves[0]).sort(), ['SAVEDATA.TXT', 'SAVEINFO.TXT', 'SCREENSHOT.JPG']);

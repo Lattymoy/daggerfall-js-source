@@ -159,8 +159,8 @@ test('OT1: the picker offers the zip door beside the directory one, and a droppe
   // the ARENA2 door's own shape: a second file input, accept-gated, with the phone line above it
   assert.match(menu, /<input type="file" id="picksaves" webkitdirectory multiple[^>]*>\s*<p[^>]*>on a phone: pick a <b>\.zip<\/b> instead/, 'the phone line sits under the directory input');
   assert.match(menu, /<input type="file" id="picksaveszip" accept="\.zip,application\/zip"/, 'the zip input is accept-gated');
-  assert.match(menu, /querySelector\('#picksaveszip'\)\.addEventListener\('change'[\s\S]{0,400}await ingest\(await classicSaveFilesFromZip\(f\)\)/, 'the zip input feeds the SAME ingest as the directory pick');
-  assert.match(menu, /if \(\/\\\.zip\$\/i\.test\(entry\.name\)\) \{ files\.push\(\.\.\.await classicSaveFilesFromZip\(f\)\); return; \}/, 'a dropped .zip expands in the directory walk');
+  assert.match(menu, /querySelector\('#picksaveszip'\)\.addEventListener\('change'[\s\S]{0,400}await ingest\((?:\[\.\.\.)?await classicSaveFilesFromZip\(f\)/, 'the zip input feeds the SAME ingest as the directory pick');
+  assert.match(menu, /if \(\/\\\.zip\$\/i\.test\(entry\.name\)\) \{ files\.push\(\.\.\.await classicSaveFilesFromZip\(f\)(?:, \.\.\.await dfuSaveFilesFromZip\(readZipEntries, f\))?\); return; \}/, 'a dropped .zip expands in the directory walk');   // DFUSAVE3: the DFU arm rides the same push
   // one collector: the directory pick, the drop and the zip all land in it
   assert.match(menu, /const saves = collectClassicSaveFiles\(files\);/);
   assert.equal((menu.match(/SAVE\(\[0-5\]\)/g) || []).length, 1, 'the SAVE# rule is written once (classicSaveSlot)');
