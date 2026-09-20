@@ -69,7 +69,7 @@
 
 import { CifRciFile } from '../formats/cifRciFile.js';
 import { RSC, TOKEN_TEXT } from '../formats/textRsc.js';
-import { bitmapToColor32 } from './hud.js';
+import { bitmapToColor32 } from '../formats/color32Order.js';
 import { drawText, measureText } from './text.js';
 import { shadowText } from './nativePanel.js';
 import { audio } from '../systems/audio.js';

@@ -309,7 +309,7 @@ test('SOC4: createFaceLoader IS the classic path - raceArt names the FACE CIF fo
   const src = rd('src/ui/partyPanel.js');
   assert.match(src, /import \{ CifRciFile \} from '\.\.\/formats\/cifRciFile\.js';/, 'the paper doll\'s own reader');
   assert.match(src, /import \{ raceArt, FACES_PER_RACE \} from '\.\.\/systems\/races\.js';/);
-  assert.match(src, /import \{ bitmapToColor32 \} from '\.\.\/ui\/hud\.js';|import \{ bitmapToColor32 \} from '\.\/hud\.js';/, 'and the HUD\'s own indexed-to-RGBA door');
+  assert.match(src, /import \{ bitmapToColor32 \} from '\.\.\/formats\/color32Order\.js';/, 'and the indexed-to-RGBA door - BOOT2 moved it from the HUD to the formats leaf (test/boot2.test.js holds the one home)');
   assert.match(src, /cif\.getDFBitmap\(record, 0\)/);
   assert.doesNotMatch(src, /innerHTML/, 'a name is text, never markup');
 });

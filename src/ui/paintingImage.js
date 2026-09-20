@@ -24,7 +24,7 @@
 // them here on the way past.
 
 import { CifRciFile } from '../formats/cifRciFile.js';
-import { bitmapToColor32 } from './hud.js';
+import { bitmapToColor32 } from '../formats/color32Order.js';
 
 let _deps = null;
 /** { renderer, fetchBytes, palette } - the inventory art preload's own

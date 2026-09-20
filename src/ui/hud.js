@@ -15,6 +15,7 @@
 //   Scale: classic pixels x floor(canvasHeight / 200) (the 320x200
 //   reference), min 1 - integer scaling keeps the art crisp.
 
+import { bitmapToColor32 } from '../formats/color32Order.js';   // BOOT2: the indexed-to-color32 door is a formats concern; it lived here and put the HUD on the entry's boot path through ui/cursor.js
 import { maxFatigue, maxBreath, liveStat } from '../systems/statMods.js';
 import { isEnhanced } from '../systems/uiSkin.js';   // PX30: the HUD is a skin too
 import { drawEnhancedHud } from './enhancedHud.js';   // PX30
@@ -173,23 +174,6 @@ export const hudScale = (canvasWidth, canvasHeight) =>
  * the art is absent - the HUD is data-gated like everything else.
  * ImgFile + palette come from the caller (scene layer owns data).
  */
-export function bitmapToColor32(bmp, palette, alphaIndex = 0) {
-  // alphaIndex is GetColor32's own parameter: classic IMG UI art keys
-  // index 0 transparent (the box corners) - the default every caller
-  // rode before it was a parameter - while a save screenshot
-  // (SAV3, IMAGE.RAW) is opaque edge to edge and passes -1.
-  const colors = new Uint32Array(bmp.width * bmp.height);
-  const u8 = new Uint8Array(colors.buffer);
-  for (let i = 0; i < bmp.data.length; i++) {
-    const idx = bmp.data[i];
-    const o = i * 4;
-    if (idx === alphaIndex) continue;
-    const c = palette.get(idx);
-    u8[o] = c.r; u8[o + 1] = c.g; u8[o + 2] = c.b; u8[o + 3] = 255;
-  }
-  return { width: bmp.width, height: bmp.height, colors };
-}
-
 export async function loadHud({ fetchBytes, ImgFile, palette, renderer }) {
   // U46: the spell-icon sheet loads HERE, with the rest of the HUD's
   // art, and not with the spellbook window that used to be its only

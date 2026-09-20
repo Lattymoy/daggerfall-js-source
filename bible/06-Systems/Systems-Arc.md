@@ -3043,7 +3043,7 @@ ladders became `hudCtx` while this slice was in flight - one object
 the ladder AND the large HUD's eleven panels both read, so a click on
 the bar and a press of the bound key reach the same door. The Rest
 arm moved into it, which means the large HUD's rest panel
-(`hudLarge.js:152`, `action: 'Rest'`) now has a destination in every
+(`hudLarge.js:153`, `action: 'Rest'`) now has a destination in every
 host: it had been posting an action nothing above ground answered.
 `routeAction`'s own `case 'Rest': ctx.toggleRest?.()` already carried
 the interior host.

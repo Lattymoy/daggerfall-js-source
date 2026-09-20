@@ -89,3 +89,38 @@ export function toScreenOrder(image) {
   if (data.length !== row * height) throw new Error(`${width}x${height} carries ${data.length} bytes`);
   return { width, height, colors: new Uint8ClampedArray(data.buffer, data.byteOffset, data.byteLength) };
 }
+
+/**
+ * BOOT2 (2026-09-20): THE THIRD DOOR, AND WHY IT IS HERE. A classic
+ * indexed bitmap (an IMG/CIF record + ART_PAL.COL) becomes color32 through
+ * this - `{ width, height, colors }`, GetColor32's own shape and its own
+ * `alphaIndex` parameter: classic IMG UI art keys index 0 transparent (the
+ * box corners), the default every caller rode before it was a parameter,
+ * while a save screenshot (SAV3, IMAGE.RAW) is opaque edge to edge and
+ * passes -1.
+ *
+ * It lived in ui/hud.js, and eleven modules imported it from there - among
+ * them ui/cursor.js, which the ENTRY imports to install the document
+ * cursor. That one edge, `cursor.js -> hud.js` for one pure function, put
+ * the HUD, the enhanced HUD, the world tick and everything the tick
+ * touches - 216 files, 4.1 MB of source - on the boot path before the
+ * menu drew. A conversion from a palette is a formats concern; the HUD was
+ * only ever where it happened to be written. One home, both ends: hud.js
+ * imports it from here like everyone else, and re-exports nothing.
+ */
+export function bitmapToColor32(bmp, palette, alphaIndex = 0) {
+  // alphaIndex is GetColor32's own parameter: classic IMG UI art keys
+  // index 0 transparent (the box corners) - the default every caller
+  // rode before it was a parameter - while a save screenshot
+  // (SAV3, IMAGE.RAW) is opaque edge to edge and passes -1.
+  const colors = new Uint32Array(bmp.width * bmp.height);
+  const u8 = new Uint8Array(colors.buffer);
+  for (let i = 0; i < bmp.data.length; i++) {
+    const idx = bmp.data[i];
+    const o = i * 4;
+    if (idx === alphaIndex) continue;
+    const c = palette.get(idx);
+    u8[o] = c.r; u8[o + 1] = c.g; u8[o + 2] = c.b; u8[o + 3] = 255;
+  }
+  return { width: bmp.width, height: bmp.height, colors };
+}

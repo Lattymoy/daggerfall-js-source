@@ -8774,7 +8774,7 @@ cited and ported somewhere in `src/`. FOUR were not:
 ### UI1 CLOSED: the use-magic-item window
 
 The port had the DOOR and not the room. `input.js:606` routed
-`Actions.UseMagicItem` to `ctx.openUseMagicItem`, `hudLarge.js:151`
+`Actions.UseMagicItem` to `ctx.openUseMagicItem`, `hudLarge.js:152`
 gave the large HUD's button its rect, `inputActions.js` bound KeyU -
 and no host implemented the method, so a live binding silently did
 nothing. That is the anti-lie law's other half: a deferred feature

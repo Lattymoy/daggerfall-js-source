@@ -55,7 +55,7 @@
 
 import { loadImg, nativeMetrics, drawImg, drawImgCrop, drawRect, shadowText, pointToNative, DEFAULT_TEXT_COLOR, DEFAULT_SHADOW_COLOR } from './nativePanel.js';   // AUDIT 63 F5: DaggerfallDefaultShadowColor, the unmarked row's shadow
 import { CifRciFile } from '../formats/cifRciFile.js';
-import { bitmapToColor32 } from './hud.js';
+import { bitmapToColor32 } from '../formats/color32Order.js';
 import { drawScreenDimBackdrop, DOUBLE_CLICK_DELAY_MS } from './chargenArt.js';
 import { wrapText } from './talkWindow.js';
 import { getBool } from '../systems/settings.js';   // UI6: EnableModernConversationStyleInTalkWindow

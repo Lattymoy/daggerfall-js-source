@@ -1905,6 +1905,43 @@ container, so nothing here was measured the way PERF-ON's names were.
 Said rather than implied.
 
 **Pinned** in `test/grasspath.test.js`.
+## BOOT2 - A CURSOR MUST NOT NEED THE HUD: ONE EDGE, 4.1 MB (2026-09-20)
+
+**Where BOOT1 left the entry.** With the four hosts behind doors, the
+entry's static graph was still 259 files and 4.9 MB of source, and the
+bundle's boot set 28 chunks / 492 KB gzipped - `travel` (257 KB) and
+`spellcast` (55 KB) the largest of them. The menu's own direct imports were
+not the cause (no single one costs more than 88 KB exclusively); the cause
+was a hub edge further down. Cutting edges one at a time on the entry's
+graph and measuring each: **`ui/cursor.js -> ui/hud.js` carries 216 files
+and 4,141 KB on its own** - `main.js` imports the cursor to install the
+document pointer, the cursor imports ONE pure function from the HUD
+(`bitmapToColor32`, an indexed bitmap through a palette), and the HUD
+imports the enhanced HUD, which imports the world tick, which imports the
+game. Cutting `worldTick -> weatherSim`/`diseases` instead saves nothing:
+the same modules arrive through `court.js -> factionRep.js -> save.js`. The
+edge that matters is the first one.
+
+**The helper was in the wrong home.** A conversion from a palette is a
+formats concern; the HUD was only where it happened to be written, and
+eleven modules imported it from there. It lives in
+`formats/color32Order.js` now - the file that already owns how a picture
+becomes color32 (the row-order doors of AUDIT 62 F26 and HT3) - and every
+importer takes it from the leaf, `hud.js` included. No re-export: a
+re-export would put the hub edge back for whoever took the shortcut, and
+`test/boot2.test.js` holds that as a law rather than a hope.
+
+**Measured.** The entry's static reach: 259 files / 4,991 KB -> 43 files /
+841 KB. What remains is the renderer, the settings, the data source and the
+crash/stale-chunk law - the things an entry genuinely needs before it knows
+which door it is going through. The bundle numbers are in the commit.
+
+**Three laws, derived, not listed.** One home (exactly one definition in the
+tree, in the leaf; nobody under src/ or test/ imports it from hud.js; hud.js
+exports it to nobody). The cursor is a leaf (its imports are read; none is
+under ui/). The entry's reach touches neither hub and stays under a ceiling
+the cut measured. 3 mutants, 3 killed.
+
 ## BOOT1 - THE GAME HOSTS BEHIND A DOOR: THE BOOT GRAPH UN-INVERTED (2026-09-20)
 
 **INLINE1's "next lever" turned out to be the wrong lever.** The plan was to
