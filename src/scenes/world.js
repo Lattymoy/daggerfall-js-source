@@ -190,6 +190,7 @@ import { initEscortFaces, addEscortFace, dropEscortFace, escortQuestEnded } from
 import { largeHudOptions, routeLargeHudClick, hudLargeNextMode, hudLargePrevMode, activeMouseOverLargeHUD, trackLargeHudPointer } from '../ui/hudLarge.js';   // U45: the classic bottom bar and its eleven panels; ROAD-Ar: and the guard that stops them being world clicks too
 import { trackHudPointer } from '../ui/hudActiveSpells.js';   // U46: the spell-icon rows' pointer
 import { getInteractionMode } from '../player/interactionMode.js';   // U45: the mode panel's cycle reads it
+import { randomEpitaph } from '../systems/gravestoneLore.js';   // GRAVE1: Info mode's graveyard flavour line
 import { ImgFile } from '../formats/imgFile.js';   // AUDIT 21 hosts F7: loadHud's reader
 import { preloadInventoryArt } from '../ui/nativeInventory.js';   // U8d: the native inventory
 import { createInventoryWindow, inventoryDoorReady } from '../ui/inventoryDoor.js';   // U53: the pack's ONE seam, and the skin fork in front of it
@@ -3382,10 +3383,10 @@ export async function bootWorld(canvas, renderer, params, status) {
   // ?dungeon host RAN every CastWhenUsed / CastWhenStrikes / SoulBound
   // / affinity arm against no ctx at all. They are optional-chained, so
   // it WAS silent. WAVE D closed it: the body is scenes/hostEnchant.js
-  // and dungeonContext.js:2253 mounts the same one, gated on
+  // and dungeonContext.js:2254 mounts the same one, gated on
   // `opts.enchantCtx !== false` because setDefaultEnchantCtx is a
   // session singleton and EC1 already routes THIS host's mount into
-  // that context through modes.dungeonCtx - so worldModes.js:4712
+  // that context through modes.dungeonCtx - so worldModes.js:4723
   // passes false beside its `chargen: false` and only the standalone
   // ?dungeon route mounts its own. S40 filled isResting
   // in - the sentence that stood here said it "stays absent above
@@ -5188,7 +5189,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // so an F9 pressed inside a shop recorded the street's sheath and
     // hand. The mode host answers for the rig that is actually drawn
     // and null outside interior mode (the dungeon owns its own
-    // composer, dungeonContext.js:5723), so exterior mode and a
+    // composer, dungeonContext.js:5724), so exterior mode and a
     // pre-seam mode host compose exactly as before, per field.
     const wp = modes?.weaponPose?.() ?? null;
     const snap = snapshotPlayer(playerEntity, {
@@ -7033,7 +7034,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // exterior -> the townTalk overlay, interior OR dungeon -> the mode
   // machine's slot. U43-ii shipped the dungeon half: showQuestBox
   // offers the window to `modes.showQuestOverlay` below, and
-  // worldModes answers it in BOTH modes (worldModes.js:7594-7657 -
+  // worldModes answers it in BOTH modes (worldModes.js:7629-7692 -
   // dungeon routes to dungeonCtx.showOverlay), so a dungeon popup is
   // shown rather than logged loudly and dropped.
   // AUDIT 24 (wave 21): DaggerfallMessageBox.Show() is a
@@ -8476,7 +8477,25 @@ export async function bootWorld(canvas, renderer, params, status) {
     online.onRelay = onRelayVersion;
     chatPanel = createChatPanel({
       log: chatLog,
-      onSend: (tabId, text) => chatLinks.get(tabId)?.sendChat(text) ?? false,   // false keeps the line in the field (B2)
+      // UNSTUCK1 (per-request): a local command, never sent to the
+      // relay - `/unstuck` on its own line, case-insensitive, leaves
+      // the player through the door they came in by. Checked before
+      // sendChat so it costs the chat log a line, not a round trip,
+      // and works exactly the same whether or not any peer is even
+      // listening on this tab. modes.unstuck() itself refuses outdoors
+      // (RF-per-request: interiors and dungeons only - houses, shops,
+      // temples, windmills and the like, same as any building door).
+      onSend: (tabId, text) => {
+        if (/^\/unstuck$/i.test(text.trim())) {
+          const moved = modes?.unstuck?.();   // AUDIT 24 wave37: guarded on the OBJECT - `modes` is a `var` assigned further down, so a line typed before the mode machine exists reads `undefined`, not a TDZ throw, and an unguarded `.unstuck()` there is the exact TypeError shape that gate was written for. Unguarded it answers falsy, which the refusal line below already speaks.
+          chatLog.push(tabId, {
+            text: moved ? 'You find your way back outside.' : 'There is nowhere to send you from out here.',
+            system: true,
+          });
+          return true;
+        }
+        return chatLinks.get(tabId)?.sendChat(text) ?? false;   // false keeps the line in the field (B2)
+      },
       // CHAT-R1 (Mac: "a sidepanel on the chat ui showing all currently
       // online players in alphabetical order"). ROSTER-G (Mac: "Players
       // dont show in online"): the roster is the ACTIVE CHANNEL's, not
@@ -10273,7 +10292,19 @@ export async function bootWorld(canvas, renderer, params, status) {
                 loot: droppedLootHooks(pile),   // G5: DaggerfallLoot's own identity
               }));
             }
-            else modes.tryEnter().catch((e) => console.error(e));
+            else modes.tryEnter().then((opened) => {
+              // GRAVE1: an activation that hit NOTHING - no door either -
+              // while Info mode is selected and the player stands inside
+              // a Graveyard-type location reads as "read the nearest
+              // stone", through the ordinary popup line (townTalk.say),
+              // which is already the enhanced skin's own small text
+              // (ui/enhancedHudText.js), not a new window. See
+              // systems/gravestoneLore.js for why this is location-gated
+              // rather than a specific clicked headstone.
+              if (!opened && getInteractionMode() === 'info' && _musicLocationType() === LOCATION_TYPES.Graveyard) {
+                townTalk.say(randomEpitaph());
+              }
+            }).catch((e) => console.error(e));
             }   // HT1: the torch arm's else
           }
         }

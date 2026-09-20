@@ -2393,6 +2393,128 @@ body:has(.dfchat.touch) .hudtext-stack { top: ${HUD_TEXT_TOP_CHAT_TOUCH_PX}px; }
 .sb-shell .sb-ask .card { max-width: 420px; margin: 0; text-align: center; }
 .sb-shell .sb-ask .sb-acts { justify-content: center; }
 
+/* ── THE TRADE COUNTER (enhancedTrade.js) ──────────────────────────
+   Same bones as the spellbook/chronicle shells above - centred frame,
+   the sb-top/sb-who header, the sb-ask confirm scrim - plus the
+   pack's own two-list grid (.packlists/.packcol/.itemrow, all
+   unscoped already) for the shelf and the basket. A window that wore
+   .px-home/.px-over alone and none of this got no centring, no scrim
+   overlay and no side-by-side lists - three symptoms of the one
+   missing class, not three separate faults. */
+.trade-shell { display: flex; align-items: center; justify-content: center; }
+.trade-shell .px-win { width: min(960px, 96vw); height: min(640px, 86dvh); }
+.trade-shell .sb-top { display: grid; grid-template-columns: 1fr auto 1fr;
+  align-items: center; padding: 12px 16px;
+  border-bottom: 2px solid rgba(125,116,96,0.35); }
+.trade-shell .sb-who { text-align: center; }
+.trade-shell .sb-who h2 { font-family: inherit; font-weight: 400; font-size: 18px; margin: 0;
+  letter-spacing: 0.1em; text-indent: 0.1em; text-transform: uppercase;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.85); }
+.trade-shell .sb-top .act { justify-self: end; }
+/* THE TWO LISTS. The shop's shelf/basket and the staged lot, side by
+   side - the same .packlists grid the pack's own remote pane uses, so
+   the two screens read as one family rather than two. Under 1100px it
+   stacks exactly as the pack's own does (the media query above this
+   block already covers .packlists unscoped). */
+.trade-shell .px-body { display: flex; flex-direction: column; overflow: hidden; padding: 18px 26px 0; }
+.trade-shell .packlists { margin: 0; flex: 1 1 auto; min-height: 0; }
+.trade-shell .packcol { padding: 0 2px 18px; overflow-y: auto; min-height: 0; }
+/* THE TABS. The base .packtab is flex: 1 1 auto in a wrapping row -
+   fine at the pack's own full width (four tabs, one row, never wraps),
+   but this column is half that wide: "Ingredients" alone wraps to its
+   own row and, still flex-growing, stretches to fill it - one
+   underline four times its neighbours' width. A small fixed 2x2 grid
+   has no row for a lone flex item to stretch across. */
+.trade-shell .packtabs { display: grid; grid-template-columns: repeat(2, 1fr); flex-wrap: unset; }
+.trade-shell .packtab { flex: unset; }
+.trade-shell .trade-footer { padding: 14px 26px;
+  border-top: 2px solid rgba(125,116,96,0.35); background: rgba(10,12,17,0.4); }
+.trade-shell .trade-cost { flex: 1 1 auto; color: var(--brass); font-size: 13px;
+  font-variant-numeric: tabular-nums; align-self: center; }
+.trade-shell .itemrow.on { background: rgba(125,116,96,0.16); box-shadow: inset 2px 0 0 var(--brass); }
+.trade-shell .itemrow.ghost { opacity: 0.5; }
+.trade-shell .itemrow.picked { background: rgba(125,116,96,0.22); box-shadow: inset 2px 0 0 var(--brass); }
+/* THE TOOLTIP STRIP - a single click's itemLine, read but not moved
+   (enhancedTrade.js's own "selected"); a double click, or the footer's
+   primary button reaching for this same pending pick, is the transfer.
+   One row rather than enhancedInventory.js's sliding third column -
+   this window is two columns, not three. */
+.trade-shell .trade-detail { display: flex; align-items: center; gap: 14px;
+  margin: 10px 0 0; padding: 10px 14px; background: rgba(0,0,0,0.28);
+  border: 1px solid rgba(125,116,96,0.4); border-radius: 2px; flex: 0 0 auto; }
+.trade-shell .trade-detail .tile { flex: 0 0 auto; }
+.trade-shell .trade-detail-info { flex: 1 1 auto; min-width: 0; }
+.trade-shell .trade-detail-info h4 { margin: 0 0 4px; font-size: 14px; font-weight: 400;
+  color: #e8e0c8; }
+.trade-shell .trade-detail-info .meta { margin: 0; font-size: 12px; color: #a99b7a;
+  overflow-wrap: break-word; }
+.trade-shell .trade-detail-info .trade-quote { margin: 4px 0 0; font-size: 13px;
+  color: var(--brass); font-variant-numeric: tabular-nums; }
+/* THE CONFIRM/REFUSAL BOX, over the counter it interrupts - Buy/Sell's
+   Yes/No, the letter-of-credit notice, and the steal roll's own ask. */
+.trade-shell .sb-ask { position: absolute; inset: 0; display: flex; align-items: center;
+  justify-content: center; background: rgba(10,12,17,0.72); padding: 20px; }
+.trade-shell .sb-ask .card { max-width: 420px; margin: 0; text-align: center; }
+.trade-shell .sb-ask .sb-acts { justify-content: center; }
+
+/* ── THE TAVERN PANEL (enhancedTavern.js) ──────────────────────────
+   The SAME missing-shell bug the trade counter shipped with (above):
+   .px-win with no scoped rule over it centres nothing and keeps
+   whatever the base rule's own min(920px,94vw)/min(620px,74dvh)
+   computes to, which at most window sizes IS most of the screen. A
+   four-button panel, a one-line room form or an eleven-row drink list
+   need nowhere near that - this shell pins it to a small dialog
+   instead, the size the content actually asks for. */
+.tavern-shell { display: flex; align-items: center; justify-content: center; }
+.tavern-shell .px-win { width: min(460px, 92vw); height: auto; max-height: min(560px, 82dvh); }
+.tavern-shell .px-body { flex: 0 1 auto; overflow-y: auto; padding: 18px 22px 22px; }
+.tavern-shell .sb-top { display: grid; grid-template-columns: 1fr auto 1fr;
+  align-items: center; padding: 12px 16px;
+  border-bottom: 2px solid rgba(125,116,96,0.35); }
+.tavern-shell .sb-who { text-align: center; }
+.tavern-shell .sb-who h2 { font-family: inherit; font-weight: 400; font-size: 17px; margin: 0;
+  letter-spacing: 0.1em; text-indent: 0.1em; text-transform: uppercase;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.85); }
+.tavern-shell .sb-top .act { justify-self: end; }
+.tavern-shell .tavern-greeting { margin: 0 0 16px; text-align: center; color: #c9bfa0;
+  font-size: 13px; line-height: 1.5; font-style: italic; }
+/* THE FOUR-BUTTON PANEL, a vertical stack rather than the footer's
+   horizontal row - this is the whole content of the main screen, not
+   an actions bar under something else. */
+.tavern-shell .tavern-menu-acts { display: flex; flex-direction: column; gap: 10px; }
+.tavern-shell .tavern-act { width: 100%; padding: 12px 16px; font-size: 14px;
+  text-align: center; justify-content: center; }
+/* THE ROOM FORM: one line, one field, one button. */
+.tavern-shell .tavern-room { display: flex; flex-direction: column; gap: 14px; }
+.tavern-shell .tavern-room .goldfield { display: flex; gap: 10px; align-items: center; }
+.tavern-shell .tavern-room .goldfield input { flex: 1 1 auto; background: rgba(0,0,0,0.35);
+  border: 1px solid rgba(125,116,96,0.5); color: #e8e0c8; padding: 8px 10px;
+  font-family: inherit; font-size: 14px; border-radius: 2px; }
+/* THE FOOD & DRINK LIST - the pack's own itemrow, two columns (a name
+   and a price) rather than one run-on line, so it reads like every
+   other list this skin draws instead of the odd one out. */
+.tavern-shell .tavern-menu { padding: 0; overflow: visible; min-height: auto; }
+.tavern-shell .tavern-menu-list { display: flex; flex-direction: column; gap: 4px;
+  max-height: min(340px, 50dvh); overflow-y: auto; margin-bottom: 14px; }
+.tavern-shell .tavern-row { display: flex; align-items: center; justify-content: space-between;
+  gap: 12px; width: 100%; text-align: left; }
+.tavern-shell .tavern-price { color: var(--brass); font-variant-numeric: tabular-nums; flex: 0 0 auto; }
+.tavern-shell .tavern-menu-header { margin: 10px 0 2px; font-size: 11px; letter-spacing: 0.12em;
+  text-transform: uppercase; color: #7d7460; }
+.tavern-shell .tavern-menu-header:first-child { margin-top: 0; }
+/* THE CONFIRM/REFUSAL BOX - the room offer's Yes/No, the not-hungry and
+   not-enough-gold notices, a meal or a drink's own line. */
+.tavern-shell .sb-ask { position: absolute; inset: 0; display: flex; align-items: center;
+  justify-content: center; background: rgba(10,12,17,0.72); padding: 20px; }
+.tavern-shell .sb-ask .card { max-width: 380px; margin: 0; text-align: center; }
+.tavern-shell .sb-ask .sb-acts { justify-content: center; }
+
+/* ── THE MERCHANT/REPAIR POPUP (enhancedMerchantPanel.js) ──────────
+   Reuses .tavern-shell's whole frame - centring, header, button-list
+   styling - just narrower: three or four short labels need nowhere
+   near the tavern's 460px. */
+.merchant-shell .px-win { width: min(320px, 88vw); }
+
 /* ── PX24: THE CHRONICLE ────────────────────────────────────────
    The spellbook's frame with a reading column instead of a card: the
    notes and messages are ENTRIES, each under its own numbered

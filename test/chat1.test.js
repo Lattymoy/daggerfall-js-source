@@ -626,7 +626,26 @@ test('CHAT1 / AUDIT CHAT: the host by source - world.js starts the chat with the
   assert.match(w, /if \(enhanced && typeof document !== 'undefined'\) chatStart\(\);/, 'the enhanced skin\'s, with a document (node has none)');
   assert.match(w, /const chatStart = \(\) => \{\s*if \(!online\.url\) return;/, 'AUDIT CHAT A9/B1: a relay the law refused is no relay for the chat either');
   assert.match(w, /for \(const tab of chatLog\.tabs\) \{\s*const link = new OnlineSession\(\{ url: online\.url, name: online\.name, look: online\.look, id: online\.id, secret: online\.secret, presence: false \}\);\s*link\.onChat = \(line\) => chatLog\.push\(tab\.id, line\);\s*link\.onRelay = onRelayVersion;\s*link\.join\(tab\.room\);\s*chatLinks\.set\(tab\.id, link\);/, 'a channel session per tab, the presence session\'s identity, a line to its tab');
-  assert.match(w, /onSend: \(tabId, text\) => chatLinks\.get\(tabId\)\?\.sendChat\(text\) \?\? false,/, 'a typed line down its tab\'s session, and the answer back (B2)');
+  // UNSTUCK1 (2026-09-20): onSend stopped being a one-liner - a LOCAL
+  // command is checked before the relay round trip - so the old pin,
+  // which matched the whole arrow verbatim, could no longer hold. It is
+  // re-aimed rather than relaxed, and it is STRONGER than the line it
+  // replaces: the B2 claim (the line goes down THIS TAB'S session and
+  // its answer is what onSend returns) is still matched character for
+  // character as the fall-through, AND the new claim is pinned beside
+  // it - the local command is tested FIRST, so a `/unstuck` never
+  // reaches the relay, and it answers true, which is what keeps the
+  // typed line out of the field. A pin that merely checked `sendChat`
+  // appeared somewhere in the host would pass on a handler that sent
+  // every line twice, or one that sent the command to the room.
+  assert.match(w, /return chatLinks\.get\(tabId\)\?\.sendChat\(text\) \?\? false;/, 'a typed line down its tab\'s session, and the answer back (B2)');
+  const onSend = /onSend: \(tabId, text\) => \{([\s\S]*?)\n {6}\},/.exec(w);
+  assert.ok(onSend, 'UNSTUCK1: the host no longer carries an onSend block');
+  const cmdAt = onSend[1].indexOf("/^\\/unstuck$/i.test(text.trim())");
+  const sendAt = onSend[1].indexOf('sendChat(text)');
+  assert.ok(cmdAt > 0, 'UNSTUCK1: the local /unstuck command is gone from onSend');
+  assert.ok(cmdAt < sendAt, 'UNSTUCK1: the local command must be tested BEFORE the relay send, or the room hears it');
+  assert.match(onSend[1], /return true;/, 'UNSTUCK1: a spent command answers true, which is what clears the field');
   assert.match(w, /canOpen: \(\) => !gamePaused\(\) && !\(townTalk\.hudCovered \|\| \(modes\?\.hudCovered \?\? false\)\)/, 'no chat under a window');
   assert.match(w, /onOpen: \(\) => surfaceOpen\('chat'\),/, 'AUDIT CHAT C2: the pointer freed on open (AUDIT SOC B6: by the first of the counted surfaces); PL3: the opening Enter reclaimed from the toggle');
   assert.match(w, /const surfaceOpen = \(name\) => \{ pointerSurfaces\.add\(name\); setCursorActive\(false\); releaseLook\(\); \};/);

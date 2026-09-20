@@ -176,7 +176,12 @@ const CONTEXTS = [
     // the second. Both paths are checked, so a pool can no longer be
     // half-remembered.
     file: 'src/scenes/worldModes.js',
-    teardowns: ['tryExit', 'forceExitToExterior'],
+    // UNSTUCK1: the door's own teardown moved out of tryExit() into its
+    // own exitInteriorNow() (so a caller with no ray - the /unstuck
+    // command - can reach it too); tryExit is now just tryExit's OTHER
+    // job (the activation ladder) plus a call into this one, so this is
+    // the path that actually ends the pools below now.
+    teardowns: ['exitInteriorNow', 'forceExitToExterior'],
     only: /^interior/,
     declared: {
       interiorWeapon: 'the weapon rig is built once and lives with the HOST, not the building - it has no per-interior state to reset (its own component ends at the page, as every host-scope thing does)',

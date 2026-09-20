@@ -420,7 +420,7 @@ test('DR1 dungeon host: Identify opens the REAL trade window there, not a refusa
   assert.ok(s.includes('function openIdentifySpellWindow('), 'the dungeon host builds no Identify window');
   const b = s.slice(s.indexOf('function openIdentifySpellWindow('),
     s.indexOf('function openDispelPicker('));
-  assert.ok(b.includes('new NativeTradeWindow('), 'the Identify builder mounts no trade window');
+  assert.ok(b.includes('createTradeWindow('), 'the Identify builder mounts no trade window');
   assert.ok(/mode: 'Identify'/.test(b) && /usingIdentifySpell: true/.test(b),
     'the dungeon Identify window is not the SPELL\'s');
   // 2. D7's live collection, spliceable, and the window's own equipped cut
@@ -440,7 +440,7 @@ test('DR1 dungeon host: Identify opens the REAL trade window there, not a refusa
   const arm = s.slice(s.indexOf('onIdentify: ({ chance, refund } = {}) => {'), s.indexOf('onDispelMagic:'));
   assert.ok(arm.includes('mountSpellWindow(openIdentifySpellWindow({ chance: chance ?? 0, cost: refund ?? 0 }))'),
     'the dungeon Identify seam no longer mounts the window');
-  assert.ok(arm.includes('!tradeArtLoaded()'), 'the seam no longer guards its art (X11b: a dead seam)');
+  assert.ok(arm.includes('!tradeDoorReady()'), 'the seam no longer guards its art (X11b: a dead seam)');
   // 5. and the art is warmed at BOOT, or tradeArtLoaded() is false for
   //    ever and the whole mount is silently dead (X11c's bug, one host over).
   assert.ok(s.includes('preloadTradeArt({ renderer, fetchBytes, palette });'),
