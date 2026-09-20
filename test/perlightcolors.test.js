@@ -131,9 +131,13 @@ test('LT1: _pointColorData answers the host array as-is, or the shared colour sp
 
 test('LT1: all four fragment shaders accumulate vec3 pointAcc off uPointColors[i]; the scalar channel is GONE', () => {
   const r = src('render/renderer.js');
-  assert.equal((r.match(/uniform vec3 uPointColors\[16\]/g) ?? []).length, 4, 'the vec3 array in all four programs');
-  assert.equal((r.match(/vec3 pointAcc = vec3\(0\.0\);/g) ?? []).length, 4);
-  assert.equal((r.match(/\* uPointColors\[i\];/g) ?? []).length, 4, 'every accumulation weighted per light');
+  // MAC-BUG W4 (2026-09-20): FIVE, not four. The DECAL pass grew the
+  // same term - a blood mark was lit by ambient alone while the gib
+  // from the same blow took the full light - and it took this one
+  // character for character, which is what EL1's own pin holds it to.
+  assert.equal((r.match(/uniform vec3 uPointColors\[16\]/g) ?? []).length, 5, 'the vec3 array in all five programs');
+  assert.equal((r.match(/vec3 pointAcc = vec3\(0\.0\);/g) ?? []).length, 5);
+  assert.equal((r.match(/\* uPointColors\[i\];/g) ?? []).length, 5, 'every accumulation weighted per light');
   assert.equal(/uniform vec3 uPointColor;/.test(r), false, 'the shared uniform left the shaders');
   assert.equal(/pointDiff/.test(r), false, 'no scalar accumulator survives');
 });

@@ -190,8 +190,21 @@ test('EL1: the five lane shaders declare the 48-light arrays and the lane\'s two
   assert.ok(!/uPointLights/.test(EL_FAR_RING_FS), 'the ring takes no lanterns, as before');
   // the classic shaders: the sixteen, the classic falloff, no lane uniform
   const r = read('src/render/renderer.js');
-  assert.equal((r.match(/uniform vec4 uPointLights\[16\];/g) || []).length, 4, 'four classic programs at sixteen');
-  assert.equal((r.match(/float att = clamp\(1\.0 - d \/ uPointLights\[i\]\.w, 0\.0, 1\.0\);/g) || []).length, 4, 'the classic falloff, four programs');
+  // MAC-BUG W4 (2026-09-20): FIVE now, not four. The DECAL pass grew a
+  // point-light term - a blood mark was lit by ambient alone while the
+  // gib from the same blow took the full light - and it is a CLASSIC
+  // program with NO LANE TWIN. That is the honest state and it is
+  // pinned as such below rather than left to be found: under the lane
+  // the other four see forty-eight lights and a decal sees the nearest
+  // sixteen.
+  assert.equal((r.match(/uniform vec4 uPointLights\[16\];/g) || []).length, 5, 'five classic programs at sixteen - the four world programs and the decal pass');
+  assert.equal((r.match(/float att = clamp\(1\.0 - d \/ uPointLights\[i\]\.w, 0\.0, 1\.0\);/g) || []).length, 5, 'the classic falloff, five programs');
+  // ...and the decal CLAMPS to that cap rather than reading off the end
+  // of its own array when the lane hands the renderer forty-eight.
+  const dec = r.slice(r.indexOf('  drawDecals(batch, tex) {'), r.indexOf('\n  }\n', r.indexOf('  drawDecals(batch, tex) {')));
+  assert.match(dec, /const dCount = Math\.min\(this\._pointLights\.length >> 2, CLASSIC_MAX_LIGHTS\);/,
+    'the decal pass cuts to the classic cap - `_pointLights` really does hold 48 under the lane');
+  assert.match(dec, /this\._pointLights\.subarray\(0, dCount \* 4\)/, '...and uploads only that many');
   assert.ok(!/uELExposure/.test(r.slice(0, r.indexOf('export class Renderer'))), 'no lane uniform in a classic shader');
   assert.ok(!/import .* from '\.\/enhancedLighting\.js'/.test(r), 'the renderer does not import the lane - a host hands it over, and a classic page never loads its shaders into a program');
   assert.match(r, /const CLASSIC_MAX_LIGHTS = 16;/); assert.ok(!/16 \* 4|16 \* 3|Math\.min\(15,/.test(r), 'no literal cap in the renderer');

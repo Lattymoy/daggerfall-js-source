@@ -2634,11 +2634,26 @@ void main() {
       gl.uniform3f(d.tint, 1, 1, 1);
       gl.uniform3f(d.sun, 0, 0, 0);
     }
-    const dCount = this._pointLights.length >> 2;
+    // MAC-BUG W4 - THE DECAL IS A FIFTH CLASSIC PROGRAM AND HAS NO LANE
+    // TWIN, so it takes the CLASSIC SIXTEEN even where the Enhanced
+    // Lighting lane gives the other four forty-eight. Said out loud and
+    // clamped rather than left to be discovered: `_pointLights` really
+    // does hold 48 under the lane, and a shader declaring
+    // `uPointLights[16]` handed a count of 48 reads off the end of its
+    // own array.
+    //
+    // WHAT IT COSTS, honestly: the sixteen a decal gets are the sixteen
+    // NEAREST, because `nearestLights` has already sorted them by
+    // distance before any of this - the same sixteen the whole renderer
+    // had before the lane existed. A mark under the seventeenth lantern
+    // in a forty-eight-light hall is lit by the sixteen closer ones.
+    // The alternative is a fifth lane shader with its own exposure,
+    // in-scatter and encode, which is a slice rather than a bug fix.
+    const dCount = Math.min(this._pointLights.length >> 2, CLASSIC_MAX_LIGHTS);
     gl.uniform1i(d.pointCount, dCount);
     if (dCount > 0) {
-      gl.uniform4fv(d.pointLights, this._pointLights);
-      gl.uniform3fv(d.pointColors, this._pointColorData(dCount));
+      gl.uniform4fv(d.pointLights, this._pointLights.subarray(0, dCount * 4));
+      gl.uniform3fv(d.pointColors, this._pointColorData(dCount));   // already cut to the slot count (AUDIT-EL F3)
     }
     gl.uniform4fv(d.indirect, this._indirect);
     gl.uniform3fv(d.indirectColor, this._c3(this._indirectColor));

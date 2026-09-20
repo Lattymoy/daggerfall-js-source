@@ -218,7 +218,28 @@ tint computing its *moon* term from the *sun's* colour because both
 decodes shared one scratch array. The new upload takes `_decA`, `_decB`
 and `_decC`, and a mutant holds it there.
 
-Campaign `tools/mutants/macbugw4.json`: 5 mutants, 5 dead.
+### One limit, named rather than left to be found
+
+The decal pass is now a **fifth classic program**, and it has **no
+Enhanced Lighting twin**. The lane replaces the other four (mesh,
+billboard, terrain, character) with 48-light versions; a decal keeps
+the classic sixteen.
+
+That had teeth, not just tidiness: `_pointLights` really does hold 48
+under the lane, and a shader declaring `uPointLights[16]` handed a
+count of 48 reads off the end of its own array. The count is clamped to
+`CLASSIC_MAX_LIGHTS`, and the two pins that count classic programs
+(`EL1`, `LT1`) say **five** now, with the reason.
+
+What it costs, stated: the sixteen a decal gets are the sixteen
+**nearest**, because `nearestLights` sorted them before any of this —
+the same sixteen the whole renderer had before the lane existed. A mark
+under the seventeenth lantern in a forty-eight-light hall is lit by the
+sixteen closer ones. The alternative is a fifth lane shader with its
+own exposure, in-scatter and encode, which is a slice rather than a bug
+fix.
+
+Campaign `tools/mutants/macbugw4.json`: 6 mutants, 6 dead.
 
 The probe stays, and it earned its keep: it ruled out four suspects in
 one run and then named the fifth the moment there was a fifth to name.

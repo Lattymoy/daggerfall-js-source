@@ -1776,8 +1776,17 @@ test('MAC-BUG W4: a MARK takes the same light a CHUNK takes - the two passes of 
   assert.match(fn, /gl\.uniform3f\(d\.sun, sc\[0\] \* this\._sunScale \* 0\.5, sc\[1\] \* this\._sunScale \* 0\.5, sc\[2\] \* this\._sunScale \* 0\.5\);/,
     'the sun’s Lambert-average HALF, which is the flats’ own number');
   assert.match(fn, /gl\.uniform1i\(d\.pointCount, dCount\);/);
-  assert.match(fn, /gl\.uniform4fv\(d\.pointLights, this\._pointLights\);/);
+  assert.match(fn, /gl\.uniform4fv\(d\.pointLights, this\._pointLights\.subarray\(0, dCount \* 4\)\);/);
   assert.match(fn, /gl\.uniform3fv\(d\.pointColors, this\._pointColorData\(dCount\)\);/);
+  // THE DECAL IS A FIFTH CLASSIC PROGRAM WITH NO LANE TWIN, and that is
+  // pinned here as well as in EL1 because it is a LIMIT rather than an
+  // oversight: `_pointLights` holds 48 under the Enhanced Lighting
+  // lane, and a shader declaring `uPointLights[16]` handed a count of
+  // 48 reads off the end of its own array. The sixteen it takes are the
+  // sixteen NEAREST - `nearestLights` sorted them before any of this -
+  // which is what the whole renderer had before the lane existed.
+  assert.match(fn, /const dCount = Math\.min\(this\._pointLights\.length >> 2, CLASSIC_MAX_LIGHTS\);/,
+    'the decal cuts to the classic cap rather than trusting the lane\u2019s count');
 
   // A CLOCKLESS SCENE keeps full bright, as the flats do - and its sun
   // goes to zero with it, or a scene with no clock would carry the last

@@ -43,5 +43,15 @@
     "tests": [
       "test/blood1_decals.test.js"
     ]
+  },
+  {
+    "name": "MACBUGW4-6-the-decal-reads-off-the-end-of-its-array-under-the-lane",
+    "file": "src/render/renderer.js",
+    "old": "    const dCount = Math.min(this._pointLights.length >> 2, CLASSIC_MAX_LIGHTS);",
+    "new": "    const dCount = this._pointLights.length >> 2;",
+    "tests": [
+      "test/blood1_decals.test.js",
+      "test/el1_enhancedlighting.test.js"
+    ]
   }
 ]
