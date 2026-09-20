@@ -32,6 +32,11 @@ import { dfWornEquipment } from '../formats/mwItemMap.js';   // MW-D32
 import { ARMOR_ENUM } from './enemyEquipment.js';   // MW-D32
 import { loadFpsWeaponArt, drawFpsWeapon, weaponTypeForItem, WEAPON_TYPES, fpLightingOn } from './fpsWeapon.js';
 import { loadThunderlockArt } from './thunderlockArt.js';
+import { createRecoil, createScreenShake, GUN_FEEL, gunPitch, muzzleGlow } from './gunFeel.js';
+import { createGunRig, gunRigStep, gunWidgetSettings, gunMotion, gunFrameRect } from './gunViewmodel.js';   // FIELD-GUN12: the PROTOTYPE's frame, run rather than resembled
+import { readWidgetSettings } from './weaponWidgetMotion.js';   // FIELD-GUN8: the mod's own reader, so the Thunderlock's Inertia rides its multipliers   // FIELD-GUN6: the lab's own feel, in the game at last
+import { weaponOffsetHeight } from '../ui/hudLarge.js';   // FIELD-GUN7: the lab's raise rides the bar's offset rather than replacing it
+import { betterAmbience } from '../systems/betterAmbience.js';   // FIELD-GUN6: the ONE camera shaker in the port, already wired through all four hosts
 import { installThunderlockSounds, SFX as TL_SFX } from '../systems/thunderlock.js';   // AUDIT-THUNDERLOCK F8: the weapon's own clips, through the mod-sound door   // the port's own weapon: its art is a sheet, not a CIF   // MAC-I: the tint's switch, with the sprite it tints
 // ROAD-tail (FPSSpellCasting.cs): the classic spellcasting HANDS. A
 // separate component in DFU and a separate module here, drawn by the
@@ -64,7 +69,7 @@ import { isShieldTemplate } from '../systems/armorMaterials.js';   // SW1: GetSh
 import { createHandheldTorches, isHeldLight } from '../systems/handheldTorches.js';   // HT1: Handheld Torches' component, one per rig beside the widget; TORCH-VIS: and its own light test
 import { isTransformedLycanthrope, liveLycanthropy } from '../systems/lycanthropy.js';   // WW1: Weapon Widget's FPSWeaponClone, beside the machine; AUDIT-EOTB2: the sprite's form
 import { concealmentFlags } from '../systems/effects.js';   // EOTB-IL: PlayerBillboard.UpdateMaterial reads the player's own IsInvisible / IsAShade / IsBlending
-import { getBool } from '../systems/settings.js';   // EOTB-IL: PlayerBillboard.LateUpdate reads DaggerfallUnity.Settings.BowDrawback
+import { getBool, getInt } from '../systems/settings.js';   // EOTB-IL: PlayerBillboard.LateUpdate reads DaggerfallUnity.Settings.BowDrawback
 import { domCodeForKeyCode } from '../systems/keyCodes.js';   // AUDIT-EOTB2: the mod's two keys, polled off the hosts' raw set as the torch mod's are
 import { modSetting } from '../systems/modSettings.js';   // WW1: its Enabled
 import { takeFrameLook } from '../player/lookFilter.js';   // WW1: the frame's look for the widget's inertia
@@ -187,9 +192,9 @@ export async function autoBuildArms(entity, { wanted = () => getPref('mwArms'), 
  *                     The note that hosts without a HUD text layer
  *                     pass console is retired: every call site hands
  *                     over a real one - hudText.add
- *                     (dungeonContext.js:2681), townTalk.say
- *                     (exterior.js:1834, world.js:3098) and
- *                     worldModes' own interior sink (worldModes.js:395,
+ *                     (dungeonContext.js:2699), townTalk.say
+ *                     (exterior.js:1835, world.js:3115) and
+ *                     worldModes' own interior sink (worldModes.js:396,
  *                     which warns to console only where a host mounts
  *                     no townTalk at all), so the empty default below
  *                     is unreached,
@@ -224,7 +229,39 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
     if (!Number.isFinite(d)) return null;
     return [cam.pos[0] + fwd[0] * d, cam.pos[1] + fwd[1] * d, cam.pos[2] + fwd[2] * d];
   });
-  const widget = createWeaponWidget({ audio, envHit: envCast, missEffect });
+  /** FIELD-GUN8: declared ABOVE the widget, not beside `widgetOn`
+   *  below it. `createWeaponWidget` calls `settings()` inside its own
+   *  constructor, so a `const` arrow declared after it is still in
+   *  the temporal dead zone when that call lands - every rig in the
+   *  game threw on construction, which the rig's own suites caught at
+   *  once. The same trap systems/effectBroker.js's header describes
+   *  one import away. */
+  /** FPSWeapon's handedness mirror, as the lab's `flip` switch. */
+  const handedFlip = () => getInt('Controls', 'Handedness', 0, 3) === 1;
+  const thunderlockHeld = () => {
+    const t = weaponTypeForItem(playerWeapon.weapon);
+    return t === WEAPON_TYPES.Thunderlock || t === WEAPON_TYPES.Thunderlock_Magic;
+  };
+  /** FIELD-GUN8 (Mac: "Yes, 1:1"). THE LAB'S ONE MODULE DEPARTURE,
+   *  carried. Weapon Widget ships Inertia OFF - "requires
+   *  double-scaled weapon textures" - and the lab turns it ON for
+   *  this weapon because this art IS high resolution, which makes it
+   *  precisely the case the mod's warning is about. The sway is part
+   *  of how the gun reads, so a game without it is not the prototype.
+   *
+   *  It is forced for THIS WEAPON ONLY and only upward: every other
+   *  weapon, and every other module, reads the player's own settings
+   *  untouched. A mod's switch is the player's to throw; this is the
+   *  port's own weapon asking for the one module it was designed
+   *  around, not a mod being overridden behind their back. */
+  const widget = createWeaponWidget({
+    audio, envHit: envCast, missEffect,
+    settings: () => {
+      const s = readWidgetSettings();
+      if (!s.inertia && thunderlockHeld()) return { ...s, inertia: true };
+      return s;
+    },
+  });
   const widgetOn = () => modSetting('weapon-widget', 'Enabled');
   // SW1: the shield's own component. Its sprites come from the player's
   // own copy of the mod (combat/shieldWidgetAssets.js); with none
@@ -595,31 +632,224 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
     _toggleSheathCalls += 1;
     // V4: the claws draw silently (DrawWeaponSound = None, :338)
     if (playerWeapon.toggleSheath() && !playerWeapon.weapon?.werecreatureClaws) {
-      audio.playOneShot(equipSoundFor(playerWeapon.weapon) ?? SOUND.DrawWeapon);
+      // FIELD-GUN13 (2026-09-19, Mac: "The sound for holstering is a
+      // sword") - AND IT WAS, ALL THE WAY DOWN THE LADDER.
+      //
+      // `equipSoundFor` is GetEquipSound (:839-867), a switch over
+      // DFU's nineteen weapon templates, and its default arm is
+      // SoundClips.None - which is the CORRECT answer for a weapon
+      // Daggerfall does not have. So this weapon fell through to the
+      // `?? SOUND.DrawWeapon` beside it, and that fallback is DFU's
+      // own declared default (FPSWeapon.DrawWeaponSound = 78, the one
+      // SetWeapon :780 overwrites whenever GetEquipSound answers) -
+      // which is a BLADE LEAVING A SCABBARD. A gun has no scabbard.
+      //
+      // THE DEPARTURE IS NAMED HERE, AHEAD OF THE VERBATIM CALL,
+      // rather than inside `equipSoundFor`: that function's domain is
+      // SoundClips, this weapon's clip is a registered STRING key
+      // through the mod-sound door (MW-D40), and widening a 1:1 port's
+      // return type to carry one departure is how a table stops being
+      // a table. The clip is the lock-up clack the reload already
+      // closes on - a breech coming home is what this weapon does
+      // instead of a scabbard, going out and coming back alike.
+      if (thunderlockHeld()) {
+        if (!_tlSounds) { _tlSounds = true; installThunderlockSounds(audio); }
+        audio.playOneShot(TL_SFX.close, GUN_FEEL.sfxVolume * 0.95, gunPitch());
+      } else {
+        audio.playOneShot(equipSoundFor(playerWeapon.weapon) ?? SOUND.DrawWeapon);
+      }
     }
   }
 
   // ── THE THUNDERLOCK'S VOICE (AUDIT-THUNDERLOCK F8) ────────────────
   let _tlState = 'Idle', _tlOpened = false, _tlClosed = false, _tlSounds = false;
-  /** The close lands this long before the weapon is ready - the clip's
-   *  own length, so the lock-up is finishing as the sprite arrives. */
+  // FIELD-GUN6 (Mac, from play: "This isn't 1 to 1 with the
+  // prototype"). It was not. The lab drove a recoil spring, a trauma
+  // shake and a reload lower, and NONE of the three was ever carried
+  // across - the sprite arrived, the sounds arrived, and the weapon
+  // sat dead still while it fired. These are the lab's own two
+  // machines, from the one home they both read (combat/gunFeel.js),
+  // on Mac's own numbers.
+  const _tlRecoil = createRecoil();
+  const _tlShake = createScreenShake();
+  /** FIELD-GUN12: the prototype's own module state, carried between
+   *  frames exactly as the lab's page carries it. */
+  const _tlRig = createGunRig();
+  let _tlKick = { x: 0, y: 0 };
+  /** The frame's rect delta for the weapon, in native (320x200)
+   *  units: the spring, plus the reload lower under it. */
+  let _tlAdjust = null;
+  /** The close lands this long before the weapon is ready, so the
+   *  lock-up is finishing as the sprite comes back up rather than
+   *  after it.
+   *
+   *  It is the LAB's own lead - `gun.cooledMs >= state.cool - 420` in
+   *  gun-proto.html's frame - and FIELD-GUN15 corrected what this
+   *  comment used to claim, which was "the clip's own length". It
+   *  never was: the clip it was written for (`close-ready`) is 98ms.
+   *  The number is a judgement about where in the pump the mechanism
+   *  should sound, and it is the prototype's, which is the only reason
+   *  it is this number and not another. */
   const TL_CLOSE_LEAD = 0.42;
   function thunderlockVoice(dt) {
     const type = weaponTypeForItem(playerWeapon.weapon);
     if (type !== WEAPON_TYPES.Thunderlock && type !== WEAPON_TYPES.Thunderlock_Magic) {
       _tlState = 'Idle'; _tlOpened = false; _tlClosed = false;
+      if (entity) entity._thunderlockFlash = 0;   // FIELD-GUN13: put the lamp out with the weapon
       return;
     }
     if (!_tlSounds) { _tlSounds = true; installThunderlockSounds(audio); }
     const m = playerWeapon.machine;
-    // the shot, on the trigger's own edge
-    if (m.state !== 'Idle' && _tlState === 'Idle') audio.playOneShot(TL_SFX.fire, 1);
+    // FIELD-GUN13: THE FRAME'S GLOW, PARKED WHERE THE HOSTS CAN READ
+    // IT - the torch's own arrangement (systems/playerTorch.js parks
+    // `st.range` on the entity and `playerTorchLight` reads it after
+    // the tick), so that all six host light arrays answer the same
+    // frame's shot without any of them re-running the curve. It is
+    // parked HERE, above the frame's mod gate, because a player with
+    // every mod off still fires a gun. A sheathed weapon does not
+    // flash - the machine cannot leave Idle while it is away, but the
+    // read says so rather than relying on that.
+    if (entity) entity._thunderlockFlash = playerWeapon.sheathed ? 0 : muzzleGlow(m.state !== 'Idle', m.frame);
+    // the shot, on the trigger's own edge - and the kick and the
+    // shake ride the SAME edge, which is what makes them read as one
+    // event rather than three things that happened near each other.
+    if (m.state !== 'Idle' && _tlState === 'Idle') {
+      // FIELD-GUN8: the lab's own volume and pitch jitter. The game
+      // played all three clips at full gain with no variance, and a
+      // gun fired six times in four seconds is exactly where an ear
+      // hears a sample repeating.
+      audio.playOneShot(TL_SFX.fire, GUN_FEEL.sfxVolume, gunPitch());
+      _tlRecoil.punch();
+      _tlShake.punch();
+      // THE SHAKE MOVES THE ROOM, NOT THE WEAPON, because the camera
+      // carries the weapon - the lab's own finding, in its probe's
+      // words. The port has exactly one camera shaker (Better
+      // Ambience's, CameraShaker.cs), already wired through all four
+      // hosts by `betterAmbience.view`, so the gun borrows it rather
+      // than threading a second one through four scenes. Its own
+      // trauma curve above still drives the WEAPON's rattle; this is
+      // the room's half.
+      betterAmbience.weaponKick?.(GUN_FEEL.roomShake);
+    }
     _tlState = m.state;
     // the reload, on the cooldown the shot left behind
     const cooling = m.now < m.cooldownUntil;
     if (!cooling) { _tlOpened = false; _tlClosed = false; return; }
-    if (!_tlOpened) { _tlOpened = true; audio.playOneShot(TL_SFX.open, 0.9); }
-    if (!_tlClosed && m.now >= m.cooldownUntil - TL_CLOSE_LEAD) { _tlClosed = true; audio.playOneShot(TL_SFX.close, 0.95); }
+    if (!_tlOpened) { _tlOpened = true; audio.playOneShot(TL_SFX.open, GUN_FEEL.sfxVolume * 0.9, gunPitch()); }
+    if (!_tlClosed && m.now >= m.cooldownUntil - TL_CLOSE_LEAD) { _tlClosed = true; audio.playOneShot(TL_SFX.close, GUN_FEEL.sfxVolume * 0.95, gunPitch()); }
+  }
+
+  /** FIELD-GUN12: the prototype's frame, drawn. `gunFrameRect` IS
+   *  gun-proto.html's draw block, so what reaches the screen here and
+   *  what reaches the lab's canvas are one function's answer rather
+   *  than two that have been argued into agreement. */
+  function drawThunderlock(art, canvas, tint) {
+    const m = playerWeapon.machine;
+    const rec = art.records[m.state === 'Idle' ? 0 : 1];
+    if (!rec) return;
+    const tex = rec.frames[Math.min(Math.max(0, m.frame), rec.frames.length - 1)];
+    if (!tex) return;
+    const { rect } = gunFrameRect({
+      canvasW: canvas.width, canvasH: canvas.height,
+      anchor: art.anchor, union: art.unionBox, rig: _tlRig,
+      kick: _tlKick, flip: handedFlip(),
+    });
+    // FIELD-GUN13 (Mac: "The muzzle flash itself shouldn't be affected
+    // by the darkening lighting").
+    //
+    // IT WAS, AND THE REASON IS THAT THE FLASH IS THE SAME TEXTURE AS
+    // THE GUN. `fpTint` is MAC-I's flat light - the room's answer at
+    // the camera - and it multiplies the whole quad, so a dungeon at
+    // 0.15 drew a muzzle flash at 0.15, which is a grey smudge. There
+    // is no second draw call to exempt: one quad carries the barrel
+    // and the fire coming out of it.
+    //
+    // So the TINT rises on the curve instead, toward white rather than
+    // by a multiplier. `gun-proto.html` multiplies (`state.room * (1 +
+    // muzzleLight(...) * state.light * 1.9)`) and at its own room
+    // level that saturates - the lab's flash frame IS drawn white -
+    // but a multiply in a black room stays black, and that is the ask
+    // dropped. A lerp keeps the lab's answer where the lab was and
+    // gives the same answer everywhere else.
+    //
+    // AND IT IS PHYSICALLY THE RIGHT SHAPE ANYWAY: the thing lighting
+    // the gun on those two frames is the gun. The barrel, the hand and
+    // the flash all brighten together and fall away over the smoke,
+    // which is one lamp switching on, not a sprite being special-cased.
+    const glow = muzzleGlow(m.state !== 'Idle', m.frame);
+    const lit = (tint && glow > 0)
+      ? tint.map((v) => v + (1 - v) * Math.min(1, glow * GUN_FEEL.flashLight * GUN_FEEL.flashGain))
+      : tint;
+    renderer.drawScreenQuad(tex, rect, undefined, lit ?? undefined);
+  }
+
+  /**
+   * FIELD-GUN13 (Mac: "The weapon should come up from the bottom
+   * screen into frame when unholstering, not pop in").
+   *
+   * IT POPPED BECAUSE `shown()` IS A BOOLEAN AND A SLIDE IS NOT. The
+   * draw ladder's `if (!shown()) return;` is FPSWeapon's own
+   * ShowWeapon - DFU's sprite has no draw animation, it is simply
+   * there or not - and the mod that DOES have one, Weapon Widget's
+   * Offset module, was being handed `shown: !reloading` by the gun's
+   * own step. So the module ran the reload dip beautifully and never
+   * saw the sheathe at all, and the holster it could have eased was
+   * decided one gate above it.
+   *
+   * This is the gun saying "not yet" to that gate: TRUE while the
+   * module still has any part of the weapon on screen. The easing
+   * itself is not new code - it is the same `offsetStep` the dip uses,
+   * on `sheathTarget` instead of `hiddenTarget`.
+   */
+  function thunderlockSliding() {
+    if (!playerWeapon.sheathed) return false;
+    return Math.abs(_tlRig.offsetCurrent[1]) < Math.abs(GUN_FEEL.sheathTarget[1]) - 1e-3;
+  }
+
+  /** FIELD-GUN6: the frame's rect delta, stepped once and read by
+   *  whichever draw path is live - the mod's clone or the classic
+   *  sprite. Null for every weapon that is not this one, which is what
+   *  both draws take to mean "nothing of mine".
+   *
+   *  THE RELOAD LOWER is the other half. There is no reload ANIMATION
+   *  to play - the art is six fire frames and an idle - so the weapon
+   *  drops out of frame while the pump runs and rides back up as it
+   *  finishes, which reads as a reload because that is what a reload
+   *  looks like from behind the gun. It eases rather than steps, on
+   *  the cooldown's own clock, so it is finishing exactly as the
+   *  weapon becomes ready. */
+  function thunderlockFeel(dt, frame = null) {
+    const type = weaponTypeForItem(playerWeapon.weapon);
+    if (type !== WEAPON_TYPES.Thunderlock && type !== WEAPON_TYPES.Thunderlock_Magic) { _tlAdjust = null; return; }
+    _tlKick = _tlRecoil.step(dt);
+    _tlAdjust = _tlKick;   // the arm below still reads it as "this weapon is live"
+    // FIELD-GUN12: THE RELOAD LOWER IS THE MOD'S OFFSET MODULE, driven
+    // the way the lab drives it - `shown: false` while the pump runs -
+    // rather than a second easing curve of my own next to it. The lab
+    // has always done it this way; the game had a hand-rolled
+    // smoothstep that was a different shape from the module's.
+    const m = playerWeapon.machine;
+    const reloading = m.now < m.cooldownUntil;
+    // FIELD-GUN13: AND THE SHEATHE IS THE MODULE'S TOO. The dip and
+    // the holster are one easing at two distances - `hiddenTarget`
+    // parks the weapon low enough to still read while the pump runs,
+    // `sheathTarget` takes it off the bottom edge entirely - so the
+    // draw is the same curve run backwards, for free. The holster wins
+    // when both are true: a shot fired on the same frame the weapon is
+    // put away leaves, it does not dip.
+    const sheathed = !!playerWeapon.sheathed;
+    gunRigStep(_tlRig, gunWidgetSettings(), dt, {
+      screenRect: { width: frame?.width ?? 320, height: frame?.height ?? 200 },
+      motion: frame?.motion ?? gunMotion({}),
+      look: frame?.look ?? [0, 0],
+      flip: handedFlip(),
+      idle: m.state === 'Idle',
+      shown: !reloading && !sheathed,
+      hiddenTarget: sheathed ? GUN_FEEL.sheathTarget : GUN_FEEL.hiddenTarget,
+      liveSpeed: entity ? liveStat(entity, 'speed') : 50,
+      cursorActive: cursorActive(),
+      swingHeld: _held,
+    });
   }
 
   /** FPSWeapon.UpdateWeapon's bow guard: an UNsheathed bow with zero
@@ -944,22 +1174,33 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
       // mod was dead on a profile that enabled only it. Each consumer
       // inside is already gated on its own switch, so this costs the
       // assembly and nothing else.
-      if (widgetOn() || _torchesOn || shieldOn()) {
-        const cam = camera?.() ?? null;
-        const mv = cam?.move ?? {};
+      // FIELD-GUN12: THE FRAME'S MOTOR, ASSEMBLED ONCE, ABOVE THE GATE.
+      // It used to live inside `if (widgetOn() || _torchesOn ||
+      // shieldOn())`, which was fine while the three mods were its
+      // only readers - the Thunderlock's own viewmodel is a fourth,
+      // and it must read the SAME numbers the mod's modules read
+      // whether or not any mod is enabled. (`_lastEye` is the frame's
+      // own bookkeeping and belongs out here for the same reason.)
+      const cam = camera?.() ?? null;
+      const mv = cam?.move ?? {};
+      const spd = entity ? liveStat(entity, 'speed') : 50;
+      const base = Number.isFinite(mv.baseSpeed) ? mv.baseSpeed : walkSpeed(spd);
+      const ratio = Number.isFinite(mv.speedRatio) ? mv.speedRatio : (Number.isFinite(mv.speedField) && base > 0 ? mv.speedField / base : 1);
+      let localVel = [0, 0, 0];
+      if (cam?.pos && _lastEye && dt > 0) {
+        const v = [(cam.pos[0] - _lastEye[0]) / dt, (cam.pos[1] - _lastEye[1]) / dt, (cam.pos[2] - _lastEye[2]) / dt];
+        const yaw = cam.yaw || 0, sy = Math.sin(yaw), cy = Math.cos(yaw);
+        localVel = [v[0] * cy - v[2] * sy, v[1], v[0] * sy + v[2] * cy];   // InverseTransformVector: right, up, forward
+      }
+      const frameMotion = { grounded: mv.grounded !== false, crouching: !!mv.crouching, riding: !!mv.riding, standing: !!mv.standing, speedRatio: ratio, baseSpeed: base, localVel };
+      if (widgetOn() || _torchesOn || shieldOn() || thunderlockHeld()) {
         const held = activateHeld();
         _activateStarted = held && !_activatePrev; _activatePrev = held;
-        const spd = entity ? liveStat(entity, 'speed') : 50;
-        const base = Number.isFinite(mv.baseSpeed) ? mv.baseSpeed : walkSpeed(spd);
-        const ratio = Number.isFinite(mv.speedRatio) ? mv.speedRatio : (Number.isFinite(mv.speedField) && base > 0 ? mv.speedField / base : 1);
-        let localVel = [0, 0, 0];
-        if (cam?.pos && _lastEye && dt > 0) {
-          const v = [(cam.pos[0] - _lastEye[0]) / dt, (cam.pos[1] - _lastEye[1]) / dt, (cam.pos[2] - _lastEye[2]) / dt];
-          const yaw = cam.yaw || 0, sy = Math.sin(yaw), cy = Math.cos(yaw);
-          localVel = [v[0] * cy - v[2] * sy, v[1], v[0] * sy + v[2] * cy];   // InverseTransformVector: right, up, forward
-        }
         _lastEye = cam?.pos ? [cam.pos[0], cam.pos[1], cam.pos[2]] : null;
         const look = takeFrameLook();   // WW1/HT1: the frame's look, read once, shared by both
+        // FIELD-GUN12: the gun's own rig steps on the same frame, from
+        // the same motor and the same look the mod's modules take.
+        thunderlockFeel(dt, { width: c?.width ?? 320, height: c?.height ?? 200, motion: frameMotion, look });
         const camThunk = () => (cam ? { ...cam, forward: [Math.sin(cam.yaw || 0) * Math.cos(cam.pitch || 0), Math.sin(cam.pitch || 0), Math.cos(cam.yaw || 0) * Math.cos(cam.pitch || 0)],
           right: [Math.cos(cam.yaw || 0), 0, -Math.sin(cam.yaw || 0)], up: [0, 1, 0] } : null);
         if (_torchesOn) {
@@ -1230,7 +1471,29 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
       if (shieldOn()) shield.setThirdPerson(eotbHidesWeapon());
       const shieldRect = (shieldOn() && c && !eotbHidesWeapon() && !fpArm.active())
         ? shield.drawRect() : null;
-      if (paralyzed || (!shown() && !torchOnly && !sheetOnly && !shieldRect)) return;
+      // FIELD-GUN13 (Mac: "The weapon should come up from the bottom
+      // screen into frame when unholstering, not pop in") - A WEAPON
+      // ON ITS WAY OUT IS STILL A WEAPON.
+      //
+      // The fourth relaxation of this gate, and it follows AUDIT-FIELD
+      // F1's rule exactly, for the reason that finding exists:
+      // `shown()` is false for FOUR things and only ONE of them is the
+      // sheathe. A readied spell, a cast animation and an equip
+      // countdown all mean EMPTY HANDS by construction, and a gun
+      // sliding out of frame across them would be the port inventing a
+      // state DFU has never drawn. So the sheathe leg is named
+      // POSITIVELY (`thunderlockSliding` tests `playerWeapon.sheathed`
+      // itself) and the other three are re-stated here, the way
+      // `torchOnly` and `sheetOnly` re-state theirs.
+      //
+      // The two LANE conditions come with them: the Morrowind arm's
+      // branch returns above this and the EotB billboard's above that,
+      // so a gun easing out from under a modelled arm would be two
+      // weapons at once.
+      const gunSliding = !!c && thunderlockHeld() && thunderlockSliding()
+        && !spellArmed() && !fpsSpellCasting.isPlayingAnim && (entity?.equipCountdown ?? 0) <= 0
+        && !eotbHidesWeapon() && !fpArm.active();
+      if (paralyzed || (!shown() && !torchOnly && !sheetOnly && !shieldRect && !gunSliding)) return;
       // THE ONE SEAM. The arm draws whole and RETURNS, or it is inactive
       // and the classic sprite draws exactly as it always has. The return
       // is load-bearing: without it both composite and the player sees a
@@ -1283,12 +1546,32 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
       // neither mod nor lane (the arm's own branch has already returned).
       if (shieldRect) shield.draw((index, rect, uv) => drawShieldSprite(index, rect, uv, fpTint));
       if (handheldOn() && c) handheld.draw(renderer, c, fpTint);
-      if (torchOnly) return;   // TORCH-VIS: the lit hand ALONE - a sheathed stance still draws no weapon, clone or sprite
+      if (torchOnly && !gunSliding) return;   // TORCH-VIS: the lit hand ALONE - a sheathed stance still draws no weapon, clone or sprite (FIELD-GUN13: unless the gun is still on its way out, which the hand is drawn behind)
       // SW1-GATE: and the shield ALONE is no more a weapon than the torch
       // is. A no-op for every path that predates it - `torchOnly` has
       // returned, `sheetOnly` needs `fpArm.active()` which returned at the
       // seam - so this line stops the shield-only frame and nothing else.
-      if (!shown()) return;
+      if (!shown() && !gunSliding) return;   // FIELD-GUN13: ...and the gun's own sheathe leg, eased rather than cut
+      // FIELD-GUN12 (Mac, the sixth time: "Port the god damn prototype
+      // verbatim"). THE GUN TAKES THE PROTOTYPE'S OWN FRAME, not the
+      // classic rect-builder and not the mod's clone.
+      //
+      // Both of those are 1:1 ports - of DFU, and of
+      // RedRoryOTheGlen's mod - written for the weapons those two
+      // things have, and this weapon is neither's. Five rounds were
+      // spent making a rect built for a CIF record come back right
+      // for a contact sheet. It still RUNS the mod's three modules,
+      // on the mod's own settings (combat/gunViewmodel.js imports
+      // them; it does not imitate them) - what it no longer does is
+      // compose the frame a second way and then be corrected.
+      const tlArt = c && thunderlockHeld() ? artFor(playerWeapon.weapon) : null;
+      if (tlArt?.anchor && tlArt.unionBox) { drawThunderlock(tlArt, c, fpTint); return; }
+      // FIELD-GUN13: and nothing BELOW this line may draw on a sliding
+      // frame. `gunSliding` relaxed three gates for the gun's own arm
+      // alone; with no art loaded yet the weapon is sheathed as far as
+      // the clone and the classic sprite are concerned, exactly as it
+      // was before.
+      if (gunSliding && !shown()) return;
       if (widgetOn() && c && widget.draw(renderer, c, fpTint)) return;
       const art = c && artFor(playerWeapon.weapon);
       if (art) drawFpsWeapon(renderer, c, art, playerWeapon.machine.state, playerWeapon.machine.frame, { tint: fpTint });

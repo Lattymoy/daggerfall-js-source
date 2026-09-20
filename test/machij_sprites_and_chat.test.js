@@ -219,10 +219,15 @@ test('MAC-I: the switch, and every sprite in the seam wearing the tint', () => {
   assert.match(rig, /const fpTint = fpLightingOn\(\) \? \(renderer\?\.flatLightAt\?\.\(\) \?\? null\) : null;/);
   assert.match(rig, /drawSpellCastHands\(renderer, c, spellArtFor\(fpsSpellCasting\.element\), fpsSpellCasting\.frameIndex, \{ tint: fpTint \}\)/);
   assert.match(rig, /handheld\.draw\(renderer, c, fpTint\)/);
-  assert.match(rig, /widget\.draw\(renderer, c, fpTint\)/);
-  assert.match(rig, /drawFpsWeapon\(renderer, c, art, playerWeapon\.machine\.state, playerWeapon\.machine\.frame, \{ tint: fpTint \}\)/);
+  assert.match(rig, /widget\.draw\(renderer, c, fpTint\)/);   // FIELD-GUN12: the gun takes its own frame above this, so the clone is the tint alone again
+  // FIELD-GUN6: `adjust` joined the tint - the Thunderlock's recoil and reload lower, null for every classic weapon
+  assert.match(rig, /drawFpsWeapon\(renderer, c, art, playerWeapon\.machine\.state, playerWeapon\.machine\.frame, \{ tint: fpTint \}\)/);   // FIELD-GUN12: the classic sprite is the classic sprite again
   // and each draw passes it THROUGH to the quad rather than accepting and dropping it
+  // FIELD-GUN11: the rect is expanded from the weapon's own box to
+  // the drawn box first (art that declares one - the Thunderlock's
+  // sheet). The TINT riding through untouched is what this holds.
   assert.match(read('src/combat/fpsWeapon.js'), /renderer\.drawScreenQuad\(tex, \{ x, y, w, h \}, src, tint \?\? undefined\);/);
+  // FIELD-GUN6: the rect is taken into a local first so the gun's kick can move it; the TINT still rides through untouched, which is what this pin is about
   assert.match(read('src/combat/weaponWidget.js'), /renderer\.drawScreenQuad\(tex, getWeaponRect\(\), w\.curAnimRect, tint \?\? undefined\);/);
   assert.match(read('src/combat/fpsSpellCasting.js'), /renderer\.drawScreenQuad\(rec\.tex, right, RIGHT_HAND_UV, tint \?\? undefined\);/);
   // the Morrowind arms are a LIT MESH and are not in this seam at all

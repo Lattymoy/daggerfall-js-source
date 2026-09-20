@@ -120,3 +120,31 @@ export function unionBox(boxes) {
   const y1 = Math.max(...live.map((b) => b.y + b.h));
   return { x: x0, y: y0, w: x1 - x0, h: y1 - y0 };
 }
+
+/**
+ * FIELD-GUN11: A TRANSFORMED ANCHOR RECT -> THE RECT THE WHOLE IMAGE
+ * IS DRAWN AT.
+ *
+ * One box for all six frames holds the gun still relative to itself,
+ * but that box is dominated by the flash and the smoke, which live up
+ * and to the left of the barrel. So everything that LAYS OUT or
+ * TRANSFORMS the weapon works on the ANCHOR - the frame with no flash
+ * in it, which is the gun and nothing else - and this turns the
+ * result into the rect the union-sized image is drawn at. The gun
+ * lands where you put it and the flash overflows around it, which is
+ * what it does in the art.
+ *
+ * This is the lab's own `unionDrawRect`, moved here so the game reads
+ * the same function rather than a second copy of it. The lab
+ * re-exports it; the four rounds of "it still isn't the proto" are
+ * what a second copy costs.
+ */
+export function unionDrawRect(anchorRect, anchor, union) {
+  const scale = anchorRect.w / anchor.w;
+  return {
+    x: anchorRect.x - (anchor.x - union.x) * scale,
+    y: anchorRect.y - (anchor.y - union.y) * scale,
+    w: union.w * scale,
+    h: union.h * scale,
+  };
+}

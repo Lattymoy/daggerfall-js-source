@@ -118,6 +118,14 @@ test('F5: on the fake GL - the far cascade skips a caster under two of its texel
     assert.equal(sp.stats.cascadesDrawn, 3);
     return sp.stats.sunDraws;
   };
+  // WEEDS1 (2026-09-19) TOOK THIS CASE OVER, and the record says so rather
+  // than leaving a pin that passes for a reason it no longer holds. F5's
+  // sphere test used to cull this flat from the far cascade; the SPRITE
+  // test culls it now, and it culls strictly more (a flat's radius is
+  // hypot(w, h) / 2, so F5 could only ever fire where the height test
+  // already had). F5's batch line is gone and this is its law's new home -
+  // the mesh case above is where F5 itself is still proved.
   assert.equal(flatDraws({ w: 2, h: 2 }), 3, 'a two-unit flat: every cascade');
-  assert.equal(flatDraws({ w: 0.6, h: 0.6 }), 2, 'a flat 0.6 across (a radius of 0.42, under the far cascade\'s 0.47): the near and mid alone');
+  assert.equal(flatDraws({ w: 0.6, h: 0.6 }), 2, 'a flat 0.6 tall, under the far cascade\'s 0.94: the near and mid alone (WEEDS1)');
+  assert.equal(flatDraws({ w: 3, h: 0.6 }), 2, 'and a WIDE short one too - its sphere clears F5 easily, which is the case F5 could never catch');
 });

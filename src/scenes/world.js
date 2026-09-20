@@ -28,6 +28,7 @@ import { CITY_LIGHT_COLOR, CITY_LIGHT_RANGE, LIGHTS_ARCHIVE, collectCityLights, 
 import { isHearthFlat, HEARTH_NEAR } from '../systems/survival/hearth.js';   // HEARTH1: which of those lanterns is a fire you could cook on, and how far one can matter
 import { withPlayerLights } from './magicCandle.js';   // X11/T1: the lights the PLAYER carries
 import { playerTorchLight } from '../systems/playerTorch.js';   // T1
+import { thunderlockMuzzleLight } from '../systems/thunderlock.js';   // FIELD-GUN13: the muzzle flash is a light the player carries, the torch's own shape
 import { applyClimate, getGroundArchive, getTerrainGroundArchive, getNatureArchive, SEASON, climateSeasonFromMinutes, INTERIOR_SEASON } from '../world/climateSwaps.js';   // A1: the season is the calendar's, and an interior's is Summer whatever the date
 import { RMB_SIDE, layoutLocation } from '../world/locationLayout.js';
 import { lookAt, multiply, perspective, mirrorProjectionX, trs, identity, UP_Y, wrapAngle } from '../world/mat4.js';   // HANDEDNESS: the one mirror (mat4's law)
@@ -2693,16 +2694,28 @@ export async function bootWorld(canvas, renderer, params, status) {
    * through the floating origin at the moment they are asked for. Only
    * the pixels within a light's reach of the player can matter - a
    * brazier two kilometres off is not one you are standing at - so the
-   * walk is cut at HEARTH_NEAR and what survives is a handful. Unlike
-   * the lantern pool beside it (PERF-LIGHTS) this is NOT refilled in
-   * place: that one runs once a frame over hundreds, this runs on the
-   * survival tick and the activation ray over the few fires within
-   * sixteen metres, and a pool for that would be bookkeeping bought
-   * with nothing.
+   * walk is cut at HEARTH_NEAR and what survives is a handful.
+   *
+   * AUDIT HEARTH1 F2: IT IS A POOL, because this runs EVERY FRAME. The
+   * first draft minted an array and an object per fire and said in this
+   * comment that it ran "on the survival tick and the activation ray",
+   * so a pool would be bookkeeping bought with nothing. That was simply
+   * wrong about the frame: the player ticker calls its host's
+   * `survivalEnv` on every frame - it is the ticker, not the caller,
+   * that decides whether a minute has rolled - so `byFire` and this walk
+   * with it ran sixty times a second, allocating each time. That is the
+   * exact churn PERF-LIGHTS took out of the lanterns two thousand lines
+   * below, reintroduced by a comment that reasoned from a cadence
+   * nobody had checked. The objects live in `_hearthStore` and are
+   * refilled in place; `_hearthOut` is the answer's own length, and
+   * setting ITS length frees nothing, because the store still holds
+   * every object it ever made.
    */
   const _hearthT = [0, 0, 0];
+  const _hearthStore = [];   // the objects, grown once and never freed
+  const _hearthOut = [];     // this frame's answer - the first n of the store
   const hearthsNear = () => {
-    const out = [];
+    let n = 0;
     const eye = walkMode && playerSpawned ? player.pos : cam.pos;
     for (const p of built.values()) {
       if (!p.hearths?.length) continue;
@@ -2710,10 +2723,14 @@ export async function bootWorld(canvas, renderer, params, status) {
       for (const h of p.hearths) {
         const x = h[0] + t[0], y = h[1] + t[1], z = h[2] + t[2];
         if (Math.abs(x - eye[0]) > HEARTH_NEAR || Math.abs(z - eye[2]) > HEARTH_NEAR) continue;
-        out.push({ x, y, z });
+        const e = _hearthStore[n] ?? (_hearthStore[n] = { x: 0, y: 0, z: 0 });
+        e.x = x; e.y = y; e.z = z;
+        _hearthOut[n] = e;
+        n++;
       }
     }
-    return out;
+    _hearthOut.length = n;
+    return _hearthOut;
   };
   const camps = createCamps({
     renderer, getTexture, uploadRecordFrame, meshes: { getGpuMesh, cpuModels }, entity: playerEntity,
@@ -3311,10 +3328,10 @@ export async function bootWorld(canvas, renderer, params, status) {
   // ?dungeon host RAN every CastWhenUsed / CastWhenStrikes / SoulBound
   // / affinity arm against no ctx at all. They are optional-chained, so
   // it WAS silent. WAVE D closed it: the body is scenes/hostEnchant.js
-  // and dungeonContext.js:2234 mounts the same one, gated on
+  // and dungeonContext.js:2236 mounts the same one, gated on
   // `opts.enchantCtx !== false` because setDefaultEnchantCtx is a
   // session singleton and EC1 already routes THIS host's mount into
-  // that context through modes.dungeonCtx - so worldModes.js:4705
+  // that context through modes.dungeonCtx - so worldModes.js:4706
   // passes false beside its `chargen: false` and only the standalone
   // ?dungeon route mounts its own. S40 filled isResting
   // in - the sentence that stood here said it "stays absent above
@@ -4044,7 +4061,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     }
     townTalk.showOverlay(new RestWindow(outdoorRestDeps));
   };
-  const arrows = new ArrowFlight({ getGpuMesh, collider: () => collider });   // C13
+  const arrows = new ArrowFlight({ getGpuMesh, collider: () => collider, effects: hitEffects });   // C13   // FIELD-GUN14: the orb's flat rides the host's own one-shot pool, which this frame already draws
   let playerSpawned = false;
   // F-slice: FAST TRAVEL. The window collects the popup's choices;
   // the LAWS live in systems/travel.js; arrival is
@@ -5117,7 +5134,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // so an F9 pressed inside a shop recorded the street's sheath and
     // hand. The mode host answers for the rig that is actually drawn
     // and null outside interior mode (the dungeon owns its own
-    // composer, dungeonContext.js:5647), so exterior mode and a
+    // composer, dungeonContext.js:5681), so exterior mode and a
     // pre-seam mode host compose exactly as before, per field.
     const wp = modes?.weaponPose?.() ?? null;
     const snap = snapshotPlayer(playerEntity, {
@@ -6712,7 +6729,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     lookFilter.add(e.movementX * lookScale(), -e.movementY * lookScale() * lookInvert());
   });
   // U41: `!townTalk.overlayActive` is the dungeon host's own gate
-  // (dungeon.js:226, "a right-click on a window is the window's...
+  // (dungeon.js:227, "a right-click on a window is the window's...
   // never a swing"), which these two hosts never got. It matters now
   // that the travel map makes RMB a ROUTINE gesture - its zoom - and
   // an ungated one fires a readied spell or looses an arrow at the
@@ -6962,7 +6979,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // exterior -> the townTalk overlay, interior OR dungeon -> the mode
   // machine's slot. U43-ii shipped the dungeon half: showQuestBox
   // offers the window to `modes.showQuestOverlay` below, and
-  // worldModes answers it in BOTH modes (worldModes.js:7583-7646 -
+  // worldModes answers it in BOTH modes (worldModes.js:7588-7651 -
   // dungeon routes to dungeonCtx.showOverlay), so a dungeon popup is
   // shown rather than logged loudly and dropped.
   // AUDIT 24 (wave 21): DaggerfallMessageBox.Show() is a
@@ -9261,7 +9278,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // main.js sets ?load when the menu resolves it, and its comment says
   // "Load Game rides the dungeon host's OWN quickLoad" - true when the
   // classic start booted scenes/dungeon.js, and U31 moved it HERE. The
-  // only reader of `load` in the whole tree is dungeon.js:107, so the
+  // only reader of `load` in the whole tree is dungeon.js:108, so the
   // flag arrived in this host and was discarded: the player got a
   // brand-new character in Privateer's Hold and the only way to reach
   // their save was to start a new game and press F11. A load is not a
@@ -10490,7 +10507,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       }
       renderer.setPointLights(
         withPlayerLights(nearestLights(_sceneLights, cam.pos, renderer.maxPointLights, worldLightAnimator.ranges, null, 0, n),   // EL1: the installed set's cap (16 classic, 48 on the lane); PERF-LIGHTS: `n` is how much of the pool is live
-          magic?.candleLight(), playerTorchLight(playerEntity, player.pos, cam.yaw), ...camps.lights(), ...droppedTorches.lights()),   // X11 candle; T1 torch; HT1 the dropped lights
+          magic?.candleLight(), playerTorchLight(playerEntity, player.pos, cam.yaw), thunderlockMuzzleLight(playerEntity, player.pos, cam.yaw), ...camps.lights(), ...droppedTorches.lights()),   // X11 candle; T1 torch; HT1 the dropped lights; FIELD-GUN13 the muzzle flash
         CITY_LIGHT_COLOR_F32
       );
     } else {
@@ -10499,7 +10516,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       // this branch used to send the renderer an empty array, so a
       // daylight Light cast would have lit nothing at all.
       renderer.setPointLights(withPlayerLights(new Float32Array(0),
-        magic?.candleLight(), playerTorchLight(playerEntity, player.pos, cam.yaw), ...camps.lights(), ...droppedTorches.lights()), CITY_LIGHT_COLOR_F32);   // HT1
+        magic?.candleLight(), playerTorchLight(playerEntity, player.pos, cam.yaw), thunderlockMuzzleLight(playerEntity, player.pos, cam.yaw), ...camps.lights(), ...droppedTorches.lights()), CITY_LIGHT_COLOR_F32);   // HT1; FIELD-GUN13 the muzzle flash
     }
     renderer.setClearColor(SKY_CLEAR);   // INCIDENT 2026-09-04 / REVIEW 2026-09-05: this frame is the EXTERIOR's (the mode frames returned above and clear black in worldModes) - CameraClearManager.cs:51-57
     renderer.setFlashLight(sky.lightningLight());   // DS1: Dynamic Skies' LightningFlash, composed first on the point-light channel just stored

@@ -1,0 +1,79 @@
+[
+ {
+  "name": "PERF-FOG-elFinish-decodes-the-uniform-once-a-fragment-again",
+  "file": "src/render/enhancedLighting.js",
+  "old": "  vec3 col = mix(uFogColorLin, tm, fogFactorAt(wp));",
+  "new": "  vec3 col = mix(elDecode(uFogColor), tm, fogFactorAt(wp));",
+  "tests": ["test/perffog_uniform.test.js"]
+ },
+ {
+  "name": "PERF-FOG-the-uniform-is-never-declared-so-every-lane-shader-fails-to-compile",
+  "file": "src/render/enhancedLighting.js",
+  "old": "uniform vec3 uFogColorLin;   // PERF-FOG: the fog colour ALREADY DECODED - see elFinish\n",
+  "new": "",
+  "tests": ["test/perffog_uniform.test.js"]
+ },
+ {
+  "name": "PERF-FOG-the-host-sends-the-DISPLAY-colour-so-the-lane-fog-is-the-wrong-brightness",
+  "file": "src/render/renderer.js",
+  "old": "      if (this._lane) this._lane.decode3(c, this._fogLin);\n      else this._fogLin.set(c);",
+  "new": "      this._fogLin.set(c);",
+  "tests": ["test/perffog_uniform.test.js"]
+ },
+ {
+  "name": "PERF-FOG-the-renderer-restates-the-sRGB-curve-instead-of-asking-the-lane",
+  "file": "src/render/renderer.js",
+  "old": "      if (this._lane) this._lane.decode3(c, this._fogLin);",
+  "new": "      if (this._lane) for (let i = 0; i < 3; i++) this._fogLin[i] = c[i] <= 0.04045 ? c[i] / 12.92 : Math.pow((c[i] + 0.055) / 1.055, 2.4);",
+  "tests": ["test/perffog_uniform.test.js"]
+ },
+ {
+  "name": "PERF-FOG-the-cache-never-notices-the-fog-moved-so-it-is-stuck-on-the-first-weather",
+  "file": "src/render/renderer.js",
+  "old": "    if (was[0] !== c[0] || was[1] !== c[1] || was[2] !== c[2]) {",
+  "new": "    if (was[0] !== c[0]) {",
+  "tests": ["test/perffog_uniform.test.js"]
+ },
+ {
+  "name": "PERF-FOG-the-cache-starts-at-zero-so-a-black-fog-is-never-recomputed",
+  "file": "src/render/renderer.js",
+  "old": "new Float32Array([NaN, NaN, NaN])",
+  "new": "new Float32Array(3)",
+  "tests": ["test/perffog_uniform.test.js"]
+ },
+ {
+  "name": "PERF-FOG-a-lane-swap-keeps-the-old-lanes-answer",
+  "file": "src/render/renderer.js",
+  "old": "    if (this._fogLinFrom) this._fogLinFrom[0] = NaN;",
+  "new": "",
+  "tests": ["test/perffog_uniform.test.js"]
+ },
+ {
+  "name": "PERF-FOG-the-upload-fires-for-a-program-that-never-asked-and-throws-on-a-null-location",
+  "file": "src/render/renderer.js",
+  "old": "    if (prog.fogColorLin) gl.uniform3fv(prog.fogColorLin, this._fogColorLinear());",
+  "new": "    gl.uniform3fv(prog.fogColorLin, this._fogColorLinear());",
+  "tests": ["test/perffog_uniform.test.js"]
+ },
+ {
+  "name": "PERF-FOG-the-location-is-never-looked-up-so-the-upload-can-never-happen",
+  "file": "src/render/renderer.js",
+  "old": "      fogColorLin: gl.getUniformLocation(program, 'uFogColorLin'),",
+  "new": "",
+  "tests": ["test/perffog_uniform.test.js"]
+ },
+ {
+  "name": "PERF-FOG-the-linear-fog-borrows-_c3s-shared-scratch-which-the-next-caller-overwrites",
+  "file": "src/render/renderer.js",
+  "old": "    if (!this._fogLin) this._fogLin = new Float32Array(3);",
+  "new": "    if (!this._fogLin) this._fogLin = this._decA;",
+  "tests": ["test/perffog_uniform.test.js"]
+ },
+ {
+  "name": "PERF-FOG-the-probe-stops-checking-that-the-uniform-survives-the-link",
+  "file": "tools/perfSunShaderProbe.mjs",
+  "old": "    const loc = linked ? r.gl.getUniformLocation(prog, 'uFogColorLin') : null;",
+  "new": "    const loc = linked ? true : null;",
+  "tests": ["test/perffog_uniform.test.js"]
+ }
+]

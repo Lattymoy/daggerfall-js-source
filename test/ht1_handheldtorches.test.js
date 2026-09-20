@@ -803,7 +803,7 @@ test('HT1: the rig runs the component beside the widget - one per rig, the pool 
   assert.match(rig, /pool\.setOnPickedUp\?\.\(\(item\) => handheld\.receivePickedUp\(item\)\);/, 'the pool hands a picked-up light to the component');
   // SW1b: the shield opens this block too - it was a third consumer inside a gate written for the other two,
   // so a profile with only Shield Widget on never got a frame at all (bible SW1b.1)
-  assert.match(rig, /const _torchesOn = handheldOn\(\);\s*(?:\/\/[^\n]*\n\s*)*if \(!_torchesOn && _handheldWasOn\) handheld\.dispose\(\);[^\n]*\n\s*_handheldWasOn = _torchesOn;\s*(?:\/\/[^\n]*\n\s*)*if \(widgetOn\(\) \|\| _torchesOn \|\| shieldOn\(\)\) \{/);
+  assert.match(rig, /const _torchesOn = handheldOn\(\);\s*(?:\/\/[^\n]*\n\s*)*if \(!_torchesOn && _handheldWasOn\) handheld\.dispose\(\);[^\n]*\n\s*_handheldWasOn = _torchesOn;[\s\S]{0,3000}?if \(widgetOn\(\) \|\| _torchesOn \|\| shieldOn\(\) \|\| thunderlockHeld\(\)\) \{/);
   // AUDIT-EOTB2: the torch hand's third-person gate asks the sprite body too (Eye Of The Beholder's ToggleBillboard hides the FPV hand)
   assert.match(rig, /if \(_torchesOn\) \{\s*bindTorches\(\);\s*const tctx = \{\s*renderer, canvas: c, entity, machine: playerWeapon\.machine, sheathed: playerWeapon\.sheathed, usingRightHand: playerWeapon\.usingRightHand,\s*castPlaying: fpsSpellCasting\.isPlayingAnim, spellArmed: spellArmed\(\), thirdPerson: fpArm\.thirdActive\(\) \|\| eotbHidesWeapon\(\),[^\n]*\n\s*climbing: !!cam\?\.climbing, swimming: !!mv\.swimming, transformedLycanthrope: !!entity && isTransformedLycanthrope\(entity\),/);
   assert.match(rig, /look, swingHeld: _held, cursorActive: cursorActive\(\), camera: camThunk, collider: \(\) => collider\?\.\(\) \?\? null,\s*keyDown: \(code\) => !!keyDown\?\.\(code\), sheathWeapons: \(\) => \{ if \(!playerWeapon\.sheathed\) playerWeapon\.toggleSheath\(\); \},\s*\};\s*handheld\.update\(dt, tctx\);\s*handheld\.lateUpdate\(dt, tctx\);/);
@@ -816,7 +816,7 @@ test('HT1: the rig runs the component beside the widget - one per rig, the pool 
   // MAP-WEAPON: one more rung between the arms and the shield - a map
   // holding the screen stops the classic body's four painters, the torch
   // hand among them (hands holding a map hold no torch either).
-  assert.match(rig, /if \(fpArm\.active\(\)\) \{[^}]*fpArm\.draw\(c\);[^}]*return; \}\s*(?:\/\/[^\n]*\n\s*)*if \(sheetWindowUp\(\)\) return;\s*(?:\/\/[^\n]*\n\s*)*if \(shieldRect\) shield\.draw\(\(index, rect, uv\) => drawShieldSprite\(index, rect, uv, fpTint\)\);\s*if \(handheldOn\(\) && c\) handheld\.draw\(renderer, c, fpTint\);\s*if \(torchOnly\) return;[^\n]*\n\s*(?:\/\/[^\n]*\n\s*)*if \(!shown\(\)\) return;\s*if \(widgetOn\(\) && c && widget\.draw\(renderer, c, fpTint\)\) return;/, 'the arms return first (no classic hand under the Morrowind arms), the shield behind the torch hand, the torch hand under the weapon');
+  assert.match(rig, /if \(fpArm\.active\(\)\) \{[^}]*fpArm\.draw\(c\);[^}]*return; \}\s*(?:\/\/[^\n]*\n\s*)*if \(sheetWindowUp\(\)\) return;\s*(?:\/\/[^\n]*\n\s*)*if \(shieldRect\) shield\.draw\(\(index, rect, uv\) => drawShieldSprite\(index, rect, uv, fpTint\)\);\s*if \(handheldOn\(\) && c\) handheld\.draw\(renderer, c, fpTint\);\s*if \(torchOnly && !gunSliding\) return;[^\n]*\n\s*(?:\/\/[^\n]*\n\s*)*if \(!shown\(\) && !gunSliding\) return;[^\n]*\n\s*(?:\/\/[^\n]*\n\s*)*const tlArt = c && thunderlockHeld\(\) \? artFor\(playerWeapon\.weapon\) : null;\s*if \(tlArt\?\.anchor && tlArt\.unionBox\) \{ drawThunderlock\(tlArt, c, fpTint\); return; \}\s*(?:\/\/[^\n]*\n\s*)*if \(gunSliding && !shown\(\)\) return;\s*if \(widgetOn\(\) && c && widget\.draw\(renderer, c, fpTint\)\) return;/, 'the arms return first (no classic hand under the Morrowind arms), the shield behind the torch hand, the torch hand under the weapon');
   assert.match(rig, /keyDown = null, torches = \(\) => null, sheetWindowUp = \(\) => false \}\)/, 'the two deps the hosts feed, and MAP-WEAPON\'s third - defaulted so a host that never heard of it draws what it always drew');
   assert.match(rig, /if \(!_torchesOn && _handheldWasOn\) handheld\.dispose\(\);/, 'AUDIT 66 F8: the switch off is a teardown - update() runs only while the mod is on, so the burning loop could not stop itself');
   assert.match(rig, /dispose\(\) \{ handheld\.dispose\(\); _handheldWasOn = false; \}/, 'AUDIT 66 F8: and the host has a door to call');
@@ -1078,12 +1078,12 @@ test('TORCH-VIS (the ladder): a lit hand draws while merely sheathed, the weapon
   // the sheathed case, and a readied spell, a cast in flight and an equip countdown all still hide the torch
   assert.match(rig, /const torchOnly = !shown\(\) && !spellArmed\(\) && !fpsSpellCasting\.isPlayingAnim\s*\n\s*&& \(entity\?\.equipCountdown \?\? 0\) <= 0 && isHeldLight\(entity\?\.lightSource\)\s*\n\s*&& \(!fpArm\.active\(\) \|\| fpArm\.torchShown\(\)\);/,
     'the exception names every leg of shown() it does NOT relax, asks the mod\'s own light test, and lets the Morrowind arm veto a light it has no art for');
-  assert.match(rig, /if \(paralyzed \|\| \(!shown\(\) && !torchOnly && !sheetOnly && !shieldRect\)\) return;/, 'the gate takes the exception, and paralysis still takes everything (MAP-FIELD put the held sheet\'s own leg beside the torch\'s, SW1b the shield\'s - the same law, three things that are not the weapon)');
+  assert.match(rig, /if \(paralyzed \|\| \(!shown\(\) && !torchOnly && !sheetOnly && !shieldRect && !gunSliding\)\) return;/, 'the gate takes the exception, and paralysis still takes everything (MAP-FIELD put the held sheet\'s own leg beside the torch\'s, SW1b the shield\'s, FIELD-GUN13 the gun still sliding out of frame - the same law, four things that are not a drawn weapon)');
   // and the weapon stays hidden: the return sits AFTER the torch hand and BEFORE the clone and the sprite
   const draw = rig.slice(rig.indexOf('const torchOnly ='));
   const torchAt = draw.indexOf('handheld.draw(renderer, c, fpTint)');
-  const stopAt = draw.indexOf('if (torchOnly) return;');
-  const cloneAt = draw.indexOf('widget.draw(renderer, c, fpTint)');
+  const stopAt = draw.indexOf('if (torchOnly && !gunSliding) return;');   // FIELD-GUN13: the gun mid-slide is the one thing that comes back with the hand
+  const cloneAt = draw.indexOf('widget.draw(renderer, c, fpTint');   // FIELD-GUN6 added the Thunderlock's rect delta after the tint
   const spriteAt = draw.indexOf('drawFpsWeapon(');
   assert.ok(torchAt > 0 && stopAt > 0 && cloneAt > 0 && spriteAt > 0, 'all four are in the ladder');
   assert.ok(torchAt < stopAt, 'the lit hand draws first...');

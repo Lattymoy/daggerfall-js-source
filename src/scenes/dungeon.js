@@ -33,6 +33,7 @@ import { INTERIOR_LIGHT_DIR } from '../world/interiorLights.js';
 import { nearestLights } from '../world/cityLights.js';
 import { withPlayerLights } from './magicCandle.js';   // X11/T1
 import { playerTorchLight } from '../systems/playerTorch.js';   // T1
+import { thunderlockMuzzleLight } from '../systems/thunderlock.js';   // FIELD-GUN13: the muzzle flash is a light the player carries, the torch's own shape
 import { lookAt, perspective, mirrorProjectionX, identity, UP_Y } from '../world/mat4.js';   // HANDEDNESS: the one mirror (mat4's law)
 const BATCH_IDENTITY = identity();   // PERF5: the merged level is in world space already
 import { PlayerMotor, TELEPORT_FREEZE_S, motionBagOf } from '../player/motor.js';   // A6: DaggerfallAction.Teleport's physics settle; WW2: the one motion bag
@@ -130,7 +131,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
       // below, after this context; null falls to standing defaults.
       motorState: () => (_motorRef ? { eyeLevel: _motorRef.eye[1] - _motorRef.pos[1], capsule: _motorRef.height } : null),
       // MAC1 J: this host's canvas, for the pause door's relock. The
-      // context owns none of its own (dungeonContext.js:5667), so each
+      // context owns none of its own (dungeonContext.js:5701), so each
       // dungeon host hands its own in and the resume gesture carries
       // the pointer back with it (ui/pauseDoor.js:270-287).
       relock: () => requestLook(canvas) });
@@ -991,7 +992,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
       // 16-slot shader cap picks from what survives (dungeonLights.js
       // carries the composition and why that order).
       withPlayerLights(nearestLights(ctx.lights, cam.pos, renderer.maxPointLights, ctx.flicker.ranges, null, DUNGEON_LIGHT_BLOCK_RANGE),   // EL1: the installed set's cap
-        ctx.candleLight?.(), playerTorchLight(playerEntity, player.pos, cam.yaw), ...ctx.campLights(), ...ctx.torchLights()),   // X11 candle; T1 torch; HT1 the dropped lights
+        ctx.candleLight?.(), playerTorchLight(playerEntity, player.pos, cam.yaw), thunderlockMuzzleLight(playerEntity, player.pos, cam.yaw), ...ctx.campLights(), ...ctx.torchLights()),   // X11 candle; T1 torch; HT1 the dropped lights; FIELD-GUN13 the muzzle flash
       DUNGEON_LANTERN_F32);
     renderer.setWorldViewport(largeHudViewportRect(canvas.clientHeight));   // E5: ViewportChanger.Update, every frame
     renderer.beginFrame(proj, view, INTERIOR_LIGHT_DIR, WORLD_FRAME);   // AUDIT-EL F5: a WORLD frame - the lane replays its records for this one

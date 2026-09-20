@@ -592,8 +592,8 @@ test('SW1-GATE: the shield alone is not a weapon - the seam stops before the clo
   const rigSrc = readFileSync('src/combat/weaponRig.js', 'utf8');
   const seam = rigSrc.slice(rigSrc.indexOf('if (shieldRect) shield.draw('));
   const upTo = seam.slice(0, seam.indexOf('if (widgetOn() && c && widget.draw('));
-  assert.match(upTo, /if \(torchOnly\) return;/, 'the torch still stops first');
-  assert.match(upTo, /if \(!shown\(\)\) return;/, 'and the shield-only frame stops here');
+  assert.match(upTo, /if \(torchOnly && !gunSliding\) return;/, 'the torch still stops first (FIELD-GUN13: unless the gun is mid-slide behind the hand)');
+  assert.match(upTo, /if \(!shown\(\) && !gunSliding\) return;/, 'and the shield-only frame stops here (FIELD-GUN13: the gun\'s own sheathe leg is the fourth exception, and the only one that reopens this)');
 });
 
 test('SW1-RECT: the screen rect is the CANVAS\u2019s, not the 320x200 fallback', () => {

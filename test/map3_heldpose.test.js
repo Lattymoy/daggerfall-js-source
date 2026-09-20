@@ -537,8 +537,8 @@ test('MAP3 weaponRig: armsDrawn() is the draw seam\'s own record - reset at the 
   // three legs for exactly this reason; the sheet's leg says the same,
   // and says it POSITIVELY (`playerWeapon.sheathed`) so no later leg of
   // `shown()` can be relaxed here by accident.
-  assert.match(src, /const sheetOnly = playerWeapon\.sheathed && !spellArmed\(\) && !fpsSpellCasting\.isPlayingAnim\s*\n\s*&& \(entity\?\.equipCountdown \?\? 0\) <= 0 && fpArm\.active\(\) && fpArm\.holdingPaper\(\);\s*\n\s*(?:[\s\S]{0,2000}?)if \(paralyzed \|\| \(!shown\(\) && !torchOnly && !sheetOnly && !shieldRect\)\) return;/,
-    'the held sheet draws the SHEATHED arm, beside the torch\'s own leg and SW1b\'s shield - and no other leg of shown()');
+  assert.match(src, /const sheetOnly = playerWeapon\.sheathed && !spellArmed\(\) && !fpsSpellCasting\.isPlayingAnim\s*\n\s*&& \(entity\?\.equipCountdown \?\? 0\) <= 0 && fpArm\.active\(\) && fpArm\.holdingPaper\(\);\s*\n\s*(?:[\s\S]{0,4000}?)if \(paralyzed \|\| \(!shown\(\) && !torchOnly && !sheetOnly && !shieldRect && !gunSliding\)\) return;/,
+    'the held sheet draws the SHEATHED arm, beside the torch\'s own leg, SW1b\'s shield and FIELD-GUN13\'s sliding gun - and no other leg of shown()');
   for (const leg of ['!spellArmed()', '!fpsSpellCasting.isPlayingAnim', '(entity?.equipCountdown ?? 0) <= 0']) {
     const torch = src.slice(src.indexOf('const torchOnly'), src.indexOf('const sheetOnly'));
     const sheet = src.slice(src.indexOf('const sheetOnly'), src.indexOf('const sheetOnly') + 400);
@@ -599,7 +599,9 @@ test('MAP-WEAPON: the sprite lane stands down while a map holds the screen, belo
     ['the shield', 'if (shieldRect) shield.draw('],
     ['the torch hand', 'if (handheldOn() && c) handheld.draw('],
     ['the clone', 'if (widgetOn() && c && widget.draw('],
-    ['the sprite', 'if (art) drawFpsWeapon('],
+    // FIELD-GUN7: the sprite's call took a block so the Thunderlock's
+    // raise can be computed for it, so the needle is the CALL
+    ['the sprite', 'drawFpsWeapon(renderer, c, art,'],
   ]) {
     assert.ok(gate < rig.indexOf(needle), `the gate stands ABOVE ${what}`);
   }

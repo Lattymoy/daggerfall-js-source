@@ -44,9 +44,9 @@
 // their home since the Thunderlock became a real weapon, and the lab
 // reads them from there.
 export {
-  SHEET_GRID, FIRE_FRAMES, cellRect, keyBackground, contentBox, unionBox,
+  SHEET_GRID, FIRE_FRAMES, cellRect, keyBackground, contentBox, unionBox, unionDrawRect,
 } from '../combat/gunSheet.js';
-import { SHEET_GRID, FIRE_FRAMES, cellRect, keyBackground, contentBox, unionBox } from '../combat/gunSheet.js';
+import { SHEET_GRID, FIRE_FRAMES, cellRect, keyBackground, contentBox, unionBox, unionDrawRect } from '../combat/gunSheet.js';
 
 // ONE HOME: the alignment enum is FPSWeapon's own, imported rather
 // than restated, so an offset tuned in the lab means in the lab
@@ -57,8 +57,21 @@ import { SHEET_GRID, FIRE_FRAMES, cellRect, keyBackground, contentBox, unionBox 
 // arrow points ONE WAY - the lab reads the port's law and the port
 // does not know the lab exists (test/gunLab.test.js fails if that
 // ever stops being true).
+// FIELD-GUN12: THE LAB NOW RUNS THE GAME'S MODULE.
+// `createWidgetRig`, `widgetRigStep`, `labMotion` and the settings
+// reader moved to combat/gunViewmodel.js with the placement, because
+// the game needs the SAME frame and five rounds of "it still isn't
+// 1:1" is what two copies of it cost. The lab is no longer a thing
+// the game resembles - it is a thing the game runs.
+export { placeSprite } from '../combat/gunPlacement.js';
+export {
+  createGunRig as createWidgetRig, gunRigStep as widgetRigStep,
+  gunMotion as labMotion, gunWidgetSettings as labWidgetSettings,
+  widgetDefaults, gunFrameRect,
+} from '../combat/gunViewmodel.js';
 export { ALIGN } from '../combat/weaponAlign.js';
 import { ALIGN } from '../combat/weaponAlign.js';
+import { placeSprite } from '../combat/gunPlacement.js';
 
 // THE MOD'S OWN MODULES (WW1's 1:1 port of FPSWeaponClone) - run, not
 // imitated. The arrow points one way, as it does for ALIGN.
@@ -67,35 +80,13 @@ import {
 } from '../combat/weaponWidgetMotion.js';
 import { MOD_SETTINGS } from '../systems/modSettings.js';
 import { walkSpeed, runSpeed } from '../player/motor.js';   // GetBaseSpeed's walk arm, the bob's baseSpeed
+export { createRecoil, createScreenShake, shakeNoise, GUN_FEEL } from '../combat/gunFeel.js';   // FIELD-GUN6: the one home
+export { MUZZLE_CURVE, muzzleGlow } from '../combat/gunFeel.js';   // FIELD-GUN13: the flash's curve, the same way
+import { muzzleGlow } from '../combat/gunFeel.js';
 export { widgetTransformRect };
 
-/**
- * FPSWeapon's OnGUI rect (:378-388), with the width taken as a
- * fraction of the screen instead of from a CIF record's native size -
- * the declared departure. Everything else is the classic law: bottom
- * anchored, aligned by the table's Alignment/Offset, and AlignRight
- * becoming AlignLeft under the handedness mirror (:459-464).
- *
- * `kick` is the lab's own: the recoil offset in NATIVE (320x200)
- * units, scaled with the surface so it reads the same at any window
- * size.
- */
-export function placeSprite({
-  canvasW, canvasH, frameW, frameH,
-  widthPct = 0.62, align = ALIGN.Center, offset = 0,
-  flip = false, kick = { x: 0, y: 0 }, offsetHeight = 0,
-}) {
-  const w = canvasW * widthPct;
-  const h = w * (frameH / frameW);
-  const a = (flip && align === ALIGN.Right) ? ALIGN.Left : align;
-  let x;
-  if (a === ALIGN.Left) x = canvasW * offset;
-  else if (a === ALIGN.Center) x = canvasW / 2 - w / 2;
-  else x = canvasW * (1 - offset) - w;
-  const y = canvasH - h - offsetHeight;
-  const sx = canvasW / 320, sy = canvasH / 200;
-  return { x: x + kick.x * sx * (flip ? -1 : 1), y: y + kick.y * sy, w, h };
-}
+// FIELD-GUN12: placeSprite moved to combat/gunPlacement.js, which
+// the game reads too - see that file's header.
 
 /**
  * THE CYCLE. A gun is not a sword: WeaponManager's six directional
@@ -150,11 +141,16 @@ export function createGunMachine({ fps = 14, cooldownMs = 1700, hitFrame = 1 } =
  * The muzzle light. The flash is on frames 1-2 of the sheet
  * (0-indexed), so the room it lights brightens on those and falls
  * away over the smoke - a lamp, not a step. Answers 0..1.
+ *
+ * FIELD-GUN13: THE CURVE MOVED, this signature did not. The game
+ * paints the flash and throws its light now, so the six numbers live
+ * in combat/gunFeel.js with the rest of the feel and this is the
+ * lab's own reading of them - `state` is this page's machine
+ * ('Firing'), which the game's machine does not have. One home, two
+ * spellings of the same question.
  */
 export function muzzleLight(state, frame) {
-  if (state !== 'Firing') return 0;
-  const curve = [0, 1, 0.82, 0.3, 0.12, 0.04];
-  return curve[frame] ?? 0;
+  return muzzleGlow(state === 'Firing', frame);
 }
 
 /**
@@ -182,30 +178,7 @@ export function muzzleLight(state, frame) {
  * not the obvious setting - a big slow kick is what a first pass
  * reaches for, and it fights the 1.7s reload for the frame.
  */
-export function createRecoil({ kick = 5, stiff = 400, damp = 36, back = 0 } = {}) {
-  const r = { x: 0, y: 0, vx: 0, vy: 0, kick, stiff, damp, back };
-  /** The shot, as a DISPLACEMENT rather than an impulse: the barrel is
-   *  already up by `kick` on the frame the trigger breaks, and the
-   *  spring's job is the ride down. An impulse (`vy += kick`) reads as
-   *  a soft push - the peak lands two frames late and a third of the
-   *  size, which is the first thing the probe caught. A second shot
-   *  fired into the recovery stacks on what is left, which is the
-   *  reason this is a spring at all. */
-  r.punch = (amount = r.kick) => { r.y += amount; r.x -= amount * r.back; };
-  r.step = (dt) => {
-    // sub-stepped: a spring this stiff integrated on a 30ms frame
-    // explodes, and a lab that only feels right at 120fps is no lab
-    const n = Math.max(1, Math.ceil(dt / 0.004));
-    const h = dt / n;
-    for (let i = 0; i < n; i++) {
-      r.vx += (-r.stiff * r.x - r.damp * r.vx) * h;
-      r.vy += (-r.stiff * r.y - r.damp * r.vy) * h;
-      r.x += r.vx * h; r.y += r.vy * h;
-    }
-    return { x: r.x, y: -r.y };   // +y is up in the impulse, down on screen
-  };
-  return r;
-}
+// FIELD-GUN6: createRecoil moved to combat/gunFeel.js - see above.
 
 /**
  * THE SOUND, and the slots it fills.
@@ -226,32 +199,50 @@ export function createRecoil({ kick = 5, stiff = 400, damp = 36, back = 0 } = {}
  * weapon starts down, `reload-close` as it comes back up.
  *
  * The lists are the LAB's CANDIDATES, in the order the audition put
- * them - the dropdowns open on the first, which is the pick. Named
+ * them - the dropdowns open on the first, WHICH IS THE PICK. Named
  * apart from systems/thunderlock.js's SFX, which is the three CLIP
  * KEYS the game plays: two different things, and one name for both is
  * what audit24's ratchet is for.
+ *
+ * FIELD-GUN15 (2026-09-20, Mac, with the panel open: "Use these
+ * sounds" over a screenshot of the three dropdowns). The heads moved,
+ * and THAT SENTENCE ABOVE IS NOW ENFORCED rather than merely written:
+ * `SFX_FILES` in the weapon's home has to name the head of each list
+ * (test/thunderlock.test.js). It was true by nobody's doing before -
+ * two places holding one decision, agreeing because the same person
+ * typed both - which is the drift class this weapon has paid for at
+ * every round since FIELD-GUN6.
+ *
+ * Mac's picks, and they are not the obvious ones:
+ *   - fire      `fire-dry`     a flat crack with NO room tail. The
+ *                              shotgun's tail is a real room's, and
+ *                              this weapon is fired in a dungeon the
+ *                              engine reverberates itself.
+ *   - open      `open-gunrack` the dark rack, over the winchester's
+ *                              brighter cock.
+ *   - close     `close-shell`  a shell seating, over the snap.
  */
 export const SFX_CANDIDATES = Object.freeze({
   fire: Object.freeze([
+    ['fire-dry', 'dry (no room)'],
     ['fire-shotgun', 'shotgun (clean crack)'],
     ['fire-20gauge', '20 gauge (the real one)'],
     ['fire-musket', 'musket (black powder)'],
     ['fire-blast', 'blast (short tail)'],
-    ['fire-dry', 'dry (no room)'],
     ['gun-fire-synth', 'synth (ours)'],
   ]),
   'reload-open': Object.freeze([
+    ['open-gunrack', 'gun rack (dark)'],
     ['open-winchester', 'winchester cock'],
     ['open-rack', 'shotgun rack'],
-    ['open-gunrack', 'gun rack (dark)'],
     ['open-shell', 'shell'],
     ['gun-reload-open-synth', 'synth (ours)'],
   ]),
   'reload-close': Object.freeze([
+    ['close-shell', 'shell home'],
     ['close-ready', 'ready (snaps shut)'],
     ['close-rack2', 'rack 2'],
     ['close-rack3', 'rack 3'],
-    ['close-shell', 'shell home'],
     ['gun-reload-close-synth', 'synth (ours)'],
   ]),
 });
@@ -336,29 +327,11 @@ export function createSfxPlayer({ base = 'sfx/', vary = 0.06, volume = 0.7 } = {
  * in degrees, `decay` the trauma bled off per second, `freq` how fast
  * it rattles.
  */
-const shakeNoise = (p, seed) => (
-  Math.sin(p * seed * 1.7) * 0.6
-  + Math.sin(p * seed * 3.1 + 1.3) * 0.3
-  + Math.sin(p * seed * 7.3 + 2.7) * 0.1
-);
-
-export function createScreenShake({ amount = 7, decay = 3.2, freq = 26, rot = 0.7 } = {}) {
-  const s = { trauma: 0, t: 0, amount, decay, freq, rot };
-  s.punch = (a = 1) => { s.trauma = Math.min(1, s.trauma + a); };
-  s.step = (dt) => {
-    s.t += dt;
-    s.trauma = Math.max(0, s.trauma - s.decay * dt);
-    const k = s.trauma * s.trauma;
-    if (k === 0) return { x: 0, y: 0, rot: 0 };
-    const p = s.t * s.freq;
-    return {
-      x: s.amount * k * shakeNoise(p, 1),
-      y: s.amount * k * shakeNoise(p, 1.7),
-      rot: s.rot * k * shakeNoise(p, 2.3) * Math.PI / 180,
-    };
-  };
-  return s;
-}
+// FIELD-GUN6: THE MACHINE MOVED. `createScreenShake` and its noise
+// live in combat/gunFeel.js now, with `createRecoil`, because the GAME
+// needs them - the lab settled these numbers and then kept them, so
+// the weapon fired dead still in all four hosts while the prototype
+// kicked. The lab reads the one home, so tuning here tunes there.
 
 /**
  * THE WEAPON WIDGET'S OWN MOVEMENT, ON THE GUN.
@@ -388,90 +361,10 @@ export function createScreenShake({ amount = 7, decay = 3.2, freq = 26, rot = 0.
  */
 export const WIDGET_VENDOR = WEAPON_WIDGET_VENDOR;
 
-/** The mod's declared defaults, as the store would answer them. */
-export function widgetDefaults() {
-  const keys = MOD_SETTINGS[WEAPON_WIDGET_VENDOR].keys;
-  const out = {};
-  for (const k of Object.keys(keys)) out[k] = keys[k].default;
-  return out;
-}
 
-/** The mod's settings with the lab's overrides on top, derived through
- *  readWidgetSettings so every multiplier is the mod's own. */
-export function labWidgetSettings(overrides = {}) {
-  return readWidgetSettings(() => ({ ...widgetDefaults(), 'Modules.Inertia': true, ...overrides }));
-}
 
-/** FPSWeaponClone's .ctor fields, the ones the three modules carry
- *  between frames. */
-export function createWidgetRig() {
-  return {
-    time: 0,
-    position: [0, 0], scale: [1, 1], offset: [0, 0],
-    offsetCurrent: [0, 0], offsetTarget: [0, 0],
-    moveSmooth: 0, bobSmooth: [0, 0],
-    inertiaCurrent: [0, 0], inertiaTarget: [0, 0], inertiaSpeedMod: 1,
-    inertiaForwardCurrent: [0, 0], inertiaForwardTarget: [0, 0],
-  };
-}
 
-/**
- * One frame of the three modules, in the component's own order -
- * Offset, then Bob, then Inertia - writing the same three channels the
- * clone publishes. `idle` is the machine's Idle, which is what the mod
- * gates Bob and Inertia on; `shown` false is the reload lower.
- */
-export function widgetRigStep(rig, s, dt, {
-  screenRect, motion, look = [0, 0], flip = false, idle = true,
-  shown = true, hiddenTarget = [0, 0.55], liveSpeed = 50, cursorActive = false, swingHeld = false,
-}) {
-  rig.time += dt;
-  rig.position = [0, 0]; rig.scale = [1, 1]; rig.offset = [0, 0];
-  if (s.offset) {
-    const o = offsetStep({
-      offsetCurrent: rig.offsetCurrent, offsetTarget: rig.offsetTarget,
-      animating: false, shown, equipCountdown: 0, hiddenTarget,
-    }, dt, liveSpeed / 100 * s.offsetSpeed);   // get_offsetSpeedLive
-    rig.offsetCurrent = o.offsetCurrent; rig.offsetTarget = o.offsetTarget;
-    rig.offset = [rig.offset[0] + o.delta[0], rig.offset[1] + o.delta[1]];
-  }
-  if (s.bob && idle) {
-    const b = bobStep({ moveSmooth: rig.moveSmooth, bobSmooth: rig.bobSmooth, time: rig.time, screenRect }, s, motion, dt);
-    rig.moveSmooth = b.moveSmooth; rig.bobSmooth = b.bobSmooth;
-    rig.position = [rig.position[0] + b.delta[0], rig.position[1] + b.delta[1]];
-  }
-  if (s.inertia && idle) {
-    const i = inertiaStep({
-      inertiaCurrent: rig.inertiaCurrent, inertiaTarget: rig.inertiaTarget,
-      inertiaForwardCurrent: rig.inertiaForwardCurrent, inertiaForwardTarget: rig.inertiaForwardTarget,
-      screenRect, flip, look, cursorActive, swingHeld,
-    }, s, motion, dt);
-    rig.inertiaCurrent = i.inertiaCurrent; rig.inertiaTarget = i.inertiaTarget; rig.inertiaSpeedMod = i.inertiaSpeedMod;
-    rig.inertiaForwardCurrent = i.inertiaForwardCurrent; rig.inertiaForwardTarget = i.inertiaForwardTarget;
-    rig.scale = [rig.scale[0] + i.scale[0], rig.scale[1] + i.scale[1]];
-    rig.position = [rig.position[0] + i.delta[0], rig.position[1] + i.delta[1]];
-  }
-  return rig;
-}
 
-/**
- * THE MOTOR'S FRAME, as the rig assembles it for the clone
- * (weaponRig.js:953-960) - baseSpeed from GetBaseSpeed's walk arm,
- * speedRatio the live speed over it, and localVel the eye's motion
- * turned into the body's frame (right, up, forward). The lab has no
- * motor, so `walking`/`running` stand in for one and the vector is
- * built the same way round.
- */
-export function labMotion({ walking = false, running = false, crouching = false, liveSpeed = 50, strafe = 0 } = {}) {
-  const base = walkSpeed(liveSpeed);
-  const speed = walking ? (running ? runSpeed(liveSpeed, 50, crouching) : base) : 0;
-  return {
-    grounded: true, crouching, riding: false, standing: !walking,
-    speedRatio: base > 0 ? speed / base : 1,
-    baseSpeed: base,
-    localVel: [strafe * speed, 0, walking ? speed : 0],
-  };
-}
 
 /**
  * THE ANCHOR, and the second half of the alignment story unionBox
@@ -489,12 +382,4 @@ export function labMotion({ walking = false, running = false, crouching = false,
  * The gun lands where you aligned it and the flash overflows around
  * it, which is what it does in the art.
  */
-export function unionDrawRect(anchorRect, anchor, union) {
-  const scale = anchorRect.w / anchor.w;
-  return {
-    x: anchorRect.x - (anchor.x - union.x) * scale,
-    y: anchorRect.y - (anchor.y - union.y) * scale,
-    w: union.w * scale,
-    h: union.h * scale,
-  };
-}
+// FIELD-GUN11: moved to combat/gunSheet.js, which the game reads too.

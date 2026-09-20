@@ -358,6 +358,27 @@ export const FEATURES = Object.freeze([
     kinds: Object.freeze(['enhanced']),
     control: Object.freeze({ store: 'prefs', key: 'cloudQuality', initial: 'default', online: 'player', tiers: Object.freeze([['default', 'Default'], ['lo', 'Low'], ['hi', 'High']]) }),   // PERF1: volumetricClouds.js QUALITY; a dial, the player's online
   }),
+  // GRAIN2 (2026-09-19, Mac: "Why dont we crank it to 16?"): GROUND
+  // SHARPNESS. GRAIN1 mipmapped the terrain tiles, which took the grain
+  // off the distance and put a little blur in its place at a grazing
+  // angle - and terrain is grazing almost everywhere. Anisotropy is the
+  // one filtering term that buys that sharpness back, and how much of it
+  // to ask for is a MACHINE's question, not a number to guess at once
+  // for everybody: it is paid in fill rate, on the pass that covers the
+  // most screen. 4x was a conservative default and nothing more. This is
+  // the dial, so a machine with room can take the driver's maximum and a
+  // laptop can drop to the mipmap alone. The player's own online, as the
+  // cloud dial is.
+  Object.freeze({
+    id: 'ground-sharpness',
+    group: 'sight',
+    title: 'Ground sharpness',
+    note: 'How sharply the ground reads into the distance, where a mipmapped tile would otherwise soften. '
+      + 'Off is the mipmap alone; Maximum is whatever the driver allows.',
+    effect: 'Takes effect when the world next loads.',
+    kinds: Object.freeze(['enhanced', 'classic']),
+    control: Object.freeze({ store: 'prefs', key: 'groundSharpness', initial: 'default', online: 'player', tiers: Object.freeze([['off', 'Off'], ['default', 'Default (4x)'], ['max', 'Maximum']]) }),
+  }),
   // FT8 (2026-09-14): ENHANCED COMBAT VISUALS (ECV1) - what the enhanced
   // skin DRAWS for a concealed foe; the rules are DFU's either way. The
   // last row of the Enhanced category of Settings, which is a pointer

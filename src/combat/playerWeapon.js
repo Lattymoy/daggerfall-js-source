@@ -25,6 +25,7 @@ import {
   createWeaponMachine, machineAttack, machineStep, gestureDirection,
   MAX_GESTURE_SECONDS, BOW_DRAWN_HOLD_FRAME, machineCancelBowDraw, THUNDERLOCK_NUM_FRAMES,
 } from '../characters/weaponStates.js';
+import { GUN_FEEL, GUN_TICK_SECONDS, GUN_COOLDOWN_SECONDS } from './gunFeel.js';   // FIELD-GUN7: the lab's cadence, from the one home
 import { DIRECTION_TO_STRIKE, ATTACKS_FP, sampleClip } from '../characters/anims.js';
 import { combinePose } from '../characters/animate.js';
 import { weaponTypeForItem, WEAPON_TYPES } from './fpsWeapon.js';
@@ -508,6 +509,15 @@ export class PlayerWeapon {
     const thunderlock = t === WEAPON_TYPES.Thunderlock || t === WEAPON_TYPES.Thunderlock_Magic;
     this.machine.ranged = t === WEAPON_TYPES.Bow || thunderlock;
     this.machine.frames = thunderlock ? THUNDERLOCK_NUM_FRAMES : null;
+    // FIELD-GUN7: and the three the lab settled that the game was
+    // answering with its own SPD-driven formulas - the frame clock
+    // (14fps, not ~5 at average speed), the reload (a fixed 1.7s, not
+    // a cooldown that moves with the character) and the hit frame
+    // (the muzzle flash, not the melee frame after it). Null for
+    // every other weapon, which is the classic answer untouched.
+    this.machine.tick = thunderlock ? GUN_TICK_SECONDS : null;
+    this.machine.cooldown = thunderlock ? GUN_COOLDOWN_SECONDS : null;
+    this.machine.hitFrame = thunderlock ? GUN_FEEL.hitFrame : null;
     return machineStep(this.machine, dt, this.liveSpeed);
   }
 

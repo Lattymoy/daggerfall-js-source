@@ -67,7 +67,7 @@ test('Weapon Widget\u2019s Bob sways the gun while walking and barely breathes w
   const standing = span(labMotion({ walking: false }));
   assert.ok(walking > 10, `the walk sways the sprite (${walking.toFixed(1)}px)`);
   assert.ok(standing > 0 && standing < walking / 3, `BobWhileIdle is a tenth of a stride, not a stride (${standing.toFixed(1)}px)`);
-  // the motor's frame is the rig's own shape (weaponRig.js:953-960)
+  // the motor's frame is the rig's own shape (weaponRig.js:1155-1162)
   const m = labMotion({ walking: true, running: true });
   assert.ok(m.speedRatio > 1 && m.baseSpeed > 0 && m.localVel[2] > 0, 'running is faster than the walk base, and it is forward motion');
   assert.equal(labMotion({ walking: false }).standing, true);
@@ -339,5 +339,22 @@ test('the paperdoll sprite is cut for the doll’s hand, and both icons are 1-bi
   }
   // sized for the panel, not for a screen: PAPERDOLL_W is 110
   assert.ok(gun.w > 40 && gun.w <= 110, `the gun fits the doll's panel (${gun.w}px of 110)`);
+  // FIELD-GUN16 (2026-09-20, Mac: "Shrink the inventory icon for the
+  // pellet ammo"). FITTING THE CELL WAS NEVER THE QUESTION. 22x22 fit
+  // it and still read as a pellet the size of a helmet, because
+  // `makeIconDrawer` never ENLARGES (`fit = Math.min(1, ...)`) - an
+  // icon is drawn at its own size, so the art's size IS the icon's
+  // size, exactly as a classic record's is. A bound that only says
+  // "not bigger than the cell" cannot catch a thing that is merely too
+  // big, so the pin is the SIZE, with the cell's own numbers beside it
+  // saying what fraction of the cell it is.
   assert.ok(ammo.w <= 50 && ammo.h <= 38, `the ammo fits the 50x38 list cell (${ammo.w}x${ammo.h})`);
+  assert.equal(ammo.w, 16, 'the pellet is 16px - Mac\'s size, and tools/gunPaperdoll.mjs\'s own default');
+  assert.equal(ammo.h, 16, 'and square, as the source is');
+  assert.ok(ammo.w / 50 < 0.4, `a pellet is a small round thing in a list, not a third of the row (${(ammo.w / 50 * 100).toFixed(0)}% of the cell)`);
+  // THE TOOL'S DEFAULT IS THE SHIPPED SIZE, so a re-bake reproduces
+  // what is committed instead of quietly restoring the last one.
+  assert.match(readFileSync('tools/gunPaperdoll.mjs', 'utf8'),
+    /const ammo = bake\('gun-ammo-src\.png', num\('ammo', 16\), \{ out: 'gun-ammo\.png' \}\);/,
+    'the baker defaults to the size that shipped');
 });

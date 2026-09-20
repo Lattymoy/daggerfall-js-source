@@ -177,6 +177,7 @@ import { ENEMY_BASICS, enemyDisplayName } from '../characters/enemyBasics.js';
 import { bloodDecalDeps } from '../combat/bloodSwitch.js';   // BLOOD1a
 import { createBloodMarks } from '../combat/bloodMarks.js';   // BLOOD1a: HARD1 - the ring is this context's to own and to end
 import { createHitEffects, bloodCentre } from './hitEffects.js';
+import { orbArchiveFor, ORB_RECORD } from '../characters/thunderlockIds.js';   // FIELD-GUN14: what this weapon's shot LOOKS like - the leaf, so no cycle
 import { bloodHit } from '../combat/bloodDecals.js';   // BLOOD1b: the blow, in the shape the mark's ladder reads
 import { createDroppedTorches } from './droppedTorches.js';
 import { createCamps } from './camps.js';   // SURV3: a fire on the dungeon floor (no tent below - the camp law says so)
@@ -1495,7 +1496,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // owned, and destroy() hands it back (the _prevPassiveHost idiom this
   // file already uses for its other process-global seams). A bare null
   // would not do: on ?world and ?exterior the previous holder is the
-  // host's own townTalk sink (world.js:7999 / exterior.js:3317), set
+  // host's own townTalk sink (world.js:8016 / exterior.js:3318), set
   // once at boot and never again, so nulling on the way out of the
   // first dungeon would silently un-file every mid-screen label above
   // ground for the rest of the session - MC-1's own bug, re-opened.
@@ -1998,7 +1999,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // copied mount would have diverged the first time an arm grew.
   /** DR1: THE TWO SPELL WINDOWS THIS HOST MOUNTS NOW, and the one door
    *  they go through. `mountSpellWindow` is worldModes'
-   *  mountSpellWindow DUNGEON ARM (worldModes.js:1105,
+   *  mountSpellWindow DUNGEON ARM (worldModes.js:1106,
    *  `dungeonCtx?.showOverlay(win)`) resolved to what it actually
    *  calls here - this file's own pushDungeonWindow, which IS
    *  UserInterfaceManager.PushWindow. So a spell window raised over an
@@ -2445,7 +2446,15 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // landed enemy arrow, ONE recoverable Arrow joins the TARGET'S
   // items (BowDamage's classic charm). Crouch pass-over pends.
   function fireArrow(from, dir, weapon, fromPlayer, shooterFoe = null, aimFoe = null) {   // ROAD-H tail: aimFoe - BowDamage's non-player arm (EnemyAttack.cs:141-143), the foe this shaft was loosed AT
-    missiles.push({ arrow: true, weapon, fromPlayer, shooterFoe, aimFoe, pos: fromPlayer ? playerArrowOrigin(from, dir) : [...from], dir: [...dir], age: 0, batch: null, draw: null });   // ROAD-H H1c: a PLAYER shaft leaves the BOW HAND - GetAimPosition (DaggerfallMissile.cs:540-550) offsets the camera position 0.11 DOWN the camera's own up and 0.15 to the hand (the other way under FPSWeapon.FlipHorizontal), and it runs INSIDE the missile in DFU (:471), so it runs here rather than at each host's loose; an ENEMY shaft arrives with its own origin already applied (enemyTargets.enemyArrowOrigin)
+    // FIELD-GUN14 (Mac: "The projectile that shoots out should be an
+    // orb, not an arrow"). The FOURTH HOST's own copy of the fork
+    // combat/arrowFlight.js takes - and here it is one field, because
+    // this missile system already draws BOTH kinds: a shaft is the
+    // 99800 mesh, a spell is a billboard riding its batch's origin.
+    // `flatArchive` says "this arrow is drawn the second way", and
+    // everything else about it - the physics, the contact, the
+    // player-arrow impact arm, the recovery - stays the arrow's.
+    missiles.push({ arrow: true, flatArchive: orbArchiveFor(weapon), weapon, fromPlayer, shooterFoe, aimFoe, pos: fromPlayer ? playerArrowOrigin(from, dir) : [...from], dir: [...dir], age: 0, batch: null, draw: null });   // ROAD-H H1c: a PLAYER shaft leaves the BOW HAND - GetAimPosition (DaggerfallMissile.cs:540-550) offsets the camera position 0.11 DOWN the camera's own up and 0.15 to the hand (the other way under FPSWeapon.FlipHorizontal), and it runs INSIDE the missile in DFU (:471), so it runs here rather than at each host's loose; an ENEMY shaft arrives with its own origin already applied (enemyTargets.enemyArrowOrigin)
   }
   // S16: the enemy cast - "enemies always cast ready spell instantly
   // once queued" (EntityEffectManager.Update): spend the S10 cost
@@ -2487,7 +2496,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // NEXT updateMissiles pass to fill. But the push lands in a
     // MICROTASK - this is async and its one caller does not await it -
     // and both hosts draw dynamicDraws BEFORE they call drawFoes
-    // (dungeon.js:1001 against :1039; worldModes.js:6146 against :6163).   // QS6: both pairs' SECOND half was stale before this slice - they named neither `drawFoes` call, and a positional bump would have moved a wrong number by the right offset; re-resolved by content
+    // (dungeon.js:1002 against :1039; worldModes.js:6145 against :6163).   // QS6: both pairs' SECOND half was stale before this slice - they named neither `drawFoes` call, and a positional bump would have moved a wrong number by the right offset; re-resolved by content
     // So the very next frame drew the arrow with a NULL matrix, and
     // `uniformMatrix4fv(uModel, false, null)` throws - Float32List is
     // a non-nullable WebIDL union. Firing a bow killed the frame loop,
@@ -2916,7 +2925,12 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   async function ensureMissileBatch(m) {
     if (m.batch !== null) return;
     m.batch = false;   // in-flight guard
-    const archive = missileArchive(m.spell.element);
+    // FIELD-GUN14: a shot with its own flat names it; a spell asks its
+    // element, as it always has. ORB_RECORD is 0, which is also the
+    // record every spell missile flies on, so the two agree by
+    // construction rather than by coincidence.
+    const archive = m.flatArchive ?? missileArchive(m.spell.element);
+    const record = m.flatArchive ? ORB_RECORD : 0;
     const t = await getTexture(archive);
     if (!t) return;
     // The arrow's bug, twice more: this is async and `m.batch = false`
@@ -2926,15 +2940,15 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // nothing ever removes, drawn at its fire position for the rest of
     // the scene. Check before publishing.
     if (m.dead) { m.batch = null; return; }
-    uploadRecord(archive, 0);
-    const size = billboardSize(t, 0);
+    uploadRecord(archive, record);
+    const size = billboardSize(t, record);
     m.firePos = [...m.pos];
-    m.batch = renderer.createBillboardBatch(archive, 0, size, [[m.firePos[0], m.firePos[1], m.firePos[2]]]);
+    m.batch = renderer.createBillboardBatch(archive, record, size, [[m.firePos[0], m.firePos[1], m.firePos[2]]]);
     // FA1 slice 2: the missile flat ANIMATES while it flies -
     // DaggerfallMissile.cs:605 sets BillboardFramesPerSecond (5) on the
     // billboard it makes at :601. Frozen on frame 0, a fireball was a
     // photograph of a fireball.
-    armFlatAnim(m.batch, t, archive, 0, flatAnims, uploadRecordFrame, { fps: MISSILE_FPS });
+    armFlatAnim(m.batch, t, archive, record, flatAnims, uploadRecordFrame, { fps: MISSILE_FPS });
     billboardBatches.push(m.batch);
   }
   /** AUDIT 26 F033 - DaggerfallMissile.DoCollision's impact flash
@@ -2963,7 +2977,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     const target = [playerFeet[0], playerFeet[1] + playerHeight / 2, playerFeet[2]];   // AUDIT 62 F21 (review): the PLAYER arm of the aim is the foe arm's law - LastKnownTargetPos is target.transform.position (DaggerfallMissile.cs:571-581 -> EnemySenses.cs:453), and the player's is feet + the LIVE height/2 (no controller centre offset; PlayerHeightChanger.cs:477-478 plants the capsule bottom and moves the transform by heightChange/2). The hardcoded 0.9 made a crouched player a standing target.
     for (const m of missiles) {
       if (m.dead) continue;
-      if (!m.arrow) ensureMissileBatch(m);   // arrows render as the 99800 model, not an element billboard
+      if (!m.arrow || m.flatArchive) ensureMissileBatch(m);   // arrows render as the 99800 model, not an element billboard - unless the weapon brought its own flat (FIELD-GUN14)
       if (!m.dir) {   // verbatim: normalized (target - object), locked at fire time
         // MT-iv: DaggerfallMissile aims at its CASTER'S TARGET, which
         // was the player and only the player until targeting armed.
@@ -3013,9 +3027,12 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // The batch was built ONCE at the fire position; flight rides
       // the batch's origin uniform (zero GL churn - the same thrash
       // class the engine audit killed stays killed).
-      if (!m.arrow && m.batch) m.batch.origin = [m.pos[0] - m.firePos[0], m.pos[1] - m.firePos[1], m.pos[2] - m.firePos[2]];
+      if ((!m.arrow || m.flatArchive) && m.batch) m.batch.origin = [m.pos[0] - m.firePos[0], m.pos[1] - m.firePos[1], m.pos[2] - m.firePos[2]];   // FIELD-GUN14: an orb flies the way a spell does
       if (m.arrow) {
-        ensureArrowModel(m);
+        // FIELD-GUN14: ...and it is NOT also a mesh. The flat is the
+        // whole picture; fetching 99800 beside it would draw a shaft
+        // through the middle of the orb.
+        if (!m.flatArchive) ensureArrowModel(m);
         if (m.draw && m.draw.object) m.draw.object.matrix = arrowMatrix(m);
         if (m.fromPlayer) {
           for (const f of foes) {
@@ -3024,8 +3041,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
               // AUDIT 39 (#64) / THE FOUR HOSTS RULE - SHIPPED (wave D):
               // this host was the FOURTH BODY of the player-arrow law
               // and is now the fourth CALLER. combat/arrowFlight.js's
-              // playerArrowHitFoe is the one copy world.js:11087,
-              // exterior.js:4743 and worldModes.js:6288 already ran;
+              // playerArrowHitFoe is the one copy world.js:11104,
+              // exterior.js:4744 and worldModes.js:6293 already ran;
               // the flag said the divergence would bite and it already
               // had. This copy splashed at the ARROW TIP
               // (`[m.pos[0], m.pos[1], m.pos[2]]`) on the claim that
@@ -6494,7 +6511,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       //
       // The interior host's `interiorHitEffects.clear()` is NOT the same
       // line and was never a precedent for one: that pool is built with
-      // no `onSpawn` (worldModes.js:574), so it owns its batches and
+      // no `onSpawn` (worldModes.js:575), so it owns its batches and
       // clear() is the only thing that frees them - and it runs on a
       // between-buildings RESET, not a teardown.
       // AUDIT 64 F41: the scene ambience leaves with the scene too -

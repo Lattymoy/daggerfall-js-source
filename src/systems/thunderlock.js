@@ -35,6 +35,7 @@ import { addVendorTextures, vendorTextureCount } from './textureReplacement.js';
 import { registerUniqueFind, registerLegendary, registerAmmunition } from './lootRarity.js';
 import { SKILLS } from './skills.js';
 import { APP_ROOT } from './appRoot.js';   // AUDIT-THUNDERLOCK F7
+import { GUN_FEEL } from '../combat/gunFeel.js';   // FIELD-GUN13: the flash's reach, from the one home the feel lives in (a leaf - no imports of its own)
 // The indices live in a LEAF (characters/thunderlockIds.js) because
 // characters/weapons.js needs them too and importing this file from
 // there would close a cycle through systems/itemTemplates.js. Said out
@@ -186,8 +187,34 @@ export function spendPellet(items) {
  *  layer and the inventory icon are the same record, which is why
  *  gun-paperdoll.png carries the hand gap and why the icon has a notch
  *  in it - it is a doll layer being shown in a list. */
+/**
+ * WHERE IT HANGS ON THE PAPER DOLL (FIELD-GUN4).
+ *
+ * A classic weapon record carries its own offset inside its CIF, and
+ * the doll blits it at `offset - paperDollOrigin`. Our sprite is a
+ * PNG and has no such field, so the number is declared here - the one
+ * place that knows the sprite is 68x42 and where its grip sits in it.
+ *
+ * The doll's panel is 110x184 with its origin at (200, 8), so these
+ * are panel coordinates plus that origin. The gun hangs muzzle-down
+ * across the body's right side (the viewer's left, which is where the
+ * doll's right hand is), low enough that the grip meets the hand and
+ * the barrel runs past the hip.
+ *
+ * MAC'S EYE IS THE GATE ON THIS ONE. It is a placement, not a law -
+ * there is no DFU number to be right or wrong against - so it is one
+ * constant, named, for him to move.
+ *
+ * FIELD-GUN9: and he moved it. The first guess hung the grip three
+ * pixels below the hand ("close, really close, but not quite"), so
+ * the sprite rises by that much. `y` is the only number that changed
+ * and the panel origin stays written out beside it, because
+ * `8 + 93` says "93 down the panel" where `101` says nothing.
+ */
+export const PAPERDOLL_OFFSET = Object.freeze({ x: 200 + 8, y: 8 + 93 });
+
 export const ICON_FILES = Object.freeze([
-  { archive: ART.weaponArchive, record: 0, frame: 0, file: 'gun-paperdoll.png' },
+  { archive: ART.weaponArchive, record: 0, frame: 0, file: 'gun-paperdoll.png', offset: PAPERDOLL_OFFSET },
   { archive: ART.ammoArchive, record: 0, frame: 0, file: 'gun-ammo.png' },
 ]);
 
@@ -223,8 +250,8 @@ export function installThunderlockIcons({ fetchBytes = null } = {}) {
   // showing at all" - and textureReplacement.js:185 says so in the
   // comment right above the function. The audit read that file for F7
   // and took the URL law out of it while walking past the flag.
-  return addVendorTextures(ICON_FILES.map(({ archive, record, frame, file }) => ({
-    archive, record, frame, fileName: file, standIn: true, load: () => load(file),
+  return addVendorTextures(ICON_FILES.map(({ archive, record, frame, file, offset }) => ({
+    archive, record, frame, fileName: file, standIn: true, offset, load: () => load(file),
   })));
 }
 
@@ -307,11 +334,18 @@ export const SFX = Object.freeze({
   close: 'thunderlock:close',
 });
 /** The picks from public/sfx (see its SOURCES.md - all CC0, all baked
- *  to DAGGER.SND's own 11025Hz 8-bit mono). */
+ *  to DAGGER.SND's own 11025Hz 8-bit mono).
+ *
+ *  FIELD-GUN15 (2026-09-20, Mac, with the lab's panel open: "Use these
+ *  sounds"). These three ARE the head of their candidate list in
+ *  src/tools/gunLab.js, which is where the audition happens and what
+ *  the lab's dropdowns open on - and that is pinned now rather than
+ *  just said, because two places holding one decision is how every
+ *  earlier round of this weapon went wrong. */
 export const SFX_FILES = Object.freeze({
-  [SFX.fire]: 'fire-shotgun.wav',
-  [SFX.open]: 'open-winchester.wav',
-  [SFX.close]: 'close-ready.wav',
+  [SFX.fire]: 'fire-dry.wav',
+  [SFX.open]: 'open-gunrack.wav',
+  [SFX.close]: 'close-shell.wav',
 });
 export const sfxUrl = (file) => new URL(`sfx/${file}`, APP_ROOT ?? globalThis.document?.baseURI ?? 'http://localhost/').href;
 
@@ -331,4 +365,73 @@ export function installThunderlockSounds(audio, { fetchBytes = null } = {}) {
     }
     return n;
   })());
+}
+
+// ── THE MUZZLE'S LIGHT ───────────────────────────────────────────────
+//
+// FIELD-GUN13 (2026-09-19, Mac: "The muzzle flash itself shouldn't be
+// affected by the darkening lighting. It should produce lighting").
+//
+// TWO ASKS IN ONE SENTENCE, and they are opposite ends of the same
+// fact. The flash is the brightest thing in the room for two frames,
+// so (a) it cannot be DARKENED by the room - combat/weaponRig.js's
+// `drawThunderlock` lifts the sprite's tint to white on the curve -
+// and (b) it must LIGHT the room, which is this.
+//
+// IT IS THE TORCH'S OWN SHAPE, deliberately. `playerTorchLight`
+// (systems/playerTorch.js) is the port's one worked example of a
+// light the PLAYER carries: a module-level read of state the frame
+// already parked on the entity, answering the `{x, y, z, range,
+// carried}` record `magicCandle.withPlayerLights` prepends to a
+// host's array. Written that way, the six light arrays across the
+// four hosts add one argument each and no host learns that a weapon
+// can be a lamp. A
+// second mechanism for the same job would be a second thing to keep
+// in step.
+//
+// THE BASIS IS YAW ONLY, for the reason the torch's is (see its
+// header): the offset is in the player BODY's space and the pitch
+// belongs to the camera. A gun does not fire into the ceiling because
+// you glanced up - the shot's own trajectory is the ranged lane's
+// business, and this is only where the flash sits.
+//
+// NO COLOUR. `withPlayerLights` gives a light with no `color` the
+// white of the shared channel, and a muzzle flash is white-hot - so
+// the honest answer here is to say nothing rather than invent a
+// temperature.
+
+/** Where the barrel is, in the player body's frame. The torch's own
+ *  two numbers (0.3 out, 1.2 up) put the hand where the hand is; the
+ *  forward reach is the barrel's, which is most of an arm further out
+ *  than a torch is held. To the RIGHT because that is the hand the
+ *  classic sprite draws in - the handedness mirror is a picture, not
+ *  a body (FPSWeapon.cs:378 flips the IMAGE). */
+export const MUZZLE_OFFSET = Object.freeze({ right: 0.3, up: 1.2, forward: 0.9 });
+
+/**
+ * The light the flash throws, or null. Read AFTER the rig's frame,
+ * off the glow it parked - so every host answers the same frame's
+ * shot, and a host that never runs a weapon rig answers null.
+ *
+ * @param {object} entity the player
+ * @param {number[]} feet the player's feet, the host's `player.pos`
+ * @param {number} yaw the camera's yaw
+ */
+export function thunderlockMuzzleLight(entity, feet, yaw = 0) {
+  const glow = entity?._thunderlockFlash;
+  if (!(glow > 0) || !feet) return null;
+  const sy = Math.sin(yaw), cy = Math.cos(yaw);
+  const f = [sy, 0, cy];              // forward
+  const r = [cy, 0, -sy];             // right
+  const o = MUZZLE_OFFSET;
+  return {
+    x: feet[0] + r[0] * o.right + f[0] * o.forward,
+    y: feet[1] + o.up,
+    z: feet[2] + r[2] * o.right + f[2] * o.forward,
+    range: GUN_FEEL.flashRange * glow,
+    // MAC-T1: a flash in your own hand gets no bloom glare either -
+    // the same exemption the carried torch takes, for the same reason
+    // (a torso-sized additive ball painted over the third-person body).
+    carried: true,
+  };
 }

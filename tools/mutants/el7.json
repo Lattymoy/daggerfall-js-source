@@ -209,8 +209,8 @@
  {
   "name": "water-fs-no-shadow",
   "file": "src/render/waterSurface.js",
-  "old": "  float shadow = cloudShadowAt(vWorldPos)${shadowGlsl ? ' * sunShadowAt(vWorldPos, n)' : ''};",
-  "new": "  float shadow = cloudShadowAt(vWorldPos);",
+  "old": "  float shadow = uSunScale > 0.0 ? cloudShadowAt(vWorldPos)${shadowGlsl ? ' * sunShadowAt(vWorldPos, n)' : ''} : 0.0;",
+  "new": "  float shadow = uSunScale > 0.0 ? cloudShadowAt(vWorldPos) : 0.0;",
   "tests": [
    "test/el7_polish.test.js"
   ]

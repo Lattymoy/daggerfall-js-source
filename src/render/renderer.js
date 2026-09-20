@@ -411,6 +411,30 @@ void main() {
 import { ShadowPass, SHADOW_GLSL } from './shadowPass.js';   // EL7: the receiver block, for the water surface's lane program
 import { boundsOf, spherePlanes, batchVisible } from './bounds.js';
 import { cullDisabled } from './frustum.js';   // PERF-CROWD2: the billboard pass culls for every host, so no host can forget to
+import { getPref } from '../systems/uiPrefs.js';   // GRAIN2: the ground-sharpness dial, read where the tile array is built
+
+/**
+ * GRAIN2 (2026-09-19, Mac: "Why dont we crank it to 16?"): the
+ * ground-sharpness tier as a max-anisotropy value, against what the
+ * driver actually allows.
+ *
+ * The honest answer to the question is that 4 was a conservative guess.
+ * Anisotropy is paid in fill rate on the pass that covers the most
+ * screen, and this session cannot measure that - its only GL is
+ * SwiftShader, a software rasteriser whose cost profile is nothing like
+ * a GPU's, and the "16" it reports is its own. So the number is a DIAL
+ * and the default is the safe end of it, not a claim.
+ *
+ * `1` is the extension's own word for no anisotropy, which is why `off`
+ * answers it rather than 0; an unknown tier is the default, so a stored
+ * pref from a future build cannot turn the ground to mush.
+ */
+export function anisotropyFor(tier, driverMax = 1) {
+  const cap = Math.max(1, driverMax || 1);
+  if (tier === 'off') return 1;
+  if (tier === 'max') return cap;
+  return Math.min(4, cap);
+}
 import { multiply as mat4Multiply } from '../world/mat4.js';   // PERF-CROWD2: proj * view, for this call's planes
 import { PerfMeter, perfOn, perfZones, perfCpu, setMeter } from './perfMeter.js';   // EL8: `?perf`   // EL5: the bounds every bundle carries for the replays' culling   // EL2: the lane's shadow maps - a leaf that compiles nothing until a lane asks
 import { AirPass, AIR_ADAPT_UNIT as ADAPT_UNIT, AIR_CONTACT_UNIT as CONTACT_UNIT } from './airPass.js';   // EL3: the ambient occlusion, the bloom and the shafts - the same kind of leaf; EL4: the eye's unit; EL6: all of it off the frame's own depth, at the resolve
@@ -974,7 +998,7 @@ export class Renderer {
     this._studioDepth = 0;   // AUDIT-EL F1: inside the studio bake (a UI picture: no eye)
     this._adaptOneTex = null;
     this.maxPointLights = CLASSIC_MAX_LIGHTS;
-    this._decA = new Float32Array(3); this._decB = new Float32Array(3);   // EL1: the decode scratch (two, for the billboard tint's two terms)
+    this._decA = new Float32Array(3); this._decB = new Float32Array(3); this._decC = new Float32Array(3);   // AUDIT F4: three, because one site decodes the ambient, the moon AND the sun and holds all three   // EL1: the decode scratch (two, for the billboard tint's two terms)
     this._pointColorDec = new Float32Array(CLASSIC_MAX_LIGHTS * 3);
     this._classicSet = this._buildWorldSet({ key: 'classic', meshFs: FS, bbFs: BB_FS, terrainFs: TERRAIN_FS, charFs: CHAR_FS });
     this._installWorldSet(this._classicSet);
@@ -1399,6 +1423,11 @@ export class Renderer {
     const gl = this.gl;
     return {
       fogColor: gl.getUniformLocation(program, 'uFogColor'),
+      // PERF-FOG: the lane's own, already decoded. A classic program does
+      // not declare it and a lane program that never calls elFinish has it
+      // optimised out, so this is null for both and the upload skips - the
+      // shader that wants linear fog is the one that asks for it.
+      fogColorLin: gl.getUniformLocation(program, 'uFogColorLin'),
       fogMode: gl.getUniformLocation(program, 'uFogMode'),
       clipY: gl.getUniformLocation(program, 'uClipY'),
       amMode: gl.getUniformLocation(program, 'uAutomapMode'),
@@ -1555,6 +1584,9 @@ export class Renderer {
       this._installWorldSet(this._classicSet);
     }
     this._lane = lane;
+    // PERF-FOG: the cached linear fog is the OLD lane's answer - a cache
+    // keyed on its input alone cannot see that the function changed.
+    if (this._fogLinFrom) this._fogLinFrom[0] = NaN;
     // EL2: the shadow pass rides a lane that asks for it; built once, kept
     if (lane?.shadows) {
       this._shadows = this._shadowPass ??= new ShadowPass(this.gl, { build: (vs, fs) => this._buildProgram(vs, fs), vs: { mesh: VS, bb: BB_VS, terrain: TERRAIN_VS, char: CHAR_VS } });   // EL7: the rigs cast
@@ -3529,6 +3561,12 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
   _uploadFog(prog) {
     const gl = this.gl;
     gl.uniform3fv(prog.fogColor, this._fogColor);
+    // PERF-FOG (2026-09-19): the lane's fog colour, decoded ONCE where the
+    // value changes rather than once per fragment in every lane shader
+    // there is. Cached against the display triple it was made from: the
+    // fog colour moves with the weather and the hour, which is a handful
+    // of times a minute, and this ran for every pixel of every frame.
+    if (prog.fogColorLin) gl.uniform3fv(prog.fogColorLin, this._fogColorLinear());
     gl.uniform1i(prog.fogMode, this._fogMode);
     gl.uniform1f(prog.fogDensity, this._fogDensity);
     gl.uniform2fv(prog.fogRange, this._fogRange);
@@ -3537,6 +3575,26 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     if (prog.amMode) gl.uniform1f(prog.amMode, this._automapMode);   // A2: and the automap presentation
     if (prog.amWaterLevel) gl.uniform1f(prog.amWaterLevel, this._automapWaterLevel);   // c2/S6: with its water tint
     if (prog.amWaterColor) gl.uniform4fv(prog.amWaterColor, this._automapWaterColor);
+  }
+
+  /** PERF-FOG: `_fogColor` in linear, decoded only when it MOVES.
+   *
+   *  Through the lane's own `decode3`, which is the curve `elDecode`
+   *  compiles into every lane shader - so there is no second copy of the
+   *  law here, only a place to keep its answer. The fog colour changes
+   *  with the weather and the hour; this used to be recomputed for every
+   *  pixel of every frame. Its own scratch, never `_c3`'s, because that
+   *  one is handed out to whoever asks next. */
+  _fogColorLinear() {
+    const c = this._fogColor;
+    const was = this._fogLinFrom ?? (this._fogLinFrom = new Float32Array([NaN, NaN, NaN]));
+    if (!this._fogLin) this._fogLin = new Float32Array(3);
+    if (was[0] !== c[0] || was[1] !== c[1] || was[2] !== c[2]) {
+      was[0] = c[0]; was[1] = c[1]; was[2] = c[2];
+      if (this._lane) this._lane.decode3(c, this._fogLin);
+      else this._fogLin.set(c);
+    }
+    return this._fogLin;
   }
 
   /** A1: the automap slice plane - fragments of the SOLID mesh pass
@@ -4074,12 +4132,20 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     // a grazing angle almost everywhere, and an isotropic mip has to take
     // the WIDER of the two footprints - so it over-blurs along the view
     // and still aliases across it. This is the one filtering term that
-    // buys back the sharpness the mipmap costs. Capped at 4: the returns
-    // fall off a cliff after that and the frame is CPU-bound anyway.
+    // buys back the sharpness the mipmap costs.
+    //
+    // GRAIN2: HOW MUCH OF IT IS THE MACHINE'S QUESTION. 4x was a
+    // conservative guess and nothing more - it is paid in fill rate, on
+    // the pass that covers the most screen, and this session cannot
+    // measure that (its only GL is SwiftShader, whose cost profile is
+    // nothing like a GPU's). So it is a dial rather than a number chosen
+    // once for everybody: `groundSharpness` off / default / max, read
+    // here, the player's own online.
     const aniso = this._anisoExt ||= (gl.getExtension('EXT_texture_filter_anisotropic') ?? null);
     if (aniso) {
       this._anisoMax ||= gl.getParameter(aniso.MAX_TEXTURE_MAX_ANISOTROPY_EXT) || 1;
-      gl.texParameterf(gl.TEXTURE_2D_ARRAY, aniso.TEXTURE_MAX_ANISOTROPY_EXT, Math.min(4, this._anisoMax));
+      const want = anisotropyFor(getPref('groundSharpness'), this._anisoMax);
+      if (want > 1) gl.texParameterf(gl.TEXTURE_2D_ARRAY, aniso.TEXTURE_MAX_ANISOTROPY_EXT, want);
     }
     // DFU's terrain texture array wraps Clamp (TextureReader) - keeps
     // the far edge texel at transformed-uv 1.0 boundary ties.
@@ -4379,7 +4445,16 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
       // Lambert-average half the sun does - a scalar on the tint.
       // EL1: under the lane the two terms are decoded FIRST and added in
       // linear (_c3 on each, into the two scratch triples).
-      const am = this._c3(this._ambient, this._decA), mc = this._c3(this._moonColor, this._decB), sc = this._c3(this._sunColor, this._decB);
+      // AUDIT PERF-SUN/FOG F4 (2026-09-19, pre-existing): THREE COLOURS,
+      // THREE SCRATCHES. `mc` and `sc` were both handed `_decB`, so they
+      // were the SAME Float32Array - and `sc`'s decode overwrote `mc`'s
+      // contents before the very next statement read `mc`. The billboard
+      // tint's MOON term was therefore computed from the SUN's colour, on
+      // every flat in the world. This is the only site in the file that
+      // holds more than one decoded colour live at once, which is why it
+      // is the only one that could have it; found by the audit that had
+      // just pinned `_fogLin` against the same hazard one method away.
+      const am = this._c3(this._ambient, this._decA), mc = this._c3(this._moonColor, this._decB), sc = this._c3(this._sunColor, this._decC);
       gl.uniform3f(
         this.bbUTint,
         am[0] + mc[0] * this._moonScale * 0.5,
