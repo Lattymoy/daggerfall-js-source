@@ -105,7 +105,7 @@ test('ENH-NOTICE1: the enhanced skin hands the rows to the panel and paints NO q
     assert.equal(panelsOf(doc).length, 1, 'one box, one panel');
     const panel = panelsOf(doc)[0];
     assert.equal(panel.dataset.owner, box._noticeKey, 'mutants: the panel not keyed to its box');
-    // requestAnimationFrame is not a thing here, so the arm runs at once
+    // armed at once, after the resting style is flushed
     assert.equal(panel.className, 'notice notice-in', 'mutants: the slide-in class never set');
     assert.deepEqual(textsOf(panel), ['You feel a warm glow.', 'Your hands tingle.'], 'mutants: rows dropped, reordered');
     assert.equal(rowsOf(panel)[1].className, 'notice-row center', 'mutants: the centred row not marked');

@@ -3825,9 +3825,11 @@ button.lv-note.lv-clickable:hover, button.lv-note.lv-clickable:focus-visible {
   color: #d8cfae; text-shadow: 2px 2px 0 rgba(0,0,0,0.85);
 }
 /* THE SLIDE: appended a full width off the right edge, the \`notice-in\`
-   class on the next frame carries it to rest; \`notice-out\` sends it
-   back the way it came and the module removes the node after the
-   transition's length (NOTICE_SLIDE_MS - keep the two in step). */
+   class carries it to rest; \`notice-out\` sends it back the way it came
+   and the module removes the node after the transition's length
+   (NOTICE_SLIDE_MS - keep the two in step, and keep the out-curve
+   plain: a back-loaded bezier left the panel half-way out when the
+   node was taken, measured in the headless browser). */
 .notice {
   box-sizing: border-box; width: min(520px, 70vw);
   padding: 14px 20px 10px 18px;
@@ -3837,7 +3839,7 @@ button.lv-note.lv-clickable:hover, button.lv-note.lv-clickable:focus-visible {
   transition: transform 260ms cubic-bezier(0.2, 0.8, 0.2, 1), opacity 200ms ease-out;
 }
 .notice.notice-in { transform: translateX(0); opacity: 1; }
-.notice.notice-out { transform: translateX(110%); opacity: 0; transition-timing-function: cubic-bezier(0.6, 0, 0.8, 0.2), ease-in; }
+.notice.notice-out { transform: translateX(110%); opacity: 0; transition-timing-function: ease-in, ease-in; }
 .notice-body { display: flex; flex-direction: column; gap: 2px; max-height: 70vh; overflow: hidden; }
 .notice-row { font-size: 15px; line-height: 1.35; min-height: 1.35em; white-space: pre-wrap; overflow-wrap: anywhere; }
 .notice-row.center { text-align: center; }

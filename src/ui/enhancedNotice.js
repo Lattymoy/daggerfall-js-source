@@ -33,11 +33,11 @@
 // stays painted unless told otherwise (AUDIT 64 F37), and the only
 // thing that can tell it is the draw not arriving.
 //
-// THE SLIDE. The panel is appended off the right edge and takes the
-// `notice-in` class on the next frame, so the sheet's transition
-// carries it in; dismissal swaps `notice-in` for `notice-out` and the
-// node leaves after NOTICE_SLIDE_MS. Both waits go through `schedule`,
-// which a test replaces to run them at once.
+// THE SLIDE. The panel is appended off the right edge, its resting
+// style is flushed, and the `notice-in` class lets the sheet's
+// transition carry it in; dismissal swaps `notice-in` for `notice-out`
+// and the node leaves after NOTICE_SLIDE_MS. The waits go through
+// `schedule`, which a test replaces to run them at once.
 
 import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
 import { isEnhanced } from '../systems/uiSkin.js';
@@ -81,9 +81,14 @@ function buildPanel(doc, key) {
   hint.textContent = NOTICE_HINT;
   host.append(hint);
   stack.append(host);
-  // appended off-screen; the class on the NEXT frame is what the transition carries in
-  const arm = () => { host.className = 'notice notice-in'; };
-  if (typeof requestAnimationFrame === 'function') requestAnimationFrame(arm); else arm();
+  // Appended off-screen, and the browser must COMPUTE that resting
+  // style before the class changes it, or there is no "before" for
+  // the transition to start from and the panel simply appears (a
+  // class set in the same style pass as the insertion animates
+  // nothing - measured, not assumed). Reading offsetWidth forces
+  // the flush; the fake document has none and needs none.
+  void host.offsetWidth;
+  host.className = 'notice notice-in';
   return { host, body, rows: [], last: {}, watchdog: null };
 }
 
