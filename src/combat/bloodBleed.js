@@ -48,6 +48,10 @@ export const POOL_SIZE = Object.freeze({ start: 0.45, end: 1.5 });
 export const POOL_SPREAD = 12;
 export const POOL_STEPS = 8;
 
+/** BLOOD2d: A BODY'S STRIDE. A foe's feet are streamed, not stepped, so
+ *  its steps are counted off the ground it covers: one every STRIDE. */
+export const STRIDE = 0.7;
+
 /** The reference's ramp: `clamp01(1 - (pct - 1) / (threshold - 1))` with
  *  pct in percent - nothing at the threshold, everything at one percent.
  *  Answered as a fraction of health rather than a percent. */
@@ -78,7 +82,7 @@ export function poolSizeAt(t) {
  * body that leaves the list is forgotten with it.
  */
 export function createBleedLedger({ rng = Math.random } = {}) {
-  /** @type {WeakMap<object, { next: number, pooled: boolean, bleeding: boolean }>} */
+  /** @type {WeakMap<object, { next: number, pooled: boolean, bleeding: boolean, last: number[]|null, walked: number }>} */
   const state = new WeakMap();
   const wait = () => BLEED_WAIT.min + rng() * (BLEED_WAIT.max - BLEED_WAIT.min);
 
@@ -90,7 +94,22 @@ export function createBleedLedger({ rng = Math.random } = {}) {
       const v = view ? view(body) : body;
       if (!v || !v.feet || !marksBlood(v.bloodIndex ?? 0)) continue;
       let s = state.get(body);
-      if (!s) { s = { next: wait(), pooled: false, bleeding: false }; state.set(body, s); }
+      if (!s) { s = { next: wait(), pooled: false, bleeding: false, last: null, walked: 0 }; state.set(body, s); }
+      // BLOOD2d: THE STEPS, off the ground covered - alive or not (a
+      // corpse does not walk, but the ledger does not have to know that:
+      // it does not move). One `step` every STRIDE, facing the way it went.
+      if (s.last) {
+        const dx = v.feet[0] - s.last[0], dz = v.feet[2] - s.last[2];
+        const run = Math.hypot(dx, dz);
+        if (run > 0 && run < STRIDE * 8) {   // a teleport is not a walk
+          s.walked += run;
+          if (s.walked >= STRIDE) {
+            s.walked -= STRIDE;
+            out.push({ kind: 'step', body, pos: [v.feet[0], v.feet[1], v.feet[2]], forward: [dx / run, 0, dz / run] });
+          }
+        } else if (run >= STRIDE * 8) s.walked = 0;
+      }
+      s.last = [v.feet[0], v.feet[1], v.feet[2]];
       if (v.dead) {
         // BLEEDS OUT: once, at the feet, only with a body to bleed from
         if (!s.pooled && v.corpse) { s.pooled = true; out.push({ kind: 'pool', body, pos: [v.feet[0], v.feet[1], v.feet[2]], bloodIndex: v.bloodIndex ?? 0 }); }

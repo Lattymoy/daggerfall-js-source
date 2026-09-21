@@ -1557,8 +1557,8 @@
   {
     "name": "BLOOD2b-the-cell-s-uv-is-not-inset",
     "file": "src/combat/bloodArt.js",
-    "old": "        u0: (x0 + 1) / size, v0: (y0 + 1) / size,\n        u1: (x0 + cell - 1) / size, v1: (y0 + cell - 1) / size,",
-    "new": "        u0: x0 / size, v0: y0 / size,\n        u1: (x0 + cell) / size, v1: (y0 + cell) / size,",
+    "old": "        u0: (x0 + 1) / size, v0: (y0 + 1) / height,\n        u1: (x0 + cell - 1) / size, v1: (y0 + cell - 1) / height,",
+    "new": "        u0: x0 / size, v0: y0 / height,\n        u1: (x0 + cell) / size, v1: (y0 + cell) / height,",
     "tests": [
       "test/blood1_decals.test.js"
     ]
@@ -1575,7 +1575,7 @@
   {
     "name": "BLOOD2b-every-mark-wears-spatter",
     "file": "src/combat/bloodArt.js",
-    "old": "  if (pool) return 'pool';\n  if (wall) return 'drip';\n  return stretch > 1.5 ? 'streak' : 'spatter';",
+    "old": "  if (pool) return 'pool';\n  if (wall) return 'drip';\n  if (print) return 'print';\n  return stretch > 1.5 ? 'streak' : 'spatter';",
     "new": "  return 'spatter';",
     "tests": [
       "test/blood1_decals.test.js"
@@ -1885,6 +1885,114 @@
     "file": "src/combat/bloodMarks.js",
     "old": "    return spray(col, [feet[0], feet[1] + DRIP_FROM, feet[2]], n, BLEED_RADIUS, BLEED_RATE, null, { up: false });",
     "new": "    return spray(col, [feet[0], feet[1] + DRIP_FROM, feet[2]], n, BLEED_RADIUS, BLEED_RATE);",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD2d-a-print-is-wet-blood",
+    "file": "src/combat/bloodMarks.js",
+    "old": "      if (d.uv?.kind === 'print' || !(d.normal[1] > 0.7) || (d.stage ?? 0) > TRACK_WET_STAGE) continue;",
+    "new": "      if (!(d.normal[1] > 0.7) || (d.stage ?? 0) > TRACK_WET_STAGE) continue;",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD2d-dried-blood-tracks",
+    "file": "src/combat/bloodMarks.js",
+    "old": "      if (d.uv?.kind === 'print' || !(d.normal[1] > 0.7) || (d.stage ?? 0) > TRACK_WET_STAGE) continue;",
+    "new": "      if (d.uv?.kind === 'print' || !(d.normal[1] > 0.7)) continue;",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD2d-standing-in-it-prints-over-the-pool",
+    "file": "src/combat/bloodMarks.js",
+    "old": "      return null;   // standing in it: nothing to print over the pool\n",
+    "new": "",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD2d-the-feet-never-alternate",
+    "file": "src/combat/bloodMarks.js",
+    "old": "    t.side = -t.side;\n",
+    "new": "",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD2d-the-prints-never-fade",
+    "file": "src/combat/bloodMarks.js",
+    "old": "    d.fresh = [d.fresh[0], d.fresh[1], d.fresh[2], share];",
+    "new": "    d.fresh = [d.fresh[0], d.fresh[1], d.fresh[2], 1];",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD2d-the-tracks-never-run-out",
+    "file": "src/combat/bloodMarks.js",
+    "old": "    t.left -= 1;\n",
+    "new": "",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD2d-a-second-tread-does-not-refresh",
+    "file": "src/combat/bloodMarks.js",
+    "old": "      if (!t) { t = { left: TRACK_STEPS, side: 1 }; _tracks.set(walker, t); } else t.left = TRACK_STEPS;",
+    "new": "      if (!t) { t = { left: TRACK_STEPS, side: 1 }; _tracks.set(walker, t); }",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD2d-a-print-wears-spatter",
+    "file": "src/combat/bloodMarks.js",
+    "old": "bloodMarkKind({ print: true }));",
+    "new": "bloodMarkKind({}));",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD2d-a-shuffle-is-a-step",
+    "file": "src/combat/bloodBleed.js",
+    "old": "          if (s.walked >= STRIDE) {\n            s.walked -= STRIDE;",
+    "new": "          if (s.walked >= 0) {\n            s.walked = 0;",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD2d-a-teleport-is-a-walk",
+    "file": "src/combat/bloodBleed.js",
+    "old": "        if (run > 0 && run < STRIDE * 8) {   // a teleport is not a walk",
+    "new": "        if (run > 0) {",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD2d-the-splash-pool-drops-the-step",
+    "file": "src/scenes/hitEffects.js",
+    "old": "        else if (a.kind === 'step') { if (marks.step?.(a.body, a.pos, a.forward)) n++; }   // BLOOD2d: a foe treads in blood and tracks it\n",
+    "new": "",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD2d-the-print-has-no-toe",
+    "file": "src/combat/bloodArt.js",
+    "old": "    const toeX = 0.32 + rng() * 0.12, heelX = -0.5 - rng() * 0.08;",
+    "new": "    const toeX = -0.32 - rng() * 0.12, heelX = 0.5 + rng() * 0.08;",
     "tests": [
       "test/blood1_decals.test.js"
     ]

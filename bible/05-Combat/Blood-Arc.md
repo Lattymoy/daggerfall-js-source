@@ -932,5 +932,47 @@ Slices, each behind its own `features.js` row:
    dead, 1 equivalent as recorded - the threshold guard the clamp
    already answers (`tools/mutants/blood1.json` is 209).
 
+7. **BLOOD2d - tracked blood: a walker who treads in it leaves prints.**
+   SHIPPED (2026-09-21). Blood that stays where it fell is a picture;
+   blood that follows you is a scene. A foot that comes down IN a wet
+   floor mark picks it up, and the next TRACK_STEPS (6) steps each lay
+   a boot print of it - alternating feet PRINT_SPREAD (0.13) either
+   side of the walk, the toe the way the walker went, a share fainter
+   each step - and then the foot is clean again.
+
+   THE ART (`src/combat/bloodArt.js`): a fifth atlas row, `print`,
+   a boot shape drawn heel-to-toe along +u; `bloodMarkKind({ print })`
+   names it, and the atlas is `cell x ATLAS_KINDS.length` tall so a
+   sixth row costs a name and a shape.
+
+   THE LAW (`src/combat/bloodMarks.js` `step(walker, pos, forward)`):
+   the walker is a KEY (the player is `PLAYER_WALKER`, a foe is its own
+   body) into a WeakMap of `{ left, side }`. The foot is `pos` rayed
+   down MARK_DROP, so the eye, the capsule centre and the feet all
+   find the same floor. Wet is a floor mark (normal up, `stage` no
+   drier than TRACK_WET_STAGE = 2 of the eight) that is NOT a print,
+   and the foot within `size / 2` of its centre and half a metre of
+   its height - so a print is never a trigger (a walk would otherwise
+   feed itself forever), and blood two ticks dry is a stain and not a
+   puddle. Standing in it while carrying REFRESHES the count and
+   prints nothing over the pool. The print's fade rides the tint's
+   alpha - `fresh[3] = left / TRACK_STEPS` - and drying keeps it,
+   because the dry tint interpolates from `fresh`.
+
+   THE STEPS: the player's footstep machine already knows when a foot
+   comes down (`_step` in world, exterior, dungeon and the interior
+   modes); the same line now calls `hitEffects.footfall(player.pos,
+   facing)` beside the step that plays. A foe's feet are streamed,
+   not stepped, so the bleed ledger counts a `step` off the ground a
+   body covers - one every STRIDE (0.7 m), facing the way it went; a
+   run of eight strides in one frame is a teleport and not a walk.
+   The ledger's actions are now `drip | pool | step`.
+
+   Pins: one (the player's tread, pick-up, six alternating fading
+   prints, the clean foot after, no trigger from a print or from dry
+   blood, the refresh, the foe's stride through the ledger, the four
+   hosts by source) and the atlas pin re-aimed to five rows. Mutants:
+   12, 12 dead (`tools/mutants/blood1.json` is 221).
+
 The numbers in THE FACTS are the target to feel like. The code that
 hits them is ours.

@@ -5,7 +5,7 @@
 // BLOOD1a chose to wear the splash animation's settled frame for every
 // mark, so the port shipped no blood picture. It still ships none: what
 // this module makes is made here, from noise, the moment a host asks -
-// an atlas of splat SHAPES in the blood-red family, four kinds in four
+// an atlas of splat SHAPES in the blood-red family, five kinds in four
 // variants, so a floor of marks is not one picture stamped six hundred
 // times.
 //
@@ -17,6 +17,8 @@
 //              flew, laid along its travel (BLOOD2a's `right`)
 //   drip     - a bead high in the cell and a run down to the cell's
 //              foot; a wall's mark, run by gravity
+//   print    - a boot's print, heel at -u and toe at +u (BLOOD2d): what
+//              a walker leaves for a few steps after treading in blood
 //
 // AND IT DRIES. A mark is born a fresh red with a little variance of
 // its own and darkens over DRY_TIME to a brown that reads as old blood,
@@ -34,7 +36,9 @@ export const BLOOD_ATLAS_RECORD = 'marks';
 export const ATLAS_SIZE = 256;
 export const ATLAS_CELLS = 4;
 /** The kinds, one row each; the variants across the row. */
-export const ATLAS_KINDS = Object.freeze(['pool', 'spatter', 'streak', 'drip']);
+export const ATLAS_KINDS = Object.freeze(['pool', 'spatter', 'streak', 'drip', 'print']);
+/** BLOOD2d: a boot's print - heel and sole, the toe toward +u, the way
+ *  the walker faces. Five rows now; the sheet is as tall as it needs. */
 /** Fresh blood's colour: the family of TEXTURE.380's own red (the splash
  *  reads about 168,16,16), a shade deeper so a lit mark is not pink. */
 export const BLOOD_BASE = Object.freeze([0.58, 0.05, 0.04]);
@@ -119,6 +123,19 @@ function shapeAt(kind, rng, bits) {
       return { a, shade: 0.88 + 0.12 * t };
     };
   }
+  if (kind === 'print') {
+    // a boot: a heel disc at -u, a longer sole at +u, a waist between,
+    // a little ragged so no two prints are the same stamp
+    const w = wobble(rng, 10, 0.12);
+    const toeX = 0.32 + rng() * 0.12, heelX = -0.5 - rng() * 0.08;
+    return (x, y) => {
+      const ang = Math.atan2(y, x);
+      const heel = 1 - smooth(0.2, 0.28, Math.hypot((x - heelX) * 1.1, y * 1.35) * (1 + w(ang)));
+      const sole = 1 - smooth(0.3, 0.38, Math.hypot((x - toeX) * 0.75, y * 1.15) * (1 + w(ang + 1)));
+      const waist = x > heelX && x < toeX ? 1 - smooth(0.16, 0.22, Math.abs(y) * (1 + 0.6 * Math.abs((x - (heelX + toeX) / 2) / ((toeX - heelX) / 2)))) : 0;
+      return { a: Math.max(heel, sole, waist), shade: 0.9 + 0.1 * smooth(heelX, toeX, x) };
+    };
+  }
   // drip: a bead high in the cell and a run down to its foot
   const w = wobble(rng, 6, 0.25);
   const runTo = -0.85 + rng() * 0.3;
@@ -144,12 +161,14 @@ function shapeAt(kind, rng, bits) {
  */
 export function buildBloodAtlas({ size = ATLAS_SIZE, cells = ATLAS_CELLS, seed = 0x5EED, rng = null } = {}) {
   const roll = rng ?? mulberry32(seed);
-  const colors = new Uint8ClampedArray(size * size * 4);
   const cell = size / cells;
+  const rows = ATLAS_KINDS.length;   // BLOOD2d: one row a kind - the sheet is `size` wide and `rows` cells tall
+  const height = cell * rows;
+  const colors = new Uint8ClampedArray(size * height * 4);
   const out = [];
   const BORDER = 2;
-  for (let row = 0; row < cells; row++) {
-    const kind = ATLAS_KINDS[row % ATLAS_KINDS.length];
+  for (let row = 0; row < rows; row++) {
+    const kind = ATLAS_KINDS[row];
     for (let col = 0; col < cells; col++) {
       const at = shapeAt(kind, roll, null);
       const grain = wobble(roll, 24, 0.08);
@@ -169,12 +188,12 @@ export function buildBloodAtlas({ size = ATLAS_SIZE, cells = ATLAS_CELLS, seed =
       }
       out.push({
         kind,
-        u0: (x0 + 1) / size, v0: (y0 + 1) / size,
-        u1: (x0 + cell - 1) / size, v1: (y0 + cell - 1) / size,
+        u0: (x0 + 1) / size, v0: (y0 + 1) / height,
+        u1: (x0 + cell - 1) / size, v1: (y0 + cell - 1) / height,
       });
     }
   }
-  return { colors, width: size, height: size, cells: out };
+  return { colors, width: size, height, cells: out };
 }
 
 /** The one atlas every pool shares, built on first ask. */
@@ -189,10 +208,11 @@ export function pickCell(atlas, kind, rng = Math.random) {
 }
 
 /** Which kind a mark is: the pool under the body, a streak that flew, a
- *  wall's run, or spatter. */
-export function bloodMarkKind({ pool = false, wall = false, stretch = 1 } = {}) {
+ *  wall's run, a walker's print (BLOOD2d), or spatter. */
+export function bloodMarkKind({ pool = false, wall = false, print = false, stretch = 1 } = {}) {
   if (pool) return 'pool';
   if (wall) return 'drip';
+  if (print) return 'print';
   return stretch > 1.5 ? 'streak' : 'spatter';
 }
 

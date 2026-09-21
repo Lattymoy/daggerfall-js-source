@@ -2359,17 +2359,17 @@ import {
   ATLAS_SIZE, ATLAS_CELLS, ATLAS_KINDS, BLOOD_BASE, FRESH_VARIANCE, DRIED_TINT, DRY_TIME, DRY_STAGES, DRY_TICK, BLOOD_ATLAS_ARCHIVE, BLOOD_ATLAS_RECORD,
 } from '../src/combat/bloodArt.js';
 
-test('BLOOD2b: the atlas is four kinds in four variants, every cell bordered so a soft sample cannot bleed, red, and the same picture on every boot', () => {
+test('BLOOD2b: the atlas is the kinds in four variants, every cell bordered so a soft sample cannot bleed, red, and the same picture on every boot', () => {
   const a = buildBloodAtlas();
-  assert.equal(a.width, ATLAS_SIZE); assert.equal(a.height, ATLAS_SIZE);
-  assert.equal(a.cells.length, ATLAS_CELLS * ATLAS_CELLS);
-  assert.deepEqual([...new Set(a.cells.map((c) => c.kind))], [...ATLAS_KINDS], 'the four kinds, one row each');
   const cell = ATLAS_SIZE / ATLAS_CELLS;
+  assert.equal(a.width, ATLAS_SIZE); assert.equal(a.height, cell * ATLAS_KINDS.length, 'BLOOD2d: one row a kind, the sheet as tall as it needs');
+  assert.equal(a.cells.length, ATLAS_CELLS * ATLAS_KINDS.length);
+  assert.deepEqual([...new Set(a.cells.map((c) => c.kind))], [...ATLAS_KINDS], 'the kinds, one row each');
   for (let k = 0; k < a.cells.length; k++) {
     const c = a.cells[k], col = k % ATLAS_CELLS, row = Math.floor(k / ATLAS_CELLS);
     // the uv rect is inset a texel inside the cell
     assert.ok(Math.abs(c.u0 - (col * cell + 1) / ATLAS_SIZE) < 1e-12 && Math.abs(c.u1 - (col * cell + cell - 1) / ATLAS_SIZE) < 1e-12);
-    assert.ok(Math.abs(c.v0 - (row * cell + 1) / ATLAS_SIZE) < 1e-12 && Math.abs(c.v1 - (row * cell + cell - 1) / ATLAS_SIZE) < 1e-12);
+    assert.ok(Math.abs(c.v0 - (row * cell + 1) / a.height) < 1e-12 && Math.abs(c.v1 - (row * cell + cell - 1) / a.height) < 1e-12);
     let opaque = 0, border = 0, redder = 0;
     for (let y = 0; y < cell; y++) {
       for (let x = 0; x < cell; x++) {
@@ -2387,6 +2387,9 @@ test('BLOOD2b: the atlas is four kinds in four variants, every cell bordered so 
   // a pool is the broadest, a run the narrowest
   const cover = (kind) => { const k = a.cells.findIndex((c) => c.kind === kind); const col = k % ATLAS_CELLS, row = Math.floor(k / ATLAS_CELLS); let n = 0; for (let y = 0; y < cell; y++) for (let x = 0; x < cell; x++) if (a.colors[((row * cell + y) * ATLAS_SIZE + col * cell + x) * 4 + 3] > 128) n++; return n; };
   assert.ok(cover('pool') > cover('spatter') && cover('spatter') > cover('drip'), 'pool broadest, run narrowest');
+  assert.ok(cover('print') > cover('drip') && cover('print') < cover('pool'), 'BLOOD2d: a boot between them');
+  // a print's toe is at +u: the right third holds more than the left
+  { const k = a.cells.findIndex((c) => c.kind === 'print'); const col = k % ATLAS_CELLS, row = Math.floor(k / ATLAS_CELLS); let left = 0, right = 0; for (let y = 0; y < cell; y++) for (let x = 0; x < cell; x++) { const al = a.colors[((row * cell + y) * ATLAS_SIZE + col * cell + x) * 4 + 3]; if (al > 128) { if (x < cell / 3) left++; else if (x > cell * 2 / 3) right++; } } assert.ok(right > left, 'the sole is heavier than the heel'); }
   // a streak's head is at -u and its tail at +u: the left third holds more than the right third
   { const k = a.cells.findIndex((c) => c.kind === 'streak'); const col = k % ATLAS_CELLS, row = Math.floor(k / ATLAS_CELLS); let left = 0, right = 0; for (let y = 0; y < cell; y++) for (let x = 0; x < cell; x++) { const al = a.colors[((row * cell + y) * ATLAS_SIZE + col * cell + x) * 4 + 3]; if (al > 128) { if (x < cell / 3) left++; else if (x > cell * 2 / 3) right++; } } assert.ok(left > right, 'the head is heavier than the tail'); }
   // deterministic: the same seed, the same bytes; another seed, another picture
@@ -2651,6 +2654,96 @@ test('BLOOD2c: the pool lays a drip at the feet and a corpse’s pool that sprea
   assert.match(fxSrc, /const bleeding = createBleedLedger\(\{ rng \}\);/);
   assert.match(fxSrc, /if \(a\.kind === 'drip'\) \{ if \(marks\.drip\?\.\(a\.bloodIndex, a\.pos, a\.count\)\) n\+\+; \}/);
   assert.match(fxSrc, /else if \(a\.kind === 'pool'\) \{ if \(marks\.spreadPool\?\.\(a\.bloodIndex, a\.pos\)\) n\+\+; \}/);
+});
+
+// ── BLOOD2d (2026-09-21) - tracked blood: a walker who treads in it leaves prints ──
+import { STRIDE } from '../src/combat/bloodBleed.js';
+import { TRACK_STEPS, TRACK_WET_STAGE, PRINT_SIZE, PRINT_SPREAD } from '../src/combat/bloodMarks.js';
+import { PLAYER_WALKER } from '../src/scenes/hitEffects.js';
+
+test('BLOOD2d: treading in wet blood tracks it - alternating prints along the walk, fainter each step, none from dried blood or from a print', () => {
+  const { fx, marks } = rigHitEffects({
+    settings: { enabled: () => true, capacity: () => 128, density: () => 1, overkill: () => false },
+    collider: () => ({ surfaceHit: (from, dir, max) => (dir[1] < 0 && from[1] <= max ? { dist: from[1], normal: [0, 1, 0] } : null), raycastHit: () => ({ dist: Infinity, normal: null }) }),
+  });
+  marks.useArt(380, 1, 6);
+  const me = PLAYER_WALKER;
+  // a pool under the body, and a step a metre off it: nothing
+  fx.showBloodSplash(0, [0, 1.7, 0], null, { damage: 10, maxHealth: 40 });
+  const before = marks.count();
+  assert.equal(fx.footfall([3, 1.7, 3], [0, 0, 1]), null, 'a clean foot prints nothing');
+  assert.equal(marks.tracked(me), 0);
+  // a step IN the pool: the foot picks it up, and nothing is printed over the pool
+  assert.equal(fx.footfall([0, 1.7, 0], [0, 0, 1]), null);
+  assert.equal(marks.tracked(me), TRACK_STEPS, 'blood on the feet');
+  assert.equal(marks.count(), before);
+  // the next steps, walking +z: a print each, alternating feet about the line, fading, along the walk
+  const prints = [];
+  for (let k = 1; k <= TRACK_STEPS + 2; k++) {
+    const d = fx.footfall([0, 1.7, 2 + k * 0.7], [0, 0, 1]);
+    if (d) prints.push(d);
+  }
+  assert.equal(prints.length, TRACK_STEPS, 'exactly TRACK_STEPS prints, then a clean foot again');
+  assert.equal(marks.tracked(me), 0);
+  for (let k = 0; k < prints.length; k++) {
+    const d = prints[k];
+    assert.equal(d.uv.kind, 'print', 'wears the boot');
+    assert.equal(d.size, PRINT_SIZE); assert.equal(d.stretch, 1);
+    assert.ok(Math.abs(d.right[2] - 1) < 1e-9, 'the toe points the way the walker went');
+    assert.ok(Math.abs(Math.abs(d.pos[0]) - PRINT_SPREAD) < 1e-9, 'a foot’s width off the line');
+    if (k > 0) assert.ok(Math.sign(d.pos[0]) !== Math.sign(prints[k - 1].pos[0]), 'left, right, left');
+    assert.ok(Math.abs(d.tint[3] - (TRACK_STEPS - k) / TRACK_STEPS) < 1e-9, 'fainter each step');
+    assert.equal(d.fresh[3], d.tint[3], 'and drying keeps the fade');
+  }
+  // a print is never a trigger: stepping on one picks nothing up
+  assert.equal(fx.footfall([prints[0].pos[0], 1.7, prints[0].pos[2]], [0, 0, 1]), null);
+  assert.equal(marks.tracked(me), 0, 'a print is not wet blood');
+  // dried blood is not wet blood either
+  for (let t = 0; t < 200; t += 1) fx.tick(1);   // well past TRACK_WET_STAGE
+  assert.ok(marks._pool().decals().every((d) => d.stage > TRACK_WET_STAGE));
+  assert.equal(fx.footfall([0, 1.7, 0], [0, 0, 1]), null);
+  assert.equal(marks.tracked(me), 0, 'dried blood does not track');
+  // treading in it again while carrying refreshes rather than prints
+  fx.showBloodSplash(0, [10, 1.7, 10], null, { damage: 10, maxHealth: 40 });
+  fx.footfall([10, 1.7, 10], [1, 0, 0]);
+  fx.footfall([11, 1.7, 10], [1, 0, 0]); fx.footfall([12, 1.7, 10], [1, 0, 0]);
+  assert.equal(marks.tracked(me), TRACK_STEPS - 2);
+  assert.equal(fx.footfall([10, 1.7, 10], [1, 0, 0]), null);
+  assert.equal(marks.tracked(me), TRACK_STEPS, 'refreshed');
+  // no forward: a print still lands, un-turned
+  assert.ok(fx.footfall([14, 1.7, 10], null));
+
+  // A FOE'S STEPS come off the ground it covers, one every STRIDE, and
+  // track the same way through the ledger
+  // (a 10-of-40 hit's pool is MARK_SIZE_MIN wide - 0.35 - so the stride
+  // that picks it up has to END in it, not start there)
+  const foe = { feet: [10 - STRIDE, 0, 10], health: 40, maxHealth: 40, bloodIndex: 0, dead: false, corpse: false };
+  fx.bleed(0.1, [foe], (b) => b);                    // seen; a stride short of the pool
+  foe.feet = [10 + 0.01, 0, 10]; fx.bleed(0.1, [foe], (b) => b);   // one stride: a step, in the pool - picked up
+  assert.equal(marks.tracked(foe), TRACK_STEPS, 'the foe has blood on its feet');
+  const n0 = marks.count();
+  foe.feet = [10 + STRIDE + 0.02, 0, 10]; fx.bleed(0.1, [foe], (b) => b);
+  assert.equal(marks.count(), n0 + 1, 'and prints on its next stride');
+  foe.feet = [10 + STRIDE + 0.1, 0, 10]; fx.bleed(0.1, [foe], (b) => b);
+  assert.equal(marks.count(), n0 + 1, 'a shuffle short of a stride is no step');
+  foe.feet = [200, 0, 200]; fx.bleed(0.1, [foe], (b) => b);
+  assert.equal(marks.count(), n0 + 1, 'a teleport is not a walk');
+
+  // the hosts: every footstep machine's step reaches the pool that holds this mode's marks
+  const read = (q) => readFileSync(new URL(`../${q}`, import.meta.url), 'utf8');
+  for (const [f, line] of [
+    ['src/scenes/world.js', /if \(_step\) hitEffects\?\.footfall\?\.\(player\.pos, \[Math\.sin\(cam\.yaw\), 0, Math\.cos\(cam\.yaw\)\]\);/],
+    ['src/scenes/exterior.js', /if \(_step\) hitEffects\?\.footfall\?\.\(player\.pos, \[Math\.sin\(cam\.yaw\), 0, Math\.cos\(cam\.yaw\)\]\);/],
+    ['src/scenes/dungeon.js', /if \(_step\) ctx\.hitEffects\?\.footfall\?\.\(player\.pos, \[Math\.sin\(cam\.yaw\), 0, Math\.cos\(cam\.yaw\)\]\);/],
+    ['src/scenes/worldModes.js', /if \(_step\) \(mode === 'dungeon' \? dungeonCtx\?\.hitEffects : interiorHitEffects\)\?\.footfall\?\.\(player\.pos, \[Math\.sin\(cam\.yaw\), 0, Math\.cos\(cam\.yaw\)\]\);/],
+  ]) {
+    const src = read(f);
+    assert.match(src, line, `${f}: the footfall`);
+    const at = src.search(line);
+    assert.ok(src.slice(at, at + 400).includes('if (_step && classicFootstepAllowed(_step.clip))'), `${f}: beside the step that plays`);
+  }
+  assert.match(read('src/scenes/hitEffects.js'), /footfall: \(pos, forward = null\) => marks\?\.step\?\.\(PLAYER_WALKER, pos, forward\) \?\? null,/);
+  assert.match(read('src/scenes/hitEffects.js'), /else if \(a\.kind === 'step'\) \{ if \(marks\.step\?\.\(a\.body, a\.pos, a\.forward\)\) n\+\+; \}/);
 });
 
 // ── MAC-BUG W5 (2026-09-20, Mac: "Also blood doesn't work outside")

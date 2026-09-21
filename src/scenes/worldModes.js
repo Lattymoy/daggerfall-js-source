@@ -5920,6 +5920,7 @@ export function createWorldModes(host) {
               // :127/:147-158, and that is None indoors -
               // PlayerMotor.cs:582-587 over :505-514.)
               dungeonShallow: _footsteps.waterStep(player.pos[1] + player.height / 2, _surf, player.swimming) }));
+        if (_step) (mode === 'dungeon' ? dungeonCtx?.hitEffects : interiorHitEffects)?.footfall?.(player.pos, [Math.sin(cam.yaw), 0, Math.cos(cam.yaw)]);   // BLOOD2d: a foot came down - treading in blood tracks it, on whichever pool this mode's marks are
         if (_step && classicFootstepAllowed(_step.clip)) audio.playOneShot(_step.clip, _step.volume);   // IF1: DisableVanillaFootsteps - every classic clip is None while the mod owns the stride; BA1: Better Ambience nulls all but Dungeon2 and Outside2 (DisableBuiltInFootsteps' slip)
         // IF1: ImmersiveFootstepsObject.FixedUpdate - inside: a building keeps the set the transition chose, a
         // dungeon reads the water level (blockWaterLevel 10000 = null here) against the LIVE capsule centre.

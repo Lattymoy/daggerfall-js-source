@@ -45,6 +45,8 @@ import { BLOODLESS_INDEX } from '../combat/bloodDecals.js';   // BLOOD1a: which 
 /** EnemyBlood.cs:23. */
 import { createBleedLedger } from '../combat/bloodBleed.js';   // BLOOD2c
 export const BLOOD_ARCHIVE = 380;
+/** BLOOD2d: the player's key in the marks' tracking table (a foe's is its own record). */
+export const PLAYER_WALKER = Object.freeze({ player: true });
 /** :37 - pinned to ten, not the general five. */
 export const BLOOD_FPS = 10;
 /** F033: UseSpellBillboardAnims(1, true) - record 1, one-shot. */
@@ -230,9 +232,15 @@ export function createHitEffects({
       for (const a of bleeding.tick(dt, bodies, view)) {
         if (a.kind === 'drip') { if (marks.drip?.(a.bloodIndex, a.pos, a.count)) n++; }
         else if (a.kind === 'pool') { if (marks.spreadPool?.(a.bloodIndex, a.pos)) n++; }
+        else if (a.kind === 'step') { if (marks.step?.(a.body, a.pos, a.forward)) n++; }   // BLOOD2d: a foe treads in blood and tracks it
       }
       return n;
     },
+
+    /** BLOOD2d: THE PLAYER'S FOOTFALL - the hosts' footstep machine says
+     *  when a foot comes down; this says where. Treading in wet blood
+     *  tracks it for a few steps. `forward` is the way the player faces. */
+    footfall: (pos, forward = null) => marks?.step?.(PLAYER_WALKER, pos, forward) ?? null,
 
     /** ShowMagicSparkles (:41-54), record 3. */
     showMagicSparkles: (pos, facing = null) => spawn(SPARKLES_RECORD, pos, facing),

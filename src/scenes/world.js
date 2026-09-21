@@ -7072,7 +7072,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // exterior -> the townTalk overlay, interior OR dungeon -> the mode
   // machine's slot. U43-ii shipped the dungeon half: showQuestBox
   // offers the window to `modes.showQuestOverlay` below, and
-  // worldModes answers it in BOTH modes (worldModes.js:7635-7698 -
+  // worldModes answers it in BOTH modes (worldModes.js:7636-7699 -
   // dungeon routes to dungeonCtx.showOverlay), so a dungeon popup is
   // shown rather than logged loudly and dropped.
   // AUDIT 24 (wave 21): DaggerfallMessageBox.Show() is a
@@ -10122,6 +10122,7 @@ export async function bootWorld(canvas, renderer, params, status) {
             onExteriorPath: _surf.path,
             onStaticGeometry: _surf.staticGeometry,
           }));
+          if (_step) hitEffects?.footfall?.(player.pos, [Math.sin(cam.yaw), 0, Math.cos(cam.yaw)]);   // BLOOD2d: a foot came down - treading in blood tracks it
           if (_step && classicFootstepAllowed(_step.clip)) audio.playOneShot(_step.clip, _step.volume);   // IF1: DisableVanillaFootsteps - every classic clip is None while the mod owns the stride; BA1: Better Ambience nulls all but Dungeon2 and Outside2 (DisableBuiltInFootsteps' slip)   // IF1: DisableVanillaFootsteps - every classic clip is None while the mod owns the stride; BA1: Better Ambience nulls all but Dungeon2 and Outside2 (DisableBuiltInFootsteps' slip)
           // IF1: ImmersiveFootstepsObject.FixedUpdate - the exterior arm reads the season, the climate and the tile the classic set above reads.
           immersiveFootsteps.update(dt, {

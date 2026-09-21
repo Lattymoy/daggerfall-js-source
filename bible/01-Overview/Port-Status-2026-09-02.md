@@ -151,7 +151,7 @@ the pair of input-config windows in the next section, and this one.
 **`FPSSpellCasting.cs` (324 lines) is uncited in `src/`, and the miss is
 real.** Its `OnReleaseFrame` semantics are ported and live
 (`scenes/hostMagic.js` consumes the release frame at four sites,
-`scenes/hitEffects.js:55` cites it), but `PlayOneShot`, `SetCurrentAnims`, `AlignLeftHand` and
+`scenes/hitEffects.js:57` cites it), but `PlayOneShot`, `SetCurrentAnims`, `AlignLeftHand` and
 `AlignRightHand` - the five element hand animations classic draws over
 the view when a spell fires - have no port. `combat/fpArm.js` draws a
 spellcast in the Morrowind lane (MW-D39) and nothing draws one in the

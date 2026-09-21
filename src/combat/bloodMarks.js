@@ -50,6 +50,14 @@ export const DRIP_FROM = 0.5;
  *  asks; and never more corpses spreading at once than this. */
 export const BLEED_DROPS_CAP = 8;
 export const MAX_SPREADS = 16;
+/** BLOOD2d: TRACKED BLOOD. A walker who treads in a mark this wet (a
+ *  drying stage this low - the first forty-five seconds) leaves this
+ *  many prints, alternating feet, each fainter than the last, this far
+ *  off the line of walking and this big. The port's own numbers. */
+export const TRACK_STEPS = 6;
+export const TRACK_WET_STAGE = 2;
+export const PRINT_SIZE = 0.34;
+export const PRINT_SPREAD = 0.13;
 
 /** Straight down, once. BLOOD1b casts up to SPRAY_MAX rays for one
  *  blow, and the collider reads this direction and never writes it. */
@@ -111,6 +119,9 @@ export function createBloodMarks({ renderer = null, collider = null, settings = 
   /** BLOOD2c: the corpses' pools still spreading - { d, born }. Bounded,
    *  and each one is dropped the moment its slot is reused under it. */
   let _spreads = [];
+  /** BLOOD2d: who has blood on their feet - { left, side }, keyed by
+   *  the walker (the player's key, or a foe's own record). */
+  const _tracks = new WeakMap();
   /** BLOOD1b: chunks in flight. Plain data this pool owns outright,
    *  emptied by `clear()` with the room they were thrown in. */
   let _gibs = [];
@@ -380,6 +391,51 @@ export function createBloodMarks({ renderer = null, collider = null, settings = 
     return n;
   }
 
+  /** BLOOD2d: A STEP. `pos` is where the walker stands (any height above
+   *  the floor within MARK_DROP - the eye, the capsule centre, the feet),
+   *  `forward` the way it is going. If the foot comes down IN a wet mark
+   *  (a floor mark no drier than TRACK_WET_STAGE, and never a print),
+   *  the walker picks the blood up; while it has any, each step lays a
+   *  print of it - alternating feet, faded a share more each time - and
+   *  a step on wet blood while carrying it refreshes the count rather
+   *  than printing over the pool. Answers the print laid, or null. */
+  function step(walker, pos, forward = null) {
+    if (!on() || !walker || !pos || !_pool) return null;
+    const col = liveCollider();
+    if (!col?.surfaceHit) return null;
+    const h = col.surfaceHit([pos[0], pos[1], pos[2]], DOWN, MARK_DROP);
+    if (!h || !Number.isFinite(h.dist) || h.dist > MARK_DROP) return null;
+    const foot = [pos[0], pos[1] - h.dist, pos[2]];
+    // in a wet mark?
+    let wet = false;
+    for (const d of _pool.decals()) {
+      if (d.uv?.kind === 'print' || !(d.normal[1] > 0.7) || (d.stage ?? 0) > TRACK_WET_STAGE) continue;
+      const dx = foot[0] - d.pos[0], dz = foot[2] - d.pos[2];
+      if (dx * dx + dz * dz <= (d.size * 0.5) * (d.size * 0.5) && Math.abs(foot[1] - d.pos[1]) < 0.5) { wet = true; break; }
+    }
+    let t = _tracks.get(walker);
+    if (wet) {
+      if (!t) { t = { left: TRACK_STEPS, side: 1 }; _tracks.set(walker, t); } else t.left = TRACK_STEPS;
+      return null;   // standing in it: nothing to print over the pool
+    }
+    if (!t || t.left <= 0) return null;
+    const f = forward && Math.hypot(forward[0], forward[2]) > 1e-6 ? [forward[0], 0, forward[2]] : null;
+    const rx = f ? f[2] / Math.hypot(f[0], f[2]) : 1, rz = f ? -f[0] / Math.hypot(f[0], f[2]) : 0;   // the walker's right (mat4's law: (f.z, 0, -f.x))
+    t.side = -t.side;
+    const at = [foot[0] + rx * PRINT_SPREAD * t.side, foot[1], foot[2] + rz * PRINT_SPREAD * t.side];
+    const share = t.left / TRACK_STEPS;
+    t.left -= 1;
+    ensure();
+    const d = lay(at, h.normal ?? [0, 1, 0], { size: PRINT_SIZE, along: f, stretch: 1 }, bloodMarkKind({ print: true }));
+    if (!d) return null;
+    // the print's fade rides the tint's alpha, and drying keeps it
+    d.fresh = [d.fresh[0], d.fresh[1], d.fresh[2], share];
+    d.tint = d.fresh;
+    writeDecalQuad(_scratch, 0, d, d.uv);
+    renderer.writeDecalSlot(_batch, d.slot, _scratch);
+    return d;
+  }
+
   function place(bloodIndex, pos, hit = null) {
     if (!on() || !pos) return null;
     // A BLOODLESS FOE MARKS NOTHING. DFU's own bloodIndex says which
@@ -589,6 +645,8 @@ export function createBloodMarks({ renderer = null, collider = null, settings = 
   return {
     place, draw, tick, shiftOrigin, clear, useArt,
     drip, spreadPool,          // BLOOD2c
+    step,                      // BLOOD2d
+    tracked: (walker) => _tracks.get(walker)?.left ?? 0,   // BLOOD2d
     spreads: () => _spreads.slice(),   // BLOOD2c
     gibs: () => _gibs.slice(),
     drips: () => _drips.slice(),

@@ -4255,6 +4255,7 @@ export async function bootExterior(canvas, renderer, params, status) {
           onExteriorPath: _surf.path,               // OnPathTile: records 46, 47, 55
           onStaticGeometry: _surf.staticGeometry,
         }));
+        if (_step) hitEffects?.footfall?.(player.pos, [Math.sin(cam.yaw), 0, Math.cos(cam.yaw)]);   // BLOOD2d: a foot came down - treading in blood tracks it
         if (_step && classicFootstepAllowed(_step.clip)) audio.playOneShot(_step.clip, _step.volume);   // IF1: DisableVanillaFootsteps - every classic clip is None while the mod owns the stride; BA1: Better Ambience nulls all but Dungeon2 and Outside2 (DisableBuiltInFootsteps' slip)
         // IF1: ImmersiveFootstepsObject.FixedUpdate - the exterior arm off this host's climate and the tile the classic set reads.
         immersiveFootsteps.update(dt, {
@@ -4726,7 +4727,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     // ROAD-G G2: THE ENEMY ARM EXISTS NOW - the note here said "this
     // host mounts no bow-armed pool", which stopped being true with the
     // encounter mount above, and an archer's shaft would have flown
-    // through the player for ever. world.js:10605-10779 is the shape.
+    // through the player for ever. world.js:10606-10780 is the shape.
     arrows.update(dt, {
       // enemy arrows hunt only a WALKING player - the fly camera has no
       // capsule to hit
@@ -4965,7 +4966,7 @@ export async function bootExterior(canvas, renderer, params, status) {
         // removed elsewhere.
         if (!cityGuards.resolvePlayerHit(weaponRig.playerWeapon, eye, fwd, player.pos, makeInView(proj, view, multiply), guardHitSound)) {
           // ROAD-G G2: encounter foes resolve AFTER the watch and
-          // BEFORE civilians - world.js:10875's order, and the order
+          // BEFORE civilians - world.js:10876's order, and the order
           // matters because a watchman standing over a quest foe must
           // still be the one the swing finds.
           if (exteriorFoes.resolvePlayerHit(weaponRig.playerWeapon, eye, fwd, player.pos, makeInView(proj, view, multiply), guardHitSound)) {
