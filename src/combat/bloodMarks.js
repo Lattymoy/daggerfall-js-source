@@ -29,7 +29,7 @@ import {
   createBloodDecalPool, writeDecalQuad, clearDecalQuad, bloodRate, marksBlood, DECAL_FLOATS,
   sprayCount, sprayRadius, sprayOffset, dropSize,   // BLOOD1b: the scatter BLOOD1a left to this slice
   isOverkill, burstCount, burstRate, burstReach,    // BLOOD1b: and the killing blow's own spray
-  scaleRate, looksUp, isCeilingNormal,              // BLOOD1b: and the drops that find a ceiling
+  scaleRate, looksUp, isCeilingNormal, streakFor,   // BLOOD2a: the streak              // BLOOD1b: and the drops that find a ceiling
 } from './bloodDecals.js';
 import {
   throwGibs, gibStep, gibFly, gibLand, gibSprayOrigin, shiftGibs, dripFrom,
@@ -198,14 +198,24 @@ export function createBloodMarks({ renderer = null, collider = null, settings = 
       // ray went straight down from THERE, so a foe killed against a
       // partition sprayed the next corridor's floor. The reference flies
       // particles that meet the wall first; this port rays the same
-      // segment, from the body to the drop, and a drop that would have
-      // to pass through something lands nowhere.
-      if (i > 0) {
-        const ox = fromX - pos[0], oz = fromZ - pos[2];
-        const run = Math.hypot(ox, oz);
-        if (run > 1e-6 && col.raycastHit) {
-          const wall = col.raycastHit(pos, [ox / run, 0, oz / run], run);
-          if (wall && Number.isFinite(wall.dist) && wall.dist <= run) continue;
+      // segment, from the body to the drop.
+      //
+      // BLOOD2a: AND WHAT MEETS THE WALL STAINS IT. A drop that would
+      // have to pass through something lands ON that something, at the
+      // point it met it, facing the way it came - which is what the
+      // reference's particles do, and what a corridor fight looks like.
+      // A wall mark is round: cast-off runs along its travel on a floor,
+      // but a spurt meeting a wall head-on spreads.
+      const ox = fromX - pos[0], oz = fromZ - pos[2];
+      const run = i > 0 ? Math.hypot(ox, oz) : 0;
+      if (run > 1e-6 && col.raycastHit) {
+        const wall = col.raycastHit(pos, [ox / run, 0, oz / run], run);
+        if (wall && Number.isFinite(wall.dist) && wall.dist <= run) {
+          const wx = pos[0] + (ox / run) * wall.dist, wz = pos[2] + (oz / run) * wall.dist;
+          ensure();
+          const d = _pool.place([wx, pos[1], wz], wall.normal ?? [-ox / run, 0, -oz / run], { size: dropSize(i, rate, rng) });
+          if (d) { writeDecalQuad(_scratch, 0, d); renderer.writeDecalSlot(_batch, d.slot, _scratch); }
+          continue;
         }
       }
       // MAC-BUG W5 (Mac: "blood doesn't work outside"). THIS RAY WAS
@@ -232,7 +242,15 @@ export function createBloodMarks({ renderer = null, collider = null, settings = 
       // does not stick to a wall it hit from below.
       if (up && !isCeilingNormal(h.normal)) continue;
       ensure();
-      const d = _pool.place(at, h.normal ?? (up ? DOWN : [0, 1, 0]), { size: dropSize(i, rate, rng) });
+      // BLOOD2a: SPATTER LIES ALONG ITS TRAVEL. The drop flew from the
+      // body to here, and it lands stretched that way - the further it
+      // flew, the longer - which is what cast-off blood is. The pool
+      // under the body flew nowhere and stays round.
+      const d = _pool.place(at, h.normal ?? (up ? DOWN : [0, 1, 0]), {
+        size: dropSize(i, rate, rng),
+        along: run > 1e-6 ? [ox, 0, oz] : null,
+        stretch: streakFor(run, radius),
+      });
       if (!d) continue;
       writeDecalQuad(_scratch, 0, d);
       renderer.writeDecalSlot(_batch, d.slot, _scratch);   // ONE slot, at its own offset

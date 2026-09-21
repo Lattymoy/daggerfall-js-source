@@ -17,6 +17,7 @@ import {
   createBloodDecalPool, bloodRate, ladderRate, scaleRate, damagePercent, isOverkill,
   surfaceBasis, writeDecalQuad, clearDecalQuad, decalIndices,
   DECAL_FLOATS, DECAL_FLOATS_PER_VERTEX, RATE_LADDER, RATE_NEAR_LETHAL, RATE_MAX, OVERKILL_PERCENT, OVERKILL_RATE, OVERKILL_RATE_HEAVY, OVERKILL_SPEED, ORDINARY_SPEED, OVERKILL_REACH_SCALE, HEAVY_WEAPON_TEMPLATE, SURFACE_LIFT,
+  basisAlong, streakFor, STREAK_MAX,   // BLOOD2a
   bloodHit, LETHAL_HIT, SWING_PUSH, SWING_LEAN, swingThrow, looksUp, isCeilingNormal, CEILING_DOT, CEILING_EVERY, burstCount, burstRate, burstReach, BURST_DROPS_MAX, sprayCount, sprayRadius, sprayOffset, dropSize, SPRAY_SHARE, SPRAY_MAX, SPATTER_SCALE, SIZE_JITTER, SPRAY_WOBBLE, SPRAY_RADIUS_MIN, SPRAY_RADIUS_MAX,   // BLOOD1b
 } from '../src/combat/bloodDecals.js';
 
@@ -2154,15 +2155,32 @@ test('BLOOD1 AUDIT 3: the spray’s wobble is a share of the SLOT, so the top ru
   const wallAt = 0.3;
   const collider = (walled) => () => ({
     surfaceHit: (from, dir, max) => (dir[1] < 0 && from[1] <= max ? { dist: from[1], normal: [0, 1, 0] } : null),
-    raycastHit: (from, dir, max) => (walled && dir[0] > 0 && from[0] < wallAt ? { dist: Math.min(max, (wallAt - from[0]) / dir[0]), normal: [-1, 0, 0] } : { dist: Infinity, normal: null }),
+    // BLOOD2a: a wall BEYOND the ray's reach is a miss, not a hit at the
+    // reach - the first cut of this stub clamped the distance and so
+    // reported a drop short of the wall as having met it there
+    raycastHit: (from, dir, max) => {
+      if (!walled || !(dir[0] > 0) || from[0] >= wallAt) return { dist: Infinity, normal: null };
+      const d = (wallAt - from[0]) / dir[0];
+      return d <= max ? { dist: d, normal: [-1, 0, 0] } : { dist: Infinity, normal: null };
+    },
   });
   const hit = { damage: 30, maxHealth: 40, fromPlayer: true, heavy: false, throw: [0, 0] };   // the top rung: 24 drops over 1.8 m
   const open = rigHitEffects({ collider: collider(false), settings: { enabled: () => true, capacity: () => 256, density: () => 1, overkill: () => false } });
   open.marks.useArt(380, 1, 6); open.fx.showBloodSplash(0, [0, 1, 0], null, hit);
   const walled = rigHitEffects({ collider: collider(true), settings: { enabled: () => true, capacity: () => 256, density: () => 1, overkill: () => false } });
   walled.marks.useArt(380, 1, 6); walled.fx.showBloodSplash(0, [0, 1, 0], null, hit);
-  assert.ok(open.marks.count() > walled.marks.count(), 'the wall took some drops');
+  // BLOOD2a: the wall does not LOSE the drops, it TAKES them - every
+  // drop that would have passed through it stains it where it met it
+  // (MORE, not the same: a drop that would have looked UP past the wall and found no ceiling in this stub meets the wall first, and stains it)
+  assert.ok(walled.marks.count() >= open.marks.count(), 'no drop is lost to the wall');
   assert.ok(walled.marks._pool().decals().every((d) => d.pos[0] <= wallAt + 1e-9), 'and none landed past it');
+  const onWall = walled.marks._pool().decals().filter((d) => Math.abs(d.normal[1]) < 1e-9);
+  assert.ok(onWall.length > 0, 'some are ON the wall');
+  for (const d of onWall) {
+    assert.ok(Math.abs(d.pos[0] - (wallAt - SURFACE_LIFT)) < 1e-9, 'at the wall, lifted toward the body it came from');
+    assert.deepEqual(d.normal, [-1, 0, 0], 'facing the way it came');
+    assert.equal(d.stretch, 1, 'a wall mark is round - a spurt meeting a wall head-on spreads');
+  }
   assert.ok(walled.marks._pool().decals().some((d) => d.pos[0] === 0 && d.pos[2] === 0), 'the pool under the body still lands');
 });
 
@@ -2250,6 +2268,86 @@ test('BLOOD1 AUDIT 3: a mark on streamed terrain lies on the DRAWN ground, and t
   const classicFs = r.slice(r.indexOf('const DECAL_FS = `'), r.indexOf('`;', r.indexOf('const DECAL_FS = `')));
   assert.ok(classicFs.includes('${CLOUD_SHADOW_GLSL}'), 'the classic decal reads the cloud map');
   assert.match(classicFs, /uDecalSun \* cloudShadowAt\(vWorld\)/, 'on the sun term, as BB_FS has it');
+});
+
+// ── BLOOD2a (2026-09-21, Mac: "make it even more visceral and detailed" /
+// "Lets do it") - blood on walls, and spatter stretched along its travel ──
+test('BLOOD2a: a basis ALONG a travel - right is the travel in the plane, the frame is the same right-handed frame, and no travel in the plane falls back', () => {
+  // a floor, a drop that flew +x: right is +x, up closes the frame
+  const b = basisAlong([0, 1, 0], [3, 0, 0]);
+  assert.deepEqual(b.right, [1, 0, 0]);
+  assert.deepEqual(b.normal, [0, 1, 0]);
+  const cr = [b.right[1] * b.up[2] - b.right[2] * b.up[1], b.right[2] * b.up[0] - b.right[0] * b.up[2], b.right[0] * b.up[1] - b.right[1] * b.up[0]];
+  assert.ok(cr.every((v, k) => Math.abs(v - b.normal[k]) < 1e-12), 'right x up = normal, as surfaceBasis has it - the same winding, the same lift');
+  // the travel is PROJECTED: a drop that flew +x and fell lands along +x on the floor
+  const slanted = basisAlong([0, 1, 0], [2, -5, 0]);
+  assert.ok(Math.abs(slanted.right[0] - 1) < 1e-12 && Math.abs(slanted.right[1]) < 1e-12);
+  // a wall: the travel toward it has no component in its plane ONLY when
+  // it is dead-on; a slanted travel lies along the wall
+  const wall = basisAlong([-1, 0, 0], [1, 0, 1]);
+  assert.ok(Math.abs(wall.right[2] - 1) < 1e-12 && Math.abs(wall.right[0]) < 1e-12, 'along the wall');
+  // straight down onto a floor: nothing in the plane, the spun basis
+  const down = basisAlong([0, 1, 0], [0, -1, 0], 0.7);
+  assert.deepEqual(down, surfaceBasis([0, 1, 0], 0.7));
+  assert.deepEqual(basisAlong([0, 1, 0], null, 0.3), surfaceBasis([0, 1, 0], 0.3), 'no travel at all: the spun basis');
+  // a non-unit normal is normalised, as everywhere
+  assert.deepEqual(basisAlong([0, 4, 0], [0, 0, 2]).right, [0, 0, 1]);
+});
+
+test('BLOOD2a: the streak - round at the body, STREAK_MAX at the reach, clamped past it - and the quad is longer along `right` by it, not across', () => {
+  assert.equal(streakFor(0, 2), 1, 'the pool flew nowhere');
+  assert.equal(streakFor(2, 2), STREAK_MAX, 'the edge of the spray');
+  assert.equal(streakFor(5, 2), STREAK_MAX, 'and never past it');
+  assert.ok(Math.abs(streakFor(1, 2) - (1 + (STREAK_MAX - 1) / 2)) < 1e-12, 'half way, half the stretch');
+  assert.equal(streakFor(1, 0), 1); assert.equal(streakFor(NaN, 2), 1); assert.equal(streakFor(1, NaN), 1);
+  assert.ok(STREAK_MAX > 1 && STREAK_MAX <= 4, 'a streak, not a line');
+  const pool = createBloodDecalPool({ capacity: 4, rng: () => 0.5 });
+  const d = pool.place([0, 0, 0], [0, 1, 0], { size: 1, along: [1, 0, 0], stretch: 2.5 });
+  assert.equal(d.stretch, 2.5);
+  assert.deepEqual(d.right, [1, 0, 0], 'laid along the travel');
+  const out = new Float32Array(DECAL_FLOATS);
+  writeDecalQuad(out, 0, d);
+  const xs = [0, 1, 2, 3].map((k) => out[k * 9]), zs = [0, 1, 2, 3].map((k) => out[k * 9 + 2]);
+  assert.ok(Math.abs(Math.max(...xs) - Math.min(...xs) - 2.5) < 1e-6, 'two and a half along the travel');
+  assert.ok(Math.abs(Math.max(...zs) - Math.min(...zs) - 1) < 1e-6, 'one across it');
+  // a round drop is round, and a stretch under one is one
+  const r = pool.place([0, 0, 0], [0, 1, 0], { size: 1, turn: 0 });
+  assert.equal(r.stretch, 1);
+  assert.equal(pool.place([0, 0, 0], [0, 1, 0], { size: 1, stretch: 0.2 }).stretch, 1);
+  assert.equal(pool.place([0, 0, 0], [0, 1, 0], { size: 1, stretch: NaN }).stretch, 1);
+});
+
+test('BLOOD2a: a spray’s spatter lies ALONG its travel and longer the further it flew; the pool stays round; the ceiling’s drops too', () => {
+  const CEIL = 2.2;
+  const { fx, marks } = rigHitEffects({
+    settings: { enabled: () => true, capacity: () => 256, density: () => 1, overkill: () => false },
+    collider: () => ({
+      surfaceHit: (from, dir, max) => (dir[1] > 0
+        ? (CEIL - from[1] <= max ? { dist: CEIL - from[1], normal: [0, -1, 0] } : null)
+        : (from[1] <= max ? { dist: from[1], normal: [0, 1, 0] } : null)),
+      raycastHit: () => ({ dist: Infinity, normal: null }),
+    }),
+  });
+  marks.useArt(380, 1, 6);
+  fx.showBloodSplash(0, [0, 1, 0], null, { damage: 30, maxHealth: 40, fromPlayer: true, heavy: false, throw: [0, 0] });   // the top rung
+  const ds = marks._pool().decals();
+  const pool = ds.find((d) => d.pos[0] === 0 && d.pos[2] === 0 && d.normal[1] > 0);
+  assert.ok(pool && pool.stretch === 1, 'the pool under the body is round');
+  const spatter = ds.filter((d) => d !== pool);
+  assert.ok(spatter.length > 4);
+  for (const d of spatter) {
+    const flown = Math.hypot(d.pos[0], d.pos[2]);
+    assert.ok(d.stretch > 1, 'every flung drop is a streak');
+    // laid ALONG the line from the body: right is the drop's own bearing (or its opposite, on a ceiling)
+    const bearing = [d.pos[0] / flown, 0, d.pos[2] / flown];
+    const dot = Math.abs(d.right[0] * bearing[0] + d.right[2] * bearing[2]);
+    assert.ok(dot > 1 - 1e-6, `along its travel (${dot})`);
+  }
+  // the further it flew, the longer - monotone over the spray
+  const sorted = [...spatter].sort((a, b) => Math.hypot(a.pos[0], a.pos[2]) - Math.hypot(b.pos[0], b.pos[2]));
+  for (let k = 1; k < sorted.length; k++) assert.ok(sorted[k].stretch >= sorted[k - 1].stretch - 1e-9, 'longer the further it flew');
+  assert.ok(sorted.at(-1).stretch > sorted[0].stretch, 'and not all the same');
+  assert.ok(ds.some((d) => d.normal[1] < 0 && d.stretch > 1), 'the ceiling’s drops are streaks too');
 });
 
 // ── MAC-BUG W5 (2026-09-20, Mac: "Also blood doesn't work outside")

@@ -813,5 +813,39 @@ Slices, each behind its own `features.js` row:
 
 3. **BLOOD1c - bleeding.** The 2..5s cadence and the ramp above.
 
+4. **BLOOD2a - blood on walls, and spatter along its travel.** SHIPPED
+   (2026-09-21, Mac: "Any way we can improve this to make it even more
+   visceral and detailed?" / "Lets do it"). The first of the slices
+   the third audit's closing note listed, and the two that read as the
+   biggest change per line.
+
+   THE WALL IS STAINED. AUDIT 3 gave the spray a ray from the body to
+   each drop so blood could not pass through a partition, and dropped
+   the drop. The reference flies particles that meet the wall FIRST
+   and stain it; so does this now - a drop that would have had to pass
+   through something lands ON it, at the point it met it, facing the
+   way it came (the collider's normal is already turned to the ray).
+   A wall mark is round: a spurt meeting a wall head-on spreads. Every
+   corridor fight marks its walls at the height of the wound.
+
+   SPATTER LIES ALONG ITS TRAVEL. A drop flung from the body lands
+   elongated the way it flew, the further the longer - which is what
+   cast-off blood is, and what a round dot never read as. The pool
+   gained `basisAlong` (the travel projected onto the surface as the
+   quad's `right`, the same right-handed frame surfaceBasis makes, so
+   the winding and the lift are every other mark's) and a `stretch`
+   the quad writer applies along `right` alone; `streakFor` runs from
+   round at the body to STREAK_MAX (2.5, the port's own) at the spray's
+   reach, clamped past it. The pool under the body flew nowhere and
+   stays round; the ceiling's drops are streaks like the floor's; a
+   drop dead-on to its surface (nothing of its travel in the plane)
+   takes the spun basis it always had.
+
+   Pins: three (the basis, the streak and the writer, a whole spray)
+   and the wall pin re-aimed - the wall LOSES no drop now, it takes
+   them, and a stub that clamped a beyond-reach wall to a hit at the
+   reach was corrected while doing so. Mutants: 10, 10 dead
+   (`tools/mutants/blood1.json` is 171).
+
 The numbers in THE FACTS are the target to feel like. The code that
 hits them is ours.

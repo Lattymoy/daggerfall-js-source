@@ -182,8 +182,8 @@
   {
     "name": "BLOOD1a-the-mark-takes-the-surfaces-normal-from-nowhere",
     "file": "src/combat/bloodMarks.js",
-    "old": "      const d = _pool.place(at, h.normal ?? (up ? DOWN : [0, 1, 0]), { size: dropSize(i, rate, rng) });",
-    "new": "      const d = _pool.place(at, [0, 1, 0], { size: dropSize(i, rate, rng) });",
+    "old": "      const d = _pool.place(at, h.normal ?? (up ? DOWN : [0, 1, 0]), {\n        size: dropSize(i, rate, rng),",
+    "new": "      const d = _pool.place(at, [0, 1, 0], {\n        size: dropSize(i, rate, rng),",
     "tests": [
       "test/blood1_decals.test.js"
     ]
@@ -1364,8 +1364,8 @@
   {
     "name": "AUDIT3-the-spray-passes-through-walls",
     "file": "src/combat/bloodMarks.js",
-    "old": "          if (wall && Number.isFinite(wall.dist) && wall.dist <= run) continue;",
-    "new": "          if (wall && Number.isFinite(wall.dist) && wall.dist <= run) { /* nothing */ }",
+    "old": "        if (wall && Number.isFinite(wall.dist) && wall.dist <= run) {\n          const wx",
+    "new": "        if (false) {\n          const wx",
     "tests": [
       "test/blood1_decals.test.js"
     ]
@@ -1451,6 +1451,96 @@
     "file": "src/player/collider.js",
     "old": "    const ok = k === 0 ? ox : k === 1 ? oy : oz;",
     "new": "    const ok = [ox, oy, oz][k];",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD2a-a-drop-meeting-a-wall-is-lost-again",
+    "file": "src/combat/bloodMarks.js",
+    "old": "          const d = _pool.place([wx, pos[1], wz], wall.normal ?? [-ox / run, 0, -oz / run], { size: dropSize(i, rate, rng) });\n          if (d) { writeDecalQuad(_scratch, 0, d); renderer.writeDecalSlot(_batch, d.slot, _scratch); }\n          continue;",
+    "new": "          continue;",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD2a-the-wall-mark-lands-at-the-drop-s-spot-not-the-wall",
+    "file": "src/combat/bloodMarks.js",
+    "old": "          const d = _pool.place([wx, pos[1], wz], wall.normal ?? [-ox / run, 0, -oz / run], { size: dropSize(i, rate, rng) });",
+    "new": "          const d = _pool.place([fromX, pos[1], fromZ], wall.normal ?? [-ox / run, 0, -oz / run], { size: dropSize(i, rate, rng) });",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD2a-the-wall-mark-is-a-streak",
+    "file": "src/combat/bloodMarks.js",
+    "old": "          const d = _pool.place([wx, pos[1], wz], wall.normal ?? [-ox / run, 0, -oz / run], { size: dropSize(i, rate, rng) });",
+    "new": "          const d = _pool.place([wx, pos[1], wz], wall.normal ?? [-ox / run, 0, -oz / run], { size: dropSize(i, rate, rng), along: [ox, 0, oz], stretch: streakFor(run, radius) });",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD2a-the-writer-ignores-the-stretch",
+    "file": "src/combat/bloodDecals.js",
+    "old": "  const hs = h * (decal.stretch ?? 1);   // BLOOD2a: longer along `right` by the streak",
+    "new": "  const hs = h;",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD2a-place-ignores-the-travel",
+    "file": "src/combat/bloodDecals.js",
+    "old": "    const basis = along ? basisAlong(normal, along, Number.isFinite(turn) ? turn : rng() * Math.PI * 2) : surfaceBasis(normal, Number.isFinite(turn) ? turn : rng() * Math.PI * 2);",
+    "new": "    const basis = surfaceBasis(normal, Number.isFinite(turn) ? turn : rng() * Math.PI * 2);",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD2a-the-along-basis-winds-the-other-way",
+    "file": "src/combat/bloodDecals.js",
+    "old": "  return { normal: n, right: r, up: cross(n, r) };",
+    "new": "  return { normal: n, right: r, up: cross(r, n) };",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD2a-the-streak-is-the-same-at-every-distance",
+    "file": "src/combat/bloodDecals.js",
+    "old": "  return 1 + Math.min(1, flown / reach) * (STREAK_MAX - 1);",
+    "new": "  return STREAK_MAX;",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD2a-the-streak-is-not-clamped-at-the-reach",
+    "file": "src/combat/bloodDecals.js",
+    "old": "  return 1 + Math.min(1, flown / reach) * (STREAK_MAX - 1);",
+    "new": "  return 1 + (flown / reach) * (STREAK_MAX - 1);",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD2a-the-spray-lays-no-travel",
+    "file": "src/combat/bloodMarks.js",
+    "old": "        along: run > 1e-6 ? [ox, 0, oz] : null,\n        stretch: streakFor(run, radius),",
+    "new": "        stretch: streakFor(run, radius),",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD2a-the-spray-lays-no-streak",
+    "file": "src/combat/bloodMarks.js",
+    "old": "        along: run > 1e-6 ? [ox, 0, oz] : null,\n        stretch: streakFor(run, radius),",
+    "new": "        along: run > 1e-6 ? [ox, 0, oz] : null,",
     "tests": [
       "test/blood1_decals.test.js"
     ]

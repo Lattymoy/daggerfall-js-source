@@ -441,6 +441,37 @@ export function surfaceBasis(normal, turn = 0) {
   };
 }
 
+/**
+ * BLOOD2a - A BASIS ALONG A DIRECTION. Spatter is not round: a drop
+ * flung from a body lands elongated along its travel, the further it
+ * flew the longer. `along` is that travel in world space; projected
+ * onto the surface it becomes the quad's `right`, and `up` closes the
+ * same right-handed frame surfaceBasis makes (right x up = normal), so
+ * the winding and the lift are the ones every other mark has. A travel
+ * with no component in the plane (straight down onto a floor) falls
+ * back to the spun basis, which is what an unthrown drop gets anyway.
+ */
+export function basisAlong(normal, along, turn = 0) {
+  const n = unit(normal) ?? [0, 1, 0];
+  const a = along ? [along[0], along[1], along[2]] : null;
+  if (!a) return surfaceBasis(n, turn);
+  const d = a[0] * n[0] + a[1] * n[1] + a[2] * n[2];
+  const r = unit([a[0] - n[0] * d, a[1] - n[1] * d, a[2] - n[2] * d]);
+  if (!r) return surfaceBasis(n, turn);
+  return { normal: n, right: r, up: cross(n, r) };
+}
+
+/** BLOOD2a - HOW LONG A STREAK GETS. A drop at the body's own spot is
+ *  round; one flung to the edge of the spray's reach is this many times
+ *  longer than it is wide, and the ones between scale with how far they
+ *  flew. The port's own number: two and a half reads as cast-off blood
+ *  without turning a drop into a line. */
+export const STREAK_MAX = 2.5;
+export function streakFor(flown, reach) {
+  if (!(flown > 0) || !(reach > 0)) return 1;
+  return 1 + Math.min(1, flown / reach) * (STREAK_MAX - 1);
+}
+
 const cross = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
 function unit(v) {
   if (!v) return null;
@@ -484,7 +515,8 @@ export function writeDecalQuad(out, offset, decal, uv = null) {
   const u0 = uv?.u0 ?? 0, v0 = uv?.v0 ?? 0, u1 = uv?.u1 ?? 1, v1 = uv?.v1 ?? 1;
   const [px, py, pz] = decal.pos;
   const h = decal.size / 2;
-  const rx = decal.right[0] * h, ry = decal.right[1] * h, rz = decal.right[2] * h;
+  const hs = h * (decal.stretch ?? 1);   // BLOOD2a: longer along `right` by the streak
+  const rx = decal.right[0] * hs, ry = decal.right[1] * hs, rz = decal.right[2] * hs;
   const ux = decal.up[0] * h, uy = decal.up[1] * h, uz = decal.up[2] * h;
   const c = decal.tint ?? WHITE;
   const corner = (i, sx, sy, u, v) => {
@@ -560,9 +592,11 @@ export function createBloodDecalPool({ capacity = 1000, rng = Math.random } = {}
    * (already turned to face the ray). Answers the decal, or null when
    * the caller handed nothing to place it on.
    */
-  function place(point, normal, { size = 1, tint = null, turn = null } = {}) {
+  function place(point, normal, { size = 1, tint = null, turn = null, along = null, stretch = 1 } = {}) {
     if (!point || !Number.isFinite(point[0]) || !Number.isFinite(point[1]) || !Number.isFinite(point[2])) return null;
-    const basis = surfaceBasis(normal, Number.isFinite(turn) ? turn : rng() * Math.PI * 2);
+    // BLOOD2a: a drop that flew lies ALONG its travel; one that did not
+    // spins as it always has.
+    const basis = along ? basisAlong(normal, along, Number.isFinite(turn) ? turn : rng() * Math.PI * 2) : surfaceBasis(normal, Number.isFinite(turn) ? turn : rng() * Math.PI * 2);
     const slot = next;
     const d = {
       slot,
@@ -581,6 +615,9 @@ export function createBloodDecalPool({ capacity = 1000, rng = Math.random } = {}
       // BLOOD1 AUDIT 3: a NaN size wrote NaN into all twelve position
       // floats of the slot; a mark with no size is a mark of size zero.
       size: Number.isFinite(size) ? Math.max(0, size) : 0,
+      // BLOOD2a: the streak - how many times longer along `right` than
+      // across. One is a round drop, the pool's own.
+      stretch: Number.isFinite(stretch) ? Math.max(1, stretch) : 1,
       tint,
       // BLOOD1 AUDIT 3: the `parent` a mark could "ride" is GONE. It was
       // stored and never read - the corners are baked into the GPU slot
