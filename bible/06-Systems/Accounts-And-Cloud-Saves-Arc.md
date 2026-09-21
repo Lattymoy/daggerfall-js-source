@@ -707,6 +707,129 @@ to clear it.
 
 ---
 
+## AUDIT-ACC, PART TWO — "Take your time"
+
+The first pass was scoped to the six slices in the PR and stopped at
+four lenses. Asked whether that was everything, the honest answer was
+no: the token had never been read adversarially, the port had never
+been read against Fight Life member by member, the credential paths had
+never been read for security, and DEPLOY-PROSE had been audited
+*around* but never itself. Four more lenses. **Eight more findings,
+five of them live defects.**
+
+### F7 — the bank could spell a name the wire could not carry
+
+`NAME_MAX` is 24. The longest name the generator can produce is **25**:
+`Kelkemmelian Larethbinder`, and three siblings sharing that surname.
+Four of the 173,330 names in the space — about **one guest in 43,000** —
+made `createGuest` throw, which `index.js` turns into a **500**. That
+player could not get an account at all until they tried again.
+
+The comment at that throw said *"the bank is the game's own, so this
+should never fire"*. **Nobody had multiplied the bank out and compared
+it to the bound.** This audit did: the space is a product of four
+part-lists, so it is 173,330 strings and entirely enumerable.
+
+It survived ACC1b's own testing for a structural reason worth keeping:
+**that pin sampled.** It drew eighteen names and checked their shape —
+and four in 173,330 is invisible to eighteen draws, essentially always.
+The new pin enumerates the whole space; a second drives the exact byte
+sequence that produces the bad name and proves an account comes back.
+
+**Raising `NAME_MAX` was not available.** It lives in `src/net/wire.js`,
+which is in the relay bundle — SLAM8 hashes that bundle's raw bytes, so
+touching it costs a `RELAY_VERSION` bump and drops every connected
+player. A four-in-173,330 cosmetic bound is not worth a dungeon run. So
+the generator rejects those draws instead, which is the same rejection
+sampling `pick` already uses one function above it.
+
+### F8 — the token is a bearer credential and nothing considers replay
+
+Not the code, not the pins, not this page. `verifyToken` closes
+**forgery**: without the private key nobody can invent a name. It does
+not close **replay** — there is no nonce, no audience, and no binding to
+a connection, so anyone who obtains a token can present it as that
+player until it expires.
+
+Bounded by `MAX_TTL_S` and by TLS, and the stakes today are a name on a
+roster. But *"the only people who can take a name are the people who
+can be banned"* is weaker if a name can be **borrowed** for five
+minutes, and that is a decision rather than something to discover after
+ACC1d ships. The cheap answer is **one-shot at the relay**: a client
+mints one token per connection, so nothing legitimate presents the same
+token twice, and `e` bounds how long the hub must remember. Written into
+`src/net/identityToken.js` itself, **now**, while that file is still
+outside the relay bundle and editing its comments is free.
+
+### F9 — a session never expired
+
+`SESSION_IDLE_S` was declared, documented as the bound *"before a sweep
+may take it"*, and **used by nothing**. There was no sweep. An abandoned
+credential — a shared machine, an old phone, a leaked backup — worked
+forever.
+
+Fight Life enforces it on the auth path rather than in a scheduled job,
+and **deletes the row** rather than refusing it, so a dead credential
+stops existing instead of being rejected forever. That is what is
+carried over; it needs no cron that can silently stop running.
+
+### F10 — a failed cosmetic write failed the whole request
+
+The two `last_seen` touches were unguarded, so a D1 hiccup on a
+freshness update turned an **already authorised** request into a 500.
+Fight Life wraps its own touch and says why. Driven here by a database
+that answers reads and refuses every `UPDATE`.
+
+### F11 — an observation, not a change
+
+`players.last_seen` is **written on every authenticated request and read
+nowhere**; `devicesOf` reads the sessions' column. A player's last-seen
+is the max of their sessions', so the column is derivable. It is still
+written, because a column that silently stops being maintained is worse
+than one that costs a write, and dropping it is a migration rather than
+an audit's business. Noted for ACC2.
+
+### F12 — only strangers were rate-limited
+
+The open routes were bounded per address, on the door. **Everything
+behind a session was unbounded** — one valid secret could mint Ed25519
+signatures and spend D1 as fast as the network allowed. A limit that
+stops strangers and not members is a limit on the wrong axis. Bounded
+per **account** now, at Fight Life's own figure, and the refusal is
+**429 rather than 401**: telling a rate-limited player their credentials
+are wrong sends them to reset a password that was never the problem.
+
+### F13 — the session secret rode in a URL
+
+`/v1/account` read `?secret=`. The code excused it: *"it is read-only,
+and a slice that makes it do more must move it."* **That answers the
+wrong risk.** The hazard was never that the route mutates — it is that
+a URL is written into Cloudflare's request logs, into any `Referer` the
+page emits, and into browser history. Read-only or not, the credential
+was in all three.
+
+It is an `Authorization: Bearer` header now. The query-string door is
+pinned **shut** rather than merely unused, the header wins when both
+are present so two sources cannot disagree, and the CORS preflight is
+checked to allow it — a header no browser is told it may send is a
+header no browser sends.
+
+### F14 — a claim in the pull request, not in the tree
+
+DEPLOY-PROSE's description said the relay's deploy had been automatic
+*"for fifteen weeks"*. `relay-deploy.yml` was added **2026-09-16**;
+this is 2026-09-21. **Five days.** The tree itself never carried the
+claim — it lived only in the PR body, which is to say in the one place
+this project does not gate. Corrected there.
+
+**And DEPLOY-PROSE is otherwise sound**, which is the other half of
+auditing it: the two corrected files say true things, the gate holds its
+derivation, and the `wire.js` exclusion's premise still stands — that
+file still carries its stale sentence, so the gate still has something
+to be honest about.
+
+---
+
 ## OPEN
 
 - **Whether the hub moves out of the relay Worker.** It is in the

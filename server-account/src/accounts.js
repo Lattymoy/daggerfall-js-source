@@ -116,9 +116,19 @@ export async function createGuest({ db, subtle, rand, nowS }, { deviceLabel = nu
   if (!Number.isSafeInteger(nowS)) throw new TypeError('createGuest needs an integer epoch-seconds clock');
   const id = mintId(rand);
   const name = guestName(rand);
-  // The bank is the game's own, so this should never fire - it is here
-  // because a name that cannot ride a token is an account that cannot
-  // play, and the place to learn that is the mint.
+  // A name that cannot ride a token is an account that cannot play, and
+  // the place to learn that is the mint.
+  //
+  // THIS USED TO SAY "the bank is the game's own, so this should never
+  // fire", AND THAT WAS FALSE. AUDIT-ACC F7 multiplied the bank out -
+  // 173,330 names - and found four at 25 characters against a NAME_MAX
+  // of 24, all sharing the surname `Larethbinder`. Roughly one guest in
+  // 43,000 hit this line and got a 500 instead of an account.
+  //
+  // `guestName` rejects those draws now, so this is a postcondition
+  // rather than a hope: it fires only if the generator's own guarantee
+  // has broken, which is worth a 500 because nothing else would be
+  // trustworthy either.
   if (!nameIsIssuable(name) || !isGuestShaped(name)) throw new Error(`guestName produced an unusable name: ${name}`);
   await db.prepare('INSERT INTO players (id, handle, handle_lc, guest_name, created_at, last_seen) VALUES (?, NULL, NULL, ?, ?, ?)')
     .bind(id, name, nowS, nowS).run();
@@ -158,14 +168,53 @@ export async function resolveSession({ db, subtle, nowS }, secret) {
   const hash = await hashSecret(secret, { subtle });
   const session = await db.prepare('SELECT * FROM sessions WHERE secret_hash = ?').bind(hash).first();
   if (!session) return null;
+
+  // ═══ AUDIT-ACC F9: AN IDLE SESSION IS DEAD, AND IT IS DELETED ════
+  //
+  // `SESSION_IDLE_S` was declared above, documented as "how long a
+  // session may sit unused before a sweep may take it", and then USED
+  // BY NOTHING. There was no sweep. A session never expired, so an
+  // abandoned credential - a shared machine, an old phone, a leaked
+  // backup - worked forever.
+  //
+  // Fight Life enforces it HERE rather than in a sweep, which is the
+  // better shape and is what is carried over: the check costs nothing
+  // on the path that already loaded the row, and it needs no scheduled
+  // job that can silently stop running. THE ROW IS DELETED rather than
+  // merely refused, so a dead credential stops existing instead of
+  // being rejected forever.
+  if (Number.isSafeInteger(nowS) && Number.isSafeInteger(session.last_seen)
+      && nowS - session.last_seen > SESSION_IDLE_S) {
+    try {
+      await db.prepare('DELETE FROM sessions WHERE id = ?').bind(session.id).run();
+    } catch { /* the refusal below is what matters; the row is retried next time */ }
+    return null;
+  }
+
   const player = await db.prepare('SELECT * FROM players WHERE id = ?').bind(session.player_id).first();
   // A session whose player is gone is not a session. It cannot happen
   // through the cascade, and it is checked because "cannot happen" is
   // how a null reaches a caller that reads `.handle` off it.
   if (!player) return null;
+
+  // ═══ AUDIT-ACC F10: A FAILED TOUCH MUST NOT FAIL THE REQUEST ═════
+  //
+  // These two writes were unguarded, so a D1 hiccup on a freshness
+  // update turned an authorised request into a 500. The call is already
+  // authorised by the time we get here and a stale `last_seen` is
+  // cosmetic - Fight Life learnt this and says so at its own touch.
+  //
+  // NOTE FOR ACC2: `players.last_seen` is WRITTEN here and read
+  // nowhere. A player's last-seen is the max of their sessions'
+  // last_seen, which `devicesOf` already orders by, so the column is
+  // derivable. It is still written because a column that silently stops
+  // being maintained is worse than one that costs a write, and dropping
+  // it is a migration rather than an audit's business.
   if (Number.isSafeInteger(nowS)) {
-    await db.prepare('UPDATE sessions SET last_seen = ? WHERE id = ?').bind(nowS, session.id).run();
-    await db.prepare('UPDATE players SET last_seen = ? WHERE id = ?').bind(nowS, player.id).run();
+    try {
+      await db.prepare('UPDATE sessions SET last_seen = ? WHERE id = ?').bind(nowS, session.id).run();
+      await db.prepare('UPDATE players SET last_seen = ? WHERE id = ?').bind(nowS, player.id).run();
+    } catch { /* cosmetic: the caller is authorised either way */ }
   }
   return { player, session };
 }
@@ -239,6 +288,24 @@ export function handleRefusal(handle) {
  *  window is. Passwords bring online guessing, which tokens did not. */
 export const LOGIN_MAX = 10;
 export const LOGIN_WINDOW_S = 15 * 60;
+
+/**
+ * AUDIT-ACC F12: AND AN AUTHENTICATED CALLER IS BOUNDED TOO.
+ *
+ * Only the OPEN routes were limited - per address, on the door. Every
+ * route behind a session was unbounded, so one valid credential could
+ * hammer `/v1/auth/token` (an Ed25519 signature) or `/v1/account`
+ * (three D1 operations) as fast as the network allowed. A limit that
+ * stops strangers and not members is a limit on the wrong axis.
+ *
+ * Fight Life bounds every authenticated call per ACCOUNT and has done
+ * since its S4 hardening; this is that, carried over. The figure is
+ * generous on purpose - a client mints one token per connection and
+ * reads its account rarely, so this is a ceiling on ABUSE rather than a
+ * pacer, and a limit that trips on normal play is an outage.
+ */
+export const ACCOUNT_MAX = 240;
+export const ACCOUNT_WINDOW_S = 60;
 
 /**
  * A fixed-window counter, per key, by UPSERT - so the table is bounded

@@ -26,8 +26,12 @@ import { _resetKeyForTests } from '../server-account/src/signing.js';
 import {
   createGuest, openSession, resolveSession, closeSession, closeAllSessions,
   devicesOf, accountView, displayName, accountKind, hashSecret, mintId, handleRefusal, LOGIN_MAX,
+  SESSION_IDLE_S, ACCOUNT_MAX,
 } from '../server-account/src/accounts.js';
 import { guestName, GUEST_BANKS, pick, isGuestShaped, isHandleShaped } from '../server-account/src/guestName.js';
+// AUDIT-ACC F7 enumerates the WHOLE name space, so it needs the bank data
+// itself rather than a few draws from it.
+import banks from '../src/characters/nameGen.json' with { type: 'json' };
 import {
   hashPassword, verifyPassword, needsRehash, parseStored, passwordRefusal,
   mintRecoveryCode, canonicalCode, PBKDF2_ITERS, CODE_ALPHABET,
@@ -146,6 +150,129 @@ test('ACC1b: TWO DEVICES AT ONCE - Fight Life\'s fix, carried over rather than r
   assert.equal(await resolveSession(ctx(db), second.secret), null);
 });
 
+test('AUDIT-ACC F13: a credential is never accepted from a URL', async () => {
+  // `/v1/account` read `?secret=`, excused as "read-only, and a slice
+  // that makes it do more must move it". That answers the wrong risk:
+  // the hazard is not mutation, it is that a URL is written into
+  // Cloudflare's request logs, into a Referer header, and into browser
+  // history. Read-only or not, the session secret was in all three.
+  const { call } = await stand();
+  const guest = (await call('POST', '/v1/auth/guest', {})).body;
+
+  // THE OLD SPELLING MUST NOT WORK. A route that still honours it has
+  // not been fixed, it has merely grown a second door.
+  const viaUrl = await call('GET', `/v1/account?secret=${encodeURIComponent(guest.secret)}`);
+  assert.equal(viaUrl.status, 401, 'the query string still authenticates');
+  assert.deepEqual(viaUrl.body, { error: 'auth' });
+
+  // ...and the header does.
+  const viaHeader = await call('GET', '/v1/account', undefined, guest.secret);
+  assert.equal(viaHeader.status, 200);
+  assert.equal(viaHeader.body.account.id, guest.id);
+
+  // THE HEADER WINS WHEN BOTH ARE PRESENT, so two sources can never
+  // disagree about who is calling.
+  const both = await call('POST', '/v1/auth/token', { secret: 'nonsense' }, guest.secret);
+  assert.equal(both.status, 200, 'a body secret overrode the header');
+
+  // AND THE PREFLIGHT ALLOWS IT. A header the browser is never told it
+  // may send is a header no browser will send.
+  const pre = await call('OPTIONS', '/v1/account');
+  assert.match(pre.headers.get('access-control-allow-headers') ?? '', /authorization/i,
+    'the CORS preflight does not allow the header the credential now rides in');
+});
+
+test('AUDIT-ACC F12: a credential is not a licence to hammer, and the refusal is 429', async () => {
+  // Only the OPEN routes were bounded, per address, on the door.
+  // Everything behind a session was unbounded, so one valid secret
+  // could mint Ed25519 signatures and spend D1 as fast as the network
+  // allowed. A limit that stops strangers and not members is a limit on
+  // the wrong axis.
+  const { call } = await stand();
+  const guest = (await call('POST', '/v1/auth/guest', {})).body;
+
+  let sawRate = 0;
+  for (let i = 0; i < ACCOUNT_MAX + 5; i++) {
+    const r = await call('POST', '/v1/auth/token', { secret: guest.secret });
+    if (r.status === 429) { sawRate = i; break; }
+  }
+  assert.ok(sawRate > 0, `${ACCOUNT_MAX + 5} authenticated calls went through unbounded`);
+
+  // 429 AND NOT 401. Telling a rate-limited player their credentials
+  // are wrong sends them to reset a password that was never the
+  // problem - Fight Life's own note beside the same check.
+  const over = await call('POST', '/v1/auth/token', { secret: guest.secret });
+  assert.equal(over.status, 429);
+  assert.equal(over.body.error, 'rate');
+
+  // ...and the bound is generous enough that ordinary play never meets
+  // it: a client mints one token per connection.
+  assert.ok(ACCOUNT_MAX >= 60, 'the ceiling is low enough to trip on normal play, which is an outage rather than a defence');
+
+  // A DIFFERENT ACCOUNT IS UNAFFECTED - the bucket is per account, not
+  // global, so one noisy client cannot lock everybody else out.
+  const other = (await call('POST', '/v1/auth/guest', {})).body;
+  assert.equal((await call('POST', '/v1/auth/token', { secret: other.secret })).status, 200,
+    'one account over its limit stopped another account working');
+});
+
+test('AUDIT-ACC F9: an idle session is DEAD, and the row is deleted rather than refused', async () => {
+  // `SESSION_IDLE_S` was declared, documented as the bound "before a
+  // sweep may take it", and used by NOTHING. There was no sweep, so a
+  // session never expired and an abandoned credential - a shared
+  // machine, an old phone, a leaked backup - worked forever.
+  //
+  // Fight Life enforces it on the auth path rather than in a scheduled
+  // job, which needs no cron that can silently stop running. That shape
+  // is what was carried over, and this drives it.
+  const db = d1();
+  const made = await createGuest(ctx(db), { deviceLabel: 'an old phone' });
+  assert.ok(await resolveSession(ctx(db), made.secret), 'a fresh session did not resolve');
+
+  // THE BOUNDARY IS CHECKED FROM BOTH SIDES, on SEPARATE sessions - an
+  // off-by-one here signs everybody out. They have to be separate
+  // because a resolve that SUCCEEDS touches `last_seen`, so asking the
+  // same session twice measures the touch rather than the bound. (The
+  // first cut of this pin did exactly that and read as a bug in the
+  // code; it was a bug in the pin, and the touch was doing its job.)
+  const atBound = await openSession(ctx(db), made.id, 'a laptop');
+  assert.ok(await resolveSession({ db, subtle, rand, nowS: NOW + SESSION_IDLE_S }, atBound.secret),
+    'a session exactly at the bound was killed early');
+
+  // ...and one second past it is gone.
+  const past = { db, subtle, rand, nowS: NOW + SESSION_IDLE_S + 1 };
+  assert.equal(await resolveSession(past, made.secret), null, 'an idle session still resolved');
+
+  // THE ROW IS GONE, not merely refused: a dead credential stops
+  // existing rather than being rejected forever. The laptop's session
+  // survives, because it was used inside the window.
+  const left = db._raw.prepare('SELECT id FROM sessions').all().map((r) => r.id);
+  assert.deepEqual(left, [atBound.sessionId], 'the idle session was refused but left in the table');
+});
+
+test('AUDIT-ACC F10: a failed freshness write does not fail the request it rode in on', async () => {
+  // The two `last_seen` touches were unguarded, so a D1 hiccup on a
+  // cosmetic write turned an AUTHORISED request into a 500. By the time
+  // those run the caller is already authenticated and a stale last_seen
+  // is cosmetic - Fight Life says exactly this at its own touch.
+  const db = d1();
+  const made = await createGuest(ctx(db), {});
+
+  // a database that answers reads and refuses every UPDATE
+  const brittle = {
+    _raw: db._raw,
+    prepare(sql) {
+      if (/^\s*UPDATE/i.test(sql)) {
+        return { bind() { return this; }, async run() { throw new Error('D1_ERROR: storage is having a day'); } };
+      }
+      return db.prepare(sql);
+    },
+  };
+  const who = await resolveSession({ db: brittle, subtle, rand, nowS: NOW + 60 }, made.secret);
+  assert.ok(who, 'a failed cosmetic write threw away a valid session');
+  assert.equal(who.player.id, made.id);
+});
+
 test('ACC1b: a secret resolves in ONE lookup, and a bad one is null rather than a throw', async () => {
   const db = d1();
   const made = await createGuest(ctx(db));
@@ -164,6 +291,77 @@ test('ACC1b: a secret resolves in ONE lookup, and a bad one is null rather than 
   db._raw.prepare('DELETE FROM players WHERE id = ?').run(made.id);
   assert.equal(await resolveSession(ctx(db), made.secret), null);
   assert.equal(db._raw.prepare('SELECT COUNT(*) c FROM sessions').get().c, 0, 'the cascade left the session behind');
+});
+
+test('AUDIT-ACC F7: EVERY name the bank can spell is one the wire can carry', () => {
+  // THE GENERATOR COULD SPELL A NAME THAT DID NOT FIT. `NAME_MAX` is 24
+  // and the longest combination in the bank is 25 - `Kelkemmelian
+  // Larethbinder` and three siblings - so `createGuest` threw and
+  // /v1/auth/guest answered 500 for roughly one guest in 43,000. The
+  // comment at that throw said it "should never fire". Nobody had
+  // multiplied the bank out and compared it to the bound.
+  //
+  // THE SPACE IS FINITE, SO IT IS ENUMERATED RATHER THAN SAMPLED. A
+  // sample of a few hundred draws would miss four names in 173,330
+  // essentially always, which is exactly how this survived ACC1b's own
+  // "eighteenth draw" pin.
+  const combos = [];
+  for (const bank of GUEST_BANKS) {
+    const sets = banks[bank].sets;
+    for (const a of sets[0].parts) for (const b of sets[1].parts) {
+      const first = a + b;
+      for (const c of sets[4].parts) for (const d of sets[5].parts) combos.push(`${first} ${c + d}`);
+    }
+  }
+  assert.ok(combos.length > 100_000, `only ${combos.length} names - the bank shrank and this pin is no longer exhaustive`);
+
+  // The hazard is REAL and it is MEASURED. If a future NAME_MAX or a
+  // changed nameGen.json makes this empty, the rejection in guestName
+  // is dead code and should go - so the pin says which it expects.
+  const tooLong = combos.filter((n) => !nameIsIssuable(n));
+  assert.ok(tooLong.every((n) => n.length > 24), `a name failed for a reason other than length: ${tooLong.find((n) => n.length <= 24)}`);
+  assert.ok(tooLong.includes('Kelkemmelian Larethbinder'), 'the name this finding is about is no longer generable - re-read the bank before deleting the rejection');
+
+  // ...and the rejection must stay overwhelmingly likely to terminate.
+  assert.ok(tooLong.length / combos.length < 0.01,
+    `${tooLong.length} of ${combos.length} names are unusable - at that rate the bounded re-draw is no longer safe`);
+
+  // EVERY name is guest-SHAPED, which is the law the whole
+  // handle-disjointness argument rests on, asked over the whole space
+  // rather than over a sample.
+  assert.deepEqual(combos.filter((n) => !isGuestShaped(n)), []);
+});
+
+test('AUDIT-ACC F7: the draw that used to 500 now yields a name, and an account', async () => {
+  // DETERMINISTIC, not probabilistic. `pick(n, rand)` returns the byte
+  // modulo n, so a scripted sequence of bytes selects exact indices -
+  // this is the draw that produced `Kelkemmelian Larethbinder`, and
+  // before the fix it threw.
+  const scripted = (seq) => { let k = 0; return (b) => { b[0] = seq[k++] ?? 0; }; };
+  const HIGH_ELF = GUEST_BANKS.indexOf('HighElf');
+  assert.ok(HIGH_ELF >= 0, 'the bank this finding came from is gone');
+
+  // the raw draw still spells the unusable name...
+  const raw = `${banks.HighElf.sets[0].parts[5]}${banks.HighElf.sets[1].parts[1]} `
+    + `${banks.HighElf.sets[4].parts[11]}${banks.HighElf.sets[5].parts[8]}`;
+  assert.equal(raw, 'Kelkemmelian Larethbinder');
+  assert.ok(!nameIsIssuable(raw), 'the name that caused this finding now fits - the pin above says what to do');
+
+  // ...and the generator refuses to hand it out.
+  const name = guestName(scripted([5, 1, 11, 8]), 'HighElf');
+  assert.ok(nameIsIssuable(name), `guestName returned a name the token cannot carry: ${name}`);
+  assert.notEqual(name, raw);
+
+  // AND THE SERVICE ANSWERS. The first byte is eaten by mintId, so the
+  // bank index sits second - without it this drives a different draw
+  // entirely and proves nothing, which cost this audit a wrong result
+  // once already.
+  const db = d1();
+  const made = await createGuest(
+    { db, subtle, rand: scripted([0, HIGH_ELF, 5, 1, 11, 8]), nowS: NOW }, {},
+  );
+  assert.ok(made.id, 'the draw that used to 500 still cannot make an account');
+  assert.ok(nameIsIssuable(made.name));
 });
 
 test('ACC1b: A GUEST NAME AND A HANDLE CANNOT COLLIDE, and it is structural', async () => {
@@ -290,10 +488,16 @@ async function stand() {
   const pkcs8 = Buffer.from(new Uint8Array(await subtle.exportKey('pkcs8', kp.privateKey))).toString('base64');
   const pubB64 = Buffer.from(new Uint8Array(await subtle.exportKey('raw', kp.publicKey))).toString('base64url');
   const env = { DB: d1(), IDENTITY_PRIVATE_KEY: pkcs8, ACCOUNT_VERSION: 'test1', ALLOWED_ORIGIN: 'https://daggerfalljs.dev' };
-  const call = async (method, path, body) => {
+  // AUDIT-ACC F13: a GET presents its credential in the
+  // `Authorization` header, never in the URL - a query string is
+  // written into Cloudflare's logs, into a Referer and into history.
+  const call = async (method, path, body, bearer = null) => {
     const req = new Request(`https://accounts.invalid${path}`, {
       method,
-      headers: body ? { 'content-type': 'application/json' } : {},
+      headers: {
+        ...(body ? { 'content-type': 'application/json' } : {}),
+        ...(bearer ? { authorization: `Bearer ${bearer}` } : {}),
+      },
       body: body === undefined ? undefined : JSON.stringify(body),
     });
     const res = await worker.fetch(req, env);
@@ -343,18 +547,18 @@ test('ACC1b: the Worker mints a guest, then a token the RELAY\'s public key veri
 test('ACC1b: every route needs a secret, and a bad one is 401 and nothing else', async () => {
   const { call } = await stand();
   const guest = (await call('POST', '/v1/auth/guest', {})).body;
-  for (const [m, p, b] of [
+  for (const [m, p, b, bearer] of [
     ['POST', '/v1/auth/token', { secret: 'nope' }],
     ['POST', '/v1/auth/session', { secret: 'nope' }],
     ['POST', '/v1/auth/logout', { secret: 'nope' }],
-    ['GET', '/v1/account?secret=nope', undefined],
+    ['GET', '/v1/account', undefined, 'nope'],
   ]) {
-    const r = await call(m, p, b);
+    const r = await call(m, p, b, bearer);
     assert.equal(r.status, 401, `${m} ${p}`);
     assert.deepEqual(r.body, { error: 'auth' }, 'a refusal says that it failed, never why');
   }
   // ...and with the real one, the account comes back with its devices
-  const acct = await call('GET', `/v1/account?secret=${encodeURIComponent(guest.secret)}`);
+  const acct = await call('GET', '/v1/account', undefined, guest.secret);
   assert.equal(acct.status, 200);
   assert.equal(acct.body.account.id, guest.id);
   assert.equal(acct.body.devices.length, 1);
@@ -384,7 +588,7 @@ test('ACC1b: every route needs a secret, and a bad one is 401 and nothing else',
   assert.equal(wrongMethod.status, 401, 'auth still comes first on a route that exists');
   // the SECOND device's secret, because the first was signed out two
   // lines up - a revoked credential answers 401 whatever the method
-  const authed = await call('GET', `/v1/auth/token?secret=${encodeURIComponent(second.body.secret)}`);
+  const authed = await call('GET', '/v1/auth/token', undefined, second.body.secret);
   assert.equal(authed.status, 405, 'a real route with the wrong method is a 405, not a 404');
 });
 
@@ -596,7 +800,7 @@ test('ACC1c: registering is an UPGRADE IN PLACE, and the code is shown exactly o
 
   // THE SAME ACCOUNT. Not a new row - the id a player already had, and
   // the friends and saves that will hang off it, are untouched.
-  const acct = (await call('GET', `/v1/account?secret=${encodeURIComponent(guest.secret)}`)).body;
+  const acct = (await call('GET', '/v1/account', undefined, guest.secret)).body;
   assert.equal(acct.account.id, guest.id, 'registering minted a new account');
   assert.equal(acct.account.name, 'Nystul');
   assert.equal(acct.account.kind, 'linked');
@@ -742,7 +946,7 @@ test('ACC1c: a password is changed with the OLD one, and email is COMPLETELY opt
   // EMAIL IS OPTIONAL AND MEANS IT: the account has worked through all
   // of the above without one, and setting one changes nothing about
   // what it can do.
-  const before = (await call('GET', `/v1/account?secret=${encodeURIComponent(guest.secret)}`)).body;
+  const before = (await call('GET', '/v1/account', undefined, guest.secret)).body;
   assert.ok(!('email' in before.account), 'an address a player never gave is being shipped back to them');
   assert.equal((await call('POST', '/v1/account/email', { secret: guest.secret, email: 'someone@example.com' })).status, 200);
   assert.equal((await call('POST', '/v1/account/email', { secret: guest.secret, email: 'not an address' })).body.error, 'email');
@@ -767,7 +971,7 @@ test('ACC1c: no credential of any kind is stored in the clear, or shipped back',
   }
   assert.notEqual(row.password, row.recovery_hash);
 
-  const view = JSON.stringify((await call('GET', `/v1/account?secret=${encodeURIComponent(guest.secret)}`)).body);
+  const view = JSON.stringify((await call('GET', '/v1/account', undefined, guest.secret)).body);
   for (const leak of ['a memorable phrase', reg.body.recoveryCode, row.password, row.recovery_hash]) {
     assert.ok(!view.includes(leak), `the account view ships ${leak.slice(0, 20)}`);
   }

@@ -87,7 +87,11 @@ function call(method, path, body, opts = {}) {
     const payload = body === undefined ? null : JSON.stringify(body);
     const req = httpRequest({
       host: '127.0.0.1', port: PORT, path, method, timeout: Number(opts.timeout ?? 20_000),
-      headers: payload ? { 'content-type': 'application/json', 'content-length': Buffer.byteLength(payload) } : {},
+      headers: {
+        ...(payload ? { 'content-type': 'application/json', 'content-length': Buffer.byteLength(payload) } : {}),
+        // AUDIT-ACC F13: the credential rides in a header, never a URL.
+        ...(opts.bearer ? { authorization: `Bearer ${opts.bearer}` } : {}),
+      },
     }, (res) => {
       let text = '';
       res.on('data', (d) => { text += d; });
@@ -248,7 +252,7 @@ try {
     { secret: guest.secret, handle: 'ProbeWalker', password: 'a good long one' })).body;
   const regMs = Date.now() - t0;
   ok('registering is an UPGRADE IN PLACE - the id does not change', Boolean(reg?.recoveryCode));
-  const view = (await get(`/v1/account?secret=${encodeURIComponent(guest.secret)}`)).body;
+  const view = (await get('/v1/account', { bearer: guest.secret })).body;
   ok('...the same player id, now linked', view?.account?.id === guest.id && view?.account?.kind === 'linked');
   // TWO derivations (password + recovery code) plus D1 round trips.
   ok(`PBKDF2 at ${PBKDF2_ITERS} fits a Worker's CPU budget`, regMs < 10_000, `register took ${regMs}ms`);

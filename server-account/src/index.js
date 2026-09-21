@@ -34,7 +34,7 @@
 //   POST /v1/auth/guest   { label? }      -> { id, secret, sessionId, name, kind }
 //   POST /v1/auth/token   { secret }      -> { token, name, kind, expiresAt }
 //   POST /v1/auth/session { secret, label? } -> { secret, sessionId }   (a second device)
-//   GET  /v1/account      ?secret=        -> { account, devices[] }
+//   GET  /v1/account      Authorization: Bearer <secret> -> { account, devices[] }
 //   POST /v1/auth/logout  { secret, all? }-> { revoked, scope }
 //
 // Bindings (wrangler.toml): env.DB (D1), env.ALLOWED_ORIGIN,
@@ -53,17 +53,21 @@
 //                             would have to be re-minted, which
 //                             invalidates every token already issued.
 //
-// THE SECRET IS A BEARER CREDENTIAL and it is carried in the BODY, not
-// the query string, on everything that mutates - a query string lands
-// in logs and in a referrer. `/v1/account` takes one for convenience on
-// a GET and is the one place that is true; it is read-only, and a slice
-// that makes it do more must move it.
+// THE SECRET IS A BEARER CREDENTIAL, so it rides in the
+// `Authorization: Bearer` header, or in the BODY of a POST. NEVER in a
+// query string - AUDIT-ACC F13 found `/v1/account` reading `?secret=`,
+// excused at the time as "read-only, and a slice that makes it do more
+// must move it". That excuse answers the wrong risk: the hazard is not
+// that the route mutates, it is that a URL is written into Cloudflare's
+// request logs, into a Referer, and into browser history. Read-only or
+// not, the credential was in all three.
 // ═══════════════════════════════════════════════════════════════════
 
 import {
   createGuest, openSession, resolveSession, closeSession, closeAllSessions,
   devicesOf, accountView, displayName, accountKind,
   register, login, recover, changePassword, setEmail, overRate,
+  ACCOUNT_MAX, ACCOUNT_WINDOW_S,
 } from './accounts.js';
 import { mintToken, MAX_TTL_S, TOKEN_V } from '../../src/net/identityToken.js';
 import { ACCOUNT_VERSION, MAX_BODY_BYTES, ROUTES, OPEN_ROUTES } from './service.js';
@@ -115,7 +119,7 @@ export default {
         headers: {
           'access-control-allow-origin': origin,
           'access-control-allow-methods': 'GET, POST, OPTIONS',
-          'access-control-allow-headers': 'content-type',
+          'access-control-allow-headers': 'content-type, authorization',
           'access-control-max-age': '86400',
         },
       });
@@ -187,9 +191,40 @@ export default {
       // one indexed lookup every time.
       const body = request.method === 'POST' ? await readBody(request) : {};
       if (!body) return no('body', 400, origin);
-      const secret = request.method === 'POST' ? body.secret : url.searchParams.get('secret');
+      // ═══ AUDIT-ACC F13: A CREDENTIAL DOES NOT GO IN A URL ══════
+      //
+      // This read `?secret=` on a GET, and the comment above defended
+      // it as "read-only, and a slice that makes it do more must move
+      // it". That answers the wrong risk. The hazard was never that the
+      // route mutates - it is that A URL IS LOGGED: Cloudflare records
+      // request URLs, a Referer carries them to any third party the
+      // page links to, and a browser writes them into history. The
+      // session secret was landing in all three.
+      //
+      // A HEADER IS NOT LOGGED BY DEFAULT and is never in a Referer, so
+      // that is where a bearer credential belongs. A POST may still
+      // carry it in the body - a body is in none of those places - and
+      // the header wins if both are present, so there is one answer
+      // when they disagree.
+      const auth = request.headers.get('authorization') ?? '';
+      const bearer = /^Bearer (.+)$/.exec(auth)?.[1];
+      const secret = bearer ?? (request.method === 'POST' ? body.secret : null);
       const who = await resolveSession(ctx, secret);
       if (!who) return no('auth', 401, origin);
+
+      // AUDIT-ACC F12: A CREDENTIAL IS NOT A LICENCE TO HAMMER. The
+      // open routes were bounded per address and everything behind a
+      // session was not, so one valid secret could mint signatures and
+      // spend D1 without limit. Bounded per ACCOUNT rather than per
+      // address, because the account is what the caller proved.
+      //
+      // 429 AND NOT 401. Telling a rate-limited player their
+      // credentials are wrong sends them to reset a password that was
+      // never the problem - Fight Life's own note beside the same
+      // check, and the reason its limiter throws rather than returns.
+      if (await overRate(ctx, `acct:${who.player.id}`, ACCOUNT_MAX, ACCOUNT_WINDOW_S)) {
+        return no('rate', 429, origin);
+      }
 
       if (path === '/v1/auth/token' && request.method === 'POST') {
         const key = await signingKey(env, subtle);

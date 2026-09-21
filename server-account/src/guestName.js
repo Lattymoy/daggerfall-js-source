@@ -34,6 +34,9 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import banks from '../../src/characters/nameGen.json' with { type: 'json' };
+// AUDIT-ACC F7: the generator has to know the wire's own bound, because
+// the bank can spell a name that exceeds it. One law, asked from here.
+import { nameIsIssuable } from '../../src/net/identityToken.js';
 
 /** The banks a guest may be drawn from - every one the file carries
  *  that has the two name sets this shape needs. DERIVED from the data
@@ -85,9 +88,44 @@ export function pick(n, rand) {
 
 const partsOf = (bank, set) => banks[bank].sets[set].parts;
 
+/** One draw, unfiltered. Separate from `guestName` so the rejection
+ *  below has something to reject. */
+function drawName(rand, bank) {
+  const part = (set) => { const p = partsOf(bank, set); return p[pick(p.length, rand)]; };
+  // sets 0+1 are the male first name, 4+5 the surname - the same sets
+  // characters/nameHelper.js draws those two from
+  return `${part(0) + part(1)} ${part(4) + part(5)}`;
+}
+
 /**
  * A name for a guest. Two parts for the first name and two for the
  * surname, the way every Breton in the game is named.
+ *
+ * ═══ AUDIT-ACC F7: THE BANK CAN SPELL A NAME THE WIRE CANNOT CARRY ══
+ *
+ * `NAME_MAX` is 24 and the longest name this bank can produce is 25:
+ * `Kelkemmelian Larethbinder`, and three siblings sharing that surname.
+ * Four of the 173,330 names the generator can spell - about one guest
+ * in 43,000 - and every one of them made `createGuest` throw, which
+ * `index.js` turns into a 500. A player who drew one simply could not
+ * get an account until they tried again.
+ *
+ * The comment at that throw said "the bank is the game's own, so this
+ * should never fire". Nobody had multiplied the bank out and compared
+ * it to the bound; this audit did, and the claim was false.
+ *
+ * RAISING `NAME_MAX` IS NOT AVAILABLE. It lives in `src/net/wire.js`,
+ * which is in the relay bundle - SLAM8 hashes that bundle's raw bytes,
+ * so touching it costs a RELAY_VERSION bump and drops every connected
+ * player. A four-in-173,330 cosmetic bound is not worth a player's
+ * dungeon run.
+ *
+ * SO THE GENERATOR RESPECTS THE BOUND IT ALWAYS HAD TO. This is
+ * rejection sampling, the same shape `pick` above already uses on the
+ * byte that would have been biased: draw, and throw the draw away if it
+ * falls outside the allowed set. The alternative - pre-filtering the
+ * bank - hard-codes an answer that a changed `nameGen.json` or a
+ * changed `NAME_MAX` would silently invalidate.
  *
  * @param {(b: Uint8Array) => void} rand  fills bytes; `crypto.getRandomValues`
  * @param {string|null} bank  a bank name, or null to draw one
@@ -96,12 +134,15 @@ const partsOf = (bank, set) => banks[bank].sets[set].parts;
 export function guestName(rand, bank = null) {
   const b = bank ?? GUEST_BANKS[pick(GUEST_BANKS.length, rand)];
   if (!GUEST_BANKS.includes(b)) throw new RangeError(`no such name bank: ${b}`);
-  const part = (set) => { const p = partsOf(b, set); return p[pick(p.length, rand)]; };
-  // sets 0+1 are the male first name, 4+5 the surname - the same sets
-  // characters/nameHelper.js draws those two from
-  const first = part(0) + part(1);
-  const last = part(4) + part(5);
-  return `${first} ${last}`;
+  // Bounded, because an unbounded retry over a bank that had somehow
+  // become entirely unusable is a Worker that spins instead of failing.
+  // At four bad names in 173,330 the chance of eight consecutive
+  // rejections is about one in 10^37.
+  for (let attempt = 0; attempt < 8; attempt++) {
+    const name = drawName(rand, b);
+    if (nameIsIssuable(name) && GUEST_NAME_RE.test(name)) return name;
+  }
+  throw new Error(`no issuable name could be drawn from ${b} - the bank and NAME_MAX have parted`);
 }
 
 /** Is this the name of a guest - by its SHAPE, not by asking anybody? */
