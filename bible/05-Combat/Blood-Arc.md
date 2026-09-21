@@ -1499,6 +1499,27 @@ Slices, each behind its own `features.js` row:
    -0.77, drip -0.58 against their anchors; inverted, those are about
    +0.9, which is what the shipped code was doing.
 
+   THE RUN, on chromium/SwiftShader: **33 of 33**. The film is in the
+   picture for the first time - classic heart `192,16,13` against its
+   shoulder `223,22,17` (red gain 1.164, saturation falling 0.076 ->
+   0.088), lane heart `136,14,10` against `152,23,18` (gain 1.118,
+   0.090 -> 0.133). The two lanes read different gains ON PURPOSE and
+   the row says so: the classic set shows it straight, the lane applies
+   it in linear and then tonemaps, which is F3 seen from the other
+   side. And the wet rows carry both halves - under a torch
+   `142,40,39` wet against `156,19,16` dry, the lamp's colour arriving
+   in green and blue while the red FALLS; at noon, head on, where
+   Schlick gives about two per cent, `119,12,9` against `134,13,9`: no
+   highlight at all, just the darkening. A build with BLOOD3's
+   any-angle glint fails that pair now.
+
+   The first run of this came back **18/33**, and every failure was the
+   probe rather than the code: the parity fixture carried its red in
+   the TEXTURE and tinted itself white, which no decal in the game
+   does - so once the ink stopped being an albedo factor it compared a
+   white mark against a red wall. The fixture takes its colour from the
+   tint now, as a mark does.
+
    Still not covered by a picture: the meniscus. It is pinned by source
    - the taps, the tangent-frame solve term for term, its placement
    before the sun visibility, both guards - and killed by four mutants,

@@ -3450,7 +3450,13 @@ test('BLOOD2f: the lane glints a wet mark - the lamp and the sun seen in it at t
   assert.doesNotMatch(F_DECAL_FS, /elWetGlint/, 'no second loop');
   // the probe reads it
   const probe = a4Read('tools/bloodProbe.mjs');
-  assert.match(probe, /a WET mark under a torch still glints/);
+  // AUDIT BLOOD3 F5: the row says BOTH halves now - the lamp's colour
+  // arriving in green and blue, and the red going the OTHER way,
+  // because a wet film is darker. A build with the old any-angle
+  // glint and no darkening fails the second half.
+  assert.match(probe, /a WET mark under a torch glints in the lamp.{0,2}s colour AND darkens in its own/);
+  assert.match(probe, /wT\[0\] < fT\[0\]/, 'the red falls - the wet darkening, driven by the picture');
+  assert.match(probe, /a wet mark is not a highlight - it is DARKER, and still blood/, 'and head-on in the sun, where Schlick gives almost nothing, the darkening is the whole cue');
   assert.match(probe, /it is still BLOOD, not a white highlight/, 'BLOOD3: the picture settles what Mac reported - a wet mark is not a white patch');
   assert.match(probe, /the wet float means nothing to the classic set/);
   assert.match(probe, /new Float32Array\(4 \* 10\)/, 'ten floats a corner');
