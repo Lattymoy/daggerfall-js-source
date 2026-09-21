@@ -362,5 +362,5 @@ test('A1 wiring pins: the M binding and the mesh shader slice seam', () => {
   // is module-global so a leaked key can never serve a stale bitmap
   assert.match(src('src/scenes/dungeonContext.js'), /activeOverlay\?\.dispose\?\.\(\);/, 'the forced overwrite disposes first');
   assert.match(w, /let _microVer = 0;/, 'module-level micro-map versions');
-  assert.match(src('src/scenes/dungeonContext.js'), /destroy\(\) \{\n[\s\S]{0,500}exitDungeonAutomap\(classicMinutesRef\.value\);/, 'dungeon teardown runs the exit law with the EXIT time (AUDIT-AMAP F11, :2155; N=0 forgets; window widened for NT1\'s dead latch ahead of it)');
+  assert.match(src('src/scenes/dungeonContext.js'), /destroy\(\) \{\n[\s\S]{0,700}exitDungeonAutomap\(classicMinutesRef\.value\);/, 'dungeon teardown runs the exit law with the EXIT time (AUDIT-AMAP F11, :2155; N=0 forgets; window widened for NT1\'s dead latch ahead of it, and again for ENH-NOTICE3\'s presenter unregister)');
 });

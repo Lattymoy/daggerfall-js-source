@@ -32,6 +32,11 @@ import { maxEncumbrance } from '../src/combat/formulas.js';
 import { carriedWeight, totalWeight } from '../src/systems/inventory.js';
 import { liveStat } from '../src/systems/statMods.js';
 import { _resetForTests } from '../src/systems/uiPrefs.js';
+// ENH-NOTICE3: the pane's `notice` line is DFU's click-anywhere box and
+// rides the enhanced notice panel now.
+import {
+  enhancedNoticeKeys, destroyEnhancedNotice, ENHANCED_NOTICE_ID,
+} from '../src/ui/enhancedNotice.js';
 
 const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 
@@ -93,7 +98,7 @@ test('U53: encumbrance is the same expression the sheet and the classic window u
     'LIVE strength - a drained player must not be told they can carry the undrained amount');
   // ...and the OTHER half. PlayerEntity.CarriedWeight (:184) is the
   // items PLUS the gold counter's weight, and the pane composes it by
-  // hand (enhancedInventory.js:191-192) because it is handed the list
+  // hand (enhancedInventory.js:201-202) because it is handed the list
   // and not the entity - so it must still land on inventory
   // .carriedWeight's answer.
   assert.equal(m.encumbrance.now, Math.trunc(carriedWeight(e)));
@@ -2132,4 +2137,133 @@ test('JAN2: a repaint that lands after the unmount paints nothing instead of thr
     assert.doesNotThrow(repaint, 'mutants: render() reaching host.querySelector with host null');
     assert.equal(host.querySelectorAll('.itemrow').length, 0, 'and it does not put a closed window back up');
   });
+});
+
+
+// ── ENH-NOTICE3: THE PANE'S `notice` IS A BOX, AND THE PANEL'S ────
+
+/** The live notice panels' rows, read off the stack in `doc`. LIVE by
+ *  the module's own key list: `withDom`'s nodes detach on remove, but a
+ *  released panel's node only leaves after the slide, so the keys are
+ *  the truthful probe. */
+const noticeTexts = (dom) => {
+  const live = new Set(enhancedNoticeKeys());
+  const stack = (dom.body.children ?? []).find((c) => c.id === ENHANCED_NOTICE_ID);
+  return (stack?.children ?? [])
+    .filter((c) => String(c.className).split(/\s+/).includes('notice') && live.has(c.dataset.owner))
+    .flatMap((panel) => (panel.children.find((c) => c.className === 'notice-body')?.children ?? [])
+      .filter((r) => r.style.display !== 'none').map((r) => r.textContent));
+};
+
+/** The pane over `skin`, with ONE broken longsword in the bag: picking
+ *  it and pressing Wear is DaggerfallInventoryWindow.cs's EquipItem
+ *  broken arm (:1330-1341, itemBrokenTextId 29, ClickAnywhereToClose). */
+function withBrokenPack(skin, fn) {
+  const had = Object.hasOwn(globalThis, 'location') ? globalThis.location : undefined;
+  globalThis.location = { search: `?skin=${skin}` };
+  try {
+    return withDom((dom) => {
+      const host = dom.mk('div');
+      dom.body.append(host);
+      const e = hero();
+      e.items = [mk('Longsword', 'Weapons', { currentCondition: 0 })];
+      const view = mountEnhancedInventory(host, {
+        entity: e, items: () => e.items, onExit: () => {},
+      });
+      const pick = () => host.querySelectorAll('.itemrow')[0].onclick();
+      // (this document's selector engine takes one compound
+      // selector, not a descendant pair - the button is found by its
+      // own class and named by its label)
+      const wear = () => host.querySelectorAll('.act')
+        .find((b) => b.textContent === 'Wear').onclick();
+      const sheetNotice = () => host.querySelectorAll('.sheet-notice').map((n) => n.textContent);
+      return fn({ dom, host, e, view, pick, wear, sheetNotice });
+    });
+  } finally {
+    if (had === undefined) delete globalThis.location; else globalThis.location = had;
+    destroyEnhancedNotice();
+  }
+}
+
+test('ENH-NOTICE3: the pack\'s refusal lands in the notice panel and NOT on the sheet, and it leaves on the next action and on the unmount (mutants: text-left-on-the-sheet, no-release-when-the-notice-clears, no-release-on-unmount)', () => {
+  withBrokenPack('enhanced', ({ dom, view, pick, wear, sheetNotice }) => {
+    assert.deepEqual(enhancedNoticeKeys(), [], 'a quiet pack raises no panel');
+    pick();
+    wear();   // :1330-1341 - the broken box
+    assert.equal(noticeTexts(dom).length, 1, 'one box, one panel');
+    assert.match(noticeTexts(dom)[0], /broken and cannot be worn/, 'the refusal, verbatim');
+    assert.deepEqual(sheetNotice(), [],
+      'and no .sheet-notice in the window - the box has ONE face on this skin');
+    assert.deepEqual(dom.body.querySelectorAll('.notice-hint').map((n) => n.textContent), [],
+      'AUDIT ENH-NOTICE3 B3: no hint - the pane takes no click and no key for a refusal, it clears on the next action');
+
+    // THE PANE'S OWN DISMISSAL: the next action clears `notice`
+    // (every writer opens with `notice = null`), and the panel with it
+    pick();   // a second click on the row deselects: an action, and a repaint
+    assert.deepEqual(enhancedNoticeKeys(), [], 'the panel goes when the line does');
+
+    // AND THE UNMOUNT: a HELD panel arms no watchdog
+    pick();
+    wear();
+    assert.equal(enhancedNoticeKeys().length, 1);
+    view.unmount();
+    assert.deepEqual(enhancedNoticeKeys(), [], 'unmount releases - a held panel with no release is a leak');
+  });
+});
+
+test('ENH-NOTICE3: JAN2 holds - a repaint after the unmount raises no panel of its own (mutants: the-hold-lifted-above-the-host-guard)', () => {
+  withBrokenPack('enhanced', ({ view, pick, wear }) => {
+    pick();
+    wear();
+    const repaint = view.repaint;
+    view.unmount();
+    assert.doesNotThrow(repaint);
+    assert.deepEqual(enhancedNoticeKeys(), [],
+      'render()\'s `if (!host) return` is ABOVE the hold: a dead pane never speaks');
+  });
+});
+
+test('ENH-NOTICE3: the classic skin is untouched - the sheet still says it and no stack is built (mutants: panel-on-every-skin)', () => {
+  withBrokenPack('classic', ({ dom, pick, wear, sheetNotice }) => {
+    pick();
+    wear();
+    assert.equal(sheetNotice().length, 1, 'the line is on the sheet, as it always was');
+    assert.match(sheetNotice()[0], /broken and cannot be worn/);
+    assert.deepEqual(enhancedNoticeKeys(), [], 'no panel');
+    assert.equal((dom.body.children ?? []).some((c) => c.id === ENHANCED_NOTICE_ID), false,
+      'and no stack was ever built');
+  });
+});
+
+test('ENH-NOTICE3 (AUDIT B/F5): a refusal raised over a LOOT PILE with the pack closed is the panel\'s too - the frame the player is reading keeps no second copy', () => {
+  // The line is painted in TWO places (the pack's footer and the loot
+  // frame), and only the pack's was driven. A loot session opens with
+  // the pack CLOSED (`packOpen = !d.loot`), so this is the arm a
+  // player meets when they open a corpse with a full purse.
+  const had = Object.hasOwn(globalThis, 'location') ? globalThis.location : undefined;
+  globalThis.location = { search: '?skin=enhanced' };
+  try {
+    withDom((dom) => {
+      const host = dom.mk('div');
+      dom.body.append(host);
+      const e = hero();
+      e.goldPieces = 2000000;   // CanCarryAmount's own gate: the coin weight alone fills the load (itemTransfer.js:270)
+      const pile = [mk('Claymore')];
+      const view = mountEnhancedInventory(host, {
+        entity: e, items: () => e.items, loot: { items: () => pile }, onExit: () => {},
+      });
+      const rows = host.querySelectorAll('.itemrow');
+      assert.equal(rows.length, 1, 'the loot frame is what the player is looking at');
+      rows[0].onclick();   // MAC-M2: a loot-side click TAKES, and this one is refused
+      assert.equal(noticeTexts(dom).length, 1, 'the refusal is on the panel');
+      assert.match(noticeTexts(dom)[0], /cannot carry/i);
+      assert.deepEqual(host.querySelectorAll('.sheet-notice').map((n) => n.textContent), [],
+        'mutant: the loot frame keeps its own copy - two faces for one box, which is the whole finding');
+      view.unmount();
+      assert.deepEqual(enhancedNoticeKeys(), []);
+    });
+  } finally {
+    if (had === undefined) delete globalThis.location; else globalThis.location = had;
+    destroyEnhancedNotice();
+  }
 });

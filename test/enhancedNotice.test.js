@@ -7,13 +7,14 @@
 // The model is the box (ActionTextBox, the no-options ChoiceWindow -
 // the port's two homes for DFU's click-anywhere DaggerfallMessageBox);
 // what the skin changes is the paint. These drive the enhanced arm
-// over the fake document test/hudtext.test.js drives its column
+// over the fake document test/hudtext.test.js drives its toasts
 // through, and the classic arm over a recording renderer, and each pin
 // names the mutants it kills.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   drawEnhancedNotice, releaseEnhancedNotice, destroyEnhancedNotice, enhancedNoticeKeys, noticeDraw, noticeKey,
+  noticeHold, drawEnhancedToasts, releaseEnhancedToasts, enhancedToastOwners,
   _setNoticeClockForTests, ENHANCED_NOTICE_ID, NOTICE_SLIDE_MS, NOTICE_WATCHDOG_MS, NOTICE_HINT,
 } from '../src/ui/enhancedNotice.js';
 import { ActionTextBox, ActionInputBox } from '../src/ui/actionText.js';
@@ -25,6 +26,7 @@ function fakeNode(tag, doc) {
     tagName: tag.toUpperCase(), children: [], parent: null, className: '', textContent: '', id: '',
     style: { setProperty(k, v) { this[k] = v; } }, dataset: {}, attrs: {},
     append(...cs) { for (const c of cs) { c.parent = n; n.children.push(c); } },
+    insertBefore(c, ref) { c.parent = n; const i = n.children.indexOf(ref); if (i < 0) n.children.push(c); else n.children.splice(i, 0, c); },
     setAttribute(k, v) { n.attrs[k] = v; },
     remove() { if (n.parent) { n.parent.children.splice(n.parent.children.indexOf(n), 1); n.parent = null; } n.removed = true; },
   };
@@ -297,7 +299,8 @@ test('ENH-NOTICE1: the sheet - right edge, pointer-transparent, a slide the modu
   const stack = /\.notice-stack \{([^}]*)\}/.exec(ENHANCED_CSS)?.[1] ?? '';
   assert.match(stack, /position: fixed; right: 0;/, 'mutants: the stack not pinned to the right edge');
   assert.match(stack, /pointer-events: none/, 'mutants: the panel eating the click that dismisses the box');
-  assert.match(stack, /z-index: 30/);
+  assert.match(stack, /z-index: 31/);   // AUDIT ENH-NOTICE3 A7: off the tie with the update scrim at 30
+  assert.match(stack, /max-height: 90vh; overflow: hidden;/, 'AUDIT ENH-NOTICE3 A1: what will not fit is clipped, not spilled off the screen');
   const panel = /\n\.notice \{([^}]*)\}/.exec(ENHANCED_CSS)?.[1] ?? '';
   assert.match(panel, /transform: translateX\(110%\)/, 'mutants: the panel resting on screen before its slide');
   assert.match(panel, new RegExp(`transition: transform ${NOTICE_SLIDE_MS}ms`), 'mutants: the sheet\'s slide and the module\'s removal out of step');
@@ -439,7 +442,7 @@ test('ENH-NOTICE2: the service flow - plain text steps ride the panel in place, 
   });
 });
 
-test('ENH-NOTICE2: THE ROSTER - the eight windows drawn on both skins that raise their own click-anywhere box, no more and no fewer', () => {
+test('ENH-NOTICE2: THE ROSTER - the eight windows drawn on both skins that raise their own click-anywhere box, and (ENH-NOTICE3) the model, the three DOM windows and the hunt - no more and no fewer', () => {
   const ROSTER = ['potionMakerWindow', 'itemMakerWindow', 'spellMakerWindow', 'bankWindow', 'restWindow', 'covenWindow', 'guildServiceWindow', 'guildServiceWindows'];
   for (const f of ROSTER) {
     const src = rd(`src/ui/${f}.js`);
@@ -447,8 +450,143 @@ test('ENH-NOTICE2: THE ROSTER - the eight windows drawn on both skins that raise
     assert.match(src, /noticeFrame\(this, /, `${f}: draw does not decide the frame`);
     assert.match(src, /_close\(\) \{[^}]*noticeRelease\(this\)/, `${f}: _close does not release - the host drops the window and never draws it again`);
   }
-  // nobody else imports the seam: the two homes take noticeDraw, and a
-  // window the enhanced skin replaces with a DOM twin has no notice to hand over
+  // nobody else imports the seam: the two homes take noticeDraw; the
+  // PopupText model takes drawEnhancedToasts (ENH-NOTICE3 - the HUD line
+  // as a toast); the DOM-native windows that raise a box of their own
+  // take noticeHold; the hunt window's busy page takes noticeFrame.
   const importers = readdirSync(new URL('../src/ui/', import.meta.url)).filter((f) => f.endsWith('.js') && /from '\.\/enhancedNotice\.js'/.test(rd(`src/ui/${f}`))).map((f) => f.replace(/\.js$/, '')).sort();
-  assert.deepEqual(importers, [...ROSTER, 'actionText', 'talkWindow'].sort());
+  assert.deepEqual(importers, [...ROSTER, 'actionText', 'talkWindow', 'hudText', 'enhancedTavern', 'enhancedInventory', 'heldMap', 'huntWindow'].sort());
+});
+
+// ── ENH-NOTICE3 (2026-09-21, Mac: "All mods, including climates and
+// calories need to utilize the enhanced notification popup") - THE
+// SAME STACK CARRIES THE HUD LINE, AND A DOM WINDOW HOLDS A PANEL ────
+//
+// The toasts' laws as HudText drives them are pinned where the model
+// is (test/hudtext.test.js); these are the module's own two doors.
+
+test('ENH-NOTICE3: noticeHold - a DOM window\'s box is HELD with no watchdog until it releases; null releases; the classic skin mints nothing', () => {
+  withSkin('enhanced', (doc) => {
+    const clock = fakeClock();
+    const win = {};
+    assert.equal(noticeHold(win, ['You cannot carry any more.']), true);
+    assert.equal(panelsOf(doc).length, 1);
+    assert.equal(bodyOf(panelsOf(doc)[0]).children[0].textContent, 'You cannot carry any more.');
+    assert.equal(panelsOf(doc)[0].className, 'notice notice-in', 'a box the window keeps the dismissal of - the hint and the edge are the box\'s');
+    assert.equal(clock.pending().length, 0,
+      'mutants: the watchdog armed on a held panel, so a DOM window\'s box - which draws no frame - slides out on its own after NOTICE_WATCHDOG_MS');
+    // repainted in place - a second hold is the same panel
+    noticeHold(win, ['You cannot carry any more.', 'Drop something first.']);
+    assert.equal(panelsOf(doc).length, 1, 'mutant: a second hold raises a second panel');
+    assert.equal(bodyOf(panelsOf(doc)[0]).children.length, 2);
+    // null releases; so does noticeRelease
+    assert.equal(noticeHold(win, null), false);
+    assert.equal(panelsOf(doc)[0].className, 'notice notice-out', 'mutant: null does not release');
+    clock.fire(NOTICE_SLIDE_MS);
+    assert.equal(stackOf(doc), null);
+    noticeHold(win, ['again']);
+    noticeRelease(win);
+    assert.equal(panelsOf(doc)[0].className, 'notice notice-out', 'mutant: noticeRelease does not know a held owner');
+  });
+  withSkin('classic', (doc) => {
+    const win = {};
+    assert.equal(noticeHold(win, ['You cannot carry any more.']), false, 'the classic skin: the window paints its own card');
+    assert.equal(stackOf(doc), null);
+    assert.equal(win._noticeKey, undefined, 'no key minted for a panel that was never raised');
+  });
+});
+
+test('ENH-NOTICE3: drawEnhancedToasts - one panel per row id under the owner, released when the row leaves the frame, hidden as one, disposed as one', () => {
+  withSkin('enhanced', (doc) => {
+    const clock = fakeClock();
+    const out = drawEnhancedToasts({ rows: ['a', 'b'], ids: [1, 2] }, doc, 'town1');
+    assert.equal(out.length, 2);
+    assert.deepEqual(out.map((p) => p.dataset.owner), ['town1:1', 'town1:2']);
+    assert.deepEqual(out.map((p) => p.className), ['notice notice-toast notice-in', 'notice notice-toast notice-in']);
+    assert.equal(out[0].children.find((c) => c.className === 'notice-hint'), undefined, 'mutant: a hint on a toast');
+    assert.equal(drawEnhancedToasts({ rows: [], ids: [] }, doc, 'dungeon1').length, 0, 'silence from another owner builds nothing');
+    // the front row pops: its toast alone slides out
+    drawEnhancedToasts({ rows: ['b'], ids: [2] }, doc, 'town1');
+    assert.equal(out[0].className, 'notice notice-toast notice-out', 'mutants: the popped row left standing; the class dropped on release');
+    assert.equal(out[1].className, 'notice notice-toast notice-in', 'mutant: every toast released on a pop (index keys)');
+    clock.fire(NOTICE_SLIDE_MS);
+    assert.ok(out[0].removed);
+    // hidden as one, with an EMPTY frame (HudText.hide's shape) - not released
+    drawEnhancedToasts({ rows: [], ids: [], visible: false }, doc, 'town1');
+    assert.equal(out[1].style.display, 'none', 'mutant: an empty hidden frame treated as "all popped" - the rows slide out and re-slide in when the HUD returns');
+    assert.equal(out[1].className, 'notice notice-toast notice-in');
+    drawEnhancedToasts({ rows: ['b'], ids: [2] }, doc, 'town1');
+    assert.equal(out[1].style.display, '');
+    // the watchdog still guards a model whose host stopped drawing
+    assert.ok(clock.pending().some((t) => t.ms === NOTICE_WATCHDOG_MS), 'a toast is drawn per frame, so silence releases it');
+    // disposed as one
+    drawEnhancedToasts({ rows: ['c'], ids: [1] }, doc, 'dungeon1');
+    releaseEnhancedToasts('town1');
+    assert.equal(out[1].className, 'notice notice-toast notice-out', 'mutant: dispose a no-op');
+    assert.deepEqual(enhancedNoticeKeys(), ['dungeon1:1'], 'and it takes only its own');
+  });
+});
+
+test('ENH-NOTICE3 (AUDIT): a box raised over toasts stands ABOVE them - the panel the player must answer reads first', () => {
+  withSkin('enhanced', (doc) => {
+    fakeClock();
+    drawEnhancedToasts({ rows: ['a', 'b'], ids: [1, 2] }, doc, 'town1');
+    drawEnhancedNotice({ rows: ['The door is locked.'] }, doc, 'box1');
+    assert.deepEqual(panelsOf(doc).map((p) => p.dataset.owner), ['box1', 'town1:1', 'town1:2'],
+      'mutant: the box appended at the foot, under four skill-ups the player is not waiting on');
+    // a toast that joins later still goes to the foot, under the box
+    drawEnhancedToasts({ rows: ['a', 'b', 'c'], ids: [1, 2, 3] }, doc, 'town1');
+    assert.deepEqual(panelsOf(doc).map((p) => p.dataset.owner), ['box1', 'town1:1', 'town1:2', 'town1:3']);
+    // and a second box goes in front of the toasts, behind the first box
+    drawEnhancedNotice({ rows: ['Another.'] }, doc, 'box2');
+    assert.deepEqual(panelsOf(doc).map((p) => p.dataset.owner), ['box1', 'box2', 'town1:1', 'town1:2', 'town1:3'],
+      'boxes keep their raising order among themselves');
+  });
+});
+
+test('ENH-NOTICE3 (AUDIT B2-B4): THE HINT TELLS THE TRUTH - the default is the box\'s, a window whose box clears on its own terms passes false or its own caption, a toast never carries one', () => {
+  withSkin('enhanced', (doc) => {
+    fakeClock();
+    const box = {}; const inv = {}; const hunt = {};
+    noticeHold(box, ['The door is locked.']);
+    noticeHold(inv, ['You cannot carry any more.'], { hint: false });
+    assert.equal(noticeFrame(hunt, ['You search...'], { hint: 'Escape to walk away' }), true);
+    const hints = panelsOf(doc).map((p) => p.children.find((c) => c.className === 'notice-hint')?.textContent ?? null);
+    assert.deepEqual(hints, [NOTICE_HINT, null, 'Escape to walk away'],
+      'mutants: the option ignored (a refusal nothing dismisses promising "click or press a key"); the caption not the window\'s own');
+    // a caption can change under the same owner (a page whose key changes)
+    noticeFrame(hunt, ['You search...'], { hint: 'Any key' });
+    assert.equal(panelsOf(doc)[2].children.find((c) => c.className === 'notice-hint').textContent, 'Any key');
+    drawEnhancedToasts({ rows: ['a'], ids: [1] }, doc, 'town1');
+    assert.equal(panelsOf(doc).at(-1).children.find((c) => c.className === 'notice-hint'), undefined, 'a toast is never dismissed');
+  });
+});
+
+test('ENH-NOTICE3 (AUDIT A2): a toast the WATCHDOG sweeps leaves its owner\'s id set too; a row popped while COVERED is released, and a row that arrives covered is not counted', () => {
+  withSkin('enhanced', (doc) => {
+    const clock = fakeClock();
+    drawEnhancedToasts({ rows: ['a', 'b'], ids: [1, 2] }, doc, 'town1');
+    assert.deepEqual(enhancedToastOwners(), ['town1']);
+    // the draws stop (a backgrounded tab, a host gone without dispose): the watchdog sweeps
+    clock.fire(NOTICE_WATCHDOG_MS);
+    clock.fire(NOTICE_SLIDE_MS);
+    assert.deepEqual(enhancedNoticeKeys(), [], 'the panels went');
+    assert.deepEqual(enhancedToastOwners(), [], 'mutant: the owner\'s set outlives its panels - garbage per abandoned model, and a resumed draw counting rows it has no panel for');
+    // a row popped while the frame is COVERED: released, not merely hidden
+    drawEnhancedToasts({ rows: ['a', 'b'], ids: [1, 2] }, doc, 'town1');
+    drawEnhancedToasts({ rows: ['b'], ids: [2], visible: false }, doc, 'town1');
+    assert.equal(panelsOf(doc).find((p) => p.dataset.owner === 'town1:1')?.className, 'notice notice-toast notice-out',
+      'mutant: a hidden frame treated as a hide of everything, so a popped row keeps a hidden panel forever');
+    assert.equal(panelsOf(doc).find((p) => p.dataset.owner === 'town1:2')?.style.display, 'none', 'the row still queued is hidden, not released');
+    // a row that ARRIVES covered builds no panel and is not counted as the owner's
+    drawEnhancedToasts({ rows: ['b', 'c'], ids: [2, 3], visible: false }, doc, 'town1');
+    assert.equal(panelsOf(doc).find((p) => p.dataset.owner === 'town1:3'), undefined, 'no panel for an invisible arrival');
+    // ...and it is not RECORDED as the owner's either: a model whose
+    // every row arrived covered owns nothing, so the set does not
+    // outlive it (mutant: the id counted although no panel was built).
+    drawEnhancedToasts({ rows: ['x'], ids: [1], visible: false }, doc, 'dungeon9');
+    assert.deepEqual(enhancedToastOwners(), ['town1'], 'mutant: an owner recorded for rows that never became panels');
+    drawEnhancedToasts({ rows: ['b', 'c'], ids: [2, 3] }, doc, 'town1');
+    assert.equal(panelsOf(doc).find((p) => p.dataset.owner === 'town1:3')?.className, 'notice notice-toast notice-in', 'and it slides in when the cover lifts');
+  });
 });

@@ -135,8 +135,8 @@
   {
     "name": "hudtext-enhanced-arm-dropped",
     "file": "src/ui/hudText.js",
-    "old": "    if (isEnhanced() && typeof document !== 'undefined') {\n      drawEnhancedHudText({ ...this.frame(), visible: !this.covered }, undefined, this.key);",
-    "new": "    if (false && typeof document !== 'undefined') {\n      drawEnhancedHudText({ ...this.frame(), visible: !this.covered }, undefined, this.key);",
+    "old": "    if (isEnhanced() && typeof document !== 'undefined') {\n      drawEnhancedToasts({ ...this.frame(), visible: !this.covered }, undefined, this.key);",
+    "new": "    if (false && typeof document !== 'undefined') {\n      drawEnhancedToasts({ ...this.frame(), visible: !this.covered }, undefined, this.key);",
     "tests": [
       "test/hudtext.test.js"
     ]
@@ -144,8 +144,8 @@
   {
     "name": "hudtext-enhanced-arm-taken-on-both-skins",
     "file": "src/ui/hudText.js",
-    "old": "    if (isEnhanced() && typeof document !== 'undefined') {\n      drawEnhancedHudText({ ...this.frame(), visible: !this.covered }, undefined, this.key);",
-    "new": "    if (typeof document !== 'undefined') {\n      drawEnhancedHudText({ ...this.frame(), visible: !this.covered }, undefined, this.key);",
+    "old": "    if (isEnhanced() && typeof document !== 'undefined') {\n      drawEnhancedToasts({ ...this.frame(), visible: !this.covered }, undefined, this.key);",
+    "new": "    if (typeof document !== 'undefined') {\n      drawEnhancedToasts({ ...this.frame(), visible: !this.covered }, undefined, this.key);",
     "tests": [
       "test/hudtext.test.js"
     ]
@@ -153,8 +153,8 @@
   {
     "name": "hudtext-rows-cut-to-maxRows",
     "file": "src/ui/hudText.js",
-    "old": "      rows: this.lines.slice(0, maxCount + 1).map((l) => l.text),",
-    "new": "      rows: this.lines.slice(0, maxCount).map((l) => l.text),",
+    "old": "    const drawn = this.lines.slice(0, maxCount + 1);",
+    "new": "    const drawn = this.lines.slice(0, maxCount);",
     "tests": [
       "test/hudtext.test.js"
     ]
@@ -171,62 +171,63 @@
   {
     "name": "hudtext-hide-door-a-no-op",
     "file": "src/ui/hudText.js",
-    "old": "    if (isEnhanced() && typeof document !== 'undefined') drawEnhancedHudText({ rows: [], slide: 0, visible: false }, undefined, this.key);",
-    "new": "    if (false) drawEnhancedHudText({ rows: [], slide: 0, visible: false }, undefined, this.key);",
+    "old": "    if (isEnhanced() && typeof document !== 'undefined') drawEnhancedToasts({ rows: [], ids: [], slide: 0, visible: false }, undefined, this.key);",
+    "new": "    if (false) drawEnhancedToasts({ rows: [], ids: [], slide: 0, visible: false }, undefined, this.key);",
     "tests": [
       "test/hudtext.test.js"
     ]
   },
   {
-    "name": "column-never-slides",
-    "file": "src/ui/enhancedHudText.js",
-    "old": "  const y = `${(slide * rowH).toFixed(2)}px`;",
-    "new": "  const y = '0.00px';",
+    "name": "ENH-NOTICE3-toasts-keyed-by-index-not-row",
+    "file": "src/ui/hudText.js",
+    "old": "      ids: drawn.map((l) => l.id),   // ENH-NOTICE3: beside the rows, so a toast keeps its row across frames",
+    "new": "      ids: drawn.map((l, i) => i),   // ENH-NOTICE3: beside the rows, so a toast keeps its row across frames",
     "tests": [
       "test/hudtext.test.js"
     ]
   },
   {
-    "name": "column-slides-the-wrong-way",
-    "file": "src/ui/enhancedHudText.js",
-    "old": "  const y = `${(slide * rowH).toFixed(2)}px`;",
-    "new": "  const y = `${(-slide * rowH).toFixed(2)}px`;",
+    "name": "ENH-NOTICE3-a-row-id-reused-after-a-pop",
+    "file": "src/ui/hudText.js",
+    "old": "    this.lines.push({ id: ++this._nextId, text });",
+    "new": "    this.lines.push({ id: this.lines.length + 1, text });",
     "tests": [
       "test/hudtext.test.js"
     ]
   },
   {
-    "name": "column-rebuilt-every-frame",
-    "file": "src/ui/enhancedHudText.js",
-    "old": "  if (!col) { col = buildColumn(doc, key); columns.set(key, col); }",
-    "new": "  { col = buildColumn(doc, key); columns.set(key, col); }",
+    "name": "ENH-NOTICE3-the-panel-rebuilt-every-frame",
+    "file": "src/ui/enhancedNotice.js",
+    "old": "  if (!p) { p = buildPanel(doc, key, !!frame?.toast, frame?.hint); panels.set(key, p); }",
+    "new": "  { p = buildPanel(doc, key, !!frame?.toast, frame?.hint); panels.set(key, p); }",
+    "tests": [
+      "test/hudtext.test.js",
+      "test/enhancedNotice.test.js"
+    ]
+  },
+  {
+    "name": "ENH-NOTICE3-a-popped-row-keeps-its-toast",
+    "file": "src/ui/enhancedNotice.js",
+    "old": "    releaseEnhancedNotice(toastKey(key, id));\n    mine.delete(id);",
+    "new": "    mine.delete(id);",
     "tests": [
       "test/hudtext.test.js"
     ]
   },
   {
-    "name": "column-keeps-its-spent-rows",
-    "file": "src/ui/enhancedHudText.js",
-    "old": "    if (i >= lines.length) {\n      if (n.style.display !== 'none') n.style.display = 'none';\n      continue;\n    }",
-    "new": "    if (i >= lines.length) {\n      continue;\n    }",
+    "name": "ENH-NOTICE3-a-toast-wears-the-box-edge",
+    "file": "src/ui/enhancedNotice.js",
+    "old": "  host.className = toast ? 'notice notice-toast notice-in' : 'notice notice-in';",
+    "new": "  host.className = 'notice notice-in';",
     "tests": [
       "test/hudtext.test.js"
     ]
   },
   {
-    "name": "column-keeps-a-row-height-of-its-own",
-    "file": "src/ui/enhancedHudText.js",
-    "old": "export const ENHANCED_HUD_TEXT_ROW_H = HUD_TEXT_ROW_PX;",
-    "new": "export const ENHANCED_HUD_TEXT_ROW_H = 18;",
-    "tests": [
-      "test/hudtext.test.js"
-    ]
-  },
-  {
-    "name": "column-back-through-the-compass",
+    "name": "ENH-NOTICE3-the-toast-rule-loses-its-edge",
     "file": "src/ui/enhancedStyle.js",
-    "old": "export const HUD_TEXT_TOP_PX = 96;",
-    "new": "export const HUD_TEXT_TOP_PX = 4;",
+    "old": "  padding: 8px 18px 8px 14px; border-left-color: rgba(243,239,44,0.55);",
+    "new": "  padding: 8px 18px 8px 14px;",
     "tests": [
       "test/hudtext.test.js"
     ]
@@ -423,37 +424,38 @@
   {
     "name": "AUDIT-FONT-F1-the-owner-key-never-reaches-the-renderer",
     "file": "src/ui/hudText.js",
-    "old": "      drawEnhancedHudText({ ...this.frame(), visible: !this.covered }, undefined, this.key);",
-    "new": "      drawEnhancedHudText({ ...this.frame(), visible: !this.covered });",
+    "old": "      drawEnhancedToasts({ ...this.frame(), visible: !this.covered }, undefined, this.key);",
+    "new": "      drawEnhancedToasts({ ...this.frame(), visible: !this.covered });",
     "tests": [
       "test/hudtext.test.js"
     ]
   },
   {
     "name": "AUDIT-FONT-F1-the-hide-door-blanks-every-model",
-    "file": "src/ui/enhancedHudText.js",
-    "old": "  let col = columns.get(key);",
-    "new": "  let col = columns.values().next().value;",
+    "file": "src/ui/enhancedNotice.js",
+    "old": "  let mine = toasts.get(key);\n  if (!mine && !ids.length) return [];",
+    "new": "  let mine = toasts.values().next().value;\n  if (!mine && !ids.length) return [];",
     "tests": [
       "test/hudtext.test.js"
     ]
   },
   {
     "name": "AUDIT-FONT-F1-the-column-is-never-released",
-    "file": "src/ui/enhancedHudText.js",
-    "old": "  try { col.host.remove(); } catch { /* already gone */ }\n  columns.delete(key);",
-    "new": "  columns.delete(key);",
+    "file": "src/ui/enhancedNotice.js",
+    "old": "  for (const id of mine) releaseEnhancedNotice(toastKey(key, id));\n  toasts.delete(key);",
+    "new": "  toasts.delete(key);",
     "tests": [
       "test/hudtext.test.js"
     ]
   },
   {
     "name": "AUDIT-FONT-F1-the-stack-outlives-its-last-column",
-    "file": "src/ui/enhancedHudText.js",
-    "old": "  if (!columns.size) { try { stack?.remove(); } catch { /* already gone */ } stack = null; }",
-    "new": "  if (false) { stack = null; }",
+    "file": "src/ui/enhancedNotice.js",
+    "old": "    if (!panels.size) { try { stack?.remove(); } catch { /* already gone */ } stack = null; }",
+    "new": "    if (false) { stack = null; }",
     "tests": [
-      "test/hudtext.test.js"
+      "test/hudtext.test.js",
+      "test/enhancedNotice.test.js"
     ]
   },
   {
@@ -468,26 +470,26 @@
   {
     "name": "AUDIT-FONT-F2-the-scale-never-reaches-the-two-hosts",
     "file": "src/ui/enhancedHud.js",
-    "old": "    setEnhancedHudTextScale(scale, document);",
-    "new": "    void scale;",
+    "old": "    setEnhancedMidTextScale(scale, document);",
+    "new": "    // setEnhancedMidTextScale(scale, document);",
     "tests": [
       "test/hudtext.test.js"
     ]
   },
   {
-    "name": "AUDIT-FONT-F2-the-scale-reaches-the-column-alone",
+    "name": "AUDIT-FONT-F2-the-scale-reaches-the-stack-not-the-label",
     "file": "src/ui/enhancedHudText.js",
-    "old": "  for (const id of [ENHANCED_HUD_TEXT_ID, ENHANCED_MID_TEXT_ID]) {",
-    "new": "  for (const id of [ENHANCED_HUD_TEXT_ID]) {",
+    "old": "  doc.getElementById?.(ENHANCED_MID_TEXT_ID)?.style?.setProperty('--hud-scale', hudScaleVar);",
+    "new": "  doc.getElementById?.('enhanced-notice')?.style?.setProperty('--hud-scale', hudScaleVar);",
     "tests": [
       "test/hudtext.test.js"
     ]
   },
   {
-    "name": "AUDIT-FONT-F2-the-slide-back-outside-the-scale",
-    "file": "src/ui/enhancedStyle.js",
-    "old": ".hudtext-stack { position: fixed; left: 50%; top: ${HUD_TEXT_TOP_PX}px; z-index: 4; pointer-events: none;\n  transform: translateX(-50%) scale(var(--hud-scale, 1));",
-    "new": ".hudtext-stack { position: fixed; left: 50%; top: ${HUD_TEXT_TOP_PX}px; z-index: 4; pointer-events: none;\n  transform: translateX(-50%) translateY(var(--hudtext-slide, 0px)) scale(var(--hud-scale, 1));",
+    "name": "ENH-NOTICE3-the-toasts-ignore-the-hide",
+    "file": "src/ui/enhancedNotice.js",
+    "old": "    const host = drawEnhancedNotice({ rows: [rows[i] ?? ''], visible, toast: true }, doc, toastKey(key, ids[i]));",
+    "new": "    const host = drawEnhancedNotice({ rows: [rows[i] ?? ''], visible: true, toast: true }, doc, toastKey(key, ids[i]));",
     "tests": [
       "test/hudtext.test.js"
     ]
@@ -540,8 +542,8 @@
   {
     "name": "AUDIT-FONT-F4-the-covered-window-is-ignored",
     "file": "src/ui/hudText.js",
-    "old": "      drawEnhancedHudText({ ...this.frame(), visible: !this.covered }, undefined, this.key);",
-    "new": "      drawEnhancedHudText({ ...this.frame(), visible: true }, undefined, this.key);",
+    "old": "      drawEnhancedToasts({ ...this.frame(), visible: !this.covered }, undefined, this.key);",
+    "new": "      drawEnhancedToasts({ ...this.frame(), visible: true }, undefined, this.key);",
     "tests": [
       "test/hudtext.test.js"
     ]
@@ -549,8 +551,8 @@
   {
     "name": "AUDIT-FONT-F4-townTalk-stops-naming-its-window",
     "file": "src/scenes/townTalk.js",
-    "old": "    hud.observe(!!overlay);\n    if (font && hudRenderEnabled())",
-    "new": "    hud.observe(false);\n    if (font && hudRenderEnabled())",
+    "old": "    hud.observe(toastsCovered());   // AUDIT ENH-NOTICE3 F3/C2",
+    "new": "    hud.observe(false);   // AUDIT ENH-NOTICE3 F3/C2",
     "tests": [
       "test/hudtext.test.js"
     ]
@@ -558,8 +560,8 @@
   {
     "name": "AUDIT-FONT-F4-the-interior-frame-stops-naming-its-window",
     "file": "src/scenes/townTalk.js",
-    "old": "      hud.observe(!!overlay);   // AUDIT FONT F4",
-    "new": "      hud.observe(false);   // AUDIT FONT F4",
+    "old": "      hud.observe(toastsCovered());   // AUDIT FONT F4 / ENH-NOTICE3 F3/C2",
+    "new": "      hud.observe(false);   // AUDIT FONT F4 / ENH-NOTICE3 F3/C2",
     "tests": [
       "test/hudtext.test.js"
     ]
@@ -567,7 +569,7 @@
   {
     "name": "AUDIT-FONT-F4-the-dungeon-stops-naming-its-window",
     "file": "src/scenes/dungeonContext.js",
-    "old": "    hudText.observe(!!activeOverlay);",
+    "old": "    hudText.observe(!!activeOverlay && (dungeonWindows.hudCovered(activeOverlay) || hidesHud(activeOverlay)));",
     "new": "    hudText.observe(false);",
     "tests": [
       "test/hudtext.test.js"
@@ -630,28 +632,28 @@
     ]
   },
   {
-    "name": "AUDIT-FONT-F7-the-column-back-inside-the-chat-peek",
-    "file": "src/ui/enhancedStyle.js",
-    "old": "body:has(.dfchat) .hudtext-stack { top: ${HUD_TEXT_TOP_CHAT_PX}px; }",
-    "new": "",
+    "name": "ENH-NOTICE3-a-hint-on-a-toast",
+    "file": "src/ui/enhancedNotice.js",
+    "old": "  const caption = toast ? false : (hint === undefined ? NOTICE_HINT : hint);",
+    "new": "  const caption = hint === undefined ? NOTICE_HINT : hint;",
     "tests": [
       "test/hudtext.test.js"
     ]
   },
   {
-    "name": "AUDIT-FONT-F7-the-touch-chat-top-forgotten",
-    "file": "src/ui/enhancedStyle.js",
-    "old": "body:has(.dfchat.touch) .hudtext-stack { top: ${HUD_TEXT_TOP_CHAT_TOUCH_PX}px; }",
-    "new": "",
+    "name": "ENH-NOTICE3-a-released-toast-drops-its-class",
+    "file": "src/ui/enhancedNotice.js",
+    "old": "  p.host.className = p.toast ? 'notice notice-toast notice-out' : 'notice notice-out';",
+    "new": "  p.host.className = 'notice notice-out';",
     "tests": [
       "test/hudtext.test.js"
     ]
   },
   {
-    "name": "AUDIT-FONT-F7-the-offset-stops-clearing-the-peek",
-    "file": "src/ui/enhancedStyle.js",
-    "old": "const CHAT_PEEK_ROWS = 2;",
-    "new": "const CHAT_PEEK_ROWS = 1;",
+    "name": "ENH-NOTICE3-hide-releases-the-toasts",
+    "file": "src/ui/enhancedNotice.js",
+    "old": "    if (!visible && !ids.length) { drawEnhancedNotice({ visible: false, toast: true }, doc, toastKey(key, id)); out.push(panels.get(toastKey(key, id))?.host); continue; }",
+    "new": "    if (false) { continue; }",
     "tests": [
       "test/hudtext.test.js"
     ]
@@ -659,44 +661,44 @@
   {
     "name": "AUDIT-FONT-F8-the-long-line-ellipsised-again",
     "file": "src/ui/enhancedStyle.js",
-    "old": "  letter-spacing: 0.04em; white-space: normal; overflow-wrap: anywhere; text-align: center; max-width: 100%; }",
-    "new": "  letter-spacing: 0.04em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }",
+    "old": ".notice-row { font-size: 15px; line-height: 1.35; min-height: 1.35em; white-space: pre-wrap; overflow-wrap: anywhere; }",
+    "new": ".notice-row { font-size: 15px; line-height: 1.35; min-height: 1.35em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }",
     "tests": [
       "test/hudtext.test.js"
     ]
   },
   {
-    "name": "AUDIT-FONT-F8-a-wrapped-row-boxed-at-one-row",
+    "name": "ENH-NOTICE3-the-toast-in-the-box-colour",
     "file": "src/ui/enhancedStyle.js",
-    "old": ".hudtext-row { min-height: ${HUD_TEXT_ROW_PX}px;",
-    "new": ".hudtext-row { height: ${HUD_TEXT_ROW_PX}px;",
+    "old": ".notice.notice-toast .notice-row { font-size: 14px; color: rgb(243,239,44); text-shadow: 2px 2px 0 rgb(93,77,12); text-align: center; }",
+    "new": ".notice.notice-toast .notice-row { font-size: 14px; text-align: center; }",
     "tests": [
       "test/hudtext.test.js"
     ]
   },
   {
-    "name": "AUDIT-FONT-F8-the-slide-stops-measuring-the-row",
-    "file": "src/ui/enhancedHudText.js",
-    "old": "  const rowH = (slide !== 0 && rows[0]?.offsetHeight) || ENHANCED_HUD_TEXT_ROW_H;",
-    "new": "  const rowH = ENHANCED_HUD_TEXT_ROW_H;",
-    "tests": [
-      "test/hudtext.test.js"
-    ]
-  },
-  {
-    "name": "AUDIT-FONT-F8-the-measured-row-has-no-fallback",
-    "file": "src/ui/enhancedHudText.js",
-    "old": "  const rowH = (slide !== 0 && rows[0]?.offsetHeight) || ENHANCED_HUD_TEXT_ROW_H;",
-    "new": "  const rowH = rows[0]?.offsetHeight;",
-    "tests": [
-      "test/hudtext.test.js"
-    ]
-  },
-  {
-    "name": "AUDIT-FONT-F9-the-narrow-top-back-as-a-literal",
+    "name": "ENH-NOTICE3-a-column-number-exported-again",
     "file": "src/ui/enhancedStyle.js",
-    "old": "  .hudtext-stack { top: ${HUD_TEXT_TOP_NARROW_PX}px; }",
-    "new": "  .hudtext-stack { top: 82px; }",
+    "old": "/* ENH-NOTICE3 (2026-09-21): the popup column's numbers - HUD_TEXT_TOP_PX",
+    "new": "export const HUD_TEXT_TOP_PX = 96;\n/* ENH-NOTICE3 (2026-09-21): the popup column's numbers - HUD_TEXT_TOP_PX",
+    "tests": [
+      "test/hudtext.test.js"
+    ]
+  },
+  {
+    "name": "ENH-NOTICE3-a-toast-never-recorded-as-the-owner-s",
+    "file": "src/ui/enhancedNotice.js",
+    "old": "      mine.add(ids[i]); out.push(host);",
+    "new": "      out.push(host);",
+    "tests": [
+      "test/hudtext.test.js"
+    ]
+  },
+  {
+    "name": "ENH-NOTICE3-the-column-rule-back-in-the-sheet",
+    "file": "src/ui/enhancedStyle.js",
+    "old": ".notice-hint {\n  margin-top: 10px;",
+    "new": ".hudtext-stack { top: 82px; }\n.notice-hint {\n  margin-top: 10px;",
     "tests": [
       "test/hudtext.test.js"
     ]
@@ -766,16 +768,16 @@
     ]
   },
   {
-    "name": "AUDIT-FONT-F2-the-stack-is-built-without-the-scale",
+    "name": "AUDIT-FONT-F2-the-label-is-built-without-the-scale",
     "file": "src/ui/enhancedHudText.js",
-    "old": "  applyScale(root);\n  doc.body.append(root);",
-    "new": "  doc.body.append(root);",
+    "old": "    applyScale(midHost);\n    doc.body.append(midHost);",
+    "new": "    doc.body.append(midHost);",
     "tests": [
       "test/hudtext.test.js"
     ]
   },
   {
-    "name": "AUDIT-FONT-F2-the-label-is-built-without-the-scale",
+    "name": "AUDIT-FONT-F2-the-label-is-built-without-the-scale-2",
     "file": "src/ui/enhancedHudText.js",
     "old": "    applyScale(midHost);\n    doc.body.append(midHost);",
     "new": "    doc.body.append(midHost);",

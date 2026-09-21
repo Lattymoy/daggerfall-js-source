@@ -26,6 +26,7 @@
 // FoodAndDrink_OnItemPicked never stages either.
 
 import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
+import { noticeHold, noticeRelease } from './enhancedNotice.js';   // ENH-NOTICE3: this window's own click-anywhere box, as the enhanced panel
 import { closeOnOutsideTap } from './enhancedOverlays.js';
 import { overlayAction } from './input.js';
 import { audio } from '../systems/audio.js';
@@ -61,6 +62,15 @@ let box = null;            // { rows, buttons: 'YesNo'|null, onYes }
 let menu = null;           // the food/drink rows, while that picker is up
 let unregisterOutside = () => {};
 let keyHandler = null;
+/** ENH-NOTICE3: the notice panel's OWNER for this window. A module-level
+ *  object rather than the view the mount returns, because `render()`
+ *  runs during the mount (before the view exists) and again from
+ *  `unmount` - and the owner has to be the same object across both or
+ *  the release cannot find the panel the raise minted. One tavern is
+ *  ever up, so one owner is enough; the module stamps `_noticeKey` on
+ *  it and re-uses it, which is what keeps two consecutive boxes from
+ *  stacking two panels. */
+const noticeOwner = {};
 
 const line = (text) => [{ text, center: true }];
 /** DFU's own "Good day, %ra." quotes the player's race back at them
@@ -80,6 +90,19 @@ const rows = (id, ctx = {}) => macroRows(deps.rows ?? (() => []), id, {
 
 function say(rowList, opts = {}) {
   box = { rows: rowList, buttons: null, ...opts };
+  render();
+}
+/** ClickAnywhereToClose, said once. Every door that dismisses a TEXT
+ *  box - the scrim's click on the enhanced skin, the card's OK button,
+ *  Escape and Enter - comes here, so the box's `onDismiss` chain
+ *  (the Heart's Day line handing over to the price offer) cannot fire
+ *  down one path and be forgotten down another. The panel is released
+ *  by `render()` below, which is the one place that knows whether a
+ *  box is still up. */
+function dismiss() {
+  const cb = box?.onDismiss;
+  box = null;
+  cb?.();
   render();
 }
 function ask(rowList, onYes) {
@@ -292,7 +315,56 @@ function foodMenu() {
 }
 
 function boxScrim() {
+  // ENH-NOTICE3 - WHICH OF THIS WINDOW'S BOXES IS A NOTICE, decided off
+  // DaggerfallTavernWindow.cs box by box. A `DaggerfallUI.MessageBox`
+  // is ClickAnywhereToClose by construction (DaggerfallUI.cs:1328-1362,
+  // every overload sets it) and therefore the panel's:
+  //
+  //   - tooManyDaysFutureId            (:190)       -> panel
+  //   - "roomFreeForKnightSuchAsYou"   (:194)       -> panel
+  //   - "roomFreeDueToHeartsDay"       (FormulaHelper.cs:1872) -> panel
+  //   - notEnoughGoldId, after the Yes (:224)       -> panel
+  //   - "youAreNotHungry"              (:301)       -> panel
+  //   - notEnoughGoldId, on a meal     (:326)       -> panel
+  //   - the survival menu's closed line and its eat/drink report
+  //     (Climates & Calories, systems/survival/tavernMenu.js - the
+  //     port's menu answers TEXT and this window's `say()` is what
+  //     shows it, the same buttonless box as the lines above; the
+  //     mod's own C# is not vendored, so the kind is this window's
+  //     decision, recorded here) -> panel, which is ENH-NOTICE3's
+  //     whole point: "All mods, including climates and calories".
+  //
+  // The two that are NOT notices keep the card, because they are
+  // DECISIONS and a decision needs its controls under the words:
+  //
+  //   - the offerPriceId box with Yes/No (:202-207) -> the card
+  //   - howManyDays / howManyAdditionalDays, which is a
+  //     DaggerfallInputMessageBox with a numeric TextBox (:161-170) ->
+  //     `roomForm()` above, never this scrim at all.
+  //
+  // `box.buttons` is exactly that division as this window already
+  // carries it, so the test is the division rather than a second list.
+  const onPanel = noticeHold(noticeOwner, box.buttons ? null : box.rows);
   const scrim = el('div', 'sb-ask');
+  if (onPanel) {
+    // THE SCRIM IS THE CLICK, and nothing else. With the words on the
+    // panel the card has nothing to hold, so the invisible
+    // click-catcher IS the screen: `sb-screen` makes it fixed over the
+    // whole viewport and render() hangs it on the SHELL, because a
+    // scrim inside the centred window covered only that rectangle
+    // (AUDIT ENH-NOTICE3 B1) - and the panel stands at the right
+    // edge, outside it, where the press then did nothing. DFU's
+    // parchment takes the press anywhere on the screen. The keyboard's
+    // half (Escape / Enter, `onKey` below) is unchanged.
+    scrim.className = 'sb-ask sb-screen';
+    scrim.onclick = dismiss;
+    return scrim;
+  }
+  // The CARD arm below, for a buttonless box, is the classic-skin
+  // fork of this module and nothing more: ui/tavernDoor.js mounts this
+  // window only under the enhanced skin with a document, where
+  // noticeHold always takes it. It stays so the module's fork is one
+  // place and unit-testable on both skins (AUDIT ENH-NOTICE3 B19).
   const ask2 = el('div', 'card');
   for (const r of box.rows) ask2.append(el('p', 'px-note', r.text));
   const acts = el('div', 'sb-acts');
@@ -304,7 +376,7 @@ function boxScrim() {
     acts.append(yes, no);
   } else {
     const ok = el('button', 'act primary', 'OK');
-    ok.onclick = () => { const cb = box.onDismiss; box = null; cb?.(); render(); };
+    ok.onclick = dismiss;
     acts.append(ok);
   }
   ask2.append(acts);
@@ -333,8 +405,9 @@ function render() {
 
   if (box) {
     for (const b of win.querySelectorAll('button, input')) b.disabled = true;
-    win.append(boxScrim());
-  }
+    const scrim = boxScrim();
+    (scrim.className.includes('sb-screen') ? shell : win).append(scrim);   // the panel's arm catches the press over the whole screen (AUDIT ENH-NOTICE3 B1)
+  } else noticeRelease(noticeOwner);   // ENH-NOTICE3: no box, no panel - the same `} else noticeRelease(this)` the classic windows keep (ui/restWindow.js:868)
   shell.append(win);
   host.append(shell);
   unregisterOutside();
@@ -349,7 +422,7 @@ function onKey(e) {
       else if (e.code === 'KeyN' || overlayAction(e) === 'back') { e.preventDefault(); box = null; render(); }
     } else if (overlayAction(e) === 'back' || e.key === 'Enter') {
       e.preventDefault();
-      const cb = box.onDismiss; box = null; cb?.(); render();
+      dismiss();
     }
     return;
   }
@@ -385,6 +458,13 @@ export function mountEnhancedTavern(hostEl, hooks = {}) {
       keyHandler = null;
       unregisterOutside();
       unregisterOutside = () => {};
+      // ENH-NOTICE3 / EVERY ALLOCATION HAS AN OWNER: a held panel has no
+      // watchdog, so the window going away without this leaves the
+      // notice painted over the world for the rest of the session. The
+      // release is here rather than only in `close()` because the door
+      // can unmount this pane without any of its own buttons being
+      // pressed (a scene change, the overlay slot taken).
+      noticeRelease(noticeOwner);
       host = null;
       deps = {};
       box = null;

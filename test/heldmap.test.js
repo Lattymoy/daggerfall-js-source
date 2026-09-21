@@ -12,7 +12,7 @@
 // the zoom bands, the selection) and its paint is driven through a
 // recording 2D context; node drives the window through a stub document
 // the way the door tests always have.
-import { test, beforeEach } from 'node:test';
+import { test, beforeEach, afterEach } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, existsSync } from 'node:fs';
 
@@ -55,11 +55,40 @@ import {
   travelMapSaveData, resetTravelMapState,
 } from '../src/systems/travelMapState.js';
 import { _resetForTests } from '../src/systems/uiPrefs.js';
+// ENH-NOTICE3: the window's click-anywhere boxes ride the enhanced
+// notice panel now, so these pins read the stack the way
+// test/enhancedNotice.test.js does.
+import {
+  enhancedNoticeKeys, destroyEnhancedNotice, ENHANCED_NOTICE_ID,
+} from '../src/ui/enhancedNotice.js';
 
 const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 const skin = (v) => { _resetForTests(); globalThis.location = { search: `?skin=${v}` }; };
 
 beforeEach(() => resetTravelMapState());
+// ENH-NOTICE3: the panel stack is module state that outlives a fake
+// document - a panel left standing would be appended to by the NEXT
+// test's document. Dropped after every test, the way the notice
+// module's own suite drops it.
+afterEach(() => destroyEnhancedNotice());
+
+/** The live notice panels, as the stack holds them: [{ owner, texts }].
+ *  LIVE, filtered by the module's own key list: this document's `remove`
+ *  is a stub that marks a node rather than detaching it, so a released
+ *  panel is still in `stack.children` and reading the DOM alone would
+ *  report a notice that is already gone. */
+const noticePanels = (doc = globalThis.document) => {
+  const live = new Set(enhancedNoticeKeys());
+  const stack = (doc?.body?.children ?? []).find((c) => c.id === ENHANCED_NOTICE_ID);
+  return (stack?.children ?? [])
+    .filter((c) => String(c.className).split(/\s+/).includes('notice') && live.has(c.dataset.owner))
+    .map((panel) => ({
+      owner: panel.dataset.owner,
+      texts: (panel.children.find((c) => c.className === 'notice-body')?.children ?? [])
+        .filter((r) => r.style.display !== 'none').map((r) => r.textContent),
+    }));
+};
+const noticeTexts = (doc) => noticePanels(doc).flatMap((p) => p.texts);
 
 // ── THE WALK IS THE LAW'S OWN ────────────────────────────────────
 
@@ -257,6 +286,11 @@ function fakeDocument() {
       // click-anywhere-to-close, the stage's middle click)
       addEventListener(t, fn) { (n.listeners ||= []).push([t, fn]); }, removeEventListener() {},
       setPointerCapture() {}, querySelectorAll: () => [],
+      // ENH-NOTICE3: the window raises the enhanced notice panel now,
+      // and ui/enhancedNotice.js's stack sets aria-live on its root -
+      // so the stub grows the one method that reaches.
+      className: '', textContent: '', id: '', attrs: {},
+      setAttribute(k, v) { n.attrs[k] = v; },
       set innerHTML(v) { n.children = []; }, get innerHTML() { return ''; },
     };
     return n;
@@ -1569,7 +1603,11 @@ test('MAP2 I and H: the building list through locationInfoRows in a box any key 
     assert.equal(win._info.title, 'Wayrest');
     assert.deepEqual(win._info.rows, ['Guild Halls:    Fighters Guild'], 'the guild hall NAMED, never counted');
     assert.deepEqual(win._info.cells, ['Alchemist  2'], 'the shops counted by type');
-    assert.equal(win._chrome.box.style.display, 'block');
+    // ENH-NOTICE3: on the enhanced skin (this suite's default) the
+    // words are the notice panel's and the .hmbox stays shut - the
+    // classic arm of that is pinned below, in the ENH-NOTICE3 test.
+    assert.equal(win._chrome.box.style.display, 'none');
+    assert.deepEqual(noticeTexts(), ['Wayrest', 'Guild Halls:    Fighters Guild', 'Alchemist  2']);
     win.input('KeyS');
     assert.equal(win._info, null, 'ANY key closes it...');
     assert.equal(win._panelState?.opts?.speedCautious ?? true, true, '...and does nothing else that press');
@@ -1581,6 +1619,8 @@ test('MAP2 I and H: the building list through locationInfoRows in a box any key 
     none._pickAt(...toPaper(none._view, 3.5, 3.5));
     none.input('KeyI');
     assert.deepEqual(none._info.rows, [toFormat(TO_TEXT.MsgNoKnowledge, 'Wayrest')]);
+    assert.ok(noticeTexts().includes(toFormat(TO_TEXT.MsgNoKnowledge, 'Wayrest')),
+      'ENH-NOTICE3: DaggerfallUI.MessageBox(MsgNoKnowledge) is the panel too (TravelOptionsMapWindow.cs:462)');
     none.dispose();
     // H: the host's rows; with none, the host's own box
     win.input('KeyH');
@@ -1592,6 +1632,98 @@ test('MAP2 I and H: the building list through locationInfoRows in a box any key 
     assert.equal(helped, 1, 'the host\'s onHelp when it hands no rows');
     mute.dispose();
   });
+});
+
+// ── ENH-NOTICE3: THE MAP'S OWN BOXES, ON THE PANEL ───────────────
+
+test('ENH-NOTICE3: the card\'s refusal and the I/H box land in the notice panel, leave on the window\'s own dismissal and on its teardown, and the classic skin keeps the card (mutants: card-text-left-in-the-card, box-still-opened, no-release-on-dismissal, no-release-on-teardown, panel-on-the-classic-skin)', () => {
+  const buildings = [{ buildingType: 0, displayName: 'The Odd Blades' }];
+  const deps = () => modDeps({
+    gold: () => 0, goldPieces: () => 0,
+    discoveredBuildings: () => buildings, buildingTypeName: () => 'Alchemist',
+  });
+  // ── the enhanced skin: the words are the panel's ──────────────
+  skin('enhanced');
+  withDocument((doc) => {
+    const win = open(mkWin(deps()));
+    win._pickAt(...toPaper(win._view, 3.5, 3.5));
+    win._openPanel('travel');
+    assert.deepEqual(enhancedNoticeKeys(), [], 'a card with nothing to refuse raises no panel');
+
+    // DaggerfallTravelPopUp.cs:394-406 - showNotEnoughGoldPopup, ClickAnywhereToClose
+    win._begin();
+    const refusal = win._panelState.notice;
+    assert.match(refusal, /gold/, 'the gate really refused - the pin needs a box to move');
+    assert.deepEqual(noticeTexts(doc), [refusal], 'the refusal is the panel\'s words, verbatim');
+    assert.equal(enhancedNoticeKeys().length, 1, 'one box, one panel');
+    assert.equal(
+      win._chrome.card.children.filter((c) => c.className === 'hmnotice').length, 0,
+      'and NOTHING of it is left in the card - two faces for one box is the bug this closes',
+    );
+
+    // the I/H box over the card: a SECOND panel, not a blanking of the first
+    win.input('KeyI');
+    assert.equal(enhancedNoticeKeys().length, 2, 'the two boxes are independent owners');
+    assert.equal(win._chrome.box.style.display, 'none', 'the .hmbox itself never opens - an empty frame is not a notice');
+    // (AUDIT-MAP H6's `hmmodal` survives the move off `open` - pinned
+    // on the source in the H6/perf test above, because this document's
+    // classList is a stub that records nothing.)
+    assert.ok(noticeTexts(doc).includes('Wayrest'), 'the info box\'s title rides the panel');
+
+    // THE WINDOW'S OWN DISMISSAL: any key closes the info box (:449-453)
+    win.input('KeyS');
+    assert.equal(win._info, null);
+    assert.equal(enhancedNoticeKeys().length, 1, 'the info panel went with the box it belonged to...');
+    assert.deepEqual(noticeTexts(doc), [refusal], '...and the card\'s refusal stayed put');
+    // ...and the card's own: closing the travel panel clears its notice
+    win._closePanel();
+    assert.deepEqual(enhancedNoticeKeys(), [], 'no box, no panel');
+
+    // AND ON THE UNMOUNT: a HELD panel arms no watchdog, so a window
+    // torn down with a box up leaks it over the world for the session
+    win._openPanel('travel');
+    win._begin();
+    win.input('KeyI');
+    assert.equal(enhancedNoticeKeys().length, 2, 'both up when the teardown comes');
+    win.dispose();
+    assert.deepEqual(enhancedNoticeKeys(), [], '_teardown releases BOTH owners');
+
+    // THE THIRD BOX: the teleport fee refusal, TravelOptionsMapWindow
+    // .cs:497-500's DaggerfallUI.MessageBox(notEnoughGoldId) - the same
+    // kind, on the panel; the card keeps its Close (the map's own exit)
+    const poor = open(mkWin(modDeps({ magesGuildRank: () => 0, gold: () => 0 }, { teleportCost: true })));
+    poor.activateTeleportationTravel();
+    poor._pickAt(...toPaper(poor._view, 3.5, 3.5));
+    assert.equal(poor._panelState.fee.canPay, false, 'the fee really refused - the pin needs a box to move');
+    assert.deepEqual(noticeTexts(doc), ['You do not have enough gold.'], 'mutant: the fee refusal left as the card\'s own prompt');
+    assert.equal(poor._chrome.card.children.filter((c) => c.className === 'hmprompt').length, 0, 'and nothing of it in the card');
+    assert.equal(poor._chrome.card.children.filter((c) => c.className === 'hmacts').length, 1, 'the Close stays');
+    poor.dispose();
+    assert.deepEqual(enhancedNoticeKeys(), [], 'released with the map');
+  });
+
+  // ── the classic skin: byte for byte what it always drew ───────
+  skin('classic');
+  withDocument((doc) => {
+    const win = open(mkWin(deps()));
+    win._pickAt(...toPaper(win._view, 3.5, 3.5));
+    win._openPanel('travel');
+    win._begin();
+    const refusal = win._panelState.notice;
+    assert.match(refusal, /gold/);
+    assert.equal(
+      win._chrome.card.children.filter((c) => c.className === 'hmnotice')
+        .map((c) => c.textContent)[0], refusal,
+      'the card still says it itself',
+    );
+    win.input('KeyI');
+    assert.equal(win._chrome.box.style.display, 'block', 'and the I/H box still opens');
+    assert.equal((doc.body.children ?? []).some((c) => c.id === ENHANCED_NOTICE_ID), false,
+      'no stack is ever built on the classic skin');
+    assert.deepEqual(enhancedNoticeKeys(), []);
+    win.dispose();
+  });
+  skin('enhanced');
 });
 
 test('MAP2 coordinates: a bare pixel is a destination only when the mod allows it, the host can honour it and the visit is not a teleport; the card bills the mod\'s walked estimate and no fare; Begin skips the gold gate and hands onTravelToCoords the popup\'s own {pixel, name} with playerControlled (mutants: coords-without-setting, coords-online, coords-on-teleport, coords-pays-fare, walked-estimate-unscaled)', () => {
@@ -2067,7 +2199,13 @@ test('AUDIT-MAP H1: online the world\'s clock does not wait - no inn is billed, 
 
 test('AUDIT-MAP H6/perf: a box holds the whole chrome (the modal class), the static ink is a kept layer painted when its key moves and the overlay per pulse, and the measure uses the paint\'s own font (mutants: modal-class-dropped, static-repainted-per-pulse)', () => {
   const src = read('src/ui/heldMap.js');
-  assert.match(src, /this\._chrome\.root\.classList\.toggle\('hmmodal', open\);/);
+  // ENH-NOTICE3 moved the modality off `open`: with the I/H box's words
+  // on the notice panel the .hmbox stays closed, and the chrome has to
+  // go pointer-dead all the same - so the class reads the box's
+  // MODALITY, which `open` is now only half of.
+  assert.match(src, /this\._chrome\.root\.classList\.toggle\('hmmodal', modal\);/);
+  assert.match(src, /const modal = !!this\._info \|\| this\._top === 'resume';/,
+    'mutants: the modality re-derived from the drawn box, which the panel arm leaves shut');
   assert.match(read('src/ui/enhancedStyle.js'), /\.hmroot\.hmmodal \.hmtop, \.hmroot\.hmmodal \.hmcard, \.hmroot\.hmmodal \.hmfoot \{ pointer-events: none; \}/);
   assert.match(src, /if \(key !== this\._staticKey \|\| !lctx\) \{/, 'the static half is painted only when its key moves');
   assert.match(src, /this\._marksVersion, this\._portsShown\(\) \? 1 : 0, this\.markedMapId,/, 'and the key carries what the static half reads');
@@ -2944,6 +3082,30 @@ test('EM1: the bay is still exactly the bay - the sheet route is a ROUTE, not a 
     assert.match(src, /pickAt: \(px, py\) => this\._pickAt\(px, py\),/);
     assert.match(src, /hoverLabel: \(px, py\) => this\._hoverLabel\(px, py\),/);
     assert.match(src, /mark: \(px, py\) => this\._markLocationHandler\(px, py\),/);
+    win.dispose();
+  });
+});
+
+test('ENH-NOTICE3 (AUDIT B4/B6): the card\'s refusal wears no hint (nothing dismisses it), the I/H box keeps the default (any key or press closes it), and a card that goes away takes its panel', () => {
+  const buildings = [{ buildingType: 0, displayName: 'The Odd Blades' }];
+  const deps = () => modDeps({ gold: () => 0, goldPieces: () => 0, discoveredBuildings: () => buildings, buildingTypeName: () => 'Alchemist' });
+  skin('enhanced');
+  withDocument((doc) => {
+    const win = open(mkWin(deps()));
+    win._pickAt(...toPaper(win._view, 3.5, 3.5));
+    win._openPanel('travel');
+    win._begin();
+    assert.match(win._panelState.notice, /gold/);
+    const hints = () => ((doc.body.children ?? []).find((c) => c.id === ENHANCED_NOTICE_ID)?.children ?? [])
+      .flatMap((panel) => panel.children.filter((c) => c.className === 'notice-hint').map((n) => n.textContent));
+    assert.deepEqual(hints(), [], 'mutant: the refusal promising "click or press a key" - it clears on the next toggle, never on a press');
+    win.input('KeyI');
+    assert.deepEqual(hints(), ['click or press a key'], 'the info box really does close on any key or press, and says so');
+    win.input('KeyS');
+    // the card goes away with the refusal still on it: the selection cleared
+    win._selected = null;
+    win._renderCard();
+    assert.deepEqual(enhancedNoticeKeys(), [], 'mutant: the hold below the early return, so a card that goes away leaves its panel held over the world');
     win.dispose();
   });
 });

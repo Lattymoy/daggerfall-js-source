@@ -87,6 +87,7 @@ import {
   goldPiecesOf, GOLD_PIECE_WEIGHT_KG,   // E4: the counter and its per-coin weight
 } from '../systems/inventory.js';
 import { goldAmount, deductGold } from '../systems/court.js';
+import { noticeHold, noticeRelease } from './enhancedNotice.js';   // ENH-NOTICE3: this window's own click-anywhere boxes, as the enhanced panel
 // U56/U57: DFU's transfer ladder and DFU's remote side, both extracted
 // from the classic window so this pane runs them rather than a second
 // reading of them.
@@ -516,6 +517,12 @@ let _renderedTab = null;          // PX22: the tab the current DOM shows
 let picked = null;      // the selected item object
 let side = 'local';     // which list `picked` came out of
 let notice = null;
+/** ENH-NOTICE3: the notice panel's OWNER. A module-level object and not
+ *  `_view`, because `_view` is null through the whole of the mount's
+ *  first `render()` and again from the moment `unmount` nulls it - and
+ *  the object that RAISED a panel has to be the object that releases
+ *  it, or the key is lost and the panel is a leak. */
+const noticeOwner = {};
 // U57: the window's own session - which list is remote, and the
 // session's drop pile. `dropped` is DFU's droppedItems and it MINTS ON
 // CLOSE (AUDIT B-C1), which is why the door reads it back out.
@@ -2162,6 +2169,53 @@ function render() {
   // after the pane is gone is a no-op, not a crash.
   if (!host) return;
   repaints++;
+  // ENH-NOTICE3 - THE `notice` LINE IS DFU'S CLICK-ANYWHERE BOX, not a
+  // status line, and on the enhanced skin it is the panel's. Every
+  // writer of `notice` above is one of DaggerfallInventoryWindow.cs's
+  // own `DaggerfallMessageBox ... ClickAnywhereToClose = true` /
+  // `DaggerfallUI.MessageBox` sites - which is exactly how the CLASSIC
+  // twin renders them (ui/nativeInventory.js pushes each onto its
+  // `boxes` queue, the click-anywhere queue):
+  //
+  //   wear()   broken     -> :1330-1341 (itemBrokenTextId 29, ClickAnywhereToClose)
+  //            forbidden  -> :1370-1381 (forbiddenEquipmentTextId 1068, ditto)
+  //   use()    the use ladder's text/textId -> :1600-1618 (the info box
+  //            and its AddNextMessageBox chain), :1721 bookUnavailable,
+  //            :1736 cannotUseThis, :1754 the no-spells box,
+  //            :1777-1800 the five lantern lines, :1836-1844 the map's
+  //            own box and readMapFail
+  //   refuse() the transfer ladder's refusals -> :1420 cannotCarryAnymore,
+  //            :1431 cannotHoldAnymore, :1467/:1491 cannotRemoveItem
+  //   toggleWagon()        -> :1237 noWagon, :1239 exitTooFar
+  //   dropGold()           -> :1303 wagonFullGold
+  //
+  // The one line with no DFU box behind it is wear()'s "cannot be
+  // worn" (DFU's EquipItem simply returns when ItemEquipTable finds no
+  // slot, :1383-1392) - the PORT'S own refusal, added because this
+  // window offers Wear on rows DFU's window never would. It is the
+  // same KIND of thing - a refusal with no control under it - so it
+  // rides the same panel rather than being the one line left behind on
+  // a sheet nothing else writes to.
+  //
+  // What is NOT here, and stays where it is: the gold FIELD
+  // (DaggerfallInputMessageBox, :1274-1285) and the split-stack field
+  // (:1528-1545) are inputs, and the item's own info plaque is the
+  // window's, not a box.
+  //
+  // Decided ONCE per render, before the tree is built, because the
+  // sheet paints the line in two places (the pack's footer and the
+  // loot frame) and a second call would mint a second panel.
+  // (The `!onPanel` arms below are this module's classic-skin fork
+  // and unreachable in the shipping game - ui/inventoryDoor.js mounts
+  // this pane only under the enhanced skin with a document; kept so
+  // the fork is one place, unit-testable on both skins. AUDIT
+  // ENH-NOTICE3 B19.)
+  // No hint (AUDIT ENH-NOTICE3 B3): this pane takes no click and no
+  // key for a refusal - it clears when the next action rewrites it
+  // (a wear, a take-off, a transfer, a tab) - so the panel promises no
+  // dismissal the pane does not keep. (The classic twin queues each of
+  // these as a real click-anywhere box; the enhanced pane never did.)
+  const onPanel = noticeHold(noticeOwner, notice ? [{ text: notice, center: true }] : null, { hint: false });
   repaintKeepingScroll(host, () => {
     // PX22: the list's scroll position survives a repaint, per tab - an
     // equip, a drop or a tab's own re-render rebuilds the DOM, and a
@@ -2277,7 +2331,7 @@ function render() {
     gold.append(el('span', 'k', 'Gold'), el('span', 'v', model.gold.toLocaleString()));
     bar.append(el('span', 'packitems', plural(model.count, 'item')), carry, gold);
     win.append(bar);
-    if (notice) win.append(el('p', 'sheet-notice', notice));
+    if (notice && !onPanel) win.append(el('p', 'sheet-notice', notice));
     }
 
     // The LOOT frame is built next, because with the pack closed it is
@@ -2289,7 +2343,7 @@ function render() {
     if (loot) {
       for (const c of ['tl', 'tr', 'bl', 'br']) loot.append(el('span', `px-gem px-corner px-${c}`));
       loot.append(remoteCol());
-      if (!packOpen && notice) loot.append(el('p', 'sheet-notice', notice));
+      if (!packOpen && notice && !onPanel) loot.append(el('p', 'sheet-notice', notice));
     }
     // PX20b: one FRAME owns the tooltip and the click-away - the pack
     // when it is open, the loot window when it is alone. Without this
@@ -2493,6 +2547,12 @@ export function mountEnhancedInventory(hostEl, d = {}) {
       // pack closed mid-drag and left an item icon glued over the world,
       // which re-opening the pack did not clear either.
       dragAbort();
+      // ENH-NOTICE3 / EVERY ALLOCATION HAS AN OWNER: a HELD panel arms
+      // no watchdog, so nothing but this releases it. The pane is
+      // unmounted from paths that never touch `notice` (F6 again, the
+      // door's close law, a scene change), and a refusal left on
+      // screen would then outlive the pack that said it.
+      noticeRelease(noticeOwner);
       hostEl.innerHTML = '';
       host = null;
       deps = {};
