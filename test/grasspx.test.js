@@ -8,11 +8,10 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { buildTuftSheet, buildTuftMips, downsampleMax, layTuft, toneAt, toneByte, mulberry32, pixelGrass,
-  PX_VARIANTS, PX_TUFT_W, PX_TUFT_H, PX_TONES, PX_RAMP_STEPS, PX_STEP_HZ, PX_TUFT_SCALE, PX_LEAN_STEPS, PX_TINT_BANDS } from '../src/render/grassPixelArt.js';
-import { LAB_GRASS_HEAD, GAME_GRASS_FIELD, LAB_GRASS_VS, LAB_GRASS_FS, GAME_GRASS_VS, GAME_GRASS_FS, GRASSPX_VS_EDITS, GRASSPX_FS_EDITS, applyGrassEdits, LabGrassRenderer } from '../src/render/labGrass.js';
+import { buildTuftSheet, buildTuftMips, downsampleCoverage, coverageOf, layTuft, paintTuft, toneAt, toneByte, isHighlightRow, mulberry32, pixelGrass,
+  PX_VARIANTS, PX_TUFT_W, PX_TUFT_H, PX_TONES, PX_RAMP_STEPS, PX_STEP_HZ, PX_LEAN_STEPS, PX_TINT_BANDS, PX_BLADES_PER_TUFT } from '../src/render/grassPixelArt.js';
+import { LAB_GRASS_HEAD, GAME_GRASS_FIELD, LAB_GRASS_VS, LAB_GRASS_FS, GAME_GRASS_VS, GAME_GRASS_FS, GRASSPX_VS_EDITS, GRASSPX_FS_EDITS, applyGrassEdits, LabGrassRenderer, GRASS_CELL } from '../src/render/labGrass.js';
 import { FEATURES, FEATURE_PREF_DEFAULTS } from '../src/systems/features.js';
-import { GRASS_CELL } from '../src/render/labGrass.js';
 import { perspective, mirrorProjectionX, lookAt } from '../src/world/mat4.js';
 
 const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
@@ -31,14 +30,14 @@ test('GRASS-PX: the sheet is eight 16x32 tufts, hard-edged, four-toned, and the 
     assert.ok(TONE_BYTES.includes(r), `the tone byte is one of five, never ${r}`);
     assert.equal(r === 0, al === 0, 'a texel is a blade exactly when it has a tone');
     if (al) { blade++; assert.equal(decode(r), TONE_BYTES.indexOf(r), 'the shader\'s decode reads the tone back'); }
-    if (al && r === 255) assert.equal(g, 255, 'the highlight is the last texel of its blade, so its height is 1');
+    if (al && r === 255) assert.ok(g >= 242, `the highlight is the top two texels of a tall blade, so its height is at least 19/20 (${g})`);
   }
   assert.ok(blade > 400 && blade < a.data.length / 4 * 0.6, `a sheet that is mostly air, with ${blade} blade texels`);
   const at = (v, x, y) => a.data[((y * a.width) + v * PX_TUFT_W + x) * 4 + 3];
   const seen = new Set();
   for (let v = 0; v < a.variants; v++) {
     let base = 0;
-    for (let x = 0; x < PX_TUFT_W; x++) { if (at(v, x, 0)) base++; assert.equal(at(v, x, PX_TUFT_H - 1) && (x === 0 || x === PX_TUFT_W - 1), 0, 'no tuft reaches its edge column, so none bleeds into its neighbour'); }
+    for (let x = 0; x < PX_TUFT_W; x++) if (at(v, x, 0)) base++;   // GRASS AUDIT 1: the edge-column law is the loop below, over every row; the old clause here was `false !== 0` waiting for a 32-texel blade
     for (let y = 0; y < PX_TUFT_H; y++) { assert.equal(at(v, 0, y), 0); assert.equal(at(v, PX_TUFT_W - 1, y), 0); }
     assert.ok(base >= 3, `tuft ${v} stands on at least three base texels (${base})`);
     for (let x = 0; x < PX_TUFT_W; x++) if (at(v, x, 0)) assert.equal(a.data[((0 * a.width) + v * PX_TUFT_W + x) * 4 + 1], 0, 'a base texel is height 0');
@@ -74,27 +73,64 @@ test('GRASS-PX: a tuft\'s blades - three to five, never on the edge, the tip ins
   assert.notDeepEqual(layTuft(mulberry32(7)), layTuft(mulberry32(8)));
 });
 
-test('GRASS-PX: the mip chain is COVERAGE, not an average - a tuft far off is a solid pixel, never nothing', () => {
+test('GRASS-PX / GRASS AUDIT 1: the mip chain PRESERVES COVERAGE and carries the TIP - a far tuft is as dense as a near one, tip-toned, never nothing and never a wall', () => {
   // a 2x2 block with one blade texel and three of air averages to a
-  // quarter and fails the alpha test; the max keeps it whole
-  const lvl = { width: 2, height: 2, data: new Uint8Array([0, 0, 0, 0, 192, 255, 30, 255, 0, 0, 0, 0, 0, 0, 0, 0]) };
-  assert.deepEqual([...downsampleMax(lvl).data], [192, 255, 30, 255], 'the block IS its one blade texel, tone and all');
-  // two blade texels: the FIRST in row order carries the block, so the chain is deterministic
-  const two = { width: 2, height: 2, data: new Uint8Array([0, 0, 0, 0, 64, 0, 0, 255, 192, 255, 0, 255, 0, 0, 0, 0]) };
-  assert.deepEqual([...downsampleMax(two).data], [64, 0, 0, 255]);
-  const chain = buildTuftMips();
+  // quarter and fails the alpha test; with a target of a quarter the
+  // block is kept whole, tone and all
+  const one = (data, targetFrac, variants = 1) => downsampleCoverage({ width: 2, height: 2, data: new Uint8Array(data) }, { targetFrac, variants });
+  assert.deepEqual([...one([0, 0, 0, 0, 192, 255, 30, 255, 0, 0, 0, 0, 0, 0, 0, 0], 0.25).data], [192, 255, 30, 255], 'the block IS its one blade texel');
+  // two blade texels: the block takes the HIGHER one (by height along the blade), a tip over a root
+  assert.deepEqual([...one([0, 0, 0, 0, 64, 0, 0, 255, 192, 255, 0, 255, 0, 0, 0, 0], 0.5).data], [192, 255, 0, 255], 'the tip carries the block, not the first in row order');
+  // ...and on equal height the LOWER tone: the tip beats the highlight, so a far field does not sparkle
+  assert.deepEqual([...one([0, 0, 0, 0, 255, 255, 0, 255, 192, 255, 0, 255, 0, 0, 0, 0], 0.5).data], [192, 255, 0, 255]);
+  // coverage: a 4x2 level of two tufts, every texel covered, at a target of a quarter keeps two blocks... and the per-tuft floor keeps one per tuft
+  const full = { width: 4, height: 2, data: new Uint8Array(4 * 2 * 4).fill(255) };
+  const down = downsampleCoverage(full, { targetFrac: 0.25, variants: 1 });
+  assert.equal(coverageOf(down), 0.5, 'two of two blocks: round(0.25 * 2) = 1 kept, then the one-per-tuft floor... the tuft is 2 texels wide and already has one');
+  const sheet = buildTuftSheet();
+  const chain = buildTuftMips(sheet);
   assert.equal(chain.length, 8, '128x32 halves to 1x1 in seven steps - a chain that stops short is an incomplete texture, which samples black');
   assert.deepEqual(chain.map((l) => `${l.width}x${l.height}`), ['128x32', '64x16', '32x8', '16x4', '8x2', '4x1', '2x1', '1x1']);
-  let prev = 0;
-  for (const l of chain) {
-    let blade = 0;
-    for (let i = 3; i < l.data.length; i += 4) { assert.ok(l.data[i] === 0 || l.data[i] === 255, 'hard alpha at every level'); if (l.data[i]) blade++; }
-    const frac = blade / (l.width * l.height);
-    assert.ok(frac >= prev, `coverage never falls down the chain (${frac} after ${prev})`);
-    assert.ok(blade > 0, 'no level is empty');
-    prev = frac;
+  const base = coverageOf(sheet);
+  assert.ok(base > 0.15 && base < 0.25, `the sheet is mostly air (${base})`);
+  for (const [k, l] of chain.entries()) {
+    for (let i = 3; i < l.data.length; i += 4) assert.ok(l.data[i] === 0 || l.data[i] === 255, 'hard alpha at every level');
+    const frac = coverageOf(l);
+    assert.ok(frac > 0, 'no level is empty');
+    const perTuft = l.width / sheet.variants;
+    if (perTuft >= 2) assert.ok(Math.abs(frac - base) < 0.03, `level ${k} keeps the base coverage (${frac.toFixed(3)} against ${base.toFixed(3)}) - the old max chain was 88% by level 3`);
+    else if (perTuft < 1) assert.equal(frac, 1, `level ${k}: a texel that spans tufts is always grass`);
+    let root = 0, n = 0;
+    for (let i = 0; i < l.data.length; i += 4) if (l.data[i + 3]) { n++; if (Math.floor((l.data[i] / 255) * 4 + 0.5) === 1) root++; }
+    if (k >= 3) assert.ok(root <= n * 0.2, `level ${k}: a far tuft is its tips, not its roots (${root} of ${n} root-toned) - the old chain was ALL root from level 5`);
   }
   assert.equal(chain[7].data[3], 255, 'the last pixel is grass');
+  assert.ok(Math.floor((chain[7].data[0] / 255) * 4 + 0.5) >= 2, '...and not the ground\'s colour');
+  // every tuft keeps at least a texel while it is a texel wide
+  for (const l of chain.slice(1, 5)) {
+    const perTuft = l.width / sheet.variants;
+    for (let v = 0; v < sheet.variants; v++) {
+      let any = 0;
+      for (let y = 0; y < l.height; y++) for (let x = Math.floor(v * perTuft); x < Math.floor((v + 1) * perTuft); x++) if (l.data[(y * l.width + x) * 4 + 3]) any++;
+      assert.ok(any > 0, `tuft ${v} survives at ${l.width}x${l.height}`);
+    }
+  }
+});
+
+test('GRASS AUDIT 1: the rim has somewhere to land - the highlight is the top two texels of a tall blade, and a seed head goes UNDER its stalk', () => {
+  assert.deepEqual([[31, 31, 32], [30, 31, 32], [29, 31, 32], [19, 19, 20], [18, 19, 20], [19, 19, 19]].map(([r, top, h]) => isHighlightRow(r, top, h)), [true, true, false, true, true, false]);
+  const sheet = buildTuftSheet();
+  let hl = 0; for (let i = 0; i < sheet.data.length; i += 4) if (sheet.data[i] === 255) hl++;
+  assert.ok(hl >= 30, `a sheet with ${hl} highlight texels - the first sheet had twelve, and half of those under a seed head`);
+  // a headed blade, painted alone: its tip texel is the highlight, not the head's mid tone
+  const w = PX_TUFT_W, h = PX_TUFT_H;
+  const out = new Uint8Array(w * h * 4);
+  paintTuft(out, w, 0, [{ x0: 8, height: 32, lean: 0, wide: false, head: true, ordinal: 0 }], w, h);
+  const at = (x, y) => out[(y * w + x) * 4];
+  assert.equal(at(8, 31), 255, 'the tip is the highlight'); assert.equal(at(8, 30), 255, '...and the texel under it');
+  assert.equal(at(9, 31), toneByte(2), 'the head\'s other column is the head\'s mid tone');
+  paintTuft(out.fill(0), w, 0, [{ x0: 8, height: 12, lean: 0, wide: false, head: false, ordinal: 0 }], w, h);
+  assert.equal(at(8, 11), toneByte(3), 'a short blade\'s tip is plain tip');
 });
 
 test('GRASS-PX: the compiled stages are the lab\'s text under the declared edits, each landing exactly once, and the lab\'s text is untouched', () => {
@@ -129,22 +165,38 @@ test('GRASS-PX: the compiled stages are the lab\'s text under the declared edits
     'float tq = mix(uTime, floor(uTime * uPxStepHz) / uPxStepHz, uPixel);',
     'float gust = sin(tq*1.7 - along*0.35 + aInst.w*0.6) * 0.5 + 0.5;',
     'lean = mix(lean, floor(lean * uPxLeanSteps + 0.5) / uPxLeanSteps, uPixel);',
-    'p.xz += side * (aCorner.x-0.5) * aInst2.w * mix(1.0 - vT*0.75, uPxTuftScale, uPixel);',
+    'p.xz += side * (aCorner.x-0.5) * mix(aInst2.w * (1.0 - vT*0.75), h * 0.5, uPixel);',
     'vUV = aCorner;',
-    'vVar = min(floor(aPC.a * uPxVariants), uPxVariants - 1.0);',
+    'vVar = min(floor(hash(root * 0.37) * uPxVariants), uPxVariants - 1.0);',
   ]) assert.ok(GAME_GRASS_VS.includes(line), `VS: ${line}`);
   for (const line of [
     'vec4 px = texture(uPxSheet, vec2((vVar + vUV.x) / uPxVariants, vUV.y));',
     'if (px.a < 0.5 || vFade < bayer4(gl_FragCoord.xy)) discard;',
     'pxTone = floor(px.r * 4.0 + 0.5); t = px.g; pxBlade = px.b;',
     'if (uPixel > 0.5) c = (pxTone < 1.5 ? root : (pxTone < 2.5 ? mid : tip)) * (0.92 + pxBlade * 0.16);',
-    'c *= 0.80 + mix(vTint, floor(vTint * uPxTintBands) / uPxTintBands, uPixel) * 0.42;',
+    'c *= 0.80 + mix(vTint, floor(vTint * (uPxTintBands - 1.0) + 0.5) / (uPxTintBands - 1.0), uPixel) * 0.42;',
     'c *= (uAmb * 1.25 * (0.42 + 0.58*t) + uSunCol',
     'mix(smoothstep(0.86,1.0,t), step(3.5, pxTone), uPixel) * vLam;',
-    'if (uPixel > 0.5) { float l = dot(c, vec3(0.299, 0.587, 0.114)); c *= (floor(l * uPxSteps + 0.5) / uPxSteps) / max(l, 1e-4); }',
+    'if (uPixel > 0.5) { float l = max(dot(c, vec3(0.299, 0.587, 0.114)), 1e-4); float g = max(1.0, floor(pow(l, 1.0 / 2.2) * uPxSteps + 0.5)) / uPxSteps; c *= pow(g, 2.2) / l; }',
     'o = vec4(c, mix(vFade * smoothstep(0.0, 0.30, vT), 1.0, uPixel));',
   ]) assert.ok(GAME_GRASS_FS.includes(line), `FS: ${line}`);
   assert.ok(!/smoothstep\(0\.0,0\.55,vT\)/.test(GAME_GRASS_FS) && !/0\.58\*vT/.test(GAME_GRASS_FS), 'the gradient and the sward shade read the drawn stalk, not the quad');
+  assert.ok(!GAME_GRASS_VS.includes('aPC.a * uPxVariants'), 'GRASS AUDIT 1: the sprite is not the gust phase, or every tuft of one sprite hops in unison');
+  // GRASS AUDIT 1: the ramp and the band, EVALUATED from the shader's own text
+  const ramp = GAME_GRASS_FS.match(/float g = (max\(1\.0, floor\(pow\(l, 1\.0 \/ 2\.2\) \* uPxSteps \+ 0\.5\)\)) \/ uPxSteps;/);
+  assert.ok(ramp, 'the ramp\'s rung, as one expression');
+  const rung = new Function('l', 'uPxSteps', `const max = Math.max, floor = Math.floor, pow = Math.pow; return ${ramp[1]} / uPxSteps;`);
+  const out = (l) => Math.pow(rung(l, PX_RAMP_STEPS), 2.2);
+  for (const l of [0.0383, 0.0265, 0.0838, 0.183, 0.372, 0.001]) assert.ok(out(l) > 0, `a luminance of ${l} is never crushed to zero (it was, for everything under 1/16: the mid tone at night, the whole sward in a storm)`);
+  assert.ok(out(0.0383) < out(0.183) && out(0.183) < out(0.372), 'the rungs climb with the light - a moonlit midnight is darker than noon');
+  assert.ok(out(0.0383) / 0.0383 < 1.6 && out(0.0383) / 0.0383 > 0.6, `a night mid tone stays within a step of itself (x${(out(0.0383) / 0.0383).toFixed(2)})`);
+  const band = GAME_GRASS_FS.match(/mix\(vTint, (floor\(vTint \* \(uPxTintBands - 1\.0\) \+ 0\.5\) \/ \(uPxTintBands - 1\.0\)), uPixel\)/);
+  assert.ok(band, 'the band, as one expression');
+  const banded = new Function('vTint', 'uPxTintBands', `const floor = Math.floor; return ${band[1]};`);
+  const bands = new Set(); let sum = 0, N = 0;
+  for (let t = 0; t <= 1.0001; t += 0.001) { const b = banded(t, PX_TINT_BANDS); bands.add(Number(b.toFixed(6))); sum += b; N++; }
+  assert.deepEqual([...bands].sort(), [0, 1 / 3, 2 / 3, 1].map((v) => Number(v.toFixed(6))).sort(), 'four bands, and the top one reaches 1 - the old floor(x*4)/4 never did');
+  assert.ok(Math.abs(sum / N - 0.5) < 0.01, `the banding keeps the mean tint (${(sum / N).toFixed(3)}) - truncation dragged it to 0.375`);
 });
 
 test('GRASS-PX: the shader\'s bayer4 is the classic 4x4 matrix, evaluated from the text', () => {
@@ -197,11 +249,29 @@ test('GRASS-PX: the renderer compiles the game\'s stages, uploads the sheet with
   };
   const px = uploads('pixel');
   assert.equal(px.uPixel, 1); assert.equal(uploads('smooth').uPixel, 0);
+  // GRASS AUDIT 1: the step counts go up in EVERY style - a zero count is a divide by zero in the pixel arm and mix(lab, NaN, 0) is NaN, which drew nothing
+  const sm = uploads('smooth');
+  assert.deepEqual([sm.uPxStepHz, sm.uPxLeanSteps, sm.uPxVariants, sm.uPxSteps, sm.uPxTintBands], [PX_STEP_HZ, PX_LEAN_STEPS, PX_VARIANTS, PX_RAMP_STEPS, PX_TINT_BANDS], 'the smooth draw still uploads every count');
+  assert.equal(sm.uPxSheet, undefined, '...but never binds the sheet');
+  calls.length = 0; r.count = 1; r.draw(new Float32Array(16), new Float32Array(16), new Float32Array(3), 0, light, wind, 300, 'smooth');
+  assert.ok(!calls.some((c) => c[0] === 'bindTexture' && c[2] === r.pxSheet) && !calls.some((c) => c[0] === 'activeTexture' && c[1] === C.TEXTURE4), 'the smooth style never touches unit 4');
   calls.length = 0; r.draw(new Float32Array(16), new Float32Array(16), new Float32Array(3), 0, light, wind);
   assert.equal(calls.find((c) => c[0] === 'uniform1f' && c[1] === 'uPixel')[2], 0, 'a draw that names no style is the lab\'s');
   assert.equal(uploads('junk').uPixel, 1, 'a stored value that is no tier is the row\'s default, pixel - the same fallback the pane draws');
-  assert.deepEqual([px.uPxStepHz, px.uPxTuftScale, px.uPxLeanSteps, px.uPxVariants, px.uPxSteps, px.uPxTintBands, px.uPxSheet], [PX_STEP_HZ, PX_TUFT_SCALE, PX_LEAN_STEPS, PX_VARIANTS, PX_RAMP_STEPS, PX_TINT_BANDS, 4]);
-  assert.deepEqual([PX_STEP_HZ, PX_TUFT_SCALE, PX_LEAN_STEPS, PX_RAMP_STEPS, PX_TINT_BANDS], [8, 3, 24, 8, 4]);
+  assert.deepEqual([px.uPxStepHz, px.uPxLeanSteps, px.uPxVariants, px.uPxSteps, px.uPxTintBands, px.uPxSheet], [PX_STEP_HZ, PX_LEAN_STEPS, PX_VARIANTS, PX_RAMP_STEPS, PX_TINT_BANDS, 4]);
+  assert.deepEqual([PX_STEP_HZ, PX_LEAN_STEPS, PX_RAMP_STEPS, PX_TINT_BANDS, PX_BLADES_PER_TUFT], [8, 24, 8, 4, 2]);
+  // GRASS AUDIT 1: the lab's one-scatter path draws the pixel tuft too - one quad, half the blades
+  calls.length = 0; r.count = 7; r.draw(new Float32Array(16), new Float32Array(16), new Float32Array(3), 0, light, wind, 300, 'pixel');
+  let dr = calls.find((c) => c[0] === 'drawArraysInstanced');
+  assert.deepEqual([dr[3], dr[4], r.drawn.farSlots, r.drawn.blades, r.drawn.kept], [r.vertsFar, 4, 1, 4, 7], 'the scatter path: the one-quad blade, ceil(7/2) instances, and the stats say so');
+  assert.equal(calls.find((c) => c[0] === 'uniform1f' && c[1] === 'uSlotN')[2], 4, 'the fade fraction runs over the half');
+  calls.length = 0; r.draw(new Float32Array(16), new Float32Array(16), new Float32Array(3), 0, light, wind, 300, 'smooth');
+  dr = calls.find((c) => c[0] === 'drawArraysInstanced');
+  assert.deepEqual([dr[3], dr[4], r.drawn.farSlots], [r.verts, 7, 0]);
+  // GRASS AUDIT 1: the constructor takes the LAB's stages, so the probe can draw the same field through the lab's own text
+  const { gl: gl2, calls: calls2 } = stubGl();
+  new LabGrassRenderer(gl2, { stages: { vs: LAB_GRASS_VS, fs: LAB_GRASS_FS } });
+  assert.deepEqual(calls2.filter((c) => c[0] === 'shaderSource').map((c) => c[2]), [LAB_GRASS_HEAD + GAME_GRASS_FIELD + LAB_GRASS_VS, LAB_GRASS_HEAD + LAB_GRASS_FS]);
   calls.length = 0; r.draw(new Float32Array(16), new Float32Array(16), new Float32Array(3), 0, light, wind, 300, 'pixel');
   const at4 = calls.findIndex((c) => c[0] === 'activeTexture' && c[1] === C.TEXTURE4);
   assert.ok(at4 >= 0 && calls[at4 + 1][0] === 'bindTexture' && calls[at4 + 1][2] === r.pxSheet, 'the sheet is bound on unit 4');
@@ -213,12 +283,14 @@ test('GRASS-PX: the renderer compiles the game\'s stages, uploads the sheet with
 test('GRASS-PX: the row, its default, and the host reading it live', () => {
   const ids = FEATURES.map((f) => f.id);
   assert.equal(ids.indexOf('grass-style'), ids.indexOf('grass-density') + 1, 'beside the density dial');
+  const world = read('src/scenes/world.js');
   const row = FEATURES.find((f) => f.id === 'grass-style');
   assert.deepEqual({ ...row.control, tiers: row.control.tiers.map((t) => [...t]) }, { store: 'prefs', key: 'grassStyle', initial: 'pixel', online: 'player', tiers: [['pixel', 'Pixel'], ['smooth', 'Smooth']] });
   assert.equal(row.group, 'sight'); assert.deepEqual([...row.kinds], ['enhanced']); assert.equal(row.effect, 'Takes effect at once.');
+  assert.ok(row.note.includes('unless the enhanced outdoors are on and Grass density is above Off'), 'GRASS AUDIT 1: the row says what it is inert without, as FT7\'s law has its sibling say');
+  assert.ok(world.includes('vertsPerBlade: labGrass._oneQuad ? labGrass.vertsFar : labGrass.verts'), 'GRASS AUDIT 1: the stats say which blade the frame drew');
   assert.equal(FEATURE_PREF_DEFAULTS.grassStyle, 'pixel', 'the shelf\'s default is the row\'s');
   assert.deepEqual(['pixel', 'smooth', undefined, 'junk'].map(pixelGrass), [true, false, true, true]);
-  const world = read('src/scenes/world.js');
   const at = world.indexOf('labGrass.draw(proj, view, new Float32Array(cam.pos), now / 1000,');
   assert.ok(at > 0);
   const call = world.slice(at, world.indexOf(');', at) + 2);
@@ -259,6 +331,10 @@ test('GRASS-PX2: in the pixel style every cell draws the ONE-QUAD blade - the sp
   assert.equal(r.drawn.slots, 1); assert.equal(r.drawn.farSlots, 1, 'pixel: the same near cell is the one-quad blade');
   assert.equal(r.drawn.verts, r.drawn.blades * r.vertsFar, 'a fifth of the vertices');
   assert.ok(calls.some((c) => c[0] === 'bindVertexArray' && c[1] === r.vaoFar), 'the one-quad array is bound');
+  // GRASS AUDIT 1: a tuft stands in for two blades, so the cell submits HALF (the first half of a random order is a uniform half), the fade fraction over that half, and the cell still HOLDS all of them
+  assert.equal(r.drawn.blades, Math.ceil(perCell / PX_BLADES_PER_TUFT), `${r.drawn.blades} of ${perCell}`);
+  assert.equal(r.drawn.kept, perCell);
+  assert.equal(calls.filter((c) => c[0] === 'uniform1f' && c[1] === r.u.uSlotN).pop()[2], Math.ceil(perCell / PX_BLADES_PER_TUFT), 'uSlotN is the half, so the index fraction is over the half');
   assert.equal(r.vertsFar * 5, r.verts);
   // and back: the style is read every draw, not latched
   r.draw(proj, view, new Float32Array(eye), 0, light, wind, 300, 'smooth');

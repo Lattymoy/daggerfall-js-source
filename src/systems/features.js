@@ -357,7 +357,8 @@ export const FEATURES = Object.freeze([
     group: 'sight',
     title: 'Grass style',
     note: 'Pixel draws each tuft as a hand-set sprite in four tones, with stepped sway and a dithered distance, the way '
-      + 'the world\u2019s trees and people are drawn; Smooth is the lab\u2019s tapered, gradient-lit blade.',
+      + 'the world\u2019s trees and people are drawn; Smooth is the lab\u2019s tapered, gradient-lit blade. Nothing to change unless '
+      + 'the enhanced outdoors are on and Grass density is above Off.',
     effect: 'Takes effect at once.',
     kinds: Object.freeze(['enhanced']),
     control: Object.freeze({ store: 'prefs', key: 'grassStyle', initial: 'pixel', online: 'player', tiers: Object.freeze([['pixel', 'Pixel'], ['smooth', 'Smooth']]) }),

@@ -36,37 +36,39 @@
   ]
  },
  {
-  "name": "GRASSPX-the-mip-takes-the-last-blade-texel-not-the-first",
+  "name": "GRASSPX-the-mip-takes-the-root-over-the-tip",
   "file": "src/render/grassPixelArt.js",
-  "old": "          if (data[i + 3] > best) { best = data[i + 3]; bi = i; }",
-  "new": "          if (data[i + 3] >= best) { best = data[i + 3]; bi = i; }",
+  "old": "          if (g > bg || (g === bg && t < bt)) { bg = g; bt = t; bi = i; }",
+  "new": "          if (bi < 0) { bg = g; bt = t; bi = i; }",
   "tests": [
    "test/grasspx.test.js"
-  ]
+  ],
+  "why": "GRASS AUDIT 1 re-aimed: the chain is coverage-preserving and tip-toned now."
  },
  {
   "name": "GRASSPX-the-mip-chain-stops-short-of-1x1",
   "file": "src/render/grassPixelArt.js",
-  "old": "  while (levels[levels.length - 1].width > 1 || levels[levels.length - 1].height > 1) levels.push(downsampleMax(levels[levels.length - 1]));",
-  "new": "  while (levels[levels.length - 1].width > 2) levels.push(downsampleMax(levels[levels.length - 1]));",
+  "old": "  while (levels[levels.length - 1].width > 1 || levels[levels.length - 1].height > 1) {",
+  "new": "  while (levels[levels.length - 1].width > 2) {",
   "tests": [
    "test/grasspx.test.js"
   ]
  },
  {
-  "name": "GRASSPX-the-mip-averages-alpha-so-a-far-tuft-vanishes",
+  "name": "GRASSPX-the-mip-is-max-alpha-again-so-a-far-tuft-is-a-wall",
   "file": "src/render/grassPixelArt.js",
-  "old": "      out[o] = data[bi]; out[o + 1] = data[bi + 1]; out[o + 2] = data[bi + 2]; out[o + 3] = data[bi + 3];",
-  "new": "      let sa = 0; for (let dy = 0; dy < 2; dy++) for (let dx = 0; dx < 2; dx++) sa += data[((Math.min(height - 1, y * 2 + dy)) * width + Math.min(width - 1, x * 2 + dx)) * 4 + 3];\n      out[o] = data[bi]; out[o + 1] = data[bi + 1]; out[o + 2] = data[bi + 2]; out[o + 3] = sa >> 2;",
+  "old": "  const keep = Math.min(covered.length, Math.max(1, Math.round(targetFrac * w2 * h2)));",
+  "new": "  const keep = covered.length;",
   "tests": [
    "test/grasspx.test.js"
-  ]
+  ],
+  "why": "GRASS AUDIT 1 re-aimed: the max chain was 88% covered by level 3 and 100% from level 4."
  },
  {
   "name": "GRASSPX-the-tuft-index-is-unclamped-so-a-phase-of-one-samples-past-the-sheet",
   "file": "src/render/labGrass.js",
-  "old": "      + '  vVar = min(floor(aPC.a * uPxVariants), uPxVariants - 1.0);',",
-  "new": "      + '  vVar = floor(aPC.a * uPxVariants);',",
+  "old": "      + '  vVar = min(floor(hash(root * 0.37) * uPxVariants), uPxVariants - 1.0);   // GRASS AUDIT 1: the prelude\\'s hash, scaled to keep its float32 fract honest',",
+  "new": "      + '  vVar = floor(hash(root * 0.37) * uPxVariants);   // GRASS AUDIT 1: the prelude\\'s hash, scaled to keep its float32 fract honest',",
   "tests": [
    "test/grasspx.test.js"
   ]
@@ -146,8 +148,8 @@
  {
   "name": "GRASSPX-the-sheet-rides-the-zero-fields-unit",
   "file": "src/render/labGrass.js",
-  "old": "    gl.activeTexture(gl.TEXTURE4); gl.bindTexture(gl.TEXTURE_2D, this.pxSheet);\n    gl.uniform1i(u.uPxSheet, 4);",
-  "new": "    gl.activeTexture(gl.TEXTURE3); gl.bindTexture(gl.TEXTURE_2D, this.pxSheet);\n    gl.uniform1i(u.uPxSheet, 3);",
+  "old": "      gl.activeTexture(gl.TEXTURE4); gl.bindTexture(gl.TEXTURE_2D, this.pxSheet);\n      gl.uniform1i(u.uPxSheet, 4);",
+  "new": "      gl.activeTexture(gl.TEXTURE3); gl.bindTexture(gl.TEXTURE_2D, this.pxSheet);\n      gl.uniform1i(u.uPxSheet, 3);",
   "tests": [
    "test/grasspx.test.js"
   ]
@@ -173,8 +175,8 @@
  {
   "name": "GRASSPX-the-renderer-compiles-the-labs-text-so-the-pixel-uniforms-do-not-exist",
   "file": "src/render/labGrass.js",
-  "old": "    gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, LAB_GRASS_HEAD + GAME_GRASS_FS));",
-  "new": "    gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, LAB_GRASS_HEAD + LAB_GRASS_FS));",
+  "old": "  constructor(gl, { stages = { vs: GAME_GRASS_VS, fs: GAME_GRASS_FS } } = {}) {",
+  "new": "  constructor(gl, { stages = { vs: GAME_GRASS_VS, fs: LAB_GRASS_FS } } = {}) {",
   "tests": [
    "test/grasspx.test.js"
   ]
@@ -193,6 +195,150 @@
   "file": "src/render/labGrass.js",
   "old": "    this._oneQuad = pixel;",
   "new": "    this._oneQuad = this._oneQuad || pixel;",
+  "tests": [
+   "test/grasspx.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-GRASSPX-the-ramp-has-a-zero-rung-again",
+  "file": "src/render/labGrass.js",
+  "old": "float g = max(1.0, floor(pow(l, 1.0 / 2.2) * uPxSteps + 0.5)) / uPxSteps;",
+  "new": "float g = floor(pow(l, 1.0 / 2.2) * uPxSteps + 0.5) / uPxSteps;",
+  "tests": [
+   "test/grasspx.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-GRASSPX-the-ramp-is-linear-so-a-moonlit-night-is-noon",
+  "file": "src/render/labGrass.js",
+  "old": "float g = max(1.0, floor(pow(l, 1.0 / 2.2) * uPxSteps + 0.5)) / uPxSteps; c *= pow(g, 2.2) / l;",
+  "new": "float g = max(1.0, floor(l * uPxSteps + 0.5)) / uPxSteps; c *= g / l;",
+  "tests": [
+   "test/grasspx.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-GRASSPX-the-tint-band-truncates",
+  "file": "src/render/labGrass.js",
+  "old": "floor(vTint * (uPxTintBands - 1.0) + 0.5) / (uPxTintBands - 1.0)",
+  "new": "floor(vTint * uPxTintBands) / uPxTintBands",
+  "tests": [
+   "test/grasspx.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-GRASSPX-the-width-ignores-the-drawn-height",
+  "file": "src/render/labGrass.js",
+  "old": "mix(aInst2.w * (1.0 - vT*0.75), h * 0.5, uPixel)",
+  "new": "mix(aInst2.w * (1.0 - vT*0.75), aInst2.w * 3.0, uPixel)",
+  "tests": [
+   "test/grasspx.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-GRASSPX-the-sprite-is-the-gust-phase",
+  "file": "src/render/labGrass.js",
+  "old": "vVar = min(floor(hash(root * 0.37) * uPxVariants), uPxVariants - 1.0);",
+  "new": "vVar = min(floor(aPC.a * uPxVariants), uPxVariants - 1.0);",
+  "tests": [
+   "test/grasspx.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-GRASSPX-the-step-counts-are-gated-so-smooth-is-NaN",
+  "file": "src/render/labGrass.js",
+  "old": "    gl.uniform1f(u.uPxStepHz, PX_STEP_HZ);\n    gl.uniform1f(u.uPxLeanSteps, PX_LEAN_STEPS);\n    gl.uniform1f(u.uPxVariants, this.pxVariants);\n    gl.uniform1f(u.uPxSteps, PX_RAMP_STEPS);\n    gl.uniform1f(u.uPxTintBands, PX_TINT_BANDS);\n    if (pixel) {",
+  "new": "    if (pixel) {\n    gl.uniform1f(u.uPxStepHz, PX_STEP_HZ);\n    gl.uniform1f(u.uPxLeanSteps, PX_LEAN_STEPS);\n    gl.uniform1f(u.uPxVariants, this.pxVariants);\n    gl.uniform1f(u.uPxSteps, PX_RAMP_STEPS);\n    gl.uniform1f(u.uPxTintBands, PX_TINT_BANDS);",
+  "tests": [
+   "test/grasspx.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-GRASSPX-the-smooth-style-binds-the-sheet",
+  "file": "src/render/labGrass.js",
+  "old": "    if (pixel) {\n      gl.activeTexture(gl.TEXTURE4);",
+  "new": "    if (pixel || true) {\n      gl.activeTexture(gl.TEXTURE4);",
+  "tests": [
+   "test/grasspx.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-GRASSPX-the-scatter-path-keeps-the-five-quad-blade",
+  "file": "src/render/labGrass.js",
+  "old": "      const one = this._oneQuad, verts = one ? this.vertsFar : this.verts;",
+  "new": "      const one = false, verts = this.verts;",
+  "tests": [
+   "test/grasspx.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-GRASSPX-the-cell-submits-every-blade-in-pixel",
+  "file": "src/render/labGrass.js",
+  "old": "      const m = this._oneQuad ? Math.ceil(n / PX_BLADES_PER_TUFT) : n;",
+  "new": "      const m = n;",
+  "tests": [
+   "test/grasspx.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-GRASSPX-the-fade-fraction-is-over-the-whole-cell-not-the-half",
+  "file": "src/render/labGrass.js",
+  "old": "      gl.uniform1f(this.u.uSlotN, m);",
+  "new": "      gl.uniform1f(this.u.uSlotN, n);",
+  "tests": [
+   "test/grasspx.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-GRASSPX-the-highlight-is-one-texel",
+  "file": "src/render/grassPixelArt.js",
+  "old": "export const isHighlightRow = (r, top, height) => height >= 20 && r >= top - 1;",
+  "new": "export const isHighlightRow = (r, top, height) => height >= 20 && r >= top;",
+  "tests": [
+   "test/grasspx.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-GRASSPX-the-seed-head-paints-over-the-highlight",
+  "file": "src/render/grassPixelArt.js",
+  "old": "    if (bl.head) {\n      // a seed head",
+  "new": "    if (false) {\n      // a seed head",
+  "tests": [
+   "test/grasspx.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-GRASSPX-the-per-tuft-floor-is-gone",
+  "file": "src/render/grassPixelArt.js",
+  "old": "    if (mine.length && !mine.some((b) => out[b.o + 3])) out[mine[0].o + 3] = 255;",
+  "new": "",
+  "tests": [
+   "test/grasspx.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-GRASSPX-the-row-does-not-say-what-it-is-inert-without",
+  "file": "src/systems/features.js",
+  "old": " Nothing to change unless '\n      + 'the enhanced outdoors are on and Grass density is above Off.',",
+  "new": "',",
+  "tests": [
+   "test/grasspx.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-GRASSPX-the-stats-name-the-near-blade-in-a-pixel-frame",
+  "file": "src/scenes/world.js",
+  "old": "vertsPerBlade: labGrass._oneQuad ? labGrass.vertsFar : labGrass.verts,",
+  "new": "vertsPerBlade: labGrass.verts,",
+  "tests": [
+   "test/grasspx.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-GRASSPX-the-renderer-ignores-the-stages-it-is-handed",
+  "file": "src/render/labGrass.js",
+  "old": "    gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, LAB_GRASS_HEAD + stages.fs));",
+  "new": "    gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, LAB_GRASS_HEAD + GAME_GRASS_FS));",
   "tests": [
    "test/grasspx.test.js"
   ]

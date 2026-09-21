@@ -70,6 +70,15 @@ export const PX_LEAN_STEPS = 24;
 export const PX_TINT_BANDS = 4;
 /** the sheet's seed - the sheet is the same on every machine, every boot */
 export const PX_SEED = 0x9e3779b1;
+/** GRASS AUDIT 1: a tuft stands in for THIS many of the lab's blades.
+ *  The placer emits one instance per lab blade; a tuft is three to five
+ *  blades on a quad half its height wide, so drawing one per blade was
+ *  several times the field's visual density. The host submits half of
+ *  each cell's blades in the pixel style (the placer's order is random,
+ *  so the first half is a uniform half). A third was tried and read
+ *  sparse at the feet, where a tuft is one-texel stalks over open
+ *  ground; half is the lab's sward, at half the fill. */
+export const PX_BLADES_PER_TUFT = 2;
 
 /** mulberry32: a small, fast, seedable generator with no state outside
  *  its closure, so a sheet is a function of its seed and nothing else */
@@ -122,6 +131,11 @@ export function toneAt(f, isTip, height) {
   if (isTip && height >= 20) return 4;
   return f < 0.35 ? 1 : f < 0.75 ? 2 : 3;
 }
+/** GRASS AUDIT 1: the highlight is the top TWO texels of a tall blade,
+ *  not one - one was overpainted by a later blade or the blade's own
+ *  seed head half the time, and twelve highlight texels in a sheet of
+ *  771 is a rim nobody sees. `r` is the texel's row, `top` the blade's. */
+export const isHighlightRow = (r, top, height) => height >= 20 && r >= top - 1;
 
 /**
  * Paint one tuft into a sheet. Later blades paint over earlier ones,
@@ -143,20 +157,22 @@ export function paintTuft(out, stride, ox, blades, w = PX_TUFT_W, h = PX_TUFT_H)
   };
   for (const bl of blades) {
     const top = bl.height - 1;
+    if (bl.head) {
+      // a seed head: a 2x2 cap of mid tone straddling the tip, the way a
+      // grass flower sits heavier than the stalk that holds it. GRASS
+      // AUDIT 1: painted BEFORE the stalk, so the stalk's own highlight
+      // texel lands on top of it and not under it.
+      const xt = bl.x0 + Math.round(bl.lean);
+      for (const [dx, dy] of [[0, -1], [1, -1], [0, 0], [1, 0]]) put(xt + dx, top + dy, 2, 1, bl.ordinal);
+    }
     for (let r = 0; r <= top; r++) {
       const f = top > 0 ? r / top : 1;
       // the stalk's curve is the lab's: the tip travels, the root does
       // not, and the travel goes as height squared
       const x = bl.x0 + Math.round(bl.lean * f * f);
-      const tone = toneAt(f, r === top, bl.height);
+      const tone = isHighlightRow(r, top, bl.height) ? 4 : toneAt(f, r === top, bl.height);
       put(x, r, tone, f, bl.ordinal);
       if (bl.wide && f < 0.2) put(x + (bl.lean >= 0 ? -1 : 1), r, 1, f, bl.ordinal);   // the base's second texel sits on the side the blade leans AWAY from, and only the bottom fifth carries it - wider and the bases read as blocks
-    }
-    if (bl.head) {
-      // a seed head: a 2x2 cap of mid tone straddling the tip, the way a
-      // grass flower sits heavier than the stalk that holds it
-      const xt = bl.x0 + Math.round(bl.lean);
-      for (const [dx, dy] of [[0, -1], [1, -1], [0, 0], [1, 0]]) put(xt + dx, top + dy, 2, 1, bl.ordinal);
     }
   }
 }
@@ -176,30 +192,75 @@ export function buildTuftSheet({ variants = PX_VARIANTS, w = PX_TUFT_W, h = PX_T
 }
 
 /**
- * One mip level down, by COVERAGE and not by average: a block's alpha
- * is the max of its texels' and its colour is the texel that carried
- * that max (the first such in row order, so it is deterministic).
+ * One mip level down, PRESERVING COVERAGE. GRASS AUDIT 1: the first
+ * chain took the MAX alpha of every block, which kept a far tuft from
+ * vanishing and also made it a solid rectangle by the third level (19%
+ * of the sheet covered at level 0, 88% at level 3, 100% from level 4)
+ * of the ROOT tone (the tie-break took the lowest row) - a far field
+ * that was a wall of dark blocks three blade-widths wide. An average
+ * goes the other way and the tuft is gone by level 1.
+ *
+ * The right answer is the alpha-test mip law (Castano): a level keeps
+ * the FRACTION of covered texels the base level had, so a tuft at any
+ * distance is as dense as it was up close - the blocks with the most
+ * covered texels are kept, the rest are air, and the alpha stays 0 or
+ * 255. Each kept block takes the tone of its HIGHEST covered texel (by
+ * height along the blade, the tip winning over the highlight on a
+ * tie), because what the eye sees of a distant blade is its tip, which
+ * is GR4's law for the smooth blade too. Two floors: every tuft keeps
+ * at least one texel while it is still a texel wide, and once a texel
+ * spans more than one tuft (the last three levels, under two pixels on
+ * screen) the level is fully covered (the per-tuft floor does that on
+ * its own), because a mark that is there is better than a mark that
+ * flickers.
+ *
  * Sizes halve and floor at one, which is the chain WebGL wants.
  */
-export function downsampleMax(level) {
+export function downsampleCoverage(level, { targetFrac, variants = PX_VARIANTS }) {
   const { width, height, data } = level;
   const w2 = Math.max(1, width >> 1), h2 = Math.max(1, height >> 1);
   const out = new Uint8Array(w2 * h2 * 4);
+  const blocks = [];
   for (let y = 0; y < h2; y++) {
     for (let x = 0; x < w2; x++) {
-      let best = -1, bi = 0;
+      let count = 0, bi = -1, bg = -1, bt = 9;
       for (let dy = 0; dy < 2; dy++) {
         for (let dx = 0; dx < 2; dx++) {
           const sx = Math.min(width - 1, x * 2 + dx), sy = Math.min(height - 1, y * 2 + dy);
           const i = (sy * width + sx) * 4;
-          if (data[i + 3] > best) { best = data[i + 3]; bi = i; }
+          if (!data[i + 3]) continue;
+          count++;
+          const g = data[i + 1], t = data[i];
+          if (g > bg || (g === bg && t < bt)) { bg = g; bt = t; bi = i; }
         }
       }
       const o = (y * w2 + x) * 4;
-      out[o] = data[bi]; out[o + 1] = data[bi + 1]; out[o + 2] = data[bi + 2]; out[o + 3] = data[bi + 3];
+      if (bi >= 0) { out[o] = data[bi]; out[o + 1] = data[bi + 1]; out[o + 2] = data[bi + 2]; }
+      blocks.push({ x, y, count, g: bg, o });
     }
   }
+  const tuftAt = w2 / variants;   // this level's texels per tuft, across
+  const covered = blocks.filter((b) => b.count > 0);
+  covered.sort((a, b) => b.count - a.count || b.g - a.g || b.y - a.y || a.x - b.x);
+  const keep = Math.min(covered.length, Math.max(1, Math.round(targetFrac * w2 * h2)));
+  for (let k = 0; k < keep; k++) out[covered[k].o + 3] = 255;
+  // the per-tuft floor: a tuft still a texel wide keeps at least one
+  // texel - and once a texel spans more than one tuft, every tuft's
+  // claim on it fills the whole level, which is the "always grass" law
+  // for the last three levels stated once rather than twice
+  for (let v = 0; v < variants; v++) {
+    const x0 = Math.floor(v * tuftAt), x1 = Math.floor((v + 1) * tuftAt);
+    const mine = covered.filter((b) => b.x >= x0 && b.x < x1);
+    if (mine.length && !mine.some((b) => out[b.o + 3])) out[mine[0].o + 3] = 255;
+  }
   return { width: w2, height: h2, data: out };
+}
+
+/** the covered fraction of a level */
+export function coverageOf(level) {
+  let n = 0;
+  for (let i = 3; i < level.data.length; i += 4) if (level.data[i]) n++;
+  return n / (level.width * level.height);
 }
 
 /** the full chain, level 0 first, down to 1x1 - a chain that stops
@@ -207,7 +268,10 @@ export function downsampleMax(level) {
 export function buildTuftMips(sheet = buildTuftSheet()) {
   /** @type {{ width: number, height: number, data: Uint8Array, variants?: number }[]} */
   const levels = [sheet];
-  while (levels[levels.length - 1].width > 1 || levels[levels.length - 1].height > 1) levels.push(downsampleMax(levels[levels.length - 1]));
+  const targetFrac = coverageOf(sheet);
+  while (levels[levels.length - 1].width > 1 || levels[levels.length - 1].height > 1) {
+    levels.push(downsampleCoverage(levels[levels.length - 1], { targetFrac, variants: sheet.variants ?? PX_VARIANTS }));
+  }
   return levels;
 }
 
