@@ -122,17 +122,43 @@ export function stripLayout(slot, { paperW = STRIP.refPaper, measure = null } = 
 }
 
 /**
- * Which tab a paper point hits, or null. The box is grown by `grab` on
- * every side: these are hand-lettered words with no button under them,
- * and a word's own ink is a thin target for a mouse and a hopeless one
- * for a thumb.
+ * THE GRAB LAW, shared by both inked strips (the tabs here and the
+ * automap's floor strip). A box is grown by `grab` on every side,
+ * because these are hand-lettered words with no button under them and a
+ * word's own ink is a thin target for a mouse and a hopeless one for a
+ * thumb - and where two grown boxes OVERLAP, the point goes to the
+ * NEAREST of them rather than to whichever was listed first.
+ *
+ * The nearest rule is not a nicety. The floor strip's rows sit a gap
+ * apart that is narrower than two grab bands, so first-match handed
+ * every press near the seam to the row ABOVE - a player aiming at Floor
+ * 1 got Floor 2, every time, and the strip looked broken rather than
+ * generous. Found by a pin rather than by reading.
+ *
+ * @param {Array<{x:number,y:number,w:number,h:number}>} boxes
+ * @param {number} px @param {number} py @param {number} g
+ * @returns {number} the index of the box hit, or -1
  */
-export function stripHit(layout, px, py) {
-  const g = STRIP.grab * (layout?.scale ?? 1);
-  for (const t of layout?.tabs ?? []) {
-    if (px >= t.x - g && px <= t.x + t.w + g && py >= t.y - g && py <= t.y + t.h + g) return t.sheet;
+export function grabHit(boxes, px, py, g) {
+  let best = -1, bestD = Infinity;
+  for (let i = 0; i < (boxes?.length ?? 0); i++) {
+    const b = boxes[i];
+    if (px < b.x - g || px > b.x + b.w + g || py < b.y - g || py > b.y + b.h + g) continue;
+    // distance from the point to the box ITSELF (zero when inside it),
+    // so a press on a word always beats a press merely near another
+    const dx = Math.max(b.x - px, 0, px - (b.x + b.w));
+    const dy = Math.max(b.y - py, 0, py - (b.y + b.h));
+    const d = dx * dx + dy * dy;
+    if (d < bestD) { bestD = d; best = i; }
   }
-  return null;
+  return best;
+}
+
+/** Which tab a paper point hits, or null. */
+export function stripHit(layout, px, py) {
+  const tabs = layout?.tabs ?? [];
+  const i = grabHit(tabs, px, py, STRIP.grab * (layout?.scale ?? 1));
+  return i < 0 ? null : tabs[i].sheet;
 }
 
 /**

@@ -370,3 +370,52 @@ test('EM2: a room wound the other way still fills its own plan', () => {
     .chains.map((c) => c.map((p) => `${p.x},${p.y}`).join(' '));
   assert.deepEqual(plan(ccw), plan(cw));
 });
+
+test('EM3: two passes over ONE grid - the wash lands cell for cell inside the outline', () => {
+  // The automap outlines what has been REVEALED and washes the part
+  // the player walked THIS RUN. Derived separately the two plans
+  // disagree about both the storeys and the box, because a smaller row
+  // set has fewer of the first and a tighter second - and the wash
+  // then sits beside its own walls rather than inside them.
+  const revealed = [
+    floorQuad(0, 0, 0, 10, 10, { key: 'a' }),
+    floorQuad(0, 10, 0, 20, 10, { key: 'b' }),
+    floorQuad(9, 0, 0, 10, 10, { key: 'up' }),      // a storey above, revealed
+  ];
+  const walked = [revealed[0]];                      // only the first room, this run
+
+  const all = floorPlan(revealed, 0, { segments: boundarySegments, link: linkSegments });
+  assert.equal(all.floors.length, 2, 'the revealed set knows about both storeys');
+  assert.ok(all.bounds, 'and hands its grid back');
+
+  // the SECOND pass, told the first's storeys and box
+  const mine = floorPlan(walked, all.index, {
+    segments: boundarySegments, link: linkSegments,
+    floors: all.floors, bounds: all.bounds,
+  });
+  assert.equal(mine.index, all.index, 'the same storey');
+  assert.deepEqual(mine.floors, all.floors, 'the handed-in storeys are USED, not re-derived');
+  assert.equal(mine.occupancy.w, all.occupancy.w, 'and the same grid');
+  assert.equal(mine.occupancy.h, all.occupancy.h);
+  assert.equal(mine.occupancy.x0, all.occupancy.x0);
+  assert.equal(mine.occupancy.z0, all.occupancy.z0);
+  // every washed cell is a cell the outline encloses
+  for (let y = 0; y < mine.occupancy.h; y++) {
+    for (let x = 0; x < mine.occupancy.w; x++) {
+      if (mine.occupancy.at(x, y)) assert.ok(all.occupancy.at(x, y), `the wash leaks at ${x},${y}`);
+    }
+  }
+  // ...and the walked half really is smaller than the revealed whole
+  const count = (o) => o.covered.reduce((n, v) => n + v, 0);
+  assert.ok(count(mine.occupancy) < count(all.occupancy), 'one room of two');
+
+  // LEFT TO ITSELF the second pass disagrees, which is why the sharing
+  // exists: alone, the walked set sees ONE storey and a box half as wide
+  const alone = floorPlan(walked, all.index, { segments: boundarySegments, link: linkSegments });
+  assert.equal(alone.floors.length, 1, 'one room, one storey - a different answer');
+  assert.notDeepEqual(
+    { w: alone.occupancy.w, x0: alone.occupancy.x0 },
+    { w: all.occupancy.w, x0: all.occupancy.x0 },
+    'and a different grid, so its cells would not line up with the outline',
+  );
+});

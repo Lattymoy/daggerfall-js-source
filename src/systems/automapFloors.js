@@ -261,23 +261,36 @@ export function floorOccupancy(tris, { cell = PLAN_CELL, bounds = null } = {}) {
  * than imported so this module stays free of the UI layer - the same
  * shape `inkMap` itself is driven with, and the pins drive it with the
  * real pair.
+ *
+ * TWO PASSES OVER ONE GRID. The automap draws what has been REVEALED
+ * as an outline and washes the part the player walked THIS RUN, which
+ * is two plans over the same rows. Handing `floors` and `bounds` back
+ * in makes the second pass share the first's storeys and its grid, so
+ * the wash lands cell for cell inside the outline; derived separately
+ * they would disagree about both, because a smaller row set has fewer
+ * storeys and a tighter box.
+ *
  * @param {Array<object>} rows - the REVEALED rows (the caller filters; the map draws what has been seen)
  * @param {number|null} wanted - the storey to cut, clamped into range
- * @param {{cell?: number, minGap?: number, segments?: Function|null, link?: Function|null}} [opts]
- * @returns {{floors: Array<object>, index: number, chains: Array<Array<{x:number,y:number}>>, occupancy: object|null}}
+ * @param {{cell?: number, minGap?: number, segments?: Function|null, link?: Function|null, floors?: Array<object>|null, bounds?: {x0:number,z0:number,x1:number,z1:number}|null}} [opts]
+ * @returns {{floors: Array<object>, index: number, chains: Array<Array<{x:number,y:number}>>, occupancy: object|null, bounds: object|null}}
  */
-export function floorPlan(rows, wanted, { cell = PLAN_CELL, minGap = FLOOR_MIN_GAP, segments = null, link = null } = {}) {
+export function floorPlan(rows, wanted, {
+  cell = PLAN_CELL, minGap = FLOOR_MIN_GAP, segments = null, link = null,
+  floors: given = null, bounds: box = null,
+} = {}) {
   const tris = floorTriangles(rows);
-  const floors = deriveFloors(tris, { minGap });
-  if (!floors.length) return { floors, index: -1, chains: [], occupancy: null };
+  const floors = given?.length ? given : deriveFloors(tris, { minGap });
+  if (!floors.length) return { floors, index: -1, chains: [], occupancy: null, bounds: box };
   const index = Math.max(0, Math.min(floors.length - 1, wanted ?? 0));
   const mine = tris.filter((t) => floorAt(floors, t.y) === index);
-  const occ = floorOccupancy(mine, { cell });
-  if (!occ || !segments || !link) return { floors, index, chains: [], occupancy: occ };
+  const bounds = box ?? planBounds(mine, cell);
+  const occ = floorOccupancy(mine, { cell, bounds });
+  if (!occ || !segments || !link) return { floors, index, chains: [], occupancy: occ, bounds };
   const segs = segments((x, y) => occ.at(x, y), occ.w, occ.h);
   const chains = link(segs).map((chain) => chain.map((p) => ({
     x: occ.x0 + p.x * cell,
     y: occ.z0 + p.y * cell,
   })));
-  return { floors, index, chains, occupancy: occ };
+  return { floors, index, chains, occupancy: occ, bounds };
 }
