@@ -404,5 +404,5 @@ test('MAC-Q: the Morrowind mesh path draws TRIANGLES, and a particle flame is no
   assert.match(file, /NiAutoNormalParticlesData: readParticlesData,/);
   // and the emission channel is NOT the gap: a flame authored as a TRIANGLE
   // with LightMode_Emissive has drawn correctly since MWT2
-  assert.match(read('src/combat/fpArm.js'), /const \[er, eg, eb\] = emissiveAt\(mat, cols, idx\[i \+ k\]\);/);
+  assert.match(read('src/combat/fpArm.js'), /const \[er, eg, eb\] = emissiveAt\(mat, cols, idx\[i\]\);/);   // PERF-RIG1: resolved once per piece into the lanes
 });

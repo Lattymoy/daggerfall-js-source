@@ -214,7 +214,12 @@ test('MWT2 the emission reaches the GPU: the arm pack carries it per vertex and 
   const rend = readFileSync(new URL('../src/render/renderer.js', import.meta.url), 'utf8');
   // The pack got THREE floats wider, and the width is one constant.
   assert.match(arm, /export const FP_FLOATS = 14;/);
-  assert.match(arm, /const \[er, eg, eb\] = emissiveAt\(mat, cols, idx\[i \+ k\]\);\s*\n\s*buf\[o\+\+\] = er; buf\[o\+\+\] = eg; buf\[o\+\+\] = eb;/);
+  // PERF-RIG1: the emission is resolved once per piece into the lane
+  // buffer (the last three of a corner's eight static floats) and the
+  // frame copies it into the last three of the corner's fourteen.
+  assert.match(arm, /const \[er, eg, eb\] = emissiveAt\(mat, cols, idx\[i\]\);\s*\n\s*lanes\[l\+\+\] = er; lanes\[l\+\+\] = eg; lanes\[l\+\+\] = eb;/);
+  assert.match(arm, /buf\[o\+\+\] = lanes\[l \+ 5\]; buf\[o\+\+\] = lanes\[l \+ 6\]; buf\[o\+\+\] = lanes\[l \+ 7\];/);
+  assert.match(arm, /const LANE_FLOATS = 8;/);
   // The attribute is ADDITIVE, as MW-D11's UV channel was: a VAO that
   // never enables it reads the constant, which is zero emission - so
   // every voxel caller (characters/engineRig.js passes no opts at all)

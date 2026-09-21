@@ -364,6 +364,45 @@ export function skinToSkelMatrix(skeleton, pose, skeletonRoot, rootBone) {
   return affineInverse(m);
 }
 
+/** PERF-RIG1: the skin loop's scratch, sized to the batch and kept on it.
+ *  A batch is one piece's geometry for the life of the assembly, so the
+ *  arrays are made once per piece and reused every frame; a batch whose
+ *  vertex count changed (none does, but the check is the law) gets a new
+ *  set. `collapse` keeps rows 0-8 at zero for the life of the scratch -
+ *  only its translation is ever written. */
+function skinScratch(batch, n) {
+  const sc = batch._skinScratch;
+  if (sc && sc.n === n) return sc;
+  const fresh = {
+    n,
+    acc: new Float32Array(n * 12),
+    wsum: new Float32Array(n),
+    touched: new Uint8Array(n),
+    collapse: new Float32Array(12),
+    composed: new Float32Array(12),
+    boneMat: { a: new Float32Array(9), t: [0, 0, 0] },
+  };
+  batch._skinScratch = fresh;
+  return fresh;
+}
+
+/** PERF-RIG1: affineMul's arithmetic, written into `out` instead of a
+ *  fresh affine - the same products in the same order into a Float32Array
+ *  `a` and a plain-number `t`, so the result is bit-for-bit affineMul's. */
+function affineMulInto(p, l, out) {
+  const a = out.a;
+  for (let r = 0; r < 3; r++) {
+    for (let c = 0; c < 3; c++) {
+      a[r * 3 + c] =
+        p.a[r * 3] * l.a[c] + p.a[r * 3 + 1] * l.a[3 + c] + p.a[r * 3 + 2] * l.a[6 + c];
+    }
+  }
+  out.t[0] = p.a[0] * l.t[0] + p.a[1] * l.t[1] + p.a[2] * l.t[2] + p.t[0];
+  out.t[1] = p.a[3] * l.t[0] + p.a[4] * l.t[1] + p.a[5] * l.t[2] + p.t[1];
+  out.t[2] = p.a[6] * l.t[0] + p.a[7] * l.t[1] + p.a[8] * l.t[2] + p.t[2];
+  return out;
+}
+
 /**
  * CPU-skin one batch (from flattenNif, carrying batch.skin) into out
  * arrays. positionsOut/normalsOut must be sized like the batch's own.
@@ -389,6 +428,23 @@ export function skinBatch(batch, skeleton, pose, skelMats, positionsOut, normals
     post = affineMul(affineFrom(st.rotation, st.translation, st.scale), post);
   }
   const n = batch.positions.length / 3;
+  // PERF-RIG1 (2026-09-21, Mac: "continue looking into fixing exterior
+  // performance issues"): THE ACCUMULATORS ARE THE BATCH'S. This runs
+  // once per skinned piece per body per FRAME - the player's arm, the
+  // third-person body, every peer's - and it minted `acc` (12 floats a
+  // vertex), `wsum`, `touched`, two 12-float scratches and one 9-float
+  // affine per bone on every call: ~150 KB of typed-array garbage per
+  // 3,000-vertex piece per frame, which the heap meter never even counts
+  // (backing stores are off-heap) and the collector paid for in the
+  // `world` zone's swing. The same arrays now live on the batch, sized
+  // to it once, and are zeroed rather than replaced. Nothing about the
+  // arithmetic changes: the scratch is Float32Array where the old
+  // temporaries were, so every rounding is the one it was.
+  const sc = skinScratch(batch, n);
+  const acc = sc.acc; acc.fill(0);
+  const wsum = sc.wsum; wsum.fill(0);
+  const touched = sc.touched; touched.fill(0);
+  const boneMat = sc.boneMat;
   // Per-vertex blended affines, translations included - 12 floats each.
   // MW-D31: the blend accumulates ONLY invBind * boneInSkelSpace - the
   // reference's resultMat starts at zero with its W column pinned to
@@ -400,8 +456,6 @@ export function skinBatch(batch, skeleton, pose, skelMats, positionsOut, normals
   // renormalising, so any vertex whose weights do not sum to 1 - a
   // missing-bone skip, or a file authored that way - slid toward the
   // origin by the deficit.
-  const acc = new Float32Array(n * 12);
-  const wsum = new Float32Array(n);
   // RULE 40: an influence naming a MISSING bone (ref null, from
   // bindPart) is skipped in the blend - and the remaining weights are
   // NOT renormalised (rule 39). But the vertex is still marked TOUCHED,
@@ -414,13 +468,12 @@ export function skinBatch(batch, skeleton, pose, skelMats, positionsOut, normals
   // the rule 40 verification). Faithful, and ugly on purpose: papering
   // it over with bind pose would hide exactly the data problem the
   // missing-bone note names.
-  const touched = new Uint8Array(n);
   for (const bone of skin.bones) {
     if (bone.ref == null) {
       for (let k = 0; k < bone.indices.length; k++) touched[bone.indices[k]] = 1;
       continue;
     }
-    const m = affineMul(skelMats.get(bone.ref), bone.invBind);
+    const m = affineMulInto(skelMats.get(bone.ref), bone.invBind, boneMat);
     for (let k = 0; k < bone.indices.length; k++) {
       const v = bone.indices[k];
       const w = bone.weights[k];
@@ -433,7 +486,7 @@ export function skinBatch(batch, skeleton, pose, skelMats, positionsOut, normals
       touched[v] = 1;
     }
   }
-  const collapse = new Float32Array(12);
+  const collapse = sc.collapse;
   collapse[9] = post.t[0];
   collapse[10] = post.t[1];
   collapse[11] = post.t[2];
@@ -441,7 +494,7 @@ export function skinBatch(batch, skeleton, pose, skelMats, positionsOut, normals
   // the row-vector `resultMat *= transform` in column terms. The
   // collapse row is that same law on a zero accumulator: post.a*0 +
   // post.t, which is why it stays post.t verbatim.
-  const composed = new Float32Array(12);
+  const composed = sc.composed;
   const pa = post.a;
   const pt = post.t;
   const composePost = (o) => {
