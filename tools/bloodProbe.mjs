@@ -170,12 +170,12 @@ const out = await page.evaluate(async () => {
   const decalTex = r.uploadTexture(777, 'mark', red);
   const batch = r.createDecalBatch(1);
   {
-    const quad = new Float32Array(4 * 9);
+    const quad = new Float32Array(4 * 10);   // BLOOD2f: ten floats a corner, the tenth the wet - zero here, a DRY mark, so the parity rows read the surface's light alone
     const corner = (i, x, y) => {
-      const o = i * 9;
+      const o = i * 10;
       quad[o] = x; quad[o + 1] = y; quad[o + 2] = 0;
       quad[o + 3] = i === 0 || i === 1 ? 0 : 1; quad[o + 4] = i === 0 || i === 3 ? 0 : 1;
-      quad[o + 5] = 1; quad[o + 6] = 1; quad[o + 7] = 1; quad[o + 8] = 1;
+      quad[o + 5] = 1; quad[o + 6] = 1; quad[o + 7] = 1; quad[o + 8] = 1; quad[o + 9] = 0;
     };
     corner(0, -1, -1); corner(1, -1, 1); corner(2, 1, 1); corner(3, 1, -1);
     r.writeDecalSlot(batch, 0, quad);
@@ -214,20 +214,20 @@ const out = await page.evaluate(async () => {
   const atlasTex = r.uploadTexture(BLOOD_ATLAS_ARCHIVE, BLOOD_ATLAS_RECORD, atlas, { smooth: true });
   const cell = pickCell(atlas, 'pool', () => 0);
   const own = r.createDecalBatch(1);
-  const wear = (tint) => {
-    const quad = new Float32Array(4 * 9);
+  const wear = (tint, wet = 0) => {
+    const quad = new Float32Array(4 * 10);
     const corner = (i, x, y) => {
-      const o = i * 9;
+      const o = i * 10;
       quad[o] = x; quad[o + 1] = y; quad[o + 2] = 0;
       quad[o + 3] = i === 0 || i === 1 ? cell.u0 : cell.u1; quad[o + 4] = i === 0 || i === 3 ? cell.v0 : cell.v1;
-      quad[o + 5] = tint[0]; quad[o + 6] = tint[1]; quad[o + 7] = tint[2]; quad[o + 8] = 1;
+      quad[o + 5] = tint[0]; quad[o + 6] = tint[1]; quad[o + 7] = tint[2]; quad[o + 8] = 1; quad[o + 9] = wet;
     };
     // a quad a little wider than the view, so the centre pixel is the cell's own centre texel
     corner(0, -1.2, -1.2); corner(1, -1.2, 1.2); corner(2, 1.2, 1.2); corner(3, 1.2, -1.2);
     r.writeDecalSlot(own, 0, quad);
   };
-  const ownShot = (label, tint, setup, lights = null) => {
-    wear(tint);
+  const ownShot = (label, tint, setup, lights = null, wet = 0) => {
+    wear(tint, wet);
     setup();
     r.setPointLights(lights ?? new Float32Array(0), [1, 1, 1], null);
     const proj = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, -1.02, -1, 0, 0, -0.2, 0];
@@ -252,6 +252,9 @@ const out = await page.evaluate(async () => {
     ownRows.push({ lane: laneName, what: 'dried at noon', px: ownShot('', dried, noonLit).px });
     ownRows.push({ lane: laneName, what: 'fresh, dungeon + torch', px: ownShot('', fresh, dungeon, TORCH).px });
     ownRows.push({ lane: laneName, what: 'dried, dungeon + torch', px: ownShot('', dried, dungeon, TORCH).px });
+    // BLOOD2f: the same fresh mark WET - the lane glints it under the torch and in the sun; the classic set does not know the float
+    ownRows.push({ lane: laneName, what: 'fresh WET, dungeon + torch', px: ownShot('', fresh, dungeon, TORCH, 1).px });
+    ownRows.push({ lane: laneName, what: 'fresh WET at noon', px: ownShot('', fresh, noonLit, null, 1).px });
     leave();
   }
 
@@ -351,6 +354,16 @@ for (const lane of ['classic', 'lane']) {
     dN[1] / Math.max(1, dN[0]) > 2 * (fN[1] / Math.max(1, fN[0])) && dN[0] > fN[0] * 0.4 && dN[0] > 40, `dried ${dN.join(',')} vs fresh ${fN.join(',')}`);
   check(`OWN ${lane}: under a torch in a dungeon, fresh is red and dried is a visible rust - not black`,
     fT[0] > 30 && dT[0] > 15 && dT[1] > 4, `fresh ${fT.join(',')} dried ${dT.join(',')}`);
+  // BLOOD2f: the wet sheen - the lane's glint, the classic set's nothing
+  const wT = at('fresh WET, dungeon + torch'), wN = at('fresh WET at noon');
+  if (lane === 'lane') {
+    check('OWN lane: a WET mark under a torch glints - brighter than the same mark dry, and the glint carries the lamp’s white into the green and blue',
+      wT[0] > fT[0] + 20 && wT[1] > fT[1] + 20 && wT[2] > fT[2] + 20, `wet ${wT.join(',')} vs dry ${fT.join(',')}`);
+    check('OWN lane: and in the sun', wN[0] >= fN[0] && wN[1] > fN[1] + 10, `wet ${wN.join(',')} vs dry ${fN.join(',')}`);
+  } else {
+    check('OWN classic: the wet float means nothing to the classic set - the same mark, wet or dry',
+      wT.join(',') === fT.join(',') && wN.join(',') === fN.join(','), `wet ${wT.join(',')} vs dry ${fT.join(',')}`);
+  }
 }
 const laneDusk = out.lane.find((x) => x.what === 'dusk');
 check('LANE dusk: the mark is RED, not the near-black the classic program drew under the lane', (laneDusk?.decal[0] ?? 0) > 50, `rgba ${laneDusk?.decal.join(',')}`);

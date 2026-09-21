@@ -92,6 +92,12 @@ export const EL_LIGHT_KNEE = 16;
  *  terrain and character shaders (a flat has no normal). */
 export const EL_SPEC_GLOSS = 24;
 export const EL_SPEC_STRENGTH = 0.12;
+/** BLOOD2f: a WET surface's glint - fresh blood under a torch. Far
+ *  tighter and far brighter than stone's low gloss above, scaled by the
+ *  mark's own wetness (one fresh, zero dried), so the sheen is what
+ *  says "wet" and it goes as the mark dries. */
+export const EL_WET_GLOSS = 64;
+export const EL_WET_STRENGTH = 0.9;
 /** EL4: PROPER DARK DUNGEONS. The lane scales a dungeon's ambient (DFU's
  *  flat 0.12 and Better Ambience's trilight alike; the Dungeon Brightness
  *  setting still rides on top) to this, so the light between the torches
@@ -293,6 +299,25 @@ vec3 elIndirectFlat(vec3 wp) {
   float iD = length(uIndirect.xyz - wp);
   float iAtt = clamp(1.0 - iD / max(uIndirect.w, 1e-4), 0.0, 1.0);
   return iAtt * iAtt * uIndirectColor;
+}
+// BLOOD2f: a WET surface's glint from every lantern in range - Blinn-Phong
+// at the wet gloss, the lantern's own shadow, the squared falloff - and
+// nothing at all when dry. The light's colour, not the surface's: a
+// highlight is the lamp seen in the wet.
+vec3 elWetGlint(vec3 wp, vec3 n, float wet) {
+  if (wet <= 0.0) return vec3(0.0);
+  vec3 V = normalize(uCamPos - wp);
+  vec3 acc = vec3(0.0);
+  for (int i = 0; i < ${EL_MAX_LIGHTS}; i++) {
+    if (i >= uPointCount) break;
+    vec3 L = uPointLights[i].xyz - wp;
+    float d = length(L);
+    if (d >= uPointLights[i].w) continue;
+    vec3 Ln = L / max(d, 1e-4);
+    vec3 H = normalize(Ln + V);
+    acc += shadowOfLight(i, wp, n) * elAttenuation(d, uPointLights[i].w) * pow(max(dot(n, H), 0.0), ${EL_WET_GLOSS}.0) * uPointColors[i];
+  }
+  return acc * (${EL_WET_STRENGTH} * wet);
 }
 // the glow of the medium between the eye and wp, every lantern summed
 vec3 elInScatter(vec3 wp) {
@@ -529,7 +554,7 @@ void main() {
  *  a floor's mark reads up, a ceiling's down, a wall's into the room. */
 export const EL_DECAL_FS = `#version 300 es
 precision highp float;
-in vec2 vUV; in vec4 vColor; in vec3 vWorld;
+in vec2 vUV; in vec4 vColor; in vec3 vWorld; in float vWet;
 uniform sampler2D uTex;
 uniform vec3 uTint;
 uniform vec3 uDecalSun;
@@ -582,6 +607,15 @@ void main() {
   float ndl = max(dot(n, uLightDir), 0.0);
   vec3 sunLit = (dot(uDecalSun, uDecalSun) > 0.0 && ndl > 0.0) ? uDecalSun * (ndl * cloudShadowAt(vWorld) * sunShadowAt(vWorld, n)) : vec3(0.0);
   vec3 lit = albedo * (uTint + sunLit + elPointLit(vWorld, n) + elIndirectLit(vWorld, n));
+  // BLOOD2f: THE WET SHEEN. A fresh mark is wet, and wet is a glint: the
+  // lamp seen in it, and the sun - Blinn-Phong at the wet gloss, on top
+  // of the lit blood (a highlight is the light's colour, not the
+  // surface's), scaled by the mark's own wetness, which the dry pass
+  // takes away stage by stage. A dry mark is exactly the line above.
+  vec3 sunGlint = (dot(uDecalSun, uDecalSun) > 0.0 && ndl > 0.0 && vWet > 0.0)
+    ? uDecalSun * (pow(max(dot(n, normalize(uLightDir + normalize(uCamPos - vWorld))), 0.0), ${EL_WET_GLOSS}.0) * ${EL_WET_STRENGTH} * vWet * cloudShadowAt(vWorld) * sunShadowAt(vWorld, n))
+    : vec3(0.0);
+  lit += elWetGlint(vWorld, n, vWet) + sunGlint;
   outColor = vec4(elFinish(lit, vWorld), t.a * vColor.a);
 }`;
 

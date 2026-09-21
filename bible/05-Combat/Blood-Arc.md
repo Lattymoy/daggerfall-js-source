@@ -1150,5 +1150,40 @@ Slices, each behind its own `features.js` row:
    quad, the row and the HUD's one call by source). Mutants: 17, 17
    dead (`tools/mutants/blood1.json` is 269).
 
+10. **BLOOD2f - the wet sheen.** SHIPPED (2026-09-21). Fresh blood is
+   WET, and wet reads as a glint: the lamp seen in it. Without one a
+   mark is paint. The lane has had a low gloss on stone since EL4
+   (EL_SPEC_GLOSS 24, a twelfth of the light); a wet mark takes a far
+   tighter, far brighter one - EL_WET_GLOSS 64, EL_WET_STRENGTH 0.9 -
+   from every lantern in range (Blinn-Phong on the quad's own normal,
+   the lantern's shadow, the squared falloff, ITS colour) and from the
+   sun (under the cloud and the sun map), ADDED after the albedo
+   multiply, because a highlight is the light's colour and not the
+   blood's. The classic set has no specular at all and ignores it.
+
+   THE FLOAT: the slot is pos3 + uv2 + rgba4 + WET1 now (ten floats a
+   corner, `DECAL_FLOATS_PER_VERTEX`), the tenth `decal.wet` - one at
+   birth, `wetAt(stage)` on every dry rewrite, so the sheen rides the
+   eight rewrites the colour already has and costs no upload of its
+   own. AND THE SHEEN GOES BEFORE THE COLOUR: fresh blood loses its
+   gloss in the first minutes and its red over the rest, so the
+   wetness falls as the SQUARE of what is left (WET_POWER 2 - half
+   dried is a quarter wet), and a fully dried mark is exactly the
+   AUDIT 4 line. A mark that says nothing is dry (the probe's parity
+   quads).
+
+   `tools/bloodProbe.mjs` reads it: the same fresh mark wet and dry
+   under a torch on the lane (wet brighter on every channel - the
+   lamp's white in the green and blue) and in the sun, and on the
+   classic set wet equal to dry to the byte.
+
+   Pins: two (the law, the writer's tenth float and its clamp, born
+   wet, a quarter at half dried in the record AND in the buffer on the
+   dry pass's own rewrite, dry at the end, a print born wet; the
+   attribute and the varying, the classic shader ignorant of it, the
+   lane's sun glint and lantern glint term for term, dry meaning no
+   loop, the probe's rows) and the layout pins re-aimed to ten.
+   Mutants: 9, 9 dead (`tools/mutants/blood1.json` is 278).
+
 The numbers in THE FACTS are the target to feel like. The code that
 hits them is ours.

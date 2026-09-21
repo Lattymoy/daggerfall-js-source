@@ -2428,5 +2428,86 @@
     "tests": [
       "test/blood1_decals.test.js"
     ]
+  },
+  {
+    "name": "BLOOD2f-the-wet-float-is-not-written",
+    "file": "src/combat/bloodDecals.js",
+    "old": "    out[o + 9] = wet;   // BLOOD2f",
+    "new": "    out[o + 9] = 0;   // BLOOD2f",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD2f-a-silent-mark-is-wet",
+    "file": "src/combat/bloodDecals.js",
+    "old": "const wet = Number.isFinite(decal.wet) ? Math.max(0, Math.min(1, decal.wet)) : 0;",
+    "new": "const wet = Number.isFinite(decal.wet) ? Math.max(0, Math.min(1, decal.wet)) : 1;",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD2f-the-sheen-goes-with-the-colour",
+    "file": "src/combat/bloodArt.js",
+    "old": "  return Math.pow(1 - t, WET_POWER);",
+    "new": "  return 1 - t;",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD2f-born-dry",
+    "file": "src/combat/bloodMarks.js",
+    "old": "    d.wet = wetAt(0);   // BLOOD2f: born wet - the lane glints it\n",
+    "new": "",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD2f-never-dries-out",
+    "file": "src/combat/bloodMarks.js",
+    "old": "      d.wet = wetAt(stage);   // BLOOD2f: the sheen goes with the stages, on the same rewrites\n",
+    "new": "",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD2f-the-glint-is-the-blood-s-colour",
+    "file": "src/render/enhancedLighting.js",
+    "old": "  lit += elWetGlint(vWorld, n, vWet) + sunGlint;",
+    "new": "  lit *= 1.0 + elWetGlint(vWorld, n, vWet) + sunGlint;",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD2f-a-dry-mark-glints",
+    "file": "src/render/enhancedLighting.js",
+    "old": "  if (wet <= 0.0) return vec3(0.0);\n  vec3 V = normalize(uCamPos - wp);",
+    "new": "  vec3 V = normalize(uCamPos - wp);",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD2f-the-glint-is-stone-s-gloss",
+    "file": "src/render/enhancedLighting.js",
+    "old": "export const EL_WET_GLOSS = 64;",
+    "new": "export const EL_WET_GLOSS = 24;",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD2f-the-attribute-is-not-bound",
+    "file": "src/render/renderer.js",
+    "old": "    gl.enableVertexAttribArray(3);\n    gl.vertexAttribPointer(3, 1, gl.FLOAT, false, DECAL_STRIDE, 36);   // BLOOD2f: the wet float\n",
+    "new": "",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
   }
 ]

@@ -36,7 +36,7 @@ import {
   throwGibs, gibStep, gibFly, gibLand, gibSprayOrigin, shiftGibs, dripFrom,
   GIB_SPLASH_RATE, GIB_COUNT, DRIP_SPLASH_RATE,
 } from './bloodGibs.js';   // BLOOD1b: what a warhammer leaves of a body, and what a ceiling lets go of
-import { bloodAtlas, pickCell, bloodMarkKind, freshTint, dryStage, driedTint, DRY_TICK, BLOOD_ATLAS_ARCHIVE, BLOOD_ATLAS_RECORD } from './bloodArt.js';   // BLOOD2b: the port's own art, made at boot, and how a mark dries
+import { bloodAtlas, pickCell, bloodMarkKind, freshTint, dryStage, driedTint, wetAt, DRY_TICK, BLOOD_ATLAS_ARCHIVE, BLOOD_ATLAS_RECORD } from './bloodArt.js';   // BLOOD2f: and how wet a mark is   // BLOOD2b: the port's own art, made at boot, and how a mark dries
 import { BLEED_RADIUS, BLEED_RATE, POOL_SIZE, POOL_SPREAD, POOL_STEPS, poolSizeAt } from './bloodBleed.js';   // BLOOD2c: a wounded body's drip and a corpse's spreading pool
 
 /** How far down a mark looks for something to stain. Blood spawns at
@@ -264,6 +264,7 @@ export function createBloodMarks({ renderer = null, collider = null, settings = 
     d.tint = d.fresh;
     d.born = _clock;
     d.stage = 0;
+    d.wet = wetAt(0);   // BLOOD2f: born wet - the lane glints it
     return d;
   }
   /** Lay one dressed mark: place, dress, write its slot (into the mirror;
@@ -587,6 +588,7 @@ export function createBloodMarks({ renderer = null, collider = null, settings = 
       if (stage === (d.stage ?? 0)) continue;
       d.stage = stage;
       d.tint = driedTint(d.fresh ?? d.tint ?? [1, 1, 1, 1], stage);
+      d.wet = wetAt(stage);   // BLOOD2f: the sheen goes with the stages, on the same rewrites
       writeSlot(d);
       n++;
     }

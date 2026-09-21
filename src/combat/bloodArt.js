@@ -250,6 +250,16 @@ export function freshShade(fresh) {
   return k >= 1 - FRESH_VARIANCE - 1e-9 && k <= 1 + 1e-9 ? k : 1;
 }
 
+/** BLOOD2f: HOW WET a mark is at a stage - one fresh, zero dried, and
+ *  the sheen goes BEFORE the colour: fresh blood loses its gloss in
+ *  the first minutes and its red over the rest, so the wetness falls
+ *  as the square of what is left. */
+export const WET_POWER = 2;
+export function wetAt(stage) {
+  const t = Math.max(0, Math.min(1, (Number.isFinite(stage) ? stage : 0) / DRY_STAGES));
+  return Math.pow(1 - t, WET_POWER);
+}
+
 /** How dried a mark of `age` seconds is, in DRY_STAGES steps: 0 fresh,
  *  DRY_STAGES fully dried. */
 export function dryStage(age) {

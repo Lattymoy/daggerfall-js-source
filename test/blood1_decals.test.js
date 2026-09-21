@@ -248,10 +248,10 @@ test('BLOOD1a: a decal is FOUR CORNERS around its own centre, and an empty slot 
   const out = new Float32Array(DECAL_FLOATS * 3);
   const next = writeDecalQuad(out, 0, d);
   assert.equal(next, DECAL_FLOATS, 'the writer chains');
-  assert.equal(DECAL_FLOATS_PER_VERTEX, 9, 'pos3 + uv2 + rgba4');
-  assert.equal(DECAL_FLOATS, 36);
+  assert.equal(DECAL_FLOATS_PER_VERTEX, 10, 'pos3 + uv2 + rgba4 + wet1 (BLOOD2f)');
+  assert.equal(DECAL_FLOATS, 40);
 
-  const vert = (i) => [...out.slice(i * 9, i * 9 + 9)];
+  const vert = (i) => [...out.slice(i * DECAL_FLOATS_PER_VERTEX, i * DECAL_FLOATS_PER_VERTEX + DECAL_FLOATS_PER_VERTEX)];   // BLOOD2f: ten a corner
   const pos = (i) => vert(i).slice(0, 3);
   const uv = (i) => vert(i).slice(3, 5);
 
@@ -279,9 +279,9 @@ test('BLOOD1a: a decal is FOUR CORNERS around its own centre, and an empty slot 
   // different colours and fades
   const red = pool.place([0, 0, 0], [0, 1, 0], { size: 1, tint: [1, 0, 0, 0.5], turn: 0 });
   writeDecalQuad(out, DECAL_FLOATS, red);
-  for (let i = 4; i < 8; i++) assert.deepEqual(vert(i).slice(5), [1, 0, 0, 0.5]);
+  for (let i = 4; i < 8; i++) assert.deepEqual(vert(i).slice(5, 9), [1, 0, 0, 0.5]);   // BLOOD2f: the tenth float is the wet, held by its own pin
   // ...and a decal with no tint of its own is white and opaque
-  assert.deepEqual(vert(0).slice(5), [1, 1, 1, 1]);
+  assert.deepEqual(vert(0).slice(5, 9), [1, 1, 1, 1]);
 
   // AN EMPTY SLOT IS A DEGENERATE QUAD, not a gap. The ring is drawn
   // whole in one call, so a hole has to be something the rasteriser
@@ -289,7 +289,7 @@ test('BLOOD1a: a decal is FOUR CORNERS around its own centre, and an empty slot 
   // live decals or an index rebuild on every placement.
   clearDecalQuad(out, 0);
   assert.deepEqual([...out.slice(0, DECAL_FLOATS)], new Array(DECAL_FLOATS).fill(0));
-  assert.deepEqual(vert(4).slice(5), [1, 0, 0, 0.5], 'and it clears its OWN slot only');
+  assert.deepEqual(vert(4).slice(5, 9), [1, 0, 0, 0.5], 'and it clears its OWN slot only');
 
   // the index buffer winds both triangles off the corner order above
   const idx = decalIndices(2);
@@ -2350,7 +2350,7 @@ test('BLOOD2a: the streak - round at the body, STREAK_MAX at the reach, clamped 
   assert.deepEqual(d.right, [1, 0, 0], 'laid along the travel');
   const out = new Float32Array(DECAL_FLOATS);
   writeDecalQuad(out, 0, d);
-  const xs = [0, 1, 2, 3].map((k) => out[k * 9]), zs = [0, 1, 2, 3].map((k) => out[k * 9 + 2]);
+  const xs = [0, 1, 2, 3].map((k) => out[k * DECAL_FLOATS_PER_VERTEX]), zs = [0, 1, 2, 3].map((k) => out[k * DECAL_FLOATS_PER_VERTEX + 2]);
   assert.ok(Math.abs(Math.max(...xs) - Math.min(...xs) - 2.5) < 1e-6, 'two and a half along the travel');
   assert.ok(Math.abs(Math.max(...zs) - Math.min(...zs) - 1) < 1e-6, 'one across it');
   // a round drop is round, and a stretch under one is one
@@ -3340,4 +3340,76 @@ test('BLOOD2e: blood on the lens - a real blow throws drops that slide and fade,
   const artReturn = hud.indexOf('  if (!art) return;');
   assert.ok(detector > 0 && spat > detector && tick > spat && draw > tick && draw < artReturn, 'after the detector, before the art return');
   assert.match(a4Read('src/ui/damageFlash.js'), /export function flashPlayerBleed\(\) \{ playerDamageFlash\.bleed\(\); \}/);
+});
+
+
+// ── BLOOD2f (2026-09-21) - THE WET SHEEN: a fresh mark glints under the
+// enhanced lane, and the glint goes before the colour does ──
+import { wetAt, WET_POWER } from '../src/combat/bloodArt.js';
+import { EL_WET_GLOSS, EL_WET_STRENGTH, EL_SPEC_GLOSS as F_SPEC_GLOSS, EL_SPEC_STRENGTH as F_SPEC_STRENGTH, EL_DECAL_FS as F_DECAL_FS } from '../src/render/enhancedLighting.js';
+
+test('BLOOD2f: the wet float rides the slot - one fresh, falling as the square with the stages, zero dried; a mark that says nothing is dry', () => {
+  // the law
+  assert.equal(wetAt(0), 1); assert.equal(wetAt(A4_DRY_STAGES), 0); assert.equal(wetAt(NaN), 1); assert.equal(wetAt(A4_DRY_STAGES * 3), 0, 'never under zero');
+  assert.equal(WET_POWER, 2);
+  assert.ok(Math.abs(wetAt(A4_DRY_STAGES / 2) - 0.25) < 1e-12, 'half dried: a quarter wet - the sheen goes before the colour');
+  for (let k = 0; k < A4_DRY_STAGES; k++) assert.ok(wetAt(k + 1) < wetAt(k), 'monotone');
+  // the writer: the tenth float of every corner
+  const d = { pos: [1, 2, 3], size: 1, right: [1, 0, 0], up: [0, 0, 1], tint: [0.5, 0.1, 0.1, 1], wet: 0.75 };
+  const out = new Float32Array(DECAL_FLOATS);
+  writeDecalQuad(out, 0, d, null);
+  for (let i = 0; i < 4; i++) assert.ok(Math.abs(out[i * DECAL_FLOATS_PER_VERTEX + 9] - 0.75) < 1e-6, `corner ${i} carries the wet`);
+  writeDecalQuad(out, 0, { ...d, wet: undefined }, null);
+  for (let i = 0; i < 4; i++) assert.equal(out[i * DECAL_FLOATS_PER_VERTEX + 9], 0, 'a mark that says nothing is dry');
+  writeDecalQuad(out, 0, { ...d, wet: 7 }, null); assert.equal(out[9], 1, 'clamped');
+  writeDecalQuad(out, 0, { ...d, wet: -1 }, null); assert.equal(out[9], 0);
+  // the pool: born wet, dried by the stages on the same rewrites
+  const { fx, marks, wrote } = rigHitEffects({ collider: a4Floor, settings: a4Settings, rng: a4Rng(4) });
+  marks.useArt(380, 1, 6);
+  fx.showBloodSplash(0, [0, 1, 0], null, { damage: 10, maxHealth: 40 });
+  const ds = marks._pool().decals();
+  assert.ok(ds.length > 0 && ds.every((m) => m.wet === 1), 'born wet');
+  assert.ok(wrote.slice(-ds.length).every((w) => w.floats[9] === 1), 'and the slot says so');
+  for (let t = 0; t < A4_DRY_TIME / 2 + A4_DRY_TICK; t += 1) fx.tick(1);
+  assert.ok(ds.every((m) => m.stage === A4_DRY_STAGES / 2 && Math.abs(m.wet - wetAt(A4_DRY_STAGES / 2)) < 1e-12), 'half dried: a quarter wet');
+  assert.ok(wrote.slice(-ds.length).every((w) => Math.abs(w.floats[9] - 0.25) < 1e-6), 'in the buffer, on the dry pass’s own rewrite');
+  for (let t = 0; t < A4_DRY_TIME; t += 1) fx.tick(1);
+  assert.ok(ds.every((m) => m.wet === 0), 'dried: dry');
+  assert.ok(wrote.slice(-ds.length).every((w) => w.floats[9] === 0));
+  // a print is born wet too (fresh blood off a boot)
+  fx.showBloodSplash(0, [5, 1.7, 5], null, { damage: 10, maxHealth: 40 });
+  fx.footfall([5, 1.7, 5], [0, 0, 1]);
+  const print = fx.footfall([5, 1.7, 6], [0, 0, 1]);
+  assert.ok(print && print.wet === 1);
+});
+
+test('BLOOD2f: the lane glints a wet mark - the lamp and the sun seen in it at the wet gloss, scaled by the wetness, nothing when dry; the classic set does not know the float', () => {
+  assert.ok(EL_WET_GLOSS > F_SPEC_GLOSS * 2 && EL_WET_STRENGTH > F_SPEC_STRENGTH * 4, 'far tighter and far brighter than stone');
+  assert.equal(EL_WET_GLOSS, 64); assert.equal(EL_WET_STRENGTH, 0.9);
+  // the attribute, the varying
+  const r = a4Read('src/render/renderer.js');
+  const vs = r.slice(r.indexOf('const DECAL_VS = `'), r.indexOf('`;', r.indexOf('const DECAL_VS = `')));
+  assert.match(vs, /layout\(location=3\) in float aWet;/);
+  assert.match(vs, /out float vWet;/); assert.match(vs, /vWet = aWet;/);
+  assert.match(r, /gl\.vertexAttribPointer\(3, 1, gl\.FLOAT, false, DECAL_STRIDE, 36\);/, 'the tenth float, after the colour');
+  assert.match(r, /gl\.vertexAttribPointer\(2, 4, gl\.FLOAT, false, DECAL_STRIDE, 20\);\s*\n\s*gl\.enableVertexAttribArray\(3\);/);
+  const classicFs = r.slice(r.indexOf('const DECAL_FS = `'), r.indexOf('`;', r.indexOf('const DECAL_FS = `')));
+  assert.doesNotMatch(classicFs, /vWet/, 'the classic set has no specular at all - the float means nothing to it');
+  // the lane's term
+  assert.match(F_DECAL_FS, /in float vWet;/);
+  assert.match(F_DECAL_FS, /lit \+= elWetGlint\(vWorld, n, vWet\) \+ sunGlint;/, 'added AFTER the albedo multiply - a highlight is the light’s colour');
+  assert.match(F_DECAL_FS, /vec3 sunGlint = \(dot\(uDecalSun, uDecalSun\) > 0\.0 && ndl > 0\.0 && vWet > 0\.0\)/);
+  assert.match(F_DECAL_FS, new RegExp(`pow\\(max\\(dot\\(n, normalize\\(uLightDir \\+ normalize\\(uCamPos - vWorld\\)\\)\\), 0\\.0\\), ${EL_WET_GLOSS}\\.0\\) \\* ${EL_WET_STRENGTH} \\* vWet \\* cloudShadowAt\\(vWorld\\) \\* sunShadowAt\\(vWorld, n\\)`), 'the sun’s glint: Blinn-Phong at the wet gloss, under the cloud and the sun map');
+  const glint = F_DECAL_FS.slice(F_DECAL_FS.indexOf('vec3 elWetGlint(vec3 wp, vec3 n, float wet) {'), F_DECAL_FS.indexOf('\n}', F_DECAL_FS.indexOf('vec3 elWetGlint(vec3 wp, vec3 n, float wet) {')));
+  assert.ok(glint.length > 0, 'the lantern glint is in the lane’s shared lantern block');
+  assert.match(glint, /if \(wet <= 0\.0\) return vec3\(0\.0\);/, 'dry: nothing, and no loop');
+  assert.match(glint, /if \(d >= uPointLights\[i\]\.w\) continue;/, 'EL5: outside the window, nothing');
+  assert.match(glint, new RegExp(`shadowOfLight\\(i, wp, n\\) \\* elAttenuation\\(d, uPointLights\\[i\\]\\.w\\) \\* pow\\(max\\(dot\\(n, H\\), 0\\.0\\), ${EL_WET_GLOSS}\\.0\\) \\* uPointColors\\[i\\]`), 'the lantern’s shadow, its falloff, the wet gloss, ITS colour');
+  assert.match(glint, new RegExp(`return acc \\* \\(${EL_WET_STRENGTH} \\* wet\\);`), 'scaled by the wetness');
+  // the probe reads it
+  const probe = a4Read('tools/bloodProbe.mjs');
+  assert.match(probe, /a WET mark under a torch glints - brighter than the same mark dry/);
+  assert.match(probe, /the wet float means nothing to the classic set/);
+  assert.match(probe, /new Float32Array\(4 \* 10\)/, 'ten floats a corner');
+  assert.doesNotMatch(probe, /new Float32Array\(4 \* 9\)/);
 });

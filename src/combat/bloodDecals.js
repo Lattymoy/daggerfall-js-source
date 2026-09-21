@@ -487,7 +487,10 @@ function unit(v) {
 // reason the rest of this module has no renderer in it.
 
 /** pos(3) + uv(2) + rgba(4). */
-export const DECAL_FLOATS_PER_VERTEX = 9;
+/** BLOOD2f: pos3 + uv2 + rgba4 + WET1. The tenth float is how wet the
+ *  mark is (one fresh, zero dried - bloodArt.js `wetAt`); the lane's
+ *  decal shader turns it into a glint, the classic one ignores it. */
+export const DECAL_FLOATS_PER_VERTEX = 10;
 /** A quad, drawn as two triangles through an index buffer. */
 export const DECAL_VERTS = 4;
 /** One decal's stride into the batch's vertex buffer. */
@@ -519,6 +522,7 @@ export function writeDecalQuad(out, offset, decal, uv = null) {
   const rx = decal.right[0] * hs, ry = decal.right[1] * hs, rz = decal.right[2] * hs;
   const ux = decal.up[0] * h, uy = decal.up[1] * h, uz = decal.up[2] * h;
   const c = decal.tint ?? WHITE;
+  const wet = Number.isFinite(decal.wet) ? Math.max(0, Math.min(1, decal.wet)) : 0;   // BLOOD2f: a mark that says nothing is dry
   const corner = (i, sx, sy, u, v) => {
     const o = offset + i * DECAL_FLOATS_PER_VERTEX;
     out[o] = px + rx * sx + ux * sy;
@@ -526,6 +530,7 @@ export function writeDecalQuad(out, offset, decal, uv = null) {
     out[o + 2] = pz + rz * sx + uz * sy;
     out[o + 3] = u; out[o + 4] = v;
     out[o + 5] = c[0]; out[o + 6] = c[1]; out[o + 7] = c[2]; out[o + 8] = c[3] ?? 1;
+    out[o + 9] = wet;   // BLOOD2f
   };
   corner(0, -1, -1, u0, v0);
   corner(1, -1, 1, u0, v1);

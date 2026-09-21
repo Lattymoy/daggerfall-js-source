@@ -732,9 +732,10 @@ const DECAL_VS = `#version 300 es
 layout(location=0) in vec3 aPos;
 layout(location=1) in vec2 aUV;
 layout(location=2) in vec4 aColor;
+layout(location=3) in float aWet;   // BLOOD2f: one fresh, zero dried - the lane's glint, nothing to the classic set
 uniform mat4 uProj, uView;
-out vec2 vUV; out vec4 vColor; out vec3 vWorld;
-void main() { vUV = aUV; vColor = aColor; vWorld = aPos; gl_Position = uProj * uView * vec4(aPos, 1.0); }`;
+out vec2 vUV; out vec4 vColor; out vec3 vWorld; out float vWet;
+void main() { vUV = aUV; vColor = aColor; vWorld = aPos; vWet = aWet; gl_Position = uProj * uView * vec4(aPos, 1.0); }`;
 /** The CLASSIC decal fragment shader - MAC-BUG W4's flat model, term for
  *  term with BB_FS above. MAC-BUG W6 (Mac: "super dark coloring instead
  *  of red"): this program has a LANE TWIN now, render/enhancedLighting.js's
@@ -831,7 +832,7 @@ void main() {
   outColor = vec4(mix(uFogColor, rgb, f), a);
 }`;
 const CLASSIC_MAX_LIGHTS = 16;
-/** BLOOD1a: pos3 + uv2 + rgba4, in bytes. */
+/** BLOOD1a: pos3 + uv2 + rgba4 (+ wet1, BLOOD2f), in bytes. */
 const DECAL_STRIDE = DECAL_FLOATS_PER_VERTEX * 4;
 const ZERO_FLAT_WIND = new Float32Array(4);   // WIND3: a bare prototype (the crash-report tests) has no wind
 // MaterialReader.cs:448-453: the auto-emissive arm's EmissionColor.
@@ -2699,8 +2700,8 @@ void main() {
   //
   // THE BUFFER IS THE RING. One slot per decal, written in place when
   // that slot is placed or cleared (`writeDecalSlot`), never rebuilt:
-  // the ring recycles oldest-first, so a placement touches exactly 36
-  // floats and the draw touches nothing. An empty slot is a zero-area
+  // the ring recycles oldest-first, so a placement touches exactly 40
+  // floats (BLOOD2f: the tenth is the wet) and the draw touches nothing. An empty slot is a zero-area
   // quad rather than a gap, so the index buffer is built once at boot
   // and the draw is always the whole capacity.
   //
@@ -2725,6 +2726,8 @@ void main() {
     gl.vertexAttribPointer(1, 2, gl.FLOAT, false, DECAL_STRIDE, 12);
     gl.enableVertexAttribArray(2);
     gl.vertexAttribPointer(2, 4, gl.FLOAT, false, DECAL_STRIDE, 20);
+    gl.enableVertexAttribArray(3);
+    gl.vertexAttribPointer(3, 1, gl.FLOAT, false, DECAL_STRIDE, 36);   // BLOOD2f: the wet float
     const ib = gl.createBuffer();
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ib);
     gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, decalIndices(cap), gl.STATIC_DRAW);
