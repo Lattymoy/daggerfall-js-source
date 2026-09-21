@@ -191,7 +191,7 @@ import { resetVitalsDetector } from '../ui/hudVitals.js';   // BLOOD AUDIT 5: th
 import { activeMemberships } from '../systems/guilds.js';   // F117
 import { avoidDeath, AVOID_DEATH_TEXT } from '../systems/guildServices.js';   // F117: Stendarr
 import { pickActivatableHit, RAY_DISTANCE, TREASURE_ACTIVATION_DISTANCE } from '../player/activate.js';   // PX21c: the hover runs the take's own pick; AUDIT 65 MC-2: the ray's reach, and each family's own
-import { showLootHover, destroyLootHover } from '../ui/lootHover.js';   // PX21c
+import { worldHoverFrame, destroyWorldPlaque } from '../ui/worldPlaque.js';   // PX21c, WORLD-HOVER: one seam, one plaque
 import { isEnhanced } from '../systems/uiSkin.js';
 import { combatVisualsOn, foeDraw, markConcealedHit } from '../systems/combatVisuals.js';   // ECV1: what the enhanced skin draws for a concealed foe
 import { UnderwaterFog } from '../render/underwaterFog.js';   // ROAD-B (b3): UnderwaterFog.cs, called from PlayerEnterExit.Update's dungeon guard
@@ -1736,7 +1736,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   let lastPlayerFeet = null, lastPlayerHeight = CAPSULE_HEIGHT;   // ROAD-H H2: the LIVE player capsule the last frame carried - explodeAt measures the AoE sphere against it (DaggerfallMissile.cs:481)
   // (enhancedNav is declared beside `foes` at the top of this function -
   // see the note there for why it cannot live here.)
-  let _hoverAt = 0;   // PX21c: the plaque's 10Hz cadence   // S11: the save position
+  // S11: the save position
   let debugHud = false;   // F8 diagnostics
   let _motorState = '';
   let _motorYaw = 0;   // A1: the automap window's player-arrow heading
@@ -4632,30 +4632,36 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     hitEffects.bleedPlayer(dt, playerFeet, playerEntity);   // BLOOD2e: and the player's own blood, at the feet
     droppedTorches.tick(dt);   // HT1: the burn, the flight, the flames
     camps.tick(dt);   // SURV3: the fires burn down
-    // PX21c: THE HOVER PLAQUE, from the frame function both dungeon
-    // hosts already call - the splash clock's reasoning, one slice on.
-    // It runs the SAME pick the take runs, at 10Hz rather than every
-    // frame (a raycast over every pile and corpse is not free, and a
-    // plaque that answers within a tenth of a second answers instantly
-    // to a player). Enhanced skin only: the classic HUD says nothing
-    // about a pile until you open it, which is Daggerfall's own answer.
-    _hoverAt += dt;
-    if (_hoverAt >= 0.1) {
-      _hoverAt = 0;
-      let key = null;
-      if (isEnhanced() && eye) {
-        const dir = [-view[2], -view[6], -view[10]];
-        // AUDIT 65 MC-2: the pick now reaches as far as the RAY does,
-        // so the plaque must apply the handler's own reach itself -
-        // the player can SEE a pile across the room and cannot open
-        // it, and DFU's HUD says nothing about one until you activate.
-        const hit = pickActivatableHit(eye, dir, api.lootTargets(), collider);
-        const k = hit && hit.distance <= hit.reach ? hit.key : null;
-        if (k && (k.startsWith('loot:') || k.startsWith('corpse:') || k.startsWith('droppedLoot:'))) key = k;
-      }
-      showLootHover(key, key ? api.lootContents(key) : null,
-        key?.startsWith('corpse:') ? 'Remains' : 'Loot');
-    }
+    // PX21c / WORLD-HOVER: THE HOVER PLAQUE, from the frame function
+    // both dungeon hosts already call - the splash clock's reasoning,
+    // one slice on. It runs the SAME pick the take runs, so it cannot
+    // disagree with what pressing the button would open. Enhanced skin
+    // only: the classic HUD says nothing about a pile until you open
+    // it, which is Daggerfall's own answer.
+    //
+    // EVERY FRAME NOW, not at 10 Hz. PX21c throttled it because "a
+    // raycast over every pile and corpse is not free" - the cost was
+    // guessed, and the guess was wrong by two orders of magnitude.
+    // Measured on this pick: one collider ray is ~3 us and the whole
+    // tick over `lootTargets()` is ~3 us more, which is 0.0005 ms of a
+    // 16.7 ms frame. What the throttle bought was nothing; what it cost
+    // was a plaque that lagged the crosshair by up to a tenth of a
+    // second, so sweeping past a rack of barrels named them out of step
+    // with the reticle and the name stuck after you looked away.
+    //
+    // (The expensive half of a hover in this port is BUILDING the
+    // target list, not casting the ray - which is why the seam takes a
+    // thunk and the hosts with real lists hand over one they are
+    // holding anyway. `lootTargets()` is 18 entries and is not one.)
+    worldHoverFrame({
+      eye,
+      dir: eye ? [-view[2], -view[6], -view[10]] : null,
+      targets: api.lootTargets,
+      collider,
+      canvas,
+      contents: api.lootContents,
+      name: (key) => ({ title: key.startsWith('corpse:') ? 'Remains' : 'Loot', subs: [] }),
+    });
     const _mobileBatches = [];   // C11: the frame's live sprite-mobile quads
     if (playerFeet) { lastPlayerFeet = [...playerFeet]; lastPlayerHeight = playerHeight; }   // ROAD-H H2: the enemy AoC blast reads the player's live capsule through castEnemySpell
     // ENHANCED AI 3b: ONE BAKE PER DUNGEON, off the frame, once the
@@ -6688,7 +6694,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       _unregisterPresenter();   // ENH-NOTICE3: the registration leaves with the context (the dead latch above is what REFUSES a box in the meantime - pushDungeonWindow reads it, AUDIT ENH-NOTICE3 F2)
       // PX21c: the plaque leaves with the host that raised it - AFTER
       // the latch, which NT1 pins as the first act of this function.
-      destroyLootHover();
+      destroyWorldPlaque();
       // A1: OnTransitionToDungeonExterior's automap half - marks the
       // player outside and, at AutomapNumberOfDungeons = 0, forgets
       // the map the moment you leave (Automap.cs:2530-2534).

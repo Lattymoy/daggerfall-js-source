@@ -1,0 +1,132 @@
+// WORLD-HOVER - WHAT THE CROSSHAIR IS ON, AS A RECORD.
+//
+// Mac handed over World Tooltips 1.1 (jefetienne, MIT, vendored whole
+// under vendor/world-tooltips/) with two conditions of his own: an
+// enhanced skin for it rather than the mod's Daggerfall tooltip panel,
+// and a merge with the loot plaque the port already had (PX21c,
+// ui/lootHover.js). This is the model half of both.
+//
+// THE ONE LAW THIS MODULE EXISTS TO KEEP. The plaque and the button
+// must never disagree. PX21c said it first, for three loot keys:
+// "It follows what the crosshair already resolves - the same
+// activation pick the take uses - so it can never disagree with what
+// pressing the button would open." The merge is that sentence extended
+// to every key the activation ladder can hit, and the way it is kept is
+// that there is exactly ONE race: `player/activationRace.js`, which the
+// press already walks. The race decides WHO WON. This module decides
+// what the winner is CALLED. Two modules resolving one ray would be the
+// FONT1 two-faces bug in a new coat.
+//
+// PURE, AND NO DOM. Everything here is a function of its arguments: it
+// imports no document, no skin, no host. The frame it answers is handed
+// to ui/worldPlaque.js, which owns the node, the dress and the skin
+// gate - the ENH-NOTICE3 idiom in as many words ("the model decides
+// WHICH MODEL, the draw decides WHICH FACE"), and the reason AUDIT 39's
+// skin gate can stay above ensure() where it belongs.
+import { rarityAttr } from '../systems/lootRarity.js';   // LR1: a pile's rows wear their tier
+import { itemNameParts } from '../systems/itemInfo.js';   // RF6: ResolveItemLongName's name part (LR1: an unidentified item reads as its template on the plaque too)
+
+/** How many lines before the plaque says "and N more" instead. A pile
+ *  is a glance, not a list to read; DFU's own loot windows scroll. */
+export const HOVER_MAX = 6;
+
+/**
+ * THE KEYS THAT ITEMISE. Everything else the ladder can name gets its
+ * name and nothing more - which is the mod's whole answer, and the
+ * port's own loot rows are the departure on top of it (Ledger A).
+ *
+ * These are prefixes of the activation keys the hosts' own
+ * `*Targets()` producers mint, never strings written out by hand here:
+ * `loot:` and `corpse:` are the dungeon's RDB piles and its bodies,
+ * `droppedLoot:` is what a player left on the floor, and `foeCorpse:`
+ * and `guardCorpse:` are the two above-ground bodies. A key whose
+ * prefix is not here draws as a name.
+ */
+export const ITEMISED_KEYS = Object.freeze(['loot:', 'corpse:', 'droppedLoot:', 'foeCorpse:', 'guardCorpse:']);
+
+/** Does this key open a list, or only a name? */
+export const keyItemises = (key) => typeof key === 'string' && ITEMISED_KEYS.some((p) => key.startsWith(p));
+
+/** The lines a pile shows: name, and a count when a stack. Pure. */
+export function hoverLines(items, max = HOVER_MAX) {
+  const rows = (items ?? []).filter(Boolean).map((it) => ({
+    name: itemNameParts(it).name || 'Something',   // RF6: the long name's name part - a potion its %po, a soul trap its soul; LR1: unidentified is the bare template (the resolver already answers a template-less item its own name)
+    stack: (it.stackCount ?? 1) > 1 ? it.stackCount : 0,
+    rarity: rarityAttr(it),   // LR1: null with the switch off or for Common
+  }));
+  const shown = rows.slice(0, max);
+  const rest = rows.length - shown.length;
+  return { shown, rest, empty: rows.length === 0 };
+}
+
+/**
+ * THE FRAME. One record, and the draw paints exactly what is in it.
+ *
+ *   key    - the winning pick's key; the identity the guard compares
+ *   kind   - 'name' (a title and up to two sub-lines) or 'items'
+ *   title  - the line under the reticle
+ *   subs   - the mod's own extra rows. It carries them as `\r`-joined
+ *            text (a lock level, a closed-shop sentence); the port
+ *            carries them as an array, because a DOM line is a node and
+ *            splitting a string back apart at the draw would be a
+ *            second parse of something the namer already knew.
+ *   rows / rest / empty - hoverLines' answer, on an itemised key only
+ */
+const frame = (key, kind, title, subs, rows = [], rest = 0, empty = false) =>
+  ({ key, kind, title, subs, rows, rest, empty });
+
+/**
+ * PICK + NAMER -> FRAME, or null for "the crosshair is on nothing".
+ *
+ * `hit` is `pickActivatableHit`'s answer, unmodified - including its
+ * `reach`, which this function applies itself. AUDIT 65 MC-2 is why:
+ * the pick reaches as far as the RAY does, so a plaque that trusted the
+ * pick alone would name a chest across the room that the player cannot
+ * open, and the one law above would be broken on its first frame.
+ *
+ * `name(key, hit)` answers the title and sub-lines for a key - the
+ * mod's ladder, per host. `contents(key)` answers a container's items,
+ * read-only. Both are the host's; neither is reached for a key the
+ * reach gate already refused.
+ */
+export function resolveHover(hit, { name = null, contents = null } = {}) {
+  if (!hit) return null;
+  // The reach gate, before anything is named or read. DFU's HUD says
+  // nothing about a pile until you can actually activate it.
+  if (!(hit.distance <= hit.reach)) return null;
+  const key = hit.key;
+  if (key == null) return null;
+  if (keyItemises(key)) {
+    const { shown, rest, empty } = hoverLines(contents?.(key) ?? null);
+    const named = name?.(key, hit) ?? null;
+    return frame(key, 'items', named?.title ?? 'Loot', named?.subs ?? [], shown, rest, empty);
+  }
+  const named = name?.(key, hit) ?? null;
+  // A key the ladder has no word for draws NOTHING. That is the mod's
+  // own behaviour (an empty `ret` leaves the tooltip down, .cs:265) and
+  // it is also what keeps an unported family from labelling itself with
+  // its own key string.
+  if (!named?.title) return null;
+  return frame(key, 'name', named.title, named.subs ?? []);
+}
+
+/**
+ * The rendered signature of a frame - what "changed" MEANS.
+ *
+ * PX21c guarded on the key alone (`if (key === shownKey) return;`),
+ * which cannot see a list that changed under a constant key. That was
+ * safe by accident and not by design: taking from a pile required
+ * opening a window, and the window unmounts the plaque's driver. The
+ * moment anything can change a container's contents while it is being
+ * looked at - a quest machine writing into it, the room's own word
+ * arriving online (WORLD4), or quick loot, which is the next arc - the
+ * guard shows a stale list under a live key.
+ *
+ * So the guard compares what would be PAINTED. One node, rewritten only
+ * on change, which is PX21c's law intact and now honest about its term.
+ */
+export function frameSignature(f) {
+  if (!f) return null;
+  const rows = f.rows.map((r) => `${r.name}\u0002${r.stack}\u0002${r.rarity ?? ''}`).join('\u001f');
+  return `${f.key}|${f.kind}|${f.title}|${f.subs.join('\u001f')}|${rows}|${f.rest}|${f.empty ? 'e' : ''}`;
+}

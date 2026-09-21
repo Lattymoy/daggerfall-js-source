@@ -1061,11 +1061,14 @@ test('PX21d: the loot window\'s head is a centred stack, not a column header', (
     'and the buttons sit over the list they act on');
 });
 
-test('PX21c: the hover plaque names a pile without opening it, on the take\'s own pick', async () => {
-  const hov = read('src/ui/lootHover.js');
+test('PX21c / WORLD-HOVER: the plaque names a pile without opening it, on the take\'s own pick', async () => {
+  const hov = read('src/ui/worldPlaque.js');
+  const model = read('src/systems/worldHover.js');
   // The lines are pure: names, a count only when a stack, and a tail
-  // rather than a list - a pile is a glance.
-  const { hoverLines, HOVER_MAX } = await import('../src/ui/lootHover.js');
+  // rather than a list - a pile is a glance. They live with the MODEL
+  // now, not the draw: the resolver answers a whole frame and the
+  // plaque paints exactly what is in it.
+  const { hoverLines, HOVER_MAX, resolveHover, frameSignature } = await import('../src/systems/worldHover.js');
   assert.deepEqual(hoverLines([]), { shown: [], rest: 0, empty: true });
   assert.deepEqual(hoverLines([{ name: 'Ruby', stackCount: 3 }, { name: 'Helm' }]),
     { shown: [{ name: 'Ruby', stack: 3, rarity: null }, { name: 'Helm', stack: 0, rarity: null }], rest: 0, empty: false });   // LR1: a row wears its tier, null with the switch off
@@ -1073,16 +1076,64 @@ test('PX21c: the hover plaque names a pile without opening it, on the take\'s ow
   assert.equal(many.shown.length, HOVER_MAX);
   assert.equal(many.rest, 4);
   assert.deepEqual(hoverLines(null), { shown: [], rest: 0, empty: true }, 'nothing under the crosshair is not a crash');
-  // ONE NODE, rewritten only when the key changes - a per-frame rebuild
-  // is PX19k's entrance replay in another hat.
-  assert.match(hov, /if \(key === shownKey\) return;/);
-  assert.match(hov, /export function showLootHover\(key, items, title = 'Loot'\)/);
-  assert.match(hov, /export const HOVER_MAX = 6;/);
+
+  // THE REACH GATE IS THE RESOLVER'S OWN FIRST ACT. AUDIT 65 MC-2: the
+  // take's pick reaches as far as DFU's ONE ray does (RayDistance,
+  // PlayerActivate.cs:76/:314), so a too-far pile reaches the handler
+  // that REFUSES it out loud - and a plaque that trusted the pick alone
+  // would name a chest across the room that E cannot open.
+  const items = [{ name: 'Ruby', stackCount: 2 }];
+  assert.equal(resolveHover({ key: 'loot:3', distance: 9, reach: 3.2 }, { contents: () => items }), null,
+    'out of reach is not named at all');
+  const near = resolveHover({ key: 'loot:3', distance: 1, reach: 3.2 }, { contents: () => items });
+  assert.equal(near.kind, 'items');
+  assert.deepEqual(near.rows, [{ name: 'Ruby', stack: 2, rarity: null }]);
+  assert.equal(resolveHover(null, {}), null, 'nothing under the crosshair');
+  // A key the ladder has no word for draws NOTHING - the mod's own
+  // behaviour (an empty `ret` leaves the tooltip down, .cs:265), and
+  // what stops an unported family labelling itself with its key string.
+  assert.equal(resolveHover({ key: 'act:2:41', distance: 1, reach: 3.2 }, { name: () => null }), null);
+  assert.equal(resolveHover({ key: 'door:2', distance: 1, reach: 3.2 },
+    { name: () => ({ title: 'Door', subs: ['Lock Level: 12'] }) }).kind, 'name');
+
+  // ONE NODE, rewritten only when what would be PAINTED changes. PX21c
+  // compared the KEY alone, which cannot see a list that changed under
+  // a constant key - safe then only by accident (taking needed a
+  // window, and the window unmounted the driver), and the accident goes
+  // the moment anything writes into a container being looked at.
+  assert.match(hov, /if \(sig === shownSig\) return;/);
+  assert.match(model, /export function frameSignature\(f\) \{/);
+  const a = resolveHover({ key: 'loot:3', distance: 1, reach: 3.2 }, { contents: () => [{ name: 'Ruby' }] });
+  const b = resolveHover({ key: 'loot:3', distance: 1, reach: 3.2 }, { contents: () => [{ name: 'Helm' }] });
+  assert.equal(a.key, b.key, 'the same key');
+  assert.notEqual(frameSignature(a), frameSignature(b), 'and a different signature - the guard SEES the change');
+  assert.equal(frameSignature(null), null, 'nothing has no signature');
+  assert.match(model, /export const HOVER_MAX = 6;/);
+
   // A READOUT: no clicks, no keys, nothing to dismiss.
   const css = read('src/ui/enhancedStyle.js');
-  assert.match(css, /\.loothover \{[\s\S]{0,400}pointer-events: none;/);
+  assert.match(css, /\.wplaque \{[\s\S]{0,400}pointer-events: none;/);
   assert.match(hov, /setAttribute\('aria-hidden', 'true'\)/);
   assert.doesNotMatch(hov, /addEventListener|onclick/, 'a readout listens to nothing');
+
+  // IT HANGS OFF THE RETICLE, not off a guessed percentage. PX21c stood
+  // it at `bottom: 16%` to avoid a cross whose real place it had no way
+  // to read; hud.js exports the two terms its own crosshair draw uses,
+  // so there is one answer to "where is the reticle" and the plaque
+  // asks it. A docked large HUD moves the cross (ROAD-E E5) and moves
+  // this with it.
+  assert.match(hov, /import \{ hudReticle \} from '\.\/hud\.js';/);
+  assert.match(read('src/ui/hud.js'), /export const hudReticle = \(canvas\) => \(\{[\s\S]{0,200}largeHudHeight: dockedLargeHudHeight\(lastLargeHudBar\),/);
+  assert.match(hov, /crosshairCentreY\(canvas\.height, largeHudHeight\) \+ CROSSHAIR_ARM \* scale\) \/ dpr \+ PLAQUE_GAP/);
+  assert.match(css, /\.wplaque \{ position: fixed; left: var\(--wp-x, 50%\); top: var\(--wp-top, 55%\);/);
+  assert.doesNotMatch(css, /loothover/, 'the old key is gone from the sheet, not left beside the new one');
+
+  // AND IT IS OFF ON A TOUCH DEVICE. There the activation ray is
+  // through the FINGER, not the crosshair, so a centre-anchored plaque
+  // would name what a tap would NOT open - the founding law broken on
+  // every frame.
+  assert.match(hov, /export const worldPlaqueOn = \(\) => isEnhanced\(\) && !isTouchDevice\(\);/);
+
   // AUDIT 39: AND THE SKIN GATE IS IN THE PLAQUE, ABOVE ensure().
   // The host gates only the PICK, and calls this every tick on every
   // skin - so with the gate only there, a classic-skin dungeon's first
@@ -1092,24 +1143,32 @@ test('PX21c: the hover plaque names a pile without opening it, on the take\'s ow
   // classic never loads a byte of this" is enhancedStyle.js's own
   // doctrine, and this is the line that keeps it true.
   assert.match(hov, /import \{ isEnhanced \} from '\.\.\/systems\/uiSkin\.js';/);
-  const show = hov.slice(hov.indexOf('export function showLootHover'));
-  assert.ok(show.indexOf('if (!isEnhanced()) return;') < show.indexOf('const n = ensure();'),
+  // BOTH doors gate, and each gates FIRST. worldHoverFrame is the one
+  // four hosts call, and it must refuse before it pulls a target list
+  // or casts a ray, not only before it paints.
+  assert.match(hov, /export function worldHoverFrame\(\{[\s\S]{0,200}\}\) \{\n  if \(!worldPlaqueOn\(\)\) return null;/,
+    'the seam asks the skin as its first act - before the ray, before the list');
+  const show = hov.slice(hov.indexOf('export function showWorldPlaque'));
+  assert.ok(show.indexOf('if (!worldPlaqueOn()) return;') < show.indexOf('const n = ensure();'),
     'the skin is asked BEFORE the node is built and the sheet injected');
-  // The host runs the SAME pick the take runs, throttled, enhanced only.
+  // THE MODEL NEVER REACHES FOR A DOCUMENT OR A SKIN. That is what lets
+  // the gate live in one place instead of four hosts' worth of places.
+  const modelCode = model.replace(/\/\/[^\n]*/g, '').replace(/\/\*[\s\S]*?\*\//g, '');
+  assert.doesNotMatch(modelCode, /document|isEnhanced|injectEnhancedStyle/, 'the model is pure of the page');
+
+  // The host runs the SAME pick the take runs, enhanced only, and
+  // EVERY FRAME. PX21c throttled to 10Hz on a guess that "a raycast
+  // over every pile is not free"; measured, this pick is ~3us of a
+  // 16.7ms frame, and what the throttle bought was a plaque that lagged
+  // the crosshair by up to a tenth of a second.
   const ctx = read('src/scenes/dungeonContext.js');
-  const frame = ctx.slice(ctx.indexOf('function drawFoes('), ctx.indexOf('function drawFoes(') + 3700);   // AUDIT 65 MC-2 widened the window: the reach gate and its note sit inside it; BLOOD2e: the player's bleed line rides the head too
-  assert.match(frame, /_hoverAt \+= dt;/);
-  assert.match(frame, /if \(_hoverAt >= 0\.1\)/, '10Hz: a raycast over every pile is not free');
-  assert.match(frame, /if \(isEnhanced\(\) && eye\)/, 'the classic HUD says nothing about a pile - Daggerfall\'s own answer');
-  // AUDIT 65 MC-2: the take's pick reaches as far as DFU's ONE ray does
-  // now (RayDistance, PlayerActivate.cs:76/:314) so a too-far pile can
-  // reach the handler that REFUSES it out loud - which means the plaque
-  // has to apply the handler's own reach itself, or it would name a
-  // chest across the room that E cannot open.
-  assert.match(frame, /pickActivatableHit\(eye, dir, api\.lootTargets\(\), collider\)/, 'the take\'s own pick');
-  assert.match(frame, /const k = hit && hit\.distance <= hit\.reach \? hit\.key : null;/,
-    'the plaque names only what the handler would actually open');
-  assert.match(frame, /showLootHover\(key, key \? api\.lootContents\(key\) : null,/);
+  const frame = ctx.slice(ctx.indexOf('function drawFoes('), ctx.indexOf('const _mobileBatches = [];'));   // AUDIT 65 MC-2 widened the window; BLOOD2e: the player's bleed line rides the head too. WORLD-HOVER anchored it on content rather than a character count, which silently gutted assertions when the block moved.
+  assert.ok(frame.length > 0 && frame.length < 12000, 'the window is the head of drawFoes, not the whole function');
+  assert.doesNotMatch(frame, /_hoverAt/, 'the 10Hz clock is GONE, not left ticking beside the per-frame call');
+  assert.match(frame, /worldHoverFrame\(\{/, 'one seam, called where the host already draws');
+  assert.match(frame, /targets: api\.lootTargets,/, 'a THUNK - the model pulls the list, so a host with an expensive one can cache it');
+  assert.match(frame, /contents: api\.lootContents,/);
+  assert.match(hov, /const hit = pickActivatableHit\(eye, dir, targets\?\.\(\) \?\? \[\], collider\);/, 'the take\'s own pick');
   // lootContents shares takeLoot's key vocabulary rather than a second one.
   assert.match(ctx, /lootContents\(key\) \{[\s\S]{0,400}const \[kind, iStr\] = key\.split\(':'\);/);
   for (const kind of ["'loot'", "'corpse'", "'droppedLoot'"]) {
@@ -1121,8 +1180,8 @@ test('PX21c: the hover plaque names a pile without opening it, on the take\'s ow
   // destroy - the first draft put the teardown ahead of it and
   // resourcesafety.test.js caught it.
   const destroyFn = ctx.slice(ctx.indexOf('    destroy() {'), ctx.indexOf('    destroy() {') + 500);
-  assert.ok(destroyFn.indexOf('_ctxDead = true;') < destroyFn.indexOf('destroyLootHover();'), 'the latch stays first');
-  assert.ok(destroyFn.includes('destroyLootHover();'));
+  assert.ok(destroyFn.indexOf('_ctxDead = true;') < destroyFn.indexOf('destroyWorldPlaque();'), 'the latch stays first');
+  assert.ok(destroyFn.includes('destroyWorldPlaque();'));
 });
 
 test('PX21e: the loot window never scrolls - it grows, then widens, and its head never moves', () => {

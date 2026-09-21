@@ -876,7 +876,7 @@ does the pack's USE arm.
                         close-then-hand-over ordering U55 got
                         backwards. No law needs extracting first.
     THE LOGBOOK         THREE sites: charSheetNav.js:53,
-    / NOTEBOOK          world.js:6176, dungeonContext.js:6350. A seam
+    / NOTEBOOK          world.js:6176, dungeonContext.js:6356. A seam
                         wants making, as U52's and U53's did.
     HISTORY             ONE site (charSheetNav.js:61), and it reads
                         only the entity's backStory. The small one.
@@ -13697,7 +13697,7 @@ Pinned: `test/macfive.test.js` PL3 (two), `test/cursortoggle.test.js`,
 ## RF6 - THE ENHANCED SKIN READS THE ONE NAME RESOLVER (2026-09-14, Mac's refactor pass, the sixth)
 
 THE FAULT. The enhanced inventory's line (`src/ui/enhancedInventory.js`
-itemLine) and the loot plaque (`src/ui/lootHover.js` hoverLines) rebuilt
+itemLine) and the loot plaque (`src/systems/worldHover.js` hoverLines) rebuilt
 ResolveItemLongName's arms by hand - ResolveItemName for the name,
 materialName for the sub-line, gated on "Armor or Weapons, identified"
 - and lost four of DFU's arms on the way: an arrow, a helm or shield

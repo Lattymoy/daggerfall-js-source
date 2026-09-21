@@ -802,8 +802,8 @@ test('AUDIT-MACL F5: the guard PREVENTS the menu and does not STOP the event', a
   // counting `enhancedBook.js`, which is mounted BY one of the thirteen
   // rather than being one of them. Counted here rather than remembered.
   const inGame = ['bookDoor', 'charSheetDoor', 'chronicleDoor', 'fpsCounter', 'gamepadInput',
-    'heldMap', 'hitNumbers', 'inventoryDoor', 'lootHover', 'pauseDoor',   // MAP1: heldMap.js in overworldMap.js's seat
-    'spellbookDoor', 'talkDoor', 'touch'].map((n) => `src/ui/${n}.js`);
+    'heldMap', 'hitNumbers', 'inventoryDoor', 'pauseDoor',   // MAP1: heldMap.js in overworldMap.js's seat   // WORLD-HOVER: lootHover.js is worldPlaque.js, at the end of the list
+    'spellbookDoor', 'talkDoor', 'touch', 'worldPlaque'].map((n) => `src/ui/${n}.js`);
   assert.equal(inGame.length, 13, 'the thirteen, named');
   for (const f of inGame) assert.ok(rd(f).length > 0, `${f} exists`);
   const selfShutting = inGame.filter((f) => /contextmenu/.test(rd(f)));
