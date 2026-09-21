@@ -1,0 +1,154 @@
+[
+  {
+    "name": "ACC1b-1-the-secret-is-stored-raw",
+    "file": "server-account/src/accounts.js",
+    "old": "  const hash = await hashSecret(secret, { subtle });\n  // A label is for a human reading a device list. It is truncated and",
+    "new": "  const hash = secret;\n  // A label is for a human reading a device list. It is truncated and",
+    "tests": [
+      "test/accountworker.test.js"
+    ],
+    "note": "A copy of the sessions table would then be a copy of everybody's credentials."
+  },
+  {
+    "name": "ACC1b-2-signing-out-one-device-signs-out-all",
+    "file": "server-account/src/accounts.js",
+    "old": "  const r = await db.prepare('DELETE FROM sessions WHERE id = ?').bind(sessionId).run();",
+    "new": "  const r = await db.prepare('DELETE FROM sessions WHERE player_id = (SELECT player_id FROM sessions WHERE id = ?)').bind(sessionId).run();",
+    "tests": [
+      "test/accountworker.test.js"
+    ],
+    "note": "Fight Life's bug from the other direction: signing out of a laptop drops the phone."
+  },
+  {
+    "name": "ACC1b-3-a-handle-is-ignored-for-the-displayed-name",
+    "file": "server-account/src/accounts.js",
+    "old": "  if (typeof handle === 'string' && handle.length > 0) return handle;",
+    "new": "  if (false) return handle;",
+    "tests": [
+      "test/accountworker.test.js"
+    ],
+    "note": "A linked player would be shown, and TOKENED, under their guest name."
+  },
+  {
+    "name": "ACC1b-4-everybody-is-a-guest",
+    "file": "server-account/src/accounts.js",
+    "old": "  return row?.handle ? 'linked' : 'guest';",
+    "new": "  return 'guest';",
+    "tests": [
+      "test/accountworker.test.js"
+    ],
+    "note": "The wall is at the saves and reads this; everyone would be on the wrong side of it."
+  },
+  {
+    "name": "ACC1b-5-the-device-label-is-stored-unbounded",
+    "file": "server-account/src/accounts.js",
+    "old": "  const label = typeof deviceLabel === 'string' ? deviceLabel.slice(0, 64) : null;",
+    "new": "  const label = typeof deviceLabel === 'string' ? deviceLabel : null;",
+    "tests": [
+      "test/accountworker.test.js"
+    ],
+    "note": "Client-supplied text with no bound is a row somebody chooses the size of."
+  },
+  {
+    "name": "ACC1b-6-a-credential-shadow-ships-to-the-client",
+    "file": "server-account/src/accounts.js",
+    "old": "  return (r?.results ?? []).map((s) => ({\n    sessionId: s.id, label: s.device_label ?? null, createdAt: s.created_at, lastSeen: s.last_seen,\n  }));",
+    "new": "  return r?.results ?? [];",
+    "tests": [
+      "test/accountworker.test.js"
+    ],
+    "note": "The whole row includes secret_hash. A hash is a credential's shadow and there is no reason to ship one."
+  },
+  {
+    "name": "ACC1b-7-an-unusable-guest-name-is-minted-anyway",
+    "file": "server-account/src/accounts.js",
+    "old": "  if (!nameIsIssuable(name) || !isGuestShaped(name)) throw new Error(`guestName produced an unusable name: ${name}`);",
+    "new": "  if (false) throw new Error(`guestName produced an unusable name: ${name}`);",
+    "tests": [
+      "test/accountworker.test.js"
+    ],
+    "equivalent": true,
+    "why": "The banks are the game's own and every name they can produce is issuable - a pin derives the bank's whole alphabet and proves it. So removing the check changes no outcome today. It is kept because a name that cannot ride a token is an account that cannot play, and the place to learn that is the mint rather than the player's first connection."
+  },
+  {
+    "name": "ACC1b-8-a-short-secret-is-looked-up-anyway",
+    "file": "server-account/src/accounts.js",
+    "old": "  if (typeof secret !== 'string' || secret.length < 16 || secret.length > 128) return null;",
+    "new": "  if (typeof secret !== 'string') return null;",
+    "tests": [
+      "test/accountworker.test.js"
+    ],
+    "equivalent": true,
+    "why": "A wrong secret of any length hashes to something no row holds, so the lookup answers null either way. The bound is here to say no before a digest and a query rather than after them, which is the same reason the Worker bounds a body before parsing it."
+  },
+  {
+    "name": "ACC1b-9-the-guest-shape-enumerates-an-alphabet-again",
+    "file": "server-account/src/guestName.js",
+    "old": "export const GUEST_NAME_RE = /^\\S+ \\S+$/;",
+    "new": "export const GUEST_NAME_RE = /^[A-Za-z]+ [A-Za-z]+$/;",
+    "tests": [
+      "test/accountworker.test.js"
+    ],
+    "note": "THE DEFECT ITS OWN PIN FOUND, put back: DFU's banks carry apostrophes and hyphens, and Akh'ar Arabi is a name this rule calls malformed."
+  },
+  {
+    "name": "ACC1b-10-a-handle-may-carry-a-space",
+    "file": "server-account/src/guestName.js",
+    "old": "export const HANDLE_RE = /^[A-Za-z][^\\s]{2,23}$/;",
+    "new": "export const HANDLE_RE = /^[A-Za-z][^!]{2,23}$/;",
+    "tests": [
+      "test/accountworker.test.js"
+    ],
+    "note": "The whole disjointness law: a handle with a space could be chosen to read exactly as a guest's name."
+  },
+  {
+    "name": "ACC1b-11-the-draw-is-modulo-biased",
+    "file": "server-account/src/guestName.js",
+    "old": "    if (buf[0] < limit) return buf[0] % n;        // the tail above `limit` is thrown away",
+    "new": "    return buf[0] % n;",
+    "tests": [
+      "test/accountworker.test.js"
+    ],
+    "note": "The low indices come up more often - the classic modulo bias, invisible in any single draw."
+  },
+  {
+    "name": "ACC1b-12-an-unknown-path-answers-401",
+    "file": "server-account/src/index.js",
+    "old": "    if (!ROUTES.has(path)) return no('not-found', 404, origin);",
+    "new": "    if (false) return no('not-found', 404, origin);",
+    "tests": [
+      "test/accountworker.test.js"
+    ],
+    "note": "Every typo'd route then reads as an auth failure to a caller with no secret."
+  },
+  {
+    "name": "ACC1b-13-the-body-is-parsed-before-it-is-bounded",
+    "file": "server-account/src/index.js",
+    "old": "  if (text.length > MAX_BODY_BYTES) return null;",
+    "new": "  if (false) return null;",
+    "tests": [
+      "test/accountworker.test.js"
+    ],
+    "note": "A megabyte of nothing then costs a parse."
+  },
+  {
+    "name": "ACC1b-14-the-token-carries-a-name-the-client-sent",
+    "file": "server-account/src/index.js",
+    "old": "          { s: who.player.id, n: displayName(who.player), k: accountKind(who.player) },",
+    "new": "          { s: who.player.id, n: body.name ?? displayName(who.player), k: accountKind(who.player) },",
+    "tests": [
+      "test/accountworker.test.js"
+    ],
+    "note": "THE WHOLE POINT OF THE TOKEN, undone: the client asserts its own name again, only now it is signed."
+  },
+  {
+    "name": "ACC1b-15-a-service-with-no-key-mints-nothing-and-says-nothing",
+    "file": "server-account/src/index.js",
+    "old": "        if (!key) return no('no-signing-key', 503, origin);",
+    "new": "        if (!key) return no('auth', 401, origin);",
+    "tests": [
+      "test/accountworker.test.js"
+    ],
+    "note": "A deployment fault would read to every player as their own credential being wrong."
+  }
+]

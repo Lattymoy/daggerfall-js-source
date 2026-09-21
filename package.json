@@ -8,7 +8,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "test": "node --test",
-    "lint": "eslint src/ server/src/",
+    "lint": "eslint src/ server/src/ server-account/src/",
     "types": "tsc -p tsconfig.json",
     "check": "npm run lint && npm run types && npm test && npm run build",
     "cites": "node tools/citeShift.mjs",

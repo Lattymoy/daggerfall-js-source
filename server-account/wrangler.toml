@@ -1,0 +1,66 @@
+# ACC1b (2026-09-21): THE ACCOUNT SERVICE. A second Cloudflare Worker
+# over D1, deliberately NOT a route on the relay.
+#
+# WHY TWO WORKERS: a relay deploy restarts every Durable Object and
+# drops every connected player. That is a fair price for changing the
+# relay's own law and an absurd one for fixing a sign-in button - and
+# SLAM8 hashes the RAW BYTES of everything the relay bundles, so the
+# price would be charged for a comment. `server/wrangler.toml` carries
+# the other half of this note.
+#
+# THE SEAM BETWEEN THEM IS A SIGNATURE. This service holds the private
+# key; the relay holds the public half and can verify but never mint.
+#
+# ─── WHAT A PERSON HAS TO DO ONCE, BY HAND ─────────────────────────
+# None of this can be done from CI, because it creates resources on the
+# Cloudflare account rather than deploying code to them.
+#
+#   1. Make the database, and put the id below:
+#        npx wrangler d1 create daggerfall-accounts
+#   2. Apply the migrations (idempotent - every statement IF NOT EXISTS):
+#        npx wrangler d1 execute daggerfall-accounts --remote \
+#          --file=server-account/migrations/0001_accounts.sql
+#   3. Mint the signing key pair:
+#        node tools/mintIdentityKeys.mjs
+#      ...then put the PRIVATE half in as a secret - it must never be
+#      written into this file, which is committed:
+#        npx wrangler secret put IDENTITY_PRIVATE_KEY
+#      ...and the PUBLIC half into the relay's config, where it is not
+#      a secret at all (a public key cannot mint).
+#   4. Deploy:
+#        npx wrangler deploy
+#
+# A DEPLOY HERE DROPS NOBODY. That is the entire point of the split:
+# this Worker holds no sockets, so it can be fixed at any hour.
+name = "daggerfall-accounts"
+main = "src/index.js"
+compatibility_date = "2026-09-01"
+account_id = "a27adccb38c8e8b82fa32e5736274a94"
+workers_dev = true
+
+# An uncaught error is logged, not lost - AUDIT ONLINE A17's law, on
+# this side too.
+[observability]
+enabled = true
+
+[vars]
+# Answered by /health so a deploy that did not happen cannot look like
+# one that did. Kept in step with ACCOUNT_VERSION in src/index.js.
+ACCOUNT_VERSION = "acct1"
+# The site that may call this. "*" while nothing is live; it is narrowed
+# to the real origin before a single account exists.
+ALLOWED_ORIGIN = "*"
+
+# [[d1_databases]]
+# binding = "DB"
+# database_name = "daggerfall-accounts"
+# database_id = "PUT-THE-ID-FROM-STEP-1-HERE"
+#
+# COMMENTED UNTIL STEP 1 IS DONE, and deliberately: a binding naming a
+# database that does not exist fails the deploy, and a half-written id
+# fails it in a way that reads like a code error. Uncomment with the
+# real id in the same commit that first deploys this.
+
+# IDENTITY_PRIVATE_KEY is NOT here and must never be. It is a secret
+# (`wrangler secret put`), and test/accountworker.test.js reads this
+# file to make sure nobody ever pastes one in.

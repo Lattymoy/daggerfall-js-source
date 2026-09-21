@@ -269,12 +269,35 @@ this week for unrelated reasons:
 Players already hold `dagger.online.account` ids, and the hub already
 holds their friend lists against those ids. Nothing may orphan them.
 
-**The account service ADOPTS the existing id.** It is already durable,
-already the player's, and already has a secret only they hold — which is
-precisely the state `/v1/auth/guest` leaves a new Fight Life player in.
-A first contact that presents a known `(id, secret)` pair becomes that
-account's first session rather than minting a new row, so friend lists
-and parties survive untouched.
+**ACC0 SAID THE ACCOUNT SERVICE WOULD ADOPT THE EXISTING ID, AND THAT
+WAS WRONG.** It is recorded here rather than quietly rewritten, because
+the error is instructive and it was found by trying to build it (ACC1b).
+
+The adoption story assumed the account service could verify an existing
+`(id, secret)` pair. It cannot: **the hub minted that secret and the hub
+is the only thing that holds it.** `asecret:<id>` lives in a Durable
+Object's storage inside the relay Worker, and the account service is
+deliberately unable to reach it. Every way of closing that gap is worse
+than the gap:
+
+- Adopt an id on sight, without checking the secret. Whoever presents it
+  first owns it — a land-grab on every account that has not reconnected.
+- Have the hub sign a voucher. Then the relay holds a signing key, and
+  the one property that lets the relay be the bigger attack surface —
+  **a public key cannot mint** — is gone.
+- Let both hold the truth and reconcile. Two answers to "who is this".
+
+**THE MERGE BELONGS AT THE HUB**, which is the one place that holds both
+credentials at once. A socket that presents a verified identity token
+AND the old `(id, secret)` the hub itself minted is a socket the hub can
+see is the same person, so the hub moves the friend list across. The
+account service never needs to know SOC1 existed.
+
+That is a later slice and it is not built. ACC1b mints its own ids and
+knows nothing about the social arc. What survives from ACC0 is the
+smaller and still-true half: the ids are the **same shape** at both
+ends, which is what makes that merge possible at all, and a pin reads
+`net/social.js` to keep it that way.
 
 A player who never plays online never has any of this happen to them.
 
@@ -301,6 +324,81 @@ Cloud saves as the source of truth are **not** on this list. That would
 be its own arc, after a long boring stretch of the backup path working.
 
 ---
+
+## ACC1b — SHIPPED 2026-09-21: the account service
+
+`server-account/` — a second Cloudflare Worker over D1. Identity alone:
+guests, sessions and the token. No provider links (ACC1c), no saves
+(ACC2). **It is written and tested and it is not deployed**, because
+creating a D1 database and putting a secret on the account are things
+only Mac's Cloudflare login can do; `server-account/wrangler.toml`
+carries the four steps, and the D1 binding is commented out on purpose
+so a deploy cannot half-succeed against a database nobody made yet.
+
+**A GUEST IS A REAL ROW FROM FIRST CONTACT.** Not a lesser kind of
+account — an account with no provider attached yet, which is the whole
+of ACC0's wall and is why linking will migrate nothing.
+
+**A SESSION IS THE CREDENTIAL, one per device.** Fight Life had one
+secret per player and rotated it on sign-in, which made two devices
+mutually exclusive: a desktop sign-in silently 401'd the phone on every
+write, and Mac found it by playing rather than by reading. That bug is
+not being ported, and the pin that holds it opens two sessions and uses
+both.
+
+**THE GUEST NAMES COME FROM DAGGERFALL'S OWN BANKS** — the same
+`nameGen.json` the chargen wizard and every townsperson draw from — so a
+visitor is an inhabitant rather than an Ochre Fox. Mithriil Stormaire,
+Erebain Avalul, Karodell Bluethorn.
+
+**AND A GUEST NAME CANNOT COLLIDE WITH A HANDLE, STRUCTURALLY.** A
+generated name carries exactly one space; a chosen handle carries none.
+No lookup, so nothing can race a rename — the alternative, checking each
+generated name against the handle table, answers "not taken YET".
+
+That law was nearly written the wrong way, and the way it failed is the
+point: **the first cut spelled the guest shape as `[A-Za-z]+ [A-Za-z]+`
+and its own pin caught `Akh'ar Arabi` on the eighteenth draw.** DFU's
+banks carry apostrophes and hyphens. Enumerating an alphabet is how a
+rule comes to disagree with the data it is about, so the law rests on
+the space alone now, and a pin derives the bank's whole alphabet and
+asks the one question that would actually break it — does any part carry
+whitespace?
+
+**THE SQL IS THE REAL SQL.** D1 is SQLite, so the pins apply the real
+migration to a real SQLite through a D1-shaped adapter. The schema, the
+UNIQUE index and the foreign key under test are the ones that will be
+live; a hand-rolled fake would have proved only that the fake agreed
+with itself, and would have been green over a typo'd index. What it
+does not prove is written into the file: no network, no Cloudflare, no
+D1 limit.
+
+`handle_lc` is UNIQUE, which is the gap in the schema this was lifted
+from. Fight Life's `handle` has no constraint at all — defensible for a
+name beside a ladder rating, and not where the name *is* the identity.
+
+15 mutants, 13 dead, 2 recorded equivalent. **Both survivors were real
+holes.** The modulo-bias pin could not see plain `% n` at all: over
+exactly 255 accepted draws, the biased and unbiased spellings both come
+out 85/85/85, so the rejection is now asked the one way that cannot be
+faked — a generator offering only the value above the last whole
+multiple must never answer. And nothing had ever *sent* a name in a
+token request, so a client-asserted name could have come back signed,
+which is worse than an unsigned one because the relay would believe it.
+
+## WHAT MAC HAS TO DO BEFORE ANY OF THIS IS LIVE
+
+None of it can come from CI; it creates resources rather than deploying
+code. `server-account/wrangler.toml` carries the same list.
+
+1. `npx wrangler d1 create daggerfall-accounts`, then put the id in the
+   toml and uncomment the binding.
+2. Apply `server-account/migrations/0001_accounts.sql` (idempotent).
+3. `node tools/mintIdentityKeys.mjs` — the private half goes in with
+   `wrangler secret put IDENTITY_PRIVATE_KEY`, the public half into the
+   relay's config, where it is not a secret at all.
+4. `npx wrangler deploy` from `server-account/`. **This drops nobody**,
+   which is the entire point of the split.
 
 ## OPEN
 
