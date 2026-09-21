@@ -952,7 +952,7 @@ export const INTERIOR_CLEAR = Object.freeze([0, 0, 0, 1.0]);
  *  so unit 7 was written by a foreign pass while the renderer's
  *  per-program stamp still said the shadow map was there. 15 sits
  *  above the mod's nine and above every other pass in the tree (none
- *  goes past unit 3), and WebGL2 guarantees
+ *  goes past unit 4 - the grass's tuft sheet, GRASS-PX), and WebGL2 guarantees
  *  MAX_TEXTURE_IMAGE_UNITS >= 16, so 15 always exists. The shaders
  *  bind it by uniform name, so the number lives only here. */
 export const CLOUD_SHADOW_UNIT = 15;

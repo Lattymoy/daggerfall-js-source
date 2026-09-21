@@ -348,6 +348,21 @@ export const FEATURES = Object.freeze([
     kinds: Object.freeze(['enhanced']),
     control: Object.freeze({ store: 'prefs', key: 'grassDensity', initial: 1, online: 'player', tiers: Object.freeze([[1, 'Full'], [0.5, 'Half'], [0.25, 'Quarter'], [0, 'Off']]) }),   // PERF1: a fraction of the lab's 1.2 million blades; a dial, the player's online
   }),
+  // GRASS-PX (2026-09-21, Mac: "turn the grass into a pixel art design").
+  // The style is a uniform in the one grass program, so the row flips
+  // live. Pixel is the default: it is the style the rest of the world's
+  // flats are drawn in.
+  Object.freeze({
+    id: 'grass-style',
+    group: 'sight',
+    title: 'Grass style',
+    note: 'Pixel draws each tuft as a hand-set sprite in four tones, with stepped sway and a dithered distance, the way '
+      + 'the world\u2019s trees and people are drawn; Smooth is the lab\u2019s tapered, gradient-lit blade. Nothing to change unless '
+      + 'the enhanced outdoors are on and Grass density is above Off.',
+    effect: 'Takes effect at once.',
+    kinds: Object.freeze(['enhanced']),
+    control: Object.freeze({ store: 'prefs', key: 'grassStyle', initial: 'pixel', online: 'player', tiers: Object.freeze([['pixel', 'Pixel'], ['smooth', 'Smooth']]) }),
+  }),
   Object.freeze({
     id: 'cloud-quality',
     group: 'sight',

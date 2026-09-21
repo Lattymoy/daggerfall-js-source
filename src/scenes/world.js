@@ -3405,7 +3405,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // ?dungeon host RAN every CastWhenUsed / CastWhenStrikes / SoulBound
   // / affinity arm against no ctx at all. They are optional-chained, so
   // it WAS silent. WAVE D closed it: the body is scenes/hostEnchant.js
-  // and dungeonContext.js:2276 mounts the same one, gated on
+  // and dungeonContext.js:2289 mounts the same one, gated on
   // `opts.enchantCtx !== false` because setDefaultEnchantCtx is a
   // session singleton and EC1 already routes THIS host's mount into
   // that context through modes.dungeonCtx - so worldModes.js:4729
@@ -5228,7 +5228,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // so an F9 pressed inside a shop recorded the street's sheath and
     // hand. The mode host answers for the rig that is actually drawn
     // and null outside interior mode (the dungeon owns its own
-    // composer, dungeonContext.js:5776), so exterior mode and a
+    // composer, dungeonContext.js:5806), so exterior mode and a
     // pre-seam mode host compose exactly as before, per field.
     const wp = modes?.weaponPose?.() ?? null;
     const snap = snapshotPlayer(playerEntity, {
@@ -6833,7 +6833,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     lookFilter.add(e.movementX * lookScale(), -e.movementY * lookScale() * lookInvert());
   });
   // U41: `!townTalk.overlayActive` is the dungeon host's own gate
-  // (dungeon.js:227, "a right-click on a window is the window's...
+  // (dungeon.js:224, "a right-click on a window is the window's...
   // never a swing"), which these two hosts never got. It matters now
   // that the travel map makes RMB a ROUTINE gesture - its zoom - and
   // an ungated one fires a readied spell or looses an arrow at the
@@ -7083,7 +7083,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // exterior -> the townTalk overlay, interior OR dungeon -> the mode
   // machine's slot. U43-ii shipped the dungeon half: showQuestBox
   // offers the window to `modes.showQuestOverlay` below, and
-  // worldModes answers it in BOTH modes (worldModes.js:7637-7700 -
+  // worldModes answers it in BOTH modes (worldModes.js:7636-7699 -
   // dungeon routes to dungeonCtx.showOverlay), so a dungeon popup is
   // shown rather than logged loudly and dropped.
   // AUDIT 24 (wave 21): DaggerfallMessageBox.Show() is a
@@ -9408,7 +9408,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // main.js sets ?load when the menu resolves it, and its comment says
   // "Load Game rides the dungeon host's OWN quickLoad" - true when the
   // classic start booted scenes/dungeon.js, and U31 moved it HERE. The
-  // only reader of `load` in the whole tree is dungeon.js:108, so the
+  // only reader of `load` in the whole tree is dungeon.js:104, so the
   // flag arrived in this host and was discarded: the player got a
   // brand-new character in Privateer's Hold and the only way to reach
   // their save was to start a new game and press F11. A load is not a
@@ -11181,7 +11181,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       };
       if (!labGrassField) labGrassField = createGrassField(labGrass, { keep, ground, density: grassDensity });   // PERF1: the pref's fraction of the lab's field
       labGrassField.update(ex, ez, keep, ground);
-      window.__grassStats = () => ({ blades: labGrass.count, drawn: labGrass.drawn, nearPixels: nearPieces().length, cells: labGrassField?.live.size ?? 0, slots: labGrassField?.slots ?? 0,
+      window.__grassStats = () => ({ blades: labGrass.count, drawn: labGrass.drawn, vertsPerBlade: labGrass._oneQuad ? labGrass.vertsFar : labGrass.verts, nearPixels: nearPieces().length,   // GRASS AUDIT 1: `verts` below is the near blade's; the frame's is this cells: labGrassField?.live.size ?? 0, slots: labGrassField?.slots ?? 0,
         perCell: labGrass.perCell, range: LAB_GRASS.range, height: LAB_GRASS.height, verts: labGrass.verts,
         // GRASS2: what the field HOLDS, against what a slot-sized draw
         // would have submitted - the pad, measured rather than assumed.
@@ -11202,7 +11202,8 @@ export async function bootWorld(canvas, renderer, params, status) {
         // programs.
         { sunDir: renderer._lightDir, amb: renderer._ambient, sunCol: renderer._sunColor, dim: wxNow.dim,
           sunScale: renderer._sunScale, moonDir: renderer._moonDir, moonScale: renderer._moonScale, moonCol: renderer._moonColor },   // WX2: the dim crosses on the front
-        { dir: wd.dir, speed: wd.slider * wd.gust, windV: wd.windV });
+        { dir: wd.dir, speed: wd.slider * wd.gust, windV: wd.windV },
+        LAB_GRASS.range, getPref('grassStyle'));   // GRASS-PX: the row's word, read live - the style is a uniform, so it flips without a reload
       // GRASS2: the field had been inside the WORLD's span, which is the
       // one number that cannot say whether the grass is worth what it
       // costs. It marks its own now, and hands the frame straight back.

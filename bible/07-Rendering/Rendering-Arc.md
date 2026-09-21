@@ -225,6 +225,12 @@ too, matching Unity's vertex-lit billboards.
 
 ## Milestone R7 - dungeon water planes (SHIPPED)
 
+WATER-D1 (2026-09-21): the DRAW moved into `dungeonContext.drawFoes`,
+ahead of the weapon overlay - on the enhanced-lighting lane the overlay's
+screen quad resolves the frame, and a plane drawn after it (as both hosts
+did) lands on the canvas against an empty depth buffer. The level law
+below is untouched. `07-Rendering/Water-Arc.md`.
+
 Verbatim RDBLayout.AddWater semantics: one plane per dungeon block
 whose start-marker water level is not the 10000 sentinel, covering the
 RDB footprint (51.2 x 51.2) at the block origin, surface at
@@ -2408,13 +2414,13 @@ beside them. Then the same shape turned up everywhere else:
 
 | host | list |
 |---|---|
-| `dungeonContext.js:5143` | the mobiles, the drops, the spells |
-| `worldModes.js:6190` | the dungeon's flats, camps, torches and peers |
-| `worldModes.js:6374` | the interior's flats and peers |
-| `worldModes.js:6380-6415` | blood, torches, drops, foes, guards - **five separate uncut calls** |
+| `dungeonContext.js:5156` | the mobiles, the drops, the spells |
+| `worldModes.js:6191` | the dungeon's flats, camps, torches and peers |
+| `worldModes.js:6373` | the interior's flats and peers |
+| `worldModes.js:6379-6414` | blood, torches, drops, foes, guards - **five separate uncut calls** |
 | `exterior.js:4804`, `world.js:10857` | the spell missiles |
 | `exterior.js:4866` | the fixed city's townspeople |
-| `interior.js:353`, `dungeon.js:1009` | the flats, the camps, the torches |
+| `interior.js:352`, `dungeon.js:1006` | the flats, the camps, the torches |
 
 Seven call sites, and an eighth waiting to be written next year. **Fixing
 them one at a time is how this bug got to be in eight places.** The test

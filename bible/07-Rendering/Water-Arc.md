@@ -646,3 +646,71 @@ port keeps it.
 
 **Pinned** in `test/grasspath.test.js` (2), with `test/water.test.js`
 holding the law's table unmoved.
+
+## WATER-D1 - THE DUNGEON WATER WAS DRAWN AFTER THE FRAME HAD BEEN RESOLVED (2026-09-21)
+
+LostMyLeg, on Discord: *"Everytime you go into a dungeon you can see 2
+Watertiles/textures floating around per player, the console says 2 Water
+in every dungeon those need to be excluded for all dungeons. Spawned
+dungeons already have this guard in so it doesnt happen in them right
+now."* And the report that produced that guard the day before (AIWATER,
+Mac's patch): a spawn's water *"shown well below the floor, in patches,
+reading like a no-clip glitch."*
+
+**The level was never wrong.** DFU's law was fetched and read again
+rather than trusted from memory: `Billboard.SetRDBResourceData` writes
+`WaterLevel = -8 * SoundIndex` (10000 for a zero) off a start marker's
+flat resource, `DaggerfallDungeon.FindMarkers` takes `StartMarkers[0]`
+for every block, and `RDBLayout.AddWater` stands a plane the size of the
+block at `level * -1 * GlobalScale`. That is `world/rdbLayout.js:470-476`
+and the quad `scenes/dungeonContext.js` mints, line for line, and R7's
+corpus pins (32 of 187 blocks watered, Maorn's Guard's three levels)
+have held it since August. The "2 Water" the console prints is the count
+of watered blocks in the dungeon just entered - two of them, in the
+dungeons he tried - and it is the right count.
+
+**The order was wrong, and only on the lane.** Both dungeon hosts called
+`renderer.drawWater` AFTER `dungeonContext.drawFoes` returned. `drawFoes`
+ends with the weapon overlay and the HUD, and those are SCREEN QUADS -
+and since EL3 (2026-09-17) a screen quad is where the enhanced-lighting
+lane ends the world pass and RESOLVES its frame target to the canvas
+(`Renderer.drawScreenQuad` -> `_compositeAir`: the lane's framebuffer is
+unbound, `_frameFbo` is null). A water quad drawn after that lands on
+the DEFAULT framebuffer, whose depth buffer holds no world at all - the
+frame's depth went into the lane's own target - so the plane passed the
+depth test everywhere and was painted over the resolved picture: through
+every wall, under every floor, wherever the player stood. "Floating
+around", "well below the floor, in patches", "no-clip". On the classic
+set there is no lane and no resolve, the default depth buffer IS the
+world's, and the very same call order was correct - which is why the
+plane drew right for a month and wrong from the day EL3 shipped, and
+why a spawn (a clone of a real dungeon's blocks, drawn by the same
+host) showed it "every time".
+
+**The fix is a move, not a guard.** The draw is a world draw, so it
+lives INSIDE `drawFoes` now - after the last world billboard (the foes,
+the drops, the missiles), before the weapon overlay - the one frame
+function both hosts call, exactly where the exterior's water surface
+has always been drawn (inside the world pass, long before the HUD).
+Each host names the water tile's archive once, at the build
+(`ctx.setWaterArchive`), the colour has one home (`DUNGEON_WATER_COLOR`
+in the context; both hosts carried the literal), and the scroll clock
+is the context's own `dt` sum on the one rate. The AIWATER skip for a
+spawned dungeon stands as Mac's patch wrote it; its cause is this one,
+so it is his call whether a spawn gets its water back.
+
+**Pinned** in `test/waterd1.test.js` (4): the renderer's own contract on
+a recording GL - with the lane and the air up, a `drawWater` before the
+first screen quad draws with the frame target bound and the same call
+after it draws on the canvas (the mechanism the defect rode, so a future
+host that draws after the overlay is caught by the reason and not the
+symptom); the ORDER inside `drawFoes`, derived - every `renderer.draw*`
+in the body precedes the overlay call, and the water is among them,
+after the last billboards; no scene file but the context calls
+`drawWater` and both hosts name the tile at the build; the colour's one
+home and the level law untouched. `test/water.test.js`'s two host pins
+re-aimed at the context. Mutants: `tools/mutants/waterd1.json`, 10, 10
+dead - among them the defect put back as a SECOND draw after the
+overlay, a host regrowing its own draw, and the screen quad no longer
+resolving the frame.
+
