@@ -25,7 +25,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import {
-  PAD_GLYPHS, PAD_FAMILIES, GLYPH_SIZE, padFamilyOf, padFamily, setPadFamily,
+  PAD_GLYPHS, PAD_FAMILIES, GLYPH_SIZE, GLYPH_AXIS_KEYS, padFamilyOf, padFamily, setPadFamily,
   unityButtonGlyph, glyphSvg, _clearGlyphCache,
 } from '../src/ui/padGlyphs.js';
 import { quickslotTag, quickslotOffTag, torchTag, tagKey, CELL_ACTIONS, tagText } from '../src/ui/quickslotTags.js';
@@ -35,9 +35,9 @@ const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 const HUD = read('src/ui/enhancedHud.js');
 const CSS = read('src/ui/enhancedStyle.js');
 
-const CODES = Array.from({ length: 10 }, (_, i) => `JoystickButton${i}`);
+const CODES = [...Array.from({ length: 10 }, (_, i) => `JoystickButton${i}`), ...GLYPH_AXIS_KEYS];   // PAD1: the ten buttons and the six axis keys
 
-test('QS3 glyphs: ten buttons per family, every bitmap square and every pixel on or off', () => {
+test('QS3 glyphs: ten buttons and six axis keys per family, every bitmap square and every pixel on or off', () => {
   // OUR OWN, drawn rather than licensed: every shipped glyph set is
   // somebody's trademark or somebody's font, and this skin has a
   // language of its own. The grid is a law rather than a per-glyph
@@ -45,7 +45,7 @@ test('QS3 glyphs: ten buttons per family, every bitmap square and every pixel on
   assert.deepEqual([...PAD_FAMILIES], ['xbox', 'ps']);
   for (const family of PAD_FAMILIES) {
     const set = PAD_GLYPHS[family];
-    assert.deepEqual(Object.keys(set).sort(), [...CODES].sort(), `${family}: the ten standard-mapping buttons`);
+    assert.deepEqual(Object.keys(set).sort(), [...CODES].sort(), `${family}: the ten standard-mapping buttons and the six axis keys (PAD1)`);
     for (const [code, rows] of Object.entries(set)) {
       assert.equal(rows.length, GLYPH_SIZE, `${family}/${code}: ${rows.length} rows`);
       for (const row of rows) {
@@ -112,11 +112,11 @@ test('QS3 padFamilyOf: Sony by id, Xbox by default, and the live family clears w
   setPadFamily(null);
 });
 
-test('QS3 unityButtonGlyph: the ten and nothing else', () => {
+test('QS3 unityButtonGlyph: the ten, the six axis keys, and nothing else', () => {
   for (const code of CODES) for (const f of PAD_FAMILIES) assert.ok(unityButtonGlyph(f, code), `${f}/${code}`);
   // Unity NAMES twenty (KeyCodeList); the standard mapping reaches ten,
   // which is what STANDARD_TO_UNITY_BUTTON maps onto.
-  for (const bad of ['JoystickButton10', 'JoystickButton19', 'JoystickAxis3Button0', 'KeyW', 'Mouse0', '', null, undefined, 7]) {
+  for (const bad of ['JoystickButton10', 'JoystickButton19', 'JoystickAxis3Button0', 'JoystickAxis9Button1', 'KeyW', 'Mouse0', '', null, undefined, 7]) {
     assert.equal(unityButtonGlyph('xbox', bad), null, String(bad));
   }
   assert.equal(unityButtonGlyph('nonsense', 'JoystickButton0'), PAD_GLYPHS.xbox.JoystickButton0,

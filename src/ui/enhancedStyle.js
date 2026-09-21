@@ -3807,6 +3807,67 @@ button.lv-note.lv-clickable:hover, button.lv-note.lv-clickable:focus-visible {
   #enhanced-levelnotice { bottom: 118px; }
 }
 
+/* ── ENH-NOTICE1: THE NOTICE PANEL (ui/enhancedNotice.js) ── DFU's
+   click-anywhere message box, the enhanced way: a panel that slides in
+   from the RIGHT edge instead of the parchment in the middle. The
+   stack is pointer-transparent so the click that dismisses the box
+   lands on the canvas as it always has (ClickAnywhereToClose is the
+   box's law, not the panel's); the panel itself is the words, a rule
+   and the one-line hint. Two boxes at once stack downward, newest
+   last, each with its own slide. */
+.notice-stack {
+  position: fixed; right: 0; top: 50%; transform: translateY(-50%);
+  z-index: 30; pointer-events: none;
+  display: flex; flex-direction: column; align-items: flex-end; gap: 10px;
+  max-width: min(520px, 70vw); max-height: 90vh;
+  font-family: ${PIXEL_STACK}; -webkit-font-smoothing: none;
+  font-variant-ligatures: none; font-feature-settings: 'liga' 0, 'clig' 0;
+  color: #d8cfae; text-shadow: 2px 2px 0 rgba(0,0,0,0.85);
+}
+/* THE SLIDE: appended a full width off the right edge, the \`notice-in\`
+   class carries it to rest; \`notice-out\` sends it back the way it came
+   and the module removes the node after the transition's length
+   (NOTICE_SLIDE_MS - keep the two in step, and keep the out-curve
+   plain: a back-loaded bezier left the panel half-way out when the
+   node was taken, measured in the headless browser). */
+.notice {
+  box-sizing: border-box; width: min(520px, 70vw);
+  padding: 14px 20px 10px 18px;
+  background: rgba(10,12,17,0.9); border: 2px solid rgba(125,116,96,0.6); border-right: 0;
+  border-left: 4px solid var(--brass);
+  transform: translateX(110%); opacity: 0;
+  transition: transform 260ms cubic-bezier(0.2, 0.8, 0.2, 1), opacity 200ms ease-out;
+}
+.notice.notice-in { transform: translateX(0); opacity: 1; }
+.notice.notice-out { transform: translateX(110%); opacity: 0; transition-timing-function: ease-in, ease-in; }
+.notice-body { display: flex; flex-direction: column; gap: 2px; max-height: 70vh; overflow: hidden; }
+.notice-row { font-size: 15px; line-height: 1.35; min-height: 1.35em; white-space: pre-wrap; overflow-wrap: anywhere; }
+.notice-row.center { text-align: center; }
+/* SetHighlightColor's row (AUDIT 64 F28/F35): the parchment reads it in
+   the caller's colour, the panel in the blood the sheet already
+   keeps for a warning. */
+.notice-row.highlight { color: var(--blood); }
+/* A tab-stopped row (the status box's columns): the cells keep their
+   columns as a grid keeps them, the parchment's x-stops become gaps. */
+.notice-row.cells { display: flex; gap: 1.2em; }
+.notice-cell { white-space: nowrap; }
+.notice-cell:first-child { min-width: 7em; }
+.notice-hint {
+  margin-top: 10px; padding-top: 6px; border-top: 1px solid rgba(125,116,96,0.35);
+  font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: #7d7460;
+  text-align: right;
+}
+@media (max-width: 720px) {
+  .notice-stack { max-width: 88vw; gap: 6px; }
+  .notice { width: 88vw; padding: 10px 14px 8px 12px; }
+  .notice-row { font-size: 13px; }
+  .notice-cell:first-child { min-width: 5em; }
+}
+@media (max-height: 520px) {
+  .notice-body { max-height: 60vh; }
+  .notice-row { font-size: 13px; line-height: 1.25; }
+}
+
 /* ── LV1: THE ASCENSION ── the level-up window, on the sky the enhanced
    skin already stands on (ui/pixelGround.js). Mac's brief: Skyrim's
    level-up screen "in our own constellation vision".

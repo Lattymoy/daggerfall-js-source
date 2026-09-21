@@ -49,24 +49,22 @@
 // both enchantment lists and Refresh()es - which _deselect (:243) does
 // exactly - and the only SpellIconPickerWindow consumers in the tree
 // are DaggerfallSpellBookWindow.cs:149 and DaggerfallSpellMakerWindow
-// .cs:194. The RENAME half is a widget departure, not a hole: DFU pops
-// a DaggerfallInputMessageBox (NameItemButon_OnMouseClick, :799-811)
-// where this window types into an inline strip, recorded as Ledger A
-// row TB1 (by NAME - the line number this used to cite rotted) - and
-// the F171 NIT row's one real defect, the character
-// cap, is fixed (MAX_ITEM_NAME = 31, the TextBox default at
-// TextBox.cs:26, which RenameItem itself never narrows).
+// .cs:194. CM3 RETIRES the rename half of Ledger A row TB1: the name
+// strip now pushes the same DaggerfallInputMessageBox shape DFU does
+// (NameItemButon_OnMouseClick, :799-811), with the same 31-character
+// TextBox default instead of typing into the maker window itself.
 
 import { loadImg, nativeMetrics, drawImg, drawRect, shadowText } from './nativePanel.js';
 import { drawScreenDimBackdrop } from './chargenArt.js';
 import { layoutMessageBox, drawMessageBox } from './messageBox.js';
+import { noticeFrame, noticeRelease } from './enhancedNotice.js';   // ENH-NOTICE2: the window's own click-anywhere box, as the enhanced panel
+import { InputMessageBoxWindow } from './inputMessageBox.js';
 import { ListPickerWindow, listPickerArtLoaded, listPickerSmallFont, preloadListPickerSmallFont, SMALL_FONT_PICKER_ROWS } from './listPicker.js';
 import {
   makeIconDrawer, drawStackLabel, scrollerHit, applyScroll, safeScrollIndex,
   playScrollerArrowClick,
   LIST_SLOTS, CELL_X,
 } from './itemScroller.js';
-import { typedChar } from './input.js';
 import { audio } from '../systems/audio.js';
 import { SOUND } from '../systems/soundClips.js';
 import {
@@ -111,13 +109,10 @@ export const ITEM_LABELS = Object.freeze({
 export const ROW_W = 75, ROW_W_SCROLLED = 71;
 export const ROW_H_PLAIN = 7, ROW_H_SECONDARY = 12;
 export const ROW_GAP = 5, ROW_START_Y = 2, ROWS_VISIBLE = 7;
-/** AUDIT 26 F171. DFU's rename runs through DaggerfallInputMessageBox,
- *  whose TextBox takes the default `maxCharacters = 31`
- *  (TextBox.cs:26), and RenameItem imposes no cap of its own
- *  (DaggerfallUnityItem.cs:1348-1354). This lane's inline rename strip
- *  - itself a recorded widget departure - stopped at 26, so names of
- *  27 to 31 characters that are legal in DFU could not be typed. */
+/** DaggerfallInputMessageBox/TextBox default used by RenameItem. */
 export const MAX_ITEM_NAME = 31;
+/** Internal_Strings.enterNewName. */
+export const ENTER_NEW_NAME = 'Enter new name : ';
 /** F170: EnchantmentListPicker's scroller (:22-26, :180-247) - it
  *  APPEARS past seven rows (ShowScroller), is 4 wide at the panel's
  *  right edge, and the wheel steps 8 pixels; no arrow buttons exist
@@ -229,7 +224,7 @@ export class ItemMakerWindow {
     this.sideEffectsScroll = 0;
     this._mouse = [0, 0];   // AUDIT 65 UI-5 put the live point on the overlay wheel seam; this window does not read it yet
     this.itemName = '';
-    this.renaming = false;
+    this.renameBox = null;
     this.box = null;
     this.picker = null;
     this._pickerType = null;
@@ -248,7 +243,7 @@ export class ItemMakerWindow {
     this._souls = this._filledSouls();
   }
 
-  _close() { this.done = true; this.hooks.onClose?.(); }
+  _close() { this.done = true; noticeRelease(this); this.hooks.onClose?.(); }
   _say(text) { this.box = { rows: [{ text, center: true }] }; }
 
   items() {
@@ -292,6 +287,21 @@ export class ItemMakerWindow {
     this.powers = [];
     this.sideEffects = [];
     this.itemName = item?.name ?? '';
+  }
+
+  /** NameItemButon_OnMouseClick (:799-811): click, seed the textbox
+   *  from itemNameLabel.Text, and push DaggerfallInputMessageBox. */
+  _openRename() {
+    // no selection guard: DFU (:799-807) clicks and shows the box seeded
+    // from the (then empty) label whatever is selected - AUDIT-CM struck
+    // the guard the first cut invented
+    audio.playOneShot(SOUND.ButtonClick, 1);
+    this.renameBox = new InputMessageBoxWindow({
+      label: ENTER_NEW_NAME,
+      value: this.itemName,
+      maxCharacters: MAX_ITEM_NAME,
+      onSubmit: (input) => { this.itemName = input; },
+    });
   }
 
   /** PowersButton / SideEffectsButton (:614-656) - the guard, then
@@ -415,22 +425,20 @@ export class ItemMakerWindow {
   }
 
   input(code, e = null) {
-    if (this.picker) { this.picker.input(code); if (this.picker?.done) this.picker = null; return; }
-    if (this.box) { this.box = null; return; }
-    if (this.renaming) {
-      if (code === 'Enter' || code === 'Escape') { this.renaming = false; return; }
-      if (code === 'backspace' || code === 'Backspace') { this.itemName = this.itemName.slice(0, -1); return; }
-      const ch = typedChar(code, e);
-      if (ch && this.itemName.length < MAX_ITEM_NAME) this.itemName += ch;
+    if (this.renameBox) {
+      this.renameBox.input(code, e);
+      if (this.renameBox.done) this.renameBox = null;
       return;
     }
+    if (this.picker) { this.picker.input(code); if (this.picker?.done) this.picker = null; return; }
+    if (this.box) { this.box = null; return; }
     if (code === 'Escape' || code === 'KeyE') this._close();
   }
 
   click(vx, vy) {
+    if (this.renameBox) { this.renameBox.click(vx, vy); return true; }
     if (this.picker) { this.picker.click(vx, vy, this._font); if (this.picker?.done) this.picker = null; return true; }
     if (this.box) { this.box = null; return true; }
-    if (this.renaming) { this.renaming = false; return true; }
 
     if (inRect(ITEM_RECTS.exit, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this._close(); return true; }
     for (let i = 0; i < TAB_PAGES.length; i++) {
@@ -441,7 +449,7 @@ export class ItemMakerWindow {
     if (inRect(ITEM_RECTS.sideEffectsButton, vx, vy)) { this._openPicker(false); return true; }
     if (inRect(ITEM_RECTS.enchant, vx, vy)) { this._enchant(); return true; }
     if (inRect(ITEM_RECTS.selectedItem, vx, vy)) { if (this.selected) this._deselect(); return true; }
-    if (inRect(ITEM_RECTS.nameItem, vx, vy)) { if (this.selected) this.renaming = true; return true; }
+    if (inRect(ITEM_RECTS.nameItem, vx, vy)) { this._openRename(); return true; }
 
     for (const [rect, list, scrollKey] of [[ITEM_RECTS.powersList, this.powers, 'powersScroll'],
       [ITEM_RECTS.sideEffectsList, this.sideEffects, 'sideEffectsScroll']]) {
@@ -489,7 +497,7 @@ export class ItemMakerWindow {
 
     const L = this.labels();
     for (const [key, [x, y]] of Object.entries(ITEM_LABELS)) {
-      shadowText(renderer, font, L[key] + (key === 'itemName' && this.renaming ? '_' : ''), m, x, y);
+      shadowText(renderer, font, L[key], m, x, y);
     }
 
     // the two enchantment lists
@@ -553,7 +561,9 @@ export class ItemMakerWindow {
       this._icon(renderer, m, this.selected, [sx - CELL_X, sy], 0);
     }
 
+    if (this.renameBox) { this.renameBox.draw(renderer, canvas, font); return; }
     if (this.picker && listPickerArtLoaded()) { this.picker.draw(renderer, canvas, font); return; }
+    if (noticeFrame(this, this.box?.rows ?? null)) { this._boxLayout = null; return; }
     if (this.box) {
       this._boxLayout = layoutMessageBox(font, this.box.rows, []);
       drawMessageBox(renderer, m, font, this._boxLayout);

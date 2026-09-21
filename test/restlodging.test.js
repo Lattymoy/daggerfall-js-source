@@ -1661,12 +1661,16 @@ test('S40 RestWindow: the hours page - PREFILLED with 0, and the 99-hour arm is 
   assert.equal(w.session.tick(1).textId, REST_TEXT.wakeUp);
   assert.equal(minutes, 0, 'no world time at all');
 
-  // Emptied and confirmed: THAT is the unparseable no-op.
+  // Emptied and confirmed: THAT is the unparseable no-op - and it is
+  // the HANDLER's no-op, run after the box has closed itself
+  // (ReturnPlayerInputEvent :298-304), so the player is back on the
+  // selection page with no rest started. AUDIT-CM: this pin used to
+  // hold the field UP, which is the departure the audit struck.
   const e = new RestWindow(winDeps());
   e.input('char:1'); e.input('backspace');
   assert.equal(e.value, '');
   e.input('confirm');
-  assert.equal(e.state, 'hours', 'an emptied field does nothing');
+  assert.equal(e.state, 'selection', 'an emptied field starts nothing; the box has closed (:298-304)');
   assert.equal(e.session, null);
 
   // The field takes EIGHT characters, not two...

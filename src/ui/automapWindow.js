@@ -160,7 +160,7 @@ import {
 import { automapTooltipFor, shortcutOrFallback, AUTOMAP_STRINGS } from './automapText.js';
 import { automapMarkerSet, markerModels, MARKER_TEXELS, teleporterConnectionTransform } from './automapMarkers.js';   // c2/S7, c2/S8
 import { createAutomapPicker, hoverKeyForHit, MARKER_NAMES } from '../systems/automapPick.js';        // c2/S7
-import { layoutMessageBox, drawMessageBox, messageBoxArtLoaded } from './messageBox.js';   // c2/S8: the note editor
+import { InputMessageBoxWindow } from './inputMessageBox.js';   // c2/S8: the note editor; CM9: the ONE DaggerfallInputMessageBox
 import { drawToolTipBox } from './toolTip.js';
 import { drawCompassStrip } from './hud.js';
 import { bindings } from './input.js';
@@ -586,7 +586,7 @@ export class AutomapWindow {
     // itself; the NOTE editor pushed over this window; the hover
     // connection cylinder; and the pass the gestures unproject through.
     this._jump = null;         // { from, to, t }
-    this._noteBox = null;      // { id, value }
+    this._noteBox = null;      // { id, box } - the marker being noted and the pushed input box (CM9)
     this._connection = null;   // the connection cylinder's matrix, or null
     this._pass = null;         // the last frame's { proj, view }
     this._onPush();
@@ -799,7 +799,11 @@ export class AutomapWindow {
     if (this._jump) return;
     // ...and the note editor is a PUSHED window, so it owns the keyboard
     // while it is up (DaggerfallInputMessageBox.Show()).
-    if (this._noteBox) { this._noteBoxInput(code, e); return; }
+    if (this._noteBox) {
+      this._noteBox.box.input(code, e);
+      if (this._noteBox.box.done) this._noteBox = null;
+      return;
+    }
     if (this.automapBinding && normalizeCode(code, e) === this.automapBinding) {
       this.isCloseWindowDeferred = true;
       return;
@@ -1018,10 +1022,29 @@ export class AutomapWindow {
 
   /** TryToAddOrEditUserNoteMarker... (:763-799) with the model half in
    *  systems/automap.js; what stays here is DFU's EditUserNote
-   *  (:1591-1607) - the box seeded with the marker's existing note. */
+   *  (Automap.cs:1593-1608) - the box seeded with the marker's existing note. */
   _tryAddOrEditNote(rec, hit, editOnCreation) {
     const r = tryAddOrEditUserNote(rec, hit, { editOnCreation });
-    if (r.edit && r.id != null) this._noteBox = { id: r.id, value: rec.notes.get(r.id)?.note ?? '' };
+    if (r.edit && r.id != null) this._noteBox = { id: r.id, box: this._openNoteBox(rec, r.id) };
+  }
+
+  /** EditUserNote (Automap.cs:1593-1608): `new DaggerfallInputMessageBox(
+   *  DaggerfallUI.UIManager, DaggerfallUI.Instance.AutomapWindow)` with
+   *  youNote as the LABEL (SetTextBoxLabel, :1597 - no text tokens
+   *  above it), MaxCharacters 50 (:1603), seeded with the marker's
+   *  existing note so editing is editing rather than retyping. Enter
+   *  raises OnGotUserInput, which writes the note home
+   *  (UserNote_OnGotUserInput, :2504-2508); Escape closes with no write.
+   *  CM9: the field is the one DaggerfallInputMessageBox, pushed.
+   *  AUDIT-CM: the first cut put youNote above the field and invented
+   *  a " > " label. */
+  _openNoteBox(rec, id) {
+    return new InputMessageBoxWindow({
+      label: AUTOMAP_STRINGS.youNote,
+      value: rec.notes.get(id)?.note ?? '',
+      maxCharacters: NOTE_MAX_CHARACTERS,
+      onSubmit: (value) => setUserNote(this.deps.record?.() ?? null, id, value),
+    });
   }
 
   /** TryTeleportPlayerToDungeonSegmentAtScreenPosition (:858-870):
@@ -1034,26 +1057,6 @@ export class AutomapWindow {
     const hit = this._pickPanel(nx, ny);
     if (!hit) return;
     this.deps.debugTeleport?.([hit.point[0], hit.point[1] + DEBUG_TELEPORT_Y_OFFSET, hit.point[2]]);
-  }
-
-  /** The note field: DaggerfallInputMessageBox's keyboard, at
-   *  MaxCharacters 50. Enter raises OnGotUserInput (which is what writes
-   *  the note home, :1608-1614); Escape closes with no write. */
-  _noteBoxInput(code, e = null) {
-    const c = normalizeCode(code, e);
-    if (c === 'Enter' || c === 'NumpadEnter') {
-      const rec = this.deps.record?.() ?? null;
-      setUserNote(rec, this._noteBox.id, this._noteBox.value);
-      this._noteBox = null;
-      return;
-    }
-    if (c === 'Escape') { this._noteBox = null; return; }
-    if (c === 'Backspace') { this._noteBox.value = this._noteBox.value.slice(0, -1); return; }
-    const ch = e?.key;
-    if (typeof ch === 'string' && ch.length === 1 && !e?.ctrlKey && !e?.metaKey
-      && this._noteBox.value.length < NOTE_MAX_CHARACTERS) {
-      this._noteBox.value += ch;
-    }
   }
 
   /**
@@ -1147,7 +1150,7 @@ export class AutomapWindow {
   /** Probe surface: `Automap.ITweenCameraAnimationIsRunning` (:265). */
   get iTweenCameraAnimationIsRunning() { return !!this._jump; }
   /** Probe surface: the live note editor, or null. */
-  get userNoteBox() { return this._noteBox; }
+  get userNoteBox() { return this._noteBox ? { id: this._noteBox.id, value: this._noteBox.box.value } : null; }
 
   /** Release the window's GL resources. Idempotent; also called by
    *  the death presenter when it force-replaces the overlay slot. */
@@ -1524,15 +1527,7 @@ export class AutomapWindow {
       // c2/S8: the note editor is a PUSHED window, so it draws over the
       // map and under nothing (:1594 - `new DaggerfallInputMessageBox(
       // DaggerfallUI.UIManager, DaggerfallUI.Instance.AutomapWindow)`).
-      // The sizing row fixes the box's width the way WidthOverride 306
-      // does, so it does not breathe as the note is typed.
-      if (this._noteBox && messageBoxArtLoaded()) {
-        const entry = ` > ${this._noteBox.value}_`;
-        const box = layoutMessageBox(font,
-          [{ text: AUTOMAP_STRINGS.youNote, center: false }, { text: entry, center: false }], [],
-          { sizingRows: [AUTOMAP_STRINGS.youNote, ` > ${'M'.repeat(NOTE_MAX_CHARACTERS)}_`] });
-        drawMessageBox(renderer, m, font, box);
-      }
+      if (this._noteBox) this._noteBox.box.draw(renderer, canvas, font, s);
       // the tooltip is the LAST component drawn, over everything
       const tip = this._tooltipRect ? automapTooltipFor(this._tooltipRect, this.automapBinding) : null;
       if (tip) drawToolTipBox(renderer, m, font, tip, this._mouse[0], this._mouse[1]);

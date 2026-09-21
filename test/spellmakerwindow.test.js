@@ -370,7 +370,7 @@ test('E8 window: the icon arrows wrap, and buying resets the sheet without closi
   addEffect(w, 'Damage', 'Health');
   w.editor = null;
   press(w, 'nameSpell');
-  assert.equal(w.naming, true);
+  assert.ok(w.nameBox, 'CM7: NameSpellButton pushes the input box (:910-918)');
   for (const c of 'Zap') w.input(`Key${c}`, { key: c });
   w.input('Enter');
   assert.equal(w.name, 'Zap');

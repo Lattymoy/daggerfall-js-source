@@ -7,6 +7,8 @@
 
 import { drawText, measureText } from './text.js';
 import { nativeMetrics } from './nativePanel.js';
+import { layoutMessageBox, drawMessageBox, messageBoxArtLoaded } from './messageBox.js';
+import { noticeDraw, noticeRelease } from './enhancedNotice.js';   // ENH-NOTICE1: the no-options box on the enhanced skin
 
 const PANEL = [0.05, 0.05, 0.09, 0.92];
 const TEXT = [0.86, 0.82, 0.68, 1];
@@ -28,7 +30,15 @@ export function wrapText(fnt, text, maxWidth, measure = measureText) {
 
 /** G2: a text panel with keyed choices (the surrender prompt and the
  *  court sequence ride it). options = [{ code, label, action }];
- *  input(code) runs the matching action and closes; done after. */
+ *  input(code) runs the matching action and closes; done after.
+ *
+ * CM1: the NO-OPTIONS shape is not a menu at all. Every production
+ * caller of that shape is a DaggerfallMessageBox-style notice: house
+ * greetings, shop-quality popups, court outcomes, holiday/quest text,
+ * and other one-shot messages. Draw those through the one native
+ * SPOP.RCI parchment implementation instead of the old interim flat
+ * panel. Keyed menus keep the old panel until their own native window
+ * replaces them. */
 export class ChoiceWindow {
   constructor({ lines, options = [] }) {
     this.lines = lines;
@@ -43,6 +53,7 @@ export class ChoiceWindow {
   input(code) {
     if (!this.options.length && (code === 'back' || code === 'confirm' || code === 'Escape' || code === 'Enter' || code === 'KeyE')) {
       this.done = true;
+      noticeRelease(this);   // ENH-NOTICE1: the panel leaves with the box
       return;
     }
     const opt = this.options.find((o) => o.code === code);
@@ -57,8 +68,14 @@ export class ChoiceWindow {
    *  canvas.width/height, a DIFFERENT space, so the point is converted
    *  back through THIS box's own last draw() metrics rather than the
    *  box being moved into native space (which would be a visual change
-   *  to a box ~50 call sites already draw and centre correctly). */
+   *  to a box ~50 call sites already draw and centre correctly).
+   *
+   *  CM1: a NO-OPTIONS box is DaggerfallMessageBox.ClickAnywhereToClose
+   *  - any click closes it, wherever it lands, and it draws as the
+   *  parchment (below), whose rows the hit map above never sees. The
+   *  keyed menus keep the row hit. */
   click(vx, vy) {
+    if (!this.options.length) { this.input('confirm'); return true; }
     if (this._m && this._hitBox) {
       const px = vx * this._m.s + this._m.ox;
       const py = vy * this._m.s + this._m.oy;
@@ -71,6 +88,17 @@ export class ChoiceWindow {
   }
 
   draw(renderer, canvas, font, s) {
+    // ENH-NOTICE1: the no-options box IS DaggerfallMessageBox
+    // .ClickAnywhereToClose (CM1), so on the enhanced skin it is the
+    // slide-in panel; a keyed menu is a decision and keeps its rows
+    // on the canvas on both skins.
+    if (!this.options.length && noticeDraw(this, this.lines)) return;
+    if (!this.options.length && messageBoxArtLoaded() && font) {
+      const m = nativeMetrics(canvas);
+      const box = layoutMessageBox(font, this.lines);
+      if (drawMessageBox(renderer, m, font, box)) return;
+    }
+
     const wrapped = this.lines.flatMap((l) => (l === '' ? [''] : wrapText(font.fnt, l, 280)));
     const optLines = this.options.filter((o) => o.label);
     const bodyCount = wrapped.length + 1;   // +1 for the blank spacer row below the text

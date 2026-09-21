@@ -1748,7 +1748,7 @@ export function wireInfectionVideos(renderer, { textAt = null, showText = null, 
       // which answers { text, center } records - while dungeonContext
       // passes `textRsc.plainText(id)`, which answers strings. Both
       // windows this reaches iterate the STRING (ChoiceWindow
-      // talkWindow.js:58-59, ActionTextBox likewise), so "Death is not
+      // talkWindow.js:60-61, ActionTextBox likewise), so "Death is not
       // eternal" threw `TypeError: text is not iterable` on draw
       // everywhere above ground and worked only in a dungeon: the
       // four-hosts divergence this project keeps meeting. Flattened
@@ -1902,7 +1902,7 @@ export function createMusicDirector({ fm = null, play = null, stop = null, playi
  *  through to `cam.yaw += movementX` - so every swing inside a
  *  building or a dungeon turned the camera with it.
  *
- *  `dungeon.js:263`, the standalone host, has always had the right
+ *  `dungeon.js:260`, the standalone host, has always had the right
  *  shape: attack, then return. It has no modal sibling to share the
  *  drag with, which is why it never needed a mode in the test at all.
  *

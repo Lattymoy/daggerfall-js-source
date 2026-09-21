@@ -8,7 +8,7 @@
 //
 //   - `ui/spellMakerWindow.js` declared "RECORDED DEPARTURES" and closed
 //     the first with "Ledger A carries the widget row already
-//     (Port-Ledger.md:783)". Section A carried no widget row at all -
+//     (Port-Ledger.md:784)". Section A carried no widget row at all -
 //     the AUDIT 17m / F7 shape, a claim of approval standing in for one -
 //     and :686 was the stat-colour NIT row by then. The row exists now
 //     (Ledger A, TB1) and the sites cite it BY NAME.
@@ -72,18 +72,23 @@ function tableRows(lo, hi) {
 const struck = (s) => /^\|\s*(\*\*)?~~/.test(s);
 
 // ═══ CD1: the spell maker's declared departure has a row that EXISTS ═══
-test('CD1: Ledger A row TB1 exists, in section A, and names the windows that cite it', () => {
+test('CD1: Ledger A row TB1 exists, in section A, STRUCK by the classic-modals cleanup, and names the windows that cite it', () => {
   const aStart = headingLine(LEDGER, '## A. Approved departures from DFU');
   const aEnd = headingLine(LEDGER, '## A-note (H1)');
   const rows = tableRows(aStart, aEnd).filter((r) => !/^\| What \|/.test(r.s));
-  const tb1 = rows.filter((r) => /^\| TB1:/.test(r.s));
+  const tb1 = rows.filter((r) => /^\| (~~)?TB1:/.test(r.s));
   assert.equal(tb1.length, 1, 'section A carries exactly one TB1 row');
 
   // The row must be about the thing the sites say it is about, and it
   // must NAME them - the doctrine gate reads the Ledger for the file,
   // and "the Ledger mentions this basename somewhere" was satisfied
   // vacuously by a STRUCK section-C row when this defect shipped.
+  // CM3-CM11 (2026-09-21) RETIRED the departure - every site pushes the
+  // one DaggerfallInputMessageBox now - so the row is struck, says why,
+  // and still names the windows so the history reads.
   const row = tb1[0].s;
+  assert.ok(struck(row), 'TB1 is struck: the field is one pushed DaggerfallInputMessageBox now');
+  assert.match(row, /CLOSED \(CM3-CM11/);
   assert.match(row, /DaggerfallInputMessageBox/);
   for (const f of ['src/ui/spellMakerWindow.js', 'src/ui/itemMakerWindow.js',
     'src/ui/spellbookWindow.js', 'src/ui/travelMapWindow.js', 'src/ui/automapWindow.js']) {
@@ -658,9 +663,9 @@ const SOURCE_CITES = [
   // AUDIT QS6 F1, a fifth time and at a second door: this row names FIVE hosts
   // and the table captured ONE, with a sixth number baked into the pick - so
   // citeMerge bumped the LITERAL at the BOX1/TI3 merge and left the doc, and
-  // four of the five had been stale for waves (`worldModes.js:5840` for a line
+  // four of the five had been stale for waves (`worldModes.js:5841` for a line
   // that is 5921, `world.js:9524` for 8836, `interior.js:297` for 329,
-  // `dungeon.js:892` for 959). Every one is captured now, against the
+  // `dungeon.js:889` for 959). Every one is captured now, against the
   // projection each host really builds.
   ['bible/10-UI/Settings-Screen-Spec.md', /`exterior\.js:(\d+)`, `dungeon\.js:\d+`/, EX, /^ {6}fieldOfView\(\),$/],
   ['bible/10-UI/Settings-Screen-Spec.md', /`exterior\.js:\d+`, `dungeon\.js:(\d+)`/, 'src/scenes/dungeon.js', /^ {4}const proj = mirrorProjectionX\(perspective\(fieldOfView\(\), largeHudWorldAspect/],

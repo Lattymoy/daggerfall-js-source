@@ -268,7 +268,6 @@ import { portraitIndexFromStaticNPCBillboard } from '../systems/npcSession.js'; 
 import { GENDERS } from '../characters/nameHelper.js';
 import { fieldOfView } from '../ui/viewSettings.js';   // MENU: Video/FieldOfView, one home for five hosts
 import { windowEmissionRGB } from '../render/windowEmission.js';   // AUDIT 26 F001/F002: WindowStyle per host (DaggerfallInterior.cs:473/:517/:1270 vs GetMaterial's Day default)
-import { WATER_SCROLL_TILES_PER_SEC } from '../render/waterSurface.js';   // AUDIT 65 CV-3: the classic texel's flow, one home (this host's DUNGEON_WATER_SCROLL was a third literal)
 let _charT0 = (typeof performance !== 'undefined' ? performance.now() : 0);
 let _charAnimMode = 'idle'; // in-engine character animation: idle | walk | off (window.__anim)
 
@@ -277,8 +276,9 @@ let _charAnimMode = 'idle'; // in-engine character animation: idle | walk | off 
 // here" - hoisted, not minted per frame (the EV2 law).
 const NO_INDIRECT_POS = [0, 0, 0];
 const NO_INDIRECT_COLOR = new Float32Array(3);
-// AUDIT 65 CV-3/MC-5: this 0.82 is the FLAT alpha drawWater's quad takes - NOT render/waterSurface.js's WATER_OPACITY, which is the enhanced surface's Fresnel FLOOR (a different pass, no Fresnel, no shore feather). They agree by taste, not by law; the scroll rate that WAS beside it is one law and now has one home.
-const DUNGEON_WATER_COLOR = [1, 1, 1, 0.82];
+// WATER-D1: the dungeon water plane's colour and its draw live in
+// scenes/dungeonContext.js (DUNGEON_WATER_COLOR, drawFoes) - one home
+// for both dungeon hosts. This host names the tile's archive at the build.
 
 // AUDIT 26 F079: CreateItem.lastSelectedIndex is ONE static shared by
 // every cast in a run (CreateItem.cs:29, :75, :121). This host kept
@@ -1355,10 +1355,10 @@ export function createWorldModes(host) {
    *  billboard is CENTRE-anchored, so the base ends up ON the marker
    *  inside a building and half a height BELOW it inside a dungeon.
    *  This port's billboard shader is BOTTOM-anchored (position = base,
-   *  the C11 law dungeonContext.js:1668 states), so the same visual
+   *  the C11 law dungeonContext.js:1682 states), so the same visual
    *  result needs the shift on the DUNGEON side - which is exactly the
    *  shift the dungeon's own RDB flats already take
-   *  (dungeonContext.js:1573, `y - size.h / 2`), and which a building's
+   *  (dungeonContext.js:1587, `y - size.h / 2`), and which a building's
    *  flats correctly do not (interiorContext.js passes its centers
    *  straight through).
    *
@@ -5345,7 +5345,7 @@ export function createWorldModes(host) {
           hudMessageSink: (t) => questBridge?.notebook?.addMessage(t),
           // MAC1 J: and the relock the dungeon's pause door needs, on
           // the same threading - the context owns no canvas of its own
-          // (dungeonContext.js:5776), so the OUTER host's one rides in.
+          // (dungeonContext.js:5826), so the OUTER host's one rides in.
           // This is the most-played pause door of the six: world.js
           // gates its own Escape ladder on exterior mode, so underground
           // the key falls to routeKey -> ui/input.js:637 -> the
@@ -5400,6 +5400,7 @@ export function createWorldModes(host) {
       const waterArchive = getGroundArchive(hit.climateBase, hit.season);
       await getTexture(waterArchive);
       uploadRecord(waterArchive, 0);
+      ctx.setWaterArchive(waterArchive);   // WATER-D1: drawFoes draws the plane with it, inside the world pass
       dungeonReturn = {
         waterArchive,
         candidates: entries.filter((e) =>
@@ -5511,7 +5512,7 @@ export function createWorldModes(host) {
     // AUDIT 62 F16/F28: TI1's tap-to-lock - see tryExit's twin. This is
     // the ladder the classic start into Privateer's Hold runs through,
     // so it is the one the feature was most missing from; the arm is
-    // scenes/dungeon.js:241's, line for line, over this context's pool.
+    // scenes/dungeon.js:238's, line for line, over this context's pool.
     if (host.activateDir?.() && dungeonCtx) {
       const f = pickFoe(eye, dir, dungeonCtx.foes, dungeonCtx.collider, LOCK_PICK_DISTANCE);
       if (f) { host.lockToggle?.(f); return true; }
@@ -5540,7 +5541,7 @@ export function createWorldModes(host) {
         // never drawn, ticked, keyed or clicked in dungeon mode, so a
         // box mounted there orphaned until the next building entry and
         // a line said there opened a second popup column over the
-        // dungeon's own. scenes/dungeon.js:255-256 is the same pair.
+        // dungeon's own. scenes/dungeon.js:252-253 is the same pair.
         hud: (t) => dungeonCtx.hudSay(t),
         modal: (t) => dungeonCtx.hudBox(String(t).split('\n')),
         makeEnemiesHostile: () => makeEnemiesHostile(dungeonCtx.foes.filter((f) => !f.dead)),
@@ -5783,7 +5784,7 @@ export function createWorldModes(host) {
     // the movers kept travelling - all of it under the open menu.
     // DFU UserInterfaceManager.AddWindow (:179-184) calls
     // PauseGame(true) for any PauseWhileOpen window (the default),
-    // which is what dungeon.js:295's `held` already implements.
+    // which is what dungeon.js:292's `held` already implements.
     // AUDIT 39 (#28): and the OUTER host's slot with them. AddWindow
     // pauses for the window, not for the slot it was pushed into -
     // and townTalk's slot really does hold one in these modes: this
@@ -5856,7 +5857,7 @@ export function createWorldModes(host) {
     // jump while the player still falls), and it was standing in for
     // both: a fall opened under a menu completed under it and
     // applyFallLanding charged the damage, a swimmer kept sinking, and
-    // the crouch edge still toggled. dungeon.js:498 is this same gate
+    // the crouch edge still toggled. dungeon.js:495 is this same gate
     // ("no movers, no motor").
     if (!overlayHeld) {
       // Audit F3: crouch stays live while paralyzed (DFU gates movement/jump only)
@@ -5964,7 +5965,7 @@ export function createWorldModes(host) {
       if (!overlayHeld) dungeonCtx.reportActivity?.({ running: player.isRunning && !player.standing, runningTally: player.isRunning && !player.riding, swimming: player.swimming, climbing: !!player.climb?.isClimbing, jumped: player.jumped, movingLessThanHalfSpeed: player.movingLessThanHalfSpeed, fell: player.landedFallDistance });   // P13 sneak state + P14 fall landing (AUDIT 26 F083: + the climbing arm)
       // PlayerMotor.StartRestGroundedCheck (:184-194) reads the LIVE
       // grounded state; dungeonContext's `_grounded` is host-fed and
-      // only dungeon.js:349 fed it, so in a world-hosted dungeon the
+      // only dungeon.js:346 fed it, so in a world-hosted dungeon the
       // rest gate read the initialiser `true` for the whole session
       // and R mid-fall opened the window DFU refuses (TEXT.RSC 355).
       if (!overlayHeld) dungeonCtx.reportMotor?.(player.grounded, player.velY, cam.yaw);
@@ -6140,7 +6141,7 @@ export function createWorldModes(host) {
 
     if (mode === 'dungeon') {
       if (pendingDungeonExit) { pendingDungeonExit = false; exitDungeonNow(); return true; }   // F-A5: outside any overlay dispatch
-      if (!overlayHeld) dungeonCtx.actions.update(dt);   // dungeon.js:296's `if (!held)` - a paused game advances no movers
+      if (!overlayHeld) dungeonCtx.actions.update(dt);   // dungeon.js:293's `if (!held)` - a paused game advances no movers
       if (!overlayHeld) dungeonCtx.automapTick?.(dt, cam.pos, fwd);   // A1: the 5 Hz reveal probes ride the same gate
       dungeonCtx.flicker.tick(dt);
       // AUDIT 26 F183: castle blocks and the one special area take
@@ -6215,11 +6216,9 @@ export function createWorldModes(host) {
       // over that window until it closed.
       if (dungeonCtx.uiOverlayActive) { dungeonCtx.hideHudText?.(); dungeonCtx.tickOverlay(dt); host.drawPeerNames?.({ proj, view, eye: mwv.eye }); dungeonCtx.drawOverlay(canvas); return true; }   // U2b/U3: overlays gate the dungeon (AUDIT 18 F5: the overlay's own clock still runs)
       dungeonCtx.drawFoes(dt, canvas, proj, view, cam.pos, player.pos, anyMove(moveHeld(keys)), player.height, !!player.isSneaking, motionBagOf(player), player.bobOffset ? player.bobOffset[1] : 0, !!player.crouching);   // ROAD-H H1b: PlayerMotor.IsCrouching rides in beside the live height - the archer's 0.05 dip (DaggerfallMissile.cs:583-585) is the latched STATE, not a 0.9 capsule   // PX26 F4: the jump-state inputs the interior lane never sent - without them `grounded` read undefined, the rig thought the player was permanently airborne, and BOTH the movement selection and the jump play died in every interior   // moveHeld: the collision-trigger input gate (verbatim)   // C8 foes + S3b clock + S4b missiles - internally gated, must run foes or not (trap spells fire in empty dungeons)
-      if (dungeonCtx.waterQuads.length) {
-        renderer.drawWater(dungeonCtx.waterQuads, DUNGEON_WATER_COLOR,
-          renderer.textures.get(`${dungeonReturn.waterArchive}_0`),
-          (now / 1000) * WATER_SCROLL_TILES_PER_SEC);
-      }
+      // WATER-D1: the water plane is drawn INSIDE drawFoes now, before the
+      // weapon overlay - a draw here landed after the lane's resolve and
+      // showed through every wall (dungeonContext.js's note at the draw).
       host.drawPeerNames?.({ proj, view, eye: mwv.eye });   // ONLINE1: the names, last of the 3D
       return true;
     }
@@ -6929,7 +6928,7 @@ export function createWorldModes(host) {
     // V4 (the first-hour playthrough probe): THE WORLD HOST'S DUNGEON
     // MODE HAD NO COMBAT OR LOOT SURFACE AT ALL. worldModes mounts a
     // real dungeonContext but installed none of the hooks
-    // scenes/dungeon.js:366-416 carries, so a probe could take the
+    // scenes/dungeon.js:363-413 carries, so a probe could take the
     // classic start into Privateer's Hold and then see nothing inside
     // it - no foes, no vitals, no corpses. Same names and same shapes
     // as the standalone host's, so one probe reads either.
@@ -7154,7 +7153,7 @@ export function createWorldModes(host) {
     // for it is now the real invariant: one feeder per Set, and every
     // reader on a fed one (test/mack_bugs.test.js).
     // I4: a right-click on a window is the WINDOW's (the remove
-    // gesture), never a swing - dungeon.js:239 and both exterior slots
+    // gesture), never a swing - dungeon.js:236 and both exterior slots
     // have always said so, and this host's modal arm had no gate at
     // all. DFU pauses the game under any PauseWhileOpen window
     // (UserInterfaceManager.cs:179-185), so the click never reaches
@@ -8662,7 +8661,7 @@ export function createWorldModes(host) {
      *  FLAG ONLY and presence-gated - both laws now stated once, in
      *  combat/playerWeapon.js's applyWeaponPose, with the citation.
      *  HARD2c: this used to spell them out, and named `world.js:5434`
-     *  and `dungeonContext.js:5846` for its two sibling copies - lines
+     *  and `dungeonContext.js:5896` for its two sibling copies - lines
      *  that had moved to :4418 and :5457. Three copies of a two-line
      *  law, and even the comment pointing between them had gone stale. */
     applyWeaponPose(pose) {

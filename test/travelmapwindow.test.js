@@ -11,7 +11,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import {
   TravelMapWindow, BUTTON_RECTS, FILTER_SRC, FIND_SRC, AT_SRC, REGION_RECT, REGION_W, REGION_H,
-  OFFSET_LOOKUP, OUTLINE_DISPLACEMENTS, BETONY_INDEX, ZOOM_FACTOR, FIND_MAX_CHARACTERS,
+  OFFSET_LOOKUP, OUTLINE_DISPLACEMENTS, BETONY_INDEX, ZOOM_FACTOR, FIND_MAX_CHARACTERS, FIND_PROMPT,
   IDENTIFY_FLASH_COUNT, IDENTIFY_FLASH_COUNT_SELECTED, IDENTIFY_FLASH_INTERVAL,
   getRegionMapNames, getRegionMapScale, getPixelColorIndex, hasRegionPage,
   _setTravelMapArtForTests, setRevealUndiscoveredLocations,
@@ -379,10 +379,12 @@ test('U41: the find box searches by edit distance, flashes, and pops the confirm
     w._openRegionPanel(DAGGERFALL);
     w.input('KeyF');
     assert.equal(w.top, 'find');
+    // CM8: the field is a pushed DaggerfallInputMessageBox (:965), findLocationPrompt, 32 characters (:968)
+    assert.equal(w.findBox.label, FIND_PROMPT); assert.equal(w.findBox.maxCharacters, FIND_MAX_CHARACTERS);
     for (const c of 'Daggerfall') w.input(`Key${c.toUpperCase()}`, { key: c });
-    assert.equal(w.findText, 'Daggerfall');
+    assert.equal(w.findBox.value, 'Daggerfall');
     w.input('Enter');
-    assert.equal(w.top, null);
+    assert.equal(w.top, null); assert.equal(w.findBox, null, 'Return pops the box');
     assert.equal(w.locationSelected, true);
     assert.equal(w.findingLocation, true, 'the crosshair is finding');
     assert.equal(w.locationSummary.id, getMapPixelID(50, 120));
@@ -926,7 +928,7 @@ test('U41: a POISONED traveller is warned through the window\'s own popup', () =
 
 test('U41: a right-click on the map is the map\'s, never a swing', () => {
   // the travel map makes RMB a routine gesture (its zoom), so the two
-  // exterior hosts need the dungeon host's gate (dungeon.js:227)
+  // exterior hosts need the dungeon host's gate (dungeon.js:224)
   for (const host of ['world', 'exterior']) {
     const src = readFileSync(new URL(`../src/scenes/${host}.js`, import.meta.url), 'utf8');
     const line = src.split('\n').find((l) => l.includes("addEventListener('mousedown'") && l.includes('isSwingButton(e.button)'));

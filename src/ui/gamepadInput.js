@@ -74,7 +74,15 @@ function defaultMakeEvent(type, init) {
 }
 
 function synth(type, code) {
-  window.dispatchEvent(new KeyboardEvent(type, { code, key: code, bubbles: true }));
+  // PAD1: ON THE DOCUMENT, not the window. An event dispatched at the
+  // window has a path of one - the window - so a listener on the
+  // document never sees it, capture or not; one dispatched at the
+  // document reaches the document's listeners and then bubbles to the
+  // window's. The hosts listen on the window and saw every button; the
+  // enhanced controls pane's capture listens on the document (a capture
+  // listener, so it beats the hosts' ladders) and could never bind one.
+  // A node harness without a document takes the window.
+  (globalThis.document ?? window).dispatchEvent(new KeyboardEvent(type, { code, key: code, bubbles: true }));
 }
 
 /** Is there a Gamepad API to poll. */
