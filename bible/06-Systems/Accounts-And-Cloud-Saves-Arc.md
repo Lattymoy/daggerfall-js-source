@@ -830,6 +830,75 @@ to be honest about.
 
 ---
 
+## AUDIT-ACC, PART THREE — "Before we merge. This is it?"
+
+Asked a third time, with the merge in front of us. The honest answer
+was again no, and the gap was specific: **the workflow that runs at
+merge time has never run**, and several of its `jq` expressions were
+guesses about wrangler's output. Those are checkable against wrangler's
+own bundle rather than on main, and checking them found the worst
+finding of the whole audit.
+
+### F15 — the first run could not have succeeded
+
+`wrangler secret list` asks Cloudflare for a Worker's secrets. On a
+Worker that does not exist yet it does not answer empty — **it fails**:
+
+```
+Worker "daggerfall-accounts" not found.
+If this is a new Worker, run `wrangler deploy` first to create it.
+```
+
+On the very first deploy that is the *expected* state. The minting step
+ran **before** the deploy, so it would have aborted the job at that
+listing and **nothing would ever have been deployed**. The first run of
+this workflow was guaranteed to fail.
+
+**And F1 is what made it fatal.** Before F1 the step swallowed the
+failure with `|| echo '[]'` and blundered on into minting. F1 correctly
+made an unreadable listing stop the job — and in doing so turned a
+first-run certainty into a hard stop. **Both halves were right on their
+own. The order was wrong**, which is why the pin now holds an *order*
+rather than a line: migrations before deploy, deploy before mint, mint
+before the pubkey check.
+
+Deploying before the key is safe **because the service is built for
+it** — a Worker with no signing key still hands out accounts and
+answers `no-signing-key` rather than minting something the relay would
+refuse. That arm has been pinned since ACC1b and this is the moment it
+was for; the order pin names it, so deleting it is not a quiet change
+to this order's safety.
+
+### F16 — half the host was derived and half was typed
+
+The verify steps built their URL from the worker **name** (read from
+the config) plus a hardcoded account **subdomain** (typed beside it).
+That is a second home for a fact, and it is the exact shape SLAM13
+burned the relay on: a check pointed at a stale fact keeps passing, or
+keeps failing, for reasons that have nothing to do with what it is
+checking.
+
+The deploy now publishes the URL wrangler says it landed on, and the
+checks reach for that. The pin asserts **no `workers.dev` host appears
+in any non-comment line** — which as a side effect makes the whole
+workflow portable to any Cloudflare account.
+
+### What was verified rather than assumed
+
+Read out of wrangler's own bundle, because the alternative was finding
+out on main:
+
+| assumption | verdict |
+|---|---|
+| `d1 list --json` prints raw API records, no banner | **true** — `printBanner: (args) => !args.json` |
+| the D1 id field is `uuid` | **true** — the raw `/d1/database` records |
+| `secret list --format json` prints `[{name,type}]`, no banner | **true** — banner only for `pretty` |
+| `secret list` on a missing Worker returns empty | **FALSE — it throws.** F15 |
+| `secret put` reads a piped value | **true** — `process.stdin.isTTY ? prompt : readFromStdin()` |
+| the host the checks reach | **was typed.** F16 |
+
+---
+
 ## OPEN
 
 - **Whether the hub moves out of the relay Worker.** It is in the

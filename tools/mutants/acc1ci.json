@@ -125,12 +125,12 @@
   {
     "name": "ACC1CI-13-the-verify-types-the-host",
     "file": ".github/workflows/account-deploy.yml",
-    "old": "          name=$(grep -oP '^name\\s*=\\s*\"\\K[^\"]+' \"$toml\")\n          test -n \"$want\" && test -n \"$name\" || {",
-    "new": "          name=daggerfall-accounts\n          test -n \"$want\" && test -n \"$name\" || {",
+    "old": "          url=\"${{ steps.deploy.outputs.base }}/v1/health\"",
+    "new": "          url=\"https://daggerfall-accounts.mackcothran.workers.dev/v1/health\"",
     "tests": [
       "test/accountdeploy.test.js"
     ],
-    "note": "A second home for a fact wrangler.toml owns. Rename the Worker and the check goes on interrogating a host that no longer exists - the SLAM13 failure that relaydeploy.test.js exists for, one workflow over."
+    "note": "AUDIT-ACC F16 put back: the host typed into the check instead of read off the deploy. It is the SLAM13 failure one workflow over - a check pointed at a stale fact keeps passing, or keeps failing, for reasons that have nothing to do with what it is checking - and it also welds this workflow to one Cloudflare account."
   },
   {
     "name": "ACC1CI-14-nothing-checks-the-deploy-landed",
@@ -213,5 +213,25 @@
       "test/accountdeploy.test.js"
     ],
     "note": "THE OTHER BUG THAT ACTUALLY SHIPPED, verbatim. `--json` is not a flag on `wrangler secret list`; wrangler prints help and exits 0, jq cannot parse it, the guard goes false, and the step mints a new pair - signing out everybody online on every deploy. The fallback is the worse half: a destructive default reached by failing to read something."
+  },
+  {
+    "name": "ACC1CI-22-the-key-is-minted-before-the-worker-exists",
+    "file": ".github/workflows/account-deploy.yml",
+    "old": "      - name: Deploy\n        id: deploy\n        working-directory: server-account\n",
+    "new": "      - name: NotTheDeploy\n        id: deploy\n        working-directory: server-account\n",
+    "tests": [
+      "test/accountdeploy.test.js"
+    ],
+    "note": "AUDIT-ACC F15: rename the deploy away and the mint becomes the first step that touches the Worker - which is the order that shipped, and the order in which `wrangler secret list` fails with 'Worker not found' on every first run, aborting the job before anything is deployed. The pin holds an ORDER rather than a line, because both the mint and the strict listing were correct on their own."
+  },
+  {
+    "name": "ACC1CI-23-the-deploy-does-not-publish-where-it-landed",
+    "file": ".github/workflows/account-deploy.yml",
+    "old": "          echo \"base=$url\" >> \"$GITHUB_OUTPUT\"",
+    "new": "          echo \"(not published)\"",
+    "tests": [
+      "test/accountdeploy.test.js"
+    ],
+    "note": "Without the deploy publishing its own URL the verify steps have nothing derived to reach for, and the only way to make them work again is to type a host back in - which is the defect F16 removed."
   }
 ]

@@ -242,6 +242,48 @@ test('AUDIT-ACC F2: the Worker entrypoint exports ONLY a handler, or workerd wil
     'the relay entrypoint grew a non-class named export - the same startup failure is one deploy away');
 });
 
+test('AUDIT-ACC F15: the Worker is DEPLOYED before its secrets are asked about', () => {
+  // `wrangler secret list` asks Cloudflare for a Worker's secrets, and
+  // on a Worker that does not exist yet it fails outright:
+  //
+  //   Worker "daggerfall-accounts" not found.
+  //   If this is a new Worker, run `wrangler deploy` first to create it.
+  //
+  // On the VERY FIRST DEPLOY that is the expected state. With the mint
+  // before the deploy, the job aborted at the listing and nothing was
+  // ever deployed - the first run could not have succeeded.
+  //
+  // F1 is what made it fatal. Before F1 the step swallowed the failure
+  // with `|| echo '[]'`; F1 correctly made an unreadable listing stop
+  // the job, and in doing so turned a first-run certainty into a hard
+  // stop. BOTH HALVES WERE RIGHT ON THEIR OWN - the ORDER was wrong,
+  // which is why this pin holds an order rather than a line.
+  const wf = rd(WF);
+  const step = (name) => {
+    const i = wf.indexOf(`- name: ${name}`);
+    assert.ok(i > 0, `the workflow has no step called "${name}"`);
+    return i;
+  };
+  const migrations = step('Apply migrations');
+  const deploy = step('Deploy');
+  const mint = step('Mint the signing pair if the service has none');
+  const verifyHealth = step('Verify /v1/health names this deploy');
+  const verifyKey = step('Verify the service can hand back its own public key');
+
+  assert.ok(migrations < deploy, 'the schema must exist before the Worker that reads it');
+  assert.ok(deploy < mint, 'the secrets are asked about before the Worker exists - the first run cannot succeed');
+  assert.ok(mint < verifyKey, '/v1/pubkey is checked before there is a key to publish');
+  assert.ok(deploy < verifyHealth, 'the deploy is verified before it happens');
+
+  // AND DEPLOYING WITHOUT A KEY MUST STAY SAFE, because that is the
+  // window this order opens. The service answers `no-signing-key`
+  // rather than minting something the relay would refuse, and that arm
+  // is pinned in test/accountworker.test.js - named here so deleting it
+  // there is not a quiet change to this order's safety.
+  assert.match(rd('test/accountworker.test.js'), /no-signing-key/,
+    'nothing pins what a keyless service does, and this order deploys one on every first run');
+});
+
 test('AUDIT-ACC F1: "I could not tell" must never be read as "there is no key"', () => {
   // THE GUARD FAILED OPEN, and it is the worst shape a bug can take: it
   // read correct. `wrangler secret list` has no `--json` flag (it takes
@@ -289,19 +331,26 @@ test('ACC1-CI: the deploy is verified BY CONTENT, and reads the host and version
   // check interrogating a host that no longer exists.
   assert.match(wf, /grep -oP '\^ACCOUNT_VERSION[^\n]*\$toml/, 'the workflow no longer reads the version from the config');
 
-  // ...AND IT IS ASKED OF EVERY STEP THAT BUILDS A URL, not of the file
-  // as a whole. There are two such steps; a first cut asked whether the
-  // WORKFLOW contained one `grep '^name'` anywhere, and a mutant that
-  // hardcoded the host in one of them survived on the other one's line.
-  // That is the SLAM13 failure - a check pointed at a stale fact - one
-  // workflow over from where relaydeploy.test.js caught it.
+  // ...AND THE HOST IS NOT TYPED ANYWHERE. It used to be the worker
+  // name from the config plus a hardcoded account subdomain beside it -
+  // half derived, half typed, which is a second home for a fact and the
+  // exact shape SLAM13 burned the relay on (AUDIT-ACC F16). The deploy
+  // step reads the URL off wrangler's own output, which is the only
+  // thing that knows where the Worker actually landed, and it makes
+  // this workflow portable to any Cloudflare account.
+  const live = wf.split('\n').filter((l) => !/^\s*#/.test(l)).join('\n');
+  assert.doesNotMatch(live, /[a-z0-9-]+\.workers\.dev/,
+    'a workers.dev host is typed into a command - it must come from the deploy step');
+  assert.match(live, /workers\\\.dev.*GITHUB_OUTPUT|GITHUB_OUTPUT[\s\S]{0,200}deployed to/,
+    'the deploy step no longer publishes the URL it deployed to');
+
   const steps = wf.split(/\n      - name: /).slice(1);
-  const urlSteps = steps.filter((s) => s.includes('workers.dev'));
-  assert.ok(urlSteps.length >= 2, `expected the health and pubkey checks to build URLs - found ${urlSteps.length}`);
-  for (const s of urlSteps) {
-    const title = s.split('\n')[0];
-    assert.match(s, /name=\$\(grep -oP '\^name[^\n]*\$toml/,
-      `"${title}" builds a workers.dev URL without reading the worker name out of the config`);
+  const verifiers = steps.filter((s) => /curl/.test(s) && /v1\//.test(s));
+  assert.ok(verifiers.length >= 2, `expected the health and pubkey checks - found ${verifiers.length}`);
+  for (const v of verifiers) {
+    const title = v.split('\n')[0];
+    assert.match(v, /steps\.deploy\.outputs\.base/,
+      `"${title}" reaches a URL it did not get from the deploy`);
   }
 
   // ...and the value it would read is the one the code answers with.

@@ -145,7 +145,57 @@ jobs:
           set -euo pipefail
           $WRANGLER d1 migrations apply "$DB_NAME" --remote
 
-      # ── 3. THE SIGNING PAIR, ONCE AND ONLY ONCE ───────────────────
+      # ── 3. DEPLOY, AND IT COMES BEFORE THE KEY ───────────────────
+      #
+      # AUDIT-ACC F15: THE ORDER USED TO BE THE OTHER WAY AND THE FIRST
+      # RUN COULD NEVER HAVE SUCCEEDED. `wrangler secret list` asks
+      # Cloudflare for a Worker's secrets, and on a Worker that does not
+      # exist yet it fails outright:
+      #
+      #   Worker "daggerfall-accounts" not found.
+      #   If this is a new Worker, run `wrangler deploy` first to create it.
+      #
+      # On the very first deploy that is the EXPECTED state, so the
+      # minting step aborted the job before anything was ever deployed.
+      #
+      # F1 is what made it fatal rather than merely wrong. Before F1 the
+      # step swallowed the failure with `|| echo '[]'` and blundered on;
+      # F1 correctly made an unreadable listing stop the job - and in
+      # doing so turned a first-run certainty into a hard stop. Both
+      # halves were right on their own. The order is what was wrong.
+      #
+      # DEPLOYING FIRST IS SAFE BECAUSE THE SERVICE IS BUILT FOR IT: a
+      # Worker with no signing key still hands out accounts and answers
+      # `no-signing-key` on /v1/auth/token rather than minting something
+      # the relay would refuse. That arm is pinned in
+      # test/accountworker.test.js and this is the moment it is for.
+      # `secret put` redeploys the Worker with the binding, so the
+      # window is seconds long and nothing is using the service yet.
+      - name: Deploy
+        id: deploy
+        working-directory: server-account
+        run: |
+          set -euo pipefail
+          # AUDIT-ACC F16: THE URL IS READ OFF THE DEPLOY, NOT TYPED.
+          # The verify steps used to build the host from the worker name
+          # plus a hardcoded `mackcothran` subdomain - the name derived
+          # from the config, the account typed beside it. That is a
+          # second home for a fact, and it is the exact shape SLAM13
+          # burned the relay on: a check pointed at a stale fact keeps
+          # passing, or keeps failing, for reasons that have nothing to
+          # do with what it is checking. wrangler prints the URL it
+          # deployed to; that is the authority on where this Worker now
+          # lives, and it makes this workflow portable to any account.
+          $WRANGLER deploy | tee /tmp/deploy.log
+          url=$(grep -oE 'https://[A-Za-z0-9.-]+\.workers\.dev' /tmp/deploy.log | head -1)
+          if [ -z "$url" ]; then
+            echo "::error::wrangler did not print a workers.dev URL - cannot verify a deploy whose address is unknown"
+            exit 1
+          fi
+          echo "base=$url" >> "$GITHUB_OUTPUT"
+          echo "deployed to $url"
+
+      # ── 4. THE SIGNING PAIR, ONCE AND ONLY ONCE ───────────────────
       #
       # RE-MINTING IS THE DESTRUCTIVE CASE. Every token this service has
       # ever signed verifies against the public half; replacing the pair
@@ -212,33 +262,29 @@ jobs:
             echo "This is the value ACC1d pins in the relay's config."
           } >> "$GITHUB_STEP_SUMMARY"
 
-      # ── 4. DEPLOY ─────────────────────────────────────────────────
-      - name: Deploy
-        working-directory: server-account
-        run: $WRANGLER deploy
-
       # ...AND PROVE IT LANDED, BY CONTENT. The client's deploy has been
       # verified this way since U60 and the relay's since SRV-N/CI, for
       # the same reason both times: a wrangler exit code of 0 over an
       # unchanged Worker is a green deploy that did not happen, and is
       # indistinguishable from success without this.
       #
-      # THE VERSION AND THE HOST ARE BOTH READ FROM THE CONFIG. Typing
-      # either one here would make this workflow a second home for a
-      # fact `wrangler.toml` already owns - and a renamed Worker would
-      # leave the check quietly interrogating a host that no longer
-      # exists.
+      # NEITHER THE VERSION NOR THE HOST IS TYPED HERE. The version is
+      # read from `wrangler.toml`, which owns it; the host comes from
+      # the deploy step, which is the only thing that actually knows
+      # where this Worker now lives (AUDIT-ACC F16 - it used to be the
+      # worker name from the config plus a hardcoded account subdomain,
+      # which is a second home for a fact and the exact shape SLAM13
+      # burned the relay on).
       - name: Verify /v1/health names this deploy
         run: |
           set -euo pipefail
           toml=server-account/wrangler.toml
           want=$(grep -oP '^ACCOUNT_VERSION\s*=\s*"\K[^"]+' "$toml")
-          name=$(grep -oP '^name\s*=\s*"\K[^"]+' "$toml")
-          test -n "$want" && test -n "$name" || {
-            echo "::error::could not read the version and the worker name out of $toml"
+          test -n "$want" || {
+            echo "::error::could not read ACCOUNT_VERSION out of $toml"
             exit 1
           }
-          url="https://${name}.mackcothran.workers.dev/v1/health"
+          url="${{ steps.deploy.outputs.base }}/v1/health"
           for i in $(seq 1 24); do
             got=$(curl -fsS --max-time 10 "$url" | sed -n 's/.*"v":"\([^"]*\)".*/\1/p' || true)
             echo "attempt $i: live reports '${got:-unreachable}', want '$want'"
@@ -255,9 +301,7 @@ jobs:
       - name: Verify the service can hand back its own public key
         run: |
           set -euo pipefail
-          toml=server-account/wrangler.toml
-          name=$(grep -oP '^name\s*=\s*"\K[^"]+' "$toml")
-          body=$(curl -fsS --max-time 10 "https://${name}.mackcothran.workers.dev/v1/pubkey" || true)
+          body=$(curl -fsS --max-time 10 "${{ steps.deploy.outputs.base }}/v1/pubkey" || true)
           key=$(echo "$body" | sed -n 's/.*"key":"\([^"]*\)".*/\1/p')
           if [ -z "$key" ]; then
             echo "::error::/v1/pubkey did not answer with a key - the signing pair is not usable by the relay"
