@@ -14,7 +14,7 @@
 // art-less fallback now, not the plan - the note this file carried
 // about unverified art names shipped out with them.
 
-import { rollStats, rollSkills, STAT_KEYS_ORDER, spellPoints, spellPointMultiplier } from '../systems/chargen.js';
+import { rollStats, rollSkills, STAT_KEYS_ORDER, statTotal, spellPoints, spellPointMultiplier } from '../systems/chargen.js';   // CHAR1: the roll's own total
 import { QUESTION_COUNT, NO_CLASS_INDEX, displayQuestion, pickQuestionIndices, answerWeightIndex, resolveClassIndex } from '../systems/classQuestions.js';   // U18
 
 // F2 / THE NEVER-UNFINISHABLE GATE. An answer locks the questions
@@ -26,7 +26,7 @@ import { QUESTION_COUNT, NO_CLASS_INDEX, displayQuestion, pickQuestionIndices, a
 const QANIM_STUCK_MIN_MS = 2000;
 const QANIM_STUCK_PAD_MS = 1000;
 import { ADVANTAGE_KEYS, DISADVANTAGE_KEYS, ONLY_ONE_KEYS, MAX_ITEMS, secondaryListFor, advDisAdjustment, cannotAdd, totalAdjust, parseCareerData } from '../systems/specialAdvantages.js';   // U20b
-import { HP_MIN, HP_MAX, HP_DEFAULT, DIFFICULTY_MIN, DIFFICULTY_MAX, FREE_EDIT_MIN, FREE_EDIT_MAX, STAT_DEFAULT, difficultyPoints, availableSkills, buildCustomCareer, classAffinityIndex, repClick, repPointsToDistribute, HELP_TOPICS } from '../systems/customClass.js';   // U20a
+import { HP_MIN, HP_MAX, HP_DEFAULT, DIFFICULTY_MIN, DIFFICULTY_MAX, FREE_EDIT_MIN, FREE_EDIT_MAX, STAT_DEFAULT, difficultyPoints, availableSkills, buildCustomCareer, classAffinityIndex, repClick, repStep, repPointsToDistribute, HELP_TOPICS } from '../systems/customClass.js';   // U20a
 import { damageModifier, maxEncumbrance, magicResist, toHitModifier, hitPointsModifier, healingRateModifier } from '../combat/formulas.js';   // U10: the derived block
 import { tagEffect, biographySkillBonuses, digestRepChanges } from '../systems/biography.js';   // S3e
 import { fullName, getNameBank, GENDERS } from '../characters/nameHelper.js';   // U15
@@ -56,6 +56,26 @@ export function statDown(working, rolled, pool) {
   if (working === rolled || working === 0) return { working, pool };   // minWorkingValue 0 is the freeEdit floor
   return { working: working - 1, pool: pool + 1 };
 }
+
+/**
+ * DaggerfallStats.IsAllMax (:85-97) - are all eight at the ceiling?
+ *
+ * THE LAW THIS SERVES IS AN ESCAPE, not a display.
+ * CheckIfDoneLeveling (DaggerfallCharacterSheetWindow.cs:437-443)
+ * refuses to close a levelling sheet while the pool is unspent - `if
+ * (statsRollout.BonusPool > 0 && !PlayerEntity.Stats.IsAllMax())` -
+ * and that second term is the whole of what keeps a maxed character
+ * from being sealed inside the window forever: at 100 across the
+ * board `statUp` refuses every press, so the pool can never reach
+ * zero and the refusal would never stop.
+ *
+ * ONE HOME (LV1's audit). `ui/charsheet.js` had it as a private
+ * method on CharSheet and NOWHERE else, so `LevelUpScreen` - the
+ * screen the enhanced skin mounted for four months - shipped the wall
+ * the sheet was protected from, and the enhanced level-up window
+ * inherited it. Both read this now.
+ */
+export const allStatsMax = (stats) => STAT_KEYS_ORDER.every((k) => (stats?.[k] ?? 0) >= MAX_STAT_VALUE);
 export function skillUp(working, pool) {
   if (pool === 0) return { working, pool };
   return { working: working + 1, pool: pool - 1 };
@@ -1332,6 +1352,19 @@ export class ChargenFlow {
     this._setStatPool(r.pool);
   }
 
+  /** CHAR1 - WHAT THIS ROLL IS WORTH, and it does not move while you
+   *  spend. statUp and statDown are strictly zero-sum (:51-58): a step
+   *  moves one point between a stat and the pool, and a refused step -
+   *  MAX_STAT_VALUE above, the rolled floor below - moves neither. So
+   *  the working stats plus the pool is INVARIANT for a given roll and
+   *  is exactly what the character will walk out with; it changes only
+   *  on Reroll, Load Roll, and the class's own re-entry. That is the
+   *  figure to judge a roll by, and it is the figure the screens show.
+   *  It reads whichever pool is on screen, the way every other stat
+   *  accessor here does (AUDIT 64 F33 - the summary has its own). */
+  get statTotalNow() { return statTotal(this.stats); }
+  get statTotalFinal() { return statTotal(this.stats) + this._statPool(); }
+
   /** The bonus pool of the screen that is showing: the SUMMARY's own
    *  (AUDIT 64 F33) or the bonus-stats window's. */
   _statPool() { return this.state === 'summary' ? this.sumStatPool : this.statPool; }
@@ -1833,7 +1866,7 @@ export class ChargenFlow {
       else if (action === 'minus' || action === 'char:-') this.spendStat(-1);
       // AUDIT 58 (f3/input): + 'char:r'/'char:R', the same root cause
       // as the 'minus' line above - r and R fall inside overlayAction's
-      // typed-character class (ui/input.js:232), so the 'reroll' row
+      // typed-character class (ui/input.js:240), so the 'reroll' row
       // that used to sit in its table was unreachable and only the
       // mouse rect (ui/chargenArt.js:1476) ever reached this. The hint
       // drawn at :2059, 'R reroll', is true again. The bare 'reroll'
@@ -2060,6 +2093,16 @@ export class ChargenFlow {
       const r = repClick(hit.repClick[0], hit.repClick[1]);
       if (r) {
         this.custom.reps[r.group] = r.value;
+        this.custom.repPoints = repPointsToDistribute(this.custom.reps);   // UpdatePointsToDistribute
+      }
+      return true;
+    }
+    // CC-REP: the enhanced pane's door - a step on one group, the same
+    // value law as the bar click above and the same ledger update.
+    if (hit.repStep) {
+      const v = repStep(this.custom.reps, hit.repStep.group, hit.repStep.dir);
+      if (v !== null) {
+        this.custom.reps[hit.repStep.group] = v;
         this.custom.repPoints = repPointsToDistribute(this.custom.reps);   // UpdatePointsToDistribute
       }
       return true;

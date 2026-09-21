@@ -31,6 +31,46 @@
 // pend towns" - by porting CanRest (:542-599) whole, and the merge
 // below is the union of what each of them got right.
 
+// RESTX1 (2026-09-15, Mac: "for online I want to change the rest
+// mechanic to not use any time. Basically rest just becomes the way to
+// regain") made an online REST resolve in ONE FRAME - the whole hourly
+// ladder run inside a single tick(), no minutes passed, no host clock
+// jump, no encounter roll - and left LOITER pacing off the shared
+// world clock at DFU's TimeScale (an hour of loiter was five real
+// minutes of watching a counter).
+//
+// RESTX2 (2026-09-17, Mac, "BetterResting": monsters should still be
+// able to interrupt an online wait, and the hours-remaining counter
+// should visibly tick down rather than jump straight to its answer)
+// RETIRES BOTH SPECIAL CASES. ONE LAW FOR EVERY MODE, ONLINE OR OFF:
+// the window's own real-time timer (REST_WAIT_PER_HOUR /
+// LOITER_WAIT_PER_HOUR real seconds a simulated hour) paces every
+// sub-tick, exactly as offline always did. So online:
+//   - the counter ticks down at the offline rate (eight hours in six
+//     real seconds; three hours of loiter in under four);
+//   - `advanceMinutes` is spent on EVERY sub-tick, so the magic-round
+//     catch-up and the hourly rest-interruption encounter roll
+//     (runEncounterTick / the dungeon's _restAdvance) run online as
+//     they always have offline - a foe that wanders in breaks the rest;
+//   - the shared WORLD clock is untouched: `worldTick.setWorldMinutes`
+//     still refuses every local write while it stands (:834-838), so
+//     this is pacing only, not time made or taken from anyone else's
+//     sky. The game minutes the encounter roll and the catch-up READ
+//     online come from `_onlineSimMinutes`, a counter local to this
+//     one session - seeded from the shared clock, ten minutes a
+//     sub-tick, forgotten when the session ends - handed to the host as
+//     the sub-tick's END (AUDIT WORLD5 C8's slot), so every simulated
+//     hour rolls against a fresh, distinct minute;
+//   - a QUEST tick still does not happen online. A quest clock is
+//     cross-player-visible state; ticking it against a locally
+//     simulated minute would desync this player's quests from everyone
+//     else's. Offline the quest tick rides the sub-tick as DFU has it.
+// AUDIT RESTX F1's full-health guard on the Medical tally went with
+// the free lane: the exploit it closed ("rest 99 hours" = 99 tallies on
+// one click) needed an hour that cost no time, and every hour costs
+// its real seconds again. DFU's unconditional tally stands in every
+// lane.
+
 import { getInt, getBool } from './settings.js';   // SETT: LoiterLimitInHours, S40: IllegalRestWarning
 import { roomRemainingHours } from './tavern.js';   // S40: GetRemainingHours, CanRest's room arm
 import { interiorSceneName } from './sceneCache.js';   // S40: DaggerfallInterior.GetSceneName
@@ -394,11 +434,11 @@ export class RestSession {
     this.totalHours = 0;
     this._minutesOfHour = 0;
     this._timer = 0;
-    this._sharedAt = null;   // WORLD5: the shared clock's reading at the last counted sub-tick (null: not yet read)
     this._abortEnemySpawn = false;   // B1: the OnEncounter latch, read at the next tick
     // waitTimePerHour / minutesPerTick, verbatim (NOT per-hour /
     // ticks-per-hour - see the header quirk note).
     this._subTickEvery = (mode === 'loiter' ? LOITER_WAIT_PER_HOUR : REST_WAIT_PER_HOUR) / MINUTES_PER_TICK;
+    this._onlineSimMinutes = null;   // RESTX2: this session's own locally-ticked minute counter, online only - seeded from the shared clock at the first sub-tick (see tick() and the header)
   }
 
   /** End the session early (the toggle key / Escape): the mode's own
@@ -456,44 +496,21 @@ export class RestSession {
    *  no seam means no stack above this window. */
   _covered() { return this.isTopWindow ? !this.isTopWindow() : false; }
 
-  /** The frame's real seconds, banked for the timer - unless WORLD5's shared clock paces this rest, in which case
-   *  the timer is never consulted and the world's clock is read per sub-tick (deps.sharedMinutes answers null
-   *  offline). */
+  /** RESTX2: the frame's real seconds, banked for the timer in EVERY mode - see the header. RESTX1 skipped
+   *  this under the shared clock (a free rest read no timer at all, a loiter read the world's clock); both
+   *  are retired, so the one timer offline always used paces online too. */
   _accrue(dt) {
-    this._sharedTaken = false;   // AUDIT WORLD5 C7: the frame's one shared sub-tick, not yet taken
-    if (Number.isFinite(this.deps.sharedMinutes?.())) return;
     this._timer += dt;
   }
 
-  /** AUDIT WORLD5 C7: a COVERED frame under the shared clock loses the world's time it covers, exactly as the timer
-   *  loses it offline (`_accrue` is never reached under a cover, so the timer banks nothing): the reading moves up to
-   *  the clock keeping less than one sub-tick owed, and a rest covered for a real hour by a quest box or the pause
-   *  menu resolves no night in one frame when the cover lifts. */
-  _holdShared() {
-    const shared = this.deps.sharedMinutes?.();
-    if (!Number.isFinite(shared) || this._sharedAt == null) return;
-    const owed = shared - this._sharedAt;
-    if (owed >= MINUTES_PER_TICK) this._sharedAt = shared - (owed % MINUTES_PER_TICK);
-  }
-
   /** ONE sub-tick taken, if one is owed - and only then, so a rest the window covers mid-frame keeps what it still
-   *  owes for the next frame, exactly as the timer always did. The window's own timer (REST_WAIT_PER_HOUR real
-   *  seconds a rested hour) or, WORLD5, the WORLD'S CLOCK: online a rest fabricates no minutes, so an hour of rest is
-   *  an hour of the shared world's time - five real minutes at DFU's TimeScale - and the window counts the clock's
-   *  own MINUTES_PER_TICK boundaries as they pass. */
+   *  owes for the next frame, exactly as the timer always did. RESTX2: one law for every mode, online or off -
+   *  the window's own timer (REST_WAIT_PER_HOUR / LOITER_WAIT_PER_HOUR real seconds a simulated hour). The old
+   *  free-rest branch (the whole rest in one frame) and the old shared-clock branch (five real minutes a
+   *  simulated hour, one sub-tick a frame) are both gone; a covered frame banks nothing, because `_accrue` is
+   *  never reached under a cover, so a rest covered for a real hour by a quest box resolves no night when the
+   *  cover lifts - the timer's own law, in every lane now. */
   _takeSubTick() {
-    const shared = this.deps.sharedMinutes?.();
-    if (Number.isFinite(shared)) {
-      if (this._sharedAt == null) this._sharedAt = shared;
-      // AUDIT WORLD5 C7: ONE sub-tick a frame, as the timer's own law gives offline (a frame's dt is clamped under
-      // one sub-tick's wait) - a tab hidden for a real hour owes the world's minutes and takes them one sub-tick a
-      // FRAME, so every hourly enemy check reads the foes on a frame of its own, the spawn-abort latch is read on the
-      // next, and no night resolves in one frame
-      if (shared - this._sharedAt < MINUTES_PER_TICK || this._sharedTaken) return false;
-      this._sharedAt += MINUTES_PER_TICK;
-      this._sharedTaken = true;
-      return true;
-    }
     if (this._timer < this._subTickEvery) return false;
     this._timer -= this._subTickEvery;
     return true;
@@ -563,13 +580,23 @@ export class RestSession {
     // the same reason DFU keeps it: it is the pair of the reachable one
     // below, and a host that ever ticks a covered window must not
     // advance its clock.
-    if (this._covered()) { this._holdShared(); return null; }
+    if (this._covered()) return null;
 
     this._accrue(dt);
     while (this._takeSubTick()) {
-      // AUDIT WORLD5 C8: the sub-tick's own span rides along under the shared clock (its END - the reading just
-      // counted; null offline), because a host that is refused the clock write cannot read the span off the clock
-      this.deps.advanceMinutes(MINUTES_PER_TICK, this._sharedAt);
+      // RESTX2: every sub-tick spends `advanceMinutes` - the magic-round catch-up and the hourly
+      // rest-interruption encounter roll both live inside it, so both run online as they always have offline.
+      // The host's own clock write is refused online regardless (worldTick.setWorldMinutes), so the minutes the
+      // roll and the catch-up READ online come from `_onlineSimMinutes` - local to this session, seeded from the
+      // shared clock, ten a sub-tick, forgotten when the session ends - handed over as the sub-tick's END
+      // (AUDIT WORLD5 C8's slot; null offline, where the host reads its own clock). Nothing here is visible to
+      // another player or survives past this rest; it only has to look, from the inside, like an hour passed.
+      const online = Number.isFinite(this.deps.sharedMinutes?.());
+      if (online) {
+        if (this._onlineSimMinutes == null) this._onlineSimMinutes = Math.floor(this.deps.sharedMinutes());
+        this._onlineSimMinutes += MINUTES_PER_TICK;
+      }
+      this.deps.advanceMinutes(MINUTES_PER_TICK, online ? this._onlineSimMinutes : null);
       // TickRest :376-379, `RaiseTime` then `QuestMachine.Instance.
       // Tick()`, in that order and inside the SAME sub-tick. DFU's own
       // comment two lines above says the ten-minute granularity exists
@@ -584,14 +611,16 @@ export class RestSession {
       // It is the SESSION's law and not a host's: DFU calls the
       // machine directly here, bypassing QuestMachine.Update's
       // real-time pacing, so the port must call the unpaced door too.
-      this.deps.tickQuests?.();
+      // RESTX2: NOT online - a quest clock is cross-player-visible state (deadlines, timers), unlike a
+      // magic-round catch-up or an encounter roll, so it never ticks against a locally simulated minute.
+      if (!online) this.deps.tickQuests?.();
       this._minutesOfHour += MINUTES_PER_TICK;
       if (this._minutesOfHour < 60) {
         // :381-385 returns false here, so DFU's frame is over either
         // way; the port's loop is what has to be told. A quest popup
         // the tick above pushed suspends the rest AT ONCE rather than
         // running the rest of this dt out underneath it.
-        if (this._covered()) { this._holdShared(); return null; }
+        if (this._covered()) return null;
         continue;
       }
       this._minutesOfHour = 0;
@@ -604,7 +633,7 @@ export class RestSession {
       // counted (:394), so the covered hour reaches OnSleepEnd's
       // six-hour test while the sleeper gets no vitals and a timed rest
       // loses no hour off its counter.
-      if (this._covered()) { this._holdShared(); return null; }
+      if (this._covered()) return null;
       // A full hour: the enemy break first, then vitals/completion.
       if (this.deps.enemiesNearby()) return { textId: REST_TEXT.enemiesNearby, enemyBroke: true, died: false };
       // :405-410 - the poll AGAIN, after the enemies and before the
@@ -618,6 +647,9 @@ export class RestSession {
       // EXPIRED line - _finish is where that precedence lives.
       let done = null;
       if (this.mode === 'timed') {
+        // AUDIT RESTX F1 is retired by RESTX2 (see the header): the free lane's full-health guard closed an
+        // exploit whose precondition - an hour that costs no time - no longer holds in any lane, so DFU's
+        // unconditional tally stands everywhere.
         this.deps.tickVitals();
         if (--this.hoursRemaining < 1) done = REST_TEXT.wakeUp;
       } else if (this.mode === 'full') {

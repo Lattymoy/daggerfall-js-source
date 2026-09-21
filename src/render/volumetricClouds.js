@@ -54,7 +54,7 @@
 // dome only (never under the Dynamic Skies mod, whose sky is its own),
 // `?clouds=off` the kill switch, `?clouds=lo|hi` the quality doors.
 
-import { createRenderTarget, withTarget } from './renderTarget.js';
+import { createRenderTarget, withTarget, frameTarget } from './renderTarget.js';
 import { CloudNoise } from './cloudNoise.js';
 import { WEATHER_EASE_MINUTES, WEATHER_SKY } from './enhancedSky.js';   // WEATHER2c: a cell's cover and grey are its weather's row
 
@@ -75,20 +75,66 @@ export const MAX_CELLS = 8;
 export const CELL_EDGE = 0.35;
 /** A full sweep of either map takes this many frames. */
 export const SWEEP_FRAMES = 8;
+/** VC6d: the steps a ray may take BEYOND its tier's budget. Empty-space
+ *  skipping normally finishes a ray early, but a ray that enters and
+ *  leaves cloud several times pays one step for each stride it backs
+ *  out of; this is what keeps such a ray reaching the end of its slab
+ *  instead of stopping short and losing the far bank. Twelve is above
+ *  the most transitions a slab this deep can hold and leaves every tier
+ *  (32, 56, 80) inside the loop's own hard cap of 96. */
+export const MARCH_SLACK = 12;
+/** VC6b: mean Earth radius, metres - the ONE number behind the whole
+ *  golden hour. A cloud at height h sees over the ground's horizon by
+ *  sqrt(2h/R) radians, which for this slab is a degree and a half: the
+ *  sun sets for the player a full ninety seconds before it sets for the
+ *  cloud deck above them. That gap IS the sunset, and the field did not
+ *  have it. */
+export const EARTH_RADIUS_M = 6371000;
+/** VC6b: how far a point at height `h` metres sees past the ground's
+ *  horizon, in radians. Pure. */
+export const horizonDip = (h) => Math.sqrt(2 * Math.max(0, h) / EARTH_RADIUS_M);
 /** One unit of the WIND2 drift integral is this many world metres -
  *  1 / 0.0038, the scale the terrain's shadow field moved by before
  *  VC4, so the sky drifts at the pace the ground was already keeping. */
 export const WORLD_PER_DRIFT = 1 / 0.0038;
 /** The fields' periods, in whole pixels (the shape volume tiles every
- *  15, the detail every 1, the weather's variation every 16, the
+ *  15, the detail every 1, the weather's variation every 80, the
  *  ambient's mottle every 5) - a recenter is answered by uShift, not
- *  by the periods; these keep the shadow square's texel grid exact. */
+ *  by the periods; these keep the shadow square's texel grid exact.
+ *
+ *  VC6a (2026-09-18, Mac: "clouds repeat pretty consistently when its
+ *  partly cloudy"): the variation was SIXTEEN pixels, 13107 m, against
+ *  the shape volume's 12288 m - two grids within seven per cent of each
+ *  other, so they walked in step and the same bank came round every
+ *  twelve kilometres, which is well inside the march's own 24 km reach.
+ *  Eighty pixels is 65536 m: five times the shape's tile, sharing only
+ *  the factor 5 with it, so the two beat over the field's whole period
+ *  (196 km) instead of over one visible sky. It is also the truer
+ *  number - how much cloud there is varies over tens of kilometres of
+ *  land, not over one valley. */
 export const SHAPE_METRES = PIXEL_METRES * 15;
 export const DETAIL_METRES = PIXEL_METRES;
-export const VARIATION_METRES = PIXEL_METRES * 16;
+export const VARIATION_METRES = PIXEL_METRES * 80;
 export const MOTTLE_METRES = PIXEL_METRES * 5;
+/** VC6a: how far the domain WARP bends a sample's position, in metres.
+ *  The warp is read from the variation sample's own spare channels, so
+ *  it costs no texture read; it bends the shape volume's lattice so the
+ *  eye cannot find the tile's straight edges even where the tile does
+ *  come round.
+ *
+ *  ONE PIXEL, AND THE PROBE CHOSE IT. Three was tried first, on the
+ *  reasoning that a fifth of the shape's period would bend the grid
+ *  without tearing a cloud. It tore them: the warp field's own features
+ *  are the variation volume's Worley cells, about 2 km across, so an
+ *  amplitude of 2458 m is larger than the gradient it rides and the map
+ *  q -> q + A*f(q) FOLDS - it stops being one-to-one, and the sky grew a
+ *  smeared fan near the zenith that the bare field never had. The
+ *  amplitude has to stay well under the warp field's own feature size,
+ *  not under the field it is bending. Seen in the lab, against the same
+ *  shot on the tree before this change. */
+export const WARP_METRES = PIXEL_METRES * 1;
 /** CLK1: the field's COMMON PERIOD - the least common multiple of the
- *  four periods above (15, 1, 16 and 5 pixels: 240), so a position
+ *  four periods above (15, 1, 80 and 5 pixels: 240), so a position
  *  moved by a whole number of it samples the same cloud. The drift and
  *  the recenter shift are both unbounded integrals (a year of game
  *  time is tens of thousands of kilometres of wind) and the shader
@@ -114,21 +160,33 @@ export const SHADOW_AMOUNT = 1.0;
 /** Per-weather PROFILE, eased on the weather ease's own clock: the
  *  slab's base and top (metres), how dense the cloud is, how dark
  *  (the storm's underside), how flat (0 towers, 1 a stratus lid),
- *  and how far the tops lead the base per metre of height. */
+ *  how far the tops lead the base per metre of height - and VC6a's
+ *  `vary`, how much the cloud's TYPE changes from one part of the sky
+ *  to the next.
+ *
+ *  VC6a: `vary` is the answer to the second half of Mac's report. Every
+ *  cloud in a sunny sky used to be the same cloud - one flatness, one
+ *  ceiling, for the whole zone - so even a field that never repeated
+ *  its noise would still have read as repetitive, because it only had
+ *  ONE THING TO SAY. It leans on the variation field that is already
+ *  read for the coverage: where there is more cloud there is flatter,
+ *  deeper cloud (more cover means a settling deck), where there is less
+ *  there are shallow towers. A lid weather takes 0 and is unchanged -
+ *  fog and a sandstorm ARE one thing, everywhere. */
 export const VC_PROFILE = Object.freeze({
-  sunny:    Object.freeze({ base: 1400, top: 3200, density: 0.60, dark: 0.00, flat: 0.10, shear: 0.35 }),
-  cloudy:   Object.freeze({ base: 1200, top: 3000, density: 0.70, dark: 0.10, flat: 0.35, shear: 0.40 }),
-  overcast: Object.freeze({ base: 800,  top: 1600, density: 0.80, dark: 0.30, flat: 0.90, shear: 0.20 }),
-  fog:      Object.freeze({ base: 150,  top: 600,  density: 1.00, dark: 0.20, flat: 1.00, shear: 0.05 }),
-  rain:     Object.freeze({ base: 600,  top: 2600, density: 0.90, dark: 0.50, flat: 0.70, shear: 0.30 }),
-  snow:     Object.freeze({ base: 600,  top: 2000, density: 0.80, dark: 0.30, flat: 0.85, shear: 0.20 }),
-  thunder:  Object.freeze({ base: 500,  top: 4200, density: 1.00, dark: 0.70, flat: 0.50, shear: 0.50 }),
-  sandstorm: Object.freeze({ base: 0,   top: 900,  density: 1.00, dark: 0.35, flat: 0.95, shear: 0.05 }),   // WEATHER2d: a wall on the ground, a lid 900 m up
+  sunny:    Object.freeze({ base: 1400, top: 3200, density: 0.60, dark: 0.00, flat: 0.10, shear: 0.35, vary: 0.50 }),
+  cloudy:   Object.freeze({ base: 1200, top: 3000, density: 0.70, dark: 0.10, flat: 0.35, shear: 0.40, vary: 0.45 }),
+  overcast: Object.freeze({ base: 800,  top: 1600, density: 0.80, dark: 0.30, flat: 0.90, shear: 0.20, vary: 0.15 }),
+  fog:      Object.freeze({ base: 150,  top: 600,  density: 1.00, dark: 0.20, flat: 1.00, shear: 0.05, vary: 0.00 }),
+  rain:     Object.freeze({ base: 600,  top: 2600, density: 0.90, dark: 0.50, flat: 0.70, shear: 0.30, vary: 0.25 }),
+  snow:     Object.freeze({ base: 600,  top: 2000, density: 0.80, dark: 0.30, flat: 0.85, shear: 0.20, vary: 0.20 }),
+  thunder:  Object.freeze({ base: 500,  top: 4200, density: 1.00, dark: 0.70, flat: 0.50, shear: 0.50, vary: 0.40 }),
+  sandstorm: Object.freeze({ base: 0,   top: 900,  density: 1.00, dark: 0.35, flat: 0.95, shear: 0.05, vary: 0.00 }),   // WEATHER2d: a wall on the ground, a lid 900 m up
 });
 /** WEATHER2d: a cell's TINT on the zone's cloud colours - the sandstorm's
  *  tan; every other word takes the row's colours unchanged. */
 export const CELL_TINT = Object.freeze({ sandstorm: Object.freeze([0.88, 0.72, 0.46]) });
-const PROFILE_KEYS = ['base', 'top', 'density', 'dark', 'flat', 'shear'];
+const PROFILE_KEYS = ['base', 'top', 'density', 'dark', 'flat', 'shear', 'vary'];   // VC6a: `vary` eases with the rest
 
 // ═══ WEATHER2c (2026-09-14): CLOUD TYPES BY PLACE ═══════════════════
 // Mac: "different generative cloud types, like being able to see a
@@ -164,8 +222,9 @@ export function slabOf(profile, cells) {
   return { base, top };
 }
 
-/** The cells packed for the shader's three arrays (x, z, r, edge |
- *  base, top, density, flat | dark, shear, cover, grey), capped at `cap`;
+/** The cells packed for the shader's four arrays (x, z, r, edge |
+ *  base, top, density, flat | dark, shear, cover, grey | tint, vary),
+ *  capped at `cap`;
  *  the rim never narrower than a metre (smoothstep's edges must be
  *  ordered). Pure over the arrays it is handed. */
 export function packCells(cells, cap, out = { c: new Float32Array(MAX_CELLS * 4), a: new Float32Array(MAX_CELLS * 4), b: new Float32Array(MAX_CELLS * 4), t: new Float32Array(MAX_CELLS * 4) }) {
@@ -177,7 +236,7 @@ export function packCells(cells, cap, out = { c: new Float32Array(MAX_CELLS * 4)
     out.a[o] = c.base; out.a[o + 1] = c.top; out.a[o + 2] = c.density; out.a[o + 3] = c.flat;
     out.b[o] = c.dark; out.b[o + 1] = c.shear; out.b[o + 2] = c.cover; out.b[o + 3] = c.grey ?? 0;
     const t = c.tint ?? [1, 1, 1];
-    out.t[o] = t[0]; out.t[o + 1] = t[1]; out.t[o + 2] = t[2]; out.t[o + 3] = 1;
+    out.t[o] = t[0]; out.t[o + 1] = t[1]; out.t[o + 2] = t[2]; out.t[o + 3] = c.vary ?? 0;   // VC6a: the spare w is the cell's own type variation
   }
   out.count = n;
   return out;
@@ -207,16 +266,49 @@ export function easeProfile(from, to, dt, span = WEATHER_EASE_MINUTES) {
 }
 
 /** The light the clouds take: the sun while it is up, else the
- *  brighter visible moon (EV5's colour, dimmed), else none. Pure. */
-export function cloudLight(state) {
-  // the sun's weight fades over its last degrees, so the light crosses
-  // to the moon's (or to none) without a pop at the horizon
-  const w = Math.min(1, Math.max(0, (state.sunDir[1] + 0.02) / 0.08));
+ *  brighter visible moon (EV5's colour, dimmed), else none. `profile`
+ *  is the slab the light falls on - its mid-height sets how far past
+ *  the ground's horizon the deck can still see the sun (VC6b). Pure. */
+export function cloudLight(state, profile = null) {
+  // VC6b: THE SUN SETS FOR THE CLOUD LAST. The weight used to be
+  // `(sunDir.y + 0.02) / 0.08` - a window fitted by eye that put the
+  // light out by the time the sun reached two and a half degrees, which
+  // is the exact half hour Mac is describing. It is not a matter of
+  // taste: a deck whose middle stands 2300 m up sees 1.54 degrees
+  // further than the player does, so it holds the sun until the sun is
+  // that far BELOW the player's horizon - and holds it in the colour
+  // the palette gives a sun at that elevation, which is ember. The
+  // fade is over the last degree and a bit (0.025 in sine), the width
+  // of the disc plus the depth of the deck, so the light goes out the
+  // way it does over a real landscape and not at a line.
+  const mid = profile ? (profile.base + profile.top) / 2 : 2300;
+  const w = Math.min(1, Math.max(0, (state.sunDir[1] + horizonDip(mid)) / 0.025));
   const moons = [state.masser, state.secunda].filter((m) => m && m.dir[1] > 0.02 && m.vis > 0);
   const m = moons.length ? moons.reduce((a, b) => (a.vis * a.color[0] >= b.vis * b.color[0] ? a : b)) : null;
   const moon = m ? [m.color[0] * 0.12 * m.vis, m.color[1] * 0.12 * m.vis, m.color[2] * 0.14 * m.vis] : [0, 0, 0];
   if (w > 0) return { dir: state.sunDir, color: [state.sun[0] * w + moon[0] * (1 - w), state.sun[1] * w + moon[1] * (1 - w), state.sun[2] * w + moon[2] * (1 - w)], day: w };
   return { dir: m ? m.dir : [0, 1, 0], color: moon, day: 0 };
+}
+
+/** VC6b: HOW MUCH OF THE LOW-SUN LOOK THIS FRAME TAKES, 0..1 - the one
+ *  weight behind all three of VC6b's terms. Pure.
+ *
+ *  It lives here, on the CPU, and not as a smoothstep on uLightDir in
+ *  the march, because uLightDir is NOT ALWAYS THE SUN: once the sun is
+ *  down it is the brighter visible MOON's, and a moon near the horizon
+ *  read as "the sun is low" - it lit the undersides, opened the direct
+ *  gain and tinted half the sky, a swing that appeared and vanished as
+ *  the moon crossed seventeen degrees, driven by the wrong body.
+ *  `dayWeight` is the SUN's own weight (cloudLight's `day`), so this is
+ *  exactly zero at night and the whole of VC6b is off: a night sky is
+ *  the one it was before the slice. Pinned by value.
+ *
+ *  @param {number} sunY the sun's direction's y - its own, never the light's
+ *  @param {number} dayWeight cloudLight's `day`: 1 while the DECK still sees the sun
+ */
+export function duskWeight(sunY, dayWeight) {
+  const t = Math.min(1, Math.max(0, (0.30 - sunY) / 0.33));   // 0 above 17 degrees, 1 at and below the horizon
+  return dayWeight * t * t * (3 - 2 * t);
 }
 
 /** VC4: the shadow map's square for a camera at (x, z): its corner,
@@ -245,13 +337,14 @@ uniform float uDensity;
 uniform float uFlat;
 uniform float uShear;
 uniform float uDark;
+uniform float uVary;      // VC6a: how much the cloud's TYPE changes across the zone
 uniform float uSlabBase;  // WEATHER2c: the union of the zone's slab and every cell's - where both marches start and stop
 uniform float uSlabTop;
 uniform int uCellCount;   // WEATHER2c: the cells, in the host's world metres
 uniform vec4 uCell[8];    // x, z, radius, the rim's width
 uniform vec4 uCellA[8];   // base, top, density, flat
 uniform vec4 uCellB[8];   // dark, shear, cover, grey
-uniform vec4 uCellC[8];   // WEATHER2d: the tint on the zone's cloud colours (rgb), w spare
+uniform vec4 uCellC[8];   // WEATHER2d: the tint on the zone's cloud colours (rgb); VC6a: w the cell's own vary
 uniform vec2 uDrift;      // world metres
 uniform vec2 uShift;      // the floating origin's recenters, accumulated - added to every position so the field is sampled where it ABSOLUTELY is
 uniform vec2 uCamXZ;      // the camera's world position, the sky map's own origin
@@ -260,16 +353,17 @@ const float SHAPE_M = ${SHAPE_METRES.toFixed(1)};
 const float DETAIL_M = ${DETAIL_METRES.toFixed(1)};
 const float VARIATION_M = ${VARIATION_METRES.toFixed(1)};
 const float MOTTLE_M = ${MOTTLE_METRES.toFixed(1)};
+const float WARP_M = ${WARP_METRES.toFixed(1)};
 float remap(float v, float lo, float hi, float nlo, float nhi) { return nlo + (v - lo) / (hi - lo) * (nhi - nlo); }
 // WEATHER2c: THE PROFILE AT A PLACE. The zone's terms, with every cell
 // whose rim reaches this ground point blended over them by its weight -
 // resolved before a march and again at every step while cells stand,
 // so a ray through a thunderhead takes the storm's terms only where the
 // storm is. The light march reads what the step resolved.
-float fBase, fTop, fDensity, fFlat, fShear, fCover, fDark, fGrey;
+float fBase, fTop, fDensity, fFlat, fShear, fCover, fDark, fGrey, fVary;
 vec3 fTint;
 void resolveAt(vec2 xz) {
-  fBase = uBase; fTop = uTop; fDensity = uDensity; fFlat = uFlat; fShear = uShear; fCover = uCover; fDark = uDark; fGrey = 0.0; fTint = vec3(1.0);
+  fBase = uBase; fTop = uTop; fDensity = uDensity; fFlat = uFlat; fShear = uShear; fCover = uCover; fDark = uDark; fGrey = 0.0; fTint = vec3(1.0); fVary = uVary;
   for (int i = 0; i < 8; i++) {
     if (i >= uCellCount) break;
     vec4 c = uCell[i];
@@ -279,16 +373,31 @@ void resolveAt(vec2 xz) {
     fBase = mix(fBase, a.x, w); fTop = mix(fTop, a.y, w); fDensity = mix(fDensity, a.z, w); fFlat = mix(fFlat, a.w, w);
     fDark = mix(fDark, b.x, w); fShear = mix(fShear, b.y, w); fCover = mix(fCover, b.z, w); fGrey = mix(fGrey, b.w, w);
     fTint = mix(fTint, uCellC[i].rgb, w);   // WEATHER2d
+    fVary = mix(fVary, uCellC[i].w, w);     // VC6a: the cell's own type variation
   }
 }
-// the towers' profile against a stratus lid's, by the weather's flatness
-float heightGradient(float h) {
+// the towers' profile against a stratus lid's, by the flatness AT THIS
+// PLACE (VC6a: the zone's, moved by the variation field; it was fFlat
+// for the whole sky, which is why every cloud was the same cloud)
+float heightGradient(float h, float lidness) {   // not 'flat': GLSL ES 3.00 reserves it as an interpolation qualifier, and the shader will not compile
   float towers = smoothstep(0.0, 0.08, h) * (1.0 - smoothstep(0.5, 1.0, h));
   float lid = smoothstep(0.0, 0.12, h) * (1.0 - smoothstep(0.25, 0.5, h));
-  return mix(towers, lid, fFlat);
+  return mix(towers, lid, lidness);
 }
 float density(vec3 p, float mip) {
-  float h = clamp((p.y - fBase) / max(fTop - fBase, 1.0), 0.0, 1.0);
+  // VC6d: OUTSIDE THE BAND, NO SAMPLE IS TAKEN. Both marches walk the
+  // UNION slab - the zone's widened to hold every cell's - so under a
+  // sunny zone with a thunderhead somewhere on the horizon every ray
+  // walked 500 m to 4200 m while the zone's own cloud lives between
+  // 1400 and 3200. heightGradient answered 0 at both ends already (its
+  // two profiles are zero at h <= 0 and at h >= 1), but only after two
+  // 3D texture reads had been paid for. This is the same answer, for
+  // nothing. It must stay on the UNCLAMPED height and on the band's
+  // own ends, never on the gradient: the local flatness below can
+  // reopen a height the zone's would have closed.
+  float hr = (p.y - fBase) / max(fTop - fBase, 1.0);
+  if (hr <= 0.0 || hr >= 1.0) return 0.0;
+  float h = hr;
   // WIND4 (2026-09-15, Mac: "clouds dont follow on the world timer with
   // the direction of the wind"): the drift is SUBTRACTED. uShift is the
   // floating origin's recenter and is ADDED, because q must be the
@@ -301,11 +410,35 @@ float density(vec3 p, float mip) {
   // the wisps carry the wind one way (windWisps.js advances the wisp's
   // POSITION by the offset) and the sky went the other.
   vec3 q = vec3(p.x + uShift.x - uDrift.x + fShear * (p.y - fBase), p.y, p.z + uShift.y - uDrift.y);
+  // VC6a: ONE SAMPLE, FOUR JOBS. The weather's variation over the land
+  // was already read here for the coverage alone, and only its R was
+  // used. The volume is RGBA: R and A are two frequencies of the same
+  // field (a Worley at 8 cells and at 32), which give a coverage that
+  // changes at two scales instead of one; G and B are a second pair,
+  // read as a VECTOR that bends the sample's position - a domain warp.
+  // The warp is what actually kills the repeat Mac saw: the shape
+  // volume still tiles every 12288 m, but its lattice arrives bent by
+  // up to 2458 m along a field with a 65536 m period, so the straight
+  // edges the eye locks onto are not there to find. It costs no texture
+  // read, and it keeps CLK1's invariant: the warp's own period (80
+  // pixels) divides the field's (240), so a position moved by a whole
+  // field period is still warped by the same vector and still samples
+  // the same cloud.
+  vec4 v = textureLod(uShape, vec3(q.x / VARIATION_M, 0.37, q.z / VARIATION_M), 0.0);
+  float variation = clamp(v.r * 0.65 + v.a * 0.35, 0.0, 1.0);
+  // VC6a: the cloud's TYPE at this place. Where there is more cloud
+  // there is flatter, deeper cloud - a settling deck; where there is
+  // less, shallow towers with room above them. fVary is 0 for fog and
+  // a sandstorm, which ARE one thing everywhere, and the whole term
+  // collapses to the zone's flatness and its full ceiling.
+  float flatHere = clamp(fFlat + (variation - 0.5) * fVary, 0.0, 1.0);
+  float ceiling = 1.0 - fVary * (1.0 - variation) * 0.8;
+  float grad = heightGradient(clamp(h / max(ceiling, 0.05), 0.0, 1.0), flatHere);
+  if (grad <= 0.0) return 0.0;
+  q.xz += (v.gb * 2.0 - 1.0) * WARP_M;   // VC6a: the warp
   vec4 s = textureLod(uShape, q / SHAPE_M, mip);
   float lowFbm = s.g * 0.625 + s.b * 0.25 + s.a * 0.125;
-  float base = remap(s.r, -(1.0 - lowFbm), 1.0, 0.0, 1.0) * heightGradient(h);
-  // the weather's own variation over the land: the shape's R read as a 2D field
-  float variation = textureLod(uShape, vec3(q.x / VARIATION_M, 0.37, q.z / VARIATION_M), 0.0).r;
+  float base = remap(s.r, -(1.0 - lowFbm), 1.0, 0.0, 1.0) * grad;
   // the row's cover is the dome's deck's word; the slab's coverage is
   // sharper - a sunny 0.32 is a scattered sky, an overcast 0.94 a lid
   float coverage = clamp(pow(fCover, 1.6) * (0.6 + 0.8 * variation), 0.0, 1.0);
@@ -329,6 +462,8 @@ uniform vec3 uLightColor;
 uniform vec3 uCloudLit;
 uniform vec3 uCloudShade;
 uniform vec3 uHorizonColor;
+uniform vec3 uSkyTint;    // VC6b: the zenith's colour - the sky that lights a cloud's shaded side
+uniform float uDusk;      // VC6b: how much of the low-sun look this frame takes (duskWeight) - the SUN's own angle and weight, so the MOON can never drive it
 uniform int uSteps;
 uniform int uLightSteps;
 out vec4 outColor;
@@ -336,6 +471,10 @@ const float PI = 3.14159265;
 ${CLOUD_FIELD_GLSL}
 float hg(float c, float g) { float g2 = g * g; return (1.0 - g2) / (4.0 * PI * pow(1.0 + g2 - 2.0 * g * c, 1.5)); }
 float hash12(vec2 p) { vec3 p3 = fract(vec3(p.xyx) * 0.1031); p3 += dot(p3, p3.yzx + 33.33); return fract((p3.x + p3.y) * p3.z); }
+// VC6b: a colour's HUE at luminance one. Every tint below is taken
+// through this, so a tint can only move a colour's hue and never its
+// brightness - the dusk must not be a way of turning the exposure up.
+vec3 hue(vec3 c) { float l = dot(c, vec3(0.2126, 0.7152, 0.0722)); return l > 1e-3 ? c / l : vec3(1.0); }   // a colour with no light in it has no hue to lend: white, the tint that changes nothing
 // toward the light: a short march, Beer's law with the powder term
 float lightMarch(vec3 p) {
   float sum = 0.0;
@@ -345,6 +484,7 @@ float lightMarch(vec3 p) {
     float step = ds * (1.0 + float(i) * 0.6);
     p += uLightDir * step;
     sum += density(p, 0.0) * step;   // the field itself, not a blurred level - a blurred one never occludes
+    if (sum * EXT > 6.0) break;   // VC6d: exp(-6) is two parts in a thousand - no later step can be seen, and a deep lid is where this march costs most
   }
   float beer = exp(-sum * EXT);
   float powder = 1.0 - exp(-sum * EXT * 2.0);
@@ -354,35 +494,85 @@ void main() {
   vec2 uv = gl_FragCoord.xy / uMapSize;
   float az = uv.x * 2.0 * PI, el = uv.y * 0.5 * PI;
   vec3 dir = vec3(sin(az) * cos(el), sin(el), cos(az) * cos(el));
-  if (dir.y <= 0.004) { outColor = vec4(0.0, 0.0, 0.0, 1.0); return; }
+  // DSH1: the rows the slab cannot be reached from are the AERIAL FADE'S
+  // colour at full opacity, not clear sky. They used to write "no cloud,
+  // nothing absorbed", which let whatever the dome drew in the last
+  // quarter-degree through the lid - under Dynamic Skies the bare
+  // in-scattering strip, a hard red line at dusk under a full overcast.
+  // The far early-out below already answers uHorizonColor; this is the
+  // same answer for the near one.
+  if (dir.y <= 0.004) { outColor = vec4(uHorizonColor, 0.0); return; }
   // the march covers the slab, or the first 24 km of it at a grazing
   // angle - the aerial fade takes the rest, so the deck reaches the
   // horizon instead of stopping short of it in a rim of bare dome
   float t0 = uSlabBase / dir.y, t1 = min(uSlabTop / dir.y, t0 + 24000.0);   // WEATHER2c: the union slab
   if (t0 > 120000.0) { outColor = vec4(uHorizonColor, 0.0); return; }
   float ds = (t1 - t0) / float(uSteps);
+  float coarse = ds * 3.0;   // VC6d: the stride over empty air
   float t = t0 + ds * hash12(gl_FragCoord.xy);
   float cosTheta = dot(dir, uLightDir);
   float phase = min(mix(hg(cosTheta, 0.55), hg(cosTheta, -0.1), 0.4) * 4.0 * PI, 2.5);   // the average over the sphere is 1; the forward peak capped
+  // ═══ VC6b: THE LOW SUN ══════════════════════════════════════════════
+  // Mac: "in the evening when the sun is setting and the sky is golden,
+  // clouds arent influenced by the sun". Three terms, all of them
+  // WEIGHTED BY HOW LOW THE SUN IS and all of them zero by day, so noon
+  // is the picture it was:
+  //   low    - 0 above 17 degrees, 1 at and below the horizon, and 0
+  //            at night: it is computed on the CPU (duskWeight) from
+  //            the SUN's own direction and weight, never from
+  //            uLightDir, which is the MOON's once the sun is down.
+  //   toward - 0 looking away from the sun, 1 looking at it. At dusk
+  //              the sky is not one colour: the half of it the sun is in
+  //              is gold and the other half is blue, and a cloud takes
+  //              whichever half it stands in.
+  //   sideLit- by day the light comes from ABOVE, so a cloud's top is
+  //              lit and its underside is the shade colour; at sunset it
+  //              comes from the SIDE, and the underside is the part that
+  //              burns. The ambient's height ramp rolls over to match.
+  // The direct term's gain opens with it (0.7 -> 1.05): a rim lit by a
+  // sun on the horizon is the brightest thing in the sky.
+  float low = uDusk;
+  float toward = clamp(cosTheta * 0.5 + 0.5, 0.0, 1.0);
+  vec3 duskTint = mix(hue(uSkyTint), hue(uLightColor), toward);
+  float gain = mix(0.7, 1.05, low);
   vec3 cam = vec3(uCamXZ.x, 0.0, uCamXZ.y);
   vec3 col = vec3(0.0);
   float T = 1.0;
+  int empty = 0;   // VC6d: how many steps in a row have found nothing
   resolveAt((cam + dir * t0).xz);   // WEATHER2c: the zone's terms, and the cell at the slab's foot
   for (int i = 0; i < 96; i++) {
-    if (i >= uSteps) break;
+    // VC6d: the ray may now finish BEFORE its step budget (it strides
+    // over empty air) or need a few steps more than it (each stride it
+    // backs out of costs one). The slack is what buys back the second
+    // case - without it a ray that crosses several banks could stop
+    // short of t1 and lose the far one.
+    if (i >= uSteps + ${MARCH_SLACK} || t > t1) break;
     vec3 p = cam + dir * t;
     if (uCellCount > 0) resolveAt(p.xz);   // WEATHER2c: the profile where this step is
     float mip = clamp(t / 12000.0, 0.0, 2.0);
     float rho = density(p, mip);
-    if (rho > 0.0) {
+    // ═══ VC6d: EMPTY-SPACE SKIPPING ═══════════════════════════════════
+    // A scattered sky is mostly air: at a sunny cover of 0.32 most of
+    // the slab a ray crosses holds no cloud at all, and every one of
+    // those steps used to cost the same as a step inside a cloud. After
+    // four empty steps the ray strides three times as far; the step it
+    // first finds cloud on, it backs the stride out and walks in fine,
+    // so the cloud's EDGE is never resolved coarsely - which is the
+    // whole reason a plain 'take bigger steps' would have shown.
+    if (rho <= 0.0) { empty++; t += (empty > 4 ? coarse : ds); continue; }
+    if (empty > 4) { t -= coarse; empty = 0; continue; }
+    empty = 0;
+    {
       float h = clamp((p.y - fBase) / max(fTop - fBase, 1.0), 0.0, 1.0);
       float light = lightMarch(p);
       // the ambient carries the field's own low-frequency structure, so a
       // lid is mottled and an underside is not one flat grey
       float mottle = textureLod(uShape, vec3(p.x + uShift.x - uDrift.x, p.y, p.z + uShift.y - uDrift.y) / MOTTLE_M, 1.0).g;   // WIND4: the same sign as the density above - the mottle rides the same air
+      float sideLit = mix(h, 0.25 * h + 0.75, low);   // VC6b: top-lit by day, whole-lit at dusk
       // WEATHER2c: a cell's grey pulls the lit colour toward the shade's, so a storm under a sunny zone is a storm's colour
-      vec3 ambient = mix(uCloudShade, uCloudLit, h * (1.0 - fGrey)) * (0.75 + 0.5 * mottle) * (1.0 - 0.5 * fDark * (1.0 - h)) * fTint;   // WEATHER2d: the cell's tint
-      vec3 S = uLightColor * light * phase * 0.7 * (1.0 - 0.8 * fDark) * (1.0 - 0.5 * fGrey) * fTint + ambient;
+      vec3 ambient = mix(uCloudShade, uCloudLit, sideLit * (1.0 - fGrey)) * (0.75 + 0.5 * mottle) * (1.0 - 0.5 * fDark * (1.0 - h)) * fTint;   // WEATHER2d: the cell's tint
+      ambient *= mix(vec3(1.0), duskTint, low * 0.8);   // VC6b: gold toward the sun, blue away from it - a hue, never a brightness
+      vec3 S = uLightColor * light * phase * gain * (1.0 - 0.8 * fDark) * (1.0 - 0.5 * fGrey) * fTint + ambient;
       float Ti = exp(-rho * EXT * ds);
       col += T * S * (1.0 - Ti);
       T *= Ti;
@@ -430,6 +620,13 @@ void main() {
   outColor = vec4(T, T, T, 1.0);
 }`;
 
+/** DSH1: how far BELOW the horizon the lid is carried, radians. The
+ *  number to clear is Unity's SKY_GROUND_THRESHOLD (0.01 in sine, the
+ *  width of the strip Dynamic Skies lerps its sky to its ground over);
+ *  this is that with a little room, and small enough that a clear sky's
+ *  ground half is unchanged to the eye. */
+export const HORIZON_SKIRT = 0.012;
+
 /** The composite: the whole sky, one sample per pixel, over the dome. */
 export const COMPOSITE_FS = `#version 300 es
 precision highp float;
@@ -449,9 +646,21 @@ void main() {
   float cy = cos(uYaw), sy = sin(uYaw);
   vec3 dir = normalize(vec3(r1.x * cy + r1.z * sy, r1.y, -r1.x * sy + r1.z * cy));
   float el = asin(clamp(dir.y, -1.0, 1.0));
-  if (el <= 0.0) discard;
+  // DSH1 (2026-09-20, Mac: "The far away horizon is still viewable even
+  // though it's cloudy"): THE LID CLEARS THE HORIZON BY A SKIRT. The
+  // composite discarded at the horizon exactly, and a dome's own last
+  // half-degree is not a half-degree of nothing: under Dynamic Skies it
+  // is the bare in-scattering strip (Unity's procedural skybox lerps sky
+  // to ground over SKY_GROUND_THRESHOLD, 0.57 degrees), which is red at
+  // dusk - so a full overcast lid ended in a hard sunset line wherever
+  // the streamed world did not reach the horizon. The lid now carries
+  // the map's bottom row down over that strip and stops. It is a skirt,
+  // not a floor: past it the dome is the dome again, so nothing about a
+  // clear sky's ground half changes, and only sky pixels reach this pass
+  // at all (the far plane under LEQUAL).
+  if (el <= -${HORIZON_SKIRT}) discard;
   float az = atan(dir.x, dir.z);
-  vec2 uv = vec2(az / (2.0 * PI), el / (0.5 * PI));
+  vec2 uv = vec2(az / (2.0 * PI), max(el, 0.0) / (0.5 * PI));   // DSH1: the bottom row over the skirt
   vec4 c = texture(uMap, uv);
   outColor = vec4(c.rgb * (1.0 + uFlash * 2.0), c.a);
 }`;
@@ -480,8 +689,8 @@ function link(gl, vs, fs) {
 }
 
 /** The field's uniforms, shared by both marches. */
-export const FIELD_UNIFORMS = ['uShape', 'uDetail', 'uCover', 'uSoft', 'uBase', 'uTop', 'uDensity', 'uFlat', 'uShear', 'uDark', 'uSlabBase', 'uSlabTop', 'uCellCount', 'uCell', 'uCellA', 'uCellB', 'uCellC', 'uDrift', 'uShift', 'uCamXZ'];   // WEATHER2c: uDark moved in (a cell has its own), the slab and the cells added
-export const MARCH_UNIFORMS = [...FIELD_UNIFORMS, 'uMapSize', 'uLightDir', 'uLightColor', 'uCloudLit', 'uCloudShade', 'uHorizonColor', 'uSteps', 'uLightSteps'];
+export const FIELD_UNIFORMS = ['uShape', 'uDetail', 'uCover', 'uSoft', 'uBase', 'uTop', 'uDensity', 'uFlat', 'uShear', 'uDark', 'uVary', 'uSlabBase', 'uSlabTop', 'uCellCount', 'uCell', 'uCellA', 'uCellB', 'uCellC', 'uDrift', 'uShift', 'uCamXZ'];   // WEATHER2c: uDark moved in (a cell has its own), the slab and the cells added; VC6a: uVary
+export const MARCH_UNIFORMS = [...FIELD_UNIFORMS, 'uMapSize', 'uLightDir', 'uLightColor', 'uCloudLit', 'uCloudShade', 'uHorizonColor', 'uSkyTint', 'uDusk', 'uSteps', 'uLightSteps'];   // VC6b: uSkyTint, uDusk
 export const SHADOW_UNIFORMS = [...FIELD_UNIFORMS, 'uMapSize', 'uOrigin', 'uExtent', 'uLightDir', 'uSteps'];
 export const COMPOSITE_UNIFORMS = ['uMap', 'uYaw', 'uPitch', 'uTanHalfFov', 'uAspect', 'uFlash'];
 
@@ -594,7 +803,7 @@ export class VolumetricClouds {
     const sx0 = Math.max(0, dx), sx1 = Math.min(n, n + dx), sy0 = Math.max(0, dz), sy1 = Math.min(n, n + dz);
     gl.blitFramebuffer(sx0, sy0, sx1, sy1, sx0 - dx, sy0 - dz, sx1 - dx, sy1 - dz, gl.COLOR_BUFFER_BIT, gl.NEAREST);
     gl.bindFramebuffer(gl.READ_FRAMEBUFFER, null);
-    gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, null);
+    gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, frameTarget());   // EL4: the frame, or the canvas
     this.shadowMap = dst; this.shadowScratch = src;
     this.mapOrigin = [this.origin[0], this.origin[1]];
     this.pendingShift = null;
@@ -620,7 +829,7 @@ export class VolumetricClouds {
     gl.uniform1f(u.uCover, r.cover); gl.uniform1f(u.uSoft, r.soft);
     gl.uniform1f(u.uBase, p.base); gl.uniform1f(u.uTop, p.top); gl.uniform1f(u.uDensity, p.density);
     gl.uniform1f(u.uFlat, p.flat); gl.uniform1f(u.uShear, p.shear);
-    gl.uniform1f(u.uDark, p.dark);
+    gl.uniform1f(u.uDark, p.dark); gl.uniform1f(u.uVary, p.vary ?? 0);   // VC6a
     // WEATHER2c: the union slab and the cells
     const slab = slabOf(p, this.cells);
     gl.uniform1f(u.uSlabBase, slab.base); gl.uniform1f(u.uSlabTop, slab.top);
@@ -638,7 +847,7 @@ export class VolumetricClouds {
   update(viewport) {
     if (!this.state || !this.profile) return;
     const gl = this.gl, q = this.q, s = this.state, p = this.profile;
-    const light = cloudLight(s);
+    const light = cloudLight(s, p);   // VC6b: the slab it falls on decides how far past the horizon it reaches
     gl.disable(gl.DEPTH_TEST); gl.depthMask(false); gl.disable(gl.CULL_FACE); gl.disable(gl.BLEND);
     gl.bindVertexArray(this.vao);
     if (this.pendingShift) this._shiftShadowMap(this.pendingShift[0], this.pendingShift[1], viewport);
@@ -653,6 +862,8 @@ export class VolumetricClouds {
       gl.uniform3fv(u.uLightDir, light.dir); gl.uniform3fv(u.uLightColor, light.color);
       gl.uniform3fv(u.uCloudLit, s.cloudLit); gl.uniform3fv(u.uCloudShade, s.cloudShade);
       gl.uniform3fv(u.uHorizonColor, s.horizon);
+      gl.uniform3fv(u.uSkyTint, s.zenith);   // VC6b: the sky that lights the side the sun does not
+      gl.uniform1f(u.uDusk, duskWeight(s.sunDir[1], light.day));   // VC6b: the SUN's own angle and weight - zero at night, so the whole slice is off
       gl.uniform1i(u.uSteps, q.steps); gl.uniform1i(u.uLightSteps, q.light);
       withTarget(gl, this.map, viewport, () => {
         gl.viewport(0, y0, q.width, Math.min(rows, q.height - y0));

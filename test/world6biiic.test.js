@@ -18,6 +18,7 @@ import { readFileSync } from 'node:fs';
 import { validFoeRecord } from '../src/net/wire.js';
 import { createExteriorFoes } from '../src/scenes/exteriorFoes.js';
 import { generateItems, validLootList } from '../src/systems/loot.js';
+import { makeHitPend } from '../src/net/hitPend.js';   // LOOT-DUP: the REAL hit queue, whose boolean is the defect
 
 const rd = (p) => readFileSync(new URL('../' + p, import.meta.url), 'utf8');
 function craftCfg() { const b = new Uint8Array(74); const v = new DataView(b.buffer); b[10] = 0x08; v.setUint16(52, 4, true); const attrs = [40, 50, 50, 85, 50, 50, 90, 55]; for (let i = 0; i < 8; i++) v.setUint16(58 + i * 2, attrs[i], true); return b; }
@@ -32,7 +33,7 @@ const poolFor = (pe, said) => createExteriorFoes({
   fetchBytes: async (n) => { if (n === 'MONSTER.BSA') return bsa; throw new Error(`no ${n}`); }, getTexture: async () => stubTex, uploadRecordFrame: () => {},
   currentMinute: () => 0, currentPixelKey: () => '3,12', playerEntity: pe, audio: null, onPlayerHurt: () => {}, rolls: () => 0.5, rand: () => 0.5, spellsByIndex: () => null, say: (l) => said.push(l),
 });
-const netFor = (me, hits, peers) => ({ room: () => 'world:3,12', inRoom: () => false, selfId: () => me, peers: () => peers, now: () => 0, staleMs: 0, onPeerHit: (h) => { hits.push(h); return true; }, toWire: (f) => [f[0], f[1], f[2]], toScene: (p) => [p[0], p[1], p[2]] });
+const netFor = (me, hits, peers) => ({ room: () => 'world:3,12', inRoom: () => false, selfId: () => me, peers: () => peers, now: () => 0, staleMs: 0, onPeerHit: (h, fate) => { hits.push(h); fate?.sent?.(); return true; }, toWire: (f) => [f[0], f[1], f[2]], toScene: (p) => [p[0], p[1], p[2]] });
 const senses = (pe) => ({ candidates: () => [], playerEntity: pe, playerHeight: 1.8, playerCrouching: false, playerInvisible: false, movingLessThanHalfSpeed: true });
 
 test('WORLD6b-iii(c): the wire - o, the body\'s pile count, a whole number in [0, 255]; else the record refused whole', () => {
@@ -103,7 +104,7 @@ test('WORLD6b-iii(c): the owner\'s body says what it holds (o on the record, 0 a
   const rat2 = await bob.spawnFoe(0, [14, 0, 12], { feetGiven: true });
   rat2.entity.items = pile.map((it) => ({ ...it }));
   bob.damageFoe(rat2, 9999, [10, 0, 10]);
-  bob.setNet({ ...netFor('bob-0002', bobHits, roster), onPeerHit: () => false });
+  bob.setNet({ ...netFor('bob-0002', bobHits, roster), onPeerHit: (h, fate) => { fate?.dropped?.(); return false; } });
   assert.equal(bob.applyHit('mac-0001', { to: 'bob-0002', k: 'world:3,12', i: rat2.seq, take: 1 }), true);
   assert.equal(rat2.entity.items.length, held, 'the frame did not leave: the pile stays');
   // a take for a body I do not have answers nothing on it; a grant that is not a list is refused
@@ -136,11 +137,74 @@ test('WORLD6b-iii(c): a pile larger than one frame is granted in parts - the fir
 
 test('WORLD6b-iii(c): by source - the record and the reader, the target, the ask, the grant emptied only once the frame left, the record', () => {
   const x = rd('src/scenes/exteriorFoes.js');
-  assert.match(x, /o: f\.corpse \? Math\.min\(255, f\.entity\?\.items\?\.length \| 0\) : 0 \};/, 'the record');
+  assert.match(x, /o: onWatch \? 0 : \(f\.corpse \? Math\.min\(255, f\.entity\?\.items\?\.length \| 0\) : 0\) \};/, 'the record (AUDIT WATCH1 A3: a watch body advertises no pile)');
   assert.match(x, /if \(r\.o !== undefined\) \{ p\.o = r\.o; if \(r\.o > 0 && !\(f\._closedN != null && \(_owners\.get\(f\.puppet\)\?\.n \?\? 0\) <= f\._closedN\)\) f\.corpseDisabled = false; \}/, 'the reader (AUDIT WORLD6b-iii(c) A7: a word older than the grant that closed it re-opens nothing)');
   assert.match(x, /isCorpse: \(f\) => !!f\.corpse && !!f\.entity && \(!f\.puppet \|\| \(f\._pup\?\.o \| 0\) > 0\),/, 'the target');
-  assert.match(x, /if \(_net\?\.onPeerHit\?\.\(\{ to: f\.puppet, k: _owners\.get\(f\.puppet\)\?\.k \?\? _net\.room\?\.\(\) \?\? null, i: f\.seq, take: 1 \}\)\) f\._takeAsked = _now\(\);/, 'the ask, keyed to the owner\'s cell, latched when the frame left (AUDIT WORLD6b-iii(c) B1)');
-  assert.match(x, /if \(_net\?\.onPeerHit\?\.\(frame\)\) items\.splice\(0, grant\.length\);/, 'emptied once the frame left, of what went (AUDIT WORLD6b-iii(c) A3/C2)');
+  assert.match(x, /_net\?\.onPeerHit\?\.\(\{ to: f\.puppet, k: _owners\.get\(f\.puppet\)\?\.k \?\? _net\.room\?\.\(\) \?\? null, i: f\.seq, take: 1 \},\s*\{ sent: \(\) => \{ f\._takeAsked = _now\(\); \} \}\);/, 'the ask, keyed to the owner\'s cell, latched when the frame left (AUDIT WORLD6b-iii(c) B1; LOOT-DUP: and left is THIS frame\'s word, not the hit queue\'s)');
+  assert.match(x, /const held = items\.splice\(0, grant\.length\);\s*const back = \(\) => \{ items\.unshift\(\.\.\.held\); \};\s*if \(!_net\?\.onPeerHit\) \{ back\(\); return; \}\s*_net\.onPeerHit\(frame, \{ dropped: back \}\);/, 'LOOT-DUP: the items are RESERVED when the frame is accepted and put back if it never leaves - splicing on the queue\'s boolean granted the same pile twice (AUDIT WORLD6b-iii(c) A3/C2)');
   assert.match(x, /const n = takeCorpseLoot\(\{ entity: \{ items: grant \} \}, playerEntity, say \?\? \(\(\) => \{\}\)\);/, 'the one take law');
   assert.match(rd('bible/06-Systems/Online-Arc.md'), /### 6b-iii\(c\): a puppet's corpse loot/, 'the record');
+});
+
+// LOOT-DUP (2026-09-15, AUDIT ONCRASH1's own finding): THE SAME PILE CANNOT BE GRANTED TWICE.
+//
+// `grantCorpse` emptied the body on `onPeerHit`'s return, and that return is the hit QUEUE's news, not this frame's:
+// a grant that is merely QUEUED answers false and is usually sent a frame later. So the taker's pack filled while
+// the corpse kept the same list, and the next peer to ask that body was granted the same loot again - silent
+// duplication, online only. The items are RESERVED when the frame is accepted now, and put back only if it never
+// leaves. These pins drive the real hit queue, not a stub that always answers true.
+test('LOOT-DUP: a grant queued behind a shut gate does not leave the pile on the body - a second asker is granted NOTHING while it is in flight, and the delivered grant is the only copy (mutant: the splice back on onPeerHit\'s boolean, which granted the same pile to everyone who asked)', async () => {
+  const bobE = playerEntity(), macE = playerEntity(), eveE = playerEntity();
+  const bobSaid = [], macSaid = [], eveSaid = [];
+  const bob = poolFor(bobE, bobSaid), mac = poolFor(macE, macSaid), eve = poolFor(eveE, eveSaid);
+  const roster = [{ id: 'bob-0002', feet: [30, 0, 30], height: 1.8 }, { id: 'mac-0001', feet: [10, 0, 10], height: 1.8 }, { id: 'eve-0003', feet: [12, 0, 10], height: 1.8 }];
+  // THE REAL QUEUE, with a gate we can shut - this is the state the boolean lied about
+  const wire = [];
+  let open = false, at = 0;
+  const pend = makeHitPend({ send: (h) => { if (!open) return false; wire.push(h); return true; }, room: () => 'world:3,12', now: () => at, warn: () => {} });
+  const bobHits = [], macHits = [], eveHits = [];
+  bob.setNet({ ...netFor('bob-0002', bobHits, roster), onPeerHit: (h, fate) => pend.send(h, fate) });
+  mac.setNet(netFor('mac-0001', macHits, roster)); eve.setNet(netFor('eve-0003', eveHits, roster));
+
+  const rat = await bob.spawnFoe(0, [12, 0, 12], { feetGiven: true });
+  const pile = generateItems('M', { level: 10, gender: 'male' }, () => 0.99);
+  rat.entity.items = pile.map((it) => ({ ...it }));
+  const held = rat.entity.items.length;
+  assert.ok(held >= 1);
+  bob.damageFoe(rat, 9999, [10, 0, 10]);
+
+  // Mac asks while the gate is SHUT: the grant is queued, and the body is already empty of what it promised
+  assert.equal(bob.applyHit('mac-0001', { to: 'bob-0002', k: 'world:3,12', i: rat.seq, take: 1 }), true);
+  assert.equal(wire.length, 0, 'the gate is shut: nothing on the wire yet');
+  assert.equal(rat.entity.items.length, 0, 'and the pile is RESERVED - this is the whole fix: it is not on the body to be granted again');
+  // Eve asks for the same body, in that window
+  assert.equal(bob.applyHit('eve-0003', { to: 'bob-0002', k: 'world:3,12', i: rat.seq, take: 1 }), true);
+  // the gate opens: both frames leave, in order
+  open = true;
+  pend.flush(at);
+  const grants = wire.filter((h) => Array.isArray(h.grant));
+  assert.equal(grants.length, 2, 'both askers were answered');
+  assert.equal(grants[0].to, 'mac-0001'); assert.equal(grants[0].grant.length, held, 'the first asker gets the pile');
+  assert.equal(grants[1].to, 'eve-0003'); assert.deepEqual(grants[1].grant, [], 'the second gets NOTHING - it was already in flight');
+  assert.equal(rat.entity.items.length, 0, 'and the body stays empty: one pile, one taker');
+  // one pile left Bob, once - the landing itself is the test above's subject
+  assert.equal(grants[0].grant.length + grants[1].grant.length, held, 'the pile crossed the wire exactly once, whole');
+});
+
+test('LOOT-DUP: a grant that never leaves puts the pile BACK - the frame aged out of the queue, so the body still holds what it promised (mutant: the reservation kept, which loses the loot instead of duplicating it)', async () => {
+  const bobE = playerEntity(), bobSaid = [];
+  const bob = poolFor(bobE, bobSaid);
+  const roster = [{ id: 'bob-0002', feet: [30, 0, 30], height: 1.8 }, { id: 'mac-0001', feet: [10, 0, 10], height: 1.8 }];
+  let at = 0;
+  const pend = makeHitPend({ send: () => false, room: () => 'world:3,12', now: () => at, ms: 100, warn: () => {} });
+  bob.setNet({ ...netFor('bob-0002', [], roster), onPeerHit: (h, fate) => pend.send(h, fate) });
+  const rat = await bob.spawnFoe(0, [12, 0, 12], { feetGiven: true });
+  rat.entity.items = generateItems('M', { level: 10, gender: 'male' }, () => 0.99).map((it) => ({ ...it }));
+  const held = rat.entity.items.length;
+  bob.damageFoe(rat, 9999, [10, 0, 10]);
+  bob.applyHit('mac-0001', { to: 'bob-0002', k: 'world:3,12', i: rat.seq, take: 1 });
+  assert.equal(rat.entity.items.length, 0, 'reserved while it waits');
+  at = 500;
+  pend.flush(at);   // the fight moved on: the frame is dropped
+  assert.equal(rat.entity.items.length, held, 'and the pile is back on the body, whole');
 });

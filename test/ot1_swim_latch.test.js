@@ -10,7 +10,7 @@
 // = false` every frame (shared.js's applyMotorEffectFlags) and nothing
 // above ground ever wrote true. So a sea swim never suppressed the
 // encounter roll (StreamingWorld :488-491 reads IsPlayerSwimming), never
-// refused a rest (355, restSession.js:185), and a dungeon exit onto open
+// refused a rest (355, restSession.js:225), and a dungeon exit onto open
 // water lost the dungeon branch's value on its first exterior frame.
 //
 // DFU has exactly two writers above ground, and the port's own motor

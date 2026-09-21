@@ -171,7 +171,7 @@ test('ECV1: the renderer\'s blended phase - spectral and concealed together, bac
 test('ECV1: the billboard shader declares uConceal and draws each mode - the ripple, the dark shade, the opacity', () => {
   const r = read('src/render/renderer.js');
   // AUDIT 65 PN-3: the template's own interpolation, resolved the way
-  // test/glstate.test.js:301 resolves ${CLOUD_SHADOW_GLSL} - so the regex
+  // test/glstate.test.js:320 resolves ${CLOUD_SHADOW_GLSL} - so the regex
   // below can spell the NUMBER the shader compiles with.
   const fs = r.slice(r.indexOf('const BB_FS = `'), r.indexOf('`;', r.indexOf('const BB_FS = `')))
     .replace(/\$\{SHADE_DARK\}/g, String(SHADE_DARK));
@@ -196,7 +196,7 @@ test('ECV1: every foe host asks foeDraw where A5 skipped, stamps the hit where d
     assert.match(s, /const ecv = foeDraw\(\w+, ecvOn, _ecvT\);\s*\n\s*if \(ecv\.kind === 'hidden'\) continue;\s*\n\s*\w+\.batch\.conceal = ecv\.kind === 'conceal' \? ecv\.visual : null;/, `${h}: the draw asks, skips hidden, and hands the visual to the batch`);
     assert.doesNotMatch(s, /isMagicallyConcealed/, `${h}: the A5 question lives in foeDraw now - no stray import`);
     assert.doesNotMatch(s, /if \(isMagicallyConcealed\(\w+\.entity\)\) continue;/, `${h}: the bare A5 skip is inside foeDraw now`);
-    assert.match(s, /if \(damage > 0\) markConcealedHit\(\w+, _ecvT\);/, `${h}: a landed blow stamps the clock`);
+    assert.match(s, /if \(damage > 0(?: && !peer)?\) markConcealedHit\(\w+, _ecvT\);/, `${h}: a landed blow stamps the clock (AUDIT WATCH1 A4: the watch's door, never for a peer's blow)`);
     assert.match(s, /_ecvT \+= dt;/, `${h}: the clock ticks`);
     assert.match(s, /const ecvOn = combatVisualsOn\(\);/, `${h}: the switch is read once per frame`);
   }

@@ -59,7 +59,7 @@ import { liveStat } from './statMods.js';
 import { registerFormulaOverride, dice100 } from '../combat/formulas.js';
 import { createWeapon } from '../combat/enemyEquipment.js';
 import { createRandomArmor } from './loot.js';
-import { mintCondition, itemBaseValue, templateByIndex } from './itemTemplates.js';
+import { mintCondition, setItemFields } from './itemTemplates.js';   // MAC-N1: SetItem's name + value, the one export
 import { registerEnemyDeathHandler } from '../scenes/corpseMarker.js';
 import { GOLD_TEMPLATE } from './inventory.js';
 
@@ -253,7 +253,7 @@ function dropArmor(loot, material, rolls) {
   loot.push(item);
   return item;
 }
-const named = (item) => ({ ...item, name: item.name ?? templateByIndex(item.templateIndex)?.name, value: item.value ?? itemBaseValue(item) });
+const named = setItemFields;   // MAC-N1: was a second copy of loot.js's `named`; ONE DFU MEMBER, ONE EXPORT
 /** AddDaedric: the Lord over 70, the Seducer over 75 (always a weapon),
  *  the Fire and Frost Daedra and the Daedroth over 80. */
 export function addDaedric(loot, enemyId, rolls) {

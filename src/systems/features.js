@@ -68,8 +68,13 @@ export const GROUPS = Object.freeze({
   world: Object.freeze({ label: 'The world' }),
   loot: Object.freeze({ label: 'Loot & items' }),
   combat: Object.freeze({ label: 'Combat' }),
+  // ORL1 (2026-09-17): the fifth group. A leveling system is not what
+  // you see, where you are, what you carry or how you fight - it is
+  // what you BECOME, and filing it under any of the four would have
+  // been filing it under the nearest one rather than the right one.
+  character: Object.freeze({ label: 'Your character' }),
 });
-export const GROUP_ORDER = Object.freeze(['sight', 'world', 'loot', 'combat']);
+export const GROUP_ORDER = Object.freeze(['sight', 'world', 'loot', 'combat', 'character']);
 
 /** WM3: the Windmills pack's switch key. It is declared HERE with its
  *  row (RF4's law) rather than in `world/windmills.js`, because that
@@ -103,12 +108,21 @@ const modFeature = (vendor, effect, group) => {
 
 /** FT14 (2026-09-15) - WHAT A MOD'S TILE SHOWS, AND WHAT IT DOES NOT.
  *
- *  The eight vendored mods carry 125 settings keys between them -
- *  Handheld Torches alone has 53 and the Weapon Widget 42, which is
- *  two thirds of the total in two mods. That is the real reason the
- *  Mods pane was a scroll, and no amount of layout fixes a list that
- *  long. So the tile shows the few a player would actually move (46 of
- *  the 125), and the other 79 keep the values the mod ships.
+ *  The eight vendored mods carried 125 settings keys between them when
+ *  this was written - Handheld Torches alone had 53 and the Weapon
+ *  Widget 42, which was two thirds of the total in two mods. That is
+ *  the real reason the Mods pane was a scroll, and no amount of layout
+ *  fixes a list that long. So the tile shows the few a player would
+ *  actually move (46 of the 125 then), and the rest keep the values the
+ *  mod ships.
+ *
+ *  ORL1 (2026-09-17) RE-COUNTED RATHER THAN RE-WORDED: thirteen mods,
+ *  227 keys, 65 shown. The ratio held as the list grew, which is the
+ *  only thing the paragraph above was ever claiming - but a count in
+ *  prose is a claim like any other, and leaving the old one standing
+ *  would have read as the live number. The numbers are derivable
+ *  (MOD_SETTINGS, modModules + modDials), so nothing here is the
+ *  authority for them; they are here to be read beside the argument.
  *
  *  TWO SHAPES, because the mods have two. A key under `Modules.` is a
  *  SUB-FEATURE the mod can turn off whole (the Widget's nine: its
@@ -132,6 +146,9 @@ export const MOD_CURATED = Object.freeze({
   'dynamic-skies': Object.freeze(['ActivatePixelSnow', 'densitySetting', 'MinParticleSize',
     'MaxParticleSize', 'MaxParticles']),
   'weapon-widget': Object.freeze(['Swings.Speed', 'Bob.Length', 'Inertia.Scale']),
+  // SW1: the three a player reaches for first - how big the shield sits,
+  // where it sits, and what it does when the weapon comes out.
+  'shield-widget': Object.freeze(['Shield.Scale', 'Shield.OffsetHorizontal', 'Shield.WhenAttacking']),
   'handheld-torches': Object.freeze(['Handling.RememberLastLightSource', 'Handling.StowWhenSpellcasting', 'Bob.Length']),
   pcaao: Object.freeze(['equipmentDamageEnhanced', 'fadingEnchantedItems', 'armorHitFormulaRedone',
     'criticalStrikesIncreaseDamage', 'conditionBasedEffectiveness', 'softMaterialRequirements',
@@ -139,6 +156,40 @@ export const MOD_CURATED = Object.freeze({
   unleveledLoot: Object.freeze(['Iron', 'Steel', 'Silver', 'Elven', 'Dwarven', 'Mithril',
     'Adamantium', 'Ebony', 'Orcish', 'Daedric']),
   'roads-hazelnut': Object.freeze(['SmoothRoads', 'RiversAndStreams']),
+  // TO1: the mod ships FIFTY-ONE keys across twelve sections, so this
+  // one is curated hard. The five are what a player reaches for first:
+  // whether a cautious trip is walked, whether a ship needs a port,
+  // what a location does to a journey in progress, how fast it may run,
+  // and which key follows a road. Everything else - the fourteen dot
+  // colours, the junction map's placement, the fare scaling - stays in
+  // the mod's own pane.
+  'travel-options': Object.freeze([
+    'CautiousTravel.PlayerControlledCautiousTravel', 'ShipTravel.OnlyFromPorts',
+    'GeneralOptions.LocationPause', 'TimeAcceleration.AccelerationLimit',
+    'RoadsIntegration.FollowPathsKey',
+  ]),
+  'ambient-text': Object.freeze(['textChance', 'interval', 'postTextInterval', 'textDisplayTime']),   // AT0: all four it ships - the mod is small enough that curation would only hide something
+  // EOTB0: the mod ships FIFTY-FOUR keys across nine sections, so this
+  // one IS curated, and the four are the ones a player reaches for
+  // first: how far back the camera sits, which shoulder it sits over,
+  // how fast it follows, and how big you are drawn. Everything else
+  // stays in the mod's own pane.
+  'eye-of-the-beholder': Object.freeze(['Camera.LongitudinalDistance', 'Camera.FrontalPlaneOffset',
+    'Camera.Speed', 'Animation.BillboardScale']),
+  // IF1: the clip quality and the two volumes are what a player reaches for.
+  'immersive-footsteps': Object.freeze(['AudioQualitySettings.SoundClipQuality', 'FootstepSettings.FootstepVolumeMulti', 'ArmorSwaySettings.ArmorSwayVolumeMulti']),
+  // BA1: the footsteps switch (off beside Immersive Footsteps), the echo, the darkness.
+  'better-ambience': Object.freeze(['Better Footsteps.enable', 'Dungeon Reverb.level', 'Dungeon Lighting.dungeonDarkness']),
+  // ORL1: the mod ships SEVEN knobs and `primarySkillsImpact` is the
+  // port's own eighth (Daggerfall has a tier of chosen skills Morrowind
+  // does not). All eight are on the tile - the
+  // same call Ambient Text's row made, and for the same reason. These
+  // are not presentation dials a player sets once; they are the rules
+  // of the leveling system, and hiding four of them would leave a
+  // player unable to see why their bar fills at the rate it does.
+  'oblivion-remaster-leveling': Object.freeze(['attributePoints', 'maxUpdatableAttribute',
+    'allowLuckIncrease', 'luckIncreaseCost', 'primarySkillsImpact', 'majorSkillsImpact',
+    'minorSkillsImpact', 'miscSkillsImpact']),
 });
 
 /** The `Modules.` keys a vendor ships, in the mod's own order - the
@@ -267,6 +318,21 @@ export const FEATURES = Object.freeze([
     kinds: Object.freeze(['enhanced']),
     control: Object.freeze({ store: 'prefs', key: 'enhancedWater', initial: true, online: true }),   // WATER1: on by default like the other enhanced visuals; `?water=off` the kill door
   }),
+  // EL1 (2026-09-17, the Enhanced Lighting arc, tier one): the renderer's
+  // lit world on a linear pipeline - render/enhancedLighting.js carries
+  // the law; `?lighting=classic` is the kill door.
+  Object.freeze({
+    id: 'enhanced-lighting',
+    group: 'sight',
+    title: 'Enhanced lighting',
+    note: 'Light that adds the way light does: textures and lights in linear colour under a tonemap, forty-eight lanterns '
+      + 'with a flame\u2019s warmth falling off by the inverse square, fog that glows where their light crosses it, the '
+      + 'sun\u2019s and the nearest torch\u2019s shadows, ambient occlusion in the corners, bloom on windows and flames, and '
+      + 'shafts of sunlight. Off is Daggerfall Unity\u2019s flat shading.',
+    effect: 'Takes effect when the world next loads.',
+    kinds: Object.freeze(['enhanced']),
+    control: Object.freeze({ store: 'prefs', key: 'enhancedLighting', initial: true, online: true }),
+  }),
   // FT7 (2026-09-14): THE TWO QUALITY TIERS OF THE ENHANCED OUTDOORS
   // (PERF1) - the grass field's fraction and the clouds' march. Both
   // are inert unless the outdoors row above is on (world.js gates the
@@ -291,6 +357,27 @@ export const FEATURES = Object.freeze([
     effect: 'Takes effect when the world next loads.',
     kinds: Object.freeze(['enhanced']),
     control: Object.freeze({ store: 'prefs', key: 'cloudQuality', initial: 'default', online: 'player', tiers: Object.freeze([['default', 'Default'], ['lo', 'Low'], ['hi', 'High']]) }),   // PERF1: volumetricClouds.js QUALITY; a dial, the player's online
+  }),
+  // GRAIN2 (2026-09-19, Mac: "Why dont we crank it to 16?"): GROUND
+  // SHARPNESS. GRAIN1 mipmapped the terrain tiles, which took the grain
+  // off the distance and put a little blur in its place at a grazing
+  // angle - and terrain is grazing almost everywhere. Anisotropy is the
+  // one filtering term that buys that sharpness back, and how much of it
+  // to ask for is a MACHINE's question, not a number to guess at once
+  // for everybody: it is paid in fill rate, on the pass that covers the
+  // most screen. 4x was a conservative default and nothing more. This is
+  // the dial, so a machine with room can take the driver's maximum and a
+  // laptop can drop to the mipmap alone. The player's own online, as the
+  // cloud dial is.
+  Object.freeze({
+    id: 'ground-sharpness',
+    group: 'sight',
+    title: 'Ground sharpness',
+    note: 'How sharply the ground reads into the distance, where a mipmapped tile would otherwise soften. '
+      + 'Off is the mipmap alone; Maximum is whatever the driver allows.',
+    effect: 'Takes effect when the world next loads.',
+    kinds: Object.freeze(['enhanced', 'classic']),
+    control: Object.freeze({ store: 'prefs', key: 'groundSharpness', initial: 'default', online: 'player', tiers: Object.freeze([['off', 'Off'], ['default', 'Default (4x)'], ['max', 'Maximum']]) }),
   }),
   // FT8 (2026-09-14): ENHANCED COMBAT VISUALS (ECV1) - what the enhanced
   // skin DRAWS for a concealed foe; the rules are DFU's either way. The
@@ -345,15 +432,45 @@ export const FEATURES = Object.freeze([
     kinds: Object.freeze(['enhanced']),
     control: Object.freeze({ store: 'prefs', key: 'windWisps', initial: true, online: 'player' }),   // WIND3: render/windWisps.js wispsOn
   }),
+  // ES1 (2026-09-16, Mac: "lump this in as a new enhanced toggle. Enhanced
+  // Sounds, add the wind noise to it"): WIND3's `wind-sound` row IS this
+  // row now - one switch over the port's own sounds (systems/
+  // enhancedSounds.js): the wind loop, and the enhanced inventory's
+  // transfer cues (MAC-O6). The kill door `?windaudio=off` still silences
+  // the wind alone.
   Object.freeze({
-    id: 'wind-sound',
+    id: 'enhanced-sounds',
     group: 'world',
-    title: 'Wind sound',
-    note: 'A quiet wind under the enhanced outdoors, from Daggerfall\u2019s own clips, rising and falling with its '
-      + 'strength. Never more than a murmur, and silent indoors.',
+    title: 'Enhanced sounds',
+    note: 'The sounds the port adds under the enhanced skin: a quiet wind outdoors from Daggerfall\u2019s own clips, '
+      + 'rising and falling with its strength and silent indoors, and the gold clink and click when you take or '
+      + 'store items in the enhanced inventory.',
     effect: 'Takes effect at once.',
     kinds: Object.freeze(['enhanced']),
-    control: Object.freeze({ store: 'prefs', key: 'windSound', initial: true, online: 'player' }),   // WIND3: systems/windAudio.js windSoundOn
+    control: Object.freeze({ store: 'prefs', key: 'soundEnhancements', initial: true, online: 'player' }),   // ES1: systems/enhancedSounds.js enhancedSoundsOn; windAudio.js windSoundOn rides it
+  }),
+  // MAC-I + MAC-P (2026-09-17, Mac: "The classic sprite should react to
+  // lighting (first person)" and "morrowind's first person view also
+  // doesn't receive lighting and is consistently dark"): the viewmodel
+  // takes the room's light, in BOTH lanes. FPSWeapon.Tint is DFU's own
+  // channel for the sprite and DFU core never writes it (FPSWeapon.cs:108,
+  // :182) - that is the First-Person Lighting mod's job there; the
+  // Morrowind arms had a fixed STUDIO light, right for a UI picture and
+  // wrong for a thing standing in the world. One answer feeds both
+  // (render/renderer.js flatLightAt, the FLAT's own four terms at the
+  // camera). On by default, because a hand that ignores the dark is the
+  // thing that was reported; off returns the white DFU draws and the
+  // studio the arms had.
+  Object.freeze({
+    id: 'first-person-lighting',
+    group: 'sight',
+    title: 'First-person lighting',
+    note: 'What you hold in first person takes the light of the room you are in: the classic weapon sprite, the '
+      + 'casting hands and the torch in your off hand, and the Morrowind arms, which were lit by a fixed studio '
+      + 'and read dark everywhere.',
+    effect: 'Takes effect at once.',
+    kinds: Object.freeze(['enhanced', 'classic']),
+    control: Object.freeze({ store: 'prefs', key: 'firstPersonLighting', initial: true, online: 'player' }),   // MAC-I: combat/weaponRig.js fpLightingOn
   }),
   Object.freeze({
     id: 'flora-sway',
@@ -413,11 +530,66 @@ export const FEATURES = Object.freeze([
   }),
   modFeature('seasons-iliac-bay', 'Takes effect when the world next loads.', 'world'),
   modFeature('roads-hazelnut', 'Takes effect when the world next loads.', 'world'),
+  // TO1 (2026-09-17): TRAVEL OPTIONS - `world`, because what it changes
+  // is how you cross it. The effect line is honest about the one half
+  // that is not immediate: the settings are read ONCE at world load
+  // (the mod's own "won't take effect without restarting DFU" keys are
+  // its roads integration and its junction map), so a switch flipped
+  // mid-session reaches the NEXT world.
+  modFeature('travel-options', 'Takes effect when the world next loads.', 'world'),
   modFeature('meanerMonsters', 'Takes effect on monsters spawned after the switch.', 'combat'),
   modFeature('pcaao', 'Takes effect at once.', 'combat'),
   modFeature('unleveledLoot', 'Takes effect on the next roll.', 'loot'),
   modFeature('weapon-widget', 'Takes effect at once.', 'combat'),   // WW1: the widget reads its switches every frame
+  modFeature('shield-widget', 'Takes effect at once.', 'combat'),   // SW1: the same - every switch is read on the frame
   modFeature('handheld-torches', 'Takes effect at once.', 'loot'),   // HT1: the component reads its switches every frame
+  // AT0 (2026-09-15): AMBIENT TEXT - `world`, because what it talks
+  // about is where you are. Its effect line is the mod's own pacing:
+  // off falls silent at once, and on hands the mod back a clock that
+  // has been running the whole time (AT1 - the interval keeps running
+  // while the mod is quiet, exactly as it does while you are indoors).
+  modFeature('ambient-text', 'Takes effect at once. The mod then speaks on its own clock.', 'world'),
+  // EOTB0 (2026-09-15): EYE OF THE BEHOLDER - third person for a
+  // player with no Morrowind data (Mac: "This is moreso for those who
+  // opt out of using morrowind"). Filed under `world` rather than
+  // `combat`: it changes where you see the whole game from, not how a
+  // blow lands. The effect line is honest about the one thing that is
+  // not immediate - the view itself is the WHEEL's now (EOTB4), so
+  // turning the row on does not move the camera until the player
+  // scrolls.
+  modFeature('eye-of-the-beholder', 'Takes effect at once. Scroll out to leave first person.', 'world'),
+  // IF1 (2026-09-16): IMMERSIVE FOOTSTEPS - the component reads its
+  // switches every frame; the stride is the mod's the moment its clips are
+  // decoded (a fetch here, where the mod's LoadAudio is synchronous).
+  modFeature('immersive-footsteps', 'Takes effect at once.', 'world'),
+  // BA1 (2026-09-16): BETTER AMBIENCE - read every frame; the dungeon's fog
+  // and light are rolled at the door, so those two land on the next dungeon.
+  modFeature('better-ambience', 'Takes effect at once. A dungeon\u2019s fog and light are rolled at its door.', 'world'),
+  // WS1 (2026-09-17): WEAPON SHEATHING - Greatness7's scabbards and the
+  // OpenMW mechanism, on the port's Morrowind third-person body. The
+  // switch is the port's own pref (the mod ships no settings of its own);
+  // RF4: declared here, once, the shelf's default and the online answer
+  // riding the row. Forced on online as the arms are (mwArms), so every
+  // body a peer sees wears its blade the same way.
+  Object.freeze({
+    id: 'mod-weapon-sheathing',
+    group: 'combat',
+    title: 'Weapon Sheathing',
+    note: 'With Morrowind assets on, a sheathed weapon stays on the body - on the hip or the back, in the scabbard Greatness7\u2019s Weapon '
+      + 'Sheathing ships for it, with a quiver for a bow. Off, a lowered weapon vanishes as in vanilla Morrowind.',
+    effect: 'Takes effect when the Morrowind body next builds; the Mods page\u2019s switch rebuilds it at once.',
+    kinds: Object.freeze(['mod']),
+    control: Object.freeze({ store: 'prefs', key: 'mwSheathing', initial: true, online: true }),
+  }),
+  // ORL1 (2026-09-17): OBLIVION-REMASTER-LIKE LEVELING - the first
+  // Morrowind mod, and the only row whose effect line has to say NEXT
+  // CHARACTER. Every other mod's switch lands on the running game; this
+  // one decides whether a character is ASKED the question at creation,
+  // and the answer then rides that character's save. Turning it off
+  // does not convert a character who is already levelling by virtues,
+  // and saying so on the tile is the honest line - the alternative is a
+  // player flipping the switch mid-game and wondering why nothing moved.
+  modFeature('oblivion-remaster-leveling', 'Takes effect on the next character you make; a character keeps the system they were created with.', 'character'),
   // FT10 (2026-09-14): DFU'S OWN DUNGEON ENHANCEMENTS - three of the
   // Enhancements section's switches, each read by the port at the point
   // of use as DFU reads it. DFU Classic: Daggerfall Unity's departures
@@ -509,6 +681,99 @@ export const FEATURES = Object.freeze([
     effect: 'Takes effect on the next dungeon you enter.',
     kinds: Object.freeze(['classic']),
     control: Object.freeze({ store: 'settings', key: 'Video/RandomDungeonTextures' }),
+  }),
+  // QS (2026-09-17, Mac: the Demon's Souls diamond, "slots for the
+  // mainhand/secondhand, consumable"): THE QUICKSLOT DIAMOND's switch.
+  // The switch hides the DIAMOND alone - the three keys and the tooltip's
+  // slot buttons keep working, because a player who turns the picture off
+  // has not asked to lose the presses. Enhanced skin only; the classic HUD
+  // never drew one.
+  Object.freeze({
+    id: 'quickslot-diamond',
+    group: 'sight',
+    title: 'Quickslot diamond',
+    note: 'The enhanced HUD\u2019s bottom-left diamond: weapon, off hand and two consumable slots filled from the '
+      + 'inventory tooltip, each with its key. Off hides the diamond; the keys still work.',
+    effect: 'Takes effect at once.',
+    kinds: Object.freeze(['enhanced']),
+    control: Object.freeze({ store: 'prefs', key: 'quickslots', initial: true, online: 'player' }),
+  }),
+  // CAMP1 (2026-09-17, Mac: camps and roaming packs in the wilderness):
+  // an original addition, not a DFU classic feature - the classic game
+  // spawns wandering monsters one at a time. This is a second roll
+  // (systems/campEncounters.js) that places a small group instead. Off
+  // returns the wilderness to lone wanderers; nothing about the
+  // single-encounter roll changes either way.
+  Object.freeze({
+    id: 'wilderness-camps',
+    group: 'world',
+    title: 'Wilderness camps & packs',
+    note: 'Travelling outdoors, a small group of enemies instead of a lone wanderer - a settled camp or a looser '
+      + 'pack crossing your path. Off keeps only the classic one-at-a-time encounters.',
+    effect: 'Takes effect at once.',
+    kinds: Object.freeze(['enhanced']),
+    control: Object.freeze({ store: 'prefs', key: 'wildernessCamps', initial: true, online: 'player' }),
+  }),
+  // SURV2 (2026-09-18, Mac: "All on by default"): THE SURVIVAL ARC -
+  // an overhaul of Ralzar's Climates & Calories (vendor/climates-
+  // calories/README.md), not a port. The one switch for the whole of
+  // it: the felt temperature and the five needs on the world minute,
+  // the food, water and camping items the store shelves and a new
+  // character carries, camps and campfires, the costed rest, hunting.
+  // Off is the classic game: no needs, no provisions minted.
+  // BLOOD1 (2026-09-19, Mac: "I really want to try and build our own
+  // version as close to 1:1 as possible" / "read in how their module
+  // works so we can achieve our own type of parity") - THE PORT'S OWN
+  // blood, and an ENHANCED row rather than a mod row because no mod is
+  // vendored for it. DaggerBlood is the reference for the feel and
+  // nothing else: no code, no art, no Mod-Registry row
+  // (bible/05-Combat/Blood-Arc.md carries the whole of that reasoning),
+  // so there is no author's name to put in the title the way every
+  // `modFeature` row carries one.
+  //
+  // ON by default: the splash has always played, and the mark is what a
+  // player expects to still be there when they walk back through.
+  Object.freeze({
+    id: 'blood-marks',
+    group: 'combat',
+    title: 'Blood stays',
+    note: 'Blood marks the floor and the walls where it landed, and stays there. A glancing blow leaves a spatter and a '
+      + 'near-lethal one a pool; a bloodless foe leaves nothing. The marks are a fixed set that recycles oldest-first, so '
+      + 'they cost the same whether you have fought once or all day. Off keeps the classic splash, which plays and goes.',
+    effect: 'Takes effect at once. The marks already laid stay until the room changes.',
+    kinds: Object.freeze(['enhanced']),
+    // ONLINE IT IS THE PLAYER'S. A mark is a local picture with no
+    // gameplay in it - nobody else's floor changes - so unlike the
+    // survival row, which the room has to agree on, this one every
+    // player answers for themselves.
+    control: Object.freeze({ store: 'prefs', key: 'blood-marks', initial: true, online: 'player' }),
+  }),
+  // BLOOD1b: the killing blow's own row. 175% of a body's health in
+  // one hit is a blow an ordinary fight never lands, so what this
+  // really turns off is the spectacle - which is why it is its own
+  // row and not a second meaning for the one above.
+  Object.freeze({
+    id: 'blood-overkill',
+    group: 'combat',
+    title: 'Overkill',
+    note: 'A blow that takes nearly twice a body\u2019s whole health throws blood far wider than an ordinary kill, and a '
+      + 'warhammer throws it wider still. Off, a killing blow bleeds like any other hit. The marks it leaves are the same '
+      + 'set as every other mark, so this costs nothing extra to keep on.',
+    effect: 'Takes effect at once. Blood already thrown stays where it landed.',
+    kinds: Object.freeze(['enhanced']),
+    // the same reading as the row above: a mark is a local picture
+    // with no gameplay in it, so every player answers for themselves.
+    control: Object.freeze({ store: 'prefs', key: 'blood-overkill', initial: true, online: 'player' }),
+  }),
+  Object.freeze({
+    id: 'mod-climates-calories',   // a mod-row id: WM3's law reaches the credits' vendor through it
+    group: 'character',
+    title: 'Climates & Calories by Ralzar',   // AUDIT SURV E: the author's name, as every mod row carries it
+    note: 'Heat, cold, rain and the road wear you down - eat, drink, sleep and dress for the weather, and rest at a '
+      + 'campfire or a bed. Off is the classic game, with no needs at all.',
+    effect: 'Takes effect at once. Online the room decides.',
+    kinds: Object.freeze(['mod', 'enhanced', 'classic']),   // AUDIT SURV E: a mod row, under the MOD AUTHORED filter
+    control: Object.freeze({ store: 'prefs', key: 'survival', initial: true, online: true }),
   }),
 ]);
 

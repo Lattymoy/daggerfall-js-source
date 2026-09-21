@@ -1,0 +1,114 @@
+[
+  {
+    "name": "U1-borrow-ignored",
+    "file": "src/net/wire.js",
+    "old": "  if (borrow ? bytes < 0 : bytes < cost) return",
+    "new": "  if (bytes < cost) return",
+    "tests": [
+      "test/slam11.test.js",
+      "test/auditworld3.test.js",
+      "test/auditworld2.test.js",
+      "test/auditworld34.test.js",
+      "test/world3.test.js",
+      "test/slam1.test.js"
+    ]
+  },
+  {
+    "name": "U2-debt-not-charged",
+    "file": "src/net/wire.js",
+    "old": "  return { bucket: { bytes: bytes - cost, at: nowMs }, pass: true };",
+    "new": "  return { bucket: { bytes: borrow ? Math.max(0, bytes - cost) : bytes - cost, at: nowMs }, pass: true };",
+    "tests": [
+      "test/slam11.test.js",
+      "test/auditworld3.test.js",
+      "test/auditworld2.test.js",
+      "test/auditworld34.test.js",
+      "test/world3.test.js",
+      "test/slam1.test.js"
+    ]
+  },
+  {
+    "name": "U3-pass-while-in-debt",
+    "file": "src/net/wire.js",
+    "old": "  if (borrow ? bytes < 0 : bytes < cost) return",
+    "new": "  if (borrow ? false : bytes < cost) return",
+    "tests": [
+      "test/slam11.test.js",
+      "test/auditworld3.test.js",
+      "test/auditworld2.test.js",
+      "test/auditworld34.test.js",
+      "test/world3.test.js",
+      "test/slam1.test.js"
+    ]
+  },
+  {
+    "name": "U4-world-back-on-foes-bucket",
+    "file": "server/src/index.js",
+    "old": "        let bucket = this._roomWorld;\n        for (const [other, b] of unseen) {\n          const budget = byteGate(bucket, now, out.length, FOES_ROOM_BYTES_PER_S, true);\n          bucket = budget.bucket;\n          if (!budget.pass) break;   // in debt: the ones not yet served wait for the next publish, unseen\n          this._setAttach(other, { ...b, worldSeen: true }); this._send(other, out);\n        }\n        this._roomWorld = bucket;",
+    "new": "        let bucket = this._roomFoes;\n        for (const [other, b] of unseen) {\n          const budget = byteGate(bucket, now, out.length, FOES_ROOM_BYTES_PER_S, true);\n          bucket = budget.bucket;\n          if (!budget.pass) break;   // in debt: the ones not yet served wait for the next publish, unseen\n          this._setAttach(other, { ...b, worldSeen: true }); this._send(other, out);\n        }\n        this._roomFoes = bucket;",
+    "tests": [
+      "test/slam11.test.js",
+      "test/auditworld3.test.js",
+      "test/auditworld2.test.js",
+      "test/auditworld34.test.js",
+      "test/world3.test.js",
+      "test/slam1.test.js"
+    ]
+  },
+  {
+    "name": "U5-world-no-borrow",
+    "file": "server/src/index.js",
+    "old": "const budget = byteGate(bucket, now, out.length, FOES_ROOM_BYTES_PER_S, true);",
+    "new": "const budget = byteGate(bucket, now, out.length, FOES_ROOM_BYTES_PER_S);",
+    "tests": [
+      "test/slam11.test.js",
+      "test/auditworld3.test.js",
+      "test/auditworld2.test.js",
+      "test/auditworld34.test.js",
+      "test/world3.test.js",
+      "test/slam1.test.js"
+    ]
+  },
+  {
+    "name": "U6-act-no-borrow",
+    "file": "server/src/index.js",
+    "old": "const bytes = byteGate(this._roomActBytes, now, cost, ACT_ROOM_BYTES_PER_S, true);",
+    "new": "const bytes = byteGate(this._roomActBytes, now, cost, ACT_ROOM_BYTES_PER_S);",
+    "tests": [
+      "test/slam11.test.js",
+      "test/auditworld3.test.js",
+      "test/auditworld2.test.js",
+      "test/auditworld34.test.js",
+      "test/world3.test.js",
+      "test/slam1.test.js"
+    ]
+  },
+  {
+    "name": "U7-foes-borrows",
+    "file": "server/src/index.js",
+    "old": "(message.length + a.id.length + 8) * listeners.length, FOES_ROOM_BYTES_PER_S);",
+    "new": "(message.length + a.id.length + 8) * listeners.length, FOES_ROOM_BYTES_PER_S, true);",
+    "tests": [
+      "test/slam11.test.js",
+      "test/auditworld3.test.js",
+      "test/auditworld2.test.js",
+      "test/auditworld34.test.js",
+      "test/world3.test.js",
+      "test/slam1.test.js"
+    ]
+  },
+  {
+    "name": "U8-latched-though-refused",
+    "file": "server/src/index.js",
+    "old": "          if (!budget.pass) break;   // in debt: the ones not yet served wait for the next publish, unseen\n          this._setAttach(other, { ...b, worldSeen: true }); this._send(other, out);",
+    "new": "          this._setAttach(other, { ...b, worldSeen: true }); if (!budget.pass) break;\n          this._send(other, out);",
+    "tests": [
+      "test/slam11.test.js",
+      "test/auditworld3.test.js",
+      "test/auditworld2.test.js",
+      "test/auditworld34.test.js",
+      "test/world3.test.js",
+      "test/slam1.test.js"
+    ]
+  }
+]

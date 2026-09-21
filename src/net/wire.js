@@ -16,6 +16,8 @@
 //                    {t:'foes', data}                   the host's live foes, FOES_HZ_MAX a second at most (WORLD2)
 //                    {t:'hit', data}                    a blow on the host's foe, from anyone but the host (WORLD2)
 //                    {t:'act', data}                    a change to the room's doors, levers, movers and loot, from anyone in it (WORLD3/WORLD4)
+//                    {t:'social', k, acct?, peer?, party?}   a friend or party act, in the HUB alone (SOC1): SOCIAL_HZ_MAX a second
+//                    {t:'party', p}                     my party pose - where I stand and how I fare - to the hub (SOC1): PARTY_HZ_MAX a second
 //   room -> client:  {t:'welcome', id, peers:[{id,name,look,pose}], host, world, now}   now: the relay's clock, ms (WORLD5)
 //                    {t:'join', id, name, look, pose}   {t:'leave', id}
 //                    {t:'pose', id, p}                  {t:'pong'}
@@ -26,6 +28,8 @@
 //                    {t:'hit', id, data}                a blow on the host's foe, to the host alone (WORLD2)
 //                    {t:'act', id, data}                a change to the room's doors, levers, movers and loot, to everyone but its author (WORLD3/WORLD4)
 //                    {t:'error', m}                     then the socket closes
+//                    {t:'social', k:'state'|'presence'|'party'|'invite'|'note'|'error', ...}   the hub's word on my friends and my party (SOC1)
+//                    {t:'party', acct, p}               a party member's pose, to the party alone (SOC1)
 // A pose is {x, y, z, yaw, pitch, mv, wd, an, as, am, sr, cn, cr} in the room's frame -
 // a world cell's in MapsFile world units (the streaming world's
 // map-pixel origin, PIXEL_UNITS a pixel), every other room's in the
@@ -127,6 +131,9 @@
 // through the offset, not its own. Nothing local moves it: no rest, no
 // fast travel, no sentence, no ?tod, no ?timescale.
 
+import { wrapAngle } from '../world/mat4.js';   // ONCRASH1: the port's one angle wrap. The relay re-exports this module (server/src/relay.js), so this reaches the worker too - mat4.js imports nothing itself.
+import { nameAllowed } from './nameFilter.js';   // NAME-F2: the filter runs INSIDE sanitizeName, so the relay carries it - nameFilter.js imports nothing, same as mat4.js above, so the worker's graph stays flat
+
 /** WORLD5: the instant the online world stood at the classic game start - 2026-09-14T00:00:00Z. */
 export const ONLINE_EPOCH_MS = Date.UTC(2026, 8, 14, 0, 0, 0);
 /** WORLD5: DaggerfallDateTime.classicGameStartTime in classic minutes (gameDate.js CLASSIC_GAME_START_TIME - pinned equal). */
@@ -187,8 +194,16 @@ export const CHAT_HZ_MAX = 2;
 export const CHAT_STRIKES_MAX = 20;
 /** The most sockets a CHAT room holds - one room hears the whole world, so it runs deeper than a cell's. */
 export const CHAT_SOCKETS_MAX = 2048;
-/** The most hellos a CHANNEL admits a second (AUDIT CHAT A1: the gate is never off; a channel's hello costs no roster, so it runs deeper). */
+/** The most hellos a CHANNEL admits a second (AUDIT CHAT A1: the gate is never off; a channel's hello costs no look and no storage read, so it runs deeper). */
 export const CHAT_HELLO_HZ_MAX = 50;
+/** ROSTER-G (2026-09-16, Mac: "Players dont show in online"): THE CHANNEL HAS A ROSTER, and this is how many names its
+ *  welcome carries. CHAT-R1 asked for "all currently online players" and the panel was wired to the PRESENCE
+ *  session - the peers in the player's own map cell - so a friend two towns over never showed. The one room every
+ *  player is in is the world channel (CHAT_WORLD_ROOM), so its welcome names who is in it ({id, name}, no look, no
+ *  pose - nothing is drawn from a channel) and its join and leave are said. Nearest-first has no meaning in a channel;
+ *  the list is socket order, cut at this many, and `n` in the welcome is the true count so a cut list still says
+ *  how many are online. Above the panel's own ROSTER_ROWS_MAX (200) and a full event (SOCKETS_MAX, 256). */
+export const CHAT_ROSTER_MAX = 512;
 /** The most chat lines a whole CHANNEL relays a second (AUDIT CHAT A2: the fan is every line to everyone - the room's budget, not the socket's). */
 export const CHAT_ROOM_HZ_MAX = 20;
 /** The World tab's room: the one chat channel there is. */
@@ -246,6 +261,15 @@ export const ACT_ROOM_HZ_MAX = 30;
  *  the foes fan's ceiling. A door's honest traffic is a few kilobytes a second even in a full room, so this sits
  *  well above every real cascade and far below the hole. */
 export const ACT_ROOM_BYTES_PER_S = 1024 * 1024;
+/** SLAM13 (2026-09-16, AUDIT SLAM A1): ONE SENDER'S SHARE OF THE ACT FAN. SLAM11 made the room's act bucket borrow so
+ *  a big door lands whole - and a borrowing bucket is a bucket one sender can drive into debt on purpose: a modified
+ *  client sending the largest act (MAX_FRAME_BYTES) to a full room charged 16 KiB x 255 = 4 MiB against a 1 MiB rate,
+ *  four seconds of debt per frame, at ACT_HZ_MAX. Everyone else's doors, levers and chests were refused for as long as
+ *  it kept it up. So a sender's fan is charged to ITS OWN borrowing bucket first, at a sixteenth of the room's rate,
+ *  and only a frame its own bucket admits is charged to the room's: sixteen honest senders fill the room's rate
+ *  exactly, one flooder can hold at most a sixteenth of it, and an honest door (a few KiB to a room) still lands
+ *  whole and at once. */
+export const ACT_SENDER_BYTES_PER_S = ACT_ROOM_BYTES_PER_S / 16;
 /** AUDIT WORLD6b-iii(c) C3: the room's HIT bytes a second, fanned - the hit frame carries a corpse's GRANT since
  *  WORLD6b-iii(c) (up to a frame's worth of items), so the arm that was a 150-byte control channel is a bulk one and
  *  counts its bytes as the foes and the acts do (AUDIT WORLD3 A1's law); over it a blow is dropped, nobody struck. */
@@ -254,26 +278,175 @@ export const HIT_ROOM_BYTES_PER_S = 256 * 1024;
  *  starves a pose) and refused to the caller at home past it. */
 export const ACT_HZ_MAX = 5;
 /** A byte budget: `rate` bytes a second, a second's worth at most; passes when the cost fits, spending it. */
-export function byteGate(bucket, nowMs, cost, rate) {
+/** A byte bucket of `rate` a second.
+ *
+ *  SLAM11 (2026-09-16, AUDIT SLAM): `borrow`. The bucket is CAPPED at `rate`, so without it a single charge larger than
+ *  `rate` can never pass - not slowly, NEVER, however long the caller waits - and three arms charged a whole fan
+ *  (`frame x listeners`) indivisibly. The dungeon's memory push at 200 players with a 100 KiB memory was 19.5 MiB
+ *  against a 4 MiB cap: 0 of 199 sockets were ever handed the room's memory, it latched nothing and retried the same
+ *  unpayable sum on every publish, and doors, levers and emptied containers silently never synced. The act fan had
+ *  the same cliff at ~5 KiB while `actFrameFits` told its author 16 KiB would land.
+ *
+ *  With `borrow`, a frame passes when the bucket is not IN DEBT (`bytes >= 0`) and takes the bucket negative by
+ *  whatever it costs; nothing else passes until the rate has repaid the debt. The RATE law holds on average, the
+ *  debt is bounded by one fan (nothing passes while negative), and a must-deliver fan lands whole rather than
+ *  never. It is for arms whose frame MUST reach everyone and comes rarely - the memory, a door - and NOT for a
+ *  continuous stream like the foes, where one oversized fan would block the next second of frames and dropping
+ *  the frame whole is the kinder failure (the next full frame heals it). */
+export function byteGate(bucket, nowMs, cost, rate, borrow = false) {
   const b = bucket ?? { bytes: rate, at: nowMs };
   const bytes = Math.min(rate, b.bytes + Math.max(0, ((nowMs - b.at) / 1000) * rate));
-  if (bytes < cost) return { bucket: { bytes, at: nowMs }, pass: false };
+  if (borrow ? bytes < 0 : bytes < cost) return { bucket: { bytes, at: nowMs }, pass: false };
   return { bucket: { bytes: bytes - cost, at: nowMs }, pass: true };
 }
 /** Every channel the relay will open (AUDIT CHAT A1: a whitelist - a later tab is a later entry, and nothing else is a channel). */
 export const CHAT_ROOMS = Object.freeze(new Set([CHAT_WORLD_ROOM]));
+
+// SOC1 (2026-09-16, Mac: "A social button next to the chat UI ... friend other users, see if they are online/last
+// online + be able to invite friends or other individuals to the new 4 person party system"): THE HUB'S LAW.
+//
+// WHERE SOCIAL STATE LIVES. Every player online holds one socket in the world channel (CHAT_WORLD_ROOM - the chat's
+// World tab, ROSTER-G's "the one room every player is in"), so that room's Durable Object is the one place that can
+// see everyone at once, and it is THE HUB: friendships, pending requests, presence and last-seen, and the parties
+// live in its storage and nowhere else. A presence room (a cell, a dungeon, a building) learns nothing new and is
+// changed by nothing here - a party member's name is green because the hub told MY client which peer ids are my
+// party's, not because a presence hello said "I am in a party" (a self-declared claim in a room that cannot check it).
+//
+// TWO IDENTITIES, BOTH GUARDED. A PEER id is a tab's (TABS1: minted per tab, so two tabs are two players), which is
+// exactly wrong for a friend list: a friend is a person, and a person is a browser profile that outlives every tab.
+// So a hello to the hub may carry an ACCOUNT id (`acct`) and its secret (`asecret`) beside the peer's - the same
+// shape and the same law as the peer's pair (ID_RE, SECRET_RE; the first hello mints, a later one must match, AUDIT
+// ONLINE A3) - minted once per browser profile (net/online.js accountId, in the app's own storage). The chat link
+// already carries the tab's peer id and secret, so the hub verifies BOTH ends of the mapping peer -> account, and
+// every frame it sends names peers by the ids the presence rooms already show. A client with no account (a build
+// before this slice) is admitted as before: the chat works, the social arms answer 'no account'.
+//
+// WHAT AN ACT NAMES. A social act names its target as `acct` (an account id, from my own lists) or as `peer` (a peer
+// id, the one thing I can see of a stranger in the world - the hub resolves it to the account behind that socket),
+// or as `party` (a party id, from an invite). The hub composes no English for the CHAT: a note is a CODE
+// (NOTE_CODES) and the client says it in words; an `error` is the hub's refusal of ONE act, in words, and closes
+// nothing - a refused friend request is not a protocol violation.
+//
+// THE BOUNDS. FRIENDS_MAX friends, PENDING_MAX requests each way (and PENDING_MAX party invites held), PARTY_MAX
+// in a party, PARTY_INVITES_MAX invites outstanding from one party, an invite good for INVITE_TTL_MS; a seat kept
+// PARTY_OFFLINE_MS after its member drops (a refresh, a blip - the hello brings them straight back), and a party
+// whose every seat has lapsed is gone. Accounts are never forgotten (a friend list that forgets people is worse than
+// the kilobyte a record costs), parties are forgotten when the hub drains (a channel's sweep - nobody is online to
+// hold one).
+/** The hub: the room whose object keeps the social state. The World channel - the one room everyone online is in. */
+export const SOCIAL_ROOM = CHAT_WORLD_ROOM;
+/** Is this key the hub's. */
+export const isSocialRoom = (key) => String(key ?? '') === SOCIAL_ROOM;
+/** The most social acts a socket may send a second (a friend request, an invite, a leave); the same strikes as the poses. */
+export const SOCIAL_HZ_MAX = 2;
+/** The most social acts the whole HUB answers a second, every socket together - an act is a few storage reads and writes,
+ *  and a room-wide bound is what every other arm carries (AUDIT CHAT A2's law); over it the act is refused with 'busy'. */
+export const SOCIAL_ROOM_HZ_MAX = 64;
+/** The most party poses a socket may send a second; the client sends one a second at most, and only when it changed. */
+export const PARTY_HZ_MAX = 2;
+/** The client's own floor between two party poses, ms (half the relay's rate, so a late one never trips the gate). */
+export const PARTY_SEND_MS = 1000;
+/** The most friends an account keeps. */
+export const FRIENDS_MAX = 64;
+/** The most requests an account holds each way, and the most party invites it holds. */
+export const PENDING_MAX = 32;
+/** A party's size - Mac's "4 person party system". */
+export const PARTY_MAX = 4;
+/** The most invites one party has outstanding at once. */
+export const PARTY_INVITES_MAX = 8;
+/** How long a party invite stands before it is nothing. */
+export const INVITE_TTL_MS = 120_000;
+/** How long a party seat is kept for a member that went offline - a page refresh, a dropped line - before it lapses. */
+export const PARTY_OFFLINE_MS = 5 * 60 * 1000;
+/** The most tabs (peer ids) one account is named with in a row - an account with more is not one person. */
+export const ACCOUNT_TABS_MAX = 8;
+/** A place name's bound on a party pose (UTF-16 units). */
+export const PARTY_LOC_MAX = 32;
+/** A hub error's bound (UTF-16 units) - the hub's refusal of one act, in words. */
+export const SOCIAL_ERROR_MAX = 120;
+/** The map's size in pixels - a party pose's `px`/`py` lie on it (MapsFile: 1000 x 500). */
+export const MAP_PIXELS_X = 1000;
+export const MAP_PIXELS_Y = 500;
+/** Every act a client may send the hub, and what each must name: 'acct' an account, 'peer' a peer, 'target' either one, 'party' a party, '' nothing. */
+export const SOCIAL_ACTS = Object.freeze({
+  'friend.request': 'target', 'friend.accept': 'acct', 'friend.decline': 'acct', 'friend.cancel': 'acct', 'friend.remove': 'acct',
+  'party.invite': 'target', 'party.accept': 'party', 'party.decline': 'party', 'party.leave': '', 'party.kick': 'acct',
+});
+/** Every note the hub says, as a code the CLIENT puts words to (net/social.js noteText) - the relay writes no chat line. */
+export const NOTE_CODES = Object.freeze(['friend.requested', 'friend.accepted', 'party.invited', 'party.declined', 'party.joined', 'party.left', 'party.kicked', 'party.leader', 'party.lapsed']);
+/** Every frame the hub sends under t:'social'. */
+export const SOCIAL_KINDS = Object.freeze(['state', 'presence', 'party', 'invite', 'note', 'error']);
+
+// AUDIT SOC (2026-09-16, Mac: "Can we do an audit of everything just merged. Just want it to be perfection"): the
+// hub's four lenses found the bounds SOC1 had not written, and they live here beside the ones it had.
+/** AUDIT SOC A1/A8: the least time between two acts of one KIND at the SAME target from one account - a friend
+ *  request or a party invite re-sent inside it is 'already asked': nothing written, nothing fanned. The room-wide
+ *  chat law bounds what everyone hears; a DIRECTED act costs its target a state frame and a chat line, and a
+ *  request/cancel pair measured as a 40x amplifier aimed at one player. */
+export const SOCIAL_REPEAT_MS = 60_000;
+/** AUDIT SOC A3: an account NOBODY'S LIST NAMES - no friends, no request either way, no live invite, no party - is
+ *  forgotten this long after it was last seen. "A friend list that forgets people is worse than a kilobyte" stands
+ *  for every account a list names; a record no list names dangles nothing when it goes, and without this one script
+ *  at the hello gate's rate minted 4.3 million permanent records a day. */
+export const ACCOUNT_IDLE_MS = 30 * 24 * 3600 * 1000;
+/** AUDIT SOC A3/A4: the hub sweeps on an alarm this often, one bounded page of records and of parties per firing
+ *  (SWEEP_PAGE, the runtime's batch size), and a page that was full is followed SWEEP_STEP_MS later. */
+export const ACCOUNT_SWEEP_MS = 6 * 3600 * 1000;
+export const SWEEP_STEP_MS = 60_000;
+export const SWEEP_PAGE = 128;
+/** AUDIT SOC B3: the client's gate on social frames COMING IN, per room - CHAT-G's law, again: the relay is the
+ *  player's choice, and a frame it pushes faster than an honest hub could is not the port's. An honest hub spends at
+ *  most its room budget in derived frames (SOCIAL_ROOM_HZ_MAX), and the hello gate's rate in presence, so this admits
+ *  an honest hub at full tilt. */
+export const SOCIAL_IN_HZ_MAX = SOCIAL_ROOM_HZ_MAX;
+export const socialInGate = (bucket, nowMs) => tokenGate(bucket, nowMs, SOCIAL_IN_HZ_MAX);
+/** AUDIT SOC B3: a note or an error becomes a CHAT LINE (a line nobody sent), and net/chat.js keeps CHAT_KEEP of them -
+ *  so those two kinds carry a rate of their own, well under the chat's, because an honest hub's notes are bounded by
+ *  the reader's own lists (PENDING_MAX requests, PENDING_MAX invites, a party of four). */
+export const NOTE_IN_HZ_MAX = 10;
+export const noteInGate = (bucket, nowMs) => tokenGate(bucket, nowMs, NOTE_IN_HZ_MAX);
+/** AUDIT SOC B3: the poses of a party's other members, at PARTY_HZ_MAX each. */
+export const PARTY_IN_HZ_MAX = PARTY_HZ_MAX * (PARTY_MAX - 1);
+export const partyInGate = (bucket, nowMs) => tokenGate(bucket, nowMs, PARTY_IN_HZ_MAX);
+
+/** AUDIT SOC B20: the widest frame an honest relay sends a client - a welcome carrying a room's memory (WORLD_FRAME_MAX)
+ *  and a full roster of hellos (ROSTER_MAX looks, each under the hello's own MAX_FRAME_BYTES). Past it a frame is
+ *  dropped UNPARSED: JSON.parse of a relay's megabytes was the one cost no door bounded, and the relay is the
+ *  player's choice. */
+export const INBOUND_FRAME_MAX = WORLD_FRAME_MAX + ROSTER_MAX * MAX_FRAME_BYTES;
 
 const finite = (v) => typeof v === 'number' && Number.isFinite(v);
 const uint = (v, max) => (finite(v) && v >= 0 ? Math.min(max, Math.floor(v)) : null);
 const ID_RE = /^[A-Za-z0-9_-]{4,40}$/;
 const SECRET_RE = /^[A-Za-z0-9_-]{8,64}$/;
 
-/** A name the room will show: printable ASCII, trimmed, bounded, never empty. */
+/** The name a refused one becomes. Not a mask (`C**` is a shape a
+ *  player treats as a puzzle) and not an error the relay could not
+ *  deliver anyway - just the default everyone starts as. */
+export const FALLBACK_NAME = 'Traveller';
+
+/**
+ * A name the room will show: printable ASCII, trimmed, bounded, never
+ * empty - and NAME-F2, never one the filter refuses.
+ *
+ * THE FILTER RUNS HERE BECAUSE HERE IS THE ONLY PLACE IT CANNOT BE
+ * SKIPPED. The pane refuses a bad name at entry with a reason, which
+ * is the half a player sees; this is the half that holds when the
+ * client is not ours. `parse` runs it on every `hello` the relay
+ * takes, and the client runs it again on every peer name it is told -
+ * so a modified client can neither publish a refused name nor be shown
+ * one. A check that only lives in the UI is a check that a devtools
+ * console removes.
+ *
+ * Idempotent, as the rest of this module is: what comes out is a name
+ * the filter allows, so running it twice changes nothing.
+ */
 export function sanitizeName(name) {
   let s = '';
   for (const ch of String(name ?? '')) { const c = ch.charCodeAt(0); if (c >= 32 && c <= 126) s += ch; }
   s = s.trim().slice(0, NAME_MAX);
-  return s || 'Traveller';
+  if (!s) return FALLBACK_NAME;
+  return nameAllowed(s) ? s : FALLBACK_NAME;
 }
 
 /** What a chat line may not carry: every FORMAT character (Unicode Cf -
@@ -359,8 +532,16 @@ export const whoIdOf = (m) => (m && typeof m.id === 'string' && ID_RE.test(m.id)
  *  legitimate owner can exceed is by quest foes, which never ride). */
 export const CELL_FRAME_RECORDS_MAX = 64;
 export const CELL_PUPPETS_MAX = 8;
+/** AUDIT WATCH1 A1: THE WATCH HAS ITS OWN ALLOWANCE. A criminal's frame is its encounter foes AND its watch, and the
+ *  watch rides behind the foes - so under one cap of eight a criminal carrying a full encounter roll streamed a watch
+ *  no reader ever stood (the cap counts standing puppets, so no later frame could get one in). The watch is counted
+ *  apart: SpawnCityGuards stands at most five, but makeNpcGuardsIntoEnemies converts a town's whole wandering-guard
+ *  population uncapped, so ten. */
+export const CELL_WATCH_PUPPETS_MAX = 10;
 export const FOE_SEQ_MAX = 1e9;
 export const FOE_HEALTH_MAX = 1e5;
+/** AUDIT ONCRASH1 A3: the most effect bundles a stored foe record may carry - the one list in a memory's foe with no other bound. */
+export const SHARED_EFFECTS_MAX = 64;
 export const FOE_LEVEL_MAX = 100;
 /** One streamed foe record projected: `i` a whole number in [0, FOE_SEQ_MAX]; `t` a whole number in [0, 255] or
  *  absent; `x`, `d`, `m` 0 or 1 or absent; `f` three finite numbers inside the pose's bounds or absent; `y` finite
@@ -377,7 +558,7 @@ export function validFoeRecord(r) {
     if (Math.abs(r.f[0]) > POSE_BOUND || Math.abs(r.f[2]) > POSE_BOUND || Math.abs(r.f[1]) > POSE_Y_BOUND) return null;
     out.f = [r.f[0], r.f[1], r.f[2]];
   }
-  if (r.y !== undefined) { if (!Number.isFinite(r.y)) return null; out.y = r.y; }
+  if (r.y !== undefined) { if (!Number.isFinite(r.y)) return null; out.y = wrapAngle(r.y); }   // ONCRASH1: the puppet's yaw is bounded as the pose's is - it reaches the same wraps through characters/enemyMotor.js
   if (r.h !== undefined) { if (!Number.isFinite(r.h) || r.h < 0 || r.h > FOE_HEALTH_MAX) return null; out.h = r.h; }
   if (r.a !== undefined) { if (!Number.isInteger(r.a) || r.a < 0 || r.a >= 2 ** 31) return null; out.a = r.a; }
   // WORLD6b-ii: `g` the foe's target - '.' its owner, a peer id, '' none (WORLD3's spelling for the dungeon's stream)
@@ -405,15 +586,258 @@ export function validFoeRecord(r) {
   return out;
 }
 
+/** AUDIT ONCRASH1 A3/B4b: ONE STORED FOE RECORD, PROJECTED - the memory's door, which had none.
+ *
+ *  `restoreSharedWorld` (scenes/dungeonContext.js) already projects the memory's ACTIONS through
+ *  `validActionRecord` and drops its piles, for a reason it writes down: the relay serves a room's stored bytes back
+ *  UNPARSED for WORLD_TTL_MS, so one bad record in a memory poisons every joiner for thirty days. Its FOES went
+ *  through raw, and `patchFoe` writes `f.entity.health = sf.health`, `f.ai.feet[0] = sf.feet[0]` and
+ *  `f.ai.yaw = sf.yaw` with no check at all - an absent `feet` THREW out of the socket handler (the incident is in
+ *  that function's own comment, which fixed the ITEMS and left the rest) and a string `yaw` made the foe's facing
+ *  NaN for the life of the dungeon.
+ *
+ *  The vocabulary is exactly what `sharedWorld` writes - `items` is deleted there, so it is not admitted here
+ *  ("what this client will not say, it will not hear", AUDIT WORLD4 D3). A field outside its law is DROPPED, not
+ *  clamped onto a neighbour; a record with a bad field is refused WHOLE, never half landed. Presence-gated
+ *  throughout, because `patchFoe` reads every optional field with `!= null` and a record from an older build carries
+ *  fewer.
+ *  @param {*} sf
+ */
+/** RESPAWN1: the longest MobileTeams name is 'PlayerEnemy' at 11; 32 is the
+ *  same shape of headroom every other string on this wire is given. */
+export const TEAM_NAME_MAX = 32;
+
+export function validSharedFoe(sf) {
+  if (!sf || typeof sf !== 'object' || Array.isArray(sf)) return null;
+  const out = {};
+  // the feet: the pose's own bounds, the same three numbers a pose carries
+  if (sf.feet !== undefined) {
+    if (!Array.isArray(sf.feet) || sf.feet.length !== 3 || !sf.feet.every(finite)) return null;
+    if (Math.abs(sf.feet[0]) > POSE_BOUND || Math.abs(sf.feet[2]) > POSE_BOUND || Math.abs(sf.feet[1]) > POSE_Y_BOUND) return null;
+    out.feet = [sf.feet[0], sf.feet[1], sf.feet[2]];
+  }
+  if (sf.yaw !== undefined) { if (!finite(sf.yaw)) return null; out.yaw = wrapAngle(sf.yaw); }   // ONCRASH1: bounded here too, not at validPose alone
+  for (const k of ['health', 'maxHealth', 'magicka', 'fatigue']) {
+    if (sf[k] === undefined) continue;
+    if (!finite(sf[k]) || sf[k] < -FOE_HEALTH_MAX || sf[k] > FOE_HEALTH_MAX) return null;
+    out[k] = sf[k];
+  }
+  if (sf.died !== undefined && sf.died !== null) { if (!finite(sf.died)) return null; out.died = sf.died; }
+  if (sf.mobileType !== undefined) { if (!Number.isInteger(sf.mobileType) || sf.mobileType < 0 || sf.mobileType > 255) return null; out.mobileType = sf.mobileType; }
+  if (sf.gender !== undefined && sf.gender !== null) { if (typeof sf.gender !== 'string' || sf.gender.length > 16) return null; out.gender = sf.gender; }
+  // RESPAWN1 (2026-09-17, Mac, from a patch he was sent): THE TEAM PAIR IS A
+  // STRING, AND THIS ASKED FOR A NUMBER - so every foe record a dungeon ever
+  // published was refused WHOLE and the memory came back EMPTY.
+  //
+  // `entity.team` is `MobileTeams`' NAME in this port, not its ordinal -
+  // 'PlayerEnemy', 'PlayerAlly', 'Vermin' (characters/enemyEntity.js:146's
+  // default, characters/enemyTargets.js' whole law, `f.entity.team ===
+  // 'PlayerAlly'` at combat/playerWeapon.js:230) - and the publisher hands the
+  // live field straight over (dungeonContext.js' foe record, AUDIT 63 F26's
+  // pair). DFU's own serializer writes the ORDINAL there
+  // (SerializableEnemy.cs:125 `(int)entity.Team + 1`), which is where the
+  // number in this line came from; the port's records never carried one.
+  // EVERY foe carries a team, so `validSharedFoe` answered null for every
+  // record, `.filter(Boolean)` dropped the lot (dungeonContext.js' restore),
+  // and a dungeon's dead stood up again however correctly the kill had been
+  // stamped, stored and sent. The pin that should have caught it passed
+  // `team: 2` - it encoded the same wrong reading as the code.
+  for (const k of ['team', 'mobileTeam']) {
+    if (sf[k] === undefined) continue;
+    if (typeof sf[k] !== 'string' || sf[k].length > TEAM_NAME_MAX) return null;
+    out[k] = sf[k];
+  }
+  for (const k of ['dead', 'hostile', 'encountered', 'wabbajackActive', 'specialTransformationCompleted']) if (sf[k] !== undefined) out[k] = !!sf[k];
+  if (sf.anchor !== undefined) out.anchor = sf.anchor;   // REVIEW 2026-09-05's stamp: read for its presence alone
+  // The effect bundles ride as they are - `patchFoe` copies them shallowly and the effect spine reads them by name -
+  // but the LIST is bounded, because it is the one field a memory's foe can grow without bound.
+  if (sf.activeEffects !== undefined) {
+    if (!Array.isArray(sf.activeEffects)) return null;
+    out.activeEffects = sf.activeEffects.filter((a) => a && typeof a === 'object' && !Array.isArray(a)).slice(0, SHARED_EFFECTS_MAX);
+  }
+  return out;
+}
+
+/** SLAM1 (2026-09-16, Mac: Daggerfall's 30th, a streamer's server slam): THE LISTENERS ONE POSE REACHES AT ONCE.
+ *
+ *  A pose reaches everyone a room holds within range, so a room's cost is N senders times N listeners - measured over
+ *  the real Room on the fake Durable Object, a crowd standing together costs 2.4k sends a second at 16 players,
+ *  22.6k at 48 and 91.2k at 96 (SLAM13 struck a clause here that claimed to know where a real object stops keeping
+ *  up; the fake carries no such limit and nothing has measured the deployed one - see AUDIT SLAM C1). RANGE DOES NOT
+ *  SAVE IT: the cull is why a cell is cheap when the country is spread out, and an event is precisely everybody
+ *  converging on one spot, where every range test passes.
+ *
+ *  What saves it is that nobody can SEE two hundred people at once. A name stops at NAME_RANGE (60 scene units), at
+ *  most BODIES_MAX (8) peers ever stand in a Morrowind body, and the rest are billboards in a crowd. So this many
+ *  listeners - the nearest - hear every pose the sender says. The cost stops being N squared.
+ *
+ *  SLAM6 (2026-09-16, AUDIT SLAM): AND THE REST HEAR THE SAME POSES LESS OFTEN, which is the half SLAM1 got wrong.
+ *  SLAM1 stopped here, and a listener past the bound heard NOTHING from that sender - so the silence law (AUDIT
+ *  ONLINE B3/B11/B14) HID it after PEER_TIMEOUT_MS. That is not a peer gone quiet, it is a peer ERASED, and it
+ *  falls hardest on exactly the player an event is held for: the bound is a RANK, so the DENSEST player in the room
+ *  reaches the SMALLEST radius. Measured over this law at 200 players standing in one town block, the man in the
+ *  middle was heard by 32 of 199 and hidden from the other 167, whichever way the crowd was spread. */
+export const POSE_FAN_MAX = 32;
+
+/** SLAM6: one pose in this many is heard by a listener past POSE_FAN_MAX - the FAR TIER's share.
+ *
+ *  NOT A GUESS, and not a budget: it is the largest share the client's own ease can still walk. A peer is eased over
+ *  its OWN observed interval (net/online.js `tick`, `_arrive`), and that interval is clamped at GAP_MAX_MS - past it
+ *  the ease finishes early and the peer STANDS until the next pose. A far listener's interval is `share / hz`, and
+ *  the crowded rate never falls below POSE_HZ_MIN (net/online.js poseHzFor), so the largest share that keeps every
+ *  far peer WALKING is POSE_HZ_MIN * GAP_MAX_MS / 1000 = 4. Above the crowd threshold hz is higher and the interval
+ *  is shorter still; below it no room is over the bound at all and this never applies.
+ *
+ *  The cost is arithmetic, not observation: a pose costs at most `POSE_FAN_MAX + ceil((n - 1 - POSE_FAN_MAX)/share)`
+ *  sends instead of `n - 1`. At 200 players in one room at 4 Hz that is 59.2k sends a second against 159.2k
+ *  unbounded - and against SLAM1's 25.6k, which bought the saving by hiding 84% of the room from each sender. Run
+ *  over this law across a 30-second standing, uniform and packed alike: 59.0k a second, every one of the 199
+ *  listeners heard the man in the middle, and the longest any of them went without him was 1000ms, exactly
+ *  GAP_MAX_MS. At SOCKETS_MAX (256) the same sum is 89.9k - a sum over the law, on the fake; what a deployed object
+ *  carries is unmeasured (AUDIT SLAM C1). */
+export const POSE_FAR_SHARE = 4;
+
+/** A pose goes out at least this often, moved or not: the peers' clock and the silence law's safety net. SLAM13 moved
+ *  it here from net/online.js, because the relay's keepalive floor (KEEPALIVE_FAN_MS) is a fraction of it and the two
+ *  must never be tuned apart.
+ *
+ *  RELAY-H1 (2026-09-20, Mac: "cloudflare hit its limit"): 5000 -> 20000, AND THE SOCKET'S LIVENESS IS NO LONGER THIS
+ *  FRAME'S JOB. A pose is a message, a message is an event at the Durable Object, and Cloudflare bills duration for
+ *  every second an object is awake; "billable duration does not accrue during hibernation" and "incoming requests
+ *  prevent hibernation" are the platform's own words. A standing player sent one every five seconds, so a room with
+ *  anyone in it never slept - the whole free tier (13,000 GB-s a day) was ~7 player-hours, and it was gone mid-stream.
+ *  The runtime answers `{"t":"ping"}` in the object's SLEEP (server/src/index.js setWebSocketAutoResponse), so the
+ *  socket's liveness rides a ping at PING_MS and the pose is sent only when it MOVED, or every HEARTBEAT_MS as the
+ *  peers' proof of life. Four times fewer wakes from a standing player, and gaps a hibernation can fit in. */
+export const HEARTBEAT_MS = 20000;
+/** RELAY-H1: the socket's own keepalive - a ping the runtime answers without waking the object. Derived from the
+ *  heartbeat so the two cannot be tuned apart: four pings to a pose, which keeps today's five-second on-wire cadence
+ *  (the cadence intermediaries and phones were already proven against) while the object sleeps between poses. */
+export const PING_MS = HEARTBEAT_MS / 4;
+/** SLAM13 (2026-09-16, AUDIT SLAM A2): A KEEPALIVE IS HEARD BY THE WHOLE CROWD AT MOST THIS OFTEN. SLAM8 fans an
+ *  unmoved pose to everyone in range, untiered, because a standing player's heartbeat is the one frame whose whole job
+ *  is to be heard - and it assumed that frame comes every HEARTBEAT_MS, which is what the port's client does. A
+ *  modified client sends unmoved poses at the pose gate's ceiling (POSE_HZ_MAX, 20 Hz), and every one of them went to
+ *  the whole room: 20 x 199 = 3,980 sends a second from ONE socket, 40x what a standing player costs and beyond what
+ *  the tier bounds a mover to. So the whole fan is served to a keepalive only when the sender's LAST whole fan is at
+ *  least this old; a keepalive inside the floor is tiered like a move. Half the heartbeat, so an honest client's
+ *  every heartbeat still clears it with a late one's jitter to spare, and a flood buys nothing past 2 whole fans a
+ *  second. The standing margin SLAM8 asserted holds: the whole fan still comes at every heartbeat. */
+export const KEEPALIVE_FAN_MS = HEARTBEAT_MS / 2;
+
+/** AUDIT WORLD34 D4: the relay names itself in /health - the deploy is by hand (`npx wrangler deploy`), nothing in
+ *  CI does it, and until now nothing said which relay was live. Bump it with every relay-changing slice; since SLAM8
+ *  test/relayversion.test.js binds each version to the bytes of the law and fails until the bump is made.
+ *
+ *  SLAM13 (2026-09-16, AUDIT SLAM A5): moved here from server/src/index.js so BOTH ENDS know the name. The welcome
+ *  carries it (`v`), and a client whose wire.js was built against another version says so on the console: the client
+ *  is deployed by CI and the relay by hand, so a skew between them is the ordinary state of a release day, and until
+ *  now nothing on either end could see it. */
+export const RELAY_VERSION = 'world84';   // RELAY-H1: KEEPALIVE_FAN_MS follows HEARTBEAT_MS 5000 -> 20000 (the floor is 10 s now)   // ONLINE-CLASS1: a look carries the character's class name, so a peer without a Morrowind body stands as its class-enemy sprite
+
+/** The listeners sorted by distance from `from`, nearest first; one with no pose yet sorts last, because a peer that
+ *  has never said where it is cannot be near. The ordering is Euclidean in the POSE'S OWN FRAME, which is a cell's
+ *  world units or a place's scene units - it never leaves one room, so it never has to agree across the two. */
+function ranked(list, from, poseOf) {
+  const d2 = (x) => {
+    const p = poseOf(x);
+    if (!p || !from || !finite(p.x) || !finite(p.z)) return Infinity;
+    const dx = p.x - from.x, dz = p.z - from.z;
+    return dx * dx + dz * dz;
+  };
+  return list.map((x) => [d2(x), x]).sort((a, b) => a[0] - b[0]).map(([, x]) => x);
+}
+
+/** The nearest `max` of `list` to `from`. Under the bound the list is returned AS IT IS (no sort, no copy) - the
+ *  whole point is to cost nothing in the rooms that do not need it. The WELCOME's door (rosterFor). */
+export function nearestFan(list, from, poseOf, max = POSE_FAN_MAX) {
+  if (!Array.isArray(list) || list.length <= max) return list;
+  return ranked(list, from, poseOf).slice(0, max);
+}
+
+/** SLAM10 (2026-09-16, AUDIT SLAM): a 32-bit FNV-1a over a string. Not for secrecy - for a BUCKET that is a function
+ *  of the listener and nothing else, so the far tier's rotation cannot be shuffled by where anybody is standing. */
+export function hashKey(s) {
+  let h = 0x811c9dc5;
+  const str = String(s);
+  for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; }
+  return h >>> 0;
+}
+
+/** SLAM6: the listeners THIS pose goes to - the nearest `max`, every pose, and one turn of the far tier; the near
+ *  ones simply hear it `share` times as often as the rest. Under the bound the list is returned AS IT IS, exactly as
+ *  `nearestFan`.
+ *
+ *  SLAM10 (AUDIT SLAM): THE FAR TIER IS BUCKETED BY WHO THE LISTENER IS, NOT BY WHERE IT RANKS. SLAM6 cut the far
+ *  listeners into `share` slices of a list `ranked()` re-sorts on every pose, and served slice `turn % share`. A rank
+ *  is not a stable thing: when the crowd moves, ranks shuffle, a listener crosses a slice boundary between two turns
+ *  and is served twice or not at all, and "once every `share` poses" was true only for a crowd standing perfectly
+ *  still - which was the one case SLAM6 measured before publishing it as a guarantee. Measured on the shipped law at
+ *  200 in one block: never-heard stayed 0 at every speed (SLAM6's erasure fix held), but 15% of sender-listener pairs
+ *  went longer than GAP_MAX_MS between poses at a shuffle and 50% at a walk, with worst gaps over 6 s - a far peer
+ *  sprinting six seconds of walking in one and then standing frozen for five, which is the exact artefact
+ *  POSE_FAR_SHARE was derived to prevent. A listener is now served on the turn `hashKey(keyOf(listener)) % share`,
+ *  which depends on its id alone; over any `share` consecutive poses every far listener is served exactly once,
+ *  whatever the crowd does, by construction. The near set is still the nearest `max` by distance: that half of the
+ *  law is about who can see whom, and distance is the right measure for it. */
+export function poseFan(list, from, poseOf, turn = 0, keyOf = (x) => x?.id, max = POSE_FAN_MAX, share = POSE_FAR_SHARE) {
+  if (!Array.isArray(list) || list.length <= max) return list;
+  const sorted = ranked(list, from, poseOf);
+  const bucket = (((turn | 0) % share) + share) % share;
+  const out = sorted.slice(0, max);
+  for (let i = max; i < sorted.length; i++) if (hashKey(keyOf(sorted[i])) % share === bucket) out.push(sorted[i]);
+  return out;
+}
+
+/** SLAM8 (2026-09-16, AUDIT SLAM): HAS A POSE MOVED? Moved here from net/online.js, which is the client alone, because
+ *  the RELAY has to ask the same question and must get the same answer (the `nearestFan`/`poseFan` rule: one law, both
+ *  ends). The client sends a pose when this says yes, and every HEARTBEAT_MS regardless; so a pose for which this says
+ *  NO is a KEEPALIVE, and the relay tells the two apart by this and nothing else.
+ *
+ *  Exact equality would not do. A player standing still with a hand on the mouse drifts by less than `eps`, which this
+ *  calls unmoved and `sendPose` therefore does not send - until the heartbeat, which carries those drifted numbers. A
+ *  relay comparing fields byte-for-byte would see a MOVE, tier the keepalive, and hand that player straight back the
+ *  bug this slice exists to close. The epsilon is the law; the bytes are not.
+ *
+ *  SLAM13 (AUDIT SLAM A3): and the yaw is compared as an ANGLE. `validPose` wraps the relay's copy into (-PI, PI], so a
+ *  player facing due south (yaw = PI) who drifts a hair's breadth reads +3.14 one heartbeat and -3.14 the next - a
+ *  difference of 2PI where the eyes see none. The bare difference tiered that player's every keepalive, which is
+ *  SLAM8's bug back for one heading; wrapAngle of the difference is the distance between two headings. */
+export function poseChanged(a, b, eps = 0.01) {
+  if (!a || !b) return true;
+  return Math.abs(a.x - b.x) > eps || Math.abs(a.y - b.y) > eps || Math.abs(a.z - b.z) > eps
+    || Math.abs(wrapAngle(a.yaw - b.yaw)) > eps || Math.abs(a.pitch - b.pitch) > eps || (a.mv | 0) !== (b.mv | 0)   // SLAM13: the yaw difference is WRAPPED - the relay keeps the pose the door wrapped into (-PI, PI], and a player standing at the seam drifts across it by 2PI, which the bare difference called a move
+    || (a.wd | 0) !== (b.wd | 0) || (a.an | 0) !== (b.an | 0)   // MAC7 #1: a draw and a swing go out at once, as a step does
+    || (a.am | 0) !== (b.am | 0) || (a.sr | 0) !== (b.sr | 0) || (a.cn | 0) !== (b.cn | 0);   // MAC7 #2: and the arrow, the spell stance, the cast
+}
+
 /** A pose the room will relay, or null. */
 export function validPose(p) {
   if (!p || typeof p !== 'object') return null;
   const { x, y, z, yaw, pitch, mv, wd, an, as, am, sr, cn, cr } = p;
   if (![x, y, z, yaw, pitch].every(finite)) return null;
   if (Math.abs(x) > POSE_BOUND || Math.abs(z) > POSE_BOUND || Math.abs(y) > POSE_Y_BOUND) return null;
+  // ONCRASH1 (2026-09-15, Mac: "reports of player browser crashing when
+  // online"): AN ANGLE IS BOUNDED LIKE EVERY OTHER FIELD. `finite` alone
+  // admitted 1e300, and the sender's own yaw is not wrapped either -
+  // player/lookFilter.js ACCUMULATES it, turn after turn, for the life of
+  // the session. Downstream, four sites wrapped it with `while (d >
+  // Math.PI) d -= 2 * Math.PI`, which at a large angle subtracts nothing
+  // and never falls: the READER's tab hangs, not the sender's. The loops
+  // are one step now (world/mat4.js wrapAngle) and the door wraps besides,
+  // because the wire's law is that it admits what the game can NAME, and
+  // no player faces 1e300 radians. Wrapped, not refused: a turn is a turn
+  // whatever its winding, and a legitimate accumulated yaw must still
+  // arrive. Idempotent - what is already inside (-PI, PI] is untouched.
+  //
+  // THE YAW ALONE. Pitch reaches no wrap - the peer bodies read a level
+  // pitch (net/peerBodies.js peerCamera sets 0) and the dolls read none -
+  // so wrapping it would move a field with no defect behind it, and
+  // ONLINE1's own bound pin says what it says on purpose. An absurd pitch
+  // is recorded, not paid.
   // MAC7: the arm's seven, clamped - a pose from before them reads sheathed, unswung, unarrowed and uncast
   return {
-    x, y, z, yaw, pitch, mv: mv === 2 ? 2 : mv ? 1 : 0,
+    x, y, z, yaw: wrapAngle(yaw), pitch, mv: mv === 2 ? 2 : mv ? 1 : 0,
     wd: wd === 2 ? 2 : wd ? 1 : 0, an: uint(an, 65535) ?? 0, as: uint(as, POSE_STRIKES.length - 1) ?? 0,
     am: am ? 1 : 0, sr: sr ? 1 : 0, cn: uint(cn, 65535) ?? 0, cr: uint(cr, POSE_CAST_RANGES - 1) ?? 0,
   };
@@ -429,14 +853,25 @@ export function validLookItem(it) {
   return out;
 }
 
-/** A look the room will keep and repeat: the paperdoll's recipe, bounded and projected. */
+/** A look the room will keep and repeat: the paperdoll's recipe, bounded and projected.
+ *  `class` (2026-09-17, remote-player billboard): the character's career name, so a peer without a Morrowind body
+ *  can be drawn as the matching class-enemy sprite (Warrior, Mage, ...) instead of the flat paperdoll - see
+ *  net/remotePlayers.js classMobileType. Optional and letters-only, same bound as `race`; an unrecognized or
+ *  missing name just falls back to the paperdoll, so this is safe to leave off an older peer's look entirely. */
 export function validLook(look) {
   if (!look || typeof look !== 'object') return null;
   const race = typeof look.race === 'string' && /^[A-Za-z]{1,16}$/.test(look.race) ? look.race : 'Breton';
   const gender = look.gender === 'female' ? 'female' : 'male';
   const faceIndex = uint(look.faceIndex, 9) ?? 0;
+  const klass = typeof look.class === 'string' && /^[A-Za-z]{1,20}$/.test(look.class) ? look.class : null;
   const items = Array.isArray(look.items) ? look.items.map(validLookItem).filter(Boolean).slice(0, MAX_LOOK_ITEMS) : [];
-  return { race, gender, faceIndex, items };
+  // The key is OMITTED, not set to null, when the look names no class. SOC1's
+  // own pin names this exact mutant - "the keys added to a hello that named
+  // none, which breaks every older hello pin" - and it is a wire law, not a
+  // style choice: a peer that never had a class must serialize to the same
+  // bytes it always did, or every older pin and every deployed client that
+  // compares looks sees a shape it has not seen before.
+  return { race, gender, faceIndex, ...(klass ? { class: klass } : {}), items };
 }
 
 /** The room's key from the request path: /room/<key>, or null. */
@@ -537,7 +972,18 @@ export function parseClient(text, { hasHello = false } = {}) {
     const look = validLook(m.look);
     if (!look) return { error: 'bad look' };
     const pose = validPose(m.pose);
-    return { t: 'hello', id, secret, name: sanitizeName(m.name), look, pose };
+    const hello = { t: 'hello', id, secret, name: sanitizeName(m.name), look, pose };
+    // SOC1: the account, optional - and BOTH or neither. A hello that names an account without its secret, or a
+    // malformed either, is not the port's client (accountId/accountSecret mint the shape the law admits), so it is an
+    // error like a bad id, not a hello quietly admitted without an account. A hello naming none is a build before
+    // this slice, admitted as it always was.
+    if (m.acct !== undefined || m.asecret !== undefined) {
+      const acct = typeof m.acct === 'string' && ID_RE.test(m.acct) ? m.acct : null;
+      const asecret = typeof m.asecret === 'string' && SECRET_RE.test(m.asecret) ? m.asecret : null;
+      if (!acct || !asecret) return { error: 'bad account' };
+      hello.acct = acct; hello.asecret = asecret;
+    }
+    return hello;
   }
   if (m.t === 'pose') {
     if (!hasHello) return { error: 'pose before hello' };
@@ -548,6 +994,16 @@ export function parseClient(text, { hasHello = false } = {}) {
     if (!hasHello) return { error: 'chat before hello' };
     const text = typeof m.text === 'string' ? sanitizeChat(m.text) : '';
     return text ? { t: 'chat', text } : { error: 'bad chat' };   // the client sanitizes before it sends, so an empty line here is not the port's client
+  }
+  if (m.t === 'social') {   // SOC1: a friend or party act - a KIND from SOCIAL_ACTS naming what that kind must name, and nothing else
+    if (!hasHello) return { error: 'social before hello' };
+    const act = validSocialAct(m);
+    return act ? { t: 'social', ...act } : { error: 'bad social' };
+  }
+  if (m.t === 'party') {   // SOC1: my party pose, to the hub - projected by the pose's own law
+    if (!hasHello) return { error: 'party before hello' };
+    const p = validPartyPose(m.p);
+    return p ? { t: 'party', p } : { error: 'bad party' };
   }
   if (m.t === 'who') {   // WORLD6b-iii(e): a member beyond the welcome's roster asked for by name, from a hello'd socket
     if (!hasHello) return { error: 'who before hello' };
@@ -577,10 +1033,24 @@ export const hitGate = (bucket, nowMs) => tokenGate(bucket, nowMs, HIT_HZ_MAX);
  *  (the nearest, AUDIT ONLINE A5), not the room: a member beyond it whose pose, foes or blow reaches me is asked for
  *  by name and answered with its join to the asker alone - a stranger is learned from the relay's own traffic. */
 export const WHO_HZ_MAX = 5;   // AUDIT WORLD6b-iii(e) B5: a mass roster loss (a halo let go) re-learns its peers at this rate - at two a second twenty peers took ten seconds
-/** AUDIT WORLD6b-iii(e) B1: the asks a ROOM answers a second, every socket together - the one arm past the hello that
- *  reads storage (a look), so it carries the room budget every other arm carries; over it the ask is dropped, nobody
- *  struck. A full room of sockets asking at their own rate was 1280 storage reads a second out of one object, for free. */
-export const WHO_ROOM_HZ_MAX = 60;
+/** AUDIT WORLD6b-iii(e) B1: the asks a ROOM answers a second, every socket together; over it the ask is dropped,
+ *  nobody struck.
+ *
+ *  SLAM9 (2026-09-16, AUDIT SLAM): DERIVED, NOT CHOSEN - and the number it replaces was the single biggest thing wrong
+ *  with the branch. This was 60, justified here as bounding STORAGE READS: "the one arm past the hello that reads
+ *  storage (a look)... 1280 storage reads a second out of one object, for free". SLAM5 deleted that cost - the hello
+ *  now fills `_looks`, so an answer on an awake object is a map hit and one send, and reads nothing. The budget
+ *  outlived the expense it was sized for, and it was binding: at 200 players a joiner's welcome names ROSTER_MAX
+ *  (64) and the other 135 must be asked for one at a time, so 200 clients offered ~1,000 asks a second against 60
+ *  answered. Measured over the real Room: the room took 172 s to finish introducing itself, and the worst client
+ *  waited ~148 s - drawn, meanwhile, as the look-less doll every stranger shares.
+ *
+ *  It is now the sum of every socket's own gate: SOCKETS_MAX x WHO_HZ_MAX. A room full of CORRECT clients asking as
+ *  fast as they are allowed is exactly answered, and the room budget binds only when the per-socket gates are somehow
+ *  not the whole story - which is what a room-wide bound is for. The cost at that ceiling is 1,280 map hits and sends
+ *  a second beside the ~59,000 sends the pose fan already pays; a socket the instance has not seen since it woke
+ *  reads one key once and caches it, bounded by the distinct ids in the room. */
+export const WHO_ROOM_HZ_MAX = SOCKETS_MAX * WHO_HZ_MAX;
 /** WORLD6b-iii(e): how long a stranger asked for stays asked at home before the next of its frames asks again. */
 export const WHO_RETRY_MS = 10_000;
 /** AUDIT WORLD6b-iii(e) A1: the most Arrows a foe's body takes from peers' shafts (`ar` on the hit) - a shaft is one
@@ -598,6 +1068,60 @@ export const actGate = (bucket, nowMs) => tokenGate(bucket, nowMs, ACT_HZ_MAX);
 export const actFrameFits = (data) => JSON.stringify({ t: 'act', data }).length <= MAX_FRAME_BYTES;
 /** The chat rate gate: CHAT_HZ_MAX a second (CHAT1). */
 export const chatGate = (bucket, nowMs) => tokenGate(bucket, nowMs, CHAT_HZ_MAX);
+/** SOC1: the social acts' gate - SOCIAL_HZ_MAX a second, at the hub and at home (an act the hub would refuse is never sent). */
+export const socialGate = (bucket, nowMs) => tokenGate(bucket, nowMs, SOCIAL_HZ_MAX);
+/** SOC1: the party poses' gate - PARTY_HZ_MAX a second, at the hub and at home. */
+export const partyGate = (bucket, nowMs) => tokenGate(bucket, nowMs, PARTY_HZ_MAX);
+
+/** CHAT-G (2026-09-17): THE THIRD SIDE, which nothing counted.
+ *
+ *  A chat line passes three gates and had only ever had two. The client
+ *  gates what it SENDS (`chatGate`, CHAT_HZ_MAX - AUDIT CHAT A8, so a
+ *  line the relay would drop is never sent); the relay gates what it
+ *  ACCEPTS (the same gate per socket, and CHAT_ROOM_HZ_MAX for the whole
+ *  room). Nothing gated what a client RECEIVES - `online.js`'s chat arm
+ *  sanitized the text, checked the id was a string and delivered, however
+ *  many arrived.
+ *
+ *  That matters because the relay is the PLAYER'S choice: `?server=` and
+ *  the enhanced menu's Relay field point a client at any relay at all,
+ *  which is the whole reason every other field on this wire has a law
+ *  here. A relay could push lines as fast as it liked and take a
+ *  player's chat history with them - `net/chat.js` keeps CHAT_KEEP of
+ *  them, so a few thousand frames is the log emptied and refilled with
+ *  whatever the relay wanted there instead.
+ *
+ *  THE RATE IS DERIVED, NOT INVENTED, and that is the point of putting it
+ *  beside the relay's own constant. CHAT_ROOM_HZ_MAX is exactly what an
+ *  honest relay spends on one room, so this admits an honest room at FULL
+ *  TILT and one frame more is a frame that relay would never have sent.
+ *  Gating at the sender's CHAT_HZ_MAX instead would have dropped real
+ *  lines the moment two people talked at once - a "hardening" that is a
+ *  chat bug.
+ *
+ *  Per ROOM, because that is the unit the relay spends by: a session
+ *  listening to its own room and a halo of cells is owed
+ *  CHAT_ROOM_HZ_MAX from each of them, and one bucket across all of them
+ *  would have made a busy neighbour silence the room you are standing in. */
+export const chatInGate = (bucket, nowMs) => tokenGate(bucket, nowMs, CHAT_ROOM_HZ_MAX);
+
+/** The longest a relay may name its deploy, in UTF-16 units (SRV-N).
+ *
+ *  AUDIT-SRVN F1: `v` shipped as the ONLY field on this wire with no law
+ *  in this file. Every other one has been here since its slice - a pose
+ *  through `validPose`, a look through `validLook`, a name through
+ *  `sanitizeName`, a line through `sanitizeChat`, an owner through
+ *  `hitOwnerOf`'s 64-character id bound - and they are all here for the
+ *  same reason: `?server=` and the enhanced menu's Relay field mean the
+ *  relay a client talks to is the PLAYER'S choice, so nothing arriving
+ *  over it is the port's own word. `v` was gated on `typeof` alone, and
+ *  a 200 KB deploy name was accepted and held (driven, not read). */
+export const RELAY_VERSION_MAX = 32;
+/** A deploy name off the wire, or null for anything that is not one.
+ *  ONE HOME, BOTH ENDS, like every law above it: the relay stamps a name
+ *  this admits (pinned) and the client reads it back through the same
+ *  function, so the two cannot disagree about what a deploy is called. */
+export const relayVersionOf = (v) => (typeof v === 'string' && v.length > 0 && v.length <= RELAY_VERSION_MAX ? v : null);
 
 /** What a joiner is told: everyone else in the room who has said hello
  *  - the nearest ROSTER_MAX to `near` when there is a pose to measure
@@ -605,6 +1129,163 @@ export const chatGate = (bucket, nowMs) => tokenGate(bucket, nowMs, CHAT_HZ_MAX)
 export function rosterFor(peers, meId, near = null) {
   const out = [];
   for (const p of peers) if (p && p.id && p.id !== meId) out.push({ id: p.id, name: p.name, look: p.look, pose: p.pose ?? null });
-  if (near && out.length > ROSTER_MAX) out.sort((a, b) => (a.pose ? pixelDistance(near, a.pose) : Infinity) - (b.pose ? pixelDistance(near, b.pose) : Infinity));
-  return out.slice(0, ROSTER_MAX);
+  // SLAM5 (2026-09-16, AUDIT SLAM): ONE METRIC. This ranked by `pixelDistance` - Chebyshev on MAP PIXELS, 32768 units
+  // wide - while the pose fan ranks by squared Euclidean in the pose's own frame. Two different metrics over the same
+  // set DO NOT NEST, so `POSE_FAN_MAX <= ROSTER_MAX` bought nothing: measured at an event standing, only 11 of the 32
+  // the fan reaches were among the 64 the welcome names, and 53 of those 64 were peers the joiner would never hear
+  // from. Worse, in a place room the poses are SCENE units, so every pixelDistance floors to 0, the sort is a no-op
+  // and "the nearest 64" was the first 64 in socket order. `nearestFan` is the one ranking now, at both doors.
+  return near ? nearestFan(out, near, (p) => p.pose, ROSTER_MAX) : out.slice(0, ROSTER_MAX);
+}
+
+/** SOC1: an id off the wire (ID_RE - a peer's, an account's and a party's are one shape), or null. */
+const idOf = (v) => (typeof v === 'string' && ID_RE.test(v) ? v : null);
+
+/** SOC1 / AUDIT SOC B11: ONE ACT, PROJECTED - `{k, acct?, peer?, party?}` with exactly what its kind needs (SOCIAL_ACTS:
+ *  an account, a peer, either one of the two but never both, a party, nothing) and nothing else, or null. ONE HOME:
+ *  the relay's parser runs it (a bad act is a refusal that CLOSES the socket) and the client's sendSocial runs it
+ *  first, so an act the relay would close on is never sent - the audit found the client checking the kind and the
+ *  rate at home and not the shape, which the record claimed it did. */
+export function validSocialAct(m) {
+  if (!m || typeof m !== 'object' || Array.isArray(m)) return null;
+  const needs = typeof m.k === 'string' && Object.prototype.hasOwnProperty.call(SOCIAL_ACTS, m.k) ? SOCIAL_ACTS[m.k] : null;
+  if (needs == null) return null;
+  const acct = m.acct === undefined ? undefined : idOf(m.acct), peer = m.peer === undefined ? undefined : idOf(m.peer), party = m.party === undefined ? undefined : idOf(m.party);
+  if (acct === null || peer === null || party === null) return null;   // named, and not by the wire's id law
+  const out = { k: m.k };
+  if (needs === 'acct' && !acct) return null;
+  if (needs === 'party' && !party) return null;
+  if (needs === 'target' && (!!acct === !!peer)) return null;   // one of the two, never both and never neither
+  if (acct && (needs === 'acct' || needs === 'target')) out.acct = acct;
+  if (peer && needs === 'target') out.peer = peer;
+  if (party && needs === 'party') out.party = party;
+  return out;
+}
+/** SOC1: a wall-clock stamp off the wire (ms, finite, not negative), or null. */
+const stampOf = (v) => (finite(v) && v >= 0 ? v : null);
+
+/** SOC1: a short label the hub will keep and repeat - a place name on a party pose, a hub error's words: printable
+ *  ASCII, whitespace collapsed, trimmed, bounded, '' when nothing is left; the name filter over it unless told not to
+ *  (a place name a modified client writes is shown to that player's party, so it goes through the same door a name
+ *  does; the hub's own error text is nobody's to filter). Idempotent, as the rest of this module is. */
+export function sanitizeLabel(text, max = PARTY_LOC_MAX, { filter = true } = {}) {
+  let s = '';
+  for (const ch of String(text ?? '')) { const c = ch.charCodeAt(0); if (c >= 32 && c <= 126) s += ch; }
+  s = s.replace(/\s+/g, ' ').trim().slice(0, max).trim();
+  if (!s) return '';
+  return !filter || nameAllowed(s) ? s : '';
+}
+
+/** SOC1: the party id the hub mints - the wire's id law, a `q` first so a reader can tell it from a peer's `p` and an
+ *  account's `a` at a glance (nothing checks the letter: one id law, ID_RE). */
+export const mintPartyId = (rand = Math.random, nowMs = Date.now()) => 'q' + nowMs.toString(36) + rand().toString(36).slice(2, 10).padEnd(8, '0');
+
+/** SOC1: A PARTY POSE the hub will keep and repeat, or null - where a member stands and how they fare, which is what
+ *  the party HUD and the map draw of a member who may be a continent away: `px`,`py` the map pixel (in a dungeon or a
+ *  building, the pixel of the place - "regardless of their location"); `in` 0 outside, 1 a dungeon, 2 a building;
+ *  `loc` the place's name, a label; the six vitals, each finite in [0, FOE_HEALTH_MAX] (an entity's health,
+ *  fatigue and magicka are all within it), rounded - a bar reads no fraction; and the portrait's recipe, `race`,
+ *  `gender`, `face`, by validLook's own bounds, so the HUD draws the face the doll would. Refused WHOLE when any
+ *  named field is outside its law: a member's card is never half landed. */
+export function validPartyPose(p) {
+  if (!p || typeof p !== 'object' || Array.isArray(p)) return null;
+  const px = uint(p.px, MAP_PIXELS_X - 1), py = uint(p.py, MAP_PIXELS_Y - 1);
+  if (px == null || py == null) return null;
+  const out = { px, py, in: p.in === 1 ? 1 : p.in === 2 ? 2 : 0, loc: sanitizeLabel(p.loc) };
+  for (const k of ['h', 'hm', 'f', 'fm', 'm', 'mm']) {
+    const v = p[k];
+    if (!finite(v) || v < 0 || v > FOE_HEALTH_MAX) return null;
+    out[k] = Math.round(v);
+  }
+  out.race = typeof p.race === 'string' && /^[A-Za-z]{1,16}$/.test(p.race) ? p.race : 'Breton';
+  out.gender = p.gender === 'female' ? 'female' : 'male';
+  out.face = uint(p.face, 9) ?? 0;
+  return out;
+}
+
+/** SOC1: one account as the hub names it to a client - a friend, a request, a party member: the id, the name as the
+ *  wire allows it, whether it is online now, when it was last seen (the hub's clock, ms; null for an account the hub
+ *  has no record of), and the peer ids its tabs are in the world as (ACCOUNT_TABS_MAX at most). Null for no id. */
+export function validSocialRow(r) {
+  if (!r || typeof r !== 'object' || Array.isArray(r)) return null;
+  const acct = idOf(r.acct);
+  if (!acct) return null;
+  const peers = [];
+  if (Array.isArray(r.peers)) for (const v of r.peers) { const id = idOf(v); if (id && !peers.includes(id) && peers.length < ACCOUNT_TABS_MAX) peers.push(id); }
+  return { acct, name: sanitizeName(r.name), online: !!r.online, seen: stampOf(r.seen), peers };
+}
+/** SOC1: a row with the stamp a pending request or invite carries (`at`), or null. */
+function validPendingRow(r) {
+  const row = validSocialRow(r);
+  if (!row) return null;
+  const at = stampOf(r.at);
+  if (at == null) return null;
+  return { ...row, at };
+}
+/** SOC1: a member row - a social row with the member's latest party pose, or null for a member that has sent none. */
+function validMemberRow(r) {
+  const row = validSocialRow(r);
+  if (!row) return null;
+  const p = r.p == null ? null : validPartyPose(r.p);
+  if (r.p != null && !p) return null;
+  return { ...row, p };
+}
+/** SOC1: A PARTY as the hub shows it to its members: the id, the leader's account and the members (PARTY_MAX at most,
+ *  join order - the seat passes to the longest-standing), or null. */
+export function validPartyView(v) {
+  if (!v || typeof v !== 'object' || Array.isArray(v)) return null;
+  const id = idOf(v.id), leader = idOf(v.leader);
+  if (!id || !leader || !Array.isArray(v.members) || v.members.length > PARTY_MAX) return null;
+  const members = [];
+  for (const r of v.members) { const row = validMemberRow(r); if (!row) return null; members.push(row); }
+  if (!members.some((m) => m.acct === leader)) return null;   // the leader is a member: a view that says otherwise is no party
+  return { id, leader, members };
+}
+/** SOC1: AN INVITE as the hub hands it to the invited: the party, who asked, who is in it (PARTY_MAX at most, name and
+ *  id alone - the invited is not yet a member and sees no pose), when, and when it lapses. Null for anything else. */
+export function validInvite(v) {
+  if (!v || typeof v !== 'object' || Array.isArray(v)) return null;
+  const party = idOf(v.party), from = validSocialRow(v.from), at = stampOf(v.at), expires = stampOf(v.expires);
+  if (!party || !from || at == null || expires == null || !Array.isArray(v.members) || v.members.length > PARTY_MAX) return null;
+  const members = [];
+  for (const r of v.members) { const acct = idOf(r?.acct); if (!acct) return null; members.push({ acct, name: sanitizeName(r.name) }); }
+  return { party, from: { acct: from.acct, name: from.name }, members, at, expires };
+}
+
+/** SOC1: A FRAME FROM THE HUB, projected - the client's door, as CHAT-G's is for a chat line: the relay is the
+ *  player's choice (`?server=`, the menu's Relay field), so nothing arriving over it is the port's own word, and a
+ *  frame a modified relay shapes is dropped whole rather than half applied. One home for the shape, so the hub's
+ *  own pins can assert what it sends passes the door its client reads through. Null for anything else.
+ *    state:    {acct, name, peers, friends:[row], in:[row+at], out:[row+at], party: view|null, invites:[invite]}   my whole picture
+ *              (AUDIT SOC C20: `peers` the ids MY OWN tabs stand as; AUDIT SOC A6: a pending row carries a name and nothing else)
+ *    presence: {...row}                        a friend came online or went (the row's `online`, `seen`, `peers`)
+ *    party:    {party: view|null}              my party as it stands, or none
+ *    invite:   {...invite}                     a party asks for me
+ *    note:     {code, acct, name}              something happened, as a code the client puts words to
+ *    error:    {m}                             the hub refused one act, in words */
+export function validSocialFrame(m) {
+  if (!m || typeof m !== 'object' || Array.isArray(m) || m.t !== 'social' || !SOCIAL_KINDS.includes(m.k)) return null;
+  const list = (v, max, one) => { if (v == null) return []; if (!Array.isArray(v)) return null; const out = []; for (const r of v.slice(0, max)) { const row = one(r); if (!row) return null; out.push(row); } return out; };
+  if (m.k === 'state') {
+    const acct = idOf(m.acct);
+    if (!acct) return null;
+    const friends = list(m.friends, FRIENDS_MAX, validSocialRow), inbox = list(m.in, PENDING_MAX, validPendingRow), outbox = list(m.out, PENDING_MAX, validPendingRow), invites = list(m.invites, PENDING_MAX, validInvite);
+    if (!friends || !inbox || !outbox || !invites) return null;
+    const party = m.party == null ? null : validPartyView(m.party);
+    if (m.party != null && !party) return null;
+    return { t: 'social', k: 'state', acct, name: sanitizeName(m.name), peers: validSocialRow(m).peers, friends, in: inbox, out: outbox, party, invites };
+  }
+  if (m.k === 'presence') { const row = validSocialRow(m); return row ? { t: 'social', k: 'presence', ...row } : null; }
+  if (m.k === 'party') { if (m.party == null) return { t: 'social', k: 'party', party: null }; const party = validPartyView(m.party); return party ? { t: 'social', k: 'party', party } : null; }
+  if (m.k === 'invite') { const inv = validInvite(m); return inv ? { t: 'social', k: 'invite', ...inv } : null; }
+  if (m.k === 'note') { if (!NOTE_CODES.includes(m.code)) return null; return { t: 'social', k: 'note', code: m.code, acct: idOf(m.acct), name: m.name == null ? null : sanitizeName(m.name) }; }
+  const text = sanitizeLabel(m.m, SOCIAL_ERROR_MAX, { filter: false });   // 'error'
+  return text ? { t: 'social', k: 'error', m: text } : null;
+}
+
+/** SOC1: a party member's pose from the hub ({t:'party', acct, p}), projected, or null. */
+export function validPartyFrame(m) {
+  if (!m || typeof m !== 'object' || Array.isArray(m) || m.t !== 'party') return null;
+  const acct = idOf(m.acct), p = validPartyPose(m.p);
+  return acct && p ? { t: 'party', acct, p } : null;
 }

@@ -1,0 +1,238 @@
+[
+  {
+    "name": "JAN1-the-hook-is-read-after-the-close",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "    const openCharSheet = deps.openCharSheet;\n    onExit();                 // the pack's own close law runs FIRST...\n    openCharSheet();",
+    "new": "    onExit();                 // the pack's own close law runs FIRST...\n    deps.openCharSheet();",
+    "tests": [
+      "test/jan1_fixes.test.js"
+    ]
+  },
+  {
+    "name": "JAN1-the-arm-takes-a-truthy-bag-entry",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "if (act === 'CharacterSheet' && typeof deps?.openCharSheet === 'function') {",
+    "new": "if (act === 'CharacterSheet' && deps?.openCharSheet) {",
+    "tests": [
+      "test/jan1_fixes.test.js"
+    ]
+  },
+  {
+    "name": "JAN1-an-empty-table-restores-empty",
+    "file": "src/systems/save.js",
+    "old": "  entity.bankAccounts = snap.bankAccounts?.length ? snap.bankAccounts.map((a) => ({ ...a })) : createBankAccounts();   // B1",
+    "new": "  entity.bankAccounts = (snap.bankAccounts ?? []).map((a) => ({ ...a }));   // B1",
+    "tests": [
+      "test/jan1_fixes.test.js"
+    ]
+  },
+  {
+    "name": "JAN1-the-houses-restore-empty",
+    "file": "src/systems/save.js",
+    "old": "  entity.houses = snap.houses?.length ? snap.houses.map((h) => ({ ...h })) : createHouses(entity.bankAccounts.length);",
+    "new": "  entity.houses = (snap.houses ?? []).map((h) => ({ ...h }));",
+    "tests": [
+      "test/jan1_fixes.test.js"
+    ]
+  },
+  {
+    "name": "JAN1-a-saved-table-is-thrown-away",
+    "file": "src/systems/save.js",
+    "old": "  entity.bankAccounts = snap.bankAccounts?.length ? snap.bankAccounts.map((a) => ({ ...a })) : createBankAccounts();   // B1",
+    "new": "  entity.bankAccounts = createBankAccounts();   // B1",
+    "tests": [
+      "test/jan1_fixes.test.js"
+    ]
+  },
+  {
+    "name": "JAN1-NaN-is-a-value",
+    "file": "src/systems/itemTemplates.js",
+    "old": "export const itemValueOf = (item) => (Number.isFinite(item?.value) ? item.value : itemBaseValue(item ?? {}));",
+    "new": "export const itemValueOf = (item) => (item?.value ?? itemBaseValue(item ?? {}));",
+    "tests": [
+      "test/jan1_fixes.test.js"
+    ]
+  },
+  {
+    "name": "JAN1-the-sell-arm-reads-the-value-raw",
+    "file": "src/systems/tradeModes.js",
+    "old": "        cost += calculateCost(itemValueOf(item), quality, priceAdjustment) * stack;   // JAN1",
+    "new": "        cost += calculateCost(item.value, quality, priceAdjustment) * stack;   // JAN1",
+    "tests": [
+      "test/jan1_fixes.test.js"
+    ]
+  },
+  {
+    "name": "JAN1-the-repair-arm-reads-the-value-raw",
+    "file": "src/systems/tradeModes.js",
+    "old": "        cost += calculateItemRepairCost(itemValueOf(item), quality,",
+    "new": "        cost += calculateItemRepairCost(item.value, quality,",
+    "tests": [
+      "test/jan1_fixes.test.js"
+    ]
+  },
+  {
+    "name": "JAN1-the-saves-items-come-in-unset",
+    "file": "src/systems/save.js",
+    "old": "  entity.items = snap.items.map((it) => setItemFields(it));",
+    "new": "  entity.items = snap.items.map((it) => ({ ...it }));",
+    "tests": [
+      "test/jan1_fixes.test.js"
+    ]
+  },
+  {
+    "name": "JAN1-the-wagons-items-come-in-unset",
+    "file": "src/systems/save.js",
+    "old": "  entity.wagonItems = (snap.wagonItems ?? []).map((it) => setItemFields(it));",
+    "new": "  entity.wagonItems = (snap.wagonItems ?? []).map((it) => ({ ...it }));",
+    "tests": [
+      "test/jan1_fixes.test.js"
+    ]
+  },
+  {
+    "name": "JAN1-the-ring-releases-what-it-never-captured",
+    "file": "src/ui/input.js",
+    "old": "export function noteKeyUp(edges, code) { if (!edges) return; if (edges.own && !edges.own.delete(code)) return; edges.up.add(code); }",
+    "new": "export function noteKeyUp(edges, code) { if (edges) edges.up.add(code); }",
+    "tests": [
+      "test/jan1_field.test.js"
+    ]
+  },
+  {
+    "name": "JAN1-the-ring-owns-nothing",
+    "file": "src/ui/input.js",
+    "old": "export function noteKeyDown(edges, code, repeat = false) { if (edges && !repeat) { edges.down.add(code); edges.own?.add(code); } }",
+    "new": "export function noteKeyDown(edges, code, repeat = false) { if (edges && !repeat) { edges.down.add(code); } }",
+    "tests": [
+      "test/jan1_field.test.js"
+    ]
+  },
+  {
+    "name": "JAN1-a-release-is-owned-for-ever",
+    "file": "src/ui/input.js",
+    "old": "if (edges.own && !edges.own.delete(code)) return;",
+    "new": "if (edges.own && !edges.own.has(code)) return;",
+    "tests": [
+      "test/jan1_field.test.js"
+    ]
+  },
+  {
+    "name": "JAN1-the-dungeon-exit-drops-the-pose",
+    "file": "src/scenes/worldModes.js",
+    "old": "    host.applyWeaponPose?.(pose);   // JAN1: the exterior rig takes the pair the dungeon rig held",
+    "new": "",
+    "tests": [
+      "test/jan1_field.test.js"
+    ]
+  },
+  {
+    "name": "JAN1-the-dungeon-exit-reads-the-pose-after-the-teardown",
+    "file": "src/scenes/worldModes.js",
+    "old": "    const pose = dungeonPose();\n    host.onDungeonLeave?.();   // WORLD1: the room's memory goes out while the dungeon still stands\n    teardownDungeonQuestFlats();   // B2: OnDestroy for the quest stands, before the batch teardown\n    dungeonCtx.destroy();\n",
+    "new": "    host.onDungeonLeave?.();   // WORLD1: the room's memory goes out while the dungeon still stands\n    teardownDungeonQuestFlats();   // B2: OnDestroy for the quest stands, before the batch teardown\n    dungeonCtx.destroy();\n    const pose = dungeonPose();\n",
+    "tests": [
+      "test/jan1_field.test.js"
+    ]
+  },
+  {
+    "name": "JAN1-the-building-exit-drops-the-pose",
+    "file": "src/scenes/worldModes.js",
+    "old": "    host.applyWeaponPose?.(weaponPoseOf(interiorWeapon.playerWeapon));   // JAN1: and the exterior rig takes the pair back",
+    "new": "",
+    "tests": [
+      "test/jan1_field.test.js"
+    ]
+  },
+  {
+    "name": "JAN1-the-forced-exit-drops-the-pose",
+    "file": "src/scenes/worldModes.js",
+    "old": "      if (pose) host.applyWeaponPose?.(pose);   // JAN1: the exterior rig takes the pair the live rig held",
+    "new": "",
+    "tests": [
+      "test/jan1_field.test.js"
+    ]
+  },
+  {
+    "name": "JAN1-the-host-hands-no-pose",
+    "file": "src/scenes/world.js",
+    "old": "    weaponPose: () => weaponPoseOf(weaponRig.playerWeapon),\n    applyWeaponPose: (p) => applyWeaponPose(weaponRig.playerWeapon, p),\n",
+    "new": "",
+    "tests": [
+      "test/jan1_field.test.js"
+    ]
+  },
+  {
+    "name": "JAN1-the-pair-crosses-as-the-sheath-alone",
+    "file": "src/combat/playerWeapon.js",
+    "old": "  if (pose.usingRightHand != null) w.usingRightHand = !!pose.usingRightHand;",
+    "new": "",
+    "tests": [
+      "test/jan1_field.test.js"
+    ]
+  },
+  {
+    "name": "JAN1-the-walkers-stand-on-the-average-again",
+    "file": "src/scenes/world.js",
+    "old": "                return Number.isFinite(h) ? h - t[1] + 2.0 * 0.025 : locOrigin[1];",
+    "new": "                return locOrigin[1];",
+    "tests": [
+      "test/jan1_field.test.js"
+    ]
+  },
+  {
+    "name": "JAN1-the-walkers-keep-the-pixels-translation",
+    "file": "src/scenes/world.js",
+    "old": "                return Number.isFinite(h) ? h - t[1] + 2.0 * 0.025 : locOrigin[1];",
+    "new": "                return Number.isFinite(h) ? h + 2.0 * 0.025 : locOrigin[1];",
+    "tests": [
+      "test/jan1_field.test.js"
+    ]
+  },
+  {
+    "name": "JAN1-the-glare-forgets-the-veto",
+    "file": "src/render/airPass.js",
+    "old": "      if (cuv == clamp(cuv, vec2(0.0), vec2(1.0)) && viewDist(depthAt(cuv)) < lantern - ${glslFloat(AIR_GLARE_SLACK)}) vis = 0.0;",
+    "new": "",
+    "tests": [
+      "test/jan1_field.test.js"
+    ]
+  },
+  {
+    "name": "JAN1-the-glare-vetoes-a-surface-behind-the-light",
+    "file": "src/render/airPass.js",
+    "old": "viewDist(depthAt(cuv)) < lantern - ${glslFloat(AIR_GLARE_SLACK)}) vis = 0.0;",
+    "new": "viewDist(depthAt(cuv)) > lantern + ${glslFloat(AIR_GLARE_SLACK)}) vis = 0.0;",
+    "tests": [
+      "test/jan1_field.test.js"
+    ]
+  },
+  {
+    "name": "JAN1-the-arrival-forgets-the-topics",
+    "file": "src/scenes/world.js",
+    "old": "    // the frame loop's own call is then a no-op.\n    syncTopics();\n  }\n",
+    "new": "    // the frame loop's own call is then a no-op.\n  }\n",
+    "tests": [
+      "test/jan1_fixes.test.js"
+    ]
+  },
+  {
+    "name": "JAN1-the-keyed-chain-loses-its-where-is-row",
+    "file": "src/scenes/townTalk.js",
+    "old": "        { code: 'KeyW', label: 'W - where is...', action: () => openCategories(onClosed) },",
+    "new": "        { code: 'KeyW', label: '', action: () => openCategories(onClosed) },",
+    "tests": [
+      "test/jan1_fixes.test.js"
+    ]
+  },
+  {
+    "name": "JAN1-the-talk-door-opens-the-panel-with-no-directory",
+    "file": "src/scenes/townTalk.js",
+    "old": "    if (talkDoorReady() && directory.length) {",
+    "new": "    if (talkDoorReady()) {",
+    "tests": [
+      "test/jan1_fixes.test.js",
+      "test/enhancedTalk.test.js",
+      "test/audit63_windows.test.js"
+    ]
+  }
+]

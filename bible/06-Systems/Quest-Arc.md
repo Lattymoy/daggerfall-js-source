@@ -716,7 +716,7 @@ Ignoring') - permanent by parity, recorded in the coverage pin.
   faction-listener slot (addFactionListener first-claim-wins /
   removeFactionListener at dispose; PlayerActivate.StaticNPCClick
   reads the map - :1534, the only consumer in the DFU tree, and
-  wired at src/scenes/worldModes.js:479). activeFactionPersons walks NON-COMPLETE quests only -
+  wired at src/scenes/worldModes.js:520). activeFactionPersons walks NON-COMPLETE quests only -
   completed quests must not lock an NPC out (QuestMachine.cs:1085).
   The non-individual parse throw carries the TEMPLATE-SetComplete
   quirk; its sibling's does not.
@@ -938,7 +938,8 @@ guildServiceFlow's FLAGGED Quests arm closes.
   second pass (the UI text arc's).
 - THE QUEST PICKER (GuildQuestListBox, default off): the
   gettingQuests wait box (the two Internal_Strings literals; %pcf
-  rides the generic pass), labels from HEADER-ONLY parses
+  rides the generic pass - which, until GQL1 below, NO box ran,
+  because the popup layer never boxed the step), labels from HEADER-ONLY parses
   (partialParse threads Parser.cs:144 through
   QuestListsManager.loadQuest), the localization override, the
   full parse on pick throwing out uncaught - and C#'s RemoveAt
@@ -1421,10 +1422,10 @@ triage: 25 kills at fails=5+ (one at fails=7 - the `| 0` int32 rail
 broke three pins at once), 2 survivors at the baseline 4, both
 PROVEN equivalents:
 
-- questBridge.js:63 `rawZ ?? 0 -> ?? 1`: the hash's only read of
+- questBridge.js:65 `rawZ ?? 0 -> ?? 1`: the hash's only read of
   rawZ is `z >> 2`, and `1 >> 2 === 0 === 0 >> 2` - for any record
   LACKING rawZ the mutated default is arithmetically invisible.
-- questBridge.js:70 `(pn.flags ?? 0) -> (?? 1)` in the gender arm:
+- questBridge.js:72 `(pn.flags ?? 0) -> (?? 1)` in the gender arm:
   gender reads bit 5 alone, and `1 & 32 === 0 === 0 & 32` - Male
   either way, every path.
 
@@ -1452,7 +1453,7 @@ spamming the same questor does not re-pulse the task. DFU makes you go
 click someone else and come back.
 
 The port carries `lastNPCClicked` as an NPCData-shaped OBJECT LITERAL,
-and both hosts mint a fresh one at every click - worldModes.js:1066's
+and both hosts mint a fresh one at every click - worldModes.js:1135's
 quest-flat arm builds `{ hash, flags, factionID, nameSeed, gender,
 buildingKey, mapID }` inline, and questBridge.clickNpc runs
 `staticNpcData(pn, sceneCtx)`. So `lastClicked === this.clickMemory`
@@ -2893,7 +2894,7 @@ correct than the game it is a port of, which is the one thing this arc
 has never allowed. Expanding in place now. (The caller-side
 `if (quest)` went too - C# calls `ExpandQuestMessage` whether or not
 `GetQuest` found anything, and the null-parent bail is a forum-bug fix
-*inside* the helper, which `questMacros.js:437` already carries.)
+*inside* the helper, which `questMacros.js:490` already carries.)
 
 **Three nits with teeth.**
 
@@ -2901,7 +2902,7 @@ has never allowed. Expanding in place now. (The caller-side
 `PlayerActivate.StaticNPCClick:1534`. `TalkManager.cs` does not
 contain the word `Listener`. Three port comments named TalkManager as
 the reader and marked the wiring `(Q4 wires)` - over a reader the port
-already ships, at `worldModes.js:479`. A pending marker over shipped
+already ships, at `worldModes.js:520`. A pending marker over shipped
 work is worse than no marker at all: it sends the next reader looking
 for work that is done, in a file that never had it. Four sites
 corrected, the bible's copy included.
@@ -4857,7 +4858,7 @@ found `mode !== 'exterior'`, fell through, and turned the camera. So
 you swung and the view swung with you - every time, in every building
 and every dungeon reached from the town.
 
-`dungeon.js:250`, the standalone host, has always had the right shape:
+`dungeon.js:263`, the standalone host, has always had the right shape:
 attack, then `return`, with no mode in the test at all. It has no modal
 sibling to share the drag with, which is precisely why it never needed
 one - and why the difference between the three files never looked like
@@ -5466,7 +5467,7 @@ lesson one host over.
 **What did NOT ship:** PlayerEntity.Update's per-minute *intermittent
 spawn* roll (:486-492) still has no caller on this route. It is not
 this pool's dependency — it is a loop that carries the passive-guard
-spawns and the NPC-guard conversion with it (world.js:2254-2336) — and
+spawns and the NPC-guard conversion with it (world.js:2849-2938) — and
 it is named at the mount so the absence reads as a fact.
 
 **(c) The find-place seam's absence, narrowed to one sentence.**
@@ -5490,10 +5491,10 @@ ready-spell events (`hostMagic.js:76-77`), and those two doors are the
 (`machine.js:799`/`:782`; C# subscribes them in the action's
 constructor). Every `cast X spell do` and `cast X effect do` on this
 whole route could therefore never latch and never fire. The pair the
-other two engine-owning hosts wire (`world.js:2502-2503`,
-`dungeonContext.js:1985-1986`) is wired here now, and with it
+other two engine-owning hosts wire (`world.js:3154-3155`,
+`dungeonContext.js:2133-2134`) is wired here now, and with it
 `CastSpellDo`'s two world reads — `getClassicSpellEffects` and the
-byte-folded `spellHasMatchForClassicEffect` (`world.js:5595-5598`),
+byte-folded `spellHasMatchForClassicEffect` (`world.js:7077-7080`),
 absent which the action self-completes at *parse*
 (`actions.js:2756`/`:2763`) and the task can never arm at all.
 
@@ -5947,3 +5948,70 @@ die where they should.
 **What was wrong was the system describing itself** - a charter claiming
 loudness over a boolean, a dev scene missing 35 seams in silence, a gate
 reading one host by name - and three laws nothing was reading.
+
+## GQL1 - "THAT SERVICE IS NOT AVAILABLE YET" ON EVERY GUILD (2026-09-21)
+
+Discord, kurkku, playing online: "Are guild quests not in this? I get a
+message saying "this service isn't available" when I try to get one and
+can't tell if that's meant to happen."
+
+### The sentence, and where it comes from
+
+The popup's Quests service (worldModes' `onService`) asks
+`openServiceFlow` for a window; the `questOffer` arm runs the bridge's
+`offerGuildQuest` and boxes the step it answers with `offerBoxes`. An
+EMPTY chain is C#'s silent close (an active questor, no message 1000) and
+opens nothing, so the arm answers null - and the caller's null face is
+the one refusal sentence, `That service is not available yet.` The
+service was never gated online; nothing in the online lane touches this
+path.
+
+### The root cause
+
+`offerBoxes` boxed five step kinds - close, fail, offer, accepted,
+refused - and fell to `default: return []` for anything else. The offer
+flow answers TWO more. With **Choose Guild Jobs** on
+(`Enhancements/GuildQuestListBox`, the Features screen's own row, DFU's
+GuildQuestListBox) `offerGuildQuest`'s first step is `gettingQuests`
+(GettingQuestsBox, DaggerfallGuildServicePopupWindow.cs:610-622 - a
+click-anywhere message box whose generic macro pass expands %pcf) and
+its dismissal is `pickQuest` (GettingQuestsBox_OnClose :624-652, the
+DaggerfallListPickerWindow whose pick runs OfferQuest). Neither had a
+case. The flow was complete and pinned (`questoffers.test.js` drives
+both steps); the popup layer had never learned to SHOW them, so with the
+setting on every guild in the game refused every quest with the same
+sentence. The setting off, the classic random draw boxed fine - which is
+why nobody saw it until a player turned the row on.
+
+### The fix
+
+Two cases in `offerBoxes`, in the ServiceFlowWindow's own vocabulary: the
+wait step is a click-anywhere `{ rows, onClick }` box - the two literals
+with %pcf expanded to the player's FIRST name through the one macro walk
+(`expandMacroValues`, `firstName`) - whose click boxes the flow's
+`onClose`; the picker step is a `{ picker, onPick, onCancel }` box whose
+pick boxes the flow's `onPick(index)` and whose cancel offers nothing
+(the C# cancel pops the window). `default` stays the silent close, but
+only for a kind the flow cannot produce.
+
+### The pins (`test/gql1.test.js`, 5)
+
+The two boxes by shape; the walk through the REAL bridge and the REAL
+`ServiceFlowWindow` with the setting on - wait box, click, picker,
+pick, YesNo, Yes, the AcceptQuest popup, the quest LIVE in the machine;
+the setting off still boxing an offer; and a DERIVED law: every
+`kind: '...'` literal `offerFlow.js` can answer must be a `case` in
+`offerBoxes`, so a third kind reddens here rather than on Discord.
+Campaign `tools/mutants/gql1.json`: 9 mutants, 9 killed - each case
+unboxed again, the label renamed (the derived pin's own kill), %pcf raw
+and %pcf the whole name, the click not raising the picker, the pick not
+offering, the pick off by one, the entries not the flow's.
+
+### What is not proven
+
+The player was online. The defect above is real, matches the sentence
+word for word, and is the only path to it that the Quests service has -
+but whether that player's Choose Guild Jobs row was on is unconfirmed.
+If it was off, the refusal came from `questBridge`/`store` missing on
+the popup's host bag, which the online lane does not do either; the
+question to ask them is whether the row is on.

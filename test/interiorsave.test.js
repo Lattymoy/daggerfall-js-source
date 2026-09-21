@@ -101,7 +101,7 @@ test('IS1: ONE transition core - the click and the restore share TransitionInter
   // (SerializablePlayer.cs:394-400 restores BuildingDiscoveryData +
   // IsPlayerInsideOpenShop rather than recomputing at the load hour).
   const body = src.slice(src.indexOf('async function enterInteriorCore'), src.indexOf('function rayAabbProbe'));
-  assert.match(body, /interiorBuilding = restore\.building \?\? null;\n        insideOpenShop = !!interiorBuilding\?\.insideOpenShop;/,
+  assert.match(body, /interiorBuilding = restore\.building \?\? null;\n(?:\s*\/\/[^\n]*\n)*\s*insideOpenShop = !!interiorBuilding\?\.insideOpenShop\n\s*\|\| \(interiorBuilding\?\.buildingType != null && isShop\(interiorBuilding\.buildingType\) && isBuildingOpen\(interiorBuilding\.buildingType, _hour\)\);/,   // OL4 / AUDIT ALL O2: the saved latch is never taken away, only added to by the effective hours
     'a shop saved open loads open, whatever hour the load happens at');
   assert.match(body, /const spot = restore\?\.pos \?\? floored;/,
     "RestorePosition's interior arm: the saved position lands raw over the door landing");
@@ -169,7 +169,8 @@ test('IS1: the interior pause and F9/F11 land on the world composer; the stopgap
   // PX26 gave togglePause its own options; the slice follows it. The
   // law here is unchanged - the interior pause hands the world's
   // composer through.
-  const pause = modes.slice(modes.indexOf('    togglePause(opts = {}) {'), modes.indexOf('    toggleCharSheet()'));
+  // MAC-L1: `doorOpts`, not `opts` - one signature across THE FOUR HOSTS.
+  const pause = modes.slice(modes.indexOf('    togglePause(doorOpts = {}) {'), modes.indexOf('    toggleCharSheet()'));
   for (const door of ['quickSave: host.quickSave', 'quickLoad: host.quickLoad', 'playerName: host.playerName', 'saveAs: host.saveAs', 'loadKey: host.loadKey']) {
     assert.ok(pause.includes(door), `the pause hands ${door.split(':')[0]} through`);
   }

@@ -83,8 +83,8 @@ test('audit26 F183: the special area is the ONE block SpecialAreaCheck names, an
   assert.match(dc, /inSpecialArea: specialAreaBlockAt\(feet\[0\], feet\[2\]\),/);
   // both hosts apply the per-block ambient, and neither spells the
   // plain constant into its lighting call any more
-  assert.match(src('src/scenes/worldModes.js'), /renderer\.setLighting\(new Float32Array\(dungeonCtx\.ambient\), 0\);/);
-  assert.match(src('src/scenes/dungeon.js'), /renderer\.setLighting\(new Float32Array\(ctx\.ambient\), 0\);/);
+  assert.match(src('src/scenes/worldModes.js'), /renderer\.setLighting\(new Float32Array\(_tri \? _tri\.equator : dungeonAmbient\(_on, dungeonCtx\.ambient\)\), 0, undefined, _tri\);/, 'BA1 (EL4: through the lane\'s dark): the selector still feeds the flat ambient, under Better Ambience\'s trilight when a dungeon has one');
+  assert.match(src('src/scenes/dungeon.js'), /renderer\.setLighting\(new Float32Array\(_tri \? _tri\.equator : dungeonAmbient\(lightingOn, ctx\.ambient\)\), 0, undefined, _tri\);/);   // EL4
 });
 
 // ---------------------------------------------------------------
@@ -100,7 +100,11 @@ test('audit26 F033: the flash is record 1 of the MISSILE\'s archive at 15fps, wi
   assert.equal(missileArchive(4), 379);
   // the pool takes them per-spawn, and the blood defaults are untouched
   const he = src('src/scenes/hitEffects.js');
-  assert.match(he, /function spawn\(record, pos, facing = null, \{ archive = BLOOD_ARCHIVE, fps = BLOOD_FPS, scale = 1 \} = \{\}\)/);   // WW1: DoClang/DoThud's x2 rides `scale`, 1 by default - the flash is unscaled
+  // FIELD-GUN17 added `onTexture` to the tail - a callback about a
+  // TEXTURE, defaulting to null, which changes nothing this arm claims:
+  // the blood defaults are still the defaults and the flash is still
+  // unscaled (WW1: DoClang/DoThud's x2 rides `scale`, 1 by default).
+  assert.match(he, /function spawn\(record, pos, facing = null, \{ archive = BLOOD_ARCHIVE, fps = BLOOD_FPS, scale = 1, tracked = false, onTexture = null \} = \{\}\)/);
   assert.match(he, /showImpactFlash: \(archive, pos\) => spawn\(IMPACT_RECORD, pos, null, \{ archive, fps: IMPACT_FPS \}\)/);
   assert.equal(BLOOD_ARCHIVE, 380);
   assert.equal(BLOOD_FPS, 10);
@@ -108,7 +112,7 @@ test('audit26 F033: the flash is record 1 of the MISSILE\'s archive at 15fps, wi
   // FORWARD_NUDGE, unlike a blood splash.
   assert.match(he, /spawn\(IMPACT_RECORD, pos, null,/);
   // the entry carries archive/fps so a recenter can REBUILD the batch
-  assert.match(he, /const entry = \{ batch: null, anim: null, dead: false, record, pos: at, size: null, archive, fps, scale \};/);
+  assert.match(he, /const entry = \{ batch: null, anim: null, dead: false, record, pos: at, at: \[\.\.\.at\], size: null, archive, fps, scale, tracked \};/);
   assert.match(he, /e\.batch = renderer\.createBillboardBatch\(e\.archive, e\.record, e\.size, \[e\.pos\]\);/);
   // ...and the ANIM is built on the entry's archive too. That is
   // unobservable today - flatFps overrides only ANIMALS (201) and
@@ -117,7 +121,12 @@ test('audit26 F033: the flash is record 1 of the MISSILE\'s archive at 15fps, wi
   // pin has to read the source: the day this pool spawns an archive
   // WITH an override, a hard-coded BLOOD_ARCHIVE would silently pick
   // the wrong rate.
-  assert.match(he, /\? new FlatAnim\(archive, frameCount, true, fps\)/);
+  // FIELD-GUN14: the one-shot flag is now `!tracked` rather than a
+  // literal `true` - every entry this test is about is untracked, so
+  // it is still `true` for all of them, and the ONE that is not is a
+  // projectile in flight (the Thunderlock's orb), which has no end for
+  // a one-shot to reach.
+  assert.match(he, /\? new FlatAnim\(archive, frameCount, !tracked, fps\)/);
 });
 
 test('audit26 F033: both missile hosts flash, gated on element None and ByTouch, at every impact', () => {

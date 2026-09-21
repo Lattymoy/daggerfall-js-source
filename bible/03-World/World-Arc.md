@@ -905,7 +905,10 @@ discovery no-dupe all mutation-checked (three planted mutants caught).
   and never marks the map. The reveal arm expands a 7332 variant
   (%loc = the building; the ARENA2 gate pins all 7 variants naming
   %loc on the map and none carrying %di) and calls discoverBuilding;
-  the direction arm is the T3c 7333 chain unchanged. The mobile-talk
+  the direction arm is the T3c 7333 chain unchanged (MAC-U 2026-09-18:
+  7333 itself is now DFU's Internal_RSC phrase, read before the file by
+  `TextRsc` - classic's "%loc is %di of here" doubled the building name
+  inside every frame; `01-Overview/Mac-Bugs-U.md`). The mobile-talk
   hosts are the two exteriors, so isInside is false at this seam;
   interiors join with static-NPC talk (in flight in a parallel lane).
 - **%hnr/%ra** (talkSession.honorificOf / raceDisplayName): %hnr is
@@ -1731,6 +1734,7 @@ About 5,200 lines.
   `TRACK_FADE_DIST`) - none had a consumer once the layer went.
   `render/overworldRenderer.js` loses its road pass, its per-chain VAO
   sets and their teardown.
+  (MAP1, 2026-09-18: that renderer is RETIRED whole with the relief map.)
 - **The switch**: the `roads` preference and its row on the Enhanced
   pane.
 - **The host**: `scenes/world.js` loses the bake, the network, the

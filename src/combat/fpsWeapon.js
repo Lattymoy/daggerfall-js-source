@@ -24,8 +24,10 @@
 
 import { CifRciFile } from '../formats/cifRciFile.js';
 import { getInt } from '../systems/settings.js';   // AUDIT 28 W13: Controls/Handedness
+import { getPref } from '../systems/uiPrefs.js';   // MAC-I: the first-person lighting switch
 import { isEnchanted } from '../systems/inventory.js';   // AUDIT 17e C2
 import { WEAPONS, WEAPON_MATERIALS, weaponDyeColor } from '../characters/weapons.js';
+import { THUNDERLOCK_TEMPLATE } from '../characters/thunderlockIds.js';   // the port's own weapon (a leaf - see the file)
 import { applyDyeToIndex, DYE_TARGETS } from '../characters/dyes.js';
 
 // WeaponTypes (DaggerfallUnityEnums), the animation-set ids.
@@ -39,6 +41,12 @@ export const WEAPON_TYPES = Object.freeze({
   Warhammer: 10, Warhammer_Magic: 11,
   Battleaxe: 12, Battleaxe_Magic: 13,
   Bow: 14, Melee: 15, Werecreature: 16,
+  // THE PORT'S OWN, past the end of DFU's enum so nothing classic
+  // shifts: the Dwarven Thunderlock (systems/thunderlock.js). It has
+  // no WEAPON*.CIF - its frames come off one sheet, which is why
+  // WEAPON_FILE below has no row for it and combat/thunderlockArt.js
+  // loads it instead.
+  Thunderlock: 17, Thunderlock_Magic: 18,
 });
 
 // GetWeaponFilename, verbatim.
@@ -55,7 +63,11 @@ export const WEAPON_FILE = Object.freeze({
   [WEAPON_TYPES.Werecreature]: 'WEAPON11.CIF',
 });
 
-export const ALIGN = Object.freeze({ Left: 0, Center: 1, Right: 2 });
+// WeaponBasics' Alignment - a leaf now (combat/weaponAlign.js), so a
+// reader that wants only the enum does not take this module's world
+// with it. Re-exported here: this is still the enum's front door.
+export { ALIGN } from './weaponAlign.js';
+import { ALIGN } from './weaponAlign.js';
 
 // The classic 320x200 design surface every weapon image overlays.
 // AUDIT 24 (wave 24): the classic 320x200 panel has one home in
@@ -144,9 +156,26 @@ export const WERECREATURE_ANIMS = Object.freeze([
   A(6, 5, WERE_FPS, ALIGN.Left, 0.2),
 ]);
 
+/** The Thunderlock's table. Not a WeaponBasics row - there is no such
+ *  row - but the same five columns, so everything that reads an anim
+ *  reads this one too. Record 0 is the idle pose, record 1 the six
+ *  fire frames, and every strike direction plays the same six: a gun
+ *  does not care which way you dragged. AlignRight, because that is
+ *  where the lab settled it and where the classic weapons sit. */
+export const THUNDERLOCK_ANIMS = Object.freeze([
+  A(0, 1, IDLE_FPS, ALIGN.Right, 0),
+  A(1, 6, STRIKE_FPS, ALIGN.Right, 0),
+  A(1, 6, STRIKE_FPS, ALIGN.Right, 0),
+  A(1, 6, STRIKE_FPS, ALIGN.Right, 0),
+  A(1, 6, STRIKE_FPS, ALIGN.Right, 0),
+  A(1, 6, STRIKE_FPS, ALIGN.Right, 0),
+  A(1, 6, STRIKE_FPS, ALIGN.Right, 0),
+]);
+
 /** GetWeaponAnims, verbatim routing. */
 export function getWeaponAnims(weaponType) {
   const T = WEAPON_TYPES;
+  if (weaponType === T.Thunderlock || weaponType === T.Thunderlock_Magic) return THUNDERLOCK_ANIMS;   // the port's own, ahead of the verbatim routing
   if (weaponType === T.Melee) return MELEE_ANIMS;
   if (weaponType === T.Dagger || weaponType === T.Dagger_Magic) return DAGGER_ANIMS;
   if (weaponType === T.Staff || weaponType === T.Staff_Magic) return STAFF_ANIMS;
@@ -165,6 +194,14 @@ export function weaponTypeForItem(item) {
   // transformed rig binds the WERECLAWS_ITEM marker, which is not a
   // template at all
   if (item.werecreatureClaws) return T.Werecreature;
+  // THE PORT'S OWN WEAPON, ahead of the verbatim switch so the switch
+  // stays exactly ConvertItemToAPIWeaponType. It takes the enchanted
+  // promotion the classic weapons take - there is no WEAPO1xx sheet
+  // for it, so the magic art is the same sheet through a shimmer
+  // (combat/thunderlockArt.js) rather than a second set of frames.
+  if (item.templateIndex === THUNDERLOCK_TEMPLATE) {
+    return isEnchanted(item) ? T.Thunderlock_Magic : T.Thunderlock;
+  }
   let result;
   switch (item.templateIndex) {
     case W.Dagger: result = T.Dagger; break;
@@ -258,6 +295,17 @@ export async function loadFpsWeaponArt(getBytes, palette, renderer, weaponType, 
  *  strike keeps its side. */
 export const FLIP_STATES = Object.freeze(['Idle', 'StrikeDown', 'StrikeUp']);
 
+/**
+ * MAC-I: the first-person sprites' tint switch - the `firstPersonLighting`
+ * pref (Features -> First-person lighting) with `?fplight=off` as the kill
+ * door, which is the shape every other port switch here has (wispsOn,
+ * floraSwayOn). It is NOT gated on the enhanced skin: the classic sprite is
+ * what takes the tint, and the classic skin is where it is always drawn.
+ */
+export function fpLightingOn(search = globalThis.location?.search ?? '') {
+  return !!getPref('firstPersonLighting') && new URLSearchParams(search).get('fplight') !== 'off';
+}
+
 export function drawFpsWeapon(renderer, canvas, art, state, frame, {
   flipHorizontal = getInt('Controls', 'Handedness', 0, 3) === 1,
   // ROAD-D D10: weaponOffsetHeight (FPSWeapon.cs:146-155). Read
@@ -265,6 +313,11 @@ export function drawFpsWeapon(renderer, canvas, art, state, frame, {
   // recomputed - and DEFAULTED here, so the single caller
   // (combat/weaponRig.js) does not have to know the bar exists.
   offsetHeight = weaponOffsetHeight(),
+  // MAC-I: FPSWeapon.Tint (FPSWeapon.cs:108), which DFU passes to its
+  // own draw (:182) and never writes - the port writes it from the
+  // light the room's flats take (render/renderer.js flatLightAt). null
+  // is Color.white, byte for byte, which is every caller before this.
+  tint = null,
 } = {}) {
   if (!art) return;
   const flip = flipHorizontal && FLIP_STATES.includes(state);
@@ -290,5 +343,5 @@ export function drawFpsWeapon(renderer, canvas, art, state, frame, {
   const y = canvas.height - h - offsetHeight;
   // The mirror: rect.xMax .. -width (:388), i.e. u from 1 to 0.
   const src = flip ? { u0: 1, v0: 0, u1: 0, v1: 1 } : undefined;
-  renderer.drawScreenQuad(tex, { x, y, w, h }, src);
+  renderer.drawScreenQuad(tex, { x, y, w, h }, src, tint ?? undefined);   // MAC-I: Tint
 }

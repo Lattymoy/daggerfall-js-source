@@ -559,21 +559,38 @@ test('WW1: the Morrowind arms take the frame\'s Position and Scale over their ow
 
 test('WW1: the rig runs the clone beside the machine - the late update after the machine\'s step with the frame\'s inputs, the draw seam after the arms and before the classic sprite, the end-of-frame resume, the recoil fed from resolveHit, the arms\' transform, the hosts\' motion words, the look latch, the miss billboard', () => {
   const rig = rd('src/combat/weaponRig.js');
-  assert.match(rig, /const widget = createWeaponWidget\(\{ audio, envHit: envCast, missEffect \}\);/);
+  assert.match(rig, /const widget = createWeaponWidget\(\{\s*audio, envHit: envCast, missEffect,/);
   assert.match(rig, /const widgetOn = \(\) => modSetting\('weapon-widget', 'Enabled'\);/);
   assert.match(rig, /playerWeapon\.onAttackResult = \(\{ foe, damage \}\) => widget\.onAttackDamageCalculated\(\{ damage, parrySounds: !!foe\?\.basics\?\.parrySounds, pos: foe\?\.pos \?\? foe\?\.ai\?\.pos \?\? null, isEnemy: true \}\);/);
-  assert.match(rig, /playerWeapon\.update\(dt\);[\s\S]{0,400}if \(widgetOn\(\) \|\| _torchesOn\) \{[\s\S]{0,2800}if \(widgetOn\(\)\) widget\.lateUpdate\(dt, \{/, 'LateUpdate after the machine\'s Update (HT1: the torch component shares the frame\'s inputs)');
+  // SW1 widened the inner span from 2800: the shield widget's own frame
+  // feed now sits inside it, between the torch component's and this one's.
+  // AUDIT-THUNDERLOCK F8 widened the OUTER span from 1200: the port's own
+  // weapon's voice rides the same frame, right after the machine's step,
+  // because the trigger is what the ear is matching.
+  // What the pin holds is the ORDER - the machine steps, then the clone's
+  // LateUpdate - and that is untouched.
+  assert.match(rig, /playerWeapon\.update\(dt\);[\s\S]{0,4200}?if \(widgetOn\(\) \|\| _torchesOn \|\| shieldOn\(\) \|\| thunderlockHeld\(\)\) \{[\s\S]{0,5200}if \(widgetOn\(\)\) widget\.lateUpdate\(dt, \{/, 'LateUpdate after the machine\'s Update (HT1: the torch component shares the frame\'s inputs; SW1b: the shield opens the block too)');
   assert.match(rig, /const look = takeFrameLook\(\);/, 'the look read once a frame'); assert.match(rig, /look, swingHeld: _held, cursorActive: cursorActive\(\), camera: camThunk,/);
-  assert.match(rig, /try \{ return drawInner\(\{ paralyzed \}\); \} finally \{ widget\.endOfFrame\(\); \}/, 'WaitForEndOfFrame resumes after the draw');
+  // SW1: the shield's coroutines resume on the same edge, in the same finally
+  assert.match(rig, /try \{ return drawInner\(\{ paralyzed \}\); \} finally \{ widget\.endOfFrame\(\); shield\.endOfFrame\(\); \}/, 'WaitForEndOfFrame resumes after the draw');
   assert.match(rig, /fpArm\.setScreenTransform\(widgetOn\(\) \? \(base\) => widget\.armsTransform\(base\) : null\);/);
-  assert.match(rig, /if \(fpArm\.active\(\)\) \{[^}]*fpArm\.draw\(c\);[^}]*return; \}\s*(?:\/\/[^\n]*\n\s*)*if \(handheldOn\(\) && c\) handheld\.draw\(renderer, c\);\s*if \(widgetOn\(\) && c && widget\.draw\(renderer, c\)\) return;/, 'the arms first, the torch (HT1: DFU draws it in OnGUI before the widget) second, the clone third, the classic sprite last');
+  // MAC-I: every sprite in this seam takes the frame's TINT now (FPSWeapon.Tint, off the room's light);
+  // the ORDER and the returns are what this pin holds, and neither moved.
+  // SW1b: the shield's verdict moved ABOVE the gate (its poses live in the frames `shown()` calls hidden), so the
+  // step here is the one line, and `if (!shown()) return;` stops a shield-only frame before the clone and the sprite
+  // MAP-WEAPON put one more rung between the arms and the shield: while a
+  // map holds the screen the classic body paints none of the four below
+  // (the arm's branch has returned above it, so the held-sheet pose is
+  // untouched). The ORDER of the four is what this pin holds, and it did
+  // not move.
+  assert.match(rig, /if \(fpArm\.active\(\)\) \{[^}]*fpArm\.draw\(c\);[^}]*return; \}\s*(?:\/\/[^\n]*\n\s*)*if \(sheetWindowUp\(\)\) return;\s*(?:\/\/[^\n]*\n\s*)*if \(shieldRect\) shield\.draw\(\(index, rect, uv\) => drawShieldSprite\(index, rect, uv, fpTint\)\);\s*if \(handheldOn\(\) && c\) handheld\.draw\(renderer, c, fpTint\);\s*if \(torchOnly && !gunSliding\) return;[^\n]*\n\s*(?:\/\/[^\n]*\n\s*)*if \(!shown\(\) && !gunSliding\) return;[^\n]*\n\s*(?:\/\/[^\n]*\n\s*)*const tlArt = c && thunderlockHeld\(\) \? artFor\(playerWeapon\.weapon\) : null;\s*if \(tlArt\?\.anchor && tlArt\.unionBox\) \{ drawThunderlock\(tlArt, c, fpTint\); return; \}\s*(?:\/\/[^\n]*\n\s*)*if \(gunSliding && !shown\(\)\) return;\s*if \(widgetOn\(\) && c && widget\.draw\(renderer, c, fpTint\)\) return;/, 'the arms first, MAP-WEAPON\\u2019s map gate, SW1\\u2019s shield (the off hand, behind both), the torch, the clone, the classic sprite last');
   assert.match(rig, /const envCast = envHit \?\? \(\(reach\) => \{/, 'CheckForEnvDamage\'s cast from the host\'s collider');
   const pw = rd('src/combat/playerWeapon.js');
   assert.match(pw, /this\.onAttackResult\?\.\(\{ foe, damage \}\);/, 'OnAttackDamageCalculated\'s one consumer');
   const arm = rd('src/combat/fpArm.js');
   assert.match(arm, /setScreenTransform\(fn\) \{ screenTransform = typeof fn === 'function' \? fn : null; \}/);
   assert.match(arm, /const rect = screenTransform\(\{ x: 0, y: 0, w: W, h: H \}\);/, 'the composite\'s whole rect through the transform');
-  assert.match(arm, /renderer\.drawScreenQuad\(tex, rect, \{ u0: 0, v0: ph \/ CHAR_SPRITE_RT_SIZE, u1: pw \/ CHAR_SPRITE_RT_SIZE, v1: 0 \}\)/, 'drawn as a screen quad with the overlay\'s own uv');
+  assert.match(arm, /renderer\.drawScreenQuad\(tex, \{ x: rect\.x, y: rect\.y - up, w: rect\.w, h: rect\.h \+ up \}, \{ u0: 0, v0: phFull \/ CHAR_SPRITE_RT_SIZE, u1: pw \/ CHAR_SPRITE_RT_SIZE, v1: 0 \}\)/, 'drawn as a screen quad with the overlay\'s own uv (MAC-R1: the rect extended UP by the pad\'s share, the padded sub-rect sampled whole)');
   // WW2: the motor's words for the bob ride ONE bag (motionBagOf) at every site - a per-file grep let a second, partial
   // site in worldModes.js (the world-hosted dungeon lane) ship without `standing`, and the walking bob played at rest
   for (const [host, sites] of [['src/scenes/world.js', 1], ['src/scenes/exterior.js', 1], ['src/scenes/worldModes.js', 2], ['src/scenes/dungeon.js', 1]]) {
@@ -584,7 +601,16 @@ test('WW1: the rig runs the clone beside the machine - the late update after the
   }
   assert.match(rd('src/scenes/dungeonContext.js'), /missEffect: \(k, p, o\) => hitEffects\.showMissEffect\(k, p, o\)/);
   assert.match(rd('src/scenes/hitEffects.js'), /showMissEffect: \(kind, pos, \{ archive = BLOOD_ARCHIVE, record = 2, fps = 20, scale = 2 \} = \{\}\) => spawn\(record, pos, null, \{ archive, fps, scale \}\)/);
-  assert.match(rd('src/scenes/hitEffects.js'), /entry\.size\.map\(\(v\) => v \* scale\)/, 'DoClang/DoThud\'s localScale x2');
+  // FIELD-GUN18 re-aimed this line, and it is worth saying what it was
+  // holding. It matched `entry.size.map((v) => v * scale)` - the ARRAY
+  // arm of a ternary whose value is a {w, h} RECORD, so the arm this
+  // pin named had never once executed and the other arm was `size *
+  // scale`, which is NaN. The x2 was pinned by SOURCE TEXT for a
+  // branch that could not run, and a NaN size draws nothing, so
+  // DoClang/DoThud has been invisible since WW1 shipped while this
+  // assertion stayed green. It asks for the arithmetic that runs now.
+  assert.match(rd('src/scenes/hitEffects.js'), /entry\.size = \{ w: entry\.size\.w \* scale, h: entry\.size\.h \* scale \};/, 'DoClang/DoThud\'s localScale x2');
+  assert.match(rd('src/scenes/hitEffects.js'), /scale = 2 \} = \{\}\)/, '...and a miss effect is scaled unless a caller says otherwise');
   const lf = rd('src/player/lookFilter.js');
   assert.match(lf, /export function takeFrameLook\(\) \{ const v = \[_frameYaw, _framePitch\]; _frameYaw = 0; _framePitch = 0; return v; \}/);
   assert.match(lf, /_frameYaw \+= dyaw; _framePitch \+= dpitch;/, 'latched where the look is applied');
@@ -628,4 +654,70 @@ test('WW1: the bundle door - TryImportCifRci\'s spelling with the w_ prefix and 
   assert.equal(b.draws.at(-1).tex, 'tex:0:0:0');
   assert.ok(b.widget._w.customCache.has('w_WEAPON04.CIF_0-0_Steel'), 'asked by TryImportCifRci\'s spelling');
   assert.equal(b.widget._w.customCache.get('w_WEAPON04.CIF_0-0_Steel'), null);
+});
+
+test('WW4 (Mac\'s curated fix): a clone that chooses silence OWNS the draw seam - frame -1, hideWeapon and third person answer true and draw nothing, so the classic sprite never falls in behind a Hide wind-up or recovery', () => {
+  const hd = bench({ over: { 'Swings.Windup': WINDUP.Hide } });
+  hd.frame(); machineAttack(hd.machine, 'StrikeLeft'); hd.frame(0.05);
+  assert.equal(hd.widget.frame, -1, 'hidden by the wind-up');
+  const before = hd.draws.length;
+  assert.equal(hd.widget.draw(hd.renderer, hd.ctx.canvas), true, 'frame -1: the seam is the clone\'s (the rig returns and draws no sprite)');
+  assert.equal(hd.draws.length, before, 'and nothing was drawn');
+  const b = bench(); b.frame();
+  b.widget.setShowWeapon(false);
+  assert.equal(b.widget.draw(b.renderer, b.ctx.canvas), true, 'a hideWeapon message: owned, silent');
+  b.widget.setShowWeapon(true);
+  b.ctx.thirdPerson = true;
+  assert.equal(b.widget.draw(b.renderer, b.ctx.canvas), true, 'third person: owned, silent');
+  b.ctx.thirdPerson = false;
+  // genuine NOT-APPLICABLE still falls through to the classic sprite
+  const none = bench({ weaponType: T.None }); none.frame();
+  assert.equal(none.widget.draw(none.renderer, none.ctx.canvas), false, 'no weapon type: not the clone\'s');
+  // and the rig's seam reads the answer exactly that way
+  assert.match(rd('src/combat/weaponRig.js'), /if \(widgetOn\(\) && c && widget\.draw\(renderer, c, fpTint\)\) return;/);
+});
+
+test('WW4b (Mac\'s curated fix): after a swing under Recovery = Hide the melee idle re-enters on a DRAWABLE frame, so it slides back into view instead of staying at -1 for ever', () => {
+  const b = bench();
+  b.frame();
+  assert.ok(machineAttack(b.machine, 'StrikeDown'));
+  for (let i = 0; i < 40 && b.machine.state !== 'Idle'; i++) b.frame(0.05);
+  assert.equal(b.machine.state, 'Idle'); assert.equal(b.widget.state, S.Idle);
+  assert.equal(b.widget.frame, 0, 'the idle holds frame 0 again, not the recovery\'s -1');
+  const before = b.draws.length;
+  b.frame(0.05);
+  assert.equal(b.draws.length, before + 1, 'and it draws');
+  assert.equal(b.draws.at(-1).tex, 'tex:0:0:0', 'the idle sprite');
+  // Recovery = LastFrame already held a real frame and is left as it was
+  const lf = bench({ over: { 'Swings.Recovery': RECOVERY.LastFrame } });
+  lf.frame(); machineAttack(lf.machine, 'StrikeDown');
+  for (let i = 0; i < 40 && lf.machine.state !== 'Idle'; i++) lf.frame(0.05);
+  assert.equal(lf.widget.state, S.Idle);
+  assert.ok(lf.widget.frame >= 0, 'a real frame, untouched by the re-entry');
+});
+
+test('F1 (2026-09-17, Mac: "when thrusting with a weapon, it can be glitchy"): a StrikeUp recovers in reverse ONCE - under Recovery = Last Frame the reverse used to run again every lap until the original\'s swing ended (mutant: the latch dropped)', () => {
+  const b = bench({ over: { 'Swings.Recovery': RECOVERY.LastFrame } });
+  b.frame();
+  assert.ok(machineAttack(b.machine, 'StrikeUp'));
+  const trace = [];
+  for (let i = 0; i < 80 && b.machine.state !== 'Idle'; i++) { b.frame(0.02); trace.push(b.widget.frame); }
+  assert.equal(b.machine.state, 'Idle');
+  // the strike went forward to its last frame, back down to 0 once, then held the last frame (the setting's pose) until the swing ended
+  let descents = 0, climbsAfterReverse = 0, reversed = false;
+  for (let i = 1; i < trace.length; i++) {
+    const a = trace[i - 1], c = trace[i];
+    if (a > 0 && c === a - 1) { descents++; if (c === 0) reversed = true; }
+    else if (reversed && c > a && a === 0) climbsAfterReverse++;
+  }
+  assert.ok(trace.includes(0) && trace.includes(4), `the strike rose to 4 and came back to 0 (${trace.join(',')})`);
+  assert.equal(descents, 4, `one reverse of four steps (${trace.join(',')})`);
+  assert.ok(climbsAfterReverse <= 1, `after the reverse the frame is set to the last once and held, never reversed again (${trace.join(',')})`);
+  // and under the shipped Hide the reverse runs once too, then the hidden frame
+  const h = bench();
+  h.frame(); machineAttack(h.machine, 'StrikeUp');
+  const t2 = [];
+  for (let i = 0; i < 80 && h.machine.state !== 'Idle'; i++) { h.frame(0.02); t2.push(h.widget.frame); }
+  let d2 = 0; for (let i = 1; i < t2.length; i++) if (t2[i - 1] > 0 && t2[i] === t2[i - 1] - 1) d2++;
+  assert.equal(d2, 4, `Hide: one reverse (${t2.join(',')})`);
 });

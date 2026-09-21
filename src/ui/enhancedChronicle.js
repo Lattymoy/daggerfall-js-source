@@ -22,7 +22,8 @@
 // player opens this window with before they have clicked anything.
 import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
 import { closeOnOutsideTap } from './enhancedOverlays.js';   // OT1
-import { overlayAction } from './input.js';
+import { overlayAction, actionOf } from './input.js';   // LV1's audit: `actionOf` is the REGISTRY's answer for the key this window is named after
+import { questRail, questTitleOf } from './questRail.js';   // MAC-K2: the ONE quest walk, shared with the pause window's Quests tab
 
 const el = (tag, cls, text) => {
   const n = document.createElement(tag);
@@ -36,9 +37,28 @@ let deps = {};
 let onExit = () => {};
 let section = 'notes';
 let draft = '';   // PX24b: the note being written, kept across renders
+// MAC-F (Mac: "Quests and their tabs should be able to be minimized").
+// WHICH CARDS THE PLAYER HAS SHUT, as `section:index`. A quest's whole
+// trail is its body and twelve of them is a wall of text; the classic
+// logbook answers that with four-lines-and-a-Next-button, this window
+// answers it by letting a card fold to its head. Kept across renders
+// and across a tab change, cleared on mount - a fold is a reading
+// position, not a saved setting, and nothing on disk should learn it.
+const folded = new Set();
 
+// MAC-K2 (Mac: "Logbook not reflecting quests"). QUESTS GOES FIRST,
+// and it is the section this window was missing entirely. The L key
+// (`LogBook`, InputManager's own name for it) opens this window; the
+// three sections it had were Notes, Messages and History, none of
+// which is a quest, and `chronicleDoor.js` was being handed
+// `questMessages` by all four hosts while `chronicleModel` never read
+// it - a dep in, nothing out. A player pressing the key named after
+// the job got their notebook.
+//
+// It leads because it is what the key is FOR. Notes, Messages and
+// History keep their order behind it.
 export const CHRONICLE_SECTIONS = Object.freeze([
-  ['notes', 'Notes'], ['messages', 'Messages'], ['history', 'History'],
+  ['quests', 'Quests'], ['notes', 'Notes'], ['messages', 'Messages'], ['history', 'History'],
 ]);
 
 const LINE_FORMATTINGS = new Set(['text', 'newline', 'highlight', 'question', 'answer']);
@@ -97,17 +117,59 @@ export function chronicleModel(d = {}) {
   const entries = (list) => (list ?? []).map(chronicleEntry).filter((e) => e.head || e.body.length);
   const notes = entries(nb?.getNotes?.());
   const messages = entries(nb?.getMessages?.());
+  // MAC-K2: the quests, through the SAME walk the pause window's
+  // Quests tab uses (ui/questRail.js) - so the two faces cannot
+  // disagree about which quests are live or what they say. Each quest
+  // becomes one entry: its title as the head, its trail as the body,
+  // NEWEST STEP FIRST (`entries` arrives oldest-first from the
+  // machine's log and the last thing you were told is the thing you
+  // opened this for - the same reading the Messages section makes).
+  // The archive follows the live ones, as the rail files it.
+  const log = d.questLog?.() ?? null;
+  const rail = log ? questRail(log) : { active: [], finished: [] };
+  const quests = [
+    ...rail.active.map((q) => ({
+      head: questTitleOf(q.name),
+      body: [...q.entries].reverse().flat(),
+    })),
+    ...rail.finished.map((q) => ({
+      head: `${questTitleOf(q.name)}${q.when ? ` \u2014 ${q.success === false ? 'ended' : 'completed'} ${q.when}` : ''}`,
+      body: [...q.lines],
+    })),
+  ].filter((e) => e.head || e.body.length);
   // The history is already lines - chargen composes backStory as
   // strings, and playerHistory.js reads exactly this.
   const history = (d.entity?.backStory ?? []).map((l) => String(l ?? '')).filter((l) => l.length);
-  return { notes, messages, history };
+  return { quests, notes, messages, history };
+}
+
+/** MAC-F: the fold laws, kept pure so a node test can drive them with
+ *  no DOM. The store is a plain Set of keys and the window owns one. */
+export const foldKey = (sec, index) => `${sec}:${index}`;
+export const isFolded = (store, sec, index) => !!store?.has(foldKey(sec, index));
+export function toggleFold(store, sec, index) {
+  const k = foldKey(sec, index);
+  if (store.has(k)) store.delete(k); else store.add(k);
+  return store;
+}
+/** Whether EVERY card in a section is shut - which is what decides
+ *  whether the section's own control offers to collapse or expand. An
+ *  empty section is not "all folded": there is nothing to fold. */
+export const allFolded = (store, sec, count) =>
+  count > 0 && Array.from({ length: count }, (_, i) => foldKey(sec, i)).every((k) => store.has(k));
+/** Fold or unfold a whole section at once. */
+export function setSectionFold(store, sec, count, shut) {
+  for (let i = 0; i < count; i++) {
+    if (shut) store.add(foldKey(sec, i)); else store.delete(foldKey(sec, i));
+  }
+  return store;
 }
 
 function render() {
   if (!host) return;
   host.innerHTML = '';
   const model = chronicleModel(deps);
-  const counts = { notes: model.notes.length, messages: model.messages.length, history: model.history.length };
+  const counts = { quests: model.quests.length, notes: model.notes.length, messages: model.messages.length, history: model.history.length };
 
   const shell = el('div', 'px-home px-over cr-shell');
   const win = el('div', 'px-win');
@@ -197,7 +259,8 @@ function render() {
       detail.append(compose);
     }
     if (!rows.length) {
-      detail.append(el('p', 'px-note', section === 'notes' ? 'Nothing written yet.' : 'No messages yet.'));
+      detail.append(el('p', 'px-note', section === 'notes' ? 'Nothing written yet.'
+        : (section === 'quests' ? 'No active quests.' : 'No messages yet.')));
     } else {
       // NEWEST FIRST for messages (the ring's own order is oldest
       // first and the last thing you were told is the thing you
@@ -206,9 +269,24 @@ function render() {
       const list = section === 'messages'
         ? rows.map((e, i) => ({ e, i })).reverse()
         : rows.map((e, i) => ({ e, i }));
+      // MAC-F: THE WHOLE TAB AT ONCE. Folding twelve quests one at a
+      // time to see the twelve titles is the wall of text again with
+      // extra clicks in it, so the section carries the same control
+      // its cards do - and it reads the cards rather than keeping a
+      // flag of its own, so folding the last one by hand flips it.
+      const shutAll = allFolded(folded, section, rows.length);
+      const every = el('button', 'px-qrow cr-foldall');
+      every.append(el('span', 'px-c', shutAll ? '\u25b8' : '\u25be'),
+        document.createTextNode(shutAll ? 'Expand all' : 'Collapse all'));
+      every.onclick = () => { setSectionFold(folded, section, rows.length, !shutAll); render(); };
+      detail.append(every);
       const box = el('div', 'cr-entries');
       for (const { e, i } of list) {
-        const entry = el('div', 'cr-entry');
+        // MAC-F: a SHUT card says so in its own class, so the head's
+        // divider can go with the body it was dividing from - a card
+        // that keeps a rule under its title looks like a card whose
+        // body failed to draw.
+        const entry = el('div', `cr-entry${isFolded(folded, section, i) ? ' cr-shut' : ''}`);
         const top = el('div', 'cr-head');
         // THE DATE, which the notebook wrote and PX24 lost. A NOTE
         // whose page split files with no header (notebook.js:97-107)
@@ -217,7 +295,18 @@ function render() {
         const head = e.head ?? (section === 'messages'
           ? (i === rows.length - 1 ? 'Most recent' : null)
           : '\u2014 continued \u2014');
-        top.append(el('span', 'cr-when', head ?? ''));
+        // MAC-F: THE HEAD IS THE HANDLE. The caret and the date are one
+        // button - a card folds by clicking the thing you were already
+        // reading, and the remove stays its own control beside it
+        // rather than nested inside a button, which is not HTML.
+        const shut = isFolded(folded, section, i);
+        const fold = el('button', 'cr-fold');
+        fold.append(el('span', 'px-c cr-caret', shut ? '\u25b8' : '\u25be'));
+        fold.append(el('span', 'cr-when', head ?? ''));
+        fold.setAttribute('aria-expanded', String(!shut));
+        fold.title = shut ? 'Expand this entry' : 'Collapse this entry';
+        fold.onclick = () => { toggleFold(folded, section, i); render(); };
+        top.append(fold);
         if (!head) top.classList.add('cr-headless');
         if (section === 'notes' && deps.notebook?.()) {
           const rm = el('button', 'cr-rm', '\u00d7');
@@ -227,7 +316,7 @@ function render() {
           top.append(rm);
         }
         entry.append(top);
-        for (const line of e.body) entry.append(el('p', null, line));
+        if (!isFolded(folded, section, i)) for (const line of e.body) entry.append(el('p', null, line));
         box.append(entry);
       }
       detail.append(box);
@@ -253,6 +342,31 @@ function onKey(e) {
     render();
     return;
   }
+  // LV1's AUDIT, recorded there and closed here: THE KEY THAT OPENED
+  // THIS WINDOW PUTS IT AWAY.
+  //
+  // MAC-C gave the sheet and the pack exactly this arm ("you can exit
+  // out of the F6 menu (inventory) by pressing F6 again, but you
+  // cannot do the same for the F5 one") and the chronicle was left
+  // out - so L opened it and L did NOTHING, which is worse than it
+  // sounds: the host swallows the key for an `isChoiceWindow` overlay
+  // (ui/input.js's routeKey and townTalk's own seam both hand the raw
+  // code to the window and return), so the press was consumed and
+  // answered by nobody. A key that is eaten in silence is
+  // indistinguishable from a key that was not received.
+  //
+  // OFF THE REGISTRY, never the literal: `LogBook` is InputManager's
+  // own name for this door, and a rebound key that cannot close the
+  // window it opened is the same bug one layer down (FIX-F's, and I2's
+  // before it). A text field keeps its own keys - the note composer is
+  // a real <input> and 'l' belongs to it (CG2) - which the guard at
+  // the top of this handler already ensures.
+  if (actionOf(e) === 'LogBook') {
+    e.preventDefault();
+    e.stopPropagation();
+    onExit();
+    return;
+  }
   if (overlayAction(e) !== 'back') return;
   e.preventDefault();
   e.stopPropagation();
@@ -265,15 +379,16 @@ export function mountEnhancedChronicle(hostEl, d = {}) {
   host = hostEl;
   deps = d;
   onExit = d.onExit ?? (() => {});
-  section = CHRONICLE_SECTIONS.some(([id]) => id === d.section) ? d.section : 'notes';
+  section = CHRONICLE_SECTIONS.some(([id]) => id === d.section) ? d.section : 'quests';
   draft = '';
+  folded.clear();   // MAC-F: a fresh open reads whole, as it always has
   render();
   window.addEventListener('keydown', onKey, true);
   return {
     render,
     destroy() {
       window.removeEventListener('keydown', onKey, true);
-      host = null; deps = {}; section = 'notes'; draft = '';
+      host = null; deps = {}; section = 'notes'; draft = ''; folded.clear();
     },
   };
 }

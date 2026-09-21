@@ -9,6 +9,27 @@
 // exactly as Unity's KeyCode names them (left/right/middle). DFU
 // serializes KeyCode NAMES into KeyBindings.txt, so the port's stored
 // shape is the same idea one alphabet over.
+//
+// SOC5 (2026-09-16, Mac: "Players should be able to interact with others in
+// the world upon encountering them by pressing F on their body, which should
+// show options to add as a friend or invite to a party"): THE ONE ACTION IN
+// THIS LIST DFU DOES NOT HAVE. 'SocialInteract' is appended past DFU's
+// forty-four, on KeyF, which SetupDefaults leaves free. It is the port's own
+// because the thing it does is the port's own - Daggerfall Unity has no other
+// players to stand in front of, no friends and no parties - so it is a
+// Ledger A row (ONLINE), not a parity claim.
+//
+// QS2 (2026-09-17): and three more beside it - 'QuickUse1', 'QuickUse2' and
+// 'QuickSwap', the enhanced HUD's quickslot diamond (systems/quickslots.js).
+// Same class, same reason: DFU's HUD carries no item slots, so these are the
+// port's own rows and not a parity claim either.
+//
+// They are APPENDED and never inserted: the
+// classic controls window indexes this list by NUMBER (ui/controlsWindow.js
+// KEY_GROUPS, DFU's SetupKeybindButtons [2..40) against fixed pixel anchors on
+// CNFG00I0.IMG), so a name spliced into the middle would silently re-label
+// thirty-eight buttons in a window whose art cannot move. Past the end,
+// every existing index still means what it meant.
 
 import { appStorage } from './appStorage.js';   // DA1: the storage seam
 
@@ -31,7 +52,41 @@ export const ACTIONS = Object.freeze([
   'QuickSave', 'QuickLoad',
   'PrintScreen',
   'AutoRun',
+  // SOC5: the port's own, past DFU's last row - see the header. The F-menu on
+  // another player's body, and the friends/party panel when nobody is in reach.
+  'SocialInteract',
+  // QS2 (2026-09-17, Mac: the Demon's Souls quickslot diamond on the enhanced
+  // HUD): three more of the port's own, appended for the same reason
+  // 'SocialInteract' was - Daggerfall has no item slots on its HUD at all, so
+  // these are Ledger A rows, not parity claims. The two consumable presses and
+  // the weapon swap the diamond's cells name (systems/quickslots.js).
+  'QuickUse1', 'QuickUse2', 'QuickSwap',
+  // QS4 (2026-09-17, Mac: "The 4th quickslot doesnt have a keybind"): the
+  // diamond's OFF-HAND cell, which had none - it spoke only through Handheld
+  // Torches' own mod key, which the enhanced pane cannot rebind and no pad can
+  // carry. Appended, like the three above and for the same reason.
+  'QuickOffHand',
+  // QS6 (2026-09-17, Mac: "for slot 3, I want to change it to be for spells.
+  // So you should be able to hold the keybind to switch between applicable
+  // spells, and then press the keybind to equip"): the diamond's SPELL slot.
+  // Appended, like the four above; 'QuickSwap' keeps its row and its place -
+  // an action is never removed from this list, and the swap is still
+  // rebindable - it only gives up the DEFAULT key, which the cell it is drawn
+  // in (the off hand's) already carries.
+  'QuickSpell',
 ]);
+
+/** AUDIT SOC D3: THE PORT'S OWN ROWS, NAMED SO THE CLASSIC WINDOWS CAN YIELD THEM.
+ *  The classic controls window stages ALL of ACTIONS and runs the duplicate check over the whole staged dict - but
+ *  its grid is DFU's Actions[2..40) on fixed art and its ADVANCED popup is DFU's six, so 'SocialInteract' is in the
+ *  check and on NEITHER window's face. A classic player who bound a grid action to F was told of a clash against a
+ *  row they could not see, could not clear, and could not close the window past. So the port's own actions YIELD
+ *  there: systems/controlsConfig.js checkDuplicates takes `{ yield: PORT_ACTIONS }` from the two classic windows
+ *  and unbinds the port's row rather than colouring a clash nobody can resolve. The ENHANCED window passes nothing,
+ *  because it draws the row (ui/enhancedControls.js PORT_ROWS, the 'Online' group) and can rebind it.
+ *  QS2: the three quickslot actions join it for the same reason, off the same face - the enhanced pane draws them
+ *  under their own 'Quickslots' heading and the classic windows cannot draw them at all. */
+export const PORT_ACTIONS = Object.freeze(['SocialInteract', 'QuickUse1', 'QuickUse2', 'QuickSwap', 'QuickOffHand', 'QuickSpell']);
 
 const ACTION_SET = new Set(ACTIONS);
 
@@ -87,6 +142,40 @@ export const DEFAULT_BINDINGS = Object.freeze([
   ['F8', 'PrintScreen'],
   ['F9', 'QuickSave'],
   ['F11', 'QuickLoad'],
+  // SOC5 (Mac: "by pressing F on their body"): the port's own row, past DFU's
+  // table. KeyF is the key Mac named and SetupDefaults never spends - the one
+  // free letter next to the movement hand. It rides in DEFAULT_BINDINGS rather
+  // than in any host, so a SAVED file from before this slice gains it without a
+  // reset: loadOrCreateBindings follows every load with resetDefaults(store,
+  // true), whose `testSetBinding` fills an action that is missing and touches
+  // nothing a player has already bound (KeyF included, if they put something
+  // there first). Rebindable like every other row - the enhanced controls
+  // window's ONLINE group.
+  ['KeyF', 'SocialInteract'],
+  // QS2: THE NUMBER ROW, which is the one place a Souls player's hand already
+  // goes. Digit1-Digit4 are unspent by SetupDefaults, unspent by the port
+  // (PX15's Tab, HT4's G, SOC5's F, HT's O and X are the whole of the port's
+  // own spending) and unspent by every vendored mod's TextKey defaults - the
+  // HT4 pin in test/ht1_handheldtorches.test.js walks that whole set and is
+  // what makes that a fact rather than a hope. They ride here, not in a host,
+  // so a bindings file written before this slice gains them on the next boot:
+  // loadOrCreateBindings follows every load with resetDefaults(store, true),
+  // whose testSetBinding fills a MISSING action on a FREE code and touches
+  // nothing a player has already bound.
+  ['Digit1', 'QuickUse1'],
+  ['Digit2', 'QuickUse2'],
+  // QS6: the third digit is the SPELL slot now. 'QuickSwap' keeps its row in
+  // ACTIONS and stays rebindable; what it loses is this default, because the
+  // cell that draws the swap is the OFF HAND's and Digit4 already presses it
+  // (ui/quickslotTags.js: the key does what the cell shows). A bindings file
+  // written before this slice keeps whatever the player put on Digit3 -
+  // testSetBinding fills a MISSING action on a FREE code and touches nothing
+  // already bound - so this moves the DEFAULT, never a player's own choice.
+  ['Digit3', 'QuickSpell'],
+  // QS4: the fourth cell takes the fourth digit, the last of the row this
+  // slice spends and still unspent by DFU, by the port and by every vendored
+  // mod's TextKey defaults.
+  ['Digit4', 'QuickOffHand'],
 ]);
 
 // ── key combos ──────────────────────────────────────────────────────
@@ -379,6 +468,28 @@ export function getBindings(store, action) {
  *  GetSecondaryBinding). */
 export function actionForCode(store, code) {
   return store.primary.get(code) ?? store.secondary.get(code) ?? null;
+}
+
+/**
+ * THE INVERSE, and the only one in the tree (LV2). The store's two
+ * dicts are CODE -> ACTION, which is what every reader has ever
+ * wanted: a press arrives and the game asks what it means. A SCREEN
+ * asking the other way - "which key opens the sheet?", so a
+ * notification can name it - has no dict to read and has to walk one.
+ *
+ * It lives here, beside its mirror, rather than inside the surface
+ * that wanted it first: a second walk written into a view is how two
+ * screens come to disagree about which key they are telling a player
+ * to press. Primary first, then secondary, which is the order
+ * `actionForCode` resolves in - so the key this NAMES is the key that
+ * ANSWERS.
+ */
+export function codeForAction(store, action) {
+  for (const dict of [store?.primary, store?.secondary]) {
+    if (!dict) continue;
+    for (const [code, act] of dict) if (act === action) return code;
+  }
+  return null;
 }
 
 // TestSetBinding (:1405-1422): a default lands only if the action is

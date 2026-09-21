@@ -20,6 +20,35 @@ export function identity() {
  *  consumer treats an up axis as a constant. */
 export const UP_Y = new Float32Array([0, 1, 0]);
 
+/** ONCRASH1 (2026-09-15, Mac: "reports of player browser crashing when
+ *  online"): WRAP AN ANGLE TO (-PI, PI], IN ONE STEP.
+ *
+ *  This is the port's one wrap, moved here from player/lockOn.js, where
+ *  it could not be reached by the four sites that had hand-rolled it as
+ *  a LOOP:
+ *
+ *      while (d >  Math.PI) d -= 2 * Math.PI;
+ *      while (d < -Math.PI) d += 2 * Math.PI;
+ *
+ *  A loop is the same answer for a small angle and a NON-TERMINATING
+ *  one for a large: at 1e300, `d - 2 * Math.PI === d` in IEEE doubles,
+ *  so the condition never falls and the tab hangs until the browser
+ *  kills it. Two of those four sites are fed an angle STRAIGHT OFF THE
+ *  WIRE - net/online.js eases a peer's yaw, net/peerBodies.js turns its
+ *  rig by it - so one player's yaw was enough to freeze every other
+ *  player in the room. `%` is exact on doubles, so this answers in one
+ *  step for any finite input. NaN in, NaN out: the callers that take
+ *  wire data check `Number.isFinite` at their own door (net/wire.js).
+ *
+ *  It lives in the math module and not beside a caller because the
+ *  three callers that did not know lockOn.js existed are the defect. */
+export function wrapAngle(a) {
+  let r = a % (2 * Math.PI);
+  if (r > Math.PI) r -= 2 * Math.PI;
+  if (r <= -Math.PI) r += 2 * Math.PI;
+  return r;
+}
+
 /** EV2: multiply's scratch, module-level. The old body allocated a
  *  fresh Float32Array(16) on EVERY call - even with `out` supplied -
  *  and multiply runs once per model per frame in the streaming host,

@@ -280,8 +280,15 @@ test('EV7: the world host rides the client and the pinned build contracts stand'
   assert.ok(bp.includes('.finally(() => inFlight.delete(key))'), 'and a settled build leaves the map');
   // AUDIT EV F-SIM2: the ring class re-checks at publish - the
   // pixelChanged restride sweep cannot see an unpublished pixel
-  assert.ok(bp.includes('if (wantStride !== entry._stride) restrideTerrain(entry, wantStride);'),
+  // STREAM1: the re-check still happens; what changed is what it DOES.
+  // A promotion to stride 1 is ~3 ms of main thread and goes on the
+  // queue the frame loop spends; a demotion is ~0.11 ms and settles now,
+  // because a pixel left full-res in the far ring costs every frame
+  // until its turn comes.
+  assert.ok(bp.includes('if (wantStride !== entry._stride) {'),
     'a crossing during the round trip cannot leave a wrong-class chunk');
+  assert.ok(bp.includes('if (wantStride === 1) restridePending.set(key, entry);'), 'the dear direction queues');
+  assert.ok(bp.includes('else restrideTerrain(entry, wantStride);'), 'and the cheap one settles at once');
   // AUDIT EV F-SIM6: the probe's idle truth covers teleport builds too
   assert.ok(world.includes('queue.length === 0 && !building && inFlight.size === 0'),
     '__streamIdle counts every in-flight build');

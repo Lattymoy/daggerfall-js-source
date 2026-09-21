@@ -273,9 +273,12 @@ test('AUDIT39 #64: a LANDED arrow runs the melee ladder - the swing mods and the
 
 test('AUDIT39 #64: all three non-dungeon hosts mark the shaft and resolve it', () => {
   for (const [f, fire] of [
-    ['src/scenes/world.js', 'arrows.fire(cam.pos, fwd, { fromPlayer: true, weapon: weaponRig.playerWeapon.weapon })'],
-    ['src/scenes/exterior.js', 'arrows.fire(eye, fwd, { fromPlayer: true, weapon: weaponRig.playerWeapon.weapon })'],
-    ['src/scenes/worldModes.js', 'interiorArrows.fire(player.eye, eyeDir(), { fromPlayer: true, weapon: interiorWeapon.playerWeapon.weapon })'],
+    // FIELD-GUN17 appended one key at all three - the muzzle offset,
+    // null for every weapon but the Thunderlock. The claim this arm
+    // makes is LastBowUsed, and it is still asserted whole.
+    ['src/scenes/world.js', 'arrows.fire(cam.pos, fwd, { fromPlayer: true, weapon: weaponRig.playerWeapon.weapon, muzzle: weaponRig.thunderlockMuzzle(fieldOfView()) })'],
+    ['src/scenes/exterior.js', 'arrows.fire(eye, fwd, { fromPlayer: true, weapon: weaponRig.playerWeapon.weapon, muzzle: weaponRig.thunderlockMuzzle(fieldOfView()) })'],
+    ['src/scenes/worldModes.js', 'interiorArrows.fire(player.eye, eyeDir(), { fromPlayer: true, weapon: interiorWeapon.playerWeapon.weapon, muzzle: interiorWeapon.thunderlockMuzzle(fieldOfView()) })'],
   ]) {
     const s = src(f);
     assert.ok(s.includes(fire), `${f} rides LastBowUsed on the shaft`);
@@ -319,7 +322,7 @@ test('AUDIT39 #65: the interior arrow update takes the four impact options it ne
   assert.match(call, /onFoeHit: \(m, t\) => interiorFoes\?\.arrowHitFoe\(m, t\),/);
   // ...and the PLAYER's shaft damages through the pool that owns the
   // billboard, the same `_encounter` split this host's sinks take -
-  // world.js:8344's own law, so a killed watchman still runs the crime
+  // world.js:10614's own law, so a killed watchman still runs the crime
   // and the corpse.
   assert.match(call, /dealDamage: \(f, d\) => \(f\._encounter\n\s+\? interiorFoes\?\.damageFoe\(f, d, player\.pos, m\.dir, \{ kind: 'arrow' \}\)[^\n]*\n\s+: interiorGuards\?\.hurtGuard\(f, d, player\.pos, m\.dir\)\),/);
   // the player-side arm of the same call
@@ -327,7 +330,7 @@ test('AUDIT39 #65: the interior arrow update takes the four impact options it ne
   // the enemy hit runs the melee arm's own payload: pain voice, sound,
   // the recoverable arrow
   assert.match(call, /playPlayerVoice\(audio, playerPainVoice\(playerEntity, dmg\)\);/);
-  assert.match(call, /addItem\(playerEntity\.items, \{ group: 'Weapons', name: 'Arrow', templateIndex: 131/);
+  assert.match(call, /addItem\(playerEntity\.items, bowDamageArrow\(\)\)/);   // MAC-N1: CreateWeapon's arrow through the one minter, not a bare literal
 });
 
 // ---------------------------------------------------------------
@@ -413,4 +416,61 @@ test('AUDIT39r R16: a player arrow bleeds its TARGET, not its own tip', () => {
   assert.ok(!af.includes('The missile\'s\n * own position is DFU\'s impactPosition'),
     'the mis-citation no longer stands as this module\'s law');
   assert.match(af, /hitTransform\.position/, 'and the real fifth argument is named');
+});
+
+// ── FOE1: THE OPTS A CALL REALLY PASSES ──────────────────────────
+// (2026-09-15, Mac relaying players: "during online play, certain
+// enemies cant be damaged".)
+//
+// THE BUG WAS A COMMENT. HT1 appended `// HT1: the torch keys` to the
+// end of the physical line that already carried
+// `onFoeHit: (hit) => host.onFoeHit?.(hit),` in the
+// buildDungeonContext opts - so the property went into the comment and
+// out of the object. `opts.onFoeHit?.()` is the ONLY way a joiner's
+// blow on a layout foe reaches the room's host: `damageFoe`'s
+// non-authority arm sends and RETURNS, applying nothing locally. So
+// every layout foe in every online dungeon absorbed every blow from
+// everyone but the authority, in silence, for eight slices - which is
+// exactly the report, because the foes at indices past the layout
+// (quest foes, summons, rest encounters) take the local path and died
+// normally beside them.
+//
+// WHY THIS PIN IS SHAPED LIKE THIS: a text match over the file would
+// have passed throughout - the characters `onFoeHit: (hit) => ...`
+// were right there on the line. The comments are STRIPPED first, so a
+// property that has been commented out is a property that is gone. It
+// reads the whole opts object rather than the one line, so the next
+// swallowed property is caught by the same pin.
+/** The source of `name(...)`'s call, comments removed. */
+function callSourceStripped(text, name) {
+  const at = text.indexOf(`${name}(`);
+  assert.ok(at >= 0, `${name} is called`);
+  let depth = 0;
+  let end = at;
+  for (let i = text.indexOf('(', at); i < text.length; i++) {
+    if (text[i] === '(') depth++;
+    else if (text[i] === ')') { depth--; if (depth === 0) { end = i; break; } }
+  }
+  return text.slice(at, end + 1)
+    .replace(/\/\*[\s\S]*?\*\//g, ' ')
+    .replace(/\/\/[^\n]*/g, ' ');
+}
+
+test('FOE1: the dungeon host really PASSES the opts it means to - a property inside a comment is not a property', () => {
+  const call = callSourceStripped(src('src/scenes/worldModes.js'), 'buildDungeonContext');
+  // the online seams, each the only route its half of the room has
+  for (const [key, why] of [
+    ['onFoeHit', 'a joiner\'s blow on a layout foe reaches the host by THIS and nothing else (WORLD2)'],
+    ['onActions', 'a door the player moved goes out to the room (WORLD3)'],
+    ['peers', 'the peers the host\'s foes hunt (WORLD3)'],
+    ['selfId', 'whose blow a puppet\'s is (WORLD3)'],
+    ['onLootClaimed', 'a claimed container makes the room\'s memory due (WORLD4)'],
+    ['foes', 'the pool the stream poses'],
+  ]) {
+    assert.match(call, new RegExp(`(^|[{,\\s])${key}\\s*:`), `${key} is passed - ${why}`);
+  }
+  // and the wiring it reaches for exists on the host object
+  assert.match(src('src/scenes/worldModes.js'), /host\.onFoeHit\?\.\(hit\)/, 'the host seam is called, not merely named');
+  assert.match(src('src/scenes/world.js'), /onFoeHit: \(hit, fate\) => hitSend\(hit, fate\)/,
+    'and the world host hands it the wire (WORLD2), through the pending set (AUDIT FOES FOE2)');
 });

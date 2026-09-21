@@ -25,11 +25,11 @@ import { liveStat } from './statMods.js';   // wave 28: MaxMagicka reads LiveInt
 //     our uniform slot matches the role, approved stance)
 //   - reflexes default Average (2)
 // THE UI ARC SHIPPED, so the pools are distributed BY HAND, as
-// classic does: ui/chargen.js:48-63 is the verbatim rollout
+// classic does: ui/chargen.js:48-83 is the verbatim rollout
 // arithmetic (statUp clamped at MAX_STAT_VALUE, statDown floored at
 // the rolled value, skillUp/skillDown per group pool - StatsRollout /
 // SkillsRollout), spent per spinner at :1147 spendStat and :1173
-// spendSkill, and chargenSession.js:239 finishChargen hands the
+// spendSkill, and chargenSession.js:249 finishChargen hands the
 // hand-distributed result to applyCharacter. The headless policy
 // below (one point at a time into the LOWEST of the eligible set,
 // pool exhausted so the character stays classic-legal) survives only
@@ -59,6 +59,18 @@ export function rollStats(career, rolls = Math.random) {
   for (const k of STAT_KEYS) stats[k] = career[k] + range(STAT_MIN_BONUS_ROLL, STAT_MAX_BONUS_ROLL);
   const bonusPool = range(STAT_MIN_BONUS_POOL, STAT_MAX_BONUS_POOL);
   return { stats, bonusPool };
+}
+
+// CHAR1 (2026-09-15, a player through Mac: "show the total dice rolls
+// in the enhanced character creator"): WHAT THE DICE ACTUALLY GAVE.
+// Neither screen ever said it. Eight values are rolled - a career
+// floor plus 0..10 each - and a bonus pool of 6..14 is rolled beside
+// them, and the only way to know whether a roll was a good one was to
+// add eight numbers by eye before deciding whether to press Reroll.
+export function statTotal(stats) {
+  let n = 0;
+  for (const k of STAT_KEYS) n += stats?.[k] ?? 0;
+  return n;
 }
 
 // ---- SkillsRollout constants + Reroll, verbatim ----
@@ -141,7 +153,7 @@ export function hitPointsPerLevelUp(career, endurance, rolls = Math.random) {
  *  the eligible set. The chargen UI replaced it on the shipping
  *  creation path (ui/chargen.js spendStat/spendSkill), so what is
  *  left is a documented fallback, and every caller is a degraded or
- *  headless path: the ?class= wizard skip (chargenSession.js:113
+ *  headless path: the ?class= wizard skip (chargenSession.js:117
  *  applyHeadlessChargen), the no-FONT-art escapes in
  *  scenes/dungeonContext.js (:1705 chargenInputFallback, :4162 and
  *  :4172 the font-less level-up, each console.warn'd first), and

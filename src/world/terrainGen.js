@@ -47,7 +47,7 @@ import { MAP_W } from './roadNetwork.js';
  * @param {number} job.climateType - the pixel's climate, for nature.
  * @returns {{samples: Float32Array, tilemap: Uint8Array,
  *   positions: Float32Array, normals: Float32Array,
- *   tilemapBytes: Uint8Array, avg: number,
+ *   tilemapBytes: Uint8Array, avg: number, paths: ?Uint8Array,
  *   nature: Array<{record:number,x:number,y:number,z:number}>}}
  */
 export function generatePixelTerrain({ woods, px, py, stride = 1, tilemap, locationRect = null, hasLocation = false, climateType, roads = null }) {
@@ -62,7 +62,11 @@ export function generatePixelTerrain({ woods, px, py, stride = 1, tilemap, locat
   // blend around it. `roads` is null in a solo build with no network
   // loaded and the pipeline is then byte-for-byte what it was.
   const tileData = generateTileData(samples, px, py);
+  // GRASS-PATH1: the painter's own record of which tiles it wrote, so
+  // the grass placer can keep off a path it cannot name by record.
+  let paths = null;
   if (roads) {
+    paths = new Uint8Array(tilemap.length);
     const i = py * MAP_W + px;
     // ROADS 23: the mod's corners - a neighbour's diagonal brushes this
     // pixel's corner tile - and its water, off unless the network says.
@@ -70,6 +74,7 @@ export function generatePixelTerrain({ woods, px, py, stride = 1, tilemap, locat
     paintRoads(tileData, tilemap, roads.roads[i], roads.tracks[i], hasLocation ? locationRect : null, 129, {
       river: roads.rivers ? roads.rivers[i] : 0, stream: roads.streams ? roads.streams[i] : 0, water: !!roads.water,
       corners: { road: c(roads.roads), track: c(roads.tracks), river: c(roads.rivers), stream: c(roads.streams) },
+      paths,   // GRASS-PATH1
     });
     // ROADS 10: the ground under the road is smoothed - after the paint,
     // before the grid is built from the samples. The network carries the
@@ -88,6 +93,7 @@ export function generatePixelTerrain({ woods, px, py, stride = 1, tilemap, locat
     locationRect,
   });
   return { samples, tilemap, positions: grid.positions, normals: grid.normals, tilemapBytes, avg, nature,
+    paths,   // GRASS-PATH1: null when no network was present, as `withRoads` says
     // ROADS 25: whether a network was PRESENT when this pixel was painted.
     // The network loads asynchronously and the world starts building at
     // once, so the first pixels can be painted with none - and were then

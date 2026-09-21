@@ -9,12 +9,13 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { hitOwnerOf, validFoeRecord, CELL_FRAME_RECORDS_MAX, CELL_PUPPETS_MAX, FOE_SEQ_MAX, FOE_HEALTH_MAX, POSE_BOUND, POSE_Y_BOUND, PIXEL_UNITS, MAX_FRAME_BYTES, DROP_STRIKES_MAX, HIT_ROOM_HZ_MAX, FOES_ROOM_BYTES_PER_S, RANGE_PIXELS } from '../src/net/wire.js';
 import * as relay from '../server/src/relay.js';
-import { RELAY_VERSION } from '../server/src/index.js';
+import { relayVersionAtLeast } from './relayVersion.mjs';
 import { OnlineSession, FOES_STALE_MS } from '../src/net/online.js';
 import { fakeRoom } from './fakeRoom.mjs';
 import { fakeSocketClass } from './fakeSocket.mjs';
 import { createExteriorFoes, MAX_ACTIVE_ENCOUNTER_FOES } from '../src/scenes/exteriorFoes.js';
-import { runDayChange, dayRollsFor, setSharedClock, sharedClockOn, MINUTES_PER_DAY, DAY_SALT } from '../src/systems/worldTick.js';
+import { runDayChange, dayRollsFor, setSharedClock, sharedClockOn, MINUTES_PER_DAY, DAY_SALT, worldRegionPricesOn } from '../src/systems/worldTick.js';
+import { regionPriceAdjustment } from '../src/systems/shopStock.js';   // ECON1: the world's index through the one seam
 import { MERCHANTS_FACTION_ID } from '../src/systems/guilds.js';
 import { FACTION_TYPES } from '../src/formats/factionFile.js';
 
@@ -33,7 +34,7 @@ test('AUDIT WORLD6b A5/B3/C2: the wire - an owner is an id by the wire\'s own la
     { i: 1, y: Infinity }, { i: 1, h: -1 }, { i: 1, h: FOE_HEALTH_MAX + 1 }, { i: 1, h: 'x' }, { i: 1, a: -1 }, { i: 1, a: 2 ** 31 }, { i: 1, a: 1.5 }]) assert.equal(validFoeRecord(r), null, `C2: refused whole: ${JSON.stringify(r)}`);
   assert.equal(CELL_PUPPETS_MAX, MAX_ACTIVE_ENCOUNTER_FOES, 'B3: an owner\'s live cap is the pool\'s own'); assert.equal(CELL_FRAME_RECORDS_MAX, 64);
   assert.equal(relay.validFoeRecord, validFoeRecord); assert.equal(relay.CELL_FRAME_RECORDS_MAX, CELL_FRAME_RECORDS_MAX); assert.equal(relay.hitOwnerOf, hitOwnerOf);
-  assert.equal(RELAY_VERSION, 'world66', 'the relay bumped');   // AUDIT WORLD6b-iii(c) C3: the hit arm's byte budget
+  assert.ok(relayVersionAtLeast(66), 'the relay bumped, and stays bumped');   // AUDIT WORLD6b-iii(c) C3: the hit arm's byte budget
 });
 
 test('AUDIT WORLD6b A1/A2: the Room - a cell\'s blow to a `to` nobody carries delivers nothing, spends nothing and is counted as junk (struck out at DROP_STRIKES_MAX); the funnel is the DESTINATION\'s own bucket - one owner\'s spent bucket stops no blow to another, and the dungeon host\'s is its own', async () => {
@@ -160,7 +161,7 @@ const poolRig = (extra = {}) => ({
  *  origin's compensation) and a clock of its own. */
 const netFor = (hits, { room = 'world:3,12', off = { v: 0 }, clock = { t: 0 }, staleMs = FOES_STALE_MS } = {}) => ({
   room: () => room, now: () => clock.t, staleMs,
-  onPeerHit: (h) => { hits.push(h); return true; },
+  onPeerHit: (h, fate) => { hits.push(h); fate?.sent?.(); return true; },
   toWire: (feet) => [feet[0] - off.v, feet[1], feet[2] - off.v],
   toScene: (p) => [p[0] + off.v, p[1], p[2] + off.v],
 });
@@ -360,8 +361,12 @@ test('AUDIT WORLD6b C4/C5: the day\'s rolls - online the walk is one day at a ti
     for (let d = day - 2; d <= day; d++) runDayChange({ entity: stayed, lastMinutes: (d - 1) * MINUTES_PER_DAY, nowMinutes: d * MINUTES_PER_DAY, rolls: () => 0.99 });
     const away = fresh();
     runDayChange({ entity: away, lastMinutes: (day - 3) * MINUTES_PER_DAY, nowMinutes: day * MINUTES_PER_DAY, rolls: () => 0.01 });
-    assert.deepEqual(away.regionPrices, stayed.regionPrices, 'C4: three days away and three days there walk the region alike, whatever the dice');
-    assert.notDeepEqual(stayed.regionPrices, { 0: 1000, 1: 1000 }, 'and the walk walked');
+    // ECON1: the prices are the WORLD'S now - a pure function of the day - so the player's own are not walked at all
+    // online, and three days away and three days there read the same index because both read today's
+    assert.deepEqual(stayed.regionPrices, { 0: 1000, 1: 1000 }, 'ECON1: the player\'s own prices are not written online');
+    assert.deepEqual(away.regionPrices, stayed.regionPrices);
+    assert.equal(regionPriceAdjustment(away, 0), regionPriceAdjustment(stayed, 0), 'C4: three days away and three days there read the region alike, whatever the dice');
+    assert.equal(regionPriceAdjustment(away, 0), worldRegionPricesOn(day)[0], 'and it is today\'s world index');
     const a = dayRollsFor(day * MINUTES_PER_DAY, Math.random, DAY_SALT.prices), b = dayRollsFor(day * MINUTES_PER_DAY, Math.random, DAY_SALT.powers), c = dayRollsFor(day * MINUTES_PER_DAY, Math.random, DAY_SALT.prices);
     assert.notEqual(a(), b(), 'C5: the prices and the powers are salted apart'); assert.equal(c(), dayRollsFor(day * MINUTES_PER_DAY, Math.random, DAY_SALT.prices)(), 'one salt, one sequence');
   } finally { setSharedClock(null); }
@@ -371,13 +376,13 @@ test('AUDIT WORLD6b C4/C5: the day\'s rolls - online the walk is one day at a ti
   assert.notDeepEqual(off1.regionPrices, off2.regionPrices, 'offline the dice decide, the span whole (DFU\'s own)');
   const w = rd('src/systems/worldTick.js');
   const imports = w.match(/^import [^\n]* from '[^\n]*';/gm); assert.ok(w.indexOf('const SHARED_DAY_SEED') > w.lastIndexOf(imports.at(-1)), 'the constants sit below the imports');
-  assert.match(w, /export const DAY_SALT = Object\.freeze\(\{ prices: 1, powers: 2 \}\);/);
+  assert.match(w, /export const DAY_SALT = Object\.freeze\(\{ prices: 1, powers: 2, priceInit: 3, conditions: 4 \}\);/);   // ECON1: two more consumers, salted apart
   // the world host by source: the heartbeat (A9), the death branch (C8), the full kick (C7), the targets (B8), the Wabbajack (B9), the pane (C9)
   const h = rd('src/scenes/world.js');
   assert.match(h, /else if \(id && isWorldRoom\(online\.room\)\) _foesInAt = performance\.now\(\);/, 'A9');
   assert.match(h, /if \(online\.room\) \{ worldPublish\(now, true\); online\.leave\(\); exteriorFoes\.clearPuppets\(\); _foesRoom = null; \}/, 'C8');
   assert.match(h, /if \(online\.room !== _foesRoom\) \{ const seam = isCellRoom\(online\.room\) && isCellRoom\(_foesRoom\); _foesRoom = online\.room; _foesFullAt = -Infinity; if \(!seam\) exteriorFoes\.clearPuppets\(\); \}/, 'C7 (WORLD6b-iii(b): a cell crossing keeps them - the seam is no room change to the puppets)');
-  assert.match(h, /\{ const near = peersNear\(\); if \(near\) exteriorFoes\.pruneOwners\(new Set\(near\.map\(\(p\) => p\.id\)\), now\); \}/, 'C3: the prune reads the clock');
+  assert.match(h, /\{ const ids = ownerIds\(\); if \(ids\) exteriorFoes\.pruneOwners\(ids, now\); \}/, 'C3: the prune reads the clock');
   assert.match(h, /candidates: \(\) => \[\.\.\.cityGuards\.guards, \.\.\.exteriorFoes\.foes\]\.filter\(\(f\) => !f\.dead && !f\.puppet\),/, 'B8');
   assert.match(h, /const f = enchantFoes\(\)\.find\(\(x\) => !x\.dead && x\.entity === targetEntity\);\s*if \(!f \|\| f\.puppet\) return;/, 'B9');
   assert.match(rd('src/scenes/exteriorFoes.js'), /const me = _net\?\.selfId\?\.\(\) \?\? null;/, 'C11: selfId on the net is READ now (WORLD6b-ii: whose blow a streamed target names) - no dead wiring');

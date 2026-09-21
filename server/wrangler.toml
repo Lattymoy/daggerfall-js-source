@@ -5,6 +5,12 @@
 # host's snapshot of the place in the object's storage; the save stays
 # on the player's machine.
 #   npx wrangler deploy          (CLOUDFLARE_API_TOKEN in the environment)
+# ...or, since SRV-N/CI, the 'Deploy relay' workflow-dispatch job, which
+# reads the token from the repo's secrets so nobody has to hold it, and
+# then POLLS /health until it names the RELAY_VERSION the run built -
+# a wrangler exit code of 0 over an unchanged Worker is a green deploy
+# that did not happen. It is manual on purpose: a deploy restarts every
+# Durable Object and drops every connected player at once.
 name = "daggerfall-online"
 main = "src/index.js"
 compatibility_date = "2026-09-01"

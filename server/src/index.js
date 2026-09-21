@@ -23,8 +23,10 @@
 // answered by the runtime while the object sleeps.
 //
 // CHAT1 (2026-09-12): a room in CHAT_ROOMS is a channel (relay.js, CHAT
-// ROOMS) - a hello there keeps the secret and nothing else, is told an
-// empty roster and announced to no one, a pose there reaches no one,
+// ROOMS) - a hello there keeps the secret and nothing else (ROSTER-G: and
+// is told who is in the channel by NAME, cut at CHAT_ROSTER_MAX with the
+// true count beside it, and its join and leave are said - the roster
+// beside the chat is everyone online), a pose there reaches no one,
 // and a chat line reaches every socket that said hello, the sender
 // included; in a place room a chat line reaches whoever a pose would
 // and the sender. The chat gate is CHAT_HZ_MAX a second per socket with
@@ -105,11 +107,69 @@
 // WORLD5 (2026-09-13): THE SHARED CLOCK is a function of wall time (relay.js
 // sharedClassicMinutes) and needs no frame; the welcome carries the relay's
 // own `now` so a client corrects for its machine's clock. Nothing else here.
-import { roomOf, parseClient, inRange, poseGate, chatGate, tokenGate, rosterFor, isChatRoom, isWorldRoom, isCellRoom, streamsFoes, hitOwnerOf, worldFrameMaxFor, CELL_FRAME_RECORDS_MAX, HELLO_HZ_MAX, CHAT_HELLO_HZ_MAX, CHAT_ROOM_HZ_MAX, SOCKETS_MAX, CHAT_SOCKETS_MAX, DROP_STRIKES_MAX, CHAT_STRIKES_MAX, WORLD_MIN_MS, WORLD_CHUNK, WORLD_TTL_MS, WORLD_PREFIX, FOES_PREFIX, foesGate, byteGate, FOES_ROOM_BYTES_PER_S, HIT_ROOM_HZ_MAX, ACT_ROOM_HZ_MAX, ACT_ROOM_BYTES_PER_S, actGate, MAX_FRAME_BYTES, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, HIT_ROOM_BYTES_PER_S, whoGate, whoIdOf, WHO_ROOM_HZ_MAX } from './relay.js';
+//
+// SOC1 (2026-09-16, Mac: "A social button next to the chat UI ... friend
+// other users, see if they are online/last online + be able to invite
+// friends or other individuals to the new 4 person party system"): THE
+// HUB. The world channel's object (relay.js SOCIAL_ROOM - the one room
+// every player online is in) keeps the social state in its storage:
+// acct:<id> an account's record (its last name, when it was last seen,
+// its friends, its requests each way, its party invites, its party),
+// asecret:<id> the account's secret (the first hello mints it, a later
+// one must match - a hello that fails it is admitted WITHOUT its
+// account and told so), party:<id> a party (its leader, its members in
+// join order, its invites out, its seats gone away). A hello there that
+// names an account is handed its whole picture ({t:'social', k:'state'})
+// and every friend and party member hears it came ({k:'presence'} to
+// the friends, {k:'party'} to the party); a leave stamps last-seen and
+// says the same. An act ({t:'social', k}) rides the acts' own bucket
+// (_meterSocial, SOCIAL_HZ_MAX) under the room's own budget
+// (SOCIAL_ROOM_HZ_MAX), and a refused act is answered in words
+// ({k:'error', m}) - a full friend list is not a protocol violation and
+// closes nothing. A party pose ({t:'party', p}, _meterParty) is kept on
+// the sender's attachment (`pm`) and fanned to its party's other
+// members alone. Presence rooms are untouched: nothing a client says in
+// a cell makes it anyone's friend or party. Parties are forgotten when
+// the hub drains (the sweep); accounts never are.
+//
+// AUDIT SOC (2026-09-16, Mac: "Can we do an audit of everything just
+// merged. Just want it to be perfection"): four lenses read the arc as
+// merged and the hub's holes were these, every one measured over the
+// fake object or workerd. A1 a friend request and its cancel were a
+// 40x amplifier aimed at one player (a state frame and a chat line at
+// the target per act, outside the chat's room-wide law because a note
+// is DIRECTED) - one act of a kind at the same target per
+// SOCIAL_REPEAT_MS per account now, and an invite the same (A8). A2
+// three arms let a storage throw out of the door while the two beside
+// them were wrapped - all five contain now. A3 one script at the hello
+// gate's rate minted 4.3 million permanent accounts a day - the alarm
+// sweeps, a page at a time, accounts NOBODY'S LIST NAMES and nobody has
+// seen for ACCOUNT_IDLE_MS, and parties whose every seat has lapsed
+// (A4: a party of one whose maker never returns was reachable by
+// nothing), and the drain's sweep lists in pages. A5 one act read ~500
+// keys - a state frame for an account with no socket is composed no
+// more (it reached nobody), the invites' parties are read in one batch,
+// a missing party is a cached miss, and the records an awake object has
+// read are kept on it. A6 a stranger could take the hub's presence and
+// live peer ids off an unaccepted request - a request or an invite BY
+// ACCOUNT needs a relation (a request back, a friend), and a pending
+// row carries a name and nothing else. A7 a socket REPLACED by a hello
+// naming another account (or none) never ran its account's leave, so
+// its seat could never lapse - it leaves at the replacement. A10 the
+// tab bound is the hub's (ACCOUNT_TABS_MAX sockets fanned to), A11 the
+// refusals are budgeted. B7 the channel's welcome carries the relay's
+// clock (`now`), so the hub link reads last-seen on the relay's time
+// without the presence session's welcome. B9 two tabs of one account
+// in one party fought over the seat's pose - the NEWEST tab speaks for
+// the seat. C20 the picture names my own tabs (`peers`), so a second
+// tab of mine is no stranger to friend.
+import { roomOf, parseClient, inRange, poseGate, chatGate, tokenGate, rosterFor, isChatRoom, isWorldRoom, isCellRoom, streamsFoes, hitOwnerOf, worldFrameMaxFor, CELL_FRAME_RECORDS_MAX, HELLO_HZ_MAX, CHAT_HELLO_HZ_MAX, CHAT_ROOM_HZ_MAX, SOCKETS_MAX, CHAT_SOCKETS_MAX, DROP_STRIKES_MAX, CHAT_STRIKES_MAX, WORLD_MIN_MS, WORLD_CHUNK, WORLD_TTL_MS, WORLD_PREFIX, FOES_PREFIX, foesGate, byteGate, FOES_ROOM_BYTES_PER_S, HIT_ROOM_HZ_MAX, ACT_ROOM_HZ_MAX, ACT_ROOM_BYTES_PER_S, actGate, MAX_FRAME_BYTES, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, HIT_ROOM_BYTES_PER_S, whoGate, whoIdOf, WHO_ROOM_HZ_MAX, poseFan, poseChanged, RELAY_VERSION, KEEPALIVE_FAN_MS, ACT_SENDER_BYTES_PER_S, CHAT_ROSTER_MAX, isSocialRoom, socialGate, partyGate, SOCIAL_ROOM_HZ_MAX, FRIENDS_MAX, PENDING_MAX, PARTY_MAX, PARTY_INVITES_MAX, INVITE_TTL_MS, PARTY_OFFLINE_MS, ACCOUNT_TABS_MAX, mintPartyId, SOCIAL_REPEAT_MS, ACCOUNT_IDLE_MS, ACCOUNT_SWEEP_MS, SWEEP_STEP_MS, SWEEP_PAGE } from './relay.js';
 
-/** AUDIT WORLD34 D4: the relay names itself in /health - the deploy is by hand (`npx wrangler deploy`), nothing in
- *  CI does it, and until now nothing said which relay was live. Bump it with every relay-changing slice. */
-export const RELAY_VERSION = 'world66';   // AUDIT WORLD6b-iii(e): the ask carries the room's budget, keeps the looks, answers a pose within range alone, strikes nothing that left
+// AUDIT WORLD34 D4: the relay names itself in /health. SLAM13 (AUDIT SLAM A5): the name lives in net/wire.js, so the
+// welcome can carry it; /health reads it through the import above. LOCALDEV1: it is NOT re-exported from this module -
+// workerd (wrangler dev, 1.20260911) refuses a worker entry whose named export is a string ("Incorrect type for map
+// entry 'RELAY_VERSION': the provided value is not of type 'function or ExportedHandler'"), so the local relay would
+// not start at all. The production runtime let it through, which is why nothing caught it; the pins read wire.js.
 
 const json = (o, status = 200) => new Response(JSON.stringify(o), { status, headers: { 'content-type': 'application/json', 'access-control-allow-origin': '*' } });
 
@@ -129,6 +189,23 @@ const lookKey = (id) => `look:${id}`;
 const secretKey = (id) => `secret:${id}`;
 const WORLD_META = 'world:meta';
 const worldChunkKey = (i) => `world:${i}`;
+// SOC1: the hub's keys - an account's record, its secret, a party
+const acctKey = (id) => `acct:${id}`;
+const acctSecretKey = (id) => `asecret:${id}`;
+const partyKey = (id) => `party:${id}`;
+/** SOC1: a fresh account record - the durable half of a player: the last name they said hello with, when they were last
+ *  seen (the relay's clock), their friends (account ids), their requests each way and their party invites ({acct|party,
+ *  at}), and the party they sit in. */
+const newAcct = (name, now) => ({ name, seen: now, friends: [], in: [], out: [], invites: [], party: null });
+/** A list of ids or of {acct} entries without one account. */
+const without = (list, acct) => (Array.isArray(list) ? list : []).filter((e) => (typeof e === 'string' ? e : e?.acct) !== acct);
+const hasEntry = (list, acct) => (Array.isArray(list) ? list : []).some((e) => (typeof e === 'string' ? e : e?.acct) === acct);
+/** AUDIT SOC A5: the most account records an awake object keeps; over it the cache is emptied (storage is the truth). */
+const RECS_MAX = 4096;
+/** AUDIT SOC A1/A8: the most (kind, from, to) cooldown stamps an awake object keeps; over it they are emptied. */
+const COOL_MAX = 4096;
+/** AUDIT SOC A3: an account nobody's list names - no friend, no request either way, no live invite, no party. */
+const unlisted = (r, now) => !!r && !(r.friends?.length) && !(r.in?.length) && !(r.out?.length) && !r.party && !(r.invites ?? []).some((i) => now - i.at < INVITE_TTL_MS);
 
 export class Room {
   constructor(state) {
@@ -143,6 +220,13 @@ export class Room {
     this._roomWho = null;    // AUDIT WORLD6b-iii(e) B1: the room's ask budget (WHO_ROOM_HZ_MAX) - the one arm past the hello that reads storage
     this._looks = new Map(); // AUDIT WORLD6b-iii(e) B1: the looks said hello with, kept on the instance while it is awake - a repeat ask reads no storage; after a hibernation the storage's copy is read once and kept again
     this._roomActBytes = null;   // AUDIT WORLD3 A1: and its BYTE budget - the frame times its listeners, as the foes fan has
+    this._roomWorld = null;      // SLAM11: the memory push's OWN byte budget, borrowing - it used to charge the foes stream's, and a big memory's debt would have stalled live foes
+    this._roomSocial = null;     // SOC1: the hub's budget for social acts (SOCIAL_ROOM_HZ_MAX) - over it an act is refused with 'busy'
+    this._acctIdx = null;        // SOC1: account -> its hello'd sockets, built from the index when asked and dropped with it (a socket's account changes on its hello alone)
+    this._parties = new Map();   // SOC1: party id -> record, kept while the object is awake (a party pose reads its party once a second; a wake reads storage once and keeps it again)
+    this._recs = new Map();      // AUDIT SOC A5: account id -> record, kept while the object is awake - every write goes through _putAcct/_putAccts so the copy is the storage's; bounded at RECS_MAX
+    this._alarmArmed = false;    // AUDIT SOC A3: the sweep's alarm is armed once per instance life (a storage read otherwise on every hello)
+    this._cool = new Map();      // AUDIT SOC A1/A8: "kind from to" -> when a directed act last went through, on the instance (a flood keeps the object awake; a hibernation is a quiet hub); bounded at COOL_MAX
     this._dead = new Set();      // AUDIT WORLD34 D1: the sockets this object closed itself, whose leave the runtime will not deliver - reaped on the way out of every door
     this._gone = new WeakSet();  // AUDIT WORLD34 D1: and the ones whose leave has been said, so a runtime that does deliver a close says it once
     try {
@@ -170,14 +254,54 @@ export class Room {
     const sockets = this.state.getWebSockets();
     if (!this._idx || this._idx.size !== sockets.length || sockets.some((ws) => !this._idx.has(ws))) {
       this._idx = new Map();
+      this._acctIdx = null;   // SOC1: rebuilt with the index
       for (const ws of sockets) { let a; try { a = ws.deserializeAttachment() ?? {}; } catch { a = {}; } this._idx.set(ws, a); }
     }
     return this._idx;
   }
+  /** SOC1: the hello'd sockets of each account - one pass over the index, kept until the index or an account changes. */
+  _byAcct() {
+    if (this._acctIdx) return this._acctIdx;
+    const m = new Map();
+    for (const [ws, a] of this._all()) if (a.id && a.acct) { let s = m.get(a.acct); if (!s) m.set(a.acct, s = []); s.push(ws); }
+    // AUDIT SOC A10: THE BOUND IS THE HUB'S, not the projection's alone - ACCOUNT_TABS_MAX sockets per account, and the
+    // NEWEST of them (by the hello's `since`): a ninth tab is the one the player just opened, and the one that drops
+    // off the end is the stalest. Sorted only for an account over the bound, which nobody real is.
+    const idx = this._all();
+    for (const [acct, s] of m) if (s.length > ACCOUNT_TABS_MAX) { s.sort((x, y) => (idx.get(y)?.since ?? 0) - (idx.get(x)?.since ?? 0)); m.set(acct, s.slice(0, ACCOUNT_TABS_MAX)); }
+    return (this._acctIdx = m);
+  }
+  /** SOC1: an account's hello'd sockets (ACCOUNT_TABS_MAX at most - AUDIT SOC A10), `except` one (a socket on its way out). */
+  _socketsOf(acct, except = null) { const s = this._byAcct().get(acct); if (!s) return []; return except ? s.filter((ws) => ws !== except) : s; }
+  /** AUDIT SOC B9: the socket that SPEAKS for an account's seat - its newest hello'd tab. Two tabs of one account in one
+   *  party each sent a pose a second and the other members' card and mark flipped between two places; the newest tab
+   *  is the one the player is playing, and the older one's poses are kept on its attachment and fanned to nobody. */
+  _speaker(acct, except = null) {
+    let best = null, since = -Infinity;
+    for (const ws of this._socketsOf(acct, except)) { const b = this._attach(ws); if ((b.since ?? 0) >= since) { best = ws; since = b.since ?? 0; } }
+    return best;
+  }
+  /** AUDIT SOC A1/A8: a DIRECTED act of one kind (a friend request, a party invite) at the same target inside
+   *  SOCIAL_REPEAT_MS of the last that went through, from one account - true, and the caller answers 'already asked'
+   *  with nothing written and nothing fanned. Asked last, after every other refusal, so a refused act stamps nothing. */
+  _repeated(me, kind, them, now) {
+    const key = `${kind} ${me} ${them}`;
+    const at = this._cool.get(key);
+    if (at != null && now - at < SOCIAL_REPEAT_MS) return true;
+    if (this._cool.size >= COOL_MAX) this._cool.clear();
+    this._cool.set(key, now);
+    return false;
+  }
   /** One socket's attachment: the index's, or the socket's own when it is already gone from the set (a closing socket still carries its id). */
   _attach(ws) { const idx = this._all(); if (idx.has(ws)) return idx.get(ws); try { return ws.deserializeAttachment() ?? {}; } catch { return {}; } }
-  _setAttach(ws, a) { try { ws.serializeAttachment(a); } catch { return false; } this._all().set(ws, a); return true; }
-  _forget(ws) { this._idx?.delete(ws); }
+  _setAttach(ws, a) {
+    try { ws.serializeAttachment(a); } catch { return false; }
+    const idx = this._all(), was = idx.get(ws);
+    if (!was || was.id !== a.id || was.acct !== a.acct) this._acctIdx = null;   // SOC1: the account index follows the ids alone - a pose's write leaves it standing
+    idx.set(ws, a);
+    return true;
+  }
+  _forget(ws) { this._idx?.delete(ws); this._acctIdx = null; }
 
   /** A frame to one socket; a socket that will not take it is closed (A10). */
   _send(ws, s) {
@@ -238,20 +362,37 @@ export class Room {
     return raw;
   }
   /** The room forgets its looks and secrets (and its hello bucket) - never its world (WORLD1). */
+  /** SOC1: and its parties - the hub drained, so nobody is online to hold one (a member back inside PARTY_OFFLINE_MS
+   *  finds its record pointing at a party that is gone, and the hello clears it); never an account or its secret. */
   async _sweep() {
     this._looks.clear();
     const dead = ['hellos'];
     for (const prefix of ['look:', 'secret:']) { const m = await this.state.storage.list({ prefix }); for (const k of m.keys()) dead.push(k); }
+    this._parties.clear(); for (const k of await this._keysOf('party:')) dead.push(k);   // SOC1: the parties go with the drain; acct: and asecret: stay (AUDIT SOC A4: listed in pages - an unbounded list of a namespace a client can grow is the isolate's memory)
     for (let i = 0; i < dead.length; i += 128) await this.state.storage.delete(dead.slice(i, i + 128));
   }
 
+  /** AUDIT SOC A4: every KEY under a prefix, SWEEP_PAGE at a time - the keys alone; a namespace a client can grow (the
+   *  parties) never has its records listed whole into memory. */
+  async _keysOf(prefix) {
+    const out = [];
+    let after = null;
+    for (;;) {
+      const page = await this.state.storage.list({ prefix, limit: SWEEP_PAGE, ...(after ? { startAfter: after } : {}) });
+      for (const k of page.keys()) { out.push(k); after = k; }
+      if (page.size < SWEEP_PAGE) return out;
+    }
+  }
   /** The frame gate (A8): the socket's pose bucket - a pose, a ping and (AUDIT WORLD A1) a world frame spend it; over
    *  the rate the frame is dropped and a strike counted, past DROP_STRIKES_MAX the socket is closed. Returns the
    *  attachment as written back, or null when the frame is not to be taken. */
-  _meter(ws, a, now, patch = {}) {
+  /** SLAM8 (AUDIT SLAM): `patch` is applied whatever the gate says (the latest pose is kept even when it is not
+   *  relayed); `passPatch` ONLY when the frame is really let through. Anything that counts what the room DID - the
+   *  pose fan's `turn` - belongs in the second, or it counts what the room was merely told. */
+  _meter(ws, a, now, patch = {}, passPatch = {}) {
     const gate = poseGate(a.bucket, now);
     const drops = gate.pass ? 0 : (a.drops ?? 0) + 1;
-    const next = { ...a, ...patch, bucket: gate.bucket, drops };
+    const next = { ...a, ...patch, ...(gate.pass ? passPatch : {}), bucket: gate.bucket, drops };
     this._setAttach(ws, next);
     if (!gate.pass) { if (drops > DROP_STRIKES_MAX) this._refuse(ws, 'too many poses'); return null; }
     return next;
@@ -263,6 +404,24 @@ export class Room {
     const next = { ...a, wbucket: gate.bucket, wdrops };
     this._setAttach(ws, next);
     if (!gate.pass) { if (wdrops > DROP_STRIKES_MAX) this._refuse(ws, 'too many asks'); return null; }
+    return next;
+  }
+  /** SOC1: the social acts' own bucket (SOCIAL_HZ_MAX), the same strikes. */
+  _meterSocial(ws, a, now) {
+    const gate = socialGate(a.sbucket, now);
+    const sdrops = gate.pass ? 0 : (a.sdrops ?? 0) + 1;
+    const next = { ...a, sbucket: gate.bucket, sdrops };
+    this._setAttach(ws, next);
+    if (!gate.pass) { if (sdrops > DROP_STRIKES_MAX) this._refuse(ws, 'too many social acts'); return null; }
+    return next;
+  }
+  /** SOC1: the party poses' own bucket (PARTY_HZ_MAX), the same strikes. */
+  _meterParty(ws, a, now) {
+    const gate = partyGate(a.pbucket, now);
+    const pdrops = gate.pass ? 0 : (a.pdrops ?? 0) + 1;
+    const next = { ...a, pbucket: gate.bucket, pdrops };
+    this._setAttach(ws, next);
+    if (!gate.pass) { if (pdrops > DROP_STRIKES_MAX) this._refuse(ws, 'too many party poses'); return null; }
     return next;
   }
   /** WORLD3: the action frames' own bucket (ACT_HZ_MAX), the same strikes - a door beside the poses, never starving them. */
@@ -295,10 +454,35 @@ export class Room {
    *  drain, re-armed by every later one - unless someone is in the room when it fires: a world parked in a room
    *  nobody plays would cost storage for ever, and the rooms a client can name are many. */
   async alarm() {
+    if (await this.state.storage.get('hub')) { await this._sweepHub(Date.now()); return; }   // AUDIT SOC A3: the hub's alarm is its sweep, whoever is in the room
     for (const [, b] of this._all()) if (b.id) return;
     const m = await this.state.storage.list({ prefix: 'world:' });
     const dead = [...m.keys()];
     for (let i = 0; i < dead.length; i += 128) await this.state.storage.delete(dead.slice(i, i + 128));
+  }
+  /** AUDIT SOC A3/A4: ONE PAGE of the hub's storage per firing - the accounts nobody's list names and nobody has seen
+   *  for ACCOUNT_IDLE_MS are forgotten with their secrets (an account a list names is never touched: "a friend list
+   *  that forgets people is worse than a kilobyte"), and the parties whose every seat has lapsed (no socket, and away
+   *  past PARTY_OFFLINE_MS or never stamped) are deleted - a member's record still pointing at one is cleared on their
+   *  next hello, as a drain's is. The cursors ride storage; a full page is followed SWEEP_STEP_MS later, an empty one
+   *  ACCOUNT_SWEEP_MS later from the start. */
+  async _sweepHub(now) {
+    const cur = (await this.state.storage.get(['sweep:acct', 'sweep:party']));
+    const acur = cur.get('sweep:acct') ?? null, pcur = cur.get('sweep:party') ?? null;
+    const accts = await this.state.storage.list({ prefix: 'acct:', limit: SWEEP_PAGE, ...(acur ? { startAfter: acur } : {}) });
+    const dead = []; let alast = null;
+    for (const [k, r] of accts) { alast = k; const id = k.slice(5); if (unlisted(r, now) && now - (r.seen ?? 0) >= ACCOUNT_IDLE_MS && !this._socketsOf(id).length) { dead.push(k, acctSecretKey(id)); this._recs.delete(id); } }
+    const parties = await this.state.storage.list({ prefix: 'party:', limit: SWEEP_PAGE, ...(pcur ? { startAfter: pcur } : {}) });
+    let plast = null;
+    for (const [k, p] of parties) {
+      plast = k;
+      const lapsed = !p || !Array.isArray(p.members) || p.members.every((id) => !this._socketsOf(id).length && (p.away?.[id] == null || now - p.away[id] >= PARTY_OFFLINE_MS));
+      if (lapsed) { dead.push(k); this._parties.set(k.slice(6), null); }
+    }
+    for (let i = 0; i < dead.length; i += SWEEP_PAGE) await this.state.storage.delete(dead.slice(i, i + SWEEP_PAGE));
+    const more = accts.size >= SWEEP_PAGE || parties.size >= SWEEP_PAGE;
+    await this.state.storage.put({ 'sweep:acct': accts.size >= SWEEP_PAGE ? alast : null, 'sweep:party': parties.size >= SWEEP_PAGE ? plast : null });
+    await this.state.storage.setAlarm(now + (more ? SWEEP_STEP_MS : ACCOUNT_SWEEP_MS));
   }
 
   async webSocketMessage(ws, message) {
@@ -356,16 +540,56 @@ export class Room {
         replaced = b;
         this._setAttach(other, { ...b, id: null, replaced: true });
         try { other.close(CLOSE_REPLACED, 'replaced'); } catch { /* gone */ }
+        // AUDIT SOC A7: a replaced socket loses its id BEFORE it closes, so its `_leave` says nothing - which is right for
+        // the room (the id lives on) and wrong for its ACCOUNT when the replacing hello names another or none: no
+        // last-seen, no presence, no `away` stamp, a seat that could never lapse. Its account leaves here.
+        if (isSocialRoom(a.key) && b.acct && b.acct !== m.acct) { try { await this._leaveAccount(other, b, now); } catch (e) { console.warn('[hub] replaced leave failed', e?.message ?? e); } }
       }
       const others = [];
       for (const [other, b] of this._all()) if (other !== ws && b.id) others.push(b);
-      if (!others.length) { await this._sweep(); await this.state.storage.put('hellos', gate.bucket); }   // an empty room forgets every look and secret an unclean close left behind - not its hello gate
+      if (!others.length) { try { await this._sweep(); } catch (e) { console.warn('[room] sweep failed', e?.message ?? e); } await this.state.storage.put('hellos', gate.bucket); }   // an empty room forgets every look and secret an unclean close left behind - not its hello gate (AUDIT SOC A2: contained - a failed list here made every first hello into an empty hub throw before its welcome)
       await this.state.storage.put(secretKey(m.id), m.secret);
       if (!chat) { await this.state.storage.put(lookKey(m.id), m.look); this._looks.set(m.id, m.look); }   // a channel keeps no look: nobody is drawn from it
       if (!this._setAttach(ws, { ...a, id: m.id, name: m.name, pose: chat ? null : m.pose, since: replaced?.since ?? now })) { this._refuse(ws, 'hello too large'); return; }
-      if (chat) { this._send(ws, JSON.stringify({ t: 'welcome', id: m.id, peers: [] })); return; }   // told no one, announced to no one: a channel has no roster
-      const looks = others.length ? await this.state.storage.get(others.map((b) => lookKey(b.id))) : new Map();
-      const roster = rosterFor(others.map((b) => ({ ...b, look: looks.get(lookKey(b.id)) ?? null })), m.id, m.pose);
+      // SRV-N: `v` rides EVERY welcome, a channel's included. A player in the enhanced skin holds a presence socket
+      // and one chat socket per tab; whichever reconnects first after a hand deploy is the one that notices, and the
+      // client's detector (net/updateNotice.js) is a Set so the rest of them say nothing. SLAM13 (AUDIT SLAM A5): and
+      // the SESSION compares it with the law it was built against, and says a skew once.
+      if (chat) {
+        // ROSTER-G (Mac: "Players dont show in online"): A CHANNEL HAS A ROSTER - names alone. This line used to say
+        // `peers: []` and announce nobody, so the one room every player is in could not say who was online, and the
+        // panel read the player's own cell instead. The names are on the attachments already (no look, no storage
+        // read - the hello path stays as cheap as AUDIT CHAT A1 priced it); socket order, cut at CHAT_ROSTER_MAX, with
+        // `n` the true count. The join below is said here too, with the name and nothing else.
+        const named = others.slice(0, CHAT_ROSTER_MAX).map((b) => ({ id: b.id, name: b.name }));
+        if (!this._send(ws, JSON.stringify({ t: 'welcome', id: m.id, peers: named, n: others.length + 1, v: RELAY_VERSION, now: Date.now() }))) return;   // AUDIT SOC B7: the relay's clock rides the channel's welcome too (WORLD5's `now`), so the hub link reads last-seen and an invite's lapse on the relay's time without waiting on the presence session's welcome
+        const said = JSON.stringify({ t: 'join', id: m.id, name: m.name });
+        for (const [other, b] of [...this._all()]) if (other !== ws && b.id) this._send(other, said);
+        // SOC1: the account, in the hub - after the welcome and the join, so a client's session has reset on the
+        // welcome before its picture lands; a hello naming none is a build before this slice, admitted as it was
+        if (isSocialRoom(a.key) && m.acct) { try { await this._helloAccount(ws, m, now); } catch (e) { console.warn('[hub] account hello failed', e?.message ?? e); } }   // AUDIT SOC A2: contained, as the acts and the leave are
+        return;
+      }
+      // SLAM5 (2026-09-16, AUDIT SLAM): THE ROSTER IS CHOSEN BEFORE THE LOOKS ARE READ, and this was a hard wall.
+      //
+      // This used to read a look for EVERY hello'd socket - up to SOCKETS_MAX-1 = 255 keys in one
+      // `storage.get(keys)` - only for `rosterFor` to throw all but ROSTER_MAX away. A Durable Object's batched get
+      // takes at most 128 keys, which this file already knows: `_sweep` and `alarm` both chunk their deletes at 128.
+      // So the 130th player to join a room made the get throw, AFTER `_setAttach` had already marked them present
+      // and BEFORE the welcome or the join fan - leaving them connected with an empty roster, no host and no clock,
+      // invisible to a room that was never told they arrived. An event does not degrade at 130; it stops.
+      //
+      // Selecting first fixes the breach and the waste together: at most ROSTER_MAX keys are ever asked for, and an
+      // awake object usually asks for none, because `_looks` already holds what every hello said (the `who` path
+      // has read it that way since AUDIT WORLD6b-iii(e) B1 - the hello path just never did).
+      const near = rosterFor(others, m.id, m.pose);
+      const missing = near.filter((b) => !this._looks.has(b.id)).map((b) => lookKey(b.id));
+      const fetched = missing.length ? await this.state.storage.get(missing) : new Map();
+      const roster = near.map((b) => {
+        const look = this._looks.get(b.id) ?? fetched.get(lookKey(b.id)) ?? null;
+        if (look && !this._looks.has(b.id)) this._looks.set(b.id, look);
+        return { ...b, look };
+      });
       // WORLD1: the host and the room's memory ride the welcome - the world raw, never parsed here; a joiner that
       // leads the room (the same-millisecond tie the smaller id wins) is said to the rest - a reconnect that keeps
       // its own seat changed nothing and says nothing (AUDIT WORLD A4)
@@ -378,7 +602,8 @@ export class Room {
       // WORLD5: the relay's clock rides the welcome, so a client whose machine's clock is off reads the shared world time through the offset
       // AUDIT WORLD5 C11: stamped as the welcome is BUILT, not as the hello began - four storage awaits sit between the
       // two, and every millisecond of them was an offset the client carried as the relay's clock
-      const welcome = `{"t":"welcome","id":${JSON.stringify(m.id)},"peers":${JSON.stringify(roster)},"host":${JSON.stringify(host)},"world":${world ?? 'null'},"now":${Date.now()}}`;
+      // SRV-N / SLAM13 (AUDIT SLAM A5): the relay's VERSION rides it (`v`, last), so a client can tell a restarted relay from the one it was talking to, and one built against another law can say so
+      const welcome = `{"t":"welcome","id":${JSON.stringify(m.id)},"peers":${JSON.stringify(roster)},"host":${JSON.stringify(host)},"world":${world ?? 'null'},"now":${Date.now()},"v":${JSON.stringify(RELAY_VERSION)}}`;
       if (!this._send(ws, welcome)) return;
       const join = JSON.stringify({ t: 'join', id: m.id, name: m.name, look: m.look, pose: m.pose });
       for (const [other, b] of [...this._all()]) if (other !== ws && b.id) this._send(other, join);
@@ -416,9 +641,32 @@ export class Room {
       const unseen = [...this._all()].filter(([other, b]) => other !== ws && b.id && !b.worldSeen);
       if (unseen.length) {
         const out = `{"t":"world","id":${JSON.stringify(a.id)},"data":${raw}}`;
-        const budget = byteGate(this._roomFoes, now, out.length * unseen.length, FOES_ROOM_BYTES_PER_S);
-        this._roomFoes = budget.bucket;
-        if (budget.pass) for (const [other, b] of unseen) { this._setAttach(other, { ...b, worldSeen: true }); this._send(other, out); }
+        // SLAM11 (AUDIT SLAM): ITS OWN BUCKET, AND IT BORROWS. This charged the FOES bucket one indivisible sum -
+        // the whole memory times every unseen socket - against a cap of FOES_ROOM_BYTES_PER_S, and byteGate caps at
+        // the rate: a sum past the cap never passes however long it waits. At 200 players with a 100 KiB memory that
+        // is 19.5 MiB against 4 MiB, so 0 of 199 were ever handed the room's memory, `worldSeen` latched nothing,
+        // and every publish re-attempted the same unpayable fan for ever - doors, levers and emptied containers
+        // silently never synced, and the memory has to be under ~21 KiB for a full room to receive it at all.
+        // Pre-existing since WORLD34 C1, reachable from ~40 players. The push now borrows (net/wire.js byteGate):
+        // it lands whole and leaves its bucket in debt until the rate repays it - which is fine for a frame that is
+        // handed to each socket ONCE and comes every WORLD_PUBLISH_MS. And it is its OWN bucket, because a 100 KiB
+        // memory's debt would have blocked the foes STREAM it used to share a bucket with for seconds.
+        //
+        // SLAM13 (AUDIT SLAM A4): A LISTENER AT A TIME, not the whole fan as one charge. SLAM11 borrowed the fan whole,
+        // and whole is the memory times every unseen socket - the largest memory (WORLD_FRAME_MAX, 512 KiB) into a
+        // full room is 127 MiB queued onto sockets in ONE tick, which is the object's whole memory. Served one
+        // listener at a time, each charged as it goes and the debt bounded by ONE FRAME: the rate's worth of sockets
+        // (a second of FOES_ROOM_BYTES_PER_S, then one more) are handed the memory on this publish, the rest stay
+        // UNSEEN and are handed it on the next (WORLD_PUBLISH_MS, by which time the rate has repaid the debt in full).
+        // A 100 KiB memory reaches forty listeners a publish; a 20 KiB one, the whole room in one.
+        let bucket = this._roomWorld;
+        for (const [other, b] of unseen) {
+          const budget = byteGate(bucket, now, out.length, FOES_ROOM_BYTES_PER_S, true);
+          bucket = budget.bucket;
+          if (!budget.pass) break;   // in debt: the ones not yet served wait for the next publish, unseen
+          this._setAttach(other, { ...b, worldSeen: true }); this._send(other, out);
+        }
+        this._roomWorld = bucket;
       }
       return;
     }
@@ -494,11 +742,60 @@ export class Room {
       if (!budget.pass) return;
       const out = JSON.stringify({ t: 'act', id: a.id, data: m.data });
       const listeners = [...this._all()].filter(([other, b]) => other !== ws && b.id);
-      // AUDIT WORLD3 A1: the fan is the frame times its listeners, and a frame count is no bound on it
-      const bytes = byteGate(this._roomActBytes, now, out.length * listeners.length, ACT_ROOM_BYTES_PER_S);
+      // AUDIT WORLD3 A1: the fan is the frame times its listeners, and a frame count is no bound on it.
+      // SLAM11 (AUDIT SLAM): AND IT BORROWS. byteGate caps at the rate, so an act whose fan cost more than one
+      // second of ACT_ROOM_BYTES_PER_S could never land - a 6 KiB act to 199 listeners was dropped whole, silently,
+      // for ever, while `actFrameFits` told its author anything up to MAX_FRAME_BYTES would. A door is not
+      // self-healing: nothing re-sends it. It lands whole now and the bucket is in debt until the rate repays it -
+      // at most one fan's worth, MAX_FRAME_BYTES x SOCKETS_MAX, four seconds of acts - and the frame gate beside it
+      // (ACT_ROOM_HZ_MAX) still bounds how many come.
+      // SLAM13 (AUDIT SLAM A1): THE SENDER'S OWN SHARE FIRST. A borrowing room bucket is one that ONE sender can hold
+      // in debt on purpose - the largest act into a full room is four seconds of the room's rate per frame, at
+      // ACT_HZ_MAX - and every other door in the room was refused while it did. So the fan is charged to the sender's
+      // own borrowing bucket (`abytes`, ACT_SENDER_BYTES_PER_S, on the attachment) before the room's, and a frame the
+      // sender's bucket refuses charges the room nothing; a frame the room refuses charges the sender nothing either,
+      // so an honest sender behind a flooder is not left paying for a door that never opened.
+      const cost = out.length * listeners.length;
+      const mine = byteGate(a.abytes, now, cost, ACT_SENDER_BYTES_PER_S, true);
+      if (!mine.pass) { this._setAttach(ws, { ...a, abytes: mine.bucket }); return; }
+      const bytes = byteGate(this._roomActBytes, now, cost, ACT_ROOM_BYTES_PER_S, true);
       this._roomActBytes = bytes.bucket;
-      if (!bytes.pass) return;
+      if (!bytes.pass) { this._setAttach(ws, { ...a, abytes: { bytes: mine.bucket.bytes + cost, at: now } }); return; }   // refilled, not charged
+      this._setAttach(ws, { ...a, abytes: mine.bucket });
       for (const [other] of listeners) this._send(other, out);
+      return;
+    }
+    if (m.t === 'social') {
+      // SOC1: a friend or party act - on the acts' own bucket (the same strikes), in the hub alone (outside it junk: a
+      // correct client sends none there), from an account (without one refused in words), under the room's budget
+      // (over it 'busy', nobody struck); what it did or why not is the hub's answer, never a close
+      const now = Date.now();
+      a = this._meterSocial(ws, a, now); if (!a) return;
+      if (!isSocialRoom(a.key)) { this._junk(ws, a); return; }
+      const budget = tokenGate(this._roomSocial, now, SOCIAL_ROOM_HZ_MAX);
+      this._roomSocial = budget.bucket;
+      if (!budget.pass) { this._sayError(ws, 'busy'); return; }
+      if (!a.acct) { this._sayError(ws, 'no account'); return; }   // AUDIT SOC A11: under the room's budget, as every arm's refusal is
+      let err;
+      try { err = await this._social(ws, a, m, now); } catch (e) { console.warn('[hub] social act failed', m.k, e?.message ?? e); err = 'the hub stumbled - try again'; }
+      if (err) this._sayError(ws, err);
+      return;
+    }
+    if (m.t === 'party') {
+      // SOC1: my party pose - on the poses' own bucket, in the hub alone, kept on the attachment (`pm`: the seat I may
+      // yet take reads it) and fanned to my party's other members alone; the relay reads nothing inside it past the
+      // door's projection
+      const now = Date.now();
+      a = this._meterParty(ws, a, now); if (!a) return;
+      if (!isSocialRoom(a.key) || !a.acct) { this._junk(ws, a); return; }
+      this._setAttach(ws, { ...a, pm: { ...m.p, at: now } });
+      if (!a.party) return;
+      if (this._speaker(a.acct) !== ws) return;   // AUDIT SOC B9: another tab of mine speaks for the seat - this pose is kept, fanned to nobody
+      let party = null;
+      try { party = await this._livingParty(a.party, now); } catch (e) { console.warn('[hub] party pose failed', e?.message ?? e); return; }   // AUDIT SOC A2: contained
+      if (!party || !party.members.includes(a.acct)) { this._markParty(a.acct, null); return; }   // the seat is gone: the attachment forgets it, or every pose would read storage for a party that is not there
+      const out = JSON.stringify({ t: 'party', acct: a.acct, p: m.p });
+      for (const member of party.members) if (member !== a.acct) for (const other of this._socketsOf(member)) this._send(other, out);
       return;
     }
     if (m.t === 'who') {
@@ -514,13 +811,15 @@ export class Room {
       // AUDIT WORLD6b-iii(e) B3: junk is what a CORRECT client never sends - one's own name (the parser refused a bad
       // one); a name that left between the frame that asked and the ask is the honest race, and answers nothing
       if (!id || id === a.id) { this._junk(ws, a); return; }
-      const target = [...this._all()].find(([other, b]) => other !== ws && b.id === id) ?? null;
-      if (!target) return;
-      // B1: the room's own budget, every asker together - the answer reads storage when the instance has not seen the
-      // look since it woke (a repeat ask reads nothing), and a room-wide bound is what every other arm carries
+      // B1: the room's own budget, every asker together - a room-wide bound is what every other arm carries.
+      // SLAM9: spent BEFORE the scan for the target, not after it. The scan is a fresh SOCKETS_MAX-entry array and a
+      // linear search, and it ran for every ask the budget was about to refuse - so the "room budget" bounded the
+      // sends and the storage reads and left the object's own work unbounded, which is the wrong half to bound.
       const budget = tokenGate(this._roomWho, now, WHO_ROOM_HZ_MAX);
       this._roomWho = budget.bucket;
       if (!budget.pass) return;
+      const target = [...this._all()].find(([other, b]) => other !== ws && b.id === id) ?? null;
+      if (!target) return;
       const [tws, b] = target;
       let look = this._looks.get(b.id) ?? null;
       if (!look) { look = (await this.state.storage.get(lookKey(b.id))) ?? null; if (look) this._looks.set(b.id, look); }
@@ -536,14 +835,61 @@ export class Room {
       // the frame gate (A8): a pose and a ping share the socket's bucket, and a channel's pose is gated and counted
       // BEFORE it is declined (AUDIT CHAT A3: the early return sat above the gate, so a channel took frames unmetered)
       const chat = isChatRoom(a.key);
-      if (!this._meter(ws, a, Date.now(), { pose: m.t === 'pose' && !chat ? m.p : a.pose })) return;   // over the rate: kept as the latest, not relayed
+      const posed = m.t === 'pose' && !chat;
+      // SLAM8 (AUDIT SLAM): a KEEPALIVE is a pose the sender did not move (net/wire.js poseChanged, the client's own
+      // law for not sending one). Read BEFORE the meter, because the meter overwrites `a.pose` with this very frame.
+      // SLAM13 (AUDIT SLAM A2): AND THE WHOLE FAN HAS A FLOOR. The port's client sends an unmoved pose every
+      // HEARTBEAT_MS and no sooner; a modified one sends them at the pose gate's ceiling, and each went to the whole
+      // room - 20 x 199 sends a second from one socket, beyond what the tier bounds a MOVER to. A keepalive is heard
+      // whole only when the sender's last whole fan (`kept`, on the PASS patch as `turn` is) is KEEPALIVE_FAN_MS
+      // old; inside the floor it is tiered like a move. An honest heartbeat always clears half its own period.
+      const now = Date.now();
+      // SLAM15 (AUDIT SLAM FINAL A6): AND A STOP IS HEARD WHOLE TOO. The pose that ends a walk - the first with `mv`
+      // 0 after one that moved - carries the place the player actually stopped, and under the tier three far slices
+      // in four never heard it: they eased to the last pose they were served, up to a second of walking short of
+      // where the player stands, and stood there wrong until the next heartbeat corrected it five seconds on. A
+      // stop is one frame per walk, so it is fanned whole like a keepalive, under the same floor: a client toggling
+      // `mv` at the gate's ceiling buys the same two whole fans a second a keepalive flood does, and no more.
+      const unmoved = posed && !!a.pose && !poseChanged(a.pose, m.p);
+      const stopped = posed && !!a.pose && (a.pose.mv | 0) !== 0 && (m.p.mv | 0) === 0;
+      const still = (unmoved || stopped) && now - (a.kept ?? 0) >= KEEPALIVE_FAN_MS;
+      // SLAM6: `turn` is the sender's own pose counter, and the only state the far tier needs - which slice of the
+      // listeners past POSE_FAN_MAX this pose serves. Masked, so an attachment a socket carries for a day stays small.
+      // SLAM8: and it rides the PASS patch. `_meter` writes its ordinary patch back whether or not the gate passed, so
+      // a counter put there counted poses RECEIVED while the fan below serves poses RELAYED. Any drop pattern sharing
+      // a factor with POSE_FAR_SHARE then pinned the served slice to one parity and starved the rest - at exactly
+      // twice the gate the bucket settles into pass/fail alternation, so two of the four slices were never served and
+      // half the far tier heard that sender no more. The port's own client cannot reach that rate; a modified one can,
+      // and an event is where those turn up.
+      const met = this._meter(ws, a, now, { pose: posed ? m.p : a.pose }, posed ? { turn: ((a.turn | 0) + 1) & 0xffff, ...(still ? { kept: now } : {}) } : {});
+      if (!met) return;   // over the rate: kept as the latest, not relayed
       if (m.t === 'ping') { this._send(ws, '{"t":"pong"}'); return; }   // a ping that reached the object (the runtime answers the exact one in its sleep)
       if (chat) return;   // a channel is no place: a pose there is kept by no one and reaches no one
       const out = JSON.stringify({ t: 'pose', id: a.id, p: m.p });
+      // SLAM1: the fan is BOUNDED. A room's cost was N senders times N listeners, and the range cull does not help
+      // the one case that matters - an event, where everybody stands in one place and every range test passes.
+      // Measured on the fake object: 91k sends a second at 96 players (SLAM13 struck a claim here about where a real
+      // one stops; nothing has measured it - AUDIT SLAM C1).
+      // SLAM6: the nearest POSE_FAN_MAX hear every pose and THE REST HEAR ONE IN POSE_FAR_SHARE, by turns. SLAM1
+      // sent the rest nothing at all, so the silence law HID every sender from every listener past the bound -
+      // measured at 200 in one town block, each player was seen by 32 and erased for 167. The bound is a rank, so
+      // the loss fell hardest on the most crowded player in the room, which at an event is the one everybody came
+      // to see.
+      // SLAM8: AND A KEEPALIVE IS NEVER TIERED. A standing player sends only on the heartbeat, so a far listener under
+      // SLAM6 heard one in POSE_FAR_SHARE of those - HEARTBEAT_MS * POSE_FAR_SHARE = 20000ms, which is
+      // PEER_TIMEOUT_MS TO THE MILLISECOND (at the day's 5000/20000; RELAY-H1 moved the pair to 20000/80000 and
+      // derived the timeout from the heartbeat, so the ratio is the law and this arm is what keeps it from mattering). Zero margin: the silence law hid every standing peer past the bound at
+      // the exact moment its next pose was due, so a crowd standing still to listen to somebody - which is what an
+      // event IS - watched itself blink in and out, and one late heartbeat hid a peer for a full twenty seconds.
+      // The tier is a bandwidth saving for MOTION; a keepalive is the one frame whose whole job is to be heard, and
+      // a pose nobody has to ease is the cheapest frame in the room. At 200 standing that is 200 * 199 / 5s = 7,960
+      // sends a second, beside the 59,000 the moving case already pays.
+      const heard = [];
       for (const [other, b] of [...this._all()]) {
         if (other === ws || !b.id) continue;
-        if (inRange(a.key ?? '', m.p, b.pose)) this._send(other, out);
+        if (inRange(a.key ?? '', m.p, b.pose)) heard.push([other, b]);
       }
+      for (const [other] of (still ? heard : poseFan(heard, m.p, (e) => e[1].pose, met.turn, (e) => e[1].id))) this._send(other, out);   // SLAM10: the far tier bucketed by the listener's ID, so a moving crowd cannot shuffle who is served
       return;
     }
     if (m.t === 'chat') {
@@ -586,9 +932,389 @@ export class Room {
     if (!a.id) return;   // never said hello, or replaced - the id lives on in another socket
     this._looks.delete(a.id);
     if (!last) { try { await this.state.storage.delete([lookKey(a.id), secretKey(a.id)]); } catch { /* the room forgets it on the next empty hello */ } }
-    if (isChatRoom(a.key)) return;   // a channel announced no join, so it says no leave
+    // ROSTER-G: a channel says its leaves now, as it says its joins - the roster beside the chat is everyone online
     const out = JSON.stringify({ t: 'leave', id: a.id });
     for (const [other, b] of [...this._all()]) if (other !== ws && b.id) this._send(other, out);
-    if (this._leads(a, ws)) this._sayHost({ skip: ws, except: ws });   // WORLD1: the host left - the next-longest in the room is the host now, said to everyone
+    if (!isChatRoom(a.key) && this._leads(a, ws)) this._sayHost({ skip: ws, except: ws });   // WORLD1: the host left - the next-longest in the room is the host now, said to everyone (ROSTER-G: a channel has no host)
+    if (isSocialRoom(a.key) && a.acct) { try { await this._leaveAccount(ws, a, Date.now()); } catch (e) { console.warn('[hub] leave failed', e?.message ?? e); } }   // SOC1: last seen stamped, the friends and the party told
+  }
+
+  // ───────────────────────────── SOC1: THE HUB ─────────────────────────────
+  /** The account's record, or null - the instance's copy while it is awake (AUDIT SOC A5: one act read ~500 keys; the
+   *  records this object has read are kept on it, and every write goes through _putAcct/_putAccts so the copy IS the
+   *  storage's - no other object writes this room's keys), else storage's, kept then. */
+  async _acct(id) {
+    if (this._recs.has(id)) return this._recs.get(id);
+    const r = await this.state.storage.get(acctKey(id));
+    const rec = r && typeof r === 'object' ? r : null;
+    this._keepRec(id, rec);
+    return rec;
+  }
+  _keepRec(id, rec) { if (this._recs.size >= RECS_MAX) this._recs.clear(); this._recs.set(id, rec); }
+  async _putAcct(id, rec) { this._keepRec(id, rec); await this.state.storage.put(acctKey(id), rec); }
+  /** Several records written as one batch (a friendship is two records at once, or none). */
+  async _putAccts(recs) { const puts = {}; for (const [id, rec] of Object.entries(recs)) { this._keepRec(id, rec); puts[acctKey(id)] = rec; } await this.state.storage.put(puts); }
+  /** Several accounts' records at once - the instance's copies, and the rest in the runtime's batches (128 keys at most,
+   *  SLAM5's wall); a missing record is kept as a miss, so a friend list naming a swept account reads storage once. */
+  async _accts(ids) {
+    const out = new Map();
+    const missing = [];
+    for (const id of new Set(ids)) { if (this._recs.has(id)) { const r = this._recs.get(id); if (r) out.set(id, r); } else missing.push(id); }
+    for (let i = 0; i < missing.length; i += 128) {
+      const slice = missing.slice(i, i + 128);
+      const got = await this.state.storage.get(slice.map(acctKey));
+      for (const id of slice) { const v = got.get(acctKey(id)); const rec = v && typeof v === 'object' ? v : null; this._keepRec(id, rec); if (rec) out.set(id, rec); }
+    }
+    return out;
+  }
+  /** A party's record - the instance's copy, else storage's (kept then, a MISS too - AUDIT SOC A9: an invite naming a
+   *  party a sweep took read storage on every state frame until its TTL); null when there is none. */
+  async _party(pid) {
+    if (this._parties.has(pid)) return this._parties.get(pid);
+    const r = await this.state.storage.get(partyKey(pid));
+    const party = r && typeof r === 'object' ? r : null;
+    this._parties.set(pid, party);
+    return party;
+  }
+  /** Several parties at once, the instance's copies first and the rest in one batch (AUDIT SOC A5: the state frame's
+   *  invites were one read each). */
+  async _partiesOf(pids) {
+    const out = new Map();
+    const missing = [];
+    for (const pid of new Set(pids)) { if (this._parties.has(pid)) { const p = this._parties.get(pid); if (p) out.set(pid, p); } else missing.push(pid); }
+    for (let i = 0; i < missing.length; i += 128) {
+      const slice = missing.slice(i, i + 128);
+      const got = await this.state.storage.get(slice.map(partyKey));
+      for (const pid of slice) { const v = got.get(partyKey(pid)); const party = v && typeof v === 'object' ? v : null; this._parties.set(pid, party); if (party) out.set(pid, party); }
+    }
+    return out;
+  }
+  async _putParty(party) { this._parties.set(party.id, party); await this.state.storage.put(partyKey(party.id), party); }
+  async _delParty(pid) { this._parties.set(pid, null); await this.state.storage.delete(partyKey(pid)); }
+  /** A party as it stands now: its lapsed seats given up (PARTY_OFFLINE_MS offline - the rest told), null when gone. */
+  async _livingParty(pid, now) {
+    let party = await this._party(pid);
+    if (!party) return null;
+    const lapsed = party.members.filter((id) => party.away?.[id] != null && now - party.away[id] >= PARTY_OFFLINE_MS && !this._socketsOf(id).length);
+    for (const id of lapsed) { if (!party) break; const rec = await this._acct(id); party = await this._partyOut(id, party, now, 'party.lapsed', rec?.name ?? null); }
+    return party;
+  }
+  /** The party an account sits in, as it stands - or null, the record's stale pointer cleared (a lapse, a drain, a kick
+   *  while it was away). Returns [party, rec] with `rec` written when it changed. */
+  async _myParty(acct, rec, now) {
+    if (!rec.party) return [null, rec];
+    const party = await this._livingParty(rec.party, now);
+    if (party && party.members.includes(acct)) return [party, rec];
+    const next = { ...rec, party: null };
+    await this._putAcct(acct, next);
+    this._markParty(acct, null);
+    return [null, next];
+  }
+  /** The party id on every socket of an account - the party pose's fan reads it, so it never reads storage for the seat. */
+  _markParty(acct, pid) { for (const ws of this._socketsOf(acct)) { const b = this._attach(ws); if ((b.party ?? null) !== pid) this._setAttach(ws, { ...b, party: pid }); } }
+  /** One frame to every hello'd socket of an account, `except` one. */
+  _sayTo(acct, s, except = null) { for (const ws of this._socketsOf(acct, except)) this._send(ws, s); }
+  _sayError(ws, m) { this._send(ws, JSON.stringify({ t: 'social', k: 'error', m })); }
+  /** A note - a code the client puts words to; `acct`/`name` its subject. */
+  _sayNote(to, code, acct, name) { this._sayTo(to, JSON.stringify({ t: 'social', k: 'note', code, acct, name: name ?? null })); }
+  /** An account as the hub names it: online when any of its sockets is here, its peers those sockets' ids, seen now while online. */
+  _rowOf(acct, rec, now, except = null) {
+    const socks = this._socketsOf(acct, except);
+    return { acct, name: rec?.name ?? null, online: socks.length > 0, seen: socks.length ? now : (rec?.seen ?? null), peers: socks.slice(0, ACCOUNT_TABS_MAX).map((ws) => this._attach(ws).id) };
+  }
+  /** AUDIT SOC A6: a PENDING request's row, either way - the name and nothing else. A stranger's unaccepted request
+   *  used to hand them my presence and my live peer ids (the tabs a friend's client marks me by in the world) for as
+   *  long as they left it pending; presence is what a friendship grants, and a request is not one yet. */
+  _blankRow(acct, rec) { return { acct, name: rec?.name ?? null, online: false, seen: null, peers: [] }; }
+  /** A party as its members see it: the rows and each member's latest pose (the newest `pm` among its sockets). */
+  _partyView(party, recs, now, except = null) {
+    const members = party.members.map((id) => {
+      let pm = null;
+      for (const ws of this._socketsOf(id, except)) { const b = this._attach(ws); if (b.pm && (!pm || b.pm.at > pm.at)) pm = b.pm; }
+      let p = null;
+      if (pm) { p = { ...pm }; delete p.at; }
+      return { ...this._rowOf(id, recs.get(id), now, except), p };
+    });
+    return { id: party.id, leader: party.leader, members };
+  }
+  /** The party to every member's sockets, `except` one. */
+  async _sayParty(party, now, except = null) {
+    const recs = await this._accts(party.members);
+    const out = JSON.stringify({ t: 'social', k: 'party', party: this._partyView(party, recs, now, except) });
+    for (const id of party.members) this._sayTo(id, out, except);
+  }
+  /** An account's whole picture, to `only` or to every socket it holds. */
+  async _sayState(acct, rec, now, only = null) {
+    const socks = this._socketsOf(acct);
+    if (!only && !socks.length) return;   // AUDIT SOC A5: nobody to hand it to - a frame for an account with no socket read every friend's record and reached no one
+    const [party, mine] = await this._myParty(acct, rec, now);
+    const live = (mine.invites ?? []).filter((i) => now - i.at < INVITE_TTL_MS);
+    const parties = await this._partiesOf(live.map((i) => i.party));   // AUDIT SOC A5: one batch, not one read per invite
+    const invites = live.filter((i) => parties.has(i.party)).map((i) => [i, parties.get(i.party)]);
+    const ids = [...mine.friends, ...mine.in.map((e) => e.acct), ...mine.out.map((e) => e.acct), ...(party?.members ?? [])];
+    for (const [i, p] of invites) ids.push(i.from, ...p.members);
+    const recs = await this._accts(ids);
+    const row = (id) => this._rowOf(id, recs.get(id), now);
+    const blank = (id) => this._blankRow(id, recs.get(id));
+    const frame = {
+      t: 'social', k: 'state', acct, name: mine.name,
+      peers: socks.map((ws) => this._attach(ws).id),   // AUDIT SOC C20: the ids MY OWN tabs stand as - a second tab of mine is no stranger to friend
+      friends: mine.friends.map(row),
+      in: mine.in.map((e) => ({ ...blank(e.acct), at: e.at })),
+      out: mine.out.map((e) => ({ ...blank(e.acct), at: e.at })),
+      party: party ? this._partyView(party, recs, now) : null,
+      invites: invites.map(([i, p]) => ({ party: p.id, from: { acct: i.from, name: recs.get(i.from)?.name ?? null }, members: p.members.map((id) => ({ acct: id, name: recs.get(id)?.name ?? null })), at: i.at, expires: i.at + INVITE_TTL_MS })),
+    };
+    const s = JSON.stringify(frame);
+    if (only) this._send(only, s); else this._sayTo(acct, s);
+  }
+  /** An account came or went: its friends hear the row (online, seen, the peer ids its tabs stand as). */
+  _sayPresence(acct, rec, now, except = null) {
+    const out = JSON.stringify({ t: 'social', k: 'presence', ...this._rowOf(acct, rec, now, except) });
+    for (const f of rec.friends) this._sayTo(f, out, except);
+  }
+  /** The hello's account: guarded by its secret (the first hello mints it), its record made or refreshed (the name it
+   *  said, seen now), its party's seat taken back (`away` cleared) or found gone, and its whole picture handed to this
+   *  socket; then the friends and the party told - on EVERY hello, a second tab's too, since the peer ids my tabs
+   *  stand as are what a friend's client marks me by in the world. */
+  async _helloAccount(ws, m, now) {
+    const held = await this.state.storage.get(acctSecretKey(m.acct));
+    if (held && held !== m.asecret) { this._sayError(ws, 'account taken'); return; }
+    if (!held) await this.state.storage.put(acctSecretKey(m.acct), m.asecret);
+    if (!this._alarmArmed) {   // AUDIT SOC A3: the room is marked a hub (its alarm is the sweep's, whoever is in it) and the sweep armed - once per instance life, and never over an alarm already set
+      this._alarmArmed = true;
+      await this.state.storage.put('hub', 1);
+      if ((await this.state.storage.getAlarm()) == null) await this.state.storage.setAlarm(now + ACCOUNT_SWEEP_MS);
+    }
+    let a = this._attach(ws);
+    if (a.id !== m.id) return;   // replaced or gone while storage answered
+    let rec = { ...((await this._acct(m.acct)) ?? newAcct(m.name, now)), name: m.name, seen: now };
+    let party = null;
+    if (rec.party) {
+      party = await this._livingParty(rec.party, now);
+      if (!party || !party.members.includes(m.acct)) { rec.party = null; party = null; }
+      else if (party.away?.[m.acct] != null) { const away = { ...party.away }; delete away[m.acct]; party = { ...party, away }; await this._putParty(party); }
+    }
+    await this._putAcct(m.acct, rec);
+    a = this._attach(ws);
+    if (a.id !== m.id || !this._setAttach(ws, { ...a, acct: m.acct, party: rec.party })) return;
+    await this._sayState(m.acct, rec, now, ws);
+    this._sayPresence(m.acct, rec, now);
+    if (party) await this._sayParty(party, now);
+  }
+  /** The account behind a closing socket: last seen stamped when its last tab went, the friends and the party told (a
+   *  seat is kept `away` for PARTY_OFFLINE_MS - a refresh brings it straight back). */
+  async _leaveAccount(ws, a, now) {
+    const rec = await this._acct(a.acct);
+    if (!rec) return;
+    const gone = this._socketsOf(a.acct, ws).length === 0;
+    let next = gone ? { ...rec, seen: now } : rec;
+    let party = next.party ? await this._livingParty(next.party, now) : null;
+    if (party && !party.members.includes(a.acct)) party = null;
+    // AUDIT SOC A4: a party of ONE with no live invite out is nobody's to keep a seat in - it goes with my last tab, not
+    // PARTY_OFFLINE_MS later at the sweep's pace; one that has asked someone waits out the invite (a refresh mid-invite keeps it)
+    if (gone && party && party.members.length === 1 && !(party.invites ?? []).some((i) => now - i.at < INVITE_TTL_MS)) { await this._delParty(party.id); party = null; next = { ...next, party: null }; }
+    if (gone) await this._putAcct(a.acct, next);
+    this._sayPresence(a.acct, next, now, ws);
+    if (!party) return;
+    if (gone) { party = { ...party, away: { ...(party.away ?? {}), [a.acct]: now } }; await this._putParty(party); }
+    await this._sayParty(party, now, ws);
+  }
+  /** The account an act names: `acct` as given, `peer` through the hub socket that holds that id; never oneself. */
+  _targetOf(me, m) {
+    if (m.acct) return m.acct === me ? { error: 'that is you' } : { acct: m.acct };
+    for (const [, b] of this._all()) if (b.id === m.peer) { if (!b.acct) return { error: 'they have no account' }; return b.acct === me ? { error: 'that is you' } : { acct: b.acct }; }
+    return { error: 'they are not online' };
+  }
+  /** An account out of a party - by choice, by the leader's hand, by a yes to another, by a lapsed seat: the seat passes to
+   *  the longest-standing member when the leader goes, the party is deleted when nobody is left; the rest are told
+   *  (`code` names why, then the party as it stands). Returns the party after, or null when gone. The account's own
+   *  record is the caller's to write. */
+  async _partyOut(acct, party, now, code, name) {
+    if (!party.members.includes(acct)) return party;
+    const members = party.members.filter((m) => m !== acct);
+    const away = { ...(party.away ?? {}) }; delete away[acct];
+    if (!members.length) { await this._delParty(party.id); return null; }
+    const leader = party.leader === acct ? members[0] : party.leader;
+    const next = { ...party, members, leader, away };
+    await this._putParty(next);
+    for (const m of members) this._sayNote(m, code, acct, name);
+    if (leader !== party.leader) { const lrec = await this._acct(leader); for (const m of members) this._sayNote(m, 'party.leader', leader, lrec?.name ?? null); }
+    await this._sayParty(next, now);
+    return next;
+  }
+  /** One act, from an account: null when done, else the refusal in words. */
+  async _social(ws, a, m, now) {
+    const me = a.acct;
+    const rec = await this._acct(me);
+    if (!rec) return 'no account';
+    switch (m.k) {
+      case 'friend.request': return this._friendRequest(me, rec, m, now);
+      case 'friend.accept': return this._friendAccept(me, rec, m.acct, now);
+      case 'friend.decline': return this._friendUnlist(me, rec, m.acct, now, 'in', 'out');
+      case 'friend.cancel': return this._friendUnlist(me, rec, m.acct, now, 'out', 'in');
+      case 'friend.remove': return this._friendRemove(me, rec, m.acct, now);
+      case 'party.invite': return this._partyInvite(me, rec, m, now);
+      case 'party.accept': return this._partyAccept(me, rec, m.party, now);
+      case 'party.decline': return this._partyDecline(me, rec, m.party, now);
+      case 'party.leave': return this._partyLeave(me, rec, now);
+      case 'party.kick': return this._partyKick(me, rec, m.acct, now);
+      default: return 'unknown act';
+    }
+  }
+  async _friendRequest(me, rec, m, now) {
+    const t = this._targetOf(me, m);
+    if (t.error) return t.error;
+    const them = t.acct;
+    if (rec.friends.includes(them)) return 'already friends';
+    if (hasEntry(rec.in, them)) return this._friendAccept(me, rec, them, now);   // they asked first: a request back is a yes
+    if (hasEntry(rec.out, them)) return 'already asked';
+    // AUDIT SOC A6: BY ACCOUNT alone is for someone on my lists (a request back, above); a stranger is met in the world
+    // and asked by peer, or the hub is an oracle of which ids exist - said before any record is read, so it tells nothing
+    if (m.acct) return 'meet them first';
+    const trec = await this._acct(them);
+    if (!trec) return 'no such player';
+    if (rec.friends.length >= FRIENDS_MAX) return 'your friend list is full';
+    if (trec.friends.length >= FRIENDS_MAX) return 'their friend list is full';
+    if (rec.out.length >= PENDING_MAX) return 'too many requests out';
+    if (trec.in.length >= PENDING_MAX) return 'their inbox is full';
+    if (this._repeated(me, 'friend.request', them, now)) return 'already asked';   // AUDIT SOC A1: asked, cancelled, asked again - once per SOCIAL_REPEAT_MS reaches them
+    const mine = { ...rec, out: [...rec.out, { acct: them, at: now }] };
+    const theirs = { ...trec, in: [...trec.in, { acct: me, at: now }] };
+    await this._putAccts({ [me]: mine, [them]: theirs });
+    await this._sayState(me, mine, now); await this._sayState(them, theirs, now);
+    this._sayNote(them, 'friend.requested', me, mine.name);
+    return null;
+  }
+  async _friendAccept(me, rec, them, now) {
+    if (!hasEntry(rec.in, them)) return 'no such request';
+    const trec = await this._acct(them);
+    if (!trec) { const mine = { ...rec, in: without(rec.in, them) }; await this._putAcct(me, mine); await this._sayState(me, mine, now); return 'no such player'; }
+    if (rec.friends.length >= FRIENDS_MAX) return 'your friend list is full';
+    if (trec.friends.length >= FRIENDS_MAX) return 'their friend list is full';
+    const mine = { ...rec, in: without(rec.in, them), out: without(rec.out, them), friends: rec.friends.includes(them) ? rec.friends : [...rec.friends, them] };
+    const theirs = { ...trec, in: without(trec.in, me), out: without(trec.out, me), friends: trec.friends.includes(me) ? trec.friends : [...trec.friends, me] };
+    await this._putAccts({ [me]: mine, [them]: theirs });
+    await this._sayState(me, mine, now); await this._sayState(them, theirs, now);
+    this._sayNote(them, 'friend.accepted', me, mine.name);
+    return null;
+  }
+  /** A decline (mine `in`, theirs `out`) or a cancel (mine `out`, theirs `in`): the request gone from both, quietly. */
+  async _friendUnlist(me, rec, them, now, mineList, theirList) {
+    if (!hasEntry(rec[mineList], them)) return 'no such request';
+    const trec = await this._acct(them);
+    const mine = { ...rec, [mineList]: without(rec[mineList], them) };
+    const puts = { [me]: mine };
+    let theirs = null;
+    if (trec) { theirs = { ...trec, [theirList]: without(trec[theirList], me) }; puts[them] = theirs; }
+    await this._putAccts(puts);
+    await this._sayState(me, mine, now); if (theirs) await this._sayState(them, theirs, now);
+    return null;
+  }
+  async _friendRemove(me, rec, them, now) {
+    if (!rec.friends.includes(them)) return 'not a friend';
+    const trec = await this._acct(them);
+    const mine = { ...rec, friends: without(rec.friends, them) };
+    const puts = { [me]: mine };
+    let theirs = null;
+    if (trec) { theirs = { ...trec, friends: without(trec.friends, me) }; puts[them] = theirs; }
+    await this._putAccts(puts);
+    await this._sayState(me, mine, now); if (theirs) await this._sayState(them, theirs, now);
+    return null;
+  }
+  async _partyInvite(me, rec, m, now) {
+    const t = this._targetOf(me, m);
+    if (t.error) return t.error;
+    const them = t.acct;
+    if (m.acct && !rec.friends.includes(them)) return 'meet them first';   // AUDIT SOC A6: by account alone for a friend (who sees my presence anyway); anyone else is invited in the world, by peer - or 'they are not online' is an oracle on any id
+    if (!this._socketsOf(them).length) return 'they are not online';
+    const trec = await this._acct(them);
+    if (!trec) return 'no such player';
+    let [party, mine] = await this._myParty(me, rec, now);
+    let made = false;
+    if (!party) {   // no party yet: mine is made now, with me in the seat
+      party = { id: mintPartyId(Math.random, now), leader: me, members: [me], invites: [], away: {}, at: now };
+      mine = { ...mine, party: party.id };
+      made = true;
+    }
+    if (party.members.includes(them)) return 'already in your party';
+    if (party.members.length >= PARTY_MAX) return 'the party is full';
+    const live = party.invites.filter((i) => now - i.at < INVITE_TTL_MS && i.acct !== them);
+    if (live.length >= PARTY_INVITES_MAX) return 'too many invites out';
+    const tinv = (trec.invites ?? []).filter((i) => now - i.at < INVITE_TTL_MS && i.party !== party.id);
+    if (tinv.length >= PENDING_MAX) return 'their invites are full';
+    if (this._repeated(me, 'party.invite', them, now)) return 'already asked';   // AUDIT SOC A8: invited, declined, invited again - once per SOCIAL_REPEAT_MS reaches them
+    const next = { ...party, invites: [...live, { acct: them, at: now }] };
+    const theirs = { ...trec, invites: [...tinv, { party: party.id, from: me, at: now }] };
+    await this._putParty(next);
+    const puts = { [them]: theirs };
+    if (made) puts[me] = mine;
+    await this._putAccts(puts);
+    if (made) this._markParty(me, next.id);
+    const recs = await this._accts(next.members);
+    this._sayTo(them, JSON.stringify({ t: 'social', k: 'invite', party: next.id, from: { acct: me, name: mine.name }, members: next.members.map((id) => ({ acct: id, name: recs.get(id)?.name ?? null })), at: now, expires: now + INVITE_TTL_MS }));
+    if (made) await this._sayParty(next, now);
+    this._sayNote(me, 'party.invited', them, trec.name);
+    return null;
+  }
+  async _partyAccept(me, rec, pid, now) {
+    const inv = (rec.invites ?? []).find((i) => i.party === pid);
+    if (!inv) return 'no such invite';
+    const shed = { ...rec, invites: rec.invites.filter((i) => i.party !== pid) };
+    const refuse = async (why) => { await this._putAcct(me, shed); await this._sayState(me, shed, now); return why; };
+    if (now - inv.at >= INVITE_TTL_MS) return refuse('that invite has lapsed');
+    const party = await this._livingParty(pid, now);
+    if (!party) return refuse('that party is gone');
+    if (party.members.includes(me)) return refuse('you are in that party already');
+    if (party.members.length >= PARTY_MAX) return refuse('the party is full');
+    // out of my own party first - a yes to a new one is a no to the old
+    let mine = shed;
+    const [old] = await this._myParty(me, mine, now);
+    if (old) await this._partyOut(me, old, now, 'party.left', mine.name);
+    const away = { ...(party.away ?? {}) }; delete away[me];
+    const next = { ...party, members: [...party.members, me], invites: party.invites.filter((i) => i.acct !== me), away };
+    mine = { ...mine, party: pid };
+    await this._putParty(next);
+    await this._putAcct(me, mine);
+    this._markParty(me, pid);
+    await this._sayState(me, mine, now);
+    for (const member of party.members) this._sayNote(member, 'party.joined', me, mine.name);
+    await this._sayParty(next, now);
+    return null;
+  }
+  async _partyDecline(me, rec, pid, now) {
+    const inv = (rec.invites ?? []).find((i) => i.party === pid);
+    if (!inv) return 'no such invite';
+    const mine = { ...rec, invites: rec.invites.filter((i) => i.party !== pid) };
+    await this._putAcct(me, mine);
+    const party = await this._party(pid);
+    if (party) await this._putParty({ ...party, invites: party.invites.filter((i) => i.acct !== me) });
+    await this._sayState(me, mine, now);
+    if (now - inv.at < INVITE_TTL_MS && party?.members.includes(inv.from)) this._sayNote(inv.from, 'party.declined', me, mine.name);
+    return null;
+  }
+  async _partyLeave(me, rec, now) {
+    const [party, mine] = await this._myParty(me, rec, now);
+    if (!party) return 'you are not in a party';
+    await this._partyOut(me, party, now, 'party.left', mine.name);
+    const next = { ...mine, party: null };
+    await this._putAcct(me, next);
+    this._markParty(me, null);
+    this._sayTo(me, JSON.stringify({ t: 'social', k: 'party', party: null }));
+    return null;
+  }
+  async _partyKick(me, rec, them, now) {
+    const [party] = await this._myParty(me, rec, now);
+    if (!party) return 'you are not in a party';
+    if (party.leader !== me) return 'only the leader can do that';
+    if (them === me) return 'that is you';
+    if (!party.members.includes(them)) return 'they are not in your party';
+    const trec = await this._acct(them);
+    await this._partyOut(them, party, now, 'party.kicked', trec?.name ?? null);
+    if (trec) await this._putAcct(them, { ...trec, party: null });
+    this._markParty(them, null);
+    this._sayTo(them, JSON.stringify({ t: 'social', k: 'party', party: null }));
+    this._sayNote(them, 'party.kicked', them, trec?.name ?? null);
+    return null;
   }
 }

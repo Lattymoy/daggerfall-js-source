@@ -415,15 +415,24 @@ test('EE5 / VC4: the ground reads the slab\u2019s own shadow map through one blo
     const ti = r.indexOf(name); const tj = r.indexOf('`;', ti);
     assert.match(r.slice(ti, tj), /\$\{CLOUD_SHADOW_GLSL\}/, `${name} interpolates the block`);
   }
-  assert.ok(r.indexOf('const CLOUD_SHADOW_GLSL = `') < r.indexOf('const FS = `'), 'declared before the first shader that reads it');
+  // VC6c: the block's text moved to its own leaf when the air pass's
+  // shafts became its second reader - the renderer imports it, and the
+  // import must stand ABOVE the first shader that interpolates it for
+  // the same reason the const did (a template literal is evaluated at
+  // module scope, and this file has been bitten by that dead zone).
+  const cs = read('src/render/cloudShadow.js');
+  assert.match(cs, /export const CLOUD_SHADOW_GLSL = `/, 'one home for the text');
+  assert.doesNotMatch(r, /const CLOUD_SHADOW_GLSL = `/, 'and only one - the renderer keeps no copy');
+  assert.ok(r.indexOf("import { CLOUD_SHADOW_GLSL } from './cloudShadow.js'") >= 0 && r.indexOf("import { CLOUD_SHADOW_GLSL } from './cloudShadow.js'") < r.indexOf('const FS = `'), 'imported before the first shader that reads it');
+  assert.match(read('src/render/airPass.js'), /import \{ CLOUD_SHADOW_GLSL \} from '\.\/cloudShadow\.js';/, 'VC6c: the shafts read the same field the ground does');
   assert.equal((r.match(/diff \*= cloudShadowAt\(vWorldPos\);/g) || []).length, 3, 'the mesh, the character and the terrain: a cloud dims the SUN and leaves the ambient alone');
   assert.match(r, /uBBSun \* cloudShadowAt\(vBBWorld\)/, 'the flats: the sun\u2019s half of the tint, shadowed');
   // OFF is free and cannot change classic: the amount 0 returns before the sample
-  assert.match(r, /if \(uCloudShadowRect\.w <= 0\.0\) return 1\.0;/);
-  assert.match(r, /if \(uv\.x < 0\.0 \|\| uv\.y < 0\.0 \|\| uv\.x > 1\.0 \|\| uv\.y > 1\.0\) return 1\.0;/, 'outside the square, no shadow');
+  assert.match(cs, /if \(uCloudShadowRect\.w <= 0\.0\) return 1\.0;/);
+  assert.match(cs, /if \(uv\.x < 0\.0 \|\| uv\.y < 0\.0 \|\| uv\.x > 1\.0 \|\| uv\.y > 1\.0\) return 1\.0;/, 'outside the square, no shadow');
   assert.match(r, /this\._cloudShadow = null;/);
   assert.match(r, /setCloudShadow\(d\) \{ d = d \?\? null; if \(d !== this\._cloudShadow\) \{ this\._cloudShadow = d; this\._csStamp\+\+; \} \}/, 'numbers and handles only - it binds nothing');
-  assert.match(r, /s\.draws = 0; s\.programBinds = 0; s\.vaoBinds = 0; s\.texBinds = 0;[\s\S]{0,500}?if \(this\._cloudShadow\) \{ this\._cloudShadow = null; this\._csStamp\+\+; \}/, 'the deck is a FRAME\u2019s: beginFrame drops it, so an interior never inherits an exterior\u2019s map');
+  assert.match(r, /s\.draws = 0; s\.programBinds = 0; s\.vaoBinds = 0; s\.texBinds = 0;[\s\S]{0,700}?if \(this\._cloudShadow\) \{ this\._deckOwed = this\._cloudShadow; this\._cloudShadow = null; this\._csStamp\+\+; \}/, 'the deck is a FRAME\u2019s: beginFrame drops it, so an interior never inherits an exterior\u2019s map (VC6c: into _deckOwed, which the air pass\u2019s owed image reads and _beginLane then drops)');
   assert.match(r, /gl\.bindTexture\(gl\.TEXTURE_2D, cs\?\.map \?\? this\._blackTex\);/, 'the draw path binds the map, or black under an amount of 0');
   for (const k of ['terrain', 'mesh', 'char', 'bb']) assert.match(r, new RegExp(`this\\._uploadCloudShadow\\('${k}'\\)`), `${k} uploads on its draw path`);
   // the old noise shadow is gone whole: no tfbm, no deck numbers in the terrain shader

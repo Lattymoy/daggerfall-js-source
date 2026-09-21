@@ -172,9 +172,16 @@ test('audit39r R17: emission CANCELS the lighting it replaces, it does not ride 
 // ---------------------------------------------------------------
 test('audit39 F50: every draw in the file reports, not drawMesh alone', () => {
   const s = src('src/render/renderer.js');
-  // EE7: drawArraysInstanced is a draw too - the grass is the file's
-  // first instanced call, and it reports like every other
-  const drawCalls = (s.match(/gl\.draw(Elements|Arrays|ArraysInstanced)\(/g) || []).length;
+  // PERF-ON: GENERATIVE, because the enumerated form was a rule
+  // enforced by memory and duly forgot one. It listed
+  // `Elements|Arrays|ArraysInstanced`, so `drawElementsInstanced` -
+  // the text run's one draw - matched nothing and read as an
+  // OVER-count, failing the pin for the one reason it was never meant
+  // to fire on. Every `gl.draw*` is a draw now; WebGL2's only
+  // `gl.draw*` that draws nothing is `drawBuffers` (it names the
+  // attachments a fragment shader writes), so that is the one
+  // exclusion, and any future draw entry point is covered unasked.
+  const drawCalls = (s.match(/gl\.draw[A-Za-z]*\(/g) || []).filter((m) => m !== 'gl.drawBuffers(').length;
   const counted = (s.match(/this\.stats\.draws\+\+/g) || []).length;
   assert.equal(counted, drawCalls,
     `${drawCalls} gl.draw* sites, ${counted} counted - a draw the counter cannot see makes the terrain culling EV3 measures invisible`);

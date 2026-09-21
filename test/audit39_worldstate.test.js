@@ -69,11 +69,15 @@ test('AUDIT 39r: the paralysed bag zeroes the movement VECTOR and keeps the spee
   // lifted. The crouch toggle stays live either way (DecideHeightAction
   // has no paralysis check).
   const KEYS = "run: held(keys, 'Run'), autoRun: held(keys, 'AutoRun'), back: mv.backwards, sneak: held(keys, 'Sneak')";
-  for (const [name, s, latch] of [
-    ['world.js', WORLD, 'latch.crouch'], ['exterior.js', EXTERIOR, 'latch.crouch'],
-    ['worldModes.js', WORLD_MODES, 'latch.crouch'], ['dungeon.js', src('src/scenes/dungeon.js'), 'prevCrouch'],
+  // MWCROUCH replaced the `crouchHeld && !<latch>` derivation the four
+  // hosts shared with `crouchPress` - GetKeyDown off the frame's key
+  // ring (ui/input.js). The law this pin states is untouched: the
+  // paralysed bag zeroes the VECTOR and still carries the live crouch.
+  for (const [name, s] of [
+    ['world.js', WORLD], ['exterior.js', EXTERIOR],
+    ['worldModes.js', WORLD_MODES], ['dungeon.js', src('src/scenes/dungeon.js')],
   ]) {
-    assert.ok(s.includes(`player.update(dt, paralyzed ? { forward: 0, strafe: 0, ${KEYS}, jump: false, up: false, down: false, crouch: crouchHeld && !${latch} } : {`),
+    assert.ok(s.includes(`player.update(dt, paralyzed ? { forward: 0, strafe: 0, ${KEYS}, jump: false, up: false, down: false, crouch: crouchPress } : {`),
       `${name}: the vector is zeroed, the capture keys ride through`);
     assert.ok(!s.includes('paralyzed ? { forward: 0, strafe: 0, run: false,'), `${name}: and the old reduced bag is gone`);
   }
@@ -109,7 +113,7 @@ test('AUDIT 39r: the interior arrow that lands on the player flashes the screen'
   assert.match(WORLD_MODES, /import \{ flashPlayerDamage \} from '\.\.\/ui\/damageFlash\.js';/);
   const hit = WORLD_MODES.slice(WORLD_MODES.indexOf('onPlayerHit: (m) => {'));
   const body = hit.slice(0, hit.indexOf('addItem(playerEntity.items,'));
-  assert.ok(body.includes('hurtPlayer(playerEntity, dmg);') && body.includes('flashPlayerDamage();'),
+  assert.ok(body.includes('hurtPlayer(playerEntity, dmg);') && body.includes('flashPlayerDamage(dmg);'),
     'the flash sits with the damage, the sound and the cry');
 });
 
@@ -118,7 +122,7 @@ test('AUDIT 39r: the interior arrow that lands on the player flashes the screen'
 // ---------------------------------------------------------------------
 
 test('AUDIT 39 #152: no host hides drawHud behind the classic HUD art', () => {
-  // hud.js:401-426 runs playerDamageFlash and the enhanced DOM branch
+  // hud.js:386-411 runs playerDamageFlash and the enhanced DOM branch
   // ABOVE its own `if (!art) return;` - "the enhanced HUD reads no
   // ARENA2, and a player whose HUD art failed to load still has
   // vitals". Three hosts wrapped the whole call in `if (hudArt)`, and
@@ -356,7 +360,9 @@ test('AUDIT-39r: the dungeon host runs the missile sweep at its OWN load door', 
   const ctx = src('src/scenes/dungeonContext.js');
   const at = ctx.indexOf('quickLoad(setPlayerPos, key = null) {');
   assert.ok(at > 0, 'the dungeon host owns a load door');
-  const body = ctx.slice(at, at + 2500);
+  // ONLINE-LOAD1 widened this window slightly: quickLoad now carries its own online guard
+  // (F9/F11 reach it directly, with no pane in the way to stop them) ahead of the same call chain.
+  const body = ctx.slice(at, at + 2900);
   assert.match(body, /magic\.clearMissiles\(\);/, 'which sweeps its own flights');
   assert.ok(body.indexOf('magic.clearMissiles();') < body.indexOf('applyWorld(extras.world)'),
     'ahead of the world restore, as OnStartLoad is');
@@ -395,7 +401,7 @@ test('AUDIT 39 #159: the travel map refuses with enemies nearby, before the raci
 
 test('AUDIT 39 #130: the exterior host\'s attack TAP defers to a readied spell like its other three doors', () => {
   // WeaponManager.cs:244-263 hands the click to the ready spell before
-  // it handles any attack; touch.js:221 already promises the tap casts.
+  // it handles any attack; touch.js:233 already promises the tap casts.
   // TI1 (2026-09-05): the tap-to-attack button is gone - the touch
   // SWIPE is the attack now, and it carries the same gate in front of
   // the drag seam, held-edge only (a release must reach the rig).

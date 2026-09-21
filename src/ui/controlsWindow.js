@@ -55,8 +55,8 @@ import { loadImg, nativeMetrics, drawImg } from './nativePanel.js';
 import { drawMenuBackdrop } from './chargenArt.js';
 import { layoutMessageBox, drawMessageBox, messageBoxHit, MB_BUTTONS } from './messageBox.js';
 import { drawText, measureText } from './text.js';
-import { ACTIONS, saveKeyBinds } from '../systems/inputActions.js';
-import { bindings } from './input.js';
+import { ACTIONS, PORT_ACTIONS, saveKeyBinds } from '../systems/inputActions.js';   // AUDIT SOC D3: the port's own rows YIELD here - this window's art cannot draw them
+import { bindings, mouseCode } from './input.js';   // MAC-K1: the ONE crossed-name table, so this grid does not spell it a second time
 import {
   createUnsavedKeybinds, currentDict, setUnsavedBinding, checkDuplicates,
   applyUnsavedKeybinds, resetUnsavedToDefaults, buttonText, ELONGATED_TEXT,
@@ -69,7 +69,39 @@ import { audio } from '../systems/audio.js';
 import { SOUND } from '../systems/soundClips.js';
 
 /** SetupKeybindButtons' nine calls (:146-152): [startIndex, endIndex)
- *  into the Actions enum, and the group's anchor. */
+ *  into the Actions enum, and the group's anchor.
+ *
+ *  SOC5 (2026-09-16, Mac: "by pressing F on their body"): THIS WINDOW CANNOT
+ *  PLACE THE PORT'S OWN ACTION, and that is a layout fact, not a decision
+ *  deferred. Every number above is a pixel on CNFG00I0.IMG - nine groups of
+ *  47x7 buttons at a +11 stride, anchored where DFU's SetupKeybindButtons puts
+ *  them - and the art has no free rect. Both lower columns already run to the
+ *  floor: the last row of the x=102 stack and of the x=270 stack both sit at
+ *  y=181, a button is 7 tall, and the tab row starts at y=190 - two pixels of
+ *  clearance, where a tenth row needs eleven. Widening a group pushes its own
+ *  last row onto the tabs; a tenth group has nowhere to stand. DFU itself leaves six
+ *  of its own forty-four off this grid for the same reason and rebinds them in
+ *  the ADVANCED popup (ui/mouseControlsWindow.js KEYBIND_ROWS) - a SECOND fixed
+ *  layout, six rows, equally full.
+ *
+ *  So 'SocialInteract' is rebound in the ENHANCED controls window alone
+ *  (ui/enhancedControls.js PORT_ROWS, the 'Online' group) - a DOM pane that
+ *  grows a row without moving a pixel of anyone's art. Nothing is broken by the
+ *  absence: the action ships bound to KeyF by default
+ *  (systems/inputActions.js DEFAULT_BINDINGS), and online forces the enhanced
+ *  lane whole (systems/onlineLane.js), so the one player who can use the action
+ *  is the one player already looking at the window that offers it.
+ *  test/soc5_interact.test.js pins both halves: this table still ends at 40, and
+ *  the enhanced pane still lists the action.
+ *
+ *  AUDIT SOC D3: ...AND SO IT YIELDS HERE. Staging is ALL of ACTIONS (the dicts
+ *  are the registry's whole), so the duplicate check saw 'SocialInteract' on F
+ *  even though no button on this art does - a classic player who put a grid
+ *  action on F was shown a clash against a row that is not on the screen, could
+ *  not clear it, and could not close the window (the exit gate is
+ *  `checkDuplicates().ok`). Both classic windows now hand the check
+ *  `{ yield: PORT_ACTIONS }`: the port's row gives the key up rather than
+ *  arguing for it, and comes back rebindable in the pane that draws it. */
 export const KEY_GROUPS = Object.freeze([
   { start: 2, end: 8, x: 57, y: 13 },     // moveKeysOne
   { start: 8, end: 14, x: 164, y: 13 },   // moveKeysTwo
@@ -147,7 +179,7 @@ export class ControlsWindow {
     this._noteRows = null;
     this._removeAction = null;
     this._box = null;
-    this.dupes = checkDuplicates(this.unsaved);
+    this.dupes = checkDuplicates(this.unsaved, { yield: PORT_ACTIONS });
     // U37: DFU points every key button at the shared tooltip and
     // SUPPRESSES it unless the label elongated (:214-216) - the tip
     // exists to show the full text a '...' is standing in for.
@@ -189,7 +221,7 @@ export class ControlsWindow {
     this.hooks.onBack?.();
   }
 
-  _refresh() { this.dupes = checkDuplicates(this.unsaved); }
+  _refresh() { this.dupes = checkDuplicates(this.unsaved, { yield: PORT_ACTIONS }); }
 
   input(code, e = null) {
     if (this._popup) {
@@ -313,14 +345,41 @@ export class ControlsWindow {
     this._refresh();
   }
 
-  /** vx/vy native; `right` marks the remove gesture (:371). */
-  click(vx, vy, right = false) {
+  /** vx/vy native; `right` marks the remove gesture (:371), `middle`
+   *  is the wheel press - carried because MAC-K1 made it a binding. */
+  click(vx, vy, right = false, middle = false) {
     if (this._popup) {
       this._popup.click(vx, vy, right);
       this._popupDone();
       return true;
     }
-    if (this.capture) return true;   // every tab ignores clicks mid-capture (:283 etc.)
+    if (this.capture) {
+      // MAC-K1 (Mac: "Mouse keybindings not working properly"). This
+      // line read `return true` - "every tab ignores clicks
+      // mid-capture (:283 etc.)" - which is the right law for a click
+      // that means something ELSE, and the wrong one for the capture
+      // itself. DFU's WaitForKeyPress is `Input.GetKeyDown` walked over
+      // every KeyCode, and Mouse0/1/2 ARE KeyCodes - which is how three
+      // of its own defaults come to be mouse buttons. So a press while
+      // armed is the binding, exactly as a keystroke is.
+      //
+      // NO COMBO ARM HERE, and that is a real difference from the key
+      // door: this seam is given a position and three booleans, never
+      // the event, so there are no modifier flags to read. A
+      // modifier+button combo can be made in the enhanced pane and
+      // will display, save and run correctly everywhere; it just
+      // cannot be ENTERED through the classic grid.
+      //
+      // Unity counts Mouse0/1/2 as left/RIGHT/middle where the DOM
+      // counts left/middle/right, so the two middle names cross - and
+      // this reads the one table (ui/input.js MOUSE_CODES) rather than
+      // spelling the crossing a second time.
+      const code = mouseCode(right ? 2 : (middle ? 1 : 0));
+      setUnsavedBinding(this.unsaved, this.capture, code);
+      this.capture = null;
+      this._refresh();
+      return true;
+    }
     if (this.top) {
       if ((this.top === 'defaults' || this.top === 'remove') && this._box) {
         const hit = messageBoxHit(this._box, vx, vy);

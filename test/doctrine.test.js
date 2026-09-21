@@ -40,14 +40,13 @@ const PUBLIC_ALLOWLIST = new Map([
   ['public/icons/icon-192.png', 'TI2: home-screen icon, drawn by scripts/makeIcons.mjs from the skin\'s tokens'],
   ['public/icons/icon-512.png', 'TI2: home-screen icon, drawn by scripts/makeIcons.mjs from the skin\'s tokens'],
   ['public/icons/icon-512-maskable.png', 'TI2: home-screen icon (maskable), drawn by scripts/makeIcons.mjs from the skin\'s tokens'],
-  // THE INTRO'S FOUR ASSETS (U65) WENT WITH THE INTRO at 1c62e11
-  // (U65f): two marks, a title card and the one recorded piece of
-  // music this port ever shipped. The rows went with the files; this
-  // sentence replaces the rationale that outlived them, because a
-  // licensing position stated over an empty list tells a reader the
-  // repo publishes a music recording and two third-party trademarks,
-  // and it publishes neither. Every note is synthesised from the
-  // player's own MIDI.BSA again (systems/songPlayer.js, the A5 arc).
+  // INTRO2 (2026-09-18): restored at Mac's explicit request. The credit
+  // marks and score are the identical U65 assets, not ARENA2-derived data.
+  // Credit marks identify their respective projects; no new rights claimed.
+  ['src/assets/intro/interkarma.webp', 'U65 credit artwork identifying Interkarma / Daggerfall Unity; recovered unchanged'],
+  ['src/assets/intro/nexus.webp', 'U65 credit artwork identifying Nexus Mods; recovered unchanged'],
+  ['src/assets/intro/theme.mp3', 'U65 original theme recording; recovered unchanged at Mac\'s request'],
+  ['src/assets/branding/daggerfall-enhanced.jpg', 'Mac\'s supplied 19956.png, 2026-09-18; original JPEG bytes, no ARENA2 data'],
   // THE SITE'S PICTURES (U60c) WERE RETIRED with the DA site cleanup
   // (Mac, 2026-08-31): the landing page carries no raster at all now -
   // landing.test.js pins <img> absent - so the three menu screens,
@@ -61,6 +60,32 @@ const PUBLIC_ALLOWLIST = new Map([
   // the question this list exists to ask. They are the first character
   // texture in the project that ships rather than loading through the data
   // door, and the reason viewer.html no longer needs ARENA2 for its skin.
+  // MAP0 (2026-09-18): THE HELD MAP'S SPRITE. Mac's own painting - two
+  // gauntleted hands holding a blank parchment, 1448x1086 - and the
+  // only picture the enhanced map will ship; the map itself is drawn
+  // onto the paper at runtime from MAPS and WOODS data (10-UI/Held-Map-Arc.md).
+  ['public/art/held-map.png', "OURS - Mac's own painting of the held parchment (MAP0, 2026-09-18); no ARENA2 pixel in it"],
+  ['public/art/gun-idle.png', "OURS - Mac's own weapon art for the gun lab (2026-09-19); no ARENA2 pixel in it"],
+  ['public/art/gun-fire-sheet.webp', "OURS - Mac's own six-frame fire sheet for the gun lab (2026-09-19); no ARENA2 pixel in it"],
+  ['public/art/gun-paperdoll.png', "OURS - Mac's own weapon art for the gun lab (2026-09-19), baked down and cut for the doll's hand by tools/gunPaperdoll.mjs; no ARENA2 pixel in it"],
+  ['public/art/gun-ammo.png', "OURS - Mac's own ammunition art for the gun lab (2026-09-19), baked down by tools/gunPaperdoll.mjs; no ARENA2 pixel in it"],
+  ['public/sfx/SOURCES.md', 'documentation - where every sound in this folder came from, with its license'],
+  ['public/sfx/fire-shotgun.wav', 'CC0 (Freesound 473846, LilMati), public domain - baked to DAGGER.SND\'s 11025Hz 8-bit by tools/sndify.mjs; see public/sfx/SOURCES.md'],
+  ['public/sfx/fire-20gauge.wav', 'CC0 (Freesound 427595, michorvath), public domain - baked to DAGGER.SND\'s 11025Hz 8-bit by tools/sndify.mjs; see public/sfx/SOURCES.md'],
+  ['public/sfx/fire-musket.wav', 'CC0 (Freesound 244345, Willlewis), public domain - baked to DAGGER.SND\'s 11025Hz 8-bit by tools/sndify.mjs; see public/sfx/SOURCES.md'],
+  ['public/sfx/fire-blast.wav', 'CC0 (Freesound 773873, MrGungus), public domain - baked to DAGGER.SND\'s 11025Hz 8-bit by tools/sndify.mjs; see public/sfx/SOURCES.md'],
+  ['public/sfx/fire-dry.wav', 'CC0 (Freesound 564480, lumikon), public domain - baked to DAGGER.SND\'s 11025Hz 8-bit by tools/sndify.mjs; see public/sfx/SOURCES.md'],
+  ['public/sfx/open-winchester.wav', 'CC0 (Freesound 153560, SpliceSound), public domain - baked to DAGGER.SND\'s 11025Hz 8-bit by tools/sndify.mjs; see public/sfx/SOURCES.md'],
+  ['public/sfx/open-rack.wav', 'CC0 (Freesound 449614, dasBUTCHER84), public domain - baked to DAGGER.SND\'s 11025Hz 8-bit by tools/sndify.mjs; see public/sfx/SOURCES.md'],
+  ['public/sfx/open-gunrack.wav', 'CC0 (Freesound 679878, AKkingStudio), public domain - baked to DAGGER.SND\'s 11025Hz 8-bit by tools/sndify.mjs; see public/sfx/SOURCES.md'],
+  ['public/sfx/open-shell.wav', 'CC0 (Freesound 108793, CeebFrack), public domain - baked to DAGGER.SND\'s 11025Hz 8-bit by tools/sndify.mjs; see public/sfx/SOURCES.md'],
+  ['public/sfx/close-ready.wav', 'CC0 (Freesound 383933, LilMati), public domain - baked to DAGGER.SND\'s 11025Hz 8-bit by tools/sndify.mjs; see public/sfx/SOURCES.md'],
+  ['public/sfx/close-rack2.wav', 'CC0 (Freesound 449613, dasBUTCHER84), public domain - baked to DAGGER.SND\'s 11025Hz 8-bit by tools/sndify.mjs; see public/sfx/SOURCES.md'],
+  ['public/sfx/close-rack3.wav', 'CC0 (Freesound 449612, dasBUTCHER84), public domain - baked to DAGGER.SND\'s 11025Hz 8-bit by tools/sndify.mjs; see public/sfx/SOURCES.md'],
+  ['public/sfx/close-shell.wav', 'CC0 (Freesound 108793, CeebFrack), public domain - baked to DAGGER.SND\'s 11025Hz 8-bit by tools/sndify.mjs; see public/sfx/SOURCES.md'],
+  ['public/sfx/gun-fire-synth.wav', 'OURS - synthesised from noise and sine by tools/gunSfx.mjs, deterministically; no recording in it at all'],
+  ['public/sfx/gun-reload-open-synth.wav', 'OURS - synthesised from noise and sine by tools/gunSfx.mjs, deterministically; no recording in it at all'],
+  ['public/sfx/gun-reload-close-synth.wav', 'OURS - synthesised from noise and sine by tools/gunSfx.mjs, deterministically; no recording in it at all'],
   ['public/skin/skin-intensity.png', 'OURS - intensity baked from our own generated turnaround'],
   ['public/skin/skin-uv.json', "OURS - UVs over our own rig's geometry, no pixels at all"],
   ['public/skin/skin-layout.json', 'OURS - atlas cell rectangles, no pixels at all'],
@@ -239,12 +264,68 @@ const PUBLIC_ALLOWLIST = new Map([
   ['vendor/handheld-torches/Textures/112358_10-0.png', "THIRD-PARTY - Handheld Torches 1.4.1 (RedRoryOTheGlen), carried on the author's permission; the mod's own pixel art - a doused torch, one frame, no emission"],
   ['vendor/handheld-torches/Textures/112358_11-0.png', "THIRD-PARTY - Handheld Torches 1.4.1 (RedRoryOTheGlen), carried on the author's permission; the mod's own pixel art - a doused candle, one frame, no emission"],
   ['vendor/handheld-torches/Textures/112358_12-0.png', "THIRD-PARTY - Handheld Torches 1.4.1 (RedRoryOTheGlen), carried on the author's permission; the mod's own pixel art - a doused holy candle, one frame, no emission"],
+  // CLIMATES & CALORIES (SURV2, vendor/climates-calories/Textures/).
+  // Sixteen of the mod's eighteen PNGs, carried on the author's
+  // permission (vendor/climates-calories/README.md): the spoiled face
+  // of each food, raw meat's three, the waterskin. Archives 532-539 are
+  // the mod's own (its template indices), with no ARENA2 file behind
+  // them - the pipeline stands a vendor archive in for them.
+  ['vendor/climates-calories/Textures/532_0-0.png', "THIRD-PARTY - Climates & Calories 1.7.1 (Ralzar), carried on the author's permission (relayed by Mac); the mod's own pixel art - a mouldy apple"],
+  ['vendor/climates-calories/Textures/532_1-0.png', "THIRD-PARTY - Climates & Calories 1.7.1 (Ralzar), carried on the author's permission (relayed by Mac); the mod's own pixel art - a rotten apple"],
+  ['vendor/climates-calories/Textures/533_0-0.png', "THIRD-PARTY - Climates & Calories 1.7.1 (Ralzar), carried on the author's permission (relayed by Mac); the mod's own pixel art - a mouldy orange"],
+  ['vendor/climates-calories/Textures/533_1-0.png', "THIRD-PARTY - Climates & Calories 1.7.1 (Ralzar), carried on the author's permission (relayed by Mac); the mod's own pixel art - a rotten orange"],
+  ['vendor/climates-calories/Textures/534_0-0.png', "THIRD-PARTY - Climates & Calories 1.7.1 (Ralzar), carried on the author's permission (relayed by Mac); the mod's own pixel art - a mouldy bread"],
+  ['vendor/climates-calories/Textures/534_1-0.png', "THIRD-PARTY - Climates & Calories 1.7.1 (Ralzar), carried on the author's permission (relayed by Mac); the mod's own pixel art - a rotten bread"],
+  ['vendor/climates-calories/Textures/535_0-0.png', "THIRD-PARTY - Climates & Calories 1.7.1 (Ralzar), carried on the author's permission (relayed by Mac); the mod's own pixel art - a mouldy raw fish"],
+  ['vendor/climates-calories/Textures/535_1-0.png', "THIRD-PARTY - Climates & Calories 1.7.1 (Ralzar), carried on the author's permission (relayed by Mac); the mod's own pixel art - a rotten raw fish"],
+  ['vendor/climates-calories/Textures/536_0-0.png', "THIRD-PARTY - Climates & Calories 1.7.1 (Ralzar), carried on the author's permission (relayed by Mac); the mod's own pixel art - a mouldy cooked fish"],
+  ['vendor/climates-calories/Textures/536_1-0.png', "THIRD-PARTY - Climates & Calories 1.7.1 (Ralzar), carried on the author's permission (relayed by Mac); the mod's own pixel art - a rotten cooked fish"],
+  ['vendor/climates-calories/Textures/537_0-0.png', "THIRD-PARTY - Climates & Calories 1.7.1 (Ralzar), carried on the author's permission (relayed by Mac); the mod's own pixel art - a mouldy meat"],
+  ['vendor/climates-calories/Textures/537_1-0.png', "THIRD-PARTY - Climates & Calories 1.7.1 (Ralzar), carried on the author's permission (relayed by Mac); the mod's own pixel art - a rotten meat"],
+  ['vendor/climates-calories/Textures/538_0-0.png', "THIRD-PARTY - Climates & Calories 1.7.1 (Ralzar), carried on the author's permission (relayed by Mac); the mod's own pixel art - mouldy raw meat"],
+  ['vendor/climates-calories/Textures/538_1-0.png', "THIRD-PARTY - Climates & Calories 1.7.1 (Ralzar), carried on the author's permission (relayed by Mac); the mod's own pixel art - rotten raw meat"],
+  ['vendor/climates-calories/Textures/538_2-0.png', "THIRD-PARTY - Climates & Calories 1.7.1 (Ralzar), carried on the author's permission (relayed by Mac); the mod's own pixel art - raw meat, fresh"],
+  ['vendor/climates-calories/Textures/539_0-0.png', "THIRD-PARTY - Climates & Calories 1.7.1 (Ralzar), carried on the author's permission (relayed by Mac); the mod's own pixel art - the waterskin"],
+  ['vendor/climates-calories/Textures/50_7-0.png', "THIRD-PARTY - Climates & Calories 1.7.1 (Ralzar), carried on the author's permission (relayed by Mac); the mod's own pixel art - the tent's canvas (SURV-TENT)"],
+  ['vendor/climates-calories/Textures/67_10-0.png', "THIRD-PARTY - Climates & Calories 1.7.1 (Ralzar), carried on the author's permission (relayed by Mac); the mod's own pixel art - the tent's pole (SURV-TENT)"],
+  // FOEBAR1 (2026-09-17): THE TARGET BAR'S BLADE FACE. Two pictures a
+  // friend of Mac's drew for this port and sent through him to be its
+  // alternate enemy health bar - a twin-bladed shape with a skull hub,
+  // the dark one the empty bar, the red one the fill. Original art on
+  // the author's say-so, no ARENA2 pixel, no screenshot; both are one
+  // crop (the union alpha box, 981x130) of the 1000x1000 originals so
+  // they register. They sit under src/ui/assets/ rather than public/
+  // because the game runs at /play/ and public/ is served at the root
+  // alone; Vite bundles them with the page (the workers' pattern).
+  ['src/ui/assets/foe-blade-empty.png', "FOEBAR1: the blade face's empty bar - a friend's original art, given for the port, cropped by us"],
+  ['src/ui/assets/foe-blade-full.png', "FOEBAR1: the blade face's fill - a friend's original art, given for the port, cropped by us"],
+  // FIELD-GUN-MW2 (2026-09-20): THE PORT'S OWN MORROWIND ASSETS. Both
+  // are in Bethesda FORMATS and neither contains one byte of Bethesda
+  // DATA - which is the distinction this list is for. The mesh is
+  // Mac's own Blender model, baked to a 4.0.0.2 NIF by
+  // tools/fbxMesh.mjs -> tools/meshUnwrap.mjs -> tools/nifWrite.mjs;
+  // the texture is generated from that mesh's own geometry by
+  // tools/meshTexture.mjs, deterministically, with no image input at
+  // all. Re-run the chain on the same .fbx and the same bytes come out.
+  // They ship because Morrowind has no firearm: no player's archives
+  // can carry a model for the port's own weapon.
+  ['src/assets/mw/source/Pellet_Shot.fbx', "OURS - Mac's own Blender export of the Dwarven Thunderlock, committed so the two files below are a DERIVATION the gate can re-run rather than a blob"],
+  ['src/assets/mw/meshes/thunderlock.nif', "OURS - Mac's own Dwarven Thunderlock model, baked to a Morrowind NIF by tools/nifWrite.mjs; a Bethesda format, no Bethesda data"],
+  ['src/assets/mw/textures/thunderlock.dds', 'OURS - generated from that mesh\'s own geometry by tools/meshTexture.mjs (position, normal and cast occlusion); no image input, no ARENA2 or Morrowind pixel in it'],
 ]);
 
-test('doctrine: nothing ships out of public/ that is not provably ours', () => {
-  const unexplained = tracked('public').filter((f) => !PUBLIC_ALLOWLIST.has(f));
+test('doctrine: nothing ships out of public/ or src/assets/ that is not provably ours', () => {
+  // FIELD-GUN-MW2: `src/assets/` IS THE OTHER HALF, and it was only
+  // ever checked one way. AUDIT 27 below added the reverse read
+  // precisely because "the list was only ever read one way" makes it
+  // mean less than it claims - and its own comment says the intro
+  // "ships from src/assets through Vite. Read each row's own directory
+  // so bundled art has the same ownership check as public/". The
+  // reverse read did; this one did not, so a NEW file bundled out of
+  // src/assets needed no row at all and nobody would have noticed.
+  const unexplained = [...tracked('public'), ...tracked('src/assets')].filter((f) => !PUBLIC_ALLOWLIST.has(f));
   assert.deepEqual(unexplained, [],
-    'these files are tracked under public/, which Vite copies verbatim into dist/ and\n'
+    'these files are tracked under public/ or src/assets/, which Vite copies into dist/ and\n'
     + 'deploy.yml uploads to GitHub Pages. Every one of them is PUBLISHED. If the pixels\n'
     + 'came from ARENA2 - including a screenshot, a gallery frame, or a re-shaded sprite\n'
     + 'that keeps the original silhouette - it may not be here at all. If it is genuinely\n'
@@ -258,12 +339,8 @@ test('AUDIT 27: the allow-list is checked BOTH ways - no row outlives its file',
   // a tracked file must have a row - so a row could be written for a
   // file that never landed, or outlive one that was deleted, and the
   // list would still pass while meaning less than it claims.
-  // The list is public-only again: it briefly reached into src/assets
-  // for the intro (Vite emits those into the build, so they are just
-  // as PUBLISHED as public/), and 1c62e11 took the intro out. The
-  // reverse check still reads each row's OWN directory rather than
-  // assuming public/, so the next published-but-not-public row needs
-  // no new machinery.
+  // The intro also ships from src/assets through Vite. Read each row's
+  // own directory so bundled art has the same ownership check as public/.
   const stale = [...PUBLIC_ALLOWLIST.keys()]
     .filter((f) => !tracked(f.split('/')[0]).includes(f));
   assert.deepEqual(stale, [],
@@ -277,9 +354,115 @@ test('doctrine: no raster of game data is tracked anywhere in the repo', () => {
   const RASTER = /\.(png|jpg|jpeg|gif|bmp|webp|tga|ico)$/i;
   const rasters = tracked('.').filter((f) => RASTER.test(f));
   const allowed = new Set([...PUBLIC_ALLOWLIST.keys()]);
-  const unexplained = rasters.filter((f) => !allowed.has(f));
+  const unexplained = rasters.filter((f) => !allowed.has(f) && !bundleArt(f));
   assert.deepEqual(unexplained, [],
     `tracked raster images outside the doctrine allow-list:\n${unexplained.join('\n')}`);
+});
+
+// ── EOTB0: A BUNDLE'S OWN ART ANSWERS TO THE BUNDLE'S OWN MANIFEST ──
+//
+// Eye Of The Beholder ships 3035 sprites. Three thousand rows typed
+// into the list above would be a rule enforced by memory - the exact
+// thing this file exists to stop - and the list's value is that a
+// human wrote a REASON beside each picture, which does not survive
+// being written three thousand times.
+//
+// So a vendored mod's art carries ONE row, on its directory, and the
+// membership question is DERIVED: a file under that directory is the
+// mod's iff the mod's own shipped manifest names it. The manifest is
+// vendored verbatim for exactly this reason - it is the authority on
+// what the bundle contained, and it is not something the port can
+// quietly widen.
+//
+// Checked BOTH WAYS (AUDIT 27 F302's lesson: a row is a CLAIM, and a
+// claim about a file that is not there is not one) - see the pins
+// below.
+const BUNDLE_ART = new Map([
+  ['vendor/eye-of-the-beholder/Textures/',
+    { manifest: 'vendor/eye-of-the-beholder/eyeofthebeholder.dfmod.json',
+      why: "THIRD-PARTY - Eye Of The Beholder 2.1 (RedRoryOTheGlen); the mod's own player sprites, re-encoded as indexed PNG (lossless for every drawn pixel - see the vendor README)" }],
+  // AUDIT-TO1 F3: TO1 vendored three pictures and never came here, and
+  // the gate did not say so on the day - `tracked()` reads git's index,
+  // the slice ran its suite BEFORE `git add`, and three untracked files
+  // are invisible to a rule written about tracked ones. It reddened on
+  // the very next run. The art itself is fine and always was: these are
+  // the mod's own UI chrome - a control strip and two filter buttons -
+  // NOT a render of ARENA2, which is the thing Port-Doctrine forbids.
+  // The row is a directory row for the same reason Eye Of The
+  // Beholder's is: membership is DERIVED from the bundle's own
+  // manifest, so the port cannot quietly widen it.
+  ['vendor/travel-options/Textures/',
+    { manifest: 'vendor/travel-options/travel-options.dfmod.json',
+      why: "THIRD-PARTY - Travel Options 1.11 (Hazelnut, MIT); the mod's own UI chrome - the 320x27 control strip and the two ports-filter buttons - re-encoded from the bundle's Texture2D objects by tools/travelOptionsAssets.mjs (see the vendor README: these are the PIXELS, not the author's file bytes)" }],
+  // SW1b (2026-09-19, the deep audit): the 600 shield sprites landed and
+  // this row did not, so the wider raster rule reddened on 600 files the
+  // moment they were tracked. The art itself is fine and is WHY they are
+  // vendored at all rather than read from the player's own .dfmod the way
+  // Weapon Widget's are: classic Daggerfall draws NO first-person shield,
+  // so there is no ARENA2 original for these to be a render of - they are
+  // the modder's own pixel art, not repainted game data, and
+  // Port-Doctrine's rule is about renders of game data.
+  ['vendor/shield-widget/Textures/',
+    { manifest: 'vendor/shield-widget/shield-widget.dfmod.json',
+      why: "THIRD-PARTY - Shield Widget 1.6 (RedRoryOTheGlen, animation art by WilhelmBlack); the mod's own first-person shield sprites - four shield shapes x twelve materials x three condition tiers x five animation frames - re-encoded from the bundle's Texture2D objects as indexed PNG (lossless for every drawn pixel; see the vendor README)" }],
+]);
+/** The basenames each bundle manifest names, lowercased. Memoised: the
+ *  membership test runs once per tracked raster and the manifest is
+ *  386 KB, so re-parsing it per file turned a 1-second file into an
+ *  8-second one. */
+const _bundleNames = new Map();
+const bundleNames = (dir) => {
+  if (!_bundleNames.has(dir)) {
+    const files = JSON.parse(readFileSync(join(root, BUNDLE_ART.get(dir).manifest), 'utf8')).Files ?? [];
+    _bundleNames.set(dir, new Set(files.map((f) => f.split('/').pop().toLowerCase())));
+  }
+  return _bundleNames.get(dir);
+};
+/** Is this tracked raster a vendored bundle's own art? */
+function bundleArt(f) {
+  for (const dir of BUNDLE_ART.keys()) {
+    if (f.startsWith(dir)) return bundleNames(dir).has(f.split('/').pop().toLowerCase());
+  }
+  return false;
+}
+
+test('doctrine EOTB0: a vendored bundle\u2019s art is the art its own manifest names - derived, not listed', () => {
+  for (const [dir, rec] of BUNDLE_ART) {
+    const names = bundleNames(dir);
+    const here = tracked('.').filter((f) => f.startsWith(dir));
+    assert.ok(here.length > 0, `${dir} has a row and no files - a claim about art that is not there`);
+    assert.ok(rec.why.startsWith('THIRD-PARTY'), `${dir} must say whose art it is`);
+
+    // Nothing under the directory that the bundle did not ship. This is
+    // the arm that makes the directory row safe: it is not "anything
+    // here is fine", it is "anything here came out of that bundle".
+    const strangers = here.filter((f) => !names.has(f.split('/').pop().toLowerCase()));
+    assert.deepEqual(strangers, [],
+      `files under ${dir} that the bundle's own manifest does not name:\n${strangers.join('\n')}`);
+
+    // ...AND THE OTHER WAY. A raster the manifest names and the tree
+    // does not carry means the vendoring dropped art on the floor,
+    // which a one-way check would never say.
+    const carried = new Set(here.map((f) => f.split('/').pop().toLowerCase()));
+    const dropped = [...names].filter((n) => /\.(png|jpg|jpeg|gif|bmp|webp|tga)$/i.test(n) && !carried.has(n));
+    assert.deepEqual(dropped, [],
+      `${dir}: the manifest names ${dropped.length} pictures the tree does not carry`);
+  }
+});
+
+test('doctrine EOTB0: the derivation is not vacuous - a stranger and a loss both redden', () => {
+  // A PIN MUST FAIL. Both arms are driven against the real manifest
+  // with one name moved, because a membership test that cannot reject
+  // is a rule that is not enforced.
+  const dir = 'vendor/eye-of-the-beholder/Textures/';
+  const names = bundleNames(dir);
+  assert.ok(names.size > 3000, `the manifest resolved to ${names.size} names - the gate is reading nothing`);
+  assert.equal(names.has('112364_0-0.png'), true, 'a sprite the bundle really ships');
+  assert.equal(names.has('112364_0-0.png.png'), false, 'and a name it does not');
+  // the stranger arm, in the shape it would really arrive: our own
+  // artwork dropped into the mod's folder
+  assert.equal(bundleArt(`${dir}112364/logo.png`), false, 'a file the manifest never named must not pass as the mod\u2019s');
+  assert.equal(bundleArt(`${dir}112364/112364_0-0.png`), true, 'and one it did must pass');
 });
 
 test('doctrine: no DERIVED raster is tracked either, whatever it is wearing', () => {

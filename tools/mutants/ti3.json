@@ -1,0 +1,74 @@
+[
+  {
+    "name": "law-sniff-alone",
+    "file": "src/ui/touchDevice.js",
+    "old": "  if (typeof win.matchMedia !== 'function') return true;   // no media queries: the sniff is all there is",
+    "new": "  return true;",
+    "tests": [
+      "test/touchdevice.test.js"
+    ]
+  },
+  {
+    "name": "law-coarse-alone",
+    "file": "src/ui/touchDevice.js",
+    "old": "    return coarse && win.matchMedia('(hover: none)').matches;",
+    "new": "    return coarse;",
+    "tests": [
+      "test/touchdevice.test.js"
+    ]
+  },
+  {
+    "name": "law-no-unknown-fallback",
+    "file": "src/ui/touchDevice.js",
+    "old": "    if (!coarse && !fine) return true;   // the query is unknown here (neither answers): the sniff stands\n",
+    "new": "",
+    "tests": [
+      "test/touchdevice.test.js"
+    ]
+  },
+  {
+    "name": "law-no-sniff-gate",
+    "file": "src/ui/touchDevice.js",
+    "old": "  if (!sniff) return false;\n",
+    "new": "",
+    "tests": [
+      "test/touchdevice.test.js"
+    ]
+  },
+  {
+    "name": "door-ignored",
+    "file": "src/ui/touchDevice.js",
+    "old": "  if (door !== null) return door;\n",
+    "new": "",
+    "tests": [
+      "test/touchdevice.test.js"
+    ]
+  },
+  {
+    "name": "door-off-is-on",
+    "file": "src/ui/touchDevice.js",
+    "old": "  return m ? m[1] === 'on' : null;",
+    "new": "  return m ? true : null;",
+    "tests": [
+      "test/touchdevice.test.js"
+    ]
+  },
+  {
+    "name": "law-throw-is-off",
+    "file": "src/ui/touchDevice.js",
+    "old": "  } catch { return true; }",
+    "new": "  } catch { return false; }",
+    "tests": [
+      "test/touchdevice.test.js"
+    ]
+  },
+  {
+    "name": "diet-shell-forgotten",
+    "file": "src/scenes/dataSource.js",
+    "old": "const LEAN = typeof window !== 'undefined' && !window.daggerShell && isTouchDevice();",
+    "new": "const LEAN = typeof window !== 'undefined' && isTouchDevice();",
+    "tests": [
+      "test/touchdevice.test.js"
+    ]
+  }
+]

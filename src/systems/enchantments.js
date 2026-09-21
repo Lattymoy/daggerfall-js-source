@@ -157,7 +157,7 @@ export const isEnchantedItem = (item) => !!itemEnchantments(item);
 // ported" - and M4's catalogue is that sum's missing half, so it
 // closed here and stays closed: legacyEnchantmentValue (:222-238) is
 // the sum, over VALUE_COUNTS_BELOW (:179), spellEnchantPtCost (:214)
-// and the SoulBound/CastWhen arms, and systems/loot.js:260 prices
+// and the SoulBound/CastWhen arms, and systems/loot.js:266 prices
 // every minted legacy item through it.
 //
 // THE BOUND IS THE ENUM'S OWN ORDER (:604-605): only
@@ -372,6 +372,20 @@ const REGISTRY = new Map([
       // sentence or the vampire fortnight costs a Cast-When-Held
       // item no wear at all.
       if (syntheticTimeIncrease()) return;
+      // AUDIT-TO1 F2: ...and Travel Options' own override of this very
+      // class (CastWhenHeldTO.cs:26-35) adds the second half of the
+      // guard: `&& !TravelOptionsMod.Instance.GetTravelControlUI().isShowing`.
+      // A walked journey is REAL time passing, so it raises no
+      // synthetic flag, and the line above alone billed a Cast-When-Held
+      // item one condition every four GAME minutes of the trip - about
+      // 750 points across a long crossing, where the same journey by
+      // classic fast travel costs nothing. The mod registers its
+      // override unconditionally, so this needs no setting either; it
+      // reads false in every host but the one that can run a journey.
+      // The panel being UP is the test, not the clock: a journey paused
+      // for camp sits at scale 1 with the panel showing and still wears
+      // nothing, which is the mod's behaviour.
+      if (ctx?.travelUIShowing?.()) return;
       const rate = ctx?.isResting?.() ? HELD_DEGRADE_RATE_RESTING : HELD_DEGRADE_RATE;
       if (round % rate === 0) enchantLowerCondition(item, 1, entity, ctx);
     },

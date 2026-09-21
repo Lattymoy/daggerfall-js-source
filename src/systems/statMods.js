@@ -54,6 +54,10 @@ export function liveStat(entity, statName) {
       // duration. RECORDED: DFU also moves the MAX (ChangeStatMaxMod);
       // the port's clamp holds at MAX_STAT_VALUE.
       if (a.kind === 'artifact') { if (!a.ended) mod += a.statMods?.[statName] ?? 0; continue; }
+      // SURV1: the needs' one entry - hunger, thirst, sleep, exposure and
+      // drink as a signed map rewritten every world minute
+      // (survival/needs.js applySurvivalMods), never a duration
+      if (a.kind === 'survival') { mod += a.statMods?.[statName] ?? 0; continue; }
       if (a.stat !== statName) continue;
       if (a.kind === 'fortifyAttribute') mod += a.magnitude;
       else if (a.kind === 'drainAttribute' || a.kind === 'transferAttribute') mod -= a.magnitude;

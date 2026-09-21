@@ -248,7 +248,7 @@ test('F101/F115: both fast-travel callers now supply the perk', () => {
   const cost = pop.indexOf('calculateTripCost(');
   assert.ok(cost > 0);
   assert.match(pop.slice(cost, cost + 500), /freeTavernRooms: this\.freeTavernRooms\(\),/);
-  const ow = src('ui/overworldMap.js');
+  const ow = src('ui/heldMap.js');   // MAP1: the held map, the relief map's successor
   const owCost = ow.indexOf('const cost = calculateTripCost(');
   assert.match(ow.slice(owCost, owCost + 400), /freeTavernRooms: !!this\.deps\.freeTavernRooms\?\.\(\),/,
     'the enhanced skin bills the same fare as the native popup');
@@ -290,7 +290,9 @@ test('F114: the host routes the travel map AND the quest clock through the origi
   const w = src('scenes/world.js');
   assert.match(w, /function playerTravelOrigin\(\) \{\n\s*return playerTravelPosition\(playerEntity, playerEntity\.boardShipPosition \?\? null, playerTravelPixel\(\)\);/);
   const map = w.slice(w.indexOf('function buildTravelMapWindow'));
-  assert.match(map.slice(0, 900), /getPlayerPixel: playerTravelOrigin,/,
+  // MAP-POV re-aimed this from a 900-char window to the builder's own body (up to its `...extra` spread): the
+  // builder gained a comment and a call above the dep bag, and a char budget is not a law
+  assert.match(map.slice(0, map.indexOf('...extra,')), /getPlayerPixel: playerTravelOrigin,/,
     'DFU\'s travel map reads GetPlayerTravelPosition for the crosshair (:864), the region (:1611) and the journey');
   assert.match(w, /playerPixel: \(\) => playerTravelOrigin\(\),/,
     'the quest bridge declares this hook as GetPlayerTravelPosition "incl. its on-ship arm"');

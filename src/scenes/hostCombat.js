@@ -21,11 +21,13 @@ import { assignEnemyEquipment, equipmentVariantFor, equipmentItems } from '../co
 import { rollEnemyWeaponPoison } from '../systems/poisons.js';
 import { EQUIP_SLOTS, equipTableOf, getEquipSlot } from '../systems/equip.js';
 import { generateItems, addEnemyLootExtras } from '../systems/loot.js';   // RF2: the spawn chain's DFU half, in its one home
+import { isHumanoid } from '../systems/survival/loot.js';   // MOD: the same humanoid test SURV2's corpse food already draws its line with
 import { rollCorpseLoot } from '../systems/lootRarity.js';   // RF2: and the port's, after it
 import { liveStat } from '../systems/statMods.js';   // RF2: the player's live luck for the roll   // AUDIT 58: ItemHelper's EquipItem half - a foe's equip table is what DamageEquipment's struck side reads
 import { GLOBAL_SCALE } from '../world/meshReader.js';
 import { swingSoundFor, hitSoundFor, ENEMY_HIT_VOLUME } from '../systems/soundClips.js';
 import { bloodCentre } from './hitEffects.js';   // AUDIT 62 F19: EnemyAttack.cs:326-328's one home, the same law the four player-melee sites cite
+import { bloodHit } from '../combat/bloodDecals.js';   // BLOOD1b: the blow, in the shape the mark's ladder reads
 import { KNIGHT_CITY_WATCH } from '../characters/mobileTypes.js';
 import { ATTRACT_RADIUS } from '../characters/enemySounds.js';   // AUDIT 24 (wave 41)
 import { enemyDisplayName } from '../characters/enemyBasics.js';   // AUDIT 24 (wave 42)
@@ -40,32 +42,22 @@ import { comprehendLanguagesChance } from '../systems/effects.js';   // X11: the
  *  Longsword trained - and rolled to hit with - Hand-to-Hand for the
  *  rest of the game. DaggerfallUnityItem.cs:910-941 + :943-962,
  *  keyed on Weapons (ItemEnums.cs:113..130). */
-export const WEAPON_SKILL_BY_TEMPLATE = Object.freeze({
-  113: SKILLS.ShortBlade,   // Dagger
-  114: SKILLS.ShortBlade,   // Tanto
-  115: SKILLS.BluntWeapon,  // Staff
-  116: SKILLS.ShortBlade,   // Shortsword
-  117: SKILLS.ShortBlade,   // Wakazashi
-  118: SKILLS.LongBlade,    // Broadsword
-  119: SKILLS.LongBlade,    // Saber
-  120: SKILLS.LongBlade,    // Longsword
-  121: SKILLS.LongBlade,    // Katana
-  122: SKILLS.LongBlade,    // Claymore
-  123: SKILLS.LongBlade,    // Dai-Katana
-  124: SKILLS.BluntWeapon,  // Mace
-  125: SKILLS.BluntWeapon,  // Flail
-  126: SKILLS.BluntWeapon,  // Warhammer
-  127: SKILLS.Axe,          // Battle Axe
-  128: SKILLS.Axe,          // War Axe
-  129: SKILLS.Archery,      // Short Bow
-  130: SKILLS.Archery,      // Long Bow
-});
+// AUDIT-THUNDERLOCK: this was a SECOND COPY of the table - the very
+// duplicate test/audit24_onehome.test.js's ratchet has been naming
+// (`weaponSkillUsed  src/characters/weapons.js src/scenes/hostCombat.js`)
+// - and the port's own weapon is what made it cost something: adding
+// the Dwarven Thunderlock to characters/weapons.js left THIS copy
+// answering null, so `isBowWeapon` said false and the gun fell through
+// to the melee arc in every host. One table now, re-exported here so
+// the callers that speak this file's name keep working.
+export { weaponSkillUsed } from '../characters/weapons.js';
+import { weaponSkillUsed, WEAPON_SKILL_USED } from '../characters/weapons.js';
 
-/** GetWeaponSkillIDAsShort: null (Skills.None) for anything that is
- *  not one of the 18 weapon templates. */
-export function weaponSkillUsed(templateIndex) {
-  return WEAPON_SKILL_BY_TEMPLATE[templateIndex] ?? null;
-}
+/** The same table in the shape THIS file's name has always had - an
+ *  object keyed by template index. Derived, so it cannot drift from
+ *  the Map it is derived from. */
+export const WEAPON_SKILL_BY_TEMPLATE = Object.freeze(Object.fromEntries(WEAPON_SKILL_USED));
+
 
 /** CalculateAttackDamage's skillID pick (FormulaHelper.cs:573-590):
  *  the weapon's skill, or HandToHand with no weapon. */
@@ -105,10 +97,22 @@ export const hasBowAttack = (basics) =>
  *  exterior pool's injectable stream - a puppet stands with an empty
  *  list and never comes here); the table roll itself stays on
  *  Math.random as UnityEngine.Random is, which is what every host
- *  passed before. Answers the entity's list. */
+ *  passed before. Answers the entity's list.
+ *
+ *  MOD: a humanoid foe's loot-table roll (every non-gold category -
+ *  weapons, armour, ingredients, magic items, clothing, books,
+ *  religious items) is cut to a QUARTER of DFU's own chance (a 75%
+ *  reduction); gold is computed before that scale ever applies and
+ *  rolls at its full, unmodified rate either way. "Humanoid" is the
+ *  same line survival/loot.js's corpse food already draws: class
+ *  enemies (128+), Orcs by team, and anything the basics row marks
+ *  affinity Human - so an Orc or a Knight is cut and a Zombie or a
+ *  Daedra Lord is not. */
+const HUMANOID_LOOT_ITEM_SCALE = 0.25;   // MOD: keep a quarter of the item chance (drop 75%)
 export function spawnEnemyLoot(entity, mobileType, basics, player, { rolls = Math.random } = {}) {
-  entity.items = generateItems(basics?.lootTableKey ?? '-', { level: player.level, gender: player.gender });
-  equipEnemy(entity, mobileType, player.level);
+  const itemChanceScale = isHumanoid(entity) ? HUMANOID_LOOT_ITEM_SCALE : 1;
+  entity.items = generateItems(basics?.lootTableKey ?? '-', { level: player.level, gender: player.gender }, undefined, { itemChanceScale, mobileType });
+  equipEnemy(entity, mobileType, player.level, rolls);
   addEnemyLootExtras(entity.items, basics, rolls);
   rollCorpseLoot(entity, basics, { rolls, luck: liveStat(player, 'luck') });
   return entity.items;
@@ -125,7 +129,15 @@ export function spawnEnemyLoot(entity, mobileType, basics, player, { rolls = Mat
  *  Order note: GenerateItems(LootTableKey) runs FIRST (EnemyEntity.cs:
  *  328) and the equipment items are appended after - callers must have
  *  filled `entity.items` before calling this. */
-export function equipEnemy(entity, mobileType, playerLevel) {
+/** MOD: the same 75% cut spawnEnemyLoot applies to the loot-table roll,
+ *  reapplied to a humanoid's WORN gear - so a looted Knight does not
+ *  hand over its whole equipped set as a matter of course. This only
+ *  touches what lands in `entity.items` (the corpse's droppable loot);
+ *  `entity.armorValues`, `entity.weapon` and the equip-slot table below
+ *  are built from the FULL `worn` set regardless, so the foe still
+ *  fights at its real armour and swings its real weapon - it is worn,
+ *  just not always left behind. */
+export function equipEnemy(entity, mobileType, playerLevel, rolls = Math.random) {
   const variant = equipmentVariantFor(entity.careerIndex, entity.isClass);
   if (variant === null) return null;
   const eq = assignEnemyEquipment(entity, variant, playerLevel);
@@ -141,14 +153,15 @@ export function equipEnemy(entity, mobileType, playerLevel) {
   // entity's items - the corpse's droppable loot.
   entity.items = entity.items ?? [];
   const worn = equipmentItems(eq);
-  entity.items.push(...worn);
+  const droppable = isHumanoid(entity) ? worn.filter(() => rolls() < HUMANOID_LOOT_ITEM_SCALE) : worn;
+  entity.items.push(...droppable);
   // AUDIT 58: AND IT PUTS THEM ON. ItemHelper.cs:1382/:1392/:1400 and
   // :1421-1450 pair every roll with
   // `enemyEntity.ItemEquipTable.EquipItem(item, true, false)` before
   // `Items.AddItem(item)` - a foe's table is genuinely worn, and
   // EnemyEntity.cs:414-421 walks it. The port wrote only the summary
   // arrays, so `equipTableOf(target)` handed back the lazy all-null
-  // table (equip.js:40-41) for every enemy in the game and
+  // table (equip.js:42-43) for every enemy in the game and
   // FormulaHelper.DamageEquipment's STRUCK side - the shield at
   // FormulaHelper.cs:1095 and the struck part's armour at :1113 -
   // could not fire once: only the attacker's own weapon ever took
@@ -520,7 +533,7 @@ export function applyDamageToNonPlayer(attacker, target, {
     // the same DFU lines (dungeonContext.js, exteriorFoes.js,
     // cityGuards.js) have used the shared law all along.
     audio?.play3d?.(hitSoundFor(weapon), at, ENEMY_HIT_VOLUME, { maxDistance: 16 });
-    hitEffects?.showBloodSplash?.(tEnt?.basics?.bloodIndex ?? 0, bloodCentre(at, target.ai?.height ?? 1.8));
+    hitEffects?.showBloodSplash?.(tEnt?.basics?.bloodIndex ?? 0, bloodCentre(at, target.ai?.height ?? 1.8), null, bloodHit(damage, tEnt));   // BLOOD1b: foe-on-foe bleeds by its blow too
     // :336-350 - the knockback, on the ATTACKER-class guard
     if (target.ai && enemyKnockbackApplies(target.ai.knockbackSpeed ?? 0, aEnt?.isClass,
       tEnt?.basics?.weight)) {

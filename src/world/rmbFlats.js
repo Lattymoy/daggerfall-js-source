@@ -72,8 +72,35 @@ const NATURE_ARCHIVE_MAX = 511; // ClimateTextureSet.Nature_Mountains_Snow
  *  :663-664, GetStaticBillboardMaterial :497-498) - the port's
  *  Enhancements/AssetInjection. `scaledBillboardSize` below stays the
  *  pure law, and a texture with no archive stamped takes no xml. */
+/**
+ * PERF-TOWN1 (2026-09-20, Mac: "the exterior is really heavy rn", and
+ * the `?perf=cpu` line that answered it - `people` swinging 1.14 to
+ * 7.36 ms a frame).
+ *
+ * THE TEXTURE'S OWN SIZE IS A FACT ABOUT THE FILE, and this recomputed
+ * it for every person, every frame. `getSize` and `getScale` each mint
+ * a record, `scaledBillboardSize` mints a third, and the arithmetic
+ * between them cannot answer differently for the same texture and the
+ * same record - a sprite does not change size while you watch it.
+ *
+ * Cached on the TEXTURE OBJECT rather than on its archive number, in a
+ * WeakMap: a replacement that swaps the file in is a different object
+ * and gets a different entry, so there is no staleness to invalidate
+ * and no table to grow. Archive numbers would have needed both.
+ *
+ * The XML scale is NOT cached and deliberately: `applyBillboardXml`
+ * reads a LIVE predicate per registered vendor (billboardXml's own
+ * `isOn`), so a mod toggled in the settings menu has to be seen on the
+ * next frame. It is also the cheap half - a registry walk over one or
+ * two entries, against three allocations and two record reads.
+ */
+const _mobileSize = new WeakMap();   // texture -> size by record
+
 export function mobileBillboardSize(t, record) {
-  const size = scaledBillboardSize(t.getSize(record), t.getScale(record));
+  let byRecord = _mobileSize.get(t);
+  if (!byRecord) { byRecord = []; _mobileSize.set(t, byRecord); }
+  let size = byRecord[record];
+  if (!size) { size = scaledBillboardSize(t.getSize(record), t.getScale(record)); byRecord[record] = size; }
   return textureReplacementEnabled() ? applyBillboardXml(t?.archive, record, size) : size;
 }
 export function billboardSize(t, record) {

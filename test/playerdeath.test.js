@@ -181,7 +181,7 @@ test('DC1: the standalone dungeon sinks OUTSIDE the overlay-held walk branch, th
   // that route are asserted, below the sink.
   const mwvAt = scene.indexOf('mwViewFrame({ fpEye: cam.pos', sinkAt);
   assert.ok(mwvAt !== -1, 'the sink lands before the machine reads the eye');
-  const view = scene.indexOf('const view = lookAt(mwv.eye', mwvAt);
+  const view = scene.indexOf('const view = betterAmbience.view(lookAt(mwv.eye', mwvAt);   // BA1: the shaker folds into the same view
   assert.ok(view !== -1, 'the sink lands before the frame builds its view');
   // The seam's two halves: the context computes the drop off its own
   // overlay slot, and the scene binds the live motor for the start heights.
@@ -249,4 +249,41 @@ test('merge audit: the death screen reads the LIVE character, not a host argumen
   assert.equal(screen.sequence.deathSound,
     combatVoicesEnabled() ? 42 : CLASSIC_PLAYER_DEATH_SOUND);
   assert.ok(played.length === 0);
+});
+
+test('AUDIT-DEATH1: the lethal exhaustion collapse goes through the ONE damage door in all FOUR hosts, never a raw zero', () => {
+  // Mac, 2026-09-19: "sometimes get stuck at 0% health and live", with a
+  // screenshot of a DUNGEON at HEALTH 0% / FATIGUE 0%, still playing.
+  //
+  // `hurtPlayer` (characters/playerEntity.js) raises the death presenter
+  // on the TRANSITION - `wasAlive && health === 0` - so a host that
+  // writes `health = 0` directly kills the player without telling
+  // anyone: no DeathScreen, no end of run, just a corpse walking at 0%.
+  // dungeonContext.js was the last raw writer, in the very host that
+  // OWNS the DeathScreen, and the note ninety lines above its own bug
+  // names the trap: "it was the only one of the four writers that
+  // checked for death, which is exactly why the other three could go on
+  // writing health raw and nobody noticed".
+  // Sliced to the COLLAPSE'S OWN BRANCH, not the file: the dungeon host
+  // also drowns the player through the same door two thousand lines
+  // away, and a file-wide grep passed on THAT call while this one was
+  // mutated back to a raw zero. A pin that another site can satisfy is
+  // not a pin for this one.
+  for (const h of ['scenes/world.js', 'scenes/exterior.js', 'scenes/worldModes.js', 'scenes/dungeonContext.js']) {
+    const src = code(h);
+    const at = src.indexOf("if (out.kind === 'rest') {");
+    assert.ok(at > 0, `${h} has the exhaustion outcome fork`);
+    const branch = src.slice(at, src.indexOf('\n    }', src.indexOf('} else {', at)));
+    assert.match(branch, /hurt(?:Player|Entity)\(playerEntity, playerEntity\.health, \{ bypassShield: true \}\);/,
+      `${h} takes the LETHAL COLLAPSE through the damage door, with the shield bypassed`);
+    assert.doesNotMatch(branch, /playerEntity\.health = 0\s*;/,
+      `${h} never sets the player's health to zero raw - the presenter would not fire`);
+  }
+  // ...and the door really is what raises it, on the transition alone
+  const pe = code('characters/playerEntity.js');
+  assert.match(pe, /if \(wasAlive && entity\.health === 0\) \{/, 'the presenter fires on the transition');
+  assert.match(pe, /_deathPresenter\?\.\(entity\);/);
+  // not vacuous: `bypassShield` is what lets a collapse past the pool,
+  // so a shield may not make the collapse survivable
+  assert.match(pe, /if \(!bypassShield\) \{\s*\n\s*dmg = damageShieldPool\(entity, dmg\);/);
 });

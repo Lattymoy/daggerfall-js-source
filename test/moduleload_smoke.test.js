@@ -11,13 +11,13 @@ import { fileURLToPath } from 'node:url';
 // thing that catches that whole class: it imports every module under
 // src/ and fails if any throws.
 //
-// Ten cannot be imported under bare node, and the list is asserted
+// Eleven cannot be imported under bare node, and the list is asserted
 // EXACTLY so the blind spot cannot silently grow:
 //   - three use Vite's `import.meta.glob`, which is a compile-time
 //     transform and simply absent outside the bundler;
-//   - seven are browser tools that touch `document`/`location` at module
+//   - eight are browser tools that touch `document`/`location` at module
 //     scope.
-// For those ten, tdz_selfreference.test.js is the standing guard.
+// For those eleven, tdz_selfreference.test.js is the standing guard.
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const walk = (d, out = []) => {
@@ -29,9 +29,9 @@ const walk = (d, out = []) => {
   return out;
 };
 
-/** The known-unimportable ten, with the reason each is excluded. */
+/** The known-unimportable ELEVEN, with the reason each is excluded. */
 export const NOT_IMPORTABLE = Object.freeze({
-  'src/main.js': 'import.meta.glob',
+  'src/main.js': 'addEventListener/document at module scope',   // BOOT1: it used to reject at LINK time, through world.js's import.meta.glob - the hosts are behind doors now, its body runs, and the crash listeners at its module scope are what node lacks
   'src/scenes/questData.js': 'import.meta.glob',
   'src/scenes/world.js': 'import.meta.glob',
   'src/tools/enhancedChargen.js': 'document at module scope',
@@ -41,6 +41,7 @@ export const NOT_IMPORTABLE = Object.freeze({
   'src/tools/paperdollViewer.js': 'document at module scope',
   'src/tools/skyLab.js': 'location at module scope',
   'src/tools/waterLab.js': 'location at module scope',   // WATER1: the water lab
+  'src/tools/levelUpLab.js': 'document at module scope',   // LV1: the level-up lab
 });
 
 test('every module under src/ loads - its body RUNS, not just parses', async () => {
@@ -64,15 +65,24 @@ test('every module under src/ loads - its body RUNS, not just parses', async () 
   assert.deepEqual(unexpectedlyFine, [], `these import fine now - remove them from NOT_IMPORTABLE:\n  ${unexpectedlyFine.join('\n  ')}`);
 });
 
-test('the blind spot is exactly ten modules, each with a reason', () => {
+test('the blind spot is exactly eleven modules, each with a reason', () => {
   const files = walk(join(root, 'src')).map((f) => relative(root, f).split('\\').join('/'));
   for (const f of Object.keys(NOT_IMPORTABLE)) {
     assert.ok(files.includes(f), `${f} is on the exclusion list and no longer exists`);
   }
-  assert.equal(Object.keys(NOT_IMPORTABLE).length, 10);   // WATER1: the water lab joined the sky lab
+  assert.equal(Object.keys(NOT_IMPORTABLE).length, 11);   // WATER1: the water lab joined the sky lab; LV1: the level-up lab joined both
   // The three that matter are the hosts: they carry the most edits and
   // the least coverage, which is exactly the combination that produced
   // the boot failure. Recorded here so the next reader sees the cost.
   const globbed = Object.entries(NOT_IMPORTABLE).filter(([, why]) => why === 'import.meta.glob');
-  assert.equal(globbed.length, 3);
+  // BOOT1 (2026-09-20): two, not three. main.js was the third only by
+  // inheritance - it statically imported world.js, so world.js's glob
+  // rejected the entry at link time before a line of it ran. With the
+  // hosts behind dynamic doors the entry's body runs in node, and what
+  // it is excluded for is its own: the crash listeners at module scope.
+  // The count is held at two so the next static import of a host into
+  // the entry (which would put the glob back in front of it) reads as
+  // the regression it is, here as well as in test/boot1.test.js.
+  assert.equal(globbed.length, 2);
+  assert.equal(NOT_IMPORTABLE['src/main.js'], 'addEventListener/document at module scope');
 });

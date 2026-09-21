@@ -55,7 +55,7 @@
 
 import { loadImg, nativeMetrics, drawImg, drawImgCrop, drawRect, shadowText, pointToNative, DEFAULT_TEXT_COLOR, DEFAULT_SHADOW_COLOR } from './nativePanel.js';   // AUDIT 63 F5: DaggerfallDefaultShadowColor, the unmarked row's shadow
 import { CifRciFile } from '../formats/cifRciFile.js';
-import { bitmapToColor32 } from './hud.js';
+import { bitmapToColor32 } from '../formats/color32Order.js';
 import { drawScreenDimBackdrop, DOUBLE_CLICK_DELAY_MS } from './chargenArt.js';
 import { wrapText } from './talkWindow.js';
 import { getBool } from '../systems/settings.js';   // UI6: EnableModernConversationStyleInTalkWindow
@@ -669,7 +669,7 @@ export class NativeTalkWindow {
     // sentence the player-says panel is showing. The port re-ran
     // _updateQuestion here unconditionally, and GetQuestionText is
     // ExpandRandomTextRecord - a fresh RANDOM variant of 7212/7225 per
-    // call (systems/answerPipeline.js -> talkMacros.js:349-353) - so
+    // call (systems/answerPipeline.js -> talkMacros.js:374-378) - so
     // the conversation recorded a different sentence from the one on
     // screen. _selectIndex IS that guarded handler.
     this._selectIndex(idx);
@@ -919,8 +919,8 @@ export class NativeTalkWindow {
   /** Pointer path (phone taps + mouse): virtual-space hit rects.
    *  AUDIT 65 UI-1: the third and fourth slots are the HOST's, not
    *  this window's. Every overlay slot dispatches
-   *  `click(vx, vy, right, middle)` - townTalk.js:1144,
-   *  worldModes.js:7306, dungeonContext.js:5654 - so the clock that
+   *  `click(vx, vy, right, middle)` - townTalk.js:1156,
+   *  worldModes.js:7707, dungeonContext.js:6053 - so the clock that
    *  used to sit in the fourth arrived as `e.button === 1`, a boolean,
    *  and `false ?? Date.now()` kept the `false`: every second click in
    *  the topic list picked. The THIRD slot is really read - it is the

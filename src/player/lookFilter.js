@@ -21,7 +21,7 @@
 // the residual is a delta and rides along. The pitch clamp is applied
 // to the TARGET as :142 does, so the camera never overshoots the range.
 
-import { getFloat } from '../systems/settings.js';
+import { getFloat, getInt } from '../systems/settings.js';   // MAC-O2: Controls/WeaponSwingMode, the term the swing suppression was missing
 import { PITCH_LIMIT } from './mwCamera.js';
 
 /** PlayerMouseLook.SmoothingMax (:45): the setter clamps to it. */
@@ -73,6 +73,51 @@ export const controllerLook = () => _controllerLook;
  *  takeFrameLook hands it over once, zeroed for the next. */
 let _frameYaw = 0, _framePitch = 0;
 export function takeFrameLook() { const v = [_frameYaw, _framePitch]; _frameYaw = 0; _framePitch = 0; return v; }
+
+/**
+ * MAC-O2 - THE SWING SUPPRESSION, ONE LAW (Mac, 2026-09-16: "Can't
+ * look around when holding right click").
+ *
+ * PlayerMouseLook.Update :246-248, whole:
+ *
+ *   if (InputManager.Instance.HasAction(InputManager.Actions.SwingWeapon)
+ *       && DaggerfallUnity.Settings.WeaponSwingMode == 0
+ *       && GameManager.Instance.WeaponManager.ScreenWeapon.WeaponType
+ *          != WeaponTypes.Bow)
+ *       applyLook = false;
+ *
+ * THREE terms, and the port's four copies carried two. The middle one
+ * is the whole reason the freeze exists: in WeaponSwingMode 0 the held
+ * drag IS the swing gesture (WeaponManager.cs:306-315 tracks the mouse
+ * while the button is down), so the camera must stand still or the
+ * player would be aiming and swinging with one motion. Modes 1 and 2 -
+ * click to attack, click or hold - track NO gesture at all
+ * (WeaponManager.cs:316-331 rolls the direction), so DFU leaves the
+ * look alone and the player turns while holding the button. The port
+ * froze the look in every mode, which is exactly the report.
+ *
+ * What is NOT in it is worth writing down, because three of the four
+ * questions a reader asks are answered by DFU saying nothing:
+ *   - SHEATHED is not a term. ApplyWeapon (WeaponManager.cs:732-757)
+ *     writes ScreenWeapon.WeaponType from the equipped item whatever
+ *     Sheathed is, so a sheathed player's held swing freezes the look
+ *     too. That is DFU's behaviour and this port keeps it.
+ *   - NO WEAPON is not a term either: bare hands are SetMelee
+ *     (:760-767), which is not Bow, so the freeze applies.
+ *   - INDOORS is not a term - PlayerMouseLook is one component for
+ *     every world context.
+ * The hosts' own gates (a walking motor, and which rig owns the
+ * screen weapon in this frame) sit at the CALL SITES, where the host
+ * can answer them; this function is the law alone.
+ *
+ * @param swingHeld    HasAction(SwingWeapon) - the raw button
+ * @param weaponIsBow  ScreenWeapon.WeaponType == WeaponTypes.Bow
+ * @param swingMode    Controls/WeaponSwingMode (0 gesture, 1 click, 2 click or hold)
+ */
+export function swingSuppressesLook({ swingHeld = false, weaponIsBow = false,
+  swingMode = getInt('Controls', 'WeaponSwingMode', 0, 2) } = {}) {
+  return !!swingHeld && swingMode === 0 && !weaponIsBow;
+}
 
 export class LookFilter {
   constructor() {

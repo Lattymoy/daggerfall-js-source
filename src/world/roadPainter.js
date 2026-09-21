@@ -92,6 +92,19 @@ export function pathCorners(mask, x, y, w = 1000) {
  * The port's entry. Paint order is the mod's: roads, then rivers and
  * streams if water is on, then tracks - the first that paints a tile
  * wins, because a painted tile is skipped by the next.
+ *
+ * GRASS-PATH1 (2026-09-19, Mac: "The grass is causing issues with
+ * dirtroads etc it just overgrows them. Grass shouldnt be on dirt
+ * paths"): WHICH TILES THE PAINTER WROTE, as a mask. The grass placer
+ * decides by RECORD (labGrass.js grassRecordsOf) and a record cannot
+ * answer this question: a track across grass writes 10/11/12/51, the
+ * very records the natural dirt-grass marching squares write, so
+ * excluding them by number would strip the grass from every dirt edge
+ * in the world to clear one path. Only the painter knows, and it knows
+ * it exactly - so it says so, one byte a tile, at the moment it writes.
+ * `opts.paths` is that Uint8Array (128x128, 1 = painted); absent, the
+ * painter is byte-for-byte what it was.
+ *
  * @param {object} masks - { road, track, river, stream } bytes for this pixel
  * @param {object} corners - { road, track, river, stream } corner bytes
  */
@@ -99,6 +112,7 @@ export function paintRoads(tileData, tilemap, roadMask, trackMask, locationRect 
   const masks = { road: roadMask | 0, track: trackMask | 0, river: opts.river | 0, stream: opts.stream | 0 };
   const corners = { road: opts.corners?.road | 0, track: opts.corners?.track | 0, river: opts.corners?.river | 0, stream: opts.corners?.stream | 0 };
   const water = !!opts.water;
+  const paths = opts.paths ?? null;   // GRASS-PATH1: which tiles this painter wrote
   const anyCorner = corners.road || corners.track || (water && (corners.river || corners.stream));
   if (!masks.road && !masks.track && !(water && (masks.river || masks.stream)) && !anyCorner) return 0;
   let painted = 0;
@@ -112,7 +126,7 @@ export function paintRoads(tileData, tilemap, roadMask, trackMask, locationRect 
       // cross it, and a road then fills what is left of it (below).
       let ground = tileData[y * tdDim + x];
       if (ground > TILE.stone) ground = TILE.grass;
-      const ctx = { tilemap, i, x, y, ground, rect: locationRect };
+      const ctx = { tilemap, i, x, y, ground, rect: locationRect, paths };
       if (paintPath(ctx, ROAD_TILES, masks.road, corners.road)) { painted++; continue; }
       if (water && paintPathWithSubPathJoins(ctx, RIVER_TILES, masks.river, corners.river, masks.stream)) { painted++; continue; }
       if (water && paintPath(ctx, STREAM_TILES, masks.stream, corners.stream)) { painted++; continue; }
@@ -138,6 +152,7 @@ function tile(ctx, slot, rotate, flip, overwrite = true) {
   if (rotate) v += TILE.ROTATE;
   if (flip) v += TILE.FLIP;
   ctx.tilemap[ctx.i] = v === 0 ? 0xff : v;
+  if (ctx.paths) ctx.paths[ctx.i] = 1;   // GRASS-PATH1
   return true;
 }
 
@@ -208,6 +223,7 @@ function paintPath(ctx, T, m, corners) {
   // becomes road.
   if (m && ctx.rect && T === ROAD_TILES && x > ctx.rect.xMin && x < ctx.rect.xMax && y > ctx.rect.yMin && y < ctx.rect.yMax) {
     ctx.tilemap[ctx.i] = 46;
+    if (ctx.paths) ctx.paths[ctx.i] = 1;   // GRASS-PATH1
     return true;
   }
   // Map pixel corners: a neighbour's diagonal brushes this pixel's corner
@@ -237,7 +253,7 @@ function paintPath(ctx, T, m, corners) {
 function paintPathWithSubPathJoins(ctx, T, m, corners, sub) {
   const has = paintPath(ctx, T, m, corners);
   const { x, y } = ctx;
-  const water = () => { ctx.tilemap[ctx.i] = 0xff; };
+  const water = () => { ctx.tilemap[ctx.i] = 0xff; if (ctx.paths) ctx.paths[ctx.i] = 1; };   // GRASS-PATH1
   const ic = (rotate, flip) => tile(ctx, T[ICORNER], rotate, flip);
   const co = (rotate, flip) => tile(ctx, T[CARD_OUT], rotate, flip);
   // Paint map pixel corner joins
@@ -414,7 +430,7 @@ export function classify(x, y, mask) {
  *  HEIGHTMAP is JobA.Idx(y, x, hDim) = y + x*hDim (TerrainSampler
  *  .cs:123) - which is what terrainSampler.js:144 writes and what every
  *  consumer in this tree reads (terrainTiles.js:146 and :317,
- *  terrainSurface.js:105-106, terrainNature.js:68 and :136). The mod
+ *  terrainSurface.js:160-161, terrainNature.js:68 and :136). The mod
  *  reads its tile at Idx(x, y, tDim) and its corner base at
  *  Idx(y, x, hDim) - BOTH in the layout that owns them - and so does
  *  this: the tile at y*tDim + x, the base at x*hDim + y. Byte for byte

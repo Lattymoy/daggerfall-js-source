@@ -112,7 +112,7 @@
 // original note is STALE and is withdrawn: there are no screen-to-ray
 // conversions to fix. The port's activation ray is the CAMERA's own
 // forward vector (`townTalk.tryActivate(cam.pos, useFwd, ...)` -
-// scenes/world.js:7999 and scenes/exterior.js:3908, the only two
+// scenes/world.js:10282 and scenes/exterior.js:4378, the only two
 // hosts that carry the call, each over a useFwd that is the camera's
 // own forward from cam.yaw and cam.pitch - or, since TI1, the touch
 // tap's ray, which IS a pixel unprojected, but through the frame's
@@ -145,7 +145,8 @@ import { BssFile } from '../formats/bssFile.js';
 // hudCrosshair rule ("must not import back into it") is about that
 // module's two GEOMETRY CONSTANTS, which travel as arguments here too:
 // see drawHudLarge's barFill.
-import { bitmapToColor32, largeHudBar } from './hud.js';
+import { bitmapToColor32 } from '../formats/color32Order.js';
+import { largeHudBar } from './hud.js';
 import { drawVitalsBars } from './hudVitals.js';   // VB1: the nine-bar law - no cycle, hudVitals reads only the settings store
 import { raceArt } from '../systems/races.js';
 import { racialOverrideHeadArt } from '../systems/vampirism.js';   // V5: the curse heads, DFU's override-first order

@@ -17,11 +17,15 @@
 // same guard test/features.test.js holds in characters, in the unit the
 // player actually sees.
 import { chromium } from 'playwright';
+import { FEATURES } from '../src/systems/features.js';
 
 const BASE = process.env.PROBE_BASE ?? 'http://127.0.0.1:5199';
 const SHOTS = process.env.PROBE_SHOTS ?? '/tmp';
 const MAX_NOTE_PX = 340;   // FT15: the trim's worst case is 300; this is the drift guard
-const TILES = 28;          // every row in the registry gets one
+// AUDIT FT15 F7: this was a hardcoded 28 - the same enumerated-count
+// anti-pattern this very commit range removed from HT1's "160 modules".
+// A 29th feature would have failed the probe for existing. Derived.
+const TILES = FEATURES.length;
 
 const bad = [];
 const check = (name, ok, detail = '') => {
@@ -34,7 +38,7 @@ const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
 const errors = [];
 page.on('pageerror', (e) => errors.push(e.message));
 
-await page.goto(`${BASE}/play/`, { waitUntil: 'networkidle' });
+await page.goto(`${BASE}/play/?nointro`, { waitUntil: 'networkidle' });
 await page.waitForSelector('.px-menu button');
 await page.locator('.px-menu button').filter({ hasText: /Features/ }).first().click();
 await page.waitForSelector('.ft-tile');

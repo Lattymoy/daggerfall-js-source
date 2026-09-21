@@ -19,15 +19,18 @@
 // player is standing. The player arm and its damage law live here
 // now, one copy for the three hosts that share this flight.
 
-import { MISSILE_SPEED, MISSILE_COLLIDER_RADIUS, MISSILE_LIFESPAN_S, playerArrowOrigin, missileHitsCapsule, missileReach, PLAYER_BODY_RADIUS } from '../systems/spellcast.js';   // AUDIT 65 CV-2: the player's own controller radius
+import { MISSILE_SPEED, MISSILE_COLLIDER_RADIUS, MISSILE_LIFESPAN_S, playerShotOrigin, missileHitsCapsule, missileReach, PLAYER_BODY_RADIUS } from '../systems/spellcast.js';   // FIELD-GUN17: playerMuzzleOrigin - the gun's own barrel, where GetAimPosition speaks for the bow   // AUDIT 65 CV-2: the player's own controller radius
 import { CAPSULE_HEIGHT } from '../player/motor.js';   // ROAD-H tail: the standing capsule, the contact's default height   // ROAD-H H1c: GetAimPosition's player arrow arm
 import { trs } from '../world/mat4.js';
 import { SWING_MODS } from './playerWeapon.js';   // CalculateSwingModifiers, read live at the arrow's impact
+import { bloodHit } from './bloodDecals.js';   // BLOOD1b: the blow, in the shape the mark's ladder reads
 import { calculateAttackDamage } from './formulas.js';
+import { bowDamageArrow } from './enemyEquipment.js';   // MAC-N1: the recovered shaft is CreateWeapon's arrow, value and all
 import { backstabChanceOf, enemyPainVoice } from '../scenes/hostCombat.js';
 import { isBackFacing } from '../characters/enemyMotor.js';
 import { hitSoundFor, ENEMY_HIT_VOLUME } from '../systems/soundClips.js';
 import { addItem } from '../systems/inventory.js';
+import { orbArchiveFor, ORB_RECORD, noteOrbColour, ORB_SCALE } from '../characters/thunderlockIds.js';   // FIELD-GUN14: what this weapon's shot LOOKS like - the leaf, so no cycle   // FIELD-GUN17: ...and what colour it is, sampled the one moment the texture is in hand   // FIELD-GUN18: ...and how big it is drawn
 
 export const ARROW_MODEL_ID = 99800;
 
@@ -45,9 +48,15 @@ export class ArrowFlight {
    * @param collider   Collider, or () => Collider for hosts whose
    *                   collider rebuilds (the weaponRig canvas rule)
    */
-  constructor({ getGpuMesh, collider = null }) {
+  constructor({ getGpuMesh, collider = null, effects = null }) {
     this.getGpuMesh = getGpuMesh;
     this._collider = collider;
+    // FIELD-GUN14: the host's own one-shot billboard pool (hitEffects),
+    // which every host already builds. A shot that flies as an ORB is
+    // drawn through it rather than through `getGpuMesh` - see `fire`.
+    // Null is an answer: the flight is unchanged and nothing is drawn,
+    // which is what a host with no effects pool has always had.
+    this._effects = effects;
     this.arrows = [];
   }
 
@@ -58,7 +67,34 @@ export class ArrowFlight {
    *  LastBowUsed, which the impact prices off - and hunts the foes
    *  through the same contact law. */
   fire(from, dir, meta = {}) {
-    this.arrows.push({ pos: meta.fromPlayer ? playerArrowOrigin(from, dir) : [...from], dir: [...dir], age: 0, gpu: null, dead: false, ...meta });   // ROAD-H H1c: a PLAYER shaft leaves the BOW HAND - GetAimPosition (DaggerfallMissile.cs:540-550) offsets the camera position 0.11 DOWN the camera's own up and 0.15 to the hand (the other way under FPSWeapon.FlipHorizontal), and it runs INSIDE the missile in DFU (:471), so it runs here rather than at each host's loose; an ENEMY shaft arrives with its own origin already applied (enemyTargets.enemyArrowOrigin)
+    // FIELD-GUN14 (Mac: "The projectile that shoots out should be an
+    // orb, not an arrow"). IT WAS AN ARROW because this module draws
+    // ONE model - 99800, the shaft - for everything it carries, which
+    // was right while the only thing it carried was a shaft. The
+    // Thunderlock rides this lane because `isBowWeapon` is "scored on
+    // Archery" (that is the whole reason every host's ranged gate took
+    // it without being told it exists), and it inherited the bow's
+    // PICTURE along with the bow's physics.
+    //
+    // The flight is untouched - same speed, same sweep, same contact,
+    // same lifespan. What forks is the draw, and it forks on the
+    // WEAPON, which the record already carries: a shaft takes the mesh
+    // lane below, an orb takes the billboard lane.
+    const orb = orbArchiveFor(meta.weapon);
+    // FIELD-GUN17 (Mac: "the orb doesnt allign with the barrel when
+    // firing. Its above the barrel"). THE SAME SENTENCE ONE FIELD ON
+    // from FIELD-GUN14's: the lane was written for the one ranged
+    // weapon Daggerfall has, so its ORIGIN is the bow's too. A host
+    // that knows where its weapon's muzzle is hands the offset over
+    // and it is used INSTEAD of GetAimPosition's bow-hand arm; a host
+    // that does not - and every bow, at every host - hands over
+    // nothing and gets the verbatim arm, unchanged.
+    // AUDIT FIELD-GUN-MW F2: the fork is playerShotOrigin's, once, for both spawn seams - a muzzle may now be a
+    // WORLD point (the third-person Morrowind body's barrel, behind the camera).
+    const origin = meta.fromPlayer
+      ? playerShotOrigin(from, dir, meta.muzzle)
+      : [...from];
+    this.arrows.push({ pos: origin, dir: [...dir], age: 0, gpu: null, dead: false, orb, orbFlat: null, ...meta });   // ROAD-H H1c: a PLAYER shaft leaves the BOW HAND - GetAimPosition (DaggerfallMissile.cs:540-550) offsets the camera position 0.11 DOWN the camera's own up and 0.15 to the hand (the other way under FPSWeapon.FlipHorizontal), and it runs INSIDE the missile in DFU (:471), so it runs here rather than at each host's loose; an ENEMY shaft arrives with its own origin already applied (enemyTargets.enemyArrowOrigin)
   }
 
   update(dt, { playerFeet = null, playerHeight = CAPSULE_HEIGHT, onPlayerHit = null, foeTargets = null, onFoeHit = null,
@@ -66,9 +102,26 @@ export class ArrowFlight {
     let live = 0;
     const c = typeof this._collider === 'function' ? this._collider() : this._collider;
     for (const m of this.arrows) {
-      if (m.dead) continue;
+      if (m.dead) { this._releaseOrb(m); continue; }   // FIELD-GUN14: the flat goes out with the flight - `arrows` is not compacted until every record is dead
       live++;
-      if (m.gpu === null) {   // lazy model fetch, in-flight guard
+      if (m.orb) {
+        // FIELD-GUN14: the orb's flat, lazily, on the same in-flight
+        // guard the mesh uses - and then MOVED every step, which is
+        // the one thing this pool's other entries never do.
+        if (m.orbFlat === null) {
+          // FIELD-GUN17: THE ORB TELLS US ITS COLOUR. The pool hands
+          // the archive over the one moment it is warm, and the leaf
+          // reduces it to the single colour the muzzle flash is painted
+          // in and the muzzle light is thrown in. Sampled rather than
+          // named, so "the same colour as the orb" is exact and follows
+          // ORB_ARCHIVE if it ever changes.
+          m.orbFlat = this._effects?.showFlyingFlat?.(m.orb, m.pos, {
+            record: ORB_RECORD,
+            scale: ORB_SCALE,   // FIELD-GUN18: a pellet, not a fireball
+            onTexture: (t, archive, record) => noteOrbColour(t?.getColor32?.(t.getDFBitmap(record, 0), 0)),
+          }) ?? false;
+        }
+      } else if (m.gpu === null) {   // lazy model fetch, in-flight guard
         m.gpu = false;
         Promise.resolve(this.getGpuMesh(ARROW_MODEL_ID)).then((g) => { if (g && !m.dead) m.gpu = g; });
       }
@@ -81,6 +134,11 @@ export class ArrowFlight {
       m.pos[0] += m.dir[0] * step;
       m.pos[1] += m.dir[1] * step;
       m.pos[2] += m.dir[2] * step;
+      // FIELD-GUN14: the flat follows AFTER the advance, so what is
+      // drawn is where the shot IS rather than where it was a step
+      // ago. The mesh lane gets this for free - `arrowMatrix(m.pos)`
+      // is built in the draw pass, which runs after this one.
+      if (m.orbFlat) m.orbFlat.move(m.pos);
       // X2-slice: an enemy arrow tests the player mid-capsule per
       // step - the dungeon missile's exact contact law
       // (MISSILE_COLLIDER_RADIUS + the player's OWN 0.35 body = 0.80).
@@ -131,13 +189,32 @@ export class ArrowFlight {
       // heightAt fallback floor) - an arrow at or under it has landed.
       if (c && m.pos[1] <= c.heightAt(m.pos[0], m.pos[2])) m.dead = true;
     }
-    if (!live && this.arrows.length) this.arrows.length = 0;
+    if (!live && this.arrows.length) { for (const m of this.arrows) this._releaseOrb(m); this.arrows.length = 0; }
+  }
+
+  /** FIELD-GUN14: an orb's flat, taken down. Idempotent - a record
+   *  can be swept more than once before the array is compacted. */
+  _releaseOrb(m) {
+    if (m.orbFlat) { m.orbFlat.retire(); m.orbFlat = null; }
+  }
+
+  /** FIELD-GUN14: every flat down, now. A host tearing its scene down
+   *  (worldModes' one pool across every building) must not leave an
+   *  orb hanging in the next one - hitEffects' own `clear` covers the
+   *  pool, and this covers the handles that point into it. */
+  clear() {
+    for (const m of this.arrows) { this._releaseOrb(m); m.dead = true; }
+    this.arrows.length = 0;
   }
 
   /** Draw every live arrow (the host's mesh pass, after update). */
   draw(renderer, texRemap = undefined) {
     for (const m of this.arrows) {
-      if (!m.dead && m.gpu) renderer.drawMesh(m.gpu, arrowMatrix(m.pos, m.dir), texRemap);
+      // FIELD-GUN14: an ORB is not drawn here. A billboard batch is
+      // pushed into the host's own flats list and drawn on the flats'
+      // axis, so the pool paints it - this pass is the MESH pass, and
+      // a shaft is the only thing in this module that is a mesh.
+      if (!m.dead && !m.orb && m.gpu) renderer.drawMesh(m.gpu, arrowMatrix(m.pos, m.dir), texRemap);
     }
   }
 }
@@ -149,7 +226,7 @@ export class ArrowFlight {
  *
  * WAVE D: four bodies became FOUR CALLERS. dungeonContext.js's
  * `m.fromPlayer` block - the arm this function was extracted FROM -
- * now calls it (dungeonContext.js:2465), so the copy that survived
+ * now calls it (dungeonContext.js:2654), so the copy that survived
  * the extraction is gone. It was not a harmless copy: it still
  * splashed at the arrow tip, the exact bug AUDIT 39r/R16 fixed here.
  * DaggerfallMissile.cs:681-687 routes an arrow into
@@ -219,7 +296,7 @@ export function playerArrowHitFoe(m, foe, {
     : at;
   if (dmg > 0) {
     audio?.play3d?.(hitSoundFor(m.weapon ?? null), at, ENEMY_HIT_VOLUME, { maxDistance: 16 });
-    hitEffects?.showBloodSplash?.(foe.entity?.basics?.bloodIndex ?? 0, bloodAt);
+    hitEffects?.showBloodSplash?.(foe.entity?.basics?.bloodIndex ?? 0, bloodAt, null, bloodHit(dmg, foe.entity, { fromPlayer: true, weapon: m.weapon ?? null }));   // BLOOD1b: the player's shaft drives the ladder, and the bow it came off decides the heavy branch   // ...and NO SWING: the reference reads the LIVE weapon state when blood spawns, which for a shaft that has been in the air is whatever the player's arm happens to be doing now. A shaft's blood is thrown by the shaft.
     const pain = enemyPainVoice(foe, dmg, rolls);
     if (pain && pain.clip >= 0) audio?.play3d?.(pain.clip, [at[0], at[1] + 0.9, at[2]], 1, { maxDistance: 16, pitch: 1 + pain.pitchLift });   // AUDIT 58: EnemySounds.cs:172-175
     dealDamage?.(foe, dmg);
@@ -227,8 +304,15 @@ export function playerArrowHitFoe(m, foe, {
   // :627/:630's unconditional pair, whatever the fork above did - and
   // BEFORE the arrow is added back (BowDamage's own order).
   onAttackFromPlayer?.(foe, dmg);   // AUDIT WORLD6b-iii(e) C2: with what landed - a pool that diverts a zero blow to a puppet's owner sends none when the damage already went
-  if (foe.entity?.items) {
-    addItem(foe.entity.items, { group: 'Weapons', name: 'Arrow', templateIndex: 131, material: 0, stackCount: 1 });
+  // FIELD-GUN14: AND A GUN LEAVES NO SHAFT TO PULL OUT. BowDamage
+  // (DaggerfallMissile.cs:679-687) adds the arrow back to whatever it
+  // struck because an arrow SURVIVES being shot - that is what makes
+  // it recoverable. This law was keyed on the lane rather than on the
+  // round, so every foe the Thunderlock killed dropped Arrows it had
+  // never been shot with. A Dwemer Pellet is spent. Said off the same
+  // leaf the orb is, so the two answers cannot drift apart.
+  if (foe.entity?.items && !orbArchiveFor(m.weapon)) {
+    addItem(foe.entity.items, bowDamageArrow());   // MAC-N1: one minter, not a bare literal with no value
   }
   return dmg;
 }

@@ -220,7 +220,7 @@ test('audit24 wave38: PlayerActivate\'s CorpseMarker arm - empty, arrows, and th
   // the list; DFU reaches it because :957 opens the window over the
   // corpse. The port's bulk take is the residue this file records, so
   // the door is spelled in takeCorpseLoot - without it a corpse's
-  // loot-table gold (loot.js:170) lands in the pack, where
+  // loot-table gold (loot.js:176) lands in the pack, where
   // court.goldAmount cannot see it and it is unspendable forever.
   say.length = 0;
   player.items = [];
@@ -229,7 +229,7 @@ test('audit24 wave38: PlayerActivate\'s CorpseMarker arm - empty, arrows, and th
   assert.equal(takeCorpseLoot(rich, player, s), 2, 'the pile still counts toward the line');
   assert.deepEqual(say, ['You take 2 items.']);
   assert.equal(player.items.some((it) => it.group === 'Currency'), false,
-    'the player\'s collection can NEVER hold Currency (inventory.js:48-56)');
+    'the player\'s collection can NEVER hold Currency (inventory.js:49-57)');
   assert.equal(player.items.length, 1);
   assert.equal(player.goldPieces, 550, 'playerEntity.GoldPieces += item.stackCount');
   assert.equal(goldAmount(player), 550, 'and it is spendable');
@@ -311,7 +311,7 @@ test('audit24 wave38: the encounter pool exports the seam, and the host asks BOT
 
   // ...and the ROUTER itself, RUN off the fixed-city host's own line.
   // Routing a `foeCorpse:` key into the watch pool is not a harmless
-  // miss: cityGuards.js:1059-1061 turns the key into
+  // miss: cityGuards.js:1104-1106 turns the key into
   // `guards.find((g) => g.id === id)` over ids minted by
   // `_nextGuardId++`, and takeCorpseLoot (corpseMarker.js:195-218)
   // tests only `corpseDisabled` and `entity.items` - never death - so
@@ -325,16 +325,29 @@ test('audit24 wave38: the encounter pool exports the seam, and the host asks BOT
   const exLines = rd('src/scenes/exterior.js').split('\n');
   const armAt = exLines.findIndex((l) => l.includes("lootKey.startsWith('foeCorpse:')"));
   assert.ok(armAt > 0, 'the fixed-city host no longer carries the corpse-key router');
-  const armSrc = exLines.slice(armAt - 1, armAt + 1).join('\n');
-  assert.match(armSrc, /setMidScreenText\(TOO_FAR_AWAY_TEXT\)/, 'the too-far refusal sits above the router');
+  // MAC-E gave the router a body (the pool takes the host's inventory
+  // door now, so the arm spans lines), so the window this reads is the
+  // ARM rather than the one line above it. The law is the same one:
+  // the refusal is the rung ABOVE the router, not inside it.
+  // MAC-E gave the router a BODY (the pool takes the host's inventory
+  // door now), so the span is the refusal rung through the router's
+  // closing brace rather than two lines. The law is the one it always
+  // was: the refusal is the rung ABOVE, not a line inside.
+  const refuseAt = exLines.findIndex((l) => l.includes('lootKey && _lootPick.distance > _lootPick.reach'));
+  assert.ok(refuseAt > 0 && refuseAt < armAt, 'the too-far refusal sits above the router');
+  const armSrc = exLines.slice(refuseAt, exLines.indexOf('          }', armAt) + 1).join('\n');
+  assert.ok(!exLines.slice(armAt, armAt + 6).join('\n').includes('TOO_FAR_AWAY_TEXT'),
+    '...and not inside it, which would speak it after the pool had already answered');
   const took = [];
   const said = [];
+  const opened = [];
   const arm = new Function('lootKey', '_lootPick', 'exteriorFoes', 'cityGuards', 'townTalk',
-    'surfacePlayer', 'setMidScreenText', 'TOO_FAR_AWAY_TEXT', armSrc);
+    'surfacePlayer', 'setMidScreenText', 'TOO_FAR_AWAY_TEXT', 'inventoryDoorReady', 'makeInventoryWindow', armSrc);
   const run = (k, pick) => arm(k, pick,
-    { takeLoot: (key) => took.push(['encounter', key]) },
-    { takeLoot: (key) => took.push(['watch', key]) },
-    { say: () => {} }, () => {}, (t) => said.push(t), TOO_FAR_AWAY_TEXT);
+    { takeLoot: (key, say2, open) => { took.push(['encounter', key]); if (open) open({ items: () => [] }); } },
+    { takeLoot: (key, say2, open) => { took.push(['watch', key]); if (open) open({ items: () => [] }); } },
+    { say: () => {}, showOverlay: (w) => opened.push(w) }, () => {}, (t) => said.push(t), TOO_FAR_AWAY_TEXT,
+    () => true, (o) => o);
   const near = { distance: 1, reach: CORPSE_ACTIVATION_DISTANCE };
   run('foeCorpse:3', near);
   run('guardCorpse:3', near);
@@ -342,6 +355,9 @@ test('audit24 wave38: the encounter pool exports the seam, and the host asks BOT
   assert.deepEqual(took, [['encounter', 'foeCorpse:3'], ['watch', 'guardCorpse:3']],
     'the KEY picks the pool - an encounter corpse never reaches a live watchman');
   assert.deepEqual(said, [], 'a body in reach is opened, not refused');
+  // MAC-E: and the door really is handed over - the pool is given a
+  // window maker, and using it mounts a window on the host.
+  assert.equal(opened.length, 2, 'each body reached the host\u2019s own inventory door');
   run('foeCorpse:9', { distance: 8, reach: CORPSE_ACTIVATION_DISTANCE });
   assert.deepEqual(said, [TOO_FAR_AWAY_TEXT], 'a body past 150 units is refused OUT LOUD (:936-941)');
   assert.equal(took.length, 2, 'and is not opened');

@@ -1,0 +1,51 @@
+[
+ {
+  "name": "STREAM1-every-promotion-is-paid-on-the-crossings-own-frame-again",
+  "file": "src/scenes/world.js",
+  "old": "        if (want === 1) restridePending.set(`${p.px},${p.py}`, p);   // the dear way round\n        else { restridePending.delete(`${p.px},${p.py}`); restrideTerrain(p, want); }",
+  "new": "        restrideTerrain(p, want);",
+  "tests": ["test/stream1_restride.test.js"]
+ },
+ {
+  "name": "STREAM1-the-frame-loop-never-spends-the-queue-so-a-pixel-waits-for-ever",
+  "file": "src/scenes/world.js",
+  "old": "    spendRestrides();   // STREAM1: a promoted pixel's grid, one a frame, off the crossing's own frame",
+  "new": "",
+  "tests": ["test/stream1_restride.test.js"]
+ },
+ {
+  "name": "STREAM1-the-whole-queue-is-spent-in-one-frame-which-is-the-spike-again",
+  "file": "src/scenes/world.js",
+  "old": "  const RESTRIDE_PER_FRAME = 1;",
+  "new": "  const RESTRIDE_PER_FRAME = 1e9;",
+  "tests": ["test/stream1_restride.test.js"]
+ },
+ {
+  "name": "STREAM1-an-evicted-pixel-is-rebuilt-into-freed-GL-objects",
+  "file": "src/scenes/world.js",
+  "old": "      if (!built.has(`${p.px},${p.py}`)) continue;        // evicted while it waited",
+  "new": "",
+  "tests": ["test/stream1_restride.test.js"]
+ },
+ {
+  "name": "STREAM1-a-pixel-that-walked-back-out-of-the-ring-is-rebuilt-anyway",
+  "file": "src/scenes/world.js",
+  "old": "      if (s === p._stride) continue;                       // walked back out of the near ring",
+  "new": "",
+  "tests": ["test/stream1_restride.test.js"]
+ },
+ {
+  "name": "STREAM1-the-queue-is-spent-furthest-first-so-the-ring-ahead-waits",
+  "file": "src/scenes/world.js",
+  "old": "      .sort((a, b) => (Math.abs(a.px - state.current.x) + Math.abs(a.py - state.current.y))\n        - (Math.abs(b.px - state.current.x) + Math.abs(b.py - state.current.y)));",
+  "new": "      .sort((a, b) => (Math.abs(b.px - state.current.x) + Math.abs(b.py - state.current.y))\n        - (Math.abs(a.px - state.current.x) + Math.abs(a.py - state.current.y)));",
+  "tests": ["test/stream1_restride.test.js"]
+ },
+ {
+  "name": "STREAM1-a-demotion-is-queued-too-so-a-far-pixel-stays-full-res-and-costs-every-frame",
+  "file": "src/scenes/world.js",
+  "old": "      if (wantStride === 1) restridePending.set(key, entry);\n      else restrideTerrain(entry, wantStride);",
+  "new": "      restridePending.set(key, entry);",
+  "tests": ["test/stream1_restride.test.js"]
+ }
+]

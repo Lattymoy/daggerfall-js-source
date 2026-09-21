@@ -57,7 +57,7 @@ const poolRig = (extra = {}) => ({
 /** The net with an id and peers - the scene frame IS the world frame. */
 const netFor = (hits, peers) => ({
   room: () => 'world:3,12', selfId: () => 'mac-0001', peers: () => peers.list, now: () => 0, staleMs: 0,
-  onPeerHit: (h) => { hits.push(h); return true; },
+  onPeerHit: (h, fate) => { hits.push(h); fate?.sent?.(); return true; },
   toWire: (feet) => [feet[0], feet[1], feet[2]], toScene: (p) => [p[0], p[1], p[2]],
 });
 const senses = (pe) => ({ candidates: () => [], playerEntity: pe, playerHeight: 1.8, playerCrouching: false, playerInvisible: false, movingLessThanHalfSpeed: true });
@@ -197,6 +197,7 @@ test('WORLD6b-ii: by source - the world host hands the pool my id and the peers 
   assert.match(x, /const _at = f\.ai\.target \?\? PLAYER_TARGET, _atPlayer = isLocalPlayerTarget\(_at\);/, 'my foe\'s shaft at a peer pays nothing here');
   assert.match(x, /if \(isPeerTarget\(f\.ai\.target\)\) \{\s*const pv = enemyAttackVoice\(f\);/, 'the swing\'s voice alone at a peer');
   assert.match(x, /if \(_blowMine && !_pupParalyzed && f\.mobile\.doMeleeDamage\) \{[^\n]*\n\s*f\.mobile\.doMeleeDamage = false;[\s\S]{0,400}if \(blowAllowed\(f\)\) resolveFoeMeleeVsPlayer\(f, playerFeet\);/, 'the puppet\'s blow at me through the one player arm, bounded (AUDIT WORLD6b-ii B1; WORLD6b-iii: one budget for the blow and the cast)');
-  assert.match(x, /const _t = f\.ai\.target, g = _t\?\.isPeer \? _t\.id : \(_t == null \? '' : \(_t\.isPlayer \? '\.' : ''\)\);/, 'the target on the wire, WORLD3\'s spelling (AUDIT WORLD6b-ii A8: none is none)');
+  assert.match(x, /const g = wireRecipient\(f\.ai\.target\);/, 'the target on the wire, WORLD3\'s spelling (AUDIT WORLD6b-ii A8: none is none; AUDIT WATCH1: through the one home)');
+  assert.match(rd('src/characters/enemyTargets.js'), /export const wireRecipient = \(t\) => \(t\?\.isPeer \? t\.id : \(t == null \? '' : \(t\.isPlayer \? '\.' : ''\)\)\);/, 'the spelling itself, at its one home');
   assert.match(rd('bible/06-Systems/Online-Arc.md'), /### 6b-ii: the foe hunts every player in the cell/, 'the record');
 });

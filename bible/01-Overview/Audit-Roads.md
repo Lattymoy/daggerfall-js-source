@@ -78,7 +78,7 @@ Two more test-coverage breaks in the same family:
   verifier's refinement: guard the flood fill so it does not run on the
   common single-component bake.
 - **The flight is planned with ALL-DEFAULT options**
-  (`src/ui/overworldMap.js:703`). `_confirmDiseased` sets
+  (`src/ui/overworldMap.js:971`; RETIRED in MAP1, 2026-09-18). `_confirmDiseased` sets
   `this._panelState = null` and THEN calls `_beginFlight()`, whose
   `const st = this._panelState` is therefore always null. Every
   `st?.opts?.speedCautious` and `st?.hasHorse` evaluates to undefined, and
@@ -125,12 +125,12 @@ Recorded so it is not re-audited:
   chain ENDS are pinned, so a spur's drawn end stops in open country
   beside a trunk that has swung away.
 - **5,658 draw calls in the map's resting view** against 6 for the rest
-  of the frame (`src/render/overworldRenderer.js:399`), plus 5,653 VAOs
+  of the frame (`src/render/overworldRenderer.js:399`; RETIRED in MAP1, 2026-09-18), plus 5,653 VAOs
   and buffers allocated in one synchronous loop. The verifier validated
   the batching patch end to end: 5,658 -> 7 draw calls, picture
   byte-identical.
 - **The road-discovery layer has six passing tests and no caller**
-  (`src/ui/overworldModel.js:452`, `src/ui/overworldMap.js:416`). Every
+  (`src/ui/overworldModel.js:452`, `src/ui/overworldMap.js:496`; the window RETIRED in MAP1, 2026-09-18). Every
   road in the Bay is drawn from the first frame, running unbroken to
   towns the same map is deliberately hiding. This is the R3W
   orphaned-layer defect again, in a new module.
@@ -143,7 +143,7 @@ Recorded so it is not re-audited:
   (`src/systems/roadTravel.js:187`): ~200 ms of blocked main thread per (RETIRED)
   click, ~0.9 s and 33 MB per card visit.
 - **Nothing is drawn for the whole 26-second bake**
-  (`src/scenes/world.js:312`) - the world host has no frame loop yet and
+  (`src/scenes/world.js:373`) - the world host has no frame loop yet and
   `status()` writes only `document.title`.
 - **A landmass with fewer than two hubs gets no road at all**
   (`src/systems/roads.js:728`). Take the verifier's PRIMARY proposal; its (RETIRED)

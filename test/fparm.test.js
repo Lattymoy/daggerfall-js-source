@@ -233,8 +233,10 @@ test('MW-D10: the draw is rule 54 and nothing else - no framing, no offsets, no 
   const draw = src.slice(src.indexOf('    draw(canvas)'), src.indexOf('    status()'));
   assert.match(draw, /const eye = firstPersonEye\(built\.arm\.mats, built\.cameraRef\);/,
     'the eye is the camera node, read fresh from the pose');
-  assert.match(draw, /renderCharacterSprite\(mesh, NIF_TO_PASS, proj, view, pw, ph, \{ lensLocal: true \}\)/,
-    'and the model matrix is the basis change alone - no placement, no scale');
+  // MAC-P: the call carries the viewmodel's LIGHT too (the room's own at the camera); the
+  // lens-local flag and the basis-change matrix are what this pin is for, and neither moved.
+  assert.match(draw, /renderCharacterSprite\(mesh, NIF_TO_PASS, proj, view, pw, phFull, \{ lensLocal: true, viewmodelLight: vmLight \}\)/,
+    'and the model matrix is the basis change alone - no placement, no scale (MAC-R1: phFull is the screen\'s rows plus the pad above them; with no transform the two are equal)');
   assert.match(draw, /perspective\(FP_FIELD_OF_VIEW, pw \/ ph,/, 'rule 29\'s own field of view');
   // THE RETIRED MECHANISM, and the sentence goes with it: none of the
   // mapper's constants may come back, in the draw or anywhere else.
@@ -251,7 +253,7 @@ test('MW-D10: the draw is rule 54 and nothing else - no framing, no offsets, no 
   // whose widest pose is four times its idle would have clipped the
   // knuckles off the camera to save the elbow.
   assert.match(draw, /const near = Math\.max\(\(built\.idleReach \?\? built\.reach\) \/ 200, 1e-4\);/);
-  assert.match(draw, /perspective\(FP_FIELD_OF_VIEW, pw \/ ph, near, built\.reach \* 4\)/);
+  assert.match(draw, /const far = built\.reach \* 4;[\s\S]{0,400}?perspective\(FP_FIELD_OF_VIEW, pw \/ ph, near, far\)/, 'the far plane off the swept reach, into the same lens (MAC-R1 named it)');
 });
 
 test('MW-D8: a build that cannot reach its data REFUSES with a stage, and never throws', async () => {
@@ -484,8 +486,8 @@ test('MW-D23: the actor\'s RIGHT lands SCREEN-RIGHT through the pass\'s OWN comp
   // The source must NOT mirror this pass: the world's mirror belongs to
   // the world's own composition, and borrowing it across compositions
   // is how MW-D9's fix became MW-D23's bug.
-  assert.match(src, /const proj = perspective\(FP_FIELD_OF_VIEW, pw \/ ph,/,
-    'the arm\'s projection is the bare 60-degree lens');
+  assert.match(src, /const proj = pad > 0 \? frustum\(-hw, hw, -hh, hh \* \(1 \+ 2 \* padFrac\), near, far\) : perspective\(FP_FIELD_OF_VIEW, pw \/ ph, near, far\);/,
+    'the arm\'s projection is the bare 60-degree lens (MAC-R1: and under a screen transform the same lens with its top edge raised - test/macr_fixes.test.js holds that the two agree over the screen)');
   // MW-D34 loosened this from "the word appears nowhere" to "is never
   // imported or called": drawThird's comment now NAMES the world's
   // mirror to explain the -u chirality flip, and a comment is not a
@@ -1452,6 +1454,7 @@ import {
   MW_CLOTHING_TYPE, DF_CLOTHING_ROWS, mwClothingRecord, fpWornAdds,
 } from '../src/formats/mwItemMap.js';
 import { armorRecords, clothingRecords, raceBeastFlag, pickWeaponRecord, facePools } from '../src/formats/mwFirstPerson.js';
+import { OWN_MW_MODELS } from '../src/characters/ownWeaponModels.js';   // FIELD-GUN-MW2: counted off the table, not typed
 import { ARMOR_ENUM } from '../src/combat/enemyEquipment.js';
 import { ARMOR_MATERIAL } from '../src/systems/armorMaterials.js';
 
@@ -1465,8 +1468,19 @@ test('MW-D28: the map is TOTAL - every DF equippable x material answers, or the 
   assert.deepEqual(holes, [], `unmapped item/material combinations:\n${holes.map((h) => `${h.material} ${h.item}`).join('\n')}`);
   // The space is the REAL space: 19 weapons x 10 materials + 11 armors
   // x 13 materials + 76 wearable garment indices (MW-D30), so removing
-  // an enum entry cannot shrink the claim.
-  assert.equal(cover.length, 19 * 10 + 11 * 13 + 76);
+  // an enum entry cannot shrink the claim. Plus one row per weapon of
+  // THE PORT'S OWN (FIELD-GUN-MW2) - counted off the table rather than
+  // typed, because that table's whole defect was being outside a
+  // population somebody had counted by hand.
+  assert.equal(cover.length, 19 * 10 + 11 * 13 + 76 + Object.keys(OWN_MW_MODELS).length);
+  // FIELD-GUN-MW2: and the port's own weapons are IN it. The census
+  // walked `WEAPONS` - DFU's frozen eighteen - so the Dwarven
+  // Thunderlock (template 560, minted at runtime) was never asked
+  // about, and this pin reported total coverage while the gun drew
+  // empty hands in Morrowind first person.
+  const own = cover.filter((c) => c.kind === 'own');
+  assert.equal(own.length, Object.keys(OWN_MW_MODELS).length, 'every own-model weapon answers a row');
+  assert.ok(own.every((o) => o.model && o.item), 'an own row names its mesh and its weapon');
   // Declared sprites are present, named, and reasoned.
   const sprites = cover.filter((c) => c.kind === 'sprite');
   assert.ok(sprites.length >= 10, 'the Arrow rows are not declared');
@@ -2269,7 +2283,7 @@ test('MW-D32: raceRecords reads RADT by hand-laid offsets - heights at 120, flag
 test('MW-D34: the third-person model matrix carries the measured chirality flip and adjustScale', () => {
   // MEASURED through the real composite (mwArmProbe L5b): the 3P body
   // rides drawRigSpriteBox into the world's mirrorProjectionX lens, and
-  // the port's world convention is left-handed (motor.js:662 - the
+  // the port's world convention is left-handed (motor.js:668 - the
   // player's right is +X at yaw 0), so a right-handed NIF actor placed
   // with a pure rotation reads MIRRORED on screen. The -u on the local
   // side axis is the same basis adaptation the mirror gives every
@@ -2767,7 +2781,94 @@ test('PX25: the pack hands the rig the worn table on every refresh', () => {
     'refresh must tell the rig what is worn');
   const src = readFileSync('src/combat/fpArm.js', 'utf8');
   assert.match(src, /if \(busy\) \{ pendingWorn = pieces; return false; \}/);
-  assert.match(src, /if \(pendingWorn\) \{ const p = pendingWorn; pendingWorn = null; this\.setWorn\(p\); \}/);
+  // MAC-S1: the flush is flushPending()'s now, and build() calls it.
+  assert.match(src, /if \(pendingWorn\) \{ const p = pendingWorn; pendingWorn = null; api\.setWorn\(p\); \}/);
+});
+
+// ═══ MAC-S1: THE SHIELD THAT SOMETIMES IS NOT THERE ══════════════════
+//
+// 2026-09-16, Mac: "Shields sometimes do not show up in the morrowind
+// paperdoll."
+//
+// The mapping was never the problem: dfWornEquipment reads a shield out
+// of either hand slot and composeWornArmor has carried IG3's
+// getShieldMesh since. What was dropped was the DELIVERY. PX25 and
+// PX26 F3 each taught their own setter to queue a change that arrives
+// while the rig is busy, and each wired the flush into build()'s finally
+// alone - but setWeapon's incremental swap holds `busy` too, and its
+// finally cleared the flag without ever looking behind it. A worn table
+// handed over during a weapon swap went into pendingWorn and stayed
+// there.
+//
+// Which is a shield, from the chair: equipping one bumps a held
+// two-hander, the pack hands the rig the table AND the hand on every
+// action, and an archive fetch runs between two clicks. Outside a
+// window weaponRig's frame tick re-reads the equip table every frame
+// and the loss heals itself before anyone sees it; while the inventory
+// is up the frame never reaches that tick, and the inventory is where
+// the paperdoll is.
+
+test('MAC-S1: a shield equipped while a weapon swap is in flight still reaches the body', async () => {
+  const files = new Map([
+    [fpSkeletonPath({}), f('armfp.nif')],
+    [FP_CLIP_PATH, f('armfpidle.kf')],
+    ['meshes/fixture/armfphand.nif', f('armfphand.nif')],
+    ['meshes/fixture/armfparm.nif', f('armfparm.nif')],
+    ['textures/tx_fixture.dds', f('fixture.dds')],
+  ]);
+  const deps = {
+    loadMorrowindArchives: async () => [{ has: (p) => files.has(p), get: (p) => files.get(p) }],
+    storedMorrowindNames: async () => ['armfp.esm'],
+    loadMorrowindFile: async () => f('armfp.esm'),
+  };
+  const arm = createFpArm();
+  let settled = 0;
+  arm.subscribe(() => { settled++; });
+  const first = await arm.build({ race: 'fprace', deps });
+  assert.equal(first.ok, true, `the fixture build must stand (${first.stage}: ${first.error})`);
+  assert.equal(settled, 1);
+
+  // THE REAL ORDER FROM THE PACK: a weapon goes into the hand (the slow
+  // path - it reopens the archives), and the shield is equipped before
+  // those meshes land. Kite Shield, the LeftHand slot's own template.
+  const shield = [{ kind: 'armor', templateIndex: 111, material: 0x0200 }];
+  const swap = arm.setWeapon({ group: 'Weapons', templateIndex: 113, material: 0 }, { hasAmmo: false });
+  assert.ok(swap && typeof swap.then === 'function', 'the weapon swap must take the slow path, or this pins nothing');
+  assert.equal(arm.setWorn(shield), false, 'the shield cannot rebuild while the swap holds the rig');
+  await swap;
+  for (let i = 0; i < 60 && settled < 3; i++) await new Promise((r) => setTimeout(r, 10));
+
+  // The settlement is what repaints the panel (MW-D36), so a shield
+  // that never rebuilds is a shield that is never drawn.
+  assert.equal(settled, 3, `the queued worn table was dropped by the swap (${settled} settlements)`);
+  // ...and the rig is WEARING it: asking again is a no-op, which it can
+  // only be if the key moved. Before the fix this answered with a fresh
+  // rebuild - the body was still undressed and only the next thing to
+  // ask would have dressed it.
+  assert.equal(arm.setWorn(shield), false, 'the body is not wearing the shield the pack handed it');
+  assert.equal(arm.status().reason, 'built');
+});
+
+test('MAC-S1: ONE flush, called from every exit out of `busy`', () => {
+  const src = readFileSync('src/combat/fpArm.js', 'utf8');
+  // Two doors take `busy` - build() and setWeapon's incremental swap -
+  // and a third will arrive. The queue is emptied by one function, so a
+  // new door forgetting half of it is a call it did not make rather than
+  // two lines it did not copy.
+  const takers = (src.match(/^\s*busy = true;$/gm) ?? []).length;
+  const flushes = (src.match(/^\s*flushPending\(\);$/gm) ?? []).length;
+  // MW-D51: the third arrived - setTorch's slow path binds the light's
+  // mesh on both rigs and takes `busy` for the fetch.
+  assert.equal(takers, 3, `a door that takes \`busy\` must flush on its way out (${takers} takers)`);
+  assert.equal(flushes, takers, `every taker flushes (${flushes} flushes for ${takers} takers)`);
+  // ...and setWeapon's own `finally` still does all three of its duties.
+  // The file's own prose is not its wiring, so it is stripped first.
+  const code = src.replace(/^\s*\/\/.*$/gm, '');
+  const swap = code.slice(code.indexOf('    setWeapon(item, { hasAmmo = false, ammoCount = null } = {}) {'));
+  const tail = swap.slice(swap.indexOf('        } finally {'), swap.indexOf('        } finally {') + 600);
+  assert.match(tail, /busy = false;/, 'the swap still frees the rig');
+  assert.match(tail, /for \(const fn of listeners\)/, 'and still repaints (PX33)');
+  assert.match(tail, /flushPending\(\);/, 'and now hands over what queued behind it');
 });
 
 // ── MW-D39: JUMP - THE FOURTH SLOT ──────────────────────────────────
@@ -2906,8 +3007,8 @@ test('MW-D39: readySpell and castSpell are the two doors, and neither gates the 
   assert.equal(arm.status().spellReady ?? false, false);
   const src = readFileSync('src/combat/fpArm.js', 'utf8');
   // the stance re-composes on ready, and the three group readers take the flag
-  assert.equal((src.match(/animWeaponType\(built\.mwType, sheathed, spellReady\)/g) || []).length, 4,
-    'idle, movement (x2) and the weapon group must all read the spell stance');
+  assert.equal((src.match(/animWeaponType\(built\.mwType, sheathed, spellReady\)/g) || []).length, 5,
+    'idle, movement (x2), the weapon group and the torch\'s carried-left rule (MW-D51) must all read the spell stance');
   assert.match(src, /readySpell\(ready\) \{[\s\S]*?refreshWeaponGroup\(\);\n      resetIdle\(\);\n      resetMovement\(\);/);
   // a cast in flight is abandoned by an un-ready (an aborted spell)
   assert.match(src, /if \(!want && upper === UPPER_BODY\.Casting\)/);
@@ -2940,7 +3041,7 @@ test('MW-D39: the hosts wire it through the rig\u2019s one door, on the referenc
   // ROAD-E6 moved the moment: the door is CastReadySpell's PlayOneShot
   // (:430-435), it takes the release handler the engine parks its
   // resolution on, and it ANSWERS - false when PlayOneShot refused.
-  assert.match(rig, /castSpellAnim: \(rangeType, element, onRelease = null\) => \{\n\s+cast\.n = \(cast\.n \+ 1\) & 0xffff; cast\.rangeType = rangeType \| 0;[^\n]*\n\s+fpArm\.castSpell\(rangeType\);\n\s+return fpsSpellCasting\.playOneShot\(element, onRelease\);/,
+  assert.match(rig, /castSpellAnim: \(rangeType, element, onRelease = null\) => \{\n\s+cast\.n = \(cast\.n \+ 1\) & 0xffff; cast\.rangeType = rangeType \| 0;[^\n]*\n\s+(?:eotbBody\.cast\(\);[^\n]*\n\s+)?fpArm\.castSpell\(rangeType\);\n\s+return fpsSpellCasting\.playOneShot\(element, onRelease\);/,
     'the cast must have one door, and it carries the range, the element and the release');
   for (const host of ['src/scenes/dungeonContext.js', 'src/scenes/world.js']) {
     const h = readFileSync(host, 'utf8');
@@ -3017,9 +3118,11 @@ test('PX26 F1/F2/F3: the menu figure carries the hand, instantly, and a mid-buil
   const pack = readFileSync('src/ui/enhancedInventory.js', 'utf8');
   assert.match(pack, /arm\.setWeapon\?\.\(slots\?\.\[EQUIP_SLOTS\.RightHand\] \?\? null,/, 'the pack must hand over the hand while a window is up');
   assert.match(pack, /hasAmmo: hasDaggerfallArrows\(deps\.entity\.items\)/, 'and the port\u2019s own arrow test, not a second one');
-  // F3: a swap during a build waits, exactly as the worn table does
+  // F3: a swap during a build waits, exactly as the worn table does.
+  // MAC-S1 moved the flush itself into flushPending() - ONE home, called
+  // from every exit out of `busy` - so the queued hand is quoted there.
   assert.match(arm, /if \(busy\) \{ pendingWeapon = \{ item, hasAmmo \}; return false; \}/);
-  assert.match(arm, /if \(pendingWeapon\) \{ const w = pendingWeapon; pendingWeapon = null; this\.setWeapon\(w\.item, \{ hasAmmo: w\.hasAmmo \}\); \}/);
+  assert.match(arm, /if \(pendingWeapon\) \{ const w = pendingWeapon; pendingWeapon = null; api\.setWeapon\(w\.item, \{ hasAmmo: w\.hasAmmo \}\); \}/);
 });
 
 test('PX27: the arm\u2019s REACH is swept over every clip, not the idle alone', async () => {
@@ -3146,7 +3249,7 @@ test('PX33: a weapon swap notifies the panel, like every other settlement', asyn
   // showing a weapon the rig failed to bind, which is the state most
   // worth redrawing.
   const src = readFileSync('src/combat/fpArm.js', 'utf8');
-  const sw = src.slice(src.indexOf('    setWeapon(item, { hasAmmo = false } = {}) {'));
+  const sw = src.slice(src.indexOf('    setWeapon(item, { hasAmmo = false, ammoCount = null } = {}) {'));
   const body = sw.slice(0, sw.indexOf('\n    attack(strike'));
   const fin = body.indexOf('} finally {');
   assert.ok(fin > 0, 'the swap still ends in a finally');

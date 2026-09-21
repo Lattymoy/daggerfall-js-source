@@ -121,14 +121,46 @@ export const internalDuplicatesExist = (u) =>
  *  (blue, never overriding red), and whether the window may close -
  *  DFU's return is `noRedDupes && crossDupes.Count == 0`: BOTH kinds
  *  block the exit. The cross check dedupes each dict first (:256-258)
- *  so an internal pair does not read as a cross clash too. */
-export function checkDuplicates(u) {
+ *  so an internal pair does not read as a cross clash too.
+ *
+ *  AUDIT SOC D3 - `yield`, THE PORT'S ONE ADDITION TO THIS LAW, and it
+ *  is a WINDOW's option rather than a default. A caller passes the
+ *  actions whose rows IT CANNOT DRAW (ui/controlsWindow.js and
+ *  ui/mouseControlsWindow.js pass inputActions.js PORT_ACTIONS - the
+ *  classic art has no rect for 'SocialInteract'); before anything is
+ *  counted, any such action whose staged code clashes with a row the
+ *  window CAN draw is staged null. The clash then does not exist, the
+ *  exit is not blocked, and the yielded action is left UNBOUND and
+ *  rebindable in the window that does show it. Nothing else moves: a
+ *  clash BETWEEN two yielded actions, or one a yielded action has all
+ *  to itself, is left exactly where it was, and the enhanced window
+ *  passes no `yield` at all and sees DFU's law byte for byte. */
+export function checkDuplicates(u, { yield: yielded = [] } = {}) {
+  if (yielded.length) yieldDuplicates(u, yielded);
   const internal = getDuplicates([...currentDict(u).values()]);
   const cross = getDuplicates([
     ...new Set([...u.primary.values()].filter((c) => c != null)),
     ...new Set([...u.secondary.values()].filter((c) => c != null)),
   ]);
   return { internal, cross, ok: internal.size === 0 && cross.size === 0 };
+}
+
+/** The `yield` pass: in EACH staged dict on its own, a yielded action
+ *  whose code is also held by a NON-yielded action in that same dict
+ *  gives the code up (staged null). Per dict, because the two dicts are
+ *  a primary and a secondary and a code in one is not a clash with the
+ *  other - the cross check has its own reading of that, and it is the
+ *  same codes it would have seen. */
+function yieldDuplicates(u, yielded) {
+  const give = new Set(yielded);
+  for (const dict of [u.primary, u.secondary]) {
+    const kept = new Set();
+    for (const [action, code] of dict) if (code != null && !give.has(action)) kept.add(code);
+    for (const action of give) {
+      const code = dict.get(action);
+      if (code != null && kept.has(code)) dict.set(action, null);
+    }
+  }
 }
 
 /** SetAllKeyBindValues (:284-288) + SetKeyBindValues (:541-559): the

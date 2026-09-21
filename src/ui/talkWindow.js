@@ -44,6 +44,9 @@ export class ChoiceWindow {
     this.options = options;
     this.done = false;
     this.isChoiceWindow = true;
+    this._hitRows = null;   // set by draw(): this session's option rows, in real pixel space
+    this._hitBox = null;
+    this._m = null;         // this session's nativeMetrics, so click() can undo pointToNative
   }
 
   input(code) {
@@ -55,13 +58,31 @@ export class ChoiceWindow {
     if (opt) { this.done = true; opt.action?.(); }
   }
 
-  /** DaggerfallMessageBox.ClickAnywhereToClose. The old ChoiceWindow
-   * had no click seam, so a house greeting drawn over the world could
-   * only be dismissed from the keyboard and the host could reacquire
-   * pointer lock underneath it. Keyed menus are not click-anywhere. */
-  click() {
-    if (!this.options.length) { this.done = true; return true; }
-    return false;
+  /** AUDIT (mouse): the box was keyboard-only - a mouse-driven player
+   *  read "Y - yes / N - no" and had nothing to click, the same fault
+   *  ActionTextBox's own doc comment records for ClickAnywhereToClose.
+   *  `vx,vy` arrive in the host's NATIVE 320x200 space (pointToNative,
+   *  nativePanel.js) - this box draws in real canvas pixels centred on
+   *  canvas.width/height, a DIFFERENT space, so the point is converted
+   *  back through THIS box's own last draw() metrics rather than the
+   *  box being moved into native space (which would be a visual change
+   *  to a box ~50 call sites already draw and centre correctly).
+   *
+   *  CM1: a NO-OPTIONS box is DaggerfallMessageBox.ClickAnywhereToClose
+   *  - any click closes it, wherever it lands, and it draws as the
+   *  parchment (below), whose rows the hit map above never sees. The
+   *  keyed menus keep the row hit. */
+  click(vx, vy) {
+    if (!this.options.length) { this.input('confirm'); return true; }
+    if (this._m && this._hitBox) {
+      const px = vx * this._m.s + this._m.ox;
+      const py = vy * this._m.s + this._m.oy;
+      if (px >= this._hitBox.x && px < this._hitBox.x + this._hitBox.w) {
+        const row = this._hitRows.find((r) => py >= r.y0 && py < r.y1);
+        if (row) { this.input(row.code ?? 'confirm'); return true; }
+      }
+    }
+    return true;   // a click that missed every row is swallowed, not answered
   }
 
   draw(renderer, canvas, font, s) {
@@ -72,18 +93,27 @@ export class ChoiceWindow {
     }
 
     const wrapped = this.lines.flatMap((l) => (l === '' ? [''] : wrapText(font.fnt, l, 280)));
-    const lines = [...wrapped, '', ...this.options.filter((o) => o.label).map((o) => o.label)];
+    const optLines = this.options.filter((o) => o.label);
+    const bodyCount = wrapped.length + 1;   // +1 for the blank spacer row below the text
+    const lines = [...wrapped, '', ...optLines.map((o) => o.label)];
     if (!this.options.length) lines.push('(continue)');
     const w = Math.max(...lines.map((l) => measureText(font.fnt, l))) * s + 24 * s;
     const lineH = 12 * s;
     const h = lines.length * lineH + 20 * s;
     const x = (canvas.width - w) / 2, y = (canvas.height - h) / 2;
     renderer.drawScreenQuad(null, { x, y, w, h }, undefined, PANEL);
+    this._m = nativeMetrics(canvas);
+    this._hitBox = { x, y, w, h };
+    this._hitRows = [];
     let ty = y + 12 * s;
-    for (const l of lines) {
+    lines.forEach((l, i) => {
       drawText(renderer, font, l, x + 12 * s, ty, s, this.options.some((o) => o.label === l) || l === '(continue)' ? DIM : TEXT);
+      // Every row from bodyCount on is a clickable one: a real option
+      // (its own code) or, when there are none at all, the single
+      // '(continue)' row (null - click() reads that as 'confirm').
+      if (i >= bodyCount) this._hitRows.push({ code: optLines[i - bodyCount]?.code ?? null, y0: ty - lineH, y1: ty });
       ty += lineH;
-    }
+    });
   }
 }
 
@@ -99,6 +129,11 @@ export class TalkWindow {
   input(action) {
     if (action === 'back' || action === 'confirm') this.done = true;
   }
+
+  /** Same fault as ChoiceWindow's, simpler fix: one message, no
+   *  branching, so any click just says goodbye - "click anywhere to
+   *  close", ActionTextBox's own rule. */
+  click() { this.input('confirm'); return true; }
 
   draw(renderer, canvas, font, s) {
     const wrapped = wrapText(font.fnt, this.text, 280);

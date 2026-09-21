@@ -341,7 +341,7 @@ test('AUDIT 58 F5 ledger: the RE-INTEGRATED road system has its own section A ro
     'and world.js holds no road wire OUTSIDE that block - every one of them is in the ungated statement above');
 
   // AUDIT 58 R1 (a): the row's own line cite RESOLVES. It read
-  // `world.js:409-412` - four lines of the ROADS 3/23 comment block - from
+  // `world.js:470-473` - four lines of the ROADS 3/24 comment block - from
   // the day it was written, and the pin above re-derived the no-gate fact
   // without ever reading the number, so the one pointer a reader is sent to
   // could name anything. The cite is now sliced and checked.
@@ -360,7 +360,7 @@ test('AUDIT 58 F5 ledger: the RE-INTEGRATED road system has its own section A ro
   assert.match(rootFile('src/world/terrainGen.js'), /paintRoads\(tileData, tilemap/, 'the paint is in the shared kernel');
   const travel = rootFile('src/systems/travel.js');
   assert.ok(!/roadAt\(|path\.roadAt|byRoad/.test(travel), 'travel.js is still the verbatim port - the road term and its two deps stayed gone');
-  assert.match(rootFile('src/ui/overworldMap.js'), /byRoad: false,/, 'and byRoad is still the permanent false the trip card reads');
+  assert.doesNotMatch(rootFile('src/ui/heldMap.js'), /byRoad: /, 'AUDIT-MAP2: the permanent false went with the relief map\'s route line - the held map\'s trip carries no road term at all');
 
   // ...and the two pages that repeated the stale claim were corrected.
   const status = rootFile('bible/01-Overview/Port-Status-2026-09-02.md');

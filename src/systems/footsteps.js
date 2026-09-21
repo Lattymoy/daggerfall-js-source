@@ -99,6 +99,23 @@ export class FootstepMachine {
   update(pos, m, set) {
     const here = [pos[0], pos[2]];
     if (this.last === null) this.last = here;
+    // EOTB-IL: Eye Of The Beholder's SyncFootsteps - once the mod's
+    // Initialize has run DisableVanillaFootsteps (every clip index to
+    // -1, IL_54f8-IL_554c) the stride is the PICTURE's: PlayFootstep on
+    // the sprite's own frames, the CLIP this table's own choice (the mod
+    // copies PlayerFootsteps' selection, IL_55e8-IL_585b), at
+    // `FootstepVolumeScale * SoundVolume * (FP ? 1 : 2)` (IL_58cd-IL_5928)
+    // - no half-speed halving there. The anchor follows the feet so the
+    // distance does not pile up under the sprite and fire one long step
+    // the frame it hands the stride back (the :245 landing shape).
+    if (m.spriteStep?.owns) {
+      this.last = here;
+      this.distance = 0;
+      if (!m.spriteStep.fell) return null;
+      const clip = this.alternate ? set[1] : set[0];
+      this.alternate = !this.alternate;
+      return { clip, volume: FOOTSTEP_VOLUME * (m.spriteStep.volumeScale ?? 1) };
+    }
     // on-foot gate (:221-225): levitation always silences; a mount
     // silences unless the player is in exterior water.
     //

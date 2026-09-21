@@ -1,0 +1,72 @@
+[
+  {
+    "name": "FIELD-GUN19-1-the-muzzle-is-mapped-through-the-canvas-again",
+    "file": "src/combat/weaponRig.js",
+    "old": "  const r = worldRectPx(viewport, canvasW, canvasH);",
+    "new": "  const r = worldRectPx(null, canvasW, canvasH);",
+    "tests": [
+      "test/thunderlock.test.js"
+    ],
+    "note": "The bug itself: the docked large HUD shrinks the world pass, so a canvas pixel divided by the canvas puts the shot high. Measured at 96% too high on a fifth-of-the-screen bar."
+  },
+  {
+    "name": "FIELD-GUN19-2-the-strips-top-edge-is-dropped",
+    "file": "src/combat/weaponRig.js",
+    "old": "    up: (1 - ((py - r.y) / r.h) * 2) * tanY * forward,",
+    "new": "    up: (1 - (py / r.h) * 2) * tanY * forward,",
+    "tests": [
+      "test/thunderlock.test.js"
+    ],
+    "note": "A campaign survivor: the large HUD's bar is at the BOTTOM, so the strip starts at canvas row 0 and r.y is zero in the obvious fixture. The pin carries a strip pushed DOWN the canvas for exactly this."
+  },
+  {
+    "name": "FIELD-GUN19-3-the-rig-stops-parking-the-world-strip",
+    "file": "src/combat/weaponRig.js",
+    "old": "viewport: renderer.worldViewportRect ?? null };",
+    "new": "};",
+    "tests": [
+      "test/thunderlock.test.js"
+    ],
+    "note": "Without the parked rect every shot is high again, with nothing else to show for it."
+  },
+  {
+    "name": "FIELD-GUN19-4-the-frames-strip-is-cleared-with-the-GL-state",
+    "file": "src/render/renderer.js",
+    "old": "      this._worldViewportFrame = r ? { ...r } : null;   // FIELD-GUN19: the record, for the 2D pass",
+    "new": "",
+    "tests": [
+      "test/thunderlock.test.js"
+    ],
+    "note": "A getter over a field nobody assigns answers null for ever, which is the full canvas, which is the bug - and it survived a campaign that only asked whether the getter EXISTED."
+  },
+  {
+    "name": "FIELD-GUN19-5-the-blown-out-core-votes-on-hue",
+    "file": "src/characters/thunderlockIds.js",
+    "old": "    const chroma = Math.max(R, G, B) - Math.min(R, G, B);\n    if (!chroma) continue;\n    const k = a * chroma;",
+    "new": "    const k = a;",
+    "tests": [
+      "test/thunderlock.test.js"
+    ],
+    "note": "The other bug: an alpha-weighted mean of a glowing sprite is dominated by its over-exposed white core, and peak-normalising makes it paler still. The answer was a lavender indistinguishable from white."
+  },
+  {
+    "name": "FIELD-GUN19-6-the-greyscale-fallback-is-dropped",
+    "file": "src/characters/thunderlockIds.js",
+    "old": "  if (!w) { r = pr; g = pg; b = pb; w = pw; }   // nothing chromatic: the old answer, on purpose",
+    "new": "",
+    "tests": [
+      "test/thunderlock.test.js"
+    ],
+    "note": "The fallback is part of the rule, not a guard: a genuinely white orb must answer white rather than nothing."
+  },
+  {
+    "name": "FIELD-GUN19-7-the-peak-normalise-is-dropped",
+    "file": "src/characters/thunderlockIds.js",
+    "old": "  return [r / peak, g / peak, b / peak];",
+    "new": "  return [r / w, g / w, b / w];",
+    "tests": [
+      "test/thunderlock.test.js"
+    ],
+    "note": "This is a tint DIRECTION, not a strength - the flash curve and flashRange are already tuned, and a dim mean would darken the flash as a side effect of asking what colour it is."
+  }
+]

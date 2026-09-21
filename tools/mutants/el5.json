@@ -1,0 +1,299 @@
+[
+  {
+    "name": "planes-no-normalise",
+    "file": "src/render/bounds.js",
+    "old": "    const l = Math.hypot(out[k * 4], out[k * 4 + 1], out[k * 4 + 2]) || 1;",
+    "new": "    const l = 1;",
+    "tests": [
+      "test/el5_field.test.js"
+    ]
+  },
+  {
+    "name": "sphere-strict",
+    "file": "src/render/bounds.js",
+    "old": "+ planes[k * 4 + 3] < -r) return false;",
+    "new": "+ planes[k * 4 + 3] < r) return false;",
+    "tests": [
+      "test/el5_field.test.js"
+    ]
+  },
+  {
+    "name": "bounds-center-min",
+    "file": "src/render/bounds.js",
+    "old": "  out[0] = (minX + maxX) / 2; out[1] = (minY + maxY) / 2; out[2] = (minZ + maxZ) / 2;",
+    "new": "  out[0] = minX; out[1] = minY; out[2] = minZ;",
+    "tests": [
+      "test/el5_field.test.js"
+    ]
+  },
+  {
+    "name": "bounds-radius-sq",
+    "file": "src/render/bounds.js",
+    "old": "  out[3] = Math.sqrt(r2);",
+    "new": "  out[3] = r2;",
+    "tests": [
+      "test/el5_field.test.js"
+    ]
+  },
+  {
+    "name": "bounds-range-start",
+    "file": "src/render/bounds.js",
+    "old": "  const at = (k) => (indices ? indices[start + k] : k) * stride;",
+    "new": "  const at = (k) => (indices ? indices[k] : k) * stride;",
+    "tests": [
+      "test/el5_field.test.js"
+    ]
+  },
+  {
+    "name": "transform-scale-min",
+    "file": "src/render/bounds.js",
+    "old": "  out[o + 3] = s[3] * Math.max(sx, sy, sz);",
+    "new": "  out[o + 3] = s[3] * Math.min(sx, sy, sz);",
+    "tests": [
+      "test/el5_field.test.js"
+    ]
+  },
+  {
+    "name": "record-unbounded-culled",
+    "file": "src/render/bounds.js",
+    "old": "  return !r.bounded || sphereInPlanes(planes, r.sphere[0], r.sphere[1], r.sphere[2], r.sphere[3]);",
+    "new": "  return sphereInPlanes(planes, r.sphere[0], r.sphere[1], r.sphere[2], r.sphere[3]);",
+    "tests": [
+      "test/el5_field.test.js"
+    ]
+  },
+  {
+    "name": "batch-no-bounds-culled",
+    "file": "src/render/bounds.js",
+    "old": "  const s = b.bounds;\n  if (!s) return true;",
+    "new": "  const s = b.bounds;\n  if (!s) return false;",
+    "tests": [
+      "test/el5_field.test.js"
+    ]
+  },
+  {
+    "name": "casters-three",
+    "file": "src/render/shadowPass.js",
+    "old": "export const SHADOW_POINT_CASTERS = 6;",
+    "new": "export const SHADOW_POINT_CASTERS = 5;",
+    "tests": [
+      "test/el5_field.test.js"
+    ]
+  },
+  {
+    "name": "pick-max-unbounded",
+    "file": "src/render/shadowPass.js",
+    "old": "    if (picked.length > max) picked.pop();\n",
+    "new": "",
+    "tests": [
+      "test/el5_field.test.js"
+    ]
+  },
+  {
+    "name": "pick-no-min-dist",
+    "file": "src/render/shadowPass.js",
+    "old": "    if (d < minDist || !(lights[i * 4 + 3] > 0) || lights[i * 4 + 3] > SHADOW_CASTER_MAX_RANGE) continue;   // AUDIT-EL F11\n    if (picked.length === max",
+    "new": "    if (!(lights[i * 4 + 3] > 0) || lights[i * 4 + 3] > SHADOW_CASTER_MAX_RANGE) continue;   // AUDIT-EL F11\n    if (picked.length === max",
+    "tests": [
+      "test/el5_field.test.js"
+    ]
+  },
+  {
+    "name": "render-one-caster",
+    "file": "src/render/shadowPass.js",
+    "old": "    for (let k = 0; k < casters.length; k++) {",
+    "new": "    for (let k = 0; k < Math.min(1, casters.length); k++) {",
+    "tests": [
+      "test/el5_field.test.js"
+    ]
+  },
+  {
+    "name": "render-params-far",
+    "file": "src/render/shadowPass.js",
+    "old": "this.pointParams[k * 4 + 3] = far;",
+    "new": "this.pointParams[k * 4 + 3] = 0;",
+    "tests": [
+      "test/el2_shadows.test.js"
+    ]
+  },
+  {
+    "name": "replay-no-record-cull",
+    "file": "src/render/shadowPass.js",
+    "old": "      if (r.kind !== REC_BB && !recordVisible(planes, r)) { this.stats.culled++; continue; }\n",
+    "new": "",
+    "tests": [
+      "test/el5_field.test.js"
+    ]
+  },
+  {
+    "name": "replay-no-sub-cull",
+    "file": "src/render/shadowPass.js",
+    "old": "          if (!subMeshVisible(planes, r, k)) { this.stats.culled++; continue; }\n",
+    "new": "",
+    "tests": [
+      "test/el5_field.test.js"
+    ]
+  },
+  {
+    "name": "replay-no-batch-cull",
+    "file": "src/render/shadowPass.js",
+    "old": "          if (!batchVisible(planes, b)) { this.stats.culled++; continue; }   // EL5\n",
+    "new": "",
+    "tests": [
+      "test/el5_field.test.js"
+    ]
+  },
+  {
+    "name": "record-never-bounded",
+    "file": "src/render/shadowPass.js",
+    "old": "    r.bounded = !!mesh.bounds;\n    if (r.bounded) {\n      transformSphere(matrix, mesh.bounds, r.sphere);",
+    "new": "    r.bounded = false;\n    if (r.bounded) {\n      transformSphere(matrix, mesh.bounds, r.sphere);",
+    "tests": [
+      "test/el5_field.test.js"
+    ]
+  },
+  {
+    "name": "glsl-face-sign",
+    "file": "src/render/shadowPass.js",
+    "old": "  if (a.x >= a.y && a.x >= a.z) { face = d.x > 0.0 ? 0 : 1; m = a.x; }",
+    "new": "  if (a.x >= a.y && a.x >= a.z) { face = d.x > 0.0 ? 1 : 0; m = a.x; }",
+    "tests": [
+      "test/el5_field.test.js"
+    ]
+  },
+  {
+    "name": "glsl-layer-no-caster",
+    "file": "src/render/shadowPass.js",
+    "old": "  float layer = float(k * 6 + face);",
+    "new": "  float layer = float(face);",
+    "tests": [
+      "test/el2_shadows.test.js"
+    ]
+  },
+  {
+    "name": "glsl-no-caster-dark",
+    "file": "src/render/shadowPass.js",
+    "old": "  return k >= 0 ? pointShadowAt(k, wp, n) : 1.0;",
+    "new": "  return k >= 0 ? pointShadowAt(k, wp, n) : 0.0;",
+    "tests": [
+      "test/el5_field.test.js"
+    ]
+  },
+  {
+    "name": "upload-one-index",
+    "file": "src/render/shadowPass.js",
+    "old": "    gl.uniform1iv(loc.shadowIndex, this.shadowIndex);",
+    "new": "    gl.uniform1i(loc.shadowIndex, this.shadowIndex[0]);",
+    "tests": [
+      "test/el2_shadows.test.js"
+    ]
+  },
+  {
+    "name": "storage-six-layers",
+    "file": "src/render/shadowPass.js",
+    "old": "gl.texStorage3D(gl.TEXTURE_2D_ARRAY, 1, gl.DEPTH_COMPONENT24, SHADOW_POINT_SIZE, SHADOW_POINT_SIZE, 6 * SHADOW_POINT_CASTERS);",
+    "new": "gl.texStorage3D(gl.TEXTURE_2D_ARRAY, 1, gl.DEPTH_COMPONENT24, SHADOW_POINT_SIZE, SHADOW_POINT_SIZE, 6);",
+    "tests": [
+      "test/el2_shadows.test.js"
+    ]
+  },
+  {
+    "name": "glare-slack-zero",
+    "file": "src/render/airPass.js",
+    "old": "export const AIR_GLARE_SLACK = 0.25;",
+    "new": "export const AIR_GLARE_SLACK = 0.0;",
+    "tests": [
+      "test/el5_field.test.js"
+    ]
+  },
+  {
+    "name": "glare-one-tap",
+    "file": "src/render/airPass.js",
+    "old": "      vis = (flame(vc, lantern)\n           + flame(vc + vec4(0.0, s, 0.0, 0.0), lantern) + flame(vc + vec4(0.0, 2.0 * s, 0.0, 0.0), lantern)\n           + flame(vc + vec4(0.0, -s, 0.0, 0.0), lantern) + flame(vc + vec4(0.0, -2.0 * s, 0.0, 0.0), lantern)\n           + flame(vc + vec4(s, 0.0, 0.0, 0.0), lantern) + flame(vc + vec4(-s, 0.0, 0.0, 0.0), lantern)) / 7.0;",
+    "new": "      vis = flame(vc, lantern);",
+    "tests": [
+      "test/el3_air.test.js"
+    ]
+  },
+  {
+    "name": "glare-viewdist-sign",
+    "file": "src/render/airPass.js",
+    "old": "  return uProjInfo.w / (z + uProjInfo.z);   // -viewZ: positive, along the eye's -z",
+    "new": "  return -uProjInfo.w / (z + uProjInfo.z);   // -viewZ: positive, along the eye's -z",
+    "tests": [
+      "test/el5_field.test.js"
+    ]
+  },
+  {
+    "name": "glare-no-texel",
+    "file": "src/render/airPass.js",
+    "old": "< AIR_GLARE_MIN_DISTANCE) continue;   // EL7: the torch in the hand, the candle",
+    "new": "< 0.0) continue;   // EL7: the torch in the hand, the candle",
+    "tests": [
+      "test/el7_polish.test.js"
+    ]
+  },
+  {
+    "name": "resolve-linear-pivot",
+    "file": "src/render/airPass.js",
+    "old": "  e = (e - 0.5) * uGrade.w + 0.5;",
+    "new": "  e = (e - 0.18) * uGrade.w + 0.18;",
+    "tests": [
+      "test/el5_field.test.js"
+    ]
+  },
+  {
+    "name": "lit-no-early-out",
+    "file": "src/render/enhancedLighting.js",
+    "old": "    if (d >= uPointLights[i].w) continue;   // EL5: outside the window the term is exactly zero - no shadow taps, no glint, no pow for it\n",
+    "new": "",
+    "tests": [
+      "test/el5_field.test.js"
+    ]
+  },
+  {
+    "name": "flat-no-early-out",
+    "file": "src/render/enhancedLighting.js",
+    "old": "    if (d >= uPointLights[i].w) continue;   // EL5\n",
+    "new": "",
+    "tests": [
+      "test/el5_field.test.js"
+    ]
+  },
+  {
+    "name": "mesh-no-bounds",
+    "file": "src/render/renderer.js",
+    "old": "    const bounds = boundsOf(model.positions);",
+    "new": "    const bounds = null;",
+    "tests": [
+      "test/el5_field.test.js"
+    ]
+  },
+  {
+    "name": "sub-bounds-whole",
+    "file": "src/render/renderer.js",
+    "old": "_bounds: boundsOf(model.positions, model.indices, sm.startIndex, sm.primitiveCount * 3) }));",
+    "new": "_bounds: boundsOf(model.positions) }));",
+    "tests": [
+      "test/el5_field.test.js"
+    ]
+  },
+  {
+    "name": "bb-bounds-no-flat",
+    "file": "src/render/renderer.js",
+    "old": "    bounds[3] += Math.hypot(size.w, size.h) * 0.5;\n",
+    "new": "",
+    "tests": [
+      "test/el5_field.test.js"
+    ]
+  },
+  {
+    "name": "terrain-no-bounds",
+    "file": "src/render/renderer.js",
+    "old": "    return { vao, buffers, indexCount: indexSet.count, bounds: boundsOf(positions) };   // EL5: the replays cull by it",
+    "new": "    return { vao, buffers, indexCount: indexSet.count };",
+    "tests": [
+      "test/el5_field.test.js"
+    ]
+  }
+]

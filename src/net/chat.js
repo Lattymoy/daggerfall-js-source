@@ -52,12 +52,21 @@ export class ChatLog {
 
   tab(id) { return this.tabs.find((t) => t.id === id) ?? null; }
 
-  /** A line in: kept on its tab, the oldest dropped past the cap, unread unless the tab is open and active. */
-  push(tabId, { id = '', name = '', text = '', at = null, mine = false } = {}) {
+  /** A line in: kept on its tab, the oldest dropped past the cap, unread unless the tab is open and active.
+   *
+   *  SRV-N: `system` marks a line the GAME wrote rather than a player -
+   *  the server-restart and new-build notices. It is a flag and not a
+   *  reserved name because a name is forgeable: the relay lets a player
+   *  call themselves anything the filter allows (net/nameFilter.js
+   *  guards the words, not the impersonation), so a notice recognised by
+   *  the string 'Server' would be one `/name Server` away from a player
+   *  announcing a fake restart. A flag never travels on the wire - it is
+   *  set here, by us, on a line nobody sent. */
+  push(tabId, { id = '', name = '', text = '', at = null, mine = false, system = false } = {}) {
     const tab = this.tab(tabId);
     if (!tab || typeof text !== 'string' || !text) return null;
     const now = this._now();
-    const line = { seq: ++this._seq, id: String(id), name: String(name), text, at: Number.isFinite(at) ? at : now, t: now, mine: !!mine };
+    const line = { seq: ++this._seq, id: String(id), name: String(name), text, at: Number.isFinite(at) ? at : now, t: now, mine: !!mine, system: !!system };
     tab.messages.push(line);
     if (tab.messages.length > this._keep) tab.messages.splice(0, tab.messages.length - this._keep);
     if (!(this.open && tab.id === this.active)) tab.unread++;

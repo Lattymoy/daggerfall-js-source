@@ -1,5 +1,6 @@
 // Static-world capsule collider: triangle soup in a uniform grid, the
-// capsule approximated as two spheres (feet + head). Engine-side (ours,
+// capsule resolved as a CHAIN of spheres along its axis (COL1 - two, at
+// the ends alone, left the waist unsampled). Engine-side (ours,
 // like the renderer) - DFU delegates this to Unity's CharacterController;
 // the CONTRACT it must honor is verbatim (motor.js constants): radius
 // 0.35, height 1.8, stepOffset 0.5, slopeLimit 70 (ground = contact
@@ -28,8 +29,38 @@ import {
 // faster. Pure spatial-index change: same triangles found, all
 // P14/P16 movement laws untouched.
 const CELL = 2;
+/** AUDIT ONCRASH1 B5a: the most sweep steps one move() may be split into - a motion larger than this is taken
+ *  whole rather than swept, because a loop whose length a caller's arithmetic chooses is a frozen tab waiting. */
+const SUBSTEPS_MAX = 256;
 const GROUND_NY = Math.cos((SLOPE_LIMIT_DEG * Math.PI) / 180);
 const SKIN = 0.02;
+
+/** The slack on the broad-phase box, in world units: the triangles' own arithmetic is float, so the box is grown by
+ *  a hair rather than trusted to the last bit. Far below CELL, so it costs nothing in rejects. */
+const BOX_SKIN = 1e-3;
+/** AUDIT NAME1 F2: THE BROAD PHASE. Does the segment `origin + dir * [0, limit]` touch this box at all?
+ *  Slab test, exact - a miss here CANNOT hide a hit, because every triangle in the bucket is inside the box the
+ *  bucket's own vertices made (BOX_SKIN covers the rounding of that arithmetic). Written as a free function rather
+ *  than inline so the one reject is the same reject for every walk that later wants it.
+ *  @returns {boolean} true when the box must be walked */
+export function segmentHitsBox(ox, oy, oz, dir, min, max, limit) {
+  if (!(limit >= 0)) return false;
+  let tMin = 0, tMax = limit;
+  for (let k = 0; k < 3; k++) {
+    const lo = min[k] - BOX_SKIN, hi = max[k] + BOX_SKIN;
+    if (!(hi >= lo)) return false;           // an empty bucket has no box and nothing to walk
+    const d = dir[k];
+    const ok = k === 0 ? ox : k === 1 ? oy : oz;   // BLOOD1 AUDIT 3: read in place - this ran per bucket per ray, and boxed the origin into a fresh array each time
+    if (d === 0) { if (ok < lo || ok > hi) return false; continue; }
+    const inv = 1 / d;
+    let t1 = (lo - ok) * inv, t2 = (hi - ok) * inv;
+    if (t1 > t2) { const s = t1; t1 = t2; t2 = s; }
+    if (t1 > tMin) tMin = t1;
+    if (t2 < tMax) tMax = t2;
+    if (tMin > tMax) return false;
+  }
+  return true;
+}
 
 function closestPointOnTriangle(p, a, b, c, out) {
   // Ericson, Real-Time Collision Detection 5.1.5.
@@ -75,11 +106,27 @@ function closestPointOnTriangle(p, a, b, c, out) {
   out[2] = a[2] + ab[2] * v + ac[2] * w;
 }
 
+/** MAC-BUG W5: how far apart the two samples of a central difference
+ *  are. Half a unit - wide enough that the terrain sampler's own
+ *  interpolation answers two different heights on a real slope,
+ *  narrow enough that a drop of blood reads the hill it is on rather
+ *  than the one over the ridge. */
+const GROUND_NORMAL_STEP = 0.5;
+
 export class Collider {
-  /** @param {(x:number,z:number)=>number} heightAt floor beneath everything */
-  constructor(heightAt = () => -Infinity) {
+  /** @param {(x:number,z:number)=>number} heightAt floor beneath everything
+   *  @param {((x:number,z:number)=>number)|null} [surfaceAt] BLOOD1 AUDIT 3:
+   *  the DRAWN ground, where it differs from the floor the capsule
+   *  walks on. The world host's `heightAt` is a bilinear read of the
+   *  heightmap; the terrain it draws is two triangles a quad, and the
+   *  two surfaces are up to 0.08 apart on real grades (terrainSurface.js
+   *  measured it) - four times a mark's 2cm lift. The capsule keeps
+   *  the bilinear floor it has always had; a thing PLACED on the ground
+   *  (surfaceHit, groundNormal) asks where the ground is drawn. */
+  constructor(heightAt = () => -Infinity, surfaceAt = null) {
     this.heightAt = heightAt;
-    this._buckets = new Map(); // key -> {tris: Float32Array, grid: Map, t: () => [x,y,z]}
+    this.surfaceAt = typeof surfaceAt === 'function' ? surfaceAt : null;
+    this._buckets = new Map(); // key -> {tris, grid: Map, t: () => [x,y,z], min: [x,y,z], max: [x,y,z]}   // AUDIT NAME1 F2: the bounds are the ray's broad phase
   }
 
   /**
@@ -89,7 +136,11 @@ export class Collider {
   addMesh(bucketKey, positions, indices, matrix, translation = null) {
     let bucket = this._buckets.get(bucketKey);
     if (!bucket) {
-      bucket = { tris: [], grid: new Map(), t: translation || (() => ZERO3) };
+      // AUDIT NAME1 F2: `min`/`max` are the bucket's own bounds in ITS
+      // OWN space (the translation is applied to the RAY, as the DDA
+      // already does), kept as the triangles go in - one compare per
+      // vertex, paid once at load, against a walk paid per ray.
+      bucket = { tris: [], grid: new Map(), t: translation || (() => ZERO3), min: [Infinity, Infinity, Infinity], max: [-Infinity, -Infinity, -Infinity] };
       this._buckets.set(bucketKey, bucket);
     }
     const m = matrix;
@@ -109,6 +160,12 @@ export class Collider {
       const c = tx(indices[i + 2]);
       const idx = bucket.tris.length;
       bucket.tris.push([a, b, c]);
+      for (const v of [a, b, c]) {
+        for (let k = 0; k < 3; k++) {
+          if (v[k] < bucket.min[k]) bucket.min[k] = v[k];
+          if (v[k] > bucket.max[k]) bucket.max[k] = v[k];
+        }
+      }
       const minX = Math.floor(Math.min(a[0], b[0], c[0]) / CELL);
       const maxX = Math.floor(Math.max(a[0], b[0], c[0]) / CELL);
       const minZ = Math.floor(Math.min(a[2], b[2], c[2]) / CELL);
@@ -166,6 +223,19 @@ export class Collider {
       const ox = origin[0] - t[0];
       const oy = origin[1] - t[1];
       const oz = origin[2] - t[2];
+      // AUDIT NAME1 F2: THE BUCKET'S OWN BOX, FIRST. Without it every
+      // ray walked a full 2-D DDA to maxDist through EVERY bucket -
+      // and an exterior collider holds one bucket per streamed map
+      // pixel plus the gates and the action doors, 20-60 in a town. The
+      // name pass casts one ray a peer, so the walk was multiplied by
+      // the crowd: the audit measured 3.85 ms a frame at 30 buckets x
+      // 60 peers and 24 ms at 60 x 199. Measured again here over a
+      // synthetic 30-bucket town, before and after: 2.13 -> 0.19 ms a
+      // frame at 60 peers, 8.63 -> 0.33 at 199, and 209 cell lookups
+      // for 60 rays where the bare DDA walks 21,720. A box test is six
+      // compares, and a bucket the ray never enters is now six
+      // compares.
+      if (!segmentHitsBox(ox, oy, oz, dir, bucket.min, bucket.max, Math.min(maxDist, best))) continue;
       // 2D DDA across cells.
       let cx = Math.floor(ox / CELL);
       let cz = Math.floor(oz / CELL);
@@ -209,6 +279,64 @@ export class Collider {
       normal = [nx, ny, nz];
     }
     return { dist: best, key: bestKey, normal };
+  }
+
+  /**
+   * MAC-BUG W5 (Mac, 2026-09-20: "blood doesn't work outside") - THE
+   * SAME RAY, PLUS THE GROUND.
+   *
+   * `raycastHit` walks BUCKETS ALONE: triangles, registered by
+   * `addMesh`. That is the whole of the world indoors and underground,
+   * where a floor is a mesh - and it is why every caller that wants a
+   * wall, a ceiling, a head-bump or a line of sight wants exactly
+   * that, and why this is a SECOND door rather than a change to it.
+   *
+   * Outside, the ground is not a mesh. It is `heightAt` - the terrain
+   * sampler in the world host, a flat constant in the exterior one -
+   * applied to the capsule in `_resolveSphere` and nowhere else. So a
+   * ray cast straight down from something standing on the ground hits
+   * NOTHING, and a caller that reads "nothing" as "no surface" is
+   * right indoors and silently wrong in the whole outdoors.
+   *
+   * This answers whichever is NEARER, so a walkway over a valley still
+   * catches what lands on it, and the terrain still catches what
+   * misses the walkway. The floor is only ever met on the way DOWN.
+   *
+   * The ground's normal is its own SLOPE, by central difference on the
+   * sampler rather than a flat up: a hillside is a surface, and a quad
+   * laid flat on a hill stands in it. A sampler with no slope (the
+   * exterior host's constant) answers straight up by construction, so
+   * the flat case costs nothing but the four lookups.
+   */
+  surfaceHit(origin, dir, maxDist, filter = null) {
+    const mesh = this.raycastHit(origin, dir, maxDist, filter);
+    if (!(dir[1] < 0)) return mesh;
+    const floor = (this.surfaceAt ?? this.heightAt)(origin[0], origin[2]);   // BLOOD1 AUDIT 3: the drawn ground, where the host draws one
+    if (!Number.isFinite(floor)) return mesh;
+    const d = (origin[1] - floor) / -dir[1];
+    if (!(d >= 0) || d > maxDist) return mesh;
+    if (mesh && Number.isFinite(mesh.dist) && mesh.dist <= d) return mesh;
+    return { dist: d, key: null, normal: this.groundNormal(origin[0], origin[2]) };
+  }
+
+  /** The ground's slope where it is asked, as a unit normal. Central
+   *  difference over GROUND_NORMAL_STEP: the gradient of a height
+   *  field is (-dh/dx, 1, -dh/dz), normalised. A sampler that answers
+   *  a constant - or one that runs off the edge of what is streamed -
+   *  gives straight up, which is the right answer for flat ground and
+   *  the safe one for no ground at all. */
+  groundNormal(x, z) {
+    const h = GROUND_NORMAL_STEP;
+    const at = this.surfaceAt ?? this.heightAt;   // BLOOD1 AUDIT 3: the slope of the DRAWN ground - inside one triangle the difference is its plane exactly
+    const hx = at(x + h, z) - at(x - h, z);
+    const hz = at(x, z + h) - at(x, z - h);
+    if (!Number.isFinite(hx) || !Number.isFinite(hz)) return [0, 1, 0];
+    // `|| 0` is not belt and braces: -0 over flat ground is a real
+    // answer that compares unequal to 0 and reads as a negative
+    // gradient to anything that tests the sign.
+    const nx = (-hx / (2 * h)) || 0, nz = (-hz / (2 * h)) || 0;
+    const l = Math.hypot(nx, 1, nz) || 1;
+    return [nx / l, 1 / l, nz / l];
   }
 
   /**
@@ -340,7 +468,7 @@ export class Collider {
     return this.capsuleCast(origin, origin, radius, dir, maxDist, 1);
   }
 
-  _resolveSphere(center, radius, out, standCeil = Infinity, oneWayFloor = false) {
+  _resolveSphere(center, radius, out, standCeil = Infinity, oneWayFloor = false, midBody = false) {
     // Push a sphere out of every nearby triangle; returns strongest
     // ground-ness and whether any ceiling-ish contact happened.
     // SH1 (2026-09-12, Mac: "you can immediately walk over things (like
@@ -395,7 +523,29 @@ export class Collider {
             // SH1: the contact point's world y is center - dy (dy is
             // center minus closest); above the stand ceiling with an
             // upward-leaning normal it is a wall, not a tread.
-            const wallAbove = dy > 0 && center[1] - dy > standCeil;
+            // AUDIT COL1 F8: A MID-BODY CONTACT IS A WALL - IN THE CODE,
+            // NOT ONLY IN THE COMMENT. COL1 gave the middle spheres "the
+            // plain push, because a contact at mid-body is something you
+            // walked into, never a floor you stand on" - but the plain
+            // push is along centre-minus-closest, and out of a TABLE TOP
+            // that direction is straight UP. _resolveCapsule copies the
+            // middle's y back into the whole capsule, so the body was
+            // LIFTED onto the thing it walked into. Measured on the ride
+            // stance (h 2.6, the widest band of middles): before COL1 a
+            // 0.70-1.30 top was walked through and only <=0.69 could be
+            // mounted; with the middles added, tops to 0.85 were mounted
+            // by a 0.65 m single-frame rise - past STEP_OFFSET, with
+            // `grounded` true the whole way. That is SH1's bug wearing
+            // COL1's clothes. The law is enforced where the push is
+            // chosen: an upward-leaning face met by a MIDDLE sphere
+            // pushes SIDEWAYS by its whole penetration and never grounds
+            // - the same branch SH1 wrote for the step ladder's tabletop
+            // edges. Legal ground is out of the middles' reach by
+            // construction: past the lower sphere's own resolve a slope
+            // at the slope limit clears a middle centre by 0.59 > radius,
+            // so this fires only on geometry the body is truly inside.
+            const wallAbove = (dy > 0 && center[1] - dy > standCeil)
+              || (midBody && dy > 0 && dy / d >= GROUND_NY);
             // PH1 (2026-09-14, Mac: "it's possible to randomly walk into
             // the floor in dungeons and get stuck in the ground"): A FLOOR
             // IS ONE-WAY FOR THE LOWER SPHERE. The push-out is along
@@ -497,8 +647,69 @@ export class Collider {
     const axis = Math.max(0, height - 2 * CAPSULE_RADIUS);
     const low = [feet[0], feet[1] + CAPSULE_RADIUS, feet[2]];
     const high = [feet[0], feet[1] + CAPSULE_RADIUS + axis, feet[2]];
+    // COL1 (2026-09-15, Mac: "3d Geometry has no collison. For example,
+    // in the first dungeon the table legs do have collison but the table
+    // top doesnt"): THE BODY WAS SAMPLED AT TWO POINTS AND HAD A HOLE.
+    //
+    // A capsule is a sphere SWEPT along a segment; this resolves it as
+    // two spheres at the segment's ends, which is only the same shape
+    // while those two cover the segment. Standing, they do not: centres
+    // sit at feet+0.35 and feet+1.45 with radius 0.35, so the lower
+    // reaches feet+0.70 and the upper starts at feet+1.10 and the band
+    // BETWEEN THEM IS SAMPLED BY NEITHER. That band is 0.40 tall and it
+    // is at exactly waist height, which is where a table top is - hence
+    // the report, and hence the legs stopping you while the top did not.
+    // The triangles were always in the index (sphereOverlaps finds them
+    // at y=0.90); nothing ever asked there. The ride stance is worse:
+    // axis 1.9 leaves a 1.2-tall hole.
+    //
+    // So the sphere COUNT is derived from the axis rather than fixed at
+    // two: consecutive centres are never more than one diameter apart,
+    // which is the condition for the chain to cover the segment. The
+    // ends keep their existing laws exactly - the lower sphere's
+    // one-way floor (PH1), the head's plain push - and a contact at
+    // mid-body is something you walked into, never a floor you stand
+    // on, which AUDIT COL1 F8 below turns from a comment into a branch.
+    //
+    // AUDIT COL1 F9: THE PRICE, MEASURED. The original note said "one
+    // more sphere resolve per iteration at standing height (three
+    // instead of two)" and stopped there, which reads as the whole
+    // cost and is not. Benchmarked over a cluttered dungeon room,
+    // _resolveCapsule itself: standing 20.2 -> 30.7 us (1.5x, the
+    // three-for-two), and the RIDE stance 20.4 -> 41.0 us (2.0x -
+    // FOUR spheres for two, which the note never mentioned). On top of
+    // that a blocked body runs the step ladder's retries where it used
+    // to walk through, so calls per move() rise as well - the walked-
+    // through path was cheap because it was wrong. CELL=2 leaves the
+    // headroom, and the spheres' scratch is reused rather than rebuilt
+    // per call (this runs several times a frame per body).
+    // AUDIT COL1 F12: THE BEADS MUST OVERLAP, NOT TOUCH. COL1's span was
+    // exactly a diameter, which is TANGENCY: at the join between two
+    // beads the chain's reach falls to zero, and short of that it is
+    // thin - measured 43% of the radius on the ride stance and 26% on a
+    // 3.4 m body. Driven: a 3.4 m foe (sprite heights that tall are
+    // ordinary - SetupDemoEnemy's height comes off the idle frame) walked
+    // clean through a slab anywhere in 2.70-2.93, the last through-band
+    // left after COL1 and F8. A 5% overlap gives every join a real bite,
+    // closes that band, and costs ONE extra sphere only past ~3.2 m of
+    // body: the player's four stances (0.30/0.9/1.8/2.6) keep the sphere
+    // counts they had to the bead.
+    const span = 2 * CAPSULE_RADIUS * BEAD_OVERLAP;
+    const middles = Math.max(0, Math.ceil(axis / span) - 1);
+    while (MID_SCRATCH.length < middles) MID_SCRATCH.push([0, 0, 0]);
+    const mid = MID_SCRATCH;
     for (let iter = 0; iter < 3; iter++) {
       this._resolveSphere(low, CAPSULE_RADIUS, out, standCeil, true);   // PH1: the lower sphere's floor is one-way
+      for (let i = 0; i < middles; i++) {
+        const m2 = mid[i];
+        m2[0] = low[0];
+        m2[2] = low[2];
+        m2[1] = low[1] + (axis * (i + 1)) / (middles + 1);
+        this._resolveSphere(m2, CAPSULE_RADIUS, out, standCeil, false, true);   // COL1: a mid-body contact is a wall, never a floor (AUDIT COL1 F8: enforced, not narrated)
+        low[0] = m2[0];
+        low[2] = m2[2];
+        low[1] = m2[1] - (axis * (i + 1)) / (middles + 1);
+      }
       high[0] = low[0];
       high[2] = low[2];
       high[1] = low[1] + axis;
@@ -524,12 +735,23 @@ export class Collider {
     // EMBEDDED the capsule in stair treads under low-but-legal
     // stairwell ceilings (and killed every jump from the squeezed
     // stand at one frame).
+    // AUDIT COL1 F13: the probe walks the WHOLE chain. It asked the head
+    // sphere only, which was every sphere above the feet when the body
+    // was two beads; with middles it is one of several, and a body
+    // wedged UNDER a low slab at waist height answered "the head is
+    // clear" and kept a rise it could not hold. The beads are re-probed
+    // at the same centres the loop used, and any one of them still being
+    // driven down is the too-tight answer the clamp exists for.
     if (out.hitCeiling && feet[1] > entryY) {
-      const headY = feet[1] + CAPSULE_RADIUS + axis;   // A6: the clamped axis, same sphere the loop above used
-      const probe = [feet[0], headY, feet[2]];
       const probeOut = { grounded: false, hitCeiling: false, pushedDown: false };
-      this._resolveSphere(probe, CAPSULE_RADIUS, probeOut);
-      if (probe[1] < headY - 1e-4) feet[1] = entryY;   // still being pushed DOWN out of a ceiling -> too tight, revert
+      // from the first MIDDLE up to the head - the lower sphere owns the
+      // floor, and a floor pushing it up is not what a ceiling clamps
+      for (let i = 1; i <= middles + 1; i++) {
+        const y = feet[1] + CAPSULE_RADIUS + (axis * i) / (middles + 1);   // A6: the clamped axis, the same centres the loop used
+        const probe = [feet[0], y, feet[2]];
+        this._resolveSphere(probe, CAPSULE_RADIUS, probeOut);
+        if (probe[1] < y - 1e-4) { feet[1] = entryY; break; }   // still being pushed DOWN out of a ceiling -> too tight, revert
+      }
     }
   }
 
@@ -545,7 +767,13 @@ export class Collider {
     const maxComp = Math.max(Math.abs(dx), Math.abs(dy), Math.abs(dz));
     const maxStep = CAPSULE_RADIUS * 0.75;
     if (maxComp > maxStep) {
-      const n = Math.ceil(maxComp / maxStep);
+      // AUDIT ONCRASH1 B5a: THE SUBSTEP COUNT HAS A CEILING, and until now every bound on it lived in a caller.
+      // AUDIT WORLD3 F2 hit this exact loop - an unnormalised direction off the wire asked for 2.4e8 substeps and
+      // froze the tab for every player in the room - and fixed it by unit-normalising `d` at the ONE call site that
+      // had caused it. That is a band-aid: the next caller with bad arithmetic freezes the tab again, and nothing
+      // here says no. Past the cap the remainder is taken as a single step, which is what a teleport is: the sweep
+      // stops being exact for a motion no frame can produce anyway, and no number can buy an unbounded loop.
+      const n = Math.min(SUBSTEPS_MAX, Math.ceil(maxComp / maxStep));
       const out = { grounded: false, hitCeiling: false, pushedDown: false, groundKey: null };
       for (let i = 0; i < n; i++) {
         const r = this._moveStep(feet, dx / n, dy / n, dz / n, height, snap);
@@ -782,6 +1010,13 @@ export class Collider {
 
 const ZERO3 = [0, 0, 0];
 const TMP = [0, 0, 0];
+// AUDIT COL1 F9: the middle spheres' centres, reused. _resolveCapsule
+// runs several times per move() per body and is never re-entered, so
+// rebuilding this array per call was pure garbage at frame rate.
+const MID_SCRATCH = [];
+// AUDIT COL1 F12: the fraction of a DIAMETER that consecutive bead
+// centres may be apart. 1 is tangency - a join with no bite at all.
+const BEAD_OVERLAP = 0.95;
 
 /** Moller-Trumbore, both faces; distance along unit dir or null. */
 function rayTriangle(ox, oy, oz, d, a, b, c) {

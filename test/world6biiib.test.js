@@ -16,7 +16,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { cellHaloFor, RANGE_PIXELS, WORLD_CELL } from '../src/net/wire.js';
-import { OnlineSession } from '../src/net/online.js';
+import { OnlineSession, PEER_TIMEOUT_MS } from '../src/net/online.js';
 import { fakeSocketClass } from './fakeSocket.mjs';
 import { createExteriorFoes } from '../src/scenes/exteriorFoes.js';
 
@@ -100,7 +100,12 @@ test('WORLD6b-iii(b): the session - a halo room is hello\'d into and posed into;
     hw.receive({ t: 'join', id: 'ann-0004', name: 'Ann', look, pose });
     assert.equal(s.peers.has('ann-0004'), true, 'a join through the halo');
     hw.receive({ t: 'welcome', id: 'mac-0001', peers: [{ id: 'eve-0003', name: 'Eve', look, pose }], host: null, world: null });
-    assert.equal(s.peers.has('ann-0004'), false, 'a fresh roster from that room drops who it no longer names');
+    // SLAM14 (AUDIT SLAM FINAL B2): a fresh roster names the NEAREST, not the present - Ann is kept, unconfirmed in
+    // that room, and goes only if she stays silent past the timeout
+    assert.equal(s.peers.has('ann-0004'), true, 'a fresh roster from that room keeps who it no longer names, unconfirmed');
+    assert.deepEqual(Object.keys(s.peers.get('ann-0004').unconfirmed), ['world:2,12']);
+    now = s.peers.get('ann-0004').seenAt + PEER_TIMEOUT_MS + 1; s.tick();
+    assert.equal(s.peers.has('ann-0004'), false, 'silent past the timeout, unconfirmed: gone');
     // the crossing: the halo's socket is promoted, my old cell's steps down
     const sent = sockets.length, reconnects = s.stats.reconnects;
     s.join('world:2,12', pose);
@@ -145,7 +150,7 @@ test('WORLD6b-iii(b): the pool - a frame keyed to a cell I hold across the seam 
     fetchBytes: async (n) => { if (n === 'MONSTER.BSA') return bsa; throw new Error(`no ${n}`); }, getTexture: async () => stubTex, uploadRecordFrame: () => {},
     currentMinute: () => 0, currentPixelKey: () => '3,12', playerEntity: pe, audio: null, onPlayerHurt: () => {}, rolls: () => 0.01, rand: () => 0.01, spellsByIndex: () => null,
   });
-  pool.setNet({ room: () => 'world:3,12', inRoom: (k) => k === 'world:2,12', selfId: () => 'mac-0001', peers: () => [{ id: 'eve-0003', feet: [30, 0, 30], height: 1.8 }], now: () => 0, staleMs: 0, onPeerHit: (h) => { hits.push(h); return true; }, toWire: (f) => [f[0], f[1], f[2]], toScene: (p) => [p[0], p[1], p[2]] });
+  pool.setNet({ room: () => 'world:3,12', inRoom: (k) => k === 'world:2,12', selfId: () => 'mac-0001', peers: () => [{ id: 'eve-0003', feet: [30, 0, 30], height: 1.8 }], now: () => 0, staleMs: 0, onPeerHit: (h, fate) => { hits.push(h); fate?.sent?.(); return true; }, toWire: (f) => [f[0], f[1], f[2]], toScene: (p) => [p[0], p[1], p[2]] });
   const rec = { i: 5, t: 0, x: 0, f: [12, 0, 10], y: 0, h: 9, d: 0, a: 0, m: 0, g: '', l: 1, w: null, c: 0, s: 0 };
   assert.equal(pool.applyFoes('eve-0003', { n: 1, k: 'world:9,9', full: 1, f: [rec] }), false, 'a cell I do not hold is not the world');
   assert.equal(pool.applyFoes('eve-0003', { n: 1, k: 'world:2,12', full: 1, f: [rec] }), true, 'Eve\'s own cell, held across the seam: the world');
@@ -166,4 +171,60 @@ test('WORLD6b-iii(b): the world host by source - the halo held from the map pixe
   assert.match(o, /if \(h && h\.ws && h\.status === 'open' && this\._ws && isCellRoom\(room\) && isCellRoom\(this\.room\)\) \{/, 'the promotion (AUDIT WORLD6b-iii(b) A1: a live halo alone)');
   assert.match(o, /for \(const r of \[k, this\.room, \.\.\.this\._halo\.keys\(\)\]\) if \(has\(r\) && sock\(r\)\) \{ via = sock\(r\); break; \}/, 'a hit through the owner\'s cell - the frame\'s first, then wherever it is reported (AUDIT WORLD6b-iii(b) A3)');
   assert.match(rd('bible/06-Systems/Online-Arc.md'), /### 6b-iii\(b\): the cell seam/, 'the record');
+});
+
+// ── AUDIT FOES FOE3: THE PRIMARY SOCKET IS NOT THE ONLY WAY OUT ──
+// (2026-09-15, Mac relaying players: "during online play, certain
+// enemies cant be damaged".)
+//
+// `sendHit` asked `!this._ws || this.status !== 'open'` BEFORE the
+// routing loop that picks the owner's socket - so while my own cell's
+// socket was down (reconnecting, a room at SOCKETS_MAX, the RTT of any
+// crossing that is not a halo promotion) every foe owned by every peer
+// went bullet-proof, while its stream kept arriving through the halo
+// and it kept walking and swinging at me. sendPose learned this exact
+// lesson at A5 above ("through every OPEN socket, my own cell's down or
+// not"); sendHit never did. In a cell the ROUTING LOOP is the check.
+test('AUDIT FOES FOE3: my own cell\'s socket is down and a peer\'s foe is still strikable through the halo', () => {
+  const { FakeWS, sockets } = fakeSocketClass();
+  let now = 1000;
+  const s = new OnlineSession({ url: 'wss://relay.test', name: 'Mac', id: 'mac-0001', secret: 'secret-of-mac-0001', WebSocketImpl: FakeWS, now: () => now });
+  const pose = { x: 1, y: 2, z: 3, yaw: 0, pitch: 0, mv: 0 };
+  const look = { race: 'Nord', gender: 'male', faceIndex: 0, items: [] };
+  const info = console.info; console.info = () => {};
+  try {
+    s.join('world:3,12', pose);
+    const ws = sockets[0]; ws.open();
+    ws.receive({ t: 'welcome', id: 'mac-0001', peers: [], host: null, world: null });
+    s.setHalo(['world:2,12']);
+    const hw = sockets[1]; hw.open();
+    hw.receive({ t: 'welcome', id: 'mac-0001', peers: [{ id: 'eve-0003', name: 'Eve', look, pose }], host: null, world: null });
+    const blow = { to: 'eve-0003', k: 'world:2,12', i: 1, dmg: 3, kind: 'arrow' };
+
+    now += 1000;
+    assert.equal(s.sendHit(blow), true, 'baseline: Eve is across the seam and strikable');
+
+    // my own cell's socket dies; the halo is untouched and Eve is still a peer there
+    ws.drop?.(1006) ?? ws.close?.(1006);
+    assert.notEqual(s.status, 'open', 'my own cell\'s socket is down');
+    assert.equal(s.inRoom('world:2,12'), true, 'the halo still holds me');
+    assert.equal(s.peers.has('eve-0003'), true, 'and Eve is still a peer through it');
+    for (let n = 0; n < 5; n++) {
+      now += 1000;
+      assert.equal(s.sendHit(blow), true,
+        'her foe is struck through the halo - the routing loop below chooses the socket, this is not the primary\'s to veto');
+    }
+    assert.equal(JSON.parse(hw.sent.at(-1)).data.to, 'eve-0003', 'and it really went out of the halo\'s socket');
+
+    // a WORLD ROOM still needs its one socket - there is no other way out there
+    const s2 = new OnlineSession({ url: 'wss://relay.test', name: 'Mac', id: 'mac-0001', secret: 'secret-of-mac-0001', WebSocketImpl: FakeWS, now: () => now });
+    s2.join('dungeon:m187', pose);
+    const dw = sockets.at(-1); dw.open();
+    dw.receive({ t: 'welcome', id: 'mac-0001', peers: [], host: 'bob-0002', world: null });
+    now += 1000;
+    assert.equal(s2.sendHit({ i: 1, dmg: 3, kind: 'melee' }), true, 'the host\'s foe, out of the one socket');
+    dw.drop?.(1006) ?? dw.close?.(1006);
+    now += 1000;
+    assert.equal(s2.sendHit({ i: 1, dmg: 3, kind: 'melee' }), false, 'and with that socket gone there is nowhere for it to go');
+  } finally { console.info = info; }
 });

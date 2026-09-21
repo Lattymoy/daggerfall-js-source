@@ -5,7 +5,7 @@
 //
 // It reads playerEntity.backStory, which chargen has been composing
 // since U13 and save.js has been round-tripping since - the data was
-// prepared for this screen and had nowhere to go. chargenSession.js:170
+// prepared for this screen and had nowhere to go. chargenSession.js:180
 // names DaggerfallPlayerHistoryWindow in its own comment.
 //
 // The art is LGBK00I0.IMG - the LOGBOOK background, shared with the

@@ -25,13 +25,17 @@
 // The level-up screen stays on the text idiom (its retrofit rides
 // a later U8 slice).
 
-import { statUp, statDown, MAX_STAT_VALUE } from './chargen.js';
+import { statUp, statDown, allStatsMax } from './chargen.js';   // LV1's audit: DaggerfallStats.IsAllMax has ONE home now (and MAX_STAT_VALUE left with the copy that used it - this file's last reader was that copy)
+import { actionForCode } from '../systems/inputActions.js';   // MAC-C: the sheet's toggle key is the registry's
+import { bindings } from './input.js';
 import { carriedWeight } from '../systems/inventory.js';   // AUDIT 17e F30; E4: PlayerEntity.CarriedWeight, one home
 import { totalGoldAmount } from '../systems/court.js';   // PlayerEntity.GetGoldAmount - coins plus letters of credit
 import { entityMaxEncumbrance, handToHandMinDamage, handToHandMaxDamage } from '../combat/formulas.js';   // U10; AUDIT 63 F34: CalculateHandToHandMin/MaxDamage
 import { STAT_KEYS_ORDER } from '../systems/chargen.js';
+import { statDescriptionRows } from '../systems/talkMacros.js';   // ATTRMACRO1: SetTextTokens' macro pass over TEXT.RSC records 0..7
 import { SKILLS, SKILL_NAMES, skillValue, getSkillRecentlyIncreased, resetSkillsRecentlyRaised } from '../systems/skills.js';
-import { applyLevelUp, LEVELUP_BONUS_POOL_MIN, LEVELUP_BONUS_POOL_MAX } from '../systems/advancement.js';
+import { applyLevelUp, bonusPoolFor } from '../systems/advancement.js';
+import { usesVirtueLeveling } from '../systems/oblivionLeveling.js';   // ORL1: whose law levels this character
 import { ActionTextBox } from './actionText.js';   // the mustDistributeBonusPoints refusal, ClickAnywhereToClose
 import { OGHMA_BONUS_POOL } from '../systems/artifactEffects.js';   // AUDIT 39: the sheet's oghmaBonusPool (:44)
 import { drawText, measureText } from './text.js';
@@ -82,8 +86,19 @@ export const charSheetArtLoaded = () => !!_art;
 export { carriedWeight };
 
 export class LevelUpScreen {
-  constructor(entity, rolls = Math.random) {
-    audio.playOneShot(SOUND.LevelUp, 1);   // UpdatePlayerValues (:373) - the level-up fanfare
+  /**
+   * LV2: `fanfare` is the third argument and it is a QUESTION ABOUT
+   * WHO ALREADY SPOKE. UpdatePlayerValues plays the level-up sound
+   * when the rollout mounts (:373) because in DFU the rollout mounts
+   * AT the level-up. On the enhanced skin the two moments have come
+   * apart: the notice announces and plays it where the player earned
+   * it, and this window may not open for another ten minutes. One
+   * event, one sound - so the door that knows the notice already spoke
+   * passes false, and every other caller keeps DFU's own behaviour by
+   * default.
+   */
+  constructor(entity, rolls = Math.random, { fanfare = true } = {}) {
+    if (fanfare) audio.playOneShot(SOUND.LevelUp, 1);   // UpdatePlayerValues (:373) - the level-up fanfare
     this.entity = entity;
     // Roll the pool NOW so the screen can show it; the base stats are
     // the floors (statDown returns points only above them).
@@ -96,8 +111,13 @@ export class LevelUpScreen {
     // reached by the next GENUINE level-up, which it then ate (no
     // Level++, no health roll).
     this.oghma = !!entity.oghmaLevelUp;
-    this.pool = this.oghma ? OGHMA_BONUS_POOL
-      : LEVELUP_BONUS_POOL_MIN + Math.floor(rolls() * (LEVELUP_BONUS_POOL_MAX + 1 - LEVELUP_BONUS_POOL_MIN));
+    // AUDIT LV2, reopened (Mac): the pool is THE LEVEL'S, not this
+    // window's. Rolled here it was re-rolled on every open, and since
+    // LV2 the player opens this window themselves - so closing it and
+    // pressing the key again until it said 6 was free points.
+    // `bonusPoolFor` draws once and remembers, on the entity, until
+    // the level is spent.
+    this.pool = this.oghma ? OGHMA_BONUS_POOL : bonusPoolFor(entity, rolls);
     this._rolledPool = this.pool;
     this.base = { ...entity.stats };
     this.working = { ...entity.stats };
@@ -106,6 +126,10 @@ export class LevelUpScreen {
     this._rolls = rolls;
   }
 
+  /** DaggerfallStats.IsAllMax over the working stats - the same law
+   *  the sheet's rollout reads, from the same home. */
+  allMax() { return allStatsMax(this.working); }
+
   input(action) {
     const key = STAT_KEYS_ORDER[this.cursor];
     if (action === 'up') this.cursor = (this.cursor + 7) % 8;
@@ -113,9 +137,9 @@ export class LevelUpScreen {
     else if (action === 'plus') { audio.playOneShot(SOUND.ButtonClick, 1); const r = statUp(this.working[key], this.pool); this.working[key] = r.working; this.pool = r.pool; }   // freeEdit spinner (StatsRollout.cs:255)
     // AUDIT 58 (f3/input): + 'char:-'. This screen carries no
     // isChoiceWindow, so both hosts hand it overlayAction's answer
-    // (scenes/townTalk.js's keyed arm and ui/input.js:346-347) - and
+    // (scenes/townTalk.js's keyed arm and ui/input.js:421-422) - and
     // overlayAction can never answer 'minus', because its typed-
-    // character branch (ui/input.js:232) owns the hyphen. The bare
+    // character branch (ui/input.js:240) owns the hyphen. The bare
     // 'minus' arm stays: the SPINNER click (:405) and the sheet's own
     // code table (:196) both still produce it. Without this, a
     // level-up point could be spent from the keyboard and never taken
@@ -123,7 +147,17 @@ export class LevelUpScreen {
     // LevelUpScreen has no click of its own to fall back on.
     // StatsRollout.cs:255's down-spinner is the same door.
     else if (action === 'minus' || action === 'char:-') { audio.playOneShot(SOUND.ButtonClick, 1); const r = statDown(this.working[key], this.base[key], this.pool); this.working[key] = r.working; this.pool = r.pool; }
-    else if (action === 'confirm' && this.pool === 0) {
+    // LV1's audit: `|| this.allMax()`. CheckIfDoneLeveling's refusal
+    // has TWO terms (:437-443) and this screen only ever carried one,
+    // so a character at 100 across the board could not leave it: every
+    // `statUp` is refused at the ceiling, the pool can never reach
+    // zero, and the only exit tested for zero. The sheet's own rollout
+    // has had the second term since AUDIT 44 (`_workingAllMax`); this
+    // screen - the one the enhanced skin mounted until LV1 - did not.
+    // The leftover points are VOIDED, which is what DFU does on the
+    // same branch: it writes the working stats home and drops the
+    // pool, because there is nowhere left to put it.
+    else if (action === 'confirm' && (this.pool === 0 || this.allMax())) {
       // applyLevelUp rolls HP; our pre-rolled pool distributes here -
       // the distribute hook writes the hand-built stats.
       applyLevelUp(this.entity, (stats) => Object.assign(stats, this.working), this._rolls, this._rolledPool);
@@ -142,7 +176,11 @@ export class LevelUpScreen {
     STAT_KEYS_ORDER.forEach((k, i) => drawText(renderer, font,
       `${i === this.cursor ? '> ' : '  '}${k.slice(0, 3).toUpperCase()}  ${this.working[k]}`,
       40 * s, (56 + i * 12) * s, s, i === this.cursor ? hot : white));
-    drawText(renderer, font, '+/- assign   ENTER when pool 0', 40 * s, (56 + 10 * 12) * s, s, dim);
+    // ...and the foot says which of CheckIfDoneLeveling's two terms is
+    // open, because at the ceiling "ENTER when pool 0" is an
+    // instruction this screen will never honour (LV1's audit).
+    drawText(renderer, font, this.allMax() ? 'every attribute is at its maximum   ENTER to continue'
+      : '+/- assign   ENTER when pool 0', 40 * s, (56 + 10 * 12) * s, s, dim);
   }
 }
 
@@ -190,7 +228,7 @@ export const STATS_ROLLOUT_SPINNER = Object.freeze({ x: 176, y: 6, w: 15, h: 20,
  *  freeEdit OFF, so a moved stat draws green here. */
 export const STAT_MODIFIED_COLOR = Object.freeze([0, 1, 0, 1]);
 /** SelectStat + the spinner's two arrows, in both key vocabularies -
- *  the overlayAction names (ui/input.js:246-247) and the raw e.code a
+ *  the overlayAction names (ui/input.js:254-255) and the raw e.code a
  *  "native" window is handed. */
 const ROLLOUT_ACTIONS = Object.freeze({
   up: 'up', ArrowUp: 'up', down: 'down', ArrowDown: 'down',
@@ -302,20 +340,32 @@ export class CharSheet {
   _mountStatsRollout(rolls) {
     const e = this.entity;
     if (!e?.readyToLevelUp) return;
+    // ORL1: ...and the sheet does NOT level a character who levels by
+    // the mod's law. ui/charSheetDoor.js hands that character
+    // VirtueLevelUpScreen instead, and this guard is the other half of
+    // it: without it, a classic-lane F5 pressed while a virtue level-up
+    // is owed would mount DFU's rollout, take the Level++ and the
+    // health roll at mount (below), and the mod's window would then
+    // find nothing left to award. The Oghma arm is the exception the
+    // door makes too - that pool is Daggerfall's own.
+    if (!e.oghmaLevelUp && usesVirtueLeveling(e)) return;
     this.leveling = true;
     audio.playOneShot(SOUND.LevelUp, 1);   // levelUpSound (:46, :373)
     this.oghma = !!e.oghmaLevelUp;
-    this.pool = this.oghma ? OGHMA_BONUS_POOL
-      : LEVELUP_BONUS_POOL_MIN + Math.floor(rolls() * (LEVELUP_BONUS_POOL_MAX + 1 - LEVELUP_BONUS_POOL_MIN));
+    // The same one home. This rollout commits at mount (applyLevelUp
+    // below), so it never re-opened on an unspent level - but the draw
+    // is the level's wherever it is taken.
+    this.pool = this.oghma ? OGHMA_BONUS_POOL : bonusPoolFor(e, rolls);
     this.base = { ...e.stats };
     this.working = { ...e.stats };
     this.cursor = 0;
     applyLevelUp(e, () => {}, rolls, this.pool);
   }
 
-  /** DaggerfallStats.IsAllMax (:85-97) over the working stats. */
+  /** DaggerfallStats.IsAllMax (:85-97) over the working stats - the
+   *  shared law (ui/chargen.js), not a second copy of it. */
   _workingAllMax() {
-    return STAT_KEYS_ORDER.every((k) => this.working[k] === MAX_STAT_VALUE);
+    return allStatsMax(this.working);
   }
 
   /** CheckIfDoneLeveling (:433-455). Levelling: an unspent pool
@@ -402,8 +452,23 @@ export class CharSheet {
     const p = pages[action];
     if (p) { this.page = this.page === p ? 0 : p; return; }
     if (this.page && (action === 'back' || action === 'Escape')) { this.page = 0; return; }
+    // MAC-C: the toggle key is the REGISTRY's, not the literal 'F5'.
+    // This window takes RAW codes (isChoiceWindow), so the code is
+    // resolved here the way every host ladder resolves one - a player
+    // who rebinds CharacterSheet gets a sheet that closes on their key
+    // rather than on Bethesda's.
+    const bound = actionForCode(bindings(), action);
+    // ...and the PACK key crosses over rather than doing nothing, which
+    // is the same law the enhanced sheet takes (ui/charSheetDoor.js).
+    // The hook is the sheet's own Items button; no hook, no key.
+    if (bound === 'Inventory' && this.hooks?.inventory) {
+      if (!this._checkIfDoneLeveling()) return;   // the same gate the exit takes: no leaving with points owed
+      this.done = true;
+      this.hooks.inventory();
+      return;
+    }
     if (action === 'confirm' || action === 'back' || action === 'sheet'
-      || action === 'Enter' || action === 'Escape' || action === 'F5' || action === 'KeyE') {
+      || action === 'Enter' || action === 'Escape' || bound === 'CharacterSheet' || action === 'KeyE') {
       // CancelWindow / the toggle key / the exit button all run the
       // same gate (:241, :259, :944) - the sheet does not close while
       // bonus points are owed.
@@ -466,7 +531,14 @@ export class CharSheet {
       for (let i = 0; i < STAT_KEYS_ORDER.length; i++) {
         if (!inRect([se.x, se.y + se.step * i, se.w, se.h], vx, vy)) continue;
         audio.playOneShot(SOUND.ButtonClick, 1);
-        const rows = this.hooks.rows?.(statDescriptionTextId(i)) ?? [];
+        // ATTRMACRO1 (2026-09-18, Mac: "none of the attribute explanations show actual values"): DFU's line here
+        // is `SetTextTokens((int)sender.Tag, playerEntity.Stats)` - the record AND a macro source - and the comment
+        // above has said so since AUDIT 58 while the code handed the rows straight to the box. So every one of the
+        // eight showed `%str`, `%ark`, `%dam`, `%enc` and their siblings as literal tokens. The source is the
+        // player's stats (systems/quest/questMacros.js statsMacroSource) and the pass is the one every other
+        // TEXT.RSC surface makes; it is applied HERE and not inside the `rows` hook, which the journal, the item
+        // text, the health box and the skills dialog all share.
+        const rows = statDescriptionRows(this.hooks.rows?.(statDescriptionTextId(i)) ?? [], this.entity);
         if (rows.length) this.child = new ActionTextBox(rows);
         return true;
       }

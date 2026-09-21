@@ -22,7 +22,11 @@ opened by MW-LOAD.
 3. **Open** (`loadMorrowindArchives`): every stored `.bsa`, ranked so
    expansions and mods answer before `Morrowind.bsa`, behind one loose
    archive that answers before all of them (the engine's data-files
-   law). Cached for the session against the generation (IG2).
+   law). Cached for the session against the generation (IG2). WS1:
+   between the loose archive and the `.bsa` files stands Weapon
+   Sheathing's vendored tree (`systems/weaponSheathingAssets.js`) -
+   the scabbards and the bone addons, fetched on first ask; a
+   player's own copy of those paths wins, retail carries none.
 4. **Build** (`combat/fpArm.js buildFpArm`, from the weapon rig): the
    masters are read whole and walked for the race, body-part, armour,
    clothing, weapon and GMST records (memoised per session, IG2); the

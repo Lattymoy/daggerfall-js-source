@@ -137,12 +137,26 @@ test('audit24 wave25: the factionListener comments name PlayerActivate, and clai
   // PlayerActivate.StaticNPCClick:1534 - and TalkManager.cs does not
   // contain the word Listener. Three port comments named TalkManager
   // and marked the wiring "(Q4 wires)", over a reader that ships at
-  // worldModes.js:479.
+  // worldModes.js, at the `factionListeners.has` reader.
   const m = rd('src/systems/quest/machine.js');
   assert.doesNotMatch(m, /TalkManager reads the map/);
   assert.doesNotMatch(m, /TalkManager's Q4 signal/);
   assert.match(m, /PlayerActivate\.StaticNPCClick reads the map/);
-  assert.match(m, /src\/scenes\/worldModes\.js:479/);   // HT1 by one more (the dropped-torch import)   // AUDIT WORLD6b-iii(a) C3 by one more (the aim law's import)   // FIX-F/E moved worldModes by eight lines; AUDIT 65 by one more; PERF5 by one more (the identity constant under the imports); UL1 by one more (the Unleveled Loot import); WORLD6a by one more (the interiorShared import)
+  // ORL1 RE-AIMED THIS CITE BY CONTENT, which is what the shifting
+  // chain below had quietly lost: every slice moved the number by the
+  // lines it added ABOVE it, and the number had drifted onto a comment
+  // about dropped loot - nowhere near the reader it names. The reader
+  // is the `factionListeners.has` line the last assertion holds, and
+  // the cite names it now. (The chain is kept: it is the record of how
+  // a mechanically-shifted cite comes loose from its subject.)
+  // HEARTH1 re-aimed it BY CONTENT again, which is the method this pin's
+  // own note above prescribes: the cite is resolved against the READER
+  // line the last assertion holds, not bumped by however many lines the
+  // slice happened to add above it.
+  const _reader = rd('src/scenes/worldModes.js').split('\n')
+    .findIndex((l) => /factionListeners\.has\(pn\.factionID\)\) return;/.test(l)) + 1;
+  assert.ok(_reader > 0, 'the reader is still there to cite');
+  assert.match(m, new RegExp(`src/scenes/worldModes\\.js:${_reader}\\b`), `the cite names the reader at :${_reader}`);   // ONLINE-CLASS1 by two more (the peer-sprite import and its mode read); SURV5 by three more (the survival status import and the vampire's); ORL1 re-aimed by content, off the chain below   // QS4 by one more (the offHandQuickslot import)   // AUDIT-EL F5 by one more (the WORLD_FRAME import)   // EL1 by one more (the lantern-colour import)   // BA1 by one more (the Better Ambience import)   // IF1 by one more (the footsteps import)   // HT1 by one more (the dropped-torch import)   // AUDIT WORLD6b-iii(a) C3 by one more (the aim law's import)   // FIX-F/E moved worldModes by eight lines; AUDIT 65 by one more; PERF5 by one more (the identity constant under the imports); UL1 by one more (the Unleveled Loot import); WORLD6a by one more (the interiorShared import)   // LV2 by nine more (the level-up arm became announceLevelUp's `open` thunk, twice, and the notice import)   // LV1 by three more (the interior host's two level-up arms go through ui/charSheetDoor.js now, and two screen imports left with them)
   assert.doesNotMatch(rd('bible/06-Systems/Quest-Arc.md').slice(0, 40000), /TalkManager reads the map at\n  Q4/);
   // and the reader really is there
   assert.match(rd('src/scenes/worldModes.js'), /factionListeners\.has\(pn\.factionID\)\) return;/);

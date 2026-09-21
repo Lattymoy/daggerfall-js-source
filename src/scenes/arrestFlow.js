@@ -159,17 +159,41 @@ export function createArrestFlow({
   }
 
   /** The guard-hit interception. Returns true when the hit was
-   *  WITHHELD (the surrender box owns the moment). */
+   *  WITHHELD (the surrender box owns the moment).
+   *
+   *  MOD (player report, online mode): WINFOE1 runs every guard's
+   *  clock on the frame's real dt regardless of any window this
+   *  client has open - which is right for a fight (an inventory tab
+   *  must not stop a swing), but the surrender box, and every later
+   *  court box, are not a fight the player is choosing to pause: they
+   *  are THIS interception's own moment. Offline that moment already
+   *  reads as a pause (nothing else in a single-player world is
+   *  moving either way), but online other clients' guards are real,
+   *  server-clocked actors that don't know a local Y/N box is up, so
+   *  without this a guard can land several more full-damage hits
+   *  while the player is still reading the box - and once accepted,
+   *  through the whole court sequence below (verdict, sentencing),
+   *  the player can still be standing in the street. `awaitingSurrenderAnswer`
+   *  covers the box itself; `playerEntity.arrested` (set the instant
+   *  startCourtFlow runs, cleared by clearArrest on every exit) covers
+   *  everything after. Choosing "N - fight on" drops the flag and the
+   *  ORIGINAL blow (the one that opened the box) lands via
+   *  `applyDamage` exactly as DFU's "No lands the damage" always did;
+   *  every guard swing that landed WHILE the box was up is simply
+   *  never delivered, not queued for later. */
+  let awaitingSurrenderAnswer = false;
   function onGuardHit(dmg, applyDamage) {
     if (crimeId() === 0) return false;
+    if (sharedClockOn() && (awaitingSurrenderAnswer || playerEntity.arrested)) return true;
     if (!playerEntity.haveShownSurrenderDialogue) {
       playerEntity.haveShownSurrenderDialogue = true;
       lowerRepForCrime(playerEntity, region(), crimeId());
+      awaitingSurrenderAnswer = true;
       townTalk.showOverlay(new ChoiceWindow({
         lines: text(TEXT_SURRENDER, 'Halt! You are under arrest. Do you surrender?'),
         options: [
-          { code: 'KeyY', label: 'Y - surrender', action: () => { if (surrenderToCityGuards(playerEntity, region(), true, { setHealth1: () => { playerEntity.health = 1; } })) startCourtFlow(); } },
-          { code: 'KeyN', label: 'N - fight on', action: () => applyDamage() },
+          { code: 'KeyY', label: 'Y - surrender', action: () => { awaitingSurrenderAnswer = false; if (surrenderToCityGuards(playerEntity, region(), true, { setHealth1: () => { playerEntity.health = 1; } })) startCourtFlow(); } },
+          { code: 'KeyN', label: 'N - fight on', action: () => { awaitingSurrenderAnswer = false; applyDamage(); } },
         ],
       }));
       return true;

@@ -32,6 +32,7 @@ import { parseClient, isWorldRoom, isChatRoom, WORLD_FRAME_MAX, WORLD_MIN_MS, WO
 import * as relay from '../server/src/relay.js';
 import { fakeRoom } from './fakeRoom.mjs';
 import { OnlineSession, WORLD_PUBLISH_MS } from '../src/net/online.js';
+import { RELAY_VERSION } from '../src/net/wire.js';   // LOCALDEV1: the worker entry exports handlers alone
 
 const rd = (p) => readFileSync(new URL('../' + p, import.meta.url), 'utf8');
 
@@ -136,7 +137,7 @@ test('WORLD1: the Room - the host is the hello\'d socket in the room longest, sa
   // a channel: no host frame business, no world
   const chat = fakeRoom('chat:world');
   const ch = chat.connect(); await chat.hello(ch, 'chat-0001');
-  assert.deepEqual(welcomeOf(ch), { t: 'welcome', id: 'chat-0001', peers: [] }, 'a channel\'s welcome is what it was');
+  assert.deepEqual(welcomeOf(ch), { t: 'welcome', id: 'chat-0001', peers: [], n: 1, v: RELAY_VERSION, now: welcomeOf(ch).now }, 'a channel\'s welcome: SRV-N\'s deploy name and ROSTER-G\'s roster and count - still no host, still no world (AUDIT SOC B7: the clock, since the hub link reads last-seen on it)');
 });
 
 function fakeSocketClass() {
@@ -184,9 +185,20 @@ test('WORLD1: the hosts by source - the dungeon host\'s shared world is the layo
   const d = rd('src/scenes/dungeonContext.js');
   assert.match(d, /function applyWorld\(w, \{ truncate = true, wire = false \} = \{\}\) \{/);
   assert.match(d, /for \(let i = foes\.length - 1; truncate && i >= \(w\.foes\?\.length \?\? 0\); i--\) \{/, 'the cut is the save\'s alone');
-  assert.match(d, /sharedWorld\(\) \{\s*const w = collectWorld\(\);\s*w\.foes = w\.foes\.slice\(0, _layoutFoes\);\s*delete w\.teleportedIntoDungeon;\s*delete w\.droppedLoot;\s*delete w\.droppedTorches;\s*(?:\/\/[^\n]*\n\s*)*(?:\/\/[^\n]*\n\s*)*delete w\.piles;\s*for \(const f of w\.foes\) delete f\.items;\s*w\.loot = lootRecords\(\[\.\.\._lootSeen\]\);\s*(?:\/\/[^\n]*\n\s*)*w\.actions = \(w\.actions \?\? \[\]\)\.map\(sharedRecord\);\s*return \{ locationKey: _locationKey, stamp: _sharedStamp, world: w \};\s*\},/, 'the layout\'s run alone (AUDIT WORLD B2), nothing of the player\'s own - not the drops (B3) - keyed and stamped (B1); and since WORLD4 the containers the room has OPENED in place of every pile\'s contents, and since AUDIT WORLD4 D4 no foe item list either - `corpse:<i>` reads exactly that array');
-  assert.match(d, /restoreSharedWorld\(shared\) \{\s*if \(!shared \|\| shared\.locationKey !== _locationKey \|\| !shared\.world \|\| typeof shared\.world !== 'object'\) return false;\s*if \(shared\.stamp === _sharedStamp \|\| _sharedApplied\) return false;\s*_sharedApplied = true;\s*(?:\/\/[^\n]*\n\s*)*(?:const acts = [^\n]*\n\s*)?applyWorld\(\{ \.\.\.shared\.world, piles: undefined, actions: acts, foes: Array\.isArray\(shared\.world\.foes\) \? shared\.world\.foes\.slice\(0, _layoutFoes\) : \[\] \}, \{ truncate: false, wire: true \}\);\s*applyLoot\(shared\.world\.loot\);[^\n]*\n\s*return true;\s*\},/, 'another dungeon\'s memory refused, its own refused (B1), once (B7), the layout\'s run alone in (B2), the rest left standing; and since WORLD4 the room\'s opened containers through the live door');
-  assert.match(d, /for \(const e of enemies\) await buildFoeAt\(e\);\s*const _layoutFoes = foes\.length;/, 'the run measured right after the markers\' build');
+  assert.match(d, /sharedWorld\(\) \{\s*const w = collectWorld\(\);\s*w\.foes = w\.foes\.slice\(0, _layoutFoes\);\s*delete w\.teleportedIntoDungeon;\s*delete w\.droppedLoot;\s*delete w\.droppedTorches;\s*(?:\/\/[^\n]*\n\s*)*(?:\/\/[^\n]*\n\s*)*delete w\.piles;\s*for \(const f of w\.foes\) delete f\.items;\s*w\.loot = lootRecords\(\[\.\.\._lootSeen\]\);\s*(?:\/\/[^\n]*\n\s*)*w\.actions = \(w\.actions \?\? \[\]\)\.map\(sharedRecord\);\s*(?:w\.camps = campMemory\(\);[^\n]*\n\s*)?return \{ locationKey: _locationKey, stamp: _sharedStamp, world: w \};\s*\},/, 'the layout\'s run alone (AUDIT WORLD B2), nothing of the player\'s own - not the drops (B3) - keyed and stamped (B1); and since WORLD4 the containers the room has OPENED in place of every pile\'s contents, and since AUDIT WORLD4 D4 no foe item list either - `corpse:<i>` reads exactly that array');
+  assert.match(d, /restoreSharedWorld\(shared\) \{\s*if \(!shared \|\| shared\.locationKey !== _locationKey \|\| !shared\.world \|\| typeof shared\.world !== 'object'\) return false;\s*if \(shared\.stamp === _sharedStamp \|\| _sharedApplied\) return false;\s*(?:\/\/[^\n]*\n\s*)*const acts = [^\n]*\n\s*(?:\/\/[^\n]*\n\s*)*const sfoes = [^\n]*\n\s*(?:\/\/[^\n]*\n\s*)*applyWorld\(\{ \.\.\.shared\.world, piles: undefined, actions: acts, foes: sfoes \}, \{ truncate: false, wire: true \}\);\s*applyLoot\(shared\.world\.loot\);[^\n]*\n\s*(?:applyCampMemory\(shared\.world\.camps\);[^\n]*\n\s*)?_sharedApplied = true;\s*return true;\s*\},/, 'another dungeon\'s memory refused, its own refused (B1), once (B7), the layout\'s run alone in (B2), the rest left standing; and since WORLD4 the room\'s opened containers through the live door');
+  // The law is that NO CODE runs between the markers' build and the measure -
+  // anything that appended a foe in between would be counted into the layout's
+  // run and streamed as if the layout had placed it. The pin used to spell that
+  // as `\s*`, which also forbade a COMMENT, and ONLINE-DUNGEON-FOES put a
+  // twenty-line FLAGGED note on that very line. Comment lines are allowed
+  // through and statements are still not, so the pin now forbids what it means.
+  const between = /for \(const e of enemies\) await buildFoeAt\(e\);\n([\s\S]*?)\n\s*const _layoutFoes = foes\.length;/.exec(d);
+  assert.ok(between, 'the run measured right after the markers\' build');
+  for (const l of between[1].split('\n')) {
+    assert.match(l, /^\s*(\/\/.*)?$/,
+      `a STATEMENT stands between the markers' build and the run's measure, and it would be counted into the layout: ${l.trim()}`);
+  }
   const m = rd('src/scenes/worldModes.js');
   assert.match(m, /dungeonSharedWorld\(\) \{ return mode === 'dungeon' && dungeonCtx \? dungeonCtx\.sharedWorld\(\) : null; \},/);
   assert.match(m, /restoreDungeonSharedWorld\(shared\) \{ return mode === 'dungeon' && dungeonCtx \? dungeonCtx\.restoreSharedWorld\(shared\) : false; \},/);
@@ -199,9 +211,9 @@ test('WORLD1: the hosts by source - the dungeon host\'s shared world is the layo
   assert.match(w, /const worldPublish = \(now, force = false\) => \{\s*if \(!online \|\| !online\.isHost\(\) \|\| online\.status !== 'open' \|\| !isWorldRoom\(online\.room\)\) return false;\s*if \(!force && now - _worldPublishedAt < WORLD_PUBLISH_MS\) return false;\s*const shared = modes\?\.placeSharedWorld\?\.\(\);[^\n]*\s*if \(!shared\) return false;\s*_worldPublishedAt = now;\s*const ok = online\.sendWorld\(shared, \{ final: force \}\);\s*if \(!ok\) console\.warn\([^\n]*\);\s*return ok;\s*\};/, 'the host\'s alone, into a world room alone (AUDIT WORLD B8), on the publish clock unless forced - and forced is the farewell (B5); a refusal said once, never retried at frame rate (B9)');
   assert.match(w, /online\.onWorld = \(shared\) => \{ if \(modes\?\.restorePlaceSharedWorld\?\.\(shared\)\)/, 'the welcome\'s memory lands on the standing place (WORLD6a: a dungeon or a building)');
   assert.match(w, /online\.onHost = \(id, mine\) => \{ if \(mine\) \{ _worldPublishedAt = -Infinity; _foesFullAt = -Infinity; \} else if \(id && isWorldRoom\(online\.room\)\) _foesInAt = performance\.now\(\); modes\?\.setDungeonAuthority\?\.\(dungeonAuthority\(\)\); \};/, 'a new host publishes at once (AUDIT WORLD6b A9: a cell\'s seat is no heartbeat) - and streams every foe at once, and the seat decides who steps them (WORLD2); another\'s word is its first heartbeat (AUDIT WORLD2 C5)');
-  assert.match(w, /online\.tick\(\);\s*(?:\/\/[^\n]*\n\s*)*if \(online\.room !== _foesRoom\) \{ const seam = isCellRoom\(online\.room\) && isCellRoom\(_foesRoom\); _foesRoom = online\.room; _foesFullAt = -Infinity; if \(!seam\) exteriorFoes\.clearPuppets\(\); \}[^\n]*\n\s*if \(isCellRoom\(online\.room\)\) \{ const near = peersNear\(\); if \(near\) exteriorFoes\.pruneOwners\(new Set\(near\.map\(\(p\) => p\.id\)\), now\); \}[^\n]*\n\s*worldPublish\(now\);/, 'every frame asks (WORLD6b: after the cell\'s puppet housekeeping; AUDIT WORLD6b C3/C7)');
+  assert.match(w, /online\.tick\(\);\s*(?:\/\/[^\n]*\n\s*)*if \(online\.room !== _foesRoom\) \{ const seam = isCellRoom\(online\.room\) && isCellRoom\(_foesRoom\); _foesRoom = online\.room; _foesFullAt = -Infinity; if \(!seam\) exteriorFoes\.clearPuppets\(\); \}[^\n]*\n\s*if \(isCellRoom\(online\.room\)\) \{ const ids = ownerIds\(\); if \(ids\) exteriorFoes\.pruneOwners\(ids, now\); \}[^\n]*\n\s*worldPublish\(now\);/, 'every frame asks (WORLD6b: after the cell\'s puppet housekeeping; AUDIT WORLD6b C3/C7)');
   assert.match(w, /if \(online\.room\) \{ worldPublish\(now, true\); online\.leave\(\); exteriorFoes\.clearPuppets\(\); _foesRoom = null; \}/, 'the dead leave the room its memory (AUDIT WORLD6b C8: and the cell its puppets)');
-  assert.match(w, /'pagehide', \(\) => \{ worldPublish\(performance\.now\(\), true\); online\?\.leave\(\);/, 'the page\'s hide too');
+  assert.match(w, /'pagehide', \(\) => \{\s*try \{ worldPublish\(performance\.now\(\), true\); \}\s*catch \(e\) \{[^\n]*\}\s*online\?\.leave\(\);/, 'the page\'s hide too');
   assert.match(w, /onDungeonLeave: \(\) => worldPublish\(performance\.now\(\), true\),/, 'and the dungeon\'s exit, through the mode machine\'s hook');
   const online = rd('src/net/online.js');
   assert.match(online, /if \(!this\.isHost\(\) \|\| !isWorldRoom\(this\.room\) \|\| !this\._ws \|\| this\.status !== 'open'\) return false;[^\n]*\n\s*const s = JSON\.stringify\(final \? \{ t: 'world', data, final: true \} : \{ t: 'world', data \}\);[^\n]*\n\s*if \(s\.length > worldFrameMaxFor\(this\.room\)\) return false;/, 'the cap kept at the client: the relay\'s refusal is terminal; t first, the prefix the relay reads');

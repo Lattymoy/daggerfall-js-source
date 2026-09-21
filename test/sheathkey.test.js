@@ -56,7 +56,13 @@ test('SHEATH: the large HUD panel still reaches the door through routeAction', (
   // - the same frame, the same "not GameManager's chain" - and no
   // routeAction arm answers it, so routeKey must decline it too.
   assert.ok(POLLED_ACTIONS.has('SwitchHand'));
-  assert.equal(POLLED_ACTIONS.size, 2, 'two polled actions; a third joins here, not in a host');
+  // QS6 joined three more, and the reason is the same one twice over: a key
+  // whose HOLD means something cannot be answered on its down edge, so the
+  // frame's machine owns it and the keyboard dispatch declines. (The comment
+  // above invited the third here rather than in a host; it arrived with two
+  // siblings.) They are named, not counted loosely, so a fourth joins here too.
+  assert.deepEqual([...POLLED_ACTIONS], ['ReadyWeapon', 'SwitchHand', 'QuickUse1', 'QuickUse2', 'QuickSpell']);
+  assert.equal(POLLED_ACTIONS.size, 5, 'five polled actions; a sixth joins here, not in a host');
   assert.equal(routeAction('SwitchHand', ctx), false, 'no panel door - the frame poll is the only one');
 });
 
@@ -66,12 +72,15 @@ test('SHEATH: every host polls ReadyWeapon on an edge, and the dungeon hosts rou
   // dungeon keydown listeners go through routeKey (they stay). The
   // decline in routeKey is what keeps them from adding up.
   for (const f of ['src/scenes/world.js', 'src/scenes/exterior.js', 'src/scenes/worldModes.js', 'src/scenes/dungeon.js']) {
-    assert.match(read(f), /held\(keys, 'ReadyWeapon'\)/, `${f} polls ReadyWeapon`);
-    // a12: and SwitchHand beside it, on the INVERTED latch -
+    // MWCROUCH: the poll is GetKeyDown now (`pressed`, ui/input.js)
+    // rather than `held(keys, act) && !prev` - the derivation dropped
+    // any press that began and ended between two frames. The law here
+    // is the one it always was: EVERY host polls the action itself.
+    assert.match(read(f), /pressed\((keyEdge|latch\.edge), keys, 'ReadyWeapon'\)/, `${f} polls ReadyWeapon`);
+    // a12: and SwitchHand beside it, on the INVERTED edge -
     // ActionComplete is the release (InputManager.cs:634-637), where
-    // ReadyWeapon's ActionStarted is the press.
-    assert.match(read(f), /held\(keys, 'SwitchHand'\)/, `${f} polls SwitchHand`);
-    assert.match(read(f), /if \(!hNow[W]? && hPrev[W]?\)/, `${f} switches the hand on the RELEASE edge`);
+    // ReadyWeapon's ActionStarted is the press. Two rings, one law.
+    assert.match(read(f), /released\((keyEdge|latch\.edge), keys, 'SwitchHand'\)/, `${f} switches the hand on the RELEASE edge`);
   }
   assert.match(read('src/scenes/worldModes.js'), /routeKey\(e, dungeonCtx/);
   assert.match(read('src/scenes/dungeon.js'), /routeKey\(e, ctx/);
@@ -111,4 +120,30 @@ test('SHEATH: every ctx the large HUD is handed carries the panel\u2019s door (T
   // and the panel is still the eleventh panel, still posting the action
   assert.match(read('src/ui/hudLarge.js'), /\{ key: 'sheath', rect: LARGE_HUD_RECTS\.sheath, action: 'ReadyWeapon' \}/);
   assert.match(read('src/ui/input.js'), /case 'ReadyWeapon': return ctx\.toggleSheath \? \(ctx\.toggleSheath\(\), true\) : false;/);
+});
+
+// WEAPON-VIS2 (a player's report, 2026-09-16: "equipped, no crash,
+// still invisible after 10 minutes idle" - a live toggleSheathCalls
+// counter caught it climbing by exactly 2 for one press). AUDIT 58
+// above gave world.js and exterior.js's hudCtx a toggleSheath door for
+// the large HUD's panel - but unlike the two dungeon hosts, NEITHER of
+// these two routes its keydown ladder through routeKey (both say so in
+// their own comments: "This host runs its own ladder and never calls
+// routeKey" / "these two outdoor hosts - which route their own keys").
+// Their ladders end in a fall-through tail that calls routeAction
+// DIRECTLY for whatever hudCtx answers - routeKey's POLLED_ACTIONS
+// decline never stood between that tail and 'ReadyWeapon', so the door
+// AUDIT 58 opened for a mouse click reopened the double-fire for the
+// keyboard above ground and outdoors: one Z press, drawn then sheathed
+// straight back, net nothing, forever. Same exclusion, same law,
+// closed at the actual place the exclusion was missing.
+test('SHEATH: the two outdoor fall-through tails decline POLLED_ACTIONS too - AUDIT 58\u2019s panel door did not silently reopen the double-fire it fixed once already', () => {
+  for (const f of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
+    const src = read(f);
+    assert.match(src, /if \(POLLED_ACTIONS\.has\(act\)\) \{[^}]*\}\s*else if \(routeAction\(act, hudCtx\)\) \{ e\.preventDefault\(\); return; \}/,
+      `${f}: the fall-through tail declines a polled action before it ever reaches routeAction, exactly as routeKey does`);
+    // AUDIT MW-TORCH: the poll is now the ONLY door for Z in these two
+    // hosts - so its presence is pinned beside the decline.
+    assert.match(src, /if \(pressed\(latch\.edge, keys, 'ReadyWeapon'\)\) weaponRig\.readyWeapon\(\);/, `${f}: the frame's edge poll stands`);
+  }
 });

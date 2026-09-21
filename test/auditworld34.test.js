@@ -25,7 +25,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { isWorldRoom, roomOf, WORLD_MIN_MS, PIXEL_UNITS, CLOSE_POLICY } from '../src/net/wire.js';
 import * as relay from '../server/src/relay.js';
-import { RELAY_VERSION } from '../server/src/index.js';
+import { RELAY_VERSION } from '../src/net/wire.js';   // LOCALDEV1: the worker entry exports handlers alone
 import { roomKeyFor, OnlineSession } from '../src/net/online.js';
 import { MAIN_STORY_DUNGEON_IDS, isMainStoryDungeon } from '../src/world/dungeonTextures.js';
 import { useSmallerDungeon, SMALLER_DUNGEONS_STATE } from '../src/world/smallerDungeons.js';
@@ -207,20 +207,20 @@ test('AUDIT WORLD34 B1/B3 by source: a dead foe is retyped too (a joiner whose s
   assert.match(d, /if \(!out\.length && !full\) return null;\s*return \{ n: \+\+_foesSeq, k: _locationKey, f: out \};/, 'the empty full frame goes');
   const w = rd('src/scenes/world.js');
   assert.match(w, /const dungeonAuthority = \(now = performance\.now\(\)\) => !\(online\?\.room && isWorldRoom\(online\.room\) && online\.status === 'open' && online\.host && !online\.isHost\(\) && now - _foesInAt < FOES_STALE_MS\);/, 'the seat still reads the heartbeat');
-  assert.match(w, /online\.onFoes = \(id, data\) => \{\s*if \(isCellRoom\(online\.room\)\) \{[^\n]*\n\s*if \(modes\?\.mode === 'dungeon'\) _foesInAt = performance\.now\(\);[^\n]*\n\s*modes\?\.applyDungeonFoes\?\.\(id, data\);\s*\};/, 'and every frame in, empty or not, is the heartbeat (AUDIT WORLD6a B8: in a dungeon - a building\'s room streams no foes; WORLD6b: a cell\'s frame is the encounter pool\'s, no heartbeat)');
+  assert.match(w, /online\.onFoes = \(id, data\) => \{\s*(?:\/\/[^\n]*\n\s*)*(?:if \(isCellRoom\(online\.room\) && [^\n]*camps\.applyOwner[^\n]*\n\s*)?if \(isCellRoom\(online\.room\)\) \{[\s\S]*?if \(modes\?\.applyDungeonFoes\?\.\(id, data\) && modes\?\.mode === 'dungeon'\) _foesInAt = performance\.now\(\);\s*\};/, 'and every frame in, empty or not, is the heartbeat (AUDIT WORLD6a B8: in a dungeon - a building\'s room streams no foes; WORLD6b: a cell\'s frame is the encounter pool\'s, no heartbeat)');
 });
 
 test('AUDIT WORLD34 C2 by source: the memory\'s action records are the SHARED half out (no picker\'s latch) and PROJECTED in (validActionRecord, as an act\'s are) - the relay serves the stored bytes back unparsed for thirty days', () => {
   const d = rd('src/scenes/dungeonContext.js');
   assert.match(d, /import \{[^\n]*sharedRecord, validActionRecord \} from '\.\.\/world\/actionSystem\.js';/);
-  assert.match(d, /w\.loot = lootRecords\(\[\.\.\._lootSeen\]\);\s*(?:\/\/[^\n]*\n\s*)*w\.actions = \(w\.actions \?\? \[\]\)\.map\(sharedRecord\);\s*return \{ locationKey: _locationKey, stamp: _sharedStamp, world: w \};/, 'out');
-  assert.match(d, /const acts = Array\.isArray\(shared\.world\.actions\) \? shared\.world\.actions\.map\(validActionRecord\)\.filter\(Boolean\) : \[\];\s*applyWorld\(\{ \.\.\.shared\.world, piles: undefined, actions: acts, foes:/, 'in');
+  assert.match(d, /w\.loot = lootRecords\(\[\.\.\._lootSeen\]\);\s*(?:\/\/[^\n]*\n\s*)*w\.actions = \(w\.actions \?\? \[\]\)\.map\(sharedRecord\);\s*(?:w\.camps = campMemory\(\);[^\n]*\n\s*)?return \{ locationKey: _locationKey, stamp: _sharedStamp, world: w \};/, 'out');   // SURV3: the camps ride the memory too
+  assert.match(d, /const acts = Array\.isArray\(shared\.world\.actions\) \? shared\.world\.actions\.map\(validActionRecord\)\.filter\(Boolean\) : \[\];[\s\S]*?const sfoes = Array\.isArray\(shared\.world\.foes\) \? shared\.world\.foes\.slice\(0, _layoutFoes\)\.map\(validSharedFoe\)\.filter\(Boolean\) : \[\];[\s\S]*?applyWorld\(\{ \.\.\.shared\.world, piles: undefined, actions: acts, foes: sfoes \}/, 'in');
 });
 
 test('AUDIT WORLD34 C3 by source: a refused act is KEPT while the socket is away and flushed when it returns; it is cleared only when the room is no world room', () => {
   const w = rd('src/scenes/world.js');
   assert.match(w, /const _actRoom = \(\) => !!\(online && \(isWorldRoom\(online\.room\) \|\| isWorldRoom\(_onlineKey\)\)\);/);   // AUDIT WORLD6a A7: or the room the mode names, while the socket is held
-  assert.match(w, /const actSend = \(data\) => \{\s*if \(!_actRoom\(\)\) \{ _actPend\.clear\(\); return false; \}\s*if \(!_actLive\(\)\) \{ for \(const k of \[\.\.\.\(\(data\?\.a \?\? \[\]\)\.map\(\(r\) => r\.key\)\), \.\.\.\(\(data\?\.l \?\? \[\]\)\.map\(\(r\) => r\.k\)\)\]\) _actPend\.add\(k\); return false; \}/, 'kept');
+  assert.match(w, /const actSend = \(data\) => \{\s*if \(!_actRoom\(\)\) \{ _actPend\.clear\(\); return false; \}\s*if \(!_actLive\(\)\) \{ for \(const k of \[\.\.\.\(\(data\?\.a \?\? \[\]\)\.map\(\(r\) => r\.key\)\), \.\.\.\(\(data\?\.l \?\? \[\]\)\.map\(\(r\) => r\.k\)\)(?:, \.\.\.\(\(data\?\.c \?\? \[\]\)\.map\(\(r\) => `camp:\$\{r\.i\}`\)\))?\]\) _actPend\.add\(k\); return false; \}/, 'kept');   // SURV3: a camp's key rides the same set
   assert.match(w, /const actFlush = \(\) => \{\s*if \(!_actPend\.size\) return false;\s*if \(!_actRoom\(\)\) \{ _actPend\.clear\(\); return false; \}\s*if \(!_actLive\(\)\) return false;/, 'flushed when the socket is back');
   assert.doesNotMatch(w, /if \(!_actLive\(\)\) \{ _actPend\.clear\(\); return false; \}/, 'the old clear is gone');
 });

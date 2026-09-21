@@ -164,7 +164,13 @@ test('HARD3: the renderer\'s contract is types only, and the shapes it names are
   // field the factory writes must be declared, and the factory must say
   // it returns the contract rather than an anonymous object.
   const r = read('src/render/renderer.js');
-  const mint = r.slice(r.indexOf('createBillboardBatch(archive, record, size, centers)'));
+  // BLOOD1b: anchored on the PREFIX of the signature, not the whole
+  // of it. The factory gained an options bag for the one batch in this
+  // tree whose centres move, and the exact-signature anchor did not
+  // fail - it matched nothing, sliced from -1, and walked zero fields.
+  // A pin that reads an empty string reports nothing missing.
+  const mint = r.slice(r.indexOf('createBillboardBatch(archive, record, size, centers'));
+  assert.ok(r.includes('createBillboardBatch(archive, record, size, centers'), 'the factory is where this pin thinks');
   assert.match(r, /@returns \{import\('\.\/contract\.js'\)\.BillboardBatch\}/,
     'createBillboardBatch declares the contract as its return');
   const returned = mint.slice(mint.indexOf('return {'), mint.indexOf('\n  }'));
@@ -187,7 +193,7 @@ test('HARD3: the renderer\'s contract is types only, and the shapes it names are
   // at the top level instead of pattern-matching around the separators.
   const minted = returned.slice(returned.indexOf('{') + 1, returned.lastIndexOf('}'))
     .split(/,(?![^[\]]*\])/).map((part) => /^\s*(\w+)/.exec(part)?.[1]).filter(Boolean);
-  assert.equal(minted.length, 8, `the factory mints ${minted.length} fields and the walk should see every one: ${minted}`);
+  assert.equal(minted.length, 11, `the factory mints ${minted.length} fields and the walk should see every one: ${minted}`);   // EL5: `bounds`; BLOOD1b: `_quads` and `_dyn`
   for (const field of minted) {
     assert.ok(declared.has(field), `the batch is minted with \`${field}\` and contract.js does not declare it`);
   }

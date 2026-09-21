@@ -33,7 +33,12 @@
 // `scenes/dataSource.js`, which is the port's one data door.
 // ═══════════════════════════════════════════════════════════════════
 
-import { bitmapCanvas } from './bitmapCanvas.js';
+import { bitmapCanvas, color32Canvas } from './bitmapCanvas.js';
+// SURV-ART: the DOM door needs the VENDOR arm the GL door already has
+// (scenes/dataPipeline.js getTexture). A vendored archive has no
+// TEXTURE.### to fetch, so `getArchive` below cached it as a miss and
+// every DOM screen drew initials where the mod's art should be.
+import { isVendorArchive, preloadTextureArchive, decodedTexture, vendorRecordCount } from '../systems/textureReplacement.js';
 // The name rule lives with the READER (U54 moved it there): both this
 // module and scenes/shared.js need it, and neither can import the
 // other without dragging in what the other is for.
@@ -109,6 +114,26 @@ export function requestIcon(archive, record, { scale = 2, onReady = null } = {})
   // is thirty. Bounded waste, not a hang - said precisely, because the
   // first draft of this comment claimed a loop it cannot cause.
   icons.set(key, null);
+  // SURV-ART: THE VENDOR ARM, FIRST. An archive that exists only as the
+  // port's own art (Climates & Calories' 532-539) has no file behind
+  // `texName`, so the classic arm below fetched nothing, warned, and
+  // cached a permanent miss - the waterskin, the raw meat and every
+  // spoiled food drew their two-letter initials forever. The bytes were
+  // registered and decoded all along; this is the door they were
+  // missing. It takes `decodedTexture`'s color32 shape straight to a
+  // canvas rather than through the palette, because a PNG has no index.
+  if (isVendorArchive(archive)) {
+    if (record >= vendorRecordCount(archive)) { console.warn(`[icons] vendored archive ${archive} has no record ${record}`); return null; }
+    preloadTextureArchive(archive).then(() => {
+      const img = decodedTexture(archive, record, 0);
+      if (!img) { console.warn(`[icons] vendored ${archive}_${record}-0 would not decode`); return; }
+      const canvas = color32Canvas(img, { scale });
+      if (!canvas) return;
+      icons.set(key, canvas.toDataURL('image/png'));
+      onReady?.();
+    }).catch((e) => console.warn(`[icons] vendored ${archive}_${record}-0 would not load`, e));
+    return null;
+  }
   getArchive(archive).then((got) => {
     if (!got) return;
     try {

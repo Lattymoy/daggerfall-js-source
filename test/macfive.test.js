@@ -151,7 +151,8 @@ test('PL3: the look gate holds a lock a door just won inside its gesture, and re
     assert.ok(RELOCK_GRACE_MS < 250, 'a grace, not a hold: a window that really opens releases on the next frame past it');
     assert.match(read('src/player/pointerLock.js'), /if \(held\) \{ if \(nowMs\(\) - _lastRequestAt > RELOCK_GRACE_MS\) releaseLook\(\); \}/);
     // the seams by source
-    assert.match(read('src/scenes/world.js'), /onOpen: \(\) => \{ setCursorActive\(false\); releaseLook\(\); \},/, 'the Enter that opens the chat is the chat\'s');
+    assert.match(read('src/scenes/world.js'), /onOpen: \(\) => surfaceOpen\('chat'\),/, 'the Enter that opens the chat is the chat\'s (AUDIT SOC B6: the chat is the first of the counted pointer surfaces)');
+    assert.match(read('src/scenes/world.js'), /const surfaceOpen = \(name\) => \{ pointerSurfaces\.add\(name\); setCursorActive\(false\); releaseLook\(\); \};/, 'and the surface\'s open still flips cursorActive off inside the gesture');
     assert.match(read('src/ui/pixelDial.js'), /onClose: \(\) => \{ _open = null; if \(lockEl\) requestLook\(lockEl\); \},/, 'the dial gives the pointer back');
     assert.match(read('src/main.js'), /z-index:20;white-space:pre-wrap;pointer-events:none'/, 'the crash report is not a wall over the canvas');
   } finally { setCursorActive(false); dom.restore(); }
@@ -200,5 +201,10 @@ test('SH1: a box taller than stepOffset is a wall - the player slides along it a
   const src = read('src/player/collider.js');
   assert.match(src, /if \(retry\[1\] > standCeil \+ 1e-4\) continue;/);
   assert.match(src, /const standCeil = entryY \+ STEP_OFFSET;/);
-  assert.match(src, /const wallAbove = dy > 0 && center\[1\] - dy > standCeil;/);
+  // AUDIT COL1 F8: SH1's half of this is unchanged - a contact above the
+  // stand ceiling with an upward normal is a wall. COL1's middle spheres
+  // join it through the same branch (an upward-leaning face met at
+  // mid-body is a wall too), so the condition gained a second clause.
+  assert.match(src, /const wallAbove = \(dy > 0 && center\[1\] - dy > standCeil\)/,
+    "SH1's clause is the first one, and still reads the stand ceiling");
 });

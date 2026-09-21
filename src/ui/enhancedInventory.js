@@ -58,13 +58,19 @@
 
 import { USE_PENDING } from './nativeInventory.js';
 import { PACK_PAGES, PAGE_IDS, pageOf, filterByPage } from './packPages.js';   // PX31: the pack's nine pages (the classic keeps DFU's four)
-import { useItem, isLightSource } from '../systems/useItem.js';   // HT2: the light source's own act
+import { useItem, isLightSource, usableItem } from '../systems/useItem.js';   // HT2: the light source's own act; Mac: Use only where the law has an arm
+// QS2: the quickslot model (systems/quickslots.js). This screen is the ONE
+// place a slot is filled - Mac's own words, "in the enhanced menu through the
+// tooltip to slot 1/2" - and it fills one by naming the item's KIND, which is
+// all a slot ever holds.
+import { isQuickConsumable, canSwapTo, quickslotOf, assignQuickslot, clearQuickslot } from '../systems/quickslots.js';
 import { EQUIP_SLOTS } from '../characters/paperdoll.js';
 import { dfWornEquipment } from '../formats/mwItemMap.js';   // PX25
 import { hasDaggerfallArrows } from '../combat/fpArm.js';   // PX26
 import { ARMOR_ENUM } from '../combat/enemyEquipment.js';   // PX25
 import { inventoryItemImage, templateByIndex } from '../systems/itemTemplates.js';
 import { requestIcon, paperDollDataUrl } from './textureCanvas.js';
+import { modelIconUrl as modelIconUrlOf } from './itemIconUrl.js';   // MW-D38, shared with the HUD's quickslots (QS3)
 // U59: the AVATAR. The compositor is ui/paperDoll.js - the same one
 // the classic window draws - and this reads its finished pixels rather
 // than re-deriving PaperDollRenderer's layer order for a second time.
@@ -75,6 +81,7 @@ import {
   equipItem, unequipSlot, equipTableOf, isEquipped,
   isForbiddenEquip, isBrokenItem,
 } from '../systems/equip.js';
+import { getEquipSlot } from '../systems/equip.js';   // Mac (2026-09-18): Wear only where a slot would take it
 import {
   itemWeight, isEnchanted, totalWeight, addItem, goldStack,
   goldPiecesOf, GOLD_PIECE_WEIGHT_KG,   // E4: the counter and its per-coin weight
@@ -91,13 +98,19 @@ import {
 } from '../systems/inventorySession.js';
 import { entityMaxEncumbrance } from '../combat/formulas.js';   // AUDIT 26: PlayerEntity.MaxEncumbrance, enchantment allowance and all
 import { liveStat } from '../systems/statMods.js';
-import { conditionWord, conditionPercentage, itemNameParts, itemLongName } from '../systems/itemInfo.js';   // RF6: the long name's two parts, ResolveItemLongName's arms once
+import { conditionWord, conditionPercentage, itemNameParts, itemLongName, itemDamageLine, itemArmourLine, itemHandsLine } from '../systems/itemInfo.js';   // RF6: the long name's two parts, ResolveItemLongName's arms once
+import { survivalInfoTokens } from '../systems/itemInfo.js';   // AUDIT SURV C: the survival items' tokens on this skin's card too
+import { isSurvivalItem } from '../systems/survival/items.js';
 import { rarityAttr, rarityLines } from '../systems/lootRarity.js';   // LR1: the row's tier attribute and the card's lines
 import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
 import { closeOnOutsideTap } from './enhancedOverlays.js';   // OT1
 import { repaintKeepingScroll } from './domRepaint.js';
-import { overlayAction } from './input.js';
+import { overlayAction, actionOf } from './input.js';   // MAC-C: and the REGISTRY's answer for the two window keys
+import { audio } from '../systems/audio.js';   // MAC-O6: the pack's own transfer cue - this window carried none at all
+import { enhancedSoundsOn } from '../systems/enhancedSounds.js';   // ES1: both cues ride the Enhanced sounds switch
+import { SOUND } from '../systems/soundClips.js';
 
+import { expandRowValues } from '../systems/quest/questMacros.js';   // MACROS1: a used item's record through its own context (%map)
 /** Slot id -> where it sits on the body, and what to call it.
  *
  *  THE FIGURE FACES THE READER, so the character's RIGHT arm is drawn
@@ -109,6 +122,17 @@ import { overlayAction } from './input.js';
  *  have no place on a body, so they sit in a row underneath rather
  *  than being hidden: a slot the player cannot see is a slot they
  *  cannot empty. */
+/** HT5: the held light's row id. No EQUIP_SLOTS member is minted for it -
+ *  DFU has no light slot, and inventing one would put a fake column in
+ *  the equip table every law here reads.
+ *
+ *  AUDIT HT5 F3: -1 is EXACTLY `EQUIP_SLOTS.None`, so the old comment's
+ *  "negative so it can never collide" was the opposite of true - None is
+ *  the one negative the equip vocabulary already uses. Nothing here
+ *  indexes the table with this id (SLOT_MAP has no -1 entry and no
+ *  reader compares row.slot against None), and THAT is the safety. */
+export const LIGHT_SLOT = -1;
+
 export const SLOT_MAP = Object.freeze({
   [EQUIP_SLOTS.Head]: { x: 110, y: 32, label: 'Head' },
   [EQUIP_SLOTS.Amulet0]: { x: 94, y: 60, label: 'Amulet' },
@@ -218,8 +242,28 @@ export function equippedModel(entity = {}) {
     x: at.x,
     y: at.y,
   })).sort((a, b) => a.y - b.y || a.x - b.x);
+  // HT5 (2026-09-15, Mac: "the torch doesnt appear slotted in
+  // inventory"): THE HELD LIGHT IS A ROW, and it is the only row here
+  // that is not one of DFU's slots.
+  //
+  // A light source HAS no equip slot - getEquipSlot answers None for
+  // all four, which is why HT2 had to make the act a USE - so the lit
+  // torch lived only in `entity.lightSource` and the worn side of this
+  // window had nothing to show. The list marked it gold (HT2) and that
+  // is all: a player holding a torch saw an empty pair of hands.
+  //
+  // Handheld Torches' own fiction is that it OCCUPIES A HAND (its
+  // with no free hand the mod stows the LIGHT, not the weapon), so a hand is where
+  // it belongs on the body. It carries a sentinel slot rather than a
+  // made-up EQUIP_SLOTS value, and the counts below still walk the
+  // REAL table, so "27 slots" stays DFU's 27 and nothing that counts
+  // slots learns about this one.
+  const light = entity?.lightSource ?? null;
+  const visible = rows.filter((r) => r.item || !r.hidden);
   return {
-    rows: rows.filter((r) => r.item || !r.hidden),
+    rows: light
+      ? [...visible, { slot: LIGHT_SLOT, label: 'Light', item: light, hidden: true, x: 110, y: 190 }]
+      : visible,
     filled: rows.filter((r) => r.item).length,
     total: rows.length,
   };
@@ -299,9 +343,32 @@ export function itemLine(item, identity = undefined) {
     item,   // MW-D38: the icon door resolves the item itself
     name: parts.name || t?.name || 'Unknown',
     weight: itemWeight(item),
-    condition: (item.maxCondition ?? 0) > 0 ? conditionPercentage(item) : null,
-    word: (item.maxCondition ?? 0) > 0 ? conditionWord(item) : null,
+    // AUDIT SURV C (review): a survival item's condition is its uses or its keeping, said in its own tokens below -
+    // "Condition New 100%" on a stale bread and "Used 50%" beside "25 uses left" were two words for one thing
+    condition: (item.maxCondition ?? 0) > 0 && !isSurvivalItem(item) ? conditionPercentage(item) : null,
+    word: (item.maxCondition ?? 0) > 0 && !isSurvivalItem(item) ? conditionWord(item) : null,
     material: parts.material || null,
+    // MAC-M1 (Mac: "Damage values arent showing on weapon tool tips.
+    // Also, not sure if armor has values either"): THE TWO NUMBERS A
+    // PLAYER PICKS A WEAPON BY. `weaponDamageString` and
+    // `armourModString` have existed since U25 with exactly one reader
+    // between them - the CLASSIC popup's macro pass - and this skin's
+    // card builds its rows from this line rather than from a record, so
+    // it showed weight and condition and never the damage. The
+    // NUMBERS come from the same producers the classic popup uses, so
+    // the two surfaces cannot drift; only the question of whether to
+    // show a row at all is this skin's (systems/itemInfo.js).
+    damage: itemDamageLine(item),
+    armour: itemArmourLine(item),
+    // MAC-M2 (Mac: "The Tooltip of weapons should also show if the
+    // weapon is 1h or 2h"): the same shape as the two above - the
+    // ANSWER is systems/itemInfo's, off the port's one GetItemHands, so
+    // the card cannot tell a player a claymore is one-handed while the
+    // equip table is emptying both their hands for it.
+    hands: itemHandsLine(item),
+    // AUDIT SURV C: a food's worth and stage, a skin's water, the gear's uses - the classic popup's tokens (systems/itemInfo.js
+    // survivalInfoTokens, less the name and the weight this card already carries), so a Waterskin says its water here too
+    survival: isSurvivalItem(item) ? survivalInfoTokens(item).slice(2).map((r) => r.text) : null,
     stack: (item.stackCount ?? 1) > 1 ? item.stackCount : null,
     equipped: isEquipped(item),
     // HT2: the LIT light source, by REFERENCE, exactly as
@@ -357,6 +424,10 @@ export function localPrimaryAct(item, entity = null) {
       ? { kind: 'douse', label: 'Douse' }
       : { kind: 'light', label: 'Light' };
   }
+  // Mac (2026-09-18, off the audit's review shots): "Hide wear for non wearables" - a waterskin, a raw meat, a
+  // gem offered WEAR. The equip table's own answer decides: no slot would take it, no verb. A throwaway table
+  // answers when no entity is at hand (the slot rules are the item's, not the wearer's).
+  if (getEquipSlot(entity ?? {}, item) === EQUIP_SLOTS.None) return null;
   return { kind: 'wear', label: 'Wear' };
 }
 
@@ -393,7 +464,7 @@ export function localPrimaryAct(item, entity = null) {
  * why `pending` exists and why the classic window's own USE_PENDING
  * strings are reused here rather than reworded.
  */
-export function useResultAction(r, { openBook = null, openSpellbook = null } = {}) {
+export function useResultAction(r, { openBook = null, openSpellbook = null, placeCamp = null } = {}) {
   if (!r) return { kind: 'nothing' };
   // AUDIT 26: DaggerfallUI.PopToHUD() + return (:1687-1688). A watched
   // quest item that is neither parchment nor clothing closes the whole
@@ -412,6 +483,12 @@ export function useResultAction(r, { openBook = null, openSpellbook = null } = {
       ? { kind: 'openSpellbook', closeFirst: true }
       : { kind: 'message', text: USE_PENDING.spellbook };
   }
+  // SURV3: a placeable - close, then hand the item to the host's ground (the spellbook arm's shape)
+  if (r.kind === 'pitchCamp' || r.kind === 'placeFire') {
+    return placeCamp
+      ? { kind: 'placeCamp', item: r.item, closeFirst: true }
+      : { kind: 'message', text: USE_PENDING[r.kind] };
+  }
   // The classic window's own ladder, in its own order: an explicit
   // text, then a TEXT.RSC id, then the pending stand-in. AUDIT 22 F9:
   // `enchanted` is a RIDER on the arm's result, not a kind that
@@ -419,7 +496,7 @@ export function useResultAction(r, { openBook = null, openSpellbook = null } = {
   const out = { kind: 'message', text: null, textId: null,
     repaint: r.kind === 'variant', closesWindow: !!r.closesWindow };
   if (r.text) out.text = r.text;
-  else if (r.textId) out.textId = r.textId;
+  else if (r.textId) { out.textId = r.textId; if (r.macros) out.macros = r.macros; }   // MACROS1: the record's context rides with its id
   else if (r.pending) out.text = USE_PENDING[r.kind] ?? 'Nothing happens.';
   if (r.enchanted && !r.text && !r.textId) out.text = USE_PENDING.enchanted;
   return out;
@@ -449,12 +526,16 @@ let remote = null;
    entire inventory window"). DFU opens the whole parchment because DFU
    has ONE window and both lists live in it; PX19c already split the
    remote into its own smaller frame, which makes a lighter answer
-   possible: opening a CONTAINER shows that frame alone. The pack is a
-   press away and everything behind the glass is unchanged - the
-   transfer ladder, the remote model, the take/stow arms, the wagon,
-   the gold popup - because this is which frames are DRAWN, not what
-   the window does. Opening the pack from a key (F6) or the world opens
-   both, exactly as before. */
+   possible: opening a CONTAINER shows that frame alone. Everything
+   behind the glass is unchanged - the transfer ladder, the remote
+   model, the take/stow arms, the wagon, the gold popup - because this
+   is which frames are DRAWN, not what the window does. Opening the pack
+   from a key (F6) or the world opens both, exactly as before.
+   MAC-M2 B: PX20b's sentence here used to read "the pack is a press
+   away", and that press was the loot bar's Pack button, which Mac has
+   had removed. A loot session therefore never opens the pack: it is
+   drawn or it is not, decided on the way in, and the way to the pack is
+   to close the pile and press the key that has always opened it. */
 let packOpen = true;
 let goldEntry = null;   // the drop-gold field's live text, or null
 let onExit = () => {};
@@ -535,6 +616,463 @@ function refreshFigure() {
 /** Wearing something, through the ONE chain. A refusal is REPORTED -
  *  the classic window pops TEXT.RSC for the same two cases, and a
  *  press that silently does nothing is what the anti-lie law forbids. */
+/** INV1 (2026-09-15, Mac: "Add the ability to click and drag items to
+ *  equip or reorganize in inventory").
+ *
+ *  THE DRAG PERFORMS THE ACT THE CARD ALREADY OFFERS. It does not grow
+ *  a second rule for what a drop means: `localPrimaryAct` decides, the
+ *  same function the act button reads, so dragging a torch onto the
+ *  body LIGHTS it and dragging a cuirass WEARS it - and a refusal
+ *  (broken, class-forbidden) says the same sentence either way.
+ *
+ *  Reordering is the pack's own list and nothing else's: it moves the
+ *  item inside `entity.items`, which is what every page filter reads,
+ *  so the order a player arranges is the order every tab shows and the
+ *  save carries. It never crosses a side - a drag out of a loot pile is
+ *  a TAKE, which is a click, and mixing the two would make a slip a
+ *  transfer. */
+/** AUDIT INV2 (2026-09-15, Mac: "I want it to be perfect") - THE DRAG IS
+ *  THE PANE'S, NOT THE ROW'S, AND IT ENDS WHATEVER HAPPENS.
+ *
+ *  INV1 and INV2 hung the whole gesture off the originating row: its own
+ *  `at` closure, its own pointer capture, its own up/cancel handlers.
+ *  Three lenses found the same omission from three sides, and each one
+ *  was confirmed by driving a real browser:
+ *
+ *  - TWO FINGERS, TWO ROWS. `at` was per row and the carried item was
+ *    one module global, so a second finger on a second row passed the
+ *    "one pointer" guard (that row's `at` was null), overwrote the
+ *    global, and the FIRST finger's release dropped the SECOND finger's
+ *    item. Silent item loss, on the touch device INV1 exists for.
+ *  - THE ROW STOPS EXISTING. `render()` empties the host on an archive
+ *    icon landing, on the paperdoll settling, on the arm rig rebuilding
+ *    - all asynchronous, all reachable while a pointer is down. The
+ *    capturing row is detached, its handlers never fire again, the drag
+ *    never ends and the ghost freezes on screen.
+ *  - THE POINTER IS TAKEN BACK. A right-click (and Android's long-press)
+ *    raises `lostpointercapture` with no `pointercancel` behind it.
+ *    Nothing listened for it, so the drag stayed live with `moved` true
+ *    and the row was un-draggable for the rest of its life.
+ *  - ESCAPE. `unmount` empties the host, and the ghost is the BODY's
+ *    child, so closing the pack mid-drag left an item icon glued over
+ *    the world until some later drag happened to clear it.
+ *
+ *  So the drag is ONE session owned by the pane, its listeners are on
+ *  the WINDOW (which no repaint can detach), and every way it can end -
+ *  release, cancel, capture loss, Escape, unmount - ends it through one
+ *  door. The source is identified by ITEM rather than by row node, so a
+ *  repaint mid-drag cannot make the item's own new row look like someone
+ *  else's. */
+let drag = null;
+
+/** INV2: the ghost - the item's own tile under the pointer, carrying the
+ *  act a release would perform.
+ *
+ *  IT IS `itemTile`'S TILE, not a second one. This file's header names
+ *  the trap directly ("a second icon pipeline in this file is how the
+ *  port ends up with two") - the Morrowind ground mesh, the classic
+ *  sprite and the initials fallback are one function's answer already,
+ *  and the ghost asks the same function.
+ *
+ *  It is `pointer-events: none` and lives on the BODY rather than inside
+ *  the window: the hit test under it must answer the thing the cursor is
+ *  over, and a node under the cursor would answer itself every time -
+ *  and a ghost clipped to the panel could not be carried off it, which
+ *  is the other half of what was asked for. */
+let ghost = null;
+const ghostEnd = () => { ghost?.remove(); ghost = null; };
+function ghostStart(item) {
+  ghostEnd();
+  ghost = el('div', 'dragghost');
+  ghost.append(itemTile(itemLine(item, deps.entity)));
+  ghost.append(el('span', 'ghostact', ''));
+  document.body?.appendChild(ghost);
+}
+/** AUDIT INV2 A3/A4: CLEAR OF THE FINGER, AND ON THE SCREEN.
+ *  The ghost is a 44px tile over a verb chip, about 64px tall, and it
+ *  was drawn centred on the reported point - so on a touch screen the
+ *  contact patch covered the bottom of the icon and ALL of the verb,
+ *  which is the only thing saying what a release would do. A touch
+ *  carries it a thumb's height above the finger. And nothing clamped it,
+ *  so at the screen edges it drew half off - precisely where the
+ *  off-panel drop region is. */
+const GHOST_LIFT_TOUCH = 52;
+function ghostAt(x, y, verb) {
+  if (!ghost) return;
+  const w = globalThis.innerWidth ?? 0;
+  const h = globalThis.innerHeight ?? 0;
+  const lift = drag?.touch ? GHOST_LIFT_TOUCH : 0;
+  ghost.style.left = `${w ? Math.min(Math.max(x, 40), w - 40) : x}px`;
+  ghost.style.top = `${h ? Math.min(Math.max(y - lift, 40), h - 16) : y - lift}px`;
+  const act = ghost.querySelector('.ghostact');
+  if (act) { act.textContent = verb ?? ''; act.classList.toggle('on', !!verb); }
+  ghost.classList.toggle('refused', verb === null);
+}
+
+/** WHAT A RELEASE HERE WOULD DO - one answer, read by the ghost's label
+ *  while the pointer moves and by the release itself when it lands, so
+ *  the word the player was shown is the act they get.
+ *
+ *  OUTSIDE THE WINDOWS IS THE TRANSFER THE SCREEN ALREADY OFFERS. It
+ *  does not invent a drop: `stow` is the function behind the button
+ *  beside the item, so carrying something off the panel Drops it on the
+ *  ground, Stows it in the wagon or Puts it back in the chest exactly as
+ *  pressing that button would.
+ *
+ *  AUDIT INV2 B-F3/B-F4: AND THE VERB IS THE REAL ANSWER, not `canStow`.
+ *  `canStow` asks "should this BUTTON exist" - a refusal that SPEAKS
+ *  earns a button - and INV2 reused it for "what will this release do",
+ *  which are different questions. A quest item and a full wagon both
+ *  refuse with text, so `canStow` said yes and the ghost read "Drop" in
+ *  white before refusing on release; a cart refuses in SILENCE, so
+ *  `canStow` said no, the ghost reddened, and the release then called
+ *  `stow` on the one path where `stow` is guaranteed mute - a dead
+ *  gesture that also wiped whatever the screen was saying. The plan's
+ *  own `ok` is the honest answer to both, so the label is the plan's. */
+function stowIntent(item) {
+  const plan = planStore(item, {
+    remote: remote.items, usingWagon: session.usingWagon, chooseOne: session.chooseOne,
+    dryRun: true,   // as canStow's own note says: the quest rung WRITES, and a label must not
+  });
+  // A refusal that speaks is still worth releasing on - the player gets
+  // the sentence. One that cannot speak is shown as refused and does
+  // nothing, because a silent no-op is the drawn door PX14 forbids.
+  if (plan.ok) return { kind: 'stow', label: STOW_LABEL[remote.kind] };
+  return plan.refusal?.text ? { kind: 'stow', label: null, speaks: true } : { kind: 'nope', label: null };
+}
+function dropIntent(item, over, fromItem, source = 'local') {
+  // MAC-M2 (2026-09-16, Mac: "Hold to drag enhanced functionality
+  // doesn't work when trying to take items off your character"): A DRAG
+  // THAT STARTED ON THE BODY HAS ONE DESTINATION, AND IT IS THE PACK.
+  //
+  // It is INV1's own law read in the other direction: the drop performs
+  // the act the card already offers, so `dropOnBody` asks
+  // `localPrimaryAct` and that answers Take off for a worn piece (and
+  // Douse for the held light, the one body row that is not an equip
+  // slot). One function for both directions, because two would drift.
+  //
+  // AND NOWHERE ELSE IS A TARGET. DFU's local list is FilterLocalItems,
+  // which never shows an equipped item, so there is no transfer law
+  // that can reach one: a worn cuirass released over the ground or over
+  // an open chest would lie there AND stay in the equip table. Off the
+  // dock the answer is the same "never mind" the pack's chrome gives.
+  if (source === 'worn') {
+    const act = localPrimaryAct(item, deps.entity);
+    return over?.closest?.('.pack-dock') && act
+      ? { kind: 'offbody', label: act.label }
+      : { kind: 'none', label: '' };
+  }
+  if (over?.closest?.('.wornmap')) {
+    const act = localPrimaryAct(item, deps.entity);
+    return act ? { kind: 'body', label: act.label } : { kind: 'nope', label: null };
+  }
+  const onRow = over?.closest?.('.itemrow');
+  const target = onRow ? rowItems.get(onRow) : null;
+  // AUDIT INV2 A-F3: the source is the ITEM, never the row NODE - a
+  // repaint mid-drag stands a NEW row for the same item, and an identity
+  // test then read the item's own row as someone else's and offered to
+  // move it above itself.
+  if (target && target !== fromItem) return { kind: 'reorder', label: 'Move here', item: target };
+  // AUDIT INV2 B-F7: the remote WINDOW is a drop target in its own
+  // right. Dragging onto the open chest is the first gesture a player
+  // tries for "store this", and reading it as panel chrome meant the
+  // only way to store something was to drop it in the void beside the
+  // window that was asking for it.
+  if (over?.closest?.('.loot-win')) return stowIntent(item);
+  if (over?.closest?.('.pack-win')) return { kind: 'none', label: '' };
+  return stowIntent(item);
+}
+
+/** AUDIT INV1 Fb: THE DRAG IS POINTER EVENTS, NOT THE HTML5 DRAG API.
+ *
+ *  The first cut used `draggable` + dragstart/drop. Those do not fire
+ *  from a touch, so the whole feature was mouse-only - on a screen the
+ *  port ships to and whose 44px target law this arc has now enforced
+ *  twice. Every other drag here is pointerdown/move/up
+ *  (ui/heldMap.js's pan); this follows it.
+ *
+ *  ONE POINTER FOR THE PANE, and a 4px threshold, so a tap is still a
+ *  pick - the row's own click law is untouched below that distance and
+ *  suppressed above it. */
+const dragHighlight = () => {
+  for (const n of document.querySelectorAll('.dragover, .itemrow.dragging, .wornrow.dragging')) n.classList.remove('dragover', 'dragging');
+};
+/** Move the carried item to a point, and say what a release there does. */
+function dragTo(x, y) {
+  if (!drag) return;
+  drag.x = x; drag.y = y;
+  if (!drag.moved) return;
+  dragHighlight();
+  drag.row?.classList.add('dragging');
+  const want = dropIntent(drag.item, document.elementFromPoint?.(x, y), drag.item, drag.source);
+  drag.want = want;
+  ghostAt(x, y, want?.label ?? null);
+  if (want?.kind === 'body') document.elementFromPoint?.(x, y)?.closest?.('.wornmap')?.classList.add('dragover');
+  // MAC-M2: the other direction lights the DOCK - the pack is one
+  // target the way the map is one, not a grid of twelve tiles.
+  else if (want?.kind === 'offbody') document.elementFromPoint?.(x, y)?.closest?.('.pack-dock')?.classList.add('dragover');
+  else if (want?.kind === 'reorder') { for (const n of document.querySelectorAll('.itemrow')) if (rowItems.get(n) === want.item) n.classList.add('dragover'); }
+}
+/** THE ONE DOOR OUT. `commit` false is an abort - a cancel, a lost
+ *  capture, Escape, the pane going away; nothing moves and nothing is
+ *  said. */
+function dragStop(commit) {
+  const d = drag;
+  drag = null;
+  if (d?.hold) clearTimeout(d.hold);
+  dragLock(false);
+  ghostEnd();
+  dragHighlight();
+  if (typeof globalThis !== 'undefined') {
+    globalThis.removeEventListener?.('pointermove', onDragMove, true);
+    globalThis.removeEventListener?.('pointerup', onDragUp, true);
+    globalThis.removeEventListener?.('pointercancel', onDragAbort, true);
+    globalThis.removeEventListener?.('scroll', onDragScroll, true);
+    globalThis.removeEventListener?.('contextmenu', onDragMenu, true);
+    globalThis.removeEventListener?.('touchmove', onDragHold, true);
+  }
+  if (!d?.moved) return;
+  _dragged = true;   // the click that follows a real drag is not a pick
+  if (!commit) return;
+  // AUDIT INV2 A-F8: the item is a reference held across time. Something
+  // else can empty the pack under a live drag - a peer, a quest, a
+  // script - and a stale one minted a ground pile for an item the player
+  // no longer owned.
+  if (!(deps.items?.() ?? []).includes(d.item)) return;
+  const want = dropIntent(d.item, document.elementFromPoint?.(d.x, d.y), d.item, d.source);
+  if (want?.kind === 'body') dropOnBody(d.item);
+  // MAC-M2: THE SAME DOOR. A piece carried OFF the body performs the
+  // act its own card offers, exactly as one carried onto it does, so
+  // the two directions cannot answer differently - and the closed act
+  // set INV1 wrote is still three.
+  else if (want?.kind === 'offbody') dropOnBody(d.item);
+  else if (want?.kind === 'reorder') reorderPack(d.item, want.item);
+  else if (want?.kind === 'stow') stow(d.item);
+}
+/** AUDIT INV2 A1: A FINGER THAT MEANT TO SCROLL MUST NOT DROP THE ITEM.
+ *  The shipped pack is not a list of rows - under `.pack-shell` every row
+ *  is a 56px TILE in a wrapping grid inside a scrolling column - and
+ *  every tile carried `touch-action: none`, so the only surface that
+ *  could start a scroll was the 6px gap between them. Every finger-down
+ *  was therefore a drag at a 4px threshold, and INV2 had just made a
+ *  release off the panel a DROP: on a phone the off-panel region is a
+ *  thin band down each side and across the top and bottom, which is
+ *  exactly where a flick ends. A failed scroll threw the item on the
+ *  floor, with no confirmation and no undo.
+ *
+ *  So a touch drag begins on a HOLD, the way every other touch surface
+ *  in the world begins one: the rows pan by default (`touch-action:
+ *  pan-y`), a flick scrolls and is never a drag, and only a finger that
+ *  stays still picks anything up. Once it has, `.draglock` takes the
+ *  pan back for the rest of the gesture. A MOUSE keeps the 4px
+ *  threshold - a mouse has no scroll to steal.
+ *
+ *  INV3 corrects two of A1's numbers below: the slop is per-axis rather
+ *  than one Manhattan sum, and `.draglock` does NOT take the pan back
+ *  for the gesture in flight - `onDragHold` does. */
+const TOUCH_HOLD_MS = 320;
+/** INV3 (2026-09-17, Mac: "Hold to drag functionality in inventory
+ *  sometimes doesnt work"): AND THE AXIS THAT CANNOT SCROLL IS NOT
+ *  EVIDENCE OF A SCROLL.
+ *
+ *  A1 was right about the law and wrong about the measurement. It asked
+ *  `|dx| + |dy| > 8` - one Manhattan sum over BOTH axes against half the
+ *  room the browser itself allows - and a resting thumb does not hold
+ *  still to five pixels. Measured in Chromium on a 430x860 phone
+ *  (`tools/invDragProbe.mjs`), on the `touch-action: pan-y` tile this
+ *  law is written for:
+ *
+ *  - the browser takes the gesture (`pointercancel`) at **16 CSS px**
+ *    of VERTICAL travel and keeps it at 15 - the same number at device
+ *    pixel ratio 1, 2 and 3, so it is CSS px and not device px;
+ *  - it never takes it for HORIZONTAL travel at all, out to 160px,
+ *    because a `pan-y` surface has no sideways pan to hand over.
+ *
+ *  So the old sum cancelled the hold twice over: at 8px when the
+ *  browser allows 16, and on an axis where the browser has nothing to
+ *  take. A finger drifting 5px across and 4px down - neither of which
+ *  can scroll anything - lost the item it was reaching for. That is the
+ *  SOMETIMES: the hold survived 0 of 12 trials at a 6px drift before
+ *  this and 12 of 12 after.
+ *
+ *  ONE AXIS IS THE SCROLLER'S. The slop is per-axis now: vertical,
+ *  where a pan really can start, at 12 - under the browser's own 16, so
+ *  this law is the one that fires and it fires the same way every time -
+ *  and horizontal at twice that, because nothing can take the gesture
+ *  there and the only thing sideways travel proves is that the finger is
+ *  going somewhere rather than resting.
+ *
+ *  A1'S LAW IS UNTOUCHED: a flick is vertical, so it still scrolls and
+ *  is still never a drag, and a MOUSE still crosses at 4px. */
+const TOUCH_HOLD_SLOP = 12;
+const TOUCH_HOLD_SLOP_X = TOUCH_HOLD_SLOP * 2;
+/** Has this finger left the hold? `dy` is the axis the list pans in and
+ *  is judged tightly; `dx` is an axis nothing can pan and is judged
+ *  loosely. Exported so the law can be pinned as a LAW rather than as
+ *  whatever the drag happened to do on one path. */
+export const holdBroken = (dx, dy) => Math.abs(dy) > TOUCH_HOLD_SLOP || Math.abs(dx) > TOUCH_HOLD_SLOP_X;
+const dragLock = (on) => document.body?.classList?.toggle('draglock', !!on);
+function dragArm() {
+  if (!drag || drag.moved) return;
+  drag.held = true;
+  drag.moved = true;
+  dragLock(true);
+  ghostStart(drag.item);
+  dragTo(drag.x, drag.y);
+}
+const onDragMove = (e) => {
+  if (!drag || e.pointerId !== drag.id) return;
+  const dx = e.clientX - drag.ox;
+  const dy = e.clientY - drag.oy;
+  if (!drag.moved) {
+    // a finger that moves before the hold was scrolling: let it go
+    if (drag.touch) {
+      if (holdBroken(dx, dy)) { dragStop(false); return; }
+      // INV3: the hold STANDS, and it stands HERE. The origin is what
+      // the slop is measured from, but the ghost must arm under the
+      // finger's real position - drifting the allowed 12px and then
+      // lifting an icon a dozen pixels away (and asking `dropIntent`
+      // what is under THAT point) is the tell that the two were one
+      // field.
+      drag.x = e.clientX; drag.y = e.clientY;
+      return;
+    }
+    if (Math.abs(dx) + Math.abs(dy) <= 4) return;
+    drag.moved = true;
+    ghostStart(drag.item);
+  }
+  dragTo(e.clientX, e.clientY);
+};
+/** INV3: AND `.draglock` CANNOT TAKE THE PAN BACK ON ITS OWN.
+ *
+ *  A1 wrote "once the hold has armed, `.draglock` takes the pan back
+ *  for the rest of the gesture", and the browser does not work that
+ *  way: Chromium reads the effective `touch-action` when the touch
+ *  SEQUENCE begins, and a rule that lands 320ms later does not reach
+ *  the gesture already in flight. Measured, on a bare `pan-y` tile in a
+ *  scroller with the lock applied the instant the hold armed: the list
+ *  scrolled anyway and the pointer was cancelled anyway, exactly as
+ *  with no lock at all. So the ghost lifted and then VANISHED the
+ *  moment the carry moved down a scrollable list - the other half of
+ *  Mac's "sometimes".
+ *
+ *  The one thing that still holds a live gesture is `preventDefault` on
+ *  a cancelable `touchmove`, and an armed drag takes them (same probe:
+ *  no cancel, and the list did not move). It is registered from the
+ *  press rather than from the arming, because the first move after the
+ *  hold is the one that must not get through, and it refuses nothing
+ *  while the drag is unarmed - a flick still scrolls.
+ *
+ *  `.draglock` stays: it is what stops a SECOND finger panning the list
+ *  out from under a live drag, which is a gesture that does begin under
+ *  the class. */
+const onDragHold = (e) => { if (drag?.moved && drag.touch && e.cancelable) e.preventDefault(); };
+const onDragUp = (e) => { if (drag && e.pointerId === drag.id) dragStop(true); };
+/** MAC-R4: the long-press menu never opens over a live session (see dragFrom). */
+const onDragMenu = (e) => { if (drag && e.cancelable) e.preventDefault(); };
+const onDragAbort = (e) => { if (drag && (e.pointerId === undefined || e.pointerId === drag.id)) dragStop(false); };
+// AUDIT INV2 A-F5: a wheel moves the DOM under a STATIONARY cursor, so
+// the highlight and the verb went on naming a row the pointer had left
+// while the release hit-tested the one really under it - the player was
+// shown one row and given another ten away. The intent is recomputed at
+// the unchanged point.
+const onDragScroll = () => { if (drag?.moved) dragTo(drag.x, drag.y); };
+
+/** MAC-M2: `source` is 'local' for a pack row and 'worn' for a panel on
+ *  the body. It is a WORD, not a node - AUDIT INV2 A-F3's law stands and
+ *  the carried thing is still identified by ITEM - and the intent needs
+ *  it, because the held light sits on the body with no `equipSlot` at
+ *  all, so `isEquipped` cannot answer "did this come off the map". */
+function dragFrom(row, item, source = 'local') {
+  row.onpointerdown = (e) => {
+    if (drag || e.button > 0) return;   // ONE pointer for the PANE: a second finger on a second row was how one drag dropped another's item
+    const touch = e.pointerType === 'touch' || e.pointerType === 'pen';
+    // INV3: `ox`/`oy` is where the finger LANDED and the slop is measured
+    // from it; `x`/`y` is where the finger is NOW and the ghost arms on it.
+    drag = { id: e.pointerId, item, row, ox: e.clientX, oy: e.clientY, x: e.clientX, y: e.clientY, moved: false, want: null, touch, hold: null, source };
+    if (touch) drag.hold = setTimeout(dragArm, TOUCH_HOLD_MS);
+    // MAC-R4 (2026-09-17, Mac: "Hold to drag in the enhanced inventory
+    // sometimes doesn't work properly"): A TOUCH POINTER CAPTURES THE ROW
+    // IT LANDS ON, IMPLICITLY, and a captured row that a repaint detaches
+    // raises `lostpointercapture` - which INV2 read as "the pointer taken
+    // back" and ended the session. `render()` runs on things a hold
+    // cannot see coming (an archive icon landing, the doll settling, the
+    // arm rig rebuilding - INV2's own list), so a press that overlapped
+    // one died with no ghost and no refusal: the "sometimes". The
+    // session's listeners are the window's and need no capture at all,
+    // so it is given back the moment it is granted - synchronously here
+    // (Chromium sets it before the pointerdown is dispatched) and again
+    // on `gotpointercapture` for an agent that grants it after. With no
+    // capture there is no capture to lose, and the abort that read its
+    // loss is gone with it: a pointer really taken back arrives as
+    // `pointercancel`, which is still an end (onDragAbort).
+    const giveBack = () => { try { row.releasePointerCapture?.(e.pointerId); } catch { /* not captured */ } };
+    if (touch) { giveBack(); row.addEventListener?.('gotpointercapture', giveBack, { once: true }); }
+    // The listeners are the WINDOW's: a repaint detaches this row, and a
+    // drag that lived on it died there with the ghost still on screen.
+    globalThis.addEventListener?.('pointermove', onDragMove, true);
+    globalThis.addEventListener?.('pointerup', onDragUp, true);
+    globalThis.addEventListener?.('pointercancel', onDragAbort, true);
+    globalThis.addEventListener?.('scroll', onDragScroll, true);
+    // MAC-R4: and the long-press menu - Android raises `contextmenu` at
+    // about the hold's own length, and a menu that opens takes the
+    // pointer (a cancel). The hosts' guard (ui/input.js
+    // installContextMenuGuard) already refuses it on a host's document;
+    // this refuses it for the session's own life on any document, so a
+    // pane mounted without a host holds too.
+    globalThis.addEventListener?.('contextmenu', onDragMenu, true);
+    // INV3: passive FALSE, or the preventDefault above is ignored - a
+    // window `touchmove` listener is passive by default in Chromium.
+    globalThis.addEventListener?.('touchmove', onDragHold, { passive: false, capture: true });
+  };
+  rowItems.set(row, item);
+}
+/** Whether a drag is carrying something right now - the click law and
+ *  the key law both have to know. */
+export const dragLive = () => !!drag?.moved;
+/** AUDIT INV2 A-F6/B-F6: THE CLICK GUARD WAS DEAD CODE. The row's own
+ *  `onclick` tested for the `.dragging` class, and the release strips
+ *  that class before it acts, so the test never fired - a drag released
+ *  on the panel's own chrome ("never mind") went on to SELECT the row it
+ *  had left, tooltip and all. The release leaves a latch instead, which
+ *  the click that follows it consumes. */
+let _dragged = false;
+export const takeDragClick = () => { const was = _dragged; _dragged = false; return was; };
+/** AUDIT INV2 A-F4: the pane going away ends the drag. The ghost is the
+ *  body's child, so emptying the host cannot reach it. */
+export const dragAbort = () => { if (drag) dragStop(false); };
+/** Which item a rendered row stands for - the hit test answers an
+ *  ELEMENT, and the reorder needs the thing it represents. */
+const rowItems = new WeakMap();
+
+function dropOnBody(item) {
+  const act = localPrimaryAct(item, deps.entity);
+  if (!act) return;
+  if (act.kind === 'wear') { wear(item); return; }
+  if (act.kind === 'takeOff') { takeOff(item.equipSlot); return; }
+  // AUDIT 22 F6: the light arm takes NO collection, as DFU's equip click does
+  use(item, null);
+}
+
+/** Move `item` to `before`'s place in the player's own list. */
+function reorderPack(item, before) {
+  const list = deps.entity?.items;
+  if (!Array.isArray(list) || item === before) return;
+  const from = list.indexOf(item);
+  const to = list.indexOf(before);
+  if (from < 0 || to < 0) return;
+  // AUDIT INV1 Fa: the drop line is drawn ABOVE the target row, so the
+  // item must LAND above it - and `to` was computed before the splice
+  // that shifts everything after `from` down one. Dragging downward
+  // therefore landed the item BELOW the row the line was drawn on
+  // ([A,B,C] dragging A onto B gave BAC), so the affordance lied in one
+  // of the two directions. Take the shift off when moving down.
+  list.splice(from, 1);
+  list.splice(from < to ? to - 1 : to, 0, item);
+  refresh();
+  render();
+}
+
 function wear(item) {
   notice = null;
   const named = itemLongName(item, { getQuest: deps.getQuest ?? null });   // RF6: the resolver's name, never the record's raw one (an unidentified magic item's)
@@ -569,7 +1107,7 @@ function use(item, collection = deps.items?.() ?? []) {
     // reach. The same seam the transfer ladder's quest arm reads.
     getQuest: deps.getQuest ?? null,
   });
-  const act = useResultAction(r, { openBook: deps.openBook, openSpellbook: deps.openSpellbook });
+  const act = useResultAction(r, { openBook: deps.openBook, openSpellbook: deps.openSpellbook, placeCamp: deps.placeCamp });
   // AUDIT 26's PopToHUD: the window stack goes, nothing is said.
   if (act.kind === 'close') { onExit(); return; }
   // THE HOOKS ARE READ BEFORE ANYTHING CLOSES. `onExit` unmounts, and
@@ -590,8 +1128,14 @@ function use(item, collection = deps.items?.() ?? []) {
     open();
     return;
   }
+  if (act.kind === 'placeCamp') {
+    const place = deps.placeCamp;
+    onExit();   // SURV3: the same law - the host's HUD line says where the camp stands, or why not
+    place(act.item);
+    return;
+  }
   if (act.textId && deps.rows) {
-    const rows = deps.rows(act.textId) ?? [];
+    const rows = expandRowValues(deps.rows(act.textId) ?? [], act.macros ?? null);   // MACROS1: %map is the map's name
     notice = rows.map((row) => (typeof row === 'string' ? row : row?.text ?? '')).join(' ').trim() || null;
   } else if (act.text) {
     notice = act.text;
@@ -649,14 +1193,37 @@ function stow(item) {
     getQuest: deps.getQuest ?? null,
   });
   if (!plan.ok) return refuse(plan.refusal);
+  // AUDIT INV2 B-F2: THE MAP IS AN INTERCEPTION, not a transfer. AUDIT
+  // 26 F156: planStore answers `{ ok: true, map: true }` for a
+  // MiscItems.Map - the reveal runs, the paper is consumed, nothing
+  // lands in the destination. The classic window routes it
+  // (nativeInventory.js:788) and this one did not, so dragging a
+  // treasure map out of the pack dropped the paper on the floor and
+  // revealed nothing.
+  if (plan.map) { use(item, deps.items?.() ?? []); return; }
+  // MAC-O6: the same cue this window's `take()` gained - storing (selling,
+  // banking, dropping into a wagon or a pile) is a transfer too, and
+  // planStore already hands back the sound (itemTransfer.js:220), unread
+  // until now.
+  if (enhancedSoundsOn()) audio.playOneShot(plan.sound === 'gold' ? SOUND.GoldPieces : SOUND.ButtonClick, 1);   // ES1: the row's switch
   // PX24 (Mac: an action taken closes the tooltip): the transfer
   // happens and the tip goes. The earlier law kept the ARRIVING item
   // picked so it could be put straight back; the player can pick it
   // again on the other side, and a tip that stays open after every
   // press is the quirk being fixed.
-  applyTransfer(item, plan, deps.items?.() ?? [], to);
-  picked = null;
-  side = 'remote';
+  // AUDIT INV2 B-F1: THE ENTITY AND THE PROVENANCE RIDE, as they do at
+  // the classic window's own call (nativeInventory.js:790). Without them
+  // `clearLightSourceOnLeave` - AUDIT 26 F157's first statement inside
+  // applyTransfer - is a no-op, so a LIT TORCH dropped on the ground
+  // went on lighting the player from where it lay. INV2 made that a
+  // gesture; it was already the button's.
+  applyTransfer(item, plan, deps.items?.() ?? [], to, { entity: deps.entity, fromLocal: true });
+  // AUDIT INV2 B-F9: `stow` was written for the BUTTON, whose argument
+  // is always `picked`; a drag hands it any row. Closing a tooltip the
+  // player opened on some OTHER item, and moving `side` to a remote list
+  // with nothing picked on it, is the button's business and not this
+  // item's.
+  if (picked === item) { picked = null; side = 'remote'; }
   refresh();
   render();
 }
@@ -672,6 +1239,19 @@ function take(item) {
     getQuest: deps.getQuest ?? null,
   });
   if (!plan.ok) return refuse(plan.refusal);
+  // AUDIT INV2 B-F2: the map is an interception in EITHER direction
+  // (itemTransfer.js:242, "F156: either direction") - taking one off a
+  // pile reveals and consumes it, exactly as stowing one does. The
+  // classic window routes both; this one routed neither.
+  if (plan.map) { use(item, remoteTarget(deps, sessionState())); return; }
+  // MAC-O6 (report: "looting gold/items makes no sound"): DoTransferItem's
+  // own cue (:1569 gold's clink, :1583 everything else), which the classic
+  // window plays (nativeInventory.js:856) and this one never did - the ONLY
+  // difference between the two windows' calls to planTake/applyTransfer was
+  // that this one dropped `plan.sound` on the floor. Played here, ahead of
+  // the gold interception below, exactly as DFU's own PlayOneShot sits
+  // ahead of that arm's `return` in DoTransferItem.
+  if (enhancedSoundsOn()) audio.playOneShot(plan.sound === 'gold' ? SOUND.GoldPieces : SOUND.ButtonClick, 1);   // ES1: the row's switch
   // E4: the pack IS the destination here, so DoTransferItem's gold
   // interception (:1562-1571) fires and answers null - its `return`
   // skips the choose-one close below, and there is no arriving record
@@ -799,22 +1379,13 @@ function modelFigure() {
   return cv;
 }
 /** MW-D38: a Daggerfall item's Morrowind icon as a data URL, or null.
- *  The rig caches the pixels per record; this caches the encoding. */
-const _iconUrls = new Map();
-function modelIconUrl(item, size) {
-  const armMod = deps.fpArm;
-  if (!armMod || typeof armMod.itemIcon !== 'function' || !item) return null;
-  let img = null;
-  try { img = armMod.itemIcon(item, { size }); } catch { img = null; }
-  if (!img || !img.width) return null;
-  if (_iconUrls.has(img)) return _iconUrls.get(img);
-  const cv = document.createElement('canvas');
-  cv.width = img.width; cv.height = img.height;
-  cv.getContext('2d').putImageData(new ImageData(img.data, img.width, img.height), 0, 0);
-  const url = cv.toDataURL('image/png');
-  _iconUrls.set(img, url);
-  return url;
-}
+ *  QS3 moved the body to ui/itemIconUrl.js, because the HUD's quickslot
+ *  diamond wants the same picture of the same item and importing this
+ *  screen to reach twenty lines would drag the whole window into every
+ *  frame drawHud makes. The rig it reads is still the one the host
+ *  mounted this screen with - a page with no Morrowind data behind it
+ *  draws the classic icon, exactly as before. */
+const modelIconUrl = (item, size) => modelIconUrlOf(item, size, deps.fpArm);
 
 /** Drag left/right to turn the figure; a tap does nothing (display only).
  *  MF1: the move records the yaw and asks for ONE repaint on the next
@@ -925,7 +1496,11 @@ const WORN_FAMILIES = Object.freeze([
   { id: 'rings', label: 'Rings', area: '1 / 3', slots: ['Ring'] },
   { id: 'tokens', label: 'Tokens', area: '2 / 3', slots: ['Mark', 'Crystal', 'Unnamed'] },
   { id: 'rhand', label: 'R\u00b7Weapon', area: '3 / 3', slots: ['Right hand'] },
-  { id: 'lhand', label: 'L\u00b7Weapon', area: '4 / 3', slots: ['Left hand'] },
+  // HT5: the held light shares the off hand's panel and is listed
+  // FIRST, because the mod frees a hand to hold one - so when both are
+  // filled the torch is the thing you just did, and the weapon is one
+  // tap away on the family's own cycle.
+  { id: 'lhand', label: 'L\u00b7Hand', area: '4 / 3', slots: ['Light', 'Left hand'] },
   { id: 'legs', label: 'Legs', area: '5 / 3', slots: ['Legs, armour', 'Legs, clothes'] },
   { id: 'feet', label: 'Feet', area: '6 / 3', slots: ['Feet'] },
 ]);
@@ -942,6 +1517,12 @@ function equippedList() {
   // area is the map's.
   const wrap = el('section', 'equipped');
   const map = el('div', 'wornmap');
+  // INV1: the body is the equip target - `dragFrom`'s pointerup finds
+  // the MAP by hit test, so the map itself needs no handler.
+  // MAC-M2: the panels ON it do. INV1's sentence here used to read "so
+  // the map needs no handler of its own", which was true of the
+  // direction it shipped and is why the other one was unreachable - a
+  // press on a filled slot started no drag session at all.
   // PX19g: the doll's FRAME is part of the composition and is always
   // there - art inside it when the paperdoll can draw, a quiet
   // Avatar plaque when it cannot. Slapped-behind is over.
@@ -1006,18 +1587,40 @@ function equippedList() {
     const top = filled.find((r) => r.item === picked) ?? filled[0];
     const line = itemLine(top.item, deps.entity);
     const b = el('button', `wornrow${filled.some((r) => r.item === picked) ? ' on' : ''}`);
-    b.title = filled.map((r) => `${r.label}: ${itemLine(r.item, deps.entity).name}`).join('\n');
+    // MAC-M1: the WORN map's hover carries the rating too, and this is
+    // the surface Mac's second sentence is about - "not sure if armor
+    // has values either". Armour is the thing you are wearing, so the
+    // place a player asks that question is here, over the slot, not in
+    // the pack. One item per line, its number in brackets when it has
+    // one.
+    b.title = filled.map((r) => {
+      const l = itemLine(r.item, deps.entity);
+      return `${r.label}: ${l.name}${itemStatSuffix(l)}`;
+    }).join('\n');
     b.style.gridArea = fam.area;
     b.append(itemTile(line));
     const txt = el('span', 'worntext');
     txt.append(el('span', 'wornslot', fam.label), el('span', 'wornname', line.name));
     b.append(txt);
     if (filled.length > 1) b.append(el('span', 'worncount', String(filled.length)));
+    // MAC-M2 (Mac: "hold to drag ... doesn't work when trying to take
+    // items off your character"): A FILLED PANEL DRAGS, on the same hold
+    // and the same threshold a pack row takes. INV1 attached `dragFrom`
+    // to the LIST's rows alone and made the body a drop TARGET, so the
+    // gesture only ever ran one way: a press on the doll started no
+    // session at all, which is not a refusal a player can read - it is a
+    // dead hold. The piece carried is the one the panel SHOWS (a family
+    // cycles on the click, and the drag takes what is on top).
+    dragFrom(b, top.item, 'worn');
     // SELECTS, never undresses (the mis-click law) - and a click on an
     // already-picked family CYCLES to its next piece and wraps, so a
     // family of four is four taps and all 27 slots stay reachable
     // from eleven panels.
     b.onclick = () => {
+      // MAC-M2: and a release that DRAGGED is not a pick here either -
+      // the same latch the list's rows consume (AUDIT INV2 A-F6).
+      // Without it every unequip-by-drag also cycled the family it left.
+      if (takeDragClick()) return;
       // PX19i: cycle through the family, and when the cycle would
       // land back where it started the tooltip goes AWAY instead -
       // a single-piece family is a plain toggle.
@@ -1124,15 +1727,35 @@ function itemTile(line) {
     // every one of them. The CSS caps both axes instead, which scales
     // to fit and keeps the shape.
     tile.append(img);
-    tile.title = line.name;
+    // MAC-M1: the GRID's own hover, which is the most literal reading of
+    // "weapon tool tips" - it said the name and nothing else.
+    tile.title = line.name + itemStatSuffix(line);
     return tile;
   }
   const tile = el('span', 'tile', line.name.split(/\s+/).map((w) => w[0]).join('').slice(0, 2).toUpperCase());
-  tile.title = line.image
+  tile.title = (line.image
     ? `${line.name} — TEXTURE.${line.image.archive} record ${line.image.record}`
-    : line.name;
+    : line.name) + itemStatSuffix(line);
   return tile;
 }
+
+/** MAC-M1: the one number an item is FOR, as a hover suffix - `" (0 - 5)"`
+ *  for a weapon, `" (+7)"` for armour, and nothing at all for a book.
+ *  Three surfaces show it (the grid tile, the tile's no-icon fallback,
+ *  the worn map's slot) and they share this rather than each spelling
+ *  the `??` themselves: three copies of a rule is three chances to
+ *  disagree, which is the shape half of this month's findings had.
+ *
+ *  MAC-M2 put the HANDS beside it on the same three hovers. Mac said
+ *  "the Tooltip of weapons should ALSO show" it, and the surface MAC-M1
+ *  read that word onto is this one - the row is on the card either way,
+ *  but a player scanning a list of blades is hovering, not clicking.
+ *  Joined with the card's own ' · ', and the word is itemInfo's
+ *  verbatim, so the two surfaces cannot say it differently. */
+export const itemStatSuffix = (line) => {
+  const stat = [line?.damage ?? line?.armour, line?.hands].filter(Boolean).join(' · ');
+  return stat ? ` (${stat})` : '';
+};
 
 function itemRow(item, from = 'local') {
   const line = itemLine(item, deps.entity);
@@ -1146,7 +1769,23 @@ function itemRow(item, from = 'local') {
   if (sub) mid.append(el('small', null, sub));
   row.append(mid);
   row.append(el('span', 'itemwt', `${line.weight.toFixed(2)} kg`));
+  // QS2: THE CHIP. A slot holds a KIND, so the row that answers to it is the
+  // row that says so - otherwise the only way to learn what is in slot 1 is to
+  // open every tooltip in the pack. LOCAL rows only: a slot resolves against
+  // the pack, and a loot row is not in it.
+  if (from === 'local') {
+    const slot = quickslotOf(item);
+    if (slot) row.append(el('span', 'qs-mark', slot === 'swap' ? 'SWAP' : (slot === 'c1' ? '1' : '2')));
+  }
+  // INV1: a LOCAL row drags. A loot row does not - taking from a pile
+  // is a click, and a drag that could also transfer would make a slip
+  // a theft.
+  if (from === 'local') dragFrom(row, item);
   row.onclick = () => {
+    // AUDIT INV1 Fb: a release that DRAGGED is not a pick. The click
+    // fires after pointerup, so without this a reorder would also
+    // select the row it left.
+    if (takeDragClick()) return;   // AUDIT INV2 A-F6: a release that DRAGGED is not a pick
     // AUDIT 26: "Send click to quest system" (:2027-2037) - the FIRST
     // act of RemoteItemListScroller_OnItemClick, ahead of the
     // action-mode branch, so LOOKING at a quest item in a pile counts
@@ -1212,19 +1851,34 @@ function remoteCol() {
     b.onclick = toggleWagon;
     acts.append(b);
   }
-  // GOLD IS NOT AN ITEM ROW. It is one stack in the pack that the list
-  // shows as a line, and DFU gives it its own button and its own
-  // numeric popup because "drop 40 of 12000" is not a click.
-  const g = el('button', 'act', 'Gold');
-  g.onclick = () => { goldEntry = goldEntry == null ? '0' : null; notice = null; render(); };
-  acts.append(g);
-  // PX20b: the way back to the whole pack, from the loot-only frame.
-  // It appears only when the pack is HIDDEN - a button that opens what
-  // is already open is the drawn-door-opening-nothing bug (PX14's law).
-  if (!packOpen) {
-    const b = el('button', 'act', 'Pack');
-    b.onclick = () => { packOpen = true; picked = null; render(); };
-    acts.append(b);
+  // MAC-M2 B (2026-09-16, Mac: "Remove the gold and pack buttons from
+  // the looting menu"): THE LOOT WINDOW IS FOR TAKING, and its bar
+  // carries the wagon and nothing else.
+  //
+  // Neither button is DFU's in this frame. DFU has ONE parchment, so its
+  // goldButton (DaggerfallInventoryWindow.cs:47/:515-517) sits on the
+  // player's own panel beside BOTH lists, and there is no "Pack" button
+  // anywhere in the reference at all - PX20b minted that one to reopen
+  // the pack its loot-only frame had replaced. Over a corpse the gold
+  // field's own verb is "Drop", and `dropGold` adds the stack to
+  // `remoteTarget` - so the control on a body offers to put the purse
+  // INTO it, which is not what anyone opened it for.
+  //
+  // Both are still reachable, and in the one place they read as
+  // themselves: the pack. Escape or the inventory key closes the pile
+  // and opens it, with the gold field on its own remote side.
+  //
+  // THE GATE IS THE SESSION, not the frame. `deps.loot` is what opened
+  // this window (`packOpen = !d.loot`), so a pack opened on F6 keeps its
+  // Gold button over the ground, the wagon and a reward tray exactly as
+  // it had it - this changes the LOOT session alone.
+  if (!deps.loot) {
+    // GOLD IS NOT AN ITEM ROW. It is one stack in the pack that the list
+    // shows as a line, and DFU gives it its own button and its own
+    // numeric popup because "drop 40 of 12000" is not a click.
+    const g = el('button', 'act', 'Gold');
+    g.onclick = () => { goldEntry = goldEntry == null ? '0' : null; notice = null; render(); };
+    acts.append(g);
   }
   head.append(acts);
   col.append(head);
@@ -1313,6 +1967,48 @@ function listCol() {
 // pane answered the same problem the same way (AUDIT F8). So this is
 // that behaviour written deliberately - the detail rises when an item
 // is picked and closes back down - rather than borrowed by accident.
+/**
+ * QS2 - THE SLOT BUTTONS (2026-09-17, Mac: consumables are assigned "in the
+ * enhanced menu through the tooltip to slot 1/2").
+ *
+ * The KIND decides which buttons exist, and the model decides what a kind is:
+ * `isQuickConsumable` (a potion or a drug - the two arms of `useItem` that
+ * consume and act on the entity) and `canSwapTo` (an unequipped weapon that is
+ * not an arrow). A torch is neither - it is the off-hand cell's, through
+ * entity.lightSource - and a book is neither, so neither grows a button. This
+ * screen asks those two questions rather than answering them, for the same
+ * reason the Use button is offered for everything: a judgement made twice is a
+ * judgement that drifts.
+ *
+ * THE BUTTON THAT HOLDS THE ITEM SAYS "UNSLOT" AND CARRIES `on`. A button that
+ * looked the same whether the thing was in the slot or not would make the
+ * player press it to find out, and pressing it is exactly what un-slots it.
+ * `assignQuickslot` moves a kind BETWEEN the two consumable slots itself, so
+ * pressing the other one is a move and not a second copy.
+ *
+ * AND THE TOOLTIP STAYS UP. PX24's law is that a USE closes it - the item is
+ * gone or changed and the card is stale - but slotting changes nothing about
+ * the item, and the player's next act is usually to read the other button. So
+ * this re-renders in place: the labels flip, the row chips appear, the card
+ * keeps its place.
+ */
+function quickslotActs(item) {
+  const inSlot = quickslotOf(item);
+  const button = (slot, set, unset) => {
+    const on = inSlot === slot;
+    const b = el('button', `act qs-act${on ? ' on' : ''}`, on ? unset : set);
+    b.onclick = () => {
+      if (on) clearQuickslot(slot); else assignQuickslot(slot, item);
+      refresh();   // the pack list is where the chips are drawn
+      render();   // ...and the card stays up, with its labels flipped
+    };
+    return b;
+  };
+  if (isQuickConsumable(item)) return [button('c1', 'Slot 1', 'Unslot 1'), button('c2', 'Slot 2', 'Unslot 2')];
+  if (canSwapTo(item)) return [button('swap', 'Swap to', 'Unset swap')];
+  return [];
+}
+
 function detailCol() {
   const col = el('section', `packcol packdetail${picked ? ' open' : ''}`);
   // PX16c: the plaque wears the pause window's own corners - one
@@ -1350,6 +2046,21 @@ function detailCol() {
   { const lines = rarityLines(picked); if (lines.length) { const ul = el('ul', 'rarity'); for (const l of lines) ul.append(el('li', null, l)); c.append(ul); } }
   const dl = el('dl', 'stats');
   const pair = (k, v) => { if (v != null) dl.append(el('dt', null, k), el('dd', null, String(v))); };
+  // MAC-M1: the headline stat FIRST - a player reading this card is
+  // deciding whether to swing the thing, and weight is not that
+  // question. Only one of the two ever draws: an item is a weapon or it
+  // is armour, and `pair` skips a null.
+  pair('Damage', line.damage);
+  pair('Armour', line.armour);
+  // MAC-M2: under the damage, because it is the same question - how the
+  // thing is swung - and above the weight, which is not. Null for
+  // everything that is not a weapon, so no book grows an empty row.
+  pair('Hands', line.hands);
+  for (const t of line.survival ?? []) {   // AUDIT SURV C: the classic popup's tokens, each under a word of its own
+    const i = t.indexOf(': ');
+    if (i > 0) pair(t.slice(0, i), t.slice(i + 2));
+    else pair(/^Nourishes/.test(t) ? 'Food' : /^Raw/.test(t) ? 'Raw' : /uses left/.test(t) ? 'Uses' : /skillet/i.test(t) ? 'Cooking' : 'Note', t);
+  }
   pair('Weight', `${line.weight.toFixed(2)} kg`);
   pair('Condition', line.condition != null ? `${line.word} · ${line.condition}%` : null);
   // HT2: a light source is never WORN - the honest line for one is
@@ -1372,13 +2083,15 @@ function detailCol() {
     // is a use (:1976-1985) and nothing in the equip table will ever
     // take one. The button says which it is doing.
     const act = localPrimaryAct(picked, deps.entity);
-    const b = el('button', 'act primary', act.label);
-    b.onclick = act.kind === 'takeOff' ? () => takeOff(picked.equipSlot)
-      : act.kind === 'wear' ? () => wear(picked)
-      // AUDIT 22 F6: DFU's equip click hands UseItem NO collection
-      // (:1980), so the act that lights a torch can consume nothing.
-      : () => use(picked, null);
-    acts.append(b);
+    if (act) {   // null: nothing would wear it (Mac: no WEAR on a waterskin)
+      const b = el('button', 'act primary', act.label);
+      b.onclick = act.kind === 'takeOff' ? () => takeOff(picked.equipSlot)
+        : act.kind === 'wear' ? () => wear(picked)
+        // AUDIT 22 F6: DFU's equip click hands UseItem NO collection
+        // (:1980), so the act that lights a torch can consume nothing.
+        : () => use(picked, null);
+      acts.append(b);
+    }
     // The verb names the DESTINATION, and the destination is whichever
     // list is showing. Drawn only when the law would either move
     // something or say something (`canStow`).
@@ -1406,6 +2119,8 @@ function detailCol() {
   // appeared only for items this screen believed were usable would be
   // this screen making a judgement the law already makes. DFU offers
   // it on the REMOTE list too (:2048-2051), so this pane does.
+  // Mac (2026-09-18): ...WAS. "Same for use for non-usables" - the law's own predicate (useItem.js usableItem)
+  // says which items an arm would do something with; a sword or a gem gets no Use button.
   const u = el('button', 'act', 'Use');
   // THE COLLECTION IS THE LIVE LIST, not the model's. `useItem`
   // CONSUMES out of what it is handed (:2048-2051 - a potion drunk
@@ -1413,9 +2128,17 @@ function detailCol() {
   // filtered COPY, so passing that would drink the potion and leave it
   // sitting in the pile. The bag travels separately for AUDIT 22 F4's
   // reason, inside `use`.
-  u.onclick = () => use(picked,
-    side === 'remote' ? remoteTarget(deps, sessionState()) : (deps.items?.() ?? []));
-  acts.append(u);
+  if (usableItem(picked)) {
+    u.onclick = () => use(picked,
+      side === 'remote' ? remoteTarget(deps, sessionState()) : (deps.items?.() ?? []));
+    acts.append(u);
+  }
+  // QS2: ...and the quickslot buttons, LOCAL ONLY. A slot resolves against the
+  // PACK every frame (quickslots resolveConsumable), so slotting something
+  // that is still in a corpse would name a kind the player does not carry - a
+  // ghost from the moment it was made. The remote side gets none; take it
+  // first, then slot it.
+  if (side === 'local') for (const b of quickslotActs(picked)) acts.append(b);
   c.append(acts);
   col.append(c);
   // The address, for the player who wants it and the developer who
@@ -1608,14 +2331,50 @@ function render() {
 }
 
 // ── THE KEYBOARD ─────────────────────────────────────────────────
-// ESCAPE AND F6, the two keys the classic window closes on. F6 is a
-// host BINDING rather than overlay vocabulary, so it is read from the
-// event and CLAIMED - the same law U52's sheet applies to F5.
+// ESCAPE AND THE INVENTORY KEY, the two the classic window closes on.
+//
+// MAC-C (2026-09-17, Mac: "you can exit out of the F6 menu (inventory)
+// by pressing F6 again, but you cannot do the same for the F5 one
+// (char sheet)" + "it would be extra cool if you could like, be on the
+// F5 page, press F6 and then go straight from char sheet to inv.").
+//
+// This line used to read `e.key !== 'F6'` - the DFU DEFAULT spelled as
+// a literal, which is I2's and FIX-F's bug twice over: a player who
+// rebinds Inventory in the controls window gets a pack that opens on
+// their key and closes on nobody's. It reads the REGISTRY now, the same
+// `actionOf` the hosts' own ladders read.
+//
+// And the other window key CROSSES OVER rather than doing nothing: the
+// pack closes and the sheet opens, in that order, because `showOverlay`
+// REPLACES the host's one slot (the same note `openSpellbook` carries
+// four lines of hooks above). A host that hands no sheet door gets a
+// key that falls through, which is the honest refusal every other
+// optional hook here gives.
 function onKey(e) {
   if (e.metaKey || e.ctrlKey || e.altKey) return;
   const t = e.target;
   if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
-  if (overlayAction(e) !== 'back' && e.key !== 'F6') return;
+  // AUDIT INV2 A-F7: A DRAG HAS AN ABORT, and it is the key every other
+  // gesture aborts with. There was none: the only release that changed
+  // nothing was one inside the windows, so a player who had picked up
+  // the wrong thing had nowhere safe to let go, and Escape - the obvious
+  // try - CLOSED THE PACK mid-drag and left the ghost stuck over the
+  // world (A-F4). Escape ends the drag and keeps the window; a second
+  // one closes it, as it always did.
+  if (overlayAction(e) === 'back' && drag) { e.preventDefault(); e.stopPropagation(); dragStop(false); return; }
+  const act = actionOf(e);
+  if (act === 'CharacterSheet' && typeof deps?.openCharSheet === 'function') {
+    e.preventDefault();
+    e.stopPropagation();
+    // JAN1 (2026-09-18, Janome: "got this while toggling between F5 and F6 menus" - CRASH `openCharSheet is not a
+    // function`): THE HOOK IS READ BEFORE ANYTHING CLOSES - the file's own law at the close arm above - because
+    // `onExit` unmounts, and the unmount clears `deps` to `{}` before this line ran on it.
+    const openCharSheet = deps.openCharSheet;
+    onExit();                 // the pack's own close law runs FIRST...
+    openCharSheet();          // ...and this replaces the slot it just freed
+    return;
+  }
+  if (overlayAction(e) !== 'back' && act !== 'Inventory') return;
   e.preventDefault();
   e.stopPropagation();
   onExit();
@@ -1645,6 +2404,12 @@ export function mountEnhancedInventory(hostEl, d = {}) {
   // (F6, the world's inventory door) opens the pack as it always did.
   packOpen = !d.loot;
   side = d.loot ? 'remote' : 'local';
+  // MAC-M2: the "that release was a drag" latch belongs to a GESTURE,
+  // so it must not outlive the pane that held it - a session that ended
+  // on a release no click ever followed (one off the panel lands on the
+  // body, not on a row) would otherwise hand the next pane a latch that
+  // eats its first pick.
+  _dragged = false;
   notice = null;
   goldEntry = null;
   repaints = 0;
@@ -1702,6 +2467,11 @@ export function mountEnhancedInventory(hostEl, d = {}) {
       lockHandler = null;
       // MW-D36: the figure's subscription has an owner too.
       _unsubscribeFigure?.(); _unsubscribeFigure = null;
+      // AUDIT INV2 A-F4: and so does a drag in flight. The ghost is the
+      // BODY's child, so emptying the host below cannot reach it - the
+      // pack closed mid-drag and left an item icon glued over the world,
+      // which re-opening the pack did not clear either.
+      dragAbort();
       hostEl.innerHTML = '';
       host = null;
       deps = {};

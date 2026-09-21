@@ -258,7 +258,13 @@ test('AUDIT 64 F34: every SetMidScreenText caller speaks to the label, and the t
   assert.match(src('scenes/dungeonContext.js'), /setMidScreenText\(lookAtLockText\(/);
   assert.equal((src('scenes/worldModes.js').match(/setMidScreenText\(lookAtLockText\(/g) ?? []).length, 2);
   // FPSWeapon.cs:365
-  assert.match(src('combat/weaponRig.js'), /setMidScreenText\('You have no arrows\.'\)/);
+  // AUDIT-THUNDERLOCK F5: the guard covers every ranged weapon now and
+  // the line names what it is out of, so the classic weapon's classic
+  // line is one arm of a ternary rather than the whole call. Both arms
+  // are asserted: the Thunderlock gained a line, the bow did not lose
+  // one.
+  assert.match(src('combat/weaponRig.js'), /setMidScreenText\([^)]*'You have no arrows\.'/);
+  assert.match(src('combat/weaponRig.js'), /'You have no pellets\.'/);
   // ...and the siblings that are PopupMessage in the reference stay on
   // the popup queue: PlayerActivate.cs:527 (lockedExteriorDoor, one
   // line above LookAtInteriorLock) and :553/:564 with
@@ -396,7 +402,7 @@ test('AUDIT 64 F35/F37: on the enhanced skin the hide door is reached, and the e
     append(...c) { this.children.push(...c); }, appendChild(c) { this.children.push(c); return c; },
     replaceChildren(...c) { this.children = c; }, addEventListener() {},
   });
-  globalThis.document = { createElement: mkEl, getElementById: () => null, head: mkEl(), body: mkEl() };
+  globalThis.document = { createElement: mkEl, createElementNS: (ns, tag) => mkEl(tag), getElementById: () => null, head: mkEl(), body: mkEl() };
   _resetHudRender();
   const canvas = { width: 1920, height: 1080 };
   const bytes = new Uint8Array(64 * 64);
@@ -545,6 +551,20 @@ test('AUDIT 64 F37: the popup column is a HUD component too, so its DRAW is gate
   for (const host of ['scenes/townTalk.js', 'scenes/dungeonContext.js']) {
     const s = src(host);
     assert.match(s, /hudRenderEnabled\(\)\) hud(Text)?\.draw\(/, `${host} gates the popup draw`);
+    // FONT1 (2026-09-16, Mac: "Any enhanced UI or text must be our
+    // enhanced version"): AND THE REFUSED FRAME IS SAID OUT LOUD. The
+    // enhanced skin draws this column in the DOM (ui/enhancedHudText.js),
+    // and a DOM column is not repainted - it stays until it is told
+    // otherwise, which is THIS finding's own law. A gate that merely
+    // skips the paint cannot hide it, so every gated site carries the
+    // hide door on its else.
+    // EVERY gated site, not just one: townTalk has two (the street
+    // frame and the interior hudFrame) and a hide door on one of them
+    // leaves the other's lines standing.
+    const gated = [...s.matchAll(/hudRenderEnabled\(\)\) hud(?:Text)?\.draw\(/g)].length;
+    const doors = [...s.matchAll(/\); else hud(?:Text)?\.hide\(\);/g)].length;
+    assert.ok(gated >= 1 && doors === gated,
+      `${host} gates the popup draw at ${gated} site(s) and sends the refused frame to hide() at ${doors} - a DOM column skipped is a DOM column still painted`);
   }
   // the tick keeps draining - PopupText.Update is DaggerfallHUD.Update's
   // work, which renderHUD does not touch (:347-351 overrides Draw only).

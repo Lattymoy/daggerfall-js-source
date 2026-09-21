@@ -196,7 +196,7 @@ test('audit24 wave46: a fall flashes the screen and does NOT make you cry out', 
   // and nothing else.
   const shared = rd('src/scenes/shared.js');
   const fall = shared.slice(shared.indexOf('export function applyFallLanding'));
-  assert.match(fall, /flashPlayerDamage\(\);/, 'the fall flashes');
+  assert.match(fall, /flashPlayerDamage\(dmg\);/, 'the fall flashes (BA1: with its amount)');
   assert.doesNotMatch(fall.slice(0, fall.indexOf('\n}')), /playerPainVoice/, 'and does not cry');
 
   // the traps SEND it, so they get BOTH. The flash is the action
@@ -204,7 +204,7 @@ test('audit24 wave46: a fall flashes the screen and does NOT make you cry out', 
   // cry is the HOST's, because the audio device is - AUDIT 64 F40
   // wired it onto the one sink that carries the message.
   const act = rd('src/world/actionSystem.js');
-  assert.match(act, /flashPlayerDamage\(\)/, 'the traps flash');
+  assert.match(act, /flashPlayerDamage\(dmg\)/, 'the traps flash (BA1: with the amount)');
   const dc = rd('src/scenes/dungeonContext.js');
   const sink = dc.slice(dc.indexOf('damagePlayer:'), dc.indexOf('castSpell:'));
   assert.match(sink, /hurtPlayer\(dmg\)/, 'the trap bills the health');
@@ -230,7 +230,7 @@ test('audit24 wave46: every blow and every ARROW now owes all three', () => {
   // out of its host and CALLED here: a pool wired tomorrow is covered
   // tomorrow, and an unwired one is a red test the same day.
   // (The flash is the third of the three and rides in the POOLS for
-  // these two hosts - cityGuards.js:460 and exteriorFoes.js:610 both
+  // these two hosts - cityGuards.js:467 and exteriorFoes.js:626 both
   // flash on the same `dmg > 0` that calls onPlayerHurt - which is why
   // it is not inside the handlers run below.)
   const zero = () => 0;
@@ -271,7 +271,7 @@ test('audit24 wave46: every blow and every ARROW now owes all three', () => {
   const arrow = w.slice(w.indexOf('onPlayerHit: (m) =>'));
   const arrowArm = arrow.slice(0, arrow.indexOf('addItem(playerEntity.items'));
   assert.match(arrowArm, /hitSoundFor\(m\.weapon\)/, 'world: the arrow sounds');
-  assert.match(arrowArm, /flashPlayerDamage\(\)/, 'world: the arrow flashes');
+  assert.match(arrowArm, /flashPlayerDamage\(dmg\)/, 'world: the arrow flashes (BA1: with the amount)');
   assert.match(arrowArm, /playerPainVoice\(playerEntity, dmg\)/, 'world: the arrow cries');
 
   const d = rd('src/scenes/dungeonContext.js');
@@ -285,7 +285,7 @@ test('audit24 wave46: every blow and every ARROW now owes all three', () => {
   // miss must make no noise, no flash and no cry
   assert.match(dArm, /if \(dmg > 0\) \{/, 'dungeon: gated on a landed arrow');
   assert.match(arrowArm, /if \(dmg > 0\) \{/, 'world: likewise');
-  assert.match(dArm, /flashPlayerDamage\(\)/, 'dungeon: and flashes');
+  assert.match(dArm, /flashPlayerDamage\(dmg\)/, 'dungeon: and flashes (BA1: with the amount)');
   assert.match(dArm, /playerPainVoice\(playerEntity, dmg\)/, 'dungeon: and cries');
 });
 

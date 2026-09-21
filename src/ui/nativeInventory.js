@@ -44,20 +44,20 @@
 // as the computed remote target, the 750kg gates, the dungeon exit
 // rule); Use mode, the 1016 info text and the IsLightSource equip
 // branch at U25 (AUDIT 23 trimmed that list). The LETTER OF CREDIT
-// went last and whole: minted at systems/inventory.js:67
+// went last and whole: minted at systems/inventory.js:68
 // (DaggerfallTradeWindow.cs:1044-1048), summed by creditAmount at
 // systems/court.js:207 (ItemCollection.GetCreditAmount, ItemCollection
 // .cs:108-118), spent letters-before-coins with the shortfall returned
 // by deductGold at court.js:249 (DeductGoldAmount, PlayerEntity.cs
 // :1324-1354), banked at systems/banking.js:482/:495, and described by
-// the 1007 text at systems/itemInfo.js:101. Nothing was ever owed at
+// the 1007 text at systems/itemInfo.js:104. Nothing was ever owed at
 // THIS surface anyway - DaggerfallInventoryWindow.cs has no
 // letter-of-credit arm at all.
 
 import { loadImg, nativeMetrics, drawImg, drawImgSub, drawImgCrop, shadowText, DEFAULT_TEXT_COLOR } from './nativePanel.js';
 import { getBool } from '../systems/settings.js';   // UI4: EnableInventoryInfoPanel
 import { layoutMessageBox, drawMessageBox, messageBoxHit, MB_BUTTONS } from './messageBox.js';   // U25
-import { useItem, isLightSource, isPotionRecipe, nextVariant } from '../systems/useItem.js';   // U25; AUDIT 64 F49/F50
+import { useItem, isLightSource, isPotionRecipe, nextVariant, USE_PENDING } from '../systems/useItem.js';   // U25; AUDIT 64 F49/F50
 import { potionRecipeByKey } from '../systems/potions.js';   // AUDIT 64 F49: PotionRecipeIngredients' recipe lookup
 import { itemInfoRows, itemInfoPanelRows, infoPanelShorten, questLetterName, INFO_TEXT } from '../systems/itemInfo.js';   // U25; AUDIT 64 F51
 import { paintingImage, setPaintingArtDeps } from './paintingImage.js';   // ROAD-A7: the painting's picture
@@ -88,16 +88,18 @@ import {
 } from '../systems/inventorySession.js';
 import { isEquipped, equipItem, unequipSlot, isForbiddenEquip, isBrokenItem, EQUIP_SLOTS, FORBIDDEN_EQUIPMENT_TEXT_ID, ITEM_BROKEN_TEXT_ID, equipDelaySnapshot, billEquipDelayOnClose } from '../systems/equip.js';   // S23; FX1 (F128): the per-visit swap-pause clock
 import { drawPaperDoll, refreshPaperDoll, slotAtPaperDoll, ARMOR_LABEL_POS } from './paperDoll.js';
-import { LIST_SLOTS, scrollerHit, applyScroll, makeIconDrawer, drawStackLabel, safeScrollIndex,
+import { LIST_SLOTS, scrollerHit, applyScroll, makeIconDrawer, drawStackLabel, safeScrollIndex, beginScrollerDrag, dragScrollerIndex,   // MAC-N2: the thumb drag
   preloadScrollerArrowArt, drawScrollerArrows, drawScrollerThumb, playScrollerArrowClick,
   makeSlotToolTip, itemBackgroundColour, drawCellBackground } from './itemScroller.js';
 import { templateByIndex, itemBaseValue, inventoryItemImage } from '../systems/itemTemplates.js';
 import { FntFile } from '../formats/fntFile.js';
 import { audio } from '../systems/audio.js';
+import { immersiveFootsteps } from '../systems/immersiveFootsteps.js';   // IF1: the inventory close refreshes the mod's armour slots
 import { SOUND } from '../systems/soundClips.js';
 import { makeFont, drawText } from './text.js';
 import { typedChar } from './input.js';   // U26: one reader for both hosts' key routing
 import { firstHotkey } from '../systems/dialogShortcuts.js';   // A8: the DaggerfallShortcut table
+import { expandRowValues } from '../systems/quest/questMacros.js';   // MACROS1: a used item's record through its own context (%map)
 
 export const INV_RECTS = Object.freeze({
   tabWeapons: [0, 0, 92, 10],        // weaponsAndArmorRect
@@ -164,15 +166,18 @@ export const goldPanelRows = (gold, weightKg) => [
   { text: `Weight: ${weightKg % 1 === 0 ? weightKg.toFixed(0) : weightKg.toFixed(2)} kg`, center: true },
 ];
 /** The arms whose destination window the port has not built. Named,
- *  so a Use click SAYS something rather than eating itself. */
-export const USE_PENDING = Object.freeze({
-  book: 'You cannot read that yet.',
-  potion: 'You drink the potion.',
-  map: 'You study the map.',
-  questItem: 'Nothing happens.',
-  enchanted: 'Nothing happens.',
-  spellbook: 'You cannot open your spellbook here.',
-});
+ *  so a Use click SAYS something rather than eating itself.
+ *
+ *  QS2: THE TABLE LIVES IN `systems/useItem.js` NOW, and this is the re-export
+ *  every reader already had. It is keyed by `useItem`'s own result KINDS, so
+ *  it belonged beside them - and it had become an import a SYSTEMS module
+ *  needed (systems/quickslots.js speaks the same ladder from the key), which
+ *  made `systems/ -> ui/nativeInventory.js` a real edge and closed a cycle
+ *  through targetIconPanel: five test files died on
+ *  `Cannot access 'LOCAL_TARGET_ICON_RECT' before initialization` the moment
+ *  anything imported the quickslots. A window's strings may live under systems;
+ *  a system reaching up into a window is how that cycle came back. */
+export { USE_PENDING };
 
 /** TEXT.RSC 25 - the drop-gold prompt (:1272). */
 export const GOLD_TO_DROP_TEXT_ID = 25;
@@ -226,17 +231,26 @@ export const isIngredientTemplate = (i) => i >= 0 && i <= 77;
  *  touched no port code at all. */
 export const armorLabelValue = (av, armorMod = 0) => Math.trunc((100 - av) / 5) + armorMod;
 
-/** AddLocalItem verbatim, over the session's {group, templateIndex,
- *  enchanted} item shape. */
+/** AddLocalItem verbatim (DaggerfallInventoryWindow.cs:914-944): does
+ *  this item belong on the selected TAB PAGE. MAC-N2: split out of
+ *  filterByTab so the trade window - which INHERITS the four tabs
+ *  (DaggerfallTradeWindow.cs:228, :253) and adds its own mode gate in
+ *  front of them (:672-703) - reads the one law rather than a copy. */
+export function tabAccepts(it, tab) {
+  const wa = it.group === 'Weapons' || it.group === 'Armor';
+  const ench = isEnchanted(it);   // AUDIT 17e C2: DERIVED, not a stored flag
+  if (tab === 'weapons') return wa && !ench;
+  if (tab === 'magic') return ench || it.templateIndex === SPELLBOOK_TEMPLATE;
+  if (tab === 'ingredients') return isIngredientTemplate(it.templateIndex) && !ench;
+  return !wa && !ench && !isIngredientTemplate(it.templateIndex) && it.templateIndex !== SPELLBOOK_TEMPLATE;
+}
+
+/** FilterLocalItems + AddLocalItem, over the session's {group,
+ *  templateIndex, enchanted} item shape. */
 export function filterByTab(items, tab) {
   return items.filter((it) => {
     if (isEquipped(it)) return false;   // FilterLocalItems: worn items leave the list
-    const wa = it.group === 'Weapons' || it.group === 'Armor';
-    const ench = isEnchanted(it);   // AUDIT 17e C2: DERIVED, not a stored flag
-    if (tab === 'weapons') return wa && !ench;
-    if (tab === 'magic') return ench || it.templateIndex === SPELLBOOK_TEMPLATE;
-    if (tab === 'ingredients') return isIngredientTemplate(it.templateIndex) && !ench;
-    return !wa && !ench && !isIngredientTemplate(it.templateIndex) && it.templateIndex !== SPELLBOOK_TEMPLATE;
+    return tabAccepts(it, tab);
   });
 }
 
@@ -353,6 +367,10 @@ export class NativeInventoryWindow {
     // AUDIT 65 UI-5: this is only the FALLBACK - the notch carries the
     // live point - and the (-1,-1) leave sentinel must hit no rect.
     this._mouse = [-1, -1];
+    // MAC-N2: the thumb drag's latch - which list ('scroll' /
+    // 'remoteScroll') and where the press began. One at a time: a
+    // press is on one thumb or the other.
+    this._drag = null;
     // AUDIT 64 F48: the window's shared ToolTip. DaggerfallBaseWindow
     // .cs:50-56 builds `defaultToolTip` and DaggerfallInventoryWindow
     // hands it to both scrollers (:368, :383), to every accessory
@@ -486,6 +504,11 @@ export class NativeInventoryWindow {
    *  skipped and a session drop was silently LOST. */
   _closeSilently() {
     this.done = true;
+    // IF1: UIManager.OnWindowChange's inventory arm (ImmersiveFootstepsMain
+    // .cs:372-398) - the inventory window popped, so the mod re-reads the
+    // seven armour slots; this is the one close law (B-C1), so every
+    // host's inventory reaches it.
+    immersiveFootsteps.onInventoryClose(this.hooks.entity ?? null);
     // FX1 (F128): SetEquipDelayTime(true) on the pop - the ONE bill
     // for this visit, then DFU's "Equipping %s" cue per changed hand
     // (:729-756; the string is Internal_Strings' equippingWeapon,
@@ -631,8 +654,18 @@ export class NativeInventoryWindow {
       else this.boxes = [{ rows: [{ text: USE_PENDING.spellbook, center: true }] }];
       return;
     }
+    // SURV3: Camping Equipment and the Campfire Kit are PLACED, and the
+    // ground is the host's - the pack closes first (the one overlay
+    // slot, the spellbook arm's law) and the host's hook decides where
+    // the camp stands and says so on the HUD. A host with no ground
+    // keeps the window and says so.
+    if (r.kind === 'pitchCamp' || r.kind === 'placeFire') {
+      if (this.hooks.placeCamp) { this._closeSilently(); this.hooks.placeCamp(r.item); }
+      else this.boxes = [{ rows: [{ text: USE_PENDING[r.kind], center: true }] }];
+      return;
+    }
     if (r.text) this.boxes = [{ rows: [{ text: r.text, center: true }] }];
-    else if (r.textId && this.hooks.rows) this.boxes = [{ rows: this.hooks.rows(r.textId) ?? [] }];
+    else if (r.textId && this.hooks.rows) this.boxes = [{ rows: expandRowValues(this.hooks.rows(r.textId) ?? [], r.macros ?? null) }];   // MACROS1: %map is the map's name
     else if (r.pending) this.boxes = [{ rows: [{ text: USE_PENDING[r.kind] ?? 'Nothing happens.', center: true }] }];
     if (r.kind === 'variant' && this.hooks.entity) refreshPaperDoll(this.hooks.entity);
     // AUDIT 22 F9: `enchanted` is now a RIDER on the arm's own result
@@ -1049,11 +1082,24 @@ export class NativeInventoryWindow {
    * clears the panel on the way in (:663-664) and takes the pointer
    * with it; hovering behind one changes nothing.
    */
-  hover(vx, vy) {
+  hover(vx, vy, e = null) {
     // AUDIT 64 F52: the wheel is routed by the pointer's LAST position
     // (BaseScreenComponent.cs:725-733 dispatches per component rect),
     // so record it ahead of every guard below.
     this._mouse = [vx, vy];
+    // MAC-N2: VerticalScrollBar.Update (:101-130) - while button 0 is
+    // held the latched thumb follows the cursor, wherever the cursor
+    // goes (DFU keeps dragging off the bar); the frame it reads the
+    // button up, the latch drops (:123-129). `e.buttons` is the hosts'
+    // GetMouseButton(0); a call with no event is a frame that cannot
+    // say, and the latch waits for one that can.
+    if (this._drag && e) {
+      if (!(e.buttons & 1)) this._drag = null;
+      else if (vy >= 0) {
+        const len = this._drag.which === 'scroll' ? this._filtered().length : this._remote().length;
+        this[this._drag.which] = dragScrollerIndex(this._drag.latch, vy, len);
+      }
+    }
     // AUDIT 64 F48: the shared ToolTip is fed on EVERY path, hit or
     // miss - DFU clears ToolTipText rather than leaving it standing
     // (ItemListScroller.cs:387 for a blank slot, DaggerfallInventory-
@@ -1254,6 +1300,9 @@ export class NativeInventoryWindow {
     const hit = scrollerHit(R.localList, vx, vy, this.scroll, this._filtered().length);
     if (hit) {
       if (hit.kind === 'slot') this._pick(hit.slot, mode);
+      // MAC-N2: a press ON the thumb latches the drag (VerticalScrollBar
+      // .Update :110-113) - button 0 alone, as GetMouseButton(0) is.
+      else if (hit.kind === 'thumb') { if (!right) this._drag = { which: 'scroll', latch: beginScrollerDrag(R.localList, vy, this.scroll) }; }
       // ROAD-A7: the two ARROWS click (ItemListScroller.cs:590-604);
       // the rail and the thumb are silent. AUDIT 64 F47: and neither
       // takes a RIGHT click - the arrow Buttons bind OnMouseClick
@@ -1265,11 +1314,17 @@ export class NativeInventoryWindow {
     const rhit = scrollerHit(R.remoteList, vx, vy, this.remoteScroll, this._remote().length);
     if (rhit) {
       if (rhit.kind === 'slot') this._pickRemote(rhit.slot, mode);
+      else if (rhit.kind === 'thumb') { if (!right) this._drag = { which: 'remoteScroll', latch: beginScrollerDrag(R.remoteList, vy, this.remoteScroll) }; }
       else if (!right) { playScrollerArrowClick(rhit.kind); this.remoteScroll = applyScroll(this.remoteScroll, rhit.kind, this._remote().length); }
       return true;
     }
     return false;
   }
+
+  /** MAC-N2: the release edge the hosts send on mouseup (ROAD-E E1) -
+   *  VerticalScrollBar.Update's else arm (:123-129), for the frame the
+   *  button comes up without a move to carry it. */
+  release() { this._drag = null; }
 
   draw(renderer, canvas, font) {
     if (!_art) { this._close(); return; }

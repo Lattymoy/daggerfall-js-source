@@ -56,6 +56,7 @@
 import { calculateCost, calculateTradePrice } from './shopStock.js';
 import { GOLD_PIECE_WEIGHT_KG, isEnchanted } from './inventory.js';
 import { calculateItemRepairCost, repairRefusal } from './repairService.js';
+import { itemValueOf } from './itemTemplates.js';   // JAN1: the one value read
 import { HOLIDAYS } from './holidays.js';
 import { GUILDS } from './guilds.js';
 import {
@@ -126,7 +127,7 @@ export const IDENTIFY_COST_MULTIPLIER = 25;
  *  no magic in it at all. It was never seen because the Identify
  *  destination was a null and the mode could not be opened; X7 opened
  *  it, so the derivation had to be right first. Both paths run at
- *  worldModes.js:1739-1773 now - the paid service and the spell. */
+ *  worldModes.js:1808-1848 now - the paid service and the spell. */
 export const itemIsIdentified = (item) => !isEnchanted(item) || item?.isIdentified === true;
 
 /** FormulaHelper.CalculateItemIdentifyCost (:1935-1955). FREE on the
@@ -184,7 +185,7 @@ export function identifySpellPass(items, chance, rolls = Math.random) {
  *  exact: the whole pass returns, nothing is identified, no magicka is
  *  spent and Mercantile is not tallied.
  *  (GodMode's `&& !GodMode` arm has no port counterpart, as
- *  motor.js:656 already records for the levitation term.) */
+ *  motor.js:662 already records for the levitation term.) */
 export const NOT_ENOUGH_SPELL_POINTS_TEXT = 'You do not have enough spell points left.';
 
 export const identifiedTallyText = (successCount, total) =>
@@ -205,7 +206,7 @@ export function buyHolidayHalvesPrice(item, { holidayId = HOLIDAYS.None, guildFa
  *  division on an int, so it TRUNCATES, and it lands AFTER the stack
  *  multiply rather than per unit. */
 export function buyItemPrice(item, { quality = 0, priceAdjustment = 1000, holidayId = HOLIDAYS.None, guildFactionId = null } = {}) {
-  const price = calculateCost(item.value, quality, priceAdjustment) * (item.stackCount ?? 1);
+  const price = calculateCost(itemValueOf(item), quality, priceAdjustment) * (item.stackCount ?? 1);   // JAN1: the one value read
   return buyHolidayHalvesPrice(item, { holidayId, guildFactionId })
     ? Math.trunc(price / 2) : price;
 }
@@ -239,7 +240,7 @@ export function tradeCost(mode, staged = [], {
         modeActionEnabled = true;
         // NOT by condition - see the header. DFU passes
         // ConditionPercentage into a slot CalculateCost never reads.
-        cost += calculateCost(item.value, quality, priceAdjustment) * stack;
+        cost += calculateCost(itemValueOf(item), quality, priceAdjustment) * stack;   // JAN1: an item with no finite value is priced at its base, never NaN
         break;
       case 'SellMagic':
         // DFU's own TODO sits on this line: "Fencing base price higher
@@ -247,12 +248,12 @@ export function tradeCost(mode, staged = [], {
         // WITHOUT the stack multiply - a stack of five soul gems fences
         // for the price of one. Verbatim, and deliberately not "fixed".
         modeActionEnabled = true;
-        cost += calculateCost(item.value, quality, priceAdjustment);
+        cost += calculateCost(itemValueOf(item), quality, priceAdjustment);
         break;
       case 'Repair':
         if (isBeingRepaired(item)) break;
         modeActionEnabled = true;
-        cost += calculateItemRepairCost(item.value, quality, item.currentCondition ?? 0, item.maxCondition ?? 0,
+        cost += calculateItemRepairCost(itemValueOf(item), quality, item.currentCondition ?? 0, item.maxCondition ?? 0,
           { reducedRepairCost, priceAdjustment }) * stack;
         break;
       case 'Identify':
@@ -403,12 +404,12 @@ export const DOESNT_NEED_IDENTIFY = 'This does not need to be identified.';
 
 // The three clauses that stood here are all closed:
 //  - the IDENTIFY SPELL arm (:956-996) is live. identifySpellPass
-//    (:161) feeds worldModes.js:1744-1764, which spends the magicka
+//    (:161) feeds worldModes.js:1808-1828, which spends the magicka
 //    ONCE for the whole list whatever the outcome and tells the player
 //    "N of M identified"; the window opens from openIdentifyWindow
-//    (worldModes.js:6864), the entry point the magic arc owed.
+//    (worldModes.js:7193), the entry point the magic arc owed.
 //  - the LETTER OF CREDIT is tender and bankable: minted at systems/
-//    inventory.js:67, summed by creditAmount at systems/court.js:207,
+//    inventory.js:68, summed by creditAmount at systems/court.js:207,
 //    spent letters-before-coins by deductGold at court.js:249, and
 //    moved at systems/banking.js:482 depositAllLetters / :476
 //    withdrawLetter.

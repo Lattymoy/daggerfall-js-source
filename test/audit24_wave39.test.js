@@ -248,11 +248,11 @@ test('audit24 wave39: which hits flash is a LAW, not an omission', () => {
   // PlayerHealth.RemoveHealth is ShowPlayerDamage's only trigger, and
   // the whole DFU tree sends that message from three places. Spell
   // damage is NOT one of them.
-  assert.match(rd('src/scenes/shared.js'), /flashPlayerDamage\(\);/, 'the fall (PlayerHealth.cs:57)');
+  assert.match(rd('src/scenes/shared.js'), /flashPlayerDamage\(dmg\);/, 'the fall (PlayerHealth.cs:57) - BA1: the message carries its amount');
   const act = rd('src/world/actionSystem.js');
-  assert.equal((act.match(/flashPlayerDamage\(\)/g) ?? []).length, 2, 'both damage traps (DaggerfallAction :739 and :768)');
+  assert.equal((act.match(/flashPlayerDamage\(dmg\)/g) ?? []).length, 2, 'both damage traps (DaggerfallAction :739 and :768) - BA1: with the amount');
   for (const f of ['src/scenes/cityGuards.js', 'src/scenes/exteriorFoes.js', 'src/scenes/dungeonContext.js']) {
-    assert.match(rd(f), /flashPlayerDamage\(\)/, `${f}: an enemy blow (EnemyAttack:406)`);
+    assert.match(rd(f), /flashPlayerDamage\(dmg\)/, `${f}: an enemy blow (EnemyAttack:406) - BA1: with the amount`);
   }
   // and NOT from the spell spine - DamageHealth, ContinuousDamageHealth
   // and TransferHealth all pass showBlood:false / never touch
@@ -309,7 +309,10 @@ test('audit24 wave39: the two DFU call sites deliberately NOT ported, and why', 
   // SetupDemoEnemy.cs:98-115 moves only controller.center). This pin
   // used to hold the bare-feet literal in place.
   for (const f of ['src/scenes/exteriorFoes.js', 'src/scenes/dungeonContext.js']) {
-    assert.match(rd(f), /hitEffects\?\.showBloodSplash\(0, f\.ai\._centre\(\)\);/, `${f}: fall damage bleeds at index 0, at the transform`);
+    // BLOOD1b carried the BLOW in beside it - a fall bleeds by what it
+    // cost, like any other blow - and what this pin holds is unchanged:
+    // record 0, at the transform.
+    assert.match(rd(f), /hitEffects\?\.showBloodSplash\(0, f\.ai\._centre\(\), null, \{ \.\.\.bloodHit\(\w+, f\.entity\), markIndex: ENEMY_BASICS\[f\.mobileType\]\?\.bloodIndex \?\? 0 \}\);/, `${f}: fall damage bleeds at index 0, at the transform, carrying its blow - and (BLOOD1 AUDIT 3) the MARK is the foe's own, so a skeleton's fall stains nothing`);
     assert.doesNotMatch(rd(f), /showBloodSplash\(0, \[f\.ai\.feet\[0\], f\.ai\.feet\[1\], f\.ai\.feet\[2\]\]\)/, `${f}: not at the feet`);
     assert.match(rd(f), /SOUND\.FallDamage, \[f\.ai\.feet\[0\], f\.ai\.feet\[1\], f\.ai\.feet\[2\]\]/, `${f}: the FallDamage clip stays at FindGroundPosition() (EnemyMotor.cs:1409)`);
   }

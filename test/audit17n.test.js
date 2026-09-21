@@ -25,7 +25,7 @@ const career = () => buildCustomCareer({ name: 'X', hp: 8, skills: Array(12).fil
 test('17n F1: an attacker carrying only a CAREER still gets its enemy-type modifier', () => {
   // DFU reads attacker.Career.<group>AttackModifier for every attacker
   // (FormulaHelper.cs:993-1030). The port flattened the byte onto the
-  // entity and only the FOE builder set it (enemyEntity.js:113), so a
+  // entity and only the FOE builder set it (enemyEntity.js:117), so a
   // player - who carries `career` and no flat field - scored 0 on every
   // swing. The target half was wired correctly all along.
   const c = career();
@@ -134,7 +134,7 @@ test('17n F3: parseCareerData leaves every numeric field finite and unsigned', (
 
 test('17n F3: a career with advantages survives the save round trip', () => {
   // AUDIT 17h found the port silently dropped player reputation on
-  // save. The career is spread as plain CFG data (save.js:63,88), so
+  // save. The career is spread as plain CFG data (save.js:262,529), so
   // the flags ride along - pinned because the same shape has bitten
   // this flow before.
   const c = career();

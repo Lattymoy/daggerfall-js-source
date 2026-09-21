@@ -52,6 +52,9 @@
 
 import { isEnhanced } from '../systems/uiSkin.js';
 import { mountEnhancedChunk } from './enhancedChunk.js';   // MENU1: the one lazy-chunk door
+import { createCharSheetWindow } from './charSheetDoor.js';   // ASCEND-ANYTIME: a level OWED is answered by the sheet key's own door
+import { playerEntity } from '../characters/playerEntity.js';   // the shared entity the Stats page already reads (enhancedMenu's sheetModel)
+import { usesVirtueLeveling } from '../systems/oblivionLeveling.js';   // ORL1: which bar the Ascension reads
 import {
   openClassicPauseFlow,
   pauseArtLoaded,
@@ -69,6 +72,48 @@ export { preloadPauseFlowArt, pauseArtLoaded };
  *  no art; classic cannot draw without it. */
 export function pauseDoorReady() {
   return isEnhanced() || pauseArtLoaded();
+}
+
+/**
+ * MAC-L1: THE PAUSE DOOR'S OPTIONS, READ IN ONE PLACE.
+ *
+ * Mac's report, 2026-09-16 (dycaite): pressing Escape threw
+ * `TypeError: can't access property "at", w is null` out of
+ * `togglePause`, indoors and then outdoors, and took the session with
+ * it. Two faults met:
+ *
+ *   1. THE FOUR HOSTS DID NOT AGREE ON THE SIGNATURE. Three declared
+ *      `togglePause(opts = {})` and `scenes/dungeonContext.js` declared
+ *      `togglePause(setPlayerPos = null, opts = {})`. `routeAction`'s
+ *      Escape arm called `ctx.togglePause(setPlayerPos)` - so on three
+ *      of the four the FIRST argument, meant to be the options, was
+ *      whatever the key router had for a position applier.
+ *   2. `opts = {}` DOES NOT DEFEND AGAINST `null`. A default parameter
+ *      fires on `undefined` alone, and `routeAction`'s own default for
+ *      `setPlayerPos` is `null`, so the hosts got a hard null and
+ *      `opts.at` threw.
+ *
+ * So there is ONE shape now - an options object, `setPlayerPos` inside
+ * it - and this is the one function that reads it. A positional pair
+ * that three callers spell one way and one spells the other is not a
+ * contract, it is a coin toss; and a door that THROWS is worse than a
+ * door that does nothing, because the pause screen is how a player
+ * saves.
+ *
+ * @param {{ at?: string|null, setPlayerPos?: ((p: any) => void)|null }|null|undefined} opts
+ * @returns {{ at: string|null, setPlayerPos: ((p: any) => void)|null }}
+ */
+export function pauseOpts(opts) {
+  // `?? {}` IS THE WHOLE LAW, and the mutation campaign is why it is the
+  // only line here. A `(opts && typeof opts === 'object')` screen stood
+  // beside it first, written to catch the old positional call handing a
+  // FUNCTION over - and a mutant forcing it away changed no answer at
+  // all, because reading `.at` off a function or a string is `undefined`
+  // just as it is off `{}`. Only `null` and `undefined` throw, and `??`
+  // is exactly the operator for those two. A dead guard reads like a
+  // reason and is one more line the next reader has to disprove.
+  const o = opts ?? {};
+  return { at: o.at ?? null, setPlayerPos: o.setPlayerPos ?? null };
 }
 
 /**
@@ -112,6 +157,8 @@ function enhancedPauseOverlay(show, base) {
   let fired = false;
   let view = null;
   let seams = null;   // the enhanced menu module, once it lands: its takePickedSaveKey / takePickedSaveName
+  let ascendView = null;   // ASCEND-ANYTIME: the Ascension screen, while it has this window's place
+  let ascendHost = null;
   // SLOTS1: the enhanced Save pane names a slot and the Load pane picks
   // one; the verbs below stay the two the pin reads, and THESE arms
   // route a picked name onto the host's saveAs and a picked key onto
@@ -121,6 +168,10 @@ function enhancedPauseOverlay(show, base) {
     ...base,
     quickSave: () => { const n = seams?.takePickedSaveName?.() ?? null; return n && typeof base.saveAs === 'function' ? base.saveAs(n) : base.quickSave?.(); },
     quickLoad: () => { const k = seams?.takePickedSaveKey?.() ?? null; return k != null && typeof base.loadKey === 'function' ? base.loadKey(k) : base.quickLoad?.(); },
+    // ASCEND-ANYTIME: the Stats page draws its Ascend button only when a door hands this over, and F5's door
+    // (ui/charSheetDoor.js) always did - this one never did, so the same page reached through Tab (the dial's
+    // character arm) or Escape had no way in. A function declaration below: it is hoisted, so this line may name it.
+    openAscend: () => openAscend(),
   };
 
   const host = document.createElement('div');
@@ -139,6 +190,7 @@ function enhancedPauseOverlay(show, base) {
 
   const close = () => {
     if (fired) return;
+    dropAscend();   // ASCEND-ANYTIME: whatever is on top of this window goes with it
     view?.unmount();
     view = null;
     host.remove();
@@ -155,6 +207,59 @@ function enhancedPauseOverlay(show, base) {
     draw() { /* DOM, not canvas */ },
     dispose() { close(); },
   };
+
+  /** ASCEND-ANYTIME: take the Ascension screen down and leave this window as it was. Safe to call with none up. */
+  function dropAscend() {
+    try { ascendView?.destroy?.(); } catch { /* already gone */ }
+    ascendView = null;
+    ascendHost?.remove();
+    ascendHost = null;
+  }
+
+  /**
+   * ASCEND-ANYTIME: the Stats page's Ascend button, from the pause window (Tab's dial, or Escape).
+   *
+   * Two answers, the same two ui/charSheetDoor.js gives F5:
+   *   - A level OWED is the real level-up, so this puts this window away (the way the Pack button does) and asks
+   *     charSheetDoor for the sheet key's own answer, which IS the rollout while points are owed.
+   *   - Nothing owed is a VIEW of the stars (levelUpView.viewOnlyScreen): the Ascension swaps in over this window
+   *     and, when it closes, this window comes back on the Stats page. Through the ONE lazy-chunk door, so a chunk
+   *     that will not load says so instead of doing nothing - and the pause window stays up behind that notice.
+   */
+  function openAscend() {
+    if (fired || ascendHost || !playerEntity) return;
+    if (playerEntity.readyToLevelUp) {
+      act('resume');   // down first, then the level-up takes the slot it frees (the Pack button's own order)
+      show(createCharSheetWindow({ entity: playerEntity }));
+      return;
+    }
+    const h = document.createElement('div');
+    h.id = 'enhanced-ascend-view';
+    // 14: above this window's 13, the level-up overlay's own depth.
+    h.style.cssText = 'position:fixed;inset:0;z-index:14;background:transparent;overflow:hidden';
+    document.body.append(h);
+    ascendHost = h;
+    const drop = () => { if (ascendHost === h) dropAscend(); else h.remove(); };
+    mountEnhancedChunk({
+      load: () => import('./enhancedLevelUp.js'),
+      alive: () => !fired && ascendHost === h,
+      host: h, onDismiss: drop, label: 'ascend',
+      mount: ({ mountEnhancedLevelUp, viewOnlyScreen }) => {
+        // This window gives the keyboard up BEFORE the Ascension takes it: two capture handlers on one window
+        // would answer Escape twice.
+        try { view?.unmount(); } catch { /* already gone */ }
+        view = null;
+        ascendView = mountEnhancedLevelUp(h, {
+          screen: viewOnlyScreen(playerEntity, usesVirtueLeveling(playerEntity)),
+          entity: playerEntity,
+          onExit: () => {
+            dropAscend();
+            if (!fired && seams) view = seams.mountEnhancedMenu(host, { mode: 'pause', hooks, onAction: act, at: 'stats' });
+          },
+        });
+      },
+    });
+  }
 
   // THE FOUR EXITS. Every one of them takes the screen down FIRST and
   // then acts, which is classic's own order (pauseWindow.js:254, :290,

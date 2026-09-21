@@ -33,7 +33,7 @@
 import { srand, randomRangeInclusive } from '../../formats/dfRandom.js';
 import { liveStat } from '../statMods.js';                       // M-X: %mad's MagicResist read
 import { permanentSkillValue, SKILL_NAMES } from '../skills.js'; // M-X: %ski
-import { entityMaxEncumbrance } from '../../combat/formulas.js'; // M-X: %enc (FormulaHelper.MaxEncumbrance over LiveStrength)
+import { entityMaxEncumbrance, damageModifier, toHitModifier, hitPointsModifier, healingRateModifier } from '../../combat/formulas.js'; // M-X: %enc (FormulaHelper.MaxEncumbrance over LiveStrength); ATTRMACRO1: and the four DERIVED modifiers
 import { surname, getRandomNameBank } from '../../characters/nameHelper.js';   // M-X: %ln (E-fix: GetRandomNameBank)
 import { GENDERS, getNameBankOfRegion, fullName, getNameBank, getRandomFullName } from '../../characters/nameHelper.js';   // AUDIT 58: GetRandomFullName's one home
 
@@ -177,6 +177,18 @@ export function expandMacroValues(text, values = {}, questLike = null) {
   });
 }
 
+/** MACROS1 (2026-09-20, kurkku on Discord: "%map" and "%pcn / %fon" printed raw): TEXT.RSC ROWS through the value
+ *  expander. A record read through the host's `lines(id)` is `[{ text, center }]` (or bare strings), and the boxes
+ *  that show one - an item's use, a guild's join prompt - showed the record verbatim where DFU's MessageBox runs
+ *  MacroHelper over it with a context (the map's revealed location, the guild as %fon's provider). The values are the
+ *  caller's, as `expandMacroValues` takes them; a row keeps its shape and its `center`. Nothing to expand: the rows
+ *  come back as they were. */
+export function expandRowValues(rows, values = null) {
+  if (!Array.isArray(rows) || !values || !Object.keys(values).length) return rows;
+  return rows.map((row) => (typeof row === 'string' ? expandMacroValues(row, values)
+    : row && typeof row === 'object' ? { ...row, text: expandMacroValues(row.text ?? '', values) } : row));
+}
+
 // ---- the quest's macro data source (QuestMCP.cs) ----
 
 // The NotImplemented sentinel: a source method C#'s MacroDataSource
@@ -191,6 +203,47 @@ const pronounOf = (quest, male, female) => {
 /** QuestMacroDataSource (QuestMCP.cs): the quest-context answers.
  *  Every method mirrors its C# body; absent = the base's
  *  NotImplementedException. */
+/** ATTRMACRO1: DaggerfallStatsMCP - the MACRO SOURCE THE PORT NEVER HAD. The eight attribute reads and the rating
+ *  word behind `%str..%luc` and `%ark` have been wired to `call(mcp, ...)` all along with nothing on the other end,
+ *  so the character sheet's eight description boxes printed their tokens raw.
+ *
+ *  IT IS STATEFUL BY DESIGN, and that is the whole subtlety: `AttributeRating()` takes no argument and reads the
+ *  LAST stat macro this same expansion evaluated ("Context is based off the last stat macro accessed"). It works
+ *  because every record says "%str ... %ark" in that order and the expander walks left to right. The defaults are
+ *  the reference's own - Strength and 0 - so a bare `%ark` with no stat before it answers the bottom rating rather
+ *  than throwing. One source per expansion; never share one between two boxes.
+ *
+ *  The thresholds are `{10,20,...,90,1000}` walked with `while (v >= t[i]) i++`, which for a stat capped at 100 is
+ *  `min(floor(v/10), 9)`. The eighty words are the reference's own list - NOT TEXT.RSC, which is why nothing in
+ *  ARENA2 supplies them and they are written down here. */
+export const STAT_RATINGS = Object.freeze({
+  strength: ['pathetic', 'frail', 'weak', 'below average', 'about average', 'fairly strong', 'athletic', 'very strong', 'powerful', 'superhuman'],
+  intelligence: ['vegetable-like', 'idiotic', 'half-witted', 'dim', 'about average', 'cunning', 'fairly clever', 'very intelligent', 'brilliant', 'genius'],
+  willpower: ['inane', 'submissive', 'passive', 'distracted', 'unassertive', 'stable', 'confident', 'strong-willed', 'very focused', 'enlightened'],
+  agility: ['oafish', 'bumbling', 'clumsy', 'awkward', 'about average', 'spry', 'nimble', 'dexterous', 'very agile', 'acrobatic'],
+  endurance: ['sickly', 'pitiable', 'unsteady', 'erratic', 'about average', 'above average', 'very healthy', 'hardy', 'titanic', 'immortal'],
+  personality: ['abhorrent', 'unpopular', 'anonymous', 'unassuming', 'unremarkable', 'interesting', 'charming', 'arresting', 'authoritative', 'charismatic'],
+  speed: ['inactive', 'sluggish', 'very slow', 'slow', 'about average', 'above average', 'fast', 'fleet-footed', 'lightning-fast', 'meteoric'],
+  luck: ['cursed', 'hopeless', 'ill-favored', 'unfortunate', 'about average', 'fairly lucky', 'lucky', 'fortunate', 'very auspicious', 'divinely favored'],
+});
+const STAT_RATING_THRESHOLDS = Object.freeze([10, 20, 30, 40, 50, 60, 70, 80, 90, 1000]);
+
+export function statsMacroSource(entity) {
+  let lastStat = 'strength', lastStatValue = 0;   // the reference's own defaults
+  const read = (key) => { lastStat = key; lastStatValue = liveStat(entity, key); return String(lastStatValue); };
+  return {
+    str: () => read('strength'), int: () => read('intelligence'),
+    wil: () => read('willpower'), agi: () => read('agility'),
+    end: () => read('endurance'), per: () => read('personality'),
+    spd: () => read('speed'), luck: () => read('luck'),
+    attributeRating() {
+      let i = 0;
+      while (i < STAT_RATING_THRESHOLDS.length && lastStatValue >= STAT_RATING_THRESHOLDS[i]) i++;
+      return STAT_RATINGS[lastStat][i];
+    },
+  };
+}
+
 export function questMacroSource(quest) {
   const world = () => quest.hooks?.world ?? null;
   return {
@@ -839,9 +892,21 @@ for (let n = 1; n <= 12; n++) {
 // M-X helper laws
 const str = (v) => (v == null ? null : String(v));
 const signedFmt = (n) => (n > 0 ? `+${n}` : String(n));   // C#'s "+0;-0;0"
+/** ATTRMACRO1 (2026-09-18, Mac: "none of the attribute explanations show actual values"): THESE ARE COMPUTED, NOT
+ *  STORED. DaggerfallEntity declares all four as properties over the LIVE stat - DamageModifier is
+ *  FormulaHelper.DamageModifier(stats.LiveStrength), ToHitModifier the same over LiveAgility, HitPointsModifier and
+ *  HealingRateModifier over LiveEndurance - and this read took them for fields on the entity. Nothing in this port
+ *  has ever ASSIGNED those fields (grep: not one writer), so `e[field] ?? 0` answered 0 for every player, always,
+ *  and the "+0;-0;0" format dressed the nothing up as a real modifier. */
+const DERIVED_MODIFIER = {
+  damageModifier: (e) => damageModifier(liveStat(e, 'strength')),
+  toHitModifier: (e) => toHitModifier(liveStat(e, 'agility')),
+  hitPointsModifier: (e) => hitPointsModifier(liveStat(e, 'endurance')),
+  healingRateModifier: (e) => healingRateModifier(liveStat(e, 'endurance')),
+};
 const signedOff = (hooks, field) => {
   const e = hooks?.playerEntity?.();
-  return e ? signedFmt(e[field] ?? 0) : null;
+  return e ? signedFmt(DERIVED_MODIFIER[field](e)) : null;
 };
 const pgender = (hooks) => hooks?.playerGender?.() === 'female';
 /** hooks.nowSeconds is EPOCH-RELATIVE (classic minutes x 60), so the
@@ -890,7 +955,7 @@ const NULL_HANDLERS = new Set(['%1hn', '%2hn', '%3hn', '%cbl', '%dts', '%ef',
   // E7: %tcn joins them. C#'s row IS null (MacroHelper.cs:221), so
   // the table's answer is [unhandled]; the travel window's own
   // `Replace("%tcn", name)` (DaggerfallTravelMapWindow.cs:1694, and
-  // ui/travelMapWindow.js:928 after it) is string surgery on TEXT.RSC
+  // ui/travelMapWindow.js:1154 after it) is string surgery on TEXT.RSC
   // 31 that never reaches this ladder. M-X had recorded it as a port
   // handler standing where C# has null, with a carve-out in the
   // coverage gate; there was never a handler to carve out.

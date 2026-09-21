@@ -15,12 +15,13 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { isCellRoom, streamsFoes, hitOwnerOf, isWorldRoom, PIXEL_UNITS, MAX_FRAME_BYTES, FOES_PREFIX } from '../src/net/wire.js';
 import * as relay from '../server/src/relay.js';
-import { RELAY_VERSION } from '../server/src/index.js';
+import { relayVersionAtLeast } from './relayVersion.mjs';
 import { OnlineSession } from '../src/net/online.js';
 import { fakeRoom } from './fakeRoom.mjs';
 import { fakeSocketClass } from './fakeSocket.mjs';
 import { createExteriorFoes, MAX_ACTIVE_ENCOUNTER_FOES } from '../src/scenes/exteriorFoes.js';
-import { runDayChange, dayRollsFor, setSharedClock, sharedClockOn, MINUTES_PER_DAY } from '../src/systems/worldTick.js';
+import { runDayChange, dayRollsFor, setSharedClock, sharedClockOn, MINUTES_PER_DAY, worldRegionPricesOn } from '../src/systems/worldTick.js';
+import { regionPriceAdjustment } from '../src/systems/shopStock.js';   // ECON1
 import { seededRng } from '../src/systems/wind.js';
 import { MERCHANTS_FACTION_ID } from '../src/systems/guilds.js';
 import { FACTION_TYPES } from '../src/formats/factionFile.js';
@@ -36,7 +37,7 @@ test('WORLD6b: the wire - a cell is world:<x>,<y> alone (no dungeon, no building
   assert.equal(hitOwnerOf({ to: 'bbbb-0002' }), 'bbbb-0002'); assert.equal(hitOwnerOf({ to: 'x'.repeat(40) }), 'x'.repeat(40), 'the wire\'s own id law (AUDIT WORLD6b A5: ID_RE, 4 to 40 of [A-Za-z0-9_-])');
   for (const d of [{ to: '' }, { to: 'a' }, { to: 'x'.repeat(41) }, { to: 'bbbb 0002' }, { to: 7 }, { to: null }, {}, null, undefined, 'bbbb-0002', ['bbbb-0002']]) assert.equal(hitOwnerOf(d), null, JSON.stringify(d));
   assert.equal(relay.isCellRoom, isCellRoom, 'one home at both ends'); assert.equal(relay.hitOwnerOf, hitOwnerOf); assert.equal(relay.streamsFoes, streamsFoes);
-  assert.equal(RELAY_VERSION, 'world66', 'the relay says which one it is');
+  assert.ok(relayVersionAtLeast(66), 'the relay says which one it is');
 });
 
 test('WORLD6b: the Room - in a cell ANYONE hello\'d streams foes (prefixed or not, no host asked, no strike counted) and everyone else hears it with the sender\'s id; a hit goes to the socket `to` names alone - never to the striker, nowhere without a `to` or to one not in the room; a cell keeps no memory (a world frame is refused as too large); the dungeon\'s law is untouched', async () => {
@@ -162,7 +163,7 @@ const poolRig = (extra = {}) => ({
   ...extra,
 });
 /** The world host's net, with identity converters (the pin's scene IS the world frame). */
-const netFor = (hits, room = 'world:3,12') => ({ selfId: () => 'mac-0001', room: () => room, onPeerHit: (h) => { hits.push(h); return true; }, toWire: (feet) => [feet[0], feet[1], feet[2]], toScene: (p) => [p[0], p[1], p[2]] });
+const netFor = (hits, room = 'world:3,12') => ({ selfId: () => 'mac-0001', room: () => room, onPeerHit: (h, fate) => { hits.push(h); fate?.sent?.(); return true; }, toWire: (feet) => [feet[0], feet[1], feet[2]], toScene: (p) => [p[0], p[1], p[2]] });
 const mine = (pool) => pool.foes.filter((f) => !f.puppet);
 const puppets = (pool) => pool.foes.filter((f) => !!f.puppet);
 
@@ -303,15 +304,17 @@ test('WORLD6b: the day\'s rolls are the shared day\'s - under the shared clock t
     assert.deepEqual([a(), a(), a()], [b(), b(), b()], 'one day, one sequence, any minute of it');
     const c = dayRollsFor((day + 1) * MINUTES_PER_DAY, Math.random);
     assert.notEqual(a(), c(), 'another day, another sequence');
+    // ECON1: the prices are the world's - the player's own are untouched online and every player reads today's index
     const s1 = price(() => 0.99), s2 = price(() => 0.01);
-    assert.equal(s1, s2, 'two players with the same state, whatever their dice, walk the region alike');
-    const expect = seededRng((((day * 7919) ^ 0x44415953) ^ Math.imul(1, 0x9E3779B1)) >>> 0);   // AUDIT WORLD6b C5: the prices' salt
-    const e = { regionPrices: { 0: 1000 }, factionRep: { dict: dict() } };
-    runDayChange({ entity: e, lastMinutes: (day - 1) * MINUTES_PER_DAY, nowMinutes: day * MINUTES_PER_DAY, rolls: expect });
-    assert.equal(e.regionPrices[0], s1, 'and the seed is the day\'s');
+    assert.equal(s1, 1000); assert.equal(s2, 1000, 'ECON1: the player\'s own prices are not walked online');
+    const e1 = { regionPrices: { 0: 1000 }, factionRep: { dict: dict() } }, e2 = { regionPrices: { 0: 4000 }, factionRep: { dict: dict() } };
+    assert.equal(regionPriceAdjustment(e1, 0), regionPriceAdjustment(e2, 0), 'two players, whatever their own state and dice, read the region alike');
+    assert.equal(regionPriceAdjustment(e1, 0), worldRegionPricesOn(day)[0], 'and it is the world\'s index for the day');
+    const expect = seededRng((((day * 7919) ^ 0x44415953) ^ Math.imul(2, 0x9E3779B1)) >>> 0);   // AUDIT WORLD6b C5: the POWERS' salt still seeds the powers' arm
+    assert.equal(dayRollsFor(day * MINUTES_PER_DAY, Math.random, 2)(), expect(), 'and the seed is the day\'s');
   } finally { setSharedClock(null); }
   const w = rd('src/systems/worldTick.js');
-  assert.match(w, /if \(sharedClockOn\(\)\) \{\s*const firstDay = Math\.floor\(lastMinutes \/ MINUTES_PER_DAY\) \+ 1, lastDay = Math\.floor\(nowMinutes \/ MINUTES_PER_DAY\);\s*for \(let d = firstDay; d <= lastDay; d\+\+\) updateRegionalPrices\(entity, entity\.factionRep\?\.dict \?\? null, 1, dayRollsFor\(d \* MINUTES_PER_DAY, rolls, DAY_SALT\.prices\), entity\.regionConditions \?\? null\);/, 'the day change walks one day at a time online, each from its own generator (AUDIT WORLD6b C4)');
+  assert.match(w, /if \(sharedClockOn\(\)\) \{\s*const firstDay = Math\.floor\(lastMinutes \/ MINUTES_PER_DAY\) \+ 1, lastDay = Math\.floor\(nowMinutes \/ MINUTES_PER_DAY\);[\s\S]{0,800}?for \(let d = firstDay; d <= lastDay && merchants; d\+\+\) \{\s*const prices = worldRegionPricesOn\(d\), flagRolls = dayRng\(d \* MINUTES_PER_DAY, DAY_SALT\.conditions\);/, 'ECON1: online the day walk reads the world\'s index and applies the flag half alone (AUDIT ALL E8: under DFU\'s own Merchants gate)'); assert.match(w, /for \(let i = 0; i < REGION_COUNT; i\+\+\) if \(findFactionByTypeAndRegion\(dict, FACTION_TYPES\.Province, i\)\) applyPriceConditionFlags\(entity\.regionConditions \?\? null, i, prices\[i\], flagRolls\);/, 'the day change walks one day at a time online, each day from its own generator (AUDIT WORLD6b C4) - the flags off the world\'s index');
   assert.match(w, /const dayRolls = dayRollsFor\(i, rolls, DAY_SALT\.powers\);\s*if \(i % FACTION_POWER_INTERVAL_MINUTES === 0\) \{\s*regionPowerUpdate\(entity\.factionRep \?\? null, \{ rumorMill: entity\.rumorMill \?\? null, rolls: dayRolls \}\);/, 'the powers\' 7-day arm reads the minute\'s day');
   assert.match(w, /rumorMill: entity\.rumorMill \?\? null, rolls: dayRolls,[^\n]*\n\s*updateConditions: true/, 'and the 38-day arm the same generator');
 });
@@ -322,8 +325,8 @@ test('WORLD6b: the world host by source - the stream\'s cell arm is everyone\'s 
   assert.match(w, /const frame = cell \? \(\(modes\?\.mode \?\? 'exterior'\) === 'exterior' \? exteriorFoes\.foesFrame\(full\) : null\) : modes\?\.dungeonFoesFrame\?\.\(full\);/, 'the exterior pool\'s frame, above ground alone');
   assert.match(w, /if \(isCellRoom\(online\.room\)\) \{ if \(\(modes\?\.mode \?\? 'exterior'\) === 'exterior'\) exteriorFoes\.applyFoes\(id, data\); return; \}/, 'a cell\'s frame is the pool\'s, never a dungeon heartbeat');
   assert.match(w, /online\.onHit = \(id, data\) => \{ if \(isCellRoom\(online\.room\)\) exteriorFoes\.applyHit\(id, data\); else modes\?\.applyDungeonHit\?\.\(id, data\); \};/);
-  assert.match(w, /exteriorFoes\.setNet\(\{\s*room: \(\) => online\?\.room \?\? null,\s*inRoom: \(k\) => online\?\.inRoom\?\.\(k\) \?\? false,[^\n]*\n\s*selfId: \(\) => online\?\.id \?\? null,[^\n]*\n\s*peers: peersNear,[^\n]*\n\s*now: \(\) => performance\.now\(\),\s*staleMs: FOES_STALE_MS,[^\n]*\n\s*onPeerHit: \(hit\) => online\?\.sendHit\(hit\) \?\? false,\s*toWire: \(feet\) => \{ const wc = state\.worldCoords\(feet\); return \[wc\.x, feet\[1\] - state\.compensation\[1\], wc\.z\]; \},\s*toScene: \(p\) => \{ const l = state\.localFromWorld\(p\[0\], p\[2\]\); return \[l\[0\], p\[1\] \+ state\.compensation\[1\], l\[1\]\]; \},\s*\}\);/, 'the net: the pose\'s own frame on the wire (AUDIT ONLINE D7), this scene\'s feet here');
-  assert.match(w, /if \(online\.room !== _foesRoom\) \{ const seam = isCellRoom\(online\.room\) && isCellRoom\(_foesRoom\); _foesRoom = online\.room; _foesFullAt = -Infinity; if \(!seam\) exteriorFoes\.clearPuppets\(\); \}[^\n]*\n\s*if \(isCellRoom\(online\.room\)\) \{ const near = peersNear\(\); if \(near\) exteriorFoes\.pruneOwners\(new Set\(near\.map\(\(p\) => p\.id\)\), now\); \}/, 'every frame (AUDIT WORLD6b C7: a new room hears every foe at once; C3: the prune reads the clock)');
+  assert.match(w, /exteriorFoes\.setNet\(\{\s*room: \(\) => online\?\.room \?\? null,\s*inRoom: \(k\) => online\?\.inRoom\?\.\(k\) \?\? false,[^\n]*\n\s*selfId: \(\) => online\?\.id \?\? null,[^\n]*\n\s*peers: peersNear,[^\n]*\n\s*now: \(\) => performance\.now\(\),\s*staleMs: FOES_STALE_MS,[^\n]*\n\s*onPeerHit: \(hit, fate\) => hitSend\(hit, fate\),[^\n]*\n\s*(?:\/\/[^\n]*\n\s*)*watch: \{ list: \(\) => cityGuards\.guards, hurt: \(g, dmg, at, dir\) => cityGuards\.hurtGuard\(g, dmg, at, dir, \{ fromPlayer: false, peer: true \}\) \},[^\n]*\n\s*toWire: \(feet\) => \{ const wc = state\.worldCoords\(feet\); return \[wc\.x, feet\[1\] - state\.compensation\[1\], wc\.z\]; \},\s*toScene: \(p\) => \{ const l = state\.localFromWorld\(p\[0\], p\[2\]\); return \[l\[0\], p\[1\] \+ state\.compensation\[1\], l\[1\]\]; \},\s*\}\);/, 'the net: the pose\'s own frame on the wire (AUDIT ONLINE D7), this scene\'s feet here; WATCH1: and the watch, a peer\'s blow on it not this player\'s');
+  assert.match(w, /if \(online\.room !== _foesRoom\) \{ const seam = isCellRoom\(online\.room\) && isCellRoom\(_foesRoom\); _foesRoom = online\.room; _foesFullAt = -Infinity; if \(!seam\) exteriorFoes\.clearPuppets\(\); \}[^\n]*\n\s*if \(isCellRoom\(online\.room\)\) \{ const ids = ownerIds\(\); if \(ids\) exteriorFoes\.pruneOwners\(ids, now\); \}/, 'every frame (AUDIT WORLD6b C7: a new room hears every foe at once; C3: the prune reads the clock)');
   assert.match(rd('src/ui/enhancedMenu.js'), /Towns and the open country share who is there and the creatures that find you: what one player meets, everyone nearby sees and fights - and its creatures can hurt you too\./);   // AUDIT WORLD6b C9: nearby (the fan is ranged), help (a puppet lands no blow)
   assert.match(rd('bible/06-Systems/Online-Arc.md'), /## WORLD6b \(2026-09-14\)/, 'the record');
 });

@@ -26,6 +26,23 @@ test('I1: the Actions enum, verbatim names and order (:324-384)', () => {
     'QuickSave', 'QuickLoad',
     'PrintScreen',
     'AutoRun',
+    // SOC5 (2026-09-16, Mac: "Players should be able to interact with others
+    // in the world upon encountering them by pressing F on their body"): the
+    // ONE row past DFU's enum - the port's own, a Ledger A departure (ONLINE),
+    // and APPENDED so every existing index keeps its meaning (ui/controlsWindow
+    // .js indexes this list by number against fixed art). The pin above is
+    // still DFU's list verbatim, in DFU's order, up to here.
+    'SocialInteract',
+    // QS2 (2026-09-17, Mac's quickslot diamond): three more of the port's own,
+    // appended for the same reason and under the same law - DFU's HUD has no
+    // item slots, so these are Ledger A rows and every existing index still
+    // means what it meant.
+    'QuickUse1', 'QuickUse2', 'QuickSwap',
+    // QS4: and the off-hand cell's own, appended after them.
+    'QuickOffHand',
+    // QS6: and the SPELL slot's, appended after that. 'QuickSwap' above keeps
+    // its index - an action is never removed from this list, only unbound.
+    'QuickSpell',
   ]);
   // ActionNameToEnum's sentinel: unknown parses to Unknown, and
   // Unknown itself is NOT a bindable action.
@@ -53,14 +70,35 @@ test('I1: ResetDefaults\' table, every row (:979-1032)', () => {
     'Insert=LookUp', 'Delete=LookDown', 'Home=CenterView', 'AltLeft=Sneak',
     'KeyL=LogBook', 'KeyN=NoteBook', 'KeyM=AutoMap', 'KeyV=TravelMap',
     'F8=PrintScreen', 'F9=QuickSave', 'F11=QuickLoad',
+    // SOC5: the port's own row, past DFU's table - KeyF, which SetupDefaults
+    // never spends. The forty-four above are still DFU's, row for row.
+    'KeyF=SocialInteract',
+    // QS2: the number row. Digit1-Digit3 are unspent by SetupDefaults, by the
+    // port and by every vendored mod's TextKey defaults (the HT4 pin in
+    // test/ht1_handheldtorches.test.js walks that whole set).
+    // QS6: the third digit readies the SPELL slot; the swap keeps its row in
+    // the enum above and ships UNBOUND, because the cell it is drawn in is
+    // the off hand's and Digit4 presses that.
+    'Digit1=QuickUse1', 'Digit2=QuickUse2', 'Digit3=QuickSpell', 'Digit4=QuickOffHand',
   ]);
   // every bindable action except the four with no default key
   // (MoveLeft/MoveRight arrive via A/D; TurnLeft/TurnRight via
   // arrows; the four WITHOUT a default are none - check coverage:
   // 44 rows over 44 distinct actions).
+  // SOC5 widened both counts by exactly one and QS2 by three: the law grew
+  // rows, so the coverage rule (every bindable action defaulted, none twice)
+  // grew with it.
   const bound = new Set(DEFAULT_BINDINGS.map(([, a]) => a));
-  assert.equal(DEFAULT_BINDINGS.length, 44);
-  assert.equal(bound.size, 44, 'no action is defaulted twice');
+  // QS6 broke the "one default per action" identity, deliberately and once:
+  // the swap gave Digit3 to the spell slot and ships UNBOUND, so the table is
+  // one row shorter than the enum. It is still one default per action AT MOST,
+  // and the one action without one is named rather than counted away.
+  assert.equal(DEFAULT_BINDINGS.length, 49);
+  assert.equal(bound.size, 49, 'no action is defaulted twice');
+  assert.equal(ACTIONS.length, 50);
+  assert.deepEqual(ACTIONS.filter((a) => !bound.has(a)), ['QuickSwap'], 'exactly one action ships unbound');
+  const codes = DEFAULT_BINDINGS.map(([c]) => c);
+  assert.equal(new Set(codes).size, codes.length, 'and no KEY is spent twice - the number row was free');
 });
 
 test('I1: SetBinding steals from the other dict, clears the old code, un-removes (:727-758)', () => {
@@ -102,7 +140,7 @@ test('I1: the two clears - by action walks all its codes, by code takes one (:80
 test('I1: a FULL reset clears primary and the removed list but NOT secondary (:956-960)', () => {
   const s = createBindings();
   resetDefaults(s);
-  assert.equal(s.primary.size, 44);
+  assert.equal(s.primary.size, 49);   // SOC5: DFU's 44 plus SocialInteract; QS2: plus the three quickslot rows; QS4: plus the off hand's
   // a secondary binding on a code no default uses SURVIVES the reset;
   // one on a default's code is stolen back by SetBinding's alt-removal.
   setBinding(s, 'KeyP', 'Rest', false);

@@ -396,7 +396,14 @@ test('PX22: a quest is filed under its kind, never TITLED by it', () => {
   assert.match(detail, /if \(meta\.childNodes\.length\) detail\.append\(meta\);/);
   // The GROUPING still uses the same law it always did - the pack's own
   // naming, S0000*.txt - so nothing about which quest is which changed.
-  assert.match(src, /main: isMainQuest\(q\.questName\)/);
+  // MAC-K2: the grouping law moved to `ui/questRail.js` with the rest
+  // of the walk - the chronicle's Quests section needed the same rows
+  // and a second copy is two laws. It is still the pack's own naming,
+  // S0000*.txt, so nothing about which quest is which changed.
+  assert.match(read('src/ui/questRail.js'), /main: isMainQuest\(q\.questName\)/);
+  assert.match(read('src/ui/questRail.js'),
+    /export const isMainQuest = \(questName\) => \/\^S0000\/\.test\(questName \?\? ''\) \|\| questName === '_BRISIEN';/);
+  assert.match(src, /from '\.\/questRail\.js'/, 'and the pause window takes it from there');
   // The archive is NOT split by kind, and that is the data's shape: the
   // notebook's filed header keeps only the display name, so the
   // questName is gone by the time a quest is filed.
@@ -426,17 +433,23 @@ test('PX22: the timer PX5 designed is still there, and only when there is one', 
   assert.match(read('src/ui/enhancedStyle.js'), /\.px-qtimer\.urgent/);
   // THE CLOCK ITSELF is the quest machine's: the TIGHTEST running
   // Clock resource on the quest, by clockEnabled && !clockFinished.
-  // All three hosts that build a log walk it the same way - the four
-  // hosts rule, on a law rather than a frame.
-  for (const host of ['src/scenes/world.js', 'src/scenes/dungeonContext.js']) {
-    const h = read(host);
-    assert.match(h, /if \(r\.clockEnabled && !r\.clockFinished && Number\.isFinite\(r\.remainingTimeInSeconds\)\)/, host);
-    assert.match(h, /Math\.min\(clockSeconds, r\.remainingTimeInSeconds\)/, `${host}: the TIGHTEST clock`);
+  //
+  // MAC-K2 MOVED IT, and this pin is the reason worth recording. It
+  // used to walk the hosts and end on "world.js carries it twice ON
+  // PURPOSE - its own questLog and the pauseQuestLog worldModes
+  // borrows", asserting the count was exactly 2. Four copies of one
+  // walk across three files, each with a sentence explaining why its
+  // copy was fine. The chronicle's Quests section made a FIFTH reader
+  // and the whole thing collapsed into `scenes/questBridge.js`.
+  const bridge = read('src/scenes/questBridge.js');
+  assert.match(bridge, /if \(r\.clockEnabled && !r\.clockFinished && Number\.isFinite\(r\.remainingTimeInSeconds\)\)/);
+  assert.match(bridge, /Math\.min\(clockSeconds, r\.remainingTimeInSeconds\)/, 'the TIGHTEST clock');
+  assert.equal((bridge.match(/clockSeconds = clockSeconds == null/g) ?? []).length, 1, 'once, in one place');
+  // ...and NO host walks it any more, derived rather than listed.
+  for (const h of ['exterior', 'world', 'worldModes', 'dungeonContext']) {
+    assert.ok(!read(`src/scenes/${h}.js`).includes('remainingTimeInSeconds'),
+      `${h}.js must take the bridge's walk, timers and all`);
   }
-  // world.js carries it twice on purpose - its own questLog and the
-  // pauseQuestLog worldModes borrows - so the modal host's journal
-  // shows the same timers the world's does.
-  assert.equal((read('src/scenes/world.js').match(/clockSeconds = clockSeconds == null/g) ?? []).length, 2);
   assert.match(read('src/scenes/worldModes.js'), /questLog: \(\) => host\.pauseQuestLog\?\.\(\) \?\? \{ active: \[\], finished: \[\] \}/);
 });
 
@@ -533,12 +546,27 @@ test('PX26 / THE FOUR HOSTS: north opens a REAL arm on every host', () => {
     // it. That is exactly how the first attempt slipped through - the
     // arm landed on one host and north on four.
     assert.match(s, /^ {4}openSheetPage(\(\) \{|: \(\) =>)/m, `${host} DEFINES the arm north asks for`);
-    assert.match(s, /at: opts\.at \?\? null,/, `${host}'s pause flow carries the landing`);
-    assert.match(s, /togglePause\(([\w ]*=[^)]*)?\)/, `${host}'s togglePause takes its own options`);
+    // MAC-L1: the landing is read through `pauseOpts`, the ONE reader of
+    // the door's options, rather than off the raw argument. Three hosts
+    // destructure just the landing; the dungeon context also wants the
+    // position applier, which now rides INSIDE the bag instead of
+    // sitting beside it as a second positional parameter.
+    assert.match(s, /const \{ at(: pauseAt|, setPlayerPos) \} = pauseOpts\(doorOpts\);/, `${host} reads its options through pauseOpts`);
+    assert.match(s, /\n\s+at(: pauseAt)?,\s+\/\/ PX26: the page the door was pressed for/, `${host}'s pause flow carries the landing`);
+    assert.doesNotMatch(s, /at: opts\.at \?\? null,/, `${host} must not read the raw argument - that is the null that crashed it`);
+    assert.match(s, /togglePause(?::\s*)?\(doorOpts = \{\}\)/, `${host}'s togglePause takes ONE options bag, spelt the same as every other host`);
   }
   // Each host calls its OWN pause flow - no host reaches into another's.
-  assert.match(read('src/scenes/world.js'), /openSheetPage: \(\) => hudCtx\.togglePause\(\{ at: 'stats' \}\),/);
-  assert.match(read('src/scenes/dungeonContext.js'), /openSheetPage\(\) \{ this\.togglePause\(null, \{ at: 'stats' \}\); \},/);
+  // LV2 FIX (2026-09-19): ...and each now asks `levelOwed` FIRST, so an
+  // owed level takes the sheet door instead of the stats page. The
+  // pause call is unchanged and still each host's own; this pin used to
+  // spell the whole line, which made it a pin on the IMPLEMENTATION
+  // rather than on the law it is named for.
+  assert.match(read('src/scenes/world.js'), /openSheetPage: \(\) => \(levelOwed\(playerEntity\) \? hudCtx\.toggleCharSheet\(\) : hudCtx\.togglePause\(\{ at: 'stats' \}\)\),/);
+  // MAC-L1: ...and this host spells it the same way as the other three
+  // now. It used to pass `null` positionally, which is the signature
+  // that made `routeAction` hand the other three a hard null.
+  assert.match(read('src/scenes/dungeonContext.js'), /openSheetPage\(\) \{ if \(levelOwed\(playerEntity\)\) this\.toggleCharSheet\(\); else this\.togglePause\(\{ at: 'stats' \}\); \},/);
 });
 
 test('PX28b: TAB ITSELF closes an open window - the registry answers the key', () => {

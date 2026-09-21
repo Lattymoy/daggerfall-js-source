@@ -181,7 +181,21 @@ test('B5: the LEVEL-UP screen keeps its slot test - it is the other half of PopT
   // it free. Converting this guard to a push would make that ordering
   // law unobservable - the screen would open either way - so the pair
   // moves together or not at all.
-  assert.match(src('src/scenes/worldModes.js'),
-    /if \(!interiorOverlay\) interiorOverlay = host\.makeCharSheet\?\.\(\) \?\? new LevelUpScreen\(playerEntity\);/);
+  // ORL1 re-shaped the arm's TAIL (the last-resort screen is now the
+  // mod's window for a character who levels by the mod's law), so the
+  // pin holds what it was written to hold and nothing else: THE GUARD,
+  // and the builder being asked FIRST. Both of this host's two arms
+  // carry it - the count is here because a guard restored on one arm
+  // and lost on the other is exactly the half-fix the FOUR HOSTS rule
+  // keeps finding.
+  // LV1 re-shaped the TAIL again - the last resort is now
+  // ui/charSheetDoor.js itself, which answers lane AND skin - so the
+  // pin holds the same two things it was written to hold, over the
+  // arm's current spelling.
+  const wm = src('src/scenes/worldModes.js');
+  const guarded = wm.match(/if \(!interiorOverlay\) \{\n\s*interiorOverlay = host\.makeCharSheet\?\.\(\)/g) ?? [];
+  assert.equal(guarded.length, 2, 'both interior level-up arms fill only an EMPTY slot, and ask the host\'s builder first');
+  assert.match(wm, /host\.makeCharSheet\?\.\(\) \?\? createCharSheetWindow\(\{ entity: playerEntity \}\)/,
+    'and the last resort is the ONE seam, which knows whose law levels this character (ORL1) and which skin draws it (LV1)');
   assert.match(src('src/ui/restWindow.js'), /PopToHUD\(\); RaiseSkills\(\);/);
 });

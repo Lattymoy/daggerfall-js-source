@@ -30,7 +30,7 @@ export const CITY_LIGHT_COLOR = Object.freeze([1, 1, 1]);
  * @param {object} dfBlock - BlocksFile.getBlock output (type Rmb).
  * @param {(record:number) => {w:number,h:number}} getScaledSize -
  *   scaledBillboardSize for archive 210 records.
- * @returns {Array<{x:number,y:number,z:number}>}
+ * @returns {Array<{record:number,x:number,y:number,z:number}>}
  */
 export function collectCityLights(dfBlock, getScaledSize) {
   const rmb = dfBlock.rmbBlock;
@@ -41,6 +41,13 @@ export function collectCityLights(dfBlock, getScaledSize) {
     if (obj.textureArchive !== LIGHTS_ARCHIVE) continue;
     const size = getScaledSize(obj.textureRecord);
     lights.push({
+      // HEARTH1: the RECORD rides along. A lantern and a brazier are the
+      // same point light to this collector and NOT the same thing to the
+      // survival law (survival/hearth.js), and this is the one walk of
+      // the block that knows which is which - collecting the flats a
+      // second time to ask again would be the same walk for the same
+      // answer.
+      record: obj.textureRecord,
       x: obj.xPos * GLOBAL_SCALE,
       y: -obj.yPos * GLOBAL_SCALE + size.h,
       z: (obj.zPos + RMB_DIMENSION) * GLOBAL_SCALE,
@@ -55,6 +62,7 @@ export function collectCityLights(dfBlock, getScaledSize) {
       if (obj.textureArchive !== LIGHTS_ARCHIVE) continue;
       const size = getScaledSize(obj.textureRecord);
       lights.push({
+        record: obj.textureRecord,   // HEARTH1
         x: obj.xPos * GLOBAL_SCALE + subX,
         y: -obj.yPos * GLOBAL_SCALE + size.h,
         z: (obj.zPos + RMB_DIMENSION) * GLOBAL_SCALE + subZ,
@@ -94,11 +102,18 @@ const _selIdx = [];
  *  (DungeonLightHandler.cs:60-74). 0 means "no cut" - every exterior
  *  and interior caller, unchanged. See dungeonLights.js for why the
  *  two rules compose in this order. */
-export function nearestLights(lights, pos, max = 16, range = CITY_LIGHT_RANGE, colorOf = null, xzRange = 0) {
+export function nearestLights(lights, pos, max = 16, range = CITY_LIGHT_RANGE, colorOf = null, xzRange = 0, n = -1) {
   const perLight = typeof range !== 'number' ? range : null;
   const xz2 = xzRange > 0 ? xzRange * xzRange : 0;
+  // PERF-LIGHTS (2026-09-19): how many of `lights` are live. The world
+  // host refills a POOL of light objects rather than minting one per
+  // lantern per frame (a town at night is hundreds of them, sixty times a
+  // second, in a frame that is already script-bound), so its array is
+  // longer than its contents. Default -1 keeps every other caller's
+  // meaning exactly: the whole array.
+  const len = n < 0 ? lights.length : Math.min(n, lights.length);
   let count = 0;
-  for (let i = 0; i < lights.length; i++) {
+  for (let i = 0; i < len; i++) {
     const l = lights[i];
     const dx = l.x - pos[0];
     const dy = l.y - pos[1];
@@ -120,7 +135,17 @@ export function nearestLights(lights, pos, max = 16, range = CITY_LIGHT_RANGE, c
     out[i * 4] = l.x;
     out[i * 4 + 1] = l.y;
     out[i * 4 + 2] = l.z;
-    out[i * 4 + 3] = perLight ? perLight[_selIdx[i]] : range;
+    // AUDIT PERF-LIGHTS F2 (pre-existing, found by this audit): a
+    // per-light range array SHORTER than the light list gives `undefined`
+    // here, which lands in a Float32Array as NaN - and a NaN far plane
+    // goes on to the point-shadow matrices and the shader's depth
+    // reconstruction, where it fails silently and totally. The host sizes
+    // its animator at 4096 lanterns and nothing checks the lights against
+    // it; a big enough city at a long enough land view is a cliff with no
+    // edge marked. The fallback is the module's own default range, which
+    // is what an unanimated lantern is anyway.
+    const w = perLight ? perLight[_selIdx[i]] : range;
+    out[i * 4 + 3] = Number.isFinite(w) ? w : CITY_LIGHT_RANGE;
   }
   if (!colorOf) return out;
   // The colour arm rides the SAME selection - the one-sort law above

@@ -32,7 +32,26 @@
 import { templateByIndex } from './itemTemplates.js';
 import { doItemEnchantmentPayloads, PAYLOAD } from './enchantments.js';   // E2: the Used payload arm
 import { inflictPoison } from './poisons.js';
-import { getItem } from './inventory.js';   // D9: ItemCollection.GetItem - the oil arm's lantern lookup (:1791)
+import { inflictDisease } from './diseases.js';   // SURV2: a bad meal's sickness, handed to the food law
+import { getItem, isEnchanted as hasEnchantments } from './inventory.js';   // D9: ItemCollection.GetItem - the oil arm's lantern lookup (:1791); the card's usable predicate
+import { isSurvivalItem, useSurvivalItem } from './survival/items.js';   // SURV2: food, water, camp gear
+
+/** THE ARMS WHOSE DESTINATION WINDOW THE PORT HAS NOT BUILT, named so a use
+ *  SAYS something rather than eating itself. Keyed by this module's own result
+ *  `kind`, which is why it lives here: the classic window (ui/nativeInventory
+ *  .js, which re-exports it), the enhanced pack and the quickslot key all read
+ *  the same words for the same arm, and a second copy is how one of the three
+ *  starts saying something else. */
+export const USE_PENDING = Object.freeze({
+  book: 'You cannot read that yet.',
+  potion: 'You drink the potion.',
+  map: 'You study the map.',
+  questItem: 'Nothing happens.',
+  enchanted: 'Nothing happens.',
+  spellbook: 'You cannot open your spellbook here.',
+  pitchCamp: 'There is nowhere to set that up here.',   // SURV3: a host with no ground for a camp
+  placeFire: 'There is nowhere to set that up here.',
+});
 
 /** The template indices the predicates name (ItemEnums.cs). */
 export const TEMPLATES = Object.freeze({
@@ -109,6 +128,19 @@ export const VARIANT_CHANGEABLE = Object.freeze(new Set([
 /** NextVariant, verbatim: cycle to 0 at TotalVariants, which is the
  *  ITEM TEMPLATE's `variants` column. Returns true when the variant
  *  moved (the caller refreshes the doll or the list). */
+/** Mac (2026-09-18): "hide Use for non-usables". TRUE when the ladder below has an arm for the item that
+ *  does something - a quest item's watch, food and water and camp gear, a book, a potion, a map, the
+ *  spellbook, a drug, a light source, oil, a Used enchantment, a garment with variants to cycle. The catch-all's
+ *  "Nothing happens." and the recipe's "cannot use" are the two that are not a use. */
+export function usableItem(item) {
+  if (!item) return false;
+  if (item.questItem) return true;
+  if (isSurvivalItem(item) || isBook(item) || isPotion(item) || isMap(item) || isSpellbook(item) || isDrug(item) || isLightSource(item)) return true;
+  if (item.group === 'UselessItems2' && item.templateIndex === TEMPLATES.Oil) return true;
+  if (hasEnchantments(item)) return true;
+  return VARIANT_CHANGEABLE.has(item.templateIndex) && (templateByIndex(item.templateIndex)?.variants ?? 0) > 1;
+}
+
 export function nextVariant(item) {
   if (!VARIANT_CHANGEABLE.has(item?.templateIndex)) return false;
   const total = templateByIndex(item.templateIndex)?.variants ?? 0;
@@ -235,11 +267,16 @@ export function useItem(item, collection, {
   }
 
   let out = null;
+  // SURV2: the survival items (food, the waterskin, camping gear, the
+  // campfire kit, the skillet) answer from their own module - their
+  // templates are the port's, above DFU's 288, and their use is eating,
+  // drinking and placing, none of which the ladder below knows.
+  if (isSurvivalItem(item)) out = useSurvivalItem(item, collection, { entity, now: nowMinute, rolls, currentDay: Math.trunc(nowMinute / 1440), inflict: inflictDisease });
   // B1: the book arm hands the ITEM to the window's openBook hook
   // (DaggerfallInventoryWindow pushes the reader; a failed open shows
   // the ruined-book box - failText - which the WINDOW shows on the
   // hook's failure callback, not immediately).
-  if (isBook(item)) out = { kind: 'book', item, failText: named('bookUnavailable') };
+  else if (isBook(item)) out = { kind: 'book', item, failText: named('bookUnavailable') };
 
   else if (isPotion(item)) {
     // DrinkPotion + RemoveOne. AUDIT 22 F5: RemoveOne takes THIS
@@ -278,8 +315,11 @@ export function useItem(item, collection, {
       const i = collection.indexOf(item);
       if (i >= 0) collection.splice(i, 1);   // RemoveItem, not RemoveOne
       const revealed = revealMap();
+      // MACROS1: record 499 says "...the secret location of %map...", and DFU's box runs MacroHelper over it with
+      // PlayerGPS.LocationRevealedByMapItem - the name DiscoverRandomLocation just set. The outcome carries the value
+      // and every consumer of a textId expands its rows with it (questMacros.js expandRowValues).
       out = revealed
-        ? { kind: 'map', textId: MAP_TEXT_ID, revealed }
+        ? { kind: 'map', textId: MAP_TEXT_ID, revealed, macros: { map: revealed } }
         : { kind: 'map', text: named('readMapFail') };
     }
   }
@@ -320,7 +360,7 @@ export function useItem(item, collection, {
     // ItemCollection.GetItem verbatim now, allowQuestItem: false
     // included (:1791) - the port grew quest items (item.questItem,
     // read at :211) and inventory.getItem already ports that filter
-    // (inventory.js:283), so a quest lantern is invisible to the oil
+    // (inventory.js:285), so a quest lantern is invisible to the oil
     // exactly as it is in DFU and the bottle refuses instead.
     const lantern = getItem(bag ?? [], 'UselessItems2', TEMPLATES.Lantern, { allowQuestItem: false });
     const oil = item.currentCondition ?? 0;

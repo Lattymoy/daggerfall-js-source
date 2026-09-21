@@ -13,6 +13,7 @@
     "check": "npm run lint && npm run types && npm test && npm run build",
     "cites": "node tools/citeShift.mjs",
     "prebuild": "node scripts/buildTag.mjs",
+    "probes": "node tools/enhancedMenuProbe.mjs && node tools/featureRailProbe.mjs",
     "shot": "node tools/screenshot.mjs",
     "firsthour": "node tools/firstHourProbe.mjs",
     "x11": "node tools/x11Probe.mjs",
@@ -20,6 +21,12 @@
     "x11c": "node tools/identifyOutdoorsProbe.mjs",
     "trademodes": "node tools/tradeModeProbe.mjs",
     "peoplegate": "node tools/peopleGateProbe.mjs",
+    "levelup": "node tools/levelUpProbe.mjs",
+    "gunproto": "node tools/gunProtoProbe.mjs",
+    "blood": "node tools/bloodProbe.mjs",
+    "gunsfx": "node tools/gunSfx.mjs && node tools/gunSfxInstall.mjs",
+    "gunart": "node tools/gunPaperdoll.mjs",
+    "gunsfx:find": "NODE_USE_ENV_PROXY=1 node tools/freesoundPick.mjs",
     "deeds": "node tools/deedProbe.mjs",
     "mwinspect": "node tools/mwInspectProbe.mjs",
     "mwarm": "node tools/mwArmProbe.mjs",
@@ -27,6 +34,7 @@
     "mwattach": "node tools/mwAttachProbe.mjs"
   },
   "devDependencies": {
+    "acorn": "^8.18.0",
     "eslint": "^10.10.0",
     "playwright": "^1.56.0",
     "pngjs": "^7.0.0",

@@ -558,6 +558,9 @@ export function calculateAttackDamage(attacker, target, { weapon = null, damageM
   // changes a roll or a value; the notes object is written by the hit
   // roll and read at the tail.
   const notes = { critical: false, backstab: false, hit: false, ineffective: false };
+  // SW1: the struck part, at the FUNCTION's scope - the resolution hook
+  // at the tail is past the block the roll is made in.
+  let struckPart = -1;
   const report = (damage) => {
     if (_playerAttackHook && attacker.isPlayer) {
       try { _playerAttackHook({ ...notes, damage, attacker, target, weapon }); } catch { /* a HUD is not the formula's problem */ }
@@ -612,6 +615,7 @@ export function calculateAttackDamage(attacker, target, { weapon = null, damageM
   if (weapon) chanceToHitMod += (WEAPON_MATERIAL_MODIFIER[weapon.material] ?? 0) * 10;
   if (weapon) chanceToHitMod = adjustWeaponHitChanceMod(attacker, target, chanceToHitMod, weaponAnimTime, weapon);   // AUDIT PCO1: the stock's mod hook, right after CalculateWeaponToHit
   const struck = calculateStruckBodyPart(rolls());
+  struckPart = struck;   // SW1: carried out to the tail's hook, which sits past this block
   if (!weapon) {
     // Monster weaponless attacks (audit F2): DFU's multi-attack loop
     // over MobileEnemy.MinDamage/2/3 - NOT the H2H skill formula
@@ -765,6 +769,15 @@ export function calculateAttackDamage(attacker, target, { weapon = null, damageM
   if (target?.isPlayer && !attacker.isPlayer && damage > 0) {
     _playerStruckHook?.(attacker, target, damage);
   }
+  // SW1: PCAAO's `onAttackDamageCalculated`, at the same tail and in the
+  // same registered-hook shape. Unlike V3's above it is NOT gated on
+  // damage: three of the Shield Widget's six Recoil conditions are MISS
+  // conditions, and a blow that rang off the shield without hurting is
+  // exactly the moment the mod wants. The struck part rides along
+  // because three of the six ask whether the shield covers it.
+  if (target?.isPlayer && !attacker.isPlayer) {
+    _attackOnPlayerHook?.(attacker, target, damage, struckPart);
+  }
   return report(damage);
 }
 
@@ -781,6 +794,12 @@ let _playerStruckHook = null;
 /** worldTick's registration seam for the enemy-damages-player tail
  *  (V3: the Ring of Namira's reflection). */
 export function setPlayerStruckHook(fn) { _playerStruckHook = fn ?? null; }
+let _attackOnPlayerHook = null;
+/** SW1: the registration seam for PCAAO's `onAttackDamageCalculated` -
+ *  EVERY resolution of an enemy's attack on the player, hit or miss,
+ *  with the struck body part. Reporting only; no formula reads it. The
+ *  weapon rig registers it for the Shield Widget's Recoil module. */
+export function setAttackOnPlayerHook(fn) { _attackOnPlayerHook = fn ?? null; }
 
 // ---- GetEnemyEntityLanguageSkill (FormulaHelper.cs:2808-2880) ----
 // Class enemies: the six stealth careers speak Streetwise, the rest
@@ -867,7 +886,7 @@ export const KB_UNIT = CLASSIC_TO_UNITY_RATIO / 10;   // 3.95
  *  at 350 instead of ~570 takes roughly 60% more knockback speed.
  *
  *  `items` is the foe's own list; totalWeight IS ItemCollection
- *  .GetWeight (inventory.js:328), so the kg->classic multiply and the
+ *  .GetWeight (inventory.js:330), so the kg->classic multiply and the
  *  C# (int) truncation are the only arithmetic added here. A caller
  *  with no list passes nothing and gets the old base-only answer,
  *  which is the honest value for a foe the port gives no inventory. */

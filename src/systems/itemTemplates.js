@@ -31,7 +31,21 @@ for (const t of TEMPLATES_JSON) {
 }
 export const ITEM_TEMPLATES = Object.freeze(_rows);
 
-export const templateByIndex = (i) => ITEM_TEMPLATES[i] ?? null;
+// SURV2: THE PORT'S OWN TEMPLATES, above DFU's 288. A vendored mod's
+// items (Climates & Calories' food, waterskin, camping gear, 530-540)
+// and the port's own (the campfire, 541) register rows here with the
+// same columns, marked `custom`; every reader that goes through
+// templateByIndex sees them and the frozen DFU table stays what it is.
+const _custom = new Map();
+export function registerCustomTemplates(rows) {
+  for (const t of rows ?? []) {
+    if (!Number.isFinite(t?.index) || t.index < ITEM_TEMPLATES.length) continue;
+    _custom.set(t.index, Object.freeze({ custom: true, variants: 0, rarity: 1, enchantmentPoints: 0, playerTextureArchive: 0, playerTextureRecord: 0, isIngredient: false, ...t, weight: t.baseWeight, worldTexArchive: t.worldTextureArchive, worldTexRecord: t.worldTextureRecord }));
+  }
+  return _custom.size;
+}
+export const customTemplateCount = () => _custom.size;
+export const templateByIndex = (i) => ITEM_TEMPLATES[i] ?? _custom.get(i) ?? null;
 
 /** GetItemTemplate(group, groupIndex) - the group's j-th template. */
 export function templateFor(group, groupIndex) {
@@ -68,6 +82,38 @@ export function itemBaseValue(item) {
   return t.basePrice;
 }
 
+/** DaggerfallUnityItem.SetItem's two READABLE writes (DaggerfallUnity
+ *  Item.cs:555 `shortName = itemTemplate.name`, :563 `value =
+ *  itemTemplate.basePrice`, the latter through SetItemPropertiesBy
+ *  Material's multiplier - ItemBuilder.cs:649 - which is what
+ *  itemBaseValue answers). NO DFU item exists without either, and the
+ *  trade window reads `item.value` raw: an undefined one sums to NaN
+ *  and CalculateTradePrice's `>> 8` collapses that to 0.
+ *
+ *  MAC-N1 (2026-09-16, Mac: "Weapon and Armorsmiths dont want to pay
+ *  for loot"): this law lived as FIVE private copies - loot.js,
+ *  unleveledLoot.js, startingGear.js and two in shopStock.js - and the
+ *  corpse's armor (combat/enemyEquipment.js equipmentItems) was minted
+ *  by none of them. A cuirass off a dead knight had no value, so the
+ *  whole staged lot it sat in priced at NaN, the strip printed NaN and
+ *  the smith offered 0 - at exactly the two shops that BUY armor. ONE
+ *  DFU MEMBER, ONE EXPORT: this is that member, and every minter
+ *  reads it. Fills only what is absent - an item minted with its own
+ *  value (an enchantment's sum, a book's price, a recipe's) keeps it -
+ *  and answers a COPY, as the copies it replaces did. */
+export function setItemFields(item) {
+  return {
+    ...item,
+    name: item.name ?? templateByIndex(item.templateIndex)?.name,
+    value: itemValueOf(item),
+  };
+}
+/** JAN1 (2026-09-18, Janome: "when I try to sell certain items I get COST:NaN ... he offers me 0"): THE ONE VALUE
+ *  READ. DFU's `item.value` is always an int; the port's can be absent (an item saved before MAC-N1 set every minter)
+ *  or, worse, NaN (a sum over an absent term), and `??` lets NaN through. A value that is not a finite number is no
+ *  value: the template's base price answers, as SetItem's own write does. Every price arm reads through here. */
+export const itemValueOf = (item) => (Number.isFinite(item?.value) ? item.value : itemBaseValue(item ?? {}));
+
 // ---- AUDIT 17e F9: GetItemImage's INVENTORY branch, verbatim ----
 // (ItemHelper.cs:399-430 + DaggerfallUnityItem.GetInventoryTexture*
 // :1728-1764 + UseWorldTexture :1830-1855.) The item lists draw the
@@ -79,6 +125,7 @@ const KATANA_TEMPLATE = 121;
 
 /** UseWorldTexture verbatim. */
 export function usesWorldTexture(item, template = templateByIndex(item.templateIndex)) {
+  if (template?.custom) return true;   // SURV2: a custom template draws its world icon (the item's own fields first, as DFU's world arm does)
   if (WORLD_TEXTURE_GROUPS.has(item.group)) return true;
   if (template?.isIngredient) return true;
   if (item.group === 'Weapons' && item.templateIndex === ARROW_TEMPLATE) return true;

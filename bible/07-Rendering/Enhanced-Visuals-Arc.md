@@ -33,10 +33,10 @@ matrix/draw path (GC spikes riding the beat).
 
 FOUND ON THE WAY, both real: a recenter injects 819.2 units into
 footsteps' stride accumulator (a spurious footstep at every map-pixel
-crossing, footsteps.js:134), and `_playerStill` reads one moving
-frame per crossing (world.js:5652-5654).
+crossing, footsteps.js:151), and `_playerStill` reads one moving
+frame per crossing (world.js:7155-7157).
 
-frame per crossing (world.js:8366-8368).
+frame per crossing (world.js:10614-10624).
 
 THE DISTANCE IS FOG-BOUND, NOT STREAM-BOUND. Linear fog ends at 2400
 units (weather.js:50-57, DFU's own number) while the default 7x7
@@ -46,13 +46,13 @@ at every distance, ~1.6M/frame, unculled. The travel map already
 builds a one-vertex-per-map-pixel relief of the whole province
 (overworldModel.js) - the natural far-land raw material, later.
 Chunk-edge normals degenerate to one-sided differences (no ghost
-rows, terrainSurface.js:92-95): a permanent lighting lattice at every
+rows, terrainSurface.js:147-150): a permanent lighting lattice at every
 819.2-unit seam, visible at grazing sun.
 
 THERE IS NO CULLING AND NO MEASUREMENT. Zero frustum tests anywhere;
 ~1045 drawMesh calls in a city with per-call useProgram + per-submesh
 double texture binds and a template-string key allocated per submesh
-per frame (renderer.js:1971 - thousands of strings/frame, the single
+per frame (renderer.js:2941 - thousands of strings/frame, the single
 largest GC source). No FPS counter, no draw counter; the proven
 measurement pattern is window.__renderer + probe monkeypatching
 (hudCrosshairProbe), exposed today by the dungeon host alone.
@@ -70,11 +70,11 @@ tint term without a vertex-format change across ~20 call sites.
 
 ## Hard constraints (the tripwires, so no slice trips them)
 
-- Source-text pins count GLSL substrings (perlightcolors.test.js:125,
+- Source-text pins count GLSL substrings (perlightcolors.test.js:127,
   handedness, the fparm studio borrow) and audit18_bible_docs pins
   Rendering.md's literal "directional light 0.45 + 0.55*diffuse" -
   shader math changes move the doc in the same commit.
-- `_clockLit` (renderer.js:618) is a regression latch: set once,
+- `_clockLit` (renderer.js:858) is a regression latch: set once,
   never cleared. Flats' tint path must keep it.
 - No sRGB anywhere; lighting happens on palette bytes; the enhanced
   sky's posterise pass and NEAREST/REPEAT cutout laws stay.
@@ -351,15 +351,15 @@ modelIdNum, the streamed pixels' models likewise), so one archetype's
 placements draw back to back and the shadow makes the repeats free.
 The shadows (and, since AUDIT 65 RS-3, the cloud-shadow upload stamps) reset at beginFrame and at markForeignPass - the R9 law's
 other half: an entry point may only trust a binding it can account
-for, and five passes change programs behind the renderer's back (GR1: the lab's grass is the fifth).
+for, and four passes change programs behind the renderer's back (GR1: the lab's grass is the fourth; the overworld map's pass was the fifth until MAP1 retired it, 2026-09-18).
 Those four (both skies, precipitation, and - since F55 - the OVERWORLD
 MAP's own pass) now all follow the same law: the getParameter
 (CURRENT_PROGRAM) save/restore is RETIRED (two synchronous driver
 queries per frame gone - the class EV2 killed in precipitation, and
 F55 took the overworld renderer's pair the same way) and the hosts
-mark the seam after each - five call sites across the four passes
-(`world.js` sky and rain, `exterior.js` sky and rain,
-`ui/overworldMap.js`). The one
+mark the seam after each - four call sites across the three passes
+(`world.js` sky and rain, `exterior.js` sky and rain; the fifth,
+`ui/overworldMap.js`, RETIRED in MAP1 2026-09-18). The one
 element-buffer upload that owns no VAO (_terrainIndices) unbinds
 first, or it would capture its buffer into whatever drawMesh left
 bound. THE SPRITE RT: the borrow-and-return of the clear colour (the

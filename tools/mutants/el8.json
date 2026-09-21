@@ -1,0 +1,290 @@
+[
+  {
+    "name": "contact-length",
+    "file": "src/render/airPass.js",
+    "old": "export const AIR_CONTACT_LENGTH = 0.6;",
+    "new": "export const AIR_CONTACT_LENGTH = 0.0;",
+    "tests": [
+      "test/el8_contact.test.js"
+    ]
+  },
+  {
+    "name": "contact-thickness",
+    "file": "src/render/airPass.js",
+    "old": "export const AIR_CONTACT_THICKNESS = 0.8;",
+    "new": "export const AIR_CONTACT_THICKNESS = 1000;",
+    "tests": [
+      "test/el8_contact.test.js"
+    ]
+  },
+  {
+    "name": "contact-floor-black",
+    "file": "src/render/airPass.js",
+    "old": "export const AIR_CONTACT_FLOOR = 0.15;",
+    "new": "export const AIR_CONTACT_FLOOR = 0.0;",
+    "tests": [
+      "test/el8_contact.test.js"
+    ]
+  },
+  {
+    "name": "contact-unit",
+    "file": "src/render/airPass.js",
+    "old": "export const AIR_CONTACT_UNIT = 12;",
+    "new": "export const AIR_CONTACT_UNIT = 0;",
+    "tests": [
+      "test/el8_contact.test.js"
+    ]
+  },
+  {
+    "name": "contact-door-ignored",
+    "file": "src/render/airPass.js",
+    "old": "  return new URLSearchParams(search).get('contact') !== 'off';",
+    "new": "  return true;",
+    "tests": [
+      "test/el8_contact.test.js"
+    ]
+  },
+  {
+    "name": "contact-glsl-on-when-off",
+    "file": "src/render/airPass.js",
+    "old": "  if (uContactParams.w <= 0.0) return 1.0;\n  float len = min(dist, uContactParams.x);",
+    "new": "  float len = min(dist, uContactParams.x);",
+    "tests": [
+      "test/el8_contact.test.js"
+    ]
+  },
+  {
+    "name": "contact-glsl-past-light",
+    "file": "src/render/airPass.js",
+    "old": "  float len = min(dist, uContactParams.x);",
+    "new": "  float len = uContactParams.x;",
+    "tests": [
+      "test/el8_contact.test.js"
+    ]
+  },
+  {
+    "name": "contact-glsl-thin",
+    "file": "src/render/airPass.js",
+    "old": "    if (behind > 0.02 && behind < uContactParams.y) return uContactParams.z;",
+    "new": "    if (behind > 0.02) return uContactParams.z;",
+    "tests": [
+      "test/el8_contact.test.js"
+    ]
+  },
+  {
+    "name": "contact-glsl-current-terms",
+    "file": "src/render/airPass.js",
+    "old": "    float sceneDist = uPrevProjInfo.w / (z + uPrevProjInfo.z);\n    float behind = c.w - sceneDist;",
+    "new": "    float sceneDist = uPrevProjInfo.w / (z + uPrevProjInfo.z);\n    float behind = sceneDist - c.w;",
+    "tests": [
+      "test/el8_contact.test.js"
+    ]
+  },
+  {
+    "name": "frame-one-depth",
+    "file": "src/render/airPass.js",
+    "old": "    f.depthIndex ^= 1;\n",
+    "new": "",
+    "tests": [
+      "test/el8_contact.test.js"
+    ]
+  },
+  {
+    "name": "frame-depth-not-attached",
+    "file": "src/render/airPass.js",
+    "old": "    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.TEXTURE_2D, f.depth, 0);\n    setFrameTarget(f.fbo);",
+    "new": "    setFrameTarget(f.fbo);",
+    "tests": [
+      "test/el8_contact.test.js"
+    ]
+  },
+  {
+    "name": "prepare-no-prev",
+    "file": "src/render/airPass.js",
+    "old": "    if (this.f) { this.prevVP.set(this._vp); this.prevProjInfo.set(this.projInfo); this.prevValid = !!this.frame; }\n",
+    "new": "",
+    "tests": [
+      "test/el8_contact.test.js"
+    ]
+  },
+  {
+    "name": "prepare-prev-is-current",
+    "file": "src/render/airPass.js",
+    "old": "    if (this.f) { this.prevVP.set(this._vp); this.prevProjInfo.set(this.projInfo); this.prevValid = !!this.frame; }\n    this.f = f;\n    this.rect.set(f.viewport);\n    projInfo(f.proj, this.projInfo);\n    multiply(f.proj, f.view, this._vp);",
+    "new": "    this.f = f;\n    this.rect.set(f.viewport);\n    projInfo(f.proj, this.projInfo);\n    multiply(f.proj, f.view, this._vp);\n    this.prevVP.set(this._vp); this.prevProjInfo.set(this.projInfo); this.prevValid = !!this.frame;",
+    "tests": [
+      "test/el8_contact.test.js"
+    ]
+  },
+  {
+    "name": "upload-contact-always-on",
+    "file": "src/render/airPass.js",
+    "old": "    const live = on && this.prevValid && this.frame;",
+    "new": "    const live = !!this.frame;",
+    "tests": [
+      "test/el8_contact.test.js"
+    ]
+  },
+  {
+    "name": "upload-contact-current-depth",
+    "file": "src/render/airPass.js",
+    "old": "    gl.bindTexture(gl.TEXTURE_2D, live ? this.frame.prevDepth : (this.frame ? this.frame.prevDepth : null));",
+    "new": "    gl.bindTexture(gl.TEXTURE_2D, this.frame ? this.frame.depth : null);",
+    "tests": [
+      "test/el8_contact.test.js"
+    ]
+  },
+  {
+    "name": "lane-no-contact",
+    "file": "src/render/enhancedLighting.js",
+    "old": "      : contactShadow(wp, n, Ln, d);",
+    "new": "      : 1.0;",
+    "tests": [
+      "test/el8_contact.test.js"
+    ]
+  },
+  {
+    "name": "renderer-contact-in-sprite",
+    "file": "src/render/renderer.js",
+    "old": "this._contactWanted !== false && this._spriteDepth === 0 && this._studioDepth === 0 && !this._panelSaved);",
+    "new": "this._contactWanted !== false && this._studioDepth === 0 && !this._panelSaved);",
+    "tests": [
+      "test/el8_contact.test.js"
+    ]
+  },
+  {
+    "name": "renderer-no-contact-door",
+    "file": "src/render/renderer.js",
+    "old": "this._contactWanted !== false && this._spriteDepth === 0",
+    "new": "this._spriteDepth === 0",
+    "tests": [
+      "test/el8_contact.test.js"
+    ]
+  },
+  {
+    "name": "renderer-no-contact-without-air",
+    "file": "src/render/renderer.js",
+    "old": "    else this._uploadNoContact(this._el[key].contact);\n",
+    "new": "",
+    "tests": [
+      "test/el8_contact.test.js"
+    ]
+  },
+  {
+    "name": "table-size",
+    "file": "src/render/shadowPass.js",
+    "old": "export const SHADOW_CASTER_TABLE = 48;",
+    "new": "export const SHADOW_CASTER_TABLE = 16;",
+    "tests": [
+      "test/el8_contact.test.js"
+    ]
+  },
+  {
+    "name": "table-not-filled",
+    "file": "src/render/shadowPass.js",
+    "old": "      if (i < SHADOW_CASTER_TABLE) this.casterOf[i] = k;\n",
+    "new": "",
+    "tests": [
+      "test/el8_contact.test.js"
+    ]
+  },
+  {
+    "name": "table-not-uploaded",
+    "file": "src/render/shadowPass.js",
+    "old": "    gl.uniform1iv(loc.casterOf, this.casterOf);   // EL8\n",
+    "new": "",
+    "tests": [
+      "test/el8_contact.test.js"
+    ]
+  },
+  {
+    "name": "glsl-table-lit",
+    "file": "src/render/shadowPass.js",
+    "old": "  int k = uCasterOf[i];\n  return k >= 0 ? pointShadowAt(k, wp, n) : 1.0;",
+    "new": "  return 1.0;",
+    "tests": [
+      "test/el8_contact.test.js"
+    ]
+  },
+  {
+    "name": "cadence-far-every-frame",
+    "file": "src/render/shadowPass.js",
+    "old": "        if (c === last && this._sunDrawn[c] && this.frameNo % SHADOW_FAR_CASCADE_EVERY !== 0) continue;\n",
+    "new": "",
+    "tests": [
+      "test/el8_contact.test.js"
+    ]
+  },
+  {
+    "name": "cadence-far-never-first",
+    "file": "src/render/shadowPass.js",
+    "old": "        if (c === last && this._sunDrawn[c] && this.frameNo % SHADOW_FAR_CASCADE_EVERY !== 0) continue;",
+    "new": "        if (c === last && this.frameNo % SHADOW_FAR_CASCADE_EVERY !== 0) continue;",
+    "tests": [
+      "test/el8_contact.test.js"
+    ]
+  },
+  {
+    "name": "cadence-stale-matrix",
+    "file": "src/render/shadowPass.js",
+    "old": "        this.sunVP[c].set(this._sunVPNew[c]);\n",
+    "new": "",
+    "tests": [
+      "test/el8_contact.test.js"
+    ]
+  },
+  {
+    "name": "cadence-casters-every-frame",
+    "file": "src/render/shadowPass.js",
+    "old": "      const due = k < SHADOW_NEAR_CASTERS || (this.frameNo + k) % SHADOW_FAR_CASTER_EVERY === 0;",
+    "new": "      const due = true;",
+    "tests": [
+      "test/el8_contact.test.js"
+    ]
+  },
+  {
+    "name": "cadence-no-change-check",
+    "file": "src/render/shadowPass.js",
+    "old": "      if (changed || due) {",
+    "new": "      if (due) {",
+    "tests": [
+      "test/el8_contact.test.js"
+    ]
+  },
+  {
+    "name": "cadence-near-none",
+    "file": "src/render/shadowPass.js",
+    "old": "export const SHADOW_NEAR_CASTERS = 2;",
+    "new": "export const SHADOW_NEAR_CASTERS = 0;",
+    "tests": [
+      "test/el8_contact.test.js"
+    ]
+  },
+  {
+    "name": "perf-door",
+    "file": "src/render/perfMeter.js",
+    "old": "  try { return /[?&]perf\\b/.test(search); } catch { return false; }",
+    "new": "  try { return /perf/.test(search); } catch { return false; }",
+    "tests": [
+      "test/el8_contact.test.js"
+    ]
+  },
+  {
+    "name": "perf-every-frame",
+    "file": "src/render/perfMeter.js",
+    "old": "    if (this.frames % PERF_EVERY !== 0) return null;\n",
+    "new": "",
+    "tests": [
+      "test/el8_contact.test.js"
+    ]
+  },
+  {
+    "name": "perf-line-gpu",
+    "file": "src/render/perfMeter.js",
+    "old": "  const gpu = gpuMs == null ? 'gpu n/a' : `gpu ${gpuMs.toFixed(2)}ms`;",
+    "new": "  const gpu = gpuMs == null ? 'gpu n/a' : `gpu ${gpuMs.toFixed(0)}ms`;",
+    "tests": [
+      "test/el8_contact.test.js"
+    ]
+  }
+]

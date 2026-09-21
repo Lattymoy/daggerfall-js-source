@@ -8,6 +8,74 @@
 
 Newest first.
 
+**2026-09-18 - AUDIT-MAP2: THE HELD MAP, THE LAST AUDIT BEFORE MERGE
+(MAP1-MAP3).** Mac: *"Before we merge, let's do one last audit on the
+new maps."* Three reviewer lenses (the rig's side of MAP3, the window's
+side of MAP3, fresh eyes on MAP1/MAP2) and a hands-lane layer in the
+browser probe on the real fixture rig. Thirty-two findings, twenty-five
+fixed. The browser found the first two: the root's lane class was the
+thumbs canvas's `pointer-events: none` class (every click in the hands
+lane went to the arm underneath), and the sheet sat past the arm's far
+plane (ink over the sky, no parchment). The rig reviewer found the
+quaternions packed `[x,y,z,w]` against the rig's `[w,x,y,z]` - a
+forty-degree bend arriving as a hundred-and-forty-degree turn about the
+wrong axis, invisible to pins that tested the module against itself;
+the bone names in the family retail's clips never key; the coplanar
+second winding; the sheet anchored to a moving eye once; stale corners
+after the arm stopped drawing. The window reviewer found the one-way
+lane latch, the `''` sentinel collision, the repack per resize, the
+pointer unclamped to the sheet over a full-viewport stage, the pinch in
+screen pixels, the foot without a scrim over the world. The fresh eyes
+found a free teleport for a poor mage on Y, Escape bypassing the fee's
+close, the guild's teleport map offering a fast-travel panel that
+committed into no hook, the far band turning a click on a hidden hamlet
+into a nameless walk, and the static layer freed and re-zeroed on every
+pan frame. Record: `10-UI/Held-Map-Arc.md`, AUDIT-MAP2.
+
+**2026-09-18 - AUDIT-MAP: THE HELD MAP, THE AUDIT OF MAP0-MAP2.** Mac:
+*"Let's audit everything so far, wanna make sure this is perfect."*
+Three reviewer lenses (the ink's geometry and cost on the real bay; the
+window against the host and a real browser; the mod's laws against the
+classic window and the C#), a browser probe written for the sheet
+(`tools/heldMapProbe.mjs`, 37 checks, screenshots), and the screenshots
+read. Twenty-two fixed: the data's edge drawn as a shore and the corner
+cut chamfering straight runs (the screenshot's own), the pulse
+repainting the whole bay's ink per frame (a kept static layer now), the
+zoom drifting at the ceiling, the recursive simplifier, per-point chain
+culling, the harbour glyph's stray line, gaps at three-province points,
+the glide breaking the clamp, the Close button dropping the toggles, no
+pinch on touch, online billing inn nights, a box holding only the stage,
+the fee's No leaving the map up, the walked trip handing DFU's minutes to
+the ETA, the mod's fare scaling never billed on the enhanced skin (one
+pure export now, both skins), the info box's click reaching the button
+under it, the junction disc reading the mark off the wrong window, and
+the small ones (wheel modes, fonts, onload order, fade-from-current).
+Five departures recorded. `test/heldmap.test.js` +20 (67),
+`tools/mutants/auditmap.json` 26 dead. `10-UI/Held-Map-Arc.md`,
+AUDIT-MAP.
+
+**2026-09-18 - AUDIT-TO1: TRAVEL OPTIONS, THE AUDIT OF THE PORT.** Mac:
+*"Please do a comprehensive audit on this."* Fourteen finders over the
+mod's eight C# files against the port, three adversarial verifiers a
+finding, and four exact table diffs by hand (417/417 port ids, 44/44
+strings, 51/51 settings, the autopilot method by method - all clean).
+THE HEADLINE: the slice's headline feature never ran. The host handed
+the mod `isPlayerOnHUD` as the exact complement of the `gamePaused`
+beside it, so every accelerated journey interrupted itself on its
+first unpaused frame - and 41 pins were green because every one of them
+supplied the flag by hand. Three of the mod's eight classes had not
+been read (part 1, `68910ff`); the default skin could not start a
+journey at all; the ship restriction was inverted; the strip drew as a
+white bar; the junction map was invisible in the two moments it exists
+for; the follow key shipped on SocialInteract's F; the location rects
+came off a method MapsFile never had. Twenty-odd defects, each with a
+two-way pin and a mutant (55 pins, 113 mutants); departures 6/8/9
+corrected, 10-14 added; the mutant list's one "equivalent" was a live
+survivor. The lesson for the next 1:1 slice, stated once: A PIN THAT
+HANDS THE HOST'S FLAGS IN BY HAND PINS NOTHING ABOUT THE HOST - drive
+the leaf with the host's own expressions, and read every file the
+mod's manifest names. `06-Systems/Travel-Options.md`, AUDIT-TO1.
+
 **2026-09-15 - MENU1: THE ENHANCED MENUS THAT SOMETIMES DO NOT OPEN.**
 Mac, relaying a player: *"sometimes you're unable to open the enhanced
 menus. For example a player might open the radial and select the
@@ -648,7 +716,7 @@ emit a negative zero.
 **2026-08-18 - AUDIT 17k, the parity pass over U16 + U17 + U18, and
 THE FIST CRASH.** Mac's report first: attacking with a fist crashed
 the game. Root-caused live (tools/fistProbe.mjs reproduced it at
-`dungeonContext.js:1703` before the fix): bare hands are a NULL weapon
+`dungeonContext.js:1850` before the fix): bare hands are a NULL weapon
 since U8h bound the rig to `equip.slots[RightHand]` - and the DEFAULT
 state, because starting weapons land in the bag unequipped (DFU adds
 them via AddItem, never equips) - and the DUNGEON host read
@@ -1366,7 +1434,7 @@ and every enemy-side call passes 16. The data diet's whole fetch
 surface (literal + variable-name sites: HUD art, palette indirection
 incl. MAP.PAL/NIGHTSKY.COL, NITE images, TEXTURE templates) passes
 KEEP on both diets; SKY-on-lean is the designed gradient. (AUDIT 18
-correction: NIGHTSKY.COL really is fetched - scenes/shared.js:52 loads
+correction: NIGHTSKY.COL really is fetched - scenes/shared.js:62 loads
 it through `img.paletteName` - but MAP.PAL is NOT. Its only namer is
 ImgFile.paletteName for TMAP00I0.IMG, and the one loader of that file,
 chargenArt.js loadOne, draws it with the shared ART_PAL and never

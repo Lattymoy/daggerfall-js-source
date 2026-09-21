@@ -20,6 +20,7 @@
 import { EQUIP_SLOTS } from './paperdoll.js';
 import { ITEM_GROUPS, SLOT_RULES, WEAPON_HANDS, SHIELD_INDICES } from './equipRules.js';
 import { getBool } from '../systems/settings.js';   // AUDIT 58: ItemEquipTable.cs:635 reads BowLeftHandWithSwitching
+import { THUNDERLOCK_TEMPLATE } from './thunderlockIds.js';   // FIELD-GUN2: the departure below - a leaf with no imports, so this cannot cycle
 
 export const ITEM_HANDS = Object.freeze({ None: 0, RightOnly: 1, LeftOnly: 2, Either: 3, Both: 4 });
 /** Weapons.Short_Bow / Weapons.Long_Bow - the one switch case in
@@ -42,11 +43,25 @@ export function getItemHands(item, { bowLeftHand = getBool('Enhancements', 'BowL
   // default; this is the branch that made the row conditional. With
   // the setting on the bow lands in EQUIP_SLOTS.LeftHand and bumps a
   // held 2H exactly as a shield does - which is what hud's arrow
-  // counter (hud.js:385-389) and playerWeapon.toggleHand (:238) have
+  // counter (hud.js:370-374) and playerWeapon.toggleHand (:223) have
   // assumed since AUDIT 28 made the key live.
   if (group === ITEM_GROUPS.Weapons && BOW_HAND_TEMPLATES.includes(item.templateIndex)) {
     return bowLeftHand ? ITEM_HANDS.LeftOnly : ITEM_HANDS.Both;
   }
+  // FIELD-GUN2 (Mac, from play: "It doesnt let me equip"). THE
+  // DEPARTURE, written as an explicit arm AHEAD of the verbatim table
+  // exactly as characters/weapons.js writes its two - so WEAPON_HANDS
+  // stays the generated DFU row set and the new weapon is one line a
+  // reader can see and delete.
+  //
+  // WHY IT COULD NOT BE EQUIPPED AT ALL. `WEAPON_HANDS` is keyed by
+  // template index over DFU's own 113-130, so index 560 fell past it
+  // to `return ITEM_HANDS.None` - and GetEquipSlot's weapon arm maps
+  // None to EQUIP_SLOTS.None, which equipItem refuses on its first
+  // line. Not a wrong hand: NO hand, and so no slot and no way to
+  // hold it. It is two-handed (the template's `isOneHanded: false`),
+  // which is what a gun this size and this heavy has to be.
+  if (group === ITEM_GROUPS.Weapons && item.templateIndex === THUNDERLOCK_TEMPLATE) return ITEM_HANDS.Both;
   const w = WEAPON_HANDS[item.templateIndex];
   if (w) return ITEM_HANDS[w];
   if (SHIELD_INDICES.includes(item.templateIndex)) return ITEM_HANDS.LeftOnly;

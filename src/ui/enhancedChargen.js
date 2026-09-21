@@ -49,7 +49,7 @@ import { STAT_KEYS_ORDER } from '../systems/chargen.js';
 import { overlayAction, isTextEntryTarget } from './input.js';   // CG2: one definition of 'a DOM field's key is the field's'
 import { SKILL_NAMES } from '../systems/skills.js';
 import { QUESTION_COUNT } from '../systems/classQuestions.js';        // AUDIT 39: the quiz's own count, not a tenth copy of ten
-import { HELP_TOPICS } from '../systems/customClass.js';              // AUDIT 39: the builder's help picker
+import { HELP_TOPICS, REP_GROUPS, REP_MAX } from '../systems/customClass.js';              // AUDIT 39: the builder's help picker; CC-REP: the reputation ledger's groups and reach
 import { labelFor } from '../systems/specialAdvantages.js';           // AUDIT 39: DFU's own words for an advantage key
 import { NAME_MAX_CHARACTERS as NAME_MAX } from './chargen.js';
 import { traceProvinces, MAP_W, MAP_H, PROVINCE_NAMES } from './provinceMap.js';
@@ -452,14 +452,18 @@ function classStage() {
 // live in ui/chargen.js and are pinned there; this reads `flow.custom`
 // and presses the same applyHit doors the classic screen's rects do.
 //
-// ONE CLASSIC WINDOW IS NOT DRAWN, recorded rather than dropped
-// quietly: the REPUTATION bars (CreateCharReputationWindow). Its only
-// door is `repClick(lx, ly)` - a pixel-coordinate hit on a 168x189
-// panel - and there is no other way into the flow's reps, so it wants
-// a control shaped for a thumb rather than a coordinate faked from
-// one. An untouched ledger is DFU's own default (every group at 0) and
-// the builder's exit gates never check it, so a class built here is a
-// legal one; the window belongs to the slice that gives it a control.
+// THE REPUTATION WINDOW (CreateCharReputationWindow) IS DRAWN NOW -
+// CC-REP (2026-09-16, Ember on the Discord: "Class creation menu seems
+// to be missing a reputation setting. By default in DFU when making a
+// class you can select how it affects your reputation with various
+// factions"). AUDIT 39 recorded it as the one classic window this view
+// did not draw: its only door was `repClick(lx, ly)`, a pixel hit on a
+// 168x189 panel, and this view wanted a control shaped for a thumb.
+// The flow has that door now (`repStep`, customClass.js - the same
+// value law as a bar click: an integer -10..10 per group, the ledger
+// the negated sum) and customRepPane below is the window: five rows
+// with steppers, the points to distribute, and Done through the
+// window's own exit gate (the balance must be zero, TEXT.RSC 303).
 const CUSTOM_SKILL_GROUPS = Object.freeze([
   ['Primary', 0, 3], ['Major', 3, 6], ['Minor', 6, 12],
 ]);
@@ -547,6 +551,40 @@ function customAdvPane(c) {
   return pane;
 }
 
+/** CC-REP: the reputation window - ReputationButton opens it over
+ *  the builder (`c.sub === 'rep'`), the exit gate closes it. The five
+ *  groups in the window's own column order; a positive number is a
+ *  group that thinks well of the class at the start, and the ledger
+ *  must balance to zero before the window lets go. */
+const REP_LABELS = Object.freeze({ merchants: 'Merchants', peasants: 'Peasants', scholars: 'Scholars', nobility: 'Nobility', underworld: 'Underworld' });
+function customRepPane(c) {
+  const pane = el('div', 'stagebody solo');
+  const wrap = el('div', 'skillpane');
+  const sec = el('div', 'skillgroup');
+  const head = el('div', 'skillhead');
+  head.append(el('span', 'skillk', 'Reputations'));
+  const pts = c.repPoints ?? 0;
+  head.append(el('span', 'skillpool', pts === 0 ? 'balanced' : `${pts} to distribute`));
+  sec.append(head);
+  sec.append(el('div', 'row-note', 'How each group regards a new member of this class, from -' + REP_MAX + ' to +' + REP_MAX + '. Every point a group gives must be taken from another.'));
+  for (const group of REP_GROUPS) {
+    const row = el('div', 'row');
+    const main = el('div', 'row-main');
+    main.append(el('div', 'row-name', REP_LABELS[group]));
+    row.append(main);
+    row.append(stepper(c.reps?.[group] ?? 0, (dir) => { flow.applyHit({ repStep: { group, dir } }); paint(); }));
+    sec.append(row);
+  }
+  wrap.append(sec);
+  const a = el('div', 'acts');
+  const done = el('button', 'act primary', 'Done');
+  done.onclick = () => { flow.applyHit({ repExit: true }); paint(); };
+  a.append(done);
+  wrap.append(a);
+  pane.append(wrap);
+  return pane;
+}
+
 function customClassStage() {
   const c = flow.custom;
   if (!c) return pendingStage(STAGE_RAIL[stageOf(flow.state)]);
@@ -554,9 +592,17 @@ function customClassStage() {
   if (c.box) return customBoxPane(c);
   if (c.pickList || c.sub === 'skillPick' || c.sub === 'help') return customPickerPane(c);
   if (c.sub === 'advantage' || c.sub === 'disadvantage') return customAdvPane(c);
+  if (c.sub === 'rep') return customRepPane(c);   // CC-REP
 
   const pane = el('div', 'stagebody solo');
-  const wrap = el('div', 'skillpane');
+  // CC-GRID (Ember: "the custom class building menu being in a list is
+  // a bit clunky ... as a list it means having to scroll around to see
+  // all the options"): the builder is a two-column grid on a wide
+  // screen - the twelve skills down one side, the attributes and the
+  // class itself down the other, the name across the top and the acts
+  // across the foot - so the whole class is on one page. Below 900px
+  // it is the one list it always was (enhancedStyle.js .skillpane.builder).
+  const wrap = el('div', 'skillpane builder');
 
   // THE NAME. The FLOW owns the text, as the name screen's box does -
   // its cap is the TextBox default the flow enforces, not this input's.
@@ -574,9 +620,11 @@ function customClassStage() {
     for (const ch of next) flow.input(`char:${ch}`);
     box.value = flow.custom.className;
   };
+  box.classList.add('span');
   wrap.append(box);
 
   // THE TWELVE SLOTS, in the three groups the builder writes them to.
+  const skillsCol = el('div', 'builder-col');
   for (const [label, from, to] of CUSTOM_SKILL_GROUPS) {
     const sec = el('div', 'skillgroup');
     const head = el('div', 'skillhead');
@@ -591,8 +639,10 @@ function customClassStage() {
       row.append(main);
       sec.append(row);
     }
-    wrap.append(sec);
+    skillsCol.append(sec);
   }
+  wrap.append(skillsCol);
+  const shapeCol = el('div', 'builder-col');
 
   // THE FREE-EDIT LEDGER. StatsRollout's spinners clamp 10..75 and the
   // POOL is free to go negative - the exit gate is what demands the
@@ -615,7 +665,7 @@ function customClassStage() {
     }));
     stats.append(row);
   });
-  wrap.append(stats);
+  shapeCol.append(stats);
 
   // THE SHAPE OF THE CLASS: hit points, what it is good and bad at,
   // and the dagger's tally - which is difficultyPoints over the hit
@@ -630,22 +680,29 @@ function customClassStage() {
   hp.append(hpMain);
   hp.append(stepper(c.hp, (dir) => { flow.applyHit({ customHp: dir }); paint(); }));
   shape.append(hp);
-  for (const [label, count, hit] of [
-    ['Special advantages', c.advantages.length, { customAdvantage: true }],
-    ['Special disadvantages', c.disadvantages.length, { customDisadvantage: true }],
+  // CC-REP: the ReputationButton's row - what the ledger says now, and
+  // the window behind it.
+  const repSet = REP_GROUPS.filter((g) => (c.reps?.[g] ?? 0) !== 0);
+  const repNote = !repSet.length ? 'every group neutral'
+    : repSet.map((g) => `${REP_LABELS[g]} ${c.reps[g] > 0 ? '+' : ''}${c.reps[g]}`).join(', ');
+  for (const [label, note, hit] of [
+    ['Special advantages', c.advantages.length ? `${c.advantages.length} taken` : 'none taken', { customAdvantage: true }],
+    ['Special disadvantages', c.disadvantages.length ? `${c.disadvantages.length} taken` : 'none taken', { customDisadvantage: true }],
+    ['Reputations', repNote, { customRep: true }],
   ]) {
     const row = el('div', 'row');
     const main = el('button', 'row-main');
     main.append(el('div', 'row-name', label));
-    main.append(el('div', 'row-note', count ? `${count} taken` : 'none taken'));
+    main.append(el('div', 'row-note', note));
     main.onclick = () => { flow.applyHit(hit); paint(); };
     row.append(main);
     shape.append(row);
   }
   shape.append(poolBar('Difficulty', flow.customDifficulty()));
-  wrap.append(shape);
+  shapeCol.append(shape);
+  wrap.append(shapeCol);
 
-  const a = el('div', 'acts');
+  const a = el('div', 'acts span');
   const make = el('button', 'act primary', 'Create this class');
   make.onclick = () => { flow.applyHit({ customExit: true }); paint(); };
   const help = el('button', 'act', 'What do these mean?');
@@ -870,7 +927,20 @@ function statsStage() {
   const pane = el('div', 'stagebody');
 
   const list = el('div', 'list');
-  list.append(poolBar('points to spend', flow.statPool));
+  // CHAR1 (2026-09-15, a player through Mac: "show the total dice rolls
+  // in the enhanced character creator"): the roll said out loud. The
+  // eight values and the bonus pool are both rolled, and nothing on
+  // either screen ever added them up - so "is this a good roll?" was
+  // eight numbers of mental arithmetic before every press of Roll
+  // again. The pair is `now -> final` while the pool is unspent,
+  // because the final figure is the one that does not move (the steps
+  // are zero-sum, ChargenFlow.statTotalFinal) and is what the
+  // character walks out with; once the pool is spent they are the same
+  // number and only one is shown.
+  list.append(poolBar('points to spend', flow.statPool, {
+    label: 'attribute total',
+    value: flow.statPool > 0 ? `${flow.statTotalNow} \u2192 ${flow.statTotalFinal}` : flow.statTotalNow,
+  }));
   STAT_KEYS_ORDER.forEach((key, i) => {
     const row = el('div', `row${i === flow.statCursor ? ' on' : ''}`);
     const main = el('button', 'row-main');
@@ -954,17 +1024,30 @@ function skillsStage() {
   return pane;
 }
 
-function poolBar(label, n) {
+// CHAR1: the bar carries one figure or two. It is STICKY, so a second
+// bar would have sat on top of the first one the moment the list
+// scrolled - the total joins the pool in the one row instead.
+function poolBar(label, n, right = null) {
   const row = el('div', 'poolbar');
-  row.append(el('span', 'poolk', label));
-  row.append(el('span', 'poolv', String(n ?? 0)));
+  const cell = (k, v) => {
+    const c = el('span', 'poolcell');
+    c.append(el('span', 'poolk', k));
+    c.append(el('span', 'poolv', String(v)));
+    return c;
+  };
+  row.append(cell(label, n ?? 0));
+  if (right) row.append(cell(right.label, right.value));
   return row;
 }
 
 function stepper(value, step) {
   const ctl = el('div', 'ctl');
   ctl.append(el('span', 'val', String(value)));
-  for (const [dir, glyph] of [[-1, '\u2039'], [1, '\u203a']]) {
+  // CC-STEP (Ember: "the + and - symbols on the buttons seem a bit
+  // small"): a MINUS SIGN and a PLUS, drawn at the button's own size
+  // (enhancedStyle.js .step), in place of the single angle quotes
+  // that read as specks on a large monitor.
+  for (const [dir, glyph] of [[-1, '\u2212'], [1, '+']]) {
     const b = el('button', 'step', glyph);
     b.setAttribute('aria-label', dir < 0 ? 'less' : 'more');
     b.onclick = () => step(dir);
@@ -1070,7 +1153,10 @@ function summaryStage() {
   who.append(idcol);
   list.append(who);
 
-  list.append(sectionHead('Attributes', flow.sumStatPool ?? 0));   // AUDIT 64 F33: the SUMMARY's own rollout pool
+  // AUDIT 64 F33: the SUMMARY's own rollout pool. CHAR1: and its own
+  // total, because this screen edits the same eight values and asks the
+  // same question - statTotalFinal reads whichever pool is on screen.
+  list.append(sectionHead('Attributes', flow.sumStatPool ?? 0, flow.statTotalFinal));
   STAT_KEYS_ORDER.forEach((key, i) => {
     list.append(reviewRow(key[0].toUpperCase() + key.slice(1), flow.stats?.[key] ?? 0, (dir) => {
       flow.applyHit({ setStatCursor: i });
@@ -1128,10 +1214,11 @@ function summaryStage() {
   return pane;
 }
 
-function sectionHead(label, pool) {
+function sectionHead(label, pool, total = null) {
   const h = el('div', 'skillhead review');
   h.append(el('span', 'skillk', label));
-  h.append(el('span', 'skillpool', pool > 0 ? `${pool} to spend` : ''));
+  const note = [total == null ? null : `total ${total}`, pool > 0 ? `${pool} to spend` : null].filter(Boolean);
+  h.append(el('span', 'skillpool', note.join('  \u00b7  ')));
   return h;
 }
 
@@ -1373,13 +1460,13 @@ function releaseLock() {
  *
  * ChargenFlow times exactly one thing: the constellation CEL an
  * answered question lights, which locks the questions screen until
- * CEL_OnAnimEnd releases it (chargen.js:587-593, :580-588). The
+ * CEL_OnAnimEnd releases it (chargen.js:607-613, :600-608). The
  * CLASSIC screen paints that chart and its host ticks the flow every
  * frame, so the lock is the animation you are watching. This view
  * paints no chart and its overlay ticks nothing, so the same lock is
  * three to seven seconds of dead buttons over a picture nobody drew.
  *
- * The seam is injectable for exactly this reason (chargen.js:216-220,
+ * The seam is injectable for exactly this reason (chargen.js:236-240,
  * "so the headless suite drives an animation with no renderer"), and
  * a start that reports 0 is the flow's own signal to run the anim-end
  * body AT ONCE - the same path a host with no art takes. Nothing else

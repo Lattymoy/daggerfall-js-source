@@ -134,3 +134,80 @@ export async function mountEnhancedChunk({ load, mount, alive = () => true, host
   if (!notice(host, { err, onDismiss })) onDismiss?.();
   return false;
 }
+
+// ═══ MENU1-WARM (2026-09-19, Mac: "look for any elements of hitching,
+// or hiccups") ═══════════════════════════════════════════════════════
+//
+// THE SAME SEVEN CHUNKS, AND THE OTHER HALF OF THEIR COST. MENU1 is
+// about a chunk that FAILS; this is about one that merely arrives late.
+// A door's `import()` is the first time its file is asked for, and it is
+// asked for at the worst possible moment - the frame the player pressed
+// the key, mid-dungeon, with the stream running. The browser fetches
+// (28 KB for the inventory, 78 KB for the menu), parses and compiles it
+// before the overlay can mount, and the game holds still for as long as
+// that takes. On a slow link, or against the 404-then-retry MENU1
+// documents, it is not subtle.
+//
+// So they are fetched EARLY and IDLY instead - the module map is a
+// cache, and a door that awaits an import already in it resolves without
+// a round trip. Nothing about the doors changes: they still call
+// `mountEnhancedChunk`, still await the same `import()`, still retry and
+// still speak if it fails. This only moves WHEN the bytes are asked for,
+// from the keypress to the first idle moment after the world settles.
+//
+// Rules it has to keep:
+//   - NEVER race the world. It waits for an idle callback, and the
+//     stream's own build queue is the busiest thing on the main thread
+//     while a scene is loading - `requestIdleCallback` is exactly the
+//     "not now" the browser already knows how to answer.
+//   - ONE AT A TIME, so seven parallel fetches cannot themselves become
+//     the stall they exist to remove.
+//   - SWALLOW EVERYTHING. A warm that fails must leave no trace: the
+//     door's own load will fail the same way a moment later and MENU1's
+//     notice is what the player should see, not a console line from a
+//     fetch nobody asked for.
+//   - ONCE per session, and never twice for the same chunk.
+
+/** The seven doors' chunks, in the order a player most often reaches
+ *  them. `enhancedMenu` is first because two doors share it (the pause
+ *  screen and the character sheet) and it is the largest. */
+export const WARM_CHUNKS = Object.freeze([
+  () => import('./enhancedMenu.js'),
+  () => import('./enhancedInventory.js'),
+  () => import('./enhancedSpellbook.js'),
+  () => import('./enhancedTalk.js'),
+  () => import('./enhancedBook.js'),
+  () => import('./enhancedChronicle.js'),
+  () => import('./enhancedTrade.js'),
+  () => import('./enhancedTavern.js'),
+  () => import('./enhancedMerchantPanel.js'),
+]);
+
+let warmed = false;
+
+/** Fetch the menu chunks during idle time so no door pays for them on
+ *  the frame it opens. Answers the number of chunks it actually warmed
+ *  (the tests drive it with their own scheduler and loaders). */
+export async function warmEnhancedChunks({
+  chunks = WARM_CHUNKS,
+  idle = (fn) => (globalThis.requestIdleCallback
+    ? globalThis.requestIdleCallback(fn, { timeout: 4000 })
+    : setTimeout(fn, 1500)),
+  alive = () => true,
+} = {}) {
+  if (warmed) return 0;
+  warmed = true;
+  let done = 0;
+  for (const load of chunks) {
+    if (!alive()) break;
+    // One at a time, each behind its own idle wait: seven fetches at
+    // once would be the stall this exists to remove.
+    await new Promise((resolve) => idle(resolve));
+    if (!alive()) break;
+    try { await load(); done++; } catch { /* MENU1's notice is the door's to show, not a warm's */ }
+  }
+  return done;
+}
+
+/** Tests only: the latch is a session's. */
+export function _resetChunkWarmForTests() { warmed = false; }

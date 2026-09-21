@@ -9,7 +9,7 @@
 import { Renderer } from '../render/renderer.js';
 import { EnhancedSkyRenderer, skyState, sunSkyDirection } from '../render/enhancedSky.js';
 import { waterUniforms, buildWaterIndices } from '../render/waterSurface.js';
-import { WATER_MASK_TABLE } from '../world/waterCorners.js';
+import { WATER_DRAW_MASK_TABLE } from '../world/waterCorners.js';   // WATER-DRAW1: the lab is the PASS's lab
 import { buildTerrainGrid, buildTerrainIndices, convertTilemap, TERRAIN_TILE_DIM } from '../world/terrainSurface.js';
 import { generateTileData, assignTiles } from '../world/terrainTiles.js';
 import { HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, SCALED_OCEAN_ELEVATION, TERRAIN_SIZE } from '../world/terrainSampler.js';
@@ -66,7 +66,7 @@ const base = [[38, 82, 128], [150, 122, 84], [78, 118, 52], [118, 118, 112]];
 const mixOf = (a, b, t) => a.map((v, i) => Math.round(v + (b[i] - v) * t));
 for (let r = 0; r < 64; r++) {
   let c = base[r] ?? [90, 90, 90];
-  const mask = WATER_MASK_TABLE[r << 2];
+  const mask = WATER_DRAW_MASK_TABLE[r << 2];
   if (r >= 5 && r <= 7) c = mixOf(base[0], base[1], 0.5);
   if (r >= 20 && r <= 22) c = mixOf(base[0], base[2], 0.5);
   if (r >= 30 && r <= 32) c = mixOf(base[0], base[3], 0.5);

@@ -125,7 +125,13 @@ if (reflexBefore !== 2 || reflexAfter !== 0) { console.log('REFLEX PICKER DID NO
 await key('Enter');            // -> U16's SUMMARY
 await waitFrames(2);
 await page.screenshot({ path: '/home/claude/chargen-summary.png' });
-await key('Enter');            // the summary's OK -> done
+await key('Enter');            // the summary's OK -> ORL1's leveling question
+await waitFrames(2);
+await page.screenshot({ path: '/home/claude/chargen-leveling.png' });
+// ORL1: the door asks which leveling system this character wants before
+// it hands the host a character. Enter takes the cursor's answer, which
+// starts on Daggerfall's own - the system every pin below expects.
+await key('Enter');            // the question's answer -> done
 await waitFrames(4);
 const e = await page.evaluate(() => {
   const p = window.__playerEntity;

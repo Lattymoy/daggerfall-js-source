@@ -33,6 +33,11 @@ export const PREF_DEFAULTS = Object.freeze({
   // to scale - so it belongs in the port's own prefs, beside the other
   // things only this port has.
   hudScale: 1,
+  // FOEBAR1 (2026-09-17, Mac, from a friend's pictures): the target bar's
+  // face - 'bar' is the plain track under the compass, 'blade' the
+  // twin-bladed picture whose fill recedes toward its hub. The port's own,
+  // like hudScale: DFU draws no enemy health at all.
+  foeBarStyle: 'bar',
   // ENHANCED IS THE DEFAULT (Mac, 2026-08-25). Read it through
   // uiSkin.js rather than here - that module resolves the ?skin
   // override on top of this and is the one place the vocabulary lives.
@@ -41,6 +46,11 @@ export const PREF_DEFAULTS = Object.freeze({
   // player's head and the relay to join (net/online.js DEFAULT_SERVER when empty).
   onlineName: '',
   onlineServer: '',
+  // CHAT-R2 (2026-09-16, Mac: "a hide chat button"): the chat put
+  // away, across sessions. A player who hid it wants it hidden next
+  // launch too - the panel is still built and still counting unread,
+  // so bringing it back finds the room where they left it.
+  chatHidden: false,
   // TI2: THE PHONE IN HAND, TUNED (2026-09-11, Mac: "enhance the mobile
   // element... camera movement, character movement and a more phone
   // built feel"). The touch layer's own knobs - DFU has no touch input
@@ -63,6 +73,15 @@ export const PREF_DEFAULTS = Object.freeze({
   // every host that owns a weapon rig builds at boot while it is on and
   // the archives are attached (combat/weaponRig.js autoBuildArms).
   mwArms: false,
+  // 2026-09-17 (per-request): a peer without a Morrowind body is drawn as their class's animated sprite by default
+  // (net/remotePlayers.js classMobileType/_syncMobilePeer) - the same billboard a hostile Warrior/Mage/etc. already
+  // is, puppeted by their pose instead of AI. Off returns to the flat paperdoll every peer used to be drawn as.
+  // Defaults ON, unlike mwArms above: this needs no attached data and no build step, so there is nothing to opt
+  // INTO the way Morrowind assets are - only a look a player might prefer to opt OUT of.
+  peerClassSprites: true,
+  // WS1: `mwSheathing` (Weapon Sheathing on the third-person body) is
+  // declared on its Features row (systems/features.js), RF4's law - it
+  // arrives through FEATURE_PREF_DEFAULTS below.
   // FPS1 (2026-09-11, RookieG via Mac: "we need an ingame fps counter").
   // The overlay in ui/fpsCounter.js: frames a second and the frame's
   // milliseconds, worst frame of the second beside it. ?fps forces it
@@ -173,7 +192,7 @@ export function getPref(k) {
   if (_prefs === null) loadPrefs();
   return _prefs[k] ?? PREF_DEFAULTS[k];
 }
-export function setPref(k, v) { if (_prefs === null) loadPrefs(); _prefs[k] = v; savePrefs(); }
+export function setPref(k, v) { if (_prefs === null) loadPrefs(); _prefs[k] = v; return savePrefs(); }   // SKIN-CARRY: the store's word comes back - a refused write is the caller's to carry another way
 export function isOpen(catId, group) { return !!getPref('open')[`${catId}:${group}`]; }
 export function setOpen(catId, group, open) {
   if (_prefs === null) loadPrefs();

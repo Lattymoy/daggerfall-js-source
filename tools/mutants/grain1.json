@@ -1,0 +1,138 @@
+[
+ {
+  "name": "GRAIN1-the-classic-terrain-samples-with-implicit-derivatives-again-so-every-tile-edge-draws-the-coarsest-mip",
+  "file": "src/render/renderer.js",
+  "old": "  vec3 tex = textureGrad(uTileArr, vec3(tuv, float(layer)), gx, gy).rgb;",
+  "new": "  vec3 tex = texture(uTileArr, vec3(tuv, float(layer))).rgb;",
+  "tests": [
+   "test/grain1_terrainmip.test.js"
+  ]
+ },
+ {
+  "name": "GRAIN1-the-enhanced-terrain-samples-with-implicit-derivatives-again",
+  "file": "src/render/enhancedLighting.js",
+  "old": "  vec3 tex = elDecode(textureGrad(uTileArr, vec3(tuv, float(layer)), gx, gy).rgb);",
+  "new": "  vec3 tex = elDecode(texture(uTileArr, vec3(tuv, float(layer))).rgb);",
+  "tests": [
+   "test/grain1_terrainmip.test.js"
+  ]
+ },
+ {
+  "name": "GRAIN1-the-gradient-is-taken-from-the-WRAPPED-uv-so-the-fract-jump-picks-the-coarsest-mip",
+  "file": "src/render/renderer.js",
+  "old": "  vec2 gx = ROT[t] * dFdx(unwrapped);\n  vec2 gy = ROT[t] * dFdy(unwrapped);",
+  "new": "  vec2 gx = dFdx(tuv);\n  vec2 gy = dFdy(tuv);",
+  "tests": [
+   "test/grain1_terrainmip.test.js"
+  ]
+ },
+ {
+  "name": "GRAIN1-the-mipmap-chain-is-never-built-so-minification-has-nothing-to-read",
+  "file": "src/render/renderer.js",
+  "old": "    gl.generateMipmap(gl.TEXTURE_2D_ARRAY);",
+  "new": "",
+  "tests": [
+   "test/grain1_terrainmip.test.js"
+  ]
+ },
+ {
+  "name": "GRAIN1-the-chain-is-built-before-the-layers-are-uploaded-so-the-distance-goes-to-an-empty-texture",
+  "file": "src/render/renderer.js",
+  "old": "    gl.texImage3D(gl.TEXTURE_2D_ARRAY, 0, gl.RGBA, w, h, layers.length, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);",
+  "new": "    gl.texImage3D(gl.TEXTURE_2D_ARRAY, 0, gl.RGBA, w, h, layers.length, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);\n    gl.generateMipmap(gl.TEXTURE_2D_ARRAY);",
+  "tests": [
+   "test/grain1_terrainmip.test.js"
+  ]
+ },
+ {
+  "name": "GRAIN1-minification-goes-back-to-NEAREST-so-the-grain-returns",
+  "file": "src/render/renderer.js",
+  "old": "    gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);",
+  "new": "    gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MIN_FILTER, gl.NEAREST);",
+  "tests": [
+   "test/grain1_terrainmip.test.js"
+  ]
+ },
+ {
+  "name": "GRAIN1-MAGNIFICATION-goes-linear-and-smears-the-ground-underfoot",
+  "file": "src/render/renderer.js",
+  "old": "    gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MAG_FILTER, gl.NEAREST);\n    // GRAIN1: and anisotropy",
+  "new": "    gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MAG_FILTER, gl.LINEAR);\n    // GRAIN1: and anisotropy",
+  "tests": [
+   "test/grain1_terrainmip.test.js"
+  ]
+ },
+ {
+  "name": "GRAIN1-the-extension-is-refetched-for-every-archive",
+  "file": "src/render/renderer.js",
+  "old": "    const aniso = this._anisoExt ||= (gl.getExtension('EXT_texture_filter_anisotropic') ?? null);",
+  "new": "    const aniso = (gl.getExtension('EXT_texture_filter_anisotropic') ?? null);",
+  "tests": [
+   "test/grain1_terrainmip.test.js"
+  ]
+ },
+ {
+  "name": "GRAIN1-the-water-pass-keeps-the-wrapped-footprint-so-the-scroll-rollover-draws-a-line",
+  "file": "src/render/waterSurface.js",
+  "old": "  vec2 wgx = dFdx(unwrapped), wgy = dFdy(unwrapped);\n  vec3 tex = textureGrad(uTileArr, vec3(uv, 0.0), wgx, wgy).rgb * uTint;",
+  "new": "  vec3 tex = texture(uTileArr, vec3(uv, 0.0)).rgb * uTint;",
+  "tests": [
+   "test/grain1_terrainmip.test.js",
+   "test/water.test.js"
+  ]
+ },
+ {
+  "name": "GRAIN2-the-dials-maximum-ignores-what-the-driver-allows",
+  "file": "src/render/renderer.js",
+  "old": "  if (tier === 'max') return cap;",
+  "new": "  if (tier === 'max') return 16;",
+  "tests": [
+   "test/grain1_terrainmip.test.js"
+  ]
+ },
+ {
+  "name": "GRAIN2-off-asks-for-zero-which-is-not-a-legal-anisotropy",
+  "file": "src/render/renderer.js",
+  "old": "  if (tier === 'off') return 1;",
+  "new": "  if (tier === 'off') return 0;",
+  "tests": [
+   "test/grain1_terrainmip.test.js"
+  ]
+ },
+ {
+  "name": "GRAIN2-an-unknown-tier-falls-back-to-the-MAXIMUM-instead-of-the-default",
+  "file": "src/render/renderer.js",
+  "old": "  return Math.min(4, cap);",
+  "new": "  return cap;",
+  "tests": [
+   "test/grain1_terrainmip.test.js"
+  ]
+ },
+ {
+  "name": "GRAIN2-a-driver-without-the-extension-is-read-as-allowing-anything",
+  "file": "src/render/renderer.js",
+  "old": "  const cap = Math.max(1, driverMax || 1);",
+  "new": "  const cap = driverMax;",
+  "tests": [
+   "test/grain1_terrainmip.test.js"
+  ]
+ },
+ {
+  "name": "GRAIN2-the-renderer-stops-reading-the-dial-and-hardcodes-a-number-again",
+  "file": "src/render/renderer.js",
+  "old": "      const want = anisotropyFor(getPref('groundSharpness'), this._anisoMax);",
+  "new": "      const want = Math.min(4, this._anisoMax);",
+  "tests": [
+   "test/grain1_terrainmip.test.js"
+  ]
+ },
+ {
+  "name": "GRAIN2-the-row-is-everyones-instead-of-the-players-own",
+  "file": "src/systems/features.js",
+  "old": "    control: Object.freeze({ store: 'prefs', key: 'groundSharpness', initial: 'default', online: 'player',",
+  "new": "    control: Object.freeze({ store: 'prefs', key: 'groundSharpness', initial: 'max', online: 'host',",
+  "tests": [
+   "test/grain1_terrainmip.test.js"
+  ]
+ }
+]

@@ -25,6 +25,8 @@
 // (player/tapRay.js projectToScreen) and hands the touch layer a
 // screen position. This module never sees a pixel.
 
+import { wrapAngle } from '../world/mat4.js';   // ONCRASH1: the port's one wrap
+
 /** m: a tap locks what its ray reaches this far. */
 export const LOCK_PICK_DISTANCE = 24;
 /** m: a lock lets go past this - the foe walked away, not the player. */
@@ -34,13 +36,12 @@ export const LOCK_FACE_GAIN = 8;
 /** The dot and the facing aim at the CHEST, not the feet: this far up the foe's height. */
 export const CHEST_FRACTION = 0.6;
 
-/** Wrap to (-PI, PI] so a foe just across the seam turns the short way. */
-export function wrapAngle(a) {
-  let r = a % (2 * Math.PI);
-  if (r > Math.PI) r -= 2 * Math.PI;
-  if (r <= -Math.PI) r += 2 * Math.PI;
-  return r;
-}
+/** Wrap to (-PI, PI] so a foe just across the seam turns the short way.
+ *  ONCRASH1: the body moved to world/mat4.js, the port's one math home -
+ *  four other sites had hand-rolled it as a non-terminating loop because
+ *  they could not reach it here. Re-exported so this module's own
+ *  callers, and the pins that read it here, are unchanged. */
+export { wrapAngle };
 
 /** The foe's chest: feet + CHEST_FRACTION of its height (pickQuestFoe's
  *  1.8 default when the AI carries none). */

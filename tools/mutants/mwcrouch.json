@@ -1,0 +1,131 @@
+[
+  {
+    "name": "MWCROUCH-the-rotation-never-clears-so-an-edge-lives-forever",
+    "file": "src/ui/input.js",
+    "old": "  edges.downFrame = edges.down; edges.upFrame = edges.up;\n  d.clear(); u.clear();\n  edges.down = d; edges.up = u;",
+    "new": "  edges.downFrame = edges.down; edges.upFrame = edges.up;\n  edges.down = d; edges.up = u;",
+    "tests": [
+      "test/mwcrouch_edges.test.js"
+    ]
+  },
+  {
+    "name": "MWCROUCH-the-rotation-does-not-rotate-at-all-so-nothing-is-ever-an-edge",
+    "file": "src/ui/input.js",
+    "old": "export function beginInputFrame(edges) {\n  if (!edges) return;",
+    "new": "export function beginInputFrame(edges) {\n  if (edges) return;",
+    "tests": [
+      "test/mwcrouch_edges.test.js"
+    ]
+  },
+  {
+    "name": "MWCROUCH-auto-repeat-fires-GetKeyDown-again",
+    "file": "src/ui/input.js",
+    "old": "export function noteKeyDown(edges, code, repeat = false) { if (edges && !repeat) { edges.down.add(code); edges.own?.add(code); } }",
+    "new": "export function noteKeyDown(edges, code, repeat = false) { if (edges || !repeat) { edges.down.add(code); edges.own?.add(code); } }",
+    "tests": [
+      "test/mwcrouch_edges.test.js"
+    ]
+  },
+  {
+    "name": "MWCROUCH-the-combo-d-key-reads-the-HELD-set-so-a-sub-frame-tap-is-swallowed-again",
+    "file": "src/ui/input.js",
+    "old": "    if (!pollModifier(store, keys, mod)) return false;\n    return ring.has(key);",
+    "new": "    if (!pollModifier(store, keys, mod)) return false;\n    return keys.has(key);",
+    "tests": [
+      "test/mwcrouch_edges.test.js"
+    ]
+  },
+  {
+    "name": "MWCROUCH-the-plain-key-reads-the-HELD-set-which-IS-the-bug-Mac-reported",
+    "file": "src/ui/input.js",
+    "old": "  if (!ring.has(code)) return false;",
+    "new": "  if (!keys.has(code)) return false;",
+    "tests": [
+      "test/mwcrouch_edges.test.js"
+    ]
+  },
+  {
+    "name": "MWCROUCH-the-MODIFIER-takes-the-edge-ring-too-so-a-held-modifier-never-answers",
+    "file": "src/ui/input.js",
+    "old": "  let hm = null;\n  for (const m of comboModifiers(store)) if (keys.has(m)) hm = m;",
+    "new": "  let hm = null;\n  for (const m of comboModifiers(store)) if (!keys.has(m)) hm = m;",
+    "tests": [
+      "test/mwcrouch_edges.test.js",
+      "test/g3_heldorder.test.js",
+      "test/a8_combos.test.js"
+    ]
+  },
+  {
+    "name": "MWCROUCH-pressed-reads-the-UP-ring",
+    "file": "src/ui/input.js",
+    "old": "export function pressed(edges, keys, action) { return edgeAction(edges?.downFrame, keys, action); }",
+    "new": "export function pressed(edges, keys, action) { return edgeAction(edges?.upFrame, keys, action); }",
+    "tests": [
+      "test/mwcrouch_edges.test.js"
+    ]
+  },
+  {
+    "name": "MWCROUCH-released-reads-the-DOWN-ring-so-SwitchHand-fires-on-the-press",
+    "file": "src/ui/input.js",
+    "old": "export function released(edges, keys, action) { return edgeAction(edges?.upFrame, keys, action); }",
+    "new": "export function released(edges, keys, action) { return edgeAction(edges?.downFrame, keys, action); }",
+    "tests": [
+      "test/mwcrouch_edges.test.js"
+    ]
+  },
+  {
+    "name": "MWCROUCH-pressedCode-reads-the-live-accumulator-rather-than-the-frame-s-half",
+    "file": "src/ui/input.js",
+    "old": "export function pressedCode(edges, code) { return !!edges?.downFrame?.has(code); }",
+    "new": "export function pressedCode(edges, code) { return !!edges?.down?.has(code); }",
+    "tests": [
+      "test/mwcrouch_edges.test.js"
+    ]
+  },
+  {
+    "name": "MWCROUCH-the-crouch-goes-back-to-the-held-ring-in-the-world-host",
+    "file": "src/scenes/world.js",
+    "old": "        const crouchPress = pressed(latch.edge, keys, 'Crouch');",
+    "new": "        const crouchPress = held(keys, 'Crouch');",
+    "tests": [
+      "test/mwcrouch_edges.test.js"
+    ]
+  },
+  {
+    "name": "MWCROUCH-the-dungeon-host-never-rotates-its-ring",
+    "file": "src/scenes/dungeon.js",
+    "old": "    beginInputFrame(keyEdge);   // MWCROUCH",
+    "new": "",
+    "tests": [
+      "test/mwcrouch_edges.test.js"
+    ]
+  },
+  {
+    "name": "MWCROUCH-the-exterior-host-s-keyup-notes-nothing-so-SwitchHand-dies",
+    "file": "src/scenes/exterior.js",
+    "old": "noteKeyUp(latch.edge, e.code); if (e.code === 'Escape') backButtonHeld = false;",
+    "new": "if (e.code === 'Escape') backButtonHeld = false;",
+    "tests": [
+      "test/mwcrouch_edges.test.js"
+    ]
+  },
+  {
+    "name": "MWCROUCH-the-mode-machine-switches-the-hand-on-the-PRESS",
+    "file": "src/scenes/worldModes.js",
+    "old": "    if (released(latch.edge, keys, 'SwitchHand')) {",
+    "new": "    if (pressed(latch.edge, keys, 'SwitchHand')) {",
+    "tests": [
+      "test/mwcrouch_edges.test.js",
+      "test/sheathkey.test.js"
+    ]
+  },
+  {
+    "name": "MWCROUCH-the-levitate-descent-takes-the-EDGE-so-C-no-longer-sinks-a-floating-player",
+    "file": "src/scenes/dungeon.js",
+    "old": "        down: crouchHeld || held(keys, 'FloatDown'),",
+    "new": "        down: crouchPress || held(keys, 'FloatDown'),",
+    "tests": [
+      "test/mwcrouch_edges.test.js"
+    ]
+  }
+]

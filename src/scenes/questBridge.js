@@ -58,6 +58,8 @@ import { PlayerNotebook } from '../systems/notebook.js';
 import { GENDERS } from '../characters/nameHelper.js';
 import { ZERO_NPC_DATA, NPC_CONTEXT, raceFromFaction } from '../characters/staticNpc.js';
 import { GUILD_GROUPS } from '../formats/factionFile.js';
+import { expandMacroValues } from '../systems/quest/questMacros.js';   // GQL1: the wait box's %pcf
+import { firstName } from '../systems/talkSession.js';
 import { getBool } from '../systems/settings.js';
 import { noteOfferPending } from '../ui/pendingOffer.js';   // AUDIT 58: DaggerfallUI's GivePc.OnOfferPending subscription
 import { getTitle } from '../systems/guilds.js';
@@ -358,6 +360,42 @@ export function createQuestBridge(ctx, { label = 'host' } = {}) {
     machine, questLists, offerFlow, notebook,
     tick,
 
+    /**
+     * MAC-K2 - THE QUEST WALK, ONE HOME.
+     *
+     * `{active, finished}`: one row per live quest that has written a
+     * log entry, its messages in the machine's own order, and the
+     * TIGHTEST RUNNING clock on the quest's resources (Clock carries
+     * `remainingTimeInSeconds` in game seconds beside
+     * `clockEnabled`/`clockFinished`, quest/clock.js:98,164). The
+     * archive is the notebook's filed entries.
+     *
+     * IT WAS WRITTEN THREE TIMES - world.js's pause hooks,
+     * dungeonContext.js's, and exterior.js's `pauseQuestLog`, whose own
+     * comment said "world.js keeps two copies of this walk; two copies
+     * is two laws the day one of them moves". MAC-K2 needed a FOURTH
+     * reader (the chronicle's Quests section, which is what the L key
+     * opens), so the walk moved here instead - the bridge is the one
+     * thing every host that has quests already holds.
+     */
+    questLog() {
+      const active = [];
+      for (const q of machine.quests.values()) {
+        const les = q.getLogMessages();
+        if (!les?.length) continue;
+        const messages = les.map((le) => q.getMessage(le.messageID)).filter(Boolean);
+        if (!messages.length) continue;
+        let clockSeconds = null;
+        for (const r of q.resources.values()) {
+          if (r.clockEnabled && !r.clockFinished && Number.isFinite(r.remainingTimeInSeconds)) {
+            clockSeconds = clockSeconds == null ? r.remainingTimeInSeconds : Math.min(clockSeconds, r.remainingTimeInSeconds);
+          }
+        }
+        active.push({ id: String(q.uid), name: q.displayName || null, questName: q.questName || '', clockSeconds, messages });
+      }
+      return { active, finished: notebook?.getFinishedQuests() ?? [] };
+    },
+
     /** SetLayoutData's direct overload for a host that has a quest
      *  Person rather than a block record (worldModes' quest-flat
      *  click). AUDIT 24: it is a bridge method now so the race lookup
@@ -422,6 +460,26 @@ export function createQuestBridge(ctx, { label = 'host' } = {}) {
         case 'accepted':
         case 'refused':
           return step.popup ? [{ rows: tokensToRows(step.popup.tokens) }] : [];
+        // GQL1 (Discord, kurkku, 2026-09-21: "this service isn't
+        // available" on every guild quest): with Choose Guild Jobs ON
+        // the flow's first step is the 'gettingQuests' wait box and its
+        // dismissal is the 'pickQuest' picker - and this switch boxed
+        // neither, so the chain came back EMPTY, the questOffer arm
+        // read empty as C#'s silent close, and the popup printed its
+        // no-flow refusal. GettingQuestsBox (:610-622) is a
+        // click-anywhere DaggerfallMessageBox whose generic macro pass
+        // expands %pcf; its OnClose raises the DaggerfallListPickerWindow
+        // (:624-652), whose pick runs OfferQuest and whose cancel just
+        // pops the window.
+        case 'gettingQuests': return [{
+          rows: step.textLines.map((line) => expandMacroValues(line, { pcf: firstName(ctx.playerEntity?.name ?? '') })),
+          onClick: () => this.offerBoxes(step.onClose(), rows),
+        }];
+        case 'pickQuest': return [{
+          picker: step.entries,
+          onPick: (index) => this.offerBoxes(step.onPick(index), rows),
+          onCancel: () => [],
+        }];
         default: return [];
       }
     },

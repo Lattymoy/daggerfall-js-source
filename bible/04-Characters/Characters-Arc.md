@@ -2111,7 +2111,7 @@ registry", and the function does exactly that - but NOTHING IN `src/` CALLS
 IT. Its only importer is test/names.test.js, so no scene ever builds the
 exterior NPC registry and no exterior static NPC is a talk or activation
 target in the running game. The interior twin IS live
-(interiorContext.js:204 -> collectInteriorPeople), which is what made the
+(interiorContext.js:205 -> collectInteriorPeople), which is what made the
 gap invisible: the feature demonstrably works on one side. The corpus pin
 (76 NPCs across 16 RMB blocks) pins the FUNCTION, not the game. Recorded as
 a Port-Ledger C row (static-NPC activation, exterior side) so the gap stops
@@ -2711,7 +2711,7 @@ retired rather than reworded.
 it.** A player ARROW reaches a pool through two separate seams:
 `dealDamage`, which `arrowFlight` calls inside its own `dmg > 0` fork,
 and `onAttackFromPlayer`, which it calls unconditionally
-(`arrowFlight.js:229`) precisely because that is where :630 lives. All
+(`arrowFlight.js:306`) precisely because that is where :630 lives. All
 three hosts that resolve a player arrow EXCLUDED the guards from the
 second seam, on a sentence — "the watch pool's damage door carries no
 hostility pair of its own" — that this lane's own `handleAttackFromPlayer`
@@ -2723,7 +2723,7 @@ distinction: `AssignBowDamageToTarget`'s player arm
 (DaggerfallMissile.cs:660-688) calls `WeaponManager.WeaponDamage`, so
 :630 runs for the shaft exactly as for the swing. The pool's door is
 PUBLIC now (beside `removeGuard` on the returned surface, as the
-encounter pool has always exported its own at `exteriorFoes.js:1660`)
+encounter pool has always exported its own at `exteriorFoes.js:1776`)
 and all three seams ROUTE by pool membership, mirroring the
 `dealDamage` router directly above each of them. A DAMAGING shaft now
 runs the pair twice for a guard - once inside `damageGuard`, once

@@ -43,7 +43,7 @@ import { hudScale } from '../ui/hud.js';
 import { hudRenderEnabled } from '../ui/hudShortcuts.js';   // AUDIT 64 F37: DaggerfallHUD's Draw override covers popupText too
 import { setMidScreenText, midScreenText } from '../ui/midScreenText.js';   // AUDIT 64 F34: the HUD's OTHER text surface, and its notebook tail
 import { overlayAction, actionOf, isTextEntryTarget } from '../ui/input.js';   // AUDIT 58: the mode keys read the registry, not e.code; CG2: a DOM field's key is the field's
-import { makeWindowStack, pauseWhileOpen } from '../ui/windowStack.js';   // ROAD-B B1: UserInterfaceManager's stack, under this host's one slot; ROAD-tail: and its PAUSE
+import { makeWindowStack, pauseWhileOpen, hidesHud } from '../ui/windowStack.js';   // ROAD-B B1: UserInterfaceManager's stack, under this host's one slot; ROAD-tail: and its PAUSE
 import { hudFade } from '../ui/fadeLayer.js';   // D4: PushWindow's ClearFade
 import {
   getPeopleOfCurrentRegion, getReactionToPlayer, pickpocket, findFactions,
@@ -128,7 +128,7 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
    *  game data. A getter, because world.js wires the four modules to
    *  each other and can only hand them over once all four exist. */
   const engine = () => (typeof talkEngine === 'function' ? talkEngine() : talkEngine);
-  const hud = new HudText();
+  const hud = new HudText('town');   // AUDIT FONT F1: this host's own PopupText model, and its own DOM column under the enhanced skin - scenes/dungeonContext.js has a second one and the two used to share one element
   let _notebookSink = null;   // AUDIT 63 F5: the host's PlayerNotebook.AddNote(tokens)
   let font = null, factions = null, textRsc = null, people = null;
   // RP1: which region `people` was resolved for. FACTION.TXT is parsed
@@ -321,7 +321,7 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
    *  every Text TOKEN of a record and picks among them, where
    *  randomVariant above picks a whole SUBRECORD variant. The two
    *  diverge exactly where a record holds several one-line entries -
-   *  which is the shape of the oath records (textRsc.js:131-134) and
+   *  which is the shape of the oath records (textRsc.js:168-171) and
    *  of 8999 - so a multi-line variant printed all its lines fused. */
   const randomPooledText = (id, fallback) => {
     const t = textRsc?.randomTextById(id, rolls);
@@ -1008,8 +1008,10 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
   function answerWhereIs(building, onClosed = null) {
     // GetAnswerWhereIs (the seed-stable knowledge roll picks the
     // knows/doesn't-know table half) + the %hnt hint chain: the T4
-    // fork - a 7333 direction variant (%loc + the %di compass) or the
-    // 7332 map reveal that discovers the building.
+    // fork - a 7333 direction variant (the %di compass in DFU's
+    // Internal_RSC phrase, MAC-U: the answer frame names the building,
+    // the hint must not) or the 7332 map reveal that discovers the
+    // building.
     showAnswer(answerText(building), onClosed);
   }
 
@@ -1049,7 +1051,7 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     let hint = '';
     if (raw.includes('%hnt')) {
       const h = buildingHint(rolls, false);
-      hint = randomVariant(h.textId, h.reveal ? '... Let me just mark %loc here on your map' : '%loc is %di of here')
+      hint = randomVariant(h.textId, h.reveal ? '... Let me just mark %loc here on your map' : '%di of here')   // MAC-U: the no-data fallback is the table's phrase too
         .replaceAll('%loc', building.name).replaceAll('%di', a.direction);
       // RP1: the discovery key is the CURRENT region's. This read the
       // boot region, so a building revealed after streaming across a
@@ -1097,7 +1099,17 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     // (:347-351) hides the popup column with everything else. Only
     // the DRAW half is gated - PopupText.Update retires rows from
     // DaggerfallHUD.Update, which renderHUD does not touch.
-    if (font && hudRenderEnabled()) hud.draw(renderer, canvas, font, s);
+    // FONT1: ...and the ELSE says so out loud. The enhanced skin draws
+    // this column in the DOM (ui/enhancedHudText.js), and a DOM column
+    // stays painted unless it is told to hide - AUDIT 64 F37's own law -
+    // so a frame the gate refuses must reach `hide()` rather than simply
+    // skip the paint. On the classic skin `hide()` does nothing, which
+    // is what skipping the call always did.
+    // AUDIT FONT F4: ...and the host REPORTS its window slot first. The classic column is drawn HERE and the overlay
+    // stack just below it, so on that skin a window covers it; the enhanced column is DOM at z-index 4 and covers the
+    // window instead, so it is told to go for as long as one stands.
+    hud.observe(!!overlay);
+    if (font && hudRenderEnabled()) hud.draw(renderer, canvas, font, s); else hud.hide();
     // ROAD close-P: THE STACK IS PAINTED, NOT JUST ITS TOP.
     // DaggerfallPopupWindow.Draw (:77-86) runs `previousWindow.Draw()`
     // before its own, and every box DaggerfallUI.MessageBox opens
@@ -1292,7 +1304,8 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
      *  frame after the player walked out. It drives this directly. */
     hudFrame: (dt, font_ = font) => {
       hud.tick(dt);
-      if (font_ && hudRenderEnabled()) hud.draw(renderer, canvas, font_, hudScale(canvas.width, canvas.height));   // AUDIT 64 F37: the same Draw gate as the frame above
+      hud.observe(!!overlay);   // AUDIT FONT F4: the same canvas-window report as the frame above, so the DOM column never stands over a native window
+      if (font_ && hudRenderEnabled()) hud.draw(renderer, canvas, font_, hudScale(canvas.width, canvas.height)); else hud.hide();   // AUDIT 64 F37: the same Draw gate as the frame above, with FONT1's hide door on its else (the enhanced column is DOM and persists)
     },
     get overlayActive() { return talkPaused(); },   // ROAD-tail: the STACK's pause latch, not this host's slot arithmetic
     /** EB4: ...and whether the occupant has already said it is DONE -
@@ -1308,6 +1321,10 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
      *  goes with it because a window filled by hand has not been
      *  reconciled onto the stack yet. */
     get hudCovered() { return talkPaused() && windows.hudCovered(overlay); },
+    /** MAP-FIELD2: ...and the overlay that HIDES it outright, which is a
+     *  different question and takes no pause gate - the held map does not
+     *  stop the world, and the vitals go anyway. */
+    get hudHidden() { return hidesHud(overlay); },
     /** U38: the loaded HUD font, for the components drawHud draws
      *  (the crosshair's mode label). This module already owns the ONE
      *  FONT0003 both exterior hosts use; handing it out beats a second

@@ -17,7 +17,7 @@
 //
 // HOW IT DRAWS, and why this needs no renderer change at all: the port
 // has ALREADY shipped a first-person pass. renderCharacterSprite
-// (render/renderer.js:857) binds an offscreen target with its OWN depth
+// (render/renderer.js:1108) binds an offscreen target with its OWN depth
 // renderbuffer, clears colour AND depth, swaps the frame's proj/view for
 // ones the caller supplies, draws, and restores; drawScreenOverlayQuad
 // (:987) composites it fullscreen with an alpha cut and no depth test.
@@ -39,7 +39,7 @@
 // looks level because ITS pitch is an animation channel, where this one
 // takes the player's pitch through the neck the reference rotates.
 
-import { lookAt, multiply, ortho, perspective, transformPoint, trs } from '../world/mat4.js';
+import { lookAt, multiply, ortho, perspective, transformPoint, trs, wrapAngle } from '../world/mat4.js';
 import { MW_ARM_PIXEL, CHAR_SPRITE_RT_SIZE } from '../render/renderer.js';
 import {
   sampleTrack, resetClip, advanceClip, getTextKeyTime,
@@ -57,6 +57,7 @@ import {
   weaponShortGroup, calculateWindUp, releaseStartPoint, EQUIP_KEYS, UNEQUIP_KEYS, isRealWeapon,
   aimingFactor, fpAnimSources, pickAnimSource, anySourceHasGroup, FP_BASE_MODEL, animSourceName,
   gmstValue, GMST_SNEAK_DELTA, sneakOffset,
+  lightRecords, pickTorchRecord, blendMaskBones, overlayTracks, overlaySampler, weaponFlags, MW_TWO_HANDED,   // MW-D51: the held torch
   tpAnimSources, TP_BASE_MODEL, playerBodyRows, MW_UNITS_PER_METER, resolveBodyParts, ARM_PARTS, raceBeastFlag, raceRecords, armorRecords, clothingRecords,
   facePools, meshBounds,
   movementAnimState, composeMovementGroup, MOVEMENT_FALLBACK_SPEED, MOVEMENT_SPEED_CAP, turnAnimSpeed,
@@ -74,7 +75,15 @@ import { WEAPONS } from '../characters/weapons.js';
 import { materialName } from '../systems/itemInfo.js';
 import { composeWornArmor, shadowSkinRows, fpWornAdds, mwArmorRecords, mwClothingRecord, CLOTHING_NAME } from '../formats/mwItemMap.js';
 import { correctTexturePath, correctActorModelPath, wrapModes, warningImage, decodeTextureImage } from '../formats/mwTexture.js';
-import { diffuseAt } from '../formats/mwNifMesh.js';
+import { diffuseAt, emissiveAt } from '../formats/mwNifMesh.js';   // MWT2: the emission the pass has always resolved and never read
+import { fpLightingOn } from './fpsWeapon.js';   // MAC-P: the first-person lighting switch, shared with the classic sprite it stands in for
+import { createParticleSystem, packParticleQuads, particleDrawState, affineOfTransform, affineMul, affineApply, affineScale } from '../formats/mwParticles.js';   // MAC-Q: the torch's flame, and any other particle system a part carries
+import { boneSourcesFor, resolveHolsterParts, holsterPartPaths, holsterHidden, HOLSTER_SLOTS } from '../systems/weaponSheathing.js';   // WS1
+import { injectSkeletonNodes } from '../formats/mwSkin.js';   // WS1: the dry injection the holster's bone probe runs
+// MAP3: THE HELD SHEET - the pose deltas over the idle, the paper piece
+// the hands hold, and where its corners land on the composite
+import { deltaTracks, heldSampler, paperPiece, refreshPaperSource, projectPaperCorners, normaliseHeldPose, HELD_POSE_DEFAULT } from './heldPose.js';
+import { farthestVertexIndex, posedVertex, viewOffsetOf, worldPointOf } from './rigMuzzle.js';   // AUDIT FIELD-GUN-MW F2: where the barrel ends, off the posed piece
 
 // MW-LOAD (2026-09-08, Mac: "improve the load time when Morrowind assets
 // are enabled"): THE ARCHIVE IS OPENED, NOT READ, AND THIS FILE IS ITS
@@ -198,6 +207,32 @@ export const FP_CLIP_PATH = 'meshes/xbase_anim.1st.kf';
  *  constant group is a constant STANCE, and the arm held a bare-handed
  *  idle with a longsword drawn. */
 export const FP_IDLE_BASE = 'idle';
+/** MW-D52: THE SNEAK IDLE. refreshIdleAnims takes the idle STATE, not a
+ *  constant base: CharState_IdleSneak names "idlesneak" (and IdleSwim
+ *  "idleswim", out of scope with the swim family), and only the plain
+ *  CharState_Idle takes the weapon's short suffix and rule 10's 2-5
+ *  loops - "idlesneak" has no "idlesneak1h" in any .kf and loops until
+ *  told to stop. The state is sneaking and NOT in a jump (the jump owns
+ *  the air); a rig whose sources carry no such group idles plain, which
+ *  is what hasAnimation's miss does in the reference. The first-person
+ *  .kf has no sneak idle - the arms sink by rule 32(a) instead - so the
+ *  base changes nothing there; the THIRD-PERSON body, which shares the
+ *  machine, is what stood upright while sneaking. */
+/** MW-D51 / AUDIT MW-TORCH F1: NpcAnimation::updateCarriedLeftVisible,
+ *  verbatim - `return !(getWeaponType(weaptype)->mFlags & TwoHanded)`.
+ *  The first cut paired the bit with the class ("a real weapon"), so a
+ *  readied spell and drawn fists kept the torch up; the reference
+ *  hides the shield and the torch for BOTH (vanilla: ready magic and
+ *  the shield vanishes), and the port's own flag table gives them the
+ *  bit for exactly that reason. The rule is one line and it is the
+ *  reference's line. */
+export const carriedLeftVisible = (type) => !(weaponFlags(type) & MW_TWO_HANDED);
+export const FP_IDLE_SNEAK = 'idlesneak';
+/** MW-D51: the carried light's group - base_anim.kf's "Torch", played on the left arm. */
+export const TORCH_GROUP = 'torch';
+export function idleBaseFor({ sneaking = false, inJump = false, hasGroup = () => false } = {}) {
+  return sneaking && !inJump && hasGroup(FP_IDLE_SNEAK) ? FP_IDLE_SNEAK : FP_IDLE_BASE;
+}
 
 /**
  * MW-D12 / RULE 10, and the arithmetic is worth spelling out because the
@@ -370,6 +405,42 @@ export const NIF_TO_PASS = trs(0, 0, 0, -90, 0, 0);
 
 /** files/settings-default.cfg: `first person field of view = 60.0`. */
 export const FP_FIELD_OF_VIEW = Math.PI / 3;
+/** MAC-R1 (2026-09-17, Mac: "Morrowind weapons that go above the screen
+ *  show their blade clipped off"): how much of the frame is rendered
+ *  ABOVE the screen's top edge, as a fraction of the screen's height,
+ *  while a screen transform (the Weapon Widget's bob, inertia and step,
+ *  weaponRig.js's `setScreenTransform`) is set. The arm's frame was
+ *  exactly the screen, and the widget's channels move the COMPOSITE -
+ *  a rect the same size as the screen, shifted down by the bob - so
+ *  the frame's top edge sat a few dozen pixels below the screen's, and
+ *  a blade raised through it ended in a straight cut with nothing
+ *  above. The widget clamps the rect to the screen's height minus its
+ *  own `weaponOffsetHeight` (transformRect), so half a screen of extra
+ *  rows covers every shift it can make; the composite rect is extended
+ *  upward by the same fraction, so the padding lands above the screen
+ *  and only the shift reveals it. Without a transform the frame IS the
+ *  screen and nothing is padded - the fullscreen overlay path is
+ *  untouched. */
+export const FP_TOP_PAD = 0.5;
+/** MAC-R1: the general GL frustum (glFrustum's matrix) - `perspective`
+ *  (world/mat4.js) is its symmetric case (l = -r, b = -t). An OFF-CENTRE
+ *  frame is the one thing perspective cannot say, and this pass is its
+ *  one reader: the padded frame's top edge is further from the axis than
+ *  its bottom. It lives HERE and not in world/mat4.js because the relay
+ *  bundles that module (net/wire.js imports its wrapAngle) and every byte
+ *  of the bundle is under RELAY_VERSION's hash law - a client-only lens
+ *  must not bump the relay. */
+export function frustum(left, right, bottom, top, near, far) {
+  const out = new Float32Array(16);
+  out[0] = (2 * near) / (right - left);
+  out[5] = (2 * near) / (top - bottom);
+  out[8] = (right + left) / (right - left);
+  out[9] = (top + bottom) / (top - bottom);
+  out[10] = (far + near) / (near - far);
+  out[11] = -1;
+  out[14] = (2 * far * near) / (near - far);
+  return out;
+}
 
 // IG6 (Mac's final call, 2026-08-31): NO tilt constants. The IG5 tilt
 // (an under-rotated draw lens) came out INVERTED on the played screen
@@ -382,7 +453,12 @@ export const FP_FIELD_OF_VIEW = Math.PI / 3;
 /** MW-D11: nine floats became eleven - [pos.xyz, colour.rgb, normal.xyz,
  *  uv.xy]. Stated once, here, because the pack and the VAO have to agree
  *  and a second copy of the number is how they stop agreeing. */
-export const FP_FLOATS = 11;
+// MWT2: 14, not 11 - three more for the EMISSION. An emissive surface's
+// diffuse is forced BLACK by the reference's own law (rule 63's
+// LightMode_Emissive arm), so without this channel a self-illuminated
+// mesh - the torch's flame above all - is drawn black times a texture
+// times the scene's light, which is black.
+export const FP_FLOATS = 14;
 
 /** Rule 54's placement, in the pass's axes: the camera node's rig-space
  *  translation, with the Z-up basis turned into the renderer's Y-up. */
@@ -413,7 +489,7 @@ export function armReach(eye, unionBounds) {
 /**
  * PACK THE ASSEMBLY for drawCharacter's vertex stream: 9 floats per
  * vertex, [pos.xyz, colour.rgb, normal.xyz], NON-INDEXED, because
- * drawCharacter issues drawArrays (renderer.js:797). The MW readers hand
+ * drawCharacter issues drawArrays (renderer.js:1048). The MW readers hand
  * back indexed triangles, so the indices are expanded here.
  *
  * NORMALS ARE COMPUTED, not read. poseAssembly skins positions with a
@@ -427,7 +503,7 @@ export function armReach(eye, unionBounds) {
  * left arm is lit inside-out - dark where the right arm is bright - and
  * that is a lighting bug that reads as "the mesh is wrong" rather than
  * as "the mirror is wrong". drawCharacter disables back-face culling
- * (renderer.js:795), so the winding costs nothing else.
+ * (renderer.js:1046), so the winding costs nothing else.
  */
 export function packFpArm(pieces, out = null) {
   let tris = 0;
@@ -481,6 +557,13 @@ export function packFpArm(pieces, out = null) {
         buf[o++] = nx; buf[o++] = ny; buf[o++] = nz;
         buf[o++] = uvs ? uvs[vi] : 0;
         buf[o++] = uvs ? uvs[vi + 1] : 0;
+        // MWT2: the reference adds the emission INTO the lighting sum and
+        // multiplies the texture by the whole of it (objects.frag's
+        // `gl_FragData[0].xyz *= lighting`, lighting.glsl's
+        // `... + getEmissionColor()`), so an emissive surface keeps its
+        // picture and stops caring what the room is lit by.
+        const [er, eg, eb] = emissiveAt(mat, cols, idx[i + k]);
+        buf[o++] = er; buf[o++] = eg; buf[o++] = eb;
       }
     }
     const count = (idx.length / 3) * 3;
@@ -525,6 +608,17 @@ function skeletonHasBone(skeletonBytes, name) {
     const skel = buildSkeleton(parseNifOnce(skeletonBytes));
     return skel.byName.has(String(name).toLowerCase());
   } catch { return false; }
+}
+/** WS1: skeletonHasBone AFTER the bone addons - a dry injection over the
+ *  same bytes, so the holster resolves against the skeleton the
+ *  assembly will build. */
+function boneProbe(skeletonBytes, boneSources) {
+  let skel = null;
+  try {
+    skel = buildSkeleton(parseNifOnce(skeletonBytes));
+    for (const src of boneSources ?? []) { try { injectSkeletonNodes(skel, parseNifOnce(src.bytes)); } catch { /* the assembly notes it */ } }
+  } catch { skel = null; }
+  return (name) => !!skel && skel.byName.has(String(name).toLowerCase());
 }
 
 /**
@@ -604,6 +698,7 @@ export function armRecordsOf(records, kind) {
     case 'armors': return records.armors;
     case 'clothes': return records.clothes;
     case 'weapons': return records.weapons;
+    case 'lights': return records.lights;   // MW-D51
     case 'gmst-sneak': return { v: Object.hasOwn(records.gmst, GMST_SNEAK_DELTA) ? records.gmst[GMST_SNEAK_DELTA] : null };
     default: throw new Error(`fpArm: no derived answer for walk kind "${kind}" (MW-LOAD)`);
   }
@@ -867,6 +962,27 @@ export const DF_ARROW_TEMPLATE = 131;
 export function hasDaggerfallArrows(items) {
   return !!items?.some((it) => it.templateIndex === DF_ARROW_TEMPLATE && (it.stackCount ?? 1) > 0);
 }
+/** THE SAME QUESTION, ASKED OF THE WEAPON. A bow is out of ammunition
+ *  when there are no Arrows; the Dwarven Thunderlock when there are no
+ *  Dwemer Pellets. Everything that is not a ranged weapon answers with
+ *  the arrow test it always did, so no caller has to know which it is
+ *  holding to keep behaving. */
+export function hasAmmoFor(items, weapon) {
+  const template = ammoTemplateFor(weapon) ?? DF_ARROW_TEMPLATE;
+  return !!items?.some((it) => it.templateIndex === template && (it.stackCount ?? 1) > 0);
+}
+export function ammoCountOf(items, weapon) {
+  const template = ammoTemplateFor(weapon) ?? DF_ARROW_TEMPLATE;
+  let n = 0;
+  for (const it of items ?? []) if (it.templateIndex === template) n += Math.max(0, it.stackCount ?? 1);
+  return n;
+}
+/** WS1: how many arrows the pack carries - the quiver shows min(count, its slots). */
+export function daggerfallArrowCount(items) {
+  let n = 0;
+  for (const it of items ?? []) if (it.templateIndex === DF_ARROW_TEMPLATE) n += Math.max(0, it.stackCount ?? 1);
+  return n;
+}
 
 /**
  * MW-LOAD: THE ARCHIVE PATHS resolveWeaponParts WILL READ, before it
@@ -883,6 +999,13 @@ export function hasDaggerfallArrows(items) {
  */
 export function weaponPartPaths({ weapon, hasAmmo = false, allWeapons, has = null }) {
   const paths = [];
+  // FIELD-GUN-MW2: the same first question resolveWeaponParts asks, in
+  // the same order. A preload that skipped this would leave the read
+  // below it calling `arc.get` on a lazy archive that had not loaded -
+  // which MW-LOAD's findLoaded exists to catch and name, and which is a
+  // defect in THIS file every time it fires.
+  const own = ownWeaponModelFor(weapon);
+  if (own) return [`meshes/${own.model}`];
   const mwType = dfWeaponToMw(weapon, WEAPONS);
   if (mwType === MW_WEAPON_TYPE.None) return paths;
   const rec = pickWeaponRecord(allWeapons, mwType, weapon ? materialName(weapon) : null, { has });   // MW-D50: a record the archives carry
@@ -893,6 +1016,67 @@ export function weaponPartPaths({ weapon, hasAmmo = false, allWeapons, has = nul
     if (ammoRec) paths.push(`meshes/${ammoRec.model}`);
   }
   return paths;
+}
+
+/** MW-D51: THE HELD TORCH's mesh paths, for the build's one preload
+ *  round - weaponPartPaths' twin. */
+export function torchPartPaths({ torch = false, allLights, has = null }) {
+  if (!torch) return [];
+  const rec = pickTorchRecord(allLights, { has });
+  return rec ? [`meshes/${rec.model}`] : [];
+}
+
+/** MW-D51: THE HELD TORCH, resolveWeaponParts' twin for Slot_CarriedLeft.
+ *  Mac: "Morrowind model needs a torch to hold when a torch is
+ *  equipped." Daggerfall's lit light is PlayerEntity.LightSource (the
+ *  Torch item, lit by use - and Handheld Torches' hand law stows it
+ *  when no hand is free); Morrowind's is the carried-left slot, whose
+ *  LIGH record is instanced under "Shield Bone" exactly as a shield is
+ *  (sPartList's PRT_Shield; npcanimation.cpp's updateParts reads
+ *  Slot_CarriedLeft for a Light the same way). The rig without the
+ *  bone is REPORTED, not silently swapped (`hasBone` is the same
+ *  skeletonHasBone test the weapon's typed bone takes, injectable for
+ *  a fixture without the bone). */
+export const TORCH_BONE = 'Shield Bone';
+/**
+ * MWT1 (2026-09-17, Mac: the Morrowind model's torch "is positioned
+ * incorrectly") - THE ATTITUDE A HELD LIGHT IS GIVEN, AND ONLY A LIGHT.
+ *
+ * The bone was right and the rotation was missing. `SceneUtil::attach`
+ * puts ONE PositionAttitudeTransform between the actor's bone and the
+ * attached model, and the only rotation it can carry is the caller's
+ * `attitude` - which `ActorAnimation::attach` passes for `isLight` ALONE
+ * (actoranimation.cpp:97-103) and never for a weapon (:104-105). It is an
+ * extra -90 degrees about X, and this port's own reference notes wrote it
+ * down at `02-Formats/Morrowind-Rules.md:3228` ("a held light (the torch
+ * in the player's left hand) gets an extra -90 deg X rotation passed as
+ * attitude") beside the two engine-injected transforms it DID port. The
+ * torch hung at Shield Bone unrotated: the right bone, the wrong way up.
+ *
+ * Rx(-90) row-major, which is the shape `preTransform` already takes for
+ * the arrow (`{ a: 3x3, t: 3 }`, applied to the positions before the
+ * bone) - the same place in the chain the reference's PAT sits, and the
+ * bone carries no "Left" so no mirror intervenes.
+ */
+export const LIGHT_ATTITUDE = Object.freeze({
+  a: Object.freeze([1, 0, 0, 0, 0, 1, 0, -1, 0]),
+  t: Object.freeze([0, 0, 0]),
+});
+export function resolveTorchPart({ torch = false, allLights, find, skeletonBytes, has = null, hasBone = null }) {
+  const notes = [];
+  const parts = [];
+  let torchInfo = null;
+  if (!torch) return { parts, torchInfo, notes };
+  const rec = pickTorchRecord(allLights, { has });
+  if (!rec) { notes.push('torch: your archives carry no carriable Morrowind torch (a LIGH record named torch, with its mesh)'); return { parts, torchInfo, notes }; }
+  const path = `meshes/${rec.model}`;
+  const arc = find(path);
+  if (!arc) { notes.push(`torch: ${path} (${rec.id}) is not in your archives`); return { parts, torchInfo, notes }; }
+  const carries = hasBone ? hasBone(TORCH_BONE) : skeletonHasBone(skeletonBytes, TORCH_BONE);
+  if (!carries) { notes.push(`torch: this skeleton has no "${TORCH_BONE}" - nowhere to hold it`); return { parts, torchInfo, notes }; }
+  parts.push({ slot: 'torch', bones: [TORCH_BONE], bytes: arc.get(path).slice(), preTransform: LIGHT_ATTITUDE });   // MWT1
+  torchInfo = { id: rec.id, name: rec.name, model: rec.model, bone: TORCH_BONE, fire: !!rec.fire, attitude: true };
+  return { parts, torchInfo, notes };
 }
 
 /** MW-D50: the archives' DIRECTORY - "is this path in any attached
@@ -906,6 +1090,9 @@ export const archiveHas = (archives) => (p) => (archives ?? []).some((a) => a.ha
  *  bow that resolves with ammunition in the pack and no arrow on it is
  *  a fault the player sees from the chair and could not name - the
  *  card's note is the same sentence, but the card is a menu away. */
+import { ammoTemplateFor } from '../characters/thunderlockIds.js';   // what a ranged weapon spends - a leaf (see the file)
+import { ownWeaponModelFor } from '../characters/ownWeaponModels.js';   // FIELD-GUN-MW2: the weapons Morrowind does not have - a leaf too
+
 const saidArrow = new Set();
 function sayNoArrow(notes) {
   const why = notes.filter((n) => n.startsWith('arrow')).join('; ') || 'no reason recorded';
@@ -920,6 +1107,42 @@ export function resolveWeaponParts({ weapon, hasAmmo = false, allWeapons, find, 
   let weaponInfo = null;
   let arrowInfo = null;
   const mwType = dfWeaponToMw(weapon, WEAPONS);
+  // FIELD-GUN-MW2: THE PORT'S OWN WEAPONS FIRST, because Morrowind has
+  // no record for them and no type to look one up by. This arm cannot
+  // shadow a Morrowind weapon - `ownWeaponModelFor` answers only for
+  // template indices `registerCustomTemplates` minted, which are past
+  // every DFU index - and it returns before the type lookup rather than
+  // after it, so the note below ("Morrowind has no weapon type for what
+  // you are holding") stays true of the items it is actually about.
+  const own = ownWeaponModelFor(weapon);
+  if (own) {
+    const path = `meshes/${own.model}`;
+    const arc = find(path);
+    if (!arc) {
+      // Not "your archives do not carry it": ours is SHIPPED, so a miss
+      // here is the build's fault and not the player's, and saying so
+      // is the difference between a bug report and a wild goose chase.
+      notes.push(`weapon: ${path} ships with the port and did not load - this is a build problem, not your data`);
+    } else if (!skeletonHasBone(skeletonBytes, own.bone)) {
+      notes.push(`weapon: this skeleton has no "${own.bone}" bone to hang ${own.name} on`);
+    } else {
+      parts.push({ slot: 'weapon', bones: [own.bone], bytes: arc.get(path).slice() });
+      weaponInfo = { id: own.id, name: own.name, model: own.model, type: own.animateAs, bone: own.bone, speed: own.speed, own: true };
+    }
+    // THE BORROWED TYPE IS WHAT GOES BACK, not None, and it is the
+    // difference between a rig and a mesh on a bone: every caller of
+    // this function's `mwType` is an ANIMATION question - the stance
+    // group, the wind-up and release keys, whether the left hand
+    // carries anything - and `animWeaponType` turns None into
+    // HandToHand, so the arms would punch while holding the gun.
+    //
+    // ITS AMMUNITION IS NOT BORROWED. `ammoTypeFor` of a crossbow is
+    // Bolt, and the arm below would instance a Morrowind quarrel on
+    // the arrow bone. Returning here is what stops it, and `borrowsAmmo`
+    // on the row says so where somebody deciding to change this will
+    // read it.
+    return { mwType: own.animateAs, parts, weaponInfo, arrowInfo, notes };
+  }
   if (mwType !== MW_WEAPON_TYPE.None) {
     const rec = pickWeaponRecord(allWeapons, mwType, weapon ? materialName(weapon) : null, { has });   // MW-D38; MW-D50: a record the archives carry
     if (!rec) {
@@ -1015,6 +1238,8 @@ export function resolveWeaponParts({ weapon, hasAmmo = false, allWeapons, find, 
  */
 async function buildTpBody({
   race, female, beast, faceIndex, faceMatch, weapon, hasAmmo, worn, archives, parts, allWeapons, find, gen = null,
+  torch = false, allLights = [],   // MW-D51
+  sheathing = true, ammoCount = null,   // WS1: the holster, and the quiver's count (null: a full quiver when there is ammunition)
 }) {
   const exists = (p) => archives.some((a) => a.has(p));
   const settingsSkeleton = tpSkeletonPath({ female, beast });
@@ -1047,6 +1272,7 @@ async function buildTpBody({
     await loadFromArchives(archives, [
       ...[...skinRows, ...worn.adds].map((row) => `meshes/${row.model}`),
       ...weaponPartPaths({ weapon, hasAmmo, allWeapons, has: archiveHas(archives) }),   // MW-D50
+      ...torchPartPaths({ torch, allLights, has: archiveHas(archives) }),   // MW-D51
     ]);
     const partBytes = [];
     for (const row of [...skinRows, ...worn.adds]) {
@@ -1065,16 +1291,37 @@ async function buildTpBody({
     // record hangs off the same column with no new law.
     const resolvedWeapon = resolveWeaponParts({ weapon, hasAmmo, allWeapons, find, skeletonBytes, has: archiveHas(archives) });   // MW-D50
     partBytes.push(...resolvedWeapon.parts);
+    // MW-D51: the held torch, at THIS rig's Shield Bone.
+    const resolvedTorch = resolveTorchPart({ torch, allLights, find, skeletonBytes, has: archiveHas(archives) });
+    partBytes.push(...resolvedTorch.parts);
+    // WS1: THE BONE ADDONS and THE HOLSTER. Every .nif under the base
+    // model's and this skeleton's animations/ folders joins the skeleton
+    // (injectSkeletonNodes, inside the assembly); the sheathed weapon,
+    // its scabbard and its quiver resolve against the skeleton AS IT
+    // WILL BE, through a dry injection over the same bytes.
+    const boneSourcePaths = boneSourcesFor(TP_BASE_MODEL, skeletonPath, archives);
+    await loadFromArchives(archives, [...boneSourcePaths, ...holsterPartPaths({ weaponModel: resolvedWeapon.weaponInfo?.model })]);
+    const boneSources = boneSourcePaths.map((path) => ({ name: path, bytes: find(path)?.get(path)?.slice() })).filter((b) => b.bytes);
+    const resolvedHolster = sheathing
+      ? resolveHolsterParts({
+        mwType: resolvedWeapon.mwType, weaponModel: resolvedWeapon.weaponInfo?.model,
+        weaponBytes: resolvedWeapon.parts.find((p) => p.slot === 'weapon')?.bytes ?? null,
+        ammo: resolvedWeapon.arrowInfo ? { bytes: resolvedWeapon.parts.find((p) => p.slot === 'arrow')?.bytes ?? null, type: resolvedWeapon.arrowInfo.type } : null,
+        ammoCount: ammoCount ?? (hasAmmo ? Number.MAX_SAFE_INTEGER : 0),
+        find, hasBone: boneProbe(skeletonBytes, boneSources), parseNif: parseNifOnce,
+      })
+      : { parts: [], info: null, notes: [] };
+    partBytes.push(...resolvedHolster.parts);
 
-    const arm = await assembleFirstPersonArm({ skeletonBytes, parts: partBytes });
+    const arm = await assembleFirstPersonArm({ skeletonBytes, parts: partBytes, boneSources });
     if (!arm.ok) {
       return { ok: false, stage: arm.stage || 'assembly', error: arm.error, notes: [...missing, ...(arm.notes || [])], rows };
     }
     // MW-LOAD: covers collectArmTextures' synchronous reads - rule 36's
     // ladder over the names the assembled pieces carry, which are only
     // knowable now that the NIFs are parsed.
-    await preloadArmTextures(arm.pieces, archives, gen);
-    const textures = collectArmTextures(arm.pieces, archives, gen);
+    await preloadArmTextures([...arm.pieces, ...(arm.effects ?? [])], archives, gen);   // MAC-Q: and the flame's
+    const textures = collectArmTextures([...arm.pieces, ...(arm.effects ?? [])], archives, gen);
 
     const sourcePaths = tpAnimSources(skeletonPath, exists);
     if (!sourcePaths.length) {
@@ -1128,8 +1375,13 @@ async function buildTpBody({
       settingsSkeleton,
       weapon: resolvedWeapon.weaponInfo,
       arrow: resolvedWeapon.arrowInfo,
+      torch: resolvedTorch.torchInfo,   // MW-D51
+      holster: resolvedHolster.info,   // WS1
+      boneSources: boneSourcePaths,   // WS1: the addons this skeleton took
+      sheathing,
+      leftArm: blendMaskBones(arm.skeleton),   // MW-D51: rule 25's LeftArm mask on THIS skeleton
       rows,
-      notes: [...missing, ...resolvedWeapon.notes, ...(arm.notes || [])],
+      notes: [...missing, ...resolvedWeapon.notes, ...resolvedTorch.notes, ...resolvedHolster.notes, ...(arm.notes || [])],
       pieces: armPieceRows(arm.pieces).length,
       // MW-D24: the live weapon swap re-resolves against THIS skeleton's
       // bones, exactly as the arm's swap does against its own.
@@ -1142,6 +1394,8 @@ async function buildTpBody({
 
 export async function buildFpArm({
   race, female = false, beast = null, faceIndex = 0, weapon = null, hasAmmo = false, armor = null, deps = null,
+  torch = false,   // MW-D51: a lit Daggerfall torch in hand at the build
+  sheathing = true, ammoCount = null,   // WS1: the holster on the third-person body, and the quiver's count
 } = {}) {
   const d = deps || await import('../scenes/dataSource.js');
   let settingsSkeleton = null;
@@ -1280,6 +1534,9 @@ export async function buildFpArm({
     // weapon and arrow meshes BEFORE resolveWeaponParts reads them -
     // and because one stage of the clock should hold every esm walk.
     const allWeapons = esmBytes.flatMap((e) => walk(e, 'weapons', weaponRecords));
+    // MW-D51: THE LIGHT RECORDS, the same walk - a lit torch's mesh is
+    // named by a LIGH record the way a blade's is by a WEAP.
+    const allLights = esmBytes.flatMap((e) => walk(e, 'lights', lightRecords));
     // RULE 32(a)'s GMST, read from the player's own data. Later masters
     // override earlier ones, so the LAST .esm that carries it wins -
     // which is the load order, not a preference.
@@ -1398,6 +1655,7 @@ export async function buildFpArm({
       ...fpRows.map((w) => w.path),
       ...fpWornAdds(worn.adds).map((add) => `meshes/${add.model}`),
       ...weaponPartPaths({ weapon, hasAmmo, allWeapons, has: archiveHas(archives) }),   // MW-D50
+      ...torchPartPaths({ torch, allLights, has: archiveHas(archives) }),   // MW-D51
       ...sourcePaths,
     ]);
     for (const w of fpRows) {
@@ -1421,7 +1679,12 @@ export async function buildFpArm({
     // through weaponPartPaths.
     const resolvedWeapon = resolveWeaponParts({ weapon, hasAmmo, allWeapons, find, skeletonBytes, has: archiveHas(archives) });   // MW-D50
     partBytes.push(...resolvedWeapon.parts);
-    const weaponNotes = resolvedWeapon.notes;
+    // MW-D51: the held torch, at the first-person rig's Shield Bone -
+    // the fp camera sees a shield (fpWornAdds keeps 'shield bone'), so
+    // it sees the torch in the same hand.
+    const resolvedTorch = resolveTorchPart({ torch, allLights, find, skeletonBytes, has: archiveHas(archives) });
+    partBytes.push(...resolvedTorch.parts);
+    const weaponNotes = [...resolvedWeapon.notes, ...resolvedTorch.notes];
     const weaponInfo = resolvedWeapon.weaponInfo;
     const arrowInfo = resolvedWeapon.arrowInfo;
     const mwType = resolvedWeapon.mwType;
@@ -1452,8 +1715,9 @@ export async function buildFpArm({
     // MW-LOAD: and for the same reason the texture LOAD can only happen
     // here - preloadArmTextures covers every read collectArmTextures
     // makes, walking rule 36's ladder with `has` alone.
-    if (arm.ok) await preloadArmTextures(arm.pieces, archives, gen);
-    const textures = arm.ok ? collectArmTextures(arm.pieces, archives, gen) : new Map();
+    // MAC-Q: the particle systems' textures ride the same catalog as the pieces'
+    if (arm.ok) await preloadArmTextures([...arm.pieces, ...(arm.effects ?? [])], archives, gen);
+    const textures = arm.ok ? collectArmTextures([...arm.pieces, ...(arm.effects ?? [])], archives, gen) : new Map();
     stage('textures');
     // MW-D38: THE CATALOG the item icons resolve against - the same
     // archives and records this build used, kept on the result so an
@@ -1462,7 +1726,7 @@ export async function buildFpArm({
     // MW-D24: the THIRD-PERSON BODY, while the same archives are open.
     // Its refusal is a note on the card, never the arm's refusal.
     const third = arm.ok
-      ? await buildTpBody({ race, female, beast, faceIndex, faceMatch, weapon, hasAmmo, worn, archives, parts, allWeapons, find, gen })
+      ? await buildTpBody({ race, female, beast, faceIndex, faceMatch, weapon, hasAmmo, worn, archives, parts, allWeapons, find, gen, torch, allLights, sheathing, ammoCount })   // MW-D51; WS1
       : null;
     stage('meshes');
     // IG2: the mapped archives are NO LONGER truncated here - they are
@@ -1658,6 +1922,12 @@ export async function buildFpArm({
       // branch tests bones against. The archives are NOT retained (they
       // are the memory cost); setWeapon reopens them for one fetch.
       allWeapons,
+      // MW-D51: the torch's record and the LIGH set a live light swap
+      // resolves against, allWeapons' twins; and rule 25's LeftArm mask
+      // on this skeleton, which the "torch" overlay poses.
+      torch: resolvedTorch.torchInfo,
+      allLights,
+      leftArm: blendMaskBones(arm.skeleton),
       skeletonBytes,
       esm: esmDiagnosis(esmNames, parts, race),
       notes: [...missing, ...weaponNotes, ...(arm.notes || [])],
@@ -1795,6 +2065,80 @@ function readFollowCamera() {
  * player got a frozen bind-pose arm where the sprite had been correct. A
  * frozen arm is not a reachable state here; the sprite is.
  */
+/**
+ * MAC-Q: THE AFFINE THAT CARRIES A PART'S PARTICLE SPACE ONTO THE RIG - the
+ * very placement its rigid shapes take, composed rather than applied to
+ * vertices. placeAtBone puts a shape's vertex at `at(mirror(v) + offset)`
+ * over positions that were pre-transformed by the part's own attitude
+ * (applyPre) and baked to the file's root by the flattener; a particle
+ * lives in its NODE's space, so the file-root bake is the node's world
+ * transform, taken here as the last term. Read right to left:
+ * particle -> file root -> the part's attitude -> the mirror and rule 14's
+ * offset -> the bone. One composition, so the flame cannot drift from the
+ * torch it burns on.
+ */
+export function effectPlacement(effect, mats, attachmentTransform) {
+  const at = attachmentTransform(mats, effect.attachRef);
+  const mirror = {
+    a: Float32Array.from([effect.mirrored ? -1 : 1, 0, 0, 0, 1, 0, 0, 0, 1]),
+    t: effect.boneOffset ? [effect.boneOffset[0], effect.boneOffset[1], effect.boneOffset[2]] : [0, 0, 0],
+  };
+  let m = affineMul(at, mirror);
+  if (effect.pre) m = affineMul(m, effect.pre);
+  return affineMul(m, affineOfTransform(effect.desc.world));
+}
+
+/**
+ * MAC-Q: ONE FRAME OF A RIG'S PARTICLE SYSTEMS - stepped on the part's
+ * clock, placed on the posed rig, packed, and (with a renderer and a mesh)
+ * uploaded onto the mesh's `effects`, one GL effect per system, created
+ * on first sight and textured through the SAME catalog the ranges use.
+ *
+ * THE TWO REFERENCE FRAMES (nifloader.cpp:1476-1483): under LocalSpace
+ * the particles are kept in the node's own space and PLACED at pack time,
+ * so the flame rides the hand; without it they are kept in the rig's
+ * space - the nearest thing a lens-local arm has to a world - so a swing
+ * leaves them behind for their lifetime, which is Morrowind's own trailing
+ * fire. The size is scaled by the placement's own scale either way,
+ * because LOCAL_COORDINATES (:1486) sizes a particle in the file's units.
+ *
+ * `clock` null is a system with no source: frozen, as the reference
+ * freezes a controller nobody drives (nifosg/controller.cpp:602-603).
+ */
+export function stepRigEffects(assembly, { dt, clock = null, hidden = () => false, renderer = null, mesh = null, textures = null } = {}) {
+  const list = assembly && assembly.effects ? assembly.effects : [];
+  if (!list.length || !assembly.mats || !assembly.fns) return 0;
+  let live = 0;
+  for (let i = 0; i < list.length; i++) {
+    const eff = list[i];
+    const m = effectPlacement(eff, assembly.mats, assembly.fns.attachmentTransform);
+    if (!eff.sim) eff.sim = createParticleSystem(eff.desc);
+    const local = eff.desc.localSpace;
+    eff.sim.update(dt, clock, local ? null : m);
+    const quads = eff.sim.quads();
+    const packed = packParticleQuads(quads, eff.packed || null, {
+      place: local ? (x, y, z) => affineApply(m, x, y, z) : null,
+      sizeScale: affineScale(m),
+    });
+    eff.packed = packed.packed; eff.count = packed.count;
+    live += quads.length;
+    if (renderer && mesh) {
+      if (!mesh.effects) mesh.effects = [];
+      let gpu = mesh.effects[i];
+      if (!gpu) {
+        gpu = renderer.createParticleEffect(eff.sim.quota, particleDrawState(eff.material));
+        const file = eff.material && eff.material.textureFile;
+        const entry = file && textures ? textures.get(file) : null;
+        if (entry && entry.image) gpu.tex = renderer.createCharacterTexture(entry.image.mips, wrapModes(eff.material.clampMode ?? 3));
+        mesh.effects[i] = gpu;
+      }
+      gpu.hidden = !!hidden(eff);
+      renderer.updateParticleEffect(gpu, packed.packed, packed.count);
+    }
+  }
+  return live;
+}
+
 export function createFpArm() {
   let renderer = null;
   let camera = null;
@@ -1802,6 +2146,9 @@ export function createFpArm() {
   const listeners = new Set();   // MW-D36
   let pendingWorn = null;        // PX25: the worn table that arrived mid-build
   let pendingWeapon = null;      // PX26: the hand that arrived mid-build
+  let pendingTorch = null;       // MW-D51: the light that arrived mid-build
+  let pendingBuild = null;       // AUDIT MW-TORCH F6: the BUILD that arrived mid-build - an identity (a load over a load) is not dropped
+  let buildGen = 0;              // AUDIT MW-TORCH F7: bumped by unload(); a build that lands after it is discarded, never installed over the unload
   let mesh = null;
   let packed = null;
   let reason = 'not built';
@@ -1869,6 +2216,76 @@ export function createFpArm() {
   let turnDir = 0;
   let upper = UPPER_BODY.None;
   let spellReady = false;        // MW-D39: a spell is readied (the stance)
+  // MW-D51: THE HELD TORCH. `torchLit` is the game's word (a lit
+  // Daggerfall torch in PlayerEntity.LightSource, handed over per frame
+  // by weaponRig's setTorch); the state/source/group triple is the
+  // "torch" animation, a FIFTH slot beside action/movement/jump/idle -
+  // and the first to win a blend mask of its own rather than
+  // BlendMask_All: Priority_Torch on the LEFT ARM (character.cpp's
+  // `mAnimation->play("torch", Priority_Torch, BlendMask_LeftArm, ...)`),
+  // so the right arm keeps swinging while the left holds the light up.
+  let torchLit = false;
+  let torchState = null;
+  let torchSource = null;
+  let torchGroup = null;
+  let torchMissRig = null;       // the rig whose sources carry no "torch" group - asked once, not per frame
+  // AUDIT MW-TORCH F4: THE OVERLAY ALLOCATES ONCE PER CHANGE, NOT PER
+  // FRAME. update()'s contract is "no allocation after the first pack";
+  // the merged track map is rebuilt only when the base tracks, the torch
+  // source or the mask change (a slot switch, a view switch), and the
+  // one sampler reads the torch's clock through a variable.
+  let overlayMemo = null;        // { base, overlay, mask, tracks }
+  let overlayClock = 0;
+  const overlaySample = overlaySampler(sampleTrack, () => overlayClock);
+  // MAP3: THE HELD SHEET. While the travel map holds it, the arms take
+  // the held pose's deltas over whatever the four-slot winner does
+  // (combat/heldPose.js - the torch's overlay idiom, a delta per bone
+  // instead of a second clock), the weapon, the arrow and the torch are
+  // hidden, and a parchment piece rides the rig root where the eye
+  // looks. `heldMemo` keeps the frame allocation-free the way
+  // overlayMemo does: one merged map and one sampler per (base, spec,
+  // inner sampler), rebuilt only when one of them changes.
+  let held = null;               // { spec, piece, aspect, eye, built, reach0 }
+  let heldMemo = null;           // { base, spec, inner, tracks, sampler }
+  let lastFrame = null;          // { model, view, proj, rect } - what draw() last composed with
+  let lastThirdModel = null;   // AUDIT FIELD-GUN-MW F2: drawThird's model matrix, for the muzzle in the world
+  /** The muzzle vertex of a weapon piece, found once off its unposed source and kept on the piece. */
+  const muzzleIndexOf = (piece) => {
+    if (piece.muzzleIndex == null) piece.muzzleIndex = farthestVertexIndex(piece.source);
+    return piece.muzzleIndex;
+  };
+  let drewLast = false;          // AUDIT-MAP2: whether the LAST draw() call composed the arm
+  /** Put (or re-put) the sheet on the rig at the camera node's translation.
+   *  The reach - which sets the pass's far plane (rule 54: the planes come
+   *  off the arm's own reach) - grows to cover the sheet's farthest corner
+   *  and a quarter more, so a sheet tuned past the arm's sweep is not
+   *  clipped while its corners still project; releasePaper restores it. */
+  const placeSheet = (node) => {
+    const eye = node.t;
+    if (!held.piece || !built.arm.pieces.includes(held.piece)) {
+      held.piece = paperPiece(eye, held.spec.paper, held.aspect);
+      built.arm.pieces = built.arm.pieces.filter((p) => p.slot !== 'paper');
+      built.arm.pieces.push(held.piece);
+      releaseMesh(); packed = null;   // the ranges the textures hang on are the piece list; a new piece is a new list
+    }
+    const far = refreshPaperSource(held.piece, eye, held.spec.paper, held.aspect);
+    held.eye = [eye[0], eye[1], eye[2]];
+    if (held.built !== built) { held.built = built; held.reach0 = built.reach; }
+    built.reach = Math.max(held.reach0, far * 1.25 / 4);
+  };
+  const heldTracksFor = (base, inner) => {
+    if (!heldMemo || heldMemo.base !== base || heldMemo.spec !== held.spec || heldMemo.inner !== inner) {
+      heldMemo = { base, spec: held.spec, inner, tracks: deltaTracks(base, held.spec, built.arm.skeleton), sampler: heldSampler(inner) };
+    }
+    return heldMemo;
+  };
+  const overlayFor = (base, mask) => {
+    const overlay = torchSource.trackMap;
+    if (!overlayMemo || overlayMemo.base !== base || overlayMemo.overlay !== overlay || overlayMemo.mask !== mask) {
+      overlayMemo = { base, overlay, mask, tracks: overlayTracks(base, overlay, mask) };
+    }
+    return overlayMemo.tracks;
+  };
   let attackType = null;
   // MS1: THE BACKHAND. A strike that runs the other way from Morrowind's
   // one slash (StrikeRight - mwFirstPerson.js's REVERSED_STRIKES) plays
@@ -1979,6 +2396,8 @@ export function createFpArm() {
       // rebuilt on every attach would otherwise leak one upload per
       // piece per build, which is the shape of NT1's teardown leaks.
       for (const r of m.ranges || []) if (r.tex) gl.deleteTexture(r.tex);
+      for (const e of m.effects || []) renderer.releaseParticleEffect(e);   // MAC-Q: the flame's buffer and texture go with the mesh
+      m.effects = null;
     }
   }
   function releaseMesh() { releaseGpu(mesh); mesh = null; }
@@ -2187,17 +2606,22 @@ export function createFpArm() {
   function refreshIdle(force = false) {
     if (!built || !built.ok) return;
     const type = animWeaponType(built.mwType, sheathed, spellReady);
+    // MW-D52: the idle STATE picks the base - "idlesneak" while sneaking
+    // on the ground where a source carries it, else the plain idle with
+    // its weapon suffix. The sneak idle takes no suffix and no loop dice.
+    const base = idleBaseFor({ sneaking, inJump: !!jumpState, hasGroup });
+    const compose = () => (base === FP_IDLE_SNEAK ? { group: base } : composeStanceGroup(base, type, hasGroup));
     if (!force && idleState && idleState.playing) {
       // Only the GROUP can have gone stale; a playing idle of the right
       // group is left exactly where it is.
-      const composed = composeStanceGroup(FP_IDLE_BASE, type, hasGroup);
+      const composed = compose();
       if (composed.group === idleGroup) return;
     }
-    const composed = composeStanceGroup(FP_IDLE_BASE, type, hasGroup);
+    const composed = compose();
     if (!composed.group) { idleState = null; idleGroup = null; return; }
     // Rule 10's condition: the dice roll happens only when the stance HAS
     // a short group. Bare hands away idle forever.
-    const short = weaponShortGroup(type);
+    const short = base === FP_IDLE_SNEAK ? null : weaponShortGroup(type);
     const loopCount = short ? FP_IDLE_LOOPS() : Infinity;
     // :822-825 - a restart of the SAME group resumes from where it was.
     const startPoint = idleGroup === composed.group ? clipCompletion(idleState) : 0;
@@ -2217,6 +2641,53 @@ export function createFpArm() {
    *  the idle so the next refresh replays it from its start with a fresh
    *  loop count, rather than resuming mid-swing-shaped. */
   function resetIdle() { idleState = null; idleGroup = null; refreshIdle(true); }
+
+  /** MW-D51: updateCarriedLeftVisible - "Shields/torches shouldn't be
+   *  visible during any operation involving two hands": the carried
+   *  light hides while the drawn type carries the TwoHanded bit -
+   *  carriedLeftVisible below. Sheathed, the drawn type is None and the
+   *  torch is up. */
+  function torchVisible() {
+    if (!torchLit || !built || !built.ok) return false;
+    // AUDIT MW-TORCH F2: a light that resolved to NOTHING on this rig
+    // (no LIGH record, its mesh not attached, no Shield Bone) is not in
+    // the carried-left slot - the reference conditions "torch" on a
+    // Light actually instanced there. Per rig: the arm and the body
+    // resolve independently.
+    const r = rig();
+    if (!r || !r.torch) return false;
+    return carriedLeftVisible(animWeaponType(built.mwType, sheathed, spellReady));
+  }
+  /** MW-D51: the "torch" slot's refresh, the reference's own lines
+   *  (character.cpp, update(): a Light in Slot_CarriedLeft and the
+   *  carried-left visible -> play "torch" at Priority_Torch on
+   *  BlendMask_LeftArm, start to stop, looping; else disable it). The
+   *  group lives in base_anim.kf (mwAnim.js's LOOPING_ANIMATIONS names
+   *  it) - a rig whose sources lack it is asked once and holds the
+   *  torch in the idle's own left hand. */
+  /** MAC-Q: an effect hides with the part it was authored on - the torch's
+   *  flame with the torch (MW-D51's carried-left rule), a weapon's with
+   *  the weapon. Anything else is always drawn. */
+  function effectHidden(eff) {
+    if (eff.slot === 'torch') return !torchVisible();
+    if (eff.slot === 'weapon') return !weaponShown;
+    return false;
+  }
+  function refreshTorch(force = false) {
+    if (!torchVisible()) { torchState = null; torchSource = null; torchGroup = null; return; }
+    if (!force && torchState && torchState.playing) return;
+    const r = rig();
+    if (!force && torchMissRig === r) return;
+    const pick = r ? pickAnimSource(r.sources, TORCH_GROUP, resetClip, { loopFallback: true }) : null;
+    if (!pick) {
+      torchState = null; torchSource = null; torchGroup = null; torchMissRig = r;
+      const say = `torch: no source gives "${TORCH_GROUP}" a start and a stop key - the light hangs in the idle's left hand`;
+      if (!notes.includes(say)) notes.push(say);
+      return;
+    }
+    torchMissRig = null;
+    torchGroup = TORCH_GROUP; torchState = pick.state; torchSource = pick.source;
+  }
 
   function resetMovement() {
     movementState = null; movementGroup = null; movementSource = null; movementBase = null;
@@ -2337,9 +2808,9 @@ export function createFpArm() {
     const yaw = cam ? (cam.yaw || 0) : 0;
     let yawRate = 0;
     if (lastYaw != null && dt > 0) {
-      let d = yaw - lastYaw;
-      while (d > Math.PI) d -= 2 * Math.PI;
-      while (d < -Math.PI) d += 2 * Math.PI;
+      // ONCRASH1: one step, not a loop. A PEER's rig reads this camera
+      // (net/peerBodies.js peerCamera), so `yaw` is the wire's there.
+      const d = wrapAngle(yaw - lastYaw);
       yawRate = d / dt;
       if (d !== 0) { turnDir = Math.sign(d); turnHold = 0.05; }
       else { turnHold -= dt; if (turnHold <= 0) turnDir = 0; }
@@ -2582,17 +3053,78 @@ export function createFpArm() {
     }
   }
 
+  /**
+   * MAC-S1 (Mac: "Shields sometimes do not show up in the morrowind
+   * paperdoll"): THE COALESCED TABLE AND HAND GO THE MOMENT THE RIG IS
+   * FREE, WHICHEVER PATH FREED IT - the one home for the flush, so a
+   * third door that takes `busy` cannot forget half of it.
+   *
+   * PX25 and PX26 F3 each gave their own setter the "a change mid-build
+   * is not dropped" law and each wired the flush into build()'s finally
+   * alone. But build() is not the only thing that holds `busy`:
+   * setWeapon's incremental swap takes it too (it reopens the archives
+   * and fetches the weapon's NIFs), and its finally cleared the flag and
+   * notified the listeners WITHOUT ever looking at what had queued up
+   * behind it. So a worn change that landed while a weapon swap was in
+   * flight was stored in pendingWorn and never applied - Home.md's ASYNC
+   * NEVER DROPS, the same defect refreshPaperDoll's re-entrancy guard
+   * had.
+   *
+   * A SHIELD is what a player notices, because a shield is the worn
+   * piece that travels with a hand: equipping one bumps a held
+   * two-hander (systems/equip.js's `a shield bumps a held 2H`,
+   * ItemEquipTable.EquipItem), and the pack hands the rig the table and
+   * the hand on every action - so "equip a weapon, then equip a shield"
+   * is two actions with an archive fetch running between them, and the
+   * shield's table is the one that lands in the gap. Outside a window
+   * weaponRig's frame tick re-reads the equip table every frame and the
+   * loss heals itself unseen; while the inventory is up the frame does
+   * not reach that tick (PX25's own note), which is exactly where the
+   * paperdoll is being looked at. Hence "sometimes".
+   */
+  function flushPending() {
+    if (pendingBuild) {   // AUDIT MW-TORCH F6: a queued build supersedes what was queued for the rig it replaces
+      const o = pendingBuild; pendingBuild = null; pendingWorn = null; pendingWeapon = null; pendingTorch = null;
+      api.build(o);
+      return;
+    }
+    if (pendingWorn) { const p = pendingWorn; pendingWorn = null; api.setWorn(p); }
+    if (pendingWeapon) { const w = pendingWeapon; pendingWeapon = null; api.setWeapon(w.item, { hasAmmo: w.hasAmmo }); }
+    if (pendingTorch !== null) { const l = pendingTorch; pendingTorch = null; api.setTorch(l); }   // MW-D51
+  }
+
   const api = {
     attach(r, cam) { renderer = r || null; camera = cam || null; },
     active,
     ready,
+    /** MWA3: WHO the standing arm was built for - the identity third
+     *  of the last build's opts (race, sex, face), or null before any
+     *  build. autoBuildArms (weaponRig.js) compares it against the
+     *  entity at every door, because this rig is a module singleton
+     *  and `ready()` alone says only that SOME arm stands - an
+     *  Argonian save loaded over a human's standing arm kept the
+     *  human's body until the pack was toggled off and on. */
+    builtFor() { return built && built.ok && lastBuildOpts ? { race: lastBuildOpts.race ?? null, female: !!lastBuildOpts.female, faceIndex: lastBuildOpts.faceIndex | 0 } : null; },   // AUDIT MW-TORCH: null when nothing stands - an unloaded or refused rig was built for no one
     get frames() { return frames; },
 
     async build(opts) {
-      if (busy) return { ok: false, stage: 'build', error: 'already building' };
+      // AUDIT MW-TORCH F6: A BUILD THAT ARRIVES MID-BUILD IS QUEUED, the
+      // law PX25/PX26 gave the worn table and the hand. autoBuildArms's
+      // door is reached by a load landing while the last load's build
+      // still runs (seconds long), and a refusal there left the NEW
+      // character on the OLD one's body until the next door - MWA3's
+      // report by another road. The latest opts wait and run the moment
+      // the in-flight build settles; the worn/hand/light queued for the
+      // rig being replaced go with it (the build's opts carry theirs).
+      if (busy) { pendingBuild = opts; return { ok: false, stage: 'build', error: 'already building - queued behind it', queued: true }; }
       busy = true;
+      const gen = buildGen;
       try {
         const res = await buildFpArm(opts);
+        // AUDIT MW-TORCH F7: unloaded while the archives were open (the
+        // pack's Off, Remove data): the result is dead on arrival, not
+        // installed over the unload.
+        if (gen !== buildGen) return { ok: false, stage: 'build', error: 'unloaded while building' };
         releaseMesh();
         releaseThirdMesh();
         built = res;
@@ -2620,9 +3152,14 @@ export function createFpArm() {
         // across a rebuild would leave the machine waiting for a clip
         // that no longer exists.
         sheathed = true;
+        // MW-D51: the light the build was asked for is the light in
+        // hand; the torch slot re-picks on the new rig's sources.
+        torchLit = !!(opts && opts.torch);
+        torchState = null; torchSource = null; torchGroup = null; torchMissRig = null;
         if (!res.ok) { reason = `${res.stage}: ${res.error}`; built = res; return res; }
         refreshWeaponGroup();
         refreshIdle(true);
+        refreshTorch(true);
         if (!idleState) {
           built = null;
           reason = 'clip: no idle group this stance can reach';
@@ -2638,8 +3175,7 @@ export function createFpArm() {
         // lands would show the old clothes on the new equip table.
         for (const fn of listeners) { try { fn(); } catch { /* a dead panel is not the rig's problem */ } }
         // PX25/PX26: the table and the hand that arrived mid-build go now.
-        if (pendingWorn) { const p = pendingWorn; pendingWorn = null; this.setWorn(p); }
-        if (pendingWeapon) { const w = pendingWeapon; pendingWeapon = null; this.setWeapon(w.item, { hasAmmo: w.hasAmmo }); }
+        flushPending();
       }
     },
 
@@ -2648,7 +3184,10 @@ export function createFpArm() {
     subscribe(fn) { listeners.add(fn); return () => listeners.delete(fn); },
 
     unload() {
+      buildGen += 1;   // AUDIT MW-TORCH F7: a build in flight lands dead
+      pendingBuild = null; lastBuildOpts = null;
       releaseMesh(); built = null; packed = null;
+      held = null; heldMemo = null; lastFrame = null; drewLast = false;   // MAP3: the sheet goes with the rig
       releaseThirdMesh(); thirdBuilt = null; thirdPacked = null; viewMode = 'first';
       movementState = null; movementGroup = null; movementSource = null; movementBase = null;
       jumpState = null; jumpGroup = null; jumpSource = null; jumpStance = null; jumpKind = null;   // MW-D39
@@ -2658,6 +3197,7 @@ export function createFpArm() {
       weaponShown = false; arrowShown = false;
       notes.length = 0; aimFactor = 0; sneaking = false;
       idleSource = null; actionSource = null; poseSource = null;
+      torchLit = false; torchState = null; torchSource = null; torchGroup = null; torchMissRig = null;   // MW-D51
       reason = 'unloaded';
       for (const fn of listeners) { try { fn(); } catch { /* see build() */ } }
     },
@@ -2771,7 +3311,7 @@ export function createFpArm() {
       wornEquipKey = key;
       return this.build({ ...lastBuildOpts, armor: pieces, weapon: lastBuildOpts.weapon });
     },
-    setWeapon(item, { hasAmmo = false } = {}) {
+    setWeapon(item, { hasAmmo = false, ammoCount = null } = {}) {
       if (!built || !built.ok) return false;
       const key = fpWeaponKey(item, hasAmmo);
       if (key === wornKey) return false;
@@ -2844,9 +3384,25 @@ export function createFpArm() {
               weapon: item, hasAmmo, allWeapons: token.allWeapons, find,
               skeletonBytes: t.skeletonBytes, has: archiveHas(archives),   // MW-D50
             });
-            t.arm.pieces = t.arm.pieces.filter((p) => p.slot !== 'weapon' && p.slot !== 'arrow');
-            bindPartsInto(t.arm, tResolved.parts);
-            const tFresh = t.arm.pieces.filter((p) => p.slot === 'weapon' || p.slot === 'arrow');
+            // WS1: the holster follows the hand - the scabbard preloaded,
+            // the parts resolved against THIS rig's skeleton (its addons
+            // already in it), the old three slots dropped with the weapon's.
+            await loadFromArchives(archives, holsterPartPaths({ weaponModel: tResolved.weaponInfo?.model }));
+            const tHolster = t.sheathing !== false
+              ? resolveHolsterParts({
+                mwType: tResolved.mwType, weaponModel: tResolved.weaponInfo?.model,
+                weaponBytes: tResolved.parts.find((p) => p.slot === 'weapon')?.bytes ?? null,
+                ammo: tResolved.arrowInfo ? { bytes: tResolved.parts.find((p) => p.slot === 'arrow')?.bytes ?? null, type: tResolved.arrowInfo.type } : null,
+                ammoCount: ammoCount ?? (hasAmmo ? Number.MAX_SAFE_INTEGER : 0),
+                find, hasBone: (n) => t.arm.skeleton.byName.has(String(n).toLowerCase()), parseNif: parseNifOnce,
+              })
+              : { parts: [], info: null, notes: [] };
+            const swapped = new Set(['weapon', 'arrow', ...HOLSTER_SLOTS]);
+            t.arm.pieces = t.arm.pieces.filter((p) => !swapped.has(p.slot));
+            bindPartsInto(t.arm, [...tResolved.parts, ...tHolster.parts]);
+            t.holster = tHolster.info;
+            t.notes = [...(t.notes || []).filter((n) => !/^holster[ :@]/.test(n)), ...tHolster.notes];
+            const tFresh = t.arm.pieces.filter((p) => swapped.has(p.slot));
             // MW-LOAD: same cover for the third-person rig's new pieces.
             await preloadArmTextures(tFresh, archives);
             for (const [file, tex] of collectArmTextures(tFresh, archives)) {
@@ -2864,6 +3420,7 @@ export function createFpArm() {
           // The old action clip belonged to the old weapon's group.
           actionState = null; actionSource = null; attackType = null; holdWindUp = false;
           wornKey = key;
+          if (lastBuildOpts) { lastBuildOpts.weapon = item; lastBuildOpts.hasAmmo = hasAmmo; }   // AUDIT MW-TORCH F5: setWorn's rebuild carries the hand that is IN it
           const wasDrawn = !sheathed;
           // MW-D28: isStillWeapon (character.cpp:1364) - a DRAWN hand
           // swapping one real weapon for another plays NO unequip and NO
@@ -2914,6 +3471,12 @@ export function createFpArm() {
           // THREW still repaints - a panel showing a weapon the rig
           // failed to bind is the state most worth redrawing.
           for (const fn of listeners) { try { fn(); } catch { /* see build() */ } }
+          // MAC-S1: and the table that queued behind this swap goes now.
+          // build()'s finally is not the only exit from `busy`, and this
+          // one used to drop what it was holding - a shield equipped
+          // while the last weapon's meshes were still loading never
+          // reached the body.
+          flushPending();
         }
       })();
     },
@@ -2990,6 +3553,146 @@ export function createFpArm() {
      *  spellcast family on the next frame - the same path a drawn
      *  sword takes. Idempotent; false when nothing changed, so a host
      *  may call it every frame. */
+    /**
+     * MW-D51: THE LIGHT FOLLOWS THE HAND, setWeapon's shape. weaponRig
+     * hands over "is a Daggerfall torch lit" every frame; the fast path
+     * is one boolean compare. A torch lit for the first time on a rig
+     * built without one binds the LIGH record's mesh at the Shield
+     * Bone of BOTH rigs (the slow path, archives reopened for the one
+     * fetch, exactly as a weapon swap does); a torch doused keeps the
+     * mesh and hides it (rule 57's hide-not-remove, the weapon's own
+     * law here) and drops the "torch" state, so re-lighting is the fast
+     * path from then on. Returns the slow path's promise, true on the
+     * fast path, false when nothing changed or nothing stands.
+     */
+    /** MAP3: HOLD THE SHEET. The travel map's holder calls this when it
+     *  opens on a drawn Morrowind arm: the pose deltas go over the idle,
+     *  the weapon/arrow/torch hide, and a parchment piece of `aspect`
+     *  (the sheet's width over its height) is placed where the eye is
+     *  looking. Answers false until the rig has been posed once (the eye
+     *  is read off the last pose); the caller asks again next frame. A
+     *  second call re-places the sheet (a new spec, a new aspect). */
+    holdPaper(spec = null, { aspect = 1.6 } = {}) {
+      if (!built || !built.ok || viewMode !== 'first') return false;   // AUDIT-MAP2: the third-person body holds nothing
+      const node = built.arm.mats && built.arm.mats.get(built.cameraRef);
+      if (!node) return false;
+      const s = normaliseHeldPose(spec, held ? held.spec : HELD_POSE_DEFAULT);   // a partial spec changes only what it names
+      const prev = held;
+      held = { spec: s, piece: null, aspect, eye: null, built: prev?.built ?? null, reach0: prev?.reach0 ?? 0 };
+      heldMemo = null;
+      placeSheet(node);
+      return true;
+    },
+    /** MAP3: the sheet goes and the arms return to whatever they were doing. */
+    releasePaper() {
+      if (!held) return false;
+      if (built && built.ok) {
+        built.arm.pieces = built.arm.pieces.filter((p) => p.slot !== 'paper');
+        if (held.built === built) built.reach = held.reach0;   // the far plane is the arm's own again
+      }
+      held = null; heldMemo = null;
+      if (built && built.ok) { releaseMesh(); packed = null; }
+      return true;
+    },
+    /** AUDIT-MAP2: whether the last draw() call composed the arm - false
+     *  after a draw that returned early (no canvas, no camera, no eye) and
+     *  before any draw. weaponRig.armsDrawn() folds this in. */
+    drewLast() { return drewLast; },
+    /** MAP3: the pose in force (null when nothing is held), and the live
+     *  tuning door (window.__heldPose) - a new spec re-places the sheet. */
+    heldPose() { return held ? held.spec : null; },
+    /** MAP-FIELD: whether a sheet is up - the draw seam asks, because a
+     *  held map draws the arms whatever the WEAPON's own `shown()` says. */
+    holdingPaper() { return !!held; },
+    setHeldPose(spec) { return held ? api.holdPaper(spec, { aspect: held.aspect }) : false; },
+    /** AUDIT FIELD-GUN-MW F2: WHERE THE BARREL ENDS, off the posed weapon
+     *  piece - the vertex farthest from the grip (the bake's origin),
+     *  through the pass the last draw of THIS view composed. First person
+     *  answers the classic muzzle's own shape, a lens-local offset in
+     *  metres ({ right, up, forward }); third person answers the world
+     *  point ({ world }), because the camera is behind the body and a lens
+     *  offset would put the orb in the air beside it. Null before a draw,
+     *  without a weapon piece, or under a rig that has not built. */
+    weaponMuzzle() {
+      if (viewMode === 'third') {
+        const t = thirdBuilt;
+        const piece = t && t.ok ? t.arm.pieces.find((p) => p.slot === 'weapon') : null;
+        if (!piece || !piece.positions || !piece.source || !lastThirdModel) return null;
+        return { world: worldPointOf(posedVertex(piece.positions, muzzleIndexOf(piece)), lastThirdModel) };
+      }
+      const piece = built && built.ok ? built.arm.pieces.find((p) => p.slot === 'weapon') : null;
+      if (!piece || !piece.positions || !piece.source || !lastFrame) return null;
+      return viewOffsetOf(posedVertex(piece.positions, muzzleIndexOf(piece)), lastFrame.model, lastFrame.view, MW_UNITS_PER_METER);
+    },
+    /** MAP3: the sheet's four corners on the composite, in CSS px of the
+     *  canvas (top-left, top-right, bottom-right, bottom-left), through
+     *  the model, view and projection the last draw composed with - or
+     *  null before the first draw, without a sheet, or with a corner
+     *  behind the lens. */
+    paperCorners() {
+      if (!held || !lastFrame || !mesh) return null;
+      return projectPaperCorners(held.piece.positions, lastFrame, lastFrame.rect);
+    },
+
+    setTorch(lit) {
+      const want = !!lit;
+      if (!built || !built.ok) return false;
+      if (torchLit === want) return false;
+      if (busy) { pendingTorch = want; return false; }
+      torchLit = want;
+      if (lastBuildOpts) lastBuildOpts.torch = want;   // AUDIT MW-TORCH F5: the equip-follow rebuild carries the light, not the build's stale flag
+      // AUDIT MW-TORCH F3: a bind that failed once on this rig (the mesh
+      // not attached, no Shield Bone) is remembered on it - or every
+      // light-up reopened the archives and repacked both meshes for the
+      // same refusal.
+      if (!want || built.torch || built.torchTried || !pickTorchRecord(built.allLights)) {
+        // Doused, the mesh already hanging there, or no LIGH record to
+        // hang (the build's own note says so): the state and the hide
+        // flag do the rest on the next frame - no archive reopens.
+        refreshTorch(true);
+        for (const fn of listeners) { try { fn(); } catch { /* see build() */ } }
+        return true;
+      }
+      busy = true;
+      const token = built;
+      return (async () => {
+        try {
+          const d = buildDeps || await import('../scenes/dataSource.js');
+          const archives = await d.loadMorrowindArchives();
+          if (built !== token) return false;
+          const find = (p) => findLoaded(archives, p);
+          await loadFromArchives(archives, torchPartPaths({ torch: true, allLights: token.allLights, has: archiveHas(archives) }));
+          const bindTorch = async (rigBuilt) => {
+            const resolved = resolveTorchPart({ torch: true, allLights: token.allLights, find, skeletonBytes: rigBuilt.skeletonBytes, has: archiveHas(archives) });
+            rigBuilt.arm.pieces = rigBuilt.arm.pieces.filter((p) => p.slot !== 'torch');
+            rigBuilt.arm.effects = (rigBuilt.arm.effects ?? []).filter((e) => e.slot !== 'torch');   // MAC-Q: the old flame goes with the old torch
+            bindPartsInto(rigBuilt.arm, resolved.parts);
+            const fresh = [...rigBuilt.arm.pieces.filter((p) => p.slot === 'torch'), ...rigBuilt.arm.effects.filter((e) => e.slot === 'torch')];
+            await preloadArmTextures(fresh, archives);
+            for (const [file, tex] of collectArmTextures(fresh, archives)) {
+              if (!rigBuilt.textures.has(file)) rigBuilt.textures.set(file, tex);
+            }
+            rigBuilt.torch = resolved.torchInfo;
+            rigBuilt.torchTried = true;   // AUDIT MW-TORCH F3: asked once per rig, whatever the answer
+            rigBuilt.notes = [...(rigBuilt.notes || []).filter((n) => !/^torch[ :]/.test(n)), ...resolved.notes];
+            rigBuilt.pieces = armPieceRows(rigBuilt.arm.pieces).length;
+          };
+          await bindTorch(token);
+          if (thirdBuilt && thirdBuilt.ok) await bindTorch(thirdBuilt);
+          // The ranges the textures hang on are the piece list; a new
+          // piece is a new list, so the meshes repack.
+          releaseMesh(); packed = null;
+          releaseThirdMesh(); thirdPacked = null;
+          refreshTorch(true);
+          return true;
+        } finally {
+          busy = false;
+          for (const fn of listeners) { try { fn(); } catch { /* see build() */ } }
+          flushPending();
+        }
+      })();
+    },
+
     readySpell(ready) {
       const want = !!ready;
       if (!built || !built.ok || spellReady === want) return false;
@@ -3115,6 +3818,11 @@ export function createFpArm() {
       if (jumpState) advanceClip(jumpState, (jumpSource || rig()).keys, dt, null);
       if (idleState) advanceClip(idleState, (idleSource || rig()).keys, dt, null);
       refreshIdle();
+      // MW-D51: the torch's own clock, on its own keys - it is not the
+      // frame's winner, it is the LEFT ARM's, and it plays through
+      // whatever the four-slot winner does with the rest of the body.
+      refreshTorch();
+      if (torchState) advanceClip(torchState, (torchSource || rig()).keys, dt, null);
       aimFactor = aimingFactor(aimFactor, accurateAiming(upper), dt);
       if (!actionState && !movementState && !jumpState && !idleState) return;
       // THE WINNER, not a blend. See the two-slot note above: in first
@@ -3145,25 +3853,61 @@ export function createFpArm() {
       if (viewMode === 'third') {
         const t = thirdBuilt;
         if (!t || !t.ok) return;
+        // MW-D51: the torch overlay on the body's own LeftArm mask.
+        const tBase = poseSource ? poseSource.trackMap : t.tracks;
+        const tOverlay = torchState && torchSource && t.leftArm && t.leftArm.size;
+        if (tOverlay) overlayClock = torchState.time;
         poseAssembly(t.arm, {
-          tracks: poseSource ? poseSource.trackMap : t.tracks,
-          sampleTrack,
+          tracks: tOverlay ? overlayFor(tBase, t.leftArm) : tBase,
+          sampleTrack: tOverlay ? overlaySample : sampleTrack,
           time: poseTime(state),   // MS1: a backhand's window runs backwards
           accumRoot: t.accumRoot,
         });
         uploadThirdMesh(t);
+        // MAC-Q: the body's particle systems, on the clock its parts ride
+        stepRigEffects(t.arm, { dt, clock: tOverlay ? overlayClock : poseTime(state), renderer, mesh: thirdMesh, textures: t.textures, hidden: effectHidden });
         // Rule 57 hides on the SAME flags: sheathed vanilla shows no
         // weapon on the body, and the arrow follows the shoot keys.
         for (const r of thirdMesh.ranges) {
           if (r.slot === 'weapon') r.hidden = !weaponShown;
           else if (r.slot === 'arrow') r.hidden = !arrowShown;
+          else if (r.slot === 'torch') r.hidden = !torchVisible();   // MW-D51
+          else if (HOLSTER_SLOTS.includes(r.slot)) r.hidden = holsterHidden(r.slot, weaponShown, { arrowShown, tag: r.piece?.tag });   // WS1: the holster while the hand is empty, the scabbard always, the quiver less the round on the string
         }
         frames++;
         return;
       }
+      // MW-D51: RULES 25+26 FOR ONE MASK - the "torch" state wins the
+      // left arm (Priority_Torch outranks every slot above) and the
+      // frame's winner keeps the rest, through overlayTracks' track map
+      // and the sampler that reads the overlay at the torch's own
+      // clock. The arm's LeftArm set is rule 25's walk on THIS
+      // skeleton; a rig without "Bip01 L Clavicle" overlays nothing.
+      const fBase = poseSource ? poseSource.trackMap : built.tracks;
+      const fOverlay = torchState && torchSource && built.leftArm && built.leftArm.size;
+      if (fOverlay) overlayClock = torchState.time;
+      let fTracks = fOverlay ? overlayFor(fBase, built.leftArm) : fBase;
+      let fSampler = fOverlay ? overlaySample : sampleTrack;
+      if (held) {
+        // MAP3: a rebuild (an equip's follow) mints a piece list without
+        // the sheet; it is put back where the eye is now. AUDIT-MAP2: the
+        // eye MOVES (the neck's pitch and offset, the bob), and the sheet
+        // follows it - its source is refreshed whenever the camera node's
+        // translation moved since it was placed (last frame's pose: one
+        // frame of lag on a node that moves a millimetre a frame). A rig
+        // with no camera node cannot hold: the sheet is let go.
+        const node = built.arm.mats && built.arm.mats.get(built.cameraRef);
+        if (!node) { held = null; heldMemo = null; }
+        else if (!built.arm.pieces.includes(held.piece)) placeSheet(node);
+        else if (node.t[0] !== held.eye[0] || node.t[1] !== held.eye[1] || node.t[2] !== held.eye[2]) placeSheet(node);
+      }
+      if (held) {
+        const hm = heldTracksFor(fTracks, fSampler);
+        fTracks = hm.tracks; fSampler = hm.sampler;
+      }
       poseAssembly(built.arm, {
-        tracks: poseSource ? poseSource.trackMap : built.tracks,
-        sampleTrack,
+        tracks: fTracks,
+        sampleTrack: fSampler,
         time: poseTime(state),   // MS1: a backhand's window runs backwards
         // Rule 56's accum root is STICKY and rig-wide, so it does not
         // follow the source the way the tracks do.
@@ -3230,6 +3974,9 @@ export function createFpArm() {
       } else {
         renderer.updateCharacterMesh(mesh, packed.packed);
       }
+      // MAC-Q: the arm's particle systems - the torch's flame - on the
+      // same clock the pose took, placed on the rig that was just posed
+      stepRigEffects(built.arm, { dt, clock: fOverlay ? overlayClock : poseTime(state), renderer, mesh, textures: built.textures, hidden: effectHidden });
       // NpcAnimation::showWeapons - the reference REMOVES the part
       // (removeIndividualPart(PRT_Weapon), npcanimation.cpp:981) and
       // re-adds it on show. This port keeps the vertices and flips a
@@ -3240,11 +3987,16 @@ export function createFpArm() {
       for (const r of mesh.ranges) {
         if (r.slot === 'weapon') r.hidden = !weaponShown;
         else if (r.slot === 'arrow') r.hidden = !arrowShown;
+        else if (r.slot === 'torch') r.hidden = !torchVisible();   // MW-D51: the same hide-not-remove, on the carried-left rule
+        else if (r.slot === 'paper') r.hidden = !held;
+        // MAP3: the hands hold the sheet and nothing else while it is up
+        if (held && (r.slot === 'weapon' || r.slot === 'arrow' || r.slot === 'torch')) r.hidden = true;
       }
       frames++;
     },
 
     draw(canvas) {
+      drewLast = false;   // AUDIT-MAP2: true again only past every early return below
       // MW-D24: in third person the first-person overlay does not exist
       // - the reference masks the whole FP root out of the scene
       // (Mask_FirstPerson, npcanimation.cpp:542-546 - setViewMode's
@@ -3256,9 +4008,13 @@ export function createFpArm() {
       // MW-D43: the ARM's dial, not the sprite pass's. See MW_ARM_PIXEL.
       const wantW = canvas.clientWidth / MW_ARM_PIXEL;
       const wantH = canvas.clientHeight / MW_ARM_PIXEL;
-      const s = Math.min(1, CHAR_SPRITE_RT_SIZE / wantW, CHAR_SPRITE_RT_SIZE / wantH);
+      // MAC-R1: the rows above the screen, only under a transform (FP_TOP_PAD's note).
+      const padFrac = screenTransform ? FP_TOP_PAD : 0;
+      const s = Math.min(1, CHAR_SPRITE_RT_SIZE / wantW, CHAR_SPRITE_RT_SIZE / (wantH * (1 + padFrac)));
       const pw = Math.max(2, Math.round(wantW * s));
       const ph = Math.max(2, Math.round(wantH * s));
+      const pad = Math.round(ph * padFrac);   // extra rows on top of the screen's ph
+      const phFull = ph + pad;
 
       // RULE 54: THE WHOLE PASS LIVES IN THE RIG'S OWN SPACE.
       //
@@ -3320,8 +4076,34 @@ export function createFpArm() {
       // AUDIT 37 F1: the near plane off the IDLE reach, the far off the
       // swept one - see the build's note.
       const near = Math.max((built.idleReach ?? built.reach) / 200, 1e-4);
-      const proj = perspective(FP_FIELD_OF_VIEW, pw / ph, near, built.reach * 4);
-      const tex = renderer.renderCharacterSprite(mesh, NIF_TO_PASS, proj, view, pw, ph, { lensLocal: true });   // VC5 review: lens-local - no cloud deck on the arm
+      // MAC-R1: the SCREEN's frame is the symmetric perspective it always
+      // was (FP_FIELD_OF_VIEW vertical, pw/ph); the padded frame keeps
+      // that frame's bottom, its sides and its near plane and raises the
+      // top edge by 2 x padFrac half-heights, so the screen still occupies
+      // the bottom ph of the phFull rows at exactly the same pixel scale
+      // and the extra rows see what is above it. With no pad the two
+      // matrices are the same matrix.
+      const far = built.reach * 4;
+      const hh = near * Math.tan(FP_FIELD_OF_VIEW / 2);
+      const hw = hh * (pw / ph);
+      const proj = pad > 0 ? frustum(-hw, hw, -hh, hh * (1 + 2 * padFrac), near, far) : perspective(FP_FIELD_OF_VIEW, pw / ph, near, far);
+      // MAC-P: the room's own light on the arm (render/renderer.js's
+      // viewmodel borrow), off the SAME `flatLightAt` the classic sprites
+      // take under MAC-I - one answer, both lanes. Null keeps the frame's
+      // light exactly as it was, which is what the switch off means.
+      const vmLight = fpLightingOn() ? (renderer.flatLightAt?.() ?? null) : null;
+      // MAP3: what this frame composed with, so paperCorners() can put the
+      // sheet's corners where the composite puts them. MAC-R1: the pad's
+      // frustum raises the top edge; the SCREEN shows the symmetric frame's
+      // rows at the same pixel scale, so the corners project through the
+      // symmetric matrix into the screen's rect.
+      {
+        const W = canvas.clientWidth || canvas.width, H = canvas.clientHeight || canvas.height;
+        const projScreen = pad > 0 ? perspective(FP_FIELD_OF_VIEW, pw / ph, near, far) : proj;
+        lastFrame = { model: NIF_TO_PASS, view, proj: projScreen, rect: screenTransform ? screenTransform({ x: 0, y: 0, w: W, h: H }) : { x: 0, y: 0, w: W, h: H } };
+        drewLast = true;
+      }
+      const tex = renderer.renderCharacterSprite(mesh, NIF_TO_PASS, proj, view, pw, phFull, { lensLocal: true, viewmodelLight: vmLight });   // VC5 review: lens-local - no cloud deck on the arm   // MAC-R1: phFull - the screen's rows and the pad above them
       // WW1: Weapon Widget's channels move the composite as they move the
       // classic sprite - a screen-space rect in place of the fullscreen
       // overlay when a transform is set, the same alpha cut either way
@@ -3330,7 +4112,13 @@ export function createFpArm() {
       if (screenTransform) {
         const W = canvas.clientWidth || canvas.width, H = canvas.clientHeight || canvas.height;
         const rect = screenTransform({ x: 0, y: 0, w: W, h: H });
-        renderer.drawScreenQuad(tex, rect, { u0: 0, v0: ph / CHAR_SPRITE_RT_SIZE, u1: pw / CHAR_SPRITE_RT_SIZE, v1: 0 });
+        // MAC-R1: the composite is the SCREEN's rect extended upward by the
+        // pad's share of its height - the padded rows land above the
+        // screen's top when the rect sits at 0, and a rect the widget has
+        // shifted down shows them instead of a cut. The sampled corner is
+        // the whole phFull-tall sub-rect.
+        const up = rect.h * padFrac;
+        renderer.drawScreenQuad(tex, { x: rect.x, y: rect.y - up, w: rect.w, h: rect.h + up }, { u0: 0, v0: phFull / CHAR_SPRITE_RT_SIZE, u1: pw / CHAR_SPRITE_RT_SIZE, v1: 0 });
         return true;
       }
       renderer.drawScreenOverlayQuad(tex, pw / CHAR_SPRITE_RT_SIZE, ph / CHAR_SPRITE_RT_SIZE);
@@ -3364,6 +4152,7 @@ export function createFpArm() {
       }
       refreshWeaponGroup();
       resetIdle();
+      refreshTorch(true);   // MW-D51: the torch clip came from the OTHER rig's sources too
       return true;
     },
     viewMode: () => viewMode,
@@ -3379,6 +4168,14 @@ export function createFpArm() {
       return followCam;
     },
     thirdActive,
+    /** TORCH-VIS: whether the carried light is REALLY in this arm's hand this frame - `torchVisible()`, which is
+     *  the reference's own three conditions at once: a Light resolved into the carried-left slot (a rig with no
+     *  LIGH record, no attached mesh or no Shield Bone has none), the light lit, and the stance's carried-left
+     *  visible. The weapon rig's draw ladder asks it before it lets a sheathed player through on this lane: the
+     *  ENTITY knowing a light is equipped is not the same question, and answering the wrong one paints empty
+     *  hands (a lantern, whose held art is the classic lane's alone, is exactly that case). `status()` has carried
+     *  this as `torchShown` all along - this is the same read without building a thirty-field card for it. */
+    torchShown: () => torchVisible(),
     /** Animation::upperBodyReady (animation.cpp:1846-1857), which is
      *  what the camera's queued-mode gate consults (camera.cpp:135):
      *  a stable stance, no action section in flight, no build in
@@ -3413,9 +4210,9 @@ export function createFpArm() {
      *
      * MW-D34, THE MEASURED CHIRALITY (mwArmProbe L5b, through the REAL
      * composite - MW-D23's law): this pass composites through the
-     * WORLD's lens, which is mirrorProjectionX (dungeon.js:598 et al.),
+     * WORLD's lens, which is mirrorProjectionX (dungeon.js:665 et al.),
      * and the port's world convention puts the player's RIGHT at +X at
-     * yaw 0 (motor.js:657) - a LEFT-handed convention the mirror turns
+     * yaw 0 (motor.js:663) - a LEFT-handed convention the mirror turns
      * into correct screen imagery. A right-handed NIF actor placed with
      * a pure rotation therefore reads MIRRORED on screen (measured:
      * sword ink Δleft 1701 vs Δright -127 with the motor's +X anchor
@@ -3440,6 +4237,7 @@ export function createFpArm() {
         trs(feet[0], feet[1], feet[2], 0, yawDeg, 0, -u * rs.weight, u * rs.height, u * rs.weight),
         NIF_TO_PASS,
       );
+      lastThirdModel = model;   // AUDIT FIELD-GUN-MW F2: the body's frame, for the muzzle behind the camera
       // The box the sprite law needs, measured off the POSED pieces in
       // MW axes and mapped: MW z is world up, MW x/y are the horizontal
       // pair. The azimuth-safe half-width holds under yaw for free,
@@ -3565,6 +4363,8 @@ export function createFpArm() {
       for (const r of thirdMesh.ranges) {
         if (r.slot === 'weapon') r.hidden = false;
         else if (r.slot === 'arrow') r.hidden = !arrowShown;
+        else if (r.slot === 'torch') r.hidden = !torchLit;   // MW-D51: a portrait shows what you carry - the lit light, whatever the hand holds
+        else if (HOLSTER_SLOTS.includes(r.slot)) r.hidden = holsterHidden(r.slot, true, { arrowShown, tag: r.piece?.tag });   // WS1: the weapon is in the hand here, so the holster is empty; the scabbard and quiver show
       }
       const u = 1 / MW_UNITS_PER_METER;
       const rs = (built && built.raceScale) || { weight: 1, height: 1 };
@@ -3626,6 +4426,12 @@ export function createFpArm() {
         weaponShown,
         arrowShown,
         arrow: built && built.ok ? built.arrow : null,
+        // MW-D51: the carried light, on the card like the weapon.
+        torch: built && built.ok ? built.torch : null,
+        torchLit,
+        torchShown: torchVisible(),
+        torchGroup,
+        torchSource: torchSource && torchSource.name,
         loopsLeft: idleState && Number.isFinite(idleState.loopCount) ? idleState.loopCount : null,
         groups: built && built.ok ? built.groups : null,
         sources: built && built.ok ? built.sourcePaths : null,

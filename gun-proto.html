@@ -1,0 +1,532 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Daggerfall Enhanced &mdash; new weapon type prototype (gun)</title>
+<!--
+  THE GUN LAB (Mac, 2026-09-19): prototype a NEW WEAPON TYPE before a
+  line of the game changes - the door grass-proto.html and water.html
+  came through.
+
+  NOTHING HERE TOUCHES THE GAME. It is its own page over its own art;
+  combat/fpsWeapon.js and combat/weaponRig.js do not know it exists.
+  The port is a 1:1 DFU translation and a gun is not in Daggerfall - so
+  the place to find out what one FEELS like is a lab, and only what
+  survives the lab is worth building into the weapon rig.
+
+  What it BORROWS it RUNS rather than imitates:
+
+    - FPSWeapon's placement (:378-388) through src/tools/gunLab.js
+      placeSprite: the 320x200 design surface, bottom-anchored and
+      stretched to the window, aligned with a fractional offset. The
+      gun sits on the RIGHT, which is where the classic weapons sit.
+
+    - WEAPON WIDGET's Offset, Bob and Inertia - the actual modules out
+      of src/combat/weaponWidgetMotion.js, WW1's 1:1 port of
+      FPSWeaponClone, with the mod's own declared defaults and its own
+      multipliers. The sliders below are the mod's own switches.
+
+    - the mod's GetWeaponRect transform, which is what applies those
+      three channels to the rect.
+
+  The gun's OWN three, which no mod could lend it: a spring RECOIL (the
+  mod's Recoil module replays a SWING in reverse, and a gun has no
+  swing); the RELOAD LOWER - there is no reload animation, so the
+  weapon drops out of frame on the mod's own Offset easing and comes
+  back up when it is ready; and a trauma-driven SCREENSHAKE, which
+  moves the CAMERA - the room and the target - and leaves the sprite
+  where it is, because a head that is kicked carries the weapon with
+  it.
+
+  The SOUND is CC0 off Freesound (tools/freesoundPick.mjs) baked to
+  DAGGER.SND's own 11025 Hz unsigned 8-bit mono by tools/sndify.mjs -
+  which IS the Daggerfall aesthetic, as far as a sound file is
+  concerned. Three slots, because the reload has two ends: the shot,
+  the weapon going down, and the lock-up as it comes back up.
+  public/sfx/SOURCES.md says where each file came from.
+
+  Controls: click fires, and the same click asks for the pointer lock
+  (the Inertia module needs a look to lag; where the lock is refused -
+  an embedded frame, headless - the shot still goes off). Space fires
+  too, hold either for auto. W walks, Shift runs, C crouches, S stops.
+  Arrows scrub frames while idle, G shows the slice boxes, Tab hides
+  the panels, Esc releases the mouse.
+-->
+<style>
+  html,body { margin:0; height:100%; background:#0d0f12; color:#cdc4a8;
+    font:13px/1.5 ui-monospace, Menlo, Consolas, monospace; overflow:hidden; }
+  canvas { display:block; width:100vw; height:100vh; cursor:crosshair; }
+  .hud { position:fixed; left:12px; top:12px; background:rgba(10,12,16,.82);
+    border:1px solid #55503f; padding:10px 12px; width:min(330px,44vw);
+    max-height:calc(100vh - 40px); overflow:auto; }
+  .hud h1 { margin:0 0 6px; font-size:12px; letter-spacing:.14em; text-transform:uppercase; color:#e0d5ad; }
+  .hud h2 { margin:10px 0 4px; font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:#9c9378; border-top:1px solid #33302a; padding-top:8px; }
+  .hud label { display:flex; align-items:center; gap:8px; margin:2px 0; }
+  .hud label > span:first-child { width:96px; color:#a89e80; flex:none; }
+  .hud input[type=range] { flex:1; min-width:60px; }
+  .hud select { flex:1; background:#15181d; color:#cdc4a8; border:1px solid #454033; }
+  .hud .v { width:46px; text-align:right; color:#c08a3e; flex:none; }
+  .hud p { margin:6px 0 0; color:#8d836c; font-size:12px; }
+  .stat { position:fixed; right:12px; top:12px; background:rgba(10,12,16,.82);
+    border:1px solid #55503f; padding:8px 10px; color:#9c9378; white-space:pre; }
+  .lock { position:fixed; left:50%; bottom:22px; transform:translateX(-50%);
+    background:rgba(10,12,16,.82); border:1px solid #55503f; padding:5px 12px; color:#b9ad8b; }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div class="hud">
+  <h1>New weapon type &mdash; gun</h1>
+
+  <h2>Placement &mdash; FPSWeapon</h2>
+  <label><span>idle pose</span><select id="idleSrc"><option value="sheet">sheet frame 1</option><option value="art">gun-idle.png</option></select></label>
+  <label><span>align</span><select id="align"><option value="2">Right</option><option value="1">Center</option><option value="0">Left</option></select></label>
+  <label><span>offset</span><input id="offset" type="range" min="0" max="0.4" step="0.005" value="0"><span class="v" id="voffset"></span></label>
+  <label><span>size %</span><input id="size" type="range" min="20" max="120" step="1" value="49"><span class="v" id="vsize"></span></label>
+  <label><span>raise</span><input id="raise" type="range" min="-60" max="60" step="1" value="-8"><span class="v" id="vraise"></span></label>
+  <label><span>left hand</span><input id="flip" type="checkbox"><span class="v">mirror</span></label>
+
+  <h2>Cycle</h2>
+  <label><span>fire fps</span><input id="fps" type="range" min="4" max="30" step="1" value="14"><span class="v" id="vfps"></span></label>
+  <label><span>reload ms</span><input id="cool" type="range" min="0" max="2000" step="20" value="1700"><span class="v" id="vcool"></span></label>
+  <label><span>hit frame</span><input id="hit" type="range" min="0" max="5" step="1" value="1"><span class="v" id="vhit"></span></label>
+  <label><span>auto</span><input id="auto" type="checkbox"><span class="v">hold</span></label>
+
+  <h2>Recoil &mdash; the lab's own</h2>
+  <label><span>kick</span><input id="kick" type="range" min="0" max="60" step="1" value="5"><span class="v" id="vkick"></span></label>
+  <label><span>back</span><input id="back" type="range" min="0" max="1.5" step="0.02" value="0"><span class="v" id="vback"></span></label>
+  <label><span>stiffness</span><input id="stiff" type="range" min="20" max="400" step="5" value="400"><span class="v" id="vstiff"></span></label>
+  <label><span>damping</span><input id="damp" type="range" min="2" max="60" step="1" value="36"><span class="v" id="vdamp"></span></label>
+
+  <h2>Screenshake &mdash; the camera</h2>
+  <label><span>shake</span><input id="shake" type="range" min="0" max="30" step="0.5" value="30"><span class="v" id="vshake"></span></label>
+  <label><span>roll&deg;</span><input id="shakeRot" type="range" min="0" max="4" step="0.1" value="4"><span class="v" id="vshakeRot"></span></label>
+  <label><span>rattle</span><input id="shakeFreq" type="range" min="6" max="60" step="1" value="60"><span class="v" id="vshakeFreq"></span></label>
+  <label><span>decay</span><input id="shakeDecay" type="range" min="0.5" max="10" step="0.1" value="5"><span class="v" id="vshakeDecay"></span></label>
+
+  <h2>Sound &mdash; CC0, baked to 11kHz 8-bit</h2>
+  <label><span>fire</span><select id="sfxFire"></select></label>
+  <label><span>reload open</span><select id="sfxOpen"></select></label>
+  <label><span>reload close</span><select id="sfxClose"></select></label>
+  <label><span>volume</span><input id="sfxVol" type="range" min="0" max="1" step="0.02" value="1"><span class="v" id="vsfxVol"></span></label>
+  <label><span>pitch vary</span><input id="sfxVary" type="range" min="0" max="0.3" step="0.01" value="0.19"><span class="v" id="vsfxVary"></span></label>
+  <label><span>sound</span><input id="sfxOn" type="checkbox" checked><span class="v">on</span></label>
+
+  <h2>Reload lower &mdash; the Offset module</h2>
+  <label><span>drop</span><input id="drop" type="range" min="0" max="1.5" step="0.05" value="0.55"><span class="v" id="vdrop"></span></label>
+  <label><span>Offset.Speed</span><input id="offsetSpeed" type="range" min="0" max="5" step="0.25" value="1"><span class="v" id="voffsetSpeed"></span></label>
+  <label><span>Modules.Offset</span><input id="modOffset" type="checkbox" checked><span class="v"></span></label>
+
+  <h2>Weapon Widget &mdash; Bob</h2>
+  <label><span>Modules.Bob</span><input id="modBob" type="checkbox" checked><span class="v"></span></label>
+  <label><span>Bob.Length</span><input id="bobLength" type="range" min="0" max="200" step="1" value="100"><span class="v" id="vbobLength"></span></label>
+  <label><span>Bob.SizeX</span><input id="bobSizeX" type="range" min="0" max="2" step="0.1" value="1"><span class="v" id="vbobSizeX"></span></label>
+  <label><span>Bob.SizeY</span><input id="bobSizeY" type="range" min="0" max="2" step="0.1" value="1"><span class="v" id="vbobSizeY"></span></label>
+  <label><span>Bob.SpeedMove</span><input id="bobSpeedMove" type="range" min="0" max="2" step="0.1" value="1"><span class="v" id="vbobSpeedMove"></span></label>
+  <label><span>Bob.SpeedState</span><input id="bobSpeedState" type="range" min="0" max="2" step="0.1" value="1"><span class="v" id="vbobSpeedState"></span></label>
+  <label><span>Bob.Shape</span><select id="bobShape"><option value="0">U</option><option value="1">Sideways 8</option><option value="2">Inverted U</option></select></label>
+  <label><span>BobWhileIdle</span><input id="bobIdle" type="checkbox" checked><span class="v"></span></label>
+
+  <h2>Weapon Widget &mdash; Inertia</h2>
+  <label><span>Modules.Inertia</span><input id="modInertia" type="checkbox" checked><span class="v"></span></label>
+  <label><span>Scale</span><input id="inScale" type="range" min="0" max="2" step="0.1" value="1"><span class="v" id="vinScale"></span></label>
+  <label><span>Speed</span><input id="inSpeed" type="range" min="0" max="2" step="0.1" value="1"><span class="v" id="vinSpeed"></span></label>
+  <label><span>ForwardDepth</span><input id="inFwd" type="range" min="0" max="2" step="0.1" value="1"><span class="v" id="vinFwd"></span></label>
+  <label><span>ForwardSpeed</span><input id="inFwdSpeed" type="range" min="0" max="2" step="0.1" value="1"><span class="v" id="vinFwdSpeed"></span></label>
+
+  <h2>Movement</h2>
+  <label><span>walking</span><input id="walk" type="checkbox"><span class="v">W/S</span></label>
+  <label><span>running</span><input id="run" type="checkbox"><span class="v">Shift</span></label>
+  <label><span>crouching</span><input id="crouch" type="checkbox"><span class="v">C</span></label>
+  <label><span>SPD</span><input id="spd" type="range" min="10" max="100" step="1" value="50"><span class="v" id="vspd"></span></label>
+
+  <h2>Art &amp; room</h2>
+  <label><span>key white</span><input id="key" type="range" min="180" max="255" step="1" value="244"><span class="v" id="vkey"></span></label>
+  <label><span>chroma</span><input id="chroma" type="range" min="0" max="40" step="1" value="10"><span class="v" id="vchroma"></span></label>
+  <label><span>muzzle light</span><input id="light" type="range" min="0" max="1" step="0.02" value="0.6"><span class="v" id="vlight"></span></label>
+  <label><span>room</span><input id="room" type="range" min="0.15" max="1.2" step="0.01" value="0.62"><span class="v" id="vroom"></span></label>
+  <label><span>boxes</span><input id="grid" type="checkbox"><span class="v">G</span></label>
+  <p id="note">loading art&hellip;</p>
+</div>
+<div class="stat" id="stat"></div>
+<div class="lock" id="lockHint">click to lock the mouse &mdash; the inertia needs a look to lag</div>
+
+<script type="module">
+import {
+  SHEET_GRID, FIRE_FRAMES, ALIGN, cellRect, keyBackground, contentBox,
+  unionBox, unionDrawRect, placeSprite, createGunMachine, muzzleLight,
+  createRecoil, createScreenShake, createWidgetRig, widgetRigStep, labWidgetSettings, labMotion,
+  widgetTransformRect, SFX_CANDIDATES, createSfxPlayer,
+} from '/src/tools/gunLab.js';
+
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+const $ = (id) => document.getElementById(id);
+
+const state = {
+  idleSrc: 'sheet', align: ALIGN.Right, offset: 0, size: 49, raise: -8, flip: false,
+  fps: 14, cool: 1700, hit: 1, auto: false,
+  kick: 5, back: 0, stiff: 400, damp: 36,
+  shake: 30, shakeRot: 4, shakeFreq: 60, shakeDecay: 5,
+  sfxFire: SFX_CANDIDATES.fire[0][0], sfxOpen: SFX_CANDIDATES['reload-open'][0][0], sfxClose: SFX_CANDIDATES['reload-close'][0][0],
+  sfxVol: 1, sfxVary: 0.19, sfxOn: true,   // FIELD-GUN15: Mac's, against the three picks below - the game reads them from combat/gunFeel.js and test/thunderlock.test.js fails if the two disagree
+  drop: 0.55, offsetSpeed: 1, modOffset: true,
+  modBob: true, bobLength: 100, bobSizeX: 1, bobSizeY: 1, bobSpeedMove: 1, bobSpeedState: 1, bobShape: 0, bobIdle: true,
+  modInertia: true, inScale: 1, inSpeed: 1, inFwd: 1, inFwdSpeed: 1,
+  walk: false, run: false, crouch: false, spd: 50,
+  key: 244, chroma: 10, light: 0.6, room: 0.62, grid: false,
+};
+const NUM = {
+  offset:1, size:1, raise:1, fps:1, cool:1, hit:1, kick:1, back:1, stiff:1, damp:1,
+  shake:1, shakeRot:1, shakeFreq:1, shakeDecay:1, sfxVol:1, sfxVary:1,
+  drop:1, offsetSpeed:1, bobLength:1, bobSizeX:1, bobSizeY:1, bobSpeedMove:1, bobSpeedState:1,
+  inScale:1, inSpeed:1, inFwd:1, inFwdSpeed:1, spd:1, key:1, chroma:1, light:1, room:1,
+};
+const ENUMS = { align:1, bobShape:1 };
+const bind = (id, after = () => {}) => {
+  const el = $(id), out = $('v' + id);
+  const read = () => {
+    state[id] = el.type === 'checkbox' ? el.checked
+      : NUM[id] ? parseFloat(el.value)
+      : ENUMS[id] ? parseInt(el.value, 10) : el.value;
+    if (out) out.textContent = el.type === 'checkbox' ? '' : el.value;
+    after();
+  };
+  el.addEventListener('input', read);
+  read();
+};
+
+// ── THE ART ──────────────────────────────────────────────────────────
+// Sliced, keyed and cropped here rather than shipped pre-cut, so the
+// key threshold is live. `frames` are six canvases on ONE box (the
+// union), `anchor` is the gun's own box inside it - see gunLab.js.
+let art = null, rebuilding = false, wantRebuild = false;
+const sheetImg = new Image(), idleImg = new Image();
+
+function bakeOne(src, sx, sy, sw, sh) {
+  const cv = document.createElement('canvas');
+  cv.width = sw; cv.height = sh;
+  const c = cv.getContext('2d', { willReadFrequently: true });
+  c.imageSmoothingEnabled = false;
+  c.drawImage(src, sx, sy, sw, sh, 0, 0, sw, sh);
+  const img = c.getImageData(0, 0, sw, sh);
+  keyBackground(img, state.key, state.chroma);
+  c.putImageData(img, 0, 0);
+  return { cv, box: contentBox(img) };
+}
+
+function crop(cv, box) {
+  const out = document.createElement('canvas');
+  out.width = box.w; out.height = box.h;
+  const c = out.getContext('2d');
+  c.imageSmoothingEnabled = false;
+  c.drawImage(cv, box.x, box.y, box.w, box.h, 0, 0, box.w, box.h);
+  return out;
+}
+
+function rebuild() {
+  if (!sheetImg.complete || !sheetImg.naturalWidth) return;
+  const baked = [];
+  for (let i = 0; i < FIRE_FRAMES; i++) {
+    const r = cellRect(i, sheetImg.naturalWidth, sheetImg.naturalHeight);
+    baked.push(bakeOne(sheetImg, r.x, r.y, r.w, r.h));
+  }
+  const union = unionBox(baked.map((b) => b.box));
+  const anchor = baked[0].box;   // frame 1: the gun with no flash on it
+  const frames = baked.map((b) => crop(b.cv, union));
+  let idle = null;
+  if (idleImg.complete && idleImg.naturalWidth) {
+    const b = bakeOne(idleImg, 0, 0, idleImg.naturalWidth, idleImg.naturalHeight);
+    if (b.box) idle = { cv: crop(b.cv, b.box), box: { x: 0, y: 0, w: b.box.w, h: b.box.h } };
+  }
+  art = { frames, union, anchor, idle };
+  $('note').textContent = `sheet ${sheetImg.naturalWidth}x${sheetImg.naturalHeight}, cell ${Math.floor(sheetImg.naturalWidth / SHEET_GRID.cols)}x${Math.floor(sheetImg.naturalHeight / SHEET_GRID.rows)} — gun ${anchor.w}x${anchor.h}, with flash ${union.w}x${union.h}`;
+}
+
+// The key sweep is a flood fill over six cells plus a 1625x968 page;
+// coalesce so dragging the slider does not queue a dozen of them.
+function scheduleRebuild() {
+  if (rebuilding) { wantRebuild = true; return; }
+  rebuilding = true;
+  requestAnimationFrame(() => {
+    rebuild();
+    rebuilding = false;
+    if (wantRebuild) { wantRebuild = false; scheduleRebuild(); }
+  });
+}
+
+sheetImg.onload = scheduleRebuild; idleImg.onload = scheduleRebuild;
+sheetImg.onerror = () => { $('note').textContent = 'art/gun-fire-sheet.webp did not load'; };
+// RELATIVE to the page, not the site root: the lab is deployed on its
+// own as well as beside the game (deploy.yml mounts it under
+// /preview/gun-lab/), and an absolute '/art/...' only resolves at a
+// root. document.baseURI is the page's own home in both.
+const artUrl = (name) => new URL(`art/${name}`, document.baseURI).href;
+sheetImg.src = artUrl('gun-fire-sheet.webp');
+idleImg.src = artUrl('gun-idle.png');
+
+// ── the machine, the mod's rig, the gun's spring ─────────────────────
+const gun = createGunMachine({ fps: state.fps, cooldownMs: state.cool, hitFrame: state.hit });
+const rig = createWidgetRig();
+const recoil = createRecoil();
+const shake = createScreenShake();
+
+// THE SOUND. The dropdowns are filled from the lab's own lists before
+// the controls are bound, so each one opens on its pick; every clip is
+// pre-loaded, because a gun that decodes its sample on the trigger
+// misses the shot it was fired for.
+const sfx = createSfxPlayer();
+for (const [id, slot] of [['sfxFire', 'fire'], ['sfxOpen', 'reload-open'], ['sfxClose', 'reload-close']]) {
+  $(id).innerHTML = SFX_CANDIDATES[slot].map(([v, label]) => `<option value="${v}">${label}</option>`).join('');
+}
+for (const list of Object.values(SFX_CANDIDATES)) for (const [name] of list) sfx.load(name).catch(() => {});
+globalThis.__gunLabSfx = SFX_CANDIDATES;   // tools/gunProtoProbe.mjs resolves every one of them
+let scrub = -1;          // frame held while idle (arrow keys), -1 = live
+let hitFlash = 0;        // the target's tell, so the hit frame can be judged
+let look = [0, 0];       // the frame's look, as takeFrameLook hands it over
+const LOOK_RADIANS_PER_PX = 0.0025;
+
+const CONTROLS = ['idleSrc','align','offset','size','raise','flip','fps','cool','hit','auto',
+  'kick','back','stiff','damp','shake','shakeRot','shakeFreq','shakeDecay','drop','offsetSpeed','modOffset',
+  'modBob','bobLength','bobSizeX','bobSizeY','bobSpeedMove','bobSpeedState','bobShape','bobIdle',
+  'modInertia','inScale','inSpeed','inFwd','inFwdSpeed',
+  'walk','run','crouch','spd','light','room','grid',
+  'sfxFire','sfxOpen','sfxClose','sfxVol','sfxVary','sfxOn'];
+for (const id of CONTROLS) bind(id);
+for (const id of ['key','chroma']) bind(id, scheduleRebuild);
+
+/** The mod's switches, live off the panel - read per frame exactly as
+ *  the component re-reads its settings per frame. */
+const widgetSettings = () => labWidgetSettings({
+  'Modules.Offset': state.modOffset, 'Modules.Bob': state.modBob, 'Modules.Inertia': state.modInertia,
+  'Offset.Speed': state.offsetSpeed,
+  'Bob.Length': state.bobLength, 'Bob.SizeX': state.bobSizeX, 'Bob.SizeY': state.bobSizeY,
+  'Bob.SpeedMove': state.bobSpeedMove, 'Bob.SpeedState': state.bobSpeedState,
+  'Bob.Shape': state.bobShape, 'Bob.BobWhileIdle': state.bobIdle,
+  'Inertia.Scale': state.inScale, 'Inertia.Speed': state.inSpeed,
+  'Inertia.ForwardDepth': state.inFwd, 'Inertia.ForwardSpeed': state.inFwdSpeed,
+});
+
+const fire = () => {
+  if (!gun.fire()) return;
+  recoil.punch(state.kick); shake.punch();
+  sfx.play(state.sfxFire);
+};
+const press = () => { gun.trigger = true; scrub = -1; fire(); };
+const release = () => { gun.trigger = false; };
+
+canvas.addEventListener('mousedown', () => {
+  // The lock is asked for on the same click that fires, not instead of
+  // it: a click that only grabs the mouse reads as a dead trigger, and
+  // headless Chromium (the probe) may refuse the grab outright - a
+  // refusal must not cost the shot.
+  if (document.pointerLockElement !== canvas) canvas.requestPointerLock?.();
+  press();
+});
+addEventListener('mouseup', release);
+addEventListener('mousemove', (e) => {
+  if (document.pointerLockElement !== canvas) return;
+  look = [look[0] + e.movementX * LOOK_RADIANS_PER_PX, look[1] - e.movementY * LOOK_RADIANS_PER_PX];
+});
+document.addEventListener('pointerlockchange', () => {
+  $('lockHint').style.display = document.pointerLockElement === canvas ? 'none' : '';
+});
+const setTick = (id, v) => { state[id] = v; $(id).checked = v; };
+addEventListener('keydown', (e) => {
+  if (e.code === 'Space') { e.preventDefault(); press(); }
+  if (e.code === 'KeyW') setTick('walk', true);
+  if (e.code === 'KeyS') setTick('walk', false);
+  if (e.code === 'KeyC') setTick('crouch', !state.crouch);
+  if (e.shiftKey) setTick('run', true);
+  if (e.code === 'Tab') { e.preventDefault(); for (const el of document.querySelectorAll('.hud,.stat')) el.style.display = el.style.display === 'none' ? '' : 'none'; }
+  if (e.code === 'KeyG') { state.grid = !state.grid; $('grid').checked = state.grid; }
+  if (e.code === 'ArrowRight') scrub = (scrub + 1 + FIRE_FRAMES) % FIRE_FRAMES;
+  if (e.code === 'ArrowLeft') scrub = (scrub - 1 + FIRE_FRAMES) % FIRE_FRAMES;
+});
+addEventListener('keyup', (e) => {
+  if (e.code === 'Space') release();
+  if (e.key === 'Shift') setTick('run', false);
+});
+
+// ── the room ─────────────────────────────────────────────────────────
+// A plain lit corridor, not a render of anything: the sprite has to be
+// judged against stone and shadow, and the muzzle flash has to have
+// something to throw light on.
+function drawRoom(lit) {
+  const { width: w, height: h } = canvas;
+  const horizon = h * 0.56;
+  const g = ctx.createLinearGradient(0, 0, 0, horizon);
+  g.addColorStop(0, `rgb(${18 * lit | 0},${17 * lit | 0},${20 * lit | 0})`);
+  g.addColorStop(1, `rgb(${74 * lit | 0},${66 * lit | 0},${54 * lit | 0})`);
+  ctx.fillStyle = g; ctx.fillRect(0, 0, w, horizon);
+  const f = ctx.createLinearGradient(0, horizon, 0, h);
+  f.addColorStop(0, `rgb(${58 * lit | 0},${50 * lit | 0},${40 * lit | 0})`);
+  f.addColorStop(1, `rgb(${22 * lit | 0},${19 * lit | 0},${16 * lit | 0})`);
+  ctx.fillStyle = f; ctx.fillRect(0, horizon, w, h - horizon);
+  ctx.strokeStyle = `rgba(${12 * lit | 0},${11 * lit | 0},${9 * lit | 0},0.85)`;
+  ctx.lineWidth = Math.max(1, w / 640);
+  for (let i = 1; i < 7; i++) {
+    const y = horizon * (i / 7) ** 1.6;
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
+  }
+  for (let i = -6; i <= 6; i++) {
+    ctx.beginPath(); ctx.moveTo(w / 2 + i * w * 0.09 + bobWorld, horizon); ctx.lineTo(w / 2 + i * w * 0.42 + bobWorld * 2, h); ctx.stroke();
+  }
+}
+
+function drawTarget(lit) {
+  const { width: w, height: h } = canvas;
+  const tw = w * 0.055, th = tw * 2.6;
+  const x = w / 2 - tw / 2 + bobWorld, y = h * 0.56 - th * 0.86;
+  ctx.fillStyle = hitFlash > 0 ? `rgba(190,60,44,${0.35 + 0.65 * hitFlash})` : `rgb(${52 * lit | 0},${46 * lit | 0},${42 * lit | 0})`;
+  ctx.fillRect(x, y, tw, th);
+  ctx.fillStyle = `rgba(${18 * lit | 0},${16 * lit | 0},${14 * lit | 0},0.9)`;
+  ctx.fillRect(x, y + th * 0.18, tw, th * 0.04);
+}
+
+function drawCrosshair() {
+  const { width: w, height: h } = canvas;
+  const r = Math.max(4, w * 0.006);
+  ctx.strokeStyle = 'rgba(220,208,170,0.55)'; ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(w / 2 - r * 2, h / 2); ctx.lineTo(w / 2 - r, h / 2);
+  ctx.moveTo(w / 2 + r, h / 2); ctx.lineTo(w / 2 + r * 2, h / 2);
+  ctx.moveTo(w / 2, h / 2 - r * 2); ctx.lineTo(w / 2, h / 2 - r);
+  ctx.moveTo(w / 2, h / 2 + r); ctx.lineTo(w / 2, h / 2 + r * 2);
+  ctx.stroke();
+}
+
+// ── the frame ────────────────────────────────────────────────────────
+let last = performance.now();
+let _reloadOpened = false, _reloadClosed = false;
+let bobWorld = 0;   // the ROOM's answer to the look, so a flick has something to move against
+
+function frame(now) {
+  const dt = Math.min(0.1, (now - last) / 1000); last = now;
+  const dpr = Math.min(2, devicePixelRatio || 1);
+  const w = Math.round(innerWidth * dpr), h = Math.round(innerHeight * dpr);
+  if (canvas.width !== w || canvas.height !== h) { canvas.width = w; canvas.height = h; }
+
+  gun.fps = state.fps; gun.cooldownMs = state.cool; gun.hitFrame = state.hit;
+  gun.trigger = gun.trigger && state.auto;
+  const wasIdle = gun.state === 'Idle';
+  const event = gun.step(dt);
+  if (event === 'hit') hitFlash = 1;
+  if (gun.state === 'Firing' && wasIdle) { recoil.punch(state.kick); shake.punch(); sfx.play(state.sfxFire); }   // the auto trigger's own shots
+  hitFlash = Math.max(0, hitFlash - dt * 4);
+
+  recoil.stiff = state.stiff; recoil.damp = state.damp; recoil.back = state.back;
+  const kick = recoil.step(dt);
+  shake.amount = state.shake; shake.rot = state.shakeRot; shake.freq = state.shakeFreq; shake.decay = state.shakeDecay;
+  const cam = shake.step(dt);
+
+  // THE RELOAD'S TWO ENDS. Open on the edge into Cooling, close as the
+  // weapon comes back up - `close` is timed off the clip's own length
+  // so the lock-up lands WITH the sprite arriving, not after it.
+  sfx.enabled = state.sfxOn; sfx.volume = state.sfxVol; sfx.vary = state.sfxVary;
+  if (gun.state === 'Cooling' && !_reloadOpened) { _reloadOpened = true; sfx.play(state.sfxOpen, 0.9); }
+  if (gun.state === 'Cooling' && !_reloadClosed && gun.cooledMs >= Math.max(0, state.cool - 420)) {
+    _reloadClosed = true; sfx.play(state.sfxClose, 0.95);
+  }
+  if (gun.state !== 'Cooling') { _reloadOpened = false; _reloadClosed = false; }
+
+  const showFrame = gun.state === 'Firing' ? gun.frame : (scrub >= 0 ? scrub : 0);
+  const lit = state.room * (1 + muzzleLight(gun.state, showFrame) * state.light * 1.9);
+  bobWorld = bobWorld * 0.86 - look[0] * canvas.width * 0.18;
+
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.imageSmoothingEnabled = false;
+  // THE CAMERA SHAKES, NOT THE WEAPON. The room and the target are
+  // drawn through the offset; the sprite is carried BY that camera, so
+  // on screen it does not move, and the crosshair is a screen-space
+  // overlay in any case. Native units, scaled with the surface.
+  const sx0 = canvas.width / 320, sy0 = canvas.height / 200;
+  ctx.save();
+  ctx.translate(canvas.width / 2 + cam.x * sx0, canvas.height / 2 + cam.y * sy0);
+  ctx.rotate(cam.rot);
+  ctx.translate(-canvas.width / 2, -canvas.height / 2);
+  drawRoom(lit); drawTarget(lit);
+  ctx.restore();
+  drawCrosshair();
+
+  // THE MOD'S FRAME. Bob and Inertia run while the machine idles, which
+  // is the gate FPSWeaponClone puts on them; the reload lowers the
+  // weapon by driving the Offset module's `shown` false.
+  const s = widgetSettings();
+  const reloading = gun.state === 'Cooling';
+  widgetRigStep(rig, s, dt, {
+    screenRect: { width: canvas.width, height: canvas.height },
+    motion: labMotion({ walking: state.walk, running: state.run, crouching: state.crouch, liveSpeed: state.spd }),
+    look, flip: state.flip, idle: gun.state === 'Idle',
+    shown: !reloading, hiddenTarget: [0, state.drop], liveSpeed: state.spd,
+    cursorActive: document.pointerLockElement !== canvas,
+  });
+  look = [0, 0];   // takeFrameLook: handed over once, zeroed for the next
+
+  let r = null, anchorRect = null;
+  if (art) {
+    const useIdleArt = state.idleSrc === 'art' && art.idle && gun.state !== 'Firing' && scrub < 0;
+    const src = useIdleArt ? art.idle.cv : art.frames[showFrame];
+    const union = useIdleArt ? art.idle.box : art.union;
+    const anchor = useIdleArt ? art.idle.box : art.anchor;
+    // Under the mirror the whole composite flips, so the gun's box
+    // flips with it inside the union box - otherwise the flash would
+    // swap sides and drag the weapon off its alignment.
+    const anc = state.flip
+      ? { ...anchor, x: 2 * union.x + union.w - anchor.x - anchor.w }
+      : anchor;
+    // FPSWeapon's rect, then the mod's three channels over it, then the
+    // gun's own kick - which has to come AFTER, because the mod's
+    // transform ends in a floor the rect may never rise above.
+    const base = placeSprite({
+      canvasW: canvas.width, canvasH: canvas.height,
+      frameW: anchor.w, frameH: anchor.h,
+      widthPct: state.size / 100, align: state.align, offset: state.offset,
+      flip: state.flip, offsetHeight: state.raise * (canvas.height / 200),
+    });
+    anchorRect = widgetTransformRect(base, {
+      position: rig.position, scale: rig.scale, offset: rig.offset,
+      flip: state.flip, screenHeight: canvas.height,
+      weaponOffsetHeight: state.raise * (canvas.height / 200),
+    });
+    const sx = canvas.width / 320, sy = canvas.height / 200;
+    anchorRect.x += kick.x * sx * (state.flip ? -1 : 1);
+    anchorRect.y += kick.y * sy;
+    r = unionDrawRect(anchorRect, anc, union);
+    ctx.save();
+    if (state.flip) { ctx.translate(r.x + r.w / 2, 0); ctx.scale(-1, 1); ctx.translate(-(r.x + r.w / 2), 0); }
+    ctx.drawImage(src, r.x, r.y, r.w, r.h);
+    ctx.restore();
+    if (state.grid) {
+      ctx.strokeStyle = 'rgba(192,138,62,0.9)'; ctx.lineWidth = 1;
+      ctx.strokeRect(r.x, r.y, r.w, r.h);
+      ctx.strokeStyle = 'rgba(120,200,140,0.9)';
+      ctx.strokeRect(anchorRect.x, anchorRect.y, anchorRect.w, anchorRect.h);
+    }
+  }
+
+  // The probe's window on the frame (tools/gunProtoProbe.mjs). The
+  // page has no DOM to measure - it is one canvas - so what it draws
+  // is claimed HERE, where it was computed, and asserted there.
+  globalThis.__gunLab = {
+    ready: !!art, state: gun.state, frame: showFrame, shots: gun.shots, reloading,
+    rect: art ? r : null, anchorRect: art ? anchorRect : null,
+    channels: { position: [...rig.position], scale: [...rig.scale], offset: [...rig.offset] },
+    kick, cam, trauma: shake.trauma,
+    art: art && { union: art.union, anchor: art.anchor, frames: art.frames.length, idle: !!art.idle },
+  };
+
+  const cycle = FIRE_FRAMES / state.fps * 1000 + state.cool;
+  $('stat').textContent =
+    `${(reloading ? 'RELOAD' : gun.state).padEnd(8)} frame ${showFrame + 1}/${FIRE_FRAMES}${scrub >= 0 && gun.state === 'Idle' ? ' (held)' : ''}\n` +
+    `shots ${gun.shots}   cycle ${cycle.toFixed(0)}ms   ${(60000 / cycle).toFixed(0)} rpm\n` +
+    `bob ${rig.position[0].toFixed(0)},${rig.position[1].toFixed(0)}  ` +
+    `off ${rig.offset[1].toFixed(2)}  kick ${kick.y.toFixed(1)}  shake ${shake.trauma.toFixed(2)}`;
+
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

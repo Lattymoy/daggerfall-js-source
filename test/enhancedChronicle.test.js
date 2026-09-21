@@ -9,18 +9,35 @@ import { chronicleModel, chronicleLines, chronicleEntry, CHRONICLE_SECTIONS } fr
 const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 const T = (text) => ({ formatting: 'text', text });
 
-test('PX24: three sections, and QUESTS are deliberately not among them', () => {
-  assert.deepEqual(CHRONICLE_SECTIONS.map(([id]) => id), ['notes', 'messages', 'history']);
-  // The classic logbook has FOUR modes and two are active/finished
-  // quests - which the pause window has carried since PX4, in three
-  // named sections since PX22. Carrying them here too would be the two
-  // character sheets again, which is the thing the F5 overlay is on the
-  // board to resolve.
+test('MAC-K2: FOUR sections, and QUESTS leads them - the L key opens what it is named for', () => {
+  // THE PIN THAT HAD TO BE REVERSED. It read "three sections, and
+  // QUESTS are deliberately not among them", and asserted
+  // `doesNotMatch(cr, /questLog/)` - the defect written down as a law.
+  // The reasoning behind it was about duplication and it was sound;
+  // what it got wrong was WHICH DOOR. `LogBook` is InputManager's own
+  // name for the L key, this is the window it opens, and what a player
+  // pressing it got was their notebook. Mac, 2026-09-15: "Logbook not
+  // reflecting quests."
+  assert.deepEqual(CHRONICLE_SECTIONS.map(([id]) => id), ['quests', 'notes', 'messages', 'history']);
+  assert.equal(CHRONICLE_SECTIONS[0][1], 'Quests', 'and it leads, because it is what the key is for');
+
+  // the classic window's four modes all have a page here now
   const jr = read('src/ui/questJournal.js');
   assert.match(jr, /JOURNAL_MODES = Object\.freeze\(\['activeQuests', 'finishedQuests', 'notebook', 'messages'\]\)/);
+  const ids = new Set(CHRONICLE_SECTIONS.map(([id]) => id));
+  for (const want of ['quests', 'notes', 'messages']) assert.ok(ids.has(want), want);
+
+  // AND THE DUPLICATION THE OLD PIN FEARED IS ANSWERED WHERE IT LIVES.
+  // Not by leaving quests out of the window named after them, but by
+  // one walk and one rail: the chronicle imports them rather than
+  // re-deriving, and so does the pause tab.
   const cr = read('src/ui/enhancedChronicle.js');
-  assert.doesNotMatch(cr, /activeQuests|finishedQuests|questLog/, 'the chronicle holds no quest list');
-  assert.match(read('src/ui/chronicleDoor.js'), /QUESTS ARE NOT IN IT, and that is deliberate/);
+  assert.match(cr, /from '\.\/questRail\.js'/, 'the chronicle takes the shared rail');
+  assert.match(read('src/ui/enhancedMenu.js'), /from '\.\/questRail\.js'/, 'and so does the pause tab');
+  assert.doesNotMatch(cr, /getLogMessages|remainingTimeInSeconds/,
+    'neither face walks the machine itself - that is scenes/questBridge.js questLog()');
+  assert.match(read('src/scenes/questBridge.js'), /questLog\(\) \{/, 'the one walk');
+  assert.match(read('src/ui/chronicleDoor.js'), /QUESTS ARE IN IT, and MAC-K2 is why/);
 });
 
 test('PX24 model: each section from its own source, and the orders differ on purpose', () => {
@@ -33,7 +50,30 @@ test('PX24 model: each section from its own source, and the orders differ on pur
   assert.deepEqual(m.messages.map((e) => e.body), [['first'], ['second']]);
   assert.deepEqual(m.history, ['line one', 'line two'], 'backStory is already lines');
   // No notebook at all is not a crash - a host may open this before one exists.
-  assert.deepEqual(chronicleModel({}), { notes: [], messages: [], history: [] });
+  assert.deepEqual(chronicleModel({}), { quests: [], notes: [], messages: [], history: [] });
+
+  // MAC-K2: THE QUESTS SECTION, driven. One entry per quest, the title
+  // as its head and the trail as its body, NEWEST STEP FIRST - the log
+  // arrives oldest-first from the machine and the last thing you were
+  // told is the thing you opened the window for.
+  const q = chronicleModel({
+    questLog: () => ({
+      active: [
+        { id: 7, name: 'Main Quest: Lysandus\u2019 Revenge', questName: 'S0000011', messages: [[T('go to Daggerfall')], [T('find the ghost')]] },
+        { id: 8, name: 'A Rat Problem', questName: 'M0B00Y00', messages: [[T('kill the rats')]] },
+        { id: 9, name: 'Silent', questName: 'M0B00Y01', messages: [] },
+      ],
+      finished: [[{ formatting: 'highlight', text: 'The Riddle completed at 3 Hearthfire:' }, T('you solved it')]],
+    }),
+  });
+  assert.deepEqual(q.quests.map((e) => e.head),
+    ['Lysandus\u2019 Revenge', 'A Rat Problem', 'The Riddle \u2014 completed 3 Hearthfire'],
+    'the kind label comes off the title, and the archive follows the live ones');
+  assert.deepEqual(q.quests[0].body, ['find the ghost', 'go to Daggerfall'], 'newest step first');
+  assert.deepEqual(q.quests[2] && q.quests[2].body, ['you solved it']);
+  assert.equal(q.quests.length, 3, 'a quest that has written NOTHING is not a row - the machine says so, not this window');
+  // and a host with no quest source at all is not a crash and not a lie
+  assert.deepEqual(chronicleModel({ questLog: () => null }).quests, []);
   assert.deepEqual(m.notes.map((e) => e.head), [null, null], 'no highlight, no head - and that is honest');
   // The token flattener is the journal's own set.
   assert.deepEqual(chronicleLines([T('x'), { formatting: 'nope', text: 'y' }]), ['x']);
@@ -211,12 +251,34 @@ test('PX24d: the journal goes through the door, on every host that has one', () 
   assert.match(dungeon, /activeOverlay = makeJournalWindow\(mode\);/, 'and _openJournal still mounts it');
   assert.doesNotMatch(dungeon, /activeOverlay = new QuestJournalWindow\(/);
   const ext = read('src/scenes/exterior.js');
-  assert.doesNotMatch(ext, /new QuestJournalWindow\(/, 'the exterior has no journal and builds none');
-  // The ENHANCED page follows the classic mode, and the classic window
-  // still gets the mode itself - the two quest modes have no page here
-  // on purpose, since the pause window has carried quests since PX4.
-  for (const s of [world, dungeon]) {
-    assert.match(s, /section: mode === 'messages' \? 'messages' : 'notes',/);
-    assert.match(s, /\bmode,/, 'and the classic window still gets its own mode');
+  assert.doesNotMatch(ext, /new QuestJournalWindow\(/, 'the exterior reaches the classic window through the door too');
+
+  // MAC-K2: THE MAPPING IS CHECKED AS A POPULATION, and this is the
+  // hole a mutation campaign found. The loop was `[world, dungeon]` -
+  // a hand-written pair from a day when `exterior.js` had no journal -
+  // so reverting THAT host's mapping back to 'notes' changed nothing
+  // any pin could see. It is the host a player walking round a town is
+  // in, which makes it the one the bug was reported from.
+  //
+  // Every host that opens the chronicle must map every classic mode.
+  const opened = [];
+  for (const h of ['exterior', 'world', 'worldModes', 'dungeonContext']) {
+    const src = read(`src/scenes/${h}.js`);
+    if (!src.includes('createChronicleWindow(')) continue;
+    opened.push(h);
+    assert.match(src, /section: mode === 'messages' \? 'messages'\n\s*: \(mode === 'notebook' \? 'notes' : 'quests'\),/,
+      `${h}.js must send each classic mode to the page that holds what it names`);
+    assert.match(src, /\bmode,/, `${h}.js must still give the classic window its own mode`);
+
+    // ...and DRIVEN, so a mapping that is merely SPELLED does not pass.
+    const m = /section: (mode === 'messages' \? 'messages'\n\s*: \(mode === 'notebook' \? 'notes' : 'quests'\)),/.exec(src);
+    // eslint-disable-next-line no-new-func
+    const map = new Function('mode', `return (${m[1]});`);
+    assert.equal(map('activeQuests'), 'quests', `${h}.js: the L key lands on Quests`);
+    assert.equal(map('finishedQuests'), 'quests');
+    assert.equal(map('notebook'), 'notes', 'and the N key on Notes');
+    assert.equal(map('messages'), 'messages');
   }
+  assert.deepEqual(opened, ['exterior', 'world', 'dungeonContext'],
+    'the three hosts that build a chronicle - worldModes reaches it through the outer host bag');
 });

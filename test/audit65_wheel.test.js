@@ -48,7 +48,7 @@ const hero = (items) => { const e = { stats: { strength: 80 }, items }; equipOf(
 const LOCAL_SLOT = (s = 0) => [INV_RECTS.localList[0] + CELL_X + 5, INV_RECTS.localList[1] + s * SLOT_H + 5];
 const REMOTE_SLOT = (s = 0) => [INV_RECTS.remoteList[0] + CELL_X + 5, INV_RECTS.remoteList[1] + s * SLOT_H + 5];
 
-/** The producer, not a literal: ui/inventoryDoor.js:59 is the ONE seam
+/** The producer, not a literal: ui/inventoryDoor.js:60 is the ONE seam
  *  every host opens the pack through (U53), and headless it mints the
  *  classic window. */
 const pack = (bag, pile) => {
@@ -93,8 +93,8 @@ test('AUDIT 65 UI-5: the notch carries its own point, so the pack scrolls before
 
 test('AUDIT 65 UI-5: every host wheel seam hands the window the live point', () => {
   const POINT = /wheel\?\.\(Math\.sign\(e\.deltaY\), v \? v\[0\] : -1, v \? v\[1\] : -1\);/;
-  // townTalk.js is the seam for BOTH outdoor hosts (world.js:5251 and
-  // exterior.js:2486 hand it the raw event).
+  // townTalk.js is the seam for BOTH outdoor hosts (world.js:6638 and
+  // exterior.js:2840 hand it the raw event).
   assert.match(read('src/scenes/townTalk.js'), POINT, 'townTalk.js');
   // worldModes.js: BOTH arms - the interior slot and the mounted
   // dungeon context's.
@@ -138,5 +138,8 @@ test('AUDIT 65 UI-5: one wheel shape in src/ui - every other window ignores the 
   assert.deepEqual(multi.sort(), [
     'automapChrome.js: wheel(nx, ny, dir)',
     'nativeInventory.js: wheel(dir, vx = this._mouse[0], vy = this._mouse[1])',
+    // MAC-N2: the shop screen inherits the pack's wheel (ItemListScroller.cs:314-316), so it reads the point the
+    // same way - the second window that legitimately takes the seam's three arguments
+    'nativeTrade.js: wheel(dir, vx = -1, vy = -1)',
   ]);
 });

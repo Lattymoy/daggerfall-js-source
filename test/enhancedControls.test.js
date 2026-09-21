@@ -31,8 +31,9 @@ import { readFileSync } from 'node:fs';
 
 import {
   paneControls, discardControlsStaging, captureArmed, controlsStaging,
-  controlsDuplicates, GRID_ACTIONS, ADVANCED_ROWS, MULTIPLE_ASSIGNMENTS, DEFAULTS_PROMPT,
+  controlsDuplicates, GRID_ACTIONS, ADVANCED_ROWS, PORT_ROWS, PORT_GROUPS, MULTIPLE_ASSIGNMENTS, DEFAULTS_PROMPT,
 } from '../src/ui/enhancedControls.js';
+import { CATEGORY_IDS } from '../src/ui/settingsMap.js';   // AUDIT FT16 CTRL-a: the door the bindings live behind
 import { SYSTEM_PANES } from '../src/ui/enhancedMenu.js';
 import { KEYBIND_ROWS } from '../src/ui/mouseControlsWindow.js';
 import { bindings, setBindings, isTextEntryTarget } from '../src/ui/input.js';
@@ -152,6 +153,15 @@ test('FT16: the key bindings live inside Settings, and both doors still reach th
   assert.ok(list('SECTIONS_PAUSE').includes('Settings'),
     'Escape must reach the key bindings - the whole of FIX-F\'s bug');
   assert.ok(list('SECTIONS_BOOT').includes('Settings'), 'and so must the front door');
+  // AUDIT FT16 CTRL-a: the bindings are reachable only through a
+  // Settings CATEGORY now, and nothing held that the category EXISTS -
+  // deleting `controls` from CATEGORIES makes them unreachable from the
+  // front door, which is FIX-F's original bug restored, and this pin
+  // (which inherited FIX-F's law) sailed past it. The door and the
+  // renderer are both held now.
+  assert.ok(CATEGORY_IDS.includes('controls'),
+    'FIX-F: there is a category to reach the bindings THROUGH - a renderer with no door is the bug this law is about');
+
   // and Controls is no longer a door of its own, on any rail or in the
   // pause window's System page
   for (const r of ['SECTIONS_BOOT', 'SECTIONS_CLASSIC', 'SECTIONS_PAUSE']) {
@@ -195,12 +205,30 @@ test('FIX-F: the pane offers the classic grid’s 38 actions and the ADVANCED si
   // the restatement cannot drift.
   assert.deepEqual(ADVANCED_ROWS.map((r) => [r.action, r.label]),
     KEYBIND_ROWS.map((r) => [r.action, r.label]));
+  // SOC5 WIDENED THIS PIN BY A THIRD GROUP, and by nothing else. The port's own
+  // actions belong to neither of the two lists above - GRID_ACTIONS is DFU's
+  // SetupKeybindButtons slice and ADVANCED_ROWS is mouseControlsWindow's six -
+  // so PORT_ROWS is where they go, and the COVERAGE rule below is what makes it
+  // compulsory rather than tidy: a bindable action with no row is a key nobody
+  // can rebind, and the classic window cannot draw this one at all.
+  // QS2 WIDENED IT AGAIN, by a fourth group rather than three more rows under
+  // the third: 'Online' is a true heading for the F-menu and a false one for a
+  // potion press, and a group whose title does not describe its rows is worse
+  // than no group. PORT_ROWS stays the flat union, because the coverage rule
+  // below is asked of the union and not of any one heading.
+  assert.deepEqual(PORT_ROWS.map((r) => r.action),
+    ['SocialInteract', 'QuickUse1', 'QuickUse2', 'QuickSpell', 'QuickSwap', 'QuickOffHand']);   // QS6: the spell slot, above the swap it took the key from
+  assert.deepEqual(PORT_GROUPS.map((g) => [g.title, ...g.rows.map((r) => r.action)]), [
+    ['Online', 'SocialInteract'],
+    ['Quickslots', 'QuickUse1', 'QuickUse2', 'QuickSpell', 'QuickSwap', 'QuickOffHand'],
+  ]);
+  assert.deepEqual(PORT_GROUPS.flatMap((g) => g.rows), [...PORT_ROWS], 'the union really is the groups, not a second list beside them');
   // together: every bindable action, none twice
-  const all = [...GRID_ACTIONS, ...ADVANCED_ROWS.map((r) => r.action)];
+  const all = [...GRID_ACTIONS, ...ADVANCED_ROWS.map((r) => r.action), ...PORT_ROWS.map((r) => r.action)];
   assert.equal(new Set(all).size, all.length);
   assert.deepEqual([...all].sort(), [...ACTIONS].sort());
   withPane(({ view }) => {
-    assert.equal(find(view.body, 'ctl-row').length, 44, 'a row for every action');
+    assert.equal(find(view.body, 'ctl-row').length, 50, 'a row for every action');   // QS6: fifty, including the swap that ships unbound
     for (const a of all) assert.ok(keyBtn(view, a), `${a} needs a row`);
   });
 });
@@ -215,19 +243,26 @@ test('FIX-F: arming then a keydown binds through the STAGED dict, and the listen
 
     b.onclick();
     assert.equal(captureArmed(), 'MoveForwards');
-    assert.equal(doc.listeners.length, 1, 'exactly one listener while armed');
-    const l = doc.listeners[0];
-    assert.equal(l.type, 'keydown', 'a keydown - not keyup, not keypress');
-    assert.deepEqual(l.opts, { capture: true },
-      'capture, so the host’s bubble-phase ladder never sees the key');
-    assert.equal(keyBtn(view, 'MoveForwards').textContent, 'PRESS A KEY');
+    // MAC-K1: TWO doors, one arm. DFU's WaitForKeyPress walks EVERY
+    // KeyCode and Mouse0/1/2 are KeyCodes - which is how three of its
+    // own defaults are mouse buttons. This pane listened for `keydown`
+    // alone, so no action could be moved onto a button and one cleared
+    // off a button could never be put back.
+    assert.deepEqual(doc.listeners.map((l) => l.type).sort(), ['keydown', 'mousedown'],
+      'the capture has both doors while armed, and nothing else');
+    for (const l of doc.listeners) {
+      assert.deepEqual(l.opts, { capture: true },
+        'capture, so the host’s bubble-phase ladder never sees the key');
+    }
+    const l = doc.listeners.find((x) => x.type === 'keydown');
+    assert.equal(keyBtn(view, 'MoveForwards').textContent, 'PRESS A KEY OR BUTTON');
 
     const e = keyEvent('KeyG');
     l.fn(e);
     assert.equal(e.prevented, true, 'the captured key must not do its browser default');
     assert.equal(e.stopped, true, 'and world.js/exterior.js/worldModes.js must never see it');
     assert.equal(captureArmed(), null, 'one key ends the capture');
-    assert.equal(doc.listeners.length, 0, 'and the listener is removed with it');
+    assert.equal(doc.listeners.length, 0, 'and BOTH listeners leave with it - a half-disarm is a live listener outliving its screen');
 
     // THE STAGED WRITE, and only the staged write.
     assert.equal(currentDict(controlsStaging()).get('MoveForwards'), 'KeyG');
@@ -281,17 +316,64 @@ test('FIX-F: the capture target is a <button>, so isTextEntryTarget stays false 
   });
 });
 
-test('FIX-F: arming from a click cannot itself be the bound key', () => {
-  // The listener is added BY the click handler and only ever answers
-  // `keydown`; a pointer gesture produces none. The pin is that the
-  // arming leaves the staged dict alone until a key actually arrives.
+test('MAC-K1: arming from a click cannot itself be the bound BUTTON, but the next press is', () => {
+  // THE REASON THIS PIN HAD TO CHANGE. It used to read "the listener
+  // only ever answers `keydown`; a pointer gesture produces none" -
+  // true, and the whole defect: a player could not bind a mouse button
+  // at all. The listener now answers `mousedown` too, so the guard has
+  // to be the real one rather than an accident of which event was
+  // listened for.
+  //
+  // And it IS real: `arm()` runs from the row button's `onclick`,
+  // which the browser fires after that press has come and gone, so the
+  // listener added inside it can only ever see the NEXT press.
   withPane(({ doc, view }) => {
     const before = currentDict(controlsStaging()).get('MoveForwards');
     keyBtn(view, 'MoveForwards').onclick();
     assert.equal(currentDict(controlsStaging()).get('MoveForwards'), before,
-      'arming binds nothing');
-    assert.deepEqual(doc.listeners.map((l) => l.type), ['keydown'],
-      'and it listens for keys only - no click, no mousedown');
+      'arming binds nothing - the click that armed is not the click that binds');
+    assert.equal(captureArmed(), 'MoveForwards', 'and the capture is still waiting');
+
+    // the NEXT press binds, and it is the registry's code for that
+    // button - Unity counts Mouse0/1/2 as left/RIGHT/middle where
+    // MouseEvent.button counts left/MIDDLE/right, so button 2 is
+    // 'Mouse1' and a host that spelled 'Mouse' + e.button would hand
+    // the wheel the right button's action
+    const down = doc.listeners.find((l) => l.type === 'mousedown');
+    const e = { button: 2, preventDefault() { this.prevented = true; }, stopPropagation() { this.stopped = true; } };
+    down.fn(e);
+    assert.equal(e.prevented, true, 'the captured press must not do its browser default');
+    assert.equal(e.stopped, true, 'and no host ladder may see it');
+    assert.equal(currentDict(controlsStaging()).get('MoveForwards'), 'Mouse1');
+    assert.equal(captureArmed(), null, 'one press ends the capture');
+    assert.equal(doc.listeners.length, 0, 'and both listeners leave');
+    assert.equal(keyBtn(view, 'MoveForwards').textContent, buttonText('Mouse1', true));
+  });
+});
+
+test('MAC-K1: a FOURTH button is not a binding, and the capture stays armed for one that is', () => {
+  // mouseCode answers null past the third button (ui/input.js's
+  // MOUSE_CODES is three long, as Unity's KeyCode list is). A thumb
+  // button must not silently bind nothing and end the capture - the
+  // row would go blank and the player would never know why.
+  withPane(({ doc, view }) => {
+    keyBtn(view, 'Jump').onclick();
+    const down = doc.listeners.find((l) => l.type === 'mousedown');
+    down.fn({ button: 3, preventDefault() {}, stopPropagation() {} });
+    assert.equal(captureArmed(), 'Jump', 'the fourth button is not a KeyCode: the capture waits on');
+    assert.equal(currentDict(controlsStaging()).get('Jump'), 'Space', 'and nothing was written');
+    down.fn({ button: 0, preventDefault() {}, stopPropagation() {} });
+    assert.equal(currentDict(controlsStaging()).get('Jump'), 'Mouse0', 'the left button still binds');
+  });
+});
+
+test('MAC-K1: a button pressed under a modifier binds the COMBO, as a key does', () => {
+  withPane(({ doc, view }) => {
+    keyBtn(view, 'Inventory').onclick();
+    doc.listeners.find((l) => l.type === 'mousedown')
+      .fn({ button: 1, shiftKey: true, preventDefault() {}, stopPropagation() {} });
+    assert.equal(currentDict(controlsStaging()).get('Inventory'), comboCode('ShiftLeft', 'Mouse2'),
+      'one combo law, whichever door the code came through');
   });
 });
 
@@ -301,7 +383,7 @@ test('FIX-F: while a capture is armed EVERY other control is inert (:281 etc.)',
   // Defaults (:299), Continue (:321), CurrentBindings (:338), the
   // keybind button (:361) and the right-click remove (:372, ANDed
   // with the unbound refusal). The classic grid carries it in one
-  // line (ui/controlsWindow.js:323 `if (this.capture) return true;`);
+  // line (ui/controlsWindow.js:355 `if (this.capture) return true;`);
   // this face carries it as the `act` wrapper. Without it CONTINUE
   // saves and re-stages under a LIVE capture, and the Primary toggle
   // flips the dict the pending keystroke is about to be written into.
@@ -312,13 +394,13 @@ test('FIX-F: while a capture is armed EVERY other control is inert (:281 etc.)',
       keyBtn(view, 'MoveForwards').onclick();
       assert.equal(captureArmed(), 'MoveForwards');
       assert.equal(controlsStaging().usingPrimary, true);
-      const armedListener = doc.listeners[0];
+      const armedListeners = [...doc.listeners];
       const still = (what) => {
         assert.equal(captureArmed(), 'MoveForwards', `${what} must not touch the capture`);
         assert.equal(controlsStaging().usingPrimary, true, `${what} must not flip the dict`);
         assert.equal(saved, 0, `${what} must not reach saveKeyBinds`);
-        assert.equal(doc.listeners.length, 1, `${what} must leave the one capture standing`);
-        assert.equal(doc.listeners[0], armedListener, `${what} must not re-arm`);
+        assert.equal(doc.listeners.length, armedListeners.length, `${what} must leave the capture standing`);
+        assert.deepEqual(doc.listeners, armedListeners, `${what} must not re-arm`);
         assert.equal(one(view.body, 'ctl-prompt'), undefined, `${what} must open no prompt`);
       };
 
@@ -349,7 +431,7 @@ test('FIX-F: while a capture is armed EVERY other control is inert (:281 etc.)',
 
       // ...and the capture the player actually armed is still the one
       // live gesture on the screen, landing where they aimed it.
-      armedListener.fn(keyEvent('KeyG'));
+      armedListeners.find((l) => l.type === 'keydown').fn(keyEvent('KeyG'));
       assert.equal(captureArmed(), null);
       assert.equal(currentDict(controlsStaging()).get('MoveForwards'), 'KeyG');
       assert.equal(controlsStaging().usingPrimary, true);
@@ -428,6 +510,25 @@ test('FIX-F: leaving without CONTINUE discards', () => {
   const unmount = src.slice(src.indexOf('    unmount() {'));
   assert.match(unmount, /discardControlsStaging\(\);/,
     'a document listener that outlives its screen is the bug the unmount note names');
+
+  // AUDIT FT16 F10: ...on every way OUT, and nowhere else. FIX-F guarded
+  // this with `id !== 'controls'` - Controls was its own section, so a
+  // click on the section you stood in kept your staging. FT16 folded
+  // Controls into a Settings category and dropped the guard with the
+  // section, so clicking the Settings rail row WHILE REBINDING (the row
+  // is right there, and it is the section you are in) threw the staged
+  // binds away. The discard belongs to a section CHANGE.
+  const goBody = src.slice(src.indexOf('function go(id) {'), src.indexOf('// ── PX1'));
+  const goCode = goBody.replace(/\/\/[^\n]*/g, '');
+  assert.match(goCode, /if \(id !== section\) discardControlsStaging\(\);/,
+    'go() drops the staging when the section actually changes - not when the rail row is the section you are in');
+  assert.doesNotMatch(goCode, /^\s*discardControlsStaging\(\);/m,
+    'and never unconditionally (AUDIT FT16 F10)');
+  // the category tabs keep their own unconditional drop - THAT switch is
+  // a walk away from the bindings even though the section does not change
+  const tabs = src.slice(src.indexOf('if (on) { pickedKey = null; sheetOpen = true; }'));
+  assert.match(tabs.slice(0, 200), /discardControlsStaging\(\); category = cat\.id;/,
+    'leaving the controls CATEGORY still discards');
 });
 
 test('FIX-F: the ✕ prompts to remove, refuses an unbound slot, and Yes stages null', () => {

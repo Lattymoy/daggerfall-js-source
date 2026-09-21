@@ -2,7 +2,7 @@
   "name": "daggerfall-js-app",
   "productName": "Daggerfall Enhanced",
   "private": true,
-  "version": "0.1.2",
+  "version": "0.1.4",
   "description": "Daggerfall Enhanced - the downloadable desktop shell. Loads the same dist/ the website deploys; adds ARENA2-from-disk and file-backed saves.",
   "author": "Lattymoy",
   "homepage": "https://daggerfalljs.dev/",

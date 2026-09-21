@@ -205,7 +205,7 @@ test('D7: the host opens the native Repair screen when the art is up, keyed when
   const at = wm.indexOf('function openRepairService(ctx = {}) {');
   assert.ok(at > 0, 'openRepairService is gone');
   const body = wm.slice(at, at + 1100);
-  assert.match(body, /if \(b && tradeArtLoaded\(\) && _shopFont\) \{/, 'no native arm');
+  assert.match(body, /if \(b && tradeDoorReady\(\) && \(isEnhanced\(\) \|\| _shopFont\)\) \{/, 'no native arm');
   assert.match(body, /openTradeWindow\(shelf, b, 'Repair'/, 'the native arm must open the trade window in Repair mode');
   assert.match(body, /showRepairList\(0, ctx\);/, 'the keyed list must stay as the no-ARENA2 fallback');
   // ROAD-F GS1: both arms HAND BACK the window they mounted, because

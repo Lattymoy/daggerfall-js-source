@@ -38,7 +38,7 @@ test('VC2: the render target obeys the upload law - creation binds no framebuffe
   assert.match(create, /gl\.texImage3D\(gl\.TEXTURE_3D, 0, gl\.RGBA8, size, size, size, 0, gl\.RGBA, gl\.UNSIGNED_BYTE, null\);/);
   assert.match(create, /TEXTURE_WRAP_R, gl\.REPEAT\)/, 'a volume tiles on every axis');
   assert.match(rt, /export function withTarget\(gl, target, restoreViewport, draw\) \{\s*\n\s*gl\.bindFramebuffer\(gl\.FRAMEBUFFER, target\.fbo\);\s*\n\s*if \(!target\.attached\)/, 'the target attaches on its first draw');
-  assert.match(rt, /gl\.bindFramebuffer\(gl\.FRAMEBUFFER, null\);\s*\n\s*gl\.viewport\(restoreViewport\[0\], restoreViewport\[1\], restoreViewport\[2\], restoreViewport\[3\]\);/, 'and leaves the default framebuffer and the caller\'s viewport');
+  assert.match(rt, /gl\.bindFramebuffer\(gl\.FRAMEBUFFER, _frameTarget\);   \/\/ EL4: the frame, or the canvas\s*\n\s*gl\.viewport\(restoreViewport\[0\], restoreViewport\[1\], restoreViewport\[2\], restoreViewport\[3\]\);/, 'and leaves the frame target (the canvas, or the lane\'s frame image - EL4) and the caller\'s viewport');
   assert.match(rt, /gl\.framebufferTextureLayer\(gl\.FRAMEBUFFER, gl\.COLOR_ATTACHMENT0, volume\.tex, 0, z\);/, 'a volume is filled a layer at a time');
   assert.match(rt, /gl\.generateMipmap\(gl\.TEXTURE_3D\);/);
   assert.doesNotMatch(rt, /getParameter\(/, 'EV6 here too');

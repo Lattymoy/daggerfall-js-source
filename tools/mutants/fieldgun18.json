@@ -1,0 +1,79 @@
+[
+  {
+    "name": "FIELD-GUN18-1-the-orb-goes-back-to-the-archives-own-size",
+    "file": "src/characters/thunderlockIds.js",
+    "old": "export const ORB_SCALE = 0.85;",
+    "new": "export const ORB_SCALE = 1;",
+    "tests": ["test/thunderlock.test.js"]
+  },
+  {
+    "name": "FIELD-GUN18-2-the-three-host-lane-stops-scaling",
+    "file": "src/combat/arrowFlight.js",
+    "old": "            scale: ORB_SCALE,   // FIELD-GUN18: a pellet, not a fireball\n",
+    "new": "",
+    "tests": ["test/thunderlock.test.js"]
+  },
+  {
+    "name": "FIELD-GUN18-3-the-fourth-host-forgets-it",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    const size = m.flatArchive ? { w: raw.w * ORB_SCALE, h: raw.h * ORB_SCALE } : raw;",
+    "new": "    const size = raw;",
+    "tests": ["test/thunderlock.test.js"]
+  },
+  {
+    "name": "FIELD-GUN18-4-the-dungeon-shrinks-every-spell-missile-too",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    const size = m.flatArchive ? { w: raw.w * ORB_SCALE, h: raw.h * ORB_SCALE } : raw;",
+    "new": "    const size = { w: raw.w * ORB_SCALE, h: raw.h * ORB_SCALE };",
+    "tests": ["test/thunderlock.test.js"]
+  },
+  {
+    "name": "FIELD-GUN18-5-only-the-width-is-scaled-so-the-orb-is-an-egg",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    const size = m.flatArchive ? { w: raw.w * ORB_SCALE, h: raw.h * ORB_SCALE } : raw;",
+    "new": "    const size = m.flatArchive ? { w: raw.w * ORB_SCALE, h: raw.h } : raw;",
+    "tests": ["test/thunderlock.test.js"]
+  },
+  {
+    "name": "FIELD-GUN18-6-the-pools-scale-goes-back-to-multiplying-an-object",
+    "file": "src/scenes/hitEffects.js",
+    "old": "      if (scale !== 1 && entry.size) entry.size = { w: entry.size.w * scale, h: entry.size.h * scale };",
+    "new": "      if (scale !== 1 && entry.size) entry.size = Array.isArray(entry.size) ? entry.size.map((v) => v * scale) : entry.size * scale;",
+    "tests": ["test/thunderlock.test.js"]
+  },
+  {
+    "name": "FIELD-GUN18-7-the-pools-scale-is-dropped-entirely",
+    "file": "src/scenes/hitEffects.js",
+    "old": "      if (scale !== 1 && entry.size) entry.size = { w: entry.size.w * scale, h: entry.size.h * scale };",
+    "new": "",
+    "tests": ["test/thunderlock.test.js", "test/audit26_render.test.js"]
+  },
+  {
+    "name": "FIELD-GUN18-8-the-miss-effect-stops-being-scaled-by-default",
+    "file": "src/scenes/hitEffects.js",
+    "old": "showMissEffect: (kind, pos, { archive = BLOOD_ARCHIVE, record = 2, fps = 20, scale = 2 } = {})",
+    "new": "showMissEffect: (kind, pos, { archive = BLOOD_ARCHIVE, record = 2, fps = 20, scale = 1 } = {})",
+    "tests": ["test/thunderlock.test.js"]
+  },
+  {
+    "name": "FIELD-GUN18-9-billboardSize-answers-an-array-after-all",
+    "file": "src/world/rmbFlats.js",
+    "old": "  return {\n    w: (size.width + xChange) * GLOBAL_SCALE,\n    h: (size.height + yChange) * GLOBAL_SCALE,\n  };",
+    "new": "  return [(size.width + xChange) * GLOBAL_SCALE, (size.height + yChange) * GLOBAL_SCALE];",
+    "tests": ["test/thunderlock.test.js"]
+  },
+  {
+    "name": "FIELD-GUN18-10-the-pellet-icon-goes-back-to-16",
+    "file": "tools/gunPaperdoll.mjs",
+    "old": "const ammo = bake('gun-ammo-src.png', num('ammo', 12), { out: 'gun-ammo.png' });",
+    "new": "const ammo = bake('gun-ammo-src.png', num('ammo', 16), { out: 'gun-ammo.png' });",
+    "tests": ["test/gunLab.test.js"]
+  },
+  {
+    "name": "FIELD-GUN18-11-the-usage-line-and-the-default-disagree",
+    "file": "tools/gunPaperdoll.mjs",
+    "old": "//     node tools/gunPaperdoll.mjs [--length=72] [--angle=35] [--ammo=12]",
+    "new": "//     node tools/gunPaperdoll.mjs [--length=72] [--angle=35] [--ammo=16]",
+    "tests": ["test/gunLab.test.js"]
+  }
+]

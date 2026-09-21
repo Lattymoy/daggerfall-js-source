@@ -40,10 +40,11 @@
 //     PlayerMouseLook.cs:238-244); only the RELEASE is ungated.
 //   - Lock-on dot: the host projects the locked foe's chest and calls
 //     setLockDot(x, y) (or null); the layer only places a mark.
-//   - Buttons, the five that have no gesture: the DIAL (Tab, the door
+//   - Buttons, the six that have no gesture: the DIAL (Tab, the door
 //     the ENHANCED skin routes to the compass rose - PX15), JUMP
 //     (held), the weapon SHEATHE (ReadyWeapon, held), the interaction
-//     MODE cycle (T3-touch, hosts with one), and the MENU (Escape).
+//     MODE cycle (T3-touch, hosts with one), the SOCIAL door (SOC5's
+//     own action, hosts with one - AUDIT SOC C9), and the MENU (Escape).
 //     Synthetic keydown/keyup with BOTH e.key and e.code set (the input
 //     map routes on either), on the ACTION's live code - an unbound
 //     action presses nothing at all. The nav row for the CLASSIC windows (arrows,
@@ -82,6 +83,7 @@
 //   field that raises the keyboard instead of window.prompt.
 
 import { createGestureRecognizer, TAP_PX, TAP_MS } from './touchGestures.js';
+import { PIXEL_FONT_CSS } from './pixelifyFive.js';   // FONT1: the enhanced skin's face for the layer's text
 import { overlayOpen } from './enhancedOverlays.js';
 import { bindings } from './input.js';                       // AUDIT 62 F8: the live registry
 import { getBinding, getCombo } from '../systems/inputActions.js';   // GetBinding (:641-671), GetCombo (:1195-1207)
@@ -104,10 +106,11 @@ const GYRO_MAX_DT = 0.1;        // TI2: a motion sample older than this (a backg
 // enhanced skin's sheets already are (enhancedStyle.js).
 const edge = (side, px) => `${side}:calc(${px}px + env(safe-area-inset-${side}, 0px))`;
 
-export function isTouchDevice() {
-  return typeof window !== 'undefined' &&
-    ('ontouchstart' in window || (navigator.maxTouchPoints ?? 0) > 0);
-}
+// TI3: the law lives in ui/touchDevice.js (a finger as the PRIMARY
+// pointer, the sniff as the fallback, `?touch=` the door); this is the
+// name every caller imports.
+import { isTouchDevice } from './touchDevice.js';
+export { isTouchDevice };
 
 const KEY_NAMES = { KeyW: 'w', KeyA: 'a', KeyS: 's', KeyD: 'd', KeyZ: 'z', Space: ' ', ShiftLeft: 'Shift', Tab: 'Tab', Escape: 'Escape', Enter: 'Enter', ArrowUp: 'ArrowUp', ArrowDown: 'ArrowDown', Equal: '=', Minus: '-' };
 function synth(type, code) {
@@ -122,7 +125,7 @@ function synth(type, code) {
 // InputManager.GetKey's dual-dict fallthrough :1084). Move Jump off
 // Space in the controls window and the JUMP button fired whatever now
 // owned Space; move Run off ShiftLeft and the stick's 80% throw did
-// nothing. The reverse lookup is GetBinding (inputActions.js:362,
+// nothing. The reverse lookup is GetBinding (inputActions.js:451,
 // InputManager.cs:641-671) and it is exactly what the automap, rest
 // and exterior-automap windows already ask. Resolved at PRESS time, so
 // a rebind takes effect on the next touch with no re-attach.
@@ -140,7 +143,7 @@ const codesOf = (code) => (code == null ? [] : (getCombo(code) ?? [code]));
 /**
  * Attach the touch layer.
  * @param canvas the game canvas (drag surface)
- * @param hooks { look(dx,dy), attack?(dx,dy,held), tap?(x,y), locked?(), dial?, cycleMode?(), overlayActive?(), paused?() }
+ * @param hooks { look(dx,dy), attack?(dx,dy,held), tap?(x,y), locked?(), dial?, enhanced?, cycleMode?(), socialInteract?(), overlayActive?(), paused?() }
  *   TI2 adds nothing to the hooks: the analog stick is read FROM the
  *   handle (`axes()`), the gyro goes through `look`.
  *   - attack/tap/dial omitted on scenes without them (the fly-cam
@@ -157,7 +160,16 @@ export function attachTouch(canvas, hooks = {}) {
 
   const ui = document.createElement('div');
   ui.id = 'touch-ui';
-  ui.style.cssText = 'position:fixed;inset:0;pointer-events:none;z-index:5;font:600 15px system-ui,-apple-system,"Segoe UI",sans-serif;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none';
+  // FONT1 (2026-09-16, Mac: "Any enhanced UI or text must be our enhanced version"): under the enhanced skin the layer's
+  // buttons, entry field and nav are in the pixel face (ui/pixelifyFive.js PIXEL_FONT_CSS - one home); the classic skin
+  // keeps the system face it always drew. The skin cannot change without a reload, so the boot-time hook is exact.
+  const face = hooks.enhanced ? `font-weight:500;font-size:15px;${PIXEL_FONT_CSS}` : 'font:600 15px system-ui,-apple-system,"Segoe UI",sans-serif';
+  // AUDIT FONT F6: the naming field sets its OWN font shorthand (it is
+  // an <input>, which inherits nothing from the layer), so the one
+  // place on this layer a player TYPES in was the one place FONT1's
+  // face never reached. Same size, this skin's letters.
+  const entryFace = hooks.enhanced ? `font-weight:600;font-size:18px;${PIXEL_FONT_CSS}` : 'font:600 18px system-ui,-apple-system,sans-serif';
+  ui.style.cssText = `position:fixed;inset:0;pointer-events:none;z-index:5;${face};-webkit-user-select:none;user-select:none;-webkit-touch-callout:none`;
   document.body.appendChild(ui);
 
   // TI2: the haptic pulse - navigator.vibrate where the platform has it
@@ -316,6 +328,18 @@ export function attachTouch(canvas, hooks = {}) {
     const modeBtn = button('grab', edge('right', 160), edge('bottom', 16), 64,
       () => { modeBtn.textContent = hooks.cycleMode(); });
   }
+  // AUDIT SOC C9: THE PHONE'S OWN F. SOC5 gave the port an action of its
+  // own - SocialInteract, KeyF - and the whole of the social arc behind
+  // it: the menu on another player's body, and the friends and party
+  // panel when nobody is in reach. A phone has no F, and this layer had
+  // no control for it, so online on a phone could open neither. One more
+  // button beside the mode cycle, drawn only where a host hands the hook
+  // in (the same gate-by-hook rule the dial and the mode button carry -
+  // a drawn door that opens nothing is the lie this repo names), and it
+  // calls the HOST'S OWN DOOR rather than synthesizing the key: the door
+  // answers true or false on its own terms (scenes/world.js
+  // socialInteract) and an offline page is a host that passes no hook.
+  if (hooks.socialInteract) button('☺', edge('right', hooks.cycleMode ? 232 : 160), edge('bottom', 16), 48, () => { hooks.socialInteract(); });
 
   // Overlay-nav row (classic windows navigate on arrows/Enter/Esc) -
   // shown by itself while a classic overlay holds the game.
@@ -346,7 +370,7 @@ export function attachTouch(canvas, hooks = {}) {
     entry.autocapitalize = 'words';
     entry.autocomplete = 'off';
     entry.placeholder = 'name';
-    entry.style.cssText = `position:absolute;left:50%;${edge('top', 76)};transform:translateX(-50%);width:min(70vw,360px);height:48px;padding:0 16px;box-sizing:border-box;font:600 18px system-ui,-apple-system,sans-serif;color:#eee;background:rgba(14,16,19,.85);border:1px solid rgba(255,255,255,.3);border-radius:14px;outline:none;pointer-events:auto`;
+    entry.style.cssText = `position:absolute;left:50%;${edge('top', 76)};transform:translateX(-50%);width:min(70vw,360px);height:48px;padding:0 16px;box-sizing:border-box;${entryFace};color:#eee;background:rgba(14,16,19,.85);border:1px solid rgba(255,255,255,.3);border-radius:14px;outline:none;pointer-events:auto`;
     entry.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') { const t = entry.value; closeEntry(); if (t) sendText(t); }
       else if (e.key === 'Escape') closeEntry();

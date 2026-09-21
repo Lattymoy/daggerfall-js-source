@@ -106,7 +106,10 @@ test('AUDIT 28 W7: all four hosts route all three look sites (mouse, touch, keyb
     // F-C1 moved the tick behind the paused gate; it still rides the
     // frame's dt, immediately after it.
     // GP1: the pad's own tick may stand between them - it takes the same dt and must run under a pause
-    assert.match(s, /const dt = Math\.min\(0\.1, \(now - last\) \/ 1000\);\n(\s*\/\/[^\n]*\n)*(\s*gamepad\?\.tick\(dt\);[^\n]*\n)?(\s*\/\/[^\n]*\n)*\s*if \(![^\n]*\) \{\s*\n\s*if \([^\n]*\) lookFilter\.settle\(\);\s*\n\s*else lookFilter\.tick\(dt, cam\);/, `${host}: the tick rides the frame's dt`);
+    // MAC-O2: the swing arm's own line now ends in a comment naming
+    // the one seam it asks (player/lookFilter.js's swingSuppressesLook),
+    // so the line break is `[^\n]*\n`, not `\s*\n`.
+    assert.match(s, /const dt = Math\.min\(0\.1, \(now - last\) \/ 1000\);\n(\s*\/\/[^\n]*\n)*(\s*gamepad\?\.tick\(dt\);[^\n]*\n)?(\s*\/\/[^\n]*\n)*\s*if \(![^\n]*\) \{\s*\n\s*if \([^\n]*\) lookFilter\.settle\(\);[^\n]*\n\s*else lookFilter\.tick\(dt, cam\);/, `${host}: the tick rides the frame's dt`);
     assert.match(s, /const lookFilter = new LookFilter\(\);/, `${host}: one filter per camera`);
   }
 });
@@ -130,15 +133,20 @@ test('AUDIT 28 F-C1/F-C2: settle drops the owed look (SetFacing -> Init), and ev
     // TI1: the touch SWIPE is a held swing too (swipeHeld beside
     // rightHeld) - the same drop, so a swing never pays out the look
     // it interrupted whichever device holds it.
-    'src/scenes/world.js': ['gamePaused()', "(rightHeld || swipeHeld) && walkMode && modeNow() === 'exterior' && !weaponRig.playerWeapon.machine?.isBow"],
-    'src/scenes/exterior.js': ['gamePaused()', "(rightHeld || swipeHeld) && walkMode && modeNow() === 'exterior' && !weaponRig.playerWeapon.machine?.isBow"],
-    'src/scenes/dungeon.js': ['ctx.uiOverlayActive', '(rightHeld || swipeHeld) && walkMode && !ctx.weaponIsBow'],
+    // MAC-O2: the swing half is now the ONE seam, asked with this
+    // host's own screen weapon; the terms it carries (WeaponSwingMode
+    // among them) are pinned in test/maco_lookswing.test.js, and what
+    // stays here is that every host still asks it and still answers
+    // Update's three cases in this order.
+    'src/scenes/world.js': ['gamePaused()', "swingSuppressesLook({ swingHeld: rightHeld || swipeHeld, weaponIsBow: weaponRig.playerWeapon.machine?.isBow }) && walkMode && modeNow() === 'exterior'"],
+    'src/scenes/exterior.js': ['gamePaused()', "swingSuppressesLook({ swingHeld: rightHeld || swipeHeld, weaponIsBow: weaponRig.playerWeapon.machine?.isBow }) && walkMode && modeNow() === 'exterior'"],
+    'src/scenes/dungeon.js': ['ctx.uiOverlayActive', 'swingSuppressesLook({ swingHeld: rightHeld || swipeHeld, weaponIsBow: ctx.weaponIsBow }) && walkMode'],
     'src/scenes/interior.js': ['gamePaused()', 'false'],
   };
   const esc = (t) => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   for (const [host, [paused, swing]] of Object.entries(gates)) {
     const s = read(host);
-    assert.match(s, new RegExp(`if \\(!\\(?${esc(paused)}\\)?\\) \\{\\s*\\n\\s*if \\(${esc(swing)}\\) lookFilter\\.settle\\(\\);\\s*\\n\\s*else lookFilter\\.tick\\(dt, cam\\);`), `${host}: the three answers`);
+    assert.match(s, new RegExp(`if \\(!\\(?${esc(paused)}\\)?\\) \\{\\s*\\n\\s*if \\(${esc(swing)}\\) lookFilter\\.settle\\(\\);[^\\n]*\\n\\s*else lookFilter\\.tick\\(dt, cam\\);`), `${host}: the three answers`);
     if (host !== 'src/scenes/interior.js') {
       // The raw button, tracked on the window and never gated - HasAction(SwingWeapon).
       assert.match(s, /addEventListener\('mousedown', \(e\) => \{ if \(isSwingButton\(e\.button\)\) rightHeld = true;/, `${host}: down`);

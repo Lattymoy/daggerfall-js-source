@@ -72,7 +72,7 @@ const poolRig = (extra = {}) => ({
 });
 const netFor = (hits, peers, clock = { t: 0 }) => ({
   room: () => 'world:3,12', selfId: () => 'mac-0001', peers: () => peers.list, now: () => clock.t, staleMs: 0,
-  onPeerHit: (h) => { hits.push(h); return true; },
+  onPeerHit: (h, fate) => { hits.push(h); fate?.sent?.(); return true; },
   toWire: (feet) => [feet[0], feet[1], feet[2]], toScene: (p) => [p[0], p[1], p[2]],
 });
 const senses = (pe) => ({ candidates: () => [], playerEntity: pe, playerHeight: 1.8, playerCrouching: false, playerInvisible: false, movingLessThanHalfSpeed: true });
@@ -219,9 +219,9 @@ test('AUDIT WORLD6b-iii(a) by source: the sinks say whose blow it is (B2, the th
   assert.match(rd('src/scenes/world.js'), /const foeSinks = \(g, fromPlayer = true\) => \(\{[^\n]*\n\s*hurt: \(n\) => \{ if \(n > 0\) \(g\._encounter \? exteriorFoes\.damageFoe\(g, n, player\.pos, null, \{ fromPlayer, kind: 'spell' \}\) : cityGuards\.hurtGuard\(g, n, player\.pos, null, \{ fromPlayer \}\)\); \},/, 'B2: the host\'s sink reads the engine\'s provenance');
   assert.match(rd('src/scenes/cityGuards.js'), /hurtGuard: \(g, dmg, playerFeet, knockDir = null, opts = undefined\) => damageGuard\(g, dmg, playerFeet, knockDir, opts\),/, 'B2: the guard door forwards it');
   assert.match(x, /function blowAllowed\(f\) \{\s*if \(f\._pup\?\.leap\) return false;/, 'B7: the leap before the bucket');
-  assert.match(x, /if \(ok !== false\) \{ f\._castN = \(\(f\._castN \| 0\) \+ 1\) & 0xffff; f\._castIdx = spell\.index \| 0; f\._castU = recipientOf\(f\.ai\.target\); \}/, 'A9/A3: the count, the spell and the recipient at the ONE release');
+  assert.match(x, /if \(ok !== false\) \{ f\._castN = \(\(f\._castN \| 0\) \+ 1\) & 0xffff; f\._castIdx = spell\.index \| 0; f\._castU = wireRecipient\(f\.ai\.target\); \}/, 'A9/A3: the count, the spell and the recipient at the ONE release (AUDIT WATCH1: through the one home, enemyTargets.wireRecipient)');
   assert.equal((x.match(/f\._castN = /g) ?? []).length, 1, 'counted in one place');
-  assert.match(x, /if \(strikeEdge\) \{ f\._atkA = [^\n]*f\._atkB = recipientOf\(f\.ai\.target\); \}/, 'A3: the blow\'s recipient at its edge');
+  assert.match(x, /if \(strikeEdge\) \{ f\._atkA = [^\n]*f\._atkB = wireRecipient\(f\.ai\.target\); \}/, 'A3: the blow\'s recipient at its edge (AUDIT WATCH1: through the one home)');
   assert.match(x, /p\.strike = \{ kind: \(r\.a & 1\) \? 'ranged' : 'melee', at: r\.b \?\? r\.g \?\? p\.target \};/, 'the reader latches it with the strike');
   assert.match(x, /if \(p\.c != null && r\.c !== p\.c && Number\.isInteger\(r\.s\)\) p\.cast = \{ s: r\.s, at: r\.u \?\? r\.g \?\? p\.target \};/, 'and with the cast (B3: no spell, no cast)');
   assert.match(x, /const sp = recipientIsMe\(f, pc\.at\) \? \(f\.entity\.spells\?\.find\(\(x\) => \(x\.index \| 0\) === pc\.s\) \?\? null\) : null;/, 'B1: out of the puppet\'s OWN list');

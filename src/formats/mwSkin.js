@@ -133,6 +133,88 @@ export function buildSkeleton(nif) {
   return { nodes, byName };
 }
 
+/** WS1: an injected node's ref - past any record index a NIF can carry,
+ *  so it never collides with the skeleton file's own. */
+export const INJECTED_REF_BASE = 1 << 24;
+
+/** WS1: does a node carry the "BONE" NiStringExtraData the loader turns
+ *  into a CustomBone description (nifloader.cpp:630-633)? The extra
+ *  chain is walked whole (:618-640 iterates `extra` -> `next`). */
+export function hasBoneMarker(nif, rec) {
+  let e = rec?.extra ?? -1;
+  let guard = 0;
+  while (e >= 0 && guard++ < 64) {
+    const x = deref(nif, e);
+    if (!x) return false;
+    if (x.type === 'NiStringExtraData' && x.string === 'BONE') return true;
+    e = x.next ?? -1;
+  }
+  return false;
+}
+
+/**
+ * WS1 (2026-09-17; AUDIT-WS read it off the source): CUSTOM BONES,
+ * OpenMW's `use additional anim sources` (animation.cpp:1306-1322
+ * injectCustomBones -> :1284-1304 loadBonesFromFile). Every .nif under
+ * `animations/<model>/` is a bone addon. GetExtendedBonesVisitor
+ * (:218-236) collects every node carrying the "CustomBone" description
+ * - the loader's name for a NiStringExtraData "BONE" (nifloader.cpp
+ * :630-633) - together with its PARENT in the addon, and does not
+ * descend into a found bone; loadBonesFromFile then looks the parent's
+ * NAME up in the actor (FindByNameVisitor) and, when found, adds a deep
+ * copy of the bone and its subtree under it. Nothing is checked for
+ * already existing: the reference would add a second node of the name,
+ * and its bone cache answers the FIRST (rule 16), so the copy is dead -
+ * this port skips it and says so in `skipped`, the same observable. An
+ * unmarked node is never added, wherever it sits (Weapon Sheathing's
+ * `Bip01 AttachWeapon` is exactly that); a marked node whose parent the
+ * actor lacks is skipped, silently there, named here.
+ *
+ * Refs are minted above INJECTED_REF_BASE; `pose.get(ref)` misses them
+ * and skeletonSpaceMatrices poses them at rest, which is what an
+ * unanimated attach bone is.
+ *
+ * @returns {{added:string[], skipped:string[]}}
+ */
+export function injectSkeletonNodes(skeleton, addonNif) {
+  const added = [];
+  const skipped = [];
+  let next = INJECTED_REF_BASE;
+  for (const [ref] of skeleton.nodes) if (ref >= next) next = ref + 1;
+  // the deep copy: a found bone and its whole subtree, under a base ref
+  function copy(ref, parentRef) {
+    const rec = deref(addonNif, ref);
+    if (!rec || !NODE_TYPES.has(rec.type)) return;
+    const key = String(rec.name || '').toLowerCase();
+    const hereRef = next++;
+    skeleton.nodes.set(hereRef, {
+      ref: hereRef, name: rec.name || '', parent: parentRef,
+      rest: { rotation: rec.rotation, translation: rec.translation, scale: rec.scale },
+      injected: true,
+    });
+    if (key && !skeleton.byName.has(key)) skeleton.byName.set(key, hereRef);   // rule 16: the first of a name answers
+    added.push(rec.name || '(nameless)');
+    for (const child of rec.children ?? []) if (child >= 0) copy(child, hereRef);
+  }
+  // the visitor: every marked node, with its addon parent; no descent past a found bone
+  function walk(ref, parentRec) {
+    const rec = deref(addonNif, ref);
+    if (!rec || !NODE_TYPES.has(rec.type)) return;
+    if (hasBoneMarker(addonNif, rec)) {
+      const key = String(rec.name || '').toLowerCase();
+      const parentKey = String(parentRec?.name || '').toLowerCase();
+      const baseParent = parentKey ? skeleton.byName.get(parentKey) : undefined;
+      if (baseParent === undefined) { skipped.push(`${rec.name || '(nameless)'} (no "${parentRec?.name ?? ''}" here)`); return; }
+      if (key && skeleton.byName.has(key)) { skipped.push(`${rec.name} (already here)`); return; }
+      copy(ref, baseParent);
+      return;
+    }
+    for (const child of rec.children ?? []) if (child >= 0) walk(child, rec);
+  }
+  for (const root of addonNif.roots) if (root >= 0) walk(root, null);
+  return { added, skipped };
+}
+
 /**
  * RULE 56: THE ACCUMULATION ROOT IS A TWO-NAME TABLE, not a search.
  *

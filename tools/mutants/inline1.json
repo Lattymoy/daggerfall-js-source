@@ -1,0 +1,23 @@
+[
+  {
+    "name": "INLINE1-the-rule-is-an-enumeration-again",
+    "file": "vite.config.js",
+    "old": "assetsInlineLimit: (filePath) => (/[\\\\/]vendor[\\\\/]/.test(filePath) ? false : undefined),",
+    "new": "assetsInlineLimit: (filePath) => (/[\\\\/]vendor[\\\\/](?:eye-of-the-beholder|immersive-footsteps|weapon-sheathing)[\\\\/]/.test(filePath) ? false : undefined),",
+    "tests": [
+      "test/vendorinline.test.js",
+      "test/eotb_body.test.js",
+      "test/if1_immersivefootsteps.test.js"
+    ]
+  },
+  {
+    "name": "INLINE1-inline-nothing-anywhere",
+    "file": "vite.config.js",
+    "old": "assetsInlineLimit: (filePath) => (/[\\\\/]vendor[\\\\/]/.test(filePath) ? false : undefined),",
+    "new": "assetsInlineLimit: (filePath) => (/[\\\\/]vendor[\\\\/]/.test(filePath) ? false : false),",
+    "tests": [
+      "test/vendorinline.test.js",
+      "test/eotb_body.test.js"
+    ]
+  }
+]

@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -37,23 +37,48 @@ test('TR5: the T key indoors REFUSES with the HUD line, in both interior hosts',
   assert.equal(CANNOT_CHANGE_INDOORS, 'You cannot change transportation indoors.');
 });
 
-test('TR5: ONE place changes the mode, and both the pick and the dismount take it (U53)', () => {
-  const world = read('src/scenes/world.js');
-  assert.match(world, /const setTransportModeHere = \(mode\) => \{\s*\n\s*player\.setTransportMode\(mode\);/);
-  assert.match(world, /ridingAnimator\.mount\(mode\);\s*\n\s*ridingArt = null;/, 'the art is dropped on every change');
+test('TR5/MAC-K3: ONE place changes the mode - and it is ONE PLACE ACROSS THE PORT now, not one per host', () => {
+  // MAC-K3 widened U53's "one place" from one host to the whole port.
+  // It used to read `scenes/world.js`, and the law it held - one motor
+  // call, the art dropped and reloaded with the mode - was true there
+  // and simply ABSENT from `scenes/exterior.js`, which had no
+  // transport surface at all.
+  const rig = read('src/player/mountRig.js');
+  assert.match(rig, /function setMode\(mode\) \{\s*\n\s*player\.setTransportMode\(mode\);/);
+  assert.match(rig, /animator\.mount\(mode\);\s*\n\s*art = null;/, 'the art is dropped on every change');
   // The door ENDS on the art drop and the SPRITE's own load (HC1,
   // 2026-09-14: the one place loads the mount it just set, so a loaded
   // save, the Test Room's ride and the ship's landing draw a horse, not
   // only the T-key pick). MW-D42 once hung an enhanced-skin 3D-horse
   // load off this tail; that horse was removed whole (2026-09-04), and
   // nothing but TR2's CFA load may grow back here unnoticed.
-  assert.match(world, /ridingArt = null;\s*\n(?:\s*\/\/[^\n]*\n)*\s*if \(isRiding\(mode\)\) \{\s*\n\s*loadRidingArt\(fetchBytes, palette, renderer, mode\)[\s\S]{0,400}?\n\s*\}\s*\n\s*\};/,
+  assert.match(rig, /art = null;\s*\n(?:\s*\/\/[^\n]*\n)*\s*if \(isRiding\(mode\)\) \{\s*\n\s*loadRidingArt\(fetchBytes, palette, renderer, mode\)[\s\S]{0,400}?\n\s*\}\s*\n\s*\}/,
     'the door: the drop, the sprite load, and nothing else');
-  const door = world.slice(world.indexOf('const setTransportModeHere = (mode) => {'), world.indexOf('\n  };', world.indexOf('const setTransportModeHere = (mode) => {')));
+  const door = rig.slice(rig.indexOf('function setMode(mode) {'), rig.indexOf('\n  }', rig.indexOf('function setMode(mode) {')));
   assert.ok(!/pegas|mesh|rig|nif/i.test(door), 'no 3D horse hangs off it');
   // TR4 put the Ship arm in front of the mode set - it is a teleport,
-  // not a mode - so the pick reaches setTransportModeHere past it.
-  assert.match(world, /if \(mode === TRANSPORT_MODES\.Ship\) \{ boardOrDisembark\(\); return; \}\s*\n\s*setTransportModeHere\(mode\);/, 'the T-key pick');
-  assert.match(world, /setTransportMode: \(mode\) => setTransportModeHere\(mode\),/, 'and the interior hosts');
-  assert.equal((world.match(/player\.setTransportMode\(/g) ?? []).length, 1, 'one motor call, not a copy per caller');
+  // not a mode - so the pick reaches setMode past it.
+  assert.match(rig, /if \(mode === TRANSPORT_MODES\.Ship\) \{ onShip\?\.\(\); return; \}\s*\n\s*setMode\(mode\);/, 'the T-key pick');
+
+  // ONE MOTOR CALL IN THE WHOLE PORT, derived rather than counted in
+  // one file: `player.setTransportMode(` may be spelled exactly once
+  // outside the motor itself, and that once is here.
+  const callers = [];
+  const walk = (dir) => {
+    for (const e of readdirSync(new URL(`../${dir}/`, import.meta.url), { withFileTypes: true })) {
+      if (e.isDirectory()) walk(`${dir}/${e.name}`);
+      else if (e.name.endsWith('.js')) {
+        const src = read(`${dir}/${e.name}`);
+        const n = (src.match(/player\.setTransportMode\(/g) ?? []).length;
+        if (n) callers.push([`${dir}/${e.name}`, n]);
+      }
+    }
+  };
+  walk('src');
+  assert.deepEqual(callers, [['src/player/mountRig.js', 1]],
+    'one motor call, in one module - not a copy per host');
+
+  // and every host that changes the mode goes through the rig
+  assert.match(read('src/scenes/world.js'), /const setTransportModeHere = \(mode\) => mountRig\.setMode\(mode\);/);
+  assert.match(read('src/scenes/world.js'), /setTransportMode: \(mode\) => setTransportModeHere\(mode\),/, 'and the interior hosts');
 });

@@ -203,7 +203,7 @@ switch operates nowhere but the home. On the home a settings switch's
 face toggles it (there is no help sheet there to open), as prefRow's
 face does.
 
-**Not done, by name.** The standalone dev host `scenes/dungeon.js:102`
+**Not done, by name.** The standalone dev host `scenes/dungeon.js:112`
 still reads the raw location - a probe door, sized by nothing, as the
 struck Ledger C row already says. Building on the feature (Mac's
 "genuine enhanced feature we can build on") is a design decision, not
@@ -565,7 +565,9 @@ room has no stake in. All three are read every frame by the two
 exterior hosts, so a press takes effect at once, and each has a kill
 door: `wind-wisps` (`windWisps`, `?wisps=off`) - the wisps that show
 the wind; `wind-sound` (`windSound`, `?windaudio=off`) - the quiet loop
-on Daggerfall's own wind clips, silent indoors; `flora-sway`
+on Daggerfall's own wind clips, silent indoors (ES1, 2026-09-16: this
+row became `enhanced-sounds` / `soundEnhancements`, the port's own sounds
+under one switch - see below); `flora-sway`
 (`floraSway`, `?sway=off`) - the trees and plants leaning with the
 wind, the crown moving and the root still. The three drive off ONE
 mapping of the wind into working units (`systems/windDrive.js`), which
@@ -749,13 +751,13 @@ overexplanation wall of text within featured categories"*.
 
 The measurement first, because "too long" is not a defect until it has
 a number. The 28 rows carried **10,292 characters** of note between
-them - a median of 317 and a worst case of 917 (Loot rarity), with
+them - a median of 317 (the lower of the middle pair) and a worst case of 917 (Loot rarity), with
 Enhanced environments at 862 and Enhanced combat visuals at 563. The
 reading rail FT14 built shows one note at a time, which made the length
 visible in a way the old scrolling list never had: a tile you point at
 answers with four or five sentences when you asked one question.
 
-They are now **6,353 characters**, a median of 218 and a worst case of
+They are now **6,353 characters**, a median of 218 (the middle pair's mean; 217 by the lower-of-pair reading used above) and a worst case of
 429. Thirty-eight percent of the words gone, and the two longest rows
 cut by sixty and by fifty-two percent.
 
@@ -791,7 +793,7 @@ per-row rather than a sweep.
 
 FT9's law is that a vendored mod's row shows the mod's own
 `Enabled.description` from `modSettings.js`, one source, no copy. The
-eight mod rows were among the longest on the panel, so the obvious move
+seven mod rows (Dynamic Skies has none - the outdoors row is its switch) were among the longest on the panel, so the obvious move
 was a short-note override on `modFeature`. That would have been the
 band-aid: two strings for one sentence, and a second place to forget.
 
@@ -841,7 +843,7 @@ them. That is the whole of Mac's first report, and it is not a taste
 call: the list those tiles replaced had been transparent, because
 `.shell .row` had a rule and `.ft-tile` never did.
 
-Twelve rules, all scoped to `.shell`. **The scope is the design
+Eleven rule blocks (twelve selectors), all scoped to `.shell`. **The scope is the design
 decision**, and the pin holds it as firmly as the rules: repainting the
 tokens instead would have taken the pause window with it, where the
 opaque paint is correct. So the pin asserts both that the shell rules
@@ -904,3 +906,46 @@ level down.
 and your changes are dropped", and the section rail enforced that. The
 category rail has to enforce it now, or a staged bind survives a hop to
 Audio and back and lands on a Continue the player never meant.
+
+## ES1 - ENHANCED SOUNDS (2026-09-16)
+
+Mac, on the loot-cue patch (MAC-O6): "lump this in as a new enhanced
+toggle. Enhanced Sounds, add the wind noise to it."
+
+**MAC-O6** (Mac's patch, `src/ui/enhancedInventory.js`): "looting
+gold/items makes no sound." DoTransferItem plays a cue - the gold
+clink at :1569, the button click at :1583 - and the classic window
+plays it (`nativeInventory.js`); the enhanced window took the same
+`plan` from planTake/planStore and dropped `plan.sound` on the floor.
+Both `take()` and the store path play it now, ahead of the gold
+interception exactly as DFU's PlayOneShot sits ahead of that arm's
+return.
+
+**ES1**: one row over the port's own sounds. WIND3's `wind-sound` row
+IS this row now - `enhanced-sounds`, pref `soundEnhancements`, on by
+default, the player's own online, in the wind row's place on the home
+- and two things ride it: the wind loop (`systems/windAudio.js`'s
+`windSoundOn` composes the switch with its own `?windaudio=off` kill
+door) and the enhanced inventory's two transfer cues. The switch is
+`systems/enhancedSounds.js`'s `enhancedSoundsOn`: the enhanced skin
+and the pref - the classic skin plays exactly what DFU plays and
+nothing more, which is why the classic window's cue is not behind it.
+A player who had turned `windSound` off starts with the new switch on;
+the old key is read by nothing.
+
+Pins: `test/enhancedsounds.test.js` (the row, the switch executed over
+skin and pref, the wind riding it with its door, both cues behind it
+by source, the classic window's cue unchanged); `wind3_windworld` and
+`features` re-pinned on the new id and key.
+
+## QS - THE DIAMOND'S SWITCH (2026-09-17)
+
+The quickslot diamond (`10-UI/UI-Arc.md` QS) gets its row, `quickslot-
+diamond`, under Sight: an Enhanced row on a `prefs` switch (`quickslots`,
+on by default, the player's own online). It hides the DIAMOND alone -
+the three keys, the tooltip's slot buttons and the row chips keep
+working, because a player who turns the picture off has not asked to
+lose the presses; the HUD reads it each frame, guarded, and toggles one
+class. The home holds 34 rows now: 13 Enhanced, 13 Mod Authored, 10 DFU
+Classic. Pins re-aimed: FT0's id list. `test/qs3_hud.test.js` pins the
+read and the rule.

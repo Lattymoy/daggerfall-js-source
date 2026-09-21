@@ -247,7 +247,7 @@ const REP_EXPECTED = [
 test('AUDIT 64 F30: TEXT.RSC 35 renders the WORDS on the classic path', () => {
   const rows = repBoxRowsFrom(REP_RSC, [-5, 0, 5, 5, 0]);
   assert.deepEqual(rows.map((r) => r.text), REP_EXPECTED);
-  // the null guards chargen.js:1191 leans on stay
+  // the null guards chargen.js:1211 leans on stay
   assert.equal(repBoxRowsFrom(null, [-5, 0, 5, 5, 0]), null);
   assert.equal(repBoxRowsFrom(REP_RSC, null), null);
 });
