@@ -11386,7 +11386,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // filled by a fire-and-forget load whose failure leaves it null
     // forever, so the enhanced skin had no vitals for the first
     // frames and none at all when MAIN/HUD could not be read.
-    meterFor(renderer.gl)?.markCpu('hud');   // PERF-ZONE2: the HUD's preparation up to its first screen quad, where the renderer's 'air' span takes over
+    meterFor(renderer.gl)?.markCpu('hud');   // PERF-ZONE2: the HUD's preparation and its draw; PERF-READ1: it ends at the next mark below, not at the next frame's first
     {
       const _hfw = [-view[2], -view[10]];
       // X4: the Detect markers. Exterior mode's nearby pool is the
@@ -11436,6 +11436,7 @@ export async function bootWorld(canvas, renderer, params, status) {
           quickUse: (n) => quickUse(n), quickSwap: () => quickSwap(), quickOffHand: () => quickOffHand(), quickSpell: () => quickSpell(), quickSwitchHand: () => quickSwitchHand(),   // QS6   // MAC-R3: the main cell's hand switch
           weaponSheathed: !!weaponRig.playerWeapon.sheathed });   // AUDIT 28 W2: the arrow counter's drawn-bow gate   // U38 + X4 + U43
     }
+    meterFor(renderer.gl)?.markCpu('ui');   // PERF-READ1: the travel panel, the talk layer and everything else the frame draws over the HUD, to the frame's end
     // TO1: THE TRAVEL PANEL, on the HUD layer and after it - a journey's
     // controls sit over the vitals and under the talk layer, so a
     // message box still covers them. It is here rather than in the
@@ -11502,6 +11503,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         window.__shotReady = true;
       }
     }
+    meterFor(renderer.gl)?.stopCpu();   // PERF-READ1: the last span closes HERE, not at the next frame's first mark - the rAF wait is nobody's
     frameEnd();   // PERF1
     requestAnimationFrame(frame);
   }

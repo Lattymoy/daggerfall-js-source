@@ -187,3 +187,49 @@ do the pins derive, does the record say true things.
   campaign is only evidence when the file it runs is green first.
 - Campaign after the audit: 18 mutants, 18 killed, on a green file.
 
+
+## PERF-READ1 - the `hud` span was the vsync wait (2026-09-21)
+
+Mac pasted a `?perf=cpu` readout from the road: `cpu 17.15ms | hud 7.09 |
+people 4.11 | sim 2.08 | ...`, `cpu 18.55ms | hud 10.78 | ...`, `cpu
+13.53 | hud 7.76`, `cpu 11.85 | hud 5.26`, `cpu 12.56 | hud 6.23`. The
+HUD at 40 to 58 percent of the frame. It was not the HUD.
+
+**A CPU span closes at the next mark, and the next mark after the
+frame's last one was the NEXT frame's first.** `markCpu('hud')` is the
+world host's last mark; the enhanced skin draws its HUD in the DOM and
+no screen quad, so nothing in the frame resolved the image or marked
+`air`; the span ran through the travel panel, the talk layer,
+`frameEnd`, `requestAnimationFrame`'s wait - vsync, the compositor, the
+GPU if it was behind - and the next frame's head up to `markCpu
+('online')`. Which is why the totals summed, line after line, to a
+number near 60 Hz's 16.7 ms: the total was the frame PERIOD, and `hud`
+was the idle. The same deferral explained the readout's `draws 0`: the
+owed resolve ran in the next frame's `_beginLane` AFTER that line had
+reset `stats.draws` and begun a new GPU clock, so the line the resolve
+printed - the previous frame's - read zero on every enhanced-skin
+frame, and 1372 on the one frame that happened to draw a quad.
+
+Three lines. `PerfMeter.stopCpu()` closes the open span and opens
+nothing; the world host calls it where its script frame ends, so the
+wait belongs to no span and `cpu` is the script's again (the FPS
+counter carries frame time beside it; the difference is the headroom).
+The owed resolve runs before the new frame's reset, so its line carries
+its own draws. And a `ui` span opens after the HUD's draw, so `hud` is
+the HUD's preparation and draw and `ui` is the travel panel and the
+rest. Pinned on the meter with a fake clock: a frame of `sim 2, hud 1`,
+a stop, nine milliseconds of wait, the next frame's mark - `hud` is 1,
+not 10 - and the old law shown giving 10. 4 mutants, 4 dead.
+
+**What Mac's readout actually said, re-read.** Script work on the road
+was 5 to 8 ms a frame: `people` 0.3 to 4.1 (the one span that moved
+between lines - the town's pools), `sim` 1.4 to 2.3, `flats` 1 to 1.7,
+`batches` 0.8, `rig` 0.6, `ring` 0.5, `grass` 0.1 to 0.4, `world` under
+0.1. The frame was at or near 60 Hz with 8 to 11 ms of headroom in each
+line, and the GPU still cannot be timed in that browser (`gpu n/a`). The
+next paste will say whether `hud` is a fraction of a millisecond, which
+is what the code says it should be, and `ui` beside it.
+
+**The lesson: a span that ends at "the next mark" ends wherever the next
+mark happens to be, and the last span of a frame has no next mark of
+its own. Close it by hand or it measures the wait.**

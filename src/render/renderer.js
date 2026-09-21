@@ -1905,9 +1905,16 @@ export class Renderer {
    *  made. Every non-panel frame draws into a frame image, resolved by its
    *  first screen draw or by resolveFrame(). */
   _beginLane(proj, view, lightDir, world) {
-    if (world && this._perf) { this._perf.begin(); this._perf.mark('shadow'); this.stats.draws = 0; }   // EL8: the frame's clock starts with its passes; VC6d: and its first span
+    // PERF-READ1: the frame still owed resolves FIRST, under its own
+    // clock and its own counters. It used to resolve after the line
+    // below had reset `draws` and begun the new frame's clock, so the
+    // perf line it prints - the owed frame's - read `draws 0` on every
+    // frame whose resolve was deferred to here (an enhanced-skin frame
+    // draws no screen quad of its own), and its GPU clock was begun
+    // twice before it was ended once.
     if (this._air?.pending && !this._panelSaved) this._compositeAir();
     this._deckOwed = null;   // VC6c: whatever was owed is drawn; this frame's deck is its host's to set
+    if (world && this._perf) { this._perf.begin(); this._perf.mark('shadow'); this.stats.draws = 0; }   // EL8: the frame's clock starts with its passes; VC6d: and its first span
     if (this._shadows && world) this._renderPasses(proj, view, lightDir);
     // EL4: THE FRAME IMAGE - the world pass draws into it, the clear included; a panel frame keeps the canvas
     this._frameFbo = this._air && !this._panelSaved ? this._air.beginFrameTarget(this.canvas.width, this.canvas.height) : null;
