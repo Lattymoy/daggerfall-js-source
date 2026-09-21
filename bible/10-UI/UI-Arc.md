@@ -9416,7 +9416,7 @@ than because the screen agrees with a narrower port.
 stays unbuilt - an owner call, unchanged: the port has no gamepad layer
 at all, the serialized joystick blocks are simply absent from
 `KeyBindData_v1`, and the flag that says so is
-`src/systems/inputActions.js:730`. The JOYSTICK tab still answers with
+`src/systems/inputActions.js:815`. The JOYSTICK tab still answers with
 its note, and Ledger `:593`'s live clause now names that window alone.
 `weaponSensitivitySlider` is commented out in DFU itself (:42, :355) -
 nine controls are built, the tenth is a stub - and
@@ -10128,7 +10128,7 @@ if (alt.ContainsKey(code)) alt.Remove(code);        // InputManager.cs:729-734
 - and for a SECONDARY write the "other" dict IS the primary, so a
 secondary Jump written onto `ShiftLeft` deletes Run's primary row, and
 the reverse order deletes Jump's secondary row by the same line. The
-port carries it at `inputActions.js:418-419`. Either order collapses the
+port carries it at `inputActions.js:469-470`. Either order collapses the
 pair.
 
 The route that DOES produce it is the LOAD path. `LoadActionKeybinds`
@@ -10139,7 +10139,7 @@ if (!dict.ContainsKey(key) && actionVal != Actions.Unknown)
     dict.Add(key, actionVal);                       // InputManager.cs:1950-1969
 ```
 
-- ported at `inputActions.js:579-589`, whose own comment already said
+- ported at `inputActions.js:649-659`, whose own comment already said
 "Raw map-set, NOT setBinding". So a hand-edited `KeyBindings.txt` that
 puts Jump on the run key as a SECONDARY, with the primary `Space` spent
 on something else, loads exactly as written; and it SURVIVES the
@@ -16389,7 +16389,7 @@ UNDER the strip rather than at a box that now contains it. All four new
 checks fail against the shipped code.
 
 **F5 - THE ROW NAMED A KEY CALLED NONE.** `buttonText(null)` is
-KeyCode.None's own string (`systems/controlsConfig.js:222`), so a
+KeyCode.None's own string (`systems/controlsConfig.js:223`), so a
 player who CLEARED the character-sheet binding was handed a plate
 reading A LEVEL AWAITS / NONE - an instruction to press a key that does
 not exist, which is the bug the registry lookup was there to prevent
@@ -16459,3 +16459,104 @@ Oghma Infinium read while a level is already owed DOES eat that level's
 re-raises the flag on the next pass because `level` is still behind the
 calculated one - the mechanism `advancement.js:173-179` was written for,
 verified by running it rather than by reading it.
+
+## PAD1 - THE PAD PASS (2026-09-21)
+
+**Mac: "Next I wanna do a comprehensive pass on m/kb keybinds and
+controller support. Ensuring all mods and keybinds are supported
+(including the quickbar)."**
+
+**The map first.** Forty-nine actions in one registry
+(`systems/inputActions.js`, DFU's forty-four and the port's five - the
+social key and the four quickslots), two dicts (DFU's primary and
+secondary, single-bind each), pad buttons as KEYS (GP1: the poller
+synthesises a keydown whose code is Unity's own `JoystickButtonN`, and
+the sixteen axis keys `JoystickAxisNButtonM` the same), a joystick UI
+dict for the four clicks, two controls screens each with the
+primary/secondary toggle and a capture, and five mod keys - Handheld
+Torches' toggle, drop and throw, Eye of the Beholder's shoulder and
+auto-toggle - read as TextKeys through one KeyCode table
+(`systems/keyCodes.js`) and polled off the hosts' raw key set. Every
+quickslot action is routed in all four hosts and drawn in the enhanced
+pane; the quickbar tags read both dicts and draw a glyph while the pad
+is the live device. That much was sound. Four gaps:
+
+**A. The enhanced pane could not bind a pad button - a bug.** The poller
+dispatched its synthetic keydown on the WINDOW. The pane's capture is a
+listener on the DOCUMENT (a capture listener, so it beats the hosts'
+ladders). An event dispatched at the window has a path of one and never
+reaches a document listener, capture or not; `tools/padDispatchProbe.mjs`
+prints Chromium doing exactly that. The hosts listen on the window and
+saw every button, which is why the pad PLAYED and nothing looked broken
+- only the one door a player rebinds through was shut. The poller
+dispatches on the document now (its listeners first, then the window's
+by bubbling; a node harness without a document takes the window).
+
+**B. A mod key could not name a pad button.** The KeyCode table carried
+no `JoystickButtonN`, so the mod pane refused a pad press as "a key
+Unity has no member for" - which is false: Unity's KeyCode names twenty,
+and a mod's `Enum.TryParse<KeyCode>` takes every one. The twenty are in
+the table; a pad press captures, stores as the Unity name the mod's own
+parser accepts, and polls off the raw set the poller fills. The torch's
+drop and throw and the camera's two keys can live on a pad.
+
+**C. No pad defaults for any action - DFU's own state, kept until now.**
+Out of the box a pad moved and looked (the axis dict) and clicked (A
+left, Y right, X middle, B back), so it activated, swung and autoran
+through the mouse codes those clicks stand for - and could not jump,
+crouch, pause, open the pack, the spellbook or a quickslot until each
+was bound by hand in the grid. `DEFAULT_SECONDARY_BINDINGS`: twelve rows
+in the SECONDARY dict (every action already holds its keyboard key in
+the primary, and DFU is single-bind per dict), on pad-only codes, filled
+by `testSetBinding` alone - a missing action, on a free code, never
+marked removed - in a full reset AND in the load-time autofill, so a
+file written before this slice gains them at the next boot and a
+player's own secondaries stand. LB crouch, RB jump, View pack, Menu
+pause, L3 run, R3 ready weapon, LT spellbook (CastSpell - the cast is
+the attack click, DFU's own), RT swing beside Y, and THE D-PAD IS THE
+QUICKSLOT DIAMOND: up and down the consumables, left the spell, right
+the off hand. The UI dict is untouched. **The mark:** DFU never
+autofilled a secondary, so it never needed `removedSecondary`; the pad
+rows do, or a row a player cleared on purpose would come back at every
+boot. `addRemovedSecondaryAction`, set by the screens' staged apply
+exactly as the primary's is, saved as `removedSecondaryActions`, loaded
+by the one law the secondary dict needs - a mark holds for an action
+with no SECONDARY (the primary's "bound nowhere" would never hold: the
+action's keyboard key is always there). A Ledger A row, DEFAULTS ONLY.
+
+**D. No glyph for a d-pad or a trigger**, so a quickslot on the d-pad
+would have printed `JOYSTICKAX...` on the HUD. Six axis keys have
+bitmaps in both families (`GLYPH_AXIS_KEYS`): a cross with the pressed
+arm filled, and LT/RT, L2/R2 pills; `unityButtonGlyph` names them and
+the tag law draws them.
+
+**What the derivation found, and left.** Every registry action is read
+by code somewhere in `src/` outside the registry and its editors -
+except FOUR: `ToggleConsole` (the port's console has its own door),
+`Slide`, `CenterView` and `PrintScreen`. DFU's C# is not on this
+container, so whether DFU itself consumes the last three is not
+verified here; they are recorded, pinned as exactly four, and a fifth
+- or one of these gaining a reader - reddens the suite.
+
+**Pinned** in `test/pad1.test.js` (10): the dispatch target with a fake
+document and the REAL synth; the twenty names both ways and every
+vendored mod's TextKey default (an axis-named setting and an unbound
+one excepted, by name); the layout's laws (pad-only, once each, off the
+UI buttons and the keyboard, every quickslot on the d-pad); the store
+through a full reset, the autofill, a player's own secondary, a cleared
+row saved, loaded and not resurrected, an old file gaining the rows;
+the screens' apply marking a cleared row; the frame reading a d-pad key
+as the quickslot through the registry; the six glyphs and the tag; and
+the derived four; and THE CONSEQUENCE - a combo bound on a pad-defaulted
+action is double-bound, so DFU's modifier-first law applies where the
+single-bound quirk (R9) used to, and clearing the pad row brings the
+quirk back byte for byte; and (Mac: "changing the keybind on the quick
+pane should change the glyph also") the chip follows the live registry
+through the pane's own apply - the diamond reads `bindings()` every
+frame and keys its repaint on the bound code, so a rebind is a new
+picture on the next frame. Campaign `tools/mutants/pad1.json`: 14 mutants, 14
+killed, on a green file - the first two runs were on a file that did
+not load (a trailing comment swallowed a one-line statement, twice),
+and read 14/14 both times; PERF-RIG1's F3 lesson again, caught by
+reading the pass count against the run.
+

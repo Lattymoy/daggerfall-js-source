@@ -13,42 +13,38 @@ const require = createRequire(import.meta.url);
 const { parseReleaseTag, parseVersion, isNewerRelease } = require('../app/lib/updateCheck.cjs');
 const root = path.join(path.dirname(new URL(import.meta.url).pathname), '..');
 
-test('DA6/REL1: the tag the marker cuts IS the version the app reports', () => {
-  // THE NAG THIS FILE EXISTS TO PREVENT, arriving through the one door
-  // DA6 never watched.
-  //
-  // Two files carry this one number and nothing held them together:
-  // `.github/DESKTOP_RELEASE` names the TAG the release is cut at, and
-  // `app/package.json`'s version is what electron-builder stamps into
-  // the installers and what `app.getVersion()` answers at runtime
-  // (app/main.cjs:258). Bump the marker alone and the release is built
-  // from the right commit, named for the wrong version, and - because
-  // `isNewerRelease(app.getVersion(), latest.tag)` is then TRUE - every
-  // fresh install of it announces an update it already has. A
-  // permanent nag on a brand new download.
-  //
-  // That is exactly the "wrong-newer" failure this file's own header
-  // names, and every pin here was aimed at the COMPARE. The compare was
-  // never wrong; the two numbers it compares had drifted apart, which
-  // no amount of testing `isNewerRelease` can see.
-  //
-  // It happened on app-v0.1.3, and app-v0.1.1 and app-v0.1.2 were both
-  // correct - so this is not a standing bug, it is a step somebody has
-  // to remember, which is the definition of a rule that wants a gate.
-  const marker = fs.readFileSync(path.join(root, '.github/DESKTOP_RELEASE'), 'utf8').split('\n')[0].trim();
+test('DA6/REL1/REL3: the release\'s number is ONE variable - the tag and the stamp both read it, and the committed version is only the base', () => {
+  // THE NAG THIS FILE EXISTS TO PREVENT: app-v0.1.3 was cut from a
+  // marker bumped alone, named for one version and stamped with the
+  // last, so every fresh install announced an update it already had.
+  // REL1 gated the two files together. REL3 (Mac: "auto push a release
+  // on each merge") removed the second file: the version is DERIVED in
+  // the workflow - MAJOR.MINOR from app/package.json's committed base,
+  // PATCH from the commit count on main - into one shell variable, and
+  // both the release tag and the `npm version` stamp electron-builder
+  // bakes in read that variable. There is no second number to drift.
+  const wf = fs.readFileSync(path.join(root, '.github/workflows/release-desktop.yml'), 'utf8');
+  assert.match(wf, /TAG="app-v\$\{BASE\}\.\$\(git rev-list --count HEAD\)"/, 'a main push derives the tag from the base and the commit count');
+  assert.match(wf, /BASE=\$\(node -p "require\('\.\/app\/package\.json'\)\.version\.split\('\.'\)\.slice\(0,2\)\.join\('\.'\)"\)/, 'the base is the committed MAJOR.MINOR');
+  assert.match(wf, /case "\$TAG" in app-v\*\) VERSION="\$\{TAG#app-v\}" ;;/, 'the version IS the tag, less its prefix');
+  assert.match(wf, /npm version "\$\{\{ steps\.reltag\.outputs\.version \}\}" --no-git-tag-version --allow-same-version/, 'the stamp reads the same output');
+  assert.match(wf, /tag_name: \$\{\{ steps\.reltag\.outputs\.tag \}\}/, 'the release is cut at the same output');
+  assert.match(wf, /fetch-depth: 0/, 'the count needs the whole history');
+  assert.ok(!fs.existsSync(path.join(root, '.github/DESKTOP_RELEASE')), 'the marker file is retired - a second number is a drift waiting to happen');
+  assert.doesNotMatch(wf, /DESKTOP_RELEASE/, 'and nothing reads it');
+  // the committed version is the BASE: CI owns the patch, so it is 0 here
   const appVersion = JSON.parse(fs.readFileSync(path.join(root, 'app/package.json'), 'utf8')).version;
-  assert.equal(marker, `app-v${appVersion}`,
-    `.github/DESKTOP_RELEASE says "${marker}" and app/package.json says "${appVersion}". `
-    + 'A release cut here would be named for one version and report the other, and every fresh '
-    + 'install would nag about an update it already has. Bump BOTH.');
-  // ...and the tag it names has to be one this file's own parser takes,
-  // or the update check reads the newest release as nothing at all.
-  assert.deepEqual(parseReleaseTag(marker), parseVersion(appVersion),
-    'the marker and the app version must parse to the SAME triple');
-  assert.notEqual(parseReleaseTag(marker), null, 'the marker is a tag release-desktop can cut');
-  // The compare against ITSELF is never newer - which is the property
-  // that makes a correctly-stamped install quiet.
-  assert.equal(isNewerRelease(appVersion, marker), false, 'a build of this very release must not nag');
+  assert.match(appVersion, /^\d+\.\d+\.0$/, `app/package.json carries the base MAJOR.MINOR.0, not a hand-bumped patch (${appVersion})`);
+  // ...and the derived shape is one this file's own parser takes, newer than anything hand-cut
+  const derived = `app-v${appVersion.split('.').slice(0, 2).join('.')}.960`;
+  assert.deepEqual(parseReleaseTag(derived), [0, 1, 960]);
+  assert.equal(isNewerRelease('0.1.5', derived), true, 'a commit-count patch outranks every hand-cut release');
+  assert.equal(isNewerRelease('0.1.960', derived), false, 'a build of this very release must not nag');
+  // every main push is a release: no paths filter narrows the door, and runs queue rather than cancel
+  const on = wf.slice(wf.indexOf('\non:'), wf.indexOf('\npermissions:'));
+  assert.match(on, /branches:\n\s+- main\n/, 'main pushes cut releases');
+  assert.doesNotMatch(on, /paths:/, 'every merge, not a marker');
+  assert.match(wf, /concurrency:\n  group: release-desktop\n  cancel-in-progress: false/, 'a release half uploaded is worse than one late');
 });
 
 test('DA6: only the app-v shape release-desktop cuts parses as a release tag', () => {
