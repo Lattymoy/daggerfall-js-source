@@ -1,0 +1,142 @@
+[
+ {
+  "name": "GRASSPX-the-sheet-has-a-soft-edge",
+  "file": "src/render/grassPixelArt.js",
+  "old": "    out[i + 3] = 255;\n  };",
+  "new": "    out[i + 3] = 200;\n  };",
+  "tests": ["test/grasspx.test.js"]
+ },
+ {
+  "name": "GRASSPX-every-tip-is-the-highlight",
+  "file": "src/render/grassPixelArt.js",
+  "old": "  if (isTip && height >= 20) return 4;",
+  "new": "  if (isTip) return 4;",
+  "tests": ["test/grasspx.test.js"]
+ },
+ {
+  "name": "GRASSPX-the-tone-byte-does-not-round-trip-the-shaders-decode",
+  "file": "src/render/grassPixelArt.js",
+  "old": "export const toneByte = (tone) => tone >= PX_TONES ? 255 : tone * 64;",
+  "new": "export const toneByte = (tone) => tone >= PX_TONES ? 255 : tone * 50;",
+  "tests": ["test/grasspx.test.js"]
+ },
+ {
+  "name": "GRASSPX-the-tip-may-leave-the-tuft",
+  "file": "src/render/grassPixelArt.js",
+  "old": "    lean = Math.max(1 - x0, Math.min(w - 2 - x0, lean));",
+  "new": "    lean = lean;",
+  "tests": ["test/grasspx.test.js"]
+ },
+ {
+  "name": "GRASSPX-the-mip-takes-the-last-blade-texel-not-the-first",
+  "file": "src/render/grassPixelArt.js",
+  "old": "          if (data[i + 3] > best) { best = data[i + 3]; bi = i; }",
+  "new": "          if (data[i + 3] >= best) { best = data[i + 3]; bi = i; }",
+  "tests": ["test/grasspx.test.js"]
+ },
+ {
+  "name": "GRASSPX-the-mip-chain-stops-short-of-1x1",
+  "file": "src/render/grassPixelArt.js",
+  "old": "  while (levels[levels.length - 1].width > 1 || levels[levels.length - 1].height > 1) levels.push(downsampleMax(levels[levels.length - 1]));",
+  "new": "  while (levels[levels.length - 1].width > 2) levels.push(downsampleMax(levels[levels.length - 1]));",
+  "tests": ["test/grasspx.test.js"]
+ },
+ {
+  "name": "GRASSPX-the-mip-averages-alpha-so-a-far-tuft-vanishes",
+  "file": "src/render/grassPixelArt.js",
+  "old": "      out[o] = data[bi]; out[o + 1] = data[bi + 1]; out[o + 2] = data[bi + 2]; out[o + 3] = data[bi + 3];",
+  "new": "      let sa = 0; for (let dy = 0; dy < 2; dy++) for (let dx = 0; dx < 2; dx++) sa += data[((Math.min(height - 1, y * 2 + dy)) * width + Math.min(width - 1, x * 2 + dx)) * 4 + 3];\n      out[o] = data[bi]; out[o + 1] = data[bi + 1]; out[o + 2] = data[bi + 2]; out[o + 3] = sa >> 2;",
+  "tests": ["test/grasspx.test.js"]
+ },
+ {
+  "name": "GRASSPX-the-tuft-index-is-unclamped-so-a-phase-of-one-samples-past-the-sheet",
+  "file": "src/render/labGrass.js",
+  "old": "      + '  vVar = min(floor(aPC.a * uPxVariants), uPxVariants - 1.0);',",
+  "new": "      + '  vVar = floor(aPC.a * uPxVariants);',",
+  "tests": ["test/grasspx.test.js"]
+ },
+ {
+  "name": "GRASSPX-the-air-texel-is-not-discarded",
+  "file": "src/render/labGrass.js",
+  "old": "      + '    if (px.a < 0.5 || vFade < bayer4(gl_FragCoord.xy)) discard;\\n'",
+  "new": "      + '    if (vFade < bayer4(gl_FragCoord.xy)) discard;\\n'",
+  "tests": ["test/grasspx.test.js"]
+ },
+ {
+  "name": "GRASSPX-the-sheet-is-sampled-upside-down",
+  "file": "src/render/labGrass.js",
+  "old": "      + '    vec4 px = texture(uPxSheet, vec2((vVar + vUV.x) / uPxVariants, vUV.y));\\n'",
+  "new": "      + '    vec4 px = texture(uPxSheet, vec2((vVar + vUV.x) / uPxVariants, 1.0 - vUV.y));\\n'",
+  "tests": ["test/grasspx.test.js"]
+ },
+ {
+  "name": "GRASSPX-the-bayer-form-is-wrong-in-one-bit",
+  "file": "src/render/labGrass.js",
+  "old": "      + '  int m = ((x & 1) << 3) | ((q.y & 1) << 2) | (x & 2) | ((q.y & 2) >> 1);\\n'",
+  "new": "      + '  int m = ((x & 1) << 3) | ((q.y & 1) << 2) | ((x & 2) << 1) | ((q.y & 2) >> 1);\\n'",
+  "tests": ["test/grasspx.test.js"]
+ },
+ {
+  "name": "GRASSPX-the-sward-shade-still-climbs-the-quad",
+  "file": "src/render/labGrass.js",
+  "old": "    to: '  c *= (uAmb * 1.25 * (0.42 + 0.58*t) + uSunCol',",
+  "new": "    to: '  c *= (uAmb * 1.25 * (0.42 + 0.58*vT) + uSunCol',",
+  "tests": ["test/grasspx.test.js"]
+ },
+ {
+  "name": "GRASSPX-an-edit-that-lands-twice-is-shrugged-at",
+  "file": "src/render/labGrass.js",
+  "old": "    if (out.indexOf(e.from, at + 1) >= 0) throw new Error(`grass edit lands twice: ${e.why}`);",
+  "new": "",
+  "tests": ["test/grasspx.test.js"]
+ },
+ {
+  "name": "GRASSPX-the-sheet-is-filtered",
+  "file": "src/render/labGrass.js",
+  "old": "    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST_MIPMAP_NEAREST);",
+  "new": "    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);",
+  "tests": ["test/grasspx.test.js"]
+ },
+ {
+  "name": "GRASSPX-only-the-first-level-is-uploaded-so-the-texture-is-incomplete",
+  "file": "src/render/labGrass.js",
+  "old": "    for (let i = 0; i < mips.length; i++) gl.texImage2D(",
+  "new": "    for (let i = 0; i < 1; i++) gl.texImage2D(",
+  "tests": ["test/grasspx.test.js"]
+ },
+ {
+  "name": "GRASSPX-a-junk-style-is-smooth-while-the-pane-says-pixel",
+  "file": "src/render/grassPixelArt.js",
+  "old": "export const pixelGrass = (style) => style !== 'smooth';",
+  "new": "export const pixelGrass = (style) => style === 'pixel';",
+  "tests": ["test/grasspx.test.js"]
+ },
+ {
+  "name": "GRASSPX-the-sheet-rides-the-zero-fields-unit",
+  "file": "src/render/labGrass.js",
+  "old": "    gl.activeTexture(gl.TEXTURE4); gl.bindTexture(gl.TEXTURE_2D, this.pxSheet);\n    gl.uniform1i(u.uPxSheet, 4);",
+  "new": "    gl.activeTexture(gl.TEXTURE3); gl.bindTexture(gl.TEXTURE_2D, this.pxSheet);\n    gl.uniform1i(u.uPxSheet, 3);",
+  "tests": ["test/grasspx.test.js"]
+ },
+ {
+  "name": "GRASSPX-the-host-reads-no-style-so-the-row-is-dead",
+  "file": "src/scenes/world.js",
+  "old": "        LAB_GRASS.range, getPref('grassStyle'));   // GRASS-PX",
+  "new": "        LAB_GRASS.range);   // GRASS-PX",
+  "tests": ["test/grasspx.test.js"]
+ },
+ {
+  "name": "GRASSPX-the-row-ships-smooth",
+  "file": "src/systems/features.js",
+  "old": "key: 'grassStyle', initial: 'pixel',",
+  "new": "key: 'grassStyle', initial: 'smooth',",
+  "tests": ["test/grasspx.test.js"]
+ },
+ {
+  "name": "GRASSPX-the-renderer-compiles-the-labs-text-so-the-pixel-uniforms-do-not-exist",
+  "file": "src/render/labGrass.js",
+  "old": "    gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, LAB_GRASS_HEAD + GAME_GRASS_FS));",
+  "new": "    gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, LAB_GRASS_HEAD + LAB_GRASS_FS));",
+  "tests": ["test/grasspx.test.js"]
+ }
+]

@@ -27,6 +27,7 @@
 
 import { frustumPlanes, aabbOutside } from './frustum.js';   // PERF2: the field draws only the cells in view
 import { smoothstep } from '../systems/mathf.js';   // GRASS2: the host's blade budget is a bound on the shader's fade, so the two must be the SAME curve
+import { buildTuftMips, pixelGrass, PX_RAMP_STEPS, PX_STEP_HZ, PX_TUFT_SCALE, PX_LEAN_STEPS, PX_TINT_BANDS } from './grassPixelArt.js';   // GRASS-PX: the tuft sheet and the pixel style's numbers
 
 /**
  * GRASS2: THE DEPARTURES FROM THE LAB, AS DATA.
@@ -311,6 +312,143 @@ void main(){
   // part - the tips through a gradient - rather than a planted line.
   o = vec4(c, vFade * smoothstep(0.0, 0.30, vT));
 }`;
+
+/**
+ * GRASS-PX: THE PIXEL STYLE, AS DECLARED EDITS ON THE LAB'S TEXT.
+ *
+ * The lab's two stages above stay what the pin says they are: the lab's
+ * own text (plus GRASS2's five). The pixel style is a SECOND list of
+ * edits laid on top of them, and what the game compiles is
+ * `GAME_GRASS_VS` / `GAME_GRASS_FS` = the lab's text with both lists
+ * applied. The pin in test/grasspx.test.js re-applies the list and
+ * compares, and holds that every `from` is found exactly once - so a
+ * lab line that moved cannot turn an edit into a silent no-op, and a
+ * change to the compiled text that is not on a list still fails.
+ *
+ * Both styles live in ONE program and a float uniform picks between
+ * them, so a player flipping the row in Settings changes a uniform and
+ * not a program: no recompile, no second set of buffers, no second
+ * field. Every pixel term is `mix(lab, pixel, uPixel)` or a branch on
+ * it, and with the uniform at zero the arithmetic is the lab's to the
+ * last operation.
+ */
+export const GRASSPX_VS_EDITS = Object.freeze([
+  Object.freeze({
+    why: 'the pixel style\'s numbers: the switch, the sway\'s frame rate, the tuft\'s width, the lean\'s steps, the sheet\'s tuft count',
+    from: 'uniform float uCellSize;           // GRASS5: how wide a cell is, so a 0..1 lane is metres\n',
+    to: 'uniform float uCellSize;           // GRASS5: how wide a cell is, so a 0..1 lane is metres\n'
+      + 'uniform float uPixel, uPxStepHz, uPxTuftScale, uPxLeanSteps, uPxVariants;   // GRASS-PX: 0 is the lab\'s blade, 1 the tuft sprite\n',
+  }),
+  Object.freeze({
+    why: 'the fragment stage needs the quad\'s own texel and which tuft this blade wears - the tuft is flat, so one blade is one sprite',
+    from: 'out float vMoonLam;                     // WIND4: the moon\'s lambert, beside the sun\'s\n',
+    to: 'out float vMoonLam;                     // WIND4: the moon\'s lambert, beside the sun\'s\n'
+      + 'out vec2 vUV; flat out float vVar;      // GRASS-PX: the tuft\'s texel, and which tuft\n',
+  }),
+  Object.freeze({
+    why: 'the sway is sampled at a hand-animator\'s frame rate, so a gust hops through poses instead of gliding',
+    from: '  float gust = sin(uTime*1.7 - along*0.35 + aInst.w*0.6) * 0.5 + 0.5;',
+    to: '  float tq = mix(uTime, floor(uTime * uPxStepHz) / uPxStepHz, uPixel);   // GRASS-PX: the clock the sway reads, stepped in the pixel style\n'
+      + '  float gust = sin(tq*1.7 - along*0.35 + aInst.w*0.6) * 0.5 + 0.5;',
+  }),
+  Object.freeze({
+    why: 'and the lean itself is snapped to steps, so between two frames a tuft is in one pose or the next and never between',
+    from: '  vec2 lean = aInst2.xy + wdir * push * 0.055;',
+    to: '  vec2 lean = aInst2.xy + wdir * push * 0.055;\n'
+      + '  lean = mix(lean, floor(lean * uPxLeanSteps + 0.5) / uPxLeanSteps, uPixel);   // GRASS-PX',
+  }),
+  Object.freeze({
+    why: 'the pixel quad is not tapered - the sprite carries the shape - and it is wide enough to hold a 1:2 tuft',
+    from: '  p.xz += side * (aCorner.x-0.5) * aInst2.w * (1.0 - vT*0.75);',
+    to: '  p.xz += side * (aCorner.x-0.5) * aInst2.w * mix(1.0 - vT*0.75, uPxTuftScale, uPixel);   // GRASS-PX',
+  }),
+  Object.freeze({
+    why: 'the texel is the corner, and the tuft is chosen by the blade\'s own phase, which is already one uniform random per blade',
+    from: '  vGround = aGround;                      // GR4: carried to the root',
+    to: '  vGround = aGround;                      // GR4: carried to the root\n'
+      + '  vUV = aCorner;                          // GRASS-PX\n'
+      + '  vVar = min(floor(aPC.a * uPxVariants), uPxVariants - 1.0);',
+  }),
+]);
+
+export const GRASSPX_FS_EDITS = Object.freeze([
+  Object.freeze({
+    why: 'the two varyings the vertex stage now sends',
+    from: 'in vec3 vGround; in float vMoonLam;   // WIND4: appended, so the lab\'s own locator still finds this line\n',
+    to: 'in vec3 vGround; in float vMoonLam;   // WIND4: appended, so the lab\'s own locator still finds this line\n'
+      + 'in vec2 vUV; flat in float vVar;   // GRASS-PX\n',
+  }),
+  Object.freeze({
+    why: 'the sheet, the switch, the ramp\'s steps, the tuft count, and the tint\'s bands; then the ordered dither and the sample itself at the top of main',
+    from: 'out vec4 o;\nvoid main(){',
+    to: 'uniform float uPixel, uPxSteps, uPxVariants, uPxTintBands; uniform sampler2D uPxSheet;   // GRASS-PX\n'
+      + 'out vec4 o;\n'
+      + '// GRASS-PX: the 4x4 Bayer matrix as bit arithmetic - a const array\n'
+      + '// indexed at runtime is the kind of thing a driver gets wrong, and\n'
+      + '// the closed form is four operations. (x xor y, y) bit-interleaved and\n'
+      + '// reversed is the classic matrix: 0 8 2 10 / 12 4 14 6 / 3 11 1 9 / 15 7 13 5.\n'
+      + 'float bayer4(vec2 fc){\n'
+      + '  ivec2 q = ivec2(fc) & 3; int x = q.x ^ q.y;\n'
+      + '  int m = ((x & 1) << 3) | ((q.y & 1) << 2) | (x & 2) | ((q.y & 2) >> 1);\n'
+      + '  return (float(m) + 0.5) / 16.0;\n'
+      + '}\n'
+      + 'void main(){\n'
+      + '  // GRASS-PX: THE TUFT. The quad wears one of the sheet\'s tufts; a\n'
+      + '  // texel that is air is discarded outright (no soft edge, ever), and\n'
+      + '  // the distance fade is an ORDERED DITHER against the screen rather\n'
+      + '  // than a transparency - the way a paletted screen faded anything.\n'
+      + '  // What the texel carries stands in for the lab\'s own terms below:\n'
+      + '  // its tone picks the flat colour, its height along its own blade is\n'
+      + '  // what the root-to-tip light reads, and its blade ordinal shades\n'
+      + '  // the tuft\'s blades apart.\n'
+      + '  float t = vT; float pxTone = 0.0; float pxBlade = 0.0;\n'
+      + '  if (uPixel > 0.5) {\n'
+      + '    vec4 px = texture(uPxSheet, vec2((vVar + vUV.x) / uPxVariants, vUV.y));\n'
+      + '    if (px.a < 0.5 || vFade < bayer4(gl_FragCoord.xy)) discard;\n'
+      + '    pxTone = floor(px.r * 4.0 + 0.5); t = px.g; pxBlade = px.b;\n'
+      + '  }',
+  }),
+  Object.freeze({
+    why: 'the gradient runs along the drawn stalk; in the pixel style the colour is one of three flat tones, and the patch tint is banded',
+    from: '  vec3 c = mix(root, mid, smoothstep(0.0,0.55,vT));\n  c = mix(c, tip, smoothstep(0.5,1.0,vT));\n  c *= 0.80 + vTint*0.42;',
+    to: '  vec3 c = mix(root, mid, smoothstep(0.0,0.55,t));\n  c = mix(c, tip, smoothstep(0.5,1.0,t));\n'
+      + '  if (uPixel > 0.5) c = (pxTone < 1.5 ? root : (pxTone < 2.5 ? mid : tip)) * (0.92 + pxBlade * 0.16);   // GRASS-PX: three flat tones, and the tuft\'s blades a shade apart\n'
+      + '  c *= 0.80 + mix(vTint, floor(vTint * uPxTintBands) / uPxTintBands, uPixel) * 0.42;   // GRASS-PX: the patch tint in bands',
+  }),
+  Object.freeze({
+    why: 'the sward\'s shade climbs the drawn stalk, not the quad',
+    from: '  c *= (uAmb * 1.25 * (0.42 + 0.58*vT) + uSunCol',
+    to: '  c *= (uAmb * 1.25 * (0.42 + 0.58*t) + uSunCol',
+  }),
+  Object.freeze({
+    why: 'the rim lands on the one highlight texel in the pixel style - a whole step of sun on one pixel, which is what a hand-set highlight is',
+    from: '  c += uSunCol * (uSunScale * 0.20) * smoothstep(0.86,1.0,vT) * vLam;',
+    to: '  c += uSunCol * (uSunScale * 0.20) * mix(smoothstep(0.86,1.0,t), step(3.5, pxTone), uPixel) * vLam;   // GRASS-PX',
+  }),
+  Object.freeze({
+    why: 'the lit colour is snapped to a short luminance ramp (the hue is kept, so a dusk field is still the colour of dusk), and the alpha is hard',
+    from: '  o = vec4(c, vFade * smoothstep(0.0, 0.30, vT));',
+    to: '  if (uPixel > 0.5) { float l = dot(c, vec3(0.299, 0.587, 0.114)); c *= (floor(l * uPxSteps + 0.5) / uPxSteps) / max(l, 1e-4); }   // GRASS-PX: the ramp\n'
+      + '  o = vec4(c, mix(vFade * smoothstep(0.0, 0.30, vT), 1.0, uPixel));',
+  }),
+]);
+
+/** apply a list of `{from, to}` edits to a text, each `from` found
+ *  EXACTLY once - zero is a lab that moved, two is an edit that would
+ *  land twice, and either is an error and not a shrug */
+export function applyGrassEdits(text, edits) {
+  let out = text;
+  for (const e of edits) {
+    const at = out.indexOf(e.from);
+    if (at < 0) throw new Error(`grass edit not found: ${e.why}`);
+    if (out.indexOf(e.from, at + 1) >= 0) throw new Error(`grass edit lands twice: ${e.why}`);
+    out = out.slice(0, at) + e.to + out.slice(at + e.from.length);
+  }
+  return out;
+}
+/** what the game compiles: the lab's stages under the pixel style's edits */
+export const GAME_GRASS_VS = applyGrassEdits(LAB_GRASS_VS, GRASSPX_VS_EDITS);
+export const GAME_GRASS_FS = applyGrassEdits(LAB_GRASS_FS, GRASSPX_FS_EDITS);
 
 // GRASS2 (Mac: "I also want to shorten the grass length. Little too tall
 // for my liking"): the height was GR1's 54 and is 38. It is the one
@@ -886,13 +1024,14 @@ export class LabGrassRenderer {
       return sh;
     };
     const prog = gl.createProgram();
-    gl.attachShader(prog, compile(gl.VERTEX_SHADER, LAB_GRASS_HEAD + GAME_GRASS_FIELD + LAB_GRASS_VS));
-    gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, LAB_GRASS_HEAD + LAB_GRASS_FS));
+    gl.attachShader(prog, compile(gl.VERTEX_SHADER, LAB_GRASS_HEAD + GAME_GRASS_FIELD + GAME_GRASS_VS));   // GRASS-PX: the lab's text under the declared edits
+    gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, LAB_GRASS_HEAD + GAME_GRASS_FS));
     gl.linkProgram(prog);
     if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(prog));
     this.program = prog;
     this.u = {};
-    for (const n of ['uVP', 'uTime', 'uWind', 'uRange', 'uEye', 'uSunDir', 'uWindDir', 'uSnowFull', 'uSlotN', 'uCellFrame', 'uBladeScale', 'uCellSize', 'uGField', 'uGFieldOrigin', 'uGFieldM', 'uSnowGlobal', 'uWindV', 'uAmb', 'uSunCol', 'uDim', 'uSunScale', 'uMoonDir', 'uMoonScale', 'uMoonCol']) this.u[n] = gl.getUniformLocation(prog, n);
+    for (const n of ['uVP', 'uTime', 'uWind', 'uRange', 'uEye', 'uSunDir', 'uWindDir', 'uSnowFull', 'uSlotN', 'uCellFrame', 'uBladeScale', 'uCellSize', 'uGField', 'uGFieldOrigin', 'uGFieldM', 'uSnowGlobal', 'uWindV', 'uAmb', 'uSunCol', 'uDim', 'uSunScale', 'uMoonDir', 'uMoonScale', 'uMoonCol',
+      'uPixel', 'uPxStepHz', 'uPxTuftScale', 'uPxLeanSteps', 'uPxVariants', 'uPxSteps', 'uPxTintBands', 'uPxSheet']) this.u[n] = gl.getUniformLocation(prog, n);   // GRASS-PX: the pixel style's eight
     // the blade, and three instance streams the lab's layout plus the game's root height
     // GRASS2: the instance buffers are made ONCE and shared by both
     // levels of detail - only the corner buffer differs between them, so
@@ -932,6 +1071,24 @@ export class LabGrassRenderer {
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([0, 0, 0, 0]));
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    gl.bindTexture(gl.TEXTURE_2D, null);
+    // GRASS-PX: THE TUFT SHEET, with its coverage mip chain, every level
+    // uploaded by hand (generateMipmap would AVERAGE, and an averaged
+    // sprite fails the alpha test a few cells out). NEAREST both ways -
+    // a pixel sprite is never filtered - and the level is the GPU's
+    // pick among the ones built here. Unit 4: the renderer's own passes
+    // stop at 3 and its reserved units start at 11, and the host marks
+    // the grass a foreign pass after every draw, so nothing counts on 4
+    // holding across it.
+    this.pxSheet = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, this.pxSheet);
+    const mips = buildTuftMips();
+    this.pxVariants = mips[0].variants;
+    for (let i = 0; i < mips.length; i++) gl.texImage2D(gl.TEXTURE_2D, i, gl.RGBA, mips[i].width, mips[i].height, 0, gl.RGBA, gl.UNSIGNED_BYTE, mips[i].data);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST_MIPMAP_NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
     gl.bindTexture(gl.TEXTURE_2D, null);
     this.count = 0;
     this._vp = new Float32Array(16);
@@ -1062,8 +1219,10 @@ export class LabGrassRenderer {
     this.slotBox = null;   // PERF2: a scatter is one run, drawn whole
   }
 
-  /** the lab's draw. `light` = {sunDir, amb, sunCol, dim}; `wind` = {dir, speed, windV}. */
-  draw(proj, view, eye, timeSeconds, light, wind, range = LAB_GRASS.range) {
+  /** the lab's draw. `light` = {sunDir, amb, sunCol, dim}; `wind` = {dir, speed, windV};
+   *  `style` (GRASS-PX) is the grass-style row's word - 'smooth' is the
+   *  lab's blade, anything else the tuft sprite. */
+  draw(proj, view, eye, timeSeconds, light, wind, range = LAB_GRASS.range, style = 'smooth') {
     if (!this.count) return;
     const gl = this.gl; const u = this.u;
     // out = proj * view, column-major
@@ -1091,6 +1250,18 @@ export class LabGrassRenderer {
     gl.activeTexture(gl.TEXTURE0);
     gl.uniform2f(u.uWindV, wind.windV[0], wind.windV[1]);
     gl.uniform1f(u.uRange, range);
+    // GRASS-PX: the style is a uniform, so the row flips live and the
+    // program never recompiles; the sheet rides unit 4 (see the constructor)
+    gl.uniform1f(u.uPixel, pixelGrass(style) ? 1 : 0);
+    gl.uniform1f(u.uPxStepHz, PX_STEP_HZ);
+    gl.uniform1f(u.uPxTuftScale, PX_TUFT_SCALE);
+    gl.uniform1f(u.uPxLeanSteps, PX_LEAN_STEPS);
+    gl.uniform1f(u.uPxVariants, this.pxVariants);
+    gl.uniform1f(u.uPxSteps, PX_RAMP_STEPS);
+    gl.uniform1f(u.uPxTintBands, PX_TINT_BANDS);
+    gl.activeTexture(gl.TEXTURE4); gl.bindTexture(gl.TEXTURE_2D, this.pxSheet);
+    gl.uniform1i(u.uPxSheet, 4);
+    gl.activeTexture(gl.TEXTURE0);
     // GRASS5: the pack's decode frame. The blade scale and the cell size
     // are the same for every slot, so they go once a draw; the cell's own
     // origin and ground span go per slot, below.
@@ -1217,6 +1388,7 @@ export class LabGrassRenderer {
     gl.deleteVertexArray(this.vao);
     if (this.vaoFar) gl.deleteVertexArray(this.vaoFar);
     gl.deleteTexture(this.zeroField);
+    gl.deleteTexture(this.pxSheet);   // GRASS-PX
     gl.deleteProgram(this.program);
   }
 }

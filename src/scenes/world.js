@@ -11202,7 +11202,8 @@ export async function bootWorld(canvas, renderer, params, status) {
         // programs.
         { sunDir: renderer._lightDir, amb: renderer._ambient, sunCol: renderer._sunColor, dim: wxNow.dim,
           sunScale: renderer._sunScale, moonDir: renderer._moonDir, moonScale: renderer._moonScale, moonCol: renderer._moonColor },   // WX2: the dim crosses on the front
-        { dir: wd.dir, speed: wd.slider * wd.gust, windV: wd.windV });
+        { dir: wd.dir, speed: wd.slider * wd.gust, windV: wd.windV },
+        LAB_GRASS.range, getPref('grassStyle'));   // GRASS-PX: the row's word, read live - the style is a uniform, so it flips without a reload
       // GRASS2: the field had been inside the WORLD's span, which is the
       // one number that cannot say whether the grass is worth what it
       // costs. It marks its own now, and hands the frame straight back.

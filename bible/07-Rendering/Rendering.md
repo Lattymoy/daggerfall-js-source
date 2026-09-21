@@ -249,6 +249,56 @@ directory by `test/audit18_bible_docs.test.js`:
   now allocates nothing. Not one blade changes where it stands.
   **The lesson: GR5's cell budget made the FILL cheap and nobody went
   back to ask whether the frame was still paying to decide what to fill.**
+  **GRASS-PX (2026-09-21, Mac: "with the grass model, is there a way we
+  can turn the grass into a pixel art design ... Let's see how detailed
+  you can be"): THE TUFT IS A SPRITE, AS EVERY OTHER LIVING THING IN
+  THIS WORLD IS.** Daggerfall draws its trees, its people and its
+  monsters as hand-set flats, and the lab's million smooth, tapered,
+  gradient-lit blades were the one thing outdoors not drawn by that
+  hand. The pixel style keeps the WHOLE of the field - the placer, the
+  packed lanes, the cells, the host-paid fade, the wind, the time of day
+  - and changes what a blade LOOKS like, in five places, each a
+  `mix(lab, pixel, uPixel)` or a branch on it so that at zero the
+  arithmetic is the lab's to the last operation: the quad wears a
+  16x32 tuft from a sheet of eight (built at boot from a seed in
+  `render/grassPixelArt.js` - three to five one-texel stalks curving as
+  height squared, the lab's own bend law; a two-texel base on half of
+  them; a seed head on a tall one now and then; alpha 0 or 255 and never
+  between); the sprite's four tones - root, mid, tip, and ONE highlight
+  texel at the tip of a blade tall enough to clear the sward - stand in
+  for the gradient, with the sun's rim landing on that one texel as a
+  whole step of light; the sway reads a clock stepped at 8 Hz and a
+  lean snapped to 24 steps, so a gust hops through poses; the distance
+  fade is a 4x4 ORDERED DITHER against the screen (the Bayer matrix as
+  four bit operations, evaluated from the shader text by the pin) rather
+  than a transparency; and the lit colour is snapped to an eight-step
+  luminance ramp with the patch tint in four bands - hue kept, so a dusk
+  field is still the colour of dusk. The texel carries three things
+  beside its tone: how far up ITS OWN blade it sits (the root-to-tip
+  light and the sward shade read that, not the quad), and which blade
+  of the tuft it is (the blades of one tuft shade apart). THE MIP CHAIN
+  IS COVERAGE, NOT AN AVERAGE: a sprite that is a quarter blade and
+  three-quarters air averages under a half at the first level and an
+  alpha test throws the whole tuft away, so every level takes the MAX
+  alpha of its block and the tone that carried it, uploaded by hand
+  down to 1x1 (a chain that stops short is an incomplete texture, which
+  samples black). Both styles live in ONE program and the row flips a
+  uniform, so `Grass style` (Pixel by default, Smooth the lab's blade)
+  takes effect at once, read every frame at the draw. Measured on the
+  probe's real GL: the pixel field takes 62 distinct colours where the
+  gradient field took 4,300, 806 blade texels reach the GPU with zero
+  soft-alpha texels, both stages compile and draw through SwiftShader.
+  8 pins in test/grasspx.test.js (the sheet byte for byte and hard-
+  edged, the tone law's round trip through the shader's decode, the
+  stalk laws over 200 seeds, the chain's coverage at every level, the
+  two edit lists each landing exactly once with the lab's text untouched,
+  the shader audit over the game's stages, the Bayer form evaluated, the
+  renderer's uploads on a stub GL, the row and the host); 20 mutants,
+  20 dead. **The lesson: a style is not a second renderer. The lab's
+  field is the field; what the eye is shown is a handful of declared
+  edits over it, and the pin that held the lab's text byte for byte now
+  holds the departures the same way.**
+- `grassPixelArt.js` - GRASS-PX THE TUFT SHEET: eight 16x32 tufts built at boot from a seed (one-texel stalks bending as height squared, four tones with one highlight texel, alpha 0 or 255), their coverage mip chain (max alpha per block, never an average, down to 1x1), the pixel style's numbers (8 Hz sway, 24 lean steps, 3x tuft width, 8-step ramp, 4 tint bands) and `pixelGrass()`, the row's word; the shader edits themselves are `GRASSPX_VS_EDITS` / `GRASSPX_FS_EDITS` in labGrass.js.
 - `systems/wind.js` - **WIND1 (2026-09-02) THE WIND IS ITS OWN THING.**
   Mac: "wind should be something different from the weather. Imagine a
   time-lapse, seeing a storm rolling in as the wind kicks up, and the

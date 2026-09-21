@@ -61,11 +61,11 @@ const out = await page.evaluate(async () => {
   const light = { sunDir: [0.3, 0.8, 0.5], amb: [0.35, 0.38, 0.35], sunCol: [1, 0.97, 0.9], dim: 1, sunScale: 1 };
   const wind = { dir: [1, 0], speed: 70, windV: [0.01, 0] };
 
-  const frame = (range) => {
+  const frame = (range, style = 'smooth') => {
     gl.viewport(0, 0, W, H);
     gl.clearColor(0.35, 0.5, 0.75, 1);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-    grass.draw(proj, view, new Float32Array(eye), 2.0, light, wind, range);
+    grass.draw(proj, view, new Float32Array(eye), 2.0, light, wind, range, style);   // GRASS-PX: the style is the draw's last word
     gl.finish();
     const px = new Uint8Array(W * H * 4);
     gl.readPixels(0, 0, W, H, gl.RGBA, gl.UNSIGNED_BYTE, px);
@@ -75,14 +75,35 @@ const out = await page.evaluate(async () => {
       if (px[i + 1] > px[i] && px[i + 1] > px[i + 2]) green++;
       sum = (sum + px[i] * 3 + px[i + 1] * 5 + px[i + 2] * 7) >>> 0;
     }
-    return { green, sum, drawn: { ...grass.drawn } };
+    // GRASS-PX: how many DISTINCT colours the grass pixels take - a
+    // posterised sprite field takes few, a gradient-lit one takes many
+    const tones = new Set();
+    for (let i = 0; i < px.length; i += 4) if (px[i + 1] > px[i] && px[i + 1] > px[i + 2]) tones.add((px[i] << 16) | (px[i + 1] << 8) | px[i + 2]);
+    return { green, sum, tones: tones.size, drawn: { ...grass.drawn } };
   };
 
   const at200 = frame(200);
   const at110 = frame(110);
   const shipped = frame(LAB_GRASS.range);   // GRASS2: and the config a player actually gets
   const sweep = [200, 250, 280, 300, 320, 350].map((r) => ({ r, ...frame(r) }));
+  // GRASS-PX: the same field in the pixel style - the same program, one
+  // uniform flipped - and then the sheet itself read back off the GPU
+  const pixel = frame(200, 'pixel');
+  const pixelShipped = frame(LAB_GRASS.range, 'pixel');
+  const pxSheet = (() => {
+    const w = grass.pxVariants * 16, h = 32;
+    const fb = gl.createFramebuffer(); gl.bindFramebuffer(gl.FRAMEBUFFER, fb);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, grass.pxSheet, 0);
+    const ok = gl.checkFramebufferStatus(gl.FRAMEBUFFER) === gl.FRAMEBUFFER_COMPLETE;
+    const buf = new Uint8Array(w * h * 4);
+    if (ok) gl.readPixels(0, 0, w, h, gl.RGBA, gl.UNSIGNED_BYTE, buf);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null); gl.deleteFramebuffer(fb);
+    let soft = 0, blade = 0;
+    for (let i = 3; i < buf.length; i += 4) { if (buf[i] !== 0 && buf[i] !== 255) soft++; if (buf[i] === 255) blade++; }
+    return { ok, soft, blade, w, h };
+  })();
   return {
+    pixel, pixelShipped, pxSheet,
     perCell: grassPerCell(), cell: GRASS_CELL, slots: field.slots, verts: grass.verts,
     labRange: LAB_GRASS.range, labHeight: LAB_GRASS.height, density: LAB_GRASS.density,
     liveCells: field.live.size, at200, at110, shipped, sweep, glError: gl.getError(),
@@ -103,6 +124,14 @@ for (const w of out.sweep ?? []) {
   console.log(`    ${String(w.r).padStart(3)} m: ${(w.drawn.verts / 1e6).toFixed(2).padStart(5)}M verts, ${String(w.green).padStart(6)} lit px`);
 }
 check('no page errors and no GL error', pageErrors.length === 0 && out.glError === 0, `${pageErrors.join(' | ')} gl=${out.glError}`);
+// GRASS-PX: the pixel style, on the same field through the same program
+console.log(`  PIXEL (range 200): ${out.pixel.green} green px in ${out.pixel.tones} colours; smooth had ${out.at200.green} in ${out.at200.tones}`);
+console.log(`  PIXEL (shipped range ${out.labRange}): ${out.pixelShipped.green} green px in ${out.pixelShipped.tones} colours; ${out.pixelShipped.drawn.blades} blades submitted`);
+console.log(`  the sheet on the GPU: ${out.pxSheet.w}x${out.pxSheet.h}, ${out.pxSheet.blade} blade texels, ${out.pxSheet.soft} soft-alpha texels`);
+check('the pixel style draws grass through the same program', out.pixel.green > 500, `${out.pixel.green} green px`);
+check('and a different picture from the smooth one', out.pixel.sum !== out.at200.sum, `sum ${out.pixel.sum} vs ${out.at200.sum}`);
+check('the pixel field takes FEWER colours than the gradient field - the ramp and the four tones', out.pixel.tones < out.at200.tones * 0.5, `${out.pixel.tones} against ${out.at200.tones}`);
+check('the sheet reached the GPU with a hard alpha - no texel between 0 and 255', out.pxSheet.ok && out.pxSheet.soft === 0 && out.pxSheet.blade > 100, JSON.stringify(out.pxSheet));
 check('the field grew and the frame has grass in it', out.liveCells > 0 && out.at200.green > 500, `${out.liveCells} cells, ${out.at200.green} green px`);
 // THE PAD. On a plane that is grass everywhere the placer keeps nearly
 // every candidate, so `kept` and the slot size agree here BY
