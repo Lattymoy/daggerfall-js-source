@@ -9,10 +9,12 @@
 // different rhythms, and a notice that knew only one of them would be
 // wrong about the other:
 //
-//   THE RELAY (`server/`, a Cloudflare Worker + Durable Objects). It is
-//   deployed BY HAND - `npx wrangler deploy`, nothing in CI does it -
-//   so it moves rarely. When it does, every Durable Object restarts and
-//   every socket in the game drops at once. That is a SERVER RESTART in
+//   THE RELAY (`server/`, a Cloudflare Worker + Durable Objects). Since
+//   SRV-N/CI it is deployed by `.github/workflows/relay-deploy.yml` on
+//   every push to main, but only when RELAY_VERSION has moved - so it
+//   moves rarely, on the merges that change the relay's own law. When
+//   it does, every Durable Object restarts and every socket in the game
+//   drops at once. That is a SERVER RESTART in
 //   the most literal sense: peers vanish, chat goes quiet, and the
 //   player currently has no idea why. This is the half Mac's words name.
 //
