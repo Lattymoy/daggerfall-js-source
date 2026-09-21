@@ -388,7 +388,8 @@ export function createQuestBridge(ctx, { label = 'host' } = {}) {
         let clockSeconds = null;
         for (const r of q.resources.values()) {
           if (r.clockEnabled && !r.clockFinished && Number.isFinite(r.remainingTimeInSeconds)) {
-            clockSeconds = clockSeconds == null ? r.remainingTimeInSeconds : Math.min(clockSeconds, r.remainingTimeInSeconds);
+            const left = r.liveRemainingSeconds(q);   // QT-LIVE1: as of NOW, not as of the last tick the pause gate let through
+            clockSeconds = clockSeconds == null ? left : Math.min(clockSeconds, left);
           }
         }
         active.push({ id: String(q.uid), name: q.displayName || null, questName: q.questName || '', clockSeconds, messages });
