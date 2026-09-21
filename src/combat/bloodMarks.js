@@ -36,12 +36,20 @@ import {
   GIB_SPLASH_RATE, GIB_COUNT, DRIP_SPLASH_RATE,
 } from './bloodGibs.js';   // BLOOD1b: what a warhammer leaves of a body, and what a ceiling lets go of
 import { bloodAtlas, pickCell, bloodMarkKind, freshTint, dryStage, driedTint, DRY_TICK, BLOOD_ATLAS_ARCHIVE, BLOOD_ATLAS_RECORD } from './bloodArt.js';   // BLOOD2b: the port's own art, made at boot, and how a mark dries
+import { BLEED_RADIUS, BLEED_RATE, POOL_SIZE, POOL_SPREAD, POOL_STEPS, poolSizeAt } from './bloodBleed.js';   // BLOOD2c: a wounded body's drip and a corpse's spreading pool
 
 /** How far down a mark looks for something to stain. Blood spawns at
  *  chest height (`bloodCentre` is five eighths up the capsule), so the
  *  floor is a body's height away and a little more on a step; past that
  *  the blood is over open air and leaves nothing. */
 export const MARK_DROP = 3;
+/** BLOOD2c: a drip and a corpse's pool ray down from KNEE height, not
+ *  chest - a foe on a stair stains the step it stands on. */
+export const DRIP_FROM = 0.5;
+/** BLOOD2c: never more drops in one drip than this, whatever a caller
+ *  asks; and never more corpses spreading at once than this. */
+export const BLEED_DROPS_CAP = 8;
+export const MAX_SPREADS = 16;
 
 /** Straight down, once. BLOOD1b casts up to SPRAY_MAX rays for one
  *  blow, and the collider reads this direction and never writes it. */
@@ -100,6 +108,9 @@ export function createBloodMarks({ renderer = null, collider = null, settings = 
   /** The pool's clock, for drying: seconds ticked since it was built. */
   let _clock = 0;
   let _dryDue = DRY_TICK;
+  /** BLOOD2c: the corpses' pools still spreading - { d, born }. Bounded,
+   *  and each one is dropped the moment its slot is reused under it. */
+  let _spreads = [];
   /** BLOOD1b: chunks in flight. Plain data this pool owns outright,
    *  emptied by `clear()` with the room they were thrown in. */
   let _gibs = [];
@@ -208,7 +219,7 @@ export function createBloodMarks({ renderer = null, collider = null, settings = 
     return d;
   }
 
-  function spray(col, pos, n, radius, rate, thrown = null) {
+  function spray(col, pos, n, radius, rate, thrown = null, { up: mayLookUp = true } = {}) {
     let pool = null;
     // BLOOD1b: WHICH WAY THE SWING THREW IT. The site worked the two
     // numbers out, because only it knows the state and the basis.
@@ -224,7 +235,7 @@ export function createBloodMarks({ renderer = null, collider = null, settings = 
       // every direction and the ones that go up find the ceiling; this
       // port rays, so the share is a number. Drop zero never does - it
       // is the pool under the body.
-      const up = looksUp(i);
+      const up = mayLookUp && looksUp(i);   // BLOOD2c: a drip at the feet is gravity's and never looks up
       const dir = up ? UP : DOWN, reach = up ? CEILING_REACH : MARK_DROP;
       // BLOOD1 AUDIT 3: BLOOD DOES NOT PASS THROUGH WALLS. The drop's
       // XZ is the body's plus the spray's offset plus the swing's throw
@@ -318,6 +329,57 @@ export function createBloodMarks({ renderer = null, collider = null, settings = 
    * Answers the POOL - the ordinary spray's drop zero - or null when
    * nothing landed at all.
    */
+  /** BLOOD2c: A WOUNDED BODY'S DRIP - `count` small drops within
+   *  BLEED_RADIUS of its feet, rayed down from knee height so a foe on a
+   *  stair still stains the step it is on. The trail a walking foe
+   *  leaves is these, one drip at a time. */
+  function drip(bloodIndex, feet, count) {
+    if (!on() || !feet || !marksBlood(bloodIndex)) return null;
+    const col = liveCollider();
+    if (!col?.surfaceHit) return null;
+    const n = Math.max(1, Math.min(BLEED_DROPS_CAP, count | 0));
+    return spray(col, [feet[0], feet[1] + DRIP_FROM, feet[2]], n, BLEED_RADIUS, BLEED_RATE, null, { up: false });
+  }
+
+  /** BLOOD2c: A CORPSE BLEEDS OUT - one pool at its feet that spreads
+   *  from POOL_SIZE.start to POOL_SIZE.end over POOL_SPREAD seconds, in
+   *  POOL_STEPS rewrites (tick). The pool wears the pool cell and dries
+   *  like every mark. Bounded at MAX_SPREADS; the oldest still spreading
+   *  is let be at its size when a newer one needs the room. */
+  function spreadPool(bloodIndex, feet) {
+    if (!on() || !feet || !marksBlood(bloodIndex)) return null;
+    const col = liveCollider();
+    if (!col?.surfaceHit) return null;
+    const h = col.surfaceHit([feet[0], feet[1] + DRIP_FROM, feet[2]], DOWN, MARK_DROP);
+    if (!h || !Number.isFinite(h.dist) || h.dist > MARK_DROP) return null;
+    ensure();
+    const d = lay([feet[0], feet[1] + DRIP_FROM - h.dist, feet[2]], h.normal ?? [0, 1, 0], { size: POOL_SIZE.start }, 'pool');
+    if (!d) return null;
+    if (_spreads.length >= MAX_SPREADS) _spreads.shift();
+    _spreads.push({ d, born: _clock });
+    return d;
+  }
+
+  /** The spreads' step: a pool whose size crossed a step is rewritten;
+   *  one that reached its end, or whose slot the ring reused, is dropped. */
+  function spread() {
+    if (!_spreads.length || !_pool) return 0;
+    let n = 0;
+    const live = new Set(_pool.decals());
+    _spreads = _spreads.filter(({ d, born }) => {
+      if (!live.has(d)) return false;
+      const size = poolSizeAt(_clock - born);
+      if (size !== d.size) {
+        d.size = size;
+        writeDecalQuad(_scratch, 0, d, d.uv);
+        renderer.writeDecalSlot(_batch, d.slot, _scratch);
+        n++;
+      }
+      return _clock - born < POOL_SPREAD;
+    });
+    return n;
+  }
+
   function place(bloodIndex, pos, hit = null) {
     if (!on() || !pos) return null;
     // A BLOODLESS FOE MARKS NOTHING. DFU's own bloodIndex says which
@@ -415,6 +477,7 @@ export function createBloodMarks({ renderer = null, collider = null, settings = 
     if (!(dt > 0)) return 0;
     _clock += dt;
     if (_clock >= _dryDue) { _dryDue = _clock + DRY_TICK; dry(); }
+    spread();   // BLOOD2c: the corpses' pools, a step at a time
     if (!_gibs.length && !_drips.length) return 0;
     // BLOOD1 AUDIT 3: the switch drops what is in the air - the row the
     // gibs ride (see `overkillOn`) is off, so they stop, and their quads go.
@@ -501,6 +564,7 @@ export function createBloodMarks({ renderer = null, collider = null, settings = 
    *  same ring next time, and rebuilding it would cost an allocation
    *  every time the player opens a door. */
   function clear() {
+    _spreads = [];             // BLOOD2c: a room thrown away takes its spreading pools with it
     _gibs = []; reseatGibs();   // BLOOD1b: a room thrown away takes the chunks still in the air with it, and their quads
     _drips = [];                // ...and the blood its ceilings had not finished with
     if (!_pool) return 0;
@@ -524,6 +588,8 @@ export function createBloodMarks({ renderer = null, collider = null, settings = 
 
   return {
     place, draw, tick, shiftOrigin, clear, useArt,
+    drip, spreadPool,          // BLOOD2c
+    spreads: () => _spreads.slice(),   // BLOOD2c
     gibs: () => _gibs.slice(),
     drips: () => _drips.slice(),
     count: () => (_pool ? _pool.count : 0),

@@ -387,6 +387,7 @@ function rigHitEffects(over = {}) {
     getTexture: () => new Promise(() => {}),   // the splash half never warms here
     uploadRecordFrame: () => {},
     marks,
+    rng: o.rng,   // BLOOD2c: the bleeding ledger's waits roll the rig's one chance too
   });
   return { fx, marks, wrote, drew, renderer };
 }
@@ -2496,6 +2497,160 @@ test('BLOOD2b: a mark wears a cell of its KIND, is born a fresh red of its own, 
   assert.equal(marks.draw(), false);
   // and the drying pass has a name of its own, for the next pin that wants to drive it
   assert.equal(typeof marks.dry, 'function');
+});
+
+// ── BLOOD2c (2026-09-21) - a wounded body bleeds, a dead one bleeds out ──
+import {
+  createBleedLedger, bleedShare, bleedDrops, poolSizeAt,
+  BLEED_THRESHOLD, BLEED_WAIT, BLEED_DROPS_MAX, BLEED_RADIUS, BLEED_RATE, POOL_SIZE, POOL_SPREAD, POOL_STEPS,
+} from '../src/combat/bloodBleed.js';
+import { DRIP_FROM, BLEED_DROPS_CAP, MAX_SPREADS } from '../src/combat/bloodMarks.js';
+
+test('BLOOD2c: the ledger - the reference’s ramp and cadence on a wounded body, one pool for a body with a corpse, nothing for the bloodless', () => {
+  // the ramp: nothing at the threshold, everything at one percent
+  assert.equal(bleedShare(20, 40), 0, 'at the threshold: nothing');
+  assert.equal(bleedShare(40, 40), 0);
+  assert.ok(Math.abs(bleedShare(0.4, 40) - 1) < 1e-9, 'one percent: everything');
+  assert.ok(Math.abs(bleedShare(10, 40) - (1 - (0.25 - 0.01) / (0.5 - 0.01))) < 1e-12, 'the reference’s own arithmetic between');
+  assert.equal(bleedShare(0, 40), 0, 'dead is not bleeding'); assert.equal(bleedShare(5, 0), 0); assert.equal(bleedShare(NaN, 40), 0);
+  assert.equal(bleedDrops(0), 0); assert.equal(bleedDrops(0.01), 1, 'once bleeding, at least one'); assert.equal(bleedDrops(1), BLEED_DROPS_MAX);
+  assert.equal(BLEED_THRESHOLD, 0.5); assert.deepEqual([BLEED_WAIT.min, BLEED_WAIT.max], [2, 5], 'the reference’s 2..5 s');
+  // the pool's size: the start, steps, the end, and never past it
+  assert.equal(poolSizeAt(0), POOL_SIZE.start); assert.equal(poolSizeAt(POOL_SPREAD), POOL_SIZE.end); assert.equal(poolSizeAt(POOL_SPREAD * 3), POOL_SIZE.end);
+  assert.equal(new Set(Array.from({ length: 200 }, (_, k) => poolSizeAt(k * POOL_SPREAD / 199))).size, POOL_STEPS + 1, 'in steps');
+
+  // the ledger, with the wait held at its floor
+  const led = createBleedLedger({ rng: () => 0 });
+  const view = (b) => b;
+  const hurt = { feet: [1, 0, 1], health: 10, maxHealth: 40, bloodIndex: 0, dead: false, corpse: false };
+  const well = { feet: [2, 0, 2], health: 30, maxHealth: 40, bloodIndex: 0, dead: false, corpse: false };
+  const bone = { feet: [3, 0, 3], health: 1, maxHealth: 40, bloodIndex: 2, dead: false, corpse: false };
+  assert.deepEqual(led.tick(1, [hurt, well, bone], view), [], 'the first second: the wait is not up');
+  const a = led.tick(1.01, [hurt, well, bone], view);
+  assert.equal(a.length, 1, 'two seconds in: the wounded one drips, the well one and the skeleton do not');
+  assert.equal(a[0].kind, 'drip'); assert.equal(a[0].body, hurt); assert.deepEqual(a[0].pos, [1, 0, 1]);
+  assert.equal(a[0].count, bleedDrops(bleedShare(10, 40)));
+  assert.deepEqual(led.tick(1.5, [hurt], view), [], 'and waits again');
+  assert.equal(led.tick(0.6, [hurt], view).length, 1, 'the next, at the cadence');
+  // healed past the threshold: the wait is FRESH when it is wounded again -
+  // most of a wait spent, then healed, then wounded: the old remainder
+  // (half a second) would drip at once; a fresh wait (two) does not
+  led.tick(1.5, [hurt], view);
+  hurt.health = 30; led.tick(0.1, [hurt], view);
+  hurt.health = 10;
+  assert.deepEqual(led.tick(1.9, [hurt], view), [], 'a fresh wait, not the old remainder');
+  assert.equal(led.tick(0.2, [hurt], view).length, 1);
+  // a walking foe drips where it IS
+  hurt.feet = [5, 0, 5]; assert.deepEqual(led.tick(1.9, [hurt], view), []);
+  assert.deepEqual(led.tick(0.2, [hurt], view)[0].pos, [5, 0, 5]);
+  // death: one pool, with a corpse, never a drip again
+  hurt.dead = true; hurt.corpse = true;
+  const d1 = led.tick(0.1, [hurt], view);
+  assert.deepEqual(d1.map((x) => x.kind), ['pool']); assert.deepEqual(d1[0].pos, [5, 0, 5]);
+  assert.deepEqual(led.tick(10, [hurt], view), [], 'once');
+  const gone = { feet: [0, 0, 0], health: 0, maxHealth: 40, bloodIndex: 0, dead: true, corpse: false };
+  assert.deepEqual(led.tick(1, [gone], view), [], 'dead with no body (removed, walked away): no pool');
+  bone.dead = true; bone.corpse = true;
+  assert.deepEqual(led.tick(1, [bone], view), [], 'a skeleton has nothing to bleed out');
+  assert.deepEqual(led.tick(0, [hurt], view), []); assert.deepEqual(led.tick(1, null, view), []);
+  // the wait really is random within the band
+  const spread = createBleedLedger({ rng: () => 1 });
+  const slow = { feet: [0, 0, 0], health: 1, maxHealth: 40, bloodIndex: 0, dead: false, corpse: false };
+  assert.deepEqual(spread.tick(4.9, [slow], view), []); assert.equal(spread.tick(0.2, [slow], view).length, 1, 'at the top of the band, five seconds');
+});
+
+test('BLOOD2c: the pool lays a drip at the feet and a corpse’s pool that spreads in steps; the splash pool maps the ledger onto it; the three foe pools hand their bodies over', () => {
+  const writes = new Map();
+  const renderer = {
+    createDecalBatch: (capacity) => ({ capacity }),
+    writeDecalSlot: (batch, slot) => { writes.set(slot, (writes.get(slot) ?? 0) + 1); return true; },
+    drawDecals: () => {}, createBillboardBatch: () => ({}), moveBillboardBatch: () => true, destroyBillboardBatch: () => {},
+  };
+  const rays = [];
+  const { fx, marks } = rigHitEffects({
+    renderer,
+    settings: { enabled: () => true, capacity: () => 64, density: () => 1, overkill: () => false },
+    collider: () => ({ surfaceHit: (from, dir, max) => { rays.push([...from]); return dir[1] < 0 && from[1] <= max ? { dist: from[1], normal: [0, 1, 0] } : null; }, raycastHit: () => ({ dist: Infinity, normal: null }) }),
+  });
+  marks.useArt(380, 1, 6);
+  // THE DRIP: `count` small drops within the radius, from KNEE height
+  // (a foe on a stair stains its step), the ladder's smallest size
+  rays.length = 0;
+  const d = marks.drip(0, [2, 0, 2], 3);
+  assert.ok(d, 'the drip landed');
+  assert.ok(rays.length >= 3 && rays.every((r) => Math.abs(r[1] - (0 + DRIP_FROM)) < 1e-9), 'every ray from knee height, not the chest');
+  const ds = marks._pool().decals();
+  assert.equal(ds.length, 3, 'three drops');
+  for (const m of ds) {
+    assert.ok(Math.hypot(m.pos[0] - 2, m.pos[2] - 2) <= BLEED_RADIUS + 1e-9, 'within the radius of the feet');
+    assert.ok(m.size <= markSize(BLEED_RATE) * 1.01 + SIZE_JITTER, 'small');
+  }
+  assert.equal(marks.drip(2, [2, 0, 2], 3), null, 'a skeleton drips nothing');
+  marks.drip(0, [2, 0, 2], 100);
+  assert.equal(marks._pool().decals().length - 3, BLEED_DROPS_CAP, 'capped - and every drop of a drip lands on the FLOOR: gravity’s blood never looks up for a ceiling');
+  assert.equal(DRIP_FROM, 0.5, 'knee height');
+  // THE POOL: laid at the feet as a pool, grows in steps to the end, then stops
+  writes.clear();
+  const p = marks.spreadPool(0, [4, 0, 4]);
+  assert.ok(p && p.uv.kind === 'pool' && p.size === POOL_SIZE.start, 'a pool, at its start size');
+  assert.equal(marks.spreads().length, 1);
+  const slotWrites = () => writes.get(p.slot) ?? 0;
+  const atPlace = slotWrites();
+  for (let t = 0; t < POOL_SPREAD + 1; t += 0.25) fx.tick(0.25);
+  assert.equal(p.size, POOL_SIZE.end, 'spread to its end');
+  assert.equal(slotWrites() - atPlace, POOL_STEPS, 'in exactly the steps');
+  assert.equal(marks.spreads().length, 0, 'and done');
+  const after = slotWrites();
+  fx.tick(5);
+  assert.equal(slotWrites(), after, 'never again');
+  assert.equal(marks.spreadPool(2, [4, 0, 4]), null, 'no pool for the bloodless');
+  // a slot the ring reuses under a spreading pool ends that spread
+  const q = marks.spreadPool(0, [6, 0, 6]);
+  for (let k = 0; k < 70; k++) marks.drip(0, [8, 0, 8], 1);   // the ring wraps
+  fx.tick(1);
+  assert.ok(!marks.spreads().some((x) => x.d === q), 'a reused slot is not rewritten as a pool');
+  // bounded
+  for (let k = 0; k < MAX_SPREADS + 5; k++) marks.spreadPool(0, [k, 0, 0]);
+  assert.ok(marks.spreads().length <= MAX_SPREADS);
+  // a mode change takes the spreads with the room
+  fx.clear();
+  assert.equal(marks.spreads().length, 0);
+
+  // THE SPLASH POOL MAPS THE LEDGER: a wounded body drips, a dead one pools
+  const hurt = { feet: [1, 0, 1], health: 5, maxHealth: 40, bloodIndex: 0, dead: false, corpse: false };
+  assert.equal(fx.bleed(3.4, [hurt], (b) => b), 0, 'the rig’s chance of one half holds the wait at three and a half: not yet');
+  assert.equal(fx.bleed(0.2, [hurt], (b) => b), 1, 'one drip');
+  assert.ok(marks.count() > 0);
+  hurt.dead = true; hurt.corpse = true;
+  assert.equal(fx.bleed(0.1, [hurt], (b) => b), 1, 'one pool');
+  assert.equal(marks.spreads().length, 1);
+
+  // THE HOSTS: every foe pool hands its bodies to the ledger every frame,
+  // through a view that names the six fields, and the dungeon's kill
+  // paths mark the body a corpse
+  const read = (q) => readFileSync(new URL(`../${q}`, import.meta.url), 'utf8');
+  const VIEW = /\(\w\) => \(\{ feet: \w\.ai\?\.feet, health: \w\.entity\?\.health, maxHealth: \w\.entity\?\.maxHealth, bloodIndex: ENEMY_BASICS\[[\w.]+\]\?\.bloodIndex \?\? 0, dead: !!\w\.dead, corpse: !!\w\.corpse \}\)/;
+  for (const [f, call] of [
+    ['src/scenes/exteriorFoes.js', /hitEffects\?\.bleed\?\.\(dt, foes, foeBleedView\);/],
+    ['src/scenes/dungeonContext.js', /hitEffects\.bleed\(dt, foes, foeBleedView\);/],
+    ['src/scenes/cityGuards.js', /hitEffects\?\.bleed\?\.\(dt, guards, guardBleedView\);/],
+  ]) {
+    const src = read(f);
+    assert.match(src, call, `${f}: hands its bodies over`);
+    assert.match(src, VIEW, `${f}: through the six-field view`);
+  }
+  const dc = read('src/scenes/dungeonContext.js');
+  // the dungeon's body flag rides the ONE corpse mint (both the kill's
+  // door and the stream's reach it) and is cleared with the corpse, so a
+  // resurrected or respawned foe starts clean and a quest-removed one
+  // never has it
+  assert.match(dc, /async function spawnCorpseNow\(f\) \{\n\s*f\.corpse = true;/, 'a minted corpse is a body');
+  assert.match(dc, /function freeCorpse\(f\) \{\n\s*f\.corpse = false;/, 'a freed one is not');
+  assert.doesNotMatch(dc.slice(dc.indexOf('removeFoe: (f) => {'), dc.indexOf('removeFoe: (f) => {') + 400), /corpse = true/, 'a quest-removed foe has none');
+  const fxSrc = read('src/scenes/hitEffects.js');
+  assert.match(fxSrc, /const bleeding = createBleedLedger\(\{ rng \}\);/);
+  assert.match(fxSrc, /if \(a\.kind === 'drip'\) \{ if \(marks\.drip\?\.\(a\.bloodIndex, a\.pos, a\.count\)\) n\+\+; \}/);
+  assert.match(fxSrc, /else if \(a\.kind === 'pool'\) \{ if \(marks\.spreadPool\?\.\(a\.bloodIndex, a\.pos\)\) n\+\+; \}/);
 });
 
 // ── MAC-BUG W5 (2026-09-20, Mac: "Also blood doesn't work outside")

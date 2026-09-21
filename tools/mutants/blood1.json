@@ -1688,5 +1688,205 @@
     "tests": [
       "test/blood1_decals.test.js"
     ]
+  },
+  {
+    "name": "BLOOD2c-the-ramp-is-flat",
+    "file": "src/combat/bloodBleed.js",
+    "old": "  return Math.max(0, Math.min(1, 1 - (pct - 0.01) / (threshold - 0.01)));",
+    "new": "  return 1;",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD2c-a-well-body-bleeds",
+    "file": "src/combat/bloodBleed.js",
+    "old": "  if (pct >= threshold) return 0;\n",
+    "new": "",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ],
+    "equivalent": true,
+    "why": "the clamp two lines down already answers 0 for any share at or above the threshold (1 - (pct - 0.01)/(threshold - 0.01) is <= 0 there); the guard says the law in words and nothing can see it go"
+  },
+  {
+    "name": "BLOOD2c-a-bleeding-body-can-drip-nothing",
+    "file": "src/combat/bloodBleed.js",
+    "old": "  return Math.max(1, Math.round(share * BLEED_DROPS_MAX));",
+    "new": "  return Math.round(share * BLEED_DROPS_MAX);",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD2c-the-pool-spreads-smoothly-not-in-steps",
+    "file": "src/combat/bloodBleed.js",
+    "old": "  const step = Math.floor(f * POOL_STEPS) / POOL_STEPS;",
+    "new": "  const step = f;",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD2c-the-pool-never-stops-growing",
+    "file": "src/combat/bloodBleed.js",
+    "old": "  const f = Math.max(0, Math.min(1, t / POOL_SPREAD));",
+    "new": "  const f = Math.max(0, t / POOL_SPREAD);",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD2c-a-skeleton-bleeds",
+    "file": "src/combat/bloodBleed.js",
+    "old": "      if (!v || !v.feet || !marksBlood(v.bloodIndex ?? 0)) continue;",
+    "new": "      if (!v || !v.feet) continue;",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD2c-a-body-with-no-corpse-pools",
+    "file": "src/combat/bloodBleed.js",
+    "old": "        if (!s.pooled && v.corpse) { s.pooled = true;",
+    "new": "        if (!s.pooled) { s.pooled = true;",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD2c-a-dead-body-pools-every-frame",
+    "file": "src/combat/bloodBleed.js",
+    "old": "        if (!s.pooled && v.corpse) { s.pooled = true;",
+    "new": "        if (v.corpse) {",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD2c-the-healed-body-keeps-its-old-wait",
+    "file": "src/combat/bloodBleed.js",
+    "old": "        if (s.bleeding) { s.bleeding = false; s.next = wait(); }\n",
+    "new": "",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD2c-the-wait-is-not-random",
+    "file": "src/combat/bloodBleed.js",
+    "old": "  const wait = () => BLEED_WAIT.min + rng() * (BLEED_WAIT.max - BLEED_WAIT.min);",
+    "new": "  const wait = () => BLEED_WAIT.min;",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD2c-the-drip-is-not-capped",
+    "file": "src/combat/bloodMarks.js",
+    "old": "    const n = Math.max(1, Math.min(BLEED_DROPS_CAP, count | 0));",
+    "new": "    const n = Math.max(1, count | 0);",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD2c-the-drip-rays-from-the-chest",
+    "file": "src/combat/bloodMarks.js",
+    "old": "    return spray(col, [feet[0], feet[1] + DRIP_FROM, feet[2]], n, BLEED_RADIUS, BLEED_RATE, null, { up: false });",
+    "new": "    return spray(col, [feet[0], feet[1] + 1.5, feet[2]], n, BLEED_RADIUS, BLEED_RATE, null, { up: false });",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD2c-the-corpse-pool-is-spatter",
+    "file": "src/combat/bloodMarks.js",
+    "old": "    const d = lay([feet[0], feet[1] + DRIP_FROM - h.dist, feet[2]], h.normal ?? [0, 1, 0], { size: POOL_SIZE.start }, 'pool');",
+    "new": "    const d = lay([feet[0], feet[1] + DRIP_FROM - h.dist, feet[2]], h.normal ?? [0, 1, 0], { size: POOL_SIZE.start }, 'spatter');",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD2c-the-spread-never-steps",
+    "file": "src/combat/bloodMarks.js",
+    "old": "    spread();   // BLOOD2c: the corpses' pools, a step at a time\n",
+    "new": "",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD2c-a-reused-slot-is-rewritten-as-a-pool",
+    "file": "src/combat/bloodMarks.js",
+    "old": "      if (!live.has(d)) return false;\n",
+    "new": "",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD2c-the-spread-rewrites-every-tick",
+    "file": "src/combat/bloodMarks.js",
+    "old": "      if (size !== d.size) {\n        d.size = size;",
+    "new": "      {\n        d.size = size;",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD2c-the-spreads-are-not-bounded",
+    "file": "src/combat/bloodMarks.js",
+    "old": "    if (_spreads.length >= MAX_SPREADS) _spreads.shift();\n",
+    "new": "",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD2c-a-mode-change-keeps-the-spreads",
+    "file": "src/combat/bloodMarks.js",
+    "old": "    _spreads = [];             // BLOOD2c: a room thrown away takes its spreading pools with it\n",
+    "new": "",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD2c-the-splash-pool-ignores-the-pool-action",
+    "file": "src/scenes/hitEffects.js",
+    "old": "        else if (a.kind === 'pool') { if (marks.spreadPool?.(a.bloodIndex, a.pos)) n++; }\n",
+    "new": "",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD2c-the-exterior-pool-hands-nobody-over",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "    hitEffects?.bleed?.(dt, foes, foeBleedView);   // BLOOD2c: the wounded drip, the dead bleed out - every body this pool walks, puppets included\n",
+    "new": "",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD2c-the-dungeon-s-killed-foe-has-no-body",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "  async function spawnCorpseNow(f) {\n    f.corpse = true;",
+    "new": "  async function spawnCorpseNow(f) {",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD2c-a-drip-looks-up-for-a-ceiling",
+    "file": "src/combat/bloodMarks.js",
+    "old": "    return spray(col, [feet[0], feet[1] + DRIP_FROM, feet[2]], n, BLEED_RADIUS, BLEED_RATE, null, { up: false });",
+    "new": "    return spray(col, [feet[0], feet[1] + DRIP_FROM, feet[2]], n, BLEED_RADIUS, BLEED_RATE);",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
   }
 ]

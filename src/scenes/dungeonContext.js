@@ -223,7 +223,7 @@ const q3 = (v) => Math.round(v * 1000) / 1000; const GENDER_BIT = ['male', 'fema
 const HIT_POS_MAX = 1e6;
 // AUDIT FOES FOE5: the most damage one peer's blow may claim. The host TRUSTS the number (it never recomputes - the
 // striker's own calc is the game's), so without a bound any joiner could one-shot every foe in the room and empty it
-// through the kill door. The exterior twin has carried this bound since WORLD6b (exteriorFoes.js:1704); the dungeon
+// through the kill door. The exterior twin has carried this bound since WORLD6b (exteriorFoes.js:1707); the dungeon
 // had none. Past anything a legal swing, shaft or blast can roll.
 const HIT_DMG_MAX = 10000;
 /** AUDIT WORLD3 E3: can the ONE build chain actually stand this species? Both of buildFoeAt's branches need a truthy
@@ -2610,6 +2610,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // and goes, a mark stays and costs a vertex buffer for the session.
   // Two lifetimes, two bindings, and destroy() ends this one by name.
   const bloodMarks = createBloodMarks({ renderer, collider: () => collider, settings: bloodDecalDeps });
+  /** BLOOD2c: how the bleeding ledger reads one of this dungeon's bodies. */
+  const foeBleedView = (f) => ({ feet: f.ai?.feet, health: f.entity?.health, maxHealth: f.entity?.maxHealth, bloodIndex: ENEMY_BASICS[f.mobileType]?.bloodIndex ?? 0, dead: !!f.dead, corpse: !!f.corpse });
   const hitEffects = createHitEffects({
     renderer, getTexture, uploadRecordFrame, marks: bloodMarks,
     onSpawn: (b) => billboardBatches.push(b),
@@ -2818,6 +2820,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     try { await spawnCorpseNow(f); } finally { f._corpseMinting = false; }
   }
   async function spawnCorpseNow(f) {
+    f.corpse = true;   // BLOOD2c: a body to bleed out from - set at the mint, whichever door asked for it (the kill's, the stream's), and cleared with the corpse by freeCorpse
     // A5 - EnemyDeath.cs:86-92 reads `mobile.Enemy.CorpseTexture`, the
     // per-mobile STRUCT COPY, not the static row. That only matters for
     // one enemy in the game: SetSpecialTransformationCompleted swaps
@@ -3454,7 +3457,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     if (!_authority || !data || typeof data !== 'object') return false;
     const i = data.i | 0, dmg = Number(data.dmg);
     const f = foes[i];
-    // AUDIT FOES FOE5: BOUNDED, as the exterior twin's applyHit is (exteriorFoes.js:1704). The number is a peer's
+    // AUDIT FOES FOE5: BOUNDED, as the exterior twin's applyHit is (exteriorFoes.js:1707). The number is a peer's
     // word and the host trusts it without recomputing, so an unbounded one let any joiner one-shot every foe in the
     // room - and, through the kill door, empty it. 10000 is past anything a legal swing, shaft or blast can roll.
     if (!f || i >= _layoutFoes || f.dead || !Number.isFinite(dmg) || dmg < 0 || dmg > HIT_DMG_MAX) return false;
@@ -3718,6 +3721,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   /** WORLD8: the corpse flat freed by its foe - setFoeDead's un-death arm, shared with the respawn (which rebuilds the
    *  record rather than waking the old one). */
   function freeCorpse(f) {
+    f.corpse = false;   // BLOOD2c: no body, no pool - a resurrected or respawned foe starts clean
     if (!f.corpseBatch) return;
     const ci = corpses.indexOf(f.corpseBatch); if (ci >= 0) corpses.splice(ci, 1);
     const bi = billboardBatches.indexOf(f.corpseBatch); if (bi >= 0) billboardBatches.splice(bi, 1);
@@ -3932,7 +3936,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // InstantiatePrefab's a fresh GameObject per saved record, so
     // EnemyEntity's `PickpocketByPlayerAttempted` default is the loaded
     // truth for every enemy. The re-minting pools match that by
-    // construction (exteriorFoes.js:1343's restoreWorld goes through
+    // construction (exteriorFoes.js:1346's restoreWorld goes through
     // spawnFoe), but this host patches the LIVE foes in place, so a
     // same-dungeon reload kept a raised latch and a failed pickpocket
     // could never be retried - falsifying the law
@@ -4548,6 +4552,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // clock lives here and no host can forget it. Real dt, and it ENDS
     // (a finished splash frees its batch inside tick).
     hitEffects.tick(dt);
+    hitEffects.bleed(dt, foes, foeBleedView);   // BLOOD2c: the wounded drip, the dead bleed out
     droppedTorches.tick(dt);   // HT1: the burn, the flight, the flames
     camps.tick(dt);   // SURV3: the fires burn down
     // PX21c: THE HOVER PLAQUE, from the frame function both dungeon
