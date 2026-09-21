@@ -595,6 +595,15 @@ export class RestSession {
       if (online) {
         if (this._onlineSimMinutes == null) this._onlineSimMinutes = Math.floor(this.deps.sharedMinutes());
         this._onlineSimMinutes += MINUTES_PER_TICK;
+        // MAC-LVL1 (2026-09-21, a player: "leveling doesn't work properly
+        // online ... how online changes the passage of time"): the same
+        // ten simulated minutes are CREDITED to the skill-check clock.
+        // DFU's RaiseSkills is called by exactly two things - this rest
+        // and fast travel - both of which have just raised world time,
+        // so its 360-minute gate always opens after a night; online the
+        // shared clock the gate reads moved 43 minutes in the 3.6 real
+        // seconds an 8-hour rest takes, and the gate stayed shut.
+        this.deps.creditSkillMinutes?.(MINUTES_PER_TICK);
       }
       this.deps.advanceMinutes(MINUTES_PER_TICK, online ? this._onlineSimMinutes : null);
       // TickRest :376-379, `RaiseTime` then `QuestMachine.Instance.

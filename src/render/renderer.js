@@ -3565,6 +3565,10 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
       fogRange: [this._fogRange[0], this._fogRange[1]],
       fogColor: this._fogColor,
       ambient: this._ambient,
+      // AUDIT-AMAP H5: setLighting's fourth argument defaults to null and
+      // forwards to setAmbientTrilight, so a restore that forgot the
+      // trilight dropped the dungeon's BA1 sky/ground pair on every pass
+      ambientTri: this._ambientTri ? { sky: Array.from(this._ambientTri.sky), ground: Array.from(this._ambientTri.ground) } : null,
       sunScale: this._sunScale,
       sunColor: this._sunColor,
       clockLit: this._clockLit,
@@ -3649,6 +3653,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     this.setAutomapWater(s.automapWaterLevel, s.automapWaterColor);
     this.setFog(FOG_MODE_NAMES[s.fogMode] ?? 'off', s.fogDensity, s.fogRange[0], s.fogRange[1], s.fogColor);
     this.setLighting(s.ambient, s.sunScale, s.sunColor);
+    this.setAmbientTrilight(s.ambientTri);   // AUDIT-AMAP H5
     this._clockLit = s.clockLit;
     this.setMoonlight(s.moonScale ? { scale: s.moonScale, dir: s.moonDir, color: s.moonColor } : null);
     this._moonDir[0] = s.moonDir[0]; this._moonDir[1] = s.moonDir[1]; this._moonDir[2] = s.moonDir[2];

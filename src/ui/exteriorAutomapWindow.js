@@ -243,7 +243,7 @@ let _yawDeg = 0;
  *  OnPush (:481-540, whose only reset arm is ResetCameraPosition plus
  *  the zoom) nor OnPop (:545-563) touches either one. The port builds
  *  a NEW window per open, so both live at module scope here - the same
- *  law automapWindow.js:326-335 already states for the dungeon map. */
+ *  law automapWindow.js:325-334 already states for the dungeon map. */
 let _viewMode = VIEW_MODES[0];
 let _background = 'original';
 let _texVer = 0;   // module-level, the A1 lesson: versioned keys never collide across instances
@@ -528,7 +528,7 @@ export class ExteriorAutomapWindow {
     this.deps = deps;
     this.done = false;
     // The raw-code seam townTalk.js:330 forks on, the same one the
-    // dungeon window takes (automapWindow.js:498) - it is that fork's
+    // dungeon window takes (automapWindow.js:497) - it is that fork's
     // switch, not a semantic claim about choice windows, and without it
     // ui/input.js's cooked alphabet cannot spell an arrow, an F-key,
     // PageUp/Down, a keypad key or ANY modifier, which is nine tenths

@@ -1389,7 +1389,7 @@ test('FIELD-GUN18: the orb is scaled off the archive’s own size, at BOTH lanes
 
 test('FIELD-GUN18: the pool’s scale really scales - it was multiplying an OBJECT by a number', () => {
   // THE BUG THIS ASK WALKED INTO. `billboardSize` answers a {w, h}
-  // RECORD (rmbFlats.js:133; billboardXml's override keeps the shape),
+  // RECORD (rmbFlats.js:155; billboardXml's override keeps the shape),
   // and the branch that applied `scale` read:
   //
   //     Array.isArray(size) ? size.map(v => v * scale) : size * scale
@@ -1582,4 +1582,73 @@ test('FIELD-GUN19: a blown-out core has no opinion about hue', () => {
   const sys = readFileSync('src/systems/thunderlock.js', 'utf8');
   assert.match(rig, /const flash = orbColour\(\);/, 'the muzzle FLASH wears it');
   assert.match(sys, /color: orbColour\(\),/, 'and so does the light it throws');
+});
+
+// FIELD-GUN20 (2026-09-21, Mac: "The orb projectile that fires is still
+// not alligned with coming out of the barrel (classic sprite not
+// morrowind)"). THE ANCHOR, after the origin (17) and the strip (19).
+//
+// The muzzle ray was right and the strip was right: the orb's POSITION
+// was on the barrel. The SPRITE was not, because the renderer anchors
+// every billboard batch at its BASE (`(aCorner.y + 0.5) * uSize.y` - the
+// centre half a height above the placement point) - which is
+// DaggerfallBillboard.AlignToBase (:410-416, `offset.y = Size.y / 2`)
+// baked in for every flat a block places. A MISSILE never calls it:
+// DaggerfallMissile.cs:601-602 makes its billboard at localPosition zero
+// on the missile's own transform, and EnemyBlood.cs:32-35 sets the
+// splash's transform.position to the hit point - CENTRED. So every
+// missile lane and the whole effect pool drew their sprite half a
+// height above where it was: the orb above the barrel, and a fireball
+// and a blood splash the same, unreported. `rmbFlats.centredBase` is the
+// one law: the position with half the billboard's height taken off.
+import { centredBase } from '../src/world/rmbFlats.js';
+
+test('FIELD-GUN20: a missile or effect sprite is CENTRED on its position - the base handed to the renderer is half a height under it', () => {
+  assert.deepEqual(centredBase([1, 2, 3], { w: 0.8, h: 1.2 }), [1, 2 - 0.6, 3], 'half the HEIGHT, not the width');
+  assert.deepEqual(centredBase([0, 0, 0], { w: 1, h: 0.5 }), [0, -0.25, 0]);
+  assert.deepEqual(centredBase([4, 5, 6], null), [4, 5, 6], 'no size yet: the position itself');
+  // the three lanes that place a sprite by its position, by source - every batch they build takes it
+  const seams = [
+    ['src/scenes/hitEffects.js', 2],       // spawn, and the rebuild on a recentre
+    ['src/scenes/hostMagic.js', 1],        // the world hosts' spell missiles
+    ['src/scenes/dungeonContext.js', 1],   // the fourth host's own missiles - the orb and every spell
+  ];
+  for (const [f, n] of seams) {
+    const s = readFileSync(f, 'utf8');
+    const builds = [...s.matchAll(/renderer\.createBillboardBatch\([^;]*\bcentredBase\(/g)].length;
+    assert.equal(builds, n, `${f}: ${n} batch build(s) at the centred base`);
+  }
+  const dc = readFileSync('src/scenes/dungeonContext.js', 'utf8');
+  const missile = dc.slice(dc.indexOf('async function ensureMissileBatch(m)'), dc.indexOf('function showImpactFlash(m, pos)'));
+  assert.match(missile, /m\.batch = renderer\.createBillboardBatch\(archive, record, size, \[centredBase\(m\.firePos, size\)\]\);/, 'the fourth host\'s missile');
+  assert.doesNotMatch(missile, /\[\[m\.firePos\[0\], m\.firePos\[1\], m\.firePos\[2\]\]\]/, 'and never the bare fire position');
+  const hm = readFileSync('src/scenes/hostMagic.js', 'utf8');
+  assert.match(hm, /m\.batch = renderer\.createBillboardBatch\(archive, 0, size, \[centredBase\(m\.firePos, size\)\]\);/, 'the world hosts\' spell missile');
+  // THE OTHER HALF OF THE LAW: a block's flats keep AlignToBase - they sit ON their base, and never take this
+  assert.doesNotMatch(readFileSync('src/world/rmbFlats.js', 'utf8').slice(readFileSync('src/world/rmbFlats.js', 'utf8').indexOf('export function collectBlockFlats')), /centredBase\(/, 'collectBlockFlats places at the base');
+  for (const f of ['src/world/rdbLayout.js', 'src/world/interiorLayout.js', 'src/scenes/world.js', 'src/scenes/exterior.js']) {
+    assert.doesNotMatch(readFileSync(f, 'utf8'), /centredBase\(/, `${f}: a flat that DFU AlignToBase-s is not centred`);
+  }
+});
+
+test('FIELD-GUN20: the pool lands the orb\'s CENTRE on the muzzle, and the flight\'s delta is centre-to-centre', async () => {
+  const { createHitEffects } = await import('../src/scenes/hitEffects.js');
+  const { GLOBAL_SCALE } = await import('../src/world/meshReader.js');
+  const built = [];
+  const fx = createHitEffects({
+    renderer: { createBillboardBatch: (a, r, size, centres) => { const b = { a, r, size, centres, frame: null, origin: null }; built.push(b); return b; }, destroyBillboardBatch: () => {} },
+    getTexture: async () => ({ recordCount: 1, getFrameCount: () => 1, getSize: () => ({ width: 32, height: 40 }), getScale: () => ({ width: 0, height: 0 }) }),
+    uploadRecordFrame: () => {},
+  });
+  const muzzle = [0.27, 1.5 - 0.48, 0.5];   // FIELD-GUN17a's own muzzle offset, on an eye at 1.5
+  const orb = fx.showFlyingFlat(378, muzzle, { scale: ORB_SCALE });
+  await new Promise((r) => setImmediate(r));
+  assert.equal(built.length, 1);
+  const h = 40 * GLOBAL_SCALE * ORB_SCALE;
+  assert.equal(built[0].size.h, h, 'the orb at its scale');
+  const base = built[0].centres[0];
+  assert.deepEqual([base[0], base[1] + h / 2, base[2]], muzzle, 'the sprite\'s centre IS the muzzle - the base is half its height under it');
+  assert.ok(base[1] < muzzle[1], 'the old base was the muzzle itself, which put the picture half an orb above the barrel');
+  orb.move([muzzle[0], muzzle[1], muzzle[2] + 3]);
+  assert.deepEqual(built[0].origin, [0, 0, 3], 'flight is a delta between centres, so it does not move with the anchor');
 });

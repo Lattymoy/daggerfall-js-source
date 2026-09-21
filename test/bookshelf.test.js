@@ -14,7 +14,8 @@ import { BOOKSHELF_CAPACITY, populateBookshelf, bookshelfAccess, bookshelfTitles
 import { healthStatusRows, YOU_ARE_HEALTHY_ID, YOU_HAVE_BEEN_POISONED_ID } from '../src/systems/healthStatus.js';
 import { BOOK_ID_TITLES } from '../src/systems/booksData.js';
 import { bookTitle } from '../src/systems/books.js';
-import { contractedMessageRecord, DISEASES } from '../src/systems/diseases.js';
+import { contractedMessageRecord, DISEASES, startDisease, updateDiseases, diseaseCount } from '../src/systems/diseases.js';
+import { createInfection } from '../src/systems/infection.js';
 import { BUILDING_TYPES } from '../src/world/buildingNames.js';
 
 const SRC = join(dirname(fileURLToPath(import.meta.url)), '..', 'src');
@@ -72,23 +73,49 @@ test('BS1: the interior shelf click routes - bookshelf in the three types, loot 
   assert.match(wm, /interiorOverlay = new ActionTextBox\(\[access\.text\]\);/);
 });
 
-test('F198: the health box decision, arm by arm', () => {
+test('F198: the health box decision, arm by arm - over the entries the PRODUCER mints (MAC-ILL1)', () => {
+  // MAC-ILL1 (2026-09-21, a player: "apparently i am ill (based on the
+  // fast travel warning), but when I press 'I' it doesn't list any
+  // illnesses"): this pin used to build its entries by hand as
+  // `{ kind: 'disease', diseaseType }` - the READER's invented shape -
+  // while startDisease writes `disease`. Every arm passed and the box
+  // drew empty in the game. TEST THE SHAPE THE PRODUCER MINTS.
+  const seq = (...v) => { let i = 0; return () => v[Math.min(i++, v.length - 1)]; };
+  const P = () => ({
+    isPlayer: true, level: 5, career: {}, health: 40, maxHealth: 40, magicka: 30, fatigue: 6400,
+    stats: { strength: 50, intelligence: 50, willpower: 50, agility: 50, endurance: 50, personality: 50, speed: 50, luck: 50 },
+  });
+  const sinks = { hurt() {}, drainFatigue() {}, drainMagicka() {} };
   // healthy: no diseases, no poisons
   assert.deepEqual(healthStatusRows({ activeEffects: [] }, rows), rows(YOU_ARE_HEALTHY_ID));
   assert.equal(YOU_ARE_HEALTHY_ID, 18);
   assert.equal(YOU_HAVE_BEEN_POISONED_ID, 117);
-  // an INCUBATING disease shows nothing - and nothing qualified means
-  // record 18 again (the `if (tokens == null)` tail)
-  const incubating = { kind: 'disease', diseaseType: DISEASES.Plague, incubationOver: false };
-  assert.deepEqual(healthStatusRows({ activeEffects: [incubating] }, rows), rows(18));
-  // incubation over: the classic contracted message, record 100 + type
-  const witch = { kind: 'disease', diseaseType: DISEASES.WitchesPox ?? 2, incubationOver: true };
-  const one = healthStatusRows({ activeEffects: [witch] }, rows);
-  assert.deepEqual(one, rows(contractedMessageRecord(witch.diseaseType)));
+  // an INCUBATING disease (contracted today) shows nothing - and nothing
+  // qualified means record 18 again (the `if (tokens == null)` tail);
+  // the travel popup's condition (diseaseCount > 0) already warns - the
+  // one DFU-faithful disagreement between the two texts
+  const pc = P();
+  const plague = startDisease(pc, DISEASES.Plague, 100);
+  assert.ok(plague && plague.disease === DISEASES.Plague && plague.diseaseType === undefined, 'the producer\'s field is `disease`');
+  assert.equal(diseaseCount(pc), 1, 'the travel warning fires');
+  assert.deepEqual(healthStatusRows(pc, rows), rows(18), 'incubating: the healthy line, as CreateHealthStatusBox :1694-1697');
+  // incubation over (the first day-crossing tick): the classic contracted
+  // message, record 100 + type - THE line the player did not get
+  updateDiseases(pc, 101, sinks, seq(0.5));
+  assert.equal(plague.incubationOver, true);
+  assert.deepEqual(healthStatusRows(pc, rows), rows(contractedMessageRecord(DISEASES.Plague)), 'mutants: a field nothing writes - an EMPTY box, not even the healthy line');
   // two ripe diseases concatenate, in order
-  const plague = { kind: 'disease', diseaseType: DISEASES.Plague, incubationOver: true };
-  assert.deepEqual(healthStatusRows({ activeEffects: [plague, witch] }, rows),
-    [...rows(contractedMessageRecord(DISEASES.Plague)), ...rows(contractedMessageRecord(witch.diseaseType))]);
+  const pox = startDisease(pc, DISEASES.WitchesPox, 101);
+  updateDiseases(pc, 102, sinks, seq(0.5));
+  assert.equal(pox.incubationOver, true);
+  assert.deepEqual(healthStatusRows(pc, rows),
+    [...rows(contractedMessageRecord(DISEASES.Plague)), ...rows(contractedMessageRecord(DISEASES.WitchesPox))]);
+  // an INFECTION entry (vampirism / lycanthropy) is Diseases.None: no
+  // message ever (DiseaseEffect.cs:204-205), and alone it is the healthy line
+  const bitten = P();
+  bitten.activeEffects = [createInfection('vampirism', { day: 100 })];
+  assert.equal(diseaseCount(bitten), 1, 'it counts for the travel warning (BundleTypes.Disease)');
+  assert.deepEqual(healthStatusRows(bitten, rows), rows(18), 'mutants: NaN\'s record read for the null type');
   // a WAITING poison is as silent as incubation
   const waiting = { kind: 'poison', state: 'waiting' };
   assert.deepEqual(healthStatusRows({ activeEffects: [waiting] }, rows), rows(18));
@@ -99,9 +126,11 @@ test('F198: the health box decision, arm by arm', () => {
     [...rows(contractedMessageRecord(DISEASES.Plague)), ...rows(117)]);
   // an ENDED entry counts for nothing
   assert.deepEqual(healthStatusRows({ activeEffects: [{ ...plague, ended: true }] }, rows), rows(18));
+  // and a reader whose record is EMPTY (a TEXT.RSC without the line) still never draws a blank box
+  assert.deepEqual(healthStatusRows({ activeEffects: [plague] }, (id) => (id === 18 ? rows(18) : [])), rows(18), 'mutants: an empty append making `tokens` non-null');
 });
 
-test('F198: all four hosts hand the Status action a showStatus - the seam input.js:603 requires', () => {
+test('F198: all four hosts hand the Status action a showStatus - the seam input.js:623 requires', () => {
   for (const h of ['scenes/world.js', 'scenes/exterior.js', 'scenes/dungeonContext.js', 'scenes/worldModes.js']) {
     const src = code(h);
     assert.match(src, /showStatus/, `${h} provides showStatus`);

@@ -170,7 +170,7 @@ carried only the first of the two lines, so a player fighting with the
 left-hand weapon loaded back holding the right hand's item, or bare
 fists. By the time it was found, the two restore lines had drifted six
 and thirteen lines apart inside their own hosts, and the comment in
-`worldModes.js` that pointed between them cited `world.js:5435` and
+`worldModes.js` that pointed between them cited `world.js:5436` and
 `dungeonContext.js:5896` - lines that had moved to `:4721` and `:5871`.
 *Three copies of a rule, and the signpost between them stale as well.*
 
@@ -249,7 +249,7 @@ three collapsed on verification.**
 2. *"`npcSession.onWorldChanged()` is on both door exits and not on the
    teleport/load path."* True, and correct: every caller of
    `forceExitToExterior` follows it with `_teleportToPixel`, and THAT
-   function owns the call (`world.js:4430`, DFU's `OnMapPixelChanged` /
+   function owns the call (`world.js:4431`, DFU's `OnMapPixelChanged` /
    `OnLoadEvent`). The quickload caller goes through
    `restoreSessionState` instead. Calling it in both places would be the
    redundancy, not the fix.
@@ -543,7 +543,7 @@ The door list derived; the four arm names did not. It demanded `close`,
 which no host has ever called on a slot - the hosts free a window with
 `dispose?.()` - so that requirement was invented, and it passed only
 because the one door lacking `close` was also the one being skipped. And
-it omitted `tick`, which `interior.js:366` calls unguarded **every
+it omitted `tick`, which `interior.js:368` calls unguarded **every
 frame**.
 
 **F3 - it assumed the population was `ui/*Door.js`.** It is not. Twelve

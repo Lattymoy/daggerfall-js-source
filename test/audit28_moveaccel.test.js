@@ -98,6 +98,6 @@ test('AUDIT 28 W8: all four producers hand the motor the axes, advanced only on 
   // no-block-close assert below is what proves containment. F0/F1's
   // onExteriorWater clear and F3's autorun note added prose between
   // the gate and the update, so the budget moves with them.
-  assert.ok(gate > 0 && at - gate < 4000, 'dungeon.js: the axes update is inside the walk-mode overlay gate');
+  assert.ok(gate > 0 && at - gate < 4500, 'dungeon.js: the axes update is inside the walk-mode overlay gate');   // MAC-SWING1: the key latch sits in that window too
   assert.equal(d.slice(gate, at).split('\n    }\n').length, 1, 'dungeon.js: no block close between the gate and the update');
 });

@@ -5,6 +5,7 @@ import assert from 'node:assert/strict';
 import { ArrowFlight, arrowMatrix, ARROW_MODEL_ID } from '../src/combat/arrowFlight.js';
 import { MISSILE_SPEED, MISSILE_LIFESPAN_S, MISSILE_COLLIDER_RADIUS } from '../src/systems/spellcast.js';
 import { Collider } from '../src/player/collider.js';
+import { GLOBAL_SCALE } from '../src/world/meshReader.js';   // FIELD-GUN20: the pool's 48 px sprite, in units
 import { readFileSync } from 'node:fs';   // FIELD-GUN14: the four hosts, by source
 
 const I = new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
@@ -287,7 +288,7 @@ test('FIELD-GUN14: the pool grew a flat that FLIES - it moves, it loops, and the
   assert.doesNotThrow(() => orb.move([0, 1, 2]));
   await settle();
   assert.equal(built.length, 1);
-  assert.deepEqual(built[0].centres[0], [0, 1, 0], 'the batch is built at the FIRE position - centres are baked STATIC_DRAW');
+  assert.deepEqual(built[0].centres[0], [0, 1 - (48 * GLOBAL_SCALE) / 2, 0], 'the batch is built at the FIRE position - centres are baked STATIC_DRAW - and FIELD-GUN20: at its BASE, half a height under the centre (DaggerfallMissile.cs:601-602 never AlignToBase), so the orb sits ON the barrel');
   assert.deepEqual(built[0].origin, [0, 0, 2], 'and the flight it already had rides the origin uniform');
 
   orb.move([0, 1, 5]);
@@ -330,7 +331,7 @@ test('FIELD-GUN14: the pool grew a flat that FLIES - it moves, it loops, and the
   fx.offsetAll([100, 0, 0]);
   const rebuilt = built[built.length - 1];
   assert.equal(built.length, 2);
-  assert.deepEqual(rebuilt.centres[0], [100, 1, 0]);
+  assert.deepEqual(rebuilt.centres[0], [100, 1 - (48 * GLOBAL_SCALE) / 2, 0]);
   assert.deepEqual(rebuilt.origin, [0, 0, 5], 'the delta survives the rebuild');
 
   // AND THE FLIGHT ENDS IT, not the clock.
