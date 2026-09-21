@@ -298,6 +298,39 @@ directory by `test/audit18_bible_docs.test.js`:
   field is the field; what the eye is shown is a handful of declared
   edits over it, and the pin that held the lab's text byte for byte now
   holds the departures the same way.**
+  **GRASS-PX2 + GRASS6 (2026-09-21, Mac: "would it help performance?"
+  "Do it"): THE TWO BAKES THAT PAY.** Baking the SWAY would not have: it
+  is one sine per vertex, and every vertex is transformed every frame
+  whatever pose it holds. What the probe's shipped frame actually spends
+  is 6.8M vertex invocations, and two things in each were work for a
+  constant. **GRASS-PX2**: the lab's near blade is five stacked quads so
+  that it can curve, and the pixel style's sprite carries its own curve
+  - so in the pixel style every cell binds the one-quad array the far
+  cells already use. The near cells are 30 of 98 slots and hold most of
+  the blades that survive the fade, so the pixel frame goes from 6.80M
+  vertices to 2.39M, 65% off, same picture (69,607 green px against
+  70,785 before, the tuft on a straight tilted quad rather than a bent
+  one). **GRASS6**: GRASS2's clump - two value noises in world space
+  pulling the tint toward its neighbours', the thing that makes a field
+  read as patches - was in the VERTEX stage, evaluated on all thirty
+  vertices of a blade every frame, eight hashes and their blends each
+  time, for a value that is a function of the root's position and
+  nothing else. It is the placer's now, once a blade at placement,
+  riding the tint lane the pack already had; the vertex stage compiles
+  the lab's OWN `vTint = aInst2.z;` again and GRASS2's edit list is four,
+  not five. The noise is the prelude's term for term in doubles rather
+  than floats, so the patches are the same shape at the same scales and
+  not the same bits - and nothing held the bits. This one applies to
+  Smooth too. 2 pins (test/grasspx.test.js: a near cell is five quads
+  in smooth and one in pixel, on the slot rig, and the style is read
+  every draw; test/labGrass.test.js: the lab's tint line back, no noise
+  in the body, the twin's constants against the prelude's, the noise's
+  range and continuity, and the placer's first blade carrying exactly
+  the pulled tint with the random stream undisturbed); 8 mutants, 8
+  dead, GRASS2's tint mutant re-aimed at the placer. **The lesson: the
+  vertex stage is the wrong place for anything that is the same number
+  every frame - and the sway, the thing that LOOKS like the work, is
+  the cheapest term in it.**
 - `grassPixelArt.js` - GRASS-PX THE TUFT SHEET: eight 16x32 tufts built at boot from a seed (one-texel stalks bending as height squared, four tones with one highlight texel, alpha 0 or 255), their coverage mip chain (max alpha per block, never an average, down to 1x1), the pixel style's numbers (8 Hz sway, 24 lean steps, 3x tuft width, 8-step ramp, 4 tint bands) and `pixelGrass()`, the row's word; the shader edits themselves are `GRASSPX_VS_EDITS` / `GRASSPX_FS_EDITS` in labGrass.js.
 - `systems/wind.js` - **WIND1 (2026-09-02) THE WIND IS ITS OWN THING.**
   Mac: "wind should be something different from the weather. Imagine a

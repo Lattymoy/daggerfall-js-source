@@ -1,0 +1,58 @@
+[
+ {
+  "name": "GRASS6-the-tint-is-pulled-nowhere",
+  "file": "src/render/labGrass.js",
+  "old": "export const bakedTint = (rnd, x, z) => Math.max(0, Math.min(1, rnd + (grassClump(x, z) - rnd) * 0.55));",
+  "new": "export const bakedTint = (rnd, x, z) => Math.max(0, Math.min(1, rnd + (grassClump(x, z) - rnd) * 0.0));",
+  "tests": [
+   "test/labGrass.test.js"
+  ]
+ },
+ {
+  "name": "GRASS6-one-octave-only",
+  "file": "src/render/labGrass.js",
+  "old": "export const grassClump = (x, z) => grassVnoise(x * 0.055, z * 0.055) * 0.66 + grassVnoise(x * 0.017, z * 0.017) * 0.34;",
+  "new": "export const grassClump = (x, z) => grassVnoise(x * 0.055, z * 0.055);",
+  "tests": [
+   "test/labGrass.test.js"
+  ]
+ },
+ {
+  "name": "GRASS6-the-noise-is-not-smoothed-so-the-patch-edges-are-creases",
+  "file": "src/render/labGrass.js",
+  "old": "  fx = fx * fx * (3 - 2 * fx); fz = fz * fz * (3 - 2 * fz);",
+  "new": "",
+  "tests": [
+   "test/labGrass.test.js"
+  ]
+ },
+ {
+  "name": "GRASS6-the-hash-goes-negative-west-of-the-origin",
+  "file": "src/render/labGrass.js",
+  "old": "const fract = (v) => v - Math.floor(v);",
+  "new": "const fract = (v) => v % 1;",
+  "tests": [
+   "test/labGrass.test.js"
+  ]
+ },
+ {
+  "name": "GRASS6-the-steps-placer-forgot-the-patch",
+  "file": "src/render/labGrass.js",
+  "old": "    const tint = bakedTint(rnd(), x, z);   // GRASS6\n",
+  "new": "    const tint = rnd();   // GRASS6\n",
+  "tests": [
+   "test/labGrass.test.js",
+   "test/grasspath.test.js",
+   "test/perf2.test.js"
+  ]
+ },
+ {
+  "name": "GRASS6-the-vertex-stage-evaluates-the-noise-again",
+  "file": "src/render/labGrass.js",
+  "old": "  vTint = aInst2.z;\n  vGround = aGround;",
+  "new": "  vTint = clamp(mix(aInst2.z, vnoise(root * 0.055) * 0.66 + vnoise(root * 0.017) * 0.34, 0.55), 0.0, 1.0);\n  vGround = aGround;",
+  "tests": [
+   "test/labGrass.test.js"
+  ]
+ }
+]

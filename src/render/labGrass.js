@@ -83,11 +83,14 @@ export const GRASS2_VS_EDITS = Object.freeze([
       + '  gRootY = uCellFrame.z + aPA.z * uCellFrame.w;\n'
       + '  vec2 root = aInst.xy;',
   }),
-  Object.freeze({
-    why: 'the tint is pulled toward a low-frequency world-space noise, so the field has patches instead of reading as one flat carpet',
-    from: '  vTint = aInst2.z;',
-    to: '  float clump = vnoise(root * 0.055) * 0.66 + vnoise(root * 0.017) * 0.34;\n  vTint = clamp(mix(aInst2.z, clump, 0.55), 0.0, 1.0);',
-  }),
+  // GRASS6 (2026-09-21): the FIFTH edit - the tint pulled toward a
+  // low-frequency world-space noise, so the field has patches - is gone
+  // from the shader and lives in the placer (`bakedTint`). The clump is
+  // a function of the blade's world position and nothing else, so it was
+  // being evaluated thirty times a blade a frame (two value noises, eight
+  // hashes) for a value that never changed. The lab's own line,
+  // `vTint = aInst2.z;`, is what compiles again; the lane carries the
+  // patched tint from the placer.
 ]);
 
 export const LAB_GRASS_HEAD = `#version 300 es
@@ -227,25 +230,7 @@ void main(){
   // planted on the snow's own surface, so the burial line is the one
   // the ground draws and not an approximation of it
   p.y = terrain(root) + snowSurf + vT * h;
-  // GRASS2: THE FIELD HAS PATCHES. aInst2.z is one uniform random per
-  // blade and nothing more, so neighbouring blades were as different as
-  // distant ones and the sward read as a flat carpet of noise at any
-  // distance past a few metres - the eye needs correlation to see a
-  // field rather than a texture. A low-frequency value noise in WORLD
-  // space (so a patch belongs to the ground, not to the camera) pulls
-  // the per-blade tint toward its neighbours' without narrowing the
-  // range: the mean is unchanged and the variance is redistributed from
-  // blade-to-blade to patch-to-patch. Two octaves, tens of metres
-  // across - larger than a blade, smaller than the draw range.
-  //
-  // NOT named "patch": that is a RESERVED WORD in GLSL ES 3.00 (the
-  // tessellation qualifier), and a reserved word used as an identifier
-  // fails the whole program to compile - which takes the entire field
-  // down, not one line of it. The same trap took the sky down at VC6
-  // under the name "flat". The probe below is what catches it; no pin
-  // can, because the pins compile nothing.
-  float clump = vnoise(root * 0.055) * 0.66 + vnoise(root * 0.017) * 0.34;
-  vTint = clamp(mix(aInst2.z, clump, 0.55), 0.0, 1.0);
+  vTint = aInst2.z;
   vGround = aGround;                      // GR4: carried to the root
   // MAC'S NOTE: the blades take the TIME OF DAY. A blade's normal is
   // roughly its own lean crossed with up, so a leaning blade catches
@@ -735,6 +720,52 @@ export const grassPerCell = (density = LAB_GRASS.density, span = LAB_GRASS.densi
   Math.max(1, Math.round(density * (cell * cell) / ((span * 2) * (span * 2))));
 
 /**
+ * GRASS6: THE FIELD HAS PATCHES, AND THE PATCH IS BAKED. The lab's tint
+ * (aInst2.z) is one uniform random per blade and nothing more, so
+ * neighbouring blades were as different as distant ones and the sward
+ * read as a flat carpet of noise past a few metres - the eye needs
+ * correlation to see a field rather than a texture. GRASS2 pulled the
+ * tint toward a low-frequency value noise in WORLD space (so a patch
+ * belongs to the ground, not to the camera), two octaves, tens of
+ * metres across: the mean unchanged, the variance moved from
+ * blade-to-blade to patch-to-patch.
+ *
+ * GRASS2 did it in the vertex stage, and that was the wrong stage. The
+ * clump is a function of the root's world position and nothing else; a
+ * blade's root never moves; so the shader was evaluating two value
+ * noises - eight hashes and their blends - on every one of a blade's
+ * thirty vertices, every frame, for a number that was the same number
+ * every time. It is evaluated ONCE here, when the blade is placed, and
+ * rides the tint lane the pack already has (8 bits, which is more than
+ * the shade the tint buys).
+ *
+ * The noise is the prelude's own (GAME_GRASS_FIELD's hash/vnoise), term
+ * for term, in doubles rather than the GPU's floats - so the patches are
+ * the same SHAPE at the same scales, and not the same bits. Nothing
+ * depended on the bits: no pin held the noise's value, only that a
+ * patch exists.
+ */
+/** GLSL's fract: x - floor(x), so a negative input folds UP into [0,1) - `%` would not */
+const fract = (v) => v - Math.floor(v);
+export function grassHash(x, z) {
+  let px = fract(x * 123.34), pz = fract(z * 456.21);
+  const d = px * (px + 45.32) + pz * (pz + 45.32);
+  px += d; pz += d;
+  return fract(px * pz);
+}
+export function grassVnoise(x, z) {
+  const ix = Math.floor(x), iz = Math.floor(z);
+  let fx = x - ix, fz = z - iz;
+  fx = fx * fx * (3 - 2 * fx); fz = fz * fz * (3 - 2 * fz);
+  const a = grassHash(ix, iz), b = grassHash(ix + 1, iz), c = grassHash(ix, iz + 1), d = grassHash(ix + 1, iz + 1);
+  return (a + (b - a) * fx) + ((c + (d - c) * fx) - (a + (b - a) * fx)) * fz;
+}
+/** the patch at a world position: two octaves, ~18 m and ~59 m across */
+export const grassClump = (x, z) => grassVnoise(x * 0.055, z * 0.055) * 0.66 + grassVnoise(x * 0.017, z * 0.017) * 0.34;
+/** the lane's tint: the lab's per-blade random, pulled 0.55 of the way to its patch */
+export const bakedTint = (rnd, x, z) => Math.max(0, Math.min(1, rnd + (grassClump(x, z) - rnd) * 0.55));
+
+/**
  * One cell's blades, padded to `perCell` with zero-height blades so the
  * slot is always full. The laws are placeLabGrassSteps' own, per blade.
  */
@@ -752,7 +783,7 @@ export function placeLabGrassCell(cx, cz, { keep, ground = null, perCell, height
     const h = (0.22 + rnd() * 0.42) * (height / 34);
     const phase = rnd() * 6.283;
     const lx = (rnd() - 0.5) * 0.5, lz = (rnd() - 0.5) * 0.5;
-    const tint = rnd();
+    const tint = bakedTint(rnd(), x, z);   // GRASS6: the lab's random, pulled toward the patch it stands in
     const w = 0.052 + rnd() * 0.055;
     const y = keep(x, z);
     if (y === null || y === undefined) continue;
@@ -920,7 +951,7 @@ export function* placeLabGrassSteps({ centre, keep, ground = null, density = LAB
     const h = (0.22 + rnd() * 0.42) * (height / 34);
     const phase = rnd() * 6.283;
     const lx = (rnd() - 0.5) * 0.5, lz = (rnd() - 0.5) * 0.5;
-    const tint = rnd();
+    const tint = bakedTint(rnd(), x, z);   // GRASS6
     const w = 0.052 + rnd() * 0.055;
     const y = keep(x, z);
     if (y !== null && y !== undefined) {
@@ -1252,7 +1283,14 @@ export class LabGrassRenderer {
     gl.uniform1f(u.uRange, range);
     // GRASS-PX: the style is a uniform, so the row flips live and the
     // program never recompiles; the sheet rides unit 4 (see the constructor)
-    gl.uniform1f(u.uPixel, pixelGrass(style) ? 1 : 0);
+    const pixel = pixelGrass(style);
+    gl.uniform1f(u.uPixel, pixel ? 1 : 0);
+    // GRASS-PX2: THE TUFT IS ONE QUAD. The lab's near blade is five
+    // stacked quads so that it can CURVE; the sprite carries its own
+    // curve, so in the pixel style every cell draws the one-quad blade
+    // the far cells already use - a fifth of the vertices on the near
+    // cells, which hold most of the blades that survive the fade.
+    this._oneQuad = pixel;
     gl.uniform1f(u.uPxStepHz, PX_STEP_HZ);
     gl.uniform1f(u.uPxTuftScale, PX_TUFT_SCALE);
     gl.uniform1f(u.uPxLeanSteps, PX_LEAN_STEPS);
@@ -1369,7 +1407,7 @@ export class LabGrassRenderer {
       // slot, which is why the level of detail is a CELL's and not a
       // blade's - one bind for six thousand blades rather than a branch
       // inside every one of them.
-      const far = dn > range * GRASS_FAR_AT;
+      const far = this._oneQuad || dn > range * GRASS_FAR_AT;   // GRASS-PX2: the pixel style is one quad everywhere
       if (far !== wasFar) { gl.bindVertexArray(far ? this.vaoFar : this.vao); wasFar = far; }
       const verts = far ? this.vertsFar : this.verts;
       this._point(slot);

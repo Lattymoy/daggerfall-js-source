@@ -2,7 +2,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { LAB_GRASS_HEAD, LAB_GRASS_VS, LAB_GRASS_FS, LAB_GRASS, LAB_DIM, placeLabGrass, grassRecordsOf, labBladeCorners, GRASS2_VS_EDITS, GRASS_FAR_SEGMENTS, GRASS_PACK_BYTES, GRASS_CELL, grassPerCell, heightFloor, heightSpan, WIDTH_SPAN, LEAN_SPAN } from '../src/render/labGrass.js';
+import { LAB_GRASS_HEAD, LAB_GRASS_VS, LAB_GRASS_FS, LAB_GRASS, LAB_DIM, placeLabGrass, grassRecordsOf, labBladeCorners, GRASS2_VS_EDITS, GAME_GRASS_VS, GAME_GRASS_FIELD, placeLabGrassCell, grassCellSeed, grassHash, grassVnoise, grassClump, bakedTint, GRASS_FAR_SEGMENTS, GRASS_PACK_BYTES, GRASS_CELL, grassPerCell, heightFloor, heightSpan, WIDTH_SPAN, LEAN_SPAN } from '../src/render/labGrass.js';
 
 const lab = () => readFileSync('grass-proto.html', 'utf8');
 
@@ -22,7 +22,7 @@ test('GR1/GRASS2/GRASS5: the shaders are the lab\u2019s own but for five DECLARE
   // not compared; the CODE is.
   const noComments = (t) => t.split('\n').filter((l) => !l.trim().startsWith('//')).join('\n');
   let want = src.slice(vsStart, vsEnd);
-  assert.equal(GRASS2_VS_EDITS.length, 5, 'five departures, no more - a sixth is a decision, not a detail');
+  assert.equal(GRASS2_VS_EDITS.length, 4, 'four departures, no more - a fifth is a decision, not a detail (GRASS6 took the tint edit back to the placer, so the lab\u2019s own vTint line compiles again)');
   for (const e of GRASS2_VS_EDITS) {
     assert.ok(want.includes(e.from), `the lab still carries the line this edit replaces: ${e.why}`);
     assert.ok(e.why && e.why.length > 20, 'every departure says why, on the departure itself');
@@ -342,4 +342,56 @@ test('GRASS5: the range is no longer a memory question - and the window at 300 m
   const src = readFileSync(new URL('../src/render/labGrass.js', import.meta.url), 'utf8');
   assert.match(src, /MEMORY IS NOT THE CAP ANY MORE/);
   assert.match(src, /THE NEXT STEP IS NOT MORE RANGE, IT IS LESS DENSITY AT RANGE/);
+});
+
+test('GRASS6: the patch is BAKED - the clump noise is the placer\u2019s, once a blade, and the vertex stage compiles the lab\u2019s own tint line', () => {
+  // the shader no longer evaluates the noise: the lab's line is back and nothing in the body calls vnoise
+  assert.ok(GAME_GRASS_VS.includes('  vTint = aInst2.z;'), 'the lab\u2019s own tint line');
+  assert.ok(!/vnoise\(/.test(GAME_GRASS_VS) && !/clump/.test(GAME_GRASS_VS), 'no noise in the vertex stage - it was thirty evaluations a blade a frame for a constant');
+  // the JS noise is the prelude's, term for term: the same three constants, the same fade, the same bilinear
+  for (const term of ['123.34', '456.21', '45.32', '3.0-2.0*f']) assert.ok(GAME_GRASS_FIELD.includes(term), `the prelude's ${term}`);
+  const src = readFileSync('src/render/labGrass.js', 'utf8');
+  const js = src.slice(src.indexOf('export function grassHash'), src.indexOf('export const bakedTint'));
+  for (const term of ['123.34', '456.21', '45.32', '(3 - 2 * fx)', '(3 - 2 * fz)']) assert.ok(js.includes(term), `the twin's ${term}`);
+  assert.match(src, /export const grassClump = \(x, z\) => grassVnoise\(x \* 0\.055, z \* 0\.055\) \* 0\.66 \+ grassVnoise\(x \* 0\.017, z \* 0\.017\) \* 0\.34;/, 'GRASS2\u2019s two octaves at GRASS2\u2019s weights');
+  // the noise behaves as a value noise: in range, continuous, and a patch rather than a constant
+  let lo = 1, hi = 0;
+  for (let i = 0; i < 4000; i++) {
+    const x = (i * 7919) % 601 - 300, z = (i * 104729) % 601 - 300;
+    const v = grassClump(x, z); lo = Math.min(lo, v); hi = Math.max(hi, v);
+    assert.ok(v >= 0 && v <= 1);
+    assert.ok(Math.abs(grassClump(x + 0.05, z) - v) < 0.02, 'five centimetres apart is the same patch');
+  }
+  assert.ok(lo < 0.2 && hi > 0.8, `a full range of patches (${lo.toFixed(2)}..${hi.toFixed(2)})`);
+  // the hash is the prelude's with GLSL's fract (x - floor(x)), which folds a negative UP - half the world is west or north of the origin
+  const glslHash = (x, z) => { const fr = (v) => v - Math.floor(v); let px = fr(x * 123.34), pz = fr(z * 456.21); const d = px * (px + 45.32) + pz * (pz + 45.32); return fr((px + d) * (pz + d)); };
+  for (const [x, z] of [[3, 4], [-3, -4], [-0.37, 2.9], [-251.25, -17.5], [0.5, -0.5]]) {
+    assert.ok(grassHash(x, z) >= 0 && grassHash(x, z) < 1, 'in [0,1) either side of zero');
+    assert.ok(Math.abs(grassHash(x, z) - glslHash(x, z)) < 1e-9, `the prelude's own value at (${x}, ${z})`);
+  }
+  assert.equal(grassVnoise(2, 5), grassHash(2, 5), 'on a lattice point the noise is the hash');
+  // the lane's tint: the lab's random pulled 0.55 of the way to the patch, clamped
+  assert.equal(bakedTint(0.2, 10, 10), 0.2 + (grassClump(10, 10) - 0.2) * 0.55);
+  assert.equal(bakedTint(0, 0, 0), 0); assert.ok(Math.abs(bakedTint(1, 0, 0) - 0.45) < 1e-12, 'a random of 1 over a patch of 0 lands at 0.45');
+  // and the placer writes exactly that for its first blade, with the random stream undisturbed
+  const cell = placeLabGrassCell(2, -3, { keep: () => 0, perCell: 8 });
+  let s = grassCellSeed(2, -3);
+  const rnd = () => { s ^= s << 13; s ^= s >>> 17; s ^= s << 5; s >>>= 0; return s / 4294967296; };
+  const px = rnd() * 30, pz = rnd() * 30, a = rnd() * 6.283, rr = rnd() * rnd() * 0.55;
+  const x = 60 + px + Math.cos(a) * rr, z = -90 + pz + Math.sin(a) * rr;
+  rnd(); rnd(); rnd(); rnd();   // height, phase, lean x, lean z
+  const t = rnd();
+  const w = 0.052 + rnd() * 0.055;
+  assert.ok(Math.abs(cell.inst2[2] - bakedTint(t, x, z)) < 1e-6, 'the first blade\u2019s tint is its random pulled to its patch');
+  assert.ok(Math.abs(cell.inst2[3] - w) < 1e-6, '...and the width after it is the lab\u2019s, so the stream did not move');
+  assert.ok(Math.abs(cell.inst2[2] - t) > 1e-3 || Math.abs(grassClump(x, z) - t) < 1e-3, 'and it is not the bare random');
+  // and the whole-field placer (placeLabGrassSteps, the lab's own walk) bakes the same law on ITS first blade
+  const g = placeLabGrass({ centre: [0, 0], keep: () => 0 });
+  let ls = 0x2f6e2b1;
+  const lrnd = () => { ls ^= ls << 13; ls ^= ls >>> 17; ls ^= ls << 5; ls >>>= 0; return ls / 4294967296; };
+  const gcx = (lrnd() - 0.5) * LAB_GRASS.span * 2, gcz = (lrnd() - 0.5) * LAB_GRASS.span * 2, ga = lrnd() * 6.283, grr = lrnd() * lrnd() * 0.55;
+  const gx = gcx + Math.cos(ga) * grr, gz = gcz + Math.sin(ga) * grr;
+  lrnd(); lrnd(); lrnd(); lrnd();
+  const gt = lrnd();
+  assert.ok(Math.abs(g.inst2[2] - bakedTint(gt, gx, gz)) < 1e-6, 'the field placer\u2019s first blade is pulled to its patch too');
 });

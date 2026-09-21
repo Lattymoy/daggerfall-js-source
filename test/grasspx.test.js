@@ -12,6 +12,8 @@ import { buildTuftSheet, buildTuftMips, downsampleMax, layTuft, toneAt, toneByte
   PX_VARIANTS, PX_TUFT_W, PX_TUFT_H, PX_TONES, PX_RAMP_STEPS, PX_STEP_HZ, PX_TUFT_SCALE, PX_LEAN_STEPS, PX_TINT_BANDS } from '../src/render/grassPixelArt.js';
 import { LAB_GRASS_HEAD, GAME_GRASS_FIELD, LAB_GRASS_VS, LAB_GRASS_FS, GAME_GRASS_VS, GAME_GRASS_FS, GRASSPX_VS_EDITS, GRASSPX_FS_EDITS, applyGrassEdits, LabGrassRenderer } from '../src/render/labGrass.js';
 import { FEATURES, FEATURE_PREF_DEFAULTS } from '../src/systems/features.js';
+import { GRASS_CELL } from '../src/render/labGrass.js';
+import { perspective, mirrorProjectionX, lookAt } from '../src/world/mat4.js';
 
 const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 const TONE_BYTES = [0, 64, 128, 192, 255];
@@ -225,4 +227,43 @@ test('GRASS-PX: the row, its default, and the host reading it live', () => {
   const probe = read('tools/grassFieldProbe.mjs');
   assert.ok(probe.includes("frame(200, 'pixel')") && probe.includes('out.pixel.tones < out.at200.tones * 0.5'), 'the probe draws the pixel style and holds that it takes fewer colours');
   assert.ok(probe.includes('out.pxSheet.soft === 0'), '...and reads the sheet back off the GPU with a hard alpha');
+});
+
+/** a cell's blades as the placer shapes them, for the slot rig (perf2's own) */
+function cellPlaced(cx, cz, perCell, { h = 50, y = 10, cell = GRASS_CELL } = {}) {
+  const inst = new Float32Array(perCell * 4), inst2 = new Float32Array(perCell * 4), rootY = new Float32Array(perCell), ground = new Float32Array(perCell * 3);
+  for (let i = 0; i < perCell; i++) {
+    inst[i * 4] = cx * cell + (i % 7) / 7 * cell; inst[i * 4 + 1] = cz * cell + Math.floor(i / 7) % 7 / 7 * cell; inst[i * 4 + 2] = h; inst[i * 4 + 3] = i / perCell;
+    rootY[i] = y;
+  }
+  return { inst, inst2, rootY, ground, count: perCell, perCell };
+}
+
+test('GRASS-PX2: in the pixel style every cell draws the ONE-QUAD blade - the sprite carries its own curve, so the near cells drop to a fifth of their vertices', () => {
+  const { gl, calls } = stubGl();
+  const r = new LabGrassRenderer(gl);
+  const perCell = 49;
+  r.allocSlots(perCell, 4);
+  const eye = [0, 12, 0];
+  const proj = mirrorProjectionX(perspective(Math.PI / 3, 16 / 9, 0.2, 6000));
+  const view = lookAt(eye, [0, 12, 1], [0, 1, 0]);
+  r.writeSlot(0, cellPlaced(0, 3, perCell));   // 90..120 m ahead: NEAR against a 300 m range
+  const light = { sunDir: [0, 1, 0], amb: [0.2, 0.2, 0.2], sunCol: [1, 1, 1], dim: 1 }, wind = { dir: [1, 0], speed: 0, windV: [0, 0] };
+  calls.length = 0;
+  r.draw(proj, view, new Float32Array(eye), 0, light, wind, 300, 'smooth');
+  assert.equal(r.drawn.slots, 1); assert.equal(r.drawn.farSlots, 0, 'smooth: a near cell is the five-quad blade');
+  assert.equal(r.drawn.verts, r.drawn.blades * r.verts);
+  assert.ok(!calls.some((c) => c[0] === 'bindVertexArray' && c[1] === r.vaoFar), 'the far array is never bound for it');
+  calls.length = 0;
+  r.draw(proj, view, new Float32Array(eye), 0, light, wind, 300, 'pixel');
+  assert.equal(r.drawn.slots, 1); assert.equal(r.drawn.farSlots, 1, 'pixel: the same near cell is the one-quad blade');
+  assert.equal(r.drawn.verts, r.drawn.blades * r.vertsFar, 'a fifth of the vertices');
+  assert.ok(calls.some((c) => c[0] === 'bindVertexArray' && c[1] === r.vaoFar), 'the one-quad array is bound');
+  assert.equal(r.vertsFar * 5, r.verts);
+  // and back: the style is read every draw, not latched
+  r.draw(proj, view, new Float32Array(eye), 0, light, wind, 300, 'smooth');
+  assert.equal(r.drawn.farSlots, 0);
+  // the probe counts it on a real GL
+  const probe = read('tools/grassFieldProbe.mjs');
+  assert.ok(probe.includes('out.pixelShipped.drawn.verts < out.shipped.drawn.verts * 0.5'), 'the probe holds the pixel frame under half the smooth frame\u2019s vertices');
 });

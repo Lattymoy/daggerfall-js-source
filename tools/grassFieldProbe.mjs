@@ -129,6 +129,9 @@ console.log(`  PIXEL (range 200): ${out.pixel.green} green px in ${out.pixel.ton
 console.log(`  PIXEL (shipped range ${out.labRange}): ${out.pixelShipped.green} green px in ${out.pixelShipped.tones} colours; ${out.pixelShipped.drawn.blades} blades submitted`);
 console.log(`  the sheet on the GPU: ${out.pxSheet.w}x${out.pxSheet.h}, ${out.pxSheet.blade} blade texels, ${out.pxSheet.soft} soft-alpha texels`);
 check('the pixel style draws grass through the same program', out.pixel.green > 500, `${out.pixel.green} green px`);
+// GRASS-PX2: the tuft is one quad everywhere, so the pixel frame's vertex work is the far blade's for every cell
+console.log(`  PIXEL vertex work at the shipped range: ${(out.pixelShipped.drawn.verts / 1e6).toFixed(2)}M against smooth's ${(out.shipped.drawn.verts / 1e6).toFixed(2)}M (${(100 * (1 - out.pixelShipped.drawn.verts / out.shipped.drawn.verts)).toFixed(0)}% off)`);
+check('the pixel frame submits under half the smooth frame\'s vertices - one quad a tuft', out.pixelShipped.drawn.verts < out.shipped.drawn.verts * 0.5, `${out.pixelShipped.drawn.verts} against ${out.shipped.drawn.verts}`);
 check('and a different picture from the smooth one', out.pixel.sum !== out.at200.sum, `sum ${out.pixel.sum} vs ${out.at200.sum}`);
 check('the pixel field takes FEWER colours than the gradient field - the ramp and the four tones', out.pixel.tones < out.at200.tones * 0.5, `${out.pixel.tones} against ${out.at200.tones}`);
 check('the sheet reached the GPU with a hard alpha - no texel between 0 and 255', out.pxSheet.ok && out.pxSheet.soft === 0 && out.pxSheet.blade > 100, JSON.stringify(out.pxSheet));
