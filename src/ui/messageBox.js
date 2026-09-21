@@ -241,7 +241,7 @@ const rowWidth = (font, r) => (r.cells
  *  `buttons` are MB_BUTTONS values. Returns everything the draw and
  *  the hit test need, in VIRTUAL (320x200) pixels. */
 export function layoutMessageBox(font, lines, buttons = [], {
-  sizingRows = null, maxTextHeight = 0, image = null, scrollIndex = 0, rect = null,
+  sizingRows = null, maxTextHeight = 0, image = null, scrollIndex = 0, rect = null, widthOverride = 0,
 } = {}) {
   const rowH = font?.fnt?.fixedHeight ?? 6;         // rowLeading 0
   const rows = normalizeRows(lines);
@@ -285,7 +285,11 @@ export function layoutMessageBox(font, lines, buttons = [], {
     // which is what drawFrame's shear arm exists for.
     [x, y, w, h] = rect;
   } else {
-    w = Math.max(stripW, textW) + MARGIN * 2;
+    // AUDIT-AMAP W11: DaggerfallInputMessageBox.UpdatePanelSizes
+    // (:243-252) takes the TextBox's WidthOverride as the WHOLE width
+    // when it is set (the automap's note prompt: 306), else the measured
+    // content plus margins - and rounds either up to the 22px slice
+    w = widthOverride > 0 ? widthOverride : Math.max(stripW, textW) + MARGIN * 2;
     if (w < MIN_BOX_WIDTH) w = MIN_BOX_WIDTH;
     w = roundUpSlice(w);
     // :555 - the image's height is part of the PANEL's height, not of

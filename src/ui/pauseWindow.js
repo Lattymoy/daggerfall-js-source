@@ -174,7 +174,7 @@ export class PauseOptionsWindow {
     this.top = null;              // 'exit' | 'note' - the stacked box
     this._noteRows = null;
     this._box = null;             // laid out at draw (the U23 shape)
-    // The automap windows' latch (automapWindow.js:560,
+    // The automap windows' latch (automapWindow.js:559,
     // DaggerfallAutomapWindow.cs:703-713's `isCloseWindowDeferred`), and
     // this window needs it for the reason those two do: DFU opens the
     // pause screen on `ActionComplete(Actions.Escape)` -

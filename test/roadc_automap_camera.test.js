@@ -357,18 +357,18 @@ test('c2/S3 the drags: pan compensation per mode, and the 3D right-drag doing BO
   near(dragPan(far, 1, 0, main).pos[0], dragPan(s, 1, 0, main).pos[0] * 2, 1e-12);
 
   // a zero bias does NOTHING at all (:900 `if (bias != Vector2.zero)`)
-  assert.deepEqual(dragRotate(s, 0, 0), s);
+  assert.deepEqual(dragRotate(s, 0, 0, 1 / 60), s);
 
   // 2D right-drag turns the camera about ITSELF
   const two = { ...s, viewMode: VIEW_2D };
-  const r2 = dragRotate(two, 18, 0);   // 5.0 * 18 = 90 degrees
+  const r2 = dragRotate(two, 18, 0, 1);   // 5.0 * 18 * dt(1) = 90 degrees
   nearV(r2.pos, two.pos, 1e-12, 'the 2D camera does not move');
   nearV(r2.fwd, [-1, 0, 0], 1e-9);
 
   // 3D right-drag rotates about the pivot AND orbits the YZ plane
-  const r3 = dragRotate(s, 20, 0);     // 4.5 * 20 = 90 about the pivot
+  const r3 = dragRotate(s, 20, 0, 1);     // 4.5 * 20 * dt(1) = 90 about the pivot
   nearV(r3.pos, [-10, 0, 0], 1e-9);
-  const both = dragRotate(s, 0, 6);    // -5.0 * 6 = -30 on the YZ plane
+  const both = dragRotate(s, 0, 6, 1);    // -5.0 * 6 * dt(1) = -30 on the YZ plane
   assert.ok(both.pos[1] !== 0, 'a vertical drag really orbits');
   assert.ok(both.up[1] > 0, 'and stays upright');
 });

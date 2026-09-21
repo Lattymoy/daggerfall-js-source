@@ -63,6 +63,7 @@ const ERASE = new Set(['backspace', 'Backspace']);
  * @property {string} [label]                TextBoxLabel.Text, spacing included ('Enter new name : ', ' > '); '' when the raiser sets none
  * @property {string} [value]                TextBox.Text at Show(), shown whole even past MaxCharacters
  * @property {number} [maxCharacters]        TextBox.MaxCharacters (default 31)
+ * @property {number} [widthOverride]        TextBox.WidthOverride (DaggerfallInputMessageBox.cs:243-252): the box's whole width, before the 22px rounding; 0 = size from the content
  * @property {boolean} [numeric]             TextBox.Numeric
  * @property {boolean} [parchment]           useParchmentBackGround (:110, default true): the SPOP.RCI frame, or bare text
  * @property {boolean} [atTop]               showAtTopOfScreen (:111, default false): VerticalAlignment.Top instead of Middle (:150-152)
@@ -72,12 +73,13 @@ const ERASE = new Set(['backspace', 'Backspace']);
 export class InputMessageBoxWindow {
   /** @param {InputMessageBoxOptions} [opts] */
   constructor({
-    lines = [], label = '', value = '', maxCharacters = DEFAULT_INPUT_MAX,
+    lines = [], label = '', value = '', maxCharacters = DEFAULT_INPUT_MAX, widthOverride = 0,
     numeric = false, parchment = true, atTop = false, onSubmit = null, onCancel = null,
   } = {}) {
     this.lines = lines;
     this.label = String(label ?? '');
     this.maxCharacters = Math.max(0, maxCharacters | 0);
+    this.widthOverride = Math.max(0, widthOverride | 0);   // AUDIT-AMAP W11
     this.value = String(value ?? '');   // TextBox.Text's setter does not truncate (:74-82); only typing is capped
     this.cursor = this.value.length;    // SetCursorPosition(text.Length) on Text's setter
     this.numeric = !!numeric;
@@ -174,6 +176,7 @@ export class InputMessageBoxWindow {
       const m = nativeMetrics(canvas);
       const box = layoutMessageBox(font, [...this.lines, { text: entry, center: false }], [], {
         sizingRows: [...this.lines, { text: sizing, center: false }],
+        widthOverride: this.widthOverride,
       });
       if (drawMessageBox(renderer, m, font, box)) return;
     }

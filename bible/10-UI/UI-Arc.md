@@ -590,7 +590,7 @@ does the pack's USE arm.
                         close-then-hand-over ordering U55 got
                         backwards. No law needs extracting first.
     THE LOGBOOK         THREE sites: charSheetNav.js:53,
-    / NOTEBOOK          world.js:6174, dungeonContext.js:6275. A seam
+    / NOTEBOOK          world.js:6174, dungeonContext.js:6300. A seam
                         wants making, as U52's and U53's did.
     HISTORY             ONE site (charSheetNav.js:61), and it reads
                         only the entity's backStory. The small one.
@@ -11183,7 +11183,7 @@ grid button, Return/F2/F3/F4 and F5-F8 were all silently undone by the
 next M. The file had already hoisted `_revealUndiscoveredBuildings`,
 `_zoomLevel`/`_zoomLocation` and `_yawDeg` for exactly this reason, and
 the sibling dungeon window states the law outright at
-`automapWindow.js:326-335` with `_background`/`_renderMode` at module
+`automapWindow.js:325-334` with `_background`/`_renderMode` at module
 scope. `mode` and `background` are now ACCESSORS over module state,
 mirroring `revealUndiscoveredBuildings` — accessors rather than a
 constructor seed plus a write-back in `tick()`, because `ActionExit`
@@ -14335,7 +14335,7 @@ death screen (`ui/deathScreen.js:71-72`), the rest window's rows
 (`ui/restWindow.js:861`), the save window (`ui/saveWindow.js`, eight
 `shadowText` sites), the travel popup (`ui/travelPopUp.js:685`), the quest
 journal (`ui/questJournal.js:641-642`), every MessageBox row
-(`ui/messageBox.js:431, 434`) and every ActionTextBox (`ui/actionText.js:45,
+(`ui/messageBox.js:435, 434`) and every ActionTextBox (`ui/actionText.js:45,
 152`) still draw in the bitmap font - each a native window under THE
 NATIVE-WINDOW RULE, whose face cannot move without its DFU metrics moving
 too. That is a FONT2 slice, not this one.
@@ -16604,7 +16604,7 @@ says in its own header that a second `--apply` against the same base
 moves every cite AGAIN. Recovering this slice's line shifts by
 reverting the tree except the files it had edited re-created exactly
 that: the kept files still carried the first pass's moves, and the
-second pass moved them a second time - `dungeonContext.js:2275` became
+second pass moved them a second time - `dungeonContext.js:2276` became
 2221 where the line had gone to 2215. The repair is a pairing walk:
 read HEAD's number at the same position in the same file, resolve it
 BY CONTENT in the working tree, and write that. Forty-seven cites came

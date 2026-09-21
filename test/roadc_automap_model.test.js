@@ -132,7 +132,7 @@ test('c2/S1 one shape past the boundary: the flat dialect and the object dialect
   } finally { resetAutomapStore(); }
 });
 
-test('c2/S1 the three-ray scan: same row + 0.01 agreement, or NOTHING reveals (:1112-1124)', () => {
+test('c2/S1 the three-ray scan: same row and no door, or NOTHING reveals (:1112-1124) - and NO inter-ray distance test (AUDIT-AMAP F1)', () => {
   resetAutomapStore();
   try {
     const boxes = roomFixture();
@@ -180,8 +180,12 @@ test('c2/S1 the three-ray scan: same row + 0.01 agreement, or NOTHING reveals (:
     automapRevealTick(rec3, { eye: [5, 2, 10], fwd: [0, 1, 0], collider: swapped, model: seamModel });
     assert.equal(rec3.revealed.size <= 1, true, 'rays straddling two rows never reveal both');
 
-    // (d) distances disagreeing by 0.02 -> no reveal
-    const rec4 = enterDungeonAutomap('0/disagree', 0);
+    // (d) AUDIT-AMAP F1: distances that DISAGREE between the rays still
+    // reveal - an oblique wall lands the parallel rays apart, and DFU's
+    // :1121-1123 compares each ray to the true geometry, never to the
+    // other rays (c2/S1 pinned the opposite, and every wall viewed more
+    // than ~6 degrees off-square revealed nothing)
+    const rec4 = enterDungeonAutomap('0/oblique', 0);
     const skewed = {
       raycastHit(o, d, max) {
         const h = collider.raycastHit(o, d, max);
@@ -190,9 +194,19 @@ test('c2/S1 the three-ray scan: same row + 0.01 agreement, or NOTHING reveals (:
       },
     };
     automapRevealTick(rec4, { eye: [5, 2, 5], fwd: [0, 1, 0], collider: skewed, model });
-    assert.equal(rec4.revealed.size, 0, `a ${HIT_DISTANCE_AGREEMENT * 2} disagreement reveals nothing (:1121-1123)`);
+    assert.equal(rec4.revealed.has('floorA'), true, `mutants: a ${HIT_DISTANCE_AGREEMENT * 2} inter-ray disagreement refusing the reveal`);
+    const rec4b = enterDungeonAutomap('0/steep', 0);
+    const steep = {
+      raycastHit(o, d, max) {
+        const h = collider.raycastHit(o, d, max);
+        if (Math.abs(o[0] - 5) > 1e-9) h.dist += 0.4;   // a wall ~76 degrees off-square
+        return h;
+      },
+    };
+    automapRevealTick(rec4b, { eye: [5, 2, 5], fwd: [0, 1, 0], collider: steep, model });
+    assert.equal(rec4b.revealed.has('floorA'), true, 'a steep skew reveals too');
 
-    // and the boundary: 0.009 still agrees
+    // and the near-agreeing case, as before
     const rec5 = enterDungeonAutomap('0/agree', 0);
     const nudged = {
       raycastHit(o, d, max) {
@@ -431,7 +445,10 @@ test('c2/S1 SOURCE PINS: action doors leave the entry set, the rows carry DFU id
   assert.match(ctx, /RDBLayout\.cs:625-627/, 'and the reason is recorded at the site');
   assert.match(ctx, /automapEntries\.push\(amapRow\(/, 'every entry goes through the identity row builder');
   assert.match(ctx, /elementName: ELEMENT_NAMES\[elementIndex\]/, 'the four-level identity rides as metadata');
-  assert.match(ctx, /isDoorBucket: \(k\) => actions\.objects\.get\(k\)\?\.kind === 'door'/, 'the tick names the door bucket');
+  assert.match(ctx, /isDoorBucket: \(k\) => \{ const o = actions\.objects\.get\(k\); return o\?\.kind === 'door' && !o\.special; \}/,
+    'the tick names the door bucket - and a SPECIAL door is not one (AUDIT-AMAP F3: RDBLayout filters by description, :751-765)');
+  assert.match(ctx, /isMovedBucket: \(k\) => \{ const o = actions\.objects\.get\(k\); return !!o && o\.state != null && o\.state !== 'start' && \(o\.kind !== 'door' \|\| !!o\.special\); \}/,
+    'and a MOVED action model blocks the scan (AUDIT-AMAP H7)');
   assert.match(ctx, /bindAutomapLayout\(automapRec, automapModel\)/, 'the layout guard runs at mount');
 
   // BUCKET DISTINCTNESS - the whole door discrimination rests on it.
