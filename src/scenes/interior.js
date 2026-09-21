@@ -9,7 +9,7 @@ import { Arch3dFile } from '../formats/arch3dFile.js';
 import { WORLD_FRAME } from '../render/renderer.js';   // AUDIT-EL F5
 import { INTERIOR_CLEAR } from '../render/renderer.js';
 import { PITCH_LIMIT } from '../player/mwCamera.js';   // MW-D30: camera.cpp:323-331's own clamp
-import { requestLook } from '../player/pointerLock.js';
+import { requestLook, makeLookGate } from '../player/pointerLock.js';   // AUDIT-AMAP H8: the lock gate the other hosts run
 import { attachTouch } from '../ui/touch.js';
 import { attachGamepad } from '../ui/gamepadInput.js';   // GP1: the pad speaks the same hooks
 import { isEnhanced } from '../systems/uiSkin.js';   // AUDIT FONT F5: the touch layer's face gate (the skin cannot change without a reload, so the boot-time read is exact)
@@ -135,6 +135,7 @@ export async function bootInterior(canvas, renderer, params, status) {
    *  does not. */
   const windows = makeWindowStack({ onTop: (w) => { overlay = w; } });
   const gamePaused = () => windows.paused() || pauseWhileOpen(overlay);
+  const lookGate = makeLookGate(canvas);   // AUDIT-AMAP H8: a window up frees the cursor, or the map cannot be dragged
   let mapFont = null;
   makeFontFor().catch((e) => console.warn('[automap] FONT0003 unavailable:', e?.message ?? e));
   async function makeFontFor() {
@@ -178,7 +179,7 @@ export async function bootInterior(canvas, renderer, params, status) {
     // rollout enumerated four, so F5 in the ?interior route reloaded
     // the page and destroyed the session - the exact failure AUDIT 17e
     // F41 recorded for the others - and F11 went fullscreen. The law
-    // (ui/input.js:545-546) is "every host that registers a keydown
+    // (ui/input.js:565-566) is "every host that registers a keydown
     // calls this FIRST", and it is NOT conditional on the host having
     // a destination for the key. First, because every arm below
     // returns before its own preventDefault - worldModes.js:7385 sits
@@ -361,6 +362,7 @@ export async function bootInterior(canvas, renderer, params, status) {
     // own call at :1001 is the one-shot lazy init, not a per-frame
     // driver. dungeon.js:710 and worldModes.js:5397/:5425 gate the same
     // way; this is that gate for this host.
+    lookGate(!!overlay);   // AUDIT-AMAP H8
     if (!gamePaused()) ctx.automapTick?.(dt, cam.pos, fwd);
     if (overlay) {
       overlay.tick(dt);

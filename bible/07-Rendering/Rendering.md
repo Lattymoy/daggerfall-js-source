@@ -175,10 +175,13 @@ directory by `test/audit18_bible_docs.test.js`:
   than the near one. Either is its own slice; neither is a reason to
   ship 169 MB quietly. GR1'S LAW IS DEPARTED FROM, on the record: the
   vertex stage is no longer the lab's text byte for byte. It is the
-  lab's text plus THREE named edits, exported as `GRASS2_VS_EDITS` and
+  lab's text plus the named edits, exported as `GRASS2_VS_EDITS` and
   applied by the pin to the lab's own slice before comparing - so a
-  fourth change, or a fourth edit nobody declared, still fails. The
-  fragment stage is untouched.
+  change, or an edit nobody declared, still fails. (Three at GRASS2,
+  five after GRASS5, four after GRASS6 took the tint back to the placer;
+  GRASS-PX laid a second list over both stages, so the fragment stage is
+  the lab's under `GRASSPX_FS_EDITS` now - GRASS AUDIT 1 corrected this
+  sentence, which had said "three" and "untouched" through all of it.)
   **GRASS4 (2026-09-18): THE PLACER'S COST WAS A STRING.** Opened as a
   sweep of the whole outdoor frame for GRASS2's defect - work submitted
   whose output is discarded - and the frame turned out to be well swept
@@ -249,6 +252,174 @@ directory by `test/audit18_bible_docs.test.js`:
   now allocates nothing. Not one blade changes where it stands.
   **The lesson: GR5's cell budget made the FILL cheap and nobody went
   back to ask whether the frame was still paying to decide what to fill.**
+  **GRASS-PX (2026-09-21, Mac: "with the grass model, is there a way we
+  can turn the grass into a pixel art design ... Let's see how detailed
+  you can be"): THE TUFT IS A SPRITE, AS EVERY OTHER LIVING THING IN
+  THIS WORLD IS.** Daggerfall draws its trees, its people and its
+  monsters as hand-set flats, and the lab's million smooth, tapered,
+  gradient-lit blades were the one thing outdoors not drawn by that
+  hand. The pixel style keeps the WHOLE of the field - the placer, the
+  packed lanes, the cells, the host-paid fade, the wind, the time of day
+  - and changes what a blade LOOKS like, in five places, each a
+  `mix(lab, pixel, uPixel)` or a branch on it so that at zero the
+  arithmetic is the lab's to the last operation: the quad wears a
+  16x32 tuft from a sheet of eight (built at boot from a seed in
+  `render/grassPixelArt.js` - three to five one-texel stalks curving as
+  height squared, the lab's own bend law; a two-texel base on half of
+  them; a seed head on a tall one now and then; alpha 0 or 255 and never
+  between); the sprite's four tones - root, mid, tip, and ONE highlight
+  texel at the tip of a blade tall enough to clear the sward - stand in
+  for the gradient, with the sun's rim landing on that one texel as a
+  whole step of light; the sway reads a clock stepped at 8 Hz and a
+  lean snapped to 24 steps, so a gust hops through poses; the distance
+  fade is a 4x4 ORDERED DITHER against the screen (the Bayer matrix as
+  four bit operations, evaluated from the shader text by the pin) rather
+  than a transparency; and the lit colour is snapped to an eight-step
+  luminance ramp with the patch tint in four bands - hue kept, so a dusk
+  field is still the colour of dusk. The texel carries three things
+  beside its tone: how far up ITS OWN blade it sits (the root-to-tip
+  light and the sward shade read that, not the quad), and which blade
+  of the tuft it is (the blades of one tuft shade apart). THE MIP CHAIN
+  IS COVERAGE, NOT AN AVERAGE: a sprite that is a quarter blade and
+  three-quarters air averages under a half at the first level and an
+  alpha test throws the whole tuft away, so every level takes the MAX
+  alpha of its block and the tone that carried it, uploaded by hand
+  down to 1x1 (a chain that stops short is an incomplete texture, which
+  samples black). Both styles live in ONE program and the row flips a
+  uniform, so `Grass style` (Pixel by default, Smooth the lab's blade)
+  takes effect at once, read every frame at the draw. Measured on the
+  probe's real GL: the pixel field takes 62 distinct colours where the
+  gradient field took 4,300, 771 blade texels reach the GPU with zero
+  soft-alpha texels (GRASS AUDIT 1: this line first said 806, which was
+  never what the probe printed), both stages compile and draw through
+  SwiftShader.
+  8 pins in test/grasspx.test.js (the sheet byte for byte and hard-
+  edged, the tone law's round trip through the shader's decode, the
+  stalk laws over 200 seeds, the chain's coverage at every level, the
+  two edit lists each landing exactly once with the lab's text untouched,
+  the shader audit over the game's stages, the Bayer form evaluated, the
+  renderer's uploads on a stub GL, the row and the host); 20 mutants,
+  20 dead. **The lesson: a style is not a second renderer. The lab's
+  field is the field; what the eye is shown is a handful of declared
+  edits over it, and the pin that held the lab's text byte for byte now
+  holds the departures the same way.**
+  **GRASS-PX2 + GRASS6 (2026-09-21, Mac: "would it help performance?"
+  "Do it"): THE TWO BAKES THAT PAY.** Baking the SWAY would not have: it
+  is one sine per vertex, and every vertex is transformed every frame
+  whatever pose it holds. What the probe's shipped frame actually spends
+  is 6.8M vertex invocations, and two things in each were work for a
+  constant. **GRASS-PX2**: the lab's near blade is five stacked quads so
+  that it can curve, and the pixel style's sprite carries its own curve
+  - so in the pixel style every cell binds the one-quad array the far
+  cells already use. The near cells are 30 of 98 slots and hold most of
+  the blades that survive the fade, so the pixel frame goes from 6.80M
+  vertices to 2.39M, 65% off, same picture (69,607 green px against
+  69,768 before - GRASS AUDIT 1 corrected a 70,785 here that matched no
+  frame - the tuft on a straight tilted quad rather than a bent one). **GRASS6**: GRASS2's clump - two value noises in the scene's
+  floating-origin frame (GRASS AUDIT 1: "world space" was the word here
+  and in the code, and it is not; the origin is a corner of the player's
+  map pixel and the whole field, patches with it, is re-placed at every
+  crossing - the GPU read the same frame, so nothing moved) pulling the
+  tint toward its neighbours', the thing that makes a field read as
+  patches - was in the VERTEX stage, evaluated on every vertex of a
+  blade every frame (thirty in the smooth style, six in the shipped
+  pixel one), eight hashes and their blends each time, for a value that
+  is a function of the root's position and nothing else. It is the placer's now, once a blade at placement,
+  riding the tint lane the pack already had; the vertex stage compiles
+  the lab's OWN `vTint = aInst2.z;` again and GRASS2's edit list is four,
+  not five. The noise is the prelude's term for term in doubles rather
+  than floats, so the patches are the same shape at the same scales and
+  not the same bits - and nothing held the bits. This one applies to
+  Smooth too. 2 pins (test/grasspx.test.js: a near cell is five quads
+  in smooth and one in pixel, on the slot rig, and the style is read
+  every draw; test/labGrass.test.js: the lab's tint line back, no noise
+  in the body, the twin's constants against the prelude's, the noise's
+  range and continuity, and the placer's first blade carrying exactly
+  the pulled tint with the random stream undisturbed); 8 mutants, 8
+  dead, GRASS2's tint mutant re-aimed at the placer. **The lesson: the
+  vertex stage is the wrong place for anything that is the same number
+  every frame - and the sway, the thing that LOOKS like the work, is
+  the cheapest term in it.**
+  **GRASS AUDIT 1 (2026-09-21, Mac: "do an audit on this"): THREE
+  LENSES OVER THE PIXEL GRASS, TWENTY FINDINGS, ALL PAID.** The sheet
+  and the fragment stage; the vertex stage, the draw path and the
+  settings wiring; the clump bake, the pin re-aims and the records. What
+  the picture was actually doing, measured on the probe's GL with the
+  lenses' own frames: (1) THE RAMP WAS BLACK. Eight linear luminance
+  steps put the first rung at 1/16, and a lit blade lives under 0.4 by
+  day and under 0.05 at night or in rain, so the mid and root tones -
+  three quarters of every tuft - went to exact (0,0,0) after dark (44%
+  of the field's pixels at night, 64% in a thunderstorm, opaque, over a
+  ground still lit at 0.25) and a moonlit midnight mid tone came out the
+  same 25,39,14 as clear noon: WIND4's bug, re-made in the default
+  style. The steps are taken in gamma space now and the lowest rung is
+  the first step; the pin evaluates the rung out of the shader text.
+  (2) THE WIDTH IGNORED THE HEIGHT. The tuft was three blade-widths
+  wide whatever its height, and the placer draws the two independently,
+  so texels were squashed 0.46x..2.36x blade to blade and a buried blade
+  was a flat opaque bar; the width is half the DRAWN height now, per
+  blade. (3) THE MIP CHAIN WAS A WALL. Max-alpha per block took the
+  sheet from 19% covered to 88% by level 3 and 100% from level 4, of the
+  ROOT tone (the tie-break took the lowest row), so the far field was
+  solid dark blocks - and the pin REQUIRED coverage to grow. The chain
+  preserves the base coverage now (the alpha-test mip law), each block
+  toned by its highest covered texel, one texel per tuft floored; a far
+  tuft is as dense as a near one and reads as its tips. (4) THE TINT
+  BAND TRUNCATED: floor(x*4)/4 never reached 1 and dragged the mean 5%
+  dark, clipping the bright patches GRASS6 had just baked; it rounds to
+  band centres now. (5) THE RIM HAD NOWHERE TO LAND: twelve highlight
+  texels in 771, half of them under the blade's own seed head; the head
+  paints first and the highlight is the top two texels of a tall blade
+  (40 now). (6) THE SPRITE WAS THE GUST PHASE: the variant came off the
+  phase lane, so every tuft of one sprite hopped in unison; it is a
+  hash of the root now. (7) ONE TUFT PER BLADE WAS FOUR TIMES THE
+  SWARD: the pixel style submits half of each cell (a third read sparse
+  at the feet), the fade fraction over that half. (8) The lab-scatter
+  path ignored the one-quad switch; (9) the sheet was bound on unit 4
+  in the smooth style too; (10) the row did not say what it is inert
+  without (FT7's law); (11) `__grassStats.verts` named the near blade in
+  a pixel frame; (12) the bake was paid before keep() decided, so a road
+  cell paid 0.43 ms of noise for candidates it threw away - and the
+  record had called the bake a pure win when it is +0.56 ms a cell on
+  the placer against the GPU's saving; (13) hash(0,0) is exactly 0 in
+  the prelude and the twin alike, so both octaves bottomed out at the
+  scene origin and a patch 25 m across sat 11% darker at a corner of the
+  player's map pixel (GRASS2 had it too) - the sample is off the lattice
+  corner now; (14) the u8 tint lane - the tint's ONLY carrier since
+  GRASS6 - had never had a packed byte read back, and a mutant that
+  wrote every blade the same tint survived the suite; (15) three GRASS6
+  mutants died to a source regex where the bilinear, the smoothstep and
+  the second octave could each be executed, and two more (the corners
+  transposed, the second axis blended by the first fade) survived
+  outright; (16) the records: 806 blade texels was never measured, 70,785
+  matched no frame, "world space" was the wrong frame, "thirty vertices"
+  was five times the shipped figure, the pin's own title still said
+  "five edits" and the record said "three" and "untouched" through all of
+  it; (17) a pin assertion was `false !== 0` waiting for a 32-texel
+  blade. AND ONE THE FIXES FOUND: gating the step-count uniforms behind
+  the pixel style set them to zero in smooth, a divide by zero in the
+  pixel arm, and mix(lab, NaN, 0) is NaN - the whole field vanished, and
+  only the probe's picture said so. The counts go up in every style; only
+  the sheet's bind is the pixel style's. THE EXECUTED PINS THE LENSES
+  ASKED FOR, all on the probe's readback: the smooth style drawn beside
+  the LAB's own program over the same field is byte-identical (the
+  renderer takes its stages, the probe hands it the lab's); zero exact
+  black by day, at night and in a storm; the pixel field within 20% of
+  the smooth one's brightness by day and at night (with a night sky, or
+  the smooth blades' translucent bases let a noon sky through); night
+  darker than day; the nearest band's highest grass pixel brighter than
+  its lowest, so the sheet is the right way up; the field no denser
+  than the smooth one, and the band under the horizon no denser (68.5%
+  against 87.0%, where the wall had been 97.5% against 88.4%); and the
+  dither's Bayer-rank histogram monotone at range 60 and flat at 300.
+  The shipped pixel frame is 1.20M vertices now, 82% under the smooth
+  6.80M; 66 colours against 4,255; 771 texels, zero soft. 38 mutants in
+  grasspx.json and 13 in grass6.json, all dead; 22 probe checks. **The
+  lesson: a text pin proves a line was typed; only a picture proves it
+  draws. Two of the three worst findings (the black ramp, the wall) were
+  lines the pins held exactly, and the one bug the fixes introduced was
+  invisible to every pin and loud on the first readback.**
+- `grassPixelArt.js` - GRASS-PX THE TUFT SHEET: eight 16x32 tufts built at boot from a seed (one-texel stalks bending as height squared, four tones with one highlight texel, alpha 0 or 255), their coverage mip chain (max alpha per block, never an average, down to 1x1), the pixel style's numbers (8 Hz sway, 24 lean steps, 3x tuft width, 8-step ramp, 4 tint bands) and `pixelGrass()`, the row's word; the shader edits themselves are `GRASSPX_VS_EDITS` / `GRASSPX_FS_EDITS` in labGrass.js.
 - `systems/wind.js` - **WIND1 (2026-09-02) THE WIND IS ITS OWN THING.**
   Mac: "wind should be something different from the weather. Imagine a
   time-lapse, seeing a storm rolling in as the wind kicks up, and the

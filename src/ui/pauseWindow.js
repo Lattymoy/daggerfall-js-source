@@ -174,15 +174,15 @@ export class PauseOptionsWindow {
     this.top = null;              // 'exit' | 'note' - the stacked box
     this._noteRows = null;
     this._box = null;             // laid out at draw (the U23 shape)
-    // The automap windows' latch (automapWindow.js:560,
+    // The automap windows' latch (automapWindow.js:559,
     // DaggerfallAutomapWindow.cs:703-713's `isCloseWindowDeferred`), and
     // this window needs it for the reason those two do: DFU opens the
     // pause screen on `ActionComplete(Actions.Escape)` -
     // GameManager.cs:515-518, and ActionComplete is the RELEASE edge
     // (InputManager.cs:634-637) - so its opening release is spent before
     // the window exists and :186's bare `GetKeyUp` is safe there. Every
-    // host here opens on the key DOWN (world.js:6613, exterior.js:2745,
-    // ui/input.js:412) and then routes that same key's release into the
+    // host here opens on the key DOWN (world.js:6614, exterior.js:2746,
+    // ui/input.js:432) and then routes that same key's release into the
     // window it just mounted, so the release door closes only a window
     // whose own press it saw.
     this.isCloseWindowDeferred = false;

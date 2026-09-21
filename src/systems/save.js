@@ -103,6 +103,7 @@ const ENTITY_FIELDS = [
   // it a backward load left a FUTURE marker that froze all skill-raise
   // checks until the clock re-passed it.
   'lastSkillCheckTime',
+  'restSimMinutes',   // MAC-LVL1: an online rest's unspent skill-clock credit (spent at the rest's end; a save mid-rest is the only way it is ever non-zero)
   // AUDIT 26 F219/F100: the coven's daedra-of-the-day. DFU persists
   // DaedraSummonDay and DaedraSummonIndex one for one
   // (SerializablePlayer.cs:164-165, restored :332-333);
@@ -766,7 +767,8 @@ export function restorePlayer(entity, snap, spellsByIndex = null) {
   // field and restores an empty one (nothing was discoverable then).
   restoreDiscovery(snap.discovery);
   // A1: a load replaces the automap store too; a pre-A1 save carries
-  // no field and restores an empty one (nothing was revealed then).
+  // no field and the store is LEFT ALONE (restoreAutomap's null arm,
+  // SaveLoadManager.cs:1508-1509 - AUDIT-AMAP F10 fixed this comment).
   // A dungeon context re-fetches its live record after this runs.
   restoreAutomap(snap.automap ?? null);
   // AUDIT 23: the sticky per-region price band (see snapshot side); a

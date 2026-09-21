@@ -952,7 +952,7 @@ export const INTERIOR_CLEAR = Object.freeze([0, 0, 0, 1.0]);
  *  so unit 7 was written by a foreign pass while the renderer's
  *  per-program stamp still said the shadow map was there. 15 sits
  *  above the mod's nine and above every other pass in the tree (none
- *  goes past unit 3), and WebGL2 guarantees
+ *  goes past unit 4 - the grass's tuft sheet, GRASS-PX), and WebGL2 guarantees
  *  MAX_TEXTURE_IMAGE_UNITS >= 16, so 15 always exists. The shaders
  *  bind it by uniform name, so the number lives only here. */
 export const CLOUD_SHADOW_UNIT = 15;
@@ -3527,6 +3527,10 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
       fogRange: [this._fogRange[0], this._fogRange[1]],
       fogColor: this._fogColor,
       ambient: this._ambient,
+      // AUDIT-AMAP H5: setLighting's fourth argument defaults to null and
+      // forwards to setAmbientTrilight, so a restore that forgot the
+      // trilight dropped the dungeon's BA1 sky/ground pair on every pass
+      ambientTri: this._ambientTri ? { sky: Array.from(this._ambientTri.sky), ground: Array.from(this._ambientTri.ground) } : null,
       sunScale: this._sunScale,
       sunColor: this._sunColor,
       clockLit: this._clockLit,
@@ -3611,6 +3615,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     this.setAutomapWater(s.automapWaterLevel, s.automapWaterColor);
     this.setFog(FOG_MODE_NAMES[s.fogMode] ?? 'off', s.fogDensity, s.fogRange[0], s.fogRange[1], s.fogColor);
     this.setLighting(s.ambient, s.sunScale, s.sunColor);
+    this.setAmbientTrilight(s.ambientTri);   // AUDIT-AMAP H5
     this._clockLit = s.clockLit;
     this.setMoonlight(s.moonScale ? { scale: s.moonScale, dir: s.moonDir, color: s.moonColor } : null);
     this._moonDir[0] = s.moonDir[0]; this._moonDir[1] = s.moonDir[1]; this._moonDir[2] = s.moonDir[2];

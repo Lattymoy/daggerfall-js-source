@@ -63,8 +63,16 @@ export function healthStatusRows(entity, rows) {
   if (diseaseCount(entity) === 0 && poisonCount(entity) === 0) return rows(YOU_ARE_HEALTHY_ID) ?? [];
   let tokens = null;
   for (const a of (entity?.activeEffects ?? [])) {
-    if (a.kind === 'disease' && !a.ended && a.incubationOver) {
-      tokens = [...(tokens ?? []), ...(rows(contractedMessageRecord(a.diseaseType)) ?? [])];
+    // MAC-ILL1 (2026-09-21, a player: "apparently i am ill (based on the
+    // fast travel warning), but when I press 'I' it doesn't list any
+    // illnesses"): the entry startDisease mints carries its type on
+    // `disease` - this read `diseaseType`, a field nothing writes, so
+    // the record was 100 + undefined and the box drew EMPTY (the
+    // append of nothing made `tokens` non-null, so the healthy tail
+    // never fired either). A null type is DFU's Diseases.None arm
+    // (DiseaseEffect.cs:204-205): no message - an infection entry.
+    if (a.kind === 'disease' && !a.ended && a.incubationOver && a.disease != null) {
+      tokens = [...(tokens ?? []), ...(rows(contractedMessageRecord(a.disease)) ?? [])];
     }
   }
   const poisonActive = (entity?.activeEffects ?? [])
@@ -72,5 +80,7 @@ export function healthStatusRows(entity, rows) {
   if (poisonCount(entity) > 0 && poisonActive) {
     tokens = [...(tokens ?? []), ...(rows(YOU_HAVE_BEEN_POISONED_ID) ?? [])];
   }
-  return tokens ?? rows(YOU_ARE_HEALTHY_ID) ?? [];
+  // `if (tokens == null)` (:1694-1697), read as DFU means it: nothing
+  // qualified is the healthy line, and an empty append is nothing
+  return (tokens && tokens.length) ? tokens : (rows(YOU_ARE_HEALTHY_ID) ?? []);
 }

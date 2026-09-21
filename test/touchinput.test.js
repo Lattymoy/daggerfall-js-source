@@ -266,7 +266,7 @@ test('TI1 hosts: the three combat hosts wire swipe, tap, lock and dial; the fly-
     assert.match(s, /_tapLockOnly = !!opts\?\.lockOnly;/, `${h}: the tap carries the stick-half flag (TS1)`);
     assert.match(s, /locked: \(\) => lockOn\.locked,/, `${h}: the lock predicate`);
     assert.match(s, /dial: isEnhanced\(\),/, `${h}: AUDIT 62 F10 - it draws the dial only where Tab OPENS one (pixelDial refuses off the enhanced skin), not merely where the host routes Tab`);
-    assert.match(s, /swingSuppressesLook\(\{ swingHeld: rightHeld \|\| swipeHeld,/, `${h}: MAC-O2 - the swipe holds the swing-settle law like the mouse button, through the one seam`);
+    assert.match(s, /swingSuppressesLook\(\{ swingHeld: rightHeld \|\| swipeHeld \|\| swingKeyLatch,/, `${h}: MAC-O2 - the swipe holds the swing-settle law like the mouse button, through the one seam`);
     assert.match(s, /lockOn\.tick\(dt, cam, /, `${h}: the lock pays its facing every frame`);
     assert.match(s, /touch\.setLockDot\(/, `${h}: places the dot`);
     assert.match(s, /_tapArmed > 0 && --_tapArmed === 0/, `${h}: the tap is a ONE-frame press of the activate action`);

@@ -109,7 +109,7 @@ test('MAC-O2 (THE FOUR HOSTS RULE): every LookFilter owner asks the ONE seam, an
   for (const f of ['src/scenes/world.js', 'src/scenes/exterior.js', 'src/scenes/dungeon.js']) {
     const s = read(f);
     assert.match(s, /import \{ LookFilter, swingSuppressesLook \} from '\.\.\/player\/lookFilter\.js';/, `${f} imports the seam`);
-    assert.match(s, /if \(swingSuppressesLook\(\{ swingHeld: rightHeld \|\| swipeHeld, weaponIsBow: [^)]+\}\)/, `${f} asks it`);
+    assert.match(s, /if \(swingSuppressesLook\(\{ swingHeld: rightHeld \|\| swipeHeld \|\| swingKeyLatch, weaponIsBow: [^)]+\}\)/, `${f} asks it`);
     // ...and does NOT write the law out again beside it.
     assert.doesNotMatch(s, /swipeHeld\) && walkMode[^\n]*isBow/, `${f}: the old inline copy is gone`);
   }

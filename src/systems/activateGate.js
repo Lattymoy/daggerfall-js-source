@@ -32,8 +32,10 @@
 // maps DOM button 2 to the code 'Mouse1', SwingWeapon's default at
 // InputManager.cs:1010), but the hosts read `e.button === 2` directly
 // and never `held(keys, 'SwingWeapon')`, so a SwingWeapon rebind is
-// inert where this module's Mouse0 activate follows one. Both are
-// recorded departures, and neither is touched here - this module adds
+// inert where this module's Mouse0 activate follows one (MAC-SWING1,
+// 2026-09-21, closed that: ui/input.js swingHeld/swingKeyHeld read the
+// binding for any code). Both were recorded departures, and neither is
+// touched here - this module adds
 // the DFU button rather than replacing the port's.
 
 // ROAD-Ar - THE THREE FACTS ABOVE WERE THE WHOLE GATE, AND THE WHOLE
