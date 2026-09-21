@@ -1,0 +1,83 @@
+[
+  {
+    "name": "GQL1-wait-step-unboxed-again",
+    "file": "src/scenes/questBridge.js",
+    "old": "        case 'gettingQuests': return [{\n          rows:",
+    "new": "        case 'gettingQuests': return [];\n        case '__never': return [{\n          rows:",
+    "tests": [
+      "test/gql1.test.js"
+    ]
+  },
+  {
+    "name": "GQL1-picker-step-unboxed-again",
+    "file": "src/scenes/questBridge.js",
+    "old": "        case 'pickQuest': return [{\n          picker:",
+    "new": "        case 'pickQuest': return [];\n        case '__never2': return [{\n          picker:",
+    "tests": [
+      "test/gql1.test.js"
+    ]
+  },
+  {
+    "name": "GQL1-wait-kind-unknown-to-the-switch",
+    "file": "src/scenes/questBridge.js",
+    "old": "        case 'gettingQuests': return [{",
+    "new": "        case 'gettingQuestsX': return [{",
+    "tests": [
+      "test/gql1.test.js"
+    ]
+  },
+  {
+    "name": "GQL1-pcf-printed-raw",
+    "file": "src/scenes/questBridge.js",
+    "old": "          rows: step.textLines.map((line) => expandMacroValues(line, { pcf: firstName(ctx.playerEntity?.name ?? '') })),",
+    "new": "          rows: step.textLines,",
+    "tests": [
+      "test/gql1.test.js"
+    ]
+  },
+  {
+    "name": "GQL1-pcf-is-the-whole-name",
+    "file": "src/scenes/questBridge.js",
+    "old": "{ pcf: firstName(ctx.playerEntity?.name ?? '') }",
+    "new": "{ pcf: ctx.playerEntity?.name ?? '' }",
+    "tests": [
+      "test/gql1.test.js"
+    ]
+  },
+  {
+    "name": "GQL1-wait-click-does-not-raise-the-picker",
+    "file": "src/scenes/questBridge.js",
+    "old": "          onClick: () => this.offerBoxes(step.onClose(), rows),",
+    "new": "          onClick: () => [],",
+    "tests": [
+      "test/gql1.test.js"
+    ]
+  },
+  {
+    "name": "GQL1-pick-does-not-offer",
+    "file": "src/scenes/questBridge.js",
+    "old": "          onPick: (index) => this.offerBoxes(step.onPick(index), rows),",
+    "new": "          onPick: (index) => { step.onPick(index); return []; },",
+    "tests": [
+      "test/gql1.test.js"
+    ]
+  },
+  {
+    "name": "GQL1-pick-index-off-by-one",
+    "file": "src/scenes/questBridge.js",
+    "old": "          onPick: (index) => this.offerBoxes(step.onPick(index), rows),",
+    "new": "          onPick: (index) => this.offerBoxes(step.onPick(index + 1), rows),",
+    "tests": [
+      "test/gql1.test.js"
+    ]
+  },
+  {
+    "name": "GQL1-picker-entries-are-not-the-flow's",
+    "file": "src/scenes/questBridge.js",
+    "old": "          picker: step.entries,",
+    "new": "          picker: [],",
+    "tests": [
+      "test/gql1.test.js"
+    ]
+  }
+]
