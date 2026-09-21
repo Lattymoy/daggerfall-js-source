@@ -389,7 +389,8 @@ export const FEATURES = Object.freeze([
     group: 'sight',
     title: 'Ground sharpness',
     note: 'How sharply the ground reads into the distance, where a mipmapped tile would otherwise soften. '
-      + 'Off is the mipmap alone; Maximum is whatever the driver allows.',
+      + 'Off is the mipmap alone, point-sampled and the cheapest; Maximum is whatever the driver allows and costs GPU fill - '
+      + 'turn it down if frames suffer outdoors.',
     effect: 'Takes effect when the world next loads.',
     kinds: Object.freeze(['enhanced', 'classic']),
     control: Object.freeze({ store: 'prefs', key: 'groundSharpness', initial: 'default', online: 'player', tiers: Object.freeze([['off', 'Off'], ['default', 'Default (4x)'], ['max', 'Maximum']]) }),

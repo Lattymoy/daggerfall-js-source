@@ -64,7 +64,7 @@ in the game:
 | --- | --- | --- | --- |
 | sky | the game's shader + 2 fixes + sunset band + horizon fix | the shader, none of the fixes (reverted) | a diff to enhancedSky.js |
 | ground texels | drawn surfaces, 128px, masked through the original tiles | 64px NEAREST from the archive | groundSurfaces.js + upload path |
-| ground sampling | mips + anisotropy | none | sized format + sampler, enhanced only |
+| ground sampling | mips + anisotropy | none | sized format + sampler, enhanced only (SHIPPED otherwise, GRAIN1/2: one unsized array mipped for BOTH lanes - DFU mips terrain too - with the tier a dial; GRAIN AUDIT 1: Off is point-over-chain) |
 | ground lighting | normal map + detail tiling + cloud shadow | one per-vertex normal | a second texture + shader terms |
 | cloud shadows | sampled from the sky's own deck | none | uniforms on the terrain FS from skyState |
 | grass | instanced blades, 3 per quad, lit, wind | none - no instanced draw exists | a new draw path |

@@ -435,6 +435,34 @@ export function anisotropyFor(tier, driverMax = 1) {
   if (tier === 'max') return cap;
   return Math.min(4, cap);
 }
+/**
+ * GRAIN AUDIT 1 (2026-09-21, Mac: "audit the filtering enhancement
+ * ensuring it doesnt degrade performance"): THE TIER IS SAMPLER STATE,
+ * AND THE FILTER IS PART OF IT.
+ *
+ * GRAIN1's `off` turned the anisotropy off and kept LINEAR_MIPMAP_LINEAR
+ * - trilinear, eight texel fetches a fragment on the pass that covers
+ * the most screen, where the ground had cost ONE before GRAIN1. So the
+ * cheapest tier on the dial was still eight times the old fetch count,
+ * and there was no way back to the old cost for the machine that felt
+ * it. The mipmap is what cures the grain, not the filter within a
+ * level: NEAREST_MIPMAP_NEAREST is one fetch, the boil is still gone,
+ * the texels stay square at every distance, and it is the filter every
+ * numeric archive in this renderer already uses (FilterMode.Point over
+ * a chain, MaterialReader.cs:104). `off` is that. `default` and `max`
+ * keep trilinear, because anisotropy wants a linear filter within the
+ * level to have anything to spread its taps over.
+ */
+export function groundSamplerFor(tier, driverMax = 1) {
+  return { aniso: anisotropyFor(tier, driverMax), minFilter: tier === 'off' ? 'NEAREST_MIPMAP_NEAREST' : 'LINEAR_MIPMAP_LINEAR' };
+}
+/** the tier in force: `?ground=off|default|max` over the pref. The door
+ *  exists so the one real-GPU instrument this port has (tools/perfProbe
+ *  .mjs, a fresh browser with an empty shelf every run) can be pointed
+ *  at each tier - without it the dial could not be measured at all. */
+export function groundSharpnessTier(search = globalThis.location?.search ?? '') {
+  return new URLSearchParams(search).get('ground') ?? getPref('groundSharpness');
+}
 import { multiply as mat4Multiply } from '../world/mat4.js';   // PERF-CROWD2: proj * view, for this call's planes
 import { PerfMeter, perfOn, perfZones, perfCpu, setMeter } from './perfMeter.js';   // EL8: `?perf`   // EL5: the bounds every bundle carries for the replays' culling   // EL2: the lane's shadow maps - a leaf that compiles nothing until a lane asks
 import { AirPass, AIR_ADAPT_UNIT as ADAPT_UNIT, AIR_CONTACT_UNIT as CONTACT_UNIT } from './airPass.js';   // EL3: the ambient occlusion, the bloom and the shafts - the same kind of leaf; EL4: the eye's unit; EL6: all of it off the frame's own depth, at the resolve
@@ -1160,9 +1188,12 @@ export class Renderer {
     // guards), each its own uncut call. Fixing seven call sites leaves an
     // eighth to be written next year. The test belongs here.
     /** GRAIN1: the anisotropy extension and its ceiling, fetched once -
-     *  not once an archive. null when the driver has neither. */
+     *  not once an archive. GRAIN AUDIT 1: `null` is "not asked yet" and
+     *  `false` is "asked, the driver has none" - the old `||=` re-asked on
+     *  every archive on exactly the drivers it was written to protect,
+     *  because the memo of an absent extension was null and null is falsy. */
     this._anisoExt = null;
-    this._anisoMax = 0;
+    this._anisoMax = 1;
     this._bbPlanes = new Float32Array(24);
     this._bbPv = new Float32Array(16);
     this._bbCullOff = cullDisabled();   // the ?cull=off door, read once
@@ -4318,7 +4349,6 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     // another the way an atlas would - which is the other reason atlases
     // ship unmipped and this need not.
     gl.generateMipmap(gl.TEXTURE_2D_ARRAY);
-    gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
     gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
     // GRAIN1: and anisotropy where the driver has it. Terrain is read at
     // a grazing angle almost everywhere, and an isotropic mip has to take
@@ -4331,20 +4361,65 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     // the pass that covers the most screen, and this session cannot
     // measure that (its only GL is SwiftShader, whose cost profile is
     // nothing like a GPU's). So it is a dial rather than a number chosen
-    // once for everybody: `groundSharpness` off / default / max, read
-    // here, the player's own online.
-    const aniso = this._anisoExt ||= (gl.getExtension('EXT_texture_filter_anisotropic') ?? null);
-    if (aniso) {
-      this._anisoMax ||= gl.getParameter(aniso.MAX_TEXTURE_MAX_ANISOTROPY_EXT) || 1;
-      const want = anisotropyFor(getPref('groundSharpness'), this._anisoMax);
-      if (want > 1) gl.texParameterf(gl.TEXTURE_2D_ARRAY, aniso.TEXTURE_MAX_ANISOTROPY_EXT, want);
-    }
+    // once for everybody: `groundSharpness` off / default / max, the
+    // player's own online.
+    //
+    // GRAIN AUDIT 1: the tier is applied by ONE method, here at upload
+    // and again over every cached array at each world load - the arrays
+    // are cached for the life of the page, so a tier read only at upload
+    // landed on a page reload and on no other occasion.
+    this._setGroundSampler(groundSharpnessTier());
     // DFU's terrain texture array wraps Clamp (TextureReader) - keeps
     // the far edge texel at transformed-uv 1.0 boundary ties.
     gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
     this.tileArrays.set(archive, tex);
     return tex;
+  }
+
+  /** GRAIN AUDIT 1: the anisotropy extension, asked for ONCE - a driver
+   *  without it is remembered as `false`, not re-asked per archive. */
+  _anisoExtension() {
+    if (this._anisoExt === null) {
+      const gl = this.gl;
+      this._anisoExt = gl.getExtension('EXT_texture_filter_anisotropic') ?? false;
+      this._anisoMax = this._anisoExt ? (gl.getParameter(this._anisoExt.MAX_TEXTURE_MAX_ANISOTROPY_EXT) || 1) : 1;
+    }
+    return this._anisoExt;
+  }
+
+  /** GRAIN AUDIT 1: the ground tier onto the BOUND tile array - the min
+   *  filter and the anisotropy, both set every time, so a cached array
+   *  that was at 16x goes to 1x when the player asks for Off. */
+  _setGroundSampler(tier) {
+    const gl = this.gl;
+    const ext = this._anisoExtension();
+    const s = groundSamplerFor(tier, this._anisoMax);
+    gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MIN_FILTER, gl[s.minFilter]);
+    if (ext) gl.texParameterf(gl.TEXTURE_2D_ARRAY, ext.TEXTURE_MAX_ANISOTROPY_EXT, s.aniso);
+    this.groundTier = tier;
+    return s;
+  }
+
+  /** GRAIN AUDIT 1: THE DIAL LANDS. `uploadTileArray` returns the cached
+   *  array for any archive the page has seen, and the cache lives as long
+   *  as the renderer - the whole page - so a tier read at upload time
+   *  reached a player on a page reload, or on the first archive of a
+   *  climate they had not visited, and left the world at two tiers when
+   *  it did. Both exterior hosts call this at every world load: it walks
+   *  the cached arrays and re-sets the sampler state, which is a bind and
+   *  two parameter calls per archive and no upload. The row's "when the
+   *  world next loads" is true because of this line. */
+  applyGroundSharpness(tier = groundSharpnessTier()) {
+    const gl = this.gl;
+    let s = null;
+    for (const tex of this.tileArrays.values()) {
+      this._activeTexture(gl.TEXTURE0);
+      gl.bindTexture(gl.TEXTURE_2D_ARRAY, tex);
+      s = this._setGroundSampler(tier);
+    }
+    this._tArrayTex = null;   // PERF-TEX2's shadow: the next terrain draw binds its own array again
+    return s;
   }
 
   /** EE5: the deck the terrain shadows under - {cover, soft, wind, time,
