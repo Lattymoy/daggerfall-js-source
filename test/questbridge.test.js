@@ -520,10 +520,12 @@ test('MAC-K2: the bridge’s questLog is the ONE walk - and it is the arithmetic
     getLogMessages: () => [{ messageID: 1010 }, { messageID: 1020 }],
     getMessage: (id) => ({ id }),
     resources: new Map([
-      ['clock_a', { clockEnabled: true, clockFinished: false, remainingTimeInSeconds: 600 }],
-      ['clock_b', { clockEnabled: true, clockFinished: false, remainingTimeInSeconds: 120 }],
-      ['clock_c', { clockEnabled: true, clockFinished: true, remainingTimeInSeconds: 1 }],
-      ['not_a_clock', { clockEnabled: false, remainingTimeInSeconds: 2 }],
+      // QT-LIVE1: the walk asks each running clock for its remainder AS OF NOW (the clock's own arithmetic, over the
+      // quest as caller); the field is the gate, the live read is the number.
+      ['clock_a', { clockEnabled: true, clockFinished: false, remainingTimeInSeconds: 600, liveRemainingSeconds: (q) => (q === withLog ? 600 : NaN) }],
+      ['clock_b', { clockEnabled: true, clockFinished: false, remainingTimeInSeconds: 130, liveRemainingSeconds: (q) => (q === withLog ? 120 : NaN) }],
+      ['clock_c', { clockEnabled: true, clockFinished: true, remainingTimeInSeconds: 1, liveRemainingSeconds: () => 1 }],
+      ['not_a_clock', { clockEnabled: false, remainingTimeInSeconds: 2, liveRemainingSeconds: () => 2 }],
     ]),
   };
   // a quest that has written NOTHING yet, and one that has COMPLETED
@@ -554,7 +556,7 @@ test('MAC-K2: the bridge’s questLog is the ONE walk - and it is the arithmetic
   assert.equal(log.active[0].questName, '_BRISIEN');
   assert.deepEqual(log.active[0].messages, [{ id: 1010 }, { id: 1020 }], 'resolved, in the machine’s own order');
   assert.equal(log.active[0].clockSeconds, 120,
-    'the SHORTEST live clock - a finished one and a disabled one are not timers');
+    'the SHORTEST live clock, by its LIVE read (clock_b\'s field says 130) - a finished one and a disabled one are not timers');
   assert.deepEqual(log.finished, ['a finished one']);
 
   // a host whose notebook has not been built yet is not a crash

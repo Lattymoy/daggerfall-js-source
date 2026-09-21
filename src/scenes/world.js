@@ -10662,6 +10662,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     renderer.setFlashLight(sky.lightningLight());   // DS1: Dynamic Skies' LightningFlash, composed first on the point-light channel just stored
     renderer.setWorldViewport(largeHudViewportRect(canvas.clientHeight));   // E5: ViewportChanger.Update, every frame
     renderer.beginFrame(proj, view, sunDirection(minute), WORLD_FRAME);   // AUDIT-EL F5: a WORLD frame - the lane replays its records for this one
+    meterFor(renderer.gl)?.markCpu('bodies');   // PERF-ZONE2: the Morrowind bodies - the player's, every peer's - the wagon and the camps, which the renderer's own 'world' mark used to swallow
     // MW-D24: the player's own body, in third person only.
     renderer.setCloudShadow(sky?.cloudShadow ?? null);   // VC4: the frame's deck, for the body and everything before the pixel loop
     mwViewDrawBody(canvas, { proj, view, eye: mwv.eye, feet: player.feetAt(), yaw: cam.yaw });
@@ -10815,6 +10816,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // instead of by order. Same picture, a third to a half fewer sky
     // fragments on an open road.
     sky.draw(cam.yaw, cam.pitch, fieldOfView(), worldAspect, renderer.worldViewportPx ?? [0, 0, renderer.gl.drawingBufferWidth, renderer.gl.drawingBufferHeight]);   // VC3: the clouds' map restores this rect
+    meterFor(renderer.gl)?.markCpu('ring');   // PERF-ZONE2: the far province ring (its rebuild and its hole) and the water, after the sky hands the frame back
     // EV8: the far province ring - the horizon's actual mountains,
     // drawn while the depth buffer is still the sky's (the streamed
     // world repaints everything nearer). Skipped when exp fog owns
@@ -11211,6 +11213,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // same damage member the melee does (BowDamage :141), so the
     // Dodging tally, the poison seam and the recoverable arrow all
     // ride the hit.
+    meterFor(renderer.gl)?.markCpu('arrows');   // PERF-ZONE2: the missiles' flight and their draw
     arrows.update(dt, {
       // enemy arrows hunt only a SPAWNED, WALKING player - fly/orbit
       // camera modes have no capsule to hit
@@ -11292,6 +11295,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // RMB animal/exterior-foe arc" was written before AR1, and the
     // arrows.update call above hands foeTargets both live pools. A
     // sentence with one true clause kept two false ones alive.
+    meterFor(renderer.gl)?.markCpu('rig');   // PERF-ZONE2: the magic, the weapon rig's frame and its draw - the Morrowind arm's pose, pack and upload live here
     if (walkMode && playerSpawned) {
       // M2: the armed click's cast fires with the LIVE look; missiles
       // fly through this host's world every walk frame.
@@ -11376,6 +11380,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // filled by a fire-and-forget load whose failure leaves it null
     // forever, so the enhanced skin had no vitals for the first
     // frames and none at all when MAIN/HUD could not be read.
+    meterFor(renderer.gl)?.markCpu('hud');   // PERF-ZONE2: the HUD's preparation up to its first screen quad, where the renderer's 'air' span takes over
     {
       const _hfw = [-view[2], -view[10]];
       // X4: the Detect markers. Exterior mode's nearby pool is the

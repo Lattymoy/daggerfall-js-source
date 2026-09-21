@@ -141,6 +141,9 @@ it costs.
 ## Still open
 
 `world` is the other spiky zone (2.25 → 8.51) and is untouched here.
+**PERF-RIG1 (2026-09-21, `Performance-Rig.md`) opened it**: three spans
+of the host's frame, and in them the Morrowind rig's CPU geometry
+pipeline per body per frame, minting ~156 KB a skinned piece per call.
 And `shadow` reads **0.00 ms** on the CPU clock while the GPU run
 reports ~1,700 shadow draws a frame (`sun 3c/~300d`, `lanterns
 6k/18f/~1,400d`) with 14–22k cull tests. The `shadow` span does wrap the

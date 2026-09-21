@@ -6015,3 +6015,58 @@ but whether that player's Choose Guild Jobs row was on is unconfirmed.
 If it was off, the refusal came from `questBridge`/`store` missing on
 the popup's host bag, which the online lane does not do either; the
 question to ask them is whether the row is on.
+
+## QT-LIVE1 - THE JOURNAL'S TIMER, LIVE (2026-09-21)
+
+Mac: "The time doesn't print out live?" - "Do it".
+
+### What stood
+
+The enhanced journal's "Time remains: N days N hours" line rendered
+once when the panel opened and again on a click. Every host holds the
+quest machine's tick under the pause gate - DFU's PauseGame sets
+timeScale 0 and QuestMachine.Update accumulates deltaTime, so nothing
+ticks under a window - which means `remainingTimeInSeconds` under the
+menu is the remainder as of the last tick BEFORE it opened. Offline the
+world clock stops under the menu too and the number is right. Online
+the world is wall time through the relay and runs on at twelve to one,
+so a minute fell off every five real seconds and the line did not move;
+when the menu closed the next tick charged the whole gap (one played
+step at most, WORLD7) in one go.
+
+### The fix, in two halves
+
+**The Clock answers its remainder as of now.** `chargeSeconds(caller)`
+is the tick's arithmetic pulled out into one home - the gap since the
+last sample, online clamped to `[0, step]`, truncated - and
+`liveRemainingSeconds(caller)` is the field less that charge, floored at
+zero, for a running clock; the field itself for one that is not
+running. The tick subtracts the same call, so a reader can never
+disagree with what the next tick leaves, and nothing is ticked under
+the gate. The bridge's `questLog()` walk asks each running clock for
+the live read and keeps the tightest.
+
+**The journal rewrites the line once a second.** `armQuestTimer` is
+armed inside the timer block of the selected row and re-reads the
+HOST's `questLog` each second (never a log captured at render), writing
+the words and the urgent class into the span in place - the panel is
+not rebuilt, so the selection and the scroll stand. A clock that fired
+or a quest that ended under the menu is a stale panel, and that
+repaints. The interval is module state with the ground clock's own two
+owners: cleared by every rebuild and by unmount.
+
+### Pins (`test/qtlive1.test.js`, 5)
+
+The live read against a real Clock - ninety seconds under the menu read
+off the line with the field unmoved, the played step's clamp, a
+backward sample charging nothing, the tick then landing on exactly what
+the read said, offline's raw gap both ways, the zero floor; the
+not-running faces; `questTimerWords` off a fresh log (urgent under a
+world day, null for a clockless or ended quest); the arming and the
+interval by content; and a DERIVED law - every `X = setInterval(` in
+the enhanced menu is module state cleared by the rebuild AND the
+unmount. Two pins re-aimed to the live read (`enhancedPause.test.js`'s
+walk pin, `questbridge.test.js`'s fixture, whose clock_b now says 130
+in its field and 120 live). Campaign `tools/mutants/qtlive1.json`: 15
+mutants, 15 killed.
+
