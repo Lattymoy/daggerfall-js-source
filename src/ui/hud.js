@@ -546,7 +546,11 @@ export function drawHud(renderer, canvas, art, vitals, heading01, dt = 0,
   // `!art` return and the enhanced HUD's - for the damage flash's reason: every host makes
   // this one call last and over the viewmodel. Off by its row, nothing
   // is thrown; what is on the lens still fades.
-  if (bloodScreenOn() && lastHealthLostPercent() >= SCREEN_SPATTER_MIN) playerBloodScreen.spatter(lastHealthLostPercent(), bloodAtlas());
+  // BLOOD AUDIT 5: AND A BLOW. The detector says how much; the damage
+  // flash's latch says a blow landed (the RemoveHealth edge - an enemy's
+  // hit, a trap, a fall; never a spell, a load or a surrender).
+  const blow = playerDamageFlash.takeBlow();
+  if (blow && bloodScreenOn() && lastHealthLostPercent() >= SCREEN_SPATTER_MIN) playerBloodScreen.spatter(lastHealthLostPercent(), bloodAtlas());
   playerBloodScreen.tick(dt);
   if (playerBloodScreen.count && renderer.uploadTexture) playerBloodScreen.draw(renderer, canvas, renderer.uploadTexture(BLOOD_ATLAS_ARCHIVE, BLOOD_ATLAS_RECORD, bloodAtlas(), { smooth: true }));
   // AUDIT 64 F34: the mid-screen label. What SetMidScreenText reads

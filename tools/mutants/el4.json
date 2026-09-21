@@ -290,8 +290,8 @@
   {
     "name": "lane-spec-dropped",
     "file": "src/render/enhancedLighting.js",
-    "old": "    acc += sh * elAttenuation(d, uPointLights[i].w) * (max(dot(n, Ln), 0.0) + spec) * uPointColors[i];",
-    "new": "    acc += sh * elAttenuation(d, uPointLights[i].w) * max(dot(n, Ln), 0.0) * uPointColors[i];",
+    "old": "    acc += att * (max(dot(n, Ln), 0.0) + spec) * uPointColors[i];",
+    "new": "    acc += att * max(dot(n, Ln), 0.0) * uPointColors[i];",
     "tests": [
       "test/el4_frame.test.js"
     ]

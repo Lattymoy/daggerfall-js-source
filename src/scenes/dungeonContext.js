@@ -184,7 +184,8 @@ import { createDroppedTorches } from './droppedTorches.js';
 import { createCamps } from './camps.js';   // SURV3: a fire on the dungeon floor (no tent below - the camp law says so)
 import { campWire, validCampRecord, mergeOwnerCamps } from '../systems/survival/camp.js';   // SURV3: the room's memory carries the camps as the wire says them   // HT1: Handheld Torches' dropped lights in the dungeon   // AUDIT 24 (wave 39): EnemyBlood.ShowBloodSplash
 import { EnemySoundSource, acuteHearingMultiplier } from '../characters/enemySounds.js';   // AUDIT 24 (wave 41): EnemySounds.cs, one home
-import { flashPlayerDamage } from '../ui/damageFlash.js';   // AUDIT 24 (wave 39): ShowPlayerDamage
+import { flashPlayerDamage } from '../ui/damageFlash.js';
+import { resetVitalsDetector } from '../ui/hudVitals.js';   // BLOOD AUDIT 5: the load's detector reset   // AUDIT 24 (wave 39): ShowPlayerDamage
 import { activeMemberships } from '../systems/guilds.js';   // F117
 import { avoidDeath, AVOID_DEATH_TEXT } from '../systems/guildServices.js';   // F117: Stendarr
 import { pickActivatableHit, RAY_DISTANCE, TREASURE_ACTIVATION_DISTANCE } from '../player/activate.js';   // PX21c: the hover runs the take's own pick; AUDIT 65 MC-2: the ray's reach, and each family's own
@@ -1534,7 +1535,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // owned, and destroy() hands it back (the _prevPassiveHost idiom this
   // file already uses for its other process-global seams). A bare null
   // would not do: on ?world and ?exterior the previous holder is the
-  // host's own townTalk sink (world.js:8095 / exterior.js:3319), set
+  // host's own townTalk sink (world.js:8097 / exterior.js:3319), set
   // once at boot and never again, so nulling on the way out of the
   // first dungeon would silently un-file every mid-screen label above
   // ground for the rest of the session - MC-1's own bug, re-opened.
@@ -3102,7 +3103,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
               // AUDIT 39 (#64) / THE FOUR HOSTS RULE - SHIPPED (wave D):
               // this host was the FOURTH BODY of the player-arrow law
               // and is now the fourth CALLER. combat/arrowFlight.js's
-              // playerArrowHitFoe is the one copy world.js:11246,
+              // playerArrowHitFoe is the one copy world.js:11248,
               // exterior.js:4762 and worldModes.js:6347 already ran;
               // the flag said the divergence would bite and it already
               // had. This copy splashed at the ARROW TIP
@@ -5839,6 +5840,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // drips and the pool spreading under a corpse that is about to
       // stand back up all stayed on the floor of the restored one.
       hitEffects.clear();
+      resetVitalsDetector();   // BLOOD AUDIT 5: the loaded health is not a blow (VitalsChangeDetector.cs:139-158)
       classicMinutesRef.value = extras.classicMinutes ?? classicMinutesRef.value;
       magic.setReadiedByIndex(extras.readiedSpellIndex ?? null, spellsByIndex);
       // B4: quest after entity, conversation after quest (the C#'s own

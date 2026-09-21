@@ -1120,6 +1120,12 @@ Slices, each behind its own `features.js` row:
    Walking while bleeding leaves the trail behind you; standing, a
    stain that grows.
 
+   THE WAIT IS THE POOL'S: the ledger is per pool and `hitEffects.clear()`
+   replaces its memory, so a door (the interior pool clears on every
+   one) restarts the player's 2..5 s wait; the world pool clears on
+   teleport and load alone. A player who door-hops a street faster than
+   a wait never drips indoors, which is the shape the foes have too.
+
    THE FLASH: each drip that lands calls `flashPlayerBleed()` - the
    damage flash's own quad at BLEED_FLASH_ALPHA (0.12, under a third
    of a blow's 0.4), the same red and the same fade, and it never
@@ -1155,7 +1161,7 @@ Slices, each behind its own `features.js` row:
 10. **BLOOD2f - the wet sheen.** SHIPPED (2026-09-21). Fresh blood is
    WET, and wet reads as a glint: the lamp seen in it. Without one a
    mark is paint. The lane has had a low gloss on stone since EL4
-   (EL_SPEC_GLOSS 24, a twelfth of the light); a wet mark takes a far
+   (EL_SPEC_GLOSS 24, EL_SPEC_STRENGTH an eighth of the light); a wet mark takes a far
    tighter, far brighter one - EL_WET_GLOSS 64, EL_WET_STRENGTH 0.9 -
    from every lantern in range (Blinn-Phong on the quad's own normal,
    the lantern's shadow, the squared falloff, ITS colour) and from the
@@ -1203,15 +1209,95 @@ Slices, each behind its own `features.js` row:
    found. Anything stored that is not a tier is Normal. The amount
    takes effect at once (`scaleRate` reads the density live, and its
    floor of one still means less blood and never none); the count
-   when a pool is next built, since the ring is a vertex buffer
-   allocated once. Its row is `blood-gore` (ON at Normal, the
-   player's own online), and the home draws it as the chooser every
-   tiered row gets.
+   when the game is next reloaded - the streaming world, the exterior
+   and the interiors build their pools once a page, and only a dungeon
+   builds its own on entry (BLOOD AUDIT 5 corrected "when the world
+   next loads"). Its row is `blood-gore` (ON at Normal, the
+   player's own online), and the home draws it as the four-segment bar
+   every tiered row gets (the cycling chooser is the other panes').
 
    Pins: one (the tiers' law and bounds, the retired keys, the row's
    tiers naming every tier and the default, the shelf's stored tier
    read live, the pool sized by the tier). Mutants: 6, 6 dead
    (`tools/mutants/blood1.json` is 284).
+
+12. **BLOOD AUDIT 5 - four lenses over BLOOD2e..2g and AUDIT 4's own
+   fixes, paid.** (2026-09-21, Mac: "Lets audit this".) The player's
+   blood and the lens; the wet sheen and the ten-float slot; the gore
+   dial and the records; and an adversarial re-read of AUDIT 4's
+   fixes. Every finding verified here before it was paid; nothing
+   merged.
+
+   THE BUGS AND RISKS:
+   - THE LENS SPATTERED ON A LOAD. The vitals detector resets when a
+     maximum changes or on its own unpriming, and an in-place save
+     load (the world's quickload, the dungeon's restore) writes the
+     entity's health without either, so the difference between the
+     live health and the save's read as ONE FRAME'S LOSS - the recoil,
+     the near-death tint and now the lens all fired on it; a surrender
+     (health set to one) the same. Two fixes, both DFU's own: the lens
+     needs a BLOW - the damage flash's RemoveHealth latch (`takeBlow`,
+     answered once), which an enemy's hit, a trap and a fall raise and
+     a spell, a load and a surrender do not - and the detector RESETS
+     on load (`resetVitalsDetector`, VitalsChangeDetector.cs:139-158),
+     beside the camera recoiler's own reset at both load sites. The
+     hudVitals header that said the load flows navigate was stale and
+     says why now.
+   - THE PLAYER BLED UNDER A WINDOW. Three hosts passed the real dt
+     with the inventory open, so drips landed and the flash pulsed
+     under the modal; the dungeon arm did the opposite. The three
+     pass the host's own pause word (a held overlay is dt 0), and the
+     world hosts hand the feet they hand everything else (the camera
+     in fly mode and before the spawn).
+   - THE MOON WAS STILL THE FLAT'S HALF. AUDIT 4 paid the sun, the
+     lanterns and the indirect by N.L and left W4's moon folded into
+     the ambient at its Lambert half: at night outdoors a mark on a
+     wall facing away from Masser glowed against an unlit wall. Both
+     decal shaders take the moon by N.L (`uDecalMoon`, `uMoonDir`) and
+     the trilight ambient (BA1) as the mesh does; the tint upload is
+     the bare ambient.
+   - THE BLOOD-OFF GATE UNDID AUDIT 3. AUDIT 4 built the ring only
+     with the row on, so a player who booted with blood off got a ring
+     sized by whatever the store held when a drop first landed - the
+     fault AUDIT 3 removed, harmless while the keys were dead and LIVE
+     once BLOOD2g made a dial of them (two hosts alive at once took two
+     sizes). The ring is built at boot again; what waits for the first
+     mark is the atlas (`wear`), which was the cost.
+   - `ensure()` re-minted the ring - and now the mirror - on every drop
+     when a renderer's batch came back empty; it latches on the pool.
+     `dispose()` keeps no mirror. A surface the knee ray meets more
+     than STEP_ABOVE (0.25) above the feet - streamed feet inside a
+     step - is not the floor, for the print and the corpse's pool.
+   - THE GLINT PAID ITS SHADOWS TWICE. The wet loop repeated the
+     lantern shadow lookups the diffuse loop had just made (and
+     answered a different shadow for a non-caster), and the sun glint
+     re-read the nine-tap sun map. ONE lantern loop
+     (`elPointLitWet`, the glint beside the diffuse on the same
+     shadow and falloff, the pow skipped where the mark is dry;
+     `elPointLit` is its dry case) and ONE sun visibility for both.
+     Also said plainly, from the lens's geometry: a torch in the hand
+     can glint a floor mark only underfoot (the half-vector never
+     bisects otherwise); the sheen is a wall sconce's and a standing
+     lantern's effect, and a wall mark's in the sun.
+   - The dry cohort and a spread stepping in the same tick flushed
+     twice; they share one. The gore row's effect said "when the world
+     next loads" of three pools that live a page; it says when. A
+     stored value that is no tier showed the FIRST segment on the home
+     while the game ran Normal; the tile and the chooser show the row's
+     default. The capacity clamp is over a closed vocabulary now and
+     its mutant is recorded equivalent.
+
+   Pins: four (the blow latch and the detector reset, driven; the
+   lens's newest-first cap, its band, the no-flash-without-a-landing,
+   the literal 0.12; the ring minted once, the mirror gone with
+   dispose, the step and the pool refusing a surface above the feet,
+   the one flush; the menu's default and the effect's wording by
+   source), the W4/W6/2b/2e/2f/AUDIT 4 pins re-aimed (the moon and
+   the trilight, the atlas at the first mark, the one sun read, the
+   folded loop, the hosts' paused dt, the literal drip count).
+   Mutants: 23 new, 23 dead; 19 records re-aimed by content and one
+   recorded equivalent (`tools/mutants/blood1.json` is 307;
+   `macbugw4.json`, `macbugw6.json` and `el4.json` re-aimed).
 
 The numbers in THE FACTS are the target to feel like. The code that
 hits them is ours.

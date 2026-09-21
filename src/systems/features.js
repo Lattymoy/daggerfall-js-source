@@ -788,7 +788,7 @@ export const FEATURES = Object.freeze([
     title: 'Gore',
     note: 'How much blood there is. Light halves what a blow throws and keeps a few hundred marks; Normal keeps six '
       + 'hundred; Heavy and Abattoir keep more of it on the floor for longer, at the cost of the memory the marks take.',
-    effect: 'The amount takes effect at once; how many marks the world keeps, when the world next loads.',
+    effect: 'The amount takes effect at once; how many marks the world keeps, when the game is next reloaded (a dungeon takes it on entry).',
     kinds: Object.freeze(['enhanced']),
     control: Object.freeze({
       store: 'prefs', key: 'blood-gore', initial: 'normal', online: 'player',

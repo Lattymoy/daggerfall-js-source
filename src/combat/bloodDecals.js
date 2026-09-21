@@ -486,7 +486,6 @@ function unit(v) {
 // a GL context - and the renderer's pass is plumbing over it. The same
 // reason the rest of this module has no renderer in it.
 
-/** pos(3) + uv(2) + rgba(4). */
 /** BLOOD2f: pos3 + uv2 + rgba4 + WET1. The tenth float is how wet the
  *  mark is (one fresh, zero dried - bloodArt.js `wetAt`); the lane's
  *  decal shader turns it into a glint, the classic one ignores it. */

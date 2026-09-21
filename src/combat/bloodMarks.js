@@ -59,6 +59,10 @@ export const TRACK_STEPS = 6;
 export const TRACK_WET_STAGE = 2;
 export const PRINT_SIZE = 0.34;
 export const PRINT_SPREAD = 0.13;
+/** BLOOD AUDIT 5: how far above the feet the knee ray may find the floor
+ *  and still call it the floor (the drawn terrain sits centimetres above
+ *  the capsule's bilinear ground on a twisted quad). */
+export const STEP_ABOVE = 0.25;
 
 /** Straight down, once. BLOOD1b casts up to SPRAY_MAX rays for one
  *  blow, and the collider reads this direction and never writes it. */
@@ -186,7 +190,7 @@ export function createBloodMarks({ renderer = null, collider = null, settings = 
   const markTexture = texture ?? (() => _atlasTex);
 
   function ensure() {
-    if (_pool && _batch) return;
+    if (_pool) return;   // BLOOD AUDIT 5: ONCE. A renderer whose batch came back empty used to re-mint the ring (and the mirror) on every drop
     const cap = Math.max(1, Math.floor(settings?.capacity?.() ?? 1000));
     // ONE SOURCE OF CHANCE for the whole pool: the ring spins each
     // mark's own turn and the spray below picks where the drops land,
@@ -196,10 +200,15 @@ export function createBloodMarks({ renderer = null, collider = null, settings = 
     _batch = renderer.createDecalBatch(cap);
     _mirror = new Float32Array(cap * DECAL_FLOATS);
     _dirty = [];
-    // BLOOD2b: the atlas rides the renderer's texture cache - one upload
-    // for the page, whichever host asks first, LINEAR-sampled so a splat's
-    // soft edge is soft. A stub renderer with no upload draws no marks,
-    // exactly as one with no texture never did.
+  }
+  /** BLOOD2b: the atlas rides the renderer's texture cache - one upload
+   *  for the page, whichever host asks first, LINEAR-sampled so a splat's
+   *  soft edge is soft. A stub renderer with no upload draws no marks,
+   *  exactly as one with no texture never did. BLOOD AUDIT 5: built and
+   *  uploaded when the first mark is DRESSED, not with the ring - the
+   *  ring is cheap and is built at boot (AUDIT 3's law); the sheet is
+   *  the seventy milliseconds, and a player with blood off never pays it. */
+  function wear() {
     if (!_atlasTex && renderer?.uploadTexture) _atlasTex = renderer.uploadTexture(BLOOD_ATLAS_ARCHIVE, BLOOD_ATLAS_RECORD, atlas(), { smooth: true }) ?? null;
   }
 
@@ -258,6 +267,7 @@ export function createBloodMarks({ renderer = null, collider = null, settings = 
    *  Written onto the decal the pool answered so the drying pass can
    *  find the fresh tint and the birth again. */
   function dress(d, kind, alpha = 1) {
+    wear();
     d.uv = pickCell(atlas(), kind, rng);
     d.fresh = freshTint(rng);
     d.fresh[3] = alpha;   // BLOOD2d: a print's fade rides the tint's alpha, and drying keeps it
@@ -412,6 +422,7 @@ export function createBloodMarks({ renderer = null, collider = null, settings = 
     if (!col?.surfaceHit) return null;
     const h = col.surfaceHit([feet[0], feet[1] + DRIP_FROM, feet[2]], DOWN, MARK_DROP);
     if (!h || !Number.isFinite(h.dist) || h.dist > MARK_DROP) return null;
+    if (h.dist < DRIP_FROM - STEP_ABOVE) return null;   // BLOOD AUDIT 5: a surface above the feet is not the floor the body lies on
     ensure();
     const d = lay([feet[0], feet[1] + DRIP_FROM - h.dist, feet[2]], h.normal ?? [0, 1, 0], { size: POOL_SIZE.start }, 'pool');
     flush();
@@ -466,6 +477,11 @@ export function createBloodMarks({ renderer = null, collider = null, settings = 
     // never knew.
     const h = col.surfaceHit([pos[0], pos[1] + DRIP_FROM, pos[2]], DOWN, MARK_DROP);
     if (!h || !Number.isFinite(h.dist) || h.dist > MARK_DROP) return null;
+    // BLOOD AUDIT 5: a surface met ABOVE the feet - a foe whose streamed
+    // feet sit inside a step or a crate - is not the floor the foot is on;
+    // the terrain's drawn ground the knee ray exists for sits centimetres
+    // above the capsule's floor, never a quarter of a metre.
+    if (h.dist < DRIP_FROM - STEP_ABOVE) return null;
     const foot = [pos[0], pos[1] + DRIP_FROM - h.dist, pos[2]];
     // in a wet mark? A FLOOR mark - the ceiling's test the other way up
     // (BLOOD AUDIT 4: the same number, by its name), never a print, and
@@ -578,7 +594,7 @@ export function createBloodMarks({ renderer = null, collider = null, settings = 
    *  stage is read off its age; one that crossed a stage takes its new
    *  tint and its slot is rewritten - DRY_STAGES rewrites over a mark's
    *  whole life, never one a frame. Answers how many were rewritten. */
-  function dry() {
+  function dryPass() {
     if (!_pool || !_pool.count) return 0;
     let n = 0;
     for (let i = 0, cap = _pool.capacity; i < cap; i++) {
@@ -592,15 +608,19 @@ export function createBloodMarks({ renderer = null, collider = null, settings = 
       writeSlot(d);
       n++;
     }
-    flush();   // BLOOD AUDIT 4: the cohort that crossed together goes up together - runs, not a call a mark
     return n;
   }
+  /** The drying pass by name (a pin drives it): the cohort that crossed
+   *  together goes up together - runs, not a call a mark (BLOOD AUDIT 4). */
+  function dry() { const n = dryPass(); flush(); return n; }
 
   function tick(dt) {
     if (!(dt > 0)) return 0;
     _clock += dt;
-    if (_clock >= _dryDue) { _dryDue = _clock + DRY_TICK; dry(); }
-    if (spread()) flush();   // BLOOD2c: the corpses' pools, a step at a time
+    let wrote = 0;
+    if (_clock >= _dryDue) { _dryDue = _clock + DRY_TICK; wrote += dryPass(); }
+    wrote += spread();   // BLOOD2c: the corpses' pools, a step at a time
+    if (wrote) flush();   // BLOOD AUDIT 5: the dry cohort and the spreads in ONE flush, not two
     if (!_gibs.length && !_drips.length) return 0;
     // BLOOD1 AUDIT 3: the switch drops what is in the air - the row the
     // gibs ride (see `overkillOn`) is off, so they stop, and their quads go.
@@ -716,12 +736,14 @@ export function createBloodMarks({ renderer = null, collider = null, settings = 
   // A host that wires no renderer (a stub) still gets a pool with no
   // ring, and `on()` refuses it exactly as before.
   //
-  // BLOOD AUDIT 4: AND ONLY WITH BLOOD ON. A player with the row off
-  // paid the ring, the batch, the atlas and its upload at every host's
-  // boot for marks nothing would ever lay; the first drop that lands
-  // after the row is turned on builds them then, through `spray`'s own
-  // `ensure()`, at the capacity the store holds at that moment.
-  if (renderer?.createDecalBatch && settings?.enabled?.()) ensure();
+  // BLOOD AUDIT 4 gated this on the row being ON, so a player with blood
+  // off paid nothing at boot; BLOOD AUDIT 5 found that reintroduced the
+  // fault this note is about - the ring built at the first landing drop
+  // at whatever the store held THEN, and since BLOOD2g the store holds a
+  // real dial, two hosts alive at once took two sizes. The ring is built
+  // HERE, at boot, to the tier held at boot (a hundred kilobytes); what
+  // waits for the first mark is the ATLAS (`wear`), which is the cost.
+  if (renderer?.createDecalBatch) ensure();
 
   return {
     place, draw, tick, shiftOrigin, clear, useArt,
@@ -738,10 +760,11 @@ export function createBloodMarks({ renderer = null, collider = null, settings = 
     dispose() {
       clear();   // BLOOD1b: which drops the chunks and, through reseatGibs, their batch
       if (_batch) renderer?.destroyDecalBatch?.(_batch);
-      _batch = null; _pool = null; _atlasTex = null; _gibArt = null;   // BLOOD2b: the atlas handle goes; the texture is the renderer cache's, page-lifetime like every cached texture
+      _batch = null; _pool = null; _mirror = null; _dirty = []; _atlasTex = null; _gibArt = null;   // BLOOD2b: the atlas handle goes; the texture is the renderer cache's, page-lifetime like every cached texture; BLOOD AUDIT 5: and the mirror, the pool's largest CPU allocation
       _dead = true;   // BLOOD1 AUDIT: and nothing this pool owns is ever built again
     },
     _pool: () => _pool,
+    _mirror: () => _mirror,   // tests only (BLOOD AUDIT 5)
     dry,                       // BLOOD2b: the drying pass, for a pin to drive by name
     clock: () => _clock,       // BLOOD2b
   };

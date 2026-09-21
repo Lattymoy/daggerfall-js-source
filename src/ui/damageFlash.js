@@ -44,10 +44,18 @@ export const BLEED_FLASH_ALPHA = 0.12;
 export function createDamageFlash() {
   let alpha = 0;
   let fadingOut = false;
+  /** BLOOD AUDIT 5: a BLOW landed since the last ask - the RemoveHealth
+   *  edge, latched for the frame's HUD pass. The lens (bloodScreen.js)
+   *  rides the vitals detector for its AMOUNT and this latch for its
+   *  CAUSE: an in-place save load or a surrender writes health down
+   *  without a blow, and the detector alone read that as one. */
+  let blow = false;
   return {
     /** Flash(). Re-flashing RESTARTS at 0.4 - two blows in one second
      *  do not stack into something darker, they refill the same fade. */
-    flash() { alpha = FLASH_ALPHA; fadingOut = true; },
+    flash() { alpha = FLASH_ALPHA; fadingOut = true; blow = true; },
+    /** Was there a blow since the last ask? Answers once. */
+    takeBlow() { const b = blow; blow = false; return b; },
     /** BLOOD2e: a bleed's flash - subtle, and never under a blow's. */
     bleed() { alpha = Math.max(alpha, BLEED_FLASH_ALPHA); fadingOut = true; },
     /** OnGUI's fade step, on the host's REAL dt (Time.deltaTime is not

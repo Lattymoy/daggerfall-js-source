@@ -767,6 +767,11 @@ uniform float uFogDensity;
 uniform vec2 uFogRange;
 uniform vec3 uCamPos;
 uniform vec3 uLightDir;
+uniform vec3 uDecalMoon;   // BLOOD AUDIT 5: the moon by N.L, as the mesh takes it - W4 folded its Lambert half into the ambient, so a mark on a wall facing away from Masser glowed at night
+uniform vec3 uMoonDir;
+uniform float uTrilight;   // BLOOD AUDIT 5: and the trilight ambient (BA1), as the mesh takes it
+uniform vec3 uAmbientSky;
+uniform vec3 uAmbientGround;
 ${CLOUD_SHADOW_GLSL}
 out vec4 outColor;
 float fogFactorAt(vec3 worldPos) {
@@ -808,6 +813,8 @@ void main() {
   vec3 n = dot(c, c) > 1e-12 ? normalize(c) : vec3(0.0, 1.0, 0.0);
   if (dot(n, uCamPos - vWorld) < 0.0) n = -n;
   float diff = max(dot(n, uLightDir), 0.0);
+  float mdiff = max(dot(n, uMoonDir), 0.0);
+  vec3 ambient = uTrilight > 0.5 ? (n.y >= 0.0 ? mix(uTint, uAmbientSky, n.y) : mix(uTint, uAmbientGround, -n.y)) : uTint;   // BA1: Trilight, as MESH_FS has it
   vec3 pointAcc = vec3(0.0);
   for (int i = 0; i < 16; i++) {
     if (i >= uPointCount) break;
@@ -825,7 +832,7 @@ void main() {
   // Lighting one being OFF, so a player with the deck and the classic
   // set watched the ground go dark under a cloud while the blood on it
   // stayed bright - W4's fault with the sign reversed.
-  vec3 lightAcc = uTint + uDecalSun * (diff * cloudShadowAt(vWorld)) + pointAcc + (iAtt * iAtt * max(dot(n, iL / max(iD, 1e-4)), 0.0)) * uIndirectColor;
+  vec3 lightAcc = ambient + uDecalSun * (diff * cloudShadowAt(vWorld)) + uDecalMoon * mdiff + pointAcc + (iAtt * iAtt * max(dot(n, iL / max(iD, 1e-4)), 0.0)) * uIndirectColor;
   vec3 rgb = t.rgb * vColor.rgb * lightAcc;
   float a = t.a * vColor.a;
   float f = fogFactorAt(vWorld);
@@ -2735,7 +2742,7 @@ void main() {
     return { vao, vb, ib, capacity: cap };
   }
 
-  /** One slot's 36 floats, in place. `floats` is what
+  /** One slot's forty floats (BLOOD2f), in place - or a RUN of slots from the mirror (BLOOD AUDIT 4). `floats` is what
    *  `writeDecalQuad`/`clearDecalQuad` filled. */
   writeDecalSlot(batch, slot, floats) {
     if (!batch || slot < 0 || slot >= batch.capacity) return false;
@@ -2778,10 +2785,11 @@ void main() {
       const am = this._c3(this._ambient, this._decA);
       const mc = this._c3(this._moonColor, this._decB);
       const sc = this._c3(this._sunColor, this._decC);
-      gl.uniform3f(d.tint,
-        am[0] + mc[0] * this._moonScale * 0.5,
-        am[1] + mc[1] * this._moonScale * 0.5,
-        am[2] + mc[2] * this._moonScale * 0.5);
+      // BLOOD AUDIT 5: THE BARE AMBIENT - the moon is its own term by N.L
+      // now, as the mesh has it (W4 folded the moon's Lambert half in
+      // here, and a wall mark facing away from Masser glowed at night).
+      gl.uniform3f(d.tint, am[0], am[1], am[2]);
+      gl.uniform3f(d.moon, mc[0] * this._moonScale, mc[1] * this._moonScale, mc[2] * this._moonScale);
       // BLOOD AUDIT 4: THE WHOLE SUN, not the flat's half - the shader
       // takes N.L off the quad's own normal now, as the mesh under the
       // mark does (MESH_FS's uSunColor * (uSunScale * diff)).
@@ -2789,8 +2797,14 @@ void main() {
     } else {
       gl.uniform3f(d.tint, 1, 1, 1);
       gl.uniform3f(d.sun, 0, 0, 0);
+      gl.uniform3f(d.moon, 0, 0, 0);
     }
     if (d.lightDir) gl.uniform3fv(d.lightDir, this._lightDir);   // BLOOD AUDIT 4
+    if (d.moonDir) gl.uniform3fv(d.moonDir, this._moonDir);      // BLOOD AUDIT 5
+    // BLOOD AUDIT 5: the trilight ambient (BA1), as drawMesh uploads it
+    const tri = this._ambientTri;
+    gl.uniform1f(d.trilight, tri ? 1 : 0);
+    if (tri) { gl.uniform3fv(d.ambientSky, this._c3(tri.sky)); gl.uniform3fv(d.ambientGround, this._c3(tri.ground)); }
     // MAC-BUG W4 pinned this as "a fifth classic program with no lane
     // twin", cutting to the classic sixteen under the lane's forty-eight.
     // MAC-BUG W6 gave it the twin (enhancedLighting.js EL_DECAL_FS), so
@@ -2852,6 +2866,11 @@ void main() {
       tint: gl.getUniformLocation(P, 'uTint'),
       sun: gl.getUniformLocation(P, 'uDecalSun'),                 // MAC-BUG W4
       lightDir: gl.getUniformLocation(P, 'uLightDir'),           // BLOOD AUDIT 4: the mark takes the sun by N.L, as the surface under it does
+      moon: gl.getUniformLocation(P, 'uDecalMoon'),              // BLOOD AUDIT 5: and the moon by N.L
+      moonDir: gl.getUniformLocation(P, 'uMoonDir'),
+      trilight: gl.getUniformLocation(P, 'uTrilight'),           // BLOOD AUDIT 5: and the trilight ambient
+      ambientSky: gl.getUniformLocation(P, 'uAmbientSky'),
+      ambientGround: gl.getUniformLocation(P, 'uAmbientGround'),
       pointCount: gl.getUniformLocation(P, 'uPointCount'),
       pointLights: gl.getUniformLocation(P, 'uPointLights'),
       pointColors: gl.getUniformLocation(P, 'uPointColors'),

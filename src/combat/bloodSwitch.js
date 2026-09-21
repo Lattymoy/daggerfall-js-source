@@ -36,7 +36,9 @@ export const bloodMarksOn = (search = globalThis.location?.search ?? '') =>
  *  The ring is ALLOCATED to the tier's count when a pool is first
  *  built and never grows, so the cost of blood is decided here and
  *  cannot rise during a fight: the amount takes effect at once, the
- *  count when the world next loads. */
+ *  count when the game is next reloaded (the streaming world, the
+ *  exterior and the interiors build their pools once a page; a dungeon
+ *  builds its own on entry and takes the tier then - BLOOD AUDIT 5). */
 export const BLOOD_GORE_PREF = 'blood-gore';
 export const GORE_TIERS = Object.freeze({
   light: Object.freeze({ density: 0.5, capacity: 300 }),
@@ -45,9 +47,11 @@ export const GORE_TIERS = Object.freeze({
   abattoir: Object.freeze({ density: 1, capacity: 4000 }),
 });
 export const GORE_DEFAULT = 'normal';
-/** The tier's own bounds - the ring is a vertex buffer built to this
- *  number, so a hand-edited store cannot ask for 180 MB of floats or a
- *  pool that divides by its own size. */
+/** The tiers' bounds. The ring is a vertex buffer built to the tier's
+ *  count, and `bloodGore` answers only a tier NAME, so a hand-edited
+ *  store cannot reach a number at all; the clamp below is belt and
+ *  braces over that closed vocabulary, and the pin asserts the TABLE
+ *  sits inside these (BLOOD AUDIT 5). */
 export const BLOOD_CAPACITY_DEFAULT = GORE_TIERS[GORE_DEFAULT].capacity;
 export const BLOOD_CAPACITY_MIN = 50;
 export const BLOOD_CAPACITY_MAX = 4000;

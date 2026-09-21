@@ -253,8 +253,15 @@ float fogFactorAt(vec3 worldPos) {
 // programs. `n` is the surface normal (the billboard passes none and
 // takes the attenuation alone - it has no normal, as in the classic lane).
 const EL_POINT_LIT_GLSL = `
-vec3 elPointLit(vec3 wp, vec3 n) {
+// BLOOD2f / BLOOD AUDIT 5: the lantern loop with a WET surface's glint
+// beside the diffuse - ONE loop, ONE shadow answer for both (a mark in a
+// contact shadow is glint-shadowed as it is diffuse-shadowed), the
+// highlight at the wet gloss skipped where it is zero, which is nearly
+// all of a mark. \`wet\` zero is the plain loop; \`glint\` is the light's
+// colour, not the surface's - the lamp seen in the wet.
+vec3 elPointLitWet(vec3 wp, vec3 n, float wet, out vec3 glint) {
   vec3 acc = vec3(0.0);
+  glint = vec3(0.0);
   for (int i = 0; i < ${EL_MAX_LIGHTS}; i++) {
     if (i >= uPointCount) break;
     vec3 L = uPointLights[i].xyz - wp;
@@ -271,10 +278,17 @@ vec3 elPointLit(vec3 wp, vec3 n) {
     // EL4: a glint - Blinn-Phong, a low gloss for stone and wood, a twelfth of the light: wet stone under a torch
     vec3 H = normalize(Ln + normalize(uCamPos - wp));
     float spec = pow(max(dot(n, H), 0.0), ${EL_SPEC_GLOSS}.0) * ${EL_SPEC_STRENGTH};
-    acc += sh * elAttenuation(d, uPointLights[i].w) * (max(dot(n, Ln), 0.0) + spec) * uPointColors[i];
+    float att = sh * elAttenuation(d, uPointLights[i].w);
+    acc += att * (max(dot(n, Ln), 0.0) + spec) * uPointColors[i];
+    if (wet > 0.0) {
+      float g = pow(max(dot(n, H), 0.0), ${EL_WET_GLOSS}.0);
+      if (g > 0.0) glint += att * g * uPointColors[i];
+    }
   }
+  glint *= ${EL_WET_STRENGTH} * wet;
   return acc;
 }
+vec3 elPointLit(vec3 wp, vec3 n) { vec3 g; return elPointLitWet(wp, n, 0.0, g); }
 // a flat's lantern term, attenuation only; its shadow is read at the
 // flat's base (one value for the whole sprite - a sprite in its own map
 // would shadow itself)
@@ -299,25 +313,6 @@ vec3 elIndirectFlat(vec3 wp) {
   float iD = length(uIndirect.xyz - wp);
   float iAtt = clamp(1.0 - iD / max(uIndirect.w, 1e-4), 0.0, 1.0);
   return iAtt * iAtt * uIndirectColor;
-}
-// BLOOD2f: a WET surface's glint from every lantern in range - Blinn-Phong
-// at the wet gloss, the lantern's own shadow, the squared falloff - and
-// nothing at all when dry. The light's colour, not the surface's: a
-// highlight is the lamp seen in the wet.
-vec3 elWetGlint(vec3 wp, vec3 n, float wet) {
-  if (wet <= 0.0) return vec3(0.0);
-  vec3 V = normalize(uCamPos - wp);
-  vec3 acc = vec3(0.0);
-  for (int i = 0; i < ${EL_MAX_LIGHTS}; i++) {
-    if (i >= uPointCount) break;
-    vec3 L = uPointLights[i].xyz - wp;
-    float d = length(L);
-    if (d >= uPointLights[i].w) continue;
-    vec3 Ln = L / max(d, 1e-4);
-    vec3 H = normalize(Ln + V);
-    acc += shadowOfLight(i, wp, n) * elAttenuation(d, uPointLights[i].w) * pow(max(dot(n, H), 0.0), ${EL_WET_GLOSS}.0) * uPointColors[i];
-  }
-  return acc * (${EL_WET_STRENGTH} * wet);
 }
 // the glow of the medium between the eye and wp, every lantern summed
 vec3 elInScatter(vec3 wp) {
@@ -569,6 +564,11 @@ uniform float uFogDensity;
 uniform vec2 uFogRange;
 uniform vec3 uCamPos;
 uniform vec3 uLightDir;
+uniform vec3 uDecalMoon;   // BLOOD AUDIT 5: the moon, by N.L as the mesh takes it (W4 folded its half into the ambient)
+uniform vec3 uMoonDir;
+uniform float uTrilight;   // BLOOD AUDIT 5: and the trilight ambient the mesh takes
+uniform vec3 uAmbientSky;
+uniform vec3 uAmbientGround;
 uniform sampler2D uCloudShadowMap;
 uniform vec4 uCloudShadowRect;
 float cloudShadowAt(vec3 wp) {
@@ -605,17 +605,24 @@ void main() {
   // indirect through elPointLit / elIndirectLit (N.L, the lantern's
   // map, the contact shadow, the glint - wet blood glints).
   float ndl = max(dot(n, uLightDir), 0.0);
-  vec3 sunLit = (dot(uDecalSun, uDecalSun) > 0.0 && ndl > 0.0) ? uDecalSun * (ndl * cloudShadowAt(vWorld) * sunShadowAt(vWorld, n)) : vec3(0.0);
-  vec3 lit = albedo * (uTint + sunLit + elPointLit(vWorld, n) + elIndirectLit(vWorld, n));
+  // BLOOD AUDIT 5: the sun's visibility ONCE - the cloud and the nine-tap
+  // sun map - for the diffuse and the glint both; the moon by N.L and the
+  // trilight ambient, as the mesh under the mark takes them.
+  float sunVis = (dot(uDecalSun, uDecalSun) > 0.0 && ndl > 0.0) ? cloudShadowAt(vWorld) * sunShadowAt(vWorld, n) : 0.0;
+  vec3 sunLit = uDecalSun * (ndl * sunVis);
+  vec3 moonLit = uDecalMoon * max(dot(n, uMoonDir), 0.0);
+  vec3 ambient = uTrilight > 0.5 ? (n.y >= 0.0 ? mix(uTint, uAmbientSky, n.y) : mix(uTint, uAmbientGround, -n.y)) : uTint;
+  vec3 glint;
+  vec3 lit = albedo * (ambient + sunLit + moonLit + elPointLitWet(vWorld, n, vWet, glint) + elIndirectLit(vWorld, n));
   // BLOOD2f: THE WET SHEEN. A fresh mark is wet, and wet is a glint: the
   // lamp seen in it, and the sun - Blinn-Phong at the wet gloss, on top
   // of the lit blood (a highlight is the light's colour, not the
   // surface's), scaled by the mark's own wetness, which the dry pass
   // takes away stage by stage. A dry mark is exactly the line above.
-  vec3 sunGlint = (dot(uDecalSun, uDecalSun) > 0.0 && ndl > 0.0 && vWet > 0.0)
-    ? uDecalSun * (pow(max(dot(n, normalize(uLightDir + normalize(uCamPos - vWorld))), 0.0), ${EL_WET_GLOSS}.0) * ${EL_WET_STRENGTH} * vWet * cloudShadowAt(vWorld) * sunShadowAt(vWorld, n))
+  vec3 sunGlint = vWet > 0.0
+    ? uDecalSun * (pow(max(dot(n, normalize(uLightDir + normalize(uCamPos - vWorld))), 0.0), ${EL_WET_GLOSS}.0) * ${EL_WET_STRENGTH} * vWet * sunVis)
     : vec3(0.0);
-  lit += elWetGlint(vWorld, n, vWet) + sunGlint;
+  lit += glint + sunGlint;
   outColor = vec4(elFinish(lit, vWorld), t.a * vColor.a);
 }`;
 

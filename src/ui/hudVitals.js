@@ -34,10 +34,17 @@
 // frame passes dt 0 here.
 //
 // DFU's other detector resets - world init, save load, the court
-// screen (VitalsChangeDetector.cs:139-158) - need no port seam: every
-// one of those paths boots a scene host afresh (the load flows
-// navigate), and module state starts unprimed. The one reset the port
-// CAN reach mid-frame-loop, the large-HUD toggle, is handled below.
+// screen (VitalsChangeDetector.cs:139-158). World init and the court
+// screen boot a scene host afresh (those flows navigate) and module
+// state starts unprimed; the large-HUD toggle is handled below. BLOOD
+// AUDIT 5: SAVE LOAD DOES NOT NAVIGATE - the world host's quickload
+// and the dungeon's restore both write the entity IN PLACE, and for
+// the same character the maxima do not change, so the detector read
+// the difference between the live health and the save's as one
+// frame's LOSS: the camera reeled, the near-death tint fired and the
+// lens spattered on every load. `resetVitalsDetector` is DFU's own
+// SaveLoadManager_OnLoad reset, called at both load sites beside the
+// camera recoiler's.
 //
 // LoadAssets reads SwapHealthAndFatigueColors once at construction
 // (:181), so DFU applies a swap flip on restart; the port reads it at
@@ -245,6 +252,10 @@ export const lastHealthLost = () => _lastHealthLost;
 /** VitalsChangeDetector.HealthLostPercent (:94) - AUDIT 28 W9's
  *  CameraRecoiler reads it beside HealthLost. */
 export const lastHealthLostPercent = () => _lastHealthLostPercent;
+
+/** BLOOD AUDIT 5: VitalsChangeDetector's save-load reset (:139-158) -
+ *  the next frame primes from the loaded values and reports no loss. */
+export function resetVitalsDetector() { _detector.primed = false; }
 
 /** The tests' door, and what a fresh boot gets for free. */
 export function _resetHudVitals() {
