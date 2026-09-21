@@ -76,23 +76,30 @@ transcribed as the reference.
   `out` was packed from, the same range objects come back untouched -
   they carry the textures the mesh hung on them.
 
-After, on the same 3,006-vertex rig: the skin call mints 0.8 KB (the
-`post` affines - a handful of 9-float arrays per PIECE per frame, which
-follow the pose and cannot be cached), the pack mints nothing and runs
-a third faster (123 → 84 µs), the pose+pack pair 355 → 303 µs.
+After, on the same 3,006-vertex rig: one POSE call - both skinned pieces
+and the skeleton - mints 0.8 KB in 24 small arrays (the `post` affines,
+a handful of 9-float arrays per piece per frame, which follow the pose
+and cannot be cached, and the skeleton's own per-node affines), the
+pack mints nothing and runs a third faster (123 → 84 µs), the pose+pack
+pair 355 → 303 µs. The scratch is RETAINED: a body keeps ~52 bytes a
+vertex of accumulator for the life of its rig - a few hundred KB for
+a clothed body - which is the trade.
 
 ## PERF-ZONE2 - the zone named
 
 Five `markCpu` spans now tile what `'world'` swallowed: `bodies` (after
 `beginFrame`), `ring` (after the sky hands back), `arrows`, `rig` (the
 magic, the weapon rig's frame and draw - the arm's pose, pack and
-upload live here), `hud`. The renderer's own `'world'` is what is left.
+upload live here), `hud`. The renderer's own `'world'` is what is left,
+which is next to nothing: its two marks are each followed by one of
+these within a line, so a `world` that still reads high is the meter
+lying, not the frame.
 The next `?perf=cpu` line from the field says which of the three spans
 it was.
 
 ## What is pinned, and what deliberately is not
 
-`test/perfrig1.test.js` (6): the skin loop bit-identical to the old
+`test/perfrig1.test.js` (7): the skin loop bit-identical to the old
 loop at several poses and across repeated calls; the accumulators the
 batch's, zeroed, and the second call constructing nothing sized to the
 mesh (a typed-array constructor count, which is how the 156 KB was
@@ -127,3 +134,56 @@ timing assertion - the PERF-TOWN1/STREAM1 law. Campaign
   field readout with both clocks.
 - NOT SEEN ON A GPU. The numbers above are node's on the fixture rig; the
   swing they explain is Mac's `?perf=cpu` line.
+
+## AUDIT PERF-RIG1 (same day, Mac: "Lets audit this")
+
+Four lenses over the slice - does it reach a player, what did it break,
+do the pins derive, does the record say true things.
+
+- **Reaches the player.** `poseAssembly` calls `fns.skinBatch`, and
+  `fns.skinBatch` is the mwSkin export itself (mwFirstPerson.js's
+  module table), so the scratch path is the frame path. A piece keeps
+  its `batch` for the life of the assembly (MW-D7), so the scratch
+  persists; the peers' rigs are separate `createFpArm`s with their own
+  batches, and even a shared batch would be safe - the scratch is
+  zeroed at the top of every call and no call is re-entered.
+- **F1 (record).** "0.8 KB per skin call" was per POSE call (both
+  pieces and the skeleton); and the renderer's residual `world` zone
+  is next to nothing now, not "what is left". Both corrected above,
+  and the scratch's retained memory is written down as the trade.
+- **F2 (fixed).** The range-identity law had a second half nobody had
+  written: `releaseGpu` deleted the textures hung on the ranges and
+  LEFT THE HANDLES on the objects. Every release site today drops its
+  pack beside the mesh (3157/3160, 3218-3220, 3444-3448, 3623, 3713-14),
+  so no stale handle was ever handed back - but a future release that
+  kept its pack would have put a deleted `WebGLTexture` into the next
+  mesh through the very reuse this slice introduced. The release
+  clears the handle with the texture, pinned by content with a sweep
+  that every `releaseMesh()` call drops its pack. One more mutant.
+- **Lane inputs are never mutated in place.** Every write to `colors`,
+  `emissive`, `diffuse`, `vertexColorMode` and `uvs` in `src/` is at
+  parse or resolve time (mwNifFile.js, mwNifMesh.js) - nothing recolours
+  a built piece under the cache, so identity is the right key. No
+  batch is frozen (`Object.freeze` in the four MW format modules is on
+  constant tables only), so the scratch assignment cannot throw.
+- **The pins.** The bit-identity references are the old code, and the
+  `Float64Array` mutant proves they see a rounding, not just a value.
+  One tautology tightened (a range's piece test that could not fail).
+  The zone-order pin enumerates, on purpose: the zones TILE, and their
+  order is the law.
+- **F3 (the campaign itself).** The first campaign reported 17/17 dead
+  while `perfrig1.test.js` was RED for an unrelated reason (the `hud`
+  span pin, since fixed) - a failing file kills every mutant that lists
+  it, which is the vacuous-pin shape in a mutation run. Re-run green,
+  THREE survived: the transposed bone product agreed with the old loop
+  on the fixture (its inverse binds carry no rotation, and a product
+  with an identity commutes); the double-width scratch agreed too (the
+  fixture's values are exactly representable, so no rounding to see);
+  and the `bodies` mark moved two lines down still sat within the pin's
+  window. The pins now hold a batch FOUND BY SEARCH against the
+  double-width mutant - general 3x3s, four vertices, two overlapping
+  bones, which a hand-picked near-orthonormal case did not catch - and
+  the `bodies` mark is pinned as the line after `beginFrame`. A
+  campaign is only evidence when the file it runs is green first.
+- Campaign after the audit: 18 mutants, 18 killed, on a green file.
+

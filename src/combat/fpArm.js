@@ -2424,7 +2424,10 @@ export function createFpArm() {
       // MW-D11: the textures go with the mesh that owns them. An arm
       // rebuilt on every attach would otherwise leak one upload per
       // piece per build, which is the shape of NT1's teardown leaks.
-      for (const r of m.ranges || []) if (r.tex) gl.deleteTexture(r.tex);
+      // AUDIT PERF-RIG1 F2: and the HANDLE goes with the texture. PERF-RIG1's
+      // pack hands the same range objects back while the pieces stand, so a
+      // range must never carry a deleted texture into the next mesh.
+      for (const r of m.ranges || []) if (r.tex) { gl.deleteTexture(r.tex); r.tex = null; }
       for (const e of m.effects || []) renderer.releaseParticleEffect(e);   // MAC-Q: the flame's buffer and texture go with the mesh
       m.effects = null;
     }

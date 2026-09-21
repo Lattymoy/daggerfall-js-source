@@ -147,6 +147,37 @@ test('PERF-RIG1a skinBatch: bit-for-bit the pre-change arithmetic, at several po
     skinBatchRef(batch, skeleton, pose, mats, want);
     assert.deepEqual(bits(got), bits(want), `time ${t}: every float is the one the old loop wrote`);
   }
+  // AUDIT PERF-RIG1: the fixture's inverse binds carry no rotation, so a
+  // bone product multiplied in the WRONG ORDER agreed with the old loop
+  // on it, and its values are exactly representable, so a scratch of
+  // doubles agreed too - two mutants the first campaign counted as dead
+  // while this file was red for another reason. A hand-built batch whose
+  // inverse bind ROTATES and whose weights and rotations are not
+  // representable in binary makes both visible: the order in the
+  // product, and the rounding in the width.
+  // The inputs were FOUND BY SEARCH against the double-width mutant (a
+  // hand-picked near-orthonormal case agreed to the bit): general 3x3s,
+  // four vertices, two bones with overlapping influence.
+  const bare = {
+    positions: new Float32Array([0.06, -1.3, -1.38, -1.41, -0.86, 1.72, -1.96, 1.56, -1.45, -1.1, -0.88, 1.18]),
+    normals: null,
+    skin: {
+      transform: { rotation: [-0.182, 0.089, 0.805, -0.102, -0.631, -0.137, 0.681, -0.333, -0.492], translation: [0.3, -0.7, 0.1], scale: 1 },
+      shapeTransform: null, skeletonRoot: -1, rootBone: -1,
+      bones: [
+        { ref: 1, indices: new Uint16Array([0, 1, 2, 3]), weights: new Float32Array([0.7, 0.3, 1, 0.5]), invBind: { a: [0.203, -0.784, 0.926, 0.125, 0.642, 0.158, -0.964, 0.47, 0.856], t: [0.1, 0.2, 0.3] } },
+        { ref: 2, indices: new Uint16Array([0, 1, 3]), weights: new Float32Array([0.3, 0.7, 0.5]), invBind: { a: [0.238, -0.143, 0.331, 0.841, 0.445, 0.947, 0.006, 0.29, -0.328], t: [-0.4, 0.9, 0] } },
+      ],
+    },
+  };
+  const skelMats = new Map([
+    [1, { a: Float32Array.from([0.321, 0.508, -0.445, -0.972, -0.312, 0.671, 0.493, -0.086, -0.819]), t: [1.7, -0.3, 0.9] }],
+    [2, { a: Float32Array.from([-0.974, -0.683, -0.446, 0.753, 0.345, 0.921, 0.461, -0.72, -0.797]), t: [0.2, 0.4, -1.1] }],
+  ]);
+  const got = new Float32Array(12); const want = new Float32Array(12);
+  skinBatch(bare, null, null, skelMats, got, null);
+  skinBatchRef(bare, null, null, skelMats, want);
+  assert.deepEqual(bits(got), bits(want), 'general matrices and inexact weights: the order of the product and the width of the scratch both hold');
 });
 
 test('PERF-RIG1b skinBatch: the accumulators are the batch\'s - made once, zeroed per call, and the second call mints no typed array', () => {
@@ -186,7 +217,7 @@ test('PERF-RIG1c packFpArm: bit-for-bit the pre-change stream on the posed fixtu
     const ref = packRef(arm.pieces);
     assert.equal(out.packed.length, ref.packed.length);
     assert.deepEqual(bits(out.packed), bits(ref.packed), `time ${t}: every float the old pack wrote`);
-    assert.deepEqual(out.ranges.map((r) => [r.first, r.count, r.slot, r.textureFile, r.piece === arm.pieces[arm.pieces.indexOf(r.piece)]]),
+    assert.deepEqual(out.ranges.map((r) => [r.first, r.count, r.slot, r.textureFile, arm.pieces.includes(r.piece)]),
       ref.ranges.map((r) => [r.first, r.count, r.slot, r.textureFile, true]));
   }
 });
@@ -249,7 +280,9 @@ test('PERF-ZONE2 the world frame\'s CPU zones tile in order, and each new mark s
   assert.deepEqual(names, ['online', 'sim', 'bodies', 'batches', 'ring', 'flats', 'people', 'arrows', 'rig', 'hud']);
   const after = (mark, subject) => { const i = frame.indexOf(`markCpu('${mark}')`); const j = frame.indexOf(subject, i); assert.ok(i > 0 && j > i && j - i < 600, `${mark} sits directly on ${subject}`); };
   const before = (subject, mark) => { const j = frame.indexOf(subject); const i = frame.indexOf(`markCpu('${mark}')`, j); assert.ok(j > 0 && i > j && i - j < 400, `${mark} follows ${subject}`); };
-  before('renderer.beginFrame(proj, view, sunDirection(minute), WORLD_FRAME);', 'bodies');
+  // the bodies mark is the NEXT statement after beginFrame: nothing the
+  // renderer's own 'world' mark used to swallow may sit between them
+  { const j = frame.indexOf('renderer.beginFrame(proj, view, sunDirection(minute), WORLD_FRAME);'); const lineEnd = frame.indexOf('\n', j); const nextLine = frame.slice(lineEnd + 1, frame.indexOf('\n', lineEnd + 1)); assert.match(nextLine, /markCpu\('bodies'\)/, 'the bodies mark is the line after beginFrame'); }
   after('bodies', 'mwViewDrawBody(canvas,');
   before('sky.draw(cam.yaw, cam.pitch, fieldOfView(), worldAspect,', 'ring');
   after('arrows', 'arrows.update(dt, {');
@@ -258,3 +291,23 @@ test('PERF-ZONE2 the world frame\'s CPU zones tile in order, and each new mark s
   after('hud', 'const _hfw = [-view[2], -view[10]];');
   { const i = frame.indexOf("markCpu('hud')"); const j = frame.indexOf('drawHud(renderer, canvas, hudArt, playerEntity,', i); const next = frame.indexOf('markCpu(', i + 1); assert.ok(j > i && (next < 0 || j < next), 'the HUD draw is inside the hud span - no other mark between'); }
 });
+
+// AUDIT PERF-RIG1 (same day, Mac: "Lets audit this"). F2: the range
+// identity law has a second half. The ranges carry the textures the
+// mesh hung on them, and releaseGpu deleted those textures and LEFT THE
+// HANDLES on the range objects. Every release site today also drops its
+// pack, so the stale handle was never handed back - but the pack's new
+// law is that the same objects come back while the pieces stand, and a
+// release that keeps its pack would have put a deleted WebGLTexture into
+// the next mesh. The release clears the handle with the texture now.
+test('AUDIT PERF-RIG1 F2: releasing a mesh clears the texture handle on every range it deletes (by content - the release needs a GL)', () => {
+  const arm = rd('src/combat/fpArm.js');
+  const body = arm.slice(arm.indexOf('function releaseGpu(m) {'), arm.indexOf('\n  }\n', arm.indexOf('function releaseGpu(m) {')));
+  assert.match(body, /for \(const r of m\.ranges \|\| \[\]\) if \(r\.tex\) \{ gl\.deleteTexture\(r\.tex\); r\.tex = null; \}/);
+  // and every release site that keeps its assembly drops its pack beside the mesh - the two laws together
+  for (const m of arm.matchAll(/releaseMesh\(\);(.{0,40})/g)) {
+    const tail = arm.slice(m.index, m.index + 400);
+    assert.ok(/packed = null/.test(tail) || /function releaseMesh/.test(arm.slice(m.index - 30, m.index)) || /built = null/.test(tail), `a releaseMesh() call drops its pack: ${m[0].trim()}`);
+  }
+});
+
