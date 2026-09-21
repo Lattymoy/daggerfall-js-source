@@ -2095,3 +2095,41 @@ test('MAC-M2: itemLine carries the hands and the card draws the row', () => {
   assert.doesNotMatch(src, /Two-handed/,
     'the skin names no weapon-hands words of its own - itemHandsLine owns them');
 });
+
+// ── JAN2 (2026-09-21, a player's CRASH "can't access property querySelector, l is null") ──
+// The card's button -> stow -> refuse -> render -> domRepaint's rebuild ->
+// host.querySelector, with `host` already nulled by an unmount. The module
+// is ONE pane (host, deps and the view state are singletons) and the door
+// mounts a fresh element per push, so a second mount over a live one left
+// the first pane orphaned on screen - still clickable - and the newer
+// view's unmount nulled `host` under it.
+test('JAN2: a second mount tears the first pane down - no orphan stays on screen with live buttons', () => {
+  withDom((dom) => {
+    const hostA = dom.mk('div'); dom.body.append(hostA);
+    const e = hero();
+    const viewA = mountEnhancedInventory(hostA, { entity: e, items: () => e.items, onExit: () => {} });
+    assert.ok(hostA.querySelectorAll('.itemrow').length, 'pane A drew its list');
+    const hostB = dom.mk('div'); dom.body.append(hostB);
+    const viewB = mountEnhancedInventory(hostB, { entity: e, items: () => e.items, onExit: () => {} });
+    assert.equal(hostA.querySelectorAll('.itemrow').length, 0, 'mutants: pane A left standing under pane B');
+    assert.equal(dom.body.children.includes(hostA), false, 'and its element is out of the document (a fixed inset:0 slab would still eat the pointer)');
+    assert.ok(hostB.querySelectorAll('.itemrow').length, 'pane B is the live one');
+    assert.doesNotThrow(() => viewA.repaint(), 'the old handle paints nothing');
+    viewB.unmount();
+    assert.equal(hostB.querySelectorAll('.itemrow').length, 0);
+  });
+});
+
+test('JAN2: a repaint that lands after the unmount paints nothing instead of throwing', () => {
+  withDom((dom) => {
+    const host = dom.mk('div'); dom.body.append(host);
+    const e = hero();
+    const view = mountEnhancedInventory(host, { entity: e, items: () => e.items, onExit: () => {} });
+    assert.ok(host.querySelectorAll('.itemrow').length, 'the pack drew its list');
+    const repaint = view.repaint;   // the handle a stale closure keeps (the reader's failure report renders after onExit by design)
+    view.unmount();
+    assert.equal(host.querySelectorAll('.itemrow').length, 0, 'the unmount emptied the host');
+    assert.doesNotThrow(repaint, 'mutants: render() reaching host.querySelector with host null');
+    assert.equal(host.querySelectorAll('.itemrow').length, 0, 'and it does not put a closed window back up');
+  });
+});

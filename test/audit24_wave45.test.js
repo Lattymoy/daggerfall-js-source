@@ -18,7 +18,7 @@
 // with you, every time, in every building and every dungeon reached
 // from the town.
 //
-// dungeon.js:263 - the standalone host - has always had the right
+// dungeon.js:264 - the standalone host - has always had the right
 // shape: attack, then return. It has no modal sibling to share the
 // drag with, which is why it never needed a mode in the test.
 import { test } from 'node:test';
@@ -86,7 +86,7 @@ test('audit24 wave45: the two streaming hosts route through it and RETURN on bot
     const body = mousemoveBody(src);
     assert.ok(body, `${f}: has the look handler`);
 
-    assert.ok(body.includes('routeMouseDrag({ walkMode, buttons: e.buttons, mode: modeNow() })'),
+    assert.ok(body.includes('routeMouseDrag({ walkMode, buttons: e.buttons, keys, mode: modeNow() })'),   // MAC-SWING1: and the key set
       `${f}: asks the one router`);
     // the guard is on 'look', not on the mode - which is the fix
     assert.ok(body.includes("if (drag !== 'look') {"), `${f}: anything but a look ends here`);
@@ -111,19 +111,19 @@ test('audit24 wave45: worldModes owns the drag indoors - that half was always ri
   assert.match(wm, /mode === 'interior' \? \(\(dx, dy, held\)/);
   // and it feeds on the same RMB bitmask
   const body = mousemoveBody(wm);
-  assert.ok(body.includes('swingHeld(e.buttons)'), 'the same button - the registry\'s (FIX-F)');
+  assert.ok(body.includes('swingHeld(e.buttons, keys)'), 'the same button - the registry\'s (FIX-F; MAC-SWING1: and the key set)');
   assert.ok(body.includes('sink(e.movementX, e.movementY, true)'), 'and it swings');
   // it never touches the camera - it is a sink, not a look handler
   assert.doesNotMatch(body, /cam\.yaw|cam\.pitch/);
 });
 
 test('audit24 wave45: the standalone dungeon host keeps its own shape, and it is the correct one', () => {
-  // dungeon.js:261-272 - attack, then return, with no mode in the test
+  // dungeon.js:262-273 - attack, then return, with no mode in the test
   // at all, because nothing else is listening there. It is the
   // reference the two streaming hosts have now been brought to.
   const d = rd('src/scenes/dungeon.js');
   const body = mousemoveBody(d);
-  assert.ok(body.includes('swingHeld(e.buttons)'), 'the swing-button test (FIX-F: the registry\'s button)');
+  assert.ok(body.includes('swingHeld(e.buttons, keys)'), 'the swing-button test (FIX-F: the registry\'s button; MAC-SWING1: and the key set)');
   assert.ok(body.includes('ctx.playerAttackInput(e.movementX, e.movementY, true); return;'),
     'attack, then RETURN - the shape');
   assert.doesNotMatch(body, /modeNow\(\)/, 'no mode gate - it has no modal sibling');

@@ -37,6 +37,9 @@
 // window is INERT - unlike the Mouse0 activate, which A8 deliberately
 // routed through `held(keys, 'ActivateCenterObject')` and which does
 // follow a rebind. The seam when that is closed is held(), same as A8's.
+// CLOSED by MAC-SWING1 (2026-09-21): swingHeld reads `held(keys,
+// 'SwingWeapon')` for a non-mouse binding and swingKeyHeld is the latch
+// the four hosts poll - a swing bound to a key or a pad button swings.
 //
 // AbortSpell and RecastSpell have no consumer here yet - the actions
 // are in the registry and the ladder simply does not answer them.
@@ -376,10 +379,27 @@ export function swingButton() {
 export const isSwingButton = (button) => button === swingButton();
 /** MouseEvent.buttons' bit for a MouseEvent.button: left 1, MIDDLE 4, right 2. */
 const BUTTONS_BIT = Object.freeze([1, 4, 2]);
-export function swingHeld(buttons) {
+export function swingHeld(buttons, keys = null) {
   const b = swingButton();
-  return b >= 0 && (buttons & BUTTONS_BIT[b]) !== 0;
+  if (b >= 0) return (buttons & BUTTONS_BIT[b]) !== 0;
+  // MAC-SWING1 (2026-09-21, a player on the desktop app: "can't swing
+  // my weapon on the installed version, tried binding it to other
+  // keys too"): a swing bound to a KEY or a pad code answered false
+  // here and everywhere, and nothing read `held(keys, 'SwingWeapon')`
+  // - the recorded departure at the top of this file. setBinding
+  // clears the Mouse1 row when a key takes the action, the desktop
+  // app's prefs file keeps the result across reinstalls, and the row
+  // in the controls window could only ever DISABLE the swing. The
+  // registry's own read is the answer for any code: `keys` carries the
+  // mouse codes too (every host adds mouseCode(e.button) to it), so
+  // this is InputManager.HasAction(SwingWeapon) whatever it is bound to.
+  return keys ? held(keys, 'SwingWeapon') : false;
 }
+/** MAC-SWING1: the rig's held latch for a swing bound to a KEY or pad
+ *  code - the one no mousedown/mouseup ever raises. Each host polls it
+ *  beside its other held reads and feeds attackInput on the change,
+ *  exactly as its mouse handlers do for a mouse binding. */
+export function swingKeyHeld(keys) { return swingButton() < 0 && held(keys, 'SwingWeapon'); }
 
 /** FIX-F: THE KEYBOARD LOOK, InputManager.FindKeyboardActions'
  *  four arms (:1854-1865): x is +1 for TurnRight and -1 for TurnLeft,

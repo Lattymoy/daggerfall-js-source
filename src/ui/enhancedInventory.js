@@ -506,6 +506,7 @@ export function useResultAction(r, { openBook = null, openSpellbook = null, plac
 
 let host = null;
 let deps = {};
+let _view = null;   // JAN2: the live mount's handle - a second mount tears the first down
 let model = null;
 let worn = { rows: [], filled: 0, total: 0 };   // U59: the slots, as rows
 let pickedAt = null;   // PX19i: WHERE the pick happened ('worn'|'dock'|'loot') - the same item highlights in two places, and the tooltip anchors to the one the hand touched
@@ -2153,6 +2154,13 @@ function detailCol() {
 }
 
 function render() {
+  // JAN2: UNMOUNTED - nothing to paint into. `unmount` nulls `host`,
+  // and the repaints that can land after it are not all async: the
+  // book reader's failure report renders after `onExit` by design
+  // (the `open(act.item, ...)` arm), and the two async ones
+  // (refreshFigure, the fpArm subscription) already guarded. A repaint
+  // after the pane is gone is a no-op, not a crash.
+  if (!host) return;
   repaints++;
   repaintKeepingScroll(host, () => {
     // PX22: the list's scroll position survives a repaint, per tab - an
@@ -2389,6 +2397,19 @@ function releaseLock() {
 export function mountEnhancedInventory(hostEl, d = {}) {
   injectEnhancedStyle();
   injectEnhancedFonts();
+  // JAN2 (2026-09-21, a player's CRASH "can't access property
+  // querySelector, l is null"): this module is ONE pane - `host`,
+  // `deps` and the view state are singletons - and the door mounts a
+  // fresh element on every push. A second mount over a live one left
+  // the first pane ORPHANED on screen, still clickable, and the newer
+  // view's unmount then nulled `host` under it: every button on the
+  // old pane threw. A second mount tears the first down - its
+  // listeners, its DOM, its element - so there is never an orphan.
+  if (host && host !== hostEl) {
+    const prev = host;
+    _view?.unmount();
+    prev.remove?.();
+  }
   host = hostEl;
   deps = d;
   // MW-D36: repaint when the body's build settles, so an equip change
@@ -2452,7 +2473,7 @@ export function mountEnhancedInventory(hostEl, d = {}) {
     filled: [...hostEl.querySelectorAll('.node.filled')].length,
     picked: picked?.name ?? null, notice,
   });
-  return {
+  _view = {
     repaint() { refresh(); render(); },
     /** The session's dropped items, for the door's close law. AUDIT
      *  B-C1: they MINT A WORLD PILE when this window goes, and the
@@ -2478,7 +2499,9 @@ export function mountEnhancedInventory(hostEl, d = {}) {
       onExit = () => {};
       picked = null;
       remote = null;
+      _view = null;
       delete globalThis.__pack;
     },
   };
+  return _view;
 }
