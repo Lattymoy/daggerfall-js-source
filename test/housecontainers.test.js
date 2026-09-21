@@ -116,7 +116,11 @@ test('HC1: PRIVATE_PROPERTY_TEXT_ID is PlayerActivate\'s PrivatePropertyId (:94)
 
 test('HC1: owner access - house OR ship - opens loot-target storage, never stocks', () => {
   const wm = src('scenes/worldModes.js');
-  const arm = wm.slice(wm.indexOf("if (key.startsWith('container:')) {"));
+  // WORLD-HOVER: the PLAQUE dispatches on the same key prefix (it names
+  // what the press opens - that is the whole point), so this slice
+  // anchors on the ACTIVATION arm rather than the first match in the
+  // file. lastIndexOf, because the namer is declared above the ladder.
+  const arm = wm.slice(wm.lastIndexOf("if (key.startsWith('container:')) {"));
   const guard = arm.indexOf("(b?.buildingType === BUILDING_TYPES.Ship && ownsShip(playerEntity))");
   const houseGuard = arm.indexOf('|| isHouseOwned(playerEntity.houses ?? []');
   assert.ok(guard >= 0 && houseGuard > guard, 'the ship arm (:905-906) rides the same OR as the house');
@@ -152,7 +156,11 @@ test('HC1: owner access - house OR ship - opens loot-target storage, never stock
 
 test('HC1: a stocked stranger\'s container - empty does NOTHING, full asks TEXT.RSC 37', () => {
   const wm = src('scenes/worldModes.js');
-  const arm = wm.slice(wm.indexOf("if (key.startsWith('container:')) {"));
+  // WORLD-HOVER: the PLAQUE dispatches on the same key prefix (it names
+  // what the press opens - that is the whole point), so this slice
+  // anchors on the ACTIVATION arm rather than the first match in the
+  // file. lastIndexOf, because the namer is declared above the ladder.
+  const arm = wm.slice(wm.lastIndexOf("if (key.startsWith('container:')) {"));
   assert.ok(arm.includes("if (c.items.length === 0) return true;"),
     '"If no contents, do nothing" (:917-918) - no box, no open');
   assert.ok(arm.includes('townTalk?.lines?.(PRIVATE_PROPERTY_TEXT_ID)'),
