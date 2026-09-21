@@ -87,8 +87,13 @@ export const SELF_DOCS = Object.freeze(['tools/citeShift.mjs', 'tools/citeMerge.
  *  stop belonging to it. A C# cite stops them too (RF3: the `.cs` arm),
  *  so "(:N)" after `SerializablePlayer.cs:421` is the C#'s, not ours. */
 export const ANY_CITE = /(?<![\w/])(?:[\w./-]*\/)?[\w.-]+\\?\.(?:js|mjs|md|sh|cs):\d+|(?:Port-Ledger row|Ledger rows?|ledger rows?) `?:\d+/g;
-/** The bare continuations after a cite: `:N, /:N, /N, `, :N` and (RF3) `(:N`. */
-export const CONTINUATION = /(`:|\/:|\/|, :|\(:)(\d+)(?:-(\d+))?(?=[`'\s,;:)./-]|$)/g;
+/** The bare continuations after a cite: `:N, /:N, / :N, /N, `, :N` and (RF3) `(:N`.
+ *  RF4 (2026-09-21): the SPACED slash. "world.js:6548 / :6549 / :6728" is the
+ *  same continuation with the separator set off by spaces - the MAC-D shift
+ *  moved the head and left the tail, and CD7 caught the backwards range that
+ *  made. A space is allowed only BEFORE a colon (`/ *:`); a bare `/N` still
+ *  has to sit against the slash, so "6 / 10" in prose is not a cite. */
+export const CONTINUATION = /(`:|\/ *:|\/|, *:|\(:)(\d+)(?:-(\d+))?(?=[`'\s,;:)./-]|$)/g;
 
 // ---- the pure half (pinned in test/citeshift.test.js) ---------------------
 

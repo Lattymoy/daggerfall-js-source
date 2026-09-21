@@ -90,7 +90,17 @@ export function respawnFlavorText(kind, roll = Math.random) {
 // death online should still cost something) and not none (they need
 // to be able to walk away from whatever killed them).
 export const RESPAWN_HEALTH_FRACTION = 0.5;
-export const respawnHealth = (maxHealth) => Math.max(1, Math.floor((maxHealth ?? 0) * RESPAWN_HEALTH_FRACTION));
+export const respawnHealth = (maxHealth) => {
+  // MAC-D3: ...and it answers a LIVING number for any input. A
+  // corrupt or absent maxHealth used to come back through
+  // Math.max(1, NaN), which is NaN - and a NaN health is neither
+  // alive (health > 0 is false) nor dead (health <= 0 is false), so
+  // the player stands up with a health bar that no comparison can
+  // ever satisfy. One is the floor for everything that is not a
+  // usable number.
+  const m = Number.isFinite(maxHealth) ? maxHealth : 0;
+  return Math.max(1, Math.floor(m * RESPAWN_HEALTH_FRACTION));
+};
 
 // ONLINE-UNDERGROUND-LOAD1 (Lost, 2026-09-19: "online mode only saves the game if you close it - when closed in a
 // dungeon it should spawn you near a city, graveyard, temple etc when loading into an online game again").

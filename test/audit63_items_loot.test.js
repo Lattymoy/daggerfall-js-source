@@ -504,3 +504,39 @@ test('AUDIT 63 F23: a classic save\'s worn 0-condition piece imports EQUIPPED', 
   // ...and the port says so where it used to say the opposite.
   assert.doesNotMatch(rd('src/systems/classicSave.js'), /Recorded divergence: the port's law refuses a/);
 });
+
+// ── MAC-D2 (Skibbster on Discord, 2026-09-21, with a screenshot of a
+// TOMATO on the "Small Cart" card) ───────────────────────────────────
+test('MAC-D2: transportation draws NO inventory icon - the columns that look like one are another template’s art', async () => {
+  const { inventoryItemImage, GROUP_TEMPLATE_INDICES, templateByIndex } = await import('../src/systems/itemTemplates.js');
+  const TRANSPORT = GROUP_TEMPLATE_INDICES.Transportation;
+  assert.deepEqual(TRANSPORT, [93, 94, 95, 96, 97, 98], 'a cart, a horse and four boats');
+
+  // WHERE THE TOMATO CAME FROM, kept as the reason this rule exists.
+  // The template rows are DFU's verbatim and are not wrong there:
+  // classic never draws a vehicle in a list, because transportation is
+  // a FLAG you buy and not a thing you carry, so these two columns are
+  // never read. The port keeps a cart as a real item - it is how the
+  // wagon knows it exists - and so it reads columns nobody maintained.
+  const cart = templateByIndex(93);
+  assert.equal(cart.name, 'Small Cart');
+  assert.equal(cart.playerTextureArchive, 213);
+  assert.equal(cart.playerTextureRecord, 1);
+  const wineRack = templateByIndex(91);
+  assert.equal(wineRack.name, 'Wine Rack');
+  assert.equal(wineRack.worldTextureArchive, 213);
+  assert.equal(wineRack.worldTextureRecord, 1,
+    'the cart’s "icon" IS the wine rack’s world sprite - that is the red blob in the screenshot');
+
+  // ...so no address at all, rather than a wrong one. Null is what an
+  // unknown template already answers, and every caller takes it: the
+  // enhanced list falls through to its own tile.
+  for (const i of TRANSPORT) {
+    assert.equal(inventoryItemImage({ templateIndex: i, group: 'Transportation' }), null,
+      `${templateByIndex(i).name}: no picture beats a wrong picture`);
+  }
+  // and NOTHING ELSE loses its icon to this rule - the wine rack still
+  // draws the sprite that is genuinely its own
+  assert.deepEqual(inventoryItemImage({ templateIndex: 91, group: 'UselessItems1' }), { archive: 213, record: 1 });
+  assert.ok(inventoryItemImage({ templateIndex: 121, group: 'Weapons' }), 'a katana still has art');
+});

@@ -732,6 +732,72 @@ function storage() {
 
 /** The startup path (:441-452): load the file if it exists then
  *  autofill, else write defaults. Always answers a usable store. */
+/** MAC-D1 (SquidKamer on the desktop app, 2026-09-21: "I cant seem to
+ *  swing the weapon in the installed version of the game. I have to
+ *  enable the attack click but I prefer the mouse swing"): THE VERBS
+ *  A GAME CANNOT BE PLAYED WITHOUT CANNOT BE LEFT UNBOUND.
+ *
+ *  MAC-SWING1 fixed the READ - a swing bound to a key answers here
+ *  now, whatever it is bound to. It did not fix the STATE that
+ *  stranded the first reporter and has stranded another: an action
+ *  with no code at all. `setBinding` clears an action's old row when
+ *  a new code takes it, and `removedPrimary` is DFU's "keep this
+ *  unbound" mark, which is exactly what resetDefaults(autofill) obeys
+ *  - so a rebind that lands on an already-taken code, or a row
+ *  cleared in the controls window, leaves SwingWeapon addressing
+ *  nothing. Then `swingButton()` is -1, `held(keys, 'SwingWeapon')`
+ *  is false, and the gesture can never fire again. The desktop app
+ *  keeps its prefs file across reinstalls, so reinstalling does not
+ *  clear it either - which is why this reads as an installed-build
+ *  bug and why both reporters reached for Click mode instead.
+ *
+ *  A player may unbind a convenience. These are not conveniences:
+ *  without them there is no way to swing, move or interact at all,
+ *  and no way BACK, because the way back is itself a binding. So the
+ *  default is restored and the removal mark lifted - the narrowest
+ *  repair that cannot strand anyone, applied at the one door every
+ *  load comes through. */
+export const UNLOSEABLE_ACTIONS = Object.freeze(['SwingWeapon', 'ActivateCenterObject', 'MoveForwards', 'MoveBackwards', 'MoveLeft', 'MoveRight']);
+
+/** The codes an action answers to right now, across both dicts. */
+export function codesForAction(store, action) {
+  const out = [];
+  for (const dict of [store.primary, store.secondary]) {
+    for (const [code, a] of dict) if (a === action) out.push(code);
+  }
+  return out;
+}
+
+/** MAC-D1: ...and whether any of them is one a player at a keyboard
+ *  can actually press. A PAD row does not rescue a stranded action:
+ *  DEFAULT_SECONDARY_BINDINGS fills the pad codes on every load, so
+ *  an unbound SwingWeapon still answers `JoystickAxis10Button0` and
+ *  would look bound while nothing on the desk can swing. `swingButton`
+ *  reads the mouse codes and the rig's key latch reads the held set;
+ *  neither can ever see a pad code on a machine with no pad. */
+export const isPadCode = (code) => typeof code === 'string' && code.startsWith('Joystick');
+export const actionIsReachable = (store, action) => codesForAction(store, action).some((c) => !isPadCode(c));
+
+/** Restore any unloseable action that addresses nothing. Answers the
+ *  actions it had to repair, so a caller can say so. */
+export function repairUnloseableBindings(store) {
+  const fixed = [];
+  for (const action of UNLOSEABLE_ACTIONS) {
+    if (actionIsReachable(store, action)) continue;
+    const def = DEFAULT_BINDINGS.find(([, a]) => a === action);
+    if (!def) continue;
+    // The removal mark is DFU's "keep it unbound" and it is exactly what
+    // stopped the autofill pass putting this back - but lifting it here
+    // by hand is dead code: SetBinding's own first act is
+    // `removedPrimary.delete(action)` (:473), so the repair below
+    // clears the mark as part of binding. A mutant that deleted the
+    // hand-written lift survived, which is what said so.
+    setBinding(store, def[0], action, true);
+    fixed.push(action);
+  }
+  return fixed;
+}
+
 export function loadOrCreateBindings() {
   const store = createBindings();
   const ls = storage();
@@ -740,6 +806,10 @@ export function loadOrCreateBindings() {
     try {
       loadKeyBinds(store, JSON.parse(raw));
       resetDefaults(store, true);
+      // MAC-D1: ...and the autofill pass above will NOT do this, by
+      // design - it obeys the removal marks. This runs after it and
+      // writes the repair back, so the next load starts sound.
+      if (repairUnloseableBindings(store).length) saveKeyBinds(store);
       return store;
     } catch { /* a corrupt file falls through to defaults */ }
   }
