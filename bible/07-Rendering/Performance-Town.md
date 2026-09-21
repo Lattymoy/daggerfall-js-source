@@ -138,7 +138,105 @@ since the two hosts had the same scratch twice. **The module header says
 this out loud**, so the next person to add a block to a host knows what
 it costs.
 
+## PERF-COL1 - THE SPHERE RESOLVE WALKED EVERY BUCKET (2026-09-21)
+
+SquidKam, on Discord: *"Guards kill the framerate too / I think thats a
+sound issue right? cause the guards have some null sounds / its an issue
+in current DF / So the fix is easy. Guards are trying to use their 2nd
+and 3rd sounds which are null."*
+
+**The sound hypothesis was read first and does not hold here.** The
+watch's row is DFU's own - move 243, bark 456, attack 245 - and the port
+plays them through `characters/enemySounds.js` (EnemySounds.cs whole:
+the 3-9 s attract cadence, the city watch the one class enemy the human
+mute spares). A clip whose DAGGER.SND record is missing or empty costs
+one lookup: `audio.js`'s `_buffer` caches the null and every later ask
+is a Map hit. Whatever classic does with a null sound, this port's
+guards do not stall on one.
+
+**So the frame was measured instead.** `tools/guardCostProbe.mjs` stands
+five watchmen (MAX_ACTIVE_GUARD_SPAWNS) on the real `EnemyAI` over the
+real `Collider` holding a synthetic town - a grid of building boxes on a
+flat ground, one bucket a building - with the target machine and the
+sound source's clock, chasing a player who walks a circle, and counts
+what the collider is asked:
+
+```
+144 buckets: frame ms median 5.457  p90 20.282  p99 23.424  max 64.764
+ 49 buckets: frame ms median 3.110  p90  6.922  p99  9.602  max 38.381
+collider calls per frame: move 1.9  _resolveCapsule 10.2  _resolveSphere 91.8
+                          raycastHit 119.5  raycast 5.1  capsuleCast 4.1
+```
+
+`--cpu-prof`: **71.5% self time in `_resolveSphere`, 13.3% in
+`_resolveCapsule`**, 6.8% in `raycastHit`, nothing else above 2%.
+
+**What it was doing.** `_resolveSphere` walked EVERY bucket for EVERY
+sample - `for (const [bkey, bucket] of this._buckets)` with no test at
+all - and for each bucket built nine string keys, did nine Map lookups
+and minted a fresh `Set`, whether or not the bucket was anywhere near
+the sphere. A capsule resolve is ~9 samples (the bead chain, COL1) and a
+step is up to ~5 resolves (the step-up ladder), so five bodies asked it
+~90 times a frame, and each ask was priced by the whole world's bucket
+count: the streaming world's bucket per streamed pixel plus the gates
+and the mills, the standalone town's bucket per block. `sphereOverlaps`
+had the same walk. The RAY had been given a broad phase in AUDIT NAME1
+F2 - the bucket's own bounds, kept per vertex by `addMesh` - and the
+sphere had not.
+
+**What changed.** `sphereTouchesBox` (collider.js, beside
+`segmentHitsBox`): the sphere's box in bucket-local space against the
+bucket's bounds, BOX_SKIN wide, asked once per bucket before the cells
+in both sphere walks. It is exact by the same argument as the ray's: the
+bounds enclose every triangle, so a triangle can only come within the
+contact radius of a centre whose own box overlaps the bucket's, and the
+narrow phase's own distance test would have dropped everything the skip
+drops. It is asked with the centre AS IT STANDS at that bucket's turn -
+the local point is LIVE per triangle below it, because pushes compound,
+and that stays - which is still exact: a bucket's first contact can only
+be made by the un-pushed centre, so a bucket the un-pushed centre cannot
+reach never pushes it. The visited set is one module scratch cleared per
+bucket. Nothing in the narrow phase moved.
+
+```
+144 buckets: frame ms median 0.712  p90 1.802  p99 8.403  max 18.414   (was 5.457 / 20.282)
+ 49 buckets: frame ms median 0.347  p90 0.915  p99 4.002  max 10.368   (was 3.110 /  6.922)
+```
+
+Seven to eight times less, and the same cut reaches everything the
+collider moves - the player's own capsule, every exterior foe, every
+peer body online, the dungeon's foes over their one big bucket less so.
+
+**Pinned** in `test/perfcol1.test.js` (6) as a DIFFERENTIAL AGAINST THE
+OLD WALK ITSELF: a twin collider with the same triangles in the same
+buckets in the same order and every bucket's bounds widened to infinity
+- its broad phase passes everything, which IS the old walk - must answer
+every move of a 1,440-move sweep over the town bit for bit the same,
+with world-space and translated buckets alike, and every `sphereOverlaps`
+too; the WORK, counted per bucket: the old walk touches all 37 buckets
+for a body on the street, the new one at most 4 and never the sky
+platform forty units up (the box is three-dimensional); the scratch set
+cleared per bucket (a wall bucket whose triangles carry the same indices
+as the floor bucket's still stops the capsule); `sphereTouchesBox`'s
+edge, skin and empty-bucket cases; and the source laws (the live local
+point per triangle, the test before the cells, no `new Set()` in either
+sphere walk). Mutants: `tools/mutants/perfcol1.json`, 9, 9 dead - the
+walk put back, the test inverted, the skin dropped, the y and z terms
+dropped, the set never cleared, the empty bucket walked. The campaign
+was run on a GREEN file (the first run was not - a wall check in the
+sweep had started inside the wall's skin - and was re-run).
+
+**Not measured here, said plainly:** the real town's bucket count and
+its triangle density, on Mac's machine, under `?perf=cpu`'s `people`
+zone. The probe's town is synthetic and the numbers above are node's.
+The read that this is the `people` spike's collider half - the guards
+are the first bodies a crime puts on the collider in numbers - is a
+reading of the profile, not of a live frame.
+
 ## Still open
+
+PERF-COL1 above took the collider half of `people`; the rest of that
+zone's per-guard frame (the senses' 24 `raycastHit` a frame per body - EnemySenses' per-FixedUpdate CanSeeTarget, parity) is unmeasured on a real town.
 
 `world` is the other spiky zone (2.25 → 8.51) and is untouched here.
 **PERF-RIG1 (2026-09-21, `Performance-Rig.md`) opened it**: three spans

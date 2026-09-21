@@ -73,15 +73,11 @@ import { fieldOfView } from '../ui/viewSettings.js';   // MENU: Video/FieldOfVie
 import { carriedWeight } from '../systems/inventory.js';   // F027 / E4: PlayerEntity.CarriedWeight, the gold counter's term and all
 import { windowEmissionRGB } from '../render/windowEmission.js';   // AUDIT 26 F001/F002: WindowStyle per host (DaggerfallInterior.cs:473/:517/:1270 vs GetMaterial's Day default)
 import { installConsoleProbe } from '../systems/consoleCommands.js';   // E3: the console's door
-import { WATER_SCROLL_TILES_PER_SEC } from '../render/waterSurface.js';   // AUDIT 65 CV-3: the classic texel's flow, one home (this host, worldModes and the surface all crawled at their own 0.05)
 
-// Water surface color: presentation choice (see renderer WATER_VS note).
-// R11: the surface is the classic water tile (climate ground archive
-// record 0 - the 0xFF tilemap sentinel's target, same picture classic
-// tiles across oceans), tinted only by alpha; slow diagonal scroll is
-// the classic flow, presentation-tuned.
-// AUDIT 65 CV-3/MC-5: this 0.82 is the FLAT alpha drawWater's quad takes - NOT render/waterSurface.js's WATER_OPACITY, which is the enhanced surface's Fresnel FLOOR (a different pass, no Fresnel, no shore feather). They agree by taste, not by law; the scroll rate below is the one that IS a law, and it has one home.
-const WATER_COLOR = [1, 1, 1, 0.82];
+// Water surface: the classic water tile (R11), drawn by the context's
+// own frame function since WATER-D1 - its colour (DUNGEON_WATER_COLOR)
+// and its draw live in scenes/dungeonContext.js, one home for both
+// dungeon hosts. This host names the tile's archive below.
 
 // Milestone 5 scene: a full dungeon on the block grid.
 export async function bootDungeon(canvas, renderer, params, status) {
@@ -131,7 +127,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
       // below, after this context; null falls to standing defaults.
       motorState: () => (_motorRef ? { eyeLevel: _motorRef.eye[1] - _motorRef.pos[1], capsule: _motorRef.height } : null),
       // MAC1 J: this host's canvas, for the pause door's relock. The
-      // context owns none of its own (dungeonContext.js:5776), so each
+      // context owns none of its own (dungeonContext.js:5826), so each
       // dungeon host hands its own in and the resume gesture carries
       // the pointer back with it (ui/pauseDoor.js:270-287).
       relock: () => requestLook(canvas) });
@@ -150,6 +146,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
   const waterArchive = dfLocation.climate.groundArchive;
   await pipeline.getTexture(waterArchive);
   pipeline.uploadRecord(waterArchive, 0);
+  ctx.setWaterArchive(waterArchive);   // WATER-D1: drawFoes draws the plane with it, inside the world pass
 
   // The classic dungeon spawn - ONE source (ctx.startSpawn: verbatim
   // MovePlayerToMarker + FixStanding). The old raw-marker spawn put
@@ -1040,9 +1037,9 @@ export async function bootDungeon(canvas, renderer, params, status) {
       return;   // U2b/U3: hold gameplay, keep the loop (AUDIT 18 F5: the overlay's own clock still runs - DFU's RestWindow.Update ticks on realtime under timeScale 0)
     }
     ctx.drawFoes(dt, canvas, proj, view, cam.pos, player.pos, anyMove(moveHeld(keys)), player.height, !!player.isSneaking, motionBagOf(player), player.bobOffset ? player.bobOffset[1] : 0, !!player.crouching);   // ROAD-H H1b: PlayerMotor.IsCrouching rides in beside the live height - the archer's 0.05 dip (DaggerfallMissile.cs:583-585) is the latched STATE, not a 0.9 capsule   // moveHeld: the collision-trigger input gate (verbatim)   // internally gated (S4b: missiles fire without foes)   // C8 E1+E2: rigged class enemies, classic senses + pursuit
-    renderer.drawWater(ctx.waterQuads, WATER_COLOR,
-      renderer.textures.get(`${waterArchive}_0`),
-      (now / 1000) * WATER_SCROLL_TILES_PER_SEC);
+    // WATER-D1: the water plane is drawn INSIDE drawFoes now, before the
+    // weapon overlay - a draw here landed after the lane's resolve and
+    // showed through every wall (dungeonContext.js's note at the draw).
 
     frames++;
     if (shotMode) window.__frame = frames;

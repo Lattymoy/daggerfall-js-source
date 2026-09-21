@@ -25,6 +25,7 @@ import { collectDungeonLights, dungeonAmbientFor, DUNGEON_AMBIENT, SPECIAL_AREA_
 import { isHearthFlat } from '../systems/survival/hearth.js';   // HEARTH1: a bowl of fire down a corridor is a fire you can cook on
 import { CityLightAnimator, MINUTES_PER_DAY } from '../world/worldClock.js';
 import { billboardSize, mobileBillboardSize } from '../world/rmbFlats.js';
+import { WATER_SCROLL_TILES_PER_SEC } from '../render/waterSurface.js';   // WATER-D1: the classic texel's flow, one home - the dungeon water draw lives here now
 import { enemyControllerHeight, idleSpriteHeight, feetFromCentre, centreFromFeet, spriteOriginY, keepRebuiltSpawn } from '../characters/enemyAnchor.js';   // INCIDENT 2026-09-04 (ceiling bats): SetupDemoEnemy.cs:103-115 capsule + DaggerfallMobileUnit.cs:398-411 anchor
 import { MobileUnit, MOBILE_DAEDRA_SEDUCER, SeducerTransformBehaviour } from '../characters/mobileUnit.js';   // C11: classic sprite monsters   // A5: the Seducer transform pair + its trigger
 import { dfMeshToModel, GLOBAL_SCALE } from '../world/meshReader.js';
@@ -232,6 +233,17 @@ const HIT_DMG_MAX = 10000;
  *  stood, and was retried on every frame of the stream. ONE HOME for the two readings. */
 const canStandFoe = (mobileType) => !!ENEMY_BASICS[mobileType]?.maleTexture;
 
+/** WATER-D1: the dungeon water plane's colour - the classic water tile
+ *  (the climate ground archive's record 0, the 0xFF tilemap sentinel's
+ *  target) tinted only by alpha. ONE HOME: both dungeon hosts carried
+ *  this literal beside their own copy of the draw call, and the draw
+ *  is the context's now (see drawFoes), so the colour is too.
+ *  AUDIT 65 CV-3/MC-5: this 0.82 is the FLAT alpha drawWater's quad
+ *  takes - NOT render/waterSurface.js's WATER_OPACITY, which is the
+ *  enhanced surface's Fresnel FLOOR (a different pass, no Fresnel, no
+ *  shore feather). They agree by taste, not by law. */
+export const DUNGEON_WATER_COLOR = Object.freeze([1, 1, 1, 0.82]);
+
 export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseType, opts = {}) {
   const { renderer, arch, getGpuMesh, cpuModels, getTexture, uploadRecord, uploadRecordFrame, palette } = deps;
 
@@ -365,6 +377,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   const people = [];
   const lights = [];
   const waterQuads = [];
+  let _waterArchive = null;   // WATER-D1: the climate ground archive whose record 0 is the water tile - the host names it after the build
+  let _waterT = 0;            // WATER-D1: the scroll clock, in seconds of drawn frames
   const exitDoors = [];
   let colliderTris = 0;
 
@@ -2542,7 +2556,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // NEXT updateMissiles pass to fill. But the push lands in a
     // MICROTASK - this is async and its one caller does not await it -
     // and both hosts draw dynamicDraws BEFORE they call drawFoes
-    // (dungeon.js:1003 against :1039; worldModes.js:6193 against :6210).   // QS6: both pairs' SECOND half was stale before this slice - they named neither `drawFoes` call, and a positional bump would have moved a wrong number by the right offset; re-resolved by content
+    // (dungeon.js:1000 against :1039; worldModes.js:6194 against :6210).   // QS6: both pairs' SECOND half was stale before this slice - they named neither `drawFoes` call, and a positional bump would have moved a wrong number by the right offset; re-resolved by content
     // So the very next frame drew the arrow with a NULL matrix, and
     // `uniformMatrix4fv(uModel, false, null)` throws - Float32List is
     // a non-nullable WebIDL union. Firing a bow killed the frame loop,
@@ -3104,7 +3118,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
               // this host was the FOURTH BODY of the player-arrow law
               // and is now the fourth CALLER. combat/arrowFlight.js's
               // playerArrowHitFoe is the one copy world.js:11260,
-              // exterior.js:4762 and worldModes.js:6347 already ran;
+              // exterior.js:4762 and worldModes.js:6346 already ran;
               // the flag said the divergence would bite and it already
               // had. This copy splashed at the ARROW TIP
               // (`[m.pos[0], m.pos[1], m.pos[2]]`) on the claim that
@@ -5152,6 +5166,39 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       renderer.drawBillboards([..._mobileBatches, ..._dropBatches, ..._spellBatches],
         new Float32Array([-view[0], -view[4], -view[8]]), UP_Y);
     }
+    // WATER-D1 (2026-09-21, LostMyLeg: "you can see 2 Watertiles/textures
+    // floating around ... the console says 2 Water in every dungeon";
+    // Mac's AIWATER report before it: "shown well below the floor, in
+    // patches, reading like a no-clip glitch"). THE WATER WAS DRAWN
+    // AFTER THE FRAME HAD BEEN RESOLVED. Both dungeon hosts called
+    // renderer.drawWater AFTER this function returned - and this
+    // function ends with the weapon overlay and the HUD, which are
+    // screen quads, and a screen quad is where the enhanced-lighting
+    // lane ENDS the world pass and RESOLVES its frame target to the
+    // canvas (renderer.drawScreenQuad -> _compositeAir: the lane's
+    // framebuffer is unbound, `_frameFbo` is null). A water quad drawn
+    // after that lands on the DEFAULT framebuffer, whose depth buffer
+    // holds no world at all (the frame's depth went into the lane's
+    // target), so it passed the depth test everywhere: a plane visible
+    // through every wall and every floor, wherever you stood. On the
+    // classic set there is no lane and no resolve, the default depth
+    // buffer IS the world's, and the same call order was correct -
+    // which is why the plane was right for months and wrong from EL3
+    // (2026-09-17) on. The level itself was never the defect: the
+    // quads sit exactly where DFU's AddWater puts its plane (R7).
+    //
+    // The draw is a WORLD draw, so it runs here, in the one frame
+    // function both hosts call, after the last world billboard and
+    // BEFORE the first screen quad - the same law the exterior's water
+    // surface has always kept (world.js draws it inside its pixel loop,
+    // long before the HUD). Blended with depth writes off, after the
+    // foes, as the hosts had it. Under an overlay this function is not
+    // called and the water is not drawn - as before.
+    _waterT += dt > 0 ? dt : 0;
+    if (waterQuads.length && _waterArchive != null) {
+      renderer.drawWater(waterQuads, DUNGEON_WATER_COLOR,
+        renderer.textures.get(`${_waterArchive}_0`), _waterT * WATER_SCROLL_TILES_PER_SEC);
+    }
     // LAST before the HUD: the classic weapon overlay composites over
     // the whole frame (DaggerfallUI draws it under the HUD). The rig
     // runs the bow-arrow guard and the ShowWeapons legs; S19
@@ -5356,6 +5403,9 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     foeSinksFor: (foe) => foeSinks(foe),
     flicker,
     waterQuads,
+    /** WATER-D1: the host names the climate ground archive whose record 0
+     *  is the water tile; drawFoes draws the quads with it. */
+    setWaterArchive: (archive) => { _waterArchive = archive; },
     startMarker: dungeon.startMarker,
     enterMarker: dungeon.enterMarker,
     blockCount: dungeon.blocks.length,

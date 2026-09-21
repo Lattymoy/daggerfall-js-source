@@ -109,7 +109,12 @@ deploys. The version is DERIVED, never bumped by hand: MAJOR.MINOR from
 `app/package.json`'s committed base (`0.1.0` - CI owns the patch), PATCH
 the count of commits on main (`git rev-list --count HEAD`, so the
 checkout is full-depth) - monotonic, reproducible from the commit, and
-newer than every hand-cut release before it (0.1.5 → 0.1.9xx). The
+newer than every hand-cut release before it (0.1.5 → 0.1.3576: the
+count is the FULL history, every ancestor including merged branches'
+commits, which is why a shallow clone's `rev-list --count` is not the
+number and why the checkout is full-depth). The first such release,
+app-v0.1.3576, cut from #303's merge with all four files - both Windows
+ones for the first time. The
 marker file and REL1's gate are retired: ONE shell variable names the
 number and both the release tag and the `npm version` stamp read it,
 which is the whole of REL1's lesson with the second number removed. The
