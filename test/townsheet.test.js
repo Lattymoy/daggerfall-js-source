@@ -257,7 +257,7 @@ test('EM4: the WASH goes under the WALL, and a house is outline alone', () => {
 
 const GRID = blockGrid([[2, 2, 10, 10, SHOP], [30, 30, 40, 40, HOUSE]]);
 const summary = (key, over = {}) => ({
-  buildingKey: key, blockX: 0, blockY: 0, position: [10 * key, 0, 10 * key],
+  buildingKey: key, blockX: 0, blockY: 0, position: [20 + 30 * key, 0, 20 + 30 * key],
   name: `Canonical ${key}`, isResidence: false, questName: '', ...over,
 });
 const townDeps = (over = {}) => ({
@@ -296,7 +296,7 @@ test('EM4: the space is LAYOUT PIXELS and already starts at zero', () => {
     }
   }
   // ...and so does a nameplate anchor, by construction
-  const [ax, ay] = nameplateAnchor(0, 0, [10, 0, 10]);
+  const [ax, ay] = nameplateAnchor(0, 0, [50, 0, 50]);
   assert.ok(ax >= 0 && ay >= 0);
   // a town with no blocks is a quiet nothing
   const empty = createTownSheet({ gridW: 0, gridH: 0, blocks: [] });
@@ -348,7 +348,7 @@ test('EM4: a quest-marked residence gets a RING, named or not', () => {
     discovered: () => [{ buildingKey: 2 }],
   });
   assert.equal(s.quests().length, 1);
-  const [ax, ay] = nameplateAnchor(0, 0, [20, 0, 20]);
+  const [ax, ay] = nameplateAnchor(0, 0, [80, 0, 80]);
   assert.deepEqual(s.quests()[0], { x: ax, y: ay });
   // an UNDISCOVERED quest residence is not rung - the map does not give
   // the quest away before the player has found the door
@@ -398,6 +398,18 @@ test('EM4: the names are lettered for the ZOOM, and not laid at all when the tow
   assert.ok(s.platesAt({ ox: 0, oy: 0, scale: NAME_ZOOM_MIN }, 400, 300, null).length > 0);
   // only what is ON the paper is solved for
   assert.deepEqual(s.platesAt({ ox: 5000, oy: 5000, scale: 4 }, 400, 300, null), []);
+  // EM5: ...AND THE TAB STRIP'S BAND IS NOT THE PAPER, for a name. The
+  // browser probe's first town shot had "The Rusty Nail" written
+  // straight through "Town". The plan's own lines may still run under a
+  // tab - a wall under a word is fine, and the halo carries the word -
+  // but a name may not.
+  const at = s.platesAt({ ox: 0, oy: 0, scale: 4 }, 400, 300, null);
+  assert.ok(at.length > 0);
+  const band = Math.max(...at.map((r) => r.y)) + 1;
+  assert.deepEqual(s.platesAt({ ox: 0, oy: 0, scale: 4 }, 400, 300, null, band), [],
+    'a band that covers them all leaves none');
+  assert.equal(s.platesAt({ ox: 0, oy: 0, scale: 4 }, 400, 300, null, 0).length, at.length,
+    'and no band leaves them all');
   // and the layout is CACHED on the view - it is the most expensive
   // thing this sheet does and the view moves far more often than the town
   const view = { ox: 0, oy: 0, scale: 4 };
@@ -416,14 +428,14 @@ test('EM4: the plates land where the nameplate anchors say, and the solver may m
   const view = { ox: 0, oy: 0, scale: 4 };
   const rows = s.platesAt(view, 400, 300, null);
   assert.equal(rows.length, 1);
-  const [ax, ay] = nameplateAnchor(0, 0, [10, 0, 10]);
+  const [ax, ay] = nameplateAnchor(0, 0, [50, 0, 50]);
   const [px, py] = toPaper(view, ax, ay);
   assert.equal(rows[0].x, px, 'x is the anchor, through the view');
   assert.ok(rows[0].y >= py, 'y is the anchor, or below it where the solver stepped it down');
   // two names on ONE anchor: the solver separates them rather than
   // letting them smear, and neither is dropped
   const stacked = sheet({
-    buildings: () => [summary(1), summary(3, { position: [10, 0, 10], name: 'Canonical 3' })],
+    buildings: () => [summary(1), summary(3, { position: [50, 0, 50], name: 'Canonical 3' })],
     discovered: () => [{ buildingKey: 1, displayName: 'One' }, { buildingKey: 3, displayName: 'Two' }],
   });
   const two = stacked.platesAt(view, 400, 300, null);
@@ -470,4 +482,46 @@ test('EM4: a name under the pointer answers itself, and elsewhere the town does'
   const row = s.platesAt(view, 400, 300, null)[0];
   assert.deepEqual(s.hoverLabel(row.x, row.y), { label: 'The Rusty Nail', cursor: 'pointer' });
   assert.deepEqual(s.hoverLabel(row.x + 300, row.y + 200), { label: 'Daggerfall', cursor: '' });
+});
+
+test('EM4 / EM5: a name is never laid under a gauntlet', () => {
+  // THE PAPER'S RECTANGLE IS NOT THE PART OF IT A PLAYER CAN SEE. The
+  // hands hold the sheet at its lower corners, and EM5's browser probe
+  // zoomed the town in and left the one surviving nameplate squarely
+  // under the left glove. The plan's own LINES still run under a thumb
+  // - a wall behind a hand is a wall you pan to see - but a word there
+  // is a word nobody gets.
+  const s = sheet();
+  const view = { ox: 0, oy: 0, scale: 4 };
+  const all = s.platesAt(view, 400, 300, null);
+  assert.ok(all.length > 0);
+  // a hand over the whole paper leaves nothing
+  const whole = [{ x0: -1e4, y0: -1e4, x1: 1e4, y1: 1e4 }];
+  assert.deepEqual(s.platesAt(view, 400, 300, null, 0, whole), []);
+  // a hand over nothing leaves them all
+  assert.equal(s.platesAt(view, 400, 300, null, 0, []).length, all.length);
+  assert.equal(s.platesAt(view, 400, 300, null, 0, null).length, all.length);
+  // and a hand over exactly one plate's box leaves the rest
+  const one = all[0];
+  const box = [{ x0: one.x - 1, y0: one.y - 1, x1: one.x + 1, y1: one.y + 1 }];
+  const left = s.platesAt(view, 400, 300, null, 0, box);
+  assert.equal(left.length, all.length - 1, 'the covered one, and only it');
+  assert.ok(!left.some((r) => r.text === one.text));
+});
+
+test('EM4 / EM5: the window puts the sprite\'s own thumb zones into PAPER space', () => {
+  // The zones are measured on the SPRITE (MAP-FIELD4 keyed the
+  // gauntlets out of it pixel by pixel) and PAPER is measured on the
+  // same sprite, so one division carries them over. Held at the source
+  // because the arithmetic is the kind that is right or mirrored, and
+  // nothing in a harness can see which.
+  const held = src('src/ui/heldMap.js');
+  assert.match(held, /_handRects\(paperW, paperH\)/, 'the window computes them');
+  assert.match(held, /reserveHands: this\._handRects\(paperW, paperH\)/, 'and hands them to the live sheet');
+  assert.match(held, /\(v - PAPER\.x0\) \/ \(PAPER\.x1 - PAPER\.x0\)/, 'through PAPER\'s own rectangle');
+  assert.match(held, /THUMB_ZONES\.map/, 'over the sprite\'s own measured zones');
+  // the zones really do cover the paper's lower corners and not its top
+  const fy = (v) => (v - 0.198) / (0.703 - 0.198);
+  assert.ok(fy(0.410) > 0.35, 'the hands start below the sheet\'s upper third');
+  assert.ok(fy(0.725) > 1, 'and run off its bottom edge');
 });

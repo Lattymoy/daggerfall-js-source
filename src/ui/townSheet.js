@@ -156,9 +156,9 @@ export function createTownSheet(deps = {}) {
    * expensive thing the sheet does and the view moves far more often
    * than the town does.
    */
-  function ensurePlates(view, paperW, paperH, measure) {
+  function ensurePlates(view, paperW, paperH, measure, reserveTop = 0, hands = null) {
     const key = [Math.round(view.ox), Math.round(view.oy), Math.round(view.scale * 100),
-      Math.round(paperW), Math.round(paperH)].join('|');
+      Math.round(paperW), Math.round(paperH), Math.round(reserveTop), hands?.length ?? 0].join('|');
     if (plates?.key === key) return plates.rows;
     const size = nameSize(view);
     const rows = [];
@@ -168,7 +168,18 @@ export function createTownSheet(deps = {}) {
         const w = measure ? measure(n.text, size) : n.text.length * size * 0.52;
         return { ...n, px: x, py: y, w, h: size * 1.15 };
       // only what is ON the paper is worth solving for
-      }).filter((n) => n.px > -n.w && n.py > -n.h && n.px < paperW + n.w && n.py < paperH + n.h);
+      // only what is on the paper is worth solving for - and the band
+      // the TAB STRIP has taken is not the paper, for a name: the probe
+      // wrote "The Rusty Nail" straight through "Town" before this.
+      // A NAME IS ONLY LAID WHERE THE PLAYER CAN READ IT: on the
+      // paper, below the tab strip's band, and clear of the gauntlets.
+      // The plan's own lines still run under a thumb - a wall behind a
+      // hand is a wall you pan to see - but a word there is a word
+      // nobody gets.
+        }).filter((n) => n.px > -n.w && n.px < paperW + n.w
+          && n.py - n.h / 2 > reserveTop && n.py < paperH + n.h
+          && !(hands ?? []).some((r) => n.px + n.w / 2 > r.x0 && n.px - n.w / 2 < r.x1
+            && n.py + n.h / 2 > r.y0 && n.py - n.h / 2 < r.y1));
       const solved = resolveNameplates(raw.map((n) => ({ x: n.px - n.w / 2, y: n.py - n.h / 2, w: n.w, h: n.h })));
       raw.forEach((n, i) => {
         const s = solved[i];
@@ -214,7 +225,8 @@ export function createTownSheet(deps = {}) {
         paperW: env.paperW, paperH: env.paperH, dpr: env.dpr, pulse: env.pulse,
         quests: questMarks(),
         plates: ensurePlates(env.view, env.paperW, env.paperH,
-          ctx?.measureText ? (t, s) => { ctx.font = `${Math.round(s)}px ${NAME_FACE}`; return ctx.measureText(t).width; } : null),
+          ctx?.measureText ? (t, s) => { ctx.font = `${Math.round(s)}px ${NAME_FACE}`; return ctx.measureText(t).width; } : null,
+          env.reserveTop ?? 0, env.reserveHands ?? null),
         player: deps.player?.() ?? null,
       });
     },
@@ -251,7 +263,7 @@ export function createTownSheet(deps = {}) {
     get plan() { ensureField(); return plan; },
     names: named,
     quests: questMarks,
-    platesAt: (view, paperW, paperH, measure) => ensurePlates(view, paperW, paperH, measure),
+    platesAt: (view, paperW, paperH, measure, reserveTop = 0, hands = null) => ensurePlates(view, paperW, paperH, measure, reserveTop, hands),
     get paperW() { return lastPaper; },
     /** One block is this many layout pixels - re-exported so a caller
      *  that has the sheet does not also have to import the ink. */

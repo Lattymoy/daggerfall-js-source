@@ -246,9 +246,16 @@ test('EM3: the floor strip is the tab strip\'s twin - same scale, same hand, BOT
   for (const r of lay.rows) assert.equal(r.x + r.w, 520 - FLOOR_STRIP.padX * lay.scale);
   // exactly one row is live, and it is the one asked for
   assert.deepEqual(lay.rows.filter((r) => r.live).map((r) => r.index), [1]);
-  // and the whole stack is centred on the paper rather than pinned to a corner
-  const mid = (lay.rows[0].y + lay.rows[2].y + lay.rows[2].h) / 2;
-  assert.ok(Math.abs(mid - 150) < 20);
+  // EM5: THE STACK IS TOP-ANCHORED, under whatever band the caller
+  // reserves. The first cut centred it down the right edge, and the
+  // browser probe drew "Floor 1" squarely under the right gauntlet -
+  // MAP-FIELD's lesson again, that the paper's rectangle is not the
+  // part of it a player can SEE. The hands hold the sheet at its lower
+  // corners, so the clear parchment is the TOP right.
+  assert.equal(lay.rows[0].y, FLOOR_STRIP.padY * lay.scale, 'at the top, with only its own pad above it');
+  const under = floorStripLayout(floors, 1, { paperW: 520, paperH: 300, reserveTop: 40, measure: (t, f) => t.length * f * 0.5 });
+  assert.equal(under.rows[0].y, 40 + FLOOR_STRIP.padY * under.scale, 'and below the tab strip when there is one');
+  assert.ok(lay.rows[2].y + lay.rows[2].h < 300 * 0.6, 'the whole stack stays in the top half, clear of the hands');
   // one storey is still a strip - a level with no stack still says so
   assert.equal(floorStripLayout([floors[0]], 0, {}).rows.length, 1);
   assert.deepEqual(floorStripLayout([], 0, {}).rows, []);

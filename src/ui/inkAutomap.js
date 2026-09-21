@@ -76,8 +76,14 @@ export const MARK_R = 3.2;
 /** The floor strip's own geometry, over the tab strip's scale so the
  *  two read as one hand. */
 export const FLOOR_STRIP = Object.freeze({
-  padX: 14,     // in from the paper's RIGHT edge
-  padY: 10,     // clear of the tab strip at the top
+  // THE STRIP LIVES IN THE PAPER'S TOP-RIGHT, and both numbers are the
+  // reason. EM5's browser probe drew it right-aligned and CENTRED down
+  // the edge, which put "Floor 1" squarely under the right gauntlet -
+  // MAP-FIELD's lesson again, that the paper's rectangle is not the
+  // part of it a player can SEE. The hands hold the sheet at its lower
+  // corners, so the top-right quadrant is the clear parchment.
+  padX: 26,     // in from the paper's RIGHT edge, clear of the thumb
+  padY: 10,     // below the tab strip's own band
   gap: 7,       // between one storey's row and the next
   font: 13,
   grab: 6,
@@ -243,9 +249,10 @@ export function paintPlanOverlay(ctx, view, opts) {
  *
  * @param {Array<{index:number, label:string}>} floors - bottom first, as deriveFloors answers
  * @param {number} live
- * @param {{paperW?:number, paperH?:number, measure?:Function|null}} [opts]
+ * @param {{paperW?:number, paperH?:number, measure?:Function|null, reserveTop?:number}} [opts]
  */
-export function floorStripLayout(floors, live, { paperW = STRIP.refPaper, paperH = 400, measure = null } = {}) {
+export function floorStripLayout(floors, live, opts = {}) {
+  const { paperW = STRIP.refPaper, measure = null } = opts;
   const scale = stripScale(paperW);
   const fontPx = FLOOR_STRIP.font * scale;
   const rowH = fontPx * 1.25;
@@ -255,9 +262,10 @@ export function floorStripLayout(floors, live, { paperW = STRIP.refPaper, paperH
   const width = (t) => (measure ? measure(t, fontPx) : t.length * fontPx * 0.52);
   const shown = visibleFloors(floors, live);
   const rows = [];
-  // laid from the BOTTOM of the stack upward, so floor 1 sits lowest
-  const total = shown.length * rowH + Math.max(0, shown.length - 1) * gap;
-  const top = Math.max(padY, (paperH - total) / 2);
+  // TOP-ANCHORED, under whatever band the caller reserves (the tab
+  // strip's). The stack still reads top storey first, so Floor 1 is
+  // lowest - it is where the paper is clear that changed, not the order.
+  const top = (opts.reserveTop ?? 0) + padY;
   for (let i = 0; i < shown.length; i++) {
     const f = shown[shown.length - 1 - i];    // top of the paper is the TOP storey
     const w = width(f.label);

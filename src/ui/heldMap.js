@@ -438,7 +438,18 @@ export class HeldMapWindow {
     // hand over the automap and town sheets that is the world alone,
     // so nothing a player can reach changes: the strip reads "The Bay"
     // and there is no second tab to press.
-    this._sheets = new Map([['world', this._worldSheet()]]);
+    // THE WINDOW HOLDS A SHEET ONLY WHERE IT WAS GIVEN WHAT TO INK ON
+    // IT. The world sheet was unconditional, and EM5's browser probe
+    // caught what that meant the moment a second door opened one: the
+    // town key built a window with no bay data at all, the slot's
+    // narrowing saw a world sheet in hand and offered the tab, and
+    // pressing it would have shown a blank page - which is exactly the
+    // regression the narrowing exists to prevent, walked in through the
+    // back. `woods` is the one thing the bay's model cannot be built
+    // without (`_ensureWorldModel` returns null for want of it), so it
+    // is what the window asks.
+    this._sheets = new Map();
+    if (deps.woods) this._sheets.set('world', this._worldSheet());
     // EM3: the dungeon and interior hosts hand `automap` - the reveal
     // record, the reveal index, the player and the way in. A host that
     // hands none (the world host's travel key) simply has no automap
@@ -1196,7 +1207,26 @@ export class HeldMapWindow {
     const model = sheet?.ensure?.() ?? null;
     if (!ctx || !model) return;
     const band = zoomBand(this._view.scale);
-    const env = { model, view: this._view, paperW, paperH, dpr, band, clock: this._clock, pulse: 0 };
+    // EM5: WHAT THE STRIP HAS TAKEN. The tabs are inked ON the paper,
+    // so the band they occupy is not the sheet's to letter names in -
+    // the probe's first town shot had "The Rusty Nail" written straight
+    // through "Town". The plan's own lines may run under a tab (a wall
+    // under a word is fine, and the halo carries the word); a NAME may
+    // not, and it is the sheet that knows which is which.
+    const env = {
+      model, view: this._view, paperW, paperH, dpr, band,
+      clock: this._clock, pulse: 0,
+      reserveTop: this._strip?.h ?? 0,
+      // ...AND WHERE THE HANDS ARE. THUMB_ZONES is measured on the
+      // SPRITE (MAP-FIELD4 keyed the gauntlets out of it pixel by
+      // pixel); PAPER is measured on the same sprite, so one division
+      // puts the thumbs into paper space. EM5's browser probe zoomed
+      // the town in and the one nameplate that survived landed under
+      // the left gauntlet - the paper's rectangle is not the part of it
+      // a player can SEE, which is the lesson MAP-FIELD3 learnt for the
+      // bay and the floor strip learnt again two shots earlier.
+      reserveHands: this._handRects(paperW, paperH),
+    };
     // AUDIT-MAP (perf): THE STATIC INK IS KEPT. The coast, the carets,
     // the borders, the roads, the marks and the names change only with
     // the view, the band, the sheet, the marks or the mod's state; the
@@ -1230,6 +1260,22 @@ export class HeldMapWindow {
     env.pulse = 0.5 + 0.5 * Math.sin(this._clock * 3);
     sheet.paintOverlay(ctx, env);
     if (this._bandShown !== band) { this._bandShown = band; this._chrome.band.textContent = band; }
+  }
+
+  /** THE HANDS, in paper pixels: each THUMB_ZONE divided into PAPER's
+   *  own rectangle and clamped to it. A sheet keeps its WORDS out of
+   *  these; its lines may run under them, because a wall behind a
+   *  thumb is simply a wall the player pans to see. */
+  _handRects(paperW, paperH) {
+    const fx = (v) => (v - PAPER.x0) / (PAPER.x1 - PAPER.x0);
+    const fy = (v) => (v - PAPER.y0) / (PAPER.y1 - PAPER.y0);
+    const clamp01 = (v) => Math.min(1, Math.max(0, v));
+    return THUMB_ZONES.map((z) => ({
+      x0: clamp01(fx(z.x0)) * paperW,
+      x1: clamp01(fx(z.x1)) * paperW,
+      y0: clamp01(fy(z.y0)) * paperH,
+      y1: clamp01(fy(z.y1)) * paperH,
+    }));
   }
 
   /** The tabs, in PAPER pixels over whatever the sheet inked. The DPR

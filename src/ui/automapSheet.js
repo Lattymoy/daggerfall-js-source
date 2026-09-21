@@ -276,6 +276,7 @@ export function createAutomapSheet(deps = {}) {
       strip = floorStripLayout(f.floors, index, {
         paperW: env.paperW,
         paperH: env.paperH,
+        reserveTop: env.reserveTop ?? 0,   // EM5: below the tab strip's band
         measure: ctx?.measureText ? (t) => { ctx.font = stripFont(env.paperW); return ctx.measureText(t).width; } : null,
       });
       lastPaper = env.paperW;

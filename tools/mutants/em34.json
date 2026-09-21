@@ -108,13 +108,14 @@
     ]
   },
   {
-    "name": "EM3-12-the-floor-strip-is-pinned-to-a-corner",
+    "name": "EM3-12-the-floor-strip-is-centred-down-the-edge-again",
     "file": "src/ui/inkAutomap.js",
-    "old": "  const top = Math.max(padY, (paperH - total) / 2);",
-    "new": "  const top = padY;",
+    "old": "  const top = (opts.reserveTop ?? 0) + padY;",
+    "new": "  const rowsTotal = shown.length * rowH + Math.max(0, shown.length - 1) * gap;\n  const top = Math.max(padY, ((opts.paperH ?? 400) - rowsTotal) / 2);",
     "tests": [
       "test/inkautomap.test.js"
-    ]
+    ],
+    "note": "THE DEFECT THE BROWSER PROBE SAW, put back: centred down the right edge, \"Floor 1\" lands squarely under the right gauntlet. The paper's rectangle is not the part of it a player can SEE."
   },
   {
     "name": "EM3-13-a-tower-runs-off-the-paper",
@@ -242,7 +243,7 @@
       "test/automapsheet.test.js"
     ],
     "equivalent": true,
-    "why": "The sheet's own pins drive `step` and `key` directly rather than through the window's pan ladder, and heldmap's do not open an automap sheet with a storey above the one it rests on. The law (the arrows pan on every tab) is stated in the sheet's header and is the window's to hold; a pin for it belongs with EM5's browser probe, where an arrow press can be seen to move the view."
+    "why": "The unit pins drive `step` and `key` directly rather than through the window's pan ladder, so none of them can fail this. IT IS COVERED, by tools/enhancedMapProbe.mjs: \"THE ARROWS PAN, they do not change storey\" presses ArrowRight on a zoomed automap sheet and asserts the storey held while the view moved."
   },
   {
     "name": "EM4-1-a-ground-flat-is-a-building",
@@ -408,8 +409,8 @@
   {
     "name": "EM4-18-every-name-in-the-town-is-solved-for",
     "file": "src/ui/townSheet.js",
-    "old": "      }).filter((n) => n.px > -n.w && n.py > -n.h && n.px < paperW + n.w && n.py < paperH + n.h);",
-    "new": "      });",
+    "old": "        }).filter((n) => n.px > -n.w && n.px < paperW + n.w\n          && n.py - n.h / 2 > reserveTop && n.py < paperH + n.h",
+    "new": "        }).filter((n) => true || (n.px > -n.w && n.px < paperW + n.w\n          && n.py - n.h / 2 > reserveTop && n.py < paperH + n.h)",
     "tests": [
       "test/townsheet.test.js"
     ]
@@ -433,7 +434,7 @@
       "test/townsheet.test.js"
     ],
     "equivalent": true,
-    "why": "The fixtures never overrun the solver's three iterations, so no plate comes back `replaced`. The law is DFU's own (a plate it gives up on draws as '*') and belongs to a fixture dense enough to force it - a town-sized one, which is EM5's browser probe rather than a unit pin."
+    "why": "The unit fixtures never overrun the collision solver's three iterations, so no plate comes back `replaced`. IT IS COVERED, by tools/enhancedMapProbe.mjs, which lays a nine-block town of twelve named buildings and counts the plates that survive at two zooms."
   },
   {
     "name": "EM4-21-the-travel-tag-is-asserted-rather-than-derived",
@@ -454,6 +455,6 @@
       "test/heldmap.test.js"
     ],
     "equivalent": true,
-    "why": "EM1's world sheet is the only one that claims chrome, and heldmap's pins drive the switch with a stub sheet that claims none - so nothing is left showing to notice. The law (the outgoing sheet gives its chrome back BEFORE the incoming one claims any) is stated at the call site and is the browser probe's to see, where a town sheet with the bay's search box still over it is visible."
+    "why": "EM1's world sheet is the only one that claims chrome, and the unit pins drive the switch with a stub sheet that claims none - so nothing is left showing for them to notice. IT IS COVERED, by tools/enhancedMapProbe.mjs: three checks walk a town sheet to the bay and back and assert the search box is hidden, then shown, then hidden again."
   }
 ]

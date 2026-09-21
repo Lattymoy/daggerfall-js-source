@@ -333,17 +333,37 @@ that inks nothing.
   bounded on all four sides wraps a row, joining a building at one
   edge to a building at the other.
 
-  **WHAT IS LEFT IS A BROWSER'S, and the three recorded-equivalent
-  mutants name it exactly.** Each one is a law that is stated at its
-  own call site and cannot be failed from inside a harness that renders
-  nothing: the arrows must pan on every tab rather than change storey;
-  a nameplate the collision solver gives up on must draw as `*`, which
-  needs a town dense enough to overrun three iterations; and a sheet's
-  chrome must be given back BEFORE the next sheet claims any, which
-  shows as the bay's search box left standing over a town plan. Those
-  three, and the one thing no pin can settle at all — **whether the
-  town's plan is the right way up against the world** — are the probe's
-  list, and they are Mac's eyes' list first.
+  **THE BROWSER PROBE IS WRITTEN AND IT FOUND THINGS.**
+  `tools/enhancedMapProbe.mjs` stands real windows up in Chromium over
+  synthetic fixtures, checks thirteen laws and writes a shot per sheet.
+  Its first run caught a real bug and two real layout defects that no
+  pin could have seen:
+
+  - **The window held a world sheet it had nothing to ink one with.**
+    The sheet map was seeded unconditionally, so the town key built a
+    window with no bay data, the slot's narrowing saw a world sheet in
+    hand and offered the tab, and pressing it would have shown a blank
+    page — which is exactly the regression the narrowing exists to
+    prevent, walked in through the back. The window holds a sheet only
+    where it was given what to ink on it now.
+  - **The floor strip sat under the right gauntlet.** It was
+    right-aligned and centred down the edge, and the hands hold the
+    sheet at its lower corners. It is top-anchored in the clear
+    parchment now.
+  - **Names were written through the tab strip, and under the
+    gauntlets.** The paper's rectangle is not the part of it a player
+    can SEE — MAP-FIELD3's lesson, learnt twice more. The window passes
+    every sheet the band the strip has taken and the two thumb zones in
+    paper space, and a sheet lays no WORD in either. Its lines still
+    run under a thumb: a wall behind a hand is a wall you pan to see.
+
+  The three recorded-equivalent mutants are the probe's checks now, and
+  what remains for Mac's eyes is the one thing nothing automated can
+  settle: **whether the town's plan is the right
+  way up against the world.** The plan and the names cannot mirror
+  against each other — that is pinned — but the pair could still be
+  rotated as one, and only a real city loaded from real data says
+  which.
 
 ## Doctrine, unchanged
 
