@@ -43,6 +43,26 @@ const BOX_SKIN = 1e-3;
  *  bucket's own vertices made (BOX_SKIN covers the rounding of that arithmetic). Written as a free function rather
  *  than inline so the one reject is the same reject for every walk that later wants it.
  *  @returns {boolean} true when the box must be walked */
+/** PERF-COL1 (2026-09-21, "guards kill the framerate"): THE SPHERE'S BROAD PHASE. Does a sphere of radius `r` at
+ *  (lx, ly, lz) - BUCKET-LOCAL, the translation already taken off - touch this bucket's box at all? The bounds
+ *  enclose every triangle in the bucket exactly (addMesh keeps them per vertex), so a triangle can only come within
+ *  `r` of the centre when the centre's own box overlaps the bucket's: a miss here CANNOT hide a contact, and the
+ *  narrow phase's own distance test would have rejected every triangle the skip drops. It is asked once per bucket
+ *  with the centre AS IT STANDS at that bucket's turn, which is exact even though a contact pushes the centre as
+ *  the walk goes: a bucket's first contact can only be made by the un-pushed centre, so a bucket the un-pushed
+ *  centre cannot reach never pushes it. BOX_SKIN covers the rounding of the bounds' arithmetic, as it does for the
+ *  ray. An EMPTY bucket has an inverted box and answers false, which is what walking its no cells answered before.
+ *  @returns {boolean} true when the bucket's cells must be walked */
+export function sphereTouchesBox(lx, ly, lz, r, min, max) {
+  return lx + r >= min[0] - BOX_SKIN && lx - r <= max[0] + BOX_SKIN
+    && ly + r >= min[1] - BOX_SKIN && ly - r <= max[1] + BOX_SKIN
+    && lz + r >= min[2] - BOX_SKIN && lz - r <= max[2] + BOX_SKIN;
+}
+/** PERF-COL1: ONE visited set for the whole module, cleared per bucket - the two sphere walks minted one per
+ *  bucket per sample, which at nine samples a capsule and up to five capsules a step was hundreds of Sets a frame
+ *  per body, most of them for buckets nowhere near it. */
+const VISITED = new Set();
+
 export function segmentHitsBox(ox, oy, oz, dir, min, max, limit) {
   if (!(limit >= 0)) return false;
   let tMin = 0, tMax = limit;
@@ -356,9 +376,11 @@ export class Collider {
       const lx = center[0] - t[0];
       const ly = center[1] - t[1];
       const lz = center[2] - t[2];
+      if (!sphereTouchesBox(lx, ly, lz, radius, bucket.min, bucket.max)) continue;   // PERF-COL1: the same broad phase (the test below is `< r2`, no skin)
       const gx = Math.floor(lx / CELL);
       const gz = Math.floor(lz / CELL);
-      const visited = new Set();
+      const visited = VISITED;
+      visited.clear();
       for (let ox = -1; ox <= 1; ox++) {
         for (let oz = -1; oz <= 1; oz++) {
           const cell = bucket.grid.get(`${gx + ox},${gz + oz}`);
@@ -486,11 +508,31 @@ export class Collider {
     let pushedDown = false;
     let groundKey = null;
     let groundY = -Infinity;
+    // PERF-COL1 (2026-09-21, SquidKam: "Guards kill the framerate"): THE
+    // BROAD PHASE THE RAY HAD AND THE SPHERE DID NOT. This walked EVERY
+    // bucket for EVERY sample - nine string keys, nine Map lookups and a
+    // fresh Set per bucket - whether or not the bucket was anywhere near
+    // the sphere. The streaming world holds a bucket per streamed pixel
+    // plus the gates and the mills, the standalone town one per block,
+    // and a capsule resolve is ~9 samples, a step up to ~5 resolves, so
+    // five watchmen chasing a player through a town paid it ~90 times a
+    // frame: measured at 5.5 ms a frame median, 20 ms at p90, 85% of it
+    // here (tools/guardCostProbe.mjs, 144 buckets). The sphere's own box
+    // against the bucket's bounds - kept by addMesh since AUDIT NAME1 F2
+    // for the ray's broad phase - skips every bucket that cannot hold a
+    // contact, and the narrow phase below is untouched: same triangles,
+    // same pushes, same answers. The visited set is the module's one
+    // scratch. (The local point stays LIVE below, per triangle - the
+    // note there says why; the box is asked with the centre as it stands
+    // when the bucket's turn comes, which sphereTouchesBox's note shows
+    // is exact.)
     for (const [bkey, bucket] of this._buckets) {
       const t = bucket.t();
+      if (!sphereTouchesBox(center[0] - t[0], center[1] - t[1], center[2] - t[2], radius + SKIN, bucket.min, bucket.max)) continue;
       const gx = Math.floor((center[0] - t[0]) / CELL);
       const gz = Math.floor((center[2] - t[2]) / CELL);
-      const visited = new Set();
+      const visited = VISITED;
+      visited.clear();
       for (let ox = -1; ox <= 1; ox++) {
         for (let oz = -1; oz <= 1; oz++) {
           const cell = bucket.grid.get(`${gx + ox},${gz + oz}`);

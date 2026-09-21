@@ -1,0 +1,65 @@
+[
+  {
+    "name": "PERFCOL1-the-resolve-walks-every-bucket-again",
+    "file": "src/player/collider.js",
+    "old": "      if (!sphereTouchesBox(center[0] - t[0], center[1] - t[1], center[2] - t[2], radius + SKIN, bucket.min, bucket.max)) continue;\n",
+    "new": "",
+    "tests": ["test/perfcol1.test.js"]
+  },
+  {
+    "name": "PERFCOL1-the-resolve-skips-the-buckets-it-touches",
+    "file": "src/player/collider.js",
+    "old": "      if (!sphereTouchesBox(center[0] - t[0], center[1] - t[1], center[2] - t[2], radius + SKIN, bucket.min, bucket.max)) continue;\n",
+    "new": "      if (sphereTouchesBox(center[0] - t[0], center[1] - t[1], center[2] - t[2], radius + SKIN, bucket.min, bucket.max)) continue;\n",
+    "tests": ["test/perfcol1.test.js"]
+  },
+  {
+    "name": "PERFCOL1-the-resolve-tests-at-the-bare-radius-without-the-skin",
+    "file": "src/player/collider.js",
+    "old": "      if (!sphereTouchesBox(center[0] - t[0], center[1] - t[1], center[2] - t[2], radius + SKIN, bucket.min, bucket.max)) continue;\n",
+    "new": "      if (!sphereTouchesBox(center[0] - t[0], center[1] - t[1], center[2] - t[2], radius - SKIN, bucket.min, bucket.max)) continue;\n",
+    "tests": ["test/perfcol1.test.js"]
+  },
+  {
+    "name": "PERFCOL1-the-box-test-forgets-y",
+    "file": "src/player/collider.js",
+    "old": "    && ly + r >= min[1] - BOX_SKIN && ly - r <= max[1] + BOX_SKIN\n",
+    "new": "",
+    "tests": ["test/perfcol1.test.js"]
+  },
+  {
+    "name": "PERFCOL1-the-box-test-forgets-z",
+    "file": "src/player/collider.js",
+    "old": "    && lz + r >= min[2] - BOX_SKIN && lz - r <= max[2] + BOX_SKIN;\n",
+    "new": "    ;\n",
+    "tests": ["test/perfcol1.test.js"]
+  },
+  {
+    "name": "PERFCOL1-the-scratch-set-is-never-cleared",
+    "file": "src/player/collider.js",
+    "old": "      const visited = VISITED;\n      visited.clear();\n      for (let ox = -1; ox <= 1; ox++) {\n        for (let oz = -1; oz <= 1; oz++) {\n          const cell = bucket.grid.get(`${gx + ox},${gz + oz}`);\n          if (!cell) continue;\n          for (const ti of cell) {\n            if (visited.has(ti)) continue;\n            visited.add(ti);\n            const tri = bucket.tris[ti];\n            // Live local point",
+    "new": "      const visited = VISITED;\n      for (let ox = -1; ox <= 1; ox++) {\n        for (let oz = -1; oz <= 1; oz++) {\n          const cell = bucket.grid.get(`${gx + ox},${gz + oz}`);\n          if (!cell) continue;\n          for (const ti of cell) {\n            if (visited.has(ti)) continue;\n            visited.add(ti);\n            const tri = bucket.tris[ti];\n            // Live local point",
+    "tests": ["test/perfcol1.test.js"]
+  },
+  {
+    "name": "PERFCOL1-sphereOverlaps-walks-every-bucket-again",
+    "file": "src/player/collider.js",
+    "old": "      if (!sphereTouchesBox(lx, ly, lz, radius, bucket.min, bucket.max)) continue;   // PERF-COL1: the same broad phase (the test below is `< r2`, no skin)\n",
+    "new": "",
+    "tests": ["test/perfcol1.test.js"]
+  },
+  {
+    "name": "PERFCOL1-sphereOverlaps-skips-the-buckets-it-touches",
+    "file": "src/player/collider.js",
+    "old": "      if (!sphereTouchesBox(lx, ly, lz, radius, bucket.min, bucket.max)) continue;   // PERF-COL1: the same broad phase (the test below is `< r2`, no skin)\n",
+    "new": "      if (sphereTouchesBox(lx, ly, lz, radius, bucket.min, bucket.max)) continue;   // PERF-COL1: the same broad phase (the test below is `< r2`, no skin)\n",
+    "tests": ["test/perfcol1.test.js"]
+  },
+  {
+    "name": "PERFCOL1-the-empty-bucket-is-walked",
+    "file": "src/player/collider.js",
+    "old": "  return lx + r >= min[0] - BOX_SKIN && lx - r <= max[0] + BOX_SKIN\n",
+    "new": "  if (min[0] > max[0]) return true;\n  return lx + r >= min[0] - BOX_SKIN && lx - r <= max[0] + BOX_SKIN\n",
+    "tests": ["test/perfcol1.test.js"]
+  }
+]
