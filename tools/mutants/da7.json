@@ -1,0 +1,71 @@
+[
+  {
+    "name": "DA7-1-macOS-is-told-to-update-in-place",
+    "file": "app/lib/autoUpdate.cjs",
+    "old": "  if (platform === 'darwin') return 'notice';\n",
+    "new": "",
+    "tests": ["test/autoupdate.test.js"],
+    "note": "An unsigned mac app cannot swap itself; the updater would fail every launch, silently."
+  },
+  {
+    "name": "DA7-2-the-portable-exe-is-told-to-update-in-place",
+    "file": "app/lib/autoUpdate.cjs",
+    "old": "  if (portable) return 'notice';\n",
+    "new": "",
+    "tests": ["test/autoupdate.test.js"],
+    "note": "No app-update.yml inside a portable build: checkForUpdates throws ENOENT on every launch."
+  },
+  {
+    "name": "DA7-3-an-unpackaged-run-is-told-to-update-in-place",
+    "file": "app/lib/autoUpdate.cjs",
+    "old": "  if (!packaged) return 'notice';\n",
+    "new": "",
+    "tests": ["test/autoupdate.test.js"]
+  },
+  {
+    "name": "DA7-4-the-update-downloads-but-never-installs",
+    "file": "app/main.cjs",
+    "old": "  au.autoInstallOnAppQuit = true;\n",
+    "new": "  au.autoInstallOnAppQuit = false;\n",
+    "tests": ["test/autoupdate.test.js"],
+    "note": "The whole ask: the player does nothing. A downloaded installer nobody runs is the old notice with a bigger cache."
+  },
+  {
+    "name": "DA7-5-the-launch-always-takes-the-notice",
+    "file": "app/main.cjs",
+    "old": "    if (currentUpdateTransport() === 'updater') autoUpdater().checkForUpdates().catch(() => {});\n    else checkForUpdates({ silent: true });\n",
+    "new": "    checkForUpdates({ silent: true });\n",
+    "tests": ["test/autoupdate.test.js"]
+  },
+  {
+    "name": "DA7-6-the-launch-check-escapes-the-gate",
+    "file": "app/main.cjs",
+    "old": "  if (loadConfig().updateCheck !== false && !process.env.DAGGER_NO_UPDATE_CHECK) {\n    // DA7: a copy that can replace itself does, silently, on quit; the\n    // rest get DA6's notice. The gate above is the same for both.\n    if (currentUpdateTransport() === 'updater') autoUpdater().checkForUpdates().catch(() => {});\n    else checkForUpdates({ silent: true });\n  }\n",
+    "new": "  if (currentUpdateTransport() === 'updater') autoUpdater().checkForUpdates().catch(() => {});\n  if (loadConfig().updateCheck !== false && !process.env.DAGGER_NO_UPDATE_CHECK) {\n    checkForUpdates({ silent: true });\n  }\n",
+    "tests": ["test/autoupdate.test.js"],
+    "note": "The checkbox and the probe env must hold BOTH transports - a probe that reaches GitHub is the thing DA6's gate exists to prevent."
+  },
+  {
+    "name": "DA7-7-the-release-drops-the-updater-metadata",
+    "file": ".github/workflows/release-desktop.yml",
+    "old": "            app/release/*.dmg\n            app/release/latest*.yml\n            app/release/*.blockmap\n          generate_release_notes: true\n",
+    "new": "            app/release/*.dmg\n          generate_release_notes: true\n",
+    "tests": ["test/autoupdate.test.js"],
+    "note": "Without latest.yml on the release the updater finds nothing and every copy silently stays where it is."
+  },
+  {
+    "name": "DA7-8-no-publish-provider-no-metadata-written",
+    "file": "app/package.json",
+    "old": "    \"publish\": [\n      {\n        \"provider\": \"github\",\n        \"owner\": \"Lattymoy\",\n        \"repo\": \"daggerfall-js-source\"\n      }\n    ],\n",
+    "new": "",
+    "tests": ["test/autoupdate.test.js"],
+    "note": "electron-builder writes latest.yml and app-update.yml only when a provider is configured, whatever --publish says."
+  },
+  {
+    "name": "DA7-9-the-updater-becomes-a-dev-dependency-and-is-not-packed",
+    "file": "app/package.json",
+    "old": "  \"dependencies\": {\n    \"electron-updater\": \"^6.8.9\"\n  }\n",
+    "new": "  \"devDependencies2\": {\n    \"electron-updater\": \"^6.8.9\"\n  }\n",
+    "tests": ["test/autoupdate.test.js"]
+  }
+]

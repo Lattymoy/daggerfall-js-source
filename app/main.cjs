@@ -213,21 +213,86 @@ function handleDagger(req) {
   return new Response('not found', { status: 404 });
 }
 
-// ---- the update notice (DA6) --------------------------------------
-// No auto-updater, on purpose: unsigned builds cannot auto-update on
-// macOS at all, and nothing here should apply code silently. This is
-// a NOTICE - one read-only GET to the GitHub releases API, the pure
-// compare in lib/updateCheck.cjs, and a dialog whose Download button
-// opens the release page in the player's browser. It is the app's
-// ONE network call of its own, it is on by default and OFF in one
-// click (the File menu checkbox, persisted in config.json as
-// updateCheck), and every failure is silent on launch - a launch
-// check that nags about the network is worse than none. The manual
-// menu item is the loud path: it reports up-to-date and unreachable
-// alike, because the player asked.
+// ---- updating: the auto-updater (DA7) over the notice (DA6) --------
+// DA6 was a NOTICE on purpose - one read-only GET to the GitHub
+// releases API, the pure compare in lib/updateCheck.cjs, and a dialog
+// whose Download button opens the release page in the player's
+// browser - because unsigned builds cannot auto-update on macOS and
+// nothing here was to apply code silently. REL3 then made every merge
+// a release, and a player was being asked to download and install
+// several times a day. DA7 (Mac: "players dont have to manually
+// install each release" - "Do it"): where the installer CAN replace
+// itself, it does. electron-updater reads the release's latest.yml,
+// downloads the new installer in the background and installs it when
+// the app quits; the player does nothing. Which copies can is
+// lib/autoUpdate.cjs's one table (NSIS on Windows, AppImage on Linux);
+// macOS, the portable exe and an unpackaged run keep the notice.
+//
+// The two gates are unchanged and gate BOTH transports: the File menu
+// checkbox (persisted in config.json as updateCheck, default on) and
+// DAGGER_NO_UPDATE_CHECK for the probes. A launch check fails
+// SILENTLY on either transport - a launch that nags about the network
+// is worse than none. The manual menu item is the loud path: it
+// reports downloading, up-to-date and unreachable alike, because the
+// player asked.
 const RELEASES_LATEST_API = 'https://api.github.com/repos/Lattymoy/daggerfall-js-source/releases/latest';
 const RELEASES_PAGE = 'https://github.com/Lattymoy/daggerfall-js-source/releases/latest';
 const { isNewerRelease } = require('./lib/updateCheck.cjs');
+const { updateTransport } = require('./lib/autoUpdate.cjs');
+
+/** Which transport THIS copy updates by - lib/autoUpdate.cjs's table
+ *  over the live facts: packaged or not, the platform, and the portable
+ *  launcher's own mark on its process. */
+function currentUpdateTransport() {
+  return updateTransport({ packaged: app.isPackaged, platform: process.platform, portable: !!process.env.PORTABLE_EXECUTABLE_DIR });
+}
+
+/** electron-updater, configured once and lazily - a copy on the notice
+ *  transport never loads it. Downloads on its own, installs on quit,
+ *  never a prerelease or a downgrade, no log file of its own; a launch
+ *  error is swallowed here (the manual check reports its own). */
+let _autoUpdater = null;
+function autoUpdater() {
+  if (_autoUpdater) return _autoUpdater;
+  const { autoUpdater: au } = require('electron-updater');
+  au.autoDownload = true;
+  au.autoInstallOnAppQuit = true;
+  au.allowPrerelease = false;
+  au.allowDowngrade = false;
+  au.logger = null;
+  au.on('error', () => {});
+  _autoUpdater = au;
+  return au;
+}
+
+/** The manual check on the updater transport: starts the download if a
+ *  newer release exists and says so out loud - DA6's three dialogs, the
+ *  first reworded because the player has nothing to click. */
+async function checkForUpdatesViaUpdater() {
+  let result;
+  try { result = await autoUpdater().checkForUpdates(); } catch {
+    dialog.showMessageBox({
+      type: 'warning',
+      message: 'Could not check for updates',
+      detail: `GitHub was unreachable. The releases page is ${RELEASES_PAGE}.`,
+    });
+    return;
+  }
+  const v = result?.updateInfo?.version;
+  if (v && isNewerRelease(app.getVersion(), `app-v${v}`)) {
+    dialog.showMessageBox({
+      type: 'info',
+      message: `Version ${v} is downloading`,
+      detail: `You have v${app.getVersion()}. It installs itself the next time you quit - your saves, settings and ARENA2 path all stay where they are.`,
+    });
+    return;
+  }
+  dialog.showMessageBox({
+    type: 'info',
+    message: `You're up to date`,
+    detail: `Daggerfall Enhanced v${app.getVersion()} is the latest release.`,
+  });
+}
 
 /** { tag, url } of the latest release, or null on any failure. */
 async function fetchLatestRelease() {
@@ -353,7 +418,7 @@ function buildMenu() {
         { type: 'separator' },
         {
           label: 'Check for Updates...',
-          click: () => checkForUpdates({ silent: false }),
+          click: () => (currentUpdateTransport() === 'updater' ? checkForUpdatesViaUpdater() : checkForUpdates({ silent: false })),   // DA7: the loud path on either transport
         },
         {
           label: 'Check for Updates on Launch',
@@ -459,7 +524,10 @@ app.whenReady().then(async () => {
   // DAGGER_NO_UPDATE_CHECK so the probes never touch the network -
   // updatecheck.test.js pins both gates.
   if (loadConfig().updateCheck !== false && !process.env.DAGGER_NO_UPDATE_CHECK) {
-    checkForUpdates({ silent: true });
+    // DA7: a copy that can replace itself does, silently, on quit; the
+    // rest get DA6's notice. The gate above is the same for both.
+    if (currentUpdateTransport() === 'updater') autoUpdater().checkForUpdates().catch(() => {});
+    else checkForUpdates({ silent: true });
   }
 });
 
