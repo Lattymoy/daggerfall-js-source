@@ -938,7 +938,8 @@ guildServiceFlow's FLAGGED Quests arm closes.
   second pass (the UI text arc's).
 - THE QUEST PICKER (GuildQuestListBox, default off): the
   gettingQuests wait box (the two Internal_Strings literals; %pcf
-  rides the generic pass), labels from HEADER-ONLY parses
+  rides the generic pass - which, until GQL1 below, NO box ran,
+  because the popup layer never boxed the step), labels from HEADER-ONLY parses
   (partialParse threads Parser.cs:144 through
   QuestListsManager.loadQuest), the localization override, the
   full parse on pick throwing out uncaught - and C#'s RemoveAt
@@ -1421,10 +1422,10 @@ triage: 25 kills at fails=5+ (one at fails=7 - the `| 0` int32 rail
 broke three pins at once), 2 survivors at the baseline 4, both
 PROVEN equivalents:
 
-- questBridge.js:63 `rawZ ?? 0 -> ?? 1`: the hash's only read of
+- questBridge.js:65 `rawZ ?? 0 -> ?? 1`: the hash's only read of
   rawZ is `z >> 2`, and `1 >> 2 === 0 === 0 >> 2` - for any record
   LACKING rawZ the mutated default is arithmetically invisible.
-- questBridge.js:70 `(pn.flags ?? 0) -> (?? 1)` in the gender arm:
+- questBridge.js:72 `(pn.flags ?? 0) -> (?? 1)` in the gender arm:
   gender reads bit 5 alone, and `1 & 32 === 0 === 0 & 32` - Male
   either way, every path.
 
@@ -5947,3 +5948,70 @@ die where they should.
 **What was wrong was the system describing itself** - a charter claiming
 loudness over a boolean, a dev scene missing 35 seams in silence, a gate
 reading one host by name - and three laws nothing was reading.
+
+## GQL1 - "THAT SERVICE IS NOT AVAILABLE YET" ON EVERY GUILD (2026-09-21)
+
+Discord, kurkku, playing online: "Are guild quests not in this? I get a
+message saying "this service isn't available" when I try to get one and
+can't tell if that's meant to happen."
+
+### The sentence, and where it comes from
+
+The popup's Quests service (worldModes' `onService`) asks
+`openServiceFlow` for a window; the `questOffer` arm runs the bridge's
+`offerGuildQuest` and boxes the step it answers with `offerBoxes`. An
+EMPTY chain is C#'s silent close (an active questor, no message 1000) and
+opens nothing, so the arm answers null - and the caller's null face is
+the one refusal sentence, `That service is not available yet.` The
+service was never gated online; nothing in the online lane touches this
+path.
+
+### The root cause
+
+`offerBoxes` boxed five step kinds - close, fail, offer, accepted,
+refused - and fell to `default: return []` for anything else. The offer
+flow answers TWO more. With **Choose Guild Jobs** on
+(`Enhancements/GuildQuestListBox`, the Features screen's own row, DFU's
+GuildQuestListBox) `offerGuildQuest`'s first step is `gettingQuests`
+(GettingQuestsBox, DaggerfallGuildServicePopupWindow.cs:610-622 - a
+click-anywhere message box whose generic macro pass expands %pcf) and
+its dismissal is `pickQuest` (GettingQuestsBox_OnClose :624-652, the
+DaggerfallListPickerWindow whose pick runs OfferQuest). Neither had a
+case. The flow was complete and pinned (`questoffers.test.js` drives
+both steps); the popup layer had never learned to SHOW them, so with the
+setting on every guild in the game refused every quest with the same
+sentence. The setting off, the classic random draw boxed fine - which is
+why nobody saw it until a player turned the row on.
+
+### The fix
+
+Two cases in `offerBoxes`, in the ServiceFlowWindow's own vocabulary: the
+wait step is a click-anywhere `{ rows, onClick }` box - the two literals
+with %pcf expanded to the player's FIRST name through the one macro walk
+(`expandMacroValues`, `firstName`) - whose click boxes the flow's
+`onClose`; the picker step is a `{ picker, onPick, onCancel }` box whose
+pick boxes the flow's `onPick(index)` and whose cancel offers nothing
+(the C# cancel pops the window). `default` stays the silent close, but
+only for a kind the flow cannot produce.
+
+### The pins (`test/gql1.test.js`, 5)
+
+The two boxes by shape; the walk through the REAL bridge and the REAL
+`ServiceFlowWindow` with the setting on - wait box, click, picker,
+pick, YesNo, Yes, the AcceptQuest popup, the quest LIVE in the machine;
+the setting off still boxing an offer; and a DERIVED law: every
+`kind: '...'` literal `offerFlow.js` can answer must be a `case` in
+`offerBoxes`, so a third kind reddens here rather than on Discord.
+Campaign `tools/mutants/gql1.json`: 9 mutants, 9 killed - each case
+unboxed again, the label renamed (the derived pin's own kill), %pcf raw
+and %pcf the whole name, the click not raising the picker, the pick not
+offering, the pick off by one, the entries not the flow's.
+
+### What is not proven
+
+The player was online. The defect above is real, matches the sentence
+word for word, and is the only path to it that the Quests service has -
+but whether that player's Choose Guild Jobs row was on is unconfirmed.
+If it was off, the refusal came from `questBridge`/`store` missing on
+the popup's host bag, which the online lane does not do either; the
+question to ask them is whether the row is on.

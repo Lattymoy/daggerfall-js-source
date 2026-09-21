@@ -58,6 +58,8 @@ import { PlayerNotebook } from '../systems/notebook.js';
 import { GENDERS } from '../characters/nameHelper.js';
 import { ZERO_NPC_DATA, NPC_CONTEXT, raceFromFaction } from '../characters/staticNpc.js';
 import { GUILD_GROUPS } from '../formats/factionFile.js';
+import { expandMacroValues } from '../systems/quest/questMacros.js';   // GQL1: the wait box's %pcf
+import { firstName } from '../systems/talkSession.js';
 import { getBool } from '../systems/settings.js';
 import { noteOfferPending } from '../ui/pendingOffer.js';   // AUDIT 58: DaggerfallUI's GivePc.OnOfferPending subscription
 import { getTitle } from '../systems/guilds.js';
@@ -458,6 +460,26 @@ export function createQuestBridge(ctx, { label = 'host' } = {}) {
         case 'accepted':
         case 'refused':
           return step.popup ? [{ rows: tokensToRows(step.popup.tokens) }] : [];
+        // GQL1 (Discord, kurkku, 2026-09-21: "this service isn't
+        // available" on every guild quest): with Choose Guild Jobs ON
+        // the flow's first step is the 'gettingQuests' wait box and its
+        // dismissal is the 'pickQuest' picker - and this switch boxed
+        // neither, so the chain came back EMPTY, the questOffer arm
+        // read empty as C#'s silent close, and the popup printed its
+        // no-flow refusal. GettingQuestsBox (:610-622) is a
+        // click-anywhere DaggerfallMessageBox whose generic macro pass
+        // expands %pcf; its OnClose raises the DaggerfallListPickerWindow
+        // (:624-652), whose pick runs OfferQuest and whose cancel just
+        // pops the window.
+        case 'gettingQuests': return [{
+          rows: step.textLines.map((line) => expandMacroValues(line, { pcf: firstName(ctx.playerEntity?.name ?? '') })),
+          onClick: () => this.offerBoxes(step.onClose(), rows),
+        }];
+        case 'pickQuest': return [{
+          picker: step.entries,
+          onPick: (index) => this.offerBoxes(step.onPick(index), rows),
+          onCancel: () => [],
+        }];
         default: return [];
       }
     },
