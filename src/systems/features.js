@@ -778,6 +778,23 @@ export const FEATURES = Object.freeze([
     kinds: Object.freeze(['enhanced']),
     control: Object.freeze({ store: 'prefs', key: 'blood-screen', initial: true, online: 'player' }),
   }),
+  // BLOOD2g: THE GORE DIAL - the one question a player asks, stepped.
+  // A tier is two numbers under one name (combat/bloodSwitch.js
+  // GORE_TIERS): how much of a blow's blood reaches the floor, and how
+  // many marks the world keeps before the oldest is reused.
+  Object.freeze({
+    id: 'blood-gore',
+    group: 'combat',
+    title: 'Gore',
+    note: 'How much blood there is. Light halves what a blow throws and keeps a few hundred marks; Normal keeps six '
+      + 'hundred; Heavy and Abattoir keep more of it on the floor for longer, at the cost of the memory the marks take.',
+    effect: 'The amount takes effect at once; how many marks the world keeps, when the world next loads.',
+    kinds: Object.freeze(['enhanced']),
+    control: Object.freeze({
+      store: 'prefs', key: 'blood-gore', initial: 'normal', online: 'player',
+      tiers: Object.freeze([['light', 'Light'], ['normal', 'Normal'], ['heavy', 'Heavy'], ['abattoir', 'Abattoir']]),
+    }),
+  }),
   Object.freeze({
     id: 'mod-climates-calories',   // a mod-row id: WM3's law reaches the credits' vendor through it
     group: 'character',

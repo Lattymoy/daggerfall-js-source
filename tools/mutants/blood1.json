@@ -2509,5 +2509,59 @@
     "tests": [
       "test/blood1_decals.test.js"
     ]
+  },
+  {
+    "name": "BLOOD2g-a-stored-nonsense-is-abattoir",
+    "file": "src/combat/bloodSwitch.js",
+    "old": "  return typeof v === 'string' && Object.hasOwn(GORE_TIERS, v) ? v : GORE_DEFAULT;",
+    "new": "  return typeof v === 'string' && GORE_TIERS[v] ? v : 'abattoir';",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD2g-a-prototype-name-is-a-tier",
+    "file": "src/combat/bloodSwitch.js",
+    "old": "  return typeof v === 'string' && Object.hasOwn(GORE_TIERS, v) ? v : GORE_DEFAULT;",
+    "new": "  return typeof v === 'string' && GORE_TIERS[v] !== undefined ? v : GORE_DEFAULT;",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD2g-the-count-ignores-the-tier",
+    "file": "src/combat/bloodSwitch.js",
+    "old": "  const v = Number(GORE_TIERS[bloodGore()].capacity);",
+    "new": "  const v = Number(GORE_TIERS[GORE_DEFAULT].capacity);",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD2g-the-amount-ignores-the-tier",
+    "file": "src/combat/bloodSwitch.js",
+    "old": "  const v = Number(GORE_TIERS[bloodGore()].density);",
+    "new": "  const v = Number(GORE_TIERS[GORE_DEFAULT].density);",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD2g-light-is-not-lighter",
+    "file": "src/combat/bloodSwitch.js",
+    "old": "  light: Object.freeze({ density: 0.5, capacity: 300 }),",
+    "new": "  light: Object.freeze({ density: 1, capacity: 300 }),",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD2g-the-row-forgets-a-tier",
+    "file": "src/systems/features.js",
+    "old": "tiers: Object.freeze([['light', 'Light'], ['normal', 'Normal'], ['heavy', 'Heavy'], ['abattoir', 'Abattoir']]),",
+    "new": "tiers: Object.freeze([['light', 'Light'], ['normal', 'Normal'], ['heavy', 'Heavy']]),",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
   }
 ]

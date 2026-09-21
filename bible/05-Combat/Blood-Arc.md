@@ -693,10 +693,11 @@ Slices, each behind its own `features.js` row:
      record and nothing to see. A per-mark record would split the one
      draw into one per texture; it is a slice if a second record ever
      comes.
-   - `blood-capacity` AND `blood-density` HAVE NO ROW. Both are read,
+   - ~~`blood-capacity` AND `blood-density` HAVE NO ROW. Both are read,
      clamped and pinned, and both are reachable from the store alone:
      the feature registry's rows are toggles, and a slider is a slice
-     of its own.
+     of its own.~~ PAID by BLOOD2g (item 11): the two keys are
+     retired for the one `blood-gore` tier, which has its row.
 
    Mutants: 133, 132 dead, 1 equivalent as recorded.
 
@@ -1081,9 +1082,10 @@ Slices, each behind its own `features.js` row:
    named numbers (STRIDE, STREAK_MAX, POOL_SPREAD, TRACK_WET_STAGE and
    its boundary, TELEPORT_SPEED) are pinned as literals so the arc's
    text cannot drift from them. STILL OPEN, said plainly:
-   `blood-capacity` and `blood-density` are prefs keys no registry row
+   ~~`blood-capacity` and `blood-density` are prefs keys no registry row
    writes (the registry has no range control yet - the gore slider is
-   the next slice), so every player runs the defaults; the decal fog
+   the next slice), so every player runs the defaults~~ (paid by
+   BLOOD2g, item 11: one `blood-gore` tier with a row); the decal fog
    term mixes the fog colour into a blended fragment as every classic
    pass does; the host wiring pins are adjacency pins.
 
@@ -1184,6 +1186,32 @@ Slices, each behind its own `features.js` row:
    lane's sun glint and lantern glint term for term, dry meaning no
    loop, the probe's rows) and the layout pins re-aimed to ten.
    Mutants: 9, 9 dead (`tools/mutants/blood1.json` is 278).
+
+11. **BLOOD2g - the gore dial.** SHIPPED (2026-09-21). The last of the
+   seven. BLOOD1 read the particle-amount fraction and the ring's
+   capacity off two prefs keys that no registry row ever wrote (item 2
+   said the registry's rows were toggles and a slider was a slice of
+   its own; BLOOD AUDIT 4 said the keys were dead), so every player
+   ran the defaults. The registry has had a stepped control since FT2
+   (`tiers`), and how much blood there is IS a stepped question. ONE
+   key now, `blood-gore`, four tiers (`GORE_TIERS`): Light (half a
+   blow's blood reaches the floor, 300 marks), Normal (all of it, 600
+   - the defaults, so nothing changes for anyone who never touches
+   it), Heavy (1500), Abattoir (4000, the ring's ceiling). The two
+   numbers are the tier's and are read nowhere else; the old keys are
+   retired, not aliased - two sources of one truth is what AUDIT 4
+   found. Anything stored that is not a tier is Normal. The amount
+   takes effect at once (`scaleRate` reads the density live, and its
+   floor of one still means less blood and never none); the count
+   when a pool is next built, since the ring is a vertex buffer
+   allocated once. Its row is `blood-gore` (ON at Normal, the
+   player's own online), and the home draws it as the chooser every
+   tiered row gets.
+
+   Pins: one (the tiers' law and bounds, the retired keys, the row's
+   tiers naming every tier and the default, the shelf's stored tier
+   read live, the pool sized by the tier). Mutants: 6, 6 dead
+   (`tools/mutants/blood1.json` is 284).
 
 The numbers in THE FACTS are the target to feel like. The code that
 hits them is ours.

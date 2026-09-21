@@ -9,11 +9,9 @@
 // vendored for it - so the row is an ENHANCED one rather than a mod
 // row, and the key is the port's.
 //
-// BLOOD AUDIT 4, SAID PLAINLY: of the keys below, only `blood-marks`,
-// `blood-overkill` and (BLOOD2e) `blood-screen` have a registry row. The
-// capacity and the density are read from keys nothing writes, so every
-// player runs their defaults; a range control does not exist in the
-// registry yet, and the gore slider that brings one is the next slice.
+// BLOOD AUDIT 4 said plainly that the capacity and the density were
+// read from two keys no row wrote; BLOOD2g retired those keys for the
+// one `blood-gore` tier below. Every key here has a registry row now.
 import { getPref } from '../systems/uiPrefs.js';
 
 export const BLOOD_PREF = 'blood-marks';
@@ -23,28 +21,48 @@ export const BLOOD_PREF = 'blood-marks';
 export const bloodMarksOn = (search = globalThis.location?.search ?? '') =>
   getPref(BLOOD_PREF) !== false && new URLSearchParams(search).get('blood') !== 'off';   // BLOOD1 AUDIT 3: the door the comment above promised and nothing had built - windAudio.js's own shape
 
-/** HOW MANY MARKS EXIST BEFORE YOURS IS REUSED - a count, not a
- *  lifetime (Blood-Arc.md's reading of the reference makes the same
- *  point about its own setting, whose text calls it a duration).
- *  Allocated once at boot: the ring is built to this size and never
- *  grows, so the cost of blood is decided here and cannot rise during
- *  a fight. */
-export const BLOOD_CAPACITY_PREF = 'blood-capacity';
-export const BLOOD_CAPACITY_DEFAULT = 600;
+/** BLOOD2g - THE GORE DIAL. ONE key for how much blood there is,
+ *  stepped, because that is the question a player asks; the two numbers
+ *  under it - the particle-amount FRACTION the reference's slider was
+ *  (`scaleRate`'s floor of one means less blood and never none, which
+ *  is the whole reason that floor is there) and HOW MANY MARKS EXIST
+ *  BEFORE YOURS IS REUSED (a count, not a lifetime; Blood-Arc.md's
+ *  reading of the reference makes the same point about its own setting,
+ *  whose text calls it a duration) - are the tier's, read here and
+ *  nowhere else. BLOOD1 read them off two keys of their own that no row
+ *  ever wrote (BLOOD AUDIT 4 said so plainly); those keys are retired,
+ *  and the dial is the registry's `blood-gore` row.
+ *
+ *  The ring is ALLOCATED to the tier's count when a pool is first
+ *  built and never grows, so the cost of blood is decided here and
+ *  cannot rise during a fight: the amount takes effect at once, the
+ *  count when the world next loads. */
+export const BLOOD_GORE_PREF = 'blood-gore';
+export const GORE_TIERS = Object.freeze({
+  light: Object.freeze({ density: 0.5, capacity: 300 }),
+  normal: Object.freeze({ density: 1, capacity: 600 }),
+  heavy: Object.freeze({ density: 1, capacity: 1500 }),
+  abattoir: Object.freeze({ density: 1, capacity: 4000 }),
+});
+export const GORE_DEFAULT = 'normal';
+/** The tier's own bounds - the ring is a vertex buffer built to this
+ *  number, so a hand-edited store cannot ask for 180 MB of floats or a
+ *  pool that divides by its own size. */
+export const BLOOD_CAPACITY_DEFAULT = GORE_TIERS[GORE_DEFAULT].capacity;
 export const BLOOD_CAPACITY_MIN = 50;
 export const BLOOD_CAPACITY_MAX = 4000;
+/** The stored tier, or the default for anything that is not one. */
+export function bloodGore() {
+  const v = getPref(BLOOD_GORE_PREF);
+  return typeof v === 'string' && Object.hasOwn(GORE_TIERS, v) ? v : GORE_DEFAULT;
+}
 export function bloodCapacity() {
-  const v = Number(getPref(BLOOD_CAPACITY_PREF));
+  const v = Number(GORE_TIERS[bloodGore()].capacity);
   if (!Number.isFinite(v)) return BLOOD_CAPACITY_DEFAULT;
   return Math.max(BLOOD_CAPACITY_MIN, Math.min(BLOOD_CAPACITY_MAX, Math.round(v)));
 }
-
-/** The particle-amount slider as a FRACTION. `scaleRate`'s floor of one
- *  means a player who turns this right down gets less blood and never
- *  none, which is the whole reason that floor is there. */
-export const BLOOD_DENSITY_PREF = 'blood-density';
 export function bloodDensity() {
-  const v = Number(getPref(BLOOD_DENSITY_PREF));
+  const v = Number(GORE_TIERS[bloodGore()].density);
   if (!Number.isFinite(v)) return 1;
   return Math.max(0, Math.min(1, v));
 }

@@ -770,24 +770,26 @@ test('BLOOD1a: the feature row owns the key and the default, and online it is th
   assert.equal(bloodDensity(), 1);
   assert.ok(BLOOD_CAPACITY_MIN < BLOOD_CAPACITY_DEFAULT && BLOOD_CAPACITY_DEFAULT < BLOOD_CAPACITY_MAX);
 
-  // THE CAPACITY IS CLAMPED, and that is not tidiness: the ring is
-  // ALLOCATED to this number at boot and a vertex buffer is built
-  // beside it, so a stored 5,000,000 is 180 MB of floats and a stored
-  // zero is a pool that divides by its own size. Neither can be
-  // reached from the panel; both can be reached from a hand-edited
-  // store, which is where settings come from often enough.
+  // BLOOD2g: THE TWO NUMBERS ARE THE TIER'S. The capacity is CLAMPED,
+  // and that is not tidiness: the ring is ALLOCATED to this number at
+  // boot and a vertex buffer is built beside it, so a tier could never
+  // ask for 180 MB of floats or a pool that divides by its own size -
+  // and the old keys, which a hand-edited store could, are retired.
   const { setPref } = await import('../src/systems/uiPrefs.js');
-  const { BLOOD_CAPACITY_PREF, BLOOD_DENSITY_PREF } = await import('../src/combat/bloodSwitch.js');
+  const sw = await import('../src/combat/bloodSwitch.js');
+  const { BLOOD_GORE_PREF, GORE_TIERS, GORE_DEFAULT, bloodGore } = sw;
+  assert.equal(sw.BLOOD_CAPACITY_PREF, undefined, 'the capacity key is retired'); assert.equal(sw.BLOOD_DENSITY_PREF, undefined, 'and the density key');
   const restore = [];
   try {
-    for (const [stored, want] of [[5e6, BLOOD_CAPACITY_MAX], [0, BLOOD_CAPACITY_MIN], [-40, BLOOD_CAPACITY_MIN], [1200.6, 1201], ['nonsense', BLOOD_CAPACITY_DEFAULT]]) {
-      setPref(BLOOD_CAPACITY_PREF, stored); restore.push(BLOOD_CAPACITY_PREF);
-      assert.equal(bloodCapacity(), want, `a stored ${stored} answers ${want}`);
+    for (const [tier, t] of Object.entries(GORE_TIERS)) {
+      assert.ok(t.capacity >= BLOOD_CAPACITY_MIN && t.capacity <= BLOOD_CAPACITY_MAX && t.density > 0 && t.density <= 1, `${tier} inside the bounds`);
+      setPref(BLOOD_GORE_PREF, tier); restore.push(BLOOD_GORE_PREF);
+      assert.equal(bloodGore(), tier); assert.equal(bloodCapacity(), t.capacity, `${tier}: its count`); assert.equal(bloodDensity(), t.density, `${tier}: its amount`);
     }
-    // ...and the density is a FRACTION, clamped the same way
-    for (const [stored, want] of [[2, 1], [-1, 0], [0.5, 0.5], ['x', 1]]) {
-      setPref(BLOOD_DENSITY_PREF, stored); restore.push(BLOOD_DENSITY_PREF);
-      assert.equal(bloodDensity(), want, `a stored ${stored} answers ${want}`);
+    for (const stored of ['nonsense', 7, null, '', 'constructor', 'toString']) {
+      setPref(BLOOD_GORE_PREF, stored);
+      assert.equal(bloodGore(), GORE_DEFAULT, `a stored ${JSON.stringify(stored)} is Normal`);
+      assert.equal(bloodCapacity(), BLOOD_CAPACITY_DEFAULT); assert.equal(bloodDensity(), 1);
     }
   } finally {
     for (const k of restore) setPref(k, undefined);
@@ -3412,4 +3414,37 @@ test('BLOOD2f: the lane glints a wet mark - the lamp and the sun seen in it at t
   assert.match(probe, /the wet float means nothing to the classic set/);
   assert.match(probe, /new Float32Array\(4 \* 10\)/, 'ten floats a corner');
   assert.doesNotMatch(probe, /new Float32Array\(4 \* 9\)/);
+});
+
+
+// ── BLOOD2g (2026-09-21) - THE GORE DIAL: one tier for how much blood there is ──
+test('BLOOD2g: the gore dial - one tier sets the amount and the count, the row names every tier and the default, a pool is sized by it', async () => {
+  const { GORE_TIERS, GORE_DEFAULT, BLOOD_GORE_PREF, bloodGore, bloodCapacity, bloodDensity, bloodDecalDeps, BLOOD_CAPACITY_MAX } = await import('../src/combat/bloodSwitch.js');
+  const { setPref } = await import('../src/systems/uiPrefs.js');
+  assert.deepEqual(Object.keys(GORE_TIERS), ['light', 'normal', 'heavy', 'abattoir']);
+  assert.deepEqual(GORE_TIERS.normal, { density: 1, capacity: 600 }, 'Normal is the defaults - nothing changes for anyone who never touches it');
+  assert.deepEqual(GORE_TIERS.light, { density: 0.5, capacity: 300 }, 'Light halves the amount');
+  assert.ok(GORE_TIERS.heavy.capacity > GORE_TIERS.normal.capacity && GORE_TIERS.abattoir.capacity > GORE_TIERS.heavy.capacity, 'more, and more');
+  assert.equal(GORE_TIERS.abattoir.capacity, BLOOD_CAPACITY_MAX, 'the ceiling');
+  assert.equal(GORE_DEFAULT, 'normal');
+  // the row: a tiered prefs row over the same key, every tier named, the default among them
+  const row = E_FEATURES.find((f) => f.id === 'blood-gore');
+  assert.ok(row && row.group === 'combat' && row.kinds.includes('enhanced'));
+  assert.equal(row.control.key, BLOOD_GORE_PREF); assert.equal(row.control.initial, GORE_DEFAULT); assert.equal(row.control.online, 'player');
+  assert.deepEqual(row.control.tiers.map(([v]) => v), Object.keys(GORE_TIERS), 'every tier, in order');
+  assert.ok(row.control.tiers.every(([v, l]) => typeof l === 'string' && l.toLowerCase() === v), 'named as itself');
+  // the dep bag reads the tier live: a pool built after the shelf changes is sized by it
+  const restore = () => setPref(BLOOD_GORE_PREF, undefined);
+  try {
+    setPref(BLOOD_GORE_PREF, 'light');
+    assert.equal(bloodDecalDeps.capacity(), 300); assert.equal(bloodDecalDeps.density(), 0.5);
+    const { marks } = rigHitEffects({ collider: a4Floor, settings: bloodDecalDeps });
+    assert.equal(marks._pool().capacity, 300, 'the ring is the tier’s count');
+    setPref(BLOOD_GORE_PREF, 'abattoir');
+    assert.equal(marks._pool().capacity, 300, 'and stays: allocated once (the count takes effect when the world next loads)');
+    assert.equal(bloodDecalDeps.density(), 1, 'the amount is live');
+    assert.equal(bloodGore(), 'abattoir');
+  } finally { restore(); }
+  assert.match(a4Read('src/combat/bloodSwitch.js'), /GORE_TIERS\[bloodGore\(\)\]\.capacity/); assert.match(a4Read('src/combat/bloodSwitch.js'), /GORE_TIERS\[bloodGore\(\)\]\.density/);
+  assert.doesNotMatch(a4Read('src/combat/bloodSwitch.js'), /'blood-capacity'|'blood-density'/, 'the old keys are gone, not aliased');
 });
