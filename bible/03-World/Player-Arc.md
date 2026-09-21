@@ -965,7 +965,7 @@ all four caught, then reverted).
   update's worth; the cadence, the submergence geometry and the
   SetHealth(0) stay in dungeonContext.breathTick, which BOTH
   dungeon-mode hosts drive through dungeonCtx.drawFoes
-  (worldModes.js:753). exterior.js and world.js have no submersion
+  (worldModes.js:754). exterior.js and world.js have no submersion
   path for it to ride yet - when exterior water lands, it consumes
   this same step. New in the step:
   (1) THE ARGONIAN COIN REFUND (:331-333): on each drain tick,
@@ -1694,10 +1694,10 @@ at the shipped `Mouse2` default, and handed it to the input lane.
 `worldModes` has no `keys` Set of its own: it destructures one from
 `host` (`worldModes.js:382`), and its only two callers are `world.js`
 (`:6147`) and `exterior.js` (`:2769`), both of which pass their own Set
-and both of whose WINDOW-level handlers (`world.js:6725-6726`,
-`exterior.js:2910-2911`) call `mouseCode(e.button)` and add/delete
+and both of whose WINDOW-level handlers (`world.js:6726-6727`,
+`exterior.js:2911-2912`) call `mouseCode(e.button)` and add/delete
 unconditionally - outside every mode and overlay gate. `MOUSE_CODES`
-maps button 2 to `Mouse2` (`input.js:356`), which is the shipped
+maps button 2 to `Mouse2` (`input.js:359`), which is the shipped
 binding (`InputManager.cs:995`). The latch is live in that host; there
 was no gap to hand on and none is queued.
 

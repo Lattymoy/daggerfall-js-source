@@ -1549,7 +1549,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // owned, and destroy() hands it back (the _prevPassiveHost idiom this
   // file already uses for its other process-global seams). A bare null
   // would not do: on ?world and ?exterior the previous holder is the
-  // host's own townTalk sink (world.js:8106 / exterior.js:3319), set
+  // host's own townTalk sink (world.js:8107 / exterior.js:3320), set
   // once at boot and never again, so nulling on the way out of the
   // first dungeon would silently un-file every mid-screen label above
   // ground for the rest of the session - MC-1's own bug, re-opened.
@@ -2053,7 +2053,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // copied mount would have diverged the first time an arm grew.
   /** DR1: THE TWO SPELL WINDOWS THIS HOST MOUNTS NOW, and the one door
    *  they go through. `mountSpellWindow` is worldModes'
-   *  mountSpellWindow DUNGEON ARM (worldModes.js:1112,
+   *  mountSpellWindow DUNGEON ARM (worldModes.js:1113,
    *  `dungeonCtx?.showOverlay(win)`) resolved to what it actually
    *  calls here - this file's own pushDungeonWindow, which IS
    *  UserInterfaceManager.PushWindow. So a spell window raised over an
@@ -3118,8 +3118,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
               // AUDIT 39 (#64) / THE FOUR HOSTS RULE - SHIPPED (wave D):
               // this host was the FOURTH BODY of the player-arrow law
               // and is now the fourth CALLER. combat/arrowFlight.js's
-              // playerArrowHitFoe is the one copy world.js:11261,
-              // exterior.js:4762 and worldModes.js:6346 already ran;
+              // playerArrowHitFoe is the one copy world.js:11268,
+              // exterior.js:4769 and worldModes.js:6354 already ran;
               // the flag said the divergence would bite and it already
               // had. This copy splashed at the ARROW TIP
               // (`[m.pos[0], m.pos[1], m.pos[2]]`) on the claim that
@@ -5541,7 +5541,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         // both of them hand it in: dungeon.js's opts bag and
         // worldModes' (the world-hosted crawl, which is where the
         // classic start into Privateer's Hold lives, and which is the
-        // pause door ui/input.js:637 reaches underground).
+        // pause door ui/input.js:657 reaches underground).
         relock: () => opts.relock?.(),
         // the LOAD arm needs the host's position applier, exactly as
         // routeKey's own QuickLoad case passes it

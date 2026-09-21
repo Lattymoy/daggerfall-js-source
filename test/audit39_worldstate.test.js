@@ -413,9 +413,11 @@ test('AUDIT 39 #130: the exterior host\'s attack TAP defers to a readied spell l
   // Mouse0 cast arm (`_act.cast`) is the new fourth door - a LIVE one,
   // unlike the drag hook it numerically replaces. The four doors are
   // mousemove, mousedown, the SWIPE (TI1) and the frame's cast dispatch.
+  // MAC-SWING1 (2026-09-21) added a FIFTH door: the frame's key latch
+  // for a swing bound to a key or pad code, gated exactly as mousedown.
   for (const [name, s] of HOSTS) {
-    assert.equal((s.match(/magic\.interceptAttack\(true\)/g) ?? []).length, 4,
-      `${name}: mousemove, mousedown, the swipe and the cast dispatch`);
+    assert.equal((s.match(/magic\.interceptAttack\(true\)/g) ?? []).length, 5,
+      `${name}: mousemove, mousedown, the swipe, the cast dispatch and the key latch`);
   }
 });
 

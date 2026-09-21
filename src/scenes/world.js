@@ -342,7 +342,7 @@ import { CameraRecoiler } from '../player/cameraRecoiler.js';   // AUDIT 28 W9: 
 import { HeadBobber } from '../player/headBobber.js';   // AUDIT 28 W10: HeadBobbing
 import { lastHealthLost, lastHealthLostPercent } from '../ui/hudVitals.js';   // AUDIT 28 W9: the detector's loss
 import { fieldOfView } from '../ui/viewSettings.js';   // MENU: Video/FieldOfView, one home for five hosts
-import { keyEdges, noteKeyDown, noteKeyUp, beginInputFrame, pressed, released, pressedCode, actionOf, held, moveHeld, anyMove, swallowBrowserKey, mouseCode, isSwingButton, keyboardLook, isTextEntryTarget, bindings, routeAction, installContextMenuGuard, POLLED_ACTIONS, QUICKSLOT_ACTIONS } from '../ui/input.js';
+import { keyEdges, noteKeyDown, noteKeyUp, beginInputFrame, pressed, released, pressedCode, actionOf, held, moveHeld, anyMove, swallowBrowserKey, mouseCode, isSwingButton, keyboardLook, isTextEntryTarget, bindings, routeAction, installContextMenuGuard, POLLED_ACTIONS, QUICKSLOT_ACTIONS, swingKeyHeld } from '../ui/input.js';
 import { armUnloadGuard, releaseUnloadGuard } from '../systems/unloadGuard.js';   // MAC-L3: one door in front of every way out of a running game; AUDIT-MACL F3: ...and down for a door the game opened itself
 import { actionForCode, getBinding } from '../systems/inputActions.js';   // AUDIT-TO1 H2: the help's TravelMap binding, read through the store's own accessor   // FIX-E: the overlay's QuickLoad read, off the code alone   // I2: the rebindable registry; AUDIT 39r: the mouse half of the held set
 import { hudShortcutKey } from '../ui/hudShortcuts.js';   // AUDIT 64 F36/F37: DaggerfallHUD.Update's LargeHUDToggle / HUDToggle arms
@@ -2038,6 +2038,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // spellings of one seam is how they drift.
   const setTransportModeHere = (mode) => mountRig.setMode(mode);
   let rightHeld = false;   // AUDIT 28 F-C2: HasAction(SwingWeapon) - the raw button, ungated
+  let swingKeyLatch = false;   // MAC-SWING1: the same action, bound to a key or pad code
   // TI1: the touch layer's state. swipeHeld is the swipe's SwingWeapon
   // truth beside rightHeld (the settle law reads both); a tap arms a
   // ONE-frame ActivateCenterObject press (_tapArmed counts it down at
@@ -3408,7 +3409,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // and dungeonContext.js:2289 mounts the same one, gated on
   // `opts.enchantCtx !== false` because setDefaultEnchantCtx is a
   // session singleton and EC1 already routes THIS host's mount into
-  // that context through modes.dungeonCtx - so worldModes.js:4729
+  // that context through modes.dungeonCtx - so worldModes.js:4730
   // passes false beside its `chargen: false` and only the standalone
   // ?dungeon route mounts its own. S40 filled isResting
   // in - the sentence that stood here said it "stays absent above
@@ -6278,14 +6279,14 @@ export async function bootWorld(canvas, renderer, params, status) {
      *  GameManager.Instance.WeaponManager.ToggleSheath() - a SINGLETON
      *  call with no scene gate at all, registered for both buttons at
      *  :211-212, so the panel is live on every screen the bar is drawn
-     *  on. Here routeAction's arm is optional (ui/input.js:605) and
+     *  on. Here routeAction's arm is optional (ui/input.js:625) and
      *  only dungeonContext.js carried the door, so above ground, in
      *  ?exterior and inside a building the click was swallowed by
      *  routeLargeHudClick's unconditional `return true` and nothing
      *  drew or sheathed - while Z kept working everywhere, which is
      *  why it read as "only the panel is dead". THE FOUR HOSTS RULE.
      *  No double-fire from the keyboard: routeKey declines
-     *  POLLED_ACTIONS (ui/input.js:466), so a Z press reaches the
+     *  POLLED_ACTIONS (ui/input.js:486), so a Z press reaches the
      *  frame's edge latch and nothing else. */
     toggleSheath: () => weaponRig.toggleSheath(),
     // QS2: the diamond's three presses, beside the sheath panel's door and for
@@ -6483,7 +6484,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     noteKeyDown(latch.edge, e.code, e.repeat);   // MWCROUCH: the press event, buffered for the frame that reads it
     // AUDIT 58 (f3/input) - THE COMBO ARM'S MISSING ARGUMENT.
     // actionOf resolves a COMBO code only when it is handed the host's
-    // held-keys Set (ui/input.js:159-180), and no host passed one - so
+    // held-keys Set (ui/input.js:162-183), and no host passed one - so
     // GetUnaryKey's combo branch (InputManager.cs:1666-1712) was live
     // for the POLLED actions, which read through held(), and dead for
     // every DISPATCHED one. A player who bound Inventory to Shift+I in
@@ -6630,7 +6631,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       // gates the position now, not just the presence.
       // WEAPON-VIS2: this ladder never calls routeKey (the comment
       // above the Escape arm says so directly), so routeKey's own
-      // `POLLED_ACTIONS.has(act)` decline (ui/input.js:568) never
+      // `POLLED_ACTIONS.has(act)` decline (ui/input.js:588) never
       // touched this door. hudCtx carries toggleSheath (AUDIT 58, for
       // the large HUD's sheath panel), so 'ReadyWeapon' - Z - reached
       // routeAction from BOTH here AND the frame's own poll below
@@ -6819,7 +6820,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // `modeNow() === 'exterior'`, so indoors worldModes fed the modal
     // rig (:1517) and this fell through to the camera: every swing
     // inside a building or a dungeon turned the view with it.
-    const drag = routeMouseDrag({ walkMode, buttons: e.buttons, mode: modeNow() });
+    const drag = routeMouseDrag({ walkMode, buttons: e.buttons, keys, mode: modeNow() });
     if (drag !== 'look') {
       if (drag === 'swing' && !magic.interceptAttack(true)) {   // M2: an armed cast eats the click
         weaponRig.attackInput(e.movementX, e.movementY, true);
@@ -9632,7 +9633,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // camera is read.
     gamepad?.tick(dt);   // GP1: the pad's frame - its keys, its stick, its look - before the paused gate, so a window still sees Back and a lifted thumb still releases
     if (!gamePaused()) {
-      if (swingSuppressesLook({ swingHeld: rightHeld || swipeHeld, weaponIsBow: weaponRig.playerWeapon.machine?.isBow }) && walkMode && modeNow() === 'exterior') lookFilter.settle();   // MAC-O2: the law is lookFilter.js's one seam (:246-248, WeaponSwingMode included); `walkMode` and the mode are this host's own - the mode host owns another screen weapon
+      if (swingSuppressesLook({ swingHeld: rightHeld || swipeHeld || swingKeyLatch, weaponIsBow: weaponRig.playerWeapon.machine?.isBow }) && walkMode && modeNow() === 'exterior') lookFilter.settle();   // MAC-O2: the law is lookFilter.js's one seam (:246-248, WeaponSwingMode included); `walkMode` and the mode are this host's own - the mode host owns another screen weapon
       else lookFilter.tick(dt, cam);
       // FIX-F: the KEYBOARD look - TurnLeft/TurnRight/LookUp/LookDown
       // (InputManager.cs:1854-1865), one look unit a frame in DFU, paid
@@ -9856,6 +9857,12 @@ export async function bootWorld(canvas, renderer, params, status) {
       if (rideOutWanted && playerSpawned) rideOut();   // TSR4: after the first stand, whichever of the two came second
       if (playerSpawned) {
         const jumpHeld = held(keys, 'Jump');
+        const swingKey = swingKeyHeld(keys);   // MAC-SWING1: a swing bound to a KEY or pad code has no mousedown - the latch is polled here, and fed to the rig on the change
+        if (swingKey !== swingKeyLatch) {
+          swingKeyLatch = swingKey;
+          if (!swingKey) weaponRig.attackInput(0, 0, false);   // the release is never gated
+          else if (!townTalk.overlayActive && walkMode && modeNow() === 'exterior' && !magic.interceptAttack(true)) weaponRig.attackInput(0, 0, true);
+        }
         const crouchHeld = held(keys, 'Crouch');   // P12 host parity (audit F4); I2: DFU's default C
         const crouchPress = pressed(latch.edge, keys, 'Crouch');   // MWCROUCH: GetKeyDown, not a held-ring derivation - the levitate descent below still reads the HELD key
         // TO1: THE JOURNEY'S CLOCK. Travel Options runs an accelerated

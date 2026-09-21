@@ -249,7 +249,7 @@ three collapsed on verification.**
 2. *"`npcSession.onWorldChanged()` is on both door exits and not on the
    teleport/load path."* True, and correct: every caller of
    `forceExitToExterior` follows it with `_teleportToPixel`, and THAT
-   function owns the call (`world.js:4429`, DFU's `OnMapPixelChanged` /
+   function owns the call (`world.js:4430`, DFU's `OnMapPixelChanged` /
    `OnLoadEvent`). The quickload caller goes through
    `restoreSessionState` instead. Calling it in both places would be the
    redundancy, not the fix.
