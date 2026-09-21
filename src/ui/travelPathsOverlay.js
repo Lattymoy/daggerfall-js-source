@@ -38,7 +38,7 @@ export const RIVER_COLOR = Object.freeze([48, 79, 250, 255]);
 export const STREAM_COLOR = Object.freeze([48, 120, 230, 255]);
 
 /** The port's packing, restated so this module imports nothing from the
- *  window it serves (ui/travelMapWindow.js:274). */
+ *  window it serves (ui/travelMapWindow.js:275). */
 export const packRGBA = (r, g, b, a) => (((a << 24) >>> 0) | (b << 16) | (g << 8) | r) >>> 0;
 export const packColor = (c) => packRGBA(c[0], c[1], c[2], c[3] ?? 255);
 

@@ -141,19 +141,23 @@ test('U25: the gold button drops gold into the remote pile, refusing bad amounts
   const entity = { isPlayer: true, items: bag, goldPieces: 500 };
   const w = new NativeInventoryWindow({ items: () => bag, icons: ICONS, entity });
   w.click(230, 130);            // the gold button
-  assert.equal(w.topBox.field, true);
-  assert.equal(w.goldEntry, '0', 'TextBox.Text = "0"');
+  // CM5: DropGoldPopup (:1246-1256) is a pushed DaggerfallInputMessageBox - numeric, 8 characters, seeded "0"
+  assert.ok(w.inputBox, 'the prompt is a pushed box');
+  assert.equal(w.inputBox.numeric, true); assert.equal(w.inputBox.maxCharacters, 8);
+  assert.equal(w.inputBox.label, '', 'GoldButton_OnMouseClick sets tokens (record 25) and no label (:1275)'); assert.ok(w.inputBox.lines.length, 'the record above the field');
+  assert.equal(w.inputBox.value, '0', 'TextBox.Text = "0"');
   // 0 is refused outright - DFU returns without clamping
   w.input('Enter');
+  assert.equal(w.inputBox, null, 'Return closes the box');
   assert.equal(entity.goldPieces, 500);
   // so is more than you carry
   w.click(230, 130);
-  w.goldEntry = '9999';
+  w.inputBox.value = '9999';
   w.input('Enter');
   assert.equal(entity.goldPieces, 500);
   // a real amount lands in the remote pile
   w.click(230, 130);
-  w.goldEntry = '120';
+  w.inputBox.value = '120';
   w.input('Enter');
   assert.equal(entity.goldPieces, 380);
   assert.equal(w._remote().find((it) => it.group === 'Currency')?.stackCount, 120);

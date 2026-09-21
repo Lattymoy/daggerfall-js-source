@@ -33,6 +33,7 @@
 import { loadImg, nativeMetrics, drawImg, shadowText } from './nativePanel.js';
 import { drawScreenDimBackdrop } from './chargenArt.js';
 import { layoutMessageBox, drawMessageBox } from './messageBox.js';
+import { noticeFrame, noticeRelease } from './enhancedNotice.js';   // ENH-NOTICE2: the window's own click-anywhere box, as the enhanced panel
 import { ListPickerWindow, listPickerArtLoaded, listPickerSmallFont, preloadListPickerSmallFont, SMALL_FONT_PICKER_ROWS } from './listPicker.js';
 import { makeIconDrawer, drawStackLabel, makeSlotToolTip } from './itemScroller.js';
 import { audio } from '../systems/audio.js';
@@ -157,7 +158,7 @@ export class PotionMakerWindow {
     return this.ingredients()[this.scroll * INGREDIENT_COLS + is] ?? null;
   }
 
-  _close() { this.done = true; this.hooks.onClose?.(); }
+  _close() { this.done = true; noticeRelease(this); this.hooks.onClose?.(); }
 
   /** The carried ingredients, minus the UNITS already in the cauldron.
    *  AUDIT 26 F174/F176: DFU's Refresh collects `item.IsIngredient &&
@@ -386,7 +387,8 @@ export class PotionMakerWindow {
     });
     shadowText(renderer, font, this.nameLabel, m, ...POTION_LABELS.name);
     shadowText(renderer, font, String(this.hooks.gold?.() ?? 0), m, ...POTION_LABELS.gold);
-    if (this.box) {
+    if (noticeFrame(this, this.box?.rows ?? null)) this._boxLayout = null;
+    else if (this.box) {
       this._boxLayout = layoutMessageBox(font, this.box.rows, []);
       drawMessageBox(renderer, m, font, this._boxLayout);
     } else this._boxLayout = null;

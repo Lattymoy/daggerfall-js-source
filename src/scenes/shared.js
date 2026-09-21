@@ -1748,7 +1748,7 @@ export function wireInfectionVideos(renderer, { textAt = null, showText = null, 
       // which answers { text, center } records - while dungeonContext
       // passes `textRsc.plainText(id)`, which answers strings. Both
       // windows this reaches iterate the STRING (ChoiceWindow
-      // talkWindow.js:58-59, ActionTextBox likewise), so "Death is not
+      // talkWindow.js:60-61, ActionTextBox likewise), so "Death is not
       // eternal" threw `TypeError: text is not iterable` on draw
       // everywhere above ground and worked only in a dungeon: the
       // four-hosts divergence this project keeps meeting. Flattened
