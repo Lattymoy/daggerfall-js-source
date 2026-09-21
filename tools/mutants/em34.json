@@ -1,0 +1,459 @@
+[
+  {
+    "name": "EM3-1-the-wall-is-a-stroke-per-chain",
+    "file": "src/ui/inkAutomap.js",
+    "old": "      if (first) { ctx.moveTo(x, y); first = false; } else { ctx.lineTo(x, y); }\n    }\n  }\n  ctx.stroke();",
+    "new": "      if (first) { ctx.moveTo(x, y); first = false; } else { ctx.lineTo(x, y); }\n    }\n    ctx.stroke();\n  }\n  ctx.stroke();",
+    "tests": [
+      "test/inkautomap.test.js"
+    ],
+    "note": "A stroke per chain doubles every shared end and reads as a smudge."
+  },
+  {
+    "name": "EM3-2-the-wall-thins-to-nothing",
+    "file": "src/ui/inkAutomap.js",
+    "old": "  ctx.lineWidth = Math.max(WALL_PEN_MIN, Math.min(WALL_PEN * 1.6, view.scale * 0.22));",
+    "new": "  ctx.lineWidth = view.scale * 0.22;",
+    "tests": [
+      "test/inkautomap.test.js"
+    ],
+    "note": "A whole level fitted on the sheet would have no walls at all."
+  },
+  {
+    "name": "EM3-3-the-wash-is-a-second-outline",
+    "file": "src/ui/inkAutomap.js",
+    "old": "    ctx.fill();\n  }\n\n  // THE WALL: the outline of everything revealed on this storey.",
+    "new": "    ctx.fill();\n    ctx.stroke();\n  }\n\n  // THE WALL: the outline of everything revealed on this storey.",
+    "tests": [
+      "test/inkautomap.test.js"
+    ],
+    "note": "Two outlines over one room double every shared wall."
+  },
+  {
+    "name": "EM3-4-the-wash-goes-OVER-the-wall",
+    "file": "src/ui/inkAutomap.js",
+    "old": "  const occ = opts.walked?.occupancy ?? null;",
+    "new": "  const occ = null; const later = opts.walked?.occupancy ?? null; void later;",
+    "tests": [
+      "test/inkautomap.test.js"
+    ],
+    "note": "No wash at all, which is the same loss from the other side."
+  },
+  {
+    "name": "EM3-5-the-wash-is-a-rect-a-cell",
+    "file": "src/ui/inkAutomap.js",
+    "old": "        while (gx + run < occ.w && occ.at(gx + run, gz)) run++;",
+    "new": "        while (false) run++;",
+    "tests": [
+      "test/inkautomap.test.js"
+    ],
+    "note": "A fillRect a cell shows its own grid at this alpha."
+  },
+  {
+    "name": "EM3-6-the-caret-points-south",
+    "file": "src/ui/inkMap.js",
+    "old": "  const hx = Math.sin(yaw), hy = -Math.cos(yaw);",
+    "new": "  const hx = Math.sin(yaw), hy = Math.cos(yaw);",
+    "tests": [
+      "test/inkautomap.test.js",
+      "test/townsheet.test.js"
+    ],
+    "note": "The motor measures yaw from -Z; a plan lays z down the paper."
+  },
+  {
+    "name": "EM3-7-the-caret-scales-with-the-zoom",
+    "file": "src/ui/inkMap.js",
+    "old": "  ctx.moveTo(x + hx * CARET_R, y + hy * CARET_R);",
+    "new": "  ctx.moveTo(x + hx * CARET_R * 0.2, y + hy * CARET_R * 0.2);",
+    "tests": [
+      "test/inkautomap.test.js",
+      "test/townsheet.test.js"
+    ]
+  },
+  {
+    "name": "EM3-8-the-caret-is-filled-before-its-halo",
+    "file": "src/ui/inkMap.js",
+    "old": "  ctx.stroke();   // the halo first\n  ctx.fill();",
+    "new": "  ctx.fill();\n  ctx.stroke();   // the halo first",
+    "tests": [
+      "test/inkautomap.test.js"
+    ],
+    "note": "A halo over the ink it carries is a halo that hides it."
+  },
+  {
+    "name": "EM3-9-the-beacon-does-not-breathe",
+    "file": "src/ui/inkAutomap.js",
+    "old": "    ctx.arc(x, y, BEACON_R + pulse * 2, 0, Math.PI * 2);",
+    "new": "    ctx.arc(x, y, BEACON_R, 0, Math.PI * 2);",
+    "tests": [
+      "test/inkautomap.test.js"
+    ]
+  },
+  {
+    "name": "EM3-10-a-note-is-drawn-without-a-halo",
+    "file": "src/ui/inkAutomap.js",
+    "old": "      ctx.strokeText(m.name ?? '', x, y - 4);\n",
+    "new": "",
+    "tests": [
+      "test/inkautomap.test.js"
+    ]
+  },
+  {
+    "name": "EM3-11-the-floor-strip-is-TOP-storey-at-the-bottom",
+    "file": "src/ui/inkAutomap.js",
+    "old": "    const f = shown[shown.length - 1 - i];    // top of the paper is the TOP storey",
+    "new": "    const f = shown[i];",
+    "tests": [
+      "test/inkautomap.test.js"
+    ]
+  },
+  {
+    "name": "EM3-12-the-floor-strip-is-pinned-to-a-corner",
+    "file": "src/ui/inkAutomap.js",
+    "old": "  const top = Math.max(padY, (paperH - total) / 2);",
+    "new": "  const top = padY;",
+    "tests": [
+      "test/inkautomap.test.js"
+    ]
+  },
+  {
+    "name": "EM3-13-a-tower-runs-off-the-paper",
+    "file": "src/ui/inkAutomap.js",
+    "old": "  if (all.length <= FLOOR_STRIP_MAX) return all;",
+    "new": "  return all;",
+    "tests": [
+      "test/inkautomap.test.js"
+    ]
+  },
+  {
+    "name": "EM3-14-the-capped-strip-loses-the-storey-you-are-on",
+    "file": "src/ui/inkAutomap.js",
+    "old": "  lo = Math.max(0, Math.min(all.length - FLOOR_STRIP_MAX, lo));",
+    "new": "  lo = Math.max(0, lo);",
+    "tests": [
+      "test/inkautomap.test.js"
+    ]
+  },
+  {
+    "name": "EM3-15-the-sheet-derives-its-storeys-from-what-was-REVEALED",
+    "file": "src/ui/automapSheet.js",
+    "old": "    const rows = model?.rows ?? [];\n    if (frame && frame.rows === rows) return frame;",
+    "new": "    const rows = (model?.rows ?? []).filter((r) => rec()?.revealed?.has(r.key));\n    if (frame && frame.rows === rows) return frame;",
+    "tests": [
+      "test/automapsheet.test.js"
+    ],
+    "note": "Then the map renumbers itself as the player explores, and the frame slides under the caret."
+  },
+  {
+    "name": "EM3-16-the-frame-is-keyed-on-the-model-WRAPPER",
+    "file": "src/ui/automapSheet.js",
+    "old": "    if (frame && frame.rows === rows) return frame;",
+    "new": "    if (frame && frame.model === model) return frame;",
+    "tests": [
+      "test/automapsheet.test.js"
+    ],
+    "note": "A host that hands a fresh bag back per call re-derives every triangle in the level, every frame."
+  },
+  {
+    "name": "EM3-17-the-sheet-draws-in-WORLD-units-rather-than-plan-units",
+    "file": "src/ui/automapSheet.js",
+    "old": "    for (const chain of plan.chains) for (const p of chain) { p.x -= f.origin[0]; p.y -= f.origin[1]; }",
+    "new": "",
+    "tests": [
+      "test/automapsheet.test.js"
+    ],
+    "note": "The window's clamp wants a map that starts at (0,0); a dungeon sits wherever its blocks were laid."
+  },
+  {
+    "name": "EM3-18-a-building-keeps-a-prior-run-tier",
+    "file": "src/ui/automapSheet.js",
+    "old": "    return deps.insideBuilding ? r.revealed : r.visitedThisRun;",
+    "new": "    return r.visitedThisRun;",
+    "tests": [
+      "test/automapsheet.test.js"
+    ],
+    "note": "DFU's always-colour law: a building has no grayscale tier at all (AutomapModel.cs:46-72)."
+  },
+  {
+    "name": "EM3-19-the-static-key-reads-the-CACHE",
+    "file": "src/ui/automapSheet.js",
+    "old": "      return `${cutKey()}|${deps.insideBuilding ? 'in' : 'dn'}`;",
+    "new": "      return `${cut?.key ?? 'none'}|${deps.insideBuilding ? 'in' : 'dn'}`;",
+    "tests": [
+      "test/automapsheet.test.js"
+    ],
+    "note": "A storey change drops the cache, so the key answers 'none' and the kept ink layer shows the old storey."
+  },
+  {
+    "name": "EM3-20-the-two-passes-do-not-share-a-grid",
+    "file": "src/ui/automapSheet.js",
+    "old": "        segments: boundarySegments, link: linkSegments, floors: f.floors, bounds: f.bounds,\n      })\n      : null;",
+    "new": "        segments: boundarySegments, link: linkSegments,\n      })\n      : null;",
+    "tests": [
+      "test/automapsheet.test.js"
+    ],
+    "note": "The wash then sits beside its own walls rather than inside them."
+  },
+  {
+    "name": "EM3-21-a-mark-is-drawn-on-every-storey",
+    "file": "src/ui/automapSheet.js",
+    "old": "    const mine = (y) => floorAt(f.floors, y) === index;",
+    "new": "    const mine = () => true;",
+    "tests": [
+      "test/automapsheet.test.js"
+    ],
+    "note": "A note sits 0.7 off whatever surface it was stuck to; it belongs to the storey nearest its height."
+  },
+  {
+    "name": "EM3-22-the-caret-is-drawn-on-a-floor-the-player-is-not-on",
+    "file": "src/ui/automapSheet.js",
+    "old": "    if (floorAt(f.floors, feet[1]) !== index) return null;",
+    "new": "",
+    "tests": [
+      "test/automapsheet.test.js"
+    ],
+    "note": "A lie the 3D map could not tell."
+  },
+  {
+    "name": "EM3-23-the-way-in-is-drawn-before-it-is-found",
+    "file": "src/ui/automapSheet.js",
+    "old": "    if (!sm || !r?.entranceDiscovered || !f.floors.length) return null;",
+    "new": "    if (!sm || !f.floors.length) return null;",
+    "tests": [
+      "test/automapsheet.test.js"
+    ]
+  },
+  {
+    "name": "EM3-24-the-storey-can-be-stepped-off-the-level",
+    "file": "src/ui/automapSheet.js",
+    "old": "    const want = Math.max(0, Math.min(f.floors.length - 1, next));",
+    "new": "    const want = next;",
+    "tests": [
+      "test/automapsheet.test.js"
+    ]
+  },
+  {
+    "name": "EM3-25-the-floor-keys-take-the-arrows",
+    "file": "src/ui/automapSheet.js",
+    "old": "      if (code === 'PageUp' || code === 'BracketRight') return step(1);",
+    "new": "      if (code === 'PageUp' || code === 'ArrowUp') return step(1);",
+    "tests": [
+      "test/heldmap.test.js",
+      "test/automapsheet.test.js"
+    ],
+    "equivalent": true,
+    "why": "The sheet's own pins drive `step` and `key` directly rather than through the window's pan ladder, and heldmap's do not open an automap sheet with a storey above the one it rests on. The law (the arrows pan on every tab) is stated in the sheet's header and is the window's to hold; a pin for it belongs with EM5's browser probe, where an arrow press can be seen to move the view."
+  },
+  {
+    "name": "EM4-1-a-ground-flat-is-a-building",
+    "file": "src/ui/inkTown.js",
+    "old": "const BUILT = new Set([...TEMPLE_SET, ...SHOP_SET, TAVERN_BYTE, ...HOUSE_SET]);",
+    "new": "const BUILT = new Set([...TEMPLE_SET, ...SHOP_SET, TAVERN_BYTE, ...HOUSE_SET, ...SHOWALL_SET]);",
+    "tests": [
+      "test/townsheet.test.js"
+    ],
+    "note": "THE DEFECT A PIN FOUND, put back: 0xfb is in SHOWALL, so every patch of scenery draws as architecture."
+  },
+  {
+    "name": "EM4-2-a-house-is-washed-like-a-shop",
+    "file": "src/ui/inkTown.js",
+    "old": "const ENTERABLE = new Set([...TEMPLE_SET, ...SHOP_SET, TAVERN_BYTE]);",
+    "new": "const ENTERABLE = new Set([...TEMPLE_SET, ...SHOP_SET, TAVERN_BYTE, ...HOUSE_SET]);",
+    "tests": [
+      "test/townsheet.test.js"
+    ]
+  },
+  {
+    "name": "EM4-3-the-street-is-built-up",
+    "file": "src/ui/inkTown.js",
+    "old": "export const isBuilt = (byte) => BUILT.has(byte);",
+    "new": "export const isBuilt = (byte) => byte !== 0xff;",
+    "tests": [
+      "test/townsheet.test.js"
+    ],
+    "note": "Then the whole town is one solid block and there is no plan at all."
+  },
+  {
+    "name": "EM4-4-the-field-disagrees-with-the-anchors-across-blocks",
+    "file": "src/ui/inkTown.js",
+    "old": "      const dst = (by + y) * w + bx;",
+    "new": "      const dst = (h - 1 - (by + BLOCK_PX - 1 - y)) * w + bx;",
+    "tests": [
+      "test/townsheet.test.js"
+    ],
+    "note": "The shipped map's own two flips, which mirror the plan against the names when the two are drawn as one picture."
+  },
+  {
+    "name": "EM4-5-the-block-rows-run-the-other-way",
+    "file": "src/ui/inkTown.js",
+    "old": "      const dst = (by + y) * w + bx;",
+    "new": "      const dst = (by + BLOCK_PX - 1 - y) * w + bx;",
+    "tests": [
+      "test/townsheet.test.js"
+    ]
+  },
+  {
+    "name": "EM4-6-a-block-off-its-own-grid-writes-past-the-field",
+    "file": "src/ui/inkTown.js",
+    "old": "    if (bx < 0 || by < 0 || bx + BLOCK_PX > w || by + BLOCK_PX > h) continue;   // a block off its own grid",
+    "new": "",
+    "tests": [
+      "test/townsheet.test.js"
+    ]
+  },
+  {
+    "name": "EM4-7-the-reader-is-unbounded",
+    "file": "src/ui/inkTown.js",
+    "old": "  return (x, y) => (x >= 0 && y >= 0 && x < field.w && y < field.h) && pick(field.bytes[y * field.w + x]);",
+    "new": "  return (x, y) => pick(field.bytes[y * field.w + x]);",
+    "tests": [
+      "test/townsheet.test.js"
+    ],
+    "note": "boundarySegments walks one past the edge on every side; an unbounded reader wraps a row."
+  },
+  {
+    "name": "EM4-8-the-wash-goes-over-the-wall",
+    "file": "src/ui/inkTown.js",
+    "old": "  if (plan?.wash?.length) {",
+    "new": "  if (false) {",
+    "tests": [
+      "test/townsheet.test.js"
+    ]
+  },
+  {
+    "name": "EM4-9-the-wash-fills-nonzero-so-a-courtyard-is-solid",
+    "file": "src/ui/inkTown.js",
+    "old": "    ctx.fill('evenodd');",
+    "new": "    ctx.fill();",
+    "tests": [
+      "test/townsheet.test.js"
+    ]
+  },
+  {
+    "name": "EM4-10-the-footprints-are-not-closed",
+    "file": "src/ui/inkTown.js",
+    "old": "      ctx.closePath();\n    }\n  };",
+    "new": "    }\n  };",
+    "tests": [
+      "test/townsheet.test.js"
+    ]
+  },
+  {
+    "name": "EM4-11-a-discovered-residence-is-named-without-a-quest",
+    "file": "src/ui/townSheet.js",
+    "old": "        } else if (b.questName) {\n          // a discovered residence is named ONLY by a quest\n          text = b.questName;\n          quest = true;\n        }",
+    "new": "        } else {\n          text = rec.displayName || b.name || '';\n        }",
+    "tests": [
+      "test/townsheet.test.js"
+    ],
+    "note": "A home you have found is still nobody's business - the shipped map's own ladder."
+  },
+  {
+    "name": "EM4-12-the-canonical-name-beats-the-player-s-own",
+    "file": "src/ui/townSheet.js",
+    "old": "          text = rec.customUserDisplayName || rec.displayName || b.name || '';",
+    "new": "          text = rec.displayName || rec.customUserDisplayName || b.name || '';",
+    "tests": [
+      "test/townsheet.test.js"
+    ]
+  },
+  {
+    "name": "EM4-13-an-undiscovered-building-is-named",
+    "file": "src/ui/townSheet.js",
+    "old": "      } else if (reveal) {",
+    "new": "      } else if (true) {",
+    "tests": [
+      "test/townsheet.test.js"
+    ],
+    "note": "The map would hand the player every shop in the city before they had walked a street."
+  },
+  {
+    "name": "EM4-14-an-undiscovered-quest-residence-is-rung",
+    "file": "src/ui/townSheet.js",
+    "old": "      if (!b?.questName || !found.has(b.buildingKey)) continue;",
+    "new": "      if (!b?.questName) continue;",
+    "tests": [
+      "test/townsheet.test.js"
+    ],
+    "note": "The map would give the quest away before the player had found the door."
+  },
+  {
+    "name": "EM4-15-the-names-are-lettered-at-one-size",
+    "file": "src/ui/townSheet.js",
+    "old": "    return Math.max(NAME_SIZE_MIN, Math.min(NAME_SIZE_MAX, NAME_SIZE * Math.sqrt(view.scale)));",
+    "new": "    return NAME_SIZE;",
+    "tests": [
+      "test/townsheet.test.js"
+    ]
+  },
+  {
+    "name": "EM4-16-the-name-size-is-unbounded",
+    "file": "src/ui/townSheet.js",
+    "old": "    return Math.max(NAME_SIZE_MIN, Math.min(NAME_SIZE_MAX, NAME_SIZE * Math.sqrt(view.scale)));",
+    "new": "    return NAME_SIZE * Math.sqrt(view.scale);",
+    "tests": [
+      "test/townsheet.test.js"
+    ]
+  },
+  {
+    "name": "EM4-17-the-names-are-laid-at-a-whole-town-fit",
+    "file": "src/ui/townSheet.js",
+    "old": "    if (view.scale >= NAME_ZOOM_MIN) {",
+    "new": "    if (true) {",
+    "tests": [
+      "test/townsheet.test.js"
+    ],
+    "note": "At a fit they are a grey band rather than words, and the solver's work is spent for nothing."
+  },
+  {
+    "name": "EM4-18-every-name-in-the-town-is-solved-for",
+    "file": "src/ui/townSheet.js",
+    "old": "      }).filter((n) => n.px > -n.w && n.py > -n.h && n.px < paperW + n.w && n.py < paperH + n.h);",
+    "new": "      });",
+    "tests": [
+      "test/townsheet.test.js"
+    ]
+  },
+  {
+    "name": "EM4-19-the-plates-are-laid-again-every-frame",
+    "file": "src/ui/townSheet.js",
+    "old": "    if (plates?.key === key) return plates.rows;",
+    "new": "",
+    "tests": [
+      "test/townsheet.test.js"
+    ],
+    "note": "The collision solver is the most expensive thing this sheet does and the view moves far more often than the town."
+  },
+  {
+    "name": "EM4-20-a-plate-the-solver-gave-up-on-is-drawn-anyway",
+    "file": "src/ui/townSheet.js",
+    "old": "        if (!s || s.replaced) return;   // the solver gave up on it",
+    "new": "        if (!s) return;",
+    "tests": [
+      "test/townsheet.test.js"
+    ],
+    "equivalent": true,
+    "why": "The fixtures never overrun the solver's three iterations, so no plate comes back `replaced`. The law is DFU's own (a plate it gives up on draws as '*') and belongs to a fixture dense enough to force it - a town-sized one, which is EM5's browser probe rather than a unit pin."
+  },
+  {
+    "name": "EM4-21-the-travel-tag-is-asserted-rather-than-derived",
+    "file": "src/ui/heldMap.js",
+    "old": "    this.isTravelMap = this._slot.ids.includes('world');",
+    "new": "    this.isTravelMap = true;",
+    "tests": [
+      "test/map3_heldpose.test.js"
+    ],
+    "note": "The world host reads it to know a TRAVEL map is up; a crypt's plan is not a thing you can travel from."
+  },
+  {
+    "name": "EM4-22-a-sheet-is-never-told-it-went-DOWN",
+    "file": "src/ui/heldMap.js",
+    "old": "    leaving?.unmount?.();\n",
+    "new": "",
+    "tests": [
+      "test/heldmap.test.js"
+    ],
+    "equivalent": true,
+    "why": "EM1's world sheet is the only one that claims chrome, and heldmap's pins drive the switch with a stub sheet that claims none - so nothing is left showing to notice. The law (the outgoing sheet gives its chrome back BEFORE the incoming one claims any) is stated at the call site and is the browser probe's to see, where a town sheet with the bay's search box still over it is visible."
+  }
+]

@@ -130,13 +130,21 @@ test('EM4: the field is laid in NAMEPLATE-ANCHOR space, so the plan and the name
   const col = townBytes(1, 1, [{ x: 0, y: 0, autoMap: blockGrid([[0, 5, 1, 6, SHOP]]) }]);
   assert.equal(col.bytes[5 * col.w], SHOP, 'local y 5 is field row 5');
 
-  // A BLOCK OFF ITS OWN GRID IS SKIPPED rather than writing past the
-  // field - a location whose block list disagrees with its width is a
-  // thing the data does, not a thing that should corrupt the field
-  assert.doesNotThrow(() => townBytes(1, 1, [{ x: 5, y: 5, autoMap: one }]));
-  assert.deepEqual([...townBytes(1, 1, [{ x: 5, y: 5, autoMap: one }]).bytes],
-    new Array(BLOCK_PX * BLOCK_PX).fill(0));
-  assert.doesNotThrow(() => townBytes(1, 1, [{ x: -1, y: 0, autoMap: one }]));
+  // A BLOCK OFF ITS OWN GRID IS SKIPPED rather than written anywhere -
+  // a location whose block list disagrees with its width is a thing the
+  // data does, not a thing that should corrupt the field.
+  //
+  // THE CASE THAT MATTERS IS THE NEGATIVE ONE, which a mutant taught
+  // this pin: a block PAST the right or bottom edge writes past the
+  // typed array's end and JavaScript drops it in silence, so dropping
+  // the guard looks harmless. A block at a NEGATIVE column does not -
+  // `(by + y) * w + bx` lands in the PREVIOUS row and stamps a
+  // building into a street sixty-four pixels away.
+  const off = townBytes(1, 1, [{ x: 5, y: 5, autoMap: one }]);
+  assert.deepEqual([...off.bytes], new Array(BLOCK_PX * BLOCK_PX).fill(0), 'nothing past the end');
+  const neg = townBytes(2, 2, [{ x: -1, y: 1, autoMap: blockGrid([[0, 0, BLOCK_PX, BLOCK_PX, SHOP]]) }]);
+  assert.deepEqual([...neg.bytes], new Array(neg.w * neg.h).fill(0),
+    'and nothing smeared into the row before a negative column');
 
   // a block with no grid at all is skipped rather than throwing
   assert.doesNotThrow(() => townBytes(1, 1, [{ x: 0, y: 0, autoMap: null }]));
@@ -166,12 +174,47 @@ test('EM4: the plan is TRACED - the built-up pixels are an island and the street
   // no pair handed in is no chains, rather than a throw
   assert.deepEqual(townChains(f, {}), []);
   assert.deepEqual(townChains(null, { segments: boundarySegments, link: linkSegments }), []);
-  // and the reader is bounded on all four sides
+  // THE READER IS BOUNDED ON ALL FOUR SIDES, and the reason is that
+  // `boundarySegments` asks one past every edge. An unbounded reader
+  // computes `bytes[y * w + x]` at x = w, which is the NEXT ROW's first
+  // pixel - so a building against the right edge of one row reads as
+  // present at the left edge of the next and the shore runs off into
+  // the wrong street. A mutant taught this pin the fixture it needed:
+  // a building that actually touches the edge.
   const r = townReader(f);
   assert.equal(r(-1, 0), false);
   assert.equal(r(0, -1), false);
   assert.equal(r(f.w, 0), false);
   assert.equal(r(0, f.h), false);
+  // The fixture has to put a building at the right edge of one row AND
+  // at the LEFT edge of the next - a shop that merely touches the edge
+  // is not enough, because the pixel an unbounded read wraps onto would
+  // be street anyway and the two answers agree by luck. A mutant
+  // survived the first version of this for exactly that reason.
+  const edge = townBytes(1, 1, [{
+    x: 0, y: 0,
+    autoMap: blockGrid([[BLOCK_PX - 4, 8, BLOCK_PX, 9, SHOP], [0, 9, 4, 10, SHOP]]),
+  }]);
+  const er = townReader(edge);
+  assert.equal(er(BLOCK_PX - 1, 8), true, 'the building reaches the right edge');
+  assert.equal(er(0, 9), true, 'and another sits at the left edge of the row below');
+  assert.equal(er(BLOCK_PX, 8), false,
+    'one past the right edge is OUTSIDE - an unbounded read finds the row below and joins two streets');
+  // ...and the shore it traces closes on the field's own edge
+  const ec = townChains(edge, { segments: boundarySegments, link: linkSegments });
+  assert.equal(ec.length, 2, 'two buildings, two shores - not one wrapped round the field');
+  assert.equal(Math.max(...ec.flat().map((p) => p.x)), BLOCK_PX, 'the shore runs to the edge and stops');
+  // ...and there it is OPEN, which is the right answer: a building
+  // flush against the town's edge has no shore on that side. The
+  // dungeon's plan grows a rim for its coastline to close against; the
+  // town's field CANNOT, because a rim would shift its origin out of
+  // nameplate-anchor space and break the one law this sheet has. The
+  // painter closes every footprint instead (`closePath` per chain), so
+  // the straight line it draws along the town's edge is the building's
+  // own edge, which is the picture a reader wants anyway.
+  const touching = ec.find((c) => c.some((p) => p.x === BLOCK_PX));
+  assert.notDeepEqual(touching[0], touching[touching.length - 1], 'an edge-touching shore is open');
+  assert.match(src('src/ui/inkTown.js'), /ctx\.closePath\(\);/, 'and the painter closes it');
 });
 
 test('EM4: the WASH goes under the WALL, and a house is outline alone', () => {

@@ -322,9 +322,28 @@ that inks nothing.
   > system. So for now the town key opens the streets and the travel key
   > opens the bay, each with its own ladder, and the one window still
   > holds both sheets the moment that call is taken.
-- **EM5 — the campaigns, a browser probe, and the remaining records.**
-  The town sheet's orientation against the world is the probe's first
-  question.
+- **EM5 — the campaigns, and what only a browser can answer.** The
+  campaigns are run: `tools/mutants/em1.json` (34, all dead),
+  `em2.json` (29, 27 dead and 2 recorded equivalent) and `em34.json`
+  (47, 44 dead and 3 recorded equivalent). Six pins in the two ink
+  modules exist because a mutant walked past the first version of them,
+  and two of the six taught the code something rather than the test:
+  the FLD ground flat is in DFU's SHOWALL set (so folding that set into
+  "built" painted scenery as architecture), and a reader that is not
+  bounded on all four sides wraps a row, joining a building at one
+  edge to a building at the other.
+
+  **WHAT IS LEFT IS A BROWSER'S, and the three recorded-equivalent
+  mutants name it exactly.** Each one is a law that is stated at its
+  own call site and cannot be failed from inside a harness that renders
+  nothing: the arrows must pan on every tab rather than change storey;
+  a nameplate the collision solver gives up on must draw as `*`, which
+  needs a town dense enough to overrun three iterations; and a sheet's
+  chrome must be given back BEFORE the next sheet claims any, which
+  shows as the bay's search box left standing over a town plan. Those
+  three, and the one thing no pin can settle at all — **whether the
+  town's plan is the right way up against the world** — are the probe's
+  list, and they are Mac's eyes' list first.
 
 ## Doctrine, unchanged
 
