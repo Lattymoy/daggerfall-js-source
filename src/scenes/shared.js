@@ -1256,6 +1256,17 @@ export function raisePlayerSkills(entity, { say = () => {}, onLevelUp = null, ro
   // was. THE FANFARE STAYS IN BOTH LANES: it is the reward, not the
   // interruption. The CLASSIC skin takes both arms exactly as written
   // before this slice, which is why they are still written here.
+  // MAC-LVL1: the minutes an ONLINE rest simulated (restSession's
+  // creditSkillMinutes) are spent here, by pulling the last-check
+  // marker back by them - the marker stays in the shared clock's past,
+  // so alignEntityClocks' clamp never sees a future stamp, and one
+  // night is one advancement pass on both lanes (RaiseSkills' 360-minute
+  // gate, PlayerEntity.cs:1367, opened by the rest's own RaiseTime).
+  // Offline the credit is never written (the clock itself moved).
+  if (entity.restSimMinutes > 0) {
+    entity.lastSkillCheckTime = (entity.lastSkillCheckTime ?? 0) - entity.restSimMinutes;
+    entity.restSimMinutes = 0;
+  }
   return raiseSkills(entity, Math.floor(worldMinutes()), rolls, onLevelUp,
     (id) => {
       // AUDIT LV2 F3: the TEXT.RSC read is a THUNK, so it happens on
@@ -2037,6 +2048,7 @@ export function createRestDeps(entity, opts = {}) {
     tickVitals: () => { if (_kind === REST_KIND.Rough) _roughHours++; return restHour(entity, _kind, () => restVitals(entity, { day: day(), inside: inside() })); },
     fullyHealed: () => restFullyHealed(entity),
     sharedMinutes: () => (sharedClockOn() ? worldMinutes() : null),   // WORLD5: a rest online is paced by the world's clock, not by the window's timer
+    creditSkillMinutes: (n) => { entity.restSimMinutes = (entity.restSimMinutes ?? 0) + n; },   // MAC-LVL1: the rest's simulated minutes, owed to the skill-check clock (raisePlayerSkills spends them)
     dead: () => entity.health <= 0,
     vitals: () => ({
       health: entity.health, maxHealth: entity.maxHealth,
