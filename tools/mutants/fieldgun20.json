@@ -1,0 +1,54 @@
+[
+  {
+    "name": "FIELD-GUN20-1-the-pool-builds-at-the-bare-position-again",
+    "file": "src/scenes/hitEffects.js",
+    "old": "      entry.batch = renderer.createBillboardBatch(archive, record, entry.size, [centredBase(entry.pos, entry.size)]);\n",
+    "new": "      entry.batch = renderer.createBillboardBatch(archive, record, entry.size, [entry.pos]);\n",
+    "tests": ["test/thunderlock.test.js", "test/arrowflight.test.js", "test/audit24_wave39.test.js"],
+    "note": "The bug itself: the sprite's centre half a height above the orb, the splash, the impact."
+  },
+  {
+    "name": "FIELD-GUN20-2-the-recentre-rebuilds-at-the-bare-position",
+    "file": "src/scenes/hitEffects.js",
+    "old": "        e.batch = renderer.createBillboardBatch(e.archive, e.record, e.size, [centredBase(e.pos, e.size)]);",
+    "new": "        e.batch = renderer.createBillboardBatch(e.archive, e.record, e.size, [e.pos]);",
+    "tests": ["test/thunderlock.test.js", "test/arrowflight.test.js", "test/audit26_render.test.js"],
+    "note": "A floating-origin shift would lift every live orb and splash back up by half a height."
+  },
+  {
+    "name": "FIELD-GUN20-3-the-world-hosts-spell-missile-keeps-the-bare-fire-position",
+    "file": "src/scenes/hostMagic.js",
+    "old": "    m.batch = renderer.createBillboardBatch(archive, 0, size, [centredBase(m.firePos, size)]);",
+    "new": "    m.batch = renderer.createBillboardBatch(archive, 0, size, [[m.firePos[0], m.firePos[1], m.firePos[2]]]);",
+    "tests": ["test/thunderlock.test.js"]
+  },
+  {
+    "name": "FIELD-GUN20-4-the-fourth-hosts-missile-keeps-the-bare-fire-position",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    m.batch = renderer.createBillboardBatch(archive, record, size, [centredBase(m.firePos, size)]);",
+    "new": "    m.batch = renderer.createBillboardBatch(archive, record, size, [[m.firePos[0], m.firePos[1], m.firePos[2]]]);",
+    "tests": ["test/thunderlock.test.js"]
+  },
+  {
+    "name": "FIELD-GUN20-5-the-base-is-lifted-instead-of-lowered",
+    "file": "src/world/rmbFlats.js",
+    "old": "  return [pos[0], pos[1] - (size?.h ?? 0) / 2, pos[2]];",
+    "new": "  return [pos[0], pos[1] + (size?.h ?? 0) / 2, pos[2]];",
+    "tests": ["test/thunderlock.test.js", "test/audit24_wave39.test.js"]
+  },
+  {
+    "name": "FIELD-GUN20-6-half-the-width-not-the-height",
+    "file": "src/world/rmbFlats.js",
+    "old": "  return [pos[0], pos[1] - (size?.h ?? 0) / 2, pos[2]];",
+    "new": "  return [pos[0], pos[1] - (size?.w ?? 0) / 2, pos[2]];",
+    "tests": ["test/thunderlock.test.js"]
+  },
+  {
+    "name": "FIELD-GUN20-7-a-block-flat-is-centred-too",
+    "file": "src/world/rmbFlats.js",
+    "old": "export function collectBlockFlats(dfBlock, natureArchive) {\n  const rmb = dfBlock.rmbBlock;\n  const flats = [];",
+    "new": "export function collectBlockFlats(dfBlock, natureArchive) {\n  const rmb = dfBlock.rmbBlock;\n  const flats = [];\n  void centredBase([0, 0, 0], null);",
+    "tests": ["test/thunderlock.test.js"],
+    "note": "The other half of the law: a flat DFU AlignToBase-s must not take the missile's anchor."
+  }
+]

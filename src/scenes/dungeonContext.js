@@ -24,7 +24,7 @@ import { remapSubMeshes } from '../world/texRemap.js';   // WM3: the one climate
 import { collectDungeonLights, dungeonAmbientFor, DUNGEON_AMBIENT, SPECIAL_AREA_BLOCK } from '../world/dungeonLights.js';   // AUDIT 26 F183: the castle / special-area ambients
 import { isHearthFlat } from '../systems/survival/hearth.js';   // HEARTH1: a bowl of fire down a corridor is a fire you can cook on
 import { CityLightAnimator, MINUTES_PER_DAY } from '../world/worldClock.js';
-import { billboardSize, mobileBillboardSize } from '../world/rmbFlats.js';
+import { billboardSize, mobileBillboardSize, centredBase } from '../world/rmbFlats.js';
 import { WATER_SCROLL_TILES_PER_SEC } from '../render/waterSurface.js';   // WATER-D1: the classic texel's flow, one home - the dungeon water draw lives here now
 import { enemyControllerHeight, idleSpriteHeight, feetFromCentre, centreFromFeet, spriteOriginY, keepRebuiltSpawn } from '../characters/enemyAnchor.js';   // INCIDENT 2026-09-04 (ceiling bats): SetupDemoEnemy.cs:103-115 capsule + DaggerfallMobileUnit.cs:398-411 anchor
 import { MobileUnit, MOBILE_DAEDRA_SEDUCER, SeducerTransformBehaviour } from '../characters/mobileUnit.js';   // C11: classic sprite monsters   // A5: the Seducer transform pair + its trigger
@@ -3019,7 +3019,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     const raw = billboardSize(t, record);
     const size = m.flatArchive ? { w: raw.w * ORB_SCALE, h: raw.h * ORB_SCALE } : raw;
     m.firePos = [...m.pos];
-    m.batch = renderer.createBillboardBatch(archive, record, size, [[m.firePos[0], m.firePos[1], m.firePos[2]]]);
+    m.batch = renderer.createBillboardBatch(archive, record, size, [centredBase(m.firePos, size)]);   // FIELD-GUN20: a missile is CENTRED on its position (DaggerfallMissile.cs:601-602, no AlignToBase) - the base is half a height under it, for the orb and every spell
     // FA1 slice 2: the missile flat ANIMATES while it flies -
     // DaggerfallMissile.cs:605 sets BillboardFramesPerSecond (5) on the
     // billboard it makes at :601. Frozen on frame 0, a fireball was a
