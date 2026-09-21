@@ -1364,10 +1364,10 @@ export function createWorldModes(host) {
    *  billboard is CENTRE-anchored, so the base ends up ON the marker
    *  inside a building and half a height BELOW it inside a dungeon.
    *  This port's billboard shader is BOTTOM-anchored (position = base,
-   *  the C11 law dungeonContext.js:1740 states), so the same visual
+   *  the C11 law dungeonContext.js:1741 states), so the same visual
    *  result needs the shift on the DUNGEON side - which is exactly the
    *  shift the dungeon's own RDB flats already take
-   *  (dungeonContext.js:1638, `y - size.h / 2`), and which a building's
+   *  (dungeonContext.js:1639, `y - size.h / 2`), and which a building's
    *  flats correctly do not (interiorContext.js passes its centers
    *  straight through).
    *
@@ -5355,7 +5355,7 @@ export function createWorldModes(host) {
           hudMessageSink: (t) => questBridge?.notebook?.addMessage(t),
           // MAC1 J: and the relock the dungeon's pause door needs, on
           // the same threading - the context owns no canvas of its own
-          // (dungeonContext.js:5892), so the OUTER host's one rides in.
+          // (dungeonContext.js:5941), so the OUTER host's one rides in.
           // This is the most-played pause door of the six: world.js
           // gates its own Escape ladder on exterior mode, so underground
           // the key falls to routeKey -> ui/input.js:657 -> the
@@ -5389,6 +5389,33 @@ export function createWorldModes(host) {
           },
         });
       dungeonCtx = ctx;
+      // WORLD-HOVER: THE THREE FAMILIES THIS HOST STANDS, registered
+      // once rather than composed inline on every press - and read by
+      // the hover plaque through the same seam, so what the plaque
+      // names is exactly what the press would reach.
+      //
+      // The dungeon exit is ActivateStaticDoor too (PlayerActivate.cs
+      // :364-369, gated :501-504), at DoorActivationDistance.
+      ctx.addActivationTargets(() => ctx.exitDoors.map((d, i) => ({ key: `exit:${i}`, aabb: doorWorldAabb(d), distance: RAY_DISTANCE, reach: DOOR_ACTIVATION_DISTANCE })));
+      // DQ1: the quest stands. B2 mounted them underground and the ray
+      // never learned them, so `clicked npc` and `clicked item` at a
+      // DUNGEON site could not fire - only kills could. Everything the
+      // interior arm needs was already here: the stand records are the
+      // same shape (one factory builds both lists), and PlayerActivate
+      // has no scene gate on the quest-resource arm at all (:326-339).
+      ctx.addActivationTargets(() => questFlatTargets(dungeonQuestFlats));
+      // AUDIT 64 F13: THE DUNGEON'S STATIC NPCs. RDBLayout.AddFlat gives
+      // an NPC-archive flat (334/346/357/175-184) a StaticNPC
+      // (RDBLayout.cs:1226-1231) and DaggerfallBillboard.cs:318-319/:343-349
+      // gives that FlatTypes.NPC a trigger BoxCollider - which is the only
+      // reason PlayerActivate's one ray can hit it (NPCCheck :1226-1229 ->
+      // ActivateStaticNPC :742-767). There is NO interior/exterior gate on
+      // that path, and DFU's own comment names dungeon instances ("guard
+      // at entrance of Daggerfall Castle and Benefactor and Sheogorath in
+      // Mantellan Crux"). Same reach and same routing as the other two
+      // rays: StaticNPCActivationDistance (:87) into activateStaticNpc,
+      // which carries the Info/PresentNPCInfo split.
+      ctx.addActivationTargets(() => (ctx.npcTargets?.() ?? []).map((pn, i) => ({ key: `person:${i}`, aabb: personAabb(pn), distance: STATIC_NPC_ACTIVATION_DISTANCE })));
       _dungeonAuthority = host.dungeonAuthority?.() ?? true; ctx.setAuthority?.(_dungeonAuthority);   // WORLD2: a dungeon built while another hosts starts as puppets
       // P10 host parity (2026-08-16 audit: only the standalone scene
       // installed the warp - a world-mode teleporter logged and
@@ -5559,31 +5586,12 @@ export function createWorldModes(host) {
         playerFeet: player.pos,
         nothingText: () => townTalk?.randomText?.(FOUND_NOTHING_VALUABLE_TEXT_ID) || 'You found nothing valuable.',
       }) : false);
-    const targets = dungeonCtx.exitDoors.map((d, i) => ({ key: `exit:${i}`, aabb: doorWorldAabb(d), distance: RAY_DISTANCE, reach: DOOR_ACTIVATION_DISTANCE }));   // AUDIT 65 MC-2 (review): the dungeon exit is ActivateStaticDoor too (:364-369, gated :501-504)
-    targets.push(...activationTargets(dungeonCtx.actions.objects));   // effects ride their precomputed aabb (crash fix, audit 2026-08-16)
-    targets.push(...dungeonCtx.lootTargets());   // S2: piles + lootable corpses
-    // DQ1: the quest stands. B2 mounted them underground and the ray
-    // never learned them, so `clicked npc` and `clicked item` at a
-    // DUNGEON site could not fire - only kills could. Everything the
-    // interior arm needs was already here: the stand records are the
-    // same shape (one factory builds both lists), and PlayerActivate
-    // has no scene gate on the quest-resource arm at all (:326-339).
-    targets.push(...questFlatTargets(dungeonQuestFlats));
-    // AUDIT 64 F13: THE DUNGEON'S STATIC NPCs. RDBLayout.AddFlat gives
-    // an NPC-archive flat (334/346/357/175-184) a StaticNPC
-    // (RDBLayout.cs:1226-1231) and DaggerfallBillboard.cs:318-319/:343-349
-    // gives that FlatTypes.NPC a trigger BoxCollider - which is the only
-    // reason PlayerActivate's one ray can hit it (NPCCheck :1226-1229 ->
-    // ActivateStaticNPC :742-767). There is NO interior/exterior gate on
-    // that path, and DFU's own comment names dungeon instances ("guard
-    // at entrance of Daggerfall Castle and Benefactor and Sheogorath in
-    // Mantellan Crux"). Same reach and same routing as the other two
-    // rays: StaticNPCActivationDistance (:87) into activateStaticNpc,
-    // which carries the Info/PresentNPCInfo split.
-    const dNpcs = dungeonCtx.npcTargets?.() ?? [];
-    dNpcs.forEach((pn, i) => {
-      targets.push({ key: `person:${i}`, aabb: personAabb(pn), distance: STATIC_NPC_ACTIVATION_DISTANCE });
-    });
+    // WORLD-HOVER: ONE construction seam. The five families this arm
+    // used to compose by hand are registered with the context at mount
+    // (see `_standDungeonTargets` beside the mount), so the press, the
+    // standalone host and the hover plaque all read one list. What each
+    // family IS, and why it is in the ray at all, is recorded there.
+    const targets = dungeonCtx.dungeonActivationTargets();
     const _pick = pickActivatableHit(eye, dir, targets, dungeonCtx.collider);
     // AUDIT 65 MC-2: ONE enemy arm at the RAY's reach, decided against
     // the ladder's winner - the interior ray's reasoning, underground.
@@ -5605,7 +5613,7 @@ export function createWorldModes(host) {
     }
     // ...and the NPC arm ENDS the activation, as the other two rays' do.
     if (key.startsWith('person:')) {
-      activateStaticNpc(dNpcs[Number(key.split(':')[1])]);
+      activateStaticNpc((dungeonCtx.npcTargets?.() ?? [])[Number(key.split(':')[1])]);   // WORLD-HOVER: the `person:` index is the registered producer's, so the handler reads THAT list - a second local copy is how the two drift
       return true;
     }
     if (key.startsWith('questflat:')) {
@@ -5802,7 +5810,7 @@ export function createWorldModes(host) {
     // the movers kept travelling - all of it under the open menu.
     // DFU UserInterfaceManager.AddWindow (:179-184) calls
     // PauseGame(true) for any PauseWhileOpen window (the default),
-    // which is what dungeon.js:292's `held` already implements.
+    // which is what dungeon.js:297's `held` already implements.
     // AUDIT 39 (#28): and the OUTER host's slot with them. AddWindow
     // pauses for the window, not for the slot it was pushed into -
     // and townTalk's slot really does hold one in these modes: this
@@ -5875,7 +5883,7 @@ export function createWorldModes(host) {
     // jump while the player still falls), and it was standing in for
     // both: a fall opened under a menu completed under it and
     // applyFallLanding charged the damage, a swimmer kept sinking, and
-    // the crouch edge still toggled. dungeon.js:495 is this same gate
+    // the crouch edge still toggled. dungeon.js:500 is this same gate
     // ("no movers, no motor").
     if (!overlayHeld) {
       // Audit F3: crouch stays live while paralyzed (DFU gates movement/jump only)
@@ -5983,7 +5991,7 @@ export function createWorldModes(host) {
       if (!overlayHeld) dungeonCtx.reportActivity?.({ running: player.isRunning && !player.standing, runningTally: player.isRunning && !player.riding, swimming: player.swimming, climbing: !!player.climb?.isClimbing, jumped: player.jumped, movingLessThanHalfSpeed: player.movingLessThanHalfSpeed, fell: player.landedFallDistance });   // P13 sneak state + P14 fall landing (AUDIT 26 F083: + the climbing arm)
       // PlayerMotor.StartRestGroundedCheck (:184-194) reads the LIVE
       // grounded state; dungeonContext's `_grounded` is host-fed and
-      // only dungeon.js:346 fed it, so in a world-hosted dungeon the
+      // only dungeon.js:351 fed it, so in a world-hosted dungeon the
       // rest gate read the initialiser `true` for the whole session
       // and R mid-fall opened the window DFU refuses (TEXT.RSC 355).
       if (!overlayHeld) dungeonCtx.reportMotor?.(player.grounded, player.velY, cam.yaw);
@@ -6159,7 +6167,7 @@ export function createWorldModes(host) {
 
     if (mode === 'dungeon') {
       if (pendingDungeonExit) { pendingDungeonExit = false; exitDungeonNow(); return true; }   // F-A5: outside any overlay dispatch
-      if (!overlayHeld) dungeonCtx.actions.update(dt);   // dungeon.js:293's `if (!held)` - a paused game advances no movers
+      if (!overlayHeld) dungeonCtx.actions.update(dt);   // dungeon.js:298's `if (!held)` - a paused game advances no movers
       if (!overlayHeld) dungeonCtx.automapTick?.(dt, cam.pos, fwd);   // A1: the 5 Hz reveal probes ride the same gate
       dungeonCtx.flicker.tick(dt);
       // AUDIT 26 F183: castle blocks and the one special area take
@@ -6946,7 +6954,7 @@ export function createWorldModes(host) {
     // V4 (the first-hour playthrough probe): THE WORLD HOST'S DUNGEON
     // MODE HAD NO COMBAT OR LOOT SURFACE AT ALL. worldModes mounts a
     // real dungeonContext but installed none of the hooks
-    // scenes/dungeon.js:363-413 carries, so a probe could take the
+    // scenes/dungeon.js:368-418 carries, so a probe could take the
     // classic start into Privateer's Hold and then see nothing inside
     // it - no foes, no vitals, no corpses. Same names and same shapes
     // as the standalone host's, so one probe reads either.
@@ -8696,7 +8704,7 @@ export function createWorldModes(host) {
      *  FLAG ONLY and presence-gated - both laws now stated once, in
      *  combat/playerWeapon.js's applyWeaponPose, with the citation.
      *  HARD2c: this used to spell them out, and named `world.js:5436`
-     *  and `dungeonContext.js:5902` for its two sibling copies - lines
+     *  and `dungeonContext.js:5951` for its two sibling copies - lines
      *  that had moved to :4418 and :5457. Three copies of a two-line
      *  law, and even the comment pointing between them had gone stale. */
     applyWeaponPose(pose) {

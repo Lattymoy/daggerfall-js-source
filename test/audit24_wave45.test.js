@@ -118,7 +118,7 @@ test('audit24 wave45: worldModes owns the drag indoors - that half was always ri
 });
 
 test('audit24 wave45: the standalone dungeon host keeps its own shape, and it is the correct one', () => {
-  // dungeon.js:258-269 - attack, then return, with no mode in the test
+  // dungeon.js:258-274 - attack, then return, with no mode in the test
   // at all, because nothing else is listening there. It is the
   // reference the two streaming hosts have now been brought to.
   const d = rd('src/scenes/dungeon.js');

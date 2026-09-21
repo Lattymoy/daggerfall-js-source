@@ -266,7 +266,7 @@ Outside it is not.
 
 | host | collider | where the ground is |
 |---|---|---|
-| `dungeonContext.js:278` | `new Collider(() => -Infinity)` | floor meshes |
+| `dungeonContext.js:279` | `new Collider(() => -Infinity)` | floor meshes |
 | `interiorContext.js:320` | `new Collider(() => -Infinity)` | floor meshes |
 | `exterior.js:509` | `new Collider(() => GROUND_OFFSET * 0.025)` | **`heightAt`** |
 | `world.js:983` | `new Collider(heightAt)` | **`heightAt`** |

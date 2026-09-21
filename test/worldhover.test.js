@@ -20,8 +20,11 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
+import { readFileSync } from 'node:fs';
+
 import {
   resolveHover, frameSignature, hoverLines, keyItemises, ITEMISED_KEYS, HOVER_MAX,
+  composeActivationTargets,
 } from '../src/systems/worldHover.js';
 import {
   showWorldPlaque, destroyWorldPlaque, plaqueAnchor, worldPlaqueOn, worldHoverFrame,
@@ -29,6 +32,8 @@ import {
 } from '../src/ui/worldPlaque.js';
 import { CROSSHAIR_ARM, crosshairCentreY } from '../src/ui/hudCrosshair.js';
 import { hudScale } from '../src/ui/hud.js';
+
+const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 
 // ── A DOCUMENT, JUST ENOUGH OF ONE ───────────────────────────────
 
@@ -376,4 +381,57 @@ test('WORLD-HOVER: an occluded target is not named', () => {
     assert.equal(worldHoverFrame({ eye: [0, 0, 0], dir: [0, 0, 1], collider: open, targets, ...deps })?.key, 'loot:1');
     assert.equal(worldHoverFrame({ eye: [0, 0, 0], dir: [0, 0, 1], collider: walled, targets, ...deps }), null);
   });
+});
+
+// ── ONE CONSTRUCTION SEAM ────────────────────────────────────────
+
+test('WORLD-HOVER: the dungeon\'s target list has ONE builder, and the hover reads it', () => {
+  // The list was composed inline in TWO places against one context -
+  // the modal host's dungeon arm and the standalone dev door's - and
+  // the hover would have been a third. AUDIT 17i's failure by name: a
+  // family added later is seen by whichever builder its author was
+  // looking at, and the other two go on answering an older world.
+  const ctx = read('src/scenes/dungeonContext.js');
+  assert.match(ctx, /return composeActivationTargets\(\[\.\.\.activationTargets\(actions\.objects\), \.\.\.lootTargets\(\)\], _hostTargets\);/,
+    'the context composes what the context owns, through the one pure law');
+  // ...and the hover pulls THAT list, not a narrower one of its own.
+  assert.match(ctx, /targets: api\.dungeonActivationTargets,/,
+    'the plaque races the same list the press does');
+  // BOTH ladders read it, and neither composes one.
+  for (const [f, src] of [['src/scenes/worldModes.js', read('src/scenes/worldModes.js')],
+    ['src/scenes/dungeon.js', read('src/scenes/dungeon.js')]]) {
+    assert.match(src, /(dungeonCtx|ctx)\.dungeonActivationTargets\(\)/, `${f} reads the seam`);
+  }
+  assert.doesNotMatch(read('src/scenes/dungeon.js'), /activationTargets\(ctx\.actions\.objects\)/,
+    'the dev door no longer keeps a hand copy');
+  // THE DIFFERENCE BETWEEN THE TWO HOSTS IS DECLARED, not accidental.
+  // The modal host registers its three families at the mount; the
+  // standalone dev door registers none, because it has no world to exit
+  // to and no `exit:`/`person:` arm - a target it cannot serve would win
+  // the pick and eat the press in silence.
+  const wm = read('src/scenes/worldModes.js');
+  assert.equal((wm.match(/ctx\.addActivationTargets\(/g) ?? []).length, 3,
+    'the exit doors, the quest stands and the static NPCs - three, named');
+  assert.doesNotMatch(read('src/scenes/dungeon.js'), /addActivationTargets/,
+    'and the dev door stands none of them, on purpose');
+});
+
+test('WORLD-HOVER: the seam composes the context\'s own families and the host\'s, in that order', () => {
+  // Driven, not read: a registry that silently drops a producer, or
+  // appends one twice, passes every source sweep above.
+  const own = [{ key: 'loot:0' }];
+  const a = [{ key: 'exit:0' }];
+  const b = [{ key: 'person:0' }];
+  const hosts = [];
+  const add = (fn) => { hosts.push(fn); return () => { const i = hosts.indexOf(fn); if (i >= 0) hosts.splice(i, 1); }; };
+  assert.deepEqual(composeActivationTargets(own, hosts), own, 'nothing registered is the context alone');
+  const off = add(() => a);
+  add(() => b);
+  add(() => []);
+  add(() => null);
+  assert.deepEqual(composeActivationTargets(own, hosts).map((t) => t.key), ['loot:0', 'exit:0', 'person:0'],
+    'the context first, then each host family in the order it was registered; an empty one adds nothing');
+  off();
+  assert.deepEqual(composeActivationTargets(own, hosts).map((t) => t.key), ['loot:0', 'person:0'],
+    'and a producer that leaves takes its family with it');
 });

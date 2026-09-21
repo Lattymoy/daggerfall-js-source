@@ -60,6 +60,37 @@ export function hoverLines(items, max = HOVER_MAX) {
 }
 
 /**
+ * ONE CONSTRUCTION SEAM, and its composition law.
+ *
+ * A host's activation target list was built inline wherever it was
+ * needed - the dungeon's in two places against one context, and the
+ * hover would have been a third. That is the failure AUDIT 17i names:
+ * a family added later is seen by whichever builder its author
+ * happened to be looking at, and the others go on answering an older
+ * world. The rule is that a scene composes its list ONCE and the press,
+ * every other ladder and the plaque all read that one.
+ *
+ * `own` is what the scene itself owns. `producers` are the families
+ * its HOST registered - and registering rather than passing an options
+ * bag is the point: a host that cannot ANSWER a family must not stand
+ * it, because a target nobody serves still wins the pick and eats the
+ * press in silence. The standalone `?dungeon` door registers none of
+ * the modal host's three for exactly that reason.
+ *
+ * Pure, so the law can be driven rather than read: a registry that
+ * drops a producer or appends one twice passes every source sweep ever
+ * written.
+ */
+export function composeActivationTargets(own, producers) {
+  const targets = [...(own ?? [])];
+  for (const fn of producers ?? []) {
+    const t = fn?.();
+    if (t?.length) targets.push(...t);
+  }
+  return targets;
+}
+
+/**
  * THE FRAME. One record, and the draw paints exactly what is in it.
  *
  *   key    - the winning pick's key; the identity the guard compares

@@ -1166,7 +1166,8 @@ test('PX21c / WORLD-HOVER: the plaque names a pile without opening it, on the ta
   assert.ok(frame.length > 0 && frame.length < 12000, 'the window is the head of drawFoes, not the whole function');
   assert.doesNotMatch(frame, /_hoverAt/, 'the 10Hz clock is GONE, not left ticking beside the per-frame call');
   assert.match(frame, /worldHoverFrame\(\{/, 'one seam, called where the host already draws');
-  assert.match(frame, /targets: api\.lootTargets,/, 'a THUNK - the model pulls the list, so a host with an expensive one can cache it');
+  assert.match(frame, /targets: api\.dungeonActivationTargets,/,
+    'a THUNK, and the SAME list the press races - one construction seam, so the plaque cannot name what the button ignores');
   assert.match(frame, /contents: api\.lootContents,/);
   assert.match(hov, /const hit = pickActivatableHit\(eye, dir, targets\?\.\(\) \?\? \[\], collider\);/, 'the take\'s own pick');
   // lootContents shares takeLoot's key vocabulary rather than a second one.

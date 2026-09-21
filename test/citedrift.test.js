@@ -8,7 +8,7 @@
 //
 //   - `ui/spellMakerWindow.js` declared "RECORDED DEPARTURES" and closed
 //     the first with "Ledger A carries the widget row already
-//     (Port-Ledger.md:786)". Section A carried no widget row at all -
+//     (Port-Ledger.md:787)". Section A carried no widget row at all -
 //     the AUDIT 17m / F7 shape, a claim of approval standing in for one -
 //     and :686 was the stat-colour NIT row by then. The row exists now
 //     (Ledger A, TB1) and the sites cite it BY NAME.
@@ -663,9 +663,9 @@ const SOURCE_CITES = [
   // AUDIT QS6 F1, a fifth time and at a second door: this row names FIVE hosts
   // and the table captured ONE, with a sixth number baked into the pick - so
   // citeMerge bumped the LITERAL at the BOX1/TI3 merge and left the doc, and
-  // four of the five had been stale for waves (`worldModes.js:5843` for a line
+  // four of the five had been stale for waves (`worldModes.js:5851` for a line
   // that is 5921, `world.js:9526` for 8836, `interior.js:298` for 329,
-  // `dungeon.js:889` for 959). Every one is captured now, against the
+  // `dungeon.js:894` for 959). Every one is captured now, against the
   // projection each host really builds.
   ['bible/10-UI/Settings-Screen-Spec.md', /`exterior\.js:(\d+)`, `dungeon\.js:\d+`/, EX, /^ {6}fieldOfView\(\),$/],
   ['bible/10-UI/Settings-Screen-Spec.md', /`exterior\.js:\d+`, `dungeon\.js:(\d+)`/, 'src/scenes/dungeon.js', /^ {4}const proj = mirrorProjectionX\(perspective\(fieldOfView\(\), largeHudWorldAspect/],

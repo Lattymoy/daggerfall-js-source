@@ -282,9 +282,15 @@ test('AUDIT 64 F13: the layout carries SetLayoutData(RdbObject) inputs, and the 
   // actions" is never activated as a person.
   assert.ok(d.includes('ACTION_FLAGS.ShowText') && d.includes('ACTION_FLAGS.ShowTextWithInput'));
   const m = src('src/scenes/worldModes.js');
-  assert.ok(m.includes('const dNpcs = dungeonCtx.npcTargets?.() ?? [];'),
+  // WORLD-HOVER: registered with the context at mount rather than
+  // composed inline on every press - one list for the press, the
+  // standalone host and the hover plaque. The people are still the
+  // dungeon's, at the same reach, routed the same way.
+  assert.ok(m.includes("ctx.addActivationTargets(() => (ctx.npcTargets?.() ?? []).map((pn, i) => ({ key: `person:${i}`, aabb: personAabb(pn), distance: STATIC_NPC_ACTIVATION_DISTANCE })));"),
     'the dungeon ray carries person: targets at last');
-  assert.ok(m.includes('activateStaticNpc(dNpcs[Number(key.split(\':\')[1])]);'));
+  // ...and the handler reads THAT producer's list, not a second local
+  // copy of it - the `person:N` index is the producer's own.
+  assert.ok(m.includes("activateStaticNpc((dungeonCtx.npcTargets?.() ?? [])[Number(key.split(':')[1])]);"));
   // ...and the hook reaches the DUNGEON mount specifically. A bare
   // `m.includes('setupStaticNpc,')` also matches the INTERIOR mount, so
   // it cannot see the dungeon one being deleted: slice the

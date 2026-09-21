@@ -41,7 +41,7 @@ import { mwViewFrame, mwViewWheel, mwViewDrawBody, mwViewFootstep } from '../pla
 import { PITCH_LIMIT } from '../player/mwCamera.js';   // MW-D30: camera.cpp:323-331's own clamp
 import { jumpSpeedMultiplier, isEnhancedJumping } from '../systems/skills.js';   // AUDIT 64 F2: CheckAirControl's IsEnhancedJumping disjunct
 import { pickFoe,   // TI1: the lock-on pick
-  pickActivatableHit, activationTargets,   // AUDIT 63 F33 (review): the pick hands its distance back so the enemy arm can lose to a nearer target
+  pickActivatableHit,   // AUDIT 63 F33 (review): the pick hands its distance back so the enemy arm can lose to a nearer target   // WORLD-HOVER: the LIST comes off the context's one seam now
   RAY_DISTANCE, TOO_FAR_AWAY_TEXT,   // AUDIT 65 MC-2: the ONE reach the foe arm competes at (DFU's one ray), and the refusal each handler speaks for itself
 } from '../player/activate.js';
 // AUDIT 63 F33: PlayerActivate.ActivateMobileEnemy (:800-841) - the
@@ -127,7 +127,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
       // below, after this context; null falls to standing defaults.
       motorState: () => (_motorRef ? { eyeLevel: _motorRef.eye[1] - _motorRef.pos[1], capsule: _motorRef.height } : null),
       // MAC1 J: this host's canvas, for the pause door's relock. The
-      // context owns none of its own (dungeonContext.js:5892), so each
+      // context owns none of its own (dungeonContext.js:5941), so each
       // dungeon host hands its own in and the resume gesture carries
       // the pointer back with it (ui/pauseDoor.js:270-287).
       relock: () => requestLook(canvas) });
@@ -260,8 +260,13 @@ export async function bootDungeon(canvas, renderer, params, status) {
         playerFeet: player.pos,
         nothingText: () => ctx.randomText?.(FOUND_NOTHING_VALUABLE_TEXT_ID) || 'You found nothing valuable.',   // GetRandomText(8999)
       });
-    const targets = activationTargets(ctx.actions.objects);   // effects ride their precomputed aabb (crash fix, audit 2026-08-16)
-    targets.push(...ctx.lootTargets());   // S2: piles + lootable corpses
+    // WORLD-HOVER: ONE construction seam, shared with the modal host
+    // and the hover plaque. This host registers NOTHING with it, and
+    // that is the recorded difference rather than an accident of two
+    // hand-copied lists: the dev door has no world to exit to and no
+    // `exit:` or `person:` arm in the ladder below, so standing those
+    // targets would win the pick and eat the press in silence.
+    const targets = ctx.dungeonActivationTargets();
     const _pick = pickActivatableHit(eye, dir, targets, ctx.collider);
     if (_enemyArm(RAY_DISTANCE, _pick?.distance ?? Infinity)) return null;   // MC-2: the split pair's FAR half ran with `nearerThan` Infinity, so a foe 20 off ate a click DFU gives a chest at 5
     const key = _pick?.key ?? null;

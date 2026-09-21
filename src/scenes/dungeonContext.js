@@ -190,7 +190,8 @@ import { flashPlayerDamage } from '../ui/damageFlash.js';
 import { resetVitalsDetector } from '../ui/hudVitals.js';   // BLOOD AUDIT 5: the load's detector reset   // AUDIT 24 (wave 39): ShowPlayerDamage
 import { activeMemberships } from '../systems/guilds.js';   // F117
 import { avoidDeath, AVOID_DEATH_TEXT } from '../systems/guildServices.js';   // F117: Stendarr
-import { pickActivatableHit, RAY_DISTANCE, TREASURE_ACTIVATION_DISTANCE } from '../player/activate.js';   // PX21c: the hover runs the take's own pick; AUDIT 65 MC-2: the ray's reach, and each family's own
+import { activationTargets, RAY_DISTANCE, TREASURE_ACTIVATION_DISTANCE } from '../player/activate.js';
+import { composeActivationTargets } from '../systems/worldHover.js';   // WORLD-HOVER: the composition law is pure, so it lives with the model and can be DRIVEN   // WORLD-HOVER: the ONE construction seam composes the action objects' targets here; AUDIT 65 MC-2: the ray's reach, and each family's own
 import { worldHoverFrame, destroyWorldPlaque } from '../ui/worldPlaque.js';   // PX21c, WORLD-HOVER: one seam, one plaque
 import { isEnhanced } from '../systems/uiSkin.js';
 import { combatVisualsOn, foeDraw, markConcealedHit } from '../systems/combatVisuals.js';   // ECV1: what the enhanced skin draws for a concealed foe
@@ -2621,7 +2622,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // NEXT updateMissiles pass to fill. But the push lands in a
     // MICROTASK - this is async and its one caller does not await it -
     // and both hosts draw dynamicDraws BEFORE they call drawFoes
-    // (dungeon.js:1001 against :1039; worldModes.js:6204 against :6210).   // QS6: both pairs' SECOND half was stale before this slice - they named neither `drawFoes` call, and a positional bump would have moved a wrong number by the right offset; re-resolved by content
+    // (dungeon.js:1009 against :1048; worldModes.js:6220 against :6244).   // QS6: both pairs' SECOND half was stale before this slice - they named neither `drawFoes` call, and a positional bump would have moved a wrong number by the right offset; re-resolved by content
     // So the very next frame drew the arrow with a NULL matrix, and
     // `uniformMatrix4fv(uModel, false, null)` throws - Float32List is
     // a non-nullable WebIDL union. Firing a bow killed the frame loop,
@@ -3179,7 +3180,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
               // this host was the FOURTH BODY of the player-arrow law
               // and is now the fourth CALLER. combat/arrowFlight.js's
               // playerArrowHitFoe is the one copy world.js:11359,
-              // exterior.js:4786 and worldModes.js:6364 already ran;
+              // exterior.js:4786 and worldModes.js:6372 already ran;
               // the flag said the divergence would bite and it already
               // had. This copy splashed at the ARROW TIP
               // (`[m.pos[0], m.pos[1], m.pos[2]]`) on the claim that
@@ -4656,11 +4657,16 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     worldHoverFrame({
       eye,
       dir: eye ? [-view[2], -view[6], -view[10]] : null,
-      targets: api.lootTargets,
+      targets: api.dungeonActivationTargets,   // the SAME list the press races - one seam, so the plaque cannot name what the button ignores
       collider,
       canvas,
       contents: api.lootContents,
-      name: (key) => ({ title: key.startsWith('corpse:') ? 'Remains' : 'Loot', subs: [] }),
+      // WORLD-HOVER: the ladder is the NEXT slice's - until it lands this
+      // host names only what PX21c named, and everything else draws
+      // nothing at all rather than borrowing a word that is not its own.
+      // (A door labelled "Loot" is worse than a door labelled nothing.)
+      name: (key) => (key.startsWith('corpse:') ? { title: 'Remains' }
+        : (key.startsWith('loot:') || key.startsWith('droppedLoot:')) ? { title: 'Loot' } : null),
     });
     const _mobileBatches = [];   // C11: the frame's live sprite-mobile quads
     if (playerFeet) { lastPlayerFeet = [...playerFeet]; lastPlayerHeight = playerHeight; }   // ROAD-H H2: the enemy AoC blast reads the player's live capsule through castEnemySpell
@@ -5402,6 +5408,49 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // host is told ONCE, not once a frame for the rest of the visit.
   let _clearedCheckT = 0, _clearedSent = false;
   const CLEARED_CHECK_INTERVAL_S = 5;
+
+  // WORLD-HOVER hoisted this OUT of the api literal: the construction
+  // seam below composes it, and a method reaching back through `api`
+  // inside `api`'s own initialiser is the TDZ shape the boot gate
+  // refuses (test/tdz_selfreference.test.js). A named function is what
+  // both of them call, and `api.lootTargets` below is the same one.
+  // S2 pickup: piles + dead foes' corpses as activation targets;
+  // U26: activating one now OPENS THE INVENTORY with the pile as the
+  // remote target, which is what PlayerActivate does - the old
+  // takeLoot vacuumed everything in one keypress.
+  function lootTargets() {
+    const targets = [];
+    // AUDIT 65 MC-2: every kind here competes for the ray at the
+    // RAY's reach (PlayerActivate.cs:76/:314) and carries its own
+    // handler constant beside it, because the refusal is spoken
+    // INSIDE the handler - ActivateLootContainer's
+    // `hit.distance > TreasureActivationDistance` (:868-873) and the
+    // corpse arm's `hit.distance > CorpseActivationDistance`
+    // (:936-941), each SetMidScreenText(youAreTooFarAway). Dropping
+    // the target at the pick, as the port did, answers with silence
+    // and lets the click fall through to whatever stood behind it.
+    lootPiles.forEach((p, i) => {
+      if (!p.batch) return;
+      const [hx, hy] = p.half;
+      targets.push({ key: `loot:${i}`, aabb: { min: [p.pos[0] - hx, p.pos[1], p.pos[2] - hx], max: [p.pos[0] + hx, p.pos[1] + hy * 2, p.pos[2] + hx] }, distance: RAY_DISTANCE, reach: TREASURE_ACTIVATION_DISTANCE });
+    });
+    foes.forEach((f, i) => {
+      if (!f.dead || !f.entity?.items?.length) return;
+      const p = f.ai.feet;
+      // PlayerActivate.cs:85/:938 - a corpse has its OWN reach,
+      // CorpseActivationDistance = 150 * GlobalScale = 3.75, not the
+      // 128-unit default the loot piles use.
+      targets.push({ key: `corpse:${i}`, aabb: { min: [p[0] - 0.5, p[1], p[2] - 0.5], max: [p[0] + 0.5, p[1] + 0.6, p[2] + 0.5] }, distance: RAY_DISTANCE, reach: CORPSE_ACTIVATION_DISTANCE });
+    });
+    targets.push(...droppedLoot.lootTargets());   // U26: the player's own drops
+    targets.push(...droppedTorches.targets());   // HT1: the dropped torches, at the mod's 3.2
+    targets.push(...camps.targets());   // SURV3: the fires, at the same 3.2
+    return targets;
+  }
+
+  // WORLD-HOVER: the host-registered halves of the activation target
+  // list (see addActivationTargets below).
+  const _hostTargets = [];
 
   const api = {
     // AUDIT 19 / 1:1: SelectCurrentSong's dungeon arm seeds DFRandom with
@@ -6571,39 +6620,45 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         && !(pn.action && (pn.action.actionFlag === ACTION_FLAGS.ShowText
           || pn.action.actionFlag === ACTION_FLAGS.ShowTextWithInput)));
     },
-    // S2 pickup: piles + dead foes' corpses as activation targets;
-    // U26: activating one now OPENS THE INVENTORY with the pile as the
-    // remote target, which is what PlayerActivate does - the old
-    // takeLoot vacuumed everything in one keypress.
-    lootTargets() {
-      const targets = [];
-      // AUDIT 65 MC-2: every kind here competes for the ray at the
-      // RAY's reach (PlayerActivate.cs:76/:314) and carries its own
-      // handler constant beside it, because the refusal is spoken
-      // INSIDE the handler - ActivateLootContainer's
-      // `hit.distance > TreasureActivationDistance` (:868-873) and the
-      // corpse arm's `hit.distance > CorpseActivationDistance`
-      // (:936-941), each SetMidScreenText(youAreTooFarAway). Dropping
-      // the target at the pick, as the port did, answers with silence
-      // and lets the click fall through to whatever stood behind it.
-      lootPiles.forEach((p, i) => {
-        if (!p.batch) return;
-        const [hx, hy] = p.half;
-        targets.push({ key: `loot:${i}`, aabb: { min: [p.pos[0] - hx, p.pos[1], p.pos[2] - hx], max: [p.pos[0] + hx, p.pos[1] + hy * 2, p.pos[2] + hx] }, distance: RAY_DISTANCE, reach: TREASURE_ACTIVATION_DISTANCE });
-      });
-      foes.forEach((f, i) => {
-        if (!f.dead || !f.entity?.items?.length) return;
-        const p = f.ai.feet;
-        // PlayerActivate.cs:85/:938 - a corpse has its OWN reach,
-        // CorpseActivationDistance = 150 * GlobalScale = 3.75, not the
-        // 128-unit default the loot piles use.
-        targets.push({ key: `corpse:${i}`, aabb: { min: [p[0] - 0.5, p[1], p[2] - 0.5], max: [p[0] + 0.5, p[1] + 0.6, p[2] + 0.5] }, distance: RAY_DISTANCE, reach: CORPSE_ACTIVATION_DISTANCE });
-      });
-      targets.push(...droppedLoot.lootTargets());   // U26: the player's own drops
-      targets.push(...droppedTorches.targets());   // HT1: the dropped torches, at the mod's 3.2
-      targets.push(...camps.targets());   // SURV3: the fires, at the same 3.2
-      return targets;
+    /**
+     * WORLD-HOVER: THE ONE CONSTRUCTION SEAM for this dungeon's
+     * activation targets.
+     *
+     * The list was built inline in TWO places against this same
+     * context - the modal host's dungeon arm (scenes/worldModes.js)
+     * and the standalone dev door's (scenes/dungeon.js) - and the
+     * hover would have been a third. That is the failure AUDIT 17i
+     * names: a family added later is seen by whichever builder its
+     * author happened to be looking at, and the other two go on
+     * quietly answering an older world.
+     *
+     * The context composes what the context OWNS - the action objects
+     * and `lootTargets` (piles, corpses, the player's own drops, the
+     * dropped torches, the camps). Everything else a host stands - its
+     * exit doors, its quest stands, its static NPCs - the host
+     * REGISTERS, once, at mount.
+     *
+     * Registering rather than taking an options bag is the whole
+     * point. A host that cannot ANSWER a family must not stand it:
+     * the standalone `?dungeon` door has no world to exit to and no
+     * `exit:` or `person:` arm in its ladder, so such a target would
+     * win the pick and eat the press in silence. That difference
+     * between the two hosts is real today and entirely invisible -
+     * it IS the difference between two hand-copied lists. Here it is
+     * one line at each mount, and the hover inherits it for free,
+     * which is what stops the plaque naming something the button
+     * ignores.
+     */
+    addActivationTargets(fn) {
+      if (typeof fn !== 'function') return () => {};
+      _hostTargets.push(fn);
+      return () => { const i = _hostTargets.indexOf(fn); if (i >= 0) _hostTargets.splice(i, 1); };
     },
+    dungeonActivationTargets() {
+      // effects ride their precomputed aabb (crash fix, audit 2026-08-16)
+      return composeActivationTargets([...activationTargets(actions.objects), ...lootTargets()], _hostTargets);
+    },
+    lootTargets,
     /** PX21c: what a loot key HOLDS, without opening it - the same
      *  three kinds takeLoot resolves, read-only, for the hover plaque.
      *  It shares takeLoot's own key vocabulary rather than inventing a
