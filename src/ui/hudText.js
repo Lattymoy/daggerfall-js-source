@@ -93,9 +93,34 @@ export class HudText {
     this.onMessage = null;
   }
 
-  /** PopupText.AddText verbatim - the row is queued unconditionally;
-   *  only the timer retires rows. */
+  /** PopupText.AddText - the row is queued unconditionally and only the
+   *  timer retires rows.
+   *
+   *  ONE DEPARTURE, AND IT IS THE SKIN'S (INFO1, 2026-09-21, kurkku on
+   *  Discord: "an empty message box appears when clicking on residences
+   *  in info mode... I assume the intended behavior is that nothing
+   *  comes up at all"). A NAMELESS row is not queued at all.
+   *
+   *  DFU's AddText is safe to call with an empty string because a row
+   *  there is a bare TextLabel: "" measures zero and paints nothing.
+   *  A row HERE is a toast with a plate behind it (ENH-NOTICE3, one per
+   *  row), so an empty string is a visible empty box - which is exactly
+   *  what a residence's info click drew, because a residence has no
+   *  name and `discoverBuilding` stores `building.name ?? ''`.
+   *
+   *  The guard belongs here rather than at that one caller: every
+   *  `say(someName)` in the port has the same hole, and AddText's LAST
+   *  line files the row in the notebook's message ring (:123), so an
+   *  empty row was also writing a blank line into the journal's
+   *  Messages page - a second symptom of the same call, and one nobody
+   *  would have reported.
+   *
+   *  Whitespace counts as nameless: a name that is all spaces paints
+   *  the same empty plate. The text itself is queued UNTRIMMED, because
+   *  what is drawn is the caller's string and this is a gate, not a
+   *  formatter. */
   add(text, delayInSeconds = HUD_TEXT_POP_DELAY) {
+    if (String(text ?? '').trim() === '') return;
     if (this.lines.length === 0) this.timer = delayInSeconds;
     else if (this.timer >= 0) this.timer = Math.max(this.timer, delayInSeconds);
     else this.nextPopDelay = Math.max(this.nextPopDelay, delayInSeconds);
