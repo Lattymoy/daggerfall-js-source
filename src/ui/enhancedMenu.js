@@ -221,6 +221,7 @@ let keyHandler = null;
 let lockHandler = null;
 let resizeHandler = null;   // PX1: the home ground's redraw-on-resize
 let groundTimer = null;     // PX1b: the home sky's 8fps clock - cleared by every rebuild and by unmount
+let questTimer = null;      // QT-LIVE1: the journal's once-a-second timer redraw - the same two owners
 let pauseTab = 'system';    // PX3: which tab the pause window shows - System lands on Resume/Save
 let questSel = null;        // PX4: the journal's selected row - 'a:<uid>' | 'f:<index>' | null = first active
 let statsSec = 'character'; // PX6: the Stats page's rail - character | attributes | skills | standing
@@ -2555,6 +2556,37 @@ function statsStanding(detail) {
 
 /** PX5: remaining game seconds as words - days+hours above a day,
  *  hours+minutes below it, minutes alone under an hour. */
+/** QT-LIVE1 (Mac, 2026-09-21: "The time doesn't print out live?"):
+ *  the timer line for the selected quest off a FRESH quest log, or
+ *  null when that quest no longer has a running clock. The words are
+ *  the same the render writes; this is what the interval writes. */
+export function questTimerWords(log, key) {
+  const q = questRail(log ?? { active: [], finished: [] }).active.find((r) => r.key === key);
+  if (!q || q.clockSeconds == null) return null;
+  return { text: `Time remains: ${remainWords(q.clockSeconds)}`, urgent: q.clockSeconds < 86400 };
+}
+
+/** The journal rendered once when it opened and again on a click, so
+ *  the line read whatever the clock was at that moment. Offline the
+ *  world stops under the menu and that is harmless; online it runs on
+ *  at twelve to one, and a minute fell off every five real seconds
+ *  with the line not moving. Once a second, re-read the host's log
+ *  (the bridge answers the remainder AS OF NOW, so nothing is ticked
+ *  under the pause gate) and rewrite the span in place - the panel is
+ *  not rebuilt, so the selection and the scroll stand. A clock that
+ *  fired or a quest that ended under the menu is a stale PANEL, and
+ *  that repaints. One owner: cleared by every rebuild and by unmount,
+ *  the ground clock's own law. */
+function armQuestTimer(span, key) {
+  if (questTimer) { clearInterval(questTimer); questTimer = null; }
+  questTimer = setInterval(() => {
+    const w = questTimerWords(hooks.questLog?.(), key);
+    if (!w) { render(); return; }
+    span.textContent = w.text;
+    span.className = `px-qtimer${w.urgent ? ' urgent' : ''}`;
+  }, 1000);
+}
+
 function remainWords(s) {
   const d = Math.floor(s / 86400), h = Math.floor((s % 86400) / 3600), m2 = Math.floor((s % 3600) / 60);
   if (d > 0) return `${d} day${d === 1 ? '' : 's'}${h ? ` ${h} hour${h === 1 ? '' : 's'}` : ''}`;
@@ -2657,7 +2689,9 @@ function pauseQuests(body) {
       if (sel.clockSeconds != null) {
         // Under a game day the words go URGENT gold.
         const urgent = sel.clockSeconds < 86400;
-        meta.append(el('span', `px-qtimer${urgent ? ' urgent' : ''}`, `Time remains: ${remainWords(sel.clockSeconds)}`));
+        const timer = el('span', `px-qtimer${urgent ? ' urgent' : ''}`, `Time remains: ${remainWords(sel.clockSeconds)}`);
+        meta.append(timer);
+        armQuestTimer(timer, sel.key);
       }
       if (meta.childNodes.length) detail.append(meta);   // PX22: an empty meta line is a gap the eye reads as a mistake
     }
@@ -2711,6 +2745,7 @@ function render() {
  *  scroll throws the player back to the top of 66 Video rows. */
 function renderInto() {
   if (groundTimer) { clearInterval(groundTimer); groundTimer = null; }
+  if (questTimer) { clearInterval(questTimer); questTimer = null; }
   app.innerHTML = '';
   // PX1/PX2: both doors open on the pixel home; every section keeps
   // its shell.
@@ -2971,6 +3006,7 @@ export function mountEnhancedMenu(host, {
       if (lockHandler && typeof document !== 'undefined') document.removeEventListener('pointerlockchange', lockHandler);
       if (resizeHandler) globalThis.removeEventListener('resize', resizeHandler);
       if (groundTimer) { clearInterval(groundTimer); groundTimer = null; }
+      if (questTimer) { clearInterval(questTimer); questTimer = null; }
       // FIX-F: and the rebind pane's own capture listener, which is on
       // the DOCUMENT and would outlive this screen exactly as the one
       // above would.
