@@ -663,7 +663,7 @@ const SOURCE_CITES = [
   // AUDIT QS6 F1, a fifth time and at a second door: this row names FIVE hosts
   // and the table captured ONE, with a sixth number baked into the pick - so
   // citeMerge bumped the LITERAL at the BOX1/TI3 merge and left the doc, and
-  // four of the five had been stale for waves (`worldModes.js:5857` for a line
+  // four of the five had been stale for waves (`worldModes.js:5889` for a line
   // that is 5921, `world.js:9630` for 8836, `interior.js:303` for 329,
   // `dungeon.js:889` for 959). Every one is captured now, against the
   // projection each host really builds.
@@ -939,7 +939,7 @@ test('CD6: every `src/` line Port-Status cites is the line it describes', () => 
 // The G1 lane re-resolved ~180 `:NNN` cites after moving code in four
 // hosts, and the pass advanced only the LEADING number of every
 // multi-number citation: `cityGuards.js:806-716`, `world.js:7202-7176`,
-// `worldModes.js:1245 against :1056`. Forty of them came out as ranges
+// `worldModes.js:1246 against :1056`. Forty of them came out as ranges
 // that cannot exist, and every pin in this file was green throughout,
 // because each one resolves a single number a human chose to list.
 //

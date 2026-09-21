@@ -81,6 +81,25 @@ export const SUMMON_TEXT = Object.freeze({
   notToday: 480, areYouSure: 481, before: 482, failed: 484,
 });
 
+/** DAEDRA1 - THE SUMMONING'S OWN MACRO, and the reason it needs one.
+ *  Record 481 reads "Today is %dat, the day of summoning for %dae. Do
+ *  you, %pcn, wish to risk you life and very soul by summoning %dae
+ *  into our mundane world?" - three symbols, and only ONE of them is
+ *  this window's to answer.
+ *
+ *  %dat and %pcn are MacroHelper's global rows and resolve from the
+ *  shared context like every other box's. %dae is
+ *  `DaggerfallDaedraSummoningWindow`'s own (DFU makes that window the
+ *  IMacroContextProvider for its boxes), and there is no global source
+ *  for it: which prince answers is decided right here, by the day and
+ *  the coven's roll. So the value travels with the box.
+ *
+ *  A null daedra - the "not a summoning day" record, which names none -
+ *  answers null, and `expandMacroValues` leaves the token verbatim
+ *  rather than printing an empty hole. That record does not carry %dae
+ *  anyway; the posture is the guard, not a case. */
+export const summonMacroValues = (daedra) => Object.freeze({ dae: daedra?.name ?? null });
+
 /** The five daedric foes a FAILED coven summoning spawns (:70-72) -
  *  Range(0, 5) over a five-entry array, so every one is reachable. */
 export const DAEDRIC_FOES = Object.freeze([

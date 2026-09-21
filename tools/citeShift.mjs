@@ -92,8 +92,14 @@ export const ANY_CITE = /(?<![\w/])(?:[\w./-]*\/)?[\w.-]+\\?\.(?:js|mjs|md|sh|cs
  *  same continuation with the separator set off by spaces - the MAC-D shift
  *  moved the head and left the tail, and CD7 caught the backwards range that
  *  made. A space is allowed only BEFORE a colon (`/ *:`); a bare `/N` still
- *  has to sit against the slash, so "6 / 10" in prose is not a cite. */
-export const CONTINUATION = /(`:|\/ *:|\/|, *:|\(:)(\d+)(?:-(\d+))?(?=[`'\s,;:)./-]|$)/g;
+ *  has to sit against the slash, so "6 / 10" in prose is not a cite.
+ *  RF5 (2026-09-21): the PROSE CONNECTOR. "worldModes.js:6210 against
+ *  :6210" is a cite and its tail joined by a word, and the DAEDRA1 shift
+ *  moved the head and left the tail - CD7 caught the backwards range, the
+ *  same way it caught RF4's. Connectors are added BY NAME as they turn up
+ *  rather than by a general "a word, then :N" rule, which would swallow
+ *  ordinary prose; `against` is the one this repo writes. */
+export const CONTINUATION = /(`:|\/ *:|\/|, *:|\(:|against +:)(\d+)(?:-(\d+))?(?=[`'\s,;:)./-]|$)/g;
 
 // ---- the pure half (pinned in test/citeshift.test.js) ---------------------
 

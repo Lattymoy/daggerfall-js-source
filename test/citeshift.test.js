@@ -103,6 +103,9 @@ test('RF3: bare continuations MOVE under the content check - every spelling, up 
   // RF4: the SPACED slash - the form that survived the MAC-D shift and left CD7 a backwards range
   assert.equal(out('the held Set and the edge ring (world.js:1861 / :1867 / :1871)'), 'the held Set and the edge ring (world.js:1862 / :1868 / :1872)', 'the "/ :N" pair, spaces and all');
   assert.equal(out('world.js:1861 and 6 / 10 of them'), 'world.js:1862 and 6 / 10 of them', 'a spaced slash with NO colon is prose, not a cite');
+  // RF5: the prose connector - a cite and its tail joined by a word
+  assert.equal(out('(world.js:1861 against :1867)'), '(world.js:1862 against :1868)', 'the "against :N" tail moves with its head');
+  assert.equal(out('world.js:1861 and the case against 10 of them'), 'world.js:1862 and the case against 10 of them', 'a connector with NO colon is prose, not a cite');
   assert.equal(out('see world.js:10, :12, :14-15 and :20'), 'see world.js:11, :13, :15-16 and :20', 'the ", :N" form and a range; a bare " :N" after "and" is no spelling (too loose to be one)');
   assert.equal(out('world.js:100 sets it; SerializablePlayer.cs:421 reads it (:423)'), 'world.js:101 sets it; SerializablePlayer.cs:421 reads it (:423)', 'a C# cite stops the region: its (:N) is the C#\'s');
   assert.equal(out('world.js:100 and talk.js:50/:60'), 'world.js:101 and talk.js:50/:60', 'another file\'s continuation is its own');
