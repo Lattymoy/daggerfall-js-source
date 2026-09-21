@@ -101,3 +101,13 @@ test('CM4: Affiliations button pushes the generated table', () => {
   assert.ok(w.child instanceof ActionTextBox);
   assert.deepEqual(w.child.lines, [{ text: 'record 19' }]);
 });
+
+test('AUDIT-CM: the Name box is modal (a click on the sheet reaches nothing) and takes TextBox\'s 31; a Level box closes on a click (ClickAnywhereToClose)', () => {
+  const w = new CharSheet(hero(), {});
+  w.click(...mid(CHARSHEET_RECTS.name));
+  assert.equal(w.child.maxCharacters, 31, 'the bare constructor takes TextBox\'s default');
+  assert.equal(w.click(1, 1), true); assert.ok(w.child instanceof InputMessageBoxWindow, 'the box is still up');
+  w.child.input('Escape'); w.input('noop'); assert.equal(w.child, null);
+  w.click(...mid(CHARSHEET_RECTS.level)); assert.ok(w.child instanceof ActionTextBox);
+  w.click(1, 1); assert.equal(w.child, null, 'ClickAnywhereToClose');
+});

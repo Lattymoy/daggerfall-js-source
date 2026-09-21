@@ -31,15 +31,17 @@ import { SKILL_NAMES } from '../systems/skills.js';
 import { goldAmount } from '../systems/court.js';
 import { raceDisplayName, honorificOf } from '../systems/talkSession.js';
 
-/** DaggerfallInputMessageBox's own field width for the donation box
- *  (DaggerfallGuildServiceDonation :48-50: Numeric, MaxCharacters 8). */
-export const DONATION_FIELD = Object.freeze({
-  numeric: true, maxCharacters: DONATION_MAX_CHARACTERS, initial: DONATION_DEFAULT,
-});
-
-/** The prompt DFU shows over the donation field, from its
- *  Internal_Strings ("serviceDonateHowMuch"). */
+/** The prompt DFU shows beside the donation field, from its
+ *  Internal_Strings ("serviceDonateHowMuch") - the TextBox LABEL
+ *  (SetTextBoxLabel, DaggerfallGuildServiceDonation.cs:46), on the
+ *  field's own row; the box carries no text tokens above it. */
 export const DONATE_HOW_MUCH = 'Donate how much money : ';
+/** DaggerfallInputMessageBox's own field for the donation box
+ *  (DaggerfallGuildServiceDonation.cs:46-51: the label, Numeric,
+ *  MaxCharacters 8, Text "1000"). */
+export const DONATION_FIELD = Object.freeze({
+  numeric: true, maxCharacters: DONATION_MAX_CHARACTERS, initial: DONATION_DEFAULT, label: DONATE_HOW_MUCH,
+});
 /** "freeHolidayCuring" and "curedDisease". */
 export const FREE_HOLIDAY_CURING = "You are cured free from cost due to today's holiday.";
 export const CURED_DISEASE = 'You are cured.';
@@ -48,7 +50,7 @@ export const CURED_DISEASE = 'You are cured.';
  *    { rows }                      click-anywhere
  *    { rows, buttons: 'YesNo', onYes }
  *    { rows, buttonsMulti: [recordNums], onButton(n) }   QG1: PromptMulti - click-only, no cancel
- *    { rows, field: {...}, onInput(text) }
+ *    { rows, field: { numeric, maxCharacters, initial, label? }, onInput(text) }   rows = the tokens ABOVE, label = the field's own (DFU sets one or the other)
  *    { picker: [labels], onPick(i) }
  */
 export class ServiceFlowWindow {
@@ -83,7 +85,7 @@ export class ServiceFlowWindow {
     // answer - Return through onInput, Escape through the plain close.
     this._input = t?.field ? new InputMessageBoxWindow({
       lines: t.rows,
-      label: ' > ',
+      label: t.field.label ?? '',   // AUDIT-CM: no invented " > " - the donation's label is serviceDonateHowMuch, the tavern's day count has none
       value: t.field.initial ?? '',
       maxCharacters: t.field.maxCharacters ?? 8,
       numeric: !!t.field.numeric,   // TextBox.Numeric refuses anything but a digit (:49)
@@ -288,8 +290,8 @@ export function buildTrainingFlow(entity, guild, membership, deps) {
 export function buildDonationFlow(entity, store, divineFactionId, deps) {
   const { rows, onClose, rolls = Math.random, godName = '', shopName = null, cityName = null } = deps;
   return new ServiceFlowWindow([{
-    rows: line(DONATE_HOW_MUCH),
-    field: DONATION_FIELD,   // its `initial` IS TextBox.Text = "1000" (:51)
+    rows: [],                // no tokens: the prompt is the field's LABEL (:46)
+    field: DONATION_FIELD,   // TextBox.Text = "1000" (:51)
     onInput: (text) => {
       // int.TryParse: a non-number does NOTHING AT ALL in DFU - not
       // even a message - so an empty or unparsable field simply closes.

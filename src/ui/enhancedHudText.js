@@ -68,9 +68,9 @@
 // and the touch layer beside them. The NATIVE WINDOWS are still drawn
 // on the canvas in the 1996 bitmap face under this skin, and that is a
 // slice of its own rather than an oversight: ui/deathScreen.js:71-72,
-// ui/restWindow.js:852, ui/saveWindow.js:625+ (shadowText, eight
+// ui/restWindow.js:859, ui/saveWindow.js:625+ (shadowText, eight
 // sites), ui/travelPopUp.js:685, ui/questJournal.js:641-642,
-// ui/messageBox.js:431/:434 and ui/actionText.js:41/:152 (every
+// ui/messageBox.js:431/:434 and ui/actionText.js:44/:152 (every
 // ActionTextBox). Each of those is a native window whose every drawn
 // element cites a DFU rect (THE NATIVE-WINDOW RULE), so the face cannot
 // change without the metrics changing with it.

@@ -4,9 +4,13 @@
 // Index + 5400 with a 20-char ' > ' input line (DaggerfallInputMessageBox)
 // and hands the entry back to the action system's answer gate.
 // Presentation: U11 gave the port DaggerfallMessageBox's parchment
-// frame, so these draw as the REAL classic popup - SPOP.RCI's
-// nine-slice with the verbatim sizing law. The flat panel below is
-// the art-less fallback now, not the plan. The overlay seam holds the
+// frame, so ShowText draws as the REAL classic popup - SPOP.RCI's
+// nine-slice with the verbatim sizing law; the flat panel below is
+// its art-less fallback. ShowTextWithInput is the exception, and
+// AUDIT-CM (2026-09-21) found the first cut drawing it wrong: DFU
+// builds that box with useParchmentBackGround = false and
+// showAtTopOfScreen = true (DaggerfallAction.cs:566), so it is bare
+// text at the TOP of the screen, no frame. The overlay seam holds the
 // world while a box is open.
 
 import { drawText, measureText } from './text.js';
@@ -19,7 +23,6 @@ export const MAX_INPUT = 20;
 
 const PANEL = [0.05, 0.05, 0.09, 0.92];
 const TEXT = [0.86, 0.82, 0.68, 1];
-const DIM = [0.55, 0.52, 0.45, 1];
 
 /** The art-less fallback draws plain strings, so a row record - a
  *  { text } or AUDIT 64 F28's tab-stopped { cells } - flattens to one.
@@ -111,12 +114,15 @@ export class ActionTextBox {
  *  here any more. */
 export class ActionInputBox extends InputMessageBoxWindow {
   constructor(lines, onInput) {
-    super({ lines, label: ' > ', maxCharacters: MAX_INPUT, onSubmit: onInput });
+    // `new DaggerfallInputMessageBox(UIManager, textID, 20, " > ", false, true, null)`
+    // (DaggerfallAction.cs:566): twenty characters, " > " for the
+    // label, NO parchment, at the TOP of the screen.
+    super({ lines, label: ' > ', maxCharacters: MAX_INPUT, parchment: false, atTop: true, onSubmit: onInput });
     this.onInput = onInput;
     /** AUDIT 64 F35 (review round): the ONLY construction of this box
      *  in the reference passes a null previous - `new
      *  DaggerfallInputMessageBox(DaggerfallUI.UIManager, textID, 20,
-     *  " > ", false, true, null)` (Internal/DaggerfallAction.cs:565) -
+     *  " > ", false, true, null)` (Internal/DaggerfallAction.cs:566) -
      *  so nothing is painted beneath it. Every other
      *  DaggerfallInputMessageBox in DFU is raised from inside another
      *  window and passes `this`, which roots at that window, not at

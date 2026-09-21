@@ -97,7 +97,6 @@ import { audio } from '../systems/audio.js';
 import { immersiveFootsteps } from '../systems/immersiveFootsteps.js';   // IF1: the inventory close refreshes the mod's armour slots
 import { SOUND } from '../systems/soundClips.js';
 import { makeFont, drawText } from './text.js';
-import { typedChar } from './input.js';   // U26: one reader for both hosts' key routing
 import { InputMessageBoxWindow } from './inputMessageBox.js';   // CM5: TransferItem's split popup
 import { firstHotkey } from '../systems/dialogShortcuts.js';   // A8: the DaggerfallShortcut table
 import { expandRowValues } from '../systems/quest/questMacros.js';   // MACROS1: a used item's record through its own context (%map)
@@ -236,7 +235,7 @@ export const isIngredientTemplate = (i) => i >= 0 && i <= 77;
 
 /** TextManager's howManyItems, formatted (:1529). */
 export const HOW_MANY_ITEMS = (max) => `Pick how many items (max ${max})?`;
-/** mb.TextBox.MaxCharacters = 8 (:1532). */
+/** mb.TextBox.MaxCharacters = 8 (:1533). */
 export const SPLIT_INPUT_MAX = 8;
 
 const amountOf = (item) => item?.stackCount ?? 1;
@@ -732,15 +731,15 @@ export class NativeInventoryWindow {
    *  entry is REFUSED OUTRIGHT below 1 or above what the player
    *  carries - not clamped. The gold lands in the remote pile, which
    *  is the ground when nothing else opened the window. */
-  /** GoldButton_OnMouseClick -> DropGoldPopup (:1246-1256): a
-   *  DaggerfallInputMessageBox with the goldToDrop record as its text,
+  /** GoldButton_OnMouseClick (:1269-1284): a DaggerfallInputMessageBox
+   *  with the goldToDrop record (25) as its text tokens and NO label,
    *  numeric, MaxCharacters 8, seeded "0"; DropGoldPopup_OnGotUserInput
    *  (:1286-1309) is the handler. CM5: the field is the one pushed box,
-   *  as the split popup's is. */
+   *  as the split popup's is (AUDIT-CM struck the " > " the first cut
+   *  invented for the label). */
   _dropGold() {
     this.inputBox = new InputMessageBoxWindow({
       lines: this.hooks.rows?.(GOLD_TO_DROP_TEXT_ID) ?? [{ text: 'How much gold?', center: true }],
-      label: ' > ',
       value: '0',
       maxCharacters: 8,
       numeric: true,
@@ -857,8 +856,8 @@ export class NativeInventoryWindow {
     }
   }
 
-  /** TransferItem's split gate (:1515-1517): the amount is short of the
-   *  stack, or Control is held - and only for a stack (IsAStack). */
+  /** TransferItem's split gate (:1515-1519): the amount is short of the
+   *  stack, or Control is held - and only for a stack (item.IsAStack(), :1519). */
   _splitRequired(it, plan) {
     return amountOf(it) > 1 && (plan.amount < amountOf(it) || this._controlDown);
   }
@@ -943,7 +942,7 @@ export class NativeInventoryWindow {
         // the callback runs - which is where the rank's flag is set, so
         // the claim and the taking are the same event.
         if (plan.claimsChoice) {
-          const cb = this.chooseOne.onChoose;
+          const cb = this.chooseOne?.onChoose;   // deferred behind the split box: the claim is read when it runs
           this.chooseOne = null;
           this._closeSilently();
           cb?.(taken);

@@ -1022,23 +1022,25 @@ export class AutomapWindow {
 
   /** TryToAddOrEditUserNoteMarker... (:763-799) with the model half in
    *  systems/automap.js; what stays here is DFU's EditUserNote
-   *  (:1591-1607) - the box seeded with the marker's existing note. */
+   *  (Automap.cs:1593-1608) - the box seeded with the marker's existing note. */
   _tryAddOrEditNote(rec, hit, editOnCreation) {
     const r = tryAddOrEditUserNote(rec, hit, { editOnCreation });
     if (r.edit && r.id != null) this._noteBox = { id: r.id, box: this._openNoteBox(rec, r.id) };
   }
 
-  /** EditUserNote (:1591-1607): `new DaggerfallInputMessageBox(
+  /** EditUserNote (Automap.cs:1593-1608): `new DaggerfallInputMessageBox(
    *  DaggerfallUI.UIManager, DaggerfallUI.Instance.AutomapWindow)` with
-   *  the youNote record as its text, ' > ' as the label, MaxCharacters
-   *  50 (:1603), seeded with the marker's existing note so editing is
-   *  editing rather than retyping. Enter raises OnGotUserInput, which
-   *  writes the note home (:1608-1614); Escape closes with no write.
-   *  CM9: the field is the one DaggerfallInputMessageBox, pushed. */
+   *  youNote as the LABEL (SetTextBoxLabel, :1597 - no text tokens
+   *  above it), MaxCharacters 50 (:1603), seeded with the marker's
+   *  existing note so editing is editing rather than retyping. Enter
+   *  raises OnGotUserInput, which writes the note home
+   *  (UserNote_OnGotUserInput, :2504-2508); Escape closes with no write.
+   *  CM9: the field is the one DaggerfallInputMessageBox, pushed.
+   *  AUDIT-CM: the first cut put youNote above the field and invented
+   *  a " > " label. */
   _openNoteBox(rec, id) {
     return new InputMessageBoxWindow({
-      lines: [{ text: AUTOMAP_STRINGS.youNote, center: false }],
-      label: ' > ',
+      label: AUTOMAP_STRINGS.youNote,
       value: rec.notes.get(id)?.note ?? '',
       maxCharacters: NOTE_MAX_CHARACTERS,
       onSubmit: (value) => setUserNote(this.deps.record?.() ?? null, id, value),

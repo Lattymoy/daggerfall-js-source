@@ -629,7 +629,7 @@ export class SpellbookWindow {
   /** SpellNameLabel_OnMouseClick (:927-938) + RenameSpellPromptHandler
    *  (:940-951). */
   renameButton() {
-    if (this.selectedIndex === -1 || !this.selected) return;
+    if (this.selectedIndex === -1 || !this.selected || this.buyMode) return;   // the button exists in cast mode only (:465 gated, see the header)
     // GetSpell, then `new DaggerfallInputMessageBox(uiManager, this)`
     // seeded from bundle.Name under enterSpellName (:927-938). CM6: the
     // box is PUSHED and owns the keyboard; `top` stays 'rename' so the
@@ -644,7 +644,7 @@ export class SpellbookWindow {
     });
   }
 
-  /** RenameSpellPromptHandler (:937-950). DFU's EffectBundleSettings
+  /** RenameSpellPromptHandler (:940-951). DFU's EffectBundleSettings
    *  is a STRUCT: GetSpell hands back a COPY, the handler renames the
    *  copy, and SetSpell writes it into the player's slot - the shared
    *  SPELLS.STD record is never touched. The port's records are

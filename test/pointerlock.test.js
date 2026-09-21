@@ -45,11 +45,14 @@ test('PL1: the wire - the toggle gate reads the predicate, the input box stamps 
   // close, `_close(submit)`, that stamps before either callback - and
   // both exits, Return and Escape, go through it. ActionInputBox is its
   // subclass and stamps nothing of its own.
+  // AUDIT-CM: DFU stamps in ReturnPlayerInputEvent ALONE (:298-304) -
+  // Escape goes through CancelWindow and stamps nothing. The behavioural
+  // pin (stamped before the handler, not on cancel) is
+  // test/classicinputbox.test.js's; this is the shape.
   const im = readFileSync('src/ui/inputMessageBox.js', 'utf8');
-  assert.equal((im.match(/noteInputBoxClosed\(\);/g) ?? []).length, 1, 'the stamp sits in the one close');
-  assert.match(im, /_close\(submit\) \{\n\s+if \(this\.done\) return;\n\s+this\.done = true;[\s\S]*?noteInputBoxClosed\(\);\n\s+if \(submit\) this\.onSubmit\?\.\(this\.value\);\n\s+else this\.onCancel\?\.\(\);/,
-    'CloseWindow stamps BEFORE OnGotUserInput (DaggerfallInputMessageBox.cs:283-301)');
-  assert.match(im, /if \(SUBMIT\.has\(c\)\) \{ this\._close\(true\); return; \}\n\s+if \(CANCEL\.has\(c\)\) \{ this\._close\(false\); return; \}/, 'both exits close through it');
+  assert.equal((im.match(/noteInputBoxClosed\(\);/g) ?? []).length, 1, 'the stamp sits in the one close, on the submit arm');
+  assert.match(im, /if \(submit\) \{\n[\s\S]*?noteInputBoxClosed\(\);\n\s+this\.onSubmit\?\.\(this\.value\);\n\s+\} else \{\n\s+this\.onCancel\?\.\(\);/,
+    'CloseWindow stamps BEFORE OnGotUserInput, and only there (DaggerfallInputMessageBox.cs:298-304)');
   const at = readFileSync('src/ui/actionText.js', 'utf8');
   assert.equal((at.match(/noteInputBoxClosed\(\);/g) ?? []).length, 0, 'the action box delegates the stamp');
   assert.match(at, /class ActionInputBox extends InputMessageBoxWindow/);

@@ -92,3 +92,15 @@ test('CM5: a whole-stack transfer does not invent a split popup', () => {
   assert.equal(ground.length, 1);
   assert.equal(ground[0].stackCount, 3);
 });
+
+test('AUDIT-CM: the split popup is modal - a click on the panel leaves it up and moves nothing - and MaxCharacters is 8 (:1533)', () => {
+  assert.equal(SPLIT_INPUT_MAX, 8);
+  const bag = [book(400)];
+  const wagon = [];
+  const w = windowFor(bag);
+  w.usingWagon = true; w._filtered = () => bag; w._remote = () => wagon;
+  w._pick(0, 'remove');
+  assert.ok(w.inputBox);
+  assert.equal(w.click(5, 5), true);
+  assert.ok(w.inputBox, 'still up'); assert.equal(bag[0].stackCount, 400); assert.equal(wagon.length, 0);
+});

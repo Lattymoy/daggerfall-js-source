@@ -87,8 +87,8 @@ subclass - the action system's construction of it, record lines above,
 `" > "`, twenty characters - and its own key router and draw are gone.
 The audit of the cleanup then found FOUR more windows typing the same
 field into their own art, none of them on Ledger A row TB1: the
-inventory's drop-gold prompt (DropGoldPopup, :1246-1256), the automap's
-note editor (EditUserNote, :1591-1607, CM9), the save window's rename
+inventory's drop-gold prompt (GoldButton_OnMouseClick, :1269-1284), the
+automap's note editor (EditUserNote, Automap.cs:1593-1608, CM9), the save window's rename
 (RenameSaveButton_OnMouseClick, DaggerfallUnitySaveGameWindow.cs:566-570,
 CM10) and the guild service flow's field boxes (the donation, which in
 DFU IS a `DaggerfallInputMessageBox` subclass, and the tavern's day
@@ -120,6 +120,84 @@ and donation folds ride the pins those windows already had
 (`nativeinventory`, `wagon`, `saveslots`, `guildserviceflows`), rewritten
 to the pushed box. The `.github/workflows/check.yml` the PR added -
 lint, types, tests and build on every pull request - stays.
+
+### AUDIT-CM (2026-09-21) - the cleanup audited
+
+Mac: *"Audit this."* Three read-only lanes over the cleanup: the box
+and its raisers against the DFU C#, the folds against the wrappers and
+the hosts, the pins and records against the code. Findings, and what
+became of each.
+
+**The box against the C# (lane 1).** (1) The action system's box is
+built `new DaggerfallInputMessageBox(UIManager, textID, 20, " > ",
+false, true, null)` (DaggerfallAction.cs:566): `useParchmentBackGround`
+FALSE, `showAtTopOfScreen` TRUE - bare text at the top of the screen,
+no SPOP.RCI frame - and the port drew it as the centred popup and said
+so in a comment. The box grew the two flags (`parchment`, `atTop`,
+:107-122, :150-152) and `ActionInputBox` passes them. (2) Four raisers
+INVENTED a `" > "` label: the automap's note (youNote IS the label,
+SetTextBoxLabel at Automap.cs:1597, nothing above), the drop-gold
+prompt (tokens, no label, :1275), the guild donation (serviceDonateHowMuch
+is the label, DaggerfallGuildServiceDonation.cs:46, no tokens) and the
+tavern's day count (tokens, no label); the rest window's hours prompt
+drew the same shape inline. The field descriptor carries its own
+`label` now, `" > "` survives only where DFU sets it (ShowTextWithInput),
+and the rest prompt draws the label on the field's row. (3) The rest
+prompt SURVIVED an empty Return; in DFU the box has already closed when
+TryParse fails (:298-304, :742-744), so the player is back on the
+selection page - as they are now. (4) The pointer-lock stamp fired on
+Escape too; DFU stamps in ReturnPlayerInputEvent alone (:301), Escape
+closing through DaggerfallPopupWindow.CancelWindow (:88-92) - fixed,
+and the old "both exits" pin rewritten. (5) A numeric field dropped a
+SHIFTED digit; TextBox.cs:446-449 reads the digit off the key in
+NumericMode.Natural - fixed. (6) The TextBox has a CURSOR
+(Left/Right/Home/End, Delete at it, Backspace before it, insertion at
+it, :352-409) and the port only appended - implemented, drawn with the
+port's `_` mark at the cursor. (7) The seed was truncated to
+MaxCharacters; TextBox.Text's setter (:74-82) shows it whole and caps
+only further typing - fixed. (8) The item maker's rename had a
+no-selection guard DFU (:799-807) does not - struck. (9) The character
+sheet's four handler citations were ~50 lines stale, the spellbook's
+RenameSpellPromptHandler cite too, and the automap's EditUserNote was
+credited to the wrong file - all re-resolved.
+
+**The folds against the wrappers and the hosts (lane 2).** One
+regression: `scenes/world.js`'s travel-map PROBE surface read the
+deleted `findText` and answered undefined - it reads the box's value
+now. Dead code the fold left: the inventory's `typedChar` import, the
+action box's `DIM`. Two wrapper details the fold dropped, restored: the
+spellbook rename's buy-mode guard, the deferred choose-one callback's
+optional chaining. Deliberate drift, recorded: the action box now
+SWALLOWS a click where the old class let it fall to the world (DFU's
+box is not click-anywhere - correct, and player-visible); the art-less
+fallback draws at the host's native scale by reading `nativeMetrics`
+itself. Every host routes `keyup` to its overlay (the Control state's
+premise), `_close` is idempotent and stamps once per close, the service
+flow's `_advance` re-entrancy is safe, every `_box = null` reader is
+guarded, and all twenty-eight production `ChoiceWindow` notices are
+rightly click-anywhere.
+
+**The pins and the records (lane 3).** Eight described mutants would
+have SURVIVED: a submit firing twice, the Meta chord, the split gate's
+IsAStack term, the Control state's bare-code clause, the split popup's
+click, the save rename's Escape and its empty answer, the donation's
+Escape. Each is a pin now, with the box's cursor, shifted digit, seed
+and stamp-order laws beside them; a tautological roster assertion and a
+whitespace-exact CM9 source regex are gone (the note editor is driven
+live in `test/roadc_automap_notes.test.js` instead). Record errors
+fixed: the drop-gold cite (:1269-1284, not :1246-1256), the automap's
+file, the sheet's block, the Internal_Strings key (`levelProgress`),
+and four off-by-ones.
+
+**Honest residue.** The save window plays ButtonClick on every button
+where `DaggerfallUnitySaveGameWindow.cs` plays no sound at all - a
+window-wide departure older than this arc, not rowed on Ledger A;
+it belongs to a pass over that window, not to a rename fix. The numeric
+field's parchment is sized with the widest glyph (`M`) times
+MaxCharacters, which is TextBox.CalculateMaximumSize's own law
+(:314-331) - the older `'0'.repeat` sizing was the departure. The
+travel map's first-tick arms assign `top` unconditionally; a find box
+cannot be up on the first tick, so no guard was added.
 
 
 ## MENU1-WARM - THE MENU BYTES ARE ASKED FOR EARLY (2026-09-19)
@@ -14102,10 +14180,10 @@ exactly as the classic did; the enhanced HUD has no arrow counter (AUDIT
 28 W2a's classic-arm feature) - not a font matter. AND THE CANVAS NATIVE
 WINDOWS, which the first record did not name: under the enhanced skin the
 death screen (`ui/deathScreen.js:71-72`), the rest window's rows
-(`ui/restWindow.js:852`), the save window (`ui/saveWindow.js`, eight
+(`ui/restWindow.js:859`), the save window (`ui/saveWindow.js`, eight
 `shadowText` sites), the travel popup (`ui/travelPopUp.js:685`), the quest
 journal (`ui/questJournal.js:641-642`), every MessageBox row
-(`ui/messageBox.js:431, 434`) and every ActionTextBox (`ui/actionText.js:41,
+(`ui/messageBox.js:431, 434`) and every ActionTextBox (`ui/actionText.js:44,
 152`) still draw in the bitmap font - each a native window under THE
 NATIVE-WINDOW RULE, whose face cannot move without its DFU metrics moving
 too. That is a FONT2 slice, not this one.

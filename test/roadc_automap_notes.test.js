@@ -594,6 +594,22 @@ const FLOOR_HIT = [5.282, 0, 4.423];
 const SECOND_CLICK_X = CHROME_RECTS.panel.x + 240;
 const SECOND_FLOOR_HIT = [10.434, 0, 4.423];
 
+test('CM9 / AUDIT-CM: the note editor IS the one input box - youNote as the LABEL (Automap.cs:1597), no tokens above, MaxCharacters 50 (:1603), Escape writing nothing', () => {
+  const { w, rec } = openWindow();
+  try {
+    doubleClick(w, CLICK_X, CLICK_Y);
+    assert.ok(w.userNoteBox, 'the editor opened');
+    const box = w._noteBox.box;
+    assert.equal(box.label, AUTOMAP_STRINGS.youNote); assert.deepEqual(box.lines, []);
+    assert.equal(box.maxCharacters, NOTE_MAX_CHARACTERS); assert.equal(NOTE_MAX_CHARACTERS, 50);
+    for (let i = 0; i < 60; i++) w.input('KeyA', { code: 'KeyA', key: 'a' });
+    assert.equal(w.userNoteBox.value.length, 50, 'capped at MaxCharacters');
+    w.input('Escape', { code: 'Escape' });
+    assert.equal(w.userNoteBox, null, 'Escape closes');
+    assert.equal(rec.notes.get(0).note ?? '', '', 'and wrote nothing');
+  } finally { _resetForTests(); resetAutomapWindowState(); }
+});
+
 test('c2/S8 a left double-click on the floor mints a note 0.7 above it', () => {
   const { w, rec } = openWindow();
   try {

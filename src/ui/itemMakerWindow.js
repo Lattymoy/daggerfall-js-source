@@ -291,7 +291,9 @@ export class ItemMakerWindow {
   /** NameItemButon_OnMouseClick (:799-811): click, seed the textbox
    *  from itemNameLabel.Text, and push DaggerfallInputMessageBox. */
   _openRename() {
-    if (!this.selected) return;
+    // no selection guard: DFU (:799-807) clicks and shows the box seeded
+    // from the (then empty) label whatever is selected - AUDIT-CM struck
+    // the guard the first cut invented
     audio.playOneShot(SOUND.ButtonClick, 1);
     this.renameBox = new InputMessageBoxWindow({
       label: ENTER_NEW_NAME,

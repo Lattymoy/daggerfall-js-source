@@ -717,7 +717,7 @@ export class SpellMakerWindow {
     audio.playOneShot(SOUND.ButtonClick, 1);
   }
 
-  /** NameSpellButton_OnMouseClick (:910-918). */
+  /** NameSpellButton_OnMouseClick (:911-919). */
   _openNameBox() {
     audio.playOneShot(SOUND.ButtonClick, 1);
     this.nameBox = new InputMessageBoxWindow({

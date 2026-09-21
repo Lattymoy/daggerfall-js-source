@@ -271,16 +271,16 @@ export const NAV_BUTTONS = Object.freeze(['inventory', 'spellbook', 'logbook', '
 //
 // U32 wired the four navigation buttons; these four were still consumed
 // as no-ops ("pend their popups") until CM4. Each is what its
-// DaggerfallCharacterSheetWindow handler does (:772-952): ButtonClick,
+// DaggerfallCharacterSheetWindow handler does (:769-812): ButtonClick,
 // then a pushed DaggerfallInputMessageBox (Name) or a ClickAnywhereToClose
 // DaggerfallMessageBox (the other three), owned as the sheet's `child`.
 
-/** TEXT.RSC record 19, "You have no affiliations." (ShowAffiliationsDialog :862). */
+/** TEXT.RSC record 19, "You have no affiliations." (ShowAffiliationsDialog :327-364). */
 export const NO_AFFILIATIONS_TEXT_ID = 19;
-/** Internal_Strings.progressMadeToNextLevel (LevelButton_OnMouseClick :836). */
+/** Internal_Strings.levelProgress (LevelButton_OnMouseClick :784). */
 export const LEVEL_PROGRESS_PREFIX = 'Progress made to the next level: ';
 
-/** LevelButton_OnMouseClick (:830-841), verbatim arithmetic: the level
+/** LevelButton_OnMouseClick (:779-786), verbatim arithmetic: the level
  *  the skill sum has earned, its fraction as a whole percent. */
 export function levelProgressPercent(entity) {
   const current = ((entity?.currentLevelUpSkillSum ?? 0)
@@ -299,7 +299,7 @@ export function guildForMembership(membership) {
   return null;
 }
 
-/** ShowAffiliationsDialog (:857-890): the tab-stopped table - a
+/** ShowAffiliationsDialog (:327-364): the tab-stopped table - a
  *  highlighted "Affiliation / Rank" header, then one row a membership
  *  with the faction's display name, the rank TITLE and the live
  *  reputation - or record 19 when the book is empty. The faction name
@@ -475,8 +475,8 @@ export class CharSheet {
 
   // ── CM4: the four residual buttons' handlers ──
 
-  /** NameButton_OnMouseClick (:772-784): the input box seeded with the
-   *  current name; EnterName_OnGotUserInput (:786-790) writes a
+  /** NameButton_OnMouseClick (:769-777): the input box seeded with the
+   *  current name; EnterName_OnGotUserInput (:794-799) writes a
    *  non-empty answer only. */
   _showName() {
     audio.playOneShot(SOUND.ButtonClick, 1);
@@ -487,20 +487,20 @@ export class CharSheet {
     });
   }
 
-  /** LevelButton_OnMouseClick (:830-841). */
+  /** LevelButton_OnMouseClick (:779-786). */
   _showLevel() {
     audio.playOneShot(SOUND.ButtonClick, 1);
     this.child = new ActionTextBox([`${LEVEL_PROGRESS_PREFIX}${levelProgressPercent(this.entity)}%`]);
   }
 
-  /** HealthButton_OnMouseClick (:843-848) -> CreateHealthStatusBox. */
+  /** HealthButton_OnMouseClick (:801-806) -> CreateHealthStatusBox. */
   _showHealth() {
     audio.playOneShot(SOUND.ButtonClick, 1);
     const rows = this.hooks.rows ? healthStatusRows(this.entity, this.hooks.rows) : [{ text: 'You are healthy.', center: true }];
     this.child = new ActionTextBox(rows);
   }
 
-  /** AffiliationsButton_OnMouseClick (:850-855) -> ShowAffiliationsDialog. */
+  /** AffiliationsButton_OnMouseClick (:808-812) -> ShowAffiliationsDialog. */
   _showAffiliations() {
     audio.playOneShot(SOUND.ButtonClick, 1);
     this.child = new ActionTextBox(affiliationRows(this.entity, this.hooks.rows));

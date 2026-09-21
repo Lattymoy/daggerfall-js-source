@@ -9489,7 +9489,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       label: _travelMap.regionLabelText(), top: _travelMap.top,
       picker: _travelMap.picker ? _travelMap.picker.items.length : 0,
       popUp: !!_travelMap.popUp, identifying: _travelMap.identifying,
-      locationSelected: _travelMap.locationSelected, find: _travelMap.findText,
+      locationSelected: _travelMap.locationSelected, find: _travelMap.findBox?.value ?? '',
       days: _travelMap.popUp?.countdownValueTravelTimeDays ?? null,
       cost: _travelMap.popUp?.trip?.totalCost ?? null,
       // G5: the teleport arm's own state, which is deliberately NOT

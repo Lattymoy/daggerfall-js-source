@@ -402,6 +402,15 @@ test('SAV4 window: delete confirms and refreshes; rename prefills and writes onl
     assert.equal(win.top, null); assert.equal(win.renameBox, null, 'Return pops the box');
     assert.equal(findSave('Alaric', 'Better', s) !== -1, true);
     assert.equal(win.nameText, 'Better');
+    // AUDIT-CM: Escape closes the box with no write, and an EMPTY answer is a no-op (:575)
+    win.click(...nat([SW_RECTS.rename[0], SW_RECTS.rename[1]]));
+    assert.equal(win.top, 'rename');
+    win.input('Escape');
+    assert.equal(win.top, null); assert.equal(win.renameBox, null); assert.equal(win.nameText, 'Better');
+    win.click(...nat([SW_RECTS.rename[0], SW_RECTS.rename[1]]));
+    win.renameBox.value = '';
+    win.input('Enter');
+    assert.equal(win.top, null); assert.equal(win.nameText, 'Better'); assert.equal(findSave('Alaric', 'Better', s) !== -1, true);
   });
 });
 

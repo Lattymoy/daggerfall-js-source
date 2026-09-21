@@ -117,7 +117,9 @@ test('wagon: the 750kg gates - the refusal, the split-take, the gold clamp', () 
   const w2 = new NativeInventoryWindow({ items: () => bag2, entity: rich, wagonItems: () => wagon2, icons: ICONS });
   wagonBtn(w2);
   w2._dropGold();
-  w2.inputBox.onSubmit('100000');   // 250kg of gold offered into 10kg of headroom (CM5: the prompt is the pushed box)
+  w2.inputBox.value = '100000';   // 250kg of gold offered into 10kg of headroom (CM5: the prompt is the pushed box)
+  w2.input('Enter');
+  assert.equal(w2.inputBox, null, 'Return closes the box before the handler runs');
   const goldInWagon = wagon2.find((it) => it.group === 'Currency');
   assert.ok(goldInWagon, 'the clamp still drops what fits');
   assert.equal(goldInWagon.stackCount, 4000, '10kg headroom / 0.0025kg per piece');

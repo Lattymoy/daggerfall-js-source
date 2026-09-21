@@ -58,3 +58,13 @@ test('CM5: the key-up edge clears the Control force before the next click', () =
   assert.equal(bag.length, 0, 'the whole stack moved normally');
   assert.equal(w.dropped.length, 1);
 });
+
+test('AUDIT-CM: Control forces the popup for a STACK only (item.IsAStack(), :1519) - a single item moves whole - and the down edge reads a bare code too', () => {
+  const single = [{ group: 'Weapons', templateIndex: 113, name: 'Dagger', stackCount: 1 }];
+  const w = windowFor(single);
+  w.input('ControlRight');
+  assert.equal(w._controlDown, true, 'a bare code with no event still raises the state');
+  w._pick(0);
+  assert.equal(w.inputBox, null, 'not a stack: no popup');
+  assert.equal(single.length, 0); assert.equal(w.dropped.length, 1);
+});

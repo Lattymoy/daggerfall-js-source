@@ -568,7 +568,11 @@ export class RestWindow {
       // field at two digits and call that "the 99-hour cap by
       // construction" - which made TEXT.RSC 26 unreachable and let a
       // 100-hour rest through the day someone widened the field.
-      if (this.value === '') return;
+      // AUDIT-CM: the box has ALREADY closed when the handler sees an
+      // unparseable answer (ReturnPlayerInputEvent :298-304 closes
+      // first), so an empty Return lands the player on the selection
+      // page - the first cut kept the field up.
+      if (this.value === '') { this.state = 'selection'; this.notice = null; this.value = PROMPT_INITIAL; return; }
       const hours = Number(this.value);
       // AUDIT 26 F144: the refusal is a NEW box over the SELECTION
       // page - the input box has already closed itself before the
@@ -840,9 +844,12 @@ export class RestWindow {
         rows = [ILLEGAL_REST_WARNING];
         buttons = [MB_BUTTONS.Yes, MB_BUTTONS.No];
       } else if (this.state === 'hours') {
+        // restHowManyHours / loiterHowManyHours is the field's LABEL
+        // (SetTextBoxLabel :616, :697), on the field's own row with no
+        // tokens above - AUDIT-CM struck the " > " row the first cut drew
         const prompt = this.mode === 'loiter' ? LOITER_PROMPT : REST_PROMPT;
-        rows = [prompt, ` > ${this.value}_`];
-        opts = { sizingRows: [prompt, ` > ${'0'.repeat(PROMPT_MAX_CHARS)}_`] };
+        rows = [{ text: `${prompt}${this.value}_`, center: false }];
+        opts = { sizingRows: [{ text: `${prompt}${'M'.repeat(PROMPT_MAX_CHARS)}_`, center: false }] };
       } else if (this.state === 'hoursRefused') {
         rows = [...(this.notice ?? [''])];
       } else if (this.state === 'refused') {

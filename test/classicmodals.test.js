@@ -11,6 +11,8 @@ import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { ChoiceWindow } from '../src/ui/talkWindow.js';
+import { RestWindow } from '../src/ui/restWindow.js';
+import { PROMPT_INITIAL } from '../src/systems/restSession.js';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const src = (p) => readFileSync(join(root, p), 'utf8');
@@ -48,7 +50,8 @@ test('CM2: every pushed rest modal uses classic DaggerfallMessageBox presentatio
   }
   assert.match(s, /buttons = \[MB_BUTTONS\.Yes, MB_BUTTONS\.No\];/,
     'the illegal-rest confirmation draws BUTTONS.RCI Yes/No');
-  assert.match(s, /opts = \{ sizingRows: \[prompt, ` > \$\{'0'\.repeat\(PROMPT_MAX_CHARS\)\}_`\] \};/,
+  assert.match(s, /rows = \[\{ text: `\$\{prompt\}\$\{this\.value\}_`, center: false \}\];/, 'the prompt is the field\'s LABEL on the field\'s own row (SetTextBoxLabel :616)');
+  assert.match(s, /opts = \{ sizingRows: \[\{ text: `\$\{prompt\}\$\{'M'\.repeat\(PROMPT_MAX_CHARS\)\}_`, center: false \}\] \};/,
     'the hours field sizes from DaggerfallInputMessageBox MaxCharacters, not the current digits');
   assert.match(s, /this\._box = layoutMessageBox\(font, rows, buttons, opts\);/);
   assert.match(s, /drawMessageBox\(renderer, m, font, this\._box\)/);
@@ -59,4 +62,19 @@ test('CM2: the rest confirmation buttons use the parchment hit rects', () => {
   assert.match(s, /const hit = this\._box \? messageBoxHit\(this\._box, vx, vy\) : null;/);
   assert.match(s, /if \(hit === MB_BUTTONS\.Yes\) this\.input\('confirm'\);/);
   assert.match(s, /else if \(hit === MB_BUTTONS\.No\) this\.input\('back'\);/);
+});
+
+test('AUDIT-CM: the rest prompt behaves as the box - "0" seeded, digits typed, Escape back to the selection, and an EMPTY Return lands on the selection too (the box closed first, :298-304; TryParse fails, :742-744)', () => {
+  const w = new RestWindow({ endLines: () => ['finished'], onClose: () => {}, entity: { stats: {}, skills: {} } });
+  w.input('char:3');   // Loiter: the prompt without CanRest's gate
+  assert.equal(w.state, 'hours'); assert.equal(w.mode, 'loiter'); assert.equal(w.value, PROMPT_INITIAL, 'TextBox.Text = "0" (:700)');
+  w.input('backspace'); w.input('char:1'); w.input('char:2'); w.input('char:x');
+  assert.equal(w.value, '12', 'digits only');
+  w.input('back');
+  assert.equal(w.state, 'selection', 'Escape closes the box');
+  w.input('char:3'); w.input('backspace');
+  assert.equal(w.value, '');
+  w.input('confirm');
+  assert.equal(w.state, 'selection', 'an empty answer: the box has closed, TryParse fails, nothing starts');
+  assert.equal(w.value, PROMPT_INITIAL);
 });
