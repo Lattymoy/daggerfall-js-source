@@ -401,15 +401,16 @@ producer walks them yet - the hosts' `say`/`hudSay` deps are still
 what AddHUDText's callers hold (AUDIT ENH-NOTICE3 F4 keeps the record
 honest on that). The port's
 hosts hold one overlay slot each, so the door OFFERS: each live host
-registers a presenter `{ mount(win, { push, onClosed }), hudText(text,
-delay), active(), priority }` and `messageBox(text, opts)` asks them
+registers a presenter `{ mount(win, { push }), hudText(text, delay),
+active(), priority }` and `messageBox(text, opts)` asks them
 by priority then recency - the dungeon context (20) before
 worldModes' modal modes (10, through the hoisted `showQuestOverlay`:
 interior mounts, dungeon hands over, exterior refuses) before
 townTalk's outdoor slot (0) - which is `world.js`'s showQuestBox
 ladder written once. A presenter that refuses passes the box on; a box
-no presenter takes lands on the HUD line and the handle answers null
-(FALLBACK, NOT SILENCE - U43-ii's silent-first-ten-minutes failure).
+no presenter takes lands on the HUD line and the handle answers INERT -
+`mounted` false, `addNext` a no-op, `done` true - never null (FALLBACK,
+NOT SILENCE - U43-ii's silent-first-ten-minutes failure).
 The handle carries `addNext` (AddNextMessageBox), `done` and the
 window. `push` defaults TRUE because every DaggerfallUI.MessageBox is
 PushWindow (UserInterfaceManager.cs:79-91, ROAD-B B5); `previousWindow`
@@ -492,8 +493,10 @@ windows, the records - were walked by hand). Nine findings, all paid:
 - **F6 (risk)** - `onClose` rode the door and one host of three
   honoured it. Gone from the contract; the presenter opts are `{ push }`.
 - **F7 (risk)** - the fallback's null handle would throw at the first
-  `addNext` (the status chains chain without looking). It answers an
-  inert handle: `addNext` returns itself, `done` true, `mounted` false.
+  `addNext` of a prospective chained caller (the status chains chain
+  without looking today, on their own boxes - the first one moved onto
+  the door would have been it). It answers an inert handle: `addNext`
+  returns itself, `done` true, `mounted` false.
 - **F8 (nit)** - the MessageBox(int) overload cite `:1352-1358`
   straddled two overloads; `:1346-1353` at every site.
 - **F9 (nit)** - the dead `midScreenText` re-export is gone.
@@ -526,14 +529,15 @@ boxes, `worldModes.js`'s bookshelf refusal, the mobile-activate `modal:`
 dep, the dungeon's `hudBox`; and the keyed `ChoiceWindow` menus and the
 court flow, which are boxes WITH BUTTONS the door does not mint.
 
-**Pinned.** `test/notify.test.js` (16): routing, refusal, recency, the
-inactive presenter, the unregister, the fallback, `hudText`/`popupMessage`
+**Pinned.** `test/notify.test.js` (17): routing, refusal, recency, the
+inactive presenter, the unregister, the fallback (inert), `hudText`/`popupMessage`
 with the delay, push and `onClosed`, the chain, the options, `toRows`,
 the skin pin, the migrated seams by source, the registrations as live
 code, the Travel Options wiring, and the mod driven with spies (arrival
 and refusal to the box, the no-path line to the HUD).
-`test/enhnotice3_hosts.test.js` (2): the three presenters and their
-order, the dungeon's unregister, no window class under `src/systems`.
+`test/enhnotice3_hosts.test.js` (3): the three presenters and their
+order, the dungeon's adoption and dead guard, the one ladder, no
+window class under `src/systems`.
 `test/hudtext.test.js` rewritten onto the toasts (15);
 `test/enhancedNotice.test.js` +2 (`noticeHold`, `drawEnhancedToasts`),
 the roster widened; `test/tavernwindow.test.js` +3,
@@ -541,8 +545,10 @@ the roster widened; `test/tavernwindow.test.js` +3,
 re-pinned, `test/surv6_hunting.test.js` +2; the old-law pins in
 `roadb_push_doors`, `ba1_betterambience`, `audit63_quests_talk`,
 `audit64_hud`, `audit24_wave22`, `waveD_dungeonHost` and `automap`
-moved to the new law. Campaign: `tools/mutants/enhnotice3.json` 37
-mutants, 37 dead; `tools/mutants/font1.json`'s 26 column records
+moved to the new law. Campaign: `tools/mutants/enhnotice3.json` 49
+mutants, 49 dead (the AUDIT rows above are the last twelve, one of
+them - the smuggled callback - a shape kill, since no shipping
+presenter reads the opts it adds); `tools/mutants/font1.json`'s 26 column records
 re-aimed by content, 51 of the slice's records run against the four
 modules, 51 dead. Ledger A rows THE ONE DOOR EVERY MESSAGE GOES THROUGH
 and THE HUD LINE AS A TOAST.
