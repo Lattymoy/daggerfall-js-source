@@ -866,7 +866,7 @@ still push CLASSIC canvas windows as children under the DOM, and so
 does the pack's USE arm.
 
     THE SPELLBOOK       FIVE construction sites across FOUR hosts:
-                        worldModes.js:1940 (the factory) and :1904 (a
+                        worldModes.js:1941 (the factory) and :1904 (a
                         HAND-ROLLED second one, 342 lines below it in
                         the same file),
                         dungeonContext.js:1017, world.js:2058,
@@ -876,7 +876,7 @@ does the pack's USE arm.
                         close-then-hand-over ordering U55 got
                         backwards. No law needs extracting first.
     THE LOGBOOK         THREE sites: charSheetNav.js:53,
-    / NOTEBOOK          world.js:6239, dungeonContext.js:6409. A seam
+    / NOTEBOOK          world.js:6268, dungeonContext.js:6409. A seam
                         wants making, as U52's and U53's did.
     HISTORY             ONE site (charSheetNav.js:61), and it reads
                         only the entity's backStory. The small one.
@@ -8605,7 +8605,7 @@ same answer: `ui/spellbookDoor.js`, with each host handing it only
 what that host knows.
 
 THE "HAND-ROLLED DUPLICATE" WAS NOT ONE. The board recorded
-worldModes.js:2757 as a second book built by hand 342 lines below the
+worldModes.js:2758 as a second book built by hand 342 lines below the
 factory. Read closely it is the SPELL MERCHANT'S SHOP - buyMode, with
 `offered`, the building's quality, the shop name, the haggling skills
 and the classic clock. A different question with different deps, and
@@ -9315,7 +9315,7 @@ and firing THAT twice is a second PopToHUD.
 
 ### Why only two of the four hosts crashed
 
-`worldModes.js:5711` and `dungeonContext.js:1563` answer the same
+`worldModes.js:5743` and `dungeonContext.js:1563` answer the same
 `onClose` by nulling their slot and never disposing - nothing to
 re-enter. Only the two hosts that come through `townTalk.closeOverlay`
 dispose. **The four-hosts rule caught this one by accident**: the two
@@ -10023,7 +10023,7 @@ than because the screen agrees with a narrower port.
 stays unbuilt - an owner call, unchanged: the port has no gamepad layer
 at all, the serialized joystick blocks are simply absent from
 `KeyBindData_v1`, and the flag that says so is
-`src/systems/inputActions.js:815`. The JOYSTICK tab still answers with
+`src/systems/inputActions.js:885`. The JOYSTICK tab still answers with
 its note, and Ledger `:593`'s live clause now names that window alone.
 `weaponSensitivitySlider` is commented out in DFU itself (:42, :355) -
 nine controls are built, the tenth is a stub - and
@@ -10559,9 +10559,9 @@ re-resolved the `exterior.js` half of a three-file sentence and left the
 `ExteriorAutomapWindow` construction, `:4101` on a `locationName:`
 field). Both halves are now read by `test/citedrift.test.js` - the
 existing entries only ever captured the exterior number, which is how
-the other half went stale unnoticed. (The rest cite named `world.js:6572`,
+the other half went stale unnoticed. (The rest cite named `world.js:6601`,
 the first of the host's TWO identical `act === 'Rest'` arms; ROAD-H H5
-deleted the second and the cite is `world.js:6578` now.)
+deleted the second and the cite is `world.js:6607` now.)
 
 ## AUDIT 62 F24/F25 - THE SENTINEL SWEEP WAS TWO WINDOWS SHORT (2026-09-07)
 
@@ -16684,7 +16684,7 @@ there; all-max gets the sentence that is true of it.
 
 **F3 - two of the eight descriptions named numbers that do nothing.**
 The window's own promise is that each attribute line is true of code
-that runs. Willpower cited `questMacros.js:555`, which only PRINTS
+that runs. Willpower cited `questMacros.js:575`, which only PRINTS
 MagicResist for the `%mr` macro - the consumer is `spellcast.js:158`'s
 saving throw. Agility cited `toHitModifier` (formulas.js:118), which is
 the CHARACTER SHEET's display modifier and is read by chargen's derived

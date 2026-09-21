@@ -224,8 +224,8 @@
   {
     "name": "D-ONLINE1-a-respawn-can-leave-no-health",
     "file": "src/systems/deathRespawn.js",
-    "old": "export const respawnHealth = (maxHealth) => Math.max(1, Math.floor((maxHealth ?? 0) * RESPAWN_HEALTH_FRACTION));",
-    "new": "export const respawnHealth = (maxHealth) => Math.floor((maxHealth ?? 0) * RESPAWN_HEALTH_FRACTION);",
+    "old": "  return Math.max(1, Math.floor(m * RESPAWN_HEALTH_FRACTION));",
+    "new": "  return Math.floor(m * RESPAWN_HEALTH_FRACTION);",
     "tests": [
       "test/donline1_respawn.test.js"
     ]

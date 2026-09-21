@@ -22,7 +22,7 @@ import {
   BLOCK_PX, TOWN_PEN, TOWN_WALL_PEN, TOWN_WALL_PEN_MIN, CARET_R, QUEST_R,
   QUARTER_WASH, QUARTER_INK, ANCHOR_R, LEAD_AT,
   townBytes, townChains, quarterChains, townReader, isBuilt, isEnterable, isQuarter,
-  paintTownStatic, paintTownOverlay,
+  paintTownStatic, paintTownOverlay, sheetY,
 } from '../src/ui/inkTown.js';
 import {
   QUARTERS, quarterOf, quarterOfType, isShowAllByte, CLASSIC_ARGB, CLASSIC_SETTING, argbChannels,
@@ -38,7 +38,9 @@ import {
   INK_RGB, PARCHMENT_RGB, quarterWash, quarterInk, mixRgb, rgba,
   QUARTER_WASH_A, QUARTER_INK_MIX, QUARTER_WASH_DE, QUARTER_INK_DE, QUARTER_INK_PAPER_DE,
 } from '../src/ui/inkMap.js';
-import { nameplateAnchor } from '../src/ui/nameplateLayout.js';
+import { nameplateAnchor, WORLD_PER_PX } from '../src/ui/nameplateLayout.js';
+import { buildExteriorLayout } from '../src/ui/exteriorAutomapWindow.js';   // EM-BUG3: the shipped map's own composition, so the two sheets are checked against each other
+import { RMB_DIMENSION } from '../src/formats/blocksFile.js';   // EM-BUG3: the anchor's own divisor, so the pin builds a z rather than copying a row number
 
 const src = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 
@@ -130,36 +132,59 @@ test('EM4: the byte groups are DFU\'s own, and a ground flat is NOT a building',
   for (const b of [...TEMPLE_SET, ...SHOP_SET, TAVERN_BYTE]) assert.ok(isBuilt(b));
 });
 
-test('EM4: the field is laid in NAMEPLATE-ANCHOR space, so the plan and the names cannot mirror', () => {
-  // THE ONE ORIENTATION LAW THIS SHEET HAS. The shipped town map flips
-  // twice - once inside the block and once across the block grid - and
-  // its net effect DISAGREES with nameplateAnchor across blocks: higher
-  // blockY is a lower row in that texture and a HIGHER row in the
-  // anchor. It gets away with it because the two reach the screen down
-  // different paths. This sheet draws them as one picture, so they have
-  // to agree, and the anchor is the one obeyed: it is the names, and
-  // the names are the point.
+test('EM-BUG3: the field is laid in SHEET space, and a grid row runs AGAINST +Z, so the plan and the names cannot mirror', () => {
+  // THE ONE ORIENTATION LAW THIS SHEET HAS, and the pin that used to
+  // stand here asserted the arithmetic as written rather than the law,
+  // so it agreed with the bug for as long as the bug was there. Two
+  // things were wrong and this states both as EQUALITIES between the
+  // two modules, not as numbers copied out of either.
   //
-  // What a pin CANNOT settle is whether the picture is the right way up
-  // against the world - that is one composed rotation either way and
-  // nothing here renders anything. It is a browser probe's question and
-  // Mac's eyes', and it is written down rather than assumed.
+  //   1. `autoMapData` is an FLD grid and its rows run AGAINST +Z, the
+  //      same way `buildGroundTilemap` reads `groundTiles[x][15 - y]`
+  //      (world/rmbLayout.js:268). Source row `y` is z-row 63 - y.
+  //   2. The sheet draws +Z UPWARD, as the shipped window does once its
+  //      two flips are composed, so an anchor row crosses over by
+  //      `sheetY`.
+  //
+  // Put together: wherever a building's anchor lands after `sheetY`,
+  // the byte for that same spot must be in that row of the field. That
+  // is the whole law, and it is checked across BLOCKS (where a block
+  // flip would show) and WITHIN one (where the grid's row order would).
+  const rowOf = (f, bx, by, gx, gy) => {
+    // the anchor of the building standing on grid cell (gx, gy) of block
+    // (bx, by): its z within the block is the z-row the grid row means
+    const div = RMB_DIMENSION * 0.025;
+    const zRow = BLOCK_PX - 1 - gy;
+    const [ax, ay] = nameplateAnchor(bx, by, [(gx / BLOCK_PX) * div, 0, (zRow / BLOCK_PX) * div]);
+    return [ax, sheetY(f.h, ay)];
+  };
+  for (const [gx, gy] of [[0, 0], [0, 63], [7, 5], [63, 63]]) {
+    for (const [bx, by] of [[0, 0], [1, 1], [0, 1], [1, 0]]) {
+      const f = townBytes(2, 2, [{ x: bx, y: by, autoMap: blockGrid([[gx, gy, gx + 1, gy + 1, SHOP]]) }]);
+      const [ax, ay] = rowOf(f, bx, by, gx, gy);
+      assert.equal(f.bytes[ay * f.w + ax], SHOP,
+        `block (${bx},${by}) grid (${gx},${gy}): the byte is where the anchor puts the building`);
+      assert.equal([...f.bytes].filter((b) => b === SHOP).length, 1, 'and in exactly one place');
+    }
+  }
+
   const one = blockGrid([[0, 0, 1, 1, SHOP]]);
   const f = townBytes(2, 2, [{ x: 1, y: 1, autoMap: one }]);
   assert.equal(f.w, 128);
   assert.equal(f.h, 128);
   const at = (x, y) => f.bytes[y * f.w + x];
-  // block (1,1)'s local (0,0) lands at layout pixel (64, 64) - exactly
-  // where nameplateAnchor puts a building at that block's origin
-  assert.equal(at(BLOCK_PX, BLOCK_PX), SHOP);
-  assert.equal(at(0, 0), 0, 'and nowhere else');
-  const [ax, ay] = nameplateAnchor(1, 1, [0, 0, 0]);
-  assert.equal(ax, BLOCK_PX, 'the anchor agrees about the column');
-  assert.equal(ay, BLOCK_PX, 'and about the row');
+  // block (1,1) is the FAR block in +Z, so it is the TOP half of the
+  // sheet - the shipped window's `(gridH-1-b.y)` (exteriorAutomapWindow
+  // .js:299), which before this fix was the bottom half
+  assert.equal(at(BLOCK_PX, 0), SHOP);
+  assert.equal(at(BLOCK_PX, BLOCK_PX), 0, 'and not where the unflipped block order put it');
 
-  // the block's own rows run DOWN the field, as the anchor's z does
+  // WITHIN a block the grid's rows run against +Z, so source row 5 is
+  // five rows from the block's own FAR edge, not from its near one
   const col = townBytes(1, 1, [{ x: 0, y: 0, autoMap: blockGrid([[0, 5, 1, 6, SHOP]]) }]);
-  assert.equal(col.bytes[5 * col.w], SHOP, 'local y 5 is field row 5');
+  assert.equal(col.bytes[5 * col.w], SHOP, 'local grid y 5 is sheet row 5');
+  assert.equal(sheetY(col.h, nameplateAnchor(0, 0, [0, 0, ((BLOCK_PX - 1 - 5) / BLOCK_PX) * (RMB_DIMENSION * 0.025)])[1]), 5,
+    'and that is the row the anchor for the same z lands on');
 
   // A BLOCK OFF ITS OWN GRID IS SKIPPED rather than written anywhere -
   // a location whose block list disagrees with its width is a thing the
@@ -181,6 +206,65 @@ test('EM4: the field is laid in NAMEPLATE-ANCHOR space, so the plan and the name
   assert.doesNotThrow(() => townBytes(1, 1, [{ x: 0, y: 0, autoMap: null }]));
   assert.doesNotThrow(() => townBytes(1, 1, [{ x: 0, y: 0, autoMap: new Uint8Array(4) }]));
   assert.doesNotThrow(() => townBytes(0, 0, null));
+});
+
+test('EM-BUG3: the plan, the plates, the rings and the caret all stand in ONE space - the bug Mac saw was them standing in two', () => {
+  // Mac, from play (2026-09-21): "enhanced local town maps are rotated
+  // wrong... I was in the corner of town and It thinks entirely
+  // different buildings are there."
+  //
+  // This is the pin the slice is FOR, and it is deliberately not about
+  // arithmetic: it puts a building and the player on the SAME spot in
+  // the world and asks whether they come out on the same spot on the
+  // paper. Under the old law they did not - the plan had crossed the
+  // grid's row order and the sheet's own flip, and the names, the
+  // rings and the caret had crossed neither - so a caret in the corner
+  // of town sat on somebody else's roof.
+  const div = RMB_DIMENSION * 0.025;
+  // one shop, one pixel, at grid (4, 2) of block (1, 0) of a 2x2 town
+  const BX = 1, BY = 0, GX = 4, GY = 2;
+  const zRow = BLOCK_PX - 1 - GY;                     // the grid's rows run against +Z
+  const pos = [(GX / BLOCK_PX) * div, 0, (zRow / BLOCK_PX) * div];
+  const s = createTownSheet({
+    gridW: 2, gridH: 2,
+    blocks: [{ x: BX, y: BY, autoMap: blockGrid([[GX, GY, GX + 1, GY + 1, SHOP]]) }],
+    buildings: () => [{ buildingKey: 9, blockX: BX, blockY: BY, position: pos, name: 'The Sign of the Cart', isResidence: false, questName: '' }],
+    discovered: () => [{ buildingKey: 9, displayName: 'The Sign of the Cart' }],
+    // the player standing AT that building: the host's own conversion,
+    // world units in the location frame over WORLD_PER_PX
+    player: () => ({ x: (BX * div + pos[0]) / WORLD_PER_PX, y: (BY * div + pos[2]) / WORLD_PER_PX, yaw: 0 }),
+  });
+
+  const f = s.field;
+  // 1. THE PIXEL. The one built byte is somewhere on the field.
+  const lit = [...f.bytes].reduce((acc, b, i) => (b === SHOP ? [...acc, i] : acc), []);
+  assert.equal(lit.length, 1, 'one shop, one pixel');
+  const px = lit[0] % f.w, py = Math.floor(lit[0] / f.w);
+
+  // 2. THE NAME stands on it.
+  const [name] = s.names();
+  assert.equal(name.text, 'The Sign of the Cart');
+  assert.equal(name.x, px, 'the plate is over its own building, across the block grid');
+  assert.equal(name.y, py, 'and in the same row as its own pixels');
+
+  // 3. THE CARET stands on it too - through paintOverlay, which is the
+  // path that actually runs, not a getter beside it.
+  const ctx = recordingCtx();
+  s.paintOverlay(ctx, { view: { ox: 0, oy: 0, scale: 1 }, paperW: 4000, paperH: 4000, dpr: 1, pulse: 0 });
+  const tip = ctx.calls.filter((c) => c.fn === 'moveTo').at(-1);
+  const [ex, ey] = toPaper({ ox: 0, oy: 0, scale: 1 }, px, py);
+  assert.ok(Math.abs(tip.args[0] - ex) < 1, 'the caret is on the building the player is standing in');
+  assert.ok(Math.abs((ey - tip.args[1]) - CARET_R) < 1e-6, 'and its nose is north, which is UP on this sheet');
+
+  // 4. AND THE SHEET AGREES WITH THE SHIPPED ONE. buildExteriorLayout
+  // composes the same two flips ExteriorAutomap.cs does; the two maps
+  // of one town must not be mirrors of each other.
+  const classic = buildExteriorLayout(2, 2, [{ x: BX, y: BY, autoMap: blockGrid([[GX, GY, GX + 1, GY + 1, SHOP]]) }],
+    'original', { tavern: 1, temple: 2, shop: 3, house: 4 });
+  const cLit = [...classic.colors].reduce((acc, c, i) => (c !== 0 ? [...acc, i] : acc), []);
+  assert.equal(cLit.length, 1);
+  assert.equal(cLit[0] % classic.width, px, 'the shipped map puts the same shop in the same column');
+  assert.equal(Math.floor(cLit[0] / classic.width), py, 'and the same row');
 });
 
 test('EM4: the plan is TRACED - the built-up pixels are an island and the street is its sea', () => {
@@ -551,7 +635,9 @@ test('EM4: a quest-marked residence gets a RING, named or not', () => {
   });
   assert.equal(s.quests().length, 1);
   const [ax, ay] = nameplateAnchor(0, 0, [80, 0, 80]);
-  assert.deepEqual(s.quests()[0], { x: ax, y: ay });
+  // EM-BUG3: a ring crosses into SHEET space with the plates and the
+  // caret - the one transform, or the ring hangs over the wrong roof
+  assert.deepEqual(s.quests()[0], { x: ax, y: sheetY(s.field.h, ay) });
   // an UNDISCOVERED quest residence is not rung - the map does not give
   // the quest away before the player has found the door
   const hidden = sheet({
@@ -597,7 +683,15 @@ test('EM8: a name is lettered in ITS OWN QUARTER\'S ink - the same ladder its pi
   // it. The ladder is the one the building's own PIXELS went through,
   // reached through quarterOfType, so the word and the wash under it
   // cannot come to disagree about what the building is.
+  // EM-BUG3: a 2x2 town, because `summary`'s positions walk out past
+  // one block's own 102.4 world units by key 3 - inside a 1x1 town
+  // those three buildings stand OUTSIDE it, and a sheet that draws +Z
+  // upward correctly puts them off the top of the paper rather than
+  // off the bottom where they used to be drawn anyway.
   const s = sheet({
+    gridW: 2,
+    gridH: 2,
+    blocks: [{ x: 0, y: 0, autoMap: GRID }, { x: 1, y: 1, autoMap: GRID }],
     buildings: () => [
       summary(1, { buildingType: TAVERN_BYTE - 1 }),
       summary(2, { buildingType: TEMPLE - 1 }),
@@ -688,7 +782,7 @@ test('EM8: a plate TICKS its building, and leads back to it only once it has bee
   assert.equal(rows.length, 1);
   // EVERY PLATE CARRIES ITS ANCHOR, whether it moved or not
   const [ax, ay] = nameplateAnchor(0, 0, summary(1).position);
-  const [px, py] = toPaper(view, ax, ay);
+  const [px, py] = toPaper(view, ax, sheetY(s.field.h, ay));   // EM-BUG3: through sheet space, as the plate is
   assert.ok(Math.abs(rows[0].x - px) < 1e-9);
   assert.ok(Math.abs(rows[0].anchorY - py) < 1e-9, 'the anchor is where the BUILDING is');
   assert.equal(rows[0].y, rows[0].anchorY, 'and this one had nothing to be untangled from');
@@ -781,7 +875,7 @@ test('EM4: the plates land where the nameplate anchors say, and the solver may m
   const rows = s.platesAt(view, 400, 300, null);
   assert.equal(rows.length, 1);
   const [ax, ay] = nameplateAnchor(0, 0, [50, 0, 50]);
-  const [px, py] = toPaper(view, ax, ay);
+  const [px, py] = toPaper(view, ax, sheetY(s.field.h, ay));   // EM-BUG3: sheet space
   assert.equal(rows[0].x, px, 'x is the anchor, through the view');
   assert.ok(rows[0].y >= py, 'y is the anchor, or below it where the solver stepped it down');
   // two names on ONE anchor: the solver separates them rather than
@@ -799,7 +893,12 @@ test('EM4: the caret says which way the player faces, and does not scale with th
   const s = sheet();
   const ctx = recordingCtx();
   s.paintOverlay(ctx, { view: VIEW, ...PAPER, pulse: 0 });
-  const [cx, cy] = toPaper(VIEW, 20, 20);
+  // EM-BUG3: the host hands the player in ANCHOR space and the sheet
+  // draws +Z upward, so the caret's expected place crosses over the
+  // same way the plates do. The HEADING is untouched by that - north
+  // was always drawn straight up, which is exactly why it disagreed
+  // with a plan that ran +Z downward.
+  const [cx, cy] = toPaper(VIEW, 20, sheetY(s.field.h, 20));
   // EM8 put ticks and leaders on this overlay, which also moveTo and
   // fill - the caret is drawn LAST and in its own pen, so ask for it
   // rather than for whatever moved first.
@@ -808,7 +907,7 @@ test('EM4: the caret says which way the player faces, and does not scale with th
   assert.ok(Math.abs((cy - tip.args[1]) - CARET_R) < 1e-9, 'facing north is straight up, CARET_R long');
   const far = recordingCtx();
   s.paintOverlay(far, { view: { ox: 0, oy: 0, scale: 0.2 }, ...PAPER, pulse: 0 });
-  const [fx, fy] = toPaper({ ox: 0, oy: 0, scale: 0.2 }, 20, 20);
+  const [fx, fy] = toPaper({ ox: 0, oy: 0, scale: 0.2 }, 20, sheetY(s.field.h, 20));
   const ft = far.calls.filter((c) => c.fn === 'moveTo').at(-1);
   assert.ok(Math.abs((fy - ft.args[1]) - CARET_R) < 1e-9, 'a cursor, not a building');
   assert.ok(Math.abs(ft.args[0] - fx) < 1e-9);
@@ -826,7 +925,8 @@ test('EM4: at rest the whole town is on the sheet, centred on the player', () =>
   const home = s.homeView(limits);
   assert.equal(home.scale, scaleMinOf(limits) / FIT_MARGIN);
   assert.ok(Math.abs((home.ox + limits.paperW / (2 * home.scale)) - 20) < 1e-6);
-  assert.ok(Math.abs((home.oy + limits.paperH / (2 * home.scale)) - 20) < 1e-6);
+  assert.ok(Math.abs((home.oy + limits.paperH / (2 * home.scale)) - sheetY(s.field.h, 20)) < 1e-6,
+    'EM-BUG3: the rest view centres on the caret where the caret actually is');
   const nobody = sheet({ player: () => null });
   assert.deepEqual(nobody.homeView(limits), { ox: 0, oy: 0, scale: scaleMinOf(limits) });
 });

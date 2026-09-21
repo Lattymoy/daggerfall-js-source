@@ -211,7 +211,8 @@ import { goldAmount, totalGoldAmount, deductGold, addGold, setCrimeCommitted, CR
 import { getReputation, getFlag, setFlag, FACTION_FLAGS } from '../systems/factionRep.js';
 // G7: the last unbuilt guild service - the summoning calendar, the
 // cost, Sheogorath's hijack and the roll.
-import { daedraForSummoner, attemptSummoning, SUMMON_TEXT, DAEDRIC_FOES } from '../systems/daedraSummoning.js';   // IF: the punishment table
+import { daedraForSummoner, attemptSummoning, SUMMON_TEXT, DAEDRIC_FOES, summonMacroValues } from '../systems/daedraSummoning.js';   // IF: the punishment table; DAEDRA1: %dae's one source
+import { expandRowValues } from '../systems/quest/questMacros.js';   // DAEDRA1: MH1's one walk, with the shared context riding it
 import { currentWeather } from '../systems/weatherSim.js';   // AUDIT AT F3: the WORD; its flags come from weather.js's one derivation
 import { weatherFlags } from '../world/weather.js';   // AUDIT AT F3: WeatherManager's four public flags, derived once from SetWeather's switch
 import { ServiceFlowWindow } from '../ui/guildServiceWindows.js';
@@ -3275,7 +3276,22 @@ export function createWorldModes(host) {
     if (!covenArtLoaded() || !_shopFont) return;   // no art, no window (the U8 idiom)
     const dict = townTalk?.factionDict ?? null;
     const store = ensureFactionRep(playerEntity, dict);
-    const rows = (id) => townTalk?.lines?.(id) ?? [];
+    // DAEDRA1 (2026-09-21, Dracula/Valentin on Discord: "daedra
+    // summoning is fucked", with the box reading "Today is %dat, the
+    // day of summoning for %dae... Do you, %pcn"): EVERY BOX THIS
+    // WINDOW SHOWS GOES THROUGH THE SHARED MACRO CONTEXT. This handed
+    // TEXT.RSC over verbatim where DFU's DaggerfallMessageBox runs
+    // MacroHelper over every record it is given - so the coven's
+    // prompts, its quest offers and the summoning flow it dispatches
+    // all printed their symbols raw. The guild path beside it had had
+    // an expander since MACROS1; this one never got one.
+    //
+    // The context is the quest machine's, per ROAD-E E7's ONE
+    // GAMEMANAGER: %pcn, %dat and the rest of MacroHelper's global
+    // rows resolve here exactly as they do in a quest message, rather
+    // than through a second table filled for the symbols somebody
+    // expected.
+    const rows = (id) => expandRowValues(townTalk?.lines?.(id) ?? [], null, questBridge?.machine.macroContext() ?? null);
     let win = null;
     win = new CovenWindow({
       rows,
@@ -3589,7 +3605,19 @@ export function createWorldModes(host) {
         // PlayerEntity.DaedraSummonIndex/Day do.
         state: playerEntity,
       });
-      if (!daedra) return { rows: rows?.(SUMMON_TEXT.notToday) ?? [{ text: 'This is not a summoning day.', center: true }] };
+      // DAEDRA1: every box in this flow, through MH1's one walk. %dae
+      // is the flow's own (which prince answers is decided here and
+      // nowhere else); %pcn, %dat and the rest come off the shared
+      // context. It wraps whichever `rows` the caller handed in - the
+      // coven's or the guild's - rather than replacing it, so each
+      // keeps whatever it already resolved.
+      const say = (id, d = daedra) => expandRowValues(rows?.(id) ?? [], summonMacroValues(d), questBridge?.machine.macroContext() ?? null);
+      // ...and ONE read per box. Several of these records carry random
+      // variants (BOX1's law: a textId box reads its record once), so a
+      // `say(id).length ? say(id) : fallback` would roll the record
+      // twice and could show the second roll's text.
+      const box = (id, d, fallback) => { const r = say(id, d); return r.length ? r : [{ text: fallback, center: true }]; };
+      if (!daedra) return { rows: box(SUMMON_TEXT.notToday, null, 'This is not a summoning day.') };
       // WeatherManager.IsRaining / IsStorming - thunder is a STORM
       // and not rain, which is what makes Sheogorath's day distinct
       // from Sanguine's four.
@@ -3603,7 +3631,7 @@ export function createWorldModes(host) {
       // had been folded into it; it had not. It is now.
       const weather = weatherFlags(currentWeather());
       return {
-        rows: rows?.(SUMMON_TEXT.areYouSure) ?? [{ text: 'Are you sure you wish to attempt this?', center: true }],
+        rows: box(SUMMON_TEXT.areYouSure, daedra, 'Are you sure you wish to attempt this?'),
         buttons: 'YesNo',
         onYes: () => {
           const r = attemptSummoning({
@@ -3634,10 +3662,12 @@ export function createWorldModes(host) {
                 minDistance: 4, maxDistance: 64,
               });
             }
-            return { rows: rows?.(SUMMON_TEXT.failed) ?? [{ text: 'The daedra does not answer.', center: true }] };
+            return { rows: box(SUMMON_TEXT.failed, r.daedra, 'The daedra does not answer.') };
           }
           if (r.kind === 'greeting') {
-            return { rows: rows?.(r.textId) ?? [{ text: `${r.daedra.name} has met you before.`, center: true }] };
+            // the PRINCE WHO ANSWERED is %dae here, not the one the day
+            // named - Sheogorath's hijack means those differ 5% of the time
+            return { rows: box(r.textId, r.daedra, `${r.daedra.name} has met you before.`) };
           }
           setFlag(store, r.daedra.factionId, r.flag);
           const offered = questBridge?.offerDaedricQuest?.(r.quest, summonerId) ?? null;
@@ -3650,7 +3680,9 @@ export function createWorldModes(host) {
           // on arrival - DFU's own push replaces the popup the same
           // way.
           const mountBoxes = () => {
-            const boxes = offered ? questBridge.offerBoxes(offered, (id) => townTalk?.lines?.(id) ?? []) : [];
+            // DAEDRA1: the prince's own offer is a TEXT.RSC record like
+            // any other and was handed over raw here too
+            const boxes = offered ? questBridge.offerBoxes(offered, (id) => say(id, r.daedra)) : [];
             if (!boxes.length || !guildServiceArtLoaded() || !_shopFont) return;
             let offerWin = null;
             offerWin = new ServiceFlowWindow(boxes, {
@@ -6345,7 +6377,7 @@ export function createWorldModes(host) {
           // AUDIT 39r: and the FLASH, which this arm was copied without.
           // An arrow reaches the player through BowDamage ->
           // ApplyDamageToPlayer -> SendDamageToPlayer, the same door as
-          // a blow (world.js:7972's own wave-46 note); the interior
+          // a blow (world.js:8001's own wave-46 note); the interior
           // MELEE hit already flashes inside exteriorFoes, so only this
           // arm - which applies its own damage - was missing it.
           flashPlayerDamage(dmg);   // BA1: RemoveHealth carries the amount
@@ -8669,7 +8701,7 @@ export function createWorldModes(host) {
      *  (world.js's, this file's `interiorWeapon` :538, dungeonContext's
      *  and exterior.js's - which this seam does not reach: that host has no save path at all, its charter exterior.js:3052-3074), and IS1 routed the inside-a-building save to
      *  the WORLD host's composer - which reads its own exterior rig
-     *  unconditionally (world.js:5256). So an F9 pressed in a shop
+     *  unconditionally (world.js:5285). So an F9 pressed in a shop
      *  recorded the street's sheath and hand, and the load wrote them
      *  back into the street's rig; the rig actually in the player's
      *  hands was in no envelope at all.
@@ -8696,7 +8728,7 @@ export function createWorldModes(host) {
      *  presenter for the whole visit) or the interior's? world.js's gate read townTalk's slot alone. */
     deathUp() { return mode === 'dungeon' ? !!dungeonCtx?.deathUp?.() : interiorOverlay instanceof DeathScreen; },
     /** The restore half - and NOT gated on the mode, deliberately.
-     *  worldQuickLoad calls forceExitToExterior FIRST (world.js:5348)
+     *  worldQuickLoad calls forceExitToExterior FIRST (world.js:5377)
      *  and only re-enters the building at :4217, so the mode at apply
      *  time is whatever the LOAD landed in, not whatever the SAVE was
      *  taken in: an outdoor save loaded while the player was indoors
@@ -8706,7 +8738,7 @@ export function createWorldModes(host) {
      *
      *  FLAG ONLY and presence-gated - both laws now stated once, in
      *  combat/playerWeapon.js's applyWeaponPose, with the citation.
-     *  HARD2c: this used to spell them out, and named `world.js:5461`
+     *  HARD2c: this used to spell them out, and named `world.js:5490`
      *  and `dungeonContext.js:5976` for its two sibling copies - lines
      *  that had moved to :4418 and :5457. Three copies of a two-line
      *  law, and even the comment pointing between them had gone stale. */

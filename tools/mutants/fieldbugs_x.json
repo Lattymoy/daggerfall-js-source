@@ -29,8 +29,8 @@
   {
     "name": "X2-rows-shape-lost",
     "file": "src/systems/quest/questMacros.js",
-    "old": "    : row && typeof row === 'object' ? { ...row, text: expandMacroValues(row.text ?? '', values) } : row));",
-    "new": "    : row && typeof row === 'object' ? expandMacroValues(row.text ?? '', values) : row));",
+    "old": "    : row && typeof row === 'object' ? { ...row, text: one(row.text ?? '') } : row));",
+    "new": "    : row && typeof row === 'object' ? one(row.text ?? '') : row));",
     "tests": [
       "test/fieldbugs_x.test.js"
     ]

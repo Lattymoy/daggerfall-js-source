@@ -3421,7 +3421,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // and dungeonContext.js:2350 mounts the same one, gated on
   // `opts.enchantCtx !== false` because setDefaultEnchantCtx is a
   // session singleton and EC1 already routes THIS host's mount into
-  // that context through modes.dungeonCtx - so worldModes.js:4745
+  // that context through modes.dungeonCtx - so worldModes.js:4777
   // passes false beside its `chargen: false` and only the standalone
   // ?dungeon route mounts its own. S40 filled isResting
   // in - the sentence that stood here said it "stays absent above
@@ -4933,6 +4933,10 @@ export async function bootWorld(canvas, renderer, params, status) {
   // the recorded wart. The shipped corpus never reaches it: every
   // `teleport pc to` targets a dungeon place and `transfer pc inside`
   // is S0000016's story dungeon alone.
+  // MAC-D3: ...and the online DEATH respawn shares this latch. One
+  // respawn is in flight at a time whichever door started it - a quest
+  // site respawn and a death respawn both teleport, and two teleports
+  // racing each other is how a player ends up somewhere neither meant.
   let _respawning = false;
   async function _respawnAtSite(loc) {
     modes?.forceExitToExterior();
@@ -5007,6 +5011,28 @@ export async function bootWorld(canvas, renderer, params, status) {
    * title menu, no save to load.
    */
   function respawnOnlinePlayer() {
+    // MAC-D3 (Seanobi on Discord, 2026-09-21: "stuck in an infinite
+    // deathloop. Instant death after respawning"): THE PLAYER IS
+    // BROUGHT BACK TO LIFE FIRST, AND EXACTLY ONCE.
+    //
+    // This used to heal on the LAST line, after `await
+    // _teleportToPixel` - so for the whole of that await the player
+    // stood at zero health with the death screen already torn down by
+    // forceExitToExterior below. The frame loop's death watcher only
+    // holds off while a DeathScreen is up (:2225), so the very next
+    // frame saw a dead player and no screen, raised death again, and
+    // that death's reset called back in here. A teleport loads a map
+    // pixel; under the lag spike Seanobi described the window is many
+    // frames wide, and the loop is unbreakable from inside the game
+    // because every pass tears the screen down again.
+    //
+    // The dungeon arm of the same law already had this right
+    // (worldModes.js's Privateer's Hold respawn: spawn, heal, THEN
+    // clear the overlay, all synchronous). This is that order.
+    if (_respawning) return;   // and a second death mid-flight cannot start a second respawn
+    _respawning = true;
+    playerEntity.health = respawnHealth(playerEntity.maxHealth);
+    surfacePlayer();
     _deathWasOnline = null;   // armed fresh for the NEXT death
     const mode = modes?.mode ?? 'exterior';
     const wasInDungeon = mode === 'dungeon';
@@ -5042,10 +5068,13 @@ export async function bootWorld(canvas, renderer, params, status) {
       // dungeon's door - not the terrain tile's dead centre.
       await _teleportToPixel(land.x, land.y, null, { reposition: REPOSITION.RandomStartMarker });
       _lastEncMinutes = Math.floor(playerTicker.classicMinutes);   // PreventEnemySpawns parity, the cemetery transfer's own line
-      playerEntity.health = respawnHealth(playerEntity.maxHealth);
-      surfacePlayer();
+      // MAC-D3: the heal is at the TOP now, before anything is torn
+      // down or awaited. Re-asserted here only because a teleport can
+      // cross a cell that re-reads vitals; it is the same value, so
+      // this is idempotent rather than a second mercy.
+      if (!(playerEntity.health > 0)) { playerEntity.health = respawnHealth(playerEntity.maxHealth); surfacePlayer(); }
       townTalk.showOverlay(new ActionTextBox([respawnFlavorText(kind)]));
-    });
+    }).finally(() => { _respawning = false; });
   }
 
   async function fastTravelTo(pick, opts, computed) {
@@ -7149,7 +7178,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // exterior -> the townTalk overlay, interior OR dungeon -> the mode
   // machine's slot. U43-ii shipped the dungeon half: showQuestBox
   // offers the window to `modes.showQuestOverlay` below, and
-  // worldModes answers it in BOTH modes (worldModes.js:7657-7720 -
+  // worldModes answers it in BOTH modes (worldModes.js:7689-7752 -
   // dungeon routes to dungeonCtx.showOverlay), so a dungeon popup is
   // shown rather than logged loudly and dropped.
   // AUDIT 24 (wave 21): DaggerfallMessageBox.Show() is a
@@ -7566,7 +7595,7 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  :3552), so the in-place pass is right for both. Also: C# calls
    *  this whether or not GetQuest found anything - the null-parent arm
    *  is a DFU forum-bug fix INSIDE ExpandQuestMessage, not a caller
-   *  guard, and expandQuestMessage carries it (questMacros.js:490). */
+   *  guard, and expandQuestMessage carries it (questMacros.js:510). */
   const expandQuestTokens = (questID, tokens) => {
     expandQuestMessage(questBridge?.machine.getQuest(questID) ?? null, tokens, true);
     return tokensToString(tokens);

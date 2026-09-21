@@ -183,10 +183,30 @@ export function expandMacroValues(text, values = {}, questLike = null) {
  *  MacroHelper over it with a context (the map's revealed location, the guild as %fon's provider). The values are the
  *  caller's, as `expandMacroValues` takes them; a row keeps its shape and its `center`. Nothing to expand: the rows
  *  come back as they were. */
-export function expandRowValues(rows, values = null) {
-  if (!Array.isArray(rows) || !values || !Object.keys(values).length) return rows;
-  return rows.map((row) => (typeof row === 'string' ? expandMacroValues(row, values)
-    : row && typeof row === 'object' ? { ...row, text: expandMacroValues(row.text ?? '', values) } : row));
+export function expandRowValues(rows, values = null, questLike = null) {
+  // DAEDRA1 (2026-09-21, Dracula/Valentin on Discord: "daedra summoning
+  // is fucked", with the coven's box reading "Today is %dat, the day of
+  // summoning for %dae ... %pcn"): THE CONTEXT RIDES HERE TOO.
+  //
+  // This walk took an explicit value map and nothing else, so a caller
+  // with no values of its own had no way to ask for the table every
+  // OTHER box in the port resolves through - %pcn, %dat, %cn and the
+  // rest of MacroHelper's global rows, which `expandMacroValues`
+  // already answers from a questLike context (ROAD-E E7's ONE
+  // GAMEMANAGER: the quest machine's hooks are the port's stand-in for
+  // GameManager.Instance, whichever window is expanding). It was
+  // reachable only by passing a hand-filled map, which is the same
+  // "filled for the symbols somebody expected" shape MACROS1 paid for.
+  //
+  // Either source alone is enough to walk: values with no context, a
+  // context with no values, or both - the value map still wins a
+  // symbol it carries, exactly as `expandMacroValues` orders them.
+  if (!Array.isArray(rows)) return rows;
+  const hasValues = !!values && !!Object.keys(values).length;
+  if (!hasValues && !questLike) return rows;
+  const one = (t) => expandMacroValues(t ?? '', values ?? {}, questLike);
+  return rows.map((row) => (typeof row === 'string' ? one(row)
+    : row && typeof row === 'object' ? { ...row, text: one(row.text ?? '') } : row));
 }
 
 // ---- the quest's macro data source (QuestMCP.cs) ----

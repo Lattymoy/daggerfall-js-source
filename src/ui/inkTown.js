@@ -145,25 +145,38 @@ export const LEAD_AT = 0.9;
  * second transform between them and no way for one to mirror against
  * the other.
  *
- * WHY THIS IS NOT THE SHIPPED MAP'S ARITHMETIC. That window flips
- * twice - once inside the block and once across the block grid
- * (exteriorAutomapWindow.js:297-300, ExteriorAutomap.cs:1481) - and its
- * net effect DISAGREES with the anchor formula across blocks: higher
- * `blockY` is a lower row in the texture and a higher row in the
- * anchor. It gets away with it
- * because the two go to the screen down different paths (a rotated quad
- * under a camera, and `toPanelScreen` per plate). This sheet draws them
- * as one picture in one space, so they have to agree, and the ANCHOR is
- * the one that must be obeyed - it is the names, and the names are the
- * point.
+ * EM-BUG3 (2026-09-21, Mac from play: "enhanced local town maps are
+ * rotated wrong... I was in the corner of town and It thinks entirely
+ * different buildings are there") - AND THIS IS WHERE THAT CAME FROM.
+ * The note this replaces reasoned about the shipped window's two flips
+ * ACROSS blocks and concluded the anchor must be obeyed instead. Both
+ * halves of that were wrong, and the second one was the bug:
  *
- * WHAT A PIN CANNOT SETTLE, written down rather than assumed: whether
- * the resulting picture is the right way up against the WORLD. That is
- * one composed rotation away either way and nothing inside the harness
- * renders anything, so it is a browser probe's question and Mac's eyes'
- * - the same answer the held map's own constants got (MAP-FIELD's
- * lesson: nothing that is about a PICTURE can be seen from inside a
- * test). What IS pinned is that the plan and the names cannot disagree.
+ *   THE GRID'S ROWS RUN AGAINST +Z, and nothing here accounted for it.
+ *   `autoMapData` is an FLD-header grid, and every FLD grid in the port
+ *   is read with its row index REVERSED - `buildGroundTilemap` takes
+ *   `groundTiles[x][15 - y]` for "row 0 nearest Z=0"
+ *   (world/rmbLayout.js:268), which is the same law at 16 rows that
+ *   ExteriorAutomap.cs:1481 is at 64. Copying `data[y * 64 + x]`
+ *   straight into row y laid every block's bytes MIRRORED north-south
+ *   against the anchors, the quest rings and the player's own caret -
+ *   all three of which come off +Z. Inside one block a tavern swapped
+ *   ends with whatever faced it, which is exactly "different buildings
+ *   are there" when you stand at the edge of town and look.
+ *
+ *   AND THE SHEET WAS THE MIRROR OF THE SHIPPED ONE. Compose the
+ *   shipped window's two flips and they are one law, not two:
+ *   `(gridH-1-b.y)*64 + y_src` is exactly `H-1-anchorRow`. It does not
+ *   disagree with the anchor formula at all - it is the anchor formula
+ *   seen from the screen, where a higher +Z is a HIGHER row on the
+ *   paper. Drawing the anchor row downward instead turned the whole
+ *   plan over against the map the same window draws beside it.
+ *
+ * So the sheet's space IS the shipped window's screen space, and this
+ * function puts the bytes straight into it. `sheetY` is the same law
+ * for everything that arrives in anchor space - the plates, the quest
+ * rings and the caret - so there is still exactly one transform between
+ * the two spaces and still no way for the plan and the names to part.
  *
  * @param {number} gridW @param {number} gridH
  * @param {Array<{x:number,y:number,autoMap?:Uint8Array|number[]|null}>} blocks
@@ -173,10 +186,16 @@ export function townBytes(gridW, gridH, blocks) {
   const w = Math.max(1, gridW) * BLOCK_PX;
   const h = Math.max(1, gridH) * BLOCK_PX;
   const bytes = new Uint8Array(w * h);
+  const gh = Math.max(1, gridH);
   for (const b of blocks ?? []) {
     const data = b?.autoMap;
     if (!data || data.length < BLOCK_PX * BLOCK_PX) continue;
-    const bx = (b.x ?? 0) * BLOCK_PX, by = (b.y ?? 0) * BLOCK_PX;
+    const bx = (b.x ?? 0) * BLOCK_PX;
+    // EM-BUG3: the block's row in SHEET space. `(gridH-1-b.y)` is the
+    // block flip and the source row `y` then goes in unreversed, which
+    // together are `H-1-anchorRow` - the shipped window's own
+    // composition (exteriorAutomapWindow.js:299-300), derived above.
+    const by = (gh - 1 - (b.y ?? 0)) * BLOCK_PX;
     if (bx < 0 || by < 0 || bx + BLOCK_PX > w || by + BLOCK_PX > h) continue;   // a block off its own grid
     for (let y = 0; y < BLOCK_PX; y++) {
       const dst = (by + y) * w + bx;
@@ -186,6 +205,17 @@ export function townBytes(gridW, gridH, blocks) {
   }
   return { w, h, bytes };
 }
+
+/** EM-BUG3 - ANCHOR SPACE TO SHEET SPACE, the one transform between
+ *  them. `nameplateAnchor` answers a row that grows with +Z; the sheet
+ *  (and the shipped window it now agrees with) draws +Z upward, so a
+ *  row is measured from the far edge. Everything that arrives in anchor
+ *  space goes through here - the plates, the quest rings, the caret -
+ *  and the field above is laid in sheet space directly, which is the
+ *  same law composed at the source.
+ *  @param {number} fieldH the field's height in layout pixels
+ *  @param {number} anchorY */
+export const sheetY = (fieldH, anchorY) => (fieldH - 1) - anchorY;
 
 /** Is this byte a built-up pixel? DERIVED off the one ladder rather
  *  than kept as a second set beside it: a byte is built-up exactly when

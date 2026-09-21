@@ -524,6 +524,72 @@ reads its own slot, the screen tag is constant, the travel tag is
 derived, and neither answers the other's question. Nine mutants, nine
 dead, including one per host that simply removes the term.
 
+## EM-BUG3 — the town plan stood in a space of its own
+
+Mac, from play (2026-09-21): *"Heads up but enhanced local town maps are
+rotated wrong. Not exactly sure the correct location but i was in the
+corner of town and It thinks entirely different buildings are there."*
+
+Two defects, one root: **the plan and everything named on it were in
+different spaces**, and EM4's own note argued its way into both.
+
+### The grid's rows run against +Z
+
+`autoMapData` is an FLD-header grid, and the port already knows which way
+those run — `buildGroundTilemap` reads `groundTiles[x][15 - y]` for "row
+0 nearest Z=0" (`world/rmbLayout.js:268`). `ExteriorAutomap.cs:1481` is
+that same law at 64 rows instead of 16, which is what the shipped
+window's "per-block row flip" is.
+
+`townBytes` copied `data[y * 64 + x]` straight into row `y`. So every
+block's bytes lay **mirrored north-south** against the three things that
+come off +Z directly: the nameplate anchors, the quest rings, and the
+player's caret (`local.z / WORLD_PER_PX`, handed over by both hosts).
+Within one block a tavern swapped ends with whatever faced it. Stand at
+the edge of town, and your caret sits on somebody else's roof — reported
+exactly as "entirely different buildings are there."
+
+### And the sheet was the mirror of the shipped one
+
+EM4's note read the shipped window as *disagreeing* with the anchor
+formula across blocks, and obeyed the anchor instead. Compose the two
+flips and there is no disagreement — they are one law:
+
+    (gridH-1-b.y)*64 + y_src   ==   H-1-anchorRow
+
+That is the anchor formula **seen from the screen**, where a higher +Z is
+a higher row on the paper. Drawing the anchor row downward instead turned
+the enhanced plan over against the classic map of the same town.
+
+### The fix is one space and one transform
+
+The field is laid in the shipped window's screen space directly, and
+`sheetY(fieldH, anchorY)` is the single crossing for everything that
+arrives in anchor space — the plates, the quest rings, and the caret
+through `playerOnSheet`, so the overlay and the rest view cannot cross on
+different paths. Nothing in `nameplateLayout.js` moved: the classic
+window reads the same anchors and applies its own flip at
+`toPanelScreen`.
+
+### The pin that let it through
+
+EM4 wrote a pin for exactly this question and then asserted the
+arithmetic as written — *"local y 5 is field row 5"* — so it agreed with
+the bug for as long as the bug stood. Its own note said the picture's
+rightness "is a browser probe's question and Mac's eyes'." Mac's eyes
+answered.
+
+It is re-aimed onto an **equality between the two modules**, swept over
+four grid cells and four blocks. The new pin stands a building and the
+player on one spot in the world and checks they come out on one spot on
+the paper, then checks the whole sheet against `buildExteriorLayout` — so
+the two maps of one town can never be mirrors again. Seven mutations,
+seven dead.
+
+**The lesson, for the third time this month:** a pin that restates the
+code will always agree with the code. The pins that caught things here
+are the ones that made two independent modules answer the same question.
+
 ## Doctrine, unchanged
 
 The sprite is Mac's, the maps are computed, the names are the game's
