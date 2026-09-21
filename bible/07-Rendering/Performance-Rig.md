@@ -233,3 +233,36 @@ is what the code says it should be, and `ui` beside it.
 **The lesson: a span that ends at "the next mark" ends wherever the next
 mark happens to be, and the last span of a frame has no next mark of
 its own. Close it by hand or it measures the wait.**
+
+## GROUND-LAST - the ground is drawn after the meshes (2026-09-21)
+
+Mac: *"I want proper fucking fixes."* This is one. Every lens of GRAIN
+AUDIT 1 pointed at it and it was left on the record for his word.
+
+**The ground was the first draw of every pixel.** So every ground
+fragment under every building, tree, wall and mill was shaded in full -
+the tile fetch and its filter, the cloud shadow, the sun, the lane's
+lights and terms - and then painted over by the mesh that stood on it.
+The ground covers more of an outdoor screen than any other pass, and in
+a town a large share of it is under something. There is no depth
+prepass in this renderer and none is added: drawing the opaque meshes
+FIRST puts them in the depth buffer, and a ground fragment behind one
+then fails the depth test before its shader runs - early-Z, which every
+GPU made this century does for free.
+
+**The streaming world** queues each visible pixel's ground during the
+pixel walk, draws the pixel's static batch and models where the ground
+used to be drawn, and drains the queue once the walk is done - so a
+pixel's ground also lies under the NEXT pixel's buildings, and the
+terrain program binds once a frame instead of twice a pixel. The sky,
+the ring, the water and the flats keep their places after it: the water
+reads the ground's depth and the flats are cut-outs blended over it.
+**The town host** draws its ground after the buildings, the mills, the
+rig and the arrows, just before the sky. Nothing else moved.
+
+Not measured on a GPU - none here can be - and stated as such: the
+saving is the shaded fraction of the ground that is under a mesh, times
+what a ground fragment costs, on a machine where the GPU is the wait.
+In a town that fraction is large; on an open road it is small. On a
+CPU-bound frame it is nothing, and it costs nothing there either. 3
+mutants, 3 dead; the perf2 order pin holds both hosts' new order.

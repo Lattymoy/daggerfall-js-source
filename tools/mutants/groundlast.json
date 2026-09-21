@@ -1,0 +1,29 @@
+[
+ {
+  "name": "GROUND-LAST-the-world-draws-the-ground-first-again",
+  "file": "src/scenes/world.js",
+  "old": "        groundQueue.push(p);\n        if (p.staticBatch)",
+  "new": "        renderer.drawTerrain(p.terrain, pixelMatrix, renderer.tileArrays.get(p.groundArchive), p.tilemapTex, 6.4);\n        if (p.staticBatch)",
+  "tests": [
+   "test/perf2.test.js"
+  ]
+ },
+ {
+  "name": "GROUND-LAST-the-queue-never-drains",
+  "file": "src/scenes/world.js",
+  "old": "    for (const p of groundQueue) {\n      const pixelMatrix = p._pixelMatrix;",
+  "new": "    for (const p of []) {\n      const pixelMatrix = p._pixelMatrix;",
+  "tests": [
+   "test/perf2.test.js"
+  ]
+ },
+ {
+  "name": "GROUND-LAST-the-town-draws-the-ground-before-its-buildings-again",
+  "file": "src/scenes/exterior.js",
+  "old": "    arrows.draw(renderer, texRemap);\n    // GROUND-LAST: THE GROUND, after every opaque mesh of the town, so a",
+  "new": "    renderer.drawTerrain(groundSurface, identityMatrix, renderer.tileArrays.get(groundArchive), tilemapTex, 6.4);\n    arrows.draw(renderer, texRemap);\n    // GROUND-LAST: THE GROUND, after every opaque mesh of the town, so a",
+  "tests": [
+   "test/perf2.test.js"
+  ]
+ }
+]

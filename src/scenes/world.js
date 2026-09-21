@@ -10697,6 +10697,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (cullOn) spherePlanes(multiply(proj, view, _pv), _planes);   // EV3 (GHOST1: normalised - the sphere test shares these)
     meterFor(renderer.gl)?.markCpu('batches');   // PERF-CPU: the pixel walk that fills allBatches, culling as it goes
     const allBatches = [];
+    const groundQueue = [];   // GROUND-LAST: the visible pixels whose ground is drawn AFTER every opaque mesh of every pixel
     // PERF-ON2 (2026-09-19, Mac: "Online mode needs further performance
     // improvements", with a readout showing 51 fps, script 23.3 ms and
     // 1365 draws): THE OTHERS ARE CULLED LIKE EVERYTHING ELSE IS.
@@ -10756,8 +10757,19 @@ export async function bootWorld(canvas, renderer, params, status) {
         // cloud and for the shadow it casts. Null when there is no enhanced
         // sky, which is the classic skin and every interior.
         renderer.setCloudShadow(sky?.cloudShadow ?? null);
-        renderer.drawTerrain(p.terrain, pixelMatrix,
-          renderer.tileArrays.get(p.groundArchive), p.tilemapTex, 6.4);
+        // GROUND-LAST (2026-09-21): THE GROUND IS DRAWN AFTER THE MESHES,
+        // not before them. It was the first thing in every pixel, so every
+        // ground fragment under every building, tree and wall was shaded
+        // in full - the tile fetch, the filter, the lights, the cloud
+        // shadow, the lane's terms - and then painted over. Drawn last, a
+        // fragment under a mesh fails the depth test before its shader
+        // runs, on every GPU made this century. The ground covers more of
+        // an outdoor screen than any other pass and in a town a large
+        // share of it is under something; that share costs nothing now.
+        // Queued here, drawn once the pixel walk is done, so a pixel's
+        // ground also sits under the NEXT pixel's buildings - and the
+        // terrain program is bound once a frame instead of twice a pixel.
+        groundQueue.push(p);
         if (p.staticBatch) renderer.drawMesh(p.staticBatch, pixelMatrix, null);   // PERF4: every static model of the pixel, one call per texture (the keys are resolved in the merge)
         for (const m of p.models) {
           if (m._batched) continue;   // PERF4: drawn above
@@ -10811,6 +10823,16 @@ export async function bootWorld(canvas, renderer, params, status) {
         b.origin = t;
         allBatches.push(b);
       }
+    }
+    // GROUND-LAST: the ground of every visible pixel, after every opaque
+    // mesh of every pixel (see the queue above). Before the sky, the ring,
+    // the water and the flats, as it always was: the water reads its depth
+    // and the flats are cut-outs blended over it.
+    renderer.setCloudShadow(sky?.cloudShadow ?? null);
+    for (const p of groundQueue) {
+      const pixelMatrix = p._pixelMatrix;
+      renderer.drawTerrain(p.terrain, pixelMatrix,
+        renderer.tileArrays.get(p.groundArchive), p.tilemapTex, 6.4);
     }
     _camRight[0] = Math.cos(cam.yaw); _camRight[1] = 0; _camRight[2] = -Math.sin(cam.yaw);
     const camRight = _camRight;   // EV2: one scratch, refilled - not three allocations a frame
