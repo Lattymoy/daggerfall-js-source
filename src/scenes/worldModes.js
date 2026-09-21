@@ -121,6 +121,7 @@ import { ChoiceWindow } from '../ui/talkWindow.js';
 import { FntFile } from '../formats/fntFile.js';
 import { makeFont } from '../ui/text.js';
 import { hudScale } from '../ui/hud.js';
+import { containerTextureRecord } from '../systems/containers.js';   // WORLD-HOVER: the texture record is DERIVED at its one reader, off the stored model id
 import { isShop, isRepairShop, stockShopShelf, stockHouseContainer, PRIVATE_PROPERTY_TEXT_ID, calculateCost, calculateTradePrice, regionPriceAdjustment, SHOP_BUYS_GROUPS, shopBuysItem, stockSoulGems, stockGuildMagicItems, stockGuildPotions, createStockedDate, needsRestock } from '../systems/shopStock.js';   // X6: the soul-gem shelf; G4: the two guild shelves; A2: the daily restock
 import { identifySpellPass, identifiedTallyText, NOT_ENOUGH_SPELL_POINTS_TEXT } from '../systems/tradeModes.js';   // X7: the Identify SPELL's per-item roll; F067: its magicka refusal
 import { liveBundles, dispelBundle, dispellableBundles, DISPEL_MAGIC_TEXT } from '../systems/mysticism.js';   // X10: the Dispel Magic picker
@@ -157,7 +158,7 @@ import { getTitle } from '../systems/guilds.js';
 import { getDivine, DIVINES } from '../systems/guildVariants.js';
 import { BUILDING_TYPES, isResidence, isTavern } from '../world/buildingNames.js';   // ROAD-B B4: IsTavern joins IsResidence at the door latch
 import { getInteractionMode, setInteractionMode } from '../player/interactionMode.js';   // R1: PlayerActivate.currentMode, the one home
-import { buildingIsUnlocked, buildingLockValue, isBuildingOpen, LOCKED_EXTERIOR_DOOR_TEXT, OPEN_HOURS, CLOSE_HOURS } from '../systems/buildingLocks.js';   // R1: opening hours + the unlocked ladder   // P1: the people gate reads the same hours
+import { buildingIsUnlocked, buildingLockValue, isBuildingOpen, LOCKED_EXTERIOR_DOOR_TEXT, buildingClosedText } from '../systems/buildingLocks.js';   // R1: opening hours + the unlocked ladder   // P1: the people gate reads the same hours   // WORLD-HOVER: the closed sentence, not the two tables it is built from
 import { peopleAreVisible, updateNpcPresence } from '../characters/interiorPeople.js';   // P1: AddPeople's visibility tail   // ROAD-B B5: OnPop's presence re-roll
 import { exteriorLockpickingChance, lookAtLockText, LOCKPICKING_SUCCESS_TEXT, LOCKPICKING_FAILURE_TEXT, isActionDoorObject } from '../world/actionSystem.js';   // AUDIT 63 F42: GetComponent<DaggerfallActionDoor>() with a name
 import { tallyCrimeGuildRequirements } from '../systems/crimeGuilds.js';   // CG2: the break-in tally
@@ -4285,8 +4286,9 @@ export function createWorldModes(host) {
     townTalk?.say?.(db.displayName);
     if (!unlocked && bd.buildingType < BUILDING_TYPES.Temple
       && bd.buildingType !== BUILDING_TYPES.HouseForSale) {
-      const which = bd.buildingType === BUILDING_TYPES.GuildHall ? 'Guild' : 'Store';
-      townTalk?.say?.(`${which} is closed. Open from ${OPEN_HOURS[bd.buildingType]}:00 to ${CLOSE_HOURS[bd.buildingType]}:00.`);
+      // WORLD-HOVER: the sentence has ONE home now (buildingLocks.
+      // buildingClosedText) - the hover says it too, without a click.
+      townTalk?.say?.(buildingClosedText(bd.buildingType));
     }
   }
 
@@ -5116,7 +5118,7 @@ export function createWorldModes(host) {
             const today = stockedToday();
             if (needsRestock(c, today)) {
               c.stockedDate = today;
-              c.items = stockHouseContainer({ buildingType: b?.buildingType, record: c.record }, playerEntity);
+              c.items = stockHouseContainer({ buildingType: b?.buildingType, record: containerTextureRecord(c.modelIdNum) }, playerEntity);
               fresh = true;   // AUDIT WORLD6a A5: said at the window's mount, after the prompt - No claims nothing
             }
             if (c.items.length === 0) return true;   // "If no contents, do nothing"

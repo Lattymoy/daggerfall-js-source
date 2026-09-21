@@ -26,7 +26,7 @@ import { remapSubMeshes } from '../world/texRemap.js';   // WM3: the one climate
 import { unityMaterialName } from '../systems/immersiveFootsteps.js';   // IF1: MaterialReader's material name, for the mod's floor walk
 import { billboardSize } from '../world/rmbFlats.js';
 import { Collider } from '../player/collider.js';
-import { isHouseContainerModel, containerTextureRecord } from '../systems/containers.js';
+import { isHouseContainerModel } from '../systems/containers.js';
 import { isShopShelfModel } from '../systems/shopStock.js';   // E2
 import { LADDER_MODEL_ID } from '../player/enterExit.js';
 import { MACHINERY_MODEL_ID } from '../world/windmillMesh.js';   // WM4b: the mill's machinery and its moving parts
@@ -411,9 +411,9 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
         // owned residence is never a shop or a Library/GuildHall/
         // Temple, so the two arms ahead of this one in DFU's chain
         // cannot fire on it.)
-        containers.push({ cpu, matrix, items: null, record: containerTextureRecord(p.modelIdNum) });
+        containers.push({ cpu, matrix, items: null, modelIdNum: p.modelIdNum });
       } else {
-        shelves.push({ cpu, matrix, items: null });
+        shelves.push({ cpu, matrix, items: null, modelIdNum: p.modelIdNum });
       }
     } else if (isHouseContainerModel(p.modelIdNum)) {
       // F209: `items: null` IS the stock-once latch, the shelf idiom
@@ -421,7 +421,7 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
       // (PlayerActivate.cs:915-918), and the scene cache preserves
       // null so an unopened chest stays unstocked across visits. Born
       // `[]` it read as already-stocked-empty and no one ever filled it.
-      containers.push({ cpu, matrix, items: null, record: containerTextureRecord(p.modelIdNum) });
+      containers.push({ cpu, matrix, items: null, modelIdNum: p.modelIdNum });
     }
   }
   // Interior swing doors run on the ActionSystem (P4): the verbatim

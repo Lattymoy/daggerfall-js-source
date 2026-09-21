@@ -88,8 +88,8 @@ test('HC1: a shelf-set model in an OWNED house is MakeHouseContainer, not a shop
   const ic = src('scenes/interiorContext.js');
   const arm = ic.slice(ic.indexOf('if (isShopShelfModel(p.modelIdNum)) {'));
   const owned = arm.indexOf('if (opts.houseOwned) {');
-  const asContainer = arm.indexOf('containers.push({ cpu, matrix, items: null, record: containerTextureRecord(p.modelIdNum) });');
-  const asShelf = arm.indexOf('shelves.push({ cpu, matrix, items: null });');
+  const asContainer = arm.indexOf('containers.push({ cpu, matrix, items: null, modelIdNum: p.modelIdNum });');
+  const asShelf = arm.indexOf('shelves.push({ cpu, matrix, items: null, modelIdNum: p.modelIdNum });');
   assert.ok(owned >= 0 && asContainer >= 0 && asShelf >= 0);
   assert.ok(owned < asContainer && asContainer < asShelf,
     'owned routes to containers FIRST; everyone else\'s shelf stays a shelf');

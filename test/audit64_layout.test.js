@@ -182,9 +182,21 @@ test('AUDIT 64 F11: both exterior hosts stand the array, and the arm does NOT co
   assert.ok(arm.includes('bd.buildingType < BUILDING_TYPES.Temple')
     && arm.includes('bd.buildingType !== BUILDING_TYPES.HouseForSale'),
   'the closed popup gate is :473-474');
-  assert.ok(arm.includes('is closed. Open from ${OPEN_HOURS[bd.buildingType]}:00 to ${CLOSE_HOURS[bd.buildingType]}:00.'),
+  // WORLD-HOVER moved the SENTENCE to systems/buildingLocks.buildingClosedText,
+  // because the world hover says it too - without a click - and two producers of
+  // one DFU member is the first violation the bible names. The arm is a caller
+  // now, and the sentence is pinned where it lives.
+  assert.ok(arm.includes('townTalk?.say?.(buildingClosedText(bd.buildingType));'),
+    'the arm ASKS for the sentence rather than building a second copy of it');
+  const bl = src('src/systems/buildingLocks.js');
+  assert.ok(bl.includes('${which} is closed. Open from ${OPEN_HOURS[buildingType]}:00 to ${CLOSE_HOURS[buildingType]}:00.'),
     'Internal_Strings.csv:36-37, ":00" suffixes and all');
-  assert.ok(arm.includes("? 'Guild' : 'Store'"), 'GuildHall gets guildClosed, everything else storeClosed');
+  assert.ok(bl.includes("subject ?? (buildingType === BUILDING_TYPES.GuildHall ? 'Guild' : 'Store')"),
+    'GuildHall gets guildClosed, everything else storeClosed');
+  // And the host no longer reads the raw hour tables at all - if it did, it
+  // could build the sentence again without anyone noticing.
+  assert.doesNotMatch(m, /OPEN_HOURS|CLOSE_HOURS/,
+    'the exterior host asks for the sentence, not the two tables under it');
   // BuildingIsUnlocked is evaluated ONCE (PlayerActivate.cs:358) and
   // handed to both arms - one helper, never a thinner second copy.
   assert.equal((m.match(/buildingIsUnlocked\(bd, \{/g) ?? []).length, 1);
