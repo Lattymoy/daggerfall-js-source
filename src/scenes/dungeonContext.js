@@ -1603,7 +1603,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // owned, and destroy() hands it back (the _prevPassiveHost idiom this
   // file already uses for its other process-global seams). A bare null
   // would not do: on ?world and ?exterior the previous holder is the
-  // host's own townTalk sink (world.js:8225 / exterior.js:3369), set
+  // host's own townTalk sink (world.js:8241 / exterior.js:3385), set
   // once at boot and never again, so nulling on the way out of the
   // first dungeon would silently un-file every mid-screen label above
   // ground for the rest of the session - MC-1's own bug, re-opened.
@@ -2624,7 +2624,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // NEXT updateMissiles pass to fill. But the push lands in a
     // MICROTASK - this is async and its one caller does not await it -
     // and both hosts draw dynamicDraws BEFORE they call drawFoes
-    // (dungeon.js:1019 against :1048; worldModes.js:6534 against :6541).   // QS6: both pairs' SECOND half was stale before this slice - they named neither `drawFoes` call, and a positional bump would have moved a wrong number by the right offset; re-resolved by content
+    // (dungeon.js:1019 against :1048; worldModes.js:6554 against :6578).   // QS6: both pairs' SECOND half was stale before this slice - they named neither `drawFoes` call, and a positional bump would have moved a wrong number by the right offset; re-resolved by content
     // So the very next frame drew the arrow with a NULL matrix, and
     // `uniformMatrix4fv(uModel, false, null)` throws - Float32List is
     // a non-nullable WebIDL union. Firing a bow killed the frame loop,
@@ -3181,8 +3181,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
               // AUDIT 39 (#64) / THE FOUR HOSTS RULE - SHIPPED (wave D):
               // this host was the FOURTH BODY of the player-arrow law
               // and is now the fourth CALLER. combat/arrowFlight.js's
-              // playerArrowHitFoe is the one copy world.js:11446,
-              // exterior.js:4847 and worldModes.js:6686 already ran;
+              // playerArrowHitFoe is the one copy world.js:11462,
+              // exterior.js:4863 and worldModes.js:6706 already ran;
               // the flag said the divergence would bite and it already
               // had. This copy splashed at the ARROW TIP
               // (`[m.pos[0], m.pos[1], m.pos[2]]`) on the claim that
@@ -5525,11 +5525,31 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     }
     return null;
   }
+  /**
+   * AUDIT-WH M10: THE EXTENSION NAMERS RUN FIRST, and the mod's own
+   * ladder last.
+   *
+   * That is the mod's documented order - `EnumerateCustomHoverText`
+   * is the FIRST statement of the tooltip body (.cs:285) and every
+   * band below it is guarded on `IsNullOrEmpty(ret)`, so a registered
+   * namer wins outright - and the port had it inverted: the dungeon's
+   * own ladder ran ahead of the torches, the camps and whatever the
+   * host stands.
+   *
+   * It is INERT TODAY, because the key sets are disjoint - nothing a
+   * torch or a camp answers is a key `_dungeonHoverName` knows. That
+   * is exactly why it is worth fixing rather than noting: the day a
+   * host stands a family whose key this context also names, the
+   * precedence decides it, and a precedence that only becomes
+   * observable at the moment it goes wrong is the FONT1 two-faces
+   * shape. The interior and the exterior arms already run their host
+   * namers first; this makes the three agree.
+   */
   const _namer = composeNamer([
-    _dungeonHoverName,
     (key) => droppedTorches.hoverName?.(key) ?? null,   // HT1, through the mod's extension API
     (key) => camps.hoverName?.(key) ?? null,            // SURV3/HEARTH1, likewise
     (key, hit) => composeNamer(_hostNamers)(key, hit),  // ...and whatever the host stands
+    _dungeonHoverName,                                  // ...then the mod's own ladder (.cs:285-296)
   ]);
 
   const api = {

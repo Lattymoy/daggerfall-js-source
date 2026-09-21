@@ -1083,9 +1083,15 @@ test('PX21c / WORLD-HOVER: the plaque names a pile without opening it, on the ta
   // that REFUSES it out loud - and a plaque that trusted the pick alone
   // would name a chest across the room that E cannot open.
   const items = [{ name: 'Ruby', stackCount: 2 }];
-  assert.equal(resolveHover({ key: 'loot:3', distance: 9, reach: 3.2 }, { contents: () => items }), null,
+  // AUDIT-WH M5: the HOST's own namer supplies the title. The model
+  // used to fall back to the literal 'Loot' for an itemised key with
+  // no word, which is not a word World Tooltips contains and is how a
+  // dropped pile outdoors read "Loot" for a whole slice while the same
+  // pile indoors read the mod's "Loot Pile".
+  const pile = { contents: () => items, name: () => ({ title: 'Loot Pile' }) };
+  assert.equal(resolveHover({ key: 'loot:3', distance: 9, reach: 3.2 }, pile), null,
     'out of reach is not named at all');
-  const near = resolveHover({ key: 'loot:3', distance: 1, reach: 3.2 }, { contents: () => items });
+  const near = resolveHover({ key: 'loot:3', distance: 1, reach: 3.2 }, pile);
   assert.equal(near.kind, 'items');
   assert.deepEqual(near.rows, [{ name: 'Ruby', stack: 2, rarity: null }]);
   assert.equal(resolveHover(null, {}), null, 'nothing under the crosshair');
@@ -1103,8 +1109,8 @@ test('PX21c / WORLD-HOVER: the plaque names a pile without opening it, on the ta
   // the moment anything writes into a container being looked at.
   assert.match(hov, /if \(sig === shownSig\) return;/);
   assert.match(model, /export function frameSignature\(f\) \{/);
-  const a = resolveHover({ key: 'loot:3', distance: 1, reach: 3.2 }, { contents: () => [{ name: 'Ruby' }] });
-  const b = resolveHover({ key: 'loot:3', distance: 1, reach: 3.2 }, { contents: () => [{ name: 'Helm' }] });
+  const a = resolveHover({ key: 'loot:3', distance: 1, reach: 3.2 }, { ...pile, contents: () => [{ name: 'Ruby' }] });
+  const b = resolveHover({ key: 'loot:3', distance: 1, reach: 3.2 }, { ...pile, contents: () => [{ name: 'Helm' }] });
   assert.equal(a.key, b.key, 'the same key');
   assert.notEqual(frameSignature(a), frameSignature(b), 'and a different signature - the guard SEES the change');
   assert.equal(frameSignature(null), null, 'nothing has no signature');

@@ -35,6 +35,12 @@ import { hudScale } from '../src/ui/hud.js';
 
 const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 
+/** The word a HOST's own namer answers for a pile. AUDIT-WH M5: the
+ *  model has no fallback of its own any more - an itemised key with no
+ *  word draws NOTHING, exactly as a named key does - so a fixture that
+ *  drives the item ROWS supplies the title its host would. */
+const PILE = () => ({ title: 'Loot Pile' });
+
 // ── A DOCUMENT, JUST ENOUGH OF ONE ───────────────────────────────
 
 function fakeEl(tag) {
@@ -141,7 +147,7 @@ test('WORLD-HOVER: only the loot keys itemise - everything else is a name', () =
   const contents = () => { read += 1; return []; };
   resolveHover(hit('door:2'), { name: () => ({ title: 'Door' }), contents });
   assert.equal(read, 0, 'a door is not a container - it is never asked for one');
-  resolveHover(hit('loot:2'), { contents });
+  resolveHover(hit('loot:2'), { contents, name: PILE });
   assert.equal(read, 1);
 });
 
@@ -153,9 +159,19 @@ test('WORLD-HOVER: an itemised frame carries the rows, the tail and the empty fl
   assert.equal(f.rows.length, HOVER_MAX);
   assert.equal(f.rest, 3);
   assert.equal(f.empty, false);
-  const e = resolveHover(hit('corpse:1'), { contents: () => [] });
+  const e = resolveHover(hit('corpse:1'), { contents: () => [], name: PILE });
   assert.equal(e.empty, true);
-  assert.equal(e.title, 'Loot', 'a namer that says nothing leaves the itemised default standing');
+  assert.equal(e.title, 'Loot Pile', 'the namer\'s title again - an empty pile is still named by its host');
+  // AUDIT-WH M5: ...and a namer that says NOTHING draws nothing, on an
+  // itemised key exactly as on a named one. The model used to fall
+  // back to the literal 'Loot' here, a word World Tooltips does not
+  // contain, and that fallback is how a dropped pile outdoors read
+  // "Loot" for a whole slice while the same pile indoors read the
+  // mod's "Loot Pile".
+  assert.equal(resolveHover(hit('corpse:1'), { contents: () => [{ name: 'Ruby' }], name: () => null }), null,
+    'an itemised key with no word draws nothing, like every other key');
+  assert.equal(resolveHover(hit('corpse:1'), { contents: () => [{ name: 'Ruby' }] }), null,
+    '...and no namer at all is the same answer, not a different word');
   assert.deepEqual(hoverLines([{ name: 'Ruby', stackCount: 4 }]).shown,
     [{ name: 'Ruby', stack: 4, rarity: null }]);
 });
@@ -169,7 +185,7 @@ test('WORLD-HOVER: the signature changes when the LIST does, under a constant ke
   // (WORLD4), or the next arc's quick loot. It was safe by accident
   // (taking needed a window, and the window unmounted the driver) and
   // an accident is not a law.
-  const of = (items) => frameSignature(resolveHover(hit('loot:1'), { contents: () => items }));
+  const of = (items) => frameSignature(resolveHover(hit('loot:1'), { contents: () => items, name: PILE }));
   const a = of([{ name: 'Ruby' }, { name: 'Helm' }]);
   assert.notEqual(a, of([{ name: 'Helm' }]), 'a row taken');
   assert.notEqual(a, of([{ name: 'Ruby', stackCount: 2 }, { name: 'Helm' }]), 'a stack grown');
@@ -217,7 +233,7 @@ test('WORLD-HOVER: the plaque paints the frame, and a null frame TAKES IT DOWN',
 
 test('WORLD-HOVER: one node, rewritten only when what would be painted changes', () => {
   withPlaque((root) => {
-    const f = (items) => resolveHover(hit('loot:1'), { contents: () => items });
+    const f = (items) => resolveHover(hit('loot:1'), { contents: () => items, name: PILE });
     showWorldPlaque(f([{ name: 'Ruby' }]));
     const n = root();
     const before = n.children;
@@ -240,7 +256,7 @@ test('WORLD-HOVER: the empty container says so', () => {
 test('WORLD-HOVER: a long pile says how many more rather than growing', () => {
   withPlaque((root) => {
     const many = Array.from({ length: HOVER_MAX + 4 }, (_, i) => ({ name: `x${i}` }));
-    showWorldPlaque(resolveHover(hit('loot:1'), { contents: () => many }));
+    showWorldPlaque(resolveHover(hit('loot:1'), { contents: () => many, name: PILE }));
     assert.deepEqual(textsOf(root(), 'wplaque-more'), ['and 4 more']);
     assert.equal(find(root(), 'wplaque-row').length, HOVER_MAX + 1, 'six rows and the tail - a pile is a glance');
   });
@@ -298,7 +314,7 @@ test('WORLD-HOVER: the classic skin never builds a node, and never injects the s
   // head rules (`*`, `html, body`, `body`, `button`, `#app`) onto it.
   withPlaque((root) => {
     assert.equal(worldPlaqueOn(), false);
-    showWorldPlaque(resolveHover(hit('loot:1'), { contents: () => [{ name: 'Ruby' }] }));
+    showWorldPlaque(resolveHover(hit('loot:1'), { contents: () => [{ name: 'Ruby' }], name: PILE }));
     assert.equal(root(), null, 'no node, so no sheet');
     assert.equal(worldHoverFrame({ eye: [0, 0, 0], dir: [0, 0, 1], collider: {}, targets: () => [] }), null);
   }, { skin: 'classic' });
@@ -311,7 +327,7 @@ test('WORLD-HOVER: a touch device gets no plaque at all', () => {
   // wrong answer delivered confidently is worse than no answer.
   withPlaque((root) => {
     assert.equal(worldPlaqueOn(), false);
-    showWorldPlaque(resolveHover(hit('loot:1'), { contents: () => [{ name: 'Ruby' }] }));
+    showWorldPlaque(resolveHover(hit('loot:1'), { contents: () => [{ name: 'Ruby' }], name: PILE }));
     assert.equal(root(), null);
   }, { touch: true });
 });
@@ -346,7 +362,7 @@ test('WORLD-HOVER: an open window takes the plaque down - by law, not by schedul
     const collider = { raycast: () => Infinity };   // collider.raycast answers Infinity on a miss
     const targets = () => [{ key: 'loot:1', aabb: { min: [-1, -1, 0.5], max: [1, 1, 2] }, reach: 3.2 }];
     const f = worldHoverFrame({ eye: [0, 0, 0], dir: [0, 0, 1], collider, targets,
-      contents: () => [{ name: 'Ruby' }] });
+      contents: () => [{ name: 'Ruby' }], name: PILE });
     assert.equal(f?.key, 'loot:1', 'the pick found it');
     assert.equal(root().classList.contains('on'), true);
     assert.equal(worldHoverFrame({ eye: [0, 0, 0], dir: [0, 0, 1], collider, targets, cursorActive: true }), null);
@@ -362,7 +378,7 @@ test('WORLD-HOVER: the seam resolves through the SAME pick the take runs', () =>
     const collider = { raycast: () => Infinity };   // collider.raycast answers Infinity on a miss
     const near = () => [{ key: 'loot:1', aabb: { min: [-1, -1, 1], max: [1, 1, 2] }, reach: 3.2 }];
     const far = () => [{ key: 'loot:1', aabb: { min: [-1, -1, 40], max: [1, 1, 41] }, reach: 3.2 }];
-    const deps = { contents: () => [{ name: 'Ruby' }] };
+    const deps = { contents: () => [{ name: 'Ruby' }], name: PILE };
     assert.equal(worldHoverFrame({ eye: [0, 0, 0], dir: [0, 0, 1], collider, targets: near, ...deps })?.key, 'loot:1');
     assert.equal(worldHoverFrame({ eye: [0, 0, 0], dir: [0, 0, 1], collider, targets: far, ...deps }), null,
       'the pick WINS it and the reach gate refuses it - DFU says nothing about a pile you cannot open');
@@ -375,7 +391,7 @@ test('WORLD-HOVER: an occluded target is not named', () => {
   // which is the point of asking the same pick.
   withPlaque(() => {
     const targets = () => [{ key: 'loot:1', aabb: { min: [-1, -1, 1], max: [1, 1, 2] }, reach: 3.2 }];
-    const deps = { contents: () => [{ name: 'Ruby' }] };
+    const deps = { contents: () => [{ name: 'Ruby' }], name: PILE };
     const open = { raycast: () => Infinity };
     const walled = { raycast: () => 0.4 };   // a wall well in front of the box, and outside it
     assert.equal(worldHoverFrame({ eye: [0, 0, 0], dir: [0, 0, 1], collider: open, targets, ...deps })?.key, 'loot:1');
@@ -520,9 +536,27 @@ test('WORLD TOOLTIPS: a house container is named by its FULL model id, which `% 
     assert.equal(houseContainerName(id), want, String(id));
   }
   // .cs:627-628 - the mod's own default for a furniture model its table
-  // does not list.
+  // does not list, AND IT IS UNCONDITIONAL.
+  //
+  // AUDIT-WH M3: this pin used to assert `houseContainerName(41999,
+  // { hideInteract: true }) === null`, and that was the port's own
+  // behaviour wearing the mod's clothes. `HideDefaultInteractTooltip`
+  // guards exactly ONE `<Interact>` in the whole mod - the ACTION
+  // arm's, `if (!HideInteractTooltip && string.IsNullOrEmpty(ret))` at
+  // .cs:466-467, pinned two tests above - and the container switch's
+  // `default:` has none. A pin that certifies a departure is worse
+  // than no pin: it reads as evidence.
   assert.equal(houseContainerName(41999), INTERACT_TEXT);
-  assert.equal(houseContainerName(41999, { hideInteract: true }), null);
+  assert.equal(houseContainerName.length, 1,
+    'the knob is not this function\'s to take - the mod does not offer it one');
+  const wt = read('src/systems/worldTooltips.js');
+  assert.match(wt, /export function houseContainerName\(modelIdNum\) \{\n\s+return HOUSE_CONTAINER_NAMES\[modelIdNum\] \?\? INTERACT_TEXT;\n\}/,
+    'unconditional, as .cs:627-628 is');
+  // ...and the ACTION arm still takes it, because that is where the
+  // mod put it.
+  const { actionName: an, TRIGGER_FLAGS: TF } = await import('../src/systems/worldTooltips.js')
+    .then(async (m) => ({ actionName: m.actionName, TRIGGER_FLAGS: (await import('../src/world/rdbLayout.js')).TRIGGER_FLAGS }));
+  assert.equal(an(TF.Direct, 12345, { hideInteract: true }), null);
 });
 
 test('WORLD TOOLTIPS: a pile of ONE is named by that item; a corpse is named by who it was', async () => {
@@ -537,7 +571,14 @@ test('WORLD TOOLTIPS: a pile of ONE is named by that item; a corpse is named by 
   assert.doesNotMatch(lootPileName([{ ...ruby, stackCount: 1 }]), /\(1\)$/, 'a stack of one is not a count');
   // .cs:525
   assert.equal(corpseName('Skeletal Warrior'), 'Skeletal Warrior (dead)');
-  assert.equal(corpseName(''), 'Body (dead)', 'something nameless is still a body');
+  // AUDIT-WH M9: and NOTHING ELSE. `loot.entityName + " (dead)"` has no
+  // fallback, and the port had invented 'Body' for a nameless one - a
+  // word World Tooltips does not contain, on a branch neither pool can
+  // reach (both name a body through `enemyDisplayName`, which answers
+  // for every mobile in the table). An invented word on an unreachable
+  // branch is still an invented word, and this pin was asserting it.
+  assert.equal(corpseName(''), ' (dead)', 'the mod has no fallback, so neither has this');
+  assert.equal(corpseName(undefined), ' (dead)');
 });
 
 test('WORLD TOOLTIPS: a door says its lock level only when it is locked', async () => {
@@ -606,8 +647,8 @@ test('AUDIT-WH H5: the location\'s name is read in the PORT\'s spelling, from ON
   // way. This is the same law HARD2 applied to the activation race.
   assert.match(wm, /const currentLocationName = \(\) => host\.currentLocation\?\.\(\)\?\.name \?\? '';/,
     'PlayerGPS.CurrentLocation.Name, once');
-  assert.equal((wm.match(/currentLocationName\(\)/g) ?? []).length, 2,
-    'the two above-ground arms that take it - the building exit and the city wall');
+  assert.equal((wm.match(/currentLocationName\(\)/g) ?? []).length, 3,
+    'the three above-ground arms that take it - the building exit, the city wall and (AUDIT-WH M7) the dungeon entrance');
   // ...and the DUNGEON exit names the dungeon it is in, not the
   // location under the player, so it reads its own record - in the
   // same spelling.
@@ -687,7 +728,7 @@ test('WORLD-HOVER: the signature guard really stops the repaint', () => {
   // preserves - so deleting the guard changed nothing it could see.
   // Mark the tree and check the MARK survives.
   withPlaque((root) => {
-    const f = (items) => resolveHover(hit('loot:1'), { contents: () => items });
+    const f = (items) => resolveHover(hit('loot:1'), { contents: () => items, name: PILE });
     showWorldPlaque(f([{ name: 'Ruby' }]));
     const n = root();
     n.children[0].__mark = 'untouched';
@@ -1181,4 +1222,145 @@ test('AUDIT-WH H4/L2/L3/L4/L6: every host branch that returns above the hover sa
   // is a law somebody moves.
   assert.match(wm, /dropDoorCache\(\);[^\n]*\n\s+mode = 'interior';/);
   assert.match(wm, /dropDoorCache\(\);[^\n]*\n\s+ctx\.goLive\?\.\(\);[\s\S]{0,400}?\n\s+mode = 'dungeon';/);
+});
+
+test('AUDIT-WH M1: every family in the ray carries a reach, and the widest of them IS the mod\'s 6.4', async () => {
+  const A = await import('../src/player/activate.js');
+  // worldTooltips.js's own header rests a whole structural argument on
+  // this: "the mod never labels anything past 6.4 ... the port's widest
+  // reach IS 6.4, and every other family's is smaller, so the reach
+  // gate answers the same everywhere without a second clamp to keep in
+  // step." Nothing checked it, and it was FALSE - the bulletin board
+  // was minted with no `reach` at all, so `pickActivatableHit` fell to
+  // `reach ?? distance` and handed the plaque a board at the RAY's
+  // 76.8: a notice board named halfway down the street, where the mod's
+  // own band for it is MobileNPCActivationDistance (.cs:315-318).
+  const REACHES = {
+    DEFAULT_ACTIVATION_DISTANCE: A.DEFAULT_ACTIVATION_DISTANCE,
+    TREASURE_ACTIVATION_DISTANCE: A.TREASURE_ACTIVATION_DISTANCE,
+    DOOR_ACTIVATION_DISTANCE: A.DOOR_ACTIVATION_DISTANCE,
+    CORPSE_ACTIVATION_DISTANCE: A.CORPSE_ACTIVATION_DISTANCE,
+    MOBILE_NPC_ACTIVATION_DISTANCE: A.MOBILE_NPC_ACTIVATION_DISTANCE,
+    STATIC_NPC_ACTIVATION_DISTANCE: A.STATIC_NPC_ACTIVATION_DISTANCE,
+    PICKUP_REACH: (await import('../src/scenes/droppedTorches.js')).PICKUP_REACH,
+    CAMP_REACH: (await import('../src/systems/survival/camp.js')).CAMP_REACH,
+    WAGON_REACH: (await import('../src/player/eotbWagon.js')).WAGON_REACH,
+  };
+  const CLAMP = A.STATIC_NPC_ACTIVATION_DISTANCE;   // the mod's `rayDistance`, its widest band
+  assert.equal(CLAMP, 6.4);
+  for (const [k, v] of Object.entries(REACHES)) {
+    assert.ok(v > 0 && v <= CLAMP, `${k} = ${v} is past the mod's own ray clamp`);
+  }
+  // ...and no target in the tree is minted with a bare `distance:
+  // RAY_DISTANCE` and no reach, which is the shape that produced the
+  // board: `pickActivatableHit` reads `reach ?? distance`, so omitting
+  // the reach does not default it - it publishes the RAY as the reach.
+  for (const f of ['src/scenes/worldModes.js', 'src/scenes/dungeonContext.js',
+    'src/scenes/corpseMarker.js', 'src/player/activate.js', 'src/scenes/droppedLoot.js']) {
+    const bare = [...read(f).matchAll(/key: [^\n]*distance: RAY_DISTANCE(?![^\n]*reach)/g)];
+    assert.deepEqual(bare.map((m) => m[0].slice(0, 70)), [], `${f}: a family reaching for the ray with no reach of its own`);
+  }
+  assert.match(read('src/scenes/worldModes.js'),
+    /key: `board:\$\{i\}`, aabb, distance: RAY_DISTANCE, reach: BULLETIN_BOARD_ACTIVATION_DISTANCE/,
+    'the board carries its handler\'s own constant (.cs:315-318, and ActivateBulletinBoard :709-713)');
+  assert.equal((await import('../src/systems/bulletinBoard.js')).BULLETIN_BOARD_ACTIVATION_DISTANCE, CLAMP,
+    '...which IS the mobile band, from its one home');
+});
+
+test('AUDIT-WH M2/M3/M4/M9: the mod\'s own asymmetries, ported as the mod has them', async () => {
+  const { actionName, questResourceName, corpseName, houseContainerName, INTERACT_TEXT } =
+    await import('../src/systems/worldTooltips.js');
+  const { TRIGGER_FLAGS } = await import('../src/world/rdbLayout.js');
+
+  // M2. The switch is NOT symmetric (.cs:421-438):
+  //   74037 -> "Wheel",         multiTriggerOkay = true
+  //   61027/61028 -> "Lever",   multiTriggerOkay = true
+  //   74143 -> "The Mantella",  <no flag>
+  // so a MULTITRIGGER Mantella falls to .cs:458-461 and is silenced
+  // outright, name and all. The port derived the flag as "has a name",
+  // which is true of three of the four and promotes the fourth.
+  assert.equal(actionName(TRIGGER_FLAGS.Direct, 74143), 'The Mantella', 'Direct still names it');
+  assert.equal(actionName(TRIGGER_FLAGS.Direct6, 74143), 'The Mantella');
+  assert.equal(actionName(TRIGGER_FLAGS.MultiTrigger, 74143), null,
+    'a MultiTrigger Mantella is silenced - it names itself and does NOT raise the flag');
+  assert.equal(actionName(TRIGGER_FLAGS.MultiTrigger, 74037), 'Wheel', 'the wheel does raise it');
+  assert.equal(actionName(TRIGGER_FLAGS.MultiTrigger, 61027), 'Lever');
+  assert.equal(actionName(TRIGGER_FLAGS.MultiTrigger, 61028), 'Lever');
+
+  // M3. `HideDefaultInteractTooltip` guards ONE `<Interact>`: the
+  // action arm's. The container default has no guard.
+  assert.equal(houseContainerName(41999), INTERACT_TEXT);
+  assert.equal(actionName(TRIGGER_FLAGS.Direct, 12345, { hideInteract: true }), null);
+
+  // M4. `ResolveItemLongName(item, FALSE)` (.cs:509) - the second
+  // argument is `differentiatePlantIngredients`, which DFU defaults
+  // TRUE (ItemHelper.cs:305-312: the first eighteen of each plant group
+  // take "(northern)"/"(southern)"). The mod passes false HERE and
+  // nowhere else, and the port took the default - so a quest plant
+  // stand read a word the mod does not put on it.
+  const plant = { group: 'PlantIngredients1', templateIndex: 3, name: 'Yellow Rose', identified: true };
+  assert.doesNotMatch(String(questResourceName(plant)), /northern|southern/,
+    'the quest stand takes the resolver with the differentiation OFF');
+  const { itemLongName } = await import('../src/systems/itemInfo.js');
+  assert.match(itemLongName(plant), /\(northern\)/,
+    '...while the resolver\'s own default still differentiates, as DFU\'s does');
+
+  // M9. `loot.entityName + " (dead)"`, with no fallback of the port's own.
+  assert.equal(corpseName('Rat'), 'Rat (dead)');
+  assert.equal(corpseName(''), ' (dead)');
+});
+
+test('AUDIT-WH M6: the two families the press has always acted on, driven', async () => {
+  const { wagonHoverName, WAGON_HOVER_TEXT, WAGON_INFO_TEXT } = await import('../src/player/eotbWagon.js');
+  const { waterSourceHoverName, WATER_SOURCE_NAME, DRY_SOURCE_TEXT } = await import('../src/systems/survival/items.js');
+  // The cart: the noun out of the Info line the press already says, so
+  // the plaque and the button cannot call one thing two things.
+  assert.deepEqual(wagonHoverName('eotbWagon'), { title: WAGON_HOVER_TEXT });
+  assert.match(WAGON_INFO_TEXT, new RegExp(WAGON_HOVER_TEXT.toLowerCase()));
+  assert.equal(wagonHoverName('droppedLoot:3'), null, 'and it answers for nothing else');
+  assert.equal(wagonHoverName(7), null, 'AUDIT-WH C1: including the exterior door\'s bare NUMBER');
+  // The water source: named, and a DRY one says so BEFORE you press -
+  // which is the whole point of a readout in the world, and is the
+  // press's own sentence rather than a second wording of it.
+  assert.deepEqual(waterSourceHoverName(false), { title: WATER_SOURCE_NAME, subs: [] });
+  assert.deepEqual(waterSourceHoverName(true), { title: WATER_SOURCE_NAME, subs: [DRY_SOURCE_TEXT] });
+});
+
+test('AUDIT-WH M5/M6/M7/M10: every family the press acts on has a word, and the ladder order is the mod\'s', () => {
+  // M5/M6. A family a host STANDS but cannot NAME is the composition
+  // seam's own named failure, one step on: the press acts and the
+  // plaque says nothing (or, before this, said an invented word).
+  // Outdoors, three families had no namer anywhere in the tree - the
+  // player's dropped piles, the water sources and Eye Of The Beholder's
+  // cart - while the press has raced all three since SURV3/EOTB-IL.
+  for (const f of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
+    const src = read(f);
+    assert.match(src, /\? \{ title: lootPileName\(droppedLoot\.contents\?\.\(key\) \?\? null\) \} : null\)/,
+      `${f}: a dropped pile is named as the interior and the dungeon name one`);
+    assert.match(src, /\? waterSourceHoverName\(/, `${f}: a water source has a word`);
+    assert.match(src, /\(key\) => wagonHoverName\(key\),/, `${f}: and so has the cart`);
+  }
+  // ...each beside the module that STANDS it, never written out at the host.
+  assert.match(read('src/player/eotbWagon.js'), /export const wagonHoverName = /);
+  assert.match(read('src/systems/survival/items.js'), /export const waterSourceHoverName = /);
+
+  // M7. GetStaticDoorText routes on `door.doorType` BEFORE it touches
+  // the building (.cs:767-771). The port routed only the building arm,
+  // so `staticDoorName('dungeonEntrance')` was written, pinned, and had
+  // no caller in the tree: "To Privateer's Hold" never drew once.
+  assert.match(read('src/scenes/worldModes.js'),
+    /if \(entry\?\.door\?\.doorType === DOOR_TYPE\.DUNGEON_ENTRANCE\) \{\n\s+return staticDoorName\('dungeonEntrance', \{ locationName: currentLocationName\(\) \}\);/);
+
+  // M10. `EnumerateCustomHoverText` is the FIRST statement of the
+  // tooltip body (.cs:285) and every band below it is guarded on
+  // `IsNullOrEmpty(ret)`, so a registered namer wins outright. The
+  // dungeon ran its own ladder first. Inert today (disjoint keys),
+  // which is exactly why it is worth fixing rather than noting.
+  const ctx = read('src/scenes/dungeonContext.js');
+  const ladder = ctx.slice(ctx.indexOf('const _namer = composeNamer(['), ctx.indexOf('const api = {'));
+  const order = [...ladder.matchAll(/droppedTorches\.hoverName|camps\.hoverName|_hostNamers|_dungeonHoverName,/g)].map((m) => m[0]);
+  assert.deepEqual(order, ['droppedTorches.hoverName', 'camps.hoverName', '_hostNamers', '_dungeonHoverName,'],
+    'the extension namers first, the mod\'s own ladder last - as .cs:285-296 walks them');
+  // ...and the two above-ground arms have always had it that way.
+  assert.match(read('src/scenes/worldModes.js'), /const own = composeNamer\(names\)\(key\);\n\s+if \(own\) return own;\n\s+if \(!worldTooltipsOn\(\)\) return null;/);
 });

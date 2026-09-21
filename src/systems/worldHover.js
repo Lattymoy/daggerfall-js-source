@@ -183,9 +183,24 @@ export function resolveHover(hit, { name = null, contents = null } = {}) {
   const key = hit.key;
   if (key == null) return null;
   if (keyItemises(key)) {
-    const { shown, rest, empty } = hoverLines(contents?.(key) ?? null);
     const named = name?.(key, hit) ?? null;
-    return frame(key, 'items', named?.title ?? 'Loot', named?.subs ?? [], shown, rest, empty);
+    // AUDIT-WH M5: AN ITEMISED KEY WITH NO WORD DRAWS NOTHING EITHER.
+    // This used to fall back to the literal 'Loot' - a word World
+    // Tooltips does not contain - and that fallback did not fail
+    // loudly, it quietly said something else: outdoors nothing
+    // answered `droppedLoot:` for the whole first slice, so a pile you
+    // dropped in the street read "Loot" while the same pile indoors
+    // read the mod's "Loot Pile" or the one item's long name. One
+    // surface, two vocabularies, and no gate could see it.
+    //
+    // The rule is now the SAME rule the named branch below states: a
+    // key the ladder has no word for draws nothing, which is the mod's
+    // own behaviour (an empty `ret` leaves the tooltip down, .cs:265)
+    // and what makes a family a host stands but cannot name VISIBLE
+    // rather than papered over.
+    if (!named?.title) return null;
+    const { shown, rest, empty } = hoverLines(contents?.(key) ?? null);
+    return frame(key, 'items', named.title, named.subs ?? [], shown, rest, empty);
   }
   const named = name?.(key, hit) ?? null;
   // A key the ladder has no word for draws NOTHING. That is the mod's

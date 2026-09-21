@@ -171,7 +171,9 @@ import { clearCrimeOnLocationExit, addGold, goldAmount, deductGold, totalGoldAmo
 import { makeInView } from '../player/cameraView.js';   // AUDIT 17e F24
 import { worldHoverFrame, hideWorldPlaque, destroyWorldPlaque } from '../ui/worldPlaque.js';   // WORLD-HOVER: the one seam each host calls, its hide door for the branches that return above it, and the teardown
 import { composeContents } from '../systems/worldHover.js';   // WORLD-HOVER: the contents ladder's one law (AUDIT-WH H3)
-import { mobilePersonName } from '../systems/worldTooltips.js';   // WORLD-HOVER H2: MobilePersonNPC.NameNPC (.cs:299-302)
+import { mobilePersonName, lootPileName } from '../systems/worldTooltips.js';   // WORLD-HOVER H2: MobilePersonNPC.NameNPC (.cs:299-302); M5: a dropped pile's word (.cs:537-548), outdoors too
+import { wagonHoverName } from '../player/eotbWagon.js';   // WORLD-HOVER M6: the cart's word, beside its producer
+import { waterSourceHoverName } from '../systems/survival/items.js';   // WORLD-HOVER M6: a water source's word, beside its producer
 import { mwViewFirstPerson, mwViewFrame, mwViewWheel, mwViewDrawBody, mwViewFootstep, mwViewLoadPose, mwViewNewGame, mwViewRebase, mwViewAttachWagon, mwViewDrawWagon, mwViewWagonTargets, mwViewWagonActivate } from '../player/mwView.js';   // MW-D25: the Morrowind camera; AUDIT-EOTB2: the sprite's stride and the load's POV
 import { mwCamera, PITCH_LIMIT } from '../player/mwCamera.js';   // MW-D30: persistence + the reference pitch clamp
 import { pickActivatableHit, pickQuestFoe, pickFoe } from '../player/activate.js';   // G3: corpse loot; QG1: the foe-click door; TI1: the lock-on pick
@@ -2881,6 +2883,20 @@ export async function bootWorld(canvas, renderer, params, status) {
     (key) => droppedTorches.hoverName?.(key) ?? null,
     (key) => exteriorFoes.hoverName?.(key) ?? null,
     (key) => cityGuards.hoverName?.(key) ?? null,
+    // AUDIT-WH M5: the player's OWN dropped pile, named as the interior
+    // and the dungeon have always named one (.cs:537-548 - a pile of
+    // ONE is that one item, the rest is "Loot Pile"). Outdoors nothing
+    // answered `droppedLoot:`, so a pile fell to the model's bare
+    // fallback and read a word the mod does not have.
+    (key) => (typeof key === 'string' && key.startsWith('droppedLoot:')
+      ? { title: lootPileName(droppedLoot.contents?.(key) ?? null) } : null),
+    // AUDIT-WH M6: ...and the two families the press has raced since
+    // SURV3/EOTB-IL with no word anywhere in the tree - a water source
+    // and the cart. Each named by the module that STANDS it, as the
+    // torches and the camps are.
+    (key) => (typeof key === 'string' && key.startsWith('water:')
+      ? waterSourceHoverName(!!_springs[Number(key.split(':')[1])]?.dry) : null),
+    (key) => wagonHoverName(key),
     // WORLD-HOVER H2: THE MOD'S MOBILE BAND (.cs:297-313). A live foe
     // is named by the pool that stands it, and only when it is not
     // hostile; a walking townsperson by `MobilePersonNPC.NameNPC`, off
@@ -3481,7 +3497,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // and dungeonContext.js:2350 mounts the same one, gated on
   // `opts.enchantCtx !== false` because setDefaultEnchantCtx is a
   // session singleton and EC1 already routes THIS host's mount into
-  // that context through modes.dungeonCtx - so worldModes.js:5231
+  // that context through modes.dungeonCtx - so worldModes.js:5251
   // passes false beside its `chargen: false` and only the standalone
   // ?dungeon route mounts its own. S40 filled isResting
   // in - the sentence that stood here said it "stays absent above
@@ -5316,7 +5332,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // so an F9 pressed inside a shop recorded the street's sheath and
     // hand. The mode host answers for the rig that is actually drawn
     // and null outside interior mode (the dungeon owns its own
-    // composer, dungeonContext.js:6001), so exterior mode and a
+    // composer, dungeonContext.js:6021), so exterior mode and a
     // pre-seam mode host compose exactly as before, per field.
     const wp = modes?.weaponPose?.() ?? null;
     const snap = snapshotPlayer(playerEntity, {
@@ -7189,7 +7205,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // exterior -> the townTalk overlay, interior OR dungeon -> the mode
   // machine's slot. U43-ii shipped the dungeon half: showQuestBox
   // offers the window to `modes.showQuestOverlay` below, and
-  // worldModes answers it in BOTH modes (worldModes.js:8172-8235 -
+  // worldModes answers it in BOTH modes (worldModes.js:8192-8255 -
   // dungeon routes to dungeonCtx.showOverlay), so a dungeon popup is
   // shown rather than logged loudly and dropped.
   // AUDIT 24 (wave 21): DaggerfallMessageBox.Show() is a

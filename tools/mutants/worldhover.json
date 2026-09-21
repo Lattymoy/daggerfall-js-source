@@ -333,8 +333,8 @@
   {
     "name": "WORLD-HOVER-container-default-stops-being-Interact",
     "file": "src/systems/worldTooltips.js",
-    "old": "  const named = HOUSE_CONTAINER_NAMES[modelIdNum] ?? null;\n  if (named) return named;\n  return hideInteract ? null : INTERACT_TEXT;",
-    "new": "  return HOUSE_CONTAINER_NAMES[modelIdNum] ?? null;",
+    "old": "export function houseContainerName(modelIdNum) {\n  return HOUSE_CONTAINER_NAMES[modelIdNum] ?? INTERACT_TEXT;\n}",
+    "new": "export function houseContainerName(modelIdNum) {\n  return HOUSE_CONTAINER_NAMES[modelIdNum] ?? null;\n}",
     "tests": [
       "test/worldhover.test.js"
     ]
@@ -349,10 +349,10 @@
     ]
   },
   {
-    "name": "WORLD-HOVER-a-nameless-body-loses-its-fallback",
+    "name": "WORLD-HOVER-a-nameless-body-grows-a-fallback-the-mod-has-not",
     "file": "src/systems/worldTooltips.js",
-    "old": "export const corpseName = (entityName) => `${entityName || 'Body'} (dead)`;",
-    "new": "export const corpseName = (entityName) => `${entityName} (dead)`;",
+    "old": "export const corpseName = (entityName) => `${entityName ?? ''} (dead)`;",
+    "new": "export const corpseName = (entityName) => `${entityName || 'Body'} (dead)`;",
     "tests": [
       "test/worldhover.test.js"
     ]
@@ -686,6 +686,96 @@
     "file": "src/scenes/worldModes.js",
     "old": "  const dropDoorCache = () => { _doorCache = null; };",
     "new": "  const dropDoorCache = () => {};",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-the-container-default-takes-the-knob-again",
+    "file": "src/systems/worldTooltips.js",
+    "old": "export function houseContainerName(modelIdNum) {\n  return HOUSE_CONTAINER_NAMES[modelIdNum] ?? INTERACT_TEXT;\n}",
+    "new": "export function houseContainerName(modelIdNum, { hideInteract = false } = {}) {\n  const named = HOUSE_CONTAINER_NAMES[modelIdNum] ?? null;\n  if (named) return named;\n  return hideInteract ? null : INTERACT_TEXT;\n}",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-the-Mantella-promotes-itself-through-MultiTrigger",
+    "file": "src/systems/worldTooltips.js",
+    "old": "  const multiOk = MT_OK_BY_NAME.has(modelIdNum) || MT_OK.has(modelIdNum);",
+    "new": "  const multiOk = named != null || MT_OK.has(modelIdNum);",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-a-quest-plant-stand-differentiates-again",
+    "file": "src/systems/worldTooltips.js",
+    "old": "  return itemLongName(item, { differentiatePlantIngredients: false }) || null;",
+    "new": "  return itemLongName(item) || null;",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-the-board-reaches-as-far-as-the-ray",
+    "file": "src/scenes/worldModes.js",
+    "old": "key: `board:${i}`, aabb, distance: RAY_DISTANCE, reach: BULLETIN_BOARD_ACTIVATION_DISTANCE }));",
+    "new": "key: `board:${i}`, aabb, distance: RAY_DISTANCE }));",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-the-dungeon-entrance-arm-loses-its-caller-again",
+    "file": "src/scenes/worldModes.js",
+    "old": "      const entry = entries[key];\n      if (entry?.door?.doorType === DOOR_TYPE.DUNGEON_ENTRANCE) {\n        return staticDoorName('dungeonEntrance', { locationName: currentLocationName() });\n      }\n",
+    "new": "",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-the-itemised-default-comes-back",
+    "file": "src/systems/worldHover.js",
+    "old": "    if (!named?.title) return null;\n    const { shown, rest, empty } = hoverLines(contents?.(key) ?? null);\n    return frame(key, 'items', named.title, named.subs ?? [], shown, rest, empty);",
+    "new": "    const { shown, rest, empty } = hoverLines(contents?.(key) ?? null);\n    return frame(key, 'items', named?.title ?? 'Loot', named?.subs ?? [], shown, rest, empty);",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-outdoors-a-dropped-pile-loses-its-word",
+    "file": "src/scenes/world.js",
+    "old": "    (key) => (typeof key === 'string' && key.startsWith('droppedLoot:')\n      ? { title: lootPileName(droppedLoot.contents?.(key) ?? null) } : null),\n",
+    "new": "",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-the-cart-loses-its-word",
+    "file": "src/scenes/exterior.js",
+    "old": "    (key) => wagonHoverName(key),\n",
+    "new": "",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-a-dry-water-source-says-nothing-about-it",
+    "file": "src/systems/survival/items.js",
+    "old": "export const waterSourceHoverName = (dry) => ({ title: WATER_SOURCE_NAME, subs: dry ? [DRY_SOURCE_TEXT] : [] });",
+    "new": "export const waterSourceHoverName = () => ({ title: WATER_SOURCE_NAME, subs: [] });",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-the-dungeon-runs-its-own-ladder-first-again",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "  const _namer = composeNamer([\n    (key) => droppedTorches.hoverName?.(key) ?? null,",
+    "new": "  const _namer = composeNamer([\n    _dungeonHoverName,\n    (key) => droppedTorches.hoverName?.(key) ?? null,",
     "tests": [
       "test/worldhover.test.js"
     ]

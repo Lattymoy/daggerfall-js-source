@@ -133,6 +133,27 @@ export const ACTION_MODEL_NAMES = Object.freeze({
 });
 
 /**
+ * ...AND WHICH OF THEM ALSO RAISE `multiTriggerOkay` (AUDIT-WH M2).
+ *
+ * The switch is not symmetric, and the asymmetry is load-bearing:
+ *
+ *   case 74037: ret = "Wheel";         multiTriggerOkay = true; break;
+ *   case 61027: case 61028:
+ *               ret = "Lever";         multiTriggerOkay = true; break;
+ *   case 74143: ret = "The Mantella";                           break;
+ *
+ * The Mantella names itself and does NOT raise the flag, so a
+ * MultiTrigger Mantella falls into `.cs:458-461` and is silenced
+ * OUTRIGHT - `ret = null` - name and all. A Direct or Direct6 one is
+ * still "The Mantella".
+ *
+ * The port derived the flag as "has a name OR is on the OK list",
+ * which is true of three of the four and promotes the fourth. It is a
+ * TABLE now, because the mod's is.
+ */
+const MT_OK_BY_NAME = new Set([74037, 61027, 61028]);
+
+/**
  * MultiTrigger models the mod allows through WITHOUT a name
  * (.cs:432-438: 62323, and the three secret teleports 72019/74215/
  * 74225). They fall to `<Interact>` rather than being silenced.
@@ -155,7 +176,9 @@ const MT_OK = new Set(MULTI_TRIGGER_NAMED_OK);
 export function actionName(triggerFlag, modelIdNum, { hideInteract = false } = {}) {
   if (!ACTION_TRIGGERS_NAMED.includes(triggerFlag)) return null;
   const named = ACTION_MODEL_NAMES[modelIdNum] ?? null;
-  const multiOk = named != null || MT_OK.has(modelIdNum);
+  // AUDIT-WH M2: the NAMED models that also raise the flag, not every
+  // named model - The Mantella names itself and does not raise it.
+  const multiOk = MT_OK_BY_NAME.has(modelIdNum) || MT_OK.has(modelIdNum);
   // .cs:458-461 - an unlisted, unnamed MultiTrigger says NOTHING.
   if (triggerFlag === TRIGGER_FLAGS.MultiTrigger && !multiOk) return null;
   if (named) return named;
@@ -182,12 +205,23 @@ export const HOUSE_CONTAINER_NAMES = Object.freeze(Object.fromEntries(
   CONTAINER_NAME_GROUPS.flatMap(([name, ids]) => ids.map((id) => [id, name])),
 ));
 
-/** A house container's word - the mod's `default: "<Interact>"`
- *  (.cs:627-628) for a furniture model its table does not list. */
-export function houseContainerName(modelIdNum, { hideInteract = false } = {}) {
-  const named = HOUSE_CONTAINER_NAMES[modelIdNum] ?? null;
-  if (named) return named;
-  return hideInteract ? null : INTERACT_TEXT;
+/**
+ * A house container's word - the mod's `default: "<Interact>"`
+ * (.cs:627-628) for a furniture model its table does not list.
+ *
+ * AUDIT-WH M3: AND IT IS UNCONDITIONAL. `HideDefaultInteractTooltip`
+ * guards exactly ONE `<Interact>` in the whole mod - the ACTION arm's
+ * (`if (!HideInteractTooltip && string.IsNullOrEmpty(ret))`, .cs:466-467)
+ * - and the container switch's `default` has no such guard. The port
+ * took the knob to both, which is a quieter game than the mod's and
+ * was PINNED as though it were the mod's behaviour: a pin that
+ * certifies a departure is worse than no pin, because it reads as
+ * evidence.
+ *
+ * The knob is the mod's own and stays exactly where the mod put it.
+ */
+export function houseContainerName(modelIdNum) {
+  return HOUSE_CONTAINER_NAMES[modelIdNum] ?? INTERACT_TEXT;
 }
 
 export const SHOP_SHELF_TEXT = 'Shop Shelf';
@@ -216,8 +250,18 @@ export function lootPileName(items) {
   return stack > 1 ? `${n} (${stack})` : n;
 }
 
-/** A corpse's word (.cs:525): the entity's name and "(dead)". */
-export const corpseName = (entityName) => `${entityName || 'Body'} (dead)`;
+/**
+ * A corpse's word (.cs:525): the entity's name and "(dead)".
+ *
+ * AUDIT-WH M9: and NOTHING ELSE. The mod is `loot.entityName + " (dead)"`
+ * with no fallback, and the port had invented 'Body' for a nameless
+ * one - a word World Tooltips does not contain, on a branch that is
+ * unreachable anyway (both pools name a body through
+ * `enemyDisplayName`, which answers for every mobile in the table).
+ * An invented word on an unreachable branch is still an invented word,
+ * and it read as though the mod had one.
+ */
+export const corpseName = (entityName) => `${entityName ?? ''} (dead)`;
 
 // ── THE MOBILE BAND (.cs:297-321) ───────────────────────────────
 //
@@ -268,7 +312,16 @@ export const TOTEM_TEXT = 'The Totem of Tiber Septim';
 export function questResourceName(item, { archive = -1, record = -1 } = {}) {
   if (archive === TOTEM_ARCHIVE && record === TOTEM_RECORD) return TOTEM_TEXT;
   if (!item) return null;
-  return itemLongName(item) || null;
+  // AUDIT-WH M4: `ResolveItemLongName(item, FALSE)` (.cs:509). The
+  // second argument is `differentiatePlantIngredients`, which DFU
+  // defaults TRUE - it is what puts "(northern)"/"(southern)" on the
+  // first eighteen of each plant group (ItemHelper.cs:305-312) - and
+  // the mod passes false here and nowhere else. The port called the
+  // resolver with no options and took the default, so a quest plant
+  // stand read "Yellow Rose (northern)" where the mod reads "Yellow
+  // Rose". The port's own resolver already carries the switch; this
+  // is the one caller that turns it off.
+  return itemLongName(item, { differentiatePlantIngredients: false }) || null;
 }
 
 // ── DOORS ───────────────────────────────────────────────────────
@@ -291,6 +344,26 @@ export function actionDoorName(locked, lockValue) {
  *   'buildingExit'   - the same door from inside (.cs:763-766)
  *   'dungeonEntrance'- from outside (.cs:767-771)
  *   'dungeonExit'    - from inside (.cs:772-782)
+ *
+ * THREE OF THE MEMBER'S RETURNS ARE NOT TOOLTIPS, and this function
+ * has none of them (AUDIT-WH M8 - a recorded departure, so that the
+ * absence is a decision and not an oversight):
+ *
+ *   - `return "<ERR: 010>"` (.cs:703-704) when the location has no
+ *     BuildingDirectory, and `return "<ERR: 011>"` (.cs:708-709) when
+ *     the directory has no summary for the key. They are debug strings
+ *     painted into the player's HUD. The port answers null, which is
+ *     what it answers for anything it cannot name, and the console
+ *     carries diagnostics.
+ *   - `return prevDoorText` (.cs:759) - the mod's own one-entry cache,
+ *     for a frame that struck the same door but missed the BUILDING
+ *     behind it. The port has no `prevHit`/`prevDoorText` pair at all
+ *     (its cache is the target list's, keyed by the host's door
+ *     generation), so a frame that cannot resolve the building draws
+ *     nothing rather than repainting the last answer. The mod's cache
+ *     exists because `GetDoors`/`HasHit` are its own comment's
+ *     "computationally expensive"; the port's pick is a ray against an
+ *     AABB it is already holding.
  *
  * TWO DEPARTURES OF THE MOD'S OWN FROM PlayerActivate, ported as the
  * mod's rather than folded into the port's pinned `activateBuilding`:

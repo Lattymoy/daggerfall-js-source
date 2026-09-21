@@ -415,7 +415,7 @@ export function createWorldModes(host) {
    *
    * AUDIT-WH H5. Three hover arms wrote `.Name` - the C# property, as
    * the mod's own source spells it (.cs:764, :725, :777) - and the
-   * record these hosts mint spells it `name` (exterior.js:3424 hands
+   * record these hosts mint spells it `name` (exterior.js:3440 hands
    * `dfLocation`, world.js hands `_questLoc()`; both are the port's
    * location record). `.Name` on it is `undefined`, so all three arms
    * fell to `''`, and `staticDoorName` answers NULL on an empty
@@ -1851,7 +1851,7 @@ export function createWorldModes(host) {
       // the groundwork slice stopped storing only `modelIdNum % 100`.
       if (key.startsWith('container:')) {
         const c = interiorCtx.containers[Number(key.split(':')[1])];
-        const t = c && houseContainerName(c.modelIdNum, { hideInteract: hide });
+        const t = c && houseContainerName(c.modelIdNum);   // AUDIT-WH M3: the knob guards the ACTION arm's <Interact> and only that one (.cs:466-467); the container default has no guard
         return t ? { title: t } : null;
       }
       // .cs:549-551 vs :476-480 - one model, two things, and the port
@@ -4441,7 +4441,15 @@ export function createWorldModes(host) {
     // refusal instead of falling through. A board the player can see
     // but not reach therefore consumes the click, exactly as C# does.
     const boards = boardTargets?.() ?? [];
-    boards.forEach((aabb, i) => targets.push({ key: `board:${i}`, aabb, distance: RAY_DISTANCE }));
+    // AUDIT-WH M1: ...and it carries that constant as its REACH. Every
+    // other family here does (MC-2's law: reach for the ray, carry the
+    // handler's own beside it) and the board was the one that did not,
+    // so `pickActivatableHit` fell to `reach ?? distance` and handed the
+    // plaque a board at the RAY's 76.8 - naming a notice board halfway
+    // down the street, where the mod's own band is 6.4 (.cs:315-318).
+    // The PRESS is unchanged: its board arm returns above the reach
+    // gate, because the refusal is spoken inside activateBulletinBoard.
+    boards.forEach((aabb, i) => targets.push({ key: `board:${i}`, aabb, distance: RAY_DISTANCE, reach: BULLETIN_BOARD_ACTIVATION_DISTANCE }));
     return { entries, npcs, boards, targets };
   }
 
@@ -4528,10 +4536,22 @@ export function createWorldModes(host) {
     const own = composeNamer(names)(key);
     if (own) return own;
     if (!worldTooltipsOn()) return null;
-    const { npcs } = exteriorActivationTargets();
+    const { npcs, entries } = exteriorActivationTargets();
     // THE DOOR KEY IS A BARE NUMBER - the index into `entries` - which
     // is why this tests the type rather than a prefix.
     if (typeof key === 'number') {
+      // AUDIT-WH M7: THE DUNGEON ENTRANCE, FIRST. GetStaticDoorText
+      // routes on `door.doorType` before it touches the building
+      // (.cs:767-771: a DungeonEntrance struck from outside names the
+      // LOCATION, not a shopfront), and the port routed only the
+      // BUILDING arm - so `staticDoorName('dungeonEntrance')` existed,
+      // was pinned, and had no caller in the tree. "To Privateer's
+      // Hold" over the mouth of a dungeon is the mod's most
+      // recognisable label and it never drew once.
+      const entry = entries[key];
+      if (entry?.door?.doorType === DOOR_TYPE.DUNGEON_ENTRANCE) {
+        return staticDoorName('dungeonEntrance', { locationName: currentLocationName() });
+      }
       // .cs:683-760, GetStaticDoorText's building arm. The mod
       // DISCOVERS the building to read its name, and Mac's call was to
       // port that 1:1 - so looking at a shopfront maps it, which is a
@@ -5627,7 +5647,7 @@ export function createWorldModes(host) {
           hudMessageSink: (t) => questBridge?.notebook?.addMessage(t),
           // MAC1 J: and the relock the dungeon's pause door needs, on
           // the same threading - the context owns no canvas of its own
-          // (dungeonContext.js:6021), so the OUTER host's one rides in.
+          // (dungeonContext.js:6041), so the OUTER host's one rides in.
           // This is the most-played pause door of the six: world.js
           // gates its own Escape ladder on exterior mode, so underground
           // the key falls to routeKey -> ui/input.js:657 -> the
@@ -6661,7 +6681,7 @@ export function createWorldModes(host) {
           // AUDIT 39r: and the FLASH, which this arm was copied without.
           // An arrow reaches the player through BowDamage ->
           // ApplyDamageToPlayer -> SendDamageToPlayer, the same door as
-          // a blow (world.js:8013's own wave-46 note); the interior
+          // a blow (world.js:8029's own wave-46 note); the interior
           // MELEE hit already flashes inside exteriorFoes, so only this
           // arm - which applies its own damage - was missing it.
           flashPlayerDamage(dmg);   // BA1: RemoveHealth carries the amount
@@ -7517,7 +7537,7 @@ export function createWorldModes(host) {
   addEventListener('mousedown', (e) => {
     // AUDIT-MACK F2: THIS HOST DOES NOT FEED THE HELD SET, and MAC-K1
     // briefly made it. `keys` is not this host's - it arrives on the
-    // host bag (`exterior.js:3485`, `world.js`'s twin), and the OUTER
+    // host bag (`exterior.js:3501`, `world.js`'s twin), and the OUTER
     // host's own mousedown writes `keys.add(mouseCode(e.button))`
     // UNGATED, before any mode test, on a listener that is never
     // removed. So the three button codes were already in the Set while
@@ -9017,9 +9037,9 @@ export function createWorldModes(host) {
      *  .cs:175-176 writes `weaponDrawn`/`usingLeftHand` off it,
      *  :420-421 restores them onto it. The port has FOUR PlayerWeapons
      *  (world.js's, this file's `interiorWeapon` :538, dungeonContext's
-     *  and exterior.js's - which this seam does not reach: that host has no save path at all, its charter exterior.js:3075-3097), and IS1 routed the inside-a-building save to
+     *  and exterior.js's - which this seam does not reach: that host has no save path at all, its charter exterior.js:3091-3113), and IS1 routed the inside-a-building save to
      *  the WORLD host's composer - which reads its own exterior rig
-     *  unconditionally (world.js:5347). So an F9 pressed in a shop
+     *  unconditionally (world.js:5363). So an F9 pressed in a shop
      *  recorded the street's sheath and hand, and the load wrote them
      *  back into the street's rig; the rig actually in the player's
      *  hands was in no envelope at all.
@@ -9046,7 +9066,7 @@ export function createWorldModes(host) {
      *  presenter for the whole visit) or the interior's? world.js's gate read townTalk's slot alone. */
     deathUp() { return mode === 'dungeon' ? !!dungeonCtx?.deathUp?.() : interiorOverlay instanceof DeathScreen; },
     /** The restore half - and NOT gated on the mode, deliberately.
-     *  worldQuickLoad calls forceExitToExterior FIRST (world.js:5439)
+     *  worldQuickLoad calls forceExitToExterior FIRST (world.js:5455)
      *  and only re-enters the building at :4217, so the mode at apply
      *  time is whatever the LOAD landed in, not whatever the SAVE was
      *  taken in: an outdoor save loaded while the player was indoors
@@ -9056,8 +9076,8 @@ export function createWorldModes(host) {
      *
      *  FLAG ONLY and presence-gated - both laws now stated once, in
      *  combat/playerWeapon.js's applyWeaponPose, with the citation.
-     *  HARD2c: this used to spell them out, and named `world.js:5553`
-     *  and `dungeonContext.js:6031` for its two sibling copies - lines
+     *  HARD2c: this used to spell them out, and named `world.js:5569`
+     *  and `dungeonContext.js:6051` for its two sibling copies - lines
      *  that had moved to :4418 and :5457. Three copies of a two-line
      *  law, and even the comment pointing between them had gone stale. */
     applyWeaponPose(pose) {
