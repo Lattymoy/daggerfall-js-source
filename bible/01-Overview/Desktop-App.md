@@ -311,6 +311,8 @@ the port's own zip reader byte for byte, the taken number moving, the
 double skipped, the quota throw leaving nothing, the layout equal to
 the app's. 12 mutants, 12 dead.
 
+**The second half of the same report** - *"he created a new character and it overwrote his save"* - was a different fault and a real one: a save's identity was the character's NAME, so a new character of the same name wrote over the old one's QuickSave. Fixed the same day as CHARID1 (Systems-Arc.md); that save is not recoverable.
+
 **For the player who asked:** if you played on the website, your saves
 are still in that browser - open the site, Load, Export all saves, then
 in the app Load, Import a zip. If you played in the app, they are files

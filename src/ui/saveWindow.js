@@ -242,6 +242,7 @@ export class SaveWindow {
     this.isChoiceWindow = true;         // raw codes through the overlay channel
     this.displayMostRecentChar = displayMostRecentChar;
     this.currentPlayerName = hooks.playerName?.() ?? '';
+    this.currentCharacterId = hooks.playerId?.() ?? null;   // CHARID1: the live character's id - the identity a save is found and overwritten by
     this.nameText = '';
     this.selectedIndex = -1;
     this.scrollIndex = 0;
@@ -296,7 +297,7 @@ export class SaveWindow {
    *  the window never trusts the row index alone, exactly as the C#
    *  re-finds by names at every action. */
   _selectedKey() {
-    return findSave(this.currentPlayerName, this.nameText);
+    return findSave(this.currentPlayerName, this.nameText, undefined, this.currentCharacterId);   // CHARID1: by id when the window has one
   }
 
   /** SaveLoadEventHandler - the go path for both modes (:480-522). */
@@ -514,6 +515,8 @@ export class SaveWindow {
         this._click();
         this.displayMostRecentChar = false;
         this.currentPlayerName = this._charRows[row];
+        // CHARID1: another character's list is read by name; the live character keeps its id
+        this.currentCharacterId = this.currentPlayerName === (this.hooks.playerName?.() ?? '') ? (this.hooks.playerId?.() ?? null) : null;
         this.nameText = '';
         this.selectedIndex = -1;
         this.refresh();

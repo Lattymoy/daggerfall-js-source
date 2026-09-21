@@ -280,7 +280,7 @@ test('AUDIT 65 UI-2: the classic pause window relocks on RESUME, and only on res
     // (DaggerfallUI.cs:829-836) empties the whole stack back to the
     // world inside the slot window's own click, and the enhanced twin
     // relocks on exactly it - pauseDoor.js:282 fires for 'save' and
-    // 'load', not only for 'resume'. saveWindow.js:344 and :349 are the
+    // 'load', not only for 'resume'. saveWindow.js:345 and :349 are the
     // two callers of this hook.
     assert.equal(typeof pushed[1].hooks.popToHUD, 'function',
       'a pushed slot window carries the drain');

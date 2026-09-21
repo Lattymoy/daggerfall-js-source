@@ -59,7 +59,7 @@ test('SP1: the layout is the app’s own - the three spellings, the two files, t
   assert.equal(fileToShot('Screenshot.gif', jpegBytes), null);
   assert.deepEqual(slotPathOf('Saves/SAVE3/SaveData.txt'), { n: 3, file: 'SaveData.txt' });
   assert.deepEqual(slotPathOf('SAVE12/Screenshot.jpg'), { n: 12, file: 'Screenshot.jpg' });
-  assert.deepEqual(slotPathOf('Daggerfall JavaScript/Saves/SAVE0/SaveInfo.txt'), { n: 0, file: 'SaveInfo.txt' }, 'a whole userData folder can be picked');
+  assert.deepEqual(slotPathOf('Roaming/Daggerfall Enhanced/Saves/SAVE0/SaveInfo.txt'), { n: 0, file: 'SaveInfo.txt' }, 'a whole userData folder can be picked, however deep the save sits in it');
   assert.equal(slotPathOf('Saves/SAVE03/SaveData.txt'), null, 'a hand-spelt slot number is not a slot (the app’s own law)');
   assert.equal(slotPathOf('Saves/README.txt'), null);
   assert.equal(TRANSFER_ZIP_NAME, 'DaggerfallEnhanced-Saves.zip');

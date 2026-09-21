@@ -265,6 +265,7 @@ function saveOf(entry) {
     key: entry.key,
     saveName: entry.info?.saveName ?? QUICK_SAVE_NAME,
     characterName: entry.info?.characterName ?? snap.name ?? '',
+    characterId: entry.info?.characterId ?? null,   // CHARID1
     name: snap.name || 'Unnamed',
     career: snap.career?.name ?? null,
     level: snap.level ?? null,
@@ -735,7 +736,8 @@ function paneSave(body) {
   // new slot. The pressed name rides the pause door's quickSave
   // through takePickedSaveName, onto the host's saveAs seam.
   const me = hooks.playerName?.() ?? savedGame()?.name ?? '';
-  const mine = savedGames().filter((s) => s.characterName === me);
+  const myId = hooks.playerId?.() ?? null;   // CHARID1: the slots the press can overwrite are THIS character's, by id - a namesake's are not
+  const mine = savedGames().filter((s) => (myId ? s.characterId === myId : s.characterName === me));
   const c = el('div', 'card');
   c.append(el('span', 'tag', 'Save as'));
   c.append(el('h3', null, me || 'Your character'));
@@ -3107,7 +3109,7 @@ export function runEnhancedMenu(doc = document) {
   return new Promise((resolve) => {
     const menu = mountEnhancedMenu(host, {
       onAction: (action) => {
-        // SAV4 shipped the save manager (systems/saveSlots.js:318
+        // SAV4 shipped the save manager (systems/saveSlots.js:327
         // deleteSave), and this file deletes through it at :387 behind
         // an ask() confirm. Nothing routes 'delete' out here - every
         // onAction call site names its own verb and RAIL_ACTS (:162) is

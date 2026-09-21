@@ -1,5 +1,6 @@
 import { SKILLS, SKILL_COUNT, SKILLS_RECENTLY_RAISED_WORDS } from './skills.js';
 import { spellPointsFor } from '../combat/formulas.js';   // U10
+import { mintCharacterId } from './characterId.js';   // CHARID1
 import { CLASSIC_GAME_START_TIME } from './gameDate.js';   // AUDIT 23: the skill-check anchor
 import { liveStat } from './statMods.js';   // wave 28: MaxMagicka reads LiveIntelligence
 
@@ -223,6 +224,7 @@ export function applyCharacter(playerEntity, career, careerIndex, { name = caree
     // full 360-minute interval instead of passing immediately at 0.
     lastSkillCheckTime: CLASSIC_GAME_START_TIME,
     chargenDone: true,
+    characterId: mintCharacterId(),   // CHARID1: born with an id - a namesake can never write over this character's slot
   });
   // S3b: the level-up sums anchor at creation (SetCurrentLevelUpSkillSum
   // over the starting skills = the starting sum, verbatim).
