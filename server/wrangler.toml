@@ -4,13 +4,28 @@
 # the connection until WORLD1 (2026-09-12): a world room keeps its
 # host's snapshot of the place in the object's storage; the save stays
 # on the player's machine.
-#   npx wrangler deploy          (CLOUDFLARE_API_TOKEN in the environment)
-# ...or, since SRV-N/CI, the 'Deploy relay' workflow-dispatch job, which
-# reads the token from the repo's secrets so nobody has to hold it, and
-# then POLLS /health until it names the RELAY_VERSION the run built -
-# a wrangler exit code of 0 over an unchanged Worker is a green deploy
-# that did not happen. It is manual on purpose: a deploy restarts every
-# Durable Object and drops every connected player at once.
+#
+# THE DEPLOY IS AUTOMATIC, and has been since SRV-N/CI (PR #209):
+# `.github/workflows/relay-deploy.yml` runs on EVERY PUSH TO MAIN. It
+# reads RELAY_VERSION out of src/net/wire.js, asks the live /health, and
+# deploys only when the two differ - then POLLS /health until it names
+# the version the run built, because a wrangler exit code of 0 over an
+# unchanged Worker is a green deploy that did not happen. The token
+# lives in the repo's secrets, so nobody has to hold it, and a
+# workflow_dispatch forces a run.
+#
+# ═══ AND A DEPLOY DROPS EVERY CONNECTED PLAYER ════════════════════
+# Every Durable Object restarts and every socket in the game closes at
+# once: peers vanish, chat goes quiet. That is the cost of merging a
+# relay-changing slice, and it is paid the moment the merge lands
+# rather than whenever somebody gets round to it.
+#
+# (This block claimed the opposite until 2026-09-21, fifteen weeks after
+# #209 made that false, and Mac had to be the one to notice.
+# test/relaydeploy.test.js reads the workflow's OWN TRIGGER now and
+# holds every live comment to it - the claim is derived from the
+# workflow rather than retyped beside it, which is what let the old
+# sentence rot in place.)
 name = "daggerfall-online"
 main = "src/index.js"
 compatibility_date = "2026-09-01"

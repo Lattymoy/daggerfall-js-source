@@ -1,0 +1,304 @@
+// @ts-check
+// ═══════════════════════════════════════════════════════════════════
+// ACC1a — THE IDENTITY TOKEN: the one thing the relay is willing to
+// believe about who a player is.
+//
+// Mac (2026-09-21): "the account name would be used for online."
+//
+// THE HOLE THIS CLOSES EXISTS TODAY. The hello is
+// `{ t:'hello', id, secret, name, look, pose }` and THE CLIENT ASSERTS
+// ITS OWN NAME - `wire.js` sanitises the string and has no idea whether
+// it is yours. That is harmless while a name means nothing. The moment
+// a name means "this is a linked account", a forged name is worth
+// forging, and every name on the roster becomes a claim nobody checked.
+//
+// So the account service SIGNS a short-lived token and the relay
+// VERIFIES it. The relay never reads D1, never talks to the account
+// service, and holds no secret that could mint one - it holds a public
+// key and checks a signature.
+//
+// ONE MECHANISM FOR BOTH ACCOUNT_KINDS OF PLAYER. A guest is issued a token
+// too, carrying the generated name it did not choose. The relay cannot
+// tell a guest from a linked account and does not need to: it is told a
+// name it can trust, and the wall (ACC0 - cloud saves and nothing else)
+// is enforced where the saves are, not here.
+//
+// ═══ WHY THIS IS NOT A JWT ═════════════════════════════════════════
+//
+// A JWT names its own algorithm in a header field the verifier reads,
+// which is the root of the whole `alg: none` family of bugs - the
+// attacker chooses how their signature is checked. THIS FORMAT HAS NO
+// ALGORITHM FIELD. The version prefix IS the algorithm, the verifier
+// knows exactly one version, and a token that does not open with it is
+// refused before a byte of it is parsed. There is nothing in the
+// payload that can change how the payload is judged.
+//
+//   v1.<base64url(payload JSON)>.<base64url(64-byte Ed25519 signature)>
+//
+// Ed25519 because it is the smallest thing that does this job: a 32-byte
+// public key the relay can carry in its config, a 64-byte signature,
+// one WebCrypto call to verify, and no curve or padding to choose
+// wrongly.
+//
+// ═══ WHAT THE VERIFIER REFUSES ═════════════════════════════════════
+//
+// Every arm below is a refusal rather than a repair, and that is the
+// law of this file: a token is the only evidence there is, so a token
+// that is not exactly right is not evidence. In particular THE NAME IS
+// NOT SANITISED HERE. `wire.js`'s `sanitizeName` falls back to a safe
+// string for a bad one, which is right for a chat frame and wrong for
+// an identity: falling back would silently rename a player and hand
+// them a name the account service never issued. A token whose name does
+// not ALREADY satisfy the wire's own law is refused, because that is a
+// minting bug and the place to fix it is the handle endpoint - NAME-F2
+// refuses at entry, and this checks that it did.
+//
+// PURE, and both ends import it. `subtle` and the key are arguments, so
+// node drives it in a test exactly as a Worker drives it in production;
+// it reaches for no global and no clock of its own.
+//
+// ═══ AUDIT-ACC F8: THIS TOKEN IS A BEARER CREDENTIAL, AND NOTHING ══
+// ═══ HERE STOPS IT BEING REPLAYED. ACC1d HAS TO DECIDE. ════════════
+//
+// What this file closes is FORGERY: nobody without the private key can
+// invent a name. What it does not close, and what nothing in the arc
+// had written down until the audit went looking, is REPLAY. There is no
+// nonce, no audience, and no binding to a connection - so anyone who
+// obtains a token can present it as that player until it expires.
+//
+// The exposure is bounded by MAX_TTL_S and by TLS, and the stakes today
+// are a name on a roster. But "the only people who can take a name are
+// the people who can be banned" (ACC0's wall) is weaker if a name can
+// be BORROWED for five minutes, and that is a decision, not an
+// oversight to be discovered later.
+//
+// THE CHEAP ANSWER IS ONE-SHOT AT THE RELAY, and it is cheap precisely
+// because of how this token is used: a client mints one per connection
+// from its session secret, so nothing legitimate ever presents the same
+// token twice. The hub can keep the signatures it has seen and refuse a
+// repeat; `e` bounds how long it must remember, so the set sweeps
+// itself. Rejected alternatives: a nonce claim needs shared state to
+// check and buys nothing this does not, and binding to the socket is
+// awkward over a WebSocket upgrade.
+//
+// WHAT ACC1d MUST ALSO SETTLE: the relay passes `maxTtlS` into
+// `verifyToken`, so a relay that passes a generous one silently grants
+// long-lived tokens - the ceiling belongs in the relay's config beside
+// the public key, not in a call site.
+//
+// This note is written HERE, in the file both ends import, and it is
+// written NOW because this module is not in the relay bundle yet
+// (RELAY_GRAPH is five files and none of them is this one). The moment
+// ACC1d imports it, every edit to this comment costs a RELAY_VERSION
+// bump and drops every connected player - DEPLOY-PROSE's lesson, paid
+// in advance for once.
+// ═══════════════════════════════════════════════════════════════════
+
+/* global atob, btoa */
+// HOST GLOBALS, declared the way ai/navmesh.js declares its own: base64
+// is in every runtime this file has to run in - the browser, the Worker
+// and node 22 - and in none of the shared globals lists, because this
+// is the first module in src/net/ to need it.
+
+import { sanitizeName, NAME_MAX } from './wire.js';
+
+/** The only version this file will read or write. It names the
+ *  algorithm, so the payload cannot. */
+export const TOKEN_V = 'v1';
+
+/** An Ed25519 public key and signature are fixed sizes; anything else
+ *  is not one, and is refused before WebCrypto is asked. */
+export const PUBKEY_BYTES = 32;
+export const SIG_BYTES = 64;
+
+/**
+ * HOW LONG A TOKEN MAY LIVE, bounded by the VERIFIER and not merely by
+ * the minter. `exp` alone says when this token dies; `MAX_TTL_S` says
+ * no token may ever have been issued for longer than this, which is
+ * what a token stolen off a client is worth. A minter that got greedy -
+ * or a future slice that quietly raised its own constant - is refused
+ * here rather than trusted.
+ *
+ * Five minutes is chosen against the thing it gates: a token is spent
+ * ONCE, on a hello, and a connection outlives its token perfectly well
+ * because the socket is the session from then on. It does not need to
+ * cover a play session; it needs to cover the walk from "press Online"
+ * to "socket open".
+ */
+export const MAX_TTL_S = 300;
+
+/** A verifier's clock and a minter's clock are two machines. This is
+ *  how far in the future an `iat` may sit before the token is read as a
+ *  lie rather than as skew - small, because both ends are Cloudflare. */
+export const SKEW_S = 30;
+
+/** What kind of player the token speaks for. Named ACCOUNT_KINDS and
+ *  not KINDS because `systems/features.js` already declares a KINDS -
+ *  the one-home gate caught the collision the moment this file landed,
+ *  and two unrelated things under one name is how a reader comes to
+ *  believe they are one thing. The relay does not act on
+ *  this; it is here so a host can say "link your account to keep these
+ *  saves" without asking the account service a second question. */
+export const ACCOUNT_KINDS = Object.freeze(['guest', 'linked']);
+
+const enc = new TextEncoder();
+const dec = new TextDecoder();
+
+const b64urlFromBytes = (bytes) => {
+  let bin = '';
+  for (const b of bytes) bin += String.fromCharCode(b);
+  return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+};
+const bytesFromB64url = (s) => {
+  if (typeof s !== 'string' || !/^[A-Za-z0-9_-]+$/.test(s)) return null;
+  let t = s.replace(/-/g, '+').replace(/_/g, '/');
+  while (t.length % 4) t += '=';
+  try {
+    const bin = atob(t);
+    const out = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+    return out;
+  } catch { return null; }
+};
+
+/**
+ * IS THIS A NAME THE ACCOUNT SERVICE COULD HAVE ISSUED? The wire's own
+ * law, asked as a question instead of as a repair: `sanitizeName`
+ * returns what it would have made of the string, and a name already fit
+ * to travel is one it leaves alone. So the minter and the verifier
+ * cannot drift - there is one law and this is it, asked from the other
+ * side.
+ * @param {unknown} name
+ */
+export function nameIsIssuable(name) {
+  return typeof name === 'string' && name.length > 0 && name.length <= NAME_MAX
+    && sanitizeName(name) === name;
+}
+
+/**
+ * The claims, as they ride. Short keys because this travels in a hello
+ * on every connection and the payload is base64 on top.
+ * @typedef {{s: string, n: string, k: 'guest'|'linked', i: number, e: number}} Claims
+ *   s  the account id          n  the display name
+ *   k  guest or linked         i  issued at, epoch seconds
+ *   e  expires at, epoch seconds
+ */
+
+/** The account id's own shape - the same one `net/social.js` already
+ *  keeps in `dagger.online.account`, so an id minted by SOC1 is an id
+ *  this token can carry (ACC0: the existing account is ADOPTED, never
+ *  replaced). */
+export const ID_RE = /^[A-Za-z0-9_-]{4,40}$/;
+
+/** Everything a well-formed claim set must be, before any signature is
+ *  considered. Split out so the minter can refuse to sign a bad one -
+ *  a token that cannot verify is worse than no token, because it fails
+ *  at the player's machine instead of at ours. */
+export function claimsValid(c, { maxTtlS = MAX_TTL_S } = {}) {
+  if (!c || typeof c !== 'object' || Array.isArray(c)) return false;
+  if (typeof c.s !== 'string' || !ID_RE.test(c.s)) return false;
+  if (!nameIsIssuable(c.n)) return false;
+  if (!ACCOUNT_KINDS.includes(c.k)) return false;
+  if (!Number.isSafeInteger(c.i) || !Number.isSafeInteger(c.e)) return false;
+  if (c.e <= c.i) return false;                 // a token that is born dead
+  if (c.e - c.i > maxTtlS) return false;        // a minter that got greedy
+  return true;
+}
+
+/**
+ * MINT. The account service's half - it holds the private key and
+ * nothing else does.
+ *
+ * @param {{s:string, n:string, k:'guest'|'linked'}} who
+ * @param {CryptoKey} privateKey  an Ed25519 private key
+ * @param {{subtle: SubtleCrypto, nowS: number, ttlS?: number}} env
+ * @returns {Promise<string>}
+ */
+export async function mintToken(who, privateKey, { subtle, nowS, ttlS = MAX_TTL_S }) {
+  if (!Number.isSafeInteger(nowS)) throw new TypeError('mintToken needs an integer epoch-seconds clock');
+  const claims = { s: who?.s, n: who?.n, k: who?.k, i: nowS, e: nowS + ttlS };
+  // A BAD CLAIM SET IS REFUSED AT THE MINTER. The verifier would refuse
+  // it too, but at the player's machine, where the only thing anyone
+  // learns is that online is broken.
+  if (!claimsValid(claims)) throw new TypeError('mintToken refused a claim set it could not verify');
+  const body = b64urlFromBytes(enc.encode(JSON.stringify(claims)));
+  const signed = enc.encode(`${TOKEN_V}.${body}`);
+  const sig = new Uint8Array(await subtle.sign({ name: 'Ed25519' }, privateKey, signed));
+  return `${TOKEN_V}.${body}.${b64urlFromBytes(sig)}`;
+}
+
+/**
+ * VERIFY. The relay's half - it holds the public key, and a public key
+ * cannot mint.
+ *
+ * Answers `{ ok: true, claims }` or `{ ok: false, why }`. NEVER throws
+ * and never repairs: `why` is for a log at our end, not for the player,
+ * and the caller's only correct response to `ok: false` is to treat the
+ * connection as carrying no identity at all.
+ *
+ * @param {unknown} token
+ * @param {CryptoKey} publicKey  an Ed25519 public key
+ * @param {{subtle: SubtleCrypto, nowS: number, maxTtlS?: number, skewS?: number}} env
+ * @returns {Promise<{ok: true, claims: Claims} | {ok: false, why: string}>}
+ */
+export async function verifyToken(token, publicKey, { subtle, nowS, maxTtlS = MAX_TTL_S, skewS = SKEW_S }) {
+  if (typeof token !== 'string' || token.length > 1024) return { ok: false, why: 'shape' };
+  const parts = token.split('.');
+  if (parts.length !== 3) return { ok: false, why: 'shape' };
+  const [v, body, sig64] = parts;
+  // THE VERSION IS READ BEFORE ANYTHING ELSE and it is the algorithm.
+  // Nothing inside the payload gets a say in how the payload is judged.
+  if (v !== TOKEN_V) return { ok: false, why: 'version' };
+
+  const sig = bytesFromB64url(sig64);
+  if (!sig || sig.length !== SIG_BYTES) return { ok: false, why: 'sig-shape' };
+  const raw = bytesFromB64url(body);
+  if (!raw) return { ok: false, why: 'body-shape' };
+
+  // SIGNATURE FIRST, CONTENT SECOND. The claims are an attacker's bytes
+  // until the signature says otherwise, so nothing is read off them -
+  // not even a length - before this passes.
+  let good = false;
+  try {
+    good = await subtle.verify({ name: 'Ed25519' }, publicKey, sig, enc.encode(`${v}.${body}`));
+  } catch { return { ok: false, why: 'verify-threw' }; }
+  if (!good) return { ok: false, why: 'signature' };
+
+  let claims;
+  try { claims = JSON.parse(dec.decode(raw)); } catch { return { ok: false, why: 'json' }; }
+  // Signed, and still checked: a key of ours signing a claim set we
+  // would not have minted means the minter has a bug, and a bug is not
+  // an authorisation.
+  if (!claimsValid(claims, { maxTtlS })) return { ok: false, why: 'claims' };
+
+  if (!Number.isSafeInteger(nowS)) return { ok: false, why: 'clock' };
+  if (nowS >= claims.e) return { ok: false, why: 'expired' };
+  if (claims.i > nowS + skewS) return { ok: false, why: 'future' };
+  return { ok: true, claims };
+}
+
+/** Import a raw 32-byte Ed25519 public key - the shape a relay carries
+ *  in its config. Answers null rather than throwing, because a
+ *  mis-pasted key is a deployment mistake that should be reported once
+ *  at boot and not once per connection.
+ *  @param {Uint8Array|ArrayBuffer} raw @param {{subtle: SubtleCrypto}} env */
+export async function importPublicKey(raw, { subtle }) {
+  if (!raw) return null;
+  // COPIED, not borrowed: a caller that keeps hold of the array it
+  // handed in cannot reach into the key afterwards, and the copy is a
+  // plain ArrayBuffer view, which is the shape WebCrypto's own types
+  // ask for.
+  const bytes = new Uint8Array(raw instanceof Uint8Array ? raw : new Uint8Array(raw));
+  if (bytes.length !== PUBKEY_BYTES) return null;
+  try {
+    return await subtle.importKey('raw', bytes, { name: 'Ed25519' }, false, ['verify']);
+  } catch { return null; }
+}
+
+/** The same, from the base64url a config file would hold. */
+export async function importPublicKeyB64(s, { subtle }) {
+  const bytes = bytesFromB64url(String(s ?? ''));
+  return bytes ? importPublicKey(bytes, { subtle }) : null;
+}
+
+export const _b64url = { encode: b64urlFromBytes, decode: bytesFromB64url };

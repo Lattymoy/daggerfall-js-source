@@ -4,10 +4,13 @@
 export default [
   {
     // ONLINE1 / AUDIT ONLINE A13: the relay's Worker is linted with the tree - its globals are the runtime's
-    files: ['server/src/**/*.js'],
+    // ACC1b: and the ACCOUNT Worker beside it - a second Worker whose
+    // globals are the same runtime's, so it shares this block rather
+    // than growing a near-identical one below it.
+    files: ['server/src/**/*.js', 'server-account/src/**/*.js'],
     languageOptions: {
       ecmaVersion: 'latest', sourceType: 'module',
-      globals: { console: 'readonly', Response: 'readonly', Request: 'readonly', URL: 'readonly', WebSocketPair: 'readonly', WebSocketRequestResponsePair: 'readonly', crypto: 'readonly', TextEncoder: 'readonly' },
+      globals: { console: 'readonly', Response: 'readonly', Request: 'readonly', URL: 'readonly', WebSocketPair: 'readonly', WebSocketRequestResponsePair: 'readonly', crypto: 'readonly', TextEncoder: 'readonly', atob: 'readonly', btoa: 'readonly' },
     },
     rules: { 'no-undef': 'error', 'no-unused-vars': ['error', { argsIgnorePattern: '^_', caughtErrors: 'none' }], 'no-dupe-keys': 'error', 'no-dupe-class-members': 'error' },
   },
