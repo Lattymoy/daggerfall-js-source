@@ -9569,6 +9569,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   ambience.onPlayEffect = (clip, playerPos) => sky.onAmbientEffect(playerPos, ambientWord === 'thunder');
   let skyInside = false;   // DS1 (AUDIT 61): PlayerEnterExit's transition edge, for the mod's listener and flash
   let _lastPlayerPos = null, _playerStill = false;   // T2: the politeness still-tracker
+const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first - a scratch, refilled per frame
   const _camRight = new Float32Array(3);   // EV2: the billboard right axis, refilled per frame
   // EV3: THE FRUSTUM. The hatch reads once at build (?cull=off, the
   // ?sky=classic shape - a wrong bound in the field is a URL away from
@@ -10697,7 +10698,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (cullOn) spherePlanes(multiply(proj, view, _pv), _planes);   // EV3 (GHOST1: normalised - the sphere test shares these)
     meterFor(renderer.gl)?.markCpu('batches');   // PERF-CPU: the pixel walk that fills allBatches, culling as it goes
     const allBatches = [];
-    const groundQueue = [];   // GROUND-LAST: the visible pixels whose ground is drawn AFTER every opaque mesh of every pixel
+    const groundQueue = [];   // GROUND-LAST: the visible pixels whose ground is drawn AFTER every opaque mesh of every pixel (near first, by the walk's order)
     // PERF-ON2 (2026-09-19, Mac: "Online mode needs further performance
     // improvements", with a readout showing 51 fps, script 23.3 ms and
     // 1365 draws): THE OTHERS ARE CULLED LIKE EVERYTHING ELSE IS.
@@ -10730,7 +10731,20 @@ export async function bootWorld(canvas, renderer, params, status) {
       if (cullOn && billboardOutside(b)) continue;
       allBatches.push(b);
     }
-    for (const p of built.values()) {
+    // NEAR-FIRST (2026-09-21): THE PIXELS ARE WALKED NEAREST FIRST. The
+    // map's insertion order is the order the pixels streamed in, which
+    // is nothing to do with where the eye is - so a far town's walls
+    // were shaded in full and then hidden behind the near street's. With
+    // the ground already drawn last (GROUND-LAST), walking the meshes
+    // near to far is the rest of the same law: whatever is nearest goes
+    // into the depth buffer first, and everything behind it fails the
+    // test before its shader runs. The order is the pixel's grid
+    // distance from the player's own pixel - a hundred-odd integers,
+    // sorted into a scratch array kept across frames, no allocation.
+    _pixelOrder.length = 0;
+    for (const p of built.values()) { p._dist2 = (p.px - state.current.x) ** 2 + (p.py - state.current.y) ** 2; _pixelOrder.push(p); }
+    _pixelOrder.sort((a, b) => a._dist2 - b._dist2);
+    for (const p of _pixelOrder) {
       // EV2: the pixel's frame matrix caches on the built entry and
       // refreshes only when its translation actually changes (a
       // recenter - not per frame), and each model's world matrix

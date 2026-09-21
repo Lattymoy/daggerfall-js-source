@@ -213,6 +213,11 @@ test('PERF2 pins: the sky passes, the clouds\' composite and the ring sit AT the
   assert.ok(wQueue > 0 && wQueue < wMesh && terrainAt > wMesh, 'world: the pixel walk queues its ground and draws the meshes; the ground is drawn after the walk');
   const wDrain = w.indexOf('for (const p of groundQueue) {');
   assert.ok(wDrain > wMesh && wDrain < terrainAt && terrainAt < w.indexOf('_camRight[0] = Math.cos(cam.yaw);'), 'the queue drains - the whole queue - before the flats are gathered for the draw');
+  // NEAR-FIRST: the pixel walk is sorted nearest-first before the meshes go down, so near buildings hide far ones in the depth buffer
+  const wSort = w.indexOf('_pixelOrder.sort((a, b) => a._dist2 - b._dist2);');
+  assert.ok(wSort > 0 && wSort < wMesh && w.indexOf('for (const p of _pixelOrder) {') > wSort && w.indexOf('for (const p of _pixelOrder) {') < wMesh, 'the walk runs over the sorted order');
+  assert.match(w, /p\._dist2 = \(p\.px - state\.current\.x\) \*\* 2 \+ \(p\.py - state\.current\.y\) \*\* 2/, 'by grid distance from the player\u2019s own pixel');
+  assert.match(w, /^const _pixelOrder = \[\];/m, 'a scratch kept across frames, not a per-frame array');
   const eMesh = e.lastIndexOf('renderer.drawMesh(d.mesh, d.matrix, texRemap);'), eArrows = e.indexOf('arrows.draw(renderer, texRemap);');
   assert.ok(eMesh > 0 && eArrows > eMesh && eTerrain > eArrows, 'exterior: the ground after the buildings, the mills and the arrows');
   assert.match(w, /window\.__grassStats = \(\) => \(\{ blades: labGrass\.count, drawn: labGrass\.drawn,/, 'the probe reports what was drawn');

@@ -25,5 +25,23 @@
   "tests": [
    "test/perf2.test.js"
   ]
+ },
+ {
+  "name": "NEAR-FIRST-the-walk-is-insertion-order-again",
+  "file": "src/scenes/world.js",
+  "old": "    _pixelOrder.sort((a, b) => a._dist2 - b._dist2);\n    for (const p of _pixelOrder) {",
+  "new": "    for (const p of built.values()) {",
+  "tests": [
+   "test/perf2.test.js"
+  ]
+ },
+ {
+  "name": "NEAR-FIRST-the-order-is-far-first",
+  "file": "src/scenes/world.js",
+  "old": "    _pixelOrder.sort((a, b) => a._dist2 - b._dist2);",
+  "new": "    _pixelOrder.sort((a, b) => b._dist2 - a._dist2);",
+  "tests": [
+   "test/perf2.test.js"
+  ]
  }
 ]

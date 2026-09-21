@@ -266,3 +266,13 @@ what a ground fragment costs, on a machine where the GPU is the wait.
 In a town that fraction is large; on an open road it is small. On a
 CPU-bound frame it is nothing, and it costs nothing there either. 3
 mutants, 3 dead; the perf2 order pin holds both hosts' new order.
+
+**NEAR-FIRST (same day): and the pixels are walked nearest first.** The
+streaming world's pixel map is in the order the pixels streamed in,
+which has nothing to do with where the eye is, so a far town's walls
+went down before the near street's that hid them. The walk sorts a
+scratch array by grid distance from the player's own pixel - a
+hundred-odd integers, no allocation - and the meshes, and then the
+queued ground, go down near to far. Same law as above, finished: the
+nearest thing enters the depth buffer first and everything behind it
+is rejected before its shader runs. 2 mutants, 2 dead.
