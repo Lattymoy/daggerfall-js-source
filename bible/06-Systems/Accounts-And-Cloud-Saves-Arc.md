@@ -317,9 +317,76 @@ be its own arc, after a long boring stretch of the backup path working.
 - **Where the token is minted for the desktop app**, which has no
   browser origin to lean on.
 
-## BEFORE ANY OF IT
+## THE CREDENTIAL, and Mac's decision on it
 
-The Cloudflare API token for this account **has still not been
-rotated.** It was pasted into a chat and has been live since. This arc
-puts D1 and R2 on that same account; standing up more behind a
-credential that is known to be exposed is the wrong order of work.
+The Cloudflare API token for this account was pasted into a chat and has
+been live since. It was raised before this arc opened and raised again
+when the arc did.
+
+Mac, 2026-09-21: **"Im not rotating. Lets do this"**.
+
+Recorded, and not re-argued. What it means in practice, so that a later
+reader is not surprised by it: the same credential that can reach the
+relay will be able to reach the account D1 and the save R2, and the
+blast radius of this arc is therefore the whole of it rather than the
+relay alone. The mitigations that do not need the token rotated are
+still worth taking and are the ordinary ones — the token stays in the
+repo's secrets and never in a file or on a command line (pinned by
+`test/relaydeploy.test.js`), and the save blobs are a BACKUP, so the
+worst case takes a copy rather than the original.
+
+---
+
+## ACC1a — SHIPPED 2026-09-21: the token
+
+`src/net/identityToken.js` and `test/identitytoken.test.js`. The pure
+law only: no Worker, no D1, nothing wired. Nothing imports it yet, so
+the relay's bundle is unchanged and no deploy was forced.
+
+**Ed25519, and no algorithm field.** A JWT names its own algorithm in a
+header the verifier reads, which is the root of the whole `alg: none`
+family — the attacker chooses how their signature is checked. The format
+here is `v1.<payload>.<signature>` and **the version prefix IS the
+algorithm**: the verifier knows exactly one version and refuses anything
+else before parsing a byte. A pin holds the absence of `alg`, `typ`,
+`kid`, `crv` and `jwk` from the payload, and holds at the source that
+only one algorithm is named in the file at all.
+
+**Every arm is a refusal, never a repair.** A token is the only evidence
+there is, so a token that is not exactly right is not evidence. The
+sharpest case is the name: `wire.js`'s `sanitizeName` falls back to a
+safe string, which is right for a chat frame and wrong here — a fallback
+would silently rename a player to something the account service never
+issued. So the wire's law is asked as a QUESTION (`nameIsIssuable` is
+"is this a fixed point of `sanitizeName`?"), and a signed token carrying
+a name that is not is refused. **A key of ours signing a claim set we
+would not have minted is a bug, and a bug is not an authorisation.**
+
+**The lifetime is bounded by the VERIFIER**, not merely by the minter.
+`exp` says when this token dies; `MAX_TTL_S` says no token may ever have
+been issued for longer, which is what a token stolen off a client is
+worth. A future slice that quietly raises the minter's own constant is
+refused at the far end. Five minutes, because a token is spent ONCE on a
+hello and the socket is the session from then on — it covers the walk
+from "press Online" to "socket open" and does not need to cover a play
+session.
+
+**The relay holds a public key and a public key cannot mint**, which is
+the whole reason the relay is allowed to be the bigger attack surface.
+Driven rather than asserted: the pin imports the key the relay would
+carry and proves `subtle.sign` rejects with it.
+
+**The account id is SOC1's own shape**, and a pin reads
+`net/social.js` to prove the two have not drifted — ACC0's adoption
+depends on an id minted by the social arc being an id this token can
+carry, so the day they part, this reddens.
+
+16 mutants, 14 dead, 2 recorded equivalent. One survivor was a real
+hole and is worth the sentence: removing the `try` around `JSON.parse`
+survived the first pass, because the signature is checked FIRST and
+every malformed body in the junk fixture died at `signature` without
+ever reaching the parser. The only way there is a body that is
+**correctly signed and is not JSON** — which means our own minter
+shipped garbage — and the verifier must still refuse rather than throw,
+because a throw out of a hello is ONCRASH1's lesson: it does not end
+that socket, it ends the reader.
