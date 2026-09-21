@@ -3291,13 +3291,33 @@ export function createWorldModes(host) {
     // rows resolve here exactly as they do in a quest message, rather
     // than through a second table filled for the symbols somebody
     // expected.
-    const rows = (id) => expandRowValues(townTalk?.lines?.(id) ?? [], null, questBridge?.machine.macroContext() ?? null);
+    //
+    // DAEDRA1b (2026-09-21, Dracula/Valentin again: "Peryite
+    // [srcDataUnknown]"): A RECORD IS EXPANDED ONCE, WHERE IT IS SHOWN.
+    // DAEDRA1 wrapped this provider AND had the summoning flow wrap it
+    // again, so a record went through two walks. The first one carries
+    // the context but not the flow's %dae, and a context that cannot
+    // answer a symbol does not leave it alone - `getMacroValue` ends its
+    // ladder at `symbolStr + '[srcDataUnknown]'` (DFU's own four
+    // sentinels, and correct for a FINAL pass). So walk one turned %dae
+    // into `%dae[srcDataUnknown]`, and walk two filled in the `%dae`
+    // part and left the marker standing: "Peryite[srcDataUnknown]".
+    //
+    // The reader below is RAW, and each place that SHOWS a box expands
+    // it once with everything it knows: this window's own boxes here,
+    // the summoning flow's with its prince (see `say`). One walk per
+    // box, and no pass ever hands a sentinel to another pass.
+    const rawRows = (id) => townTalk?.lines?.(id) ?? [];
+    const rows = (id) => expandRowValues(rawRows(id), null, questBridge?.machine.macroContext() ?? null);
     let win = null;
     win = new CovenWindow({
       rows,
       onTalk: () => popupTalkToStaticNpc(npcData),
+      // DAEDRA1b: the flow is its own display point and knows the prince,
+      // so it takes the RAW reader - handing it the expanded one is what
+      // put the sentinel on screen.
       onSummon: () => openServiceFlow('guildServiceDaedraSummoning', {
-        guild: null, memberships: [], store, rows, route: null,
+        guild: null, memberships: [], store, rows: rawRows, route: null,
         summonerFactionId: pn.factionID,
       }),
       onQuest: () => {

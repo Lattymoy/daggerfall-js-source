@@ -230,7 +230,9 @@ test('DAEDRA1: the summoning box says a date, a prince and a name - not %dat, %d
 test('DAEDRA1: every box the coven and the summoning show goes THROUGH the walk', () => {
   const modes = code('scenes/worldModes.js');
   // the coven's own rows provider - its prompts and its quest offers
-  assert.match(modes, /const rows = \(id\) => expandRowValues\(townTalk\?\.lines\?\.\(id\) \?\? \[\], null, questBridge\?\.machine\.macroContext\(\) \?\? null\)/,
+  // DAEDRA1b: off the RAW reader, and once - the composition pin below
+  // owns the rest of this law
+  assert.match(modes, /const rows = \(id\) => expandRowValues\(rawRows\(id\), null, questBridge\?\.machine\.macroContext\(\) \?\? null\)/,
     'the coven expands every record it shows');
   // the flow's own, with the prince riding it
   assert.match(modes, /const say = \(id, d = daedra\) => expandRowValues\(rows\?\.\(id\) \?\? \[\], summonMacroValues\(d\), questBridge\?\.machine\.macroContext\(\) \?\? null\)/,
@@ -247,4 +249,49 @@ test('DAEDRA1: every box the coven and the summoning show goes THROUGH the walk'
   assert.match(modes, /offerBoxes\(offered, \(id\) => say\(id, r\.daedra\)\)/,
     "the prince's own offer is expanded too, and by the prince who came");
   assert.doesNotMatch(modes, /rows\?\.\(SUMMON_TEXT/, 'no raw row left in the flow');
+});
+
+test('DAEDRA1b: a record is expanded ONCE, where it is shown - a second walk over a sentinel is what put "Peryite[srcDataUnknown]" on screen', () => {
+  // Dracula/Valentin, on the DAEDRA1 build: the box now reads "Today is
+  // Tirdas the 24th of Rain's Hand" and "Do you, Valentin" - %dat and
+  // %pcn landed - but %dae came out as "Peryite[srcDataUnknown]".
+  //
+  // DAEDRA1 wrapped the coven's provider AND had the summoning flow
+  // wrap it again, so a record went through TWO walks:
+  //   walk 1 (the provider): context, but no %dae -> getMacroValue ends
+  //          its ladder at `symbolStr + '[srcDataUnknown]'`, so the text
+  //          now reads `%dae[srcDataUnknown]`
+  //   walk 2 (the flow): supplies dae, matches the `%dae` INSIDE that
+  //          string, and leaves the marker standing.
+  // Neither walk is wrong on its own. Composing them is.
+  const ctx = { hooks: { playerName: () => 'Valentin', nowSeconds: () => 60 * 60 * 24 * 115 } };
+  const record = [{ text: 'the day of summoning for %dae. Do you, %pcn, wish', center: true }];
+  const values = summonMacroValues(DAEDRA.find((d) => d.name === 'Peryite'));
+
+  // THE SHAPE THAT SHIPPED, driven so it cannot come back unnoticed
+  const twice = expandRowValues(expandRowValues(record, null, ctx), values, ctx);
+  assert.match(twice[0].text, /Peryite\[srcDataUnknown\]/, 'two walks reproduce the screenshot exactly');
+
+  // THE LAW: one walk, from the raw record, with everything known
+  const once = expandRowValues(record, values, ctx);
+  assert.equal(once[0].text, 'the day of summoning for Peryite. Do you, Valentin, wish');
+  assert.doesNotMatch(once[0].text, /\[(srcDataUnknown|nullMCP|undefined|unhandled)\]/,
+    'no sentinel reaches the screen');
+
+  // AND WHY THE FIRST WALK CANNOT SIMPLY BE TAUGHT TO LEAVE IT ALONE: a
+  // context that cannot answer a symbol MARKS it, which is DFU's own
+  // ladder and right for a final pass. The fix is composition, not the
+  // ladder - so this pin states the marking as intended behaviour.
+  assert.match(expandRowValues([{ text: '%dae' }], null, ctx)[0].text, /^%dae\[srcDataUnknown\]$/,
+    'a context-only walk marks an unanswerable symbol - that is the ladder, and it stays');
+});
+
+test('DAEDRA1b: the coven keeps a RAW reader, and hands THAT to the summoning flow', () => {
+  const modes = code('scenes/worldModes.js');
+  assert.match(modes, /const rawRows = \(id\) => townTalk\?\.lines\?\.\(id\) \?\? \[\];/,
+    'the raw reader exists');
+  assert.match(modes, /const rows = \(id\) => expandRowValues\(rawRows\(id\), null, questBridge\?\.machine\.macroContext\(\) \?\? null\);/,
+    "the window's own boxes expand once, off the raw reader");
+  assert.match(modes, /openServiceFlow\('guildServiceDaedraSummoning', \{\s*guild: null, memberships: \[\], store, rows: rawRows,/,
+    'and the flow is handed the RAW reader, not the expanded one - the whole of this fix');
 });
