@@ -900,3 +900,41 @@ unchanged, the walk back out, the pin on the smoothed eye; the per-axis
 pin tells the port's cast from the mod's by its length);
 `tools/mutants/eotbwall.json` 4 - 4 dead.
 
+## RIDE-POV - the Morrowind body has no saddle (2026-09-20)
+
+Mac: *"When riding the horse with the morrowind model, you should be
+exempt from using 3rd person"*.
+
+The sprite body rides - EOTB has saddle states of its own, on foot and
+mounted, and its lane is untouched here. The Morrowind third-person body
+has no riding animation and would stand through the horse. So the view
+seam (`player/mwView.js`) keeps the Morrowind lane IN THE HEAD while the
+host says `riding`: a rider in third person is put there on the frame,
+before any queued wheel notch can cross out, and the notch is dropped
+rather than left to fire on dismount; while mounted the wheel refuses to
+leave the head (`mwViewWheel` reads the saddle the last frame recorded,
+because the wheel has no state of its own). The zoom distance is kept,
+and the view is NOT put back on dismount - a transition, as MAP-POV's is;
+the wheel is the player's again the moment they are on foot.
+
+The door into the head is ONE function, `mwIntoHead()` - the camera's
+restore door, the rig moved with it, the distance kept - shared by the
+map (MAP-POV, `mwViewFirstPerson`) and the saddle. It reads the `riding`
+every host already hands the seam (AUDIT-EOTB F3b derives that from the
+four call sites), so no host learns the rule. `scenes/exterior.js`'s
+standalone ride-view predates the machine and skips the seam while
+riding (its own recorded law); there the rule is moot.
+
+**Pins** (`test/ridepov.test.js`, 4 - with `canThirdPerson` and
+`setViewMode` stubbed to serve, as `eotb_view.test.js` stubs the first,
+because without a body the frame's own fallback would mask the rule): a
+third-person rider lands in the head on the frame with the host's own
+eye, keeps the distance, and is left there on dismount; the wheel is
+refused in the saddle, a notch queued before it is dropped, and the wheel
+returns on foot; the EOTB lane rides on and the map's door still moves
+it; by source, the one door, the rule before the flush, the wheel's read,
+and every host's `riding` (generative). **Mutants**
+(`tools/mutants/ridepov.json`): 6 mutations, 6 dead - the rule gone, the
+notch kept, the rule after the flush, the wheel blind to the saddle, the
+saddle never cleared, the saddle emptying the EOTB lane too.
+

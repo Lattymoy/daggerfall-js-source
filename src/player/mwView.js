@@ -129,6 +129,9 @@ export function mwViewFrame({ fpEye, feet, yaw, pitch, heightScale = null, rayca
     eotbWagon.tick(frame.dt ?? 0, { feet, yaw, height: frame.motion?.height, cart: !!frame.cart, onExteriorPath: !!frame.onExteriorPath, raycast });
     return out;
   }
+  // RIDE-POV: the saddle first, before any queued notch can cross out of the head
+  mounted = !!state.riding;
+  if (mounted) { mwIntoHead(); pendingClicks = 0; }
   if (pendingClicks) {
     mwCamera.wheel(pendingClicks, { ready: fpArm.upperBodyReady() });
     pendingClicks = 0;
@@ -166,7 +169,7 @@ export function mwViewWheel(deltaY) {
   // ladders read a click the same way round - negative is out of the
   // head - so nothing about the sign moves at the seam.
   if (eotbLane()) return eotbCamera.wheel(clicks);
-  if (mwCamera.mode() === 'first' && clicks < 0 && !fpArm.canThirdPerson()) return false;
+  if (mwCamera.mode() === 'first' && clicks < 0 && (!fpArm.canThirdPerson() || mounted)) return false;   // RIDE-POV: no saddle to show
   pendingClicks += clicks;   // flushed once per frame (actionbindings.lua:113-114)
   return true;
 }
@@ -174,6 +177,52 @@ export function mwViewWheel(deltaY) {
 /** The frame's pending, exposed for the pins - a probe with its own
  *  counter measures the copy. */
 export function mwViewPendingClicks() { return pendingClicks; }
+
+/**
+ * MAP-POV (2026-09-20, Mac: "If you're in 3rd person and decide to use
+ * the map, it should transition you to first person and then open the
+ * map. Both for the morrowind/non morrowind"): INTO THE HEAD NOW, for
+ * whichever body answers. The map is read in first person - the held
+ * map's hands lane needs the first-person arm (AUDIT-MAP2: the
+ * third-person body holds nothing), and from third person the window
+ * fell to its painted sprite for the whole open, which is what Mac saw.
+ *
+ * The EOTB lane takes the mod's own ToggleOffset(false). The Morrowind
+ * lane takes the camera's restore door and NOT the wheel's crossing:
+ * the wheel queues the boundary behind the upper body (camera.cpp:
+ * 225-232) and the map is opening THIS frame - so the rig is moved with
+ * it, and the arm is first-person before the window's first tick asks.
+ * The remembered zoom distance is kept, so a wheel out afterwards lands
+ * where the player left the camera. Answers whether the view moved.
+ */
+export function mwViewFirstPerson() {
+  if (eotbLane()) {
+    if (!eotbCamera.thirdPerson()) return false;
+    eotbCamera.toggleOffset(false);
+    return true;
+  }
+  return mwIntoHead();
+}
+
+/** The Morrowind lane's own door into the head (MAP-POV's, and RIDE-POV's): the restore door, the rig moved with
+ *  it, the zoom distance kept. Answers whether the view moved. */
+function mwIntoHead() {
+  if (!mwCamera.thirdPerson()) return false;
+  mwCamera.restore({ firstPerson: true, baseDistance: mwCamera.baseDistance() });
+  fpArm.setViewMode('first');
+  return true;
+}
+
+// RIDE-POV (2026-09-20, Mac: "When riding the horse with the morrowind
+// model, you should be exempt from using 3rd person"): THE MORROWIND BODY
+// HAS NO SADDLE. The sprite body rides (EOTB's own saddle states); the
+// Morrowind third-person body has no riding animation and would stand
+// through the horse, so while the host says `riding` the Morrowind lane
+// stays in the head - a rider in third person is put there, and the wheel
+// cannot take one out. The frame remembers the saddle for the wheel, which
+// has no state of its own. Read off the seam's own frame, so every host
+// that rides the seam gets the rule and none has to know it.
+let mounted = false;
 
 // ═══ AUDIT-EOTB2: THE FOUR DOORS THE BODY'S OTHER HALF NEEDED ════════
 //

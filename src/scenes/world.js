@@ -168,7 +168,7 @@ import { createCityGuards } from './cityGuards.js';   // G1
 import { createArrestFlow } from './arrestFlow.js';
 import { clearCrimeOnLocationExit, addGold, goldAmount, deductGold, totalGoldAmount, deductGoldPieces } from '../systems/court.js';   // AUDIT 17e F6   // G2   // F-slice: travel gold; U41: GetGoldAmount + the pieces half of DeductFastTravelGold
 import { makeInView } from '../player/cameraView.js';   // AUDIT 17e F24
-import { mwViewFrame, mwViewWheel, mwViewDrawBody, mwViewFootstep, mwViewLoadPose, mwViewNewGame, mwViewRebase, mwViewAttachWagon, mwViewDrawWagon, mwViewWagonTargets, mwViewWagonActivate } from '../player/mwView.js';   // MW-D25: the Morrowind camera; AUDIT-EOTB2: the sprite's stride and the load's POV
+import { mwViewFirstPerson, mwViewFrame, mwViewWheel, mwViewDrawBody, mwViewFootstep, mwViewLoadPose, mwViewNewGame, mwViewRebase, mwViewAttachWagon, mwViewDrawWagon, mwViewWagonTargets, mwViewWagonActivate } from '../player/mwView.js';   // MW-D25: the Morrowind camera; AUDIT-EOTB2: the sprite's stride and the load's POV
 import { mwCamera, PITCH_LIMIT } from '../player/mwCamera.js';   // MW-D30: persistence + the reference pitch clamp
 import { pickActivatableHit, pickQuestFoe, pickFoe } from '../player/activate.js';   // G3: corpse loot; QG1: the foe-click door; TI1: the lock-on pick
 import { raceActivation } from '../player/activationRace.js';   // HARD2: one home for "the nearest thing under the one ray takes the click"
@@ -5931,6 +5931,15 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  (woods rides along for the overworld's relief) and never which
    *  map that adds up to. */
   function buildTravelMapWindow(extra = {}) {
+    // MAP-POV (2026-09-20, Mac: "If you're in 3rd person and decide to
+    // use the map, it should transition you to first person and then
+    // open the map. Both for the morrowind/non morrowind"): THE MAP IS
+    // READ IN THE HEAD. Every door into the map - the key, the journal's
+    // goto, the guild's teleport - reaches this builder, and only after
+    // its own refusals (enemies near, the sun, a pending offer), so the
+    // camera moves for a map that opens and never for a press that was
+    // refused. The seam picks the body (player/mwView.js).
+    mwViewFirstPerson();
     return createTravelMapWindow({
       maps, mapDict, woods,
       roads: () => terrainGen.roads(),   // ROADS 7: the map draws the network

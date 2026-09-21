@@ -362,7 +362,7 @@ test('F8: the game plays the weapon’s own clips - all four hosts, through the 
   assert.deepEqual([...registered.keys()].sort(), [SFX.close, SFX.fire, SFX.open].sort());
   // and the ONE place all four hosts share plays them
   const rig = readFileSync('src/combat/weaponRig.js', 'utf8');
-  assert.match(rig, /thunderlockVoice\(dt\);/, 'the rig has a per-frame voice');
+  assert.match(rig, /thunderlockVoice\(dt, \{ armShoots, fired: held\.fired \}\);/, 'the rig has a per-frame voice (AUDIT FIELD-GUN-MW F1: told the arm\'s hold, so the shot\'s bang rides the release under the arm)');
   assert.match(rig, /audio\.playOneShot\(TL_SFX\.fire/, 'the shot');
   assert.match(rig, /audio\.playOneShot\(TL_SFX\.open/, 'the reload opening');
   assert.match(rig, /audio\.playOneShot\(TL_SFX\.close/, 'and the lock-up');
@@ -1204,10 +1204,13 @@ test('FIELD-GUN17a: the shot leaves the BARREL, and the barrel is measured off t
   // which is every bow, at every host, unchanged.
   const spell = readFileSync('src/systems/spellcast.js', 'utf8');
   assert.match(spell, /export function playerMuzzleOrigin\(eye, lookDir, muzzle\)/);
+  // AUDIT FIELD-GUN-MW F2 re-aimed this: the fork is ONE function (playerShotOrigin - a world muzzle for the
+  // third-person Morrowind body, a lens muzzle, or GetAimPosition), and both seams call it rather than restate it.
+  assert.match(spell, /export function playerShotOrigin\(eye, lookDir, muzzle\) \{[\s\S]*?return muzzle \? playerMuzzleOrigin\(eye, lookDir, muzzle\) : playerArrowOrigin\(eye, lookDir\);/,
+    'a muzzle wins, nothing supplied keeps the verbatim arm - at the fork\'s one home');
   for (const f of ['src/combat/arrowFlight.js', 'src/scenes/dungeonContext.js']) {
     const src = readFileSync(f, 'utf8');
-    assert.match(src, /muzzle\s*\?\s*playerMuzzleOrigin\([^)]*\)\s*:\s*playerArrowOrigin\(from, dir\)/,
-      `${f}: a muzzle wins, nothing supplied keeps the verbatim arm`);
+    assert.match(src, /playerShotOrigin\(from, dir, (?:meta\.)?muzzle\)/, `${f} spawns through the one fork`);
   }
 
   // ALL FOUR HOSTS hand it over - the FOUR HOSTS RULE, which this

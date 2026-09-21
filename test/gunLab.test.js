@@ -67,7 +67,7 @@ test('Weapon Widget\u2019s Bob sways the gun while walking and barely breathes w
   const standing = span(labMotion({ walking: false }));
   assert.ok(walking > 10, `the walk sways the sprite (${walking.toFixed(1)}px)`);
   assert.ok(standing > 0 && standing < walking / 3, `BobWhileIdle is a tenth of a stride, not a stride (${standing.toFixed(1)}px)`);
-  // the motor's frame is the rig's own shape (weaponRig.js:1235-1242)
+  // the motor's frame is the rig's own shape (weaponRig.js:1311-1318)
   const m = labMotion({ walking: true, running: true });
   assert.ok(m.speedRatio > 1 && m.baseSpeed > 0 && m.localVel[2] > 0, 'running is faster than the walk base, and it is forward motion');
   assert.equal(labMotion({ walking: false }).standing, true);

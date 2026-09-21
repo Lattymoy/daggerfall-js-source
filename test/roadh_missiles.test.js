@@ -301,11 +301,16 @@ test('ROAD-H H1c: BOTH arrow spawn seams apply it, so every host inherits the bo
   // the claim this arm makes is unchanged and is asserted whole: a
   // PLAYER shaft with no muzzle supplied still takes GetAimPosition,
   // and an ENEMY shaft still takes its origin bare, at both seams.
+  // AUDIT FIELD-GUN-MW F2 re-aimed this again: the fork is ONE function now (systems/spellcast.js
+  // playerShotOrigin - a world muzzle, a lens muzzle, or GetAimPosition), and both seams call it; the claim is
+  // asserted at the fork's home and the two seams are held to the call.
+  assert.match(src('systems/spellcast.js'),
+    /export function playerShotOrigin\(eye, lookDir, muzzle\) \{\n\s*if \(muzzle\?\.world\) return \[\.\.\.muzzle\.world\];\n\s*return muzzle \? playerMuzzleOrigin\(eye, lookDir, muzzle\) : playerArrowOrigin\(eye, lookDir\);\n\}/);
   assert.match(src('combat/arrowFlight.js'),
-    /const origin = meta\.fromPlayer\s*\n\s*\? \(meta\.muzzle \? playerMuzzleOrigin\(from, dir, meta\.muzzle\) : playerArrowOrigin\(from, dir\)\)\s*\n\s*: \[\.\.\.from\];/);
+    /const origin = meta\.fromPlayer\s*\n\s*\? playerShotOrigin\(from, dir, meta\.muzzle\)\s*\n\s*: \[\.\.\.from\];/);
   assert.match(src('combat/arrowFlight.js'), /this\.arrows\.push\(\{ pos: origin,/);
   assert.match(src('scenes/dungeonContext.js'),
-    /const pos = fromPlayer\s*\n\s*\? \(muzzle \? playerMuzzleOrigin\(from, dir, muzzle\) : playerArrowOrigin\(from, dir\)\)\s*\n\s*: \[\.\.\.from\];/);
+    /const pos = fromPlayer\s*\n\s*\? playerShotOrigin\(from, dir, muzzle\)[^\n]*\n\s*: \[\.\.\.from\];/);
   assert.match(src('scenes/dungeonContext.js'), /missiles\.push\(\{ arrow: true, flatArchive: orbArchiveFor\(weapon\), weapon, fromPlayer, shooterFoe, aimFoe, pos,/);
   // FlipHorizontal is read LIVE at the loose, off the same stored
   // Controls/Handedness the screen weapon draws by (StartGameBehaviour
