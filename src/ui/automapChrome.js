@@ -32,7 +32,6 @@ export const TOOL_TIP_DELAY = 1;
 /** Unity's default double-click window; the panel's OnMouseDoubleClick
  *  is what the debug teleport click rides. */
 export const DOUBLE_CLICK_TIME = 0.3;
-export const DOUBLE_CLICK_SLOP = 2;   // native pixels
 
 /**
  * Every rect on the native 320x200 screen, as DFU lays them out. The
@@ -148,10 +147,15 @@ export const RIGHT_DOWN_GUARD = Object.freeze({
 const inRect = (r, x, y) => x >= r.x && x < r.x + r.w && y >= r.y && y < r.y + r.h;
 
 /** Which named rect a NATIVE point falls in, or null. Buttons win over
- *  the panel, which is what DFU's child-panel ordering does. */
+ *  the panel, which is what DFU's child-panel ordering does. The
+ *  micro-map is NOT in the scan (AUDIT-AMAP W2): BaseScreenComponent
+ *  tests every component's rect without occlusion (:577-587) and the
+ *  overlay panel registers no mouse handler (:391-392), so a point
+ *  under the micro-map is the render panel's - drags, double-clicks
+ *  and the debug teleport all work there. */
 export function hitChrome(nx, ny) {
   if (nx == null || ny == null || nx < 0 || ny < 0) return null;
-  for (const name of [...CLICK_BUTTONS, ...HOLD_BUTTONS, 'microMap']) {
+  for (const name of [...CLICK_BUTTONS, ...HOLD_BUTTONS]) {
     if (inRect(CHROME_RECTS[name], nx, ny)) return name;
   }
   if (inRect(CHROME_RECTS.panel, nx, ny)) return 'panel';
@@ -228,11 +232,16 @@ export class AutomapChrome {
       if (name === 'panel') {
         // the render panel starts a DRAG - and a double click on it is
         // its own event (OnMouseDoubleClick, :375-377)
+        // AUDIT-AMAP W9: the panel's press consults and sets alreadyIn*
+        // like every button (:1916-1929, :1939-1947, :1956-1964) - a
+        // right-held rotate button (which sets it) refuses a left drag
+        if (this.alreadyIn[side]) return out;
+        this.alreadyIn[side] = true;
+        // AUDIT-AMAP W6: the double click is TIME alone
+        // (BaseScreenComponent.cs:681-692) - both clicks inside the
+        // component, no position slop
         const last = this._lastDown;
-        if (last && last.side === side && this.time - last.t <= DOUBLE_CLICK_TIME
-          && Math.abs(last.nx - nx) <= DOUBLE_CLICK_SLOP && Math.abs(last.ny - ny) <= DOUBLE_CLICK_SLOP) {
-          out.doubleClick = true;
-        }
+        if (last && last.side === side && this.time - last.t <= DOUBLE_CLICK_TIME) out.doubleClick = true;
         this._lastDown = { t: this.time, nx, ny, side };
         this.panelDrag[side] = true;
         this._dragAt = [nx, ny];
@@ -258,7 +267,11 @@ export class AutomapChrome {
     }
 
     if (phase === 'move') {
-      if (name !== this.hover) this.hoverT = 0;   // MouseLeave restarts the delay
+      // AUDIT-AMAP W7: the tooltip clock runs only while the pointer is
+      // STILL (BaseScreenComponent.cs:602-605) - any movement restarts
+      // it, not just a change of rect
+      if (name !== this.hover || !this._lastMove || this._lastMove[0] !== nx || this._lastMove[1] !== ny) this.hoverT = 0;
+      this._lastMove = [nx, ny];
       this.hover = name;
       if (this.inDragMode() && this._dragAt) {
         const dx = nx - this._dragAt[0];
@@ -280,7 +293,7 @@ export class AutomapChrome {
     // (see the four hosts' listeners), and honouring it here is the
     // point: an unreleasable drag is worse than a one-frame
     // difference in where the drag ends.
-    if (this.panelDrag[side]) { this.panelDrag[side] = false; this._dragAt = null; }
+    if (this.panelDrag[side]) { this.panelDrag[side] = false; this._dragAt = null; this.alreadyIn[side] = false; }   // AUDIT-AMAP W9: the panel's up clears its own flag (:1932-1936)
     if (this._pressed && this._pressed.side === side) {
       const { name: pressedName } = this._pressed;
       this._pressed = null;
@@ -311,7 +324,15 @@ export class AutomapChrome {
 
   /** The wheel over a rect: only the DUNGEON grid button answers one
    *  (the exterior window registers no scroll handler on it at all). */
+  /** AUDIT-AMAP W5: the tween keeps the drag anchor under the pointer
+   *  (:689-690), so the drag that started the jump resumes from where
+   *  the pointer IS, not from where it pressed. */
+  syncDragAnchor(nx, ny) {
+    if (this.inDragMode()) this._dragAt = [nx, ny];
+  }
+
   wheel(nx, ny, dir) {
+    this.hoverT = 0;   // AUDIT-AMAP W7: a wheel notch restarts the tooltip clock (:735)
     if (this.inDragMode()) return null;
     const name = hitChrome(nx, ny);
     const entry = name ? this.table[name] : null;

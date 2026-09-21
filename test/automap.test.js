@@ -203,9 +203,13 @@ test('A1 entrance discovery: clear LOS to the player within 100 units reveals th
     // blocked: a wall sits between
     automapEntranceTick(rec, [0, 1, 0], [30, 1, 0], blocked);
     assert.equal(rec.entranceDiscovered, false);
-    // the near-boundary counts as clear (hit >= dist - 0.5)
+    // AUDIT-AMAP F8: the ray ends at the player CAPSULE (:1219-1268) -
+    // clear means the hit reaches dist - CAPSULE_RADIUS (0.35), not
+    // c2/S1's 0.5 from nowhere
     automapEntranceTick(rec, [0, 1, 0], [30, 1, 0], { raycast: () => 29.6 });
-    assert.equal(rec.entranceDiscovered, true);
+    assert.equal(rec.entranceDiscovered, false, 'mutants: the old 0.5 slack (29.6 >= 29.5 would count as clear)');
+    automapEntranceTick(rec, [0, 1, 0], [30, 1, 0], { raycast: () => 29.7 });
+    assert.equal(rec.entranceDiscovered, true, '29.7 >= 30 - 0.35 is the capsule\'s surface');
     // discovered latches - no further casts
     automapEntranceTick(rec, [0, 1, 0], [30, 1, 0], { raycast: () => { throw new Error('cast after discovery'); } });
     assert.equal(rec.entranceDiscovered, true);
@@ -358,5 +362,5 @@ test('A1 wiring pins: the M binding and the mesh shader slice seam', () => {
   // is module-global so a leaked key can never serve a stale bitmap
   assert.match(src('src/scenes/dungeonContext.js'), /activeOverlay\?\.dispose\?\.\(\);/, 'the forced overwrite disposes first');
   assert.match(w, /let _microVer = 0;/, 'module-level micro-map versions');
-  assert.match(src('src/scenes/dungeonContext.js'), /destroy\(\) \{\n[\s\S]{0,500}exitDungeonAutomap\(\);/, 'dungeon teardown runs the exit law (N=0 forgets; window widened for NT1\'s dead latch ahead of it)');
+  assert.match(src('src/scenes/dungeonContext.js'), /destroy\(\) \{\n[\s\S]{0,500}exitDungeonAutomap\(classicMinutesRef\.value\);/, 'dungeon teardown runs the exit law with the EXIT time (AUDIT-AMAP F11, :2155; N=0 forgets; window widened for NT1\'s dead latch ahead of it)');
 });

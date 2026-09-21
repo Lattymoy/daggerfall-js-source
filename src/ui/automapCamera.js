@@ -399,8 +399,6 @@ export const actionRotateRight = (s, dt) => actionRotate(s, -ROTATE_SPEED, dt); 
 /** ActionRotateCamera (:1544-1565): the camera turns about ITSELF,
  *  around +Vector3.up, by -amount * dt. */
 export const actionRotateCamera = (s, amount, dt) => rotateAround(s, s.pos, [0, 1, 0], -amount * dt);
-export const actionRotateCameraLeft = (s, dt) => actionRotateCamera(s, +ROTATE_CAMERA_SPEED, dt);
-export const actionRotateCameraRight = (s, dt) => actionRotateCamera(s, -ROTATE_CAMERA_SPEED, dt);
 
 /**
  * ActionrotateCameraOnCameraYZplaneAroundObject (:1522-1539). 3D ONLY
@@ -499,12 +497,16 @@ export function dragPan(s, dx, dy, mainPos) {
 
 /** RIGHT drag on the panel: 2D turns the camera about itself; 3D turns
  *  the map about the pivot AND orbits the YZ plane, both from the one
- *  drag (:906-915). A zero bias does nothing at all. */
-export function dragRotate(s, dx, dy) {
+ *  drag (:906-915). A zero bias does nothing at all. AUDIT-AMAP W1: the
+ *  three verbs it hands the bias to ALL multiply by
+ *  Time.unscaledDeltaTime (:1548, :1499-1517, :1522-1533) - only the
+ *  pan is dt-free - so the drag carries the frame's dt; c2 passed a
+ *  literal 1 and a ten-pixel drag turned the map two hundred degrees. */
+export function dragRotate(s, dx, dy, dt) {
   if (dx === 0 && dy === 0) return s;
-  if (s.viewMode === VIEW_2D) return actionRotateCamera(s, +DRAG_ROTATE_SPEED_TOP_VIEW * dx, 1);
-  let t = actionRotate(s, DRAG_ROTATE_SPEED_VIEW_3D * dx, 1);
-  t = actionRotateCameraYZ(t, -DRAG_ROTATE_YZ_SPEED_VIEW_3D * dy, 1);
+  if (s.viewMode === VIEW_2D) return actionRotateCamera(s, +DRAG_ROTATE_SPEED_TOP_VIEW * dx, dt);
+  let t = actionRotate(s, DRAG_ROTATE_SPEED_VIEW_3D * dx, dt);
+  t = actionRotateCameraYZ(t, -DRAG_ROTATE_YZ_SPEED_VIEW_3D * dy, dt);
   return t;
 }
 

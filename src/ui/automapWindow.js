@@ -94,15 +94,14 @@
 //    shader is injected into the duplicated GEOMETRY alone (:1906).
 //  - THE PICK RUNS ON THE PASS'S OWN proj/view, mirrored X included, so
 //    the picker cannot disagree with what was drawn.
-//  - THE PANEL MOUSE STICKS. DFU reads `panelRenderAutomap
-//    .ScaledMousePosition`, which BaseScreenComponent only writes while
-//    the pointer is inside the component (:598-618) and never clears -
-//    so hover text found at the edge of the map survives the pointer
-//    leaving it. The port keeps that by tracking a separate panel-local
-//    position that only updates inside the rect. (It starts unset
-//    rather than at Unity's uninitialised (0,0); nothing is pickable at
-//    a panel corner, so the difference is the first frame of a window
-//    nobody has pointed at yet.)
+//  - THE PANEL MOUSE CLEARS ON THE WAY OUT. DFU reads `panelRenderAutomap
+//    .ScaledMousePosition`, which BaseScreenComponent.Update resets to
+//    -Vector2.one at its top (:575) and rewrites only while the pointer
+//    is inside the component (:607-610) - so hover text and the
+//    teleporter connection go the frame the pointer leaves the map.
+//    (c2/S7 read the write-only-inside half and missed the reset, and
+//    the port kept the text and the cylinder up; AUDIT-AMAP W3.) The
+//    port tracks a panel-local position that is null outside the rect.
 //
 // THE KEYED FALLBACK SURVIVES. A boot with no ARENA2 art still gets a
 // working map: the same geometry pass in the same panel rect, with a
@@ -145,7 +144,7 @@ import { mirrorProjectionX, perspective, lookAt, trs, UP_Y } from '../world/mat4
 import { getBool, getString } from '../systems/settings.js';
 import {
   slicingPositionY, DEFAULT_SLICING_BIAS_Y,
-  tryAddOrEditUserNote, tryRemoveUserNote, setUserNote, NOTE_MAX_CHARACTERS,
+  tryAddOrEditUserNote, tryRemoveUserNote, setUserNote, NOTE_MAX_CHARACTERS, NOTE_WIDTH_OVERRIDE,
   automapDebugTeleportMode,
 } from '../systems/automap.js';
 import { RDB_SIDE } from '../world/dungeonLayout.js';
@@ -654,7 +653,9 @@ export class AutomapWindow {
    *  the whole of it that survives into the port - the render texture
    *  and its Texture2D that DFU destroys here never existed (the c2/S2
    *  bracket draws straight into the panel). */
-  _onPop() {
+  /** OnPop (:648-660): public, so the window stack's RemoveWindow and
+   *  the death presenter's forced overwrite run it too (AUDIT-AMAP H9). */
+  onPop() {
     if (!_cam) return;
     _cam = _cam.viewMode === VIEW_2D ? saveCameraTransformViewFromTop(_cam) : saveCameraTransformView3D(_cam);
   }
@@ -662,7 +663,7 @@ export class AutomapWindow {
   _click() { audio.playOneShot(SOUND.ButtonClick, 1); }
 
   _close() {
-    this._onPop();
+    this.onPop();
     this.done = true;
     this.dispose();
   }
@@ -887,6 +888,11 @@ export class AutomapWindow {
     // would spin under the next mouse move.
     if (this._jump || this._noteBox) {
       if (phase === 'up') this.chrome.pointer(phase, nx, ny, button);   // flags only; the verbs are what the lockout refuses
+      // AUDIT-AMAP W5: "update oldMousePosition to prevent problems with
+      // drag and drop action that starts before animation is over"
+      // (:689-690) - the anchor follows the pointer through the tween,
+      // or the first move after it pans the whole accumulated delta
+      else this.chrome.syncDragAnchor(nx, ny);
       return;
     }
     if (phase !== 'up') { this._mouse = [nx, ny]; this._trackPanelMouse(nx, ny); }
@@ -1043,6 +1049,7 @@ export class AutomapWindow {
       label: AUTOMAP_STRINGS.youNote,
       value: rec.notes.get(id)?.note ?? '',
       maxCharacters: NOTE_MAX_CHARACTERS,
+      widthOverride: NOTE_WIDTH_OVERRIDE,   // AUDIT-AMAP W11: TextBox.WidthOverride = 306 (Automap.cs:1604), rounded to 308 by the box
       onSubmit: (value) => setUserNote(this.deps.record?.() ?? null, id, value),
     });
   }
@@ -1072,7 +1079,7 @@ export class AutomapWindow {
     const p = this.deps.player?.() ?? null;
     const mainPos = p?.eye ?? p?.feet ?? [0, 0, 0];
     if (kind === 'pan') { _cam = dragPan(_cam, dx * s, dy * s, mainPos); return; }
-    if (kind === 'rotate') { _cam = dragRotate(_cam, dx * s, dy * s); return; }
+    if (kind === 'rotate') { _cam = dragRotate(_cam, dx * s, dy * s, this._dt || 1 / 60); return; }   // AUDIT-AMAP W1: the three rotate verbs are dt-scaled
     // the MIDDLE drag moves the slice, with dt folded in (:925-927)
     _cam = actionMoveSliceLevel(_cam, dy * s, this._dt ?? 0);
   }
@@ -1081,13 +1088,17 @@ export class AutomapWindow {
     if (nx >= 0 && ny >= 0) { this._mouse = [nx, ny]; this._trackPanelMouse(nx, ny); }
   }
 
-  /** c2/S7: ScaledMousePosition's law - written only while the pointer
-   *  is INSIDE the render panel, and never cleared on the way out. */
+  /** ScaledMousePosition's law (AUDIT-AMAP W3 corrected c2/S7's
+   *  reading): BaseScreenComponent.Update sets it to -Vector2.one
+   *  FIRST (:575) and rewrites it only while the pointer is inside the
+   *  component (:607-610) - so it clears the frame the pointer leaves,
+   *  the hover text goes to "" and the connection cylinder is torn
+   *  down (Automap.cs:681-688). */
   _trackPanelMouse(nx, ny) {
     const P = CHROME_RECTS.panel;
     const px = nx - P.x;
     const py = ny - P.y;
-    if (px < 0 || py < 0 || px >= P.w || py >= P.h) return;
+    if (px < 0 || py < 0 || px >= P.w || py >= P.h) { this._panelMouse = null; return; }
     this._panelMouse = [px, py];
   }
 
@@ -1102,8 +1113,9 @@ export class AutomapWindow {
     const [nx, ny] = this._mouse;
     const verb = this.chrome.wheel(nx, ny, dir);
     if (verb) { this.runVerb(verb, this._dt ?? 0); return; }
-    // over the render panel itself: zoom at the RAW wheel speed
-    if (this.chrome.inDragMode()) return;
+    // over the render panel itself: zoom at the RAW wheel speed. No
+    // drag guard here - PanelAutomap_OnMouseScrollUp/Down carry none
+    // (:1857-1865); only the grid button's do (AUDIT-AMAP W8)
     const inPanel = nx >= CHROME_RECTS.panel.x && ny >= CHROME_RECTS.panel.y
       && nx < CHROME_RECTS.panel.x + CHROME_RECTS.panel.w
       && ny < CHROME_RECTS.panel.y + CHROME_RECTS.panel.h;
@@ -1119,6 +1131,12 @@ export class AutomapWindow {
     // before the deferred close - so the jump is the only thing that
     // happens on these frames.
     if (this._jump) { this._advanceJump(dt); return; }
+    // AUDIT-AMAP W4: while the note prompt is pushed it is the TOP
+    // window, and DaggerfallUI updates only the top (DaggerfallUI.cs
+    // :430-433) - no IsPressedWith poll, no button hold, no tooltip
+    // clock under it. A typed letter that is a bound hotkey must not
+    // pan the map.
+    if (this._noteBox) return;
     // ROAD-E E1: the IsPressedWith arms run HERE, before the mouse half
     // - DFU's Update order is the deferred close, the debug teleport,
     // the IsDownWith hotkeys, the IsPressedWith hotkeys, THEN the mouse
@@ -1227,7 +1245,11 @@ export class AutomapWindow {
       row.push({ mesh, matrix, water: byKey?.get(key)?.waterLevel ?? null });
     };
     for (const d of this.deps.drawList) push(d.mesh, d.matrix, d.key);
-    for (const d of this.deps.dynamicDraws) push(d.gpu, d.object.matrix, d.object.key);
+    // AUDIT-AMAP H6: at the AT-REST matrix the reveal index and the
+    // picker hold (dungeonContext amapRow), not the live one - DFU's
+    // automap is a static duplicate (CreateDungeonGeometryForAutomap),
+    // and a raised elevator drawn live would sit where the pick is not
+    for (const d of this.deps.dynamicDraws) push(d.gpu, byKey?.get(d.object.key)?.matrix ?? d.object.matrix, d.object.key);
     return { visited, prior };
   }
 
@@ -1253,7 +1275,7 @@ export class AutomapWindow {
   /**
    * c2/S7: SetupBeacons' object list for THIS frame. DFU rebuilds the
    * beacons' transforms in UpdateAutomapStateOnWindowPush (:407-414)
-   * and their pivot rotation in UpdateAutomapView (window :1297), which
+   * and their pivot rotation in UpdateAutomapView (window :1292), which
    * together is "every time the map is drawn" - so this is computed per
    * draw and nothing caches a stale position.
    */

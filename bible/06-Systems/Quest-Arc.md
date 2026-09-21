@@ -4858,7 +4858,7 @@ found `mode !== 'exterior'`, fell through, and turned the camera. So
 you swung and the view swung with you - every time, in every building
 and every dungeon reached from the town.
 
-`dungeon.js:264`, the standalone host, has always had the right shape:
+`dungeon.js:260`, the standalone host, has always had the right shape:
 attack, then `return`, with no mode in the test at all. It has no modal
 sibling to share the drag with, which is precisely why it never needed
 one - and why the difference between the three files never looked like
@@ -5491,8 +5491,8 @@ ready-spell events (`hostMagic.js:76-77`), and those two doors are the
 (`machine.js:799`/`:782`; C# subscribes them in the action's
 constructor). Every `cast X spell do` and `cast X effect do` on this
 whole route could therefore never latch and never fire. The pair the
-other two engine-owning hosts wire (`world.js:3156-3157`,
-`dungeonContext.js:2134-2135`) is wired here now, and with it
+other two engine-owning hosts wire (`world.js:3155-3156`,
+`dungeonContext.js:2148-2149`) is wired here now, and with it
 `CastSpellDo`'s two world reads — `getClassicSpellEffects` and the
 byte-folded `spellHasMatchForClassicEffect` (`world.js:7080-7083`),
 absent which the action self-completes at *parse*

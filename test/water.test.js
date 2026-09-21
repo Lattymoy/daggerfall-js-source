@@ -134,8 +134,10 @@ test('WATER1: the uniforms - the eased wind on the row\'s scale, null as calm, t
   // and scenes/worldModes.js (as DUNGEON_WATER_SCROLL) - and this line's own
   // message named scenes/dungeon.js while reading only this module, so retuning
   // either host could never redden it. Both hosts import the name now, and no
-  // scene may declare a second one.
-  for (const h of ['src/scenes/dungeon.js', 'src/scenes/worldModes.js']) {
+  // scene may declare a second one. WATER-D1 (2026-09-21): the dungeon draw
+  // moved into scenes/dungeonContext.js's own frame function (one home for
+  // both hosts), so the ONE importer is the context.
+  for (const h of ['src/scenes/dungeonContext.js']) {
     assert.match(rd(h), /^import \{ WATER_SCROLL_TILES_PER_SEC \} from '\.\.\/render\/waterSurface\.js';/m, `${h} imports the rate`);
   }
   const jsUnder = (dir) => readdirSync(join(ROOT, dir), { withFileTypes: true })
@@ -238,8 +240,8 @@ test('WATER1: both exterior hosts - the gate, the has-water skip, and the slot a
   assert.ok(eslot < e.indexOf('renderer.drawBillboards(_visBatches, camRight, UP_Y);'), 'before the first flat');
   assert.match(e, /waterUniforms\(\{ seconds: now \/ 1000, wind: sky\.wind\(\), rain: precipMode === 'rain' \|\| precipMode === 'storm' \? fx\.intensity : 0, sky: sky\.waterSky\(\) \}\)/);
   assert.match(e, /sky: sky\.waterSky\(\) \}\),\s*\n\s*tilemapDim\);/, 'WATER-AUDIT (L2): the town\'s tilemap side reaches the shader');
-  // the dungeon's own water pass is untouched
-  assert.match(rd('src/scenes/dungeon.js'), /renderer\.drawWater\(/);
+  // the dungeon's own water pass is untouched - WATER-D1 moved it into the context's frame function, one home for both dungeon hosts
+  assert.match(rd('src/scenes/dungeonContext.js'), /renderer\.drawWater\(waterQuads, DUNGEON_WATER_COLOR,/);
 });
 
 test('WATER1: the switch, the row, the sky\'s colours, the lab, the probe and the record', () => {

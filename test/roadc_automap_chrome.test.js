@@ -62,7 +62,7 @@ test('c2/S4 hit testing at three integer scales, INCLUDING the one-pixel gaps be
   assert.equal(hitChrome(105, 171), 'forward', 'the top-left corner is inside');
   assert.equal(hitChrome(126, 190), null, 'and the bottom edge is exclusive');
   assert.equal(hitChrome(160, 80), 'panel');
-  assert.equal(hitChrome(10, 60), 'microMap', 'the micro-map overlay wins over the panel it sits on');
+  assert.equal(hitChrome(10, 60), 'panel', 'AUDIT-AMAP W2: the micro-map overlay registers no mouse handler (:391-392) and BaseScreenComponent tests rects without occlusion (:577-587) - a point under it is the panel\'s');
   assert.equal(hitChrome(40, 175), 'compass');
   assert.equal(hitChrome(-1, -1), null);
   assert.equal(hitChrome(null, null), null);
@@ -374,4 +374,56 @@ test('c2/S4 SOURCE PINS: ALL FOUR HOSTS route down, move AND up - a missing up l
   assert.equal(/if \(.*exterior/i.test(chrome), false, 'no if(exterior) ladder inside the module');
   assert.equal(/isExterior|isDungeon/.test(chrome), false, 'and no per-window flag either - the table IS the difference');
   assert.ok(chrome.includes('DUNGEON_ACTIONS') && chrome.includes('EXTERIOR_ACTIONS'), 'two tables, one machine');
+});
+
+
+// ── AUDIT-AMAP (2026-09-21): the press-hold machine against BaseScreenComponent ──
+test('AUDIT-AMAP W6/W9: the panel double click is TIME alone, and the panel press honours alreadyIn* like every button', () => {
+  const c = new AutomapChrome(DUNGEON_ACTIONS);
+  const P = CHROME_RECTS.panel;
+  c.pointer('down', P.x + 10, P.y + 10, 0); c.pointer('up', P.x + 10, P.y + 10, 0);
+  c.tick(0.1);
+  // ten pixels away, inside the window: a double click (BaseScreenComponent.cs:681-692 compares times only)
+  const out = c.pointer('down', P.x + 20, P.y + 10, 0);
+  assert.equal(out.doubleClick, true, 'mutants: c2/S4\'s 2-pixel slop back');
+  c.pointer('up', P.x + 20, P.y + 10, 0);
+  c.tick(DOUBLE_CLICK_TIME + 0.01);
+  assert.equal(c.pointer('down', P.x + 20, P.y + 10, 0).doubleClick, false, 'outside the window: a single click');
+  c.pointer('up', P.x + 20, P.y + 10, 0);
+  // W9: a right-held rotate button sets alreadyInMouseDown (:2189), and DFU's panel press then returns (:1916-1929)
+  const r = CHROME_RECTS.rotateLeft;
+  c.pointer('down', r.x + 2, r.y + 2, 2);
+  assert.equal(c.alreadyIn.left, true, 'the quirk c2 already modelled');
+  c.pointer('down', P.x + 30, P.y + 30, 0);
+  assert.equal(c.panelDrag.left, false, 'mutants: the panel press ignoring alreadyIn');
+  c.pointer('up', r.x + 2, r.y + 2, 2);
+  c.pointer('down', P.x + 30, P.y + 30, 0);
+  assert.equal(c.panelDrag.left, true, 'released, the press starts a drag');
+  assert.equal(c.alreadyIn.left, true, 'and sets the flag (:1929)');
+  c.pointer('up', P.x + 31, P.y + 30, 0);
+  assert.equal(c.alreadyIn.left, false, 'the panel\'s up clears it (:1932-1936)');
+});
+
+test('AUDIT-AMAP W7: the tooltip clock runs only while the pointer is STILL (BaseScreenComponent.cs:602-605), and a wheel notch restarts it (:735)', () => {
+  const c = new AutomapChrome(DUNGEON_ACTIONS);
+  const b = CHROME_RECTS.exit;
+  c.pointer('move', b.x + 2, b.y + 2, 0);
+  c.tick(TOOL_TIP_DELAY - 0.2);
+  c.pointer('move', b.x + 3, b.y + 2, 0);   // one pixel, same button
+  assert.equal(c.tick(0.3).tooltip, null, 'mutants: the clock surviving a move inside the same rect');
+  assert.equal(c.tick(TOOL_TIP_DELAY).tooltip, 'exit', 'still for the delay: the tooltip');
+  c.wheel(b.x + 3, b.y + 2, -1);
+  assert.equal(c.tick(0.5).tooltip, null, 'mutants: the wheel not restarting the clock');
+});
+
+test('AUDIT-AMAP W5: syncDragAnchor keeps the drag under the pointer through the tween (:689-690)', () => {
+  const c = new AutomapChrome(DUNGEON_ACTIONS);
+  const P = CHROME_RECTS.panel;
+  c.pointer('down', P.x + 10, P.y + 10, 0);
+  c.syncDragAnchor(P.x + 60, P.y + 40);   // the pointer moved during the lockout
+  const out = c.pointer('move', P.x + 62, P.y + 41, 0);
+  assert.deepEqual([out.drag.kind, out.drag.dx, out.drag.dy], ['pan', 2, 1], 'mutants: the whole 52x31 delta applied as one pan');
+  const idle = new AutomapChrome(DUNGEON_ACTIONS);
+  idle.syncDragAnchor(5, 5);
+  assert.equal(idle._dragAt, null, 'no drag, no anchor');
 });

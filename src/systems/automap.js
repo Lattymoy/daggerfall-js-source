@@ -40,12 +40,20 @@
 // the distances disagree and NOTHING reveals. Without it a closed
 // door reveals the room behind it.
 // THE PORT'S EQUIVALENT (a substitution, recorded): there is one
-// collider, so there is no true-vs-copy pair to compare. Instead the
-// three rays must agree pairwise within the same 0.01 (which is what
-// DFU's per-ray agreement buys across the trio), they must resolve
-// the same MODEL ROW (the stand-in for `hit.collider ==`), and a
-// nearest hit whose collider BUCKET is an action door reveals
-// nothing. The port gets the door discrimination for free and
+// collider, so there is no true-vs-copy pair to compare. The three
+// rays must resolve the same MODEL ROW (the stand-in for
+// `hit.collider ==`), and a nearest hit whose collider BUCKET is an
+// action door reveals nothing - which IS the true-vs-copy test, since
+// action doors are the only thing the automap copy lacks. NOTE WHAT
+// IS NOT HERE (AUDIT-AMAP F1, 2026-09-21): c2/S1 also demanded the
+// three rays agree with EACH OTHER within 0.01, reading DFU's three
+// per-ray true-vs-copy comparisons (:1121-1123) as one inter-ray
+// one. DFU never compares ray 1's distance to ray 2's - the offsets
+// are perpendicular to the ray, so on any surface off-square to it
+// the parallel rays land 0.1*tan(angle) apart, past 0.01 beyond ~6
+// degrees, and that test refused every oblique wall, every ramp, and
+// - because the view scan then answered null - the whole floor
+// march. The port gets the door discrimination for free and
 // exactly, because action doors are their own collider buckets keyed
 // by the action object (world/actionSystem.js addDoor) while dungeon
 // geometry is the single 'dungeon' bucket. That is cheaper than
@@ -113,6 +121,7 @@ import { getInt } from './settings.js';
 import { MINUTES_PER_DAY } from './gameDate.js';
 import { buildAutomapModel, restoreMatchesLayout, AABB_TOLERANCE } from './automapModel.js';
 import { registerCommand } from './consoleCommands.js';   // E3: the console command database
+import { CAPSULE_RADIUS, CAPSULE_HEIGHT, EYE_HEIGHT } from '../player/motor.js';   // AUDIT-AMAP F8/F9: the entrance LOS ends at the player CAPSULE
 
 export const SCAN_INTERVAL_S = 1 / 5;              // scanRateGeometryDiscoveryInHertz = 5 (:172)
 export const RAYCAST_DISTANCE_DOWN = 3.0;          // :168
@@ -120,7 +129,12 @@ export const RAYCAST_DISTANCE_VIEW = 30.0;         // :169
 export const RAYCAST_DISTANCE_ENTRANCE = 100.0;    // :170
 export const FLOOR_MARCH_STEP = 1.0;               // :1180
 export const PROTECTION_RAYCAST_OFFSET = 0.1;      // "slight offset of 10cm" (:1160, :1172)
-export const HIT_DISTANCE_AGREEMENT = 0.01;        // Math.Abs(...) < 0.01f (:1121-1123)
+/** DFU's per-ray true-vs-copy tolerance (Math.Abs(...) < 0.01f,
+ *  :1121-1123). RECORDED, NOT APPLIED: the port has one collider and
+ *  no copy, so the door-bucket rejection in scanWithRaycast is that
+ *  test's whole content (header). AUDIT-AMAP F1 struck the inter-ray
+ *  reading of it. */
+export const HIT_DISTANCE_AGREEMENT = 0.01;
 
 // ---- the per-dungeon store (module singleton - one player) ---------
 
@@ -170,7 +184,11 @@ export function enterDungeonAutomap(key, nowMinutes, { fromLoad = false } = {}) 
  *  whole dictionary CLEARS - vanilla Daggerfall forgets the map the
  *  moment you exit (:2133-2137; the A1 review caught this arm
  *  dropped). dungeonContext.destroy() calls this in both hosts. */
-export function exitDungeonAutomap() {
+export function exitDungeonAutomap(nowMinutes = null) {
+  // AUDIT-AMAP F11: SaveStateAutomapDungeon(true) on the exit
+  // transition stamps the record with the EXIT time (:2155, :2530-2534)
+  const live = _liveKey ? _dungeons.get(_liveKey) : null;
+  if (live && Number.isFinite(nowMinutes)) live.lastVisited = nowMinutes;
   _inside = false;
   _liveKey = null;
   _live = null;   // E3: Automap.instance goes with the geometry
@@ -208,7 +226,10 @@ export const getDungeonAutomap = (key) => _dungeons.get(key) ?? null;
  *  the live dungeon's stamp is written NOW (:2155 - which is what
  *  makes it the newest) and the store prunes (:2216-2238). */
 export function snapshotAutomap(nowMinutes = null) {
-  if (!_inside && getInt('Map', 'AutomapNumberOfDungeons', 0, 100) === 0) {
+  // AUDIT-AMAP F5: DFU's gate is GameManager.IsPlayerInside (:2133),
+  // true in a BUILDING too - a save taken in a shop at N = 0 keeps
+  // the dungeon maps; only a save taken outdoors forgets them.
+  if (!automapIsPlayerInside() && getInt('Map', 'AutomapNumberOfDungeons', 0, 100) === 0) {
     _dungeons = new Map();
     return {};
   }
@@ -221,7 +242,9 @@ export function snapshotAutomap(nowMinutes = null) {
   for (const [key, rec] of _dungeons) {
     out[key] = {
       revealed: [...rec.revealed],
-      visitedThisRun: [...rec.visitedThisRun],
+      // AUDIT-AMAP F7: nested, as every DFU save has it - the keyword
+      // is cleared wherever the renderer is disabled (:2176-2186)
+      visitedThisRun: [...rec.visitedThisRun].filter((k) => rec.revealed.has(k)),
       entranceDiscovered: rec.entranceDiscovered,
       lastVisited: rec.lastVisited,
       // c2/S1: DFU's own record carries `blockName` per block
@@ -473,15 +496,15 @@ const _add = (a, b) => [a[0] + b[0], a[1] + b[1], a[2] + b[2]];
 
 /**
  * ScanWithRaycastInDirectionAndUpdateMeshesAndMaterials (:1021-1144).
- * Three parallel rays; all three must resolve the SAME model row and
- * agree pairwise within 0.01, and no ray may be stopped by an action
- * door. On success the row reveals AND marks visited-this-run
+ * Three parallel rays; all three must resolve the SAME model row, and
+ * no ray may be stopped by an action door (the header says why there
+ * is no inter-ray distance test). On success the row reveals AND marks visited-this-run
  * (DisableKeyword("RENDER_IN_GRAYSCALE"), :1135) and the hit distance
  * comes back - the floor march reads it. On any failure: null, and
  * NOTHING reveals.
  */
 function scanWithRaycast(rayStart, rayDir, rayDistance, offsetSecond, ctx, rec) {
-  const { collider, model, isDoorBucket, bucketFilter } = ctx;
+  const { collider, model, isDoorBucket, isMovedBucket } = ctx;
   // ":1032" - the third offset is the second turned about the ray
   const offsetThird = _scale(
     _cross(_norm(rayDir), _norm(offsetSecond)),
@@ -492,22 +515,20 @@ function scanWithRaycast(rayStart, rayDir, rayDistance, offsetSecond, ctx, rec) 
   let key;
   let haveKey = false;
   for (const o of origins) {
-    const hit = collider.raycastHit(o, rayDir, rayDistance, bucketFilter);
+    const hit = collider.raycastHit(o, rayDir, rayDistance);
     ctx.rays++;
     if (!hit || !Number.isFinite(hit.dist) || hit.dist > rayDistance) return null;
     // The port's stand-in for DFU's true-vs-copy distance test: the
     // automap copy has no action doors, so a door hit reveals nothing.
     if (isDoorBucket && hit.key != null && isDoorBucket(hit.key)) return null;
+    // AUDIT-AMAP H7: a moved action model is the other place the copy
+    // and the level disagree - the copy holds it at rest
+    if (isMovedBucket && hit.key != null && isMovedBucket(hit.key)) return null;
     const p = [o[0] + rayDir[0] * hit.dist, o[1] + rayDir[1] * hit.dist, o[2] + rayDir[2] * hit.dist];
     const row = model.resolveAt(p, AABB_TOLERANCE);
     if (!row) return null;
     if (!haveKey) { key = row.key; haveKey = true; } else if (row.key !== key) return null;   // "hits must have same collider" (:1116-1117)
     dists.push(hit.dist);
-  }
-  for (let i = 0; i < dists.length; i++) {
-    for (let j = i + 1; j < dists.length; j++) {
-      if (Math.abs(dists[i] - dists[j]) >= HIT_DISTANCE_AGREEMENT) return null;
-    }
   }
   rec.revealed.add(key);          // hitMeshRenderer.enabled = true (:1129)
   rec.visitedThisRun.add(key);    // DisableKeyword("RENDER_IN_GRAYSCALE") (:1135)
@@ -532,14 +553,14 @@ function cameraDownFrom(fwd) {
  * with the live eye + forward.
  *
  * `isDoorBucket(bucketKey)` names an action door's collider bucket;
- * `bucketFilter` rides through to raycastHit untouched.
+ * `isMovedBucket` (AUDIT-AMAP H7) names a moved action model's bucket.
  * Answers `{ rays }` - the tick's true ray count, which the budget
  * pin bounds at 3 x (1 + 1 + march steps).
  */
-export function automapRevealTick(rec, { eye, fwd, collider, model, index, isDoorBucket = null, bucketFilter = null }) {
+export function automapRevealTick(rec, { eye, fwd, collider, model, index, isDoorBucket = null, isMovedBucket = null }) {
   const m = model ?? index;
   if (!rec || !m) return { rays: 0 };
-  const ctx = { collider, model: m, isDoorBucket, bucketFilter, rays: 0 };
+  const ctx = { collider, model: m, isDoorBucket, isMovedBucket, rays: 0 };
   const camDown = cameraDownFrom(fwd);
 
   // (a) DOWN from the head - "3 meters should be enough" (:168). The
@@ -568,17 +589,31 @@ export function automapRevealTick(rec, { eye, fwd, collider, model, index, isDoo
   return { rays: ctx.rays };
 }
 
+/** The player controller's CENTRE from the eye (DFU's
+ *  `playerCollider.transform.position`, :1216 - the capsule's middle,
+ *  not the camera): the eye sits eyeHeight above the feet and the
+ *  centre half a capsule above them. The hosts pass their live motor
+ *  numbers (a crouch lowers both); the constants are the standing
+ *  pair. */
+export const capsuleCentreFromEye = (eye, eyeHeight = EYE_HEIGHT, capsuleHeight = CAPSULE_HEIGHT) =>
+  [eye[0], eye[1] - eyeHeight + capsuleHeight / 2, eye[2]];
+
 /** The entrance beacon's own discovery (:1197-1274): while
  *  undiscovered, a clear line of sight entrance->player within 100
- *  units reveals it. */
-export function automapEntranceTick(rec, entrancePos, playerPos, collider) {
+ *  units reveals it. DFU casts from the entrance to the player
+ *  CAPSULE and asks that the nearest hit BE the player collider
+ *  (:1219-1268); the port's collider carries no player, so the
+ *  equivalent is a ray that reaches the capsule's surface - the
+ *  centre less CAPSULE_RADIUS (AUDIT-AMAP F8: c2/S1's 0.5 was a
+ *  number from nowhere). */
+export function automapEntranceTick(rec, entrancePos, playerCentre, collider) {
   if (!rec || rec.entranceDiscovered || !entrancePos) return;
-  const d = [playerPos[0] - entrancePos[0], playerPos[1] - entrancePos[1], playerPos[2] - entrancePos[2]];
+  const d = [playerCentre[0] - entrancePos[0], playerCentre[1] - entrancePos[1], playerCentre[2] - entrancePos[2]];
   const dist = Math.hypot(d[0], d[1], d[2]);
   if (dist > RAYCAST_DISTANCE_ENTRANCE || dist < 1e-3) return;
   const dir = [d[0] / dist, d[1] / dist, d[2] / dist];
   const hit = collider.raycast(entrancePos, dir, dist);
-  if (!Number.isFinite(hit) || hit >= dist - 0.5) rec.entranceDiscovered = true;
+  if (!Number.isFinite(hit) || hit >= dist - CAPSULE_RADIUS) rec.entranceDiscovered = true;
 }
 
 /** The window's slice plane (UpdateSlicingPositionY, :1296-1304):
@@ -588,8 +623,6 @@ export function automapEntranceTick(rec, entrancePos, playerPos, collider) {
 export const DEFAULT_SLICING_BIAS_Y = 0.2;
 export const slicingPositionY = (playerY, eyeHeight, biasY) => playerY + eyeHeight + biasY;
 
-/** The stale-visit clock, for probes: minutes -> days old. */
-export const automapDaysSinceVisit = (rec, nowMinutes) => (nowMinutes - (rec?.lastVisited ?? 0)) / MINUTES_PER_DAY;
 
 // ── ROAD-C c2/S8: USER NOTE MARKERS ──────────────────────────────────
 

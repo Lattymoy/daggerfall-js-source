@@ -133,7 +133,7 @@ test('c2/S7 the pivot beacon follows the MAP CAMERA yaw, and drags its arrows ro
   // the axis itself is a cylinder, so its POSITION is unchanged...
   assert.deepEqual([pivot90.matrix[12], pivot90.matrix[13], pivot90.matrix[14]], [5, 1, -3]);
   // ...but the frame turned (UpdateAutomapView's
-  // Quaternion.Euler(0, cameraAutomap yaw, 0), window :1297)
+  // Quaternion.Euler(0, cameraAutomap yaw, 0), window :1292)
   assert.ok(near(pivot0.matrix[0], 0.15));
   assert.ok(near(pivot90.matrix[0], 0), 'cos 90 = 0');
   assert.ok(near(pivot90.matrix[2], -0.15));
@@ -601,7 +601,7 @@ test('c2/S7 the entrance beacon is not DRAWN and not PICKABLE until it is discov
   } finally { _resetForTests(); resetAutomapWindowState(); }
 });
 
-test('c2/S7 the status label is UpdateMouseHoverOverText - and the panel mouse STICKS on the way out', () => {
+test('c2/S7 the status label is UpdateMouseHoverOverText - and the panel mouse CLEARS on the way out (AUDIT-AMAP W3)', () => {
   const w = openWindow();
   try {
     // over the middle of the panel, where the player's own beacon
@@ -611,11 +611,12 @@ test('c2/S7 the status label is UpdateMouseHoverOverText - and the panel mouse S
     assert.equal(w.hoverText, 'player position beacon');
 
     // OUT of the panel entirely (down on the button row): DFU's
-    // ScaledMousePosition is only written while the pointer is inside
-    // the component and is NEVER cleared, so the answer stands
+    // ScaledMousePosition is reset to -Vector2.one at the top of every
+    // Update (BaseScreenComponent.cs:575) and rewritten only inside the
+    // component (:607-610), so the answer goes with the pointer
     w.hover(160, 180);
     w.draw(markerStub([]), CANVAS, null, 1);
-    assert.equal(w.hoverText, 'player position beacon', 'the stale panel position is DFU\'s own');
+    assert.equal(w.hoverText, '', 'mutants: c2/S7\'s sticky position - the beacon\'s name kept on the button row');
 
     // ...and moving back inside, over nothing, really does clear it
     w.hover(CHROME_RECTS.panel.x + 3, CHROME_RECTS.panel.y + 3);

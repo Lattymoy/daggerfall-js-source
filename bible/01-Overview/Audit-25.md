@@ -148,7 +148,7 @@ These are the items where the port is not merely incomplete but
 and `standFoe` are consumed by `systems/quest/actions.js` (CreateFoe,
 :2024-2101) and `systems/quest/sceneMount.js:177`, and **no host
 supplies any of them**. Every hit in `src/` is a consumer or a
-documented absence - `worldModes.js:272` "standFoe is absent",
+documented absence - `worldModes.js:271` "standFoe is absent",
 `machine.js:162` "ABSENT createFoeGameObjects = the spawn law idles".
 Consequence: no quest that requires killing or meeting a Foe resource
 can be completed, and every `killed`/`injured` trigger is unreachable.

@@ -583,14 +583,14 @@ does the pack's USE arm.
                         worldModes.js:1925 (the factory) and :1904 (a
                         HAND-ROLLED second one, 342 lines below it in
                         the same file),
-                        dungeonContext.js:999, world.js:2052,
+                        dungeonContext.js:1013, world.js:2051,
                         exterior.js:2275. It is the only window TWO
                         enhanced screens already push - the sheet's
                         button and the pack's USE hand-off, whose
                         close-then-hand-over ordering U55 got
                         backwards. No law needs extracting first.
     THE LOGBOOK         THREE sites: charSheetNav.js:53,
-    / NOTEBOOK          world.js:6175, dungeonContext.js:6275. A seam
+    / NOTEBOOK          world.js:6174, dungeonContext.js:6325. A seam
                         wants making, as U52's and U53's did.
     HISTORY             ONE site (charSheetNav.js:61), and it reads
                         only the entity's backStory. The small one.
@@ -9028,7 +9028,7 @@ and firing THAT twice is a second PopToHUD.
 
 ### Why only two of the four hosts crashed
 
-`worldModes.js:5695` and `dungeonContext.js:1523` answer the same
+`worldModes.js:5695` and `dungeonContext.js:1537` answer the same
 `onClose` by nulling their slot and never disposing - nothing to
 re-enter. Only the two hosts that come through `townTalk.closeOverlay`
 dispose. **The four-hosts rule caught this one by accident**: the two
@@ -11183,7 +11183,7 @@ grid button, Return/F2/F3/F4 and F5-F8 were all silently undone by the
 next M. The file had already hoisted `_revealUndiscoveredBuildings`,
 `_zoomLevel`/`_zoomLocation` and `_yawDeg` for exactly this reason, and
 the sibling dungeon window states the law outright at
-`automapWindow.js:326-335` with `_background`/`_renderMode` at module
+`automapWindow.js:325-334` with `_background`/`_renderMode` at module
 scope. `mode` and `background` are now ACCESSORS over module state,
 mirroring `revealUndiscoveredBuildings` — accessors rather than a
 constructor seed plus a write-back in `tick()`, because `ActionExit`
@@ -14335,7 +14335,7 @@ death screen (`ui/deathScreen.js:71-72`), the rest window's rows
 (`ui/restWindow.js:861`), the save window (`ui/saveWindow.js`, eight
 `shadowText` sites), the travel popup (`ui/travelPopUp.js:685`), the quest
 journal (`ui/questJournal.js:641-642`), every MessageBox row
-(`ui/messageBox.js:431, 434`) and every ActionTextBox (`ui/actionText.js:45,
+(`ui/messageBox.js:435, 434`) and every ActionTextBox (`ui/actionText.js:45,
 152`) still draw in the bitmap font - each a native window under THE
 NATIVE-WINDOW RULE, whose face cannot move without its DFU metrics moving
 too. That is a FONT2 slice, not this one.
@@ -15062,7 +15062,7 @@ PAIR - `` `world.js:N`, `exterior.js:M` `` - and the table captured `M`
 alone. So `M` was re-resolved at every wave for a year and `N` was never
 read: `world.js:4694` named a line that is 8950, `:792` one that is
 1215, `:1094` one that is 2194, `:3903` one that is 3066, `:3920` one
-that is 8907. `world.js:4430-4462` and `dungeonContext.js:1371` were
+that is 8907. `world.js:4429-4461` and `dungeonContext.js:1385` were
 stale the same way. Seven numbers re-resolved BY CONTENT, every
 uncaptured half de-baked to `\d+`, and eight new entries added so every
 number in a pair is captured. The half nobody reads cannot rot in
@@ -16604,7 +16604,7 @@ says in its own header that a second `--apply` against the same base
 moves every cite AGAIN. Recovering this slice's line shifts by
 reverting the tree except the files it had edited re-created exactly
 that: the kept files still carried the first pass's moves, and the
-second pass moved them a second time - `dungeonContext.js:2275` became
+second pass moved them a second time - `dungeonContext.js:2289` became
 2221 where the line had gone to 2215. The repair is a pairing walk:
 read HEAD's number at the same position in the same file, resolve it
 BY CONTENT in the working tree, and write that. Forty-seven cites came

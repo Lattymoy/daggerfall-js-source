@@ -13,7 +13,7 @@ import { markFoeStruck } from '../ui/hudFoeTarget.js';   // PX30
 import { lycanthropeAttackVoice, racialSuppressInventory, lycanthropeMoveSound } from '../systems/lycanthropy.js';   // V4: the beast's attack voice + inventory refusal; LM1: the 4-20s move-sound loop
 import { layoutDungeon } from '../world/dungeonLayout.js';
 import { executeConsoleCommand } from '../systems/consoleCommands.js';   // E3: the probe door runs the real database
-import { enterDungeonAutomap, exitDungeonAutomap, buildRevealIndex, bindAutomapLayout, automapRevealTick, automapEntranceTick, automapDungeonKey, SCAN_INTERVAL_S, recordTeleporterConnection, automapDebugTeleportMode, registerAutomapConsoleCommands } from '../systems/automap.js';   // A1; ROAD-C c2/S8 the teleport listener + the three console verbs, ROAD-E E3 on the command database
+import { enterDungeonAutomap, exitDungeonAutomap, buildRevealIndex, bindAutomapLayout, automapRevealTick, automapEntranceTick, capsuleCentreFromEye, automapDungeonKey, SCAN_INTERVAL_S, recordTeleporterConnection, automapDebugTeleportMode, registerAutomapConsoleCommands } from '../systems/automap.js';   // A1; ROAD-C c2/S8 the teleport listener + the three console verbs, ROAD-E E3 on the command database
 import { automapWaterLevel, ELEMENT_NAMES } from '../systems/automapModel.js';   // ROAD-C c2/S1
 import { AutomapWindow, preloadAutomapArt, signalAutomapReset } from '../ui/automapWindow.js';   // A1: the M window; ROAD-C c2/S5: its native art + the reset signal
 import { applyTextureTable } from '../world/dungeonTextures.js';
@@ -25,6 +25,7 @@ import { collectDungeonLights, dungeonAmbientFor, DUNGEON_AMBIENT, SPECIAL_AREA_
 import { isHearthFlat } from '../systems/survival/hearth.js';   // HEARTH1: a bowl of fire down a corridor is a fire you can cook on
 import { CityLightAnimator, MINUTES_PER_DAY } from '../world/worldClock.js';
 import { billboardSize, mobileBillboardSize } from '../world/rmbFlats.js';
+import { WATER_SCROLL_TILES_PER_SEC } from '../render/waterSurface.js';   // WATER-D1: the classic texel's flow, one home - the dungeon water draw lives here now
 import { enemyControllerHeight, idleSpriteHeight, feetFromCentre, centreFromFeet, spriteOriginY, keepRebuiltSpawn } from '../characters/enemyAnchor.js';   // INCIDENT 2026-09-04 (ceiling bats): SetupDemoEnemy.cs:103-115 capsule + DaggerfallMobileUnit.cs:398-411 anchor
 import { MobileUnit, MOBILE_DAEDRA_SEDUCER, SeducerTransformBehaviour } from '../characters/mobileUnit.js';   // C11: classic sprite monsters   // A5: the Seducer transform pair + its trigger
 import { dfMeshToModel, GLOBAL_SCALE } from '../world/meshReader.js';
@@ -106,7 +107,7 @@ import { preloadPaperDollForEntity } from '../ui/paperDoll.js';   // U26: the do
 import { createDroppedLoot, droppedLootHooks, containerDropPos } from './droppedLoot.js';   // U8e, mounted here at U26; G5: the pile's DaggerfallLoot identity
 import { createPlayerMagic } from './hostMagic.js';   // M3: the ONE cast engine
 import { tallySkill, skillValue, SKILLS, SKILL_NAMES } from '../systems/skills.js';
-import { FALL_DAMAGE_THRESHOLD, FALL_HP_PER_METRE, CAPSULE_HEIGHT, startRestGroundedCheck } from '../player/motor.js';   // the rest gate's grounded input, one home
+import { FALL_DAMAGE_THRESHOLD, FALL_HP_PER_METRE, CAPSULE_HEIGHT, EYE_HEIGHT, startRestGroundedCheck } from '../player/motor.js';   // the rest gate's grounded input, one home
 import { applyLevelUp } from '../systems/advancement.js';
 import { initVirtueLeveling, LEVELING_CLASSIC } from '../systems/oblivionLeveling.js';   // ORL1: the font-less creation path answers the question it could not ask
 import { tickPlayerMinutes, claimMagicRounds, runMagicRoundsFor } from '../systems/worldTick.js';   // AUDIT 18: the player tick every host shares
@@ -231,6 +232,17 @@ const HIT_DMG_MAX = 10000;
  *  maleTexture (ENEMY_BASICS[39] has 0), and without this the rebuild fell to the build-time flat fallback, never
  *  stood, and was retried on every frame of the stream. ONE HOME for the two readings. */
 const canStandFoe = (mobileType) => !!ENEMY_BASICS[mobileType]?.maleTexture;
+
+/** WATER-D1: the dungeon water plane's colour - the classic water tile
+ *  (the climate ground archive's record 0, the 0xFF tilemap sentinel's
+ *  target) tinted only by alpha. ONE HOME: both dungeon hosts carried
+ *  this literal beside their own copy of the draw call, and the draw
+ *  is the context's now (see drawFoes), so the colour is too.
+ *  AUDIT 65 CV-3/MC-5: this 0.82 is the FLAT alpha drawWater's quad
+ *  takes - NOT render/waterSurface.js's WATER_OPACITY, which is the
+ *  enhanced surface's Fresnel FLOOR (a different pass, no Fresnel, no
+ *  shore feather). They agree by taste, not by law. */
+export const DUNGEON_WATER_COLOR = Object.freeze([1, 1, 1, 0.82]);
 
 export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseType, opts = {}) {
   const { renderer, arch, getGpuMesh, cpuModels, getTexture, uploadRecord, uploadRecordFrame, palette } = deps;
@@ -365,6 +377,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   const people = [];
   const lights = [];
   const waterQuads = [];
+  let _waterArchive = null;   // WATER-D1: the climate ground archive whose record 0 is the water tile - the host names it after the build
+  let _waterT = 0;            // WATER-D1: the scroll clock, in seconds of drawn frames
   const exitDoors = [];
   let colliderTris = 0;
 
@@ -1892,6 +1906,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // A1 review: this is the one FORCED overwrite of the overlay
       // slot - a window holding GL resources (the automap's batches
       // + micro-map texture) must release them or they leak per death.
+      activeOverlay?.onPop?.();   // AUDIT-AMAP H9: the map saves its camera on the way out (DaggerfallAutomapWindow.cs:648-660)
       activeOverlay?.dispose?.();
       // DC1: the LIVE eye and capsule, as PlayerEntity_OnDeath reads
       // them. The motor lives in the scene host (dungeon.js, worldModes),
@@ -2542,7 +2557,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // NEXT updateMissiles pass to fill. But the push lands in a
     // MICROTASK - this is async and its one caller does not await it -
     // and both hosts draw dynamicDraws BEFORE they call drawFoes
-    // (dungeon.js:1006 against :1039; worldModes.js:6201 against :6210).   // QS6: both pairs' SECOND half was stale before this slice - they named neither `drawFoes` call, and a positional bump would have moved a wrong number by the right offset; re-resolved by content
+    // (dungeon.js:1000 against :1039; worldModes.js:6194 against :6210).   // QS6: both pairs' SECOND half was stale before this slice - they named neither `drawFoes` call, and a positional bump would have moved a wrong number by the right offset; re-resolved by content
     // So the very next frame drew the arrow with a NULL matrix, and
     // `uniformMatrix4fv(uModel, false, null)` throws - Float32List is
     // a non-nullable WebIDL union. Firing a bow killed the frame loop,
@@ -3103,8 +3118,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
               // AUDIT 39 (#64) / THE FOUR HOSTS RULE - SHIPPED (wave D):
               // this host was the FOURTH BODY of the player-arrow law
               // and is now the fourth CALLER. combat/arrowFlight.js's
-              // playerArrowHitFoe is the one copy world.js:11267,
-              // exterior.js:4769 and worldModes.js:6355 already ran;
+              // playerArrowHitFoe is the one copy world.js:11268,
+              // exterior.js:4769 and worldModes.js:6354 already ran;
               // the flag said the divergence would bite and it already
               // had. This copy splashed at the ARROW TIP
               // (`[m.pos[0], m.pos[1], m.pos[2]]`) on the claim that
@@ -5152,6 +5167,39 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       renderer.drawBillboards([..._mobileBatches, ..._dropBatches, ..._spellBatches],
         new Float32Array([-view[0], -view[4], -view[8]]), UP_Y);
     }
+    // WATER-D1 (2026-09-21, LostMyLeg: "you can see 2 Watertiles/textures
+    // floating around ... the console says 2 Water in every dungeon";
+    // Mac's AIWATER report before it: "shown well below the floor, in
+    // patches, reading like a no-clip glitch"). THE WATER WAS DRAWN
+    // AFTER THE FRAME HAD BEEN RESOLVED. Both dungeon hosts called
+    // renderer.drawWater AFTER this function returned - and this
+    // function ends with the weapon overlay and the HUD, which are
+    // screen quads, and a screen quad is where the enhanced-lighting
+    // lane ENDS the world pass and RESOLVES its frame target to the
+    // canvas (renderer.drawScreenQuad -> _compositeAir: the lane's
+    // framebuffer is unbound, `_frameFbo` is null). A water quad drawn
+    // after that lands on the DEFAULT framebuffer, whose depth buffer
+    // holds no world at all (the frame's depth went into the lane's
+    // target), so it passed the depth test everywhere: a plane visible
+    // through every wall and every floor, wherever you stood. On the
+    // classic set there is no lane and no resolve, the default depth
+    // buffer IS the world's, and the same call order was correct -
+    // which is why the plane was right for months and wrong from EL3
+    // (2026-09-17) on. The level itself was never the defect: the
+    // quads sit exactly where DFU's AddWater puts its plane (R7).
+    //
+    // The draw is a WORLD draw, so it runs here, in the one frame
+    // function both hosts call, after the last world billboard and
+    // BEFORE the first screen quad - the same law the exterior's water
+    // surface has always kept (world.js draws it inside its pixel loop,
+    // long before the HUD). Blended with depth writes off, after the
+    // foes, as the hosts had it. Under an overlay this function is not
+    // called and the water is not drawn - as before.
+    _waterT += dt > 0 ? dt : 0;
+    if (waterQuads.length && _waterArchive != null) {
+      renderer.drawWater(waterQuads, DUNGEON_WATER_COLOR,
+        renderer.textures.get(`${_waterArchive}_0`), _waterT * WATER_SCROLL_TILES_PER_SEC);
+    }
     // LAST before the HUD: the classic weapon overlay composites over
     // the whole frame (DaggerfallUI draws it under the HUD). The rig
     // runs the bow-arrow guard and the ShowWeapons legs; S19
@@ -5356,6 +5404,9 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     foeSinksFor: (foe) => foeSinks(foe),
     flicker,
     waterQuads,
+    /** WATER-D1: the host names the climate ground archive whose record 0
+     *  is the water tile; drawFoes draws the quads with it. */
+    setWaterArchive: (archive) => { _waterArchive = archive; },
     startMarker: dungeon.startMarker,
     enterMarker: dungeon.enterMarker,
     blockCount: dungeon.blocks.length,
@@ -5382,18 +5433,29 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       }
       automapScanT += dt;
       if (automapScanT < SCAN_INTERVAL_S) return;
-      automapScanT = 0;
+      automapScanT = (automapScanT - SCAN_INTERVAL_S) % SCAN_INTERVAL_S;   // AUDIT-AMAP F12: keep the phase, no catch-up burst
       automapRevealTick(automapRec, {
         eye, fwd, collider, model: automapModel,
         // The three-ray scan's door blocker: an action door is its own
         // collider bucket, keyed by the action object (actionSystem
         // addDoor). THIS is what stops a closed door revealing the
-        // hall behind it - see automap.js's scan.
-        isDoorBucket: (k) => actions.objects.get(k)?.kind === 'door',
+        // hall behind it - see automap.js's scan. AUDIT-AMAP F3: a
+        // SPECIAL door (DaggerfallActionDoorSpecial) is a plain model
+        // to the automap copy - RDBLayout filters by description
+        // (:751-765), not by action - so it reveals like any wall.
+        isDoorBucket: (k) => { const o = actions.objects.get(k); return o?.kind === 'door' && !o.special; },
+        // AUDIT-AMAP H7: a MOVED action model (a raised platform, a
+        // swung special door) is where DFU's true-vs-copy test fails
+        // outright - the copy holds it at rest - so a nearest hit on one
+        // reveals nothing, instead of resolving to whichever at-rest box
+        // happens to hold the hit point
+        isMovedBucket: (k) => { const o = actions.objects.get(k); return !!o && o.state != null && o.state !== 'start' && (o.kind !== 'door' || !!o.special); },
       });
-      // the entrance beacon sits on the START marker (Automap.cs:1447)
+      // the entrance beacon sits on the START marker (Automap.cs:1447);
+      // the LOS runs to the player CAPSULE's centre (:1216), not the eye
       const sm = dungeon.startMarker;
-      automapEntranceTick(automapRec, sm ? [sm.x, sm.y, sm.z] : null, eye, collider);
+      const ms = opts.motorState?.() ?? null;
+      automapEntranceTick(automapRec, sm ? [sm.x, sm.y, sm.z] : null, capsuleCentreFromEye(eye, ms?.eyeLevel, ms?.capsule), collider);
     },
     automapRecord: () => automapRec,   // probe surface + the window's live view
     /** I3: the Escape window, same one-slot idiom. GATED ON THE DOOR,
@@ -5533,7 +5595,15 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         // It goes through the SAME `onTeleport` door the Teleport action
         // uses, which each host has already installed with its own motor
         // warp - so the window never learns what a motor is.
-        debugTeleport: (pos) => actions.onTeleport?.({ pos, yawDeg: 0 }),
+        debugTeleport: (pos) => {
+          actions.onTeleport?.({ pos, yawDeg: 0 });
+          // AUDIT-AMAP H4: DFU moves the player AND both beacons in the
+          // same call (Automap.cs:869-875); the window reads the player
+          // through lastPlayerFeet/_automapEye, which only non-overlay
+          // frames write - so the warp writes them here
+          lastPlayerFeet = [pos[0], pos[1], pos[2]];
+          _automapEye = [pos[0], pos[1] + (opts.motorState?.()?.eyeLevel ?? EYE_HEIGHT), pos[2]];
+        },
       });
     },
     /** ROAD-C c2/S8: AutoMapConsoleCommands (Automap.cs:2596-2688).
@@ -5860,6 +5930,11 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // pruning belong to save time, and a prune here could evict a
       // record the save itself carried (A1 review).
       automapRec = enterDungeonAutomap(automapKey, classicMinutesRef.value, { fromLoad: true });
+      // AUDIT-AMAP F4: the bind is the RESTORE (RestoreStateAutomap
+      // Dungeon, :2492-2493): it applies the layout guard to the loaded
+      // record and points Automap.instance (the console verbs) at it
+      bindAutomapLayout(automapRec, automapModel);
+      signalAutomapReset();   // AUDIT-AMAP H3: InitWhenInInteriorOrDungeon raises it on the LOAD arm too (:2490, :2496, from :2548)
       if (extras.position && extras.locationKey === _locationKey && setPlayerPos) setPlayerPos(extras.position);
       // AUDIT 28 W4 (SerializablePlayer.cs:462-472): saved in the OTHER
       // layout, the position may sit in blocks this build does not have -
@@ -6552,7 +6627,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // A1: OnTransitionToDungeonExterior's automap half - marks the
       // player outside and, at AutomapNumberOfDungeons = 0, forgets
       // the map the moment you leave (Automap.cs:2530-2534).
-      exitDungeonAutomap();
+      exitDungeonAutomap(classicMinutesRef.value);   // AUDIT-AMAP F11: stamped with the EXIT time (:2155)
       bloodMarks.dispose();   // BLOOD1a (HARD1): the ring is OURS - a vertex buffer and a VAO handed to nobody - so it ends here, by its own name and not through the hand-off pool
       // ROAD-B B1: RemoveWindow runs OnPop on every window it removes
       // (UserInterfaceManager.cs:189-196) and ChangeWindow removes them
