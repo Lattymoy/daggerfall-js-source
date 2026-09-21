@@ -14,10 +14,18 @@
 //   A SECRET IS RETURNED ONCE AND STORED AS A HASH. A copy of the
 //   sessions table is not a copy of anybody's credentials.
 //
-//   A SESSION IS THE CREDENTIAL, one per device. Fight Life had one
-//   secret per player and rotated it on sign-in, which made two devices
-//   mutually exclusive - a desktop sign-in silently 401'd the phone on
-//   every write. That bug is not being ported.
+//   A SESSION IS THE CREDENTIAL, one per device. This is Fight Life's
+//   FIX, carried over - not a bug of theirs we sidestepped. They shipped
+//   one secret per player and rotated it on sign-in, which made two
+//   devices mutually exclusive (a desktop sign-in silently 401'd the
+//   phone on every write); Mac hit it farming on one device while
+//   playing on the other, and their Account-First arc replaced it with
+//   a sessions table. `fight-life-source/server/schema.sql` carries that
+//   whole account, and the shape here - a row per device, sign-out
+//   revoking THIS session, "everywhere" a separate act, one indexed
+//   lookup on the hot path - is theirs. AUDIT-ACC F6 corrected this
+//   comment, which had read as though the bug were still live over
+//   there.
 //
 //   THE DISPLAYED NAME IS DERIVED, never stored twice: a handle if the
 //   player has chosen one, the generated name otherwise. One function,
@@ -195,7 +203,13 @@ export const isMuted = (row, nowS) => mutedUntil(row) > nowS;
  */
 export function accountView(player, nowS) {
   return {
-    playerId: player.id,
+    // AUDIT-ACC F4: `id`, not `playerId`. /v1/auth/guest and
+    // /v1/auth/login have always answered `id`, the header comment
+    // documented `playerId`, and this view returned `playerId` - the
+    // same field under two names in one API, which is a bug waiting for
+    // ACC1d to read `account.id` and get undefined. Nothing consumes
+    // this yet, so it costs nothing to settle now.
+    id: player.id,
     name: displayName(player),
     kind: accountKind(player),
     handle: player.handle ?? null,

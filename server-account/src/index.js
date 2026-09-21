@@ -31,7 +31,7 @@
 //
 //   GET  /v1/health                       -> { ok, v }
 //   GET  /v1/pubkey                       -> { alg, key }   (not a secret)
-//   POST /v1/auth/guest   { label? }      -> { playerId, secret, sessionId, name, kind }
+//   POST /v1/auth/guest   { label? }      -> { id, secret, sessionId, name, kind }
 //   POST /v1/auth/token   { secret }      -> { token, name, kind, expiresAt }
 //   POST /v1/auth/session { secret, label? } -> { secret, sessionId }   (a second device)
 //   GET  /v1/account      ?secret=        -> { account, devices[] }
@@ -66,35 +66,17 @@ import {
   register, login, recover, changePassword, setEmail, overRate,
 } from './accounts.js';
 import { mintToken, MAX_TTL_S, TOKEN_V } from '../../src/net/identityToken.js';
+import { ACCOUNT_VERSION, MAX_BODY_BYTES, ROUTES, OPEN_ROUTES } from './service.js';
+import { signingKey } from './signing.js';
 
-/** Bumped with every change to this Worker's law, and answered by
- *  /health - the same discipline RELAY_VERSION keeps, for the same
- *  reason: a deploy that did not happen looks exactly like one that
- *  did. */
-export const ACCOUNT_VERSION = 'acct1';
-
-/** A body bigger than this is not a request this service has. Read
- *  BEFORE the JSON is parsed, so a megabyte of nothing costs nothing. */
-export const MAX_BODY_BYTES = 4 * 1024;
-
-/** Every path this service serves. Named once, so the 404 below and
- *  the ladder further down cannot come to disagree about what exists. */
-export const ROUTES = new Set([
-  '/v1/health', '/v1/pubkey', '/v1/auth/guest', '/v1/auth/token', '/v1/auth/session',
-  '/v1/account', '/v1/auth/logout',
-  // ACC1c: username and password. `register` needs a session (it
-  // upgrades the guest row that session belongs to); `login` and
-  // `recover` are the two that do NOT, because a player standing at
-  // them has no session yet - which is exactly why they are the two
-  // that are throttled.
-  '/v1/auth/register', '/v1/auth/login', '/v1/auth/recover',
-  '/v1/account/password', '/v1/account/email',
-]);
-
-/** The routes a caller reaches WITHOUT a credential. Everything else
- *  resolves a session first. Named rather than special-cased inside the
- *  ladder, so "what can a stranger reach?" has one answer. */
-export const OPEN_ROUTES = new Set(['/v1/health', '/v1/auth/guest', '/v1/auth/login', '/v1/auth/recover']);
+// THIS MODULE EXPORTS `default` AND NOTHING ELSE, and that is a
+// runtime requirement rather than a preference: in a module Worker
+// every named export of the entrypoint is read as an entrypoint, and
+// a plain constant is not one - workerd refuses to start. AUDIT-ACC
+// F2 found it by booting the Worker; no node test could, because the
+// tests imported the very names that were breaking it. What this
+// service IS lives in service.js; what it signs with lives in
+// signing.js; both are imported here and by the pins.
 
 const json = (body, status = 200, origin = '*') => new Response(JSON.stringify(body), {
   status,
@@ -117,23 +99,6 @@ async function readBody(request) {
   if (!text) return {};
   try { const v = JSON.parse(text); return v && typeof v === 'object' && !Array.isArray(v) ? v : null; } catch { return null; }
 }
-
-/** The Ed25519 private key, imported once per isolate. A key imported
- *  per request costs a parse on the hot path for nothing. */
-let _key = null;
-async function signingKey(env, subtle) {
-  if (_key) return _key;
-  const b64 = String(env.IDENTITY_PRIVATE_KEY ?? '');
-  if (!b64) return null;
-  try {
-    const bin = atob(b64);
-    const bytes = new Uint8Array(bin.length);
-    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
-    _key = await subtle.importKey('pkcs8', bytes, { name: 'Ed25519' }, false, ['sign']);
-    return _key;
-  } catch { return null; }
-}
-export function _resetKeyForTests() { _key = null; }
 
 export default {
   async fetch(request, env) {

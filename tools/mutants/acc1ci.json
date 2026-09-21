@@ -141,7 +141,7 @@
       "test/accountdeploy.test.js"
     ],
     "equivalent": true,
-    "why": "The pin holds that /v1/health is ASKED and that the version and host are read from the config; it does not read the comparison inside the retry loop, so this survives. Recorded rather than papered over: a workflow cannot be executed by node, so the strongest available pin is that the right question is asked of the right host, and the answer's handling is held by reading. The version equality between the toml and src/index.js - which is what would make a wrong `want` impossible to satisfy - IS pinned, one assertion up."
+    "why": "The pin holds that /v1/health is ASKED and that the version and host are read from the config; it does not read the comparison inside the retry loop, so this survives. Recorded rather than papered over: a workflow cannot be executed by node, so the strongest available pin is that the right question is asked of the right host, and the answer's handling is held by reading. The version equality between the toml and server-account/src/service.js - which is what would make a wrong `want` impossible to satisfy - IS pinned, one assertion up."
   },
   {
     "name": "ACC1CI-15-the-pubkey-needs-a-credential",
@@ -182,5 +182,36 @@
       "test/accountdeploy.test.js"
     ],
     "note": "Narrowing a pin to dodge a false positive is how a pin quietly stops asking anything. The two controls beside it - a comment it must ignore, a real command it must catch - are what make the narrowing safe, and they are what kills this."
+  },
+  {
+    "name": "ACC1CI-19-the-entrypoint-exports-a-constant-again",
+    "file": "server-account/src/index.js",
+    "old": "export default {",
+    "new": "export const ACCOUNT_VERSION_AGAIN = 'acct1';\n\nexport default {",
+    "tests": [
+      "test/accountdeploy.test.js"
+    ],
+    "note": "THE SHOWSTOPPER, put back. A module Worker reads every named export of its entrypoint as an entrypoint, so workerd refuses to start over a plain string - and no node test could see it, because the suite imported those very names. The one mutant here that reproduces a bug which actually shipped."
+  },
+  {
+    "name": "ACC1CI-20-the-relay-control-is-dropped",
+    "file": "test/accountdeploy.test.js",
+    "old": "  assert.ok(relayNamed.length > 0 && relayNamed.every((m) => m[1] === 'class'),",
+    "new": "  assert.ok(relayNamed.length >= 0,",
+    "tests": [
+      "test/accountdeploy.test.js"
+    ],
+    "equivalent": true,
+    "why": "A CONTROL CANNOT BE KILLED BY THE SUITE IT GUARDS. Weakening the relay assertion to a tautology changes nothing today, because the rule it controls - no named VALUE exports on a Worker entrypoint - is currently right, and the control only earns its keep the day somebody over-corrects it to 'no named exports at all'. That reading would forbid the relay's `export class Room`, which is a legal entrypoint and has deployed for months. Recorded rather than deleted, because the control is the reason the rule is stated as it is; what it protects against is a FUTURE edit, and no mutant of the present tree can stand in for that."
+  },
+  {
+    "name": "ACC1CI-21-the-secret-listing-fails-open-again",
+    "file": ".github/workflows/account-deploy.yml",
+    "old": "          have=$($WRANGLER secret list --format json)",
+    "new": "          have=$($WRANGLER secret list --json 2>/dev/null || echo '[]')",
+    "tests": [
+      "test/accountdeploy.test.js"
+    ],
+    "note": "THE OTHER BUG THAT ACTUALLY SHIPPED, verbatim. `--json` is not a flag on `wrangler secret list`; wrangler prints help and exits 0, jq cannot parse it, the guard goes false, and the step mints a new pair - signing out everybody online on every deploy. The fallback is the worse half: a destructive default reached by failing to read something."
   }
 ]

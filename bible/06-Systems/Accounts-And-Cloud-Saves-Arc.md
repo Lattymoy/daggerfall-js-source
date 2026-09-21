@@ -1,9 +1,15 @@
 # Accounts and cloud saves (ACC)
 
-ACC0 — the design record, 2026-09-21. **Nothing below has shipped.** This
-page is the shape agreed with Mac before any code, and it says what is
-decided, what is lifted from another repo, what is genuinely new, and
-what is still open.
+ACC0 — the design record, 2026-09-21. ~~Nothing below has shipped.~~
+**ACC1a, ACC1b, ACC1c and ACC1-CI have shipped since**, and AUDIT-ACC
+has been over all of them; the sections below carry their own dated
+headings and this line was left stale for half a day, which is the
+exact failure DEPLOY-PROSE was opened for. Nothing is DEPLOYED yet: the
+deploy fires on merge to main.
+
+This page is the shape agreed with Mac before any code, and it says
+what is decided, what is lifted from another repo, what is genuinely
+new, and what is still open.
 
 Mac (2026-09-21):
 
@@ -350,12 +356,26 @@ the deploy stands the service up itself and the D1 binding is live. See
 account — an account with no provider attached yet, which is the whole
 of ACC0's wall and is why linking will migrate nothing.
 
-**A SESSION IS THE CREDENTIAL, one per device.** Fight Life had one
-secret per player and rotated it on sign-in, which made two devices
-mutually exclusive: a desktop sign-in silently 401'd the phone on every
-write, and Mac found it by playing rather than by reading. That bug is
-not being ported, and the pin that holds it opens two sessions and uses
-both.
+**A SESSION IS THE CREDENTIAL, one per device** — and **AUDIT-ACC F6
+corrected what this paragraph used to claim about it.** It said Fight
+Life "had one secret per player" and that "that bug is not being
+ported", which reads as though the fault were still live over there and
+this arc had stepped around it. Reading
+`fight-life-source/server/schema.sql` shows the opposite: they hit it,
+Mac found it by playing (farming on one device while playing on the
+other), and their Account-First arc replaced it with a sessions table.
+
+**So this is their FIX, carried over, not a bug of theirs avoided.**
+The shape is theirs down to the reasoning — a row per device, sign-out
+revoking *this* session because every account system a player has used
+behaves that way, "everywhere" as a separate explicit act, one indexed
+lookup on the hot path, and a device label that is never trusted for
+anything but display. Under-crediting a source you lifted from is the
+same class of error as any other false claim in a record, and it is
+worse here because the source is Mac's own other repo.
+
+What this arc adds is that the property is **driven** rather than
+inherited on trust: the pin opens two sessions and uses both.
 
 **THE GUEST NAMES COME FROM DAGGERFALL'S OWN BANKS** — the same
 `nameGen.json` the chargen wizard and every townsperson draw from — so a
@@ -576,6 +596,116 @@ credential anywhere. If that secret is ever missing or under-scoped,
 the workflow's first step says so in one line rather than letting
 wrangler fail four steps later with an authentication error that reads
 like a wrangler bug.
+
+## AUDIT-ACC — 2026-09-21, Mac: "Let's do a proper audit on everything"
+
+Four lenses over ACC0-ACC1c and ACC1-CI. **Six findings, and the two
+that mattered were both invisible to a green suite** — they were found
+by standing the Worker up in a real workerd, which nothing in this tree
+had ever done.
+
+### F2 — THE WORKER DID NOT BOOT. AT ALL.
+
+```
+Uncaught TypeError: Incorrect type for map entry 'ACCOUNT_VERSION':
+the provided value is not of type 'function or ExportedHandler'.
+```
+
+In a module Worker **every named export of the entrypoint is read as an
+entrypoint** — a WorkerEntrypoint, a Durable Object, a Workflow. A
+plain string is not one, so it is a hard startup failure.
+`server-account/src/index.js` exported four constants and a test hook. The first `wrangler deploy`
+after merge would have produced a dead service.
+
+**AND THE SUITE WAS GREEN BECAUSE OF THE BUG, NOT DESPITE IT.**
+`test/accountworker.test.js` imported `ACCOUNT_VERSION`,
+`MAX_BODY_BYTES` and `_resetKeyForTests` — so it proved those exports
+existed, which was precisely what the runtime was refusing to start
+over. **Importability is not deployability**, and nothing here had ever
+asked the second question.
+
+The relay is the control and the reason the rule is stated carefully:
+`server/src/index.js` exports `default` and `export class Room`, and has
+deployed for months. A class is a legal entrypoint; a constant is not.
+So the law is *no named **value** exports*, not *no named exports*.
+
+Fixed by giving the constants and the key cache their own homes
+(`service.js`, `signing.js`) and leaving the entrypoint exporting only
+a handler. The entrypoint had been doubling as a library.
+
+### F1 — THE RE-MINT GUARD FAILED OPEN, AND READ CORRECTLY
+
+ACC1-CI's proudest guard — *never re-mint, because that invalidates
+every token in flight* — never fired. `wrangler secret list` has no
+`--json` flag; it takes `--format json`. Given an unknown flag wrangler
+printed its **help text** and exited 0, `jq` could not parse that, the
+`if` went false, and the step fell straight through to minting.
+
+**Every deploy would have signed out everybody online**, while the
+guard sat there looking right.
+
+The flag was only the trigger. **The fallback was the fault:** `|| echo
+'[]'` turns *"I could not read the secrets"* into *"there are no
+secrets"* — a destructive default reached by ignorance. The listing must
+now succeed **and** parse as an array, or the step fails and mints
+nothing.
+
+### The other four
+
+- **F3 — not a defect.** A verify failure against the live `/v1/pubkey`
+  turned out to be the audit's own harness calling
+  `importPublicKeyB64(key, subtle)` instead of `(key, { subtle })`.
+  Checked before it was reported.
+- **F4 — the player id under two names.** `id` from `/v1/auth/guest`
+  and `/v1/auth/login`, `playerId` from `/v1/account`, and `playerId`
+  in the comment documenting the *guest* response. ACC1d would have
+  read `account.id` and got undefined. Settled on `id` while nothing
+  consumes it.
+- **F5 — `.wrangler/` was not ignored**, so the local D1 and the
+  workerd build of the Worker were staged for commit the moment anybody
+  ran the probe. `.dev.vars` is ignored now too: it is exactly the file
+  a signing key gets pasted into by accident.
+- **F6 — the record under-credited Fight Life.** See the session
+  paragraph above: it said *"that bug is not being ported"*, implying
+  the fault was still live over there. They hit it, fixed it, and this
+  is their fix.
+
+### What the audit MEASURED rather than assumed
+
+`tools/accountProbe.mjs` (`npm run account`) now stands the service up
+on every run. 21/21:
+
+- **Ed25519 exists in workerd** at the committed compatibility date —
+  48-byte PKCS8, 32-byte raw public, 64-byte signature, verify true.
+  The entire token design rests on this and it had never been checked.
+- **PBKDF2 at 210,000 costs 36 ms** there, which is the `~35 ms`
+  `password.js` claims. The claim was right.
+- **Both migrations apply in order** through wrangler's own ledger.
+- **A token the Worker signs verifies against the key the Worker
+  publishes** — the exact seam ACC1d needs, both ends live, with a
+  stranger's key and a bent byte refused as controls.
+- **Nothing in this arc is in the relay bundle.** `RELAY_GRAPH` is 5
+  files and none of them is `identityToken.js` or anything under
+  `server-account/`. The two-Worker split's central promise — *this
+  deploy drops nobody* — is now measured rather than argued. **ACC1d
+  changes that:** the moment the relay imports the token module, it
+  joins the bundle and every edit to it costs a deploy.
+
+### The probe's own two bugs, and one that was mine
+
+Its first run scored 19/21, and both failures were the probe's: it
+counted wrangler's repeated summary table as duplicate migrations, and
+it read `account.id` (which was F4). Then it began hanging for ten
+minutes at a time — because **its fail-fast port check treated a
+TIMEOUT as "port is free"**, which is exactly backwards. An orphaned
+workerd accepts a connection and never answers, so a timeout is the
+strongest evidence the port is *held*. One orphan poisoned every later
+run. It now kills the whole process group (`npx` → `wrangler` →
+`workerd`; killing the pid `spawn` returns leaves the grandchild
+holding the port) and refuses a busy port in seconds with the command
+to clear it.
+
+---
 
 ## OPEN
 

@@ -17,7 +17,12 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
 import { DatabaseSync } from 'node:sqlite';
-import worker, { ACCOUNT_VERSION, MAX_BODY_BYTES, _resetKeyForTests } from '../server-account/src/index.js';
+import worker from '../server-account/src/index.js';
+// AUDIT-ACC F2: these come from their own homes now, because the
+// entrypoint may export ONLY `default` - workerd reads every other
+// named export as an entrypoint and refuses to start over a constant.
+import { ACCOUNT_VERSION, MAX_BODY_BYTES } from '../server-account/src/service.js';
+import { _resetKeyForTests } from '../server-account/src/signing.js';
 import {
   createGuest, openSession, resolveSession, closeSession, closeAllSessions,
   devicesOf, accountView, displayName, accountKind, hashSecret, mintId, handleRefusal, LOGIN_MAX,
@@ -108,11 +113,15 @@ test('ACC1b: a guest is a REAL ROW from first contact, and its secret is never s
   assert.ok(dump.includes(await hashSecret(made.secret, { subtle })), 'and its hash is what the table keeps');
 });
 
-test('ACC1b: TWO DEVICES AT ONCE - the bug Fight Life paid for, not ported', async () => {
+test('ACC1b: TWO DEVICES AT ONCE - Fight Life\'s fix, carried over rather than re-learned', async () => {
   // One secret per player, rotated on sign-in, made two devices
   // mutually exclusive: a desktop sign-in silently 401'd the phone on
-  // every write, and Mac found it by playing. A SESSION is the
-  // credential here, so this is a property rather than a hope.
+  // every write, and Mac found it by playing. FIGHT LIFE ALREADY FIXED
+  // THAT, with a sessions table, and this is that fix rather than an
+  // independent escape from it (AUDIT-ACC F6 - the record used to imply
+  // the bug was still live over there). What the pin adds is that the
+  // property is DRIVEN here rather than inherited on trust: two
+  // sessions are opened and both are used.
   const db = d1();
   const first = await createGuest(ctx(db), { deviceLabel: 'desktop' });
   const second = await openSession(ctx(db), first.id, 'phone');
@@ -347,7 +356,7 @@ test('ACC1b: every route needs a secret, and a bad one is 401 and nothing else',
   // ...and with the real one, the account comes back with its devices
   const acct = await call('GET', `/v1/account?secret=${encodeURIComponent(guest.secret)}`);
   assert.equal(acct.status, 200);
-  assert.equal(acct.body.account.playerId, guest.id);
+  assert.equal(acct.body.account.id, guest.id);
   assert.equal(acct.body.devices.length, 1);
 
   // a second device, admitted by the first
@@ -588,7 +597,7 @@ test('ACC1c: registering is an UPGRADE IN PLACE, and the code is shown exactly o
   // THE SAME ACCOUNT. Not a new row - the id a player already had, and
   // the friends and saves that will hang off it, are untouched.
   const acct = (await call('GET', `/v1/account?secret=${encodeURIComponent(guest.secret)}`)).body;
-  assert.equal(acct.account.playerId, guest.id, 'registering minted a new account');
+  assert.equal(acct.account.id, guest.id, 'registering minted a new account');
   assert.equal(acct.account.name, 'Nystul');
   assert.equal(acct.account.kind, 'linked');
   assert.equal(acct.account.guestName, guest.name, 'the name the world gave them is still on the row');

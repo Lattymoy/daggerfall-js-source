@@ -153,6 +153,25 @@ jobs:
       # first, and a pair that is already there is left completely
       # alone.
       #
+      # ═══ AUDIT-ACC F1: AND "I COULD NOT TELL" IS NOT "THERE IS NONE" ══
+      #
+      # The first cut of this step ran `secret list --json` and fell back
+      # to `[]` if that failed. Both halves of that were wrong, and
+      # together they were the destructive case arriving through the
+      # error path:
+      #
+      #   - THERE IS NO `--json` FLAG on `wrangler secret list`. It takes
+      #     `--format json|pretty` and already defaults to json. Given an
+      #     unknown flag wrangler printed its HELP TEXT and exited 0.
+      #   - `jq` then failed to parse that help text, the `if` went
+      #     false, and the step fell straight through to minting.
+      #
+      # So every deploy would have re-minted, signing out everybody
+      # online, while the guard sat right there looking correct. The
+      # fallback was the deeper fault: a DESTRUCTIVE default reached by
+      # not being able to read something. Now the listing must succeed
+      # AND parse as an array, or the step fails and mints nothing.
+      #
       # Neither half is ever echoed, written to a file, or passed as an
       # argument. One `node` run emits both (in that order, private
       # first) and `read` takes them straight off the pipe into
@@ -163,7 +182,12 @@ jobs:
         working-directory: server-account
         run: |
           set -euo pipefail
-          have=$($WRANGLER secret list --json 2>/dev/null || echo '[]')
+          # No `|| default`: a listing that fails must fail the step.
+          have=$($WRANGLER secret list --format json)
+          if ! echo "$have" | jq -e 'type == "array"' >/dev/null; then
+            echo "::error::secret list did not return a JSON array - refusing to decide whether a key exists"
+            exit 1
+          fi
           if echo "$have" | jq -e 'any(.[]; .name == "IDENTITY_PRIVATE_KEY")' >/dev/null; then
             echo "a signing key is already set - leaving it alone (re-minting would invalidate every token in flight)"
             exit 0

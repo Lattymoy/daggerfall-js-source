@@ -162,13 +162,13 @@
   },
   {
     "name": "ACC1c-17-login-and-recover-need-a-session",
-    "file": "server-account/src/index.js",
+    "file": "server-account/src/service.js",
     "old": "export const OPEN_ROUTES = new Set(['/v1/health', '/v1/auth/guest', '/v1/auth/login', '/v1/auth/recover']);",
     "new": "export const OPEN_ROUTES = new Set(['/v1/health', '/v1/auth/guest']);",
     "tests": [
       "test/accountworker.test.js"
     ],
-    "note": "A player standing at a login form has no session - that is why they are standing there."
+    "note": "A player standing at a login form has no session - that is why they are standing there. (AUDIT-ACC F2 moved OPEN_ROUTES to service.js: the entrypoint may export only a handler, so the constants left index.js. Re-aimed at the new home and confirmed dead there.)"
   },
   {
     "name": "ACC1c-18-the-refusal-names-the-cause",

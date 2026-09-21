@@ -206,6 +206,74 @@ test('ACC1-CI: --pipe emits ONE pair, private first, and there is no way to ask 
   assert.doesNotMatch(tool, /writeFile|appendFile|createWriteStream/, 'the key tool writes a key to disk');
 });
 
+test('AUDIT-ACC F2: the Worker entrypoint exports ONLY a handler, or workerd will not start', () => {
+  // THE WORKER DID NOT BOOT. AUDIT-ACC stood it up in a real workerd
+  // and it refused, before a single request:
+  //
+  //   Uncaught TypeError: Incorrect type for map entry 'ACCOUNT_VERSION':
+  //   the provided value is not of type 'function or ExportedHandler'.
+  //
+  // In a module Worker EVERY named export of the entrypoint is read as
+  // an entrypoint - a WorkerEntrypoint, a Durable Object, a Workflow -
+  // and a plain string or Set is not one, so it is a hard startup
+  // failure rather than something ignored. `src/index.js` exported four
+  // constants and a test hook.
+  //
+  // NO NODE TEST COULD SEE IT, and that is the lesson worth keeping:
+  // the pins IMPORTED those very names, so they proved the exports
+  // existed while the runtime rejected them for existing. Importability
+  // and deployability are different questions and the suite was only
+  // ever asking the first one.
+  const entry = rd('server-account/src/index.js');
+  const named = [...entry.matchAll(/^export\s+(?!default\b)(\w+)\s+(\w+)/gm)];
+  assert.deepEqual(named.map((m) => m[2]), [],
+    `server-account/src/index.js has named exports (${named.map((m) => m[2]).join(', ')}) - workerd reads each as an entrypoint and refuses to start`);
+  assert.match(entry, /^export default \{/m, 'the entrypoint no longer exports a handler at all');
+
+  // THE RELAY IS THE CONTROL, and it is why this is a law rather than a
+  // guess: server/src/index.js has deployed for months exporting
+  // `default` and the `Room` Durable Object CLASS. A class is a legal
+  // entrypoint; a constant is not. So the pin forbids named value
+  // exports, not named exports outright.
+  const relay = rd('server/src/index.js');
+  assert.match(relay, /^export default \{/m);
+  const relayNamed = [...relay.matchAll(/^export\s+(?!default\b)(\w+)\s+(\w+)/gm)];
+  assert.ok(relayNamed.length > 0 && relayNamed.every((m) => m[1] === 'class'),
+    'the relay entrypoint grew a non-class named export - the same startup failure is one deploy away');
+});
+
+test('AUDIT-ACC F1: "I could not tell" must never be read as "there is no key"', () => {
+  // THE GUARD FAILED OPEN, and it is the worst shape a bug can take: it
+  // read correct. `wrangler secret list` has no `--json` flag (it takes
+  // `--format json|pretty` and defaults to json), so wrangler printed
+  // its HELP TEXT and exited 0; jq could not parse that; the `if` went
+  // false; and the step fell through to minting a new pair. Every
+  // deploy would have signed out everybody online.
+  //
+  // The flag was the trigger. THE FALLBACK WAS THE FAULT - `|| echo
+  // '[]'` turns "I could not read the secrets" into "there are no
+  // secrets", which is a destructive default reached by ignorance.
+  const wf = rd(WF);
+  const found = /Mint the signing pair[\s\S]*?(?=\n      - name:)/.exec(wf);
+  assert.ok(found, 'the minting step is gone or renamed past recognition');
+  const step = found[0];
+
+  const listing = step.split('\n').find((l) => /secret list/.test(l) && !/^\s*#/.test(l));
+  assert.ok(listing, 'nothing in the step lists the existing secrets any more');
+  assert.doesNotMatch(listing, /\|\|/,
+    'the secret listing has a fallback again - a listing that fails must fail the step, not answer "none"');
+  assert.doesNotMatch(listing, /--json\b/,
+    '`--json` is not a flag on `wrangler secret list`; it prints help and exits 0, which is how this failed open');
+  assert.match(listing, /--format json/, 'the listing no longer asks for json in the spelling wrangler accepts');
+
+  // ...and what came back is checked to BE a list before it is asked a
+  // question about its contents.
+  const shape = step.indexOf("type == \"array\"");
+  const decide = step.indexOf('IDENTITY_PRIVATE_KEY"');
+  assert.ok(shape >= 0, 'nothing checks that the listing is actually an array before trusting it');
+  assert.ok(shape < decide, 'the shape is checked after the decision, which is not a check');
+});
+
 test('ACC1-CI: the deploy is verified BY CONTENT, and reads the host and version from the config', () => {
   const wf = rd(WF);
   const toml = rd(TOML);
@@ -240,9 +308,12 @@ test('ACC1-CI: the deploy is verified BY CONTENT, and reads the host and version
   const inToml = /^ACCOUNT_VERSION\s*=\s*"([^"]+)"/m.exec(toml);
   const name = /^name\s*=\s*"([^"]+)"/m.exec(toml);
   assert.ok(inToml && name, 'the config no longer carries both a version and a name to read');
-  const idx = rd('server-account/src/index.js');
-  const inCode = /^export const ACCOUNT_VERSION = '([^']+)'/m.exec(idx);
-  assert.ok(inCode, 'src/index.js no longer declares ACCOUNT_VERSION');
+  // ...read from service.js since AUDIT-ACC F2 moved it there: the
+  // entrypoint may export only a handler, so the constants live in
+  // their own home and this pin follows them.
+  const svc = rd('server-account/src/service.js');
+  const inCode = /^export const ACCOUNT_VERSION = '([^']+)'/m.exec(svc);
+  assert.ok(inCode, 'server-account/src/service.js no longer declares ACCOUNT_VERSION');
   assert.equal(inToml[1], inCode[1], 'the config and the code name different deploys - the verify step would never go green');
 
   // A path filter is allowed HERE and is refused on the relay. The

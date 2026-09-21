@@ -24,6 +24,7 @@
     "levelup": "node tools/levelUpProbe.mjs",
     "gunproto": "node tools/gunProtoProbe.mjs",
     "blood": "node tools/bloodProbe.mjs",
+    "account": "node tools/accountProbe.mjs",
     "gunsfx": "node tools/gunSfx.mjs && node tools/gunSfxInstall.mjs",
     "gunart": "node tools/gunPaperdoll.mjs",
     "gunsfx:find": "NODE_USE_ENV_PROXY=1 node tools/freesoundPick.mjs",
