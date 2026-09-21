@@ -578,7 +578,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
    *  which arrowFlight.js calls unconditionally (arrowFlight.js:306)
    *  because `dealDamage` is inside its own `dmg > 0` fork - so the
    *  door is PUBLIC (the returned surface below), exactly as the
-   *  encounter pool's is (exteriorFoes.js:1795). */
+   *  encounter pool's is (exteriorFoes.js:1798). */
   function handleAttackFromPlayer(g, playerFeet = null) {
     if (!g?.ai) return;
     if (!g.ai.isHostile) makeAreaHostile?.();
@@ -739,7 +739,10 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
   /** Per-frame drive; returns the live mobile batches (the host draws
    *  them on the flats' axis with the corpses). */
   let _ecvT = 0;   // ECV1: the watch's clock (seconds), for the shimmer and the hit reveal
+  /** BLOOD2c: how the bleeding ledger reads a watchman. */
+  const guardBleedView = (g) => ({ feet: g.ai?.feet, health: g.entity?.health, maxHealth: g.entity?.maxHealth, bloodIndex: ENEMY_BASICS[GUARD_MOBILE_TYPE]?.bloodIndex ?? 0, dead: !!g.dead, corpse: !!g.corpse });
   function update(dt, playerFeet, eye, senses = {}) {
+    hitEffects?.bleed?.(dt, guards, guardBleedView);   // BLOOD2c: a wounded watchman drips, a killed one bleeds out (a walk-away has no body and leaves no pool)
     _ecvT += dt;
     const ecvOn = combatVisualsOn();   // ECV1: once per frame
     // EnemyEntity.Update (:184-191): the city watch DESPAWNS when the

@@ -893,5 +893,44 @@ Slices, each behind its own `features.js` row:
    keeping the cell) and the settled-frame pin re-aimed. Mutants: 16,
    16 dead (`tools/mutants/blood1.json` is 187).
 
+6. **BLOOD2c - a wounded body bleeds, a dead one bleeds out.** SHIPPED
+   (2026-09-21). The arc's BLOOD1c was to be the reference's PLAYER
+   bleeding; this turns that shape on the FOES first, because a foe
+   cut to half its health should leave a trail you can follow, and a
+   foe you killed should lie in a pool that spreads.
+
+   THE LEDGER (`src/combat/bloodBleed.js`, pure): the reference's own
+   ramp - `clamp01(1 - (pct - 1) / (threshold - 1))`, nothing at the
+   threshold and everything at one percent - over BLEED_THRESHOLD
+   (half, the port's own) and the reference's cadence (every 2..5 s,
+   random). A drip is `max(1, round(share x BLEED_DROPS_MAX))` drops
+   (six at most; the reference's forty particles are not marks). A
+   body healed past the threshold starts a fresh wait when wounded
+   again. The first frame a body is seen dead WITH A CORPSE - a
+   quest-removed foe, a culled one, a watchman who walked away has no
+   body and leaves no pool - one pool at its feet. A bloodless body
+   neither drips nor pools. State rides a WeakMap keyed by the body.
+
+   THE MARKS: `drip` lays the drops within BLEED_RADIUS of the feet,
+   rayed down from KNEE height (a foe on a stair stains its step) at
+   the gib's small rate, capped at BLEED_DROPS_CAP, and NEVER looks up -
+   a drip is gravity's; `spreadPool` lays one pool-cell mark at the
+   feet at POOL_SIZE.start and the pool's tick grows it to
+   POOL_SIZE.end over POOL_SPREAD (12 s) in POOL_STEPS (8) rewrites,
+   drops it the moment the ring reuses its slot, bounds the spreads
+   at MAX_SPREADS, and clears them with the room.
+
+   THE SEAM: `hitEffects.bleed(dt, bodies, view)` - the three foe
+   pools hand the bodies they already walk every frame (puppets
+   included: they carry health and death) through a six-field view
+   `{ feet, health, maxHealth, bloodIndex, dead, corpse }`, and the
+   dungeon's two kill paths mark the body a corpse (its quest removal
+   does not). No wire, no save.
+
+   Pins: two (the ledger's law end to end; the drip, the spread, the
+   splash pool's mapping, the three hosts by source). Mutants: 22, 21
+   dead, 1 equivalent as recorded - the threshold guard the clamp
+   already answers (`tools/mutants/blood1.json` is 209).
+
 The numbers in THE FACTS are the target to feel like. The code that
 hits them is ours.

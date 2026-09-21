@@ -43,6 +43,7 @@ import { billboardSize } from '../world/rmbFlats.js';
 import { BLOODLESS_INDEX } from '../combat/bloodDecals.js';   // BLOOD1a: which foes bleed, for the art hand-off below
 
 /** EnemyBlood.cs:23. */
+import { createBleedLedger } from '../combat/bloodBleed.js';   // BLOOD2c
 export const BLOOD_ARCHIVE = 380;
 /** :37 - pinned to ten, not the general five. */
 export const BLOOD_FPS = 10;
@@ -97,7 +98,11 @@ export function createHitEffects({
   // name. Null means no marks and exactly the splash this file always
   // drew.
   marks = null,
+  // BLOOD2c: the chance the bleeding ledger rolls its 2..5 s waits with -
+  // the game's own unless a pin holds it still.
+  rng = Math.random,
 } = {}) {
+  const bleeding = createBleedLedger({ rng });   // BLOOD2c: per pool, keyed by body
   // onSpawn/onRetire let a host whose draw list is PERSISTENT (the
   // dungeon's billboardBatches, which the missile impact already
   // pushes into and splices out of) register the batch instead of
@@ -208,6 +213,25 @@ export function createHitEffects({
       const entry = spawn(bloodIndex ?? 0, pos, facing);
       marks?.place?.(hit?.markIndex ?? bloodIndex, pos, hit);   // BLOOD1a: the splash plays, the mark stays   // BLOOD1 AUDIT 3: a site whose SPLASH index is not the foe's (the fall sites' literal 0) names the mark's own, so the bloodless gate holds
       return entry;
+    },
+
+    /**
+     * BLOOD2c: A WOUNDED BODY BLEEDS, A DEAD ONE BLEEDS OUT. The host
+     * hands the bodies it walks every frame and a VIEW that reads one -
+     * { feet, health, maxHealth, bloodIndex, dead, corpse } - and the
+     * ledger answers what is due: a drip of small drops at a wounded
+     * body's feet every 2..5 s (the reference's cadence, ramped by how
+     * hurt it is), and one spreading pool the first frame a body is seen
+     * dead with a corpse. Marks only - no splash plays for a drip.
+     */
+    bleed: (dt, bodies, view) => {
+      if (!marks) return 0;
+      let n = 0;
+      for (const a of bleeding.tick(dt, bodies, view)) {
+        if (a.kind === 'drip') { if (marks.drip?.(a.bloodIndex, a.pos, a.count)) n++; }
+        else if (a.kind === 'pool') { if (marks.spreadPool?.(a.bloodIndex, a.pos)) n++; }
+      }
+      return n;
     },
 
     /** ShowMagicSparkles (:41-54), record 3. */

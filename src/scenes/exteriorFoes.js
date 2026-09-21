@@ -365,6 +365,8 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
    *  the one damage door so corpse, loot, alert and the kill notice
    *  all run; removeFoe is Destroy(gameObject) - the isHidden
    *  teardown - gone with no corpse, the cull's own shape. */
+  /** BLOOD2c: how the bleeding ledger reads one of this pool's bodies. */
+  const foeBleedView = (f) => ({ feet: f.ai?.feet, health: f.entity?.health, maxHealth: f.entity?.maxHealth, bloodIndex: ENEMY_BASICS[f.mobileType]?.bloodIndex ?? 0, dead: !!f.dead, corpse: !!f.corpse });
   const questPoolOps = {
     removeFoe: (f) => {
       if (f.dead || f.puppet) return;   // AUDIT WORLD6b B9: a peer's foe is not mine to remove (a dispel, a Wabbajack, a clear leave it to its owner's stream)
@@ -785,6 +787,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
 
   function update(dt, playerFeet, eye, senses = {}) {
     _ecvT += dt; _lastPlayerHeight = senses.playerHeight ?? CAPSULE_HEIGHT;   // ROAD-H H2: the live capsule this tick, for the AoC blast the cast seam fires
+    hitEffects?.bleed?.(dt, foes, foeBleedView);   // BLOOD2c: the wounded drip, the dead bleed out - every body this pool walks, puppets included
     _peerFrame++;   // WORLD6b-ii: the peers are read once a frame
     for (const f of foes) {
       // B1: the QuestResourceBehaviour drives every frame the object
