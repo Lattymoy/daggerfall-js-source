@@ -310,7 +310,7 @@ reference surface absent · **Departure** = deliberate, ledgered.
 | **player** | Near-1:1 / one lethal seam | **Near-1:1** | `cancelMovement` is a real motor field set on the mode edges (`player/motor.js:367,:439,:447`). ROAD-A A6 took the -0.28 doorway head-dip, `PlayerMoveScanner`'s three probes, `controllerSwimHeight` 0.30 with Do(Un)Sinking, and `FreezeMotor` on teleports. |
 | **combat** | Math exact / wiring broken | **Verbatim** | Four hosts resolve a player arrow. ROAD-A A12 shipped the left-hand weapon (ToggleHand/SwitchHand/`usingRightHand`, the classic import's `usingLeftHandWeapon`, the mirrored draw). |
 | **characters-ai** | Verbatim | **Verbatim** | `stopDistance` picks `CLASSIC_MELEE_DISTANCE_VS_AI` per pass (`enemyMotor.js:1271`, `enemyAttack.js:177`). ROAD-A A5 took enemy levitation, invisibility/Shade as live sources, foe fall damage and the Seducer transform pair. |
-| **characters-voxel** | Departure (deliberate) | **Departure, still editor-only** | 86 designs across seven tables - 42 of the 43 monster mobiles, 19 class, 25 villager. The rig is 1,791 lines across 7 modules and is still gated: `worldModes.js:4403` passes `voxelfolk`, `scenes/interiorContext.js:503` consumes it. |
+| **characters-voxel** | Departure (deliberate) | **Departure, still editor-only** | 86 designs across seven tables - 42 of the 43 monster mobiles, 19 class, 25 villager. The rig is 1,791 lines across 7 modules and is still gated: `worldModes.js:4408` passes `voxelfolk`, `scenes/interiorContext.js:503` consumes it. |
 | **sys-entity** | Law byte-exact / three dead seams | **Verbatim** | ROAD-A A11 took the "master of" box (TEXT.RSC 4020) with `ArenaFanfareLevelUp`, `skillsRecentlyRaised` and the sheet's own leveling arm. |
 | **sys-magic** | Near-complete | **Verbatim** | 91 keys, 0 inert; `minimumCastingCost` live; ROAD-D D9 took the held-bundle instant re-fire and the caster block's `BundleType == Spell` test on all three gates. |
 | **sys-quests** | Verbatim | **Verbatim** | 82/82 action templates, 265 quests. `playSound`'s busy-skip was the one recorded delta and the E-group closed it (`systems/audio.js`'s `QuestAudioSource`). |
@@ -324,7 +324,7 @@ reference surface absent · **Departure** = deliberate, ledgered.
 | **ui-hud** | Verbatim (classic) / Partial (enhanced default) | **Verbatim on both skins** | The skin fork moved BELOW the game-state seams: `ui/hud.js:499` runs `updateHudVitals` and `:554` `drawNearDeathFlicker`, both above the enhanced branch at `:606` and above the `!art` return, and the enhanced HUD takes the Detect markers at `:621`. `lastHealthLost()` is no longer pinned at 0, so `CameraRecoiler` lives in all three hosts. |
 | **ui-windows-a** | Rect parity excellent / two crash doors | **Verbatim** | ROAD-D D2 shipped both scroll thumbs (`chargenArt.js:777` over `RECTS.pickScroll`, `spellbookWindow.js:1011` over the 7-wide rail). |
 | **ui-windows-b** | Broadly ported | **Verbatim** | Both automaps are native windows. ROAD-D D6 built the ship purchase over the shared bank-market mount and gave `buildingIsUnlocked` the `ownsShip` key its last arm needed. |
-| **ui-enhanced** | Departure lane | **Departure lane, scoped** | `ui/worldPlaque.js:169` puts the skin gate above `ensure()`, so the unscoped `*`/`html`/`body`/`button`/`#app` rules never reach the classic page. 9 modules / 8,940 lines. |
+| **ui-enhanced** | Departure lane | **Departure lane, scoped** | `ui/worldPlaque.js:178` puts the skin gate above `ensure()`, so the unscoped `*`/`html`/`body`/`button`/`#app` rules never reach the classic page. 9 modules / 8,940 lines. |
 | **xcut-seams** | Clean, with one block | **Clean** | The quest machine's region-faction block was the wave. |
 | **xcut-async** | Disciplined / one missing sweep | **Disciplined** | `CleanupUntrackedObjects` has a counterpart in both halves. |
 | **xcut-tests-docs** | Gated half exact / ungated half rotting | **Gated half exact** | The flag list is byte-identical to `regenOpenFlags --check`; `Testing.md:4` is pinned to a live walk of `test/` by `test/manifest.test.js`. |
@@ -456,7 +456,7 @@ are the **narrowed remainders** Wave D recorded rather than shipped
   interior pause off the same one walk), and the pause window's
   Chronicle button. The EIGHTH - the exterior static-NPC pass - keeps
   C#'s empty-machine answer for the narrower reason written at its own
-  site. (The `src/scenes/worldModes.js:2014` row below is struck: ROAD-E
+  site. (The `src/scenes/worldModes.js:2016` row below is struck: ROAD-E
   E3 ran that pass above ground in the streaming host, and what the
   sentence names is this host's layout order alone.)*
 
@@ -625,7 +625,7 @@ are the **narrowed remainders** Wave D recorded rather than shipped
 
 **Added after this page's measurement, and counted here so the tally follows the tree.**
 
-- **`src/scenes/dungeonContext.js:1130`** - the dungeon's non-layout foe
+- **`src/scenes/dungeonContext.js:1131`** - the dungeon's non-layout foe
   run is private (ONLINE-DUNGEON-FOES, 2026-09-20). *Mac's two online
   reports - "non-reactive enemies in dungeons" and "the lysander ghost
   enemy isn't synced between players" - are one line. `_layoutFoes` is
@@ -958,7 +958,7 @@ faithful to whatever reference it does have, and none of them is a gap.
 - **The voxel character engine** (Mac's system, Port-Doctrine). 86
   designs across seven tables - 42 of the 43 monster mobiles, 19 class,
   25 villager - and a 1,791-line rig across 7 modules. Still not shipped
-  by a game host: `worldModes.js:4403` passes `voxelfolk`,
+  by a game host: `worldModes.js:4408` passes `voxelfolk`,
   `scenes/interiorContext.js:503` gates on it, and no default route sets
   it. The departure is faithful and is not in the player's hands.
 - **The enhanced skin and visuals** - 9 `ui/enhanced*.js` modules, 8,940

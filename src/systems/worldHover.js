@@ -91,6 +91,31 @@ export function composeActivationTargets(own, producers) {
 }
 
 /**
+ * THE NAMER LADDER - the mod's own extension API, in the port's shape.
+ *
+ * World Tooltips lets other mods add words through a
+ * `Map<float, List<Func<RaycastHit, string>>>` keyed by reach, walked
+ * in insertion order, FIRST NON-EMPTY WINS, and run before the mod's
+ * own ladder (vendor .cs:225-257). The port keeps the law and drops the
+ * key: reach is already decided by the pick, so a namer only has to say
+ * whether it knows this key.
+ *
+ * Insertion order is the priority, and the first answer with a title
+ * wins. That is what lets a host stand the port's OWN world objects -
+ * dropped torches, camps, hearths, water, the EOTB cart - beside the
+ * mod's ladder rather than wedged into it.
+ */
+export function composeNamer(namers) {
+  return (key, hit) => {
+    for (const fn of namers ?? []) {
+      const r = fn?.(key, hit);
+      if (r?.title) return r;
+    }
+    return null;
+  };
+}
+
+/**
  * THE FRAME. One record, and the draw paints exactly what is in it.
  *
  *   key    - the winning pick's key; the identity the guard compares

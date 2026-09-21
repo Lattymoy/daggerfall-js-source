@@ -191,7 +191,8 @@ import { resetVitalsDetector } from '../ui/hudVitals.js';   // BLOOD AUDIT 5: th
 import { activeMemberships } from '../systems/guilds.js';   // F117
 import { avoidDeath, AVOID_DEATH_TEXT } from '../systems/guildServices.js';   // F117: Stendarr
 import { activationTargets, RAY_DISTANCE, TREASURE_ACTIVATION_DISTANCE } from '../player/activate.js';
-import { composeActivationTargets } from '../systems/worldHover.js';   // WORLD-HOVER: the composition law is pure, so it lives with the model and can be DRIVEN   // WORLD-HOVER: the ONE construction seam composes the action objects' targets here; AUDIT 65 MC-2: the ray's reach, and each family's own
+import { composeActivationTargets, composeNamer } from '../systems/worldHover.js';
+import { worldTooltipsOn, hideInteractTooltip, corpseName, lootPileName, actionName, actionDoorName } from '../systems/worldTooltips.js';   // WORLD-HOVER: the mod's ladder, arm by arm   // WORLD-HOVER: the composition law is pure, so it lives with the model and can be DRIVEN   // WORLD-HOVER: the ONE construction seam composes the action objects' targets here; AUDIT 65 MC-2: the ray's reach, and each family's own
 import { worldHoverFrame, destroyWorldPlaque } from '../ui/worldPlaque.js';   // PX21c, WORLD-HOVER: one seam, one plaque
 import { isEnhanced } from '../systems/uiSkin.js';
 import { combatVisualsOn, foeDraw, markConcealedHit } from '../systems/combatVisuals.js';   // ECV1: what the enhanced skin draws for a concealed foe
@@ -2112,7 +2113,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // copied mount would have diverged the first time an arm grew.
   /** DR1: THE TWO SPELL WINDOWS THIS HOST MOUNTS NOW, and the one door
    *  they go through. `mountSpellWindow` is worldModes'
-   *  mountSpellWindow DUNGEON ARM (worldModes.js:1121,
+   *  mountSpellWindow DUNGEON ARM (worldModes.js:1123,
    *  `dungeonCtx?.showOverlay(win)`) resolved to what it actually
    *  calls here - this file's own pushDungeonWindow, which IS
    *  UserInterfaceManager.PushWindow. So a spell window raised over an
@@ -2622,7 +2623,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // NEXT updateMissiles pass to fill. But the push lands in a
     // MICROTASK - this is async and its one caller does not await it -
     // and both hosts draw dynamicDraws BEFORE they call drawFoes
-    // (dungeon.js:1009 against :1048; worldModes.js:6220 against :6244).   // QS6: both pairs' SECOND half was stale before this slice - they named neither `drawFoes` call, and a positional bump would have moved a wrong number by the right offset; re-resolved by content
+    // (dungeon.js:1009 against :1048; worldModes.js:6265 against :6289).   // QS6: both pairs' SECOND half was stale before this slice - they named neither `drawFoes` call, and a positional bump would have moved a wrong number by the right offset; re-resolved by content
     // So the very next frame drew the arrow with a NULL matrix, and
     // `uniformMatrix4fv(uModel, false, null)` throws - Float32List is
     // a non-nullable WebIDL union. Firing a bow killed the frame loop,
@@ -3180,7 +3181,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
               // this host was the FOURTH BODY of the player-arrow law
               // and is now the fourth CALLER. combat/arrowFlight.js's
               // playerArrowHitFoe is the one copy world.js:11359,
-              // exterior.js:4786 and worldModes.js:6372 already ran;
+              // exterior.js:4786 and worldModes.js:6417 already ran;
               // the flag said the divergence would bite and it already
               // had. This copy splashed at the ARROW TIP
               // (`[m.pos[0], m.pos[1], m.pos[2]]`) on the claim that
@@ -4661,12 +4662,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       collider,
       canvas,
       contents: api.lootContents,
-      // WORLD-HOVER: the ladder is the NEXT slice's - until it lands this
-      // host names only what PX21c named, and everything else draws
-      // nothing at all rather than borrowing a word that is not its own.
-      // (A door labelled "Loot" is worse than a door labelled nothing.)
-      name: (key) => (key.startsWith('corpse:') ? { title: 'Remains' }
-        : (key.startsWith('loot:') || key.startsWith('droppedLoot:')) ? { title: 'Loot' } : null),
+      name: api.hoverName,   // WORLD-HOVER: the mod's ladder, the port's own objects, then whatever the host stands
     });
     const _mobileBatches = [];   // C11: the frame's live sprite-mobile quads
     if (playerFeet) { lastPlayerFeet = [...playerFeet]; lastPlayerHeight = playerHeight; }   // ROAD-H H2: the enemy AoC blast reads the player's live capsule through castEnemySpell
@@ -5449,8 +5445,56 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   }
 
   // WORLD-HOVER: the host-registered halves of the activation target
-  // list (see addActivationTargets below).
+  // list and of the naming ladder (see addActivationTargets and
+  // addActivationNamer below). The context's own namer runs LAST, so a
+  // host can override a word for a family it stands differently.
   const _hostTargets = [];
+  const _hostNamers = [];
+
+  /**
+   * The context's own arm of the naming ladder: World Tooltips' words
+   * for what a dungeon stands, each cited to the mod's source.
+   *
+   * It answers NOTHING it does not know, which is the mod's own
+   * behaviour (an empty `ret` leaves the tooltip down, .cs:265) and
+   * what stops an unported family labelling itself with its key string.
+   */
+  function _dungeonHoverName(key) {
+    const modOn = worldTooltipsOn();
+    const hide = hideInteractTooltip();
+    // PX21c's loot rows come first and are NOT the mod's - they are
+    // the port's own departure and predate its arrival, so they answer
+    // whether the mod is switched on or off.
+    if (key.startsWith('corpse:')) {
+      const f = foes[Number(key.split(':')[1])];
+      // .cs:525 - the entity's name and "(dead)".
+      return f ? { title: corpseName(enemyDisplayName(f.mobileType)) } : null;
+    }
+    if (key.startsWith('loot:') || key.startsWith('droppedLoot:')) {
+      // .cs:537-548 - a pile of ONE is named by that one item; the
+      // port lists the rest UNDER this title rather than stopping here.
+      return { title: lootPileName(api.lootContents(key)) };
+    }
+    if (!modOn) return null;
+    if (key.startsWith('door:') || key.startsWith('act:')) {
+      const o = actions.objects.get(key) ?? null;
+      if (!o) return null;
+      // .cs:634-643 - an action door says "Door", and its lock level
+      // when it is locked. DaggerfallActionDoor.IsLocked is
+      // currentLockValue > 0.
+      if (o.kind === 'door') return actionDoorName((o.currentLockValue ?? 0) > 0, o.currentLockValue ?? 0);
+      // .cs:399-470 - Direct/Direct6/MultiTrigger only, by model id.
+      const t = actionName(o.triggerFlag, o.modelIdNum, { hideInteract: hide });
+      return t ? { title: t } : null;
+    }
+    return null;
+  }
+  const _namer = composeNamer([
+    _dungeonHoverName,
+    (key) => droppedTorches.hoverName?.(key) ?? null,   // HT1, through the mod's extension API
+    (key) => camps.hoverName?.(key) ?? null,            // SURV3/HEARTH1, likewise
+    (key, hit) => composeNamer(_hostNamers)(key, hit),  // ...and whatever the host stands
+  ]);
 
   const api = {
     // AUDIT 19 / 1:1: SelectCurrentSong's dungeon arm seeds DFRandom with
@@ -6654,6 +6698,30 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       _hostTargets.push(fn);
       return () => { const i = _hostTargets.indexOf(fn); if (i >= 0) _hostTargets.splice(i, 1); };
     },
+    /** WORLD-HOVER: the naming half of the same seam - the mod's own
+     *  extension API (vendor .cs:225-257), insertion order, first
+     *  answer with a title wins. A host registers a namer for each
+     *  family it registered targets for, so the two halves cannot
+     *  drift apart: a family nobody stands is a family nobody names. */
+    addActivationNamer(fn) {
+      if (typeof fn !== 'function') return () => {};
+      _hostNamers.push(fn);
+      return () => { const i = _hostNamers.indexOf(fn); if (i >= 0) _hostNamers.splice(i, 1); };
+    },
+    /**
+     * WORLD-HOVER: THE DUNGEON'S OWN WORDS - World Tooltips' ladder
+     * (systems/worldTooltips.js) over the families this context owns,
+     * then the port-own objects through the mod's extension API, then
+     * whatever the HOST registered. Insertion order is priority and
+     * the first answer with a title wins, which is the mod's own law
+     * (vendor .cs:225-257).
+     *
+     * Everything the mod names is gated on ITS switch; the loot rows
+     * are PX21c's and are not, which is why `loot:`/`corpse:`/
+     * `droppedLoot:` still answer with the switch off. That split is
+     * recorded on the mod's Features row in as many words.
+     */
+    hoverName(key, hit) { return _namer(key, hit); },
     dungeonActivationTargets() {
       // effects ride their precomputed aabb (crash fix, audit 2026-08-16)
       return composeActivationTargets([...activationTargets(actions.objects), ...lootTargets()], _hostTargets);

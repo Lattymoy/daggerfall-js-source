@@ -3336,6 +3336,7 @@ body.draglock .wornrow, body.draglock .wornmap { touch-action: none; }
   text-shadow: 2px 2px 0 rgba(0,0,0,0.85); }
 .wplaque.on { display: block; }
 .wplaque-title { font-size: 15px; line-height: 1.4; text-align: center; color: #d8cfae; }
+.wplaque-titleline { display: block; }
 .wplaque-sub { font-size: 12px; line-height: 1.4; text-align: center; color: #7d7460; }
 /* PX21c's head rule, re-homed. Its TYPOGRAPHY retires with it - 11px
    uppercase letterspaced was a KIND label ("LOOT", "REMAINS"), and the

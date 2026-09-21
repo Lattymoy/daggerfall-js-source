@@ -46,9 +46,12 @@ test('F016: the static NPC name bank is the REGION\'s, and the race path is gone
   // every host call site passes the region's bank. AUDIT 58 (talk
   // lane) added the THIRD: PresentNPCInfo (PlayerActivate.cs:1484-1486)
   // speaks StaticNPC.DisplayName too, so the Info arm reads the same
-  // bank as the two StaticNPCClick sites.
+  // bank as the two StaticNPCClick sites. WORLD-HOVER added the
+  // FOURTH, and for the same reason one step earlier: the plaque names
+  // a person BEFORE the click, so it must read the same bank or the
+  // hover and the click would call one person two things.
   const wm = src('scenes/worldModes.js');
-  assert.equal((wm.match(/nameBank: currentNameBank\(\)/g) ?? []).length, 3, 'every static-NPC name site');
+  assert.equal((wm.match(/nameBank: currentNameBank\(\)/g) ?? []).length, 4, 'every static-NPC name site');
   assert.ok(wm.includes('const currentNameBank = () => getNameBankOfRegion('), 'GetNameBankOfCurrentRegion');
 });
 

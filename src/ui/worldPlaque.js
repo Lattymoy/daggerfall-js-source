@@ -106,7 +106,16 @@ function paint(n, f) {
   n.classList.toggle('has-list', f.kind === 'items');
   const title = document.createElement('div');
   title.className = 'wplaque-title';
-  title.textContent = f.title;
+  // The mod joins a door's label with `\r` - "To\rPrivateer's Hold" -
+  // and that IS a line break, not a separator to flatten. One node per
+  // line inside the one title block, so the `has-list` divider still
+  // sits under the whole label rather than between its halves.
+  for (const line of String(f.title).split('\n')) {
+    const l = document.createElement('div');
+    l.className = 'wplaque-titleline';
+    l.textContent = line;
+    title.append(l);
+  }
   n.append(title);
   for (const s of f.subs) {
     const sub = document.createElement('div');

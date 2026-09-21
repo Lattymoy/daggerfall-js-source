@@ -184,9 +184,13 @@ test('WORLD2: the hosts by source - the dungeon host\'s hit door (the striker\'s
   assert.match(d, /    foesFrame,\s*applyFoes,\s*applyHit,\s*setAuthority,\s*isAuthority: \(\) => _authority,/, 'the API');
   const m = rd('src/scenes/worldModes.js');
   assert.match(m, /onFoeHit: \(hit\) => host\.onFoeHit\?\.\(hit\),/, 'the hit routed into the build');
-  // WORLD-HOVER put the activation-target registrations between these two,
-  // so the pin holds the ORDER by content rather than by adjacency.
-  assert.match(m, /dungeonCtx = ctx;[\s\S]{0,3000}?_dungeonAuthority = host\.dungeonAuthority\?\.\(\) \?\? true; ctx\.setAuthority\?\.\(_dungeonAuthority\);/, 'a dungeon built under the seat as it stands');
+  // WORLD-HOVER put the activation-target and namer registrations
+  // between these two lines, so the pin holds the ORDER by content
+  // rather than by adjacency - a character-counted window silently
+  // stops applying the moment anything lands inside it.
+  const _mount = m.indexOf('dungeonCtx = ctx;');
+  const _seat = m.indexOf('_dungeonAuthority = host.dungeonAuthority?.() ?? true; ctx.setAuthority?.(_dungeonAuthority);');
+  assert.ok(_mount > 0 && _seat > _mount, 'a dungeon built under the seat as it stands');
   assert.match(m, /setDungeonAuthority\(on\) \{ _dungeonAuthority = !!on; dungeonCtx\?\.setAuthority\?\.\(_dungeonAuthority\); \},/, 'the seat kept for the next dungeon');
   assert.match(m, /dungeonFoesFrame\(full = false\) \{ return mode === 'dungeon' && dungeonCtx \? \(dungeonCtx\.foesFrame\?\.\(full\) \?\? null\) : null; \},/);
   assert.match(m, /applyDungeonFoes\(id, data\) \{ return mode === 'dungeon' && dungeonCtx \? !!dungeonCtx\.applyFoes\?\.\(data, id\) : false; \}/, 'the host\'s id rides in (A1)');

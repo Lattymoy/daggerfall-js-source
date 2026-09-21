@@ -121,7 +121,9 @@ import { ChoiceWindow } from '../ui/talkWindow.js';
 import { FntFile } from '../formats/fntFile.js';
 import { makeFont } from '../ui/text.js';
 import { hudScale } from '../ui/hud.js';
-import { containerTextureRecord } from '../systems/containers.js';   // WORLD-HOVER: the texture record is DERIVED at its one reader, off the stored model id
+import { containerTextureRecord } from '../systems/containers.js';
+import { staticDoorName, npcHoverName, questResourceName } from '../systems/worldTooltips.js';   // WORLD-HOVER: the mod's ladder for the families THIS host stands
+import { LOCATION_TYPES } from '../formats/mapsFile.js';   // WORLD-HOVER: .cs:775-781 - a dungeon exit names its town, or the region   // WORLD-HOVER: the texture record is DERIVED at its one reader, off the stored model id
 import { isShop, isRepairShop, stockShopShelf, stockHouseContainer, PRIVATE_PROPERTY_TEXT_ID, calculateCost, calculateTradePrice, regionPriceAdjustment, SHOP_BUYS_GROUPS, shopBuysItem, stockSoulGems, stockGuildMagicItems, stockGuildPotions, createStockedDate, needsRestock } from '../systems/shopStock.js';   // X6: the soul-gem shelf; G4: the two guild shelves; A2: the daily restock
 import { identifySpellPass, identifiedTallyText, NOT_ENOUGH_SPELL_POINTS_TEXT } from '../systems/tradeModes.js';   // X7: the Identify SPELL's per-item roll; F067: its magicka refusal
 import { liveBundles, dispelBundle, dispellableBundles, DISPEL_MAGIC_TEXT } from '../systems/mysticism.js';   // X10: the Dispel Magic picker
@@ -1364,10 +1366,10 @@ export function createWorldModes(host) {
    *  billboard is CENTRE-anchored, so the base ends up ON the marker
    *  inside a building and half a height BELOW it inside a dungeon.
    *  This port's billboard shader is BOTTOM-anchored (position = base,
-   *  the C11 law dungeonContext.js:1741 states), so the same visual
+   *  the C11 law dungeonContext.js:1742 states), so the same visual
    *  result needs the shift on the DUNGEON side - which is exactly the
    *  shift the dungeon's own RDB flats already take
-   *  (dungeonContext.js:1639, `y - size.h / 2`), and which a building's
+   *  (dungeonContext.js:1640, `y - size.h / 2`), and which a building's
    *  flats correctly do not (interiorContext.js passes its centers
    *  straight through).
    *
@@ -4165,6 +4167,9 @@ export function createWorldModes(host) {
   let exitReturn = null;
   let dungeonCtx = null;
   let _dungeonAuthority = true;   // WORLD2: who steps the layout's foes - me, unless a world room's host is another (the seat as last told)
+  // WORLD-HOVER: .cs:775-781 - the three location types whose dungeon
+  // exit names the settlement rather than the region.
+  const DUNGEON_EXIT_TOWN_TYPES = [LOCATION_TYPES.TownCity, LOCATION_TYPES.TownHamlet, LOCATION_TYPES.TownVillage];
   let dungeonLoc = null;    // B2: the mounted dungeon's dfLocation (playerInside's dungeon arm)
   let dungeonReturn = null; // entrance-door candidates of the group
   let transitioning = false;
@@ -5355,7 +5360,7 @@ export function createWorldModes(host) {
           hudMessageSink: (t) => questBridge?.notebook?.addMessage(t),
           // MAC1 J: and the relock the dungeon's pause door needs, on
           // the same threading - the context owns no canvas of its own
-          // (dungeonContext.js:5941), so the OUTER host's one rides in.
+          // (dungeonContext.js:5985), so the OUTER host's one rides in.
           // This is the most-played pause door of the six: world.js
           // gates its own Escape ladder on exterior mode, so underground
           // the key falls to routeKey -> ui/input.js:657 -> the
@@ -5416,6 +5421,46 @@ export function createWorldModes(host) {
       // rays: StaticNPCActivationDistance (:87) into activateStaticNpc,
       // which carries the Info/PresentNPCInfo split.
       ctx.addActivationTargets(() => (ctx.npcTargets?.() ?? []).map((pn, i) => ({ key: `person:${i}`, aabb: personAabb(pn), distance: STATIC_NPC_ACTIVATION_DISTANCE })));
+      // WORLD-HOVER: and the WORDS for the same three families, beside
+      // the targets. Both halves of a family stay together, because a
+      // family nobody stands is a family nobody should name - the
+      // plaque must never say something the press cannot reach.
+      //
+      // .cs:772-782 - a dungeon exit names the town it opens onto, or
+      // the REGION when it opens onto open country. The mod asks
+      // PlayerGPS for all three; this host is where they live.
+      ctx.addActivationNamer((key) => (key.startsWith('exit:') ? staticDoorName('dungeonExit', {
+        locationName: dungeonLoc?.Name ?? '',
+        regionName: buildingDirectory?.()?.regionName ?? '',
+        inTown: DUNGEON_EXIT_TOWN_TYPES.includes(dungeonLoc?.mapTableData?.locationType ?? -1),
+      }) : null));
+      // .cs:325-393 - the sixteen Daedra by their summoning billboard's
+      // record, else the NPC's own display name.
+      ctx.addActivationNamer((key) => {
+        if (!key.startsWith('person:')) return null;
+        const pn = (ctx.npcTargets?.() ?? [])[Number(key.split(':')[1])];
+        if (!pn) return null;
+        // The DISPLAY NAME is resolved by the port's own StaticNPC
+        // member - the same one the Info click speaks through - so the
+        // plaque and the click can never call one person two things.
+        const dict = townTalk?.factionDict ?? null;
+        const display = staticNpcName(staticNpcData(pn, { ...(questSceneCtx?.() ?? {}), buildingKey: 0,
+          ...(pn?.context != null ? { context: pn.context } : {}) }),
+        { getFaction: (id) => dict?.get(id) ?? null, nameBank: currentNameBank() });
+        const t = npcHoverName(display, { archive: pn.archive ?? -1, record: pn.record ?? -1 });
+        return t ? { title: t } : null;
+      });
+      // .cs:481-512 - a quest ITEM stand is named by the long name, and
+      // one billboard by hand. A quest PERSON or FOE stand answers
+      // nothing, exactly as the mod's `is Item` gate does.
+      ctx.addActivationNamer((key) => {
+        if (!key.startsWith('questflat:')) return null;
+        const st = dungeonQuestFlats[Number(key.split(':')[1])];
+        const res = st?.behaviour?.targetResource ?? null;
+        if (!res || res.isPerson === true || res.isFoe === true) return null;
+        const t = questResourceName(res.daggerfallItem ?? res.item ?? null, { archive: st.archive ?? -1, record: st.record ?? -1 });
+        return t ? { title: t } : null;
+      });
       _dungeonAuthority = host.dungeonAuthority?.() ?? true; ctx.setAuthority?.(_dungeonAuthority);   // WORLD2: a dungeon built while another hosts starts as puppets
       // P10 host parity (2026-08-16 audit: only the standalone scene
       // installed the warp - a world-mode teleporter logged and
@@ -8704,7 +8749,7 @@ export function createWorldModes(host) {
      *  FLAG ONLY and presence-gated - both laws now stated once, in
      *  combat/playerWeapon.js's applyWeaponPose, with the citation.
      *  HARD2c: this used to spell them out, and named `world.js:5436`
-     *  and `dungeonContext.js:5951` for its two sibling copies - lines
+     *  and `dungeonContext.js:5995` for its two sibling copies - lines
      *  that had moved to :4418 and :5457. Three copies of a two-line
      *  law, and even the comment pointing between them had gone stale. */
     applyWeaponPose(pose) {

@@ -435,3 +435,179 @@ test('WORLD-HOVER: the seam composes the context\'s own families and the host\'s
   assert.deepEqual(composeActivationTargets(own, hosts).map((t) => t.key), ['loot:0', 'person:0'],
     'and a producer that leaves takes its family with it');
 });
+
+// ── WORLD TOOLTIPS' NAMING LADDER ────────────────────────────────
+//
+// The mod's own words, ported 1:1 from `vendor/world-tooltips/Scripts/
+// Modded_HUDTooltipWindow.cs`. Every assertion names the line it holds.
+
+test('WORLD TOOLTIPS: the sixteen Daedra by BILLBOARD RECORD, which is not the summoning table\'s order', async () => {
+  const wt = await import('../src/systems/worldTooltips.js');
+  const ds = await import('../src/systems/daedraSummoning.js');
+  // .cs:332-390 - archive 175, records 0..15.
+  assert.equal(wt.DAEDRA_BY_RECORD.length, 16);
+  assert.equal(wt.npcHoverName('Somebody', { archive: 175, record: 0 }), 'Azura');
+  assert.equal(wt.npcHoverName('Somebody', { archive: 175, record: 14 }), 'Sheogorath');
+  assert.equal(wt.npcHoverName('Somebody', { archive: 175, record: 15 }), 'Vaermina');
+  // ...and anything that is NOT a summoning billboard keeps its own name.
+  assert.equal(wt.npcHoverName('Marcus Grey', { archive: 334, record: 0 }), 'Marcus Grey');
+  assert.equal(wt.npcHoverName('Marcus Grey', { archive: 175, record: 99 }), 'Marcus Grey', 'a record past the table');
+  assert.equal(wt.npcHoverName('', { archive: 334, record: 1 }), null, 'a nameless NPC says nothing');
+  // THE TWO TABLES ARE DIFFERENT ORDERINGS OF ONE PANTHEON, on purpose.
+  // systems/daedraSummoning.js is by factionId and its index 8 is
+  // load-bearing for the summoning itself; this one is by billboard
+  // record. Re-sorting either to serve the other breaks the other.
+  const summoning = ds.DAEDRA.map((d) => d.name);
+  assert.notDeepEqual([...wt.DAEDRA_BY_RECORD], summoning, 'two orderings, not one');
+  assert.equal(summoning[8], 'Sheogorath', 'the summoning table\'s load-bearing index');
+  assert.equal(wt.DAEDRA_BY_RECORD[8], 'Meridia', 'and the billboard table disagrees with it, correctly');
+  // The spelling difference is real and deliberate: this table is the
+  // MOD's, verbatim; the other is Daggerfall's own.
+  assert.ok(summoning.includes('Vaernima'), 'the port\'s summoning table keeps Daggerfall\'s spelling');
+  assert.ok(wt.DAEDRA_BY_RECORD.includes('Vaermina'), 'the mod\'s table keeps the mod\'s');
+});
+
+test('WORLD TOOLTIPS: an action object is named by its model, and an unlisted MultiTrigger says NOTHING', async () => {
+  const { actionName, INTERACT_TEXT } = await import('../src/systems/worldTooltips.js');
+  const { TRIGGER_FLAGS } = await import('../src/world/rdbLayout.js');
+  // .cs:421-431 - the three the mod names outright.
+  assert.equal(actionName(TRIGGER_FLAGS.Direct, 74037), 'Wheel');
+  assert.equal(actionName(TRIGGER_FLAGS.Direct, 61027), 'Lever');
+  assert.equal(actionName(TRIGGER_FLAGS.Direct6, 61028), 'Lever');
+  assert.equal(actionName(TRIGGER_FLAGS.Direct, 74143), 'The Mantella');
+  // .cs:402-404 - only Direct, Direct6 and MultiTrigger are named at
+  // all. The rest are chain links and traps the player is not meant to
+  // read as interactive.
+  for (const t of [TRIGGER_FLAGS.None, TRIGGER_FLAGS.Collision01, TRIGGER_FLAGS.Collision03,
+    TRIGGER_FLAGS.Collision09, TRIGGER_FLAGS.Attack, TRIGGER_FLAGS.Door]) {
+    assert.equal(actionName(t, 74037), null, `trigger ${t} is not named`);
+  }
+  // .cs:466-467 - a named-trigger object with no word of its own.
+  assert.equal(actionName(TRIGGER_FLAGS.Direct, 12345), INTERACT_TEXT);
+  assert.equal(actionName(TRIGGER_FLAGS.Direct, 12345, { hideInteract: true }), null,
+    'HideDefaultInteractTooltip - the author\'s own knob, so the main quest\'s puzzles are not given away');
+  // .cs:458-461 - THE MULTITRIGGER RULE, and the reason for it:
+  // MultiTrigger is the flag on collision plates and trap volumes, so
+  // an unlisted one is SILENCED outright rather than defaulted.
+  assert.equal(actionName(TRIGGER_FLAGS.MultiTrigger, 12345), null, 'a pressure pad is not labelled');
+  assert.equal(actionName(TRIGGER_FLAGS.MultiTrigger, 74037), 'Wheel', 'but a named one still speaks');
+  // .cs:432-438 - four the mod lets through WITHOUT a name of their own.
+  for (const id of [62323, 72019, 74215, 74225]) {
+    assert.equal(actionName(TRIGGER_FLAGS.MultiTrigger, id), INTERACT_TEXT, `${id} is allowed through`);
+    assert.equal(actionName(TRIGGER_FLAGS.MultiTrigger, id, { hideInteract: true }), null);
+  }
+});
+
+test('WORLD TOOLTIPS: a house container is named by its FULL model id, which `% 100` could not tell apart', async () => {
+  const { houseContainerName, INTERACT_TEXT } = await import('../src/systems/worldTooltips.js');
+  const { containerTextureRecord } = await import('../src/systems/containers.js');
+  // .cs:558-629. The reason WORLD-HOVER's groundwork slice made the
+  // container record carry its model id: the derived texture record is
+  // LOSSY, and these two both read 3.
+  assert.equal(containerTextureRecord(41003), containerTextureRecord(41803), 'the derivation cannot tell them apart');
+  assert.equal(houseContainerName(41003), 'Wardrobe');
+  assert.equal(houseContainerName(41803), 'Dresser');
+  for (const [id, want] of [[41004, 'Wardrobe'], [41800, 'Wardrobe'], [41801, 'Wardrobe'],
+    [41007, 'Cabinets'], [41802, 'Cabinets'], [41810, 'Cabinets'],
+    [41027, 'Shelf'], [41034, 'Dresser'], [41806, 'Dresser'],
+    [41032, 'Cupboard'], [41814, 'Cupboard'],
+    [41815, 'Crate'], [41834, 'Crate'], [41811, 'Chest'], [41813, 'Chest']]) {
+    assert.equal(houseContainerName(id), want, String(id));
+  }
+  // .cs:627-628 - the mod's own default for a furniture model its table
+  // does not list.
+  assert.equal(houseContainerName(41999), INTERACT_TEXT);
+  assert.equal(houseContainerName(41999, { hideInteract: true }), null);
+});
+
+test('WORLD TOOLTIPS: a pile of ONE is named by that item; a corpse is named by who it was', async () => {
+  const { lootPileName, corpseName, LOOT_PILE_TEXT } = await import('../src/systems/worldTooltips.js');
+  // .cs:537-548 - exactly one item names the pile, with its stack count.
+  const ruby = { name: 'Ruby', templateIndex: -1 };
+  assert.equal(lootPileName([]), LOOT_PILE_TEXT);
+  assert.equal(lootPileName(null), LOOT_PILE_TEXT);
+  assert.equal(lootPileName([ruby, { name: 'Helm', templateIndex: -1 }]), LOOT_PILE_TEXT, 'two is a pile');
+  assert.match(lootPileName([ruby]), /Ruby/);
+  assert.match(lootPileName([{ ...ruby, stackCount: 4 }]), /\(4\)$/, 'the stack count, in parentheses');
+  assert.doesNotMatch(lootPileName([{ ...ruby, stackCount: 1 }]), /\(1\)$/, 'a stack of one is not a count');
+  // .cs:525
+  assert.equal(corpseName('Skeletal Warrior'), 'Skeletal Warrior (dead)');
+  assert.equal(corpseName(''), 'Body (dead)', 'something nameless is still a body');
+});
+
+test('WORLD TOOLTIPS: a door says its lock level only when it is locked', async () => {
+  const { actionDoorName } = await import('../src/systems/worldTooltips.js');
+  // .cs:634-643 - the mod joins the two with `\r`; the port carries the
+  // second as a sub-line, because a DOM line is a node.
+  assert.deepEqual(actionDoorName(false, 0), { title: 'Door' });
+  assert.deepEqual(actionDoorName(true, 12), { title: 'Door', subs: ['Lock Level: 12'] });
+});
+
+test('WORLD TOOLTIPS: a static door names where it goes, its lock, and the shop it says is shut', async () => {
+  const { staticDoorName } = await import('../src/systems/worldTooltips.js');
+  const { BUILDING_TYPES } = await import('../src/world/buildingNames.js');
+  // .cs:763-771 - stepping out, or into a dungeon, names the place.
+  assert.deepEqual(staticDoorName('buildingExit', { locationName: 'Daggerfall' }), { title: 'To\nDaggerfall' });
+  assert.deepEqual(staticDoorName('dungeonEntrance', { locationName: 'Privateer\'s Hold' }), { title: 'To\nPrivateer\'s Hold' });
+  // .cs:775-781 - a dungeon exit names its TOWN, or the region when
+  // there is no town, because you step out into open country.
+  assert.deepEqual(staticDoorName('dungeonExit', { locationName: 'Daggerfall', regionName: 'Daggerfall', inTown: true }),
+    { title: 'To\nDaggerfall' });
+  assert.deepEqual(staticDoorName('dungeonExit', { locationName: 'Privateer\'s Hold', regionName: 'Tigonus', inTown: false }),
+    { title: 'To\nTigonus Region' });
+  // .cs:724-731 - Town23 is the city wall, which has no name of its own.
+  assert.deepEqual(staticDoorName('building', { buildingType: BUILDING_TYPES.Town23, locationName: 'Daggerfall', unlocked: true }),
+    { title: 'To\nDaggerfall City Walls', subs: [] });
+  // .cs:733-736 - the lock level, only when locked, off the port's own
+  // GetBuildingLockValue (quality / 2).
+  const shut = staticDoorName('building', { displayName: 'The Rusty Sword', buildingType: BUILDING_TYPES.GeneralStore, unlocked: false, quality: 20 });
+  assert.equal(shut.title, 'To\nThe Rusty Sword');
+  assert.equal(shut.subs[0], 'Lock Level: 10');
+  assert.match(shut.subs[1], /^Store is closed\. Open from \d+:00 to \d+:00\.$/, 'the sentence, from its ONE home');
+  // TWO DEPARTURES OF THE MOD'S OWN FROM PlayerActivate, ported as the
+  // mod's rather than folded into the port's pinned activateBuilding:
+  // the gate is `<= Palace` where DFU's is `< Temple`...
+  const temple = staticDoorName('building', { displayName: 'Temple', buildingType: BUILDING_TYPES.Temple, unlocked: false, quality: 20 });
+  assert.equal(temple.subs.length, 2, 'the mod tells you a temple is shut; DFU does not');
+  // ...and a Palace substitutes its own word for "Store".
+  const palace = staticDoorName('building', { displayName: 'Castle Daggerfall', buildingType: BUILDING_TYPES.Palace, unlocked: false, quality: 20 });
+  assert.match(palace.subs[1], /^Palace is closed\./);
+  // An unlocked building says only where it goes.
+  const open = staticDoorName('building', { displayName: 'The Rusty Sword', buildingType: BUILDING_TYPES.GeneralStore, unlocked: true });
+  assert.deepEqual(open.subs, []);
+  // ...and a door onto nothing named says nothing at all.
+  assert.equal(staticDoorName('building', { displayName: '', unlocked: true }), null);
+  assert.equal(staticDoorName('buildingExit', { locationName: '' }), null);
+  assert.equal(staticDoorName('nonsense', {}), null);
+});
+
+test('WORLD TOOLTIPS: a quest ITEM stand is named; the Totem is named by hand', async () => {
+  const { questResourceName, TOTEM_TEXT } = await import('../src/systems/worldTooltips.js');
+  // .cs:493-505 - archive 211 record 54, before the resolver runs.
+  assert.equal(questResourceName(null, { archive: 211, record: 54 }), TOTEM_TEXT);
+  assert.equal(questResourceName({ name: 'Ruby', templateIndex: -1 }, { archive: 211, record: 54 }), TOTEM_TEXT,
+    'the billboard wins over the item');
+  assert.match(questResourceName({ name: 'Ruby', templateIndex: -1 }, { archive: 211, record: 0 }), /Ruby/);
+  assert.equal(questResourceName(null, { archive: 211, record: 0 }), null, 'no item, no word');
+});
+
+test('WORLD TOOLTIPS: the naming ladder is insertion order, first answer with a title wins', async () => {
+  const { composeNamer } = await import('../src/systems/worldHover.js');
+  // The mod's extension API (vendor .cs:225-257): a Map keyed by reach,
+  // walked in insertion order, FIRST NON-EMPTY WINS, run before the
+  // mod's own ladder. The port keeps the law and drops the key, because
+  // reach is already decided by the pick.
+  const n = composeNamer([
+    (k) => (k === 'a' ? { title: 'first' } : null),
+    (k) => (k === 'a' ? { title: 'second' } : null),
+    (k) => (k === 'b' ? { title: 'b' } : null),
+    null,
+    (k) => (k === 'c' ? { title: '' } : null),   // an empty title is no answer
+    (k) => (k === 'c' ? { title: 'c' } : null),
+  ]);
+  assert.equal(n('a').title, 'first', 'insertion order is priority');
+  assert.equal(n('b').title, 'b');
+  assert.equal(n('c').title, 'c', 'an empty title does not stop the walk');
+  assert.equal(n('d'), null, 'a key nobody knows draws nothing');
+  assert.equal(composeNamer(null)('a'), null);
+});
