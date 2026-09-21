@@ -220,11 +220,51 @@ that inks nothing.
   where it sorts unpredictably and drags a storey to nowhere. Only a
   guard written as `!(len > 0)` catches it, and only a fixture with a
   NaN vertex proves so.
-- **EM3 — the automap sheet**, and the key. The floor plan in the world map's pen,
-  visited-this-run and previously-revealed as two pen weights (DFU's
-  grayscale law, as ink), the player caret, the entrance beacon, doors,
-  teleporters and user notes; the floor strip. Wired into the dungeon
-  host and both interior hosts.
+- **EM3 — the automap sheet**, and the key. SHIPPED:
+  `ui/inkAutomap.js` (12 pins), `ui/automapSheet.js` (16 pins),
+  `ui/automapDoor.js`, and the dungeon host plus both interior hosts
+  wired through it. The wall is the outline of what was revealed, the
+  wash is the floor walked this run (DFU's grayscale law read as ink
+  rather than as brightness), the caret points where the player looks,
+  the beacon breathes at the way in, and the floor strip runs down the
+  right edge in the tab strip's own hand.
+
+  **The strip's seam bug, found by a pin rather than by reading.** The
+  floor strip's rows sit a gap apart narrower than two grab bands, so
+  the first-match hit handed every press near a seam to the row ABOVE:
+  a player aiming at Floor 1 got Floor 2, every time. Fixed in the
+  shared grab law — one `grabHit` for both inked strips — by giving an
+  overlap to the NEAREST box, measured to the ink rather than to the
+  grown box. Shrinking the band to half a gap was the other option and
+  was not taken: a band that stops being generous stops doing its job.
+
+  **The sheet's own two findings.** The level was being derived once per
+  FRAME rather than once per level, because the frame was keyed on the
+  model wrapper's identity and a host is free to hand a fresh bag back
+  on every call; it is keyed on the reveal index's own `rows` array now,
+  which is built once per level. And the static key read the CACHE, so a
+  storey change made it answer "none" until the next cut — and the
+  window's kept ink layer is keyed on it, so the old storey's ink would
+  have sat under the new storey's rule.
+
+  **`key` joined the contract here**, held back through EM1 on purpose:
+  deriving a hook's shape from one implementation is how a hook comes
+  out the wrong shape, and the automap gave it the second. The world
+  sheet answers false to every key — its own (the resume prompt, the
+  info box, the travel panel's S/T/N/B) are about the WINDOW's phases
+  rather than about the bay — and that is recorded rather than left to
+  look like an oversight.
+
+  **CRASH2's closed-population gate was widened, not relaxed.** A skin
+  door made `interior.js`'s slot stop being a set of `new X(...)`
+  literals and the pin went red, correctly: it had lost sight of what
+  could arrive. `test/windowContract.mjs` follows a door now — its arms
+  are the `new` calls in the door module, so the set is still exactly
+  knowable, and each class is resolved to the module that DECLARES it by
+  looking rather than by guessing a filename from the class name
+  (`HeldMapWindow` lives in `heldMap.js`, and the guess
+  `heldMapWindow.js` is the kind of silent miss that library exists to
+  prevent). Any future door works with no edit.
 - **EM4 — the town sheet.** The town plan in the same pen over the
   block layout bytes and the building summaries, with the discovered
   nameplates in the hand-lettered face and the quest-marked residences.

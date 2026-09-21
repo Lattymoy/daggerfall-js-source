@@ -15,7 +15,10 @@ import { layoutDungeon } from '../world/dungeonLayout.js';
 import { executeConsoleCommand } from '../systems/consoleCommands.js';   // E3: the probe door runs the real database
 import { enterDungeonAutomap, exitDungeonAutomap, buildRevealIndex, bindAutomapLayout, automapRevealTick, automapEntranceTick, capsuleCentreFromEye, automapDungeonKey, SCAN_INTERVAL_S, recordTeleporterConnection, automapDebugTeleportMode, registerAutomapConsoleCommands } from '../systems/automap.js';   // A1; ROAD-C c2/S8 the teleport listener + the three console verbs, ROAD-E E3 on the command database
 import { automapWaterLevel, ELEMENT_NAMES } from '../systems/automapModel.js';   // ROAD-C c2/S1
-import { AutomapWindow, preloadAutomapArt, signalAutomapReset } from '../ui/automapWindow.js';   // A1: the M window; ROAD-C c2/S5: its native art + the reset signal
+import { signalAutomapReset } from '../ui/automapWindow.js';   // A1: the M window; ROAD-C c2/S5: its native art + the reset signal
+// EM3: the skin fork. The classic skin keeps DFU's 3D panel whole; the
+// enhanced one gets the held sheet with the dungeon's plan inked on it.
+import { createAutomapWindow, preloadAutomapArt, automapDoorReady } from '../ui/automapDoor.js';
 import { applyTextureTable } from '../world/dungeonTextures.js';
 import { createUseMagicItemWindow } from '../ui/useMagicItemWindow.js';   // UI1: the U key's window
 import { CANNOT_CHANGE_INDOORS } from '../ui/transportWindow.js';   // TR5: the indoors refusal
@@ -2053,7 +2056,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // copied mount would have diverged the first time an arm grew.
   /** DR1: THE TWO SPELL WINDOWS THIS HOST MOUNTS NOW, and the one door
    *  they go through. `mountSpellWindow` is worldModes'
-   *  mountSpellWindow DUNGEON ARM (worldModes.js:1113,
+   *  mountSpellWindow DUNGEON ARM (worldModes.js:1114,
    *  `dungeonCtx?.showOverlay(win)`) resolved to what it actually
    *  calls here - this file's own pushDungeonWindow, which IS
    *  UserInterfaceManager.PushWindow. So a spell window raised over an
@@ -2557,7 +2560,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // NEXT updateMissiles pass to fill. But the push lands in a
     // MICROTASK - this is async and its one caller does not await it -
     // and both hosts draw dynamicDraws BEFORE they call drawFoes
-    // (dungeon.js:1000 against :1039; worldModes.js:6194 against :6210).   // QS6: both pairs' SECOND half was stale before this slice - they named neither `drawFoes` call, and a positional bump would have moved a wrong number by the right offset; re-resolved by content
+    // (dungeon.js:1000 against :1039; worldModes.js:6195 against :6210).   // QS6: both pairs' SECOND half was stale before this slice - they named neither `drawFoes` call, and a positional bump would have moved a wrong number by the right offset; re-resolved by content
     // So the very next frame drew the arrow with a NULL matrix, and
     // `uniformMatrix4fv(uModel, false, null)` throws - Float32List is
     // a non-nullable WebIDL union. Firing a bow killed the frame loop,
@@ -3119,7 +3122,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
               // this host was the FOURTH BODY of the player-arrow law
               // and is now the fourth CALLER. combat/arrowFlight.js's
               // playerArrowHitFoe is the one copy world.js:11268,
-              // exterior.js:4769 and worldModes.js:6354 already ran;
+              // exterior.js:4769 and worldModes.js:6355 already ran;
               // the flag said the divergence would bite and it already
               // had. This copy splashed at the ARROW TIP
               // (`[m.pos[0], m.pos[1], m.pos[2]]`) on the claim that
@@ -5572,7 +5575,12 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
      *  idiom - an occupied slot refuses, the window closes itself). */
     toggleAutomap() {
       if (activeOverlay) return;
-      activeOverlay = new AutomapWindow({
+      // EM3: THE SKIN FORK, at the one place this host builds the map.
+      // The classic arm answers null without its native art and the
+      // slot stays empty, exactly as before; the enhanced arm reads no
+      // ARENA2 raster at all, so it is always ready.
+      if (!automapDoorReady()) return;
+      activeOverlay = createAutomapWindow({
         record: () => automapRec,
         drawList, dynamicDraws, texRemap,
         player: () => ({ feet: lastPlayerFeet, eye: _automapEye, yaw: _motorYaw }),
@@ -5590,6 +5598,11 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         // one, so the reset arm's default render mode is TRANSPARENT.
         // The interior arm that flips it is c2/S9's.
         insideBuilding: false,
+        // EM3: what the enhanced sheet needs beyond the classic bag -
+        // where the player is standing (the tab context mapTabs derives
+        // from) and what the strip calls this place.
+        where: () => ({ insideDungeon: true }),
+        title: dfLocation?.name ?? 'Dungeon',
         // ROAD-C c2/S8: the Ctrl+Shift debug-teleport click
         // (TryTeleportPlayerToDungeonSegmentAtScreenPosition, :858-870).
         // It goes through the SAME `onTeleport` door the Teleport action

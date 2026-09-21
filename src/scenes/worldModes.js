@@ -26,7 +26,8 @@ import { createBloodMarks } from '../combat/bloodMarks.js';   // BLOOD1a
 import { doorWorldAabb, doorWorldPosition, doorWorldNormal, interiorLanding, exteriorLanding, dungeonEntranceLanding, climbLadder, floorLanding, repositionFeetY } from '../player/enterExit.js';
 import { WORLD_FRAME } from '../render/renderer.js';   // AUDIT-EL F5
 import { startRestGroundedCheck, TELEPORT_FREEZE_S, motionBagOf } from '../player/motor.js';   // S40: the rest gate's grounded input; A6: DaggerfallAction.Teleport's physics settle; WW2: the one motion bag
-import { AutomapWindow, preloadAutomapArt, signalAutomapReset } from '../ui/automapWindow.js';   // ROAD-C c2/S9: the M window inside a building
+import { signalAutomapReset } from '../ui/automapWindow.js';   // ROAD-C c2/S9: the M window inside a building
+import { createAutomapWindow, preloadAutomapArt, automapDoorReady } from '../ui/automapDoor.js';   // EM3: the skin fork
 import { automapDungeonKey, getDungeonAutomap } from '../systems/automap.js';   // ROAD-C c2/S9: Automap.cs:2362-2379's read of the dungeon dictionary
 import { INTERIOR_MARKER } from '../world/interiorLayout.js';
 import { pickActivatable, pickActivatableHit, worldAabb, activationTargets, pickQuestFoe, pickFoe, rayAabb, presentNpcInfoText, DOOR_ACTIVATION_DISTANCE, TREASURE_ACTIVATION_DISTANCE } from '../player/activate.js';   // QG1: the foe-click door; AUDIT 58: PresentNPCInfo's one line; AUDIT 62 F16/F28: TI1's lock pick
@@ -1356,10 +1357,10 @@ export function createWorldModes(host) {
    *  billboard is CENTRE-anchored, so the base ends up ON the marker
    *  inside a building and half a height BELOW it inside a dungeon.
    *  This port's billboard shader is BOTTOM-anchored (position = base,
-   *  the C11 law dungeonContext.js:1682 states), so the same visual
+   *  the C11 law dungeonContext.js:1685 states), so the same visual
    *  result needs the shift on the DUNGEON side - which is exactly the
    *  shift the dungeon's own RDB flats already take
-   *  (dungeonContext.js:1587, `y - size.h / 2`), and which a building's
+   *  (dungeonContext.js:1590, `y - size.h / 2`), and which a building's
    *  flats correctly do not (interiorContext.js passes its centers
    *  straight through).
    *
@@ -5346,7 +5347,7 @@ export function createWorldModes(host) {
           hudMessageSink: (t) => questBridge?.notebook?.addMessage(t),
           // MAC1 J: and the relock the dungeon's pause door needs, on
           // the same threading - the context owns no canvas of its own
-          // (dungeonContext.js:5826), so the OUTER host's one rides in.
+          // (dungeonContext.js:5839), so the OUTER host's one rides in.
           // This is the most-played pause door of the six: world.js
           // gates its own Escape ladder on exterior mode, so underground
           // the key falls to routeKey -> ui/input.js:657 -> the
@@ -7475,7 +7476,8 @@ export function createWorldModes(host) {
      *  beacon at the entered door rather than a dungeon start marker. */
     toggleAutomap() {
       if (interiorOverlay || !interiorCtx) return;
-      interiorOverlay = new AutomapWindow({
+      if (!automapDoorReady()) return;   // EM3: the skin fork's gate
+      interiorOverlay = createAutomapWindow({
         record: () => interiorCtx.automapRecord(),
         drawList: interiorCtx.drawList, dynamicDraws: interiorCtx.dynamicDraws, texRemap: interiorCtx.texRemap,
         player: () => ({ feet: player.pos, eye: cam.pos, yaw: cam.yaw }),
@@ -7487,6 +7489,10 @@ export function createWorldModes(host) {
         indexSize: interiorCtx.automapModel.length,
         model: interiorCtx.automapModel,
         insideBuilding: true,   // IsPlayerInsideBuilding (window :587-596, :1871)
+        // EM3: a shop is INSIDE - Mac's own answer - so the strip offers
+        // the plan alone and calls it an Interior rather than a Dungeon.
+        where: () => ({ insideBuilding: true }),
+        title: interiorBuilding?.name ?? 'Interior',
       });
     },
     // PX15b: THE DIAL - four arms now that the interior ctx has four
@@ -8669,7 +8675,7 @@ export function createWorldModes(host) {
      *  FLAG ONLY and presence-gated - both laws now stated once, in
      *  combat/playerWeapon.js's applyWeaponPose, with the citation.
      *  HARD2c: this used to spell them out, and named `world.js:5434`
-     *  and `dungeonContext.js:5896` for its two sibling copies - lines
+     *  and `dungeonContext.js:5909` for its two sibling copies - lines
      *  that had moved to :4418 and :5457. Three copies of a two-line
      *  law, and even the comment pointing between them had gone stale. */
     applyWeaponPose(pose) {

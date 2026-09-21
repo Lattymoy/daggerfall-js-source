@@ -116,6 +116,7 @@ import {
   createSheetSlot, stripLayout, stripHit, paintStrip, stripFont,
 } from './mapStrip.js';
 import { mapContextOf } from '../systems/mapTabs.js';
+import { createAutomapSheet } from './automapSheet.js';
 import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
 import { quadPlacement } from './quadMap.js';   // MAP3: the sheet over the held paper's corners
 import { bindings } from './input.js';
@@ -430,6 +431,11 @@ export class HeldMapWindow {
     // so nothing a player can reach changes: the strip reads "The Bay"
     // and there is no second tab to press.
     this._sheets = new Map([['world', this._worldSheet()]]);
+    // EM3: the dungeon and interior hosts hand `automap` - the reveal
+    // record, the reveal index, the player and the way in. A host that
+    // hands none (the world host's travel key) simply has no automap
+    // sheet, and the slot's narrowing keeps the tab off the paper.
+    if (deps.automap) this._sheets.set('automap', createAutomapSheet(deps.automap));
     this._slot = createSheetSlot({
       context: mapContextOf(deps.where?.() ?? {}),
       wanted: deps.openOnSheet ?? null,
@@ -493,6 +499,11 @@ export class HeldMapWindow {
     this._resumeAsked = false;  // once per open
 
     this._mountChrome();
+    // EM3: the sheet the window OPENS on claims its chrome as well - it
+    // never passes through _selectSheet, and a world map that opened
+    // without its search box was the first thing this caught.
+    this._showChrome(['search', 'ports', 'legend', 'card'], false);
+    this._sheet?.mount?.();
     this._tornDown = false;
     this._probeFn = () => JSON.stringify({
       phase: this._phase,
@@ -567,6 +578,14 @@ export class HeldMapWindow {
       return;
     }
     if (this._phase !== 'map') return;
+    // EM3: THE LIVE SHEET IS ASKED FIRST, once the window's own boxes
+    // have had their say - they hold the whole sheet, so a floor key
+    // under an open prompt would move a map the player cannot see.
+    if (!this._panel && !this._panelState?.confirm && this._sheet?.key?.(code, e)) {
+      e?.preventDefault?.();
+      this._dirty = true;
+      return;
+    }
     if (this._panelState?.confirm) {
       if (code === 'KeyY') { this._confirmDiseased(true); return; }
       if (code === 'KeyN') { this._confirmDiseased(false); return; }
@@ -943,6 +962,12 @@ export class HeldMapWindow {
           pulse: env.pulse,
         });
       },
+      // the bay's keys stay with the WINDOW: I, H, P, the travel
+      // panel's S/T/N/B and the resume prompt's Y/N are about this
+      // window's phases and boxes rather than about the map, and moving
+      // them here would only move the tangle. Recorded in mapStrip's
+      // SHEET_MEMBERS note.
+      key: () => false,
       pickAt: (px, py) => this._pickAt(px, py),
       hoverLabel: (px, py) => this._hoverLabel(px, py),
       mark: (px, py) => this._markLocationHandler(px, py),
@@ -952,18 +977,44 @@ export class HeldMapWindow {
         this._partyPoll -= dt;
         if (this._partyPoll <= 0) { this._partyPoll = PARTY_POLL_S; this._refreshParty(); }
       },
-      mount: () => { this._renderPorts(); this._renderLegend(); },
-      unmount: () => { /* the world sheet gives nothing back yet - it is the only sheet */ },
+      // THE TRAVEL CHROME IS THE WORLD SHEET'S. The search box, the
+      // ports button, the legend and the travel card exist to pick a
+      // destination on the bay; a dungeon plan has no destination, so
+      // they go with the tab rather than standing over it.
+      mount: () => {
+        this._showChrome(['search', 'card'], true);
+        this._renderPorts();
+        this._renderLegend();
+      },
+      unmount: () => {
+        this._showChrome(['search', 'ports', 'legend', 'card'], false);
+        this._closePanel?.();
+      },
       // at rest the whole bay is on the sheet, centred
       homeView: () => null,
     };
   }
 
+  /** Show or hide the shared chrome a sheet claims. ONE place, so a
+   *  sheet says what it needs and never touches this window's DOM. */
+  _showChrome(names, on) {
+    for (const n of names) {
+      const el2 = this._chrome?.[n];
+      if (el2) el2.style.display = on ? '' : 'none';
+    }
+  }
+
   /** Put a sheet up, remembering where this one was looking. Refused by
    *  the slot where the place does not offer it - Mac's sentence held
-   *  at ONE door - and silent when it is refused. */
+   *  at ONE door - and silent when it is refused.
+   *
+   *  The outgoing sheet gives its chrome back BEFORE the incoming one
+   *  claims any: the other order lets a sheet that wants the search box
+   *  have it hidden a moment later by the sheet that just left. */
   _selectSheet(id) {
+    const leaving = this._sheet;
     if (!this._slot.select(id, this._view)) return false;
+    leaving?.unmount?.();
     this._sheets.get(id)?.mount?.();
     this._layoutKey = '';        // the new sheet's own coordinate space
     this._staticKey = '';
@@ -1958,12 +2009,16 @@ export class HeldMapWindow {
         // EM1: a tab under the pointer names itself and shows a hand -
         // the sheet is never asked about a point that is on the strip
         const tab = stripHit(this._strip, hx, hy);
-        if (tab) {
-          this._chrome.label.textContent = this._strip.tabs.find((t) => t.sheet === tab)?.title ?? '';
-          this._chrome.stage.style.cursor = 'pointer';
-        } else {
-          this._sheet?.hoverLabel?.(hx, hy);
-        }
+        // EM3: ONE writer for the label and the cursor, whichever sheet
+        // is up. A tab under the pointer names itself and shows a hand,
+        // and the sheet is never asked about a point that is on the
+        // strip; anywhere else the live sheet ANSWERS and the window
+        // writes, so no sheet has to reach into this window's chrome.
+        const hit = tab
+          ? { label: this._strip.tabs.find((t) => t.sheet === tab)?.title ?? '', cursor: 'pointer' }
+          : (this._sheet?.hoverLabel?.(hx, hy) ?? null);
+        this._chrome.label.textContent = hit?.label ?? '';
+        this._chrome.stage.style.cursor = hit?.cursor ?? '';
       }
     });
     const lift = (e) => {
@@ -2072,39 +2127,44 @@ export class HeldMapWindow {
     }
   }
 
+  /**
+   * The WORLD sheet's label under the pointer. EM3: it ANSWERS rather
+   * than writes - `{label, cursor}` - because the sheet contract's
+   * `hoverLabel` is a sheet's, and a sheet that reaches into the
+   * window's chrome is a sheet that cannot be built outside this file.
+   * The window does the writing, in one place, for every sheet.
+   */
   _hoverLabel(sx, sy) {
-    if (!this._onSheet([sx, sy])) { this._chrome.label.textContent = ''; return; }   // AUDIT-MAP2: off the paper is off the map
+    if (!this._onSheet([sx, sy])) return null;   // AUDIT-MAP2: off the paper is off the map
     // SOC6: a party member wins the label over the place they are
     // standing in - the player pointed at the green ring, and "who"
     // is the answer they asked for.
     const pm = this._partyAt(sx, sy);
     if (pm) {
       // AUDIT SOC D2: every member ON THAT PIXEL, not the nearest of them.
-      this._chrome.label.textContent = this._party
-        .filter((m) => m.px === pm.px && m.py === pm.py)
-        .map(partyHoverText).join(' / ');
-      this._chrome.stage.style.cursor = 'pointer';
-      return;
+      return {
+        label: this._party.filter((m) => m.px === pm.px && m.py === pm.py).map(partyHoverText).join(' / '),
+        cursor: 'pointer',
+      };
     }
     const m = this._markerAt(sx, sy);
     if (m) {
       const name = m.name || this._summaryName(m.summary);
       const region = REGION_NAMES[m.summary.regionIndex] ?? '';
       // UpdateRegionLabel's own "Region : Location" reading
-      this._chrome.label.textContent = region && name ? `${region} : ${name}` : name;
-      this._chrome.stage.style.cursor = 'pointer';
-      return;
+      return { label: region && name ? `${region} : ${name}` : name, cursor: 'pointer' };
     }
-    this._chrome.stage.style.cursor = '';
     const [mx, my] = toMap(this._view, sx, sy);
     const px = Math.floor(mx), py = Math.floor(my);
-    if (px < 0 || py < 0 || px >= this._size.width || py >= this._size.height) { this._chrome.label.textContent = ''; return; }
+    if (px < 0 || py < 0 || px >= this._size.width || py >= this._size.height) return null;
     // the raw politic read, range-checked - the classic window's own
     // region-under-cursor law; the sea answers nothing
     const politic = this.deps.maps?.getPoliticIndex?.(px, py) ?? -1;
     const region = politic - 128;
-    this._chrome.label.textContent =
-      (region >= 0 && region < (this.deps.maps?.regionCount ?? 0)) ? (REGION_NAMES[region] ?? '') : '';
+    return {
+      label: (region >= 0 && region < (this.deps.maps?.regionCount ?? 0)) ? (REGION_NAMES[region] ?? '') : '',
+      cursor: '',
+    };
   }
 
   _pickAt(sx, sy) {

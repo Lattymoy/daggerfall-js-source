@@ -1235,12 +1235,12 @@ test('MAP1 window: the selection - a click within 16 paper px of an inked mark s
     win._pickAt(nx, ny);
     assert.equal(win._selected?.kind, 'home', 'and near shows the farm');
     // hover reads Region : Location on a mark, the province on bare land
-    win._hoverLabel(nx, ny);
-    assert.equal(win._chrome.label.textContent, 'Daggerfall : Wayrest', 'the summary\'s region 17, then the name');
-    assert.equal(win._chrome.stage.style.cursor, 'pointer');
-    win._hoverLabel(...toPaper(win._view, 1.5, 1.5));
-    assert.equal(win._chrome.label.textContent, 'Alik\'r Desert', 'the politic read, region 0');
-    assert.equal(win._chrome.stage.style.cursor, '');
+    // EM3: the SHEET answers and the window writes, so the label is
+    // asked of the sheet's return rather than read off the chrome
+    assert.deepEqual(win._hoverLabel(nx, ny),
+      { label: 'Daggerfall : Wayrest', cursor: 'pointer' }, 'the summary\'s region 17, then the name');
+    assert.deepEqual(win._hoverLabel(...toPaper(win._view, 1.5, 1.5)),
+      { label: 'Alik\'r Desert', cursor: '' }, 'the politic read, region 0');
     win.dispose();
   });
 });
@@ -2338,8 +2338,7 @@ test('AUDIT-MAP2 the pointer off the sheet: in the hands lane the stage is the w
       win._selected = { name: 'X' };
       win._pickAt(-50, -50);
       assert.equal(win._selected?.name, 'X', 'a pick off the paper does nothing, not even clear');
-      win._hoverLabel(-50, -50);
-      assert.equal(win._chrome.label.textContent, '');
+      assert.equal(win._hoverLabel(-50, -50), null, 'off the paper the sheet answers nothing at all');
       win.dispose();
     } finally { delete globalThis.innerWidth; delete globalThis.innerHeight; }
   });

@@ -285,11 +285,17 @@ export { MAP_SHEETS };
 // the ink and the pointer inside it.
 //
 // The three members that make a sheet a sheet are the space, the ink
-// and the pointer. Keys and chrome are deliberately NOT here yet: the
-// world map's keys are tangled with the window's own phases and boxes
-// (the resume prompt, the info box, the travel panel), and the automap's
-// (a floor up, a floor down) arrive with EM3 - deriving a hook's shape
-// from ONE implementation is how a hook comes out the wrong shape.
+// and the pointer.
+//
+// `key` was held back through EM1 on purpose - deriving a hook's shape
+// from ONE implementation is how a hook comes out the wrong shape - and
+// EM3's automap gave it the second. Its shape is the port's own
+// everywhere else a ladder forks: the sheet is asked FIRST and answers
+// whether it took the press. The world sheet answers false to
+// everything: its keys (the resume prompt, the info box, the travel
+// panel's S/T/N/B) are tangled with the WINDOW's phases rather than
+// with the bay, so they belong where they are. RECORDED, so a later
+// reader does not mistake that for an oversight.
 //
 // `mount`/`unmount` are how a sheet claims the shared chrome it needs
 // (the world map's search box, ports button and legend) and gives it
@@ -303,8 +309,9 @@ export const SHEET_MEMBERS = Object.freeze([
   'paintStatic',   // (ctx, env) => void - the ink that only the view moves
   'paintOverlay',  // (ctx, env) => void - what breathes, per frame
   'pickAt',        // (px, py) => void - a click on the paper
-  'hoverLabel',    // (px, py) => void - the pointer's label
+  'hoverLabel',    // (px, py) => {label, cursor}|null - the WINDOW writes it
   'mark',          // (px, py) => void - the middle button
+  'key',           // (code, e) => boolean - the sheet's own keys; true when it took the press
   'tick',          // (dt) => void - the sheet's own clock
   'mount',         // () => void - claim the shared chrome
   'unmount',       // () => void - give it back
