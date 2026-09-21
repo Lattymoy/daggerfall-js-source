@@ -12,10 +12,13 @@
 // field (the placer, the packed lanes, the cells, the host-paid fade,
 // the wind, the time of day) and changes only what a blade LOOKS like:
 // the quad carries a tuft sprite instead of a tapered blade, the sprite
-// is four flat tones instead of a gradient, the sway hops in steps
-// instead of gliding, the distance fade is an ordered dither instead of
-// a transparency, and the lit colour is snapped to a short ramp so the
-// day's light reads as bands, the way a paletted screen banded it.
+// is four flat tones instead of a gradient, the distance fade is an
+// ordered dither instead of a transparency, and the lit colour is
+// snapped to a short ramp so the day's light reads as bands, the way a
+// paletted screen banded it. The SWAY is the lab's, smooth, in both
+// styles (GRASS-PX3: it was stepped at first, and Mac missed the way
+// the grass flowed with the wind - the one thing in the field that
+// should never look drawn frame by frame).
 //
 // THE SHEET IS BUILT HERE, AT BOOT, FROM A SEED - not loaded, not drawn
 // by hand in a file. Eight tufts, each sixteen texels wide and
@@ -56,16 +59,6 @@ export const PX_TUFT_H = 32;
 export const PX_TONES = 4;
 /** the lit colour is snapped to this many luminance steps */
 export const PX_RAMP_STEPS = 8;
-/** the sway is sampled this many times a second - eight, the frame
- *  rate a hand-animated flat would flip at */
-export const PX_STEP_HZ = 8;
-/** the pixel quad is this many times the lab's blade width - the lab's
- *  blade is 0.052..0.107 wide and 0.25..0.72 tall, and a 16x32 sprite
- *  wants width to be half its height */
-export const PX_TUFT_SCALE = 3;
-/** the lean is snapped to this many steps across its span, so a gust
- *  hops the tuft through discrete poses */
-export const PX_LEAN_STEPS = 24;
 /** the patch tint is snapped to this many bands */
 export const PX_TINT_BANDS = 4;
 /** the sheet's seed - the sheet is the same on every machine, every boot */

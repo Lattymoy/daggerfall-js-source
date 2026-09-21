@@ -187,3 +187,92 @@ do the pins derive, does the record say true things.
   campaign is only evidence when the file it runs is green first.
 - Campaign after the audit: 18 mutants, 18 killed, on a green file.
 
+
+## PERF-READ1 - the `hud` span was the vsync wait (2026-09-21)
+
+Mac pasted a `?perf=cpu` readout from the road: `cpu 17.15ms | hud 7.09 |
+people 4.11 | sim 2.08 | ...`, `cpu 18.55ms | hud 10.78 | ...`, `cpu
+13.53 | hud 7.76`, `cpu 11.85 | hud 5.26`, `cpu 12.56 | hud 6.23`. The
+HUD at 40 to 58 percent of the frame. It was not the HUD.
+
+**A CPU span closes at the next mark, and the next mark after the
+frame's last one was the NEXT frame's first.** `markCpu('hud')` is the
+world host's last mark; the enhanced skin draws its HUD in the DOM and
+no screen quad, so nothing in the frame resolved the image or marked
+`air`; the span ran through the travel panel, the talk layer,
+`frameEnd`, `requestAnimationFrame`'s wait - vsync, the compositor, the
+GPU if it was behind - and the next frame's head up to `markCpu
+('online')`. Which is why the totals summed, line after line, to a
+number near 60 Hz's 16.7 ms: the total was the frame PERIOD, and `hud`
+was the idle. The same deferral explained the readout's `draws 0`: the
+owed resolve ran in the next frame's `_beginLane` AFTER that line had
+reset `stats.draws` and begun a new GPU clock, so the line the resolve
+printed - the previous frame's - read zero on every enhanced-skin
+frame, and 1372 on the one frame that happened to draw a quad.
+
+Three lines. `PerfMeter.stopCpu()` closes the open span and opens
+nothing; the world host calls it where its script frame ends, so the
+wait belongs to no span and `cpu` is the script's again (the FPS
+counter carries frame time beside it; the difference is the headroom).
+The owed resolve runs before the new frame's reset, so its line carries
+its own draws. And a `ui` span opens after the HUD's draw, so `hud` is
+the HUD's preparation and draw and `ui` is the travel panel and the
+rest. Pinned on the meter with a fake clock: a frame of `sim 2, hud 1`,
+a stop, nine milliseconds of wait, the next frame's mark - `hud` is 1,
+not 10 - and the old law shown giving 10. 4 mutants, 4 dead.
+
+**What Mac's readout actually said, re-read.** Script work on the road
+was 5 to 8 ms a frame: `people` 0.3 to 4.1 (the one span that moved
+between lines - the town's pools), `sim` 1.4 to 2.3, `flats` 1 to 1.7,
+`batches` 0.8, `rig` 0.6, `ring` 0.5, `grass` 0.1 to 0.4, `world` under
+0.1. The frame was at or near 60 Hz with 8 to 11 ms of headroom in each
+line, and the GPU still cannot be timed in that browser (`gpu n/a`). The
+next paste will say whether `hud` is a fraction of a millisecond, which
+is what the code says it should be, and `ui` beside it.
+
+**The lesson: a span that ends at "the next mark" ends wherever the next
+mark happens to be, and the last span of a frame has no next mark of
+its own. Close it by hand or it measures the wait.**
+
+## GROUND-LAST - the ground is drawn after the meshes (2026-09-21)
+
+Mac: *"I want proper fucking fixes."* This is one. Every lens of GRAIN
+AUDIT 1 pointed at it and it was left on the record for his word.
+
+**The ground was the first draw of every pixel.** So every ground
+fragment under every building, tree, wall and mill was shaded in full -
+the tile fetch and its filter, the cloud shadow, the sun, the lane's
+lights and terms - and then painted over by the mesh that stood on it.
+The ground covers more of an outdoor screen than any other pass, and in
+a town a large share of it is under something. There is no depth
+prepass in this renderer and none is added: drawing the opaque meshes
+FIRST puts them in the depth buffer, and a ground fragment behind one
+then fails the depth test before its shader runs - early-Z, which every
+GPU made this century does for free.
+
+**The streaming world** queues each visible pixel's ground during the
+pixel walk, draws the pixel's static batch and models where the ground
+used to be drawn, and drains the queue once the walk is done - so a
+pixel's ground also lies under the NEXT pixel's buildings, and the
+terrain program binds once a frame instead of twice a pixel. The sky,
+the ring, the water and the flats keep their places after it: the water
+reads the ground's depth and the flats are cut-outs blended over it.
+**The town host** draws its ground after the buildings, the mills, the
+rig and the arrows, just before the sky. Nothing else moved.
+
+Not measured on a GPU - none here can be - and stated as such: the
+saving is the shaded fraction of the ground that is under a mesh, times
+what a ground fragment costs, on a machine where the GPU is the wait.
+In a town that fraction is large; on an open road it is small. On a
+CPU-bound frame it is nothing, and it costs nothing there either. 3
+mutants, 3 dead; the perf2 order pin holds both hosts' new order.
+
+**NEAR-FIRST (same day): and the pixels are walked nearest first.** The
+streaming world's pixel map is in the order the pixels streamed in,
+which has nothing to do with where the eye is, so a far town's walls
+went down before the near street's that hid them. The walk sorts a
+scratch array by grid distance from the player's own pixel - a
+hundred-odd integers, no allocation - and the meshes, and then the
+queued ground, go down near to far. Same law as above, finished: the
+nearest thing enters the depth buffer first and everything behind it
+is rejected before its shader runs. 2 mutants, 2 dead.

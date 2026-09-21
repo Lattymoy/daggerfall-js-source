@@ -27,6 +27,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { PerfMeter, PERF_EVERY } from '../src/render/perfMeter.js';
 import { parseNif } from '../src/formats/mwNifFile.js';
 import { flattenNif, diffuseAt, emissiveAt, mat33Mul, mat33Apply } from '../src/formats/mwNifMesh.js';
 import { extractTracks, sampleTrack } from '../src/formats/mwAnim.js';
@@ -277,7 +278,7 @@ test('PERF-ZONE2 the world frame\'s CPU zones tile in order, and each new mark s
   const w = rd('src/scenes/world.js');
   const frame = w.slice(w.indexOf('  function frame(now) {'));
   const names = [...frame.matchAll(/meterFor\(renderer\.gl\)\?\.markCpu\('(\w+)'\)/g)].map((m) => m[1]);
-  assert.deepEqual(names, ['online', 'sim', 'bodies', 'batches', 'ring', 'flats', 'people', 'arrows', 'rig', 'hud']);
+  assert.deepEqual(names, ['online', 'sim', 'bodies', 'batches', 'ring', 'flats', 'people', 'arrows', 'rig', 'hud', 'ui']);   // PERF-READ1: `ui` after the HUD's draw
   const after = (mark, subject) => { const i = frame.indexOf(`markCpu('${mark}')`); const j = frame.indexOf(subject, i); assert.ok(i > 0 && j > i && j - i < 600, `${mark} sits directly on ${subject}`); };
   const before = (subject, mark) => { const j = frame.indexOf(subject); const i = frame.indexOf(`markCpu('${mark}')`, j); assert.ok(j > 0 && i > j && i - j < 400, `${mark} follows ${subject}`); };
   // the bodies mark is the NEXT statement after beginFrame: nothing the
@@ -311,3 +312,39 @@ test('AUDIT PERF-RIG1 F2: releasing a mesh clears the texture handle on every ra
   }
 });
 
+
+test('PERF-READ1: the last CPU span of a frame closes at the frame\u2019s end, so the rAF wait is nobody\u2019s - and the owed resolve prints its own draws', () => {
+  // the meter on a fake clock: a frame of three marks, then the script ends, then the idle, then the next frame
+  const gl = { getExtension: () => null };
+  const m = new PerfMeter(gl, false, true);
+  let t = 0; m._now = () => t;
+  m.markCpu('sim'); t += 2;
+  m.markCpu('hud'); t += 1;
+  m.stopCpu();          // the script frame ends
+  t += 9;               // requestAnimationFrame's wait: vsync, the compositor, the GPU behind
+  m.markCpu('sim');     // the next frame's first mark
+  t += 2;
+  assert.deepEqual([...m.cpuZones], [['sim', 2], ['hud', 1]], 'the idle is in no span - hud is its own millisecond, not ten');
+  assert.equal(m.cpuOpen[0], 'sim', 'the next frame\u2019s first span is open');
+  m.stopCpu();
+  assert.equal(m.cpuZones.get('sim'), 4, '...and closes at its own frame\u2019s end');
+  // without the stop, the old law: the wait lands in the frame\u2019s last span
+  const n = new PerfMeter(gl, false, true); let u = 0; n._now = () => u;
+  n.markCpu('hud'); u += 1; u += 9; n.markCpu('sim');
+  assert.equal(n.cpuZones.get('hud'), 10, 'the readout that said the HUD cost ten milliseconds');
+  // the line: the wait is not in the total either
+  for (let i = 0; i < PERF_EVERY - 1; i++) m.frame({ draws: 5 });
+  const line = m.frame({ draws: 5 });
+  assert.match(line, /^\[perf\] cpu /); assert.ok(!/hud 10/.test(line));
+  // the host: stopCpu right before frameEnd, and a `ui` span after the HUD's draw so the HUD's own number is the HUD's
+  const w = readFileSync('src/scenes/world.js', 'utf8');
+  const stop = w.indexOf("meterFor(renderer.gl)?.stopCpu();"), end = w.indexOf('frameEnd();   // PERF1');
+  assert.ok(stop > 0 && end > stop && end - stop < 200, 'the span closes where the script frame ends');
+  const hud = w.indexOf("markCpu('hud')"), ui = w.indexOf("markCpu('ui')"), draw = w.indexOf('drawHud(renderer, canvas, hudArt, playerEntity,', hud);
+  assert.ok(hud > 0 && draw > hud && ui > draw && w.indexOf('drawEnhancedTravelControl({', ui) > ui, 'hud is the HUD\u2019s prep and draw; ui is the travel panel and the rest');
+  // the renderer: the owed resolve runs BEFORE the new frame resets its counters, so its line carries its draws
+  const r = readFileSync('src/render/renderer.js', 'utf8');
+  const lane = r.slice(r.indexOf('  _beginLane(proj, view, lightDir, world) {'));
+  assert.ok(lane.indexOf('this._compositeAir();') < lane.indexOf('this.stats.draws = 0;'), 'the deferred resolve first - it printed `draws 0` on every enhanced-skin frame');
+  assert.match(lane.slice(0, lane.indexOf('this.stats.draws = 0;')), /if \(this\._air\?\.pending && !this\._panelSaved\) this\._compositeAir\(\);/);
+});

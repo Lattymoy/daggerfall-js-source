@@ -28,6 +28,11 @@ const PORT = Number(process.env.PORT || 5237);
 const SECONDS = Math.max(3, Number(process.env.SECONDS || 8));
 const HEADED = process.env.HEADED === '1';
 const WANT = (process.env.SCENES || 'city,road,dungeon').split(',').map((s) => s.trim()).filter(Boolean);
+// GRAIN AUDIT 1: GROUND=off|default|max points every scene at one tier of
+// the ground-sharpness dial (the `?ground=` door), so the dial can be A/B'd
+// on a real GPU: HEADED=1 SCENES=road SECONDS=12 GROUND=off npm run perf,
+// then again with max, and compare frameMs while scriptMs holds flat.
+const GROUND = process.env.GROUND ? `&ground=${encodeURIComponent(process.env.GROUND)}` : '';
 
 const SCENES = {
   city: `/play/?world&region=Daggerfall&loc=Daggerfall&class=1&novideo&shot&fps`,
@@ -48,7 +53,7 @@ const rows = [];
 for (const name of WANT) {
   const url = SCENES[name];
   if (!url) { console.warn(`perf: no scene "${name}"`); continue; }
-  await page.goto(`http://localhost:${PORT}${url}`);
+  await page.goto(`http://localhost:${PORT}${url}${GROUND}`);
   await page.waitForFunction(() => window.__shotReady === true, null, { timeout: 300000 });
   await page.waitForTimeout(1000);   // the first second after settling is the stream's tail, not the scene
   const samples = [];

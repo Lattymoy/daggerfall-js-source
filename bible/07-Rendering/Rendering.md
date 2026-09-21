@@ -340,6 +340,16 @@ directory by `test/audit18_bible_docs.test.js`:
   vertex stage is the wrong place for anything that is the same number
   every frame - and the sway, the thing that LOOKS like the work, is
   the cheapest term in it.**
+  **GRASS-PX3 (2026-09-21, Mac: "I miss the way the grass flowed with
+  the wind smoothly"): THE SWAY IS THE LAB'S AGAIN.** GRASS-PX stepped the
+  pixel style's clock at 8 Hz and snapped its lean to 24 poses, on the
+  argument that a hand-animated flat hops through frames. Mac's eye said
+  otherwise, and the eye is right: the wind is the one thing in the
+  field that should never look drawn frame by frame - a sprite can be a
+  sprite and still move like grass. The two edits, their two uniforms
+  and their two constants are gone; the pixel style's edit list is four,
+  and the pin holds the whole sway block of the compiled vertex stage
+  byte-identical to the lab's. Nothing else about the tuft moved.
   **GRASS AUDIT 1 (2026-09-21, Mac: "do an audit on this"): THREE
   LENSES OVER THE PIXEL GRASS, TWENTY FINDINGS, ALL PAID.** The sheet
   and the fragment stage; the vertex stage, the draw path and the

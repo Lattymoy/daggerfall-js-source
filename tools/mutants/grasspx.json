@@ -247,8 +247,8 @@
  {
   "name": "AUDIT-GRASSPX-the-step-counts-are-gated-so-smooth-is-NaN",
   "file": "src/render/labGrass.js",
-  "old": "    gl.uniform1f(u.uPxStepHz, PX_STEP_HZ);\n    gl.uniform1f(u.uPxLeanSteps, PX_LEAN_STEPS);\n    gl.uniform1f(u.uPxVariants, this.pxVariants);\n    gl.uniform1f(u.uPxSteps, PX_RAMP_STEPS);\n    gl.uniform1f(u.uPxTintBands, PX_TINT_BANDS);\n    if (pixel) {",
-  "new": "    if (pixel) {\n    gl.uniform1f(u.uPxStepHz, PX_STEP_HZ);\n    gl.uniform1f(u.uPxLeanSteps, PX_LEAN_STEPS);\n    gl.uniform1f(u.uPxVariants, this.pxVariants);\n    gl.uniform1f(u.uPxSteps, PX_RAMP_STEPS);\n    gl.uniform1f(u.uPxTintBands, PX_TINT_BANDS);",
+  "old": "    gl.uniform1f(u.uPxVariants, this.pxVariants);\n    gl.uniform1f(u.uPxSteps, PX_RAMP_STEPS);\n    gl.uniform1f(u.uPxTintBands, PX_TINT_BANDS);\n    if (pixel) {",
+  "new": "    if (pixel) {\n    gl.uniform1f(u.uPxVariants, this.pxVariants);\n    gl.uniform1f(u.uPxSteps, PX_RAMP_STEPS);\n    gl.uniform1f(u.uPxTintBands, PX_TINT_BANDS);",
   "tests": [
    "test/grasspx.test.js"
   ]
@@ -339,6 +339,15 @@
   "file": "src/render/labGrass.js",
   "old": "    gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, LAB_GRASS_HEAD + stages.fs));",
   "new": "    gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, LAB_GRASS_HEAD + GAME_GRASS_FS));",
+  "tests": [
+   "test/grasspx.test.js"
+  ]
+ },
+ {
+  "name": "GRASSPX3-the-sway-is-stepped-again",
+  "file": "src/render/labGrass.js",
+  "old": "  Object.freeze({\n    why: 'the pixel quad is not tapered",
+  "new": "  Object.freeze({\n    why: 'GRASS-PX3 mutant: the clock stepped',\n    from: '  float gust = sin(uTime*1.7 - along*0.35 + aInst.w*0.6) * 0.5 + 0.5;',\n    to: '  float gust = sin((floor(uTime * 8.0) / 8.0)*1.7 - along*0.35 + aInst.w*0.6) * 0.5 + 0.5;',\n  }),\n  Object.freeze({\n    why: 'the pixel quad is not tapered",
   "tests": [
    "test/grasspx.test.js"
   ]

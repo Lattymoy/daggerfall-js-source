@@ -356,7 +356,7 @@ export const FEATURES = Object.freeze([
     id: 'grass-style',
     group: 'sight',
     title: 'Grass style',
-    note: 'Pixel draws each tuft as a hand-set sprite in four tones, with stepped sway and a dithered distance, the way '
+    note: 'Pixel draws each tuft as a hand-set sprite in four tones with a dithered distance, the way '
       + 'the world\u2019s trees and people are drawn; Smooth is the lab\u2019s tapered, gradient-lit blade. Nothing to change unless '
       + 'the enhanced outdoors are on and Grass density is above Off.',
     effect: 'Takes effect at once.',
@@ -389,7 +389,8 @@ export const FEATURES = Object.freeze([
     group: 'sight',
     title: 'Ground sharpness',
     note: 'How sharply the ground reads into the distance, where a mipmapped tile would otherwise soften. '
-      + 'Off is the mipmap alone; Maximum is whatever the driver allows.',
+      + 'Off is the mipmap alone, point-sampled and the cheapest; Maximum is whatever the driver allows and costs GPU fill - '
+      + 'turn it down if frames suffer outdoors.',
     effect: 'Takes effect when the world next loads.',
     kinds: Object.freeze(['enhanced', 'classic']),
     control: Object.freeze({ store: 'prefs', key: 'groundSharpness', initial: 'default', online: 'player', tiers: Object.freeze([['off', 'Off'], ['default', 'Default (4x)'], ['max', 'Maximum']]) }),

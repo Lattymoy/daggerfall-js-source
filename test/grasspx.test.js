@@ -9,7 +9,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { buildTuftSheet, buildTuftMips, downsampleCoverage, coverageOf, layTuft, paintTuft, toneAt, toneByte, isHighlightRow, mulberry32, pixelGrass,
-  PX_VARIANTS, PX_TUFT_W, PX_TUFT_H, PX_TONES, PX_RAMP_STEPS, PX_STEP_HZ, PX_LEAN_STEPS, PX_TINT_BANDS, PX_BLADES_PER_TUFT } from '../src/render/grassPixelArt.js';
+  PX_VARIANTS, PX_TUFT_W, PX_TUFT_H, PX_TONES, PX_RAMP_STEPS, PX_TINT_BANDS, PX_BLADES_PER_TUFT } from '../src/render/grassPixelArt.js';
 import { LAB_GRASS_HEAD, GAME_GRASS_FIELD, LAB_GRASS_VS, LAB_GRASS_FS, GAME_GRASS_VS, GAME_GRASS_FS, GRASSPX_VS_EDITS, GRASSPX_FS_EDITS, applyGrassEdits, LabGrassRenderer, GRASS_CELL } from '../src/render/labGrass.js';
 import { FEATURES, FEATURE_PREF_DEFAULTS } from '../src/systems/features.js';
 import { perspective, mirrorProjectionX, lookAt } from '../src/world/mat4.js';
@@ -134,7 +134,7 @@ test('GRASS AUDIT 1: the rim has somewhere to land - the highlight is the top tw
 });
 
 test('GRASS-PX: the compiled stages are the lab\'s text under the declared edits, each landing exactly once, and the lab\'s text is untouched', () => {
-  assert.equal(GRASSPX_VS_EDITS.length, 6); assert.equal(GRASSPX_FS_EDITS.length, 6);
+  assert.equal(GRASSPX_VS_EDITS.length, 4, 'GRASS-PX3: the two sway edits are gone - the wind is the lab\'s in both styles'); assert.equal(GRASSPX_FS_EDITS.length, 6);
   assert.equal(GAME_GRASS_VS, applyGrassEdits(LAB_GRASS_VS, GRASSPX_VS_EDITS));
   assert.equal(GAME_GRASS_FS, applyGrassEdits(LAB_GRASS_FS, GRASSPX_FS_EDITS));
   for (const [lab, edits] of [[LAB_GRASS_VS, GRASSPX_VS_EDITS], [LAB_GRASS_FS, GRASSPX_FS_EDITS]]) {
@@ -162,9 +162,8 @@ test('GRASS-PX: the compiled stages are the lab\'s text under the declared edits
   }
   // the pixel terms, by their exact lines: with the switch at zero every one of them is the lab's arithmetic
   for (const line of [
-    'float tq = mix(uTime, floor(uTime * uPxStepHz) / uPxStepHz, uPixel);',
-    'float gust = sin(tq*1.7 - along*0.35 + aInst.w*0.6) * 0.5 + 0.5;',
-    'lean = mix(lean, floor(lean * uPxLeanSteps + 0.5) / uPxLeanSteps, uPixel);',
+    'float gust = sin(uTime*1.7 - along*0.35 + aInst.w*0.6) * 0.5 + 0.5;',
+    'vec2 lean = aInst2.xy + wdir * push * 0.055;',
     'p.xz += side * (aCorner.x-0.5) * mix(aInst2.w * (1.0 - vT*0.75), h * 0.5, uPixel);',
     'vUV = aCorner;',
     'vVar = min(floor(hash(root * 0.37) * uPxVariants), uPxVariants - 1.0);',
@@ -182,6 +181,9 @@ test('GRASS-PX: the compiled stages are the lab\'s text under the declared edits
   ]) assert.ok(GAME_GRASS_FS.includes(line), `FS: ${line}`);
   assert.ok(!/smoothstep\(0\.0,0\.55,vT\)/.test(GAME_GRASS_FS) && !/0\.58\*vT/.test(GAME_GRASS_FS), 'the gradient and the sward shade read the drawn stalk, not the quad');
   assert.ok(!GAME_GRASS_VS.includes('aPC.a * uPxVariants'), 'GRASS AUDIT 1: the sprite is not the gust phase, or every tuft of one sprite hops in unison');
+  assert.ok(!/uPxStepHz|uPxLeanSteps|floor\(uTime|floor\(lean/.test(GAME_GRASS_VS), 'GRASS-PX3: nothing steps the clock or snaps the lean - the sway is the lab\'s, smooth, in both styles');
+  const labSway = LAB_GRASS_VS.slice(LAB_GRASS_VS.indexOf('  vec2 wdir ='), LAB_GRASS_VS.indexOf('  vec3 p;'));
+  assert.ok(GAME_GRASS_VS.includes(labSway), 'the whole sway block is the lab\'s text, byte for byte');
   // GRASS AUDIT 1: the ramp and the band, EVALUATED from the shader's own text
   const ramp = GAME_GRASS_FS.match(/float g = (max\(1\.0, floor\(pow\(l, 1\.0 \/ 2\.2\) \* uPxSteps \+ 0\.5\)\)) \/ uPxSteps;/);
   assert.ok(ramp, 'the ramp\'s rung, as one expression');
@@ -251,15 +253,16 @@ test('GRASS-PX: the renderer compiles the game\'s stages, uploads the sheet with
   assert.equal(px.uPixel, 1); assert.equal(uploads('smooth').uPixel, 0);
   // GRASS AUDIT 1: the step counts go up in EVERY style - a zero count is a divide by zero in the pixel arm and mix(lab, NaN, 0) is NaN, which drew nothing
   const sm = uploads('smooth');
-  assert.deepEqual([sm.uPxStepHz, sm.uPxLeanSteps, sm.uPxVariants, sm.uPxSteps, sm.uPxTintBands], [PX_STEP_HZ, PX_LEAN_STEPS, PX_VARIANTS, PX_RAMP_STEPS, PX_TINT_BANDS], 'the smooth draw still uploads every count');
+  assert.deepEqual([sm.uPxVariants, sm.uPxSteps, sm.uPxTintBands], [PX_VARIANTS, PX_RAMP_STEPS, PX_TINT_BANDS], 'the smooth draw still uploads every count');
+  assert.equal(sm.uPxStepHz, undefined, 'GRASS-PX3: no sway clock exists to upload');
   assert.equal(sm.uPxSheet, undefined, '...but never binds the sheet');
   calls.length = 0; r.count = 1; r.draw(new Float32Array(16), new Float32Array(16), new Float32Array(3), 0, light, wind, 300, 'smooth');
   assert.ok(!calls.some((c) => c[0] === 'bindTexture' && c[2] === r.pxSheet) && !calls.some((c) => c[0] === 'activeTexture' && c[1] === C.TEXTURE4), 'the smooth style never touches unit 4');
   calls.length = 0; r.draw(new Float32Array(16), new Float32Array(16), new Float32Array(3), 0, light, wind);
   assert.equal(calls.find((c) => c[0] === 'uniform1f' && c[1] === 'uPixel')[2], 0, 'a draw that names no style is the lab\'s');
   assert.equal(uploads('junk').uPixel, 1, 'a stored value that is no tier is the row\'s default, pixel - the same fallback the pane draws');
-  assert.deepEqual([px.uPxStepHz, px.uPxLeanSteps, px.uPxVariants, px.uPxSteps, px.uPxTintBands, px.uPxSheet], [PX_STEP_HZ, PX_LEAN_STEPS, PX_VARIANTS, PX_RAMP_STEPS, PX_TINT_BANDS, 4]);
-  assert.deepEqual([PX_STEP_HZ, PX_LEAN_STEPS, PX_RAMP_STEPS, PX_TINT_BANDS, PX_BLADES_PER_TUFT], [8, 24, 8, 4, 2]);
+  assert.deepEqual([px.uPxVariants, px.uPxSteps, px.uPxTintBands, px.uPxSheet], [PX_VARIANTS, PX_RAMP_STEPS, PX_TINT_BANDS, 4]);
+  assert.deepEqual([PX_RAMP_STEPS, PX_TINT_BANDS, PX_BLADES_PER_TUFT], [8, 4, 2]);
   // GRASS AUDIT 1: the lab's one-scatter path draws the pixel tuft too - one quad, half the blades
   calls.length = 0; r.count = 7; r.draw(new Float32Array(16), new Float32Array(16), new Float32Array(3), 0, light, wind, 300, 'pixel');
   let dr = calls.find((c) => c[0] === 'drawArraysInstanced');
