@@ -434,7 +434,8 @@ export function drawCompassStrip(renderer, art, x, y, s, heading01) {
  * surfaces are DOM and stay painted until told otherwise (AUDIT 64
  * F37's law), so "You are too far away" stood over an open dungeon
  * window until the player closed it, and on ?dungeon - which has no
- * townTalk drawing a second column - the popup column stood too.
+ * townTalk drawing a second set - the popup rows stood too (toasts
+ * in the notice stack since ENH-NOTICE3, hidden by the same door).
  *
  * ONE call rather than two lines in each host, because the next host
  * to grow an early return is the one that remembers one of them.

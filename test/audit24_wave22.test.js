@@ -37,7 +37,7 @@ test('audit24 wave22: every HUD popup files into the notebook message ring', () 
 });
 
 test('audit24 wave22: the two hosts hand their HudText the notebook sink', () => {
-  assert.match(rd('src/ui/hudText.js'), /this\.lines\.push\(\{ text \}\);\s*\n\s*this\.onMessage\?\.\(text\);/,
+  assert.match(rd('src/ui/hudText.js'), /this\.lines\.push\(\{ id: \+\+this\._nextId, text \}\);\s*\n\s*this\.onMessage\?\.\(text\);/,   // ENH-NOTICE3: the row carries its toast's id
     'AddText files AFTER it queues, as C# does');
   // AUDIT 65 MC-1: BOTH walkable outdoor hosts, which is what this
   // test's title has always said. exterior.js handed down `notebookSink`

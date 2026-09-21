@@ -90,32 +90,51 @@ test('B5: the EXHAUSTION box pushes in all three hosts that can collapse', () =>
   }
 });
 
-test('B5: the INFECTION popup pushes in all FOUR hosts that wire it', () => {
+test('B5/ENH-NOTICE3: the INFECTION popup pushes, and the four hosts no longer each build it', () => {
   // VampirismInfection / LycanthropyInfection speak through
   // DaggerfallUI.MessageBox; a player who turns with a trade window or
-  // an automap open was simply never told.
-  assert.match(src('src/scenes/worldModes.js'),
-    /showText: \(lines\) => mountInterior\(new ChoiceWindow\(\{ lines \}\)\),/);
-  assert.match(src('src/scenes/dungeonContext.js'),
-    /showText: \(lines\) => pushDungeonWindow\(new ActionTextBox\(lines\)\),/);
-  assert.equal(/showText: \(lines\) => \{ if \(!activeOverlay\)/.test(src('src/scenes/dungeonContext.js')), false);
-  assert.equal(/showText: \(lines\) => \{ if \(!interiorOverlay\)/.test(src('src/scenes/worldModes.js')), false);
-  // ROAD review-p: and the two STREAMING hosts, which wire the same
-  // seam (world.js / exterior.js each call wireInfectionVideos) and
-  // were left replacing-and-disposing while the exhaustion box a
-  // hundred lines away in the same file was being converted. One
-  // event, one C#, four hosts, one door.
-  for (const f of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
-    assert.match(src(f), /showText: \(lines\) => townTalk\.pushOverlay\(new ChoiceWindow\(\{ lines \}\)\),/,
-      `${f}: the turn lands OVER what is open`);
-    assert.equal(/showText: \(lines\) => townTalk\.showOverlay\(new ChoiceWindow/.test(src(f)), false,
-      `${f}: and no longer disposes it`);
+  // an automap open was simply never told. B5 converted the four
+  // hosts' own `showText` wirings to pushes ONE AT A TIME, which is
+  // the drift ENH-NOTICE3 closed: the shared factory names the KIND
+  // once and systems/notify.js finds the live host's slot. This pin
+  // moves with the law - the push is still pinned, it is just pinned
+  // where the push now lives.
+  const sh = src('src/scenes/shared.js');
+  assert.match(sh, /export function wireInfectionVideos\(renderer, \{ textAt = null, factionDict = null, transferToCemetery = null \} = \{\}\)/,
+    'the per-host showText dependency is gone from the factory');
+  assert.match(sh, /const lines = plainLines\(textAt\?\.\(id\)\);\n\s*if \(lines\?\.length\) messageBox\(lines\);/,
+    'the box is raised through the one door, on the rows the factory already flattened (V5)');
+  assert.match(sh, /import \{ messageBox \} from '\.\.\/systems\/notify\.js';/);
+  // A PUSH, still: the seam's `push` defaults true (notify.js) and
+  // this call passes no option, so DaggerfallUI.MessageBox's
+  // PushWindow is what every host performs.
+  assert.match(src('src/systems/notify.js'), /export function messageBox\(text, \{ highlightColor = undefined, previousWindow = true, push = true \} = \{\}\)/);
+  assert.equal(/if \(lines\?\.length\) messageBox\(lines, \{ push: false/.test(sh), false, 'never a replace');
+  // and NO host wires a window for it any more - not the two modal
+  // hosts B5 converted, not the two streaming hosts ROAD review-p did.
+  for (const f of ['src/scenes/world.js', 'src/scenes/exterior.js', 'src/scenes/worldModes.js', 'src/scenes/dungeonContext.js']) {
+    const s = src(f);
+    const seam = s.slice(s.indexOf('wireInfectionVideos(renderer, {'));
+    assert.ok(s.includes('wireInfectionVideos(renderer, {'), `${f}: still wires the seam (THE FOUR HOSTS RULE)`);
+    assert.equal(/showText:/.test(seam.slice(0, seam.indexOf('});'))), false,
+      `${f}: no per-host window for one C# line`);
   }
 });
 
 test('B5: DaggerfallAction ShowText and ShowTextWithInput push', () => {
   const dc = src('src/scenes/dungeonContext.js');
-  assert.match(dc, /pushDungeonWindow\(new ActionTextBox\(lines\)\);/, 'ShowText');
+  // ENH-NOTICE3: ShowText goes through the one door now, and this pin
+  // moved with it. It used to read `pushDungeonWindow(new
+  // ActionTextBox(lines));` - which, after AUDIT 64 F35 gave the
+  // plaque its null previousWindow, only ever matched the AZURA box
+  // further down the file and pinned nothing of ShowText at all.
+  // Pinned on the action seam's own body this time, with DFU's null
+  // previousWindow (Internal/DaggerfallAction.cs:536) carried through
+  // the seam as the port's `false` (ui/windowStack.js:65 reads it
+  // `=== true`).
+  const showText = dc.slice(dc.indexOf('actions.onShowText = (id) => {'), dc.indexOf('actions.onShowTextInput = (id, submit) => {'));
+  assert.match(showText, /messageBox\(lines, \{ previousWindow: false \}\);/, 'ShowText');
+  assert.equal(/new ActionTextBox\(/.test(showText), false, 'and mints no window of its own');
   assert.match(dc, /pushDungeonWindow\(new ActionInputBox\(lines, submit\)\);/, 'ShowTextWithInput');
   assert.equal(/if \(!activeOverlay\) activeOverlay = new ActionInputBox\(/.test(dc), false,
     'the input box especially - it is the only way to answer the riddle it asks');
@@ -131,7 +150,7 @@ test('B5: the dungeon\'s rest MASTERY box pushes, like the interior twin already
 
 test('B5: the dungeon has ONE push door and its ctx member delegates to it', () => {
   const dc = src('src/scenes/dungeonContext.js');
-  assert.match(dc, /function pushDungeonWindow\(win\) \{\n\s*if \(!win\) return false;\n\s*dungeonWindows\.reconcile\(activeOverlay\);[^\n]*\n\s*if \(dungeonWindows\.containsWindow\(win\)\) return true;\n\s*dungeonWindows\.pushWindow\(win\);\n\s*return true;\n\s*\}/,
+  assert.match(dc, /function pushDungeonWindow\(win\) \{\n\s*if \(!win\) return false;\n(?:\s*\/\/[^\n]*\n)*\s*if \(_ctxDead\) return false;\n\s*dungeonWindows\.reconcile\(activeOverlay\);[^\n]*\n\s*if \(dungeonWindows\.containsWindow\(win\)\) return true;\n\s*dungeonWindows\.pushWindow\(win\);\n\s*return true;\n\s*\}/,
     'PushWindow (UserInterfaceManager.cs:79-91) with ContainsWindow as the re-entrancy guard');
   assert.match(dc, /showOverlay\(win\) \{ return pushDungeonWindow\(win\); \},/,
     'the ctx member is the same door, not a second copy');

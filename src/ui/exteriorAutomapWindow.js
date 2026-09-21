@@ -121,13 +121,20 @@
 import { drawText, measureText } from './text.js';
 import { getBool, getInt, getString } from '../systems/settings.js';
 import { hexColor32 } from './automapWindow.js';
+// EM7: the byte groups and DFU's own four colours have ONE HOME, and
+// the enhanced town sheet reads them there too - they sat in this file
+// and in ui/inkTown.js at once, which is how the same building could
+// have come to be drawn as a shop on one map and a house on the next.
+import {
+  QUARTERS, quarterOf, isShowAllByte, CLASSIC_ARGB, CLASSIC_SETTING,
+} from './townQuarters.js';
 import { shortcutOrFallback, exteriorAutomapTooltipFor } from './automapText.js';
 import { bindings } from './input.js';
 import { getBinding } from '../systems/inputActions.js';
 import { normalizeCode, keyboardModifiers, checkSetModifiers } from '../systems/dialogShortcuts.js';
 import { audio } from '../systems/audio.js';
 import { SOUND } from '../systems/soundClips.js';
-import { resolveNameplates, nameplateAnchor } from './nameplateLayout.js';
+import { resolveNameplates, nameplateAnchor, WORLD_PER_PX } from './nameplateLayout.js';   // EM4: WORLD_PER_PX has one home there
 import {
   nativeMetrics, drawImg, drawRect, loadImg, NATIVE_W, NATIVE_H, SCREEN_DIM,
 } from './nativePanel.js';
@@ -154,7 +161,7 @@ import { registerCommand } from '../systems/consoleCommands.js';   // E3: the co
 let _revealUndiscoveredBuildings = false;   // map_revealbuildings / map_hidebuildings (:1796-1830)
 
 export const BLOCK_PX = 64;                      // blockSizeWidth/Height (ExteriorAutomap.cs:153-154)
-const WORLD_PER_PX = 102.4 / BLOCK_PX;           // 1.6 world units per layout pixel (RMBDimension * GlobalScale / 64)
+// WORLD_PER_PX has ONE HOME in ui/nameplateLayout.js (EM4) - it is imported above
 export const ZOOM_MIN = EXT_MAX_ZOOM;            // 25 - DFU's maxZoom, "the minimum camera height"
 export const ZOOM_MAX = EXT_MIN_ZOOM;            // 250 - DFU's minZoom (the names invert the meaning)
 const NAMEPLATE_YELLOW = [243 / 255, 239 / 255, 44 / 255, 1];   // DaggerfallDefaultTextColor (DaggerfallUI.cs:52)
@@ -192,11 +199,7 @@ export const MARKER_STAMP_BIAS = 0.8;                    // -normalize(forward) 
 const STAMP_PX = 128;                                    // the rasteriser's edge (meshStamp.js records the oversampling)
 
 // the byte groups (ExteriorAutomap.cs:1482-1541; byte = BuildingType + 1)
-const TEMPLE_SET = new Set([12, 15]);
-const SHOP_SET = new Set([1, 3, 4, 6, 7, 9, 10, 11, 13, 14]);
-const TAVERN_BYTE = 16;
-const HOUSE_SET = new Set([2, 5, 8, 17, 18, 19, 20, 21, 22, 23, 24]);
-const SHOWALL_SET = new Set([25, 117, 224, 250, 251]);
+// live in ui/townQuarters.js, imported above - see EM7.
 export const VIEW_MODES = ['original', 'extra', 'all'];   // (showAll, removeGroundFlats) = (f,t) (t,t) (t,f) (:318-337)
 
 /**
@@ -284,12 +287,12 @@ export function buildExteriorLayout(gridW, gridH, blocks, mode, colours) {
         let byte = data[y * BLOCK_PX + x];
         if (removeGroundFlats && byte === 0xfb) byte = 0;   // the copy-side strip (BlocksFile.cs:434-440; never in place here)
         if (byte === 0) continue;
+        // EM7: the ladder is townQuarters' own, so this window and the
+        // enhanced sheet cannot come to sort a byte differently.
+        const quarter = quarterOf(byte);
         let c;
-        if (TEMPLE_SET.has(byte)) c = colours.temple;
-        else if (SHOP_SET.has(byte)) c = colours.shop;
-        else if (byte === TAVERN_BYTE) c = colours.tavern;
-        else if (HOUSE_SET.has(byte)) c = colours.house;
-        else if (SHOWALL_SET.has(byte)) { if (!showAll) continue; c = colours.house; }   // ships + specials (:1519-1528)
+        if (quarter) c = colours[quarter];
+        else if (isShowAllByte(byte)) { if (!showAll) continue; c = colours.house; }   // ships + specials (:1519-1528)
         else c = (0xff000000 | (byte << 16) | 0x0000ff) >>> 0;   // the debug red (255, 0, byte) (:1535-1540)
         // per-block row flip (:1481) = the navgrid's own law; then
         // whole-map flip so north lands at data row 0 (drawn top)
@@ -527,7 +530,7 @@ export class ExteriorAutomapWindow {
   constructor(deps) {
     this.deps = deps;
     this.done = false;
-    // The raw-code seam townTalk.js:330 forks on, the same one the
+    // The raw-code seam townTalk.js:345 forks on, the same one the
     // dungeon window takes (automapWindow.js:497) - it is that fork's
     // switch, not a semantic claim about choice windows, and without it
     // ui/input.js's cooked alphabet cannot spell an arrow, an F-key,
@@ -888,12 +891,10 @@ export class ExteriorAutomapWindow {
 
   _ensureTexture(renderer) {
     if (this._tex?.mode === this.mode) return;
-    const colours = {
-      temple: hexColor32(getString('Map', 'AutomapTempleColor'), 0xffc37d45),
-      shop: hexColor32(getString('Map', 'AutomapShopColor'), 0xff1855be),
-      tavern: hexColor32(getString('Map', 'AutomapTavernColor'), 0xff307555),
-      house: hexColor32(getString('Map', 'AutomapHouseColor'), 0xff283c45),
-    };
+    // EM7: one read per quarter, off the one table - a fifth quarter
+    // added at the home would be drawn here without this line moving.
+    const colours = Object.fromEntries(QUARTERS.map((q) => [q,
+      hexColor32(getString('Map', CLASSIC_SETTING[q]), CLASSIC_ARGB[q])]));
     const bmp = buildExteriorLayout(this.deps.gridW, this.deps.gridH, this.deps.blocks, this.mode, colours);
     if (this._tex) renderer.releaseTexture('amap', this._tex.key);
     const key = `ext-${++_texVer}`;
@@ -1126,9 +1127,12 @@ export class ExteriorAutomapWindow {
   _drawChrome(renderer, canvas, font, m, s) {
     if (_art) {
       drawImg(renderer, _art.town, m, CAPTION_STRIP.x, CAPTION_STRIP.y, CAPTION_STRIP.w, CAPTION_STRIP.h);
-      for (const [name, key] of [['temple', 'AutomapTempleColor'], ['shop', 'AutomapShopColor'], ['tavern', 'AutomapTavernColor']]) {
+      // the strip carries three of the four (:466-476) - the house has
+      // no swatch - and reads each through the one table (EM7), which
+      // is where the THIRD copy of these four defaults used to be.
+      for (const name of QUARTERS.filter((q) => CAPTION_SWATCHES[q])) {
         const r = CAPTION_SWATCHES[name];
-        const c = hexColor32(getString('Map', key), name === 'temple' ? 0xffc37d45 : name === 'shop' ? 0xff1855be : 0xff307555);
+        const c = hexColor32(getString('Map', CLASSIC_SETTING[name]), CLASSIC_ARGB[name]);
         drawRect(renderer, m, CAPTION_STRIP.x + r.x, CAPTION_STRIP.y + r.y, r.w, r.h,
           [(c & 0xff) / 255, ((c >>> 8) & 0xff) / 255, ((c >>> 16) & 0xff) / 255, 1]);
       }

@@ -11,9 +11,9 @@
 // cemetery ambience already runs) with Info mode selected. An
 // activation that hits nothing else there is read as "you kneel and
 // read the nearest stone", and one of these lines answers - through
-// the ordinary HUD/popup-text line (townTalk.say), which is already
-// the enhanced skin's own small text (ui/enhancedHudText.js) rather
-// than a new window.
+// the ordinary HUD/popup-text line (townTalk.say), which under the
+// enhanced skin is a toast in the notice stack (ui/enhancedNotice.js,
+// ENH-NOTICE3) rather than a new window.
 
 /** Sixteen short, in-world phrases - no real name is invented for any
  *  of them (a graveyard's stones this port has no census for should

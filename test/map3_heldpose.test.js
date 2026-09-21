@@ -620,5 +620,32 @@ test('MAP-WEAPON: the host asks the live overlay slot, and the window carries th
   // lowered at every one of them.
   assert.match(w, /sheetWindowUp: \(\) => townTalk\.overlay\?\.isTravelMap === true,/);
   const held = readFileSync(new URL('../src/ui/heldMap.js', import.meta.url), 'utf8');
-  assert.match(held, /this\.isTravelMap = true;/, 'the window’s own duck tag - the rig imports no UI class to ask');
+  // EM4: THE TAG IS DERIVED, NOT DECLARED. It was a constant `true`
+  // while this window was only ever the travel map; once the same
+  // window also opens on a town or a dungeon the constant became a lie,
+  // and `sheetWindowUp` above would have answered yes over a crypt's
+  // plan. It is the SLOT's answer now: true exactly where the bay is
+  // reachable, which is what the host is asking.
+  assert.match(held, /this\.isTravelMap = this\._slot\.ids\.includes\('world'\);/,
+    'the window’s own duck tag - the rig imports no UI class to ask');
+  assert.doesNotMatch(held, /this\.isTravelMap = true;/, 'and it is never simply asserted');
+});
+
+test('MAP-WEAPON / EM4: the travel tag answers for the place, not for the class', async () => {
+  const { HeldMapWindow } = await import('../src/ui/heldMap.js');
+  const { createSheetSlot } = await import('../src/ui/mapStrip.js');
+  // the slot is the law the tag reads, so it is asked directly here -
+  // the window's own construction needs a document, and this is about
+  // the ANSWER rather than about the wiring (heldmap.test.js drives the
+  // window itself)
+  assert.ok(HeldMapWindow);
+  assert.equal(createSheetSlot({ context: 'town', has: ['town', 'world'] }).ids.includes('world'), true,
+    'a town can reach the bay, so a map open there IS a travel map');
+  assert.equal(createSheetSlot({ context: 'dungeon', has: ['automap'] }).ids.includes('world'), false,
+    'a crypt cannot, and the rig must not be told a travel map is up');
+  assert.equal(createSheetSlot({ context: 'building', has: ['automap'] }).ids.includes('world'), false);
+  assert.equal(createSheetSlot({ context: 'wilderness', has: ['world'] }).ids.includes('world'), true);
+  // and the narrowing matters too: a town whose window holds no world
+  // sheet is not a travel map either, which is exactly EM4's town door
+  assert.equal(createSheetSlot({ context: 'town', has: ['town'] }).ids.includes('world'), false);
 });

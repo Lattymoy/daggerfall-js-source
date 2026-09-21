@@ -37,21 +37,27 @@ test('hudText: the rubberband speedup only engages past maxRows', () => {
   assert.equal(over.timer, HUD_TEXT_POP_DELAY - 0.5 * (1 + HUD_TEXT_RUBBERBAND * 3));
 });
 
+
 // ── FONT1 (2026-09-16, Mac: "Enhanced mode UI ... Ambient Text mod also
 // doesnt use it. Any enhanced UI or text must be our enhanced
-// version"): THE POPUP COLUMN IN THE ENHANCED FACE ───────────────────
+// version"): THE POPUP ROWS IN THE ENHANCED FACE ────────────────────
 //
 // The model above is PopupText and stays PopupText: what the skin
-// changes is the PAINT. These drive the enhanced arm over a fake
-// document (the shape test/soc3_socialpanel.test.js drives its panel
-// through, cut to what this renderer touches) and the classic arm over
-// a recording renderer, and each pin names the mutants it kills.
+// changes is the PAINT. FONT1's paint was a DOM column at the top of
+// the screen; ENH-NOTICE3 (2026-09-21, Mac: "All mods, including
+// climates and calories need to utilize the enhanced notification
+// popup") moved it into the notice stack as TOASTS - one panel per row
+// in the same right-edge stack the message box slides into
+// (ui/enhancedNotice.js drawEnhancedToasts). These drive that arm over
+// a fake document (the shape test/enhancedNotice.test.js drives its
+// panels through) and the classic arm over a recording renderer, and
+// each pin names the mutants it kills.
 import { readFileSync } from 'node:fs';
-import { drawEnhancedHudText, drawEnhancedStatusLine, destroyEnhancedHudText, setEnhancedHudTextScale, midTextTopPx, ENHANCED_HUD_TEXT_ID, ENHANCED_MID_TEXT_ID, ENHANCED_STATUS_ID, ENHANCED_HUD_TEXT_ROW_H } from '../src/ui/enhancedHudText.js';
+import { drawEnhancedStatusLine, destroyEnhancedHudText, setEnhancedMidTextScale, midTextTopPx, ENHANCED_MID_TEXT_ID, ENHANCED_STATUS_ID } from '../src/ui/enhancedHudText.js';
+import { destroyEnhancedNotice, enhancedNoticeKeys, _setNoticeClockForTests, ENHANCED_NOTICE_ID, NOTICE_SLIDE_MS } from '../src/ui/enhancedNotice.js';
 import { MidScreenText, MID_SCREEN_TEXT_DEFAULT_DELAY, midScreenText } from '../src/ui/midScreenText.js';
-import { ENHANCED_CSS, ENHANCED_STYLE_ID, injectEnhancedStyle, HUD_TEXT_ROW_PX, HUD_TEXT_TOP_PX, HUD_TEXT_TOP_NARROW_PX, HUD_TEXT_TOP_CHAT_PX, HUD_TEXT_TOP_CHAT_TOUCH_PX } from '../src/ui/enhancedStyle.js';
-import { CHAT_CSS } from '../src/ui/chatPanel.js';
-import { CHAT_PEEK } from '../src/net/chat.js';
+import { ENHANCED_CSS, ENHANCED_STYLE_ID, injectEnhancedStyle } from '../src/ui/enhancedStyle.js';
+import * as enhancedStyle from '../src/ui/enhancedStyle.js';
 import { hideHudTextSurfaces } from '../src/ui/hud.js';
 import { nativeMetrics } from '../src/ui/nativePanel.js';
 
@@ -62,6 +68,7 @@ function fakeNode(tag, doc) {
     tagName: tag.toUpperCase(), children: [], parent: null, className: '', textContent: '', id: '',
     style: { setProperty(k, v) { this[k] = v; } }, dataset: {}, attrs: {},
     append(...cs) { for (const c of cs) { c.parent = n; n.children.push(c); } },
+    insertBefore(c, ref) { c.parent = n; const i = n.children.indexOf(ref); if (i < 0) n.children.push(c); else n.children.splice(i, 0, c); },
     setAttribute(k, v) { n.attrs[k] = v; },
     remove() { if (n.parent) { n.parent.children.splice(n.parent.children.indexOf(n), 1); n.parent = null; } n.removed = true; },
   };
@@ -78,101 +85,138 @@ function fakeDocument() {
 /** The renderer HudText's classic arm draws through - every quad it puts up. */
 const recorder = () => ({ quads: [], drawScreenQuad(tex, rect) { this.quads.push({ tex, ...rect }); } });
 const FONT = { fnt: { fixedHeight: 9, fixedWidth: 4, glyphWidth: () => 4 }, tex: 'tex:font', cols: 16, rows: 16, cw: 8, ch: 8 };
+/** The notice module's clock, turned by hand (test/enhancedNotice.test.js's
+ *  shape): a released toast's node leaves when NOTICE_SLIDE_MS fires. */
+function fakeClock() {
+  const due = [];
+  let id = 0;
+  _setNoticeClockForTests(
+    (fn, ms) => { const t = { id: ++id, fn, ms, live: true }; due.push(t); return t; },
+    (t) => { if (t) t.live = false; },
+  );
+  return { due, fire(ms) { for (const t of due.filter((t) => t.live && t.ms === ms)) { t.live = false; t.fn(); } } };
+}
 /** The skin, for one test. isEnhanced() reads globalThis.location.search when nothing is passed. */
 const withSkin = (skin, fn) => {
   const had = Object.hasOwn(globalThis, 'location') ? globalThis.location : undefined;
   const hadDoc = Object.hasOwn(globalThis, 'document') ? globalThis.document : undefined;
   globalThis.location = { search: `?skin=${skin}` };
-  try { return fn(); } finally {
+  const clock = fakeClock();
+  try { return fn(clock); } finally {
     if (had === undefined) delete globalThis.location; else globalThis.location = had;
     if (hadDoc === undefined) delete globalThis.document; else globalThis.document = hadDoc;
     destroyEnhancedHudText();
+    destroyEnhancedNotice();
+    _setNoticeClockForTests((fn2, ms) => setTimeout(fn2, ms), (t) => clearTimeout(t));
   }
 };
-const rowsOf = (host) => host.children.filter((c) => c.style.display !== 'none').map((c) => c.textContent);
+const stackOf = (doc) => doc.getElementById(ENHANCED_NOTICE_ID);
+/** This model's toasts, in stack order - the panels keyed `${model.key}:${row id}`. */
+const toastsOf = (doc, h) => (stackOf(doc)?.children ?? []).filter((p) => String(p.dataset.owner).startsWith(`${h.key}:`));
+const bodyOf = (panel) => panel.children.find((c) => c.className === 'notice-body');
+const hintOf = (panel) => panel.children.find((c) => c.className === 'notice-hint');
+/** The rows a reader sees: each SHOWN toast's one row, released ones (sliding out) excluded. */
+const rowsOf = (toasts) => toasts
+  .filter((p) => p.style.display !== 'none' && !p.className.includes('notice-out'))
+  .map((p) => bodyOf(p).children[0].textContent);
 
-test('FONT1: HudText.frame is PopupText.Draw as data - the same rows, the same scroll-out, the same off-by-one', () => {
+test('FONT1: HudText.frame is PopupText.Draw as data - the same rows, the same scroll-out, the same off-by-one - and ENH-NOTICE3 an id beside each row', () => {
   const h = new HudText();
-  assert.deepEqual(h.frame(), { rows: [], slide: 0 }, 'nothing queued, nothing drawn');
+  assert.deepEqual(h.frame(), { rows: [], ids: [], slide: 0 }, 'nothing queued, nothing drawn');
   for (let i = 0; i < 3; i++) h.add(`m${i}`);
   assert.deepEqual(h.frame().rows, ['m0', 'm1', 'm2'], 'front first, in the queue\'s order');
+  // ENH-NOTICE3: a toast must know WHICH row it is across frames - a
+  // row that left the frame was popped and slides out, a row still in
+  // it stays put. The ids are the rows' own, never reused by a model.
+  assert.deepEqual(h.frame().ids, [1, 2, 3], 'mutants: no ids (every toast keyed by index, so a pop re-keys every row and the whole stack re-slides); ids reused');
+  h.tick(HUD_TEXT_POP_DELAY * 2 + 0.01);
+  assert.deepEqual(h.frame().ids, [2, 3], 'the popped row\'s id leaves with it');
+  h.add('m3');
+  assert.deepEqual(h.frame().ids, [2, 3, 4], 'mutant: the counter reset, so a new row takes a popped row\'s id and its toast');
   // PopupText.Draw breaks AFTER the row that takes the count past
   // maxRows (`if (++count > maxCount) break`), so a long queue paints
   // maxRows + 1. The classic arm has always done this; the enhanced
-  // one must do the same or the two skins show different columns.
+  // one must do the same or the two skins show different rows.
   const many = new HudText();
   for (let i = 0; i < 20; i++) many.add(`m${i}`);
   assert.equal(many.frame().rows.length, HUD_TEXT_MAX_ROWS + 1,
     'mutants: rows cut to maxRows (the 8th row vanishes under the enhanced skin alone); the queue drawn whole (20 rows down the screen)');
+  assert.equal(many.frame().ids.length, HUD_TEXT_MAX_ROWS + 1, 'the ids are cut where the rows are');
   // The slide is PopupText's own `timer / popDelay`, and ONLY while the
   // timer is negative - a positive timer is a row waiting, not leaving.
   assert.equal(many.frame().slide, 0, 'mutants: the slide taken from a positive timer, so the column sits low and drifts up as it waits');
   many.tick(HUD_TEXT_POP_DELAY + 0.5);
   assert.ok(Math.abs(many.frame().slide - (many.timer / HUD_TEXT_POP_DELAY)) < 1e-9);
-  assert.ok(many.frame().slide < 0, 'the column rides UP as the front row leaves');
+  assert.ok(many.frame().slide < 0, 'the classic column rides UP as the front row leaves');
 });
 
-test('FONT1: under the enhanced skin the column is DOM in the pixel face, updated rather than rebuilt, and it hides on command', () => {
-  withSkin('enhanced', () => {
+test('ENH-NOTICE3: under the enhanced skin each PopupText row is a TOAST in the notice stack - no hint, updated not rebuilt, hidden on command, gone when the model pops it', () => {
+  withSkin('enhanced', (clock) => {
     const doc = fakeDocument();
     globalThis.document = doc;
     const h = new HudText();
-    h.draw(recorder(), { width: 1280, height: 800 }, null);
-    assert.equal(doc.getElementById(ENHANCED_HUD_TEXT_ID), null, 'silence builds nothing - a host for no lines is furniture');
+    h.draw(recorder(), CANVAS, null);
+    assert.equal(stackOf(doc), null, 'silence builds nothing - a stack for no lines is furniture');
 
     h.add('Your Long Blade skill has improved.');
     h.add('You found 5 gold pieces.');
-    // The FONT is null here on purpose: the enhanced column owes the
+    // The FONT is null here on purpose: the enhanced face owes the
     // classic bitmap font nothing, and a skin that could not speak
     // without ARENA2's font would be the classic skin wearing a coat.
-    h.draw(recorder(), { width: 1280, height: 800 }, null);
-    // AUDIT FONT F1: the id is the STACK's - one per document - and the
-    // column inside it is this model's own (see that finding below).
-    const stack = doc.getElementById(ENHANCED_HUD_TEXT_ID);
+    h.draw(recorder(), CANVAS, null);
+    const stack = stackOf(doc);
     assert.ok(stack, 'mutants: the enhanced arm dropped, so the lines draw in the 1996 bitmap face (or not at all with no font)');
-    assert.equal(stack.className, 'hudtext-stack');
-    assert.equal(stack.attrs['aria-hidden'], 'true', 'a readout, not a reading order - the notebook carries the words');
-    const host = stack.children[0];
-    assert.equal(host.className, 'hudtext');
-    assert.equal(host.dataset.owner, h.key, 'the column is named for the model that draws it');
-    assert.deepEqual(rowsOf(host), ['Your Long Blade skill has improved.', 'You found 5 gold pieces.']);
-    assert.equal(host.style['--hudtext-slide'], '0.00px', 'at rest the column does not slide');
+    assert.equal(stack.className, 'notice-stack', 'THE SAME STACK the message box slides into - not a second face');
+    const toasts = toastsOf(doc, h);
+    assert.equal(toasts.length, 2, 'mutants: the rows painted into ONE panel (a box, not toasts - a new line would repaint every old one)');
+    assert.deepEqual(toasts.map((p) => p.dataset.owner), [`${h.key}:1`, `${h.key}:2`], 'each keyed by its row under its model');
+    assert.deepEqual(toasts.map((p) => p.className), ['notice notice-toast notice-in', 'notice notice-toast notice-in'],
+      'mutants: the toast class dropped (a toast wearing the box\'s edge); notice-in never set (no slide)');
+    assert.deepEqual(rowsOf(toasts), ['Your Long Blade skill has improved.', 'You found 5 gold pieces.']);
+    assert.equal(hintOf(toasts[0]), undefined, 'mutant: "click or press a key" on a row nothing dismisses');
 
     // UPDATED, NOT REBUILT: the nodes survive the next frame, and there
-    // is still exactly ONE column in the document.
-    const first = host.children[0];
-    h.draw(recorder(), { width: 1280, height: 800 }, null);
-    assert.equal(host.children[0], first, 'mutants: the column rebuilt every frame (PX19k at sixty times a second)');
-    assert.equal(doc.body.children.filter((c) => c.id === ENHANCED_HUD_TEXT_ID).length, 1,
-      'mutant: a fresh host built every frame, stacking dead columns under the live one');
-    assert.equal(stack.children.length, 1, 'and one column for one model');
+    // is still exactly ONE stack in the document.
+    h.draw(recorder(), CANVAS, null);
+    assert.equal(toastsOf(doc, h)[0], toasts[0], 'mutants: the panel rebuilt every frame (PX19k at sixty times a second), or released and re-raised so it re-slides every frame');
+    assert.equal(doc.body.children.filter((c) => c.id === ENHANCED_NOTICE_ID).length, 1,
+      'mutant: a fresh stack built every frame, stacking dead toasts under the live ones');
 
-    // The scroll-out: PopupText's timer, in pixels, off the ONE row
-    // height the sheet and the module share. 1.5 s in, the timer is
-    // -0.5 and nothing has popped yet (a row leaves at -popDelay).
-    h.tick(HUD_TEXT_POP_DELAY + 0.5);
-    assert.equal(h.lines.length, 2);
-    h.draw(recorder(), { width: 1280, height: 800 }, null);
-    assert.equal(host.style['--hudtext-slide'], `${(h.timer * ENHANCED_HUD_TEXT_ROW_H).toFixed(2)}px`);
-    assert.ok(parseFloat(host.style['--hudtext-slide']) < 0, 'mutants: the sign flipped (the column falls as a line leaves); the slide never written (no scroll-out at all)');
+    // A THIRD LINE JOINS; the first two stay where they are.
+    h.add('The door is locked.');
+    h.draw(recorder(), CANVAS, null);
+    assert.deepEqual(rowsOf(toastsOf(doc, h)), ['Your Long Blade skill has improved.', 'You found 5 gold pieces.', 'The door is locked.']);
+    assert.equal(toastsOf(doc, h)[0], toasts[0], 'mutant: a new row re-keys the old ones (index keys), so the whole stack slides again on every line');
 
-    // THE HIDE DOOR (AUDIT 64 F37): a DOM column stays painted unless
-    // it is told otherwise, and the hosts tell it on the else of the
-    // gate they already had.
+    // THE HIDE DOOR (AUDIT 64 F37): a DOM face stays painted unless it
+    // is told otherwise, and the hosts tell it on the else of the gate
+    // they already had.
     h.hide();
-    assert.equal(host.style.display, 'none', 'mutants: hide() a no-op, so the last lines stand over a hidden HUD until something else is said');
-    assert.deepEqual(h.lines.map((l) => l.text), ['Your Long Blade skill has improved.', 'You found 5 gold pieces.'],
+    assert.deepEqual(toastsOf(doc, h).map((p) => p.style.display), ['none', 'none', 'none'],
+      'mutants: hide() a no-op, so the last lines stand over a hidden HUD until something else is said; hide releasing (the rows would re-slide in when the HUD came back)');
+    assert.deepEqual(h.lines.map((l) => l.text), ['Your Long Blade skill has improved.', 'You found 5 gold pieces.', 'The door is locked.'],
       'and hiding the paint never touches the QUEUE - PopupText.Update keeps draining under a window');
-    h.draw(recorder(), { width: 1280, height: 800 }, null);
-    assert.equal(host.style.display, '', 'and the next drawn frame brings it back');
+    h.draw(recorder(), CANVAS, null);
+    assert.deepEqual(toastsOf(doc, h).map((p) => p.style.display), ['', '', ''], 'and the next drawn frame brings them back, the same nodes');
 
-    // A ROW THAT POPPED IS GONE FROM THE PAINT. The queue is the
-    // model's; the renderer must follow it down as well as up.
-    h.tick(HUD_TEXT_POP_DELAY);
-    assert.equal(h.lines.length, 1, 'the front row popped (PopupText.Update)');
-    h.draw(recorder(), { width: 1280, height: 800 }, null);
-    assert.deepEqual(rowsOf(host), ['You found 5 gold pieces.'],
-      'mutants: a spent row left on screen (the pool never hides its tail), so the column only ever grows');
+    // A ROW THAT POPPED SLIDES OUT. The queue is the model's; the face
+    // must follow it down as well as up - and only the popped row goes.
+    h.tick(HUD_TEXT_POP_DELAY * 2 + 0.01);
+    assert.equal(h.lines.length, 2, 'the front row popped (PopupText.Update)');
+    h.draw(recorder(), CANVAS, null);
+    assert.equal(toasts[0].className, 'notice notice-toast notice-out', 'mutants: a spent row left standing (the face only ever grows); the popped row hidden rather than slid out');
+    assert.deepEqual(rowsOf(toastsOf(doc, h)), ['You found 5 gold pieces.', 'The door is locked.']);
+    clock.fire(NOTICE_SLIDE_MS);
+    assert.ok(toasts[0].removed, 'the node leaves after the slide');
+    assert.equal(toastsOf(doc, h).length, 2);
+    assert.equal(toastsOf(doc, h)[0], toasts[1], 'the rows still queued kept their nodes');
+
+    // ...and the last pop takes the stack with it.
+    h.tick(10);
+    h.draw(recorder(), CANVAS, null);
+    clock.fire(NOTICE_SLIDE_MS);
+    assert.equal(stackOf(doc), null, 'mutant: the stack outlives its last panel');
+    assert.deepEqual(enhancedNoticeKeys(), [], 'and no panel is left registered');
   });
 });
 
@@ -185,12 +229,12 @@ test('FONT1: the classic skin draws the column exactly as it did - bitmap glyphs
     const r = recorder();
     h.draw(r, { width: 1920, height: 1080 }, FONT);
     assert.ok(r.quads.length >= 2, 'the classic arm still paints its glyphs through the renderer');
-    assert.equal(doc.getElementById(ENHANCED_HUD_TEXT_ID), null,
-      'mutants: the enhanced arm taken unconditionally, so the classic skin grows a DOM column over its own');
+    assert.equal(stackOf(doc), null,
+      'mutants: the enhanced arm taken unconditionally, so the classic skin grows a DOM stack over its own column');
     // ...and the classic skin's hide is nothing at all, because the
     // classic column is repainted every frame.
     h.hide();
-    assert.equal(doc.getElementById(ENHANCED_HUD_TEXT_ID), null);
+    assert.equal(stackOf(doc), null);
     // A font-less classic frame draws nothing rather than throwing.
     const r2 = recorder();
     h.draw(r2, { width: 1920, height: 1080 }, null);
@@ -198,25 +242,30 @@ test('FONT1: the classic skin draws the column exactly as it did - bitmap glyphs
   });
 });
 
-test('FONT1: the enhanced column wears the skin\'s face and stands clear of the compass, in ONE set of numbers', () => {
+test('ENH-NOTICE3: the toast wears the popup\'s yellow on the box\'s dark, in the one stack\'s face - and the column\'s sheet is GONE', () => {
   const css = ENHANCED_CSS;
-  // The face, unsmoothed, with the classic popup's own yellow and its
-  // shadow (nativePanel DEFAULT_TEXT_COLOR is rgb(243,239,44)).
-  assert.match(css, /\.hudtext \{[^}]*font-family: 'Pixelify Five', 'Pixelify Sans', monospace;[^}]*-webkit-font-smoothing: none;/,
-    'mutants: the column left in --data (the launcher face); the smoothing left on, which blurs a pixel glyph');
-  assert.match(css, /\.hudtext \{[^}]*color: rgb\(243,239,44\); text-shadow: 2px 2px 0 rgb\(93,77,12\);/);
-  assert.match(css, /\.hudtext-stack \{[^}]*pointer-events: none;/, 'a readout takes no clicks');
-  // The two numbers are one number: the sheet's row height IS the pixel
-  // step the module slides by, and the top is the sheet's too.
-  assert.equal(ENHANCED_HUD_TEXT_ROW_H, HUD_TEXT_ROW_PX, 'mutants: the module keeps a row height of its own and the scroll-out slides by the wrong amount');
-  assert.match(css, new RegExp(`\\.hudtext-row \\{ min-height: ${HUD_TEXT_ROW_PX}px; line-height: ${HUD_TEXT_ROW_PX}px;`));
-  assert.match(css, new RegExp(`\\.hudtext-stack \\{[^}]*top: ${HUD_TEXT_TOP_PX}px;`));
-  // The compass strip is at top 18 and 26 tall, so the column must
-  // start below 44 - tools/font1Probe.mjs measures the whole top block
-  // (with a named target under the compass) at 82 and this at 96.
-  assert.ok(HUD_TEXT_TOP_PX > 44, 'mutants: the column back at the native panel\'s y=4, straight through the compass');
-  assert.match(rd('src/ui/enhancedHudText.js'), /import \{ injectEnhancedStyle, injectEnhancedFonts, HUD_TEXT_ROW_PX \} from '\.\/enhancedStyle\.js';/,
-    'the renderer reads the sheet\'s number rather than restating it');
+  // The stack's face is the notice panel's (ENH-NOTICE1 pins it); the
+  // toast is the same panel with the classic popup's own colour pair
+  // (nativePanel DEFAULT_TEXT_COLOR rgb(243,239,44), its shadow
+  // rgb(93,77,12)) so a row the game SAYS reads apart from a box the
+  // player must ANSWER.
+  assert.match(css, /\.notice\.notice-toast \{[^}]*border-left-color: rgba\(243,239,44,0\.55\);/,
+    'mutant: the toast rule dropped, so a skill-up wears the brass edge of a box waiting for a click');
+  assert.match(css, /\.notice\.notice-toast \.notice-row \{[^}]*color: rgb\(243,239,44\); text-shadow: 2px 2px 0 rgb\(93,77,12\);/,
+    'mutants: the popup\'s yellow dropped (a toast in the box\'s bone, one kind indistinguishable from the other)');
+  assert.match(css, /\.notice-stack \{[^}]*font-family: 'Pixelify Five', 'Pixelify Sans', monospace; -webkit-font-smoothing: none;/,
+    'the toast speaks in the skin\'s face because the stack does');
+  // THE COLUMN IS RETIRED, sheet and numbers alike: a second enhanced
+  // face for the HUD line would be exactly what ENH-NOTICE3 closed.
+  assert.doesNotMatch(css, /\.hudtext/, 'mutant: the column\'s rules back in the sheet beside the toasts');
+  for (const name of ['HUD_TEXT_TOP_PX', 'HUD_TEXT_ROW_PX', 'HUD_TEXT_TOP_NARROW_PX', 'HUD_TEXT_TOP_CHAT_PX', 'HUD_TEXT_TOP_CHAT_TOUCH_PX']) {
+    assert.equal(enhancedStyle[name], undefined, `mutant: ${name} exported again - a number for a surface that is not there`);
+  }
+  const mod = rd('src/ui/enhancedHudText.js');
+  assert.doesNotMatch(mod, /export function drawEnhancedHudText|export function releaseEnhancedHudText|ENHANCED_HUD_TEXT_ID/,
+    'mutant: the column\'s draw back in the module - two enhanced faces for one PopupText');
+  assert.match(rd('src/ui/hudText.js'), /import \{ drawEnhancedToasts, releaseEnhancedToasts \} from '\.\/enhancedNotice\.js';/,
+    'the model draws through the notice stack and nothing else');
 });
 
 test('FONT1: the HUD\'s OTHER text surface - the mid-screen label - speaks in the same face, and hides on the same law', () => {
@@ -316,11 +365,9 @@ test('FONT1: the online status line is the skin\'s face too, and every silent pa
 // them. Each names the mutants it kills (tools/mutants/font1.json).
 
 const CANVAS = { width: 1280, height: 800 };
-/** The columns inside the one stack, by the model that owns each. */
-const columnOf = (doc, h) => doc.getElementById(ENHANCED_HUD_TEXT_ID)?.children.find((c) => c.dataset.owner === h.key);
 
-test('AUDIT FONT F1: two PopupText models, two columns - a dungeon line survives townTalk\'s empty frame, and both sets are readable', () => {
-  withSkin('enhanced', () => {
+test('AUDIT FONT F1: two PopupText models, two sets of toasts in ONE stack - a dungeon line survives townTalk\'s empty frame, and both are readable', () => {
+  withSkin('enhanced', (clock) => {
     const doc = fakeDocument();
     globalThis.document = doc;
     // The two that are alive at once on ?world inside a dungeon:
@@ -335,39 +382,40 @@ test('AUDIT FONT F1: two PopupText models, two columns - a dungeon line survives
 
     dungeon.add('You found 25 gold pieces.');
     dungeon.draw(recorder(), CANVAS, null);
-    assert.deepEqual(rowsOf(columnOf(doc, dungeon)), ['You found 25 gold pieces.']);
+    assert.deepEqual(rowsOf(toastsOf(doc, dungeon)), ['You found 25 gold pieces.']);
 
     // THE FRAME ORDER, verbatim: worldModes' dungeon arm draws the
-    // dungeon's column and returns true, then townTalk.frame draws its
+    // dungeon's rows and returns true, then townTalk.frame draws its
     // own - empty, because the street is not talking - in the same task.
     town.draw(recorder(), CANVAS, null);
-    assert.equal(columnOf(doc, town), undefined, 'silence still builds nothing');
-    assert.equal(columnOf(doc, dungeon).style.display, '',
-      'mutants: the two models share one element, so townTalk\'s empty draw hid every dungeon popup this port has ever spoken');
-    assert.deepEqual(rowsOf(columnOf(doc, dungeon)), ['You found 25 gold pieces.']);
+    assert.equal(toastsOf(doc, town).length, 0, 'silence still builds nothing');
+    assert.deepEqual(rowsOf(toastsOf(doc, dungeon)), ['You found 25 gold pieces.'],
+      'mutants: the two models share one key, so townTalk\'s empty draw released every dungeon popup this port has ever spoken');
 
     // ...and when the street DOES talk, the two stack rather than
     // overwrite: both sets of lines readable, which is the whole point.
     town.add('A dog barks somewhere behind you.');
     town.draw(recorder(), CANVAS, null);
-    assert.deepEqual(rowsOf(columnOf(doc, town)), ['A dog barks somewhere behind you.']);
-    assert.deepEqual(rowsOf(columnOf(doc, dungeon)), ['You found 25 gold pieces.'],
+    assert.deepEqual(rowsOf(toastsOf(doc, town)), ['A dog barks somewhere behind you.']);
+    assert.deepEqual(rowsOf(toastsOf(doc, dungeon)), ['You found 25 gold pieces.'],
       'mutant: the later model writes the earlier one\'s rows');
-    assert.equal(doc.body.children.filter((c) => c.id === ENHANCED_HUD_TEXT_ID).length, 1,
-      'one STACK holds both - the place, the z-index and the scale are the document\'s, the rows are each model\'s');
-    assert.equal(doc.getElementById(ENHANCED_HUD_TEXT_ID).children.length, 2);
+    assert.equal(doc.body.children.filter((c) => c.id === ENHANCED_NOTICE_ID).length, 1,
+      'one STACK holds both - and the message box too - the place is the document\'s, the rows are each model\'s');
+    assert.equal(stackOf(doc).children.length, 2);
 
     // EVERY ALLOCATION HAS AN OWNER: a dungeon context ends inside a
-    // session (scenes/dungeonContext.js destroy), and takes its column.
+    // session (scenes/dungeonContext.js destroy), and takes its toasts.
     dungeon.dispose();
-    assert.equal(columnOf(doc, dungeon), undefined, 'mutant: dispose a no-op, so a torn-down context\'s column outlives it');
-    assert.deepEqual(rowsOf(columnOf(doc, town)), ['A dog barks somewhere behind you.'], 'and it takes only its own');
+    clock.fire(NOTICE_SLIDE_MS);
+    assert.equal(toastsOf(doc, dungeon).length, 0, 'mutant: dispose a no-op, so a torn-down context\'s rows outlive it');
+    assert.deepEqual(rowsOf(toastsOf(doc, town)), ['A dog barks somewhere behind you.'], 'and it takes only its own');
     town.dispose();
-    assert.equal(doc.getElementById(ENHANCED_HUD_TEXT_ID), null, 'mutant: the stack outlives its last column');
+    clock.fire(NOTICE_SLIDE_MS);
+    assert.equal(stackOf(doc), null, 'mutant: the stack outlives its last panel');
   });
 });
 
-test('AUDIT FONT F2: --hud-scale reaches the column and the label - they are SIBLINGS of .hud, not children of it', () => {
+test('AUDIT FONT F2: --hud-scale reaches the mid-screen label - a SIBLING of .hud, not a child of it; the toasts are the box\'s size and take none', () => {
   withSkin('enhanced', () => {
     const doc = fakeDocument();
     globalThis.document = doc;
@@ -377,43 +425,30 @@ test('AUDIT FONT F2: --hud-scale reaches the column and the label - they are SIB
     const label = new MidScreenText();
     label.set('Interaction is now in steal mode.');
     label.draw(recorder(), CANVAS, null);
-    const stack = doc.getElementById(ENHANCED_HUD_TEXT_ID);
     const mid = doc.getElementById(ENHANCED_MID_TEXT_ID);
-    assert.equal(stack.style['--hud-scale'], undefined, 'nothing has set it yet - the variable is declared on .hud and does not inherit here');
-    setEnhancedHudTextScale(2, doc);
-    assert.equal(stack.style['--hud-scale'], '2',
-      'mutants: the column left off the scale write, so at hudScale 2 it draws at 1 - straight through the compass block - and at 0.5 it floats');
-    assert.equal(mid.style['--hud-scale'], '2', 'mutants: the mid-screen label left off it');
+    assert.equal(mid.style['--hud-scale'], undefined, 'nothing has set it yet - the variable is declared on .hud and does not inherit here');
+    setEnhancedMidTextScale(2, doc);
+    assert.equal(mid.style['--hud-scale'], '2', 'mutants: the mid-screen label left off the scale write, so at hudScale 2 it draws at 1 and at 0.5 it floats');
+    assert.equal(stackOf(doc).style['--hud-scale'], undefined,
+      'ENH-NOTICE3: the notice stack is the BOX\'s stack, at the box\'s size - a HUD scale of 2 must not double a notice the box beside it draws at 1');
   });
   // ...AND THE HOST BUILT AFTERWARDS GETS IT TOO. enhancedHud writes
-  // the scale only when it CHANGES - once at boot - and these hosts are
+  // the scale only when it CHANGES - once at boot - and the label is
   // built on the first line the game says, which may be an hour later.
   withSkin('enhanced', () => {
     const doc = fakeDocument();
     globalThis.document = doc;
-    setEnhancedHudTextScale(0.5, doc);          // the boot frame, with nothing built yet
-    const h = new HudText('town');
-    h.add('Your Long Blade skill has improved.');
-    h.draw(recorder(), CANVAS, null);
+    setEnhancedMidTextScale(0.5, doc);          // the boot frame, with nothing built yet
     const label = new MidScreenText();
     label.set('You are too far away.');
     label.draw(recorder(), CANVAS, null);
-    assert.equal(doc.getElementById(ENHANCED_HUD_TEXT_ID).style['--hud-scale'], '0.5',
-      'mutant: the scale not kept, so a column built after the one write draws at 1 under a HUD at 0.5');
     assert.equal(doc.getElementById(ENHANCED_MID_TEXT_ID).style['--hud-scale'], '0.5',
-      'mutant: ...and the label with it');
+      'mutant: the scale not kept, so a label built after the one write draws at 1 under a HUD at 0.5');
   });
   // ...and the one hand that knows the live scale calls it, beside the
   // damage-number layer it already fed for exactly this reason.
-  assert.match(rd('src/ui/enhancedHud.js'), /getElementById\('enhanced-hitnums'\)\?\.style\.setProperty\('--hud-scale', String\(scale\)\);[\s\S]{0,400}?setEnhancedHudTextScale\(scale, document\);/,
-    'mutant: the propagation dropped out of the scale write, so nothing ever sets it on either host');
-  // AND THE SLIDE RIDES INSIDE THE SCALE. The scale is on the stack,
-  // the translateY on the column within it - so a row leaves by a
-  // SCALED row. FONT1 put both on one element with the translate
-  // outside the scale, so the scroll-out was always unscaled pixels.
-  assert.match(ENHANCED_CSS, /\.hudtext-stack \{[^}]*transform: translateX\(-50%\) scale\(var\(--hud-scale, 1\)\);/);
-  assert.match(ENHANCED_CSS, /\.hudtext \{[^}]*transform: translateY\(var\(--hudtext-slide, 0px\)\);/,
-    'mutant: the slide back outside the scale, so the scroll-out does not match the rows it is scrolling');
+  assert.match(rd('src/ui/enhancedHud.js'), /getElementById\('enhanced-hitnums'\)\?\.style\.setProperty\('--hud-scale', String\(scale\)\);[\s\S]{0,400}?setEnhancedMidTextScale\(scale, document\);/,   // AUDIT ENH-NOTICE3 A10: named for the one surface it scales
+    'mutant: the propagation dropped out of the scale write, so nothing ever sets it on the label');
 });
 
 test('AUDIT FONT F3: the dungeon hosts\' overlay branch takes BOTH DOM surfaces down before it returns', () => {
@@ -426,16 +461,16 @@ test('AUDIT FONT F3: the dungeon hosts\' overlay branch takes BOTH DOM surfaces 
     midScreenText._reset();
     midScreenText.set('You are too far away.');
     midScreenText.draw(recorder(), CANVAS, null);
-    const col = columnOf(doc, hud);
+    const toast = toastsOf(doc, hud)[0];
     const mid = doc.getElementById(ENHANCED_MID_TEXT_ID);
-    assert.equal(col.style.display, '');
+    assert.equal(toast.style.display, '');
     assert.equal(mid.style.display, '');
     // The frame a dungeon host runs with a window up: it returns above
     // drawFoes, which is the only place it reaches drawHud, so this is
     // the ONLY call that can ever take these two down on such a frame.
     hideHudTextSurfaces(hud);
-    assert.equal(col.style.display, 'none',
-      'mutants: the popup column left standing over an open dungeon window (and on ?dungeon there is no second column behind it)');
+    assert.equal(toast.style.display, 'none',
+      'mutants: the popup rows left standing over an open dungeon window (and on ?dungeon there is no second model behind them)');
     assert.equal(mid.style.display, 'none',
       'mutants: "You are too far away" left standing over the window that opened under it');
     // The PAINT went; the model did not. PopupText.Update keeps
@@ -465,7 +500,7 @@ test('AUDIT FONT F3: the dungeon hosts\' overlay branch takes BOTH DOM surfaces 
     'mutants: the context\'s door hides one surface and not the other');
 });
 
-test('AUDIT FONT F4: a canvas window covers the classic column, so the DOM column goes while one is up', () => {
+test('AUDIT FONT F4: a canvas window covers the classic column, so the toasts go while one is up', () => {
   withSkin('enhanced', () => {
     const doc = fakeDocument();
     globalThis.document = doc;
@@ -473,21 +508,21 @@ test('AUDIT FONT F4: a canvas window covers the classic column, so the DOM colum
     h.add('Your Long Blade skill has improved.');
     h.observe(false);
     h.draw(recorder(), CANVAS, null);
-    const col = columnOf(doc, h);
-    assert.deepEqual(rowsOf(col), ['Your Long Blade skill has improved.']);
+    const toast = toastsOf(doc, h)[0];
+    assert.deepEqual(rowsOf([toast]), ['Your Long Blade skill has improved.']);
     // The death screen, the rest and save windows, the travel pop-up,
     // the quest journal, every MessageBox and ActionTextBox are drawn
     // on the CANVAS after this column - so on the classic skin they
-    // cover it. The DOM column is at z-index 4 over all of them.
+    // cover it. The notice stack is DOM over all of them.
     h.observe(true);
     h.draw(recorder(), CANVAS, null);
-    assert.equal(col.style.display, 'none',
+    assert.equal(toast.style.display, 'none',
       'mutants: the covered flag ignored, so the popup lines stand OVER the death screen and every native window');
     assert.deepEqual(h.lines.map((l) => l.text), ['Your Long Blade skill has improved.'],
       'the paint went, the queue did not - PopupText.Update drains under a window');
     h.observe(false);
     h.draw(recorder(), CANVAS, null);
-    assert.equal(col.style.display, '', 'and the window closing brings it back');
+    assert.equal(toast.style.display, '', 'and the window closing brings it back');
   });
   // The classic arm is byte for byte what it was: there the draw ORDER
   // already says it, and a `covered` frame still paints its glyphs
@@ -501,13 +536,29 @@ test('AUDIT FONT F4: a canvas window covers the classic column, so the DOM colum
     h.observe(true);
     h.draw(r, { width: 1920, height: 1080 }, FONT);
     assert.ok(r.quads.length >= 2, 'mutant: the covered gate taken on the classic arm too, which would blank a column DFU draws');
-    assert.equal(doc.getElementById(ENHANCED_HUD_TEXT_ID), null);
+    assert.equal(stackOf(doc), null);
   });
-  // ...and every host that owns a column hands its own window slot in.
+  // ...and every host that owns a model hands its own window slot in.
   const town = rd('src/scenes/townTalk.js');
-  assert.equal([...town.matchAll(/hud\.observe\(!!overlay\);/g)].length, 2,
-    'mutants: townTalk\'s frame - or the interior arm\'s own hudFrame - stops telling the column that a window is up');
-  assert.match(rd('src/scenes/dungeonContext.js'), /hudText\.observe\(!!activeOverlay\);/,
+  // AUDIT ENH-NOTICE3 F3/C2: the question is THE PREVIOUSWINDOW CHAIN,
+  // not the slot. DFU paints PopupText as part of the HUD window at the
+  // bottom of the stack, and a pushed box paints its previousWindow
+  // first (DaggerfallPopupWindow.cs:77-85) - so under a BOX the rows
+  // stay and under a window that cuts the chain (the inventory, the
+  // rest) they go. Both townTalk sites ask one predicate: this slot's
+  // chain (AUDIT 64 F35's hudCovered), the held map's outright hide,
+  // and the MODE host's chain - the interior slot this model is drawn
+  // under, which `overlay` cannot see.
+  assert.equal([...town.matchAll(/hud\.observe\(toastsCovered\(\)\);/g)].length, 2,
+    'mutants: townTalk\'s frame - or the interior arm\'s own hudFrame - stops telling the model that a window covers the HUD');
+  assert.match(town, /const toastsCovered = \(\) => \(talkPaused\(\) && windows\.hudCovered\(overlay\)\) \|\| hidesHud\(overlay\) \|\| !!otherHudCovered\?\.\(\);/,
+    'mutants: the slot asked instead of the chain (a pushed box hides the toasts DFU keeps); the held map\'s hide dropped; the mode host dropped (an interior window never hides them)');
+  for (const h of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
+    assert.match(rd(h), /otherHudCovered: \(\) => modes\?\.hudCovered \?\? false,/, `${h}: the seam IS the mode machine's previousWindow chain`);
+  }
+  assert.match(rd('src/scenes/dungeonContext.js'), /hudText\.observe\(!!activeOverlay && \(dungeonWindows\.hudCovered\(activeOverlay\) \|\| hidesHud\(activeOverlay\)\)\);/,
+    'mutant: the dungeon asks the slot (its own windowCoversHud asks the chain)');
+  assert.match(rd('src/scenes/dungeonContext.js'), /hudText\.observe\(!!activeOverlay && /,
     'mutants: the dungeon\'s frame stops telling it');
   // ...and the model's own draw is back to three arguments: a fourth
   // positional slot on a `draw` in src/ui is the scale's (audit24
@@ -516,41 +567,7 @@ test('AUDIT FONT F4: a canvas window covers the classic column, so the DOM colum
     'mutant: the window slot smuggled into draw\'s argument list, where the sheet\'s forward fills the fourth with a number');
 });
 
-test('AUDIT FONT F7: the column steps out of the chat\'s peek where the chat is mounted, and the numbers are the chat sheet\'s own', () => {
-  withSkin('enhanced', () => {
-    const doc = fakeDocument();
-    globalThis.document = doc;
-    // The sheet as it is really injected, not a string read off the
-    // module: one <style> in the head, carrying the rule.
-    const h = new HudText('town');
-    h.add('Your Long Blade skill has improved.');
-    h.draw(recorder(), CANVAS, null);
-    const sheet = doc.getElementById(ENHANCED_STYLE_ID);
-    assert.ok(sheet, 'the module injects its sheet on the first line it paints');
-    assert.match(sheet.textContent, new RegExp(`body:has\\(\\.dfchat\\) \\.hudtext-stack \\{ top: ${HUD_TEXT_TOP_CHAT_PX}px; \\}`),
-      'mutants: the offset dropped, so the column sits inside the chat peek - .dfchat is z-index 5 over it and on a 430px phone the two boxes are the same box');
-    assert.match(sheet.textContent, new RegExp(`body:has\\(\\.dfchat\\.touch\\) \\.hudtext-stack \\{ top: ${HUD_TEXT_TOP_CHAT_TOUCH_PX}px; \\}`),
-      'mutant: the touch skin\'s own chat top (72, not 44) forgotten');
-  });
-  // The numbers are DERIVED from the chat's sheet, so a chat that moves
-  // reddens this rather than quietly sliding under the column again.
-  const chatTop = Number(/\.dfchat \{[^}]*top: calc\((\d+)px/.exec(CHAT_CSS)[1]);
-  const chatTouchTop = Number(/\.dfchat\.touch \{ top: calc\((\d+)px/.exec(CHAT_CSS)[1]);
-  const line = /\.dfchat-line \{[^}]*font-size: (\d+)px; line-height: ([\d.]+);/.exec(CHAT_CSS);
-  const gap = Number(/\.dfchat-peek \{[^}]*gap: (\d+)px;/.exec(CHAT_CSS)[1]);
-  // A peek line wraps in .dfchat's 440px box - tools/font1Probe.mjs
-  // measures the real panel at 248.5 (292.5 touch) and that is two
-  // rows a line, so the floor here is the two-row peek.
-  const peekH = CHAT_PEEK * 2 * Number(line[1]) * Number(line[2]) + (CHAT_PEEK - 1) * gap;
-  assert.ok(HUD_TEXT_TOP_CHAT_PX >= chatTop + peekH,
-    `mutant: the offset stops clearing the peek (${HUD_TEXT_TOP_CHAT_PX} against ${chatTop} + ${peekH.toFixed(1)})`);
-  assert.ok(HUD_TEXT_TOP_CHAT_TOUCH_PX >= chatTouchTop + peekH,
-    'mutant: the touch offset stops clearing the peek');
-  assert.ok(HUD_TEXT_TOP_CHAT_PX > HUD_TEXT_TOP_PX && HUD_TEXT_TOP_CHAT_TOUCH_PX > HUD_TEXT_TOP_CHAT_PX,
-    'the compass clearance is a FLOOR - the chat only ever pushes the column further down');
-});
-
-test('AUDIT FONT F8: a long line is drawn WHOLE, and the scroll-out is measured off the row it is scrolling', () => {
+test('AUDIT FONT F8: a long line is drawn WHOLE in its toast, and the stack\'s row wraps rather than cuts', () => {
   withSkin('enhanced', () => {
     const doc = fakeDocument();
     globalThis.document = doc;
@@ -560,42 +577,17 @@ test('AUDIT FONT F8: a long line is drawn WHOLE, and the scroll-out is measured 
     const LONG = 'You have been given a letter of introduction to the Knights of the Dragon, and are expected at their hall in Daggerfall before the 15th of Hearthfire.';
     h.add(LONG);
     h.draw(recorder(), CANVAS, null);
-    const col = columnOf(doc, h);
-    assert.deepEqual(rowsOf(col), [LONG],
+    const toast = toastsOf(doc, h)[0];
+    assert.deepEqual(rowsOf([toast]), [LONG],
       'mutants: the row truncated in the DOM, so the operative half of a quest line never reaches the player at all');
-    assert.equal(col.children[0].textContent.length, LONG.length);
-    // The sheet wraps rather than ellipsising it.
-    assert.match(ENHANCED_CSS, /\.hudtext-row \{[^}]*white-space: normal; overflow-wrap: anywhere;/,
-      'mutants: nowrap back on the row; the overflow-wrap dropped, so a long unbroken word spills out of the column');
-    assert.doesNotMatch(ENHANCED_CSS, /\.hudtext-row \{[^}]*text-overflow: ellipsis;/,
-      'mutant: the ellipsis back, which is what cut the line');
-    assert.match(ENHANCED_CSS, new RegExp(`\\.hudtext-row \\{ min-height: ${HUD_TEXT_ROW_PX}px;`),
-      'mutant: a fixed height back on a row that now wraps, so the second line draws outside its own box');
-
-    // ...and the slide is honest about that row's REAL height. A row
-    // that wrapped to two lines and scrolled out by one row's worth
-    // would jump; the module measures the front row and falls back to
-    // the sheet's minimum for a row that has never been laid out.
-    h.tick(HUD_TEXT_POP_DELAY + 0.5);
-    col.children[0].offsetHeight = 44;          // what a two-line row measures
-    h.draw(recorder(), CANVAS, null);
-    assert.equal(col.style['--hudtext-slide'], `${(h.timer * 44).toFixed(2)}px`,
-      'mutants: the slide taken off the constant while the row is taller, so a wrapped line leaves by half of itself');
-    delete col.children[0].offsetHeight;
-    h.draw(recorder(), CANVAS, null);
-    assert.equal(col.style['--hudtext-slide'], `${(h.timer * ENHANCED_HUD_TEXT_ROW_H).toFixed(2)}px`,
-      'mutant: no fallback, so a row with no layout yet slides by NaN and the column vanishes');
+    assert.equal(bodyOf(toast).children[0].textContent.length, LONG.length);
+    // The sheet wraps rather than ellipsising it - the notice row's own
+    // rule, which the box's rows already rely on.
+    assert.match(ENHANCED_CSS, /\.notice-row \{[^}]*white-space: pre-wrap; overflow-wrap: anywhere;/,
+      'mutants: nowrap on the row; the overflow-wrap dropped, so a long unbroken word spills out of the panel');
+    assert.doesNotMatch(ENHANCED_CSS, /\.notice-row \{[^}]*text-overflow: ellipsis;/,
+      'mutant: an ellipsis on the row, which is what cut the line');
   });
-});
-
-test('AUDIT FONT F9: the narrow top is an export the sheet interpolates, like its wide sibling', () => {
-  assert.equal(typeof HUD_TEXT_TOP_NARROW_PX, 'number');
-  assert.ok(HUD_TEXT_TOP_NARROW_PX < HUD_TEXT_TOP_PX,
-    'the compass block moves UP under 860px (.hud-top 18 -> 10), so the column follows it');
-  assert.match(ENHANCED_CSS, new RegExp(`@media \\(max-width: 860px\\) \\{[\\s\\S]*?\\.hudtext-stack \\{ top: ${HUD_TEXT_TOP_NARROW_PX}px; \\}`),
-    'mutants: the narrow top back as a literal, so a slice that moves the compass moves one of the two numbers and not the other');
-  assert.doesNotMatch(rd('src/ui/enhancedStyle.js'), /\.hudtext-stack \{ top: 82px; \}/,
-    'mutant: the literal restored beside the export');
 });
 
 test('AUDIT FONT F11: the mid-screen label lands on the CLASSIC label\'s own line, not on a proportion that is right at 16:10 alone', () => {
@@ -639,8 +631,65 @@ test('AUDIT FONT F12: the teardown\'s doc names callers that exist', () => {
   const s = rd('src/ui/enhancedHudText.js');
   assert.doesNotMatch(s, /the same hand that calls ui\/enhancedHud\.js destroyEnhancedHud/,
     'mutant: the old sentence back - it named a caller that is nowhere in src/, and destroyEnhancedHud has none either');
-  assert.match(s, /export function releaseEnhancedHudText\(key\)/,
+  // The per-owner teardown a live host really does reach is the
+  // toasts' (ENH-NOTICE3), through HudText.dispose.
+  assert.match(rd('src/ui/enhancedNotice.js'), /export function releaseEnhancedToasts\(key\)/,
     'the per-owner teardown a live host really does reach');
+  assert.match(rd('src/ui/hudText.js'), /dispose\(\) \{\n    if \(typeof document !== 'undefined'\) releaseEnhancedToasts\(this\.key\);/,
+    'mutant: dispose no longer reaches it');
   assert.equal([...rd('src/scenes/dungeonContext.js').matchAll(/hudText\.dispose\(\);/g)].length, 1,
-    'mutant: the context\'s column never released, so a torn-down dungeon leaves its column on the page');
+    'mutant: the context\'s rows never released, so a torn-down dungeon leaves its toasts on the page');
+});
+
+test('ENH-NOTICE3 (AUDIT A1): under the enhanced skin WITH the classic font loaded the bitmap column paints nothing - one face, not two', () => {
+  withSkin('enhanced', () => {
+    const doc = fakeDocument();
+    globalThis.document = doc;
+    const h = new HudText('town');
+    h.add('Your Long Blade skill has improved.');
+    const r = recorder();
+    h.draw(r, CANVAS, FONT);   // the shipping hosts pass the font - every earlier pin passed null
+    assert.equal(toastsOf(doc, h).length, 1, 'the toast is up');
+    assert.equal(r.quads.length, 0, 'mutant: the enhanced arm\'s return dropped, so the classic glyphs paint under the toasts');
+  });
+});
+
+test('ENH-NOTICE3 (AUDIT A6-A8): PopupText.AddText\'s delay arithmetic - the waiting timer and the next pop delay take the MAX, and the next pop delay resets after a pop', () => {
+  // AddText (PopupText.cs): an empty queue takes the delay outright; a
+  // queue still waiting (timer >= 0) takes max(timer, delay); a queue
+  // already draining (timer < 0) raises nextPopDelay to max(next,
+  // delay). Update: each pop adds nextPopDelay back and resets it to
+  // popDelay. Every earlier pin added with the default 1 s, so the
+  // whole delay half - the mod's textDisplayTime - was unpinned.
+  const h = new HudText();
+  h.add('a');                          // empty: timer = 1
+  h.add('b', 0.5);                     // waiting: max(1, 0.5) = 1, not 0.5
+  assert.equal(h.timer, 1, 'mutant: the waiting timer ASSIGNED (a short line cuts a long one\'s life)');
+  h.add('c', 3);                       // waiting: max(1, 3) = 3
+  assert.equal(h.timer, 3);
+  h.tick(3.5);                         // timer = -0.5: draining, nothing popped yet
+  assert.equal(h.lines.length, 3);
+  h.add('d', 0.5);                     // draining: nextPopDelay = max(1, 0.5) = 1, not 0.5
+  assert.equal(h.nextPopDelay, 1, 'mutant: the next pop delay ASSIGNED');
+  h.add('e', 2);                       // draining: nextPopDelay = max(1, 2) = 2
+  assert.equal(h.nextPopDelay, 2);
+  h.tick(0.6);                         // timer = -1.1 < -1: pop 'a', timer += 2 -> 0.9, next resets to 1
+  assert.deepEqual(h.lines.map((l) => l.text), ['b', 'c', 'd', 'e']);
+  assert.ok(Math.abs(h.timer - 0.9) < 1e-9, 'the popped row gave back the RAISED delay');
+  assert.equal(h.nextPopDelay, HUD_TEXT_POP_DELAY, 'mutant: the next pop delay never reset, so every later row lives the raised life too');
+  h.tick(2.0);                         // timer = -1.1: pop 'b', timer += 1 (the reset delay) -> -0.1
+  assert.deepEqual(h.lines.map((l) => l.text), ['c', 'd', 'e']);
+  assert.ok(Math.abs(h.timer - (-0.1)) < 1e-9, 'mutant: the second pop added the old raised delay');
+});
+
+test('ENH-NOTICE3 (AUDIT A1/A6/A9/A10): the sheet - the stack clips what will not fit, the toast keeps its dark, and the media blocks reach a toast\'s row', () => {
+  assert.match(ENHANCED_CSS, /\.notice-stack \{[^}]*max-height: 90vh; overflow: hidden;/,
+    'mutant: the cap raised or the overflow open, so eight toasts and a box spill the last toast off a 520px screen');
+  assert.match(ENHANCED_CSS, /\.notice\.notice-toast \{[^}]*background: rgba\(10,12,17,0\.82\);/,
+    'mutant: the toast\'s dark thinned, and the popup\'s yellow stands on the sky');
+  // the toast rule (0-2-1) outranks the media blocks\' bare .notice-row
+  // (0-1-0), so each block names the toast\'s row too
+  assert.match(ENHANCED_CSS, /@media \(max-width: 720px\) \{[^@]*\.notice-row, \.notice\.notice-toast \.notice-row \{ font-size: 13px; \}/,
+    'mutant: on a phone the toast stays 14px while the box drops to 13 - the panel merely read set larger than the one to answer');
+  assert.match(ENHANCED_CSS, /@media \(max-height: 520px\) \{[^@]*\.notice-row, \.notice\.notice-toast \.notice-row \{ font-size: 13px; line-height: 1\.25; \}/);
 });
