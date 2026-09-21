@@ -9,8 +9,8 @@
 // vendored for it - so the row is an ENHANCED one rather than a mod
 // row, and the key is the port's.
 //
-// BLOOD AUDIT 4, SAID PLAINLY: of the four keys below, only
-// `blood-marks` and `blood-overkill` have a registry row today. The
+// BLOOD AUDIT 4, SAID PLAINLY: of the keys below, only `blood-marks`,
+// `blood-overkill` and (BLOOD2e) `blood-screen` have a registry row. The
 // capacity and the density are read from keys nothing writes, so every
 // player runs their defaults; a range control does not exist in the
 // registry yet, and the gore slider that brings one is the next slice.
@@ -57,6 +57,14 @@ export function bloodDensity() {
  *  row really turns off is the spectacle of a killing blow. */
 export const BLOOD_OVERKILL_PREF = 'blood-overkill';
 export const bloodOverkillOn = () => getPref(BLOOD_OVERKILL_PREF) !== false;
+
+/** BLOOD2e - BLOOD ON THE LENS. A blow that takes a real share of the
+ *  player's health in one frame throws a few drops onto the screen,
+ *  which slide and fade. The port's own (the reference has no screen
+ *  blood); ON by default, its own row because it is the one piece of
+ *  blood that is in the player's face rather than on the floor. */
+export const BLOOD_SCREEN_PREF = 'blood-screen';
+export const bloodScreenOn = () => getPref(BLOOD_SCREEN_PREF) !== false;
 
 /** The dep bag `createHitEffects` takes, built once so four hosts
  *  cannot each spell it differently (the FOUR HOSTS RULE's own

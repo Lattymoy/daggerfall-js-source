@@ -44,6 +44,7 @@ import { BLOODLESS_INDEX } from '../combat/bloodDecals.js';   // BLOOD1a: which 
 
 /** EnemyBlood.cs:23. */
 import { createBleedLedger } from '../combat/bloodBleed.js';   // BLOOD2c
+import { flashPlayerBleed } from '../ui/damageFlash.js';   // BLOOD2e: the reference's subtle flash with each of the player's own drips
 export const BLOOD_ARCHIVE = 380;
 /** BLOOD2d: the player's key in the marks' tracking table (a foe's is its own record). */
 export const PLAYER_WALKER = Object.freeze({ player: true });
@@ -233,6 +234,26 @@ export function createHitEffects({
         if (a.kind === 'drip') { if (marks.drip?.(a.bloodIndex, a.pos, a.count)) n++; }
         else if (a.kind === 'pool') { if (marks.spreadPool?.(a.bloodIndex, a.pos)) n++; }
         else if (a.kind === 'step') { if (marks.step?.(a.body, a.pos, a.forward)) n++; }   // BLOOD2d: a foe treads in blood and tracks it
+      }
+      return n;
+    },
+
+    /** BLOOD2e: THE PLAYER BLEEDS. The reference bleeds the PLAYER -
+     *  below the threshold, every 2..5 s, a spawn ramped by how hurt
+     *  they are, with a subtle red flash, suppressed at zero health -
+     *  and BLOOD2c turned that shape on the foes first. This is the
+     *  player's own: the same ledger, keyed by PLAYER_WALKER, read
+     *  through a view of the entity's health at the feet the host
+     *  hands, with no strides (the footstep machine lays the player's
+     *  prints) and no corpse (a dead player is the death screen's, not
+     *  a pool's). Each drip that lands flashes. Answers the drips laid. */
+    bleedPlayer: (dt, feet, entity) => {
+      if (!marks || !feet || !entity) return 0;
+      const health = entity.health ?? 0, maxHealth = entity.maxHealth ?? 0;
+      const view = () => ({ feet, health, maxHealth, bloodIndex: 0, dead: !(health > 0), corpse: false, strides: false });
+      let n = 0;
+      for (const a of bleeding.tick(dt, [PLAYER_WALKER], view)) {
+        if (a.kind === 'drip' && marks.drip?.(a.bloodIndex, a.pos, a.count)) { n++; flashPlayerBleed(); }
       }
       return n;
     },

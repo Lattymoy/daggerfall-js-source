@@ -3210,3 +3210,134 @@ test('BLOOD AUDIT 4: by source - the dungeon quickload clears the blood, every p
   assert.match(fn, /this\._bindTex0\(tex\);/);
   assert.doesNotMatch(fn, /this\.stats\.texBinds\+\+/, 'counted once, by the bind');
 });
+
+// ── BLOOD2e (2026-09-21) - THE PLAYER'S OWN BLOOD: the reference's player
+// bleeding on the same ledger, its subtle flash, and blood on the lens ──
+import { playerDamageFlash, flashPlayerDamage, BLEED_FLASH_ALPHA, FLASH_ALPHA as E_FLASH_ALPHA } from '../src/ui/damageFlash.js';
+import { createBloodScreen, screenDrops, screenDropAlpha, SCREEN_SPATTER_MIN, SCREEN_DROPS_MAX, SCREEN_DROPS_AT, SCREEN_DROPS_CAP, SCREEN_DROP_LIFE, SCREEN_FADE_SHARE, SCREEN_DROP_SIZE, SCREEN_DROP_SLIDE } from '../src/ui/bloodScreen.js';
+import { bleedDrops as eBleedDrops, bleedShare as eBleedShare, BLEED_WAIT as E_WAIT } from '../src/combat/bloodBleed.js';
+import { FEATURES as E_FEATURES } from '../src/systems/features.js';
+
+test('BLOOD2e: the player bleeds - the same ledger, no strides, no corpse, a subtle flash a drip that never lowers a blow’s, nothing at zero health', () => {
+  // the ledger: a view that says `strides: false` walks without steps
+  const led = a4Ledger({ rng: () => 0 });
+  const me = { feet: [0, 0, 0], health: 40, maxHealth: 40, bloodIndex: 0, dead: false, corpse: false, strides: false };
+  led.tick(0.1, [me], (b) => b);
+  me.feet = [3, 0, 0];
+  assert.deepEqual(led.tick(0.1, [me], (b) => b), [], 'three metres, no steps - the footstep machine lays the player’s');
+  const other = { ...me, strides: true };
+  led.tick(0.1, [other], (b) => b); other.feet = [6, 0, 0];
+  assert.ok(led.tick(0.1, [other], (b) => b).some((a) => a.kind === 'step'), '(a body that strides still does)');
+
+  // the seam: drips at the feet off the entity's health, on the rig's held chance (a wait of 3.5 s)
+  const { fx, marks } = rigHitEffects({ collider: a4Floor, settings: a4Settings });
+  marks.useArt(380, 1, 6);
+  const entity = { health: 10, maxHealth: 40 };
+  const wait = E_WAIT.min + 0.5 * (E_WAIT.max - E_WAIT.min);
+  playerDamageFlash.tick(10);   // clean
+  assert.equal(fx.bleedPlayer(wait - 0.1, [2, 1.7, 2], entity), 0, 'the wait is not up');
+  assert.equal(playerDamageFlash.alpha, 0);
+  assert.equal(fx.bleedPlayer(0.2, [2, 1.7, 2], entity), 1, 'then a drip');
+  const drops = marks._pool().decals();
+  assert.equal(drops.length, eBleedDrops(eBleedShare(10, 40)), 'the ramp’s count, at the feet');
+  assert.ok(drops.every((d) => Math.hypot(d.pos[0] - 2, d.pos[2] - 2) <= BLEED_RADIUS + 1e-9 && Math.abs(d.pos[1]) < 0.05), 'on the floor under the feet');
+  assert.ok(Math.abs(playerDamageFlash.alpha - BLEED_FLASH_ALPHA) < 1e-9, 'and the subtle flash');
+  assert.ok(BLEED_FLASH_ALPHA < E_FLASH_ALPHA / 3, 'subtle: under a third of a blow’s');
+  // a blow's flash is never lowered by a drip
+  flashPlayerDamage(5);
+  fx.bleedPlayer(wait + 0.1, [2, 1.7, 2], entity);
+  assert.equal(playerDamageFlash.alpha, E_FLASH_ALPHA, 'the blow’s flash stands');
+  playerDamageFlash.tick(10);
+  // walking while bleeding lays drips where the feet are and no prints
+  const n0 = marks.count();
+  fx.bleedPlayer(wait + 0.1, [9, 1.7, 9], entity);
+  assert.ok(marks._pool().decals().slice(n0).every((d) => d.uv.kind !== 'print' && Math.hypot(d.pos[0] - 9, d.pos[2] - 9) <= BLEED_RADIUS + 1e-9), 'drips, not prints, at the new feet');
+  // well: nothing; dead: nothing, and NO POOL - the death screen's, not the floor's
+  entity.health = 30;
+  assert.equal(fx.bleedPlayer(wait + 1, [2, 1.7, 2], entity), 0, 'above the threshold: nothing');
+  entity.health = 0;
+  const before = marks.count();
+  for (let k = 0; k < 10; k++) fx.bleedPlayer(1, [2, 1.7, 2], entity);
+  assert.equal(marks.count(), before, 'at zero health: no drip, no pool');
+  assert.equal(fx.bleedPlayer(1, null, entity), 0); assert.equal(fx.bleedPlayer(1, [0, 0, 0], null), 0);
+  // the four hosts, by source, beside the tick they already make
+  for (const [f, line] of [
+    ['src/scenes/world.js', 'hitEffects.bleedPlayer(dt, player.pos, playerEntity);'],
+    ['src/scenes/exterior.js', 'hitEffects.bleedPlayer(dt, player.pos, playerEntity);'],
+    ['src/scenes/dungeonContext.js', 'hitEffects.bleedPlayer(dt, playerFeet, playerEntity);'],
+    ['src/scenes/worldModes.js', 'interiorHitEffects.bleedPlayer(dt, player.pos, playerEntity);'],
+  ]) {
+    const src = a4Read(f);
+    const at = src.indexOf(line);
+    assert.ok(at > 0, `${f}: the player bleeds`);
+    assert.ok(src.slice(Math.max(0, at - 200), at).includes('.tick(dt);'), `${f}: beside the pool’s tick`);
+  }
+  assert.match(a4Read('src/scenes/hitEffects.js'), /dead: !\(health > 0\), corpse: false, strides: false/, 'the player’s view: no corpse, no strides');
+});
+
+test('BLOOD2e: blood on the lens - a real blow throws drops that slide and fade, one blended quad each in the blood’s red, capped; its row; the HUD’s one call', () => {
+  // the law
+  assert.equal(screenDrops(0), 0); assert.equal(screenDrops(SCREEN_SPATTER_MIN - 0.001), 0, 'a scratch throws nothing');
+  assert.equal(screenDrops(SCREEN_SPATTER_MIN), 1); assert.equal(screenDrops(SCREEN_DROPS_AT), SCREEN_DROPS_MAX); assert.equal(screenDrops(1), SCREEN_DROPS_MAX, 'never past the most');
+  assert.ok(screenDrops(0.3) > 1 && screenDrops(0.3) < SCREEN_DROPS_MAX, 'and between, between');
+  assert.equal(screenDropAlpha(0), 1); assert.equal(screenDropAlpha(SCREEN_DROP_LIFE * (1 - SCREEN_FADE_SHARE)), 1, 'holds');
+  assert.ok(screenDropAlpha(SCREEN_DROP_LIFE * 0.9) > 0 && screenDropAlpha(SCREEN_DROP_LIFE * 0.9) < 1, 'then fades'); assert.equal(screenDropAlpha(SCREEN_DROP_LIFE), 0); assert.equal(screenDropAlpha(-1), 0);
+  for (let t = 0; t < SCREEN_DROP_LIFE; t += 0.05) assert.ok(screenDropAlpha(t + 0.05) <= screenDropAlpha(t) + 1e-12, 'monotone');
+  assert.equal(SCREEN_SPATTER_MIN, 0.1); assert.equal(SCREEN_DROPS_MAX, 5); assert.equal(SCREEN_DROPS_CAP, 12); assert.equal(SCREEN_DROP_LIFE, 2.5);
+
+  // the lens
+  const atlas = buildBloodAtlas();
+  const lens = createBloodScreen({ rng: a4Rng(11) });
+  assert.equal(lens.spatter(0.05, atlas), 0); assert.equal(lens.count, 0);
+  assert.equal(lens.spatter(0.5, atlas), SCREEN_DROPS_MAX); assert.equal(lens.count, SCREEN_DROPS_MAX);
+  for (const d of lens._drops()) {
+    assert.ok(d.x > 0 && d.x < 1 && d.y > 0 && d.y < 1, 'on the screen');
+    assert.ok(d.size >= SCREEN_DROP_SIZE.min && d.size <= SCREEN_DROP_SIZE.max);
+    assert.equal(d.cell.kind, 'spatter', 'wears the atlas’s spatter');
+  }
+  assert.ok(new Set(lens._drops().map((d) => `${d.x.toFixed(3)},${d.size.toFixed(3)}`)).size === SCREEN_DROPS_MAX, 'each its own');
+  for (let k = 0; k < 5; k++) lens.spatter(1, atlas);
+  assert.equal(lens.count, SCREEN_DROPS_CAP, 'capped - the oldest go first');
+  // the draw: one blended quad a drop, the blood's red at the drop's alpha, sliding down with age
+  const quads = [];
+  const renderer = { drawScreenQuad: (tex, dst, src, color, opts) => { quads.push({ tex, dst, src, color, opts }); } };
+  const canvas = { width: 1600, height: 900 };
+  lens.clear(); lens.spatter(0.5, atlas);
+  assert.equal(lens.draw(renderer, canvas, 'atlas-tex'), SCREEN_DROPS_MAX);
+  assert.equal(quads.length, SCREEN_DROPS_MAX);
+  for (const q of quads) {
+    assert.equal(q.tex, 'atlas-tex'); assert.equal(q.opts.blend, true, 'blended - the atlas’s alpha is the shape');
+    assert.ok(Math.abs(q.color[0] - A4_BASE[0]) < 1e-12 && Math.abs(q.color[1] - A4_BASE[1]) < 1e-12 && Math.abs(q.color[2] - A4_BASE[2]) < 1e-12 && q.color[3] === 1, 'the blood’s red, fresh');
+    assert.ok(q.dst.w === q.dst.h && q.dst.w >= SCREEN_DROP_SIZE.min * 900 - 1e-9 && q.dst.w <= SCREEN_DROP_SIZE.max * 900 + 1e-9, 'sized by the canvas HEIGHT');
+    assert.equal(q.src.kind, 'spatter'); assert.ok(q.opts.rotate && Number.isFinite(q.opts.rotate.rad), 'turned');
+  }
+  const y0 = quads.map((q) => q.dst.y);
+  quads.length = 0;
+  lens.tick(SCREEN_DROP_LIFE * 0.8);
+  lens.draw(renderer, canvas, 'atlas-tex');
+  for (let k = 0; k < quads.length; k++) {
+    assert.ok(quads[k].dst.y > y0[k], 'slid down');
+    assert.ok(Math.abs(quads[k].dst.y - y0[k] - SCREEN_DROP_SLIDE * 900 * 0.8) < 1e-6, 'by its age’s share of the slide');
+    assert.ok(quads[k].color[3] < 1 && quads[k].color[3] > 0, 'fading');
+  }
+  lens.tick(SCREEN_DROP_LIFE);
+  assert.equal(lens.count, 0, 'gone'); assert.equal(lens.draw(renderer, canvas, 'atlas-tex'), 0);
+  assert.equal(lens.tick(-1), 0); assert.equal(lens.tick(NaN), 0);
+  lens.spatter(0.5, null); assert.equal(lens.draw(renderer, canvas, 'atlas-tex'), 0, 'no art, no quad - and no throw'); lens.clear();
+  assert.equal(lens.draw(renderer, canvas, null), 0);
+
+  // the row, on by default, the player's own online
+  const row = E_FEATURES.find((f) => f.id === 'blood-screen');
+  assert.ok(row && row.group === 'combat' && row.kinds.includes('enhanced'));
+  assert.deepEqual(row.control, { store: 'prefs', key: 'blood-screen', initial: true, online: 'player' });
+  assert.match(a4Read('src/combat/bloodSwitch.js'), /export const bloodScreenOn = \(\) => getPref\(BLOOD_SCREEN_PREF\) !== false;/);
+  // the HUD's one call: spattered off the detector CameraRecoiler reads, ticked and drawn above the `!art` return
+  const hud = a4Read('src/ui/hud.js');
+  const spat = hud.indexOf("if (bloodScreenOn() && lastHealthLostPercent() >= SCREEN_SPATTER_MIN) playerBloodScreen.spatter(lastHealthLostPercent(), bloodAtlas());");
+  const tick = hud.indexOf('playerBloodScreen.tick(dt);');
+  const draw = hud.indexOf('playerBloodScreen.draw(renderer, canvas, renderer.uploadTexture(BLOOD_ATLAS_ARCHIVE, BLOOD_ATLAS_RECORD, bloodAtlas(), { smooth: true }));');
+  const detector = hud.indexOf('const rig = updateHudVitals(');
+  const artReturn = hud.indexOf('  if (!art) return;');
+  assert.ok(detector > 0 && spat > detector && tick > spat && draw > tick && draw < artReturn, 'after the detector, before the art return');
+  assert.match(a4Read('src/ui/damageFlash.js'), /export function flashPlayerBleed\(\) \{ playerDamageFlash\.bleed\(\); \}/);
+});

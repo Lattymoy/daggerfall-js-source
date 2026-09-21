@@ -4875,6 +4875,7 @@ export async function bootExterior(canvas, renderer, params, status) {
       personBatches.push(...droppedLoot.batches());   // U8e: the ground piles
       // AUDIT 24 (wave 39): blood splashes ride the person axis too.
       hitEffects.tick(dt);
+      hitEffects.bleedPlayer(dt, player.pos, playerEntity);   // BLOOD2e: the player's own blood, at the feet, on the same clock
       personBatches.push(...hitEffects.batches());
       droppedTorches.tick(dt); personBatches.push(...droppedTorches.batches());   // HT1
       camps.tick(dt); personBatches.push(...camps.batches());   // SURV3
@@ -5004,7 +5005,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     // layer, because a talk window is a modal above the vitals.
     // AUDIT 39: THE CALL IS UNCONDITIONAL. drawHud runs the damage
     // flash and the enhanced DOM HUD ABOVE its own `!art` return
-    // (hud.js:386-414) because neither reads ARENA2 - "a player whose
+    // (hud.js:389-417) because neither reads ARENA2 - "a player whose
     // HUD art failed to load still has vitals". Wrapping the whole
     // call in `if (hudArt)` inverted that: hudArt starts null and is
     // filled by a fire-and-forget load whose failure leaves it null

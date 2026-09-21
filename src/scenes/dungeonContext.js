@@ -3102,7 +3102,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
               // AUDIT 39 (#64) / THE FOUR HOSTS RULE - SHIPPED (wave D):
               // this host was the FOURTH BODY of the player-arrow law
               // and is now the fourth CALLER. combat/arrowFlight.js's
-              // playerArrowHitFoe is the one copy world.js:11245,
+              // playerArrowHitFoe is the one copy world.js:11246,
               // exterior.js:4762 and worldModes.js:6347 already ran;
               // the flag said the divergence would bite and it already
               // had. This copy splashed at the ARROW TIP
@@ -4553,6 +4553,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // (a finished splash frees its batch inside tick).
     hitEffects.tick(dt);
     hitEffects.bleed(dt, foes, foeBleedView);   // BLOOD2c: the wounded drip, the dead bleed out
+    hitEffects.bleedPlayer(dt, playerFeet, playerEntity);   // BLOOD2e: and the player's own blood, at the feet
     droppedTorches.tick(dt);   // HT1: the burn, the flight, the flames
     camps.tick(dt);   // SURV3: the fires burn down
     // PX21c: THE HOVER PLAQUE, from the frame function both dungeon

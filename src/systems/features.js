@@ -765,6 +765,19 @@ export const FEATURES = Object.freeze([
     // with no gameplay in it, so every player answers for themselves.
     control: Object.freeze({ store: 'prefs', key: 'blood-overkill', initial: true, online: 'player' }),
   }),
+  // BLOOD2e: the lens. The one piece of blood that is in the player's
+  // face rather than on the floor, so it is its own row - a player who
+  // wants the marks and not the face gets exactly that.
+  Object.freeze({
+    id: 'blood-screen',
+    group: 'combat',
+    title: 'Blood on the lens',
+    note: 'A blow that takes a real share of your health throws a few drops onto the screen, which slide and fade in a '
+      + 'couple of seconds. Off, the screen stays clean and the floor still bleeds.',
+    effect: 'Takes effect at once.',
+    kinds: Object.freeze(['enhanced']),
+    control: Object.freeze({ store: 'prefs', key: 'blood-screen', initial: true, online: 'player' }),
+  }),
   Object.freeze({
     id: 'mod-climates-calories',   // a mod-row id: WM3's law reaches the credits' vendor through it
     group: 'character',

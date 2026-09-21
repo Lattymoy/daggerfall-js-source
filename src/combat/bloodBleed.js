@@ -23,8 +23,10 @@
 //
 // NO RENDERER, NO POOL, NO HOST. This ledger reads bodies through a VIEW
 // the host hands it - { feet, health, maxHealth, bloodIndex, dead,
-// corpse } - and answers ACTIONS; the splash pool turns them into marks.
-// A bloodless body (bloodIndex 2) neither drips nor pools.
+// corpse, strides } - and answers ACTIONS; the splash pool turns them
+// into marks. A bloodless body (bloodIndex 2) neither drips nor pools.
+// BLOOD2e: the player is a body too (hitEffects.bleedPlayer), with
+// `strides: false` because its steps are the footstep machine's.
 import { marksBlood } from './bloodDecals.js';
 import { GIB_SPLASH_RATE } from './bloodGibs.js';
 
@@ -120,7 +122,10 @@ export function createBleedLedger({ rng = Math.random } = {}) {
       // facing the way it went (BLOOD AUDIT 4: a frame that covers two
       // strides lays two steps where the feet passed, not one where
       // they stopped - and the remainder carries).
-      if (s.last) {
+      // BLOOD2e: the PLAYER's steps are the footstep machine's (footfall),
+      // so its view says `strides: false` and the ledger counts none -
+      // or every stride would print twice.
+      if (s.last && v.strides !== false) {
         const dx = v.feet[0] - s.last[0], dy = v.feet[1] - s.last[1], dz = v.feet[2] - s.last[2];
         const run = Math.hypot(dx, dz);
         if (run > 0 && run <= TELEPORT_SPEED * dt) {

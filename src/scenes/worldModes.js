@@ -5345,7 +5345,7 @@ export function createWorldModes(host) {
           hudMessageSink: (t) => questBridge?.notebook?.addMessage(t),
           // MAC1 J: and the relock the dungeon's pause door needs, on
           // the same threading - the context owns no canvas of its own
-          // (dungeonContext.js:5774), so the OUTER host's one rides in.
+          // (dungeonContext.js:5775), so the OUTER host's one rides in.
           // This is the most-played pause door of the six: world.js
           // gates its own Escape ladder on exterior mode, so underground
           // the key falls to routeKey -> ui/input.js:637 -> the
@@ -6381,6 +6381,7 @@ export function createWorldModes(host) {
     // HE1: the blood, on the same axis and the same call the exterior
     // host makes for its own pool.
     interiorHitEffects.tick(dt);
+    interiorHitEffects.bleedPlayer(dt, player.pos, playerEntity);   // BLOOD2e: the player's own blood, at the feet, on the same clock
     {
       const _blood = interiorHitEffects.batches();
       if (_blood.length) renderer.drawBillboards(_blood, camRight, UP_Y);
@@ -6512,7 +6513,7 @@ export function createWorldModes(host) {
     // last, over the viewmodel, under the overlay.
     // AUDIT 39: THE CALL IS UNCONDITIONAL. drawHud runs the damage
     // flash and the enhanced DOM HUD ABOVE its own `!art` return
-    // (hud.js:386-414) because neither reads ARENA2 - "a player whose
+    // (hud.js:389-417) because neither reads ARENA2 - "a player whose
     // HUD art failed to load still has vitals". Wrapping the whole
     // call in `if (hudArt)` inverted that: hudArt starts null and is
     // filled by a fire-and-forget load whose failure leaves it null
@@ -8661,7 +8662,7 @@ export function createWorldModes(host) {
      *  FLAG ONLY and presence-gated - both laws now stated once, in
      *  combat/playerWeapon.js's applyWeaponPose, with the citation.
      *  HARD2c: this used to spell them out, and named `world.js:5432`
-     *  and `dungeonContext.js:5843` for its two sibling copies - lines
+     *  and `dungeonContext.js:5844` for its two sibling copies - lines
      *  that had moved to :4418 and :5457. Three copies of a two-line
      *  law, and even the comment pointing between them had gone stale. */
     applyWeaponPose(pose) {

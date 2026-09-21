@@ -151,7 +151,7 @@ the pair of input-config windows in the next section, and this one.
 **`FPSSpellCasting.cs` (324 lines) is uncited in `src/`, and the miss is
 real.** Its `OnReleaseFrame` semantics are ported and live
 (`scenes/hostMagic.js` consumes the release frame at four sites,
-`scenes/hitEffects.js:57` cites it), but `PlayOneShot`, `SetCurrentAnims`, `AlignLeftHand` and
+`scenes/hitEffects.js:58` cites it), but `PlayOneShot`, `SetCurrentAnims`, `AlignLeftHand` and
 `AlignRightHand` - the five element hand animations classic draws over
 the view when a spell fires - have no port. `combat/fpArm.js` draws a
 spellcast in the Morrowind lane (MW-D39) and nothing draws one in the
@@ -321,7 +321,7 @@ reference surface absent · **Departure** = deliberate, ledgered.
 | **sys-audio** | Data verbatim / engine risk | **Verbatim** | 133 songs, 39 playlists, 76 named clips. |
 | **sys-save** | Broad / three features silently dropped | **Verbatim** | ROAD-A A4 took the envelope stragglers (resistances, `skillsRecentlyRaised`, `minMetalToHit`, `previousVampireClan`, `timeToBecomeVampireOrWerebeast`, `playerTeleportedIntoDungeon`); ROAD-C C1 built the multi-slot window over the store. |
 | **ui-core** | Verbatim | **Verbatim** | ROAD-A A7 built a real `VerticalScrollBar` with a draggable thumb, the item scroller's arrow states, the list picker's double-click law and the message box's scrolling variant with its image panel - and with it, paintings. |
-| **ui-hud** | Verbatim (classic) / Partial (enhanced default) | **Verbatim on both skins** | The skin fork moved BELOW the game-state seams: `ui/hud.js:482` runs `updateHudVitals` and `:537` `drawNearDeathFlicker`, both above the enhanced branch at `:574` and above the `!art` return, and the enhanced HUD takes the Detect markers at `:589`. `lastHealthLost()` is no longer pinned at 0, so `CameraRecoiler` lives in all three hosts. |
+| **ui-hud** | Verbatim (classic) / Partial (enhanced default) | **Verbatim on both skins** | The skin fork moved BELOW the game-state seams: `ui/hud.js:485` runs `updateHudVitals` and `:540` `drawNearDeathFlicker`, both above the enhanced branch at `:588` and above the `!art` return, and the enhanced HUD takes the Detect markers at `:603`. `lastHealthLost()` is no longer pinned at 0, so `CameraRecoiler` lives in all three hosts. |
 | **ui-windows-a** | Rect parity excellent / two crash doors | **Verbatim** | ROAD-D D2 shipped both scroll thumbs (`chargenArt.js:777` over `RECTS.pickScroll`, `spellbookWindow.js:939` over the 7-wide rail). |
 | **ui-windows-b** | Broadly ported | **Verbatim** | Both automaps are native windows. ROAD-D D6 built the ship purchase over the shared bank-market mount and gave `buildingIsUnlocked` the `ownsShip` key its last arm needed. |
 | **ui-enhanced** | Departure lane | **Departure lane, scoped** | `ui/lootHover.js:67` puts the skin gate above `ensure()`, so the unscoped `*`/`html`/`body`/`button`/`#app` rules never reach the classic page. 9 modules / 8,940 lines. |

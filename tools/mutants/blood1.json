@@ -2275,5 +2275,158 @@
     "tests": [
       "test/blood1_decals.test.js"
     ]
+  },
+  {
+    "name": "BLOOD2e-the-player-s-strides-count",
+    "file": "src/combat/bloodBleed.js",
+    "old": "      if (s.last && v.strides !== false) {",
+    "new": "      if (s.last) {",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD2e-the-player-never-bleeds",
+    "file": "src/scenes/hitEffects.js",
+    "old": "      for (const a of bleeding.tick(dt, [PLAYER_WALKER], view)) {",
+    "new": "      for (const a of []) {",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD2e-a-dead-player-pools",
+    "file": "src/scenes/hitEffects.js",
+    "old": "dead: !(health > 0), corpse: false, strides: false",
+    "new": "dead: !(health > 0), corpse: true, strides: false",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD2e-a-drip-does-not-flash",
+    "file": "src/scenes/hitEffects.js",
+    "old": "{ n++; flashPlayerBleed(); }",
+    "new": "{ n++; }",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD2e-the-bleed-flash-is-a-blow-s",
+    "file": "src/ui/damageFlash.js",
+    "old": "    bleed() { alpha = Math.max(alpha, BLEED_FLASH_ALPHA); fadingOut = true; },",
+    "new": "    bleed() { alpha = FLASH_ALPHA; fadingOut = true; },",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD2e-the-bleed-flash-lowers-a-blow-s",
+    "file": "src/ui/damageFlash.js",
+    "old": "    bleed() { alpha = Math.max(alpha, BLEED_FLASH_ALPHA); fadingOut = true; },",
+    "new": "    bleed() { alpha = BLEED_FLASH_ALPHA; fadingOut = true; },",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD2e-a-scratch-throws-blood-on-the-lens",
+    "file": "src/ui/bloodScreen.js",
+    "old": "  if (!(share >= SCREEN_SPATTER_MIN)) return 0;",
+    "new": "  if (!(share > 0)) return 0;",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD2e-the-lens-never-fills-past-one",
+    "file": "src/ui/bloodScreen.js",
+    "old": "  return Math.max(1, Math.round(1 + t * (SCREEN_DROPS_MAX - 1)));",
+    "new": "  return 1;",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD2e-the-lens-is-uncapped",
+    "file": "src/ui/bloodScreen.js",
+    "old": "      if (drops.length > SCREEN_DROPS_CAP) drops = drops.slice(drops.length - SCREEN_DROPS_CAP);\n",
+    "new": "",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD2e-a-drop-never-fades",
+    "file": "src/ui/bloodScreen.js",
+    "old": "  return age <= hold ? 1 : Math.max(0, 1 - (age - hold) / (life - hold));",
+    "new": "  return 1;",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD2e-a-drop-never-dies",
+    "file": "src/ui/bloodScreen.js",
+    "old": "      drops = drops.filter((d) => d.age < SCREEN_DROP_LIFE);\n",
+    "new": "",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD2e-a-drop-does-not-slide",
+    "file": "src/ui/bloodScreen.js",
+    "old": "        const slide = SCREEN_DROP_SLIDE * H * (d.age / SCREEN_DROP_LIFE);",
+    "new": "        const slide = 0;",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD2e-the-lens-draws-opaque",
+    "file": "src/ui/bloodScreen.js",
+    "old": "          { blend: true, rotate:",
+    "new": "          { blend: false, rotate:",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD2e-the-lens-is-not-red",
+    "file": "src/ui/bloodScreen.js",
+    "old": "          [BLOOD_BASE[0], BLOOD_BASE[1], BLOOD_BASE[2], a],",
+    "new": "          [1, 1, 1, a],",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD2e-a-drop-is-sized-by-the-width",
+    "file": "src/ui/bloodScreen.js",
+    "old": "        const px = d.size * H;",
+    "new": "        const px = d.size * W;",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD2e-the-hud-forgets-the-lens",
+    "file": "src/ui/hud.js",
+    "old": "  if (bloodScreenOn() && lastHealthLostPercent() >= SCREEN_SPATTER_MIN) playerBloodScreen.spatter(lastHealthLostPercent(), bloodAtlas());\n",
+    "new": "",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD2e-the-row-is-off-by-default",
+    "file": "src/systems/features.js",
+    "old": "key: 'blood-screen', initial: true",
+    "new": "key: 'blood-screen', initial: false",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
   }
 ]

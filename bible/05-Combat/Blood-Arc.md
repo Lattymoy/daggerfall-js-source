@@ -1100,5 +1100,55 @@ Slices, each behind its own `features.js` row:
    (`tools/mutants/blood1.json` is 252, `macbugw4.json` and
    `macbugw6.json` re-aimed).
 
+9. **BLOOD2e - the player's own blood.** SHIPPED (2026-09-21). The
+   reference bleeds the PLAYER (THE FACTS, "Player bleeding": below
+   the threshold, every 2..5 s, a spawn ramped from nothing at the
+   threshold to everything at one percent, with an optional subtle
+   red flash, suppressed at zero health), and BLOOD2c turned that
+   shape on the foes first. This is the player's.
+
+   THE DRIPS: `hitEffects.bleedPlayer(dt, feet, entity)` - the same
+   ledger, keyed by PLAYER_WALKER, read through a view of the
+   entity's health at the feet the host hands; `strides: false`
+   (the footstep machine lays the player's prints - BLOOD2d - so the
+   ledger counts none, or every stride would print twice) and no
+   corpse (a dead player is the death screen's, not a pool's; at zero
+   health the ramp is zero and the ledger's dead branch has no body).
+   The four hosts call it beside the pool's tick they already make.
+   Walking while bleeding leaves the trail behind you; standing, a
+   stain that grows.
+
+   THE FLASH: each drip that lands calls `flashPlayerBleed()` - the
+   damage flash's own quad at BLEED_FLASH_ALPHA (0.12, under a third
+   of a blow's 0.4), the same red and the same fade, and it never
+   LOWERS a blow's flash still fading. No RemoveHealth: a drip is not
+   a blow, the shaker does not hear it.
+
+   THE LENS (`src/ui/bloodScreen.js`) - the port's own; the reference
+   has no screen blood. A blow that takes SCREEN_SPATTER_MIN (a tenth)
+   of a life in ONE FRAME - read off the vitals detector the HUD
+   already runs, VitalsChangeDetector.HealthLostPercent, which
+   CameraRecoiler reads for the same reason - throws `screenDrops`
+   (one at the threshold to SCREEN_DROPS_MAX = 5 at half a life) onto
+   the screen: the atlas's own spatter cells (white ink) blended in
+   BLOOD_BASE, each its own place, size (a share of the canvas HEIGHT,
+   the same drop on a phone and a monitor) and turn, sliding down
+   SCREEN_DROP_SLIDE over SCREEN_DROP_LIFE (2.5 s) and fading over the
+   last SCREEN_FADE_SHARE of it. Capped at SCREEN_DROPS_CAP (12),
+   oldest first. One singleton, ticked and drawn by `drawHud` - the
+   one host-agnostic call, after the detector and above the `!art`
+   return, for the damage flash's reason. Its own row,
+   `blood-screen` (ON, the player's own online): the one piece of
+   blood that is in the player's face rather than on the floor.
+
+   Pins: two (the ledger without strides; the seam - the wait, the
+   drip's count and place, the subtle flash, a blow's flash standing,
+   drips and no prints while walking, nothing well, nothing and no
+   pool dead, the four hosts by source; the lens' law, the drops'
+   place, size, cell and cap, the draw's blended red quads sized by
+   the height, the slide and the fade, gone at the end, no art no
+   quad, the row and the HUD's one call by source). Mutants: 17, 17
+   dead (`tools/mutants/blood1.json` is 269).
+
 The numbers in THE FACTS are the target to feel like. The code that
 hits them is ours.
