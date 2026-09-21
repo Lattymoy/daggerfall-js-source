@@ -480,11 +480,11 @@ test('DFUSAVE2: the whole save -> the envelope: every ENTITY_FIELDS key minted, 
   assert.equal(out.saveName, 'Quick'); assert.equal(out.characterName, 'Tester'); assert.equal(out.screenshot, null);
   assert.deepEqual(out.warnings, ['mod "Roads" was loaded; its own saved state does not come over']);
 
-  // restorePlayer takes it whole and hands back the thirteen extras
+  // restorePlayer takes it whole and hands back the fifteen extras
   const entity = {};
   const extras = restorePlayer(entity, structuredClone(s), null);
   assert.ok(extras, 'the version gate passes');
-  assert.deepEqual(Object.keys(extras).sort(), ['classicMinutes', 'dungeon', 'escortingFaces', 'interior', 'locationKey', 'pose', 'position', 'quest', 'readiedSpellIndex', 'smallerDungeonsState', 'talk', 'travelMap', 'world']);
+  assert.deepEqual(Object.keys(extras).sort(), ['classicMinutes', 'dungeon', 'escortingFaces', 'interior', 'locationKey', 'pose', 'position', 'quest', 'quickslots', 'readiedSpellIndex', 'smallerDungeonsState', 'spawns', 'talk', 'travelMap', 'world']);
   assert.equal(entity.name, 'Tester'); assert.equal(entity.items.length, 2); assert.equal(entity.goldPieces, 1234, 'goldPieces minted, so no Currency migration ran');
   assert.equal(entity.lightSource, entity.items[0], 'the torch relinked');
   assert.deepEqual(entity.guildMemberships, { mortal: {}, vampire: {} });

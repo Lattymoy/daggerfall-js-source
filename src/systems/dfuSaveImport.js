@@ -50,6 +50,7 @@ import { MOBILE_TYPES } from '../characters/mobileTypes.js';
 import { VAMPIRE_SPELL_TAG, LYCANTHROPY_SPELL_TAG } from './lycanthropy.js';
 import { spellPoints, spellPointMultiplier, CLASS_CAREERS } from './chargen.js';
 import { levelUpSkillSum } from './advancement.js';
+import { LEVELING_CLASSIC } from './oblivionLeveling.js';   // ORL1: a DFU character levels by Daggerfall's own law
 import { Formatting as MessageFormatting } from './quest/message.js';
 import { WEATHER_TYPES } from '../world/weather.js';
 import { TRANSPORT_MODES } from './transport.js';
@@ -635,7 +636,7 @@ export const dfuFaces = (faces) => (faces ?? []).map((f) => ({
 /** DiscoveryData.txt (Dictionary<int, DiscoveredLocation>) -> the
  *  port's two stores: locations by `mapID & 0xfffff`, buildings by the
  *  port's location id, which is `${regionINDEX}:${locationName}`
- *  (world.js:7249 discoveryLocationId, townTalk.js:1058 through
+ *  (world.js:7265 discoveryLocationId, townTalk.js:1058 through
  *  regionNow() = the index). DFU carries the region's NAME; the 62
  *  names are MAPS.BSA's order (mapsFile.js REGION_NAMES). AUDIT-DFUSAVE
  *  C2: the first draft keyed by the name, which nothing reads. */
@@ -963,6 +964,8 @@ export function dfuSaveToSnapshot(save) {
       sleepInn: sd.travelMapData?.sleepInn ?? true, speedCautious: sd.travelMapData?.speedCautious ?? true, travelShip: sd.travelMapData?.travelShip ?? true,
     },
     escortingFaces: dfuFaces(sd.escortingFaces),
+    quickslots: null,   // QS1's diamond and TTL1's spawned-dungeon ledger are the port's own; DFU has neither, and the restore reads null as empty
+    spawns: null,
     smallerDungeonsState: enumValue(pos.smallerDungeonsState ?? 'NotSet', E.DFU_QUEST_SMALLER_DUNGEONS_STATE),
     weather: dfuWeather(pos.weather),
 
@@ -982,7 +985,9 @@ export function dfuSaveToSnapshot(save) {
     fatigue: num(pe.currentFatigue),
     currentBreath: num(pe.currentBreath),
     startingLevelUpSkillSum, currentLevelUpSkillSum,
-    readyToLevelUp: false, pendingLevel: null, chargenDone: true,
+    readyToLevelUp: false, pendingLevel: null, pendingBonusPool: null, chargenDone: true,   // no level owed, so no ORL1 bonus pool pending either (classicSave.js's own mint)
+    // ORL1's leveling choice is a chargen answer no DFU save can carry: the classic law, with the mod's bar at zero - the classic import's own mint (classicSave.js:772)
+    levelingSystem: LEVELING_CLASSIC, levelProgress: 0, levelRollUp: 0,
     biographyResistDiseaseMod: num(pe.biographyResistDiseaseMod), biographyResistMagicMod: num(pe.biographyResistMagicMod),
     biographyAvoidHitMod: num(pe.biographyAvoidHitMod), biographyResistPoisonMod: num(pe.biographyResistPoisonMod),
     biographyFatigueMod: num(pe.biographyFatigueMod), biographyReactionMod: num(pe.biographyReactionMod),

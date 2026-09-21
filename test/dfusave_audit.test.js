@@ -27,6 +27,7 @@ import { ITEM_IDENTIFIED_MASK, ITEM_ARTIFACT_MASK, CLASSIC_RECIPE_KEYS } from '.
 import { dateToSeconds } from '../src/systems/gameDate.js';
 import { spellPoints, spellPointMultiplier } from '../src/systems/chargen.js';
 import { levelUpSkillSum } from '../src/systems/advancement.js';
+import { LEVELING_CLASSIC } from '../src/systems/oblivionLeveling.js';
 import { VAMPIRE_SPELL_TAG, LYCANTHROPY_SPELL_TAG } from '../src/systems/lycanthropy.js';
 import { MOBILE_TYPES } from '../src/characters/mobileTypes.js';
 import { GROUP_TEMPLATE_INDICES } from '../src/systems/itemTemplatesData.js';
@@ -339,6 +340,9 @@ test('AUDIT-DFUSAVE C2/C9/C11: an indoor Recall anchor is null with a line; the 
   assert.equal(s.maxMagicka, spellPoints(42, spellPointMultiplier(s.career.abilityFlagsAndSpellPointsBitfield)));
   assert.equal(s.maxMagicka, 63, 'INT 42 at the fixture career\'s Times_1_50');
   assert.equal(s.readiedSpellIndex, null, 'no spell readied - the port\'s restore hands it back as an extra');
+  // the port-only fields a DFU save cannot carry are minted as the classic import mints them (classicSave.js:763-772), never left for the restore to copy as undefined
+  assert.equal(s.levelingSystem, LEVELING_CLASSIC, 'ORL1: a DFU character levels by Daggerfall\'s own law'); assert.equal(s.levelProgress, 0); assert.equal(s.levelRollUp, 0);
+  assert.equal(s.pendingBonusPool, null); assert.equal(s.pendingLevel, null); assert.equal(s.readyToLevelUp, false); assert.equal(s.chargenDone, true);
 });
 
 test('AUDIT-DFUSAVE C2: discovery keyed by region INDEX comes through the whole save, an unknown region dropped with a line', () => {

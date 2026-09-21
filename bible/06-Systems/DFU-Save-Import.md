@@ -125,6 +125,7 @@ world units (`world.nativeX/nativeZ`, then `_teleportToPixel` and
 | `lightSourceUID` | `lightSourceIndex` | converted | the index of the item with that uid, -1 for none (the same Ledger A departure) |
 | eleven `reputation*` shorts | `sGroupReputations[11]` | direct | by `FactionFile.SocialGroups` index |
 | `previousVampireClan` | `previousVampireClan` | converted | enum -> number |
+| - | `readyToLevelUp`, `pendingLevel`, `pendingBonusPool`, `chargenDone`, `levelingSystem`, `levelProgress`, `levelRollUp` | minted | the port-only fields (a level owed, ORL1's leveling choice and bar) as the classic import mints them: nothing owed, chargen done, the classic law with the bar at zero - a DFU save cannot carry a chargen answer this port asks |
 | `anchorPosition` | `anchorPosition` | partial | the same PlayerPositionData_v1 shape as the player's, into `makeAnchor`'s record - when its `worldContext` is Exterior. An anchor set INSIDE a building or dungeon is null with a line (the port's interior anchor needs the building key and the interior record the position half does not carry yet). AUDIT-DFUSAVE C2 |
 
 ### ItemData_v1 -> a port item

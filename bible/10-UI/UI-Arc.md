@@ -270,7 +270,7 @@ does the pack's USE arm.
                         close-then-hand-over ordering U55 got
                         backwards. No law needs extracting first.
     THE LOGBOOK         THREE sites: charSheetNav.js:53,
-    / NOTEBOOK          world.js:6172, dungeonContext.js:6266. A seam
+    / NOTEBOOK          world.js:6188, dungeonContext.js:6266. A seam
                         wants making, as U52's and U53's did.
     HISTORY             ONE site (charSheetNav.js:61), and it reads
                         only the entity's backStory. The small one.
@@ -4720,7 +4720,7 @@ all four with a no-raw-constant assertion.
 
 **F2 - THE LAUNCHER TRAPPED EVERY TOUCH DEVICE (severe).**
 `launcherScene.js` registered only `keydown`, while every other
-pre-game screen takes `pointerdown` (menu.js:96, :143) and every
+pre-game screen takes `pointerdown` (menu.js:98, :154) and every
 playable scene calls `attachTouch`. With `ShowOptionsAtStart` shipping
 True, a phone booted straight into a screen it could not dismiss - the
 game was unreachable. PROVEN on an emulated Pixel 5 before the fix
@@ -9952,9 +9952,9 @@ re-resolved the `exterior.js` half of a three-file sentence and left the
 `ExteriorAutomapWindow` construction, `:4101` on a `locationName:`
 field). Both halves are now read by `test/citedrift.test.js` - the
 existing entries only ever captured the exterior number, which is how
-the other half went stale unnoticed. (The rest cite named `world.js:6504`,
+the other half went stale unnoticed. (The rest cite named `world.js:6520`,
 the first of the host's TWO identical `act === 'Rest'` arms; ROAD-H H5
-deleted the second and the cite is `world.js:6510` now.)
+deleted the second and the cite is `world.js:6526` now.)
 
 ## AUDIT 62 F24/F25 - THE SENTINEL SWEEP WAS TWO WINDOWS SHORT (2026-09-07)
 
@@ -14740,9 +14740,9 @@ whether an entry MATCHES and asserts nothing.
 Following it out was worse than the symptom. Five Ledger rows cite a
 PAIR - `` `world.js:N`, `exterior.js:M` `` - and the table captured `M`
 alone. So `M` was re-resolved at every wave for a year and `N` was never
-read: `world.js:4692` named a line that is 8950, `:791` one that is
+read: `world.js:4708` named a line that is 8950, `:791` one that is
 1215, `:1094` one that is 2194, `:3903` one that is 3066, `:3920` one
-that is 8907. `world.js:4428-4460` and `dungeonContext.js:1370` were
+that is 8907. `world.js:4437-4469` and `dungeonContext.js:1370` were
 stale the same way. Seven numbers re-resolved BY CONTENT, every
 uncaptured half de-baked to `\d+`, and eight new entries added so every
 number in a pair is captured. The half nobody reads cannot rot in
