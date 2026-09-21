@@ -399,3 +399,23 @@ test('ENH-NOTICE3: the classic skin keeps the hunt\'s parchment, byte for byte, 
       'and no stack was ever built');
   });
 });
+
+test('ENH-NOTICE3 (AUDIT B2/B7): the busy panel wears the page\'s OWN caption - Escape alone walks away, no click is taken - and the release precedes the close hook', () => {
+  huntBusy('enhanced', ({ dom, win, r }) => {
+    win.draw(r, HUNT_CANVAS, HUNT_FONT);
+    const hint = dom.doc.querySelectorAll('.notice-hint').map((n) => n.textContent);
+    assert.deepEqual(hint, ['Escape to walk away'],
+      'mutants: the default "click or press a key" on a page that takes no click; no caption at all');
+    assert.equal(win.click(), true, 'and a click is still swallowed, as the caption says');
+  });
+  // THE SLOT IS EMPTIED BEFORE THE OCCUPANT IS TOLD, in miniature: the
+  // close hook may raise the next box, and it must not find this
+  // window's panel still standing.
+  const seen = [];
+  huntBusy('enhanced', ({ win, r }) => {
+    win.draw(r, HUNT_CANVAS, HUNT_FONT);
+    win._onClosed = () => seen.push(enhancedNoticeKeys().length);
+    win.input('Escape');
+    assert.deepEqual(seen, [0], 'mutant: the release after the hook, so the hook\'s own box lands under a panel that is leaving');
+  });
+});

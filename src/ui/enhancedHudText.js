@@ -71,6 +71,8 @@ function applyScale(node) {
 
 /** AUDIT FONT F2: --hud-scale is declared on `.hud` (ui/enhancedHud.js
  *  build), and the mid-screen label is a SIBLING of it on document.body
+ *  (named for the ONE surface it scales since ENH-NOTICE3 retired the
+ *  column - AUDIT ENH-NOTICE3 A10; the status line never took it)
  *  - the variable never inherited into it, so at hudScale 2 the label
  *  drew at half size and at 0.5 it floated. enhancedHud's scale write
  *  hands it here, exactly as it already hands it to the damage-number
@@ -78,7 +80,7 @@ function applyScale(node) {
  *  this once scaled too is a toast in the notice stack since
  *  ENH-NOTICE3, which does not scale with the HUD - it is the box's
  *  stack, at the box's size.) */
-export function setEnhancedHudTextScale(scale, doc = (typeof document === 'undefined' ? null : document)) {
+export function setEnhancedMidTextScale(scale, doc = (typeof document === 'undefined' ? null : document)) {
   hudScaleVar = String(scale);
   if (!doc) return;
   doc.getElementById?.(ENHANCED_MID_TEXT_ID)?.style?.setProperty('--hud-scale', hudScaleVar);

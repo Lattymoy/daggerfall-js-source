@@ -39,7 +39,7 @@ import { longitudeLatitudeToMapPixel } from '../formats/mapsFile.js';   // MAC6 
 import { openPixelDial } from '../ui/pixelDial.js';   // PX15b: the Tab compass rose
 import { ActionTextBox, ActionInputBox } from '../ui/actionText.js';
 import { registerPresenter, messageBox } from '../systems/notify.js';   // ENH-NOTICE3: this context's window stack and its PopupText, offered to the one door every message goes through - and the door itself, for the seams that name a KIND
-import { makeWindowStack, pauseWhileOpen } from '../ui/windowStack.js';   // ROAD-B B1: UserInterfaceManager's stack, under this context's one slot; ROAD-tail: and its PAUSE
+import { makeWindowStack, pauseWhileOpen, hidesHud } from '../ui/windowStack.js';   // ROAD-B B1: UserInterfaceManager's stack, under this context's one slot; ROAD-tail: and its PAUSE
 import { healthStatusRows, statusInfoRows } from '../systems/healthStatus.js';   // BS1/F198: the Status health box
 import { survivalStatusRows } from '../systems/survival/status.js';   // SURV5
 import { liveVampirism } from '../systems/racialLive.js';   // SURV5: the vampire's one status line
@@ -1287,6 +1287,14 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
    *  uiManager.PushWindow) and the port dropped the message on the
    *  floor instead. The door is here rather than only on the returned
    *  ctx because the sites that owe it are built above that object. */
+  // NT1 (F213): the context's own dead latch - destroy() sets it so the
+  // async continuations (a corpse whose texture is still warming) stop
+  // publishing GPU batches onto a torn-down scene. Declared HERE, above
+  // its first reader (AUDIT ENH-NOTICE3, re-audit C3): pushDungeonWindow
+  // below reads it, and a `let` is in its temporal dead zone until its
+  // line runs - a call from inside the build would have thrown rather
+  // than refused.
+  let _ctxDead = false;
   function pushDungeonWindow(win) {
     if (!win) return false;
     // AUDIT ENH-NOTICE3 F2: a dead context takes nothing. destroy()
@@ -1592,7 +1600,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // owned, and destroy() hands it back (the _prevPassiveHost idiom this
   // file already uses for its other process-global seams). A bare null
   // would not do: on ?world and ?exterior the previous holder is the
-  // host's own townTalk sink (world.js:8153 / exterior.js:3324), set
+  // host's own townTalk sink (world.js:8154 / exterior.js:3325), set
   // once at boot and never again, so nulling on the way out of the
   // first dungeon would silently un-file every mid-screen label above
   // ground for the rest of the session - MC-1's own bug, re-opened.
@@ -2879,10 +2887,6 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     playerWeapon.weapon = { name: 'Short Bow', ...createWeapon(129, 0) };   // scripted demo: the rig's worn bind is off for this context (see createWeaponRig bindWorn)
   }
   const corpses = [];
-  // NT1 (F213): the context's own dead latch - destroy() sets it so the
-  // async continuations (a corpse whose texture is still warming) stop
-  // publishing GPU batches onto a torn-down scene.
-  let _ctxDead = false;
   async function spawnCorpse(f) {
     if (f._diedAt == null) f._diedAt = _wallNow();   // WORLD8: the death's stamp, the relay's clock (null offline) - the memory carries it and the hour's respawn reads it
     // AUDIT WORLD2 B14: one mint in flight per foe - a dead/alive/dead flap while the texture warmed minted two
@@ -3174,8 +3178,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
               // AUDIT 39 (#64) / THE FOUR HOSTS RULE - SHIPPED (wave D):
               // this host was the FOURTH BODY of the player-arrow law
               // and is now the fourth CALLER. combat/arrowFlight.js's
-              // playerArrowHitFoe is the one copy world.js:11321,
-              // exterior.js:4787 and worldModes.js:6362 already ran;
+              // playerArrowHitFoe is the one copy world.js:11322,
+              // exterior.js:4788 and worldModes.js:6362 already ran;
               // the flag said the divergence would bite and it already
               // had. This copy splashed at the ARROW TIP
               // (`[m.pos[0], m.pos[1], m.pos[2]]`) on the claim that
@@ -5290,7 +5294,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // window (DaggerfallHUD.cs:172-173) and the Draw override
     // (:347-351) suppresses it with everything else; the tick is
     // Update's and keeps draining.
-    hudText.observe(!!activeOverlay);   // AUDIT FONT F4: a canvas window standing over the column takes it down - the DOM column has no draw order to put it underneath
+    hudText.observe(!!activeOverlay && (dungeonWindows.hudCovered(activeOverlay) || hidesHud(activeOverlay)));   // AUDIT ENH-NOTICE3 C2: the previousWindow chain (windowCoversHud above asks the same), not the slot - a pushed box keeps the toasts as DFU keeps PopupText under it   // AUDIT FONT F4: a canvas window standing over the column takes it down - the DOM column has no draw order to put it underneath
     if (hudFont && hudRenderEnabled()) hudText.draw(renderer, canvas, hudFont, hudScaleFor(canvas.width, canvas.height)); else hudText.hide();   // FONT1: the refused frame reaches the hide door - the enhanced skin's column is DOM and persists (AUDIT 64 F37)
     // The CLICK TO LOOK banner retired with click-to-look itself: the
     // hosts re-engage a dropped lock on the next gesture (DFU shape),

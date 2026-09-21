@@ -45,7 +45,29 @@ test('ENH-NOTICE3: three presenters, asked dungeon (20) before the modal modes (
   // AUDIT ENH-NOTICE3 F1: NOT LIVE UNTIL ADOPTED - the two hosts that
   // adopt a context say so, after their own adoption and not before.
   assert.match(dungeon, /\n    goLive\(\) \{ _live = true; \},/, 'the adoption door');
-  assert.match(modes, /\n      mode = 'dungeon';\n(?:[^\n]*\n){1,3}      ctx\.goLive\?\.\(\);/, 'mutants: worldModes never adopts (every dungeon box falls to the street for the whole visit); adopts before `mode = \'dungeon\'`');
+  // ...BEFORE the flip and adjacent to it (re-audit C1): worldModes'
+  // own quest door reaches the same stack the moment `mode` reads
+  // 'dungeon' and reads no `_live`, so no statement may run between
+  // the flip and the adoption - the adoption comes first.
+  assert.match(modes, /\n      ctx\.goLive\?\.\(\);[^\n]*\n      mode = 'dungeon';\n/, 'mutants: worldModes never adopts (every dungeon box falls to the street for the whole visit); adopts after the flip (a gap the quest door can land a box in)');
+  // A PIN MUST FAIL (re-audit C11): exactly ONE adoption call in the
+  // mode machine and exactly ONE write of `_live` in the context - a
+  // second `goLive` before the build's awaits, or a `_live = true`
+  // after the registration, re-opens F1 with every shape pin green.
+  assert.equal((modes.match(/ctx\.goLive\?\.\(\);/g) ?? []).length, 1, 'mutant: a second adoption, before the awaits');
+  assert.equal((dungeon.match(/_live = true/g) ?? []).length, 1, 'mutant: `_live = true` written somewhere other than goLive');
+  assert.equal((dungeon.match(/let _live = false;/g) ?? []).length, 1);
+  // re-audit C3: the dead latch is declared ABOVE its first reader -
+  // a `let` is dead until its line runs, and pushDungeonWindow reads it
+  const latchAt = dungeon.indexOf('let _ctxDead = false;');
+  assert.ok(latchAt >= 0, 'mutant: the latch declaration gone (the door reads a free variable)');
+  assert.ok(latchAt < dungeon.indexOf('function pushDungeonWindow(win) {'),
+    'mutant: the latch declared below the door, so a call from inside the build throws instead of refusing');
+  // A3 (the toasts lane): the interior slot's font-less arm DISPOSES
+  // the occupant it drops - an enhanced DOM window needs no classic
+  // font to mount, and its held panel has no watchdog
+  assert.match(modes, /else \{ interiorOverlay\.dispose\?\.\(\); interiorOverlay = null; \}/,
+    'mutant: the font-less arm nulls the slot without dispose, so the tavern\'s held panel, its full-screen host and its capture listener outlive the drop');
   assert.match(rd('src/scenes/dungeon.js'), /\n  \);\n  ctx\.goLive\?\.\(\);/, 'the standalone host adopts after its await');
   // AUDIT ENH-NOTICE3 F2: THE DEAD LATCH IS THE REFUSAL. destroy()
   // unregisters, but worldModes' showQuestOverlay is a second door into

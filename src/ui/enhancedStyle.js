@@ -738,8 +738,10 @@ body.draglock .wornrow, body.draglock .wornmap { touch-action: none; }
    AUDIT INV2 A7: THE LADDER, walked rather than eyeballed. Every
    z-index literal in src/ and index.html: the doors' hosts are 11-14,
    the boot error and three bottom sheets are 20, enhancedChunk's "the
-   game was updated" scrim is 30, the asset picker is 40 (and
-   test/mwattach.test.js holds that it outranks everything). The first
+   game was updated" scrim is 30, the notice stack (ENH-NOTICE1; AUDIT
+   ENH-NOTICE3 A7 lifted it off a tie with that scrim) is 31, the asset
+   picker is 40 (and test/mwattach.test.js holds that it outranks
+   everything). The first
    cut put the ghost at 30 - a straight COLLISION with the update scrim,
    which won only by an accident of which host it happened to be mounted
    inside. 16 clears every door host and loses to every notice that
@@ -2368,6 +2370,8 @@ body.draglock .wornrow, body.draglock .wornmap { touch-action: none; }
    need nowhere near that - this shell pins it to a small dialog
    instead, the size the content actually asks for. */
 .tavern-shell { display: flex; align-items: center; justify-content: center; }
+/* AUDIT ENH-NOTICE3 B1: with the words on the notice panel the click-catcher is THE SCREEN, not the window's rectangle - DFU's ClickAnywhereToClose takes the press anywhere, and the panel stands at the right edge, outside a centred window. */
+.tavern-shell .sb-ask.sb-screen { position: fixed; inset: 0; }
 .tavern-shell .px-win { width: min(460px, 92vw); height: auto; max-height: min(560px, 82dvh); }
 .tavern-shell .px-body { flex: 0 1 auto; overflow-y: auto; padding: 18px 22px 22px; }
 .tavern-shell .sb-top { display: grid; grid-template-columns: 1fr auto 1fr;
@@ -3713,12 +3717,15 @@ button.lv-note.lv-clickable:hover, button.lv-note.lv-clickable:focus-visible {
    lands on the canvas as it always has (ClickAnywhereToClose is the
    box's law, not the panel's); the panel itself is the words, a rule
    and the one-line hint. Two boxes at once stack downward, newest
-   last, each with its own slide. */
+   last, each with its own slide. AUDIT ENH-NOTICE3 A1: the stack is
+   capped at 90vh and CLIPS what will not fit (a short viewport under
+   eight toasts and a box spilled the last toast off the screen); the
+   boxes stand first, so what is lost is the newest toast. */
 .notice-stack {
   position: fixed; right: 0; top: 50%; transform: translateY(-50%);
-  z-index: 30; pointer-events: none;
+  z-index: 31; pointer-events: none;
   display: flex; flex-direction: column; align-items: flex-end; gap: 10px;
-  max-width: min(520px, 70vw); max-height: 90vh;
+  max-width: min(520px, 70vw); max-height: 90vh; overflow: hidden;
   font-family: ${PIXEL_STACK}; -webkit-font-smoothing: none;
   font-variant-ligatures: none; font-feature-settings: 'liga' 0, 'clig' 0;
   color: #d8cfae; text-shadow: 2px 2px 0 rgba(0,0,0,0.85);
@@ -3772,12 +3779,16 @@ button.lv-note.lv-clickable:hover, button.lv-note.lv-clickable:focus-visible {
   .notice-stack { max-width: 88vw; gap: 6px; }
   .notice { width: 88vw; padding: 10px 14px 8px 12px; }
   .notice.notice-toast { padding: 6px 12px 6px 10px; }
-  .notice-row { font-size: 13px; }
+  /* AUDIT ENH-NOTICE3 A6: the toast rule (0-2-1) outranked these
+     blocks' bare .notice-row (0-1-0), so a toast stayed 14px on a
+     phone while the box beside it dropped to 13 - the panel merely
+     read set larger than the one to answer. */
+  .notice-row, .notice.notice-toast .notice-row { font-size: 13px; }
   .notice-cell:first-child { min-width: 5em; }
 }
 @media (max-height: 520px) {
   .notice-body { max-height: 60vh; }
-  .notice-row { font-size: 13px; line-height: 1.25; }
+  .notice-row, .notice.notice-toast .notice-row { font-size: 13px; line-height: 1.25; }
 }
 
 /* ── LV1: THE ASCENSION ── the level-up window, on the sky the enhanced

@@ -1298,7 +1298,7 @@ export class HeldMapWindow {
     // info on the panel it stays display:none and the ROOT keeps
     // `hmmodal` on its own: the words moved, the modality did not, and
     // an empty .hmbox would paint a bordered blank over the bay
-    // (ui/enhancedStyle.js:1266-1271 - the frame is the box's, not its
+    // (ui/enhancedStyle.js:1308 - the frame is the box's, not its
     // children's).
     const open = modal && !(this._info && onPanel);
     box.classList.toggle('open', open);
@@ -2082,8 +2082,22 @@ export class HeldMapWindow {
     // own exit (:498 CloseWindow), under a panel that carries the words.
     const fee = this._panel === 'teleport' ? (this._panelState?.fee ?? null) : null;
     const feeRefused = !!(fee && !fee.canPay);
-    const cardNotice = (this._panel === 'travel' && this._panelState?.notice) || (feeRefused ? 'You do not have enough gold.' : null) || null;
-    const onPanel = noticeHold(this, cardNotice ? [{ text: cardNotice, center: true }] : null);
+    // ...and only while the CARD is up: a selection cleared or a phase
+    // turned closes the card, and a refusal still in its state must not
+    // stand on the panel over a card that is gone (re-audit B6).
+    const cardUp = !!this._selected && this._phase === 'map';
+    const cardNotice = cardUp ? ((this._panel === 'travel' && this._panelState?.notice) || (feeRefused ? 'You do not have enough gold.' : null) || null) : null;
+    // (The `!onPanel` arms of this window - the info block drawn into
+    // .hmbox, the card's own hmnotice/hmprompt lines - are its
+    // classic-skin fork and unreachable in the shipping game:
+    // ui/travelMapDoor.js mounts it only under the enhanced skin with a
+    // document. Kept so the fork is one place, unit-testable on both
+    // skins. AUDIT ENH-NOTICE3 B19.)
+    // No hint (AUDIT ENH-NOTICE3 B4): the card's refusals clear on the
+    // next toggle, the next attempt or the map's own close - never on a
+    // click or a key - so the panel makes no promise. The I/H box above
+    // keeps the default: any key and any press really do close it.
+    const onPanel = noticeHold(this, cardNotice ? [{ text: cardNotice, center: true }] : null, { hint: false });
     if (!this._selected || this._phase !== 'map') return;
     const { summary } = this._selected;
     card.append(el('h3', 'hmname', this._selected.name || 'Unknown place'));

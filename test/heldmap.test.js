@@ -2854,3 +2854,27 @@ test('MAP-FIELD2/4: the cut cuffs are AUTHORED down to the foot, and nothing els
   assert.match(fsrc, /if \(last < band \|\| last >= h - 1\) continue;/, 'the band is the test, so it is one number to turn if the art changes');
   assert.match(fsrc, /extendCuffs\(img\.data, w, h\);/, 'and the window runs it on the sprite it shows');
 });
+
+test('ENH-NOTICE3 (AUDIT B4/B6): the card\'s refusal wears no hint (nothing dismisses it), the I/H box keeps the default (any key or press closes it), and a card that goes away takes its panel', () => {
+  const buildings = [{ buildingType: 0, displayName: 'The Odd Blades' }];
+  const deps = () => modDeps({ gold: () => 0, goldPieces: () => 0, discoveredBuildings: () => buildings, buildingTypeName: () => 'Alchemist' });
+  skin('enhanced');
+  withDocument((doc) => {
+    const win = open(mkWin(deps()));
+    win._pickAt(...toPaper(win._view, 3.5, 3.5));
+    win._openPanel('travel');
+    win._begin();
+    assert.match(win._panelState.notice, /gold/);
+    const hints = () => ((doc.body.children ?? []).find((c) => c.id === ENHANCED_NOTICE_ID)?.children ?? [])
+      .flatMap((panel) => panel.children.filter((c) => c.className === 'notice-hint').map((n) => n.textContent));
+    assert.deepEqual(hints(), [], 'mutant: the refusal promising "click or press a key" - it clears on the next toggle, never on a press');
+    win.input('KeyI');
+    assert.deepEqual(hints(), ['click or press a key'], 'the info box really does close on any key or press, and says so');
+    win.input('KeyS');
+    // the card goes away with the refusal still on it: the selection cleared
+    win._selected = null;
+    win._renderCard();
+    assert.deepEqual(enhancedNoticeKeys(), [], 'mutant: the hold below the early return, so a card that goes away leaves its panel held over the world');
+    win.dispose();
+  });
+});

@@ -53,7 +53,7 @@ test('hudText: the rubberband speedup only engages past maxRows', () => {
 // panels through) and the classic arm over a recording renderer, and
 // each pin names the mutants it kills.
 import { readFileSync } from 'node:fs';
-import { drawEnhancedStatusLine, destroyEnhancedHudText, setEnhancedHudTextScale, midTextTopPx, ENHANCED_MID_TEXT_ID, ENHANCED_STATUS_ID } from '../src/ui/enhancedHudText.js';
+import { drawEnhancedStatusLine, destroyEnhancedHudText, setEnhancedMidTextScale, midTextTopPx, ENHANCED_MID_TEXT_ID, ENHANCED_STATUS_ID } from '../src/ui/enhancedHudText.js';
 import { destroyEnhancedNotice, enhancedNoticeKeys, _setNoticeClockForTests, ENHANCED_NOTICE_ID, NOTICE_SLIDE_MS } from '../src/ui/enhancedNotice.js';
 import { MidScreenText, MID_SCREEN_TEXT_DEFAULT_DELAY, midScreenText } from '../src/ui/midScreenText.js';
 import { ENHANCED_CSS, ENHANCED_STYLE_ID, injectEnhancedStyle } from '../src/ui/enhancedStyle.js';
@@ -68,6 +68,7 @@ function fakeNode(tag, doc) {
     tagName: tag.toUpperCase(), children: [], parent: null, className: '', textContent: '', id: '',
     style: { setProperty(k, v) { this[k] = v; } }, dataset: {}, attrs: {},
     append(...cs) { for (const c of cs) { c.parent = n; n.children.push(c); } },
+    insertBefore(c, ref) { c.parent = n; const i = n.children.indexOf(ref); if (i < 0) n.children.push(c); else n.children.splice(i, 0, c); },
     setAttribute(k, v) { n.attrs[k] = v; },
     remove() { if (n.parent) { n.parent.children.splice(n.parent.children.indexOf(n), 1); n.parent = null; } n.removed = true; },
   };
@@ -426,7 +427,7 @@ test('AUDIT FONT F2: --hud-scale reaches the mid-screen label - a SIBLING of .hu
     label.draw(recorder(), CANVAS, null);
     const mid = doc.getElementById(ENHANCED_MID_TEXT_ID);
     assert.equal(mid.style['--hud-scale'], undefined, 'nothing has set it yet - the variable is declared on .hud and does not inherit here');
-    setEnhancedHudTextScale(2, doc);
+    setEnhancedMidTextScale(2, doc);
     assert.equal(mid.style['--hud-scale'], '2', 'mutants: the mid-screen label left off the scale write, so at hudScale 2 it draws at 1 and at 0.5 it floats');
     assert.equal(stackOf(doc).style['--hud-scale'], undefined,
       'ENH-NOTICE3: the notice stack is the BOX\'s stack, at the box\'s size - a HUD scale of 2 must not double a notice the box beside it draws at 1');
@@ -437,7 +438,7 @@ test('AUDIT FONT F2: --hud-scale reaches the mid-screen label - a SIBLING of .hu
   withSkin('enhanced', () => {
     const doc = fakeDocument();
     globalThis.document = doc;
-    setEnhancedHudTextScale(0.5, doc);          // the boot frame, with nothing built yet
+    setEnhancedMidTextScale(0.5, doc);          // the boot frame, with nothing built yet
     const label = new MidScreenText();
     label.set('You are too far away.');
     label.draw(recorder(), CANVAS, null);
@@ -446,7 +447,7 @@ test('AUDIT FONT F2: --hud-scale reaches the mid-screen label - a SIBLING of .hu
   });
   // ...and the one hand that knows the live scale calls it, beside the
   // damage-number layer it already fed for exactly this reason.
-  assert.match(rd('src/ui/enhancedHud.js'), /getElementById\('enhanced-hitnums'\)\?\.style\.setProperty\('--hud-scale', String\(scale\)\);[\s\S]{0,400}?setEnhancedHudTextScale\(scale, document\);/,
+  assert.match(rd('src/ui/enhancedHud.js'), /getElementById\('enhanced-hitnums'\)\?\.style\.setProperty\('--hud-scale', String\(scale\)\);[\s\S]{0,400}?setEnhancedMidTextScale\(scale, document\);/,   // AUDIT ENH-NOTICE3 A10: named for the one surface it scales
     'mutant: the propagation dropped out of the scale write, so nothing ever sets it on the label');
 });
 
@@ -539,16 +540,25 @@ test('AUDIT FONT F4: a canvas window covers the classic column, so the toasts go
   });
   // ...and every host that owns a model hands its own window slot in.
   const town = rd('src/scenes/townTalk.js');
-  // AUDIT ENH-NOTICE3 F3: ...and the MODE host's slot beside its own.
-  // townTalk's model is drawn under the interior arm (hudFrame) and by
-  // the outer hosts in every mode, and `overlay` is the town's slot
-  // alone - so an inventory or a rest window opened inside a building
-  // never reached this report, and the toasts stood over it.
-  assert.equal([...town.matchAll(/hud\.observe\(!!overlay \|\| !!otherOverlayActive\?\.\(\)\);/g)].length, 2,
-    'mutants: townTalk\'s frame - or the interior arm\'s own hudFrame - stops telling the model that a window is up, or reports its own slot alone');
-  assert.match(rd('src/scenes/world.js'), /otherOverlayActive: \(\) => modes\?\.overlayHeld \?\? false,/, 'the seam IS the mode machine\'s slot');
-  assert.match(rd('src/scenes/exterior.js'), /otherOverlayActive: \(\) => modes\?\.overlayHeld \?\? false,/);
-  assert.match(rd('src/scenes/dungeonContext.js'), /hudText\.observe\(!!activeOverlay\);/,
+  // AUDIT ENH-NOTICE3 F3/C2: the question is THE PREVIOUSWINDOW CHAIN,
+  // not the slot. DFU paints PopupText as part of the HUD window at the
+  // bottom of the stack, and a pushed box paints its previousWindow
+  // first (DaggerfallPopupWindow.cs:77-85) - so under a BOX the rows
+  // stay and under a window that cuts the chain (the inventory, the
+  // rest) they go. Both townTalk sites ask one predicate: this slot's
+  // chain (AUDIT 64 F35's hudCovered), the held map's outright hide,
+  // and the MODE host's chain - the interior slot this model is drawn
+  // under, which `overlay` cannot see.
+  assert.equal([...town.matchAll(/hud\.observe\(toastsCovered\(\)\);/g)].length, 2,
+    'mutants: townTalk\'s frame - or the interior arm\'s own hudFrame - stops telling the model that a window covers the HUD');
+  assert.match(town, /const toastsCovered = \(\) => \(talkPaused\(\) && windows\.hudCovered\(overlay\)\) \|\| hidesHud\(overlay\) \|\| !!otherHudCovered\?\.\(\);/,
+    'mutants: the slot asked instead of the chain (a pushed box hides the toasts DFU keeps); the held map\'s hide dropped; the mode host dropped (an interior window never hides them)');
+  for (const h of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
+    assert.match(rd(h), /otherHudCovered: \(\) => modes\?\.hudCovered \?\? false,/, `${h}: the seam IS the mode machine's previousWindow chain`);
+  }
+  assert.match(rd('src/scenes/dungeonContext.js'), /hudText\.observe\(!!activeOverlay && \(dungeonWindows\.hudCovered\(activeOverlay\) \|\| hidesHud\(activeOverlay\)\)\);/,
+    'mutant: the dungeon asks the slot (its own windowCoversHud asks the chain)');
+  assert.match(rd('src/scenes/dungeonContext.js'), /hudText\.observe\(!!activeOverlay && /,
     'mutants: the dungeon\'s frame stops telling it');
   // ...and the model's own draw is back to three arguments: a fourth
   // positional slot on a `draw` in src/ui is the scale's (audit24
@@ -629,4 +639,57 @@ test('AUDIT FONT F12: the teardown\'s doc names callers that exist', () => {
     'mutant: dispose no longer reaches it');
   assert.equal([...rd('src/scenes/dungeonContext.js').matchAll(/hudText\.dispose\(\);/g)].length, 1,
     'mutant: the context\'s rows never released, so a torn-down dungeon leaves its toasts on the page');
+});
+
+test('ENH-NOTICE3 (AUDIT A1): under the enhanced skin WITH the classic font loaded the bitmap column paints nothing - one face, not two', () => {
+  withSkin('enhanced', () => {
+    const doc = fakeDocument();
+    globalThis.document = doc;
+    const h = new HudText('town');
+    h.add('Your Long Blade skill has improved.');
+    const r = recorder();
+    h.draw(r, CANVAS, FONT);   // the shipping hosts pass the font - every earlier pin passed null
+    assert.equal(toastsOf(doc, h).length, 1, 'the toast is up');
+    assert.equal(r.quads.length, 0, 'mutant: the enhanced arm\'s return dropped, so the classic glyphs paint under the toasts');
+  });
+});
+
+test('ENH-NOTICE3 (AUDIT A6-A8): PopupText.AddText\'s delay arithmetic - the waiting timer and the next pop delay take the MAX, and the next pop delay resets after a pop', () => {
+  // AddText (PopupText.cs): an empty queue takes the delay outright; a
+  // queue still waiting (timer >= 0) takes max(timer, delay); a queue
+  // already draining (timer < 0) raises nextPopDelay to max(next,
+  // delay). Update: each pop adds nextPopDelay back and resets it to
+  // popDelay. Every earlier pin added with the default 1 s, so the
+  // whole delay half - the mod's textDisplayTime - was unpinned.
+  const h = new HudText();
+  h.add('a');                          // empty: timer = 1
+  h.add('b', 0.5);                     // waiting: max(1, 0.5) = 1, not 0.5
+  assert.equal(h.timer, 1, 'mutant: the waiting timer ASSIGNED (a short line cuts a long one\'s life)');
+  h.add('c', 3);                       // waiting: max(1, 3) = 3
+  assert.equal(h.timer, 3);
+  h.tick(3.5);                         // timer = -0.5: draining, nothing popped yet
+  assert.equal(h.lines.length, 3);
+  h.add('d', 0.5);                     // draining: nextPopDelay = max(1, 0.5) = 1, not 0.5
+  assert.equal(h.nextPopDelay, 1, 'mutant: the next pop delay ASSIGNED');
+  h.add('e', 2);                       // draining: nextPopDelay = max(1, 2) = 2
+  assert.equal(h.nextPopDelay, 2);
+  h.tick(0.6);                         // timer = -1.1 < -1: pop 'a', timer += 2 -> 0.9, next resets to 1
+  assert.deepEqual(h.lines.map((l) => l.text), ['b', 'c', 'd', 'e']);
+  assert.ok(Math.abs(h.timer - 0.9) < 1e-9, 'the popped row gave back the RAISED delay');
+  assert.equal(h.nextPopDelay, HUD_TEXT_POP_DELAY, 'mutant: the next pop delay never reset, so every later row lives the raised life too');
+  h.tick(2.0);                         // timer = -1.1: pop 'b', timer += 1 (the reset delay) -> -0.1
+  assert.deepEqual(h.lines.map((l) => l.text), ['c', 'd', 'e']);
+  assert.ok(Math.abs(h.timer - (-0.1)) < 1e-9, 'mutant: the second pop added the old raised delay');
+});
+
+test('ENH-NOTICE3 (AUDIT A1/A6/A9/A10): the sheet - the stack clips what will not fit, the toast keeps its dark, and the media blocks reach a toast\'s row', () => {
+  assert.match(ENHANCED_CSS, /\.notice-stack \{[^}]*max-height: 90vh; overflow: hidden;/,
+    'mutant: the cap raised or the overflow open, so eight toasts and a box spill the last toast off a 520px screen');
+  assert.match(ENHANCED_CSS, /\.notice\.notice-toast \{[^}]*background: rgba\(10,12,17,0\.82\);/,
+    'mutant: the toast\'s dark thinned, and the popup\'s yellow stands on the sky');
+  // the toast rule (0-2-1) outranks the media blocks\' bare .notice-row
+  // (0-1-0), so each block names the toast\'s row too
+  assert.match(ENHANCED_CSS, /@media \(max-width: 720px\) \{[^@]*\.notice-row, \.notice\.notice-toast \.notice-row \{ font-size: 13px; \}/,
+    'mutant: on a phone the toast stays 14px while the box drops to 13 - the panel merely read set larger than the one to answer');
+  assert.match(ENHANCED_CSS, /@media \(max-height: 520px\) \{[^@]*\.notice-row, \.notice\.notice-toast \.notice-row \{ font-size: 13px; line-height: 1\.25; \}/);
 });

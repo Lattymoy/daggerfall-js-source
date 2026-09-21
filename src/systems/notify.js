@@ -52,7 +52,9 @@
 // FALLBACK, NOT SILENCE. A box with no presenter must not vanish - a
 // dropped box is the failure showQuestBox was written to fix ("the
 // first ten minutes of a new game were silent"). It lands on the HUD
-// line, and the handle answers null so a caller that cares can tell.
+// line, and the handle answers INERT - `mounted` false, `addNext` a
+// no-op, `done` true - so a caller that cares can tell and a caller
+// that chains without looking cannot throw.
 
 import { ActionTextBox } from '../ui/actionText.js';
 

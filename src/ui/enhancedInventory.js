@@ -2182,7 +2182,7 @@ function render() {
   //   use()    the use ladder's text/textId -> :1600-1618 (the info box
   //            and its AddNextMessageBox chain), :1721 bookUnavailable,
   //            :1736 cannotUseThis, :1754 the no-spells box,
-  //            :1777-1800 the four lantern lines, :1836-1844 the map's
+  //            :1777-1800 the five lantern lines, :1836-1844 the map's
   //            own box and readMapFail
   //   refuse() the transfer ladder's refusals -> :1420 cannotCarryAnymore,
   //            :1431 cannotHoldAnymore, :1467/:1491 cannotRemoveItem
@@ -2205,7 +2205,17 @@ function render() {
   // Decided ONCE per render, before the tree is built, because the
   // sheet paints the line in two places (the pack's footer and the
   // loot frame) and a second call would mint a second panel.
-  const onPanel = noticeHold(noticeOwner, notice ? [{ text: notice, center: true }] : null);
+  // (The `!onPanel` arms below are this module's classic-skin fork
+  // and unreachable in the shipping game - ui/inventoryDoor.js mounts
+  // this pane only under the enhanced skin with a document; kept so
+  // the fork is one place, unit-testable on both skins. AUDIT
+  // ENH-NOTICE3 B19.)
+  // No hint (AUDIT ENH-NOTICE3 B3): this pane takes no click and no
+  // key for a refusal - it clears when the next action rewrites it
+  // (a wear, a take-off, a transfer, a tab) - so the panel promises no
+  // dismissal the pane does not keep. (The classic twin queues each of
+  // these as a real click-anywhere box; the enhanced pane never did.)
+  const onPanel = noticeHold(noticeOwner, notice ? [{ text: notice, center: true }] : null, { hint: false });
   repaintKeepingScroll(host, () => {
     // PX22: the list's scroll position survives a repaint, per tab - an
     // equip, a drop or a tab's own re-render rebuilds the DOM, and a

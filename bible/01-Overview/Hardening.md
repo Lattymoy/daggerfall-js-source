@@ -170,8 +170,8 @@ carried only the first of the two lines, so a player fighting with the
 left-hand weapon loaded back holding the right hand's item, or bare
 fists. By the time it was found, the two restore lines had drifted six
 and thirteen lines apart inside their own hosts, and the comment in
-`worldModes.js` that pointed between them cited `world.js:5450` and
-`dungeonContext.js:5952` - lines that had moved to `:4777` and `:5927`.
+`worldModes.js` that pointed between them cited `world.js:5451` and
+`dungeonContext.js:5956` - lines that had moved to `:4781` and `:5931`.
 *Three copies of a rule, and the signpost between them stale as well.*
 
 The pair lives in `src/combat/playerWeapon.js` now - `weaponPoseOf`,
@@ -249,13 +249,13 @@ three collapsed on verification.**
 2. *"`npcSession.onWorldChanged()` is on both door exits and not on the
    teleport/load path."* True, and correct: every caller of
    `forceExitToExterior` follows it with `_teleportToPixel`, and THAT
-   function owns the call (`world.js:4446`, DFU's `OnMapPixelChanged` /
+   function owns the call (`world.js:4447`, DFU's `OnMapPixelChanged` /
    `OnLoadEvent`). The quickload caller goes through
    `restoreSessionState` instead. Calling it in both places would be the
    redundancy, not the fix.
 3. *"`worldModes.js:8428` disposes the dungeon overlay that
    `dungeonCtx.destroy()` disposes again - HARD1's double free."* Already
-   known, already written down, at `dungeonContext.js:6615-6616`:
+   known, already written down, at `dungeonContext.js:6619-6620`:
    *"dispose() is idempotent (A2), which is what makes the outer host's
    call harmless."* The tree had the answer before the audit asked.
 
@@ -548,7 +548,7 @@ frame**.
 
 **F3 - it assumed the population was `ui/*Door.js`.** It is not. Twelve
 window classes are constructed straight into a host slot, and
-`townTalk.js:1124` paints every *covered* window as well
+`townTalk.js:1138` paints every *covered* window as well
 (`eachCoveredWindow((w) => w.draw(...))`), so depth is in the contract
 too, not just the top of the stack.
 
@@ -556,7 +556,7 @@ too, not just the top of the stack.
 
 Read off the four hosts that own a window stack, scoped to the enclosing
 function rather than a fixed lookback (the first pass used four lines and
-mis-read `townTalk.js:1211` as unguarded; its guard sits eight lines up -
+mis-read `townTalk.js:1225` as unguarded; its guard sits eight lines up -
 HARD2's D10 pin was re-aimed for the same reason):
 
 | arm | required by | note |

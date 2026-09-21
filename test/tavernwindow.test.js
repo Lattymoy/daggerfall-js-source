@@ -445,6 +445,12 @@ test('ENH-NOTICE3: the enhanced tavern\'s click-anywhere box is the notice panel
     const s = scrim();
     assert.ok(s, 'the scrim still stands: it is what takes the dismissing click');
     assert.equal(typeof s.onclick, 'function', 'ClickAnywhereToClose - the press lands anywhere on it');
+    // AUDIT ENH-NOTICE3 B1: ...and "anywhere" is THE SCREEN. The panel
+    // stands at the right edge, outside a centred 460px window; a scrim
+    // inside the window covered only the window, so the one place the
+    // words were was the one place the press was dead.
+    assert.equal(s.className, 'sb-ask sb-screen', 'mutant: the panel arm\'s scrim without its screen class (window-sized)');
+    assert.match(String(s.parentNode?.className ?? s.parent?.className), /\btavern-shell\b/, 'mutant: the scrim hung on the window instead of the shell');
 
     // THE WINDOW'S OWN DISMISSAL
     s.onclick();
@@ -483,4 +489,14 @@ test('ENH-NOTICE3: the classic skin is untouched - the enhanced tavern off the e
     assert.equal(scrim().onclick, null, 'the scrim is not the click here - the OK button is');
     assert.equal(dom.doc.querySelectorAll('.sb-acts')[0].children[0].textContent, 'OK');
   });
+});
+
+test('ENH-NOTICE3 (AUDIT): the tavern\'s notice owner is ONE object for the module - a per-render owner leaks a panel per box', () => {
+  // `render()` runs on every state change and again from `unmount`,
+  // and the owner is what carries `_noticeKey`: mint it per render and
+  // each raise is a NEW panel with nobody to release the last.
+  const src = readFileSync(new URL('../src/ui/enhancedTavern.js', import.meta.url), 'utf8');
+  assert.match(src, /^const noticeOwner = \{\};$/m,
+    'mutant: the owner minted per render (a panel per box, released by nothing)');
+  assert.equal((src.match(/noticeOwner = /g) ?? []).length, 1, 'and written once - nothing re-mints it');
 });

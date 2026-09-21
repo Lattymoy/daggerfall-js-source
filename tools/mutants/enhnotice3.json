@@ -355,8 +355,8 @@
   {
     "name": "AUDIT-F1-worldModes-never-adopts",
     "file": "src/scenes/worldModes.js",
-    "old": "      ctx.goLive?.();   // ENH-NOTICE3 (AUDIT F1): only now is the dungeon's stack the live top window the door may offer boxes to\n",
-    "new": "",
+    "old": "      ctx.goLive?.();   // ENH-NOTICE3 (AUDIT F1, re-audited C1)",
+    "new": "      // ctx.goLive?.();   // ENH-NOTICE3 (AUDIT F1, re-audited C1)",
     "tests": [
       "test/enhnotice3_hosts.test.js"
     ]
@@ -383,8 +383,8 @@
   {
     "name": "AUDIT-F3-townTalk-reports-its-own-slot-alone",
     "file": "src/scenes/townTalk.js",
-    "old": "    hud.observe(!!overlay || !!otherOverlayActive?.());   // AUDIT ENH-NOTICE3 F3",
-    "new": "    hud.observe(!!overlay);   // AUDIT ENH-NOTICE3 F3",
+    "old": "  const toastsCovered = () => (talkPaused() && windows.hudCovered(overlay)) || hidesHud(overlay) || !!otherHudCovered?.();",
+    "new": "  const toastsCovered = () => (talkPaused() && windows.hudCovered(overlay)) || hidesHud(overlay);",
     "tests": [
       "test/hudtext.test.js"
     ]
@@ -450,6 +450,478 @@
     "new": "  stack.append(host); void firstToast;",
     "tests": [
       "test/enhancedNotice.test.js"
+    ]
+  },
+  {
+    "name": "TAV-yes-no-decision-routed-to-the-panel",
+    "file": "src/ui/enhancedTavern.js",
+    "old": "noticeHold(noticeOwner, box.buttons ? null : box.rows)",
+    "new": "noticeHold(noticeOwner, box.rows)",
+    "tests": [
+      "test/tavernwindow.test.js"
+    ]
+  },
+  {
+    "name": "TAV-scrim-is-not-the-click",
+    "file": "src/ui/enhancedTavern.js",
+    "old": "    scrim.onclick = dismiss;\n",
+    "new": "",
+    "tests": [
+      "test/tavernwindow.test.js"
+    ]
+  },
+  {
+    "name": "TAV-no-release-when-the-box-clears",
+    "file": "src/ui/enhancedTavern.js",
+    "old": "  } else noticeRelease(noticeOwner);",
+    "new": "  } else if (false) noticeRelease(noticeOwner);",
+    "tests": [
+      "test/tavernwindow.test.js"
+    ]
+  },
+  {
+    "name": "TAV-no-release-on-unmount",
+    "file": "src/ui/enhancedTavern.js",
+    "old": "      noticeRelease(noticeOwner);\n      host = null;",
+    "new": "      host = null;",
+    "tests": [
+      "test/tavernwindow.test.js"
+    ]
+  },
+  {
+    "name": "TAV-owner-minted-per-render",
+    "file": "src/ui/enhancedTavern.js",
+    "old": "const noticeOwner = {};",
+    "new": "let noticeOwner = {};",
+    "tests": [
+      "test/tavernwindow.test.js"
+    ]
+  },
+  {
+    "name": "INV-line-left-on-the-sheet-too",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "    if (notice && !onPanel) win.append(el('p', 'sheet-notice', notice));",
+    "new": "    if (notice) win.append(el('p', 'sheet-notice', notice));",
+    "tests": [
+      "test/enhancedInventory.test.js"
+    ]
+  },
+  {
+    "name": "INV-loot-frame-line-left-too",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "      if (!packOpen && notice && !onPanel) loot.append(el('p', 'sheet-notice', notice));",
+    "new": "      if (!packOpen && notice) loot.append(el('p', 'sheet-notice', notice));",
+    "tests": [
+      "test/enhancedInventory.test.js"
+    ]
+  },
+  {
+    "name": "INV-no-release-on-unmount",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "      noticeRelease(noticeOwner);\n      hostEl.innerHTML = '';",
+    "new": "      hostEl.innerHTML = '';",
+    "tests": [
+      "test/enhancedInventory.test.js"
+    ]
+  },
+  {
+    "name": "INV-hold-lifted-above-the-host-guard",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "  if (!host) return;\n  repaints++;",
+    "new": "  repaints++;\n  if (!host) { noticeHold(noticeOwner, notice ? [{ text: notice, center: true }] : null); return; }",
+    "tests": [
+      "test/enhancedInventory.test.js"
+    ]
+  },
+  {
+    "name": "MAP-no-release-of-the-card-owner-on-teardown",
+    "file": "src/ui/heldMap.js",
+    "old": "    noticeRelease(this);\n    noticeRelease(this._infoOwner);",
+    "new": "    noticeRelease(this._infoOwner);",
+    "tests": [
+      "test/heldmap.test.js"
+    ]
+  },
+  {
+    "name": "MAP-no-release-of-the-info-owner-on-teardown",
+    "file": "src/ui/heldMap.js",
+    "old": "    noticeRelease(this);\n    noticeRelease(this._infoOwner);",
+    "new": "    noticeRelease(this);",
+    "tests": [
+      "test/heldmap.test.js"
+    ]
+  },
+  {
+    "name": "MAP-one-owner-for-both-boxes",
+    "file": "src/ui/heldMap.js",
+    "old": "    const onPanel = noticeHold(this._infoOwner, this._infoNoticeRows());",
+    "new": "    const onPanel = noticeHold(this, this._infoNoticeRows());",
+    "tests": [
+      "test/heldmap.test.js"
+    ]
+  },
+  {
+    "name": "MAP-hmmodal-read-off-the-drawn-box-again",
+    "file": "src/ui/heldMap.js",
+    "old": "    this._chrome.root.classList.toggle('hmmodal', modal);",
+    "new": "    this._chrome.root.classList.toggle('hmmodal', open);",
+    "tests": [
+      "test/heldmap.test.js"
+    ]
+  },
+  {
+    "name": "MAP-empty-hmbox-opened-under-the-panel",
+    "file": "src/ui/heldMap.js",
+    "old": "    const open = modal && !(this._info && onPanel);",
+    "new": "    const open = modal;",
+    "tests": [
+      "test/heldmap.test.js"
+    ]
+  },
+  {
+    "name": "MAP-card-notice-left-in-the-card-too",
+    "file": "src/ui/heldMap.js",
+    "old": "      if (st.notice && !onPanel) card.append(el('p', 'hmnotice', st.notice));",
+    "new": "      if (st.notice) card.append(el('p', 'hmnotice', st.notice));",
+    "tests": [
+      "test/heldmap.test.js"
+    ]
+  },
+  {
+    "name": "MAP-info-title-dropped-from-the-panel-rows",
+    "file": "src/ui/heldMap.js",
+    "old": "    if (i.title) out.push({ text: i.title, center: true, highlight: true });",
+    "new": "    if (false) out.push({ text: i.title, center: true, highlight: true });",
+    "tests": [
+      "test/heldmap.test.js"
+    ]
+  },
+  {
+    "name": "MAP-info-cells-dropped-from-the-panel-rows",
+    "file": "src/ui/heldMap.js",
+    "old": "    for (const c of i.cells) out.push({ text: c, center: false });",
+    "new": "    for (const c of []) out.push({ text: c, center: false });",
+    "tests": [
+      "test/heldmap.test.js"
+    ]
+  },
+  {
+    "name": "HUNT-no-release-on-close",
+    "file": "src/ui/huntWindow.js",
+    "old": "    noticeRelease(this);\n    this._onClosed?.(searched);",
+    "new": "    this._onClosed?.(searched);",
+    "tests": [
+      "test/surv6_hunting.test.js"
+    ]
+  },
+  {
+    "name": "HUNT-no-release-at-the-page-turn",
+    "file": "src/ui/huntWindow.js",
+    "old": "    if (this.phase !== HUNT_PHASE.Busy) { noticeRelease(this); this._flow.draw(renderer, canvas, font); return; }",
+    "new": "    if (this.phase !== HUNT_PHASE.Busy) { this._flow.draw(renderer, canvas, font); return; }",
+    "tests": [
+      "test/surv6_hunting.test.js"
+    ]
+  },
+  {
+    "name": "HUNT-panel-painted-once-and-left-stale",
+    "file": "src/ui/huntWindow.js",
+    "old": "    const rows = [{ text: this.busy, center: true }, { text: dots, center: true }];",
+    "new": "    const rows = this._rowsOnce ??= [{ text: this.busy, center: true }, { text: dots, center: true }];",
+    "tests": [
+      "test/surv6_hunting.test.js"
+    ]
+  },
+  {
+    "name": "TAV-a-fresh-owner-at-every-raise",
+    "file": "src/ui/enhancedTavern.js",
+    "old": "  const onPanel = noticeHold(noticeOwner, box.buttons ? null : box.rows);",
+    "new": "  const onPanel = noticeHold({}, box.buttons ? null : box.rows);",
+    "tests": [
+      "test/tavernwindow.test.js"
+    ]
+  },
+  {
+    "name": "TAV-dismiss-does-not-repaint",
+    "file": "src/ui/enhancedTavern.js",
+    "old": "  const cb = box?.onDismiss;\n  box = null;\n  cb?.();\n  render();",
+    "new": "  const cb = box?.onDismiss;\n  box = null;\n  cb?.();",
+    "tests": [
+      "test/tavernwindow.test.js"
+    ]
+  },
+  {
+    "name": "MAP-info-rows-dropped-from-the-panel",
+    "file": "src/ui/heldMap.js",
+    "old": "    for (const r of i.rows) out.push({ text: r, center: false });",
+    "new": "    for (const r of []) out.push({ text: r, center: false });",
+    "tests": [
+      "test/heldmap.test.js"
+    ]
+  },
+  {
+    "name": "INV-loot-frame-line-left-too-with-map-tests",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "      if (!packOpen && notice && !onPanel) loot.append(el('p', 'sheet-notice', notice));",
+    "new": "      if (!packOpen && notice) loot.append(el('p', 'sheet-notice', notice));",
+    "tests": [
+      "test/enhancedInventory.test.js"
+    ]
+  },
+  {
+    "name": "HUNT-release-after-the-close-hook",
+    "file": "src/ui/huntWindow.js",
+    "old": "    noticeRelease(this);\n    this._onClosed?.(searched);",
+    "new": "    this._onClosed?.(searched);\n    noticeRelease(this);",
+    "tests": [
+      "test/surv6_hunting.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT4-C2-the-mode-host-dropped-from-the-cover",
+    "file": "src/scenes/townTalk.js",
+    "old": "  const toastsCovered = () => (talkPaused() && windows.hudCovered(overlay)) || hidesHud(overlay) || !!otherHudCovered?.();",
+    "new": "  const toastsCovered = () => (talkPaused() && windows.hudCovered(overlay)) || hidesHud(overlay) || !!otherOverlayActive?.();",
+    "tests": [
+      "test/hudtext.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT4-C2-the-slot-asked-instead-of-the-chain",
+    "file": "src/scenes/townTalk.js",
+    "old": "  const toastsCovered = () => (talkPaused() && windows.hudCovered(overlay)) || hidesHud(overlay) || !!otherHudCovered?.();",
+    "new": "  const toastsCovered = () => !!overlay || !!otherHudCovered?.();",
+    "tests": [
+      "test/hudtext.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT4-C2-the-dungeon-asks-the-slot",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    hudText.observe(!!activeOverlay && (dungeonWindows.hudCovered(activeOverlay) || hidesHud(activeOverlay)));",
+    "new": "    hudText.observe(!!activeOverlay);",
+    "tests": [
+      "test/hudtext.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT4-C1-adopted-after-the-flip",
+    "file": "src/scenes/worldModes.js",
+    "old": "      ctx.goLive?.();   // ENH-NOTICE3 (AUDIT F1, re-audited C1): ADOPTED - the context's stack is the live top window from the next statement on; before the flip and not after, so no statement ever runs with mode 'dungeon' and the door's presenter still dormant (worldModes' own quest door reaches the same stack and reads no `_live`)\n      mode = 'dungeon';\n      host.unlockOn?.();   // AUDIT 62 F16/F28: the lock never outlives a mode change\n",
+    "new": "      mode = 'dungeon';\n      host.unlockOn?.();   // AUDIT 62 F16/F28: the lock never outlives a mode change\n      ctx.goLive?.();\n",
+    "tests": [
+      "test/enhnotice3_hosts.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT4-C11-a-second-adoption-before-the-awaits",
+    "file": "src/scenes/worldModes.js",
+    "old": "      dungeonCtx = ctx;\n",
+    "new": "      dungeonCtx = ctx;\n      ctx.goLive?.();\n",
+    "tests": [
+      "test/enhnotice3_hosts.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT4-C11-live-written-after-the-registration",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    active: () => _live && !_ctxDead,\n    priority: 20,\n  });\n",
+    "new": "    active: () => _live && !_ctxDead,\n    priority: 20,\n  });\n  _live = true;\n",
+    "tests": [
+      "test/enhnotice3_hosts.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT4-A3-the-font-less-arm-drops-without-dispose",
+    "file": "src/scenes/worldModes.js",
+    "old": "      else { interiorOverlay.dispose?.(); interiorOverlay = null; }",
+    "new": "      else interiorOverlay = null;",
+    "tests": [
+      "test/enhnotice3_hosts.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT4-A1-the-stack-spills",
+    "file": "src/ui/enhancedStyle.js",
+    "old": "  max-width: min(520px, 70vw); max-height: 90vh; overflow: hidden;",
+    "new": "  max-width: min(520px, 70vw); max-height: 900vh;",
+    "tests": [
+      "test/hudtext.test.js",
+      "test/enhancedNotice.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT4-A6-the-toast-row-escapes-the-phone-block",
+    "file": "src/ui/enhancedStyle.js",
+    "old": "  .notice-row, .notice.notice-toast .notice-row { font-size: 13px; }\n  .notice-cell:first-child { min-width: 5em; }",
+    "new": "  .notice-row { font-size: 13px; }\n  .notice-cell:first-child { min-width: 5em; }",
+    "tests": [
+      "test/hudtext.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT4-A7-the-stack-back-on-the-tie",
+    "file": "src/ui/enhancedStyle.js",
+    "old": "  z-index: 31; pointer-events: none;",
+    "new": "  z-index: 30; pointer-events: none;",
+    "tests": [
+      "test/enhancedNotice.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT4-A10-the-toast-loses-its-dark",
+    "file": "src/ui/enhancedStyle.js",
+    "old": "  background: rgba(10,12,17,0.82);",
+    "new": "  background: rgba(10,12,17,0.06);",
+    "tests": [
+      "test/hudtext.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT4-A1-the-enhanced-arm-paints-both-faces",
+    "file": "src/ui/hudText.js",
+    "old": "      drawEnhancedToasts({ ...this.frame(), visible: !this.covered }, undefined, this.key);\n      return;",
+    "new": "      drawEnhancedToasts({ ...this.frame(), visible: !this.covered }, undefined, this.key);",
+    "tests": [
+      "test/hudtext.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT4-A7-the-waiting-timer-assigned",
+    "file": "src/ui/hudText.js",
+    "old": "    else if (this.timer >= 0) this.timer = Math.max(this.timer, delayInSeconds);",
+    "new": "    else if (this.timer >= 0) this.timer = delayInSeconds;",
+    "tests": [
+      "test/hudtext.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT4-A8-the-next-pop-delay-assigned",
+    "file": "src/ui/hudText.js",
+    "old": "    else this.nextPopDelay = Math.max(this.nextPopDelay, delayInSeconds);",
+    "new": "    else this.nextPopDelay = delayInSeconds;",
+    "tests": [
+      "test/hudtext.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT4-A6-the-next-pop-delay-never-reset",
+    "file": "src/ui/hudText.js",
+    "old": "      this.lines.shift();\n      this.nextPopDelay = HUD_TEXT_POP_DELAY;",
+    "new": "      this.lines.shift();",
+    "tests": [
+      "test/hudtext.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT4-A2-the-watchdog-leaves-the-owner-set",
+    "file": "src/ui/enhancedNotice.js",
+    "old": "    if (mine) { mine.delete(p.rowId); if (!mine.size) toasts.delete(p.toastOwner); }",
+    "new": "    void mine;",
+    "tests": [
+      "test/enhancedNotice.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT4-A2-a-covered-pop-merely-hidden",
+    "file": "src/ui/enhancedNotice.js",
+    "old": "    if (!visible && !ids.length) {",
+    "new": "    if (!visible) {",
+    "tests": [
+      "test/enhancedNotice.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT4-A12-a-covered-arrival-counted",
+    "file": "src/ui/enhancedNotice.js",
+    "old": "    if (host) {\n      const p = panels.get(toastKey(key, ids[i]));",
+    "new": "    mine.add(ids[i]);\n    if (host) {\n      const p = panels.get(toastKey(key, ids[i]));",
+    "tests": [
+      "test/enhancedNotice.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT4-B2-the-hint-option-ignored",
+    "file": "src/ui/enhancedNotice.js",
+    "old": "  const caption = toast ? false : (hint === undefined ? NOTICE_HINT : hint);",
+    "new": "  const caption = toast ? false : NOTICE_HINT;",
+    "tests": [
+      "test/enhancedNotice.test.js",
+      "test/surv6_hunting.test.js",
+      "test/heldmap.test.js",
+      "test/enhancedInventory.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT4-B1-the-scrim-window-sized",
+    "file": "src/ui/enhancedTavern.js",
+    "old": "    scrim.className = 'sb-ask sb-screen';\n",
+    "new": "",
+    "tests": [
+      "test/tavernwindow.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT4-B1-the-scrim-on-the-window",
+    "file": "src/ui/enhancedTavern.js",
+    "old": "    (scrim.className.includes('sb-screen') ? shell : win).append(scrim);",
+    "new": "    win.append(scrim);",
+    "tests": [
+      "test/tavernwindow.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT4-B6-a-gone-card-keeps-its-refusal",
+    "file": "src/ui/heldMap.js",
+    "old": "    const cardNotice = cardUp ? (",
+    "new": "    const cardNotice = true ? (",
+    "tests": [
+      "test/heldmap.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT4-C3-the-latch-below-the-door",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "  let _ctxDead = false;\n  function pushDungeonWindow(win) {",
+    "new": "  function pushDungeonWindow(win) {",
+    "tests": [
+      "test/enhnotice3_hosts.test.js"
+    ]
+  },
+  {
+    "name": "INV-nothing-on-the-panel",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "  const onPanel = noticeHold(noticeOwner, notice ? [{ text: notice, center: true }] : null, { hint: false });",
+    "new": "  const onPanel = noticeHold(noticeOwner, null, { hint: false });",
+    "tests": [
+      "test/enhancedInventory.test.js"
+    ]
+  },
+  {
+    "name": "MAP-card-refusal-not-on-the-panel",
+    "file": "src/ui/heldMap.js",
+    "old": "    const onPanel = noticeHold(this, cardNotice ? [{ text: cardNotice, center: true }] : null, { hint: false });",
+    "new": "    const onPanel = noticeHold(this, null, { hint: false });",
+    "tests": [
+      "test/heldmap.test.js"
+    ]
+  },
+  {
+    "name": "MAP-teleport-fee-refusal-not-on-the-panel",
+    "file": "src/ui/heldMap.js",
+    "old": "(feeRefused ? 'You do not have enough gold.' : null) || null) : null;",
+    "new": "null) : null;",
+    "tests": [
+      "test/heldmap.test.js"
+    ]
+  },
+  {
+    "name": "HUNT-parchment-drawn-under-the-panel",
+    "file": "src/ui/huntWindow.js",
+    "old": "    if (noticeFrame(this, rows, { hint: 'Escape to walk away' })) { this._box = null; return; }",
+    "new": "    noticeFrame(this, rows, { hint: 'Escape to walk away' });",
+    "tests": [
+      "test/surv6_hunting.test.js"
     ]
   }
 ]

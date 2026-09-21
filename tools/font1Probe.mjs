@@ -357,6 +357,29 @@ console.log(`   a ${h.longRow.content}px line wraps into a ${h.longRow.box}px bo
 if (h.longRow.content > h.longRow.box + 1) fails.push(`a TEXT.RSC-length line is ${h.longRow.content}px in a ${h.longRow.box}px box - it is being cut, not wrapped`);
 if (h.longRow.h <= h.longRow.shortH + 0.5) fails.push('a long line did not wrap to a second row - the toast is still one line high');
 
+// AUDIT ENH-NOTICE3 (second pass, A1): a SHORT viewport under eight
+// toasts and a box - the stack must clip what will not fit, never
+// spill it off the screen (1280x520 spilled the eighth toast by 12px).
+await page.setViewportSize({ width: 1280, height: 520 });
+const short = await page.evaluate(() => {
+  const el = (t, c, x) => { const e = document.createElement(t); if (c) e.className = c; if (x != null) e.textContent = x; return e; };
+  const stack = el('div', 'notice-stack');
+  const box = el('div', 'notice notice-in'); const bb = el('div', 'notice-body');
+  for (const t of ['The door is locked.', 'You have no key.', 'A third line.']) bb.append(el('div', 'notice-row', t));
+  box.append(bb, el('div', 'notice-hint', 'click or press a key')); stack.append(box);
+  for (let i = 0; i < 8; i++) { const n = el('div', 'notice notice-toast notice-in'); const b = el('div', 'notice-body'); b.append(el('div', 'notice-row', `Your Long Blade skill has improved ${i}.`)); n.append(b); stack.append(n); }
+  document.body.append(stack);
+  const r = stack.getBoundingClientRect();
+  const last = stack.lastElementChild.getBoundingClientRect();
+  const out = { overflow: getComputedStyle(stack).overflow, stackBottom: +r.bottom.toFixed(1), lastBottom: +last.bottom.toFixed(1), innerHeight: window.innerHeight, toastRow: getComputedStyle(stack.lastElementChild.querySelector('.notice-row')).fontSize, boxRow: getComputedStyle(box.querySelector('.notice-row')).fontSize };
+  stack.remove();
+  return out;
+});
+console.log(`   1280x520: the stack ends at ${short.stackBottom}px of ${short.innerHeight} with overflow ${short.overflow}; its last toast's box ends at ${short.lastBottom}px; a toast row is ${short.toastRow}, a box row ${short.boxRow}`);
+if (short.overflow !== 'hidden') fails.push('the notice stack does not clip: what will not fit spills off the screen');
+if (short.stackBottom > short.innerHeight + 0.5) fails.push(`the notice stack itself runs past the viewport (${short.stackBottom} > ${short.innerHeight})`);
+if (short.toastRow !== short.boxRow) fails.push(`on a short viewport a toast row is ${short.toastRow} while a box row is ${short.boxRow} - the media block does not reach the toast`);
+
 await browser.close();
 if (fails.length) {
   console.error('\nFAILED:');

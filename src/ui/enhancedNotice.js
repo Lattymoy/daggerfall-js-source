@@ -87,18 +87,28 @@ function buildStack(doc) {
   return root;
 }
 
-function buildPanel(doc, key, toast = false) {
+function buildPanel(doc, key, toast = false, hint = undefined) {
   const host = doc.createElement('div');
   host.className = toast ? 'notice notice-toast' : 'notice';
   host.dataset.owner = key;
   const body = doc.createElement('div');
   body.className = 'notice-body';
   host.append(body);
-  if (!toast) {   // a toast is not dismissed, so it carries no "click or press a key"
-    const hint = doc.createElement('div');
-    hint.className = 'notice-hint';
-    hint.textContent = NOTICE_HINT;
-    host.append(hint);
+  // THE HINT TELLS THE TRUTH (AUDIT ENH-NOTICE3 B2-B4). "click or
+  // press a key" is DFU's ClickAnywhereToClose said the enhanced way,
+  // and it is the default because the box IS that. A toast is not
+  // dismissed and carries none; and a window whose box clears on its
+  // own terms - the hunt's busy page (Escape alone), the pack's and
+  // the held map's refusals (the next action) - says so or says
+  // nothing (`hint` false, or its own caption), never a promise the
+  // page does not keep.
+  const caption = toast ? false : (hint === undefined ? NOTICE_HINT : hint);
+  let hintNode = null;
+  if (caption) {
+    hintNode = doc.createElement('div');
+    hintNode.className = 'notice-hint';
+    hintNode.textContent = String(caption);
+    host.append(hintNode);
   }
   // THE BOX STANDS ABOVE THE TOASTS (AUDIT ENH-NOTICE3, seen in the
   // browser): a stack is read top-down, and the panel the player must
@@ -117,7 +127,7 @@ function buildPanel(doc, key, toast = false) {
   // the flush; the fake document has none and needs none.
   void host.offsetWidth;
   host.className = toast ? 'notice notice-toast notice-in' : 'notice notice-in';
-  return { host, body, rows: [], last: {}, watchdog: null, toast };
+  return { host, body, hintNode, rows: [], last: {}, watchdog: null, toast, key };
 }
 
 /** A row record as the box carries it: a string, a { text, center,
@@ -150,6 +160,8 @@ function paintRow(doc, node, row) {
  * `frame.rows` are the box's lines (strings or row records), in order;
  * `frame.visible === false` hides the panel without releasing it;
  * `frame.toast` makes the panel a toast (no hint - ENH-NOTICE3);
+ * `frame.hint` is the caption under the rows - undefined for the
+ * default NOTICE_HINT, false for none, a string for the window's own;
  * `frame.hold` arms no watchdog, for an owner that does not draw per
  * frame (a DOM window) and releases by hand. `key` names the OWNER -
  * two boxes never share a panel. Returns the panel (or null off a
@@ -161,8 +173,9 @@ export function drawEnhancedNotice(frame, doc = (typeof document === 'undefined'
   let p = panels.get(key);
   if (!p && !lines.length) return null;
   if (!stack) stack = buildStack(doc);
-  if (!p) { p = buildPanel(doc, key, !!frame?.toast); panels.set(key, p); }
+  if (!p) { p = buildPanel(doc, key, !!frame?.toast, frame?.hint); panels.set(key, p); }
   const { host, body, rows, last } = p;
+  if (p.hintNode && typeof frame?.hint === 'string' && p.hintNode.textContent !== frame.hint) p.hintNode.textContent = frame.hint;
   // the watchdog: re-armed on every draw, fires only when the draws stop
   cancel(p.watchdog);
   p.watchdog = frame?.hold ? null : schedule(() => { if (panels.get(key) === p) releaseEnhancedNotice(key); }, NOTICE_WATCHDOG_MS);
@@ -192,6 +205,14 @@ export function releaseEnhancedNotice(key) {
   if (!p) return;
   panels.delete(key);
   cancel(p.watchdog);
+  // AUDIT ENH-NOTICE3 A2: a toast the WATCHDOG swept (its model's
+  // draws stopped - a backgrounded tab, a host gone without dispose)
+  // must leave its owner's id set too, or the set outlives the model
+  // as garbage and a resumed draw counts a row it has no panel for.
+  if (p.toast && p.toastOwner != null) {
+    const mine = toasts.get(p.toastOwner);
+    if (mine) { mine.delete(p.rowId); if (!mine.size) toasts.delete(p.toastOwner); }
+  }
   p.host.className = p.toast ? 'notice notice-toast notice-out' : 'notice notice-out';
   const gone = () => {
     try { p.host.remove(); } catch { /* already gone */ }
@@ -242,10 +263,10 @@ export function noticeRelease(owner) {
  * panel this owner had is released - so a text step that gives way
  * to a Yes/No step, or a box that clears, leaves on the next draw.
  */
-export function noticeFrame(owner, rows) {
+export function noticeFrame(owner, rows, { hint = undefined } = {}) {
   if (!rows || !isEnhanced()) { noticeRelease(owner); return false; }
   owner._noticeKey ??= noticeKey();
-  return drawEnhancedNotice({ rows }, undefined, owner._noticeKey) != null;
+  return drawEnhancedNotice({ rows, hint }, undefined, owner._noticeKey) != null;
 }
 
 /**
@@ -257,10 +278,10 @@ export function noticeFrame(owner, rows) {
  * its own dismissal (its scrim, its key), exactly as the classic
  * windows keep theirs under noticeFrame. True: the panel is up.
  */
-export function noticeHold(owner, rows) {
+export function noticeHold(owner, rows, { hint = undefined } = {}) {
   if (!rows || !isEnhanced()) { noticeRelease(owner); return false; }
   owner._noticeKey ??= noticeKey();
-  return drawEnhancedNotice({ rows, hold: true }, undefined, owner._noticeKey) != null;
+  return drawEnhancedNotice({ rows, hold: true, hint }, undefined, owner._noticeKey) != null;
 }
 
 /** key -> Set of the row ids that owner has toasts for. */
@@ -290,7 +311,11 @@ export function drawEnhancedToasts(frame, doc = (typeof document === 'undefined'
   const out = [];
   for (let i = 0; i < ids.length; i++) {
     const host = drawEnhancedNotice({ rows: [rows[i] ?? ''], visible, toast: true }, doc, toastKey(key, ids[i]));
-    if (host) { mine.add(ids[i]); out.push(host); }
+    if (host) {
+      const p = panels.get(toastKey(key, ids[i]));
+      if (p) { p.toastOwner = key; p.rowId = ids[i]; }   // AUDIT ENH-NOTICE3 A2: the watchdog's release finds the owner's set through these
+      mine.add(ids[i]); out.push(host);
+    }
   }
   for (const id of [...mine]) {
     if (ids.includes(id)) continue;
@@ -316,6 +341,8 @@ export function releaseEnhancedToasts(key) {
 
 /** The live panels' keys, for a probe. */
 export const enhancedNoticeKeys = () => [...panels.keys()];
+/** The models that hold toasts, for a probe (AUDIT ENH-NOTICE3 A2). */
+export const enhancedToastOwners = () => [...toasts.keys()];
 
 /** Tests: drop everything at once. */
 export function destroyEnhancedNotice() {

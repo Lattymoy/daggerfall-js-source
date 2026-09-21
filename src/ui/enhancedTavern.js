@@ -317,7 +317,7 @@ function foodMenu() {
 function boxScrim() {
   // ENH-NOTICE3 - WHICH OF THIS WINDOW'S BOXES IS A NOTICE, decided off
   // DaggerfallTavernWindow.cs box by box. A `DaggerfallUI.MessageBox`
-  // is ClickAnywhereToClose by construction (DaggerfallUI.cs:1337-1365,
+  // is ClickAnywhereToClose by construction (DaggerfallUI.cs:1328-1362,
   // every overload sets it) and therefore the panel's:
   //
   //   - tooManyDaysFutureId            (:190)       -> panel
@@ -327,9 +327,12 @@ function boxScrim() {
   //   - "youAreNotHungry"              (:301)       -> panel
   //   - notEnoughGoldId, on a meal     (:326)       -> panel
   //   - the survival menu's closed line and its eat/drink report
-  //     (Climates & Calories, systems/survival/tavernMenu.js) -> panel,
-  //     which is ENH-NOTICE3's whole point: "All mods, including
-  //     climates and calories".
+  //     (Climates & Calories, systems/survival/tavernMenu.js - the
+  //     port's menu answers TEXT and this window's `say()` is what
+  //     shows it, the same buttonless box as the lines above; the
+  //     mod's own C# is not vendored, so the kind is this window's
+  //     decision, recorded here) -> panel, which is ENH-NOTICE3's
+  //     whole point: "All mods, including climates and calories".
   //
   // The two that are NOT notices keep the card, because they are
   // DECISIONS and a decision needs its controls under the words:
@@ -345,14 +348,23 @@ function boxScrim() {
   const scrim = el('div', 'sb-ask');
   if (onPanel) {
     // THE SCRIM IS THE CLICK, and nothing else. With the words on the
-    // panel the card has nothing to hold, so the dimming scrim over the
-    // disabled panel becomes the invisible click-catcher - which is a
-    // truer ClickAnywhereToClose than the OK button it replaces, since
-    // DFU's parchment takes the press anywhere on the screen. The
-    // keyboard's half (Escape / Enter, `onKey` below) is unchanged.
+    // panel the card has nothing to hold, so the invisible
+    // click-catcher IS the screen: `sb-screen` makes it fixed over the
+    // whole viewport and render() hangs it on the SHELL, because a
+    // scrim inside the centred window covered only that rectangle
+    // (AUDIT ENH-NOTICE3 B1) - and the panel stands at the right
+    // edge, outside it, where the press then did nothing. DFU's
+    // parchment takes the press anywhere on the screen. The keyboard's
+    // half (Escape / Enter, `onKey` below) is unchanged.
+    scrim.className = 'sb-ask sb-screen';
     scrim.onclick = dismiss;
     return scrim;
   }
+  // The CARD arm below, for a buttonless box, is the classic-skin
+  // fork of this module and nothing more: ui/tavernDoor.js mounts this
+  // window only under the enhanced skin with a document, where
+  // noticeHold always takes it. It stays so the module's fork is one
+  // place and unit-testable on both skins (AUDIT ENH-NOTICE3 B19).
   const ask2 = el('div', 'card');
   for (const r of box.rows) ask2.append(el('p', 'px-note', r.text));
   const acts = el('div', 'sb-acts');
@@ -393,7 +405,8 @@ function render() {
 
   if (box) {
     for (const b of win.querySelectorAll('button, input')) b.disabled = true;
-    win.append(boxScrim());
+    const scrim = boxScrim();
+    (scrim.className.includes('sb-screen') ? shell : win).append(scrim);   // the panel's arm catches the press over the whole screen (AUDIT ENH-NOTICE3 B1)
   } else noticeRelease(noticeOwner);   // ENH-NOTICE3: no box, no panel - the same `} else noticeRelease(this)` the classic windows keep (ui/restWindow.js:868)
   shell.append(win);
   host.append(shell);

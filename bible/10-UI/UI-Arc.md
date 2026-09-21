@@ -392,7 +392,7 @@ line. The third designed the seam. What they found together:
    hunt window's busy page was still a canvas parchment.
 
 **THE SEAM: `systems/notify.js`.** DFU has one door - a static on
-`DaggerfallUI` (`MessageBox` :1328-1365, `AddHUDText` :759-775,
+`DaggerfallUI` (`MessageBox` :1328-1362, `AddHUDText` :759-775,
 `PopupMessage` :820-824) that reaches `uiManager.TopWindow` because
 DFU has one window stack. The port's door is that for the BOX kind;
 its `hudText`/`popupMessage` are AddHUDText's door for a producer
@@ -482,8 +482,9 @@ windows, the records - were walked by hand). Nine findings, all paid:
   townTalk's model is drawn under the interior arm and by the outer
   hosts in every mode, and reported its own slot alone, so an
   inventory or a rest opened inside a building never hid the toasts.
-  Both `observe` sites report `otherOverlayActive` (the mode machine's
-  slot) beside `overlay`.
+  Both `observe` sites report the mode host's slot beside their own -
+  and the second pass (C2 below) corrected WHICH question is asked of
+  either slot.
 - **F4 (doctrine)** - "AddHUDText/PopupMessage/SetMidScreenText
   written once" over-claimed: nothing walks `notify.hudText`; the
   records and the module header say so now (above).
@@ -519,7 +520,88 @@ windows, the records - were walked by hand). Nine findings, all paid:
   held map's `_teardown` for both owners, the hunt's `_end` and its
   page turn). Clean.
 
-Campaign: `tools/mutants/enhnotice3.json` 49 mutants, 49 dead.
+Campaign: `tools/mutants/enhnotice3.json` 101 mutants, 101 dead (the
+first audit's twelve, the second pass's twenty-seven, and the four DOM
+windows' twenty-five, which the first pass had left in a lane's
+scratch - one of them, the smuggled callback, a shape kill, since no
+shipping presenter reads the opts it adds).
+
+#### AUDIT ENH-NOTICE3, SECOND PASS (2026-09-21, Mac: "Lets do an audit before we merge")
+
+Three Opus lanes, all reporting this time: the toasts in a browser
+(A), the DOM windows and the records (B), and a re-audit of the first
+pass's own fixes (C). Everything below is paid and pinned;
+`tools/mutants/enhnotice3.json` carries the windows' 25 records the
+first pass had left in a lane's scratch, plus 27 for the findings.
+
+- **C2 (correctness-vs-DFU)** - the first pass hid the toasts by the
+  PAUSE latch (`overlayHeld`). DFU paints PopupText as part of the HUD
+  window at the bottom of the stack (DaggerfallUI.cs:407-408) and a
+  pushed box paints its previousWindow first, dimmed
+  (DaggerfallPopupWindow.cs:77-85), so under a BOX the rows stay and
+  under a window that cuts the chain they go - the question AUDIT 64
+  F35 ported as `hudCovered`. Both townTalk sites ask one predicate
+  now: this slot's chain, the held map's outright hide, the mode
+  host's chain (`modes.hudCovered`, handed in as `otherHudCovered`);
+  the dungeon asks its own chain beside its `windowCoversHud`. It also
+  made the first pass's box-above-toasts order REACHABLE - every box
+  had hidden the toasts in the frame it mounted.
+- **C1 (structure)** - the adoption gate was enforced at one door of
+  two (worldModes' quest door reaches the same stack and reads no
+  `_live`). `goLive` runs immediately BEFORE `mode = 'dungeon'`, so no
+  statement runs with the mode flipped and the presenter dormant;
+  pinned as exactly one adoption call and exactly one `_live` write
+  (C11 - two shape-passing mutants had survived).
+- **C3 (risk)** - `pushDungeonWindow` read `_ctxDead`, a `let`
+  declared 1,500 lines below it: a call from inside the build would
+  have thrown in the temporal dead zone. Declared above the door.
+- **A1 (bug)** - eight toasts and a box spilled the last toast off a
+  1280x520 viewport; the stack clips at 90vh (the boxes stand first, so
+  the newest toast is what is lost), and `tools/font1Probe.mjs` gained
+  the short lane. **A6** - the toast row's rule outranked the media
+  blocks, so a phone drew the toast larger than the box. **A7** - the
+  stack tied the update scrim at z-index 30; 31, and in the ladder.
+- **A2 (risk)** - the watchdog's release never told the toasts' owner
+  set; a swept model's set was garbage for the session and a resumed
+  draw counted rows with no panel. The panel carries its owner and the
+  release clears it. A row popped while COVERED is released, a row that
+  arrives covered is not counted (two survivors, pinned).
+- **A3 (risk)** - worldModes' font-less arm nulled the interior slot
+  WITHOUT dispose; an enhanced DOM window needs no classic font to
+  mount, so the tavern's held panel, its full-screen host and its
+  capture listener outlived the drop. It disposes.
+- **A4 (test gap)** - no pin drew the enhanced arm with the real font;
+  dropping its `return` painted both faces. Pinned; and the model's
+  delay arithmetic (`Math.max` twice, the reset after a pop) was
+  unpinned anywhere - mixed-delay pin added.
+- **B1 (bug)** - the tavern's click-catcher was the WINDOW's rectangle;
+  the panel stands at the right edge outside it, so the one place the
+  words were was the one place the press was dead. The panel arm's
+  scrim is fixed over the screen and hangs on the shell.
+- **B2-B4 (correctness)** - "click or press a key" stood over three
+  panels that take no click: the hunt's busy page (Escape alone; it is
+  the port's page, not a MessageBox), the pack's refusals and the held
+  map's card refusals (the next action clears them). `noticeFrame` /
+  `noticeHold` take `{ hint }` - false, or the window's own caption.
+  **B6** - a card that went away with a refusal still in its state
+  kept the panel; the refusal is the card's only while the card is up.
+- **B19 (record)** - the three DOM windows mount only under the
+  enhanced skin, so their `!onPanel` arms are the modules' classic
+  fork and unreachable in the shipping game; each says so now, and
+  they stay for the fork's one home and its tests.
+- **A10 / C6 / C7 / F9-A / B15-B18 (records)** - the scale setter is
+  `setEnhancedMidTextScale`; three "handle answers null" sentences, a
+  deleted callback still named, pre-audit counts under the audit's,
+  a four-that-is-five, a straddling overload range and a `.hmbox` cite
+  four rules off, all corrected; six probe/test cites the shifter had
+  carried along already wrong re-resolved by content and anchored in
+  `test/citedrift.test.js` (B18).
+- **Named and left**: the watchdog's per-panel timer churn (~540
+  set/clear pairs a second at eight toasts and a box - sub-millisecond,
+  recorded so nobody measures it again); the standalone `?dungeon`
+  host's box during its build (no producer reaches it); `mountWindow`'s
+  silent false (townTalk never refuses); the tavern's double render on
+  a dismissal.
 
 **NOT MOVED, LISTED** (each a plain MessageBox a later pass moves with
 its C# in hand): the status-box chains (DisplayStatusInfo, four hosts -
@@ -539,18 +621,21 @@ and refusal to the box, the no-path line to the HUD).
 order, the dungeon's adoption and dead guard, the one ladder, no
 window class under `src/systems`.
 `test/hudtext.test.js` rewritten onto the toasts (15);
-`test/enhancedNotice.test.js` +2 (`noticeHold`, `drawEnhancedToasts`),
-the roster widened; `test/tavernwindow.test.js` +3,
+`test/enhancedNotice.test.js` +3 (`noticeHold`, `drawEnhancedToasts`, the box
+above the toasts), the roster widened; `test/tavernwindow.test.js` +3,
 `test/enhancedInventory.test.js` +3, `test/heldmap.test.js` +1 and two
 re-pinned, `test/surv6_hunting.test.js` +2; the old-law pins in
 `roadb_push_doors`, `ba1_betterambience`, `audit63_quests_talk`,
 `audit64_hud`, `audit24_wave22`, `waveD_dungeonHost` and `automap`
-moved to the new law. Campaign: `tools/mutants/enhnotice3.json` 49
-mutants, 49 dead (the AUDIT rows above are the last twelve, one of
-them - the smuggled callback - a shape kill, since no shipping
-presenter reads the opts it adds); `tools/mutants/font1.json`'s 26 column records
-re-aimed by content, 51 of the slice's records run against the four
-modules, 51 dead. Ledger A rows THE ONE DOOR EVERY MESSAGE GOES THROUGH
+moved to the new law. Campaign: `tools/mutants/enhnotice3.json` 101
+mutants, 101 dead (the first audit's twelve, the second pass's
+twenty-seven, and the four DOM windows' twenty-five, which the first
+pass had left in a lane's scratch - one of them, the smuggled
+callback, a shape kill, since no shipping presenter reads the opts it
+adds); `tools/mutants/font1.json`'s 26 column records
+re-aimed by content - the 51 of the slice's 86 that name those four
+modules, `ui/hud.js` or `ui/midScreenText.js` run at once (51 dead), the
+whole list at the second audit (86 dead). Ledger A rows THE ONE DOOR EVERY MESSAGE GOES THROUGH
 and THE HUD LINE AS A TOAST.
 
 ## MENU1-WARM - THE MENU BYTES ARE ASKED FOR EARLY (2026-09-19)
@@ -785,13 +870,13 @@ does the pack's USE arm.
                         HAND-ROLLED second one, 342 lines below it in
                         the same file),
                         dungeonContext.js:1014, world.js:2052,
-                        exterior.js:2280. It is the only window TWO
+                        exterior.js:2281. It is the only window TWO
                         enhanced screens already push - the sheet's
                         button and the pack's USE hand-off, whose
                         close-then-hand-over ordering U55 got
                         backwards. No law needs extracting first.
     THE LOGBOOK         THREE sites: charSheetNav.js:53,
-    / NOTEBOOK          world.js:6208, dungeonContext.js:6385. A seam
+    / NOTEBOOK          world.js:6209, dungeonContext.js:6389. A seam
                         wants making, as U52's and U53's did.
     HISTORY             ONE site (charSheetNav.js:61), and it reads
                         only the entity's backStory. The small one.
@@ -2552,8 +2637,9 @@ Windows close on ESC. Backgrounds FLAGGED as U2/U3.
 ui/hudText.js is the message queue (AddHUDText shape; PopupText's
 column is TOP-centred, y=4 of the native panel - and since FONT1,
 2026-09-16, the classic bitmap draw is the classic skin's while the
-enhanced skin draws the same queue as a DOM column in the pixel face,
-ui/enhancedHudText.js): newest-last, 4-line cap, ~2s per line with a
+enhanced skin drew the same queue as a DOM column in the pixel face,
+ui/enhancedHudText.js - until ENH-NOTICE3, 2026-09-21, made each row a
+toast in the right-edge notice stack, ui/enhancedNotice.js): newest-last, 4-line cap, ~2s per line with a
 0.4s fade, drawn just above the vitals in classic text. SEVEN
 consumers wired in the scene: pickup ('You take N items.'), skill
 raises ('Your X skill has improved.' - the classic phrasing),
@@ -6882,7 +6968,7 @@ still speaking to devtools, both of them one line of plumbing rather
 than an arc:
 
 - `townTalk.frame` ticks and draws the HUD TEXT LAYER as well as the
-  overlay (`townTalk.js:618, :599`), and both exterior hosts called it
+  overlay (`townTalk.js:632, :613`), and both exterior hosts called it
   in their modal branch only WHEN A WINDOW WAS UP. AUDIT F2-I1 added
   that line to tick a window and gated it on the window existing. So
   inside a building a broken weapon, a fatigue warning and a level-up
@@ -8602,7 +8688,7 @@ mutations, 4 dead.
 
 PX24 (Mac: "with the logbook and history, I want them as one detailed
 UI"): THE CHRONICLE. Two classic windows built at four sites -
-questJournal.js from charSheetNav:53, world.js:2468 and
+questJournal.js from charSheetNav:53, world.js:2469 and
 dungeonContext.js, playerHistory.js from charSheetNav:61 - become ONE
 seam (ui/chronicleDoor.js, the U52/U53/PX23 shape a sixth time) and,
 on the enhanced skin, ONE WINDOW.
@@ -9229,7 +9315,7 @@ and firing THAT twice is a second PopToHUD.
 
 ### Why only two of the four hosts crashed
 
-`worldModes.js:5703` and `dungeonContext.js:1552` answer the same
+`worldModes.js:5703` and `dungeonContext.js:1560` answer the same
 `onClose` by nulling their slot and never disposing - nothing to
 re-enter. Only the two hosts that come through `townTalk.closeOverlay`
 dispose. **The four-hosts rule caught this one by accident**: the two
@@ -10473,9 +10559,9 @@ re-resolved the `exterior.js` half of a three-file sentence and left the
 `ExteriorAutomapWindow` construction, `:4101` on a `locationName:`
 field). Both halves are now read by `test/citedrift.test.js` - the
 existing entries only ever captured the exterior number, which is how
-the other half went stale unnoticed. (The rest cite named `world.js:6541`,
+the other half went stale unnoticed. (The rest cite named `world.js:6542`,
 the first of the host's TWO identical `act === 'Rest'` arms; ROAD-H H5
-deleted the second and the cite is `world.js:6547` now.)
+deleted the second and the cite is `world.js:6548` now.)
 
 ## AUDIT 62 F24/F25 - THE SENTINEL SWEEP WAS TWO WINDOWS SHORT (2026-09-07)
 
@@ -10892,7 +10978,7 @@ the interior half:
 
 - The callback was handed to `openTalkWindow`'s FIRST mount and lost by
   every later one. `showOverlay` writes `_onOverlayClosed` on each call
-  (`townTalk.js:563-589`), so in the art-less greeting chain a tone
+  (`townTalk.js:577-603`), so in the art-less greeting chain a tone
   press (`toneOption`'s reshow) or a Where-is page (`openCategories` ->
   `pagedList`) re-mounted with `onClosed` null and threw the restore
   away - the player escaped the conversation and the popup DFU keeps
@@ -14492,7 +14578,9 @@ host and draws its buttons, entry field and nav in the pixel face under
 the enhanced skin, the system face under the classic - in all four hosts,
 the naming field included (AUDIT FONT F5/F6).
 
-**The popup text.** `HudText.frame()` (`ui/hudText.js`) hands PopupText
+**The popup text** (as FONT1 built it; the column below was RETIRED at
+ENH-NOTICE3, 2026-09-21, for toasts in the notice stack - kept here as
+the record of the slice). `HudText.frame()` (`ui/hudText.js`) hands PopupText
 .Draw's own frame - the rows, with DFU's `if (++count > maxCount) break`
 off-by-one (maxRows + 1), and the slide (`timer / popDelay`, only while
 negative) - to `ui/enhancedHudText.js`, a DOM column in the pixel face at
@@ -15261,9 +15349,9 @@ whether an entry MATCHES and asserts nothing.
 Following it out was worse than the symptom. Five Ledger rows cite a
 PAIR - `` `world.js:N`, `exterior.js:M` `` - and the table captured `M`
 alone. So `M` was re-resolved at every wave for a year and `N` was never
-read: `world.js:4710` named a line that is 8950, `:793` one that is
+read: `world.js:4711` named a line that is 8950, `:793` one that is
 1215, `:1094` one that is 2194, `:3903` one that is 3066, `:3920` one
-that is 8907. `world.js:4445-4477` and `dungeonContext.js:1400` were
+that is 8907. `world.js:4446-4478` and `dungeonContext.js:1408` were
 stale the same way. Seven numbers re-resolved BY CONTENT, every
 uncaptured half de-baked to `\d+`, and eight new entries added so every
 number in a pair is captured. The half nobody reads cannot rot in
@@ -16805,7 +16893,7 @@ says in its own header that a second `--apply` against the same base
 moves every cite AGAIN. Recovering this slice's line shifts by
 reverting the tree except the files it had edited re-created exactly
 that: the kept files still carried the first pass's moves, and the
-second pass moved them a second time - `dungeonContext.js:2339` became
+second pass moved them a second time - `dungeonContext.js:2347` became
 2221 where the line had gone to 2215. The repair is a pairing walk:
 read HEAD's number at the same position in the same file, resolve it
 BY CONTENT in the working tree, and write that. Forty-seven cites came

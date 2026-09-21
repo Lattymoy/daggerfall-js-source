@@ -100,16 +100,19 @@ export class HuntWindow {
     const dots = this.dots;
     const rows = [{ text: this.busy, center: true }, { text: dots, center: true }];
     const sizing = [{ text: this.busy, center: true }, { text: '.'.repeat(BUSY_DOTS), center: true }];
-    // THE BUSY PAGE IS A CLICK-ANYWHERE BOX, and the panel's. It is
-    // drawn with `drawMessageBox` and no buttons - the port's own
-    // parchment for DaggerfallUI.MessageBox (DaggerfallUI.cs:1337-1344,
-    // ClickAnywhereToClose), raised over the hunt the way the eight
-    // classic windows raise theirs - so it takes the same per-frame
-    // door they take (ui/restWindow.js:865, ui/bankWindow.js:410).
+    // THE BUSY PAGE IS THE PANEL'S. It is drawn with `drawMessageBox`
+    // and no buttons, in the parchment's shape - but it is the PORT'S
+    // page, not a DaggerfallUI.MessageBox: Climates & Calories skips
+    // the clock an hour behind a box, and this page waits it out with
+    // a row of dots, taking no click (click() swallows) and Escape
+    // alone (input above). So it rides the same per-frame door the
+    // eight classic windows take (ui/restWindow.js:865,
+    // ui/bankWindow.js:410) with ITS OWN caption, never "click or
+    // press a key" (AUDIT ENH-NOTICE3 B2 - the hint tells the truth).
     // A per-frame door and not noticeHold: this window IS drawn every
     // frame, so the watchdog is the honest guard - a host that drops
     // the overlay without closing it stops drawing, and the panel goes.
-    if (noticeFrame(this, rows)) { this._box = null; return; }
+    if (noticeFrame(this, rows, { hint: 'Escape to walk away' })) { this._box = null; return; }
     this._box = layoutMessageBox(font, rows, [], { sizingRows: sizing });
     drawMessageBox(renderer, m, font, this._box);
   }

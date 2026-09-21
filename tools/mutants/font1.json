@@ -198,8 +198,8 @@
   {
     "name": "ENH-NOTICE3-the-panel-rebuilt-every-frame",
     "file": "src/ui/enhancedNotice.js",
-    "old": "  if (!p) { p = buildPanel(doc, key, !!frame?.toast); panels.set(key, p); }",
-    "new": "  { p = buildPanel(doc, key, !!frame?.toast); panels.set(key, p); }",
+    "old": "  if (!p) { p = buildPanel(doc, key, !!frame?.toast, frame?.hint); panels.set(key, p); }",
+    "new": "  { p = buildPanel(doc, key, !!frame?.toast, frame?.hint); panels.set(key, p); }",
     "tests": [
       "test/hudtext.test.js",
       "test/enhancedNotice.test.js"
@@ -470,8 +470,8 @@
   {
     "name": "AUDIT-FONT-F2-the-scale-never-reaches-the-two-hosts",
     "file": "src/ui/enhancedHud.js",
-    "old": "    setEnhancedHudTextScale(scale, document);",
-    "new": "    void scale;",
+    "old": "    setEnhancedMidTextScale(scale, document);",
+    "new": "    // setEnhancedMidTextScale(scale, document);",
     "tests": [
       "test/hudtext.test.js"
     ]
@@ -551,8 +551,8 @@
   {
     "name": "AUDIT-FONT-F4-townTalk-stops-naming-its-window",
     "file": "src/scenes/townTalk.js",
-    "old": "    hud.observe(!!overlay || !!otherOverlayActive?.());   // AUDIT ENH-NOTICE3 F3",
-    "new": "    hud.observe(false);   // AUDIT ENH-NOTICE3 F3",
+    "old": "    hud.observe(toastsCovered());   // AUDIT ENH-NOTICE3 F3/C2",
+    "new": "    hud.observe(false);   // AUDIT ENH-NOTICE3 F3/C2",
     "tests": [
       "test/hudtext.test.js"
     ]
@@ -560,8 +560,8 @@
   {
     "name": "AUDIT-FONT-F4-the-interior-frame-stops-naming-its-window",
     "file": "src/scenes/townTalk.js",
-    "old": "      hud.observe(!!overlay || !!otherOverlayActive?.());   // AUDIT FONT F4",
-    "new": "      hud.observe(false);   // AUDIT FONT F4",
+    "old": "      hud.observe(toastsCovered());   // AUDIT FONT F4 / ENH-NOTICE3 F3/C2",
+    "new": "      hud.observe(false);   // AUDIT FONT F4 / ENH-NOTICE3 F3/C2",
     "tests": [
       "test/hudtext.test.js"
     ]
@@ -569,7 +569,7 @@
   {
     "name": "AUDIT-FONT-F4-the-dungeon-stops-naming-its-window",
     "file": "src/scenes/dungeonContext.js",
-    "old": "    hudText.observe(!!activeOverlay);",
+    "old": "    hudText.observe(!!activeOverlay && (dungeonWindows.hudCovered(activeOverlay) || hidesHud(activeOverlay)));",
     "new": "    hudText.observe(false);",
     "tests": [
       "test/hudtext.test.js"
@@ -634,8 +634,8 @@
   {
     "name": "ENH-NOTICE3-a-hint-on-a-toast",
     "file": "src/ui/enhancedNotice.js",
-    "old": "  if (!toast) {   // a toast is not dismissed, so it carries no \"click or press a key\"",
-    "new": "  {   // a toast is not dismissed, so it carries no \"click or press a key\"",
+    "old": "  const caption = toast ? false : (hint === undefined ? NOTICE_HINT : hint);",
+    "new": "  const caption = hint === undefined ? NOTICE_HINT : hint;",
     "tests": [
       "test/hudtext.test.js"
     ]
@@ -688,8 +688,8 @@
   {
     "name": "ENH-NOTICE3-a-toast-never-recorded-as-the-owner-s",
     "file": "src/ui/enhancedNotice.js",
-    "old": "    if (host) { mine.add(ids[i]); out.push(host); }",
-    "new": "    if (host) { out.push(host); }",
+    "old": "      mine.add(ids[i]); out.push(host);",
+    "new": "      out.push(host);",
     "tests": [
       "test/hudtext.test.js"
     ]
@@ -777,7 +777,7 @@
     ]
   },
   {
-    "name": "AUDIT-FONT-F2-the-label-is-built-without-the-scale",
+    "name": "AUDIT-FONT-F2-the-label-is-built-without-the-scale-2",
     "file": "src/ui/enhancedHudText.js",
     "old": "    applyScale(midHost);\n    doc.body.append(midHost);",
     "new": "    doc.body.append(midHost);",

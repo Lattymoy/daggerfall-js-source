@@ -566,7 +566,7 @@ const SOURCE_CITES = [
   // the line goes red at the citation instead of at a reader.
   ['src/characters/playerEntity.js', /exterior\.js:(\d+) and applyHeadlessChargen/,
     EX, /createChargenFlow\(fetchBytes\)\.then/],
-  ['src/combat/weaponRig.js', /\(exterior\.js:(\d+), world\.js:3215\)/,
+  ['src/combat/weaponRig.js', /\(exterior\.js:(\d+), world\.js:3216\)/,
     EX, /^ {4}say: \(l\) => townTalk\.say\(l\),$/],
   ['src/scenes/dungeonContext.js', /exterior\.js:(\d+) and worldModes\.js:\d+/,
     EX, /onPlayerArrowHitFoe: \(m, t\) => playerArrowHitFoe\(/],
@@ -643,9 +643,9 @@ const SOURCE_CITES = [
   ['src/ui/restWindow.js', /world\.js:(\d+), exterior\.js:\d+,/,
     WO, /if \(act === 'Rest'\) \{ e\.preventDefault\(\); hudCtx\.toggleRest\(\); return; \}/],
   ['test/daychange.test.js', /exterior\.js:(\d+), world\.js:1071/, EX, /playerTicker\.advance\(60\);/],
-  ['test/overlayreentry.test.js', /exterior\.js:(\d+) and world\.js:2891/,
+  ['test/overlayreentry.test.js', /exterior\.js:(\d+) and world\.js:2892/,
     EX, /if \(townTalk\.overlay\?\.isRestWindow\) townTalk\.closeOverlay\?\.\(\);/],
-  ['test/overlayreentry.test.js', /exterior\.js:(\d+), world\.js:2891/,
+  ['test/overlayreentry.test.js', /exterior\.js:(\d+), world\.js:2892/,
     EX, /if \(townTalk\.overlay\?\.isRestWindow\) townTalk\.closeOverlay\?\.\(\);/],
   ['test/probehygiene.test.js', /keydown ladder, exterior\.js:(\d+)-\d+/,
     EX, /addEventListener\('keydown', \(e\) => \{/],
@@ -664,7 +664,7 @@ const SOURCE_CITES = [
   // and the table captured ONE, with a sixth number baked into the pick - so
   // citeMerge bumped the LITERAL at the BOX1/TI3 merge and left the doc, and
   // four of the five had been stale for waves (`worldModes.js:5849` for a line
-  // that is 5921, `world.js:9570` for 8836, `interior.js:297` for 329,
+  // that is 5921, `world.js:9571` for 8836, `interior.js:297` for 329,
   // `dungeon.js:890` for 959). Every one is captured now, against the
   // projection each host really builds.
   ['bible/10-UI/Settings-Screen-Spec.md', /`exterior\.js:(\d+)`, `dungeon\.js:\d+`/, EX, /^ {6}fieldOfView\(\),$/],
@@ -686,7 +686,7 @@ const SOURCE_CITES = [
   // PAIRS never checked. Five Ledger rows cite `world.js:N`, `exterior.js:M`
   // and this table captured M alone - so M was resolved at every wave and N
   // was never read at all. All five N's were stale by thousands of lines
-  // (`world.js:4710` for a line that is 8950; `:793` for 1215; `:1324` for
+  // (`world.js:4711` for a line that is 8950; `:793` for 1215; `:1324` for
   // 2194; `:3903` for 3066; `:3920` for 8907), and citeMerge rewrote one of
   // them INSIDE THE PICK REGEX at the QS6 merge - which is WM3's hazard
   // exactly: a literal in the pick decides whether the entry matches at all,
@@ -724,7 +724,7 @@ const SOURCE_CITES = [
   // ROAD-G G1 (review): BOTH ends, because the half-shifted range is
   // exactly the defect this file exists to catch - the leading number
   // was re-resolved and the trailing one left where it was, leaving a
-  // range that cannot exist (`exterior.js:1397-1294`).
+  // range that cannot exist (`exterior.js:1398-1295`).
   ['bible/01-Overview/Port-Ledger.md', /`exterior\.js:(\d+)-\d+` build `createDetectFeed`/,
     EX, /const detectFeed = createDetectFeed\(playerEntity, \{/],
   ['bible/01-Overview/Port-Ledger.md', /`exterior\.js:\d+-(\d+)` build `createDetectFeed`/,
@@ -745,12 +745,19 @@ const SOURCE_CITES = [
     EX, /^ {4}\}$/],
   ['bible/01-Overview/Port-Ledger.md', /`exterior\.js:(\d+)`\), and `ambientEffects\.js:118-145`/,
     EX, /ambience\.update\(dt, \{ playerPos: eye, inside: false \}\)/],
+  // AUDIT ENH-NOTICE3 (second pass, B18): six cites the shifter carried
+  // along already WRONG - stale before the slice, moved by the right
+  // offset, never read. Resolved by content and held here.
+  ['tools/firstHourProbe.mjs', /drain \(world\.js:(\d+)\)/, WO, /window\.__shotReady = true;/],
+  ['tools/fistProbe.mjs', /reproduced at dungeonContext\.js:(\d+) pre-fix/, DC, /Combat bows: the strike frame LOOSES an arrow/],
+  ['tools/mwArmProbe.mjs', /\(dungeon\.js:(\d+)'s exact lens\)/, 'src/scenes/dungeon.js', /mirrorProjectionX\(perspective\(/],
+  ['tools/mwArmProbe.mjs', /perspective \(dungeon\.js:(\d+)\)/, 'src/scenes/dungeon.js', /mirrorProjectionX\(perspective\(/],
+  ['tools/mwRigProbe.mjs', /as world\.js:(\d+) writes it/, WO, /const weaponRig = createWeaponRig\(\{/],
+  ['test/inputmap.test.js', /overlay \(townTalk\.js:(\d+), :\d+\)/, 'src/scenes/townTalk.js', /^ {4}hud\.tick\(dt\);$/],
+  ['test/inputmap.test.js', /overlay \(townTalk\.js:\d+, :(\d+)\)/, 'src/scenes/townTalk.js', /hud\.draw\(renderer, canvas, font, s\)/],
+  ['test/enhancedInventory.test.js', /hand \(enhancedInventory\.js:(\d+)-\d+\)/, 'src/ui/enhancedInventory.js', /const carried = items\.reduce/],
 ];
 
-// The DELETED subjects, which no longer have a line to name: the
-// sweep's other half is that a cite whose code the row's own fix
-// removed says so, rather than carrying a number that lands on a
-// stranger. Pinned as the absence.
 const NO_LINE_LEFT = [
   // AUDIT QS6 F1 again: the number here names code that IS DELETED, so it can
   // never be content-resolved and must never be moved - and baking it into the
@@ -931,7 +938,7 @@ test('CD6: every `src/` line Port-Status cites is the line it describes', () => 
 //
 // The G1 lane re-resolved ~180 `:NNN` cites after moving code in four
 // hosts, and the pass advanced only the LEADING number of every
-// multi-number citation: `cityGuards.js:806-716`, `world.js:7142-7116`,
+// multi-number citation: `cityGuards.js:806-716`, `world.js:7143-7117`,
 // `worldModes.js:1237 against :1056`. Forty of them came out as ranges
 // that cannot exist, and every pin in this file was green throughout,
 // because each one resolves a single number a human chose to list.

@@ -98,7 +98,7 @@ test('U53: encumbrance is the same expression the sheet and the classic window u
     'LIVE strength - a drained player must not be told they can carry the undrained amount');
   // ...and the OTHER half. PlayerEntity.CarriedWeight (:184) is the
   // items PLUS the gold counter's weight, and the pane composes it by
-  // hand (enhancedInventory.js:192-193) because it is handed the list
+  // hand (enhancedInventory.js:201-202) because it is handed the list
   // and not the entity - so it must still land on inventory
   // .carriedWeight's answer.
   assert.equal(m.encumbrance.now, Math.trunc(carriedWeight(e)));
@@ -2194,6 +2194,8 @@ test('ENH-NOTICE3: the pack\'s refusal lands in the notice panel and NOT on the 
     assert.match(noticeTexts(dom)[0], /broken and cannot be worn/, 'the refusal, verbatim');
     assert.deepEqual(sheetNotice(), [],
       'and no .sheet-notice in the window - the box has ONE face on this skin');
+    assert.deepEqual(dom.body.querySelectorAll('.notice-hint').map((n) => n.textContent), [],
+      'AUDIT ENH-NOTICE3 B3: no hint - the pane takes no click and no key for a refusal, it clears on the next action');
 
     // THE PANE'S OWN DISMISSAL: the next action clears `notice`
     // (every writer opens with `notice = null`), and the panel with it
@@ -2231,4 +2233,37 @@ test('ENH-NOTICE3: the classic skin is untouched - the sheet still says it and n
     assert.equal((dom.body.children ?? []).some((c) => c.id === ENHANCED_NOTICE_ID), false,
       'and no stack was ever built');
   });
+});
+
+test('ENH-NOTICE3 (AUDIT B/F5): a refusal raised over a LOOT PILE with the pack closed is the panel\'s too - the frame the player is reading keeps no second copy', () => {
+  // The line is painted in TWO places (the pack's footer and the loot
+  // frame), and only the pack's was driven. A loot session opens with
+  // the pack CLOSED (`packOpen = !d.loot`), so this is the arm a
+  // player meets when they open a corpse with a full purse.
+  const had = Object.hasOwn(globalThis, 'location') ? globalThis.location : undefined;
+  globalThis.location = { search: '?skin=enhanced' };
+  try {
+    withDom((dom) => {
+      const host = dom.mk('div');
+      dom.body.append(host);
+      const e = hero();
+      e.goldPieces = 2000000;   // CanCarryAmount's own gate: the coin weight alone fills the load (itemTransfer.js:270)
+      const pile = [mk('Claymore')];
+      const view = mountEnhancedInventory(host, {
+        entity: e, items: () => e.items, loot: { items: () => pile }, onExit: () => {},
+      });
+      const rows = host.querySelectorAll('.itemrow');
+      assert.equal(rows.length, 1, 'the loot frame is what the player is looking at');
+      rows[0].onclick();   // MAC-M2: a loot-side click TAKES, and this one is refused
+      assert.equal(noticeTexts(dom).length, 1, 'the refusal is on the panel');
+      assert.match(noticeTexts(dom)[0], /cannot carry/i);
+      assert.deepEqual(host.querySelectorAll('.sheet-notice').map((n) => n.textContent), [],
+        'mutant: the loot frame keeps its own copy - two faces for one box, which is the whole finding');
+      view.unmount();
+      assert.deepEqual(enhancedNoticeKeys(), []);
+    });
+  } finally {
+    if (had === undefined) delete globalThis.location; else globalThis.location = had;
+    destroyEnhancedNotice();
+  }
 });

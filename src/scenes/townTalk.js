@@ -107,7 +107,7 @@ export function rayPersonDistance(camPos, fwd, feet) {
   return t / fl * Math.hypot(fwd[0], fwd[1], fwd[2]);
 }
 
-export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, regionIndex, onCrime = null, topics = null, palette = null, rolls = Math.random, talkEngine = null, onBuildingList = null, otherOverlayActive = null, questBuildingSource = null }) {   // AUDIT 63 F49: PlayerGPS.DiscoverBuilding's quest name-override seam ({ currentMapID, isBuildingQuestResource }), null in a host with no topic tree
+export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, regionIndex, onCrime = null, topics = null, palette = null, rolls = Math.random, talkEngine = null, onBuildingList = null, otherOverlayActive = null, otherHudCovered = null, questBuildingSource = null }) {   // AUDIT ENH-NOTICE3 C2: `otherHudCovered` is the mode host's previousWindow-chain answer (modes.hudCovered), for the toasts   // AUDIT 63 F49: PlayerGPS.DiscoverBuilding's quest name-override seam ({ currentMapID, isBuildingQuestResource }), null in a host with no topic tree
   // RP1 - THE REGION IS READ LIVE, NOT CAPTURED AT BOOT.
   //
   // This took a plain number, and the world host had no choice but to
@@ -143,6 +143,20 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     return people;
   };
   let overlay = null;
+  /** AUDIT ENH-NOTICE3 C2 - WHEN THE TOASTS GO, AND WHEN THEY STAY.
+   *  DFU paints PopupText as part of the HUD window, which is the
+   *  BOTTOM of the stack (DaggerfallUI.cs:407-408), and a popup's Draw
+   *  paints its previousWindow first, dimmed (DaggerfallPopupWindow.cs
+   *  :77-85); every DaggerfallUI.MessageBox passes the then-top as
+   *  previousWindow (:1328-1362). So under a pushed BOX the rows stay;
+   *  under a window that cuts the chain (the inventory, the rest, the
+   *  sheet) they go. AUDIT FONT F4 asked "is the slot occupied", which
+   *  hid the toasts under the very box the notice stack was built to
+   *  stand beside; the question is the chain's - `hudCovered`, AUDIT 64
+   *  F35's port of it, on this slot and on the mode host's (the outer
+   *  hosts hand `modes.hudCovered` in) - and the held map's outright
+   *  HUD hide (MAP-FIELD2's `hidesHud`) beside it. */
+  const toastsCovered = () => (talkPaused() && windows.hudCovered(overlay)) || hidesHud(overlay) || !!otherHudCovered?.();
   /** ROAD-B B1: the DEPTH under this host's one slot. `overlay` is the
    *  live top - every draw, key, click and drain in this file already
    *  reads it - and the stack (UserInterfaceManager.cs, ported in
@@ -1110,7 +1124,7 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     // AUDIT FONT F4: ...and the host REPORTS its window slot first. The classic column is drawn HERE and the overlay
     // stack just below it, so on that skin a window covers it; the enhanced face is DOM over the canvas and covers the
     // window instead, so it is told to go for as long as one stands.
-    hud.observe(!!overlay || !!otherOverlayActive?.());   // AUDIT ENH-NOTICE3 F3: ...and the MODE host's slot, which this model is drawn under too (the interior arm drives hudFrame below; the outer hosts run this frame in every mode)
+    hud.observe(toastsCovered());   // AUDIT ENH-NOTICE3 F3/C2: the HUD's cover, read the way DFU paints it - see toastsCovered
     if (font && hudRenderEnabled()) hud.draw(renderer, canvas, font, s); else hud.hide();
     // ROAD close-P: THE STACK IS PAINTED, NOT JUST ITS TOP.
     // DaggerfallPopupWindow.Draw (:77-86) runs `previousWindow.Draw()`
@@ -1340,7 +1354,7 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
      *  frame after the player walked out. It drives this directly. */
     hudFrame: (dt, font_ = font) => {
       hud.tick(dt);
-      hud.observe(!!overlay || !!otherOverlayActive?.());   // AUDIT FONT F4: the same canvas-window report as the frame above, so the DOM face never stands over a native window - and (AUDIT ENH-NOTICE3 F3) the interior slot this arm is drawn under, which `overlay` cannot see
+      hud.observe(toastsCovered());   // AUDIT FONT F4 / ENH-NOTICE3 F3/C2: the same report as the frame above, the interior slot this arm is drawn under included
       if (font_ && hudRenderEnabled()) hud.draw(renderer, canvas, font_, hudScale(canvas.width, canvas.height)); else hud.hide();   // AUDIT 64 F37: the same Draw gate as the frame above, with FONT1's hide door on its else (the enhanced column is DOM and persists)
     },
     get overlayActive() { return talkPaused(); },   // ROAD-tail: the STACK's pause latch, not this host's slot arithmetic
