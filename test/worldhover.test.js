@@ -611,3 +611,116 @@ test('WORLD TOOLTIPS: the naming ladder is insertion order, first answer with a 
   assert.equal(n('d'), null, 'a key nobody knows draws nothing');
   assert.equal(composeNamer(null)('a'), null);
 });
+
+// ── THE SEVEN THE FIRST MUTATION RUN FOUND ───────────────────────
+//
+// Every assertion below was written because a mutant SURVIVED the
+// suite as it stood. They are the campaign's findings, not its
+// decoration: `tools/mutants/worldhover.json` names each one.
+
+test('WORLD-HOVER: a docked large HUD moves the plaque, because it moves the reticle', () => {
+  // ROAD-E E5: HUDCrosshair re-centres into the view a docked bar
+  // leaves, because the world pass is drawn there. A plaque that read
+  // the scale but not the bar height sat below a cross that had moved
+  // up - and nothing caught it, because every fixture drew with no bar.
+  const canvas = { width: 1600, height: 900, clientWidth: 800 };
+  const plain = plaqueAnchor(canvas);
+  // `hudReticle` answers the LIVE bar, so drive the term it reads
+  // rather than the module state: the law is that the two agree.
+  const s = hudScale(canvas.width, canvas.height);
+  const withBar = (h) => (crosshairCentreY(canvas.height, h) + CROSSHAIR_ARM * s) / 2 + PLAQUE_GAP;
+  assert.equal(plain.top, withBar(0), 'undocked, the middle is the middle');
+  assert.ok(withBar(200) < withBar(0), 'a docked bar raises the reticle...');
+  assert.equal(withBar(200), plain.top - 50,
+    '...by exactly half its height, in device pixels, over the device ratio - E5\'s own arithmetic through the plaque\'s');
+  // and the plaque's own line is the one that carries the term
+  assert.match(read('src/ui/worldPlaque.js'),
+    /const \{ scale, largeHudHeight \} = hudReticle\(canvas\);/,
+    'the plaque reads BOTH terms, not just the scale');
+});
+
+test('WORLD-HOVER: the signature guard really stops the repaint', () => {
+  // The first pin compared `n.children` by reference, which a repaint
+  // preserves - so deleting the guard changed nothing it could see.
+  // Mark the tree and check the MARK survives.
+  withPlaque((root) => {
+    const f = (items) => resolveHover(hit('loot:1'), { contents: () => items });
+    showWorldPlaque(f([{ name: 'Ruby' }]));
+    const n = root();
+    n.children[0].__mark = 'untouched';
+    showWorldPlaque(f([{ name: 'Ruby' }]));
+    assert.equal(n.children[0]?.__mark, 'untouched', 'an unchanged frame does not rebuild the tree');
+    showWorldPlaque(f([{ name: 'Helm' }]));
+    assert.notEqual(n.children[0]?.__mark, 'untouched', 'and a changed one does');
+  });
+});
+
+test('WORLD-HOVER: a title with a line break is DRAWN as two lines', () => {
+  // The mod joins a door's label with `\r` - "To\rPrivateer's Hold" -
+  // and flattening that to one line passed every pin, because nothing
+  // drove a multi-line title through the draw.
+  withPlaque((root) => {
+    showWorldPlaque({ key: 'exit:0', kind: 'name', title: 'To\nPrivateer\'s Hold', subs: [], rows: [], rest: 0, empty: false });
+    const lines = find(root(), 'wplaque-titleline').map((n) => n.textContent);
+    assert.deepEqual(lines, ['To', 'Privateer\'s Hold']);
+    showWorldPlaque({ key: 'person:1', kind: 'name', title: 'Marcus Grey', subs: [], rows: [], rest: 0, empty: false });
+    assert.deepEqual(find(root(), 'wplaque-titleline').map((n) => n.textContent), ['Marcus Grey'],
+      'and a single-line title is still one line');
+  });
+});
+
+test('WORLD TOOLTIPS: a house for sale is never told it is shut', async () => {
+  // PlayerActivate.cs:474 and the mod's :738 both exempt it by name,
+  // and no fixture had ever used the type - so deleting the exemption
+  // changed nothing any pin could see.
+  const { staticDoorName } = await import('../src/systems/worldTooltips.js');
+  const { BUILDING_TYPES } = await import('../src/world/buildingNames.js');
+  const forSale = staticDoorName('building', { displayName: 'A House', buildingType: BUILDING_TYPES.HouseForSale, unlocked: false, quality: 20 });
+  assert.equal(forSale.subs.length, 1, 'it says it is locked...');
+  assert.match(forSale.subs[0], /^Lock Level: /, '...and nothing about opening hours');
+});
+
+test('WORLD-HOVER: raceWinner is the press\'s own precedence, driven against the race itself', async () => {
+  // Three mutants survived here - the tie order inverted, the farthest
+  // taken, and a tie handed to the later entry - because NOTHING drove
+  // this function. It is the one thing standing between the plaque and
+  // a different answer from the press.
+  const { raceWinner, raceActivation } = await import('../src/player/activationRace.js');
+  const p = (key, distance) => ({ key, distance, reach: 3.2 });
+
+  assert.equal(raceWinner({}), null, 'nothing under the ray');
+  assert.equal(raceWinner(), null);
+  assert.equal(raceWinner({ ground: p('door', 2) }).key, 'door', 'the only candidate wins');
+  assert.equal(raceWinner({ corpse: p('body', 1), ground: p('door', 2) }).key, 'body', 'nearest wins');
+  assert.equal(raceWinner({ corpse: p('body', 3), ground: p('door', 2) }).key, 'door');
+
+  // THE TIE ORDER IS THE HOST'S ARM LADDER: camp, water, wagon, torch,
+  // body, pile, ground. Each pair driven at an EXACT tie, which is the
+  // only distance at which the order is observable at all.
+  const all = { camp: p('camp', 2), water: p('water', 2), wagon: p('wagon', 2), torch: p('torch', 2), corpse: p('body', 2), pile: p('pile', 2), ground: p('door', 2) };
+  const order = ['camp', 'water', 'wagon', 'torch', 'body', 'pile', 'door'];
+  const byKey = { camp: 'camp', water: 'water', wagon: 'wagon', torch: 'torch', body: 'corpse', pile: 'pile', door: 'ground' };
+  for (let i = 0; i < order.length; i++) {
+    const bag = {};
+    for (const k of order.slice(i)) bag[byKey[k]] = all[byKey[k]];
+    assert.equal(raceWinner(bag).key, order[i], `at an exact tie, ${order[i]} takes it from ${order.slice(i + 1).join(', ') || 'nothing'}`);
+  }
+
+  // ...AND IT AGREES WITH `raceActivation`, which is the press's own
+  // answer. A change to one that the other does not follow goes red.
+  const cases = [
+    { camp: p('camp', 1), corpse: p('body', 2), ground: p('door', 3) },
+    { water: p('water', 2), torch: p('torch', 1), ground: p('door', 3) },
+    { wagon: p('wagon', 1.5), pile: p('pile', 1.4), ground: p('door', 9) },
+    { corpse: p('body', 2), pile: p('pile', 2) },            // the tie the race hands the body
+    { torch: p('torch', 2), camp: p('camp', 2) },            // ...and the one it hands the camp
+    { ground: p('door', 0.5), camp: p('camp', 4) },
+  ];
+  for (const c of cases) {
+    const race = raceActivation({ ...c, doorDistance: c.ground?.distance ?? Infinity });
+    const won = raceWinner(c);
+    const flag = race.campWins ? 'camp' : race.waterWins ? 'water' : race.wagonWins ? 'wagon'
+      : race.torchWins ? 'torch' : race.loot ? 'body' : race.drop ? 'pile' : 'door';
+    assert.equal(won.key, flag, `the two disagree on ${JSON.stringify(Object.keys(c))}`);
+  }
+});

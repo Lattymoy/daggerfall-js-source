@@ -17169,3 +17169,229 @@ not load (a trailing comment swallowed a one-line statement, twice),
 and read 14/14 both times; PERF-RIG1's F3 lesson again, caught by
 reading the pass count against the run.
 
+
+## WORLD-HOVER - a name under the crosshair for whatever you are looking at (2026-09-21, Mac)
+
+Mac handed over the shipped zip of **World Tooltips 1.1** (jefetienne,
+MIT, Nexus 158) with two conditions of his own:
+
+> "This is perfect and honestly it fits in with the next mod I want to
+> integerate 1:1. With soem caviats 1. We need to build our own
+> enhanced skin for the enhanced version 2. Currently we have a tooltip
+> for looting containers, so this will need to be compatible somehow."
+
+The second caveat is the interesting one. The port already had a plaque
+under the crosshair - PX21c's `ui/lootHover.js`, which names what is in
+a pile you are looking at - and the mod names everything EXCEPT what is
+in a pile. Two surfaces answering one ray would be the FONT1 two-faces
+bug in a new coat. So this is not the mod bolted on beside the plaque;
+it is one surface with one resolver, and the mod's ladder and the
+port's item rows are two STATES of it.
+
+### The law the whole slice exists to keep
+
+**The plaque and the button can never disagree.** PX21c said it first,
+for three loot keys, in its own header:
+
+> It follows what the crosshair already resolves - the same activation
+> pick the take uses - so it can never disagree with what pressing the
+> button would open.
+
+Everything below is that sentence extended to every key the activation
+ladder can hit, and the way it is kept is that there is exactly ONE
+race: `player/activationRace.js`, which the press already walks. **The
+race decides WHO WON; the model only decides what the winner is
+CALLED.** Nothing in this slice re-derives a distance, a reach or a
+precedence of its own.
+
+### The shape
+
+| | module | what it is |
+|---|---|---|
+| model | `systems/worldHover.js` | the reach gate, the itemising, the frame record, its rendered signature, the two composition laws. Pure: no document, no skin, no host |
+| words | `systems/worldTooltips.js` | World Tooltips' naming ladder, ported 1:1 and cited arm by arm |
+| draw | `ui/worldPlaque.js` | the node, the dress, the skin gate, the reticle anchor, and the ONE seam four hosts call |
+
+`ui/lootHover.js` was renamed to `ui/worldPlaque.js`: it was named after
+the one state it had. The rename is the repo's own idiom
+(`MakeHouseContainer` -> `isHouseContainerModel`, `overworldMap.js` ->
+`heldMap.js`) and every pin that held the old name moved with it rather
+than being deleted - including the `readdirSync('src/ui')` sweep in
+`rf6_itemnames`, which would have dropped the file SILENTLY.
+
+### Three things PX21c got away with by accident
+
+**1. The guard could not see the list.** `if (key === shownKey) return;`
+cannot see a pile whose contents changed under a constant key. That was
+safe only because taking required a window and the window unmounted the
+driver - an accident, not a law, and it goes the moment a quest machine,
+the room's own word (WORLD4) or the next arc's quick loot writes into a
+container being looked at. The guard compares the RENDERED SIGNATURE
+now (`frameSignature`): one node, rewritten only on change, which is
+PX21c's law intact and finally honest about its term.
+
+**2. The 10 Hz throttle bought nothing.** PX21c threw it in because "a
+raycast over every pile and corpse is not free". Measured rather than
+guessed, the pick is ~3 microseconds of a 16.7 ms frame. What the
+throttle cost was a plaque that lagged the crosshair by up to a tenth
+of a second, so sweeping past a rack of barrels named them out of step
+with the reticle and the name stuck after you looked away. It runs
+every frame.
+
+**3. It stood where the reticle was not.** The old rule was `bottom:
+16%`, with a comment saying it was "centred low so it never sits on the
+reticle" - avoiding the cross by standing far from it, because it had
+nowhere to read the cross's real place. `ui/hud.js` exports
+`hudReticle` now, the two terms its own crosshair draw uses, so there
+is ONE answer to "where is the reticle" and the plaque asks it. It
+hangs a fixed gap BELOW the cross and grows downward: covered in no
+state at any length, and a docked large HUD moves both (ROAD-E E5).
+That is also the mod's own anchor (vendor .cs:1085-1100).
+
+### And two gates it did not have
+
+`cursorActive` takes the plaque down BY LAW rather than by scheduling
+accident - the dungeon's driver only ran with no overlay up, and four
+hosts calling one seam have no such accident to rely on. And **the
+plaque is off entirely on a touch device**: there the activation ray is
+through the FINGER (`_tapPoint` -> `_tapDir` through `rayDirFromScreen`),
+not the crosshair, so a centre-anchored plaque would name what a tap
+would NOT open. That is the founding law broken on every frame, and a
+wrong answer delivered confidently is worse than no answer. The
+tap-anchored variant - resolve on the tap's own ray, anchor at the tap
+point, hold a couple of seconds - is a later slice's, not this one
+wearing a media query.
+
+### ONE CONSTRUCTION SEAM, per scene
+
+The dungeon's activation target list was built INLINE in two places
+against the same context - the modal host's arm and the standalone dev
+door's - and the hover would have been a third. AUDIT 17i's failure by
+name. It is `dungeonContext.dungeonActivationTargets()` now, composed
+through `worldHover.composeActivationTargets`, a pure law that can be
+DRIVEN rather than read. The interior's list had never been extracted
+at all (its exterior twin had) and is `interiorActivationTargets()`.
+
+**A host REGISTERS the families it stands, and registering rather than
+passing an options bag is the point.** A host that cannot ANSWER a
+family must not stand it: the standalone `?dungeon` door has no world
+to exit to and no `exit:` or `person:` arm in its ladder, so such a
+target would win the pick and eat the press in silence. That difference
+between the two dungeon hosts was real before this slice and entirely
+invisible - it WAS the difference between two hand-copied lists. It is
+three declared lines at one mount and none at the other now.
+
+The exterior hosts are the exception that proves it. They do not race
+one list: they run seven picks and settle them with `raceActivation`.
+So `raceWinner` was minted beside the race - the race's own winner, as
+a hit - and the seam takes a `pick` override. The tie order is not a
+guess: `raceActivation` answers `<= Math.min(...)`, so on an exact tie
+several flags are true and the HOST'S arm ladder decides which one
+takes the press. That ladder is the order `raceWinner` walks.
+
+### The naming ladder, and the one structural difference
+
+The mod asks "what component is on this transform" and walks reach
+BANDS in order. The port asks "what key won the pick", and the bands
+are enforced BEFORE the ladder is asked, per family, by the very pick
+the press uses. That is a stronger guarantee than the mod's own,
+because the mod's bands and PlayerActivate's handlers are two copies of
+one set of constants. Three consequences are written into the module's
+head rather than left to be rediscovered: the mod's 6.4 ray clamp is
+structurally already here (the port's widest reach IS 6.4); the mod's
+unguarded "Default" band, which can overwrite a Static NPC name at
+close range, is unreachable; and the `MeshFilter` name scraping has no
+counterpart because a model record carries its own id.
+
+What the ladder says, every arm driven by a pin:
+
+- **the sixteen Daedra by BILLBOARD RECORD**, which is deliberately a
+  SECOND table: `daedraSummoning.DAEDRA` is ordered by factionId and
+  its index 8 is load-bearing for the summoning itself. Two orderings
+  of one pantheon, each right for its own question, and a pin holds
+  them apart. The spellings differ too (the mod's "Vaermina",
+  Daggerfall's "Vaernima") and each stays faithful to its own source.
+- **action objects by model** - Wheel, Lever, The Mantella - and THE
+  MULTITRIGGER RULE: an unlisted, unnamed MultiTrigger is SILENCED
+  outright, because MultiTrigger is the flag on collision plates and
+  trap volumes and labelling them would draw a box round every pressure
+  pad in the dungeon.
+- **house containers by FULL model id.** 41003 (Wardrobe) and 41803
+  (Dresser) both read 3 under `% 100`, which is why the groundwork
+  slice made the container record store the model and derive the
+  texture record at its one reader.
+- a pile of exactly one named by that item with its stack count; a
+  corpse by who it was; a door by its lock level when locked; a static
+  door by where it goes, its lock, and the closed-shop sentence from
+  its one home.
+- `HideDefaultInteractTooltip` verbatim - the author's own knob, so the
+  main quest's puzzles are not given away by a label on the thing you
+  are meant to find for yourself.
+
+**The extension API came with it.** `worldHover.composeNamer` is the
+mod's `Map<reach, fn[]>` in the port's shape - insertion order, first
+answer with a title wins - minus the reach key, which the pick already
+decided. That is what lets the port's OWN world objects ride beside the
+mod's ladder instead of being wedged into it: the camps, the dropped
+torches and both corpse pools name themselves, from the module that
+STANDS the target, through the same door a third party would use.
+
+### What had to move to one home first
+
+Four members had two producers the moment a plaque wanted to SAY
+something the press had only ever done:
+
+- **the closed-shop sentence** -> `buildingLocks.buildingClosedText`
+  (it was a template literal inside the exterior activate arm; the host
+  no longer imports the hour tables at all, so it cannot rebuild it)
+- **a model's own id** -> the `cpuModels` record, so the five
+  ActionSystem constructors can say which model they hold
+- **a container's model** stored instead of its derived texture record
+- **`isBookshelfBuilding`** -> `systems/bookshelf.js`, because one
+  shelf model is a bookshelf in a Library, GuildHall or Temple and loot
+  shelves in a shop, and the plaque must say which without opening it
+
+And one import cycle, caught at boot by the suite:
+`corpseMarker -> worldTooltips -> buildingLocks -> worldTick ->
+unleveledLoot -> corpseMarker`, which read `_deathHandlers` before it
+existed. `corpseEntryFor` answers the ENTRY and the pools apply the
+word. A caller of a rule is not a copy of it; a cycle is a crash.
+
+### Cost, measured rather than guessed
+
+| | ms/frame |
+|---|---|
+| one collider ray | ~0.003 |
+| the pick, per target | ~0.00002 |
+| **assembling a streaming city's door list** | **~0.200, and ~4,500 allocations** |
+| ray + pick over a CACHED list | **~0.007** |
+
+95-97% of a hover in this port is BUILDING the target list, not casting
+the ray - the PERF-TOWN1 shape exactly, in the host whose collector
+meetings that slice already had to go and fix. So the seam takes a
+THUNK, and `world.js` carries a `doorGeneration` bumped by three
+discrete events (a pixel in, a pixel out, the floating origin
+recentring). The live families are NOT cached: the street's people and
+the boards move, and a stale person is a plaque naming someone who has
+walked away.
+
+### The departures, and who chose them
+
+Ledger A carries the row. In short: the enhanced skin's plaque in place
+of the mod's own Daggerfall tooltip panel; the port's ITEM ROWS where
+the mod says "Loot Pile" (PX21c's departure carried forward, not
+dropped); the port's own world objects named through the mod's
+extension API rather than its ladder; and **looking at a building
+discovers it** - the mod's static-door namer calls `DiscoverBuilding`
+purely to read the name (.cs:718). That last one was put to Mac as a
+decision, because it is a save-state write arriving through a naming
+call and it fills your map as you walk. His answer was to keep it 1:1,
+so it is a recorded departure from DFU rather than from the mod.
+
+Two departures OF THE MOD'S OWN from PlayerActivate are carried as the
+mod's rather than folded into the port's pinned `activateBuilding`: its
+closed-message gate is `<= Palace` where DFU's is `< Temple`, so it
+tells you a temple is shut and DFU does not; and a palace substitutes
+its own word for "Store".
+
+The classic skin has none of it, byte for byte.

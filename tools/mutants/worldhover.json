@@ -1,0 +1,387 @@
+[
+  {
+    "name": "WORLD-HOVER-reach-gate-removed",
+    "file": "src/systems/worldHover.js",
+    "old": "  if (!(hit.distance <= hit.reach)) return null;",
+    "new": "  if (false) return null;",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-reach-gate-becomes-strictly-less",
+    "file": "src/systems/worldHover.js",
+    "old": "  if (!(hit.distance <= hit.reach)) return null;",
+    "new": "  if (!(hit.distance < hit.reach)) return null;",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-unnamed-key-labels-itself",
+    "file": "src/systems/worldHover.js",
+    "old": "  if (!named?.title) return null;\n  return frame(key, 'name', named.title, named.subs ?? []);",
+    "new": "  return frame(key, 'name', named?.title || key, named?.subs ?? []);",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-signature-is-the-key-alone",
+    "file": "src/systems/worldHover.js",
+    "old": "  return `${f.key}|${f.kind}|${f.title}|${f.subs.join('\\u001f')}|${rows}|${f.rest}|${f.empty ? 'e' : ''}`;",
+    "new": "  return `${f.key}`;",
+    "tests": [
+      "test/worldhover.test.js",
+      "test/enhancedInventory.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-signature-drops-the-sub-lines",
+    "file": "src/systems/worldHover.js",
+    "old": "  return `${f.key}|${f.kind}|${f.title}|${f.subs.join('\\u001f')}|${rows}|${f.rest}|${f.empty ? 'e' : ''}`;",
+    "new": "  return `${f.key}|${f.kind}|${f.title}|${rows}|${f.rest}|${f.empty ? 'e' : ''}`;",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-signature-drops-the-stack-count",
+    "file": "src/systems/worldHover.js",
+    "old": "  const rows = f.rows.map((r) => `${r.name}\\u0002${r.stack}\\u0002${r.rarity ?? ''}`).join('\\u001f');",
+    "new": "  const rows = f.rows.map((r) => `${r.name}`).join('\\u001f');",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-a-door-is-asked-for-contents",
+    "file": "src/systems/worldHover.js",
+    "old": "  if (keyItemises(key)) {",
+    "new": "  if (true) {",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-corpse-prefix-stops-itemising",
+    "file": "src/systems/worldHover.js",
+    "old": "export const ITEMISED_KEYS = Object.freeze(['loot:', 'corpse:', 'droppedLoot:', 'foeCorpse:', 'guardCorpse:']);",
+    "new": "export const ITEMISED_KEYS = Object.freeze(['loot:', 'droppedLoot:', 'foeCorpse:', 'guardCorpse:']);",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-hover-max-widened",
+    "file": "src/systems/worldHover.js",
+    "old": "export const HOVER_MAX = 6;",
+    "new": "export const HOVER_MAX = 60;",
+    "tests": [
+      "test/worldhover.test.js",
+      "test/enhancedInventory.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-namer-ladder-takes-the-last-answer",
+    "file": "src/systems/worldHover.js",
+    "old": "      if (r?.title) return r;",
+    "new": "      if (r) return r;",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-namer-ladder-accepts-an-empty-title",
+    "file": "src/systems/worldHover.js",
+    "old": "      const r = fn?.(key, hit);\n      if (r?.title) return r;",
+    "new": "      const r = fn?.(key, hit);\n      if (r) return r;",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-compose-drops-a-host-family",
+    "file": "src/systems/worldHover.js",
+    "old": "    if (t?.length) targets.push(...t);",
+    "new": "    if (t?.length && producers.indexOf(fn) === 0) targets.push(...t);",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-skin-gate-removed-from-the-draw",
+    "file": "src/ui/worldPlaque.js",
+    "old": "  if (!worldPlaqueOn()) return;\n  const n = ensure();",
+    "new": "  if (false) return;\n  const n = ensure();",
+    "tests": [
+      "test/worldhover.test.js",
+      "test/enhancedInventory.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-skin-gate-removed-from-the-seam",
+    "file": "src/ui/worldPlaque.js",
+    "old": "} = {}) {\n  if (!worldPlaqueOn()) return null;",
+    "new": "} = {}) {\n  if (false) return null;",
+    "tests": [
+      "test/worldhover.test.js",
+      "test/enhancedInventory.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-touch-device-gets-the-plaque",
+    "file": "src/ui/worldPlaque.js",
+    "old": "export const worldPlaqueOn = () => isEnhanced() && !isTouchDevice();",
+    "new": "export const worldPlaqueOn = () => isEnhanced();",
+    "tests": [
+      "test/worldhover.test.js",
+      "test/enhancedInventory.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-a-null-frame-is-merely-skipped",
+    "file": "src/ui/worldPlaque.js",
+    "old": "    n.classList.remove('on');\n    n.textContent = '';\n    n.classList.remove('has-list');\n    return;",
+    "new": "    return;",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-cursorActive-ignored",
+    "file": "src/ui/worldPlaque.js",
+    "old": "  if (cursorActive || !eye || !dir || !collider) { showWorldPlaque(null); return null; }",
+    "new": "  if (!eye || !dir || !collider) { showWorldPlaque(null); return null; }",
+    "tests": [
+      "test/worldhover.test.js",
+      "test/enhancedInventory.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-plaque-hangs-above-the-cross",
+    "file": "src/ui/worldPlaque.js",
+    "old": "    top: (crosshairCentreY(canvas.height, largeHudHeight) + CROSSHAIR_ARM * scale) / dpr + PLAQUE_GAP,",
+    "new": "    top: (crosshairCentreY(canvas.height, largeHudHeight) - CROSSHAIR_ARM * scale) / dpr - PLAQUE_GAP,",
+    "tests": [
+      "test/worldhover.test.js",
+      "test/enhancedInventory.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-plaque-ignores-the-docked-large-hud",
+    "file": "src/ui/worldPlaque.js",
+    "old": "  const { scale, largeHudHeight } = hudReticle(canvas);",
+    "new": "  const { scale } = hudReticle(canvas); const largeHudHeight = 0;",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-has-list-set-on-every-frame",
+    "file": "src/ui/worldPlaque.js",
+    "old": "  n.classList.toggle('has-list', f.kind === 'items');",
+    "new": "  n.classList.toggle('has-list', true);",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-the-signature-guard-retires",
+    "file": "src/ui/worldPlaque.js",
+    "old": "  const sig = frameSignature(frame);\n  if (sig === shownSig) return;",
+    "new": "  const sig = frameSignature(frame);\n  if (false) return;",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-a-multi-line-title-is-flattened",
+    "file": "src/ui/worldPlaque.js",
+    "old": "  for (const line of String(f.title).split('\\n')) {",
+    "new": "  for (const line of [String(f.title)]) {",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-multiTrigger-silence-removed",
+    "file": "src/systems/worldTooltips.js",
+    "old": "  if (triggerFlag === TRIGGER_FLAGS.MultiTrigger && !multiOk) return null;",
+    "new": "  if (false) return null;",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-hideInteract-knob-ignored",
+    "file": "src/systems/worldTooltips.js",
+    "old": "  if (named) return named;\n  return hideInteract ? null : INTERACT_TEXT;",
+    "new": "  if (named) return named;\n  return INTERACT_TEXT;",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-every-trigger-is-named",
+    "file": "src/systems/worldTooltips.js",
+    "old": "  if (!ACTION_TRIGGERS_NAMED.includes(triggerFlag)) return null;",
+    "new": "  if (false) return null;",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-daedra-table-reordered",
+    "file": "src/systems/worldTooltips.js",
+    "old": "  'Peryite', 'Sanguine', 'Sheogorath', 'Vaermina',",
+    "new": "  'Peryite', 'Sanguine', 'Vaermina', 'Sheogorath',",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-daedra-archive-widened",
+    "file": "src/systems/worldTooltips.js",
+    "old": "export const DAEDRA_ARCHIVE = 175;",
+    "new": "export const DAEDRA_ARCHIVE = 334;",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-pile-of-one-widened-to-any",
+    "file": "src/systems/worldTooltips.js",
+    "old": "  if (list.length !== 1) return LOOT_PILE_TEXT;",
+    "new": "  if (list.length < 1) return LOOT_PILE_TEXT;",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-stack-count-always-printed",
+    "file": "src/systems/worldTooltips.js",
+    "old": "  return stack > 1 ? `${n} (${stack})` : n;",
+    "new": "  return `${n} (${stack})`;",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-lock-level-shown-when-unlocked",
+    "file": "src/systems/worldTooltips.js",
+    "old": "  if (!unlocked) subs.push(`Lock Level: ${buildingLockValue(quality)}`);",
+    "new": "  if (unlocked) subs.push(`Lock Level: ${buildingLockValue(quality)}`);",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-mod-closed-gate-reverted-to-DFU",
+    "file": "src/systems/worldTooltips.js",
+    "old": "  if (!unlocked && buildingType <= BUILDING_TYPES.Palace",
+    "new": "  if (!unlocked && buildingType < BUILDING_TYPES.Temple",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-palace-substitution-dropped",
+    "file": "src/systems/worldTooltips.js",
+    "old": "      { subject: buildingType === BUILDING_TYPES.Palace ? 'Palace' : null }));",
+    "new": "      { subject: null }));",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-houseForSale-told-it-is-shut",
+    "file": "src/systems/worldTooltips.js",
+    "old": "    && buildingType !== BUILDING_TYPES.HouseForSale) {",
+    "new": "    && true) {",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-dungeon-exit-always-names-its-town",
+    "file": "src/systems/worldTooltips.js",
+    "old": "    const to = inTown ? locationName : (regionName ? `${regionName} Region` : '');",
+    "new": "    const to = locationName;",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-city-walls-lose-their-special-case",
+    "file": "src/systems/worldTooltips.js",
+    "old": "  const to = buildingType === BUILDING_TYPES.Town23\n    ? (locationName ? `${locationName} City Walls` : '')\n    : displayName;",
+    "new": "  const to = displayName;",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-dresser-loses-a-model-id",
+    "file": "src/systems/worldTooltips.js",
+    "old": "  ['Dresser', [41034, 41050, 41803, 41806]],",
+    "new": "  ['Dresser', [41034, 41050, 41806]],",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-container-default-stops-being-Interact",
+    "file": "src/systems/worldTooltips.js",
+    "old": "  const named = HOUSE_CONTAINER_NAMES[modelIdNum] ?? null;\n  if (named) return named;\n  return hideInteract ? null : INTERACT_TEXT;",
+    "new": "  return HOUSE_CONTAINER_NAMES[modelIdNum] ?? null;",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-the-totem-loses-its-billboard",
+    "file": "src/systems/worldTooltips.js",
+    "old": "  if (archive === TOTEM_ARCHIVE && record === TOTEM_RECORD) return TOTEM_TEXT;",
+    "new": "  if (false) return TOTEM_TEXT;",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-a-nameless-body-loses-its-fallback",
+    "file": "src/systems/worldTooltips.js",
+    "old": "export const corpseName = (entityName) => `${entityName || 'Body'} (dead)`;",
+    "new": "export const corpseName = (entityName) => `${entityName} (dead)`;",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-raceWinner-tie-order-inverted",
+    "file": "src/player/activationRace.js",
+    "old": "  for (const p of [camp, water, wagon, torch, corpse, pile, ground]) {",
+    "new": "  for (const p of [ground, pile, corpse, torch, wagon, water, camp]) {",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-raceWinner-takes-the-farthest",
+    "file": "src/player/activationRace.js",
+    "old": "    if (best === null || p.distance < best.distance) best = p;",
+    "new": "    if (best === null || p.distance > best.distance) best = p;",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-raceWinner-ties-go-to-the-later",
+    "file": "src/player/activationRace.js",
+    "old": "    if (best === null || p.distance < best.distance) best = p;",
+    "new": "    if (best === null || p.distance <= best.distance) best = p;",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  }
+]
