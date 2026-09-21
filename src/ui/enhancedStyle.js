@@ -852,7 +852,16 @@ body.draglock .wornrow, body.draglock .wornmap { touch-action: none; }
 .goldfield input:focus-visible { outline: none; border-color: var(--brass); }
 /* ONLINE1: the Online card's two fields */
 .card label.field { display: flex; flex-direction: column; gap: 6px; margin: 10px 0; }
-.card label.field .fieldlabel { font-size: 13px; color: var(--ash); letter-spacing: 0.02em; }
+/* ACC1e F1: THIS SAID var(--ash) AND NOTHING HAS EVER DEFINED --ash.
+   Not here, not in enhanced.html, not in the landing page's injected
+   block - the whole tree has one USE of it and no declaration, so the
+   property was invalid at computed-value time and every field label in
+   the enhanced skin inherited --bone instead. ONLINE1's two fields, the
+   save slot's name, and now this arc's: all of them have been drawing
+   their labels in the body colour since the day the rule was written.
+   --dim is what this wanted and what .card .meta one line up already
+   uses for exactly this job - a quiet label over a loud value. */
+.card label.field .fieldlabel { font-size: 13px; color: var(--dim); letter-spacing: 0.02em; }
 .card label.field input {
   min-height: 44px; padding: 0 12px;
   background: #0b0e12; border: 1px solid var(--iron); color: var(--bone);
@@ -865,6 +874,80 @@ body.draglock .wornrow, body.draglock .wornmap { touch-action: none; }
 .card label.field.bad input { border-color: #b4553f; }
 .card p.meta.nameveto:empty { display: none; }
 .card p.meta.nameveto.bad { color: #e0906f; }
+
+/* ── ACC1e: THE ACCOUNT CARD ────────────────────────────────────────
+   Three shapes and no fourth. Everything else it wears - .card, .tag,
+   .acts, .act, label.field, .fieldlabel - already existed and is
+   already worn by the Online pane this card sits inside. A screen that
+   arrives with its own palette is the drift this file exists to stop. */
+
+/* A FIELD'S HINT. The rule under the box ("at least 8 characters"),
+   said BEFORE the press rather than as a refusal after it. Quieter
+   than the label above it, because it is help rather than a name. */
+.card label.field .fieldhint { font-size: 11.5px; color: var(--dim); opacity: 0.85; }
+/* ...AND THE GROUP NEEDS ROOM UNDER IT, which the probe measured
+   rather than anybody eyeballing: at the shared 10px field margin a
+   hint sat 6px under its own box and 10px above the NEXT field's
+   label. Nearer its own, but by four pixels - which is not a grouping
+   a reader can see, so the hint read as a caption for the box below
+   it. The gap inside a field stays 6px and the gap BETWEEN fields
+   goes to 20px, so proximity says what belongs together. */
+.card.acct label.field { margin: 0 0 20px; }
+
+/* THE REFUSAL, AND THE CONFIRMATION. NAME-F2's own reasoning: the red
+   lives on the border and on this line, never on the text the player
+   typed, because what they have to do next is EDIT that text. The good
+   line is verdigris rather than a green - brass turning is the skin's
+   own idea of a thing that has settled. */
+.card p.meta.acctwhy { margin: 10px 0 14px; font-size: 13px; }
+.card p.meta.acctwhy.bad { color: #e0906f; }
+.card p.meta.acctwhy.good { color: var(--verdigris); }
+.card p.meta.acctwhy:empty { display: none; }
+
+/* THE SIGNED-IN FACTS. A key and a value per row, the key quiet and
+   letter-spaced the way .qs-mark and the rarity headings are, so it
+   reads as a label rather than as half a sentence. */
+.card ul.acctfacts { list-style: none; margin: 0 0 16px; padding: 0; }
+.card ul.acctfacts li {
+  display: flex; align-items: baseline; gap: 12px;
+  padding: 7px 0; border-bottom: 1px solid var(--iron);
+}
+.card ul.acctfacts li:last-child { border-bottom: 0; }
+.card ul.acctfacts .acctkey {
+  flex: 0 0 96px; font-size: 10.5px; letter-spacing: 0.16em;
+  text-transform: uppercase; color: var(--dim);
+}
+.card ul.acctfacts .acctval { flex: 1 1 auto; min-width: 0; color: var(--bone); font-size: 15px; }
+
+/* ═══ THE RECOVERY CODE ═══════════════════════════════════════════
+   THE ONE MOMENT THIS STRING EXISTS. Email is completely optional
+   (Mac), so there is no address to send a reset to and this code IS
+   the reset - a player who does not write it down has a forgotten
+   password away from losing the account and the saves behind it.
+   So it is drawn as a PLAQUE rather than as a line of text: brass on
+   ink inside a brass frame, the loudest thing the skin can say
+   without a colour it does not own, and wide letter-spacing because
+   what happens next is a human transcribing it onto paper.
+   Selectable on purpose - user-select: all makes one click take the
+   whole code, since a half-copied recovery code is worse than none. */
+.card .acctcode {
+  margin: 4px 0 16px; padding: 16px 12px;
+  border: 1px solid var(--brass); background: #0b0e12;
+  text-align: center;
+}
+.card .acctcode code {
+  font-family: var(--data); font-size: clamp(17px, 4.6vw, 23px); font-weight: 600;
+  letter-spacing: 0.22em; color: var(--brass);
+  word-break: break-all; user-select: all; -webkit-user-select: all;
+}
+/* The phone: 0.22em of tracking on a 23-line is what pushes a 23
+   character code into a second line, and a code that wraps mid-group
+   is a code somebody mistypes. The clamp above shrinks it first; this
+   loosens the grip rather than letting it overflow the card. */
+@media (max-width: 420px) {
+  .card .acctcode { padding: 14px 8px; }
+  .card .acctcode code { letter-spacing: 0.12em; }
+}
 .goldfield .meta { flex: 1 0 100%; color: var(--dim); font-size: 11.5px; margin: 0; }
 
 /* THE LISTS STACK BELOW THE PACK'S OWN BREAKPOINT, not at it: two

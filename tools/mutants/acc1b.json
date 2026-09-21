@@ -83,23 +83,23 @@
   },
   {
     "name": "ACC1b-9-the-guest-shape-enumerates-an-alphabet-again",
-    "file": "server-account/src/guestName.js",
+    "file": "src/net/handleShape.js",
     "old": "export const GUEST_NAME_RE = /^\\S+ \\S+$/;",
     "new": "export const GUEST_NAME_RE = /^[A-Za-z]+ [A-Za-z]+$/;",
     "tests": [
       "test/accountworker.test.js"
     ],
-    "note": "THE DEFECT ITS OWN PIN FOUND, put back: DFU's banks carry apostrophes and hyphens, and Akh'ar Arabi is a name this rule calls malformed."
+    "note": "THE DEFECT ITS OWN PIN FOUND, put back: DFU's banks carry apostrophes and hyphens, and Akh'ar Arabi is a name this rule calls malformed. RE-AIMED BY CONTENT (ACC1e): the two shapes moved to src/net/handleShape.js when the client needed to ask the same question, because every import in this repo runs server -> src and a client file reaching into server-account/ would have been the only edge going the other way. The law is unchanged; only the address is. test/mutantdrift.test.js caught the move."
   },
   {
     "name": "ACC1b-10-a-handle-may-carry-a-space",
-    "file": "server-account/src/guestName.js",
+    "file": "src/net/handleShape.js",
     "old": "export const HANDLE_RE = /^[A-Za-z][^\\s]{2,23}$/;",
     "new": "export const HANDLE_RE = /^[A-Za-z][^!]{2,23}$/;",
     "tests": [
       "test/accountworker.test.js"
     ],
-    "note": "The whole disjointness law: a handle with a space could be chosen to read exactly as a guest's name."
+    "note": "The whole disjointness law: a handle with a space could be chosen to read exactly as a guest's name. RE-AIMED BY CONTENT (ACC1e): the two shapes moved to src/net/handleShape.js when the client needed to ask the same question, because every import in this repo runs server -> src and a client file reaching into server-account/ would have been the only edge going the other way. The law is unchanged; only the address is. test/mutantdrift.test.js caught the move."
   },
   {
     "name": "ACC1b-11-the-draw-is-modulo-biased",

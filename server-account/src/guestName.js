@@ -46,30 +46,26 @@ export const GUEST_BANKS = Object.freeze(Object.keys(banks)
   .filter((k) => Array.isArray(banks[k]?.sets) && banks[k].sets.length >= 6)
   .sort());
 
-/**
- * A guest name is `<first> <surname>`; a handle is one word. THE ONE
- * SPACE IS THE LAW, and both halves of it are exported from here so
- * neither can drift from the other.
+/* ═══ THE TWO NAME SHAPES MOVED TO src/net/handleShape.js (ACC1e) ══
  *
- * THE LAW RESTS ON THE SPACE AND ON NOTHING ELSE, which is deliberate
- * and was learnt the hard way: the first cut spelled the guest shape as
- * `[A-Za-z]+ [A-Za-z]+` and its own pin caught `Akh'ar Arabi` on the
- * eighteenth draw - DFU's banks carry apostrophes and hyphens, and a
- * rule that enumerates an alphabet is a rule that breaks when the data
- * says something the author did not check. So a guest's name is
- * "exactly one space, and no other whitespace", a handle's is "no space
- * at all", and what the letters are is the bank's business. Everything
- * else a name must satisfy is `nameIsIssuable` - the wire's own law,
- * which bounds the length and the character range already.
+ * They were born here and the law is unchanged; only the address is.
+ * ACC1e gave the player a field to type a handle into, and the client
+ * has to ask the same question the service does - but every import in
+ * this repo runs one way, `server-account/` reaching into `src/` and
+ * never the reverse, so a client file importing from THIS file would
+ * have been the only edge going backwards.
+ *
+ * BOTH HALVES WENT TOGETHER on purpose. The comment that used to stand
+ * here said "both halves of it are exported from here so neither can
+ * drift from the other" - taking HANDLE_RE alone would have broken the
+ * very property that sentence exists to hold. They are one law seen
+ * from two sides.
+ *
+ * RE-EXPORTED rather than re-declared, so every reader of this file
+ * still finds them here and there is still exactly one of each.
  */
-export const GUEST_NAME_RE = /^\S+ \S+$/;
-/** ...and the handle's rule does TWO jobs, which are worth keeping
- *  apart: `[^\s]` is the disjointness law above (no whitespace, so it
- *  can never read as a guest's two words), and the leading letter is an
- *  ordinary product rule - it keeps a handle from being `12345` or
- *  `___`, which read as ids rather than as people. The second is a
- *  choice and can be relaxed; the first cannot. */
-export const HANDLE_RE = /^[A-Za-z][^\s]{2,23}$/;
+import { GUEST_NAME_RE, HANDLE_RE, isGuestShaped, isHandleShaped } from '../../src/net/handleShape.js';
+export { GUEST_NAME_RE, HANDLE_RE, isGuestShaped, isHandleShaped };
 
 /** A uniform index in [0, n), from a CSPRNG, without modulo bias -
  *  rejection sampling over whole bytes. `rand` is an argument so a test
@@ -145,8 +141,3 @@ export function guestName(rand, bank = null) {
   throw new Error(`no issuable name could be drawn from ${b} - the bank and NAME_MAX have parted`);
 }
 
-/** Is this the name of a guest - by its SHAPE, not by asking anybody? */
-export const isGuestShaped = (name) => typeof name === 'string' && GUEST_NAME_RE.test(name);
-/** Is this a handle a player may choose? One word, so it can never be
- *  read as a guest's. */
-export const isHandleShaped = (name) => typeof name === 'string' && HANDLE_RE.test(name);

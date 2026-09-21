@@ -149,6 +149,11 @@ import { paneControls, discardControlsStaging, captureArmed } from './enhancedCo
 import { FEATURES, KINDS, KIND_ORDER, GROUPS, GROUP_ORDER, filterFeatures, featureCounts, featureForControl, resolveControl, modModules, modDials } from '../systems/features.js';   // FT14: the groups and each mod's curated keys
 import '../world/landView.js';   // RF4: the land-view lane registers itself with the registry
 import '../world/outdoors.js';   // RF4: the outdoors lane too
+// ACC1e: the account card at the head of the Online pane - the flow
+// thinks (ui/accountFlow.js, node-drivable), this draws it
+import { AccountFlow } from './accountFlow.js';
+import { accountCard } from './enhancedAccount.js';
+import { serviceBase } from '../net/accountClient.js';
 
 // ── THE RAIL ─────────────────────────────────────────────────────
 // Six destinations. Mac's call: the menus get set up now even where
@@ -509,6 +514,48 @@ function paneTest(body) {
 }
 
 // ── LOAD GAME ────────────────────────────────────────────────────
+// ═══ ACC1e: THE ACCOUNT CARD, AT THE HEAD OF THE ONLINE PANE ══════
+//
+// Mac: "Should we go ahead and build the account creation screen" -
+// "Yes, please be detailed and match the enhanced aesthetic."
+//
+// IT SITS ABOVE THE ONLINE CARD AND GATES NOTHING. ACC0's wall is at
+// cloud saves and nowhere else: a guest connects, is seen, walks and
+// chats, and every button below this card works with no account at
+// all. Putting it FIRST is not a toll - it is where a player looks for
+// "who am I here", and the card's own copy says the game is playable
+// without one.
+//
+// NOTHING IS ASKED OF THE NETWORK UNLESS THIS DEVICE ALREADY HAS A
+// SESSION. `flow.start()` returns immediately on a device with none,
+// so opening Online on a train draws the card and stops. That is
+// pinned in test/accountflow.test.js rather than hoped for here.
+//
+// THE FLOW IS MADE PER MOUNT, deliberately: the pane is rebuilt every
+// time it is opened, and a flow held in a module-level variable would
+// carry a half-typed password from the last time somebody looked at
+// this screen. A password does not outlive the card it was typed into.
+function accountBlock() {
+  const host = el('div', 'acctmount');
+  let card = null;
+  const flow = AccountFlow({
+    io: { fetch: (...a) => globalThis.fetch(...a), base: serviceBase(appStorage()) },
+    storage: appStorage(),
+    // EVERY state change repaints, which is why no arm of the flow has
+    // to remember to. `card` is null only during the first build, when
+    // paint() is about to run anyway.
+    onChange: () => card?.paint(),
+  });
+  card = accountCard(document, flow);
+  host.append(card.root);
+  // Not awaited: the pane must be on screen before the service is
+  // asked anything. A rejection cannot escape either - `start` catches
+  // its own refusals, and this guard is the belt for a bug in it,
+  // because a throw here would take the whole Online pane with it.
+  Promise.resolve(flow.start()).catch(() => {});
+  return host;
+}
+
 // ONLINE1 (2026-09-12, Mac: "add an option to the menu labeled online
 // which allows you to bring your own developed character into a
 // massive server"): THE ONLINE DOOR. The most recent save is the
@@ -517,6 +564,7 @@ function paneTest(body) {
 // the world host with ?online beside ?load (main.js).
 function paneOnline(body) {
   const saves = savedGames();
+  body.append(accountBlock());
   const c = el('div', 'card');
   c.append(el('span', 'tag', 'Online'));
   c.append(el('h3', null, 'Bring your character into the shared world'));

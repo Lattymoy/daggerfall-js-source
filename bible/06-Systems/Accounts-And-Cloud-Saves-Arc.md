@@ -1033,3 +1033,115 @@ ever reaching the parser. The only way there is a body that is
 shipped garbage — and the verifier must still refuse rather than throw,
 because a throw out of a hello is ONCRASH1's lesson: it does not end
 that socket, it ends the reader.
+
+
+---
+
+## ACC1e — the account creation screen (2026-09-21)
+
+Mac: *"Should we go ahead and build the account creation screen"* — and,
+told it was the right thing to do before ACC1d: *"Yes, please be
+detailed and match the enhanced aesthetic."*
+
+**IT WENT FIRST BECAUSE IT IS FREE.** The card talks to the account
+service over HTTPS and touches nothing in the relay bundle, so no
+`RELAY_VERSION` bump and nobody is dropped. ACC1d costs every connected
+player their session, and spending that once — after the screen exists —
+means one deploy delivers something a player can see.
+
+**IT GATES NOTHING.** It sits at the head of the Online pane, above
+ONLINE1's card, and every button below it works with no account at all.
+ACC0's wall is at cloud saves and nowhere else.
+
+### The split: the flow thinks, the card draws
+
+`ui/accountFlow.js` holds every stage, every field, every refusal and
+every rule about what may be pressed. `ui/enhancedAccount.js` walks what
+the flow says and makes DOM. That is `ChargenFlow` / `enhancedChargen.js`
+again, and `test/enhancedChargen.test.js` says why: *"node cannot draw
+them; what IS testable is the part that does arithmetic."* Everything a
+player can get **wrong** about an account is arithmetic.
+
+`net/accountClient.js` is the third piece — one home for where the
+service is, what its routes are, and **what its refusals mean**. The
+translation table is keyed by exactly the words `server-account/src/`
+emits, and a pin walks that source: a word the service can answer with
+and this side has no sentence for reddens. That is how `not-found` and
+`no-database` were found missing.
+
+### What the card is careful about
+
+- **One press is one account.** Registering is two calls — open a guest
+  row, then upgrade it in place — and a press between them opens a
+  second guest row with no handle, no password and nothing that will
+  ever adopt it. The pin holds the first call open and presses again.
+- **A failed upgrade keeps the session.** `handle-taken` leaves a real
+  row this device owns; dropping the secret would strand it and make the
+  next press open another.
+- **A dead credential signs the device out; a blip does not.** `auth`
+  means the service has stopped honouring the secret. `offline` says
+  nothing about it, and a player signed out by a bad second is a bug.
+- **The recovery code is a stage, not a line in a corner.** Email is
+  completely optional, so there is no reset link and this code *is* the
+  reset. It is never written to storage, the only way off that stage is
+  an explicit *"I have written it down"*, and a second way off would be
+  a way to lose an account by taking it.
+- **A password is sent exactly as typed.** The handle is trimmed; a
+  password is not. Trimming here while the service hashes what it was
+  sent is a login that works from this client and fails from every other.
+
+### ACC1e F1 — a rule in the skin read a token nothing declares
+
+`.card label.field .fieldlabel` said `color: var(--ash)`, and **nothing
+in the tree has ever declared `--ash`** — one use, no declaration. The
+property was invalid at computed-value time, so every field label in the
+enhanced skin inherited `--bone` instead of a quiet label colour:
+ONLINE1's two fields, the save slot's name, and this arc's, since the day
+the rule was written.
+
+No source sweep sees that — the rule is present and spelled correctly.
+`tools/accountCardProbe.mjs` stands the card up in a real Chromium and
+reads the **computed** colour, which comes back as `--bone` exactly. Put
+the bug back and the probe fails naming the colour. `--dim` is what it
+wanted and what `.card .meta` one line up already uses.
+
+### And the shapes moved, because the direction of every import matters
+
+`GUEST_NAME_RE` and `HANDLE_RE` were born in
+`server-account/src/guestName.js`. The client now has a field to type a
+handle into and has to ask the same question — but every import in this
+repo runs one way, `server/` and `server-account/` taking from `src/` and
+never the reverse. A client file reaching into `server-account/` would
+have been the only edge going backwards, and an architecture with one
+exception in it is an architecture nobody can state.
+
+**Both halves moved together**, to `src/net/handleShape.js`, because
+ACC1b's own comment says why: *"both halves of it are exported from here
+so neither can drift from the other."* Taking `HANDLE_RE` alone would
+have broken the property that sentence exists to hold. `guestName.js`
+imports and re-exports them, so every existing reader is unchanged.
+
+`test/mutantdrift.test.js` caught the move and demanded the two `acc1b`
+mutants be re-aimed by content, which they were.
+
+### What is pinned
+
+`accountflow.test.js` 21, `enhancedaccount.test.js` 12, and
+`npm run acctcard` — 9 checks in a real browser at every stage, desktop
+and phone. Mutants: `tools/mutants/acc1e.json`, 12, **12 dead and 0
+survived**.
+
+One survived the first run and it was a real hole: the "a password is
+not trimmed" law was stated in a comment above `pw()` and asked by
+nothing, so a mutant that trimmed passwords walked straight through a
+green suite. It has its own pin now.
+
+### Still open after this
+
+The card creates an account that changes nothing a player can see until
+**ACC1d** reads the name off the token (the relay), or **ACC2** brings
+the saves. That is stated plainly in the card's own copy rather than
+oversold. And the client now holds two identities — SOC1's hub-minted
+`dagger.online.account` and this service's session — which ACC1b already
+settled: the merge belongs at the hub, the only thing holding both
+credentials at once.
