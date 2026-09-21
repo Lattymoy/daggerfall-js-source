@@ -5361,7 +5361,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     try {
       const snap = key != null ? loadSlot(key)
         : mostRecent ? (mostRecentRestorable()?.snap ?? null)
-          : quickLoadSlot(playerEntity.name);
+          : quickLoadSlot(playerEntity.name, undefined, playerEntity.characterId ?? null);   // CHARID1: my own QuickSave, never a namesake's
       if (!snap) { townTalk.say('No saved game.'); return; }
       // MAC-L4: the table this save is READ WITH, before it is read. The
       // boot fires `loadMagicRegistries` and does not await it (every
@@ -6415,7 +6415,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         loadingPrevented: () => !!online,
         // SAV4: the slot window's seams - the pause SAVE/LOAD doors
         // open it with these (openClassicPauseFlow builds the doors).
-        playerName: () => playerEntity.name,
+        playerName: () => playerEntity.name, playerId: () => playerEntity.characterId ?? null,
         saveAs: (saveName) => worldQuickSave(saveName),
         loadKey: (key) => worldQuickLoad({ key }),
         // ROAD-C C1: DFU PUSHES the slot window over the pause window
@@ -9298,7 +9298,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // pause menu greys the Load pane the same way - see
     // worldModes.js's togglePause for the door itself.
     loadingPrevented: () => !!online,
-    playerName: () => playerEntity.name,
+    playerName: () => playerEntity.name, playerId: () => playerEntity.characterId ?? null,
     saveAs: (saveName) => worldQuickSave(saveName),
     loadKey: (key) => worldQuickLoad({ key }),
     // AUDIT 26 (F019): RMBLayout's exterior StaticNPCs, shifted through

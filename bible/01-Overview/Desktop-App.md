@@ -266,6 +266,59 @@ the first one after the merge carries the metadata, and copies
 installed from IT onward update in place. A copy installed before it
 has no updater and takes the notice one last time.
 
+## Saves move between the website and the app (SP1, 2026-09-21)
+
+A player on Discord, the afternoon a release went out: *"my saves its
+all gone."* Mac: *"we need parity between browser and the install."*
+
+**Nothing was deleted.** Nothing in either store removes a save but the
+player's own Delete (systems/saveSlots.js: the only three `removeItem`
+calls on a slot are deleteSave, an overwrite dropping its stale
+picture, and a NEW slot whose write threw). The website keeps a save
+in the browser's storage for its origin; the app keeps the same save as
+files under `<userData>/Saves/SAVE<n>/`. They are two stores with one
+shape, and nothing carried a save from one to the other - so a player
+who played on the site and then installed the app opened it to empty
+slots, and a player who cleared a browser profile had done the one
+thing the file store exists to survive. The saves were in the other
+place, or gone with the profile; the app never had them.
+
+**The carrier** is `systems/saveTransfer.js`, pure over a storage-shaped
+object. **Export** writes every slot the store holds as ONE zip in the
+app's own on-disk layout - `Saves/SAVE<n>/SaveData.txt`, `SaveInfo.txt`,
+`Screenshot.jpg` (the three shot spellings pinned equal to
+fileStorage.cjs's) - so the zip is also a backup a player can open, and
+can be unzipped straight into the app's Saves folder by hand. The zip is
+written STORED, no dependency; the reader is the port's own
+(dataSource.js readZipEntries, methods 0 and 8). **Import** takes that
+zip, or a picked folder (the Saves folder, one SAVE folder, or the whole
+userData folder - only the three save files under a `SAVE<n>` segment
+are read), and writes each slot into whatever store is under this
+build: the browser's on the site, the file store in the app, where the
+live index picks the files up within two seconds. A slot never
+overwrites another: it keeps its own number when free, takes the first
+free one otherwise, and a save the store already holds (same
+character, slot name and game minute) is skipped rather than doubled.
+The card is written last, as saveSlot writes it, and a write that
+throws takes its half slot back.
+
+**The doors** are on the enhanced menu's Load pane, title and pause
+alike: a "Move saves" card with Export all saves, Import a zip, Import a
+Saves folder, and in the app the folder's own path. The classic skin's
+load window has no room for them; a classic-skin player switches skin
+for the minute it takes. Pinned by execution: the round trip through
+the port's own zip reader byte for byte, the taken number moving, the
+double skipped, the quota throw leaving nothing, the layout equal to
+the app's. 12 mutants, 12 dead.
+
+**The second half of the same report** - *"he created a new character and it overwrote his save"* - was a different fault and a real one: a save's identity was the character's NAME, so a new character of the same name wrote over the old one's QuickSave. Fixed the same day as CHARID1 (Systems-Arc.md); that save is not recoverable.
+
+**For the player who asked:** if you played on the website, your saves
+are still in that browser - open the site, Load, Export all saves, then
+in the app Load, Import a zip. If you played in the app, they are files
+in `%APPDATA%\Daggerfall JavaScript\Saves` (File > Open Saves Folder),
+and an update never touches that folder.
+
 ## What deliberately did NOT move
 
 Music packs, texture packs and Morrowind data still live in IndexedDB

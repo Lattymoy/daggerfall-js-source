@@ -179,14 +179,14 @@ test('SAV4: the host wiring source pins - per-character quickslots, the boot arm
   // window's saveAs share the ONE producer.
   assert.match(world, /function worldQuickSave\(saveName = QUICK_SAVE_NAME\)/);
   assert.match(world, /saveSlot\(playerEntity\.name, saveName, snap\)/);
-  assert.match(world, /: mostRecent \? \(mostRecentRestorable\(\)\?\.snap \?\? null\)\n\s*: quickLoadSlot\(playerEntity\.name\)/);
+  assert.match(world, /: mostRecent \? \(mostRecentRestorable\(\)\?\.snap \?\? null\)\n\s*: quickLoadSlot\(playerEntity\.name, undefined, playerEntity\.characterId \?\? null\)/);
   // The boot arm: a picked slot key wins, else the most-recent shape.
   assert.match(world, /\? \{ key: Number\(params\.get\('loadkey'\)\) \}\n\s*: \{ mostRecent: true \}/);
 
   const dungeon = readFileSync(new URL('../src/scenes/dungeonContext.js', import.meta.url), 'utf8');
   assert.match(dungeon, /quickSave\(saveName = QUICK_SAVE_NAME\)/);
   assert.match(dungeon, /saveSlot\(playerEntity\.name, saveName, snap\)/);
-  assert.match(dungeon, /key != null \? loadSlot\(key\) : quickLoadSlot\(playerEntity\.name\)/);
+  assert.match(dungeon, /key != null \? loadSlot\(key\) : quickLoadSlot\(playerEntity\.name, undefined, playerEntity\.characterId \?\? null\)/);
 
   // The pause seam builds the slot-window doors from the hosts' seams.
   const pause = readFileSync(new URL('../src/ui/pauseWindow.js', import.meta.url), 'utf8');

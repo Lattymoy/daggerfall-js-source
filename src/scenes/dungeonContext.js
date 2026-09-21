@@ -5556,7 +5556,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         // the standalone ?dungeon probe never sets, so it stays open there.
         loadingPrevented: () => !!opts.dungeonOnline?.(),
         // SAV4: the slot window's seams over the same two verbs.
-        playerName: () => playerEntity.name,
+        playerName: () => playerEntity.name, playerId: () => playerEntity.characterId ?? null,
         saveAs: (saveName) => ctx.quickSave?.(saveName),
         loadKey: (key) => ctx.quickLoad?.(setPlayerPos, key),
         // ROAD-C C1: the slot window is PUSHED over the pause window
@@ -5891,7 +5891,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     quickLoad(setPlayerPos, key = null) {
       // ONLINE-LOAD1: guarded here, not only the pane's loadingPrevented - F9/F11 reach this directly.
       if (opts.dungeonOnline?.()) { hudText.add('Loading is disabled during online play.'); return; }
-      const snap = key != null ? loadSlot(key) : quickLoadSlot(playerEntity.name);
+      const snap = key != null ? loadSlot(key) : quickLoadSlot(playerEntity.name, undefined, playerEntity.characterId ?? null);   // CHARID1
       if (!snap) { hudText.add('No saved game.'); return; }
       const extras = restorePlayer(playerEntity, snap, spellsByIndex);
       if (!extras) { hudText.add('Save version mismatch.'); return; }
