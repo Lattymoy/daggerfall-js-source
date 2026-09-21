@@ -1422,8 +1422,8 @@
   {
     "name": "AUDIT3-the-twin-decodes-the-product",
     "file": "src/render/enhancedLighting.js",
-    "old": "  vec3 albedo = elDecode(t.rgb) * elDecode(vColor.rgb)",
-    "new": "  vec3 albedo = elDecode(t.rgb * vColor.rgb)",
+    "old": "  vec3 albedo = elDecode(vColor.rgb)",
+    "new": "  vec3 albedo = vColor.rgb",
     "tests": [
       "test/blood1_decals.test.js",
       "test/el1_enhancedlighting.test.js"
@@ -2731,8 +2731,8 @@
   {
     "name": "AUDIT5-the-sun-map-is-read-twice",
     "file": "src/render/enhancedLighting.js",
-    "old": "* ${EL_WET_STRENGTH} * sheen * sunVis)",
-    "new": "* ${EL_WET_STRENGTH} * sheen * cloudShadowAt(vWorld) * sunShadowAt(vWorld, n))",
+    "old": "* ${EL_WET_STRENGTH} * sheen * wetFresnel(dot(V, H)) * sunVis);",
+    "new": "* ${EL_WET_STRENGTH} * sheen * wetFresnel(dot(V, H)) * cloudShadowAt(vWorld) * sunShadowAt(vWorld, n));",
     "tests": [
       "test/blood1_decals.test.js"
     ]

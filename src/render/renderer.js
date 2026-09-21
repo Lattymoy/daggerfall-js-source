@@ -466,8 +466,8 @@ export function groundSharpnessTier(search = globalThis.location?.search ?? '') 
 import { multiply as mat4Multiply } from '../world/mat4.js';   // PERF-CROWD2: proj * view, for this call's planes
 import { PerfMeter, perfOn, perfZones, perfCpu, setMeter } from './perfMeter.js';   // EL8: `?perf`   // EL5: the bounds every bundle carries for the replays' culling   // EL2: the lane's shadow maps - a leaf that compiles nothing until a lane asks
 import { AirPass, AIR_ADAPT_UNIT as ADAPT_UNIT, AIR_CONTACT_UNIT as CONTACT_UNIT } from './airPass.js';   // EL3: the ambient occlusion, the bloom and the shafts - the same kind of leaf; EL4: the eye's unit; EL6: all of it off the frame's own depth, at the resolve
-import { decalIndices, DECAL_FLOATS_PER_VERTEX } from '../combat/bloodDecals.js';   // BLOOD1a: the index winding
-import { BLOOD_ABSORB } from '../combat/bloodArt.js';   // BLOOD3: the film's absorption - the classic mark takes the depth, the lane takes the sheen too and the vertex stride are the decal module's, so the writer and the buffer cannot disagree about the format
+import { decalIndices, DECAL_FLOATS_PER_VERTEX } from '../combat/bloodDecals.js';   // BLOOD1a: the index winding and the vertex stride are the decal module's, so the writer and the buffer cannot disagree about the format
+import { BLOOD_ABSORB_ENCODED, INK_DEPTH } from '../combat/bloodArt.js';   // BLOOD3: the film's absorption - the classic mark takes the depth, the lane takes the sheen too
 import { SHADE_DARK } from '../systems/concealDraw.js';   // ECV1 / AUDIT 65 PN-3: the shade's pull toward black, interpolated into BB_FS below - the shader restated 0.12 as a second literal. The LEAF, not systems/combatVisuals.js, which re-exports it: that module's graph would take this file's closure from 13 modules to 69
 
 const BB_FS = `#version 300 es
@@ -870,7 +870,18 @@ void main() {
   // LANE's twin carries the rest of the slice - the meniscus normal and
   // the sheen's Fresnel - because a classic mark has no glint to temper
   // and no lantern rig to catch a rim with. See combat/bloodArt.js.
-  vec3 rgb = t.rgb * vColor.rgb * exp(vec3(${BLOOD_ABSORB[0]}, ${BLOOD_ABSORB[1]}, ${BLOOD_ABSORB[2]}) * (1.0 - t.a * t.r)) * lightAcc;
+  // AUDIT BLOOD3 F1: the ink is the thickness INVERTED (bloodArt.js), so
+  // the film reads it out rather than taking it for a density - BLOOD3
+  // had this running backwards over every shape in the sheet. And the
+  // ink is no longer an albedo factor: it WAS the shape's depth painted
+  // as a grey darkening, and the film is that darkening done properly,
+  // per channel. AUDIT BLOOD3 F3: the absorption is the ENCODED one,
+  // because this set has no decode and no encode - it works in display
+  // space end to end, where a gain of G shows as G and not G^(1/2.2).
+  // The same constant in both lanes made a thin rim up to 1.7x brighter
+  // here than on the lane, which is W6's fault with the sign reversed.
+  float thick = t.a * clamp((1.0 - t.r) / ${INK_DEPTH}, 0.0, 1.0);
+  vec3 rgb = vColor.rgb * exp(vec3(${BLOOD_ABSORB_ENCODED[0]}, ${BLOOD_ABSORB_ENCODED[1]}, ${BLOOD_ABSORB_ENCODED[2]}) * (1.0 - thick)) * lightAcc;
   float a = t.a * vColor.a;
   float f = fogFactorAt(vWorld);
   outColor = vec4(mix(uFogColor, rgb, f), a);

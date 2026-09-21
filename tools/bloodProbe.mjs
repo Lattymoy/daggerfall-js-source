@@ -51,19 +51,22 @@ const out = await page.evaluate(async () => {
 
   // A KNOWN TEXTURE: 8x8 of a saturated blood red, fully opaque.
   //
-  // BLOOD3: FULL in the channel the film reads, and so is the wall's
-  // twin below. The decal pass draws one thing in this game - the blood
-  // atlas, whose rgb is WHITE INK (the shape and its grain) and whose
-  // alpha is coverage - so the shader reads `alpha * r` as the film's
-  // thickness. A fixture at 168 red stands in for ink at 66% density:
-  // the film would brighten it, and the LIGHTING parity checks below,
-  // which are about light and not albedo, would read that gain as a
-  // lighting difference. At full density the film is exactly a no-op
-  // (`exp(ABSORB * 0) = 1`) - the property it is anchored on - and the
-  // parity checks go back to measuring the one thing they are named for.
+  // AUDIT BLOOD3 F2: 209, AND THAT IS A REAL TEXEL, NOT A CHOSEN ONE.
+  // The decal pass draws one thing in this game - the blood atlas,
+  // whose alpha is coverage and whose ink is `255 * (1 - INK_DEPTH *
+  // thickness)`. 209 is `255 * (1 - 0.18)`: the value the sheet itself
+  // holds at the heart of every pool, a FULL-THICKNESS film, where the
+  // law is anchored and `exp(ABSORB * 0) = 1` exactly. The LIGHTING
+  // parity checks below are about light and not albedo, so they are
+  // shot on that anchor and measure the one thing they are named for.
+  // BLOOD3 shipped this at 255 - which is ink at ZERO thickness, the
+  // film's MAXIMUM gain - and the checks passed only because the law
+  // was inverted then too. The film's own magnitude is not tested here
+  // by construction; it is tested on its own rows below, off the real
+  // atlas, where the thickness varies across one mark.
   const W = 8, H = 8;
   const colors = new Uint8ClampedArray(W * H * 4);
-  for (let i = 0; i < W * H; i++) { colors[i * 4] = 255; colors[i * 4 + 1] = 16; colors[i * 4 + 2] = 16; colors[i * 4 + 3] = 255; }
+  for (let i = 0; i < W * H; i++) { colors[i * 4] = 209; colors[i * 4 + 1] = 16; colors[i * 4 + 2] = 16; colors[i * 4 + 3] = 255; }
   const red = { colors, width: W, height: H };
 
   // The pool's own door, driven exactly as a host drives it - so the
@@ -121,7 +124,7 @@ const out = await page.evaluate(async () => {
   // A FOE STANDS IN THE SAME PASS. If a splash is black where a sprite
   // beside it is not, the difference is not the lighting - so the
   // comparison is made rather than assumed.
-  r.uploadTexture(199, '8#0', { colors: (() => { const c = new Uint8ClampedArray(W * H * 4); for (let i = 0; i < W * H; i++) { c[i * 4] = 255; c[i * 4 + 1] = 16; c[i * 4 + 2] = 16; c[i * 4 + 3] = 255; } return c; })(), width: W, height: H });
+  r.uploadTexture(199, '8#0', { colors: (() => { const c = new Uint8ClampedArray(W * H * 4); for (let i = 0; i < W * H; i++) { c[i * 4] = 209; c[i * 4 + 1] = 16; c[i * 4 + 2] = 16; c[i * 4 + 3] = 255; } return c; })(), width: W, height: H });
   const foe = r.createBillboardBatch(199, 8, { w: 2, h: 2 }, [[0, 0, 0]]);
   foe.frame = 0;
   const foeShot = (label, setup, lights = null) => {
@@ -262,18 +265,31 @@ const out = await page.evaluate(async () => {
     // BLACK for the same reason: a blue clear leaks into every edge.
     const all = new Uint8Array(128 * 128 * 4);
     gl.readPixels(0, 0, 128, 128, gl.RGBA, gl.UNSIGNED_BYTE, all);
-    const reds = [];
-    for (let i = 0; i < all.length; i += 4) {
-      if (all[i] > all[i + 2] && all[i] >= 24) reds.push([all[i], all[i + 1], all[i + 2]]);
-    }
-    reds.sort((a, b) => a[0] - b[0]);
-    const band = (from, to) => {
-      const part = reds.slice(Math.floor(reds.length * from), Math.max(1, Math.floor(reds.length * to)));
-      if (!part.length) return null;
-      const m = [0, 1, 2].map((c) => part.reduce((s, p) => s + p[c], 0) / part.length);
-      return { r: m[0], g: m[1], b: m[2], warm: m[0] > 0 ? (m[1] + m[2]) / 2 / m[0] : 0 };
+    // AUDIT BLOOD3 F4: BANDED BY RADIUS, NOT BY BRIGHTNESS. Banding the
+    // frame by red sorts the mark's own ALPHA-FADED RIM into the "thin"
+    // bucket - a rim pixel at a third coverage over a black clear is a
+    // third of the body's colour before any film exists - so the old
+    // check reported a 1.83 spread the film cannot produce at all (its
+    // whole range on red is exp(0.5) = 1.65) and would have passed with
+    // the film deleted. The cell drawn here is a POOL, radial, centred
+    // on the quad, and the quad is centred on the viewport: so screen
+    // radius IS thickness, and both bands below sit at full coverage,
+    // well inside the silhouette, where alpha is 1 and only the film
+    // can be making a difference.
+    const ring = (lo, hi) => {
+      const acc = [0, 0, 0]; let n = 0;
+      for (let y = 0; y < 128; y++) for (let x = 0; x < 128; x++) {
+        const d = Math.hypot(x - 63.5, y - 63.5);
+        if (d < lo || d >= hi) continue;
+        const i = (y * 128 + x) * 4;
+        if (!(all[i] > all[i + 2])) continue;   // the mark, not the page
+        acc[0] += all[i]; acc[1] += all[i + 1]; acc[2] += all[i + 2]; n++;
+      }
+      if (!n) return null;
+      const m = acc.map((v) => v / n);
+      return { n, r: m[0], g: m[1], b: m[2], warm: m[0] > 0 ? (m[1] + m[2]) / 2 / m[0] : 0 };
     };
-    return { label, px: [...px], film: { n: reds.length, thin: band(0, 0.2), deep: band(0.8, 1) } };
+    return { label, px: [...px], film: { deep: ring(0, 12), thin: ring(30, 40) } };
   };
   const fresh = freshTint(() => 0.5), dried = driedTint(fresh, DRY_STAGES);
   const noonLit = () => r.setLighting([0.55, 0.55, 0.55], 1, [1, 0.96, 0.9]);
@@ -409,8 +425,12 @@ for (const lane of ['classic', 'lane']) {
       wT[1] >= fT[1] + 6 && wT[2] >= fT[2] + 6 && wT[0] >= fT[0], `wet ${wT.join(',')} vs dry ${fT.join(',')}`);
     check('OWN lane: ...but it is still BLOOD, not a white highlight - the red keeps a clear lead over the glint',
       wT[0] > wT[1] * 2.2 && wT[0] > wT[2] * 2.2, `wet ${wT.join(',')} (r/g ${(wT[0] / Math.max(1, wT[1])).toFixed(2)})`);
-    check('OWN lane: and in the sun the same law - a lift, and the mark stays red',
-      wN[1] >= fN[1] && wN[0] >= fN[0] && wN[0] > wN[1] * 2.2, `wet ${wN.join(',')} vs dry ${fN.join(',')}`);
+    // AUDIT BLOOD3 F-probe: WITH A MARGIN. BLOOD3 relaxed this row from
+    // "+20 on all three" to ">= on two", which a build with the sun
+    // glint DELETED satisfies exactly (wet === dry). Nothing in the
+    // picture then said the sun contributes a glint at all.
+    check('OWN lane: and in the sun the same law - a real lift, and the mark stays red',
+      wN[1] >= fN[1] + 2 && wN[0] >= fN[0] && wN[0] > wN[1] * 2.2, `wet ${wN.join(',')} vs dry ${fN.join(',')}`);
   } else {
     check('OWN classic: the wet float means nothing to the classic set - the same mark, wet or dry',
       wT.join(',') === fT.join(',') && wN.join(',') === fN.join(','), `wet ${wT.join(',')} vs dry ${fT.join(',')}`);
@@ -421,13 +441,31 @@ for (const lane of ['classic', 'lane']) {
 // sticker. The ink's grain is a DENSITY, and blood absorbs green and
 // blue far harder than red, so where the smear ran thin it has to come
 // out warmer as well as lighter in the body of the mark.
+// AUDIT BLOOD3 F1/F4: THE FILM, OFF A REAL POOL, AT FULL COVERAGE.
+// Both rings sit inside the mark's silhouette where alpha is 1, so the
+// only thing that can differ between them is the film - and the SIGN is
+// the whole point. BLOOD3 read the sheet's ink as a density when the
+// art paints it as a darkening, so the film ran backwards over every
+// shape and brightened exactly what the art had darkened. A heart is
+// DEEPER than a mid-radius ring, so a heart must come back DARKER and
+// MORE saturated. Inverted, this check reads the other way round.
 for (const f of out.ownFilm ?? []) {
   const d = f.deep, t = f.thin;
-  console.log(`  FILM ${f.lane}: ${f.n} px, deep ${d?.r.toFixed(0)},${d?.g.toFixed(0)},${d?.b.toFixed(0)} | thin ${t?.r.toFixed(0)},${t?.g.toFixed(0)},${t?.b.toFixed(0)} (warmth ${d?.warm.toFixed(3)} -> ${t?.warm.toFixed(3)})`);
-  check(`FILM ${f.lane}: a mark is not ONE red - the ink's grain is a density, so its body carries a real range of it`,
-    !!d && !!t && d.r > t.r * 1.25, `deep ${d?.r.toFixed(0)} against thin ${t?.r.toFixed(0)}`);
-  check(`FILM ${f.lane}: ...and the thinner blood is WARMER - green and blue pass a thinning film, which is the whole of reading it as depth`,
-    !!d && !!t && t.warm > d.warm * 1.08, `warmth deep ${d?.warm.toFixed(3)} -> thin ${t?.warm.toFixed(3)}`);
+  console.log(`  FILM ${f.lane}: deep ${d?.n}px ${d?.r.toFixed(0)},${d?.g.toFixed(0)},${d?.b.toFixed(0)} | thin ${t?.n}px ${t?.r.toFixed(0)},${t?.g.toFixed(0)},${t?.b.toFixed(0)} (g+b over r: ${d?.warm.toFixed(3)} -> ${t?.warm.toFixed(3)})`);
+  check(`FILM ${f.lane}: a mark is not ONE red - a pool's heart is a DEEPER film than its shoulder, so it comes back darker`,
+    !!d && !!t && t.r > d.r * 1.15, `heart ${d?.r.toFixed(0)} against shoulder ${t?.r.toFixed(0)} - inverted, the heart is the brighter one`);
+  check(`FILM ${f.lane}: ...and the thinner blood is DESATURATED - green and blue pass a thinning film, which is the whole of reading it as depth`,
+    !!d && !!t && t.warm > d.warm * 1.06, `g+b over r, heart ${d?.warm.toFixed(3)} -> shoulder ${t?.warm.toFixed(3)}`);
+  // AUDIT BLOOD3 F2: and the SIZE of it. No probe row constrained
+  // BLOOD_ABSORB at all after BLOOD3 - the parity rows were shot on a
+  // fixture where the film is a no-op, and the band check above was
+  // measuring alpha. A ring at radius 30-40 of a pool whose edge is at
+  // ~50px is roughly a third of full thickness, so the red gain between
+  // the two rings should land in the band the law allows and nowhere
+  // near 1 (no film) or its 1.65 ceiling (a film with no anchor).
+  const gain = d && t ? t.r / d.r : 0;
+  check(`FILM ${f.lane}: ...and by an amount the law allows - not a no-op, not unbounded`,
+    gain > 1.15 && gain < 1.65, `red gain heart -> shoulder ${gain.toFixed(3)} (exp(ABSORB.r) = 1.649 is the ceiling, at zero thickness)`);
 }
 const laneDusk = out.lane.find((x) => x.what === 'dusk');
 check('LANE dusk: the mark is RED, not the near-black the classic program drew under the lane', (laneDusk?.decal[0] ?? 0) > 50, `rgba ${laneDusk?.decal.join(',')}`);

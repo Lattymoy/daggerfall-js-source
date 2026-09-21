@@ -140,7 +140,12 @@ test('EL4: proper dark dungeons and the glints - the ambient scaled once under t
   // the glints
   assert.equal(EL_SPEC_GLOSS, 24); assert.equal(EL_SPEC_STRENGTH, 0.12);
   for (const [name, fs] of [['mesh', EL_MESH_FS], ['terrain', EL_TERRAIN_FS], ['char', EL_CHAR_FS]]) {
-    assert.match(fs, /vec3 H = normalize\(Ln \+ normalize\(uCamPos - wp\)\);/, `${name}: the half vector`);
+    // AUDIT BLOOD3 F5/F6: the eye vector is hoisted out of the light
+    // loop now - it was rebuilt per light, up to 48 times a fragment,
+    // and the wet Fresnel below needs it by name anyway. Same value,
+    // same half vector.
+    assert.match(fs, /vec3 V = normalize\(uCamPos - wp\);\s*\n\s*vec3 H = normalize\(Ln \+ V\);/, `${name}: the half vector, off one eye vector`);
+    assert.doesNotMatch(fs, /normalize\(Ln \+ normalize\(uCamPos - wp\)\)/, `${name}: never rebuilt inside the loop`);
     assert.match(fs, /float spec = pow\(max\(dot\(n, H\), 0\.0\), 24\.0\) \* 0\.12;/, `${name}: the gloss and the strength`);
     assert.match(fs, /\(max\(dot\(n, Ln\), 0\.0\) \+ spec\) \* uPointColors\[i\]/, `${name}: the glint in the lantern's colour, under its shadow and falloff`);
   }
