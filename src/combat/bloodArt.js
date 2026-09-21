@@ -5,7 +5,7 @@
 // BLOOD1a chose to wear the splash animation's settled frame for every
 // mark, so the port shipped no blood picture. It still ships none: what
 // this module makes is made here, from noise, the moment a host asks -
-// an atlas of splat SHAPES in the blood-red family, four kinds in four
+// an atlas of splat SHAPES in the blood-red family, five kinds in four
 // variants, so a floor of marks is not one picture stamped six hundred
 // times.
 //
@@ -17,6 +17,8 @@
 //              flew, laid along its travel (BLOOD2a's `right`)
 //   drip     - a bead high in the cell and a run down to the cell's
 //              foot; a wall's mark, run by gravity
+//   print    - a boot's print, heel at -u and toe at +u (BLOOD2d): what
+//              a walker leaves for a few steps after treading in blood
 //
 // AND IT DRIES. A mark is born a fresh red with a little variance of
 // its own and darkens over DRY_TIME to a brown that reads as old blood,
@@ -34,15 +36,35 @@ export const BLOOD_ATLAS_RECORD = 'marks';
 export const ATLAS_SIZE = 256;
 export const ATLAS_CELLS = 4;
 /** The kinds, one row each; the variants across the row. */
-export const ATLAS_KINDS = Object.freeze(['pool', 'spatter', 'streak', 'drip']);
+export const ATLAS_KINDS = Object.freeze(['pool', 'spatter', 'streak', 'drip', 'print']);
+/** BLOOD2d: a boot's print - heel and sole, the toe toward +u, the way
+ *  the walker faces. Five rows now; the sheet is as tall as it needs. */
 /** Fresh blood's colour: the family of TEXTURE.380's own red (the splash
- *  reads about 168,16,16), a shade deeper so a lit mark is not pink. */
+ *  reads about 168,16,16), a shade deeper so a lit mark is not pink.
+ *
+ *  BLOOD AUDIT 4: THE ATLAS IS INK AND THE TINT IS THE COLOUR. BLOOD2b
+ *  painted this red into the texels and tinted them toward a "dried
+ *  brown-red" of 0.5/0.36/0.34 - a MULTIPLY, over a texel whose green
+ *  was already a twelfth of its red. A multiply cannot raise a channel:
+ *  the dried mark came out at HALF the brightness and MORE saturated
+ *  (G/R 0.082 fresh, 0.059 dried), a black-red - which is "super dark
+ *  instead of red" said a second way, and it landed on every mark
+ *  older than three minutes for the rest of the session. So the texel
+ *  holds the mark's SHAPE and GRAIN in white, and the vertex tint is
+ *  the blood's colour outright: BLOOD_BASE fresh, DRIED_TINT dried,
+ *  both real colours, both under one on every channel - which is also
+ *  what keeps the lane's decode honest, since decode(ink) x decode(tint)
+ *  is decode(ink x tint) only while both stay inside the curve. */
 export const BLOOD_BASE = Object.freeze([0.58, 0.05, 0.04]);
-/** How much a fresh mark's tint wanders from white - red less than the
- *  other two, so the variance reads as wetter-or-darker, never as a hue. */
+/** How much a fresh mark's tint wanders from the base - ALL THREE
+ *  CHANNELS TOGETHER, so the variance is a shade of the same red and
+ *  never a hue (BLOOD AUDIT 4: the red used to wander half as far as
+ *  the rest, which made the darker marks the MORE saturated ones). */
 export const FRESH_VARIANCE = 0.12;
-/** Dried blood: the port's own brown-red, as a TINT over the atlas's red. */
-export const DRIED_TINT = Object.freeze([0.5, 0.36, 0.34, 1]);
+/** Dried blood: the port's own rust brown, THE COLOUR ITSELF - about
+ *  the fresh red's luminance, with the green and blue a dried stain
+ *  has and a wet one does not. */
+export const DRIED_TINT = Object.freeze([0.3, 0.13, 0.09, 1]);
 /** Seconds from fresh to fully dried, and the steps it takes. */
 export const DRY_TIME = 180;
 export const DRY_STAGES = 8;
@@ -119,6 +141,19 @@ function shapeAt(kind, rng, bits) {
       return { a, shade: 0.88 + 0.12 * t };
     };
   }
+  if (kind === 'print') {
+    // a boot: a heel disc at -u, a longer sole at +u, a waist between,
+    // a little ragged so no two prints are the same stamp
+    const w = wobble(rng, 10, 0.12);
+    const toeX = 0.32 + rng() * 0.12, heelX = -0.5 - rng() * 0.08;
+    return (x, y) => {
+      const ang = Math.atan2(y, x);
+      const heel = 1 - smooth(0.2, 0.28, Math.hypot((x - heelX) * 1.1, y * 1.35) * (1 + w(ang)));
+      const sole = 1 - smooth(0.3, 0.38, Math.hypot((x - toeX) * 0.75, y * 1.15) * (1 + w(ang + 1)));
+      const waist = x > heelX && x < toeX ? 1 - smooth(0.16, 0.22, Math.abs(y) * (1 + 0.6 * Math.abs((x - (heelX + toeX) / 2) / ((toeX - heelX) / 2)))) : 0;
+      return { a: Math.max(heel, sole, waist), shade: 0.9 + 0.1 * smooth(heelX, toeX, x) };
+    };
+  }
   // drip: a bead high in the cell and a run down to its foot
   const w = wobble(rng, 6, 0.25);
   const runTo = -0.85 + rng() * 0.3;
@@ -144,12 +179,14 @@ function shapeAt(kind, rng, bits) {
  */
 export function buildBloodAtlas({ size = ATLAS_SIZE, cells = ATLAS_CELLS, seed = 0x5EED, rng = null } = {}) {
   const roll = rng ?? mulberry32(seed);
-  const colors = new Uint8ClampedArray(size * size * 4);
   const cell = size / cells;
+  const rows = ATLAS_KINDS.length;   // BLOOD2d: one row a kind - the sheet is `size` wide and `rows` cells tall
+  const height = cell * rows;
+  const colors = new Uint8ClampedArray(size * height * 4);
   const out = [];
   const BORDER = 2;
-  for (let row = 0; row < cells; row++) {
-    const kind = ATLAS_KINDS[row % ATLAS_KINDS.length];
+  for (let row = 0; row < rows; row++) {
+    const kind = ATLAS_KINDS[row];
     for (let col = 0; col < cells; col++) {
       const at = shapeAt(kind, roll, null);
       const grain = wobble(roll, 24, 0.08);
@@ -161,20 +198,21 @@ export function buildBloodAtlas({ size = ATLAS_SIZE, cells = ATLAS_CELLS, seed =
           const { a, shade } = inBorder ? { a: 0, shade: 1 } : at(x, y);
           const g = 1 + grain(Math.atan2(y, x)) * 0.5 + grain(px * 0.37 + py * 0.11) * 0.5;
           const o = ((y0 + py) * size + (x0 + px)) * 4;
-          colors[o] = Math.round(255 * Math.min(1, BLOOD_BASE[0] * shade * g));
-          colors[o + 1] = Math.round(255 * Math.min(1, BLOOD_BASE[1] * shade * g));
-          colors[o + 2] = Math.round(255 * Math.min(1, BLOOD_BASE[2] * shade * g));
+          // BLOOD AUDIT 4: white ink - the shape and its grain; the colour
+          // is the tint's (see BLOOD_BASE)
+          const ink = Math.round(255 * Math.max(0, Math.min(1, shade * g)));
+          colors[o] = ink; colors[o + 1] = ink; colors[o + 2] = ink;
           colors[o + 3] = Math.round(255 * Math.max(0, Math.min(1, a)));
         }
       }
       out.push({
         kind,
-        u0: (x0 + 1) / size, v0: (y0 + 1) / size,
-        u1: (x0 + cell - 1) / size, v1: (y0 + cell - 1) / size,
+        u0: (x0 + 1) / size, v0: (y0 + 1) / height,
+        u1: (x0 + cell - 1) / size, v1: (y0 + cell - 1) / height,
       });
     }
   }
-  return { colors, width: size, height: size, cells: out };
+  return { colors, width: size, height, cells: out };
 }
 
 /** The one atlas every pool shares, built on first ask. */
@@ -189,18 +227,37 @@ export function pickCell(atlas, kind, rng = Math.random) {
 }
 
 /** Which kind a mark is: the pool under the body, a streak that flew, a
- *  wall's run, or spatter. */
-export function bloodMarkKind({ pool = false, wall = false, stretch = 1 } = {}) {
+ *  wall's run, a walker's print (BLOOD2d), or spatter. */
+export function bloodMarkKind({ pool = false, wall = false, print = false, stretch = 1 } = {}) {
   if (pool) return 'pool';
   if (wall) return 'drip';
+  if (print) return 'print';
   return stretch > 1.5 ? 'streak' : 'spatter';
 }
 
-/** A fresh mark's tint: near white, red wandering less than the rest so
- *  the variance reads as wet-or-dark and never as a hue. */
+/** A fresh mark's tint: the blood's red, a shade darker by the roll -
+ *  one factor on all three channels, so it is a shade and not a hue. */
 export function freshTint(rng = Math.random) {
-  const r = rng();
-  return [1 - r * FRESH_VARIANCE * 0.5, 1 - r * FRESH_VARIANCE, 1 - r * FRESH_VARIANCE, 1];
+  const k = 1 - rng() * FRESH_VARIANCE;
+  return [BLOOD_BASE[0] * k, BLOOD_BASE[1] * k, BLOOD_BASE[2] * k, 1];
+}
+
+/** The shade a fresh tint was rolled at: its red over the base's, since
+ *  a fresh tint is the base by one factor. Anything else (a tint a pin
+ *  made up) is shade one. */
+export function freshShade(fresh) {
+  const k = BLOOD_BASE[0] > 0 ? (fresh?.[0] ?? BLOOD_BASE[0]) / BLOOD_BASE[0] : 1;
+  return k >= 1 - FRESH_VARIANCE - 1e-9 && k <= 1 + 1e-9 ? k : 1;
+}
+
+/** BLOOD2f: HOW WET a mark is at a stage - one fresh, zero dried, and
+ *  the sheen goes BEFORE the colour: fresh blood loses its gloss in
+ *  the first minutes and its red over the rest, so the wetness falls
+ *  as the square of what is left. */
+export const WET_POWER = 2;
+export function wetAt(stage) {
+  const t = Math.max(0, Math.min(1, (Number.isFinite(stage) ? stage : 0) / DRY_STAGES));
+  return Math.pow(1 - t, WET_POWER);
 }
 
 /** How dried a mark of `age` seconds is, in DRY_STAGES steps: 0 fresh,
@@ -210,14 +267,18 @@ export function dryStage(age) {
   return Math.min(DRY_STAGES, Math.floor((age / DRY_TIME) * DRY_STAGES));
 }
 
-/** The tint at a stage: the fresh tint sliding to DRIED_TINT. */
+/** The tint at a stage: the fresh tint sliding to DRIED_TINT at the
+ *  mark's own shade (BLOOD AUDIT 4: a mark rolled darker dries darker -
+ *  the variance is the mark's for life, not the wet half of it). */
 export function driedTint(fresh, stage) {
   const t = Math.max(0, Math.min(1, stage / DRY_STAGES));
-  if (t >= 1) return [DRIED_TINT[0], DRIED_TINT[1], DRIED_TINT[2], fresh[3] ?? 1];   // dried is DRIED, to the bit - not a mix that lands a rounding error off it
+  const k = freshShade(fresh);
+  const end = [DRIED_TINT[0] * k, DRIED_TINT[1] * k, DRIED_TINT[2] * k];
+  if (t >= 1) return [end[0], end[1], end[2], fresh[3] ?? 1];   // dried is DRIED, to the bit - not a mix that lands a rounding error off it
   return [
-    fresh[0] + (DRIED_TINT[0] - fresh[0]) * t,
-    fresh[1] + (DRIED_TINT[1] - fresh[1]) * t,
-    fresh[2] + (DRIED_TINT[2] - fresh[2]) * t,
+    fresh[0] + (end[0] - fresh[0]) * t,
+    fresh[1] + (end[1] - fresh[1]) * t,
+    fresh[2] + (end[2] - fresh[2]) * t,
     fresh[3] ?? 1,
   ];
 }

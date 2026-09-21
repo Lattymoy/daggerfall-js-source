@@ -44,7 +44,7 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { held, actionOf, routeKey, setBindings } from '../src/ui/input.js';
-import {
+import { clearBinding,
   createBindings, resetDefaults, setBinding, comboCode, isPairedCode,
 } from '../src/systems/inputActions.js';
 
@@ -176,6 +176,7 @@ test('G3/GR: both arms take the stored flag - the combo and the plain key it wou
 
 test('G3: a SINGLE-bound combo fires on either order - the code, not the comment (R9\'s lesson at :1636)', () => {
   const b = createBindings(); resetDefaults(b);
+  clearBinding(b, 'Jump', false);   // PAD1: the pad layout gave Jump a secondary (RB); this pin is the SINGLE-bound combo
   setBinding(b, comboCode('ShiftLeft', 'KeyK'), 'Jump', true);   // primary only
   setBindings(b);
   try {

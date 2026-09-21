@@ -131,7 +131,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
       // below, after this context; null falls to standing defaults.
       motorState: () => (_motorRef ? { eyeLevel: _motorRef.eye[1] - _motorRef.pos[1], capsule: _motorRef.height } : null),
       // MAC1 J: this host's canvas, for the pause door's relock. The
-      // context owns none of its own (dungeonContext.js:5774), so each
+      // context owns none of its own (dungeonContext.js:5776), so each
       // dungeon host hands its own in and the resume gesture carries
       // the pointer back with it (ui/pauseDoor.js:270-287).
       relock: () => requestLook(canvas) });
@@ -884,6 +884,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
           // `height` getter IS controller.height, and the swim toggle
           // three dozen lines above already reads it.
           dungeonShallow: _footsteps.waterStep(player.pos[1] + player.height / 2, surf, player.swimming) }));
+        if (_step) ctx.hitEffects?.footfall?.(player.pos, [Math.sin(cam.yaw), 0, Math.cos(cam.yaw)]);   // BLOOD2d: a foot came down - treading in blood tracks it
         if (_step && classicFootstepAllowed(_step.clip)) audio.playOneShot(_step.clip, _step.volume);   // IF1: DisableVanillaFootsteps - every classic clip is None while the mod owns the stride; BA1: Better Ambience nulls all but Dungeon2 and Outside2 (DisableBuiltInFootsteps' slip)
         // IF1: ImmersiveFootstepsObject.FixedUpdate - the dungeon arm off the water level (null = blockWaterLevel 10000) and the LIVE capsule centre.
         immersiveFootsteps.update(dt, {

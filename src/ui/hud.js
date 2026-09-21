@@ -22,6 +22,9 @@ import { drawEnhancedHud } from './enhancedHud.js';   // PX30
 import { drawLevelNotices } from './levelNotice.js';   // LV2: the level-up notification, on the same one call
 import { drawCrosshairAndModeIcon } from './hudCrosshair.js';   // U38
 import { playerDamageFlash } from './damageFlash.js';   // AUDIT 24 (wave 39): ShowPlayerDamage rides the one HUD call
+import { playerBloodScreen, SCREEN_SPATTER_MIN } from './bloodScreen.js';   // BLOOD2e: blood on the lens rides the same call
+import { bloodScreenOn } from '../combat/bloodSwitch.js';   // BLOOD2e: its row
+import { bloodAtlas, BLOOD_ATLAS_ARCHIVE, BLOOD_ATLAS_RECORD } from '../combat/bloodArt.js';   // BLOOD2e: the lens wears the marks' own atlas
 import { hudFade } from './fadeLayer.js';   // D4: FadeBehaviour's target IS the HUD's parent panel
 import { drawHudLarge, dockedLargeHudHeight, largeHudEnabled } from './hudLarge.js';   // U45: the classic bottom bar - an ALTERNATIVE HUD, see below; E5: and the docked bar's height, the crosshair's re-centre term
 import { drawActiveSpells, activeSpellAt, createBlinkClock, hudPointer } from './hudActiveSpells.js';   // U46: the buff/debuff icon rows
@@ -37,7 +40,7 @@ import { preloadSpellIcons } from './spellIcons.js';   // U46: the sheet the row
 import { drawEscortFaces } from './hudEscortFaces.js';   // FE1: the quest escorts' portrait column
 import { drawText, measureText } from './text.js';   // AUDIT 28 W2: the arrow counter's label
 import { HudFlickerController } from './hudFlicker.js';   // AUDIT 28 W2d: the near-death warning
-import { lastHealthLost } from './hudVitals.js';
+import { lastHealthLost, lastHealthLostPercent } from './hudVitals.js';   // BLOOD2e: HealthLostPercent, as CameraRecoiler reads it
 import { getBool } from '../systems/settings.js';   // AUDIT 28 W2: EnableArrowCounter, BowLeftHandWithSwitching
 import { getItem, isSummoned, ARROW_TEMPLATE } from '../systems/inventory.js';   // AUDIT 28 W2: GetItem(Arrow, priorityToConjured)
 import { EQUIP_SLOTS } from '../systems/equip.js';   // AUDIT 28 W2: the bow hand
@@ -535,6 +538,21 @@ export function drawHud(renderer, canvas, art, vitals, heading01, dt = 0,
   // window's OWN panel - so it is painted by that window's Draw and
   // dies with it. Its cycle keeps stepping either way.
   drawNearDeathFlicker(renderer, canvas, cur, cursorActive ? 0 : dt, hudDrawn);   // AUDIT 28 W2d: the parent panel's tint, under everything
+  // BLOOD2e: BLOOD ON THE LENS rides the detector CameraRecoiler reads -
+  // a blow worth a tenth of a life in one frame throws drops on the
+  // screen (the marks' own atlas, blended in the blood's red), which
+  // slide and fade. Ticked and drawn HERE - after the detector and its
+  // tint (W2d's order: detector, tint, then whatever draws), above the
+  // `!art` return and the enhanced HUD's - for the damage flash's reason: every host makes
+  // this one call last and over the viewmodel. Off by its row, nothing
+  // is thrown; what is on the lens still fades.
+  // BLOOD AUDIT 5: AND A BLOW. The detector says how much; the damage
+  // flash's latch says a blow landed (the RemoveHealth edge - an enemy's
+  // hit, a trap, a fall; never a spell, a load or a surrender).
+  const blow = playerDamageFlash.takeBlow();
+  if (blow && bloodScreenOn() && lastHealthLostPercent() >= SCREEN_SPATTER_MIN) playerBloodScreen.spatter(lastHealthLostPercent(), bloodAtlas());
+  playerBloodScreen.tick(dt);
+  if (playerBloodScreen.count && renderer.uploadTexture) playerBloodScreen.draw(renderer, canvas, renderer.uploadTexture(BLOOD_ATLAS_ARCHIVE, BLOOD_ATLAS_RECORD, bloodAtlas(), { smooth: true }));
   // AUDIT 64 F34: the mid-screen label. What SetMidScreenText reads
   // off the live screen (:357-359) is fed every frame; the guard is
   // the LargeHUD SETTING, not whether a bar happens to be drawn.

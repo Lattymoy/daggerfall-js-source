@@ -82,7 +82,7 @@ test('EV5: the wiring - three lit shaders, the latched flat tint, the studio, th
   // the second directional term in exactly the three normal-bearing
   // programs (mesh, character, terrain) - the billboard program has no
   // normals and takes no uMoonDir
-  assert.equal((r.match(/uniform vec3 uMoonDir;/g) || []).length, 3);
+  assert.equal((r.match(/uniform vec3 uMoonDir;/g) || []).length, 4);   // BLOOD AUDIT 5: and the decal, which reads its normal off its own derivatives and takes the moon by N.L (uDecalMoon * mdiff, not this program's colour * scale form)
   assert.equal((r.match(/uMoonColor \* \(uMoonScale \* mdiff\)/g) || []).length, 3);
   // the flats: the Lambert-average half, INSIDE the _clockLit latch -
   // clockless scenes keep their full-bright flats

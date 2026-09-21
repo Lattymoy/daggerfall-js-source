@@ -3,7 +3,7 @@
 // quirk, the load path's raw adds, the unknown-action round trip.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import {
+import { DEFAULT_SECONDARY_BINDINGS,
   ACTIONS, DEFAULT_BINDINGS, parseActionName,
   createBindings, setBinding, clearBinding, clearBindingByCode,
   addRemovedPrimaryAction, getBinding, getBindings, actionForCode,
@@ -193,7 +193,9 @@ test('I1: the save shape and the unknown-action round trip (:871-930, :1950-1969
   const data = serializeKeyBinds(s);
   assert.equal(data.actionKeyBinds.KeyW, 'MoveForwards');
   assert.deepEqual(data.removedPrimaryActions, ['Sneak']);
-  assert.deepEqual(data.secondaryActionKeyBinds, {});
+  // PAD1: the secondary dict carries the pad layout after a reset - those rows and nothing else
+  assert.deepEqual(Object.keys(data.secondaryActionKeyBinds).sort(), DEFAULT_SECONDARY_BINDINGS.map(([c]) => c).sort());
+  assert.deepEqual(data.removedSecondaryActions, []);
 
   // a NEWER build's file: an action this build does not know, plus a
   // second key hand-bound to Rest.

@@ -1168,7 +1168,8 @@ function choiceRow(key, name, note, tiers, { home = false, read = null, write = 
   if (!home) { const moved = featureForControl('prefs', key); if (moved) return movedRow(moved); }   // FT2
   // FT2: a condensed row reads the lane's live value and writes both stores
   const cur = String(read ? read() : getPref(key));
-  const at = Math.max(0, tiers.findIndex(([v]) => String(v) === cur));
+  const found = tiers.findIndex(([v]) => String(v) === cur);
+  const at = found >= 0 ? found : Math.max(0, tiers.findIndex(([v]) => String(v) === String(featureForControl('prefs', key)?.control?.default ?? featureForControl('prefs', key)?.control?.initial)));   // BLOOD AUDIT 5: the row's default, not the first tier, for a value that is no tier
   const row = el('div', 'row');
   const main = el('button', 'row-main');
   main.append(el('div', 'row-name', name));
@@ -1796,7 +1797,11 @@ function tileStates(f) {
     const locked = onlineForcedPref(c.key) !== undefined;
     if (c.tiers) {
       const cur = String(c.read ? c.read() : getPref(c.key));
-      const at = Math.max(0, c.tiers.findIndex(([v]) => String(v) === cur));
+      // BLOOD AUDIT 5: a stored value that is no tier reads as the row's
+      // DEFAULT, which is what the game runs - not the first segment
+      const fallback = Math.max(0, c.tiers.findIndex(([v]) => String(v) === String(c.default ?? c.initial)));
+      const found = c.tiers.findIndex(([v]) => String(v) === cur);
+      const at = found >= 0 ? found : fallback;
       return { labels: c.tiers.map(([, l]) => l), at, locked,
         set: (i) => (c.write ?? ((v) => setPref(c.key, v)))(c.tiers[i][0]) };
     }

@@ -31,6 +31,14 @@ const PAIRS = [
   ['KeypadDivide', 'NumpadDivide'], ['KeypadMultiply', 'NumpadMultiply'], ['KeypadMinus', 'NumpadSubtract'], ['KeypadPlus', 'NumpadAdd'], ['KeypadPeriod', 'NumpadDecimal'],
   // the mouse, as the port's held set spells it (ui/input.js MOUSE_CODES)
   ['Mouse0', 'Mouse0'], ['Mouse1', 'Mouse1'], ['Mouse2', 'Mouse2'],
+  // PAD1: the controller, as the poller spells it (ui/gamepadInput.js
+  // synthesises a keydown whose code is Unity's own JoystickButtonN name,
+  // and the hosts' raw set is what a mod's key polls). Unity's KeyCode
+  // names twenty, so a mod's Enum.TryParse takes every one of them; the
+  // standard mapping reaches ten. Without these a mod's TextKey could
+  // never name a pad button - the pane refused the capture as a key
+  // Unity has no member for, which was false.
+  ...Array.from({ length: 20 }, (_, i) => [`JoystickButton${i}`, `JoystickButton${i}`]),
 ];
 const TO_DOM = new Map(PAIRS);
 const TO_KEYCODE = new Map(PAIRS.map(([k, c]) => [c, k]));
