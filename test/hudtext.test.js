@@ -4,6 +4,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { HudText, HUD_TEXT_POP_DELAY, HUD_TEXT_MAX_ROWS, HUD_TEXT_RUBBERBAND } from '../src/ui/hudText.js';
+import { BUILDING_TYPES, isNamedBuildingType, isResidence } from '../src/world/buildingNames.js';   // INFO1: why a residence has no name to say
 
 test('hudText: PopupText.AddText/Update - the queue never caps, the timer pops', () => {
   const h = new HudText();
@@ -692,4 +693,50 @@ test('ENH-NOTICE3 (AUDIT A1/A6/A9/A10): the sheet - the stack clips what will no
   assert.match(ENHANCED_CSS, /@media \(max-width: 720px\) \{[^@]*\.notice-row, \.notice\.notice-toast \.notice-row \{ font-size: 13px; \}/,
     'mutant: on a phone the toast stays 14px while the box drops to 13 - the panel merely read set larger than the one to answer');
   assert.match(ENHANCED_CSS, /@media \(max-height: 520px\) \{[^@]*\.notice-row, \.notice\.notice-toast \.notice-row \{ font-size: 13px; line-height: 1\.25; \}/);
+});
+
+test('INFO1: a nameless row is not a row - no empty toast, and no blank line in the notebook', () => {
+  // kurkku on Discord (2026-09-21): "an empty message box appears when
+  // clicking on residences in info mode... I assume the intended
+  // behavior is that nothing comes up at all."
+  //
+  // Info mode on a building says its discovered displayName. A
+  // RESIDENCE has none - House1..House4 are not named building types -
+  // so `discoverBuilding` stores `building.name ?? ''` and the say was
+  // of an empty string. DFU survives that because a row there is a bare
+  // TextLabel; a row HERE is a toast with a plate, so "" drew a box
+  // with nothing in it.
+  assert.equal(isResidence(BUILDING_TYPES.House1), true);
+  assert.equal(isNamedBuildingType(BUILDING_TYPES.House1), false, 'a residence has no name to say');
+  assert.equal(isNamedBuildingType(BUILDING_TYPES.Tavern), true, '...where a tavern does');
+
+  const hud = new HudText('info1');
+  const filed = [];
+  hud.onMessage = (m) => filed.push(m);
+  hud.add('');
+  assert.deepEqual(hud.lines, [], 'an empty name queues nothing');
+  assert.deepEqual(filed, [], 'and files nothing in the notebook ring - the second symptom of the same call');
+  hud.add('   ');
+  assert.deepEqual(hud.lines, [], 'whitespace is nameless too - it paints the same empty plate');
+  hud.add(null);
+  hud.add(undefined);
+  assert.deepEqual(hud.lines, [], 'and a missing name is not a throw');
+
+  // A REAL NAME IS UNTOUCHED, and still arrives verbatim - this is a
+  // gate, not a formatter, so a caller's own spacing is the caller's.
+  hud.add('  The Rusty Nail  ');
+  assert.equal(hud.lines.length, 1);
+  assert.equal(hud.lines[0].text, '  The Rusty Nail  ', 'the row is queued untrimmed');
+  assert.deepEqual(filed, ['  The Rusty Nail  ']);
+  assert.equal(hud.timer, HUD_TEXT_POP_DELAY, 'and the first real row still arms the timer');
+
+  // ...and a rejected row does not disturb a queue already running:
+  // the timer, the ids and the notebook all stay where they were.
+  const before = { timer: hud.timer, id: hud.lines[0].id, filed: filed.length };
+  hud.add('');
+  assert.equal(hud.timer, before.timer, 'the timer is not re-armed by a row that never joined');
+  assert.equal(hud.lines.length, 1);
+  hud.add('Second');
+  assert.equal(hud.lines[1].id, before.id + 1, 'and no id was burned on the empty one');
+  assert.equal(filed.length, before.filed + 1);
 });
