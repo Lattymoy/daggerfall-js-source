@@ -339,11 +339,12 @@ is unchanged and next.
 
 `server-account/` — a second Cloudflare Worker over D1. Identity alone:
 guests, sessions and the token. No password yet (ACC1c), no provider
-links, no saves (ACC2). **It is written and tested and it is not deployed**, because
-creating a D1 database and putting a secret on the account are things
-only Mac's Cloudflare login can do; `server-account/wrangler.toml`
-carries the four steps, and the D1 binding is commented out on purpose
-so a deploy cannot half-succeed against a database nobody made yet.
+links, no saves (ACC2). ~~It is written and tested and it is not
+deployed, because creating a D1 database and putting a secret on the
+account are things only Mac's Cloudflare login can do.~~ **ACC1-CI
+corrected that** — the same token that deploys the relay does both, so
+the deploy stands the service up itself and the D1 binding is live. See
+*ACC1-CI* below.
 
 **A GUEST IS A REAL ROW FROM FIRST CONTACT.** Not a lesser kind of
 account — an account with no provider attached yet, which is the whole
@@ -479,22 +480,102 @@ which is not measurable through a PBKDF2 derivation that dwarfs it, and
 a refusal-naming mutation that moves both spellings together, so the
 equality the pin actually asserts still holds.
 
-## WHAT MAC HAS TO DO BEFORE ANY OF THIS IS LIVE
+## ~~WHAT MAC HAS TO DO BEFORE ANY OF THIS IS LIVE~~ — ACC1-CI, and there is nothing
 
-None of it can come from CI; it creates resources rather than deploying
-code. `server-account/wrangler.toml` carries the same list.
+~~None of it can come from CI; it creates resources rather than
+deploying code.~~ **That was wrong, and it was wrong on the same day
+DEPLOY-PROSE finished paying for the identical mistake on the relay.**
 
-1. `npx wrangler d1 create daggerfall-accounts`, then put the id in the
-   toml and uncomment the binding.
-2. Apply `server-account/migrations/0001_accounts.sql`, then
-   `0002_passwords.sql` — in order and once each. 0001 is
-   idempotent; 0002 is not, because `ALTER TABLE ADD COLUMN` has no
-   `IF NOT EXISTS`.
-3. `node tools/mintIdentityKeys.mjs` — the private half goes in with
-   `wrangler secret put IDENTITY_PRIVATE_KEY`, the public half into the
-   relay's config, where it is not a secret at all.
-4. `npx wrangler deploy` from `server-account/`. **This drops nobody**,
-   which is the entire point of the split.
+Mac, reading the four-step list:
+
+> The token provided allows you to take this on yourself. I am not
+> needed at all.
+
+He was right. The reasoning behind the list — *CI can deploy code to
+resources but cannot create them* — is simply false of the Cloudflare
+API token that has been deploying the relay since SRV-N/CI. The same
+token creates a D1 database and sets a Worker secret. Every one of the
+four steps had an idempotent spelling, and nobody had looked for one.
+
+`.github/workflows/account-deploy.yml` now does all four on every push
+to main that touches the service, and `server-account/wrangler.toml`
+says so instead of carrying the list.
+
+**A LIST OF MANUAL STEPS IS A DEPENDENCY ON SOMEBODY'S ATTENTION**, and
+this arc had written four of them into the one place a person looks
+last. The failure mode is not that a step is hard; it is that the
+service sits finished and undeployed for as long as nobody has an
+afternoon.
+
+### What changed to make each step automatic
+
+| step | was | is |
+|---|---|---|
+| the database | `d1 create`, then paste the id into the toml | created if absent; the id is **resolved from Cloudflare** and written into the runner's copy, never committed |
+| the migrations | two `d1 execute --file` lines, "in order and once each" | `d1 migrations apply`, which keeps a `d1_migrations` ledger **in the database** |
+| the signing pair | mint, then `secret put`, then copy the public half into the relay | minted **only if absent**, both halves piped straight in, public half served at `/v1/pubkey` |
+| the deploy | `npx wrangler deploy` | on push, then verified by content against `/v1/health` |
+
+**THE MIGRATION CHANGE IS THE ONE THAT WAS ACTUALLY LOAD-BEARING.**
+ACC1c had to write a warning that 0002 is not idempotent — `ALTER TABLE
+ADD COLUMN` has no `IF NOT EXISTS` — and then trust a reader to apply
+each file exactly once. Wrangler's ledger makes that a property of the
+tool. *"Apply each one once, in order"* was never a law; it was a hope
+addressed to whoever read the comment.
+
+**AND THE PUBLIC KEY HAD TO STOP BEING A THING SOMEBODY CARRIES.** The
+old step 3 ended "…and the PUBLIC half into the relay's config", which
+is a copy-paste between two systems performed by a human once, at a
+moment nobody records. Now the pair is minted by a job no person
+watches — so the service **publishes its own public half** at
+`/v1/pubkey`, openly and before any credential, because a public key
+can verify and cannot mint. ACC1d reads it from there.
+
+That also closes the hazard the automation introduced: a pair minted
+where nobody can see it, in a service that could not hand the public
+half back, would be a verifying key nobody can ever read — and the only
+way to get one would be to re-mint, which invalidates every token
+already issued. The deploy's last step asks `/v1/pubkey` for a key and
+fails if it does not get one.
+
+### What the gate's own mutants found
+
+`test/accountdeploy.test.js`, 6 pins; `tools/mutants/acc1ci.json`, 18
+mutants, 17 dead and 1 recorded equivalent. **Four survived the first
+run and every one was a hole in the pins rather than a mutant worth
+keeping:**
+
+- The sentinel check asked whether the workflow *contained* the string.
+  The workflow's own header comment quotes it while explaining what it
+  is for, so the prose answered for the code and a drifted shell
+  variable sailed through. It reads the **assignment** now.
+- The re-mint guard was checked as "`exit 0` comes before `secret
+  put`". A mutant that moved the whole guard *down past the minting
+  call* satisfied that and still re-minted on every deploy. The pin
+  reads four landmarks in order now — look, bail, mint, put.
+- The derived-host check asked whether the workflow contained one
+  `grep '^name'` **anywhere**. There are two steps that build a URL; a
+  mutant that hardcoded the host in one survived on the other one's
+  line. It is asked per step now, of every step that builds a URL.
+- The comment-exemption controls carried **copies** of the assertion's
+  regex, so blanking the assertion left the controls proving only that
+  two throwaway literals still matched each other. One regex, used
+  three times.
+
+**AND THE CAMPAIGN'S FIRST RESULT WAS ITSELF A LIE.** A duplicate
+`const mint` made the test file fail to *parse*, so every mutant came
+back dead — 17 of 18 green with nothing being asked at all. A mutation
+campaign is evidence only if the unmutated suite is known to run, and
+that is now the order it is done in.
+
+### The one thing that is still a person's
+
+The **Cloudflare API token itself**, in `secrets.CLOUDFLARE_API_TOKEN`.
+It was already there for the relay; nothing about this arc adds a
+credential anywhere. If that secret is ever missing or under-scoped,
+the workflow's first step says so in one line rather than letting
+wrangler fail four steps later with an authentication error that reads
+like a wrangler bug.
 
 ## OPEN
 

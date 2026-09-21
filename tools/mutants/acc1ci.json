@@ -1,0 +1,186 @@
+[
+  {
+    "name": "ACC1CI-1-the-sentinel-drifts-in-the-workflow",
+    "file": ".github/workflows/account-deploy.yml",
+    "old": "          sentinel='resolved-by-account-deploy-workflow'",
+    "new": "          sentinel='resolved-by-the-account-deploy-workflow'",
+    "tests": [
+      "test/accountdeploy.test.js"
+    ],
+    "note": "The config and the workflow stop agreeing on the one string that joins them. Without the pin this deploys a Worker bound to a database id that is a sentence, which fails as a wrangler error about a missing database - three steps from its cause."
+  },
+  {
+    "name": "ACC1CI-2-a-real-database-id-is-committed",
+    "file": "server-account/wrangler.toml",
+    "old": "database_id = \"resolved-by-account-deploy-workflow\"",
+    "new": "database_id = \"9a4e2c1b7f3d40518e6a2b9c4d7e1f03\"",
+    "tests": [
+      "test/accountdeploy.test.js",
+      "test/accountworker.test.js"
+    ],
+    "note": "The opposite drift from the one everybody watches for: not a secret, just a fact about ONE Cloudflare account quietly welded into a repo that had been portable."
+  },
+  {
+    "name": "ACC1CI-3-the-substitution-is-assumed",
+    "file": ".github/workflows/account-deploy.yml",
+    "old": "          if grep -q \"$sentinel\" \"$toml\"; then\n            echo \"::error::the sentinel survived the substitution\"\n            exit 1\n          fi\n",
+    "new": "",
+    "tests": [
+      "test/accountdeploy.test.js"
+    ],
+    "note": "sed that matched nothing exits 0. This is the arm that turns a silent no-op into a named failure."
+  },
+  {
+    "name": "ACC1CI-4-the-migrations-go-back-to-being-listed",
+    "file": ".github/workflows/account-deploy.yml",
+    "old": "          $WRANGLER d1 migrations apply \"$DB_NAME\" --remote",
+    "new": "          $WRANGLER d1 execute \"$DB_NAME\" --remote --file=migrations/0001_accounts.sql\n          $WRANGLER d1 execute \"$DB_NAME\" --remote --file=migrations/0002_passwords.sql",
+    "tests": [
+      "test/accountdeploy.test.js"
+    ],
+    "note": "The exact spelling ACC1b shipped, and the reason the ledger replaced it: 0002 has no IF NOT EXISTS, so the second run of this job errors on `duplicate column` - and a THIRD migration would never run at all until somebody edited the list."
+  },
+  {
+    "name": "ACC1CI-5-the-binding-is-commented-out-again",
+    "file": "server-account/wrangler.toml",
+    "old": "[[d1_databases]]\nbinding = \"DB\"",
+    "new": "# [[d1_databases]]\n# binding = \"DB\"",
+    "tests": [
+      "test/accountdeploy.test.js",
+      "test/accountworker.test.js"
+    ],
+    "note": "ACC1b's own arrangement, which was right then and ships a Worker with no database now - every route answers 503 no-database."
+  },
+  {
+    "name": "ACC1CI-6-migrations-dir-points-somewhere-else",
+    "file": "server-account/wrangler.toml",
+    "old": "migrations_dir = \"migrations\"",
+    "new": "migrations_dir = \"sql\"",
+    "tests": [
+      "test/accountdeploy.test.js"
+    ],
+    "note": "The ledger then finds no migrations at all and applies nothing, and `migrations apply` reports success over an empty schema."
+  },
+  {
+    "name": "ACC1CI-7-the-pair-is-re-minted-every-deploy",
+    "file": ".github/workflows/account-deploy.yml",
+    "old": "            echo \"a signing key is already set - leaving it alone (re-minting would invalidate every token in flight)\"\n            exit 0",
+    "new": "            echo \"a signing key is already set - replacing it\"",
+    "tests": [
+      "test/accountdeploy.test.js"
+    ],
+    "note": "THE DESTRUCTIVE ONE. Every token the service ever signed verifies against the public half; replacing the pair fails all of them at once and signs out everybody online, on a deploy whose whole selling point is that it drops nobody."
+  },
+  {
+    "name": "ACC1CI-8-the-bail-out-lands-after-the-write",
+    "file": ".github/workflows/account-deploy.yml",
+    "old": "          if echo \"$have\" | jq -e 'any(.[]; .name == \"IDENTITY_PRIVATE_KEY\")' >/dev/null; then\n            echo \"a signing key is already set - leaving it alone (re-minting would invalidate every token in flight)\"\n            exit 0\n          fi\n          echo \"no signing key yet - minting one\"\n          { read -r priv; read -r pub; } < <(node ../tools/mintIdentityKeys.mjs --pipe)",
+    "new": "          echo \"minting\"\n          { read -r priv; read -r pub; } < <(node ../tools/mintIdentityKeys.mjs --pipe)\n          if echo \"$have\" | jq -e 'any(.[]; .name == \"IDENTITY_PRIVATE_KEY\")' >/dev/null; then\n            echo \"a signing key is already set - leaving it alone (re-minting would invalidate every token in flight)\"\n            exit 0\n          fi",
+    "tests": [
+      "test/accountdeploy.test.js"
+    ],
+    "note": "The guard is still there and still true, and it now runs after the mint. This is why the pin checks the ORDER and not just the presence of both: a bail-out downstream of the thing it guards is not a bail-out. (Here it would only waste a keypair - but the same shape one line lower, past the `secret put`, is the destructive case wearing a passing test.)"
+  },
+  {
+    "name": "ACC1CI-9-the-private-half-goes-on-the-command-line",
+    "file": ".github/workflows/account-deploy.yml",
+    "old": "          printf '%s' \"$priv\" | $WRANGLER secret put IDENTITY_PRIVATE_KEY",
+    "new": "          $WRANGLER secret put IDENTITY_PRIVATE_KEY --text \"$priv\"",
+    "tests": [
+      "test/accountdeploy.test.js"
+    ],
+    "note": "An argument is visible in a process list and lands in any shell trace. The pipe is the whole reason nobody ever has to see this value."
+  },
+  {
+    "name": "ACC1CI-10-the-key-tool-offers-one-half-at-a-time",
+    "file": "tools/mintIdentityKeys.mjs",
+    "old": "if (process.argv.includes('--pipe')) {\n  process.stdout.write(`${priv}\\n${pub}\\n`);\n  process.exit(0);\n}",
+    "new": "if (process.argv.includes('--private')) { process.stdout.write(`${priv}\\n`); process.exit(0); }\nif (process.argv.includes('--public')) { process.stdout.write(`${pub}\\n`); process.exit(0); }\nif (process.argv.includes('--pipe')) {\n  process.stdout.write(`${priv}\\n${pub}\\n`);\n  process.exit(0);\n}",
+    "tests": [
+      "test/accountdeploy.test.js"
+    ],
+    "note": "Harmless-looking, and it is the door to two calls minting two unrelated pairs - a service that signs with a key its own /v1/pubkey disowns, which on the wire is indistinguishable from a forged token."
+  },
+  {
+    "name": "ACC1CI-11-the-halves-come-out-swapped",
+    "file": "tools/mintIdentityKeys.mjs",
+    "old": "  process.stdout.write(`${priv}\\n${pub}\\n`);",
+    "new": "  process.stdout.write(`${pub}\\n${priv}\\n`);",
+    "tests": [
+      "test/accountdeploy.test.js"
+    ],
+    "note": "The workflow reads private-then-public positionally, so a swap stores the public key as the signing secret and publishes the private one at /v1/pubkey. Caught by asking which is which rather than by trusting the order."
+  },
+  {
+    "name": "ACC1CI-12-the-tool-keeps-a-copy",
+    "file": "tools/mintIdentityKeys.mjs",
+    "old": "const priv = b64(await subtle.exportKey('pkcs8', kp.privateKey));",
+    "new": "const priv = b64(await subtle.exportKey('pkcs8', kp.privateKey));\nawait (await import('node:fs')).promises.writeFile('/tmp/identity.key', priv);",
+    "tests": [
+      "test/accountdeploy.test.js",
+      "test/accountworker.test.js"
+    ],
+    "note": "The oldest way a secret escapes: something helpful writes it down."
+  },
+  {
+    "name": "ACC1CI-13-the-verify-types-the-host",
+    "file": ".github/workflows/account-deploy.yml",
+    "old": "          name=$(grep -oP '^name\\s*=\\s*\"\\K[^\"]+' \"$toml\")\n          test -n \"$want\" && test -n \"$name\" || {",
+    "new": "          name=daggerfall-accounts\n          test -n \"$want\" && test -n \"$name\" || {",
+    "tests": [
+      "test/accountdeploy.test.js"
+    ],
+    "note": "A second home for a fact wrangler.toml owns. Rename the Worker and the check goes on interrogating a host that no longer exists - the SLAM13 failure that relaydeploy.test.js exists for, one workflow over."
+  },
+  {
+    "name": "ACC1CI-14-nothing-checks-the-deploy-landed",
+    "file": ".github/workflows/account-deploy.yml",
+    "old": "            if [ \"$got\" = \"$want\" ]; then echo \"VERIFIED: the account service serves $want\"; exit 0; fi",
+    "new": "            if [ -n \"$got\" ]; then echo \"VERIFIED: something answered\"; exit 0; fi",
+    "tests": [
+      "test/accountdeploy.test.js"
+    ],
+    "equivalent": true,
+    "why": "The pin holds that /v1/health is ASKED and that the version and host are read from the config; it does not read the comparison inside the retry loop, so this survives. Recorded rather than papered over: a workflow cannot be executed by node, so the strongest available pin is that the right question is asked of the right host, and the answer's handling is held by reading. The version equality between the toml and src/index.js - which is what would make a wrong `want` impossible to satisfy - IS pinned, one assertion up."
+  },
+  {
+    "name": "ACC1CI-15-the-pubkey-needs-a-credential",
+    "file": "server-account/src/index.js",
+    "old": "    if (path === '/v1/pubkey') {\n      const pub = String(env.IDENTITY_PUBLIC_KEY ?? '');",
+    "new": "    if (path === '/v1/pubkey' && false) {\n      const pub = String(env.IDENTITY_PUBLIC_KEY ?? '');",
+    "tests": [
+      "test/accountworker.test.js"
+    ],
+    "note": "The route then falls through to the credential ladder and 401s. A public key behind a login is a public key nobody can use, and the relay is exactly the caller with no account."
+  },
+  {
+    "name": "ACC1CI-16-an-absent-key-answers-empty",
+    "file": "server-account/src/index.js",
+    "old": "      return pub\n        ? json({ alg: TOKEN_V, key: pub }, 200, origin)\n        : no('no-signing-key', 503, origin);",
+    "new": "      return json({ alg: TOKEN_V, key: pub }, 200, origin);",
+    "tests": [
+      "test/accountworker.test.js"
+    ],
+    "note": "A 200 with an empty key is worse than a 503: the relay imports it, every verify fails, and the symptom reads as 'everybody's tokens are forged'."
+  },
+  {
+    "name": "ACC1CI-17-the-manual-claim-pattern-goes-blind",
+    "file": "test/accountdeploy.test.js",
+    "old": "  const MANUAL_CLAIM = /(what a person has to do once, by hand|none of this can be done from ci|cannot be done from ci|by hand, because it creates resources|only a cloudflare login can)/i;",
+    "new": "  const MANUAL_CLAIM = /(^\\bnevermatchesanything\\b$)/i;",
+    "tests": [
+      "test/accountdeploy.test.js"
+    ],
+    "note": "The vacuous-gate hole, aimed at this gate's own regex. The first cut of DEPLOY-PROSE's identical pattern had exactly this and survived, which is why the positive controls quoting ACC1b's real sentences are in the test rather than in a comment about the test."
+  },
+  {
+    "name": "ACC1CI-18-the-comment-exemption-swallows-commands",
+    "file": "test/accountdeploy.test.js",
+    "old": "  const HAND_RUN = /^\\s*[^#\\n]*d1 execute[^\\n]*--file/m;",
+    "new": "  const HAND_RUN = /^#*never-matches-a-command$/m;",
+    "tests": [
+      "test/accountdeploy.test.js"
+    ],
+    "note": "Narrowing a pin to dodge a false positive is how a pin quietly stops asking anything. The two controls beside it - a comment it must ignore, a real command it must catch - are what make the narrowing safe, and they are what kills this."
+  }
+]

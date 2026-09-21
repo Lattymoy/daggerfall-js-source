@@ -30,6 +30,7 @@
 // may do.
 //
 //   GET  /v1/health                       -> { ok, v }
+//   GET  /v1/pubkey                       -> { alg, key }   (not a secret)
 //   POST /v1/auth/guest   { label? }      -> { playerId, secret, sessionId, name, kind }
 //   POST /v1/auth/token   { secret }      -> { token, name, kind, expiresAt }
 //   POST /v1/auth/session { secret, label? } -> { secret, sessionId }   (a second device)
@@ -37,8 +38,20 @@
 //   POST /v1/auth/logout  { secret, all? }-> { revoked, scope }
 //
 // Bindings (wrangler.toml): env.DB (D1), env.ALLOWED_ORIGIN,
-// env.IDENTITY_PRIVATE_KEY (base64 PKCS8 Ed25519 - a SECRET, set with
-// `wrangler secret put`, never in the toml), env.ACCOUNT_VERSION.
+// env.ACCOUNT_VERSION, and the signing pair, which the deploy mints
+// ONCE and puts in with `wrangler secret put` - never into the toml,
+// which is committed:
+//
+//   env.IDENTITY_PRIVATE_KEY  base64 PKCS8 Ed25519. A SECRET. It is
+//                             what makes a token believable and it is
+//                             never read back out of Cloudflare.
+//   env.IDENTITY_PUBLIC_KEY   base64url raw. NOT a secret - /v1/pubkey
+//                             hands it to anybody who asks. It lives
+//                             beside the private half because the pair
+//                             is minted where no person is watching,
+//                             and a verifying key nobody can read again
+//                             would have to be re-minted, which
+//                             invalidates every token already issued.
 //
 // THE SECRET IS A BEARER CREDENTIAL and it is carried in the BODY, not
 // the query string, on everything that mutates - a query string lands
@@ -52,7 +65,7 @@ import {
   devicesOf, accountView, displayName, accountKind,
   register, login, recover, changePassword, setEmail, overRate,
 } from './accounts.js';
-import { mintToken, MAX_TTL_S } from '../../src/net/identityToken.js';
+import { mintToken, MAX_TTL_S, TOKEN_V } from '../../src/net/identityToken.js';
 
 /** Bumped with every change to this Worker's law, and answered by
  *  /health - the same discipline RELAY_VERSION keeps, for the same
@@ -67,7 +80,7 @@ export const MAX_BODY_BYTES = 4 * 1024;
 /** Every path this service serves. Named once, so the 404 below and
  *  the ladder further down cannot come to disagree about what exists. */
 export const ROUTES = new Set([
-  '/v1/health', '/v1/auth/guest', '/v1/auth/token', '/v1/auth/session',
+  '/v1/health', '/v1/pubkey', '/v1/auth/guest', '/v1/auth/token', '/v1/auth/session',
   '/v1/account', '/v1/auth/logout',
   // ACC1c: username and password. `register` needs a session (it
   // upgrades the guest row that session belongs to); `login` and
@@ -144,6 +157,23 @@ export default {
     }
 
     if (path === '/v1/health') return json({ ok: true, v: env.ACCOUNT_VERSION || ACCOUNT_VERSION }, 200, origin);
+
+    // ACC1-CI: THE SERVICE PUBLISHES ITS OWN PUBLIC KEY, and that is the
+    // whole point of it being public. The pair is minted by the deploy
+    // and neither half is ever typed by a person, so without this the
+    // public key would exist only in the run log that minted it - and a
+    // verifying key nobody can read again is a verifying key that has to
+    // be re-minted, which invalidates every token already issued.
+    //
+    // It is served openly, before any credential, because A PUBLIC KEY
+    // CAN VERIFY AND CANNOT MINT. Anyone may check a token this service
+    // signed; nobody may sign one.
+    if (path === '/v1/pubkey') {
+      const pub = String(env.IDENTITY_PUBLIC_KEY ?? '');
+      return pub
+        ? json({ alg: TOKEN_V, key: pub }, 200, origin)
+        : no('no-signing-key', 503, origin);
+    }
 
     // A PATH NOBODY SERVES IS A 404, and it is answered HERE - before
     // the credential is looked at. The first cut checked auth first,

@@ -27,7 +27,7 @@ import {
   hashPassword, verifyPassword, needsRehash, parseStored, passwordRefusal,
   mintRecoveryCode, canonicalCode, PBKDF2_ITERS, CODE_ALPHABET,
 } from '../server-account/src/password.js';
-import { verifyToken, importPublicKeyB64, ID_RE, nameIsIssuable } from '../src/net/identityToken.js';
+import { verifyToken, importPublicKeyB64, ID_RE, nameIsIssuable, TOKEN_V } from '../src/net/identityToken.js';
 
 const src = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 const { subtle } = globalThis.crypto;
@@ -436,12 +436,56 @@ test('ACC1b: the service names its own deploy, and the version is in step', asyn
   assert.ok(inToml, 'the config no longer carries a version for /health to answer');
   assert.equal(inToml[1], ACCOUNT_VERSION, 'src/index.js and wrangler.toml name different deploys');
 
-  // AND THE D1 BINDING IS COMMENTED UNTIL THE DATABASE EXISTS - a
-  // binding naming a database nobody created fails the deploy in a way
-  // that reads like a code error.
-  assert.match(toml, /#\s*\[\[d1_databases\]\]/, 'the binding is live; the database id must be real');
-  assert.doesNotMatch(toml, /^\s*\[\[d1_databases\]\]/m);
-  assert.match(toml, /PUT-THE-ID-FROM-STEP-1-HERE/);
+  // ACC1-CI RE-AIMED THIS. ACC1b kept the D1 binding COMMENTED OUT,
+  // because a binding naming a database nobody had created fails the
+  // deploy in a way that reads like a code error - and at the time
+  // creating it was a person's job that might never happen.
+  //
+  // The deploy creates the database itself now, so the binding is live
+  // and the thing worth holding moved: THE ID IS STILL NOT COMMITTED.
+  // The remaining hazard is the opposite one - somebody pasting a real
+  // id in and quietly making this repo specific to one Cloudflare
+  // account. test/accountdeploy.test.js owns the rest of the seam.
+  assert.match(toml, /^\[\[d1_databases\]\]/m, 'the binding is commented out again - the Worker would deploy with no database');
+  const id = /^database_id\s*=\s*"([^"]+)"/m.exec(toml);
+  assert.ok(id, 'the binding no longer declares a database_id');
+  assert.doesNotMatch(id[1], /^[0-9a-f-]{32,}$/i, 'a real D1 id is committed - Cloudflare owns it, and the deploy resolves it');
+});
+
+test('ACC1-CI: the service hands back its own public key, openly and without a credential', async () => {
+  // THE PAIR IS MINTED WHERE NO PERSON IS WATCHING, so a public key the
+  // service could not hand back would be a verifying key nobody can
+  // read - and the only way to get one would be to re-mint, which
+  // invalidates every token already issued.
+  //
+  // It is answered BEFORE any credential on purpose: a public key can
+  // verify and cannot mint. Anyone may check a token this service
+  // signed; nobody may sign one.
+  const env = { DB: d1(), ACCOUNT_VERSION: 'test1', IDENTITY_PUBLIC_KEY: 'a-public-key' };
+  const get = (p, e) => worker.fetch(new Request(`https://x.invalid${p}`), e ?? env);
+
+  const r = await get('/v1/pubkey');
+  assert.equal(r.status, 200, 'the public key needs a credential, which defeats the point of publishing it');
+  assert.deepEqual(await r.json(), { alg: TOKEN_V, key: 'a-public-key' });
+
+  // THE ALGORITHM RIDES WITH IT, and it is the token's own version
+  // prefix rather than a second name for the same thing - ACC1a's law:
+  // the version IS the algorithm, so a reader cannot be told one thing
+  // by the key and another by the token.
+  assert.equal(TOKEN_V, 'v1');
+
+  // A SERVICE WITH NO PAIR SAYS SO, rather than answering with an empty
+  // key that a relay would import and then fail every verify against.
+  const bare = await get('/v1/pubkey', { DB: d1(), ACCOUNT_VERSION: 'test1' });
+  assert.equal(bare.status, 503);
+  assert.deepEqual(await bare.json(), { error: 'no-signing-key' });
+
+  // ...and it is a GET. The POST-only ladder the other open routes go
+  // through would 405 this one.
+  const posted = await worker.fetch(new Request('https://x.invalid/v1/pubkey', {
+    method: 'POST', headers: { 'content-type': 'application/json' }, body: '{}',
+  }), env);
+  assert.equal(posted.status, 200, 'the public key is behind the POST-only open-route ladder');
 });
 
 // ── ACC1c: USERNAME, PASSWORD, AND THE ONE WAY BACK IN ──────────────
