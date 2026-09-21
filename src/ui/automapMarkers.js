@@ -449,7 +449,7 @@ export function userNoteMarkerRows(notes) {
  *   playerYawDeg    ...transform.rotation, as a Y euler
  *   pivotPos        rotationPivotAxisPosition (:1414)
  *   cameraYawDeg    UpdateAutomapView's `Quaternion.Euler(0, cameraAutomap
- *                   .transform.rotation.eulerAngles.y, 0)` (window :1297)
+ *                   .transform.rotation.eulerAngles.y, 0)` (window :1292)
  *   entrancePos     dungeon.StartMarker.transform.position (:1447)
  *   entranceDiscovered  the beacon's activeSelf (:1448 sets it FALSE for a
  *                   dungeon; the LOS tick is what lights it)

@@ -13,7 +13,7 @@ import { markFoeStruck } from '../ui/hudFoeTarget.js';   // PX30
 import { lycanthropeAttackVoice, racialSuppressInventory, lycanthropeMoveSound } from '../systems/lycanthropy.js';   // V4: the beast's attack voice + inventory refusal; LM1: the 4-20s move-sound loop
 import { layoutDungeon } from '../world/dungeonLayout.js';
 import { executeConsoleCommand } from '../systems/consoleCommands.js';   // E3: the probe door runs the real database
-import { enterDungeonAutomap, exitDungeonAutomap, buildRevealIndex, bindAutomapLayout, automapRevealTick, automapEntranceTick, automapDungeonKey, SCAN_INTERVAL_S, recordTeleporterConnection, automapDebugTeleportMode, registerAutomapConsoleCommands } from '../systems/automap.js';   // A1; ROAD-C c2/S8 the teleport listener + the three console verbs, ROAD-E E3 on the command database
+import { enterDungeonAutomap, exitDungeonAutomap, buildRevealIndex, bindAutomapLayout, automapRevealTick, automapEntranceTick, capsuleCentreFromEye, automapDungeonKey, SCAN_INTERVAL_S, recordTeleporterConnection, automapDebugTeleportMode, registerAutomapConsoleCommands } from '../systems/automap.js';   // A1; ROAD-C c2/S8 the teleport listener + the three console verbs, ROAD-E E3 on the command database
 import { automapWaterLevel, ELEMENT_NAMES } from '../systems/automapModel.js';   // ROAD-C c2/S1
 import { AutomapWindow, preloadAutomapArt, signalAutomapReset } from '../ui/automapWindow.js';   // A1: the M window; ROAD-C c2/S5: its native art + the reset signal
 import { applyTextureTable } from '../world/dungeonTextures.js';
@@ -107,7 +107,7 @@ import { preloadPaperDollForEntity } from '../ui/paperDoll.js';   // U26: the do
 import { createDroppedLoot, droppedLootHooks, containerDropPos } from './droppedLoot.js';   // U8e, mounted here at U26; G5: the pile's DaggerfallLoot identity
 import { createPlayerMagic } from './hostMagic.js';   // M3: the ONE cast engine
 import { tallySkill, skillValue, SKILLS, SKILL_NAMES } from '../systems/skills.js';
-import { FALL_DAMAGE_THRESHOLD, FALL_HP_PER_METRE, CAPSULE_HEIGHT, startRestGroundedCheck } from '../player/motor.js';   // the rest gate's grounded input, one home
+import { FALL_DAMAGE_THRESHOLD, FALL_HP_PER_METRE, CAPSULE_HEIGHT, EYE_HEIGHT, startRestGroundedCheck } from '../player/motor.js';   // the rest gate's grounded input, one home
 import { applyLevelUp } from '../systems/advancement.js';
 import { initVirtueLeveling, LEVELING_CLASSIC } from '../systems/oblivionLeveling.js';   // ORL1: the font-less creation path answers the question it could not ask
 import { tickPlayerMinutes, claimMagicRounds, runMagicRoundsFor } from '../systems/worldTick.js';   // AUDIT 18: the player tick every host shares
@@ -1906,6 +1906,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // A1 review: this is the one FORCED overwrite of the overlay
       // slot - a window holding GL resources (the automap's batches
       // + micro-map texture) must release them or they leak per death.
+      activeOverlay?.onPop?.();   // AUDIT-AMAP H9: the map saves its camera on the way out (DaggerfallAutomapWindow.cs:648-660)
       activeOverlay?.dispose?.();
       // DC1: the LIVE eye and capsule, as PlayerEntity_OnDeath reads
       // them. The motor lives in the scene host (dungeon.js, worldModes),
@@ -5432,18 +5433,29 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       }
       automapScanT += dt;
       if (automapScanT < SCAN_INTERVAL_S) return;
-      automapScanT = 0;
+      automapScanT = (automapScanT - SCAN_INTERVAL_S) % SCAN_INTERVAL_S;   // AUDIT-AMAP F12: keep the phase, no catch-up burst
       automapRevealTick(automapRec, {
         eye, fwd, collider, model: automapModel,
         // The three-ray scan's door blocker: an action door is its own
         // collider bucket, keyed by the action object (actionSystem
         // addDoor). THIS is what stops a closed door revealing the
-        // hall behind it - see automap.js's scan.
-        isDoorBucket: (k) => actions.objects.get(k)?.kind === 'door',
+        // hall behind it - see automap.js's scan. AUDIT-AMAP F3: a
+        // SPECIAL door (DaggerfallActionDoorSpecial) is a plain model
+        // to the automap copy - RDBLayout filters by description
+        // (:751-765), not by action - so it reveals like any wall.
+        isDoorBucket: (k) => { const o = actions.objects.get(k); return o?.kind === 'door' && !o.special; },
+        // AUDIT-AMAP H7: a MOVED action model (a raised platform, a
+        // swung special door) is where DFU's true-vs-copy test fails
+        // outright - the copy holds it at rest - so a nearest hit on one
+        // reveals nothing, instead of resolving to whichever at-rest box
+        // happens to hold the hit point
+        isMovedBucket: (k) => { const o = actions.objects.get(k); return !!o && o.state != null && o.state !== 'start' && (o.kind !== 'door' || !!o.special); },
       });
-      // the entrance beacon sits on the START marker (Automap.cs:1447)
+      // the entrance beacon sits on the START marker (Automap.cs:1447);
+      // the LOS runs to the player CAPSULE's centre (:1216), not the eye
       const sm = dungeon.startMarker;
-      automapEntranceTick(automapRec, sm ? [sm.x, sm.y, sm.z] : null, eye, collider);
+      const ms = opts.motorState?.() ?? null;
+      automapEntranceTick(automapRec, sm ? [sm.x, sm.y, sm.z] : null, capsuleCentreFromEye(eye, ms?.eyeLevel, ms?.capsule), collider);
     },
     automapRecord: () => automapRec,   // probe surface + the window's live view
     /** I3: the Escape window, same one-slot idiom. GATED ON THE DOOR,
@@ -5583,7 +5595,15 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         // It goes through the SAME `onTeleport` door the Teleport action
         // uses, which each host has already installed with its own motor
         // warp - so the window never learns what a motor is.
-        debugTeleport: (pos) => actions.onTeleport?.({ pos, yawDeg: 0 }),
+        debugTeleport: (pos) => {
+          actions.onTeleport?.({ pos, yawDeg: 0 });
+          // AUDIT-AMAP H4: DFU moves the player AND both beacons in the
+          // same call (Automap.cs:869-875); the window reads the player
+          // through lastPlayerFeet/_automapEye, which only non-overlay
+          // frames write - so the warp writes them here
+          lastPlayerFeet = [pos[0], pos[1], pos[2]];
+          _automapEye = [pos[0], pos[1] + (opts.motorState?.()?.eyeLevel ?? EYE_HEIGHT), pos[2]];
+        },
       });
     },
     /** ROAD-C c2/S8: AutoMapConsoleCommands (Automap.cs:2596-2688).
@@ -5910,6 +5930,11 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // pruning belong to save time, and a prune here could evict a
       // record the save itself carried (A1 review).
       automapRec = enterDungeonAutomap(automapKey, classicMinutesRef.value, { fromLoad: true });
+      // AUDIT-AMAP F4: the bind is the RESTORE (RestoreStateAutomap
+      // Dungeon, :2492-2493): it applies the layout guard to the loaded
+      // record and points Automap.instance (the console verbs) at it
+      bindAutomapLayout(automapRec, automapModel);
+      signalAutomapReset();   // AUDIT-AMAP H3: InitWhenInInteriorOrDungeon raises it on the LOAD arm too (:2490, :2496, from :2548)
       if (extras.position && extras.locationKey === _locationKey && setPlayerPos) setPlayerPos(extras.position);
       // AUDIT 28 W4 (SerializablePlayer.cs:462-472): saved in the OTHER
       // layout, the position may sit in blocks this build does not have -
@@ -6602,7 +6627,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // A1: OnTransitionToDungeonExterior's automap half - marks the
       // player outside and, at AutomapNumberOfDungeons = 0, forgets
       // the map the moment you leave (Automap.cs:2530-2534).
-      exitDungeonAutomap();
+      exitDungeonAutomap(classicMinutesRef.value);   // AUDIT-AMAP F11: stamped with the EXIT time (:2155)
       bloodMarks.dispose();   // BLOOD1a (HARD1): the ring is OURS - a vertex buffer and a VAO handed to nobody - so it ends here, by its own name and not through the hand-off pool
       // ROAD-B B1: RemoveWindow runs OnPop on every window it removes
       // (UserInterfaceManager.cs:189-196) and ChangeWindow removes them

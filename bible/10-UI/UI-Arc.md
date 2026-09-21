@@ -11183,7 +11183,7 @@ grid button, Return/F2/F3/F4 and F5-F8 were all silently undone by the
 next M. The file had already hoisted `_revealUndiscoveredBuildings`,
 `_zoomLevel`/`_zoomLocation` and `_yawDeg` for exactly this reason, and
 the sibling dungeon window states the law outright at
-`automapWindow.js:326-335` with `_background`/`_renderMode` at module
+`automapWindow.js:325-334` with `_background`/`_renderMode` at module
 scope. `mode` and `background` are now ACCESSORS over module state,
 mirroring `revealUndiscoveredBuildings` — accessors rather than a
 constructor seed plus a write-back in `tick()`, because `ActionExit`
@@ -14335,7 +14335,7 @@ death screen (`ui/deathScreen.js:71-72`), the rest window's rows
 (`ui/restWindow.js:861`), the save window (`ui/saveWindow.js`, eight
 `shadowText` sites), the travel popup (`ui/travelPopUp.js:685`), the quest
 journal (`ui/questJournal.js:641-642`), every MessageBox row
-(`ui/messageBox.js:431, 434`) and every ActionTextBox (`ui/actionText.js:45,
+(`ui/messageBox.js:435, 434`) and every ActionTextBox (`ui/actionText.js:45,
 152`) still draw in the bitmap font - each a native window under THE
 NATIVE-WINDOW RULE, whose face cannot move without its DFU metrics moving
 too. That is a FONT2 slice, not this one.

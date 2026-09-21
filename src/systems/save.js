@@ -766,7 +766,8 @@ export function restorePlayer(entity, snap, spellsByIndex = null) {
   // field and restores an empty one (nothing was discoverable then).
   restoreDiscovery(snap.discovery);
   // A1: a load replaces the automap store too; a pre-A1 save carries
-  // no field and restores an empty one (nothing was revealed then).
+  // no field and the store is LEFT ALONE (restoreAutomap's null arm,
+  // SaveLoadManager.cs:1508-1509 - AUDIT-AMAP F10 fixed this comment).
   // A dungeon context re-fetches its live record after this runs.
   restoreAutomap(snap.automap ?? null);
   // AUDIT 23: the sticky per-region price band (see snapshot side); a

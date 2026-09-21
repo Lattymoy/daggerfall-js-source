@@ -368,7 +368,7 @@ test('c2/S9 SOURCE PINS: BOTH interior hosts tick the probes and route AutoMap, 
   const ic = src('src/scenes/interiorContext.js');
   assert.match(ic, /automapTick\(dt, eye, fwd\) \{/, 'the context carries the 5 Hz gate');
   assert.match(ic, /automapRecord: \(\) => automapRec,/);
-  assert.match(ic, /automapEntranceTick\(automapRec, automapEntrance, eye, collider\)/,
+  assert.match(ic, /automapEntranceTick\(automapRec, automapEntrance, capsuleCentreFromEye\(eye\), collider\)/,
     'the entrance LOS check ticks indoors too (:1196-1274)');
   assert.match(ic, /exitInteriorAutomap\(\);/, 'and the record dies with the room');
 
