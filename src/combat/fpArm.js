@@ -83,6 +83,7 @@ import { injectSkeletonNodes } from '../formats/mwSkin.js';   // WS1: the dry in
 // MAP3: THE HELD SHEET - the pose deltas over the idle, the paper piece
 // the hands hold, and where its corners land on the composite
 import { deltaTracks, heldSampler, paperPiece, refreshPaperSource, projectPaperCorners, normaliseHeldPose, HELD_POSE_DEFAULT } from './heldPose.js';
+import { farthestVertexIndex, posedVertex, viewOffsetOf, worldPointOf } from './rigMuzzle.js';   // AUDIT FIELD-GUN-MW F2: where the barrel ends, off the posed piece
 
 // MW-LOAD (2026-09-08, Mac: "improve the load time when Morrowind assets
 // are enabled"): THE ARCHIVE IS OPENED, NOT READ, AND THIS FILE IS ITS
@@ -509,35 +510,37 @@ export function packFpArm(pieces, out = null) {
   for (const p of pieces) tris += (p.indices ? p.indices.length : 0) / 3;
   const buf = out && out.packed && out.packed.length === tris * 3 * FP_FLOATS
     ? out.packed : new Float32Array(tris * 3 * FP_FLOATS);
-  const ranges = [];
+  // PERF-RIG1 (2026-09-21): THE FRAME PATH MINTS NOTHING PER VERTEX. This
+  // ran every frame for the arm, the body and every peer's body, and per
+  // CORNER it built `[a, b, c]` to index, and took an `[r, g, b]` from
+  // diffuseAt and another from emissiveAt - three arrays a corner, some
+  // ten thousand a frame for one body, none of which outlived the call.
+  // And of the fourteen floats a corner, eight never change between
+  // frames: the diffuse, the UV and the emission are the authored
+  // vertex's, and only the position and the face normal follow the pose.
+  // So the static eight are resolved ONCE per piece (through the same
+  // diffuseAt/emissiveAt - one home for the colour law) into a lane
+  // buffer kept on the piece and keyed on what it was read from, and a
+  // frame copies them beside the six it computes. The corner order, the
+  // float order and every value written are the ones they were.
+  //
+  // The ranges are the piece list and carry the mesh's textures once
+  // hung (uploadThirdMesh, the fp path): a per-frame pack that answered
+  // a fresh array threw that identity away every frame and made the
+  // caller keep the first. When the pieces are the ones `out` was packed
+  // from, the same range objects come back, untouched.
+  const ranges = sameRanges(out, pieces) ? out.ranges : [];
+  const rebuild = ranges.length === 0;
   let o = 0;
   let first = 0;
   for (const p of pieces) {
     const pos = p.positions;
     const idx = p.indices;
     if (!pos || !idx) continue;
-    const uvs = p.uvs || null;
-    // MW-D13 / RULE 63: the colour written per vertex is the RESOLVED
-    // DIFFUSE, which is the vertex colour only when the mode says so.
-    // What stood here read p.colors directly and the shader MULTIPLIED
-    // it into the albedo - the exact error rule 63 opens by naming: "the
-    // single most likely place for a port to be silently wrong. OpenMW
-    // does not modulate the material by the vertex colour; the vertex
-    // colour SUBSTITUTES for whichever material channel the colour mode
-    // names." A mesh with both a material colour and vertex colours was
-    // being tinted twice and drawn dark.
-    const cols = p.colors || null;
-    const mat = p.material || null;
+    const lanes = pieceLanes(p);
     const flip = p.mirrored ? -1 : 1;
-    const textured = !!(uvs && p.material && p.material.textureFile);
-    // THE INVENTED SKIN TONE IS GONE. The reference's fragment starts at
-    // opaque WHITE with no diffuse map (objects.frag:152-154) and the
-    // NIF material defaults are overridden to white too
-    // (nifloader.cpp:2740-2742), so an untextured surface is white lit by
-    // the scene - not a flat colour somebody chose. The vertex colour,
-    // when the mesh HAS one, substitutes for the material's diffuse and
-    // ambient terms, which in this pass's single-product lighting is the
-    // same arithmetic: texel * colour * (ambient + sun * diff).
+    const textured = !!(p.uvs && p.material && p.material.textureFile);
+    let l = 0;
     for (let i = 0; i + 2 < idx.length; i += 3) {
       const a = idx[i] * 3; const b = idx[i + 1] * 3; const c = idx[i + 2] * 3;
       const ux = pos[b] - pos[a]; const uy = pos[b + 1] - pos[a + 1]; const uz = pos[b + 2] - pos[a + 2];
@@ -548,32 +551,59 @@ export function packFpArm(pieces, out = null) {
       const len = Math.hypot(nx, ny, nz);
       if (len > 1e-8) { nx /= len; ny /= len; nz /= len; } else { nx = 0; ny = 1; nz = 0; }
       for (let k = 0; k < 3; k++) {
-        const v = [a, b, c][k];
-        const vi = idx[i + k] * 2;
+        const v = k === 0 ? a : k === 1 ? b : c;
         buf[o++] = pos[v]; buf[o++] = pos[v + 1]; buf[o++] = pos[v + 2];
-        const [dr, dg, db] = diffuseAt(mat, cols, idx[i + k]);
-        buf[o++] = dr; buf[o++] = dg; buf[o++] = db;
+        buf[o++] = lanes[l]; buf[o++] = lanes[l + 1]; buf[o++] = lanes[l + 2];
         buf[o++] = nx; buf[o++] = ny; buf[o++] = nz;
-        buf[o++] = uvs ? uvs[vi] : 0;
-        buf[o++] = uvs ? uvs[vi + 1] : 0;
-        // MWT2: the reference adds the emission INTO the lighting sum and
-        // multiplies the texture by the whole of it (objects.frag's
-        // `gl_FragData[0].xyz *= lighting`, lighting.glsl's
-        // `... + getEmissionColor()`), so an emissive surface keeps its
-        // picture and stops caring what the room is lit by.
-        const [er, eg, eb] = emissiveAt(mat, cols, idx[i + k]);
-        buf[o++] = er; buf[o++] = eg; buf[o++] = eb;
+        buf[o++] = lanes[l + 3]; buf[o++] = lanes[l + 4];
+        buf[o++] = lanes[l + 5]; buf[o++] = lanes[l + 6]; buf[o++] = lanes[l + 7];
+        l += LANE_FLOATS;
       }
     }
     const count = (idx.length / 3) * 3;
-    // ONE RANGE PER PIECE, because a Morrowind arm is several meshes with
-    // several textures and the character path issues drawArrays. The
-    // range carries the piece's own texture name; the caller resolves it
-    // once and hangs the GL texture here.
-    ranges.push({ first, count, slot: p.slot, piece: p, textureFile: textured ? p.material.textureFile : null, tex: null, hidden: false });
+    if (rebuild) ranges.push({ first, count, slot: p.slot, piece: p, textureFile: textured ? p.material.textureFile : null, tex: null, hidden: false });
     first += count;
   }
   return { packed: buf, ranges };
+}
+
+/** PERF-RIG1: the eight static floats a corner - diffuse rgb, uv, emissive
+ *  rgb - in corner order, resolved once per piece through the pass's own
+ *  colour laws and kept on the piece until the arrays they were read from
+ *  change identity (a rebuilt wardrobe hands the piece new ones). */
+const LANE_FLOATS = 8;
+function pieceLanes(p) {
+  const idx = p.indices, uvs = p.uvs || null, cols = p.colors || null, mat = p.material || null;
+  const have = p._packLanes;
+  if (have && have.idx === idx && have.uvs === uvs && have.cols === cols && have.mat === mat) return have.lanes;
+  const lanes = new Float32Array(idx.length * LANE_FLOATS);
+  let l = 0;
+  for (let i = 0; i < idx.length; i++) {
+    const vi = idx[i] * 2;
+    const [dr, dg, db] = diffuseAt(mat, cols, idx[i]);
+    lanes[l++] = dr; lanes[l++] = dg; lanes[l++] = db;
+    lanes[l++] = uvs ? uvs[vi] : 0;
+    lanes[l++] = uvs ? uvs[vi + 1] : 0;
+    const [er, eg, eb] = emissiveAt(mat, cols, idx[i]);
+    lanes[l++] = er; lanes[l++] = eg; lanes[l++] = eb;
+  }
+  p._packLanes = { idx, uvs, cols, mat, lanes };
+  return lanes;
+}
+
+/** PERF-RIG1: true when `out.ranges` is the range list of exactly these
+ *  pieces - one range per drawable piece, in order, on the same piece
+ *  objects - so the frame can hand the same objects back. */
+function sameRanges(out, pieces) {
+  const r = out && out.ranges;
+  if (!r) return false;
+  let k = 0;
+  for (const p of pieces) {
+    if (!p.positions || !p.indices) continue;
+    const range = r[k++];
+    if (!range || range.piece !== p || range.count !== (p.indices.length / 3) * 3) return false;
+  }
+  return k === r.length;
 }
 
 /**
@@ -2247,6 +2277,12 @@ export function createFpArm() {
   let held = null;               // { spec, piece, aspect, eye, built, reach0 }
   let heldMemo = null;           // { base, spec, inner, tracks, sampler }
   let lastFrame = null;          // { model, view, proj, rect } - what draw() last composed with
+  let lastThirdModel = null;   // AUDIT FIELD-GUN-MW F2: drawThird's model matrix, for the muzzle in the world
+  /** The muzzle vertex of a weapon piece, found once off its unposed source and kept on the piece. */
+  const muzzleIndexOf = (piece) => {
+    if (piece.muzzleIndex == null) piece.muzzleIndex = farthestVertexIndex(piece.source);
+    return piece.muzzleIndex;
+  };
   let drewLast = false;          // AUDIT-MAP2: whether the LAST draw() call composed the arm
   /** Put (or re-put) the sheet on the rig at the camera node's translation.
    *  The reach - which sets the pass's far plane (rule 54: the planes come
@@ -2388,7 +2424,10 @@ export function createFpArm() {
       // MW-D11: the textures go with the mesh that owns them. An arm
       // rebuilt on every attach would otherwise leak one upload per
       // piece per build, which is the shape of NT1's teardown leaks.
-      for (const r of m.ranges || []) if (r.tex) gl.deleteTexture(r.tex);
+      // AUDIT PERF-RIG1 F2: and the HANDLE goes with the texture. PERF-RIG1's
+      // pack hands the same range objects back while the pieces stand, so a
+      // range must never carry a deleted texture into the next mesh.
+      for (const r of m.ranges || []) if (r.tex) { gl.deleteTexture(r.tex); r.tex = null; }
       for (const e of m.effects || []) renderer.releaseParticleEffect(e);   // MAC-Q: the flame's buffer and texture go with the mesh
       m.effects = null;
     }
@@ -3598,6 +3637,25 @@ export function createFpArm() {
      *  held map draws the arms whatever the WEAPON's own `shown()` says. */
     holdingPaper() { return !!held; },
     setHeldPose(spec) { return held ? api.holdPaper(spec, { aspect: held.aspect }) : false; },
+    /** AUDIT FIELD-GUN-MW F2: WHERE THE BARREL ENDS, off the posed weapon
+     *  piece - the vertex farthest from the grip (the bake's origin),
+     *  through the pass the last draw of THIS view composed. First person
+     *  answers the classic muzzle's own shape, a lens-local offset in
+     *  metres ({ right, up, forward }); third person answers the world
+     *  point ({ world }), because the camera is behind the body and a lens
+     *  offset would put the orb in the air beside it. Null before a draw,
+     *  without a weapon piece, or under a rig that has not built. */
+    weaponMuzzle() {
+      if (viewMode === 'third') {
+        const t = thirdBuilt;
+        const piece = t && t.ok ? t.arm.pieces.find((p) => p.slot === 'weapon') : null;
+        if (!piece || !piece.positions || !piece.source || !lastThirdModel) return null;
+        return { world: worldPointOf(posedVertex(piece.positions, muzzleIndexOf(piece)), lastThirdModel) };
+      }
+      const piece = built && built.ok ? built.arm.pieces.find((p) => p.slot === 'weapon') : null;
+      if (!piece || !piece.positions || !piece.source || !lastFrame) return null;
+      return viewOffsetOf(posedVertex(piece.positions, muzzleIndexOf(piece)), lastFrame.model, lastFrame.view, MW_UNITS_PER_METER);
+    },
     /** MAP3: the sheet's four corners on the composite, in CSS px of the
      *  canvas (top-left, top-right, bottom-right, bottom-left), through
      *  the model, view and projection the last draw composed with - or
@@ -4211,6 +4269,7 @@ export function createFpArm() {
         trs(feet[0], feet[1], feet[2], 0, yawDeg, 0, -u * rs.weight, u * rs.height, u * rs.weight),
         NIF_TO_PASS,
       );
+      lastThirdModel = model;   // AUDIT FIELD-GUN-MW F2: the body's frame, for the muzzle behind the camera
       // The box the sprite law needs, measured off the POSED pieces in
       // MW axes and mapped: MW z is world up, MW x/y are the horizontal
       // pair. The azimuth-safe half-width holds under yaw for free,

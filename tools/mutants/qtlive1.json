@@ -1,0 +1,107 @@
+[
+  {
+    "name": "QT-LIVE1-live-read-is-the-stale-field",
+    "file": "src/systems/quest/clock.js",
+    "old": "    return Math.max(0, this.remainingTimeInSeconds - this.chargeSeconds(caller));",
+    "new": "    return this.remainingTimeInSeconds;",
+    "tests": ["test/qtlive1.test.js"]
+  },
+  {
+    "name": "QT-LIVE1-live-read-not-floored",
+    "file": "src/systems/quest/clock.js",
+    "old": "    return Math.max(0, this.remainingTimeInSeconds - this.chargeSeconds(caller));",
+    "new": "    return this.remainingTimeInSeconds - this.chargeSeconds(caller);",
+    "tests": ["test/qtlive1.test.js"]
+  },
+  {
+    "name": "QT-LIVE1-charge-ignores-the-played-step",
+    "file": "src/systems/quest/clock.js",
+    "old": "    const difference = Number.isFinite(step) ? Math.min(Math.max(raw, 0), step) : raw;\n    return Math.trunc(difference);",
+    "new": "    const difference = raw;\n    return Math.trunc(difference);",
+    "tests": ["test/qtlive1.test.js", "test/auditworld78.test.js"]
+  },
+  {
+    "name": "QT-LIVE1-charge-lets-a-backward-sample-add",
+    "file": "src/systems/quest/clock.js",
+    "old": "    const difference = Number.isFinite(step) ? Math.min(Math.max(raw, 0), step) : raw;\n    return Math.trunc(difference);",
+    "new": "    const difference = Number.isFinite(step) ? Math.min(raw, step) : raw;\n    return Math.trunc(difference);",
+    "tests": ["test/qtlive1.test.js", "test/auditworld78.test.js"]
+  },
+  {
+    "name": "QT-LIVE1-tick-grows-its-own-arithmetic-back",
+    "file": "src/systems/quest/clock.js",
+    "old": "    this.remainingTimeInSeconds -= this.chargeSeconds(caller);",
+    "new": "    this.remainingTimeInSeconds -= Math.trunc(now - this._lastWorldTimeSample);",
+    "tests": ["test/qtlive1.test.js", "test/auditworld78.test.js"]
+  },
+  {
+    "name": "QT-LIVE1-running-clock-answers-the-field-when-disabled-check-inverted",
+    "file": "src/systems/quest/clock.js",
+    "old": "    if (!this.clockEnabled || this.clockFinished) return this.remainingTimeInSeconds;\n    return Math.max(0,",
+    "new": "    if (this.clockEnabled && !this.clockFinished) return this.remainingTimeInSeconds;\n    return Math.max(0,",
+    "tests": ["test/qtlive1.test.js"]
+  },
+  {
+    "name": "QT-LIVE1-walk-reads-the-stale-field",
+    "file": "src/scenes/questBridge.js",
+    "old": "            const left = r.liveRemainingSeconds(q);",
+    "new": "            const left = r.remainingTimeInSeconds;",
+    "tests": ["test/questbridge.test.js", "test/enhancedPause.test.js"]
+  },
+  {
+    "name": "QT-LIVE1-words-ignore-urgency",
+    "file": "src/ui/enhancedMenu.js",
+    "old": "  return { text: `Time remains: ${remainWords(q.clockSeconds)}`, urgent: q.clockSeconds < 86400 };",
+    "new": "  return { text: `Time remains: ${remainWords(q.clockSeconds)}`, urgent: false };",
+    "tests": ["test/qtlive1.test.js"]
+  },
+  {
+    "name": "QT-LIVE1-words-for-a-clockless-quest",
+    "file": "src/ui/enhancedMenu.js",
+    "old": "  if (!q || q.clockSeconds == null) return null;",
+    "new": "  if (!q) return null;",
+    "tests": ["test/qtlive1.test.js"]
+  },
+  {
+    "name": "QT-LIVE1-interval-reads-a-captured-log",
+    "file": "src/ui/enhancedMenu.js",
+    "old": "    const w = questTimerWords(hooks.questLog?.(), key);",
+    "new": "    const w = questTimerWords(log0, key);",
+    "tests": ["test/qtlive1.test.js"]
+  },
+  {
+    "name": "QT-LIVE1-interval-once-a-minute",
+    "file": "src/ui/enhancedMenu.js",
+    "old": "  }, 1000);\n}\n\nfunction remainWords(s) {",
+    "new": "  }, 60000);\n}\n\nfunction remainWords(s) {",
+    "tests": ["test/qtlive1.test.js"]
+  },
+  {
+    "name": "QT-LIVE1-rebuild-leaks-the-interval",
+    "file": "src/ui/enhancedMenu.js",
+    "old": "  if (groundTimer) { clearInterval(groundTimer); groundTimer = null; }\n  if (questTimer) { clearInterval(questTimer); questTimer = null; }\n  app.innerHTML = '';",
+    "new": "  if (groundTimer) { clearInterval(groundTimer); groundTimer = null; }\n  app.innerHTML = '';",
+    "tests": ["test/qtlive1.test.js"]
+  },
+  {
+    "name": "QT-LIVE1-unmount-leaks-the-interval",
+    "file": "src/ui/enhancedMenu.js",
+    "old": "      if (questTimer) { clearInterval(questTimer); questTimer = null; }\n      // FIX-F:",
+    "new": "      // FIX-F:",
+    "tests": ["test/qtlive1.test.js"]
+  },
+  {
+    "name": "QT-LIVE1-timer-never-armed",
+    "file": "src/ui/enhancedMenu.js",
+    "old": "        armQuestTimer(timer, sel.key);",
+    "new": "        void timer;",
+    "tests": ["test/qtlive1.test.js"]
+  },
+  {
+    "name": "QT-LIVE1-a-gone-clock-leaves-a-stale-line",
+    "file": "src/ui/enhancedMenu.js",
+    "old": "    if (!w) { render(); return; }",
+    "new": "    if (!w) return;",
+    "tests": ["test/qtlive1.test.js"]
+  }
+]

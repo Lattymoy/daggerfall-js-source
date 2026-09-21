@@ -167,6 +167,27 @@ export class Clock extends QuestResource {
     return String(Math.ceil(secs / 86400));
   }
 
+  /** The seconds the NEXT tick charges as of the caller's now: the gap since the last sample, and online (a finite
+   *  played step) never negative and never more than one step. ONE arithmetic - tick subtracts it, and
+   *  liveRemainingSeconds reads it - so a reader can never disagree with the charge. */
+  chargeSeconds(caller) {
+    const now = caller.nowSeconds?.() ?? 0;
+    const step = caller.questClockStepMax?.() ?? Infinity;
+    const raw = now - this._lastWorldTimeSample;
+    const difference = Number.isFinite(step) ? Math.min(Math.max(raw, 0), step) : raw;
+    return Math.trunc(difference);
+  }
+
+  /** QT-LIVE1 (Mac, 2026-09-21: "The time doesn't print out live?"): the remainder AS OF NOW. The machine ticks off
+   *  the frame loop and every host holds that tick under the pause gate, so `remainingTimeInSeconds` is the remainder
+   *  as of the last tick BEFORE the menu opened - and online the world runs on under the menu, so a journal reading
+   *  the field showed a number the next tick would already have moved past. This is that next tick's answer without
+   *  taking it: the field less the charge, floored at zero. A clock that is not running answers its field. */
+  liveRemainingSeconds(caller) {
+    if (!this.clockEnabled || this.clockFinished) return this.remainingTimeInSeconds;
+    return Math.max(0, this.remainingTimeInSeconds - this.chargeSeconds(caller));
+  }
+
   tick(caller) {
     if (!this.clockEnabled || this.clockFinished) return;
     const now = caller.nowSeconds?.() ?? 0;
@@ -181,10 +202,7 @@ export class Clock extends QuestResource {
     // to every running clock (Brisienna's fourteen days became forty-four played, for exactly the character Mac
     // brought over). Online a backward sample is a resume: nothing charged, the sample moved. Offline the raw gap
     // stands, DFU's own arithmetic (a backward jump there is a load, whose sample is the save's).
-    const step = caller.questClockStepMax?.() ?? Infinity;
-    const raw = now - this._lastWorldTimeSample;
-    const difference = Number.isFinite(step) ? Math.min(Math.max(raw, 0), step) : raw;
-    this.remainingTimeInSeconds -= Math.trunc(difference);
+    this.remainingTimeInSeconds -= this.chargeSeconds(caller);
     if (this.remainingTimeInSeconds <= 0) {
       this._triggerTask(caller);
       this.clockEnabled = false;

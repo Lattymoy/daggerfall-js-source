@@ -122,7 +122,7 @@ import { createItemLabels, grantCreatedItem, lastCreateItemIndex, setLastCreateI
 import {
   missileArchive, MISSILE_SPEED, MISSILE_COLLIDER_RADIUS, missileReach,   // ROAD-H tail: the reach along the normalised direction
   MISSILE_LIFESPAN_S,
-  EXPLOSION_RADIUS, pickTouchTarget, sweepFoes, missileHitsFoe, missileHitsCapsule, playerArrowOrigin, playerMuzzleOrigin, PLAYER_BODY_RADIUS,   // FIELD-GUN17: playerMuzzleOrigin - the gun's own barrel, where GetAimPosition speaks for the bow   // AUDIT 62 F21: the capsule contact test DFU spherecasts against   // ROAD-H H1c: GetAimPosition's player arrow arm (DaggerfallMissile.cs:540-550)   // AUDIT 65 CV-2: measured at the player's own controller radius
+  EXPLOSION_RADIUS, pickTouchTarget, sweepFoes, missileHitsFoe, missileHitsCapsule, playerShotOrigin, PLAYER_BODY_RADIUS,   // FIELD-GUN17: playerMuzzleOrigin - the gun's own barrel, where GetAimPosition speaks for the bow   // AUDIT 62 F21: the capsule contact test DFU spherecasts against   // ROAD-H H1c: GetAimPosition's player arrow arm (DaggerfallMissile.cs:540-550)   // AUDIT 65 CV-2: measured at the player's own controller radius
 } from '../systems/spellcast.js';
 import { silenceBlocksCast, SILENCED_TEXT, attemptSoulTrap, SOUL_TRAP_TEXT, dispelNearby, fillEmptyTrap, liveBundles, dispelBundle, dispellableBundles, DISPEL_MAGIC_TEXT } from '../systems/mysticism.js';   // S27; X5 the soul trap's kill intercept; DR1: X10's bundle picker, in this host too
 import { preloadTradeArt } from '../ui/nativeTrade.js';   // DR1: X7's Identify window - the SPELL's, castable underground
@@ -1535,7 +1535,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // owned, and destroy() hands it back (the _prevPassiveHost idiom this
   // file already uses for its other process-global seams). A bare null
   // would not do: on ?world and ?exterior the previous holder is the
-  // host's own townTalk sink (world.js:8097 / exterior.js:3319), set
+  // host's own townTalk sink (world.js:8106 / exterior.js:3319), set
   // once at boot and never again, so nulling on the way out of the
   // first dungeon would silently un-file every mid-screen label above
   // ground for the rest of the session - MC-1's own bug, re-opened.
@@ -2498,7 +2498,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // the origin fork combat/arrowFlight.js takes: a supplied muzzle
     // wins, nothing supplied keeps GetAimPosition's verbatim arm.
     const pos = fromPlayer
-      ? (muzzle ? playerMuzzleOrigin(from, dir, muzzle) : playerArrowOrigin(from, dir))
+      ? playerShotOrigin(from, dir, muzzle)   // AUDIT FIELD-GUN-MW F2: the one fork, so a world muzzle lands here too
       : [...from];
     missiles.push({ arrow: true, flatArchive: orbArchiveFor(weapon), weapon, fromPlayer, shooterFoe, aimFoe, pos, dir: [...dir], age: 0, batch: null, draw: null });   // ROAD-H H1c: a PLAYER shaft leaves the BOW HAND - GetAimPosition (DaggerfallMissile.cs:540-550) offsets the camera position 0.11 DOWN the camera's own up and 0.15 to the hand (the other way under FPSWeapon.FlipHorizontal), and it runs INSIDE the missile in DFU (:471), so it runs here rather than at each host's loose; an ENEMY shaft arrives with its own origin already applied (enemyTargets.enemyArrowOrigin)
   }
@@ -3103,7 +3103,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
               // AUDIT 39 (#64) / THE FOUR HOSTS RULE - SHIPPED (wave D):
               // this host was the FOURTH BODY of the player-arrow law
               // and is now the fourth CALLER. combat/arrowFlight.js's
-              // playerArrowHitFoe is the one copy world.js:11248,
+              // playerArrowHitFoe is the one copy world.js:11260,
               // exterior.js:4762 and worldModes.js:6347 already ran;
               // the flag said the divergence would bite and it already
               // had. This copy splashed at the ARROW TIP

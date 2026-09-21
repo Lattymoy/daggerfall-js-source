@@ -19,7 +19,7 @@
 // player is standing. The player arm and its damage law live here
 // now, one copy for the three hosts that share this flight.
 
-import { MISSILE_SPEED, MISSILE_COLLIDER_RADIUS, MISSILE_LIFESPAN_S, playerArrowOrigin, playerMuzzleOrigin, missileHitsCapsule, missileReach, PLAYER_BODY_RADIUS } from '../systems/spellcast.js';   // FIELD-GUN17: playerMuzzleOrigin - the gun's own barrel, where GetAimPosition speaks for the bow   // AUDIT 65 CV-2: the player's own controller radius
+import { MISSILE_SPEED, MISSILE_COLLIDER_RADIUS, MISSILE_LIFESPAN_S, playerShotOrigin, missileHitsCapsule, missileReach, PLAYER_BODY_RADIUS } from '../systems/spellcast.js';   // FIELD-GUN17: playerMuzzleOrigin - the gun's own barrel, where GetAimPosition speaks for the bow   // AUDIT 65 CV-2: the player's own controller radius
 import { CAPSULE_HEIGHT } from '../player/motor.js';   // ROAD-H tail: the standing capsule, the contact's default height   // ROAD-H H1c: GetAimPosition's player arrow arm
 import { trs } from '../world/mat4.js';
 import { SWING_MODS } from './playerWeapon.js';   // CalculateSwingModifiers, read live at the arrow's impact
@@ -89,8 +89,10 @@ export class ArrowFlight {
     // and it is used INSTEAD of GetAimPosition's bow-hand arm; a host
     // that does not - and every bow, at every host - hands over
     // nothing and gets the verbatim arm, unchanged.
+    // AUDIT FIELD-GUN-MW F2: the fork is playerShotOrigin's, once, for both spawn seams - a muzzle may now be a
+    // WORLD point (the third-person Morrowind body's barrel, behind the camera).
     const origin = meta.fromPlayer
-      ? (meta.muzzle ? playerMuzzleOrigin(from, dir, meta.muzzle) : playerArrowOrigin(from, dir))
+      ? playerShotOrigin(from, dir, meta.muzzle)
       : [...from];
     this.arrows.push({ pos: origin, dir: [...dir], age: 0, gpu: null, dead: false, orb, orbFlat: null, ...meta });   // ROAD-H H1c: a PLAYER shaft leaves the BOW HAND - GetAimPosition (DaggerfallMissile.cs:540-550) offsets the camera position 0.11 DOWN the camera's own up and 0.15 to the hand (the other way under FPSWeapon.FlipHorizontal), and it runs INSIDE the missile in DFU (:471), so it runs here rather than at each host's loose; an ENEMY shaft arrives with its own origin already applied (enemyTargets.enemyArrowOrigin)
   }

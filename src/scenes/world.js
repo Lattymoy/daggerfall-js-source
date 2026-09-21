@@ -169,7 +169,7 @@ import { createCityGuards } from './cityGuards.js';   // G1
 import { createArrestFlow } from './arrestFlow.js';
 import { clearCrimeOnLocationExit, addGold, goldAmount, deductGold, totalGoldAmount, deductGoldPieces } from '../systems/court.js';   // AUDIT 17e F6   // G2   // F-slice: travel gold; U41: GetGoldAmount + the pieces half of DeductFastTravelGold
 import { makeInView } from '../player/cameraView.js';   // AUDIT 17e F24
-import { mwViewFrame, mwViewWheel, mwViewDrawBody, mwViewFootstep, mwViewLoadPose, mwViewNewGame, mwViewRebase, mwViewAttachWagon, mwViewDrawWagon, mwViewWagonTargets, mwViewWagonActivate } from '../player/mwView.js';   // MW-D25: the Morrowind camera; AUDIT-EOTB2: the sprite's stride and the load's POV
+import { mwViewFirstPerson, mwViewFrame, mwViewWheel, mwViewDrawBody, mwViewFootstep, mwViewLoadPose, mwViewNewGame, mwViewRebase, mwViewAttachWagon, mwViewDrawWagon, mwViewWagonTargets, mwViewWagonActivate } from '../player/mwView.js';   // MW-D25: the Morrowind camera; AUDIT-EOTB2: the sprite's stride and the load's POV
 import { mwCamera, PITCH_LIMIT } from '../player/mwCamera.js';   // MW-D30: persistence + the reference pitch clamp
 import { pickActivatableHit, pickQuestFoe, pickFoe } from '../player/activate.js';   // G3: corpse loot; QG1: the foe-click door; TI1: the lock-on pick
 import { raceActivation } from '../player/activationRace.js';   // HARD2: one home for "the nearest thing under the one ray takes the click"
@@ -5933,6 +5933,15 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  (woods rides along for the overworld's relief) and never which
    *  map that adds up to. */
   function buildTravelMapWindow(extra = {}) {
+    // MAP-POV (2026-09-20, Mac: "If you're in 3rd person and decide to
+    // use the map, it should transition you to first person and then
+    // open the map. Both for the morrowind/non morrowind"): THE MAP IS
+    // READ IN THE HEAD. Every door into the map - the key, the journal's
+    // goto, the guild's teleport - reaches this builder, and only after
+    // its own refusals (enemies near, the sun, a pending offer), so the
+    // camera moves for a map that opens and never for a press that was
+    // refused. The seam picks the body (player/mwView.js).
+    mwViewFirstPerson();
     return createTravelMapWindow({
       maps, mapDict, woods,
       roads: () => terrainGen.roads(),   // ROADS 7: the map draws the network
@@ -10656,6 +10665,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     renderer.setFlashLight(sky.lightningLight());   // DS1: Dynamic Skies' LightningFlash, composed first on the point-light channel just stored
     renderer.setWorldViewport(largeHudViewportRect(canvas.clientHeight));   // E5: ViewportChanger.Update, every frame
     renderer.beginFrame(proj, view, sunDirection(minute), WORLD_FRAME);   // AUDIT-EL F5: a WORLD frame - the lane replays its records for this one
+    meterFor(renderer.gl)?.markCpu('bodies');   // PERF-ZONE2: the Morrowind bodies - the player's, every peer's - the wagon and the camps, which the renderer's own 'world' mark used to swallow
     // MW-D24: the player's own body, in third person only.
     renderer.setCloudShadow(sky?.cloudShadow ?? null);   // VC4: the frame's deck, for the body and everything before the pixel loop
     mwViewDrawBody(canvas, { proj, view, eye: mwv.eye, feet: player.feetAt(), yaw: cam.yaw });
@@ -10809,6 +10819,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // instead of by order. Same picture, a third to a half fewer sky
     // fragments on an open road.
     sky.draw(cam.yaw, cam.pitch, fieldOfView(), worldAspect, renderer.worldViewportPx ?? [0, 0, renderer.gl.drawingBufferWidth, renderer.gl.drawingBufferHeight]);   // VC3: the clouds' map restores this rect
+    meterFor(renderer.gl)?.markCpu('ring');   // PERF-ZONE2: the far province ring (its rebuild and its hole) and the water, after the sky hands the frame back
     // EV8: the far province ring - the horizon's actual mountains,
     // drawn while the depth buffer is still the sky's (the streamed
     // world repaints everything nearer). Skipped when exp fog owns
@@ -11206,6 +11217,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // same damage member the melee does (BowDamage :141), so the
     // Dodging tally, the poison seam and the recoverable arrow all
     // ride the hit.
+    meterFor(renderer.gl)?.markCpu('arrows');   // PERF-ZONE2: the missiles' flight and their draw
     arrows.update(dt, {
       // enemy arrows hunt only a SPAWNED, WALKING player - fly/orbit
       // camera modes have no capsule to hit
@@ -11287,6 +11299,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // RMB animal/exterior-foe arc" was written before AR1, and the
     // arrows.update call above hands foeTargets both live pools. A
     // sentence with one true clause kept two false ones alive.
+    meterFor(renderer.gl)?.markCpu('rig');   // PERF-ZONE2: the magic, the weapon rig's frame and its draw - the Morrowind arm's pose, pack and upload live here
     if (walkMode && playerSpawned) {
       // M2: the armed click's cast fires with the LIVE look; missiles
       // fly through this host's world every walk frame.
@@ -11371,6 +11384,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // filled by a fire-and-forget load whose failure leaves it null
     // forever, so the enhanced skin had no vitals for the first
     // frames and none at all when MAIN/HUD could not be read.
+    meterFor(renderer.gl)?.markCpu('hud');   // PERF-ZONE2: the HUD's preparation up to its first screen quad, where the renderer's 'air' span takes over
     {
       const _hfw = [-view[2], -view[10]];
       // X4: the Detect markers. Exterior mode's nearby pool is the

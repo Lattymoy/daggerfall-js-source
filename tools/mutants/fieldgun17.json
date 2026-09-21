@@ -1,9 +1,9 @@
 [
   {
     "name": "FIELD-GUN17-1-the-shot-goes-back-to-the-bow-hand",
-    "file": "src/combat/arrowFlight.js",
-    "old": "      ? (meta.muzzle ? playerMuzzleOrigin(from, dir, meta.muzzle) : playerArrowOrigin(from, dir))",
-    "new": "      ? playerArrowOrigin(from, dir)",
+    "file": "src/systems/spellcast.js",
+    "old": "  if (muzzle?.world) return [...muzzle.world];\n  return muzzle ? playerMuzzleOrigin(eye, lookDir, muzzle) : playerArrowOrigin(eye, lookDir);",
+    "new": "  return playerArrowOrigin(eye, lookDir);",
     "tests": [
       "test/thunderlock.test.js"
     ]
@@ -11,7 +11,7 @@
   {
     "name": "FIELD-GUN17-2-the-fourth-host-keeps-the-bow-hand",
     "file": "src/scenes/dungeonContext.js",
-    "old": "      ? (muzzle ? playerMuzzleOrigin(from, dir, muzzle) : playerArrowOrigin(from, dir))",
+    "old": "      ? playerShotOrigin(from, dir, muzzle)   // AUDIT FIELD-GUN-MW F2: the one fork, so a world muzzle lands here too",
     "new": "      ? playerArrowOrigin(from, dir)",
     "tests": [
       "test/thunderlock.test.js"
@@ -19,9 +19,9 @@
   },
   {
     "name": "FIELD-GUN17-3-a-bow-loses-GetAimPosition-too",
-    "file": "src/combat/arrowFlight.js",
-    "old": "      ? (meta.muzzle ? playerMuzzleOrigin(from, dir, meta.muzzle) : playerArrowOrigin(from, dir))",
-    "new": "      ? playerMuzzleOrigin(from, dir, meta.muzzle)",
+    "file": "src/systems/spellcast.js",
+    "old": "  if (muzzle?.world) return [...muzzle.world];\n  return muzzle ? playerMuzzleOrigin(eye, lookDir, muzzle) : playerArrowOrigin(eye, lookDir);",
+    "new": "  return playerMuzzleOrigin(eye, lookDir, muzzle);",
     "tests": [
       "test/thunderlock.test.js",
       "test/roadh_missiles.test.js"
