@@ -100,7 +100,15 @@ function buildPanel(doc, key, toast = false) {
     hint.textContent = NOTICE_HINT;
     host.append(hint);
   }
-  stack.append(host);
+  // THE BOX STANDS ABOVE THE TOASTS (AUDIT ENH-NOTICE3, seen in the
+  // browser): a stack is read top-down, and the panel the player must
+  // ANSWER goes first - a box raised under four skill-ups sat at the
+  // foot of the column. A toast joins at the foot; a box goes in
+  // front of the first toast (a fake document with no insertBefore
+  // appends, which the order pin's own document does not).
+  const firstToast = !toast && typeof stack.insertBefore === 'function'
+    ? (stack.children ? [...stack.children].find((c) => c.className?.includes?.('notice-toast')) : null) : null;
+  if (firstToast) stack.insertBefore(host, firstToast); else stack.append(host);
   // Appended off-screen, and the browser must COMPUTE that resting
   // style before the class changes it, or there is no "before" for
   // the transition to start from and the panel simply appears (a

@@ -393,8 +393,13 @@ line. The third designed the seam. What they found together:
 
 **THE SEAM: `systems/notify.js`.** DFU has one door - a static on
 `DaggerfallUI` (`MessageBox` :1328-1365, `AddHUDText` :759-775,
-`PopupMessage` :820-824, `SetMidScreenText` :783-789) that reaches
-`uiManager.TopWindow` because DFU has one window stack. The port's
+`PopupMessage` :820-824) that reaches `uiManager.TopWindow` because
+DFU has one window stack. The port's door is that for the BOX kind;
+its `hudText`/`popupMessage` are AddHUDText's door for a producer
+without a host handle and what the fallback lands on, and no shipping
+producer walks them yet - the hosts' `say`/`hudSay` deps are still
+what AddHUDText's callers hold (AUDIT ENH-NOTICE3 F4 keeps the record
+honest on that). The port's
 hosts hold one overlay slot each, so the door OFFERS: each live host
 registers a presenter `{ mount(win, { push, onClosed }), hudText(text,
 delay), active(), priority }` and `messageBox(text, opts)` asks them
@@ -448,6 +453,70 @@ its card (the tavern's price offer, the map's resume and diseased
 prompts, the inventory's gold and split fields). The hunt's busy page
 takes `noticeFrame` like the eight classic windows. `.pack-shell
 .sheet-notice` and `.hmnotice` left the sheet with their last renderer.
+
+#### AUDIT ENH-NOTICE3 (2026-09-21, Mac: "Audit before merge")
+
+One Opus lane over the seam and the routing (the other two lanes fell
+to a rate limit and their subjects - the toasts in a browser, the DOM
+windows, the records - were walked by hand). Nine findings, all paid:
+
+- **F1 (bug)** - the dungeon presenter stood at priority 20 from the
+  middle of `buildDungeonContext`, and the build awaits the HUD art,
+  the meshes and the textures for seconds after that line while the
+  world host's frame, clock and magic rounds keep running outdoors at
+  the door; a box raised then (the infection's deploy, a holiday, a
+  talk refusal) landed on a stack nothing drew yet, and died with the
+  context if the transition aborted. DFU's `uiManager.TopWindow` is
+  never a half-built window. The presenter answers `active` only once
+  the host has ADOPTED the context - `ctx.goLive()`, called by
+  worldModes after `mode = 'dungeon'` and by the standalone host after
+  its await - and never once dead.
+- **F2 (bug)** - the unregister at the top of `destroy()` protected
+  nothing: worldModes' `showQuestOverlay` is a second door into the
+  same stack and the host nulls its handle only after `destroy()`
+  returns. `pushDungeonWindow` refuses once `_ctxDead`, so both doors
+  fall to the host that stands; the position pin that certified the
+  wrong law is replaced by the dead-guard pin.
+- **F3 (bug)** - AUDIT FONT F4's law was held in three hosts of four:
+  townTalk's model is drawn under the interior arm and by the outer
+  hosts in every mode, and reported its own slot alone, so an
+  inventory or a rest opened inside a building never hid the toasts.
+  Both `observe` sites report `otherOverlayActive` (the mode machine's
+  slot) beside `overlay`.
+- **F4 (doctrine)** - "AddHUDText/PopupMessage/SetMidScreenText
+  written once" over-claimed: nothing walks `notify.hudText`; the
+  records and the module header say so now (above).
+- **F5 (risk)** - the showQuestBox ladder was written once in the door
+  and twice more by hand in the outer hosts. `mountWindow(win)` is the
+  ladder on its own and both `showQuestBox` bodies call it.
+- **F6 (risk)** - `onClose` rode the door and one host of three
+  honoured it. Gone from the contract; the presenter opts are `{ push }`.
+- **F7 (risk)** - the fallback's null handle would throw at the first
+  `addNext` (the status chains chain without looking). It answers an
+  inert handle: `addNext` returns itself, `done` true, `mounted` false.
+- **F8 (nit)** - the MessageBox(int) overload cite `:1352-1358`
+  straddled two overloads; `:1346-1353` at every site.
+- **F9 (nit)** - the dead `midScreenText` re-export is gone.
+- **Survivors named and killed**: `rowText` gutted (the fallback pin
+  feeds a record row and a cells row now); `{ push: false }` at any
+  migrated seam (swept); the object guard on `registerPresenter`; a
+  mountless host ending the ladder (`continue` -> `break`).
+- **The browser pass** (`scratchpad/audit3b/toastProbe.mjs`, the real
+  modules under `?skin=enhanced` in Chromium with Pixelify Sans
+  inlined): four toasts from two models in the one stack, a box beside
+  them with its hint, the popped row sliding out with its class kept
+  and its node gone after NOTICE_SLIDE_MS, the stack gone when empty,
+  at 1280x800 and 430x932. What it showed that the fake document could
+  not: the box landed at the FOOT of the stack under four skill-ups.
+  A box goes in front of the first toast now (`insertBefore`), and
+  the order is pinned.
+- **The DOM windows** (walked by hand): every `noticeHold` has its
+  release on the window's one teardown path (the inventory's
+  `unmount`, the tavern's `unmount` and its no-box render arm, the
+  held map's `_teardown` for both owners, the hunt's `_end` and its
+  page turn). Clean.
+
+Campaign: `tools/mutants/enhnotice3.json` 49 mutants, 49 dead.
 
 **NOT MOVED, LISTED** (each a plain MessageBox a later pass moves with
 its C# in hand): the status-box chains (DisplayStatusInfo, four hosts -
@@ -716,7 +785,7 @@ does the pack's USE arm.
                         close-then-hand-over ordering U55 got
                         backwards. No law needs extracting first.
     THE LOGBOOK         THREE sites: charSheetNav.js:53,
-    / NOTEBOOK          world.js:6208, dungeonContext.js:6358. A seam
+    / NOTEBOOK          world.js:6208, dungeonContext.js:6385. A seam
                         wants making, as U52's and U53's did.
     HISTORY             ONE site (charSheetNav.js:61), and it reads
                         only the entity's backStory. The small one.
@@ -9154,7 +9223,7 @@ and firing THAT twice is a second PopToHUD.
 
 ### Why only two of the four hosts crashed
 
-`worldModes.js:5702` and `dungeonContext.js:1544` answer the same
+`worldModes.js:5703` and `dungeonContext.js:1552` answer the same
 `onClose` by nulling their slot and never disposing - nothing to
 re-enter. Only the two hosts that come through `townTalk.closeOverlay`
 dispose. **The four-hosts rule caught this one by accident**: the two
@@ -15188,7 +15257,7 @@ PAIR - `` `world.js:N`, `exterior.js:M` `` - and the table captured `M`
 alone. So `M` was re-resolved at every wave for a year and `N` was never
 read: `world.js:4710` named a line that is 8950, `:793` one that is
 1215, `:1094` one that is 2194, `:3903` one that is 3066, `:3920` one
-that is 8907. `world.js:4445-4477` and `dungeonContext.js:1392` were
+that is 8907. `world.js:4445-4477` and `dungeonContext.js:1400` were
 stale the same way. Seven numbers re-resolved BY CONTENT, every
 uncaptured half de-baked to `\d+`, and eight new entries added so every
 number in a pair is captured. The half nobody reads cannot rot in
@@ -16730,7 +16799,7 @@ says in its own header that a second `--apply` against the same base
 moves every cite AGAIN. Recovering this slice's line shifts by
 reverting the tree except the files it had edited re-created exactly
 that: the kept files still carried the first pass's moves, and the
-second pass moved them a second time - `dungeonContext.js:2316` became
+second pass moved them a second time - `dungeonContext.js:2339` became
 2221 where the line had gone to 2215. The repair is a pairing walk:
 read HEAD's number at the same position in the same file, resolve it
 BY CONTENT in the working tree, and write that. Forty-seven cites came

@@ -470,7 +470,7 @@ export function createWorldModes(host) {
     // `DaggerfallMessageBox mb = DaggerfallUI.MessageBox(
     // deathIsNotEternalTextID); mb.Show();` and MessageBox is `new
     // DaggerfallMessageBox(uiManager, uiManager.TopWindow); ...;
-    // messageBox.Show()` (DaggerfallUI.cs:1352-1358) - a PushWindow
+    // messageBox.Show()` (DaggerfallUI.cs:1346-1353) - a PushWindow
     // that has never asked what is open. What the four hosts each
     // wired by hand, the presenter registered above now answers for.
     factionDict: () => townTalk?.factionDict ?? null,
@@ -1363,10 +1363,10 @@ export function createWorldModes(host) {
    *  billboard is CENTRE-anchored, so the base ends up ON the marker
    *  inside a building and half a height BELOW it inside a dungeon.
    *  This port's billboard shader is BOTTOM-anchored (position = base,
-   *  the C11 law dungeonContext.js:1709 states), so the same visual
+   *  the C11 law dungeonContext.js:1732 states), so the same visual
    *  result needs the shift on the DUNGEON side - which is exactly the
    *  shift the dungeon's own RDB flats already take
-   *  (dungeonContext.js:1607, `y - size.h / 2`), and which a building's
+   *  (dungeonContext.js:1630, `y - size.h / 2`), and which a building's
    *  flats correctly do not (interiorContext.js passes its centers
    *  straight through).
    *
@@ -5353,7 +5353,7 @@ export function createWorldModes(host) {
           hudMessageSink: (t) => questBridge?.notebook?.addMessage(t),
           // MAC1 J: and the relock the dungeon's pause door needs, on
           // the same threading - the context owns no canvas of its own
-          // (dungeonContext.js:5859), so the OUTER host's one rides in.
+          // (dungeonContext.js:5882), so the OUTER host's one rides in.
           // This is the most-played pause door of the six: world.js
           // gates its own Escape ladder on exterior mode, so underground
           // the key falls to routeKey -> ui/input.js:657 -> the
@@ -5445,6 +5445,7 @@ export function createWorldModes(host) {
       host.unlockOn?.();   // AUDIT 62 F16/F28: the lock never outlives a mode change
       mwViewTransition('Interior');   // EOTB-IL: OnTransitionInterior is registered on PlayerEnterExit.OnTransitionDungeonInterior too (Start, IL_06bf)
       setWeaponPose(dungeonCtx?.weaponRig?.()?.playerWeapon ?? null, host.weaponPose?.() ?? null);   // JAN1: the dungeon rig takes the pair the exterior rig held
+      ctx.goLive?.();   // ENH-NOTICE3 (AUDIT F1): only now is the dungeon's stack the live top window the door may offer boxes to
       immersiveFootsteps.onTransitionDungeonInterior();   // IF1: UpdateFootsteps_OnTransitionDungeonInterior
       betterAmbience.onTransition({ dungeon: { regionName: dfLocation.regionName, name: dfLocation.name, inCastle: () => !!ctx.insideDungeonCastle?.(), exitPos: ctx.enterMarker ? [ctx.enterMarker.x, ctx.enterMarker.y, ctx.enterMarker.z] : null } });   // BA1: OnTransitionDungeonInterior - the fog seeded by the dungeon's name, the rain source at "DungeonExit"
       _insideTavern = false;   // ROAD-B B4: PlayerEnterExit.cs:1112 - the dungeon transition clears the tavern latch too (and, verbatim, not the residence one)
@@ -6336,7 +6337,7 @@ export function createWorldModes(host) {
           // AUDIT 39r: and the FLASH, which this arm was copied without.
           // An arrow reaches the player through BowDamage ->
           // ApplyDamageToPlayer -> SendDamageToPlayer, the same door as
-          // a blow (world.js:7938's own wave-46 note); the interior
+          // a blow (world.js:7941's own wave-46 note); the interior
           // MELEE hit already flashes inside exteriorFoes, so only this
           // arm - which applies its own damage - was missing it.
           flashPlayerDamage(dmg);   // BA1: RemoveHealth carries the amount
@@ -7154,7 +7155,7 @@ export function createWorldModes(host) {
   addEventListener('mousedown', (e) => {
     // AUDIT-MACK F2: THIS HOST DOES NOT FEED THE HELD SET, and MAC-K1
     // briefly made it. `keys` is not this host's - it arrives on the
-    // host bag (`exterior.js:3441`, `world.js`'s twin), and the OUTER
+    // host bag (`exterior.js:3440`, `world.js`'s twin), and the OUTER
     // host's own mousedown writes `keys.add(mouseCode(e.button))`
     // UNGATED, before any mode test, on a listener that is never
     // removed. So the three button codes were already in the Set while
@@ -8693,7 +8694,7 @@ export function createWorldModes(host) {
      *  FLAG ONLY and presence-gated - both laws now stated once, in
      *  combat/playerWeapon.js's applyWeaponPose, with the citation.
      *  HARD2c: this used to spell them out, and named `world.js:5450`
-     *  and `dungeonContext.js:5929` for its two sibling copies - lines
+     *  and `dungeonContext.js:5952` for its two sibling copies - lines
      *  that had moved to :4418 and :5457. Three copies of a two-line
      *  law, and even the comment pointing between them had gone stale. */
     applyWeaponPose(pose) {

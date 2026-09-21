@@ -2,8 +2,8 @@
   {
     "name": "ENH-NOTICE3-townTalk-push-routed-to-replace",
     "file": "src/scenes/townTalk.js",
-    "old": "    mount: (win, { push, onClosed }) => { if (push) return pushOverlay(win, onClosed); showOverlay(win, onClosed); return true; },",
-    "new": "    mount: (win, { push, onClosed }) => { showOverlay(win, onClosed); return true; },",
+    "old": "    mount: (win, { push }) => { if (push) return pushOverlay(win); showOverlay(win); return true; },",
+    "new": "    mount: (win, { push }) => { showOverlay(win); return true; },",
     "tests": [
       "test/enhnotice3_hosts.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "ENH-NOTICE3-dungeon-mount-is-the-one-slot-write",
     "file": "src/scenes/dungeonContext.js",
-    "old": "    mount: (win) => pushDungeonWindow(win),\n    hudText: (line, delayInSeconds) => { hudText.add(line, delayInSeconds); return true; },\n    priority: 20,",
-    "new": "    mount: (win) => { activeOverlay = win; return true; },\n    hudText: (line, delayInSeconds) => { hudText.add(line, delayInSeconds); return true; },\n    priority: 20,",
+    "old": "    mount: (win) => pushDungeonWindow(win),\n    hudText: (line, delayInSeconds) => { hudText.add(line, delayInSeconds); return true; },\n    active: () => _live && !_ctxDead,\n    priority: 20,",
+    "new": "    mount: (win) => { activeOverlay = win; return true; },\n    hudText: (line, delayInSeconds) => { hudText.add(line, delayInSeconds); return true; },\n    active: () => _live && !_ctxDead,\n    priority: 20,",
     "tests": [
       "test/enhnotice3_hosts.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "ENH-NOTICE3-dungeon-behind-the-modal-modes",
     "file": "src/scenes/dungeonContext.js",
-    "old": "    hudText: (line, delayInSeconds) => { hudText.add(line, delayInSeconds); return true; },\n    priority: 20,",
-    "new": "    hudText: (line, delayInSeconds) => { hudText.add(line, delayInSeconds); return true; },\n    priority: 5,",
+    "old": "    active: () => _live && !_ctxDead,\n    priority: 20,",
+    "new": "    active: () => _live && !_ctxDead,\n    priority: 5,",
     "tests": [
       "test/enhnotice3_hosts.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "ENH-NOTICE3-dungeon-never-unregisters",
     "file": "src/scenes/dungeonContext.js",
-    "old": "      _unregisterPresenter();   // ENH-NOTICE3: the next box goes to the host that stands, not to this stack\n",
-    "new": "",
+    "old": "      _unregisterPresenter();   // ENH-NOTICE3: the registration leaves with the context",
+    "new": "      // _unregisterPresenter();   // ENH-NOTICE3: the registration leaves with the context",
     "tests": [
       "test/enhnotice3_hosts.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "ENH-NOTICE3-P4-hud-fallback-dropped",
     "file": "src/systems/notify.js",
-    "old": "  hudText(rows.map(rowText).join(' '));\n  return null;",
-    "new": "  return null;",
+    "old": "  hudText(rows.map(rowText).join(' '));\n  const inert",
+    "new": "  const inert",
     "tests": [
       "test/notify.test.js"
     ]
@@ -128,17 +128,17 @@
   {
     "name": "ENH-NOTICE3-P4-push-forced-true",
     "file": "src/systems/notify.js",
-    "old": "if (p.mount(win, { push: !!push, onClosed: onClose })) return handle;",
-    "new": "if (p.mount(win, { push: true, onClosed: onClose })) return handle;",
+    "old": "    if (p.mount(win, { push: !!push })) return true;",
+    "new": "    if (p.mount(win, { push: true })) return true;",
     "tests": [
       "test/notify.test.js"
     ]
   },
   {
-    "name": "ENH-NOTICE3-P4-onClose-never-forwarded",
+    "name": "ENH-NOTICE3-P4-messageBox-skips-the-push-it-was-given",
     "file": "src/systems/notify.js",
-    "old": "if (p.mount(win, { push: !!push, onClosed: onClose })) return handle;",
-    "new": "if (p.mount(win, { push: !!push, onClosed: null })) return handle;",
+    "old": "  if (mountWindow(win, { push })) return handle;",
+    "new": "  if (mountWindow(win, { push: true })) return handle;",
     "tests": [
       "test/notify.test.js"
     ]
@@ -290,8 +290,8 @@
   {
     "name": "ENH-NOTICE3-P4-townTalk-registration-commented-out",
     "file": "src/scenes/townTalk.js",
-    "old": "  registerPresenter({\n    mount: (win, { push, onClosed })",
-    "new": "  // registerPresenter({\n  // mount: (win, { push, onClosed })",
+    "old": "  registerPresenter({\n    mount: (win, { push })",
+    "new": "  // registerPresenter({\n  // mount: (win, { push })",
     "tests": [
       "test/notify.test.js"
     ]
@@ -341,6 +341,115 @@
     "new": "        drawJunctionMap(mp);\n        messageBox(T.MsgNoPath);",
     "tests": [
       "test/notify.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-F1-the-dungeon-presenter-live-before-adoption",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    active: () => _live && !_ctxDead,\n    priority: 20,",
+    "new": "    active: () => !_ctxDead,\n    priority: 20,",
+    "tests": [
+      "test/enhnotice3_hosts.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-F1-worldModes-never-adopts",
+    "file": "src/scenes/worldModes.js",
+    "old": "      ctx.goLive?.();   // ENH-NOTICE3 (AUDIT F1): only now is the dungeon's stack the live top window the door may offer boxes to\n",
+    "new": "",
+    "tests": [
+      "test/enhnotice3_hosts.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-F2-the-dead-guard-dropped",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    if (_ctxDead) return false;\n    dungeonWindows.reconcile(activeOverlay);",
+    "new": "    dungeonWindows.reconcile(activeOverlay);",
+    "tests": [
+      "test/enhnotice3_hosts.test.js",
+      "test/roadb_push_doors.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-F5-the-ladder-written-back-by-hand",
+    "file": "src/scenes/world.js",
+    "old": "    mountWindow(win);\n  };",
+    "new": "    if (modes?.showQuestOverlay?.(win)) return;\n    townTalk.pushOverlay(win);\n  };",
+    "tests": [
+      "test/enhnotice3_hosts.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-F3-townTalk-reports-its-own-slot-alone",
+    "file": "src/scenes/townTalk.js",
+    "old": "    hud.observe(!!overlay || !!otherOverlayActive?.());   // AUDIT ENH-NOTICE3 F3",
+    "new": "    hud.observe(!!overlay);   // AUDIT ENH-NOTICE3 F3",
+    "tests": [
+      "test/hudtext.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-F6-a-callback-smuggled-into-the-opts",
+    "file": "src/systems/notify.js",
+    "old": "    if (p.mount(win, { push: !!push })) return true;",
+    "new": "    if (p.mount(win, { push: !!push, onClosed: null })) return true;",
+    "tests": [
+      "test/notify.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-F7-the-fallback-handle-null-again",
+    "file": "src/systems/notify.js",
+    "old": "  const inert = { addNext: () => inert, done: true, mounted: false, window: null };\n  return inert;",
+    "new": "  return null;",
+    "tests": [
+      "test/notify.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-survivor-rowText-gutted",
+    "file": "src/systems/notify.js",
+    "old": "  if (Array.isArray(r?.cells)) return r.cells.map((c) => c?.text ?? '').join('  ');\n  return r?.text ?? '';",
+    "new": "  return '';",
+    "tests": [
+      "test/notify.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-survivor-showBox-replaces-again",
+    "file": "src/scenes/townTalk.js",
+    "old": "showBox: (rows) => messageBox(rows.length ? rows : ['']),",
+    "new": "showBox: (rows) => messageBox(rows.length ? rows : [''], { push: false }),",
+    "tests": [
+      "test/notify.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-survivor-the-object-guard-dropped",
+    "file": "src/systems/notify.js",
+    "old": "  if (!p || typeof p !== 'object') return () => {};\n  presenters.push(p);",
+    "new": "  presenters.push(p);",
+    "tests": [
+      "test/notify.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-survivor-a-mountless-host-ends-the-ladder",
+    "file": "src/systems/notify.js",
+    "old": "    if (typeof p.mount !== 'function') continue;   // a host with a PopupText and no slot passes the window on",
+    "new": "    if (typeof p.mount !== 'function') break;   // a host with a PopupText and no slot passes the window on",
+    "tests": [
+      "test/notify.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-the-box-under-the-toasts",
+    "file": "src/ui/enhancedNotice.js",
+    "old": "  if (firstToast) stack.insertBefore(host, firstToast); else stack.append(host);",
+    "new": "  stack.append(host); void firstToast;",
+    "tests": [
+      "test/enhancedNotice.test.js"
     ]
   }
 ]

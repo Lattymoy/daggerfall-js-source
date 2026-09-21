@@ -281,7 +281,7 @@ test('U43-ii: every modal mode can SPEAK - no HUD line goes to the console', () 
   // built ABOVE the returned ctx object and could not reach a member of
   // it. The ctx member delegates rather than keeping a second copy, so
   // what this pin asks for is the DOOR and the delegation.
-  assert.match(dc, /function pushDungeonWindow\(win\) \{\n {4}if \(!win\) return false;\n {4}dungeonWindows\.reconcile\(activeOverlay\);/,
+  assert.match(dc, /function pushDungeonWindow\(win\) \{\n {4}if \(!win\) return false;\n(?: {4}\/\/[^\n]*\n)* {4}if \(_ctxDead\) return false;\n {4}dungeonWindows\.reconcile\(activeOverlay\);/,   // ENH-NOTICE3 (AUDIT F2): a dead context refuses
     'and the dungeon slot PUSHES onto the stack rather than refusing');
   assert.match(dc, /dungeonWindows\.pushWindow\(win\);\n {4}return true;/);
   assert.match(dc, /showOverlay\(win\) \{ return pushDungeonWindow\(win\); \},/,

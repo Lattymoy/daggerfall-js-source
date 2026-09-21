@@ -1289,6 +1289,14 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
    *  ctx because the sites that owe it are built above that object. */
   function pushDungeonWindow(win) {
     if (!win) return false;
+    // AUDIT ENH-NOTICE3 F2: a dead context takes nothing. destroy()
+    // drains this stack and nulls the host's handle AFTER it returns
+    // (worldModes' `dungeonCtx = null` follows the call), so for that
+    // gap both doors into the stack - this one and worldModes'
+    // showQuestOverlay, which is this one by another name - would land
+    // a box on a stack nobody draws again. Refused, it falls to the
+    // host that stands.
+    if (_ctxDead) return false;
     dungeonWindows.reconcile(activeOverlay);   // whatever the slot holds NOW is the top
     if (dungeonWindows.containsWindow(win)) return true;
     dungeonWindows.pushWindow(win);
@@ -1310,7 +1318,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // `DaggerfallMessageBox mb = DaggerfallUI.MessageBox(
     // deathIsNotEternalTextID); mb.Show();` and MessageBox is `new
     // DaggerfallMessageBox(uiManager, uiManager.TopWindow); ...;
-    // messageBox.Show()` (DaggerfallUI.cs:1352-1358) - a PushWindow
+    // messageBox.Show()` (DaggerfallUI.cs:1346-1353) - a PushWindow
     // that has never asked what is open. What the four hosts each
     // wired by hand, the presenter registered above now answers for.
   });
@@ -1553,9 +1561,24 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // PushWindow onto it (ROAD-B B5). destroy() takes the registration
   // back - a box raised after the context is gone belongs to whoever
   // stands next, never to a dead stack.
+  //
+  // AUDIT ENH-NOTICE3 F1 - NOT LIVE UNTIL ADOPTED. This registration
+  // runs in the middle of the build, and the build awaits the HUD art,
+  // the meshes and the textures for seconds AFTER it, with the world
+  // host's frame, clock and magic rounds still running outdoors at
+  // the door. A box raised in that window (the infection's deploy, a
+  // holiday, a talk refusal) would land on a stack nothing draws yet -
+  // and be destroyed with the context if the transition then aborts.
+  // DFU has no such window: `uiManager.TopWindow` is always the one
+  // live stack. So the presenter answers `active` only once the host
+  // has ADOPTED the context (`goLive`, called by worldModes after
+  // `mode = 'dungeon'` and by the standalone host after its await),
+  // and never once it is dead.
+  let _live = false;
   const _unregisterPresenter = registerPresenter({
     mount: (win) => pushDungeonWindow(win),
     hudText: (line, delayInSeconds) => { hudText.add(line, delayInSeconds); return true; },
+    active: () => _live && !_ctxDead,
     priority: 20,
   });
   // AUDIT 64 F34: SetMidScreenText ends with the SAME
@@ -1569,7 +1592,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // owned, and destroy() hands it back (the _prevPassiveHost idiom this
   // file already uses for its other process-global seams). A bare null
   // would not do: on ?world and ?exterior the previous holder is the
-  // host's own townTalk sink (world.js:8150 / exterior.js:3325), set
+  // host's own townTalk sink (world.js:8153 / exterior.js:3324), set
   // once at boot and never again, so nulling on the way out of the
   // first dungeon would silently un-file every mid-screen label above
   // ground for the rest of the session - MC-1's own bug, re-opened.
@@ -2380,7 +2403,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // context stands (its presenter is priority 20 and its mount is
       // pushDungeonWindow, the door this line called by hand), and the
       // push is the seam's default because DaggerfallUI.MessageBox is
-      // PushWindow (DaggerfallUI.cs:1346-1358, UserInterfaceManager
+      // PushWindow (DaggerfallUI.cs:1346-1353, UserInterfaceManager
       // .cs:79-91). The rows are this host's own rscLines, untouched.
       messageBox: (id) => {
         const lines = rscLines(id);
@@ -2590,7 +2613,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // NEXT updateMissiles pass to fill. But the push lands in a
     // MICROTASK - this is async and its one caller does not await it -
     // and both hosts draw dynamicDraws BEFORE they call drawFoes
-    // (dungeon.js:1000 against :1039; worldModes.js:6201 against :6210).   // QS6: both pairs' SECOND half was stale before this slice - they named neither `drawFoes` call, and a positional bump would have moved a wrong number by the right offset; re-resolved by content
+    // (dungeon.js:1001 against :1039; worldModes.js:6202 against :6210).   // QS6: both pairs' SECOND half was stale before this slice - they named neither `drawFoes` call, and a positional bump would have moved a wrong number by the right offset; re-resolved by content
     // So the very next frame drew the arrow with a NULL matrix, and
     // `uniformMatrix4fv(uModel, false, null)` throws - Float32List is
     // a non-nullable WebIDL union. Firing a bow killed the frame loop,
@@ -3151,8 +3174,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
               // AUDIT 39 (#64) / THE FOUR HOSTS RULE - SHIPPED (wave D):
               // this host was the FOURTH BODY of the player-arrow law
               // and is now the fourth CALLER. combat/arrowFlight.js's
-              // playerArrowHitFoe is the one copy world.js:11318,
-              // exterior.js:4788 and worldModes.js:6361 already ran;
+              // playerArrowHitFoe is the one copy world.js:11321,
+              // exterior.js:4787 and worldModes.js:6362 already ran;
               // the flag said the divergence would bite and it already
               // had. This copy splashed at the ARROW TIP
               // (`[m.pos[0], m.pos[1], m.pos[2]]`) on the claim that
@@ -6140,6 +6163,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
      *  a _TUTOR__ message that arrived while the automap or a rest
      *  window was up simply never appeared. */
     showOverlay(win) { return pushDungeonWindow(win); },
+    /** ENH-NOTICE3 (AUDIT F1): the host has adopted this context - its
+     *  stack is the live top window from here on, and the door may
+     *  offer it boxes. */
+    goLive() { _live = true; },
     dropped: () => droppedLoot._piles,
     /** AUDIT 18 F5: the overlay's own clock. DFU runs
      *  DaggerfallRestWindow.Update every frame the window is topmost
@@ -6654,7 +6681,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     colliderTris,
     destroy() {
       _ctxDead = true;   // NT1 (F213): before anything frees - the warm-window continuations read it
-      _unregisterPresenter();   // ENH-NOTICE3: the next box goes to the host that stands, not to this stack
+      _unregisterPresenter();   // ENH-NOTICE3: the registration leaves with the context (the dead latch above is what REFUSES a box in the meantime - pushDungeonWindow reads it, AUDIT ENH-NOTICE3 F2)
       // PX21c: the plaque leaves with the host that raised it - AFTER
       // the latch, which NT1 pins as the first act of this function.
       destroyLootHover();

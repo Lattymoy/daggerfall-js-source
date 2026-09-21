@@ -297,7 +297,7 @@ import { revealGuildHallsOnMap } from '../systems/guildHallReveal.js';   // AUDI
 import { RumorMill, tokensToString } from '../systems/rumorMill.js';
 import { HolidayTextTimer, holidayTextPrimesFor } from '../systems/holidays.js';   // AUDIT 64 F10: PlayerEnterExit.ShowHolidayText and its prime/drain
 import { tokenRows } from '../ui/messageBox.js';   // AUDIT 63 F3: MultiFormatTextLabel.LayoutTextElements' row law, its ONE home
-import { messageBox } from '../systems/notify.js';   // ENH-NOTICE3: DaggerfallUI.MessageBox, the ONE door - this host's seams name the KIND and never the window
+import { messageBox, mountWindow } from '../systems/notify.js';   // ENH-NOTICE3: DaggerfallUI.MessageBox, the ONE door - this host's seams name the KIND and never the window; and the ladder itself, for the quest box this host builds
 import { isFaction2RelatedToFaction1 } from '../systems/factionRelations.js';   // S44: the member this host used to stub as false
 // AUDIT 39 (#109): SetFactionIdsAndRegionID's two setters bracket the
 // common-rumor macro pass, as TalkManager.cs:1417-1419 brackets its own.
@@ -2484,7 +2484,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // `DaggerfallMessageBox mb = DaggerfallUI.MessageBox(
     // deathIsNotEternalTextID); mb.Show();` and MessageBox is `new
     // DaggerfallMessageBox(uiManager, uiManager.TopWindow); ...;
-    // messageBox.Show()` (DaggerfallUI.cs:1352-1358) - a PushWindow
+    // messageBox.Show()` (DaggerfallUI.cs:1346-1353) - a PushWindow
     // that has never asked what is open. What the four hosts each
     // wired by hand, the presenter registered above now answers for.
     factionDict: () => townTalk.factionDict ?? null,
@@ -3407,7 +3407,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // ?dungeon host RAN every CastWhenUsed / CastWhenStrikes / SoulBound
   // / affinity arm against no ctx at all. They are optional-chained, so
   // it WAS silent. WAVE D closed it: the body is scenes/hostEnchant.js
-  // and dungeonContext.js:2316 mounts the same one, gated on
+  // and dungeonContext.js:2339 mounts the same one, gated on
   // `opts.enchantCtx !== false` because setDefaultEnchantCtx is a
   // session singleton and EC1 already routes THIS host's mount into
   // that context through modes.dungeonCtx - so worldModes.js:4737
@@ -3736,7 +3736,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       // stack, in both cases as a PUSH. That is a FIX, not a
       // behaviour change of convenience: every DaggerfallUI.MessageBox
       // is `new DaggerfallMessageBox(uiManager, uiManager.TopWindow)`
-      // + Show() (DaggerfallUI.cs:1346-1358), i.e. PushWindow
+      // + Show() (DaggerfallUI.cs:1346-1353), i.e. PushWindow
       // (UserInterfaceManager.cs:79-91) - the artifact speaks OVER
       // what is open, it does not throw it away. The ROWS are
       // untouched: plainLines over this host's own TEXT.RSC reader,
@@ -5245,7 +5245,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // so an F9 pressed inside a shop recorded the street's sheath and
     // hand. The mode host answers for the rig that is actually drawn
     // and null outside interior mode (the dungeon owns its own
-    // composer, dungeonContext.js:5839), so exterior mode and a
+    // composer, dungeonContext.js:5862), so exterior mode and a
     // pre-seam mode host compose exactly as before, per field.
     const wp = modes?.weaponPose?.() ?? null;
     const snap = snapshotPlayer(playerEntity, {
@@ -5827,7 +5827,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // DaggerfallUI.AddHUDText (DaggerfallUI.cs:759-766 ->
     // PopupText.AddText), the scrolling top-of-screen line
     // TravelOptionsMod uses for MsgNoPath and MsgArrivedJunc.
-    // `messageBox` is DaggerfallUI.MessageBox (:1346-1358 - a
+    // `messageBox` is DaggerfallUI.MessageBox (:1346-1353 - a
     // DaggerfallMessageBox on `uiManager.TopWindow`,
     // ClickAnywhereToClose, Show()), which is what the mod raises on
     // arrival (TravelOptionsMod.cs:493/:517 OnArrival), for
@@ -7118,7 +7118,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // exterior -> the townTalk overlay, interior OR dungeon -> the mode
   // machine's slot. U43-ii shipped the dungeon half: showQuestBox
   // offers the window to `modes.showQuestOverlay` below, and
-  // worldModes answers it in BOTH modes (worldModes.js:7643-7706 -
+  // worldModes answers it in BOTH modes (worldModes.js:7644-7707 -
   // dungeon routes to dungeonCtx.showOverlay), so a dungeon popup is
   // shown rather than logged loudly and dropped.
   // AUDIT 24 (wave 21): DaggerfallMessageBox.Show() is a
@@ -7148,23 +7148,26 @@ export async function bootWorld(canvas, renderer, params, status) {
       },
     });
     _questBoxWin = win;
-    // U43-ii: the modal slot first - interior OR dungeon, both of
-    // which showQuestOverlay now answers. It REFUSES when a window is
-    // already up, and the fall-through is townTalk's own slot, which
-    // draws above the modal render in every mode. The old line here
-    // was a console.warn saying the dungeon seam "pends", and the
-    // CLASSIC START runs _TUTOR__ and _BRISIEN inside Privateer's
-    // Hold - so the first ten minutes of a new game were silent.
-    if (modes?.showQuestOverlay?.(win)) return;
+    // U43-ii: the modal slot first - interior OR dungeon - and the
+    // fall-through townTalk's own slot, which draws above the modal
+    // render in every mode. The old line here was a console.warn
+    // saying the dungeon seam "pends", and the CLASSIC START runs
+    // _TUTOR__ and _BRISIEN inside Privateer's Hold - so the first ten
+    // minutes of a new game were silent.
     // ROAD-B B1: PUSH, not replace. A quest popup is DFU's PushWindow -
     // it lands over whatever is open and hands the screen back when it
-    // closes (UserInterfaceManager.cs:79-91) - and this fall-through is
-    // the OUTDOOR slot, where a rest window lives too. Replacing meant
-    // a _BRISIEN message arriving mid-rest threw the rest away; the
-    // rest is suspended under the box now, and resumes on its close,
-    // which is exactly what DaggerfallRestWindow's `TopWindow != this`
-    // (:364/:399) is written for.
-    townTalk.pushOverlay(win);
+    // closes (UserInterfaceManager.cs:79-91) - and the outdoor slot is
+    // where a rest window lives too. Replacing meant a _BRISIEN message
+    // arriving mid-rest threw the rest away; the rest is suspended
+    // under the box now, and resumes on its close, which is exactly
+    // what DaggerfallRestWindow's `TopWindow != this` (:364/:399) is
+    // written for.
+    // ENH-NOTICE3 (AUDIT F5): the ladder is systems/notify.js's - the
+    // same asking order every box takes (the dungeon context, the mode
+    // machine, this host's townTalk), written once. A quest box is a
+    // ServiceFlowWindow with buttons, which the door does not mint, so
+    // it rides the ladder alone.
+    mountWindow(win);
   };
   /** A window is only still "the top of the stack" while the overlay
    *  slot it went into is still showing it - the player may have
@@ -7714,7 +7717,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       // ActionTextBox in the town's slot by hand, and the three talk
       // refusals (TalkManager.cs:2626/:2632/:2645) are
       // DaggerfallUI.MessageBox, i.e. a PushWindow over the talk
-      // window the player is standing in (DaggerfallUI.cs:1346-1358,
+      // window the player is standing in (DaggerfallUI.cs:1346-1353,
       // UserInterfaceManager.cs:79-91). The seam's default push is
       // that, and it now reaches an interior or dungeon host too.
       messageBox(rows.length ? rows : ['You get no response.']);

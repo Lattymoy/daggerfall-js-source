@@ -28,7 +28,7 @@ test('ENH-NOTICE3: three presenters, asked dungeon (20) before the modal modes (
   // over what is open - ROAD-B B5's law for every DaggerfallUI
   // .MessageBox); a replace is showOverlay (the dispatching door);
   // and the town's own PopupText is its hudText.
-  assert.match(town, /\n  registerPresenter\(\{\n    mount: \(win, \{ push, onClosed \}\) => \{ if \(push\) return pushOverlay\(win, onClosed\); showOverlay\(win, onClosed\); return true; \},\n    hudText: \(line, delayInSeconds\) => \{ hud\.add\(line, delayInSeconds\); return true; \},\n    priority: 0,\n  \}\);/,
+  assert.match(town, /\n  registerPresenter\(\{\n    mount: \(win, \{ push \}\) => \{ if \(push\) return pushOverlay\(win\); showOverlay\(win\); return true; \},\n    hudText: \(line, delayInSeconds\) => \{ hud\.add\(line, delayInSeconds\); return true; \},\n    priority: 0,\n  \}\);/,
     'mutants: townTalk registers nothing (a box with no modal host up is dropped - the silent-first-ten-minutes failure); push routed to showOverlay (a quest box replaces the rest it lands on); the delay dropped from hudText (a mod\'s textDisplayTime ignored); a priority above the modal hosts (the street takes a box raised inside a building)');
   // worldModes: the modal modes' slot, through the hoisted
   // showQuestOverlay - interior mounts (a push), dungeon hands to the
@@ -40,13 +40,34 @@ test('ENH-NOTICE3: three presenters, asked dungeon (20) before the modal modes (
   assert.match(modes, /    showQuestOverlay,\n/, 'the quest machine\'s own door is the same function, not a second copy');
   // dungeonContext: its window stack and its PopupText, in front of
   // both, for as long as the context stands.
-  assert.match(dungeon, /\n  const _unregisterPresenter = registerPresenter\(\{\n    mount: \(win\) => pushDungeonWindow\(win\),\n    hudText: \(line, delayInSeconds\) => \{ hudText\.add\(line, delayInSeconds\); return true; \},\n    priority: 20,\n  \}\);/,
-    'mutants: the dungeon registers nothing (on ?dungeon, which has no townTalk and no worldModes, every box falls to the HUD line); its mount the one-slot write instead of the push door (a box under an open window swallowed - ROAD-B B5); a priority below worldModes\'');
-  // ...and the teardown takes the registration back, right after the
-  // dead latch and before anything else: a box raised after the context
-  // is gone belongs to whoever stands next, never to a dead stack.
-  assert.match(dungeon, /destroy\(\) \{\n      _ctxDead = true;[^\n]*\n      _unregisterPresenter\(\);   \/\//,
-    'mutants: the unregister dropped (a torn-down dungeon keeps taking boxes into a stack nobody draws); written after the stack drain, where a box the drain raises lands on it');
+  assert.match(dungeon, /\n  let _live = false;\n  const _unregisterPresenter = registerPresenter\(\{\n    mount: \(win\) => pushDungeonWindow\(win\),\n    hudText: \(line, delayInSeconds\) => \{ hudText\.add\(line, delayInSeconds\); return true; \},\n    active: \(\) => _live && !_ctxDead,\n    priority: 20,\n  \}\);/,
+    'mutants: the dungeon registers nothing (on ?dungeon, which has no townTalk and no worldModes, every box falls to the HUD line); its mount the one-slot write instead of the push door (a box under an open window swallowed - ROAD-B B5); a priority below worldModes\'; `active` dropped (AUDIT ENH-NOTICE3 F1: a half-built dungeon takes boxes into a stack nothing draws yet)');
+  // AUDIT ENH-NOTICE3 F1: NOT LIVE UNTIL ADOPTED - the two hosts that
+  // adopt a context say so, after their own adoption and not before.
+  assert.match(dungeon, /\n    goLive\(\) \{ _live = true; \},/, 'the adoption door');
+  assert.match(modes, /\n      mode = 'dungeon';\n(?:[^\n]*\n){1,3}      ctx\.goLive\?\.\(\);/, 'mutants: worldModes never adopts (every dungeon box falls to the street for the whole visit); adopts before `mode = \'dungeon\'`');
+  assert.match(rd('src/scenes/dungeon.js'), /\n  \);\n  ctx\.goLive\?\.\(\);/, 'the standalone host adopts after its await');
+  // AUDIT ENH-NOTICE3 F2: THE DEAD LATCH IS THE REFUSAL. destroy()
+  // unregisters, but worldModes' showQuestOverlay is a second door into
+  // the same stack and the host nulls its handle only after destroy()
+  // returns - so pushDungeonWindow itself refuses once dead, and both
+  // doors fall to the host that stands.
+  assert.match(dungeon, /function pushDungeonWindow\(win\) \{\n    if \(!win\) return false;\n(?:    \/\/[^\n]*\n)*    if \(_ctxDead\) return false;\n/,
+    'mutant: the dead guard dropped, so a box raised while the context is torn down lands on a stack nobody draws');
+  assert.match(dungeon, /destroy\(\) \{\n      _ctxDead = true;[^\n]*\n      _unregisterPresenter\(\);/,
+    'mutant: the unregister dropped (a torn-down dungeon stays in the registry; harmless only while its active() reads the latch)');
+});
+
+test('ENH-NOTICE3 (AUDIT F5): the showQuestBox ladder has ONE home - systems/notify.js mountWindow - and neither outer host writes it by hand', () => {
+  for (const f of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
+    const s = rd(f);
+    assert.match(s, /\n    mountWindow\(win\);/, `${f}: the quest box rides the door's ladder`);
+    assert.equal(/showQuestOverlay\?\.\(win\)\) return;\s*\n(?:\s*\/\/[^\n]*\n)*\s*townTalk\.pushOverlay\(win\);/.test(s), false,
+      `${f}: mutant - the two-rung ladder written back by hand, a second home the door's order does not reach`);
+  }
+  const notify = rd('src/systems/notify.js');
+  assert.match(notify, /export function mountWindow\(win, \{ push = true \} = \{\}\) \{/);
+  assert.match(notify, /  if \(mountWindow\(win, \{ push \}\)\) return handle;/, 'and messageBox itself walks the same ladder - one order for every window');
 });
 
 test('ENH-NOTICE3: the seam is imported where the hosts build their deps, and nothing under src/systems or src/mods builds a window', () => {

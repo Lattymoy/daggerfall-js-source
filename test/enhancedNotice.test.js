@@ -7,7 +7,7 @@
 // The model is the box (ActionTextBox, the no-options ChoiceWindow -
 // the port's two homes for DFU's click-anywhere DaggerfallMessageBox);
 // what the skin changes is the paint. These drive the enhanced arm
-// over the fake document test/hudtext.test.js drives its column
+// over the fake document test/hudtext.test.js drives its toasts
 // through, and the classic arm over a recording renderer, and each pin
 // names the mutants it kills.
 import { test } from 'node:test';
@@ -26,6 +26,7 @@ function fakeNode(tag, doc) {
     tagName: tag.toUpperCase(), children: [], parent: null, className: '', textContent: '', id: '',
     style: { setProperty(k, v) { this[k] = v; } }, dataset: {}, attrs: {},
     append(...cs) { for (const c of cs) { c.parent = n; n.children.push(c); } },
+    insertBefore(c, ref) { c.parent = n; const i = n.children.indexOf(ref); if (i < 0) n.children.push(c); else n.children.splice(i, 0, c); },
     setAttribute(k, v) { n.attrs[k] = v; },
     remove() { if (n.parent) { n.parent.children.splice(n.parent.children.indexOf(n), 1); n.parent = null; } n.removed = true; },
   };
@@ -522,5 +523,22 @@ test('ENH-NOTICE3: drawEnhancedToasts - one panel per row id under the owner, re
     releaseEnhancedToasts('town1');
     assert.equal(out[1].className, 'notice notice-toast notice-out', 'mutant: dispose a no-op');
     assert.deepEqual(enhancedNoticeKeys(), ['dungeon1:1'], 'and it takes only its own');
+  });
+});
+
+test('ENH-NOTICE3 (AUDIT): a box raised over toasts stands ABOVE them - the panel the player must answer reads first', () => {
+  withSkin('enhanced', (doc) => {
+    fakeClock();
+    drawEnhancedToasts({ rows: ['a', 'b'], ids: [1, 2] }, doc, 'town1');
+    drawEnhancedNotice({ rows: ['The door is locked.'] }, doc, 'box1');
+    assert.deepEqual(panelsOf(doc).map((p) => p.dataset.owner), ['box1', 'town1:1', 'town1:2'],
+      'mutant: the box appended at the foot, under four skill-ups the player is not waiting on');
+    // a toast that joins later still goes to the foot, under the box
+    drawEnhancedToasts({ rows: ['a', 'b', 'c'], ids: [1, 2, 3] }, doc, 'town1');
+    assert.deepEqual(panelsOf(doc).map((p) => p.dataset.owner), ['box1', 'town1:1', 'town1:2', 'town1:3']);
+    // and a second box goes in front of the toasts, behind the first box
+    drawEnhancedNotice({ rows: ['Another.'] }, doc, 'box2');
+    assert.deepEqual(panelsOf(doc).map((p) => p.dataset.owner), ['box1', 'box2', 'town1:1', 'town1:2', 'town1:3'],
+      'boxes keep their raising order among themselves');
   });
 });

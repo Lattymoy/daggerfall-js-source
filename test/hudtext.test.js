@@ -539,8 +539,15 @@ test('AUDIT FONT F4: a canvas window covers the classic column, so the toasts go
   });
   // ...and every host that owns a model hands its own window slot in.
   const town = rd('src/scenes/townTalk.js');
-  assert.equal([...town.matchAll(/hud\.observe\(!!overlay\);/g)].length, 2,
-    'mutants: townTalk\'s frame - or the interior arm\'s own hudFrame - stops telling the model that a window is up');
+  // AUDIT ENH-NOTICE3 F3: ...and the MODE host's slot beside its own.
+  // townTalk's model is drawn under the interior arm (hudFrame) and by
+  // the outer hosts in every mode, and `overlay` is the town's slot
+  // alone - so an inventory or a rest window opened inside a building
+  // never reached this report, and the toasts stood over it.
+  assert.equal([...town.matchAll(/hud\.observe\(!!overlay \|\| !!otherOverlayActive\?\.\(\)\);/g)].length, 2,
+    'mutants: townTalk\'s frame - or the interior arm\'s own hudFrame - stops telling the model that a window is up, or reports its own slot alone');
+  assert.match(rd('src/scenes/world.js'), /otherOverlayActive: \(\) => modes\?\.overlayHeld \?\? false,/, 'the seam IS the mode machine\'s slot');
+  assert.match(rd('src/scenes/exterior.js'), /otherOverlayActive: \(\) => modes\?\.overlayHeld \?\? false,/);
   assert.match(rd('src/scenes/dungeonContext.js'), /hudText\.observe\(!!activeOverlay\);/,
     'mutants: the dungeon\'s frame stops telling it');
   // ...and the model's own draw is back to three arguments: a fourth

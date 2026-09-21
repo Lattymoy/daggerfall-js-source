@@ -551,8 +551,8 @@
   {
     "name": "AUDIT-FONT-F4-townTalk-stops-naming-its-window",
     "file": "src/scenes/townTalk.js",
-    "old": "    hud.observe(!!overlay);\n    if (font && hudRenderEnabled())",
-    "new": "    hud.observe(false);\n    if (font && hudRenderEnabled())",
+    "old": "    hud.observe(!!overlay || !!otherOverlayActive?.());   // AUDIT ENH-NOTICE3 F3",
+    "new": "    hud.observe(false);   // AUDIT ENH-NOTICE3 F3",
     "tests": [
       "test/hudtext.test.js"
     ]
@@ -560,7 +560,7 @@
   {
     "name": "AUDIT-FONT-F4-the-interior-frame-stops-naming-its-window",
     "file": "src/scenes/townTalk.js",
-    "old": "      hud.observe(!!overlay);   // AUDIT FONT F4",
+    "old": "      hud.observe(!!overlay || !!otherOverlayActive?.());   // AUDIT FONT F4",
     "new": "      hud.observe(false);   // AUDIT FONT F4",
     "tests": [
       "test/hudtext.test.js"

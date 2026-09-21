@@ -1760,7 +1760,7 @@ export function wireInfectionVideos(renderer, { textAt = null, factionDict = nul
     // bit, and ROAD review-p had to convert all four by hand).
     // VampirismInfection.cs:186-188 is `DaggerfallMessageBox mb =
     // DaggerfallUI.MessageBox(deathIsNotEternalTextID); mb.Show();`,
-    // and DaggerfallUI.MessageBox (DaggerfallUI.cs:1346-1358) builds
+    // and DaggerfallUI.MessageBox (DaggerfallUI.cs:1346-1353) builds
     // the box on `Instance.uiManager.TopWindow` and Show()s it - a
     // PushWindow (UserInterfaceManager.cs:79-91). So the KIND is
     // named once here and systems/notify.js finds whichever host's

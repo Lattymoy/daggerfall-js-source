@@ -25,7 +25,7 @@ import { join } from 'node:path';
 
 import {
   messageBox, hudText, popupMessage, toRows,
-  registerPresenter, notifyPresenters, _resetNotifyForTests,
+  registerPresenter, notifyPresenters, _resetNotifyForTests, mountWindow,
 } from '../src/systems/notify.js';
 
 import { createTravelOptions, readTravelOptionsSettings } from '../src/systems/travelOptions.js';
@@ -117,7 +117,7 @@ test('ENH-NOTICE3: the unregister a teardown calls really drops the host', () =>
   assert.deepEqual(log.map((r) => r.name), ['town'], 'a box raised after the context is gone belongs to whoever stands next');
 });
 
-test('ENH-NOTICE3: FALLBACK, NOT SILENCE - with no host to mount it the rows land on the HUD line and the handle is null', () => {
+test('ENH-NOTICE3: FALLBACK, NOT SILENCE - with no host to mount it the rows land on the HUD line and the handle is inert, never a throw', () => {
   _resetNotifyForTests();
   const log = [];
   // a host with a PopupText but no slot (and one whose slot refuses):
@@ -125,10 +125,33 @@ test('ENH-NOTICE3: FALLBACK, NOT SILENCE - with no host to mount it the rows lan
   // "first ten minutes of a new game were silent" bug lived in.
   registerPresenter({ hudText: (line, delay) => { log.push({ line, delay }); return true; }, priority: 0 });
   registerPresenter(fakeHost(log, 'refuser', 20, { takes: false }));
-  const handle = messageBox(['Death is not eternal.', 'Nor is life.']);
-  assert.equal(handle, null, 'null so a caller that cares can tell');
-  assert.deepEqual(log.filter((r) => r.line).map((r) => r.line), ['Death is not eternal. Nor is life.'],
-    'the rows, joined - the words are not dropped');
+  // AUDIT ENH-NOTICE3 (a survivor): the rows are RECORDS as often as
+  // strings - a `{ text, center }` row, AUDIT 64 F28's `{ cells }` row
+  // - and each must reach the line in words, not as an empty string.
+  const handle = messageBox(['Death is not eternal.', { text: 'Nor is life.', center: true }, { cells: [{ text: 'Health', x: 0 }, { text: '12', x: 60 }] }]);
+  assert.equal(handle.mounted, false, 'so a caller that cares can tell');
+  assert.deepEqual(log.filter((r) => r.line).map((r) => r.line), ['Death is not eternal. Nor is life. Health  12'],
+    'mutants: the rows dropped; a record row read as an empty string; a cells row read as an empty string');
+  // AUDIT ENH-NOTICE3 F7: the status chains call addNext without
+  // looking, so the inert handle must chain to itself and read done.
+  assert.equal(handle.addNext('more'), handle, 'the chain is a no-op, not a TypeError');
+  assert.equal(handle.done, true);
+  assert.equal(handle.window, null);
+  assert.equal(log.filter((r) => r.line).length, 1, 'a chained row after a fallback raises no second line');
+});
+
+test('ENH-NOTICE3 (AUDIT): a host with a PopupText and no slot is passed OVER, not the end of the ladder; a non-object registers nothing', () => {
+  _resetNotifyForTests();
+  const log = [];
+  registerPresenter(fakeHost(log, 'town', 0));
+  registerPresenter({ hudText: () => true, priority: 20 });   // a mountless host FIRST in the asking order
+  const handle = messageBox('x');
+  assert.equal(handle.mounted, true, 'mutant: `continue` -> `break`, so a mountless host stops the ladder and the box falls to the line');
+  assert.deepEqual(log.map((r) => r.name), ['town']);
+  const off = registerPresenter(null);
+  assert.equal(typeof off, 'function');
+  assert.doesNotThrow(() => messageBox('y'), 'mutant: the object guard dropped, so a stray null throws the door down at order()');
+  off();
 });
 
 test('ENH-NOTICE3: hudText is AddHUDText on the live host, delay and all; popupMessage is the same PopupText', () => {
@@ -142,18 +165,30 @@ test('ENH-NOTICE3: hudText is AddHUDText on the live host, delay and all; popupM
   assert.equal(hudText('nobody'), false, 'and it says so when no host queued it');
 });
 
-test('ENH-NOTICE3: push rides through to the host, and onClose arrives as onClosed', () => {
+test('ENH-NOTICE3: push rides through to the host, and NOTHING else does - the door carries no close callback', () => {
   _resetNotifyForTests();
   const log = [];
   registerPresenter(fakeHost(log, 'town', 0));
-  const onClose = () => {};
   messageBox('default');
   messageBox('replace', { push: false });
-  messageBox('closed', { onClose });
   // PushWindow (UserInterfaceManager.cs:79-91) is what every
   // DaggerfallUI.MessageBox does, so the DEFAULT is the push.
-  assert.deepEqual(log.map((r) => r.opts.push), [true, false, true]);
-  assert.deepEqual(log.map((r) => r.opts.onClosed), [null, null, onClose]);
+  assert.deepEqual(log.map((r) => r.opts.push), [true, false]);
+  // AUDIT ENH-NOTICE3 F6: an onClose the door advertised was honoured
+  // by one host of three (the interior mount and the dungeon push
+  // have no close callback), so the contract is gone rather than
+  // two-thirds false. The presenter opts are `{ push }` and no more.
+  assert.deepEqual(log.map((r) => Object.keys(r.opts)), [['push'], ['push']],
+    'mutant: a callback smuggled back into the opts, which two hosts would drop');
+  assert.equal(/onClose/.test(src('src/systems/notify.js')), false, 'and the door does not name one');
+  // ...and the LADDER on its own, for a window a host built (the quest
+  // ServiceFlowWindow): the same asking order, no box minted.
+  const win = { lines: ['a quest'] };
+  assert.equal(mountWindow(win), true);
+  assert.equal(log.at(-1).win, win, 'the window handed over as given');
+  assert.equal(mountWindow(null), false);
+  _resetNotifyForTests();
+  assert.equal(mountWindow(win), false, 'no host, no mount - the caller decides');
 });
 
 test('ENH-NOTICE3: the handle CHAINS - AddNextMessageBox onto the same box', () => {
@@ -274,6 +309,10 @@ test('ENH-NOTICE3 B: every migrated host seam names the KIND and mints no window
   for (const [file, from, to] of seams) {
     const body = dep(file, from, to);
     assert.match(body, /\bmessageBox\(/, `${file} ${from}: must raise the box through the one door`);
+    // AUDIT ENH-NOTICE3 (a survivor): `{ push: false }` at any of these
+    // is the exact bug the slice fixed - the talk refusals and the
+    // enchant seam DISPOSING the window they stand over.
+    assert.equal(/push:\s*false/.test(body), false, `${file} ${from}: every DaggerfallUI.MessageBox is a PushWindow`);
     assert.equal(/new ChoiceWindow\(\{ lines/.test(body), false, `${file} ${from}: no hand-built ChoiceWindow`);
     assert.equal(/new ActionTextBox\(/.test(body), false, `${file} ${from}: no hand-built ActionTextBox`);
     assert.equal(/townTalk\.(showOverlay|pushOverlay|showBox)\(/.test(body), false, `${file} ${from}: no host window door`);

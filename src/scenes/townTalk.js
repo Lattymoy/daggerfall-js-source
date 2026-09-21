@@ -1110,7 +1110,7 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     // AUDIT FONT F4: ...and the host REPORTS its window slot first. The classic column is drawn HERE and the overlay
     // stack just below it, so on that skin a window covers it; the enhanced face is DOM over the canvas and covers the
     // window instead, so it is told to go for as long as one stands.
-    hud.observe(!!overlay);
+    hud.observe(!!overlay || !!otherOverlayActive?.());   // AUDIT ENH-NOTICE3 F3: ...and the MODE host's slot, which this model is drawn under too (the interior arm drives hudFrame below; the outer hosts run this frame in every mode)
     if (font && hudRenderEnabled()) hud.draw(renderer, canvas, font, s); else hud.hide();
     // ROAD close-P: THE STACK IS PAINTED, NOT JUST ITS TOP.
     // DaggerfallPopupWindow.Draw (:77-86) runs `previousWindow.Draw()`
@@ -1239,11 +1239,12 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
   // arm, the dungeon context) stand in front of it, which is the
   // order world.js's showQuestBox ladder always asked them in. A push
   // is pushOverlay (the box lands over what is open, B5's law); a
-  // replace is showOverlay (the dispatching door). No unregister: this
+  // replace is showOverlay (the dispatching door); no close callback
+  // rides the door (AUDIT ENH-NOTICE3 F6). No unregister: this
   // host lives as long as the page (every scene change in this port
   // ends in location.replace - ui/enhancedHudText.js, AUDIT FONT F12).
   registerPresenter({
-    mount: (win, { push, onClosed }) => { if (push) return pushOverlay(win, onClosed); showOverlay(win, onClosed); return true; },
+    mount: (win, { push }) => { if (push) return pushOverlay(win); showOverlay(win); return true; },
     hudText: (line, delayInSeconds) => { hud.add(line, delayInSeconds); return true; },
     priority: 0,
   });
@@ -1304,7 +1305,7 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
      *  it used to REPLACE. `showOverlay` disposed whatever held the
      *  slot; DFU's own door does not - `DaggerfallUI.MessageBox` is
      *  `new DaggerfallMessageBox(uiManager, uiManager.TopWindow);
-     *  ...; messageBox.Show()` (DaggerfallUI.cs:1346-1358) and Show
+     *  ...; messageBox.Show()` (DaggerfallUI.cs:1346-1353) and Show
      *  is PushWindow (UserInterfaceManager.cs:79-91). Both remaining
      *  kinds that come through here are that: the talk refusals
      *  above, and Travel Options' H help, which the mod raises with
@@ -1339,7 +1340,7 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
      *  frame after the player walked out. It drives this directly. */
     hudFrame: (dt, font_ = font) => {
       hud.tick(dt);
-      hud.observe(!!overlay);   // AUDIT FONT F4: the same canvas-window report as the frame above, so the DOM column never stands over a native window
+      hud.observe(!!overlay || !!otherOverlayActive?.());   // AUDIT FONT F4: the same canvas-window report as the frame above, so the DOM face never stands over a native window - and (AUDIT ENH-NOTICE3 F3) the interior slot this arm is drawn under, which `overlay` cannot see
       if (font_ && hudRenderEnabled()) hud.draw(renderer, canvas, font_, hudScale(canvas.width, canvas.height)); else hud.hide();   // AUDIT 64 F37: the same Draw gate as the frame above, with FONT1's hide door on its else (the enhanced column is DOM and persists)
     },
     get overlayActive() { return talkPaused(); },   // ROAD-tail: the STACK's pause latch, not this host's slot arithmetic

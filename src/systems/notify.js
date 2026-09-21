@@ -21,9 +21,16 @@
 // door on DaggerfallUI: MessageBox (DaggerfallUI.cs:1328/:1337/:1346/
 // :1355 - four overloads, all built on `Instance.uiManager.TopWindow`,
 // ClickAnywhereToClose set, Show()), AddHUDText (:759/:767/:775 ->
-// PopupText.AddText), PopupMessage (:820-824, the same PopupText),
-// SetMidScreenText (:783-789). A producer - the game's or a mod's -
-// names the KIND and never the window. This module is that door.
+// PopupText.AddText), PopupMessage (:820-824, the same PopupText). A
+// producer - the game's or a mod's - names the KIND and never the
+// window. This module is that door for the BOX kind, and the ladder
+// (`mountWindow`) for any window a host wants on the live slot. The
+// HUD-text kind has a door here too (`hudText`, `popupMessage`), but
+// AUDIT ENH-NOTICE3 F4 records the truth of the tree: no shipping
+// producer walks through it yet - the hosts' own `say`/`hudSay` deps
+// are still what AddHUDText's callers hold, and this door is what a
+// producer WITHOUT a host handle would use, and what the fallback
+// below lands on. SetMidScreenText stays ui/midScreenText.js's.
 //
 // THE LAW: notify decides WHICH MODEL; the draw decides WHICH FACE.
 // This module does not import ui/uiSkin.js and never will: the skin
@@ -48,13 +55,15 @@
 // line, and the handle answers null so a caller that cares can tell.
 
 import { ActionTextBox } from '../ui/actionText.js';
-export { setMidScreenText as midScreenText } from '../ui/midScreenText.js';
 
 /**
  * @typedef {object} Presenter
- * @property {(win: object, opts: { push: boolean, onClosed: (() => void) | null }) => boolean} [mount]
+ * @property {(win: object, opts: { push: boolean }) => boolean} [mount]
  *   Take the window into this host's slot. True when taken; false to pass it on
- *   (the slot is held and this host does not push).
+ *   (the slot is held and this host does not push). No close callback rides
+ *   through: two of the three hosts' doors (the interior mount, the dungeon
+ *   push) have none, and a contract one host honours and two drop is a lie
+ *   (AUDIT ENH-NOTICE3 F6) - a caller that needs OnClose owns its window.
  * @property {(text: string, delay?: number) => boolean} [hudText]
  *   This host's PopupText model (ui/hudText.js - two are live at once, the town's
  *   and the dungeon's; AUDIT FONT F1 keys them). True when queued.
@@ -65,7 +74,9 @@ export { setMidScreenText as midScreenText } from '../ui/midScreenText.js';
 /** @type {Array<Presenter>} */
 const presenters = [];
 
-/** A host offers its slot. Returns the unregister its teardown must call. */
+/** A host offers its slot. Returns the unregister its teardown must call.
+ *  Not an object: nothing registered, a no-op unregister - `order()`
+ *  reads `p.active?.()` and a stray null would throw the door down. */
 export function registerPresenter(p) {
   if (!p || typeof p !== 'object') return () => {};
   presenters.push(p);
@@ -99,10 +110,29 @@ export function toRows(text) {
 }
 
 /**
+ * THE LADDER on its own: a window - any window, a box the door minted
+ * or a buttoned one a host built (world.js's quest ServiceFlowWindow)
+ * - offered to the live presenters in asking order. True when a host
+ * took it. AUDIT ENH-NOTICE3 F5: the showQuestBox ladder was written
+ * here and then twice more by hand in the outer hosts; this is the
+ * one home, so a fourth presenter is seen by every window at once.
+ * @param {object} win  @param {{ push?: boolean }} [opts]
+ */
+export function mountWindow(win, { push = true } = {}) {
+  if (!win) return false;
+  for (const p of order()) {
+    if (typeof p.mount !== 'function') continue;   // a host with a PopupText and no slot passes the window on
+    if (p.mount(win, { push: !!push })) return true;
+  }
+  return false;
+}
+
+/**
  * @typedef {object} MessageBoxHandle
  * @property {(rows: any) => MessageBoxHandle} addNext  DaggerfallMessageBox.AddNextMessageBox: dismissing this box shows the next rows in its place
  * @property {boolean} done
- * @property {object} window  the ActionTextBox, for a host that draws it itself
+ * @property {boolean} mounted  false when no presenter took it (the rows went to the HUD line)
+ * @property {object|null} window  the ActionTextBox, for a host that draws it itself; null when not mounted
  */
 
 /**
@@ -117,23 +147,21 @@ export function toRows(text) {
  * @param {number[]} [opts.highlightColor]   SetHighlightColor (DaggerfallMessageBox.cs:455-458)
  * @param {boolean} [opts.previousWindow]    DaggerfallPopupWindow.previousWindow (:24, :56-59): the HUD stays painted under the box; false is DaggerfallAction's null (Internal/DaggerfallAction.cs:536)
  * @param {boolean} [opts.push]              PushWindow over the open window (UserInterfaceManager.cs:79-91), which is what every DaggerfallUI.MessageBox does (ROAD-B B5's law); false is CloseWindow-then-Push, for a caller that means to dispatch the window it stands in
- * @param {() => void} [opts.onClose]        OnClose
- * @returns {MessageBoxHandle|null}          null when no presenter took it (it went to the HUD line)
+ * @returns {MessageBoxHandle}               `mounted` false when no presenter took it (it went to the HUD line); the chain is then a no-op, never a throw (AUDIT ENH-NOTICE3 F7 - the status chains call addNext without looking)
  */
-export function messageBox(text, { highlightColor = undefined, previousWindow = true, push = true, onClose = null } = {}) {
+export function messageBox(text, { highlightColor = undefined, previousWindow = true, push = true } = {}) {
   const rows = toRows(text);
   const win = new ActionTextBox(rows, { highlightColor, previousWindow });
   const handle = {
     addNext(next) { win.addNext(toRows(next)); return handle; },
     get done() { return win.done; },
+    mounted: true,
     window: win,
   };
-  for (const p of order()) {
-    if (typeof p.mount !== 'function') continue;
-    if (p.mount(win, { push: !!push, onClosed: onClose })) return handle;
-  }
+  if (mountWindow(win, { push })) return handle;
   hudText(rows.map(rowText).join(' '));
-  return null;
+  const inert = { addNext: () => inert, done: true, mounted: false, window: null };
+  return inert;
 }
 
 /** A row's words, for the fallback line. */

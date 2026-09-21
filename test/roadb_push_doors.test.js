@@ -108,7 +108,7 @@ test('B5/ENH-NOTICE3: the INFECTION popup pushes, and the four hosts no longer e
   // A PUSH, still: the seam's `push` defaults true (notify.js) and
   // this call passes no option, so DaggerfallUI.MessageBox's
   // PushWindow is what every host performs.
-  assert.match(src('src/systems/notify.js'), /export function messageBox\(text, \{ highlightColor = undefined, previousWindow = true, push = true, onClose = null \} = \{\}\)/);
+  assert.match(src('src/systems/notify.js'), /export function messageBox\(text, \{ highlightColor = undefined, previousWindow = true, push = true \} = \{\}\)/);
   assert.equal(/if \(lines\?\.length\) messageBox\(lines, \{ push: false/.test(sh), false, 'never a replace');
   // and NO host wires a window for it any more - not the two modal
   // hosts B5 converted, not the two streaming hosts ROAD review-p did.
@@ -150,7 +150,7 @@ test('B5: the dungeon\'s rest MASTERY box pushes, like the interior twin already
 
 test('B5: the dungeon has ONE push door and its ctx member delegates to it', () => {
   const dc = src('src/scenes/dungeonContext.js');
-  assert.match(dc, /function pushDungeonWindow\(win\) \{\n\s*if \(!win\) return false;\n\s*dungeonWindows\.reconcile\(activeOverlay\);[^\n]*\n\s*if \(dungeonWindows\.containsWindow\(win\)\) return true;\n\s*dungeonWindows\.pushWindow\(win\);\n\s*return true;\n\s*\}/,
+  assert.match(dc, /function pushDungeonWindow\(win\) \{\n\s*if \(!win\) return false;\n(?:\s*\/\/[^\n]*\n)*\s*if \(_ctxDead\) return false;\n\s*dungeonWindows\.reconcile\(activeOverlay\);[^\n]*\n\s*if \(dungeonWindows\.containsWindow\(win\)\) return true;\n\s*dungeonWindows\.pushWindow\(win\);\n\s*return true;\n\s*\}/,
     'PushWindow (UserInterfaceManager.cs:79-91) with ContainsWindow as the re-entrancy guard');
   assert.match(dc, /showOverlay\(win\) \{ return pushDungeonWindow\(win\); \},/,
     'the ctx member is the same door, not a second copy');
