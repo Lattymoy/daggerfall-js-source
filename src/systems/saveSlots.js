@@ -42,13 +42,12 @@
 // key is removed, so a quota failure leaves the old save untouched.
 
 import { SAVE_VERSION, QUICKSAVE_KEY } from './save.js';
+import { SAVE_DATA_PREFIX, SAVE_INFO_PREFIX, SAVE_SHOT_PREFIX, characterIdOf, adoptLegacyCards, mintCharacterId } from './characterId.js';   // CHARID1: the prefixes and the id, the one module save.js and this both read
 import { BUILD_TAG } from '../buildTag.js';
 import { appStorage } from './appStorage.js';   // DA1: localStorage in a browser, real save files in the desktop shell
 
 // SaveLoadManager's names (:42-44), as storage-key prefixes.
-export const SAVE_DATA_PREFIX = 'dagger.save.';
-export const SAVE_INFO_PREFIX = 'dagger.saveinfo.';
-export const SAVE_SHOT_PREFIX = 'dagger.saveshot.';
+export { SAVE_DATA_PREFIX, SAVE_INFO_PREFIX, SAVE_SHOT_PREFIX, characterIdOf, adoptLegacyCards, mintCharacterId };   // CHARID1: still this module's words to every caller
 export const QUICK_SAVE_NAME = 'QuickSave';
 export const AUTO_SAVE_NAME = 'AutoSave';
 
@@ -73,6 +72,7 @@ const store = () => appStorage();
  * @property {string} [characterName]
  * @property {{gameTime?: number, realTime?: number}} [dateAndTime]  gameTime in CLASSIC MINUTES, realTime in Date.now() ms - both compare-and-display, never arithmetic
  * @property {string} [dfuVersion]   the port's BUILD_TAG
+ * @property {string} [characterId]  CHARID1: the character's id - a card without one is a legacy card, adopted on its character's next load
  */
 
 // HARD3: ONE reader, TWO shapes. `parse` was handed both the slot CARD
@@ -174,12 +174,16 @@ export function characterNames(storage = store()) {
   return [...enumerateSaves(storage).characterSaves.keys()];
 }
 
-/** FindSaveFolderByNames: the (characterName, saveName) identity, -1
- *  when absent. */
-export function findSave(characterName, saveName, storage = store()) {
+/** FindSaveFolderByNames, with CHARID1's law: the identity is
+ *  (characterId, saveName) when the caller knows the id - a card
+ *  without an id never matches an id, which is what keeps a new
+ *  character off an old one's slot - and (characterName, saveName)
+ *  only for a caller with no id to give. -1 when absent. */
+export function findSave(characterName, saveName, storage = store(), characterId = null) {
   const { info } = enumerateSaves(storage);
   for (const [key, saveInfo] of info) {
-    if (saveInfo.characterName === characterName && saveInfo.saveName === saveName) return key;
+    if (saveInfo.saveName !== saveName) continue;
+    if (characterId ? saveInfo.characterId === characterId : saveInfo.characterName === characterName) return key;
   }
   return -1;
 }
@@ -202,12 +206,17 @@ export function findMostRecentSave(storage = store()) {
  *  @returns {{ ok: boolean, key: number }} */
 export function saveSlot(characterName, saveName, snap, { screenshot = null, storage = store(), now = Date.now() } = {}) {
   if (!storage || !snap) return { ok: false, key: -1 };
-  let key = findSave(characterName, saveName, storage);
+  // CHARID1: the envelope carries the character's id (snapshotPlayer
+  // mints one onto a character that has none), and the slot it
+  // overwrites is ITS OWN slot of that name - never a namesake's.
+  const characterId = typeof snap.characterId === 'string' && snap.characterId ? snap.characterId : null;
+  let key = findSave(characterName, saveName, storage, characterId);
   if (key === -1) key = firstFreeKey(storage);
   const saveInfo = {
     saveVersion: snap.v ?? SAVE_VERSION,
     saveName,
     characterName,
+    characterId,
     dateAndTime: { gameTime: Math.floor(snap.classicMinutes ?? 0), realTime: now },
     dfuVersion: BUILD_TAG,
   };
@@ -343,14 +352,15 @@ export function quickSaveSlot(characterName, snap, opts = {}) {
   return saveSlot(characterName, QUICK_SAVE_NAME, snap, opts);
 }
 
-/** HasQuickSave(characterName). */
-export function hasQuickSave(characterName, storage = store()) {
-  return findSave(characterName, QUICK_SAVE_NAME, storage) !== -1;
+/** HasQuickSave(characterName) - CHARID1: by the character's id when the caller has it. */
+export function hasQuickSave(characterName, storage = store(), characterId = null) {
+  return findSave(characterName, QUICK_SAVE_NAME, storage, characterId) !== -1;
 }
 
 /** QuickLoad() = Load(currentName, "QuickSave") - the envelope, or
- *  null so the caller's own "No saved game." arm answers. */
-export function quickLoadSlot(characterName, storage = store()) {
-  const key = findSave(characterName, QUICK_SAVE_NAME, storage);
+ *  null so the caller's own "No saved game." arm answers. CHARID1: the
+ *  character's OWN QuickSave, by id, never a namesake's. */
+export function quickLoadSlot(characterName, storage = store(), characterId = null) {
+  const key = findSave(characterName, QUICK_SAVE_NAME, storage, characterId);
   return key === -1 ? null : loadSlot(key, storage);
 }

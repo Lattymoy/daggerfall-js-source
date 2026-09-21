@@ -27,7 +27,7 @@
 
 import { frustumPlanes, aabbOutside } from './frustum.js';   // PERF2: the field draws only the cells in view
 import { smoothstep } from '../systems/mathf.js';   // GRASS2: the host's blade budget is a bound on the shader's fade, so the two must be the SAME curve
-import { buildTuftMips, pixelGrass, PX_RAMP_STEPS, PX_STEP_HZ, PX_LEAN_STEPS, PX_TINT_BANDS, PX_BLADES_PER_TUFT } from './grassPixelArt.js';   // GRASS-PX: the tuft sheet and the pixel style's numbers
+import { buildTuftMips, pixelGrass, PX_RAMP_STEPS, PX_TINT_BANDS, PX_BLADES_PER_TUFT } from './grassPixelArt.js';   // GRASS-PX: the tuft sheet and the pixel style's numbers
 
 /**
  * GRASS2: THE DEPARTURES FROM THE LAB, AS DATA.
@@ -322,7 +322,7 @@ export const GRASSPX_VS_EDITS = Object.freeze([
     why: 'the pixel style\'s numbers: the switch, the sway\'s frame rate, the lean\'s steps, the sheet\'s tuft count',
     from: 'uniform float uCellSize;           // GRASS5: how wide a cell is, so a 0..1 lane is metres\n',
     to: 'uniform float uCellSize;           // GRASS5: how wide a cell is, so a 0..1 lane is metres\n'
-      + 'uniform float uPixel, uPxStepHz, uPxLeanSteps, uPxVariants;   // GRASS-PX: 0 is the lab\'s blade, 1 the tuft sprite\n',
+      + 'uniform float uPixel, uPxVariants;   // GRASS-PX: 0 is the lab\'s blade, 1 the tuft sprite\n',
   }),
   Object.freeze({
     why: 'the fragment stage needs the quad\'s own texel and which tuft this blade wears - the tuft is flat, so one blade is one sprite',
@@ -330,18 +330,13 @@ export const GRASSPX_VS_EDITS = Object.freeze([
     to: 'out float vMoonLam;                     // WIND4: the moon\'s lambert, beside the sun\'s\n'
       + 'out vec2 vUV; flat out float vVar;      // GRASS-PX: the tuft\'s texel, and which tuft\n',
   }),
-  Object.freeze({
-    why: 'the sway is sampled at a hand-animator\'s frame rate, so a gust hops through poses instead of gliding',
-    from: '  float gust = sin(uTime*1.7 - along*0.35 + aInst.w*0.6) * 0.5 + 0.5;',
-    to: '  float tq = mix(uTime, floor(uTime * uPxStepHz) / uPxStepHz, uPixel);   // GRASS-PX: the clock the sway reads, stepped in the pixel style\n'
-      + '  float gust = sin(tq*1.7 - along*0.35 + aInst.w*0.6) * 0.5 + 0.5;',
-  }),
-  Object.freeze({
-    why: 'and the lean itself is snapped to steps, so between two frames a tuft is in one pose or the next and never between',
-    from: '  vec2 lean = aInst2.xy + wdir * push * 0.055;',
-    to: '  vec2 lean = aInst2.xy + wdir * push * 0.055;\n'
-      + '  lean = mix(lean, floor(lean * uPxLeanSteps + 0.5) / uPxLeanSteps, uPixel);   // GRASS-PX',
-  }),
+  // GRASS-PX3 (2026-09-21, Mac: "I miss the way the grass flowed with
+  // the wind smoothly"): the pixel style's two SWAY edits are gone - the
+  // clock stepped at 8 Hz and the lean snapped to 24 poses. A tuft is a
+  // sprite; how it MOVES is the lab's, in both styles, because the wind
+  // is the one thing in the field that should never look drawn frame by
+  // frame. The sway law is untouched above this list: uTime, the gust
+  // wave, the lean, exactly as the lab has them.
   Object.freeze({
     why: 'the pixel quad is not tapered - the sprite carries the shape - and it is HALF ITS DRAWN HEIGHT wide, so a 16x32 sprite is square texels on every blade, buried or not',
     from: '  p.xz += side * (aCorner.x-0.5) * aInst2.w * (1.0 - vT*0.75);',
@@ -1085,7 +1080,7 @@ export class LabGrassRenderer {
     this.program = prog;
     this.u = {};
     for (const n of ['uVP', 'uTime', 'uWind', 'uRange', 'uEye', 'uSunDir', 'uWindDir', 'uSnowFull', 'uSlotN', 'uCellFrame', 'uBladeScale', 'uCellSize', 'uGField', 'uGFieldOrigin', 'uGFieldM', 'uSnowGlobal', 'uWindV', 'uAmb', 'uSunCol', 'uDim', 'uSunScale', 'uMoonDir', 'uMoonScale', 'uMoonCol',
-      'uPixel', 'uPxStepHz', 'uPxLeanSteps', 'uPxVariants', 'uPxSteps', 'uPxTintBands', 'uPxSheet']) this.u[n] = gl.getUniformLocation(prog, n);   // GRASS-PX: the pixel style's seven
+      'uPixel', 'uPxVariants', 'uPxSteps', 'uPxTintBands', 'uPxSheet']) this.u[n] = gl.getUniformLocation(prog, n);   // GRASS-PX: the pixel style's five (GRASS-PX3 took the sway's two)
     // the blade, and three instance streams the lab's layout plus the game's root height
     // GRASS2: the instance buffers are made ONCE and shared by both
     // levels of detail - only the corner buffer differs between them, so
@@ -1319,8 +1314,6 @@ export class LabGrassRenderer {
     // - the whole field vanished the moment these were gated (GRASS
     // AUDIT 1 found that by drawing it). Only the sheet's bind is the
     // pixel style's own, so the smooth style never touches unit 4.
-    gl.uniform1f(u.uPxStepHz, PX_STEP_HZ);
-    gl.uniform1f(u.uPxLeanSteps, PX_LEAN_STEPS);
     gl.uniform1f(u.uPxVariants, this.pxVariants);
     gl.uniform1f(u.uPxSteps, PX_RAMP_STEPS);
     gl.uniform1f(u.uPxTintBands, PX_TINT_BANDS);

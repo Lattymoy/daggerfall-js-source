@@ -36,6 +36,7 @@ import { setItemFields } from './itemTemplates.js';   // JAN1: an item saved bef
 import { restoreKnightlyOrderFlags } from './knightlyGifts.js';   // D9: KnightlyOrder.RestoreGuildData's armour-bit back-fill
 import { GUILD_GROUPS } from '../formats/factionFile.js';   // the membership book's key IS the guild group
 import { appStorage } from './appStorage.js';   // DA1: localStorage in a browser, real save files in the desktop shell
+import { characterIdOf, adoptLegacyCards, mintCharacterId } from './characterId.js';   // CHARID1: a character is an id, not a name
 import { isOnlinePage } from './onlineLane.js';   // ONLINE-DEATH-FIX: the page is online
 import { respawnHealth } from './deathRespawn.js';   // ONLINE-DEATH-FIX: the SAME half-health an online respawn leaves
 
@@ -62,6 +63,7 @@ export const QUICKSAVE_KEY = 'dagger.quicksave';
 
 const ENTITY_FIELDS = [
   'name', 'gender', 'race', 'raceId', 'faceIndex',   // S3c/U9: the identity rides the save
+  'characterId',   // CHARID1: and the id that IS the identity - minted at chargen, adopted onto a legacy character at its load
   'careerIndex', 'level', 'reflexes',
   'health', 'maxHealth', 'magicka', 'maxMagicka', 'fatigue',
   'currentBreath',   // P12 (SerializablePlayer carries it; missing = 0/surfaced on old saves)
@@ -246,6 +248,7 @@ export function snapshotPlayer(entity, { position = null, pose = null, classicMi
   // is a module singleton, so the envelope reads it here and every
   // host's save carries it without a host edit.
   snap.weather = snapshotWeather();
+  characterIdOf(entity);   // CHARID1: a character that reached a save without an id (born before this) gets one here, before the copy
   for (const k of ENTITY_FIELDS) snap[k] = entity[k];
   snap.stats = { ...entity.stats };
   // SURV1: the needs record (survival/needs.js) - its markers are classic
@@ -535,6 +538,15 @@ export function restorePlayer(entity, snap, spellsByIndex = null) {
   // number, orphaning every maxMagickaModifier producer. Idempotent.
   defineLiveMaxMagicka(entity);
   for (const k of ENTITY_FIELDS) entity[k] = snap[k];
+  // CHARID1: A LEGACY SAVE IS ADOPTED HERE. An envelope written before
+  // the id existed carries none; its character gets one now, and every
+  // card of that name that has none is stamped with it - so the next
+  // QuickSave overwrites this character's own slot, as it always did,
+  // and a NEW character of the same name never can.
+  if (typeof snap.characterId !== 'string' || !snap.characterId) {
+    entity.characterId = mintCharacterId();
+    adoptLegacyCards(appStorage(), entity.name, entity.characterId);
+  }
   // ONLINE-DEATH-FIX: NEVER LOAD DEAD ONLINE. hurtPlayer fires the death only on the alive->0 TRANSITION, so a
   // character restored at 0 HP can never die again and is stuck at 0% (unkillable). Online, a death is a respawn, so a
   // dead save (the exit autosave can write one) comes back at the respawn's own half health. Offline is untouched.

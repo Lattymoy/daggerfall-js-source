@@ -74,7 +74,7 @@ test('SLOTS1: the pick seams hand a key and a name over once (mutant: a pick tak
   assert.match(card, /label: 'Delete', onClick: \(\) => ask\([\s\S]{0,300}deleteSave\(save\.key\)/, 'delete asks first and removes the slot it shows');
   assert.doesNotMatch(load, /More saves/, 'the note that the list rode the classic window is gone with the reason for it');
   const save = menu.slice(menu.indexOf('function paneSave(body)'), menu.indexOf('// ── EXIT (pause only)'));
-  assert.match(save, /const mine = savedGames\(\)\.filter\(\(s\) => s\.characterName === me\);/, 'the character\'s own slots');
+  assert.match(save, /const mine = savedGames\(\)\.filter\(\(s\) => \(myId \? s\.characterId === myId : s\.characterName === me\)\);/, 'the character\u2019s own slots - CHARID1: by id, so a namesake\u2019s are not offered to overwrite');
   assert.match(save, /_pickedSaveName = input\.value\.trim\(\) \|\| QUICK_SAVE_NAME; onAction\('save'\);/, 'the typed name rides the save verb');
   assert.match(save, /_pickedSaveName = save\.saveName; onAction\('save'\);/, 'a slot card overwrites that slot');
   assert.match(save, /sensitivity: 'accent'/, 'the overwrite match is the classic window\'s own (localeCompare, accent-insensitive)');

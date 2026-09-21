@@ -204,5 +204,21 @@ test('PERF2 pins: the sky passes, the clouds\' composite and the ring sit AT the
   const eSky = e.indexOf('sky.draw(Math.atan2(dx, dz), Math.atan2(dy, horiz)');
   const eWater = e.indexOf('if (waterOn) {');
   assert.ok(eTerrain > 0 && eTerrain < eSky && eSky < eWater, `exterior: terrain ${eTerrain} < sky ${eSky} < water ${eWater}`);
+  // GROUND-LAST (2026-09-21): the ground is drawn AFTER every opaque mesh in
+  // both hosts, so a ground fragment under a building fails the depth test
+  // before its shader runs - the ground covers more of the screen than any
+  // pass and in a town a large share of it is under something
+  const wMesh = w.indexOf('if (p.staticBatch) renderer.drawMesh(p.staticBatch, pixelMatrix, null);');
+  const wQueue = w.indexOf('groundQueue.push(p);');
+  assert.ok(wQueue > 0 && wQueue < wMesh && terrainAt > wMesh, 'world: the pixel walk queues its ground and draws the meshes; the ground is drawn after the walk');
+  const wDrain = w.indexOf('for (const p of groundQueue) {');
+  assert.ok(wDrain > wMesh && wDrain < terrainAt && terrainAt < w.indexOf('_camRight[0] = Math.cos(cam.yaw);'), 'the queue drains - the whole queue - before the flats are gathered for the draw');
+  // NEAR-FIRST: the pixel walk is sorted nearest-first before the meshes go down, so near buildings hide far ones in the depth buffer
+  const wSort = w.indexOf('_pixelOrder.sort((a, b) => a._dist2 - b._dist2);');
+  assert.ok(wSort > 0 && wSort < wMesh && w.indexOf('for (const p of _pixelOrder) {') > wSort && w.indexOf('for (const p of _pixelOrder) {') < wMesh, 'the walk runs over the sorted order');
+  assert.match(w, /p\._dist2 = \(p\.px - state\.current\.x\) \*\* 2 \+ \(p\.py - state\.current\.y\) \*\* 2/, 'by grid distance from the player\u2019s own pixel');
+  assert.match(w, /^const _pixelOrder = \[\];/m, 'a scratch kept across frames, not a per-frame array');
+  const eMesh = e.lastIndexOf('renderer.drawMesh(d.mesh, d.matrix, texRemap);'), eArrows = e.indexOf('arrows.draw(renderer, texRemap);');
+  assert.ok(eMesh > 0 && eArrows > eMesh && eTerrain > eArrows, 'exterior: the ground after the buildings, the mills and the arrows');
   assert.match(w, /window\.__grassStats = \(\) => \(\{ blades: labGrass\.count, drawn: labGrass\.drawn,/, 'the probe reports what was drawn');
 });

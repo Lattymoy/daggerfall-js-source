@@ -1574,6 +1574,81 @@ thing than what was reported; making even the first shot blue means
 warming the archive when the weapon is equipped rather than when a shot
 flies, which is a wiring change across the hosts and its own slice.
 
+## FIELD-GUN20: the anchor, after the origin and the strip
+
+Mac, 2026-09-21: *"The orb projectile that fires is still not alligned
+with coming out of the barrel (classic sprite not morrowind)."*
+
+Third round on one symptom, and each round was a different question.
+FIELD-GUN17 asked *where the shot starts* and answered with the drawn
+barrel's own pixel. FIELD-GUN19 asked *which space that pixel is in*
+and answered with the world strip. Both are right, and after both the
+orb's **position** lies on the barrel. What was never asked is where
+the **picture** is relative to the position.
+
+### The renderer anchors at the base, and DFU does not, for this
+
+The billboard vertex shader places a batch's sprite with its centre
+half a height above the placement point (`(aCorner.y + 0.5) * uSize.y`
+- "bottom-anchored"). That is `DaggerfallBillboard.AlignToBase`
+(:410-416, `offset.y = Size.y / 2`) baked in, and it is right for
+every flat a block places, because DFU calls AlignToBase on all of
+them - `rmbFlats.js` says so at the top: "AlignToBase handled by the
+renderer".
+
+A missile is not a block flat. `DaggerfallMissile.cs:601-602` creates
+its billboard on the missile's own transform at `localPosition =
+Vector3.zero` and never aligns it; `EnemyBlood.cs:32-35` sets the
+splash's `transform.position` to the hit point and never aligns it.
+Both are **centred** on the position they are given. So the port's
+three lanes that place a sprite by its position - the effect pool
+(`hitEffects.spawn`: the orb in flight through `showFlyingFlat`, every
+impact flash, every blood splash, the sparkles), the world hosts' spell
+missiles (`hostMagic.ensureMissileBatch`) and the fourth host's own
+(`dungeonContext.ensureMissileBatch`, the orb and every spell) - each
+drew its sprite **half a height above where it was**. At half a metre
+from the eye, half an orb is most of a screen.
+
+The fireball and the splash were wrong by the same half and nobody
+said so, which is what a picture at a wrong height looks like when
+there is no barrel beside it to measure against.
+
+### One law, one home
+
+`rmbFlats.centredBase(pos, size)` - the position with half the
+billboard's height taken off - beside `billboardSize`, where the
+AlignToBase note already lives. The three lanes hand the renderer that
+base; the flight's delta rides the origin uniform centre-to-centre and
+does not move, and a floating-origin rebuild takes the same base. The
+block flats keep their base, and a pin holds that none of them takes
+the missile's anchor. (The thrown torch had already done this by hand -
+`droppedTorches.js` lowers its projectile by half its texture height -
+which is the same law written once more; it stays as it is, cited.)
+
+**Pinned** in `test/thunderlock.test.js` (+2, 39): `centredBase` by
+value (half the height, not the width; no size yet is the position
+itself), every batch build in the three lanes taking it - counted per
+file, the fourth host's and the world hosts' by their exact lines, the
+bare fire position gone - and the other half of the law (no flat
+placer takes it); and on the pool itself: an orb spawned at
+FIELD-GUN17a's own muzzle offset lands its **centre** on the muzzle,
+the base half its scaled height under it, and a move is a delta
+between centres. Re-aimed at the centred base: `arrowflight.test.js`
+(the fire position and the rebuild), `audit24_wave39.test.js` (four
+splash bases), `audit24_wave44.test.js` (the sparkles),
+`audit26_render.test.js` (the rebuild's source line). Campaign
+`tools/mutants/fieldgun20.json`: 7 mutants - the pool at the bare
+position, the rebuild at the bare position, each missile lane at its
+bare fire position, the base lifted instead of lowered, half the width,
+a block flat centred - all dead.
+
+**Not seen on a screen.** This container has no ARENA2 and no GPU; the
+claim is DFU's source against the shader's anchor, and the pins hold
+the arithmetic. If the orb still reads off the barrel after this, the
+next question is the flash's centroid (`thunderlockArt.muzzlePoint`
+weighs the whole bloom, and a flash that blooms upward measures above
+the bore) - a different question again, and a screenshot's.
+
 ## AUDIT FIELD-GUN-MW (2026-09-21): the gun in the rig, both views
 
 Mac: *"The newly integrated gun on the morrowind rig needs proper rigging

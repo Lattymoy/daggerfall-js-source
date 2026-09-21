@@ -3196,7 +3196,7 @@ collapse is a bare `RaiseTime(1 * SecondsPerHour)` (`:2429`) that
 returns; `Update` is not re-entered.
 
 The port's hosts implement that same RaiseTime as
-`playerTicker.advance(60)` (`exterior.js:971`, `world.js:1067`), fired
+`playerTicker.advance(60)` (`exterior.js:971`, `world.js:1066`), fired
 from inside `sinks.drainFatigue` - so it re-enters `tickPlayerMinutes`
 from inside that function's own fatigue band. The nested tick wrote the
 marker an hour ahead, the outer frame's own `setWorldMinutes` then
@@ -3354,7 +3354,7 @@ PNG through the DOM and cached `{ width, height, data }` - the shape
 pass that object straight on as a colour32
 (`const color32 = swap ?? t.getColor32(bitmap, ...)`), and
 `renderer.uploadTexture` reads `color32.colors` and calls `asBytes` on
-it (`renderer.js:2656`). `colors` was `undefined`, `asBytes` reads
+it (`renderer.js:2694`). `colors` was `undefined`, `asBytes` reads
 `.buffer` off it, and the upload threw. Every pin on this door held:
 they asserted the cache stored the object the decoder returned, by
 IDENTITY, which is precisely the assertion that cannot see a wrong
@@ -3365,7 +3365,7 @@ orientation is not its only problem".
 **And orientation was the other half.** The port's texel convention is
 bottom-up: `getColor32` writes `dstRow = (dstHeight - 1 - border - y) *
 dstWidth` (`baseImageFile.js:143`, `BaseImageFile.cs:250`), the upload
-leaves `UNPACK_FLIP_Y_WEBGL` off (`renderer.js:2646`), and `BB_VS`
+leaves `UNPACK_FLIP_Y_WEBGL` off (`renderer.js:2684`), and `BB_VS`
 samples the quad's top at v=1 (`renderer.js:382-406`). A browser decode
 is TOP row first. So a swap named correctly would still have drawn
 mirrored beside the classic art in the same batch loop - the exact
@@ -5550,7 +5550,7 @@ to that cite and moves under the same content check; citeMerge had
 done this since CS2 and citeShift only reported them, so the two
 regexes are one law now, exported from citeShift (`ANY_CITE`,
 `CONTINUATION`) and imported by citeMerge. (2) A TEST'S ESCAPED
-LITERAL FOLLOWS THE ROW IT PINS: `world\.js:4767` in citedrift.test.js
+LITERAL FOLLOWS THE ROW IT PINS: `world\.js:4751` in citedrift.test.js
 is a quote of a Ledger row's text; the row is STRUCK and its number
 held, and the literal used to move anyway, parting the pin from its
 row at every shift. The CLI plans every doc first, learns which
@@ -7975,3 +7975,56 @@ rest gate's handler leak, four camp doors, nine law bugs and a dozen
 surface faults - all fixed, recorded in `06-Systems/Climates-Calories.md`
 "The audit", pinned by `test/auditsurv.test.js` (8) and
 `tools/mutants/auditsurv.json`.
+
+## CHARID1 - A CHARACTER IS AN ID, NOT A NAME (2026-09-21)
+
+The second half of a Discord report. A player: *"my saves its all
+gone"* - and then, through Mac: *"he created a new character and it
+overwrote his save."* That second sentence is the bug, and it is
+exact.
+
+**A save's identity was (characterName, saveName).** SaveLoadManager's
+FindSaveFolderByNames, taken verbatim by SAV4: `saveSlot(name, slotName)`
+finds the character's save of that name and overwrites it, else takes
+the first free key. So a NEW character who took an old one's name - the
+default name, a favourite name, the same Breton as last time - wrote
+its first QuickSave over the old character's QuickSave, and the old
+character was gone. The Save pane even said so, in the card's line
+("Overwrites ..."), in a font a player mid-chargen was never going to
+read. DFU has the same seam and lives with it; a port with one Quick
+Save per character does not get to.
+
+**Every character carries an id now** (`systems/characterId.js`):
+minted at chargen and for a character read out of a classic DOS save,
+carried on the entity as an ENTITY_FIELD of the envelope, written onto
+the slot card as `characterId`. A save's identity is (characterId,
+saveName): `findSave` matches a card by id when the caller has one, and
+a card WITHOUT an id never matches an id - which is the whole fix, a
+namesake cannot land on a legacy card either. The name law survives
+only for a caller with no id to give. `quickLoadSlot` and
+`hasQuickSave` take the id; both hosts' F11 pass it; the classic save
+window carries `currentCharacterId` beside `currentPlayerName` and finds
+and overwrites by it (another character picked from its list is read by
+name, the live one keeps its id); the enhanced Save pane's overwrite
+candidates are this character's by id.
+
+**A legacy card is ADOPTED, not orphaned.** An envelope written before
+the id existed carries none; `restorePlayer` mints one onto the
+character and stamps every card of that name that has none
+(`adoptLegacyCards`), so the old player's next QuickSave overwrites
+their own slot as it always did. `snapshotPlayer` mints too, so an
+envelope never leaves without one. The three storage prefixes moved to
+the id module, the one file save.js and saveSlots.js both import
+without importing each other; saveSlots re-exports them under its own
+names.
+
+What it does NOT do: it does not un-overwrite the save that was lost.
+There is no copy of it; the write was the old slot's. Pinned by
+execution: two characters of one name each keep their own QuickSave,
+by id, and each overwrites only their own; a legacy card is never a new
+character's, and its own character's load adopts it and only it; the
+identity law by name for a caller without an id; the births, the hosts
+and both windows by content. 15 mutants, 15 dead.
+
+**The lesson: a name is what a player types, and a player types the
+same thing twice. Identity that can be typed is not identity.**

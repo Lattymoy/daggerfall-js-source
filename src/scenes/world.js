@@ -1167,6 +1167,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         return n ? [r / n / 255, g / n / 255, b / n / 255] : [0.10, 0.145, 0.065];
       }));
     }
+    renderer.applyGroundSharpness();   // GRAIN AUDIT 1: the ground-sharpness tier lands on THIS load, on every cached archive - the cache outlives the scene
     // GR1: which of this archive's records are GRASS, from its own texels -
     // roads excluded by record, and a winter archive has no green base so
     // it yields none. AUDIT 49 F3: learned whenever MISSING, not only on a
@@ -5372,7 +5373,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     try {
       const snap = key != null ? loadSlot(key)
         : mostRecent ? (mostRecentRestorable()?.snap ?? null)
-          : quickLoadSlot(playerEntity.name);
+          : quickLoadSlot(playerEntity.name, undefined, playerEntity.characterId ?? null);   // CHARID1: my own QuickSave, never a namesake's
       if (!snap) { townTalk.say('No saved game.'); return; }
       // MAC-L4: the table this save is READ WITH, before it is read. The
       // boot fires `loadMagicRegistries` and does not await it (every
@@ -6424,7 +6425,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         loadingPrevented: () => !!online,
         // SAV4: the slot window's seams - the pause SAVE/LOAD doors
         // open it with these (openClassicPauseFlow builds the doors).
-        playerName: () => playerEntity.name,
+        playerName: () => playerEntity.name, playerId: () => playerEntity.characterId ?? null,
         saveAs: (saveName) => worldQuickSave(saveName),
         loadKey: (key) => worldQuickLoad({ key }),
         // ROAD-C C1: DFU PUSHES the slot window over the pause window
@@ -9319,7 +9320,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // pause menu greys the Load pane the same way - see
     // worldModes.js's togglePause for the door itself.
     loadingPrevented: () => !!online,
-    playerName: () => playerEntity.name,
+    playerName: () => playerEntity.name, playerId: () => playerEntity.characterId ?? null,
     saveAs: (saveName) => worldQuickSave(saveName),
     loadKey: (key) => worldQuickLoad({ key }),
     // AUDIT 26 (F019): RMBLayout's exterior StaticNPCs, shifted through
@@ -9615,6 +9616,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   ambience.onPlayEffect = (clip, playerPos) => sky.onAmbientEffect(playerPos, ambientWord === 'thunder');
   let skyInside = false;   // DS1 (AUDIT 61): PlayerEnterExit's transition edge, for the mod's listener and flash
   let _lastPlayerPos = null, _playerStill = false;   // T2: the politeness still-tracker
+const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first - a scratch, refilled per frame
   const _camRight = new Float32Array(3);   // EV2: the billboard right axis, refilled per frame
   // EV3: THE FRUSTUM. The hatch reads once at build (?cull=off, the
   // ?sky=classic shape - a wrong bound in the field is a URL away from
@@ -10750,6 +10752,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (cullOn) spherePlanes(multiply(proj, view, _pv), _planes);   // EV3 (GHOST1: normalised - the sphere test shares these)
     meterFor(renderer.gl)?.markCpu('batches');   // PERF-CPU: the pixel walk that fills allBatches, culling as it goes
     const allBatches = [];
+    const groundQueue = [];   // GROUND-LAST: the visible pixels whose ground is drawn AFTER every opaque mesh of every pixel (near first, by the walk's order)
     // PERF-ON2 (2026-09-19, Mac: "Online mode needs further performance
     // improvements", with a readout showing 51 fps, script 23.3 ms and
     // 1365 draws): THE OTHERS ARE CULLED LIKE EVERYTHING ELSE IS.
@@ -10782,7 +10785,20 @@ export async function bootWorld(canvas, renderer, params, status) {
       if (cullOn && billboardOutside(b)) continue;
       allBatches.push(b);
     }
-    for (const p of built.values()) {
+    // NEAR-FIRST (2026-09-21): THE PIXELS ARE WALKED NEAREST FIRST. The
+    // map's insertion order is the order the pixels streamed in, which
+    // is nothing to do with where the eye is - so a far town's walls
+    // were shaded in full and then hidden behind the near street's. With
+    // the ground already drawn last (GROUND-LAST), walking the meshes
+    // near to far is the rest of the same law: whatever is nearest goes
+    // into the depth buffer first, and everything behind it fails the
+    // test before its shader runs. The order is the pixel's grid
+    // distance from the player's own pixel - a hundred-odd integers,
+    // sorted into a scratch array kept across frames, no allocation.
+    _pixelOrder.length = 0;
+    for (const p of built.values()) { p._dist2 = (p.px - state.current.x) ** 2 + (p.py - state.current.y) ** 2; _pixelOrder.push(p); }
+    _pixelOrder.sort((a, b) => a._dist2 - b._dist2);
+    for (const p of _pixelOrder) {
       // EV2: the pixel's frame matrix caches on the built entry and
       // refreshes only when its translation actually changes (a
       // recenter - not per frame), and each model's world matrix
@@ -10809,8 +10825,19 @@ export async function bootWorld(canvas, renderer, params, status) {
         // cloud and for the shadow it casts. Null when there is no enhanced
         // sky, which is the classic skin and every interior.
         renderer.setCloudShadow(sky?.cloudShadow ?? null);
-        renderer.drawTerrain(p.terrain, pixelMatrix,
-          renderer.tileArrays.get(p.groundArchive), p.tilemapTex, 6.4);
+        // GROUND-LAST (2026-09-21): THE GROUND IS DRAWN AFTER THE MESHES,
+        // not before them. It was the first thing in every pixel, so every
+        // ground fragment under every building, tree and wall was shaded
+        // in full - the tile fetch, the filter, the lights, the cloud
+        // shadow, the lane's terms - and then painted over. Drawn last, a
+        // fragment under a mesh fails the depth test before its shader
+        // runs, on every GPU made this century. The ground covers more of
+        // an outdoor screen than any other pass and in a town a large
+        // share of it is under something; that share costs nothing now.
+        // Queued here, drawn once the pixel walk is done, so a pixel's
+        // ground also sits under the NEXT pixel's buildings - and the
+        // terrain program is bound once a frame instead of twice a pixel.
+        groundQueue.push(p);
         if (p.staticBatch) renderer.drawMesh(p.staticBatch, pixelMatrix, null);   // PERF4: every static model of the pixel, one call per texture (the keys are resolved in the merge)
         for (const m of p.models) {
           if (m._batched) continue;   // PERF4: drawn above
@@ -10864,6 +10891,16 @@ export async function bootWorld(canvas, renderer, params, status) {
         b.origin = t;
         allBatches.push(b);
       }
+    }
+    // GROUND-LAST: the ground of every visible pixel, after every opaque
+    // mesh of every pixel (see the queue above). Before the sky, the ring,
+    // the water and the flats, as it always was: the water reads its depth
+    // and the flats are cut-outs blended over it.
+    renderer.setCloudShadow(sky?.cloudShadow ?? null);
+    for (const p of groundQueue) {
+      const pixelMatrix = p._pixelMatrix;
+      renderer.drawTerrain(p.terrain, pixelMatrix,
+        renderer.tileArrays.get(p.groundArchive), p.tilemapTex, 6.4);
     }
     _camRight[0] = Math.cos(cam.yaw); _camRight[1] = 0; _camRight[2] = -Math.sin(cam.yaw);
     const camRight = _camRight;   // EV2: one scratch, refilled - not three allocations a frame
@@ -11446,7 +11483,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // filled by a fire-and-forget load whose failure leaves it null
     // forever, so the enhanced skin had no vitals for the first
     // frames and none at all when MAIN/HUD could not be read.
-    meterFor(renderer.gl)?.markCpu('hud');   // PERF-ZONE2: the HUD's preparation up to its first screen quad, where the renderer's 'air' span takes over
+    meterFor(renderer.gl)?.markCpu('hud');   // PERF-ZONE2: the HUD's preparation and its draw; PERF-READ1: it ends at the next mark below, not at the next frame's first
     {
       const _hfw = [-view[2], -view[10]];
       // X4: the Detect markers. Exterior mode's nearby pool is the
@@ -11496,6 +11533,7 @@ export async function bootWorld(canvas, renderer, params, status) {
           quickUse: (n) => quickUse(n), quickSwap: () => quickSwap(), quickOffHand: () => quickOffHand(), quickSpell: () => quickSpell(), quickSwitchHand: () => quickSwitchHand(),   // QS6   // MAC-R3: the main cell's hand switch
           weaponSheathed: !!weaponRig.playerWeapon.sheathed });   // AUDIT 28 W2: the arrow counter's drawn-bow gate   // U38 + X4 + U43
     }
+    meterFor(renderer.gl)?.markCpu('ui');   // PERF-READ1: the travel panel, the talk layer and everything else the frame draws over the HUD, to the frame's end
     // TO1: THE TRAVEL PANEL, on the HUD layer and after it - a journey's
     // controls sit over the vitals and under the talk layer, so a
     // message box still covers them. It is here rather than in the
@@ -11562,6 +11600,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         window.__shotReady = true;
       }
     }
+    meterFor(renderer.gl)?.stopCpu();   // PERF-READ1: the last span closes HERE, not at the next frame's first mark - the rAF wait is nobody's
     frameEnd();   // PERF1
     requestAnimationFrame(frame);
   }

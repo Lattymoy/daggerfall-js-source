@@ -167,7 +167,8 @@ test('WATER1: the shader - the terrain\'s own grid lifted, the corner lookup by 
   // wrapped coordinate would draw a blurred line wherever the scroll
   // rolls over, which is the artefact the mipmap exists to remove.
   assert.match(fs, /vec2 uv = fract\(f \+ vec2\(uScroll\)\);/, 'the classic water texel, layer 0, scrolled');
-  assert.match(fs, /vec2 wgx = dFdx\(unwrapped\), wgy = dFdy\(unwrapped\);\s*\n\s*vec3 tex = textureGrad\(uTileArr, vec3\(uv, 0\.0\), wgx, wgy\)\.rgb \* uTint;/,
+  assert.ok(fs.indexOf('vec2 wgx = dFdx(unwrapped), wgy = dFdy(unwrapped);') < fs.indexOf('if (corners == 0u) discard;'), 'GRAIN AUDIT 1: the derivatives are taken ABOVE the discards - inside non-uniform control flow they are undefined');
+  assert.match(fs, /vec3 tex = textureGrad\(uTileArr, vec3\(uv, 0\.0\), wgx, wgy\)\.rgb \* uTint;/,
     'and its footprint comes from the coordinate that does not wrap');
   // the trains fade with distance on their own scale - the far sea keeps the swell
   assert.match(fs, /exp\(-dist \* 0\.0015\)\) \* cos\(dot\(p, d0\)/);

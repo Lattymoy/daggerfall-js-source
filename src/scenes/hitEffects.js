@@ -39,7 +39,7 @@
 // `showBloodSplash(targetBloodIndex, bloodCentre(...))`.
 
 import { FlatAnim, isAnimatedFlat, IMPACT_FPS, MISSILE_FPS } from '../render/flatAnimation.js';   // AUDIT 26 F033: ImpactBillboardFramesPerSecond   // FIELD-GUN14: a flying flat's own rate, which is the missile's
-import { billboardSize } from '../world/rmbFlats.js';
+import { billboardSize, centredBase } from '../world/rmbFlats.js';
 import { BLOODLESS_INDEX } from '../combat/bloodDecals.js';   // BLOOD1a: which foes bleed, for the art hand-off below
 
 /** EnemyBlood.cs:23. */
@@ -164,7 +164,7 @@ export function createHitEffects({
       // which is the same knob asked the other way.
       //
       // THIS BRANCH NEVER RAN CORRECTLY. `billboardSize` answers a
-      // {w, h} RECORD (rmbFlats.js:133, and billboardXml's override
+      // {w, h} RECORD (rmbFlats.js:155, and billboardXml's override
       // keeps the shape), and neither arm of the old ternary was that:
       // an object is not an Array, so every scaled flat took
       // `entry.size * scale` - object times number, which is NaN. A
@@ -174,7 +174,14 @@ export function createHitEffects({
       // DEFAULT - drew nothing at all, at every host, since WW1. A
       // shape the value never had, in a branch nothing measured.
       if (scale !== 1 && entry.size) entry.size = { w: entry.size.w * scale, h: entry.size.h * scale };
-      entry.batch = renderer.createBillboardBatch(archive, record, entry.size, [entry.pos]);
+      // FIELD-GUN20: the pool's flats are CENTRED on their position - a
+      // splash on the wound, an impact on the wall, an orb on the muzzle
+      // - where every block flat sits on its base. The renderer anchors
+      // at the base for all of them, so the base handed over is half a
+      // height under the position (rmbFlats.centredBase, the law's one
+      // home). The origin deltas below are centre-to-centre and do not
+      // move: the batch's base and its live position shift together.
+      entry.batch = renderer.createBillboardBatch(archive, record, entry.size, [centredBase(entry.pos, entry.size)]);
       entry.batch.frame = 0;
       onSpawn?.(entry.batch);
       // A single-frame record has no wrap to end on, so it would hang
@@ -356,7 +363,7 @@ export function createHitEffects({
         if (!e.batch) continue;
         onRetire?.(e.batch);
         renderer.destroyBillboardBatch(e.batch);
-        e.batch = renderer.createBillboardBatch(e.archive, e.record, e.size, [e.pos]);
+        e.batch = renderer.createBillboardBatch(e.archive, e.record, e.size, [centredBase(e.pos, e.size)]);   // FIELD-GUN20: rebuilt where it was built - centred
         e.batch.frame = e.anim?.frame ?? 0;
         if (e.tracked) e.batch.origin = [e.at[0] - e.pos[0], e.at[1] - e.pos[1], e.at[2] - e.pos[2]];   // FIELD-GUN14: a rebuilt batch starts at its centres again - the flight's delta has to be put back
         onSpawn?.(e.batch);

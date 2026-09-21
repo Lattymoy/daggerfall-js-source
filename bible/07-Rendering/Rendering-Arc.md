@@ -2414,13 +2414,13 @@ beside them. Then the same shape turned up everywhere else:
 
 | host | list |
 |---|---|
-| `dungeonContext.js:5216` | the mobiles, the drops, the spells |
-| `worldModes.js:6199` | the dungeon's flats, camps, torches and peers |
-| `worldModes.js:6381` | the interior's flats and peers |
-| `worldModes.js:6387-6422` | blood, torches, drops, foes, guards - **five separate uncut calls** |
-| `exterior.js:4823`, `world.js:10911` | the spell missiles |
-| `exterior.js:4885` | the fixed city's townspeople |
-| `interior.js:352`, `dungeon.js:1007` | the flats, the camps, the torches |
+| `dungeonContext.js:5156` | the mobiles, the drops, the spells |
+| `worldModes.js:6191` | the dungeon's flats, camps, torches and peers |
+| `worldModes.js:6373` | the interior's flats and peers |
+| `worldModes.js:6379-6414` | blood, torches, drops, foes, guards - **five separate uncut calls** |
+| `exterior.js:4817`, `world.js:10901` | the spell missiles |
+| `exterior.js:4879` | the fixed city's townspeople |
+| `interior.js:352`, `dungeon.js:1006` | the flats, the camps, the torches |
 
 Seven call sites, and an eighth waiting to be written next year. **Fixing
 them one at a time is how this bug got to be in eight places.** The test
@@ -2453,7 +2453,7 @@ bugs, it is one bug in the wrong layer.**
 
 Mac: *"distance terrian has a weird grain look"* - and, before asking for
 it, *"im not sure if we can tackle this without taking a performance
-hit"*. **It costs nothing, and it may give some back.** That is worth
+hit"*. **It costs nothing, and it may give some back.** *(GRAIN AUDIT 1: half right. Nothing on the CPU, measured; on the GPU the filter went from one fetch to eight-to-thirty-two per ground fragment, and the give-back is not real for an 896 KiB array that already lived in cache. See GRAIN AUDIT 1.)* That is worth
 saying first because the worry was reasonable.
 
 ### What the grain is
@@ -2925,6 +2925,157 @@ records re-aimed by content and one retired with the line it mutated.
 it is no cull at all - and it will sit there for months looking like one,
 because the code that would have caught it is the code it is standing in
 for.**
+
+## GRAIN AUDIT 1 - "ensuring it doesnt degrade performance" (2026-09-21)
+
+Mac: *"Can you audit the filtering enhancement we have implemented
+ensuring it doesnt degrade performance."* Three Opus lenses, read-only:
+the GL and texture side, the shader side, and the dial with its pins,
+records and measurement story. Every number below was counted, diffed
+or read back; SwiftShader's milliseconds were taken by nobody.
+
+### The answer first
+
+**On the CPU: nothing, measured.** A counting GL stub under the real
+`Renderer`: one `generateMipmap`, four `texParameteri` and one
+`texParameterf` per ground archive at upload, the extension and its
+ceiling fetched once per renderer, and in a frame of 121 terrain draws
+**zero** filter-related calls - the array binds once for the frame
+under PERF-TEX2's shadow. `getPref` is read once per archive. Nothing
+per layer, per streaming update or per map-pixel crossing.
+
+**On the GPU: a real cost, small at the default, not measured on any
+GPU, and GRAIN1's "it costs nothing, and it may give some back" was
+half wrong.** The sampling *instruction* is one either way, as the
+record said; the *filter* changed on the next line. Texel fetches per
+ground fragment: pre-GRAIN1 `NEAREST` no chain, **1**; GRAIN1 "Off"
+(trilinear, no anisotropy), **8**; Default (trilinear, 4x), **up to
+32**; Maximum (16x), **up to 128** - on the pass that covers the most
+screen, drawn FIRST with no depth prepass so its occluded fragments pay
+too, and paid TWICE over water, which re-shades the same fragments from
+the same array. The give-back is not real: the array is 56 layers of
+64x64 RGBA, 896 KiB, 1.17 MiB with its chain (GRAIN2's "under a
+megabyte with its chain" was wrong; GRAIN1's "the chain is a third of
+that" was right) - a texture that already lived in L2 had no bandwidth
+problem for a mipmap to solve, so the extra taps are pure cost.
+Compiled through ANGLE, the shipping shaders carry +103 SPIR-V
+instructions on the classic terrain stage (+15.6%) and +101 on the
+enhanced (+4.6%) against a GRAIN1-reverted copy - an upper bound, most
+of it folds - and two `dFdx`, two `dFdy`, four multiplies and two adds
+that do not. On Mac's own machine (PERF-TOWN1: CPU-bound, script at or
+over the frame) the honest estimate is *no measurable change*. On
+integrated graphics at 1080p, running the classic lane, the ground
+pass's sampler work is a real fraction of the frame and this multiplied
+it; low single digits to low teens of a percent is the range, and no
+one can narrow it without a GPU.
+
+**What the artefact was worth.** On a synthetic perspective ground
+plane the blurred-tile-edge line GRAIN1 was built to avoid touches
+**0.15% of pixels**, on 16 of 240 scanlines, at up to 218 of 255 -
+real, structured exactly as predicted, and O(perimeter) against a fix
+paid O(area). The grain itself is gone: horizontal high-frequency
+energy 45.0 -> 10.7 with the chain on. And the dial's shape is
+vindicated: Off -> Default moves 25% of pixels (mean 18); Default ->
+Maximum moves 6.3% (mean 1.5) for up to four times the filter work.
+"Maximum" buys almost nothing.
+
+### The findings, all paid
+
+1. **THE DIAL DID NOT LAND.** `uploadTileArray` returns the cached
+   array for any archive the page has seen, the cache lives as long as
+   the renderer - the page - and the tier was read only at upload. So
+   `groundSharpness` took effect on a page reload, or on the first
+   archive of a climate not yet visited, leaving the world at two tiers
+   when it did; a player who felt the cost and turned it Off kept
+   paying until they reloaded the page. The row said "when the world
+   next loads" and the pin asserted the sentence rather than the
+   behaviour. Now: `applyGroundSharpness()` walks the cached arrays and
+   re-sets the sampler state - a bind and two parameter calls per
+   archive, no upload, no chain - and both exterior hosts call it at
+   every world load. The sentence is true because of that line.
+2. **"OFF" WAS STILL TRILINEAR.** GRAIN1's Off turned the anisotropy
+   off and kept `LINEAR_MIPMAP_LINEAR`: eight fetches where the ground
+   had cost one, and no tier on the dial went lower. The mipmap is what
+   cures the grain, not the filter within a level. Off is
+   `NEAREST_MIPMAP_NEAREST` now - one fetch, the pre-GRAIN1 cost with
+   the boil gone, the texels square at every distance, and the filter
+   every numeric archive in this renderer already used (FilterMode
+   .Point over a chain, MaterialReader.cs:104). Measured on the near
+   field: `LINEAR_MIPMAP_LINEAR` at 1x took a 3-colour patch to 444
+   colours and changed 17.8% of its pixels; `NEAREST_MIPMAP_NEAREST`
+   took it to 4 and 7.3%. Which also corrects GRAIN1's "spends nothing
+   on the near field": `MAG = NEAREST` governs only where a texel is
+   larger than a pixel, a couple of metres out at eye height, and past
+   that the MIN filter blends. Default and Maximum keep trilinear,
+   because anisotropy wants a linear filter within the level.
+3. **NOTHING COULD MEASURE IT.** The port's one real-GPU instrument,
+   `tools/perfProbe.mjs`, opens a fresh browser with an empty shelf, so
+   it always measured Default and no run could ever say what a tier
+   cost. There is a `?ground=off|default|max` door now (a junk word is
+   the default, by `anisotropyFor`'s own law) and the probe takes
+   `GROUND=`. The experiment is ten minutes: `HEADED=1 SCENES=road
+   SECONDS=12 GROUND=off npm run perf`, again with `max`, and compare
+   `frameMs` while `scriptMs`, `draws` and `binds` hold flat. Without
+   the probe: set the dial, reload the WORLD (not the page, now), stand
+   at a low grazing outdoor view and read the FPS counter; same camera,
+   weather and hour. Note Mac's browser has no
+   `EXT_disjoint_timer_query_webgl2` (PERF-TOWN1), so a GPU zone would
+   read n/a for him; the frame time is the instrument.
+4. The extension memo `||=` re-asked `getExtension` on every archive on
+   exactly the drivers without it (a memo of null is falsy) - ten calls
+   over ten uploads on the stub; `null` is "not asked" and `false` is
+   "none" now, and the pin counts the calls.
+5. The water pass took its derivatives after two `discard`s -
+   undefined in non-uniform control flow, a garbage footprint on a
+   shoreline quad under a driver that ends discarded lanes; hoisted
+   above them.
+6. The row said nothing about cost, at the only place a laptop player
+   will look; it names which end is cheap now.
+7. The pins held the GL sequence by regex only and the cache - the one
+   law that makes this free per frame - not at all: deleting the
+   early return survived every pin. The new pin runs `uploadTileArray`
+   on a logging stub: one chain per archive after the layers, filter
+   and anisotropy by tier, ZERO calls on a cached archive, the re-apply
+   over both cached arrays with the anisotropy SET to 1 (not skipped -
+   a cached 16x array has to come down), the shadow forgotten, the
+   extension asked once with and without a driver that has it, both
+   hosts' calls, the probe's door. `kinds` is pinned too - dropping
+   `classic` had survived the campaign.
+8. Records: the index still carried GRAIN1's retracted "verified 16" and
+   no word of GRAIN2; GRAIN1's give-back and near-field sentences;
+   GRAIN2's cache-residency argument, which bounds the memory cost of
+   the taps and says nothing about their TMU throughput; the
+   Enhanced-Environments plan still saying "enhanced only / NEAREST for
+   classic" when both lanes mip the one array (the right call - DFU mips
+   terrain - and unrecorded).
+
+### Left on the record, not done
+
+- **The ground is drawn first, with no depth prepass.** Every ground
+  fragment under every building, tree and person is fully shaded - the
+  filter included - and overwritten; in a town that is a large share of
+  the pass, and it is the share GRAIN1 made dearer. Drawing the opaque
+  static batch before the ground, or a depth prepass for it, is the
+  highest-leverage change this audit found and it is not a filtering
+  change. It waits on Mac's word.
+- **The chain is built in sRGB space** by `generateMipmap` on an unsized
+  RGBA array, and the enhanced lane decodes the filtered texel as if it
+  were one texel (`elDecode(textureGrad(...))`); decode is convex, so
+  distant ground in that lane reads slightly darker than it should, more
+  so at higher tiers. An `SRGB8_ALPHA8` array would make the filter
+  linear and exact, and free. Recorded, not changed.
+- `textureLod` with a fragment-computed LOD was costed as the obvious
+  cheaper shader: it is not cheaper (+94 against +104 SPIR-V) and it
+  silently loses anisotropy, which would make the dial a no-op. A
+  vertex-stage LOD cannot work either: the tile index and rotation are
+  per fragment. There is no cheaper shader; every saving is sampler
+  state (2) or draw order (above).
+
+**The lesson: "one sample either way" was true of the instruction and
+false of the taps, and the one setting built to let a weak machine opt
+out neither reached the filter nor reached the machine without a page
+reload. A dial that cannot be measured and does not land is a promise,
+not a control.**
 
 ## GRAIN2 - "Why dont we crank it to 16?" (2026-09-19)
 

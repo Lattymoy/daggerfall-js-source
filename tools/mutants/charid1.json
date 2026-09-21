@@ -1,0 +1,137 @@
+[
+ {
+  "name": "CHARID1-the-identity-is-the-name-again",
+  "file": "src/systems/saveSlots.js",
+  "old": "    if (characterId ? saveInfo.characterId === characterId : saveInfo.characterName === characterName) return key;",
+  "new": "    if (saveInfo.characterName === characterName) return key;",
+  "tests": [
+   "test/charid1.test.js"
+  ]
+ },
+ {
+  "name": "CHARID1-a-legacy-card-matches-any-id-of-its-name",
+  "file": "src/systems/saveSlots.js",
+  "old": "    if (characterId ? saveInfo.characterId === characterId : saveInfo.characterName === characterName) return key;",
+  "new": "    if (characterId ? (saveInfo.characterId === characterId || (!saveInfo.characterId && saveInfo.characterName === characterName)) : saveInfo.characterName === characterName) return key;",
+  "tests": [
+   "test/charid1.test.js"
+  ]
+ },
+ {
+  "name": "CHARID1-the-card-forgets-the-id",
+  "file": "src/systems/saveSlots.js",
+  "old": "    characterName,\n    characterId,\n    dateAndTime:",
+  "new": "    characterName,\n    dateAndTime:",
+  "tests": [
+   "test/charid1.test.js"
+  ]
+ },
+ {
+  "name": "CHARID1-the-envelopes-id-is-ignored-on-write",
+  "file": "src/systems/saveSlots.js",
+  "old": "  let key = findSave(characterName, saveName, storage, characterId);",
+  "new": "  let key = findSave(characterName, saveName, storage);",
+  "tests": [
+   "test/charid1.test.js"
+  ]
+ },
+ {
+  "name": "CHARID1-quickload-by-name",
+  "file": "src/systems/saveSlots.js",
+  "old": "  const key = findSave(characterName, QUICK_SAVE_NAME, storage, characterId);\n  return key === -1 ? null : loadSlot(key, storage);",
+  "new": "  const key = findSave(characterName, QUICK_SAVE_NAME, storage);\n  return key === -1 ? null : loadSlot(key, storage);",
+  "tests": [
+   "test/charid1.test.js"
+  ]
+ },
+ {
+  "name": "CHARID1-adoption-stamps-every-name",
+  "file": "src/systems/characterId.js",
+  "old": "    if (!info || typeof info !== 'object' || info.characterId || (info.characterName ?? '') !== (characterName ?? '')) continue;",
+  "new": "    if (!info || typeof info !== 'object' || info.characterId) continue;",
+  "tests": [
+   "test/charid1.test.js"
+  ]
+ },
+ {
+  "name": "CHARID1-adoption-restamps-a-card-that-has-an-id",
+  "file": "src/systems/characterId.js",
+  "old": "    if (!info || typeof info !== 'object' || info.characterId || (info.characterName ?? '') !== (characterName ?? '')) continue;",
+  "new": "    if (!info || typeof info !== 'object' || (info.characterName ?? '') !== (characterName ?? '')) continue;",
+  "tests": [
+   "test/charid1.test.js"
+  ]
+ },
+ {
+  "name": "CHARID1-the-mint-repeats",
+  "file": "src/systems/characterId.js",
+  "old": "  return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 12)}`;",
+  "new": "  return 'c';",
+  "tests": [
+   "test/charid1.test.js"
+  ]
+ },
+ {
+  "name": "CHARID1-characterIdOf-re-mints-every-time",
+  "file": "src/systems/characterId.js",
+  "old": "  if (typeof entity.characterId !== 'string' || !entity.characterId) entity.characterId = mintCharacterId();",
+  "new": "  entity.characterId = mintCharacterId();",
+  "tests": [
+   "test/charid1.test.js"
+  ]
+ },
+ {
+  "name": "CHARID1-chargen-births-no-id",
+  "file": "src/systems/chargen.js",
+  "old": "    characterId: mintCharacterId(),   // CHARID1: born with an id",
+  "new": "    // CHARID1: born with an id",
+  "tests": [
+   "test/charid1.test.js"
+  ]
+ },
+ {
+  "name": "CHARID1-the-envelope-drops-the-field",
+  "file": "src/systems/save.js",
+  "old": "  'characterId',   // CHARID1:",
+  "new": "  // CHARID1:",
+  "tests": [
+   "test/charid1.test.js"
+  ]
+ },
+ {
+  "name": "CHARID1-restore-adopts-nothing",
+  "file": "src/systems/save.js",
+  "old": "    adoptLegacyCards(appStorage(), entity.name, entity.characterId);",
+  "new": "",
+  "tests": [
+   "test/charid1.test.js"
+  ]
+ },
+ {
+  "name": "CHARID1-the-world-host-quickloads-by-name",
+  "file": "src/scenes/world.js",
+  "old": "          : quickLoadSlot(playerEntity.name, undefined, playerEntity.characterId ?? null);",
+  "new": "          : quickLoadSlot(playerEntity.name);",
+  "tests": [
+   "test/charid1.test.js"
+  ]
+ },
+ {
+  "name": "CHARID1-the-classic-window-finds-by-name",
+  "file": "src/ui/saveWindow.js",
+  "old": "    return findSave(this.currentPlayerName, this.nameText, undefined, this.currentCharacterId);",
+  "new": "    return findSave(this.currentPlayerName, this.nameText);",
+  "tests": [
+   "test/charid1.test.js"
+  ]
+ },
+ {
+  "name": "CHARID1-the-enhanced-pane-overwrites-a-namesake",
+  "file": "src/ui/enhancedMenu.js",
+  "old": "  const mine = savedGames().filter((s) => (myId ? s.characterId === myId : s.characterName === me));",
+  "new": "  const mine = savedGames().filter((s) => s.characterName === me);",
+  "tests": [
+   "test/charid1.test.js"
+  ]
+ }
+]
