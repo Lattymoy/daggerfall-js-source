@@ -334,9 +334,8 @@ test('SOC6: the hover line reads "Name - place (dungeon)" and beats the place un
     // a marker AND a place under the same cursor: the player pointed at
     // the green ring, and "who" is the answer they asked for
     assert.equal(win._markerAt(p[0], p[1])?.name, 'Daggerfall', 'the town IS under the cursor');
-    win._hoverLabel(p[0], p[1]);
-    assert.equal(win._chrome.label.textContent, 'Nym - Privateers Hold (dungeon)');
-    assert.equal(win._chrome.stage.style.cursor, 'pointer');
+    assert.deepEqual(win._hoverLabel(p[0], p[1]),
+      { label: 'Nym - Privateers Hold (dungeon)', cursor: 'pointer' });
     win.dispose();
   });
 });
@@ -346,7 +345,7 @@ test('SOC6: a party that moves repaints its marks and NEVER the map\'s own (muta
   withDocument(() => {
     let roster = [member({ px: 3, py: 7 })];
     const win = mkWin({ party: () => roster });
-    const model = win._ensureModel();
+    const model = win._sheet.ensure();
     win._marksDirty = false;
     const marks = model.marks, coast = model.coast;
 
@@ -358,8 +357,8 @@ test('SOC6: a party that moves repaints its marks and NEVER the map\'s own (muta
     assert.equal(win._party[0].x, 4.5, 'to the new pixel');
     assert.equal(win._dirty, true, 'the sheet is repainted');
     assert.equal(win._marksDirty, false, 'and the bay\'s marks were NOT dirtied');
-    assert.equal(win._ensureModel().marks, marks, '...nor rebuilt');
-    assert.equal(win._ensureModel().coast, coast, '...nor the chains');
+    assert.equal(win._sheet.ensure().marks, marks, '...nor rebuilt');
+    assert.equal(win._sheet.ensure().coast, coast, '...nor the chains');
     win.dispose();
   });
 });
@@ -618,14 +617,12 @@ test('AUDIT SOC D2: members on ONE pixel stack rather than stand on top of each 
     const q = toPaper(win._view, 8.5, 2.5);
     assert.equal(names[3].args[2], q[1] + 9);
     // THE HOVER NAMES EVERY MEMBER ON THAT PIXEL.
-    win._hoverLabel(p[0], p[1]);
-    const line = win._chrome.label.textContent;
+    const line = win._hoverLabel(p[0], p[1]).label;
     for (const who of ['Nym', 'Del', 'Bry']) assert.match(line, new RegExp(who), `${who} is named`);
     assert.equal(line.split(' / ').length, 3, 'joined with " / ", one clause each');
     assert.match(line, /Del - Privateers Hold \(dungeon\)/, 'and each clause is that member\'s own sentence');
     assert.doesNotMatch(line, /Oth/, 'the member on another pixel is not in it');
-    win._hoverLabel(q[0], q[1]);
-    assert.equal(win._chrome.label.textContent, 'Oth - Wayrest');
+    assert.equal(win._hoverLabel(q[0], q[1]).label, 'Oth - Wayrest');
     win.dispose();
   });
 });

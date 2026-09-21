@@ -32,7 +32,7 @@ import { lookScale, lookInvert, keyboardLookRate } from '../ui/lookSettings.js';
 import { LookFilter } from '../player/lookFilter.js';   // AUDIT 28 W7: MouseLookSmoothingFactor
 import { fieldOfView } from '../ui/viewSettings.js';   // MENU: Video/FieldOfView, one home for five hosts
 import { windowEmissionRGB } from '../render/windowEmission.js';   // AUDIT 26 F001/F002: WindowStyle per host (DaggerfallInterior.cs:473/:517/:1270 vs GetMaterial's Day default)
-import { AutomapWindow, preloadAutomapArt } from '../ui/automapWindow.js';   // ROAD-C c2/S9: the second interior host's M window
+import { createAutomapWindow, preloadAutomapArt, automapDoorReady } from '../ui/automapDoor.js';   // ROAD-C c2/S9 + EM3: the second interior host's M window, behind the skin fork
 import { nativeMetrics, pointToNative } from '../ui/nativePanel.js';   // ROAD-C c2/S9
 import { makeFont } from '../ui/text.js';   // ROAD-C c2/S9: the map's status/hover labels
 import { FntFile } from '../formats/fntFile.js';   // ROAD-C c2/S9
@@ -147,7 +147,13 @@ export async function bootInterior(canvas, renderer, params, status) {
     if (overlay) return;
     // PushWindow (UserInterfaceManager.cs:79-91) - `onTop` writes the
     // slot every reader below already uses, and the latch rises with it.
-    windows.pushWindow(new AutomapWindow({
+    // EM3: the skin fork's gate stands BEFORE the push, exactly as it
+    // does in the other two automap hosts - `automapDoorReady()` is
+    // true only where the door can build something, so the push site
+    // stays a direct expression and CRASH2's closed-population pin can
+    // still read what can arrive here.
+    if (!automapDoorReady()) return;
+    windows.pushWindow(createAutomapWindow({
       record: () => ctx.automapRecord(),
       drawList: ctx.drawList, dynamicDraws: ctx.dynamicDraws, texRemap: ctx.texRemap,
       player: () => ({ feet: cam.pos, eye: cam.pos, yaw: cam.yaw }),
@@ -159,6 +165,8 @@ export async function bootInterior(canvas, renderer, params, status) {
       indexSize: ctx.automapModel.length,
       model: ctx.automapModel,
       insideBuilding: true,
+      where: () => ({ insideBuilding: true }),   // EM3
+      title: blockName,
     }));
   };
   const nativeAt = (e) => {
@@ -182,7 +190,7 @@ export async function bootInterior(canvas, renderer, params, status) {
     // (ui/input.js:565-566) is "every host that registers a keydown
     // calls this FIRST", and it is NOT conditional on the host having
     // a destination for the key. First, because every arm below
-    // returns before its own preventDefault - worldModes.js:7393 sits
+    // returns before its own preventDefault - worldModes.js:7394 sits
     // ahead of its arms for the same reason.
     swallowBrowserKey(e);
     // The open map owns the keyboard, exactly as it does in the three
@@ -360,7 +368,7 @@ export async function bootInterior(canvas, renderer, params, status) {
     // scan, for the reason DFU states on the gate (SetActive(false) on
     // the geometry would mess with the open map's rendering). Update's
     // own call at :1001 is the one-shot lazy init, not a per-frame
-    // driver. dungeon.js:711 and worldModes.js:5404/:5432 gate the same
+    // driver. dungeon.js:711 and worldModes.js:5405/:5433 gate the same
     // way; this is that gate for this host.
     lookGate(!!overlay);   // AUDIT-AMAP H8
     if (!gamePaused()) ctx.automapTick?.(dt, cam.pos, fwd);

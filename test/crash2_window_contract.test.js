@@ -17,7 +17,7 @@
 //   F2  ITS ARM LIST WAS TYPED BY HAND, and wrong in both directions.
 //       It demanded `close`, which NO host has ever called on a slot
 //       (pauseDoor does not even carry it, and passed only because it
-//       was skipped), and omitted `tick`, which interior.js:368 calls
+//       was skipped), and omitted `tick`, which interior.js:374 calls
 //       unguarded every frame. The door list derived; the arms did not.
 //
 //   F3  IT ASSUMED THE POPULATION WAS `ui/*Door.js`. It is not: twelve
@@ -53,7 +53,7 @@ test('CRASH2: the required arms are DERIVED from the hosts, not typed here', () 
     'CRASH1 demanded `close` of every door. No host calls `close()` on its slot - the hosts free a window with\n'
     + '`dispose?.()` - so that requirement was invented, and it passed only because the door that lacks it was skipped.');
   assert.ok(required.has('tick'),
-    'interior.js:368 calls `overlay.tick(dt)` unguarded every frame; CRASH1 omitted `tick` from the contract entirely.');
+    'interior.js:374 calls `overlay.tick(dt)` unguarded every frame; CRASH1 omitted `tick` from the contract entirely.');
   // and the arms a host TESTS before calling stay the window's own choice
   for (const arm of ['hover', 'pointer', 'keyup', 'click']) {
     assert.ok(optional.has(arm), `\`${arm}\` is guarded at every call site, so it is optional by design (townTalk.js:447 says so)`);
@@ -111,7 +111,10 @@ test('CRASH2: interior.js keeps the CLOSED population that lets it demand `tick`
   const { required } = hostArms();
   const owed = [...required.keys()].filter((a) => required.get(a).some((w) => w.startsWith('interior.js')));
   for (const name of interior.names) {
-    const path = `src/ui/${name[0].toLowerCase()}${name.slice(1)}.js`;
+    // EM3: a class that arrives through a skin DOOR is resolved by the
+    // population, which looked its module up; only a class pushed as a
+    // literal falls back to the filename guess.
+    const path = interior.modules?.get(name) ?? `src/ui/${name[0].toLowerCase()}${name.slice(1)}.js`;
     let src = null;
     try { src = read(path); } catch { /* named otherwise; the arm check below says so */ }
     assert.ok(src, `${name} reaches interior.js's slot but ${path} does not exist - resolve it before trusting this pin`);

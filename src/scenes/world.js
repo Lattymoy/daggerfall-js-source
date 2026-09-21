@@ -119,7 +119,12 @@ import { MEMBERSHIP_STATUS } from '../systems/quest/questLists.js';   // V2d: th
 import { playerInSunlight, playerInHolyPlace, careerSunDamage } from '../systems/passiveSpecials.js';   // V2c: the enchant ctx's two E1 flags; AUDIT 64 F20/F21: Career.DamageFromSunlight, the travel door's own rung and the arrival clamp's second arm
 import { buildMapDict, locationSummaryAt as travelLocationSummaryAt } from '../systems/mapDirectory.js';   // W1: ContentReader's map dict; TO1: the junction map's own reads
 import { dilateCoastalClimate, smoothLocationNeighbourhood } from '../world/terrainHelper.js';   // AUDIT 58 F4
-import { ExteriorAutomapWindow, stampResidenceQuestNames, registerExteriorAutomapConsoleCommands } from '../ui/exteriorAutomapWindow.js';   // A2: the town map on M; D5: the quest-residence plate name; E3: ExteriorAutoMapConsoleCommands
+import { stampResidenceQuestNames, registerExteriorAutomapConsoleCommands } from '../ui/exteriorAutomapWindow.js';   // D5: the quest-residence plate name; E3: ExteriorAutoMapConsoleCommands
+// EM4: the skin fork. The classic skin keeps DFU's rotating town map
+// whole; the enhanced one gets the held sheet with the town's plan
+// traced onto it and its names in the Iliac Bay's own hand.
+import { createTownMapWindow, townMapDoorReady } from '../ui/townMapDoor.js';
+import { WORLD_PER_PX } from '../ui/inkTown.js';   // EM4: the town plan's own scale
 import { buildingSummaries } from '../world/buildingSummaries.js';   // ROAD-C c2/S10: the plate anchor's Position-bearing walk
 import { hasCustomLocationPosition } from '../world/locationLayout.js';   // ROAD-C c2/S10: the marker's custom-location offsets
 import { FootstepMachine, pickFootstepSet } from '../systems/footsteps.js';   // FS-slice
@@ -3409,10 +3414,10 @@ export async function bootWorld(canvas, renderer, params, status) {
   // ?dungeon host RAN every CastWhenUsed / CastWhenStrikes / SoulBound
   // / affinity arm against no ctx at all. They are optional-chained, so
   // it WAS silent. WAVE D closed it: the body is scenes/hostEnchant.js
-  // and dungeonContext.js:2347 mounts the same one, gated on
+  // and dungeonContext.js:2350 mounts the same one, gated on
   // `opts.enchantCtx !== false` because setDefaultEnchantCtx is a
   // session singleton and EC1 already routes THIS host's mount into
-  // that context through modes.dungeonCtx - so worldModes.js:4737
+  // that context through modes.dungeonCtx - so worldModes.js:4738
   // passes false beside its `chargen: false` and only the standalone
   // ?dungeon route mounts its own. S40 filled isResting
   // in - the sentence that stood here said it "stays absent above
@@ -5247,7 +5252,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // so an F9 pressed inside a shop recorded the street's sheath and
     // hand. The mode host answers for the rig that is actually drawn
     // and null outside interior mode (the dungeon owns its own
-    // composer, dungeonContext.js:5866), so exterior mode and a
+    // composer, dungeonContext.js:5879), so exterior mode and a
     // pre-seam mode host compose exactly as before, per field.
     const wp = modes?.weaponPose?.() ?? null;
     const snap = snapshotPlayer(playerEntity, {
@@ -6178,7 +6183,8 @@ export async function bootWorld(canvas, renderer, params, status) {
       getQuest: (questID) => questBridge?.machine.getQuest(questID) ?? null,
       isBuildingQuestResource: (mapID, key) => topicTree.isBuildingQuestResource(mapID, key),
     }, dfLoc.mapTableData?.mapId ?? 0);
-    townTalk.showOverlay(new ExteriorAutomapWindow({
+    if (!townMapDoorReady()) return;   // EM4: the skin fork's gate
+    townTalk.showOverlay(createTownMapWindow({
       locationName: dfLoc.name,
       locationId: locId,
       gridW: dfLoc.exterior.exteriorData.width, gridH: dfLoc.exterior.exteriorData.height,
@@ -6195,6 +6201,25 @@ export async function bootWorld(canvas, renderer, params, status) {
       directory: () => townTalk.directory,
       discovered: () => discoveredBuildings(locId),
       rename: (buildingKey, name) => renameMapBuilding(locId, buildingKey, name),
+      // EM4: what the enhanced sheet needs beyond the classic bag. The
+      // context is DERIVED off the flags every host already keeps.
+      //
+      // THE BAY TAB IS NOT HANDED OVER FROM HERE, and that is a
+      // decision rather than an omission. `systems/mapTabs.js` says a
+      // town offers the streets AND the bay, and the slot's narrowing
+      // (ui/mapStrip.js) therefore leaves the world tab off this
+      // window's strip because this window holds no world sheet. The
+      // reason is DFU's travel guards: `toggleTravelMap` refuses to
+      // OPEN the bay with enemies nearby, with a merchant's offer
+      // pending, in sunlight for a sun-damaged career, or under a
+      // racial fast-travel block - four checks that happen at open
+      // time. Handing the bay over on the town key would walk straight
+      // past all four, and moving them to commit time is a behaviour
+      // change to a ported, audited system. Mac's call, recorded in
+      // 10-UI/Enhanced-Maps-Arc.md; until he takes it, the travel key
+      // is the way to the bay and it keeps its ladder.
+      where: () => ({ inLocation: true }),
+      townPlayer: () => ({ x: local[0] / WORLD_PER_PX, y: local[2] / WORLD_PER_PX, yaw: cam.yaw }),
     }));
   };
   /** SetCustomBuildingName (ExteriorAutomap.cs:867-899): the plate's
@@ -7120,7 +7145,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // exterior -> the townTalk overlay, interior OR dungeon -> the mode
   // machine's slot. U43-ii shipped the dungeon half: showQuestBox
   // offers the window to `modes.showQuestOverlay` below, and
-  // worldModes answers it in BOTH modes (worldModes.js:7644-7707 -
+  // worldModes answers it in BOTH modes (worldModes.js:7650-7713 -
   // dungeon routes to dungeonCtx.showOverlay), so a dungeon popup is
   // shown rather than logged loudly and dropped.
   // AUDIT 24 (wave 21): DaggerfallMessageBox.Show() is a

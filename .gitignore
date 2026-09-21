@@ -65,3 +65,7 @@ server/.wrangler/
 
 # Probe output (tools/enhancedLightingProbe.mjs PNGs and the like) - never commit.
 scratch/
+
+# EM5: the enhanced map probe writes its shots here - pictures for a
+# person to look at, not source the repo carries.
+artifacts/
