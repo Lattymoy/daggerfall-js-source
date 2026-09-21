@@ -35,7 +35,7 @@ dies.
   so clearing `picked` closes it wherever it stood.
 - The click-away on either frame still puts the tip away; buttons and
   the tip itself are excluded from it.
-- The in-world loot hover (worldPlaque.js, then lootHover.js) is a crosshair READOUT with
+- The in-world loot hover (lootHover.js, renamed to worldPlaque.js by WORLD-HOVER) is a crosshair READOUT with
   nothing to dismiss; it is not the tooltip and takes no action.
 - Refusals keep the tip open with the notice on every side (refuse()
   renders without touching `picked`), which is the right shape: the

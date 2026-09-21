@@ -50,7 +50,7 @@ import { CORPSE_ACTIVATION_DISTANCE, liveFoeTargets, liveFoeFor } from '../playe
 import { WEAPON_REACH } from '../combat/playerWeapon.js';   // AUDIT WATCH1 B2: a peer's melee blow on my watch lands from the player's own reach, no farther   // AUDIT WORLD6b-iii(c) A1/C7: the owner reads the taker's reach
 import { createWeapon, bowDamageArrow } from '../combat/enemyEquipment.js';   // MAC-N1: the recovered shaft is CreateWeapon's arrow, value and all   // AUDIT WORLD6b-ii B2: a puppet's weapon is its owner's word, rebuilt from the descriptor   // AUDIT WORLD6b B3/C2: a cell's record projected and its puppets capped, the wire's law
 import { mintCorpseMarker, playBodyFall, playRareDrop, corpseLootTargets, corpseEntryFor, corpseContents, takeCorpseLoot, openCorpseLoot, sayEnemyDied, raiseEnemyDeath } from './corpseMarker.js';
-import { corpseName, mobileEntityName } from '../systems/worldTooltips.js';   // WORLD-HOVER: "<who> (dead)", the mod's own word (.cs:525); H2: and a LIVE one's, when it is not hostile (.cs:304-313)
+import { corpseName, mobileEntityName } from '../systems/worldTooltips.js';   // WORLD-HOVER: "<who> (dead)", the mod's own word (.cs:526); H2: and a LIVE one's, when it is not hostile (.cs:304-312)
 import { enemyDisplayName } from '../characters/enemyBasics.js';   // GetLocalizedEnemyName, the index law in one place
 import { bloodCentre } from './hitEffects.js';   // AUDIT 24 (wave 39): EnemyBlood.ShowBloodSplash
 import { bloodHit } from '../combat/bloodDecals.js';   // BLOOD1b: the blow, in the shape the mark's ladder reads
@@ -1157,7 +1157,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
    *  producer did not stand. */
   const hoverName = (key) => {
     const e = corpseEntryFor(foes, key, 'foeCorpse', corpseLens);
-    return e ? { title: corpseName(enemyDisplayName(e.mobileType)) } : null;   // .cs:525
+    return e ? { title: corpseName(enemyDisplayName(e.mobileType)) } : null;   // .cs:526
   };
   /** ...and what it HOLDS (AUDIT-WH H3). `foeCorpse:` itemises, so the
    *  plaque draws a LIST for it; without this the host's `contents`
@@ -1172,7 +1172,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
   /** WORLD-HOVER (AUDIT-WH H2): THE LIVE BODIES, as ray targets.
    *
    *  The mod names a living entity inside MobileNPCActivationDistance
-   *  (.cs:304-313) and the plaque had no sight of one at all: a foe
+   *  (.cs:304-312) and the plaque had no sight of one at all: a foe
    *  standing between the crosshair and a shopfront lost the plaque's
    *  race outright and the door behind it drew its name. The press had
    *  always raced them (`tryMobileEnemyActivate`, its own AABB sweep),

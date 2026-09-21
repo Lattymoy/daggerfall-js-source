@@ -684,7 +684,7 @@
   {
     "name": "WORLD-HOVER-the-door-cache-is-never-freed",
     "file": "src/scenes/worldModes.js",
-    "old": "  const dropDoorCache = () => { _doorCache = null; };",
+    "old": "  const dropDoorCache = () => { _doorCache = null; _extList = null; _extMark = null; _intList = null; _intMark = null; _doorTextKey = null; _doorText = null; };",
     "new": "  const dropDoorCache = () => {};",
     "tests": [
       "test/worldhover.test.js"
@@ -776,6 +776,88 @@
     "file": "src/scenes/dungeonContext.js",
     "old": "  const _namer = composeNamer([\n    (key) => droppedTorches.hoverName?.(key) ?? null,",
     "new": "  const _namer = composeNamer([\n    _dungeonHoverName,\n    (key) => droppedTorches.hoverName?.(key) ?? null,",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-the-exterior-list-is-rebuilt-per-reader",
+    "file": "src/scenes/worldModes.js",
+    "old": "    if (mark !== null && _extMark === mark && _extList) return _extList;\n",
+    "new": "",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-the-interior-list-is-rebuilt-per-reader",
+    "file": "src/scenes/worldModes.js",
+    "old": "    if (_mark !== null && _intMark === _mark && _intList) return _intList;\n",
+    "new": "",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-a-frame-memo-outlives-its-frame",
+    "file": "src/systems/frameClock.js",
+    "old": "export const frameMark = () => open;",
+    "new": "let _lastMark = 0;\nexport const frameMark = () => (open ?? ++_lastMark);",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-the-door-text-cache-ignores-the-generation",
+    "file": "src/scenes/worldModes.js",
+    "old": "      if (_doorTextKey === key && _doorTextGen === gen) return _doorText;",
+    "new": "      if (_doorTextKey === key) return _doorText;",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-the-door-text-is-resolved-every-frame-again",
+    "file": "src/scenes/worldModes.js",
+    "old": "      const gen = doorGeneration?.() ?? 0;\n      if (_doorTextKey === key && _doorTextGen === gen) return _doorText;\n      _doorTextKey = key; _doorTextGen = gen; _doorText = null;\n",
+    "new": "",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-the-plaque-list-has-no-height-cap",
+    "file": "src/ui/enhancedStyle.js",
+    "old": ".wplaque-list { display: block; max-height: calc(100vh - var(--wp-top, 55%) - 24px);\n  overflow: hidden; }",
+    "new": ".wplaque-list { display: block; }",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-online-forces-the-readout-on",
+    "file": "src/systems/onlineLane.js",
+    "old": "export const ONLINE_PLAYERS_OWN_MODS = ['world-tooltips'];",
+    "new": "export const ONLINE_PLAYERS_OWN_MODS = [];",
+    "tests": [
+      "test/onlinelane.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-the-water-lookup-goes-back-to-the-shared-slot",
+    "file": "src/scenes/world.js",
+    "old": "  const springAt = (key) => springList()[Number(key.split(':')[1])] ?? null;",
+    "new": "  const springAt = (key) => _springs[Number(key.split(':')[1])] ?? null;",
+    "tests": [
+      "test/worldhover.test.js",
+      "test/surv3_camps.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-the-teleport-stops-bumping-the-generation",
+    "file": "src/scenes/world.js",
+    "old": "    doorGeneration += 1;   // WORLD-HOVER: the origin was re-anchored, so every door's WORLD matrix moved with it",
+    "new": "",
     "tests": [
       "test/worldhover.test.js"
     ]

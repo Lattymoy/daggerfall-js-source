@@ -220,7 +220,7 @@ export function corpseLootTargets(entries, keyPrefix, { isCorpse, feetOf, idOf =
  * hand-written rule they stop agreeing.
  *
  * It answers the ENTRY and not the word. The word is World Tooltips'
- * (`corpseName`, vendor .cs:525) and the pools apply it - because this
+ * (`corpseName`, vendor .cs:526) and the pools apply it - because this
  * module is reached, through `unleveledLoot`, from `worldTick`, which
  * `worldTooltips` itself imports by way of the building hours. An
  * import from here would close that ring and this file's own

@@ -19,6 +19,20 @@ let samples = [];      // [end ms, busy ms] within the window
 /** The top of a host's frame callback. */
 export function frameBegin(now) { open = now; }
 
+/**
+ * THE FRAME IN FLIGHT, AS A TOKEN - or null between frames.
+ *
+ * AUDIT-WH P1. A reader that must not do the same work twice in one
+ * frame needs to know which frame it is in, and this module is the one
+ * that already knows: `frameBegin` stamps the rAF's `now` at the top
+ * of every live frame in all three hosts (PERF1 pins that), and
+ * `frameEnd` clears it. So the value changes exactly once a frame and
+ * is NULL outside one - which is the important half, because a memo
+ * keyed on it can never carry an answer from one frame into the next,
+ * and a caller reached outside a frame (a test, a console) recomputes.
+ */
+export const frameMark = () => open;
+
 /** The bottom of the same callback, before it re-arms. `now` defaults
  *  to performance.now() - the end is measured, not the rAF's stamp. */
 export function frameEnd(now = (typeof performance !== 'undefined' ? performance.now() : null)) {

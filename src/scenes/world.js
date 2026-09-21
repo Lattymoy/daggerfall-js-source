@@ -171,7 +171,7 @@ import { clearCrimeOnLocationExit, addGold, goldAmount, deductGold, totalGoldAmo
 import { makeInView } from '../player/cameraView.js';   // AUDIT 17e F24
 import { worldHoverFrame, hideWorldPlaque, destroyWorldPlaque } from '../ui/worldPlaque.js';   // WORLD-HOVER: the one seam each host calls, its hide door for the branches that return above it, and the teardown
 import { composeContents } from '../systems/worldHover.js';   // WORLD-HOVER: the contents ladder's one law (AUDIT-WH H3)
-import { mobilePersonName, lootPileName } from '../systems/worldTooltips.js';   // WORLD-HOVER H2: MobilePersonNPC.NameNPC (.cs:299-302); M5: a dropped pile's word (.cs:537-548), outdoors too
+import { mobilePersonName, lootPileName } from '../systems/worldTooltips.js';   // WORLD-HOVER H2: MobilePersonNPC.NameNPC (.cs:299-302); M5: a dropped pile's word (.cs:534-548), outdoors too
 import { wagonHoverName } from '../player/eotbWagon.js';   // WORLD-HOVER M6: the cart's word, beside its producer
 import { waterSourceHoverName } from '../systems/survival/items.js';   // WORLD-HOVER M6: a water source's word, beside its producer
 import { mwViewFirstPerson, mwViewFrame, mwViewWheel, mwViewDrawBody, mwViewFootstep, mwViewLoadPose, mwViewNewGame, mwViewRebase, mwViewAttachWagon, mwViewDrawWagon, mwViewWagonTargets, mwViewWagonActivate } from '../player/mwView.js';   // MW-D25: the Morrowind camera; AUDIT-EOTB2: the sprite's stride and the load's POV
@@ -2869,7 +2869,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   /** SURV3: the water sources under the ray - every built pixel's, in scene coordinates, and the list the pick indexes. */
   let _springs = [];
   // WORLD-HOVER: the port's OWN world objects, each named by the module
-  // that STANDS it - World Tooltips' extension API (vendor .cs:225-257)
+  // that STANDS it - World Tooltips' extension API (vendor .cs:228-257)
   // rather than its ladder, because Daggerfall has no camps, no dropped
   // torches and no cart, so the mod has no word for any of them. The
   // two corpse pools are here for a different reason: their bodies are
@@ -2884,7 +2884,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     (key) => exteriorFoes.hoverName?.(key) ?? null,
     (key) => cityGuards.hoverName?.(key) ?? null,
     // AUDIT-WH M5: the player's OWN dropped pile, named as the interior
-    // and the dungeon have always named one (.cs:537-548 - a pile of
+    // and the dungeon have always named one (.cs:534-548 - a pile of
     // ONE is that one item, the rest is "Loot Pile"). Outdoors nothing
     // answered `droppedLoot:`, so a pile fell to the model's bare
     // fallback and read a word the mod does not have.
@@ -2895,7 +2895,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // and the cart. Each named by the module that STANDS it, as the
     // torches and the camps are.
     (key) => (typeof key === 'string' && key.startsWith('water:')
-      ? waterSourceHoverName(!!_springs[Number(key.split(':')[1])]?.dry) : null),
+      ? waterSourceHoverName(!!springAt(key)?.dry) : null),
     (key) => wagonHoverName(key),
     // WORLD-HOVER H2: THE MOD'S MOBILE BAND (.cs:297-313). A live foe
     // is named by the pool that stands it, and only when it is not
@@ -2933,18 +2933,40 @@ export async function bootWorld(canvas, renderer, params, status) {
     (key) => cityGuards.hoverContents?.(key) ?? null,
   ]);
 
-  const springTargets = () => {
-    _springs = [];
-    if (!survivalOn()) return [];
+  /**
+   * THE WATER SOURCES, IN SCENE COORDINATES - and the list is ANSWERED,
+   * not published as a side effect.
+   *
+   * AUDIT-WH P7. `springTargets()` used to clear and refill the
+   * module-level `_springs` on its way to building the targets, and
+   * `drinkAtSpring` indexed that array. Per PRESS that was one call
+   * and one read, in that order. The hover made it three readers a
+   * frame - the press's pick, the plaque's pick and the plaque's
+   * NAMER, which reads the dry flag - and the take's correctness then
+   * rested on the press's call happening earlier in the same frame
+   * than anyone else's. Nothing stated that, and nothing could have
+   * caught it: the list is identical between calls in the same frame,
+   * so the ordering is load-bearing exactly until the day a pixel
+   * streams in between two of them.
+   *
+   * One builder, three readers, no shared slot. `_springs` is still
+   * written through (PERF-TOWN1: the same array, refilled) because it
+   * is rebuilt every frame and nothing holds it across one.
+   */
+  const springList = () => {
+    _springs.length = 0;
+    if (!survivalOn()) return _springs;
     for (const p of built.values()) {
       if (!p.springs?.length) continue;
       const t = state.pixelTranslation(p.px, p.py);
       for (const s of p.springs) _springs.push({ pos: [s.pos[0] + t[0], s.pos[1] + t[1], s.pos[2] + t[2]], dry: s.dry });
     }
-    return _springs.map((s, i) => ({ key: `water:${i}`, aabb: { min: [s.pos[0] - 0.8, s.pos[1], s.pos[2] - 0.8], max: [s.pos[0] + 0.8, s.pos[1] + 1.6, s.pos[2] + 0.8] }, distance: RAY_DISTANCE, reach: DEFAULT_ACTIVATION_DISTANCE }));
+    return _springs;
   };
+  const springTargets = () => springList().map((s, i) => ({ key: `water:${i}`, aabb: { min: [s.pos[0] - 0.8, s.pos[1], s.pos[2] - 0.8], max: [s.pos[0] + 0.8, s.pos[1] + 1.6, s.pos[2] + 0.8] }, distance: RAY_DISTANCE, reach: DEFAULT_ACTIVATION_DISTANCE }));
+  const springAt = (key) => springList()[Number(key.split(':')[1])] ?? null;
   const drinkAtSpring = (key) => {
-    const s = _springs[Number(key.split(':')[1])];
+    const s = springAt(key);
     if (!s) return false;
     townTalk.say(s.dry ? DRY_SOURCE_TEXT : drinkAtSource(playerEntity, Math.floor(worldMinutes())).text);
     return true;
@@ -3497,7 +3519,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // and dungeonContext.js:2350 mounts the same one, gated on
   // `opts.enchantCtx !== false` because setDefaultEnchantCtx is a
   // session singleton and EC1 already routes THIS host's mount into
-  // that context through modes.dungeonCtx - so worldModes.js:5251
+  // that context through modes.dungeonCtx - so worldModes.js:5320
   // passes false beside its `chargen: false` and only the standalone
   // ?dungeon route mounts its own. S40 filled isResting
   // in - the sentence that stood here said it "stays absent above
@@ -4496,6 +4518,17 @@ export async function bootWorld(canvas, renderer, params, status) {
     }
     queue.length = 0;
     queue.push(...state.init(px, py));
+    // AUDIT-WH P9: THE CACHE'S INVALIDATION, STATED. `state.init`
+    // re-anchors the floating origin by up to 32,768 units and returns
+    // no offset, so the recenter bump at the frame's end cannot see
+    // this one - and the door cache keys on that generation. It is
+    // safe today only INCIDENTALLY: the loop above destroys every
+    // built pixel first and each removal bumps the counter, so the
+    // cache is empty by the time the origin moves. That is a law
+    // resting on the order of two unrelated statements. One bump here
+    // and the cache is invalid because the ORIGIN moved, which is the
+    // reason, rather than because a splice happened to run first.
+    doorGeneration += 1;   // WORLD-HOVER: the origin was re-anchored, so every door's WORLD matrix moved with it
     const first = queue.shift();
     if (seasonsActive && modEvent === 'travel') await seasons.onPostFastTravel().catch((e) => console.warn('[seasons] travel:', e?.message ?? e));   // SIB1: OnPostFastTravel, off the arrival month (SIB2: the travel popup's arm alone)
     if (seasonsActive && modEvent === 'load') await seasons.onLoad().catch((e) => console.warn('[seasons] load:', e?.message ?? e));   // SIB2: SaveLoadManager.OnLoad - the forced apply now, the unforced one next frame (seasons.tick)
@@ -5332,7 +5365,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // so an F9 pressed inside a shop recorded the street's sheath and
     // hand. The mode host answers for the rig that is actually drawn
     // and null outside interior mode (the dungeon owns its own
-    // composer, dungeonContext.js:6021), so exterior mode and a
+    // composer, dungeonContext.js:6050), so exterior mode and a
     // pre-seam mode host compose exactly as before, per field.
     const wp = modes?.weaponPose?.() ?? null;
     const snap = snapshotPlayer(playerEntity, {
@@ -7205,7 +7238,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // exterior -> the townTalk overlay, interior OR dungeon -> the mode
   // machine's slot. U43-ii shipped the dungeon half: showQuestBox
   // offers the window to `modes.showQuestOverlay` below, and
-  // worldModes answers it in BOTH modes (worldModes.js:8192-8255 -
+  // worldModes answers it in BOTH modes (worldModes.js:8263-8326 -
   // dungeon routes to dungeonCtx.showOverlay), so a dungeon popup is
   // shown rather than logged loudly and dropped.
   // AUDIT 24 (wave 21): DaggerfallMessageBox.Show() is a

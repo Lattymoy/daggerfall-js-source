@@ -37,7 +37,7 @@
 // is covered in no state at any length. That is also the mod's own
 // anchor - HUDTooltip.Draw puts its panel at the screen's middle, and
 // at `(Screen.height - largeHUD.Rectangle.height) / 2` under a docked
-// large HUD (vendor .cs:1085-1100) - so ROAD-E E5's law, that a docked
+// large HUD (vendor .cs:1097-1112) - so ROAD-E E5's law, that a docked
 // bar moves the reticle, moves the plaque with it for free.
 import { injectEnhancedStyle } from './enhancedStyle.js';
 import { isEnhanced } from '../systems/uiSkin.js';

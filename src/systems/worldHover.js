@@ -96,7 +96,7 @@ export function composeActivationTargets(own, producers) {
  * World Tooltips lets other mods add words through a
  * `Map<float, List<Func<RaycastHit, string>>>` keyed by reach, walked
  * in insertion order, FIRST NON-EMPTY WINS, and run before the mod's
- * own ladder (vendor .cs:225-257). The port keeps the law and drops the
+ * own ladder (vendor .cs:228-257). The port keeps the law and drops the
  * key: reach is already decided by the pick, so a namer only has to say
  * whether it knows this key.
  *
@@ -195,7 +195,7 @@ export function resolveHover(hit, { name = null, contents = null } = {}) {
     //
     // The rule is now the SAME rule the named branch below states: a
     // key the ladder has no word for draws nothing, which is the mod's
-    // own behaviour (an empty `ret` leaves the tooltip down, .cs:265)
+    // own behaviour (an empty `ret` leaves the tooltip down, .cs:169-172)
     // and what makes a family a host stands but cannot name VISIBLE
     // rather than papered over.
     if (!named?.title) return null;
@@ -204,7 +204,7 @@ export function resolveHover(hit, { name = null, contents = null } = {}) {
   }
   const named = name?.(key, hit) ?? null;
   // A key the ladder has no word for draws NOTHING. That is the mod's
-  // own behaviour (an empty `ret` leaves the tooltip down, .cs:265) and
+  // own behaviour (an empty `ret` leaves the tooltip down, .cs:169-172) and
   // it is also what keeps an unported family from labelling itself with
   // its own key string.
   if (!named?.title) return null;

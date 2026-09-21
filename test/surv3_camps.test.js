@@ -337,7 +337,12 @@ test('SURV3: by source - the three hosts stand the pool, feed the race, draw the
     assert.match(src, /openRest: \(\) => \{ townTalk\.closeOverlay\(\); toggleRest\(\); \}/, `${name}: the menu's picker leaves the slot before the rest window`);
     assert.match(src, /isWaterSourceFlat\(flat\.archive, flat\.record\) \|\| isDrySourceFlat\(flat\.archive, flat\.record\)/, `${name}: the fountains and wells off the block flats`);
     assert.match(src, /WATER_SOURCE_MODELS\.includes\(placed\.modelIdNum\)/, `${name}: the troughs off the models`);
-    assert.match(src, /if \(!survivalOn\(\)\) return \[\];|survivalOn\(\) \? springs\.map/, `${name}: no water arm with the mod off`);
+    // AUDIT-WH P7 split the streaming host's builder from its
+    // targets (one builder, three readers, no shared slot), so its
+    // empty answer is the empty LIST rather than an empty array
+    // literal. The law - nothing in the ray with the mod off - is
+    // the same one.
+    assert.match(src, /if \(!survivalOn\(\)\) return _springs;|survivalOn\(\) \? springs\.map/, `${name}: no water arm with the mod off`);
   }
   // world: the pixel sweep, the scene cache, the save envelope, the recenter, the cell's frames
   assert.doesNotMatch(world, /camps\.collectPixel\(key\)/, 'AUDIT SURV B: the streaming sweep spares a placed camp');

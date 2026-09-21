@@ -198,7 +198,7 @@ export function createCamps({
   }
   const forKey = (key) => camps.find((c) => `camp:${c.rec.id}` === key) ?? null;
   /** WORLD-HOVER: the port's OWN world objects, named through World
-   *  Tooltips' extension API (vendor .cs:225-257) rather than wedged
+   *  Tooltips' extension API (vendor .cs:228-257) rather than wedged
    *  into its ladder - the mod has no word for a camp because
    *  Daggerfall has no camps. A tent and its fire share one `camp:`
    *  key (two boxes, one subject), so the kind decides the word; a

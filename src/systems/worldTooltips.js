@@ -35,7 +35,7 @@
 //    same everywhere without a second clamp to keep in step.
 //
 //  - THE MOD'S "Default" BAND IS NOT GUARDED by `IsNullOrEmpty(ret)`
-//    the way the bands around it are (.cs:397) - a quirk, and one that
+//    the way the bands around it are (.cs:398) - a quirk, and one that
 //    lets the Default band overwrite a Static NPC name at close range.
 //    It is unreachable here: one key wins, one namer answers, there is
 //    no second band to overwrite the first.
@@ -49,7 +49,7 @@
 // ── THE CACHING LAW ─────────────────────────────────────────────
 //
 // The mod caches on the hit TRANSFORM (`prevHit`) and returns
-// `prevText` unchanged while the ray keeps meeting it (.cs:266-279).
+// `prevText` unchanged while the ray keeps meeting it (.cs:266-275).
 // The port caches on what would be PAINTED (`worldHover.frameSignature`)
 // which is strictly stronger: it also sees a container's contents
 // change under a constant key, which the mod cannot.
@@ -63,17 +63,17 @@ import { TRIGGER_FLAGS } from '../world/rdbLayout.js';   // DFBlock.RdbTriggerFl
  *  (OL1), which `modSetting` already applies - right for this one: a
  *  label over a door is a look, and OL1 has ruled on looks. */
 export const worldTooltipsOn = () => modSetting('world-tooltips', 'Enabled');
-/** `HideDefaultInteractTooltip` (.cs:41-42, :456-457). The author's own
+/** `HideDefaultInteractTooltip` (.cs:42, :465). The author's own
  *  reason, in his own words: "Enable to not give a default indication
  *  on interactable objects that may have been intended to be secret,
  *  particularly regarding puzzles in the main quest." */
 export const hideInteractTooltip = () => modSetting('world-tooltips', 'HideDefaultInteractTooltip');
 
 /** The mod's own default label for a thing it knows is interactive and
- *  has no word for (.cs:466-467). */
+ *  has no word for (.cs:465-466). */
 export const INTERACT_TEXT = '<Interact>';
 
-// ── THE SIXTEEN DAEDRA (.cs:332-390) ────────────────────────────
+// ── THE SIXTEEN DAEDRA (.cs:334-384) ────────────────────────────
 //
 // Indexed by the summoning billboard's RECORD in archive 175, which is
 // NOT the port's `systems/daedraSummoning.js` order - that table is by
@@ -115,16 +115,16 @@ export function npcHoverName(displayName, { archive = -1, record = -1 } = {}) {
   return displayName || null;
 }
 
-// ── ACTION OBJECTS (.cs:399-470) ────────────────────────────────
+// ── ACTION OBJECTS (.cs:400-471) ────────────────────────────────
 //
 // Only Direct, Direct6 and MultiTrigger action objects are named at
-// all (.cs:402-404) - the rest are chain links and traps the player is
+// all (.cs:403-405) - the rest are chain links and traps the player is
 // not meant to see as interactive.
 export const ACTION_TRIGGERS_NAMED = Object.freeze([
   TRIGGER_FLAGS.Direct, TRIGGER_FLAGS.Direct6, TRIGGER_FLAGS.MultiTrigger,
 ]);
 
-/** The three models the mod names outright (.cs:421-431). */
+/** The three models the mod names outright (.cs:420-431). */
 export const ACTION_MODEL_NAMES = Object.freeze({
   74037: 'Wheel',
   61027: 'Lever',
@@ -143,7 +143,7 @@ export const ACTION_MODEL_NAMES = Object.freeze({
  *   case 74143: ret = "The Mantella";                           break;
  *
  * The Mantella names itself and does NOT raise the flag, so a
- * MultiTrigger Mantella falls into `.cs:458-461` and is silenced
+ * MultiTrigger Mantella falls into `.cs:459-461` and is silenced
  * OUTRIGHT - `ret = null` - name and all. A Direct or Direct6 one is
  * still "The Mantella".
  *
@@ -155,10 +155,10 @@ const MT_OK_BY_NAME = new Set([74037, 61027, 61028]);
 
 /**
  * MultiTrigger models the mod allows through WITHOUT a name
- * (.cs:432-438: 62323, and the three secret teleports 72019/74215/
+ * (.cs:432-437: 62323, and the three secret teleports 72019/74215/
  * 74225). They fall to `<Interact>` rather than being silenced.
  *
- * The rule around them (.cs:458-461) is the interesting half: a
+ * The rule around them (.cs:459-461) is the interesting half: a
  * MultiTrigger object that is NOT on this list, and has no name of its
  * own, is silenced OUTRIGHT (`ret = null`) - not defaulted. MultiTrigger
  * is the flag on collision plates and trap volumes, so labelling every
@@ -171,7 +171,7 @@ const MT_OK = new Set(MULTI_TRIGGER_NAMED_OK);
  * An action object's word, or null for silence. `triggerFlag` is the
  * object's RdbTriggerFlags name; `modelIdNum` is the model it was
  * built from - what the mod scrapes off the MeshFilter's name
- * (.cs:408-420) and the port carries on the record.
+ * (.cs:408-418) and the port carries on the record.
  */
 export function actionName(triggerFlag, modelIdNum, { hideInteract = false } = {}) {
   if (!ACTION_TRIGGERS_NAMED.includes(triggerFlag)) return null;
@@ -179,13 +179,13 @@ export function actionName(triggerFlag, modelIdNum, { hideInteract = false } = {
   // AUDIT-WH M2: the NAMED models that also raise the flag, not every
   // named model - The Mantella names itself and does not raise it.
   const multiOk = MT_OK_BY_NAME.has(modelIdNum) || MT_OK.has(modelIdNum);
-  // .cs:458-461 - an unlisted, unnamed MultiTrigger says NOTHING.
+  // .cs:459-461 - an unlisted, unnamed MultiTrigger says NOTHING.
   if (triggerFlag === TRIGGER_FLAGS.MultiTrigger && !multiOk) return null;
   if (named) return named;
   return hideInteract ? null : INTERACT_TEXT;
 }
 
-// ── HOUSE CONTAINERS, BY MODEL ID (.cs:558-629) ─────────────────
+// ── HOUSE CONTAINERS, BY MODEL ID (.cs:552-629) ─────────────────
 //
 // Keyed by the FULL model id, because `% 100` cannot tell 41003
 // (Wardrobe) from 41803 (Dresser) - which is why WORLD-HOVER's
@@ -211,7 +211,7 @@ export const HOUSE_CONTAINER_NAMES = Object.freeze(Object.fromEntries(
  *
  * AUDIT-WH M3: AND IT IS UNCONDITIONAL. `HideDefaultInteractTooltip`
  * guards exactly ONE `<Interact>` in the whole mod - the ACTION arm's
- * (`if (!HideInteractTooltip && string.IsNullOrEmpty(ret))`, .cs:466-467)
+ * (`if (!HideInteractTooltip && string.IsNullOrEmpty(ret))`, .cs:465-466)
  * - and the container switch's `default` has no such guard. The port
  * took the knob to both, which is a quieter game than the mod's and
  * was PINNED as though it were the mod's behaviour: a pin that
@@ -231,7 +231,7 @@ export const BOOKSHELF_TEXT = 'Bookshelf';
 export const BULLETIN_BOARD_TEXT = 'Bulletin Board';
 
 /**
- * A dropped pile's or a random treasure's word (.cs:537-548). A pile
+ * A dropped pile's or a random treasure's word (.cs:534-548). A pile
  * holding exactly ONE item is named by that item, with its stack count
  * in parentheses; anything else is "Loot Pile".
  *
@@ -251,7 +251,7 @@ export function lootPileName(items) {
 }
 
 /**
- * A corpse's word (.cs:525): the entity's name and "(dead)".
+ * A corpse's word (.cs:526): the entity's name and "(dead)".
  *
  * AUDIT-WH M9: and NOTHING ELSE. The mod is `loot.entityName + " (dead)"`
  * with no fallback, and the port had invented 'Body' for a nameless
@@ -263,7 +263,7 @@ export function lootPileName(items) {
  */
 export const corpseName = (entityName) => `${entityName ?? ''} (dead)`;
 
-// ── THE MOBILE BAND (.cs:297-321) ───────────────────────────────
+// ── THE MOBILE BAND (.cs:297-320) ───────────────────────────────
 //
 // AUDIT-WH H2. The mod names three things inside
 // PlayerActivate.MobileNPCActivationDistance and nothing beyond it -
@@ -285,7 +285,7 @@ export const corpseName = (entityName) => `${entityName ?? ''} (dead)`;
 export const mobilePersonName = (nameNPC) => (nameNPC || null);
 
 /**
- * .cs:304-313 - a live entity is `Entity.Name`, and ONLY when its
+ * .cs:304-312 - a live entity is `Entity.Name`, and ONLY when its
  * EnemyMotor says it is not hostile.
  *
  * The condition is `!enemyMotor || !enemyMotor.IsHostile`, so a foe
@@ -326,7 +326,7 @@ export function questResourceName(item, { archive = -1, record = -1 } = {}) {
 
 // ── DOORS ───────────────────────────────────────────────────────
 
-/** An action door (.cs:634-643): "Door", and its lock level when it is
+/** An action door (.cs:641-650): "Door", and its lock level when it is
  *  locked. The mod joins the two with `\r`; the port carries the second
  *  as a sub-line, because a DOM line is a node and splitting a string
  *  back apart at the draw would parse what the namer already knew. */
@@ -335,27 +335,27 @@ export function actionDoorName(locked, lockValue) {
 }
 
 /**
- * A STATIC door's word - the mod's `GetStaticDoorText` (.cs:683-783),
+ * A STATIC door's word - the mod's `GetStaticDoorText` (.cs:684-789),
  * the one arm with real substance in it.
  *
  * `kind` is the port's word for `DoorTypes` plus which side the player
  * is on, since the mod's four cases are exactly that pairing:
- *   'building'       - a town building's door, from outside (.cs:691)
- *   'buildingExit'   - the same door from inside (.cs:763-766)
- *   'dungeonEntrance'- from outside (.cs:767-771)
- *   'dungeonExit'    - from inside (.cs:772-782)
+ *   'building'       - a town building's door, from outside (.cs:692)
+ *   'buildingExit'   - the same door from inside (.cs:764-767)
+ *   'dungeonEntrance'- from outside (.cs:769-772)
+ *   'dungeonExit'    - from inside (.cs:774-783)
  *
  * THREE OF THE MEMBER'S RETURNS ARE NOT TOOLTIPS, and this function
  * has none of them (AUDIT-WH M8 - a recorded departure, so that the
  * absence is a decision and not an oversight):
  *
- *   - `return "<ERR: 010>"` (.cs:703-704) when the location has no
- *     BuildingDirectory, and `return "<ERR: 011>"` (.cs:708-709) when
+ *   - `return "<ERR: 010>"` (.cs:706-707) when the location has no
+ *     BuildingDirectory, and `return "<ERR: 011>"` (.cs:711-712) when
  *     the directory has no summary for the key. They are debug strings
  *     painted into the player's HUD. The port answers null, which is
  *     what it answers for anything it cannot name, and the console
  *     carries diagnostics.
- *   - `return prevDoorText` (.cs:759) - the mod's own one-entry cache,
+ *   - `return prevDoorText` (.cs:762) - the mod's own one-entry cache,
  *     for a frame that struck the same door but missed the BUILDING
  *     behind it. The port has no `prevHit`/`prevDoorText` pair at all
  *     (its cache is the target list's, keyed by the host's door
@@ -367,10 +367,10 @@ export function actionDoorName(locked, lockValue) {
  *
  * TWO DEPARTURES OF THE MOD'S OWN FROM PlayerActivate, ported as the
  * mod's rather than folded into the port's pinned `activateBuilding`:
- *   - the closed-message gate is `buildingType <= Palace` (.cs:737)
+ *   - the closed-message gate is `buildingType <= Palace` (.cs:740-741)
  *     where DFU's is `< Temple` (PlayerActivate.cs:473), so the mod
  *     tells you a temple or a palace is shut and DFU does not;
- *   - a Palace substitutes the word "Palace" for "Store" (.cs:741-742).
+ *   - a Palace substitutes the word "Palace" for "Store" (.cs:747-748).
  * They are the MOD's text and belong with the mod's ladder. The
  * SENTENCE itself is `buildingLocks.buildingClosedText`, the port's one
  * home for it, which takes that substitution as its `subject`.
@@ -384,24 +384,24 @@ export function staticDoorName(kind, {
     return locationName ? { title: `To\n${locationName}` } : null;
   }
   if (kind === 'dungeonExit') {
-    // .cs:775-781: a town's dungeon exit names the town; anything else
+    // .cs:777-782: a town's dungeon exit names the town; anything else
     // names the REGION, because you step out into open country.
     const to = inTown ? locationName : (regionName ? `${regionName} Region` : '');
     return to ? { title: `To\n${to}` } : null;
   }
   if (kind !== 'building') return null;
   // Town23 is the city-wall "building", which has no name of its own
-  // (.cs:724-731).
+  // (.cs:726-733).
   const to = buildingType === BUILDING_TYPES.Town23
     ? (locationName ? `${locationName} City Walls` : '')
     : displayName;
   if (!to) return null;
   const subs = [];
-  if (!unlocked) subs.push(`Lock Level: ${buildingLockValue(quality)}`);   // .cs:733-736
+  if (!unlocked) subs.push(`Lock Level: ${buildingLockValue(quality)}`);   // .cs:735-738
   if (!unlocked && buildingType <= BUILDING_TYPES.Palace
-    && buildingType !== BUILDING_TYPES.HouseForSale) {                     // .cs:737-738
+    && buildingType !== BUILDING_TYPES.HouseForSale) {                     // .cs:740-741
     subs.push(buildingClosedText(buildingType,
-      { subject: buildingType === BUILDING_TYPES.Palace ? 'Palace' : null }));   // .cs:741-742
+      { subject: buildingType === BUILDING_TYPES.Palace ? 'Palace' : null }));   // .cs:747-748
   }
   return { title: `To\n${to}`, subs };
 }

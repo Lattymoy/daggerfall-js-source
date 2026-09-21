@@ -419,7 +419,7 @@ export function createDroppedTorches({
   /** WORLD-HOVER: what the plaque calls a torch on the floor. The mod
    *  has no word for one - a dropped light source is the port's own
    *  object (HT1) - so it rides World Tooltips' extension API
-   *  (vendor .cs:225-257) instead of being wedged into its ladder.
+   *  (vendor .cs:228-257) instead of being wedged into its ladder.
    *  The word is the item's own template name, which is what Info mode
    *  already says about it one line below. */
   function hoverName(key) {

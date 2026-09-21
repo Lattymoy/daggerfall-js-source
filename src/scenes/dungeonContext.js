@@ -1603,7 +1603,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // owned, and destroy() hands it back (the _prevPassiveHost idiom this
   // file already uses for its other process-global seams). A bare null
   // would not do: on ?world and ?exterior the previous holder is the
-  // host's own townTalk sink (world.js:8241 / exterior.js:3385), set
+  // host's own townTalk sink (world.js:8274 / exterior.js:3390), set
   // once at boot and never again, so nulling on the way out of the
   // first dungeon would silently un-file every mid-screen label above
   // ground for the rest of the session - MC-1's own bug, re-opened.
@@ -2114,7 +2114,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // copied mount would have diverged the first time an arm grew.
   /** DR1: THE TWO SPELL WINDOWS THIS HOST MOUNTS NOW, and the one door
    *  they go through. `mountSpellWindow` is worldModes'
-   *  mountSpellWindow DUNGEON ARM (worldModes.js:1148,
+   *  mountSpellWindow DUNGEON ARM (worldModes.js:1149,
    *  `dungeonCtx?.showOverlay(win)`) resolved to what it actually
    *  calls here - this file's own pushDungeonWindow, which IS
    *  UserInterfaceManager.PushWindow. So a spell window raised over an
@@ -2624,7 +2624,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // NEXT updateMissiles pass to fill. But the push lands in a
     // MICROTASK - this is async and its one caller does not await it -
     // and both hosts draw dynamicDraws BEFORE they call drawFoes
-    // (dungeon.js:1019 against :1048; worldModes.js:6554 against :6578).   // QS6: both pairs' SECOND half was stale before this slice - they named neither `drawFoes` call, and a positional bump would have moved a wrong number by the right offset; re-resolved by content
+    // (dungeon.js:1019 against :1048; worldModes.js:6625 against :6649).   // QS6: both pairs' SECOND half was stale before this slice - they named neither `drawFoes` call, and a positional bump would have moved a wrong number by the right offset; re-resolved by content
     // So the very next frame drew the arrow with a NULL matrix, and
     // `uniformMatrix4fv(uModel, false, null)` throws - Float32List is
     // a non-nullable WebIDL union. Firing a bow killed the frame loop,
@@ -3181,8 +3181,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
               // AUDIT 39 (#64) / THE FOUR HOSTS RULE - SHIPPED (wave D):
               // this host was the FOURTH BODY of the player-arrow law
               // and is now the fourth CALLER. combat/arrowFlight.js's
-              // playerArrowHitFoe is the one copy world.js:11462,
-              // exterior.js:4863 and worldModes.js:6706 already ran;
+              // playerArrowHitFoe is the one copy world.js:11495,
+              // exterior.js:4868 and worldModes.js:6777 already ran;
               // the flag said the divergence would bite and it already
               // had. This copy splashed at the ARROW TIP
               // (`[m.pos[0], m.pos[1], m.pos[2]]`) on the claim that
@@ -4652,10 +4652,39 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // second, so sweeping past a rack of barrels named them out of step
     // with the reticle and the name stuck after you looked away.
     //
+    // AND THE OTHER HALF, CORRECTED (AUDIT-WH P4). This block used to
+    // end "`lootTargets()` is 18 entries and is not [expensive]", and
+    // eight lines below it the call hands over
+    // `dungeonActivationTargets()` - which is `lootTargets()` PLUS
+    // `activationTargets(actions.objects)`, and that is a full VERTEX
+    // WALK per action object per frame (AUDIT 63 F37's live-pose law:
+    // `objectAabb` -> `worldAabb` over the model's positions, because
+    // a lever that has swung must not be picked at the box it had
+    // before it swung). A justification resting on a number the next
+    // statement invalidates is worse than none.
+    //
+    // MEASURED, normalized: 0.068 ms for 62 objects at ~78 verts, and
+    // 0.582 ms for 150 at ~300 - so a busy RDB level costs about 3.5%
+    // of a 16.7 ms frame here, not 0.0005%. It is still worth paying,
+    // and the reason is the one this seam exists for: this is the
+    // SAME list the press races, and a cheaper list of the plaque's
+    // own would be a second answer to "what is under the crosshair".
+    // The throttle is still the wrong saving - it bought 90% of a cost
+    // that is dominated by the list, not the ray, and paid for it in a
+    // readout that lagged the reticle.
+    //
+    // THE CACHE THIS DOES NOT HAVE, and why: the exterior host's door
+    // cache keys on a GENERATION the host bumps at three discrete
+    // events. An action object has no such event - it moves whenever
+    // its animation does - so the only correct cache here would key on
+    // every object's matrix, which is the walk it would be replacing.
+    // The exterior hosts hand over a list they hold anyway; this one
+    // is built, and that is the honest cost of the law above.
+    //
     // (The expensive half of a hover in this port is BUILDING the
     // target list, not casting the ray - which is why the seam takes a
     // thunk and the hosts with real lists hand over one they are
-    // holding anyway. `lootTargets()` is 18 entries and is not one.)
+    // holding anyway.)
     worldHoverFrame({
       eye,
       dir: eye ? [-view[2], -view[6], -view[10]] : null,
@@ -5483,7 +5512,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
    * for what a dungeon stands, each cited to the mod's source.
    *
    * It answers NOTHING it does not know, which is the mod's own
-   * behaviour (an empty `ret` leaves the tooltip down, .cs:265) and
+   * behaviour (an empty `ret` leaves the tooltip down, .cs:169-172) and
    * what stops an unported family labelling itself with its key string.
    */
   function _dungeonHoverName(key) {
@@ -5494,16 +5523,16 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // whether the mod is switched on or off.
     if (key.startsWith('corpse:')) {
       const f = foes[Number(key.split(':')[1])];
-      // .cs:525 - the entity's name and "(dead)".
+      // .cs:526 - the entity's name and "(dead)".
       return f ? { title: corpseName(enemyDisplayName(f.mobileType)) } : null;
     }
     if (key.startsWith('loot:') || key.startsWith('droppedLoot:')) {
-      // .cs:537-548 - a pile of ONE is named by that one item; the
+      // .cs:534-548 - a pile of ONE is named by that one item; the
       // port lists the rest UNDER this title rather than stopping here.
       return { title: lootPileName(api.lootContents(key)) };
     }
     if (!modOn) return null;
-    // .cs:304-313 - a LIVE entity is `Entity.Name`, and only when its
+    // .cs:304-312 - a LIVE entity is `Entity.Name`, and only when its
     // motor says it is not hostile. Keyed by INDEX, as this pool's
     // corpses are: a dungeon's foe list is never spliced.
     if (key.startsWith('mobileFoe:')) {
@@ -5515,11 +5544,11 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     if (key.startsWith('door:') || key.startsWith('act:')) {
       const o = actions.objects.get(key) ?? null;
       if (!o) return null;
-      // .cs:634-643 - an action door says "Door", and its lock level
+      // .cs:641-650 - an action door says "Door", and its lock level
       // when it is locked. DaggerfallActionDoor.IsLocked is
       // currentLockValue > 0.
       if (o.kind === 'door') return actionDoorName((o.currentLockValue ?? 0) > 0, o.currentLockValue ?? 0);
-      // .cs:399-470 - Direct/Direct6/MultiTrigger only, by model id.
+      // .cs:400-471 - Direct/Direct6/MultiTrigger only, by model id.
       const t = actionName(o.triggerFlag, o.modelIdNum, { hideInteract: hide });
       return t ? { title: t } : null;
     }
@@ -6755,7 +6784,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       return () => { const i = _hostTargets.indexOf(fn); if (i >= 0) _hostTargets.splice(i, 1); };
     },
     /** WORLD-HOVER: the naming half of the same seam - the mod's own
-     *  extension API (vendor .cs:225-257), insertion order, first
+     *  extension API (vendor .cs:228-257), insertion order, first
      *  answer with a title wins. A host registers a namer for each
      *  family it registered targets for, so the two halves cannot
      *  drift apart: a family nobody stands is a family nobody names. */
@@ -6770,7 +6799,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
      * then the port-own objects through the mod's extension API, then
      * whatever the HOST registered. Insertion order is priority and
      * the first answer with a title wins, which is the mod's own law
-     * (vendor .cs:225-257).
+     * (vendor .cs:228-257).
      *
      * Everything the mod names is gated on ITS switch; the loot rows
      * are PX21c's and are not, which is why `loot:`/`corpse:`/

@@ -3349,6 +3349,21 @@ body.draglock .wornrow, body.draglock .wornmap { touch-action: none; }
   line-height: 1.5; }
 .wplaque-count { margin-left: auto; color: var(--brass); font-size: 12px; }
 .wplaque-empty, .wplaque-more { color: #7d7460; font-size: 12px; }
+/* AUDIT-WH R7: THE LIST HAS ITS OWN NODE AND HAD NO RULE. The draw
+   emits a .wplaque-list wrapper round the rows and nothing styled it,
+   so the block existed only to be an unstyled div - and a plaque under
+   the reticle GROWS DOWNWARD, which on a short viewport (a laptop
+   under browser chrome, a 16:10 window with a docked large HUD) walks
+   a six-row pile off the bottom of the screen. The cap is the room
+   BELOW the cross, which is what the anchor already knows: --wp-top is
+   the plaque's own top edge, so 100vh minus it is exactly what is
+   left. The TITLE never moves - it is the thing the reticle is about -
+   so the rows are what gives. No scrollbar chrome: a readout is not a
+   control (the whole surface is pointer-events: none), so the overflow
+   is a CLIP, and the "and N more" tail already tells the truth about
+   what is not shown. */
+.wplaque-list { display: block; max-height: calc(100vh - var(--wp-top, 55%) - 24px);
+  overflow: hidden; }
 /* AUDIT ENH-NOTICE3 A6's lesson: a more-specific base rule outranks a
    media block, so every base selector above is one class. */
 @media (max-width: 720px) { .wplaque { max-width: 88vw; padding: 8px 12px; }

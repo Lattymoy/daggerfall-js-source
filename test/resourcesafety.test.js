@@ -146,3 +146,52 @@ test('NT1 (F054): the no-landing throw frees the interior build it abandons', ()
   assert.ok(wm.includes("if (!landing) { ctx.destroy(); throw new Error('no interior landing'); }"),
     'the fully-built context is freed before the throw the hosts only log');
 });
+
+// ---------------------------------------------------------------
+// 4. AUDIT-WH R6 - THE PLAQUE'S OWN ALLOCATION, and the six doors
+//    that are supposed to close it
+// ---------------------------------------------------------------
+//
+// This file is the 17e ownership rule's gate and it had no opinion
+// about the world plaque, which is a `document.body` child with a
+// module-level handle - the exact shape NT1 exists for. The audit
+// found ONE of its six doors pinned anywhere in the tree: the modal
+// arms' mode exits. The five that were not are the two above-ground
+// hosts' unwinds, the standalone dungeon's, and the dungeon context's
+// own destroy - and `world.js` had imported the door without ever
+// calling it while `exterior.js` had no teardown at all.
+
+test('NT1 / AUDIT-WH R6: the world plaque has ONE owner per host, and every one of them frees it', () => {
+  const plaque = src('ui/worldPlaque.js');
+  // The node is module state with one creator and one destroyer.
+  assert.match(plaque, /function ensure\(\) \{\n  if \(node \|\| typeof document === 'undefined'\) return node;/,
+    'one creator, idempotent');
+  assert.match(plaque, /export function destroyWorldPlaque\(\) \{[\s\S]{0,400}node = null;/,
+    'one destroyer, and it drops the handle');
+  // ...and the destroyer resets EVERY piece of module state, or the
+  // next host inherits a guard that says the plaque already shows what
+  // it does not.
+  const destroy = plaque.slice(plaque.indexOf('export function destroyWorldPlaque() {'));
+  for (const slot of ['node = null;', 'shownSig = null;', 'lastX = null;', 'lastTop = null;', '_faults = 0;', '_faultSaid = false;']) {
+    assert.ok(destroy.includes(slot), `destroyWorldPlaque leaves ${slot.split(' ')[0]} behind`);
+  }
+  // THE SIX DOORS. Five of them were unpinned before AUDIT-WH R6, and
+  // two of those were not merely unpinned - they did not exist.
+  const DOORS = [
+    ['scenes/world.js', /if \(!frameAlive\(_frameToken\)\) \{ destroyWorldPlaque\(\); return; \}/, 'the streaming host\'s unwind'],
+    ['scenes/exterior.js', /if \(!frameAlive\(_frameToken\)\) \{ destroyWorldPlaque\(\); return; \}/, 'the fixed city\'s unwind'],
+    ['scenes/dungeon.js', /if \(!frameAlive\(_frameToken\)\) \{ destroyWorldPlaque\(\); return; \}/, 'the dev door\'s unwind'],
+    ['scenes/worldModes.js', /destroyWorldPlaque\(\);   \/\/ WORLD-HOVER/, 'the modal arms\' mode exits'],
+    ['scenes/dungeonContext.js', /destroyWorldPlaque\(\);/, 'the dungeon context\'s destroy'],
+  ];
+  for (const [f, re, what] of DOORS) assert.match(src(f), re, `${what} does not free the plaque`);
+  // The modal machine has THREE exits, not one - two back to the
+  // street and the machine's own destroy - and all three say it.
+  assert.equal((src('scenes/worldModes.js').match(/destroyWorldPlaque\(\);/g) ?? []).length, 3,
+    'every way out of a mode frees it');
+  // The seam itself allocates nothing that outlives a frame: the only
+  // persistent handle is the node, and the only growing state is a
+  // fault COUNT.
+  assert.doesNotMatch(plaque, /^let (?!node|shownSig|lastX|lastTop|_faults|_faultSaid)/m,
+    'a new module-level slot needs an owner and a line in destroyWorldPlaque');
+});

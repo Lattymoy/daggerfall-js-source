@@ -1096,7 +1096,7 @@ test('PX21c / WORLD-HOVER: the plaque names a pile without opening it, on the ta
   assert.deepEqual(near.rows, [{ name: 'Ruby', stack: 2, rarity: null }]);
   assert.equal(resolveHover(null, {}), null, 'nothing under the crosshair');
   // A key the ladder has no word for draws NOTHING - the mod's own
-  // behaviour (an empty `ret` leaves the tooltip down, .cs:265), and
+  // behaviour (an empty `ret` leaves the tooltip down, .cs:169-172), and
   // what stops an unported family labelling itself with its key string.
   assert.equal(resolveHover({ key: 'act:2:41', distance: 1, reach: 3.2 }, { name: () => null }), null);
   assert.equal(resolveHover({ key: 'door:2', distance: 1, reach: 3.2 },
