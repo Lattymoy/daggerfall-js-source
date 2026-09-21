@@ -40,18 +40,94 @@ import {
 } from './overworldModel.js';
 
 // ── THE INK (skin): the pen and its washes ───────────────────────────────────────────────
+/** THE TWO GROUNDS EVERY COLOUR ON THIS SHEET IS MIXED FROM. The pen
+ *  is one brown and the paper is one cream, and every entry below is
+ *  one of them at some strength - which is why the map reads as one
+ *  hand rather than a palette. Named (EM7) because the quarters'
+ *  colours are MIXED against them: `rgb()` with the numbers typed a
+ *  second time is how a derived colour stops being derived. */
+export const INK_RGB = Object.freeze([58, 40, 22]);
+export const PARCHMENT_RGB = Object.freeze([238, 222, 190]);
+/** `rgba(...)` from a channel triple and an alpha - the one place this
+ *  string is built, so a colour and the number behind it cannot part.
+ *  @param {ArrayLike<number>} rgb @param {number} a */
+export const rgba = (rgb, a) => `rgba(${Math.round(rgb[0])}, ${Math.round(rgb[1])}, ${Math.round(rgb[2])}, ${a})`;
+/** Move `from` this far toward `to`, channel by channel.
+ *  @param {ArrayLike<number>} from @param {ArrayLike<number>} to @param {number} t
+ *  @returns {number[]} */
+export const mixRgb = (from, to, t) => [0, 1, 2].map((i) => from[i] + (to[i] - from[i]) * t);
+
 export const PEN = Object.freeze({
-  line: 'rgba(58, 40, 22, 0.92)',    // the pen
-  soft: 'rgba(58, 40, 22, 0.42)',    // borders, tracks, minor marks
-  relief: 'rgba(58, 40, 22, 0.26)',  // MAP-FIELD6: the high ground's carets
-  wash: 'rgba(58, 40, 22, 0.10)',    // the shore's shade
+  line: rgba(INK_RGB, 0.92),         // the pen
+  soft: rgba(INK_RGB, 0.42),         // borders, tracks, minor marks
+  relief: rgba(INK_RGB, 0.26),       // MAP-FIELD6: the high ground's carets
+  wash: rgba(INK_RGB, 0.10),         // the shore's shade
   name: 'rgba(46, 32, 18, 0.95)',    // a place's name
-  region: 'rgba(58, 40, 22, 0.55)',  // a province's name
+  region: rgba(INK_RGB, 0.55),       // a province's name
   select: 'rgba(168, 112, 24, 0.95)', // the chosen mark's ring
   player: 'rgba(120, 28, 20, 0.95)',  // the player's own mark
   coords: 'rgba(120, 28, 20, 0.75)',  // MAP2: a bare-pixel destination's cross
-  halo: 'rgba(238, 222, 190, 0.80)',  // MAP-FIELD6: the parchment, quieted under a glyph or a name
+  halo: rgba(PARCHMENT_RGB, 0.80),    // MAP-FIELD6: the parchment, quieted under a glyph or a name
 });
+
+/**
+ * EM7 — THE FOUR QUARTERS, IN THIS HAND.
+ *
+ * Mac (2026-09-21): "keep our own version of the colored buildings that
+ * classic uses".
+ *
+ * Classic sorts a town's pixels into four groups and paints each in a
+ * flat, saturated colour - the temple's tan, the shop's blue, the
+ * tavern's green, the house's slate - and that one decision is what
+ * makes its town map readable at a glance. The reading is kept. The
+ * PAINT is not: a flat 0xff1855be laid on this parchment is a sticker
+ * on a map, and the whole point of the enhanced sheet is that it looks
+ * drawn.
+ *
+ * SO EACH QUARTER IS CLASSIC'S OWN HUE, TWICE OVER, and both are
+ * DERIVED from `ui/townQuarters.js`'s `CLASSIC_ARGB` rather than picked
+ * by eye - change the source (or DFU's settings default moves) and
+ * these follow, and a pin can ask whether the tavern's wash is still
+ * the tavern's green rather than merely whether it is still a string:
+ *
+ *   THE WASH is that hue at a watercolour's strength, so the paper's
+ *   own cracks and stains read straight through it and the sepia
+ *   outline still sits on top as the drawing. One alpha for all four,
+ *   because a quarter that got its own strength would be a quarter
+ *   someone had shaded by hand.
+ *
+ *   THE NAME INK is that same hue walked most of the way to the PEN,
+ *   so a tavern's name is recognisably the tavern's green and is
+ *   unmistakably ink - dark enough to letter with, tinted enough to
+ *   tell a temple from a smith without reading either.
+ */
+export const QUARTER_WASH_A = 0.36;
+export const QUARTER_INK_MIX = 0.55;
+export const QUARTER_INK_A = 0.95;
+/**
+ * AND THE TWO NUMBERS ABOVE ARE BOUNDED BY A MEASUREMENT, not by
+ * taste. Laid over the parchment, the four washes must stay far enough
+ * apart that a player can tell a tavern from a house at a glance, and
+ * the four inks the same while each stays dark enough to letter with -
+ * `test/townsheet.test.js` puts every pair through CIE76 and holds
+ * these floors.
+ *
+ * The first cut sat at 0.30 and the tightest pair - the tavern's green
+ * against the house's slate, both low-chroma and both darkened toward
+ * the paper - came out at 9.8, which is a difference you can find when
+ * you look for it and not one you READ. A wash pulls every hue toward
+ * the parchment, so the alpha is what decides whether four colours stay
+ * four colours; it is set here at the smallest value that clears the
+ * floor rather than at the largest the sheet can bear.
+ */
+export const QUARTER_WASH_DE = 11;
+export const QUARTER_INK_DE = 15;
+/** ...and an ink must also stand off the PAPER, or it is a wash. */
+export const QUARTER_INK_PAPER_DE = 45;
+/** @param {{r:number,g:number,b:number}} c */
+export const quarterWash = (c) => rgba([c.r, c.g, c.b], QUARTER_WASH_A);
+/** @param {{r:number,g:number,b:number}} c */
+export const quarterInk = (c) => rgba(mixRgb([c.r, c.g, c.b], INK_RGB, QUARTER_INK_MIX), QUARTER_INK_A);
 /** MAP-FIELD6 (2026-09-19, Mac: "Some of the glyphs are hard to read. I
  *  want to make everything more readable, without clutter and keeping
  *  the same design").

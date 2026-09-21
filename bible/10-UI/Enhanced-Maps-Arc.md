@@ -365,6 +365,105 @@ that inks nothing.
   rotated as one, and only a real city loaded from real data says
   which.
 
+## EM7 — the four quarters, in our hand
+
+Mac, 2026-09-21:
+
+> keep our own version of the colored buildings that classic uses
+
+**THE FIRST CUT THREW AWAY THE ONE THING CLASSIC'S TOWN MAP HAS
+ALWAYS HAD.** EM4 washed every ENTERABLE pixel in one flat sepia and
+left a house as outline alone. It was legible, and it was monochrome:
+classic sorts a town's bytes into four groups and paints each in its
+own colour — the temple's tan, the shop's blue, the tavern's green,
+the house's slate — and that single decision is why you find the smith
+on it without reading a word.
+
+The READING is kept whole. The PAINT is ours. Each quarter is traced
+as its own island and washed in classic's own hue at a watercolour's
+strength, so the parchment's cracks read straight through and the
+sepia outline still sits on top as the drawing rather than as a border
+round a block of colour. The wall is stroked ONCE over all four,
+because a wall two quarters share would otherwise be drawn twice and
+read heavier than a wall against the street.
+
+**THE SETS LIVED TWICE, AND THAT WAS A HAZARD RATHER THAN UNTIDINESS.**
+`ui/exteriorAutomapWindow.js` had the four byte groups for its stamp
+and `ui/inkTown.js` had them for its trace, and DFU's four colour
+defaults were typed out in *three* places in the classic window alone
+(the paint, the caption swatches, and the fallbacks beside them). A
+byte regrouped in one skin would have silently disagreed with the
+other: the same building drawn as a shop on one map and a house on the
+next. `ui/townQuarters.js` is the one home now, and both skins ask it.
+
+Everything downstream is derived from that one ladder rather than kept
+beside it — `isBuilt` is "belongs to a quarter", `isEnterable` is
+"belongs to one that is not the houses", and the four washes and four
+name inks are a law applied to `CLASSIC_ARGB` rather than colours
+picked by eye.
+
+**AND "FOUR COLOURS" IS MEASURED, NOT ASSERTED.** The first pin
+checked that the four washes were four different *strings*, and it
+passed at a wash alpha where the tavern's green and the house's slate
+composited to within ΔE 9.8 of each other over the parchment — both
+low-chroma, both pulled toward the paper by the same alpha. That is a
+difference you can find when you look for it and not one you READ. A
+wash pulls every hue toward the parchment, so the only honest question
+is what comes out the other side: every pair now goes through CIE76
+against the paper and must clear a floor, every name ink must clear it
+too *and* stand far enough off the parchment to letter with, and the
+alpha is pinned as the SMALLEST that clears rather than the largest
+the sheet can bear.
+
+## EM8 — the names, enhanced
+
+Mac, 2026-09-21:
+
+> plus let's enhance the location names on the buildings more
+
+A town plan is read to FIND something. Three things were added, and
+each of them is information rather than decoration:
+
+- **A name is lettered in its own quarter's ink**, through the same
+  ladder its own pixels went — reached by `quarterOfType`, the one
+  place the `+ 1` between a summary's `buildingType` and the grid's
+  byte is written, so the word and the wash under it cannot come to
+  disagree about what the building is. A quest's name still overrides,
+  because a quest is why the map is open at all. A building whose type
+  is unknown is still inked, in the sheet's plain name pen: an unknown
+  type is not a missing name.
+- **A tick on the building, and a leader only when it is earned.** The
+  nameplate solver displaces plates VERTICALLY to untangle them, which
+  means a name's own position is not reliably its building's — DFU's
+  own window gets away with it because its plates are screen-space
+  labels over a rotating camera and nobody reads them as a plan. Every
+  plate ticks its anchor; a plate pushed further than its own height
+  gets a hairline back to that tick, stopping short of the lettering.
+  A plate that did not move gets nothing, which is most of them.
+- **A size that says what the name is.** The landmarks a player steers
+  by — the temple and the tavern — stand a little proud of the run of
+  shops, and a quest's name proud of them.
+
+**THE WEIGHT IS APPLIED AFTER THE BAND, AND THAT ORDER IS THE WHOLE
+OF IT.** The first cut multiplied inside the clamp, which looked right
+and quietly threw the hierarchy away at both ends of the zoom: past
+scale 2.4 every plate is already at `NAME_SIZE_MAX`, so a landmark and
+the shop beside it came out the same size *exactly where the map is
+most read*. A weight is a RATIO against the names beside it. The band
+bounds the baseline; the weight rides on top; the true ceiling is the
+band's own times the largest weight there is.
+
+**AND `NAME_SIZE_MIN` IS UNREACHABLE**, which is worth writing down
+rather than assuming: the baseline only reaches it below scale
+`(NAME_SIZE_MIN/NAME_SIZE)^2`, and no name is laid at all under
+`NAME_ZOOM_MIN`, which is higher. It is a guard against a future band,
+not a size anything is lettered at.
+
+The probe carries four more checks for all of this, and its town shot
+is the answer to whether it reads: all four quarters traced, every
+plate carrying its own quarter, a landmark lettered proud of the shops
+at rest, and a quest proud of the landmarks.
+
 ## Doctrine, unchanged
 
 The sprite is Mac's, the maps are computed, the names are the game's

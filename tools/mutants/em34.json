@@ -247,9 +247,9 @@
   },
   {
     "name": "EM4-1-a-ground-flat-is-a-building",
-    "file": "src/ui/inkTown.js",
-    "old": "const BUILT = new Set([...TEMPLE_SET, ...SHOP_SET, TAVERN_BYTE, ...HOUSE_SET]);",
-    "new": "const BUILT = new Set([...TEMPLE_SET, ...SHOP_SET, TAVERN_BYTE, ...HOUSE_SET, ...SHOWALL_SET]);",
+    "file": "src/ui/townQuarters.js",
+    "old": "  if (HOUSES.has(byte)) return 'house';",
+    "new": "  if (HOUSES.has(byte) || SHOWALL.has(byte)) return 'house';",
     "tests": [
       "test/townsheet.test.js"
     ],
@@ -258,8 +258,8 @@
   {
     "name": "EM4-2-a-house-is-washed-like-a-shop",
     "file": "src/ui/inkTown.js",
-    "old": "const ENTERABLE = new Set([...TEMPLE_SET, ...SHOP_SET, TAVERN_BYTE]);",
-    "new": "const ENTERABLE = new Set([...TEMPLE_SET, ...SHOP_SET, TAVERN_BYTE, ...HOUSE_SET]);",
+    "old": "export const isEnterable = (byte) => { const q = quarterOf(byte); return q !== null && q !== 'house'; };",
+    "new": "export const isEnterable = (byte) => quarterOf(byte) !== null;",
     "tests": [
       "test/townsheet.test.js"
     ]
@@ -267,7 +267,7 @@
   {
     "name": "EM4-3-the-street-is-built-up",
     "file": "src/ui/inkTown.js",
-    "old": "export const isBuilt = (byte) => BUILT.has(byte);",
+    "old": "export const isBuilt = (byte) => quarterOf(byte) !== null;",
     "new": "export const isBuilt = (byte) => byte !== 0xff;",
     "tests": [
       "test/townsheet.test.js"
@@ -315,8 +315,8 @@
   {
     "name": "EM4-8-the-wash-goes-over-the-wall",
     "file": "src/ui/inkTown.js",
-    "old": "  if (plan?.wash?.length) {",
-    "new": "  if (false) {",
+    "old": "  for (const q of QUARTERS) {\n    const chains = plan?.quarters?.[q];\n    if (!chains?.length) continue;",
+    "new": "  ctx.strokeStyle = TOWN_PEN.wall;\n  trace(plan?.chains);\n  ctx.stroke();\n  for (const q of QUARTERS) {\n    const chains = plan?.quarters?.[q];\n    if (!chains?.length) continue;",
     "tests": [
       "test/townsheet.test.js"
     ]
@@ -381,8 +381,8 @@
   {
     "name": "EM4-15-the-names-are-lettered-at-one-size",
     "file": "src/ui/townSheet.js",
-    "old": "    return Math.max(NAME_SIZE_MIN, Math.min(NAME_SIZE_MAX, NAME_SIZE * Math.sqrt(view.scale)));",
-    "new": "    return NAME_SIZE;",
+    "old": "    const base = Math.max(NAME_SIZE_MIN, Math.min(NAME_SIZE_MAX, NAME_SIZE * Math.sqrt(view.scale)));",
+    "new": "    const base = NAME_SIZE;",
     "tests": [
       "test/townsheet.test.js"
     ]
@@ -390,8 +390,8 @@
   {
     "name": "EM4-16-the-name-size-is-unbounded",
     "file": "src/ui/townSheet.js",
-    "old": "    return Math.max(NAME_SIZE_MIN, Math.min(NAME_SIZE_MAX, NAME_SIZE * Math.sqrt(view.scale)));",
-    "new": "    return NAME_SIZE * Math.sqrt(view.scale);",
+    "old": "    const base = Math.max(NAME_SIZE_MIN, Math.min(NAME_SIZE_MAX, NAME_SIZE * Math.sqrt(view.scale)));",
+    "new": "    const base = NAME_SIZE * Math.sqrt(view.scale);",
     "tests": [
       "test/townsheet.test.js"
     ]
@@ -456,5 +456,105 @@
     ],
     "equivalent": true,
     "why": "EM1's world sheet is the only one that claims chrome, and the unit pins drive the switch with a stub sheet that claims none - so nothing is left showing for them to notice. IT IS COVERED, by tools/enhancedMapProbe.mjs: three checks walk a town sheet to the bay and back and assert the search box is hidden, then shown, then hidden again."
+  },
+  {
+    "name": "EM7-1-two-quarters-become-one",
+    "file": "src/ui/townQuarters.js",
+    "old": "  if (byte === TAVERN_BYTE) return 'tavern';",
+    "new": "  if (byte === TAVERN_BYTE) return 'shop';",
+    "tests": [
+      "test/townsheet.test.js"
+    ],
+    "note": "The whole point of four colours is that four things look different."
+  },
+  {
+    "name": "EM7-2-the-plus-one-drifts",
+    "file": "src/ui/townQuarters.js",
+    "old": "export const quarterOfType = (type) => (type == null ? null : quarterOf(type + 1));",
+    "new": "export const quarterOfType = (type) => (type == null ? null : quarterOf(type));",
+    "tests": [
+      "test/townsheet.test.js"
+    ],
+    "note": "A summary's type is the grid's byte MINUS one. Lose that and every name is lettered as the quarter next door."
+  },
+  {
+    "name": "EM7-3-the-wash-is-a-fill",
+    "file": "src/ui/inkMap.js",
+    "old": "export const QUARTER_WASH_A = 0.36;",
+    "new": "export const QUARTER_WASH_A = 1;",
+    "tests": [
+      "test/townsheet.test.js"
+    ],
+    "note": "Opaque, the parchment stops reading through and the sheet is a sticker again."
+  },
+  {
+    "name": "EM7-4-the-name-ink-is-raw-paint",
+    "file": "src/ui/inkMap.js",
+    "old": "export const QUARTER_INK_MIX = 0.55;",
+    "new": "export const QUARTER_INK_MIX = 0;",
+    "tests": [
+      "test/townsheet.test.js"
+    ],
+    "note": "Unmixed, a name is classic's flat blue on parchment rather than ink with a hue."
+  },
+  {
+    "name": "EM7-5-the-static-key-forgets-the-quarters",
+    "file": "src/ui/townSheet.js",
+    "old": "      return `${f.w}x${f.h}|${plan?.chains?.length ?? 0}|${q}`;",
+    "new": "      return `${f.w}x${f.h}|${plan?.chains?.length ?? 0}`;",
+    "tests": [
+      "test/townsheet.test.js"
+    ],
+    "note": "EM3's own lesson on the other sheet: a key that does not name what is inked keeps an old wash under a new outline."
+  },
+  {
+    "name": "EM8-1-the-tick-marks-the-words-not-the-building",
+    "file": "src/ui/inkTown.js",
+    "old": "      ctx.arc(p.x, ay, ANCHOR_R, 0, Math.PI * 2);",
+    "new": "      ctx.arc(p.x, p.y, ANCHOR_R, 0, Math.PI * 2);",
+    "tests": [
+      "test/townsheet.test.js"
+    ],
+    "note": "Then the tick says nothing the words did not already say, and says it in the wrong place."
+  },
+  {
+    "name": "EM8-2-every-plate-gets-a-leader",
+    "file": "src/ui/inkTown.js",
+    "old": "      if (Math.abs(p.y - ay) > p.size * LEAD_AT) {",
+    "new": "      if (true) {",
+    "tests": [
+      "test/townsheet.test.js"
+    ],
+    "note": "A line under every name in a dense quarter is the smear the solver exists to prevent."
+  },
+  {
+    "name": "EM8-3-no-plate-ever-gets-a-leader",
+    "file": "src/ui/inkTown.js",
+    "old": "      if (Math.abs(p.y - ay) > p.size * LEAD_AT) {",
+    "new": "      if (false) {",
+    "tests": [
+      "test/townsheet.test.js"
+    ],
+    "note": "A displaced plate then floats over a building it does not name, which is the lie EM8 was written to stop."
+  },
+  {
+    "name": "EM8-4-the-weight-is-applied-inside-the-clamp",
+    "file": "src/ui/townSheet.js",
+    "old": "    const base = Math.max(NAME_SIZE_MIN, Math.min(NAME_SIZE_MAX, NAME_SIZE * Math.sqrt(view.scale)));\n    return base * weight;",
+    "new": "    return Math.max(NAME_SIZE_MIN, Math.min(NAME_SIZE_MAX, NAME_SIZE * Math.sqrt(view.scale) * weight));",
+    "tests": [
+      "test/townsheet.test.js"
+    ],
+    "note": "THE DEFECT THE PINS FOUND, put back: past scale 2.4 every plate is already at NAME_SIZE_MAX, so a landmark and the shop beside it come out identical exactly where the map is most read."
+  },
+  {
+    "name": "EM8-5-a-quest-loses-its-pen-to-its-quarter",
+    "file": "src/ui/inkTown.js",
+    "old": "      ctx.fillStyle = p.quest ? TOWN_PEN.quest : (QUARTER_INK[p.quarter ?? ''] ?? TOWN_PEN.name);",
+    "new": "      ctx.fillStyle = QUARTER_INK[p.quarter ?? ''] ?? TOWN_PEN.name;",
+    "tests": [
+      "test/townsheet.test.js"
+    ],
+    "note": "A quest is why the map is open at all; it outranks knowing the building is somebody's house."
   }
 ]

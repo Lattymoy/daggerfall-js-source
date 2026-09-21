@@ -38,7 +38,8 @@
 
 import { boundarySegments, linkSegments, fitView, toPaper, NAME_FACE } from './inkMap.js';
 import {
-  townBytes, townChains, isBuilt, isEnterable, paintTownStatic, paintTownOverlay, BLOCK_PX,
+  townBytes, townChains, quarterChains, quarterOfType, isBuilt, QUARTERS,
+  paintTownStatic, paintTownOverlay, BLOCK_PX,
 } from './inkTown.js';
 import { nameplateAnchor, resolveNameplates } from './nameplateLayout.js';
 
@@ -52,6 +53,24 @@ export { FIT_MARGIN } from './inkMap.js';
 export const NAME_SIZE = 13;
 export const NAME_SIZE_MIN = 9;
 export const NAME_SIZE_MAX = 20;
+/**
+ * EM8 — NOT EVERY NAME IS WORTH THE SAME. Mac: "let's enhance the
+ * location names on the buildings more."
+ *
+ * A town plan is read to FIND something, and the things a player
+ * navigates BY are not the things they are hunting FOR. So a plate's
+ * size is its own quarter's weight times the zoom's size, and the two
+ * exceptions are the ones that matter: the LANDMARKS a player steers
+ * off - the temple on the hill and the tavern on the corner - stand a
+ * little proud of the run of shops, and a QUEST'S name stands proud of
+ * everything, because a quest is why the map is open at all.
+ *
+ * The weights are a RATIO rather than a size, so they ride the zoom
+ * band, and MIN/MAX are applied after so a bump can never carry a plate
+ * past the size a name stops being a name at.
+ */
+export const NAME_WEIGHT = Object.freeze({ temple: 1.12, tavern: 1.12, shop: 1, house: 1 });
+export const QUEST_WEIGHT = 1.2;
 /** Below this zoom no name is laid at all - at a whole-town fit they
  *  are a grey band rather than words, and the solver's work is wasted. */
 export const NAME_ZOOM_MIN = 0.55;
@@ -60,7 +79,8 @@ const EMPTY_SIZE = Object.freeze({ width: 1, height: 1 });
 
 /**
  * @typedef {{buildingKey?: number, blockX?: number, blockY?: number, position?: number[],
- *            name?: string, isResidence?: boolean, questName?: string}} Summary
+ *            name?: string, isResidence?: boolean, questName?: string,
+ *            buildingType?: number}} Summary
  * @typedef {{buildingKey?: number, displayName?: string, customUserDisplayName?: string,
  *            isOverrideName?: boolean}} Discovered
  *
@@ -85,8 +105,10 @@ export function createTownSheet(deps = {}) {
     if (field) return field;
     field = townBytes(deps.gridW ?? 0, deps.gridH ?? 0, deps.blocks ?? []);
     plan = {
+      // the whole town's footprint, one outline...
       chains: townChains(field, { segments: boundarySegments, link: linkSegments, pick: isBuilt }),
-      wash: townChains(field, { segments: boundarySegments, link: linkSegments, pick: isEnterable }),
+      // ...and EM7's four islands under it, one per quarter
+      quarters: quarterChains(field, { segments: boundarySegments, link: linkSegments }),
     };
     return field;
   }
@@ -101,7 +123,7 @@ export function createTownSheet(deps = {}) {
 
   /**
    * WHICH BUILDINGS GET A NAME, and what that name is. The shipped
-   * town map's own ladder (ui/exteriorAutomapWindow.js:1061-1097),
+   * town map's own ladder (ui/exteriorAutomapWindow.js:1062-1098),
    * kept whole because it is the DISCOVERY law rather than a
    * presentation choice.
    */
@@ -127,7 +149,11 @@ export function createTownSheet(deps = {}) {
       }
       if (!text) continue;
       const [ax, ay] = nameplateAnchor(b.blockX ?? 0, b.blockY ?? 0, b.position ?? [0, 0, 0]);
-      out.push({ text, quest, x: ax, y: ay, key: b.buildingKey });
+      // EM8: the SAME ladder the building's own pixels go through -
+      // the grid's byte is this type PLUS ONE, and quarterOfType is the
+      // one place that plus-one is written, so a name and the wash
+      // under it cannot come to disagree about what the building is.
+      out.push({ text, quest, x: ax, y: ay, key: b.buildingKey, quarter: quarterOfType(b.buildingType) });
     }
     return out;
   }
@@ -145,9 +171,24 @@ export function createTownSheet(deps = {}) {
     return out;
   }
 
-  /** The size a name is lettered at, for this zoom. */
-  function nameSize(view) {
-    return Math.max(NAME_SIZE_MIN, Math.min(NAME_SIZE_MAX, NAME_SIZE * Math.sqrt(view.scale)));
+  /**
+   * The size a name is lettered at, for this zoom - and, EM8, for what
+   * the name IS.
+   *
+   * THE BAND BOUNDS THE BASELINE, AND THE WEIGHT IS APPLIED AFTER, and
+   * that order is the whole of it. The first cut multiplied inside the
+   * clamp, which looked right and quietly threw the hierarchy away at
+   * both ends of the zoom: past scale 2.4 every plate is already at
+   * NAME_SIZE_MAX, so a landmark and the shop beside it came out the
+   * same size exactly where the map is most read. A weight is a RATIO
+   * against the run of names beside it, so a landmark now stands its
+   * weight proud of them at EVERY zoom, and the true ceiling is the
+   * band's own times the largest weight there is.
+   */
+  function nameSize(view, n = null) {
+    const weight = n?.quest ? QUEST_WEIGHT : (NAME_WEIGHT[n?.quarter ?? ''] ?? 1);
+    const base = Math.max(NAME_SIZE_MIN, Math.min(NAME_SIZE_MAX, NAME_SIZE * Math.sqrt(view.scale)));
+    return base * weight;
   }
 
   /**
@@ -160,13 +201,16 @@ export function createTownSheet(deps = {}) {
     const key = [Math.round(view.ox), Math.round(view.oy), Math.round(view.scale * 100),
       Math.round(paperW), Math.round(paperH), Math.round(reserveTop), hands?.length ?? 0].join('|');
     if (plates?.key === key) return plates.rows;
-    const size = nameSize(view);
     const rows = [];
     if (view.scale >= NAME_ZOOM_MIN) {
       const raw = named().map((n) => {
         const [x, y] = toPaper(view, n.x, n.y);
+        // EM8: a size PER PLATE, so the solver unpicks the plates as
+        // they will actually be lettered rather than as an average of
+        // them - a landmark asks for more room and now gets it.
+        const size = nameSize(view, n);
         const w = measure ? measure(n.text, size) : n.text.length * size * 0.52;
-        return { ...n, px: x, py: y, w, h: size * 1.15 };
+        return { ...n, size, px: x, py: y, w, h: size * 1.15 };
       // only what is ON the paper is worth solving for
       // only what is on the paper is worth solving for - and the band
       // the TAB STRIP has taken is not the paper, for a name: the probe
@@ -184,7 +228,14 @@ export function createTownSheet(deps = {}) {
       raw.forEach((n, i) => {
         const s = solved[i];
         if (!s || s.replaced) return;   // the solver gave up on it
-        rows.push({ text: n.text, quest: n.quest, size, x: n.px, y: n.py + (s.offY ?? 0) });
+        // EM8: the plate carries its QUARTER (its ink) and its
+        // ANCHOR (where its building actually is) as well as where the
+        // solver put its words - the overlay needs all three to tick
+        // the building and lead back to it when the words have moved.
+        rows.push({
+          text: n.text, quest: n.quest, quarter: n.quarter, size: n.size,
+          x: n.px, y: n.py + (s.offY ?? 0), anchorY: n.py,
+        });
       });
     }
     plates = { key, rows };
@@ -207,7 +258,11 @@ export function createTownSheet(deps = {}) {
 
     staticKey() {
       const f = ensureField();
-      return `${f.w}x${f.h}|${plan?.chains?.length ?? 0}`;
+      // EM7: the four quarters are part of what is INKED, so they are
+      // part of what says the ink is stale - a key that named only the
+      // footprint would have kept an old wash under a new outline.
+      const q = QUARTERS.map((n) => plan?.quarters?.[n]?.length ?? 0).join(',');
+      return `${f.w}x${f.h}|${plan?.chains?.length ?? 0}|${q}`;
     },
 
     paintStatic(ctx, env) {

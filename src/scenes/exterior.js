@@ -2572,7 +2572,7 @@ export async function bootExterior(canvas, renderer, params, status) {
       // runs no rumor mill or topic tree at all - the same reason its
       // bulletin board opens on the location name alone.
       //   AND THAT COSTS THE WHOLE PLATE, not one clause. residenceQuestName
-      // optional-calls the arm at exteriorAutomapWindow.js:479 and the
+      // optional-calls the arm at exteriorAutomapWindow.js:482 and the
       // NEXT line is `if (!r?.isQuestResource) continue`, which skips
       // the only assignment to buildingQuestName - so with the arm
       // absent this stamp resolves '' for every residence and raises no

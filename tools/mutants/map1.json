@@ -696,8 +696,8 @@
   {
     "name": "AUDITMAPFIELD-the-halo-is-the-pen",
     "file": "src/ui/inkMap.js",
-    "old": "  halo: 'rgba(238, 222, 190, 0.80)',",
-    "new": "  halo: 'rgba(58, 40, 22, 0.80)',",
+    "old": "  halo: rgba(PARCHMENT_RGB, 0.80),    // MAP-FIELD6: the parchment, quieted under a glyph or a name",
+    "new": "  halo: rgba(INK_RGB, 0.80),    // MAP-FIELD6: the parchment, quieted under a glyph or a name",
     "tests": [
       "test/heldmap.test.js"
     ]

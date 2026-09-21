@@ -21,16 +21,41 @@
 // and not one pixel of ARENA2 raster enters the port through any of
 // them.
 //
-// THE TWO WEIGHTS, and the one thing the bytes can and cannot say.
+// ═══ EM7: AND THE ISLAND IS FOUR ISLANDS ═══════════════════════════
+//
+// Mac (2026-09-21): "keep our own version of the colored buildings that
+// classic uses".
+//
+// The first cut washed the ENTERABLE pixels in one flat sepia and left
+// a house as outline alone. It was legible and it threw away the one
+// thing classic's town map has always had: a tavern is green, a temple
+// is tan, a shop is blue, a house is slate, and you find the smith
+// without reading a word. That reading is kept whole. The PAINT is
+// ours - each quarter traced as its own island and washed in classic's
+// own hue at a watercolour's strength, so the parchment's cracks read
+// straight through and the sepia outline still sits on top as the
+// drawing rather than as a border round a block of colour.
+//
+// WHICH QUARTER A BYTE IS lives in `ui/townQuarters.js`, with DFU's
+// four colours beside it, and BOTH SKINS ASK IT THERE. The sets used
+// to sit in this file and in `ui/exteriorAutomapWindow.js` at once,
+// which is how the same building could have come to be drawn as a shop
+// on one map and a house on the next.
+//
+// THE THREE WEIGHTS, and the one thing the bytes can and cannot say.
+//
+//   THE QUARTERS are the wash: four traced, filled islands, one per
+//   group, in classic's own hue.
 //
 //   THE WALL is the outline of every built-up pixel, at the pen's full
-//   weight. Every block, every building, the whole town's footprint.
+//   weight, over all four. Every block, every building, the whole
+//   town's footprint - ONE stroke, because a stroke per quarter doubles
+//   every wall two quarters share.
 //
-//   THE WASH is the pixels a player can WALK INTO - shops, taverns and
-//   temples, DFU's own three enterable groups - laid under the wall in
-//   the shore's shade, exactly as the dungeon's wash marks where you
-//   have been. A house is outline alone, which is what a house is on a
-//   town plan you are reading to find a smith.
+//   THE NAMES are the whole readability win, and EM8 letters each one
+//   in ITS OWN QUARTER'S INK - the same ladder its pixels went through,
+//   reached through `quarterOfType` because a summary carries the type
+//   and the grid carries the type plus one.
 //
 //   WHAT THE BYTES CANNOT SAY IS WHICH building a pixel belongs to.
 //   They carry a TYPE per pixel and no identity, so "wash the ones you
@@ -40,11 +65,6 @@
 //   building they name. Written down because the absence looks like an
 //   oversight and is not.
 //
-// THE NAMES are the whole readability win, and they are the world
-// map's own law: set in the hand-lettered face, haloed against the
-// parchment's cracks (MAP-FIELD6), and laid out through DFU's own
-// collision solver so a dense quarter does not become a smear.
-//
 // Paper coordinates throughout; the plan arrives in LAYOUT PIXELS
 // (gridW*64 by gridH*64), which already start at zero, so the window's
 // clamp needs no shifting. THE FIELD IS LAID IN NAMEPLATE-ANCHOR SPACE
@@ -52,7 +72,10 @@
 // `townBytes` carries that law and what a pin cannot settle about it.
 // ═══════════════════════════════════════════════════════════════════
 
-import { PEN, HALO_PEN, NAME_FACE, toPaper, paintCaret, CARET_R } from './inkMap.js';
+import {
+  PEN, HALO_PEN, NAME_FACE, toPaper, paintCaret, CARET_R, quarterWash, quarterInk,
+} from './inkMap.js';
+import { QUARTERS, CLASSIC_ARGB, argbChannels, quarterOf } from './townQuarters.js';
 
 /** One block is 64 layout pixels on a side (the FLD grid's own), and
  *  one layout pixel is WORLD_PER_PX world units. Both live in
@@ -62,17 +85,40 @@ import { PEN, HALO_PEN, NAME_FACE, toPaper, paintCaret, CARET_R } from './inkMap
 export { NAMEPLATE_BLOCK_PX as BLOCK_PX, WORLD_PER_PX } from './nameplateLayout.js';
 import { NAMEPLATE_BLOCK_PX as BLOCK_PX } from './nameplateLayout.js';
 
+/** The quarters and the ladder that sorts a byte into one have ONE
+ *  HOME in ui/townQuarters.js, and it is the home the CLASSIC window
+ *  reads too - re-exported so a caller that has the ink does not also
+ *  have to reach for them. */
+export { QUARTERS, quarterOf, quarterOfType } from './townQuarters.js';
+
 /** What each thing on a town plan is drawn in - inkMap's own pen, as
  *  the dungeon's is. A colour written out here would be the first thing
  *  to give away that these are three sheets and not one map. */
 export const TOWN_PEN = Object.freeze({
   wall: PEN.line,      // the outline of the built-up pixels
-  wash: PEN.wash,      // the ones you can walk into
-  name: PEN.name,      // a discovered building's name
+  wash: PEN.wash,      // MAP-FIELD's own shade, still the fallback ground
+  name: PEN.name,      // a discovered building's name, quarter unknown
   quest: PEN.select,   // a residence a quest has marked
+  lead: PEN.soft,      // EM8: a displaced plate's line back to its building
   caret: PEN.player,
   halo: PEN.halo,
 });
+
+/**
+ * EM7 — THE FOUR WASHES AND THE FOUR NAME INKS, derived one per
+ * quarter from DFU's own colour for it through inkMap's two laws.
+ * Neither table is written by hand: `quarterWash` and `quarterInk` are
+ * the whole of the styling, so a pin can ask whether the tavern's wash
+ * is still recognisably the tavern's GREEN rather than merely whether
+ * it is still some string, and a change to either law moves all four
+ * together.
+ */
+export const QUARTER_WASH = Object.freeze(Object.fromEntries(
+  QUARTERS.map((q) => [q, quarterWash(argbChannels(CLASSIC_ARGB[q]))]),
+));
+export const QUARTER_INK = Object.freeze(Object.fromEntries(
+  QUARTERS.map((q) => [q, quarterInk(argbChannels(CLASSIC_ARGB[q]))]),
+));
 
 export const TOWN_WALL_PEN = 1.3;
 export const TOWN_WALL_PEN_MIN = 0.8;
@@ -80,31 +126,13 @@ export const TOWN_WALL_PEN_MIN = 0.8;
 export { CARET_R } from './inkMap.js';
 /** A quest mark's ring. */
 export const QUEST_R = 7;
-
-/**
- * DFU's own grouping of the FLD byte, transcribed from the shipped town
- * map (ui/exteriorAutomapWindow.js:194-199), which took it from
- * ExteriorAutomap.cs. The byte is `BuildingType + 1`.
- */
-export const STREET_BYTE = 0;
-export const GROUND_FLAT_BYTE = 0xfb;
-export const TEMPLE_SET = Object.freeze([12, 15]);
-export const SHOP_SET = Object.freeze([1, 3, 4, 6, 7, 9, 10, 11, 13, 14]);
-export const TAVERN_BYTE = 16;
-export const HOUSE_SET = Object.freeze([2, 5, 8, 17, 18, 19, 20, 21, 22, 23, 24]);
-/** The bytes the shipped map only draws in its "show all" mode - the
- *  town's own furniture rather than its buildings. */
-export const SHOWALL_SET = Object.freeze([25, 117, 224, 250, 251]);
-
-const ENTERABLE = new Set([...TEMPLE_SET, ...SHOP_SET, TAVERN_BYTE]);
-/** THE BUILT SET IS THE DEFAULT READING'S, and SHOWALL is not in it.
- *  The shipped town map has three view modes and only the last draws
- *  the SHOWALL bytes; the first two strip them, and one of them - 0xfb,
- *  the ground flat - is in that set, so folding SHOWALL in would have
- *  drawn every patch of scenery as a building. Found by a pin, which
- *  asked whether a ground flat is built-up and got "yes". This sheet
- *  takes the DEFAULT reading: buildings, no scenery. */
-const BUILT = new Set([...TEMPLE_SET, ...SHOP_SET, TAVERN_BYTE, ...HOUSE_SET]);
+/** EM8: the tick that says WHICH building a plate names, in paper px,
+ *  and how far a plate must have been pushed before the tick alone
+ *  stops being enough and a leader line is drawn to it. The threshold
+ *  is in units of the plate's own height, so it follows the lettering
+ *  rather than needing its own number per zoom. */
+export const ANCHOR_R = 1.8;
+export const LEAD_AT = 0.9;
 
 /**
  * The town's byte grids, as ONE layout-pixel field.
@@ -119,9 +147,10 @@ const BUILT = new Set([...TEMPLE_SET, ...SHOP_SET, TAVERN_BYTE, ...HOUSE_SET]);
  *
  * WHY THIS IS NOT THE SHIPPED MAP'S ARITHMETIC. That window flips
  * twice - once inside the block and once across the block grid
- * (exteriorAutomapWindow.js:1481) - and its net effect DISAGREES with
- * the anchor formula across blocks: higher `blockY` is a lower row in
- * the texture and a higher row in the anchor. It gets away with it
+ * (exteriorAutomapWindow.js:297-300, ExteriorAutomap.cs:1481) - and its
+ * net effect DISAGREES with the anchor formula across blocks: higher
+ * `blockY` is a lower row in the texture and a higher row in the
+ * anchor. It gets away with it
  * because the two go to the screen down different paths (a rotated quad
  * under a camera, and `toPanelScreen` per plate). This sheet draws them
  * as one picture in one space, so they have to agree, and the ANCHOR is
@@ -158,16 +187,23 @@ export function townBytes(gridW, gridH, blocks) {
   return { w, h, bytes };
 }
 
-/** Is this byte a built-up pixel - anything but street and the ground
- *  flats the shipped map strips? */
-export const isBuilt = (byte) => BUILT.has(byte);
-/** Is this byte a place a player can walk into? */
-export const isEnterable = (byte) => ENTERABLE.has(byte);
+/** Is this byte a built-up pixel? DERIVED off the one ladder rather
+ *  than kept as a second set beside it: a byte is built-up exactly when
+ *  it belongs to a quarter, so a quarter added or a byte regrouped
+ *  moves both answers at once. Street, ground flats and the rest of the
+ *  show-all furniture belong to no quarter and are no part of the
+ *  town's footprint. */
+export const isBuilt = (byte) => quarterOf(byte) !== null;
+/** Is this byte a place a player can walk into? Also derived: every
+ *  quarter but the houses is a door you can open. */
+export const isEnterable = (byte) => { const q = quarterOf(byte); return q !== null && q !== 'house'; };
+/** The reader for one quarter, by name. */
+export const isQuarter = (name) => (byte) => quarterOf(byte) === name;
 
 /**
  * One reader over the field, as `boundarySegments` wants it: `(x, y) =>
  * inside`. `pick` chooses which set is the island - the built-up pixels
- * for the wall, the enterable ones for the wash.
+ * for the wall, one quarter's own for its wash.
  */
 export function townReader(field, pick = isBuilt) {
   return (x, y) => (x >= 0 && y >= 0 && x < field.w && y < field.h) && pick(field.bytes[y * field.w + x]);
@@ -189,17 +225,41 @@ export function townChains(field, { segments = null, link = null, pick = isBuilt
 }
 
 /**
- * Ink the town: the wash of what you can walk into, then the wall over
- * it. `plan` is `{ chains, wash }` - the outline of the built-up pixels
- * and the outline of the enterable ones.
+ * EM7: every quarter traced at once, keyed by name - the wash half of
+ * a town's plan. Four passes over the field rather than one, which is
+ * the price of four colours and is paid ONCE per town (the sheet caches
+ * the traced plan and only the view moves).
  *
- * The wash is drawn as its own CLOSED paths and filled, rather than as
- * a grid of cells: unlike a dungeon's storey, a shop's footprint is
- * already a tidy rectangle in the bytes, so its own outline is the
- * cheapest and cleanest fill there is.
+ * @param {{w:number,h:number,bytes:Uint8Array}|null} field
+ * @param {{segments?: Function|null, link?: Function|null}} [opts]
+ * @returns {Record<string, Array<Array<{x:number,y:number}>>>}
+ */
+export function quarterChains(field, { segments = null, link = null } = {}) {
+  /** @type {Record<string, Array<Array<{x:number,y:number}>>>} */
+  const out = {};
+  for (const q of QUARTERS) out[q] = townChains(field, { segments, link, pick: isQuarter(q) });
+  return out;
+}
+
+/**
+ * Ink the town: each quarter's wash, then the wall over all of them.
+ * `plan` is `{ chains, quarters }` - the outline of every built-up
+ * pixel, and the four per-quarter outlines under it.
+ *
+ * The washes are drawn as their own CLOSED paths and filled, rather
+ * than as a grid of cells: unlike a dungeon's storey, a shop's
+ * footprint is already a tidy rectangle in the bytes, so its own
+ * outline is the cheapest and cleanest fill there is.
+ *
+ * THE WALL IS STROKED ONCE, over all four, because two quarters that
+ * share a wall would otherwise have it drawn twice and it would read
+ * heavier than a wall against the street.
  */
 /**
- * @param {*} ctx @param {{chains?:Array<Array<{x:number,y:number}>>, wash?:Array<Array<{x:number,y:number}>>}|null} plan
+ * @param {*} ctx
+ * @param {{chains?:Array<Array<{x:number,y:number}>>,
+ *          quarters?:Record<string, Array<Array<{x:number,y:number}>>>,
+ *          wash?:Array<Array<{x:number,y:number}>>}|null} plan
  * @param {{ox:number,oy:number,scale:number}} view
  * @param {{paperW:number, paperH:number, dpr?:number, clear?:boolean}} opts
  */
@@ -224,9 +284,14 @@ export function paintTownStatic(ctx, plan, view, opts) {
     }
   };
 
-  if (plan?.wash?.length) {
-    ctx.fillStyle = TOWN_PEN.wash;
-    trace(plan.wash);
+  // EM7: the four quarters, each in classic's own hue for it. In the
+  // ladder's order, so two that somehow overlapped would settle the
+  // way classic settles them.
+  for (const q of QUARTERS) {
+    const chains = plan?.quarters?.[q];
+    if (!chains?.length) continue;
+    ctx.fillStyle = QUARTER_WASH[q];
+    trace(chains);
     // evenodd, so a courtyard inside a temple reads as a courtyard
     ctx.fill('evenodd');
   }
@@ -240,12 +305,33 @@ export function paintTownStatic(ctx, plan, view, opts) {
  * The names and the marks. `plates` are already laid out and resolved
  * (the sheet does that, through DFU's own solver), each carrying paper
  * coordinates; the quest rings and the caret are in layout pixels.
+ *
+ * EM8 — WHAT A NAME NOW CARRIES BESIDES ITS WORDS:
+ *
+ *   ITS QUARTER'S INK. A tavern's name is lettered in the tavern's
+ *   green over the tavern's green wash, a temple's in the temple's tan.
+ *   The ladder is the one its own PIXELS went through, so the word and
+ *   the building under it cannot come to disagree about what it is. A
+ *   quest's name still overrides, because a quest is the thing you
+ *   opened the map for.
+ *
+ *   AN ANCHOR TICK. The solver moves plates vertically to untangle
+ *   them, which means a name's own position is not reliably its
+ *   building's - a dot at the anchor says which footprint the words
+ *   belong to, always, and costs one small mark.
+ *
+ *   A LEADER, but only when it is EARNED: a plate pushed further than
+ *   LEAD_AT of its own height is far enough to be read against the
+ *   wrong building, and gets a hairline back to its tick. A plate that
+ *   did not move gets nothing, which is most of them - the line is
+ *   information, not decoration.
  */
 /**
  * @param {*} ctx @param {{ox:number,oy:number,scale:number}} view
  * @param {{paperW:number, paperH:number, dpr?:number, clear?:boolean, pulse?:number,
  *          quests?: Array<{x:number,y:number}>,
- *          plates?: Array<{x:number,y:number,text:string,size:number,quest?:boolean}>,
+ *          plates?: Array<{x:number,y:number,text:string,size:number,quest?:boolean,
+ *                          quarter?:string|null, anchorY?:number}>,
  *          player?: {x:number,y:number,yaw?:number}|null}} opts
  */
 export function paintTownOverlay(ctx, view, opts) {
@@ -270,6 +356,25 @@ export function paintTownOverlay(ctx, view, opts) {
 
   // the names, haloed then inked, as every name on every sheet is
   if (opts.plates?.length) {
+    // EM8: the ticks and the leaders go down FIRST, so a name is never
+    // crossed by the line that points at it.
+    for (const p of opts.plates) {
+      const ay = p.anchorY ?? p.y;
+      const ink = p.quest ? TOWN_PEN.quest : (QUARTER_INK[p.quarter ?? ''] ?? TOWN_PEN.name);
+      if (Math.abs(p.y - ay) > p.size * LEAD_AT) {
+        ctx.strokeStyle = TOWN_PEN.lead;
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(p.x, ay);
+        // stop short of the lettering rather than running into it
+        ctx.lineTo(p.x, p.y + (ay > p.y ? p.size * 0.6 : -p.size * 0.6));
+        ctx.stroke();
+      }
+      ctx.fillStyle = ink;
+      ctx.beginPath();
+      ctx.arc(p.x, ay, ANCHOR_R, 0, Math.PI * 2);
+      ctx.fill();
+    }
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     for (const p of opts.plates) {
@@ -277,7 +382,7 @@ export function paintTownOverlay(ctx, view, opts) {
       ctx.lineWidth = 2 * HALO_PEN;
       ctx.strokeStyle = TOWN_PEN.halo;
       ctx.strokeText(p.text, p.x, p.y);
-      ctx.fillStyle = p.quest ? TOWN_PEN.quest : TOWN_PEN.name;
+      ctx.fillStyle = p.quest ? TOWN_PEN.quest : (QUARTER_INK[p.quarter ?? ''] ?? TOWN_PEN.name);
       ctx.fillText(p.text, p.x, p.y);
     }
   }

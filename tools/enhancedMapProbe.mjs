@@ -90,6 +90,14 @@ async function mount(page, kind) {
     };
 
     // ── A SYNTHETIC TOWN: 3x3 blocks of streets and buildings ────
+    // EM7: one byte from each of DFU's four groups and then some, so
+    // the shot shows all FOUR quarters rather than whichever two a seed
+    // happened to draw. The block's PIXELS and the building SUMMARIES
+    // are generated independently here - a real town's are the same
+    // buildings seen twice - so what a shot proves about the quarters
+    // is that each is washed and lettered in its own hue, not that a
+    // given plate sits on its own footprint.
+    const TOWN_BYTES = [1, 3, 4, 16, 12, 2, 5, 17, 18];
     const BLOCK = 64;
     const block = (seed) => {
       const g = new Uint8Array(BLOCK * BLOCK);
@@ -101,7 +109,7 @@ async function mount(page, kind) {
         const x = 4 + Math.floor(rnd() * (BLOCK - w - 8));
         const y = 4 + Math.floor(rnd() * (BLOCK - h - 8));
         // shops/taverns/temples vs houses, DFU's own byte groups
-        const byte = [1, 3, 4, 16, 12, 2, 5, 17, 18][Math.floor(rnd() * 9)];
+        const byte = TOWN_BYTES[Math.floor(rnd() * TOWN_BYTES.length)];
         for (let yy = y; yy < y + h; yy++) for (let xx = x; xx < x + w; xx++) g[yy * BLOCK + xx] = byte;
       }
       return g;
@@ -124,6 +132,10 @@ async function mount(page, kind) {
             name: NAMES[k],
             isResidence: k === NAMES.length - 1,
             questName: k === NAMES.length - 1 ? 'Ser Kithlan' : '',
+            // the byte is the type PLUS ONE, so a fixture that wants a
+            // tavern asks for the tavern BYTE minus one and lets
+            // quarterOfType do the arithmetic
+            buildingType: TOWN_BYTES[k % TOWN_BYTES.length] - 1,
           });
         }
       }
@@ -216,12 +228,47 @@ check('the town strip reads "Town" alone while the bay is not handed over',
   strip.length === 1 && strip[0] === 'Town', strip.join(' | '));
 let plates = await page.evaluate(() => globalThis.__win._sheet.platesAt(globalThis.__win._view, globalThis.__win._paper.w, globalThis.__win._paper.h, null).length);
 check('the town lays nameplates at rest', plates > 0, `${plates} plates`);
+// EM7/EM8: the quarters reach the paper, and the names reach them
+const quarters = await page.evaluate(() => {
+  const plan = globalThis.__win._sheet.plan;
+  return Object.fromEntries(Object.entries(plan.quarters).map(([q, c]) => [q, c.length]));
+});
+check('all FOUR quarters are traced, houses included',
+  Object.values(quarters).filter((n) => n > 0).length === 4, JSON.stringify(quarters));
+const atRest = await page.evaluate(() => {
+  const w = globalThis.__win;
+  const rows = w._sheet.platesAt(w._view, w._paper.w, w._paper.h, null);
+  const by = {};
+  for (const r of rows) (by[r.quest ? 'quest' : r.quarter] ??= []).push(r.size);
+  return { kinds: [...new Set(rows.map((r) => r.quarter))].sort(),
+    size: Object.fromEntries(Object.entries(by).map(([k, v]) => [k, Math.max(...v)])) };
+});
+check('and the plates carry their own quarters, so a name is lettered like its building',
+  atRest.kinds.length >= 3 && !atRest.kinds.includes(null), atRest.kinds.join(', '));
+// EM8: a landmark stands proud of the run of shops. Read at REST,
+// because that is the view where every plate in the town is on the
+// paper - a zoomed view carries whichever few are under the lens.
+check('a landmark is lettered proud of the run of shops',
+  Math.max(atRest.size.tavern ?? 0, atRest.size.temple ?? 0) > (atRest.size.shop ?? Infinity),
+  JSON.stringify(atRest.size));
+check('...and a quest\'s name proud of the landmarks',
+  (atRest.size.quest ?? 0) > Math.max(atRest.size.tavern ?? 0, atRest.size.temple ?? 0),
+  JSON.stringify(atRest.size));
 await page.screenshot({ path: `${SHOTS}/3-town.png` });
 
 // zoom in so the names letter up, and look for a plate the solver gave up on
 await page.evaluate(() => { globalThis.__win._zoomBy(3.2, globalThis.__win._paper.w / 2, globalThis.__win._paper.h / 2); for (let i = 0; i < 30; i++) globalThis.__win.tick(1 / 30); });
-plates = await page.evaluate(() => globalThis.__win._sheet.platesAt(globalThis.__win._view, globalThis.__win._paper.w, globalThis.__win._paper.h, null).length);
-check('and more of them once the streets are zoomed into', plates > 0, `${plates} plates`);
+const zoomed = await page.evaluate(() => {
+  const w = globalThis.__win;
+  const rows = w._sheet.platesAt(w._view, w._paper.w, w._paper.h, null);
+  return { n: rows.length, size: Math.max(0, ...rows.map((r) => r.size)) };
+});
+// FEWER names, LARGER - a zoom carries whichever few are under the lens
+// and letters them up. The old wording here said "more of them" and
+// only ever asserted "> 0", which is not what a zoom does.
+check('a zoom letters the names it still holds larger',
+  zoomed.n > 0 && zoomed.size > Math.max(...Object.values(atRest.size)),
+  `${zoomed.n} plates, largest ${zoomed.size.toFixed(1)} against ${Math.max(...Object.values(atRest.size)).toFixed(1)} at rest`);
 await page.screenshot({ path: `${SHOTS}/4-town-zoomed.png` });
 await page.evaluate(() => globalThis.__win.dispose());
 
