@@ -112,8 +112,8 @@
   {
     "name": "WORLD-HOVER-skin-gate-removed-from-the-draw",
     "file": "src/ui/worldPlaque.js",
-    "old": "  if (!worldPlaqueOn()) return;\n  const n = ensure();",
-    "new": "  if (false) return;\n  const n = ensure();",
+    "old": "  if (!worldPlaqueOn()) { hideWorldPlaque(); return; }\n  const n = ensure();",
+    "new": "  const n = ensure();",
     "tests": [
       "test/worldhover.test.js",
       "test/enhancedInventory.test.js"
@@ -142,8 +142,8 @@
   {
     "name": "WORLD-HOVER-a-null-frame-is-merely-skipped",
     "file": "src/ui/worldPlaque.js",
-    "old": "    n.classList.remove('on');\n    n.textContent = '';\n    n.classList.remove('has-list');\n    return;",
-    "new": "    return;",
+    "old": "    blank(n);\n    return;\n  }\n  paint(n, frame);",
+    "new": "    return;\n  }\n  paint(n, frame);",
     "tests": [
       "test/worldhover.test.js"
     ]
@@ -587,6 +587,105 @@
     "file": "src/scenes/world.js",
     "old": "      const t = mobilePersonName(_livePersons[Number(key.split(':')[1])]?.person?.nameNPC);",
     "new": "      const t = null;",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-the-hide-door-is-gated-by-the-skin",
+    "file": "src/ui/worldPlaque.js",
+    "old": "  if (!worldPlaqueOn()) { hideWorldPlaque(); return; }",
+    "new": "  if (!worldPlaqueOn()) return;",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-the-hide-keeps-the-signature",
+    "file": "src/ui/worldPlaque.js",
+    "old": "export function hideWorldPlaque() {\n  if (!node) return;\n  shownSig = null;\n  blank(node);\n}",
+    "new": "export function hideWorldPlaque() {\n  if (!node) return;\n  blank(node);\n}",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-the-hide-door-ensures-a-node",
+    "file": "src/ui/worldPlaque.js",
+    "old": "export function hideWorldPlaque() {\n  if (!node) return;\n  shownSig = null;\n  blank(node);\n}",
+    "new": "export function hideWorldPlaque() {\n  const n = ensure();\n  if (!n) return;\n  shownSig = null;\n  blank(n);\n}",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-the-world-hosted-dungeon-window-keeps-the-plaque",
+    "file": "src/scenes/worldModes.js",
+    "old": "dungeonCtx.hideHudText?.(); hideWorldPlaque();",
+    "new": "dungeonCtx.hideHudText?.();",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-the-dev-door-window-keeps-the-plaque",
+    "file": "src/scenes/dungeon.js",
+    "old": "ctx.hideHudText?.(); hideWorldPlaque();",
+    "new": "ctx.hideHudText?.();",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-the-dungeon-states-no-cursorActive",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "      cursorActive: dungeonPaused(),\n",
+    "new": "",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-the-interior-reads-one-stacks-top-again",
+    "file": "src/scenes/worldModes.js",
+    "old": "        cursorActive: overlayHeld,",
+    "new": "        cursorActive: !!interiorOverlay,",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-a-held-frame-keeps-the-plaque",
+    "file": "src/scenes/world.js",
+    "old": "    if (frameHeld()) { hideWorldPlaque(); last = now;",
+    "new": "    if (frameHeld()) { last = now;",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-the-fixed-city-never-tears-the-plaque-down",
+    "file": "src/scenes/exterior.js",
+    "old": "    if (!frameAlive(_frameToken)) { destroyWorldPlaque(); return; }",
+    "new": "    if (!frameAlive(_frameToken)) return;",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-the-street-s-doors-outlive-the-street",
+    "file": "src/scenes/worldModes.js",
+    "old": "      dropDoorCache();   // AUDIT-WH L6: the building takes the click, and the STREET's door rows are the street's\n      mode = 'interior';",
+    "new": "      mode = 'interior';",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-the-door-cache-is-never-freed",
+    "file": "src/scenes/worldModes.js",
+    "old": "  const dropDoorCache = () => { _doorCache = null; };",
+    "new": "  const dropDoorCache = () => {};",
     "tests": [
       "test/worldhover.test.js"
     ]

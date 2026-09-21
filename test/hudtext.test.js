@@ -488,12 +488,15 @@ test('AUDIT FONT F3: the dungeon hosts\' overlay branch takes BOTH DOM surfaces 
   // BOTH dungeon hosts say it, ON the branch, BEFORE the return - the
   // branch is an early return and a hide written after it is dead code.
   assert.match(rd('src/scenes/worldModes.js'),
-    /if \(dungeonCtx\.uiOverlayActive\) \{ dungeonCtx\.hideHudText\?\.\(\); dungeonCtx\.tickOverlay\(dt\); host\.drawPeerNames\?\.\(\{ proj, view, eye: mwv\.eye \}\); dungeonCtx\.drawOverlay\(canvas\); return true; \}/,   // AUDIT NAME1 F1 runs the name pass on the same arm, between the clock and the overlay
+    /if \(dungeonCtx\.uiOverlayActive\) \{ dungeonCtx\.hideHudText\?\.\(\); hideWorldPlaque\(\); dungeonCtx\.tickOverlay\(dt\); host\.drawPeerNames\?\.\(\{ proj, view, eye: mwv\.eye \}\); dungeonCtx\.drawOverlay\(canvas\); return true; \}/,   // AUDIT NAME1 F1 runs the name pass on the same arm, between the clock and the overlay; AUDIT-WH H4 puts the world plaque - a THIRD DOM surface, and the same law - beside the two
     'mutants: the hide door dropped from ?world\'s dungeon arm, or written after the return where nothing runs it');
   const dg = rd('src/scenes/dungeon.js');
   const branch = dg.indexOf('if (ctx.uiOverlayActive) {');
   const hidden = dg.indexOf('ctx.hideHudText?.();', branch);
   const drawn = dg.indexOf('ctx.tickOverlay(dt); ctx.drawOverlay(canvas);', branch);
+  // AUDIT-WH H4: the world plaque is the third DOM surface on that line.
+  const plaque = dg.indexOf('hideWorldPlaque();', hidden);   // from the hide door, not the branch: L3 puts one on the held-frame return further up too
+  assert.ok(plaque > hidden && plaque < drawn, 'mutants: the plaque left standing over an open ?dungeon window');
   assert.ok(branch > 0 && hidden > branch && hidden < drawn,
     'mutants: the hide door dropped from ?dungeon\'s overlay branch, or written after the return where nothing runs it');
   assert.match(rd('src/scenes/dungeonContext.js'), /hideHudText: \(\) => hideHudTextSurfaces\(hudText\),/,

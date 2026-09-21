@@ -2624,7 +2624,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // NEXT updateMissiles pass to fill. But the push lands in a
     // MICROTASK - this is async and its one caller does not await it -
     // and both hosts draw dynamicDraws BEFORE they call drawFoes
-    // (dungeon.js:1009 against :1048; worldModes.js:6517 against :6541).   // QS6: both pairs' SECOND half was stale before this slice - they named neither `drawFoes` call, and a positional bump would have moved a wrong number by the right offset; re-resolved by content
+    // (dungeon.js:1019 against :1048; worldModes.js:6534 against :6541).   // QS6: both pairs' SECOND half was stale before this slice - they named neither `drawFoes` call, and a positional bump would have moved a wrong number by the right offset; re-resolved by content
     // So the very next frame drew the arrow with a NULL matrix, and
     // `uniformMatrix4fv(uModel, false, null)` throws - Float32List is
     // a non-nullable WebIDL union. Firing a bow killed the frame loop,
@@ -3181,8 +3181,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
               // AUDIT 39 (#64) / THE FOUR HOSTS RULE - SHIPPED (wave D):
               // this host was the FOURTH BODY of the player-arrow law
               // and is now the fourth CALLER. combat/arrowFlight.js's
-              // playerArrowHitFoe is the one copy world.js:11433,
-              // exterior.js:4834 and worldModes.js:6669 already ran;
+              // playerArrowHitFoe is the one copy world.js:11446,
+              // exterior.js:4847 and worldModes.js:6686 already ran;
               // the flag said the divergence would bite and it already
               // had. This copy splashed at the ARROW TIP
               // (`[m.pos[0], m.pos[1], m.pos[2]]`) on the claim that
@@ -4678,6 +4678,16 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       },
       collider,
       canvas,
+      // AUDIT-WH H4: THE PLAQUE'S OWN WORD, not a scheduling accident.
+      // The record claimed the dungeon's "only runs with no overlay up"
+      // had been replaced by law and it had not - this call had no
+      // `cursorActive` at all, and both dungeon hosts return above
+      // `drawFoes` when an overlay is live, so the law was still the
+      // accident. Those returns take it down now (`hideWorldPlaque`
+      // beside `hideHudText`); this is the belt, and it is the CONTEXT's
+      // own answer - a host with a window of its own over the dungeon
+      // (townTalk's slot) hides it on its own branch.
+      cursorActive: dungeonPaused(),
       contents: api.lootContents,
       name: api.hoverName,   // WORLD-HOVER: the mod's ladder, the port's own objects, then whatever the host stands
     });

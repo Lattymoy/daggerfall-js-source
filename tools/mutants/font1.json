@@ -497,8 +497,8 @@
   {
     "name": "AUDIT-FONT-F3-worldModes-overlay-branch-drops-the-hide-doors",
     "file": "src/scenes/worldModes.js",
-    "old": "if (dungeonCtx.uiOverlayActive) { dungeonCtx.hideHudText?.(); dungeonCtx.tickOverlay(dt);",
-    "new": "if (dungeonCtx.uiOverlayActive) { dungeonCtx.tickOverlay(dt);",
+    "old": "if (dungeonCtx.uiOverlayActive) { dungeonCtx.hideHudText?.(); hideWorldPlaque(); dungeonCtx.tickOverlay(dt);",
+    "new": "if (dungeonCtx.uiOverlayActive) { hideWorldPlaque(); dungeonCtx.tickOverlay(dt);",
     "tests": [
       "test/hudtext.test.js"
     ]
@@ -506,8 +506,8 @@
   {
     "name": "AUDIT-FONT-F3-dungeon-overlay-branch-drops-the-hide-doors",
     "file": "src/scenes/dungeon.js",
-    "old": "      ctx.hideHudText?.(); ctx.tickOverlay(dt); ctx.drawOverlay(canvas);",
-    "new": "      ctx.tickOverlay(dt); ctx.drawOverlay(canvas);",
+    "old": "      ctx.hideHudText?.(); hideWorldPlaque(); ctx.tickOverlay(dt); ctx.drawOverlay(canvas);",
+    "new": "      hideWorldPlaque(); ctx.tickOverlay(dt); ctx.drawOverlay(canvas);",
     "tests": [
       "test/hudtext.test.js"
     ]

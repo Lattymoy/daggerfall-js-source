@@ -27,7 +27,7 @@ import {
   composeActivationTargets,
 } from '../src/systems/worldHover.js';
 import {
-  showWorldPlaque, destroyWorldPlaque, plaqueAnchor, worldPlaqueOn, worldHoverFrame,
+  showWorldPlaque, destroyWorldPlaque, hideWorldPlaque, plaqueAnchor, worldPlaqueOn, worldHoverFrame,
   worldHoverFaults, PLAQUE_GAP, _plaqueSignatureForTests,
 } from '../src/ui/worldPlaque.js';
 import { CROSSHAIR_ARM, crosshairCentreY } from '../src/ui/hudCrosshair.js';
@@ -1086,4 +1086,99 @@ test('AUDIT-WH H2: all four hosts race the mobile band, and none of them stands 
   assert.match(tt, /export function nearestPerson\(camPos, fwd, persons\)/);
   assert.match(tt, /const near = nearestPerson\(camPos, fwd, persons\);/,
     'tryActivate reads the one scan, it does not keep its own');
+});
+
+test('AUDIT-WH H4/L3/L5: the plaque comes DOWN when a branch returns above the frame, and when the gate flips under it', () => {
+  // A DOM overlay stays painted unless it is TOLD otherwise (AUDIT 64
+  // F37). The hide used to be spoken only by a frame that reached
+  // `worldHoverFrame`, and four host branches return above that call -
+  // both dungeon hosts on an overlay and both above-ground hosts on a
+  // held frame - so a name stayed on screen over every dungeon window,
+  // naming a container's PRE-TAKE contents while the window emptied it.
+  withPlaque((root) => {
+    showWorldPlaque({ key: 'loot:1', kind: 'name', title: 'Iron Chest', subs: [], rows: [], rest: 0, empty: false });
+    assert.equal(root().classList.contains('on'), true, 'painted');
+    hideWorldPlaque();
+    assert.equal(root().classList.contains('on'), false, 'and taken down by the door, with no frame involved');
+    assert.equal(_plaqueSignatureForTests(), null,
+      'the signature goes too - a hidden plaque must repaint the same name, not guard it away');
+    // ...and the SAME frame paints again after a hide, which is the
+    // half a naive `classList.remove` would have broken.
+    showWorldPlaque({ key: 'loot:1', kind: 'name', title: 'Iron Chest', subs: [], rows: [], rest: 0, empty: false });
+    assert.equal(root().classList.contains('on'), true);
+    assert.deepEqual(textsOf(root(), 'wplaque-title'), ['Iron Chest']);
+  });
+  // AUDIT-WH L5: THE GATE REFUSES TO DRAW, NOT TO HIDE. Both of its
+  // terms flip under a live plaque - the skin is a setting, and
+  // `isTouchDevice` is a media query a tablet-mode flip changes - and
+  // a bare `return` above the hide stranded a painted node naming what
+  // a tap will not open.
+  withPlaque((root) => {
+    showWorldPlaque({ key: 'loot:1', kind: 'name', title: 'Iron Chest', subs: [], rows: [], rest: 0, empty: false });
+    assert.equal(root().classList.contains('on'), true);
+    // the device becomes a touch device under the painted plaque
+    const search = '?skin=enhanced&touch=on';
+    globalThis.location = { search };
+    globalThis.window = { location: { search }, matchMedia: () => ({ matches: false }) };
+    assert.equal(worldPlaqueOn(), false, 'the gate is shut now');
+    showWorldPlaque(null);
+    assert.equal(root().classList.contains('on'), false, 'and the painted node went down with it');
+  });
+  // ...and a CLASSIC page still never reaches ensure(). AUDIT 39: the
+  // hide must not be a back door into injectEnhancedStyle().
+  withPlaque((root) => {
+    showWorldPlaque({ key: 'loot:1', kind: 'name', title: 'Iron Chest', subs: [], rows: [], rest: 0, empty: false });
+    assert.equal(root(), null, 'classic loads nothing');
+    hideWorldPlaque();
+    assert.equal(root(), null, 'and hiding a node that was never made makes none');
+  }, { skin: 'classic' });
+});
+
+test('AUDIT-WH H4/L2/L3/L4/L6: every host branch that returns above the hover says the hide, and the plaque dies with the loop', () => {
+  // THE FOUR HOSTS RULE, on the lifecycle rather than the wiring.
+  const wm = read('src/scenes/worldModes.js');
+  const dj = read('src/scenes/dungeon.js');
+  const wo = read('src/scenes/world.js');
+  const ex = read('src/scenes/exterior.js');
+
+  // H4: both dungeon hosts return above `drawFoes`, where the hover
+  // lives, and `hideHudText` already rode that exact line for this
+  // exact reason. The record claimed the scheduling accident had been
+  // replaced "by law"; it had not.
+  assert.match(wm, /if \(dungeonCtx\.uiOverlayActive\) \{ dungeonCtx\.hideHudText\?\.\(\); hideWorldPlaque\(\);/,
+    'the world-hosted dungeon hides it on the overlay branch');
+  assert.match(dj, /ctx\.hideHudText\?\.\(\); hideWorldPlaque\(\);/,
+    'and so does the standalone ?dungeon door');
+  // ...and the dungeon's own call finally carries a cursorActive.
+  assert.match(read('src/scenes/dungeonContext.js'), /cursorActive: dungeonPaused\(\),/,
+    'the belt: the context states it too, rather than relying on when it is called');
+
+  // L2: the interior's is the CROSSHAIR's answer, not the top of one
+  // stack - `!!interiorOverlay` missed a townTalk-slot window and the
+  // depth under the top.
+  assert.match(wm, /cursorActive: overlayHeld,/);
+  assert.doesNotMatch(wm, /cursorActive: !!interiorOverlay,/);
+
+  // L3: a full-screen video owns the canvas and this return is above
+  // the hover - the plaque floated over infection dreams.
+  for (const [f, src] of [['world.js', wo], ['exterior.js', ex], ['dungeon.js', dj]]) {
+    assert.match(src, /if \(frameHeld\(\)\) \{ hideWorldPlaque\(\);/, `${f}: the held frame takes it down`);
+    // L4: ...and the host's ONE unwind point destroys it. `world.js`
+    // imported the door and never called it; `exterior.js` had no
+    // teardown at all.
+    assert.match(src, /if \(!frameAlive\(_frameToken\)\) \{ destroyWorldPlaque\(\); return; \}/,
+      `${f}: the plaque dies with the loop that raised it`);
+  }
+
+  // L6: EVERY ALLOCATION HAS AN OWNER. The door cache holds the
+  // outgoing city's rows, each off a live dfBlock, and it is
+  // exterior-only by construction - so leaving the street frees it, at
+  // the one write of `mode` rather than at the four sites that write it.
+  assert.match(wm, /const dropDoorCache = \(\) => \{ _doorCache = null; \};/);
+  // Before the flip in both arms, because the statements after it are
+  // each pinned to sit next to their neighbour (the lock release, the
+  // context's goLive adoption) and a law wedged between two of those
+  // is a law somebody moves.
+  assert.match(wm, /dropDoorCache\(\);[^\n]*\n\s+mode = 'interior';/);
+  assert.match(wm, /dropDoorCache\(\);[^\n]*\n\s+ctx\.goLive\?\.\(\);[\s\S]{0,400}?\n\s+mode = 'dungeon';/);
 });

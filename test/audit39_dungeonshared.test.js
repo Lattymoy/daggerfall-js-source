@@ -188,7 +188,11 @@ test('AUDIT 39 #160: every rAF host WAITS on the hold instead of drawing under t
   for (const h of ['src/scenes/world.js', 'src/scenes/exterior.js', 'src/scenes/dungeon.js']) {
     const s = read(h);
     // straight after the ownership check, before any state is read
-    assert.match(s, /if \(!frameAlive\(_frameToken\)\) return;[\s\S]{0,400}?\n\s+if \(frameHeld\(\)\) \{ last = now; requestAnimationFrame\(frame\); return; \}\n\s+const dt =/,
+    // AUDIT-WH L3: ...and the world plaque goes down on that same line.
+    // It is a DOM node and this return is ABOVE the frame's hover call,
+    // so a name that was on screen when the video took the canvas
+    // floated over the infection dream until the video ended.
+    assert.match(s, /if \(!frameAlive\(_frameToken\)\) \{ destroyWorldPlaque\(\); return; \}[\s\S]{0,800}?\n\s+if \(frameHeld\(\)\) \{ hideWorldPlaque\(\); last = now; requestAnimationFrame\(frame\); return; \}\n\s+const dt =/,
       `${h} waits out the video and keeps its loop`);
   }
   // the seam's own half

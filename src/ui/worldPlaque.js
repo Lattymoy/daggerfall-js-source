@@ -167,6 +167,35 @@ function paint(n, f) {
  * can move (a large HUD docking, a resize) while the name under it does
  * not change.
  */
+function blank(n) {
+  n.classList.remove('on');
+  n.textContent = '';
+  n.classList.remove('has-list');
+}
+
+/**
+ * TAKE THE PLAQUE DOWN, whatever the skin says - the door a host's
+ * overlay branch and its held-frame branch call before they return.
+ *
+ * AUDIT-WH H4/L3. The hide used to be spoken only by a frame that
+ * reached `worldHoverFrame`, and three host branches return ABOVE that
+ * call: both dungeon hosts on an overlay (`hideHudText` rides that
+ * exact line, for this exact reason) and both above-ground hosts on a
+ * held frame (a full-screen infection video). A DOM overlay stays
+ * painted unless it is told otherwise (AUDIT 64 F37), so the plaque
+ * hung frozen over every dungeon window - naming a container's
+ * PRE-TAKE contents while the window behind it emptied the thing.
+ *
+ * It never calls `ensure()`. AUDIT 39's gate is about DRAWING: a
+ * classic-skin page must not reach `injectEnhancedStyle()`, and a node
+ * that does not exist has nothing to hide.
+ */
+export function hideWorldPlaque() {
+  if (!node) return;
+  shownSig = null;
+  blank(node);
+}
+
 export function showWorldPlaque(frame, anchor = null) {
   // THE SKIN GATE IS HERE, ABOVE ensure(). AUDIT 39: the hosts call
   // this every tick whatever the skin - they gate only the PICK - so a
@@ -177,7 +206,15 @@ export function showWorldPlaque(frame, anchor = null) {
   // byte of that, which is this module's own doctrine - and four hosts
   // calling one seam is four more chances to reach ensure() by
   // accident, so the gate matters more now than it did.
-  if (!worldPlaqueOn()) return;
+  //
+  // AUDIT-WH L5: but the gate refuses to DRAW, not to HIDE. Both of
+  // its terms can flip under a painted plaque - the skin switch is a
+  // live setting, and `isTouchDevice` reads a media query that a
+  // tablet-mode flip or a plugged-in touchscreen changes - and a
+  // bare `return` there stranded a painted node naming what the new
+  // input can no longer open. Hiding an EXISTING node injects nothing,
+  // so the gate above is untouched.
+  if (!worldPlaqueOn()) { hideWorldPlaque(); return; }
   const n = ensure();
   if (!n) return;
   if (anchor && (anchor.x !== lastX || anchor.top !== lastTop)) {
@@ -193,9 +230,7 @@ export function showWorldPlaque(frame, anchor = null) {
     // stays painted unless it is told otherwise (AUDIT 64 F37) - the
     // notice panel's own law, and the reason ENH-NOTICE1 has a
     // watchdog. A frame that says nothing takes the plaque down.
-    n.classList.remove('on');
-    n.textContent = '';
-    n.classList.remove('has-list');
+    blank(n);
     return;
   }
   paint(n, frame);
