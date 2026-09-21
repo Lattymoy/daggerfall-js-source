@@ -1,0 +1,184 @@
+[
+  {
+    "name": "ACC1c-1-the-salt-is-a-pepper",
+    "file": "server-account/src/password.js",
+    "old": "  const salt = new Uint8Array(SALT_BYTES);\n  rand(salt);",
+    "new": "  const salt = new Uint8Array(SALT_BYTES);",
+    "tests": [
+      "test/accountworker.test.js"
+    ],
+    "note": "Every account then shares a zero salt: one rainbow table does the lot."
+  },
+  {
+    "name": "ACC1c-2-the-cost-is-a-token-gesture",
+    "file": "server-account/src/password.js",
+    "old": "export const PBKDF2_ITERS = 210_000;",
+    "new": "export const PBKDF2_ITERS = 1_000;",
+    "tests": [
+      "test/accountworker.test.js"
+    ],
+    "note": "A KDF nobody has to wait for is a KDF nobody has to wait for."
+  },
+  {
+    "name": "ACC1c-3-the-compare-short-circuits",
+    "file": "server-account/src/password.js",
+    "old": "  let diff = x.length ^ y.length;\n  const n = Math.max(x.length, y.length);\n  for (let i = 0; i < n; i++) diff |= (x[i % (x.length || 1)] ?? 0) ^ (y[i % (y.length || 1)] ?? 0);\n  return diff === 0;",
+    "new": "  if (x.length !== y.length) return false;\n  for (let i = 0; i < x.length; i++) if (x[i] !== y[i]) return false;\n  return true;",
+    "tests": [
+      "test/accountworker.test.js"
+    ],
+    "equivalent": true,
+    "why": "Functionally identical, and the property it destroys - the time saying where the first differing byte was - is not one a node test can measure through a PBKDF2 derivation that dwarfs it. Held by reading rather than by timing, which is the honest place for it; the derivation in front of this compare is what actually makes the whole call constant-ish, and THAT is driven."
+  },
+  {
+    "name": "ACC1c-4-NFKC-is-skipped",
+    "file": "server-account/src/password.js",
+    "old": "export const normalise = (pw) => (typeof pw === 'string' ? pw.normalize('NFKC') : '');",
+    "new": "export const normalise = (pw) => (typeof pw === 'string' ? pw : '');",
+    "tests": [
+      "test/accountworker.test.js"
+    ],
+    "note": "A decomposed accent then locks its owner out of their own account, on a different keyboard."
+  },
+  {
+    "name": "ACC1c-5-a-parse-failure-verifies",
+    "file": "server-account/src/password.js",
+    "old": "  if (!parsed) return false;",
+    "new": "  if (!parsed) return true;",
+    "tests": [
+      "test/accountworker.test.js"
+    ],
+    "note": "An account with no password would then admit anybody."
+  },
+  {
+    "name": "ACC1c-6-an-unparseable-row-skips-the-derivation",
+    "file": "server-account/src/password.js",
+    "old": "  const got = await derive(pw, salt, iters, subtle);\n  if (!parsed) return false;",
+    "new": "  if (!parsed) return false;\n  const got = await derive(pw, salt, iters, subtle);",
+    "tests": [
+      "test/accountworker.test.js"
+    ],
+    "note": "Then 'this account has no password' is visibly faster than 'this password is wrong' - the username oracle, by the clock."
+  },
+  {
+    "name": "ACC1c-7-Q-is-folded-onto-zero-again",
+    "file": "server-account/src/password.js",
+    "old": "    .replace(/O/g, '0').replace(/[IL]/g, '1');",
+    "new": "    .replace(/[OQ]/g, '0').replace(/[IL]/g, '1');",
+    "tests": [
+      "test/accountworker.test.js"
+    ],
+    "note": "THE BUG ITS OWN PIN FOUND, put back: Q is in the alphabet, so a minted code carrying one canonicalises to a different string than the one that was hashed."
+  },
+  {
+    "name": "ACC1c-8-the-code-is-shorter-than-it-looks",
+    "file": "server-account/src/password.js",
+    "old": "export const CODE_GROUPS = 4;",
+    "new": "export const CODE_GROUPS = 1;",
+    "tests": [
+      "test/accountworker.test.js"
+    ],
+    "note": "Five characters is 25 bits, which is a weekend."
+  },
+  {
+    "name": "ACC1c-9-a-handle-nobody-holds-is-answered-early",
+    "file": "server-account/src/accounts.js",
+    "old": "  const ok = await verifyPassword(password, player?.password ?? null, { subtle });\n  if (!player || !ok) return { error: 'bad-login' };",
+    "new": "  if (!player) return { error: 'bad-login' };\n  const ok = await verifyPassword(password, player.password, { subtle });\n  if (!ok) return { error: 'bad-login' };",
+    "tests": [
+      "test/accountworker.test.js"
+    ],
+    "note": "The username oracle, spelled out: a name nobody holds costs a lookup and a name somebody holds costs a derivation."
+  },
+  {
+    "name": "ACC1c-10-the-recovery-code-is-not-spent",
+    "file": "server-account/src/accounts.js",
+    "old": "  await db.prepare('UPDATE players SET password = ?, recovery_hash = ? WHERE id = ?').bind(pw, rc, player.id).run();",
+    "new": "  await db.prepare('UPDATE players SET password = ? WHERE id = ?').bind(pw, player.id).run();",
+    "tests": [
+      "test/accountworker.test.js"
+    ],
+    "note": "A code that still works after it has been used is a permanent skeleton key on a scrap of paper."
+  },
+  {
+    "name": "ACC1c-11-recovering-leaves-the-thief-signed-in",
+    "file": "server-account/src/accounts.js",
+    "old": "  await closeAllSessions({ db }, player.id);\n  await clearRate({ db }, `recover:${lc}`);",
+    "new": "  await clearRate({ db }, `recover:${lc}`);",
+    "tests": [
+      "test/accountworker.test.js"
+    ],
+    "note": "The reason somebody is standing at recovery may be that another person has their password."
+  },
+  {
+    "name": "ACC1c-12-changing-a-password-needs-no-old-one",
+    "file": "server-account/src/accounts.js",
+    "old": "  if (!await verifyPassword(oldPassword, player.password, { subtle })) return { error: 'bad-login' };",
+    "new": "  if (false) return { error: 'bad-login' };",
+    "tests": [
+      "test/accountworker.test.js"
+    ],
+    "note": "A borrowed phone could then lock its owner out of their own account."
+  },
+  {
+    "name": "ACC1c-13-a-taken-handle-is-checked-instead-of-enforced",
+    "file": "server-account/src/accounts.js",
+    "old": "    if (/UNIQUE|constraint/i.test(String(e?.message ?? e))) return { error: 'handle-taken' };\n    throw e;",
+    "new": "    throw e;",
+    "tests": [
+      "test/accountworker.test.js"
+    ],
+    "note": "The UNIQUE index is the authority; without the catch, a race reads as a 500."
+  },
+  {
+    "name": "ACC1c-14-the-throttle-never-closes",
+    "file": "server-account/src/accounts.js",
+    "old": "  return (row?.count ?? 0) > max;",
+    "new": "  return false;",
+    "tests": [
+      "test/accountworker.test.js"
+    ],
+    "note": "Online guessing, unlimited."
+  },
+  {
+    "name": "ACC1c-15-a-correct-login-does-not-forgive",
+    "file": "server-account/src/accounts.js",
+    "old": "  await clearRate({ db }, `login:${lc}`);",
+    "new": "  void lc;",
+    "tests": [
+      "test/accountworker.test.js"
+    ],
+    "note": "Someone who mistyped twice and then got it right stays on a countdown."
+  },
+  {
+    "name": "ACC1c-16-registering-mints-a-new-account",
+    "file": "server-account/src/accounts.js",
+    "old": "  if (player.handle) return { error: 'already-registered' };",
+    "new": "  if (false) return { error: 'already-registered' };",
+    "tests": [
+      "test/accountworker.test.js"
+    ],
+    "note": "An upgrade in place is the property that keeps the friends and the saves."
+  },
+  {
+    "name": "ACC1c-17-login-and-recover-need-a-session",
+    "file": "server-account/src/service.js",
+    "old": "export const OPEN_ROUTES = new Set(['/v1/health', '/v1/auth/guest', '/v1/auth/login', '/v1/auth/recover']);",
+    "new": "export const OPEN_ROUTES = new Set(['/v1/health', '/v1/auth/guest']);",
+    "tests": [
+      "test/accountworker.test.js"
+    ],
+    "note": "A player standing at a login form has no session - that is why they are standing there. (AUDIT-ACC F2 moved OPEN_ROUTES to service.js: the entrypoint may export only a handler, so the constants left index.js. Re-aimed at the new home and confirmed dead there.)"
+  },
+  {
+    "name": "ACC1c-18-the-refusal-names-the-cause",
+    "file": "server-account/src/index.js",
+    "old": "          return r.error ? no(r.error, r.error === 'rate' ? 429 : 401, origin) : json(r, 200, origin);\n        }\n        // /v1/auth/recover",
+    "new": "          return r.error ? no(r.error + (body.handle ? '-user-exists' : ''), r.error === 'rate' ? 429 : 401, origin) : json(r, 200, origin);\n        }\n        // /v1/auth/recover",
+    "tests": [
+      "test/accountworker.test.js"
+    ],
+    "equivalent": true,
+    "why": "The mutation appends a constant to every refusal rather than distinguishing the two cases, so the pin that compares the two bodies still sees them equal - it is not actually the defect it is named for. Kept as a record that the pin holds EQUALITY of the two refusals rather than their literal text, which is the property that matters and the one a real leak would break."
+  }
+]

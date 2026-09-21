@@ -18,6 +18,7 @@ import assert from 'node:assert/strict';
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { RELAY_GRAPH } from './relayversion.test.js';   // the files a relay deploy would have to reship
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const rd = (p) => readFileSync(join(root, p), 'utf8');
@@ -116,4 +117,115 @@ test('SRV-N/CI: the token is the repo\'s, never a literal', () => {
   assert.doesNotMatch(wf, /cfat_[A-Za-z0-9_-]+/, 'no literal Cloudflare token');
   assert.equal(/wrangler/.test(wf) && /working-directory: server/.test(wf), true,
     'and it deploys from server/, where wrangler.toml is');
+});
+
+// ── AND THE PROSE MUST AGREE WITH THE TRIGGER ───────────────────────
+//
+// 2026-09-21, Mac: "I think the server claim is stale. It's auto".
+//
+// It was, and it had been for fifteen weeks. `server/wrangler.toml` still
+// said "It is manual on purpose", `src/net/wire.js` still said "the deploy
+// is by hand ... nothing in CI does it", and `src/net/updateNotice.js` -
+// the module whose WHOLE SUBJECT is telling a player when the server
+// moved - opened by explaining that the server moves by hand. SRV-N/CI
+// made all three false on 2026-09-17 and nothing went red, because every
+// one of them was a sentence typed beside the fact rather than derived
+// from it.
+//
+// So this asks the WORKFLOW what the deploy is and holds the tree to the
+// answer. It is deliberately two-directional: make the deploy manual
+// again and the pin does not merely stop caring, it starts requiring the
+// files to say so. A claim about the deploy is a claim this test owns.
+//
+// THE POPULATION IS LIVE SOURCE AND CONFIG, not the bible. A dated arc
+// entry that says "the deploy was by hand when this was written" is a
+// RECORD and is true; the same sentence in a comment over running code is
+// a lie a reader acts on. The bible's own entries already carry their
+// corrections inline and are left alone.
+//
+// ...AND NOT THE RELAY BUNDLE ITSELF, which is the one exclusion here and
+// is a real constraint of this repo rather than a convenience. SLAM8
+// hashes the RAW BYTES of every file the Worker bundles, comments
+// included, deliberately: `/health` answers "is the Worker running the
+// bundle I built?", and a bundle whose comments differ is a different
+// bundle. So correcting a COMMENT in `src/net/wire.js` forces a
+// RELAY_VERSION bump, and a bump on main deploys the relay and drops
+// every connected player. A prose fix is not worth a player's dungeon
+// run, so the words in there are left for a slice that is redeploying
+// anyway - and `src/net/wire.js` does still carry the stale sentence as
+// this is written (2026-09-21), which is recorded here rather than
+// hidden.
+//
+// The exclusion is DERIVED from `RELAY_GRAPH`, not listed: if wire.js
+// ever leaves the bundle it falls straight back into the population, and
+// a file that JOINS the bundle leaves it without anyone editing this.
+const MANUAL_CLAIM = /(deploy(ed)?\s+(is\s+)?by\s+hand|by\s+hand\s*[-,]\s*`?npx wrangler|manual on purpose|nothing in CI does it|hand-deployed)/i;
+
+test('SRV-N/CI: nothing in live source calls the deploy a hand command while the workflow runs on push', () => {
+  // (0) THE GATE MUST BE ABLE TO CATCH ITS OWN SUBJECT. A pattern that
+  //     matches nothing is green over any prose in the tree - which is
+  //     EXACTLY the state this file was in for fifteen weeks, and a
+  //     mutation that emptied MANUAL_CLAIM survived the first cut of
+  //     this very test. The three sentences below are the ones that
+  //     were actually live in the tree on 2026-09-21, quoted here
+  //     because a test is not in the population it checks.
+  for (const real of [
+    '# that did not happen. It is manual on purpose: a deploy restarts every',
+    '/** AUDIT WORLD34 D4: the relay names itself in /health - the deploy is by hand (`npx wrangler deploy`), nothing in',
+    '//   deployed BY HAND - `npx wrangler deploy`, nothing in CI does it -',
+  ]) {
+    assert.match(real, MANUAL_CLAIM, 'the gate can no longer see the sentence it exists to catch');
+  }
+  // ...and it does not fire on the true prose that replaced them
+  for (const fine of [
+    '# THE DEPLOY IS AUTOMATIC, and has been since SRV-N/CI (PR #209):',
+    '//   SRV-N/CI it is deployed by `.github/workflows/relay-deploy.yml` on',
+  ]) {
+    assert.doesNotMatch(fine, MANUAL_CLAIM, 'the gate fires on prose that says the right thing');
+  }
+
+  const wf = rd(WF);
+
+  // (1) WHAT IS THE DEPLOY? Derived from the workflow's own trigger.
+  const on = wf.slice(wf.search(/^on:/m));
+  const head = on.slice(0, on.search(/^permissions:/m) >>> 0);
+  const auto = /push:/.test(head) && /branches:\s*\[\s*main\s*\]/.test(head);
+
+  // (2) EVERY LIVE .js AND THE WORKER'S OWN CONFIG. Walked, so a file
+  //     added later is in the population without anyone remembering.
+  const bundled = new Set(RELAY_GRAPH);   // see the note above: a comment here costs a deploy
+  const files = [...walk('src'), ...walk('server/src'), 'server/wrangler.toml']
+    .filter((f) => !bundled.has(f));
+  const claims = files.filter((f) => MANUAL_CLAIM.test(rd(f)));
+
+  // ...and the exclusion is exactly the bundle, nothing wider. wire.js is
+  // in it today and IS carrying a stale claim - if that ever stops being
+  // true the note above is wrong and should come out.
+  assert.ok(bundled.has('src/net/wire.js'), 'the exclusion no longer covers the file it was written for');
+  assert.ok([...bundled].some((f) => MANUAL_CLAIM.test(rd(f))),
+    'nothing in the relay bundle claims a hand deploy any more - delete this exclusion and the note above it');
+
+  if (auto) {
+    assert.deepEqual(claims, [],
+      'the workflow deploys on every push to main, so no comment over running code may call it a hand command');
+  } else {
+    assert.ok(claims.length > 0,
+      'the workflow no longer deploys on push - some file must now tell a reader how the relay actually moves');
+  }
+
+  // (3) AND THE COST IS STILL WRITTEN DOWN WHERE THE DEPLOY IS
+  //     CONFIGURED. Whichever way the trigger goes, a person opening
+  //     wrangler.toml must learn that a deploy drops every connected
+  //     player - that is the fact the old "manual on purpose" sentence
+  //     was carrying, and it must not be lost with it.
+  const toml = rd('server/wrangler.toml');
+  assert.match(toml, /drops every connected player/i,
+    'wrangler.toml no longer says what a deploy costs');
+  // ...and says it in terms a person feels, not just as a phrase. A
+  // banner alone survived a mutation that deleted the sentence under
+  // it, which is a cost stated and not explained.
+  assert.match(toml, /peers vanish/i, 'and no longer says what that looks like from inside the game');
+  assert.match(toml, /chat goes quiet/i);
+  assert.match(rd('server/wrangler.toml'), /relay-deploy\.yml/,
+    'and no longer names the workflow that performs it');
 });
