@@ -146,5 +146,32 @@
     "tests": [
       "test/identitytoken.test.js"
     ]
+  },
+  {
+    "name": "ACC1a-17-F8-the-note-claims-the-refusal-is-built",
+    "file": "src/net/identityToken.js",
+    "old": "// NOTHING HERE ENFORCES EITHER YET, AND THAT IS THE POINT OF SAYING SO:",
+    "new": "// The relay refuses a repeat today, so this is all handled already:",
+    "tests": [
+      "test/identitytoken.test.js"
+    ]
+  },
+  {
+    "name": "ACC1a-18-F8-the-note-stops-saying-what-the-relay-must-do",
+    "file": "src/net/identityToken.js",
+    "old": "// keeps the signatures it has seen and refuses a repeat; `e` bounds how",
+    "new": "// keeps some state about what it has seen; `e` bounds how",
+    "tests": [
+      "test/identitytoken.test.js"
+    ]
+  },
+  {
+    "name": "ACC1a-19-F8-the-gate-watches-a-path-the-bundle-walk-never-spells",
+    "file": "test/identitytoken.test.js",
+    "old": "const TOKEN_MODULE = 'src/net/identityToken.js';",
+    "new": "const TOKEN_MODULE = 'src/net/identity-token.js';",
+    "tests": [
+      "test/identitytoken.test.js"
+    ]
   }
 ]

@@ -329,3 +329,81 @@ test('ACC1a: PURE, and both ends can import it', async () => {
   const imports = [...text.matchAll(/from\s+'(\.[^']+)'/g)].map((m) => m[1]);
   assert.deepEqual(imports, ['./wire.js'], 'a new import here is a new file in the relay\'s bundle');
 });
+
+// ═══ AUDIT-ACC F8, SETTLED: A TOKEN IS SPENT ONCE ═══════════════════
+//
+// Mac, asked whether to close replay or accept the five-minute window:
+// "Yes". The refusal itself belongs in the RELAY - it is the thing that
+// remembers signatures - and the relay does not import this module yet,
+// so there is nothing here to drive. What a pin CAN do today is make
+// sure the decision cannot be quietly lost between now and ACC1d, and
+// the way it does that is by watching the one event that matters: the
+// moment `src/net/identityToken.js` joins the relay's bundle.
+//
+// DERIVED FROM RELAY_GRAPH, NOT FROM A DATE OR A FLAG. The same walk
+// SLAM13 hashes the relay with answers "is this file in the bundle
+// yet?", so ACC1d cannot land without going past this pin and nobody
+// has to remember to come back and switch it on.
+//
+// THE SECOND ARM IS A TRIPWIRE AND IS MEANT TO BE, which took two
+// wrong cuts to arrive at and both are worth the lines:
+//
+//   1. It first asked whether anything in the bundle matched a
+//      seen/replay pattern - and PASSED the instant the module joined,
+//      because THIS FILE'S OWN NOTE says the relay "keeps the
+//      signatures it has seen and refuses a repeat". The comment
+//      describing the work satisfied the check for the work. That is
+//      ACC1-CI's sentinel survivor verbatim.
+//   2. Comments stripped and the module excluded from its own
+//      population, it then refused a REAL refusal - `seenTokens` and
+//      `isReplay` - because `\breplay\b` does not match `isReplay`. A
+//      pattern guessing identifier spellings is an enumeration, and an
+//      enumeration disagrees with the code the day somebody names
+//      something reasonably.
+//
+// There is no third pattern worth writing. A static grep cannot tell a
+// relay that refuses a repeat from one that merely mentions refusing a
+// repeat, and inventing the relay's API here - "it must export a spend
+// check shaped like THIS" - would be designing ACC1d from a test file
+// before ACC1d is written. So this arm does not try to be satisfiable:
+// it fails, and it says what has to be true and what must replace it.
+// ACC1d discharges it by driving the real refusal, which is the pin
+// this one exists to demand.
+import { RELAY_GRAPH } from './relayversion.test.js';
+
+const TOKEN_MODULE = 'src/net/identityToken.js';
+
+test('AUDIT-ACC F8: a token is spent ONCE - this fails the day ACC1d puts the token module in the relay bundle', () => {
+  // (0) THE GATE MUST BE ABLE TO SEE ITS OWN SUBJECT. This whole pin
+  //     turns on one membership test, and a membership test against a
+  //     path the walk never spells is green forever - the vacuous-pin
+  //     hazard HARD5-3 exists for. wire.js lives in the same directory
+  //     and IS in the bundle, so it proves the spelling this pin asks
+  //     in is the spelling RELAY_GRAPH answers in.
+  assert.ok(RELAY_GRAPH.includes('src/net/wire.js'),
+    'the membership test can no longer see a file it is meant to find - the path spelling has drifted');
+
+  const note = src(TOKEN_MODULE);
+
+  // (1) THE DECISION IS RECORDED IN THE FILE BOTH ENDS IMPORT.
+  assert.match(note, /spent once|one-shot/i,
+    'the F8 decision is no longer written in the module both ends import');
+  assert.match(note, /refuses a repeat/i, 'the note no longer says what the relay must do');
+
+  // (2) ...AND THE NOTE MAY NOT OVERSTATE ITSELF while the relay has
+  //     never heard of this file. A comment that describes a refusal
+  //     nothing performs is the defect this whole arc keeps paying for.
+  if (!RELAY_GRAPH.includes(TOKEN_MODULE)) {
+    assert.match(note, /NOTHING HERE ENFORCES EITHER YET/,
+      'the token module claims the replay refusal is built, and the relay does not even import this file yet');
+    return;
+  }
+
+  assert.fail(
+    `${TOKEN_MODULE} is in the relay bundle now, so a stolen token is worth ${MAX_TTL_S} seconds of somebody's name.\n`
+    + '  Mac settled this before ACC1d was written: A TOKEN IS SPENT ONCE.\n'
+    + '  The relay must keep the signatures it has verified and refuse a repeat; `e` bounds how long it must remember.\n'
+    + '  The TTL ceiling belongs in the relay\'s config beside the public key, not passed in at a call site.\n'
+    + '  REPLACE THIS PIN with one that DRIVES it: present the same token twice and prove the second is refused.\n'
+    + '  Deleting it without that is the one move this gate exists to make visible.');
+});

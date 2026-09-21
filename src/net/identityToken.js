@@ -58,7 +58,7 @@
 // it reaches for no global and no clock of its own.
 //
 // ═══ AUDIT-ACC F8: THIS TOKEN IS A BEARER CREDENTIAL, AND NOTHING ══
-// ═══ HERE STOPS IT BEING REPLAYED. ACC1d HAS TO DECIDE. ════════════
+// ═══ HERE STOPS IT BEING REPLAYED. ACC1d MAKES IT ONE-SHOT. ════════
 //
 // What this file closes is FORGERY: nobody without the private key can
 // invent a name. What it does not close, and what nothing in the arc
@@ -69,22 +69,30 @@
 // The exposure is bounded by MAX_TTL_S and by TLS, and the stakes today
 // are a name on a roster. But "the only people who can take a name are
 // the people who can be banned" (ACC0's wall) is weaker if a name can
-// be BORROWED for five minutes, and that is a decision, not an
-// oversight to be discovered later.
+// be BORROWED for five minutes.
 //
-// THE CHEAP ANSWER IS ONE-SHOT AT THE RELAY, and it is cheap precisely
-// because of how this token is used: a client mints one per connection
-// from its session secret, so nothing legitimate ever presents the same
-// token twice. The hub can keep the signatures it has seen and refuse a
-// repeat; `e` bounds how long it must remember, so the set sweeps
-// itself. Rejected alternatives: a nonce claim needs shared state to
-// check and buys nothing this does not, and binding to the socket is
-// awkward over a WebSocket upgrade.
+// MAC DECIDED IT (2026-09-21, asked whether to close replay or accept
+// the five-minute window: "Yes"). A TOKEN IS SPENT ONCE. The relay
+// keeps the signatures it has seen and refuses a repeat; `e` bounds how
+// long it must remember, so the set sweeps itself.
 //
-// WHAT ACC1d MUST ALSO SETTLE: the relay passes `maxTtlS` into
+// IT IS CHEAP PRECISELY BECAUSE OF HOW THIS TOKEN IS USED: a client
+// mints one per connection from its session secret, so nothing
+// legitimate ever presents the same token twice. Rejected alternatives:
+// a nonce claim needs shared state to check and buys nothing this does
+// not, and binding to the socket is awkward over a WebSocket upgrade.
+//
+// AND THE TTL CEILING BELONGS IN THE RELAY'S CONFIG, beside the public
+// key - not at a call site. The relay passes `maxTtlS` into
 // `verifyToken`, so a relay that passes a generous one silently grants
-// long-lived tokens - the ceiling belongs in the relay's config beside
-// the public key, not in a call site.
+// long-lived tokens, and a ceiling typed at the one call that happens
+// to be in front of somebody is the second-home shape SLAM13 burned us
+// on.
+//
+// NOTHING HERE ENFORCES EITHER YET, AND THAT IS THE POINT OF SAYING SO:
+// the refusal lives in the relay, which does not import this file yet.
+// test/identitytoken.test.js holds the decision against RELAY_GRAPH and
+// fails the day ACC1d puts this module in the bundle without it.
 //
 // This note is written HERE, in the file both ends import, and it is
 // written NOW because this module is not in the relay bundle yet

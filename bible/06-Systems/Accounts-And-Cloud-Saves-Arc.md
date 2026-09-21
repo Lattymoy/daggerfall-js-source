@@ -4,8 +4,17 @@ ACC0 — the design record, 2026-09-21. ~~Nothing below has shipped.~~
 **ACC1a, ACC1b, ACC1c and ACC1-CI have shipped since**, and AUDIT-ACC
 has been over all of them; the sections below carry their own dated
 headings and this line was left stale for half a day, which is the
-exact failure DEPLOY-PROSE was opened for. Nothing is DEPLOYED yet: the
-deploy fires on merge to main.
+exact failure DEPLOY-PROSE was opened for. ~~Nothing is DEPLOYED yet:
+the deploy fires on merge to main.~~ **IT MERGED AND IT DEPLOYED**
+(6743d3bdb, 2026-09-21): the account service is LIVE at
+`https://daggerfall-accounts.mackcothran.workers.dev`, `/v1/health`
+serves `acct1`, and `/v1/pubkey` publishes the signing pair's public
+half. The first-ever run created the database, applied both migrations
+through the ledger and minted the pair, with nobody touching a
+Cloudflare dashboard — and the relay deploy on the same commit finished
+having deployed nothing, because `RELAY_VERSION` was unchanged, so not
+one player was dropped. That is the two-Worker split's central claim,
+demonstrated rather than argued.
 
 This page is the shape agreed with Mac before any code, and it says
 what is decided, what is lifted from another repo, what is genuinely
@@ -755,11 +764,48 @@ Bounded by `MAX_TTL_S` and by TLS, and the stakes today are a name on a
 roster. But *"the only people who can take a name are the people who
 can be banned"* is weaker if a name can be **borrowed** for five
 minutes, and that is a decision rather than something to discover after
-ACC1d ships. The cheap answer is **one-shot at the relay**: a client
-mints one token per connection, so nothing legitimate presents the same
-token twice, and `e` bounds how long the hub must remember. Written into
-`src/net/identityToken.js` itself, **now**, while that file is still
-outside the relay bundle and editing its comments is free.
+ACC1d ships.
+
+**MAC SETTLED IT (2026-09-21).** Asked whether to close replay or accept
+the five-minute window: *"Yes"*. **A token is spent once.** The relay
+keeps the signatures it has verified and refuses a repeat; `e` bounds
+how long it must remember, so the set sweeps itself. It is cheap
+precisely because of how this token is used — a client mints one per
+connection from its session secret, so nothing legitimate ever presents
+the same token twice. Rejected alternatives: a nonce claim needs shared
+state to check and buys nothing this does not, and binding to the socket
+is awkward over a WebSocket upgrade. **And the TTL ceiling belongs in
+the relay's config beside the public key**, not passed in at a call
+site: the relay hands `maxTtlS` to `verifyToken`, so a generous value
+typed at whichever call happens to be in front of somebody silently
+grants long-lived tokens — the second-home shape SLAM13 burned the relay
+on.
+
+**NOTHING ENFORCES IT YET, AND THE RECORD SAYS SO.** The refusal lives
+in the relay, which does not import the token module. What exists today
+is the decision, written into `src/net/identityToken.js` while that file
+is still outside the relay bundle and editing its comments is free — and
+a gate in `test/identitytoken.test.js` that holds it against
+`RELAY_GRAPH` and **fails the day ACC1d puts the module in the bundle**.
+
+That gate's second arm is a **tripwire on purpose**, and two wrong cuts
+got it there. It first asked whether anything in the bundle matched a
+seen/replay pattern, and passed the instant the module joined — because
+the module's own note says the relay *"keeps the signatures it has seen
+and refuses a repeat"*, so the comment describing the work satisfied the
+check for the work. That is ACC1-CI's sentinel survivor verbatim, found
+the same way: by simulating the event rather than trusting the pin. With
+comments stripped and the module excluded from its own population, it
+then **refused a real refusal** — `seenTokens` and `isReplay`, because
+`\breplay\b` does not match `isReplay`. A pattern guessing identifier
+spellings is an enumeration, and an enumeration disagrees with the code
+the day somebody names something reasonably. A static grep cannot tell a
+relay that refuses a repeat from one that mentions refusing a repeat,
+and inventing the relay's API from a test file would be designing ACC1d
+before ACC1d is written. So the arm does not try to be satisfiable: it
+fails, says what must be true, and names the pin that must replace it —
+one that presents the same token twice and proves the second is
+refused.
 
 ### F9 — a session never expired
 
