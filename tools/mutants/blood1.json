@@ -2731,8 +2731,8 @@
   {
     "name": "AUDIT5-the-sun-map-is-read-twice",
     "file": "src/render/enhancedLighting.js",
-    "old": "* ${EL_WET_STRENGTH} * sheen * wetFresnel(dot(V, H)) * sunVis);",
-    "new": "* ${EL_WET_STRENGTH} * sheen * wetFresnel(dot(V, H)) * cloudShadowAt(vWorld) * sunShadowAt(vWorld, n));",
+    "old": "* ${glslFloat(EL_WET_STRENGTH)} * sheen * wetFresnel(dot(V, H)) * sunVis);",
+    "new": "* ${glslFloat(EL_WET_STRENGTH)} * sheen * wetFresnel(dot(V, H)) * cloudShadowAt(vWorld) * sunShadowAt(vWorld, n));",
     "tests": [
       "test/blood1_decals.test.js"
     ]

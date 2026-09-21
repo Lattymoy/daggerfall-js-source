@@ -155,7 +155,7 @@
   {
     "name": "AUDITBLOOD3-the-lane-takes-the-raw-ink-for-a-thickness",
     "file": "src/render/enhancedLighting.js",
-    "old": "  float thick = t.a * clamp((1.0 - t.r) / ${INK_DEPTH}, 0.0, 1.0);",
+    "old": "  float thick = t.a * clamp((1.0 - t.r) / ${glslFloat(INK_DEPTH)}, 0.0, 1.0);",
     "new": "  float thick = t.a * t.r;",
     "tests": [
       "test/blood1_decals.test.js"
@@ -173,7 +173,7 @@
   {
     "name": "AUDITBLOOD3-the-meniscus-taps-read-the-bare-alpha-against-a-thickness",
     "file": "src/render/enhancedLighting.js",
-    "old": "  vec2 duv = vec2(tU.a * clamp((1.0 - tU.r) / ${INK_DEPTH}, 0.0, 1.0),\n                  tV.a * clamp((1.0 - tV.r) / ${INK_DEPTH}, 0.0, 1.0)) - vec2(thick);",
+    "old": "  vec2 duv = vec2(tU.a * clamp((1.0 - tU.r) / ${glslFloat(INK_DEPTH)}, 0.0, 1.0),\n                  tV.a * clamp((1.0 - tV.r) / ${glslFloat(INK_DEPTH)}, 0.0, 1.0)) - vec2(thick);",
     "new": "  vec2 duv = vec2(tU.a, tV.a) - vec2(thick);",
     "tests": [
       "test/blood1_decals.test.js"
@@ -182,8 +182,8 @@
   {
     "name": "AUDITBLOOD3-the-meniscus-is-a-dent-rather-than-a-bank",
     "file": "src/render/enhancedLighting.js",
-    "old": "    n = normalize(n - slope * ${BLOOD_MENISCUS});",
-    "new": "    n = normalize(n + slope * ${BLOOD_MENISCUS});",
+    "old": "    n = normalize(n - slope * ${glslFloat(BLOOD_MENISCUS)});",
+    "new": "    n = normalize(n + slope * ${glslFloat(BLOOD_MENISCUS)});",
     "tests": [
       "test/blood1_decals.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "AUDITBLOOD3-the-suns-glint-drops-its-Fresnel",
     "file": "src/render/enhancedLighting.js",
-    "old": "* ${EL_WET_STRENGTH} * sheen * wetFresnel(dot(V, H)) * sunVis);",
-    "new": "* ${EL_WET_STRENGTH} * sheen * sunVis);",
+    "old": "* ${glslFloat(EL_WET_STRENGTH)} * sheen * wetFresnel(dot(V, H)) * sunVis);",
+    "new": "* ${glslFloat(EL_WET_STRENGTH)} * sheen * sunVis);",
     "tests": [
       "test/blood1_decals.test.js"
     ]
@@ -227,7 +227,7 @@
   {
     "name": "AUDITBLOOD3-the-lane-forgets-the-wet-darkening",
     "file": "src/render/enhancedLighting.js",
-    "old": "    * mix(1.0, ${WET_DARKEN}, clamp(vWet, 0.0, 1.0));",
+    "old": "    * mix(1.0, ${glslFloat(WET_DARKEN)}, clamp(vWet, 0.0, 1.0));",
     "new": "    ;",
     "tests": [
       "test/blood1_decals.test.js"
@@ -236,7 +236,7 @@
   {
     "name": "AUDITBLOOD3-the-classic-set-keeps-the-flat-sticker",
     "file": "src/render/renderer.js",
-    "old": "  vec3 rgb = vColor.rgb * exp(vec3(${BLOOD_ABSORB_ENCODED[0]}, ${BLOOD_ABSORB_ENCODED[1]}, ${BLOOD_ABSORB_ENCODED[2]}) * (1.0 - thick)) * lightAcc;",
+    "old": "  vec3 rgb = vColor.rgb * exp(vec3(${glslFloat(BLOOD_ABSORB_ENCODED[0])}, ${glslFloat(BLOOD_ABSORB_ENCODED[1])}, ${glslFloat(BLOOD_ABSORB_ENCODED[2])}) * (1.0 - thick)) * lightAcc;",
     "new": "  vec3 rgb = vColor.rgb * lightAcc;",
     "tests": [
       "test/blood1_decals.test.js"
@@ -245,8 +245,53 @@
   {
     "name": "AUDITBLOOD3-the-classic-set-takes-the-raw-ink-for-a-thickness",
     "file": "src/render/renderer.js",
-    "old": "  float thick = t.a * clamp((1.0 - t.r) / ${INK_DEPTH}, 0.0, 1.0);",
+    "old": "  float thick = t.a * clamp((1.0 - t.r) / ${glslFloat(INK_DEPTH)}, 0.0, 1.0);",
     "new": "  float thick = t.a * t.r;",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "AUDITBLOOD3-F9-the-meniscus-dial-reaches-GLSL-bare-so-a-round-value-breaks-the-shader",
+    "file": "src/render/enhancedLighting.js",
+    "old": "    n = normalize(n - slope * ${glslFloat(BLOOD_MENISCUS)});",
+    "new": "    n = normalize(n - slope * ${BLOOD_MENISCUS});",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "AUDITBLOOD3-F9-the-wet-darkening-dial-reaches-GLSL-bare",
+    "file": "src/render/enhancedLighting.js",
+    "old": "    * mix(1.0, ${glslFloat(WET_DARKEN)}, clamp(vWet, 0.0, 1.0));",
+    "new": "    * mix(1.0, ${WET_DARKEN}, clamp(vWet, 0.0, 1.0));",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "AUDITBLOOD3-F9-the-classic-sets-absorption-reaches-GLSL-bare",
+    "file": "src/render/renderer.js",
+    "old": "exp(vec3(${glslFloat(BLOOD_ABSORB_ENCODED[0])}, ${glslFloat(BLOOD_ABSORB_ENCODED[1])}, ${glslFloat(BLOOD_ABSORB_ENCODED[2])}) * (1.0 - thick))",
+    "new": "exp(vec3(${BLOOD_ABSORB_ENCODED[0]}, ${BLOOD_ABSORB_ENCODED[1]}, ${BLOOD_ABSORB_ENCODED[2]}) * (1.0 - thick))",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "AUDITBLOOD3-F9-glslFloat-stops-making-a-whole-number-a-float",
+    "file": "src/render/airPass.js",
+    "old": "export const glslFloat = (v) => (Number.isInteger(v) ? `${v}.0` : String(v));",
+    "new": "export const glslFloat = (v) => String(v);",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "AUDITBLOOD3-F10-the-shader-goes-back-to-claiming-a-rim-lip",
+    "file": "src/render/enhancedLighting.js",
+    "old": "  // BLOOD3: AND THE MARK IS A HEIGHT FIELD, NOT A PLANE.",
+    "new": "  // BLOOD3: AND THE RIM HAS A SHOULDER.",
     "tests": [
       "test/blood1_decals.test.js"
     ]

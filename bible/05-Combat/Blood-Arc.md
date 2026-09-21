@@ -1337,8 +1337,10 @@ Slices, each behind its own `features.js` row:
    while its body is still wet. ONE number feeds both the lantern
    glint and the sun's - one wetness, not two.
 
-   THE MENISCUS. A pool has a raised edge, so its rim catches light a
-   flat quad never could. The thickness gradient is two extra atlas
+   THE MENISCUS. (Read with slice 15: the NAME is right - this is the
+   curve a liquid stands in - but "a pool has a raised edge, so its rim
+   catches light" is not what the code computes, and a picture was
+   finally made of it there.) The thickness gradient is two extra atlas
    taps (one texel along each axis) turned into a world-space slope
    through the quad's OWN tangent frame, solved from `dFdx/dFdy` of
    the world position against the same of the UV; the normal tilts
@@ -1535,6 +1537,51 @@ Slices, each behind its own `features.js` row:
    hoisted out of the light loop now - it was rebuilt up to 48 times a
    fragment). Mutants: 28, 28 dead (`tools/mutants/blood3.json`); three
    records re-aimed by content in `blood1.json` and `macbugw6.json`.
+
+15. **AUDIT BLOOD3, TWO LEFT OVER.** (2026-09-21, Mac: *"Whats the
+   meniscus"*, then *"Might aswell"* - make the picture.) Both came out
+   of trying to photograph the one part of the slice that had none.
+
+   **F9 - A DIAL AT A WHOLE NUMBER TOOK THE SHADER OUT.** To shoot the
+   meniscus against itself, `BLOOD_MENISCUS` was set to `0.0` - and the
+   Enhanced Lighting decal program stopped compiling:
+   `'*' : wrong operand types ... 'const int'`. JavaScript stringifies
+   `0.0` as `"0"`, which is an INTEGER literal in GLSL, and `vec3 * int`
+   has no overload. Every constant BLOOD3 and this audit interpolated
+   was bare - `BLOOD_MENISCUS`, `WET_DARKEN`, `INK_DEPTH`, `BLOOD_F0`,
+   `1 - BLOOD_F0`, `EL_WET_STRENGTH`, both absorption triplets - so any
+   of them set to a round number was a runtime landmine under exactly
+   the dials the record invites a reader to tune. The house already had
+   the answer: `glslFloat` (airPass.js:152), which the lantern loop has
+   used since EL5. Eleven interpolations routed through it, both lanes.
+   Pinned by driving the shader build at an integral value, which is the
+   only way to catch this - a text pin on the built string reads whatever
+   the current value happens to produce.
+
+   **F10 - IT IS A HEIGHT FIELD, NOT A RIM.** The picture (the same pool
+   under a grazing sun, `BLOOD_MENISCUS` on against off, differenced):
+   peak change 56 of 255 - so it is plainly doing something - but the
+   change is TWICE as strong in the body as in the rim band, mean 10.7
+   against 4.95. That is inherent to the shape. A pool's thickness is
+   `1 - smoothstep(0, edge, r)`, and a smoothstep's gradient peaks in
+   the MIDDLE of its ramp, not at its ends. So the term lights the mark
+   as a relief of its own thickness - which is correct, and is what
+   gives a pool volume - and a rim lip is one case of that rather than
+   the point of it. The grain rides inside the thickness now, so it
+   becomes fine surface texture too. Slice 13's "a pool has a raised
+   edge, so its rim catches light a flat quad never could" described an
+   effect the code does not have; one of the three lenses flagged the
+   wording and it was carried into the record anyway. Said correctly
+   here, in the shader, and in the index.
+
+   So the meniscus HAS a picture now, and it is a probe row: the mark's
+   lit result changes measurably when the term is switched off, and the
+   row says where that change lands. That was the one gap this arc went
+   to main with, and it is closed.
+
+   Pins: two (every interpolated dial through `glslFloat`, driven at an
+   integral value; the height-field wording by source). Mutants: 4, 4
+   dead. Probe: 35 checks, 35 pass.
 
 The numbers in THE FACTS are the target to feel like. The code that
 hits them is ours.

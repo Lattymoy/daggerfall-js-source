@@ -268,7 +268,7 @@ const EL_POINT_LIT_GLSL = `
 // "less shiny", but not wet at all. The angle belongs beside the lobe
 // it scales, once per light, against that light's own half-vector.
 float wetFresnel(float vdoth) {
-  return ${BLOOD_F0} + ${1 - BLOOD_F0} * pow(1.0 - clamp(vdoth, 0.0, 1.0), 5.0);
+  return ${glslFloat(BLOOD_F0)} + ${glslFloat(1 - BLOOD_F0)} * pow(1.0 - clamp(vdoth, 0.0, 1.0), 5.0);
 }
 vec3 elPointLitWet(vec3 wp, vec3 n, float wet, out vec3 glint) {
   vec3 acc = vec3(0.0);
@@ -297,7 +297,7 @@ vec3 elPointLitWet(vec3 wp, vec3 n, float wet, out vec3 glint) {
       if (g > 0.0) glint += att * g * wetFresnel(dot(V, H)) * uPointColors[i];   // AUDIT BLOOD3 F5: this light's own angle, beside this light's own lobe
     }
   }
-  glint *= ${EL_WET_STRENGTH} * wet;
+  glint *= ${glslFloat(EL_WET_STRENGTH)} * wet;
   return acc;
 }
 vec3 elPointLit(vec3 wp, vec3 n) { vec3 g; return elPointLitWet(wp, n, 0.0, g); }
@@ -624,7 +624,7 @@ void main() {
   // line and the film has a real depth to run on - 0 at a rim, 1 at a
   // heart, the whole range ACROSS a mark at full coverage, which is
   // what BLOOD3 wanted and read backwards.
-  float thick = t.a * clamp((1.0 - t.r) / ${INK_DEPTH}, 0.0, 1.0);
+  float thick = t.a * clamp((1.0 - t.r) / ${glslFloat(INK_DEPTH)}, 0.0, 1.0);
   // ...and the ink is NOT an albedo factor any more. It was the shape's
   // depth painted as a grey darkening; the film is that same darkening
   // done properly, per channel, so multiplying by both spent it twice
@@ -634,8 +634,8 @@ void main() {
   // is DARKER - the light goes into the film before it comes back.
   // That, not a highlight, is what reads as wet from above.
   vec3 albedo = elDecode(vColor.rgb)
-    * exp(vec3(${BLOOD_ABSORB[0]}, ${BLOOD_ABSORB[1]}, ${BLOOD_ABSORB[2]}) * (1.0 - thick))
-    * mix(1.0, ${WET_DARKEN}, clamp(vWet, 0.0, 1.0));
+    * exp(vec3(${glslFloat(BLOOD_ABSORB[0])}, ${glslFloat(BLOOD_ABSORB[1])}, ${glslFloat(BLOOD_ABSORB[2])}) * (1.0 - thick))
+    * mix(1.0, ${glslFloat(WET_DARKEN)}, clamp(vWet, 0.0, 1.0));
   // the mark's own surface, from its own quad, facing the eye - and a
   // quad seen edge-on has no derivative to speak of, so it takes up
   // rather than NaN (BLOOD1 AUDIT 3)
@@ -643,12 +643,19 @@ void main() {
   vec3 c = cross(dpx, dpy);
   vec3 n = dot(c, c) > 1e-12 ? normalize(c) : vec3(0.0, 1.0, 0.0);
   if (dot(n, uCamPos - vWorld) < 0.0) n = -n;
-  // BLOOD3: AND THE RIM HAS A SHOULDER. A mark lit by one flat normal
-  // is lit the same at its edge as at its middle, which is the other
-  // half of "flat". The thickness field has a gradient - steep at a
-  // rim, nothing in the body - and that gradient IS the meniscus the
-  // liquid stands in, so the normal tilts away from it where the blood
-  // banks up. Two taps, one texel along each axis of the atlas; a cell
+  // BLOOD3: AND THE MARK IS A HEIGHT FIELD, NOT A PLANE. A mark lit by
+  // one flat normal is lit the same at its edge as at its middle, which
+  // is the other half of "flat". Its thickness IS a height, so the
+  // gradient of that thickness is the surface's own slope, and the
+  // normal tilts away from the rise wherever the blood stands deeper.
+  //
+  // AUDIT BLOOD3 F10: and it is the WHOLE mark, not a rim lip. This was
+  // recorded as "a pool has a raised edge" until a picture was finally
+  // made of it (BLOOD_MENISCUS on against off, under a grazing sun):
+  // the change is TWICE as strong in the body as in the rim band, mean
+  // 10.7 against 4.95 of 255, because a pool's thickness is a smoothstep
+  // and a smoothstep's gradient peaks in the MIDDLE of its ramp. The
+  // rim is one case of the relief, not the point of it. Two taps, one texel along each axis of the atlas; a cell
   // keeps a clear two-texel border and its UV rect is inset by one, so
   // a tap at the outer edge reads the border's zero - a thinning edge,
   // which is the truth - and never the neighbouring cell. The tangent
@@ -664,8 +671,8 @@ void main() {
   vec2 ts = 1.0 / vec2(textureSize(uTex, 0));
   vec4 tU = texture(uTex, vUV + vec2(ts.x, 0.0));
   vec4 tV = texture(uTex, vUV + vec2(0.0, ts.y));
-  vec2 duv = vec2(tU.a * clamp((1.0 - tU.r) / ${INK_DEPTH}, 0.0, 1.0),
-                  tV.a * clamp((1.0 - tV.r) / ${INK_DEPTH}, 0.0, 1.0)) - vec2(thick);
+  vec2 duv = vec2(tU.a * clamp((1.0 - tU.r) / ${glslFloat(INK_DEPTH)}, 0.0, 1.0),
+                  tV.a * clamp((1.0 - tV.r) / ${glslFloat(INK_DEPTH)}, 0.0, 1.0)) - vec2(thick);
   vec2 dux = dFdx(vUV), duy = dFdy(vUV);
   float uvDet = dux.x * duy.y - duy.x * dux.y;
   // AUDIT BLOOD3 F2: the WORLD frame is guarded too. dot(c, c) is the
@@ -676,7 +683,7 @@ void main() {
     vec3 tu = (duy.y * dpx - dux.y * dpy) / uvDet;
     vec3 tv = (dux.x * dpy - duy.x * dpx) / uvDet;
     vec3 slope = duv.x * normalize(tu) + duv.y * normalize(tv);
-    n = normalize(n - slope * ${BLOOD_MENISCUS});
+    n = normalize(n - slope * ${glslFloat(BLOOD_MENISCUS)});
   }
   // BLOOD AUDIT 4: THE SURFACE'S TERMS, not the flat's. The normal was
   // read here since AUDIT 3 and spent on the shadow lookups alone; the
@@ -701,7 +708,7 @@ void main() {
   // its own thickness. That is this number, and it carries no angle:
   // AUDIT BLOOD3 F5 moved the angle to where it belongs, beside each
   // light's own half-vector (wetFresnel). One gate for both glints.
-  float sheen = vWet * smoothstep(${WET_THICK_LO}, ${WET_THICK_HI}, thick);
+  float sheen = vWet * smoothstep(${glslFloat(WET_THICK_LO)}, ${glslFloat(WET_THICK_HI)}, thick);
   vec3 glint;
   vec3 lit = albedo * (ambient + sunLit + moonLit + elPointLitWet(vWorld, n, sheen, glint) + elIndirectLit(vWorld, n));
   // BLOOD2f: THE WET SHEEN. A fresh mark is wet, and wet is a glint: the
@@ -713,7 +720,7 @@ void main() {
   if (sheen > 0.0) {
     vec3 V = normalize(uCamPos - vWorld);
     vec3 H = normalize(uLightDir + V);
-    sunGlint = uDecalSun * (pow(max(dot(n, H), 0.0), ${EL_WET_GLOSS}.0) * ${EL_WET_STRENGTH} * sheen * wetFresnel(dot(V, H)) * sunVis);
+    sunGlint = uDecalSun * (pow(max(dot(n, H), 0.0), ${EL_WET_GLOSS}.0) * ${glslFloat(EL_WET_STRENGTH)} * sheen * wetFresnel(dot(V, H)) * sunVis);
   }
   lit += glint + sunGlint;
   outColor = vec4(elFinish(lit, vWorld), t.a * vColor.a);

@@ -1937,7 +1937,7 @@ test('MAC-BUG W4: a MARK takes the same light a CHUNK takes - the two passes of 
   assert.match(meshFs, /float mdiff = max\(dot\(n, uMoonDir\), 0\.0\);/);
   assert.match(decalFs, /vec3 ambient = uTrilight > 0\.5 \? \(n\.y >= 0\.0 \? mix\(uTint, uAmbientSky, n\.y\) : mix\(uTint, uAmbientGround, -n\.y\)\) : uTint;/, 'the trilight ambient, as MESH_FS has it');
   assert.match(decalFs, /vec3 lightAcc = ambient \+ uDecalSun \* \(diff \* cloudShadowAt\(vWorld\)\) \+ uDecalMoon \* mdiff \+ pointAcc \+ \(iAtt \* iAtt \* max\(dot\(n, iL \/ max\(iD, 1e-4\)\), 0\.0\)\) \* uIndirectColor;/);   // BLOOD1 AUDIT 3: and under the cloud's shadow, as the mesh's sun term is
-  assert.match(decalFs, /float thick = t\.a \* clamp\(\(1\.0 - t\.r\) \/ \$\{INK_DEPTH\}, 0\.0, 1\.0\);\s*\n\s*vec3 rgb = vColor\.rgb \* exp\(vec3\([^)]*\) \* \(1\.0 - thick\)\) \* lightAcc;/, 'AUDIT BLOOD3 F1/F3: the classic set recovers the depth off the sheet and takes the film in DISPLAY space, between the tint and the light');
+  assert.match(decalFs, /float thick = t\.a \* clamp\(\(1\.0 - t\.r\) \/ \$\{glslFloat\(INK_DEPTH\)\}, 0\.0, 1\.0\);\s*\n\s*vec3 rgb = vColor\.rgb \* exp\(vec3\(.*?\) \* \(1\.0 - thick\)\) \* lightAcc;/, 'AUDIT BLOOD3 F1/F3: the classic set recovers the depth off the sheet and takes the film in DISPLAY space, between the tint and the light; F9: through glslFloat, or a round value is an int literal');
   assert.doesNotMatch(decalFs, /vec3 rgb = t\.rgb \* vColor\.rgb \* uTint;/,
     'ambient alone is what made the mark black');
 
@@ -3756,6 +3756,37 @@ test('BLOOD3 shiny: the sheen is the mark’s own depth, the angle is Schlick at
   assert.ok(wetAlbedo(0.5) > wetAlbedo(1) && wetAlbedo(0.5) < wetAlbedo(0), 'and it fades with the drying');
 });
 
+test('AUDIT BLOOD3 F9: every dial the blood shaders interpolate goes through glslFloat - a whole number is an INT in GLSL, and vec3 * int does not compile', async () => {
+  const { glslFloat } = await import('../src/render/airPass.js');
+  // THE FAILURE, EXACTLY. BLOOD_MENISCUS was set to 0.0 to photograph
+  // the meniscus against itself and the lane's decal program stopped
+  // compiling: "'*' : wrong operand types ... 'const int'". JS turns
+  // 0.0 into "0", GLSL reads that as an integer, and there is no
+  // vec3 * int. Every constant this arc interpolated was bare, so any
+  // of them at a round value was a landmine under the dials the record
+  // invites a reader to tune.
+  assert.equal(String(0.0), '0', 'this is the whole bug - JS stringifies it as an int literal');
+  assert.equal(glslFloat(0.0), '0.0'); assert.equal(glslFloat(1), '1.0'); assert.equal(glslFloat(-2), '-2.0');
+  assert.equal(glslFloat(0.85), '0.85', 'and a fractional value is left exactly as it is - no rounding, no drift');
+  assert.equal(glslFloat(0.02), '0.02');
+  // ...and no bare interpolation of a blood dial is left in either set
+  const lane = readFileSync(new URL('../src/render/enhancedLighting.js', import.meta.url), 'utf8');
+  const classic = readFileSync(new URL('../src/render/renderer.js', import.meta.url), 'utf8');
+  for (const [name, src] of [['lane', lane], ['classic', classic]]) {
+    const bare = [...src.matchAll(/\$\{(BLOOD_[A-Z0-9_]*|WET_[A-Z_]*|INK_DEPTH|EL_WET_STRENGTH)(\[\d\])?\}/g)].map((m) => m[0]);
+    assert.deepEqual(bare, [], `${name}: these dials reach the shader without glslFloat`);
+  }
+  assert.match(classic, /import \{ glslFloat \} from '\.\/airPass\.js'/);
+  // THE LAW, DRIVEN: build the shader at an integral value and read what
+  // it actually emitted. A text pin on the built string proves nothing
+  // here - it reads whatever the current value happens to produce.
+  const { BLOOD_MENISCUS, WET_DARKEN, INK_DEPTH, BLOOD_F0 } = await import('../src/combat/bloodArt.js');
+  for (const v of [BLOOD_MENISCUS, WET_DARKEN, INK_DEPTH, BLOOD_F0, 1 - BLOOD_F0, 0, 1, 0.5]) {
+    assert.match(glslFloat(v), /^-?\d+(\.\d+)?$/, `${v} is a literal`);
+    assert.ok(glslFloat(v).includes('.'), `${v} reaches GLSL as a FLOAT - an int here is a compile error, not a wrong picture`);
+  }
+});
+
 test('BLOOD3 by source: both decal shaders recover the depth, and the LANE carries the meniscus, the wet darkening and the per-light Fresnel', async () => {
   const { EL_DECAL_FS, EL_WET_STRENGTH } = await import('../src/render/enhancedLighting.js');
   const { BLOOD_ABSORB, BLOOD_ABSORB_ENCODED, BLOOD_F0, BLOOD_MENISCUS, WET_THICK_LO, WET_THICK_HI, INK_DEPTH, WET_DARKEN } = await import('../src/combat/bloodArt.js');
@@ -3765,14 +3796,14 @@ test('BLOOD3 by source: both decal shaders recover the depth, and the LANE carri
   // off the one constant the sheet is written from - never a second
   // copy of the ramp, and never the raw channel again.
   assert.ok(EL_DECAL_FS.includes(recover), 'the lane recovers the depth');
-  assert.ok(classic.includes('float thick = t.a * clamp((1.0 - t.r) / ${INK_DEPTH}, 0.0, 1.0);'), 'and so does the classic set');
+  assert.ok(classic.includes('float thick = t.a * clamp((1.0 - t.r) / ${glslFloat(INK_DEPTH)}, 0.0, 1.0);'), 'and so does the classic set');
   assert.match(classic, /import \{ BLOOD_ABSORB_ENCODED, INK_DEPTH \} from '\.\.\/combat\/bloodArt\.js'/);
   assert.ok(!/float thick = t\.a \* t\.r;/.test(EL_DECAL_FS) && !/\* t\.a \* t\.r\)/.test(EL_DECAL_FS), 'the raw ink is never a thickness again (the prose above the meniscus may still name the bug it fixed)');
   assert.ok(!/vec3 albedo = elDecode\(t\.rgb\)/.test(EL_DECAL_FS) && !/vec3 rgb = t\.rgb \*/.test(classic),
     'and the ink is not an albedo factor either - it WAS the depth, painted as a grey darkener, and the film does that per channel now');
   // the film, in both, each in its own colour space (AUDIT BLOOD3 F3)
   assert.ok(EL_DECAL_FS.includes(`* exp(vec3(${BLOOD_ABSORB[0]}, ${BLOOD_ABSORB[1]}, ${BLOOD_ABSORB[2]}) * (1.0 - thick))`), 'the lane, in linear');
-  assert.ok(classic.includes('exp(vec3(${BLOOD_ABSORB_ENCODED[0]}, ${BLOOD_ABSORB_ENCODED[1]}, ${BLOOD_ABSORB_ENCODED[2]}) * (1.0 - thick))'), 'the classic set, in display space');
+  assert.ok(classic.includes('exp(vec3(${glslFloat(BLOOD_ABSORB_ENCODED[0])}, ${glslFloat(BLOOD_ABSORB_ENCODED[1])}, ${glslFloat(BLOOD_ABSORB_ENCODED[2])}) * (1.0 - thick))'), 'the classic set, in display space');
   assert.ok(BLOOD_ABSORB_ENCODED[0] < BLOOD_ABSORB[0], 'which is the smaller exponent, or the gain would show twice over');
   // AUDIT BLOOD3 F5: the wet DARKENING, on the lane
   assert.ok(EL_DECAL_FS.includes(`* mix(1.0, ${WET_DARKEN}, clamp(vWet, 0.0, 1.0));`), 'a wet mark is darker - the cue you can see from above');
@@ -3788,6 +3819,13 @@ test('BLOOD3 by source: both decal shaders recover the depth, and the LANE carri
     'the quad’s own d(world)/d(uv), solved - so the tilt is IN the surface, whatever the mark is stuck to');
   assert.ok(EL_DECAL_FS.includes('vec3 slope = duv.x * normalize(tu) + duv.y * normalize(tv);'));
   assert.ok(EL_DECAL_FS.includes(`n = normalize(n - slope * ${BLOOD_MENISCUS});`), 'and the normal tilts AWAY from the rise - a bank of liquid, not a dent');
+  // AUDIT BLOOD3 F10: and it is the WHOLE mark's relief, not a rim lip.
+  // A pool's thickness is a smoothstep and a smoothstep is steepest in
+  // the MIDDLE of its ramp, so the picture shows the change twice as
+  // strong in the body as at the rim. The shader said "the rim has a
+  // shoulder" until a frame was finally differenced.
+  assert.ok(EL_DECAL_FS.includes('THE MARK IS A HEIGHT FIELD, NOT A PLANE'), 'the comment says what the code does');
+  assert.ok(!/RIM HAS A SHOULDER/.test(EL_DECAL_FS), '...and not what it was assumed to do');
   assert.ok(BLOOD_MENISCUS > 0.3, 'by an amount that does something');
   assert.ok(EL_DECAL_FS.indexOf('n = normalize(n - slope') > 0 && EL_DECAL_FS.indexOf('n = normalize(n - slope') < EL_DECAL_FS.indexOf('float sunVis'),
     'before anything reads the normal, or the shadows and the sun would take the flat one');
@@ -3811,4 +3849,7 @@ test('BLOOD3 by source: both decal shaders recover the depth, and the LANE carri
   const probe = readFileSync(new URL('../tools/bloodProbe.mjs', import.meta.url), 'utf8');
   assert.ok(probe.includes('FILM ${f.lane}: a mark is not ONE red'), 'the probe reads the film off a real frame');
   assert.ok(probe.includes('it is still BLOOD, not a white highlight'), '...and that a wet mark did not become a white patch');
+  assert.ok(probe.includes('MENISCUS lane: the mark is lit as a RELIEF'),
+    'AUDIT BLOOD3 F10: and the meniscus is DRAWN now - it went to main as the one law in the slice with no picture at all');
+  assert.ok(probe.includes('not a rim lip'), '...and the row says where the change lands, which is not where the record claimed');
 });

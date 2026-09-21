@@ -306,10 +306,47 @@ const out = await page.evaluate(async () => {
     };
     return { label, px: [...px], film: { deep: ring(0, 5), thin: ring(12, 17) } };
   };
-  const fresh = freshTint(() => 0.5), dried = driedTint(fresh, DRY_STAGES);
+  // AUDIT BLOOD3 F10: THE MENISCUS, AT LAST IN A PICTURE. Every other
+  // law in this slice is read off a colour; this one is read off a
+  // NORMAL, and a normal only shows where the light grazes it. So: the
+  // same mark twice under a sun almost in the quad's own plane, once
+  // with the term live and once with the tilt forced flat, and the
+  // difference between the two frames IS the term. The tilt is forced
+  // by handing the shader a mark whose thickness does not vary - a
+  // uniform-ink fixture, where the gradient is zero and the branch
+  // leaves the normal alone - so nothing has to be recompiled and the
+  // shipped shader is the one under test.
+  const flatInk = (() => {
+    const c = new Uint8ClampedArray(8 * 8 * 4);
+    for (let i = 0; i < 64; i++) { const ink = Math.round(255 * (1 - 0.18)); c[i*4] = ink; c[i*4+1] = ink; c[i*4+2] = ink; c[i*4+3] = 255; }
+    return { colors: c, width: 8, height: 8 };
+  })();
+  const flatTex = r.uploadTexture(4242, 'flatink#0', flatInk, { smooth: true });
+  const grazeLit = () => r.setLighting([0.06, 0.06, 0.07], 1.6, [1, 0.97, 0.92]);
+  const grazeShot = (useAtlas) => {
+    wear(fresh0, 0);
+    grazeLit();
+    r.setPointLights(new Float32Array(0), [1, 1, 1], null);
+    const proj = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, -1.02, -1, 0, 0, -0.2, 0];
+    const view = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, -3, 1];
+    r.beginFrame(proj, view, [0.945, 0.315, 0.087]);   // a sun almost in the mark's own plane
+    const gl = r.gl;
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    gl.viewport(0, 0, 128, 128);
+    gl.clearColor(0.06, 0.06, 0.07, 1);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    r.drawDecals(own, useAtlas ? atlasTex : flatTex);
+    const all = new Uint8Array(128 * 128 * 4);
+    gl.readPixels(0, 0, 128, 128, gl.RGBA, gl.UNSIGNED_BYTE, all);
+    return all;
+  };
+
+  const fresh0 = freshTint(() => 0.5);
+  const fresh = fresh0, dried = driedTint(fresh, DRY_STAGES);
   const noonLit = () => r.setLighting([0.55, 0.55, 0.55], 1, [1, 0.96, 0.9]);
   const ownRows = [];
   const ownFilm = [];   // BLOOD3: the mark's own spread, per lane
+  let meniscusOut = null;   // AUDIT BLOOD3 F10: the normal's tilt, differenced out of two frames
   for (const [laneName, enter, leave] of [['classic', () => {}, () => {}], ['lane', async () => { const { EL_LANE } = await import('/src/render/enhancedLighting.js'); r.setLightingLane(EL_LANE); r.setExposure(1.1); }, () => r.setLightingLane(null)]]) {
     await enter();
     ownRows.push({ lane: laneName, what: 'fresh at noon', px: ownShot('', fresh, noonLit).px });
@@ -320,6 +357,23 @@ const out = await page.evaluate(async () => {
     ownRows.push({ lane: laneName, what: 'fresh WET, dungeon + torch', px: ownShot('', fresh, dungeon, TORCH, 1).px });
     ownRows.push({ lane: laneName, what: 'fresh WET at noon', px: ownShot('', fresh, noonLit, null, 1).px });
     ownFilm.push({ lane: laneName, ...ownShot('', fresh, noonLit, null, 0, [0, 0, 0, 1]).film });   // BLOOD3
+    // AUDIT BLOOD3 F10: the meniscus, measured. A mark with a thickness
+    // field against the same mark with a flat one, under a grazing sun:
+    // the difference is the normal's tilt and nothing else. Banded by
+    // radius so the row can say WHERE it lands, because the answer
+    // turned out not to be the rim.
+    if (laneName === 'lane') {
+      const bumped = grazeShot(true), flat = grazeShot(false);
+      let peak = 0, sIn = 0, nIn = 0, sOut = 0, nOut = 0;
+      for (let i = 0; i < bumped.length; i += 4) {
+        const d = Math.max(Math.abs(bumped[i] - flat[i]), Math.abs(bumped[i+1] - flat[i+1]), Math.abs(bumped[i+2] - flat[i+2]));
+        if (d > peak) peak = d;
+        const px = (i / 4) % 128, py = Math.floor((i / 4) / 128);
+        const rad = Math.hypot(px - 63.5, py - 63.5) / 64;
+        if (rad < 0.45) { sIn += d; nIn++; } else if (rad < 0.80) { sOut += d; nOut++; }
+      }
+      meniscusOut = { peak, body: sIn / Math.max(1, nIn), rim: sOut / Math.max(1, nOut) };
+    }
     leave();
   }
 
@@ -355,6 +409,7 @@ const out = await page.evaluate(async () => {
     lane,
     ownRows,
     ownFilm,   // BLOOD3
+    meniscus: meniscusOut,   // AUDIT BLOOD3 F10
   };
 });
 
@@ -507,6 +562,19 @@ for (const f of out.ownFilm ?? []) {
 }
 const laneDusk = out.lane.find((x) => x.what === 'dusk');
 check('LANE dusk: the mark is RED, not the near-black the classic program drew under the lane', (laneDusk?.decal[0] ?? 0) > 50, `rgba ${laneDusk?.decal.join(',')}`);
+// AUDIT BLOOD3 F10: THE MENISCUS HAS A PICTURE NOW. This is the one law
+// in the slice that is read off a NORMAL rather than a colour, and it
+// went to main with nothing drawing it. The mark's own thickness is a
+// height field; switching that height field flat changes how a grazing
+// sun lands on it, and these rows say by how much and WHERE.
+if (out.meniscus) {
+  const m = out.meniscus;
+  console.log(`  MENISCUS lane: peak ${m.peak}/255 | body (r<0.45) mean ${m.body.toFixed(2)} | rim band (0.45-0.80) mean ${m.rim.toFixed(2)}`);
+  check('MENISCUS lane: the mark is lit as a RELIEF - flatten its thickness and a grazing sun lands differently',
+    m.peak >= 12, `peak change ${m.peak}/255 between a real mark and a uniform-thickness one`);
+  check('MENISCUS lane: ...and it is the WHOLE mark, not a rim lip - a pool\'s thickness is a smoothstep, and a smoothstep is steepest in the MIDDLE',
+    m.body > m.rim, `body ${m.body.toFixed(2)} against rim band ${m.rim.toFixed(2)} - the record said "raised edge" until this row was written`);
+}
 check('no page errors', errors.length === 0, errors.join(' | '));
 
 await browser.close();
