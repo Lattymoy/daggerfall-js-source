@@ -351,6 +351,7 @@ export function createHitEffects({
     clear() {
       for (let i = live.length - 1; i >= 0; i--) retire(live[i]);
       marks?.clear?.();   // BLOOD1a: a room thrown away takes its blood with it, on the call every host already makes
+      bleeding.clear();   // BLOOD AUDIT 4: ...and the ledger's memory of who pooled and who walked - the next room's bodies are met fresh
     },
     _live: live,
   };

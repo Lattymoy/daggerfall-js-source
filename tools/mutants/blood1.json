@@ -191,8 +191,8 @@
   {
     "name": "BLOOD1a-a-mode-change-frees-the-ring-instead-of-blanking-it",
     "file": "src/combat/bloodMarks.js",
-    "old": "    for (const d of _pool.decals()) {\n      clearDecalQuad(_scratch, 0);\n      renderer.writeDecalSlot(_batch, d.slot, _scratch);\n    }",
-    "new": "",
+    "old": "    const n = _pool.count;\n    _pool.clear();\n    return n;",
+    "new": "    const n = _pool.count;\n    _pool = null; _batch = null;\n    return n;",
     "tests": [
       "test/blood1_decals.test.js"
     ]
@@ -254,7 +254,7 @@
   {
     "name": "BLOOD1a-the-shift-moves-the-ring-but-not-the-buffer",
     "file": "src/combat/bloodMarks.js",
-    "old": "    for (const d of _pool.decals()) {\n      writeDecalQuad(_scratch, 0, d, d.uv);\n      renderer.writeDecalSlot(_batch, d.slot, _scratch);\n    }\n    return n;",
+    "old": "    for (let i = 0, cap = _pool.capacity; i < cap; i++) {\n      const d = _pool.at(i);\n      if (d) writeSlot(d);\n    }\n    flush();   // BLOOD AUDIT 4: one upload a run - the whole ring moved, and it went up a slot at a time\n    return n;",
     "new": "    return n;",
     "tests": [
       "test/blood1_decals.test.js"
@@ -426,8 +426,8 @@
   {
     "name": "BLOOD1b-the-rate-sizes-one-mark-again-instead-of-counting-them",
     "file": "src/combat/bloodMarks.js",
-    "old": "    return spray(col, pos, sprayCount(rate), sprayRadius(rate), rate, hit?.throw);",
-    "new": "    return spray(col, pos, 1, sprayRadius(rate), rate, hit?.throw);",
+    "old": "    const pool = spray(col, pos, sprayCount(rate), sprayRadius(rate), rate, hit?.throw);",
+    "new": "    const pool = spray(col, pos, 1, sprayRadius(rate), rate, hit?.throw);",
     "tests": [
       "test/blood1_decals.test.js"
     ]
@@ -444,8 +444,8 @@
   {
     "name": "BLOOD1b-the-burst-REPLACES-the-ladder-s-spray",
     "file": "src/combat/bloodMarks.js",
-    "old": "      if (heavy && _gibs.length < GIB_COUNT * MAX_BODIES) { _gibs = _gibs.concat(throwGibs(pos, rng)); reseatGibs(); }\n    }\n    const rate = bloodRate(damage, maxHealth, density);\n    return spray(col, pos, sprayCount(rate), sprayRadius(rate), rate, hit?.throw);",
-    "new": "      if (heavy && _gibs.length < GIB_COUNT * MAX_BODIES) { _gibs = _gibs.concat(throwGibs(pos, rng)); reseatGibs(); }\n      const h2 = !!hit?.fromPlayer && !!hit?.heavy;\n      return spray(col, pos, burstCount(h2, density), burstReach(h2, density), burstRate(h2, density), hit?.throw);\n    }\n    const rate = bloodRate(damage, maxHealth, density);\n    return spray(col, pos, sprayCount(rate), sprayRadius(rate), rate, hit?.throw);",
+    "old": "      if (heavy && _gibs.length < GIB_COUNT * MAX_BODIES) { _gibs = _gibs.concat(throwGibs(pos, rng)); reseatGibs(); }\n    }\n    const rate = bloodRate(damage, maxHealth, density);\n    const pool = spray(col, pos, sprayCount(rate), sprayRadius(rate), rate, hit?.throw);",
+    "new": "      if (heavy && _gibs.length < GIB_COUNT * MAX_BODIES) { _gibs = _gibs.concat(throwGibs(pos, rng)); reseatGibs(); }\n      const h2 = !!hit?.fromPlayer && !!hit?.heavy;\n      const b2 = spray(col, pos, burstCount(h2, density), burstReach(h2, density), burstRate(h2, density), hit?.throw);\n      flush();\n      return b2;\n    }\n    const rate = bloodRate(damage, maxHealth, density);\n    const pool = spray(col, pos, sprayCount(rate), sprayRadius(rate), rate, hit?.throw);",
     "tests": [
       "test/blood1_decals.test.js"
     ]
@@ -1038,8 +1038,8 @@
   {
     "name": "BLOOD1b-the-ladder-s-spray-is-not-thrown-by-the-swing",
     "file": "src/combat/bloodMarks.js",
-    "old": "    return spray(col, pos, sprayCount(rate), sprayRadius(rate), rate, hit?.throw);",
-    "new": "    return spray(col, pos, sprayCount(rate), sprayRadius(rate), rate);",
+    "old": "    const pool = spray(col, pos, sprayCount(rate), sprayRadius(rate), rate, hit?.throw);",
+    "new": "    const pool = spray(col, pos, sprayCount(rate), sprayRadius(rate), rate);",
     "tests": [
       "test/blood1_decals.test.js"
     ]
@@ -1191,10 +1191,10 @@
     ]
   },
   {
-    "name": "AUDIT2-clear-forgets-the-marks-but-leaves-the-quads-in-the-buffer",
+    "name": "AUDIT2-clear-forgets-the-marks-but-leaves-the-ring",
     "file": "src/combat/bloodMarks.js",
-    "old": "    for (const d of _pool.decals()) {\n      clearDecalQuad(_scratch, 0);\n      renderer.writeDecalSlot(_batch, d.slot, _scratch);\n    }\n    _pool.clear();",
-    "new": "    _pool.clear();",
+    "old": "    const n = _pool.count;\n    _pool.clear();",
+    "new": "    const n = _pool.count;",
     "tests": [
       "test/blood1_decals.test.js"
     ]
@@ -1247,7 +1247,7 @@
   {
     "name": "AUDIT3-the-ring-is-built-at-first-blood-again",
     "file": "src/combat/bloodMarks.js",
-    "old": "  if (renderer?.createDecalBatch) ensure();\n",
+    "old": "  if (renderer?.createDecalBatch && settings?.enabled?.()) ensure();\n",
     "new": "",
     "tests": [
       "test/blood1_decals.test.js"
@@ -1400,8 +1400,8 @@
   {
     "name": "AUDIT3-the-classic-decal-ignores-the-cloud",
     "file": "src/render/renderer.js",
-    "old": "  vec3 lightAcc = uTint + uDecalSun * cloudShadowAt(vWorld) + pointAcc + iAtt * iAtt * uIndirectColor;",
-    "new": "  vec3 lightAcc = uTint + uDecalSun + pointAcc + iAtt * iAtt * uIndirectColor;",
+    "old": "  vec3 lightAcc = uTint + uDecalSun * (diff * cloudShadowAt(vWorld)) + pointAcc + (iAtt * iAtt * max(dot(n, iL / max(iD, 1e-4)), 0.0)) * uIndirectColor;",
+    "new": "  vec3 lightAcc = uTint + uDecalSun * diff + pointAcc + (iAtt * iAtt * max(dot(n, iL / max(iD, 1e-4)), 0.0)) * uIndirectColor;",
     "tests": [
       "test/blood1_decals.test.js",
       "test/el1_enhancedlighting.test.js"
@@ -1582,10 +1582,10 @@
     ]
   },
   {
-    "name": "BLOOD2b-a-fresh-mark-is-always-white",
+    "name": "BLOOD2b-a-fresh-mark-is-always-the-base",
     "file": "src/combat/bloodArt.js",
-    "old": "  const r = rng();\n  return [1 - r * FRESH_VARIANCE * 0.5, 1 - r * FRESH_VARIANCE, 1 - r * FRESH_VARIANCE, 1];",
-    "new": "  return [1, 1, 1, 1];",
+    "old": "  const k = 1 - rng() * FRESH_VARIANCE;\n  return [BLOOD_BASE[0] * k, BLOOD_BASE[1] * k, BLOOD_BASE[2] * k, 1];",
+    "new": "  return [BLOOD_BASE[0], BLOOD_BASE[1], BLOOD_BASE[2], 1];",
     "tests": [
       "test/blood1_decals.test.js"
     ]
@@ -1611,8 +1611,8 @@
   {
     "name": "BLOOD2b-the-dried-tint-ignores-the-stage",
     "file": "src/combat/bloodArt.js",
-    "old": "  const t = Math.max(0, Math.min(1, stage / DRY_STAGES));\n  if (t >= 1)",
-    "new": "  const t = 0;\n  if (t >= 1)",
+    "old": "  const t = Math.max(0, Math.min(1, stage / DRY_STAGES));\n  const k = freshShade(fresh);",
+    "new": "  const t = 0;\n  const k = freshShade(fresh);",
     "tests": [
       "test/blood1_decals.test.js"
     ]
@@ -1638,8 +1638,8 @@
   {
     "name": "BLOOD2b-a-recentre-drops-the-cell",
     "file": "src/combat/bloodMarks.js",
-    "old": "    for (const d of _pool.decals()) {\n      writeDecalQuad(_scratch, 0, d, d.uv);",
-    "new": "    for (const d of _pool.decals()) {\n      writeDecalQuad(_scratch, 0, d);",
+    "old": "      if (d) writeSlot(d);\n    }\n    flush();   // BLOOD AUDIT 4: one upload a run",
+    "new": "      if (d) { writeDecalQuad(_mirror, d.slot * DECAL_FLOATS, d); _dirty.push(d.slot); }\n    }\n    flush();   // BLOOD AUDIT 4: one upload a run",
     "tests": [
       "test/blood1_decals.test.js"
     ]
@@ -1665,8 +1665,8 @@
   {
     "name": "BLOOD2b-the-atlas-is-sampled-nearest",
     "file": "src/combat/bloodMarks.js",
-    "old": "_atlasTex = renderer.uploadTexture(BLOOD_ATLAS_ARCHIVE, BLOOD_ATLAS_RECORD, _atlas, { smooth: true }) ?? null;",
-    "new": "_atlasTex = renderer.uploadTexture(BLOOD_ATLAS_ARCHIVE, BLOOD_ATLAS_RECORD, _atlas) ?? null;",
+    "old": "_atlasTex = renderer.uploadTexture(BLOOD_ATLAS_ARCHIVE, BLOOD_ATLAS_RECORD, atlas(), { smooth: true }) ?? null;",
+    "new": "_atlasTex = renderer.uploadTexture(BLOOD_ATLAS_ARCHIVE, BLOOD_ATLAS_RECORD, atlas()) ?? null;",
     "tests": [
       "test/blood1_decals.test.js"
     ]
@@ -1793,8 +1793,8 @@
   {
     "name": "BLOOD2c-the-drip-rays-from-the-chest",
     "file": "src/combat/bloodMarks.js",
-    "old": "    return spray(col, [feet[0], feet[1] + DRIP_FROM, feet[2]], n, BLEED_RADIUS, BLEED_RATE, null, { up: false });",
-    "new": "    return spray(col, [feet[0], feet[1] + 1.5, feet[2]], n, BLEED_RADIUS, BLEED_RATE, null, { up: false });",
+    "old": "    const d = spray(col, [feet[0], feet[1] + DRIP_FROM, feet[2]], n, BLEED_RADIUS, BLEED_RATE, null, { up: false, streak: false });",
+    "new": "    const d = spray(col, [feet[0], feet[1] + 1.5, feet[2]], n, BLEED_RADIUS, BLEED_RATE, null, { up: false, streak: false });",
     "tests": [
       "test/blood1_decals.test.js"
     ]
@@ -1811,7 +1811,7 @@
   {
     "name": "BLOOD2c-the-spread-never-steps",
     "file": "src/combat/bloodMarks.js",
-    "old": "    spread();   // BLOOD2c: the corpses' pools, a step at a time\n",
+    "old": "    if (spread()) flush();   // BLOOD2c: the corpses' pools, a step at a time\n",
     "new": "",
     "tests": [
       "test/blood1_decals.test.js"
@@ -1820,7 +1820,7 @@
   {
     "name": "BLOOD2c-a-reused-slot-is-rewritten-as-a-pool",
     "file": "src/combat/bloodMarks.js",
-    "old": "      if (!live.has(d)) return false;\n",
+    "old": "      if (_pool.at(d.slot) !== d) return false;\n",
     "new": "",
     "tests": [
       "test/blood1_decals.test.js"
@@ -1883,8 +1883,8 @@
   {
     "name": "BLOOD2c-a-drip-looks-up-for-a-ceiling",
     "file": "src/combat/bloodMarks.js",
-    "old": "    return spray(col, [feet[0], feet[1] + DRIP_FROM, feet[2]], n, BLEED_RADIUS, BLEED_RATE, null, { up: false });",
-    "new": "    return spray(col, [feet[0], feet[1] + DRIP_FROM, feet[2]], n, BLEED_RADIUS, BLEED_RATE);",
+    "old": "    const d = spray(col, [feet[0], feet[1] + DRIP_FROM, feet[2]], n, BLEED_RADIUS, BLEED_RATE, null, { up: false, streak: false });",
+    "new": "    const d = spray(col, [feet[0], feet[1] + DRIP_FROM, feet[2]], n, BLEED_RADIUS, BLEED_RATE, null, { streak: false });",
     "tests": [
       "test/blood1_decals.test.js"
     ]
@@ -1892,8 +1892,8 @@
   {
     "name": "BLOOD2d-a-print-is-wet-blood",
     "file": "src/combat/bloodMarks.js",
-    "old": "      if (d.uv?.kind === 'print' || !(d.normal[1] > 0.7) || (d.stage ?? 0) > TRACK_WET_STAGE) continue;",
-    "new": "      if (!(d.normal[1] > 0.7) || (d.stage ?? 0) > TRACK_WET_STAGE) continue;",
+    "old": "      if (!d || d.uv?.kind === 'print' || !(d.normal[1] > CEILING_DOT) || (d.stage ?? 0) > TRACK_WET_STAGE) continue;",
+    "new": "      if (!d || !(d.normal[1] > CEILING_DOT) || (d.stage ?? 0) > TRACK_WET_STAGE) continue;",
     "tests": [
       "test/blood1_decals.test.js"
     ]
@@ -1901,8 +1901,8 @@
   {
     "name": "BLOOD2d-dried-blood-tracks",
     "file": "src/combat/bloodMarks.js",
-    "old": "      if (d.uv?.kind === 'print' || !(d.normal[1] > 0.7) || (d.stage ?? 0) > TRACK_WET_STAGE) continue;",
-    "new": "      if (d.uv?.kind === 'print' || !(d.normal[1] > 0.7)) continue;",
+    "old": "      if (!d || d.uv?.kind === 'print' || !(d.normal[1] > CEILING_DOT) || (d.stage ?? 0) > TRACK_WET_STAGE) continue;",
+    "new": "      if (!d || d.uv?.kind === 'print' || !(d.normal[1] > CEILING_DOT)) continue;",
     "tests": [
       "test/blood1_decals.test.js"
     ]
@@ -1928,8 +1928,8 @@
   {
     "name": "BLOOD2d-the-prints-never-fade",
     "file": "src/combat/bloodMarks.js",
-    "old": "    d.fresh = [d.fresh[0], d.fresh[1], d.fresh[2], share];",
-    "new": "    d.fresh = [d.fresh[0], d.fresh[1], d.fresh[2], 1];",
+    "old": "bloodMarkKind({ print: true }), share);",
+    "new": "bloodMarkKind({ print: true }), 1);",
     "tests": [
       "test/blood1_decals.test.js"
     ]
@@ -1955,8 +1955,8 @@
   {
     "name": "BLOOD2d-a-print-wears-spatter",
     "file": "src/combat/bloodMarks.js",
-    "old": "bloodMarkKind({ print: true }));",
-    "new": "bloodMarkKind({}));",
+    "old": "bloodMarkKind({ print: true }), share);",
+    "new": "bloodMarkKind({}), share);",
     "tests": [
       "test/blood1_decals.test.js"
     ]
@@ -1964,8 +1964,8 @@
   {
     "name": "BLOOD2d-a-shuffle-is-a-step",
     "file": "src/combat/bloodBleed.js",
-    "old": "          if (s.walked >= STRIDE) {\n            s.walked -= STRIDE;",
-    "new": "          if (s.walked >= 0) {\n            s.walked = 0;",
+    "old": "          for (let a = STRIDE - s.walked; a <= run; a += STRIDE) {",
+    "new": "          for (let a = 0; a <= run; a += STRIDE) {",
     "tests": [
       "test/blood1_decals.test.js"
     ]
@@ -1973,7 +1973,7 @@
   {
     "name": "BLOOD2d-a-teleport-is-a-walk",
     "file": "src/combat/bloodBleed.js",
-    "old": "        if (run > 0 && run < STRIDE * 8) {   // a teleport is not a walk",
+    "old": "        if (run > 0 && run <= TELEPORT_SPEED * dt) {",
     "new": "        if (run > 0) {",
     "tests": [
       "test/blood1_decals.test.js"
@@ -1993,6 +1993,285 @@
     "file": "src/combat/bloodArt.js",
     "old": "    const toeX = 0.32 + rng() * 0.12, heelX = -0.5 - rng() * 0.08;",
     "new": "    const toeX = -0.32 - rng() * 0.12, heelX = 0.5 + rng() * 0.08;",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT4-the-step-rays-from-the-feet",
+    "file": "src/combat/bloodMarks.js",
+    "old": "    const h = col.surfaceHit([pos[0], pos[1] + DRIP_FROM, pos[2]], DOWN, MARK_DROP);\n    if (!h || !Number.isFinite(h.dist) || h.dist > MARK_DROP) return null;\n    const foot = [pos[0], pos[1] + DRIP_FROM - h.dist, pos[2]];",
+    "new": "    const h = col.surfaceHit([pos[0], pos[1], pos[2]], DOWN, MARK_DROP);\n    if (!h || !Number.isFinite(h.dist) || h.dist > MARK_DROP) return null;\n    const foot = [pos[0], pos[1] - h.dist, pos[2]];",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT4-the-tracks-survive-the-room",
+    "file": "src/combat/bloodMarks.js",
+    "old": "    _tracks = new WeakMap();    // BLOOD AUDIT 4: ...and the blood on everyone's boots\n",
+    "new": "",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT4-the-ledger-remembers-the-last-room",
+    "file": "src/scenes/hitEffects.js",
+    "old": "      bleeding.clear();   // BLOOD AUDIT 4:",
+    "new": "      // bleeding.clear();   // BLOOD AUDIT 4:",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT4-alive-again-is-the-old-life",
+    "file": "src/combat/bloodBleed.js",
+    "old": "      s.pooled = false;\n      const share = bleedShare(v.health, v.maxHealth);",
+    "new": "      const share = bleedShare(v.health, v.maxHealth);",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT4-a-body-met-dead-pools",
+    "file": "src/combat/bloodBleed.js",
+    "old": "pooled: !!v.dead, bleeding: false",
+    "new": "pooled: false, bleeding: false",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT4-feet-nowhere-are-feet",
+    "file": "src/combat/bloodBleed.js",
+    "old": "      if (!Number.isFinite(v.feet[0]) || !Number.isFinite(v.feet[1]) || !Number.isFinite(v.feet[2])) continue;\n",
+    "new": "",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT4-a-teleport-is-a-distance-again",
+    "file": "src/combat/bloodBleed.js",
+    "old": "        if (run > 0 && run <= TELEPORT_SPEED * dt) {",
+    "new": "        if (run > 0 && run < STRIDE * 8) {",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT4-one-step-a-frame",
+    "file": "src/combat/bloodBleed.js",
+    "old": "          for (let a = STRIDE - s.walked; a <= run; a += STRIDE) {",
+    "new": "          for (let a = STRIDE - s.walked; a <= run; a += run + 1) {",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT4-the-steps-land-where-the-feet-stopped",
+    "file": "src/combat/bloodBleed.js",
+    "old": "pos: [s.last[0] + dx * f, s.last[1] + dy * f, s.last[2] + dz * f]",
+    "new": "pos: [v.feet[0], v.feet[1], v.feet[2]]",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT4-the-remainder-is-dropped",
+    "file": "src/combat/bloodBleed.js",
+    "old": "          s.walked = (s.walked + run) % STRIDE;",
+    "new": "          s.walked = 0;",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT4-dried-is-the-old-multiply",
+    "file": "src/combat/bloodArt.js",
+    "old": "export const DRIED_TINT = Object.freeze([0.3, 0.13, 0.09, 1]);",
+    "new": "export const DRIED_TINT = Object.freeze([0.5, 0.36, 0.34, 1]);",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT4-the-atlas-is-painted-red",
+    "file": "src/combat/bloodArt.js",
+    "old": "          colors[o] = ink; colors[o + 1] = ink; colors[o + 2] = ink;",
+    "new": "          colors[o] = ink; colors[o + 1] = Math.round(ink * 0.1); colors[o + 2] = Math.round(ink * 0.1);",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT4-fresh-wanders-as-a-hue",
+    "file": "src/combat/bloodArt.js",
+    "old": "  return [BLOOD_BASE[0] * k, BLOOD_BASE[1] * k, BLOOD_BASE[2] * k, 1];",
+    "new": "  return [BLOOD_BASE[0], BLOOD_BASE[1] * k, BLOOD_BASE[2] * k, 1];",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT4-dried-forgets-the-shade",
+    "file": "src/combat/bloodArt.js",
+    "old": "  const k = freshShade(fresh);\n  const end",
+    "new": "  const k = 1;\n  const end",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT4-the-wall-under-the-foot-is-wet",
+    "file": "src/combat/bloodMarks.js",
+    "old": "!(d.normal[1] > CEILING_DOT) || (d.stage ?? 0) > TRACK_WET_STAGE) continue;",
+    "new": "!(d.normal[1] > -2) || (d.stage ?? 0) > TRACK_WET_STAGE) continue;",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT4-a-drip-s-drops-streak",
+    "file": "src/combat/bloodMarks.js",
+    "old": "BLEED_RADIUS, BLEED_RATE, null, { up: false, streak: false });",
+    "new": "BLEED_RADIUS, BLEED_RATE, null, { up: false });",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT4-the-dry-pass-uploads-a-mark-at-a-time",
+    "file": "src/combat/bloodMarks.js",
+    "old": "      while (i + 1 < _dirty.length && _dirty[i + 1] <= hi) { i++; if (_dirty[i] === hi) hi++; }   // the same slot twice is one slot\n",
+    "new": "",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT4-a-clear-blanks-the-slots-again",
+    "file": "src/combat/bloodMarks.js",
+    "old": "    const n = _pool.count;\n    _pool.clear();\n    return n;",
+    "new": "    const n = _pool.count;\n    for (let i = 0; i < n; i++) renderer.writeDecalSlot(_batch, i, _mirror.subarray(0, DECAL_FLOATS));\n    _pool.clear();\n    return n;",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT4-the-spread-reads-the-ring-as-an-array",
+    "file": "src/combat/bloodMarks.js",
+    "old": "      if (_pool.at(d.slot) !== d) return false;",
+    "new": "      if (!_pool.decals().includes(d)) return false;",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT4-the-step-reads-the-ring-as-an-array",
+    "file": "src/combat/bloodMarks.js",
+    "old": "    for (let i = 0, cap = _pool.capacity; i < cap; i++) {\n      const d = _pool.at(i);\n      if (!d || d.uv?.kind === 'print'",
+    "new": "    for (const d of _pool.decals()) {\n      if (d.uv?.kind === 'print'",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT4-the-ring-is-built-with-blood-off",
+    "file": "src/combat/bloodMarks.js",
+    "old": "  if (renderer?.createDecalBatch && settings?.enabled?.()) ensure();",
+    "new": "  if (renderer?.createDecalBatch) ensure();",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT4-the-atlas-is-built-at-boot",
+    "file": "src/combat/bloodMarks.js",
+    "old": "  let _atlas = null;\n  const atlas = () => (_atlas ??= bloodAtlas());",
+    "new": "  let _atlas = bloodAtlas();\n  const atlas = () => _atlas;",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT4-the-dungeon-quickload-keeps-the-blood",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "      hitEffects.clear();\n      classicMinutesRef.value = extras.classicMinutes ?? classicMinutesRef.value;",
+    "new": "      classicMinutesRef.value = extras.classicMinutes ?? classicMinutesRef.value;",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT4-the-classic-decal-takes-the-flat-s-sun-again",
+    "file": "src/render/renderer.js",
+    "old": "  vec3 lightAcc = uTint + uDecalSun * (diff * cloudShadowAt(vWorld)) + pointAcc",
+    "new": "  vec3 lightAcc = uTint + uDecalSun * (0.5 * cloudShadowAt(vWorld)) + pointAcc",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT4-the-classic-decal-takes-the-flat-s-lanterns-again",
+    "file": "src/render/renderer.js",
+    "old": "    pointAcc += att * att * max(dot(n, L / max(d, 1e-4)), 0.0) * uPointColors[i];\n  }\n  vec3 iL = uIndirect.xyz - vWorld;",
+    "new": "    pointAcc += att * att * uPointColors[i];\n  }\n  vec3 iL = uIndirect.xyz - vWorld;",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT4-the-lane-decal-takes-the-flat-s-lanterns-again",
+    "file": "src/render/enhancedLighting.js",
+    "old": "  vec3 lit = albedo * (uTint + sunLit + elPointLit(vWorld, n) + elIndirectLit(vWorld, n));",
+    "new": "  vec3 base = vWorld + n * 0.5;\n  vec3 lit = albedo * (uTint + sunLit + elPointFlat(vWorld, base) + elIndirectFlat(vWorld));",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT4-the-lane-decal-takes-the-flat-s-sun-again",
+    "file": "src/render/enhancedLighting.js",
+    "old": "uDecalSun * (ndl * cloudShadowAt(vWorld) * sunShadowAt(vWorld, n))",
+    "new": "uDecalSun * (0.5 * cloudShadowAt(vWorld) * sunShadowAt(vWorld, n))",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT4-the-sun-uploads-its-half",
+    "file": "src/render/renderer.js",
+    "old": "      gl.uniform3f(d.sun, sc[0] * this._sunScale, sc[1] * this._sunScale, sc[2] * this._sunScale);",
+    "new": "      gl.uniform3f(d.sun, sc[0] * this._sunScale * 0.5, sc[1] * this._sunScale * 0.5, sc[2] * this._sunScale * 0.5);",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT4-the-sun-s-direction-is-not-uploaded",
+    "file": "src/render/renderer.js",
+    "old": "    if (d.lightDir) gl.uniform3fv(d.lightDir, this._lightDir);   // BLOOD AUDIT 4\n",
+    "new": "",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT4-texBinds-counted-twice",
+    "file": "src/render/renderer.js",
+    "old": "    this._bindVao(null);\n    // BLOOD AUDIT 4: no texBinds++ here",
+    "new": "    this._bindVao(null);\n    this.stats.texBinds++;\n    // BLOOD AUDIT 4: no texBinds++ here",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT4-the-bleed-rate-is-a-second-copy",
+    "file": "src/combat/bloodBleed.js",
+    "old": "export const BLEED_RATE = GIB_SPLASH_RATE;",
+    "new": "export const BLEED_RATE = 20;",
     "tests": [
       "test/blood1_decals.test.js"
     ]

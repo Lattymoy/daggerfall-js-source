@@ -853,8 +853,9 @@ Slices, each behind its own `features.js` row:
    times, in one colour, for ever. The port still ships no blood
    picture; it MAKES one now.
 
-   THE ATLAS (`src/combat/bloodArt.js`): a 256x256 RGBA sheet of four
-   kinds in four variants, generated from noise by a seeded generator
+   THE ATLAS (`src/combat/bloodArt.js`): a 256-wide RGBA sheet, one
+   row a kind (four kinds here, five since BLOOD2d's print) in four
+   variants, generated from noise by a seeded generator
    (mulberry32, so it is the same picture on every boot and a pin can
    name a texel) the first time a pool asks, and uploaded ONCE through
    the renderer's own texture cache under a port-own pseudo-archive
@@ -880,8 +881,10 @@ Slices, each behind its own `features.js` row:
    AND IT DRIES. The pool keeps a clock; every DRY_TICK (2 s) each live
    mark's stage is read off its age - DRY_STAGES (8) steps over
    DRY_TIME (180 s) - and one that crossed a stage takes its new tint
-   (the fresh tint sliding to DRIED_TINT, a dark brown-red, landing on
-   it TO THE BIT at the last stage) and has its slot rewritten. Eight
+   (the fresh tint sliding to DRIED_TINT, landing on it TO THE BIT at
+   the last stage - BLOOD AUDIT 4 found the tint shipped here made a
+   black-red, not a brown, and moved the colour out of the texels; see
+   item 8) and has its slot rewritten. Eight
    rewrites over a mark's life, never one a frame, and none once
    dried. A mark laid later is born at the clock, not at zero.
 
@@ -891,7 +894,10 @@ Slices, each behind its own `features.js` row:
    drying driven through DRY_TIME with the rewrites counted and
    bounded, dried never rewritten, a late mark born now, a recentre
    keeping the cell) and the settled-frame pin re-aimed. Mutants: 16,
-   16 dead (`tools/mutants/blood1.json` is 187).
+   15 dead and ONE SURVIVOR the record here first called dead
+   (`tools/mutants/blood1.json` is 187) - the recentre pin read the
+   decal's own field and never the buffer; BLOOD AUDIT 4 (item 8)
+   re-aimed it to the floats and the mutant dies.
 
 6. **BLOOD2c - a wounded body bleeds, a dead one bleeds out.** SHIPPED
    (2026-09-21). The arc's BLOOD1c was to be the reference's PLAYER
@@ -973,6 +979,126 @@ Slices, each behind its own `features.js` row:
    blood, the refresh, the foe's stride through the ledger, the four
    hosts by source) and the atlas pin re-aimed to five rows. Mutants:
    12, 12 dead (`tools/mutants/blood1.json` is 221).
+
+8. **BLOOD AUDIT 4 - four lenses over BLOOD2a..2d, paid.** (2026-09-21,
+   Mac: "I just want to audit everything so far before we continue.")
+   Four read-only lenses - the pure laws, the marks runtime and the
+   renderer, the host seams and online, the colour path end to end and
+   the records - and every finding below verified here before it was
+   paid. Nothing in this item was merged; it waits on the branch with
+   the rest.
+
+   THE BUGS:
+   - PRINTS NEVER LANDED INDOORS. `step` rayed down from `pos`, and
+     every host hands the walker's FEET - so on a mesh floor the ray
+     started ON the triangle, the walk refused a hit inside its own
+     epsilon, and no walker ever printed underground or in a building.
+     Outdoors the drawn ground sits above the capsule's bilinear floor
+     on every quad of positive twist, so half the world's quads dropped
+     the print the same way. The ray starts at the KNEE now, as the drip
+     and the corpse's pool always did (`DRIP_FROM`), and the pin drives
+     a real Collider with a mesh floor and a twisted terrain pair.
+   - DRIED WAS A BLACK-RED. `DRIED_TINT` 0.5/0.36/0.34 was a multiply
+     over a texel already painted 0.58/0.05/0.04, and a multiply cannot
+     raise a channel: dried blood came out at half the brightness and
+     MORE saturated (G/R 0.082 fresh, 0.059 dried), on every mark older
+     than three minutes, for the rest of the session. THE ATLAS IS INK
+     NOW - the shape and its grain in white - AND THE TINT IS THE
+     COLOUR: `BLOOD_BASE` fresh, `DRIED_TINT` a rust (0.30/0.13/0.09,
+     about the fresh red's luminance, browner), both inside the curve
+     so the lane's decode of ink times tint is the decode of the
+     product. Fresh varies as ONE factor on all three channels (a
+     shade, never a hue - the red used to wander half as far as the
+     rest, which made the darker marks the more saturated ones), and a
+     mark dries AT ITS OWN SHADE (`freshShade`).
+   - BLOOD ON THE BOOTS CROSSED DOORS. `clear()` emptied the ring and
+     not `_tracks`; the player's key is one frozen object for the page,
+     so a walker who left a shop mid-trail printed the street. The map
+     is replaced on `clear()`, and the ledger's memory with it
+     (`hitEffects.clear()` calls `bleeding.clear()`).
+   - A FOE KILLED TWICE POOLED ONCE. The ledger's `pooled` latch never
+     cleared, and the dungeon's load and the online stream un-death a
+     foe IN PLACE. Alive clears it. And a body FIRST SEEN DEAD - a
+     restored corpse, a re-entered room, a foe a peer killed before the
+     ledger was born - has bled out elsewhere and lays no pool; feet
+     with a NaN in them skip the frame rather than spending the pool on
+     a point the ring refuses.
+   - A TELEPORT WAS A FRAME-RATE. "More than eight strides in one
+     frame" read a 6 m/s foe as a walk at sixty frames and a teleport at
+     one, and a texture hitch erased a running foe's trail. It is a
+     SPEED now (`TELEPORT_SPEED`, 40 m/s); the steps come off the ground
+     covered ALONG the run, as many as it holds, where the feet passed,
+     and the remainder carries.
+   - THE RECENTRE MUTANT SURVIVED. The BLOOD2b pin read `d.uv` off the
+     record, which the recentre never touches; dropping the cell from
+     the buffer write passed 56 pins. The pin reads the slot's floats.
+   - THE DUNGEON QUICKLOAD KEPT THE BLOOD. The world clears on every
+     teleport and the interior on every door; the dungeon context is
+     reused across its own quickload and cleared nothing, so the
+     abandoned timeline's marks, chunks, drips and the pool spreading
+     under a corpse about to stand up all stayed. `restoreSaved` clears.
+
+   THE LIGHT: A DECAL HAS A NORMAL. W4 lit the mark as a flat ("a decal
+   has no normal, exactly as a billboard has none"): the sun's
+   Lambert-average half, lanterns attenuation-only. A mark lies ON a
+   surface, and the surface takes N.L - so a mark on a sunlit floor and
+   one on a shaded wall were the same brightness while the floor and
+   the wall were not, which is the outdoor inconsistency Mac reported.
+   Both decal programs read the quad's normal off its derivatives (the
+   lane's had since AUDIT 3, for its shadow lookups alone) and take THE
+   MESH'S terms: the sun by N.L under the cloud and the sun map, the
+   lanterns and the indirect by N.L (on the lane through `elPointLit` /
+   `elIndirectLit` - the lantern's map, the contact shadow, the glint;
+   wet blood glints). `drawDecals` uploads the whole sun and its
+   direction. `tools/bloodProbe.mjs` reads the mark against a MESH
+   facing the eye now (the surface it lies on), not the flat beside it,
+   and reads the ATLAS under the real tints: fresh at noon
+   154/13/10 classic and 113/8/6 on the lane; dried 80/34/23 and
+   61/24/15 - a rust, not a black.
+
+   THE UPLOADS: THE RING'S MIRROR. Every slot write was its own
+   `bufferSubData`: a fight's marks share a birth and crossed each dry
+   stage on the same tick (a thousand calls in a frame, eight times a
+   cohort), a recentre rewrote every mark one by one, and a door
+   blanked every slot - nine hundred calls of dead work, since the
+   ring's ranges are empty after `clear()` and a slot outside them is
+   never rasterised. Writes land in a CPU mirror of the buffer and name
+   their slot dirty; `flush` uploads each contiguous run of dirty slots
+   as one call, nothing between them. A dry cohort is one call, a
+   recentre one, a clear none, a print one write (its fade dressed in
+   rather than rewritten). The spread's "is this still my mark" and the
+   step's walk read slots (`at`) rather than allocating the ring as an
+   array - per frame for twelve seconds a corpse, per footstep of every
+   walker. The atlas is built when first worn (seventy milliseconds off
+   the boot path), and the ring, the batch and the upload wait for the
+   row to be ON.
+
+   THE SMALLER ONES: `drawDecals` counted its texture bind twice; a
+   drip's outer drops wore a streak (gravity's blood does not fly);
+   `BLEED_RATE` was a second copy of `GIB_SPLASH_RATE` and imports it;
+   the floor test in `step` names `CEILING_DOT` rather than a second
+   0.7, and a wall's mark under the foot does not make it wet; the
+   named numbers (STRIDE, STREAK_MAX, POOL_SPREAD, TRACK_WET_STAGE and
+   its boundary, TELEPORT_SPEED) are pinned as literals so the arc's
+   text cannot drift from them. STILL OPEN, said plainly:
+   `blood-capacity` and `blood-density` are prefs keys no registry row
+   writes (the registry has no range control yet - the gore slider is
+   the next slice), so every player runs the defaults; the decal fog
+   term mixes the fog colour into a blended fragment as every classic
+   pass does; the host wiring pins are adjacency pins.
+
+   Pins: seven (the knee ray on a real mesh and a twisted terrain; the
+   room's clear over boots and ledger; the ledger's second life, the
+   body met dead, the NaN feet, the speed guard, the steps along the
+   run at one frame and at sixty; the floor test and the drip's
+   streaks; the runs - a cohort one call, a recentre one, a clear none,
+   the cell in the buffer; nothing per frame and the ON gate; the
+   quickload clear, the hosts' bleed at the top of their updates, the
+   bind count, the literals), the W4/W6/AUDIT 3 shader pins re-aimed to
+   the surface's terms, the BLOOD1a/2b/2c/2d pins re-aimed to runs and
+   ink. Mutants: 31 new, 31 dead; 26 records re-aimed by content
+   (`tools/mutants/blood1.json` is 252, `macbugw4.json` and
+   `macbugw6.json` re-aimed).
 
 The numbers in THE FACTS are the target to feel like. The code that
 hits them is ours.

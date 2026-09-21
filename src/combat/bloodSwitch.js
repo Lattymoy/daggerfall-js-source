@@ -8,6 +8,12 @@
 // Blood is the port's own (bible/05-Combat/Blood-Arc.md) - no mod is
 // vendored for it - so the row is an ENHANCED one rather than a mod
 // row, and the key is the port's.
+//
+// BLOOD AUDIT 4, SAID PLAINLY: of the four keys below, only
+// `blood-marks` and `blood-overkill` have a registry row today. The
+// capacity and the density are read from keys nothing writes, so every
+// player runs their defaults; a range control does not exist in the
+// registry yet, and the gore slider that brings one is the next slice.
 import { getPref } from '../systems/uiPrefs.js';
 
 export const BLOOD_PREF = 'blood-marks';

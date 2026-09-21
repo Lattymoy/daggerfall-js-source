@@ -765,6 +765,7 @@ uniform int uFogMode;
 uniform float uFogDensity;
 uniform vec2 uFogRange;
 uniform vec3 uCamPos;
+uniform vec3 uLightDir;
 ${CLOUD_SHADOW_GLSL}
 out vec4 outColor;
 float fogFactorAt(vec3 worldPos) {
@@ -789,19 +790,33 @@ void main() {
   // through drawBillboards and were lit in full, so one hit put lit
   // chunks over a black smear.
   //
-  // A decal has no normal, exactly as a billboard has none, so it takes
-  // the billboard's model: attenuation-only point lights (squared
-  // linear falloff), the sun's Lambert-average half, and the indirect
-  // term on the same attenuation. Written to mirror that shader term
-  // for term so the two cannot drift.
+  // BLOOD AUDIT 4: A DECAL HAS A NORMAL - IT LIES ON A SURFACE. W4 gave
+  // it the billboard's model, "a decal has no normal, exactly as a
+  // billboard has none", and that was the inconsistency Mac saw
+  // outdoors: the mark on a sunlit floor and the mark on a shaded wall
+  // took the same Lambert-average half of the sun, while the floor and
+  // the wall under them took N.L - so blood was one brightness on
+  // every surface of a world that was not. The quad's own normal is in
+  // its derivatives (the lane's twin has read it since AUDIT 3), and
+  // the mark takes THE SURFACE'S terms now, as MESH_FS spells them: the
+  // sun by N.L, the lanterns and the indirect by N.L on the same
+  // squared falloff. The ambient stays the flat's (no trilight on a
+  // quad that is not a mesh). A quad seen edge-on has no derivative to
+  // speak of, so it takes up rather than NaN.
+  vec3 c = cross(dFdx(vWorld), dFdy(vWorld));
+  vec3 n = dot(c, c) > 1e-12 ? normalize(c) : vec3(0.0, 1.0, 0.0);
+  if (dot(n, uCamPos - vWorld) < 0.0) n = -n;
+  float diff = max(dot(n, uLightDir), 0.0);
   vec3 pointAcc = vec3(0.0);
   for (int i = 0; i < 16; i++) {
     if (i >= uPointCount) break;
-    float d = length(uPointLights[i].xyz - vWorld);
+    vec3 L = uPointLights[i].xyz - vWorld;
+    float d = length(L);
     float att = clamp(1.0 - d / uPointLights[i].w, 0.0, 1.0);
-    pointAcc += att * att * uPointColors[i];
+    pointAcc += att * att * max(dot(n, L / max(d, 1e-4)), 0.0) * uPointColors[i];
   }
-  float iD = length(uIndirect.xyz - vWorld);
+  vec3 iL = uIndirect.xyz - vWorld;
+  float iD = length(iL);
   float iAtt = clamp(1.0 - iD / max(uIndirect.w, 1e-4), 0.0, 1.0);
   // BLOOD1 AUDIT 3: the CLOUD'S SHADOW on the sun term, as every other
   // classic world shader has it (BB_FS's sun term, under cloudShadowAt). The
@@ -809,7 +824,7 @@ void main() {
   // Lighting one being OFF, so a player with the deck and the classic
   // set watched the ground go dark under a cloud while the blood on it
   // stayed bright - W4's fault with the sign reversed.
-  vec3 lightAcc = uTint + uDecalSun * cloudShadowAt(vWorld) + pointAcc + iAtt * iAtt * uIndirectColor;
+  vec3 lightAcc = uTint + uDecalSun * (diff * cloudShadowAt(vWorld)) + pointAcc + (iAtt * iAtt * max(dot(n, iL / max(iD, 1e-4)), 0.0)) * uIndirectColor;
   vec3 rgb = t.rgb * vColor.rgb * lightAcc;
   float a = t.a * vColor.a;
   float f = fogFactorAt(vWorld);
@@ -2764,11 +2779,15 @@ void main() {
         am[0] + mc[0] * this._moonScale * 0.5,
         am[1] + mc[1] * this._moonScale * 0.5,
         am[2] + mc[2] * this._moonScale * 0.5);
-      gl.uniform3f(d.sun, sc[0] * this._sunScale * 0.5, sc[1] * this._sunScale * 0.5, sc[2] * this._sunScale * 0.5);
+      // BLOOD AUDIT 4: THE WHOLE SUN, not the flat's half - the shader
+      // takes N.L off the quad's own normal now, as the mesh under the
+      // mark does (MESH_FS's uSunColor * (uSunScale * diff)).
+      gl.uniform3f(d.sun, sc[0] * this._sunScale, sc[1] * this._sunScale, sc[2] * this._sunScale);
     } else {
       gl.uniform3f(d.tint, 1, 1, 1);
       gl.uniform3f(d.sun, 0, 0, 0);
     }
+    if (d.lightDir) gl.uniform3fv(d.lightDir, this._lightDir);   // BLOOD AUDIT 4
     // MAC-BUG W4 pinned this as "a fifth classic program with no lane
     // twin", cutting to the classic sixteen under the lane's forty-eight.
     // MAC-BUG W6 gave it the twin (enhancedLighting.js EL_DECAL_FS), so
@@ -2805,7 +2824,8 @@ void main() {
     gl.enable(gl.CULL_FACE);
     gl.disable(gl.BLEND);
     this._bindVao(null);
-    this.stats.texBinds++;
+    // BLOOD AUDIT 4: no texBinds++ here - _bindTex0 above counts the bind
+    // it makes, and this line counted it a second time on every draw.
   }
 
   destroyDecalBatch(batch) {
@@ -2828,6 +2848,7 @@ void main() {
       tex: gl.getUniformLocation(P, 'uTex'),
       tint: gl.getUniformLocation(P, 'uTint'),
       sun: gl.getUniformLocation(P, 'uDecalSun'),                 // MAC-BUG W4
+      lightDir: gl.getUniformLocation(P, 'uLightDir'),           // BLOOD AUDIT 4: the mark takes the sun by N.L, as the surface under it does
       pointCount: gl.getUniformLocation(P, 'uPointCount'),
       pointLights: gl.getUniformLocation(P, 'uPointLights'),
       pointColors: gl.getUniformLocation(P, 'uPointColors'),

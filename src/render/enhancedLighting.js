@@ -543,6 +543,7 @@ uniform int uFogMode;
 uniform float uFogDensity;
 uniform vec2 uFogRange;
 uniform vec3 uCamPos;
+uniform vec3 uLightDir;
 uniform sampler2D uCloudShadowMap;
 uniform vec4 uCloudShadowRect;
 float cloudShadowAt(vec3 wp) {
@@ -569,9 +570,18 @@ void main() {
   vec3 c = cross(dFdx(vWorld), dFdy(vWorld));
   vec3 n = dot(c, c) > 1e-12 ? normalize(c) : vec3(0.0, 1.0, 0.0);
   if (dot(n, uCamPos - vWorld) < 0.0) n = -n;
-  vec3 base = vWorld + n * 0.5;   // the flat's half unit, along the surface rather than up
-  vec3 sunLit = dot(uDecalSun, uDecalSun) > 0.0 ? uDecalSun * cloudShadowAt(vWorld) * sunShadowSoftAt(base, n) : vec3(0.0);
-  vec3 lit = albedo * (uTint + sunLit + elPointFlat(vWorld, base) + elIndirectFlat(vWorld));
+  // BLOOD AUDIT 4: THE SURFACE'S TERMS, not the flat's. The normal was
+  // read here since AUDIT 3 and spent on the shadow lookups alone; the
+  // sun still came as the flat's Lambert-average half, and the lanterns
+  // attenuation-only - so a mark on a sunlit floor and one on a shaded
+  // wall were the same brightness while the surfaces under them were
+  // not. The mark lies ON the mesh, so it takes MESH_FS's law: the sun
+  // by N.L under the cloud and the sun map, the lanterns and the
+  // indirect through elPointLit / elIndirectLit (N.L, the lantern's
+  // map, the contact shadow, the glint - wet blood glints).
+  float ndl = max(dot(n, uLightDir), 0.0);
+  vec3 sunLit = (dot(uDecalSun, uDecalSun) > 0.0 && ndl > 0.0) ? uDecalSun * (ndl * cloudShadowAt(vWorld) * sunShadowAt(vWorld, n)) : vec3(0.0);
+  vec3 lit = albedo * (uTint + sunLit + elPointLit(vWorld, n) + elIndirectLit(vWorld, n));
   outColor = vec4(elFinish(lit, vWorld), t.a * vColor.a);
 }`;
 

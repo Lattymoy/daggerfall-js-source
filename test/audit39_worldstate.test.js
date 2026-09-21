@@ -362,7 +362,8 @@ test('AUDIT-39r: the dungeon host runs the missile sweep at its OWN load door', 
   assert.ok(at > 0, 'the dungeon host owns a load door');
   // ONLINE-LOAD1 widened this window slightly: quickLoad now carries its own online guard
   // (F9/F11 reach it directly, with no pane in the way to stop them) ahead of the same call chain.
-  const body = ctx.slice(at, at + 2900);
+  // BLOOD AUDIT 4 widened it again: the blood's clear rides beside the sweep, with its reason.
+  const body = ctx.slice(at, at + 3500);
   assert.match(body, /magic\.clearMissiles\(\);/, 'which sweeps its own flights');
   assert.ok(body.indexOf('magic.clearMissiles();') < body.indexOf('applyWorld(extras.world)'),
     'ahead of the world restore, as OnStartLoad is');

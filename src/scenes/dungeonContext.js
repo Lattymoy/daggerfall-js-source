@@ -5831,6 +5831,13 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // air when F12 landed kept flying at the restored player. The
       // world host's teleport already sweeps its own (world.js).
       magic.clearMissiles();
+      // BLOOD AUDIT 4: AND THE BLOOD, for the same reason. The world host
+      // clears its pool on every teleport and the interior on every
+      // door; this context is reused across its own quickload, so the
+      // abandoned timeline's marks, its chunks in flight, its ceilings'
+      // drips and the pool spreading under a corpse that is about to
+      // stand back up all stayed on the floor of the restored one.
+      hitEffects.clear();
       classicMinutesRef.value = extras.classicMinutes ?? classicMinutesRef.value;
       magic.setReadiedByIndex(extras.readiedSpellIndex ?? null, spellsByIndex);
       // B4: quest after entity, conversation after quest (the C#'s own

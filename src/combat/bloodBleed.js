@@ -26,6 +26,7 @@
 // corpse } - and answers ACTIONS; the splash pool turns them into marks.
 // A bloodless body (bloodIndex 2) neither drips nor pools.
 import { marksBlood } from './bloodDecals.js';
+import { GIB_SPLASH_RATE } from './bloodGibs.js';
 
 /** Below this share of its health a body bleeds. The port's own: the
  *  reference's threshold is a setting; half is where a fight has clearly
@@ -38,9 +39,10 @@ export const BLEED_WAIT = Object.freeze({ min: 2, max: 5 });
  *  emptying. The port's own. */
 export const BLEED_DROPS_MAX = 6;
 /** How far a drip's drops fall from the feet, and the size ladder they
- *  take (the gib's splat rate - one piece landing, not a body opening). */
+ *  take: the gib's splat rate - one piece landing, not a body opening -
+ *  and THE GIB'S OWN NUMBER, not a second copy of it (BLOOD AUDIT 4). */
 export const BLEED_RADIUS = 0.35;
-export const BLEED_RATE = 20;
+export const BLEED_RATE = GIB_SPLASH_RATE;
 
 /** The corpse's pool: from a body's width to a metre and a half, over
  *  twelve seconds, in eight rewrites. The port's own numbers. */
@@ -51,6 +53,14 @@ export const POOL_STEPS = 8;
 /** BLOOD2d: A BODY'S STRIDE. A foe's feet are streamed, not stepped, so
  *  its steps are counted off the ground it covers: one every STRIDE. */
 export const STRIDE = 0.7;
+/** BLOOD AUDIT 4: A TELEPORT IS A SPEED, not a distance. The guard was
+ *  "more than eight strides in one frame", which is a frame-rate: a foe
+ *  running at 6 m/s covered 0.1 m a frame at sixty and 6 m a frame at
+ *  one, and the one-frame hitch a texture load costs erased a running
+ *  foe's whole trail. Faster than this, in metres a second, is a
+ *  teleport - a stream correction, a quest move, a recentre - and
+ *  nothing that walks comes near it. */
+export const TELEPORT_SPEED = 40;
 
 /** The reference's ramp: `clamp01(1 - (pct - 1) / (threshold - 1))` with
  *  pct in percent - nothing at the threshold, everything at one percent.
@@ -83,7 +93,7 @@ export function poolSizeAt(t) {
  */
 export function createBleedLedger({ rng = Math.random } = {}) {
   /** @type {WeakMap<object, { next: number, pooled: boolean, bleeding: boolean, last: number[]|null, walked: number }>} */
-  const state = new WeakMap();
+  let state = new WeakMap();
   const wait = () => BLEED_WAIT.min + rng() * (BLEED_WAIT.max - BLEED_WAIT.min);
 
   function tick(dt, bodies, view) {
@@ -93,21 +103,34 @@ export function createBleedLedger({ rng = Math.random } = {}) {
       if (!body) continue;
       const v = view ? view(body) : body;
       if (!v || !v.feet || !marksBlood(v.bloodIndex ?? 0)) continue;
+      // BLOOD AUDIT 4: FEET THAT ARE NOWHERE ARE NOT FEET. A body seen on
+      // its death frame with a NaN in its feet spent its one pool on a
+      // point the ring refused, and never pooled again.
+      if (!Number.isFinite(v.feet[0]) || !Number.isFinite(v.feet[1]) || !Number.isFinite(v.feet[2])) continue;
       let s = state.get(body);
-      if (!s) { s = { next: wait(), pooled: false, bleeding: false, last: null, walked: 0 }; state.set(body, s); }
+      // BLOOD AUDIT 4: A BODY FIRST SEEN DEAD HAS ALREADY BLED OUT - a
+      // corpse a save restored, a room re-entered, a foe a peer killed
+      // before this ledger was born. Its blood is not on this floor and
+      // never was, and a pool that starts spreading under a body that
+      // died an hour ago is a body dying twice.
+      if (!s) { s = { next: wait(), pooled: !!v.dead, bleeding: false, last: null, walked: 0 }; state.set(body, s); }
       // BLOOD2d: THE STEPS, off the ground covered - alive or not (a
       // corpse does not walk, but the ledger does not have to know that:
-      // it does not move). One `step` every STRIDE, facing the way it went.
+      // it does not move). One `step` every STRIDE, ALONG the run and
+      // facing the way it went (BLOOD AUDIT 4: a frame that covers two
+      // strides lays two steps where the feet passed, not one where
+      // they stopped - and the remainder carries).
       if (s.last) {
-        const dx = v.feet[0] - s.last[0], dz = v.feet[2] - s.last[2];
+        const dx = v.feet[0] - s.last[0], dy = v.feet[1] - s.last[1], dz = v.feet[2] - s.last[2];
         const run = Math.hypot(dx, dz);
-        if (run > 0 && run < STRIDE * 8) {   // a teleport is not a walk
-          s.walked += run;
-          if (s.walked >= STRIDE) {
-            s.walked -= STRIDE;
-            out.push({ kind: 'step', body, pos: [v.feet[0], v.feet[1], v.feet[2]], forward: [dx / run, 0, dz / run] });
+        if (run > 0 && run <= TELEPORT_SPEED * dt) {
+          const fx = dx / run, fz = dz / run;
+          for (let a = STRIDE - s.walked; a <= run; a += STRIDE) {
+            const f = a / run;
+            out.push({ kind: 'step', body, pos: [s.last[0] + dx * f, s.last[1] + dy * f, s.last[2] + dz * f], forward: [fx, 0, fz] });
           }
-        } else if (run >= STRIDE * 8) s.walked = 0;
+          s.walked = (s.walked + run) % STRIDE;
+        } else if (run > 0) s.walked = 0;   // a teleport is not a walk
       }
       s.last = [v.feet[0], v.feet[1], v.feet[2]];
       if (v.dead) {
@@ -116,6 +139,11 @@ export function createBleedLedger({ rng = Math.random } = {}) {
         s.bleeding = false;
         continue;
       }
+      // BLOOD AUDIT 4: ALIVE AGAIN IS A NEW LIFE. The dungeon's load and
+      // the online stream un-death a foe IN PLACE (the same record),
+      // so the latch that says "this body has pooled" was the previous
+      // life's, and the foe killed a second time lay in no pool.
+      s.pooled = false;
       const share = bleedShare(v.health, v.maxHealth);
       if (!(share > 0)) {
         // healed past the threshold: the next wound starts a fresh wait
@@ -131,5 +159,11 @@ export function createBleedLedger({ rng = Math.random } = {}) {
     return out;
   }
 
-  return { tick, _state: (body) => state.get(body) ?? null };
+  /** BLOOD AUDIT 4: THE ROOM THROWN AWAY takes the ledger's memory with
+   *  it - what was pooled, what was walked - so the bodies of the next
+   *  room (or the same room, reloaded) are met fresh. A WeakMap cannot
+   *  be emptied; it is replaced. */
+  function clear() { state = new WeakMap(); }
+
+  return { tick, clear, _state: (body) => state.get(body) ?? null };
 }

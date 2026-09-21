@@ -635,6 +635,11 @@ export function createBloodDecalPool({ capacity = 1000, rng = Math.random } = {}
     return d;
   }
 
+  /** The mark in one slot, or null - BLOOD AUDIT 4: the walk that asks
+   *  "is this mark still the one I hold" and the walk over every slot
+   *  read this rather than allocating the whole ring as an array. */
+  function at(slot) { return ring[slot] ?? null; }
+
   /** Every live mark, oldest first. The draw reads this. */
   function decals() {
     const out = [];
@@ -692,7 +697,7 @@ export function createBloodDecalPool({ capacity = 1000, rng = Math.random } = {}
   return {
     ranges,
     get touched() { return touched; },
-    place, decals, shiftOrigin, clear,
+    place, decals, at, shiftOrigin, clear,
     get capacity() { return cap; },
     get count() { return live; },
     get placed() { return serial; },

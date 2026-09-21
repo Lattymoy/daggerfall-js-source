@@ -40,13 +40,31 @@ export const ATLAS_KINDS = Object.freeze(['pool', 'spatter', 'streak', 'drip', '
 /** BLOOD2d: a boot's print - heel and sole, the toe toward +u, the way
  *  the walker faces. Five rows now; the sheet is as tall as it needs. */
 /** Fresh blood's colour: the family of TEXTURE.380's own red (the splash
- *  reads about 168,16,16), a shade deeper so a lit mark is not pink. */
+ *  reads about 168,16,16), a shade deeper so a lit mark is not pink.
+ *
+ *  BLOOD AUDIT 4: THE ATLAS IS INK AND THE TINT IS THE COLOUR. BLOOD2b
+ *  painted this red into the texels and tinted them toward a "dried
+ *  brown-red" of 0.5/0.36/0.34 - a MULTIPLY, over a texel whose green
+ *  was already a twelfth of its red. A multiply cannot raise a channel:
+ *  the dried mark came out at HALF the brightness and MORE saturated
+ *  (G/R 0.082 fresh, 0.059 dried), a black-red - which is "super dark
+ *  instead of red" said a second way, and it landed on every mark
+ *  older than three minutes for the rest of the session. So the texel
+ *  holds the mark's SHAPE and GRAIN in white, and the vertex tint is
+ *  the blood's colour outright: BLOOD_BASE fresh, DRIED_TINT dried,
+ *  both real colours, both under one on every channel - which is also
+ *  what keeps the lane's decode honest, since decode(ink) x decode(tint)
+ *  is decode(ink x tint) only while both stay inside the curve. */
 export const BLOOD_BASE = Object.freeze([0.58, 0.05, 0.04]);
-/** How much a fresh mark's tint wanders from white - red less than the
- *  other two, so the variance reads as wetter-or-darker, never as a hue. */
+/** How much a fresh mark's tint wanders from the base - ALL THREE
+ *  CHANNELS TOGETHER, so the variance is a shade of the same red and
+ *  never a hue (BLOOD AUDIT 4: the red used to wander half as far as
+ *  the rest, which made the darker marks the MORE saturated ones). */
 export const FRESH_VARIANCE = 0.12;
-/** Dried blood: the port's own brown-red, as a TINT over the atlas's red. */
-export const DRIED_TINT = Object.freeze([0.5, 0.36, 0.34, 1]);
+/** Dried blood: the port's own rust brown, THE COLOUR ITSELF - about
+ *  the fresh red's luminance, with the green and blue a dried stain
+ *  has and a wet one does not. */
+export const DRIED_TINT = Object.freeze([0.3, 0.13, 0.09, 1]);
 /** Seconds from fresh to fully dried, and the steps it takes. */
 export const DRY_TIME = 180;
 export const DRY_STAGES = 8;
@@ -180,9 +198,10 @@ export function buildBloodAtlas({ size = ATLAS_SIZE, cells = ATLAS_CELLS, seed =
           const { a, shade } = inBorder ? { a: 0, shade: 1 } : at(x, y);
           const g = 1 + grain(Math.atan2(y, x)) * 0.5 + grain(px * 0.37 + py * 0.11) * 0.5;
           const o = ((y0 + py) * size + (x0 + px)) * 4;
-          colors[o] = Math.round(255 * Math.min(1, BLOOD_BASE[0] * shade * g));
-          colors[o + 1] = Math.round(255 * Math.min(1, BLOOD_BASE[1] * shade * g));
-          colors[o + 2] = Math.round(255 * Math.min(1, BLOOD_BASE[2] * shade * g));
+          // BLOOD AUDIT 4: white ink - the shape and its grain; the colour
+          // is the tint's (see BLOOD_BASE)
+          const ink = Math.round(255 * Math.max(0, Math.min(1, shade * g)));
+          colors[o] = ink; colors[o + 1] = ink; colors[o + 2] = ink;
           colors[o + 3] = Math.round(255 * Math.max(0, Math.min(1, a)));
         }
       }
@@ -216,11 +235,19 @@ export function bloodMarkKind({ pool = false, wall = false, print = false, stret
   return stretch > 1.5 ? 'streak' : 'spatter';
 }
 
-/** A fresh mark's tint: near white, red wandering less than the rest so
- *  the variance reads as wet-or-dark and never as a hue. */
+/** A fresh mark's tint: the blood's red, a shade darker by the roll -
+ *  one factor on all three channels, so it is a shade and not a hue. */
 export function freshTint(rng = Math.random) {
-  const r = rng();
-  return [1 - r * FRESH_VARIANCE * 0.5, 1 - r * FRESH_VARIANCE, 1 - r * FRESH_VARIANCE, 1];
+  const k = 1 - rng() * FRESH_VARIANCE;
+  return [BLOOD_BASE[0] * k, BLOOD_BASE[1] * k, BLOOD_BASE[2] * k, 1];
+}
+
+/** The shade a fresh tint was rolled at: its red over the base's, since
+ *  a fresh tint is the base by one factor. Anything else (a tint a pin
+ *  made up) is shade one. */
+export function freshShade(fresh) {
+  const k = BLOOD_BASE[0] > 0 ? (fresh?.[0] ?? BLOOD_BASE[0]) / BLOOD_BASE[0] : 1;
+  return k >= 1 - FRESH_VARIANCE - 1e-9 && k <= 1 + 1e-9 ? k : 1;
 }
 
 /** How dried a mark of `age` seconds is, in DRY_STAGES steps: 0 fresh,
@@ -230,14 +257,18 @@ export function dryStage(age) {
   return Math.min(DRY_STAGES, Math.floor((age / DRY_TIME) * DRY_STAGES));
 }
 
-/** The tint at a stage: the fresh tint sliding to DRIED_TINT. */
+/** The tint at a stage: the fresh tint sliding to DRIED_TINT at the
+ *  mark's own shade (BLOOD AUDIT 4: a mark rolled darker dries darker -
+ *  the variance is the mark's for life, not the wet half of it). */
 export function driedTint(fresh, stage) {
   const t = Math.max(0, Math.min(1, stage / DRY_STAGES));
-  if (t >= 1) return [DRIED_TINT[0], DRIED_TINT[1], DRIED_TINT[2], fresh[3] ?? 1];   // dried is DRIED, to the bit - not a mix that lands a rounding error off it
+  const k = freshShade(fresh);
+  const end = [DRIED_TINT[0] * k, DRIED_TINT[1] * k, DRIED_TINT[2] * k];
+  if (t >= 1) return [end[0], end[1], end[2], fresh[3] ?? 1];   // dried is DRIED, to the bit - not a mix that lands a rounding error off it
   return [
-    fresh[0] + (DRIED_TINT[0] - fresh[0]) * t,
-    fresh[1] + (DRIED_TINT[1] - fresh[1]) * t,
-    fresh[2] + (DRIED_TINT[2] - fresh[2]) * t,
+    fresh[0] + (end[0] - fresh[0]) * t,
+    fresh[1] + (end[1] - fresh[1]) * t,
+    fresh[2] + (end[2] - fresh[2]) * t,
     fresh[3] ?? 1,
   ];
 }
