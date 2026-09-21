@@ -295,6 +295,63 @@ re-armed, the node yanked without the slide, the removal off the
 slide's length, `visible:false` ignored, an empty panel raised), each
 killed by a named pin.
 
+### The slide, measured (2026-09-21)
+
+Driven in headless Chromium with the panel's transform and opacity
+logged per frame: the slide-in NEVER RAN - the panel was appended and
+given `notice-in` in the same style pass, so there was no resting
+style for the transition to start from and it simply appeared; and
+the slide-out's back-loaded bezier had the panel half-way out when
+the node was taken at `NOTICE_SLIDE_MS`. A read of `offsetWidth`
+flushes the resting style before the class (the fake document has
+none and needs none), and the out-curve is a plain ease-in that
+finishes inside the slide's length. Both were invisible to the fake
+document, which is the lesson: a transition is a browser fact, and
+the pin that holds it is a measurement, not a class name.
+
+### ENH-NOTICE2 - THE WINDOWS' OWN BOXES (2026-09-21, Mac: "Just wanna make sure this works for everything right?")
+
+An Opus survey of every `layoutMessageBox`/`drawMessageBox` site
+outside the two homes (27 of them) sorted the parchments: decisions
+(Yes/No, PromptMulti), fields (the rest hours, the journal note),
+in-window panels (the spell editor's description, the reflex text),
+the busy card the hunt window shows while it waits, and windows the
+enhanced skin already replaces with a DOM twin (inventory, trade,
+spellbook, travel map, chargen, pause, controls, journal). What was
+left is EIGHT classic windows drawn on both skins that raise DFU's
+click-anywhere box from inside themselves and paint it as their own
+parchment, because a host holds one overlay slot: the potion maker,
+the item maker, the spell maker, the bank, the rest window (its
+hoursRefused / refused / ended states), the coven, the guild service
+window and the shared service flow.
+
+`noticeFrame(owner, rows)` is their seam, one line at the top of the
+box draw: rows while a click-anywhere box is up, null when none is or
+when the box up is a decision or a field. True: the panel took the
+frame and the window lays out no parchment. False: the parchment,
+and any panel the owner had is released - so a text step giving way
+to a Yes/No step, a picker or a field, or a box that clears, leaves
+on the next draw. `_close` releases too, because a host drops a
+closed window and never draws it again (the watchdog would catch it
+400ms late; the close catches it now). The `_boxLayout`/`_box` the
+click arms read for a button hit is null while the panel is up, and
+every arm already guards it. The two homes' own release is the same
+`noticeRelease`.
+
+**Tests** (+5 in `test/enhancedNotice.test.js`): the seam alone
+(rows raise, repaint in place, null releases, the classic skin mints
+nothing, a released owner raises fresh); the guild service window
+over its test art (a text step is the panel with BOX1's single read
+still holding, the Yes/No step that follows is the parchment and
+takes the panel down, the classic skin untouched); the coven (a
+closesWindow box's click releases through `_close`); the service
+flow (a text step, then a decision, a field and a closing step each
+releasing); and THE ROSTER - the eight files import the seam, decide
+the frame in draw and release in `_close`, and nobody else imports
+it. Eight mutants over the hooks (a hook dropped, a decision handed
+to the panel, `_close` and the field step not releasing, the seam's
+null and classic arms), each killed.
+
 ## MENU1-WARM - THE MENU BYTES ARE ASKED FOR EARLY (2026-09-19)
 
 Mac: *"Also look for any elements of hitching, or hiccups."*
@@ -9700,7 +9757,7 @@ to the wrong code.
   so the edge was a silent no-op and one press glued a slider to the
   pointer for the rest of the popup's life, with the runaway value then
   written by the grid's save. `ControlsWindow.release()` forwards it now,
-  the ROAD-E E1 shape `ui/itemMakerWindow.js:203` has carried since
+  the ROAD-E E1 shape `ui/itemMakerWindow.js:204` has carried since
   Wave E, and it is `HorizontalSlider.cs:148-154`'s else arm.
 - **The wheel arm was dead.** `sliderScroll` ported MouseScrollUp/Down
   (:180-190) with no caller anywhere. `MouseControlsWindow.wheel(dir)`
@@ -14275,7 +14332,7 @@ exactly as the classic did; the enhanced HUD has no arrow counter (AUDIT
 28 W2a's classic-arm feature) - not a font matter. AND THE CANVAS NATIVE
 WINDOWS, which the first record did not name: under the enhanced skin the
 death screen (`ui/deathScreen.js:71-72`), the rest window's rows
-(`ui/restWindow.js:859`), the save window (`ui/saveWindow.js`, eight
+(`ui/restWindow.js:861`), the save window (`ui/saveWindow.js`, eight
 `shadowText` sites), the travel popup (`ui/travelPopUp.js:685`), the quest
 journal (`ui/questJournal.js:641-642`), every MessageBox row
 (`ui/messageBox.js:431, 434`) and every ActionTextBox (`ui/actionText.js:45,

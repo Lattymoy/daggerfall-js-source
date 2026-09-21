@@ -8,7 +8,7 @@
 import { drawText, measureText } from './text.js';
 import { nativeMetrics } from './nativePanel.js';
 import { layoutMessageBox, drawMessageBox, messageBoxArtLoaded } from './messageBox.js';
-import { noticeDraw, releaseEnhancedNotice } from './enhancedNotice.js';   // ENH-NOTICE1: the no-options box on the enhanced skin
+import { noticeDraw, noticeRelease } from './enhancedNotice.js';   // ENH-NOTICE1: the no-options box on the enhanced skin
 
 const PANEL = [0.05, 0.05, 0.09, 0.92];
 const TEXT = [0.86, 0.82, 0.68, 1];
@@ -53,7 +53,7 @@ export class ChoiceWindow {
   input(code) {
     if (!this.options.length && (code === 'back' || code === 'confirm' || code === 'Escape' || code === 'Enter' || code === 'KeyE')) {
       this.done = true;
-      if (this._noticeKey) releaseEnhancedNotice(this._noticeKey);   // ENH-NOTICE1: the panel leaves with the box
+      noticeRelease(this);   // ENH-NOTICE1: the panel leaves with the box
       return;
     }
     const opt = this.options.find((o) => o.code === code);

@@ -39,6 +39,7 @@
 import { loadImg, nativeMetrics, drawImg, shadowText } from './nativePanel.js';
 import { drawScreenDimBackdrop } from './chargenArt.js';
 import { layoutMessageBox, drawMessageBox, messageBoxHit, MB_BUTTONS } from './messageBox.js';
+import { noticeFrame, noticeRelease } from './enhancedNotice.js';   // ENH-NOTICE2: the window's own click-anywhere box, as the enhanced panel
 import { typedChar } from './input.js';
 import { audio } from '../systems/audio.js';
 import { SOUND } from '../systems/soundClips.js';
@@ -130,7 +131,7 @@ export class BankWindow {
     this.box = null;
   }
 
-  _close() { this.done = true; this.hooks.onClose?.(); }
+  _close() { this.done = true; noticeRelease(this); this.hooks.onClose?.(); }
   get accounts() { return this.hooks.accounts(); }
   get region() { return this.hooks.regionIndex(); }
 
@@ -406,6 +407,7 @@ export class BankWindow {
       const [ix, iy] = BANK_RECTS.input;
       shadowText(renderer, font, `${this.value}_`, m, BANK_PANEL_X + ix + 2, BANK_PANEL_Y + iy + 2);
     }
+    if (noticeFrame(this, this.box && this.box.buttons !== 'YesNo' ? this.box.rows : null)) { this._boxLayout = null; return; }
     if (this.box) {
       const buttons = this.box.buttons === 'YesNo' ? [MB_BUTTONS.Yes, MB_BUTTONS.No] : [];
       this._boxLayout = layoutMessageBox(font, this.box.rows, buttons);

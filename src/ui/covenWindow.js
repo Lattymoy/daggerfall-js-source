@@ -38,6 +38,7 @@ import { drawScreenDimBackdrop } from './chargenArt.js';
 import { audio } from '../systems/audio.js';   // F141: the ButtonClick roster
 import { SOUND } from '../systems/soundClips.js';
 import { layoutMessageBox, drawMessageBox, messageBoxHit, MB_BUTTONS, latchBoxRows } from './messageBox.js';
+import { noticeFrame, noticeRelease } from './enhancedNotice.js';   // ENH-NOTICE2: the window's own click-anywhere box, as the enhanced panel
 import { firstHotkey } from '../systems/dialogShortcuts.js';   // A8: the DaggerfallShortcut table
 
 /** The window's DaggerfallShortcut.Buttons, in ctor ADD order
@@ -113,7 +114,7 @@ export class CovenWindow {
     b.onDismiss?.();
   }
 
-  _close() { this.done = true; this.hooks.onClose?.(); }
+  _close() { this.done = true; noticeRelease(this); this.hooks.onClose?.(); }
 
   _summon() {
     const r = this.hooks.onSummon?.();
@@ -181,6 +182,7 @@ export class CovenWindow {
     drawScreenDimBackdrop(renderer, canvas);
     drawImg(renderer, _art.base, m, COVEN_PANEL_X, COVEN_PANEL_Y);
     const top = this.top;
+    if (noticeFrame(this, top && top.buttons !== 'YesNo' ? latchBoxRows(top, this.hooks.rows) : null)) { this._box = null; return; }   // ENH-NOTICE2
     if (top) {
       const buttons = top.buttons === 'YesNo' ? [MB_BUTTONS.Yes, MB_BUTTONS.No] : [];
       this._box = layoutMessageBox(font, latchBoxRows(top, this.hooks.rows), buttons);   // BOX1: a textId box reads its (random-variant) record ONCE

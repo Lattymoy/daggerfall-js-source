@@ -18,6 +18,7 @@
 
 import { nativeMetrics } from './nativePanel.js';
 import { layoutMessageBox, drawMessageBox, messageBoxHit, MB_BUTTONS } from './messageBox.js';
+import { noticeFrame, noticeRelease } from './enhancedNotice.js';   // ENH-NOTICE2: the window's own click-anywhere box, as the enhanced panel
 import { ListPickerWindow, listPickerArtLoaded } from './listPicker.js';
 import { wrapText } from './talkWindow.js';
 import { InputMessageBoxWindow } from './inputMessageBox.js';   // CM11: a field box IS a pushed DaggerfallInputMessageBox
@@ -122,7 +123,7 @@ export class ServiceFlowWindow {
     if (!this.boxes.length) this._close();
   }
 
-  _close() { this.done = true; this.onClose?.(); }
+  _close() { this.done = true; noticeRelease(this); this.onClose?.(); }
 
   push(boxes) {
     if (boxes?.length) this.boxes.unshift(...boxes);
@@ -191,13 +192,17 @@ export class ServiceFlowWindow {
     const t = this.top;
     if (!t) { this._close(); return; }
     if (t.picker) {
+      noticeRelease(this);   // ENH-NOTICE2: a text step's panel does not outlive it
       if (!listPickerArtLoaded()) { this._advance(); return; }
       this._picker?.draw(renderer, canvas, font);
       return;
     }
-    if (t.field) { this._box = null; this._input?.draw(renderer, canvas, font); return; }   // CM11: the pushed box
+    if (t.field) { this._box = null; noticeRelease(this); this._input?.draw(renderer, canvas, font); return; }   // CM11: the pushed box
     const m = nativeMetrics(canvas);
     const buttons = t.buttons === 'YesNo' ? [MB_BUTTONS.Yes, MB_BUTTONS.No] : (t.buttonsMulti ?? []);
+    // ENH-NOTICE2: a plain text step (no buttons, no picker, no field)
+    // is DFU's click-anywhere box and the enhanced panel
+    if (noticeFrame(this, buttons.length ? null : t.rows)) { this._box = null; return; }
     this._box = layoutMessageBox(font, t.rows, buttons);
     drawMessageBox(renderer, m, font, this._box);
   }

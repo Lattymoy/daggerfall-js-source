@@ -54,6 +54,7 @@ import { drawScreenDimBackdrop } from './chargenArt.js';
 import { audio } from '../systems/audio.js';   // F141: the ButtonClick roster
 import { SOUND } from '../systems/soundClips.js';
 import { layoutMessageBox, drawMessageBox, messageBoxHit, MB_BUTTONS, latchBoxRows } from './messageBox.js';
+import { noticeFrame, noticeRelease } from './enhancedNotice.js';   // ENH-NOTICE2: the window's own click-anywhere box, as the enhanced panel
 import { drawText, measureText } from './text.js';
 import { serviceLabel, serviceShortcutButton } from '../systems/guildServiceFlow.js';
 import { firstHotkey } from '../systems/dialogShortcuts.js';   // A8: the DaggerfallShortcut table
@@ -137,7 +138,7 @@ export class GuildServiceWindow {
 
   _push(box) { if (box) this.boxes.push(box); }
 
-  _close() { this.done = true; this.hooks.onClose?.(); }
+  _close() { this.done = true; noticeRelease(this); this.hooks.onClose?.(); }
 
   _join() {
     // JoinButton_OnMouseClick (:497-525): the popup CLOSES first, then
@@ -250,6 +251,7 @@ export class GuildServiceWindow {
       m.ox + (PANEL_X + sx + Math.round((sw - lw) / 2)) * m.s,
       m.oy + (PANEL_Y + sy + SERVICE_LABEL_OFFSET_Y) * m.s, m.s, DEFAULT_TEXT_COLOR);
     const top = this.top;
+    if (noticeFrame(this, top && top.buttons !== 'YesNo' ? latchBoxRows(top, this.hooks.rows) : null)) { this._box = null; return; }   // ENH-NOTICE2
     if (top) {
       const buttons = top.buttons === 'YesNo' ? [MB_BUTTONS.Yes, MB_BUTTONS.No] : [];
       this._box = layoutMessageBox(font, latchBoxRows(top, this.hooks.rows), buttons);   // BOX1: a textId box reads its (random-variant) record ONCE

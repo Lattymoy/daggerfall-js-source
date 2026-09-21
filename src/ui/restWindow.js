@@ -62,6 +62,7 @@ import { getBinding } from '../systems/inputActions.js';   // B5: InputManager.G
 import { loadImg, nativeMetrics, drawImg, shadowText, NATIVE_W } from './nativePanel.js';   // D3: the native-window idiom
 import { drawMenuBackdrop } from './chargenArt.js';   // D3: Setup :137-138, ParentPanel.BackgroundColor = Color.black
 import { layoutMessageBox, drawMessageBox, messageBoxHit, messageBoxArtLoaded, MB_BUTTONS } from './messageBox.js';   // CM2: the five pushed modal states
+import { noticeFrame, noticeRelease } from './enhancedNotice.js';   // ENH-NOTICE2: the window's own click-anywhere box, as the enhanced panel
 import { isEnhanced } from '../systems/uiSkin.js';   // CLK4: the enhanced skin's rest is a veil, not a wall
 import { dateFromClassicMinutes } from '../systems/gameDate.js';   // OL2: the world's clock, read for the counter page
 
@@ -262,6 +263,7 @@ export class RestWindow {
    *  the same as clearing it once, so the guard would be a branch no
    *  test could kill, and this file has already retired one of those. */
   _close() {
+    noticeRelease(this);   // ENH-NOTICE2
     // The flags first and UNGUARDED, per the note above. Then the
     // dispatch, ONCE: `dispose()` calls this method deliberately, so a
     // host that drains a window which already closed itself would fire
@@ -857,9 +859,13 @@ export class RestWindow {
       } else {
         rows = this.endLines ?? [''];
       }
+      // ENH-NOTICE2: the three click-anywhere states are the panel on
+      // the enhanced skin; the confirm (Yes/No) and the hours field keep
+      // the parchment
+      if (noticeFrame(this, ['hoursRefused', 'refused', 'ended'].includes(this.state) ? rows : null)) { this._box = null; return; }
       this._box = layoutMessageBox(font, rows, buttons, opts);
       if (drawMessageBox(renderer, m, font, this._box)) return;
-    }
+    } else noticeRelease(this);
     this._box = null;
 
     let lines;

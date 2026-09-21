@@ -78,6 +78,7 @@ import {
 } from './nativePanel.js';
 import { drawScreenDimBackdrop } from './chargenArt.js';
 import { layoutMessageBox, drawMessageBox, messageBoxHit, MB_BUTTONS } from './messageBox.js';
+import { noticeFrame, noticeRelease } from './enhancedNotice.js';   // ENH-NOTICE2: the window's own click-anywhere box, as the enhanced panel
 import { InputMessageBoxWindow } from './inputMessageBox.js';
 import { ListPickerWindow, listPickerArtLoaded } from './listPicker.js';
 import { SpellIconPickerWindow } from './spellIconPickerWindow.js';   // SelectIconButton's window (:894-898)
@@ -447,6 +448,7 @@ export class SpellMakerWindow {
   }
 
   _close() {
+    noticeRelease(this);   // ENH-NOTICE2
     if (this.done) return;
     this.done = true;
     this.onClose?.();
@@ -903,6 +905,8 @@ export class SpellMakerWindow {
       this.picker.draw(renderer, canvas, font);
       return;
     }
+    // a box WITH buttons is a decision and keeps the parchment
+    if (noticeFrame(this, this.box && !this.box.buttons?.length ? this.box.rows : null)) { this._boxLayout = null; return; }
     if (this.box) {
       this._boxLayout = layoutMessageBox(font, this.box.rows, this.box.buttons ?? []);
       drawMessageBox(renderer, m, font, this._boxLayout);

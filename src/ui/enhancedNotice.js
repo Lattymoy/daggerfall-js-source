@@ -176,7 +176,7 @@ export const noticeKey = (prefix = 'box') => `${prefix}${++seq}`;
 
 /**
  * THE BOX'S DRAW, decided once for both homes (ActionTextBox,
- * ChoiceWindow). True when the panel took the frame and the box must
+ * ChoiceWindow; a window's own box goes through noticeFrame below). True when the panel took the frame and the box must
  * put up no canvas quads; false when the box paints its own parchment
  * - the classic skin, or the enhanced skin off a document. A box that
  * is DONE answers true without drawing: its panel is sliding out, and
@@ -188,6 +188,33 @@ export function noticeDraw(box, rows) {
   if (box.done) return true;
   box._noticeKey ??= noticeKey();
   return drawEnhancedNotice({ rows }, undefined, box._noticeKey) != null;
+}
+
+/** The box (or the window that owns one) is gone: its panel leaves.
+ *  A no-op for an owner that never drew a panel - the classic skin. */
+export function noticeRelease(owner) {
+  if (owner?._noticeKey) releaseEnhancedNotice(owner._noticeKey);
+}
+
+/**
+ * A WINDOW'S OWN BOX, decided each frame (ENH-NOTICE2). Eight classic
+ * windows drawn on both skins - the potion maker, the item maker, the
+ * spell maker, the bank, the rest window, the coven, the guild service
+ * window and the service flow - raise DFU's click-anywhere box from
+ * inside themselves (`DaggerfallUI.MessageBox` over the window) and
+ * paint it as their own parchment rather than pushing an
+ * ActionTextBox, because a host holds one overlay slot. They hand
+ * `rows` here while such a box is up and `null` when none is - or
+ * when the box up is a DECISION (buttons) or a FIELD, which keep the
+ * parchment. True: the panel took the frame. False: paint the
+ * parchment (classic skin, no document, or nothing to show), and any
+ * panel this owner had is released - so a text step that gives way
+ * to a Yes/No step, or a box that clears, leaves on the next draw.
+ */
+export function noticeFrame(owner, rows) {
+  if (!rows || !isEnhanced()) { noticeRelease(owner); return false; }
+  owner._noticeKey ??= noticeKey();
+  return drawEnhancedNotice({ rows }, undefined, owner._noticeKey) != null;
 }
 
 /** The live panels' keys, for a probe. */

@@ -307,3 +307,148 @@ test('ENH-NOTICE1: the sheet - right edge, pointer-transparent, a slide the modu
   assert.match(ENHANCED_CSS, /\.notice-row\.cells \{ display: flex/);
   assert.ok(NOTICE_WATCHDOG_MS > NOTICE_SLIDE_MS, 'a watchdog shorter than the slide would chase its own tail');
 });
+
+// ── ENH-NOTICE2: THE WINDOWS' OWN BOXES ──────────────────────────────
+// Eight classic windows drawn on both skins raise DFU's click-anywhere
+// box from inside themselves and paint it as their own parchment (a
+// host holds one overlay slot, so they do not push an ActionTextBox).
+// `noticeFrame` is their seam: rows while such a box is up, null when
+// none - or when the box up is a decision or a field.
+import { readFileSync, readdirSync } from 'node:fs';
+import { noticeFrame, noticeRelease } from '../src/ui/enhancedNotice.js';
+import { GuildServiceWindow, _setGuildServiceArtForTests } from '../src/ui/guildServiceWindow.js';
+import { CovenWindow, _setCovenArtForTests } from '../src/ui/covenWindow.js';
+import { ServiceFlowWindow } from '../src/ui/guildServiceWindows.js';
+
+const rd = (p) => readFileSync(new URL('../' + p, import.meta.url), 'utf8');
+const artRecorder = () => ({ quads: [], uploadTexture: () => 'tex', releaseTexture: () => {}, drawScreenQuad(tex, rect) { this.quads.push({ tex, ...rect }); } });
+const IMG = { tex: 't', w: 130, h: 51 };
+const NATIVE = { width: 320, height: 200 };
+
+test('ENH-NOTICE2: noticeFrame - rows raise the owner\'s panel, null releases it, the classic skin mints nothing', () => {
+  withSkin('classic', (doc) => {
+    const w = {};
+    assert.equal(noticeFrame(w, ['x']), false, 'mutants: the classic window handed to the panel');
+    assert.equal(w._noticeKey, undefined);
+    assert.equal(stackOf(doc), null);
+  });
+  withSkin('enhanced', (doc) => {
+    fakeClock();
+    const w = {};
+    assert.equal(noticeFrame(w, [{ text: 'a refusal', center: true }]), true);
+    assert.ok(w._noticeKey, 'mutants: no key for the window');
+    assert.deepEqual(textsOf(panelsOf(doc)[0]), ['a refusal']);
+    assert.equal(noticeFrame(w, ['a refusal', 'more']), true, 'the same panel, repainted');
+    assert.equal(panelsOf(doc).length, 1);
+    assert.equal(noticeFrame(w, null), false, 'mutants: null taking the frame');
+    assert.deepEqual(enhancedNoticeKeys(), [], 'mutants: null not releasing');
+    assert.equal(panelsOf(doc)[0].className, 'notice notice-out');
+    noticeRelease(w); noticeRelease({});   // twice, and for an owner that never drew: harmless
+    assert.equal(noticeFrame(w, ['again']), true, 'the same owner raises a fresh panel after a release');
+    assert.deepEqual(enhancedNoticeKeys(), [w._noticeKey]);
+  });
+});
+
+test('ENH-NOTICE2: the guild service window - a text step is the panel, the Yes/No step that follows takes it down', () => {
+  _setGuildServiceArtForTests({ base: IMG, member: IMG });
+  try {
+    withSkin('enhanced', (doc) => {
+      fakeClock();
+      let n = 0;
+      const w = new GuildServiceWindow({
+        member: () => true, service: () => 'Training',
+        steps: () => [{ textId: 7, clickAnywhere: true }, { textId: 8, buttons: 'YesNo', onYes: () => {}, closesWindow: true }],
+        rows: (id) => [{ text: `[${id}] variant ${++n}`, center: true }],
+      });
+      const r = artRecorder();
+      for (let i = 0; i < 3; i++) w.draw(r, NATIVE, FONT);
+      assert.equal(w._box, null, 'mutants: the parchment laid out under the panel');
+      assert.equal(panelsOf(doc).length, 1);
+      assert.deepEqual(textsOf(panelsOf(doc)[0]), ['[7] variant 1'], 'BOX1 still holds: one read over three frames');
+      assert.equal(n, 1);
+      w.click(10, 10);   // click-anywhere: the next box
+      w.draw(r, NATIVE, FONT);
+      assert.ok(w._box, 'the Yes/No box is the parchment');
+      assert.equal(panelsOf(doc)[0].className, 'notice notice-out', 'mutants: the text step\'s panel outliving it under the decision');
+      assert.deepEqual(enhancedNoticeKeys(), []);
+      w.input('KeyY');
+      assert.equal(w.done, true);
+    });
+    // the classic skin: untouched
+    withSkin('classic', (doc) => {
+      const w = new GuildServiceWindow({ member: () => true, service: () => 'Training',
+        steps: () => [{ textId: 7, clickAnywhere: true }], rows: () => [{ text: 'x', center: true }] });
+      w.draw(artRecorder(), NATIVE, FONT);
+      assert.ok(w._box, 'mutants: the classic parchment gone');
+      assert.equal(stackOf(doc), null);
+    });
+  } finally { _setGuildServiceArtForTests(null); }
+});
+
+test('ENH-NOTICE2: the coven - the same seam; closing the window takes the panel with it', () => {
+  _setCovenArtForTests({ base: IMG });
+  try {
+    withSkin('enhanced', (doc) => {
+      fakeClock();
+      const w = new CovenWindow({ rows: (id) => [{ text: `coven ${id}`, center: true }], onSummon: () => ({ textId: 9 }), onTalk: () => {}, onClose: () => {} });
+      w.boxes.push({ textId: 3, closesWindow: true });
+      const r = artRecorder();
+      w.draw(r, NATIVE, FONT);
+      assert.equal(w._box, null);
+      assert.deepEqual(textsOf(panelsOf(doc)[0]), ['coven 3']);
+      w.click(10, 10);   // click-anywhere on a closesWindow box: the window closes
+      assert.equal(w.done, true);
+      assert.deepEqual(enhancedNoticeKeys(), [], 'mutants: _close not releasing - the host drops the window and never draws it again');
+      assert.equal(panelsOf(doc)[0].className, 'notice notice-out');
+    });
+  } finally { _setCovenArtForTests(null); }
+});
+
+test('ENH-NOTICE2: the service flow - plain text steps ride the panel in place, a picker or a field step releases it, the last step\'s close releases it', () => {
+  withSkin('enhanced', (doc) => {
+    fakeClock();
+    const w = new ServiceFlowWindow([
+      { rows: [{ text: 'welcome' }] },
+      { rows: [{ text: 'and then' }], buttons: 'YesNo', onYes: () => null, onNo: () => null },
+    ]);
+    const r = recorder();
+    w.draw(r, NATIVE, FONT);
+    assert.equal(r.quads.length, 0, 'mutants: the parchment painted under the panel');
+    assert.equal(w._box, null);
+    assert.deepEqual(textsOf(panelsOf(doc)[0]), ['welcome']);
+    w.click(0, 0);   // click-anywhere advances
+    w.draw(r, NATIVE, FONT);
+    assert.ok(w._box, 'the Yes/No step is the parchment');
+    assert.deepEqual(enhancedNoticeKeys(), [], 'mutants: the decision not releasing the text step\'s panel');
+    w.input('KeyN');
+    assert.equal(w.done, true);
+    // a field step after a text step
+    const w2 = new ServiceFlowWindow([{ rows: [{ text: 'how much?' }] }, { rows: [], field: { label: 'x' }, onInput: () => null }]);
+    w2.draw(r, NATIVE, FONT);
+    assert.equal(enhancedNoticeKeys().length, 1);
+    w2.click(0, 0);
+    w2.draw(r, NATIVE, FONT);
+    assert.deepEqual(enhancedNoticeKeys(), [], 'mutants: the field step keeping the text panel up');
+    // the last text step closes the window: the panel goes with it, before any watchdog
+    const w3 = new ServiceFlowWindow([{ rows: [{ text: 'farewell' }] }]);
+    w3.draw(r, NATIVE, FONT);
+    assert.equal(enhancedNoticeKeys().length, 1);
+    w3.click(0, 0);
+    assert.equal(w3.done, true);
+    assert.deepEqual(enhancedNoticeKeys(), [], 'mutants: _close not releasing');
+  });
+});
+
+test('ENH-NOTICE2: THE ROSTER - the eight windows drawn on both skins that raise their own click-anywhere box, no more and no fewer', () => {
+  const ROSTER = ['potionMakerWindow', 'itemMakerWindow', 'spellMakerWindow', 'bankWindow', 'restWindow', 'covenWindow', 'guildServiceWindow', 'guildServiceWindows'];
+  for (const f of ROSTER) {
+    const src = rd(`src/ui/${f}.js`);
+    assert.match(src, /import \{ noticeFrame, noticeRelease \} from '\.\/enhancedNotice\.js'/, `${f}: the seam not imported`);
+    assert.match(src, /noticeFrame\(this, /, `${f}: draw does not decide the frame`);
+    assert.match(src, /_close\(\) \{[^}]*noticeRelease\(this\)/, `${f}: _close does not release - the host drops the window and never draws it again`);
+  }
+  // nobody else imports the seam: the two homes take noticeDraw, and a
+  // window the enhanced skin replaces with a DOM twin has no notice to hand over
+  const importers = readdirSync(new URL('../src/ui/', import.meta.url)).filter((f) => f.endsWith('.js') && /from '\.\/enhancedNotice\.js'/.test(rd(`src/ui/${f}`))).map((f) => f.replace(/\.js$/, '')).sort();
+  assert.deepEqual(importers, [...ROSTER, 'actionText', 'talkWindow'].sort());
+});

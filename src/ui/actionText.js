@@ -17,7 +17,7 @@ import { drawText, measureText } from './text.js';
 import { nativeMetrics } from './nativePanel.js';
 import { layoutMessageBox, drawMessageBox, messageBoxArtLoaded } from './messageBox.js';   // U11
 import { InputMessageBoxWindow } from './inputMessageBox.js';   // CM3: the one DaggerfallInputMessageBox
-import { noticeDraw, releaseEnhancedNotice } from './enhancedNotice.js';   // ENH-NOTICE1: the enhanced skin's panel
+import { noticeDraw, noticeRelease } from './enhancedNotice.js';   // ENH-NOTICE1: the enhanced skin's panel
 
 /** DaggerfallInputMessageBox maxCharacters. */
 export const MAX_INPUT = 20;
@@ -86,7 +86,7 @@ export class ActionTextBox {
     this.done = true;
     // ENH-NOTICE1: the panel leaves with the box. A no-op on the
     // classic skin (no panel was ever keyed to this box).
-    if (this._noticeKey) releaseEnhancedNotice(this._noticeKey);
+    noticeRelease(this);
   }
 
   /** ClickAnywhereToClose is CLICK anywhere first (DaggerfallMessageBox

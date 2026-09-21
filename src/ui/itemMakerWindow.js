@@ -57,6 +57,7 @@
 import { loadImg, nativeMetrics, drawImg, drawRect, shadowText } from './nativePanel.js';
 import { drawScreenDimBackdrop } from './chargenArt.js';
 import { layoutMessageBox, drawMessageBox } from './messageBox.js';
+import { noticeFrame, noticeRelease } from './enhancedNotice.js';   // ENH-NOTICE2: the window's own click-anywhere box, as the enhanced panel
 import { InputMessageBoxWindow } from './inputMessageBox.js';
 import { ListPickerWindow, listPickerArtLoaded, listPickerSmallFont, preloadListPickerSmallFont, SMALL_FONT_PICKER_ROWS } from './listPicker.js';
 import {
@@ -242,7 +243,7 @@ export class ItemMakerWindow {
     this._souls = this._filledSouls();
   }
 
-  _close() { this.done = true; this.hooks.onClose?.(); }
+  _close() { this.done = true; noticeRelease(this); this.hooks.onClose?.(); }
   _say(text) { this.box = { rows: [{ text, center: true }] }; }
 
   items() {
@@ -562,6 +563,7 @@ export class ItemMakerWindow {
 
     if (this.renameBox) { this.renameBox.draw(renderer, canvas, font); return; }
     if (this.picker && listPickerArtLoaded()) { this.picker.draw(renderer, canvas, font); return; }
+    if (noticeFrame(this, this.box?.rows ?? null)) { this._boxLayout = null; return; }
     if (this.box) {
       this._boxLayout = layoutMessageBox(font, this.box.rows, []);
       drawMessageBox(renderer, m, font, this._boxLayout);
