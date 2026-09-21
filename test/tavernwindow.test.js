@@ -18,6 +18,14 @@ import {
   ROOM_FREE_FOR_KNIGHT, YOU_ARE_NOT_HUNGRY, roomRemainingHours,
 } from '../src/systems/tavern.js';
 import { MINUTES_PER_DAY, dayOfYearFromMinutes } from '../src/systems/gameDate.js';
+// ENH-NOTICE3: the ENHANCED twin of this window (ui/enhancedTavern.js,
+// mounted by ui/tavernDoor.js on the enhanced skin) raises the same
+// boxes; the click-anywhere ones ride the notice panel now.
+import { mountEnhancedTavern } from '../src/ui/enhancedTavern.js';
+import {
+  enhancedNoticeKeys, destroyEnhancedNotice, ENHANCED_NOTICE_ID,
+} from '../src/ui/enhancedNotice.js';
+import { withDom } from './invdrag.mjs';   // a document just real enough to mount a DOM window
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -377,4 +385,118 @@ test('D1: the four hotkeys are DialogShortcuts.txt\'s, so EXIT is G and E does n
   const mod = win();
   mod.w.input('KeyG', { ctrlKey: true });
   assert.equal(mod.w.done, false, 'Ctrl-G is not TavernExit');
+});
+
+
+// ── ENH-NOTICE3: THE ENHANCED TAVERN'S BOXES, ON THE PANEL ────────
+
+/** The live notice panels' rows, read off the stack in `doc`. */
+const noticeTexts = (doc) => {
+  const live = new Set(enhancedNoticeKeys());
+  const stack = (doc.body.children ?? []).find((c) => c.id === ENHANCED_NOTICE_ID);
+  return (stack?.children ?? [])
+    .filter((c) => String(c.className).split(/\s+/).includes('notice') && live.has(c.dataset.owner))
+    .flatMap((panel) => (panel.children.find((c) => c.className === 'notice-body')?.children ?? [])
+      .filter((r) => r.style.display !== 'none').map((r) => r.textContent));
+};
+
+/** The enhanced panel, mounted over `withDom`'s document on `skin`, with
+ *  tavernWindow.js's OWN hooks bag (ui/tavernDoor.js hands both windows
+ *  the identical object). The player has just eaten, so the Food button
+ *  raises DFU's "youAreNotHungry" - DaggerfallTavernWindow.cs:301,
+ *  DaggerfallUI.MessageBox and therefore ClickAnywhereToClose. */
+function enhancedTavern(skin, fn) {
+  const had = Object.hasOwn(globalThis, 'location') ? globalThis.location : undefined;
+  globalThis.location = { search: `?skin=${skin}` };
+  try {
+    return withDom((dom) => {
+      const entity = player();
+      const now = 99 * MINUTES_PER_DAY + 600;
+      entity.lastTimePlayerAteOrDrankAtTavern = now;   // canEat is false: the not-hungry box
+      const host = dom.mk('div');
+      dom.body.append(host);
+      const view = mountEnhancedTavern(host, {
+        entity, rows, now: () => now, mapId: () => 7, buildingKey: () => 42,
+        buildingName: () => 'The Dancing Dagger', quality: () => 10, bedCount: () => 4,
+        freeRooms: () => false, skills: () => ({ mercantile: 50, personality: 50 }),
+        heal: () => {}, onExit: () => {}, rolls: () => 0.5,
+      });
+      const acts = () => dom.doc.querySelectorAll('.tavern-act');
+      const click = (label) => acts().find((b) => b.textContent === label).onclick();
+      const scrim = () => dom.doc.querySelectorAll('.sb-ask')[0] ?? null;
+      const cardText = () => (scrim()?.querySelectorAll('.px-note') ?? []).map((n) => n.textContent);
+      return fn({ dom, view, click, scrim, cardText });
+    });
+  } finally {
+    if (had === undefined) delete globalThis.location; else globalThis.location = had;
+    destroyEnhancedNotice();
+  }
+}
+
+test('ENH-NOTICE3: the enhanced tavern\'s click-anywhere box is the notice panel, its scrim is the click, and it leaves on the dismissal and on the unmount (mutants: text-left-in-the-card, scrim-not-clickable, no-release-on-dismissal, no-release-on-unmount)', () => {
+  enhancedTavern('enhanced', ({ dom, view, click, scrim, cardText }) => {
+    assert.deepEqual(enhancedNoticeKeys(), [], 'nothing is said before a box is raised');
+    click('Food & drink');   // :301 - DaggerfallUI.MessageBox("youAreNotHungry")
+    assert.deepEqual(noticeTexts(dom.doc), [YOU_ARE_NOT_HUNGRY],
+      'the box\'s words are the panel\'s, verbatim');
+    assert.equal(enhancedNoticeKeys().length, 1, 'one box, one panel');
+    assert.deepEqual(cardText(), [],
+      'and NOTHING of it is left in the card - the scrim is a click-catcher now, not a second face');
+    const s = scrim();
+    assert.ok(s, 'the scrim still stands: it is what takes the dismissing click');
+    assert.equal(typeof s.onclick, 'function', 'ClickAnywhereToClose - the press lands anywhere on it');
+    // AUDIT ENH-NOTICE3 B1: ...and "anywhere" is THE SCREEN. The panel
+    // stands at the right edge, outside a centred 460px window; a scrim
+    // inside the window covered only the window, so the one place the
+    // words were was the one place the press was dead.
+    assert.equal(s.className, 'sb-ask sb-screen', 'mutant: the panel arm\'s scrim without its screen class (window-sized)');
+    assert.match(String(s.parentNode?.className ?? s.parent?.className), /\btavern-shell\b/, 'mutant: the scrim hung on the window instead of the shell');
+
+    // THE WINDOW'S OWN DISMISSAL
+    s.onclick();
+    assert.deepEqual(enhancedNoticeKeys(), [], 'the panel goes with the box');
+    assert.equal(scrim(), null, 'and so does the scrim');
+
+    // AND THE UNMOUNT: a HELD panel arms no watchdog
+    click('Food & drink');
+    assert.equal(enhancedNoticeKeys().length, 1);
+    view.unmount();
+    assert.deepEqual(enhancedNoticeKeys(), [], 'unmount releases - a held panel with no release is a leak');
+  });
+});
+
+test('ENH-NOTICE3: a box WITH BUTTONS is a decision and keeps the card, on either skin (mutants: the-yes-no-offer-routed-to-the-panel)', () => {
+  // DaggerfallTavernWindow.cs:202-207 - the offerPriceId box carries
+  // Yes and No, so its words must stay under its buttons.
+  enhancedTavern('enhanced', ({ dom, click, cardText }) => {
+    click('Rent a room');
+    const form = dom.doc.querySelectorAll('form')[0];
+    form.onsubmit({ preventDefault() {} });
+    assert.ok(cardText().some((t) => t.includes(`#${OFFER_PRICE_ID}`)), 'the offer is still in the card');
+    assert.deepEqual(enhancedNoticeKeys(), [], 'and no panel was raised for it');
+    assert.deepEqual(dom.doc.querySelectorAll('.sb-acts')[0].children.map((b) => b.textContent),
+      ['Yes', 'No'], 'with its two controls under the words');
+  });
+});
+
+test('ENH-NOTICE3: the classic skin is untouched - the enhanced tavern off the enhanced skin still paints its own card and builds no stack (mutants: panel-on-every-skin)', () => {
+  enhancedTavern('classic', ({ dom, click, cardText, scrim }) => {
+    click('Food & drink');
+    assert.deepEqual(cardText(), [YOU_ARE_NOT_HUNGRY], 'the card says it, as it always did');
+    assert.deepEqual(enhancedNoticeKeys(), [], 'no panel');
+    assert.equal((dom.body.children ?? []).some((c) => c.id === ENHANCED_NOTICE_ID), false,
+      'and no stack was ever built');
+    assert.equal(scrim().onclick, null, 'the scrim is not the click here - the OK button is');
+    assert.equal(dom.doc.querySelectorAll('.sb-acts')[0].children[0].textContent, 'OK');
+  });
+});
+
+test('ENH-NOTICE3 (AUDIT): the tavern\'s notice owner is ONE object for the module - a per-render owner leaks a panel per box', () => {
+  // `render()` runs on every state change and again from `unmount`,
+  // and the owner is what carries `_noticeKey`: mint it per render and
+  // each raise is a NEW panel with nobody to release the last.
+  const src = readFileSync(new URL('../src/ui/enhancedTavern.js', import.meta.url), 'utf8');
+  assert.match(src, /^const noticeOwner = \{\};$/m,
+    'mutant: the owner minted per render (a panel per box, released by nothing)');
+  assert.equal((src.match(/noticeOwner = /g) ?? []).length, 1, 'and written once - nothing re-mints it');
 });

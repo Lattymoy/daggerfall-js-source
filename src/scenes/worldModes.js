@@ -58,6 +58,7 @@ import { isNight } from '../world/worldClock.js';   // AUDIT 23 (C12)
 import { worldMinutes, setWorldMinutes, sharedRealTimeText } from '../systems/worldTick.js';   // AUDIT 23 (C12); OL3: the prices said in real time online: the one clock; G4's probe moves it
 import { exhaustionOutcome, EXHAUSTED_IN_WATER } from '../systems/rest.js';   // AUDIT 23 (C5)
 import { ActionTextBox } from '../ui/actionText.js';   // AUDIT 23 (C5)
+import { registerPresenter } from '../systems/notify.js';   // ENH-NOTICE3: the modal modes' slot, offered to the one door every message goes through
 import { healthStatusRows, statusInfoRows } from '../systems/healthStatus.js';   // BS1/F198: the Status health box
 import { survivalStatusRows } from '../systems/survival/status.js';   // SURV5
 import { liveVampirism } from '../systems/racialLive.js';   // SURV5: the vampire's one status line
@@ -462,10 +463,16 @@ export function createWorldModes(host) {
   // so a player who catches vampirism in a shop still dreams.
   wireInfectionVideos(renderer, {
     textAt: (id) => townTalk?.lines?.(id) ?? null,
-    // ROAD-B B5: VampirismInfection's own DaggerfallUI.MessageBox - a
-    // PUSH, the same conversion its dungeon twin took. A player who
-    // turned with a shop's trade window open was never told.
-    showText: (lines) => mountInterior(new ChoiceWindow({ lines })),
+    // ENH-NOTICE3: THE `showText` THIS HOST USED TO PASS IS GONE. The
+    // box is raised by the shared seam itself (scenes/shared.js ->
+    // systems/notify.js), and it is still the PUSH ROAD review-p
+    // converted it to: VampirismInfection.cs:186-188 is
+    // `DaggerfallMessageBox mb = DaggerfallUI.MessageBox(
+    // deathIsNotEternalTextID); mb.Show();` and MessageBox is `new
+    // DaggerfallMessageBox(uiManager, uiManager.TopWindow); ...;
+    // messageBox.Show()` (DaggerfallUI.cs:1346-1353) - a PushWindow
+    // that has never asked what is open. What the four hosts each
+    // wired by hand, the presenter registered above now answers for.
     factionDict: () => townTalk?.factionDict ?? null,
     // V2e: the outer host's cemetery arm rides through, or this
     // re-registration would silently drop it (world.js passes it;
@@ -1356,10 +1363,10 @@ export function createWorldModes(host) {
    *  billboard is CENTRE-anchored, so the base ends up ON the marker
    *  inside a building and half a height BELOW it inside a dungeon.
    *  This port's billboard shader is BOTTOM-anchored (position = base,
-   *  the C11 law dungeonContext.js:1682 states), so the same visual
+   *  the C11 law dungeonContext.js:1740 states), so the same visual
    *  result needs the shift on the DUNGEON side - which is exactly the
    *  shift the dungeon's own RDB flats already take
-   *  (dungeonContext.js:1587, `y - size.h / 2`), and which a building's
+   *  (dungeonContext.js:1638, `y - size.h / 2`), and which a building's
    *  flats correctly do not (interiorContext.js passes its centers
    *  straight through).
    *
@@ -2512,7 +2519,7 @@ export function createWorldModes(host) {
     // does not write, so every shopkeeper, priest and guild clerk in
     // the game reached TalkManager as ''. The visible half is
     // TalkManager's greeting, which says the NPC's name once reaction
-    // is above zero and "stranger" below it (townTalk.js:497) - so
+    // is above zero and "stranger" below it (townTalk.js:512) - so
     // every static NPC stayed a stranger no matter how well liked -
     // and topicTree's same-building-static test (:558), which matches
     // a topic caption against this name and therefore never matched.
@@ -5346,7 +5353,7 @@ export function createWorldModes(host) {
           hudMessageSink: (t) => questBridge?.notebook?.addMessage(t),
           // MAC1 J: and the relock the dungeon's pause door needs, on
           // the same threading - the context owns no canvas of its own
-          // (dungeonContext.js:5826), so the OUTER host's one rides in.
+          // (dungeonContext.js:5886), so the OUTER host's one rides in.
           // This is the most-played pause door of the six: world.js
           // gates its own Escape ladder on exterior mode, so underground
           // the key falls to routeKey -> ui/input.js:657 -> the
@@ -5434,6 +5441,7 @@ export function createWorldModes(host) {
         dungeonCtx = null;
         return false;
       }
+      ctx.goLive?.();   // ENH-NOTICE3 (AUDIT F1, re-audited C1): ADOPTED - the context's stack is the live top window from the next statement on; before the flip and not after, so no statement ever runs with mode 'dungeon' and the door's presenter still dormant (worldModes' own quest door reaches the same stack and reads no `_live`)
       mode = 'dungeon';
       host.unlockOn?.();   // AUDIT 62 F16/F28: the lock never outlives a mode change
       mwViewTransition('Interior');   // EOTB-IL: OnTransitionInterior is registered on PlayerEnterExit.OnTransitionDungeonInterior too (Start, IL_06bf)
@@ -6615,7 +6623,7 @@ export function createWorldModes(host) {
       // reach.
       if (!interiorOverlay) { /* the window is gone; nothing to paint */ }
       else if (_shopFont) interiorOverlay.draw(renderer, canvas, _shopFont, hudScale(canvas.width, canvas.height));
-      else interiorOverlay = null;
+      else { interiorOverlay.dispose?.(); interiorOverlay = null; }   // AUDIT ENH-NOTICE3 A3: the font-less arm DROPPED the occupant - an enhanced DOM window needs no classic font to mount, and the tavern's held panel, its full-screen host and its capture listener outlived the drop (townTalk's twin disposes, :1126)
     }
     return true;
   }
@@ -7929,6 +7937,35 @@ export function createWorldModes(host) {
     interiorFoes?.restoreWorld(saved.foes, fromNative, yOffset, { reviveQuestBehaviour });
     interiorGuards?.restoreWorld(saved.guards, fromNative, yOffset);
   }
+  /** U43-ii: the quest machine's popup, in EVERY modal mode. The
+   *  dungeon arm was missing, so world.js's showQuestBox fell through
+   *  to a console.warn - and the CLASSIC START runs _TUTOR__ and
+   *  _BRISIEN inside Privateer's Hold, which meant the first ten
+   *  minutes of a new game were silent. The dungeon context has had an
+   *  overlay slot since U14; nothing exported a way in.
+   *
+   *  Through mountInterior, which is PushWindow (ROAD-B B1). A quest
+   *  popup is the one thing that can take the slot from a running
+   *  rest - the rest sub-tick calls QuestMachine.Tick, which is
+   *  exactly what DFU's second `TopWindow != this` check (:397-400)
+   *  exists for - and it is now the two-deep case it is in DFU: the
+   *  box goes ON TOP, the rest stops advancing because it is no
+   *  longer the top window, and closing the box hands the rest back
+   *  its slot, its hours and its IsResting. */
+  function showQuestOverlay(win) {
+    if (mode === 'interior') { mountInterior(win); return true; }
+    if (mode === 'dungeon' && dungeonCtx?.showOverlay) return dungeonCtx.showOverlay(win);
+    return false;
+  }
+  // ENH-NOTICE3: THE MODAL MODES' SLOT, offered to systems/notify.js -
+  // the same door as above, at priority 10: in front of townTalk's
+  // outdoor slot (0), which is the order world.js's showQuestBox ladder
+  // asked them in, and behind the dungeon context's own presenter (20)
+  // while one stands. Above ground with no building mounted it refuses
+  // and the box falls to townTalk. This host has no PopupText of its
+  // own (the town's and the dungeon's are the two), so it offers no
+  // hudText. No unregister: the mode machine lives as long as the page.
+  registerPresenter({ mount: (win) => showQuestOverlay(win), priority: 10 });
   return {
     get mode() { return mode; },
     // UNSTUCK1 (per-request, online-chat command): teleports the
@@ -8568,19 +8605,7 @@ export function createWorldModes(host) {
      *  first ten minutes of a new game were silent. The dungeon
      *  context has had an overlay slot since U14; nothing exported a
      *  way in. */
-    showQuestOverlay(win) {
-      // Through mountInterior, which is PushWindow (ROAD-B B1). A quest
-      // popup is the one thing that can take the slot from a running
-      // rest - the rest sub-tick calls QuestMachine.Tick, which is
-      // exactly what DFU's second `TopWindow != this` check (:397-400)
-      // exists for - and it is now the two-deep case it is in DFU: the
-      // box goes ON TOP, the rest stops advancing because it is no
-      // longer the top window, and closing the box hands the rest back
-      // its slot, its hours and its IsResting.
-      if (mode === 'interior') { mountInterior(win); return true; }
-      if (mode === 'dungeon' && dungeonCtx?.showOverlay) return dungeonCtx.showOverlay(win);
-      return false;
-    },
+    showQuestOverlay,
     /** RW1: GivePc's reward container in the MODE that owns the
      *  ground. GivePc mints through the SAME CreateDroppedLootContainer
      *  the inventory's drop does (GivePc.cs:168), so it picks its

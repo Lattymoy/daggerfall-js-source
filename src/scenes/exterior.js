@@ -151,6 +151,7 @@ import { seedStartingEquipment, EQUIP_SLOTS } from '../systems/equip.js';   // U
 import { createChargenFlow, createChargenWindow, finishChargen, loadSpellIndex, applyHeadlessChargen } from '../systems/chargenSession.js';   // S3c/U9
 import { preloadChargenArt } from '../ui/chargenArt.js';   // U10
 import { preloadMessageBoxArt, tokenRows } from '../ui/messageBox.js';   // U11; AUDIT 64 F10: MultiFormatTextLabel's row law for the holiday parchment
+import { messageBox, mountWindow } from '../systems/notify.js';   // ENH-NOTICE3: DaggerfallUI.MessageBox, the ONE door - this host's seams name the KIND and never the window
 import { expandMessageBoxTokens } from '../systems/talkMacros.js';   // AUDIT 64 F10: SetTextTokens' null-mcp ExpandMacros pass
 import { HolidayTextTimer, holidayTextPrimesFor } from '../systems/holidays.js';   // AUDIT 64 F10: PlayerEnterExit.ShowHolidayText and its prime/drain
 import { buildingDataForDoor, locationBuildings } from '../systems/talkTopics.js';   // E2: the shop identity   // AUDIT 64 F26: BuildingDirectory's real building list in this host too
@@ -1097,6 +1098,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     // there is invisible to townTalk's own `overlay`. `modes` is
     // declared below, so the read is deferred (the regionIndex idiom).
     otherOverlayActive: () => modes?.overlayHeld ?? false,
+    otherHudCovered: () => modes?.hudCovered ?? false,   // AUDIT ENH-NOTICE3 C2: the previousWindow chain on the mode host's stack, for the toasts
   });
   townTalk.ensureLoaded();
   /** THE GAME PAUSE for this host - ONE composition, asked of the
@@ -1197,12 +1199,16 @@ export async function bootExterior(canvas, renderer, params, status) {
   // lifecycle still runs and the player just never sees the dream.
   wireInfectionVideos(renderer, {
     textAt: (id) => townTalk.lines(id),
-    // ROAD review-p: a PUSH, like the two interior hosts - see the
-    // world host's copy of this seam. VampirismInfection.cs:186-188 is
-    // DaggerfallUI.MessageBox + Show(), i.e. PushWindow
-    // (DaggerfallUI.cs:1352-1358), and a replacement here would
-    // dispose whatever the player had open when they turned.
-    showText: (lines) => townTalk.pushOverlay(new ChoiceWindow({ lines })),
+    // ENH-NOTICE3: THE `showText` THIS HOST USED TO PASS IS GONE. The
+    // box is raised by the shared seam itself (scenes/shared.js ->
+    // systems/notify.js), and it is still the PUSH ROAD review-p
+    // converted it to: VampirismInfection.cs:186-188 is
+    // `DaggerfallMessageBox mb = DaggerfallUI.MessageBox(
+    // deathIsNotEternalTextID); mb.Show();` and MessageBox is `new
+    // DaggerfallMessageBox(uiManager, uiManager.TopWindow); ...;
+    // messageBox.Show()` (DaggerfallUI.cs:1346-1353) - a PushWindow
+    // that has never asked what is open. What the four hosts each
+    // wired by hand, the presenter registered above now answers for.
     factionDict: () => townTalk.factionDict ?? null,
   });
   // QX1: InitAtGameStart runs ONCE when a NEW character finishes
@@ -2329,7 +2335,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     // (chronicleDoor.js:87 `if (!questJournalArtLoaded()) return null`),
     // so a readiness test placed AHEAD of the preload that satisfies it
     // made the classic skin answer null for ever - the warm behind the
-    // gate could never run. dungeonContext.js:1371-1376 is the shape:
+    // gate could never run. dungeonContext.js:1394-1399 is the shape:
     // warm, then let the door refuse.
     preloadQuestJournalArt({ renderer, fetchBytes, palette });
     return createChronicleWindow({
@@ -3063,8 +3069,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     if (_questBoxWin && !_questBoxWin.done && live) { _questBoxWin.push([box]); return; }
     const win = new ServiceFlowWindow([box], { onClose: () => { if (_questBoxWin === win) _questBoxWin = null; } });
     _questBoxWin = win;
-    if (modes?.showQuestOverlay?.(win)) return;
-    townTalk.pushOverlay(win);
+    mountWindow(win);   // ENH-NOTICE3 (AUDIT F5): the one ladder, systems/notify.js's
   };
   const questWorld = {
     // AUDIT 28 W4/F-B2: DFU's smaller-dungeon law lives INSIDE
@@ -3741,10 +3746,19 @@ export async function bootExterior(canvas, renderer, params, status) {
       foeSinks: (f) => enchantFoeSinks(f),
       feet: () => enchantFeet(),
       standLooseFoe: _standLooseFoe,
-      // V3: Azura's TEXT.RSC popup, through this host's overlay slot.
+      // V3: Azura's TEXT.RSC popup.
+      // ENH-NOTICE3: through the one door, and the ROUTING CHANGES
+      // here exactly as it does in the world host's twin - this was
+      // `townTalk.showOverlay`, a REPLACE that disposed whatever held
+      // the slot, and it never reached a mounted building's own slot.
+      // The seam offers the box by priority (the interior mount in
+      // front of the street), as a PUSH: every DaggerfallUI.MessageBox
+      // is built on `uiManager.TopWindow` and Show()n
+      // (DaggerfallUI.cs:1346-1353), which is PushWindow
+      // (UserInterfaceManager.cs:79-91). The rows are unchanged.
       messageBox: (id) => {
         const lines = plainLines(townTalk.lines(id));
-        if (lines?.length) townTalk.showOverlay(new ChoiceWindow({ lines }));
+        if (lines?.length) messageBox(lines);
       },
       // U52: the Oghma opens THIS host's one sheet construction.
       openCharacterSheet: () => townTalk.showOverlay(makeCharSheetWindow()),
@@ -4045,10 +4059,15 @@ export async function bootExterior(canvas, renderer, params, status) {
       // SetTextTokens(int) with ClickAnywhereToClose (:574-575). The mcp
       // is NULL at that call site (DaggerfallMessageBox.cs:443-450's
       // default), so this is the null-mcp door, hooks only.
+      // ENH-NOTICE3: the rows are AUDIT 64 F10's own (the null-mcp
+      // door, hooks only - unchanged); the box is the seam's.
+      // SetTextTokens(int) + ClickAnywhereToClose is
+      // DaggerfallUI.MessageBox (PlayerEnterExit.cs:573-575) and so a
+      // PUSH, the seam's default.
       showRecord: (id) => {
         const ctx = { hooks: questBridge?.machine?.macroContext?.()?.hooks ?? null };
         const rows = plainLines(tokenRows(expandMessageBoxTokens(townTalk.recordTokens(id), ctx))) ?? [];
-        if (rows.length) townTalk.showBox(rows);
+        if (rows.length) messageBox(rows);
       },
     });
 
@@ -4083,7 +4102,7 @@ export async function bootExterior(canvas, renderer, params, status) {
       // window held in the townTalk slot while the player was inside a
       // building or a dungeon, and gated it on the window existing -
       // but townTalk.frame ticks and draws the HUD TEXT LAYER too
-      // (townTalk.js:617, :598). So every HUD line raised in a modal
+      // (townTalk.js:632, :613). So every HUD line raised in a modal
       // mode had nowhere to land, which is why the interior weapon
       // rig's `say` was a console.warn and the interior ticker's was a
       // console.log. Drawn ABOVE the modal render, which is where

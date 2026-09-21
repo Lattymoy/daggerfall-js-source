@@ -625,7 +625,7 @@ the DEFAULT state, because starting weapons land in the bag unequipped
 `WEAPON_SKILL[playerWeapon.weapon.name]` raw at both its swing sites
 where the exterior hosts guarded with `?.`: the strike-frame bow test
 threw on EVERY bare-handed swing (reproduced live at
-dungeonContext.js:1865 by tools/fistProbe.mjs), the melee tally on
+dungeonContext.js:1923 by tools/fistProbe.mjs), the melee tally on
 every resolved fist hit. Fixed with the rule enforced, not remembered:
 a source sweep over src/scenes fails on any unguarded
 `playerWeapon.weapon.` deref, the bare-handed path is driven
@@ -1367,12 +1367,12 @@ review had to apply to `pauseWindow`/`restWindow`. And `listPicker.js`'s
 "three routers that mount a bare picker" named three lines, none of
 which was a router — the round bumped the dungeon's `:4112` to `:4113`
 mechanically, and a wrong number moved by the right offset is still
-wrong. All three are resolved by content (`townTalk.js:1156`,
-`worldModes.js:7708`, `dungeonContext.js:6115`) and pinned as a set.
+wrong. All three are resolved by content (`townTalk.js:1172`,
+`worldModes.js:7716`, `dungeonContext.js:6179`) and pinned as a set.
 
 The `worldModes.js` fix inserts one line, so cites into that host past
-it move by one: the dungeon's `worldModes.js:6326` and
-`chargenSession.js`'s `worldModes.js:7821` are bumped and pinned. Four
+it move by one: the dungeon's `worldModes.js:6334` and
+`chargenSession.js`'s `worldModes.js:7829` are bumped and pinned. Four
 `worldModes.js` cites elsewhere (`interior.js`, `world.js`,
 `tradeModes.js`, `saveWindow.js`) and `UI-Arc.md`'s notebook trio were
 ALREADY stale before this round and are left as found rather than

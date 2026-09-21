@@ -372,8 +372,15 @@ test('AUDIT 64 F35: the stack answers it - one null previousWindow anywhere cuts
   // (Internal/DaggerfallAction.cs:536/:565).
   assert.equal(paintsPreviousWindow(new ActionTextBox(['x'], { previousWindow: null })), false);
   assert.equal(paintsPreviousWindow(new ActionInputBox(['x'], () => {})), false);
+  // ENH-NOTICE3: the ShowText plaque is raised through the one door
+  // now (systems/notify.js), so the exception is PASSED as an option
+  // rather than minted at the site - and the seam's spelling of
+  // DaggerfallAction's null is `false`, which this stack reads
+  // identically (`=== true`, windowStack.js:65). Pinned both ways:
+  // the value behaves, and the site still asks for it.
+  assert.equal(paintsPreviousWindow(new ActionTextBox(['x'], { previousWindow: false })), false);
   assert.match(src('scenes/dungeonContext.js'),
-    /new ActionTextBox\(lines, \{ previousWindow: null \}\)/);
+    /messageBox\(lines, \{ previousWindow: false \}\);/);
 
   // ALL FOUR HOSTS ask their own stack rather than their pause flag.
   for (const host of ['scenes/world.js', 'scenes/exterior.js']) {

@@ -716,7 +716,7 @@ Ignoring') - permanent by parity, recorded in the coverage pin.
   faction-listener slot (addFactionListener first-claim-wins /
   removeFactionListener at dispose; PlayerActivate.StaticNPCClick
   reads the map - :1534, the only consumer in the DFU tree, and
-  wired at src/scenes/worldModes.js:521). activeFactionPersons walks NON-COMPLETE quests only -
+  wired at src/scenes/worldModes.js:528). activeFactionPersons walks NON-COMPLETE quests only -
   completed quests must not lock an NPC out (QuestMachine.cs:1085).
   The non-individual parse throw carries the TEMPLATE-SetComplete
   quirk; its sibling's does not.
@@ -1453,7 +1453,7 @@ spamming the same questor does not re-pulse the task. DFU makes you go
 click someone else and come back.
 
 The port carries `lastNPCClicked` as an NPCData-shaped OBJECT LITERAL,
-and both hosts mint a fresh one at every click - worldModes.js:1136's
+and both hosts mint a fresh one at every click - worldModes.js:1143's
 quest-flat arm builds `{ hash, flags, factionID, nameSeed, gender,
 buildingKey, mapID }` inline, and questBridge.clickNpc runs
 `staticNpcData(pn, sceneCtx)`. So `lastClicked === this.clickMemory`
@@ -2808,7 +2808,7 @@ banker and guild clerk in Daggerfall reached `TalkManager` with an
 empty name. Two things read it:
 
 - the greeting says the NPC's name once reaction is above zero, and
-  "stranger" below it (`townTalk.js:497`). Every static NPC in the
+  "stranger" below it (`townTalk.js:512`). Every static NPC in the
   game stayed a stranger no matter how well liked.
 - `topicTree`'s same-building-static test (`:558`) matches a topic
   caption against that name, so it never matched.
@@ -2902,7 +2902,7 @@ has never allowed. Expanding in place now. (The caller-side
 `PlayerActivate.StaticNPCClick:1534`. `TalkManager.cs` does not
 contain the word `Listener`. Three port comments named TalkManager as
 the reader and marked the wiring `(Q4 wires)` - over a reader the port
-already ships, at `worldModes.js:521`. A pending marker over shipped
+already ships, at `worldModes.js:528`. A pending marker over shipped
 work is worse than no marker at all: it sends the next reader looking
 for work that is done, in a file that never had it. Four sites
 corrected, the bible's copy included.

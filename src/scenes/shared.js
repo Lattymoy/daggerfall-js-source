@@ -68,6 +68,7 @@ import { setWeaponWidgetSources } from '../combat/weaponWidgetAssets.js';   // W
 import { getBool, getInt } from '../systems/settings.js';   // M-FM: Audio/AlternateMusic, read once for all three hosts; MAC-O4: Controls/WeaponSwingMode, the drag route's own missing term
 import { SongManager, musicEnvironment, holdEnvironment } from '../systems/songManager.js';
 import { audio } from '../systems/audio.js';
+import { messageBox } from '../systems/notify.js';   // ENH-NOTICE3: the one door every DaggerfallUI.MessageBox goes through - the infection's popup names the KIND, never the host's window
 
 import { getBytes, storedMusicNames, loadMusicFile, storedTextureNames, loadTextureFile, registerMorrowindData } from './dataSource.js';   // M-EXT/M-TEX: the player's own packs
 
@@ -1687,7 +1688,7 @@ export async function endRunToTitleMenu(renderer, { play = playDeathVideo, watch
  * close callback is what carries the lifecycle forward and it runs on
  * every path out.
  */
-export function wireInfectionVideos(renderer, { textAt = null, showText = null, factionDict = null, transferToCemetery = null } = {}) {
+export function wireInfectionVideos(renderer, { textAt = null, factionDict = null, transferToCemetery = null } = {}) {
   // AUDIT 39 (#37): answers the host it replaced. A context that mounts
   // over an outer one (the dungeon over worldModes) hands this back on
   // teardown - the leaner set it registers has no FACTION.TXT and no
@@ -1748,10 +1749,25 @@ export function wireInfectionVideos(renderer, { textAt = null, showText = null, 
     // leaves behind is what makes the next host frame claim the window.
     raiseTime: (seconds) => { setSyntheticTimeIncrease(true); return advanceWorldMinutes(seconds / 60); },
     // "Death is not eternal" (:187-188) - a DaggerfallMessageBox on
-    // TEXT.RSC 401. The LINES are shared; the BOX is the host's, the
-    // same split D1's DeathScreen mount uses, because the dungeon
-    // draws an ActionTextBox where the town hosts draw a
-    // ChoiceWindow and neither is the other's overlay.
+    // TEXT.RSC 401.
+    //
+    // ENH-NOTICE3: THE PER-HOST SPLIT IS RETIRED. This used to take a
+    // `showText` from each of the four hosts, because "the dungeon
+    // draws an ActionTextBox where the town hosts draw a ChoiceWindow
+    // and neither is the other's overlay" - four wirings of ONE C#
+    // line, which is the drift the seam was opened to end (V5's
+    // `TypeError: text is not iterable` was the last time that split
+    // bit, and ROAD review-p had to convert all four by hand).
+    // VampirismInfection.cs:186-188 is `DaggerfallMessageBox mb =
+    // DaggerfallUI.MessageBox(deathIsNotEternalTextID); mb.Show();`,
+    // and DaggerfallUI.MessageBox (DaggerfallUI.cs:1346-1353) builds
+    // the box on `Instance.uiManager.TopWindow` and Show()s it - a
+    // PushWindow (UserInterfaceManager.cs:79-91). So the KIND is
+    // named once here and systems/notify.js finds whichever host's
+    // slot is live: the dungeon's stack underground, the interior
+    // mount inside a building, townTalk's overlay in the street. A
+    // push is the seam's default and it is this call's law, so no
+    // option is passed.
     messageBox: (id) => {
       // V5: plainLines, and it is a FIX rather than tidying. Three of
       // the four textAt providers hand back TEXT.RSC ROWS - world.js,
@@ -1765,7 +1781,7 @@ export function wireInfectionVideos(renderer, { textAt = null, showText = null, 
       // four-hosts divergence this project keeps meeting. Flattened
       // HERE, at the one consumer, so no provider has to be right.
       const lines = plainLines(textAt?.(id));
-      if (lines?.length) showText?.(lines);
+      if (lines?.length) messageBox(lines);
     },
     // GetVampireClan's region read (:400-427), assembled from the
     // host's FACTION.TXT: the Province faction of the region the

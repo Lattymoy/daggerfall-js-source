@@ -444,7 +444,13 @@ test('AUDIT 63 F3: the seam raises a real parchment through the expansion, on al
   assert.match(seam, /formatting: TOKEN_TEXT, text: String\(x \?\? ''\)/,
     'SetText(string) tokenizes into one Text token and expands too (DaggerfallMessageBox.cs:405-408)');
   assert.match(seam, /expandMessageBoxTokens\(tokens, talkMcp\(\)\)/);
-  assert.match(seam, /townTalk\.showBox\(/, 'a modal box, never AddHUDText');
+  // ENH-NOTICE3: still a modal box and never AddHUDText - raised
+  // through the one door (systems/notify.js) instead of through
+  // townTalk's own slot, so the refusal reaches whichever host is
+  // live. TalkManager.cs:2626/:2632/:2645 are DaggerfallUI.MessageBox,
+  // i.e. PushWindow, which is the seam's default.
+  assert.match(seam, /messageBox\(rows\.length \? rows : \['You get no response\.'\]\);/, 'a modal box, never AddHUDText');
+  assert.equal(/townTalk\.showBox\(/.test(seam), false, 'and not through a second window-building door');
   assert.equal(/messageBox: \(x\) => townTalk\.say\(/.test(w), false, 'the HUD line is gone');
   // the racial refusal is a box at both of DFU's own doors
   const tt = src('scenes/townTalk.js');

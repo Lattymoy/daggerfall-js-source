@@ -14,7 +14,13 @@ import { newSurvival } from '../src/systems/survival/needs.js';
 import { MOBILE_TYPES } from '../src/characters/mobileTypes.js';
 import { REST_WAIT_PER_HOUR } from '../src/systems/restSession.js';
 import { SKILLS } from '../src/systems/skills.js';
-import { HuntWindow, HUNT_PHASE } from '../src/ui/huntWindow.js';
+import { HuntWindow, HUNT_PHASE, BUSY_DOTS } from '../src/ui/huntWindow.js';
+// ENH-NOTICE3: the busy page is a click-anywhere parchment and rides
+// the enhanced notice panel now.
+import {
+  enhancedNoticeKeys, destroyEnhancedNotice, ENHANCED_NOTICE_ID,
+} from '../src/ui/enhancedNotice.js';
+import { withDom } from './invdrag.mjs';
 import { createHunting } from '../src/scenes/hunting.js';
 import { setPref, _resetForTests } from '../src/systems/uiPrefs.js';
 
@@ -293,4 +299,123 @@ test('SURV6: by source - the overworld host alone rolls, opens in the slot, pass
   assert.doesNotMatch(leaf, /from '\.\.\/\.\.\/scenes\/|from '\.\.\/\.\.\/ui\/|from '\.\.\/\.\.\/combat\/|from '\.\.\/spellcast|from '\.\.\/diseases|from '\.\.\/poisons|from '\.\.\/effects|document\.|window\./);
   assert.match(read('src/scenes/townTalk.js'), /overlay\?\.tick\?\.\(dt\);/, 'the busy page\'s clock');
   assert.match(read('src/scenes/hunting.js'), /if \(searched && outcome\?\.beast\) spawnBeast\?\.\(outcome\.beast\);/);
+});
+
+
+// ── ENH-NOTICE3: THE HUNT'S BUSY PAGE, ON THE PANEL ──────────────
+
+const recorder = () => ({ quads: [], drawScreenQuad(tex, rect) { this.quads.push({ tex, ...rect }); } });
+const HUNT_FONT = { fnt: { fixedHeight: 9, fixedWidth: 4, glyphWidth: () => 4 }, tex: 'tex:font', cols: 16, rows: 16, cw: 8, ch: 8 };
+const HUNT_CANVAS = { width: 640, height: 400 };
+
+/** The live notice panels' rows, read off the stack in `dom`. */
+const huntNoticeTexts = (dom) => {
+  const live = new Set(enhancedNoticeKeys());
+  const stack = (dom.body.children ?? []).find((c) => c.id === ENHANCED_NOTICE_ID);
+  return (stack?.children ?? [])
+    .filter((c) => String(c.className).split(/\s+/).includes('notice') && live.has(c.dataset.owner))
+    .flatMap((panel) => (panel.children.find((c) => c.className === 'notice-body')?.children ?? [])
+      .filter((r) => r.style.display !== 'none').map((r) => r.textContent));
+};
+
+/** A hunt already past its Yes, on `skin`, over a document. */
+function huntBusy(skin, fn) {
+  const had = Object.hasOwn(globalThis, 'location') ? globalThis.location : undefined;
+  globalThis.location = { search: `?skin=${skin}` };
+  try {
+    return withDom((dom) => {
+      const closed = [];
+      const win = new HuntWindow({
+        prompt: ['Hunt here?'], busy: 'You search the brush...', seconds: 4,
+        onSearched: () => ['You bring down a deer.'],
+        onClosed: (searched) => closed.push(searched),
+      });
+      win._begin();
+      assert.equal(win.phase, HUNT_PHASE.Busy, 'the fixture really is on the busy page');
+      return fn({ dom, win, closed, r: recorder() });
+    });
+  } finally {
+    if (had === undefined) delete globalThis.location; else globalThis.location = had;
+    destroyEnhancedNotice();
+  }
+}
+
+test('ENH-NOTICE3: the hunt\'s busy page is the notice panel, redrawn per frame, and it is released at the page turn AND at the window\'s close (mutants: parchment-drawn-under-the-panel, panel-not-refreshed, no-release-at-the-turn, no-release-on-close)', () => {
+  huntBusy('enhanced', ({ dom, win, r }) => {
+    win.draw(r, HUNT_CANVAS, HUNT_FONT);
+    assert.deepEqual(huntNoticeTexts(dom), ['You search the brush...', '.'],
+      'the busy line and its first dot are the panel\'s');
+    assert.equal(win._box, null, 'mutants: the parchment laid out under the panel');
+    assert.equal(enhancedNoticeKeys().length, 1, 'one page, one panel');
+    const key = win._noticeKey;
+    assert.ok(key, 'the per-frame door minted this owner a key');
+
+    // A PER-FRAME DOOR, so the dots really move
+    win.tick(2);
+    win.draw(r, HUNT_CANVAS, HUNT_FONT);
+    assert.deepEqual(huntNoticeTexts(dom), ['You search the brush...', win.dots],
+      'mutants: the panel painted once and left stale while the wait runs');
+    assert.equal(win.dots.length > 1 && win.dots.length <= BUSY_DOTS, true);
+
+    // THE PAGE TURN: the result is the flow's own click-anywhere box,
+    // so THIS owner's panel goes and the flow raises its own
+    win.tick(2);
+    assert.equal(win.phase, HUNT_PHASE.Result);
+    win.draw(r, HUNT_CANVAS, HUNT_FONT);
+    assert.equal(enhancedNoticeKeys().includes(key), false,
+      'mutants: the busy panel left standing under the result');
+    assert.ok(huntNoticeTexts(dom).includes('You bring down a deer.'),
+      'and the result is on the stack, under the flow\'s own key');
+  });
+
+  // THE CLOSE: Escape walks away mid-search (AUDIT SURV C) and the
+  // panel walks with it - `_end` is this window's one close door
+  huntBusy('enhanced', ({ dom, win, closed, r }) => {
+    win.draw(r, HUNT_CANVAS, HUNT_FONT);
+    assert.equal(enhancedNoticeKeys().length, 1);
+    win.input('Escape');
+    assert.deepEqual(closed, [false], 'nothing searched');
+    assert.deepEqual(enhancedNoticeKeys(), [], 'mutants: _end not releasing - a panel left over the world');
+    assert.deepEqual(huntNoticeTexts(dom), []);
+  });
+
+  // ...and the same through dispose(), the host taking the slot
+  huntBusy('enhanced', ({ win, r }) => {
+    win.draw(r, HUNT_CANVAS, HUNT_FONT);
+    win.dispose();
+    assert.deepEqual(enhancedNoticeKeys(), [], 'the slot taken from under the window takes the panel too');
+  });
+});
+
+test('ENH-NOTICE3: the classic skin keeps the hunt\'s parchment, byte for byte, and builds no stack (mutants: panel-on-every-skin)', () => {
+  huntBusy('classic', ({ dom, win, r }) => {
+    win.draw(r, HUNT_CANVAS, HUNT_FONT);
+    assert.ok(win._box, 'the message-box layout is minted, as it always was');
+    assert.deepEqual(win._box.rows.map((row) => row.text), ['You search the brush...', '.'],
+      'with the busy line and its dots');
+    assert.equal(win._noticeKey, undefined, 'mutants: a key minted on the classic skin');
+    assert.deepEqual(enhancedNoticeKeys(), [], 'no panel');
+    assert.equal((dom.body.children ?? []).some((c) => c.id === ENHANCED_NOTICE_ID), false,
+      'and no stack was ever built');
+  });
+});
+
+test('ENH-NOTICE3 (AUDIT B2/B7): the busy panel wears the page\'s OWN caption - Escape alone walks away, no click is taken - and the release precedes the close hook', () => {
+  huntBusy('enhanced', ({ dom, win, r }) => {
+    win.draw(r, HUNT_CANVAS, HUNT_FONT);
+    const hint = dom.doc.querySelectorAll('.notice-hint').map((n) => n.textContent);
+    assert.deepEqual(hint, ['Escape to walk away'],
+      'mutants: the default "click or press a key" on a page that takes no click; no caption at all');
+    assert.equal(win.click(), true, 'and a click is still swallowed, as the caption says');
+  });
+  // THE SLOT IS EMPTIED BEFORE THE OCCUPANT IS TOLD, in miniature: the
+  // close hook may raise the next box, and it must not find this
+  // window's panel still standing.
+  const seen = [];
+  huntBusy('enhanced', ({ win, r }) => {
+    win.draw(r, HUNT_CANVAS, HUNT_FONT);
+    win._onClosed = () => seen.push(enhancedNoticeKeys().length);
+    win.input('Escape');
+    assert.deepEqual(seen, [0], 'mutant: the release after the hook, so the hook\'s own box lands under a panel that is leaving');
+  });
 });

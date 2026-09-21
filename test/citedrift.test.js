@@ -8,7 +8,7 @@
 //
 //   - `ui/spellMakerWindow.js` declared "RECORDED DEPARTURES" and closed
 //     the first with "Ledger A carries the widget row already
-//     (Port-Ledger.md:784)". Section A carried no widget row at all -
+//     (Port-Ledger.md:786)". Section A carried no widget row at all -
 //     the AUDIT 17m / F7 shape, a claim of approval standing in for one -
 //     and :686 was the stat-colour NIT row by then. The row exists now
 //     (Ledger A, TB1) and the sites cite it BY NAME.
@@ -656,7 +656,7 @@ const SOURCE_CITES = [
   ['test/roade_up_seam.test.js', /exterior\.js:\d+\/:(\d+)/,
     EX, /if \(act === 'Escape' && pauseDoorReady\(\)\) \{ hudCtx\.togglePause\(\); return; \}/],
   ['bible/01-Overview/Audit-58.md', /`src\/scenes\/exterior\.js:(\d+)` now/, EX, /setDefaultEnchantCtx/],
-  ['bible/06-Systems/Systems-Arc.md', /`exterior\.js:(\d+)`, `world\.js:1066`/, EX, /playerTicker\.advance\(60\);/],
+  ['bible/06-Systems/Systems-Arc.md', /`exterior\.js:(\d+)`, `world\.js:1067`/, EX, /playerTicker\.advance\(60\);/],
   ['bible/09-Testing/Testing.md', /keydown ladder \(exterior\.js:(\d+)-\d+\)/,
     EX, /addEventListener\('keydown', \(e\) => \{/],
   ['bible/10-UI/UI-Arc.md', /exterior\.js:(\d+)\. It is the only window/, EX, /createSpellbookWindow\(\{/],
@@ -745,12 +745,19 @@ const SOURCE_CITES = [
     EX, /^ {4}\}$/],
   ['bible/01-Overview/Port-Ledger.md', /`exterior\.js:(\d+)`\), and `ambientEffects\.js:118-145`/,
     EX, /ambience\.update\(dt, \{ playerPos: eye, inside: false \}\)/],
+  // AUDIT ENH-NOTICE3 (second pass, B18): six cites the shifter carried
+  // along already WRONG - stale before the slice, moved by the right
+  // offset, never read. Resolved by content and held here.
+  ['tools/firstHourProbe.mjs', /drain \(world\.js:(\d+)\)/, WO, /window\.__shotReady = true;/],
+  ['tools/fistProbe.mjs', /reproduced at dungeonContext\.js:(\d+) pre-fix/, DC, /Combat bows: the strike frame LOOSES an arrow/],
+  ['tools/mwArmProbe.mjs', /\(dungeon\.js:(\d+)'s exact lens\)/, 'src/scenes/dungeon.js', /mirrorProjectionX\(perspective\(/],
+  ['tools/mwArmProbe.mjs', /perspective \(dungeon\.js:(\d+)\)/, 'src/scenes/dungeon.js', /mirrorProjectionX\(perspective\(/],
+  ['tools/mwRigProbe.mjs', /as world\.js:(\d+) writes it/, WO, /const weaponRig = createWeaponRig\(\{/],
+  ['test/inputmap.test.js', /overlay \(townTalk\.js:(\d+), :\d+\)/, 'src/scenes/townTalk.js', /^ {4}hud\.tick\(dt\);$/],
+  ['test/inputmap.test.js', /overlay \(townTalk\.js:\d+, :(\d+)\)/, 'src/scenes/townTalk.js', /hud\.draw\(renderer, canvas, font, s\)/],
+  ['test/enhancedInventory.test.js', /hand \(enhancedInventory\.js:(\d+)-\d+\)/, 'src/ui/enhancedInventory.js', /const carried = items\.reduce/],
 ];
 
-// The DELETED subjects, which no longer have a line to name: the
-// sweep's other half is that a cite whose code the row's own fix
-// removed says so, rather than carrying a number that lands on a
-// stranger. Pinned as the absence.
 const NO_LINE_LEFT = [
   // AUDIT QS6 F1 again: the number here names code that IS DELETED, so it can
   // never be content-resolved and must never be moved - and baking it into the

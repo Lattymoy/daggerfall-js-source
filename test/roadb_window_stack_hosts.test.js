@@ -161,7 +161,13 @@ test('B1: a rest in the STREET survives a quest box - the world.js fall-through'
 
   // ...and the source says so, so a future edit that reverts the door
   // fails here rather than silently losing a night's sleep.
-  assert.match(src('src/scenes/world.js'), /if \(modes\?\.showQuestOverlay\?\.\(win\)\) return;[\s\S]{0,700}\n\s*townTalk\.pushOverlay\(win\);/,
+  // ENH-NOTICE3 (AUDIT F5): the ladder is systems/notify.js's
+  // `mountWindow`, whose default is the PUSH and whose outdoor rung is
+  // townTalk's presenter - `pushOverlay` for a push, never showOverlay.
+  assert.match(src('src/scenes/world.js'), /_questBoxWin = win;[\s\S]{0,1600}\n\s*mountWindow\(win\);\n\s*\};/,
+    'the quest box rides the door\'s ladder');
+  assert.match(src('src/systems/notify.js'), /export function mountWindow\(win, \{ push = true \} = \{\}\)/, 'whose default is the push');
+  assert.match(src('src/scenes/townTalk.js'), /mount: \(win, \{ push \}\) => \{ if \(push\) return pushOverlay\(win\); showOverlay\(win\); return true; \},/,
     'the quest box pushes into the outdoor slot rather than replacing it');
 });
 
