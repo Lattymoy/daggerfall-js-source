@@ -58,6 +58,7 @@
 // so a test can pin the arithmetic the GPU runs without a GPU.
 
 import { getPref } from '../systems/uiPrefs.js';
+import { BLOOD_ABSORB, BLOOD_F0, BLOOD_MENISCUS, WET_THICK_LO, WET_THICK_HI, INK_DEPTH, WET_DARKEN } from '../combat/bloodArt.js';   // BLOOD3: the film's own law, beside the tints it already owns
 import { isEnhanced } from '../systems/uiSkin.js';
 import { SHADOW_GLSL, SHADOW_CASTER_MIN_DISTANCE } from './shadowPass.js';   // EL2: the receiver block - the sun map on the sun term, the cube map on its lantern; F3: the hand's distance
 import { AIR_ADAPT_GLSL, AIR_CONTACT_GLSL, AIR_CONTACT_RANGE_FRACTION, airOn, contactOn, glslFloat } from './airPass.js';   // EL6: no AO block - the resolve's; EL8: the contact block
@@ -97,7 +98,7 @@ export const EL_SPEC_STRENGTH = 0.12;
  *  mark's own wetness (one fresh, zero dried), so the sheen is what
  *  says "wet" and it goes as the mark dries. */
 export const EL_WET_GLOSS = 64;
-export const EL_WET_STRENGTH = 0.9;
+export const EL_WET_STRENGTH = 0.55;   // BLOOD3: Schlick carries most of the reduction (4% head-on); this is what is left at a grazing angle, a sheen and not a mirror
 /** EL4: PROPER DARK DUNGEONS. The lane scales a dungeon's ambient (DFU's
  *  flat 0.12 and Better Ambience's trilight alike; the Dungeon Brightness
  *  setting still rides on top) to this, so the light between the torches
@@ -257,8 +258,18 @@ const EL_POINT_LIT_GLSL = `
 // beside the diffuse - ONE loop, ONE shadow answer for both (a mark in a
 // contact shadow is glint-shadowed as it is diffuse-shadowed), the
 // highlight at the wet gloss skipped where it is zero, which is nearly
-// all of a mark. \`wet\` zero is the plain loop; \`glint\` is the light's
+// all of a mark. \'wet\' zero is the plain loop; \'glint\' is the light's
 // colour, not the surface's - the lamp seen in the wet.
+// AUDIT BLOOD3 F5: SCHLICK FOR A SPECULAR LOBE IS F(V.H), NOT F(N.V).
+// BLOOD3 shipped the latter, hoisted out in front of every light - and
+// a (N.H)^64 lobe peaks where the half-vector lines up with the normal,
+// which is a different regime from where N.V grazes. The two together
+// took a mark underfoot with a torch at head height down by 82x: not
+// "less shiny", but not wet at all. The angle belongs beside the lobe
+// it scales, once per light, against that light's own half-vector.
+float wetFresnel(float vdoth) {
+  return ${glslFloat(BLOOD_F0)} + ${glslFloat(1 - BLOOD_F0)} * pow(1.0 - clamp(vdoth, 0.0, 1.0), 5.0);
+}
 vec3 elPointLitWet(vec3 wp, vec3 n, float wet, out vec3 glint) {
   vec3 acc = vec3(0.0);
   glint = vec3(0.0);
@@ -276,16 +287,17 @@ vec3 elPointLitWet(vec3 wp, vec3 n, float wet, out vec3 glint) {
       : (k == -2 || d > uPointLights[i].w * ${glslFloat(AIR_CONTACT_RANGE_FRACTION)} || length(uPointLights[i].xyz - uCamPos) < ${glslFloat(SHADOW_CASTER_MIN_DISTANCE)}) ? 1.0   // MAC-T1: -2 is the hand's light, by name
       : contactShadow(wp, n, Ln, d);
     // EL4: a glint - Blinn-Phong, a low gloss for stone and wood, a twelfth of the light: wet stone under a torch
-    vec3 H = normalize(Ln + normalize(uCamPos - wp));
+    vec3 V = normalize(uCamPos - wp);
+    vec3 H = normalize(Ln + V);
     float spec = pow(max(dot(n, H), 0.0), ${EL_SPEC_GLOSS}.0) * ${EL_SPEC_STRENGTH};
     float att = sh * elAttenuation(d, uPointLights[i].w);
     acc += att * (max(dot(n, Ln), 0.0) + spec) * uPointColors[i];
     if (wet > 0.0) {
       float g = pow(max(dot(n, H), 0.0), ${EL_WET_GLOSS}.0);
-      if (g > 0.0) glint += att * g * uPointColors[i];
+      if (g > 0.0) glint += att * g * wetFresnel(dot(V, H)) * uPointColors[i];   // AUDIT BLOOD3 F5: this light's own angle, beside this light's own lobe
     }
   }
-  glint *= ${EL_WET_STRENGTH} * wet;
+  glint *= ${glslFloat(EL_WET_STRENGTH)} * wet;
   return acc;
 }
 vec3 elPointLit(vec3 wp, vec3 n) { vec3 g; return elPointLitWet(wp, n, 0.0, g); }
@@ -588,13 +600,91 @@ void main() {
   // A DEGENERATE SLOT still rasterises nothing, but a live one whose
   // texel is fully clear must not draw a black square either.
   if (t.a < 0.01) discard;
-  vec3 albedo = elDecode(t.rgb) * elDecode(vColor.rgb);   // BLOOD1 AUDIT 3: each decoded on its own - the curve is not linear, so a tinted mark would have been the wrong colour on this lane alone
+  // BLOOD3 (Mac: "the blood is too shiny and flat"): THE MARK IS A
+  // FILM. The atlas's alpha is a THICKNESS - its shapes fall off at
+  // their rims because there is less blood there - and the albedo read
+  // it as coverage alone, so every texel of a pool was the same red and
+  // the mark was a coloured sticker. Beer-Lambert through the film
+  // instead, anchored at the deep end (at thick = 1 the factor is 1, so
+  // the colour a full mark already had does not move): blood absorbs
+  // green and blue far harder than red, so a thinning rim brightens and
+  // turns toward orange while the body stays a deep maroon. See
+  // combat/bloodArt.js BLOOD_ABSORB / filmColour.
+  //
+  // THE THICKNESS IS COVERAGE TIMES DENSITY (bloodArt.js filmThickness).
+  // Alpha alone cancels itself out - it is also what the mark is blended
+  // by, so the thin rim the law brightens is the rim that is fading out,
+  // and the solid middle has no variation left to read. The ink carries
+  // the rest: the shape's shade and its grain, which vary ACROSS a mark
+  // at full coverage and were being spent as a flat darkener.
+  // AUDIT BLOOD3 F1: THE INK IS THE THICKNESS, INVERTED. The sheet
+  // stores '1 - INK_DEPTH * thickness' (bloodArt.js), the range and the
+  // sense the hand-painted shade always had, so the lens that draws the
+  // same sheet through the plain 2D quad is untouched. Undo that one
+  // line and the film has a real depth to run on - 0 at a rim, 1 at a
+  // heart, the whole range ACROSS a mark at full coverage, which is
+  // what BLOOD3 wanted and read backwards.
+  float thick = t.a * clamp((1.0 - t.r) / ${glslFloat(INK_DEPTH)}, 0.0, 1.0);
+  // ...and the ink is NOT an albedo factor any more. It was the shape's
+  // depth painted as a grey darkening; the film is that same darkening
+  // done properly, per channel, so multiplying by both spent it twice
+  // in opposite directions. The tint is decoded on its own (BLOOD1
+  // AUDIT 3: the curve is not linear, so a tinted mark would be the
+  // wrong colour on this lane alone). AUDIT BLOOD3 F5: and a WET mark
+  // is DARKER - the light goes into the film before it comes back.
+  // That, not a highlight, is what reads as wet from above.
+  vec3 albedo = elDecode(vColor.rgb)
+    * exp(vec3(${glslFloat(BLOOD_ABSORB[0])}, ${glslFloat(BLOOD_ABSORB[1])}, ${glslFloat(BLOOD_ABSORB[2])}) * (1.0 - thick))
+    * mix(1.0, ${glslFloat(WET_DARKEN)}, clamp(vWet, 0.0, 1.0));
   // the mark's own surface, from its own quad, facing the eye - and a
   // quad seen edge-on has no derivative to speak of, so it takes up
   // rather than NaN (BLOOD1 AUDIT 3)
-  vec3 c = cross(dFdx(vWorld), dFdy(vWorld));
+  vec3 dpx = dFdx(vWorld), dpy = dFdy(vWorld);   // AUDIT BLOOD3 F2: taken ONCE, out here - GLSL ES 3.0 leaves a derivative in non-uniform control flow undefined, and the meniscus below wanted these inside its branch
+  vec3 c = cross(dpx, dpy);
   vec3 n = dot(c, c) > 1e-12 ? normalize(c) : vec3(0.0, 1.0, 0.0);
   if (dot(n, uCamPos - vWorld) < 0.0) n = -n;
+  // BLOOD3: AND THE MARK IS A HEIGHT FIELD, NOT A PLANE. A mark lit by
+  // one flat normal is lit the same at its edge as at its middle, which
+  // is the other half of "flat". Its thickness IS a height, so the
+  // gradient of that thickness is the surface's own slope, and the
+  // normal tilts away from the rise wherever the blood stands deeper.
+  //
+  // AUDIT BLOOD3 F10: and it is the WHOLE mark, not a rim lip. This was
+  // recorded as "a pool has a raised edge" until a picture was finally
+  // made of it (BLOOD_MENISCUS on against off, under a grazing sun):
+  // the change is TWICE as strong in the body as in the rim band, mean
+  // 10.7 against 4.95 of 255, because a pool's thickness is a smoothstep
+  // and a smoothstep's gradient peaks in the MIDDLE of its ramp. The
+  // rim is one case of the relief, not the point of it. Two taps, one texel along each axis of the atlas; a cell
+  // keeps a clear two-texel border and its UV rect is inset by one, so
+  // a tap at the outer edge reads the border's zero - a thinning edge,
+  // which is the truth - and never the neighbouring cell. The tangent
+  // frame is the quad's own derivatives solved for d(world)/d(uv), so
+  // the tilt is in the surface, whatever the mark is stuck to.
+  // AUDIT BLOOD3 F1: and BOTH taps read the SAME field the centre does.
+  // They used to read the bare alpha and subtract 't.a * t.r', which is
+  // not a difference at all - it left a constant pedestal of
+  // alpha * (1 - ink) over a mark's whole body, where the true gradient
+  // is zero. That is a fixed tilt along one atlas diagonal on every
+  // mark, several times the rim signal it was meant to measure, and it
+  // fed the diffuse, the shadow lookup, the ambient and the Fresnel.
+  vec2 ts = 1.0 / vec2(textureSize(uTex, 0));
+  vec4 tU = texture(uTex, vUV + vec2(ts.x, 0.0));
+  vec4 tV = texture(uTex, vUV + vec2(0.0, ts.y));
+  vec2 duv = vec2(tU.a * clamp((1.0 - tU.r) / ${glslFloat(INK_DEPTH)}, 0.0, 1.0),
+                  tV.a * clamp((1.0 - tV.r) / ${glslFloat(INK_DEPTH)}, 0.0, 1.0)) - vec2(thick);
+  vec2 dux = dFdx(vUV), duy = dFdy(vUV);
+  float uvDet = dux.x * duy.y - duy.x * dux.y;
+  // AUDIT BLOOD3 F2: the WORLD frame is guarded too. dot(c, c) is the
+  // same test line 616 already makes before it falls back to world up -
+  // without it a quad whose world derivatives are parallel hands
+  // normalize() a zero vector and throws that fallback away as NaN.
+  if (dot(c, c) > 1e-12 && abs(uvDet) > 1e-12 && dot(duv, duv) > 0.0) {
+    vec3 tu = (duy.y * dpx - dux.y * dpy) / uvDet;
+    vec3 tv = (dux.x * dpy - duy.x * dpx) / uvDet;
+    vec3 slope = duv.x * normalize(tu) + duv.y * normalize(tv);
+    n = normalize(n - slope * ${glslFloat(BLOOD_MENISCUS)});
+  }
   // BLOOD AUDIT 4: THE SURFACE'S TERMS, not the flat's. The normal was
   // read here since AUDIT 3 and spent on the shadow lookups alone; the
   // sun still came as the flat's Lambert-average half, and the lanterns
@@ -612,16 +702,26 @@ void main() {
   vec3 sunLit = uDecalSun * (ndl * sunVis);
   vec3 moonLit = uDecalMoon * max(dot(n, uMoonDir), 0.0);
   vec3 ambient = uTrilight > 0.5 ? (n.y >= 0.0 ? mix(uTint, uAmbientSky, n.y) : mix(uTint, uAmbientGround, -n.y)) : uTint;
+  // BLOOD3: THE SHEEN IS THE DEPTH, AND THEN THE ANGLE. A mark does not
+  // dry evenly - the thin rim goes first and the deep middle holds the
+  // wet - so how much of a mark is wet at all is its wetness gated on
+  // its own thickness. That is this number, and it carries no angle:
+  // AUDIT BLOOD3 F5 moved the angle to where it belongs, beside each
+  // light's own half-vector (wetFresnel). One gate for both glints.
+  float sheen = vWet * smoothstep(${glslFloat(WET_THICK_LO)}, ${glslFloat(WET_THICK_HI)}, thick);
   vec3 glint;
-  vec3 lit = albedo * (ambient + sunLit + moonLit + elPointLitWet(vWorld, n, vWet, glint) + elIndirectLit(vWorld, n));
+  vec3 lit = albedo * (ambient + sunLit + moonLit + elPointLitWet(vWorld, n, sheen, glint) + elIndirectLit(vWorld, n));
   // BLOOD2f: THE WET SHEEN. A fresh mark is wet, and wet is a glint: the
   // lamp seen in it, and the sun - Blinn-Phong at the wet gloss, on top
   // of the lit blood (a highlight is the light's colour, not the
   // surface's), scaled by the mark's own wetness, which the dry pass
   // takes away stage by stage. A dry mark is exactly the line above.
-  vec3 sunGlint = vWet > 0.0
-    ? uDecalSun * (pow(max(dot(n, normalize(uLightDir + normalize(uCamPos - vWorld))), 0.0), ${EL_WET_GLOSS}.0) * ${EL_WET_STRENGTH} * vWet * sunVis)
-    : vec3(0.0);
+  vec3 sunGlint = vec3(0.0);
+  if (sheen > 0.0) {
+    vec3 V = normalize(uCamPos - vWorld);
+    vec3 H = normalize(uLightDir + V);
+    sunGlint = uDecalSun * (pow(max(dot(n, H), 0.0), ${EL_WET_GLOSS}.0) * ${glslFloat(EL_WET_STRENGTH)} * sheen * wetFresnel(dot(V, H)) * sunVis);
+  }
   lit += glint + sunGlint;
   outColor = vec4(elFinish(lit, vWorld), t.a * vColor.a);
 }`;

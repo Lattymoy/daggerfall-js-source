@@ -1,0 +1,299 @@
+[
+  {
+    "name": "AUDITBLOOD3-the-ink-is-read-as-a-density-again-the-bug-this-audit-found",
+    "file": "src/combat/bloodArt.js",
+    "old": "  Math.max(0, Math.min(1, alpha)) * Math.max(0, Math.min(1, (1 - Math.max(0, Math.min(1, ink))) / INK_DEPTH));",
+    "new": "  Math.max(0, Math.min(1, alpha)) * Math.max(0, Math.min(1, ink));",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "AUDITBLOOD3-the-thickness-is-coverage-alone",
+    "file": "src/combat/bloodArt.js",
+    "old": "  Math.max(0, Math.min(1, alpha)) * Math.max(0, Math.min(1, (1 - Math.max(0, Math.min(1, ink))) / INK_DEPTH));",
+    "new": "  Math.max(0, Math.min(1, alpha));",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "AUDITBLOOD3-the-ink-ramp-is-not-the-one-the-sheet-was-written-from",
+    "file": "src/combat/bloodArt.js",
+    "old": "export const INK_DEPTH = 0.18;",
+    "new": "export const INK_DEPTH = 0.5;",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "AUDITBLOOD3-the-painter-writes-a-shade-again-not-a-depth",
+    "file": "src/combat/bloodArt.js",
+    "old": "          const ink = Math.round(255 * (1 - INK_DEPTH * thick));",
+    "new": "          const ink = Math.round(255 * (1 - INK_DEPTH * (1 - thick)));",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "AUDITBLOOD3-a-pools-heart-is-its-thinnest-point",
+    "file": "src/combat/bloodArt.js",
+    "old": "      return { a: 1 - smooth(edge - 0.1, edge + 0.05, r), depth: 1 - smooth(0, edge, r) };",
+    "new": "      return { a: 1 - smooth(edge - 0.1, edge + 0.05, r), depth: smooth(0, edge, r) };",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "AUDITBLOOD3-a-drips-bead-is-its-thinnest-point",
+    "file": "src/combat/bloodArt.js",
+    "old": "    return { a: Math.max(bead, run, foot), depth: 1 - Math.max(0, Math.min(1, along < 0 ? 1 : along)) };",
+    "new": "    return { a: Math.max(bead, run, foot), depth: Math.max(0, Math.min(1, along < 0 ? 1 : along)) };",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "AUDITBLOOD3-the-sheet-stops-being-white-ink-so-the-lens-tints-green",
+    "file": "src/combat/bloodArt.js",
+    "old": "          colors[o] = ink; colors[o + 1] = ink; colors[o + 2] = ink;",
+    "new": "          colors[o] = ink; colors[o + 1] = Math.round(255 * thick); colors[o + 2] = ink;",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "AUDITBLOOD3-blood-absorbs-every-channel-alike-so-a-thinning-mark-never-shifts",
+    "file": "src/combat/bloodArt.js",
+    "old": "export const BLOOD_ABSORB = Object.freeze([0.50, 0.95, 0.95]);",
+    "new": "export const BLOOD_ABSORB = Object.freeze([0.95, 0.95, 0.95]);",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "AUDITBLOOD3-blood-is-a-tinted-filter-rather-than-a-red-one",
+    "file": "src/combat/bloodArt.js",
+    "old": "export const BLOOD_ABSORB = Object.freeze([0.50, 0.95, 0.95]);",
+    "new": "export const BLOOD_ABSORB = Object.freeze([0.50, 0.95, 0.80]);",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "AUDITBLOOD3-the-film-is-too-faint-to-see",
+    "file": "src/combat/bloodArt.js",
+    "old": "export const BLOOD_ABSORB = Object.freeze([0.50, 0.95, 0.95]);",
+    "new": "export const BLOOD_ABSORB = Object.freeze([0.05, 0.09, 0.09]);",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "AUDITBLOOD3-the-classic-set-takes-the-linear-absorption-so-the-lanes-disagree",
+    "file": "src/combat/bloodArt.js",
+    "old": "export const BLOOD_ABSORB_ENCODED = Object.freeze(BLOOD_ABSORB.map((a) => a / DISPLAY_GAMMA));",
+    "new": "export const BLOOD_ABSORB_ENCODED = Object.freeze(BLOOD_ABSORB.map((a) => a));",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "AUDITBLOOD3-the-film-is-a-glass-plate-rather-than-a-water-one",
+    "file": "src/combat/bloodArt.js",
+    "old": "export const BLOOD_F0 = 0.02;",
+    "new": "export const BLOOD_F0 = 0.2;",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "AUDITBLOOD3-Schlicks-fifth-power-is-a-straight-line-so-the-whole-mark-glints",
+    "file": "src/combat/bloodArt.js",
+    "old": "  return BLOOD_F0 + (1 - BLOOD_F0) * Math.pow(1 - Math.max(0, Math.min(1, vdoth)), 5);",
+    "new": "  return BLOOD_F0 + (1 - BLOOD_F0) * Math.pow(1 - Math.max(0, Math.min(1, vdoth)), 1);",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "AUDITBLOOD3-the-angle-is-ignored-so-a-wet-mark-is-plastic-again",
+    "file": "src/combat/bloodArt.js",
+    "old": "  return BLOOD_F0 + (1 - BLOOD_F0) * Math.pow(1 - Math.max(0, Math.min(1, vdoth)), 5);",
+    "new": "  return 1;",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "AUDITBLOOD3-the-sheen-ignores-the-marks-depth-so-a-dried-rim-shines",
+    "file": "src/combat/bloodArt.js",
+    "old": "  return Math.max(0, Math.min(1, wet)) * (x * x * (3 - 2 * x));   // smoothstep, the shader's own",
+    "new": "  return Math.max(0, Math.min(1, wet));   // smoothstep, the shader's own",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "AUDITBLOOD3-the-wet-band-sits-where-no-mark-ever-is",
+    "file": "src/combat/bloodArt.js",
+    "old": "export const WET_THICK_LO = 0.15;\nexport const WET_THICK_HI = 0.75;",
+    "new": "export const WET_THICK_LO = 0.0;\nexport const WET_THICK_HI = 1.0;",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "AUDITBLOOD3-a-wet-mark-does-not-darken-so-nothing-reads-as-wet-from-above",
+    "file": "src/combat/bloodArt.js",
+    "old": "export const WET_DARKEN = 0.72;",
+    "new": "export const WET_DARKEN = 1.0;",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "AUDITBLOOD3-the-lane-takes-the-raw-ink-for-a-thickness",
+    "file": "src/render/enhancedLighting.js",
+    "old": "  float thick = t.a * clamp((1.0 - t.r) / ${glslFloat(INK_DEPTH)}, 0.0, 1.0);",
+    "new": "  float thick = t.a * t.r;",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "AUDITBLOOD3-the-lane-spends-the-ink-twice-as-albedo-and-as-depth",
+    "file": "src/render/enhancedLighting.js",
+    "old": "  vec3 albedo = elDecode(vColor.rgb)",
+    "new": "  vec3 albedo = elDecode(t.rgb) * elDecode(vColor.rgb)",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "AUDITBLOOD3-the-meniscus-taps-read-the-bare-alpha-against-a-thickness",
+    "file": "src/render/enhancedLighting.js",
+    "old": "  vec2 duv = vec2(tU.a * clamp((1.0 - tU.r) / ${glslFloat(INK_DEPTH)}, 0.0, 1.0),\n                  tV.a * clamp((1.0 - tV.r) / ${glslFloat(INK_DEPTH)}, 0.0, 1.0)) - vec2(thick);",
+    "new": "  vec2 duv = vec2(tU.a, tV.a) - vec2(thick);",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "AUDITBLOOD3-the-meniscus-is-a-dent-rather-than-a-bank",
+    "file": "src/render/enhancedLighting.js",
+    "old": "    n = normalize(n - slope * ${glslFloat(BLOOD_MENISCUS)});",
+    "new": "    n = normalize(n + slope * ${glslFloat(BLOOD_MENISCUS)});",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "AUDITBLOOD3-the-degenerate-WORLD-frame-is-unguarded-so-the-fallback-normal-goes-NaN",
+    "file": "src/render/enhancedLighting.js",
+    "old": "  if (dot(c, c) > 1e-12 && abs(uvDet) > 1e-12 && dot(duv, duv) > 0.0) {",
+    "new": "  if (abs(uvDet) > 1e-12 && dot(duv, duv) > 0.0) {",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "AUDITBLOOD3-the-derivatives-go-back-inside-the-branch-where-they-are-undefined",
+    "file": "src/render/enhancedLighting.js",
+    "old": "    vec3 tu = (duy.y * dpx - dux.y * dpy) / uvDet;",
+    "new": "    vec3 dpx2 = dFdx(vWorld), dpy2 = dFdy(vWorld);\n    vec3 tu = (duy.y * dpx2 - dux.y * dpy2) / uvDet;",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "AUDITBLOOD3-the-lanterns-glint-drops-its-Fresnel-and-is-plastic-again",
+    "file": "src/render/enhancedLighting.js",
+    "old": "      if (g > 0.0) glint += att * g * wetFresnel(dot(V, H)) * uPointColors[i];",
+    "new": "      if (g > 0.0) glint += att * g * uPointColors[i];",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "AUDITBLOOD3-the-suns-glint-drops-its-Fresnel",
+    "file": "src/render/enhancedLighting.js",
+    "old": "* ${glslFloat(EL_WET_STRENGTH)} * sheen * wetFresnel(dot(V, H)) * sunVis);",
+    "new": "* ${glslFloat(EL_WET_STRENGTH)} * sheen * sunVis);",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "AUDITBLOOD3-the-lane-forgets-the-wet-darkening",
+    "file": "src/render/enhancedLighting.js",
+    "old": "    * mix(1.0, ${glslFloat(WET_DARKEN)}, clamp(vWet, 0.0, 1.0));",
+    "new": "    ;",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "AUDITBLOOD3-the-classic-set-keeps-the-flat-sticker",
+    "file": "src/render/renderer.js",
+    "old": "  vec3 rgb = vColor.rgb * exp(vec3(${glslFloat(BLOOD_ABSORB_ENCODED[0])}, ${glslFloat(BLOOD_ABSORB_ENCODED[1])}, ${glslFloat(BLOOD_ABSORB_ENCODED[2])}) * (1.0 - thick)) * lightAcc;",
+    "new": "  vec3 rgb = vColor.rgb * lightAcc;",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "AUDITBLOOD3-the-classic-set-takes-the-raw-ink-for-a-thickness",
+    "file": "src/render/renderer.js",
+    "old": "  float thick = t.a * clamp((1.0 - t.r) / ${glslFloat(INK_DEPTH)}, 0.0, 1.0);",
+    "new": "  float thick = t.a * t.r;",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "AUDITBLOOD3-F9-the-meniscus-dial-reaches-GLSL-bare-so-a-round-value-breaks-the-shader",
+    "file": "src/render/enhancedLighting.js",
+    "old": "    n = normalize(n - slope * ${glslFloat(BLOOD_MENISCUS)});",
+    "new": "    n = normalize(n - slope * ${BLOOD_MENISCUS});",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "AUDITBLOOD3-F9-the-wet-darkening-dial-reaches-GLSL-bare",
+    "file": "src/render/enhancedLighting.js",
+    "old": "    * mix(1.0, ${glslFloat(WET_DARKEN)}, clamp(vWet, 0.0, 1.0));",
+    "new": "    * mix(1.0, ${WET_DARKEN}, clamp(vWet, 0.0, 1.0));",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "AUDITBLOOD3-F9-the-classic-sets-absorption-reaches-GLSL-bare",
+    "file": "src/render/renderer.js",
+    "old": "exp(vec3(${glslFloat(BLOOD_ABSORB_ENCODED[0])}, ${glslFloat(BLOOD_ABSORB_ENCODED[1])}, ${glslFloat(BLOOD_ABSORB_ENCODED[2])}) * (1.0 - thick))",
+    "new": "exp(vec3(${BLOOD_ABSORB_ENCODED[0]}, ${BLOOD_ABSORB_ENCODED[1]}, ${BLOOD_ABSORB_ENCODED[2]}) * (1.0 - thick))",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "AUDITBLOOD3-F9-glslFloat-stops-making-a-whole-number-a-float",
+    "file": "src/render/airPass.js",
+    "old": "export const glslFloat = (v) => (Number.isInteger(v) ? `${v}.0` : String(v));",
+    "new": "export const glslFloat = (v) => String(v);",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "AUDITBLOOD3-F10-the-shader-goes-back-to-claiming-a-rim-lip",
+    "file": "src/render/enhancedLighting.js",
+    "old": "  // BLOOD3: AND THE MARK IS A HEIGHT FIELD, NOT A PLANE.",
+    "new": "  // BLOOD3: AND THE RIM HAS A SHOULDER.",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  }
+]
