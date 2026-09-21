@@ -11,7 +11,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import {
   TravelMapWindow, BUTTON_RECTS, FILTER_SRC, FIND_SRC, AT_SRC, REGION_RECT, REGION_W, REGION_H,
-  OFFSET_LOOKUP, OUTLINE_DISPLACEMENTS, BETONY_INDEX, ZOOM_FACTOR, FIND_MAX_CHARACTERS,
+  OFFSET_LOOKUP, OUTLINE_DISPLACEMENTS, BETONY_INDEX, ZOOM_FACTOR, FIND_MAX_CHARACTERS, FIND_PROMPT,
   IDENTIFY_FLASH_COUNT, IDENTIFY_FLASH_COUNT_SELECTED, IDENTIFY_FLASH_INTERVAL,
   getRegionMapNames, getRegionMapScale, getPixelColorIndex, hasRegionPage,
   _setTravelMapArtForTests, setRevealUndiscoveredLocations,
@@ -379,10 +379,12 @@ test('U41: the find box searches by edit distance, flashes, and pops the confirm
     w._openRegionPanel(DAGGERFALL);
     w.input('KeyF');
     assert.equal(w.top, 'find');
+    // CM8: the field is a pushed DaggerfallInputMessageBox (:965), findLocationPrompt, 32 characters (:968)
+    assert.equal(w.findBox.label, FIND_PROMPT); assert.equal(w.findBox.maxCharacters, FIND_MAX_CHARACTERS);
     for (const c of 'Daggerfall') w.input(`Key${c.toUpperCase()}`, { key: c });
-    assert.equal(w.findText, 'Daggerfall');
+    assert.equal(w.findBox.value, 'Daggerfall');
     w.input('Enter');
-    assert.equal(w.top, null);
+    assert.equal(w.top, null); assert.equal(w.findBox, null, 'Return pops the box');
     assert.equal(w.locationSelected, true);
     assert.equal(w.findingLocation, true, 'the crosshair is finding');
     assert.equal(w.locationSummary.id, getMapPixelID(50, 120));

@@ -93,6 +93,12 @@ test('wagon: the 750kg gates - the refusal, the split-take, the gold clamp', () 
   const idx = w._filtered().indexOf(bag[1]);
   assert.ok(idx >= 0);
   w._pick(idx);
+  // CM5: TransferItem does not move a partial fit at once - it pushes
+  // the split popup seeded with the amount that fits (:1515-1536), and
+  // SplitStackPopup_OnGotUserInput moves what the player confirms
+  assert.equal(wagonList.length, 0, 'nothing moves before the popup is answered');
+  assert.equal(w.inputBox.value, '375', 'the field is seeded with the amount that fits');
+  w.input('Enter');
   assert.equal(wagonList.length, 1);
   assert.equal(wagonList[0].stackCount, 375, 'ComputeCanHoldAmount: trunc((750-0)*400 / 800) units fit');
   assert.equal(bag[1].stackCount, 25, 'the bag keeps the remainder (the split-take)');
@@ -111,7 +117,7 @@ test('wagon: the 750kg gates - the refusal, the split-take, the gold clamp', () 
   const w2 = new NativeInventoryWindow({ items: () => bag2, entity: rich, wagonItems: () => wagon2, icons: ICONS });
   wagonBtn(w2);
   w2._dropGold();
-  w2.topBox.onInput('100000');   // 250kg of gold offered into 10kg of headroom
+  w2.inputBox.onSubmit('100000');   // 250kg of gold offered into 10kg of headroom (CM5: the prompt is the pushed box)
   const goldInWagon = wagon2.find((it) => it.group === 'Currency');
   assert.ok(goldInWagon, 'the clamp still drops what fits');
   assert.equal(goldInWagon.stackCount, 4000, '10kg headroom / 0.0025kg per piece');

@@ -393,11 +393,13 @@ test('SAV4 window: delete confirms and refreshes; rename prefills and writes onl
     win._select(0);
     win.click(...nat([SW_RECTS.rename[0], SW_RECTS.rename[1]]));
     assert.equal(win.top, 'rename');
-    assert.equal(win.renameText, 'Old', 'TextBox.Text prefills');
+    // CM10: RenameSaveButton_OnMouseClick pushes a DaggerfallInputMessageBox (:566-570), enterSaveName for its label
+    assert.equal(win.renameBox.value, 'Old', 'TextBox.Text prefills');
+    assert.equal(win.renameBox.label, 'Enter save name: ');
     win.input('Backspace'); win.input('Backspace'); win.input('Backspace');
     for (const ch of 'Better') win.input('char:' + ch);
     win.input('Enter');
-    assert.equal(win.top, null);
+    assert.equal(win.top, null); assert.equal(win.renameBox, null, 'Return pops the box');
     assert.equal(findSave('Alaric', 'Better', s) !== -1, true);
     assert.equal(win.nameText, 'Better');
   });

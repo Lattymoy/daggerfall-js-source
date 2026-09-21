@@ -12,7 +12,7 @@
 import { drawText, measureText } from './text.js';
 import { nativeMetrics } from './nativePanel.js';
 import { layoutMessageBox, drawMessageBox, messageBoxArtLoaded } from './messageBox.js';   // U11
-import { noteInputBoxClosed } from '../player/pointerLock.js';   // PL1: the 0.3s toggle refusal's stamp
+import { InputMessageBoxWindow } from './inputMessageBox.js';   // CM3: the one DaggerfallInputMessageBox
 
 /** DaggerfallInputMessageBox maxCharacters. */
 export const MAX_INPUT = 20;
@@ -104,13 +104,15 @@ export class ActionTextBox {
 
 /** ShowTextWithInput: the 20-char ' > ' entry; Enter submits to the
  *  action system's answer gate (a match fires the chain), Escape
- *  closes without answering. */
-export class ActionInputBox {
+ *  closes without answering. CM3: the field IS the one
+ *  DaggerfallInputMessageBox (ui/inputMessageBox.js) - this is the
+ *  action system's construction of it, record lines above, ' > ' for
+ *  the label, MaxCharacters 20 - and nothing of the field's law lives
+ *  here any more. */
+export class ActionInputBox extends InputMessageBoxWindow {
   constructor(lines, onInput) {
-    this.lines = lines;
+    super({ lines, label: ' > ', maxCharacters: MAX_INPUT, onSubmit: onInput });
     this.onInput = onInput;
-    this.value = '';
-    this.done = false;
     /** AUDIT 64 F35 (review round): the ONLY construction of this box
      *  in the reference passes a null previous - `new
      *  DaggerfallInputMessageBox(DaggerfallUI.UIManager, textID, 20,
@@ -120,35 +122,5 @@ export class ActionInputBox {
      *  window and passes `this`, which roots at that window, not at
      *  the HUD. */
     this.previousWindow = null;
-  }
-
-  input(action) {
-    if (action === 'confirm') {
-      this.done = true;
-      // PL1: CloseWindow's stamp (DaggerfallInputMessageBox.cs:301) -
-      // the Return that just submitted must not also free the mouse.
-      noteInputBoxClosed();
-      this.onInput?.(this.value);
-      return;
-    }
-    if (action === 'back') { this.done = true; noteInputBoxClosed(); return; }
-    if (action === 'backspace') { this.value = this.value.slice(0, -1); return; }
-    if (action.startsWith('char:') && this.value.length < MAX_INPUT) this.value += action.slice(5);
-  }
-
-  draw(renderer, canvas, font, s) {
-    const entry = ` > ${this.value}_`;
-    if (messageBoxArtLoaded() && font) {
-      const m = nativeMetrics(canvas);
-      // DaggerfallInputMessageBox puts the entry line UNDER the
-      // prompt inside the same parchment box.
-      const rows = [...this.lines, entry];
-      // the entry field never sizes the box past its maximum
-      // (maxCharacters 20, the same clamp input() enforces)
-      const box = layoutMessageBox(font, rows, [], { sizingRows: [...this.lines, ` > ${'M'.repeat(MAX_INPUT)}_`] });
-      if (drawMessageBox(renderer, m, font, box)) return;
-    }
-    const at = drawPanel(renderer, canvas, font, s, this.lines, entry);
-    drawText(renderer, font, entry, at.x + 12 * s, at.y - 12 * s, s, DIM);
   }
 }

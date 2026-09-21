@@ -25,8 +25,11 @@ test('CM1: a no-options ChoiceWindow is a click-anywhere message box, not a keye
     lines: ['Choose.'],
     options: [{ code: 'Digit1', label: '1 - yes', action() {} }],
   });
-  assert.equal(menu.click(), false, 'a keyed ChoiceWindow is not ClickAnywhereToClose');
-  assert.equal(menu.done, false);
+  // a keyed menu answers a click on one of its ROWS (the mouse audit's
+  // hit map, drawn on the flat panel) and swallows every other; it is
+  // never click-anywhere
+  assert.equal(menu.click(0, 0), true, 'swallowed, not answered');
+  assert.equal(menu.done, false, 'a keyed ChoiceWindow is not ClickAnywhereToClose');
 });
 
 test('CM1: simple ChoiceWindow notices render through the one native parchment implementation', () => {

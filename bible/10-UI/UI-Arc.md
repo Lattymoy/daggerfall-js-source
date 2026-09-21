@@ -32,6 +32,96 @@ registers the hook; the classic path never has one.
 
 
 
+## CM1-CM11 THE CLASSIC MODALS, AND THE ONE INPUT BOX (2026-09-15 / 2026-09-21)
+
+Mac opened PR #178 ("Restore residual classic modal UI parity") on
+2026-09-15: eight slices, CM1-CM8, that took the port's last flat text
+panels and inline text fields to the windows DFU actually pushes -
+`DaggerfallMessageBox` and `DaggerfallInputMessageBox`. Six days and
+564 commits of main later, Mac: *"take a look at the classic windows
+PR, see whats there"*, then *"lets clean it up"*. This section is the
+record of both: what the PR built, what the cleanup changed, and why.
+
+**What the PR built (CM1-CM8).** CM1: a `ChoiceWindow` with no options
+is not a menu - every production caller of that shape is a notice - so
+it draws as the SPOP.RCI parchment and closes on any click
+(ClickAnywhereToClose). CM2: the rest window's five pushed states draw
+as parchment with BUTTONS.RCI Yes/No. CM3: a shared
+`InputMessageBoxWindow`. CM4: the character sheet's four dead buttons
+(Name, Level, Health, Affiliations) get their popups, with
+LevelButton_OnMouseClick's arithmetic and ShowAffiliationsDialog's
+table. CM5: the inventory's split popup, Control-forced included. CM6,
+CM7, CM8: the spellbook's rename, the spell maker's name and the travel
+map's Find each push the box instead of typing into the window.
+
+**What was wrong with it.** Four of those slices were WRAPPERS: a
+`classicCharSheet.js` subclassing `CharSheet`, a `classicInventory.js`
+subclassing `NativeInventoryWindow`, and the same for the spellbook and
+the travel map, each re-exported under the base's name so the runtime
+door imported the wrapper - and three of the four declared the class
+unexported and exported it at the tail, with comments saying so, to
+stay out of the one-home scan. That is dressing a duplicate to pass a
+gate, and the fourth crossed the duplicate ratchet anyway (28 against
+27). The spellbook wrapper kept the base's inline field and hid it per
+frame. Main had meanwhile grown its own `ChoiceWindow.click` (the mouse
+audit's row hit), which the PR's click-anywhere collided with. And the
+shared box was a SECOND home: `ui/actionText.js` already carried
+`ActionInputBox`, the same DFU class built for ShowTextWithInput, with
+its own key router and its own draw. No records, no Testing rows, the
+manifest red.
+
+**The cleanup (CM3-CM11, 2026-09-21).** The wrappers are gone and their
+behaviour lives in the windows themselves: `charsheet.js` owns the four
+buttons (their DaggerfallShortcut bindings included), `nativeInventory.js`
+the split gate, `spellbookWindow.js` and `travelMapWindow.js` their
+pushed boxes with `top` still the flag that holds the list or the map
+still underneath. `ui/inputMessageBox.js` is the ONE
+`DaggerfallInputMessageBox`: text tokens above, a label and the field on
+one row, `TextBox.maxCharacters` (31 by default), `Numeric`, Return
+closing BEFORE it raises OnGotUserInput (PL1's pointer-lock stamp rides
+that order), Escape raising nothing, a background click reaching
+nothing; it reads BOTH host vocabularies (the dungeon's `confirm` /
+`back` / `backspace` / `char:x` actions and the exterior hosts' raw
+codes) through the one `typedChar`. `ActionInputBox` is now its
+subclass - the action system's construction of it, record lines above,
+`" > "`, twenty characters - and its own key router and draw are gone.
+The audit of the cleanup then found FOUR more windows typing the same
+field into their own art, none of them on Ledger A row TB1: the
+inventory's drop-gold prompt (DropGoldPopup, :1246-1256), the automap's
+note editor (EditUserNote, :1591-1607, CM9), the save window's rename
+(RenameSaveButton_OnMouseClick, DaggerfallUnitySaveGameWindow.cs:566-570,
+CM10) and the guild service flow's field boxes (the donation, which in
+DFU IS a `DaggerfallInputMessageBox` subclass, and the tavern's day
+count, CM11). All four push the box now. The `ChoiceWindow.click`
+reconciles: a notice is click-anywhere, a keyed menu keeps the row hit.
+Ledger A row TB1 is struck.
+
+**What stays inline, and why.** The bank's transaction amount is a
+`TextBox` IN the panel in DFU too (DaggerfallBankingWindow.cs:185), and
+so is the save window's name box (saveNameTextBox); both keep their own
+key reader, and the roster pin names them as the only readers of
+`typedChar` in `src/ui` beside the box and the helper's home. The rest
+window's hours prompt is a `DaggerfallInputMessageBox` in DFU (:619-624)
+and draws as one since CM2, but still keys through the window's own
+paced state machine (`value`, the `char:N` actions, the two refusals) -
+the one field this arc did not push. It is pinned as it is
+(`test/classicmodals.test.js`) and is the next slice if one is wanted.
+
+**Pinned** in `test/classicinputbox.test.js` (10: the box under both
+vocabularies, the cap, the numeric filter, close-before-callback, the
+`ActionInputBox` relation, the item maker's rename, THE ROSTER - every
+raiser in `src/ui` by DFU member, no other `typedChar` reader, and the
+eight retired inline fields gone by name - and CM9's note editor),
+`test/classicmodals.test.js` (4), `test/classiccharsheetmodal.test.js`
+(7), `test/classicinventorysplit.test.js` (4), `test/cm5_ctrlsplit.test.js`
+(2), `test/cm6_spellbookrename.test.js` (3), `test/cm7_spellmakerrename.test.js`
+(3), `test/cm8_travelmapfind.test.js` (3); the drop-gold, save-rename
+and donation folds ride the pins those windows already had
+(`nativeinventory`, `wagon`, `saveslots`, `guildserviceflows`), rewritten
+to the pushed box. The `.github/workflows/check.yml` the PR added -
+lint, types, tests and build on every pull request - stays.
+
+
 ## MENU1-WARM - THE MENU BYTES ARE ASKED FOR EARLY (2026-09-19)
 
 Mac: *"Also look for any elements of hitching, or hiccups."*
@@ -9997,7 +10087,7 @@ c2 flight 2 caught the same pair driving the town map's chrome.
   row 0.
 
 **THE FIX.** `vy >= 0 &&` in front of the `update` call in both hovers
-- the arm `ui/chargen.js:1123` and `ui/spellbookWindow.js:429` already
+- the arm `ui/chargen.js:1123` and `ui/spellbookWindow.js:430` already
 carry. (The third guarded sibling is not the same arm:
 `ui/spellIconPickerWindow.js:227` tests `vx >= 0 && vy >= 0`, and
 `test/citedrift.test.js`'s CD8c pins that two-part shape by name.)
@@ -10040,7 +10130,7 @@ mutants - the guard deleted from either new window, "ALL THREE" restored
 to the Ledger, "both" restored to Testing.md - all go red.
 
 **AND THE THREE SIBLINGS ARE NOT ONE ARM.** The first draft of the
-section above called `ui/chargen.js:1123`, `ui/spellbookWindow.js:429`
+section above called `ui/chargen.js:1123`, `ui/spellbookWindow.js:430`
 and `ui/spellIconPickerWindow.js:227` "the same arm". They are not:
 the icon picker tests `vx >= 0 && vy >= 0`, the two-part shape CD8c
 pins by regex, while the other two test `vy` alone. The two new guards

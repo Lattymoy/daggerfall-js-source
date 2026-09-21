@@ -29,8 +29,7 @@
 import { isEnhanced } from '../systems/uiSkin.js';
 import { mountEnhancedChunk } from './enhancedChunk.js';   // MENU1: the one lazy-chunk door
 import { registerOverlay } from './enhancedOverlays.js';   // PX28: Tab puts it away
-import { spellbookArtLoaded } from './spellbookWindow.js';
-import { SpellbookWindow } from './classicSpellbook.js';   // CM6: classic rename pushes DaggerfallInputMessageBox
+import { SpellbookWindow, spellbookArtLoaded } from './spellbookWindow.js';
 
 export { spellbookArtLoaded };
 

@@ -20,7 +20,7 @@ import { nativeMetrics } from './nativePanel.js';
 import { layoutMessageBox, drawMessageBox, messageBoxHit, MB_BUTTONS } from './messageBox.js';
 import { ListPickerWindow, listPickerArtLoaded } from './listPicker.js';
 import { wrapText } from './talkWindow.js';
-import { typedChar } from './input.js';
+import { InputMessageBoxWindow } from './inputMessageBox.js';   // CM11: a field box IS a pushed DaggerfallInputMessageBox
 import {
   trainingOffer, canAffordTraining, tooSkilledToTrain, trainSkill, trainableSkills,
   donate, DONATION_DEFAULT, DONATION_MAX_CHARACTERS,
@@ -57,11 +57,16 @@ export class ServiceFlowWindow {
     this.onClose = onClose;
     this.done = false;
     this.isChoiceWindow = true;
-    this.value = '';
+    this._input = null;     // CM11: the pushed DaggerfallInputMessageBox while the top box carries a field
     this._picker = null;
     this._syncPicker();
     this._syncValue();
   }
+
+  /** The field's live text - the pushed box's, read and written through
+   *  the flow so a probe sees one surface (the U24 pins). */
+  get value() { return this._input?.value ?? ''; }
+  set value(v) { if (this._input) this._input.value = String(v ?? ''); }
 
   get top() { return this.boxes.length ? this.boxes[0] : null; }
 
@@ -70,7 +75,22 @@ export class ServiceFlowWindow {
    *  FIELD, not to the window, because a chain can raise a second
    *  field with a different default - so it is read every time the
    *  top box changes rather than poked in once at construction. */
-  _syncValue() { this.value = this.top?.field?.initial ?? ''; }
+  _syncValue() {
+    const t = this.top;
+    // CM11: DFU's donation (DaggerfallGuildServiceDonation : DaggerfallInputMessageBox
+    // :44-51) and the tavern's day count are PUSHED input boxes; the
+    // flow raises the one box for a field box and advances on its
+    // answer - Return through onInput, Escape through the plain close.
+    this._input = t?.field ? new InputMessageBoxWindow({
+      lines: t.rows,
+      label: ' > ',
+      value: t.field.initial ?? '',
+      maxCharacters: t.field.maxCharacters ?? 8,
+      numeric: !!t.field.numeric,   // TextBox.Numeric refuses anything but a digit (:49)
+      onSubmit: (v) => this._advance(t.onInput?.(v) ?? null),
+      onCancel: () => this._advance(),
+    }) : null;
+  }
 
   _syncPicker() {
     const t = this.top;
@@ -112,18 +132,7 @@ export class ServiceFlowWindow {
     const t = this.top;
     if (!t) { this._close(); return; }
     if (t.picker) { this._picker?.input(code); if (this._picker?.done) this._syncPicker(); return; }
-    if (t.field) {
-      if (code === 'Escape') { this._advance(); return; }
-      if (code === 'Enter') { const v = this.value; this._advance(t.onInput?.(v) ?? null); return; }
-      if (code === 'backspace' || code === 'Backspace') { this.value = this.value.slice(0, -1); return; }
-      const ch = typedChar(code, e);   // U26: raw codes or 'char:x'
-      if (ch) {
-        // TextBox.Numeric refuses anything but a digit (:49)
-        if (t.field.numeric && !/^[0-9]$/.test(ch)) return;
-        if (this.value.length < (t.field.maxCharacters ?? 8)) this.value += ch;
-      }
-      return;
-    }
+    if (t.field) { this._input?.input(code, e); return; }   // the pushed box owns the keyboard; its answer advances the chain
     if (t.buttons === 'YesNo') {
       if (code === 'KeyY') this._advance(t.onYes?.() ?? null);
       // AUDIT 28 W2c: a box that names onEscape takes Escape as
@@ -170,7 +179,7 @@ export class ServiceFlowWindow {
       if (hit != null && t.buttonsMulti.includes(hit)) this._advance(t.onButton?.(hit) ?? null);
       return true;
     }
-    if (t.field) return true;   // the field takes keys, not clicks
+    if (t.field) { this._input?.click(); return true; }   // modal, not click-anywhere
     this._advance(t.onClick?.() ?? null);
     return true;
   }
@@ -184,13 +193,10 @@ export class ServiceFlowWindow {
       this._picker?.draw(renderer, canvas, font);
       return;
     }
+    if (t.field) { this._box = null; this._input?.draw(renderer, canvas, font); return; }   // CM11: the pushed box
     const m = nativeMetrics(canvas);
-    const rows = t.field ? [...t.rows, ` > ${this.value}_`] : t.rows;
-    const sizing = t.field
-      ? [...t.rows, ` > ${'0'.repeat(t.field.maxCharacters ?? 8)}_`]
-      : null;
     const buttons = t.buttons === 'YesNo' ? [MB_BUTTONS.Yes, MB_BUTTONS.No] : (t.buttonsMulti ?? []);
-    this._box = layoutMessageBox(font, rows, buttons, sizing ? { sizingRows: sizing } : {});
+    this._box = layoutMessageBox(font, t.rows, buttons);
     drawMessageBox(renderer, m, font, this._box);
   }
 }

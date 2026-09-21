@@ -38,8 +38,7 @@
 import { isEnhanced } from '../systems/uiSkin.js';
 import { mountEnhancedChunk } from './enhancedChunk.js';   // MENU1: the one lazy-chunk door
 import { registerOverlay } from './enhancedOverlays.js';   // PX28: Tab puts it away
-import { inventoryArtLoaded } from './nativeInventory.js';
-import { NativeInventoryWindow } from './classicInventory.js';   // CM5: DFU partial-stack input popup
+import { NativeInventoryWindow, inventoryArtLoaded } from './nativeInventory.js';
 import { closeSession } from '../systems/inventorySession.js';
 import { immersiveFootsteps } from '../systems/immersiveFootsteps.js';   // AUDIT-IF F5: the enhanced skin's close refreshes the mod's armour slots too
 

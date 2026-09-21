@@ -48,7 +48,7 @@ const hero = (items) => { const e = { stats: { strength: 80 }, items }; equipOf(
 const LOCAL_SLOT = (s = 0) => [INV_RECTS.localList[0] + CELL_X + 5, INV_RECTS.localList[1] + s * SLOT_H + 5];
 const REMOTE_SLOT = (s = 0) => [INV_RECTS.remoteList[0] + CELL_X + 5, INV_RECTS.remoteList[1] + s * SLOT_H + 5];
 
-/** The producer, not a literal: ui/inventoryDoor.js:60 is the ONE seam
+/** The producer, not a literal: ui/inventoryDoor.js:59 is the ONE seam
  *  every host opens the pack through (U53), and headless it mints the
  *  classic window. */
 const pack = (bag, pile) => {

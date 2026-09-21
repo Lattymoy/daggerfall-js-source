@@ -3,9 +3,8 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { TravelMapWindow } from '../src/ui/classicTravelMapWindow.js';
+import { TravelMapWindow, FIND_PROMPT, FIND_MAX_CHARACTERS } from '../src/ui/travelMapWindow.js';
 import { InputMessageBoxWindow } from '../src/ui/inputMessageBox.js';
-import { FIND_PROMPT, FIND_MAX_CHARACTERS } from '../src/ui/travelMapWindow.js';
 
 const make = () => {
   const w = new TravelMapWindow({});
@@ -22,7 +21,7 @@ test('CM8: Find pushes the shared classic input box', () => {
   assert.equal(w.findBox.label, FIND_PROMPT);
   assert.equal(w.findBox.value, '');
   assert.equal(w.findBox.maxCharacters, FIND_MAX_CHARACTERS);
-  assert.equal(w.top, null, 'the base inline find state is no longer armed');
+  assert.equal(w.top, 'find', 'the map under the box is blocked, as under any pushed box');
 });
 
 test('CM8: Return hands the input back to the map find law', () => {
@@ -33,7 +32,7 @@ test('CM8: Return hands the input back to the map find law', () => {
   w.findBox.value = 'Daggerfall';
   w.input('Enter');
 
-  assert.equal(w.findBox, null);
+  assert.equal(w.findBox, null); assert.equal(w.top, null);
   assert.equal(searched, 'Daggerfall');
 });
 
@@ -45,6 +44,6 @@ test('CM8: Escape cancels Find without running a search', () => {
   w.findBox.value = 'Discard Me';
   w.input('Escape');
 
-  assert.equal(w.findBox, null);
+  assert.equal(w.findBox, null); assert.equal(w.top, null);
   assert.equal(searched, false);
 });

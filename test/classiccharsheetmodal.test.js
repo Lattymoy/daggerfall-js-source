@@ -1,9 +1,10 @@
-// CM4 - THE FOUR RESIDUAL CHARACTER-SHEET MODALS.
+// CM4 - THE FOUR RESIDUAL CHARACTER-SHEET MODALS (Name, Level, Health,
+// Affiliations), on the sheet ITSELF (ui/charsheet.js) - U32 had left
+// them consumed as no-ops.
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { CharSheet, levelProgressPercent, affiliationRows } from '../src/ui/classicCharSheet.js';
-import { CHARSHEET_RECTS } from '../src/ui/charsheet.js';
+import { CharSheet, CHARSHEET_RECTS, levelProgressPercent, affiliationRows } from '../src/ui/charsheet.js';
 import { InputMessageBoxWindow } from '../src/ui/inputMessageBox.js';
 import { ActionTextBox } from '../src/ui/actionText.js';
 import { GUILDS } from '../src/systems/guilds.js';

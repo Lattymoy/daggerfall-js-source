@@ -24,9 +24,8 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { isEnhanced } from '../systems/uiSkin.js';
-import { TravelMapWindow } from './classicTravelMapWindow.js';
 import {
-  preloadTravelMapArt, travelMapArtLoaded, canFindPlace,
+  TravelMapWindow, preloadTravelMapArt, travelMapArtLoaded, canFindPlace,
 } from './travelMapWindow.js';
 import { HeldMapWindow } from './heldMap.js';
 

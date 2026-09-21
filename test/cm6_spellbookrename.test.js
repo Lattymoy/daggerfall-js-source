@@ -3,8 +3,7 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { SpellbookWindow } from '../src/ui/classicSpellbook.js';
-import { ENTER_SPELL_NAME } from '../src/ui/spellbookWindow.js';
+import { SpellbookWindow, ENTER_SPELL_NAME } from '../src/ui/spellbookWindow.js';
 import { InputMessageBoxWindow, DEFAULT_INPUT_MAX } from '../src/ui/inputMessageBox.js';
 
 const make = () => {

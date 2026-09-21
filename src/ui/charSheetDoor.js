@@ -40,8 +40,7 @@ import { isEnhanced } from '../systems/uiSkin.js';
 import { actionOf } from './input.js';   // MAC-C: the REGISTRY's answer for the two window keys
 import { mountEnhancedChunk, paintChunkNotice } from './enhancedChunk.js';   // MENU1: the one lazy-chunk door, and the notice it paints when a chunk is gone
 import { registerOverlay } from './enhancedOverlays.js';   // PX28: Tab puts it away
-import { LevelUpScreen, charSheetArtLoaded } from './charsheet.js';
-import { CharSheet } from './classicCharSheet.js';   // CM4: the four residual DFU modal buttons
+import { CharSheet, LevelUpScreen, charSheetArtLoaded } from './charsheet.js';
 import { charSheetHooks } from './charSheetNav.js';
 import { VirtueLevelUpScreen } from './virtueLevelUp.js';   // ORL1
 import { levelNotices } from './levelNotice.js';   // LV2: who already played the fanfare
@@ -550,3 +549,4 @@ function enhancedLevelUpOverlay(screen, entity) {
  * sheets always read, and it is now read by the one that remains.
  * What went is the ~200 lines of view that drew the second one.
  */
+
