@@ -136,17 +136,91 @@ console verbs and their pins. This arc is the ENHANCED skin's, behind
 the same skin door `ui/travelMapDoor.js` already forks on. A departure
 here is a departure from DFU only where the enhanced skin is worn.
 
+## The window is the paper; the sheet is the ink
+
+The held window is 2,244 lines and every one of them was audited twice
+(`AUDIT-MAP`, `AUDIT-MAP2`). EM1 did not move them. It put a SEAM in
+front of them and routed the window through it, which is the difference
+between an architecture and a rewrite.
+
+The contract is `SHEET_MEMBERS` in `ui/mapStrip.js`, and it is three
+things: the SPACE (`size`, which the pan and zoom clamp against), the
+INK (`ensure`, `staticKey`, `paintStatic`, `paintOverlay`) and the
+POINTER (`pickAt`, `hoverLabel`, `mark`), plus a clock and a
+`mount`/`unmount` pair for the shared chrome a sheet claims while it is
+up. The window keeps the parchment, the hands, the pan, the zoom, the
+Morrowind pose and the closing; it asks the SHEET for everything else
+and never asks WHICH sheet — a pin walks the class and fails on any
+comparison against a sheet's name, because a window that knows which
+sheet is up is a window that grows a special case per sheet, which is
+the three windows this arc exists to collapse.
+
+**Keys and chrome are deliberately not in the contract yet.** The world
+map's keys are tangled with the window's own phases and boxes (the
+resume prompt, the info box, the travel panel), and the automap's — a
+floor up, a floor down — arrive with EM3. Deriving a hook's shape from
+ONE implementation is how a hook comes out the wrong shape, so the hook
+is written when there are two.
+
+The world sheet is therefore an adapter built inside the window, closing
+over it, every member delegating to the method that has always done the
+work. EM3's and EM4's sheets are standalone modules with no such
+back-reference. When the world map's travel half follows them out, the
+adapter shrinks to nothing and the contract does not move.
+
+**The strip is INK, not chrome**, and the reason is MAP3. Every other
+control on this window is a DOM node laid over the sprite; a DOM tab
+would float in front of the Morrowind arm when the rig is holding the
+sheet. Inked in paper coordinates, the tabs go round the corner with the
+paper and the pointer reaches them through the same inverse homography
+the marks are picked through, for free. They ride the KEPT static layer,
+so a breathing ring costs no re-lettering, and the live tab is part of
+what makes that layer stale.
+
+**THE ARC'S MID-FLIGHT GATE.** The slot's offer is the place's offer
+narrowed by the sheets the window actually holds. EM1 ships the world
+sheet alone, so wherever the map opens today the strip reads "The Bay"
+and there is no second tab: nothing a player can reach has moved. A
+place whose every sheet is missing answers `empty` at the door rather
+than opening a blank page. The narrowing is over the window's own sheet
+map rather than a literal, so it lifts itself the moment EM3 and EM4
+hand their sheets over — and until then it is impossible to ship a tab
+that inks nothing.
+
 ## The slices
 
-- **EM1 — the sheet contract, the tab strip, one key.** The tab law
-  (SHIPPED: `systems/mapTabs.js`, 5 pins). The window's sheet slot, the
-  strip inked on the paper, the world sheet moved behind the contract
-  with no behaviour change, and the key wiring.
-- **EM2 — the floor model.** SHIPPED: `systems/automapFloors.js`, 8
+- **EM1 — the sheet contract and the tab strip.** SHIPPED: the tab law
+  (`systems/mapTabs.js`, 5 pins), the strip and the slot
+  (`ui/mapStrip.js`, 11 pins), and the window routed through the
+  contract with the bay unchanged (`ui/heldMap.js`, 7 pins in its own
+  suite). 31 mutants, 31 dead. The KEY WIRING waits for EM3/EM4: a key
+  that opens a blank sheet is a regression, so `AutoMap` keeps its two
+  windows until there is something to ink.
+- **EM2 — the floor model.** SHIPPED: `systems/automapFloors.js`, 14
   pins over hand-built geometry — two stacked rooms, a ramp, a wall, a
   sliver, a partly revealed hall, and the coastline chain landing on
-  the room's true edges in world units.
-- **EM3 — the automap sheet.** The floor plan in the world map's pen,
+  the room's true edges in world units. 29 mutants, 27 dead and 2
+  recorded equivalent.
+
+  **The campaign paid for itself.** Seven mutants survived the first
+  run, and every one of them was a fixture that was too tidy: quads fed
+  bottom to top (so nothing proved the sort), every triangle wound the
+  same way (so nothing proved the inside test agreed with the facing
+  test), every room with a flat floor in it (so nothing proved a cave
+  of pure slope still gets a storey), and a `FLOOR_MIN_GAP` held only
+  BY VALUE — where the motor's capsule is 1.8 and the headroom 1.2, a
+  hardcoded `3.0` agrees today and stops agreeing the day the player's
+  height moves, so that law is now held at the source as well.
+
+  The last survivor taught the module something about itself: the
+  `len > 0` facing guard looks redundant beside the area guard, since a
+  zero-area triangle is dropped either way. It is not. A NaN vertex
+  gives `area` of NaN, and `NaN < MIN_TRI_AREA` is FALSE, so a bad
+  position sails past the area test and lands in the list at `y: NaN`,
+  where it sorts unpredictably and drags a storey to nowhere. Only a
+  guard written as `!(len > 0)` catches it, and only a fixture with a
+  NaN vertex proves so.
+- **EM3 — the automap sheet**, and the key. The floor plan in the world map's pen,
   visited-this-run and previously-revealed as two pen weights (DFU's
   grayscale law, as ink), the player caret, the entrance beacon, doors,
   teleporters and user notes; the floor strip. Wired into the dungeon

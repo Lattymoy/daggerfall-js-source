@@ -346,7 +346,7 @@ test('SOC6: a party that moves repaints its marks and NEVER the map\'s own (muta
   withDocument(() => {
     let roster = [member({ px: 3, py: 7 })];
     const win = mkWin({ party: () => roster });
-    const model = win._ensureModel();
+    const model = win._sheet.ensure();
     win._marksDirty = false;
     const marks = model.marks, coast = model.coast;
 
@@ -358,8 +358,8 @@ test('SOC6: a party that moves repaints its marks and NEVER the map\'s own (muta
     assert.equal(win._party[0].x, 4.5, 'to the new pixel');
     assert.equal(win._dirty, true, 'the sheet is repainted');
     assert.equal(win._marksDirty, false, 'and the bay\'s marks were NOT dirtied');
-    assert.equal(win._ensureModel().marks, marks, '...nor rebuilt');
-    assert.equal(win._ensureModel().coast, coast, '...nor the chains');
+    assert.equal(win._sheet.ensure().marks, marks, '...nor rebuilt');
+    assert.equal(win._sheet.ensure().coast, coast, '...nor the chains');
     win.dispose();
   });
 });

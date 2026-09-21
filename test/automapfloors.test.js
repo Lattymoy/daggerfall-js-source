@@ -19,6 +19,7 @@
 // world units.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import {
   floorTriangles, deriveFloors, floorAt, floorOccupancy, planBounds, floorPlan,
   FLOOR_NY, LEVEL_NY, FLOOR_MIN_GAP, PLAN_CELL, MIN_TRI_AREA,
@@ -61,6 +62,15 @@ test('EM2: the constants are the motor\'s own - a floor is what the player could
   assert.equal(FLOOR_MIN_GAP, CAPSULE_HEIGHT + 1.2, 'the player\'s own height plus the headroom a room needs');
   assert.ok(FLOOR_MIN_GAP > CAPSULE_HEIGHT, 'a storey you cannot stand up in is not a storey');
   assert.equal(PLAN_CELL, 1);
+  // ONE HOME, held at the SOURCE as well as by value: the motor's
+  // capsule is 1.8 and the headroom 1.2, so a hardcoded 3.0 would
+  // AGREE today and stop agreeing the day the player's height moves -
+  // a mutant that wrote the literal walked straight past a by-value
+  // pin, which is precisely the drift this law exists to prevent.
+  const src = readFileSync(new URL('../src/systems/automapFloors.js', import.meta.url), 'utf8');
+  assert.match(src, /import \{ SLOPE_LIMIT_DEG, CAPSULE_HEIGHT \} from '\.\.\/player\/motor\.js';/);
+  assert.match(src, /export const FLOOR_MIN_GAP = CAPSULE_HEIGHT \+ [\d.]+;/, 'the gap is the capsule plus headroom, written that way');
+  assert.match(src, /export const FLOOR_NY = Math\.cos\(\(SLOPE_LIMIT_DEG \* Math\.PI\) \/ 180\);/);
 
   // THE TWO THRESHOLDS, and the mistake that produced them. The first
   // cut had ONE - the motor's walk limit - and clustered the walkable
@@ -206,4 +216,157 @@ test('EM2: nothing revealed is an empty plan, not a throw', () => {
   const noInk = floorPlan([floorQuad(0, 0, 0, 10, 10)], 0);
   assert.equal(noInk.floors.length, 1);
   assert.deepEqual(noInk.chains, []);
+});
+
+// ── THE SIX HOLES A MUTANT CAMPAIGN FOUND (tools/mutants/em2.json) ──
+//
+// The pins above drove the model with tidy fixtures: quads fed bottom
+// to top, every triangle non-degenerate, every winding the same way,
+// every room with a flat floor in it. Six mutants walked through that
+// tidiness untouched. Each one below is a fixture the model will
+// actually meet in a dungeon, and each was written because a defect
+// survived without it.
+
+test('EM2: the rows arrive in no order at all - a dungeon is a bag of blocks, not a stack', () => {
+  // the reveal index is keyed and iterated by reveal ORDER, so the
+  // upper storey is as likely to come first as last. A run-walk over an
+  // unsorted list splits one floor into a storey per triangle.
+  const down = [floorQuad(8, 0, 0, 10, 10, { key: 'up' }), floorQuad(0, 0, 0, 10, 10, { key: 'lo' })];
+  const up = [floorQuad(0, 0, 0, 10, 10, { key: 'lo' }), floorQuad(8, 0, 0, 10, 10, { key: 'up' })];
+  const a = deriveFloors(floorTriangles(down));
+  const b = deriveFloors(floorTriangles(up));
+  assert.equal(a.length, 2, 'two rooms, two storeys, whichever way they were revealed');
+  assert.deepEqual(a.map((f) => f.y), b.map((f) => f.y), 'and the same two, bottom first');
+  assert.deepEqual(a.map((f) => f.y), [0, 8]);
+  // interleaved, which is what a reveal walk really looks like
+  const mixed = deriveFloors(floorTriangles([
+    floorQuad(8, 0, 0, 5, 5, { key: 'a' }), floorQuad(0, 0, 0, 5, 5, { key: 'b' }),
+    floorQuad(8, 5, 5, 10, 10, { key: 'c' }), floorQuad(0, 5, 5, 10, 10, { key: 'd' }),
+  ]));
+  assert.deepEqual(mixed.map((f) => f.y), [0, 8]);
+});
+
+test('EM2: a long gentle stair of ledges is ONE storey - the gap is measured from the run\'s CEILING', () => {
+  // Six landings, each a metre above the last: no two are a storey
+  // apart, but the top is five metres over the bottom. Measuring each
+  // landing against the run's FLOOR instead of its ceiling would cut
+  // this into storeys at fixed intervals, putting a stairwell's own
+  // steps on the floor strip.
+  const rows = [];
+  for (let i = 0; i < 6; i++) rows.push(floorQuad(i * 1.0, i * 2, 0, i * 2 + 2, 4, { key: `s${i}` }));
+  const floors = deriveFloors(floorTriangles(rows));
+  assert.equal(floors.length, 1, 'a continuous rise is one storey, however far it climbs');
+  assert.equal(floors[0].y0, 0);
+  assert.equal(floors[0].y1, 5);
+  // ...and a real break still breaks it: one landing moved a storey clear
+  const broken = deriveFloors(floorTriangles([...rows, floorQuad(5 + FLOOR_MIN_GAP + 1, 0, 0, 4, 4, { key: 'top' })]));
+  assert.equal(broken.length, 2, 'a gap wider than the headroom is another floor');
+});
+
+test('EM2: a cave of nothing but slopes still answers a storey - a blank strip draws nothing', () => {
+  // Not every level has a flat floor laid in it. A natural cavern can
+  // be all slope, and "no floors" would make the map a blank page -
+  // so with no voter at all the whole WALKABLE set votes instead.
+  const cave = floorTriangles([rampQuad(0, 10, 0, 8, 0, 10, 'slope')]);
+  assert.ok(cave.length > 0);
+  assert.ok(cave.every((t) => t.flat === false), 'nothing in here is flat enough to vote');
+  const floors = deriveFloors(cave);
+  assert.ok(floors.length >= 1, 'the map still has a storey to draw');
+  assert.equal(floors[0].label, 'Floor 1');
+  // and the plan over it is a real plan, not an empty one
+  const plan = floorPlan([rampQuad(0, 10, 0, 8, 0, 10, 'slope')], 0, { segments: boundarySegments, link: linkSegments });
+  assert.ok(plan.chains.length >= 1, 'the cavern is drawn');
+  assert.ok(plan.floors.length >= 1);
+});
+
+test('EM2: a degenerate triangle has no facing, and is not a floor on the strength of its zero normal', () => {
+  // Meshes carry them: a collapsed seam, two coincident vertices, a
+  // zero-area cap. Its cross product is the zero vector, so `ny / len`
+  // is NaN and every comparison against it is false - but `Math.abs`
+  // of a zero over a zero is NaN too, and a guard written the other way
+  // round would let it through as a floor at whatever height it sits.
+  const degenerate = {
+    key: 'd',
+    positions: new Float32Array([0, 5, 0, 0, 5, 0, 0, 5, 0]),
+    indices: new Uint16Array([0, 1, 2]),
+    matrix: null,
+  };
+  const line = {
+    key: 'l',   // three collinear points: an area of zero with distinct vertices
+    positions: new Float32Array([0, 5, 0, 4, 5, 0, 8, 5, 0]),
+    indices: new Uint16Array([0, 1, 2]),
+    matrix: null,
+  };
+  assert.deepEqual(floorTriangles([degenerate]), [], 'a collapsed triangle is not a floor');
+  assert.deepEqual(floorTriangles([line]), [], 'nor is a line');
+
+  // AND THE CASE THE `len > 0` GUARD IS REALLY FOR, which a mutant
+  // found by surviving without it: a NaN vertex. A zero-area triangle
+  // is dropped by MIN_TRI_AREA anyway, so that guard looks redundant -
+  // but `NaN < MIN_TRI_AREA` is FALSE, so a bad position sails past the
+  // area test and lands in the list at `y: NaN`, where it sorts
+  // unpredictably and drags a storey to nowhere. Only the facing guard
+  // catches it, because only it is written as `!(len > 0)`.
+  const nan = {
+    key: 'n',
+    positions: new Float32Array([0, 5, 0, NaN, 5, 0, 8, 5, 8]),
+    indices: new Uint16Array([0, 1, 2]),
+    matrix: null,
+  };
+  assert.deepEqual(floorTriangles([nan]), [], 'a triangle with no position has no facing and no area');
+  const beside = deriveFloors(floorTriangles([floorQuad(0, 0, 0, 10, 10), nan]));
+  assert.equal(beside.length, 1);
+  assert.ok(Number.isFinite(beside[0].y), 'and it cannot drag a storey to NaN');
+  assert.equal(beside[0].y, 0);
+  // and neither can conjure a storey beside a real one
+  const withReal = deriveFloors(floorTriangles([floorQuad(0, 0, 0, 10, 10), degenerate, line]));
+  assert.equal(withReal.length, 1, 'the room is the only storey; the seams are not five metres up');
+  assert.equal(withReal[0].y, 0);
+});
+
+test('EM2: a triangle sits where its whole face sits, not where its first vertex happens to land', () => {
+  // A floor tilted three degrees is still a floor (it votes), and its
+  // three corners are at three heights. Taking the FIRST vertex would
+  // read a great slab of floor as sitting at its lowest corner - and
+  // two such slabs, laid in opposite directions, would then disagree
+  // about the height of the floor they form.
+  const tilt = 1.2;                          // over 20 units: under three degrees
+  const east = rampQuad(0, 20, 10, 10 + tilt, 0, 20, 'e');
+  const west = rampQuad(0, 20, 10 + tilt, 10, 20, 40, 'w');
+  const tris = floorTriangles([east, west]);
+  assert.ok(tris.every((t) => t.flat === true), 'three degrees is a floor laid by hand');
+  // every triangle's height is its own centroid, so both slabs read as
+  // the same floor and the storey lands in the middle of them
+  const floors = deriveFloors(tris);
+  assert.equal(floors.length, 1);
+  assert.ok(Math.abs(floors[0].y - (10 + tilt / 2)) < 0.2, 'the storey is where the floor is');
+  for (const t of tris) {
+    assert.ok(t.y > 10 && t.y < 10 + tilt, 'no triangle claims a corner\'s height as its own');
+  }
+});
+
+test('EM2: a room wound the other way still fills its own plan', () => {
+  // floorTriangles takes either winding (the port's meshes are not
+  // reliably wound and a one-sided facing test drops half the rooms) -
+  // and the INSIDE test has to agree with it, or the rooms that survive
+  // the first law are rasterised empty by the second.
+  const cw = floorQuad(0, 0, 0, 10, 10, { key: 'cw' });
+  const ccw = {
+    key: 'ccw',
+    positions: cw.positions,
+    indices: new Uint16Array([0, 2, 1, 0, 3, 2]),   // the same quad, reversed
+    matrix: null,
+  };
+  const a = floorOccupancy(floorTriangles([cw]));
+  const b = floorOccupancy(floorTriangles([ccw]));
+  assert.ok(a && b);
+  assert.equal(a.w, b.w); assert.equal(a.h, b.h);
+  const count = (o) => o.covered.reduce((n, v) => n + v, 0);
+  assert.ok(count(a) > 50, 'a ten-by-ten room covers its cells');
+  assert.equal(count(b), count(a), 'and covers exactly the same ones wound the other way');
+  assert.deepEqual([...b.covered], [...a.covered]);
+  // the whole plan, both ways: the same coastline
+  const plan = (row) => floorPlan([row], 0, { segments: boundarySegments, link: linkSegments })
+    .chains.map((c) => c.map((p) => `${p.x},${p.y}`).join(' '));
+  assert.deepEqual(plan(ccw), plan(cw));
 });

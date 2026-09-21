@@ -44,6 +44,9 @@ import {
 } from '../src/ui/inkMap.js';
 import { PARTY_MARK_CSS } from '../src/ui/partyMapMarks.js';
 import { quadPlacement } from '../src/ui/quadMap.js';   // MAP3
+// EM1: one map, three sheets
+import { createSheetSlot, stripScale, isSheet } from '../src/ui/mapStrip.js';
+import { MAP_SHEETS } from '../src/systems/mapTabs.js';
 import { getPixelColorIndex } from '../src/ui/travelMapWindow.js';
 import { CLIMATES, LOCATION_TYPES, mapPixelToLongitudeLatitude } from '../src/formats/mapsFile.js';
 import { SCALED_OCEAN_ELEVATION } from '../src/world/terrainSampler.js';
@@ -1210,7 +1213,7 @@ test('MAP1 window: the selection - a click within 16 paper px of an inked mark s
     for (const s of [summaryOf(3, 3, LOCATION_TYPES.TownCity), summaryOf(9, 9, LOCATION_TYPES.HomeFarms)]) mapDict.set(s.id, s);
     const maps = { regionCount: 1, getRegion: () => ({ mapNames: ['A', 'B', 'C', 'Wayrest'] }), getPoliticIndex: () => 128 };
     const win = open(mkWin({ mapDict, maps }));
-    const model = win._ensureModel();
+    const model = win._sheet.ensure();
     assert.equal(model.marks.length, 2);
     // the synthetic bay: contain puts the 10x10 sheet at the same scale both ways
     assert.equal(zoomBand(win._view.scale), 'near', 'a 10-pixel bay on a real paper is near');
@@ -1417,19 +1420,23 @@ test('MAP1: the window paints only from tick, guarded on a real 2D context, and 
   withDocument(() => {
     const woods = { heightMapBuffer: new Uint8Array(100).fill(10) };
     const win = open(mkWin({ woods }));
-    const m1 = win._ensureModel();
+    const m1 = win._sheet.ensure();
     win._marksDirty = true;
-    const m2 = win._ensureModel();
+    const m2 = win._sheet.ensure();
     assert.equal(m1.coast, m2.coast, 'the chains are the cached set');
     assert.equal(m1, m2, 'the model object is kept');
     // a second window over the same bytes shares the chains
     const win2 = mkWin({ woods });
-    assert.equal(win2._ensureModel().coast, m1.coast, 'cached on the height bytes');
+    assert.equal(win2._sheet.ensure().coast, m1.coast, 'cached on the height bytes');
     win2.dispose();
     // draw() is a no-op: no renderer, no canvas work
     assert.doesNotThrow(() => win.draw(null, null));
     const src = read('src/ui/heldMap.js');
-    assert.match(src, /const ctx = canvas\?\.getContext\?\.\('2d'\);\s*\n\s*const model = this\._ensureModel\(\);\s*\n\s*if \(!ctx \|\| !model\) return;/, 'the paint is guarded on the context');
+    // EM1: the paint asks the live SHEET for its model and is guarded
+    // on both - a context the stub canvas will not give, and a sheet
+    // with nothing to ink.
+    assert.match(src, /const model = sheet\?\.ensure\?\.\(\) \?\? null;\s*\n\s*if \(!ctx \|\| !model\) return;/, 'the paint is guarded on the context and the sheet');
+    assert.match(src, /const ctx = canvas\?\.getContext\?\.\('2d'\);/, 'and the context is the canvas\'s own');
     assert.match(src, /if \(this\._dirty\) this\._paint\(\);/, 'and runs from tick when something changed');
     assert.equal((src.match(/this\._paint\(\)/g) || []).length, 1, 'from tick alone');
     win.dispose();
@@ -1473,24 +1480,24 @@ test('MAP2 ports: the filter is the mod\'s law (portsFilterAllows over hasPort) 
   withDocument(() => {
     const win = open(mkWin(modDeps()));
     assert.equal(win._chrome.ports.style.display, 'inline-block', 'the ports button, while ShipTravel.OnlyFromPorts is on');
-    assert.deepEqual(win._ensureModel().marks.map((m) => [m.kind, m.port]), [['city', true], ['hamlet', false]], 'the harbour flag rides the mark');
+    assert.deepEqual(win._sheet.ensure().marks.map((m) => [m.kind, m.port]), [['city', true], ['hamlet', false]], 'the harbour flag rides the mark');
     win.input('KeyP');
     assert.equal(win.portsFilter, true);
     assert.equal(win._chrome.ports.textContent, 'Ports only');
-    assert.deepEqual(win._ensureModel().marks.map((m) => m.kind), ['city'], 'the inland hamlet is not on the map at all');
+    assert.deepEqual(win._sheet.ensure().marks.map((m) => m.kind), ['city'], 'the inland hamlet is not on the map at all');
     assert.equal(win._discovered(win.deps.mapDict.get(summaryOf(8, 6, 0).id)), false, 'the one law the search and the click-through ask too');
     assert.equal(win._discovered(win.deps.mapDict.get(summaryOf(3, 3, 0).id)), true);
     // (the ladder still answers the next-best DISCOVERED name, as FindLocation's own does - the cutoff is set at the first kept match)
     assert.ok(!win._findLocations('B').some((e) => e.name === 'B'), 'the find box cannot find the inland hamlet either');
     assert.deepEqual(win._findLocations('Wayrest').map((e) => e.name), ['Wayrest'], 'but the port is there');
     win.input('KeyP');
-    assert.equal(win._ensureModel().marks.length, 2, 'and back');
+    assert.equal(win._sheet.ensure().marks.length, 2, 'and back');
     assert.equal(win._findLocations('B')[0]?.name, 'B', 'and so is the hamlet, to the find box');
     // the harbour glyph: beside a port at mid and near, never at far, and
     // only while the mod restricts ships to ports
     const harbours = (band, scale, ports) => {
       const ctx = recordingCtx();
-      paintInk(ctx, win._ensureModel(), { ox: 0, oy: 0, scale }, { paperW: 200, paperH: 200, band, ports });
+      paintInk(ctx, win._sheet.ensure(), { ox: 0, oy: 0, scale }, { paperW: 200, paperH: 200, band, ports });
       return ctx.calls.filter((c) => c.fn === 'arc' && c.lineWidth === 1.1).length;
     };
     assert.equal(harbours('near', 10, true), 1, 'one anchor, beside the port');
@@ -1526,7 +1533,7 @@ test('MAP2 mark: the middle click marks the place under the cursor through the S
     // the ring: at FAR the hamlet itself is not inked, the mark still is
     const rings = (band, scale) => {
       const ctx = recordingCtx();
-      paintInk(ctx, win._ensureModel(), { ox: 0, oy: 0, scale }, { paperW: 200, paperH: 200, band, markedMapId: win.markedMapId, markColor: rgbaCss([255, 235, 5, 255]) });
+      paintInk(ctx, win._sheet.ensure(), { ox: 0, oy: 0, scale }, { paperW: 200, paperH: 200, band, markedMapId: win.markedMapId, markColor: rgbaCss([255, 235, 5, 255]) });
       return ctx.calls.filter((c) => c.fn === 'arc' && c.strokeStyle === 'rgba(255, 235, 5, 1)');
     };
     assert.equal(rings('far', 1).length, 1, 'the mark at far, though the hamlet is not');
@@ -2458,8 +2465,8 @@ test('AUDIT-MAP2 perf and polish: the kept static layer is not reset on every pa
     // two byte arrays: the chain cache is keyed on the bytes' identity
     const noFix = new HeldMapWindow(winDeps({ maps: { regionCount: 62, getPoliticIndex: politic, getRegion: () => null }, woods: { heightMapBuffer: new Uint8Array(100).fill(10) } }));
     const fixed = new HeldMapWindow(winDeps({ maps: { regionCount: 62, getPoliticIndex: politic, getRegionIndexAt: () => 31, getRegion: () => null }, woods: { heightMapBuffer: new Uint8Array(100).fill(10) } }));
-    assert.equal(noFix._ensureModel().regions.length, 0, 'a bare -128 on byte 64 names nothing');
-    assert.equal(fixed._ensureModel().regions.length, 1, 'the maps file\'s own read names the sea coast');
+    assert.equal(noFix._sheet.ensure().regions.length, 0, 'a bare -128 on byte 64 names nothing');
+    assert.equal(fixed._sheet.ensure().regions.length, 1, 'the maps file\'s own read names the sea coast');
     noFix.dispose(); fixed.dispose();
     // the wheel under a box
     const win = open(mkWin(bayDeps()));
@@ -2715,4 +2722,229 @@ test('MAP-FIELD2/4: the cut cuffs are AUTHORED down to the foot, and nothing els
   const fsrc = read('src/ui/heldMap.js');
   assert.match(fsrc, /if \(last < band \|\| last >= h - 1\) continue;/, 'the band is the test, so it is one number to turn if the art changes');
   assert.match(fsrc, /extendCuffs\(img\.data, w, h\);/, 'and the window runs it on the sprite it shows');
+});
+
+// ═══ EM1: ONE MAP, THREE SHEETS ══════════════════════════════════════
+//
+// Mac (2026-09-21): "instead of 3 seperate keybinds, adding a tab toggle
+// on the map itself. So if you open it in a dungeon, the world map would
+// be not accessible, same for the town map."
+//
+// The window keeps the paper, the hands, the pan, the zoom, the held
+// pose and the closing; what is INKED on the sheet is a tab. These pins
+// hold the seam rather than the strip's geometry (test/mapstrip.test.js
+// has that): the window asks the SHEET for its space, its ink and its
+// pointer and never asks WHICH sheet, the strip is asked before the
+// sheet on a click, and the bay is still exactly the bay.
+
+test('EM1: the window answers the sheet contract for every sheet it holds', () => {
+  withDocument(() => {
+    const win = mkWin();
+    assert.ok(win._sheets.size >= 1);
+    for (const [id, sheet] of win._sheets) {
+      assert.equal(sheet.id, id, `_sheets keys by the sheet's own id (${id})`);
+      assert.ok(MAP_SHEETS.includes(id), `${id} is not a sheet`);
+      assert.ok(isSheet(sheet), `the ${id} sheet is missing a member of the contract`);
+    }
+    // and the live sheet is one of them
+    assert.equal(win._sheet, win._sheets.get(win._slot.live));
+    win.dispose();
+  });
+});
+
+test('EM1: the context is DERIVED off the host flags, never declared - and no flags is the wilderness', () => {
+  withDocument(() => {
+    const at = (where) => { const w = mkWin(where ? { where: () => where } : {}); const c = w._slot.context; w.dispose(); return c; };
+    assert.equal(at(null), 'wilderness', 'a host that says nothing is out in the wild - the bay, as it always was');
+    assert.equal(at({}), 'wilderness');
+    assert.equal(at({ inLocation: true }), 'town');
+    assert.equal(at({ insideBuilding: true, inLocation: true }), 'building', 'a shop in a town is the shop');
+    assert.equal(at({ insideDungeon: true }), 'dungeon');
+    // the host hands FLAGS. It never names a context and never names a
+    // tab: a host that declares is a host that forgets.
+    const src = read('src/ui/heldMap.js');
+    assert.match(src, /mapContextOf\(deps\.where\?\.\(\) \?\? \{\}\)/, 'the window derives the context itself');
+    assert.doesNotMatch(src, /deps\.mapContext\b|deps\.sheets\b/, 'no host declares the context or the sheet list');
+  });
+});
+
+test('EM1: the slot offers only what this window can ink, so nothing a player reaches has moved', () => {
+  withDocument(() => {
+    // EM1 ships the WORLD sheet alone, and no host hands `where` yet,
+    // so every window that opens today derives the wilderness and inks
+    // the bay - the strip reads "The Bay" and there is no second tab.
+    for (const extra of [{}, { where: () => ({}) }, { where: () => ({ inLocation: true }) }]) {
+      const win = mkWin(extra);
+      assert.deepEqual([...win._slot.ids], ['world'], 'until EM3/EM4 there is one sheet to ink');
+      assert.equal(win._slot.live, 'world');
+      assert.equal(win._slot.toggles, false);
+      assert.equal(win._slot.empty, false);
+      win.dispose();
+    }
+    // ...and the gate lifts itself the moment a sheet is added: the
+    // narrowing is over `_sheets`, not a literal.
+    assert.match(read('src/ui/heldMap.js'), /has: \[\.\.\.this\._sheets\.keys\(\)\]/);
+  });
+});
+
+test('EM1: a place this window can ink NOTHING for is empty, and an empty window still ticks and closes', () => {
+  withDocument(() => {
+    // a crypt offers the automap alone (Mac's sentence), and EM1 has no
+    // automap sheet - so the slot is EMPTY. This is the state EM3 lifts,
+    // and until then it must be a quiet nothing rather than a throw: the
+    // host asks `empty` before it opens, and a window that opened anyway
+    // inks no sheet, lays an empty strip and closes like any other.
+    const win = mkWin({ where: () => ({ insideDungeon: true }) });
+    assert.equal(win._slot.empty, true);
+    assert.equal(win._slot.live, null);
+    assert.equal(win._sheet, null);
+    assert.doesNotThrow(() => open(win));
+    assert.deepEqual(win._strip.tabs, [], 'no tab names a sheet that cannot be drawn');
+    // the clamp still has a space to work in, so the pan and zoom laws
+    // do not divide by a missing sheet
+    const lim = win._limits();
+    assert.equal(lim.mapW, 10); assert.equal(lim.mapH, 10);
+    assert.doesNotThrow(() => win._setView({ ox: 3, oy: 3, scale: 2 }));
+    assert.doesNotThrow(() => win._selectSheet('automap'));
+    assert.equal(win._slot.live, null, 'and a sheet it does not hold cannot be selected');
+    assert.doesNotThrow(() => win.dispose());
+  });
+});
+
+test('EM1: the window asks the SHEET for the space, the ink and the pointer - and never asks WHICH sheet', () => {
+  const src = read('src/ui/heldMap.js');
+  // the clamp reads the LIVE sheet's own size, so a sheet in world
+  // units and a sheet in map pixels each get their own limits
+  assert.match(src, /const size = this\._sheet\?\.size\?\.\(\) \?\? this\._size;/);
+  // the ink, the pick, the label, the mark and the clock all go through it
+  for (const arm of ['ensure', 'paintStatic', 'paintOverlay', 'staticKey', 'pickAt', 'hoverLabel', 'mark', 'tick']) {
+    assert.match(src, new RegExp(`sheet\\??\\.?\\??${arm}|_sheet\\?\\.${arm}`), `the window does not route ${arm} through the sheet`);
+  }
+  // THE GENERATIVE HALF: no branch on a sheet's NAME anywhere in the
+  // window. A window that knows which sheet is up is a window that will
+  // grow a special case for each one - which is the three windows this
+  // arc exists to collapse.
+  const body = src.slice(src.indexOf('export class HeldMapWindow'));
+  for (const id of MAP_SHEETS) {
+    const branch = new RegExp(`(===|!==|case)\\s*'${id}'`);
+    assert.doesNotMatch(body, branch, `the window branches on the '${id}' sheet by name`);
+  }
+  // the one place a sheet's id is written down is where the sheet is BUILT
+  assert.equal((body.match(/id: '(?:automap|town|world)'/g) || []).length, body.split('_worldSheet()').length - 1 > 0 ? 1 : 0,
+    'a sheet names itself once, at its own construction');
+});
+
+test('EM1: the strip is laid out on every paint, in paper pixels, and rides the KEPT layer', () => {
+  withDocument(() => {
+    const win = open(mkWin());
+    assert.ok(win._strip, 'the layout is minted even with no 2D context - the hit test is the pointer\'s');
+    assert.deepEqual(win._strip.tabs.map((t) => t.sheet), ['world']);
+    assert.equal(win._strip.tabs[0].title, 'The Bay');
+    assert.equal(win._strip.tabs[0].live, true);
+    // the strip scales with the PAPER, not the screen
+    assert.equal(win._strip.scale, stripScale(win._paper.w));
+    win.dispose();
+    // AUDIT-MAP's kept layer: the tabs are re-lettered only when the
+    // static key moves, never on a breathing ring's frame
+    const src = read('src/ui/heldMap.js');
+    const paint = src.slice(src.indexOf('  _paint() {'), src.indexOf('  _paintStrip('));
+    const atStrip = paint.indexOf('this._paintStrip(');
+    const atKey = paint.indexOf("if (key !== this._staticKey");
+    const atOverlay = paint.indexOf('sheet.paintOverlay(');
+    assert.ok(atKey >= 0 && atStrip > atKey, 'the strip is painted inside the static-key branch');
+    assert.ok(atOverlay > atStrip, '...and the overlay still goes on top of it');
+    // the live tab is part of what makes the layer stale, or a tab
+    // press would leave the old rule under the old word
+    assert.match(paint, /this\._slot\.live, sheet\.staticKey\(\)/);
+  });
+});
+
+test('EM1: a click on a tab switches the sheet and never picks the place under it', () => {
+  withDocument(() => {
+    const win = open(mkWin(modDeps()));
+    // give the window a second sheet by hand: EM1 ships one, and this
+    // pin is about the SEAM, which must work the moment EM3 lands
+    let mounted = 0, inked = 0, picked = 0, labelled = 0;
+    win._sheets.set('town', {
+      id: 'town', size: () => ({ width: 4, height: 4 }),
+      ensure: () => ({ marks: [] }), staticKey: () => 'x',
+      paintStatic: () => { inked++; }, paintOverlay: () => {},
+      // COUNTED, not ignored: "the tab was not also a pick" is only
+      // held if a pick that did happen would show up somewhere
+      pickAt: () => { picked++; }, hoverLabel: () => { labelled++; }, mark: () => {},
+      tick: () => {}, mount: () => { mounted++; }, unmount: () => {},
+      homeView: () => null,
+    });
+    win._slot = createSheetSlot({ context: 'town', has: [...win._sheets.keys()] });
+    win._paint();
+    assert.deepEqual(win._strip.tabs.map((t) => t.sheet), ['town', 'world'], 'the strip is the slot');
+    assert.equal(win._slot.live, 'town');
+
+    // stand on the bay, then press the TOWN tab
+    win._selectSheet('world');
+    assert.equal(win._slot.live, 'world');
+    mounted = 0;
+    win._paint();
+    // a pointer down + up on the TOWN tab, with no drag between them
+    const tab = win._strip.tabs.find((t) => t.sheet === 'town');
+    const [px, py] = [tab.x + tab.w / 2, tab.y + tab.h / 2];
+    const markBefore = win.markedMapId;
+    fire(win._chrome.stage, 'pointerdown', { button: 0, pointerId: 9, clientX: px, clientY: py });
+    fire(win._chrome.stage, 'pointerup', { button: 0, pointerId: 9, clientX: px, clientY: py });
+    assert.equal(win._slot.live, 'town', 'the tab was pressed');
+    assert.equal(picked, 0, 'and NO sheet was asked to pick the point under the word');
+    assert.equal(win._selected, null, 'so nothing on the bay was selected either');
+    assert.equal(win.markedMapId, markBefore);
+    assert.equal(mounted, 1, 'a sheet is told when it goes up');
+    assert.ok(inked >= 0);
+
+    // the same for the pointer's LABEL: a tab names itself, and the
+    // sheet under it is never asked what is at that point
+    fire(win._chrome.stage, 'pointermove', { pointerId: 11, clientX: px, clientY: py });
+    assert.equal(labelled, 0, 'the sheet was asked to label a point on the strip');
+    assert.equal(win._chrome.label.textContent, 'Town');
+    // ...and a point BELOW the strip is the map's again
+    fire(win._chrome.stage, 'pointermove', { pointerId: 11, clientX: px, clientY: py + win._strip.h + 40 });
+    assert.equal(labelled, 1, 'the map under the strip still labels');
+
+    // the sheet each tab left is remembered, and found again
+    win._selectSheet('world');
+    win._setView({ ox: 1, oy: 1, scale: win._view.scale });
+    const moved = { ...win._view };
+    win._selectSheet('town');
+    assert.deepEqual(win._slot.viewOf('world'), moved, 'the bay is where it was left');
+    win._selectSheet('world');
+    assert.deepEqual({ ...win._view }, moved, 'and it comes back to it');
+    win.dispose();
+  });
+});
+
+test('EM1: the bay is still exactly the bay - the sheet route is a ROUTE, not a rewrite', () => {
+  withDocument(() => {
+    // the world sheet's ink is the same two inkMap calls with the same
+    // options the window passed before the contract existed
+    const win = open(mkWin(modDeps()));
+    const sheet = win._sheets.get('world');
+    const model = sheet.ensure();
+    assert.ok(model?.coast, 'the bay\'s chains');
+    const env = { model, view: win._view, paperW: 200, paperH: 200, dpr: 1, band: 'near', pulse: 0.5 };
+    const a = recordingCtx(); sheet.paintStatic(a, env);
+    const b = recordingCtx(); sheet.paintOverlay(b, env);
+    assert.ok(a.calls.length > 0, 'the static half still inks the bay');
+    assert.ok(b.calls.length > 0, 'and the overlay half still breathes');
+    // the two halves are the two inkMap painters, not one merged pass:
+    // the static one sets a transform and strokes the coast, the
+    // overlay one draws the player's own mark and clears nothing
+    assert.ok(a.calls.some((c) => c.fn === 'setTransform'));
+    assert.ok(!b.calls.some((c) => c.fn === 'clearRect'), 'the overlay never wipes the kept ink under it');
+    // and the world sheet's pointer arms ARE the window's own methods -
+    // the same code, reached through the seam
+    assert.equal(sheet.pickAt.length, 2);
+    assert.equal(sheet.hoverLabel.length, 2);
+    const src = read('src/ui/heldMap.js');
+    assert.match(src, /pickAt: \(px, py\) => this\._pickAt\(px, py\),/);
+    assert.match(src, /hoverLabel: \(px, py\) => this\._hoverLabel\(px, py\),/);
+    assert.match(src, /mark: \(px, py\) => this\._markLocationHandler\(px, py\),/);
+    win.dispose();
+  });
 });
