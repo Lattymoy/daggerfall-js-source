@@ -178,6 +178,56 @@ export const DEFAULT_BINDINGS = Object.freeze([
   ['Digit4', 'QuickOffHand'],
 ]);
 
+/**
+ * PAD1 (2026-09-21, Mac: "a comprehensive pass on m/kb keybinds and
+ * controller support ... including the quickbar"): THE PAD LAYOUT.
+ *
+ * DFU's ResetDefaults binds no action to a controller button. Out of the
+ * box a pad moves and looks (the axis dict) and clicks (the joystick UI
+ * dict: A left-click, Y right-click, X middle-click, B back), so it
+ * activates, swings and autoruns through the mouse codes those clicks
+ * stand for - and nothing else: no jump, no crouch, no menu, no
+ * spellbook, no quickslot, until the player binds each one in the grid.
+ * This is that binding done once, as DEFAULTS, and it is a Ledger A
+ * departure (DEFAULTS ONLY - the binding law, the dicts, the grid and
+ * the file are DFU's; only the rows are the port's).
+ *
+ * THE SECONDARY DICT, because DFU's is single-bind per dict and every
+ * one of these actions already holds its keyboard key in the primary.
+ * The codes are pad-only (the Unity button names the poller synthesises
+ * and the axis keys it edges - ui/gamepadInput.js), so a keyboard player
+ * never sees them, and they are filled by testSetBinding alone: a
+ * missing action, on a free code, never marked removed (the
+ * removedSecondary law) - so a file written before this slice gains them
+ * on the next boot and a player's own secondaries stand.
+ *
+ * The rows, on a standard-mapping pad (systems/gamepad.js unityAxes /
+ * unityButtons): the bumpers crouch and jump, View opens the pack, Menu
+ * pauses, L3 runs, R3 readies the weapon, LT opens the spellbook (the
+ * CastSpell action - the cast itself is the attack click, as DFU's), RT
+ * swings beside Y, and the D-PAD is the quickslot diamond - up and down
+ * the two consumables, left the spell, right the off hand - which is
+ * where a Souls player's thumb already goes. The UI dict is DFU's own and
+ * untouched: A/B/X/Y keep their clicks in a window and in the world.
+ * Sneak, the modes, the journals and the maps have no pad row: eight
+ * buttons and four directions is what a pad has, and the rest is the
+ * grid's to bind - a combo with View or Menu held is DFU's own way.
+ */
+export const DEFAULT_SECONDARY_BINDINGS = Object.freeze([
+  ['JoystickButton4', 'Crouch'],          // LB / L1
+  ['JoystickButton5', 'Jump'],            // RB / R1
+  ['JoystickButton6', 'Inventory'],       // View / Share
+  ['JoystickButton7', 'Escape'],          // Menu / Options
+  ['JoystickButton8', 'Run'],             // L3
+  ['JoystickButton9', 'ReadyWeapon'],     // R3
+  ['JoystickAxis9Button0', 'CastSpell'],  // LT / L2
+  ['JoystickAxis10Button0', 'SwingWeapon'],   // RT / R2, beside Y's right-click
+  ['JoystickAxis7Button0', 'QuickUse1'],  // d-pad up
+  ['JoystickAxis7Button1', 'QuickUse2'],  // d-pad down
+  ['JoystickAxis6Button1', 'QuickSpell'], // d-pad left
+  ['JoystickAxis6Button0', 'QuickOffHand'],   // d-pad right
+]);
+
 // ── key combos ──────────────────────────────────────────────────────
 // A8: GetComboCode/GetCombo/GetComboString (:1165-1219). DFU PACKS the
 // pair into one 32-bit KeyCode - the modifier in bits 16-31, the
@@ -344,6 +394,7 @@ export function createBindings() {
     secondary: new Map(),
     rev: 0,                      // bumped on every write; comboModifiers' cache key
     removedPrimary: new Set(),   // :87 - "don't autofill this default back"
+    removedSecondary: new Set(),   // PAD1: the same mark for the secondary dict, which carries the pad defaults
     unknown: new Map(),
     secondaryUnknown: new Map(),
     // GP1: the joystick dicts (:83-92) - axis name -> AxisAction,
@@ -420,6 +471,7 @@ export function setBinding(store, code, action, primary = true) {
   clearBinding(store, action, primary);
   if (code != null) {
     if (primary) store.removedPrimary.delete(action);
+    else store.removedSecondary.delete(action);   // PAD1
     dict.delete(code);
     dict.set(code, action);
   }
@@ -444,6 +496,15 @@ export function clearBindingByCode(store, code, primary = true) {
  *  would quietly re-bind the default on next launch. */
 export function addRemovedPrimaryAction(store, action) {
   store.removedPrimary.add(action);
+}
+
+/** PAD1: the secondary dict's own mark. DFU never needed one - its
+ *  ResetDefaults writes no secondary - but the pad defaults live there
+ *  (DEFAULT_SECONDARY_BINDINGS) and are autofilled on every load, so a
+ *  pad button a player cleared on purpose would come back at the next
+ *  boot without it. Same law, same file row (`removedSecondaryActions`). */
+export function addRemovedSecondaryAction(store, action) {
+  store.removedSecondary.add(action);
 }
 
 /** GetBinding (:641-671). One-arg walks the primary dict ("first
@@ -506,6 +567,7 @@ function testSetBinding(store, code, action, primary = true) {
   if (dict.has(code) || alt.has(code)) return;
   for (const a of dict.values()) if (a === action) return;
   if (primary && store.removedPrimary.has(action)) return;
+  if (!primary && store.removedSecondary.has(action)) return;   // PAD1
   if (comboModifiers(store).has(code)) return;
   setBinding(store, code, action, primary);
 }
@@ -521,11 +583,18 @@ export function resetDefaults(store, autofill = false) {
   if (!autofill) {
     store.primary.clear();
     store.removedPrimary.clear();
+    store.removedSecondary.clear();   // PAD1: a full reset forgets the pad marks too, and refills below
   }
   const set = autofill
     ? (code, action) => testSetBinding(store, code, action, true)
     : (code, action) => setBinding(store, code, action, true);
   for (const [code, action] of DEFAULT_BINDINGS) set(code, action);
+  // PAD1: THE PAD LAYOUT, in the SECONDARY dict and always by testSetBinding
+  // - a full reset restores the keyboard primaries as DFU's does (:956-960)
+  // and leaves every secondary a player chose standing, so the pad rows can
+  // only ever FILL a gap: a missing action, on a free code, not marked
+  // removed. The codes are pad-only, so no keyboard default is touched.
+  for (const [code, action] of DEFAULT_SECONDARY_BINDINGS) testSetBinding(store, code, action, false);
   // GP1: the joystick tail (:1034-1047). A full reset SETS the four
   // axes and four buttons over whatever stood (SetAxisBinding clears
   // the action's old axis, so a stick moved to Axis3 comes home); an
@@ -567,6 +636,7 @@ export function serializeKeyBinds(store) {
     actionKeyBinds,
     secondaryActionKeyBinds,
     removedPrimaryActions: [...store.removedPrimary],
+    removedSecondaryActions: [...store.removedSecondary],   // PAD1
     axisActionKeyBinds,
     axisActionInversions,
     joystickUIKeyBinds,
@@ -604,6 +674,21 @@ export function loadKeyBinds(store, data) {
       for (const a of store.primary.values()) if (a === action) bound = true;
       for (const a of store.secondary.values()) if (a === action) bound = true;
       if (!bound) store.removedPrimary.add(action);
+    }
+  }
+  // PAD1: the secondary marks. The primary's law above asks "bound
+  // nowhere", and a secondary mark's action is bound on the KEYBOARD
+  // almost by definition (Crouch keeps its C while its pad row is
+  // cleared) - so the secondary's law asks the one dict it is about: a
+  // mark loads for an action that holds no SECONDARY, and a file that
+  // names a secondary-bound action as removed is read as the binding.
+  if (Array.isArray(data.removedSecondaryActions)) {
+    for (const name of data.removedSecondaryActions) {
+      const action = parseActionName(name);
+      if (action === 'Unknown') continue;
+      let bound = false;
+      for (const a of store.secondary.values()) if (a === action) bound = true;
+      if (!bound) store.removedSecondary.add(action);
     }
   }
   // GP1: the joystick blocks (:1995-2035). Each is a raw map-set that

@@ -8,7 +8,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import {
+import { DEFAULT_SECONDARY_BINDINGS,
   createBindings, resetDefaults, setBinding, clearBinding, loadKeyBinds,
   getBinding, actionForCode,
   comboCode, isCombo, getCombo, comboString, parseComboString,
@@ -22,7 +22,14 @@ import { held, actionOf, setBindings } from '../src/ui/input.js';
 import { comboFromEvent } from '../src/ui/controlsWindow.js';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
-const freshStore = () => { const b = createBindings(); resetDefaults(b); return b; };
+// PAD1: resetDefaults fills the SECONDARY dict with the pad layout, and
+// pairedCodes reads an action bound in BOTH dicts as double-bound - which
+// is DFU's own law, and exactly what these pins must NOT be reading: they
+// are about the SINGLE-bound combo. A fresh store here clears the pad
+// rows of the two actions the combos below land on, so the scenario is
+// the one the pin names. The double-bound consequence of the pad layout
+// has its own pin (test/pad1.test.js).
+const freshStore = () => { const b = createBindings(); resetDefaults(b); for (const a of ['Jump', 'Inventory', 'Run']) clearBinding(b, a, false); return b; };   // Run: ShiftLeft's own action, single-bound as the pins read it
 
 test('A8: GetComboCode packs one code, and refuses a combo inside a combo', () => {
   assert.equal(comboCode('ShiftLeft', 'KeyT'), 'ShiftLeft+KeyT');
@@ -57,7 +64,10 @@ test('A8: a combo is ONE dictionary entry - every existing reader still works', 
   // Jump holds the combo in the PRIMARY dict alone, so it pairs nothing.
   assert.equal(isPairedCode(b, 'ShiftLeft+KeyK'), false, 'single-bound - no pair');
   assert.equal(isPairedCode(b, 'ShiftLeft'), false, 'Run holds it in ONE dict');
-  assert.equal(pairedCodes(b).size, 0, 'a defaults-only store pairs nothing at all');
+  // PAD1: a defaults-only store pairs exactly the pad-defaulted actions -
+  // two entries each (primary -> secondary and back) - less the three this
+  // fresh store cleared. Before the pad layout the number was zero.
+  assert.equal(pairedCodes(b).size, (DEFAULT_SECONDARY_BINDINGS.length - 3) * 2, 'a defaults-only store pairs the pad rows and nothing else');
   // give Jump a SECOND home and the pair appears, both ways round
   setBinding(b, 'KeyJ', 'Jump', false);
   assert.equal(pairedCodes(b).get('ShiftLeft+KeyK'), 'KeyJ', 'SetSecondaryBinding :1372');
@@ -65,7 +75,8 @@ test('A8: a combo is ONE dictionary entry - every existing reader still works', 
   assert.equal(isPairedCode(b, 'ShiftLeft'), false, 'Run is still single-bound');
   // and dropping the second home detaches the pair entirely
   clearBinding(b, 'Jump', false);
-  assert.equal(pairedCodes(b).size, 0, 'single-bound again');
+  assert.equal(pairedCodes(b).size, (DEFAULT_SECONDARY_BINDINGS.length - 3) * 2,   // PAD1: the pad rows pair; nothing else does
+     'single-bound again');
   // modifierHeldFirstDict's key set, over BOTH dicts
   assert.deepEqual([...comboModifiers(b)], ['ShiftLeft']);
   setBinding(b, comboCode('AltLeft', 'KeyP'), 'AutoMap', false);

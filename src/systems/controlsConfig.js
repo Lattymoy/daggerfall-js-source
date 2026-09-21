@@ -17,7 +17,7 @@
 // display face when one is wanted.
 
 import {
-  ACTIONS, getBinding, setBinding, addRemovedPrimaryAction, resetDefaults,
+  ACTIONS, getBinding, setBinding, addRemovedPrimaryAction, addRemovedSecondaryAction, resetDefaults,
   isCombo, getCombo, comboCode,
 } from './inputActions.js';
 
@@ -184,6 +184,7 @@ export function applyUnsavedKeybinds(store, u) {
       const cur = getBinding(store, action, primary);
       if (cur !== code) {
         if (primary && code == null) addRemovedPrimaryAction(store, action);
+        if (!primary && code == null) addRemovedSecondaryAction(store, action);   // PAD1: a cleared pad row stays cleared
         setBinding(store, code ?? null, action, primary);
       }
     }
