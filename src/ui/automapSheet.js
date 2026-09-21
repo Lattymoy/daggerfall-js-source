@@ -40,15 +40,15 @@
 import {
   floorTriangles, deriveFloors, floorAt, planBounds, floorPlan, PLAN_CELL,
 } from '../systems/automapFloors.js';
-import { boundarySegments, linkSegments, scaleMinOf, viewCentredOn, toPaper } from './inkMap.js';
+import { boundarySegments, linkSegments, fitView, toPaper } from './inkMap.js';
 import {
   paintPlanStatic, paintPlanOverlay, floorStripLayout, floorStripHit, paintFloorStrip,
 } from './inkAutomap.js';
 import { stripFont } from './mapStrip.js';
 
-/** The height at rest: the whole storey fitted on the paper, with a
- *  little air so the wall is not against the torn edge. */
-export const FIT_MARGIN = 0.92;
+/** The fit at rest has ONE HOME in ui/inkMap.js - re-exported so a
+ *  pin that has this sheet does not also have to reach for it. */
+export { FIT_MARGIN } from './inkMap.js';
 
 /** A level with no geometry at all still answers a space, so the
  *  window's clamp has something finite to work in. */
@@ -342,10 +342,12 @@ export function createAutomapSheet(deps = {}) {
      *  not. A dungeon map that opens on the far corner is a map the
      *  player has to pan before it says anything. */
     homeView(limits) {
-      const scale = scaleMinOf(limits) / FIT_MARGIN;
+      // inkMap's own fit: the whole storey on the sheet, centred on the
+      // player where they are ON it and left to the window's clamp
+      // where they are not
+      // the plan's second axis IS world z, which is the sheet's y
       const p = playerHere();
-      if (!p) return { ox: 0, oy: 0, scale: scaleMinOf(limits) };
-      return viewCentredOn(p.x, p.z, scale, limits);
+      return fitView(limits, p ? { x: p.x, y: p.z } : null);
     },
 
     // ── the sheet's own handles, for the window's keys and its pins ──

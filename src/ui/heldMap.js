@@ -117,6 +117,7 @@ import {
 } from './mapStrip.js';
 import { mapContextOf } from '../systems/mapTabs.js';
 import { createAutomapSheet } from './automapSheet.js';
+import { createTownSheet } from './townSheet.js';
 import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
 import { quadPlacement } from './quadMap.js';   // MAP3: the sheet over the held paper's corners
 import { bindings } from './input.js';
@@ -404,7 +405,14 @@ export class HeldMapWindow {
     // MAP-WEAPON: the scene's tick tag, this file's own idiom
     // (`isRestWindow`, `isVirtueLevelUp`): the weapon rig asks whether
     // a map holds the screen and must not import a UI class to ask.
-    this.isTravelMap = true;
+    //
+    // EM4: DERIVED, not declared. The world host reads this tag to know
+    // a TRAVEL map is up (`sheetWindowUp`), and once the same window
+    // also opens on a town or a dungeon the constant `true` became a
+    // lie - a crypt's plan is not a thing you can travel from. It is
+    // set below, off the slot, once the slot knows what this place
+    // offers: true exactly where the bay is reachable.
+    this.isTravelMap = false;
     // MAP-FIELD2: the vitals and the status icons go while the sheet is
     // out - it is held in the player's own hands, and a bar drawn over
     // the knuckles is not a HUD under a window (windowStack.hidesHud).
@@ -436,12 +444,17 @@ export class HeldMapWindow {
     // hands none (the world host's travel key) simply has no automap
     // sheet, and the slot's narrowing keeps the tab off the paper.
     if (deps.automap) this._sheets.set('automap', createAutomapSheet(deps.automap));
+    // EM4: the two exterior hosts hand `town` - the block grids, the
+    // building summaries and the discovery record.
+    if (deps.town) this._sheets.set('town', createTownSheet(deps.town));
     this._slot = createSheetSlot({
       context: mapContextOf(deps.where?.() ?? {}),
       wanted: deps.openOnSheet ?? null,
       has: [...this._sheets.keys()],
     });
     this._strip = null;   // the tabs' layout in paper px, minted on each paint
+    // the bay is reachable from here, so this window IS a travel map
+    this.isTravelMap = this._slot.ids.includes('world');
 
     this._phase = 'opening';
     this._t = 0;

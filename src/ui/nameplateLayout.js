@@ -53,6 +53,14 @@ import { RMB_DIMENSION } from '../formats/blocksFile.js';   // BlocksFile.RMBDim
  * corner. The window subtracts half the layout to reach world.
  */
 export const NAMEPLATE_BLOCK_PX = 64;            // blockSizeWidth/Height
+
+/** EM4: WORLD UNITS PER LAYOUT PIXEL, one home. An RMB block is
+ *  RMB_DIMENSION * GLOBAL_SCALE world units across and
+ *  NAMEPLATE_BLOCK_PX layout pixels, so this is the one number that
+ *  turns a player's position into the space the anchors are in. Both
+ *  town maps read it here rather than each keeping a private 1.6 -
+ *  found by the one-home gate when the second copy appeared. */
+export const WORLD_PER_PX = (RMB_DIMENSION * 0.025) / NAMEPLATE_BLOCK_PX;
 export function nameplateAnchor(blockX, blockY, position, globalScale = 0.025) {
   const div = RMB_DIMENSION * globalScale;
   return [

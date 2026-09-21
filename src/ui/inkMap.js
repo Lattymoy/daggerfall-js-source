@@ -484,6 +484,64 @@ export function zoomAt(view, factor, px, py) {
   return { ox: mx - px / scale, oy: my - py / scale, scale };
 }
 export const toPaper = (view, x, y) => [(x - view.ox) * view.scale, (y - view.oy) * view.scale];
+
+// ── EM4: THE TWO THINGS EVERY SHEET DOES THE SAME WAY ──────────────
+//
+// The dungeon's plan and the town's plan each grew their own caret and
+// their own "fit at rest", byte for byte alike, and the one-home gate
+// caught both the moment the second sheet landed. They live here, with
+// the pen and the view laws, because that is what this module is: the
+// things three sheets share.
+
+/** The player's caret, in paper pixels. It does NOT scale with the
+ *  zoom - it is a cursor, not a room, and one that shrank with the plan
+ *  would vanish at a far zoom. */
+export const CARET_R = 8;
+
+/** How much of the fit a sheet rests at: a little in, so the outermost
+ *  line is not against the paper's torn edge. */
+export const FIT_MARGIN = 0.92;
+
+/**
+ * THE CARET, pointing where the player LOOKS. `yaw` is the motor's own,
+ * measured from -Z and growing clockwise looking down, and a plan lays
+ * z straight down the paper, so the heading is (sin yaw, -cos yaw).
+ * Haloed then filled, as every mark on every sheet is.
+ *
+ * @param {*} ctx @param {number} x @param {number} y paper pixels
+ * @param {number} yaw radians @param {{fill?:string, halo?:string, haloPen?:number}} [pen]
+ */
+export function paintCaret(ctx, x, y, yaw = 0, pen = {}) {
+  if (!ctx?.beginPath) return;
+  const hx = Math.sin(yaw), hy = -Math.cos(yaw);
+  const px = -hy, py = hx;
+  ctx.fillStyle = pen.fill ?? PEN.player;
+  ctx.strokeStyle = pen.halo ?? PEN.halo;
+  ctx.lineWidth = pen.haloPen ?? (2 * HALO_PEN);
+  ctx.beginPath();
+  ctx.moveTo(x + hx * CARET_R, y + hy * CARET_R);
+  ctx.lineTo(x + px * CARET_R * 0.55 - hx * CARET_R * 0.6, y + py * CARET_R * 0.55 - hy * CARET_R * 0.6);
+  ctx.lineTo(x - hx * CARET_R * 0.25, y - hy * CARET_R * 0.25);
+  ctx.lineTo(x - px * CARET_R * 0.55 - hx * CARET_R * 0.6, y - py * CARET_R * 0.55 - hy * CARET_R * 0.6);
+  ctx.closePath();
+  ctx.stroke();   // the halo first
+  ctx.fill();
+}
+
+/**
+ * WHERE A SHEET RESTS: the whole plan on the paper, centred on `focus`
+ * where there is one and left to the window's own clamp where there is
+ * not. A map that opens on the far corner is a map the player has to
+ * pan before it says anything.
+ *
+ * @param {{mapW:number,mapH:number,paperW:number,paperH:number}} limits
+ * @param {{x:number,y:number}|null} [focus]
+ */
+export function fitView(limits, focus = null) {
+  const min = scaleMinOf(limits);
+  if (!focus) return { ox: 0, oy: 0, scale: min };
+  return viewCentredOn(focus.x, focus.y, min / FIT_MARGIN, limits);
+}
 export const toMap = (view, px, py) => [view.ox + px / view.scale, view.oy + py / view.scale];
 
 // ── THE NAMES ────────────────────────────────────────────────────

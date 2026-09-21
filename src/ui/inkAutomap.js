@@ -43,7 +43,7 @@
 // this lane is.
 // ═══════════════════════════════════════════════════════════════════
 
-import { PEN, HALO_PEN, NAME_FACE, toPaper } from './inkMap.js';
+import { PEN, HALO_PEN, NAME_FACE, toPaper, paintCaret, CARET_R } from './inkMap.js';
 import { STRIP, stripScale, grabHit } from './mapStrip.js';
 
 /** What each thing on a dungeon plan is drawn in. Every one of these is
@@ -64,10 +64,10 @@ export const PLAN_PEN = Object.freeze({
 export const WALL_PEN = 1.5;
 export const WALL_PEN_MIN = 0.9;
 
-/** How big the player's caret is drawn, in paper px. It does NOT scale
- *  with the zoom: it is a cursor, not a room, and at a far zoom a caret
- *  that shrank with the plan would vanish. */
-export const CARET_R = 8;
+/** The caret has ONE HOME in ui/inkMap.js (EM4: the town sheet grew
+ *  an identical copy and the one-home gate caught it) - re-exported so
+ *  a caller that has this module does not also have to reach for it. */
+export { CARET_R } from './inkMap.js';
 /** The beacon at the way in. */
 export const BEACON_R = 7;
 /** A door or a teleporter. */
@@ -227,24 +227,9 @@ export function paintPlanOverlay(ctx, view, opts) {
 
   if (opts.player) {
     const [x, y] = toPaper(view, opts.player.x, opts.player.z);
-    // The caret points where the player LOOKS. The motor's yaw is
-    // measured from -Z and grows clockwise looking down, and the paper's
-    // y grows the way world z does (the plan is x/z laid straight down),
-    // so the heading is (sin yaw, -cos yaw) in paper space.
-    const yaw = opts.player.yaw ?? 0;
-    const hx = Math.sin(yaw), hy = -Math.cos(yaw);
-    const px = -hy, py = hx;                 // the perpendicular, for the tail
-    ctx.fillStyle = PLAN_PEN.caret;
-    ctx.strokeStyle = PLAN_PEN.halo;
-    ctx.lineWidth = 2 * HALO_PEN;
-    ctx.beginPath();
-    ctx.moveTo(x + hx * CARET_R, y + hy * CARET_R);
-    ctx.lineTo(x + px * CARET_R * 0.55 - hx * CARET_R * 0.6, y + py * CARET_R * 0.55 - hy * CARET_R * 0.6);
-    ctx.lineTo(x - hx * CARET_R * 0.25, y - hy * CARET_R * 0.25);
-    ctx.lineTo(x - px * CARET_R * 0.55 - hx * CARET_R * 0.6, y - py * CARET_R * 0.55 - hy * CARET_R * 0.6);
-    ctx.closePath();
-    ctx.stroke();   // the halo first, as every mark on this sheet is
-    ctx.fill();
+    // the caret is inkMap's, so the dungeon and the town point the
+    // same way for the same reason
+    paintCaret(ctx, x, y, opts.player.yaw ?? 0, { fill: PLAN_PEN.caret, halo: PLAN_PEN.halo });
   }
 }
 

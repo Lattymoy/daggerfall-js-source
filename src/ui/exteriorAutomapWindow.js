@@ -127,7 +127,7 @@ import { getBinding } from '../systems/inputActions.js';
 import { normalizeCode, keyboardModifiers, checkSetModifiers } from '../systems/dialogShortcuts.js';
 import { audio } from '../systems/audio.js';
 import { SOUND } from '../systems/soundClips.js';
-import { resolveNameplates, nameplateAnchor } from './nameplateLayout.js';
+import { resolveNameplates, nameplateAnchor, WORLD_PER_PX } from './nameplateLayout.js';   // EM4: WORLD_PER_PX has one home there
 import {
   nativeMetrics, drawImg, drawRect, loadImg, NATIVE_W, NATIVE_H, SCREEN_DIM,
 } from './nativePanel.js';
@@ -154,7 +154,7 @@ import { registerCommand } from '../systems/consoleCommands.js';   // E3: the co
 let _revealUndiscoveredBuildings = false;   // map_revealbuildings / map_hidebuildings (:1796-1830)
 
 export const BLOCK_PX = 64;                      // blockSizeWidth/Height (ExteriorAutomap.cs:153-154)
-const WORLD_PER_PX = 102.4 / BLOCK_PX;           // 1.6 world units per layout pixel (RMBDimension * GlobalScale / 64)
+// WORLD_PER_PX has ONE HOME in ui/nameplateLayout.js (EM4) - it is imported above
 export const ZOOM_MIN = EXT_MAX_ZOOM;            // 25 - DFU's maxZoom, "the minimum camera height"
 export const ZOOM_MAX = EXT_MIN_ZOOM;            // 250 - DFU's minZoom (the names invert the meaning)
 const NAMEPLATE_YELLOW = [243 / 255, 239 / 255, 44 / 255, 1];   // DaggerfallDefaultTextColor (DaggerfallUI.cs:52)

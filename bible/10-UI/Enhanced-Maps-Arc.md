@@ -265,11 +265,66 @@ that inks nothing.
   (`HeldMapWindow` lives in `heldMap.js`, and the guess
   `heldMapWindow.js` is the kind of silent miss that library exists to
   prevent). Any future door works with no edit.
-- **EM4 — the town sheet.** The town plan in the same pen over the
-  block layout bytes and the building summaries, with the discovered
-  nameplates in the hand-lettered face and the quest-marked residences.
-  Wired into the two exterior hosts.
-- **EM5 — records, mutants, probes, PR.**
+- **EM4 — the town sheet.** SHIPPED: `ui/inkTown.js`,
+  `ui/townSheet.js`, `ui/townMapDoor.js`, and both exterior hosts wired
+  through it (15 pins).
+
+  **The plan is TRACED, not stamped.** The shipped town map paints the
+  FLD bytes as four flat colours and rotates the result under a camera.
+  That is faithful, and it is a bitmap. Here the built-up pixels are an
+  island whose sea is the street, and its shore is the same two
+  functions that ink the bay's coast and the dungeon's walls. Shops,
+  taverns and temples get the wash; a house is outline alone, which is
+  what a house is on a plan you are reading to find a smith.
+
+  **What the bytes cannot say is WHICH building a pixel belongs to.**
+  They carry a type per pixel and no identity, so "wash what you have
+  discovered" is not derivable from them and is not attempted:
+  discovery is answered by the NAMES, which come off the building
+  summaries and the discovery record and know exactly what they name.
+  Written down because the absence looks like an oversight.
+
+  **A ground flat is not a building**, found by a pin. `0xfb` is in the
+  shipped map's SHOWALL set, which only its third view mode draws, so
+  folding SHOWALL into the built set painted every patch of scenery as
+  architecture.
+
+  **The field is laid in NAMEPLATE-ANCHOR space**, and that is the
+  sheet's one orientation law. The shipped map flips twice and its net
+  effect DISAGREES with `nameplateAnchor` across blocks — higher
+  `blockY` is a lower row in that texture and a higher row in the anchor
+  — which it gets away with because the two reach the screen down
+  different paths. Drawn as one picture they have to agree, and the
+  anchor is the one obeyed: it is the names, and the names are the
+  point. What a pin cannot settle, and is written down rather than
+  assumed, is whether the picture is the right way up against the
+  WORLD: that is one composed rotation either way and nothing in the
+  harness renders anything. **It is a browser probe's question and
+  Mac's eyes' — MAP-FIELD's own lesson, that nothing about a PICTURE
+  can be seen from inside a test.**
+
+  **The travel tag stopped being a constant.** `isTravelMap` was `true`
+  for every held map, which was true while this window was only ever the
+  bay. Once it also opens on a town or a crypt the constant became a
+  lie, and the world host reads it (`sheetWindowUp`) to know a travel
+  map is up. It is DERIVED off the slot now: true exactly where the bay
+  is reachable.
+
+  > **OPEN, AND MAC'S CALL: the bay tab from a town.** `mapTabs` says a
+  > town offers the streets AND the bay, and the strip would show both —
+  > but the town key does not hand the world sheet over, so the slot's
+  > narrowing leaves that tab off. The reason is DFU's travel guards:
+  > `toggleTravelMap` refuses to OPEN the bay with enemies nearby, with
+  > a merchant's offer pending, in sunlight for a sun-damaged career, or
+  > under a racial fast-travel block. Four checks, all at open time.
+  > Handing the bay over on the town key walks past all four, and moving
+  > them to commit time is a behaviour change to a ported, audited
+  > system. So for now the town key opens the streets and the travel key
+  > opens the bay, each with its own ladder, and the one window still
+  > holds both sheets the moment that call is taken.
+- **EM5 — the campaigns, a browser probe, and the remaining records.**
+  The town sheet's orientation against the world is the probe's first
+  question.
 
 ## Doctrine, unchanged
 
