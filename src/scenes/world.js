@@ -72,7 +72,8 @@ import { rangedDamageSpells } from '../systems/spellcast.js';   // U42: the flig
 import { worldMinutes, setWorldMinutes, setSharedClock, sharedClockOn, alignEntityClocks, setWorldPriceTilt } from '../systems/worldTick.js';   // ECON1 / AUDIT ALL E1: the world's tilt off the file's base powers   // AUDIT 23 (C2): the ONE clock
 import { setSyntheticTimeIncrease } from '../systems/effectBroker.js';   // AUDIT 63 F13: DaggerfallTravelPopUp_OnPostFastTravel (EntityEffectBroker.cs:846-847)
 import { tallySwingSkills, SWING_WEAPON_FATIGUE_LOSS, playerPainVoice, playPlayerVoice, makeEnemiesHostile, isBowWeapon } from './hostCombat.js';   // ROAD-B: GameManager.MakeEnemiesHostile
-import { flashPlayerDamage } from '../ui/damageFlash.js';   // AUDIT 24 (wave 46): the arrow owes the flash too   // AUDIT 23 (C14)
+import { flashPlayerDamage } from '../ui/damageFlash.js';
+import { resetVitalsDetector } from '../ui/hudVitals.js';   // BLOOD AUDIT 5: the load's detector reset   // AUDIT 24 (wave 46): the arrow owes the flash too   // AUDIT 23 (C14)
 import { hudFade } from '../ui/fadeLayer.js';   // D4: performFastTravel's and TeleportAway's fade from black
 import { exhaustionOutcome, EXHAUSTED_IN_WATER } from '../systems/rest.js';   // AUDIT 23 (C5)
 import { bloodDecalDeps } from '../combat/bloodSwitch.js';
@@ -3404,7 +3405,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // ?dungeon host RAN every CastWhenUsed / CastWhenStrikes / SoulBound
   // / affinity arm against no ctx at all. They are optional-chained, so
   // it WAS silent. WAVE D closed it: the body is scenes/hostEnchant.js
-  // and dungeonContext.js:2274 mounts the same one, gated on
+  // and dungeonContext.js:2275 mounts the same one, gated on
   // `opts.enchantCtx !== false` because setDefaultEnchantCtx is a
   // session singleton and EC1 already routes THIS host's mount into
   // that context through modes.dungeonCtx - so worldModes.js:4729
@@ -5227,7 +5228,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // so an F9 pressed inside a shop recorded the street's sheath and
     // hand. The mode host answers for the rig that is actually drawn
     // and null outside interior mode (the dungeon owns its own
-    // composer, dungeonContext.js:5754), so exterior mode and a
+    // composer, dungeonContext.js:5756), so exterior mode and a
     // pre-seam mode host compose exactly as before, per field.
     const wp = modes?.weaponPose?.() ?? null;
     const snap = snapshotPlayer(playerEntity, {
@@ -5368,6 +5369,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       // CameraRecoiler's SaveLoadManager_OnStartLoad (:185-191): the
       // incoming character does not inherit the old one's reel.
       cameraRecoiler.reset();
+      resetVitalsDetector();   // BLOOD AUDIT 5: nor the difference between the two healths as a blow (VitalsChangeDetector.cs:139-158)
       // IS1: a load never runs UNDER a mounted mode - RespawnPlayer
       // destroys the standing interior first (PlayerEnterExit
       // .cs:453-459). The dying scene is NOT cached on the way out:
@@ -7081,7 +7083,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // exterior -> the townTalk overlay, interior OR dungeon -> the mode
   // machine's slot. U43-ii shipped the dungeon half: showQuestBox
   // offers the window to `modes.showQuestOverlay` below, and
-  // worldModes answers it in BOTH modes (worldModes.js:7635-7698 -
+  // worldModes answers it in BOTH modes (worldModes.js:7637-7700 -
   // dungeon routes to dungeonCtx.showOverlay), so a dungeon popup is
   // shown rather than logged loudly and dropped.
   // AUDIT 24 (wave 21): DaggerfallMessageBox.Show() is a
@@ -10131,6 +10133,7 @@ export async function bootWorld(canvas, renderer, params, status) {
             onExteriorPath: _surf.path,
             onStaticGeometry: _surf.staticGeometry,
           }));
+          if (_step) hitEffects?.footfall?.(player.pos, [Math.sin(cam.yaw), 0, Math.cos(cam.yaw)]);   // BLOOD2d: a foot came down - treading in blood tracks it
           if (_step && classicFootstepAllowed(_step.clip)) audio.playOneShot(_step.clip, _step.volume);   // IF1: DisableVanillaFootsteps - every classic clip is None while the mod owns the stride; BA1: Better Ambience nulls all but Dungeon2 and Outside2 (DisableBuiltInFootsteps' slip)   // IF1: DisableVanillaFootsteps - every classic clip is None while the mod owns the stride; BA1: Better Ambience nulls all but Dungeon2 and Outside2 (DisableBuiltInFootsteps' slip)
           // IF1: ImmersiveFootstepsObject.FixedUpdate - the exterior arm reads the season, the climate and the tile the classic set above reads.
           immersiveFootsteps.update(dt, {
@@ -10993,6 +10996,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // clock is REAL dt like every other one-shot, and it ENDS - a
     // finished splash frees its batch inside tick().
     hitEffects.tick(dt);
+    hitEffects.bleedPlayer(townTalk.overlayActive ? 0 : dt, walkMode && playerSpawned ? player.pos : cam.pos, playerEntity);   // BLOOD2e: the player's own blood, at the feet, on the same clock; BLOOD AUDIT 5: not under a window, and the host's own feet
     livePersonBatches.push(...hitEffects.batches());
     // HT1: the dropped torches burn, the thrown one flies, a burning foe's flame follows it (the transition sweep is at the mode branch above, AUDIT 66 F11)
     if (_mode() === 'exterior') { droppedTorches.tick(dt); livePersonBatches.push(...droppedTorches.batches()); camps.tick(dt); livePersonBatches.push(...camps.batches()); }   // SURV3: the fires burn on the same axis
@@ -11374,7 +11378,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // layer, because a talk window is a modal above the vitals.
     // AUDIT 39: THE CALL IS UNCONDITIONAL. drawHud runs the damage
     // flash and the enhanced DOM HUD ABOVE its own `!art` return
-    // (hud.js:386-414) because neither reads ARENA2 - "a player whose
+    // (hud.js:389-417) because neither reads ARENA2 - "a player whose
     // HUD art failed to load still has vitals". Wrapping the whole
     // call in `if (hudArt)` inverted that: hudArt starts null and is
     // filled by a fire-and-forget load whose failure leaves it null

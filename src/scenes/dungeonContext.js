@@ -184,7 +184,8 @@ import { createDroppedTorches } from './droppedTorches.js';
 import { createCamps } from './camps.js';   // SURV3: a fire on the dungeon floor (no tent below - the camp law says so)
 import { campWire, validCampRecord, mergeOwnerCamps } from '../systems/survival/camp.js';   // SURV3: the room's memory carries the camps as the wire says them   // HT1: Handheld Torches' dropped lights in the dungeon   // AUDIT 24 (wave 39): EnemyBlood.ShowBloodSplash
 import { EnemySoundSource, acuteHearingMultiplier } from '../characters/enemySounds.js';   // AUDIT 24 (wave 41): EnemySounds.cs, one home
-import { flashPlayerDamage } from '../ui/damageFlash.js';   // AUDIT 24 (wave 39): ShowPlayerDamage
+import { flashPlayerDamage } from '../ui/damageFlash.js';
+import { resetVitalsDetector } from '../ui/hudVitals.js';   // BLOOD AUDIT 5: the load's detector reset   // AUDIT 24 (wave 39): ShowPlayerDamage
 import { activeMemberships } from '../systems/guilds.js';   // F117
 import { avoidDeath, AVOID_DEATH_TEXT } from '../systems/guildServices.js';   // F117: Stendarr
 import { pickActivatableHit, RAY_DISTANCE, TREASURE_ACTIVATION_DISTANCE } from '../player/activate.js';   // PX21c: the hover runs the take's own pick; AUDIT 65 MC-2: the ray's reach, and each family's own
@@ -1534,7 +1535,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // owned, and destroy() hands it back (the _prevPassiveHost idiom this
   // file already uses for its other process-global seams). A bare null
   // would not do: on ?world and ?exterior the previous holder is the
-  // host's own townTalk sink (world.js:8104 / exterior.js:3319), set
+  // host's own townTalk sink (world.js:8106 / exterior.js:3319), set
   // once at boot and never again, so nulling on the way out of the
   // first dungeon would silently un-file every mid-screen label above
   // ground for the rest of the session - MC-1's own bug, re-opened.
@@ -2541,7 +2542,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // NEXT updateMissiles pass to fill. But the push lands in a
     // MICROTASK - this is async and its one caller does not await it -
     // and both hosts draw dynamicDraws BEFORE they call drawFoes
-    // (dungeon.js:1002 against :1039; worldModes.js:6192 against :6210).   // QS6: both pairs' SECOND half was stale before this slice - they named neither `drawFoes` call, and a positional bump would have moved a wrong number by the right offset; re-resolved by content
+    // (dungeon.js:1003 against :1039; worldModes.js:6193 against :6210).   // QS6: both pairs' SECOND half was stale before this slice - they named neither `drawFoes` call, and a positional bump would have moved a wrong number by the right offset; re-resolved by content
     // So the very next frame drew the arrow with a NULL matrix, and
     // `uniformMatrix4fv(uModel, false, null)` throws - Float32List is
     // a non-nullable WebIDL union. Firing a bow killed the frame loop,
@@ -3102,8 +3103,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
               // AUDIT 39 (#64) / THE FOUR HOSTS RULE - SHIPPED (wave D):
               // this host was the FOURTH BODY of the player-arrow law
               // and is now the fourth CALLER. combat/arrowFlight.js's
-              // playerArrowHitFoe is the one copy world.js:11256,
-              // exterior.js:4761 and worldModes.js:6346 already ran;
+              // playerArrowHitFoe is the one copy world.js:11260,
+              // exterior.js:4762 and worldModes.js:6347 already ran;
               // the flag said the divergence would bite and it already
               // had. This copy splashed at the ARROW TIP
               // (`[m.pos[0], m.pos[1], m.pos[2]]`) on the claim that
@@ -4553,6 +4554,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // (a finished splash frees its batch inside tick).
     hitEffects.tick(dt);
     hitEffects.bleed(dt, foes, foeBleedView);   // BLOOD2c: the wounded drip, the dead bleed out
+    hitEffects.bleedPlayer(dt, playerFeet, playerEntity);   // BLOOD2e: and the player's own blood, at the feet
     droppedTorches.tick(dt);   // HT1: the burn, the flight, the flames
     camps.tick(dt);   // SURV3: the fires burn down
     // PX21c: THE HOVER PLAQUE, from the frame function both dungeon
@@ -5831,6 +5833,14 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // air when F12 landed kept flying at the restored player. The
       // world host's teleport already sweeps its own (world.js).
       magic.clearMissiles();
+      // BLOOD AUDIT 4: AND THE BLOOD, for the same reason. The world host
+      // clears its pool on every teleport and the interior on every
+      // door; this context is reused across its own quickload, so the
+      // abandoned timeline's marks, its chunks in flight, its ceilings'
+      // drips and the pool spreading under a corpse that is about to
+      // stand back up all stayed on the floor of the restored one.
+      hitEffects.clear();
+      resetVitalsDetector();   // BLOOD AUDIT 5: the loaded health is not a blow (VitalsChangeDetector.cs:139-158)
       classicMinutesRef.value = extras.classicMinutes ?? classicMinutesRef.value;
       magic.setReadiedByIndex(extras.readiedSpellIndex ?? null, spellsByIndex);
       // B4: quest after entity, conversation after quest (the C#'s own

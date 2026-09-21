@@ -2,8 +2,8 @@
   {
     "name": "MACBUGW4-1-the-mark-takes-ambient-alone-again",
     "file": "src/render/renderer.js",
-    "old": "  vec3 lightAcc = uTint + uDecalSun * cloudShadowAt(vWorld) + pointAcc + iAtt * iAtt * uIndirectColor;",
-    "new": "  vec3 lightAcc = uTint;",
+    "old": "  vec3 lightAcc = ambient + uDecalSun * (diff * cloudShadowAt(vWorld)) + uDecalMoon * mdiff + pointAcc + (iAtt * iAtt * max(dot(n, iL / max(iD, 1e-4)), 0.0)) * uIndirectColor;",
+    "new": "  vec3 lightAcc = ambient;",
     "tests": [
       "test/blood1_decals.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "MACBUGW4-2-the-mark-loses-the-sun",
     "file": "src/render/renderer.js",
-    "old": "  vec3 lightAcc = uTint + uDecalSun * cloudShadowAt(vWorld) + pointAcc + iAtt * iAtt * uIndirectColor;",
-    "new": "  vec3 lightAcc = uTint + pointAcc + iAtt * iAtt * uIndirectColor;",
+    "old": "  vec3 lightAcc = ambient + uDecalSun * (diff * cloudShadowAt(vWorld)) + uDecalMoon * mdiff + pointAcc + (iAtt * iAtt * max(dot(n, iL / max(iD, 1e-4)), 0.0)) * uIndirectColor;",
+    "new": "  vec3 lightAcc = ambient + uDecalMoon * mdiff + pointAcc + (iAtt * iAtt * max(dot(n, iL / max(iD, 1e-4)), 0.0)) * uIndirectColor;",
     "tests": [
       "test/blood1_decals.test.js"
     ]

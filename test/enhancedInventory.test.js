@@ -1092,7 +1092,7 @@ test('PX21c: the hover plaque names a pile without opening it, on the take\'s ow
     'the skin is asked BEFORE the node is built and the sheet injected');
   // The host runs the SAME pick the take runs, throttled, enhanced only.
   const ctx = read('src/scenes/dungeonContext.js');
-  const frame = ctx.slice(ctx.indexOf('function drawFoes('), ctx.indexOf('function drawFoes(') + 3500);   // AUDIT 65 MC-2 widened the window: the reach gate and its note sit inside it
+  const frame = ctx.slice(ctx.indexOf('function drawFoes('), ctx.indexOf('function drawFoes(') + 3700);   // AUDIT 65 MC-2 widened the window: the reach gate and its note sit inside it; BLOOD2e: the player's bleed line rides the head too
   assert.match(frame, /_hoverAt \+= dt;/);
   assert.match(frame, /if \(_hoverAt >= 0\.1\)/, '10Hz: a raycast over every pile is not free');
   assert.match(frame, /if \(isEnhanced\(\) && eye\)/, 'the classic HUD says nothing about a pile - Daggerfall\'s own answer');

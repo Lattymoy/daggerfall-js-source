@@ -122,7 +122,7 @@ test('AUDIT 39r: the interior arrow that lands on the player flashes the screen'
 // ---------------------------------------------------------------------
 
 test('AUDIT 39 #152: no host hides drawHud behind the classic HUD art', () => {
-  // hud.js:386-411 runs playerDamageFlash and the enhanced DOM branch
+  // hud.js:389-414 runs playerDamageFlash and the enhanced DOM branch
   // ABOVE its own `if (!art) return;` - "the enhanced HUD reads no
   // ARENA2, and a player whose HUD art failed to load still has
   // vitals". Three hosts wrapped the whole call in `if (hudArt)`, and
@@ -362,7 +362,8 @@ test('AUDIT-39r: the dungeon host runs the missile sweep at its OWN load door', 
   assert.ok(at > 0, 'the dungeon host owns a load door');
   // ONLINE-LOAD1 widened this window slightly: quickLoad now carries its own online guard
   // (F9/F11 reach it directly, with no pane in the way to stop them) ahead of the same call chain.
-  const body = ctx.slice(at, at + 2900);
+  // BLOOD AUDIT 4 widened it again: the blood's clear rides beside the sweep, with its reason.
+  const body = ctx.slice(at, at + 3500);
   assert.match(body, /magic\.clearMissiles\(\);/, 'which sweeps its own flights');
   assert.ok(body.indexOf('magic.clearMissiles();') < body.indexOf('applyWorld(extras.world)'),
     'ahead of the world restore, as OnStartLoad is');

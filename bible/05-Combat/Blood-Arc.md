@@ -693,10 +693,11 @@ Slices, each behind its own `features.js` row:
      record and nothing to see. A per-mark record would split the one
      draw into one per texture; it is a slice if a second record ever
      comes.
-   - `blood-capacity` AND `blood-density` HAVE NO ROW. Both are read,
+   - ~~`blood-capacity` AND `blood-density` HAVE NO ROW. Both are read,
      clamped and pinned, and both are reachable from the store alone:
      the feature registry's rows are toggles, and a slider is a slice
-     of its own.
+     of its own.~~ PAID by BLOOD2g (item 11): the two keys are
+     retired for the one `blood-gore` tier, which has its row.
 
    Mutants: 133, 132 dead, 1 equivalent as recorded.
 
@@ -853,8 +854,9 @@ Slices, each behind its own `features.js` row:
    times, in one colour, for ever. The port still ships no blood
    picture; it MAKES one now.
 
-   THE ATLAS (`src/combat/bloodArt.js`): a 256x256 RGBA sheet of four
-   kinds in four variants, generated from noise by a seeded generator
+   THE ATLAS (`src/combat/bloodArt.js`): a 256-wide RGBA sheet, one
+   row a kind (four kinds here, five since BLOOD2d's print) in four
+   variants, generated from noise by a seeded generator
    (mulberry32, so it is the same picture on every boot and a pin can
    name a texel) the first time a pool asks, and uploaded ONCE through
    the renderer's own texture cache under a port-own pseudo-archive
@@ -880,8 +882,10 @@ Slices, each behind its own `features.js` row:
    AND IT DRIES. The pool keeps a clock; every DRY_TICK (2 s) each live
    mark's stage is read off its age - DRY_STAGES (8) steps over
    DRY_TIME (180 s) - and one that crossed a stage takes its new tint
-   (the fresh tint sliding to DRIED_TINT, a dark brown-red, landing on
-   it TO THE BIT at the last stage) and has its slot rewritten. Eight
+   (the fresh tint sliding to DRIED_TINT, landing on it TO THE BIT at
+   the last stage - BLOOD AUDIT 4 found the tint shipped here made a
+   black-red, not a brown, and moved the colour out of the texels; see
+   item 8) and has its slot rewritten. Eight
    rewrites over a mark's life, never one a frame, and none once
    dried. A mark laid later is born at the clock, not at zero.
 
@@ -891,7 +895,10 @@ Slices, each behind its own `features.js` row:
    drying driven through DRY_TIME with the rewrites counted and
    bounded, dried never rewritten, a late mark born now, a recentre
    keeping the cell) and the settled-frame pin re-aimed. Mutants: 16,
-   16 dead (`tools/mutants/blood1.json` is 187).
+   15 dead and ONE SURVIVOR the record here first called dead
+   (`tools/mutants/blood1.json` is 187) - the recentre pin read the
+   decal's own field and never the buffer; BLOOD AUDIT 4 (item 8)
+   re-aimed it to the floats and the mutant dies.
 
 6. **BLOOD2c - a wounded body bleeds, a dead one bleeds out.** SHIPPED
    (2026-09-21). The arc's BLOOD1c was to be the reference's PLAYER
@@ -931,6 +938,366 @@ Slices, each behind its own `features.js` row:
    splash pool's mapping, the three hosts by source). Mutants: 22, 21
    dead, 1 equivalent as recorded - the threshold guard the clamp
    already answers (`tools/mutants/blood1.json` is 209).
+
+7. **BLOOD2d - tracked blood: a walker who treads in it leaves prints.**
+   SHIPPED (2026-09-21). Blood that stays where it fell is a picture;
+   blood that follows you is a scene. A foot that comes down IN a wet
+   floor mark picks it up, and the next TRACK_STEPS (6) steps each lay
+   a boot print of it - alternating feet PRINT_SPREAD (0.13) either
+   side of the walk, the toe the way the walker went, a share fainter
+   each step - and then the foot is clean again.
+
+   THE ART (`src/combat/bloodArt.js`): a fifth atlas row, `print`,
+   a boot shape drawn heel-to-toe along +u; `bloodMarkKind({ print })`
+   names it, and the atlas is `cell x ATLAS_KINDS.length` tall so a
+   sixth row costs a name and a shape.
+
+   THE LAW (`src/combat/bloodMarks.js` `step(walker, pos, forward)`):
+   the walker is a KEY (the player is `PLAYER_WALKER`, a foe is its own
+   body) into a WeakMap of `{ left, side }`. The foot is `pos` rayed
+   down MARK_DROP, so the eye, the capsule centre and the feet all
+   find the same floor. Wet is a floor mark (normal up, `stage` no
+   drier than TRACK_WET_STAGE = 2 of the eight) that is NOT a print,
+   and the foot within `size / 2` of its centre and half a metre of
+   its height - so a print is never a trigger (a walk would otherwise
+   feed itself forever), and blood two ticks dry is a stain and not a
+   puddle. Standing in it while carrying REFRESHES the count and
+   prints nothing over the pool. The print's fade rides the tint's
+   alpha - `fresh[3] = left / TRACK_STEPS` - and drying keeps it,
+   because the dry tint interpolates from `fresh`.
+
+   THE STEPS: the player's footstep machine already knows when a foot
+   comes down (`_step` in world, exterior, dungeon and the interior
+   modes); the same line now calls `hitEffects.footfall(player.pos,
+   facing)` beside the step that plays. A foe's feet are streamed,
+   not stepped, so the bleed ledger counts a `step` off the ground a
+   body covers - one every STRIDE (0.7 m), facing the way it went; a
+   run of eight strides in one frame is a teleport and not a walk.
+   The ledger's actions are now `drip | pool | step`.
+
+   Pins: one (the player's tread, pick-up, six alternating fading
+   prints, the clean foot after, no trigger from a print or from dry
+   blood, the refresh, the foe's stride through the ledger, the four
+   hosts by source) and the atlas pin re-aimed to five rows. Mutants:
+   12, 12 dead (`tools/mutants/blood1.json` is 221).
+
+8. **BLOOD AUDIT 4 - four lenses over BLOOD2a..2d, paid.** (2026-09-21,
+   Mac: "I just want to audit everything so far before we continue.")
+   Four read-only lenses - the pure laws, the marks runtime and the
+   renderer, the host seams and online, the colour path end to end and
+   the records - and every finding below verified here before it was
+   paid. Nothing in this item was merged; it waits on the branch with
+   the rest.
+
+   THE BUGS:
+   - PRINTS NEVER LANDED INDOORS. `step` rayed down from `pos`, and
+     every host hands the walker's FEET - so on a mesh floor the ray
+     started ON the triangle, the walk refused a hit inside its own
+     epsilon, and no walker ever printed underground or in a building.
+     Outdoors the drawn ground sits above the capsule's bilinear floor
+     on every quad of positive twist, so half the world's quads dropped
+     the print the same way. The ray starts at the KNEE now, as the drip
+     and the corpse's pool always did (`DRIP_FROM`), and the pin drives
+     a real Collider with a mesh floor and a twisted terrain pair.
+   - DRIED WAS A BLACK-RED. `DRIED_TINT` 0.5/0.36/0.34 was a multiply
+     over a texel already painted 0.58/0.05/0.04, and a multiply cannot
+     raise a channel: dried blood came out at half the brightness and
+     MORE saturated (G/R 0.082 fresh, 0.059 dried), on every mark older
+     than three minutes, for the rest of the session. THE ATLAS IS INK
+     NOW - the shape and its grain in white - AND THE TINT IS THE
+     COLOUR: `BLOOD_BASE` fresh, `DRIED_TINT` a rust (0.30/0.13/0.09,
+     about the fresh red's luminance, browner), both inside the curve
+     so the lane's decode of ink times tint is the decode of the
+     product. Fresh varies as ONE factor on all three channels (a
+     shade, never a hue - the red used to wander half as far as the
+     rest, which made the darker marks the more saturated ones), and a
+     mark dries AT ITS OWN SHADE (`freshShade`).
+   - BLOOD ON THE BOOTS CROSSED DOORS. `clear()` emptied the ring and
+     not `_tracks`; the player's key is one frozen object for the page,
+     so a walker who left a shop mid-trail printed the street. The map
+     is replaced on `clear()`, and the ledger's memory with it
+     (`hitEffects.clear()` calls `bleeding.clear()`).
+   - A FOE KILLED TWICE POOLED ONCE. The ledger's `pooled` latch never
+     cleared, and the dungeon's load and the online stream un-death a
+     foe IN PLACE. Alive clears it. And a body FIRST SEEN DEAD - a
+     restored corpse, a re-entered room, a foe a peer killed before the
+     ledger was born - has bled out elsewhere and lays no pool; feet
+     with a NaN in them skip the frame rather than spending the pool on
+     a point the ring refuses.
+   - A TELEPORT WAS A FRAME-RATE. "More than eight strides in one
+     frame" read a 6 m/s foe as a walk at sixty frames and a teleport at
+     one, and a texture hitch erased a running foe's trail. It is a
+     SPEED now (`TELEPORT_SPEED`, 40 m/s); the steps come off the ground
+     covered ALONG the run, as many as it holds, where the feet passed,
+     and the remainder carries.
+   - THE RECENTRE MUTANT SURVIVED. The BLOOD2b pin read `d.uv` off the
+     record, which the recentre never touches; dropping the cell from
+     the buffer write passed 56 pins. The pin reads the slot's floats.
+   - THE DUNGEON QUICKLOAD KEPT THE BLOOD. The world clears on every
+     teleport and the interior on every door; the dungeon context is
+     reused across its own quickload and cleared nothing, so the
+     abandoned timeline's marks, chunks, drips and the pool spreading
+     under a corpse about to stand up all stayed. `restoreSaved` clears.
+
+   THE LIGHT: A DECAL HAS A NORMAL. W4 lit the mark as a flat ("a decal
+   has no normal, exactly as a billboard has none"): the sun's
+   Lambert-average half, lanterns attenuation-only. A mark lies ON a
+   surface, and the surface takes N.L - so a mark on a sunlit floor and
+   one on a shaded wall were the same brightness while the floor and
+   the wall were not, which is the outdoor inconsistency Mac reported.
+   Both decal programs read the quad's normal off its derivatives (the
+   lane's had since AUDIT 3, for its shadow lookups alone) and take THE
+   MESH'S terms: the sun by N.L under the cloud and the sun map, the
+   lanterns and the indirect by N.L (on the lane through `elPointLit` /
+   `elIndirectLit` - the lantern's map, the contact shadow, the glint;
+   wet blood glints). `drawDecals` uploads the whole sun and its
+   direction. `tools/bloodProbe.mjs` reads the mark against a MESH
+   facing the eye now (the surface it lies on), not the flat beside it,
+   and reads the ATLAS under the real tints: fresh at noon
+   154/13/10 classic and 113/8/6 on the lane; dried 80/34/23 and
+   61/24/15 - a rust, not a black.
+
+   THE UPLOADS: THE RING'S MIRROR. Every slot write was its own
+   `bufferSubData`: a fight's marks share a birth and crossed each dry
+   stage on the same tick (a thousand calls in a frame, eight times a
+   cohort), a recentre rewrote every mark one by one, and a door
+   blanked every slot - nine hundred calls of dead work, since the
+   ring's ranges are empty after `clear()` and a slot outside them is
+   never rasterised. Writes land in a CPU mirror of the buffer and name
+   their slot dirty; `flush` uploads each contiguous run of dirty slots
+   as one call, nothing between them. A dry cohort is one call, a
+   recentre one, a clear none, a print one write (its fade dressed in
+   rather than rewritten). The spread's "is this still my mark" and the
+   step's walk read slots (`at`) rather than allocating the ring as an
+   array - per frame for twelve seconds a corpse, per footstep of every
+   walker. The atlas is built when first worn (seventy milliseconds off
+   the boot path), and the ring, the batch and the upload wait for the
+   row to be ON.
+
+   THE SMALLER ONES: `drawDecals` counted its texture bind twice; a
+   drip's outer drops wore a streak (gravity's blood does not fly);
+   `BLEED_RATE` was a second copy of `GIB_SPLASH_RATE` and imports it;
+   the floor test in `step` names `CEILING_DOT` rather than a second
+   0.7, and a wall's mark under the foot does not make it wet; the
+   named numbers (STRIDE, STREAK_MAX, POOL_SPREAD, TRACK_WET_STAGE and
+   its boundary, TELEPORT_SPEED) are pinned as literals so the arc's
+   text cannot drift from them. STILL OPEN, said plainly:
+   ~~`blood-capacity` and `blood-density` are prefs keys no registry row
+   writes (the registry has no range control yet - the gore slider is
+   the next slice), so every player runs the defaults~~ (paid by
+   BLOOD2g, item 11: one `blood-gore` tier with a row); the decal fog
+   term mixes the fog colour into a blended fragment as every classic
+   pass does; the host wiring pins are adjacency pins.
+
+   Pins: seven (the knee ray on a real mesh and a twisted terrain; the
+   room's clear over boots and ledger; the ledger's second life, the
+   body met dead, the NaN feet, the speed guard, the steps along the
+   run at one frame and at sixty; the floor test and the drip's
+   streaks; the runs - a cohort one call, a recentre one, a clear none,
+   the cell in the buffer; nothing per frame and the ON gate; the
+   quickload clear, the hosts' bleed at the top of their updates, the
+   bind count, the literals), the W4/W6/AUDIT 3 shader pins re-aimed to
+   the surface's terms, the BLOOD1a/2b/2c/2d pins re-aimed to runs and
+   ink. Mutants: 31 new, 31 dead; 26 records re-aimed by content
+   (`tools/mutants/blood1.json` is 252, `macbugw4.json` and
+   `macbugw6.json` re-aimed).
+
+9. **BLOOD2e - the player's own blood.** SHIPPED (2026-09-21). The
+   reference bleeds the PLAYER (THE FACTS, "Player bleeding": below
+   the threshold, every 2..5 s, a spawn ramped from nothing at the
+   threshold to everything at one percent, with an optional subtle
+   red flash, suppressed at zero health), and BLOOD2c turned that
+   shape on the foes first. This is the player's.
+
+   THE DRIPS: `hitEffects.bleedPlayer(dt, feet, entity)` - the same
+   ledger, keyed by PLAYER_WALKER, read through a view of the
+   entity's health at the feet the host hands; `strides: false`
+   (the footstep machine lays the player's prints - BLOOD2d - so the
+   ledger counts none, or every stride would print twice) and no
+   corpse (a dead player is the death screen's, not a pool's; at zero
+   health the ramp is zero and the ledger's dead branch has no body).
+   The four hosts call it beside the pool's tick they already make.
+   Walking while bleeding leaves the trail behind you; standing, a
+   stain that grows.
+
+   THE WAIT IS THE POOL'S: the ledger is per pool and `hitEffects.clear()`
+   replaces its memory, so a door (the interior pool clears on every
+   one) restarts the player's 2..5 s wait; the world pool clears on
+   teleport and load alone. A player who door-hops a street faster than
+   a wait never drips indoors, which is the shape the foes have too.
+
+   THE FLASH: each drip that lands calls `flashPlayerBleed()` - the
+   damage flash's own quad at BLEED_FLASH_ALPHA (0.12, under a third
+   of a blow's 0.4), the same red and the same fade, and it never
+   LOWERS a blow's flash still fading. No RemoveHealth: a drip is not
+   a blow, the shaker does not hear it.
+
+   THE LENS (`src/ui/bloodScreen.js`) - the port's own; the reference
+   has no screen blood. A blow that takes SCREEN_SPATTER_MIN (a tenth)
+   of a life in ONE FRAME - read off the vitals detector the HUD
+   already runs, VitalsChangeDetector.HealthLostPercent, which
+   CameraRecoiler reads for the same reason - throws `screenDrops`
+   (one at the threshold to SCREEN_DROPS_MAX = 5 at half a life) onto
+   the screen: the atlas's own spatter cells (white ink) blended in
+   BLOOD_BASE, each its own place, size (a share of the canvas HEIGHT,
+   the same drop on a phone and a monitor) and turn, sliding down
+   SCREEN_DROP_SLIDE over SCREEN_DROP_LIFE (2.5 s) and fading over the
+   last SCREEN_FADE_SHARE of it. Capped at SCREEN_DROPS_CAP (12),
+   oldest first. One singleton, ticked and drawn by `drawHud` - the
+   one host-agnostic call, after the detector and above the `!art`
+   return, for the damage flash's reason. Its own row,
+   `blood-screen` (ON, the player's own online): the one piece of
+   blood that is in the player's face rather than on the floor.
+
+   Pins: two (the ledger without strides; the seam - the wait, the
+   drip's count and place, the subtle flash, a blow's flash standing,
+   drips and no prints while walking, nothing well, nothing and no
+   pool dead, the four hosts by source; the lens' law, the drops'
+   place, size, cell and cap, the draw's blended red quads sized by
+   the height, the slide and the fade, gone at the end, no art no
+   quad, the row and the HUD's one call by source). Mutants: 17, 17
+   dead (`tools/mutants/blood1.json` is 269).
+
+10. **BLOOD2f - the wet sheen.** SHIPPED (2026-09-21). Fresh blood is
+   WET, and wet reads as a glint: the lamp seen in it. Without one a
+   mark is paint. The lane has had a low gloss on stone since EL4
+   (EL_SPEC_GLOSS 24, EL_SPEC_STRENGTH an eighth of the light); a wet mark takes a far
+   tighter, far brighter one - EL_WET_GLOSS 64, EL_WET_STRENGTH 0.9 -
+   from every lantern in range (Blinn-Phong on the quad's own normal,
+   the lantern's shadow, the squared falloff, ITS colour) and from the
+   sun (under the cloud and the sun map), ADDED after the albedo
+   multiply, because a highlight is the light's colour and not the
+   blood's. The classic set has no specular at all and ignores it.
+
+   THE FLOAT: the slot is pos3 + uv2 + rgba4 + WET1 now (ten floats a
+   corner, `DECAL_FLOATS_PER_VERTEX`), the tenth `decal.wet` - one at
+   birth, `wetAt(stage)` on every dry rewrite, so the sheen rides the
+   eight rewrites the colour already has and costs no upload of its
+   own. AND THE SHEEN GOES BEFORE THE COLOUR: fresh blood loses its
+   gloss in the first minutes and its red over the rest, so the
+   wetness falls as the SQUARE of what is left (WET_POWER 2 - half
+   dried is a quarter wet), and a fully dried mark is exactly the
+   AUDIT 4 line. A mark that says nothing is dry (the probe's parity
+   quads).
+
+   `tools/bloodProbe.mjs` reads it: the same fresh mark wet and dry
+   under a torch on the lane (wet brighter on every channel - the
+   lamp's white in the green and blue) and in the sun, and on the
+   classic set wet equal to dry to the byte.
+
+   Pins: two (the law, the writer's tenth float and its clamp, born
+   wet, a quarter at half dried in the record AND in the buffer on the
+   dry pass's own rewrite, dry at the end, a print born wet; the
+   attribute and the varying, the classic shader ignorant of it, the
+   lane's sun glint and lantern glint term for term, dry meaning no
+   loop, the probe's rows) and the layout pins re-aimed to ten.
+   Mutants: 9, 9 dead (`tools/mutants/blood1.json` is 278).
+
+11. **BLOOD2g - the gore dial.** SHIPPED (2026-09-21). The last of the
+   seven. BLOOD1 read the particle-amount fraction and the ring's
+   capacity off two prefs keys that no registry row ever wrote (item 2
+   said the registry's rows were toggles and a slider was a slice of
+   its own; BLOOD AUDIT 4 said the keys were dead), so every player
+   ran the defaults. The registry has had a stepped control since FT2
+   (`tiers`), and how much blood there is IS a stepped question. ONE
+   key now, `blood-gore`, four tiers (`GORE_TIERS`): Light (half a
+   blow's blood reaches the floor, 300 marks), Normal (all of it, 600
+   - the defaults, so nothing changes for anyone who never touches
+   it), Heavy (1500), Abattoir (4000, the ring's ceiling). The two
+   numbers are the tier's and are read nowhere else; the old keys are
+   retired, not aliased - two sources of one truth is what AUDIT 4
+   found. Anything stored that is not a tier is Normal. The amount
+   takes effect at once (`scaleRate` reads the density live, and its
+   floor of one still means less blood and never none); the count
+   when the game is next reloaded - the streaming world, the exterior
+   and the interiors build their pools once a page, and only a dungeon
+   builds its own on entry (BLOOD AUDIT 5 corrected "when the world
+   next loads"). Its row is `blood-gore` (ON at Normal, the
+   player's own online), and the home draws it as the four-segment bar
+   every tiered row gets (the cycling chooser is the other panes').
+
+   Pins: one (the tiers' law and bounds, the retired keys, the row's
+   tiers naming every tier and the default, the shelf's stored tier
+   read live, the pool sized by the tier). Mutants: 6, 6 dead
+   (`tools/mutants/blood1.json` is 284).
+
+12. **BLOOD AUDIT 5 - four lenses over BLOOD2e..2g and AUDIT 4's own
+   fixes, paid.** (2026-09-21, Mac: "Lets audit this".) The player's
+   blood and the lens; the wet sheen and the ten-float slot; the gore
+   dial and the records; and an adversarial re-read of AUDIT 4's
+   fixes. Every finding verified here before it was paid; nothing
+   merged.
+
+   THE BUGS AND RISKS:
+   - THE LENS SPATTERED ON A LOAD. The vitals detector resets when a
+     maximum changes or on its own unpriming, and an in-place save
+     load (the world's quickload, the dungeon's restore) writes the
+     entity's health without either, so the difference between the
+     live health and the save's read as ONE FRAME'S LOSS - the recoil,
+     the near-death tint and now the lens all fired on it; a surrender
+     (health set to one) the same. Two fixes, both DFU's own: the lens
+     needs a BLOW - the damage flash's RemoveHealth latch (`takeBlow`,
+     answered once), which an enemy's hit, a trap and a fall raise and
+     a spell, a load and a surrender do not - and the detector RESETS
+     on load (`resetVitalsDetector`, VitalsChangeDetector.cs:139-158),
+     beside the camera recoiler's own reset at both load sites. The
+     hudVitals header that said the load flows navigate was stale and
+     says why now.
+   - THE PLAYER BLED UNDER A WINDOW. Three hosts passed the real dt
+     with the inventory open, so drips landed and the flash pulsed
+     under the modal; the dungeon arm did the opposite. The three
+     pass the host's own pause word (a held overlay is dt 0), and the
+     world hosts hand the feet they hand everything else (the camera
+     in fly mode and before the spawn).
+   - THE MOON WAS STILL THE FLAT'S HALF. AUDIT 4 paid the sun, the
+     lanterns and the indirect by N.L and left W4's moon folded into
+     the ambient at its Lambert half: at night outdoors a mark on a
+     wall facing away from Masser glowed against an unlit wall. Both
+     decal shaders take the moon by N.L (`uDecalMoon`, `uMoonDir`) and
+     the trilight ambient (BA1) as the mesh does; the tint upload is
+     the bare ambient.
+   - THE BLOOD-OFF GATE UNDID AUDIT 3. AUDIT 4 built the ring only
+     with the row on, so a player who booted with blood off got a ring
+     sized by whatever the store held when a drop first landed - the
+     fault AUDIT 3 removed, harmless while the keys were dead and LIVE
+     once BLOOD2g made a dial of them (two hosts alive at once took two
+     sizes). The ring is built at boot again; what waits for the first
+     mark is the atlas (`wear`), which was the cost.
+   - `ensure()` re-minted the ring - and now the mirror - on every drop
+     when a renderer's batch came back empty; it latches on the pool.
+     `dispose()` keeps no mirror. A surface the knee ray meets more
+     than STEP_ABOVE (0.25) above the feet - streamed feet inside a
+     step - is not the floor, for the print and the corpse's pool.
+   - THE GLINT PAID ITS SHADOWS TWICE. The wet loop repeated the
+     lantern shadow lookups the diffuse loop had just made (and
+     answered a different shadow for a non-caster), and the sun glint
+     re-read the nine-tap sun map. ONE lantern loop
+     (`elPointLitWet`, the glint beside the diffuse on the same
+     shadow and falloff, the pow skipped where the mark is dry;
+     `elPointLit` is its dry case) and ONE sun visibility for both.
+     Also said plainly, from the lens's geometry: a torch in the hand
+     can glint a floor mark only underfoot (the half-vector never
+     bisects otherwise); the sheen is a wall sconce's and a standing
+     lantern's effect, and a wall mark's in the sun.
+   - The dry cohort and a spread stepping in the same tick flushed
+     twice; they share one. The gore row's effect said "when the world
+     next loads" of three pools that live a page; it says when. A
+     stored value that is no tier showed the FIRST segment on the home
+     while the game ran Normal; the tile and the chooser show the row's
+     default. The capacity clamp is over a closed vocabulary now and
+     its mutant is recorded equivalent.
+
+   Pins: four (the blow latch and the detector reset, driven; the
+   lens's newest-first cap, its band, the no-flash-without-a-landing,
+   the literal 0.12; the ring minted once, the mirror gone with
+   dispose, the step and the pool refusing a surface above the feet,
+   the one flush; the menu's default and the effect's wording by
+   source), the W4/W6/2b/2e/2f/AUDIT 4 pins re-aimed (the moon and
+   the trilight, the atlas at the first mark, the one sun read, the
+   folded loop, the hosts' paused dt, the literal drip count).
+   Mutants: 23 new, 23 dead; 19 records re-aimed by content and one
+   recorded equivalent (`tools/mutants/blood1.json` is 307;
+   `macbugw4.json`, `macbugw6.json` and `el4.json` re-aimed).
 
 The numbers in THE FACTS are the target to feel like. The code that
 hits them is ours.

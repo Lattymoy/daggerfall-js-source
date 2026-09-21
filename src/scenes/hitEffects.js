@@ -35,7 +35,7 @@
 // A third has no port equivalent yet rather than being unported here:
 // EnemyAttack.cs:332 is `ApplyDamageToNonPlayer`, foe-vs-foe melee,
 // which the port's pools do not do (documented at enemyCasting.js:149
-// and dungeonContext.js:1341). When friendly fire lands, its splash is
+// and dungeonContext.js:1342). When friendly fire lands, its splash is
 // `showBloodSplash(targetBloodIndex, bloodCentre(...))`.
 
 import { FlatAnim, isAnimatedFlat, IMPACT_FPS, MISSILE_FPS } from '../render/flatAnimation.js';   // AUDIT 26 F033: ImpactBillboardFramesPerSecond   // FIELD-GUN14: a flying flat's own rate, which is the missile's
@@ -44,7 +44,10 @@ import { BLOODLESS_INDEX } from '../combat/bloodDecals.js';   // BLOOD1a: which 
 
 /** EnemyBlood.cs:23. */
 import { createBleedLedger } from '../combat/bloodBleed.js';   // BLOOD2c
+import { flashPlayerBleed } from '../ui/damageFlash.js';   // BLOOD2e: the reference's subtle flash with each of the player's own drips
 export const BLOOD_ARCHIVE = 380;
+/** BLOOD2d: the player's key in the marks' tracking table (a foe's is its own record). */
+export const PLAYER_WALKER = Object.freeze({ player: true });
 /** :37 - pinned to ten, not the general five. */
 export const BLOOD_FPS = 10;
 /** F033: UseSpellBillboardAnims(1, true) - record 1, one-shot. */
@@ -230,9 +233,35 @@ export function createHitEffects({
       for (const a of bleeding.tick(dt, bodies, view)) {
         if (a.kind === 'drip') { if (marks.drip?.(a.bloodIndex, a.pos, a.count)) n++; }
         else if (a.kind === 'pool') { if (marks.spreadPool?.(a.bloodIndex, a.pos)) n++; }
+        else if (a.kind === 'step') { if (marks.step?.(a.body, a.pos, a.forward)) n++; }   // BLOOD2d: a foe treads in blood and tracks it
       }
       return n;
     },
+
+    /** BLOOD2e: THE PLAYER BLEEDS. The reference bleeds the PLAYER -
+     *  below the threshold, every 2..5 s, a spawn ramped by how hurt
+     *  they are, with a subtle red flash, suppressed at zero health -
+     *  and BLOOD2c turned that shape on the foes first. This is the
+     *  player's own: the same ledger, keyed by PLAYER_WALKER, read
+     *  through a view of the entity's health at the feet the host
+     *  hands, with no strides (the footstep machine lays the player's
+     *  prints) and no corpse (a dead player is the death screen's, not
+     *  a pool's). Each drip that lands flashes. Answers the drips laid. */
+    bleedPlayer: (dt, feet, entity) => {
+      if (!marks || !feet || !entity) return 0;
+      const health = entity.health ?? 0, maxHealth = entity.maxHealth ?? 0;
+      const view = () => ({ feet, health, maxHealth, bloodIndex: 0, dead: !(health > 0), corpse: false, strides: false });
+      let n = 0;
+      for (const a of bleeding.tick(dt, [PLAYER_WALKER], view)) {
+        if (a.kind === 'drip' && marks.drip?.(a.bloodIndex, a.pos, a.count)) { n++; flashPlayerBleed(); }
+      }
+      return n;
+    },
+
+    /** BLOOD2d: THE PLAYER'S FOOTFALL - the hosts' footstep machine says
+     *  when a foot comes down; this says where. Treading in wet blood
+     *  tracks it for a few steps. `forward` is the way the player faces. */
+    footfall: (pos, forward = null) => marks?.step?.(PLAYER_WALKER, pos, forward) ?? null,
 
     /** ShowMagicSparkles (:41-54), record 3. */
     showMagicSparkles: (pos, facing = null) => spawn(SPARKLES_RECORD, pos, facing),
@@ -343,6 +372,7 @@ export function createHitEffects({
     clear() {
       for (let i = live.length - 1; i >= 0; i--) retire(live[i]);
       marks?.clear?.();   // BLOOD1a: a room thrown away takes its blood with it, on the call every host already makes
+      bleeding.clear();   // BLOOD AUDIT 4: ...and the ledger's memory of who pooled and who walked - the next room's bodies are met fresh
     },
     _live: live,
   };
