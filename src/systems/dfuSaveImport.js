@@ -42,9 +42,15 @@ import { SAVE_VERSION, FACTION_RELATION_COLUMNS } from './save.js';
 import { raceById } from './races.js';
 import { GROUP_TEMPLATE_INDICES } from './itemTemplatesData.js';
 import { ITEM_GROUP_BY_ID } from './biography.js';
-import { ITEM_IDENTIFIED_MASK, ITEM_ARTIFACT_MASK } from './loot.js';
-import { CLASSIC_EPOCH_IN_SECONDS, SECONDS_PER_MINUTE } from './gameDate.js';
-import { worldCoordToMapPixel } from '../formats/mapsFile.js';
+import { ITEM_IDENTIFIED_MASK, ITEM_ARTIFACT_MASK, legacyArtifactIndexBitfieldCheck, CLASSIC_RECIPE_KEYS } from './loot.js';
+import { isPotion, isPotionRecipe } from './useItem.js';
+import { CLASSIC_EPOCH_IN_SECONDS, SECONDS_PER_MINUTE, dateToSeconds } from './gameDate.js';
+import { worldCoordToMapPixel, REGION_NAMES } from '../formats/mapsFile.js';
+import { MOBILE_TYPES } from '../characters/mobileTypes.js';
+import { VAMPIRE_SPELL_TAG, LYCANTHROPY_SPELL_TAG } from './lycanthropy.js';
+import { spellPoints, spellPointMultiplier, CLASS_CAREERS } from './chargen.js';
+import { levelUpSkillSum } from './advancement.js';
+import { Formatting as MessageFormatting } from './quest/message.js';
 import { WEATHER_TYPES } from '../world/weather.js';
 import { TRANSPORT_MODES } from './transport.js';
 import { createBankAccounts, createHouses, BANK_REGION_COUNT } from './banking.js';
@@ -57,7 +63,6 @@ import { VALUES_WIDTH, FLAGS_WIDTH, FLAGS2_WIDTH, REGION_COUNT } from './regionC
 import { SOCIAL_GROUP_COUNT, GUILD_GROUPS } from '../formats/factionFile.js';
 import { GUILDS } from './guilds.js';
 import { DIVINES, ORDERS, templeOf, orderOf } from './guildVariants.js';
-import { CLASS_CAREERS } from './chargen.js';
 import { Scopes } from './quest/place.js';
 import { TaskType } from './quest/task.js';
 
@@ -65,11 +70,12 @@ import { TaskType } from './quest/task.js';
 
 /** DaggerfallDateTime.ToSeconds (:430-441) over the six serialised
  *  fields (Year, Month, Day, Hour, Minute, Second - Month and Day
- *  zero-based, Second truncated). */
+ *  zero-based, Second truncated). ONE home: gameDate.js's
+ *  dateToSeconds IS that member; this only lowers the C# field case.
+ *  (AUDIT-DFUSAVE D1: the first draft re-wrote the sum.) */
 export function dfuDateToSeconds(dt) {
   if (!dt) return 0;
-  return 31104000 * (dt.Year ?? 0) + 2592000 * (dt.Month ?? 0) + 86400 * (dt.Day ?? 0)
-    + 3600 * (dt.Hour ?? 0) + 60 * (dt.Minute ?? 0) + Math.trunc(dt.Second ?? 0);
+  return dateToSeconds({ year: num(dt.Year), month: num(dt.Month), day: num(dt.Day), hour: num(dt.Hour), minute: num(dt.Minute), second: Math.trunc(num(dt.Second)) });
 }
 
 /** ToClassicDaggerfallTime (:475-478): absolute seconds -> the classic
@@ -116,8 +122,9 @@ const innerName = (o) => (typeof o === 'string' ? o.replace(/^_+|_+$/g, '') : nu
  *  notebook.js's 'newline' and the talk halves' four); a name the port
  *  has no word for rides lower-cased, and the port ignores it. */
 const TOKEN_FORMATTING = Object.freeze({
-  Text: 'text', TextHighlight: 'highlight', TextQuestion: 'question', TextAnswer: 'answer',
-  NewLine: 'newline', NewLineOffset: 'newline', JustifyCenter: 'center', Nothing: 'nothing',
+  ...MessageFormatting,   // Nothing, Text, JustifyCenter - the quest machine's own words (AUDIT-DFUSAVE D4: one home)
+  TextHighlight: 'highlight', TextQuestion: 'question', TextAnswer: 'answer',
+  NewLine: 'newline', NewLineOffset: 'newline',
 });
 export function dfuToken(t) {
   if (!t || typeof t !== 'object') return t;
@@ -145,16 +152,22 @@ export const dfuGender = (g) => (enumValue(g, E.DFU_GENDERS) === E.DFU_GENDERS.F
  *  the weapon/armor/shield bitfield's four fields (:604-607). */
 export function dfuCareerToRecord(c) {
   const tol = (name) => enumValue(c[name], E.DFU_TOLERANCE);
+  // EffectFlags (Paralysis 1 .. Disease 64) name DFCareer's seven
+  // tolerance fields; SpecialAbilityFlags name its six booleans (the
+  // last two under DamageFromSunlight/DamageFromHolyPlaces). Both
+  // tables are regenerated from the C# (AUDIT-DFUSAVE D2: the first
+  // draft wrote the bits by hand a second time).
   const flagsOf = (which) => {
     let out = 0;
-    for (const [field, bit] of /** @type {[string, number][]} */ ([['Paralysis', 1], ['Magic', 2], ['Poison', 4], ['Fire', 8], ['Frost', 16], ['Shock', 32], ['Disease', 64]])) {
-      if (tol(field) === which) out |= bit;
+    for (const [field, bit] of Object.entries(E.DFU_EFFECT_FLAGS)) {
+      if (bit && tol(field) === which) out |= bit;
     }
     return out;
   };
   const skill = (name) => enumValue(c[name], E.DFU_SKILLS);
-  const ability = (c.AcuteHearing ? 1 : 0) | (c.Athleticism ? 2 : 0) | (c.AdrenalineRush ? 4 : 0)
-    | (c.NoRegenSpellPoints ? 8 : 0) | (c.DamageFromSunlight ? 16 : 0) | (c.DamageFromHolyPlaces ? 32 : 0);
+  const ABILITY_FIELD = { AcuteHearing: 'AcuteHearing', Athleticism: 'Athleticism', AdrenalineRush: 'AdrenalineRush', NoRegenSpellPoints: 'NoRegenSpellPoints', SunDamage: 'DamageFromSunlight', HolyDamage: 'DamageFromHolyPlaces' };
+  let ability = 0;
+  for (const [flag, bit] of Object.entries(E.DFU_SPECIAL_ABILITY_FLAGS)) if (bit && c[ABILITY_FIELD[flag]]) ability |= bit;
   const magery = (enumValue(c.LightPoweredMagery ?? 0, E.DFU_LIGHT_MAGERY_FLAGS) << 6)
     | (enumValue(c.DarknessPoweredMagery ?? 0, E.DFU_DARKNESS_MAGERY_FLAGS) << 8);
   const spellPoints = enumValue(c.SpellPointMultiplier ?? 16, E.DFU_SPELL_POINT_MULTIPLIERS) << 8;
@@ -170,7 +183,7 @@ export function dfuCareerToRecord(c) {
     | (enumValue(c.ForbiddenProficiencies ?? 0, E.DFU_PROFICIENCY_FLAGS) & 0x3f);
   const advancementMultiplier = Math.round(num(c.AdvancementMultiplier, 1) * 100) / 100;
   return {
-    name: String(c.Name ?? ''),
+    name: String(c.Name ?? '').trim(),   // SerializablePlayer.cs:372 Career.Name.Trim()
     resistanceFlags: flagsOf(E.DFU_TOLERANCE.Resistant),
     immunityFlags: flagsOf(E.DFU_TOLERANCE.Immune),
     lowToleranceFlags: flagsOf(E.DFU_TOLERANCE.LowTolerance),
@@ -229,7 +242,7 @@ export function statModsMap(arr) {
 
 /**
  * ItemData_v1 -> a port item. DaggerfallUnityItem.FromItemData
- * (:640-700) is the map, classicItemFromRecord the port's pattern:
+ * (:1622-1688) is the map, classicItemFromRecord the port's pattern:
  * the classic record's fields under DFU's names. A group without a
  * template table (MagicItems) or a groupIndex off it is dropped with
  * a warning - a templateIndex the port cannot resolve is an orphan
@@ -254,7 +267,7 @@ export function dfuItem(d, warnings = []) {
     typeDependentData: num(d.hits3) >>> 8,
     enchantmentPoints: num(d.enchantmentPoints),
     message: num(d.message),
-    stackCount: Math.max(1, num(d.stackCount, 1)),
+    stackCount: num(d.stackCount, 1),   // verbatim, as FromItemData copies it (AUDIT-DFUSAVE C13)
     weightInKg: num(d.weightInKg),
     playerTextureArchive: num(d.playerTextureArchive),
     playerTextureRecord: num(d.playerTextureRecord),
@@ -267,7 +280,7 @@ export function dfuItem(d, warnings = []) {
   const variant = num(d.currentVariant);
   if (variant > 0 || group === 'MensClothing' || group === 'WomensClothing') item.variant = variant;
   if (num(d.artifactIndexBitfield)) item.artifactIndexBitfield = num(d.artifactIndexBitfield);
-  // legacyMagic: flat (type, param) pairs (FromItemData :657-664), all
+  // legacyMagic: flat (type, param) pairs (FromItemData :1641-1652), all
   // ten slots as DFU writes them; kept whole when any slot is real,
   // dropped whole when none is - classicItemFromRecord's own law.
   const lm = Array.isArray(d.legacyMagic) ? d.legacyMagic : [];
@@ -282,10 +295,14 @@ export function dfuItem(d, warnings = []) {
     item.questUID = num(d.questUID);
     item.questSymbol = liveSymbol(d.questItemSymbol);   // a Symbol clone on the port's item (quest/item.js:173); world.js reads its .name
   }
-  const soul = d.trappedSoulType;
-  if (soul != null && soul !== 'None' && Number(soul) !== E.DFU_MOBILE_TYPES_NONE) {
-    if (typeof soul === 'number' || /^\d+$/.test(String(soul))) item.trappedSoulType = Number(soul);
-    else warnings.push(`item "${item.name}": trapped soul "${soul}" is named, not numbered - dropped`);
+  // trappedSoulType is a MobileTypes ENUM (SerializableGameObject.cs
+  // :295), so the save carries its NAME ("Daedroth"); the port's own
+  // MOBILE_TYPES table (characters/mobileTypes.js, DaggerfallUnityEnums
+  // .cs verbatim) is the one home for it. AUDIT-DFUSAVE C3: the first
+  // draft accepted a number only and emptied every filled soul gem.
+  if (d.trappedSoulType != null) {
+    const soul = enumValue(d.trappedSoulType, MOBILE_TYPES);
+    if (soul !== MOBILE_TYPES.None) item.trappedSoulType = soul;
   }
   const poison = d.poisonType;
   if (poison != null && poison !== 'None') {
@@ -293,14 +310,26 @@ export function dfuItem(d, warnings = []) {
     if (p >= 128) item.poisonType = p;
   }
   if (num(d.potionRecipe)) item.potionRecipeKey = num(d.potionRecipe);
+  // FromItemData's three back-fills (:1673-1687), which DFU runs on
+  // every item it loads (AUDIT-DFUSAVE C8): the classic recipe key
+  // from typeDependentData, the artifact bitfield an older save
+  // lacks, and the Ark'ay book id 10000 -> 5.
+  else if ((isPotion(item) || isPotionRecipe(item)) && item.typeDependentData < CLASSIC_RECIPE_KEYS.length) {
+    item.potionRecipeKey = CLASSIC_RECIPE_KEYS[item.typeDependentData];
+  }
+  legacyArtifactIndexBitfieldCheck(item);
+  if (group === 'Books' && item.message === 10000) item.message = 5;
   if (d.repairData && num(d.repairData.timeStarted)) {
     // The port keys the job by the shop's buildingKey; DFU by the
-    // interior's scene name, which carries it.
+    // interior's scene name, which carries it. DFU's repairTime is
+    // SECONDS (FormulaHelper.cs:1931-1932, floored at SecondsPerDay);
+    // the port's is classic MINUTES (repairService.js). AUDIT-DFUSAVE
+    // C1: the first draft copied it verbatim, sixty times too long.
     const m = /BuildingKey=(\d+)/.exec(String(d.repairData.sceneName ?? ''));
     item.repairData = {
       buildingKey: m ? Number(m[1]) : 0,
       timeStarted: dfuSecondsToClassicMinutes(d.repairData.timeStarted),
-      repairTime: num(d.repairData.repairTime),
+      repairTime: Math.max(1, Math.round(num(d.repairData.repairTime) / SECONDS_PER_MINUTE)),
     };
   }
   if (num(d.timeForItemToDisappear)) item.timeForItemToDisappear = num(d.timeForItemToDisappear);
@@ -323,6 +352,7 @@ function dfuCollection(list, warnings) {
 
 // ── spells ────────────────────────────────────────────────────────
 
+const SPELL_ICON_COUNT = 55;   // spellMaker.js's SetIcon law: index % count
 const EMPTY_EFFECT = () => ({
   type: -1, subType: -1, durationBase: 0, durationMod: 0, durationPerLevel: 0,
   chanceBase: 0, chanceMod: 0, chancePerLevel: 0, magnitudeBaseLow: 0, magnitudeBaseHigh: 0,
@@ -349,27 +379,46 @@ export function dfuEffectSettings(st) {
  * when nothing of it can be carried.
  */
 export function dfuSpell(b, nextIndex, warnings = []) {
-  if (b?.StandardSpellIndex != null) return num(b.StandardSpellIndex);
+  // A TAGGED bundle is a vampire's or a werebeast's granted spell
+  // (PlayerEntity.cs:1139 vampireSpellTag, :1164 lycanthropySpellTag,
+  // both with MinimumCastingCost): DFU stores it as a stock spell with
+  // a StandardSpellIndex AND the tag, and the port stores it as a
+  // tagged custom record (vampirism.js:163, lycanthropy.js:199) - the
+  // tag is what the cast-cost floor, the cure and the spellbook's
+  // no-delete note key on. AUDIT-DFUSAVE C5: the first draft answered
+  // the bare index and the spell came back untagged at full cost.
+  const tag = typeof b?.Tag === 'string' && b.Tag ? b.Tag : null;
+  if (b?.StandardSpellIndex != null && !tag) return num(b.StandardSpellIndex);
   const effects = [];
+  let over = 0;
   for (const e of b?.Effects ?? []) {
     const pair = E.DFU_EFFECT_CLASSIC_KEYS[e?.Key];
     if (!pair) { warnings.push(`spell "${b?.Name ?? '?'}": effect "${e?.Key}" has no classic key - dropped`); continue; }
+    if (effects.length >= 3) { over++; continue; }   // the classic record's three slots
     effects.push({ type: pair[0], subType: pair[1] === 255 ? -1 : pair[1], ...dfuEffectSettings(e.Settings) });
-    if (effects.length >= 3) break;
   }
+  if (over) warnings.push(`spell "${b?.Name ?? '?'}": ${over} effect(s) past the classic record's three were dropped`);
   if (!effects.length) { warnings.push(`spell "${b?.Name ?? '?'}": no effect survived - dropped`); return null; }
   while (effects.length < 3) effects.push(EMPTY_EFFECT());
-  return {
+  if (b.Icon?.key) warnings.push(`spell "${b?.Name ?? '?'}": its icon pack "${b.Icon.key}" does not come over; the classic icon index does`);
+  const record = {
     effects,
     element: flagIndex(b.ElementType ?? 'Magic', E.DFU_ELEMENT_TYPES),
     rangeType: flagIndex(b.TargetType ?? 'CasterOnly', E.DFU_TARGET_TYPES),
     name: String(b.Name ?? ''),
-    // RestoreInstancedBundleSaveData's icon migration (EntityEffectManager.cs:2309-2311): a SpellIcon with no key and index 0 means the legacy flat IconIndex.
-    icon: (((b.Icon && (b.Icon.key || num(b.Icon.index)) ? num(b.Icon.index) : num(b.IconIndex)) % 55) + 55) % 55,
+    // RestoreInstancedBundleSaveData's icon migration (EntityEffectManager.cs:2315-2318): a SpellIcon with no key and index 0 means the legacy flat IconIndex. The port's icon is the classic 0-54 index (SPELL_ICON_COUNT); a pack key has no home here.
+    icon: (((b.Icon && (b.Icon.key || num(b.Icon.index)) ? num(b.Icon.index) : num(b.IconIndex)) % SPELL_ICON_COUNT) + SPELL_ICON_COUNT) % SPELL_ICON_COUNT,
     cost: 0,
     index: nextIndex(),
     custom: true,
   };
+  if (tag) {
+    record.tag = tag === 'vampire' ? VAMPIRE_SPELL_TAG : tag === 'lycanthrope' ? LYCANTHROPY_SPELL_TAG : tag;
+    record.minimumCastingCost = true;
+  } else if (b.MinimumCastingCost) {
+    record.minimumCastingCost = true;
+  }
+  return record;
 }
 
 // ── the effects that outlive a load ───────────────────────────────
@@ -389,7 +438,12 @@ export function dfuActiveEffects(bundles, warnings = []) {
   const out = [];
   let dropped = 0;
   for (const b of bundles ?? []) {
+    // A HeldMagicItem bundle is the port's held-item runtime's to
+    // rebuild from the worn item; DFU itself drops one whose item is
+    // gone (EntityEffectManager.cs:2311-2313). AUDIT-DFUSAVE C13.
+    if (enumValue(b?.bundleType ?? 'None', E.DFU_BUNDLE_TYPES) === E.DFU_BUNDLE_TYPES.HeldMagicItem) continue;
     for (const fx of b?.liveEffects ?? []) {
+      if (fx?.effectEnded) continue;   // EntityEffect.cs:550 - an ended effect still in the list (AUDIT-DFUSAVE C10)
       const key = String(fx?.key ?? '');
       const sp = fx?.effectSpecific ?? null;
       if (key.startsWith(E.DFU_DISEASE_KEY_PREFIX)) {
@@ -424,10 +478,13 @@ export function dfuActiveEffects(bundles, warnings = []) {
           statMods: statModsMap(fx.statMods), skillMods: {},
           moveSoundTimer: 0,   // InitMoveSoundTimer runs at the curse; a fresh wait starts on the first frame
         });
-      } else if (key.startsWith(E.DFU_DRAIN_KEY_PREFIX) && sp && sp.drainStat != null) {
+      } else if ((key.startsWith(E.DFU_DRAIN_KEY_PREFIX) || key.startsWith(E.DFU_TRANSFER_KEY_PREFIX)) && sp && sp.drainStat != null) {
+        // TransferEffect : DrainEffect (TransferEffect.cs:18) - the same
+        // permanent drain under the other key; the port's statMods.js
+        // reads both kinds. AUDIT-DFUSAVE C4.
         const stat = STAT_KEYS_ORDER[enumValue(sp.drainStat, E.DFU_STATS)];
         if (!stat) { dropped++; continue; }
-        out.push({ kind: 'drainAttribute', stat, magnitude: num(sp.magnitude), permanent: true });
+        out.push({ kind: key.startsWith(E.DFU_TRANSFER_KEY_PREFIX) ? 'transferAttribute' : 'drainAttribute', stat, magnitude: num(sp.magnitude), permanent: true });
       } else if (key.startsWith(E.DFU_POISON_KEY_PREFIX)) {
         const name = key.slice(E.DFU_POISON_KEY_PREFIX.length);
         if (!(name in E.DFU_POISONS)) { warnings.push(`poison "${key}" unknown - dropped`); continue; }
@@ -464,16 +521,24 @@ export function dfuWorldBag(p) {
 
 /** The same struct as the player's, into makeAnchor's record (the
  *  Recall anchor, PlayerEntity.AnchorPosition). */
-export function dfuAnchor(p) {
+export function dfuAnchor(p, warnings = []) {
   if (!p || (num(p.worldPosX) === 0 && num(p.worldPosZ) === 0)) return null;
   const ctx = enumValue(p.worldContext ?? 'Exterior', E.DFU_WORLD_CONTEXT);
-  const worldContext = ctx === E.DFU_WORLD_CONTEXT.Dungeon ? WORLD_CONTEXT.Dungeon
-    : ctx === E.DFU_WORLD_CONTEXT.Interior ? WORLD_CONTEXT.Interior : WORLD_CONTEXT.Exterior;
+  if (ctx !== E.DFU_WORLD_CONTEXT.Exterior) {
+    // An anchor set inside carries DFU's door (exteriorDoors) and its
+    // raw Unity local; the port's interior anchor needs the port's door
+    // record and the dungeon's local frame, neither of which is carried
+    // yet (the same gap as a save made inside). Without them the spell
+    // would be consumed and land outside - so no anchor, and the
+    // Recall says 'set an anchor first'. AUDIT-DFUSAVE C7.
+    warnings.push('your Recall anchor was set inside a building or dungeon: it does not come over');
+    return null;
+  }
   const nativeX = num(p.worldPosX), nativeZ = num(p.worldPosZ);
   return makeAnchor({
-    worldContext, pixel: worldCoordToMapPixel(nativeX, nativeZ), nativeX, nativeZ,
+    worldContext: WORLD_CONTEXT.Exterior, pixel: worldCoordToMapPixel(nativeX, nativeZ), nativeX, nativeZ,
     y: num(p.position?.y) - num(p.worldCompensation?.y),
-    local: worldContext === WORLD_CONTEXT.Exterior ? null : [num(p.position?.x), num(p.position?.y), num(p.position?.z)],
+    local: null,
     yaw: num(p.yaw), pitch: num(p.pitch), interior: null, buildingKey: 0,
   });
 }
@@ -569,13 +634,18 @@ export const dfuFaces = (faces) => (faces ?? []).map((f) => ({
 
 /** DiscoveryData.txt (Dictionary<int, DiscoveredLocation>) -> the
  *  port's two stores: locations by `mapID & 0xfffff`, buildings by the
- *  talk seam's `Region:Location` id (townTalk.js:1058). */
-export function dfuDiscovery(dict) {
+ *  port's location id, which is `${regionINDEX}:${locationName}`
+ *  (world.js:7249 discoveryLocationId, townTalk.js:1058 through
+ *  regionNow() = the index). DFU carries the region's NAME; the 62
+ *  names are MAPS.BSA's order (mapsFile.js REGION_NAMES). AUDIT-DFUSAVE
+ *  C2: the first draft keyed by the name, which nothing reads. */
+export function dfuDiscovery(dict, warnings = []) {
   const buildings = {}, locations = {};
   for (const [, loc] of dictEntries(dict)) {
     if (!loc) continue;
     const regionName = String(loc.regionName ?? ''), locationName = String(loc.locationName ?? '');
     locations[num(loc.mapID) & 0xfffff] = { regionName, locationName };
+    const regionIndex = REGION_NAMES.indexOf(regionName);
     const b = {};
     for (const [, rec] of dictEntries(loc.discoveredBuildings)) {
       if (!rec) continue;
@@ -586,7 +656,9 @@ export function dfuDiscovery(dict) {
         isOverrideName: bool(rec.isOverrideName), oldDisplayName: rec.oldDisplayName ?? null,
       };
     }
-    if (Object.keys(b).length) buildings[`${regionName}:${locationName}`] = b;
+    if (!Object.keys(b).length) continue;
+    if (regionIndex < 0) { warnings.push(`discovered buildings in "${locationName}": region "${regionName}" is not one of the 62 - dropped`); continue; }
+    buildings[`${regionIndex}:${locationName}`] = b;
   }
   return { buildings, locations };
 }
@@ -604,11 +676,16 @@ export function dfuFactionRep(factionData) {
   return out.ids.length ? out : null;
 }
 
+/** An enum value with NO name (Races has no 0, and a zero NPCData
+ *  struct carries one) prints as JSON null - fsEnumConverter's
+ *  Enum.GetName miss - and reads back as the struct's zero, exactly
+ *  the port's own ZERO_NPC_DATA. */
+const zeroEnum = (v, table) => (v == null ? 0 : enumValue(v, table));
 const npcData = (n) => (n ? {
   hash: num(n.hash), flags: num(n.flags), factionID: num(n.factionID), nameSeed: num(n.nameSeed),
-  gender: enumValue(n.gender ?? 'Male', E.DFU_GENDERS), race: enumValue(n.race ?? 'Breton', E.DFU_RACES),
-  context: enumValue(n.context ?? 'Custom', E.DFU_NPC_CONTEXT), mapID: num(n.mapID), locationID: num(n.locationID),
-  buildingKey: num(n.buildingKey), nameBank: enumValue(n.nameBank ?? 'Breton', E.DFU_BANK_TYPES),
+  gender: zeroEnum(n.gender, E.DFU_GENDERS), race: zeroEnum(n.race, E.DFU_RACES),
+  context: zeroEnum(n.context, E.DFU_NPC_CONTEXT), mapID: num(n.mapID), locationID: num(n.locationID),
+  buildingKey: num(n.buildingKey), nameBank: zeroEnum(n.nameBank, E.DFU_BANK_TYPES),
   billboardArchiveIndex: num(n.billboardArchiveIndex), billboardRecordIndex: num(n.billboardRecordIndex),
 } : null);
 
@@ -699,7 +776,7 @@ function resourceSpecific(type, sp, warnings) {
       };
     case 'Person':
       return {
-        race: enumValue(sp.race ?? 'Breton', E.DFU_RACES), nameBank: enumValue(sp.nameBank ?? 'Breton', E.DFU_BANK_TYPES),
+        race: sp.race == null ? -1 : enumValue(sp.race, E.DFU_RACES), nameBank: zeroEnum(sp.nameBank, E.DFU_BANK_TYPES),
         npcGender: enumValue(sp.npcGender ?? 'Male', E.DFU_GENDERS), faceIndex: num(sp.faceIndex), nameSeed: num(sp.nameSeed),
         isQuestor: bool(sp.isQuestor), isIndividualNPC: bool(sp.isIndividualNPC), isIndividualAtHome: bool(sp.isIndividualAtHome),
         displayName: sp.displayName ?? null, homePlaceSymbol: symbol(sp.homePlaceSymbol), lastAssignedPlaceSymbol: symbol(sp.lastAssignedPlaceSymbol),
@@ -809,6 +886,20 @@ export function dfuSaveToSnapshot(save) {
   if (!raceById(raceId)) warnings.push(`race id ${raceId} is not one of the eight - Breton stands in`);
   const career = pe.careerTemplate ? dfuCareerToRecord(pe.careerTemplate) : null;
   const stats = dfuStats(pe.stats);
+  const skills = dfuSkills(pe.skills);
+  // SerializablePlayer.RestorePlayerData's two guards (:295-296, :350-
+  // 351): a zero current sum is recomputed from the career's skills,
+  // a non-positive starting sum estimated from the level. AUDIT-DFUSAVE
+  // C9: without them advancement.js's calculatePlayerLevel reads a
+  // character as many levels overdue.
+  let currentLevelUpSkillSum = num(pe.currentLevelUpSkillSum);
+  if (currentLevelUpSkillSum === 0 && career) currentLevelUpSkillSum = levelUpSkillSum({ career, skills });
+  let startingLevelUpSkillSum = num(pe.startingLevelUpSkillSum);
+  if (startingLevelUpSkillSum <= 0) {
+    // EstimateStartingLevelUpSkillSum (PlayerEntity.cs:1480-1489)
+    const estimatedSum = Math.trunc(((num(pe.level, 1) + 0.5) * 15) - (28 + currentLevelUpSkillSum)) * -1;
+    startingLevelUpSkillSum = (currentLevelUpSkillSum > 0 && startingLevelUpSkillSum > currentLevelUpSkillSum) ? currentLevelUpSkillSum : estimatedSum;
+  }
 
   // Items, and the two things that name an item by its DFU uid.
   const items = dfuCollection(pe.items, warnings);
@@ -835,6 +926,8 @@ export function dfuSaveToSnapshot(save) {
 
   const { regionConditions, legalRep, regionPrices } = dfuRegionData(pe.regionData);
   const bank = dfuBank(sd.bankAccounts, sd.bankDeeds);
+  const anchorPosition = dfuAnchor(pe.anchorPosition, warnings);
+  const discovery = dfuDiscovery(save.discoveryData, warnings);
   const worldContext = enumValue(pos.worldContext ?? 'Exterior', E.DFU_WORLD_CONTEXT);
   if (pos.insideDungeon || worldContext === E.DFU_WORLD_CONTEXT.Dungeon) warnings.push('the save was made inside a dungeon: you start outside it');
   else if (pos.insideBuilding || worldContext === E.DFU_WORLD_CONTEXT.Interior) warnings.push('the save was made inside a building: you start outside it');
@@ -874,7 +967,7 @@ export function dfuSaveToSnapshot(save) {
     weather: dfuWeather(pos.weather),
 
     // ENTITY_FIELDS, every one minted (the restore copies them blind).
-    name: String(pe.name ?? ''),
+    name: String(pe.name ?? '').trim(),   // SerializablePlayer.cs:371 Name.Trim()
     gender: dfuGender(pe.gender ?? 'Male'),
     race, raceId,
     faceIndex: num(pe.faceIndex),
@@ -882,10 +975,13 @@ export function dfuSaveToSnapshot(save) {
     level: num(pe.level, 1),
     reflexes: enumValue(pe.reflexes ?? 'Average', E.DFU_PLAYER_REFLEXES),
     health: num(pe.currentHealth), maxHealth: num(pe.maxHealth),
-    magicka: num(pe.currentMagicka), maxMagicka: num(pe.currentMagicka),
+    // MaxMagicka is DERIVED in DFU (never serialised); the port's stored
+    // ceiling computes through the same formula home the classic import
+    // uses (classicSave.js:751). AUDIT-DFUSAVE C11.
+    magicka: num(pe.currentMagicka), maxMagicka: spellPoints(stats.intelligence, spellPointMultiplier(career?.abilityFlagsAndSpellPointsBitfield ?? 0x1000)),
     fatigue: num(pe.currentFatigue),
     currentBreath: num(pe.currentBreath),
-    startingLevelUpSkillSum: num(pe.startingLevelUpSkillSum), currentLevelUpSkillSum: num(pe.currentLevelUpSkillSum),
+    startingLevelUpSkillSum, currentLevelUpSkillSum,
     readyToLevelUp: false, pendingLevel: null, chargenDone: true,
     biographyResistDiseaseMod: num(pe.biographyResistDiseaseMod), biographyResistMagicMod: num(pe.biographyResistMagicMod),
     biographyAvoidHitMod: num(pe.biographyAvoidHitMod), biographyResistPoisonMod: num(pe.biographyResistPoisonMod),
@@ -897,7 +993,7 @@ export function dfuSaveToSnapshot(save) {
     minMetalToHit: enumValue(pe.minMetalToHit ?? 'None', E.DFU_WEAPON_MATERIAL_TYPES),
 
     stats,
-    skills: dfuSkills(pe.skills),
+    skills,
     skillUses: Array.from({ length: 35 }, (_, i) => num(pe.skillUses?.[i])),
     career,
     items: items.items,
@@ -908,14 +1004,26 @@ export function dfuSaveToSnapshot(save) {
     bankAccounts: bank.bankAccounts,
     houses: bank.houses,
     ownedShip: bank.ownedShip,
+    // The boarding memory: DFU's Unity-local `position` is under ITS
+    // floating origin and cannot be re-expressed here, but the world
+    // units can, and the ship arrival (world.js shipTransition's
+    // consumer) converts them under the port's origin once the pixel
+    // is built. AUDIT-DFUSAVE C6: the first draft's `pos: null` landed
+    // the disembarking player at the pixel's centre.
     boardShipPosition: pd.boardShipPosition && num(pd.boardShipPosition.worldPosX)
-      ? { mapPixel: worldCoordToMapPixel(num(pd.boardShipPosition.worldPosX), num(pd.boardShipPosition.worldPosZ)), pos: null, yaw: num(pd.boardShipPosition.yaw) }
+      ? {
+        mapPixel: worldCoordToMapPixel(num(pd.boardShipPosition.worldPosX), num(pd.boardShipPosition.worldPosZ)),
+        pos: null,
+        nativeX: num(pd.boardShipPosition.worldPosX), nativeZ: num(pd.boardShipPosition.worldPosZ),
+        y: num(pd.boardShipPosition.position?.y) - num(pd.boardShipPosition.worldCompensation?.y),
+        yaw: num(pd.boardShipPosition.yaw),
+      }
       : null,
     rentedRooms: (pe.rentedRooms ?? []).map((r) => ({
       name: String(r.name ?? ''), mapId: num(r.mapID), buildingKey: num(r.buildingKey),
       allocatedBedIndex: num(r.allocatedBedIndex), expiryMinutes: dfuSecondsToClassicMinutes(r.expiryTime),
     })),
-    anchorPosition: dfuAnchor(pe.anchorPosition),
+    anchorPosition,
     racialOverridePending: null,
     spells,
     activeEffects: dfuActiveEffects(pe.instancedEffectBundles, warnings),
@@ -932,7 +1040,7 @@ export function dfuSaveToSnapshot(save) {
     lightSourceIndex,
     factionRep: dfuFactionRep(save.factionData),
     guildMemberships: { mortal: dfuMembershipBook(pd.guildMemberships, warnings), vampire: dfuMembershipBook(pd.vampireMemberships, warnings) },
-    discovery: dfuDiscovery(save.discoveryData),
+    discovery,
     automap: null,
     regionPrices,
     regionConditions,
@@ -941,7 +1049,7 @@ export function dfuSaveToSnapshot(save) {
     timeToBecomeVampireOrWerebeast: num(pe.timeToBecomeVampireOrWerebeast),
   };
   if (bank.ownedShip < 0 && pd.boardShipPosition) snap.boardShipPosition = null;
-  if (pd.boardShipPosition && snap.boardShipPosition) warnings.push('the save was made at sea: you disembark at the ship');
+  if (pd.boardShipPosition && snap.boardShipPosition) warnings.push('the save was made aboard your ship: leaving it puts you back where you boarded');
 
   return {
     snap,

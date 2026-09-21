@@ -11,37 +11,41 @@
 
 import * as E from '../src/formats/dfuEnums.js';
 import { GROUP_TEMPLATE_INDICES } from '../src/systems/itemTemplatesData.js';
-import { CLASSIC_EPOCH_IN_SECONDS } from '../src/systems/gameDate.js';
+import { CLASSIC_EPOCH_IN_SECONDS, dateFromSeconds } from '../src/systems/gameDate.js';
+import { MOBILE_TYPES } from '../src/characters/mobileTypes.js';
 
 /** `[fsObject("v1")]` as printed. */
 export const v1 = (content) => ({ $version: 'v1', $content: content });
 
-/** An enum VALUE -> the first name declared for it (Enum.ToString). A
- *  null is what the port writes where C# has a struct field that can
- *  only be its zero, so it prints as the zero's name. */
+/** An enum VALUE -> the first name declared for it, as fsEnumConverter
+ *  prints it (Enum.GetName). A null is what the port writes where C#
+ *  has a struct field that can only be its zero, so it prints as the
+ *  zero's name; a value with NO name (Races has no 0, and a zero
+ *  NPCData carries one) prints as JSON null - GetName's miss becomes a
+ *  null fsData (AUDIT-DFUSAVE R11). */
 export function nameOf(table, value) {
   if (value == null) value = 0;
   for (const [k, v] of Object.entries(table)) if (v === value) return k;
-  return value;   // .NET prints the integer when no name matches (Races has no 0, and a zero NPCData carries one)
+  return null;
 }
 
-/** A [Flags] value -> ", "-joined names, .NET style; 0 -> its zero name. */
+/** A [Flags] value -> ","-joined names as fsEnumConverter builds them
+ *  (only the members whose bit is set; NO member set prints as the
+ *  EMPTY string, not the zero's name - AUDIT-DFUSAVE R6). The .NET
+ *  ", " spelling is accepted on read too. */
 export function flagNames(table, value) {
-  if (!value) return nameOf(table, 0);
+  if (!value) return '';
   const parts = [];
   for (const [k, v] of Object.entries(table)) if (v && (value & v) === v && parts.every((p) => table[p] !== v)) parts.push(k);
-  return parts.join(', ');
+  return parts.join(',');
 }
 
 /** DaggerfallDateTime.FromSeconds (:446-473) - absolute seconds to the
- *  six serialised fields. */
+ *  six serialised fields. ONE home: gameDate.js's dateFromSeconds IS
+ *  that member; this raises the case to the C#'s. */
 export function dfuDate(seconds) {
-  let dayno = Math.floor(seconds / 86400);
-  const dayclock = seconds % 86400;
-  let Year = 0, Month = 0;
-  while (dayno >= 360) { dayno -= 360; Year++; }
-  while (dayno >= 30) { dayno -= 30; Month++; }
-  return { Year, Month, Day: dayno, Hour: Math.floor(dayclock / 3600), Minute: Math.floor((dayclock % 3600) / 60), Second: dayclock % 60 };
+  const d = dateFromSeconds(seconds);
+  return { Year: d.year, Month: d.month, Day: d.day, Hour: d.hour, Minute: d.minute, Second: d.second };
 }
 /** The port's classic seconds -> DFU's absolute date. */
 export const classicSecondsToDate = (s) => dfuDate(Number(s) + CLASSIC_EPOCH_IN_SECONDS);
@@ -72,11 +76,11 @@ export function shapeItem(it, uid) {
     worldTextureArchive: it.worldTextureArchive ?? 0, worldTextureRecord: it.worldTextureRecord ?? 0,
     itemGroup: it.group, groupIndex, currentVariant: it.variant ?? 0,
     isQuestItem: !!it.questItem, questUID: it.questUID ?? 0, questItemSymbol: it.questSymbol ? symbol(it.questSymbol) : null,
-    trappedSoulType: it.trappedSoulType ?? 'None', className: null,
+    trappedSoulType: nameOf(MOBILE_TYPES, it.trappedSoulType ?? MOBILE_TYPES.None), className: null,
     poisonType: it.poisonType != null ? nameOf(E.DFU_POISONS, it.poisonType) : 'None',
     potionRecipe: it.potionRecipeKey ?? 0,
     repairData: v1(it.repairData
-      ? { sceneName: `DaggerfallInterior [MapID=0, BuildingKey=${it.repairData.buildingKey}]`, timeStarted: classicMinutesToSeconds(it.repairData.timeStarted), repairTime: it.repairData.repairTime }
+      ? { sceneName: `DaggerfallInterior [MapID=0, BuildingKey=${it.repairData.buildingKey}]`, timeStarted: classicMinutesToSeconds(it.repairData.timeStarted), repairTime: it.repairData.repairTime * 60 }   // DFU's repairTime is SECONDS
       : { sceneName: null, timeStarted: 0, repairTime: 0 }),
     timeForItemToDisappear: it.timeForItemToDisappear ?? 0, timeHealthLeechLastUsed: it.timeHealthLeechLastUsed ?? 0,
     artifactIndexBitfield: it.artifactIndexBitfield ?? 0,

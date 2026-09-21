@@ -199,7 +199,7 @@ export function findMostRecentSave(storage = store()) {
  *  the same name, else the first free key. The info is written LAST -
  *  its presence is what makes the slot real, the manifest-last shape
  *  the ingest already proved out.
- *  @returns {{ ok: boolean, key: number }} */
+ *  @returns {{ ok: boolean, key: number, error?: string, screenshotDropped?: boolean }} */
 export function saveSlot(characterName, saveName, snap, { screenshot = null, storage = store(), now = Date.now() } = {}) {
   if (!storage || !snap) return { ok: false, key: -1 };
   let key = findSave(characterName, saveName, storage);
@@ -213,18 +213,31 @@ export function saveSlot(characterName, saveName, snap, { screenshot = null, sto
   };
   try {
     storage.setItem(SAVE_DATA_PREFIX + key, JSON.stringify(snap));
-    if (screenshot) storage.setItem(SAVE_SHOT_PREFIX + key, screenshot);
-    else storage.removeItem(SAVE_SHOT_PREFIX + key);   // an overwrite without a capture drops the stale picture
-    storage.setItem(SAVE_INFO_PREFIX + key, JSON.stringify(saveInfo));
-    return { ok: true, key };
+    storage.setItem(SAVE_INFO_PREFIX + key, JSON.stringify(saveInfo));   // info LAST: the slot is real once its card is
   } catch (err) {
     console.warn('[saveSlots] save write failed:', err?.name ?? err);
     // A half-written NEW slot must not linger as an orphan; an
     // overwritten slot keeps whatever survived (its info still names
     // the old write's data - the blob is one key, so it is whole).
     try { if (!saveInfoOf(key, storage)) { storage.removeItem(SAVE_DATA_PREFIX + key); storage.removeItem(SAVE_SHOT_PREFIX + key); } } catch { /* storage gone */ }
-    return { ok: false, key };
+    return { ok: false, key, error: err?.name ?? String(err) };
   }
+  // AUDIT-DFUSAVE R1: the PICTURE is optional in fact, not only in
+  // name. It used to be written between the data and the card inside
+  // the one try, so a screenshot the storage refused (a quota hit - a
+  // DFU import's full-screen JPEG is the first thing that ever did)
+  // took the whole save down with it: the catch saw no card yet and
+  // swept the data. Now the save stands, and a refused picture is a
+  // missing picture.
+  try {
+    if (screenshot) storage.setItem(SAVE_SHOT_PREFIX + key, screenshot);
+    else storage.removeItem(SAVE_SHOT_PREFIX + key);   // an overwrite without a capture drops the stale picture
+  } catch (err) {
+    console.warn('[saveSlots] screenshot write failed, the save stands without it:', err?.name ?? err);
+    try { storage.removeItem(SAVE_SHOT_PREFIX + key); } catch { /* storage gone */ }
+    return { ok: true, key, screenshotDropped: true };
+  }
+  return { ok: true, key };
 }
 
 /** Load-side read of a slot's envelope (the LoadGame path parses the

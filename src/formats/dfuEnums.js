@@ -5,7 +5,8 @@
 // stores a number (or, for a few, its own string). These are the name
 // -> value tables the import reads through `enumValue`
 // (formats/dfuSave.js), one per C# enum, each with its declaration
-// cited. Every name carries the DFU_ prefix: the port has its OWN
+// cited (the ones the import reads - a table no site reads is a second
+// home, AUDIT-DFUSAVE D3). Every name carries the DFU_ prefix: the port has its OWN
 // RACES, SKILLS, WORLD_CONTEXT and the rest (its runtime values - a
 // string, an index, a table), and the audit24 one-home gate is right
 // that a second `RACES` would be a second home. These are not the
@@ -94,15 +95,6 @@ export const DFU_POISONS = Object.freeze({
   Indulcet: 136, Sursum: 137, Quaesto_Vil: 138, Aegrotat: 139,
 });
 
-/** Game/Items/ItemEnums.cs:105 - the equip table's 27 slots. */
-export const DFU_EQUIP_SLOTS = Object.freeze({
-  None: -1, Amulet0: 0, Amulet1: 1, Bracelet0: 2, Bracelet1: 3, Ring0: 4, Ring1: 5,
-  Bracer0: 6, Bracer1: 7, Mark0: 8, Mark1: 9, Crystal0: 10, Crystal1: 11,
-  Head: 12, RightArm: 13, Cloak1: 14, LeftArm: 15, Cloak2: 16,
-  ChestClothes: 17, ChestArmor: 18, RightHand: 19, Gloves: 20, LeftHand: 21,
-  Unknown1: 22, LegsArmor: 23, LegsClothes: 24, Unknown2: 25, Feet: 26,
-});
-
 /** Game/MagicAndEffects/MagicAndEffectsEnums.cs:78 */
 export const DFU_BUNDLE_TYPES = Object.freeze({ None: 0, Spell: 1, Disease: 2, Poison: 3, HeldMagicItem: 4, Potion: 5 });
 
@@ -113,9 +105,6 @@ export const DFU_TARGET_TYPES = Object.freeze({ None: 0, CasterOnly: 1, ByTouch:
 /** Game/MagicAndEffects/MagicAndEffectsEnums.cs:36 - [Flags]; the port's
  *  element is the bit's INDEX (Fire 0 .. Magic 4). */
 export const DFU_ELEMENT_TYPES = Object.freeze({ None: 0, Fire: 1, Cold: 2, Poison: 4, Shock: 8, Magic: 16 });
-
-/** DaggerfallUnityEnums.cs:487 */
-export const DFU_ENTITY_TYPES = Object.freeze({ None: 0, Player: 1, CivilianNPC: 2, StaticNPC: 3, EnemyMonster: 4, EnemyClass: 5 });
 
 /** API/DFCareer.cs:448 - DFCareer.Skills, the port's SKILLS order. */
 export const DFU_SKILLS = Object.freeze({
@@ -136,7 +125,6 @@ export const DFU_STATS = Object.freeze({
 
 /** API/DFCareer.cs sub-enums, all inside `careerTemplate` (:229-:518). */
 export const DFU_TOLERANCE = Object.freeze({ Normal: 0, Immune: 1, Resistant: 2, LowTolerance: 3, CriticalWeakness: 4 });
-export const DFU_PROFICIENCY = Object.freeze({ Normal: 0, Forbidden: 1, Expert: 2 });
 export const DFU_ATTACK_MODIFIER = Object.freeze({ Normal: 0, Bonus: 1, Phobia: 2 });
 export const DFU_MATERIAL_FLAGS = Object.freeze({ Iron: 1, Steel: 2, Silver: 4, Elven: 8, Dwarven: 16, Mithril: 32, Adamantium: 64, Ebony: 128, Orcish: 256, Daedric: 512 });
 export const DFU_SHIELD_FLAGS = Object.freeze({ Buckler: 1, RoundShield: 2, KiteShield: 4, TowerShield: 8 });
@@ -191,8 +179,6 @@ export const DFU_QUEST_INFO_RESOURCE_TYPE = Object.freeze({ NotSet: 0, Location:
 export const DFU_RUMOR_TYPE = Object.freeze({ CommonRumor: 0, QuestProgressRumor: 1, QuestRumorMill: 2 });
 /** Game/TalkManager.cs:297 */
 export const DFU_BUILDING_LOCATION_HINT = Object.freeze({ None: 0, ReceivedDirectionalHints: 1, LocationWasMarkedOnMap: 2 });
-/** DaggerfallUnityEnums.cs:293 */
-export const DFU_MOBILE_GENDER = Object.freeze({ Unspecified: 0, Female: 1, Male: 2 });
 
 /** API/DFLocation.cs:106 */
 export const DFU_BUILDING_TYPES = Object.freeze({
@@ -204,20 +190,11 @@ export const DFU_BUILDING_TYPES = Object.freeze({
   AnyShop: 65533, AnyHouse: 65534, AllValid: 65535,
 });
 
-/** API/TextFile.cs:98 - the token formatting names the talk and
- *  notebook files carry; two aliases on 0. */
-export const DFU_TEXT_FORMATTING = Object.freeze({
-  Text: -1, TextHighlight: -2, TextQuestion: -3, TextAnswer: -4,
-  NewLineOffset: 0, NewLine: 0, SameLineOffset: 1, PullPreceeding: 2,
-  FirstCharacter: 32, LastCharacter: 127,
-  FontPrefix: 249, PositionPrefix: 251, JustifyLeft: 252, JustifyCenter: 253,
-  EndOfPage: 246, InputCursorPositioner: 248, EndOfRecord: 254, SubrecordSeparator: 255,
-  Color: 256, Scale: 257, Image: 258, Nothing: 65535,
-});
-
-/** DaggerfallUnityEnums.cs:142 - monsters 0-42, humanoids 128-146,
- *  None = 0xffff. Only the two sentinels the import needs. */
-export const DFU_MOBILE_TYPES_NONE = 65535;
+// The token formatting names (API/TextFile.cs:98) are read by NAME
+// alone (systems/dfuSaveImport.js TOKEN_FORMATTING over quest/message.js's
+// Formatting); MobileTypes is the port's own characters/mobileTypes.js;
+// EquipSlots is characters/paperdoll.js's. AUDIT-DFUSAVE D3: a table
+// with no reader is a second home, not a record.
 
 /**
  * THE EFFECT KEY TABLE - every effect class's `EffectKey` and the
@@ -275,3 +252,4 @@ export const DFU_WEREBOAR_INFECTION_KEY = 'Wereboar-Infection';
 export const DFU_VAMPIRISM_CURSE_KEY = 'Vampirism-Curse';
 export const DFU_LYCANTHROPY_CURSE_KEY = 'Lycanthropy-Curse';
 export const DFU_DRAIN_KEY_PREFIX = 'Drain-';
+export const DFU_TRANSFER_KEY_PREFIX = 'Transfer-';   // TransferEffect : DrainEffect (TransferEffect.cs:18)

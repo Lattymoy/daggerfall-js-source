@@ -17,7 +17,7 @@
 //   - `[fsObject("v1")]` (143 sites in the tree) wraps a versioned type
 //     as { "$version": "v1", "$content": { ...fields } };
 //   - a polymorphic field (`object effectSpecific`, EntityEffectManager
-//     .cs:2216) carries "$type": "Namespace.Type" beside its content;
+//     .cs:2218) carries "$type": "Namespace.Type" beside its content;
 //   - a class-typed object may carry "$id": "<n>" and a second
 //     occurrence of the same object is { "$ref": "<n>" };
 //   - a Dictionary with a string key is an object; any other key type
@@ -81,7 +81,7 @@ export const DFU_SAVE_FILES = Object.freeze(new Set([
   DFU_AUTOMAP_DATA, DFU_QUEST_EXCEPTIONS, DFU_SCREENSHOT, DFU_BIO_FILE,
 ].map((n) => n.toUpperCase())));
 
-/** The folder prefix (SaveLoadManager.cs:44 `savePrefix = "SAVE"`). */
+/** The folder prefix (SaveLoadManager.cs:42 `savePrefix = "SAVE"`). */
 export const DFU_SAVE_PREFIX = 'SAVE';
 
 // ── the Full Serializer envelope ──────────────────────────────────
@@ -222,6 +222,7 @@ export function dictEntries(node) {
 export function enumValue(v, names) {
   if (typeof v === 'number') return v;
   if (typeof v === 'string') {
+    if (v === '') return 0;   // fsEnumConverter prints a ZERO [Flags] value as the empty string (no member matched) - AUDIT-DFUSAVE R6
     if (/^-?\d+$/.test(v)) return Number(v);
     let out = 0;
     for (const part of v.split(',')) {
@@ -299,6 +300,7 @@ export function readDfuSave(index, files) {
   if (info.saveVersion > DFU_LATEST_SAVE_VERSION) {
     throw new Error(`SAVE${index}: save version ${info.saveVersion} is newer than ${DFU_LATEST_SAVE_VERSION}`);
   }
+  if (get(DFU_SAVE_DATA) == null) throw new Error(`SAVE${index}: no ${DFU_SAVE_DATA}`);
   const saveData = json(DFU_SAVE_DATA);
   if (!isObj(saveData) || !isObj(saveData.header)) throw new Error(`SAVE${index}: ${DFU_SAVE_DATA} is not a SaveData_v1`);
   const modData = new Map();
@@ -335,43 +337,48 @@ export function readDfuSave(index, files) {
  * A picked path's SAVE<n> slot and file, or null: a `SAVE<digits>`
  * segment then one of the save's names (or a mod_*.txt),
  * case-folded. DFU's slots are unbounded (SAVE0 upward, :739) unlike
- * the classic six.
+ * the classic six. `folder` is the path up to and including the
+ * SAVE<n> segment - the save's identity, because a pick can hold two
+ * SAVE0 folders under different parents (a `Saves` beside a
+ * `Saves_backup`), and DFU's own folder IS the save (AUDIT-DFUSAVE R2).
  * @param {string} path
- * @returns {{index:number, name:string}|null}
+ * @returns {{index:number, name:string, folder:string}|null}
  */
 export function dfuSaveSlot(path) {
-  const m = String(path).toUpperCase().match(/(?:^|\/)SAVE(\d+)\/([^/]+)$/);
+  const m = String(path).match(/^(.*?(?:^|\/)SAVE(\d+))\/([^/]+)$/i);
   if (!m) return null;
-  const name = m[2];
+  const name = m[3].toUpperCase();
   if (!DFU_SAVE_FILES.has(name) && !/^MOD_.+\.TXT$/.test(name)) return null;
-  return { index: Number(m[1]), name };
+  return { index: Number(m[2]), name, folder: m[1] };
 }
 
 /**
  * The Directory.GetDirectories walk over picked file-likes (anything
- * with a path and an `arrayBuffer()` or `text()`): `{ saveIndex: {
- * FILENAME: file } }` keyed by the SAVE<n> segment, everything else
- * dropped. A folder without SaveInfo.txt is not a save (:751) and is
- * dropped whole.
+ * with a path and an `arrayBuffer()` or `text()`): one entry per
+ * SAVE<n> FOLDER - `{ index, folder, files: { FILENAME: file } }` -
+ * in index order, then folder order, everything else dropped. A
+ * folder without SaveInfo.txt is not a save (:751) and is dropped
+ * whole. Two folders with the same index are two saves, not one.
  * @param {Iterable<any>} files
- * @returns {Record<number, Record<string, any>>}
+ * @returns {Array<{index:number, folder:string, files:Record<string, any>}>}
  */
 export function collectDfuSaveFiles(files) {
-  /** @type {Record<number, Record<string, any>>} */
-  const saves = {};
+  /** @type {Map<string, {index:number, folder:string, files:Record<string, any>}>} */
+  const byFolder = new Map();
   for (const f of files) {
     const slot = dfuSaveSlot(f.webkitRelativePath || f.name);
     if (!slot) continue;
-    (saves[slot.index] ??= {})[slot.name] = f;
+    let entry = byFolder.get(slot.folder);
+    if (!entry) { entry = { index: slot.index, folder: slot.folder, files: {} }; byFolder.set(slot.folder, entry); }
+    entry.files[slot.name] = f;
   }
-  for (const k of Object.keys(saves)) {
-    if (!saves[k][DFU_SAVE_INFO.toUpperCase()]) delete saves[k];
-  }
-  return saves;
+  return [...byFolder.values()]
+    .filter((e) => e.files[DFU_SAVE_INFO.toUpperCase()])
+    .sort((a, b) => a.index - b.index || (a.folder < b.folder ? -1 : a.folder > b.folder ? 1 : 0));
 }
 
 /**
- * Read one collected slot's file-likes into the text/bytes map
+ * Read one collected folder's file-likes into the text/bytes map
  * `readDfuSave` takes: text for every .txt, bytes for the screenshot.
  * @param {Record<string, any>} slotFiles
  * @returns {Promise<Record<string, string|Uint8Array>>}

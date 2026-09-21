@@ -95,6 +95,8 @@ test('DFUSAVE1: a dictionary reads both ways fsSerializer writes one, and an enu
   assert.equal(enumValue(1, G), 1);
   assert.equal(enumValue('1', G), 1);
   assert.equal(enumValue('A, C', { A: 1, B: 2, C: 4 }), 5);
+  assert.equal(enumValue('A,C', { A: 1, B: 2, C: 4 }), 5, 'fsEnumConverter joins with a bare comma');
+  assert.equal(enumValue('', { None: 0, A: 1 }), 0, 'a ZERO [Flags] value prints as the empty string (AUDIT-DFUSAVE R6)');
   assert.throws(() => enumValue('Other', G), /unknown enum name "Other"/);
   assert.throws(() => enumValue(null, G), /enum expected/);
 });
@@ -129,6 +131,7 @@ test('DFUSAVE1: the gates - no SaveInfo, a newer saveVersion, a SaveData that is
   assert.throws(() => readDfuSave(0, { 'SAVEDATA.TXT': files['SAVEDATA.TXT'] }), /SAVE0: no SaveInfo\.txt/);
   assert.throws(() => readDfuSave(2, fixture({ saveVersion: DFU_LATEST_SAVE_VERSION + 1 })), /SAVE2: save version 2 is newer than 1/);
   assert.throws(() => readDfuSave(1, { ...files, 'SAVEDATA.TXT': '[1,2]' }), /SAVE1: SaveData\.txt is not a SaveData_v1/);
+  assert.throws(() => readDfuSave(3, { 'SAVEINFO.TXT': files['SAVEINFO.TXT'] }), /SAVE3: no SaveData\.txt/, 'a missing file is named as missing, not as malformed (AUDIT-DFUSAVE R9)');
   assert.throws(() => readDfuSave(1, { ...files, 'SAVEDATA.TXT': JSON.stringify(v1({ noHeader: 1 })) }), /not a SaveData_v1/);
   assert.throws(() => readDfuSaveInfo('{"saveName":"x"}'), /not a SaveInfo_v1/);
   // The map's keys are the walk's UPPERCASE names; a text arrives as text or bytes.
@@ -137,9 +140,9 @@ test('DFUSAVE1: the gates - no SaveInfo, a newer saveVersion, a SaveData that is
 });
 
 test('DFUSAVE1: the folder walk - a SAVE<n> segment of any index, the roster case-folded, ModData_*, and no SaveInfo means no save', async () => {
-  assert.deepEqual(dfuSaveSlot('Saves/SAVE12/SaveData.txt'), { index: 12, name: 'SAVEDATA.TXT' });
-  assert.deepEqual(dfuSaveSlot('x/save3/mod_foo.dfmod.txt'), { index: 3, name: 'MOD_FOO.DFMOD.TXT' });
-  assert.deepEqual(dfuSaveSlot('SAVE0/bio.txt'), { index: 0, name: 'BIO.TXT' });
+  assert.deepEqual(dfuSaveSlot('Saves/SAVE12/SaveData.txt'), { index: 12, name: 'SAVEDATA.TXT', folder: 'Saves/SAVE12' });
+  assert.deepEqual(dfuSaveSlot('x/save3/mod_foo.dfmod.txt'), { index: 3, name: 'MOD_FOO.DFMOD.TXT', folder: 'x/save3' });
+  assert.deepEqual(dfuSaveSlot('SAVE0/bio.txt'), { index: 0, name: 'BIO.TXT', folder: 'SAVE0' });
   assert.equal(dfuSaveSlot('SAVE1/other.txt'), null, 'a name off the roster');
   assert.equal(dfuSaveSlot('Saves/SAVE1/sub/SaveData.txt'), null, 'a file must sit directly in the slot');
   assert.equal(dfuSaveSlot('Backup/SaveData.txt'), null);
@@ -150,10 +153,12 @@ test('DFUSAVE1: the folder walk - a SAVE<n> segment of any index, the roster cas
     f('Saves/SAVE7/SaveData.txt'),                                      // no SaveInfo -> not a save (:751)
     { name: 'SAVE2/SaveInfo.txt', arrayBuffer: async () => new ArrayBuffer(0) },   // a bare name works too
     f('Saves/Backup/MAPS.BSA'),
+    f('Saves_backup/SAVE0/SaveInfo.txt'), f('Saves_backup/SAVE0/SaveData.txt'),   // a SECOND SAVE0 under another parent: a second save, never merged (AUDIT-DFUSAVE R2)
   ]);
-  assert.deepEqual(Object.keys(saves), ['0', '2']);
-  assert.deepEqual(Object.keys(saves[0]).sort(), ['SAVEDATA.TXT', 'SAVEINFO.TXT', 'SCREENSHOT.JPG']);
-  const loaded = await loadDfuSaveFiles(saves[0]);
+  assert.deepEqual(saves.map((e) => [e.index, e.folder]), [[0, 'Saves/SAVE0'], [0, 'Saves_backup/SAVE0'], [2, 'SAVE2']], 'one entry per FOLDER, index order then folder order');
+  assert.deepEqual(Object.keys(saves[0].files).sort(), ['SAVEDATA.TXT', 'SAVEINFO.TXT', 'SCREENSHOT.JPG']);
+  assert.equal(saves[1].files['SAVEDATA.TXT'].webkitRelativePath, 'Saves_backup/SAVE0/SaveData.txt', 'the backup\'s own file, not the live one\'s');
+  const loaded = await loadDfuSaveFiles(saves[0].files);
   assert.equal(loaded['SAVEINFO.TXT'], 'Saves/SAVE0/SaveInfo.txt', 'a .txt arrives as text');
   assert.ok(loaded['SCREENSHOT.JPG'] instanceof Uint8Array, 'the screenshot as bytes');
 });
@@ -169,7 +174,7 @@ test('DFUSAVE1: OT1\'s phone path - only the roster under a SAVE<n> segment infl
   assert.deepEqual(files.map((x) => x.webkitRelativePath), picked);
   assert.deepEqual(new Uint8Array(await files[0].arrayBuffer()), Uint8Array.of('Saves/SAVE1/SaveInfo.txt'.length));
   const saves = collectDfuSaveFiles(files);
-  assert.deepEqual(Object.keys(saves), ['1'], 'SAVE4 has no SaveInfo and drops');
+  assert.deepEqual(saves.map((e) => e.index), [1], 'SAVE4 has no SaveInfo and drops');
 });
 
 // -------------------------------------------------------------- the source

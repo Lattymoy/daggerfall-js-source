@@ -97,7 +97,8 @@ test('TR4: the picker\'s row is live for an owner, and Ship routes to the telepo
   assert.match(world, /const t = shipTransition\(playerEntity, \{/);
   // F-F1 (the parity audit): the host READS the reposition rather than
   // inferring it from `restore`, so the two encodings cannot drift.
-  assert.match(world, /const localPos = t\.reposition === REPOSITION\.None \? t\.restore\.pos : null;/);
+  // AUDIT-DFUSAVE C6: an imported boarding memory carries WORLD units and no local pos; the same line hands those on for the core to convert
+  assert.match(world, /const localPos = t\.reposition === REPOSITION\.None\n\s+\? \(t\.restore\.pos \?\? \(Number\.isFinite\(t\.restore\.nativeX\) \? \{ nativeX: t\.restore\.nativeX, nativeZ: t\.restore\.nativeZ, y: t\.restore\.y \} : null\)\)\n\s+: null;/);
   assert.match(world, /await _teleportToPixel\(t\.go\.x, t\.go\.y, localPos, \{ reposition: t\.reposition \}\);/);
   assert.match(world, /playerEntity\.boardShipPosition = t\.boardShipPosition;/);
   assert.match(world, /setTransportModeHere\(t\.mode\);/, 'and it lands on Foot through the one seam');

@@ -45,6 +45,8 @@ import { CLASSIC_EPOCH_IN_SECONDS } from '../src/systems/gameDate.js';
 import { GROUP_TEMPLATE_INDICES } from '../src/systems/itemTemplatesData.js';
 import { STAT_KEYS_ORDER } from '../src/systems/statMods.js';
 import { EQUIP_SLOTS } from '../src/characters/paperdoll.js';
+import { MOBILE_TYPES } from '../src/characters/mobileTypes.js';
+import { REGION_NAMES } from '../src/formats/mapsFile.js';
 import { WEATHER_TYPES } from '../src/world/weather.js';
 import { GUILD_GROUPS } from '../src/formats/factionFile.js';
 import { templeOf, orderOf } from '../src/systems/guildVariants.js';
@@ -158,20 +160,22 @@ test('DFUSAVE2: ItemData_v1 -> a port item, FromItemData\'s map under the port\'
   // a quest item, a soul, a poison, a recipe, a repair job, a summoned item's timer, a clothing dye and variant
   const q = dfuItem(weapon({
     itemGroup: 'MensClothing', groupIndex: 2, isQuestItem: true, questUID: 33554600, questItemSymbol: { original: '_item_', name: 'item' },
-    trappedSoulType: 28, poisonType: 'Arsenic', potionRecipe: 0, dyeColor: 'Red', currentVariant: 2,
-    repairData: { sceneName: 'DaggerfallInterior [MapID=12345, BuildingKey=777]', timeStarted: classicMinutesToSeconds(523000), repairTime: 240 },
+    trappedSoulType: 'Vampire', poisonType: 'Arsenic', potionRecipe: 0, dyeColor: 'Red', currentVariant: 2,
+    repairData: { sceneName: 'DaggerfallInterior [MapID=12345, BuildingKey=777]', timeStarted: classicMinutesToSeconds(523000), repairTime: 86400 },   // DFU's floor: SecondsPerDay
     timeForItemToDisappear: 523999, timeHealthLeechLastUsed: 5, legacyMagic: [],
   }), warnings);
   assert.equal(q.questItem, true); assert.equal(q.questUID, 33554600); assert.deepEqual(q.questSymbol, { original: '_item_', name: 'item' }, 'a live Symbol shape - world.js reads questSymbol.name');
-  assert.equal(q.trappedSoulType, 28); assert.equal(q.poisonType, POISONS.Arsenic); assert.equal(q.dye, 2); assert.equal(q.variant, 2);
-  assert.deepEqual(q.repairData, { buildingKey: 777, timeStarted: 523000, repairTime: 240 });
+  assert.equal(q.trappedSoulType, MOBILE_TYPES.Vampire, 'a soul by its NAME, through the port\'s own MobileTypes table (AUDIT-DFUSAVE C3)'); assert.equal(q.poisonType, POISONS.Arsenic); assert.equal(q.dye, 2); assert.equal(q.variant, 2);
+  assert.deepEqual(q.repairData, { buildingKey: 777, timeStarted: 523000, repairTime: 1440 }, 'DFU\'s SECONDS (FormulaHelper.cs:1931) into the port\'s classic MINUTES - one day, not sixty (AUDIT-DFUSAVE C1)');
   assert.equal(q.timeForItemToDisappear, 523999); assert.equal(q.timeHealthLeechLastUsed, 5);
   assert.equal('enchantments' in q, false); assert.equal('magic' in q, false);
   for (const k of Object.keys(q)) assert.ok(k in ITEM_FIELDS, `${k} is a declared item field`);
   // a numbered group and a named soul
   assert.equal(dfuItem(weapon({ itemGroup: 3 }), warnings).group, 'Weapons');
-  const named = dfuItem(weapon({ trappedSoulType: 'Vampire' }), warnings);
-  assert.equal('trappedSoulType' in named, false); assert.match(warnings.at(-1), /trapped soul "Vampire"/);
+  const none = dfuItem(weapon({ trappedSoulType: 'None' }), warnings);
+  assert.equal('trappedSoulType' in none, false, 'an empty gem carries no soul');
+  assert.equal(dfuItem(weapon({ trappedSoulType: 65535 }), warnings).trappedSoulType, undefined, 'and the integer None too');
+  assert.equal(dfuItem(weapon({ trappedSoulType: 'Daedroth' }), warnings).trappedSoulType, MOBILE_TYPES.Daedroth);
   // the drops: an unknown group, a groupIndex off the table, custom enchantments
   assert.equal(dfuItem(weapon({ itemGroup: 'MagicItems', groupIndex: 0 }), warnings), null); assert.match(warnings.at(-1), /has no template/);
   assert.equal(dfuItem(weapon({ itemGroup: 'Nope' }), warnings), null); assert.match(warnings.at(-1), /unknown group/);
@@ -269,8 +273,14 @@ test('DFUSAVE2: where the player stands - worldPosX/Z are PlayerGPS world units,
   assert.deepEqual(dfuWorldBag(p), { pixel: { x: 4000, y: 250 }, nativeX: 4000 * 32768 + 100, nativeZ: (499 - 250) * 32768 + 7, y: 4, piles: [], droppedTorches: [], foes: [], guards: [] });
   const a = dfuAnchor({ ...p, worldContext: 'Exterior', yaw: 10, pitch: -2 });
   assert.equal(a.worldContext, 'Exterior'); assert.deepEqual(a.pixel, { x: 4000, y: 250 }); assert.equal(a.nativeX, p.worldPosX); assert.equal(a.y, 4); assert.equal(a.yaw, 10); assert.equal(a.local, null);
-  const d = dfuAnchor({ ...p, worldContext: 'Dungeon' });
-  assert.equal(d.worldContext, 'Dungeon'); assert.deepEqual(d.local, [1, 5.5, 2]); assert.equal(d.insideDungeon, true);
+  // AUDIT-DFUSAVE C7: an anchor set inside carries DFU's door and its
+  // raw Unity local, neither of which the port's interior anchor can
+  // take yet - so no anchor and a line, rather than a Recall that lands
+  // outside with 'Building has no exterior doors'.
+  const warnings = [];
+  assert.equal(dfuAnchor({ ...p, worldContext: 'Dungeon' }, warnings), null);
+  assert.equal(dfuAnchor({ ...p, worldContext: 'Interior' }, warnings), null);
+  assert.deepEqual(warnings, ['your Recall anchor was set inside a building or dungeon: it does not come over', 'your Recall anchor was set inside a building or dungeon: it does not come over']);
   assert.equal(dfuAnchor(null), null); assert.equal(dfuAnchor({ worldPosX: 0, worldPosZ: 0 }), null, 'a never-set anchor is null');
 });
 
@@ -323,7 +333,12 @@ test('DFUSAVE2: escort faces, discovery (round-tripped through the port\'s store
     discoveredBuildings: pairs([[777, { buildingKey: 777, displayName: 'The Odd Blades', oldDisplayName: null, isOverrideName: false, factionID: 41, quality: 12, buildingType: 'WeaponSmith', lastLockpickAttempt: 0, customUserDisplayName: null }]]),
   }], [99, { mapID: 7, mapPixelID: 99, regionName: 'Wayrest', locationName: 'Wayrest', discoveredBuildings: {} }]]));
   assert.deepEqual(disc.locations, { [0x12345678 & 0xfffff]: { regionName: 'Daggerfall', locationName: 'Daggerfall' }, 7: { regionName: 'Wayrest', locationName: 'Wayrest' } });
-  assert.deepEqual(disc.buildings, { 'Daggerfall:Daggerfall': { 777: { buildingKey: 777, displayName: 'The Odd Blades', factionId: 41, quality: 12, buildingType: 13, lastLockpickAttempt: 0, customUserDisplayName: '', isOverrideName: false, oldDisplayName: null } } });
+  // the port's location id is `${regionINDEX}:${locationName}` (world.js discoveryLocationId, townTalk.js:1058 through regionNow()); DFU carries the NAME (AUDIT-DFUSAVE C2)
+  assert.equal(REGION_NAMES.indexOf('Daggerfall'), 17);
+  assert.deepEqual(disc.buildings, { '17:Daggerfall': { 777: { buildingKey: 777, displayName: 'The Odd Blades', factionId: 41, quality: 12, buildingType: 13, lastLockpickAttempt: 0, customUserDisplayName: '', isOverrideName: false, oldDisplayName: null } } });
+  const w = [];
+  const odd = dfuDiscovery(pairs([[1, { mapID: 9, regionName: 'Nirn', locationName: 'Nowhere', discoveredBuildings: pairs([[1, { buildingKey: 1, displayName: 'x', factionID: 0, quality: 0, buildingType: 'Tavern', lastLockpickAttempt: 0 }]]) }]]), w);
+  assert.deepEqual(odd.buildings, {}); assert.deepEqual(odd.locations, { 9: { regionName: 'Nirn', locationName: 'Nowhere' } }); assert.match(w[0], /region "Nirn" is not one of the 62/);
   restoreDiscovery(disc);
   assert.deepEqual(snapshotDiscovery(), disc, 'the port\'s store takes it and hands it back unchanged');
   restoreDiscovery(null);
@@ -365,16 +380,27 @@ test('DFUSAVE2: the quest machine round-trips - a real quest parsed by the port,
   const lines = rd('vendor/dfu-quests/Quests/B0B40Y09.txt').replace(/^﻿/, '').split(/\r?\n/);
   const q = m.scheduleQuest(lines, 0, { rolls: () => 0.25 });
   m.quests.set(q.uid, q);
+  // AUDIT-DFUSAVE P1: the columns the port writes as null until play
+  // fills them are SEEDED, so the trip proves them and not a
+  // normalisation: every Person's nameBank, every Foe's spell and item
+  // queues (CastSpellOnFoe / GiveItem's consumers).
+  let seeded = { persons: 0, foes: 0 };
+  for (const r of q.resources.values()) {
+    if (r.isPerson) { r.nameBank = 3; seeded.persons++; }
+    if (r.isFoe) { r.queueSpell({ ClassicID: 7, CustomKey: null }); r.queueItem(dfuItem(weapon({ uid: 33554700 + seeded.foes }))); seeded.foes++; }
+  }
+  assert.ok(seeded.persons > 0 && seeded.foes > 0, `seeded ${seeded.persons} persons, ${seeded.foes} foes`);
   const saved = m.getSaveData();
+  assert.ok(saved.quests[0].resources.every((r) => r.type !== 'Person' || r.resourceSpecific.nameBank === 3));
+  assert.ok(saved.quests[0].resources.every((r) => r.type !== 'Foe' || (r.resourceSpecific.spellQueue.length === 1 && r.resourceSpecific.itemQueue.length === 1)));
   assert.deepEqual([...new Set(saved.quests[0].resources.map((r) => r.type))].sort(), ['Clock', 'Foe', 'Item', 'Person', 'Place'], 'the quest carries every resource type');
   const shaped = unwrapFs(parseFsJson(JSON.stringify(shapeQuestMachine(saved))));
   const env = dfuQuestEnvelope(shaped, [{ index: 3, name: 'X', value: true }], { notebookEntries: [['a', 'b']], finishedQuestEntries: [] }, ['M0B00Y00']);
-  // What the port writes as null where C# has a value type: an unplaced
-  // Person's nameBank (C# prints its zero, Breton), a Foe's null queues
-  // (an empty list on the way back). Restore-equivalent, not byte-equal.
   // An ItemData_v1 carries EVERY field, so a port item that came through
   // one carries the zeros the mint left out - the same item to the
-  // restore, with more columns written down.
+  // restore, with more columns written down. (The Person nameBank and
+  // Foe queue normalisations the first draft carried are gone: those
+  // columns are seeded above and must come back as written.)
   const asDfuItem = (it) => (it ? {
     group: it.group, templateIndex: it.templateIndex, name: it.name ?? '', material: it.material ?? 0, value: it.value ?? 0, flags: it.flags ?? 0,
     currentCondition: it.currentCondition ?? 0, maxCondition: it.maxCondition ?? 0, typeDependentData: it.typeDependentData ?? 0,
@@ -390,8 +416,7 @@ test('DFUSAVE2: the quest machine round-trips - a real quest parsed by the port,
   for (const q of expected) {
     for (const r of q.resources) {
       const sp = r.resourceSpecific ?? {};
-      if (r.type === 'Person' && sp.nameBank == null) sp.nameBank = 0;
-      if (r.type === 'Foe') { sp.spellQueue ??= []; sp.itemQueue = (sp.itemQueue ?? []).map(asDfuItem); }
+      if (r.type === 'Foe') sp.itemQueue = sp.itemQueue.map(asDfuItem);
       if (r.type === 'Item') sp.item = asDfuItem(sp.item);
     }
   }
@@ -473,8 +498,9 @@ test('DFUSAVE2: the honest halves - inside a dungeon or a building lands outside
   const building = dfuSaveToSnapshot(open({ worldContext: 'Interior', insideBuilding: true }));
   assert.ok(building.warnings.includes('the save was made inside a building: you start outside it'));
   const sea = dfuSaveToSnapshot(open({ bankDeeds: v1({ shipType: 0, houses: [] }), boardShipPosition: v1({ worldPosX: 4001 * 32768 + 5, worldPosZ: 249 * 32768 + 5, yaw: 3, position: { x: 0, y: 0, z: 0 }, worldCompensation: { x: 0, y: 0, z: 0 } }) }));
-  assert.deepEqual(sea.snap.boardShipPosition, { mapPixel: { x: 4001, y: 250 }, pos: null, yaw: 3 });
-  assert.ok(sea.warnings.includes('the save was made at sea: you disembark at the ship'));
+  // AUDIT-DFUSAVE C6: the WORLD units ride beside the pixel (DFU's Unity-local `pos` cannot), and the ship arrival converts them under the port's origin
+  assert.deepEqual(sea.snap.boardShipPosition, { mapPixel: { x: 4001, y: 250 }, pos: null, nativeX: 4001 * 32768 + 5, nativeZ: 249 * 32768 + 5, y: 0, yaw: 3 });
+  assert.ok(sea.warnings.includes('the save was made aboard your ship: leaving it puts you back where you boarded'));
   assert.equal(sea.snap.ownedShip, 0);
   const noShip = dfuSaveToSnapshot(open({ boardShipPosition: v1({ worldPosX: 5, worldPosZ: 5, yaw: 0 }) }));
   assert.equal(noShip.snap.boardShipPosition, null, 'a boarding memory without a ship is dropped');
@@ -531,15 +557,12 @@ const TABLES = [
   ['LYCANTHROPY_TYPES', 'Assets/Scripts/DaggerfallUnityEnums.cs', 'LycanthropyTypes'],
   ['WEAPON_MATERIAL_TYPES', 'Assets/Scripts/Game/Items/ItemEnums.cs', 'WeaponMaterialTypes'],
   ['POISONS', 'Assets/Scripts/Game/Items/ItemEnums.cs', 'Poisons'],
-  ['EQUIP_SLOTS', 'Assets/Scripts/Game/Items/ItemEnums.cs', 'EquipSlots'],
   ['BUNDLE_TYPES', 'Assets/Scripts/Game/MagicAndEffects/MagicAndEffectsEnums.cs', 'BundleTypes'],
   ['TARGET_TYPES', 'Assets/Scripts/Game/MagicAndEffects/MagicAndEffectsEnums.cs', 'TargetTypes'],
   ['ELEMENT_TYPES', 'Assets/Scripts/Game/MagicAndEffects/MagicAndEffectsEnums.cs', 'ElementTypes'],
-  ['ENTITY_TYPES', 'Assets/Scripts/DaggerfallUnityEnums.cs', 'EntityTypes'],
   ['SKILLS', 'Assets/Scripts/API/DFCareer.cs', 'Skills'],
   ['STATS', 'Assets/Scripts/API/DFCareer.cs', 'Stats'],
   ['TOLERANCE', 'Assets/Scripts/API/DFCareer.cs', 'Tolerance'],
-  ['PROFICIENCY', 'Assets/Scripts/API/DFCareer.cs', 'Proficiency'],
   ['ATTACK_MODIFIER', 'Assets/Scripts/API/DFCareer.cs', 'AttackModifier'],
   ['MATERIAL_FLAGS', 'Assets/Scripts/API/DFCareer.cs', 'MaterialFlags'],
   ['SHIELD_FLAGS', 'Assets/Scripts/API/DFCareer.cs', 'ShieldFlags'],
@@ -566,9 +589,7 @@ const TABLES = [
   ['QUEST_INFO_RESOURCE_TYPE', 'Assets/Scripts/Game/TalkManager.cs', 'QuestInfoResourceType'],
   ['RUMOR_TYPE', 'Assets/Scripts/Game/TalkManager.cs', 'RumorType'],
   ['BUILDING_LOCATION_HINT', 'Assets/Scripts/Game/TalkManager.cs', 'BuildingLocationHintTypeGiven'],
-  ['MOBILE_GENDER', 'Assets/Scripts/DaggerfallUnityEnums.cs', 'MobileGender'],
   ['BUILDING_TYPES', 'Assets/Scripts/API/DFLocation.cs', 'BuildingTypes'],
-  ['TEXT_FORMATTING', 'Assets/Scripts/API/TextFile.cs', 'Formatting'],
 ];
 const SKIP_DFU = missingDfu('Assets/Scripts/DaggerfallUnityEnums.cs') && 'no DFU checkout (DFU_PATH)';
 
@@ -578,13 +599,19 @@ test('DFUSAVE2: every enum table IS the C# declaration (regenerated from the ref
     const ours = E[`DFU_${table}`];
     assert.ok(ours, `formats/dfuEnums.js exports DFU_${table}`);
     for (const [k, v] of Object.entries(cs)) {
-      if (typeof v !== 'number') continue;
+      assert.equal(typeof v, 'number', `${table}.${k}: the parser could not evaluate "${v}" - a member left unchecked is a member unpinned (AUDIT-DFUSAVE P5)`);
       assert.equal(ours[k], v, `${table}.${k} (${file} enum ${name})`);
     }
     for (const k of Object.keys(ours)) assert.ok(k in cs, `${table}.${k} is not in the C# enum ${name}`);
   }
-  const mt = csEnum('Assets/Scripts/DaggerfallUnityEnums.cs', 'MobileTypes');
-  assert.equal(E.DFU_MOBILE_TYPES_NONE, mt.None);
+  // every table the module exports is in the list above - a table with no regeneration pin is a table nobody checks
+  const exported = Object.keys(E).filter((k) => k.startsWith('DFU_') && typeof E[k] === 'object');
+  const pinned = new Set(TABLES.map(([t]) => `DFU_${t}`));
+  assert.deepEqual(exported.filter((k) => !pinned.has(k)).sort(), ['DFU_EFFECT_CLASSIC_KEYS'], 'only the effect-key table has its own sweep');
+  // and every table the module exports has a READER in src/ (AUDIT-DFUSAVE D3: a table nobody reads is a second home)
+  const src = readdirSync(join(ROOT, 'src/systems')).filter((f) => f.endsWith('.js')).map((f) => rd(join('src/systems', f))).join('\n');
+  const unread = Object.keys(E).filter((k) => !new RegExp(`\\bE\\.${k}\\b`).test(src));
+  assert.deepEqual(unread, [], 'every DFU table is read by the import');
 });
 
 test('DFUSAVE2: the effect-key table IS the effect classes\' own EffectKey + MakeClassicKey pairs (regenerated from Effects/**)', { skip: SKIP_DFU }, () => {
@@ -596,14 +623,15 @@ test('DFUSAVE2: the effect-key table IS the effect classes\' own EffectKey + Mak
       if (statSync(p).isDirectory()) { walk(p); continue; }
       if (!f.endsWith('.cs')) continue;
       const cs = readFileSync(p, 'utf8');
-      const key = /EffectKey\s*=\s*"([^"]+)"/.exec(cs);
-      const ck = /MakeClassicKey\((\d+),\s*(\d+)\)/.exec(cs);
-      if (key && ck) found[key[1]] = [Number(ck[1]), Number(ck[2])];
-      else if (key) found[key[1]] = null;
+      // every literal key and every literal classic pair in the file, paired by order (AUDIT-DFUSAVE P5: first-match-only went blind to a second class in a file)
+      const keys = [...cs.matchAll(/EffectKey\s*=\s*"([^"]+)"/g)].map((m) => m[1]);
+      const cks = [...cs.matchAll(/MakeClassicKey\((\d+),\s*(\d+)\)/g)].map((m) => [Number(m[1]), Number(m[2])]);
+      assert.ok(keys.length <= 1 && cks.length <= 1, `${f}: ${keys.length} keys and ${cks.length} classic pairs - the sweep pairs one per file`);
+      if (keys.length) found[keys[0]] = cks[0] ?? null;
     }
   };
   walk(dir);
-  assert.ok(Object.keys(found).length > 80, `the sweep found ${Object.keys(found).length} literal keys`);
+  assert.equal(Object.keys(found).length, 84, `the sweep found ${Object.keys(found).length} literal keys - the reference clone's own count, not an inequality with slack`);
   for (const [key, pair] of Object.entries(found)) {
     if (!(key in E.DFU_EFFECT_CLASSIC_KEYS)) {
       assert.equal(pair, null, `${key} has a classic key in DFU and no row in the table`);

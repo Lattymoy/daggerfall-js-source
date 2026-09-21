@@ -3550,6 +3550,15 @@ export async function bootWorld(canvas, renderer, params, status) {
       || reposition === REPOSITION.DirectionFromStartMarker;
     const hint = reposition === REPOSITION.DirectionFromStartMarker ? travelStart : null;
     const landing = wantsLanding ? locationLandingFor(px, py, { travelStart: hint }) : null;
+    // AUDIT-DFUSAVE C6: a caller's position may be a WORLD-unit bag
+    // (an imported DFU boarding memory has no scene-local pos - DFU's
+    // is under its own floating origin); it converts under the port's
+    // origin now that the pixel is built, the same localFromWorld a
+    // quickload uses, and then ranks as any caller's local position.
+    if (localPos && !Array.isArray(localPos) && Number.isFinite(localPos.nativeX)) {
+      const [lx, lz] = state.localFromWorld(localPos.nativeX, localPos.nativeZ);
+      localPos = [lx, (localPos.y ?? 2) + state.compensation[1], lz];
+    }
     const local = landing?.pos ?? localPos;
     // `grounded` is StreamingWorld.RepositionPlayer's own last argument
     // (:1587, :1592), which the location arm derives from the
@@ -3746,7 +3755,14 @@ export async function bootWorld(canvas, renderer, params, status) {
     // grounded false - :1462-1464) put the player on the deck at a
     // random side of the ship's block rather than at a terrain origin
     // dropped to sea level. The pin is tr4_ship.test.js's data gate.
-    const localPos = t.reposition === REPOSITION.None ? t.restore.pos : null;
+    // AUDIT-DFUSAVE C6: a boarding memory that came over from a DFU
+    // save carries no scene-local `pos` (DFU's is under its own floating
+    // origin) but the WORLD units; the core converts those under the
+    // port's origin once the pixel is built, the same localFromWorld a
+    // quickload uses.
+    const localPos = t.reposition === REPOSITION.None
+      ? (t.restore.pos ?? (Number.isFinite(t.restore.nativeX) ? { nativeX: t.restore.nativeX, nativeZ: t.restore.nativeZ, y: t.restore.y } : null))
+      : null;
     // A10 - THE SCENE CACHE ROUND THE TELEPORT (:382-388, :393-398).
     // BOTH arms of the ship do the same three things in the same
     // order: CacheScene(world.SceneName) with SceneName still naming
