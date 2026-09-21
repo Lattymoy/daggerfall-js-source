@@ -35,6 +35,7 @@ import {
   throwGibs, gibStep, gibFly, gibLand, gibSprayOrigin, shiftGibs, dripFrom,
   GIB_SPLASH_RATE, GIB_COUNT, DRIP_SPLASH_RATE,
 } from './bloodGibs.js';   // BLOOD1b: what a warhammer leaves of a body, and what a ceiling lets go of
+import { bloodAtlas, pickCell, bloodMarkKind, freshTint, dryStage, driedTint, DRY_TICK, BLOOD_ATLAS_ARCHIVE, BLOOD_ATLAS_RECORD } from './bloodArt.js';   // BLOOD2b: the port's own art, made at boot, and how a mark dries
 
 /** How far down a mark looks for something to stain. Blood spawns at
  *  chest height (`bloodCentre` is five eighths up the capsule), so the
@@ -91,7 +92,14 @@ export const GIB_FRAME = 0;
 export function createBloodMarks({ renderer = null, collider = null, settings = null, texture = null, rng = Math.random } = {}) {
   let _pool = null;
   let _batch = null;
-  let _texKey = null;
+  /** BLOOD2b: THE ATLAS, uploaded once through the renderer's own cache
+   *  (every host asks by the same key and gets the same texture) - the
+   *  mark's art is the port's own now, not the splash's settled frame. */
+  let _atlasTex = null;
+  const _atlas = bloodAtlas();
+  /** The pool's clock, for drying: seconds ticked since it was built. */
+  let _clock = 0;
+  let _dryDue = DRY_TICK;
   /** BLOOD1b: chunks in flight. Plain data this pool owns outright,
    *  emptied by `clear()` with the room they were thrown in. */
   let _gibs = [];
@@ -133,7 +141,7 @@ export function createBloodMarks({ renderer = null, collider = null, settings = 
   // which this row already gates, so a second switch would be one
   // that does nothing unless the first is on.
   const overkillOn = () => !!(settings?.overkill?.() ?? false);
-  const markTexture = texture ?? (() => (_texKey ? renderer?.textures?.get?.(_texKey) ?? null : null));
+  const markTexture = texture ?? (() => _atlasTex);
 
   function ensure() {
     if (_pool && _batch) return;
@@ -144,15 +152,20 @@ export function createBloodMarks({ renderer = null, collider = null, settings = 
     // two seams to hold.
     _pool = createBloodDecalPool({ capacity: cap, rng });
     _batch = renderer.createDecalBatch(cap);
+    // BLOOD2b: the atlas rides the renderer's texture cache - one upload
+    // for the page, whichever host asks first, LINEAR-sampled so a splat's
+    // soft edge is soft. A stub renderer with no upload draws no marks,
+    // exactly as one with no texture never did.
+    if (!_atlasTex && renderer?.uploadTexture) _atlasTex = renderer.uploadTexture(BLOOD_ATLAS_ARCHIVE, BLOOD_ATLAS_RECORD, _atlas, { smooth: true }) ?? null;
   }
 
-  /** THE MARK'S ART IS THE SPLASH'S LAST FRAME. A splash plays out to
-   *  the settled splat and then vanishes; that final frame IS the
-   *  stain, so the mark needs no art of its own and the port ships
-   *  none. Only the splash pool can see the frame count, so it tells
-   *  this one. */
-  function useArt(archive, record, frameCount) {
-    _texKey = `${archive}_${record}#${Math.max(0, frameCount - 1)}`;
+  /** BLOOD1a wore the SPLASH'S LAST FRAME for every mark; BLOOD2b makes
+   *  the port's own atlas at boot (bloodArt.js), so the mark takes
+   *  nothing from the splash but the news that blood art exists. What
+   *  the splash pool still tells this one is the CHUNKS' art: a chunk
+   *  is a piece of the body and takes the first frame of the same
+   *  record, and only the splash pool can see the record. */
+  function useArt(archive, record) {
     // BLOOD1b: and the chunks take the FIRST frame of the same record.
     // Every frame of it is uploaded by the splash that told us this, so
     // a chunk needs no art of its own either and the port still ships
@@ -174,6 +187,27 @@ export function createBloodMarks({ renderer = null, collider = null, settings = 
    * Answers DROP ZERO - the body's own spot - or null when nothing in
    * this spray landed at all.
    */
+  /** BLOOD2b: what a mark WEARS - its cell, its fresh tint, its birth.
+   *  Written onto the decal the pool answered so the drying pass can
+   *  find the fresh tint and the birth again. */
+  function dress(d, kind) {
+    d.uv = pickCell(_atlas, kind, rng);
+    d.fresh = freshTint(rng);
+    d.tint = d.fresh;
+    d.born = _clock;
+    d.stage = 0;
+    return d;
+  }
+  /** Lay one dressed mark: place, dress, write its slot. */
+  function lay(at, normal, opts, kind) {
+    const d = _pool.place(at, normal, opts);
+    if (!d) return null;
+    dress(d, kind);
+    writeDecalQuad(_scratch, 0, d, d.uv);
+    renderer.writeDecalSlot(_batch, d.slot, _scratch);   // ONE slot, at its own offset
+    return d;
+  }
+
   function spray(col, pos, n, radius, rate, thrown = null) {
     let pool = null;
     // BLOOD1b: WHICH WAY THE SWING THREW IT. The site worked the two
@@ -213,8 +247,11 @@ export function createBloodMarks({ renderer = null, collider = null, settings = 
         if (wall && Number.isFinite(wall.dist) && wall.dist <= run) {
           const wx = pos[0] + (ox / run) * wall.dist, wz = pos[2] + (oz / run) * wall.dist;
           ensure();
-          const d = _pool.place([wx, pos[1], wz], wall.normal ?? [-ox / run, 0, -oz / run], { size: dropSize(i, rate, rng) });
-          if (d) { writeDecalQuad(_scratch, 0, d); renderer.writeDecalSlot(_batch, d.slot, _scratch); }
+          // BLOOD2b: a wall's mark is a RUN - the bead where it met the
+          // wall and gravity's trail below it; `turn: 0` on a vertical
+          // surface puts the basis' up at world up, which the cell's own
+          // run is drawn against.
+          lay([wx, pos[1], wz], wall.normal ?? [-ox / run, 0, -oz / run], { size: dropSize(i, rate, rng), turn: 0 }, bloodMarkKind({ wall: true }));
           continue;
         }
       }
@@ -246,14 +283,13 @@ export function createBloodMarks({ renderer = null, collider = null, settings = 
       // body to here, and it lands stretched that way - the further it
       // flew, the longer - which is what cast-off blood is. The pool
       // under the body flew nowhere and stays round.
-      const d = _pool.place(at, h.normal ?? (up ? DOWN : [0, 1, 0]), {
+      const stretch = streakFor(run, radius);
+      const d = lay(at, h.normal ?? (up ? DOWN : [0, 1, 0]), {
         size: dropSize(i, rate, rng),
         along: run > 1e-6 ? [ox, 0, oz] : null,
-        stretch: streakFor(run, radius),
-      });
+        stretch,
+      }, bloodMarkKind({ pool: i === 0, stretch }));   // BLOOD2b: the pool wears a pool, a drop that flew a streak, the rest spatter
       if (!d) continue;
-      writeDecalQuad(_scratch, 0, d);
-      renderer.writeDecalSlot(_batch, d.slot, _scratch);   // ONE slot, at its own offset
       // ...and what a ceiling holds, it eventually lets go of.
       if (up && _drips.length < MAX_DRIPS) _drips.push(dripFrom(at));
       if (i === 0) pool = d;
@@ -356,8 +392,30 @@ export function createBloodMarks({ renderer = null, collider = null, settings = 
     return moved;
   }
 
+  /** BLOOD2b: THE MARKS DRY. Every DRY_TICK seconds, each live mark's
+   *  stage is read off its age; one that crossed a stage takes its new
+   *  tint and its slot is rewritten - DRY_STAGES rewrites over a mark's
+   *  whole life, never one a frame. Answers how many were rewritten. */
+  function dry() {
+    if (!_pool || !_pool.count) return 0;
+    let n = 0;
+    for (const d of _pool.decals()) {
+      const stage = dryStage(_clock - (d.born ?? _clock));
+      if (stage === (d.stage ?? 0)) continue;
+      d.stage = stage;
+      d.tint = driedTint(d.fresh ?? d.tint ?? [1, 1, 1, 1], stage);
+      writeDecalQuad(_scratch, 0, d, d.uv);
+      renderer.writeDecalSlot(_batch, d.slot, _scratch);
+      n++;
+    }
+    return n;
+  }
+
   function tick(dt) {
-    if ((!_gibs.length && !_drips.length) || !(dt > 0)) return 0;
+    if (!(dt > 0)) return 0;
+    _clock += dt;
+    if (_clock >= _dryDue) { _dryDue = _clock + DRY_TICK; dry(); }
+    if (!_gibs.length && !_drips.length) return 0;
     // BLOOD1 AUDIT 3: the switch drops what is in the air - the row the
     // gibs ride (see `overkillOn`) is off, so they stop, and their quads go.
     if (!on()) { _gibs = []; _drips = []; reseatGibs(); return 0; }
@@ -406,7 +464,7 @@ export function createBloodMarks({ renderer = null, collider = null, settings = 
     if (!_pool || !_pool.count || !offset) return 0;
     const n = _pool.shiftOrigin(offset);
     for (const d of _pool.decals()) {
-      writeDecalQuad(_scratch, 0, d);
+      writeDecalQuad(_scratch, 0, d, d.uv);
       renderer.writeDecalSlot(_batch, d.slot, _scratch);
     }
     return n;
@@ -475,9 +533,11 @@ export function createBloodMarks({ renderer = null, collider = null, settings = 
     dispose() {
       clear();   // BLOOD1b: which drops the chunks and, through reseatGibs, their batch
       if (_batch) renderer?.destroyDecalBatch?.(_batch);
-      _batch = null; _pool = null; _texKey = null; _gibArt = null;
+      _batch = null; _pool = null; _atlasTex = null; _gibArt = null;   // BLOOD2b: the atlas handle goes; the texture is the renderer cache's, page-lifetime like every cached texture
       _dead = true;   // BLOOD1 AUDIT: and nothing this pool owns is ever built again
     },
     _pool: () => _pool,
+    dry,                       // BLOOD2b: the drying pass, for a pin to drive by name
+    clock: () => _clock,       // BLOOD2b
   };
 }

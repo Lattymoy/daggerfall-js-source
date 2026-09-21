@@ -592,7 +592,7 @@ export function createBloodDecalPool({ capacity = 1000, rng = Math.random } = {}
    * (already turned to face the ray). Answers the decal, or null when
    * the caller handed nothing to place it on.
    */
-  function place(point, normal, { size = 1, tint = null, turn = null, along = null, stretch = 1 } = {}) {
+  function place(point, normal, { size = 1, tint = null, turn = null, along = null, stretch = 1, uv = null } = {}) {
     if (!point || !Number.isFinite(point[0]) || !Number.isFinite(point[1]) || !Number.isFinite(point[2])) return null;
     // BLOOD2a: a drop that flew lies ALONG its travel; one that did not
     // spins as it always has.
@@ -619,6 +619,9 @@ export function createBloodDecalPool({ capacity = 1000, rng = Math.random } = {}
       // across. One is a round drop, the pool's own.
       stretch: Number.isFinite(stretch) ? Math.max(1, stretch) : 1,
       tint,
+      // BLOOD2b: the atlas cell this mark wears - { u0, v0, u1, v1 } - or
+      // null for the whole texture, as BLOOD1a's single frame was.
+      uv,
       // BLOOD1 AUDIT 3: the `parent` a mark could "ride" is GONE. It was
       // stored and never read - the corners are baked into the GPU slot
       // at place, `pos` is world space, and shiftOrigin moved a parented

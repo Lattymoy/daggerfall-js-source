@@ -182,8 +182,8 @@
   {
     "name": "BLOOD1a-the-mark-takes-the-surfaces-normal-from-nowhere",
     "file": "src/combat/bloodMarks.js",
-    "old": "      const d = _pool.place(at, h.normal ?? (up ? DOWN : [0, 1, 0]), {\n        size: dropSize(i, rate, rng),",
-    "new": "      const d = _pool.place(at, [0, 1, 0], {\n        size: dropSize(i, rate, rng),",
+    "old": "      const d = lay(at, h.normal ?? (up ? DOWN : [0, 1, 0]), {\n        size: dropSize(i, rate, rng),",
+    "new": "      const d = lay(at, [0, 1, 0], {\n        size: dropSize(i, rate, rng),",
     "tests": [
       "test/blood1_decals.test.js"
     ]
@@ -254,7 +254,7 @@
   {
     "name": "BLOOD1a-the-shift-moves-the-ring-but-not-the-buffer",
     "file": "src/combat/bloodMarks.js",
-    "old": "    for (const d of _pool.decals()) {\n      writeDecalQuad(_scratch, 0, d);\n      renderer.writeDecalSlot(_batch, d.slot, _scratch);\n    }\n    return n;",
+    "old": "    for (const d of _pool.decals()) {\n      writeDecalQuad(_scratch, 0, d, d.uv);\n      renderer.writeDecalSlot(_batch, d.slot, _scratch);\n    }\n    return n;",
     "new": "    return n;",
     "tests": [
       "test/blood1_decals.test.js"
@@ -1458,7 +1458,7 @@
   {
     "name": "BLOOD2a-a-drop-meeting-a-wall-is-lost-again",
     "file": "src/combat/bloodMarks.js",
-    "old": "          const d = _pool.place([wx, pos[1], wz], wall.normal ?? [-ox / run, 0, -oz / run], { size: dropSize(i, rate, rng) });\n          if (d) { writeDecalQuad(_scratch, 0, d); renderer.writeDecalSlot(_batch, d.slot, _scratch); }\n          continue;",
+    "old": "          lay([wx, pos[1], wz], wall.normal ?? [-ox / run, 0, -oz / run], { size: dropSize(i, rate, rng), turn: 0 }, bloodMarkKind({ wall: true }));\n          continue;",
     "new": "          continue;",
     "tests": [
       "test/blood1_decals.test.js"
@@ -1467,8 +1467,8 @@
   {
     "name": "BLOOD2a-the-wall-mark-lands-at-the-drop-s-spot-not-the-wall",
     "file": "src/combat/bloodMarks.js",
-    "old": "          const d = _pool.place([wx, pos[1], wz], wall.normal ?? [-ox / run, 0, -oz / run], { size: dropSize(i, rate, rng) });",
-    "new": "          const d = _pool.place([fromX, pos[1], fromZ], wall.normal ?? [-ox / run, 0, -oz / run], { size: dropSize(i, rate, rng) });",
+    "old": "          lay([wx, pos[1], wz], wall.normal ?? [-ox / run, 0, -oz / run], { size: dropSize(i, rate, rng), turn: 0 }, bloodMarkKind({ wall: true }));\n          continue;",
+    "new": "          lay([fromX, pos[1], fromZ], wall.normal ?? [-ox / run, 0, -oz / run], { size: dropSize(i, rate, rng), turn: 0 }, bloodMarkKind({ wall: true }));\n          continue;",
     "tests": [
       "test/blood1_decals.test.js"
     ]
@@ -1476,8 +1476,8 @@
   {
     "name": "BLOOD2a-the-wall-mark-is-a-streak",
     "file": "src/combat/bloodMarks.js",
-    "old": "          const d = _pool.place([wx, pos[1], wz], wall.normal ?? [-ox / run, 0, -oz / run], { size: dropSize(i, rate, rng) });",
-    "new": "          const d = _pool.place([wx, pos[1], wz], wall.normal ?? [-ox / run, 0, -oz / run], { size: dropSize(i, rate, rng), along: [ox, 0, oz], stretch: streakFor(run, radius) });",
+    "old": "          lay([wx, pos[1], wz], wall.normal ?? [-ox / run, 0, -oz / run], { size: dropSize(i, rate, rng), turn: 0 }, bloodMarkKind({ wall: true }));\n          continue;",
+    "new": "          lay([wx, pos[1], wz], wall.normal ?? [-ox / run, 0, -oz / run], { size: dropSize(i, rate, rng), turn: 0, along: [ox, 0, oz], stretch: streakFor(run, radius) }, bloodMarkKind({ wall: true }));\n          continue;",
     "tests": [
       "test/blood1_decals.test.js"
     ]
@@ -1530,8 +1530,8 @@
   {
     "name": "BLOOD2a-the-spray-lays-no-travel",
     "file": "src/combat/bloodMarks.js",
-    "old": "        along: run > 1e-6 ? [ox, 0, oz] : null,\n        stretch: streakFor(run, radius),",
-    "new": "        stretch: streakFor(run, radius),",
+    "old": "        along: run > 1e-6 ? [ox, 0, oz] : null,\n        stretch,\n",
+    "new": "        stretch,\n",
     "tests": [
       "test/blood1_decals.test.js"
     ]
@@ -1539,8 +1539,152 @@
   {
     "name": "BLOOD2a-the-spray-lays-no-streak",
     "file": "src/combat/bloodMarks.js",
-    "old": "        along: run > 1e-6 ? [ox, 0, oz] : null,\n        stretch: streakFor(run, radius),",
-    "new": "        along: run > 1e-6 ? [ox, 0, oz] : null,",
+    "old": "        along: run > 1e-6 ? [ox, 0, oz] : null,\n        stretch,\n",
+    "new": "        along: run > 1e-6 ? [ox, 0, oz] : null,\n",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD2b-the-atlas-has-no-clear-border",
+    "file": "src/combat/bloodArt.js",
+    "old": "          const inBorder = px < BORDER || py < BORDER || px >= cell - BORDER || py >= cell - BORDER;",
+    "new": "          const inBorder = false;",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD2b-the-cell-s-uv-is-not-inset",
+    "file": "src/combat/bloodArt.js",
+    "old": "        u0: (x0 + 1) / size, v0: (y0 + 1) / size,\n        u1: (x0 + cell - 1) / size, v1: (y0 + cell - 1) / size,",
+    "new": "        u0: x0 / size, v0: y0 / size,\n        u1: (x0 + cell) / size, v1: (y0 + cell) / size,",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD2b-the-atlas-is-a-different-picture-every-boot",
+    "file": "src/combat/bloodArt.js",
+    "old": "  const roll = rng ?? mulberry32(seed);",
+    "new": "  const roll = rng ?? mulberry32(seed + Math.floor(Math.random() * 1e9));",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD2b-every-mark-wears-spatter",
+    "file": "src/combat/bloodArt.js",
+    "old": "  if (pool) return 'pool';\n  if (wall) return 'drip';\n  return stretch > 1.5 ? 'streak' : 'spatter';",
+    "new": "  return 'spatter';",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD2b-a-fresh-mark-is-always-white",
+    "file": "src/combat/bloodArt.js",
+    "old": "  const r = rng();\n  return [1 - r * FRESH_VARIANCE * 0.5, 1 - r * FRESH_VARIANCE, 1 - r * FRESH_VARIANCE, 1];",
+    "new": "  return [1, 1, 1, 1];",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD2b-a-mark-never-dries",
+    "file": "src/combat/bloodArt.js",
+    "old": "  return Math.min(DRY_STAGES, Math.floor((age / DRY_TIME) * DRY_STAGES));",
+    "new": "  return 0;",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD2b-drying-is-not-clamped",
+    "file": "src/combat/bloodArt.js",
+    "old": "  return Math.min(DRY_STAGES, Math.floor((age / DRY_TIME) * DRY_STAGES));",
+    "new": "  return Math.floor((age / DRY_TIME) * DRY_STAGES);",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD2b-the-dried-tint-ignores-the-stage",
+    "file": "src/combat/bloodArt.js",
+    "old": "  const t = Math.max(0, Math.min(1, stage / DRY_STAGES));\n  if (t >= 1)",
+    "new": "  const t = 0;\n  if (t >= 1)",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD2b-the-tick-never-dries",
+    "file": "src/combat/bloodMarks.js",
+    "old": "    if (_clock >= _dryDue) { _dryDue = _clock + DRY_TICK; dry(); }\n",
+    "new": "",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD2b-the-drying-pass-rewrites-every-mark-every-time",
+    "file": "src/combat/bloodMarks.js",
+    "old": "      if (stage === (d.stage ?? 0)) continue;\n",
+    "new": "",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD2b-a-recentre-drops-the-cell",
+    "file": "src/combat/bloodMarks.js",
+    "old": "    for (const d of _pool.decals()) {\n      writeDecalQuad(_scratch, 0, d, d.uv);",
+    "new": "    for (const d of _pool.decals()) {\n      writeDecalQuad(_scratch, 0, d);",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD2b-the-wall-s-mark-is-spatter",
+    "file": "src/combat/bloodMarks.js",
+    "old": "{ size: dropSize(i, rate, rng), turn: 0 }, bloodMarkKind({ wall: true }));",
+    "new": "{ size: dropSize(i, rate, rng), turn: 0 }, bloodMarkKind({}));",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD2b-the-pool-under-the-body-is-spatter",
+    "file": "src/combat/bloodMarks.js",
+    "old": "      }, bloodMarkKind({ pool: i === 0, stretch }));",
+    "new": "      }, bloodMarkKind({ stretch }));",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD2b-the-atlas-is-sampled-nearest",
+    "file": "src/combat/bloodMarks.js",
+    "old": "_atlasTex = renderer.uploadTexture(BLOOD_ATLAS_ARCHIVE, BLOOD_ATLAS_RECORD, _atlas, { smooth: true }) ?? null;",
+    "new": "_atlasTex = renderer.uploadTexture(BLOOD_ATLAS_ARCHIVE, BLOOD_ATLAS_RECORD, _atlas) ?? null;",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD2b-a-mark-is-born-at-zero-not-now",
+    "file": "src/combat/bloodMarks.js",
+    "old": "    d.born = _clock;",
+    "new": "    d.born = 0;",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "BLOOD2b-the-wall-s-run-is-not-hung-from-world-up",
+    "file": "src/combat/bloodMarks.js",
+    "old": "{ size: dropSize(i, rate, rng), turn: 0 }, bloodMarkKind({ wall: true }));",
+    "new": "{ size: dropSize(i, rate, rng) }, bloodMarkKind({ wall: true }));",
     "tests": [
       "test/blood1_decals.test.js"
     ]

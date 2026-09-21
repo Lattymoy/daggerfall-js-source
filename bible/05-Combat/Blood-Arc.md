@@ -847,5 +847,51 @@ Slices, each behind its own `features.js` row:
    reach was corrected while doing so. Mutants: 10, 10 dead
    (`tools/mutants/blood1.json` is 171).
 
+5. **BLOOD2b - the port's own blood art, made at boot, and marks that
+   dry.** SHIPPED (2026-09-21). BLOOD1a wore the splash animation's
+   settled frame for every mark - one picture stamped six hundred
+   times, in one colour, for ever. The port still ships no blood
+   picture; it MAKES one now.
+
+   THE ATLAS (`src/combat/bloodArt.js`): a 256x256 RGBA sheet of four
+   kinds in four variants, generated from noise by a seeded generator
+   (mulberry32, so it is the same picture on every boot and a pin can
+   name a texel) the first time a pool asks, and uploaded ONCE through
+   the renderer's own texture cache under a port-own pseudo-archive
+   (38001, above every classic number), LINEAR-sampled so a splat's
+   edge is soft. Every cell keeps a clear two-texel border and an
+   inset UV rect so a soft sample cannot read its neighbour. The kinds:
+   a POOL (broad, irregular, darker at the heart - the drop under the
+   body), SPATTER (a blob with satellite dots - cast-off that landed
+   short of a third of the reach), a STREAK (a head at -u and a tail
+   toward +u - a drop that flew, laid along BLOOD2a's `right`, so the
+   tail points away from the body), and a DRIP (a bead high in the
+   cell and a run down to its foot - a wall's mark, laid with `turn:
+   0`, which on a vertical surface puts the basis' up at world up so
+   the run hangs down). Every opaque texel is blood red (the base a
+   shade deeper than TEXTURE.380's own 168,16,16, so a lit mark is not
+   pink), with grain.
+
+   EACH MARK ITS OWN SHADE: born with a fresh tint near white whose red
+   wanders half as far as the other two, so the variance reads as wet-
+   or-dark and never as a hue - the tint the quad writer has always
+   carried and the lane decodes on its own since W6/AUDIT 3.
+
+   AND IT DRIES. The pool keeps a clock; every DRY_TICK (2 s) each live
+   mark's stage is read off its age - DRY_STAGES (8) steps over
+   DRY_TIME (180 s) - and one that crossed a stage takes its new tint
+   (the fresh tint sliding to DRIED_TINT, a dark brown-red, landing on
+   it TO THE BIT at the last stage) and has its slot rewritten. Eight
+   rewrites over a mark's life, never one a frame, and none once
+   dried. A mark laid later is born at the clock, not at zero.
+
+   Pins: two (the atlas - kinds, borders, insets, coverage bands,
+   red, determinism, no picture loaded; the pool - kinds by role (`bloodMarkKind` - `markKind` is inkMap.js's name), the
+   wall's run hung from world up, the tint in the slot's floats, the
+   drying driven through DRY_TIME with the rewrites counted and
+   bounded, dried never rewritten, a late mark born now, a recentre
+   keeping the cell) and the settled-frame pin re-aimed. Mutants: 16,
+   16 dead (`tools/mutants/blood1.json` is 187).
+
 The numbers in THE FACTS are the target to feel like. The code that
 hits them is ours.

@@ -585,19 +585,21 @@ test('BLOOD1a: the collider is a GETTER, and the mark survives the world being s
   }
 });
 
-test('BLOOD1a: the mark wears the SPLASH’S SETTLED FRAME, so the port ships no blood art at all', () => {
+test('BLOOD1a/BLOOD2b: the mark wears the PORT’S OWN ART, made at boot - and the port still ships no blood picture', () => {
   const src = readFileSync(new URL('../src/scenes/hitEffects.js', import.meta.url), 'utf8');
-  // A splash plays out to the settled splat and then vanishes; that
-  // last frame IS the stain. Recorded at the upload because nothing
-  // else in the file can see `frameCount`.
-  // Only the splash pool can see the frame count, so it TELLS the mark
-  // pool rather than the mark pool guessing.
+  // BLOOD1a wore the splash's settled frame. BLOOD2b makes an atlas at
+  // boot (bloodArt.js) - the mark takes NOTHING from the splash now but
+  // the chunks' art, which is still the record's first frame, and only
+  // the splash pool can see the record, so it still tells this one.
   assert.match(src, /if \(archive === BLOOD_ARCHIVE && record !== BLOODLESS_INDEX\) marks\?\.useArt\?\.\(archive, record, frameCount\);/);
   const mk = readFileSync(new URL('../src/combat/bloodMarks.js', import.meta.url), 'utf8');
-  assert.match(mk, /_texKey = `\$\{archive\}_\$\{record\}#\$\{Math\.max\(0, frameCount - 1\)\}`;/);
-  // ...and the default means no host spells a texture key, so the four
-  // of them cannot spell it four ways
-  assert.match(mk, /const markTexture = texture \?\? \(\(\) => \(_texKey \? renderer\?\.textures\?\.get\?\.\(_texKey\) \?\? null : null\)\);/);
+  assert.match(mk, /function useArt\(archive, record\) \{/, 'the frame count is no longer the mark’s business');
+  assert.match(mk, /_gibArt = \{ archive, record \};/, 'the chunks still take the splash’s record');
+  assert.doesNotMatch(mk, /_texKey/, 'no splash frame key remains');
+  // the atlas: uploaded ONCE through the renderer's own cache, by one
+  // key every host spells the same, LINEAR so a splat's edge is soft
+  assert.match(mk, /_atlasTex = renderer\.uploadTexture\(BLOOD_ATLAS_ARCHIVE, BLOOD_ATLAS_RECORD, _atlas, \{ smooth: true \}\) \?\? null;/);
+  assert.match(mk, /const markTexture = texture \?\? \(\(\) => _atlasTex\);/);
   // the port ships NO blood picture: the only archive named is the
   // classic one the splash already reads out of the player's ARENA2
   const code = src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
@@ -2348,6 +2350,152 @@ test('BLOOD2a: a spray’s spatter lies ALONG its travel and longer the further 
   for (let k = 1; k < sorted.length; k++) assert.ok(sorted[k].stretch >= sorted[k - 1].stretch - 1e-9, 'longer the further it flew');
   assert.ok(sorted.at(-1).stretch > sorted[0].stretch, 'and not all the same');
   assert.ok(ds.some((d) => d.normal[1] < 0 && d.stretch > 1), 'the ceiling’s drops are streaks too');
+});
+
+// ── BLOOD2b (2026-09-21) - the port's own blood art, made at boot, and marks that dry ──
+import {
+  buildBloodAtlas, bloodAtlas, pickCell, bloodMarkKind, freshTint, dryStage, driedTint, mulberry32,
+  ATLAS_SIZE, ATLAS_CELLS, ATLAS_KINDS, BLOOD_BASE, FRESH_VARIANCE, DRIED_TINT, DRY_TIME, DRY_STAGES, DRY_TICK, BLOOD_ATLAS_ARCHIVE, BLOOD_ATLAS_RECORD,
+} from '../src/combat/bloodArt.js';
+
+test('BLOOD2b: the atlas is four kinds in four variants, every cell bordered so a soft sample cannot bleed, red, and the same picture on every boot', () => {
+  const a = buildBloodAtlas();
+  assert.equal(a.width, ATLAS_SIZE); assert.equal(a.height, ATLAS_SIZE);
+  assert.equal(a.cells.length, ATLAS_CELLS * ATLAS_CELLS);
+  assert.deepEqual([...new Set(a.cells.map((c) => c.kind))], [...ATLAS_KINDS], 'the four kinds, one row each');
+  const cell = ATLAS_SIZE / ATLAS_CELLS;
+  for (let k = 0; k < a.cells.length; k++) {
+    const c = a.cells[k], col = k % ATLAS_CELLS, row = Math.floor(k / ATLAS_CELLS);
+    // the uv rect is inset a texel inside the cell
+    assert.ok(Math.abs(c.u0 - (col * cell + 1) / ATLAS_SIZE) < 1e-12 && Math.abs(c.u1 - (col * cell + cell - 1) / ATLAS_SIZE) < 1e-12);
+    assert.ok(Math.abs(c.v0 - (row * cell + 1) / ATLAS_SIZE) < 1e-12 && Math.abs(c.v1 - (row * cell + cell - 1) / ATLAS_SIZE) < 1e-12);
+    let opaque = 0, border = 0, redder = 0;
+    for (let y = 0; y < cell; y++) {
+      for (let x = 0; x < cell; x++) {
+        const o = ((row * cell + y) * ATLAS_SIZE + col * cell + x) * 4;
+        const al = a.colors[o + 3];
+        if (x < 2 || y < 2 || x >= cell - 2 || y >= cell - 2) { if (al !== 0) border++; continue; }
+        if (al > 128) { opaque++; if (a.colors[o] > a.colors[o + 1] * 3 && a.colors[o] > a.colors[o + 2] * 3) redder++; }
+      }
+    }
+    assert.equal(border, 0, `${c.kind} ${col}: a clear two-texel border`);
+    assert.ok(opaque > cell * cell * 0.05, `${c.kind} ${col}: a shape that is there`);
+    assert.ok(opaque < cell * cell * 0.7, `${c.kind} ${col}: and room around it`);
+    assert.equal(redder, opaque, `${c.kind} ${col}: every opaque texel is blood red`);
+  }
+  // a pool is the broadest, a run the narrowest
+  const cover = (kind) => { const k = a.cells.findIndex((c) => c.kind === kind); const col = k % ATLAS_CELLS, row = Math.floor(k / ATLAS_CELLS); let n = 0; for (let y = 0; y < cell; y++) for (let x = 0; x < cell; x++) if (a.colors[((row * cell + y) * ATLAS_SIZE + col * cell + x) * 4 + 3] > 128) n++; return n; };
+  assert.ok(cover('pool') > cover('spatter') && cover('spatter') > cover('drip'), 'pool broadest, run narrowest');
+  // a streak's head is at -u and its tail at +u: the left third holds more than the right third
+  { const k = a.cells.findIndex((c) => c.kind === 'streak'); const col = k % ATLAS_CELLS, row = Math.floor(k / ATLAS_CELLS); let left = 0, right = 0; for (let y = 0; y < cell; y++) for (let x = 0; x < cell; x++) { const al = a.colors[((row * cell + y) * ATLAS_SIZE + col * cell + x) * 4 + 3]; if (al > 128) { if (x < cell / 3) left++; else if (x > cell * 2 / 3) right++; } } assert.ok(left > right, 'the head is heavier than the tail'); }
+  // deterministic: the same seed, the same bytes; another seed, another picture
+  assert.ok(Buffer.compare(Buffer.from(buildBloodAtlas().colors.buffer), Buffer.from(a.colors.buffer)) === 0, 'the same picture on every boot');
+  assert.ok(Buffer.compare(Buffer.from(buildBloodAtlas({ seed: 7 }).colors.buffer), Buffer.from(a.colors.buffer)) !== 0);
+  assert.equal(bloodAtlas(), bloodAtlas(), 'one atlas for the page');
+  const r = mulberry32(1); assert.ok(r() !== r(), 'the generator moves');
+  // the base is a red, deeper than the splash's own
+  assert.ok(BLOOD_BASE[0] > 0.5 && BLOOD_BASE[1] < 0.1 && BLOOD_BASE[2] < 0.1);
+  // no picture is shipped: the atlas is made, not read
+  const art = readFileSync(new URL('../src/combat/bloodArt.js', import.meta.url), 'utf8');
+  assert.ok(!/\.png|fetch\(|import .*\.png/.test(art), 'nothing loaded');
+});
+
+test('BLOOD2b: a mark wears a cell of its KIND, is born a fresh red of its own, and DRIES in bounded steps', () => {
+  // the law
+  assert.equal(bloodMarkKind({ pool: true, stretch: 3 }), 'pool');
+  assert.equal(bloodMarkKind({ wall: true, stretch: 3 }), 'drip');
+  assert.equal(bloodMarkKind({ stretch: 2 }), 'streak');
+  assert.equal(bloodMarkKind({ stretch: 1.2 }), 'spatter');
+  assert.equal(bloodMarkKind(), 'spatter');
+  const a = buildBloodAtlas();
+  for (const kind of ATLAS_KINDS) for (const v of [0, 0.5, 0.999]) assert.equal(pickCell(a, kind, () => v).kind, kind);
+  assert.notEqual(pickCell(a, 'pool', () => 0), pickCell(a, 'pool', () => 0.999), 'variants');
+  const white = freshTint(() => 0), dark = freshTint(() => 1);
+  assert.deepEqual(white, [1, 1, 1, 1]);
+  assert.ok(Math.abs(dark[0] - (1 - FRESH_VARIANCE / 2)) < 1e-12 && Math.abs(dark[1] - (1 - FRESH_VARIANCE)) < 1e-12, 'red wanders half as far as the rest');
+  assert.equal(dryStage(0), 0); assert.equal(dryStage(-1), 0); assert.equal(dryStage(NaN), 0);
+  assert.equal(dryStage(DRY_TIME), DRY_STAGES); assert.equal(dryStage(DRY_TIME * 10), DRY_STAGES, 'never past dried');
+  for (let t = 0; t < DRY_TIME; t += 1) assert.ok(dryStage(t + 1) >= dryStage(t), 'monotone');
+  assert.deepEqual(driedTint([1, 1, 1, 1], 0), [1, 1, 1, 1]);
+  assert.deepEqual(driedTint([1, 1, 1, 1], DRY_STAGES), [...DRIED_TINT]);
+  assert.ok(DRIED_TINT[0] < 0.7 && DRIED_TINT[1] < DRIED_TINT[0], 'dried is darker and browner');
+
+  // the pool: kinds, tints in the slot, drying rewrites bounded
+  const CEIL = 2.2;
+  const uploads = [];
+  const writes = new Map();
+  const renderer = {
+    createDecalBatch: (capacity) => ({ capacity }),
+    writeDecalSlot: (batch, slot, floats) => { writes.set(slot, (writes.get(slot) ?? 0) + 1); return true; },
+    drawDecals: () => {},
+    createBillboardBatch: () => ({}),
+    moveBillboardBatch: () => true,
+    destroyBillboardBatch: () => {},
+    uploadTexture: (archive, record, img, opts) => { uploads.push({ archive, record, w: img.width, opts }); return { tex: `${archive}_${record}` }; },
+  };
+  const wallAt = 0.9;
+  const { fx, marks } = rigHitEffects({
+    renderer, texture: null, rng: mulberry32(3),   // a chance that MOVES - the rig's one-half would dress every mark alike
+    settings: { enabled: () => true, capacity: () => 256, density: () => 1, overkill: () => false },
+    collider: () => ({
+      surfaceHit: (from, dir, max) => (dir[1] > 0
+        ? (CEIL - from[1] <= max ? { dist: CEIL - from[1], normal: [0, -1, 0] } : null)
+        : (from[1] <= max ? { dist: from[1], normal: [0, 1, 0] } : null)),
+      raycastHit: (from, dir, max) => { if (!(dir[0] > 0) || from[0] >= wallAt) return { dist: Infinity, normal: null }; const d = (wallAt - from[0]) / dir[0]; return d <= max ? { dist: d, normal: [-1, 0, 0] } : { dist: Infinity, normal: null }; },
+    }),
+  });
+  assert.deepEqual(uploads, [{ archive: BLOOD_ATLAS_ARCHIVE, record: BLOOD_ATLAS_RECORD, w: ATLAS_SIZE, opts: { smooth: true } }], 'the atlas, uploaded with the ring, smooth');
+  assert.deepEqual(marks.draw(), false, 'nothing yet');
+  // the LADDER'S TOP: twenty-four drops over 1.8 m (an overkill's blow with
+  // the burst row off), so drops land short of a third of the reach
+  // (spatter), past it (streaks), and against the wall at 0.9
+  fx.showBloodSplash(0, [0, 1, 0], null, { damage: 80, maxHealth: 40, fromPlayer: true, heavy: false, throw: [0, 0] });
+  const ds = marks._pool().decals();
+  assert.equal(ds.length, 24, 'the top rung, every drop landed somewhere');
+  const pool = ds.find((d) => d.pos[0] === 0 && d.pos[2] === 0 && d.normal[1] > 0);
+  assert.equal(pool.uv.kind, 'pool', 'the pool wears a pool');
+  assert.ok(ds.some((d) => d.stretch > 1.5 && d.uv.kind === 'streak'), 'a drop that flew wears a streak');
+  assert.ok(ds.filter((d) => d.normal[1] === 0).length > 0, 'some met the wall');
+  assert.ok(ds.filter((d) => d.normal[1] === 0).every((d) => d.uv.kind === 'drip'), 'a wall’s mark wears a run');
+  assert.ok(ds.filter((d) => d.normal[1] === 0).every((d) => Math.abs(d.up[1] - 1) < 1e-9), 'and its run hangs DOWN the wall - the basis’ up is world up');
+  assert.ok(ds.some((d) => d.stretch <= 1.5 && d !== pool && d.normal[1] !== 0 && d.uv.kind === 'spatter'), 'the rest wear spatter');
+  for (const d of ds) { assert.ok(d.tint[0] <= 1 && d.tint[0] >= 1 - FRESH_VARIANCE / 2 - 1e-12, 'born fresh'); assert.equal(d.stage, 0); assert.equal(d.born, 0); }
+  assert.ok(new Set(ds.map((d) => d.tint[1].toFixed(4))).size > 1, 'each its own shade');
+  // the slot carries the cell and the tint: write one and read the floats back
+  const out = new Float32Array(DECAL_FLOATS);
+  writeDecalQuad(out, 0, pool, pool.uv);
+  assert.ok(Math.abs(out[3] - pool.uv.u0) < 1e-6 && Math.abs(out[4] - pool.uv.v0) < 1e-6, 'the first corner at the cell’s own corner');
+  assert.ok(Math.abs(out[5] - pool.tint[0]) < 1e-6 && Math.abs(out[6] - pool.tint[1]) < 1e-6, 'the tint in the colour floats');
+
+  // DRYING. Tick the pool through DRY_TIME and past it: every mark ends
+  // at DRIED_TINT, its slot rewritten at most DRY_STAGES times beyond
+  // its placing, and never again once dried.
+  const placedWrites = new Map(writes);
+  const step = 0.5;
+  for (let t = 0; t < DRY_TIME + DRY_TICK * 2; t += step) fx.tick(step);
+  for (const d of ds) {
+    assert.equal(d.stage, DRY_STAGES, 'dried');
+    for (let k = 0; k < 3; k++) assert.ok(Math.abs(d.tint[k] - DRIED_TINT[k]) < 1e-9, 'to DRIED_TINT exactly');
+    const extra = writes.get(d.slot) - placedWrites.get(d.slot);
+    assert.ok(extra >= 1 && extra <= DRY_STAGES, `rewritten ${extra} times, bounded by the stages`);
+  }
+  const after = new Map(writes);
+  for (let t = 0; t < 30; t += step) fx.tick(step);
+  assert.deepEqual([...writes], [...after], 'dried is dried - no rewrite ever again');
+  assert.ok(marks.clock() > DRY_TIME, 'the clock ran');
+  // a fresh mark laid now is born at the clock, not at zero, and starts wet
+  fx.showBloodSplash(0, [3, 1, 3], null, { damage: 10, maxHealth: 40 });
+  const young = marks._pool().decals().filter((d) => d.stage === 0);
+  assert.ok(young.length > 0 && young.every((d) => d.born > DRY_TIME), 'born now');
+  // a recentre keeps the cell and the tint
+  const before = young[0].uv;
+  fx.offsetAll([819.2, 0, 0]);
+  assert.equal(young[0].uv, before);
+  // the switch off drops nothing here; dispose drops the atlas HANDLE alone (the renderer's cache owns the texture)
+  marks.dispose();
+  assert.equal(marks.draw(), false);
+  // and the drying pass has a name of its own, for the next pin that wants to drive it
+  assert.equal(typeof marks.dry, 'function');
 });
 
 // ── MAC-BUG W5 (2026-09-20, Mac: "Also blood doesn't work outside")
