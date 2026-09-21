@@ -57,6 +57,9 @@ test('littlelaws items-9: the window gate - refuse at zero fit, split-take a par
   // (TransferItem's split popup defaults to maxAmount - the Enter
   // path), and DoTransferItem spends the split half into the counter
   w._pickRemote(1);
+  assert.equal(loot[1].stackCount, 300, 'CM5: the popup is up and nothing has moved yet');
+  assert.equal(w.inputBox.value, '100', 'seeded with maxAmount');
+  w.input('Enter');
   assert.equal(loot[1].stackCount, 200, 'the pile keeps what did not fit');
   assert.equal(entity.goldPieces, 12000, 'GoldPieces += the 100 that did');
   assert.equal(bag.length, 0, 'and the pack still holds no Currency');

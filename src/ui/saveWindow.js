@@ -150,6 +150,7 @@ import { measureText } from './text.js';
 // ListBox hands every selected row (ListBox.cs:43) - one home for the
 // literal, the picker window's.
 import { SELECTED_TEXT_COLOR } from './listPicker.js';
+import { InputMessageBoxWindow } from './inputMessageBox.js';   // CM10: the rename is a pushed DaggerfallInputMessageBox
 import { layoutMessageBox, drawMessageBox, messageBoxHit, MB_BUTTONS } from './messageBox.js';
 import { typedChar } from './input.js';
 import { audio } from '../systems/audio.js';
@@ -255,7 +256,7 @@ export class SaveWindow {
     this.top = null;                    // 'overwrite'|'delete'|'note'|'rename'|'charPicker'
     this._noteRows = null;
     this._box = null;
-    this.renameText = '';
+    this.renameBox = null;              // CM10: the pushed rename box while `top` is 'rename'
     this._charRows = [];
     this._lastClick = { t: 0, index: -1 };
     this._shot = null;                  // SS1: the selected slot's decoded screenshot
@@ -361,11 +362,10 @@ export class SaveWindow {
    *  cancel. */
   input(code, e = null) {
     if (this.top === 'rename') {
-      if (code === 'Enter' || code === 'NumpadEnter') { this._renameCommit(); return true; }
-      if (code === 'Escape') { this.top = null; return true; }
-      if (code === 'Backspace') { this.renameText = this.renameText.slice(0, -1); return true; }
-      const ch = typedChar(code, e);
-      if (ch && this.renameText.length < RENAME_MAX_CHARS) this.renameText += ch;
+      // CM10: the pushed DaggerfallInputMessageBox owns the keyboard
+      // (:566-570); its Return commits, its Escape clears `top`
+      this.renameBox?.input(code, e);
+      if (this.renameBox?.done) this.renameBox = null;
       return true;
     }
     if (this.top) {
@@ -426,12 +426,12 @@ export class SaveWindow {
     this.hooks.onBack?.();
   }
 
-  _renameCommit() {
+  _renameCommit(input) {
     // RenameSaveButton_OnGotUserInput: empty input is a no-op (:575).
-    if (this.renameText.length === 0) { this.top = null; return; }
+    if (input.length === 0) { this.top = null; return; }
     const key = this._selectedKey();
-    if (key !== -1 && renameSave(key, this.renameText)) {
-      this.nameText = this.renameText;
+    if (key !== -1 && renameSave(key, input)) {
+      this.nameText = input;
       this.refresh();
       this._select(this.rows.findIndex((r) => r.key === key));
     }
@@ -565,8 +565,18 @@ export class SaveWindow {
     // Rename and delete want a selection (:562, :592).
     if (inRect(R.rename, px, py) && this.selectedIndex >= 0) {
       this._click();
-      this.renameText = this.nameText;   // TextBox.Text prefills (:568)
+      // RenameSaveButton_OnMouseClick (:566-570): a DaggerfallInputMessageBox
+      // labelled enterSaveName + ": ", TextBox.Text prefilled with the
+      // save's name (:568). CM10: pushed; `top` stays 'rename' so the
+      // list under it holds still, as under any box.
       this.top = 'rename';
+      this.renameBox = new InputMessageBoxWindow({
+        label: `${SW_TEXT.enterSaveName}: `,   // SetTextBoxLabel (:567)
+        value: this.nameText,
+        maxCharacters: RENAME_MAX_CHARS,
+        onSubmit: (input) => this._renameCommit(input),
+        onCancel: () => { this.top = null; },
+      });
       return true;
     }
     if (inRect(R.del, px, py) && this.selectedIndex >= 0) {
@@ -751,11 +761,7 @@ export class SaveWindow {
         rows.forEach((r, i) => shadowText(renderer, font, r, m, 20, 20 + i * 10));
       }
     } else if (this.top === 'rename') {
-      drawRect(renderer, m, 80, 90, 160, 22, SW_COLORS.main);
-      drawRect(renderer, m, 80, 90, 160, 1, [1, 1, 1, 0.5]);
-      drawRect(renderer, m, 80, 111, 160, 1, [1, 1, 1, 0.5]);
-      shadowText(renderer, font, `${SW_TEXT.enterSaveName}: `, m, 84, 93);   // SetTextBoxLabel (:567)
-      shadowText(renderer, font, this.renameText + '_', m, 84, 102);
+      this.renameBox?.draw(renderer, canvas, font);   // CM10: the pushed box rides over the list
     } else if (this.top === 'charPicker') {
       const h = this._charRows.length * 10 + 8;
       drawRect(renderer, m, 90, 36, 140, h, SW_COLORS.main);

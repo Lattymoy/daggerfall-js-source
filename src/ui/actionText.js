@@ -4,22 +4,26 @@
 // Index + 5400 with a 20-char ' > ' input line (DaggerfallInputMessageBox)
 // and hands the entry back to the action system's answer gate.
 // Presentation: U11 gave the port DaggerfallMessageBox's parchment
-// frame, so these draw as the REAL classic popup - SPOP.RCI's
-// nine-slice with the verbatim sizing law. The flat panel below is
-// the art-less fallback now, not the plan. The overlay seam holds the
+// frame, so ShowText draws as the REAL classic popup - SPOP.RCI's
+// nine-slice with the verbatim sizing law; the flat panel below is
+// its art-less fallback. ShowTextWithInput is the exception, and
+// AUDIT-CM (2026-09-21) found the first cut drawing it wrong: DFU
+// builds that box with useParchmentBackGround = false and
+// showAtTopOfScreen = true (DaggerfallAction.cs:566), so it is bare
+// text at the TOP of the screen, no frame. The overlay seam holds the
 // world while a box is open.
 
 import { drawText, measureText } from './text.js';
 import { nativeMetrics } from './nativePanel.js';
 import { layoutMessageBox, drawMessageBox, messageBoxArtLoaded } from './messageBox.js';   // U11
-import { noteInputBoxClosed } from '../player/pointerLock.js';   // PL1: the 0.3s toggle refusal's stamp
+import { InputMessageBoxWindow } from './inputMessageBox.js';   // CM3: the one DaggerfallInputMessageBox
+import { noticeDraw, noticeRelease } from './enhancedNotice.js';   // ENH-NOTICE1: the enhanced skin's panel
 
 /** DaggerfallInputMessageBox maxCharacters. */
 export const MAX_INPUT = 20;
 
 const PANEL = [0.05, 0.05, 0.09, 0.92];
 const TEXT = [0.86, 0.82, 0.68, 1];
-const DIM = [0.55, 0.52, 0.45, 1];
 
 /** The art-less fallback draws plain strings, so a row record - a
  *  { text } or AUDIT 64 F28's tab-stopped { cells } - flattens to one.
@@ -80,6 +84,9 @@ export class ActionTextBox {
   input() {
     if (this._next.length) { this.lines = this._next.shift(); return; }
     this.done = true;
+    // ENH-NOTICE1: the panel leaves with the box. A no-op on the
+    // classic skin (no panel was ever keyed to this box).
+    noticeRelease(this);
   }
 
   /** ClickAnywhereToClose is CLICK anywhere first (DaggerfallMessageBox
@@ -90,6 +97,10 @@ export class ActionTextBox {
   click() { this.input(); return true; }
 
   draw(renderer, canvas, font, s) {
+    // ENH-NOTICE1: on the enhanced skin the rows go to the slide-in
+    // panel (ui/enhancedNotice.js) and nothing is painted here. The
+    // box is still the box - modal, chained, click-anywhere.
+    if (noticeDraw(this, this.lines)) return;
     if (messageBoxArtLoaded() && font) {
       const m = nativeMetrics(canvas);
       // ClickAnywhereToClose has NO buttons (DaggerfallMessageBox
@@ -104,51 +115,26 @@ export class ActionTextBox {
 
 /** ShowTextWithInput: the 20-char ' > ' entry; Enter submits to the
  *  action system's answer gate (a match fires the chain), Escape
- *  closes without answering. */
-export class ActionInputBox {
+ *  closes without answering. CM3: the field IS the one
+ *  DaggerfallInputMessageBox (ui/inputMessageBox.js) - this is the
+ *  action system's construction of it, record lines above, ' > ' for
+ *  the label, MaxCharacters 20 - and nothing of the field's law lives
+ *  here any more. */
+export class ActionInputBox extends InputMessageBoxWindow {
   constructor(lines, onInput) {
-    this.lines = lines;
+    // `new DaggerfallInputMessageBox(UIManager, textID, 20, " > ", false, true, null)`
+    // (DaggerfallAction.cs:566): twenty characters, " > " for the
+    // label, NO parchment, at the TOP of the screen.
+    super({ lines, label: ' > ', maxCharacters: MAX_INPUT, parchment: false, atTop: true, onSubmit: onInput });
     this.onInput = onInput;
-    this.value = '';
-    this.done = false;
     /** AUDIT 64 F35 (review round): the ONLY construction of this box
      *  in the reference passes a null previous - `new
      *  DaggerfallInputMessageBox(DaggerfallUI.UIManager, textID, 20,
-     *  " > ", false, true, null)` (Internal/DaggerfallAction.cs:565) -
+     *  " > ", false, true, null)` (Internal/DaggerfallAction.cs:566) -
      *  so nothing is painted beneath it. Every other
      *  DaggerfallInputMessageBox in DFU is raised from inside another
      *  window and passes `this`, which roots at that window, not at
      *  the HUD. */
     this.previousWindow = null;
-  }
-
-  input(action) {
-    if (action === 'confirm') {
-      this.done = true;
-      // PL1: CloseWindow's stamp (DaggerfallInputMessageBox.cs:301) -
-      // the Return that just submitted must not also free the mouse.
-      noteInputBoxClosed();
-      this.onInput?.(this.value);
-      return;
-    }
-    if (action === 'back') { this.done = true; noteInputBoxClosed(); return; }
-    if (action === 'backspace') { this.value = this.value.slice(0, -1); return; }
-    if (action.startsWith('char:') && this.value.length < MAX_INPUT) this.value += action.slice(5);
-  }
-
-  draw(renderer, canvas, font, s) {
-    const entry = ` > ${this.value}_`;
-    if (messageBoxArtLoaded() && font) {
-      const m = nativeMetrics(canvas);
-      // DaggerfallInputMessageBox puts the entry line UNDER the
-      // prompt inside the same parchment box.
-      const rows = [...this.lines, entry];
-      // the entry field never sizes the box past its maximum
-      // (maxCharacters 20, the same clamp input() enforces)
-      const box = layoutMessageBox(font, rows, [], { sizingRows: [...this.lines, ` > ${'M'.repeat(MAX_INPUT)}_`] });
-      if (drawMessageBox(renderer, m, font, box)) return;
-    }
-    const at = drawPanel(renderer, canvas, font, s, this.lines, entry);
-    drawText(renderer, font, entry, at.x + 12 * s, at.y - 12 * s, s, DIM);
   }
 }
