@@ -38,7 +38,7 @@
 
 import { boundarySegments, linkSegments, fitView, toPaper, NAME_FACE } from './inkMap.js';
 import {
-  townBytes, townChains, quarterChains, quarterOfType, isBuilt, QUARTERS,
+  townBytes, townChains, quarterChains, quarterOfType, isBuilt, QUARTERS, sheetY,
   paintTownStatic, paintTownOverlay, BLOCK_PX,
 } from './inkTown.js';
 import { nameplateAnchor, resolveNameplates } from './nameplateLayout.js';
@@ -149,13 +149,29 @@ export function createTownSheet(deps = {}) {
       }
       if (!text) continue;
       const [ax, ay] = nameplateAnchor(b.blockX ?? 0, b.blockY ?? 0, b.position ?? [0, 0, 0]);
+      // EM-BUG3: the anchor grows with +Z and the sheet draws +Z
+      // upward, so a plate crosses into sheet space here - the one
+      // transform, the same one the field was laid through.
+      const sy = sheetY(ensureField().h, ay);
       // EM8: the SAME ladder the building's own pixels go through -
       // the grid's byte is this type PLUS ONE, and quarterOfType is the
       // one place that plus-one is written, so a name and the wash
       // under it cannot come to disagree about what the building is.
-      out.push({ text, quest, x: ax, y: ay, key: b.buildingKey, quarter: quarterOfType(b.buildingType) });
+      out.push({ text, quest, x: ax, y: sy, key: b.buildingKey, quarter: quarterOfType(b.buildingType) });
     }
     return out;
+  }
+
+  /** EM-BUG3 - THE CARET CROSSES THE SAME SEAM AS THE PLATES. The host
+   *  hands the player in anchor space (`local.z / WORLD_PER_PX`, which
+   *  grows with +Z), and the sheet draws +Z upward. Both readers - the
+   *  overlay and the rest view - go through here, because a caret that
+   *  crossed on one path and not the other is the bug this whole slice
+   *  is about, one layer up. */
+  function playerOnSheet() {
+    const p = deps.player?.() ?? null;
+    if (!p) return null;
+    return { ...p, y: sheetY(ensureField().h, p.y) };
   }
 
   /** Every residence a quest has marked, named or not, in layout
@@ -166,7 +182,7 @@ export function createTownSheet(deps = {}) {
     for (const b of deps.buildings?.() ?? []) {
       if (!b?.questName || !found.has(b.buildingKey)) continue;
       const [x, y] = nameplateAnchor(b.blockX ?? 0, b.blockY ?? 0, b.position ?? [0, 0, 0]);
-      out.push({ x, y });
+      out.push({ x, y: sheetY(ensureField().h, y) });   // EM-BUG3: into sheet space, as the plates are
     }
     return out;
   }
@@ -282,7 +298,7 @@ export function createTownSheet(deps = {}) {
         plates: ensurePlates(env.view, env.paperW, env.paperH,
           ctx?.measureText ? (t, s) => { ctx.font = `${Math.round(s)}px ${NAME_FACE}`; return ctx.measureText(t).width; } : null,
           env.reserveTop ?? 0, env.reserveHands ?? null),
-        player: deps.player?.() ?? null,
+        player: playerOnSheet(),
       });
     },
 
@@ -310,7 +326,7 @@ export function createTownSheet(deps = {}) {
 
     /** At rest the whole town is on the sheet, centred on the player. */
     homeView(limits) {
-      return fitView(limits, deps.player?.() ?? null);
+      return fitView(limits, playerOnSheet());
     },
 
     // ── handles for the pins ────────────────────────────────────────
