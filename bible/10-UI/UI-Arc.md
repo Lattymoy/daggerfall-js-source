@@ -200,6 +200,101 @@ travel map's first-tick arms assign `top` unconditionally; a find box
 cannot be up on the first tick, so no guard was added.
 
 
+## ENH-NOTICE1 THE NOTICE PANEL - THE ENHANCED SKIN'S MESSAGE BOX SLIDES IN FROM THE RIGHT (2026-09-21)
+
+Mac, before the merge of PR #178: "classic DFU has text that shows in
+the middle of the screen, instead of this, for enhanced I want a panel
+that slides in from the right side of the screen showing the
+notification. This should work for any and all mods that utilize this
+text."
+
+**What the text is.** `DaggerfallUI.MessageBox(...)` with
+ClickAnywhereToClose - the parchment in the middle of the screen that a
+quest, an item, a shop, a guild, a holiday, a door and every ported mod
+raise, and that any click or key dismisses. The port has exactly two
+homes for it: `ui/actionText.js`'s `ActionTextBox` (the port's
+DaggerfallMessageBox, ~35 sites, the `addNext` chain) and
+`ui/talkWindow.js`'s no-options `ChoiceWindow` (CM1 made it the same
+shape, 28 sites). A box with buttons, a picker or a text field is a
+DECISION, not a notice, and keeps its own window on both skins - the
+`ActionInputBox`, the keyed `ChoiceWindow` menus, the rest window's
+states.
+
+**What was built.** `ui/enhancedNotice.js` (new): `drawEnhancedNotice
+(frame, doc, key)` builds a `.notice-stack` fixed to the RIGHT edge,
+vertically centred, `aria-live="polite"`, and one `.notice` panel per
+OWNER key - the box's rows as `.notice-row`s (a string, a `{ text,
+center, highlight }` record, or AUDIT 64 F28's tab-stopped `{ cells }`
+row as `.notice-cell` spans that keep their columns), and the one-line
+hint "click or press a key" where the parchment said nothing.
+`releaseEnhancedNotice(key)` swaps `notice-in` for `notice-out` and
+removes the node after `NOTICE_SLIDE_MS` (260, the sheet's transition
+length - the sheet pin holds the two in step). `noticeDraw(box, rows)`
+is the decision both homes call at the top of `draw`: false on the
+classic skin or off a document (the box paints its own parchment),
+true when the panel took the frame - and true WITHOUT drawing for a
+box that is `done`, so a host that paints a dismissed box one more
+frame before dropping it cannot raise a second panel. The box's
+dismissal (`input` setting `done`) releases its panel. Nothing else
+about the box changes: modal, chained, click-anywhere, the same
+`done` the hosts already read.
+
+**The watchdog.** A persistent DOM overlay stays painted unless told
+otherwise (AUDIT 64 F37), and a box can leave without a dismissal - a
+host that drops its overlay on a scene change, a HUD that stops
+drawing. So every draw re-arms a `NOTICE_WATCHDOG_MS` (400) timer, and
+a panel whose draws stop slides out on its own; a box that keeps
+drawing keeps its panel, and a box that resumes drawing (a tab that
+comes back) raises it again under the same key. Two boxes alive at
+once - a level-up refusal over a sheet, a quest box over a talk box -
+are two panels, newest last.
+
+**The sheet.** `.notice-stack` is `pointer-events: none`: the click
+that dismisses the box lands on the canvas as it always has, because
+ClickAnywhereToClose is the BOX's law and the panel is only its face.
+The panel rests at `translateX(110%)`, takes `notice-in` on the next
+animation frame so the transition carries it, and `notice-out` sends
+it back the way it came. PIXEL_STACK, the sheet's bone and brass, a
+blood highlight row, 88vw on a phone. The classic skin is untouched,
+byte for byte - the stack is never built there and no key is minted.
+
+**Why it serves "any and all mods".** A mod does not draw a box; it
+raises one through the same two classes the game raises, and a class
+that hands its rows to the panel hands every raiser's rows. There is
+no mod list here and none is needed - which is the ONE-HOME rule
+paying out.
+
+**Departure, rowed.** The parchment in the middle of the screen is
+DFU's; the panel at the right edge is the port's, on the enhanced
+skin only. Ledger A section A row "THE NOTICE AT THE EDGE".
+
+**Tests.** `test/enhancedNotice.test.js` (12): the classic skin
+painting quads and raising no DOM and minting no key; the enhanced
+skin painting NO quads and one keyed panel with the rows in order, the
+centred mark, the hint and the sheet injected; the highlight row and
+the tab-stopped row's cells, a narrower cells row hiding the spare
+span, a text row after a cells row dropping the spans; dismissal
+sliding out (class, node kept until the slide's length, watchdog
+struck, the done frame painting nothing and raising nothing, stack
+gone when the last panel goes); the `addNext` chain repainting the
+SAME panel and only the last click releasing; the watchdog re-armed
+on every draw, firing on silence, the resumed draw raising a new panel;
+two boxes as two panels and one dismissal leaving the other's; the
+no-options `ChoiceWindow` as the panel and the keyed menu on the
+canvas with Escape still not closing it; `ActionInputBox` never handed
+to the panel; the enhanced skin off a document falling back to the
+canvas; `visible: false` hiding without releasing, an empty frame
+raising nothing, a double release harmless; and the sheet - right
+edge, pointer-transparent, `translateX(110%)`, the transition length
+equal to `NOTICE_SLIDE_MS`, the watchdog longer than the slide.
+Mutation campaign: twelve mutants over the two hooks and the module
+(the box painting under the panel, either home never releasing, the
+keyed menu handed to the panel, a done box painting the parchment,
+the classic gate inverted, one key for every box, the watchdog not
+re-armed, the node yanked without the slide, the removal off the
+slide's length, `visible:false` ignored, an empty panel raised), each
+killed by a named pin.
+
 ## MENU1-WARM - THE MENU BYTES ARE ASKED FOR EARLY (2026-09-19)
 
 Mac: *"Also look for any elements of hitching, or hiccups."*
@@ -14183,7 +14278,7 @@ death screen (`ui/deathScreen.js:71-72`), the rest window's rows
 (`ui/restWindow.js:859`), the save window (`ui/saveWindow.js`, eight
 `shadowText` sites), the travel popup (`ui/travelPopUp.js:685`), the quest
 journal (`ui/questJournal.js:641-642`), every MessageBox row
-(`ui/messageBox.js:431, 434`) and every ActionTextBox (`ui/actionText.js:44,
+(`ui/messageBox.js:431, 434`) and every ActionTextBox (`ui/actionText.js:45,
 152`) still draw in the bitmap font - each a native window under THE
 NATIVE-WINDOW RULE, whose face cannot move without its DFU metrics moving
 too. That is a FONT2 slice, not this one.

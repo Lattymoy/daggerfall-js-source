@@ -17,6 +17,7 @@ import { drawText, measureText } from './text.js';
 import { nativeMetrics } from './nativePanel.js';
 import { layoutMessageBox, drawMessageBox, messageBoxArtLoaded } from './messageBox.js';   // U11
 import { InputMessageBoxWindow } from './inputMessageBox.js';   // CM3: the one DaggerfallInputMessageBox
+import { noticeDraw, releaseEnhancedNotice } from './enhancedNotice.js';   // ENH-NOTICE1: the enhanced skin's panel
 
 /** DaggerfallInputMessageBox maxCharacters. */
 export const MAX_INPUT = 20;
@@ -83,6 +84,9 @@ export class ActionTextBox {
   input() {
     if (this._next.length) { this.lines = this._next.shift(); return; }
     this.done = true;
+    // ENH-NOTICE1: the panel leaves with the box. A no-op on the
+    // classic skin (no panel was ever keyed to this box).
+    if (this._noticeKey) releaseEnhancedNotice(this._noticeKey);
   }
 
   /** ClickAnywhereToClose is CLICK anywhere first (DaggerfallMessageBox
@@ -93,6 +97,10 @@ export class ActionTextBox {
   click() { this.input(); return true; }
 
   draw(renderer, canvas, font, s) {
+    // ENH-NOTICE1: on the enhanced skin the rows go to the slide-in
+    // panel (ui/enhancedNotice.js) and nothing is painted here. The
+    // box is still the box - modal, chained, click-anywhere.
+    if (noticeDraw(this, this.lines)) return;
     if (messageBoxArtLoaded() && font) {
       const m = nativeMetrics(canvas);
       // ClickAnywhereToClose has NO buttons (DaggerfallMessageBox
