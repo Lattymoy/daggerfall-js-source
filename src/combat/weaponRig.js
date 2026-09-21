@@ -32,7 +32,7 @@ import { dfWornEquipment } from '../formats/mwItemMap.js';   // MW-D32
 import { ARMOR_ENUM } from './enemyEquipment.js';   // MW-D32
 import { loadFpsWeaponArt, drawFpsWeapon, weaponTypeForItem, WEAPON_TYPES, fpLightingOn } from './fpsWeapon.js';
 import { loadThunderlockArt } from './thunderlockArt.js';
-import { createRecoil, createScreenShake, GUN_FEEL, gunPitch, muzzleGlow } from './gunFeel.js';
+import { createRecoil, createScreenShake, GUN_FEEL, gunPitch, muzzleGlow, GUN_TICK_SECONDS } from './gunFeel.js';   // AUDIT FIELD-GUN-MW F1: the flash's own clock under the arm
 import { createGunRig, gunRigStep, gunWidgetSettings, gunMotion, gunFrameRect } from './gunViewmodel.js';   // FIELD-GUN12: the PROTOTYPE's frame, run rather than resembled
 import { readWidgetSettings } from './weaponWidgetMotion.js';   // FIELD-GUN8: the mod's own reader, so the Thunderlock's Inertia rides its multipliers   // FIELD-GUN6: the lab's own feel, in the game at last
 import { weaponOffsetHeight } from '../ui/hudLarge.js';   // FIELD-GUN7: the lab's raise rides the bar's offset rather than replacing it
@@ -755,29 +755,39 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
    *  should sound, and it is the prototype's, which is the only reason
    *  it is this number and not another. */
   const TL_CLOSE_LEAD = 0.42;
-  function thunderlockVoice(dt) {
+  // AUDIT FIELD-GUN-MW F1 (2026-09-21): the flash's own clock under the arm - seconds since the arm's release,
+  // -1 while dark. The classic lane reads the glow curve off the machine's frame, which counts from the CLICK;
+  // under the arm the shot is the arm's release key, so the curve counts from that instead, on the same tick.
+  let _tlFlashClock = -1;
+  const flashFromClock = (dt) => {
+    if (_tlFlashClock < 0) return 0;
+    const frame = Math.floor(_tlFlashClock / GUN_TICK_SECONDS);
+    const g = muzzleGlow(true, frame);
+    _tlFlashClock += dt;
+    if (frame > 0 && g === 0) _tlFlashClock = -1;   // past the curve's end (it opens dark on frame 0): dark until the next shot
+    return g;
+  };
+  /** The weapon's own voice, and the flash it throws. `armShoots` is MW-D42's condition - the Morrowind arm is the
+   *  thing on screen and the machine is a shooter - and `fired` is the frame its release let the held hit go. */
+  function thunderlockVoice(dt, { armShoots = false, fired = false } = {}) {
     const type = weaponTypeForItem(playerWeapon.weapon);
     if (type !== WEAPON_TYPES.Thunderlock && type !== WEAPON_TYPES.Thunderlock_Magic) {
-      _tlState = 'Idle'; _tlOpened = false; _tlClosed = false;
+      _tlState = 'Idle'; _tlOpened = false; _tlClosed = false; _tlFlashClock = -1;
       if (entity) entity._thunderlockFlash = 0;   // FIELD-GUN13: put the lamp out with the weapon
       return;
     }
     if (!_tlSounds) { _tlSounds = true; installThunderlockSounds(audio); }
     const m = playerWeapon.machine;
-    // FIELD-GUN13: THE FRAME'S GLOW, PARKED WHERE THE HOSTS CAN READ
-    // IT - the torch's own arrangement (systems/playerTorch.js parks
-    // `st.range` on the entity and `playerTorchLight` reads it after
-    // the tick), so that all six host light arrays answer the same
-    // frame's shot without any of them re-running the curve. It is
-    // parked HERE, above the frame's mod gate, because a player with
-    // every mod off still fires a gun. A sheathed weapon does not
-    // flash - the machine cannot leave Idle while it is away, but the
-    // read says so rather than relying on that.
-    if (entity) entity._thunderlockFlash = playerWeapon.sheathed ? 0 : muzzleGlow(m.state !== 'Idle', m.frame);
+    // AUDIT FIELD-GUN-MW F1: THE TRIGGER IS THE ARM'S RELEASE, UNDER THE ARM. MW-D42 held the bow's hit for rule
+    // 24's "shoot release" and MW-D42d held its sound with it; the gun's hit now rides the same hold, but its VOICE
+    // fired here on the machine leaving Idle - the click - so under the borrowed crossbow animation the bang, the
+    // kick and the flash came at the click and the orb left at the release, half a second apart: MW-D42d's own
+    // defect one weapon along. The classic lane keeps the click, because its sprite IS the machine's frames.
+    const trigger = armShoots ? fired : (m.state !== 'Idle' && _tlState === 'Idle');
     // the shot, on the trigger's own edge - and the kick and the
     // shake ride the SAME edge, which is what makes them read as one
     // event rather than three things that happened near each other.
-    if (m.state !== 'Idle' && _tlState === 'Idle') {
+    if (trigger) {
       // FIELD-GUN8: the lab's own volume and pitch jitter. The game
       // played all three clips at full gain with no variance, and a
       // gun fired six times in four seconds is exactly where an ear
@@ -794,7 +804,18 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
       // trauma curve above still drives the WEAPON's rattle; this is
       // the room's half.
       betterAmbience.weaponKick?.(GUN_FEEL.roomShake);
+      _tlFlashClock = 0;
     }
+    // FIELD-GUN13: THE FRAME'S GLOW, PARKED WHERE THE HOSTS CAN READ
+    // IT - the torch's own arrangement (systems/playerTorch.js parks
+    // `st.range` on the entity and `playerTorchLight` reads it after
+    // the tick), so that all six host light arrays answer the same
+    // frame's shot without any of them re-running the curve. It is
+    // parked HERE, above the frame's mod gate, because a player with
+    // every mod off still fires a gun. A sheathed weapon does not
+    // flash - the machine cannot leave Idle while it is away, but the
+    // read says so rather than relying on that.
+    if (entity) entity._thunderlockFlash = playerWeapon.sheathed ? 0 : (armShoots ? flashFromClock(dt) : muzzleGlow(m.state !== 'Idle', m.frame));
     _tlState = m.state;
     // the reload, on the cooldown the shot left behind
     const cooling = m.now < m.cooldownUntil;
@@ -959,6 +980,55 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
     setMidScreenText(type === WEAPON_TYPES.Bow ? 'You have no arrows.' : 'You have no pellets.');
   }
 
+  /** MW-D42's hold, as the function the frame decides first (it used to be the frame's own tail). AUDIT
+   *  FIELD-GUN-MW F1 (2026-09-21): the gate is `machine.ranged`, not `isBow` - the Thunderlock is a shooter the arm
+   *  animates as a crossbow, and its hit rode straight through the bow-only gate: the orb left at the machine's
+   *  frame 1 (70 ms after the click at GUN_FEEL.fps 14) while the arm was still winding up to its release key -
+   *  the exact defect MW-D42 paid for the bow, one weapon along. Answers the events to hand the host and whether a
+   *  held hit went THIS frame, which is what the weapon's voice fires on under the arm. */
+  function holdShotForArm(evs, dt, armShoots) {
+    if (!armShoots) {
+        // The classic sprite path is untouched, and so is every melee
+        // weapon on every path.
+        if (_heldHit) _heldHit = false;
+        _heldSound = false;
+        return { evs, fired: false };
+      }
+      const out = [];
+      for (const ev of evs) {
+        if (ev === 'hit') { _heldHit = true; _heldHitAge = 0; continue; }
+        // MW-D42d (Mac: "the sound affect plays before the arrow is
+        // fired"): THE LOOSE SOUND RIDES WITH THE LOOSE. The machine
+        // puts bowSound on frame 4 and the hit on frame 5 - one 0.0625
+        // tick apart, which is the same instant to an ear. MW-D42 moved
+        // the HIT to the arm's release key and let the sound through
+        // untouched, so the two came apart by the whole length of the
+        // draw and the string was heard before the arrow left. Holding
+        // the arrow and not its sound is not half a fix, it is a new
+        // defect, and it was mine.
+        if (ev === 'bowSound') { _heldSound = true; continue; }
+        out.push(ev);
+      }
+      if (_heldHit) {
+        _heldHitAge += dt;
+        // NEVER-TRAPS. If the arm's "shoot release" key never comes -
+        // a .kf that does not carry it, an arm that loses its build
+        // mid-shot - the shot is not swallowed. It lands late rather
+        // than never, and HELD_HIT_MAX_S is generous enough that a real
+        // release always wins the race: the whole classic bow release
+        // is seven frames at a 0.0625 tick, about 0.44s.
+        if (fpArm.takeShootRelease() || _heldHitAge >= HELD_HIT_MAX_S) {
+          _heldHit = false;
+          // SOUND FIRST, then the hit - the machine's own order across
+          // frames 4 and 5, preserved rather than reinvented.
+          if (_heldSound) { _heldSound = false; out.push('bowSound'); }
+          out.push('hit');
+          return { evs: out, fired: true };
+        }
+      }
+      return { evs: out, fired: false };
+  }
+
   return {
     /** QS2 - RE-READ THE HANDS NOW, not on the next frame.
      *
@@ -998,6 +1068,12 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
      */
     thunderlockMuzzle(fovRad, forward = MUZZLE_FORWARD) {
       if (!thunderlockHeld()) return null;
+      // AUDIT FIELD-GUN-MW F2 (2026-09-21): THE MORROWIND ARM ANSWERS FOR ITSELF. `_tlDrawn` is the classic sprite's
+      // record, written by drawThunderlock - which the arm's branch of the draw ladder returns BEFORE - so under the arm
+      // it was null, or a stale rect from before the arm came up, and the orb left the eye rather than the barrel, in
+      // first person and in third. The rig poses the weapon piece every frame and knows where it ends
+      // (combat/rigMuzzle.js); the sprite's record stays the sprite's.
+      if (fpArm.active() || fpArm.thirdActive()) return fpArm.weaponMuzzle();
       return muzzleRay(_tlDrawn, fovRad, forward);
     },
     refreshWorn() { syncWorn(); },
@@ -1272,7 +1348,13 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
       // character reloads slower and the lock-up still lands with the
       // weapon coming back up - the lab's law, off the numbers the
       // machine already keeps.
-      thunderlockVoice(dt);
+      //
+      // MW-D42 / AUDIT FIELD-GUN-MW F1: the arm's hold is decided FIRST, so the shot's own voice can ride the same
+      // instant its hit does. `armShoots` is the condition both share: the arm is the thing on screen (either view)
+      // and the machine is a shooter - `ranged`, not `isBow`.
+      const armShoots = (fpArm.active() || fpArm.thirdActive()) && !!playerWeapon.machine.ranged;
+      const held = holdShotForArm(evs, dt, armShoots);
+      thunderlockVoice(dt, { armShoots, fired: held.fired });
       // WW1: the clone's LateUpdate, after the original's frame advance -
       // the same order DFU's LateUpdate has against FPSWeapon's Update.
       const _torchesOn = handheldOn();
@@ -1386,45 +1468,7 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
       // Same animation, same release key, same clock; only the pass
       // that draws it differs, and the pass is none of the loose's
       // business.
-      if (!(fpArm.active() || fpArm.thirdActive()) || !playerWeapon.machine.isBow) {
-        // The classic sprite path is untouched, and so is every melee
-        // weapon on every path.
-        if (_heldHit) _heldHit = false;
-        _heldSound = false;
-        return evs;
-      }
-      const out = [];
-      for (const ev of evs) {
-        if (ev === 'hit') { _heldHit = true; _heldHitAge = 0; continue; }
-        // MW-D42d (Mac: "the sound affect plays before the arrow is
-        // fired"): THE LOOSE SOUND RIDES WITH THE LOOSE. The machine
-        // puts bowSound on frame 4 and the hit on frame 5 - one 0.0625
-        // tick apart, which is the same instant to an ear. MW-D42 moved
-        // the HIT to the arm's release key and let the sound through
-        // untouched, so the two came apart by the whole length of the
-        // draw and the string was heard before the arrow left. Holding
-        // the arrow and not its sound is not half a fix, it is a new
-        // defect, and it was mine.
-        if (ev === 'bowSound') { _heldSound = true; continue; }
-        out.push(ev);
-      }
-      if (_heldHit) {
-        _heldHitAge += dt;
-        // NEVER-TRAPS. If the arm's "shoot release" key never comes -
-        // a .kf that does not carry it, an arm that loses its build
-        // mid-shot - the shot is not swallowed. It lands late rather
-        // than never, and HELD_HIT_MAX_S is generous enough that a real
-        // release always wins the race: the whole classic bow release
-        // is seven frames at a 0.0625 tick, about 0.44s.
-        if (fpArm.takeShootRelease() || _heldHitAge >= HELD_HIT_MAX_S) {
-          _heldHit = false;
-          // SOUND FIRST, then the hit - the machine's own order across
-          // frames 4 and 5, preserved rather than reinvented.
-          if (_heldSound) { _heldSound = false; out.push('bowSound'); }
-          out.push('hit');
-        }
-      }
-      return out;
+      return held.evs;
     },
     /** The overlay draw, LAST in the host's frame (composites over the
      *  scene; any HUD draws over it). Runs the bow guard first. */

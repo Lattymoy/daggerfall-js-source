@@ -1400,7 +1400,7 @@ hand and the butt 5.1 behind it.
 
 This is the one that "it attaches to the right bone" hides completely.
 `resolveWeaponParts` returned `MW_WEAPON_TYPE.None`, and
-`animWeaponType` turns None into **HandToHand** (`fpArm.js:285`) —
+`animWeaponType` turns None into **HandToHand** (`fpArm.js:286`) —
 correct for empty hands, absurd for a man holding a dwemer firearm. The
 rig played unarmed stances and the gun went along for the ride:
 `composeWeaponGroup` returned no group at all, `weaponShortGroup` the
@@ -1573,3 +1573,101 @@ FIELD-GUN17's stated "white until warmed" design and it is a far smaller
 thing than what was reported; making even the first shot blue means
 warming the archive when the weapon is equipped rather than when a shot
 flies, which is a wiring change across the hosts and its own slice.
+
+## AUDIT FIELD-GUN-MW (2026-09-21): the gun in the rig, both views
+
+Mac: *"The newly integrated gun on the morrowind rig needs proper rigging
+in 3rd and 1st person, proper animations. Just want you to audit it and
+ensure its perfect."* Four lenses over MW1/MW2/MW3, read against the rig's
+own laws (MW-D42 for the shot, rule 24 for the release key, WS1 for the
+holster). Two defects paid, one records gap paid, two things recorded
+that only eyes on a build can close.
+
+**F1 (PAID): the shot fired at the click under the arm, in both views.**
+MW-D42's hold - the machine's hit waits for the arm's "shoot release" -
+gated on `machine.isBow`. The Thunderlock is `machine.ranged` and not a
+bow, so under the borrowed crossbow animation its hit rode straight
+through: the orb left at the machine's frame 1, 70 ms after the click
+(`GUN_FEEL.fps` 14), while the arm was still winding up. And the
+weapon's VOICE - the bang, the recoil punch, the room shake, the flash -
+fired on the machine leaving Idle, the click. The bow paid exactly this
+at MW-D42 and MW-D42d ("the sound affect plays before the arrow is
+fired"). Now: the gate is `ranged`; the hold is `holdShotForArm`,
+decided FIRST in the frame so `thunderlockVoice` is told the frame a
+held hit went (`fired`); under the arm the trigger is that frame, and
+the flash counts from it on the curve's own tick (`flashFromClock`)
+rather than from the machine's frame. The classic lane keeps the click,
+because its sprite IS the machine's frames. Third person holds like
+first (MW-D42c's `thirdActive()` is in the same condition). The reload's
+two clacks still ride the machine's cooldown, which starts at the
+click - the crossbow's own reload follows its release, and the two
+roughly overlap; recorded, not retuned.
+
+**F2 (PAID): the orb left the eye, not the barrel, in both views.**
+`thunderlockMuzzle` read `_tlDrawn`, the classic sprite's record - written
+by `drawThunderlock`, which the arm's branch of the draw ladder returns
+BEFORE. Under the arm it was null, or a stale rect from before the arm
+came up, so `arrows.fire` fell to the eye centre in first person and to
+the camera - behind the body - in third. FIELD-GUN17 and 19 fixed the
+muzzle for the sprite only. The rig now answers for itself:
+`combat/rigMuzzle.js` (pure) finds the muzzle as the vertex farthest from
+the piece's origin - the GRIP, since MW3's `--origin=grip` - so no axis
+is assumed and a re-bake that turns the mesh does not move the muzzle
+off the barrel; `fpArm.weaponMuzzle()` poses it through the frame the
+last draw of THAT view composed - first person as the classic muzzle's
+own lens offset in metres, third person as a world point through
+`drawThird`'s model (kept as `lastThirdModel`), because behind the body
+a lens offset is the wrong shape. The origin fork itself - a world muzzle,
+a lens muzzle, or GetAimPosition's bow-hand arm - lived twice, restated
+in `combat/arrowFlight.js` and in the dungeon host's own missiles
+(ROAD-H H1c's "BOTH arrow spawn seams"), so a third arm added to one
+would have missed the other; it is ONE function now,
+`playerShotOrigin` in `systems/spellcast.js` beside the two arms it
+forks, and both seams call it. The three hosts that fire the shot were
+not touched: they already ask the one door. Re-aimed onto the one home:
+`roadh_missiles` H1c, `thunderlock` FIELD-GUN17a, and three of
+`fieldgun17.json`'s records (one of them the dungeon seam's own).
+
+**F3 (PAID, as far as it can be): the MW1-MW3 mutant campaigns are not
+in the tree.** The record claims "9 pins, 29 mutants, 29 killed" and "60
+mutants over the two slices, 60 killed", and `tools/mutants/` carries
+none of them - so `mutantdrift` holds nothing, and a survivor could
+return with no gate to say so. The original lists are gone; this audit's
+campaign (`tools/mutants/fieldgunmwaudit.json`, 17 mutants, 17 dead)
+covers F1 and F2 in full and MW2/MW3's four load-bearing laws - the own
+arm, the borrowed type, the bone, the un-borrowed bolt - against
+`fieldgunmw.test.js`. The bake chain's 29 remain uncommitted and are
+recorded here as such.
+
+**Ruled sound by reading.** Third person shares `resolveWeaponParts`
+with first, so the gun hangs on the body's `Weapon Bone` and the body
+plays the crossbow groups (`t.weapon`, `tResolved.mwType`). Sheathed, the
+bare gun rides the sheathing mod's own bare-weapon fallback on `Bip01
+MarksmanCrossbow` (no `thunderlock_sh.nif`, and `holsters(crossbow)` is
+true); it takes no quiver, since it borrows no bolt. The muzzle LIGHT
+(`thunderlockMuzzleLight`, `_thunderlockFlash` on the entity) is
+lane-agnostic and, with FP lighting on, the viewmodel light reads it
+too - so the arm and the gun mesh are lit by the flash; only the
+sprite's tinted flash frame has no mesh counterpart, and the light does
+its work. `borrowsAmmo: false` holds through the third-person resolve
+(`arrowInfo` null, no arrow part).
+
+**Not closable here, and said plainly.** (1) The gun's ORIENTATION on
+`Weapon Bone` - the bake put the barrel along the piece's +Y and the
+grip at the origin, and no `BoneOffset` nudges it - was chosen against a
+rendered preview, never against the bone; MW1 and MW3 both say so. Eyes
+on a build decide whether it reads as held and pointing forward. If it
+does not, the fix is a `BoneOffset` node in the bake, not a change to
+the attach. (2) The crossbow animation's timing against the gun's
+1.7 s reload is the same eyes' question.
+
+**Pins** (`test/fieldgunmwaudit.test.js`, 6): the hold and the voice
+under the arm (held at the click, released with the bang and the flash
+on the same frame, once), the classic lane untouched and third person
+held like first, the never-swallowed ceiling, the muzzle door in both
+views and never the sprite's record, the muzzle vertex and the two
+frames (a point ahead lands on `forward`, up on `up`; the body's model
+carries the metre and the basis), and by source the gate, the order,
+the third-person frame, the flight's world origin and the hosts' one
+door (generative). Re-aimed: `thunderlock.test.js` F8's voice call.
+

@@ -83,6 +83,7 @@ import { injectSkeletonNodes } from '../formats/mwSkin.js';   // WS1: the dry in
 // MAP3: THE HELD SHEET - the pose deltas over the idle, the paper piece
 // the hands hold, and where its corners land on the composite
 import { deltaTracks, heldSampler, paperPiece, refreshPaperSource, projectPaperCorners, normaliseHeldPose, HELD_POSE_DEFAULT } from './heldPose.js';
+import { farthestVertexIndex, posedVertex, viewOffsetOf, worldPointOf } from './rigMuzzle.js';   // AUDIT FIELD-GUN-MW F2: where the barrel ends, off the posed piece
 
 // MW-LOAD (2026-09-08, Mac: "improve the load time when Morrowind assets
 // are enabled"): THE ARCHIVE IS OPENED, NOT READ, AND THIS FILE IS ITS
@@ -2247,6 +2248,12 @@ export function createFpArm() {
   let held = null;               // { spec, piece, aspect, eye, built, reach0 }
   let heldMemo = null;           // { base, spec, inner, tracks, sampler }
   let lastFrame = null;          // { model, view, proj, rect } - what draw() last composed with
+  let lastThirdModel = null;   // AUDIT FIELD-GUN-MW F2: drawThird's model matrix, for the muzzle in the world
+  /** The muzzle vertex of a weapon piece, found once off its unposed source and kept on the piece. */
+  const muzzleIndexOf = (piece) => {
+    if (piece.muzzleIndex == null) piece.muzzleIndex = farthestVertexIndex(piece.source);
+    return piece.muzzleIndex;
+  };
   let drewLast = false;          // AUDIT-MAP2: whether the LAST draw() call composed the arm
   /** Put (or re-put) the sheet on the rig at the camera node's translation.
    *  The reach - which sets the pass's far plane (rule 54: the planes come
@@ -3598,6 +3605,25 @@ export function createFpArm() {
      *  held map draws the arms whatever the WEAPON's own `shown()` says. */
     holdingPaper() { return !!held; },
     setHeldPose(spec) { return held ? api.holdPaper(spec, { aspect: held.aspect }) : false; },
+    /** AUDIT FIELD-GUN-MW F2: WHERE THE BARREL ENDS, off the posed weapon
+     *  piece - the vertex farthest from the grip (the bake's origin),
+     *  through the pass the last draw of THIS view composed. First person
+     *  answers the classic muzzle's own shape, a lens-local offset in
+     *  metres ({ right, up, forward }); third person answers the world
+     *  point ({ world }), because the camera is behind the body and a lens
+     *  offset would put the orb in the air beside it. Null before a draw,
+     *  without a weapon piece, or under a rig that has not built. */
+    weaponMuzzle() {
+      if (viewMode === 'third') {
+        const t = thirdBuilt;
+        const piece = t && t.ok ? t.arm.pieces.find((p) => p.slot === 'weapon') : null;
+        if (!piece || !piece.positions || !piece.source || !lastThirdModel) return null;
+        return { world: worldPointOf(posedVertex(piece.positions, muzzleIndexOf(piece)), lastThirdModel) };
+      }
+      const piece = built && built.ok ? built.arm.pieces.find((p) => p.slot === 'weapon') : null;
+      if (!piece || !piece.positions || !piece.source || !lastFrame) return null;
+      return viewOffsetOf(posedVertex(piece.positions, muzzleIndexOf(piece)), lastFrame.model, lastFrame.view, MW_UNITS_PER_METER);
+    },
     /** MAP3: the sheet's four corners on the composite, in CSS px of the
      *  canvas (top-left, top-right, bottom-right, bottom-left), through
      *  the model, view and projection the last draw composed with - or
@@ -4211,6 +4237,7 @@ export function createFpArm() {
         trs(feet[0], feet[1], feet[2], 0, yawDeg, 0, -u * rs.weight, u * rs.height, u * rs.weight),
         NIF_TO_PASS,
       );
+      lastThirdModel = model;   // AUDIT FIELD-GUN-MW F2: the body's frame, for the muzzle behind the camera
       // The box the sprite law needs, measured off the POSED pieces in
       // MW axes and mapped: MW z is world up, MW x/y are the horizontal
       // pair. The azimuth-safe half-width holds under yaw for free,
