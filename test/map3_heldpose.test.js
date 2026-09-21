@@ -611,24 +611,48 @@ test('MAP-WEAPON: the sprite lane stands down while a map holds the screen, belo
   assert.doesNotMatch(shownFn, /sheetWindowUp/, 'a window is not a leg of the weapon’s own predicate');
 });
 
-test('MAP-WEAPON: the host asks the live overlay slot, and the window carries the tag it asks for', async () => {
+test('MAP-WEAPON / EM-BUG1: EVERY host asks its own live slot, and the tag it asks for answers only that question', async () => {
   const { readFileSync } = await import('node:fs');
-  const w = readFileSync(new URL('../src/scenes/world.js', import.meta.url), 'utf8');
+  const read = (rel) => readFileSync(new URL(rel, import.meta.url), 'utf8');
   // Read PER FRAME off the slot, never a flag raised at the open: the
   // window can be closed by Escape, by a travel, by a quest popup
   // taking the slot, or by a teardown, and a flag would have to be
   // lowered at every one of them.
-  assert.match(w, /sheetWindowUp: \(\) => townTalk\.overlay\?\.isTravelMap === true,/);
-  const held = readFileSync(new URL('../src/ui/heldMap.js', import.meta.url), 'utf8');
-  // EM4: THE TAG IS DERIVED, NOT DECLARED. It was a constant `true`
-  // while this window was only ever the travel map; once the same
-  // window also opens on a town or a dungeon the constant became a lie,
-  // and `sheetWindowUp` above would have answered yes over a crypt's
-  // plan. It is the SLOT's answer now: true exactly where the bay is
-  // reachable, which is what the host is asking.
-  assert.match(held, /this\.isTravelMap = this\._slot\.ids\.includes\('world'\);/,
-    'the window’s own duck tag - the rig imports no UI class to ask');
+  //
+  // EM-BUG1 (Mac: "your equipped weapon isnt stowed when the map is
+  // out"): AND THE TAG IS `holdsScreen`, NOT `isTravelMap`. This pin
+  // asserted the travel tag until the bug was reported, which is how
+  // the regression got past it - EM4 narrowed `isTravelMap` to "the
+  // bay is reachable from here", correctly, for the TRAVEL question,
+  // and this gate was quietly riding on the same flag. One flag, two
+  // questions, and narrowing it for one un-answered the other.
+  const HOSTS = [
+    ['src/scenes/world.js', /sheetWindowUp: \(\) => townTalk\.overlay\?\.holdsScreen === true,/],
+    ['src/scenes/exterior.js', /sheetWindowUp: \(\) => townTalk\.overlay\?\.holdsScreen === true,/],
+    ['src/scenes/dungeonContext.js', /sheetWindowUp: \(\) => activeOverlay\?\.holdsScreen === true,/],
+    ['src/scenes/worldModes.js', /sheetWindowUp: \(\) => interiorOverlay\?\.holdsScreen === true,/],
+  ];
+  // ...AND EVERY HOST, which is the other half of the same bug. The
+  // world host was the only one wired, because when MAP-WEAPON was
+  // written it was the only host that could open the sheet. EM3 and
+  // EM4 gave the same window a door underground, in a town and in a
+  // building; three rigs never grew the term, so the map came up with
+  // the weapon drawn over it in every one of them.
+  for (const [file, re] of HOSTS) {
+    assert.match(read(`../${file}`), re, `${file}: this host's rig asks ITS OWN slot whether a map holds the screen`);
+  }
+  for (const [file] of HOSTS) {
+    assert.doesNotMatch(read(`../${file}`), /sheetWindowUp: \(\) => [^\n]*isTravelMap/, `${file}: never back onto the travel tag`);
+  }
+  const held = read('../src/ui/heldMap.js');
+  // the screen tag is CONSTANT - hands holding a map are not also
+  // holding a sword, wherever the map came from
+  assert.match(held, /this\.holdsScreen = true;/, 'the window’s own duck tag - the rig imports no UI class to ask');
+  // ...and the TRAVEL tag stays derived, answering only for the place
+  assert.match(held, /this\.isTravelMap = this\._slot\.ids\.includes\('world'\);/);
   assert.doesNotMatch(held, /this\.isTravelMap = true;/, 'and it is never simply asserted');
+  // the rig's gate itself, unchanged and still one line
+  assert.match(read('../src/combat/weaponRig.js'), /if \(sheetWindowUp\(\)\) return;/);
 });
 
 test('MAP-WEAPON / EM4: the travel tag answers for the place, not for the class', async () => {
