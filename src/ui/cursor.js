@@ -8,7 +8,7 @@
 
 import { ImgFile } from '../formats/imgFile.js';
 import { DFPalette } from '../formats/dfPalette.js';
-import { bitmapToColor32 } from './hud.js';
+import { bitmapToColor32 } from '../formats/color32Order.js';   // BOOT2: from the formats leaf - through hud.js this one line put the whole HUD and the world tick on the boot path
 
 const SCALE = 2;   // the 32x16 source reads too small at modern DPI
 

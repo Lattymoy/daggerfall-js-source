@@ -15,6 +15,7 @@ import { skyFrameForTime, isNight, setLightCurve, daylightScale } from '../world
 import { createWindModel } from '../systems/wind.js';   // WIND1; WEATHER2b: the lead is the front's own (leadMinutes)
 import { releaseUnloadGuard } from '../systems/unloadGuard.js';   // MAC-L3: a door the game opened is not a door to warn about
 import { EnhancedSkyRenderer, skyState, easeWeather, weatherRow, CLOUD_SHADOW, moonlightTerm, WEATHER_EASE_MINUTES, WIND_SECONDS_PER_MINUTE } from '../render/enhancedSky.js';   // ES1: the enhanced sky, behind the skin; EV5: its moons light the world
+import { meterFor } from '../render/perfMeter.js';   // VC6d: `?perf=zones` - the sky's own span
 import { VolumetricClouds, QUALITY as CLOUD_QUALITY } from '../render/volumetricClouds.js';   // VC3: the clouds over the dome
 import { cloudsStateUnderMod, dynamicMoonState, dynamicMoonlight } from '../render/dynamicSkiesBridge.js';   // DS1/DS2: the mod's state in the port's shapes - the moons, the clouds, and the moons' own term (AUDIT 65 MC-3: the bridge's third export had no caller and this file carried its body inline)
 import { isEnhanced } from '../systems/uiSkin.js';
@@ -28,9 +29,15 @@ import { weatherSunlightScale } from '../world/weather.js';   // DS1: WeatherMan
 import { seasonValue, SEASONS, dateFromClassicMinutes } from '../systems/gameDate.js';   // DS1: the winter arm of that scale
 import { hasActiveEffect, isBlending, isInvisible, isAShade } from '../systems/effects.js';
 import { skillValue, tallySkill, SKILLS, SKILL_NAMES } from '../systems/skills.js';
+// LV2: the level-up notification's seams. The CLASSIC lane's line and
+// box are still this file's - the seam takes them and uses them - so
+// nothing about the old skin is decided in a UI module.
+import { announceSkillRaise, announceMastery } from '../ui/levelNotice.js';
 import { DOOR_SPELL_TEXT, castBySkeletonKey } from '../systems/mysticism.js';   // X1: the door-spell alert lines; D9: Open.CheckCastByItem
 import { raiseSkills } from '../systems/advancement.js';   // AUDIT 23 (entity-1): the rest-end raise
 import { tickPlayerMinutes, runMagicRoundsFor, worldMinutes, setWorldMinutes, advanceWorldMinutes, MINUTES_PER_DAY, CLASSIC_MINUTES_PER_SECOND, sharedClockOn } from '../systems/worldTick.js';
+import { REST_KIND, REST_TEXT_SURVIVAL, restHour, stiffen } from '../systems/survival/rest.js';   // SURV4: the rest law - a bed and a fire sleep, the window alone is rough
+import { survivalOn } from '../systems/survival/switch.js';
 import { setSyntheticTimeIncrease } from '../systems/effectBroker.js';   // AUDIT 63 F13: VampirismInfection.cs:161-162
 import { setInfectionHost, vampireClanForFaction } from '../systems/infection.js';   // V1: the host seam for the dream/death videos and the turn's clock raise
 import { findFactions } from '../systems/talk.js';   // V1: GetRegionFaction's FindFactions(Province, region)
@@ -38,7 +45,9 @@ import { FACTION_TYPES } from '../formats/factionFile.js';
 import { killIfAnyLiveStatZero } from '../systems/statMods.js';   // AUDIT 24 (wave 32): the per-entity laws a foe pool owes
 import { hasSpecialAbility, SPECIAL_ABILITY, healthRecoveryRate, fatigueRecoveryRate, spellPointRecoveryRate } from '../systems/rest.js';
 import { entityImprovedAthleticism } from '../systems/enchantments.js';   // AUDIT 26 F044: the ImprovesTalents fatigue arm   // the rested hour's three rates, one home for every host (V5 + S40, same line from two lanes)
-import { getPreventedRestMessage } from '../systems/restSession.js';   // ROAD-B B5: TickRest's per-frame poll (:357-360, :407-410)
+import { getPreventedRestMessage } from '../systems/restSession.js';
+import { registerPreventRestCondition } from '../systems/restSession.js';   // SURV7: the survival rest gate's seam
+import { survivalFeed, installSurvivalGate } from '../systems/survival/env.js';   // SURV7: the needs' feed and the gate, composed from the entity   // ROAD-B B5: TickRest's per-frame poll (:357-360, :407-410)
 import { createNearbyScan, updateNearbyObjects, detectedMarkers, hasLiveDetector } from '../systems/nearbyObjects.js';   // X4: the Detect scan
 import { liveStat, maxFatigue } from '../systems/statMods.js';
 import { FALL_DAMAGE_THRESHOLD, FALL_HP_PER_METRE, CAPSULE_HEIGHT } from '../player/motor.js';   // AUDIT 62 F23: the standing capsule, the senses context's headless default
@@ -56,7 +65,7 @@ import { setMusicReplacements } from '../systems/musicReplacement.js';   // M-EX
 import { setTextureReplacements } from '../systems/textureReplacement.js';   // M-TEX: TextureReplacement's registry
 import { setSeasonsSources } from '../systems/seasonsIliacBayAssets.js';   // SIB1: Seasons of the Iliac Bay's texture door
 import { setWeaponWidgetSources } from '../combat/weaponWidgetAssets.js';   // WW1: Weapon Widget's double-scale textures, from the player's own bundle
-import { getBool } from '../systems/settings.js';   // M-FM: Audio/AlternateMusic, read once for all three hosts
+import { getBool, getInt } from '../systems/settings.js';   // M-FM: Audio/AlternateMusic, read once for all three hosts; MAC-O4: Controls/WeaponSwingMode, the drag route's own missing term
 import { SongManager, musicEnvironment, holdEnvironment } from '../systems/songManager.js';
 import { audio } from '../systems/audio.js';
 
@@ -606,8 +615,14 @@ export function createSkyController(gl, params) {
     /** VC3: `viewport` is the host's world rect [x, y, w, h] in pixels,
      *  restored after the clouds' map is marched (a render target). */
     draw(yaw, pitch, fovY, aspect, viewport = [0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight]) {
+      // VC6d: the sky and its cloud march are the one heavy pass the
+      // renderer does not run, so they mark their own span and hand the
+      // frame back to the world's - `?perf=zones` and nothing otherwise.
+      const meter = meterFor(gl);
+      meter?.mark('sky');
       (enhancedSky ?? dynamicSky ?? sky).draw(yaw, pitch, fovY, aspect);
       if (clouds) { clouds.update(viewport); clouds.draw(yaw, pitch, fovY, aspect); }   // VC3: over the dome, under the host's marker
+      meter?.mark('world');
     },
   };
 }
@@ -1078,7 +1093,7 @@ export function applyFallLanding(entity, distance, { hurt = null, sound = null, 
     // AUDIT 24 (wave 39): PlayerHealth.ApplyPlayerFallDamage calls
     // RemoveHealth (:57), which is ShowPlayerDamage.Flash's only
     // trigger. A fall flashes the screen; a poison does not.
-    flashPlayerDamage();
+    flashPlayerDamage(dmg);   // BA1: RemoveHealth carries the amount
     // AUDIT 58: at FootstepVolumeScale, not full. ApplyPlayerFallDamage
     // is `PlayOneShot((int)FallDamageSound, 0, FootstepVolumeScale)`
     // (PlayerFootsteps.cs:307-311) and HardFallAlert the same for
@@ -1231,13 +1246,27 @@ export function raisePlayerSkills(entity, { say = () => {}, onLevelUp = null, ro
   // Interleaved, not batched: DFU pops the skillImprove message and
   // then, for that same skill, the master box - so a pass that raises
   // two skills reads in the source's order.
+  // LV2 - THE RISING (Mac, 2026-09-19: the enhanced level-up
+  // notification, "all of the above"): on the ENHANCED skin the two
+  // presentations below move to the notice strip (ui/levelNotice.js).
+  // The raise leaves the popup column - a skill going up is a change
+  // to the CHARACTER, not another thing the world said - and the
+  // mastery leaves its click-anywhere box, which carries news and no
+  // choice and is therefore the same interruption the level-up window
+  // was. THE FANFARE STAYS IN BOTH LANES: it is the reward, not the
+  // interruption. The CLASSIC skin takes both arms exactly as written
+  // before this slice, which is why they are still written here.
   return raiseSkills(entity, Math.floor(worldMinutes()), rolls, onLevelUp,
-    () => {
-      const rows = plainLines(lines?.(MASTERY_TEXT_ID));
-      if (rows?.length) box?.(rows);
+    (id) => {
+      // AUDIT LV2 F3: the TEXT.RSC read is a THUNK, so it happens on
+      // the lane that shows it. Passed by value it ran on BOTH - the
+      // enhanced skin read record 4020 off disk at every mastery and
+      // dropped it, under a surface that promises to read no game
+      // data to announce one.
+      announceMastery(id, { box, rows: () => plainLines(lines?.(MASTERY_TEXT_ID)) });
       audio.playOneShot(SOUND.ArenaFanfareLevelUp, 1);
     },
-    (id) => say(`Your ${SKILL_NAMES[id]} skill has improved.`)) ?? [];
+    (id) => announceSkillRaise(id, skillValue(entity, id), { say })) ?? [];
 }
 
 /**
@@ -1278,7 +1307,12 @@ export function createPlayerTicker(entity, { say = () => {}, onLevelUp = null, o
   // because a host that has not said where the player stands must not
   // deliver a letter it cannot place, and the dungeon host is inside
   // by construction anyway.
-  isInside = () => true } = {}) {
+  isInside = () => true,
+  // SURV7: the host's survival env reader - () => env, or null for a
+  // tick that runs no needs (the dungeon's own tick feeds its own).
+  // The feed (survival/env.js survivalFeed) is built here from the
+  // entity; the gate rides the same reader.
+  survivalEnv = null } = {}) {
   // AUDIT 21 F2: a VIEW on the one world clock, not an owner. This used to
   // close over its own accumulator, so the three hosts that build a ticker -
   // world, exterior, worldModes - each counted from zero and only while
@@ -1312,6 +1346,9 @@ export function createPlayerTicker(entity, { say = () => {}, onLevelUp = null, o
   // fans it out here, so a pool cannot be forgotten by a host that forgot to
   // add a line to its frame body.
   const subscribers = [];
+  // SURV7: the rest gate on DFU's RegisterPreventRestCondition seam, with this host's readers - too cold without a
+  // fire or a roof, too hot anywhere (survival/rest.js restBlock); inert with the mod off
+  if (survivalEnv) installSurvivalGate(registerPreventRestCondition, () => entity, survivalEnv);
 
   return {
     get classicMinutes() { return worldMinutes(); },
@@ -1332,6 +1369,7 @@ export function createPlayerTicker(entity, { say = () => {}, onLevelUp = null, o
         entity, classicMinutes: worldMinutes(), dt, sinks, activity, realSeconds,
         fatigueMultiplier: fatigueLossMultiplierFor(entity),
         say, inside: isInside(),
+        survival: survivalFeed(entity, survivalEnv?.() ?? null, { say }),   // SURV7: the needs' minute, when the host says where the player stands
       });
       setWorldMinutes(r.classicMinutes);
       // PlayerEntity.Update:380-384's 8-hour alert decay used to be
@@ -1864,16 +1902,31 @@ export function createMusicDirector({ fm = null, play = null, stop = null, playi
  *  through to `cam.yaw += movementX` - so every swing inside a
  *  building or a dungeon turned the camera with it.
  *
- *  `dungeon.js:252`, the standalone host, has always had the right
+ *  `dungeon.js:263`, the standalone host, has always had the right
  *  shape: attack, then return. It has no modal sibling to share the
  *  drag with, which is why it never needed a mode in the test at all.
  *
  *  @returns 'swing'  - this host owns the drag; feed its own rig
  *           'modal'  - a mode host owns it; do nothing, and DO NOT LOOK
  *           'look'   - nobody is swinging; the drag is a look
+ *
+ *  MAC-O4 (Mac, 2026-09-16 follow-up: "still can't look while attacking
+ *  in Click / Click or Hold"). WeaponSwingMode was a term this function
+ *  never asked, so a held swing button ALWAYS ate the drag, in every
+ *  mode. That is right for Gesture (0) - the drag over the held button
+ *  IS the swing, tracked in playerWeapon.gesture()'s dx/dy trail - but
+ *  Click (1) and Click-or-Hold (2) track no gesture at all
+ *  (WeaponManager.cs:316-331 rolls a random direction; playerWeapon.js's
+ *  swingMode !== 0 branch never reads dx/dy), and the swing itself keeps
+ *  firing every frame off `held` alone (weaponRig.js's attackInput/held
+ *  latch, set by mousedown/mouseup, independent of mousemove). So
+ *  routing the drag away from 'look' in those two modes fed the rig
+ *  deltas it does not use and cost the player the one thing DFU still
+ *  gives them: turning while the button is down.
  */
-export function routeMouseDrag({ walkMode, buttons, mode = 'exterior' }) {
-  if (!walkMode || !swingHeld(buttons)) return 'look';   // FIX-F: the swing's button is the registry's, not the right one
+export function routeMouseDrag({ walkMode, buttons, mode = 'exterior',
+  swingMode = getInt('Controls', 'WeaponSwingMode', 0, 2) } = {}) {
+  if (!walkMode || swingMode !== 0 || !swingHeld(buttons)) return 'look';   // FIX-F: the swing's button is the registry's, not the right one; MAC-O4: only Gesture (0) ever claims the drag
   return mode === 'exterior' ? 'swing' : 'modal';
 }
 
@@ -1935,15 +1988,29 @@ export function createRestDeps(entity, opts = {}) {
     // come from the host's `endLines`, which is already its TEXT.RSC
     // reader - one host dep, not a second one that could disagree.
     box = null,
-    place = null, ...rest
+    place = null,
+    // SURV4: the host's word on WHERE the sleep is (survival/rest.js restKind) - a bed, a camp, or rough; a
+    // host that says nothing sleeps rough, which is what the window alone has always been
+    restKind = () => REST_KIND.Rough, ...rest
   } = opts;
+  let _kind = REST_KIND.Rough;   // the running rest's kind, read at the open
+  let _roughHours = 0;           // rested hours paid at the rough rate - the stiff morning follows them
   return {
     // PlayerEntity.IsResting / IsLoitering (:268, :284, :789, :285).
     // Every host owes these identically - they are entity flags, not
     // host state - so the composition writes them rather than asking
     // four hosts to remember. A host may still override via the
     // spread if it needs to observe the edge.
-    setResting: (b) => { entity.isResting = !!b; },
+    setResting: (b) => {
+      entity.isResting = !!b;
+      // SURV4: the kind is read at the OPEN (the fire may die under a long night - it was lit when you lay down);
+      // `entity.restKind` is the needs law's `sleeping` for the hosts' env feed and the encounter roll's `roughRest`
+      if (b) { _kind = survivalOn() ? restKind() : REST_KIND.Bed; _roughHours = 0; }
+      // SURV4: rough hours rested are a stiff morning (STIFF_HOURS of speed and agility) on the way out - an interrupted
+      // night too, since the hours were slept - said once; the hours are spent
+      if (!b && _roughHours > 0 && stiffen(entity, worldMinutes(), REST_KIND.Rough)) { say(REST_TEXT_SURVIVAL.stiff); _roughHours = 0; }
+      entity.restKind = b ? _kind : null;
+    },
     setLoitering: (b) => { entity.isLoitering = !!b; },
     // THE PASS-THROUGH IS LOAD BEARING, and it is here because a review
     // round caught the shape without it: worldModes handed this
@@ -1966,7 +2033,8 @@ export function createRestDeps(entity, opts = {}) {
     // four hosts, and the same read feeds each host's open gate.
     preventedRestMessage: getPreventedRestMessage,
     onRestFinished: () => raisePlayerSkills(entity, { say, onLevelUp, lines: rest.endLines, box }),
-    tickVitals: () => restVitals(entity, { day: day(), inside: inside() }),
+    // SURV4: the hour by its kind - DFU's whole hour in a bed or by a fire, half of it rough (survival/rest.js restHour)
+    tickVitals: () => { if (_kind === REST_KIND.Rough) _roughHours++; return restHour(entity, _kind, () => restVitals(entity, { day: day(), inside: inside() })); },
     fullyHealed: () => restFullyHealed(entity),
     sharedMinutes: () => (sharedClockOn() ? worldMinutes() : null),   // WORLD5: a rest online is paced by the world's clock, not by the window's timer
     dead: () => entity.health <= 0,

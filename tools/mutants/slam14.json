@@ -1,0 +1,150 @@
+[
+  {
+    "name": "Y1-welcome-unmembers-again",
+    "file": "src/net/online.js",
+    "old": "for (const id of [...(this._rooms.get(room) ?? [])]) if (!keep.has(id)) { const p = this.peers.get(id); if (p) (p.unconfirmed ??= {})[room] = now; }",
+    "new": "for (const id of [...(this._rooms.get(room) ?? [])]) if (!keep.has(id)) this._unmember(room, id);",
+    "tests": [
+      "test/slam14.test.js",
+      "test/online.test.js",
+      "test/world6biiib.test.js"
+    ]
+  },
+  {
+    "name": "Y2-unconfirmed-never-pruned",
+    "file": "src/net/online.js",
+    "old": "      if (p.unconfirmed && now - p.seenAt > PEER_TIMEOUT_MS) for (const room of Object.keys(p.unconfirmed)) this._unmember(room, p.id);\n",
+    "new": "",
+    "tests": [
+      "test/slam14.test.js",
+      "test/online.test.js",
+      "test/world6biiib.test.js"
+    ]
+  },
+  {
+    "name": "Y3-pruned-at-timeout-not-past-it",
+    "file": "src/net/online.js",
+    "old": "if (p.unconfirmed && now - p.seenAt > PEER_TIMEOUT_MS)",
+    "new": "if (p.unconfirmed && now - p.seenAt >= PEER_TIMEOUT_MS)",
+    "tests": [
+      "test/slam14.test.js"
+    ]
+  },
+  {
+    "name": "Y4-pose-does-not-confirm",
+    "file": "src/net/online.js",
+    "old": "        if (p.unconfirmed) this._confirm(p, room);   // SLAM14 B2: a pose is proof it is still here\n",
+    "new": "",
+    "tests": [
+      "test/slam14.test.js"
+    ]
+  },
+  {
+    "name": "Y5-confirm-clears-every-room",
+    "file": "src/net/online.js",
+    "old": "    delete p.unconfirmed[room];\n    if (!Object.keys(p.unconfirmed).length) p.unconfirmed = null;",
+    "new": "    p.unconfirmed = null;",
+    "tests": [
+      "test/slam14.test.js"
+    ]
+  },
+  {
+    "name": "Y6-member-does-not-confirm",
+    "file": "src/net/online.js",
+    "old": "if (have) { if (have.unconfirmed) this._confirm(have, room); if (told) this._refresh(have, p, now); return; }",
+    "new": "if (have) { if (told) this._refresh(have, p, now); return; }",
+    "tests": [
+      "test/slam14.test.js"
+    ]
+  },
+  {
+    "name": "Y7-recall-never-set",
+    "file": "src/net/online.js",
+    "old": "    made.recall = !told && !!knew;\n",
+    "new": "",
+    "tests": [
+      "test/slam14.test.js",
+      "test/slam9.test.js"
+    ]
+  },
+  {
+    "name": "Y8-ask-guard-refuses-recall",
+    "file": "src/net/online.js",
+    "old": "(held?.told && !held.recall)) return false;",
+    "new": "held?.told) return false;",
+    "tests": [
+      "test/slam14.test.js",
+      "test/slam9.test.js"
+    ]
+  },
+  {
+    "name": "Y9-round-skips-recall",
+    "file": "src/net/online.js",
+    "old": "for (const [id, p] of this.peers) if (!p.told || p.recall) ids.push(id);",
+    "new": "for (const [id, p] of this.peers) if (!p.told) ids.push(id);",
+    "tests": [
+      "test/slam14.test.js",
+      "test/slam9.test.js"
+    ]
+  },
+  {
+    "name": "Y10-refresh-keeps-recall",
+    "file": "src/net/online.js",
+    "old": "p.told = true; p.recall = false;   // SLAM6",
+    "new": "p.told = true;   // SLAM6",
+    "tests": [
+      "test/slam14.test.js",
+      "test/slam9.test.js"
+    ]
+  },
+  {
+    "name": "Y11-heardin-stamped-once",
+    "file": "src/net/online.js",
+    "old": "        if (!p.told || p.recall) p.heardIn = room;\n",
+    "new": "",
+    "tests": [
+      "test/slam14.test.js"
+    ]
+  },
+  {
+    "name": "Y12-halo-welcome-reset-dropped",
+    "file": "src/net/online.js",
+    "old": "if (primary) this._backoff = BACKOFF_MIN_MS; else { const h = this._halo.get(room); if (h) h.backoff = BACKOFF_MIN_MS; }",
+    "new": "if (primary) this._backoff = BACKOFF_MIN_MS;",
+    "tests": [
+      "test/slam14.test.js",
+      "test/slam12.test.js"
+    ]
+  },
+  {
+    "name": "Y13-null-key-recomputed",
+    "file": "src/net/remotePlayers.js",
+    "old": "  if (!look || typeof look !== 'object') return NULL_LOOK_KEY;",
+    "new": "  if (!look || typeof look !== 'object') return _computeLookKey(look);",
+    "tests": [
+      "test/slam14.test.js"
+    ],
+    "equivalent": true,
+    "why": "the constant and the recomputation are the same string - the saving is one JSON.stringify per look-less peer per frame, which no pin can observe from outside; the source pin holds the constant's presence"
+  },
+  {
+    "name": "Y14-orphan-release-no-args",
+    "file": "src/net/remotePlayers.js",
+    "old": "this.renderer.releaseTexture?.(PEER_ARCHIVE, doll.rec); return; }",
+    "new": "this.renderer.releaseTexture?.(); return; }",
+    "tests": [
+      "test/slam14.test.js",
+      "test/slam12.test.js"
+    ]
+  },
+  {
+    "name": "Y15-orphan-not-released",
+    "file": "src/net/remotePlayers.js",
+    "old": "if (doll && typeof doll.rec === 'string') this.renderer.releaseTexture?.(PEER_ARCHIVE, doll.rec); return; }",
+    "new": "return; }",
+    "tests": [
+      "test/slam14.test.js",
+      "test/slam12.test.js"
+    ]
+  }
+]

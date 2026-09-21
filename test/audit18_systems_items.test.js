@@ -21,7 +21,7 @@ import {
 import { planTake, applyTransfer } from '../src/systems/itemTransfer.js';   // E4: the transfer door
 import { goldAmount } from '../src/systems/court.js';
 import { stockShopShelf, randomizeArmorVariant } from '../src/systems/shopStock.js';
-import { ITEM_TEMPLATES, inventoryItemImage } from '../src/systems/itemTemplates.js';
+import { ITEM_TEMPLATES, inventoryItemImage, templateByIndex } from '../src/systems/itemTemplates.js';
 import { playerArchiveFor } from '../src/characters/paperdollArt.js';
 import { CLOTHING_DYES, DYE_COLORS } from '../src/characters/dyes.js';
 import { BUILDING_TYPES } from '../src/world/buildingNames.js';
@@ -345,7 +345,7 @@ test('audit18 items: every minted shop/loot row carries the template ItemName', 
   const unnamed = rows.filter((r) => typeof r.name !== 'string' || !r.name.length);
   assert.deepEqual(unnamed, []);
   // and the name is the TEMPLATE's, not something invented
-  const wrong = rows.filter((r) => r.group !== 'Weapons' && r.name !== ITEM_TEMPLATES[r.templateIndex]?.name);
+  const wrong = rows.filter((r) => r.group !== 'Weapons' && r.name !== templateByIndex(r.templateIndex)?.name);   // SURV2: through the one reader - the provisions shelf's rows are custom templates above the table
   assert.deepEqual(wrong, []);
   // spot pins straight off ItemTemplates.txt
   const gs = stockShopShelf({ buildingType: BUILDING_TYPES.GeneralStore, quality: 20 }, { level: 5, gender: 'male' }, { rolls: () => 0.4 });

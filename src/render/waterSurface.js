@@ -32,7 +32,7 @@
 // pass draws water the player swims). The coverage inside a tile is
 // the bilinear blend of its corners - the diagonal the shore tile's own
 // art follows - feathered by SHORE_SOFTNESS.
-import { WATER_MASK_TABLE } from '../world/waterCorners.js';   // MAC2: the corner table is a leaf the player's feet share
+import { WATER_DRAW_MASK_TABLE } from '../world/waterCorners.js';   // MAC2: the corner table is a leaf the player's feet share; WATER-DRAW1: the DRAW's half of it - the feet's is the law's own table, and the two are not the same question
 import { WIND_ROW_CALM, WIND_ROW_SPAN } from '../systems/wind.js';
 import { getPref } from '../systems/uiPrefs.js';   // FT6: the switch, read here alone
 import { isEnhanced } from '../systems/uiSkin.js';
@@ -80,7 +80,7 @@ export const DEFAULT_SKY_HORIZON = Object.freeze([0.66, 0.78, 0.92]);
  *  location's real extent, and zero converts to water, so the whole map
  *  answered yes for every non-square town (AUDIT 65 MC-6: the one gate -
  *  the whole-map twin it replaced had no caller left and is retired). */
-export function tilemapRectHasWater(bytes, dim, width, height, table = WATER_MASK_TABLE) {
+export function tilemapRectHasWater(bytes, dim, width, height, table = WATER_DRAW_MASK_TABLE) {
   const w = Math.min(width, dim), h = Math.min(height, dim);
   for (let y = 0; y < h; y++) {
     const row = y * dim;
@@ -101,7 +101,7 @@ export function tilemapRectHasWater(bytes, dim, width, height, table = WATER_MAS
  * tiles at (x * stride.., z * stride..) - the grid's cell IS the tile at
  * stride 1 (6.4 units), which is the frame the shader samples in.
  */
-export function buildWaterIndices(bytes, stride = 1, table = WATER_MASK_TABLE, tileDim = 128) {
+export function buildWaterIndices(bytes, stride = 1, table = WATER_DRAW_MASK_TABLE, tileDim = 128) {
   const g = tileDim / stride + 1;
   const q = g - 1;
   const out = [];
@@ -195,7 +195,7 @@ void main() {
  * to nothing along the shore's diagonal; a texel outside any water is
  * discarded before it costs a blend.
  */
-export const waterSurfaceFs = (cloudShadowGlsl) => `#version 300 es
+export const waterSurfaceFs = (cloudShadowGlsl, shadowGlsl = '') => `#version 300 es   // EL7: with SHADOW_GLSL the water receives the lane's sun shadow
 precision highp float;
 precision highp usampler2D;
 precision highp sampler2DArray;
@@ -235,6 +235,7 @@ uniform int uFogMode;
 uniform float uFogDensity;
 uniform vec2 uFogRange;
 uniform vec3 uCamPos;
+${shadowGlsl}
 out vec4 outColor;
 float fogFactorAt(vec3 worldPos) {
   if (uFogMode == 0) return 1.0;
@@ -307,10 +308,17 @@ void main() {
   float F = uF0 + (0.72 - uF0) * pow(1.0 - NdV, 5.0);
   vec3 R = reflect(-V, n);
   vec3 skyRefl = mix(uSkyHorizon, uSkyZenith, clamp(0.2 + R.y * 1.4, 0.0, 1.0));
-  float shadow = cloudShadowAt(vWorldPos);
+  // PERF-SUN2: the water reads its shadow only while the sun is up. A
+  // UNIFORM branch, and shadow reaches the light exactly once through
+  // uSunColor * (uSunScale * diff), so this is output-identical.
+  float shadow = uSunScale > 0.0 ? cloudShadowAt(vWorldPos)${shadowGlsl ? ' * sunShadowAt(vWorldPos, n)' : ''} : 0.0;   // EL7: a quay's shadow lies on the water under the lane
   // the classic texel, the body of the water, lit as the ground is lit
   vec2 uv = fract(f + vec2(uScroll));
-  vec3 tex = texture(uTileArr, vec3(uv, 0.0)).rgb * uTint;
+  // GRAIN1: the same wrap, the same cure - the scrolled coordinate before
+  // the fract is what the footprint is measured from, or the water tile
+  // draws a blurred line wherever the scroll rolls over.
+  vec2 wgx = dFdx(unwrapped), wgy = dFdy(unwrapped);
+  vec3 tex = textureGrad(uTileArr, vec3(uv, 0.0), wgx, wgy).rgb * uTint;
   float diff = max(dot(n, uLightDir), 0.0) * shadow;
   float mdiff = max(dot(n, uMoonDir), 0.0);
   vec3 lit = tex * (uAmbient + uSunColor * (uSunScale * diff) + uMoonColor * (uMoonScale * mdiff));

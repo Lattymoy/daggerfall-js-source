@@ -52,7 +52,7 @@
 //     DFLocation with Loaded = false (MapsFile.cs:723-816). This is the
 //     port-wide convention and every consumer found - scenes/world.js,
 //     systems/quest/place.js, ui/travelMapWindow.js, systems/mapDirectory.js,
-//     ui/overworldMap.js, world/roadsProducer.js - already guards with
+//     ui/heldMap.js, world/roadsProducer.js - already guards with
 //     `?.` / `?? null`.
 //   - loadRegion memoizes; C# re-reads the four records every call. See the
 //     comment at the cache check.

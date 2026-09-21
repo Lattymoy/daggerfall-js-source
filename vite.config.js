@@ -106,15 +106,33 @@ export default defineConfig({
     // said nothing. A player would have parsed 12 MB of base64 before
     // the game started, to get art most of them never look at.
     //
-    // So this mod's art is excluded from inlining BY PATH. The rule is
-    // narrow on purpose: every other vendored texture keeps the default,
-    // because inlining a handful of small files is a win and the
-    // problem here is only ever the COUNT.
-    // Returning `undefined` falls back to the default limit, which is
-    // what every other asset must keep - a callback that returned
-    // `true` for them would force-inline them all REGARDLESS of size,
-    // which is the opposite mistake and just as quiet.
-    assetsInlineLimit: (filePath) => (/[\\/]vendor[\\/]eye-of-the-beholder[\\/]/.test(filePath) ? false : undefined),
+    // So this mod's art was excluded from inlining BY PATH, and the rule
+    // was narrow on purpose: "every other vendored texture keeps the
+    // default, because inlining a handful of small files is a win and
+    // the problem here is only ever the COUNT." AUDIT-IF F1 then added
+    // Immersive Footsteps (123 clips under 4 KB, 250 KB of base64).
+    //
+    // INLINE1 (2026-09-20): THAT PREMISE WAS WRONG, AND THE RULE WAS AN
+    // ENUMERATION. A vendored mod is never "a handful of small files" -
+    // it ships in the hundreds - and an allow-list of three folders is a
+    // rule enforced by memory: twenty vendor folders landed after it and
+    // not one joined the list. Shield Widget's 275 under-4 KB sprites
+    // (plus Handheld Torches' 31 and Climates & Calories' 18) went into
+    // the weaponRig chunk as 1.34 MB of base64 - which is why that chunk
+    // gzips to 1.0 MB against main's 0.5 MB, base64 being nearly
+    // incompressible - and main imports it STATICALLY, so every player
+    // pulled a megabyte of shield art before first paint. The build
+    // exited 0 and said nothing, exactly as EOTB5 records it did the
+    // first time.
+    //
+    // So the rule is the CLASS, not a list: nothing under vendor/ is ever
+    // inlined. A mod's art and audio are files, fetched when the mod
+    // wants them (test/vendorinline.test.js walks every vendor folder and
+    // holds it). Everything outside vendor/ keeps Vite's default -
+    // returning `undefined` falls back to the 4 KB limit, and a callback
+    // that returned `true` would force-inline REGARDLESS of size, the
+    // opposite mistake and just as quiet.
+    assetsInlineLimit: (filePath) => (/[\\/]vendor[\\/]/.test(filePath) ? false : undefined),
     // TWO PAGES. The game, and the voxel editor — which is a real route
     // now rather than a standalone file you have to build yourself.
     // Neither carries game data: the editor asks for the user's ARENA2
@@ -131,6 +149,7 @@ export default defineConfig({
         main: 'play/index.html',
         viewer: 'viewer.html',
         sky: 'sky.html',   // ES1: the enhanced sky lab
+        water: 'water.html', // WATER1: the enhanced water lab (src/tools/waterLab.js)
         // MW-D: the Morrowind data inspector. Reads a player's own
         // archives and reports what is IN them; it draws nothing, stores
         // nothing and is wired to nothing the game runs. It exists
@@ -143,13 +162,6 @@ export default defineConfig({
         // and as the visual proving ground the first-person rig has to
         // pass before it goes anywhere near the game.
         mwViewer: 'mw-viewer.html',
-        // The ground + 3D grass prototype (Mac asked to play with it).
-        // A prototype page must register here or it 404s on gh-pages.
-        // Its textures are NOT shipped: they are derived from
-        // Daggerfall's own tiles, and doctrine forbids a raster of game
-        // data in the repo - correctly. The page generates its ground
-        // procedurally instead, which is ours.
-        grassProto: 'grass-proto.html',
         // A PROTOTYPE, and deployed on purpose: a design that claims to
         // adapt to a phone has to be opened on one.
         enhanced: 'enhanced.html',
@@ -171,6 +183,17 @@ export default defineConfig({
         // the tileset tools/groundProto.mjs writes into
         // public/prototype/ground/.
         grassProto: 'grass-proto.html',
+        // THE GUN LAB (Mac, 2026-09-19): a NEW WEAPON TYPE prototyped
+        // before a line of the game changes. Its own page over our own
+        // art (public/art/gun-*), the classic 320x200 placement law and
+        // nothing else borrowed; combat/fpsWeapon.js is untouched and
+        // nothing the game runs imports src/tools/gunLab.js.
+        gunProto: 'gun-proto.html',
+        // LV1: THE ASCENSION LAB - the enhanced level-up window over a
+        // made-up character, so the screen a player sees once a level
+        // can be opened on demand, at any size, with no ARENA2 on disk.
+        // tools/levelUpProbe.mjs drives this page.
+        levelUp: 'levelup.html',
       },
     },
   },

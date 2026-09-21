@@ -34,11 +34,12 @@ import { readFileSync } from 'node:fs';
 import {
   CHAT_MAX, CHAT_HZ_MAX, CHAT_STRIKES_MAX, CHAT_SOCKETS_MAX, CHAT_HELLO_HZ_MAX, CHAT_ROOM_HZ_MAX, CHAT_WORLD_ROOM, CHAT_ROOMS,
   SOCKETS_MAX, HELLO_HZ_MAX, DROP_STRIKES_MAX, PIXEL_UNITS,
-  sanitizeChat, isChatRoom, parseClient, chatGate,
+  sanitizeChat, isChatRoom, parseClient, chatGate, chatInGate,
 } from '../src/net/wire.js';
 import * as relay from '../server/src/relay.js';
 import { fakeRoom } from './fakeRoom.mjs';
 import worker from '../server/src/index.js';
+import { RELAY_VERSION } from '../src/net/wire.js';   // LOCALDEV1: the worker entry exports handlers alone
 import { OnlineSession, HEARTBEAT_MS, BACKOFF_MIN_MS } from '../src/net/online.js';
 import { ChatLog, CHAT_TABS, CHAT_KEEP, CHAT_FADE_MS, CHAT_PEEK, CHAT_REJOIN_MS, tagOf } from '../src/net/chat.js';
 import { createChatPanel, isOpenKey, CHAT_STYLE_ID, CHAT_OPEN_ACTION, clockOf, CHAT_CSS } from '../src/ui/chatPanel.js';
@@ -116,9 +117,12 @@ test('CHAT1 / AUDIT CHAT: the Room as a CHANNEL - a hello keeps the secret and n
   const r = fakeRoom(CHAT_WORLD_ROOM);
   const a = r.connect(), b = r.connect(), c = r.connect();
   await r.hello(a, 'aaaa-0001'); await r.hello(b, 'bbbb-0002', at(3, 3));
-  assert.deepEqual(a.sent, [{ t: 'welcome', id: 'aaaa-0001', peers: [] }]);
-  assert.deepEqual(b.sent, [{ t: 'welcome', id: 'bbbb-0002', peers: [] }], 'a channel has no roster: b is told no one though a is there');
-  assert.equal(ofType(a, 'join').length, 0, 'and a hears no join');
+  // ROSTER-G (Mac: "Players dont show in online"): a channel HAS a roster now - names alone, with the true count -
+  // and says its joins, because the roster beside the chat is everyone online and the channel is where everyone is
+  assert.deepEqual(a.sent[0], { t: 'welcome', id: 'aaaa-0001', peers: [], n: 1, v: RELAY_VERSION, now: a.sent[0].now });   // SRV-N: and the deploy's name, on a channel's welcome too - the only welcome a chat link ever gets; AUDIT SOC B7: and the relay's clock
+  assert.equal(typeof a.sent[0].now, 'number');
+  assert.deepEqual(b.sent, [{ t: 'welcome', id: 'bbbb-0002', peers: [{ id: 'aaaa-0001', name: 'aaaa-0001' }], n: 2, v: RELAY_VERSION, now: b.sent[0].now }], 'b is told who is in the channel - a, by name, no look, no pose');
+  assert.deepEqual(ofType(a, 'join'), [{ t: 'join', id: 'bbbb-0002', name: 'bbbb-0002' }], 'and a hears b join - the name and nothing else');
   assert.equal(r.store.has('secret:aaaa-0001'), true, 'the secret is kept');
   assert.equal(r.store.has('look:aaaa-0001'), false, 'the look is not: nobody is drawn from a channel');
   assert.equal(r.store.has('hellos'), true, 'AUDIT CHAT A1: the hello bucket is kept - the gate is never off');
@@ -147,13 +151,17 @@ test('CHAT1 / AUDIT CHAT: the Room as a CHANNEL - a hello keeps the secret and n
   assert.deepEqual(c.sent.at(-1), { t: 'error', m: 'id taken' });
   const d = r.connect(); await r.hello(d, 'dddd-0004');
   await r.drop(b);
-  assert.equal(ofType(d, 'leave').length, 0, 'a channel announced no join, so it says no leave');
+  assert.deepEqual(ofType(d, 'leave'), [{ t: 'leave', id: 'bbbb-0002' }], 'ROSTER-G: a channel says its leaves, as it says its joins');
+  assert.equal(ofType(d, 'host').length, 0, 'and still no host word - a channel has no host');
   assert.equal(r.store.has('secret:bbbb-0002'), false, 'the secret goes with the socket');
   assert.equal(r.store.has('secret:dddd-0004'), true, 'and no one else\'s');
   // the hello gate: deeper than a place's, never off (A1)
   const burst = fakeRoom(CHAT_WORLD_ROOM);
   const many = Array.from({ length: CHAT_HELLO_HZ_MAX + 10 }, () => burst.connect());
-  for (let i = 0; i < many.length; i++) await burst.hello(many[i], `peer-${String(i).padStart(4, '0')}`);
+  // SLAM13 (AUDIT SLAM C7): ONE INSTANT, on a held clock - the Room reads Date.now() itself, and under a slow runner
+  // this loop could straddle a millisecond and refill a token, admitting one hello more than "one instant" holds
+  const realNow = Date.now; const held = realNow(); Date.now = () => held;
+  try { for (let i = 0; i < many.length; i++) await burst.hello(many[i], `peer-${String(i).padStart(4, '0')}`); } finally { Date.now = realNow; }
   assert.equal(many.filter((ws) => ws.sent[0]?.t === 'welcome' && !ws.closed).length, CHAT_HELLO_HZ_MAX, 'CHAT_HELLO_HZ_MAX hellos in one instant are welcomed');
   assert.equal(many.filter((ws) => ws.closed?.code === 1013).length, 10, 'and the rest are refused busy: the gate is never off');
   assert.ok(CHAT_HELLO_HZ_MAX > HELLO_HZ_MAX, 'deeper than a place\'s: a channel\'s hello costs no roster');
@@ -293,7 +301,7 @@ test('CHAT1 / AUDIT CHAT: the session as a CHANNEL (presence: false) - the hello
   assert.equal(s.statusLine(), 'online: reconnecting', 'the default label is the presence session\'s');
   assert.equal(s.sendChat('anyone?'), false, 'no socket: refused, so the field keeps it (B2)');
   assert.equal(s.rejoin(CHAT_WORLD_ROOM, CHAT_REJOIN_MS), false, 'a session on its way back needs no rejoin');
-  clock += BACKOFF_MIN_MS; s.tick();
+  clock += 2 * BACKOFF_MIN_MS; s.tick();   // SLAM12: the first retry is jittered inside [BACKOFF_MIN_MS, 2 x BACKOFF_MIN_MS] - the far edge is when it has certainly fired
   assert.equal(sockets.length, 2, 'the retry opened a second socket');
   sockets[1].open();
   // the goodbye and the way back (B4)
@@ -319,8 +327,12 @@ test('CHAT1 / AUDIT CHAT: the session as a CHANNEL (presence: false) - the hello
   const pw = sockets[4]; pw.open();
   assert.deepEqual(pw.sent[0].pose, { x: 1, y: 2, z: 3, yaw: 0, pitch: 0, mv: 1 });
   assert.equal(p.sendPose({ x: 2, y: 2, z: 3, yaw: 0, pitch: 0, mv: 1 }), true, 'a presence session sends its pose');
+  // RELAY-H1 re-aimed this: a presence session now ALSO pings (PING_MS, runtime-answered in the object's sleep) so the
+  // socket's liveness no longer costs a wake; its proof of life to the PEERS is still the pose, which a ping never delays.
+  const pingsBefore = pw.sent.filter((m) => m.t === 'ping').length;
   clock += HEARTBEAT_MS * 2; p.tick();
-  assert.equal(pw.sent.filter((m) => m.t === 'ping').length, 0, 'a presence session heartbeats with its pose, not a ping');
+  assert.equal(pw.sent.filter((m) => m.t === 'ping').length - pingsBefore, 1, 'a standing presence session pings (RELAY-H1) - one per tick that finds PING_MS elapsed');
+  assert.equal(p.sendPose({ x: 2, y: 2, z: 3, yaw: 0, pitch: 0, mv: 1 }), true, 'and the heartbeat pose still goes at HEARTBEAT_MS, unmoved by the ping');
 });
 
 // ── THE LOG ──────────────────────────────────────────────────────────
@@ -342,7 +354,7 @@ test('CHAT1 / AUDIT CHAT: the log - the World tab from CHAT_TABS (one today, eac
   assert.equal(log.push('world', { id: 'a', name: 'A', text: '' }), null, 'nothing to say: nothing kept');
   assert.equal(log.version, v0, 'and nothing to show');
   const l1 = log.push('world', { id: 'a', name: 'A', text: 'one', at: 5 });
-  assert.deepEqual(l1, { seq: 1, id: 'a', name: 'A', text: 'one', at: 5, t: 10_000, mine: false });
+  assert.deepEqual(l1, { seq: 1, id: 'a', name: 'A', text: 'one', at: 5, t: 10_000, mine: false, system: false });   // SRV-N: every line carries the flag, and a player's is false
   assert.equal(log.tab('world').unread, 1, 'closed: unread');
   assert.ok(log.version > v0);
   log.push('world', { id: 'me', name: 'Me', text: 'two', mine: true });
@@ -412,7 +424,11 @@ function fakeDocument() {
   return doc;
 }
 /** A window with BOTH phases (AUDIT CHAT D2): the capture pass, then - unless propagation was stopped - the bubble pass,
- *  where the host's own listener (world.js's, `keys.add(e.code)`) lives. */
+ *  where the host's own listener (world.js's, `keys.add(e.code)`) lives.
+ *
+ *  AUDIT SOC C14: and `stopImmediatePropagation`, which the real one has and this one did not. It stops the rest of
+ *  the SAME phase as well as the next, which is the whole of that finding: three social surfaces all listen in
+ *  capture on the window, so stopping the bubble alone still let a sibling close on the same press. */
 function fakeWindow() {
   const listeners = [];
   return {
@@ -420,8 +436,10 @@ function fakeWindow() {
     addEventListener(t, fn, capture) { listeners.push({ t, fn, capture: capture === true || capture?.capture === true }); },
     removeEventListener(t, fn) { const i = listeners.findIndex((l) => l.t === t && l.fn === fn); if (i >= 0) listeners.splice(i, 1); },
     key(code, e = {}) {
-      const ev = { type: 'keydown', code, target: null, isTrusted: true, prevented: false, stopped: false, preventDefault() { ev.prevented = true; }, stopPropagation() { ev.stopped = true; }, ...e };
-      for (const l of listeners) if (l.t === 'keydown' && l.capture) l.fn(ev);
+      const ev = { type: 'keydown', code, target: null, isTrusted: true, prevented: false, stopped: false, immediate: false,
+        preventDefault() { ev.prevented = true; }, stopPropagation() { ev.stopped = true; },
+        stopImmediatePropagation() { ev.stopped = true; ev.immediate = true; }, ...e };
+      for (const l of listeners) { if (ev.immediate) break; if (l.t === 'keydown' && l.capture) l.fn(ev); }
       if (!ev.stopped) for (const l of listeners) if (l.t === 'keydown' && !l.capture) l.fn(ev);
       return ev;
     },
@@ -608,14 +626,35 @@ test('CHAT1 / AUDIT CHAT: the host by source - world.js starts the chat with the
   const w = rd('src/scenes/world.js');
   assert.match(w, /import \{ ChatLog, CHAT_REJOIN_MS \} from '\.\.\/net\/chat\.js';/);
   assert.match(w, /import \{ createChatPanel \} from '\.\.\/ui\/chatPanel\.js';/);
-  assert.match(w, /import \{ requestLook, releaseLook, makeLookGate, bindCursorToggle, setCursorActive \} from '\.\.\/player\/pointerLock\.js';/);
+  assert.match(w, /import \{ requestLook, releaseLook, makeLookGate, bindCursorToggle, setCursorActive, cursorActive \} from '\.\.\/player\/pointerLock\.js';/);   // AUDIT-TO1 I2: cursorActive joined the import
   assert.match(w, /if \(enhanced && typeof document !== 'undefined'\) chatStart\(\);/, 'the enhanced skin\'s, with a document (node has none)');
   assert.match(w, /const chatStart = \(\) => \{\s*if \(!online\.url\) return;/, 'AUDIT CHAT A9/B1: a relay the law refused is no relay for the chat either');
-  assert.match(w, /for \(const tab of chatLog\.tabs\) \{\s*const link = new OnlineSession\(\{ url: online\.url, name: online\.name, look: online\.look, id: online\.id, secret: online\.secret, presence: false \}\);\s*link\.onChat = \(line\) => chatLog\.push\(tab\.id, line\);\s*link\.join\(tab\.room\);\s*chatLinks\.set\(tab\.id, link\);/, 'a channel session per tab, the presence session\'s identity, a line to its tab');
-  assert.match(w, /onSend: \(tabId, text\) => chatLinks\.get\(tabId\)\?\.sendChat\(text\) \?\? false,/, 'a typed line down its tab\'s session, and the answer back (B2)');
+  assert.match(w, /for \(const tab of chatLog\.tabs\) \{\s*const link = new OnlineSession\(\{ url: online\.url, name: online\.name, look: online\.look, id: online\.id, secret: online\.secret, presence: false \}\);\s*link\.onChat = \(line\) => chatLog\.push\(tab\.id, line\);\s*link\.onRelay = onRelayVersion;\s*link\.join\(tab\.room\);\s*chatLinks\.set\(tab\.id, link\);/, 'a channel session per tab, the presence session\'s identity, a line to its tab');
+  // UNSTUCK1 (2026-09-20): onSend stopped being a one-liner - a LOCAL
+  // command is checked before the relay round trip - so the old pin,
+  // which matched the whole arrow verbatim, could no longer hold. It is
+  // re-aimed rather than relaxed, and it is STRONGER than the line it
+  // replaces: the B2 claim (the line goes down THIS TAB'S session and
+  // its answer is what onSend returns) is still matched character for
+  // character as the fall-through, AND the new claim is pinned beside
+  // it - the local command is tested FIRST, so a `/unstuck` never
+  // reaches the relay, and it answers true, which is what keeps the
+  // typed line out of the field. A pin that merely checked `sendChat`
+  // appeared somewhere in the host would pass on a handler that sent
+  // every line twice, or one that sent the command to the room.
+  assert.match(w, /return chatLinks\.get\(tabId\)\?\.sendChat\(text\) \?\? false;/, 'a typed line down its tab\'s session, and the answer back (B2)');
+  const onSend = /onSend: \(tabId, text\) => \{([\s\S]*?)\n {6}\},/.exec(w);
+  assert.ok(onSend, 'UNSTUCK1: the host no longer carries an onSend block');
+  const cmdAt = onSend[1].indexOf("/^\\/unstuck$/i.test(text.trim())");
+  const sendAt = onSend[1].indexOf('sendChat(text)');
+  assert.ok(cmdAt > 0, 'UNSTUCK1: the local /unstuck command is gone from onSend');
+  assert.ok(cmdAt < sendAt, 'UNSTUCK1: the local command must be tested BEFORE the relay send, or the room hears it');
+  assert.match(onSend[1], /return true;/, 'UNSTUCK1: a spent command answers true, which is what clears the field');
   assert.match(w, /canOpen: \(\) => !gamePaused\(\) && !\(townTalk\.hudCovered \|\| \(modes\?\.hudCovered \?\? false\)\)/, 'no chat under a window');
-  assert.match(w, /onOpen: \(\) => \{ setCursorActive\(false\); releaseLook\(\); \},/, 'AUDIT CHAT C2: the pointer freed on open; PL3: the opening Enter reclaimed from the toggle');
-  assert.match(w, /onClose: \(\) => \{ if \(!gamePaused\(\)\) requestLook\(canvas\); \},/, 'and taken back inside the closing gesture');
+  assert.match(w, /onOpen: \(\) => surfaceOpen\('chat'\),/, 'AUDIT CHAT C2: the pointer freed on open (AUDIT SOC B6: by the first of the counted surfaces); PL3: the opening Enter reclaimed from the toggle');
+  assert.match(w, /const surfaceOpen = \(name\) => \{ pointerSurfaces\.add\(name\); setCursorActive\(false\); releaseLook\(\); \};/);
+  assert.match(w, /onClose: \(\) => surfaceClose\('chat'\),/, 'and taken back inside the closing gesture (AUDIT SOC B6: by the last of the counted surfaces to close)');
+  assert.match(w, /const surfaceClose = \(name\) => \{ pointerSurfaces\.delete\(name\); if \(!pointerSurfaces\.size && !gamePaused\(\)\) requestLook\(canvas\); \};/);
   assert.match(w, /for \(const \[tabId, link\] of chatLinks\) \{\s*link\.rejoin\(chatLog\.tab\(tabId\)\.room, CHAT_REJOIN_MS\);[^\n]*\n\s*link\.tick\(\);/, 'every channel rejoined when it must be, and ticked');
   // AUDIT-CHATR F1: the option is `covered`, not `hidden`. The two words
   // are different things - the host's window and the player's Hide
@@ -649,7 +688,11 @@ test('CHAT1 / AUDIT CHAT: the host by source - world.js starts the chat with the
   const online = rd('src/net/online.js');
   assert.match(online, /if \(!this\.presence && this\.status === 'open' && now - this\._lastSentAt >= HEARTBEAT_MS && this\._send\(\{ t: 'ping' \}\)\) this\._lastSentAt = now;/, 'the channel heartbeat is a ping the runtime answers in its sleep');
   const room = rd('server/src/index.js');
-  assert.match(room, /if \(m\.t === 'pose' \|\| m\.t === 'ping'\) \{[\s\S]*?const chat = isChatRoom\(a\.key\);\s*if \(!this\._meter\(ws, a, Date\.now\(\), \{ pose: m\.t === 'pose' && !chat \? m\.p : a\.pose \}\)\) return;[^\n]*\n[^\n]*\n\s*if \(chat\) return;/, 'AUDIT CHAT A3: a channel\'s pose is gated (the one meter, AUDIT WORLD A1) before it is declined');
+  // SLAM6 re-aimed this: the meter's patch grew a `turn` and the call was split over two lines, so the shape moved.
+  // The LAW is unchanged and is what the slice asserts - the one meter runs on a channel's pose BEFORE the decline -
+  // so the pin still reads the order, over a source with its comments stripped rather than around them.
+  const bare = (src) => src.replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/\/\/[^\n]*/g, ' ');
+  assert.match(bare(room), /if \(m\.t === 'pose' \|\| m\.t === 'ping'\) \{\s*const chat = isChatRoom\(a\.key\);\s*const posed = m\.t === 'pose' && !chat;\s*const now = Date\.now\(\);\s*const unmoved = [^\n]*\s*const stopped = [^\n]*\s*const still = [^\n]*\s*const met = this\._meter\(ws, a, now, \{ pose: posed \? m\.p : a\.pose \}[^\n]*\);\s*if \(!met\) return;\s*if \(m\.t === 'ping'\)[^\n]*\s*if \(chat\) return;/, 'AUDIT CHAT A3: a channel\'s pose is gated (the one meter, AUDIT WORLD A1) before it is declined');
   assert.match(room, /if \(other === ws \|\| chat \|\| inRange\(a\.key \?\? '', a\.pose, b\.pose\)\) this\._send\(other, out\);/, 'the fan: the sender, a channel\'s everyone, a place\'s range');
   assert.match(room, /const room = tokenGate\(this\._roomChat, now, CHAT_ROOM_HZ_MAX\);/, 'the room\'s own budget (A2)');
   const dial = rd('src/ui/pixelDial.js');
@@ -722,4 +765,147 @@ test('CHAT2: a chat row states that it does not shrink', () => {
   assert.ok(row, 'the row rule is still called .dfchat-line');
   assert.equal(DECLS(row.body).flex, 'none',
     'the row never shrinks - the list scrolls instead (CHAT2; tools/chatLayoutProbe.mjs measures it)');
+});
+
+// ── SRV-N: A LINE NOBODY SENT ────────────────────────────────────────
+
+test('SRV-N: the panel draws a notice UNATTRIBUTED - no name and no #tag, its own colour instead - while a player\'s line keeps both, in the peek and in the open list alike', () => {
+  let clock = 50_000;
+  const log = new ChatLog({ now: () => clock });
+  const doc = fakeDocument(), win = fakeWindow();
+  const panel = createChatPanel({ log, onSend: () => true, canOpen: () => true, action: defaultAction, doc, win, touch: false });
+  const root = doc.body.children[0];
+
+  log.push('world', { id: 'bob-0001', name: 'Bob', text: 'anyone else just get dropped' });
+  log.push('world', { text: 'The server was updated and restarted.', system: true });
+  panel.render();
+  const [player, notice] = find(one(root, 'dfchat-peek'), 'dfchat-line');
+
+  assert.equal(one(player, 'dfchat-name').textContent, 'Bob');
+  assert.equal(one(player, 'dfchat-tag').textContent, `#${tagOf('bob-0001')}`);
+
+  // THE TAG IS THE REASON THIS IS NOT A NAME. `tagOf('')` is a perfectly
+  // real-looking four-character hash, identical on every notice - so a
+  // notice drawn the ordinary way would read as a PLAYER called Server
+  // with a stable tag of their own, which is precisely the thing a
+  // player learns to trust.
+  assert.equal(find(notice, 'dfchat-name').length, 0, 'a notice is nobody\'s');
+  assert.equal(find(notice, 'dfchat-tag').length, 0);
+  assert.equal(one(notice, 'dfchat-text').textContent, 'The server was updated and restarted.');
+  assert.ok(String(notice.className).split(/\s+/).includes('system'), 'its own class, so the sheet can give it its own colour');
+  assert.ok(!String(player.className).split(/\s+/).includes('system'));
+  assert.match(CHAT_CSS, /\.dfchat-line\.system \.dfchat-text \{/, 'and the sheet actually carries that rule');
+
+  // the open list is a second builder over the same node maker, and a
+  // notice must not grow a name on the way into it
+  panel.open(); panel.render();
+  const listRows = find(one(root, 'dfchat-list'), 'dfchat-line');
+  assert.equal(find(listRows.at(-1), 'dfchat-name').length, 0, 'still nobody\'s with the panel open');
+  assert.equal(one(listRows.at(-1), 'dfchat-text').textContent, 'The server was updated and restarted.');
+  assert.ok(one(listRows.at(-1), 'dfchat-time'), 'and it is still stamped like any other line');
+  panel.destroy?.();
+});
+
+// ── CHAT-G: THE THIRD SIDE ───────────────────────────────────────────
+
+test('CHAT-G: chat lines COMING IN are counted - at the relay\'s own per-room spend, so an honest room at full tilt passes whole and a flood is bounded, per ROOM so a loud neighbour cannot silence the room you stand in, refilling, dropped lines counted, and said on the console ONCE', () => {
+  // THE RATE IS DERIVED. CHAT_ROOM_HZ_MAX is what the relay spends on one
+  // room, so this is not a number somebody chose - it is the honest
+  // ceiling restated at the other end, and the two cannot drift because
+  // they are the same constant through the same function object.
+  assert.equal(relay.chatInGate, chatInGate, 'the same function at both ends');
+  assert.notEqual(chatInGate, chatGate, 'and NOT the sender\'s gate: gating arrivals at CHAT_HZ_MAX would drop real lines the moment two people talked at once - a hardening that is a chat bug');
+
+  const { FakeWS, sockets } = fakeSocketClass();
+  let clock = 1_000_000;
+  const heard = [];
+  const s = new OnlineSession({ url: 'wss://relay.test', id: 'mac-0001', secret: 'secret-of-mac-0001', presence: false, WebSocketImpl: FakeWS, now: () => clock });
+  s.onChat = (line) => heard.push(line.text);
+  s.join(CHAT_WORLD_ROOM);
+  sockets[0].open();
+  const say = (n, room) => {
+    for (let i = 0; i < n; i++) {
+      const frame = JSON.stringify({ t: 'chat', id: 'bob-0001', name: 'Bob', text: 'line ' + i, at: clock });
+      if (room) s._receive(frame, room); else sockets[0].receive(JSON.parse(frame));
+    }
+  };
+
+  // AN HONEST ROOM AT FULL TILT PASSES WHOLE. This half matters as much
+  // as the flood half: the gate must not cost a busy room its chat.
+  say(CHAT_ROOM_HZ_MAX);
+  assert.equal(heard.length, CHAT_ROOM_HZ_MAX, 'every line an honest relay could have sent in that second landed');
+  assert.equal(s.stats.chatsDropped, 0);
+
+  // ...and the first one past it is a line no honest relay would send.
+  say(1);
+  assert.equal(heard.length, CHAT_ROOM_HZ_MAX, 'one more in the same second does not');
+  assert.equal(s.stats.chatsDropped, 1, 'dropped AND counted - a silent drop is a bug report nobody can write');
+
+  // THE FLOOD, driven: net/chat.js keeps CHAT_KEEP lines, so an ungated
+  // stream is a player's history deleted and refilled with the relay's
+  // choice of text. This is the reason the gate exists.
+  say(5000);
+  assert.equal(heard.length, CHAT_ROOM_HZ_MAX, 'five thousand more change nothing');
+  assert.equal(s.stats.chatsDropped, 5001);
+
+  // PER ROOM, because that is the unit the relay spends by. A session
+  // listens to its own room and a halo of cells and is owed
+  // CHAT_ROOM_HZ_MAX from EACH; one bucket across all of them would let a
+  // loud neighbouring cell silence the room the player is standing in.
+  say(CHAT_ROOM_HZ_MAX, 'world:9,9');
+  assert.equal(heard.length, CHAT_ROOM_HZ_MAX * 2, 'the halo room has its own bucket and its own full tilt');
+
+  // IT REFILLS - a drop is a moment, not a sentence.
+  clock += 1000;
+  say(CHAT_ROOM_HZ_MAX);
+  assert.equal(heard.length, CHAT_ROOM_HZ_MAX * 3, 'a second later the room is whole again');
+
+  // and a room LET GO takes its bucket with it, or a session accumulates
+  // one per cell it ever walked through.
+  s._forgetRoom('world:9,9');
+  assert.equal(s._inChat.has('world:9,9'), false);
+});
+
+test('CHAT-G: the console says it ONCE - a flood must not become its own flood', () => {
+  const { FakeWS, sockets } = fakeSocketClass();
+  const said = [];
+  const warn = console.warn;
+  console.warn = (...a) => said.push(String(a[0]));
+  try {
+    const s = new OnlineSession({ url: 'wss://relay.test', id: 'mac-0001', secret: 'secret-of-mac-0001', presence: false, WebSocketImpl: FakeWS, now: () => 1_000_000 });
+    s.onChat = () => {};
+    s.join(CHAT_WORLD_ROOM);
+    sockets[0].open();
+    for (let i = 0; i < 500; i++) sockets[0].receive({ t: 'chat', id: 'bob-0001', name: 'Bob', text: 'x' + i, at: 1_000_000 });
+    assert.equal(said.length, 1, 'one line on the console, however many frames were refused');
+    assert.match(said[0], /faster than 20\/s/);
+  } finally { console.warn = warn; }
+});
+
+// ── FONT1 (2026-09-16, Mac: "Enhanced mode UI. Especially the new
+// online interfaces font use our enhanced font ... Any enhanced UI or
+// text must be our enhanced version") ───────────────────────────────
+
+test('FONT1: the chat is set in the ENHANCED face, not the launcher\'s - unsmoothed, with Silkscreen\'s five in the sheet', () => {
+  // The panel stood over an enhanced world in `--data` (Barlow Semi
+  // Condensed), which is the MENU's face - the boot screens' and the
+  // settings pages'. In-game the enhanced skin is the pixel stack, and
+  // the chat is in-game.
+  assert.match(CHAT_CSS, /\.dfchat \{[^}]*font-family: 'Pixelify Five', 'Pixelify Sans', monospace;/,
+    'mutants: the root left on var(--data) - the launcher face over the world; the five dropped out of the stack, so every 5 reads as an 8 (FIX-D)');
+  assert.match(CHAT_CSS, /\.dfchat \{[^}]*-webkit-font-smoothing: none;/,
+    'mutant: the smoothing left on, which blurs every pixel glyph in the panel');
+  assert.doesNotMatch(CHAT_CSS, /--data/, 'no corner of this sheet is still in the menu\'s face');
+  // FIX-D: the five is a data-URI @font-face, and this sheet is
+  // injected on its own - a document that never mounted the skin's
+  // stylesheet must still get Silkscreen's 5.
+  assert.match(CHAT_CSS, /@font-face \{ font-family: 'Pixelify Five'; unicode-range: U\+0035;/,
+    'mutant: the face dropped from this sheet, so a chat mounted without the skin\'s stylesheet draws Pixelify\'s 5');
+  assert.ok(CHAT_CSS.indexOf('@font-face') < CHAT_CSS.indexOf('.dfchat {'), 'and it stands before the first rule that sets the stack');
+  // Text over the WORLD takes the HUD's hard shadow pair, never a blur:
+  // a blurred drop shadow under a pixel face reads as a rendering
+  // fault. The open list, which sits on a plate, still takes none.
+  assert.match(CHAT_CSS, /\.dfchat-line \{[^}]*text-shadow: 2px 2px 0 rgba\(0,0,0,0\.85\); \}/,
+    'mutant: the old `0 1px 2px #000, 0 0 6px` blur kept under the pixel face');
+  assert.match(CHAT_CSS, /\.dfchat-list \.dfchat-line \{ text-shadow: none; \}/);
 });

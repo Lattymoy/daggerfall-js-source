@@ -35,6 +35,7 @@ import { BOOK_TEMPLATE, createBook } from './books.js';   // EB3: books in the p
 import { BOOK_ID_TITLES } from './booksData.js';
 import { setPref } from './uiPrefs.js';   // LR3: the loot door turns the ladder on for the session
 import { applyRarity, LEGENDARIES, ROLLED_TIERS } from './lootRarity.js';   // LR3: one of everything the ladder can mint
+import { createThunderlock, createPellets, THUNDERLOCK_TEMPLATE, PELLET_TEMPLATE } from './thunderlock.js';   // TSR-GUN: the port's own weapon, and the import IS its registration
 
 /** The prebuilt characters. `race` is the DF race key (races.js RACES
  *  spelling - mwRaceId derives the Morrowind id from it), `classIndex`
@@ -132,6 +133,17 @@ export function testGearRows(gender) {
   rows.push({ kind: 'weapon', label: 'Ebony Longsword', templateIndex: W.Longsword, material: 7 });
   rows.push({ kind: 'weapon', label: 'Daedric Dai-Katana', templateIndex: W['Dai-Katana'], material: 9 });
   rows.push({ kind: 'arrows', label: 'Arrows (60)', templateIndex: ARROW_TEMPLATE, stackCount: 60 });
+  // TSR-GUN (Mac, 2026-09-19: "Put this weapon and ammo inside the
+  // test characters"). The Dwarven Thunderlock is the ONE weapon the
+  // armory could not reach any other way: it is not in WEAPONS_ENUM
+  // (that enum is DFU's table and this weapon is the port's own), it
+  // is off the shops entirely and its find is the rarest roll in the
+  // game - so without a row here the only way to hold one is to be
+  // lucky. It rides with a stack of pellets for the same reason the
+  // bow rides with a quiver: a ranged weapon with no ammunition
+  // tests the refusal, not the weapon.
+  rows.push({ kind: 'thunderlock', label: 'Dwarven Thunderlock', templateIndex: THUNDERLOCK_TEMPLATE });
+  rows.push({ kind: 'pellets', label: 'Dwemer Pellets (30)', templateIndex: PELLET_TEMPLATE, stackCount: 30 });
   // The full steel suit - every armor slot.
   for (const [name, t] of Object.entries(A)) rows.push({ kind: 'armor', label: `Steel ${name.replace(/_/g, ' ')}`, templateIndex: t, material: M.Steel });
   // Material rows that change the Morrowind mapping.
@@ -169,6 +181,11 @@ export function testItemOf(row) {
   if (row.kind === 'weapon') return createWeapon(row.templateIndex, row.material);
   if (row.kind === 'book') return createBook(row.message);   // EB3: ItemBuilder.CreateBook, the named path
   if (row.kind === 'arrows') return { ...createWeapon(ARROW_TEMPLATE, 0), stackCount: row.stackCount };
+  // TSR-GUN: through the weapon's OWN constructors, the same two the
+  // find and the legendary mint with - a second literal here is how
+  // the test character's gun and the found one drift apart.
+  if (row.kind === 'thunderlock') return createThunderlock();
+  if (row.kind === 'pellets') return createPellets(row.stackCount);
   if (row.kind === 'armor') {
     // MAC-N1: through SetItem's value write - this armor was minted
     // with a name and NO value, the corpse's shape exactly.

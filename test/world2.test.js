@@ -164,7 +164,8 @@ test('WORLD2: the hosts by source - the dungeon host\'s hit door (the striker\'s
   assert.match(d, /let _fi = -1;\s*_peerFrame\+\+;[^\n]*\n\s*for \(const f of foes\) \{\s*_fi\+\+;\s*if \(f\.dead\) continue;/, 'the loop counts (WORLD3: and the peers\' frame)');
   assert.match(d, /const _puppet = !_authority && _fi < _layoutFoes;\s*let _tgt = null, _strikeEdge = false;\s*if \(_puppet\) \{\s*_strikeEdge = puppetStep\(f, dt\);\s*f\.ai\._senses\?\.\(_pf, null\);[^\n]*\n\s*if \(f\._pupMine && f\.ai\.inSight && f\.ai\.detected && !f\.dead\) setEnemyAlert\(playerEntity, true, classicMinutesRef\.value\);[^\n]*\n\s*f\.sounds \?\?= new EnemySoundSource\(f\.mobileType\);\s*tickEnemySound\(f\.sounds,[^\n]*\n\s*if \(_strikeEdge\) playEnemyClip\(audio, f\.sounds\.attack\(\), f\.ai\.feet, acuteHearingMultiplier\(playerEntity\)\);[^\n]*\n\s*\}\s*else \{/, 'the branch: a puppet steps by the stream, senses as observation (B4), its barks and its swing\'s sound its own; the authority by itself');
   assert.match(d, /resolveFoeMelee\(f, _pf\);\s*\}\s*\}[^\n]*\n\s*if \(f\.mobile\) \{/, 'and the mobile arm draws both (the else closes before it)');
-  assert.match(d, /if \(_strikeEdge\) f\._atkA = \(\(\(f\._atkA \| 0\) >> 1\) \+ 1\) \* 2 \+ \(f\.attack\.firedRanged \? 1 : 0\);/, 'the attack count, the ranged bit low');
+  assert.match(d, /if \(_strikeEdge\) f\._atkA = foeDeps\.bumpAtkCount\(f\._atkA, f\.attack\.firedRanged\);/, 'the attack count, the ranged bit low (AUDIT WATCH1: through the one home)');
+  assert.match(rd('src/characters/enemyTargets.js'), /export const bumpAtkCount = \(a, ranged\) => \(\(\(\(a \| 0\) >> 1\) \+ 1\) << 1\) \| \(ranged \? 1 : 0\);/, 'the spelling itself, at its one home');
   assert.match(d, /function puppetStep\(f, dt\) \{[\s\S]*?if \(d2 > PUPPET_SNAP \* PUPPET_SNAP\) \{ feet\[0\] = t\[0\]; feet\[1\] = t\[1\]; feet\[2\] = t\[2\]; \}\s*else \{ const k = Math\.min\(1, dt \/ PUPPET_EASE_S\); feet\[0\] \+= dx \* k;[\s\S]*?f\.ai\.hurtKnock = p\.hurt; p\.hurt = false;\s*if \(p\.strike != null\) \{ edge = true; if \(f\.attack\) f\.attack\.firedRanged = p\.strike === 'ranged'; p\.strike = null; \}[\s\S]*?return edge;/, 'the puppet: eased or snapped in place (the batch aliases the feet), the hurt once, the edge once');
   assert.match(d, /f\._castPending = false;[^\n]*\n(?:\s*\/\/[^\n]*\n)*\s*if \(_puppet && f\.mobile\) \{\s*if \(!f\._pupMine\) f\.mobile\.doMeleeDamage = false;[^\n]*\n\s*if \(f\._pupTarget == null\) f\.mobile\.shootArrow = false;[^\n]*\n\s*\}/, 'the latches dropped AFTER the mobile set them, the same frame (WORLD3: unless the blow is at ME, and a shaft at anyone flies; AUDIT WORLD6b-ii B10)');
   assert.match(d, /const PUPPET_EASE_S = 0\.2;/, 'the stream\'s interval'); assert.equal(FOES_MS, 200, 'and it is FOES_MS'); assert.ok(FOES_FULL_MS > FOES_MS); assert.equal(FOES_STALE_MS, 3 * FOES_FULL_MS);
@@ -188,7 +189,7 @@ test('WORLD2: the hosts by source - the dungeon host\'s hit door (the striker\'s
   assert.match(m, /dungeonFoesFrame\(full = false\) \{ return mode === 'dungeon' && dungeonCtx \? \(dungeonCtx\.foesFrame\?\.\(full\) \?\? null\) : null; \},/);
   assert.match(m, /applyDungeonFoes\(id, data\) \{ return mode === 'dungeon' && dungeonCtx \? !!dungeonCtx\.applyFoes\?\.\(data, id\) : false; \}/, 'the host\'s id rides in (A1)');
   const w = rd('src/scenes/world.js');
-  assert.match(w, /const foesStream = \(now\) => \{\s*if \(!online \|\| online\.status !== 'open'\) return false;\s*(?:\/\/[^\n]*\n\s*)*const cell = isCellRoom\(online\.room\);\s*if \(!cell && \(!online\.isHost\(\) \|\| !isWorldRoom\(online\.room\)\)\) return false;\s*if \(now - _foesSentAt < FOES_MS\) return false;\s*_foesSentAt = now;[^\n]*\n\s*const full = now - _foesFullAt >= FOES_FULL_MS;\s*const frame = cell \? \(\(modes\?\.mode \?\? 'exterior'\) === 'exterior' \? exteriorFoes\.foesFrame\(full\) : null\) : modes\?\.dungeonFoesFrame\?\.\(full\);\s*if \(!frame\) return false;\s*if \(!online\.sendFoes\(frame\)\) \{ _foesFullAt = -Infinity; return false; \}[^\n]*\n\s*if \(full\) _foesFullAt = now;/, 'the stream: the host\'s, in a world room, FOES_MS apart with the clock re-armed whether or not anything changed (B11), every foe FOES_FULL_MS apart, a refusal made good by the next full frame (A9); WORLD6b: in a cell everyone\'s own, the exterior pool\'s frame');
+  assert.match(w, /const foesStream = \(now\) => \{\s*if \(!online \|\| online\.status !== 'open'\) return false;\s*(?:\/\/[^\n]*\n\s*)*const cell = isCellRoom\(online\.room\);\s*if \(!cell && \(!online\.isHost\(\) \|\| !isWorldRoom\(online\.room\)\)\) return false;\s*if \(now - _foesSentAt < FOES_MS\) return false;\s*_foesSentAt = now;[^\n]*\n\s*const full = now - _foesFullAt >= FOES_FULL_MS;\s*const frame = cell \? \(\(modes\?\.mode \?\? 'exterior'\) === 'exterior' \? exteriorFoes\.foesFrame\(full\) : null\) : modes\?\.dungeonFoesFrame\?\.\(full\);\s*if \(!frame\) return false;\s*(?:if \(cell && full\) frame\.c = camps\.wireRecords\(campToWire\);[^\n]*\n\s*)?if \(!online\.sendFoes\(frame\)\) \{ _foesFullAt = -Infinity; return false; \}[^\n]*\n\s*if \(full\) _foesFullAt = now;/, 'the stream: the host\'s, in a world room, FOES_MS apart with the clock re-armed whether or not anything changed (B11), every foe FOES_FULL_MS apart, a refusal made good by the next full frame (A9); WORLD6b: in a cell everyone\'s own, the exterior pool\'s frame');
   assert.match(w, /const dungeonAuthority = \(now = performance\.now\(\)\) => !\(online\?\.room && isWorldRoom\(online\.room\) && online\.status === 'open' && online\.host && !online\.isHost\(\) && now - _foesInAt < FOES_STALE_MS\);/, 'the seat: mine unless a world room\'s open socket names another, and that seat was heard from within FOES_STALE_MS (C2/C3/C5)');
   assert.match(w, /online\.onFoes = \(id, data\) => \{\s*if \(isCellRoom\(online\.room\)\) \{ if \(\(modes\?\.mode \?\? 'exterior'\) === 'exterior'\) exteriorFoes\.applyFoes\(id, data\); return; \}[\s\S]*?if \(modes\?\.applyDungeonFoes\?\.\(id, data\) && modes\?\.mode === 'dungeon'\) _foesInAt = performance\.now\(\);\s*\};/, 'the stream is the seat\'s heartbeat, the host\'s id rides in (AUDIT WORLD6a B8: a dungeon\'s heartbeat alone; WORLD6b: a cell\'s frame is the pool\'s, no heartbeat; AUDIT ONCRASH1 A4: and the heartbeat is the APPLY\'s word, so a stream that throws cannot hold the seat alive)');
   assert.match(w, /online\.onHit = \(id, data\) => \{ if \(isCellRoom\(online\.room\)\) exteriorFoes\.applyHit\(id, data\); else modes\?\.applyDungeonHit\?\.\(id, data\); \};/, 'the hits routed (WORLD6b: a cell\'s to the pool)');
@@ -212,4 +213,50 @@ test('WORLD2: the hosts by source - the dungeon host\'s hit door (the striker\'s
     assert.deepEqual([ai.isHostile, ai.hasEncounteredPlayer], [true, true], 'the foe\'s own stand');
     if (AI === EnhancedEnemyAI) assert.deepEqual([ai.path, ai.pathI, ai.repathT, ai.pathEpoch], [null, 1, 0, undefined], 'and the cached path with it');
   }
+});
+
+// ── THE NON-LAYOUT RUN: MAC'S TWO ONLINE-DUNGEON REPORTS, PINNED AS ONE HOLE ──
+
+test('ONLINE-DUNGEON-FOES: a foe past the layout run is neither streamed nor peer-aware, and the two must stay in step', () => {
+  // Mac, 2026-09-20: "Issues with non-reactive enemies in dungeons in the
+  // online mode" and "The lysander ghost enemy isn't synced online between
+  // players". Both are the SAME line - `_layoutFoes` - and this pin exists
+  // because the hole is recorded rather than closed (bible/Home.md's open
+  // flags carry it, from the FLAGGED note at the site). It is not a pin on
+  // the bug being present; it is a pin on the two halves being paid TOGETHER,
+  // which is the thing a future edit can quietly get wrong.
+  const dc = readFileSync(new URL('../src/scenes/dungeonContext.js', import.meta.url), 'utf8');
+
+  // HALF ONE - the stream. `foesFrame` walks the layout run and stops. A foe
+  // appended past it (spawnQuestFoe, the encounter spawner, a summon) is in no
+  // frame any peer receives, which is why a quest-placed ghost exists only on
+  // the client whose quest placed it.
+  const frame = /function foesFrame\(full = false\) \{([\s\S]*?)\n  \}/.exec(dc);
+  assert.ok(frame, 'foesFrame is gone - re-aim this pin');
+  assert.match(frame[1], /for \(let i = 0; i < _layoutFoes; i\+\+\) \{/,
+    'the stream walks the layout run; if this bound widened, the sync half has moved');
+
+  // HALF TWO - the targeting. Peers reach the target machine only for a foe
+  // the stream carries, so a foe past the run never sees another player.
+  const cands = /candidates: foeDeps \? \(streamed = false\) =>([^\n]*)/.exec(dc);
+  assert.ok(cands, 'the candidates seam is gone - re-aim this pin');
+  assert.match(cands[1], /_authority && streamed \? peerCandidates\(\) : \[\]/,
+    'peers are candidates only for a streamed foe');
+  assert.match(dc, /_armed\(f, _senses, _fi < _layoutFoes\)/,
+    '...and `streamed` IS the layout bound');
+
+  // THE LAW THE FLAG STATES: arming a non-layout foe against peers while it is
+  // still unsynced is WORSE than the bug - it would chase and swing at a player
+  // who cannot see it and has no damage frame to resolve the blow. So the two
+  // bounds must be the same expression. The day someone widens the targeting
+  // bound alone, this goes red.
+  const puppet = /const _puppet = !_authority && ([^;]+);/.exec(dc);
+  assert.ok(puppet, 'the puppet gate is gone - re-aim this pin');
+  assert.equal(puppet[1].trim(), '_fi < _layoutFoes',
+    'the puppet gate and the targeting bound are one expression - widen them together or not at all');
+
+  // And the flag itself is still at the site, naming both halves, so the
+  // record cannot quietly outlive the code it describes.
+  assert.match(dc, /ONLINE-DUNGEON-FOES \(2026-09-20, Mac:/, 'the FLAGGED note is gone from the site');
+  assert.match(dc, /NOT SYNCED\./); assert.match(dc, /NOT REACTIVE\./);
 });

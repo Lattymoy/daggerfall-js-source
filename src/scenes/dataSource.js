@@ -13,6 +13,8 @@
 // it 404s and the picker is the source. Names are normalized to
 // UPPERCASE basenames - real ARENA2 ships uppercase, user folders vary.
 
+import { isTouchDevice } from '../ui/touchDevice.js';   // TI3
+
 const DB_NAME = 'project-dagger';
 const STORE = 'arena2';
 /** M-EXT: user-supplied music lives in its OWN store, and that is not
@@ -116,8 +118,10 @@ const mem = new Map(); // NAME -> Uint8Array
 // fell back to the in-page picker used to ingest the sky-less lean
 // set with no way out of it from the app. The shell's presence
 // (daggerShell, the preload bridge) outranks the touch sniff.
-const LEAN = typeof window !== 'undefined' && !window.daggerShell &&
-  ('ontouchstart' in window || (navigator?.maxTouchPoints ?? 0) > 0);
+// TI3: ...and the touch sniff is ui/touchDevice.js's law - a finger as
+// the PRIMARY pointer - so a touchscreen laptop in a browser is not lean
+// either.
+const LEAN = typeof window !== 'undefined' && !window.daggerShell && isTouchDevice();
 export const KEEP = (name, lean = LEAN) => /^TEXTURE\.\d+$/.test(name) ||
   /\.(BSA|COL|PAL|PAK|CFG|FNT|WLD|DEF|STD|IMG|CIF|RSC|RCI|SND|TXT|GFX|BSS|CFA)$/.test(name) ||   // U45 added BSS: the three compass needles, 116KB for all three; HC1 added CFA: TR2's riding sprites (MRED00I0/MRED01I0), which the deployed site had NEVER held - the horse and cart drew nothing there
   name === 'CLASSES.DAT' ||
@@ -458,7 +462,7 @@ export async function loadDerivedJson(key) {
  *  data-files frame ("meshes/maxhorse/xhorse1.nif"), so the key slices
  *  from the FIRST known asset root, lowercased, slashes normalized. A
  *  path with no known root keys by its basename (a file picked alone). */
-const MW_LOOSE_ROOTS = ['meshes/', 'textures/', 'sound/', 'icons/', 'bookart/', 'music/', 'splash/', 'video/', 'fonts/'];
+const MW_LOOSE_ROOTS = ['meshes/', 'textures/', 'sound/', 'icons/', 'bookart/', 'music/', 'splash/', 'video/', 'fonts/', 'animations/'];   // WS1: the bone addons' folder
 export function mwLoosePath(name) {
   const p = String(name).replace(/\\/g, '/').toLowerCase();
   for (const root of MW_LOOSE_ROOTS) {
@@ -520,6 +524,13 @@ export const loadMorrowindFile = async (fileName) => {
 };
 export const clearStoredMorrowind = async () => {
   _mwArchiveCache = null; _mwFileCache = null; _mwRecordsCache = null;
+  // AUDIT MW-TORCH F8 (MWA2's Remove data): the COUNT is the answer every
+  // consumer reads (the card's rows, autoBuildArms's data gate, the peer
+  // bodies' enabled), and it only ever moved in the two counting doors -
+  // so a cleared store still said "N archives attached" until the next
+  // boot. The clear is a count of zero, an unmeasured set, and a new
+  // generation (every cache keyed on the old one stands down).
+  _mwCount = 0; _mwCountedNames = null; _mwFingerprint = null; _mwGeneration += 1;
   await clearDerivedPrefix(ARM_RECORDS_PREFIX);   // MW-LOAD: the record sets are ANSWERS ABOUT the files
   return clearAssets(MW_STORE);
 };
@@ -651,6 +662,27 @@ async function _openMorrowindArchives() {
       if (bytes) loose.set(n, bytes);
     }
     archives.push(makeLooseArchive(loose));
+  }
+  // WS1: Weapon Sheathing's vendored scabbards and bone addons, after
+  // the player's own loose files (a replacer wins) and before every
+  // .bsa (retail carries none of these names).
+  try {
+    const ws = await import('../systems/weaponSheathingAssets.js');
+    archives.push(ws.weaponSheathingArchive());
+  } catch (err) {
+    console.warn(`weapon sheathing assets: ${err.message}`);
+  }
+  // FIELD-GUN-MW2: THE PORT'S OWN Morrowind assets - the Dwarven
+  // Thunderlock's mesh and texture, which no player's archives can
+  // carry because Morrowind has no firearm. Same rank and the same
+  // reason as the line above: after the loose files, so Mac dropping
+  // his own texture in REPLACES ours without a rebuild, and before
+  // every .bsa, where these names do not exist.
+  try {
+    const own = await import('../systems/ownMwAssets.js');
+    archives.push(own.ownMwArchive());
+  } catch (err) {
+    console.warn(`own morrowind assets: ${err.message}`);
   }
   for (const n of names) {
     try {
@@ -915,7 +947,7 @@ export const ASSET_PICKER_Z = 40;
 /** MWFIX: is the asset picker on screen? A modal opened FROM another
  *  overlay has to be able to say so, because the opener may own the
  *  keyboard - the enhanced shell takes Escape on `globalThis` in
- *  CAPTURE and stops it (enhancedMenu.js:2041), which is right for a
+ *  CAPTURE and stops it (enhancedMenu.js:2165), which is right for a
  *  screen with nothing above it and wrong the moment something is.
  *  Its own stated law is that a modal overlay owns its input; this is
  *  how the one above it says "that's me". */
@@ -1037,17 +1069,39 @@ export async function getBytes(name) {
 }
 
 /** Read a picked FileList into (NAME, ArrayBuffer) entries: uppercase
- *  basenames, flat-name filter (the dev middleware's own rule). */
-async function readPicked(files) {
+ *  basenames, flat-name filter (the dev middleware's own rule).
+ *  DG-LNX: `progress(done, n)` every few files - a folder pick reads a
+ *  few hundred megabytes before a byte is stored, and a screen that
+ *  says "reading 3035 files..." for a minute reads as "doesn't work". */
+async function readPicked(files, progress = null) {
   const entries = [];
+  let done = 0;
   for (const f of files) {
+    done++;
     const key = normalizeName(f.name);
     if (!/^[A-Za-z0-9._-]+$/.test(key)) continue;
     if (!KEEP(key)) continue;   // the engine's diet only
     entries.push([key, await f.arrayBuffer()]);
+    if (progress && (done % 25 === 0 || done === files.length)) progress(done, files.length);
   }
   return entries;
 }
+
+/** DG-LNX (2026-09-16, Ember on the Discord, Linux: "Picking the arena2
+ *  folder doesn't work. Picking a zip with the game files does though."):
+ *  THE FOLDER ARM SAID NOTHING WHEN IT FAILED. The zip arm has always
+ *  been wrapped and reports `zip failed: ...`; the folder arm's ingest
+ *  was an unguarded async listener, so a read that threw (a sandboxed
+ *  browser - Snap or Flatpak Firefox and Chromium hand a folder pick
+ *  through the desktop portal, which grants FILES cleanly and a whole
+ *  DIRECTORY often not at all, or not readably) became an unhandled
+ *  rejection: the screen stayed on "reading N files..." for ever and the
+ *  boot was dead. And an EMPTY pick - the portal's other answer - said
+ *  "no usable files" with no way forward. Both now say what happened
+ *  and name the route that works on that setup: the zip, or the folder
+ *  dropped onto the screen. */
+export const FOLDER_PICK_HINT = 'Some Linux browsers (Snap or Flatpak builds, where the file dialog is the desktop portal\u2019s) cannot hand a whole folder over. '
+  + 'Pick a .zip of the ARENA2 folder below instead, or drag the folder onto this screen.';
 
 const PROBE = 'ART_PAL.COL'; // small, universally present, first thing most scenes touch
 
@@ -1161,13 +1215,19 @@ export async function ensureArena2() {
     document.body.appendChild(ui);
     const msg = ui.querySelector('#msg');
     const ingest = async (files) => {
-      msg.textContent = `reading ${files.length} files...`;
-      const entries = await readPicked(files);
-      if (!entries.length) { msg.textContent = 'no usable files in that selection'; return; }
-      const fail = await finishIngest(entries, msg);
-      if (fail) { msg.textContent = fail; return; }   // stay on the picker
-      ui.remove();
-      resolve();
+      // DG-LNX: guarded like the zip arm, with the folder's own hint.
+      try {
+        if (!files.length) { msg.textContent = `the browser handed over no files from that folder. ${FOLDER_PICK_HINT}`; return; }
+        msg.textContent = `reading ${files.length} files...`;
+        const entries = await readPicked(files, (done, n) => { msg.textContent = `reading ${done}/${n}...`; });
+        if (!entries.length) { msg.textContent = `no ARENA2 files in that selection (${files.length} files, none of them Daggerfall\u2019s). Pick the ARENA2 folder itself, or a .zip of it.`; return; }
+        const fail = await finishIngest(entries, msg);
+        if (fail) { msg.textContent = fail; return; }   // stay on the picker
+        ui.remove();
+        resolve();
+      } catch (err) {
+        msg.textContent = `folder failed: ${err?.message ?? err}. ${FOLDER_PICK_HINT}`;
+      }
     };
     ui.querySelector('#pick').addEventListener('change', (e) => ingest([...e.target.files]));
     ui.querySelector('#pickzip').addEventListener('change', async (e) => {

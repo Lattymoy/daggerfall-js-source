@@ -127,8 +127,34 @@ test('AUDIT 39 F127 / TI1: the drag hook is live - the swipe calls it, and no bu
   const touch = read('src/ui/touch.js');
   assert.match(touch, /hooks\.attack\?\.\(ev\.dx, ev\.dy, ev\.held\)/, 'the swipe reaches the drag seam');
   assert.doesNotMatch(touch, /hooks\.attackTap/, 'the tap-to-attack button is gone (the tap is the activation now)');
-  assert.match(touch, /@param hooks \{ look\(dx,dy\), attack\?\(dx,dy,held\), tap\?\(x,y\), locked\?\(\), dial\?, cycleMode\?\(\), overlayActive\?\(\), paused\?\(\) \}/,
+  // AUDIT SOC C9 re-pinned: `socialInteract` joined the list - the phone's door to SOC5's action, which had no
+  // control at all on a touch device. The law is unchanged: the header documents EXACTLY the hooks the layer calls.
+  // FONT1 re-pinned: `enhanced` joined it - the skin flag that puts the layer's text in the pixel face (the classic skin keeps system-ui)
+  assert.match(touch, /@param hooks \{ look\(dx,dy\), attack\?\(dx,dy,held\), tap\?\(x,y\), locked\?\(\), dial\?, enhanced\?, cycleMode\?\(\), socialInteract\?\(\), overlayActive\?\(\), paused\?\(\) \}/,
     'the header documents exactly the hooks the layer calls (AUDIT 62 F7 added `paused`, the pause predicate the mouse arms always carried)');
+  assert.match(touch, /if \(hooks\.socialInteract\) button\(/, '...and the social button is drawn only where a host hands the hook in');
+  assert.match(touch, /const face = hooks\.enhanced \? `font-weight:500;font-size:15px;\$\{PIXEL_FONT_CSS\}` : 'font:600 15px system-ui,-apple-system,"Segoe UI",sans-serif';/, 'FONT1: the enhanced skin\'s layer is in the pixel face, the classic skin\'s in the system face');
+  // AUDIT FONT F5: ALL FOUR HOSTS, not one. FONT1 wired `enhanced` in
+  // scenes/world.js alone and this pin read that one file, so on
+  // ?exterior, ?dungeon and ?interior every touch button, the nav row
+  // and the naming field stayed in system-ui under the enhanced skin -
+  // the three hosts a phone reaches from the front door's own test
+  // rooms. THE FOUR HOSTS RULE: each is named here, wired or flagged.
+  for (const h of ['src/scenes/world.js', 'src/scenes/exterior.js', 'src/scenes/dungeon.js', 'src/scenes/interior.js']) {
+    const s = read(h);
+    assert.match(s, /\n    enhanced: isEnhanced\(\),/, `${h}: mutants: the skin flag dropped, so this host's touch layer is in the system face under the enhanced skin`);
+    assert.match(s, /import \{[^}]*isEnhanced[^}]*\} from '\.\.\/systems\/uiSkin\.js';/, `${h}: ...and it reads the real skin, not a literal`);
+  }
+  // AUDIT FONT F6: the naming field is an <input> and inherits nothing
+  // from the layer's root, so it set its own font shorthand and was the
+  // one place on this layer a player TYPES that FONT1's face never
+  // reached. Same size, this skin's letters.
+  assert.match(touch, /const entryFace = hooks\.enhanced \? `font-weight:600;font-size:18px;\$\{PIXEL_FONT_CSS\}` : 'font:600 18px system-ui,-apple-system,sans-serif';/,
+    'AUDIT FONT F6: the entry field takes the skin\'s face too');
+  assert.match(touch, /box-sizing:border-box;\$\{entryFace\};color:#eee;/,
+    'mutants: the field back on its own hard-coded system-ui shorthand, whatever the layer around it wears');
+  assert.doesNotMatch(touch, /font:600 18px system-ui,-apple-system,sans-serif;color:#eee/,
+    'mutant: the old literal left in the cssText beside the new variable');
   assert.match(touch, /const paused = !!hooks\.paused\?\.\(\);/, '...and the layer calls it');
   // The three combat hosts pass the drag hook; the fly-cam interior
   // passes neither it nor a tap and gets no sword and no dial.

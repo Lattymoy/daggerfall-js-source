@@ -193,8 +193,9 @@ export class SongPlayer {
    * @param {AudioContext} ctx
    * @param {AudioNode} [destination]  defaults to ctx.destination
    */
-  constructor(ctx, destination = null) {
+  constructor(ctx, destination = null, reverbSend = null) {
     this.ctx = ctx;
+    this._reverbSend = reverbSend;   // AUDIT-BA F4: the audio engine's reverb send - Unity's zone takes the music's AudioSource at reverbZoneMix 1 like every other
     this.song = null;
     this.playing = false;
     this.loop = true;
@@ -209,6 +210,7 @@ export class SongPlayer {
     this._master = this.ctx.createGain();
     this._master.gain.value = musicGain();
     this._master.connect(this._destination ?? this.ctx.destination);
+    if (this._reverbSend) this._master.connect(this._reverbSend);   // AUDIT-BA F4
   }
 
   /** The MusicVolume setting moved (2026-08-27): follow it now, not at
@@ -550,8 +552,9 @@ export class AudioSongPlayer {
    * @param {AudioContext} ctx
    * @param {AudioNode} [destination]  defaults to ctx.destination
    */
-  constructor(ctx, destination = null) {
+  constructor(ctx, destination = null, reverbSend = null) {
     this.ctx = ctx;
+    this._reverbSend = reverbSend;   // AUDIT-BA F4: the audio engine's reverb send - Unity's zone takes the music's AudioSource at reverbZoneMix 1 like every other
     this.playing = false;
     this.loop = true;
     this._source = null;
@@ -564,6 +567,7 @@ export class AudioSongPlayer {
     this._master = this.ctx.createGain();
     this._master.gain.value = trackGain();   // the setting alone: a mastered pack needs no FM trim
     this._master.connect(this._destination ?? this.ctx.destination);
+    if (this._reverbSend) this._master.connect(this._reverbSend);   // AUDIT-BA F4
   }
 
   /** Follow the setting now (see SongPlayer.resyncGain). */

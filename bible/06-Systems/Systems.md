@@ -4,7 +4,7 @@ ACTIVE - see `Systems-Arc.md` for the live record. S1-S22 SHIPPED (effects
 and the spell/effect library, chargen, biography, items and equip, loot,
 containers, talk, crime and the court, rest and recovery, diseases, poisons,
 the Cure family, concealment, FreeAction) plus the economy sub-arc E1-E3
-(shop templates and stock, the shelf mount, selling, the guild bookshelf, the health status box). 166 modules live under
+(shop templates and stock, the shelf mount, selling, the guild bookshelf, the health status box), plus ORL1's OBLIVION-REMASTER-LIKE LEVELING - the alternative leveling system a character chooses at creation, plus the DWARVEN THUNDERLOCK (`thunderlock.js`) - the port's own weapon, the first item in this port that Daggerfall does not have, with its two custom templates and the Dwemer Pellet it spends, and `appRoot.js` - the SITE ROOT off a module's own URL, which MAP-FIELD found the hard way on the held map and AUDIT-THUNDERLOCK F7 found again on the weapon's art, plus FIELD-GUN-MW2's pair for the port's OWN Morrowind assets - `urlArchive.js` (the `{has, get, load, loaded}` duck over files that ship with the build, moved out of `weaponSheathing.js` once it had a second caller) and `ownMwAssets.js` (the Thunderlock's NIF and DDS, mounted after the player's loose files so their own replacer still wins). `gravestoneLore.js` (GRAVE1: the epitaph pool an Info-mode activation that hit nothing reads from while the player stands in a Graveyard location - location-gated rather than per-headstone, because the stones are block models with no record of their own). 189 modules live under
 `src/systems/`. Items still routed here are collected in
 `01-Overview/Port-Ledger.md` section C; scope in
 `01-Overview/Port-Doctrine.md` phase plan.

@@ -15,9 +15,11 @@
 //   Scale: classic pixels x floor(canvasHeight / 200) (the 320x200
 //   reference), min 1 - integer scaling keeps the art crisp.
 
+import { bitmapToColor32 } from '../formats/color32Order.js';   // BOOT2: the indexed-to-color32 door is a formats concern; it lived here and put the HUD on the entry's boot path through ui/cursor.js
 import { maxFatigue, maxBreath, liveStat } from '../systems/statMods.js';
 import { isEnhanced } from '../systems/uiSkin.js';   // PX30: the HUD is a skin too
 import { drawEnhancedHud } from './enhancedHud.js';   // PX30
+import { drawLevelNotices } from './levelNotice.js';   // LV2: the level-up notification, on the same one call
 import { drawCrosshairAndModeIcon } from './hudCrosshair.js';   // U38
 import { playerDamageFlash } from './damageFlash.js';   // AUDIT 24 (wave 39): ShowPlayerDamage rides the one HUD call
 import { hudFade } from './fadeLayer.js';   // D4: FadeBehaviour's target IS the HUD's parent panel
@@ -172,23 +174,6 @@ export const hudScale = (canvasWidth, canvasHeight) =>
  * the art is absent - the HUD is data-gated like everything else.
  * ImgFile + palette come from the caller (scene layer owns data).
  */
-export function bitmapToColor32(bmp, palette, alphaIndex = 0) {
-  // alphaIndex is GetColor32's own parameter: classic IMG UI art keys
-  // index 0 transparent (the box corners) - the default every caller
-  // rode before it was a parameter - while a save screenshot
-  // (SAV3, IMAGE.RAW) is opaque edge to edge and passes -1.
-  const colors = new Uint32Array(bmp.width * bmp.height);
-  const u8 = new Uint8Array(colors.buffer);
-  for (let i = 0; i < bmp.data.length; i++) {
-    const idx = bmp.data[i];
-    const o = i * 4;
-    if (idx === alphaIndex) continue;
-    const c = palette.get(idx);
-    u8[o] = c.r; u8[o + 1] = c.g; u8[o + 2] = c.b; u8[o + 3] = 255;
-  }
-  return { width: bmp.width, height: bmp.height, colors };
-}
-
 export async function loadHud({ fetchBytes, ImgFile, palette, renderer }) {
   // U46: the spell-icon sheet loads HERE, with the rest of the HUD's
   // art, and not with the spellbook window that used to be its only
@@ -434,9 +419,31 @@ export function drawCompassStrip(renderer, art, x, y, s, heading01) {
   return { bw, bh };
 }
 
+/**
+ * AUDIT FONT F3: THE HUD'S TWO DOM TEXT SURFACES, DOWN - in one call,
+ * for the frame that never reaches drawHud at all.
+ *
+ * drawHud is the only place a host says either of these, and both
+ * dungeon hosts (scenes/dungeon.js, scenes/worldModes.js's dungeon arm)
+ * RETURN out of the frame while a window is up, above the `drawFoes`
+ * that would have called it. On the classic skin that is exactly right
+ * - nothing painted is nothing seen - but under the enhanced skin both
+ * surfaces are DOM and stay painted until told otherwise (AUDIT 64
+ * F37's law), so "You are too far away" stood over an open dungeon
+ * window until the player closed it, and on ?dungeon - which has no
+ * townTalk drawing a second column - the popup column stood too.
+ *
+ * ONE call rather than two lines in each host, because the next host
+ * to grow an early return is the one that remembers one of them.
+ */
+export function hideHudTextSurfaces(hudText = null) {
+  hudText?.hide();
+  midScreenText.hide();
+}
+
 export function drawHud(renderer, canvas, art, vitals, heading01, dt = 0,
-  { font = null, cursorActive = false, windowCoversHud = null, detected = null, playerXZ = null, largeHud = null, hover = null,
-    readied = null, weapon = null, weaponSheathed = true } = {}) {   // PX30b: for the enhanced HUD's hand plaques; AUDIT 28 W2: the arrow counter's gate; AUDIT 64 F35: the host's previousWindow answer
+  { font = null, cursorActive = false, windowCoversHud = null, hudHidden = false, detected = null, playerXZ = null, largeHud = null, hover = null,
+    readied = null, weapon = null, weaponSheathed = true, quickUse = null, quickSwap = null, quickOffHand = null, quickSpell = null, quickSwitchHand = null } = {}) {   // PX30b: for the enhanced HUD's hand plaques; AUDIT 28 W2: the arrow counter's gate; AUDIT 64 F35: the host's previousWindow answer; QS3: the diamond's sheathe state and its two phone taps; QS6: the caption's spell chip press
   // AUDIT 24 (wave 39): ShowPlayerDamage's red flash, under the bars.
   // THE FOUR HOSTS RULE, applied before the fact: drawHud is the one
   // host-agnostic call all four make, "last, over the viewmodel", so
@@ -516,7 +523,8 @@ export function drawHud(renderer, canvas, art, vitals, heading01, dt = 0,
   // stack and answers true the moment ANY window on it fails to paint
   // its own previous - and this call falls back to `cursorActive` only
   // for a caller that answers nothing (the old, blunter law).
-  const hudCovered = (windowCoversHud ?? cursorActive) && !largeHud?.art;
+  // MAP-FIELD2: `hudHidden` is the OTHER question - a window that takes the HUD away outright rather than being painted over it, so it skips the large-HUD carve-out (which is DFU's own law, for DFU's own windows; see windowStack.hidesHud).
+  const hudCovered = hudHidden || ((windowCoversHud ?? cursorActive) && !largeHud?.art);
   const hudDrawn = hudRenderEnabled() && !hudCovered;
   // F-A6 (self-audit): DFU's flicker steps on Time.deltaTime, which a
   // paused game holds at 0 (timeScale) - the tint FREEZES under a
@@ -550,10 +558,21 @@ export function drawHud(renderer, canvas, art, vitals, heading01, dt = 0,
   // observed because the seven-row column tops out ~70 native px above
   // this label's y=146.
   if (!cursorActive) midScreenText.tick(dt);
-  if (hudDrawn) midScreenText.draw(renderer, canvas, font);
+  // FONT1: ...and the refused frame reaches the hide door, because the
+  // enhanced skin's label is DOM and a DOM line stays painted until it
+  // is told otherwise (this finding's own law, F37). On the classic
+  // skin `hide()` is nothing, which is what the bare `if` meant there.
+  if (hudDrawn) midScreenText.draw(renderer, canvas, font); else midScreenText.hide();
   // Above the `!art` return, like the flash: the enhanced HUD reads no
   // ARENA2, and a player whose HUD art failed to load still has vitals.
+  // LV2: THE RISING rides the same one call, for the reason the flash
+  // and the enhanced HUD above it do - drawHud is what all four hosts
+  // already make. It takes the HUD's own hide gate (AUDIT 64 F37: a
+  // persistent DOM overlay must REACH its hide door rather than be
+  // skipped) and reads whether a level is still owed off the one
+  // player entity itself.
   if (isEnhanced() && typeof document !== 'undefined') {
+    drawLevelNotices({ hidden: cursorActive || !hudRenderEnabled() });
     drawEnhancedHud(vitals, heading01, dt, {
       // AUDIT 64 F37: the enhanced skin is a persistent DOM overlay -
       // it stays painted unless told otherwise - so a hidden HUD must
@@ -569,6 +588,20 @@ export function drawHud(renderer, canvas, art, vitals, heading01, dt = 0,
       // classic compass carries them too.
       detected: detected ?? null,
       playerXZ: playerXZ ?? null,
+      // QS3: the quickslot diamond dims its main cell when the weapon
+      // is put away. drawHud has carried `weaponSheathed` since AUDIT
+      // 28 W2 for the arrow counter's gate and never passed it on, so
+      // the enhanced skin had no way to know and a drawn sword read
+      // exactly as a sheathed one. One line.
+      weaponSheathed: weaponSheathed,
+      // QS3's second departure: on a phone the diamond's cells are the
+      // only control for the two quick uses and the swap. A host with
+      // no such door passes none and the tap does nothing.
+      quickUse: quickUse ?? null,
+      quickSwap: quickSwap ?? null,
+      quickOffHand: quickOffHand ?? null,   // QS4: the off hand's own press
+      quickSpell: quickSpell ?? null,   // QS6: the spell chip's
+      quickSwitchHand: quickSwitchHand ?? null,   // MAC-R3: the main cell's hand switch
     });
     // FE1 + AUDIT 39 F133: the escort column is not the classic skin's
     // - DaggerfallHUD adds it unconditionally (:183-185) and even the

@@ -59,7 +59,14 @@ test('PX30: the HUD rides the ONE host-agnostic call, and the classic keeps its 
   // viewmodel" - the same reasoning the damage flash rides.
   // PX30b gave the call the two hands; the shape it guards is
   // unchanged - one branch, on the skin, and it RETURNS.
-  assert.match(hud, /if \(isEnhanced\(\) && typeof document !== 'undefined'\) \{\s*\n\s*drawEnhancedHud\(vitals, heading01, dt, \{/);
+  // LV2 re-aimed this BY CONTENT: the branch is still ONE branch on the
+  // skin and it still returns, but the enhanced skin now has a second
+  // surface inside it - ui/levelNotice.js's strip, which rides the same
+  // one call for the same reason and takes the same hide gate. What the
+  // pin is about is the BRANCH, not the number of lines in it.
+  assert.match(hud, /if \(isEnhanced\(\) && typeof document !== 'undefined'\) \{\s*\n\s*drawLevelNotices\(\{ hidden: cursorActive \|\| !hudRenderEnabled\(\) \}\);\s*\n\s*drawEnhancedHud\(vitals, heading01, dt, \{/);
+  assert.equal((hud.match(/if \(isEnhanced\(\) && typeof document !== 'undefined'\) \{/g) ?? []).length, 1,
+    'ONE branch on the skin, not one per surface');
   const branch = hud.slice(hud.indexOf('if (isEnhanced() && typeof document'));
   assert.ok(branch.indexOf('return;') < branch.indexOf('if (!art) return;'), 'the enhanced branch returns');
   // ABOVE the `!art` return, like the flash: the enhanced HUD reads no
@@ -83,7 +90,28 @@ test('PX30: it is a READOUT, and it is updated rather than rebuilt', () => {
   // Tab does not close it - it is the game's own face.
   assert.match(css, /\.hud \{ position: fixed; inset: 0; z-index: 4; pointer-events: none;/);
   assert.match(src, /setAttribute\('aria-hidden', 'true'\)/);
-  assert.doesNotMatch(src, /registerOverlay|addEventListener/, 'a readout listens to nothing');
+  assert.doesNotMatch(src, /registerOverlay/, 'a readout goes through no door');
+  // QS3 narrowed this pin by exactly its own departure and no further.
+  // It read "a readout listens to nothing"; under `pointer: coarse` the
+  // four quickslot cells - and nothing else on this layer - take a
+  // pointerdown, because a phone has no Digit1, Digit2 or Digit3 and
+  // AUDIT SOC C9 is what happens when a platform cannot reach an
+  // action. The three listeners are bound ONCE, in build(), and the
+  // `.hud` root is still pointer-events none, which is what keeps the
+  // game underneath reachable.
+  // QS6 widened it by exactly its own departure and no further: the two
+  // consumables and the spell chip take a HOLD as well as a tap - Mac's
+  // "hold the keybind to switch", which a phone has no key to hold - so a
+  // hold's four edges (down, up, cancel, leave) are subscribed by ONE helper
+  // called for three slots, and the off cell's tap is the fifth site. Still
+  // bound once, in build(), and still nothing else on this layer.
+  assert.equal((src.match(/addEventListener\(/g) ?? []).length, 6, 'six listener sites, and they are the quickslot cells\' and the spell chip\'s (MAC-R3: the main cell\'s hand switch joined them)');
+  const events = new Set((src.match(/\.addEventListener\('(\w+)'/g) ?? []).map((m) => m.slice(19, -1)));
+  assert.deepEqual([...events].sort(), ['pointercancel', 'pointerdown', 'pointerleave', 'pointerup'],
+    'pointer edges only - a readout hears no key, no click and no wheel');
+  // AUDIT QS F8: TOUCH-FIRST is coarse AND hover-none - a desktop with a
+  // touchscreen answers coarse alone, and a mouse click there swallowed a swing.
+  assert.match(css, /@media \(pointer: coarse\) and \(hover: none\) \{\s*\n\s*\.hud-qcell \{ pointer-events: auto;/);
   // UPDATED, NOT REBUILT: a per-frame innerHTML is PX19k's entrance
   // replay at sixty times a second. Every write is guarded.
   assert.match(src, /const put = \(node, key, value\) => \{\s*\n\s*if \(last\[key\] === value\) return;/);
@@ -116,22 +144,38 @@ test('PX30b: the breath bar and the two hands - each only when there is one', ()
   assert.match(css, /\.hud-breath \{ display: none;[\s\S]{0,80}\.hud-breath\.on \{ display: flex; \}/);
   // THE HANDS. The reference's ability bar has no Daggerfall
   // equivalent - there are no hotkeyed abilities - but the two things
-  // it would hold do exist. Each plaque draws only when filled: an
-  // empty one is PX14's drawn door, and a HUD is the worst place for
-  // furniture that says nothing.
+  // it would hold do exist: the spell you have READIED and what is in
+  // your hand.
+  //
+  // QS3 REPLACED THE TWO PLAQUES WITH THE QUICKSLOT DIAMOND, and this
+  // pin was re-aimed rather than deleted. What it protected is still
+  // protected: BOTH values still arrive through drawHud's own options
+  // bag, so a host that knows neither passes neither, and both are
+  // still GUARDED writes. What changed is where they are drawn - the
+  // readied spell is the diamond's caption chip and the weapon is its
+  // main cell - so the `.hud-hand` plaque rules are gone with them, and
+  // the "each only when filled" half of this law now lives where it was
+  // made: on the CHIP, which carries a name and says nothing without
+  // one. The cells are the arc's recorded departure (see
+  // test/qs3_hud.test.js and ui/enhancedHud.js's header): an empty cell
+  // is a SOCKET, because the diamond's shape is the readout.
   assert.match(src, /parts\.readied\.classList\.toggle\('on', !!readyName\);/);
-  assert.match(src, /parts\.weapon\.classList\.toggle\('on', !!weaponName\);/);
-  assert.match(css, /\.hud-hand \{ display: none;/);
-  assert.match(css, /\.hud-hand\.on \{ display: flex; \}/);
+  assert.doesNotMatch(css, /\.hud-hand \{|\.hud-hands|\.hud-hand\.on/, 'the plaques went with the diamond');
+  assert.match(src, /quickslotView\(vitals, \{ weapon: opts\.weapon \?\? null, sheathed: opts\.weaponSheathed \?\? false,/,
+    'the weapon is the diamond\'s main cell now');
+  // QS6: and the readied chip stands down when the SPELL CHIP is already
+  // naming that spell - two chips a hand's width apart saying one word is a
+  // stutter, not a readout.
+  assert.match(src, /const readyName = readySpell && !doubled \? String\(readySpell\.name \?\? ''\) : null;/);
   // The host hands them over through drawHud's own options bag, so a
   // host that knows neither passes neither.
   // AUDIT 28 W2a re-aimed from the literal bag-tail: the bag grew
   // weaponSheathed after these two, and the law is that both are there.
-  assert.match(read('src/ui/hud.js'), /readied = null, weapon = null(, [^}]*)? \} = \{\}\)/);
+  assert.match(read('src/ui/hud.js'), /readied = null, weapon = null(, [^}]*)? \} = \{\}[,)]/s);
   assert.match(read('src/ui/hud.js'), /readied: readied \?\? null,\s*\n\s*weapon: weapon \?\? null,/);
   // ...and both are still GUARDED writes, like everything else here.
   assert.match(src, /if \(last\.readied !== readyName\) \{/);
-  assert.match(src, /if \(last\.weapon !== weaponName\) \{/);
+  assert.match(src, /if \(last\.quick === sig\) return;/);
 });
 
 test('AUDIT 39: every host that draws a HUD fills the two hands', () => {

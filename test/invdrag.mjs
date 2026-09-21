@@ -66,11 +66,21 @@ export function fakeDom({ w = 1280, h = 800 } = {}) {
     elementFromPoint: () => null,   // the test says what is under the pointer
     addEventListener() {}, removeEventListener() {},
   };
+  // INV3: AND THE THIRD ARGUMENT IS PART OF THE FEATURE. A window
+  // `touchmove` listener is PASSIVE by default in Chromium, so a drag
+  // that holds the gesture with `preventDefault` is doing nothing at
+  // all unless it registered with `{ passive: false }`. That is a fact
+  // about the registration and not about the handler, so the options
+  // are kept beside the listener and `opts(t)` hands them back - pinning
+  // it by grepping the source is the thing AUDIT INV2 exists to stop.
+  const options = new Map();
+  const at = (t) => { if (!listeners.has(t)) { listeners.set(t, []); options.set(t, []); } return listeners.get(t); };
   const win = {
-    addEventListener: (t, fn) => { if (!listeners.has(t)) listeners.set(t, []); listeners.get(t).push(fn); },
-    removeEventListener: (t, fn) => { const a = listeners.get(t); const i = a?.indexOf(fn) ?? -1; if (i >= 0) a.splice(i, 1); },
+    addEventListener: (t, fn, o) => { at(t).push(fn); options.get(t).push(o); },
+    removeEventListener: (t, fn) => { const a = listeners.get(t); const i = a?.indexOf(fn) ?? -1; if (i >= 0) { a.splice(i, 1); options.get(t).splice(i, 1); } },
     fire: (t, e) => { for (const fn of [...(listeners.get(t) ?? [])]) fn(e); },
     count: (t) => (listeners.get(t) ?? []).length,
+    opts: (t) => [...(options.get(t) ?? [])],
   };
   return { doc, win, body, mk, all, matches, w, h };
 }

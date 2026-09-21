@@ -10,6 +10,7 @@ import {
   GUARD_NPC_SPAWN_RANGE, GUARD_BEHIND_ANGLE,
   GUARD_FALLBACK_MIN_DIST, GUARD_FALLBACK_MAX_DIST,
 } from '../src/scenes/cityGuards.js';
+import { uninstallSurvivalLoot } from '../src/systems/survival/loot.js';   // AUDIT VC6: SURV2's corpse food is stood down for the pins that count a body's items
 
 const ARENA2 = process.env.ARENA2_PATH;
 const skipReal = !ARENA2 || !existsSync(ARENA2)
@@ -169,12 +170,24 @@ test('guards G3: killed guards are loot targets, walk-aways are not, loot takes 
   // AUDIT 39: the ID of the second guard this pool ever stood - which
   // is 1 where its INDEX is now 0, the whole point of the change.
   assert.equal(targets[0].key, 'guardCorpse:1');
+  // MAC-E: the body OPENS (PlayerActivate.cs:957) - it does not empty
+  // itself. The count is what it holds, the host's door is handed the
+  // body's own hooks, and not one item has moved yet.
   let said = null;
-  assert.equal(g.takeLoot('guardCorpse:1', (l) => { said = l; }), 2);
-  assert.equal(said, 'You take 2 items.');
-  assert.ok(deps.playerEntity.items.some((it) => it.group === 'Currency' && it.stackCount === 7));
-  assert.equal(g.takeLoot('guardCorpse:1'), 0, 'a looted corpse is empty');
-  assert.equal(g.lootTargets().length, 0);
+  let loot = null;
+  assert.equal(g.takeLoot('guardCorpse:1', (l) => { said = l; }, (h) => { loot = h; }), 2);
+  assert.equal(said, null, 'no line: DFU says nothing when it opens a body');
+  assert.deepEqual(loot.items().map((it) => it.name), ['Gold', 'Longsword'], 'the window is given the BODY');
+  assert.equal(loot.playerOwned, false, 'a corpse container is not player-owned (:833)');
+  assert.equal(deps.playerEntity.items.some((it) => it.group === 'Currency'), false,
+    'and the purse is still on the body - the window moves it, on the player\u2019s word');
+  // ...and emptying it by hand, as the window would, leaves the body a
+  // target until the NEXT click finds it empty and says so (:942-947).
+  g.guards[0].entity.items.length = 0;
+  assert.equal(g.lootTargets().length, 1, 'an emptied body is still a target');
+  assert.equal(g.takeLoot('guardCorpse:1', (l) => { said = l; }, () => {}), 0, 'a looted corpse is empty');
+  assert.equal(said, 'The body has no treasure.');
+  assert.equal(g.lootTargets().length, 0, 'and only NOW does it stop being one');
 });
 
 // AUDIT 39r R32 ADDED THIS PIN, AND IT IS DELIBERATELY UN-GATED.
@@ -202,6 +215,16 @@ function stubClassCfg() {
 }
 
 test('guards G3 (un-gated): the id is MINTED at the spawn, and the loot key survives the prune', async () => {
+  // AUDIT VC6 (2026-09-18): THIS PIN USED TO FAIL ONE RUN IN EIGHT.
+  // SURV2 registers a death handler that puts the body's food on it,
+  // and this pool raised the death with no roll of its own - so the
+  // drop fell to Math.random and about fifteen per cent of kills grew
+  // one or two items nobody had put there. The pool hands its own
+  // `rand` now (cityGuards.js), which makes the drop deterministic; the
+  // handler is stood down HERE so that what this pin reads is the
+  // GUARDS' law - the key surviving the prune - and not SURV2's table,
+  // which is pinned in its own file (test/surv2_items.test.js).
+  uninstallSurvivalLoot();
   const player = { level: 1, reflexes: 2, skills: 30, items: [], stats: { strength: 50, agility: 50, luck: 50 }, crimeCommitted: 5 };
   const deps = { ...makeDeps(() => 0.9), fetchBytes: async () => stubClassCfg(), playerEntity: player };
   const g = createCityGuards(deps);
@@ -224,11 +247,13 @@ test('guards G3 (un-gated): the id is MINTED at the spawn, and the loot key surv
 
   // THE WHOLE POINT: its INDEX is now 0 and its key is still its id.
   assert.deepEqual(g.lootTargets().map((t) => t.key), ['guardCorpse:1']);
-  let said = null;
-  assert.equal(g.takeLoot('guardCorpse:1', (l) => { said = l; }), 2, 'and takeLoot resolves the same name');
-  assert.equal(said, 'You take 2 items.');
-  assert.ok(player.items.some((it) => it.group === 'Currency' && it.stackCount === 7),
-    'the purse that moved is the one that was on THAT body');
+  // MAC-E: the body opens rather than emptying itself, so what this
+  // pin reads is that the KEY resolved to the right body - the purse
+  // the window is offered is the one that was on it.
+  let loot = null;
+  assert.equal(g.takeLoot('guardCorpse:1', () => {}, (h) => { loot = h; }), 2, 'and takeLoot resolves the same name');
+  assert.ok(loot.items().some((it) => it.group === 'Currency' && it.stackCount === 7),
+    'the purse offered is the one that was on THAT body');
 });
 
 test('guards G4: civilian strike = one-hit Murder; wandering guard = Assault + conversion; guard kill = Murder', { skip: skipReal }, async () => {

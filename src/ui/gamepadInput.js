@@ -56,6 +56,7 @@ import { getBinding, getAxisBinding, getAxisInversion, getJoystickUIBinding } fr
 import { unityAxes, unityButtons, axisNumber, axisKeyDown, axisKeyName, movementAxes, cameraAxes, controllerLookDegrees, cursorStep, controllerSettings, NUM_AXES, AXIS_KEY_BASE } from '../systems/gamepad.js';
 import { lookScale } from './lookSettings.js';
 import { setControllerLook } from '../player/lookFilter.js';
+import { padFamilyOf, setPadFamily } from './padGlyphs.js';   // QS3: which family of button glyph the HUD's quickslot tags draw
 
 /** The swing's drag, in the attack hook's pixels per second at a full stick. */
 export const SWING_PX_PER_SEC = 800;
@@ -146,6 +147,7 @@ export function attachGamepad(canvas, hooks = {}, { getPads = null, dispatch = s
       analog = null;
       if (swinging) { swinging = false; hooks.attack?.(0, 0, false); }
       if (usingController) { usingController = false; setControllerLook(false); }
+      setPadFamily(null);   // QS3: a glyph for a pad nobody is holding is a lie
       cursorRelease(); cursorShow(false);
       releaseAll();
       mouseMoved = false;
@@ -195,6 +197,7 @@ export function attachGamepad(canvas, hooks = {}, { getPads = null, dispatch = s
     }
     mouseMoved = false;
     setControllerLook(usingController);
+    setPadFamily(padFamilyOf(pad.id));   // QS3: Xbox or PlayStation, off the pad's own id
     // the UI buttons as the mouse's (GetMouseButton :1050-1063) and Back as Escape (:1065-1068)
     for (const [ui, mouse] of Object.entries(MOUSE_CODE_OF_UI)) {
       const code = getJoystickUIBinding(b, ui);
@@ -248,6 +251,6 @@ export function attachGamepad(canvas, hooks = {}, { getPads = null, dispatch = s
     usingController: () => usingController,
     cursor: () => (cursor ? [cursor[0], cursor[1]] : null),
     held: () => new Set(held),
-    dispose() { cursorRelease(); cursorShow(false); cursorEl?.remove?.(); cursorEl = null; releaseAll(); setControllerLook(false); window.removeEventListener('mousemove', onMouseMove); },
+    dispose() { cursorRelease(); cursorShow(false); cursorEl?.remove?.(); cursorEl = null; releaseAll(); setControllerLook(false); setPadFamily(null); window.removeEventListener('mousemove', onMouseMove); },
   };
 }

@@ -202,7 +202,12 @@ test('UL1: the registry - installed, the two rolls answer the mod\'s when Enable
   assert.equal(formulaOverride('randomMaterial'), null);
   let seen = 0; registerEnemyDeathHandler('t', () => { seen++; }); raiseEnemyDeath({ items: [] }); registerEnemyDeathHandler('t', null); raiseEnemyDeath({ items: [] });
   assert.equal(seen, 1);
-  for (const f of ['src/scenes/exteriorFoes.js', 'src/scenes/cityGuards.js', 'src/scenes/dungeonContext.js']) assert.match(rd(f), /raiseEnemyDeath\(\w+\.entity\);/, `${f}: the kill raises OnEnemyDeath`);
+  // AUDIT VC6 (2026-09-18): the three kills raise it WITH the raiser's
+  // own terms now - a handler that ROLLS (SURV2's corpse food) was
+  // falling to Math.random and to an invented luck of 50, which made a
+  // guards pin fail one run in eight. The shapes are pinned in
+  // test/surv2_items.test.js; here it is still that all three raise.
+  for (const f of ['src/scenes/exteriorFoes.js', 'src/scenes/cityGuards.js', 'src/scenes/dungeonContext.js']) assert.match(rd(f), /raiseEnemyDeath\(\w+\.entity, \{[^}]*\}\);/, `${f}: the kill raises OnEnemyDeath, with its own roll and luck`);
   assert.match(rd('src/combat/enemyEquipment.js'), /formulaOverride\('randomMaterial'\)\?\.\(playerLevel, rolls\)/); assert.match(rd('src/combat/enemyEquipment.js'), /formulaOverride\('randomArmorMaterial'\)\?\.\(playerLevel, rolls\)/);
   // the pane
   const m = MOD_SETTINGS.unleveledLoot;

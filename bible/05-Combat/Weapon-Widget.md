@@ -15,8 +15,13 @@ vendored under `vendor/weapon-widget/` (the manifest, the shipped
 modsettings, a README with the provenance and the permission line), it
 is credited on the About screen, it has a Mod Authored row on the
 Features home (FT9's shape) and its 41 keys under its card on the Mods
-page, and it is ported as `src/combat/weaponWidget.js` (the component)
-and `src/combat/weaponWidgetAssets.js` (the door for its textures). On
+page, and it is ported as `src/combat/weaponWidget.js` (the component),
+`src/combat/weaponWidgetMotion.js` (the parts that are arithmetic
+rather than component - LoadSettings, the Offset/Bob/Inertia modules
+and GetWeaponRect's transform, split out 2026-09-19 so the gun lab can
+RUN them rather than copy them; the component imports them back and
+the arithmetic is untouched) and `src/combat/weaponWidgetAssets.js`
+(the door for its textures). On
 by default (MO1). Pins: 14 in `test/ww1_weaponwidget.test.js`.
 
 ## The source the port reads
@@ -272,3 +277,67 @@ against M-TEX converting at the door (the H4 law) - was recorded here as
 torch doors and the crash itself. Every door converts at the door now and
 nothing under `src/` imports `toColor32Order`:
 `06-Systems/Handheld-Torches.md` TEX1.
+
+## WW4 - the clone owns the seam, and the idle comes back (2026-09-16)
+
+Mac handed over a curated `weaponWidget.js` with two hunks and a
+report of the vanilla weapon flashing back mid-swing. Both are in.
+
+**WW4, the draw seam.** `draw()` answered `false` for frame -1, for a
+`hideWeapon` message and for third person - and `false` reads to the
+rig (`if (widgetOn() && c && widget.draw(renderer, c)) return;`) as
+"not mine", so the classic sprite fell in behind every Hide wind-up and
+recovery, both of which are the defaults. In DFU the mod hides the
+original outright (`ScreenWeapon.ShowWeapon = false`, the page's own
+"deliberately not carried" row says the draw seam's order IS that
+hide); the port's order was only that hide while the clone drew
+something. An applicable clone that chooses silence answers `true` now
+and draws nothing; only genuine not-applicable (no ctx or art, no
+anim, record or texture data) falls through.
+
+**WW4b, the idle's re-entry - THE PORT'S OWN.** The IL's
+`ChangeWeaponState` resets only a bow's Idle to frame 0. With Recovery
+= Hide the Swings coroutine leaves a melee frame at -1, and
+`finishSwing`'s slide-in from below needs a drawable frame; the mod's
+clone recovers it from the original it shadows, the port's shadows a
+machine that publishes no frame for Idle. So the melee idle stayed at
+-1 - invisible once WW4 stopped the classic sprite standing in for it,
+which is why WW4 alone would have emptied the screen after the first
+swing. An Idle arriving at -1 takes frame 0; an Idle already holding a
+real frame (Recovery = Last Frame, the other callers) is untouched.
+
+Pins in `test/ww1_weaponwidget.test.js` (two): the three silent
+answers own the seam and draw nothing while no-weapon still falls
+through, and the rig's line reads it so; a full swing under the default
+recovery lands on frame 0 and draws the idle, while Last Frame is left
+as it was.
+
+Beside it, unrelated to the widget but shipped in the same commit:
+**MAC-C1**, the live crash `r.text.split is not a function` at
+`showStatus` - the status box wrapped `townTalk.lines`' formatted rows
+(`{ text, center }`) whole as a token's text; `statusInfoRows` takes
+both row shapes now (`systems/healthStatus.js`, pinned in
+`test/statusinfo.test.js`).
+
+## F1 - THE THRUST (2026-09-17, Mac: "when thrusting with a weapon, it can be glitchy")
+
+Two things a thrust does that the other strikes do not, one of them the
+mod's own. The mod's: `CheckForRecoveryOverride` - a StrikeUp of anything
+but a dagger recovers IN REVERSE, at half the tick (`recoveryOverride`,
+under the shipped `VanillaRecoveryOverride`, on by default). A thrust
+therefore plays forward to its hit and then runs backward through its
+frames at double speed, which is the mod's designed look and reads as a
+stutter beside the other strikes' clean Hide/Idle recovery. That is
+reportable as the mod's behaviour, not a bug; the setting turns it off.
+
+The bug: the reverse ran inside the "while the original is still
+attacking" loop UNLATCHED. With Recovery = Last Frame the loop, having
+reversed to frame 0, set the frame back to the LAST frame on its next lap
+and reversed again - every lap until the original's swing ended, a thrust
+flickering backwards over and over. Under Hide (the default) the frame
+went to -1 and the reverse's guard (`currentFrame > 0`) held, so the
+default player saw the double-speed reverse alone. `playWeaponAnimation`
+latches the reverse (`reversed`) and runs it once; the reverse itself is
+the mod's, to frame 0. Pinned in `test/ww1_weaponwidget.test.js`
+(a StrikeUp under Last Frame descends its frames exactly once; under Hide
+as before). Mutants in `tools/mutants/bugs5.json`.

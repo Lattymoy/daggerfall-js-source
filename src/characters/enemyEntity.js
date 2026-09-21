@@ -65,7 +65,7 @@ export function skillsLevel(level) {
  * @param career parsed CLASS*.CFG career (class enemies) or null
  * @param playerLevel
  */
-export function makeEnemyEntity(mobileType, basicsIn, career, playerLevel, rollFn = Math.random) {
+export function makeEnemyEntity(mobileType, basicsIn, career, playerLevel, rollFn = Math.random, { exactLevel = false } = {}) {
   const isClass = mobileType >= 128;
   // MM1 + PCO1: EnemyBasics.Enemies[i] as the two Awakes left it -
   // Ralzar's Meaner Monsters row over the base row when that mod is on,
@@ -84,7 +84,11 @@ export function makeEnemyEntity(mobileType, basicsIn, career, playerLevel, rollF
   let level, maxHealth, liveSpeed, armor;
   if (isClass) {
     level = playerLevel;
-    if (mobileType === KNIGHT_CITYWATCH_ID) level += 3 + Math.floor(rollFn() * 4);   // Range(3, 7)
+    // AUDIT WATCH1 A5: a PUPPET is built at its owner's foe's level (AUDIT WORLD6b-ii B2), and the owner's watchman
+    // already carries this bonus - the reader hands the streamed level in with `exactLevel` so it is not rolled twice
+    // (a 146 puppet stood three to six levels above the watchman it copies, the one species where builtLevel and
+    // entity.level disagreed, and the one term a crafted `t: 146` record could ride).
+    if (mobileType === KNIGHT_CITYWATCH_ID && !exactLevel) level += 3 + Math.floor(rollFn() * 4);   // Range(3, 7)
     maxHealth = rollEnemyClassMaxHealth(level, career.hitPointsPerLevel, rollFn);
     liveSpeed = career.speed;
     armor = 0;   // class armor comes from equipment (E3b: SetEnemyEquipment)

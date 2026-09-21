@@ -390,18 +390,20 @@ test('ROADS 25: the network is traced into chains, simplified, rounded and lifte
   const grid = buildOverworldGrid({ heightBytes: ctx.heightBytes, width: 8, height: 4, climateAt: () => 227 });
   assert.ok(grid.colors.length === 8 * 4 * 3, 'a plain relief');
   const fs = await import('node:fs');
-  const map = fs.readFileSync('src/ui/overworldMap.js', 'utf8');
-  assert.match(map, /this\._ov\.setRoads\(roadModel\(chains, ctx\)\)/, 'the map hands the renderer the chains');
-  assert.match(map, /roadLayers: this\._roadLayers/, 'and the chips choose the layers at draw time');
-  const r = fs.readFileSync('src/render/overworldRenderer.js', 'utf8');
-  // HARD3 re-aimed this from the loop's SYNTAX to its LAW. It used to
-  // read `for (const [kind, fallback] of [ ['stream'`, which pinned the
-  // array's inline position and only ever checked the FIRST name; the
-  // order of all four is the actual rule, and the array is a named const
-  // now (the literal could not be type-annotated where it stood).
-  assert.deepEqual([...r.matchAll(/^ {8}\['(\w+)', \[/gm)].map((m) => m[1]),
-    ['stream', 'river', 'track', 'trunk'],
-    'water under the tracks, tracks under the trunk');
+  // MAP1 (2026-09-18) re-aimed this half: the 3D relief and its renderer
+  // are RETIRED, and the network is INK on the held parchment
+  // (ui/inkMap.js) - traced by the same traceChains, softened by the
+  // same simplify/Chaikin pair, and inked ONLY when the network is the
+  // mod's own arrays (the `source` word world/roadsProducer.js puts on
+  // it), never the port's generated one (bible/03-World/Roads.md).
+  const ink = fs.readFileSync('src/ui/inkMap.js', 'utf8');
+  assert.match(ink, /if \(!net \|\| net\.source !== 'basic-roads'\) return \{ roads: \[\], tracks: \[\] \};/, 'only the mod\'s arrays are inked');
+  assert.match(ink, /traceChains\(mask, width, height\)\.map\(\(c\) => roundCorners\(simplifyChain\(centre\(c\)\)\)\)/, 'traced, simplified, rounded (the bounded cut) - the ROADS 25 chain');
+  assert.match(ink, /stroke\(model\.roads, band === 'far' \? 1 : 1\.5, PEN\.line\)/, 'the roads are LINES in the pen');
+  assert.match(ink, /stroke\(model\.tracks, 1, PEN\.soft, \[2, 3\]\)/, 'the tracks dotted and softer under them');
+  // the model's own order of the four classes is still the law the
+  // retired renderer read: water under the tracks, tracks under the trunk
+  assert.deepEqual(Object.keys(roadModel({}, ctx)), ['stream', 'river', 'track', 'trunk']);
 });
 
 // ROADS 8 (Audit 45 F7, finished): A STRANDED TOWN IS NAMED. The other
@@ -526,16 +528,18 @@ test('ROADS 12: the two chips ride the store, default shown, and the relief is k
   restoreTravelMapSaveData({ filterDungeons: true });   // an older save: no road keys
   assert.deepEqual([travelMapFilters().roads, travelMapFilters().tracks], [false, false], 'absent means shown');
   resetTravelMapState();
-  const src = (await import('node:fs')).readFileSync('src/ui/overworldMap.js', 'utf8');
-  assert.match(src, /'dungeons', 'temples', 'homes', 'towns', 'roads', 'tracks'/, 'six chips');
-  assert.match(src, /if \(key === 'roads' \|\| key === 'tracks' \|\| key === 'rivers' \|\| key === 'streams'\) this\._ensureTerrain\(\);/, 'a road or water chip re-runs the terrain step');
-  // AUDIT 47 A1: the two flags must be READ from the store. The line
-  // above proves a hidden layer is not drawn IF showRoads is false; it
-  // said nothing about where showRoads comes from, and a mutant that
-  // set both to `true` passed every pin with the chips toggling nothing.
-  // ROADS 25: the flags pick LAYERS at draw time; the relief is not keyed on them.
-  assert.match(src, /const showRoads = !this\.filters\.roads, showTracks = !this\.filters\.tracks;/, 'the classic inversion of the live store');
-  assert.match(src, /this\._roadLayers = \{ trunk: showRoads, track: showTracks/, 'and they choose the layers');
+  // MAP1 (2026-09-18): the enhanced map's chip row is RETIRED with the
+  // relief (bible/10-UI/Held-Map-Arc.md); the two flags still ride the
+  // store, the classic window's chips still set them, and the held map
+  // READS them at paint time - a flag TRUE hides its layer, the classic
+  // inversion (AUDIT 47 A1's law: read from the store, not assumed).
+  const ink = (await import('node:fs')).readFileSync('src/ui/inkMap.js', 'utf8');
+  assert.match(ink, /if \(!opts\.filters\?\.roads\) stroke\(model\.roads/, 'a hidden roads flag is not inked');
+  assert.match(ink, /if \(band !== 'far' && !opts\.filters\?\.tracks\) stroke\(model\.tracks/, 'the tracks likewise - and never at the far band');
+  // MAP-FIELD2: `names` is a literal null now (Mac: the town names are
+  // clutter) - what this pin is about is the FILTERS being the live
+  // store object, which is unchanged.
+  assert.match((await import('node:fs')).readFileSync('src/ui/heldMap.js', 'utf8'), /filters: this\.filters, names: null, regionNames: REGION_NAMES,/, 'and the window hands the LIVE store object to the paint');
 });
 
 // AUDIT 46 A10: NO CHUNK IS EVER BUILT WITHOUT THE NETWORK. The worker
@@ -845,7 +849,7 @@ test('ROADS 25: a pixel says whether a network was present, and the host rebuild
   assert.equal(typeof generatePixelTerrain, 'function');
   const world = read('src/scenes/world.js');
   // The host keeps it on the pixel entry...
-  assert.match(world, /const \{ samples, tilemap, positions, normals, tilemapBytes, avg, nature, withRoads \} = await terrainGen\.generate\(/);
+  assert.match(world, /const \{ samples, tilemap, positions, normals, tilemapBytes, avg, nature, withRoads[^}]*\} = await terrainGen\.generate\(/);
   assert.match(world, /^\s+withRoads,\s+\/\/ ROADS 25/m);
   // ...and when the network lands, tears down every pixel built without
   // one so the stream rebuilds it - on BOTH arrival paths, since the

@@ -14,10 +14,28 @@
 import { crashText } from './ui/crashText.js';   // the crash line, pinned in its own module
 import { Renderer } from './render/renderer.js';
 import { windowEmissionRGB } from './render/windowEmission.js';
-import { bootExterior } from './scenes/exterior.js';
-import { bootInterior } from './scenes/interior.js';
-import { bootDungeon } from './scenes/dungeon.js';
-import { bootWorld } from './scenes/world.js';
+// BOOT1 (2026-09-20, Mac: "overall performance improvements"): THE GAME
+// HOSTS ARE BEHIND A DOOR, NOT ON THE ENTRY. These four were static
+// imports, and a static import of a host is the host's WHOLE graph at
+// module-evaluation time: 623 files and 13.4 MB of source reached from
+// this file before boot() ran a line - every scene, every system, every
+// window - while the MENU the player actually sees first was the thing
+// loaded dynamically (below). The boot graph was inverted. Measured over
+// the build: 54 chunks, 1,349 KB gzipped, had to arrive before the entry
+// finished evaluating, and the game's hosts were most of it.
+//
+// Each door is a dynamic import at the moment of use, with the SAME
+// NAME and the SAME CALL SHAPE the routes below always used, so the
+// routes - and the pins that hold them (classicstart, hard2s, macn) -
+// read as before. The hosts carry no import-time side effects (nothing
+// at their top level runs), so evaluating them later changes nothing
+// but WHEN. test/boot1.test.js walks this file's static graph and holds
+// that no host is on it, transitively - a pin on the regex alone would
+// pass the day something else on the entry imported a host for us.
+const bootExterior = (...a) => import('./scenes/exterior.js').then((m) => m.bootExterior(...a));
+const bootInterior = (...a) => import('./scenes/interior.js').then((m) => m.bootInterior(...a));
+const bootDungeon = (...a) => import('./scenes/dungeon.js').then((m) => m.bootDungeon(...a));
+const bootWorld = (...a) => import('./scenes/world.js').then((m) => m.bootWorld(...a));
 
 import { ensureArena2, getBytes } from './scenes/dataSource.js';
 import { installCursor } from './ui/cursor.js';
@@ -113,6 +131,16 @@ async function boot() {
   let choice;
   if (params.has('begin')) choice = 'begin';
   else {
+    // BOOT1: THE WARM-UP. Every door out of this menu ends in bootWorld,
+    // so the world host's chunks start downloading NOW - behind the
+    // cinematic and the menu, where a player is looking at something
+    // else - and Play finds them in the cache instead of paying for them
+    // at the click. It sits ABOVE the MAC-N3 trio below (delete, publish, import the menu) because that trio is pinned adjacent - the URL must be published before the menu reads it - and the warm-up has no part in that law. Not awaited: nothing here needs the host yet. The
+    // catch is not optional: a deploy between page load and Play renames
+    // every chunk (systems/staleChunk.js), and a warm-up that rejected
+    // unhandled would be a console error for a failure the real import
+    // at Play reports properly through the same law.
+    import('./scenes/world.js').catch(() => {});
     // MAC-N3: the menu DECIDES these keys, so it must not read a stale
     // set off the URL a previous session published - the Mods pane
     // would show the online lock, and uiSkin the online skin, for a
@@ -121,8 +149,20 @@ async function boot() {
     for (const k of BOOT_DOOR_KEYS) params.delete(k);
     publishBootParams(params);
     const { runEnhancedMenu } = await import('./ui/enhancedMenu.js');
-    status('main menu');
-    choice = await runEnhancedMenu();
+    const { runCinematicFrontDoor } = await import('./ui/introScreen.js');
+    // INTRO2: the cinematic and menu share ONE music session. The final
+    // splash holds for the player's tap; opening the menu ducks the track,
+    // choosing a game closes it before any in-game or classic video audio.
+    status('introduction');
+    const freeze = import.meta.env.DEV && params.has('introat') ? Number(params.get('introat')) : null;
+    choice = await runCinematicFrontDoor(() => {
+      status('main menu');
+      return runEnhancedMenu();
+    }, {
+      skip: params.has('nointro'),
+      debug: import.meta.env.DEV && params.has('introdebug'),
+      freezeAt: freeze !== null && Number.isFinite(freeze) ? Math.max(0, freeze) : null,
+    });
   }
   if (choice !== 'begin') {
     await ensureData();
@@ -261,7 +301,16 @@ const rememberReload = () => {
   try { globalThis.sessionStorage.setItem(RELOAD_KEY, '1'); return true; } catch { return false; }
 };
 
-boot().then(() => {
+// BOOT1: NO DOCUMENT, NO BOOT. This entry loads in node now - the four
+// hosts were the static imports that used to reject it at link time
+// (world.js's import.meta.glob), and with those behind doors the body
+// below RUNS under test/moduleload_smoke.test.js. boot() then reached
+// for `document`, rejected, and its own catch reached for `document`
+// again to report it - an unhandled rejection after the test ended,
+// for a page that does not exist. A runtime with no document has
+// nothing to boot: the chain starts from a resolved promise instead,
+// and its `.then` (the reload flag, already optional-chained) is inert.
+(typeof document === 'undefined' ? Promise.resolve() : boot()).then(() => {
   // A boot that WORKED gives the next one its reload back. Without
   // this the flag outlives the problem: a player who recovers once
   // would face the dead page on the next deploy with the retry

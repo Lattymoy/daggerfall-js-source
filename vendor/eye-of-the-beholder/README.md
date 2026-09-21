@@ -23,20 +23,21 @@ here - the earlier mod records carry theirs in this line.]**
 
 ## How much of it is ported
 
-Not all of it, and the arc said otherwise for a day. The assembly
-carries **62 authored methods**; the port implements **twenty-nine** -
-thirteen read off the IL (the camera's offsets, bounds and smoothing,
-and the sprite's SELECTION) and, since AUDIT-EOTB2 (2026-09-16),
-sixteen read off the SETTINGS' own names and option labels (the attack
-and death one-shots, the footstep sync, the auto-toggle table, the two
-hides, the two transition rows), because the assembly itself is NOT in
-this tree - only the manifest, the settings, the presets and the art
-are, and the bundle is behind a Nexus login. The cart, the boat
-override, the per-sprite offsets and the one-shots' own tick time wait
-on it. `test/eotb_scope.test.js` holds all 62 rows with a verdict
-each, and `bible/06-Systems/Eye-Of-The-Beholder.md` explains which
-gaps have no twin here, which need the assembly, and which were read
-from the settings rather than the IL.
+The assembly carries **61 authored methods** and the port implements
+**forty-five** of them, every one read off the IL (EOTB-IL,
+2026-09-16): the camera whole - offsets, bounds, smoothing, the
+shoulder and its auto-switch, the scroll ladder, the auto-toggle table,
+the new-game / load / transition doors, the floating origin - the
+sprite whole - the state tables, the frame clock, the orientation, the
+attack, hold, ping-pong, mirror and death one-shots, the footsteps, the
+material, the first-person billboard - and the cart. The sixteen with
+no twin are Unity lifecycle, mesh and material handling the port's
+billboard batch replaces, two other mods' hooks (Come Sail Away, Free
+Rein), the mod bus, and one getter the assembly itself never calls.
+`test/eotb_scope.test.js` holds all 61 rows with a verdict each and
+checks them against the IL dump; `bible/06-Systems/Eye-Of-The-Beholder.md`
+carries the findings. An earlier count of 62 (AUDIT-EOTB, written
+without the assembly) listed a method that does not exist.
 
 ## Why this mod is in a port that already has third person
 
@@ -53,6 +54,14 @@ mod's sprite if they do not.
 
 ## What is here
 
+- `Eye Of The Beholder.dll` - the mod's assembly, VERBATIM: the
+  `.dfmod`'s own TextAsset (54,272 bytes), taken out of the archive by
+  `tools/eotbIl.mjs` through the port's UnityFS reader. It is the
+  authority every `[IL]` citation in `src/player/eotb*.js` points at.
+- `il/Eye_Of_The_Beholder.il.txt` - every method body of it as CIL,
+  printed by `tools/ilDump.py` (dnfile + dncil). Branch targets print
+  as dncil gives them - decimal, absolute - and the port's citations
+  use the hex `IL_xxxx` offsets on the left.
 - `eyeofthebeholder.dfmod.json` - the shipped bundle's manifest,
   VERBATIM, all 4075 `Files` entries included. It is 386 KB of build
   paths and it earns its place: it is the authority on which files the

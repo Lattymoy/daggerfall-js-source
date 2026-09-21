@@ -31,7 +31,7 @@ import { readFileSync } from 'node:fs';
 
 import {
   paneControls, discardControlsStaging, captureArmed, controlsStaging,
-  controlsDuplicates, GRID_ACTIONS, ADVANCED_ROWS, MULTIPLE_ASSIGNMENTS, DEFAULTS_PROMPT,
+  controlsDuplicates, GRID_ACTIONS, ADVANCED_ROWS, PORT_ROWS, PORT_GROUPS, MULTIPLE_ASSIGNMENTS, DEFAULTS_PROMPT,
 } from '../src/ui/enhancedControls.js';
 import { CATEGORY_IDS } from '../src/ui/settingsMap.js';   // AUDIT FT16 CTRL-a: the door the bindings live behind
 import { SYSTEM_PANES } from '../src/ui/enhancedMenu.js';
@@ -205,12 +205,30 @@ test('FIX-F: the pane offers the classic grid’s 38 actions and the ADVANCED si
   // the restatement cannot drift.
   assert.deepEqual(ADVANCED_ROWS.map((r) => [r.action, r.label]),
     KEYBIND_ROWS.map((r) => [r.action, r.label]));
+  // SOC5 WIDENED THIS PIN BY A THIRD GROUP, and by nothing else. The port's own
+  // actions belong to neither of the two lists above - GRID_ACTIONS is DFU's
+  // SetupKeybindButtons slice and ADVANCED_ROWS is mouseControlsWindow's six -
+  // so PORT_ROWS is where they go, and the COVERAGE rule below is what makes it
+  // compulsory rather than tidy: a bindable action with no row is a key nobody
+  // can rebind, and the classic window cannot draw this one at all.
+  // QS2 WIDENED IT AGAIN, by a fourth group rather than three more rows under
+  // the third: 'Online' is a true heading for the F-menu and a false one for a
+  // potion press, and a group whose title does not describe its rows is worse
+  // than no group. PORT_ROWS stays the flat union, because the coverage rule
+  // below is asked of the union and not of any one heading.
+  assert.deepEqual(PORT_ROWS.map((r) => r.action),
+    ['SocialInteract', 'QuickUse1', 'QuickUse2', 'QuickSpell', 'QuickSwap', 'QuickOffHand']);   // QS6: the spell slot, above the swap it took the key from
+  assert.deepEqual(PORT_GROUPS.map((g) => [g.title, ...g.rows.map((r) => r.action)]), [
+    ['Online', 'SocialInteract'],
+    ['Quickslots', 'QuickUse1', 'QuickUse2', 'QuickSpell', 'QuickSwap', 'QuickOffHand'],
+  ]);
+  assert.deepEqual(PORT_GROUPS.flatMap((g) => g.rows), [...PORT_ROWS], 'the union really is the groups, not a second list beside them');
   // together: every bindable action, none twice
-  const all = [...GRID_ACTIONS, ...ADVANCED_ROWS.map((r) => r.action)];
+  const all = [...GRID_ACTIONS, ...ADVANCED_ROWS.map((r) => r.action), ...PORT_ROWS.map((r) => r.action)];
   assert.equal(new Set(all).size, all.length);
   assert.deepEqual([...all].sort(), [...ACTIONS].sort());
   withPane(({ view }) => {
-    assert.equal(find(view.body, 'ctl-row').length, 44, 'a row for every action');
+    assert.equal(find(view.body, 'ctl-row').length, 50, 'a row for every action');   // QS6: fifty, including the swap that ships unbound
     for (const a of all) assert.ok(keyBtn(view, a), `${a} needs a row`);
   });
 });
@@ -365,7 +383,7 @@ test('FIX-F: while a capture is armed EVERY other control is inert (:281 etc.)',
   // Defaults (:299), Continue (:321), CurrentBindings (:338), the
   // keybind button (:361) and the right-click remove (:372, ANDed
   // with the unbound refusal). The classic grid carries it in one
-  // line (ui/controlsWindow.js:323 `if (this.capture) return true;`);
+  // line (ui/controlsWindow.js:355 `if (this.capture) return true;`);
   // this face carries it as the `act` wrapper. Without it CONTINUE
   // saves and re-stages under a LIVE capture, and the Primary toggle
   // flips the dict the pending keystroke is about to be written into.

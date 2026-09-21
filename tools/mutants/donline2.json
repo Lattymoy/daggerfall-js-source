@@ -1,0 +1,23 @@
+[
+  {
+    "name": "DONLINE2-the-tutorial-dungeon-gets-the-door-out-like-any-other",
+    "file": "src/scenes/world.js",
+    "old": "      if (wasInDungeon && !isPrivateersHold) kind = 'dungeon';   // the door out: the pixel already under the player",
+    "new": "      if (wasInDungeon) kind = 'dungeon';   // the door out: the pixel already under the player",
+    "tests": ["test/donline1_respawn.test.js"]
+  },
+  {
+    "name": "DONLINE2-the-hold-is-a-hardcoded-pixel-not-the-configured-start-cell",
+    "file": "src/scenes/world.js",
+    "old": "        && px.x === getInt('Startup', 'StartCellX') && px.y === getInt('Startup', 'StartCellY');",
+    "new": "        && px.x === 109 && px.y === 158;",
+    "tests": ["test/donline1_respawn.test.js"]
+  },
+  {
+    "name": "DONLINE2-every-dungeon-death-falls-through-to-the-safe-search",
+    "file": "src/scenes/world.js",
+    "old": "      const isPrivateersHold = wasInDungeon\n        && px.x === getInt('Startup', 'StartCellX') && px.y === getInt('Startup', 'StartCellY');",
+    "new": "      const isPrivateersHold = wasInDungeon;",
+    "tests": ["test/donline1_respawn.test.js"]
+  }
+]

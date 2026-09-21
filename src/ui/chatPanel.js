@@ -53,6 +53,34 @@
 // name carries a tag from the guarded id (A5); the dial counts as an
 // overlay (C1, in pixelDial.js) and an open overlay hides the panel.
 //
+// SOC3 (2026-09-16, Mac: "A social button next to the chat UI, that
+// when tapped opens the new friends list + party interface ... be able
+// to invite friends or other individuals to the new 4 person party
+// system. Party system: Upon joining a party, the players name who are
+// in a party together should turn green"): THREE SEAMS, AND NO NET.
+//
+// This file still imports no socket and no social module. What SOC3
+// adds is three OPTIONS the host fills from the picture it already
+// holds (net/social.js, over the hub's link):
+//   `social`  - the button beside the chat's controls, in BOTH states,
+//               with a badge counting what is waiting on the player
+//               (requests to me + live invites). The button only opens
+//               something the HOST owns (ui/socialPanel.js), so the
+//               chat neither knows nor imports the panel.
+//   `nameColor` - a peer id in, a CSS colour or null out. The chat
+//               lines' author names and the roster rows wear it, which
+//               is where "the players name ... should turn green"
+//               lands in the DOM. The colour is the HOST's answer, not
+//               a class this file invents, because who is in my party
+//               is the hub's word and nothing the panel can see.
+//   `rowActions` - what a click on a roster row offers for that PEER.
+//               The roster is the one place a stranger has a name, and
+//               "other individuals" is exactly that column; the labels,
+//               their enabled state and the REASON a disabled one gives
+//               all come from the host (net/social.js actionsFor).
+// A host that passes none of the three gets the chat it had, byte for
+// byte: no button is built, no colour is asked for, no row is a door.
+//
 // Not a DFU member: Daggerfall Unity has no chat. Ledger A row (ONLINE).
 import { isTextEntryTarget, swallowBrowserKey, bindings } from './input.js';
 import { actionForCode } from '../systems/inputActions.js';
@@ -62,26 +90,44 @@ import { CHAT_MAX } from '../net/wire.js';
 import { tagOf } from '../net/chat.js';
 import { rosterRows, rosterTitle } from '../net/roster.js';   // CHAT-R1: who is online, in order (the cap is the model's own - AUDIT-CHATR F4: this file imported it and never used it, and lint could not see that: no-unused-vars is on for server/src and not for src)
 import { getPref, setPref } from '../systems/uiPrefs.js';   // CHAT-R2: the hidden state outlives the session
+import { PIXELIFY_FIVE_FACE, PIXEL_FONT_CSS, PIXEL_TEXT_SHADOW } from './pixelifyFive.js';   // FONT1: the enhanced skin's own face, unsmoothed, with Silkscreen's five
 
 /** The action whose key opens the chat: DFU's own cursor key (Enter by default), since opening frees the cursor. */
 export const CHAT_OPEN_ACTION = 'ActivateCursor';
 
 export const CHAT_STYLE_ID = 'dagger-chat-style';
 
-/** The panel's sheet: the enhanced tokens (enhancedStyle.js) where they exist, a fallback where the skin's sheet is not loaded. */
+/** The panel's sheet: the enhanced tokens (enhancedStyle.js) where they exist, a fallback where the skin's sheet is not loaded.
+ *
+ *  FONT1 (2026-09-16, Mac: "Especially the new online interfaces font use our enhanced font"): THE FACE IS THE
+ *  SKIN'S, NOT THE LAUNCHER'S. This sheet set `--data` (Barlow Semi Condensed) - which is the MENU's face, the one
+ *  the boot screens and the settings pages are set in - so the chat stood over an enhanced world in a font nothing
+ *  else in that world uses. In-game the enhanced skin is the pixel stack (ui/pixelifyFive.js PIXEL_STACK, the same
+ *  face ui/enhancedHud.js and every floating window wear), unsmoothed, and text laid over the world takes the HUD's
+ *  hard shadow pair rather than a blur: a blurred drop shadow under a pixel glyph reads as a rendering fault.
+ *  The @font-face for the FIVE rides this sheet too (FIX-D), because this sheet is injected on its own and a
+ *  document that never mounted the skin's stylesheet would otherwise draw Pixelify's 5 - the glyph that reads as 8.
+ *
+ *  AND THE SIZES CAME DOWN A STEP where the line is long. Pixelify Sans measures about 1.29x the width of Barlow
+ *  Semi Condensed at one size (measured in Chromium, tools/font1Probe.mjs), so every size here is really a size and
+ *  a quarter: the chat line is 13px where it was 14, the tag/time/hint/status 10-11 where they were 11-12, the
+ *  roster row 12 where it was 13. Nothing a THUMB presses moved - AUDIT SOC C8's 44px targets and the button type
+ *  (14px / 6px 10px, pinned) are untouched, because a pixel face is not a reason to shrink a target. */
 export const CHAT_CSS = `
+${PIXELIFY_FIVE_FACE}
 .dfchat { position: fixed; left: calc(14px + env(safe-area-inset-left, 0px)); top: calc(44px + env(safe-area-inset-top, 0px));
   width: min(440px, calc(100vw - 28px)); z-index: 5; pointer-events: none;
-  font-family: var(--data, 'Barlow Semi Condensed', system-ui, sans-serif); color: var(--bone, #e9e4d9); }
+  ${PIXEL_FONT_CSS} color: var(--bone, #e9e4d9); }
 .dfchat.touch { top: calc(72px + env(safe-area-inset-top, 0px)); }
 .dfchat-peek { display: flex; flex-direction: column; gap: 3px; }
-.dfchat-line { flex: none; font-size: 14px; line-height: 1.3; overflow-wrap: anywhere; overflow: hidden; text-shadow: 0 1px 2px #000, 0 0 6px rgba(0,0,0,.85); }
+.dfchat-line { flex: none; font-size: 13px; line-height: 1.35; overflow-wrap: anywhere; overflow: hidden; text-shadow: ${PIXEL_TEXT_SHADOW}; }
 .dfchat-name { color: var(--brass, #c08a3e); font-weight: 600; }
-.dfchat-tag { color: var(--dim, #8b8578); font-size: 11px; margin: 0 6px 0 2px; }
+.dfchat-tag { color: var(--dim, #8b8578); font-size: 10px; margin: 0 6px 0 2px; }
 .dfchat-line.mine .dfchat-name { color: #dcc27c; }
-.dfchat-time { color: var(--dim, #8b8578); font-size: 11px; margin-right: 6px; }
-.dfchat-hint { margin-top: 4px; font-size: 12px; color: var(--dim, #8b8578); opacity: .75; text-shadow: 0 1px 2px #000; }
-.dfchat-status { margin-top: 4px; font-size: 12px; color: #e0b070; text-shadow: 0 1px 2px #000; }
+.dfchat-line.system .dfchat-text { color: #8fb8d8; font-style: italic; }
+.dfchat-time { color: var(--dim, #8b8578); font-size: 10px; margin-right: 6px; }
+.dfchat-hint { margin-top: 4px; font-size: 11px; color: var(--dim, #8b8578); opacity: .75; text-shadow: ${PIXEL_TEXT_SHADOW}; }
+.dfchat-status { margin-top: 4px; font-size: 11px; color: #e0b070; text-shadow: ${PIXEL_TEXT_SHADOW}; }
 .dfchat-status:empty { display: none; }
 .dfchat-open { display: none; pointer-events: auto; margin-top: 4px; align-items: center; gap: 6px; }
 .dfchat.touch .dfchat-open { display: inline-flex; }
@@ -111,13 +157,65 @@ export const CHAT_CSS = `
 .dfchat-who { flex: none; width: 132px; border-left: 1px solid var(--iron, #2b323b); display: flex; flex-direction: column; min-height: 0; }
 .dfchat-whohead { flex: none; padding: 6px 8px 4px; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--dim, #8b8578); }
 .dfchat-wholist { flex: 1; min-height: 0; overflow-y: auto; padding: 0 8px 6px; display: flex; flex-direction: column; gap: 1px; }
-.dfchat-who-row { font-size: 13px; line-height: 1.35; overflow-wrap: anywhere; color: var(--bone, #e9e4d9); }
+.dfchat-who-row { font-size: 12px; line-height: 1.35; overflow-wrap: anywhere; color: var(--bone, #e9e4d9); }
 .dfchat-who-row.me .dfchat-who-name { color: #dcc27c; }
 .dfchat-who-name { font-weight: 600; }
 .dfchat-who-tag { color: var(--dim, #8b8578); font-size: 10px; margin-left: 4px; }
 .dfchat-who-more { font-size: 11px; color: var(--dim, #8b8578); padding-top: 4px; }
 /* the roster is the first thing to go when there is no width for it */
 @media (max-width: 560px) { .dfchat-who { display: none; } }
+
+/* SOC3: THE SOCIAL BUTTON, IN BOTH STATES - one class in two places,
+   so the badge's law is written once. Closed it stands beside the Chat
+   button, and unlike that one it is drawn on a DESKTOP too: Enter
+   opens the chat and until SOC5 nothing opens the social panel, so a
+   button that only existed on a touch device would be the feature's
+   only door on half the machines. Open it sits at the far end of the
+   tab bar, where an MMO puts it. */
+/* AUDIT SOC C24: the closed-state Social button stands on the Chat button's own line, so it wears the Chat button's
+   own font-size and padding (14px / 6px 10px - .dfchat-open, in the shared rule above) instead of a smaller pair
+   that made the two different heights, and the Chat button carries a 6px right margin so they are not flush. */
+.dfchat-social { background: var(--iron, #2b323b); color: var(--bone, #e9e4d9); border: 0; border-radius: 3px; font: inherit;
+  font-size: 14px; padding: 6px 10px; cursor: pointer; align-items: center; }
+.dfchat.touch .dfchat-open { margin-right: 6px; }
+.dfchat-social-out { display: inline-flex; pointer-events: auto; margin-top: 4px; }
+.dfchat[data-state="open"] .dfchat-social-out { display: none; }
+.dfchat-social-tab { display: inline-flex; margin: 2px 4px 4px auto; }
+/* a request waiting on YOU is not an unread line: its own colour, so the two badges never read as one count */
+.dfchat-social .dfchat-badge { background: #c8503c; color: #f6efe2; }
+
+/* SOC3: A ROSTER ROW IS A DOOR (Mac: "invite friends or other
+   individuals"). The "other individuals" are the names in this column,
+   so a click on one opens a small menu of what can be done with that
+   peer; what cannot carries the reason as its title rather than
+   vanishing, because a missing button teaches nothing.
+
+   MAC-J (2026-09-17, Mac: "the online section where player's names are
+   shown are too large and shouldn't be large rectangles"): the marker
+   class is dfchat-act, and the prefix is the whole fix. It was a bare
+   "act" - and .act is the ENHANCED SKIN'S BUTTON (ui/enhancedStyle.js:
+   padding 12px 20px, a 1px iron border, min-height 46px), which is
+   loaded in every online game because online forces the enhanced lane
+   (OL1). So every name a player could click wore a 46px bordered
+   button: four names filled the column, and the one name that is never
+   a door - your own - sat 16px high beside them, which is how the
+   collision reads as "too large" rather than as a style. Every other
+   class in this sheet was already prefixed; this one was the
+   exception, and an unprefixed class in a sheet that shares a document
+   with another sheet is a collision waiting for the other sheet to
+   grow the name. */
+.dfchat-who-row.dfchat-act { cursor: pointer; }
+.dfchat-rowmenu { display: flex; flex-direction: column; gap: 2px; padding: 3px 0 4px; }
+.dfchat-rowbtn { display: flex; align-items: baseline; gap: 4px; background: var(--iron, #2b323b); color: var(--bone, #e9e4d9); border: 0; border-radius: 3px; font: inherit;
+  font-size: 11px; text-align: left; padding: 3px 6px; cursor: pointer; }
+.dfchat-rowbtn[disabled] { opacity: .45; cursor: default; }
+/* AUDIT SOC C11: the reason a row is dead, drawn beside its label - a title is a hover, and a finger cannot hover. */
+.dfchat-rowwhy { font-size: 10px; font-style: italic; color: var(--dim, #8b8578); margin-left: auto; }
+/* AUDIT SOC C8: the finger's own sizes for the two controls SOC3 added to this panel - the Social button (23 tall)
+   and a roster row's menu buttons (18) - on the touch skin alone, where every one of them is pressed by a thumb. */
+.dfchat.touch .dfchat-social { min-height: 44px; }
+.dfchat.touch .dfchat-who-row.dfchat-act { min-height: 44px; padding: 12px 0 0; }
+.dfchat.touch .dfchat-rowbtn { min-height: 44px; font-size: 13px; padding: 8px 8px; }
 
 /* CHAT-R2: HIDDEN. Not display:none on the root - the panel must
    keep its listeners and its log - but every VISIBLE part away, with
@@ -128,6 +226,7 @@ export const CHAT_CSS = `
 .dfchat[data-hidden="1"] .dfchat-hint,
 .dfchat[data-hidden="1"] .dfchat-open,
 .dfchat[data-hidden="1"] .dfchat-status,
+.dfchat[data-hidden="1"] .dfchat-social-out,
 .dfchat[data-hidden="1"] .dfchat-box { display: none; }
 .dfchat[data-hidden="1"] .dfchat-show { display: inline-flex; }
 `;
@@ -161,8 +260,23 @@ export function isOpenKey(e, { canOpen = () => true, overlay = overlayOpen, acti
  * chat right now; `onOpen`/`onClose` are the host's pointer-lock door
  * (release on open, take back on close - inside the gesture). Handed
  * the document and the window so the tests drive it headless.
+ *
+ * SOC3's three, all optional and all the HOST's answers (see the
+ * header): `social` is `{ onToggle, pending }` - the button beside the
+ * chat's controls and the number on its badge; `nameColor(peerId)` is
+ * a CSS colour or null for an author's name and a roster row;
+ * `rowActions(peerId)` is `[{ label, enabled, why, run }]` - the menu a
+ * click on a roster row opens.
+ *
+ * AUDIT SOC C2/C14: `above()` is the host's word on whether a social
+ * surface stands OVER the chat (the friends panel, the F-menu). All
+ * three listen for Escape on the window in capture, so ONE press used
+ * to close two of them. The topmost answers: with something above it
+ * the chat IGNORES Escape - it does not close and it does not stop the
+ * key - and when it does handle one it calls stopImmediatePropagation,
+ * so neither a sibling surface nor the host's pause door sees it.
  */
-export function createChatPanel({ log, onSend, roster = null, canOpen = () => true, onOpen = null, onClose = null, action = actionOfKey, overlay = overlayOpen, doc = document, win = globalThis, touch = isTouchDevice() } = {}) {
+export function createChatPanel({ log, onSend, roster = null, canOpen = () => true, onOpen = null, onClose = null, above = () => false, action = actionOfKey, overlay = overlayOpen, doc = document, win = globalThis, touch = isTouchDevice(), social = null, nameColor = null, rowActions = null } = {}) {
   injectChatStyle(doc);
   const el = (tag, cls, text) => { const n = doc.createElement(tag); n.className = cls; if (text != null) n.textContent = text; return n; };
   const root = el('div', `dfchat${touch ? ' touch' : ''}`);
@@ -210,13 +324,34 @@ export function createChatPanel({ log, onSend, roster = null, canOpen = () => tr
     tabs.append(b);
     tabButtons.set(tab.id, { b, badge });
   }
+  // SOC3: the two Social buttons - one for each state of the panel, built only when the host asked for them. The
+  // badge is a SPAN of the chat's own badge class, so a request waiting on the player counts the way an unread line
+  // does; its colour in the sheet is what keeps the two from reading as one number.
+  const socialBadges = [];
+  const socialButton = (cls) => {
+    const b = el('button', `dfchat-social ${cls}`, 'Social');
+    b.type = 'button';
+    // AUDIT SOC C21: NO aria-label ON THE BUTTON. One overrode the whole of its content, so the badge - the count of
+    // requests and invitations waiting on this player, the only thing on the button that ever changes - was read as
+    // "Friends and party" and nothing else. The word stays a title for the mouse; the badge names ITSELF, and the
+    // button's accessible name becomes "Social 3" the moment there is a 3.
+    b.setAttribute('title', 'Friends and party');
+    const badge = el('span', 'dfchat-badge');
+    b.append(badge); socialBadges.push(badge);
+    b.addEventListener('click', () => social.onToggle?.());
+    return b;
+  };
+  const socialOut = social ? socialButton('dfchat-social-out') : null;
+  if (social) tabs.append(socialButton('dfchat-social-tab'));
   main.append(list, form);
   cols.append(main, who);
   box.append(tabs, cols);
-  root.append(peek, hint, status, openBtn, show, box);
+  // the Social button follows the Chat button (they share a line when both are drawn); `show` and the box keep their places
+  root.append(peek, hint, status, openBtn, ...(socialOut ? [socialOut] : []), show, box);
   doc.body.append(root);
 
   let painted = -1;
+  let socialBadgeLabel = null;   // SOC3/C21: the badge's last spoken label, so the attribute is written on a change
   let peekNodes = [];
   let listNodes = [];      // the open list's rows, in order: [{ seq, node }] - grown, not rebuilt (AUDIT CHAT C8)
   let listTab = null;
@@ -226,12 +361,70 @@ export function createChatPanel({ log, onSend, roster = null, canOpen = () => tr
   let hidden = getPref('chatHidden') === true;
   let whoRows = [];        // the drawn rows, keyed so an unchanged roster repaints nothing
   let whoKey = '';
+  let whoNames = [];       // SOC3: [{ id, nameEl, css }] - the roster's name spans, for the colour pass
+  let menuFor = null;      // SOC3: the roster row whose action menu is open (a peer id), or null
 
+  /** A drawn line, and the span its AUTHOR's name is in - SOC3 colours that span from the host's `nameColor` without
+   *  rebuilding the row, so a party formed while the chat is open turns the names green where they already stand. */
   const lineNode = (line, withTime) => {
-    const n = el('div', `dfchat-line${line.mine ? ' mine' : ''}`);
+    const n = el('div', `dfchat-line${line.mine ? ' mine' : ''}${line.system ? ' system' : ''}`);
     if (withTime) n.append(el('span', 'dfchat-time', clockOf(line.at)));
-    n.append(el('span', 'dfchat-name', line.name || '?'), el('span', 'dfchat-tag', `#${tagOf(line.id)}`), el('span', 'dfchat-text', line.text));
+    // SRV-N: a notice is NOT ATTRIBUTED. No name and no `#tag`, because
+    // both are the marks of a person having spoken - a notice drawn with
+    // them would read as a player called 'Server' with a tag of its own,
+    // and the tag would be `tagOf('')`: a real-looking four-character
+    // hash off an empty id, identical on every notice and therefore
+    // exactly the thing a player could be fooled by. Its own colour
+    // instead, which is a mark no player's line can wear.
+    if (line.system) n.append(el('span', 'dfchat-text', line.text));
+    else n.append(el('span', 'dfchat-name', line.name || '?'), el('span', 'dfchat-tag', `#${tagOf(line.id)}`), el('span', 'dfchat-text', line.text));
     return n;
+  };
+  /** One drawn row of the two line lists: the node, and the record the colour pass walks. */
+  const lineRow = (line, withTime, extra) => {
+    const node = lineNode(line, withTime);
+    const nameEl = line.system ? null : node.children[withTime ? 1 : 0];
+    return { node, nameEl, id: line.id, css: null, ...extra };
+  };
+
+  /**
+   * SOC3 (Mac: "the players name who are in a party together should
+   * turn green"): THE COLOUR PASS.
+   *
+   * Who is in my party is the HUB's word (net/social.js isPartyPeer),
+   * which this file cannot see and must not cache - a seat can change
+   * between two frames with no line said and no peer joining, so a
+   * colour baked in at build time would be wrong until the next
+   * message. So the spans that are drawn are asked again each pass and
+   * the ones whose answer did not change are not touched at all - the
+   * same law the roster column repaints under (CHAT-R2).
+   *
+   * The answer is cached PER PEER ID for the pass: two hundred rows are
+   * a handful of distinct authors, and `nameColor` walks the party's
+   * seats on every call.
+   */
+  const paintNames = () => {
+    if (!nameColor) return;
+    const asked = new Map();
+    const of = (id) => { if (!asked.has(id)) asked.set(id, nameColor(id) || ''); return asked.get(id); };
+    const pass = (rows) => { for (const r of rows) { if (!r.nameEl) continue; const css = of(r.id); if (r.css === css) continue; r.css = css; r.nameEl.style.color = css; } };
+    pass(listNodes); pass(peekNodes); pass(whoNames);
+  };
+
+  /** SOC3: the badge on both Social buttons - what is waiting on the player (requests to me + live invites). */
+  const paintSocial = () => {
+    if (!social) return;
+    const n = Number(social.pending?.() ?? 0);
+    const text = Number.isFinite(n) && n > 0 ? String(n) : '';
+    // C21: the badge says what its number MEANS, so "3" is not read out as a bare digit beside "Social". Written on
+    // a CHANGE, like everything else on this frame - `setAttribute` is a write whatever the value.
+    const label = text ? `${text} waiting` : '';
+    const moved = label !== socialBadgeLabel;
+    socialBadgeLabel = label;
+    for (const b of socialBadges) {
+      if (b.textContent !== text) b.textContent = text;
+      if (moved) b.setAttribute('aria-label', label);
+    }
   };
 
   /** The open list: the rows that left the cap dropped from the front, the rows that arrived appended at the
@@ -243,15 +436,42 @@ export function createChatPanel({ log, onSend, roster = null, canOpen = () => tr
     const atBottom = !listNodes.length || (list.scrollHeight - list.scrollTop - (list.clientHeight ?? 0)) <= 8;
     const contiguous = listTab === log.active && listNodes.length && msgs.length && msgs.some((m) => m.seq === listNodes[listNodes.length - 1].seq);
     if (!contiguous) {
-      listNodes = msgs.map((line) => ({ seq: line.seq, node: lineNode(line, true) }));
+      listNodes = msgs.map((line) => lineRow(line, true, { seq: line.seq }));
       list.replaceChildren(...listNodes.map((r) => r.node));
     } else {
       while (listNodes.length && listNodes[0].seq < msgs[0].seq) listNodes.shift().node.remove();
       const lastSeq = listNodes.length ? listNodes[listNodes.length - 1].seq : -1;
-      for (const line of msgs) if (line.seq > lastSeq) { const row = { seq: line.seq, node: lineNode(line, true) }; listNodes.push(row); list.append(row.node); }
+      for (const line of msgs) if (line.seq > lastSeq) { const row = lineRow(line, true, { seq: line.seq }); listNodes.push(row); list.append(row.node); }
     }
     listTab = log.active;
     if (atBottom) list.scrollTop = list.scrollHeight ?? 0;
+  };
+
+  /**
+   * SOC3: the menu under an opened roster row. Every label, its enabled
+   * state and the REASON a disabled one carries come from the host
+   * (net/social.js actionsFor), so this file decides nothing about who
+   * may be friended or invited - it draws an answer and calls back.
+   *
+   * A refused act is a SENTENCE, never a missing button: "already
+   * friends" and "the party is full" are the two things a player most
+   * wants to be told, and a row that silently drops the option teaches
+   * neither. AUDIT SOC C11: the sentence is DRAWN beside the label as
+   * well as titled - a `title` is a mouse hover, and the touch skin
+   * this panel also runs in has no hover at all.
+   */
+  const rowMenu = (peerId) => {
+    const menu = el('div', 'dfchat-rowmenu');
+    for (const a of rowActions(peerId) ?? []) {
+      const b = el('button', 'dfchat-rowbtn', String(a.label ?? ''));
+      b.type = 'button';
+      if (a.enabled === false) {
+        b.disabled = true;
+        if (a.why) { b.setAttribute('title', String(a.why)); b.append(el('span', 'dfchat-rowwhy', String(a.why))); }
+      } else b.addEventListener('click', (e) => { e.stopPropagation?.(); a.run?.(); menuFor = null; paintWho(); });
+      menu.append(b);
+    }
+    return menu;
   };
 
   /**
@@ -267,18 +487,38 @@ export function createChatPanel({ log, onSend, roster = null, canOpen = () => tr
   const paintWho = () => {
     if (!roster) { who.style.display = 'none'; return; }
     const { rows, total, shown } = rosterRows(roster());
-    const key = total + '|' + rows.map((r) => r.id + ':' + r.name + ':' + (r.me ? 1 : 0)).join(',');
+    // SOC3: the open menu is part of what is DRAWN, so it joins the key - a roster that did not change still has to
+    // repaint when a row is opened or closed, and nothing else about this law moved.
+    const key = total + '|' + (menuFor ?? '') + '|' + rows.map((r) => r.id + ':' + r.name + ':' + (r.me ? 1 : 0)).join(',');
     if (key === whoKey) return;
     whoKey = key;
     whoHead.textContent = rosterTitle(total);
+    // ROSTER-G (Mac: "the roster naming itself seems hardcoded"): the #tag is the tie-breaker for two players with ONE
+    // name (net/roster.js's second sort clause, the chat line's own suffix), and it read as a fixed code stuck to every
+    // name. It is drawn only where it does that work - beside a name another row shares.
+    const dup = new Set(); const seen = new Set();
+    for (const r of rows) { const k = r.name.toLowerCase(); if (seen.has(k)) dup.add(k); seen.add(k); }
+    whoNames = [];
     whoRows = rows.map((r) => {
-      const n = el('div', 'dfchat-who-row' + (r.me ? ' me' : ''));
-      n.append(el('span', 'dfchat-who-name', r.name), el('span', 'dfchat-who-tag', '#' + r.tag));
+      // SOC3: a row is a door for everyone but ME - "Add friend" on my own name is the one action that can never mean
+      // anything, and net/social.js would refuse it in words a player should not have to read. A host whose picture
+      // is not up yet (no account, no hub) offers nothing, and a row with nothing behind it is not a door either.
+      const acts = !!rowActions && !r.me && (rowActions(r.id) ?? []).length > 0;
+      const n = el('div', 'dfchat-who-row' + (r.me ? ' me' : '') + (acts ? ' dfchat-act' : ''));   // MAC-J: prefixed, because a bare `act` IS the enhanced skin's button
+      const nameEl = el('span', 'dfchat-who-name', r.name);
+      whoNames.push({ id: r.id, nameEl, css: null });
+      n.append(nameEl);
+      if (dup.has(r.name.toLowerCase())) n.append(el('span', 'dfchat-who-tag', '#' + r.tag));
+      if (acts) {
+        n.addEventListener('click', () => { menuFor = menuFor === r.id ? null : r.id; paintWho(); });
+        if (menuFor === r.id) n.append(rowMenu(r.id));
+      }
       return n;
     });
     whoList.replaceChildren(...whoRows);
     // a cut list says so rather than quietly under-reporting the room
     whoMore.textContent = total > shown ? '+' + (total - shown) + ' more' : '';
+    paintNames();   // SOC3: the spans are new, so the colours they wear are asked for once, here
   };
 
   const paint = () => {
@@ -295,13 +535,15 @@ export function createChatPanel({ log, onSend, roster = null, canOpen = () => tr
     if (log.open) { paintList(); paintWho(); }
     peekNodes = [];
     peek.replaceChildren();
+    paintSocial();   // SOC3
+    paintNames();
   };
 
   /** The closed state's lines: rebuilt when the set changes, their alpha stepped every frame. */
   const paintPeek = () => {
     const shown = log.open ? [] : log.peek();
     if (shown.length !== peekNodes.length || shown.some((p, i) => peekNodes[i].line !== p.line)) {
-      peekNodes = shown.map((p) => ({ line: p.line, node: lineNode(p.line, false), alpha: -1 }));
+      peekNodes = shown.map((p) => lineRow(p.line, false, { line: p.line, alpha: -1 }));
       peek.replaceChildren(...peekNodes.map((p) => p.node));
     }
     for (let i = 0; i < shown.length; i++) {
@@ -338,7 +580,8 @@ export function createChatPanel({ log, onSend, roster = null, canOpen = () => tr
     if (e.target === input) {
       // the field's key (CG2): stopped here, so the host's ring never fills from a chat line
       if (e.isComposing || e.keyCode === 229) { e.stopPropagation(); return; }   // C3: the IME's own Enter commits a candidate, not a line
-      if (e.code === 'Escape') { e.preventDefault(); closePanel(); }
+      // AUDIT SOC C2/C14: a surface OVER the chat owns Escape - the key is left whole for it, and the field keeps its line
+      if (e.code === 'Escape') { if (above()) { e.stopPropagation(); return; } e.preventDefault(); e.stopImmediatePropagation(); closePanel(); return; }
       else if (e.code === 'Enter' && !e.shiftKey && !e.repeat) { e.preventDefault(); submit(); }   // C6: a held Enter opened once; its repeats send nothing
       else if (e.code === 'Tab') e.preventDefault();   // C7: focus stays in the field - Tab walked it onto Send and gave the keyboard back to the game
       else swallowBrowserKey(e);
@@ -389,6 +632,9 @@ export function createChatPanel({ log, onSend, roster = null, canOpen = () => tr
   const swallow = (e) => e.stopPropagation();
   for (const t of ['pointerdown', 'mousedown', 'click', 'touchstart', 'wheel', 'contextmenu']) box.addEventListener(t, swallow);
   for (const t of ['pointerdown', 'mousedown', 'click', 'touchstart']) openBtn.addEventListener(t, swallow);
+  // SOC3: the closed-state Social button is outside the box, so it carries the box's own press rule - a thumb that
+  // taps it must not also draw a weapon (D7). The tab-bar one is inside the box and already has it.
+  if (socialOut) for (const t of ['pointerdown', 'mousedown', 'click', 'touchstart']) socialOut.addEventListener(t, swallow);
 
   return {
     root, input,
@@ -426,6 +672,10 @@ export function createChatPanel({ log, onSend, roster = null, canOpen = () => tr
       if (root.dataset.hidden !== (hidden ? '1' : '0')) root.dataset.hidden = hidden ? '1' : '0';
       if (log.open) paintWho();
       paintPeek();
+      // SOC3: neither of these rides the log's version either - a friend request lands and a party forms with nothing
+      // said in the chat at all, so the badge and the name colours are asked for on the frame like the roster is.
+      paintSocial();
+      paintNames();
       const s = line ? String(line) : '';
       if (status.textContent !== s) status.textContent = s;
     },

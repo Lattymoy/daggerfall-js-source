@@ -170,7 +170,7 @@ test('audit18 hosts: worldModes overlayHeld covers the DUNGEON overlay, and hold
   const decl = s.slice(s.indexOf('const overlayHeld'), s.indexOf('const crouchHeld'));
   assert.match(decl, /dungeonCtx/, 'overlayHeld ignores the dungeon overlay - the motor walks under an open window');
   assert.match(decl, /uiOverlayActive/);
-  // DFU PauseGame(true) stops the movers too (dungeon.js:284 does).
+  // DFU PauseGame(true) stops the movers too (dungeon.js:296 does).
   assert.match(s, /if \(!overlayHeld\) dungeonCtx\.actions\.update\(dt\);/,
     'the dungeon movers still travel under an open window');
 });
@@ -659,7 +659,7 @@ test('audit18 hosts: interior point lights carry their PER-LIGHT range in both h
   // colorOf - per-light colour x intensity - so the pin asserts BOTH
   // per-light channels ride the one call.
   for (const host of ['src/scenes/worldModes.js', 'src/scenes/interior.js']) {
-    assert.match(src(host), /nearestLights\([A-Za-z.]+\.lights, cam\.pos, 16, [A-Za-z.]+\.lights\.map\(\(l\) => l\.range\),\n\s*\(l\) => \[l\.color\[0\] \* l\.intensity, l\.color\[1\] \* l\.intensity, l\.color\[2\] \* l\.intensity\]\)/,
+    assert.match(src(host), /nearestLights\([A-Za-z.]+\.lights, cam\.pos, renderer\.maxPointLights, [A-Za-z.]+\.lights\.map\(\(l\) => l\.range\),[^\n]*\n\s*\(l\) => \[l\.color\[0\] \* l\.intensity, l\.color\[1\] \* l\.intensity, l\.color\[2\] \* l\.intensity\]\)/,   // EL1: the installed set's cap
       `${host} must pass per-record range AND colour x intensity to the shader`);
   }
 });

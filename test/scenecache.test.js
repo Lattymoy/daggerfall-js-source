@@ -83,11 +83,13 @@ test('P1: only loot, doors and the player\'s own piles are cached - enemies are 
   const s = interiorSceneName(1, 2);
   cacheScene(c, s, { lootContainers: [chest(1)], actionDoors: [door(2)], enemies: [{ id: 'rat' }] });
   const back = restoreCachedScene(c, s);
-  assert.deepEqual(Object.keys(back).sort(), ['actionDoors', 'droppedPiles', 'lootContainers']);
+  // SURV3: two more of the port's own loose objects ride the hand-off - HT1's dropped torches (handed to this door
+  // since HT1 and DROPPED here, because the store kept three keys) and the camps
+  assert.deepEqual(Object.keys(back).sort(), ['actionDoors', 'camps', 'droppedPiles', 'droppedTorches', 'lootContainers']);
   assert.equal(back.enemies, undefined, 'an enemy list handed in is not carried');
   // an empty cache call is legal and stores empty arrays
   cacheScene(c, s);
-  assert.deepEqual(restoreCachedScene(c, s), { lootContainers: [], actionDoors: [], droppedPiles: [] });
+  assert.deepEqual(restoreCachedScene(c, s), { lootContainers: [], actionDoors: [], droppedPiles: [], droppedTorches: [], camps: [] });   // SURV3: five arrays now
 });
 
 test('AUDIT 58 (ID1): the player\'s DROPPED PILES ride the store, the save and the world move', () => {

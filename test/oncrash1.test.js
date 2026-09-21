@@ -19,7 +19,7 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { OnlineSession, THREW_SAY_MS, lerpPose } from '../src/net/online.js';
 import { PeerBodies, peerCamera } from '../src/net/peerBodies.js';
 import { withinYaw, turnTowards } from '../src/characters/enemyMotor.js';
-import { validPose, validFoeRecord, validSharedFoe, SHARED_EFFECTS_MAX } from '../src/net/wire.js';
+import { validPose, validFoeRecord, validSharedFoe, SHARED_EFFECTS_MAX, RELAY_VERSION } from '../src/net/wire.js';
 import { wrapAngle } from '../src/world/mat4.js';
 import { fakeSocketClass } from './fakeSocket.mjs';
 
@@ -34,7 +34,7 @@ function session({ now = () => 1000 } = {}) {
   const s = new OnlineSession({ url: 'wss://relay.test', name: 'Mac', id: 'mac-0001', secret: 'shh-shh-shh-0001', WebSocketImpl: FakeWS, now });
   s.join('dungeon:m187853213', pose(0));
   sockets[0].open();
-  sockets[0].receive({ t: 'welcome', id: 'mac-0001', host: 'bob-0001', peers: [{ id: 'bob-0001', name: 'Bob', look: {}, pose: pose(1) }] });
+  sockets[0].receive({ t: 'welcome', v: RELAY_VERSION, id: 'mac-0001', host: 'bob-0001', peers: [{ id: 'bob-0001', name: 'Bob', look: {}, pose: pose(1) }] });
   return { s, ws: sockets[0] };
 }
 
@@ -95,7 +95,7 @@ test('ONCRASH1: EVERY handler out of _receive is contained, not just the foes st
     s.onWorld = () => { ran = true; throw new Error('the welcome\'s world threw'); };
     s.join('dungeon:m187853213', pose(0));
     sockets[0].open();
-    assert.doesNotThrow(() => sockets[0].receive({ t: 'welcome', id: 'mac-0001', host: 'bob-0001', peers: [], world: { v: 1 } }));
+    assert.doesNotThrow(() => sockets[0].receive({ t: 'welcome', v: RELAY_VERSION, id: 'mac-0001', host: 'bob-0001', peers: [], world: { v: 1 } }));
     assert.equal(ran, true, 'the welcome\'s world handler really ran');
     assert.equal(s.threw.kind, 'world');
   }
@@ -106,7 +106,7 @@ test('ONCRASH1: EVERY handler out of _receive is contained, not just the foes st
     s.onClock = () => { throw new Error('clock threw'); };
     s.join('dungeon:m187853213', pose(0));
     sockets[0].open();
-    assert.doesNotThrow(() => sockets[0].receive({ t: 'welcome', id: 'mac-0001', host: 'mac-0001', peers: [], now: Date.now() }));
+    assert.doesNotThrow(() => sockets[0].receive({ t: 'welcome', v: RELAY_VERSION, id: 'mac-0001', host: 'mac-0001', peers: [], now: Date.now() }));
     assert.equal(s.threw.kind, 'clock');
   }
 });
@@ -299,10 +299,14 @@ test('ONCRASH1 C2: THE SWEEP IS A SWEEP - no hand-rolled angle wrap anywhere und
 });
 
 test('ONCRASH1 A3: validSharedFoe IS the memory\'s door - every field by its own law, a bad one refusing the record WHOLE, a vocabulary it will not say it will not hear (mutant: the feet checked for being an array and nothing else, which is what patchFoe throws on)', () => {
-  const ok = validSharedFoe({ health: 10, maxHealth: 20, dead: false, feet: [1, 2, 3], yaw: 0.5, mobileType: 3, gender: 'male', team: 2, hostile: 1 });
+  // RESPAWN1: `team` is a STRING here, because it is a string everywhere in
+  // this port. This pin passed `team: 2` and encoded the very misreading that
+  // made `validSharedFoe` refuse every real foe record - see the team arm.
+  const ok = validSharedFoe({ health: 10, maxHealth: 20, dead: false, feet: [1, 2, 3], yaw: 0.5, mobileType: 3, gender: 'male', team: 'PlayerEnemy', hostile: 1 });
   assert.deepEqual(ok.feet, [1, 2, 3]);
   assert.equal(ok.yaw, 0.5, 'an ordinary record passes through unmoved');
   assert.equal(ok.hostile, true, 'the flags are booleans, whatever the memory wrote');
+  assert.equal(ok.team, 'PlayerEnemy', 'and the team name rides through');
   // THE FEET are what `patchFoe` indexes - `f.ai.feet[0] = sf.feet[0]` - and an absent or short one is the throw the
   // incident in that function's own comment describes
   for (const feet of [[1, 2], [1, 2, 3, 4], ['a', 2, 3], [NaN, 0, 0], [Infinity, 0, 0], 'xyz', {}, null]) {

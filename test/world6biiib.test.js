@@ -16,7 +16,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { cellHaloFor, RANGE_PIXELS, WORLD_CELL } from '../src/net/wire.js';
-import { OnlineSession } from '../src/net/online.js';
+import { OnlineSession, PEER_TIMEOUT_MS } from '../src/net/online.js';
 import { fakeSocketClass } from './fakeSocket.mjs';
 import { createExteriorFoes } from '../src/scenes/exteriorFoes.js';
 
@@ -100,7 +100,12 @@ test('WORLD6b-iii(b): the session - a halo room is hello\'d into and posed into;
     hw.receive({ t: 'join', id: 'ann-0004', name: 'Ann', look, pose });
     assert.equal(s.peers.has('ann-0004'), true, 'a join through the halo');
     hw.receive({ t: 'welcome', id: 'mac-0001', peers: [{ id: 'eve-0003', name: 'Eve', look, pose }], host: null, world: null });
-    assert.equal(s.peers.has('ann-0004'), false, 'a fresh roster from that room drops who it no longer names');
+    // SLAM14 (AUDIT SLAM FINAL B2): a fresh roster names the NEAREST, not the present - Ann is kept, unconfirmed in
+    // that room, and goes only if she stays silent past the timeout
+    assert.equal(s.peers.has('ann-0004'), true, 'a fresh roster from that room keeps who it no longer names, unconfirmed');
+    assert.deepEqual(Object.keys(s.peers.get('ann-0004').unconfirmed), ['world:2,12']);
+    now = s.peers.get('ann-0004').seenAt + PEER_TIMEOUT_MS + 1; s.tick();
+    assert.equal(s.peers.has('ann-0004'), false, 'silent past the timeout, unconfirmed: gone');
     // the crossing: the halo's socket is promoted, my old cell's steps down
     const sent = sockets.length, reconnects = s.stats.reconnects;
     s.join('world:2,12', pose);

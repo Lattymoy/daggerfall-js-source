@@ -916,7 +916,7 @@ Enhanced pane's Morrowind card.
 
 NO RENDERER CHANGE WAS NEEDED, which was the surprise. The port had
 ALREADY shipped a first-person pass: renderCharacterSprite
-(render/renderer.js:857) binds an offscreen target with its own depth
+(render/renderer.js:1108) binds an offscreen target with its own depth
 renderbuffer, clears colour and depth, SWAPS the frame's proj/view for
 ones the caller hands it, draws, and restores; drawScreenOverlayQuad
 (:987) composites it fullscreen with an alpha cut and no depth test. It
@@ -3560,7 +3560,7 @@ sound, this is the condition it must not be read past):
 
 > Nearly everything checks out against upstream, but the sorting claim states as unconditional what the code guards. Confirmed accurate: property.hpp:414-463 has Flag_Blending=0x0001, Flag_Testing=0x0200, Flag_NoSorter=0x2000, uint16 mFlags + uint8 mThreshold, and sourceBlendMode()=(mFlags>>1)&0xF, destinationBlendMode()=(mFlags>>5)&0xF, alphaTestMode()=(mFlags>>10)&0x7. getBlendMode (nifloader.cpp:1899-1928) and getTestMode (1930-1954) match the quoted tables including the SRC_ALPHA / LEQUAL defaults with Log(Debug::Info). handleAlphaTesting uses threshold/255.f, and both handlers really do removeAttribute + removeMode on the OFF branch; collectDrawableProperties (nifloader.cpp:189-211) recurses into the parent first and appends the node's own props last, so a child NiAlphaProperty genuinely cancels an ancestor's on the shared drawable stateset. The DST_ALPHA -> ONE rewrite and the objects.frag ordering (157 `gl_FragData[0].a *= diffuseColor.a * alpha * actorFade;`, 160-161 darkMap, 164 alphaTest) are verbatim correct. The defect: "blending WITHOUT the 0x2000 bit puts the drawable in the TRANSPARENT_BIN (back-to-front); with the bit set it inherits the opaque bin" drops the `if (!mPushedSorter)` guard that sits on BOTH bin calls in the quoted snippet. mPushedSorter is the enclosing NiSortAdjustNode (nifloader.cpp:329, pushed at :800-803). When one is in scope, handleAlphaBlending sets NO bin at all — it only sets hasSortAlpha — and the bin is decided later at nifloader.cpp:2943-2985 from the sorter's mode and subsorter type. That inverts the stated outcome in real cases: under SortingMode::Off a blending drawable with the sorter bit CLEAR gets setBinTraversal (bin 2, "TraversalOrderBin"), not back-to-front; and under a NiClusterAccumulator subsorter a drawable WITH the 0x2000 bit set still gets setBinBackToFront regardless of hasSortAlpha, rather than inheriting. A port that hardcodes the rule as written mis-sorts every mesh under a NiSortAdjustNode. Two smaller inaccuracies ride along: the back-to-front path outside handleAlphaBlending is setRenderBinDetails(0, "SORT_BACK_TO_FRONT"), not the TRANSPARENT_BIN hint (bin 10, DepthSortedBin); and setRenderBinToInherit() means inheriting whatever bin is in effect, which is not necessarily "the opaque bin".
 
-> The rule cannot hold here because its entire subject is absent from this codebase, and the code that actually renders the first-person player body contradicts it. This repository is /home/user/project-dagger, a JavaScript port of Daggerfall (logic from Daggerfall Unity, presentation on hand-rolled WebGL2) — not OpenMW. All three cited sources are non-existent paths: there is no components/ directory, no files/shaders/ directory, no .gitmodules, and zero .cpp/.hpp/.frag/.glsl files anywhere in the tree. A full-tree grep (excluding .git and node_modules) for NiAlphaProperty, nifloader, nifosg, and openmw returns no hits; the sole filename matching *nif* is /home/user/project-dagger/test/manifest.test.js, matching on the substring inside "manifest". Daggerfall assets are ARCH3D/CIF/IMG, never NIF, so no mFlags/mThreshold decode, blend-factor table, test-function table, stateset, or sorting bin exists to be overridden. Where it matters for a first-person player body, the real behaviour is different in kind, not just in detail. Alpha is a fixed 1-bit cutout compiled into the shaders rather than a per-material reference derived from mThreshold/255.0: `if (t.a < 0.5) discard;` at /home/user/project-dagger/src/render/renderer.js:82, :845 and :895, with the one exception being spectral (ghost) flats at renderer.js:254, `if (tex.a < (uSpectral == 1 ? 0.1 : 0.5)) discard;`. The comment at renderer.js:999-1003 states the governing law: classic art is a 1-bit palette cutout (index 0 transparent, everything else fully opaque), so the default discards and forces alpha 1, with a narrow `uBlendTex` opt-in for art authored outside that palette. Blending, where enabled at all, is one hard-coded pair with no factor decoding — gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA) at renderer.js:1074, :1530, :1607, overworldRenderer.js:370 and :385, and precipitation.js:166 — so there is no source/destination factor selection and therefore no DST_ALPHA-to-ONE rewrite. Because the renderer is immediate-mode WebGL2 with no stateset graph, the rule's two load-bearing behaviours have no mechanism to exist: nothing can REMOVE a blend func or alpha func from a parent's state to cancel it, and there is no noSorter bit or TRANSPARENT_BIN assignment. The specific special cases the task asked about confirm the same. The first-person viewmodel entry point, drawFirstPersonViewmodel at /home/user/project-dagger/src/render/characterSprite.js:55, is explicitly marked ON ICE (2026-08-17) with "No consumer"; the live first-person path is src/combat/fpsWeapon.js using WEAPON*.CIF sprites, and neith ...
+> The rule cannot hold here because its entire subject is absent from this codebase, and the code that actually renders the first-person player body contradicts it. This repository is /home/user/project-dagger, a JavaScript port of Daggerfall (logic from Daggerfall Unity, presentation on hand-rolled WebGL2) — not OpenMW. All three cited sources are non-existent paths: there is no components/ directory, no files/shaders/ directory, no .gitmodules, and zero .cpp/.hpp/.frag/.glsl files anywhere in the tree. A full-tree grep (excluding .git and node_modules) for NiAlphaProperty, nifloader, nifosg, and openmw returns no hits; the sole filename matching *nif* is /home/user/project-dagger/test/manifest.test.js, matching on the substring inside "manifest". Daggerfall assets are ARCH3D/CIF/IMG, never NIF, so no mFlags/mThreshold decode, blend-factor table, test-function table, stateset, or sorting bin exists to be overridden. Where it matters for a first-person player body, the real behaviour is different in kind, not just in detail. Alpha is a fixed 1-bit cutout compiled into the shaders rather than a per-material reference derived from mThreshold/255.0: `if (t.a < 0.5) discard;` at /home/user/project-dagger/src/render/renderer.js:85, :1062 and :895, with the one exception being spectral (ghost) flats at renderer.js:325, `if (tex.a < (uSpectral == 1 ? 0.1 : 0.5)) discard;`. The comment at renderer.js:1196-1200 states the governing law: classic art is a 1-bit palette cutout (index 0 transparent, everything else fully opaque), so the default discards and forces alpha 1, with a narrow `uBlendTex` opt-in for art authored outside that palette. Blending, where enabled at all, is one hard-coded pair with no factor decoding — gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA) at renderer.js:1333, :2302, :2379, overworldRenderer.js:370 and :385, and precipitation.js:166 — so there is no source/destination factor selection and therefore no DST_ALPHA-to-ONE rewrite. Because the renderer is immediate-mode WebGL2 with no stateset graph, the rule's two load-bearing behaviours have no mechanism to exist: nothing can REMOVE a blend func or alpha func from a parent's state to cancel it, and there is no noSorter bit or TRANSPARENT_BIN assignment. The specific special cases the task asked about confirm the same. The first-person viewmodel entry point, drawFirstPersonViewmodel at /home/user/project-dagger/src/render/characterSprite.js:55, is explicitly marked ON ICE (2026-08-17) with "No consumer"; the live first-person path is src/combat/fpsWeapon.js using WEAPON*.CIF sprites, and neith ...
 
 **Corrected form offered:** Same as stated for the flags, the bit fields, both lookup tables (SRC_ALPHA / LEQUAL fallbacks), alphaRef = mThreshold/255.0, the remove-on-off cancellation semantics, the DST_ALPHA -> ONE destination rewrite, and the shader ordering — but the sorting rule is conditional on there being no enclosing NiSortAdjustNode. The call site passes sort = !alphaprop->noSorter() (nifloader.cpp:2829-2830), and handleAlphaBlending's blending branch always records hasSortAlpha = sort; the bin, however, is only touched when mPushedSorter == nullptr: sort -> setRenderingHint(TRANSPARENT_BIN), !sort -> setRenderBinToInherit(), and the OFF branch also calls setRenderBinToInherit(). When an ancestor NiSortAdjustNode IS in scope, handleAlphaBlending sets no bin; the end of applyDrawableProperties (nifloader.cpp:2943-2985) assigns it instead: SortingMode::Off -> setRenderBinDetails(2, "TraversalOrderBin") no matter what the alpha flags say; Inherit/Subsort with a NiAlphaAccumulator -> setRenderBinDetails(0, "SORT_BACK_TO_FRONT") if hasSortAlpha else TraversalOrderBin; with a NiClusterAccumulator -> SORT_BACK_TO_FRONT unconditionally. Also, with no pushed sorter, a non-sorting drawable that carries a sten
 
@@ -3659,7 +3659,7 @@ sound, this is the condition it must not be read past):
 
 > The rule omits a guard that inverts its central claim. It asserts only "Two guards run after the loop" and cites :2907-2926 and :2928-2934, but there are two further blocks between the loop and :2907. The decisive one is nifloader.cpp:2899-2906: `if (lightmode == LightMode_Emissive) { diffuse = (0,0,0,diffuse.a()); mat->setDiffuse(diffuse); mat->setAmbient(osg::Vec4f()); }`. Trace a NiVertexColorProperty with VertMode_SrcAmbDif + LightMode_Emissive on a mesh with no colour array: inside the loop (2808-2812) the mode is forced to None and `lightmode` is latched to LightMode_Emissive; at 2899 ambient and diffuse RGB are zeroed to black; at 2907 the !hasVertexColors switch sees mode None, hits `default:`, and writes nothing back to white; at 2930 the material now differs from defaultMat so it IS attached, carrying black ambient and black diffuse. That directly refutes "a NiVertexColorProperty on a colourless mesh yields plain white, not black" — stated as always-true when it holds only while lightmode != LightMode_Emissive — and refutes the corollary that such a shape carries no material state and inherits from above. A second omitted block at 2891-2897 (`mVersion <= VER_MW || !specEnabled`) also runs after the loop and unconditionally stomps specular to (0,0,0,0), shininess to 0 and specularStrength to 1, so on Morrowind-era NIFs a NiMaterialProperty's mSpecular/mGlossiness never reach the stateset. Everything else in the rule checks out against the fetched sources: MaterialConfig defaults at material.hpp:27-36 are exactly as stated; the redundant white re-set of diffuse/ambient is real; the colour mode is indeed the only non-default material state set before the loop; Material::operator== (material.cpp:68-75) compares mVertexColorMode, so a vertex-coloured shape with no NiMaterialProperty does get a material attached with AmbientAndDiffuse; and the property.cpp:505-521 claims hold (mAmbient/mDiffuse read only when bethVersion < 26, mEmissiveMult only when bethVersion >= 22, mAlpha a single float becoming diffuse.a while setAmbient/setEmission/setSpecular each pass 1.f as alpha).
 
-> Refuted on its premise, not by an override. The rule describes OpenMW's C++ NIF loader, and none of it exists in the codebase under review. Working directory is /home/user/project-dagger, a JavaScript 1:1 Daggerfall port on a hand-rolled WebGL2 renderer. Verified: (1) the claimed source components/nifosg/nifloader.cpp:2731-2934 does not exist, and there is no components/, nifosg/, or sceneutil/ directory anywhere; (2) the repo contains ZERO C++ sources - find for *.cpp/*.hpp/*.cc/*.h returns nothing; (3) grep across the whole tree including vendor/ for applyDrawableProperties, NiMaterialProperty, NiVertexColorProperty, SceneUtil, emissiveMult, vertexColorMode, bethVersion and openmw returns zero hits. vendor/ holds only dfu-books, dfu-quests, dfu-settings (Daggerfall Unity text data). The only "Morrowind" matches are a province name at /home/user/project-dagger/src/ui/provinceMap.js:93 and a font remark at /home/user/project-dagger/bible/10-UI/UI-Arc.md:339. The actual rendering model is incompatible with the rule rather than a variant of it: /home/user/project-dagger/src/render/characterMesh.js packs interleaved [pos.xyz, color.rgb, normal.xyz] per vertex and /home/user/project-dagger/src/render/renderer.js lights it in-shader against a scene ambient/sun/point model - no OSG state sets, no material objects, no inheritance from parent state, no NIF property loop, so there is no "attach only if it differs from a default-constructed Material" behaviour to override. The first-person framing has no counterpart either: per /home/user/project-dagger/src/combat/fpsWeapon.js:1-22 first-person view is classic 2D CIF sprite art and the voxel FP viewmodel is explicitly "ON ICE" as of a 2026-08-17 design pivot, so there is no first-person 3D player body carrying material state. Beast/werewolf and vampire handling (/home/user/project-dagger/src/characters/beasts.js, /home/user/project-dagger/src/characters/pieces/beastHead.js, /home/user/project-dagger/src/characters/paperdollPayload.js) drives paperdoll and sprite art, never mesh materials. IMPORTANT CAVEAT: I did not find a caller, subclass, or special case that contradicts the rule as a statement about real OpenMW - I found that OpenMW is not present in this session at all, so the rule is unverifiable here and must not be recorded as confirmed. If the intent was to audit the genuine OpenMW repository, it needs to be attached first; nothing in project-dagger can confirm or refute its NIF material defaults.
+> Refuted on its premise, not by an override. The rule describes OpenMW's C++ NIF loader, and none of it exists in the codebase under review. Working directory is /home/user/project-dagger, a JavaScript 1:1 Daggerfall port on a hand-rolled WebGL2 renderer. Verified: (1) the claimed source components/nifosg/nifloader.cpp:2731-2934 does not exist, and there is no components/, nifosg/, or sceneutil/ directory anywhere; (2) the repo contains ZERO C++ sources - find for *.cpp/*.hpp/*.cc/*.h returns nothing; (3) grep across the whole tree including vendor/ for applyDrawableProperties, NiMaterialProperty, NiVertexColorProperty, SceneUtil, emissiveMult, vertexColorMode, bethVersion and openmw returns zero hits. vendor/ holds only dfu-books, dfu-quests, dfu-settings (Daggerfall Unity text data). The only "Morrowind" matches are a province name at /home/user/project-dagger/src/ui/provinceMap.js:93 and a font remark at /home/user/project-dagger/bible/10-UI/UI-Arc.md:399. The actual rendering model is incompatible with the rule rather than a variant of it: /home/user/project-dagger/src/render/characterMesh.js packs interleaved [pos.xyz, color.rgb, normal.xyz] per vertex and /home/user/project-dagger/src/render/renderer.js lights it in-shader against a scene ambient/sun/point model - no OSG state sets, no material objects, no inheritance from parent state, no NIF property loop, so there is no "attach only if it differs from a default-constructed Material" behaviour to override. The first-person framing has no counterpart either: per /home/user/project-dagger/src/combat/fpsWeapon.js:1-22 first-person view is classic 2D CIF sprite art and the voxel FP viewmodel is explicitly "ON ICE" as of a 2026-08-17 design pivot, so there is no first-person 3D player body carrying material state. Beast/werewolf and vampire handling (/home/user/project-dagger/src/characters/beasts.js, /home/user/project-dagger/src/characters/pieces/beastHead.js, /home/user/project-dagger/src/characters/paperdollPayload.js) drives paperdoll and sprite art, never mesh materials. IMPORTANT CAVEAT: I did not find a caller, subclass, or special case that contradicts the rule as a statement about real OpenMW - I found that OpenMW is not present in this session at all, so the rule is unverifiable here and must not be recorded as confirmed. If the intent was to audit the genuine OpenMW repository, it needs to be attached first; nothing in project-dagger can confirm or refute its NIF material defaults.
 
 **Corrected form offered:** applyDrawableProperties starts from a fresh SceneUtil::Material whose MaterialConfig defaults are diffuse (1,1,1,1), ambient (1,1,1,1), specular (0,0,0,0), emission (0,0,0,1), shininess 0, emissiveMult 1, specularStrength 1, vertexColorMode None (components/sceneutil/material.hpp:27-36), then redundantly re-sets diffuse and ambient to white. The only non-default material state set before the property loop is the colour mode: AmbientAndDiffuse when the geometry has a colour array, None when it does not — so a shape with vertex colours and no NiMaterialProperty still gets a material whose vertex colours drive ambient and diffuse. FOUR things then run after the loop, not two. (1) :2891-2897 — if mVersion <= VER_MW or specular was disabled, specular is forced to (0,0,0,0), shininess to 0 and specularStrength to 1, discarding whatever a NiMaterialProperty or BSLightingShaderProperty set. (2) :2899-2906 — if a NiVertexColorProperty selected VertMode_SrcAmbDif with LightMode_Emissive, diffuse RGB is zeroed (alpha kept) and ambient is set to (0,0,0,0), i.e. genuinely black. (3) :2907-2926 — only if the geometry has no colour array, the channel matching the currently selected mode is writte
 
@@ -6472,3 +6472,373 @@ base meshes attached resolves the iron arrow, carries it as a piece
 and leaves no arrow note; and the console line fires once per reason,
 never without ammunition; every preload and resolve passes the one
 directory.
+
+## MW-D51 (2026-09-16): the held torch
+
+Mac: "Morrowind model needs a torch to hold when a torch is equipped."
+
+The lane answered None for a light (Handheld-Torches.md recorded it):
+the hand law, the keys and the player torch's light all ran under the
+Morrowind arms, and the visible torch was the classic lane's sprite,
+which the rig's draw seam does not paint beside a modelled arm. So a
+lit torch under the Morrowind view was a light with no torch.
+
+**The record.** Morrowind's carriable lights are LIGH records with a
+mesh (`Torch` -> `l\light_torch.nif` and its `torch_256`... variants;
+the sconces and candles are LIGH too). `readLight`/`lightRecords`
+(`formats/mwFirstPerson.js`) read NAME, MODL, FNAM and LHDT - 24 bytes,
+the flags int at 20, CARRY 0x2 and FIRE 0x10 - and the one-pass
+extractor carries them as `lights` (ARM_RECORDS_VERSION 2, so a v1
+derived set re-extracts). `pickTorchRecord` chooses as MW-D38 chooses a
+blade: a CARRIABLE light whose id names a torch, the plain `torch`
+first, else the shortest id, and only one whose mesh the archives
+carry (MW-D50's law).
+
+**The slot.** Daggerfall's word for "a torch is equipped" is
+`PlayerEntity.LightSource` holding the Torch item (TEMPLATES.Torch,
+247) - lit by use, and stowed by Handheld Torches' hand law when no
+hand is free. Morrowind's is Slot_CarriedLeft, the SHIELD's slot, whose
+part is instanced under "Shield Bone" (rule 4's table, PRT_Shield).
+`resolveTorchPart` (`combat/fpArm.js`) is resolveWeaponParts' twin for
+that slot: the part at `Shield Bone` on whichever rig is being built,
+the bone's absence REPORTED. Both builds take it (`torch` in the opts,
+`armBuildOptsOf` reads the lit light) and preload its mesh in the one
+round; `fpArm.setTorch(lit)` is the live door, handed the read per
+frame by weaponRig beside the weapon - a boolean fast path, and a slow
+path that binds the mesh on both rigs the first time a torch is lit on
+a rig built without one (rule 57 hides a doused torch, never removes
+it, so re-lighting is the fast path from then on). A rig whose master
+carries no LIGH record never reopens the archives, and (AUDIT MW-TORCH
+F3) neither does one whose bind failed once - `torchTried` on the rig
+- or every light-up reopened them and repacked both meshes for the
+same refusal. F5: `setTorch` writes the light into `lastBuildOpts`
+(and `setWeapon` its hand), so the equip-follow rebuild `setWorn`
+spreads carries what is in hand now, not the build's stale flag.
+
+**The visibility.** updateCarriedLeftVisible: "Shields/torches
+shouldn't be visible during any operation involving two hands" - the
+reference's one line, `return !(getWeaponType(weaptype)->mFlags &
+TwoHanded)`, is `carriedLeftVisible`: the torch hides while the drawn
+type carries the TwoHanded bit - a two-hander, a bow, a crossbow, AND
+a readied spell or drawn fists (vanilla: ready magic and the shield
+vanishes; the flag table gives both the bit for exactly that) - and
+shows sheathed. AUDIT MW-TORCH F1 corrected the first cut, which paired
+the bit with the class and kept the torch up over a spellcast. F2: the
+rule is asked of a light that is actually IN this rig's slot -
+`rig().torch` - so a light that resolved to nothing (no record, its
+mesh not attached, no Shield Bone) neither shows nor raises the arm,
+per rig. The figure portrait shows the lit light whatever the hand
+holds (PX26 F1's own law for the weapon).
+
+**The animation - rules 25+26, for ONE mask.** The reference plays
+"torch" at Priority_Torch on BlendMask_LeftArm (character.cpp's update,
+whenever a Light sits in the carried-left slot and it is visible), so
+the left arm holds the light up while the right arm swings, walks and
+idles. This port had no blend mask ("THE PART WE HAVE NO CONCEPT OF",
+rule 9's note) - every slot won BlendMask_All. It now has one:
+`blendMaskBones(skeleton, 'bip01 l clavicle')` is rule 25's own walk
+(detectBlendMask: a bone belongs to the mask whose root it meets first
+walking up its parents), computed once per built rig and carried as
+`leftArm`; `overlayTracks(base, overlay, mask)` and
+`overlaySampler(sampleTrack, overlayTime)` are rule 26's resolution
+for that one mask - a track map answering the torch's track for a mask
+bone and the frame winner's for every other, read through a sampler
+that samples an overlay track at the TORCH's own clock. poseSkeleton
+asks `tracks.get` and `sampleTrack` and nothing else, so the pass is
+unchanged. The "torch" state is a fifth slot with its own clock on its
+own source's keys, re-picked on a view switch (the other rig's
+sources), asked once per rig that lacks the group (the first-person
+.kf may; the light then hangs where the idle leaves the left hand, and
+the card says so). A mask bone the overlay does not key falls to the
+base's track. AUDIT MW-TORCH F4: the merged map is built ONCE per
+(base tracks, torch source, mask) and memoised, and one sampler reads
+the torch's clock through a variable - update()'s "no allocation
+after the first pack" holds with the torch lit.
+
+**Recorded, not faked.** A peer's look carries no light on the wire
+(MWBODY1's `lk`), so the peers' bodies hold none; a lantern or candle
+is the classic lane's still; the torch's own LIGHT (the LIGH radius
+and colour) is not the rig's - the player torch's light already moves
+with the hand law.
+
+**Pinned (test/mwtorch.test.js, test/mwload_records.test.js).** The
+LIGH reader and its place in the one pass; the pick's four rules; the
+resolve's four refusals and its part; rule 25's walk on a hand-built
+skeleton; the overlay's three answers; the fast path on the fixture
+rig (no LIGH record: no archive reopens; doused hides; unload drops
+it); and the wiring by source - the rig's two hand-overs, the
+carried-left rule, both meshes' hide, both rigs' overlay, the view
+switch's re-pick, the mid-build queue.
+
+## MW-D52 (2026-09-16): the sneak idle
+
+Mac: "Morrowind crouch animation is missing."
+
+The MOVEMENT already sneaked - MW-D26's movestate ladder composes
+`sneakforward`... off the same `sneaking` the camera bag carries - so
+a sneaking player who WALKED crouched, and one who stood still stood
+up. refreshIdle composed `FP_IDLE_BASE` ('idle') whatever the stance;
+the reference's refreshIdleAnims takes the idle STATE
+(CharState_IdleSneak -> "idlesneak", CharState_IdleSwim ->
+"idleswim"), and only the plain CharState_Idle takes the weapon's
+short suffix and rule 10's 2-5 loops.
+
+`idleBaseFor({ sneaking, inJump, hasGroup })` (`combat/fpArm.js`) is
+that law: "idlesneak" while sneaking on the ground where a source
+carries it, else 'idle'. refreshIdle composes the sneak base bare (no
+`idlesneak1h` exists in any .kf) with no loop dice, and the plain base
+through the ladder as before. The first-person .kf carries no sneak
+idle - the arms sink by rule 32(a)'s i1stPersonSneakDelta instead - so
+first person is unchanged; the THIRD-PERSON body shares the machine and
+its base_anim.kf carries "IdleSneak", which is the crouch that was
+missing. The swim family stays deferred with the port's swimming.
+
+**Recorded, not parity (AUDIT MW-TORCH F9).** The reference plays the
+sneak idle at Priority_SneakIdleLowerBody on the LOWER body, so the
+legs stay crouched under a weapon-priority upper-body clip; this
+port's four-slot winner takes every bone, so a sneaking body in third
+person stands up for the length of an attack or an equip and crouches
+again after. Rule 26 whole is still the recorded gap; MW-D51's one
+mask is the first step toward it, not the last.
+
+**Pinned (test/mwtorch.test.js).** The four terms of idleBaseFor; the
+fixture rig's stance reaching refreshIdle (no sneak idle in the
+fixture .kf: the plain idle, as hasAnimation's miss); the refresh
+reading the state and rolling no dice for the sneak base.
+
+## WS1 (2026-09-17): weapon sheathing - the bone addons, the holster, the quiver
+
+Mac: "Can we implement this for the morrowind model" (Greatness7's
+Weapon Sheathing 1.6, the OpenMW archive). Written from the files at
+WS1; REWRITTEN AT AUDIT-WS (the same day) off the reference itself -
+`apps/openmw/mwrender/actoranimation.cpp`, `animation.cpp`,
+`npcanimation.cpp`, `mwmechanics/weapontype.hpp`,
+`components/nifosg/nifloader.cpp` at tag openmw-0.48.0, fetched into
+the session - every cite below is to those files.
+
+**The bone addons** (animation.cpp:1306-1322 injectCustomBones ->
+:1284-1304 loadBonesFromFile). With `use additional anim sources`
+on, setObjectRoot (:1368-1400) injects for the default skeleton
+(`xbaseanim`, `meshes/xbase_anim.nif`) and then for the actor's own
+model (:1339-1340, :1360-1361 - the two calls, base first). Each
+looks at every `.nif` under `animations/<model without extension>/`
+(:1310-1321). loadBonesFromFile runs GetExtendedBonesVisitor
+(:218-236) over the addon: a node carrying the "CustomBone" user
+description is recorded with its PARENT and NOT descended into; the
+description is what the NIF loader gives a node whose extra chain
+carries a NiStringExtraData "BONE" (nifloader.cpp:630-633, the chain
+walked whole :618-640). For each found bone the parent's NAME is
+looked up in the actor (FindByNameVisitor, :1293-1296) and, when
+found, a DEEP copy of the bone and its subtree is added under it
+(:1298-1302). Nothing is checked for already existing - a second node
+of the name would be added, and the bone cache answers the FIRST
+(rule 16), so the copy is dead. So the port's rule, corrected: ONLY
+marked nodes join, each under the actor's node of its addon parent's
+name, with its subtree; an unmarked node never (Weapon Sheathing's
+`Bip01 AttachWeapon` is unmarked - thirteen join, not fourteen); a
+marked node whose parent the actor lacks is skipped (silently there,
+named in `skipped` here); a name already present is skipped (the
+reference's dead copy, the same observable). `injectSkeletonNodes`
+and `hasBoneMarker` (mwSkin.js).
+
+**The sheathing bones** (weapontype.hpp, the `sheath bone` column):
+`Bip01 ShortBladeOneHand` (:73), `Bip01 LongBladeOneHand` (:87), `Bip01
+BluntOneHand` (:101), **`Bip01 LongBladeOneHand` for AxeOneHand**
+(:115 - not the addon's own `Bip01 AxeOneHand`, which the reference
+never names; AUDIT-WS F1), `Bip01 LongBladeTwoClose` (:129), `Bip01
+AxeTwoClose` (:143), `Bip01 BluntTwoClose` (:157), `Bip01 BluntTwoWide`
+(:171), `Bip01 SpearTwoWide` (:185), `Bip01 MarksmanBow` (:199), `Bip01
+MarksmanCrossbow` (:213), `Bip01 MarksmanThrown` (:227); Arrow and Bolt
+none (:241, :255). getHolsteredWeaponBoneName (actoranimation.cpp
+:292-306) answers the column for a WEAP record and "" for anything
+else.
+
+**The holster** (actoranimation.cpp:318-394 updateHolsteredWeapon,
+called as `updateHolsteredWeapon(!mShowWeapons)` from showWeapons,
+npcanimation.cpp:958-994 :992): behind `weapon sheathing`; the carried
+right slot must hold a WEAP (:330-332); a THROWN weapon does not turn
+the holster off - it forces `showHolsteredWeapons = false` (:333-336,
+"since throwing weapons stack themselves, do not show such weapon
+itself"), so its scabbard, if one exists, still attaches with the
+weapon node masked (AUDIT-WS F3). The scabbard is the model with
+`_sh.nif` for its last four characters (:348); absent, the weapon mesh
+attaches at the bone while holstered and nothing while not (:352-360);
+present, it attaches whole (:363), `Bip01 Weapon` is looked up in the
+ACTOR (getBoneByName :367 - the attached scabbard's node) and masked
+while the weapon is shown (:375-378), or, when it has no children, the
+weapon mesh is instanced under it (:383-387, "use transformation from
+this node, but use the common weapon mesh"). A file with no `Bip01
+Weapon` returns after the attach (:368-369): whole, never masked.
+**Every attach here is attachMesh (:66-83) - `getInstance(model,
+parent)` under the bone, NOT SceneUtil::attach** - so no BoneOffset
+and no mirror ride a holstered mesh, unlike the weapon in the hand
+(AUDIT-WS F6: every WS1 part is `bare`). The enchantment glow (:355,
+:389-393) is not ported - the port draws no glow on any Morrowind
+mesh.
+
+**The quiver** (actoranimation.cpp:396-471 updateQuiver, run from
+showWeapons :993 and at attachArrow / detachArrow / releaseArrow,
+npcanimation.cpp:1062-1074): `Bip01 Ammo` in the actor (:414-416);
+for a thrown weapon the ammo is the weapon's own stack, one fewer
+while one is in the hand (:424-433); otherwise the ammunition slot,
+`ammoCount--` while an arrow is attached (:437-444, isArrowAttached =
+`mAmmunition != nullptr`, npcanimation.cpp:1313-1316), suitable only
+when its type is the weapon type's ammo type (:446); `min(count,
+children)` (:453); every child's old instance removed, one
+`getInstance(model, arrowNode)` per slot (:456-471). The port: the
+count is the Daggerfall arrow stack, the last slot emptied while the
+round is on the string (AUDIT-WS F4: the quiver parts carry `{ i, n }`
+and the rig's hide law reads `arrowShown`); the thrown stack is
+unreachable from Daggerfall's weapon table (nothing maps to
+MarksmanThrown) and is not carried.
+
+**Where the first person stands.** No addon ships for `xbase_anim.1st`,
+attachMesh finds no sheathing bone there (:68-70) and attaches nothing;
+the port's first-person rig takes no holster parts at all.
+
+**Recorded deltas.** `findNodeByName` answers null for a NiTriShape
+named as the node (its own recorded delta), so a scabbard that names a
+SHAPE `Bip01 Weapon` would stand whole here where the reference masks
+it; no vendored file does. The `Extras/` alternate draw animations
+(two-handed weapons drawn from the back) are not vendored. Shield
+sheathing (`updateHolsteredShield`, `Bip01 AttachShield`) is not
+ported: the mod ships no shield art and the port's Morrowind body
+carries no shield.
+
+## MAC-R1 (2026-09-17): the raised blade is not cut
+
+Mac: "Morrowind weapons that go above the screen show their blade
+clipped off." The arm's first-person pass (combat/fpArm.js `draw`)
+rendered a frame that was EXACTLY the screen - `pw x ph` rows of the
+sprite target at the screen's aspect, `FP_FIELD_OF_VIEW` vertical - and
+composited it fullscreen. Under the Weapon Widget (WW1) the composite is
+instead a screen-space RECT the widget's channels move: `armsTransform`
+applies the mod's Position and Scale (the bob, the inertia, the step),
+and `transformRect` clamps the rect to the screen's height minus its
+own `weaponOffsetHeight`. A rect the screen's size shifted DOWN by the
+bob has its top edge below the screen's top, and the frame has nothing
+above its own top edge - so a blade raised through it ended in a
+straight horizontal cut that moved with the bob.
+
+**The fix is to render what is above the screen.** While a screen
+transform is set, the frame is padded by `FP_TOP_PAD` (0.5 - half a
+screen; the widget's clamp keeps every shift under one screen height)
+of the screen's own height in extra rows ON TOP: `phFull = ph + pad`.
+The projection is the SAME lens with its top edge raised - an off-centre
+`frustum` (combat/fpArm.js, glFrustum's matrix; `perspective` is its
+symmetric case, pinned element for element; it lives beside its one
+reader and not in world/mat4.js, which the relay bundles under
+RELAY_VERSION's hash law) over the screen's bottom
+edge, its sides and its near plane, with `top = hh * (1 + 2 * padFrac)`.
+So the screen still occupies the bottom `ph` of the `phFull` rows at
+exactly the same pixel scale (its top lands at NDC (1-p)/(1+p), its
+bottom at -1), and the pad sees what is above it. The composite is the
+widget's rect extended UPWARD by `rect.h * padFrac`, sampling the whole
+padded sub-rect: at rest the pad lands above the screen and is unseen;
+shifted down, it shows the blade instead of a cut. The RT cap
+(`CHAR_SPRITE_RT_SIZE`) counts the pad. With no transform `padFrac` is
+0, the matrices are the same matrix and the fullscreen overlay path is
+untouched.
+
+Not seen in a browser: no Morrowind data in this container, and the cut
+needs the widget's shift over a raised blade. The lens law is pinned
+numerically (`test/macr_fixes.test.js`) and the draw by source; MW-D10
+and MW-D23's projection pins re-aimed. Mutants in
+`tools/mutants/macr.json`.
+## MAP3 (2026-09-18): the held sheet - the first hand-authored pose
+
+Mac (the Held Map arc, `bible/10-UI/Held-Map-Arc.md`): "Morrowind will
+need its own handcrafted map with hand placement just like the sprite.
+Our first custom rig change." Until this slice every pose on the
+first-person rig was one of Morrowind's own clips (the idle, the weapon
+groups, MW-D51's torch overlay). `src/combat/heldPose.js` is the first
+that is not: a set of rotations authored here, laid over the idle.
+
+**The mechanism is MW-D51's, one step further.** poseAssembly poses the
+rig from a TRACK MAP and a SAMPLER (`tracks.get(bone)` then
+`sampleTrack(track, time)` -> `{rotation, translation, scale}`). The
+torch wrapped the masked bones' tracks (`{__overlay}`) and handed a
+sampler that reads the wrapper on its own clock. The held pose wraps the
+same way - `{__delta, __base, __rest}` per posed bone - and its sampler
+answers the base pose's rotation TIMES a constant delta quaternion: a
+turn about the bone's OWN axes on top of whatever the idle is doing, so
+the arm keeps breathing while the hands come up. `heldTracksFor` in
+fpArm.js wraps whatever the torch overlay left (the two idioms stack:
+overlay first, delta over it), memoised per (base map, spec, inner
+sampler) as overlayMemo is, so a frame allocates nothing. A bone the
+skeleton lacks is not posed; a zero delta is not wrapped at all.
+
+**Why deltas, not absolute rotations.** An absolute local rotation is a
+number about ONE skeleton's rest frames; retail's `xbase_anim.1st.nif`
+and the fixtures' `armfp.nif` do not share them. "Bend the left forearm
+forty degrees more" means the same thing on both. Degrees, X then Y then
+Z, each about the bone's own (already turned) axes - `quatFromEulerDeg`
+is `qx * qy * qz` in Hamilton's [x, y, z, w].
+
+**The paper is a rigid piece like the weapon and the torch** (a `source`
+of vertices placed by an attachment transform each frame) but its
+attachment is the RIG ROOT (`attachRef: null`, the identity), not a hand
+bone: it is put where the eye is (`built.arm.mats.get(built.cameraRef).t`,
+the camera node's rig-space translation), `forward` metres ahead (+Y,
+the actor faces +Y), `drop` below (-Z), `width` across with the sheet's
+aspect giving the height, leaning back by `tilt` about its own
+horizontal; two triangles in BOTH windings, parchment diffuse, no
+texture. Slot `paper`; hidden with `!held` beside the torch's line;
+while held the weapon, the arrow and the torch are hidden (the hands
+hold the sheet and nothing else). Adding or removing it changes the
+piece list, which is the range list the textures hang on, so the mesh
+is released and repacks (the MW-D11 rule). An equip-follow rebuild
+mints a piece list without the sheet; the frame puts it back.
+
+**The picture is NOT on the piece.** The ink stays the window's DOM
+canvas; the rig answers `paperCorners()` - the piece's posed vertices
+through the model, view and projection the last `draw()` composed with
+(recorded per frame as `lastFrame`, the WW1 channel rect included), to
+CSS pixels - and the window lays the canvas over them by a CSS matrix3d
+(`src/ui/quadMap.js`). A corner behind the lens answers null and the
+window hides the ink that frame.
+
+**The seam.** `weaponRig.armsDrawn()` is the draw seam's own record:
+reset at the top of every `draw()`, set to `fpArm.active()` on the line
+before the untouched `if (fpArm.active()) { fpArm.draw(c); return; }`
+(after the EOTB guard, so a hidden weapon answers no). The world host
+hands the window a `holder` of four closures over the rig (available,
+hold, release, corners) - asked per open, never snapshot.
+
+**The defaults are ZERO, on purpose.** `HELD_POSE_DEFAULT` names the six
+bones (upper arm, forearm, hand, both sides) with `[0, 0, 0]` and the
+paper at 0.46 m wide, 0.42 m ahead, 0.14 m down, 22 degrees back. The
+session had the fixture arm only; a number placed by eye on it would be
+a claim about retail bones no one here has seen. `window.__heldPose(spec)`
+re-places the sheet on the live arm (a PARTIAL spec changes only what it
+names - the pose in force is the base); `window.__heldPose()` reads it
+back. The pose Mac lands on becomes the shipped default.
+
+Pins: `test/map3_heldpose.test.js` (16) on the real fixture rig
+headless; `test/heldmap.test.js` MAP3 (4); `tools/mutants/map3.json` 39
+dead; a MAP3 layer in `tools/mwArmProbe.mjs`.
+
+**AUDIT-MAP2 (the same day) corrected four things above.** (1) The
+quaternions: the first draft packed `[x, y, z, w]`; the rig's sampler
+(mwAnim.js) and `quatToMat33` (mwSkin.js) are `[w, x, y, z]`, so a
+forty-degree bend about X reached the rig as a hundred-and-forty-degree
+turn about Z. Repacked; the pin now poses a delta through
+`poseSkeleton` itself and reads the matrix. (2) The bone names: the six
+defaults were the part-attach family (`left forearm`) - the nodes the
+body parts hang on - but retail's `.kf` keys `Bip01 L Forearm`, and the
+hand is a child of the Bip01 bone, not of the attach node; a delta
+there would have turned the forearm mesh and left the hand behind. A
+held bone now resolves to whichever spelling the clip keys, then to
+whichever the skeleton has (`HELD_BONE_ALIASES`; the fixture keys the
+attach names, retail the Bip01 ones). (3) The paper's second winding
+was a coplanar twin whose normal faced away, fighting the first under a
+culling-off pass: one winding, facing the eye. (4) The sheet was placed
+at the eye once; the camera node moves with the neck (pitch, offset,
+bob), so the sheet's source is refreshed in place whenever the node's
+translation moved. Also: the pass's far plane is the arm's reach times
+four, and the default sheet sat past it on the fixture - a held sheet
+now grows `built.reach` to its farthest corner and a quarter more
+(restored on release); `paperCorners` answers only from a frame the arm
+composed (`drewLast()`, folded into `weaponRig.armsDrawn()`); `holdPaper`
+is refused in third person; a rebuild with no camera node lets the
+sheet go. Record: `bible/10-UI/Held-Map-Arc.md`, AUDIT-MAP2.

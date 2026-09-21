@@ -18,9 +18,9 @@ import './modsOff.js';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { WHO_HZ_MAX, WHO_ROOM_HZ_MAX, HIT_ARROWS_MAX, parseClient, PIXEL_UNITS, validPose, RANGE_PIXELS } from '../src/net/wire.js';
+import { SOCKETS_MAX, WHO_HZ_MAX, WHO_ROOM_HZ_MAX, HIT_ARROWS_MAX, parseClient, PIXEL_UNITS, validPose, RANGE_PIXELS } from '../src/net/wire.js';
 import * as relay from '../server/src/relay.js';
-import { RELAY_VERSION } from '../server/src/index.js';
+import { relayVersionAtLeast } from './relayVersion.mjs';
 import { POISONS } from '../src/systems/poisons.js';
 import { OnlineSession } from '../src/net/online.js';
 import { fakeRoom } from './fakeRoom.mjs';
@@ -150,12 +150,20 @@ test('AUDIT WORLD6b-iii(e) B1/B2/B9: the Room - who carries the room\'s budget (
   const j = ofType(a, 'join').filter((m) => m.id === 'ffff-0003').at(-1);
   assert.equal(j.pose, null, 'out of range: no pose'); assert.deepEqual(j.look, r.look, 'the look rides');
   assert.deepEqual(ofType(a, 'join').filter((m) => m.id === 'bbbb-0002').at(-1).pose, validPose(at(2, 2)), 'in range: the latest pose');
-  // after a wake the instance has no looks: one storage read, then kept
+  // after a wake the instance has no looks: the storage's copy is read ONCE and then kept.
+  // SLAM5: and the reader is now the HELLO, not the first `who` - the hello path fills `_looks` for the roster it
+  // builds (at most ROSTER_MAX keys, never the whole room, which is the 128-key wall SLAM5 closed). So the law is
+  // unchanged - one read, then kept - but the ask that pays for it moved earlier. Both halves are asserted, so
+  // neither the read nor the keeping can quietly go away.
   r.wake(); reads = 0;
   const c = r.connect(); await r.hello(c, 'cccc-0004', at(1, 1));
+  assert.ok(reads >= 1, 'the hello after a wake reads the roster\'s looks from storage');
   reads = 0;
   await who(c, 'bbbb-0002'); await who(c, 'bbbb-0002');
-  assert.equal(reads, 1, 'the storage\'s copy read once after the wake, then kept');
+  assert.equal(reads, 0, 'and they are KEPT: a later ask about a peer the hello already read costs no storage');
+  reads = 0;
+  await who(c, 'ffff-0003'); await who(c, 'ffff-0003');
+  assert.ok(reads <= 1, 'a peer outside that roster is read at most once, then kept too');
   assert.equal(ofType(c, 'join').filter((m) => m.id === 'bbbb-0002').length, 2);
   // B1: the room's budget - sockets asking at their own rate together, WHO_ROOM_HZ_MAX answered, the rest dropped without a strike
   const r2 = fakeRoom('world:5,5');
@@ -167,19 +175,32 @@ test('AUDIT WORLD6b-iii(e) B1/B2/B9: the Room - who carries the room\'s budget (
     for (let i = 0; i < 14; i++) { if (i === 7) clock += 1000; const w = r2.connect(); await r2.hello(w, `ask${String(i).padStart(3, '0')}-0${i}`, at(1, 1)); assert.equal(w.closed, null, 'hello\'d'); askers.push(w); }
     clock += 1000;
     for (const w of askers) for (let k = 0; k < WHO_HZ_MAX; k++) { await r2.raw(w, JSON.stringify({ t: 'who', id: 'tttt-0000' })); }
+    for (const w of askers) answered += ofType(w, 'join').filter((m) => m.id === 'tttt-0000').length;
+    // the room's budget spent (the only way to reach it without 257 sockets): a second on, so every SOCKET gate has
+    // refilled and the room's bucket is the one thing standing in the way - the next ask is dropped, and not struck
+    clock += 1000;
+    r2.room._roomWho = { tokens: 0, at: clock };
+    const before = ofType(askers[0], 'join').filter((m) => m.id === 'tttt-0000').length;
+    await r2.raw(askers[0], JSON.stringify({ t: 'who', id: 'tttt-0000' }));
+    assert.equal(ofType(askers[0], 'join').filter((m) => m.id === 'tttt-0000').length, before, 'over the room\'s budget: dropped');
   } finally { Date.now = realNow; }
-  for (const w of askers) answered += ofType(w, 'join').filter((m) => m.id === 'tttt-0000').length;
-  assert.equal(14 * WHO_HZ_MAX > WHO_ROOM_HZ_MAX, true, 'the rig asks past the budget');
-  assert.equal(answered, WHO_ROOM_HZ_MAX, `WHO_ROOM_HZ_MAX answered (${answered})`);
+  // SLAM9 re-aimed the budget half of this. It asserted WHO_ROOM_HZ_MAX === 60 and that 14 askers at their own rate
+  // overran it - and that 60 was the single biggest thing wrong with the branch: sized for storage reads SLAM5 had
+  // already deleted, it left a 200-player room 172 s from introducing itself. The law now is the OPPOSITE case: a
+  // room full of CORRECT clients asking as fast as their own gates allow is answered in full, because the room
+  // budget is the SUM of those gates and binds only when they are not the whole story. Both halves are driven: the
+  // full rig answered, and a room whose budget is spent dropping the next ask with no strike.
+  assert.equal(answered, 14 * WHO_HZ_MAX, `every ask from correct clients at their own rate is answered (${answered})`);
+  assert.equal(WHO_ROOM_HZ_MAX, SOCKETS_MAX * WHO_HZ_MAX, 'derived: the sum of every socket\'s own gate'); assert.equal(relay.WHO_ROOM_HZ_MAX, WHO_ROOM_HZ_MAX);
   for (const w of askers) { assert.equal(w.closed, null); assert.equal(w.att.junk ?? 0, 0); assert.equal(w.att.wdrops ?? 0, 0, 'no strike: the room\'s budget drops, the socket\'s own gate passed'); }
-  assert.equal(WHO_ROOM_HZ_MAX, 60); assert.equal(relay.WHO_ROOM_HZ_MAX, WHO_ROOM_HZ_MAX);
   const s = rd('server/src/index.js');
-  assert.match(s, /const budget = tokenGate\(this\._roomWho, now, WHO_ROOM_HZ_MAX\);\s*\n\s*this\._roomWho = budget\.bucket;\s*\n\s*if \(!budget\.pass\) return;/, 'the budget before the read');
+  assert.match(s, /const budget = tokenGate\(this\._roomWho, now, WHO_ROOM_HZ_MAX\);\s*\n\s*this\._roomWho = budget\.bucket;\s*\n\s*if \(!budget\.pass\) return;\s*\n\s*const target = /, 'SLAM9: the budget before the SCAN, not only before the read - a refused ask costs the object nothing');
   assert.match(s, /let look = this\._looks\.get\(b\.id\) \?\? null;\s*\n\s*if \(!look\) \{ look = \(await this\.state\.storage\.get\(lookKey\(b\.id\)\)\) \?\? null; if \(look\) this\._looks\.set\(b\.id, look\); \}/, 'the looks kept');
   assert.match(s, /if \(this\._attach\(tws\)\?\.id !== b\.id\) return;/, 'B9: the socket read again after the await');
   assert.match(s, /this\._looks\.set\(m\.id, m\.look\); \}/, 'set at the hello'); assert.match(s, /this\._looks\.delete\(a\.id\);/, 'gone at the leave'); assert.match(s, /this\._looks\.clear\(\);\s*\n\s*const dead = \['hellos'\];/, 'cleared with the sweep');
-  assert.match(s, /if \(!id \|\| id === a\.id\) \{ this\._junk\(ws, a\); return; \}\s*\n\s*const target = [^\n]*\n\s*if \(!target\) return;/, 'B3: one\'s own name is junk, a name that left is nothing');
-  assert.equal(RELAY_VERSION, 'world66', 'the relay says which one it is');
+  const bare = s.replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/(^|[ \t])\/\/[^\n]*/gm, '$1');   // comments away - and only a `//` that begins a comment, not the one inside `wss://` (AUDIT SLAM found the naive stripper eating a real line)
+  assert.match(bare, /if \(!id \|\| id === a\.id\) \{ this\._junk\(ws, a\); return; \}\s*const budget = [^\n]*\s*this\._roomWho = budget\.bucket;\s*if \(!budget\.pass\) return;\s*const target = [^\n]*\s*if \(!target\) return;/, 'B3: one\'s own name is junk, a name that left is nothing - with SLAM9\'s budget between them');
+  assert.ok(relayVersionAtLeast(66), 'the relay says which one it is, and says a later one just as well');
 });
 
 test('AUDIT WORLD6b-iii(e) B4/B6: the session forgets who it asked with the room (leave, and a join elsewhere); the parser refuses a bad name as an error, and passes a good one', () => {
@@ -190,13 +211,13 @@ test('AUDIT WORLD6b-iii(e) B4/B6: the session forgets who it asked with the room
   try {
     const pose = { x: 1, y: 2, z: 3, yaw: 0, pitch: 0, mv: 0 };
     s.join('world:3,12', pose); sockets[0].open(); sockets[0].receive({ t: 'welcome', id: 'mac-0001', peers: [], host: null, world: null });
-    sockets[0].receive({ t: 'pose', id: 'eve-0003', p: pose });
+    sockets[0].receive({ t: 'pose', id: 'eve-0003', p: pose }); s.tick();   // SLAM9: the ask comes from the tick's fair round, not from the pose
     assert.equal(s._who.has('eve-0003'), true);
     s.join('world:9,9', pose);
     assert.equal(s._who.size, 0, 'a crossing forgets who was asked');
     sockets[1].open(); sockets[1].receive({ t: 'welcome', id: 'mac-0001', peers: [], host: null, world: null });
-    sockets[1].receive({ t: 'pose', id: 'eve-0003', p: pose });
-    assert.ok(sockets[1].sent.some((x) => x === JSON.stringify({ t: 'who', id: 'eve-0003' })), 'asked at once in the new cell');
+    sockets[1].receive({ t: 'pose', id: 'eve-0003', p: pose }); s.tick();
+    assert.ok(sockets[1].sent.some((x) => x === JSON.stringify({ t: 'who', id: 'eve-0003' })), 'asked on the next tick in the new cell');
     s.leave();
     assert.equal(s._who.size, 0, 'and with the leave');
   } finally { console.info = info; }

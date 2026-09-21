@@ -1,0 +1,138 @@
+[
+ {
+  "name": "SURV7-the-feed-ignores-the-switch",
+  "file": "src/systems/survival/env.js",
+  "old": "  if (!survivalOn() || !entity || !env) return null;",
+  "new": "  if (!entity || !env) return null;",
+  "tests": [
+   "test/surv7_feed.test.js"
+  ]
+ },
+ {
+  "name": "SURV7-nothing-is-worn",
+  "file": "src/systems/survival/env.js",
+  "old": "  const deps = { worn: entity.equip?.slots ?? null, ctx: survivalCtx(entity, full) };",
+  "new": "  const deps = { worn: null, ctx: survivalCtx(entity, full) };",
+  "tests": [
+   "test/surv7_feed.test.js"
+  ]
+ },
+ {
+  "name": "SURV7-every-race-is-a-breton",
+  "file": "src/systems/survival/env.js",
+  "old": "    raceTemplate: raceById(entity?.raceId ?? 1) ?? {},",
+  "new": "    raceTemplate: {},",
+  "tests": [
+   "test/surv7_feed.test.js"
+  ]
+ },
+ {
+  "name": "SURV7-the-gate-reads-no-felt",
+  "file": "src/systems/survival/env.js",
+  "old": "    tempWord: felt == null ? 'comfortable' : temperatureWord(felt),",
+  "new": "    tempWord: 'comfortable',",
+  "tests": [
+   "test/surv7_feed.test.js"
+  ]
+ },
+ {
+  "name": "SURV7-the-gate-sees-no-fire",
+  "file": "src/systems/survival/env.js",
+  "old": "    byFire: !!env?.byFire,",
+  "new": "    byFire: false,",
+  "tests": [
+   "test/surv7_feed.test.js"
+  ]
+ },
+ {
+  "name": "SURV7-the-ticker-feeds-nothing",
+  "file": "src/scenes/shared.js",
+  "old": "        survival: survivalFeed(entity, survivalEnv?.() ?? null, { say }),   // SURV7: the needs' minute, when the host says where the player stands\n",
+  "new": "",
+  "tests": [
+   "test/surv7_feed.test.js"
+  ]
+ },
+ {
+  "name": "SURV7-no-gate-on-the-seam",
+  "file": "src/scenes/shared.js",
+  "old": "  if (survivalEnv) installSurvivalGate(registerPreventRestCondition, () => entity, survivalEnv);\n",
+  "new": "",
+  "tests": [
+   "test/surv7_feed.test.js"
+  ]
+ },
+ {
+  "name": "SURV7-the-tick-skips-the-minutes",
+  "file": "src/systems/worldTick.js",
+  "old": "  if (survival && nowMinutes > lastMinutes) {",
+  "new": "  if (false) {",
+  "tests": [
+   "test/surv7_feed.test.js"
+  ]
+ },
+ {
+  "name": "SURV7-the-world-feeds-the-dungeon-too",
+  "file": "src/scenes/world.js",
+  "old": "    survivalEnv: () => (_mode() === 'dungeon' ? null : survivalEnvNow()),\n",
+  "new": "    survivalEnv: () => survivalEnvNow(),   // SURV7\n",
+  "tests": [
+   "test/surv7_feed.test.js"
+  ],
+  "why": "TO-FIELD3 re-aimed this back by content: Mac took the accelerated-journey arm off, so the world's reader is the dungeon's silence and nothing else again."
+ },
+ {
+  "name": "SURV7-the-interior-has-no-roof",
+  "file": "src/scenes/worldModes.js",
+  "old": "    survivalEnv: () => (mode === 'interior' && host.survivalEnv ? { ...host.survivalEnv(), insideBuilding: true, insideDungeon: false, inSunlight: false, swimming: false, byFire: interiorCamps.byFire(player.pos) } : null),",
+  "new": "    survivalEnv: () => (mode === 'interior' && host.survivalEnv ? { ...host.survivalEnv(), insideBuilding: false, insideDungeon: false, inSunlight: false, swimming: false, byFire: interiorCamps.byFire(player.pos) } : null),",
+  "tests": [
+   "test/surv7_feed.test.js"
+  ]
+ },
+ {
+  "name": "SURV7-the-dungeon-fire-warms-nobody",
+  "file": "src/scenes/dungeonContext.js",
+  "old": "      byFire: !!(_fpFeet && camps.byFire(_fpFeet)),\n      resting: !!playerEntity.isResting, sleeping: playerEntity.isResting && !playerEntity.isLoitering ? (playerEntity.restKind ?? 'rough') : null,\n    };\n  };\n  const _survivalGate = installSurvivalGate",
+  "new": "      byFire: false,\n      resting: !!playerEntity.isResting, sleeping: playerEntity.isResting && !playerEntity.isLoitering ? (playerEntity.restKind ?? 'rough') : null,\n    };\n  };\n  const _survivalGate = installSurvivalGate",
+  "tests": [
+   "test/surv7_feed.test.js"
+  ]
+ },
+ {
+  "name": "SURV7-the-load-aligns-nothing",
+  "file": "src/systems/save.js",
+  "old": "  if (sharedClockOn()) alignSurvival(entity, Math.floor(worldMinutes()), Math.floor(snap.classicMinutes ?? 0));   // SURV7: the needs' markers - a save from more than a day ago starts fed, watered and rested (WORLD5's law for these)\n",
+  "new": "",
+  "tests": [
+   "test/surv7_feed.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-FIELD-resting-holds-the-accruals-too",
+  "file": "src/systems/survival/needs.js",
+  "old": "    s.thirst = Math.min(NEED.THIRST_MAX, s.thirst + rate);",
+  "new": "    if (!resting) s.thirst = Math.min(NEED.THIRST_MAX, s.thirst + rate);",
+  "tests": [
+   "test/surv7_feed.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-FIELD-resting-pays-the-starving-fatigue-anyway",
+  "file": "src/systems/survival/needs.js",
+  "old": "  if (hungerAfter === 'starving' && !resting) sinks.drainFatigue?.(DRAIN.starving);",
+  "new": "  if (hungerAfter === 'starving') sinks.drainFatigue?.(DRAIN.starving);",
+  "tests": [
+   "test/surv7_feed.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-FIELD-resting-pays-the-exhausted-fatigue-anyway",
+  "file": "src/systems/survival/needs.js",
+  "old": "    if (sleepNow === 'exhausted' && !resting) sinks.drainFatigue?.(DRAIN.exhausted);",
+  "new": "    if (sleepNow === 'exhausted') sinks.drainFatigue?.(DRAIN.exhausted);",
+  "tests": [
+   "test/surv7_feed.test.js"
+  ]
+ }
+]

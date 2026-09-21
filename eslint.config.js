@@ -25,6 +25,10 @@ export default [
         globalThis: 'readonly', URLSearchParams: 'readonly', URL: 'readonly',
         setTimeout: 'readonly', clearTimeout: 'readonly', alert: 'readonly',
         setInterval: 'readonly', clearInterval: 'readonly',
+        // AUDIT-SRVN F3: the build poll cancels a request on a deadline
+        // rather than leaking the socket. Node 17.3+ and every browser
+        // this port targets; the one call site guards for its absence.
+        AbortSignal: 'readonly',
         // Node 17+ and every browser this port targets. The quest lane
         // uses it for its resource snapshots; without it declared, main
         // was lint-red on twelve call sites.

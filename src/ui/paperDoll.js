@@ -161,9 +161,47 @@ let _pending = null;   // AUDIT 17e F16: the coalesced follow-up
  *  boot, and the doll must follow) - `_identity` is the guard that
  *  used to be a bare `if (_art) return`. */
 let _identity = null;
+/** The IDENT the loaded set was built from, not just its key - the
+ *  context and the region live here, so the drift check below can ask
+ *  for the entity's identity WHERE the doll already is. */
+let _ident = null;
 /** The art set's key: who the doll is, and where. */
 export const paperDollIdentityKey = ({ race = 'Breton', gender = 'male', faceIndex = 0, context = 'town', where = null } = {}) =>
   `${race}|${gender}|${faceIndex}|${context}|${where?.region ?? -1}`;
+
+/** THE ART FOLLOWS THE ENTITY (Mac, 2026-09-16: "Characters face and
+ *  gender completely changed after a few hours of playtime").
+ *
+ *  DFU has no art set to keep in step: DaggerfallPaperDoll.Refresh
+ *  hands the LIVE PlayerEntity to PaperDollRenderer.Refresh, and
+ *  BlitBody (PaperDollRenderer.cs:346-353) and PaperDoll.cs
+ *  RefreshBackground read Race and Gender off THAT entity on every
+ *  single refresh. The port caches the decoded set instead - three
+ *  IMGs and a CIF record per identity - and a cache that nobody
+ *  invalidates is a cache that lies: `preloadPaperDollArt` was called
+ *  only from the four hosts' boots (with the PRE-CHARGEN Breton/male/0
+ *  stand-in) and from the three chargen completions, so a character
+ *  who arrived by RESTORE - `systems/save.js` restorePlayer, which is
+ *  every `?load` boot, and main.js:173 makes Continue, Load Game AND
+ *  Online all `?load` - wore the stand-in's body, face and morphology
+ *  for the rest of the session.
+ *
+ *  So the invalidation is DERIVED rather than remembered: the compose
+ *  itself asks whether the set it is about to draw is this entity's,
+ *  and no host has to know. Returns the ident the set would have to be
+ *  loaded with, or null when what is loaded already fits. Pure.
+ *  Context and region are the loaded set's own - a load does not move
+ *  the player, so only the identity can have drifted. */
+export function paperDollIdentityDrift(entity, ident = _ident) {
+  if (!ident) return null;
+  const want = {
+    ...ident,
+    race: entity?.race ?? 'Breton',
+    gender: entity?.gender ?? 'male',
+    faceIndex: entity?.faceIndex ?? 0,
+  };
+  return paperDollIdentityKey(want) === paperDollIdentityKey(ident) ? null : want;
+}
 
 /** ONLINE1 (AUDIT ONLINE C1-C4, C8, C9): the art set - BODY, FACE, SCBG -
  *  loaded fresh for whoever asks, PURE: nothing of the singleton's is
@@ -203,6 +241,7 @@ export async function preloadPaperDollArt(deps, ident = {}) {
   try {
     _art = await loadArtSet(deps, ident);
     _identity = key;
+    _ident = { ...ident };   // what the drift check above compares an entity against
     // AUDIT 17f: _deps carries the identity paperdollItemImage keys
     // off, so it may only advance once the new art is actually in
     // hand - a failed load used to leave a Khajiit _deps addressing
@@ -276,6 +315,42 @@ function blit(out, img, palette, { rows = null, remap = null, atOffset = null, u
       if (remap) idx = remap(idx);
       const c = palette.get(idx);
       out[o] = c.r; out[o + 1] = c.g; out[o + 2] = c.b; out[o + 3] = 255;
+    }
+  }
+}
+
+/** FIELD-GUN4: THE OTHER KIND OF LAYER. `blit` above is DFU's own -
+ *  palette INDICES through the doll's palette, with 0 transparent and
+ *  0xff the cloak's cut-out. The port's own art (systems/thunderlock.js)
+ *  is truecolor and has no index to give, so it composites straight
+ *  in on its alpha. No dye and no remap: a dye is a palette-range
+ *  rotation and there is no palette here to rotate.
+ *
+ *  Everything else is `blit`'s, deliberately - the same origin, the
+ *  same clip, the same offset arithmetic - so a layer that draws here
+ *  lands exactly where the indexed one would have. */
+function blitRgba(out, img, { atOffset = null } = {}) {
+  const [orgX, orgY] = PAPERDOLL_ORIGIN;
+  const off = atOffset ?? img.off;
+  const px = off.x - orgX, py = off.y - orgY;
+  const { width, height, rgba } = img.bmp;
+  if (!rgba) return;
+  for (let y = 0; y < height; y++) {
+    const dy = py + y;
+    if (dy < 0 || dy >= PAPERDOLL_H) continue;
+    for (let x = 0; x < width; x++) {
+      const dx = px + x;
+      if (dx < 0 || dx >= PAPERDOLL_W) continue;
+      const si = (y * width + x) * 4;
+      const a = rgba[si + 3];
+      if (a === 0) continue;
+      const o = (dy * PAPERDOLL_W + dx) * 4;
+      if (a === 255) { out[o] = rgba[si]; out[o + 1] = rgba[si + 1]; out[o + 2] = rgba[si + 2]; out[o + 3] = 255; continue; }
+      const k = a / 255;   // the sprite's own edge, over whatever is under it
+      out[o] = rgba[si] * k + out[o] * (1 - k);
+      out[o + 1] = rgba[si + 1] * k + out[o + 1] * (1 - k);
+      out[o + 2] = rgba[si + 2] * k + out[o + 2] * (1 - k);
+      out[o + 3] = 255;
     }
   }
 }
@@ -386,6 +461,11 @@ async function composeDoll(art, deps, entity, { background = true } = {}) {
     if (!res) continue;
     const img = await loadRecord(res.archive, res.record, deps.getTexture);
     if (!img) continue;
+    // FIELD-GUN4: a vendor-only archive has no indexed bitmap to blit
+    // through the palette - it hands back RGBA instead, and it is the
+    // port's own art rather than DFU's, so it takes neither the dye
+    // nor the helm mask.
+    if (img.bmp?.rgba) { blitRgba(out, img); layout.push({ slot: it.equipSlot, img }); continue; }
     const remap = res.target == null ? null : (i) => applyDyeToIndex(i, res.dye, res.target);
     blit(out, img, art.palette, { remap, under });   // HM1: the helm's mask erases the hair
     layout.push({ slot: it.equipSlot, img });
@@ -403,6 +483,16 @@ export async function refreshPaperDoll(entity) {
   if (_refreshing) { _pending = entity; return; }
   _refreshing = true;
   try {
+    // THE ART FOLLOWS THE ENTITY - the drift check above, taken here
+    // because this is the one door every doll in the game composes
+    // through (the classic inventory, the char sheet, the enhanced
+    // pack's avatar), so a character who arrived by restore cannot
+    // reach a draw wearing the boot's stand-in body. The latch is
+    // already up, so the await opens no re-entry (AUDIT-MACL F2), and
+    // a reload that fails leaves the old set standing - loud, never a
+    // trap - to be tried again on the next refresh.
+    const drift = paperDollIdentityDrift(entity);
+    if (drift) await preloadPaperDollArt(_deps, drift);
     const { out, layout } = await composeDoll(_art, _deps, entity);
     const key = `paperdoll_v${++_version}`;
     const prevKey = _live?.key ?? null;
@@ -452,6 +542,12 @@ export function slotAtPaperDoll(px, py) {
     const { slot, img } = _layout[i];
     const x = px - (img.off.x - orgX), y = py - (img.off.y - orgY);
     if (x < 0 || y < 0 || x >= img.bmp.width || y >= img.bmp.height) continue;
+    // FIELD-GUN4: an RGBA layer's "is there a pixel here" is its
+    // ALPHA. Reading `data` for one answers undefined, which is
+    // neither 0 nor 0xff and so returned the slot for every point
+    // inside the sprite's BOX - the transparent corners included, and
+    // that box is what sits over the doll's own body.
+    if (img.bmp.rgba) { if (img.bmp.rgba[(y * img.bmp.width + x) * 4 + 3] !== 0) return slot; continue; }
     const idx = img.bmp.data[y * img.bmp.width + x];
     if (idx !== 0 && idx !== 0xff) return slot;
   }

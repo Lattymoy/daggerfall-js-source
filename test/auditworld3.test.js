@@ -66,16 +66,32 @@ test('AUDIT WORLD3 A: the relay - the act fan spends a BYTE budget (the frame ti
   // the budget spent - stamped a minute AHEAD, because byteGate refills at a MiB a second and a
   // millisecond of scheduling delay under a full-suite run refilled the frame's 300 bytes (the
   // pin flaked green-then-red on the clock, not the law; `Math.max(0, ...)` makes a future stamp refill nothing)
-  r.room._roomActBytes = { bytes: 10, at: Date.now() + 60_000 };
+  // SLAM11 re-aimed the next lines. They set the bucket to 10 bytes and asserted the act DROPPED - the indivisible
+  // law, under which an act whose fan cost more than a second of the budget could never land at all. The act fan
+  // borrows now: a bucket that is not IN DEBT lands the frame whole and goes negative by it, and only a bucket still
+  // in debt refuses. Both halves driven, so the drop is still a law - it just has the right trigger.
+  r.room._roomActBytes = { bytes: -10, at: Date.now() + 60_000 };   // in DEBT (stamped ahead so nothing refills it)
   await r.raw(j1, frame);
-  assert.equal(ofType(h, 'act').length, 1, 'A1: over the byte budget - dropped'); assert.equal(j1.closed, null, 'and no strike');
-  r.room._roomActBytes = { bytes: 10, at: Date.now() - 1000 };   // a second on: refilled
-  await r.raw(j1, frame);
-  assert.equal(ofType(h, 'act').length, 2, 'refilled: fanned');
+  assert.equal(ofType(h, 'act').length, 1, 'A1/SLAM11: a bucket in debt - dropped'); assert.equal(j1.closed, null, 'and no strike');
+  // SLAM13: ON A HELD CLOCK. A landed frame re-stamps the bucket at the frame's own `now` (byteGate's `at: nowMs`),
+  // so under a real clock the next send, one millisecond on, refilled 1048 bytes - more than the ~500 of debt - and
+  // 'the next one waits' flaked green-then-red about one run in five. The law is in the numbers, not the scheduler.
+  const realNow = Date.now; let clock = realNow(); Date.now = () => clock;
+  try {
+    r.room._roomActBytes = { bytes: 10, at: clock };   // nearly spent but NOT in debt
+    await r.raw(j1, frame);
+    assert.equal(ofType(h, 'act').length, 2, 'SLAM11: not in debt - the act lands whole...');
+    assert.ok(r.room._roomActBytes.bytes < 0, '...and the bucket is in debt by the overshoot');
+    await r.raw(j1, frame);
+    assert.equal(ofType(h, 'act').length, 2, 'and the next one waits');
+    r.room._roomActBytes = { bytes: 10, at: clock - 1000 };   // a second on: refilled
+    await r.raw(j1, frame);
+    assert.equal(ofType(h, 'act').length, 3, 'refilled: fanned');
+  } finally { Date.now = realNow; }
   // the frame budget is still there beside it
   r.room._roomActs = { tokens: 0, at: Date.now() + 60_000 };   // stamped ahead: tokenGate refills on the clock too (see A1 above)
   await r.raw(j1, frame);
-  assert.equal(ofType(h, 'act').length, 2, 'and the frame budget still bites'); assert.equal(j1.closed, null);
+  assert.equal(ofType(h, 'act').length, 3, 'and the frame budget still bites'); assert.equal(j1.closed, null);
   assert.match(rd('server/src/index.js'), /AUDIT WORLD3 A1: the fan is the frame times its listeners, and a frame count is no bound on it/);
 });
 

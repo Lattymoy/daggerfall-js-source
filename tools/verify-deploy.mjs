@@ -38,11 +38,15 @@ export function entryBundle(html) {
 
 /** The commit a built page was stamped with, or null on a page built
  *  before the stamp existed (which is the whole reason the caller has
- *  to keep the exact-hash arm). Attribute order is not assumed. */
-export function buildTagOf(html) {
-  const tag = String(html ?? '').match(/<meta[^>]*\sname="build-tag"[^>]*>/i)?.[0];
-  return tag?.match(/\scontent="([^"]*)"/i)?.[1] || null;
-}
+ *  to keep the exact-hash arm).
+ *
+ *  SRV-N moved the body to `src/net/updateNotice.js` and left this
+ *  re-export, because the GAME now asks the same question of the same
+ *  tag from a running tab. Two copies of the regex would have been two
+ *  answers to "has the site moved?" - the tool's and the player's - and
+ *  the one that matters is the one nobody is watching. */
+export { buildTagOf } from '../src/net/updateNotice.js';
+import { buildTagOf } from '../src/net/updateNotice.js';
 
 /** The verdict, with the git question injected so it is testable
  *  without a repository. `contains(a, d)` answers whether commit `a`

@@ -23,10 +23,21 @@ const DEFAULT_POPUP = Object.freeze({ speedCautious: true, sleepModeInn: true, t
 
 let _filters = { ...DEFAULT_FILTERS };
 let _popUp = { ...DEFAULT_POPUP };
+// AUDIT-TO1 G4: Travel Options' middle-click mark
+// (TravelOptionsMapWindow.cs:102, `markedLocationId = -1`) is a field on
+// the SAME persistent window the eight filters ride, so it outlives an
+// open/close exactly as they do - and the junction mini-map reads it
+// between openings (TravelOptionsMod.cs:915-921). Session state, not
+// save state: the mod does not write it to the save either.
+let _markedMapId = -1;
 
 /** The live filter set - the window edits this object in place, the
  *  way DFU's window edits its own four fields. */
 export function travelMapFilters() { return _filters; }
+
+/** AUDIT-TO1 G4: the middle-click mark, -1 for none. */
+export function travelMapMarkedMapId() { return _markedMapId; }
+export function setTravelMapMarkedMapId(id) { _markedMapId = Number.isFinite(id) ? id : -1; }
 
 /** The three popup choices the next popup opens with. */
 export function travelMapPopUpState() { return { ..._popUp }; }
@@ -78,4 +89,5 @@ export function restoreTravelMapSaveData(data) {
 export function resetTravelMapState() {
   _filters = { ...DEFAULT_FILTERS };
   _popUp = { ...DEFAULT_POPUP };
+  _markedMapId = -1;   // AUDIT-TO1 G4
 }

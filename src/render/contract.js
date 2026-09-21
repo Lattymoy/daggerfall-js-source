@@ -40,6 +40,10 @@
  * @property {number|null} [frame]                    FA1: null for a still flat, a frame INDEX for an animated one, folded into the texture key
  * @property {number} [sway]                          WIND3: this batch's share of the wind's lean - the flora have one, nothing else does
  * @property {object|null} [conceal]                  ECV1: the concealment visual, which moves the batch into the blended pass
+ * @property {Float32Array} [bounds]                  EL5: the sphere [cx, cy, cz, r] about the origin the shadow and air replays cull by
+ * @property {number} [_quads]                        BLOOD1b: how many quads the buffer holds, so `moveBillboardBatch` cannot write past it
+ * @property {boolean} [_dyn]                         BLOOD1b: born DYNAMIC_DRAW, because its centres move every frame
+ * @property {Float32Array} [_moveScratch]            BLOOD1b: the move's own vertex staging, kept rather than re-minted each frame
  */
 
 /**
@@ -54,6 +58,7 @@
  * @property {string} [name]
  * @property {number} [modelId]
  * @property {{vao: WebGLVertexArrayObject, ebo: WebGLBuffer}|null} [_wire]
+ * @property {Float32Array} [bounds]                  EL5: the local sphere [cx, cy, cz, r]; each sub-mesh carries its own as `_bounds`
  */
 
 /**
@@ -96,8 +101,10 @@
  * @typedef {object} RendererLike
  * @property {(archive: number|string, record: number|string, color32: Color32, opts?: object) => any} uploadTexture
  * @property {(archive: number|string, record: number|string) => void} [releaseTexture]
- * @property {(archive: number, record: number, size: {w: number, h: number}, centers: number[][]) => BillboardBatch} createBillboardBatch
+ * @property {(archive: number|string, record: number|string, size: {w: number, h: number}, centers: number[][], opts?: {dynamic?: boolean}) => BillboardBatch} createBillboardBatch
  * @property {(batch: BillboardBatch|null) => void} [destroyBillboardBatch]
+ * @property {(batch: BillboardBatch|null, centers: number[][]) => boolean} [moveBillboardBatch] BLOOD1b: rewrite a dynamic batch's centres in place - the one thing in this tree that flies
+ * @property {Map<string, any>} [textures] the live texture cache, keyed `archive_record` - read to skip a re-upload
  */
 
 export {};

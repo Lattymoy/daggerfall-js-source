@@ -55,12 +55,15 @@ stopped would under-report a busy room with nothing saying so - the
 shape of lie this port keeps finding in its own records - so a cut list
 prints `+N more`.
 
-### It is the PRESENCE session's roster
+### It WAS the presence session's roster - ROSTER-G made it the channel's
 
-The chat links join with `presence: false`: they carry lines and hold
-no peers. A roster read off them would always be empty. `world.js`
-hands the panel `online`, the session that actually holds the room's
-members, and the pin says so in both directions.
+CHAT-R1 wired the panel to `online`, the presence session, because the
+chat links (`presence: false`) held no peers then: the relay's channel
+welcome said `peers: []` and announced nobody. But the presence session
+is the player's own map CELL - so the list beside a world-wide chat was
+a list of the street, and Mac's first report on it was "Players dont
+show in online". See ROSTER-G below; the pin now says the panel reads the
+tab's own link, with `online` as the stand-in until that link exists.
 
 ## CHAT-R - the hide button
 
@@ -334,3 +337,60 @@ No GL and no ARENA2 here. The roster's order, the hide state and every
 filter verdict are driven in node; **nobody has looked at the column**.
 Worth a pass on a machine that can render it: open the chat with a peer
 in the room, hide it, reload, and try to name yourself something rude.
+
+## ROSTER-G - the roster is everyone online (2026-09-16)
+
+Mac: "Players dont show in online and the roster naming itself seems
+hardcoded."
+
+**What it was.** Two findings, one root. The request (CHAT-R1) was "all
+currently online players"; the panel read the PRESENCE session, whose
+peers are the player's own map cell, because the one room every player
+is in - the world channel - had no roster: CHAT1 priced a channel as
+lines alone, so its welcome named nobody and it said no join and no
+leave. A friend two towns over was online, in the same chat, and absent
+from the list. Verified end to end before the fix: the live relay, the
+session, and the real panel in Chromium all did exactly what the code
+said - the code said the wrong room.
+
+**The relay.** A channel's hello is told who is in the channel: `{ id,
+name }` - no look, no pose, nothing is drawn from a channel and the
+hello path reads no storage, so it stays as cheap as CHAT1 priced it.
+The list is socket order (nearest-first has no meaning in a channel),
+cut at `CHAT_ROSTER_MAX` (512: above a full place room and above the
+panel's own 200 rows, below the channel's 2048 sockets), and `n` beside
+it is the true count. The channel says its joins (`{ id, name }`) and
+its leaves; it still says no host, because it has none. `RELAY_VERSION`
+is `world77`.
+
+**The client.** A channel link holds the roster it is told through the
+same `_member`/`_unmember` a place uses. `world.js` hands the panel the
+ACTIVE TAB's link, with `online` as the stand-in until it exists. The
+header reads the room's count only when the welcome's list was CUT (a
+whole list counts itself), and while kept, every join and leave the
+channel says moves it - the browser run that drove this found the
+first cut: a count that outlived its rows said three when one had
+left.
+
+**The naming.** The `#tag` is the tie-breaker for two players with ONE
+name - `net/roster.js`'s second sort clause, the chat line's own
+suffix - and drawn beside every name it read as a code somebody had
+hardcoded. It is drawn only beside a name another row shares.
+
+**Also found on the way.** The local relay could not start:
+`wrangler dev`'s workerd refuses a worker entry whose named export is
+a string, and SLAM13 had re-exported `RELAY_VERSION` from
+`server/src/index.js`. Production's runtime let it through, so nothing
+caught it until a local relay was needed to reproduce this. Fixed as
+LOCALDEV1 (`world76`): the entry exports handlers alone, every pin
+reads `wire.js`.
+
+**Driven.** `test/rosterg.test.js` (4): the channel's welcome by name
+with the count, the join and the leave said and no host, no look in
+storage; the cut at `CHAT_ROSTER_MAX` with the count uncut; a channel
+link holding the roster through welcome, join and leave, the cut count
+following them and a whole list counting itself; the wiring and the
+conditional tag by source. And in Chromium against a local relay: two
+players in other cells appear in the roster, two Bobs carry tags and
+FarAway does not, a leave drops the row. Mutants:
+`tools/mutants/rosterg.json` - **14 mutations, 14 dead**.

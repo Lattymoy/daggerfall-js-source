@@ -270,6 +270,29 @@ function knightlyCanAccessService(membership, service) {
   }
 }
 
+// ── AUDIT-TO1 F1: GuildManager.RegisterCustomGuild ────────────────
+// DFU lets a mod replace a guild's own class for a whole guild GROUP
+// (GuildManager.cs RegisterCustomGuild / customGuilds), and Travel
+// Options is the first mod here that uses it: with paid teleportation
+// on it registers MagesGuildTO (MagesGuildTO.cs:9-17), whose entire
+// body is `CanAccessService(Teleport) => true`, so a member of ANY
+// rank can reach the teleport service and be charged for it. Without
+// it the port's own MagesGuild.CanAccessService still answers rank >= 8
+// - and above rank 8 the service is FREE, so the whole paid-teleport
+// feature was unreachable by exactly the players it is written for.
+//
+// The registry is the formula registry's shape (combat/formulas.js:54-57,
+// FormulaHelper.RegisterOverride): one entry per guild name, an arm that
+// returns `undefined` to DECLINE so the stock law stands, and the mod's
+// own install as the only writer. This file stays a LEAF - the mod
+// pushes into it, nothing here reads a setting.
+const _customGuilds = new Map();
+/** Register (fn) or retire (null) a guild's service override by guild
+ *  name, e.g. 'MagesGuild'. The arm is (membership, service) and
+ *  returns true, false, or undefined to decline. */
+export function registerCustomGuild(name, fn) { if (fn) _customGuilds.set(name, fn); else _customGuilds.delete(name); }
+export const customGuild = (name) => _customGuilds.get(name) ?? null;
+
 export function canAccessService(guild, membership, service) {
   // AUDIT 26 F115: a NON-MEMBER never reaches the subclass switch.
   // GuildManager.GetGuild (:229-249) hands them guildNotMember - or
@@ -288,6 +311,12 @@ export function canAccessService(guild, membership, service) {
   }
   if (guild.divine) return templeCanAccessService(guild, membership, service);
   if (guild.order) return knightlyCanAccessService(membership, service);
+  // AUDIT-TO1 F1: a registered custom guild answers FIRST, and only for
+  // a MEMBER - RegisterCustomGuild replaces the class GetGuild hands
+  // back for the group, and a non-member is still handed
+  // guildNotMember above before any subclass is asked.
+  const custom = _customGuilds.get(guild.name);
+  if (custom) { const r = custom(membership, service); if (r !== undefined) return r; }
   switch (guild.name) {
     case 'MagesGuild': return magesCanAccessService(membership, service);
     case 'ThievesGuild': return thievesCanAccessService(membership, service);

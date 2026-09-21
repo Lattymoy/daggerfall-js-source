@@ -1,0 +1,57 @@
+[
+  {
+    "name": "PORTRAIT1-the-world-host-hand-lists-the-bag-again",
+    "file": "src/scenes/world.js",
+    "old": "    pipeline: { ...pipeline, arch, palette },",
+    "new": "    pipeline: { getGpuMesh, cpuModels, getTexture, uploadRecord, uploadRecordFrame, arch, palette, getMachineryParts },",
+    "tests": [
+      "test/hostdeps.test.js"
+    ]
+  },
+  {
+    "name": "PORTRAIT1-the-exterior-host-hand-lists-the-bag-again",
+    "file": "src/scenes/exterior.js",
+    "old": "    pipeline: { ...pipeline, arch, palette },",
+    "new": "    pipeline: { getGpuMesh, cpuModels, getTexture, uploadRecord, uploadRecordFrame, arch, palette, getMachineryParts },",
+    "tests": [
+      "test/hostdeps.test.js"
+    ]
+  },
+  {
+    "name": "PORTRAIT1-the-two-hosts-hand-different-bags",
+    "file": "src/scenes/exterior.js",
+    "old": "    pipeline: { ...pipeline, arch, palette },",
+    "new": "    pipeline: { ...pipeline, arch },",
+    "tests": [
+      "test/hostdeps.test.js"
+    ]
+  },
+  {
+    "name": "PORTRAIT1-the-billboard-stops-overwriting-the-factions-face",
+    "file": "src/systems/npcSession.js",
+    "old": "  const fromBillboard = flatFaceIndex?.(data?.billboardArchiveIndex ?? 0, data?.billboardRecordIndex ?? 0) ?? -1;\n  if (fromBillboard >= 0) record = fromBillboard;",
+    "new": "  const fromBillboard = -1;\n  if (fromBillboard >= 0) record = fromBillboard;",
+    "tests": [
+      "test/nativetalk.test.js"
+    ]
+  },
+  {
+    "name": "PORTRAIT1-the-oops-face-stops-being-the-starting-value",
+    "file": "src/systems/npcSession.js",
+    "old": "  let record = OOPS_PORTRAIT_RECORD;",
+    "new": "  let record = 0;",
+    "tests": [
+      "test/nativetalk.test.js"
+    ]
+  },
+  {
+    "name": "PORTRAIT1-the-flats-reader-answers-a-face-for-an-absent-flat",
+    "file": "src/formats/flatsFile.js",
+    "old": "    return this.getFlatData(archive, record)?.faceIndex ?? -1;",
+    "new": "    return this.getFlatData(archive, record)?.faceIndex ?? 0;",
+    "tests": [
+      "test/nativetalk.test.js",
+      "test/flats.test.js"
+    ]
+  }
+]

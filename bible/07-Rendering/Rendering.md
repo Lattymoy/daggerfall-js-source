@@ -25,9 +25,48 @@ directory by `test/audit18_bible_docs.test.js`:
   in particular is written by eight files outside `render/` - its
   `origin`, `sway`, `conceal` and `frame` are the CALLER'S fields and
   until now nothing said so. Exports `{}`, so the bundle never carries it.
+- `airPass.js` - EL3 THE AIR PASS: off the frame's own depth (EL6 - a depth
+  texture on the frame image; before it a replay of the shadow pass's records
+  from the camera), at the resolve: the ambient occlusion the resolve multiplies
+  the frame by, the bloom sourced from the emitters (each occluded by that
+  depth) and the lanterns' glares, and the sun's shafts; EL4: the frame image
+  the whole world draws into, the eye's adaptation off its mean luminance,
+  bloom from its bright pass, the vignette, the contrast in display space and
+  the dither in the resolve; EL8: two depth textures on the frame image,
+  ping-ponged, so the lane's contact shadows (`AIR_CONTACT_GLSL`) march
+  through the previous frame's depth; BUGS-5: the march reprojects its
+  point first (a surface the previous frame did not see is not marched),
+  four steps within seven tenths of a range, the glare's band a quarter
+  unit. `?air=off`, `?contact=off`. See
+  `07-Rendering/Enhanced-Lighting-Arc.md`.
 - `characterMesh.js` - the voxel character mesh path.
 - `characterSprite.js` - the classic-visuals sprite pass (one fixed
   CHAR_SPRITE_RT_SIZE target).
+- `bounds.js` - EL5 THE BOUNDS AND THE CULL: a bundle's bounding sphere
+  (`boundsOf`, computed at upload for a mesh and each sub-mesh, a terrain
+  surface, a billboard batch), the record's world sphere
+  (`transformSphere`), the frustum's normalised planes (`spherePlanes`,
+  over frustum.js's extraction) and the sphere test the shadow and air
+  replays cull by. A leaf: no GL. See `07-Rendering/Enhanced-Lighting-Arc.md`.
+- `cloudShadow.js` - EE5 / VC4 THE CLOUD SHADOW BLOCK: the uniforms and
+  the reader (`cloudShadowAt`) that answer how much sun reaches a point
+  on the ground, off the map `volumetricClouds.js` writes. Its own leaf
+  since VC6c, because a GLSL declaration is visible only inside its own
+  compilation unit and TWO passes interpolate it now - every renderer
+  program that lights by the sun, and the air pass's shafts, which
+  cannot import from the renderer that imports them. No GL, no imports.
+  See `07-Rendering/Volumetric-Clouds-Arc.md`.
+- `shadowPass.js` - EL2 THE SHADOW PASS: records what the world pass draws and
+  replays it depth-only from the light at the top of the next frame - a
+  two-cascade sun map outdoors, a cube map from the nearest lantern indoors -
+  with the receiver block the lane's shaders read (`SHADOW_GLSL`); the depth
+  programs are the renderer's own vertex shaders (EL7: three cascades, the
+  rigs recorded too, the water surface a receiver; EL8: the caster table
+  `uCasterOf`, the far cascade and the far casters on a cadence; BUGS-5:
+  the light in the hand never casts (`SHADOW_CASTER_MIN_DISTANCE` 1.5), a
+  thing on the ground is no standing card (`noShadow`, archive 216, flats
+  under half a unit), a cascade skips casters under two of its texels).
+  See `07-Rendering/Enhanced-Lighting-Arc.md`.
 - `skyRenderer.js` - painted skies (R4) + the night sky.
 - `labGrass.js` - GR1 the LAB'S GRASS: grass-proto.html's blade shaders
   verbatim, its placer law, and a renderer of its own beside the world's,
@@ -82,6 +121,134 @@ directory by `test/audit18_bible_docs.test.js`:
   whole-field upload, ever. The blade laws are unchanged. Measured
   headless: five metres of walking touches nothing; forty frees one
   edge column of 15 cells and fills the other, of 225 live.
+  **GRASS2 (2026-09-18, Mac: "improve grass, improve grass performance,
+  and also have it be seen at long ranges... I also want to shorten the
+  grass length"): THE FADE IS PAID ON THE HOST.** Measured first, on a
+  real GL context through `tools/grassFieldProbe.mjs` (this container has
+  no ARENA2, so the field is driven over a synthetic all-grass plane -
+  the blade COUNTS are exact and deterministic, the milliseconds are
+  SwiftShader's and are never quoted): 46 cells in frustum, 281,612
+  blades, **8.45M vertex shader invocations a frame**. The same field at
+  range 110 costs 3.31M and shows 2.1% fewer lit pixels - so 61% of the
+  vertex work was buying 2% of the grass. The cause: the fade discarded
+  blades INSIDE the vertex shader (`gl_Position = vec4(2,2,2,1)`), so a
+  blade culled at 180 m cost exactly what one at 5 m cost, and the band
+  where that happens is 70% of the field's area. Two changes, and the
+  picture does not move (67,833 lit pixels to 67,846). **(1)** The
+  fade's threshold is the blade's INDEX rather than a hash of its phase.
+  Same distribution - the placer already emits a cell's blades in random
+  order, so the first k are a uniform random k - but an index is
+  knowable to the HOST, which can then submit only the prefix that can
+  survive and decline the rest before they cost anything. The bound is
+  taken at the cell's NEAREST corner, so it never cuts a blade the
+  shader wanted. **(2)** Cells past half the range bind a ONE-QUAD
+  blade instead of the lab's five stacked quads: the five exist so the
+  stalk can curve, and at that distance the curve is not resolvable.
+  Same instance buffers, same shader, a different vertex array. 30 of
+  the 46 cells qualify. Together, like for like at the lab's own 200 m:
+  **8.45M to 3.54M, 58% off.** AND WHAT ACTUALLY SHIPS, which is the
+  number that matters to a player: the range is 250 m, where the frame
+  submits **4.97M** - still 41% under what the old field cost at 200 m,
+  while seeing a quarter further. (It submits slightly MORE blades there,
+  290k against 282k; the vertices fall anyway because two thirds of the
+  cells are on the one-quad blade.) Height is 54 to 38 on Mac's word and
+  the tint is pulled toward a low-frequency world-space noise so the
+  sward has patches instead of reading as one flat carpet of per-blade
+  noise.
+  THREE THINGS THIS COST, all caught by pins and probe rather than by
+  eye. Widening the span THINNED the grass, because `density` is a count
+  over the window and not a rate - `densitySpan` now holds the lab's own
+  420 m so blades-a-square-metre is the invariant. The noise variable
+  could not be called `patch`: that is a reserved word in GLSL ES 3.00
+  and took the whole program down, which is the trap that took the sky
+  down at VC6 under the name `flat`. And GR5's own pin caught that the
+  new span was not a whole number of cells, so the window's two edges
+  floored out of phase and a step that added one column dropped two -
+  the lab's 210 was a multiple of the cell by luck, 270 is by intent.
+  WHAT IS NOT DONE, and why, so nobody re-derives it: the range stops at
+  250 m because the DRAW cost no longer tracks the area but the STORAGE
+  still does. Every cell holds near-field density at 48 bytes a blade
+  whether it is underfoot or at the horizon - 75 MB of GPU buffer at
+  200 m, 106 MB at 250, 169 MB at 320. 320 m is what "long range" really
+  wants, and reaching it needs the instance data PACKED (twelve floats a
+  blade is mostly byte-sized information) or the far ring stored sparser
+  than the near one. Either is its own slice; neither is a reason to
+  ship 169 MB quietly. GR1'S LAW IS DEPARTED FROM, on the record: the
+  vertex stage is no longer the lab's text byte for byte. It is the
+  lab's text plus THREE named edits, exported as `GRASS2_VS_EDITS` and
+  applied by the pin to the lab's own slice before comparing - so a
+  fourth change, or a fourth edit nobody declared, still fails. The
+  fragment stage is untouched.
+  **GRASS4 (2026-09-18): THE PLACER'S COST WAS A STRING.** Opened as a
+  sweep of the whole outdoor frame for GRASS2's defect - work submitted
+  whose output is discarded - and the frame turned out to be well swept
+  already: flats culled by ring and frustum (MAC1, EV3), terrain by
+  pixel, the sun's cascades by texel radius (EL8), the lanterns gated to
+  17:00-08:00, the AO at half resolution and the bloom at a quarter. The
+  one that was left is on the CPU, in the placer: `pieceIndex` answers
+  once per blade CANDIDATE - six thousand a cell, two cells a frame
+  while the eye walks - and it built a template string for each of them.
+  Twelve thousand strings a frame, hashed, looked up and dropped; the
+  allocation was the work and the answer never needed it. `pieceKey` is
+  `px * 65536 + py` now, injective three orders of magnitude past the
+  Daggerfall map, and the placer went from 1.22 ms a cell to 0.40 - 67%
+  off, output byte-identical. AND ONE CHANGE MEASURED AND NOT MADE:
+  `ground()` repeats `keep()`'s lookup for every kept blade, which looks
+  like the same class of waste and is not - caching it across the two
+  saves nothing once the key is a number, because the duplicate was only
+  ever expensive because of the string. It was written, measured,
+  reverted, and `world.js` carries a comment saying so, because the next
+  reader will see the duplicate too.
+  **GRASS-PATH1 / GRASS-WET1 (2026-09-19): THE PLACER WAS ASKING THE
+  WRONG THING.** Mac, two bugs in one breath: "The grass is causing
+  issues with dirtroads etc it just overgrows them. Grass shouldnt be on
+  dirt paths", and "some textures not taking the water tile ... might be
+  because it registers as ground". They are one fault. The placer keeps a
+  blade where the tile's RECORD is in `grassRecordsOf`'s set - and the
+  record cannot answer either question. A TRACK across grass writes
+  10/11/12/51 (`roadPainter.js` TRACK_TILES, the grass column), and those
+  are the very records `createLookupTable`'s dirt-grass ring writes for a
+  natural field edge, so excluding them by number would have stripped the
+  grass off every dirt boundary in the world to clear one path. And the
+  WATER-GRASS shore records a stream or a town's own ground tiles write
+  (20-22, 49) are mostly-grass by texel count, so `grassRecordsOf` took
+  them and blades grew straight up out of the water - a green mottled
+  patch in a pond, which is what "not taking the water tile" looks like
+  from the ground. Two laws, each asked of the thing that owns it: the
+  painter now MARKS the tiles it writes (`opts.paths`, one byte a tile,
+  set at the moment of the write - it is the only thing that knows), and
+  the water question goes to `waterCorners.js`, the one table the water
+  pass and the player's feet already read. No blade stands on a painted
+  tile, and none stands on a tile with ANY corner in water. **The lesson:
+  the record was never the question. It had been answering a THIRD one -
+  "what does this tile look like" - and two different callers had been
+  reading that as "is it a path" and "is it dry" for as long as the
+  field has existed.**
+  **PERF10 (2026-09-19): THE WINDOW WAS A SQUARE AND THE DRAW WAS A
+  DISC.** Mac: "when youre further out in the wilderniss it loaded many
+  chunks and grass the performance still degrades." Three costs, all
+  paid for nothing. `createGrassField` filled the SQUARE
+  [eye - span, eye + span], and PERF2's draw skips any cell whose nearest
+  point is past `range` - so the square's corners, out at 445 m against a
+  300 m fade, were placed (6,122 `keep()` lookups apiece), packed,
+  uploaded and then skipped every frame of their life: 484 slots of which
+  92 could never draw a fragment. A cell is filled inside `range` and
+  held out to `span` now - the same hysteresis the square had along its
+  axes, so nothing churns while the eye stands still - and the field is
+  392 slots, 8.6 MB less held on the GPU, with the world's first fill 360
+  cells rather than 484. Second: the `live` map was keyed by
+  `${cx},${cz}` and the free sweep ran `key.split(',').map(Number)` over
+  every live cell EVERY frame - four hundred odd string splits, arrays
+  and boxed numbers a frame to decide that nothing had moved. GRASS4's
+  own lesson one level up: the key is a number and cx/cz ride the entry.
+  Third, and the one that actually grows with "many chunks": the host
+  spread every streamed pixel into an array, mapped it into a second one
+  and built a `pieceIndex` Map over it every frame, whether or not the
+  field had a cell to place - and `keep`/`ground` are called ONLY from
+  `placeLabGrassCell`. One lazy memo a frame: a frame that fills nothing
+  now allocates nothing. Not one blade changes where it stands.
+  **The lesson: GR5's cell budget made the FILL cheap and nobody went
+  back to ask whether the frame was still paying to decide what to fill.**
 - `systems/wind.js` - **WIND1 (2026-09-02) THE WIND IS ITS OWN THING.**
   Mac: "wind should be something different from the weather. Imagine a
   time-lapse, seeing a storm rolling in as the wind kicks up, and the
@@ -237,6 +404,13 @@ directory by `test/audit18_bible_docs.test.js`:
   WX1's byte-exact shaders untouched; both hosts wired alike; `?weather=`
   still pins the sim and a pinned boot is never a front; the stub audio
   handles. Still unseen: all of it, in a browser, with ARENA2.
+- `enhancedLighting.js` - EL1 THE ENHANCED LIGHTING LANE: five fragment shaders
+  (mesh, billboard, terrain, character, far ring) the renderer installs as a
+  unit over its classic set - sRGB decode, linear light, windowed inverse-square
+  lanterns x48, exposure + extended Reinhard, fog in-scatter, sRGB encode - and
+  the pure functions that ARE their terms; the switch (`enhancedLightingOn`),
+  the host's one call (`syncLightingLane`), the flame colour. See
+  `07-Rendering/Enhanced-Lighting-Arc.md`.
 - `enhancedSky.js` - ES1 the ENHANCED SKY: one fullscreen procedural
 - `dynamicSkiesRenderer.js` - DS1: Dynamic Skies' own skybox (BLBProceduralSkybox, translated line for line), the enhanced lane's sky while the vendored mod's switch is on; the same draw contract as `enhancedSky.js`.
 - `dynamicSkiesBridge.js` - DS2: the mod's state in the port's shapes - `dynamicMoonState` (the world's moonlight off the mod's orbits, DS1) and `cloudsStateUnderMod` (the volumetric clouds' six fields off the mod's sun, moons and horizon over the port's colours); one home the controller and the sky lab both import.
@@ -246,11 +420,6 @@ directory by `test/audit18_bible_docs.test.js`:
   skin (`?sky=classic` opts back to the painted pass); the classic pass
   above is untouched. Its lab is `sky.html` + `src/tools/skyLab.js`,
   its eye `tools/enhancedSkyProbe.mjs`.
-- `overworldRenderer.js` - U61 the OVERWORLD pass: the whole-bay relief,
-  its location markers, the route line and the cloud deck behind the
-  enhanced travel map (self-contained, save/restore, mirrorProjectionX
-  on its camera like every world pass - see `src/ui/overworldMap.js`
-  for the window that drives it).
 - `waterSurface.js` - WATER1 THE WATER SURFACE: the enhanced pass over the
   exterior water tiles - the terrain grid drawn again and lifted, the
   water-corner table that inverts the marching squares, the swell, foam, Fresnel,
@@ -299,7 +468,7 @@ directory by `test/audit18_bible_docs.test.js`:
   models merged once at build time into one mesh grouped by resolved texture, one
   draw call per texture instead of one per sub-mesh per model; the gates and the
   mills stay individual draws (test/perf4.test.js).
-- `renderTarget.js` - VC2 THE RENDER TARGET: a 2D colour target and a 3D
+- `renderTarget.js` (EL4: also the FRAME TARGET every pass restores to - the canvas, or the lane's frame image) - VC2 THE RENDER TARGET: a 2D colour target and a 3D
   volume, creation under the upload law (it sizes, parameterises and binds
   no framebuffer), the framebuffer work on named DRAW paths that leave the
   default framebuffer and the caller's viewport behind and never ask GL.
@@ -307,6 +476,21 @@ directory by `test/audit18_bible_docs.test.js`:
   + Worley at 8/16/32) and a 32^3 detail volume (Worley at 4/8/16), tiling on
   every axis, generated on the GPU one layer per draw; the lab's slice viewer
   (`?noise=`) behind tools/cloudNoiseProbe.mjs.
+- `warmPrograms.js` - PERF-WARM THE COMPILE THAT NO LONGER HAPPENS MID-FRAME:
+  the idle driver for the programs a renderer builds ON DEMAND. Five of
+  renderer.js's were compiled inside a draw call (the particle effects' on the
+  first spell, the character-sprite quad's on the first classic sprite, the
+  screen quad's, the instanced screen quad's and the overlay's), and a
+  compile-and-link is a DRIVER stall of tens of milliseconds that nothing here
+  can make cheaper - only MOVE. `renderer.warmSteps()` names them, one step
+  each; this walks them behind `requestIdleCallback`, one per callback, the
+  shape `ui/enhancedChunk.js` settled on and for the same reason. Both exterior
+  hosts add the rain's whole renderer to the walk. A leaf: no renderer type,
+  no lane, no GL.
+- `perfMeter.js` - EL8 THE PERF READOUT: `?perf` - the frame's GPU time on
+  `EXT_disjoint_timer_query_webgl2` and the lane's counts, one console line
+  every PERF_EVERY world frames. A leaf: no renderer, no lane. See
+  `07-Rendering/Enhanced-Lighting-Arc.md`.
 - `orderedDither.js` - what remains of the retro pass after FT3 (2026-09-14,
   Mac: "Remove our version of pixelated sky"): `ringSnap` (ES1g's ring grid,
   used now only to name a world-fixed cell a third of a degree across) and
@@ -322,6 +506,8 @@ directory by `test/audit18_bible_docs.test.js`:
   sixteen pixels snapped to the 819.2 grid, which the terrain, the models, the
   characters and the flats sample through renderer.js's CLOUD_SHADOW_GLSL;
   VC5: the arc closed after an Opus review (Volumetric-Clouds-Arc.md).
+
+RETIRED from this list (MAP1, 2026-09-18): `src/render/overworldRenderer.js`, the U61 OVERWORLD pass (the whole-bay relief, its markers, route line and cloud deck behind the enhanced travel map) - gone with the relief map itself (`src/ui/overworldMap.js`, RETIRED the same day) when the enhanced map became the held parchment (`src/ui/heldMap.js` + `src/ui/inkMap.js`, a 2D canvas that draws through no renderer pass; bible/10-UI/Held-Map-Arc.md).
 
 AUDIT 18 deleted a `groundMesh.js` bullet from this list: R10 had already
 deleted that module, and the bullet tagged it "(ledgered departure)" when

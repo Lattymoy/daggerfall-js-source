@@ -1,0 +1,36 @@
+name: "Montée en niveau à la manière d'Oblivion Remastered"
+description: "Permet aux joueurs d'allouer un montant défini de points pour améliorer les caractéristiques qu'ils souhaintent dans le menu de montée de niveau, à la manière de ce qui a été fait sur Oblivion Remastered."
+
+levelUpSettingsTitle: "Paramètres de montée en niveau"
+levelUpSettingsDescription: "Paramètres appliqués lors des montées en niveau"
+
+attributePointsName: "Points de caratéristique"
+attributePointsDescription: "Nombre de points disponibles pour améliorer les caractéristiques"
+
+maxUpdatableAttributeName: "Maximum de caractéristiques modifiables"
+maxUpdatableAttributeDescription: "Nombre de caractéristiques à faire évoluer lors d'une montée en niveau"
+
+allowLuckIncreaseName: "Autoriser l'amélioration de la Chance"
+allowLuckIncreaseDescription: "Autoriser l'amélioration de la Chance de plus d'un point par niveau"
+
+luckIncreaseCostName: "Coût d'amélioration de la Chance"
+luckIncreaseCostDescription: "Coût pour augmenter la Chance d'un point"
+
+skillSettingsTitle: "Paramètres des talents"
+skillSettingsDescription: "Paramètres concerant les talents"
+
+majorSkillsImpactName: "Impact des talents majeurs"
+majorSkillsImpactDescription: "Points rapportés par une monté en niveau d'un talent majeur (100 points requis pour monter en niveau)"
+
+minorSkillsImpactName: "Impact des talents mineurs"
+minorSkillsImpactDescription: "Points rapportés par une monté en niveau d'un talent mineur (100 points requis pour monter en niveau)"
+
+miscSkillsImpactName: "Impact des talents divers"
+miscSkillsImpactDescription: "Points rapportés par une monté en niveau d'un talent divers (100 points requis pour monter en niveau)"
+
+yes: "Oui"
+no: "Non"
+
+remaining_points_error: "Vous devez distribuer toutes les vertus avant de continuer"
+choose_attributes_label: "Choisir {count} caractéristiques à améliorer"
+remaining_points_label: "Vertus restantes"

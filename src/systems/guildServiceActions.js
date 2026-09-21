@@ -44,7 +44,7 @@ import { expandMacroValues } from './quest/questMacros.js';   // MH1: the ONE ma
  *
  *  The shared %pcn/%pcf/%cn/%oth ride the same value map, so a guild
  *  record with a player name in it reads correctly too. */
-export function expandGuildMacros(text, { amount = null, gold = null, god = null, guildTitle = null, roomHours = null, race = null, honorific = null, shopName = null, playerName = '', cityName = '' } = {}) {
+export function expandGuildMacros(text, { amount = null, gold = null, god = null, guildTitle = null, roomHours = null, race = null, honorific = null, shopName = null, factionName = null, playerName = '', cityName = '' } = {}) {
   // MH1: ONE walk (questMacros.expandMacroValues) over ONE value map.
   // A null value leaves its token VERBATIM - exactly the `if (x !=
   // null)` guards the old replaceAll chain carried - and the walk's
@@ -64,7 +64,20 @@ export function expandGuildMacros(text, { amount = null, gold = null, god = null
     // U40: MacroHelper.cs:69 `{ "%cpn", ShopName }` - the CURRENT
     // SHOP's name, which the trade records quote back at the player.
     cpn: shopName,
+    // MACROS1 (2026-09-20, kurkku on Discord: "%fon always has room for a skillful knight..."): MacroHelper.cs
+    // `{ "%fon", FactionOrderName }` and `{ "%kno", FactionOrderName }` - the guild's own faction name off
+    // FACTION.TXT, which the knightly orders' invitation (and every guild record with the guild's name in it) quotes.
+    // DFU's GuildServicePopupWindow hands ITSELF to MacroHelper for every box it shows; the port's join flow handed
+    // the rows over verbatim. MAC-BUGS W1's lesson, one symbol further: the table was filled for the symbols
+    // somebody expected.
+    fon: factionName, kno: factionName,
   });
+}
+
+/** MACROS1: a TEXT.RSC record's rows ([{ text, center }] or bare strings) through expandGuildMacros - the shape kept,
+ *  as guildServiceWindows.js maps its own. */
+export function expandGuildRows(rows, ctx) {
+  return (rows ?? []).map((r) => (typeof r === 'string' ? expandGuildMacros(r, ctx) : r && typeof r === 'object' ? { ...r, text: expandGuildMacros(r.text ?? '', ctx) } : r));
 }
 
 /** DaggerfallTradeWindow's two shared ids, which all three of these
@@ -198,8 +211,8 @@ export const CURE_BASE_COST_PER_DISEASE = 250;
  *  it off the ENTITY exactly as DFU reads it off playerEntity (:57-59)
  *  rather than taking it from a host. The field arrives from the
  *  classic import (formats/characterRecord.js:183, offset 0x1f3 ->
- *  classicSave.js:201/:796) and round-trips through the save envelope
- *  (save.js:377 out, :443 back). It
+ *  classicSave.js:202/:805) and round-trips through the save envelope
+ *  (save.js:416 out, :483 back). It
  *  reaches a character only through AssignCharacter (PlayerEntity.cs
  *  :856), i.e. a classic import - the port's own infections are
  *  disease effects and diseaseCount already counts those - so a

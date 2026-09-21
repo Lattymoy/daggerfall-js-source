@@ -36,7 +36,7 @@ test('F035/F041: every damage door takes a provenance flag, defaulting TRUE', ()
   // AUDIT 58: the three doors also take bypassShield now, the same
   // idiom for the same reason - Shield mitigates DAMAGE, and the
   // SetHealth(0) door is not damage (DaggerfallEntity.cs:313-328).
-  assert.ok(src('scenes/cityGuards.js').includes('function damageGuard(g, damage, playerFeet, knockDir, { fromPlayer = true, bypassShield = false } = {})'));
+  assert.ok(src('scenes/cityGuards.js').includes('function damageGuard(g, damage, playerFeet, knockDir, { fromPlayer = true, bypassShield = false, peer = false } = {})'));
   assert.ok(src('scenes/exteriorFoes.js').includes("function damageFoe(f, damage, playerFeet, knockDir = null, { fromPlayer = true, bypassShield = false, kind = 'melee', peer = false, peerId = null } = {})"));   // WORLD6b-ii: and the striker's id, as the dungeon's   // WORLD6b: the kind and the peer flag, as the dungeon's
   assert.ok(src('scenes/dungeonContext.js').includes('function damageFoe(foe, damage, playerFeet = null, knockDir = null, { fromPlayer = true, bypassShield = false, kind = \'melee\', peer = false, peerId = null } = {})'));   // WORLD3: and the striker's id (the aggro turns on the peer); WORLD2: and the blow's kind, for the hit that goes to the host; AUDIT WORLD2 C4: and whether it is a peer's
 });
@@ -180,7 +180,9 @@ test('F040: a falling watchman bleeds, like every other falling enemy', () => {
   // its controller on the transform (m_Center 0) while
   // SetupDemoEnemy.cs:98-115 moves only controller.center. The clip
   // above stays at the feet: :1409 rings it at FindGroundPosition().
-  assert.ok(arm.slice(0, 2600).includes('hitEffects?.showBloodSplash(0, g.ai._centre());'),
+  // BLOOD1b carried the BLOW in beside it; what this pin holds -
+  // record 0, at the transform - is unchanged.
+  assert.ok(arm.slice(0, 2600).includes('hitEffects?.showBloodSplash(0, g.ai._centre(), null, bloodHit(gdmg, g.entity));'),
     'ShowBloodSplash(0, transform.position) on every fall past the threshold');
   assert.equal(arm.slice(0, 2600).includes('showBloodSplash(0, [g.ai.feet[0], g.ai.feet[1], g.ai.feet[2]])'), false,
     'not at the feet - that was the pre-F20 reading');
@@ -189,17 +191,17 @@ test('F040: a falling watchman bleeds, like every other falling enemy', () => {
   // the sibling pool has done this since CH3 - one law, both pools
   const xf = src('scenes/exteriorFoes.js');
   const xarm = xf.slice(xf.indexOf('if (f.ai.landedFall > 0'));
-  assert.ok(xarm.slice(0, 2000).includes('hitEffects?.showBloodSplash(0, f.ai._centre());'));
+  assert.ok(xarm.slice(0, 2000).includes('hitEffects?.showBloodSplash(0, f.ai._centre(), null, { ...bloodHit(fdmg, f.entity), markIndex: ENEMY_BASICS[f.mobileType]?.bloodIndex ?? 0 });'));   // BLOOD1 AUDIT 3: the splash at 0, the mark the foe's own
 });
 
 test('F206: a damaging fall in a dungeon flashes the screen', () => {
   const d = src('scenes/dungeonContext.js');
   const arm = d.slice(d.indexOf('if (fell > FALL_DAMAGE_THRESHOLD) {'));
-  assert.ok(arm.slice(0, 400).includes('flashPlayerDamage();'), 'RemoveHealth opens with the flash');
+  assert.ok(arm.slice(0, 400).includes('flashPlayerDamage(_fallDmg);'), 'RemoveHealth opens with the flash (BA1: carrying its amount)');
   // the stale "pends the HUD arc" note is gone - the file already
   // flashed for arrows and melee, and the shared helper flashes here.
   assert.equal(d.includes('The\n      // ShowPlayerDamage screen flash pends the HUD arc (flagged).'), false);
-  assert.ok(src('scenes/shared.js').includes('flashPlayerDamage();'), 'the other three hosts route through this');
+  assert.ok(src('scenes/shared.js').includes('flashPlayerDamage(dmg);'), 'the other three hosts route through this (BA1: carrying its amount)');
 });
 
 // ── F052 / F053 ───────────────────────────────────────────────────

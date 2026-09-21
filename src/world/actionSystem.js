@@ -503,10 +503,10 @@ constructor(collider, { damagePlayer = null, drainMagicka = null, castSpell = nu
       const dmg = (a + Math.floor(this._rolls() * span)) * lvl;
       // AUDIT 24 (wave 39): DaggerfallAction.cs:739 sends RemoveHealth,
       // so a damage trap flashes the screen (ShowPlayerDamage).
-      if (this._damagePlayer) { this._damagePlayer(dmg); flashPlayerDamage(); }
+      if (this._damagePlayer) { this._damagePlayer(dmg); flashPlayerDamage(dmg); }   // BA1: RemoveHealth carries the amount
     } else if (o.actionFlag >= F.Hurt22 && o.actionFlag <= F.Hurt25) {
       const dmg = (o.isFlat ? o.magnitude : o.axisRaw) * lvl;
-      if (this._damagePlayer) { this._damagePlayer(dmg); flashPlayerDamage(); }   // :768, the same message
+      if (this._damagePlayer) { this._damagePlayer(dmg); flashPlayerDamage(dmg); }   // :768, the same message
     }
     else if (o.actionFlag === F.CastSpell) {
       // S4b verbatim: cooldown -= 45.454546 per Play; at <= 0 the

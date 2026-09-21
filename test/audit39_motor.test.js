@@ -372,8 +372,12 @@ test('AUDIT 39r: the hosts add and drop the mouse code on the button edges', () 
     assert.match(s, /import \{[^}]*mouseCode[^}]*\} from '\.\.\/ui\/input\.js';/, `${f}: the one translation table`);
     const down = s.split('\n').find((l) => l.includes("addEventListener('mousedown'"));
     const up = s.split('\n').find((l) => l.includes("addEventListener('mouseup'"));
-    assert.ok(down.includes('const mc = mouseCode(e.button); if (mc) keys.add(mc);'), `${f}: down feeds the set`);
-    assert.ok(up.includes('const mc = mouseCode(e.button); if (mc) keys.delete(mc);'), `${f}: up drops it`);
+    // MWCROUCH: the button feeds the frame's key-EDGE ring beside the
+    // held Set, because an edge read (GetKeyDown/GetKeyUp) has the same
+    // claim on Mouse0/1/2 that GetKey has - a slice that fed one and
+    // not the other would give a rebound button a press and no edge.
+    assert.ok(down.includes('const mc = mouseCode(e.button); if (mc) { keys.add(mc); noteKeyDown('), `${f}: down feeds the set`);
+    assert.ok(up.includes('const mc = mouseCode(e.button); if (mc) { keys.delete(mc); noteKeyUp('), `${f}: up drops it`);
     // never the raw DOM number - that crosses the middle and right names
     assert.ok(!s.includes("'Mouse' + e.button"), `${f}: no hand-spelled code`);
   }

@@ -36,6 +36,7 @@ import {
 import { GROUP_TEMPLATE_INDICES, ITEM_TEMPLATES, mintCondition, rollPaintingMessage } from '../itemTemplates.js';
 import { createBook, createRandomBook } from '../books.js';   // A2: ItemBuilder.CreateBook / CreateRandomBook
 import { goldStack } from '../inventory.js';
+import { itemLongName } from '../itemInfo.js';   // MAC-D: ResolveItemLongName, which Item.cs:304-307 is a call to
 import { alterReward } from '../guilds.js';
 import { CLOTHING_DYES } from '../../characters/dyes.js';
 
@@ -88,11 +89,27 @@ export class Item extends QuestResource {
 
   /** ExpandMacro (Item.cs:236-260): _symbol_ and =symbol_ both
    *  answer the item's name - an artifact its SHORT name, gold its
-   *  STACK COUNT, everything else the long name.
-   *  ResolveItemLongName's material/condition prefix half is the
-   *  inventory arc's label maker; the port's shop windows speak the
-   *  same plain template name today (worldModes._itemLabel), so the
-   *  long name here is name ?? template name - one convention. */
+   *  STACK COUNT, everything else `GetLongName` (:304-307), which is
+   *  `ResolveItemLongName(item, false)`.
+   *
+   *  MAC-D (2026-09-17, Mac: "I was given a quest to find a book, but
+   *  the book's name was just *Book*"). This line used to return
+   *  `it.name` - the raw field, which for a book is the TEMPLATE's
+   *  name - under a note that said: "ResolveItemLongName's
+   *  material/condition prefix half is the inventory arc's label
+   *  maker; the port's shop windows speak the same plain template name
+   *  today, so the long name here is name ?? template name - one
+   *  convention." That was true when it was written and stopped being
+   *  true at D7, which ported `ResolveItemLongName` whole. The quest
+   *  machine went on naming a Daedric Broadsword "Broadsword", a
+   *  potion "Glass Bottle", a quest letter "Parchment" - and a book
+   *  "Book", which is the one a player read out loud.
+   *
+   *  `differentiatePlantIngredients` is FALSE here because :306 passes
+   *  false: a quest asking for a plant names the plant, not its
+   *  (northern) variant. `getQuest` is the letter arm's, taken from
+   *  the quest this resource belongs to rather than a machine lookup -
+   *  a letter in a quest names its own quest's signoff. */
   expandMacro(macroType) {
     if (macroType !== 1 && macroType !== 5) return false;   // NameMacro1/DetailsMacro
     const it = this.daggerfallUnityItem;
@@ -100,7 +117,11 @@ export class Item extends QuestResource {
     if (this.artifact) return it.shortName ?? it.name ?? false;
     const isGold = it.group === 'Currency' || (it.groupIndex === 7 && it.templateIndex === 230);
     if (isGold) return String(it.stackCount ?? 0);
-    return it.name ?? it.shortName ?? false;
+    const long = itemLongName(it, {
+      differentiatePlantIngredients: false,
+      getQuest: (uid) => (uid === this.parentQuest?.uid ? this.parentQuest : null),
+    });
+    return long || it.name || it.shortName || false;
   }
 
   setResource(line) {

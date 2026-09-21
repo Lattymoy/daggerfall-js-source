@@ -130,7 +130,10 @@ test('RF6: no second derivation - the enhanced modules read the resolver, never 
   assert.match(inv, /material: parts\.material \|\| null,/);
   assert.match(inv, /const named = itemLongName\(item, \{ getQuest: deps\.getQuest \?\? null \}\);[\s\S]*?\$\{named\} is broken[\s\S]*?may not use \$\{named\}[\s\S]*?\$\{named\} cannot be worn/, 'the three notices name through the resolver');
   assert.match(read('src/ui/lootHover.js'), /name: itemNameParts\(it\)\.name \|\| 'Something',/, 'the plaque');
-  assert.match(read('src/ui/enhancedHud.js'), /const weaponName = held2 \? itemLongName\(held2\) : null;/, 'the HUD\'s held weapon');
+  // QS3: the HUD's hand plaque became the quickslot diamond, whose every
+  // cell is named by the model's one `cell()` through the resolver.
+  assert.match(read('src/systems/quickslots.js'), /const cell = \(item, extra = \{\}\) => \(\{ item, name: itemLongName\(item\), condition: conditionPercentage\(item\), \.\.\.extra \}\);/, 'the HUD\'s held weapon');
+  assert.doesNotMatch(read('src/ui/enhancedHud.js'), /materialName\(|resolveItemName\(/, 'the diamond derives no name of its own');
   const files = readdirSync(join(root, 'src/ui')).filter((f) => /^enhanced.*\.js$|^lootHover\.js$|^hud.*\.js$/.test(f));
   assert.ok(files.length >= 12);
   for (const f of files) {

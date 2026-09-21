@@ -172,11 +172,21 @@ export class TownPopulation {
       this._timer = 0;
       this._tick(playerPos, viewYaw, isDay);
     }
-    const out = [];
+    // PERF-TOWN1: the LIST and its rows are this pool's own, refilled
+    // rather than rebuilt. The caller walks it within the frame and
+    // keeps nothing, so a new array and a new row per visible person
+    // per frame bought nothing.
+    const out = this._live ??= [];
+    out.length = 0;
+    const seats = this._rows ??= [];
     for (const it of this.pool) {
       if (!it.active || !it.visible) continue;
       const frameOut = it.person.update(dt, cameraPos, wantsToStopFn(it.person));
-      if (it.person.moveCount > 0) out.push({ person: it.person, out: frameOut });
+      if (it.person.moveCount > 0) {
+        const seat = seats[out.length] ??= { person: null, out: null };
+        seat.person = it.person; seat.out = frameOut;
+        out.push(seat);
+      }
     }
     return out;
   }

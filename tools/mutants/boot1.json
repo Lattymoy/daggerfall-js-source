@@ -1,0 +1,29 @@
+[
+  {
+    "name": "BOOT1-a-host-back-on-the-entry-statically",
+    "file": "src/main.js",
+    "old": "const bootWorld = (...a) => import('./scenes/world.js').then((m) => m.bootWorld(...a));",
+    "new": "import { bootWorld } from './scenes/world.js';",
+    "tests": [
+      "test/boot1.test.js"
+    ]
+  },
+  {
+    "name": "BOOT1-the-warm-up-rejects-unhandled",
+    "file": "src/main.js",
+    "old": "    import('./scenes/world.js').catch(() => {});",
+    "new": "    import('./scenes/world.js');",
+    "tests": [
+      "test/boot1.test.js"
+    ]
+  },
+  {
+    "name": "BOOT1-the-warm-up-is-gone",
+    "file": "src/main.js",
+    "old": "    import('./scenes/world.js').catch(() => {});\n",
+    "new": "",
+    "tests": [
+      "test/boot1.test.js"
+    ]
+  }
+]

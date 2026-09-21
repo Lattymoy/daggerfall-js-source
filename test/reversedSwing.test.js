@@ -136,7 +136,8 @@ test('MS1: a right slash runs the clip backwards on the same arm - wind-up from 
 test('MS1: no mirror anywhere - the draws are untouched and the pose alone reads the window backwards', () => {
   const src = rd('src/combat/fpArm.js');
   assert.ok(!/MIRROR_X|mirrorNow|attackMirror/.test(src), 'the mirror is gone: a mirror changes hands');
-  assert.match(src, /renderCharacterSprite\(mesh, NIF_TO_PASS, proj, view, pw, ph, \{ lensLocal: true \}\)/);
+  // MAC-P: ...and its light (viewmodelLight), which changes no matrix here.
+  assert.match(src, /renderCharacterSprite\(mesh, NIF_TO_PASS, proj, view, pw, phFull, \{ lensLocal: true, viewmodelLight: vmLight \}\)/);
   assert.match(src, /const poseTime = \(state\) => \(state && state\.reversed \? state\.startTime \+ state\.stopTime - state\.time : state\.time\);/);
   assert.equal((src.match(/time: poseTime\(state\),/g) || []).length, 2, 'both rigs pose through it');
   assert.match(src, /actionState\.reversed = !!reversed;/);

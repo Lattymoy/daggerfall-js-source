@@ -1,41 +1,37 @@
-// ═══ AUDIT-EOTB2 (2026-09-16): THE BODY WAS A STATUE ═══════════════
+// ═══ AUDIT-EOTB2 (2026-09-16) → EOTB-IL (2026-09-17): THE INTEGRATION ═══
 //
 // Mac: "Do an audit on eye of the beholder. Ensure its integrated 1:1.
-// No half assed work." A player, the same day: "scrolling the mouse
-// wheel down during regular gameplay makes some wacky stuff happen."
+// No half assed work." Then, with the shipped archive in hand: "it
+// needs to be 1:1 with the uploaded file. No exceptions."
 //
-// The assembly is NOT in the tree and cannot be fetched from the
-// container (Nexus gates the bundle behind a login), so this audit is
-// two things and says which is which: the INTEGRATION of what EOTB2-5
-// read off the IL, driven end to end and repaired; and the sixteen
-// members the arc left "NOT DONE", ported from the settings' own names,
-// descriptions and option labels [SETTINGS] with the state table the
-// IL gave us. Every [SETTINGS] law is pinned here so that the day the
-// assembly is read, a wrong reading fails a test rather than a player.
+// AUDIT-EOTB2 wired the body through the only path a player has
+// (`mwViewFrame`) and, with the assembly out of reach, read sixteen
+// members off the settings' labels and marked them [SETTINGS]. EOTB-IL
+// read the assembly. Every [SETTINGS] law is gone from the tree; the
+// pins below drive the same integration against the IL's own laws,
+// and the ones AUDIT-EOTB2 got wrong say so where they are corrected.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { createEotbBody, bodyState, CLIP_FRAMES } from '../src/player/eotbBody.js';
-import { eotbBody } from '../src/player/eotbBody.js';
-import { eotbCamera, createEotbCamera, readCameraSettings } from '../src/player/eotbCamera.js';
-import {
-  attackString, clipFrames, turnsToView, autoToggleSituation, deathTable, ATTACK_STRINGS, TURN_TO_VIEW,
-  AUTO_TOGGLE_ROWS, AUTO_TOGGLE, frameTime, FOOTSTEP_FRAMES,
-} from '../src/player/eotbBillboard.js';
-import { spriteFor, SIZE_ON_FOOT, SIZE_RIDING_OR_TRANSFORMED, worldOrderColors, flipRows } from '../src/player/eotbSprite.js';
+import { createEotbBody, eotbBody, MATERIAL, FOOTSTEP_VOLUME_SCALE } from '../src/player/eotbBody.js';
+import { eotbCamera, createEotbCamera, readCameraSettings, AUTO_TOGGLE_MESSAGES } from '../src/player/eotbCamera.js';
+import { STRING, frameCount, AUTO_TOGGLE, TABLE_FRAMES } from '../src/player/eotbBillboard.js';
+import { getMeleeWeaponAnimTime } from '../src/characters/weaponStates.js';
+import { worldOrderColors, flipRows } from '../src/player/eotbSprite.js';
 import { toColor32 } from '../src/formats/color32Order.js';
 import {
-  mwViewFrame, mwViewFootstep, mwViewHides, mwViewTransition, mwViewLoadPose, mwViewPendingClicks,
+  mwViewFrame, mwViewFootstep, mwViewHides, mwViewTransition, mwViewLoadPose, mwViewNewGame, mwViewRebase, mwViewPendingClicks,
   setEotbBodyReady, setEotbDrawBody, setEotbPlayerState, eotbLane,
 } from '../src/player/mwView.js';
 import { mwCamera } from '../src/player/mwCamera.js';
 import { FootstepMachine, FOOTSTEP_VOLUME } from '../src/systems/footsteps.js';
-import { setModSetting, _resetModSettings, MOD_SETTINGS } from '../src/systems/modSettings.js';
+import { setModSetting, _resetModSettings } from '../src/systems/modSettings.js';
 import { createWeaponRig } from '../src/combat/weaponRig.js';
 import { domCodeForKeyCode } from '../src/systems/keyCodes.js';
+import { motionBagOf } from '../src/player/motor.js';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const rd = (p) => readFileSync(join(root, p), 'utf8');
@@ -45,9 +41,10 @@ const renderer = () => ({
   uploads: [], batches: [],
   uploadTexture(archive, rec, img) { this.uploads.push({ archive, rec, img }); },
   createBillboardBatch(archive, rec, size) { const b = { archive, rec, size, origin: [0, 0, 0] }; this.batches.push(b); return b; },
+  destroyBillboardBatch() {},
   drawBillboards() {},
 });
-/** A body with art present and an instant decode - the shape a browser has. */
+/** A body with art present and an instant decode, active in third person. */
 async function liveBody(over = {}) {
   const r = renderer();
   const b = createEotbBody({
@@ -56,12 +53,16 @@ async function liveBody(over = {}) {
     ...over,
   });
   b.attach(r, () => ({}));
-  await Promise.resolve(); await Promise.resolve();
+  await new Promise((res) => setTimeout(res, 5));
+  b.toggle(true, false);
   return { b, r };
 }
+const walk = (extra = {}) => ({ motion: { forward: 1, standing: false, speed: 3, grounded: true, height: 1.8 }, feet: [0, 0, 0], yaw: 0, cameraPos: [0, 1.5, -2], liveSpeed: 50, ...extra });
+const still = (extra = {}) => ({ motion: { forward: 0, standing: true, speed: 0, grounded: true, height: 1.8 }, feet: [0, 0, 0], yaw: 0, cameraPos: [0, 1.5, -2], liveSpeed: 50, ...extra });
+const ticks = (b, n, state, dt = 1 / 60) => { for (let i = 0; i < n; i++) b.tick(dt, state); };
 const tickSeconds = (b, seconds, state, step = 1 / 60) => { for (let t = 0; t < seconds; t += step) b.tick(step, state); };
 
-/** The seam as a fresh session has it (eotb_view.test.js's reset), the lane OPEN. */
+/** The seam as a fresh session has it, the lane OPEN. */
 function openLane() {
   _resetModSettings();
   setEotbBodyReady(() => true);
@@ -73,304 +74,262 @@ function openLane() {
   for (let i = 0; i < 4 && mwViewPendingClicks(); i++) mwViewFrame({ fpEye: [0, 1.6, 0], feet: [0, 0, 0], yaw: 0, pitch: 0 });
   assert.equal(eotbLane(), true, 'the lane is open for these pins');
 }
-const closeLane = () => { setEotbBodyReady(null); setEotbPlayerState(null); eotbCamera.toggleOffset(false); _resetModSettings(); };
+const closeLane = () => { setEotbBodyReady(null); setEotbPlayerState(null); eotbCamera.toggleOffset(false); eotbBody.attach(null, null); _resetModSettings(); };
 
 // ─────────────────────────────────────────────────────────────────
 // THE STATE - one home, and the seam carries it whole
 // ─────────────────────────────────────────────────────────────────
 
-test('AUDIT-EOTB2: bodyState reads the rig\'s record and the hosts\' motion bag - the fields chooseTable was starving for', () => {
-  const walking = bodyState({ weaponReady: true, motion: { forward: 1, strafe: 0, running: false, riding: false, standing: false } });
-  assert.equal(walking.stopped, false, 'a move axis is not stopped');
-  assert.equal(walking.sheathed, false, 'weaponReady is the rig\'s word for unsheathed');
-  assert.equal(walking.galloping, false);
-  const galloping = bodyState({ motion: { forward: 1, running: true, riding: true, standing: false } });
-  assert.deepEqual([galloping.riding, galloping.galloping], [true, true], 'the saddle at a run gallops');
-  const still = bodyState({ motion: { forward: 0, strafe: 0, standing: true } });
-  assert.equal(still.stopped, true);
-  assert.equal(bodyState({}).stopped, true, 'no record at all stands still - the shape the statue had');
-  assert.equal(bodyState({ stopped: false, motion: { standing: true } }).stopped, false, 'a host\'s explicit word wins over the bag');
-  assert.deepEqual(bodyState({ died: true, transformed: true, lycanthropyType: 2, spellcasting: true, usingBow: true }),
-    { died: true, transformed: true, lycanthropyType: 2, riding: false, stopped: true, galloping: false, sheathed: true, spellcasting: true, usingBow: true, forward: 0, strafe: 0 });
-});
-
-test('AUDIT-EOTB2: THE STATUE WALKS - through the seam, the rig\'s record drives the table, the death and the saddle', () => {
+test('EOTB-IL: THE STATUE WALKS - through the seam, the rig\'s record drives the table, the death and the saddle', () => {
   openLane();
   try {
+    const rend = renderer();
+    eotbBody.attach(rend, () => ({}));
+    // attach re-arms the gate on the body's own `ready()` (the first
+    // sprite's decode, a fetch here) - hold the lane open for the pin
+    setEotbBodyReady(() => true);
+    eotbCamera.toggleOffset(true);
     const eye = { fpEye: [0, 1.6, 0], feet: [0, 0, 0], yaw: 0, pitch: 0, dt: 1 / 60 };
-    setEotbPlayerState(() => ({ sheathed: false, motion: { forward: 1, standing: false } }));
+    setEotbPlayerState(() => ({ sheathed: false, motion: { forward: 1, standing: false, speed: 3, grounded: true } }));
     mwViewFrame(eye);
     assert.equal(eotbBody.state().table, 'MoveMelee', 'walking with a drawn weapon: the MoveMelee table, not Idle');
     setEotbPlayerState(() => ({ sheathed: true, motion: { forward: 0, standing: true } }));
     mwViewFrame(eye);
     assert.equal(eotbBody.state().table, 'Idle');
-    setEotbPlayerState(() => ({ motion: { forward: 1, running: true, riding: true, standing: false } }));
+    setEotbPlayerState(() => ({ motion: { forward: 1, running: true, riding: true, standing: false, speed: 12 } }));
     mwViewFrame({ ...eye, riding: true });
-    assert.equal(eotbBody.state().table, 'GallopHorse', 'the hosts\' riding and the bag\'s run: a gallop');
+    assert.equal(eotbBody.state().table, 'GallopHorse', 'the hosts\' riding and a horse\'s speed: a gallop');
+    setEotbPlayerState(() => ({ motion: { forward: 1, riding: true, standing: false, speed: 7.6 } }));
+    mwViewFrame({ ...eye, riding: true });
+    assert.equal(eotbBody.state().table, 'MoveHorse', 'the cart\'s speed: a walk');
     setEotbPlayerState(() => ({ died: true }));
     mwViewFrame(eye);
-    assert.equal(eotbBody.state().table, 'Death', 'dead: the Death table');
-    assert.ok(eotbBody.state().clip?.death, 'as a held one-shot');
-    setEotbPlayerState(() => ({ transformed: true, motion: { forward: 1, standing: false } }));
-    mwViewFrame(eye);
-    assert.equal(eotbBody.state().table, 'MoveLycan', 'alive again and transformed: the lycan walk, the death clip gone');
-    assert.equal(eotbBody.state().clip, null);
+    assert.equal(eotbBody.state().clip?.table, 'Death', 'dead: the Death clip, frozen');
+    assert.equal(eotbBody.state().died, true);
+    // the camera handed the body the frame's eye
+    assert.deepEqual(eotbBody.state().last.stopped, true);
   } finally { closeLane(); }
 });
 
-test('AUDIT-EOTB2: the rig registers the WHOLE record, off the motion bag its camera thunk already carries - no host grew a line', () => {
+test('EOTB-IL: the rig registers the WHOLE record - the motion bag and what LateUpdate polls off DFU - and the bag carries what PlayerMotor is read for', () => {
   const rig = rd('src/combat/weaponRig.js');
-  const reg = /eotbBody\.attach\(renderer, \(\) => \(\{([\s\S]*?)\}\)\);/.exec(rig);
+  const reg = /const eotbState = \(\) => \(\{([\s\S]*?)\}\);\s*\n\s*const bindBody = \(\) => eotbBody\.attach\(renderer, eotbState\);/.exec(rig);   // MAC-O3: the thunk is named so the frame can re-claim it
   assert.ok(reg, 'the one registration');
   for (const f of ['weaponReady:', 'sheathed: playerWeapon.sheathed', 'spellcasting: spellArmed()', 'usingBow: !!playerWeapon.machine.isBow',
-    'transformed: !!entity && isTransformedLycanthrope(entity)', 'lycanthropyType:', 'died: !!entity && (entity.health ?? 1) <= 0', 'motion: camera?.()?.move ?? null']) {
+    'transformed: !!entity && isTransformedLycanthrope(entity)', 'lycanthropyType:', 'died: !!entity && (entity.health ?? 1) <= 0', 'motion: camera?.()?.move ?? null',
+    'attacking: playerWeapon.machine.state !== \'Idle\'', 'castPlaying: !!fpsSpellCasting.isPlayingAnim', 'bowDrawback: getBool(\'Controls\', \'BowDrawback\')',
+    'swingHeld: _held', 'liveSpeed: entity ? liveStat(entity, \'speed\') : 50', 'concealment: entity ? concealmentFlags(entity) : null']) {
     assert.ok(reg[1].includes(f), `the record carries ${f}`);
   }
-  // and every host's camera thunk hands the rig the ONE motion bag (WW2's law), which is where `motion` comes from
   for (const h of ['src/scenes/world.js', 'src/scenes/exterior.js', 'src/scenes/worldModes.js', 'src/scenes/dungeonContext.js']) {
     assert.match(rd(h), /move: (?:motionBagOf\(player\)|_fpMove)/, `${h}: the thunk carries the bag`);
   }
+  // the bag: the sneak, FreezeMotor, OnExteriorWater == Swimming, the live capsule height
+  const bag = motionBagOf({ moveForward: 1, isSneaking: true, freezeMotor: 0.2, onExteriorWater: true, height: 0.9, grounded: true });
+  assert.equal(bag.sneaking, true);
+  assert.equal(bag.freeze, 0.2);
+  assert.equal(bag.onExteriorWater, true);
+  assert.equal(bag.height, 0.9);
 });
 
 // ─────────────────────────────────────────────────────────────────
-// THE ONE-SHOTS [SETTINGS]
+// THE ONE-SHOTS [IL]
 // ─────────────────────────────────────────────────────────────────
 
-test('AUDIT-EOTB2 [SETTINGS]: AttackStrings by its own labels - None forward, PingPong turned at n-1-offset, Mirror flipped, Mixed one of the two', () => {
-  assert.deepEqual([...ATTACK_STRINGS], ['None', 'Mirror', 'PingPong', 'Mixed'], 'modsettings.json\'s options, in order');
-  assert.equal(attackString(0), 'None');
-  assert.equal(attackString(1), 'Mirror');
-  assert.equal(attackString(2), 'PingPong');
-  assert.equal(attackString(3, () => 0.2), 'Mirror');
-  assert.equal(attackString(3, () => 0.7), 'PingPong');
-  assert.equal(attackString(9), 'None', 'off the table is None');
-  assert.deepEqual(clipFrames(5), [0, 1, 2, 3, 4]);
-  assert.deepEqual(clipFrames(5, { pingPong: true, pingPongOffset: 1 }), [0, 1, 2, 3, 2, 1, 0], 'the shipped offset turns one frame early');
-  assert.deepEqual(clipFrames(5, { pingPong: true, pingPongOffset: 0 }), [0, 1, 2, 3, 4, 3, 2, 1, 0]);
-  assert.deepEqual(clipFrames(5, { pingPong: true, pingPongOffset: -3 }), [0, 1, 2, 3, 4, 3, 2, 1, 0], 'past the end clamps to the last frame');
-  assert.deepEqual(clipFrames(5, { pingPong: true, pingPongOffset: 3 }), [0, 1, 0]);
-  assert.deepEqual(clipFrames(5, { pingPong: true, pingPongOffset: 9 }), [0], 'past the start is the first frame alone');
-  assert.deepEqual(clipFrames(0), [0], 'an empty clip is one frame, never nothing');
-});
-
-test('AUDIT-EOTB2 [SETTINGS]: an attack plays its table ONCE at the frame clock and the loop resumes; the drawn bow HOLDS its last frame until released', async () => {
+test('EOTB-IL: a swing plays the six-frame AttackMelee at GetMeleeAnimTickTime, started by IsAttacking, once, and the loop resumes', async () => {
   _resetModSettings();
-  setModSetting(MOD, 'Graphics.AttackStrings', 0);   // None: the plain forward clip
+  setModSetting(MOD, 'Graphics.AttackStrings', STRING.None);
   const { b } = await liveBody();
-  b.reload();
-  const walking = { sheathed: false, motion: { forward: 1, standing: false } };
-  b.tick(1 / 60, walking);
+  ticks(b, 12, walk({ sheathed: false }));
   assert.equal(b.state().table, 'MoveMelee');
-  const clip = b.attack('StrikeDown');
-  assert.equal(clip.table, 'AttackMelee', 'the swing: the stance\'s attack table');
-  assert.deepEqual(clip.frames, [0, 1, 2, 3, 4]);
-  b.tick(0, walking);
-  assert.equal(b.state().table, 'AttackMelee', 'drawn over the loop');
-  assert.equal(b.state().frame, 0);
-  const step = frameTime(false, 1);
-  b.tick(step * 2.5, walking);
-  assert.equal(b.state().frame, 2, 'two frames on, at get_frameTime\'s step');
-  b.tick(step * 3, walking);
-  assert.equal(b.state().clip, null, 'past the last frame the clip is gone');
+  b.tick(1 / 60, walk({ sheathed: false, attacking: true }));
+  const clip = b.state().clip;
+  assert.ok(clip, 'IsAttacking starts the clip (IL_3eee-IL_3f3b)');
+  assert.equal(clip.table, 'AttackMelee');
+  assert.deepEqual(clip.frames, [0, 1, 2, 3, 4, 5], 'the art\'s six frames, forward');
+  const animTime = getMeleeWeaponAnimTime(50);
+  assert.equal(clip.interval, animTime * 5 / 6, 'the weapon\'s own frame time, five over six');
+  assert.equal(b.state().shown.frame, 0, 'the first frame paints in the same LateUpdate');
+  b.tick(1 / 60, walk({ sheathed: false, attacking: true }));
+  assert.equal(b.state().clip.i, 0, 'no second clip while one is in flight');
+  tickSeconds(b, animTime * 5 + 0.1, walk({ sheathed: false, attacking: false }));
+  assert.equal(b.state().clip, null, 'past the last frame and its wait the clip is gone');
   assert.equal(b.state().table, 'MoveMelee', 'and the loop is back');
+  // a dead body swings nothing; a rider swings nothing
+  b.tick(0, walk({ died: true, attacking: true }));
+  assert.equal(b.state().clip?.table, 'Death');
+  const { b: rider } = await liveBody();
+  ticks(rider, 3, walk({ riding: true, attacking: true, motion: { forward: 1, riding: true, standing: false, speed: 12, grounded: true } }));
+  assert.equal(rider.state().clip, null, 'PlayMeleeAttackAnimation returns in the saddle (IL_5050-IL_5060)');
+  _resetModSettings();
+});
 
-  // the bow: hold on the last frame while the string is drawn
-  const bow = { sheathed: false, usingBow: true, motion: { forward: 0, standing: true } };
-  b.tick(0, bow);
-  const drawn = b.attack('StrikeUp', { hold: true });
-  assert.equal(drawn.table, 'AttackRanged');
-  b.tick(step * 10, bow);
-  assert.equal(b.state().frame, 4, 'held on the last frame');
-  assert.ok(b.state().clip?.done && b.state().clip?.hold, 'done, and holding');
-  b.release();
-  assert.equal(b.state().clip, null, 'released: the clip ends');
-  b.tick(0, bow);
+test('EOTB-IL: the loose, the cast and the claw at an eighth of a second; the drawn bow is the HOLD coroutine - down to 0, held, released forward', async () => {
+  _resetModSettings();
+  const { b } = await liveBody();
+  ticks(b, 12, still({ sheathed: false, usingBow: true }));
   assert.equal(b.state().table, 'IdleRanged');
-
-  // the spell, and the lycan's claws
-  b.tick(0, { spellcasting: true });
-  assert.equal(b.cast().table, 'AttackSpell');
-  b.tick(0, { transformed: true, sheathed: false });
-  assert.equal(b.attack().table, 'AttackMeleeLycan');
-  assert.equal(b.cast().table, 'AttackMeleeLycan', 'a transformed caster has claws, not hands');
-  // and a dead body swings nothing
-  b.tick(0, { died: true });
-  assert.equal(b.attack(), null);
-  assert.equal(b.cast(), null);
-  _resetModSettings();
+  b.tick(1 / 60, still({ sheathed: false, usingBow: true, attacking: true }));
+  let c = b.state().clip;
+  assert.equal(c.table, 'AttackRanged');
+  assert.equal(c.interval, 0.125);
+  assert.deepEqual(c.frames, [0, 1, 2, 3], 'BowDrawback off: PlayRangedAttackAnimation, forward');
+  tickSeconds(b, 0.6, still({ sheathed: false, usingBow: true }));
+  assert.equal(b.state().clip, null);
+  // BowDrawback on: the hold coroutine
+  const drawn = still({ sheathed: false, usingBow: true, attacking: true, bowDrawback: true, swingHeld: true });
+  b.tick(1 / 60, drawn);
+  c = b.state().clip;
+  assert.equal(c.kind, 'hold');
+  assert.deepEqual(c.frames, [2, 1, 0], 'drawn DOWN from n-2 to 0 (IL_5fa5-IL_6020)');
+  assert.equal(b.state().shown.frame, 2);
+  tickSeconds(b, 0.4, drawn);
+  assert.equal(b.state().clip.phase, 'hold', 'held on 0 while the swing is held');
+  assert.equal(b.state().shown.frame, 0);
+  tickSeconds(b, 1, drawn);
+  assert.equal(b.state().clip.phase, 'hold', 'for as long as it is held');
+  b.tick(1 / 60, { ...drawn, swingHeld: false });
+  assert.equal(b.state().clip.phase, 'release', 'let go: the release plays forward');
+  assert.deepEqual(b.state().clip.frames, [0, 1, 2, 3]);
+  tickSeconds(b, 0.6, { ...drawn, swingHeld: false, attacking: false });
+  assert.equal(b.state().clip, null);
+  // the cast: FPSSpellCasting.IsPlayingAnim
+  b.tick(1 / 60, still({ spellcasting: true, castPlaying: true }));
+  c = b.state().clip;
+  assert.equal(c.table, 'AttackSpell');
+  assert.equal(c.interval, 0.125);
+  assert.deepEqual(c.frames, [0, 1, 2, 3]);
+  tickSeconds(b, 0.6, still({ spellcasting: true }));
+  // the claw
+  b.tick(1 / 60, still({ transformed: true, attacking: true }));
+  c = b.state().clip;
+  assert.equal(c.table, 'AttackMeleeLycan');
+  assert.equal(c.interval, 0.125);
+  assert.deepEqual(c.frames, [0, 1, 2]);
 });
 
-test('AUDIT-EOTB2 [SETTINGS]: Mirror alternates the whole clip\'s flip swing by swing, MirrorTime reverts it, and the flip reaches the sprite KEY', async () => {
+test('EOTB-IL: Mixed is a ping-pong on the first swing and every fourth, Mirror alternates the count and flips 0/4 alone, MirrorTime reverts', async () => {
   _resetModSettings();
-  setModSetting(MOD, 'Graphics.AttackStrings', 1);   // Mirror
+  const { b } = await liveBody();   // AttackStrings ships at Mixed
+  const swing = async () => {
+    b.tick(1 / 60, still({ sheathed: false, attacking: true }));
+    const c = b.state().clip;
+    tickSeconds(b, c.interval * (c.frames.length + 1) + 0.05, still({ sheathed: false }));
+    assert.equal(b.state().clip, null);
+    return c;
+  };
+  const kinds = [];
+  for (let i = 0; i < 6; i++) kinds.push((await swing()).kind);
+  assert.deepEqual(kinds, ['pingpong', 'forward', 'forward', 'forward', 'pingpong', 'forward'], 'pingpongCount % 4 == 0 (IL_507c-IL_509f)');
+  assert.equal(b.state().pingpongCount, 6, 'every clip under Mixed bumps the count');
+  // the mirror count: a melee clip under Mirror/Mixed bumps it (the ping-pong does not)
+  assert.equal(b.state().mirrorCount, 4, 'four forward swings');
+  // the flip: front and back only, while the count is odd
+  const { b: m } = await liveBody();
+  setModSetting(MOD, 'Graphics.AttackStrings', STRING.Mirror);
   setModSetting(MOD, 'Graphics.MirrorTime', 2);
-  const { b } = await liveBody();
-  b.reload();
-  const st = { sheathed: false, motion: { forward: 0, standing: true } };
-  b.tick(0, st);
-  assert.equal(b.attack().mirror, true, 'the first swing flips');
-  assert.equal(b.state().attackMirror, true);
-  b.tick(0.5, st);
-  assert.equal(b.attack().mirror, false, 'the second swings back');
-  assert.equal(b.attack().mirror, true, 'the third flips again');
-  tickSeconds(b, 2.1, st);
-  assert.equal(b.state().attackMirror, false, 'MirrorTime reverts the state');
-  // the flip lays over the wheel's own mirror: a flipped left-facing frame is the right-facing pixels
-  const plain = spriteFor('AttackMelee', 1, 0, {});
-  const flipped = spriteFor('AttackMelee', 1, 0, {}, { flip: true });
-  assert.equal(plain.mirror, true, 'orientation 1 draws flipped on the wheel');
-  assert.equal(flipped.mirror, false, 'and the Mirror string cancels it');
-  assert.notEqual(plain.rec, flipped.rec, 'two different uploads, two keys');
-  assert.equal(spriteFor('AttackMelee', 0, 0, {}, { flip: true }).rec, '25-0m', 'a front frame flipped is the mirrored upload');
-  // "Set to 0 to disable", says the description - and the bundle's own
-  // slider is Min 1.0 (modsettings.json), so the disable is unreachable
-  // from the pane in DFU too. The port declares the bundle's range,
-  // verbatim quirk kept, and the revert arm still honours a 0 a future
-  // reader of the assembly may find another way to set.
-  assert.equal(MOD_SETTINGS[MOD].keys['Graphics.MirrorTime'].min, 1, 'the bundle\'s own floor');
+  m.toggle(true, false);
+  ticks(m, 12, still({ sheathed: false }));
+  assert.equal(m.state().shown.flip, false);
+  m.tick(1 / 60, still({ sheathed: false, attacking: true }));
+  let c = m.state().clip;
+  tickSeconds(m, c.interval * 7 + 0.05, still({ sheathed: false }));
+  assert.equal(m.state().mirrorCount, 1);
+  ticks(m, 12, still({ sheathed: false }));
+  assert.equal(m.state().shown.orientation, 4);
+  assert.equal(m.state().shown.flip, true, 'the back view (4) is drawn flipped while the count is odd');
+  ticks(m, 12, still({ sheathed: false, cameraPos: [2, 1.5, 0] }));
+  assert.equal(m.state().shown.orientation, 2);
+  assert.equal(m.state().shown.flip, false, 'a side view keeps the wheel\'s own flip');
+  ticks(m, 12, still({ sheathed: false }));
+  m.tick(1 / 60, still({ sheathed: false, attacking: true }));
+  c = m.state().clip;
+  tickSeconds(m, c.interval * 7 + 0.05, still({ sheathed: false }));
+  assert.equal(m.state().mirrorCount, 2, 'the second swing: even');
+  ticks(m, 12, still({ sheathed: false }));
+  assert.equal(m.state().shown.flip, false);
+  m.tick(1 / 60, still({ sheathed: false, attacking: true }));
+  c = m.state().clip;
+  tickSeconds(m, c.interval * 7 + 0.05, still({ sheathed: false }));
+  assert.equal(m.state().mirrorCount, 3);
+  tickSeconds(m, 2.2, still({ sheathed: false }));
+  assert.equal(m.state().mirrorCount, 0, 'MirrorTime reverts the count (IL_3d11-IL_3d2c)');
   _resetModSettings();
 });
 
-test('AUDIT-EOTB2 [SETTINGS]: PingPong reorders the clip by the offset, and Mixed rolls between the two', async () => {
-  _resetModSettings();
-  setModSetting(MOD, 'Graphics.AttackStrings', 2);
-  setModSetting(MOD, 'Graphics.PingPongOffset', 2);
+test('EOTB-IL: the death plays the two-frame table at half a second, FROZEN, and holds until the next Initialize', async () => {
   const { b } = await liveBody();
-  b.reload();
-  b.tick(0, { sheathed: false });
-  assert.deepEqual(b.attack().frames, [0, 1, 2, 1, 0]);
-  const rolls = [0.1, 0.9];
-  const { b: mixed } = await liveBody({ rolls: () => rolls.shift() });
-  setModSetting(MOD, 'Graphics.AttackStrings', 3);
-  mixed.reload();
-  mixed.tick(0, { sheathed: false });
-  assert.equal(mixed.attack().mirror, true, 'the low roll is Mirror');
-  assert.equal(mixed.attack().mirror, false, 'the high roll is PingPong - and it does not flip');
-  assert.deepEqual(mixed.state().clip.frames, [0, 1, 2, 1, 0]);
-  _resetModSettings();
-});
-
-test('AUDIT-EOTB2 [SETTINGS]: the death clip plays once, HOLDS its last frame for as long as the entity is dead, and goes on a load', async () => {
-  const { b } = await liveBody();
-  const dead = { died: true };
-  b.tick(0, dead);
-  assert.equal(b.state().table, 'Death');
-  assert.equal(deathTable({ transformed: true }), 'DeathLycan');
-  tickSeconds(b, 3, dead);
-  assert.equal(b.state().frame, CLIP_FRAMES - 1, 'held on the last frame');
-  assert.ok(b.state().clip?.death && b.state().clip?.done);
-  b.release();
-  assert.ok(b.state().clip, 'a release is the bow\'s, not death\'s');
-  b.tick(0, { died: false });
-  assert.equal(b.state().clip, null, 'alive: the clip is gone');
-  assert.equal(b.state().table, 'Idle');
+  ticks(b, 12, still());
+  b.tick(1 / 60, still({ died: true }));
+  const c = b.state().clip;
+  assert.equal(c.table, 'Death');
+  assert.equal(c.interval, 0.5);
+  assert.equal(c.freeze, true, 'no UpdateOrientation when it ends');
+  assert.deepEqual(c.frames, [0, 1]);
+  tickSeconds(b, 3, still({ died: true }));
+  assert.equal(b.state().shown.frame, 1, 'the last frame stays');
+  assert.equal(b.state().clip, null);
+  assert.equal(b.state().died, true);
+  ticks(b, 12, walk({ died: false }));
+  assert.equal(b.state().table, 'Idle', 'LateUpdate returns while died holds - the loop never runs (IL_3ea6-IL_3eae)');
+  b.toggle(true, false);   // Initialize clears it (IL_3b60)
+  assert.equal(b.state().died, false);
+  ticks(b, 12, walk());
+  assert.equal(b.state().table, 'Move');
+  // a transformed death is the lycan table
+  const { b: wolf } = await liveBody();
+  wolf.tick(1 / 60, still({ transformed: true, died: true }));
+  assert.equal(wolf.state().clip.table, 'DeathLycan');
+  assert.equal(frameCount('DeathLycan'), 2);
 });
 
 // ─────────────────────────────────────────────────────────────────
-// THE FACING, THE SIZE, THE STRIDE, THE HIDES [SETTINGS]
+// THE FACING, THE ORIENTATION CLOCK, THE STRIDE, THE HIDES [IL]
 // ─────────────────────────────────────────────────────────────────
 
-test('AUDIT-EOTB2 [SETTINGS]: TurnToView - the sprite faces the view when the option says, and its own heading otherwise', async () => {
-  assert.deepEqual([...TURN_TO_VIEW], ['Never', 'OnlyWhenAnimating', 'WhenWeaponReadied', 'Always']);
-  assert.equal(turnsToView(3), true);
-  assert.equal(turnsToView(2, { readied: true }), true);
-  assert.equal(turnsToView(2, { readied: false }), false);
-  assert.equal(turnsToView(2, { animating: true }), true, 'a swing in flight faces the view under WhenWeaponReadied too');
-  assert.equal(turnsToView(1, { animating: true }), true);
-  assert.equal(turnsToView(1, { readied: true }), false);
-  assert.equal(turnsToView(0, { animating: true, readied: true }), false);
-
-  _resetModSettings();
+test('EOTB-IL: UpdateOrientation runs ten times a second, keeps the last FACING while stopped, and turns to the view with a weapon up', async () => {
   const { b } = await liveBody();
-  const view = [0, 0, 1];            // the camera looks down +z
-  const behind = [0, 0, -1];         // and stands behind the player
-  // shipped: WhenWeaponReadied. Unarmed and backing away, the sprite faces the way it walks - toward the camera
-  b.tick(0, { sheathed: true, motion: { forward: -1, strafe: 0, standing: false } });
-  assert.equal(b.face(view, behind), 0, 'walking backwards: the FRONT view (facing the camera)');
-  b.tick(0, { sheathed: true, motion: { forward: 0, strafe: 0, standing: true } });
-  assert.equal(b.face(view, behind), 0, 'stopped: keeps the heading it had');
-  b.tick(0, { sheathed: true, motion: { forward: 1, strafe: 0, standing: false } });
-  assert.equal(b.face(view, behind), 4, 'walking away: the BACK view');
-  b.tick(0, { sheathed: false, motion: { forward: -1, strafe: 0, standing: false } });
-  assert.equal(b.face(view, behind), 4, 'a weapon readied: the sprite turns to the view whichever way it walks');
-  setModSetting(MOD, 'Graphics.TurnToView', 3);
-  b.reload();
-  b.tick(0, { sheathed: true, motion: { forward: -1, standing: false } });
-  assert.equal(b.face(view, behind), 4, 'Always: the view');
+  // walking toward +z with the camera behind: the back
+  ticks(b, 20, walk());
+  assert.equal(b.state().shown.orientation, 4);
+  // backing away (forward -1) unarmed: the sprite faces the way it walks - toward the camera
+  ticks(b, 20, walk({ motion: { forward: -1, standing: false, speed: 3, grounded: true } }));
+  assert.equal(b.state().shown.orientation, 0, 'walking backwards: the front (TurnToView 2, unarmed, moving: moveDir)');
+  // stopped: the last facing holds whatever the camera does
+  ticks(b, 20, still({ cameraPos: [2, 1.5, 0] }));
+  assert.equal(b.state().shown.orientation, 6, 'stopped: the facing kept is the last one (-z); the camera on +x reads index 6');
+  // a weapon up: the camera's forward
+  ticks(b, 20, still({ sheathed: false, cameraPos: [0, 1.5, -2] }));
+  assert.equal(b.state().shown.orientation, 4, 'readied: the sprite faces the view, the camera behind sees the back');
+  // the throttle: a camera swung round is not read for a tenth of a second
+  ticks(b, 20, still({ sheathed: false, cameraPos: [0, 1.5, -2] }));
+  b.tick(1 / 60, still({ sheathed: false, cameraPos: [0, 1.5, 2] }));
+  const t0 = b.state().orientationTimer;
+  let painted = null;
+  for (let i = 1; i <= 12; i++) { b.tick(1 / 60, still({ sheathed: false, cameraPos: [0, 1.5, 2] })); if (b.state().shown.orientation === 0 && painted === null) painted = i; }
+  assert.ok(painted !== null && painted >= 6, `the turn lands after the tenth of a second and the three delayed frames (${painted})`);
+  assert.ok(t0 >= 0);
+  // floating: the camera forward, whatever the option
   setModSetting(MOD, 'Graphics.TurnToView', 0);
-  b.reload();
-  b.tick(0, { sheathed: false, motion: { strafe: 1, forward: 0, standing: false } });
-  const o = b.face(view, behind);
-  assert.ok(o === 2 || o === 6, `Never, strafing: a side view (${o})`);
-  _resetModSettings();
-});
-
-test('AUDIT-EOTB2: the sprite is sized for the state it is IN - the saddle and the wolf take the larger arm (it passed false, false)', async () => {
-  _resetModSettings();
-  const { b, r } = await liveBody();
-  eotbCamera.toggleOffset(true);
   try {
-    const f = { eye: [0, 1.6, -2], feet: [0, 0, 0], yaw: 0 };
-    b.tick(0, { motion: { standing: true } });
-    b.draw(null, f); await Promise.resolve(); await Promise.resolve(); b.draw(null, f);
-    const foot = r.batches.at(-1);
-    assert.ok(foot, 'a batch was built');
-    assert.equal(foot.size.h, 6 * SIZE_ON_FOOT);
-    b.tick(0, { riding: true, motion: { standing: true, riding: true } });
-    b.draw(null, f); await Promise.resolve(); await Promise.resolve(); b.draw(null, f);
-    assert.equal(r.batches.at(-1).size.h, 6 * SIZE_RIDING_OR_TRANSFORMED, 'mounted: the rider\'s size');
-    b.tick(0, { transformed: true, motion: { standing: true } });
-    b.draw(null, f); await Promise.resolve(); await Promise.resolve(); b.draw(null, f);
-    assert.equal(r.batches.at(-1).size.h, 6 * SIZE_RIDING_OR_TRANSFORMED, 'transformed: the same arm');
-    // Graphics.Enable off: the camera stays out, the body does not draw
-    setModSetting(MOD, 'Graphics.Enable', false);
-    b.reload();
-    assert.equal(b.draw(null, f), false);
-  } finally { eotbCamera.toggleOffset(false); _resetModSettings(); }
+    const { b: f } = await liveBody();
+    ticks(f, 20, walk({ motion: { forward: -1, standing: false, speed: 3, grounded: true, levitating: true } }));
+    assert.equal(f.state().shown.orientation, 4, 'levitating and backing away: still the view\'s forward, the back');
+  } finally { _resetModSettings(); }
 });
 
-test('AUDIT-EOTB2 [SETTINGS]: SyncFootsteps - the sprite owns the stride on foot in third person, a foot lands on frames 2 and 4 of a MOVE table', async () => {
-  _resetModSettings();
-  const { b } = await liveBody();
-  const walk = { motion: { forward: 1, standing: false } };
-  b.tick(0, walk);
-  assert.deepEqual(b.footstep(), { owns: false, fell: false }, 'first person: DFU\'s stride');
-  eotbCamera.toggleOffset(true);
-  try {
-    b.tick(0, walk);
-    assert.equal(b.footstep().owns, true, 'third person, the body ready, on foot: the picture\'s stride');
-    const step = frameTime(false, 1);
-    const fell = [];
-    for (let i = 1; i <= 10; i++) { b.tick(step, walk); if (b.footstep().fell) fell.push(b.state().frame); }
-    assert.deepEqual([...new Set(fell)].sort(), [...FOOTSTEP_FRAMES], 'a footfall on frames 2 and 4, no others');
-    assert.equal(fell.length, 4, 'two strides in ten frames');
-    b.tick(step, { motion: { forward: 0, standing: true } });
-    assert.equal(b.footstep().fell, false, 'standing: no foot lands');
-    b.tick(step, { riding: true, motion: { forward: 1, riding: true, standing: false } });
-    assert.equal(b.footstep().owns, false, 'the saddle keeps DFU\'s hoofbeats');
-    setModSetting(MOD, 'Animation.SyncFootsteps', false);
-    b.reload();
-    b.tick(step, walk);
-    assert.equal(b.footstep().owns, false, 'the switch off hands the stride back');
-  } finally { eotbCamera.toggleOffset(false); _resetModSettings(); }
-});
-
-test('AUDIT-EOTB2 [SETTINGS]: the stride machine yields to the sprite\'s word - no distance piles up under it, the clips alternate, half speed halves', () => {
+test('EOTB-IL: SyncFootsteps through the seam - the picture\'s stride at twice the volume, the machine yields, and DFU\'s clip choice', () => {
   const fm = new FootstepMachine();
   const set = ['A', 'B'];
   const m = { grounded: true, standingStill: false, swimming: false, levitating: false };
-  // owned and no footfall: nothing, and the anchor follows so nothing accumulates
-  for (let i = 0; i < 20; i++) assert.equal(fm.update([i * 0.5, 0, 0], { ...m, spriteStep: { owns: true, fell: false } }, set), null);
+  for (let i = 0; i < 20; i++) assert.equal(fm.update([i * 0.5, 0, 0], { ...m, spriteStep: { owns: true, fell: false, volumeScale: 2 } }, set), null);
   assert.equal(fm.distance, 0, 'no walked distance under the sprite');
-  assert.deepEqual(fm.update([10, 0, 0], { ...m, spriteStep: { owns: true, fell: true } }, set), { clip: 'A', volume: FOOTSTEP_VOLUME });
-  assert.deepEqual(fm.update([10, 0, 0], { ...m, spriteStep: { owns: true, fell: true }, halfSpeed: true }, set), { clip: 'B', volume: FOOTSTEP_VOLUME * 0.5 });
-  // handed back: the vanilla stride from the anchor it left, not from where it started
-  assert.equal(fm.update([10.1, 0, 0], { ...m, spriteStep: { owns: false, fell: false } }, set), null, 'a tenth of a unit is not a stride');
-  assert.equal(fm.update([10.1, 0, 0], m, set), null, 'and no word at all is the vanilla stride');
-  // the seam: off the lane the sprite owns nothing
+  assert.deepEqual(fm.update([10, 0, 0], { ...m, spriteStep: { owns: true, fell: true, volumeScale: 2 } }, set), { clip: 'A', volume: FOOTSTEP_VOLUME * 2 });
+  assert.deepEqual(fm.update([10, 0, 0], { ...m, spriteStep: { owns: true, fell: true, volumeScale: 1 }, halfSpeed: true }, set), { clip: 'B', volume: FOOTSTEP_VOLUME }, 'the first-person billboard at once, and NO half-speed halving under the sprite');
+  assert.equal(fm.update([10.1, 0, 0], { ...m, spriteStep: { owns: false, fell: false } }, set), null, 'handed back: a tenth of a unit is not a stride');
+  assert.deepEqual(FOOTSTEP_VOLUME_SCALE, { thirdPerson: 2, firstPerson: 1 });
   closeLane();
-  assert.deepEqual(mwViewFootstep(), { owns: false, fell: false });
-  // and every host hands its machine the word
+  assert.deepEqual(mwViewFootstep(), { owns: false, fell: false, volumeScale: 1 });
   for (const h of ['src/scenes/world.js', 'src/scenes/exterior.js', 'src/scenes/dungeon.js', 'src/scenes/worldModes.js']) {
     const s = rd(h);
     const calls = [...s.matchAll(/_?footsteps\.update\(player\.pos, \{[\s\S]*?\}, /g)];
@@ -379,131 +338,130 @@ test('AUDIT-EOTB2 [SETTINGS]: the stride machine yields to the sprite\'s word - 
   }
 });
 
-test('AUDIT-EOTB2 [SETTINGS]: ToggleBillboard\'s two hides - the FPV weapon and horse go while the sprite is on screen, each behind its Compatibility key', async () => {
+test('EOTB-IL: the hides - the FPV weapon and horse behind their keys, the spell hands with none, all while the sprite camera is out', async () => {
   _resetModSettings();
   const { b } = await liveBody();
-  assert.deepEqual(b.hides(), { weapon: false, horse: false }, 'first person hides nothing');
+  eotbCamera.setBillboard(null);
+  eotbCamera.toggleOffset(false);
+  assert.deepEqual(b.hides(), { weapon: false, horse: false, spellHands: false }, 'first person hides nothing');
   eotbCamera.toggleOffset(true);
   try {
-    assert.deepEqual(b.hides(), { weapon: true, horse: true });
+    assert.deepEqual(b.hides(), { weapon: true, horse: true, spellHands: true });
     setModSetting(MOD, 'Compatibility.Don\'tHideWeapon', true);
     b.reload();
-    assert.deepEqual(b.hides(), { weapon: false, horse: true });
+    assert.deepEqual(b.hides(), { weapon: false, horse: true, spellHands: true });
     setModSetting(MOD, 'Compatibility.Don\'tHideHorse', true);
     b.reload();
-    assert.deepEqual(b.hides(), { weapon: false, horse: false });
+    assert.deepEqual(b.hides(), { weapon: false, horse: false, spellHands: true }, 'spellCasting.enabled = false has no key (IL_22f9)');
   } finally { eotbCamera.toggleOffset(false); _resetModSettings(); }
-  // a body with no art hides nothing however the camera stands - the lane is shut
-  const bare = createEotbBody({ count: () => 0, urlFor: () => null, decode: async () => { throw new Error('none'); } });
-  bare.attach(renderer(), () => ({}));
-  eotbCamera.toggleOffset(true);
-  try { assert.deepEqual(bare.hides(), { weapon: false, horse: false }); } finally { eotbCamera.toggleOffset(false); }
-  // the seam: off the lane, nothing hides
   closeLane();
-  assert.deepEqual(mwViewHides(), { weapon: false, horse: false });
-  // the rig: the widget's and the torch hand's third-person gate ask the sprite too, and the draw returns before the arm
+  assert.deepEqual(mwViewHides(), { weapon: false, horse: false, spellHands: false });
   const rig = rd('src/combat/weaponRig.js');
   assert.match(rig, /const eotbHidesWeapon = \(\) => !fpArm\.canThirdPerson\(\) && eotbBody\.hides\(\)\.weapon;/);
+  assert.match(rig, /const eotbHidesSpellHands = \(\) => !fpArm\.canThirdPerson\(\) && eotbBody\.hides\(\)\.spellHands;/);
+  // the hide folds into the frame's texture read, so the gate keeps the
+  // shape fpsspellcasting.test.js pins (WeaponManager.cs:247)
+  assert.match(rig, /const c = eotbHidesSpellHands\(\) \? null : \(cv\(\)\);/, 'the hands\' picture goes in third person');
+  assert.match(rig, /if \(c && !fpArm\.active\(\)\) \{\s*\n\s*drawSpellCastHands\(/, 'and the draw gate is unchanged');
   assert.equal((rig.match(/thirdPerson: fpArm\.thirdActive\(\) \|\| eotbHidesWeapon\(\)/g) ?? []).length, 2, 'the widget and the torch hand');
   assert.match(rig, /if \(eotbHidesWeapon\(\)\) return;\s*\n\s*if \(fpArm\.active\(\)\) \{ fpArm\.draw\(c\); return; \}/, 'the picture goes before any first-person draw');
-  // and the mount rig's horse
   assert.match(rd('src/player/mountRig.js'), /if \(art && isRiding\(player\.transportMode\) && !ridePaused && !mwViewHides\(\)\.horse\) \{/);
 });
 
 // ─────────────────────────────────────────────────────────────────
-// THE CAMERA'S OTHER HALF [SETTINGS]
+// THE CAMERA'S OTHER HALF [IL]
 // ─────────────────────────────────────────────────────────────────
 
-test('AUDIT-EOTB2 [SETTINGS]: AutoTogglePerspective - a row is applied when the SITUATION changes, never every frame, and ToggleInput arms it', () => {
-  assert.deepEqual([...AUTO_TOGGLE_ROWS], ['OnFoot', 'OnFootMelee', 'OnFootRanged', 'OnFootSpell', 'OnHorse', 'OnHorseReady', 'OnLycan']);
-  assert.equal(autoToggleSituation({ sheathed: true }), 'OnFoot');
-  assert.equal(autoToggleSituation({ sheathed: false }), 'OnFootMelee');
-  assert.equal(autoToggleSituation({ sheathed: false, usingBow: true }), 'OnFootRanged');
-  assert.equal(autoToggleSituation({ sheathed: true, spellcasting: true }), 'OnFootSpell');
-  assert.equal(autoToggleSituation({ riding: true, sheathed: true }), 'OnHorse');
-  assert.equal(autoToggleSituation({ riding: true, sheathed: false }), 'OnHorseReady');
-  assert.equal(autoToggleSituation({ riding: true, spellcasting: true, sheathed: true }), 'OnHorseReady');
-  assert.equal(autoToggleSituation({ transformed: true, riding: true, sheathed: false }), 'OnLycan', 'the form outranks the saddle');
-
+test('EOTB-IL: AutoTogglePerspective ships DISARMED - the sum of nine Don\'tChange rows - and armed it applies the IL\'s blocks, an arming forcing the fan-out', () => {
+  const shipped = readCameraSettings(null);
+  assert.deepEqual(Object.values(shipped.auto), new Array(9).fill(AUTO_TOGGLE.DontChange));
+  assert.equal(shipped.autoPOVSwitch, false, 'autoPOVSwitch is derived from the rows (IL_10e1-IL_112d): all Don\'tChange, disarmed');
   const rows = { 'AutoTogglePerspective.OnFootMelee': AUTO_TOGGLE.ThirdPerson, 'AutoTogglePerspective.OnFoot': AUTO_TOGGLE.FirstPerson,
     'AutoTogglePerspective.OnTransitionInterior': AUTO_TOGGLE.FirstPerson, 'AutoTogglePerspective.OnTransitionExterior': AUTO_TOGGLE.ThirdPerson,
-    'Camera.StartInThirdPerson': false };
+    'AutoTogglePerspective.OnFootSpell': AUTO_TOGGLE.ThirdPerson, 'Camera.StartInThirdPerson': false };
   const cam = createEotbCamera();
   cam.loadSettings((v, k) => rows[k]);
+  assert.equal(cam.autoArmed(), true, 'a row set arms it');
   cam.start();
   assert.equal(cam.thirdPerson(), false);
   cam.tick({ sheathed: true });
-  assert.equal(cam.thirdPerson(), false, 'the first frame seeds the situation - it is not a change');
+  assert.equal(cam.thirdPerson(), false, 'the first frame: the sheath "changed" from the all-false fields and OnFoot says first - already there');
   cam.tick({ sheathed: false });
   assert.equal(cam.thirdPerson(), true, 'a weapon drawn: OnFootMelee says third');
-  // THE SAME SITUATION AGAIN APPLIES NOTHING - proven where it bites: the
-  // player scrolls all the way back into their head (the wheel's own
-  // ladder, in past MinimumDistance), and a row re-applied every frame
-  // would drag them straight back out
   for (let i = 0; i < 12 && cam.thirdPerson(); i++) { cam.wheel(1); cam.tick({ sheathed: false }); }
   assert.equal(cam.thirdPerson(), false, 'scrolled back into the head');
   cam.tick({ sheathed: false }); cam.tick({ sheathed: false });
-  assert.equal(cam.thirdPerson(), false, 'and the unchanged situation leaves it there');
+  assert.equal(cam.thirdPerson(), false, 'an unchanged frame applies nothing');
   cam.tick({ sheathed: true }); cam.tick({ sheathed: false });
-  assert.equal(cam.thirdPerson(), true, 'a CHANGE back into the situation applies its row again');
+  assert.equal(cam.thirdPerson(), true, 'a CHANGE back applies the row again');
   cam.tick({ sheathed: true });
   assert.equal(cam.thirdPerson(), false, 'sheathed: OnFoot says first');
-  // AND THE FIRST FRAME IS A SEED, proven where it bites: a game that
-  // opens in third person (StartInThirdPerson) under an OnFoot row that
-  // says first must not be dropped into first on its first frame
-  const seeded = createEotbCamera();
-  seeded.loadSettings((v, k) => (k === 'Camera.StartInThirdPerson' ? true : rows[k]));
-  seeded.start();
-  assert.equal(seeded.thirdPerson(), true);
-  seeded.tick({ sheathed: true });
-  assert.equal(seeded.thirdPerson(), true, 'the first frame seeds OnFoot and applies nothing');
-  seeded.tick({ sheathed: false }); seeded.tick({ sheathed: true });
-  assert.equal(seeded.thirdPerson(), false, 'the first CHANGE back to OnFoot applies its row');
-  // DontChange leaves the view
-  cam.tick({ sheathed: false });
-  cam.tick({ sheathed: false, usingBow: true });
-  assert.equal(cam.thirdPerson(), true, 'OnFootRanged is DontChange: still third');
-  // the doors
-  assert.equal(cam.transition('Interior'), false, 'stepping in: first');
-  assert.equal(cam.transition('Exterior'), true, 'stepping out: third');
-  // disarmed, nothing moves
+  // the spell block is its own: a readied spell says OnFootSpell even in the saddle
+  cam.tick({ sheathed: true, riding: true, spellcasting: true });
+  assert.equal(cam.thirdPerson(), true, 'OnFootSpell: third, riding or not');
+  // disarmed by the key: nothing moves; re-armed: the fan-out fires this frame (IL_1814)
   assert.equal(cam.toggleAuto(), false);
   cam.tick({ sheathed: true });
   assert.equal(cam.thirdPerson(), true, 'disarmed: OnFoot\'s FirstPerson row is ignored');
   assert.equal(cam.transition('Interior'), true, 'and so is the door');
   assert.equal(cam.toggleAuto(), true);
-  // shipped: every row DontChange, so a fresh camera never moves by itself
-  const shipped = readCameraSettings(null);
-  assert.deepEqual(Object.values(shipped.auto), new Array(9).fill(AUTO_TOGGLE.DontChange), 'nine rows, all Don\'tChange as the bundle ships');
-  // the seam and the mode machine: the two doors
+  cam.tick({ sheathed: true });
+  assert.equal(cam.thirdPerson(), false, 'arming forces the fan-out: OnFoot applied at once');
+  // the doors
+  cam.tick({ sheathed: false });
+  assert.equal(cam.transition('Interior'), false, 'stepping in: first');
+  assert.equal(cam.transition('Exterior'), true, 'stepping out: third');
+  // the popups
+  const said = [];
+  cam.setPopup((l) => said.push(l));
+  cam.toggleAuto(); cam.toggleAuto();
+  assert.deepEqual(said, [AUTO_TOGGLE_MESSAGES.disarmed, AUTO_TOGGLE_MESSAGES.armed]);
+  // the seam and the mode machine: four doors now, the dungeon's too
   closeLane();
   assert.equal(mwViewTransition('Interior'), false, 'off the lane the door does nothing');
   const wm = rd('src/scenes/worldModes.js');
   assert.match(wm, /mode = 'interior';\s*\n\s*host\.unlockOn\?\.\(\);[^\n]*\n\s*mwViewTransition\('Interior'\);/);
-  assert.match(wm, /mode = 'exterior';\s*\n\s*host\.unlockOn\?\.\(\);[^\n]*\n\s*mwViewTransition\('Exterior'\);/);
+  assert.match(wm, /mode = 'dungeon';\s*\n\s*host\.unlockOn\?\.\(\);[^\n]*\n\s*mwViewTransition\('Interior'\);/, 'OnTransitionDungeonInterior (IL_06bf)');
+  assert.equal((wm.match(/mwViewTransition\('Exterior'\)/g) ?? []).length, 2, 'the building\'s exit and the dungeon\'s (IL_06e1)');
 });
 
-test('AUDIT-EOTB2 [SETTINGS]: StartInThirdPerson - shipped ON, taken at the rig\'s attach (a new game) and at the load door (the mod\'s OnLoad)', () => {
-  assert.equal(readCameraSettings(null).startInThird, true, 'the bundle ships it on');
+test('EOTB-IL: OnNewGame and OnLoad - a transition row when armed and nothing else; StartInThirdPerson through ToggleOffset when not', () => {
   const cam = createEotbCamera();
   cam.loadSettings(null);
-  assert.equal(cam.start(), true, 'a new game opens in third person');
-  cam.loadSettings((v, k) => (k === 'Camera.StartInThirdPerson' ? false : undefined));
-  assert.equal(cam.start(), false);
-  // the rig: loadSettings then start, once, beside the attach
-  assert.match(rd('src/combat/weaponRig.js'), /eotbCamera\.loadSettings\(modSetting\);[\s\S]{0,700}?eotbCamera\.start\(\);/);
-  // the load door restores BOTH lanes, and world.js takes it where it restored the Morrowind camera alone
+  assert.equal(cam.start(), true, 'Start: ToggleOffset(StartInThirdPerson), shipped on');
+  cam.toggleOffset(false);
+  assert.equal(cam.onLoad(false), true, 'disarmed: OnLoad takes StartInThirdPerson');
+  cam.toggleOffset(false);
+  assert.equal(cam.onNewGame(true), true, 'and OnNewGame the same');
+  const armed = createEotbCamera();
+  armed.loadSettings((v, k) => ({ 'AutoTogglePerspective.OnTransitionInterior': AUTO_TOGGLE.FirstPerson, 'AutoTogglePerspective.OnTransitionExterior': AUTO_TOGGLE.DontChange })[k]);
+  armed.toggleOffset(false);
+  assert.equal(armed.onLoad(false), false, 'armed, outside: the exterior row is Don\'tChange and StartInThirdPerson is NOT consulted (IL_0a72-IL_0abb)');
+  armed.toggleOffset(true);
+  assert.equal(armed.onLoad(true), false, 'armed, inside: the interior row says first');
+  // the two doors in the world host
+  const w = rd('src/scenes/world.js');
+  assert.match(w, /mwViewLoadPose\(pose\.camera, \(modes\?\.mode \?\? 'exterior'\) !== 'exterior'\);/, 'the load door hands IsPlayerInside');
+  assert.match(w, /if \(!_loadedGame\) mwViewNewGame\(\(modes\?\.mode \?\? 'exterior'\) !== 'exterior'\);/, 'a boot that loaded nothing is a new game');
+  assert.match(w, /mwViewRebase\(r\.offset\);/, 'and the floating origin re-seeds the camera');
   openLane();
   try {
     eotbCamera.toggleOffset(false);
-    mwViewLoadPose(null);
-    assert.equal(eotbCamera.thirdPerson(), true, 'a load re-seeds the sprite camera from the setting');
-    assert.match(rd('src/scenes/world.js'), /mwViewLoadPose\(pose\.camera\);/);
-    assert.doesNotMatch(rd('src/scenes/world.js'), /mwCamera\.restore\(pose\.camera\)/, 'the Morrowind-only restore is gone from the host');
+    mwViewLoadPose(null, false);
+    assert.equal(eotbCamera.thirdPerson(), true, 'the load door re-seeds the sprite camera from the setting');
+    eotbCamera.toggleOffset(false);
+    mwViewNewGame(false);
+    assert.equal(eotbCamera.thirdPerson(), true);
+    // the rebase moves the smoothing with the world
+    mwViewFrame({ fpEye: [0, 1.6, 0], feet: [0, 0, 0], yaw: 0, pitch: 0, dt: 1000, raycast: () => null });
+    const before = mwViewFrame({ fpEye: [0, 1.6, 0], feet: [0, 0, 0], yaw: 0, pitch: 0, dt: 0, raycast: () => null }).eye;
+    mwViewRebase([100, 0, 0]);
+    const after = mwViewFrame({ fpEye: [100, 1.6, 0], feet: [100, 0, 0], yaw: 0, pitch: 0, dt: 0, raycast: () => null }).eye;
+    assert.equal(Number((after[0] - before[0]).toFixed(6)), 100, 'the eye moved with the origin, not swept across the jump');
   } finally { closeLane(); }
 });
 
-test('AUDIT-EOTB2 [SETTINGS]: the SwitchShoulder and ToggleInput keys, DOWN-edge off the hosts\' raw set - driven through a real rig', () => {
+test('EOTB-IL: the SwitchShoulder and ToggleInput keys on their RELEASE edge (GetKeyUp) - driven through a real rig', () => {
   _resetModSettings();
   setModSetting(MOD, 'Camera.FrontalPlaneOffset', [0.5, 0.5]);   // "if it is non-zero" - the shipped X of 0 makes the switch a no-op
   assert.equal(domCodeForKeyCode('B'), 'KeyB');
@@ -519,22 +477,22 @@ test('AUDIT-EOTB2 [SETTINGS]: the SwitchShoulder and ToggleInput keys, DOWN-edge
     const armed = eotbCamera.autoArmed();
     keys.add('KeyB');
     rig.frame(1 / 60); rig.frame(1 / 60); rig.frame(1 / 60);
-    assert.equal(eotbCamera.mirrored(), !before, 'one press held over three frames switches the shoulder ONCE');
+    assert.equal(eotbCamera.mirrored(), before, 'held: nothing yet - the mod reads GetKeyUp');
     keys.delete('KeyB');
     rig.frame(1 / 60);
-    keys.add('KeyB');
-    rig.frame(1 / 60);
-    assert.equal(eotbCamera.mirrored(), before, 'released and pressed again: back');
-    keys.add('NumpadAdd');
+    assert.equal(eotbCamera.mirrored(), !before, 'released: the shoulder switches ONCE');
     rig.frame(1 / 60); rig.frame(1 / 60);
-    assert.equal(eotbCamera.autoArmed(), !armed, 'ToggleInput arms or disarms the table, once per press');
-    keys.delete('NumpadAdd'); rig.frame(1 / 60); keys.add('NumpadAdd'); rig.frame(1 / 60);
+    assert.equal(eotbCamera.mirrored(), !before, 'and stays');
+    keys.add('NumpadAdd'); rig.frame(1 / 60); keys.delete('NumpadAdd'); rig.frame(1 / 60);
+    assert.equal(eotbCamera.autoArmed(), !armed, 'ToggleInput arms or disarms the table, once per release');
+    keys.add('NumpadAdd'); rig.frame(1 / 60); keys.delete('NumpadAdd'); rig.frame(1 / 60);
     assert.equal(eotbCamera.autoArmed(), armed);
   } finally {
     keys.clear(); rig.frame(1 / 60);
     eotbCamera.toggleOffset(false);
     _resetModSettings();
     eotbCamera.loadSettings(null);
+    eotbBody.attach(null, null);
   }
 });
 
@@ -542,17 +500,16 @@ test('AUDIT-EOTB2 [SETTINGS]: the SwitchShoulder and ToggleInput keys, DOWN-edge
 // THE RECORD
 // ─────────────────────────────────────────────────────────────────
 
-test('AUDIT-EOTB2: every [SETTINGS] law is marked in the module that carries it, and the page says the assembly is not in the tree', () => {
-  const arc = readdirSync(join(root, 'src/player')).filter((f) => /^eotb/.test(f)).map((f) => rd(`src/player/${f}`)).join('\n');
-  for (const law of ['attackString', 'clipFrames', 'turnsToView', 'autoToggleSituation', 'SyncFootsteps', 'ToggleBillboard', 'StartInThirdPerson']) {
-    const sites = [...arc.matchAll(new RegExp(law, 'g'))].map((m) => m.index);
-    assert.ok(sites.length > 0, `${law} is in the arc`);
-    assert.ok(sites.some((i) => /\[SETTINGS\]/.test(arc.slice(Math.max(0, i - 1200), i + 400))), `${law} is marked with its evidence`);
-  }
+test('EOTB-IL: no [SETTINGS] law is left in the arc, every law is marked [IL] with an offset, and the page says the assembly is read', () => {
+  const files = readdirSync(join(root, 'src/player')).filter((f) => /^eotb/.test(f));
+  const arc = files.map((f) => rd(`src/player/${f}`)).join('\n');
+  assert.ok(!/\[SETTINGS\]/.test(arc), 'AUDIT-EOTB2\'s evidence mark is gone: the assembly is in the tree');
+  assert.ok((arc.match(/\[IL\]/g) ?? []).length >= 30, 'the laws carry the IL mark');
+  assert.ok((arc.match(/IL_[0-9a-f]{4}/g) ?? []).length >= 60, 'and cite their offsets');
   const page = rd('bible/06-Systems/Eye-Of-The-Beholder.md');
-  assert.match(page, /AUDIT-EOTB2/);
-  assert.match(page, /not in the tree/i, 'the page says where the assembly is not');
-  assert.match(page, /\[SETTINGS\]/, 'and what the sixteen were read from');
+  assert.match(page, /EOTB-IL/);
+  assert.match(page, /the assembly is in the tree|Eye Of The Beholder\.dll` is vendored/i, 'the page says where the assembly is');
+  assert.ok(!/THE ASSEMBLY IS NOT IN THE TREE/.test(page), 'and no longer says it is not');
 });
 
 // ─────────────────────────────────────────────────────────────────
@@ -561,22 +518,17 @@ test('AUDIT-EOTB2: every [SETTINGS] law is marked in the module that carries it,
 // ─────────────────────────────────────────────────────────────────
 
 test('EOTB-FLIP: a decoded PNG is turned into the world billboard\'s row order ONCE, through the tree\'s one converter - the top row lands last', () => {
-  // a 2x3 raster, top row first, as a PNG decodes: each pixel is its (x, y)
   const w = 2, h = 3;
   const data = new Uint8Array(w * h * 4);
   for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { const i = (y * w + x) * 4; data[i] = x; data[i + 1] = y; data[i + 2] = 0; data[i + 3] = 255; }
   const out = worldOrderColors({ width: w, height: h, data });
   assert.equal(out.width, w); assert.equal(out.height, h);
   assert.ok(out.colors instanceof Uint32Array, 'a Uint32 a pixel - the shape the mirror reads');
-  assert.equal(out.colors.length, w * h);
-  const px = (i) => [out.colors[i] & 0xff, (out.colors[i] >> 8) & 0xff];   // little-endian RGBA: r, g = x, y
+  const px = (i) => [out.colors[i] & 0xff, (out.colors[i] >> 8) & 0xff];
   assert.deepEqual(px(0), [0, 2], 'row 0 of the upload is the picture\'s BOTTOM row (y = 2)');
-  assert.deepEqual(px(1), [1, 2]);
   assert.deepEqual(px(w * (h - 1)), [0, 0], 'and the raster\'s top row is last');
-  // the mirror still works on the reordered rows, and only across x
   const m = flipRows(out.colors, w, h);
   assert.deepEqual([m[0] & 0xff, (m[0] >> 8) & 0xff], [1, 2], 'mirrored: x swapped, y kept');
-  // and it IS the tree's one converter, not a second flip
   assert.deepEqual([...out.colors], [...new Uint32Array(toColor32({ width: w, height: h, data }).colors.buffer)], 'toColor32, byte for byte');
 });
 
@@ -587,4 +539,6 @@ test('EOTB-FLIP: the body\'s decode is the dropped torch\'s door - decodePng, th
   assert.ok(!/getImageData|new Image\(|OffscreenCanvas/.test(body), 'no canvas door of its own');
   assert.match(rd('src/player/eotbSprite.js'), /import \{ toColor32 \} from '\.\.\/formats\/color32Order\.js';/, 'the converter is the tree\'s');
   assert.match(rd('src/scenes/droppedTorches.js'), /return toColor32\(await decodePng\(new Uint8Array\(await res\.arrayBuffer\(\)\)\)\);/, 'and the torch still takes it too');
+  assert.deepEqual(MATERIAL.shade, { mode: 4, alpha: 0.6 });
+  assert.equal(TABLE_FRAMES.Death, 2);
 });

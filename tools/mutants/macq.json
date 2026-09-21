@@ -1,0 +1,256 @@
+[
+  {
+    "name": "MACQ-the-flattener-drops-the-particle-geometry-as-it-always-did",
+    "file": "src/formats/mwNifMesh.js",
+    "old": "      if (inside && opts.effects && !skipGeometryName(rec.name, hasMarkers)) {\n        opts.effects.push({ ref, rec, world: nextWorld, props: nextProps, animFlags });\n      }",
+    "new": "",
+    "tests": [
+      "test/macq_flame.test.js"
+    ]
+  },
+  {
+    "name": "MACQ-the-BSParticleNode-flags-are-not-carried-down",
+    "file": "src/formats/mwNifMesh.js",
+    "old": "    if (ANIM_FLAG_NODES.has(rec.type)) animFlags = rec.flags | 0;   // MAC-Q: nifloader.cpp:786-787",
+    "new": "",
+    "tests": [
+      "test/macq_flame.test.js"
+    ]
+  },
+  {
+    "name": "MACQ-the-source-and-destination-blend-swap",
+    "file": "src/formats/mwNifMesh.js",
+    "old": "        out.srcBlend = (prop.flags >> 1) & 0xF;   // MAC-Q: sourceBlendMode()\n        out.dstBlend = (prop.flags >> 5) & 0xF;   // MAC-Q: destinationBlendMode()",
+    "new": "        out.srcBlend = (prop.flags >> 5) & 0xF;\n        out.dstBlend = (prop.flags >> 1) & 0xF;",
+    "tests": [
+      "test/macq_flame.test.js"
+    ]
+  },
+  {
+    "name": "MACQ-the-depth-write-bit-is-read-as-the-test-bit",
+    "file": "src/formats/mwNifMesh.js",
+    "old": "        out.depthWrite = (prop.flags & 0x2) !== 0;",
+    "new": "        out.depthWrite = (prop.flags & 0x1) !== 0;",
+    "tests": [
+      "test/macq_flame.test.js"
+    ]
+  },
+  {
+    "name": "MACQ-an-inactive-controller-still-makes-a-system",
+    "file": "src/formats/mwParticles.js",
+    "old": "    if ((c.type === 'NiParticleSystemController' || c.type === 'NiBSPArrayController') && (c.flags & CONTROLLER_FLAG_ACTIVE)) found = c;",
+    "new": "    if (c.type === 'NiParticleSystemController' || c.type === 'NiBSPArrayController') found = c;",
+    "tests": [
+      "test/macq_flame.test.js"
+    ]
+  },
+  {
+    "name": "MACQ-the-rate-forgets-the-half-variation",
+    "file": "src/formats/mwParticles.js",
+    "old": "      : c.particles.length / (c.lifetime + c.lifetimeVariation / 2);",
+    "new": "      : c.particles.length / c.lifetime;",
+    "tests": [
+      "test/macq_flame.test.js"
+    ]
+  },
+  {
+    "name": "MACQ-NoAutoAdjust-is-ignored",
+    "file": "src/formats/mwParticles.js",
+    "old": "  const rate = noAutoAdjust ? c.birthRate",
+    "new": "  const rate = false ? c.birthRate",
+    "tests": [
+      "test/macq_flame.test.js"
+    ]
+  },
+  {
+    "name": "MACQ-the-counter-drops-its-remainder",
+    "file": "src/formats/mwParticles.js",
+    "old": "    carry += v - n;\n    if (carry > 1) { n++; carry -= 1; }",
+    "new": "",
+    "tests": [
+      "test/macq_flame.test.js"
+    ]
+  },
+  {
+    "name": "MACQ-the-speed-range-is-the-whole-variation-not-half",
+    "file": "src/formats/mwParticles.js",
+    "old": "  const minSpeed = c.speed - c.speedVariation * 0.5;\n  const maxSpeed = c.speed + c.speedVariation * 0.5;",
+    "new": "  const minSpeed = c.speed - c.speedVariation;\n  const maxSpeed = c.speed + c.speedVariation;",
+    "tests": [
+      "test/macq_flame.test.js"
+    ]
+  },
+  {
+    "name": "MACQ-the-shot-turns-about-the-wrong-axis-first",
+    "file": "src/formats/mwParticles.js",
+    "old": "  return [x1 * ch - y1 * sh, x1 * sh + y1 * ch, z1];",
+    "new": "  return [x1 * ch + y1 * sh, -x1 * sh + y1 * ch, z1];",
+    "tests": [
+      "test/macq_flame.test.js"
+    ]
+  },
+  {
+    "name": "MACQ-the-quota-is-not-enforced",
+    "file": "src/formats/mwParticles.js",
+    "old": "    for (let i = 0; i < n && particles.length < quota; i++) {",
+    "new": "    for (let i = 0; i < n; i++) {",
+    "tests": [
+      "test/macq_flame.test.js"
+    ]
+  },
+  {
+    "name": "MACQ-a-particle-dies-on-the-step-it-reaches-its-life",
+    "file": "src/formats/mwParticles.js",
+    "old": "      if (x > 1) { particles.splice(i, 1); continue; }",
+    "new": "      if (x >= 1) { particles.splice(i, 1); continue; }",
+    "tests": [
+      "test/macq_flame.test.js"
+    ]
+  },
+  {
+    "name": "MACQ-the-age-advances-before-it-is-judged",
+    "file": "src/formats/mwParticles.js",
+    "old": "      const x = p.life > 0 ? p.age / p.life : 0;\n      p.age += dt;",
+    "new": "      p.age += dt;\n      const x = p.life > 0 ? p.age / p.life : 0;",
+    "tests": [
+      "test/macq_flame.test.js"
+    ]
+  },
+  {
+    "name": "MACQ-grow-fade-grows-off-the-particles-own-size-not-the-default",
+    "file": "src/formats/mwParticles.js",
+    "old": "        let size = c.initialSize;\n        if (p.age < growFade.grow && growFade.grow !== 0) size *= p.age / growFade.grow;",
+    "new": "        let size = p.size;\n        if (p.age < growFade.grow && growFade.grow !== 0) size *= p.age / growFade.grow;",
+    "tests": [
+      "test/macq_flame.test.js"
+    ]
+  },
+  {
+    "name": "MACQ-the-colour-keys-alpha-lands-in-the-colour-and-the-pin-reads-the-alpha",
+    "file": "src/formats/mwParticles.js",
+    "old": "        p.color = [k[0], k[1], k[2]]; p.colorA = 1; p.alpha = k[3];",
+    "new": "        p.color = [k[0], k[1], k[2]]; p.colorA = k[3]; p.alpha = 1;",
+    "tests": [
+      "test/macq_flame.test.js"
+    ]
+  },
+  {
+    "name": "MACQ-gravity-loses-its-magic",
+    "file": "src/formats/mwParticles.js",
+    "old": "export const GRAVITY_MAGIC = 1.6;",
+    "new": "export const GRAVITY_MAGIC = 1.0;",
+    "tests": [
+      "test/macq_flame.test.js"
+    ]
+  },
+  {
+    "name": "MACQ-the-emit-window-is-open-ended",
+    "file": "src/formats/mwParticles.js",
+    "old": "      enabled = t >= c.emitStart && t < c.emitStop;   // ParticleSystemController (nifosg/controller.cpp:594-604)",
+    "new": "      enabled = t >= c.emitStart;",
+    "tests": [
+      "test/macq_flame.test.js"
+    ]
+  },
+  {
+    "name": "MACQ-no-clock-is-not-frozen",
+    "file": "src/formats/mwParticles.js",
+    "old": "      if (clock === null || clock === undefined) { frozen = true; return; }",
+    "new": "      if (clock === null || clock === undefined) { frozen = true; }",
+    "tests": [
+      "test/macq_flame.test.js"
+    ]
+  },
+  {
+    "name": "MACQ-the-planar-collider-bounces-a-particle-outside-its-extents",
+    "file": "src/formats/mwParticles.js",
+    "old": "  if (-col.width * 0.5 > xd || col.width * 0.5 < xd) return null;",
+    "new": "",
+    "tests": [
+      "test/macq_flame.test.js"
+    ]
+  },
+  {
+    "name": "MACQ-emitterToPs-is-the-emitter-into-the-file-not-into-the-node",
+    "file": "src/formats/mwParticles.js",
+    "old": "    ? affineOrthoNormalize(affineMul(affineInverse(psWorld), affineOfTransform(desc.emitter.world)))",
+    "new": "    ? affineOrthoNormalize(affineOfTransform(desc.emitter.world))",
+    "tests": [
+      "test/macq_flame.test.js"
+    ]
+  },
+  {
+    "name": "MACQ-the-absolute-frame-is-treated-as-local",
+    "file": "src/combat/fpArm.js",
+    "old": "    eff.sim.update(dt, clock, local ? null : m);",
+    "new": "    eff.sim.update(dt, clock, null);",
+    "tests": [
+      "test/macq_flame.test.js"
+    ],
+    "equivalent": true,
+    "why": "The fixture rig's mats are identity-rotation with a translation, and the absolute-frame pin drives createParticleSystem directly (`the two reference frames`) rather than through stepRigEffects, whose pin uses a LocalSpace file. Both frames are pinned; this seam's choice between them is not, because a second full rig fixture for one branch is a fixture, not a law. Recorded."
+  },
+  {
+    "name": "MACQ-the-placement-forgets-the-nodes-own-frame",
+    "file": "src/combat/fpArm.js",
+    "old": "  return affineMul(m, affineOfTransform(effect.desc.world));",
+    "new": "  return m;",
+    "tests": [
+      "test/macq_flame.test.js"
+    ]
+  },
+  {
+    "name": "MACQ-the-placement-forgets-the-mirror",
+    "file": "src/combat/fpArm.js",
+    "old": "    a: Float32Array.from([effect.mirrored ? -1 : 1, 0, 0, 0, 1, 0, 0, 0, 1]),",
+    "new": "    a: Float32Array.from([1, 0, 0, 0, 1, 0, 0, 0, 1]),",
+    "tests": [
+      "test/macq_flame.test.js"
+    ]
+  },
+  {
+    "name": "MACQ-a-second-GL-effect-every-frame",
+    "file": "src/combat/fpArm.js",
+    "old": "      let gpu = mesh.effects[i];\n      if (!gpu) {",
+    "new": "      let gpu = null;\n      if (!gpu) {",
+    "tests": [
+      "test/macq_flame.test.js"
+    ]
+  },
+  {
+    "name": "MACQ-the-flame-is-drawn-hidden-or-not",
+    "file": "src/combat/fpArm.js",
+    "old": "      gpu.hidden = !!hidden(eff);",
+    "new": "      gpu.hidden = false;",
+    "tests": [
+      "test/macq_flame.test.js"
+    ]
+  },
+  {
+    "name": "MACQ-the-parts-particle-systems-never-reach-the-assembly",
+    "file": "src/formats/mwFirstPerson.js",
+    "old": "        for (const desc of bound.effects ?? []) {",
+    "new": "        for (const desc of []) {",
+    "tests": [
+      "test/macq_flame.test.js"
+    ]
+  },
+  {
+    "name": "MACQ-bindPart-drops-the-sink",
+    "file": "src/formats/mwCharacter.js",
+    "old": "  for (const bundle of sink) {\n    const d = particleSystemOf(partNif, bundle);\n    if (d) effects.push(d);\n  }",
+    "new": "",
+    "tests": [
+      "test/macq_flame.test.js"
+    ]
+  },
+  {
+    "name": "MACQ-the-picture-is-upside-down",
+    "file": "src/formats/mwParticles.js",
+    "old": "  [-1, -1, 0, 1], [1, -1, 1, 1], [1, 1, 1, 0],\n  [-1, -1, 0, 1], [1, 1, 1, 0], [-1, 1, 0, 0],",
+    "new": "  [-1, -1, 0, 0], [1, -1, 1, 0], [1, 1, 1, 1],\n  [-1, -1, 0, 0], [1, 1, 1, 1], [-1, 1, 0, 1],",
+    "tests": [
+      "test/macq_flame.test.js"
+    ]
+  }
+]

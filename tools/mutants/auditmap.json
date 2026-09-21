@@ -1,0 +1,265 @@
+[
+ {
+  "name": "edge-is-a-shore",
+  "file": "src/ui/inkMap.js",
+  "old": "      if (x + 1 < width && here !== inside(x + 1, y)) segs.push([x + 1, y, x + 1, y + 1]);",
+  "new": "      if (here !== (x + 1 < width ? inside(x + 1, y) : false)) segs.push([x + 1, y, x + 1, y + 1]);",
+  "tests": [
+   "test/heldmap.test.js"
+  ]
+ },
+ {
+  "name": "corner-cut-unbounded",
+  "file": "src/ui/inkMap.js",
+  "old": "    const t = len === 0 ? 0 : Math.min(0.25, maxCut / len);",
+  "new": "    const t = len === 0 ? 0 : 0.25;",
+  "tests": [
+   "test/heldmap.test.js"
+  ]
+ },
+ {
+  "name": "closed-loop-notched",
+  "file": "src/ui/inkMap.js",
+  "old": "  const closed = line[0].x === line[line.length - 1].x && line[0].y === line[line.length - 1].y;",
+  "new": "  const closed = false;",
+  "tests": [
+   "test/heldmap.test.js"
+  ]
+ },
+ {
+  "name": "zoom-anchor-before-clamp",
+  "file": "src/ui/heldMap.js",
+  "old": "    const target = clamp(this._view.scale * factor, scaleMinOf(lim), SCALE_MAX);\n    this._setView(zoomAt(this._view, target / this._view.scale, px, py));",
+  "new": "    this._setView(zoomAt(this._view, factor, px, py));",
+  "tests": [
+   "test/heldmap.test.js"
+  ]
+ },
+ {
+  "name": "pulse-every-frame",
+  "file": "src/ui/heldMap.js",
+  "old": "      if (beat !== this._beat) { this._beat = beat; this._dirty = true; }",
+  "new": "      this._beat = beat; this._dirty = true;",
+  "tests": [
+   "test/heldmap.test.js"
+  ]
+ },
+ {
+  "name": "close-drops-toggles",
+  "file": "src/ui/heldMap.js",
+  "old": "    if (this._panelState) this._rememberPanel();\n    this._commit = commit;",
+  "new": "    this._commit = commit;",
+  "tests": [
+   "test/heldmap.test.js"
+  ]
+ },
+ {
+  "name": "pinch-ignored",
+  "file": "src/ui/heldMap.js",
+  "old": "      if (downAt && !second && e.pointerId !== downAt.id) {",
+  "new": "      if (false) {",
+  "tests": [
+   "test/heldmap.test.js"
+  ]
+ },
+ {
+  "name": "pinch-picks",
+  "file": "src/ui/heldMap.js",
+  "old": "        panned = true;   // a pinch is never a pick\n",
+  "new": "        ",
+  "tests": [
+   "test/heldmap.test.js"
+  ]
+ },
+ {
+  "name": "eta-dfu-minutes",
+  "file": "src/ui/heldMap.js",
+  "old": "      minutes: st.trip.walked ? st.trip.walkedMinutes : st.trip.minutes,",
+  "new": "      minutes: st.trip.minutes,",
+  "tests": [
+   "test/heldmap.test.js"
+  ]
+ },
+ {
+  "name": "fare-unscaled",
+  "file": "src/ui/heldMap.js",
+  "old": "    const scaled = scaleTripCost(cost, st.to?.settings, this.deps.playerEntity?.() ?? null);",
+  "new": "    const scaled = cost;",
+  "tests": [
+   "test/heldmap.test.js"
+  ]
+ },
+ {
+  "name": "popup-not-delegating",
+  "file": "src/ui/travelPopUp.js",
+  "old": "    return scaleTripCost(c, this._to?.settings, this.deps.playerEntity?.() ?? null);",
+  "new": "    return c;",
+  "tests": [
+   "test/heldmap.test.js",
+   "test/to1_travelOptions.test.js"
+  ]
+ },
+ {
+  "name": "fee-no-stays",
+  "file": "src/ui/heldMap.js",
+  "old": "      if (this._panelState?.fee) { this._beginClose(null); return; }\n      this._closePanel();",
+  "new": "      this._closePanel();",
+  "tests": [
+   "test/heldmap.test.js"
+  ]
+ },
+ {
+  "name": "click-not-swallowed",
+  "file": "src/ui/heldMap.js",
+  "old": "      this._swallowClick = true;\n    }, { capture: true });",
+  "new": "    }, { capture: true });",
+  "tests": [
+   "test/heldmap.test.js"
+  ]
+ },
+ {
+  "name": "junction-mark-from-window",
+  "file": "src/scenes/world.js",
+  "old": "      markedMapId: () => travelMapMarkedMapId(),",
+  "new": "      markedMapId: () => -1,",
+  "tests": [
+   "test/heldmap.test.js"
+  ]
+ },
+ {
+  "name": "cull-per-point",
+  "file": "src/ui/inkMap.js",
+  "old": "        const draw = visible(p.x, p.y, 8)\n          || (i > 0 && meets(view, paperW, paperH, c[i - 1], p))\n          || (i + 1 < c.length && meets(view, paperW, paperH, p, c[i + 1]));",
+  "new": "        const draw = visible(p.x, p.y, 8);",
+  "tests": [
+   "test/heldmap.test.js"
+  ]
+ },
+ {
+  "name": "junction-walked-through",
+  "file": "src/ui/inkMap.js",
+  "old": "    while (degree(x, y) === 2) {\n      const i = step(x, y);",
+  "new": "    for (;;) {\n      const i = step(x, y);",
+  "tests": [
+   "test/heldmap.test.js"
+  ]
+ },
+ {
+  "name": "tracer-skips-loops",
+  "file": "src/ui/overworldModel.js",
+  "old": "  for (let i = 0; i < mask.length; i++) {   // pure loops\n    const m = mask[i];\n    if (!m) continue;\n    for (let d = 0; d < 8; d++) if ((m & DIR_BIT[d]) && !(walked[i] & DIR_BIT[d])) walk(i, d);\n  }\n",
+  "new": "",
+  "tests": [
+   "test/heldmap.test.js",
+   "test/roads.test.js"
+  ]
+ },
+ {
+  "name": "carets-thinned-per-paint",
+  "file": "src/ui/inkMap.js",
+  "old": "      far: high.filter((h) => h.x % CARET_STEP.far === 0 && h.y % CARET_STEP.far === 0),",
+  "new": "      far: high.filter((h) => h.x % CARET_STEP.mid === 0 && h.y % CARET_STEP.mid === 0),",
+  "tests": [
+   "test/heldmap.test.js"
+  ]
+ },
+ {
+  "name": "harbour-joined",
+  "file": "src/ui/inkMap.js",
+  "old": "  ctx.moveTo(ax + 3 * Math.cos(Math.PI * 0.15), ay + 0.5 + 3 * Math.sin(Math.PI * 0.15));\n",
+  "new": "",
+  "tests": [
+   "test/heldmap.test.js"
+  ]
+ },
+ {
+  "name": "glide-unclamped",
+  "file": "src/ui/heldMap.js",
+  "old": "      Object.assign(v, clampView(v, this._limits()));\n      this._dirty = true;",
+  "new": "      this._dirty = true;",
+  "tests": [
+   "test/heldmap.test.js"
+  ]
+ },
+ {
+  "name": "summary-name-throws",
+  "file": "src/ui/heldMap.js",
+  "old": "    if (!Number.isInteger(summary?.regionIndex)) return '';\n",
+  "new": "",
+  "tests": [
+   "test/heldmap.test.js"
+  ]
+ },
+ {
+  "name": "wheel-lines-as-pixels",
+  "file": "src/ui/heldMap.js",
+  "old": "  if (e.deltaMode === 1) return d * 16;",
+  "new": "  if (e.deltaMode === 1) return d;",
+  "tests": [
+   "test/heldmap.test.js"
+  ]
+ },
+ {
+  "name": "online-bills-inns",
+  "file": "src/ui/heldMap.js",
+  "old": "      sleepModeInn: st.opts.sleepModeInn && !nwt, hasShip: st.hasShip, travelShip: st.opts.travelShip,",
+  "new": "      sleepModeInn: st.opts.sleepModeInn, hasShip: st.hasShip, travelShip: st.opts.travelShip,",
+  "tests": [
+   "test/heldmap.test.js"
+  ]
+ },
+ {
+  "name": "online-counts-days",
+  "file": "src/ui/heldMap.js",
+  "old": "days: nwt ? 0 : travelDays(minutes), online: nwt };",
+  "new": "days: travelDays(minutes), online: nwt };",
+  "tests": [
+   "test/heldmap.test.js"
+  ]
+ },
+ {
+  "name": "modal-class-dropped",
+  "file": "src/ui/heldMap.js",
+  "old": "    this._chrome.root.classList.toggle('hmmodal', open);\n",
+  "new": "",
+  "tests": [
+   "test/heldmap.test.js"
+  ]
+ },
+ {
+  "name": "static-repainted-per-pulse",
+  "file": "src/ui/heldMap.js",
+  "old": "    if (key !== this._staticKey || !lctx) {",
+  "new": "    if (true) {",
+  "tests": [
+   "test/heldmap.test.js"
+  ]
+ },
+ {
+  "name": "app-root-cuts-at-the-first-assets-segment",
+  "file": "src/systems/appRoot.js",
+  "old": "  const cut = u.pathname.replace(/^(.*)\\/(?:assets|src)\\/[^/]*(?:\\/.*)?$/, '$1/');\n  if (cut === u.pathname) return null;\n  u.pathname = cut;",
+  "new": "  u.pathname = u.pathname.replace(/\\/(?:assets|src)\\/.*$/, '/');",
+  "tests": [
+   "test/heldmap.test.js"
+  ]
+ },
+ {
+  "name": "sprite-url-off-the-module-directory",
+  "file": "src/ui/heldMap.js",
+  "old": "export const HELD_MAP_URL = new URL('art/held-map.png', APP_ROOT ?? globalThis.document?.baseURI ?? 'https://invalid.invalid/').href;",
+  "new": "export const HELD_MAP_URL = new URL('art/held-map.png', import.meta.url).href;",
+  "tests": [
+   "test/heldmap.test.js"
+  ]
+ },
+ {
+  "name": "hands-retry-disarmed-by-the-first-no",
+  "file": "src/ui/heldMap.js",
+  "old": "    if (this._lane === 'hands') { this._handsTries = 0; return false; }",
+  "new": "    if (this._lane === 'hands' || !this.deps.holder?.available?.()) { if (this._lane !== 'hands') this._handsTries = 0; return false; }",
+  "tests": [
+   "test/heldmap.test.js"
+  ]
+ }
+]

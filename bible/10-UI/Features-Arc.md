@@ -203,7 +203,7 @@ switch operates nowhere but the home. On the home a settings switch's
 face toggles it (there is no help sheet there to open), as prefRow's
 face does.
 
-**Not done, by name.** The standalone dev host `scenes/dungeon.js:104`
+**Not done, by name.** The standalone dev host `scenes/dungeon.js:112`
 still reads the raw location - a probe door, sized by nothing, as the
 struck Ledger C row already says. Building on the feature (Mac's
 "genuine enhanced feature we can build on") is a design decision, not
@@ -565,7 +565,9 @@ room has no stake in. All three are read every frame by the two
 exterior hosts, so a press takes effect at once, and each has a kill
 door: `wind-wisps` (`windWisps`, `?wisps=off`) - the wisps that show
 the wind; `wind-sound` (`windSound`, `?windaudio=off`) - the quiet loop
-on Daggerfall's own wind clips, silent indoors; `flora-sway`
+on Daggerfall's own wind clips, silent indoors (ES1, 2026-09-16: this
+row became `enhanced-sounds` / `soundEnhancements`, the port's own sounds
+under one switch - see below); `flora-sway`
 (`floraSway`, `?sway=off`) - the trees and plants leaning with the
 wind, the crown moving and the root still. The three drive off ONE
 mapping of the wind into working units (`systems/windDrive.js`), which
@@ -904,3 +906,46 @@ level down.
 and your changes are dropped", and the section rail enforced that. The
 category rail has to enforce it now, or a staged bind survives a hop to
 Audio and back and lands on a Continue the player never meant.
+
+## ES1 - ENHANCED SOUNDS (2026-09-16)
+
+Mac, on the loot-cue patch (MAC-O6): "lump this in as a new enhanced
+toggle. Enhanced Sounds, add the wind noise to it."
+
+**MAC-O6** (Mac's patch, `src/ui/enhancedInventory.js`): "looting
+gold/items makes no sound." DoTransferItem plays a cue - the gold
+clink at :1569, the button click at :1583 - and the classic window
+plays it (`nativeInventory.js`); the enhanced window took the same
+`plan` from planTake/planStore and dropped `plan.sound` on the floor.
+Both `take()` and the store path play it now, ahead of the gold
+interception exactly as DFU's PlayOneShot sits ahead of that arm's
+return.
+
+**ES1**: one row over the port's own sounds. WIND3's `wind-sound` row
+IS this row now - `enhanced-sounds`, pref `soundEnhancements`, on by
+default, the player's own online, in the wind row's place on the home
+- and two things ride it: the wind loop (`systems/windAudio.js`'s
+`windSoundOn` composes the switch with its own `?windaudio=off` kill
+door) and the enhanced inventory's two transfer cues. The switch is
+`systems/enhancedSounds.js`'s `enhancedSoundsOn`: the enhanced skin
+and the pref - the classic skin plays exactly what DFU plays and
+nothing more, which is why the classic window's cue is not behind it.
+A player who had turned `windSound` off starts with the new switch on;
+the old key is read by nothing.
+
+Pins: `test/enhancedsounds.test.js` (the row, the switch executed over
+skin and pref, the wind riding it with its door, both cues behind it
+by source, the classic window's cue unchanged); `wind3_windworld` and
+`features` re-pinned on the new id and key.
+
+## QS - THE DIAMOND'S SWITCH (2026-09-17)
+
+The quickslot diamond (`10-UI/UI-Arc.md` QS) gets its row, `quickslot-
+diamond`, under Sight: an Enhanced row on a `prefs` switch (`quickslots`,
+on by default, the player's own online). It hides the DIAMOND alone -
+the three keys, the tooltip's slot buttons and the row chips keep
+working, because a player who turns the picture off has not asked to
+lose the presses; the HUD reads it each frame, guarded, and toggles one
+class. The home holds 34 rows now: 13 Enhanced, 13 Mod Authored, 10 DFU
+Classic. Pins re-aimed: FT0's id list. `test/qs3_hud.test.js` pins the
+read and the rule.

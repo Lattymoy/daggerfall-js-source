@@ -25,10 +25,12 @@ import { TERRAIN_SIZE } from '../src/world/terrainSampler.js';
 import { armBuildOptsOf } from '../src/combat/weaponRig.js';
 import { RACES } from '../src/systems/races.js';
 import { CLASS_CAREERS } from '../src/systems/chargen.js';
-import { ITEM_TEMPLATES } from '../src/systems/itemTemplates.js';
+import { ITEM_TEMPLATES, templateByIndex } from '../src/systems/itemTemplates.js';
 import { WEAPONS_ENUM, ARMOR_ENUM, ARROW_TEMPLATE } from '../src/combat/enemyEquipment.js';
 import { ARMOR_MATERIAL } from '../src/systems/armorMaterials.js';
 import { EQUIP_SLOTS } from '../src/systems/equip.js';
+import { THUNDERLOCK_TEMPLATE, PELLET_TEMPLATE, isThunderlock, isPellet, pelletCount } from '../src/systems/thunderlock.js';
+import { baseDamageMin, baseDamageMax } from '../src/combat/formulas.js';   // TSR-GUN: AUDIT 18 F1's law - damage is the TEMPLATE's, never a baked field
 
 const read = (p) => readFileSync(p, 'utf8');
 
@@ -56,7 +58,12 @@ test('TSR1: the armory is total where it claims to be, and every row is a real t
   for (const gender of ['male', 'female']) {
     const rows = testGearRows(gender);
     for (const r of rows) {
-      assert.ok(ITEM_TEMPLATES[r.templateIndex], `${gender}/${r.label}: template ${r.templateIndex} exists`);
+      // TSR-GUN: `templateByIndex`, not the frozen DFU array. The
+      // armory carries the port's OWN weapon now, and a custom row
+      // lives above 288 in the custom map - `ITEM_TEMPLATES[560]` is
+      // undefined for a template the game resolves fine. This asks
+      // the question every reader in the game asks.
+      assert.ok(templateByIndex(r.templateIndex), `${gender}/${r.label}: template ${r.templateIndex} exists`);
     }
     // ONE OF EVERY WEAPON TYPE - each maps to its own Morrowind
     // animation class and attach bone, so a missing type is a lane
@@ -78,6 +85,17 @@ test('TSR1: the armory is total where it claims to be, and every row is a real t
     const arrows = rows.find((r) => r.kind === 'arrows');
     assert.equal(arrows?.templateIndex, ARROW_TEMPLATE);
     assert.equal(arrows?.stackCount, 60);
+    // TSR-GUN: the Dwarven Thunderlock and its pellets. This is the
+    // one weapon the loop above cannot reach - it is not in
+    // WEAPONS_ENUM (DFU's table; this weapon is the port's own), it
+    // is off every shop shelf, and its find is the rarest roll in the
+    // game - so the test character is the only way to hold one on
+    // purpose. Loaded, for the same reason the bow is.
+    const gun = rows.find((r) => r.kind === 'thunderlock');
+    assert.equal(gun?.templateIndex, THUNDERLOCK_TEMPLATE, `${gender}: the Thunderlock is in the pack`);
+    const pellets = rows.find((r) => r.kind === 'pellets');
+    assert.equal(pellets?.templateIndex, PELLET_TEMPLATE, `${gender}: and its ammunition`);
+    assert.ok(pellets.stackCount >= 1, `${gender}: a real stack, not an empty row`);
     // The clothes are the SEX'S OWN templates - mens rows are 141-181,
     // womens 182-216 (itemTemplates' own split).
     for (const r of rows.filter((x) => x.kind === 'clothing')) {
@@ -104,6 +122,25 @@ test('TSR1: rows mint through the game\'s own constructors, not a second copy', 
   const robe = testItemOf(rows.find((r) => r.label === 'Plain Robes'));
   assert.equal(robe.group, 'MensClothing');
   assert.equal(robe.name, 'Plain Robes', 'the template names the item');
+  // TSR-GUN: the gun and its ammunition mint through the weapon's own
+  // two constructors, so the test character's Thunderlock is the same
+  // item the rarest find in the game hands over - damage off its own
+  // table, and a stack the ammunition door can spend.
+  const thunder = testItemOf(rows.find((r) => r.kind === 'thunderlock'));
+  assert.ok(isThunderlock(thunder), 'the row mints the real weapon');
+  assert.equal(thunder.group, 'Weapons', 'so equip, the paperdoll and the rig all see a weapon');
+  assert.ok(thunder.maxCondition > 0, 'mintCondition ran');
+  // AUDIT 18 F1's law, and the reason this asks formulas.js rather
+  // than the item: DFU never stores a weapon's damage ON the item, it
+  // resolves the template on every swing. A `thunder.maxDamage` here
+  // would pass only for the one constructor that bakes the field and
+  // would say nothing about what the gun actually hits for.
+  assert.ok(baseDamageMax(thunder) > baseDamageMin(thunder) && baseDamageMin(thunder) > 0,
+    'the template answers its own span for the minted item');
+  const shot = testItemOf(rows.find((r) => r.kind === 'pellets'));
+  assert.ok(isPellet(shot), 'and the row mints real pellets');
+  assert.equal(shot.stackCount, 30);
+  assert.equal(pelletCount([thunder, shot]), 30, 'the pack answers the ammunition question with them in it');
 });
 
 test('TSR2: armBuildOptsOf reads the STRING gender - the !! that built the female skeleton for everyone is dead', () => {

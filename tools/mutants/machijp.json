@@ -1,0 +1,186 @@
+[
+  {
+    "name": "MAC-H-the-hand-draws-whatever-texture-it-last-had",
+    "file": "src/systems/handheldTorches.js",
+    "old": "    const held = light();\n    if (!held || !(isTorch(held) || isLantern(held))) return false;   // MAC-H: nothing in the hand, nothing on the screen",
+    "new": "",
+    "tests": [
+      "test/machij_sprites_and_chat.test.js"
+    ]
+  },
+  {
+    "name": "MAC-H-a-candle-borrows-the-torchs-sprite",
+    "file": "src/systems/handheldTorches.js",
+    "old": "    if (!held || !(isTorch(held) || isLantern(held))) return false;",
+    "new": "    if (!held) return false;",
+    "tests": [
+      "test/machij_sprites_and_chat.test.js"
+    ]
+  },
+  {
+    "name": "MAC-H-the-draw-trusts-a-latch-Update-sets",
+    "file": "src/systems/handheldTorches.js",
+    "old": "    const held = light();",
+    "new": "    const held = w.hasLightSource ? light() : light();",
+    "tests": [
+      "test/machij_sprites_and_chat.test.js"
+    ],
+    "equivalent": true,
+    "why": "`hasLightSource` is set in the same Update that clears it, so on any frame the two agree - the mutation only matters on the frame BETWEEN the light leaving the hand and the next update, which is the frame this pin drives by hand (`the sprite goes the moment the torch leaves the hand`). Recorded rather than pinned twice: the arm that matters is the direct read, and it is pinned."
+  },
+  {
+    "name": "MAC-H-the-tint-is-dropped-on-the-floor",
+    "file": "src/systems/handheldTorches.js",
+    "old": "    renderer.drawScreenQuad(w.currentTexture.tex, getSpriteRect(), w.curAnimRect, tint ?? undefined);",
+    "new": "    renderer.drawScreenQuad(w.currentTexture.tex, getSpriteRect(), w.curAnimRect);",
+    "tests": [
+      "test/machij_sprites_and_chat.test.js"
+    ]
+  },
+  {
+    "name": "MAC-I-a-clockless-scene-is-lit-by-nothing",
+    "file": "src/render/renderer.js",
+    "old": "    if (!this._clockLit) return [1, 1, 1];",
+    "new": "    if (!this._clockLit) return [0, 0, 0];",
+    "tests": [
+      "test/machij_sprites_and_chat.test.js"
+    ]
+  },
+  {
+    "name": "MAC-I-the-sun-goes-in-whole-not-by-halves",
+    "file": "src/render/renderer.js",
+    "old": "      am[0] + mc[0] * this._moonScale * 0.5 + sc[0] * this._sunScale * 0.5,",
+    "new": "      am[0] + mc[0] * this._moonScale * 0.5 + sc[0] * this._sunScale,",
+    "tests": [
+      "test/machij_sprites_and_chat.test.js"
+    ]
+  },
+  {
+    "name": "MAC-I-the-falloff-is-linear-not-squared",
+    "file": "src/render/renderer.js",
+    "old": "        const a2 = att * att;",
+    "new": "        const a2 = att;",
+    "tests": [
+      "test/machij_sprites_and_chat.test.js"
+    ]
+  },
+  {
+    "name": "MAC-I-a-light-past-its-range-still-reaches",
+    "file": "src/render/renderer.js",
+    "old": "        const att = Math.max(0, Math.min(1, 1 - Math.hypot(dx, dy, dz) / range));",
+    "new": "        const att = Math.min(1, 1 - Math.hypot(dx, dy, dz) / range);",
+    "tests": [
+      "test/machij_sprites_and_chat.test.js"
+    ]
+  },
+  {
+    "name": "MAC-I-there-is-no-floor-under-the-sprite",
+    "file": "src/render/renderer.js",
+    "old": "    for (let i = 0; i < 3; i++) out[i] = Math.max(floor, Math.min(1, out[i]));",
+    "new": "    for (let i = 0; i < 3; i++) out[i] = Math.min(1, out[i]);",
+    "tests": [
+      "test/machij_sprites_and_chat.test.js"
+    ]
+  },
+  {
+    "name": "MAC-I-and-no-ceiling-either",
+    "file": "src/render/renderer.js",
+    "old": "    for (let i = 0; i < 3; i++) out[i] = Math.max(floor, Math.min(1, out[i]));",
+    "new": "    for (let i = 0; i < 3; i++) out[i] = Math.max(floor, out[i]);",
+    "tests": [
+      "test/machij_sprites_and_chat.test.js"
+    ]
+  },
+  {
+    "name": "MAC-I-the-lane-decode-lands-on-a-screen-quad",
+    "file": "src/render/renderer.js",
+    "old": "      const colors = this._pointColorData(count, true);   // EL1: the classic-space read, as the water takes",
+    "new": "      const colors = this._pointColorData(count);",
+    "tests": [
+      "test/machij_sprites_and_chat.test.js"
+    ],
+    "equivalent": true,
+    "why": "`_pointColorData`'s decode only fires under the enhanced-lighting LANE (`this._lane`), and every pin here drives a laneless state - so the two reads are the same array in this suite. The difference is a whole-frame one (a linear tint multiplied into a display-space quad) and belongs to the browser probe, not to a unit pin. Recorded rather than faked with a stub lane."
+  },
+  {
+    "name": "MAC-I-the-switch-is-ignored",
+    "file": "src/combat/weaponRig.js",
+    "old": "      const fpTint = fpLightingOn() ? (renderer?.flatLightAt?.() ?? null) : null;",
+    "new": "      const fpTint = renderer?.flatLightAt?.() ?? null;",
+    "tests": [
+      "test/machij_sprites_and_chat.test.js"
+    ]
+  },
+  {
+    "name": "MAC-I-the-kill-door-does-not-close",
+    "file": "src/combat/fpsWeapon.js",
+    "old": "  return !!getPref('firstPersonLighting') && new URLSearchParams(search).get('fplight') !== 'off';",
+    "new": "  return !!getPref('firstPersonLighting');",
+    "tests": [
+      "test/machij_sprites_and_chat.test.js"
+    ]
+  },
+  {
+    "name": "MAC-I-the-weapon-sprite-drops-the-tint",
+    "file": "src/combat/weaponRig.js",
+    "old": "      if (art) drawFpsWeapon(renderer, c, art, playerWeapon.machine.state, playerWeapon.machine.frame, { tint: fpTint });",
+    "new": "      if (art) drawFpsWeapon(renderer, c, art, playerWeapon.machine.state, playerWeapon.machine.frame);",
+    "tests": [
+      "test/machij_sprites_and_chat.test.js"
+    ]
+  },
+  {
+    "name": "MAC-P-the-arm-keeps-its-fixed-studio",
+    "file": "src/combat/fpArm.js",
+    "old": "      const vmLight = fpLightingOn() ? (renderer.flatLightAt?.() ?? null) : null;",
+    "new": "      const vmLight = null;",
+    "tests": [
+      "test/machij_sprites_and_chat.test.js"
+    ]
+  },
+  {
+    "name": "MAC-P-the-key-light-forgets-the-rooms-colour",
+    "file": "src/render/renderer.js",
+    "old": "      this._sunColor = new Float32Array([viewmodelLight[0], viewmodelLight[1], viewmodelLight[2]]);",
+    "new": "      this._sunColor = new Float32Array([1, 1, 1]);",
+    "tests": [
+      "test/machij_sprites_and_chat.test.js"
+    ]
+  },
+  {
+    "name": "MAC-P-the-worlds-point-lights-ride-into-the-lens-local-pass",
+    "file": "src/render/renderer.js",
+    "old": "      this._pointLights = st.pointLights;   // world-space lights have no meaning at this origin",
+    "new": "",
+    "tests": [
+      "test/machij_sprites_and_chat.test.js"
+    ]
+  },
+  {
+    "name": "MAC-P-the-borrow-is-never-returned",
+    "file": "src/render/renderer.js",
+    "old": "    } finally {\n      if (vmSaved) {\n        this._lightDir = vmSaved.lightDir; this._ambient = vmSaved.ambient; this._sunScale = vmSaved.sunScale;",
+    "new": "    } finally {\n      if (false) {\n        this._lightDir = vmSaved.lightDir; this._ambient = vmSaved.ambient; this._sunScale = vmSaved.sunScale;",
+    "tests": [
+      "test/machij_sprites_and_chat.test.js"
+    ]
+  },
+  {
+    "name": "MAC-J-the-roster-marker-loses-its-prefix",
+    "file": "src/ui/chatPanel.js",
+    "old": "(acts ? ' dfchat-act' : '')",
+    "new": "(acts ? ' act' : '')",
+    "tests": [
+      "test/machij_sprites_and_chat.test.js"
+    ]
+  },
+  {
+    "name": "MAC-J-the-sheet-keeps-the-unprefixed-rule-too",
+    "file": "src/ui/chatPanel.js",
+    "old": ".dfchat-who-row.dfchat-act { cursor: pointer; }",
+    "new": ".dfchat-who-row.act { cursor: pointer; }",
+    "tests": [
+      "test/machij_sprites_and_chat.test.js"
+    ]
+  }
+]

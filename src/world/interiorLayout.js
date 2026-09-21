@@ -31,7 +31,7 @@
 // they are pure layout data, position-only.
 
 import { ROTATION_DIVISOR } from '../formats/blocksFile.js';
-import { GLOBAL_SCALE } from './meshReader.js';
+import { GLOBAL_SCALE, DOOR_TYPE } from './meshReader.js';   // MAC-BUG1: a synthesised exit is a BUILDING door like any other
 import { EDITOR_FLATS_ARCHIVE } from './rmbFlats.js';
 import { getStaticDoors } from './staticDoors.js';
 import { trs } from './mat4.js';
@@ -42,6 +42,13 @@ import { trs } from './mat4.js';
 // chain (:500) on the SAME clause.
 export const PROP_MODEL_TYPE = 3;
 const DOOR_MODEL_BASE_ID = 9000;
+
+/** MAC-BUG1: the box a synthesised exit offers the activation ray, in
+ *  the port's world units. A classic building door is about a metre
+ *  wide and a little over two tall; this is that, and nothing about it
+ *  is load-bearing beyond being big enough to press and small enough
+ *  not to swallow the room. */
+const SYNTHESISED_DOOR_SIZE = Object.freeze({ x: 1.2, y: 2.4, z: 1.2 });
 
 // DFU InteriorMarkerTypes (editor flat texture records), same values.
 export const INTERIOR_MARKER = {
@@ -208,5 +215,68 @@ export function layoutInterior(dfBlock, blockIndex, recordIndex, getModel) {
     spawnPoints.push([obj.xPos * GLOBAL_SCALE, -obj.yPos * GLOBAL_SCALE, obj.zPos * GLOBAL_SCALE]);
   }
 
+  // MAC-BUG1 (2026-09-20, Mac: "got locked inside a windmill when i
+  // went inside. not sure if it's all of them that do that") - IT IS
+  // ALL OF THEM, AND THE REASON IS THAT AN INTERIOR'S EXIT IS A MODEL.
+  //
+  // A building's way out is not a record in its own data: it is the
+  // STATIC DOOR baked into one of the interior's placed models
+  // (`getStaticDoors` above), which is why every classic interior has
+  // one and why nothing in the port had ever needed to ask whether an
+  // interior HAS one. The hosts turn `doors` into the only activation
+  // targets an interior offers (`interiorCtx.doors` -> the `exit:N`
+  // targets), so an empty list is a room with no way out - and it
+  // fails SILENTLY, because an empty array is a perfectly good array.
+  //
+  // WM2g attached Kamer's vendored mill interior to each of the seven
+  // farm blocks, and the way IN is a CLASSIC model (118, the structure
+  // beside the mill - windmillMesh.js says so). Nothing in the mill's
+  // own interior carries a door, so the door that let you in had no
+  // twin on the inside. All seven mills share the one interior, which
+  // is why it is all of them.
+  //
+  // THE EXIT GOES WHERE THE PLAYER LANDS. `interiorLanding`
+  // (player/enterExit.js) already falls back to the ENTER MARKER when
+  // it finds no door, so the mill drops the player at its 199.8 marker
+  // and then has nothing to walk back out of. That marker is where
+  // classic data would have put the door - it is the same point, named
+  // twice - so this is not a guess about geometry: it is the one
+  // position the interior itself already claims as its threshold.
+  //
+  // IT IS A LAST RESORT, not a policy. An interior that produced even
+  // one door is untouched, so no classic building's door set changes
+  // by a byte; and an interior with neither a door nor an enter marker
+  // gets nothing, because there is nowhere honest to put it.
+  if (doors.length === 0) {
+    const enter = markers.find((m) => m.type === INTERIOR_MARKER.ENTER)
+      ?? markers.find((m) => m.type === INTERIOR_MARKER.REST);
+    if (enter) doors.push(exitDoorAt(enter, blockIndex, recordIndex));
+  }
+
   return { placements, actionDoors, flats, markers, doors, spawnPoints };
+}
+
+/** MAC-BUG1: one static door, in the shape `getStaticDoors` answers,
+ *  standing at a marker. The matrix is the IDENTITY because the marker
+ *  is already in the interior's own frame (the model loop above has
+ *  applied each placement's matrix; a marker carries no model), so the
+ *  centre IS the position and `doorWorldPosition` reproduces it.
+ *
+ *  The normal points at +Z rather than at nothing: `interiorLanding`
+ *  steps ENTER_DOOR_OFFSET along it to place the feet, and a zero
+ *  normal would land the player inside the door's own box. The
+ *  size is a classic building door's, so the activation AABB the
+ *  hosts build round it is the size a player expects to press. */
+function exitDoorAt(marker, blockIndex, recordIndex) {
+  return {
+    matrix: trs(0, 0, 0, 0, 0, 0),
+    doorType: DOOR_TYPE.BUILDING,
+    blockIndex,
+    recordIndex,
+    doorIndex: 0,
+    synthesised: true,   // MAC-BUG1: this one is the port's, not the model's
+    centre: { x: marker.x, y: marker.y, z: marker.z },
+    normal: { x: 0, y: 0, z: 1 },
+    size: { x: SYNTHESISED_DOOR_SIZE.x, y: SYNTHESISED_DOOR_SIZE.y, z: SYNTHESISED_DOOR_SIZE.z },
+  };
 }

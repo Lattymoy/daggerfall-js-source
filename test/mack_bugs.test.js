@@ -36,7 +36,7 @@ test('AUDIT-MACK F2: ONE feeder per held-key Set, and every reader is on a fed o
   // matters: it asserted that every file reading `held(keys, ...)`
   // must itself write the mouse codes into that Set. `worldModes.js`
   // does not OWN a Set - it takes `keys` off the host bag
-  // (`exterior.js:3114`) - and the lender's own mousedown writes the
+  // (`exterior.js:3435`) - and the lender's own mousedown writes the
   // codes UNGATED on a listener that is never removed. The codes were
   // always there.
   //
@@ -61,9 +61,11 @@ test('AUDIT-MACK F2: ONE feeder per held-key Set, and every reader is on a fed o
     `the port has both kinds (${owners.length} owners, ${borrowers.length} borrowers)`);
 
   for (const [f, src] of owners) {
-    assert.match(src, /const mc = mouseCode\(e\.button\);\s*\n?\s*if \(mc\) keys\.add\(mc\);/s,
+    // MWCROUCH: `keys.add(mc)` now sits in a block beside the key-edge
+    // ring's own note of the same button - one feeder, two readers.
+    assert.match(src, /const mc = mouseCode\(e\.button\);\s*\n?\s*if \(mc\) \{ keys\.add\(mc\);/s,
       `${f} DECLARES the Set, so a mouse press must reach it - Mouse2 is AutoRun and Mouse0 the drawn bow's un-draw at the shipped bindings`);
-    assert.match(src, /const mc = mouseCode\(e\.button\);\s*\n?\s*if \(mc\) keys\.delete\(mc\);/s,
+    assert.match(src, /const mc = mouseCode\(e\.button\);\s*\n?\s*if \(mc\) \{ keys\.delete\(mc\);/s,
       `${f} must also let the button GO - a stuck Mouse2 is a stuck AutoRun`);
     // ...and the write must be UNGATED, which is what makes a borrower
     // safe: the lender records the press whatever mode is mounted.
@@ -508,7 +510,7 @@ test('MAC-L1b: the dungeon pause door reads the HOST BAG, not its own argument',
 const DOM_DOORS = [
   'src/ui/pauseDoor.js', 'src/ui/inventoryDoor.js', 'src/ui/spellbookDoor.js',
   'src/ui/talkDoor.js', 'src/ui/chronicleDoor.js', 'src/ui/bookDoor.js',
-  'src/ui/charSheetDoor.js', 'src/ui/overworldMap.js',
+  'src/ui/charSheetDoor.js', 'src/ui/heldMap.js',   // MAP1: the held map took the relief map's seat
 ];
 
 test('MAC-L3: the browser menu is shut ONCE, on the document, and text entry keeps its own', async () => {
@@ -795,12 +797,12 @@ test('AUDIT-MACL F4: the large HUD’s options panel is a SECOND route to the sa
 
 test('AUDIT-MACL F5: the guard PREVENTS the menu and does not STOP the event', async () => {
   // A correction and a hazard. The correction: of the THIRTEEN in-game
-  // surfaces appended to `document.body`, exactly ONE (`overworldMap.js`)
+  // surfaces appended to `document.body`, exactly ONE (`overworldMap.js`, since RETIRED for `heldMap.js`)
   // shut `contextmenu` itself. MAC-L3's record said "two" - it was
   // counting `enhancedBook.js`, which is mounted BY one of the thirteen
   // rather than being one of them. Counted here rather than remembered.
   const inGame = ['bookDoor', 'charSheetDoor', 'chronicleDoor', 'fpsCounter', 'gamepadInput',
-    'hitNumbers', 'inventoryDoor', 'lootHover', 'overworldMap', 'pauseDoor',
+    'heldMap', 'hitNumbers', 'inventoryDoor', 'lootHover', 'pauseDoor',   // MAP1: heldMap.js in overworldMap.js's seat
     'spellbookDoor', 'talkDoor', 'touch'].map((n) => `src/ui/${n}.js`);
   assert.equal(inGame.length, 13, 'the thirteen, named');
   for (const f of inGame) assert.ok(rd(f).length > 0, `${f} exists`);

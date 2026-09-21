@@ -282,11 +282,26 @@ export class MobilePerson {
     if (this.state === 'idle') {
       const rec = this.guard ? PERSON_GUARD_IDLE_RECORD : PERSON_IDLE_RECORD;
       const n = Math.max(1, this.frameCount(rec, this.archive));
-      return { record: rec, frame: this.frame % n, flip: false };
+      return this._frameOut(rec, this.frame % n, false);
     }
     const o = mobileOrientation(DIR_YAW[this.dir], this.pos, cameraPos);
     const rec = MOVE_RECORDS[o];
     const n = Math.max(1, this.frameCount(rec, this.archive));
-    return { record: rec, frame: this.frame % n, flip: MOVE_FLIPS[o] };
+    return this._frameOut(rec, this.frame % n, MOVE_FLIPS[o]);
+  }
+
+  /**
+   * PERF-TOWN1: THIS PERSON'S OWN ROW, written through.
+   *
+   * `update` answers once per person per frame and the caller reads the
+   * three fields and drops them - so a fresh record each time was a
+   * frame's worth of garbage for a value nothing outlives. One record
+   * PER PERSON rather than one shared by all of them, because the host
+   * collects every row first and reads them after.
+   */
+  _frameOut(record, frame, flip) {
+    const o = this._out ??= { record: 0, frame: 0, flip: false };
+    o.record = record; o.frame = frame; o.flip = flip;
+    return o;
   }
 }

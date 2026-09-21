@@ -2,19 +2,34 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { LAB_GRASS_HEAD, LAB_GRASS_VS, LAB_GRASS_FS, LAB_GRASS, LAB_DIM, placeLabGrass, grassRecordsOf, labBladeCorners } from '../src/render/labGrass.js';
+import { LAB_GRASS_HEAD, LAB_GRASS_VS, LAB_GRASS_FS, LAB_GRASS, LAB_DIM, placeLabGrass, grassRecordsOf, labBladeCorners, GRASS2_VS_EDITS, GRASS_FAR_SEGMENTS, GRASS_PACK_BYTES, GRASS_CELL, grassPerCell, heightFloor, heightSpan, WIDTH_SPAN, LEAN_SPAN } from '../src/render/labGrass.js';
 
 const lab = () => readFileSync('grass-proto.html', 'utf8');
 
-test('GR1: the shaders are the lab\u2019s own, verbatim, and the lab\u2019s height is 54', () => {
+test('GR1/GRASS2/GRASS5: the shaders are the lab\u2019s own but for five DECLARED edits, and the port\u2019s height, range and byte layout are its own', () => {
   const src = lab();
   const vsStart = src.indexOf('layout(location=0) in vec2 aCorner;      // one blade quad, 0..1\nlayout(location=1) in vec4 aInst;        // xz, height, phase');
   const vsEnd = src.indexOf('}`, HEAD + `', vsStart) + 1;
   const fsStart = src.indexOf('in float vT; in float vTint; in float vFade; in float vLam; in float vSnow; in float vWet;', vsEnd);
   const fsEnd = src.indexOf('}`);', fsStart) + 1;
   assert.ok(vsStart > 0 && fsStart > 0);
-  assert.equal(LAB_GRASS_VS, src.slice(vsStart, vsEnd), 'the vertex stage is the lab\u2019s text, byte for byte');
-  assert.equal(LAB_GRASS_FS, src.slice(fsStart, fsEnd), 'the fragment stage is the lab\u2019s text, byte for byte');
+  // GRASS2: the vertex stage is the lab's text plus THREE DECLARED
+  // EDITS, and the pin is still byte-exact - it applies the edits to the
+  // lab's own slice and compares the result. A fourth change, or a
+  // fourth edit nobody declared, still fails here, which is the whole
+  // value of GR1's law: it is departed from on the record, never
+  // loosened. The comments around each edit are the port's own and are
+  // not compared; the CODE is.
+  const noComments = (t) => t.split('\n').filter((l) => !l.trim().startsWith('//')).join('\n');
+  let want = src.slice(vsStart, vsEnd);
+  assert.equal(GRASS2_VS_EDITS.length, 5, 'five departures, no more - a sixth is a decision, not a detail');
+  for (const e of GRASS2_VS_EDITS) {
+    assert.ok(want.includes(e.from), `the lab still carries the line this edit replaces: ${e.why}`);
+    assert.ok(e.why && e.why.length > 20, 'every departure says why, on the departure itself');
+    want = want.replace(e.from, e.to);
+  }
+  assert.equal(noComments(LAB_GRASS_VS), noComments(want), 'the vertex stage is the lab\u2019s text with the three declared edits, and nothing else');
+  assert.equal(LAB_GRASS_FS, src.slice(fsStart, fsEnd), 'the fragment stage is the lab\u2019s text, byte for byte - GRASS2 changed no fragment law');
   const headStart = src.indexOf('const HEAD = `');
   assert.equal(LAB_GRASS_HEAD, src.slice(headStart + 'const HEAD = `'.length, src.indexOf('`;', headStart)));
   // the lab itself: height 54, and the maxima the game uses
@@ -22,8 +37,16 @@ test('GR1: the shaders are the lab\u2019s own, verbatim, and the lab\u2019s heig
   assert.match(src, /id="height" type="range" min="10" max="120" step="1" value="54"/);
   assert.match(src, /id="density" type="range" min="20000" max="1200000"/);
   assert.match(src, /id="range" type="range" min="10" max="200"/);
-  assert.deepEqual({ ...LAB_GRASS }, { density: 1200000, height: 54, range: 200, span: 210, seed: 0x2f6e2b1 }, 'max blades, max range, no exceptions');
+  // GRASS2: the lab's DENSITY is kept and its height and range are not.
+  // `densitySpan` is the lab's own span, kept as the rate the field is
+  // dense by, so pushing the range out never thins the grass.
+  assert.deepEqual({ ...LAB_GRASS }, { density: 1200000, height: 38, range: 300, span: 315, densitySpan: 210, seed: 0x2f6e2b1 },
+    'the lab\u2019s blade count, at Mac\u2019s height and a longer range');
+  assert.equal((LAB_GRASS.span * 2) % 30, 0, 'the window is a whole number of cells, so its two edges move in step');
+  assert.equal(LAB_GRASS.densitySpan, 210, 'the rate is measured over the lab\u2019s own window, never the window in force');
+  assert.ok(LAB_GRASS.span > LAB_GRASS.range, 'the window holds the range - a window shorter than the range has a wall at its edge');
   assert.equal(labBladeCorners().length / 2, 30, 'five stacked quads, the lab\u2019s blade');
+  assert.equal(labBladeCorners(GRASS_FAR_SEGMENTS).length / 2, 6, 'and one quad for the far blade, a fifth of the vertices');
   assert.deepEqual({ ...LAB_DIM }, { sunny: 1.00, cloudy: 0.90, overcast: 0.72, fog: 0.66, rain: 0.60, thunder: 0.46, snow: 0.80, sandstorm: 0.55 });   // WEATHER2d: the port's own row appended; the lab's seven verbatim
 });
 
@@ -37,9 +60,9 @@ test('GR1: the placer is the lab\u2019s law - same seed, span, clustering, heigh
   const g = placeLabGrass({ centre: [0, 0], keep: () => 0 });
   let s = 0x2f6e2b1;
   const rnd = () => { s ^= s << 13; s ^= s >>> 17; s ^= s << 5; s >>>= 0; return s / 4294967296; };
-  const cx = (rnd() - 0.5) * 420, cz = (rnd() - 0.5) * 420; const a = rnd() * 6.283, rr = rnd() * rnd() * 0.55;
+  const cx = (rnd() - 0.5) * LAB_GRASS.span * 2, cz = (rnd() - 0.5) * LAB_GRASS.span * 2; const a = rnd() * 6.283, rr = rnd() * rnd() * 0.55;
   assert.ok(Math.abs(g.inst[0] - (cx + Math.cos(a) * rr)) < 1e-3 && Math.abs(g.inst[1] - (cz + Math.sin(a) * rr)) < 1e-3   /* Float32 storage */, 'the first blade is where the lab puts it');
-  assert.ok(Math.abs(g.inst[2] - (0.22 + rnd() * 0.42) * (54 / 34)) < 1e-4, 'at the lab\u2019s height');
+  assert.ok(Math.abs(g.inst[2] - (0.22 + rnd() * 0.42) * (LAB_GRASS.height / 34)) < 1e-4, 'at the port\u2019s height, on the lab\u2019s law');
   assert.equal(g.count, 1200000, 'all 1,200,000 candidates when every one may stand');
   // and a candidate that may not stand is dropped without disturbing the sequence
   const h = placeLabGrass({ centre: [0, 0], keep: (x, z) => (x > 0 ? 0 : null) });
@@ -143,7 +166,7 @@ test('GR4: the root takes the colour of the tile it stands on, and the base fade
   // a fourth instance attribute carries the ground's colour, the root
   // is that colour darkened as a sward's shade would, and the alpha
   // fades in from the base so the planted line is gone.
-  assert.match(LAB_GRASS_VS, /layout\(location=4\) in vec3 aGround;/);
+  assert.match(LAB_GRASS_VS, /layout\(location=4\) in vec4 aPC;/);   // GRASS5: three bytes of ground and one of phase
   assert.match(LAB_GRASS_VS, /vGround = aGround;/);
   assert.match(LAB_GRASS_FS, /in vec3 vGround;/);
   assert.match(LAB_GRASS_FS, /vec3 root = vGround \* 0\.62;/, 'the root IS the ground, darkened');
@@ -165,11 +188,14 @@ test('GR4: the root takes the colour of the tile it stands on, and the base fade
   const bare = placeLabGrassSteps({ centre: [0, 0], keep: () => 0, density: 100 });
   let b; do { b = bare.next(); } while (!b.done);
   assert.ok([0.10, 0.145, 0.065].every((v, k) => near(b.value.ground[k], v)), 'no ground callback: the old olive');
-  // THE RENDERER takes the fourth buffer as a vec3 with the instance divisor.
+  // GRASS5: THE RENDERER takes three PACKED streams with the instance
+  // divisor - the ground colour is three bytes of the last one, and the
+  // root height lost its own attribute to a lane of the first.
   const src = readFileSync(new URL('../src/render/labGrass.js', import.meta.url), 'utf8');
-  assert.match(src, /this\.bufs = \[1, 2, 3, 4\]\.map/);
-  assert.match(src, /loc === 3 \? 1 : loc === 4 \? 3 : 4/);
-  assert.match(src, /\[3, placed\.ground\]/);
+  assert.match(src, /this\.bufs = \[1, 2, 4\]\.map/, 'three streams');
+  assert.match(src, /\[\[0, 1, gl\.UNSIGNED_SHORT\], \[1, 2, gl\.UNSIGNED_BYTE\], \[2, 4, gl\.UNSIGNED_BYTE\]\]/, 'u16 then two u8');
+  assert.match(src, /gl\.vertexAttribPointer\(loc, 4, type, true, 0, 0\);/, 'NORMALIZED, so the GPU does the unpack');
+  assert.match(src, /C\[i \* 4\] = u8\(placed\.ground\[i \* 3\]\);/, 'and the ground colour is packed from the placer\'s own floats');
 });
 
 test('GR4: the game feeds each tile\'s MEAN colour, averaged once where the texels already are', () => {
@@ -212,14 +238,35 @@ test('GR5: a cell grows the same blades whoever is looking, and walking touches 
   // INCREMENTAL: the field frees and fills EDGES only, a few a frame -
   // never a whole-field upload.
   const w = []; const r = { allocSlots(p, s) { w.push(['a', p, s]); }, writeSlot(s, p) { w.push(['w', s, p.count]); }, clearSlot(s) { w.push(['c', s]); } };
-  const f = createGrassField(r, { keep: () => 0, perFrame: 400 });
+  // GRASS5: the budget has to exceed the WINDOW, which grew with the
+  // range - at 400 the first update left 84 cells unfilled and the next
+  // one finished them, which reads exactly like a step that moved cells.
+  const f = createGrassField(r, { keep: () => 0, perFrame: 1e9 });
   assert.equal(w[0][0], 'a', 'the buffers are sized once, up front');
-  f.update(1000, 1000); const live = w.filter((x) => x[0] === 'w').length; w.length = 0;
-  f.update(1005, 1000);
-  assert.equal(w.length, 0, 'five metres: nothing moves');
-  f.update(1040, 1000);
+  // GRASS5: the start is SNAPPED to the cell grid rather than a round
+  // number, so the fixture states a law rather than relying on the
+  // arithmetic of whatever span is in force.
+  const start = LAB_GRASS.span + GRASS_CELL * 22;
+  assert.equal((start - LAB_GRASS.span) % GRASS_CELL, 0, 'the walk starts on a cell boundary');
+  f.update(start, start); const live = w.filter((x) => x[0] === 'w').length; w.length = 0;
+  // PERF10: STANDING STILL COSTS NOTHING. The window is a disc now, so
+  // its rim is not snapped to the cell grid the way the square's floored
+  // bounds were and a step of any size can bring a cell in. What must
+  // still hold - and is the law the square's version was reaching for -
+  // is that a frame which does not move the eye does not move a blade.
+  f.update(start, start);
+  assert.equal(w.length, 0, 'the eye did not move: nothing moves');
+  // ...and a five-metre step reaches only the leading rim, and frees
+  // nothing at all: the fill radius is the draw's range and cells are
+  // held out to `span`, so nothing churns at the trailing edge.
+  f.update(start + 5, start);
+  const near = w.filter((x) => x[0] === 'w').length;
+  assert.ok(near > 0 && near < live / 20, `five metres: the leading rim only (${near} of ${live})`);
+  assert.equal(w.filter((x) => x[0] === 'c').length, 0, 'five metres frees nothing - the hysteresis holds the trailing rim');
+  w.length = 0;
+  f.update(start + 40, start);
   const writes = w.filter((x) => x[0] === 'w').length, clears = w.filter((x) => x[0] === 'c').length;
-  assert.ok(writes > 0 && writes < live / 4 && clears === writes, `forty metres: one edge in, one out (${writes}/${clears} of ${live})`);
+  assert.ok(writes > 0 && writes < live / 4 && clears > 0 && clears < live / 4, `forty metres: one edge in, one out (${writes}/${clears} of ${live})`);
   // ...and a frame fills at most perFrame, so the walk cannot hitch.
   const g = createGrassField(r, { keep: () => 0, perFrame: 2 }); w.length = 0;
   const pending = g.update(0, 0);
@@ -234,6 +281,65 @@ test('GR5: the host runs the field, not the walk', () => {
   assert.doesNotMatch(world, /placeLabGrassSteps|labGrassWalk\b|labGrass\.set\(/, 'the whole-field walk and its 60MB swap are gone');
   assert.match(world, /labGrassField = null;   \/\/ AUDIT 49 F2 \/ GR5/, 'a new world starts empty');
   const src = readFileSync(new URL('../src/render/labGrass.js', import.meta.url), 'utf8');
-  assert.match(src, /gl\.bufferSubData\(gl\.ARRAY_BUFFER, slot \* p \* stride \* 4, data\);/, 'a cell arrives by bufferSubData into its slot');
-  assert.match(src, /clearSlot\(slot\) \{[\s\S]{0,400}bufferSubData\(gl\.ARRAY_BUFFER, slot \* p \* 4 \* 4, this\._zeros\)/, 'and leaves by zeros');
+  // GRASS5: the stride is in BYTES now, because a blade is no longer a
+  // whole number of floats - eight bytes of u16 and two lots of four u8.
+  assert.match(src, /gl\.bufferSubData\(gl\.ARRAY_BUFFER, slot \* p \* w\.bytes, w\.data\);/, 'a cell arrives by bufferSubData into its slot');
+  assert.match(src, /clearSlot\(slot\) \{[\s\S]{0,700}bufferSubData\(gl\.ARRAY_BUFFER, slot \* p \* 8, this\._zeros\)/, 'and leaves by zeros');
+});
+
+// ═══ GRASS5 (2026-09-19): THE BLADE, PACKED ═════════════════════════
+// Twelve floats a blade was 48 bytes on the GPU, and the STORAGE - not
+// the frame - was what capped the range: 106 MB at 250 m, 169 at 320.
+// Sixteen bytes is three times the field for the same memory.
+test('GRASS5: a blade is sixteen bytes, and every lane is finer than the float it replaced', () => {
+  const src = readFileSync(new URL('../src/render/labGrass.js', import.meta.url), 'utf8');
+  assert.equal(GRASS_PACK_BYTES, 16);
+  // THE LANES, and the precision each one actually has. These are the
+  // numbers the pack rests on; if a lane shrinks, one of them fails.
+  const cell = GRASS_CELL;
+  assert.ok(cell / 65535 < 0.001, `x and z are cell-local u16: ${(cell / 65535 * 1000).toFixed(2)} mm`);
+  const hSpan = heightSpan();
+  assert.ok(hSpan / 255 < 0.003, `height is u8 over its own span: ${(hSpan / 255 * 1000).toFixed(2)} mm`);
+  assert.ok(WIDTH_SPAN / 255 < 0.001, `width is u8 over ${WIDTH_SPAN}`);
+  assert.ok((2 * Math.PI) / 255 < 0.03, 'phase is u8 over a turn');
+  assert.ok(LEAN_SPAN / 255 < 0.003, 'lean is u8 over its own span');
+  // the height law's floor and span ARE the placer's own arithmetic
+  assert.ok(Math.abs(heightFloor(54) - 0.22 * (54 / 34)) < 1e-12);
+  assert.ok(Math.abs(heightSpan(54) - 0.42 * (54 / 34)) < 1e-12);
+  assert.ok(Math.abs(heightFloor() - 0.22 * (LAB_GRASS.height / 34)) < 1e-12, 'and default to the port’s height');
+
+  // THE BUFFERS ARE SIZED IN BYTES, and the three of them add to sixteen
+  assert.match(src, /const sizes = \[slots \* perCell \* 8, slots \* perCell \* 4, slots \* perCell \* 4\];/);
+  // THE FRAME IS THE DATA'S BOUNDS, not the cell's coordinates - a blade
+  // clusters up to 0.55 outside its own cell, so a floor() of the lowest
+  // blade names the cell next door and throws the slot 30 m out.
+  assert.match(src, /const xSpan = n > 0 \? Math\.max\(1e-3, Math\.max\(x1 - x0, z1 - z0\)\) : 1;/);
+  assert.match(src, /const ox = n > 0 \? x0 : 0;/, 'the origin is the lowest blade, not a floor of it');
+  assert.ok(!/Math\.floor\(x0 \/ cell\) \* cell/.test(src), 'and the floor that broke it is gone');
+  // AND THE POINTER RE-STATES THE TYPE. vertexAttribPointer sets the
+  // FORMAT as well as the offset, so moving to a slot with the old float
+  // shape un-packs every attribute and the draw dies.
+  const pt = src.slice(src.indexOf('  _point(slot) {'), src.indexOf('  _drawVisibleSlots(vp'));
+  assert.match(pt, /gl\.vertexAttribPointer\(loc, 4, type, true, 0, slot \* p \* bytes\);/, 'the type travels with the offset');
+  assert.match(pt, /gl\.UNSIGNED_SHORT, 8\], \[1, 2, gl\.UNSIGNED_BYTE, 4\], \[2, 4, gl\.UNSIGNED_BYTE, 4\]/);
+});
+
+test('GRASS5: the range is no longer a memory question - and the window at 300 m holds less than the lab’s own 200 m did', () => {
+  const per = grassPerCell();
+  const bytesAt = (span, wide) => {
+    const side = Math.ceil((span * 2) / GRASS_CELL) + 1;
+    return side * side * per * wide;
+  };
+  const now = bytesAt(LAB_GRASS.span, GRASS_PACK_BYTES);
+  const labOld = bytesAt(210, 48);   // the lab's own 200 m window, unpacked
+  assert.ok(now < labOld, `300 m packed is ${(now / 1e6).toFixed(0)} MB against the lab's 200 m at ${(labOld / 1e6).toFixed(0)} MB`);
+  assert.equal(bytesAt(LAB_GRASS.span, 48), 3 * now, 'and the same window unpacked would be exactly three times it');
+  // THE RANGE IS SET BY THE TRADE, not the memory: the probe's own curve
+  // says each extra 50 m costs about a million vertices and buys a tenth
+  // of a per cent of grass, because the density does not fall with
+  // distance. The pin holds the REASON in the source so the next reader
+  // does not push the number and wonder why nothing got better.
+  const src = readFileSync(new URL('../src/render/labGrass.js', import.meta.url), 'utf8');
+  assert.match(src, /MEMORY IS NOT THE CAP ANY MORE/);
+  assert.match(src, /THE NEXT STEP IS NOT MORE RANGE, IT IS LESS DENSITY AT RANGE/);
 });

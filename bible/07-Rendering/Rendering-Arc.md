@@ -1318,6 +1318,487 @@ disease probehygiene's T3 names.
 
 **Pinned** in `test/perf9.test.js` (2). Not a departure.
 
+## PERF-TEX - THE UNIT THAT WAS ALREADY BOUND (2026-09-19)
+
+Mac: *"Receiving reports of heavy performance issues across the game... I
+want players to get maximum performance with maximum quality. No
+exceptions."* So: no setting, no tier, no preset. Deleted work, or
+nothing.
+
+**MEASURED, not read out of the frame.** PERF1-8 were argued from the
+code because this session has no GPU; PERF-ON showed the way round that
+for the part that is CPU - drive the REAL `Renderer` over a logging GL
+stub and count what it actually calls. Over the batched static mesh path
+(what PERF4/5/6 built, and the bulk of any scene's draws), 60 meshes of
+four sub-meshes each:
+
+| | GL calls | a draw | bindTexture | of which redundant |
+|---|---|---|---|---|
+| before | 1385 | 5.8 | 480 | **239 (50%)** |
+| after | 1034 | 4.3 | 363 | 0 |
+
+Half of every texture bind in the path set a unit to the texture it
+already held. The cause is that `_evEmis` is `_blackTex` for everything
+that is not a window or an auto-emissive record - which is nearly every
+sub-mesh in a street or a dungeon - and the loop bound it, and switched
+the active unit to reach it, unconditionally, for all of them.
+
+**`drawBillboards` had already solved this.** It has skipped the whole
+texture setup on `lastKey` since it was written, and the line directly
+above the mesh loop's bind caches the emission COLOUR the same way
+(`_emissionColorUp`, F49, cleared in `beginFrame`). The mesh loop simply
+never got the treatment its neighbour and its own sibling already had.
+
+So `_bindEmission(tex)` is EV6's `_use(program)` for a texture unit: bind
+unless the shadow says it already is, and leave unit 0 active, which
+every draw path expects on entry and on exit. The shadow is cleared
+wherever something else can own unit 1 - `beginFrame`, `endWorldPass`,
+a texture upload, a context rebuild, and `drawBillboards`, which owns the
+unit while it runs and is left exactly as it was.
+
+**IT MOVES NO PIXEL, AND THAT IS PROVEN RATHER THAN ASSERTED.** Binding a
+texture that is already bound is a no-op by definition, but the argument
+that matters is the one the suite makes: the GL log is replayed through a
+state machine and what the GPU would SEE at every draw - the program, the
+VAO, the texture on each unit, the draw's own arguments - is compared
+against the same scene with the shadow defeated. 80 draws, identical, in
+a scene whose emission maps deliberately change every few sub-meshes
+where a real one barely changes at all. A faster path that moves a pixel
+is a bug, not a faster path (PERF-ON's law).
+
+**What this is worth.** GL call count is CPU-side driver cost, so it
+converts to frames when a scene is draw-call bound - a streamed exterior
+at the default land view of 5 (121 pixels) usually is - and not when it
+is fill-bound. It is a floor raise, not a ceiling raise, and it is free.
+
+**Pinned** in `test/glstate.test.js` (4, EV6's own home): no bind in the
+path is redundant, the saving is real against the unshadowed 4-a-draw,
+the effective GPU state is unchanged draw for draw, and every site in
+`renderer.js` that binds unit 1 either goes through the helper or clears
+the shadow - a source sweep, because a shadow that speaks for a unit it
+no longer owns is a wrong texture on screen.
+
+## PERF-TEX2 - THE ATLAS AND THE TILE SIZE, ONCE A WORLD (2026-09-19)
+
+The same sweep over `drawTerrain`, which runs once per streamed pixel -
+121 of them at the default land view of 5. 121 pixels, each with a model
+matrix and a tilemap of its own as the streamer gives them, sharing the
+world's one tile atlas:
+
+| | GL calls | a pixel | redundant state writes |
+|---|---|---|---|
+| before | 1239 | 10.2 | **361 (29%)** |
+| after | 879 | 7.3 | 0 |
+
+Two values were being set 121 times to say one thing. The TILEMAP is the
+pixel's own and always binds. The tile ARRAY is the world's single atlas -
+the same object for every pixel of the frame. And the TILE SIZE is the
+world's one number: PERF3 left it outside its frame-constant block as one
+of "the per-pixel two", and it is passed per pixel, but it is 128 every
+time.
+
+Both are SHADOWED, not hoisted, and the distinction is the whole safety
+argument. Hoisting either into PERF3's once-a-frame block would be wrong -
+that block runs once, and a pixel's own model matrix belongs beside them -
+so the guard stays where the upload was and only skips when the value is
+already there. A world that really does change its atlas or its tile size
+still uploads, which the suite proves by driving two.
+
+**The third redundancy was left alone.** `drawTerrain` ends with
+`_bindVao(null)`, which unbinds after every pixel - 121 extra binds a
+frame. It is not a mistake: a dozen sites in `renderer.js` do the same,
+and the foreign passes (the skies, precipitation) run against a context
+they expect to find clean. 121 calls is not worth breaking a convention
+the whole file keeps, and a subtle state bug is exactly the cost this
+campaign is not allowed to pay.
+
+**AND A GAP IN PERF-TEX, FOUND BY LOOKING FOR THIS ONE.** EV6's
+`markForeignPass` forgets the program and VAO shadows when a pass outside
+the renderer takes the context - and PERF-TEX's texture shadow had not
+joined them. A sky that binds its own texture to unit 1 would have left
+the shadow speaking for a unit it no longer owned: a wrong texture on
+screen, from a change whose entire claim is that it cannot move a pixel.
+All three shadows are cleared there now, and pinned to be.
+
+**Pinned** in `test/glstate.test.js` (3): no redundant bind or upload in
+the pixel loop, a world that changes either still uploads, and every
+texture shadow is forgotten on a foreign pass. PERF3's own pin was
+re-aimed: its law is that the two stay OUT of the frame-constant block,
+which they do, and it now says that rather than quoting two lines.
+
+## PERF-UI - THE SCREEN QUAD'S FOUR THAT ARE NOT A QUAD'S OWN (2026-09-19)
+
+`drawScreenQuad` is the UI arc's primitive (U1), and the HUD draws a
+hundred-odd of them a frame in EVERY scene there is - a dungeon and a
+building interior included, which is where "heavy performance issues
+across the game" lands, because none of the exterior's passes run there.
+
+| | GL calls | a quad | redundant state writes |
+|---|---|---|---|
+| before | 2056 | 17.1 | **1071 (52%)** |
+| after | 1342 | 11.2 | 357 |
+
+More than half of every call set state that was already set:
+
+- **the canvas size** is the FRAME's, not a quad's - `drawingBufferWidth`
+  and `Height` are read and uploaded on every one.
+- **the sampler binding** is a CONSTANT for the life of the program:
+  `uTex` is unit 0 and has never been anything else. It goes up with the
+  program now, once, instead of once a quad.
+- **useTex, blendTex, rotOn and the colour** are the same for every quad
+  of a RUN - a row of icons, a bar, a panel's backdrop, a page of a book.
+
+PERF-ON gave the TEXT case one draw a string. This is the same saving for
+every quad that is not text, and it needed no new API and no new call
+shape: the three flags and the colour are shadowed ON VALUE, so a caller
+that really changes one still uploads.
+
+**What was left, and why.** 240 cap toggles and 242 VAO binds remain -
+each quad disables DEPTH_TEST and CULL_FACE, draws, then re-enables both,
+and binds and unbinds the same VAO. Removing them means not restoring the
+state a quad found, which is a CONTRACT change: the world paths after it
+would have to own their own caps. That is a real optimisation and a real
+risk, and it does not belong in a slice whose whole claim is that it
+cannot move a pixel.
+
+**Proven, not asserted.** The scene the suite drives deliberately changes
+each shadowed field at least twice - runs of same-colour icons, a tinted
+bar, a solid untextured panel, a blended logo, a rotated needle - because
+the colour and flag shadows are the ones that could bite: skip an upload
+the caller meant and the quad draws in the last one's colour. Every
+uniform and every texture at all 55 draws is compared against the same
+scene with nothing remembered between quads. Identical.
+
+**Pinned** in `test/glstate.test.js` (2): the canvas, sampler and shared
+flags stop repeating while `dst` and `src` - which really are a quad's
+own - still go up every single time; and the equality above.
+
+## PERF-TEX3 - THE UNIT THAT WAS ALREADY ACTIVE (2026-09-19)
+
+With the 2D bracket gone, the same frame was measured again and asked the
+question PERF-TEX asked of unit 1: how much of what is left sets state to
+the value it already holds?
+
+| | calls | redundant |
+|---|---|---|
+| `activeTexture` | 121 | **117 (97%)** |
+| `bindTexture` | 202 | **111 (55%)** |
+
+**97% is not an accident.** Every path in `renderer.js` that reaches for a
+unit above 0 puts unit 0 back the moment it is done - `_bindEmission`, the
+contact and adapt uploads, the reserved cloud-shadow slot, the terrain's
+tilemap. So unit 0 is what is active almost always, and almost every
+`activeTexture` call re-selected it. The other half is texture locality
+nobody was exploiting: a mesh bundle whose sub-meshes repeat an archive,
+and a HUD drawing ninety quads off one sheet.
+
+Two shadows, both the `_bindEmission` idiom:
+
+- **`_activeTexture(unit)`** - a pure selector, so it cannot change a
+  picture on its own; what it can do is go stale, which is why the funnel
+  law allows exactly ONE raw `gl.activeTexture` in the file, inside it.
+  27 call sites routed.
+- **`_bindTex0(tex)`** - `_bindEmission` for the unit every pass shares,
+  cleared at every point `_tex1Bound` is cleared at.
+
+**Where it was NOT applied, and why.** `drawBillboards` clears the unit-0
+shadow instead of sharing it. That path already skips on its own
+`lastKey`, and routing it through the shared shadow is exactly what broke
+MAC4's record key and PERF3's sorted-cutout pin the first time PERF-TEX
+was written - a lesson worth paying for once.
+
+| the same dungeon frame | GL calls |
+|---|---|
+| before PERF-2D | 1,760 |
+| after PERF-2D | 1,043 |
+| **after PERF-TEX3** | **640** |
+
+**64% off the frame across the two slices**, and the frame now has no
+redundant texture traffic left in it at all: the same measurement run
+again answers 1 redundant call out of 640.
+
+**Proved, not asserted.** A scene covering every pass the shadows can
+touch - 20 terrain pixels sharing a world atlas, mesh bundles with
+emission moving under unit 0, billboards, a character sprite quad, a HUD
+with realistic locality, an instanced run, an overlay and a foreign seam -
+replayed against the previous commit in a worktree, recording what is on
+EVERY texture unit at every draw along with the program, the VAO and the
+draw's own arguments. **462 draws, all identical.**
+
+**Four existing pins were re-aimed, and all four were source-TEXT pins**
+broken by the rename (`gl.activeTexture(` to `this._activeTexture(`) -
+AUDIT 65 RS-3, PERF-TEX's own unit-1 law, WATER1's two-unit assertion and
+PERF3's billboard key. None of them was a behavioural failure, which the
+equality proof above is what establishes rather than the re-aiming.
+
+### PERF-TEX3 AUDIT - THE LAW THAT WAS SKIPPED (same day, before merge)
+
+PERF-TEX wrote this law for unit 1:
+
+> and no site binds TEXTURE_2D to unit 1 outside the helper without
+> clearing it
+
+It is why that slice never shipped a wrong texture. **Its unit-0 twin was
+not written**, and the audit found what that cost: **13 raw binds to unit
+0 answered to nothing.** The repro is three lines of ordinary world pass -
+
+```js
+r.drawMesh(bundle, m);        // binds MESH_TEX through the shadow
+r.drawCharacter(char, m);     // owns unit 0 raw, hands it back EMPTY
+r.drawMesh(bundle, m);        // shadow still says MESH_TEX -> skips
+```
+
+→ **the model after the character drew with nothing bound.** Untextured
+geometry in the world pass, every frame a character is on screen, which
+is every frame.
+
+`drawWater` would have handed the next model the water's texture;
+`uploadTexture` and `uploadTilemapTexture` the same, mid-stream.
+
+**Why the equality proof missed it.** The proof scene ran terrain, then
+meshes, then billboards, then UI - it never put a path that owns unit 0
+raw BETWEEN two paths that share the shadow, which is the only place the
+bug lives. A proof is only as wide as its scene, and "identical across
+462 draws" was true and useless. The scene is the world host's real shape
+now - ground, models, a character, more models, an upload, billboards,
+more models, six pixels of it - and both slices are proved against the
+commit before PERF-2D on it: **672 draws, identical in caps, VAO,
+program, every texture unit and every draw argument.**
+
+**Fixed and pinned twice.** Every raw unit-0 bind clears the shadow
+beside it; the twin law walks `renderer.js` tracking the active unit and
+requires every TEXTURE_2D bind landing on unit 0 outside `_bindTex0` to
+answer the shadow within four lines; and the repro is kept as its own
+behavioural pin. Both were mutation-tested against the real fix - removing
+one clear fails the law, removing all three of `drawCharacter`'s fails
+both.
+
+**The lesson, which is the same one this file keeps learning.** A state
+shadow is only ever as good as the list of places that invalidate it, and
+that list is not a thing to be reasoned out once - it is a law to be read
+out of the source by a test. PERF-TEX knew that. PERF-TEX3 shipped the
+shadow and skipped the law, and only an audit stood between that and a
+merge.
+
+
+## PERF-2D - THE BRACKET THAT WAS PER QUAD (2026-09-19)
+
+PERF-UI ended by naming what it had left on the table and why:
+
+> **What was left, and why.** 240 cap toggles and 242 VAO binds remain [...]
+> Removing them means not restoring the state a quad found, which is a
+> CONTRACT change: the world paths after it would have to own their own
+> caps. That is a real optimisation and a real risk.
+
+It was measured this time, and the number is why it is no longer being
+left. A dungeon frame - 3 batched level meshes, 25 loose models and a
+hundred-odd HUD quads, which is what a player is looking at in the scenes
+where "heavy performance issues across the game" was reported:
+
+| | GL calls | share |
+|---|---|---|
+| world meshes | 232 | 13% |
+| billboards | 34 | 2% |
+| **the HUD (120 quads)** | **1,494** | **85%** |
+| whole frame | 1,760 | |
+| *of which the per-quad cap/VAO bracket* | *763* | ***43%*** |
+
+**The UI is the frame.** Not the terrain, not the models - the 2D pass,
+in every scene there is, and 43% of the whole frame's GL traffic was one
+bracket opened and shut around every single quad.
+
+| | GL calls a frame | a quad |
+|---|---|---|
+| before | 1,760 | 12.4 |
+| after | 1,043 | 6.5 |
+
+**41% off the frame; 48% off the UI pass.** The bracket itself: 763 calls
+to 46.
+
+**It is NOT the contract change PERF-UI refused.** That one would have
+made the world paths own their caps. The renderer still owns them here -
+what changed is only WHEN the restore happens. `_open2D(vao)` disables
+the caps and binds; `_close2D()` hands the baseline back; and `_close2D`
+is called at the head of everything that needs it. The quad no longer
+carries the bracket, the RUN does.
+
+**The law it replaces was installed after a mutation campaign, so the
+replacement had to be at least as strong.** `perfon_text_run.test.js`
+says it plainly: deleting `gl.enable(gl.CULL_FACE)` from drawScreenQuad
+*passed the entire suite* - "leaving it off means every back face in the
+world pass that follows draws, for the rest of the session." Three things
+carry that weight now:
+
+1. **The source law.** Every method in `renderer.js` that issues a
+   `gl.draw*` is one of the three 2D primitives or calls `_close2D()`
+   first, and so do the five seams where foreign GL runs. Read out of
+   the source, so it cannot go vacuous.
+2. **The equality proof.** A mixed scene - UI runs interleaved with
+   meshes, a character sprite quad, an instanced run, an overlay and
+   foreign seams, because the transition OUT of an open run is the only
+   thing this can break - replayed twice, once with the run and once
+   with `_close2D()` forced after every quad, which IS the old bracket.
+   The full effective state at every draw (program, VAO, both texture
+   units, the caps, the draw's own arguments) is identical. Proved the
+   same way against the previous commit in a worktree: **366 draws, all
+   identical.**
+3. **The gap, made loud.** The sky, the rain, the wisps, the sand and the
+   grass are NOT in this file - the hosts hold `renderer.gl` and call
+   them directly, and they assume the baseline (precipitation's draw sets
+   BLEND and depthMask and never touches DEPTH_TEST, so an open run would
+   give it rain that draws through walls). Today they cannot collide:
+   every foreign pass runs in the world section and the first screen quad
+   is what ENDS it (ROAD-E E5). But that is the hosts' running order and
+   not a law. So `markForeignPass` - which a host calls AFTER its foreign
+   pass - checks whether the run is still open, and if it is, says so
+   once, naming `endUiRun()` as the remedy. The two regressions this
+   bracket has already caused were both silent; this one would not be.
+
+**The trap, and it is worth writing down.** `drawScreenQuad` calls
+`_compositeAir()` at the head of EVERY quad. Putting `_close2D()` at the
+top of `_compositeAir` - where every other guard goes - shuts the run a
+hundred times a frame and hands the entire saving back, while every test
+still passes, because nothing about the picture changes. It belongs after
+that function's early return, and there is a pin that says so.
+
+**What is left now.** 777 calls for 120 quads: `dst` and `src` per quad
+(262), the texture binds (204), the draws (120). The next real cut is
+batching same-texture quads into `drawScreenQuadRun`, which already
+exists and already does one draw for a whole string - but that is a
+CALLER change across some thirty UI files, not a renderer change, and it
+wants its own slice.
+
+## PERF-WARM - THE COMPILE THAT HAPPENS MID-FRAME (2026-09-19)
+
+PERF-TEX, PERF-TEX2 and PERF-UI took redundant GL calls out of the steady
+frame. This slice is about a different cost and the one a player actually
+notices: a **hitch**. Seven programs were compiled the first time
+something needed them, and "the first time" is always inside a draw call,
+which is always inside a frame.
+
+| program | the frame that paid for it |
+|---|---|
+| `particleProgram` | the first spell effect that draws |
+| `charQuadProgram` | the first classic character sprite |
+| `screenQuadProgram` | the first 2D blit of the session |
+| `screenQuadRunProgram` | the first instanced 2D run |
+| `overlayProgram` | the first full-screen overlay |
+| the lab's `pixelProgram` | the first frame of Dynamic Skies' snow |
+| the rain's whole renderer | the weather change that turns rain on |
+
+A compile-and-link is not a few hundred small calls that add up - it is
+ONE call into the **driver's own compiler**, which can hold the calling
+thread for tens of milliseconds, and nothing in this codebase can make it
+cheaper. The only thing that can be done with it is to **move it**: off
+the frame that needs the program and onto time the browser was going to
+spend idle.
+
+**The refactor is the whole change.** Each `if (!this.xProgram) { ... }`
+block came out of its draw function into an `_ensureXProgram()` method
+byte for byte, guard included - so the draw path is EXACTLY what it was
+for anyone who never warms, and warming twice costs one property read.
+`renderer.warmSteps()` names the five; `render/warmPrograms.js` walks
+them one per `requestIdleCallback`, the shape `ui/enhancedChunk.js`
+settled on for MENU1 and for the same reason (five compiles back to back
+in one callback is the stall this exists to remove, moved somewhere less
+visible).
+
+**The rain is the expensive one.** `applyWeather` built the whole
+`PrecipitationRenderer` - a program, a 1000-particle vertex volume and its
+index buffer - inside a game frame, the moment the weather turned. Both
+exterior hosts add that construction to the idle walk. The draw gate is
+the MODE and never the object (the draw site's own law, W1 review: "the
+renderer outlives a clear-up"), so a renderer that exists before any rain
+does draws nothing. The pixel-snow program joins `_buildLab` in the
+constructor on the **enhanced lane only** - `drawPixelSnow` is reachable
+only through `drawLab`, so AUDIT 58's rule that the classic lane compiles
+nothing it cannot bind still holds, and `drawPixelSnow` keeps its own
+on-demand build for the renderer handed the enhanced deck without the
+lane's flag.
+
+**WHAT THIS DOES NOT CLAIM.** Unlike the three slices above, the SIZE of
+this win is not measured here and cannot be: `test/glstate.test.js` drives
+a Proxy stub, and a stub does not compile shaders. The claim is
+STRUCTURAL - the program is built before the first draw needs it rather
+than during it - and the number belongs to whatever driver the player is
+running. Saying otherwise would be inventing a figure, which is the one
+thing the three measured slices above were careful not to do.
+
+**Pinned** in `test/glstate.test.js` (6): `warmSteps` names exactly five
+and warming builds every one; the steps are idempotent; an unwarmed
+renderer still builds on the draw and a warmed one does not build again;
+a step that throws does not take the rest of the warm with it; a warm
+stops when its host is gone; and the pixel-snow program is the
+constructor's on the lane that can draw it and nobody's on the lane that
+cannot.
+
+### PERF-WARM AUDIT (same day) - what held, and four things the section above got ahead of
+
+**The refactor is proved, not asserted.** Each of the five blocks was
+replayed out of the commit before and the commit after and compared line
+for line: **all five byte-identical**, call sites in place and in order.
+And the warm is proved harmless the way PERF-TEX/UI were - a logging GL
+stub, a scene that exercises all five programs, once on a renderer nobody
+warmed and once on one warmed BETWEEN FRAMES, where a real
+`requestIdleCallback` lands. The steady-state frame is **call for call
+identical**. It cannot be otherwise, and for a reason worth writing down:
+`beginFrame` already forgets every shadow it owns ("whatever ran between
+frames is not trusted"), `frame()` is synchronous with no `await` so an
+idle callback can never land mid-frame, and every draw path - the video
+player's own loop included - opens with `beginFrame`. Every ARRAY_BUFFER
+upload in `src/` rebinds first (all 33 checked), so the dirty binding a
+build leaves behind is nobody's input.
+
+**1. Two of the five are probably already built before the warm fires.**
+`requestAnimationFrame` outranks `requestIdleCallback`, and the world's
+first frame draws the HUD. So `screenQuadProgram` and
+`screenQuadRunProgram` are almost certainly compiled by frame 1, during
+the boot, before the first idle callback runs. The table above reads as
+if all seven moved; what actually moves is `particleProgram` (first
+spell), `charQuadProgram` (first classic sprite), `overlayProgram` and
+the rain's renderer. The other two were never the hitch a player feels -
+they land in the loading screen either way.
+
+**2. The warm compiles programs a session may never bind - the AUDIT 58
+objection, not applied to the renderer's five.** Measured: 11 links
+warmed against 10 unwarmed, for a scene that never draws a particle
+effect. `charQuadProgram` is the CLASSIC sprite path, so an
+enhanced-visuals player now compiles one they will never use; so is
+`particleProgram` for a player who never casts. The section above cites
+AUDIT 58 as the reason not to warm the lab's programs and then does not
+hold itself to it. The trade is defensible - idle time is free and five
+small programs is negligible VRAM - but it is a trade, and it was made
+silently.
+
+**3. A player who never sees rain now pays for the rain.** Precipitation's
+constructor runs at boot instead of at the weather change: **~102 KB** of
+GPU buffers on the classic lane (1,000 particles x 4 verts x 5 floats =
+78 KB, plus 6,000 indices = 23 KB) and **~508 KB** on the enhanced one,
+which adds `_buildLab`'s 26,000 instances x 4 floats = 406 KB. Before, that was paid only if the weather turned. It is the
+right trade for a game where it rains, but it is a new steady cost and
+the section above only counted the saving.
+
+**4. `stats.programBinds` is incremented outside a frame.**
+`_ensureScreenQuadProgram` ends in `this._use(...)`, which counts - so
+one warm adds 1 to the frame counters after that frame reported and
+before `beginFrame` zeroes them. Cosmetic, and `?perf` is the readout
+PERF-TEX and PERF-UI were measured with, so it is worth knowing it can
+be off by one for exactly one frame.
+
+**Not a finding, checked anyway.** No leak: the hosts are one per PAGE
+LOAD (a scene change is a navigation, and dungeons and interiors are mode
+swaps inside `bootWorld`), so the warm's closure cannot outlive its
+context and `alive` has nothing to guard. Normal play always routes
+through `bootWorld` (`main.js`), so players are warmed; the standalone
+`?dungeon`/`?interior`/`?shot` hosts are not, which is a dev and probe
+path and arguably right - a probe wants no idle work.
+
+**Fixed by the audit.** The pin for "an unwarmed renderer still builds on
+the draw" was calling `drawScreenQuad(null, 0, 0, 10, 10)` against a
+signature of `(tex, dst, src, color, opts)` - `src.u0`, `color[0]` and
+`opts.blend` were all `undefined` and it passed only because the stub
+swallows anything. It draws a real quad now.
+
 ## PERF-ON - ONE DRAW A STRING (2026-09-15)
 
 Mac: *"Next thing I want to tackle is improving online performance. I
@@ -1391,3 +1872,1186 @@ bytes that would reach the driver. Mac's eye is the next gate.
 
 **Pinned** in `test/perfon_text_run.test.js` (7). Campaign: 13 mutants,
 13 killed, plus the fourteenth against the sibling. Not a departure.
+
+## PERF11 - one owner list a frame (2026-09-19)
+
+Mac: *"Online mode needs further performance improvements"*.
+
+PERF-ON capped the per-peer DRAW. This is a per-peer cost on the CPU
+side of the same frame, and it is the plainest kind: the same answer
+computed twice. `scenes/world.js`'s online frame runs two owner sweeps -
+`exteriorFoes.pruneOwners` for the peers' foe puppets and
+`camps.sweepOwners` for their camps - and each one opened with
+
+```js
+const near = peersNear(); if (near) ...(new Set(near.map((p) => p.id)), ...)
+```
+
+`peersNear()` walks every peer in the room, asks `peerBodies.heightOf`
+for each and mints an object plus a scene-space triple apiece; the `.map`
+mints an array and the `Set` a set. All of it, twice, every frame, for
+one list that cannot differ between the two calls. A lazy per-frame memo
+(`ownerIds()`) builds it at most once and hands the SAME Set to both, so
+a room that is not a cell room still builds nothing at all. Both call
+sites keep their own `isCellRoom(online.room)` gate, so the frame's
+shape is unchanged.
+
+**What this is not.** It is a constant factor on a list that is already
+O(peers), not a change of slope; the slope in online mode is the peer
+bodies and sprites, and both are capped and range-culled already. The
+honest next step for "online is heavy" is a profile with a real room
+behind it, not more guessing - there is no ARENA2 and no relay in this
+container, so nothing here was measured the way PERF-ON's names were.
+Said rather than implied.
+
+**Pinned** in `test/grasspath.test.js`.
+## BOOT2 - A CURSOR MUST NOT NEED THE HUD: ONE EDGE, 4.1 MB (2026-09-20)
+
+**Where BOOT1 left the entry.** With the four hosts behind doors, the
+entry's static graph was still 259 files and 4.9 MB of source, and the
+bundle's boot set 28 chunks / 492 KB gzipped - `travel` (257 KB) and
+`spellcast` (55 KB) the largest of them. The menu's own direct imports were
+not the cause (no single one costs more than 88 KB exclusively); the cause
+was a hub edge further down. Cutting edges one at a time on the entry's
+graph and measuring each: **`ui/cursor.js -> ui/hud.js` carries 216 files
+and 4,141 KB on its own** - `main.js` imports the cursor to install the
+document pointer, the cursor imports ONE pure function from the HUD
+(`bitmapToColor32`, an indexed bitmap through a palette), and the HUD
+imports the enhanced HUD, which imports the world tick, which imports the
+game. Cutting `worldTick -> weatherSim`/`diseases` instead saves nothing:
+the same modules arrive through `court.js -> factionRep.js -> save.js`. The
+edge that matters is the first one.
+
+**The helper was in the wrong home.** A conversion from a palette is a
+formats concern; the HUD was only where it happened to be written, and
+eleven modules imported it from there. It lives in
+`formats/color32Order.js` now - the file that already owns how a picture
+becomes color32 (the row-order doors of AUDIT 62 F26 and HT3) - and every
+importer takes it from the leaf, `hud.js` included. No re-export: a
+re-export would put the hub edge back for whoever took the shortcut, and
+`test/boot2.test.js` holds that as a law rather than a hope.
+
+**Measured.** The entry's static reach: 259 files / 4,991 KB -> 43 files /
+841 KB. What remains is the renderer, the settings, the data source and the
+crash/stale-chunk law - the things an entry genuinely needs before it knows
+which door it is going through. The bundle's boot set: 28 chunks / 492 KB ->
+**12 chunks / 104 KB gzipped**.
+
+**What did NOT move, said plainly.** The bytes a player waits for before the
+MENU is interactive - the entry's set plus the menu chunk's own static
+closure plus the intro - are ~656 KB gzipped, the same as before this slice.
+The menu chunk reaches the world tick directly AND through
+`ui/enhancedHud.js`, and reaches `travel` through `systems/saveSlots.js ->
+save.js -> weatherSim.js`; with several roots, no single cut helps, which is
+exactly what the exclusive-cost table said at the start. That is the next
+lever and a different shape of work: the clock (`worldMinutes`,
+`sharedClockOn`) split out of the world tick as a LEAF, so the nineteen
+modules that only want the time stop importing the heartbeat.
+
+**Three laws, derived, not listed.** One home (exactly one definition in the
+tree, in the leaf; nobody under src/ or test/ imports it from hud.js; hud.js
+exports it to nobody). The cursor is a leaf (its imports are read; none is
+under ui/). The entry's reach touches neither hub and stays under a ceiling
+the cut measured. 3 mutants, 3 killed.
+
+## BOOT1 - THE GAME HOSTS BEHIND A DOOR: THE BOOT GRAPH UN-INVERTED (2026-09-20)
+
+**INLINE1's "next lever" turned out to be the wrong lever.** The plan was to
+make `weaponRig` lazy (96 KB gzipped on the boot path). Walking the entry's
+static import graph first showed why that was small change: `src/main.js`
+imported all four scene hosts - `bootExterior`, `bootInterior`,
+`bootDungeon`, `bootWorld` - STATICALLY, and a static import of a host is the
+host's whole graph at module-evaluation time. **623 files and 13.4 MB of
+source were reached from the entry before `boot()` ran a line** - every
+scene, every system, every window - while the menu a player actually sees
+first (`ui/enhancedMenu.js`, `ui/introScreen.js`) was the thing loaded
+dynamically. The boot graph was inverted. Over the built bundle: 54 chunks,
+1,349 KB gzipped, had to arrive before the entry finished evaluating, and
+`main` alone was 517 KB of it.
+
+**The change is four lines, and every route reads as before.** Each host is
+a door now - a dynamic import at the moment of use, bound to the SAME name
+and called with the SAME shape the routes always used, so the routes and
+the pins that hold them (classicstart, hard2s, macn) are untouched. The
+hosts carry no import-time side effects (nothing at their top level runs),
+so evaluating them later changes nothing but WHEN.
+
+**And a warm-up.** Every door out of the enhanced menu ends in `bootWorld`,
+so the world host's import is kicked off - not awaited - the moment the
+menu branch is entered, behind the cinematic and the menu where the player
+is looking at something else; Play then finds the chunks in cache instead
+of paying for them at the click. It carries a `.catch`, and that is not
+optional: a deploy between page load and Play renames every chunk
+(`systems/staleChunk.js`), and a warm-up that rejected unhandled would be a
+console error for a failure the real import at Play reports properly
+through the same law.
+
+**Measured over the build.** The chunks a browser must fetch before the
+entry finishes evaluating: **54 -> 28; 1,349 KB -> 492 KB gzipped (-64%)**.
+Total JavaScript is unchanged (1,959 KB) - nothing was removed, it moved
+off the critical path. `test/boot1.test.js` walks the entry's static graph
+itself, transitively, with the host set derived from the tree, and holds a
+ceiling on the entry's reach so the graph cannot quietly re-invert. 3
+mutants, 3 killed.
+
+**And one thing the change found.** `test/moduleload_smoke.test.js` imports
+every module under src/ in node and keeps a list of the eleven that cannot
+load, each with its reason. `src/main.js` was on it as "import.meta.glob" -
+and that was only ever true by inheritance: its static import of world.js
+rejected the entry at LINK time, before a line of its body ran. With the
+hosts behind doors the entry's body runs in node, `boot()` reached for
+`document`, and its own catch reached for `document` again to report it -
+an unhandled rejection after the test ended, for a page that does not
+exist. The chain now starts from a resolved promise when there is no
+document; the entry stays on the list for what it is genuinely excluded for
+(the crash listeners at its module scope), and the "three modules fail for
+the glob" count is two, held there so a static host import returning to the
+entry reads as the regression it is.
+
+**What is still on the boot path, and why.** `travel` (257 KB gzipped, the
+largest chunk left) and `spellcast` (55 KB) are reached statically from the
+menu floor - `ui/enhancedMenu.js`'s own static graph is 315 files and 6.2 MB
+of source, and it pulls `world/windmillMesh.js` (250 KB) and 2.4 MB of
+`systems/` for things a menu does not draw. That is the next lever, and it
+is the menu's own import list, not the entry's.
+
+## INLINE1 - NOTHING UNDER vendor/ IS INLINED: A MEGABYTE OFF FIRST PAINT (2026-09-20)
+
+**Mac: "Want to talk about overall performance improvements."** The first
+thing measurable from the tree, and the cheapest: the JavaScript on the
+wire was 2,870 KB gzipped, and 1,002 KB of it was ONE chunk, `weaponRig`.
+Its raw size was 1,921 KB, and 1,343 KB of that was **432 PNGs inlined as
+base64** - Shield Widget's 275 under-4 KB sprites, Handheld Torches' 31,
+Climates & Calories' 18 and the rest. Base64 is nearly incompressible, which
+is why that chunk gzipped 1.9 -> 1.0 MB while `main` went 1.5 -> 0.5. And
+`scenes/world.js` imports the rig STATICALLY, so the chunk is on the boot
+path: every player pulled a megabyte of shield art before the menu drew.
+
+**The rule that let it happen was an enumeration.** EOTB5 met this class
+first - 3,035 sprites, a twelve-megabyte chunk - and excluded that mod's
+folder from Vite's `assetsInlineLimit` by path, narrow on purpose: "every
+other vendored texture keeps the default, because inlining a handful of
+small files is a win and the problem here is only ever the COUNT."
+AUDIT-IF F1 added Immersive Footsteps the same way. The premise was wrong -
+a vendored mod is never a handful of files, it ships in the hundreds - and
+the shape was the project's own named hazard: a rule enforced by memory.
+Twenty vendor folders landed after the allow-list of three, and not one
+joined it. The build exited 0 and said nothing, exactly as EOTB5 records it
+did the first time.
+
+**The rule is the class now.** `/[\/]vendor[\/]/` - nothing under
+vendor/ is ever inlined; everything outside it keeps Vite's default (a rule
+that inlined nothing anywhere would be the opposite mistake, and is pinned
+against). The pins that held the old rule named the folders it held OUT -
+"every other vendor asset keeps the default", with dynamic-skies and
+handheld-torches as the examples - and are INVERTED rather than deleted.
+The new pin, `test/vendorinline.test.js`, is GENERATIVE: it walks vendor/
+itself, puts every file under the 4 KB default through the real rule read
+out of vite.config.js, and holds that every one is refused and every vendor
+folder is covered whether or not it has small art today. The next mod holds
+without anyone remembering.
+
+**Measured over a real build.** `weaponRig` 1,921 KB -> 596 KB raw, 1,002
+KB -> 96 KB gzipped. Total JS on the wire 2,870 KB -> 1,945 KB (-32%). 357
+more files emitted to `dist/assets` (2,074 -> 2,431 PNGs), zero base64 PNGs
+left in any chunk. The sprites load the way EOTB's 2,000 and Immersive
+Footsteps' 210 clips already did - as files, when the mod asks for them.
+
+**What this does not do.** `weaponRig` is still 596 KB of code on the boot
+path because `world.js` imports it statically; nothing in it is needed
+before a game starts. Making the rig lazy is the next lever and is not
+this slice. `tools/mutants/inline1.json`: 2 dead, 0 survived.
+
+## AUDIT-AIR1 - THE SIXTH SEAM (2026-09-19)
+
+> Mac, with a screenshot: *"the screenshot shows a bug where sometimes
+> unsheathing, it spawns a weird water texture"*.
+
+It was not water. It was the resolved frame buffer, pasted into the
+weapon sprite's quad.
+
+**PERF-TEX3's own trap, one seam further on.** That slice's audit found
+13 raw unit-0 binds that answered to nothing, wrote the unit-0 twin of
+PERF-TEX's law, and pinned it. What neither pass asked was the other
+question: **who takes the context away from the renderer entirely?**
+`markForeignPass` is the answer the file already had, and it forgets
+every texture shadow for exactly this reason - its own comment says a
+shadow that speaks for a unit it no longer owns is a wrong texture.
+
+`_compositeAir` is the same kind of seam and never said so.
+`airPass.composite()` is the post-processing resolve: it binds units 0
+to 3 (frame, bloom, shafts, AO) and leaves its own unit selected.
+`_compositeAir` forgot `_lastProgram` and `_lastVao` after it and **not
+the texture shadows** - so the first screen quad after a resolve found
+
+- `_activeUnit` still claiming `TEXTURE0`, when the resolve left unit 3
+  selected, and
+- `_tex0Bound` still naming the sprite the quad wanted.
+
+Either one alone is a wrong texture. Together they are a guarantee: the
+quad skipped its bind, or bound to unit 3, and sampled whatever the
+resolve left on unit 0. On an unsheathe that is the weapon sprite
+painted with a blurred picture of the room - a soft blue-grey smear with
+the room's own edges in it, which is what a water plane looks like.
+
+**Why "sometimes".** `_compositeAir` returns early unless
+`this._air.pending`, and `drawScreenQuad` calls it at the head of every
+quad - so only the FIRST quad after a resolve is ever wrong, and which
+quad that is depends on what else the frame drew. It also needs the
+enhanced lane on, since there is no air pass without it.
+
+**The root cause is not the missing line, it is the six copies.** The
+same six-field block was hand-written at five seams (the constructor,
+`endWorldPass`, `_installWorldSet`, `markForeignPass`, `beginFrame`) and
+a sixth was owed at `_compositeAir`. Six copies of a rule is five
+chances to miss one, and one was missed. It is now
+`_forgetTextureShadows()` and **seven** seams call it -
+`uploadEmissionTexture` was a seventh hand-copy, clearing three of the
+six, which the sweep also found.
+
+**Proved by replay, not by grep.** The pin drives the real `Renderer`
+over the logging GL stub with an air pass that binds what the real one
+binds, replays the call log through the GL state machine, and asks what
+the GPU would have on unit 0 - and which unit is selected - AT THE DRAW.
+A source pin could not have caught this: every line it would have
+grepped for was present and correct.
+
+The three older pins that grepped for the hand-written block are
+re-aimed at the call, with the helper's own contents pinned where it
+lives, so neither half can go vacuous. The unit-1 source law now accepts
+`_forgetTextureShadows` as a third way to answer, and only because the
+assertion above it proves the helper really clears `_tex1Bound`.
+
+`tools/mutants/audit_air1.json`: 7 mutants, 7 dead - including the
+ordering (a forget BEFORE the composite is forgetting shadows the
+resolve then invalidates again).
+
+**What this says about the whole PERF arc.** Three slices, three audits,
+three shipping bugs found after a green gate, every one of them a
+*shadow that outlived its claim*. The shadows are still right and the
+64% saving is still real, but the pattern is now explicit: **every new
+shadow owes a list of who can take the thing it shadows away.** Both
+audits found their bug by asking it; the gate never did.
+
+## PERF-ON2 + PERF-CPU - the others are culled, and the frame can be timed on the clock it is losing (2026-09-19)
+
+Mac: *"Online mode needs further performance improvements"*, then a
+readout from the running game:
+
+```
+51 fps
+19.7 ms   worst 40
+script 23.3 ms   worst 44
+draws 1365   binds 820
+```
+
+**A frame whose SCRIPT outruns its frame time is CPU-bound.** That one
+line reorders everything: the cost is not the GPU finishing the work, it
+is JavaScript issuing it.
+
+### Measured first, and two hypotheses died
+
+`tools/onlinePerfProbe.mjs` is the measurement that did not exist. Three
+arms, all over the real modules:
+
+| arm | what it measures | answer |
+|---|---|---|
+| session | `OnlineSession.tick()` + `drawable()` over a real session on `test/fakeSocket.mjs` | **0.04 ms/frame at 100 peers** |
+| names | the real `namePoints` + the real `ui/nameLayer.js` over a counting document | **1.65 inline style writes a name a frame** |
+| draw | `drawBillboards` under PERF-ON's own recording Proxy | **6.3 GL calls a peer a frame** |
+
+The first arm killed a fix before it was written. The per-frame
+allocation churn in `net/` - the peer map spread every tick, a fresh
+pose object a peer a frame, half a dozen collections rebuilt - is real,
+and it costs **0.04 ms at a hundred peers**. It is not the problem and
+it is not worth touching.
+
+The second arm was measured twice, because the first fixture was
+dishonest: a camera that strafed a metre and a half on the spot changed
+only each name's `left`, and reported 0.94 `left` against 0.04 `top` and
+0.005 `fontSize`. A player walks and turns, which moves every name in x,
+in y and in depth. Against an honest walk it is 1.65 writes a name.
+
+Then `tools/nameLayerBrowserProbe.mjs` asked Chromium what those writes
+COST, through `Performance.getMetrics` - and **refuted the fix**:
+
+| mode | layout ms/frame | layouts in 600 frames |
+|---|---|---|
+| `left`/`top` + font-size (today) | 0.123 | 600 |
+| `transform` + font-size | 0.119 | 599 |
+| `left`/`top`, font-size fixed | 0.079 | 599 |
+| `transform`, font-size fixed | **0.000** | **0** |
+
+Moving to `transform` alone buys nothing, because the per-frame
+`font-size` dirties layout by itself. Only moving BOTH takes the layer
+off the layout path entirely - and the prize is 0.12 ms a frame at 72
+names, which is under one per cent of a frame. **Recorded, not taken:
+the win is real, small, and costs a visual change to how a name is
+sized. It is not where 23 ms went.**
+
+### What the measurement did find: the peers were never culled
+
+Every world flat gets a frustum test against its own box before it is
+submitted (EV3). The peers did not:
+
+```js
+if (remotePlayers) for (const b of remotePlayers.batches()) allBatches.push(b);
+```
+
+A peer behind the camera, or one at the far edge of the relay's range -
+`RANGE_PIXELS` is 3 map pixels, nearly 2,500 units - was a draw, two
+texture binds and its uniforms, every frame, whatever the camera was
+looking at. At 6.3 GL calls a peer that is 630 calls a frame in a
+hundred-peer room, and **every one of them is script time**, which is
+the budget the readout says is gone.
+
+PERF-ON passed over this in a line - *"a peer's doll is one billboard
+batch created once, with only its `origin` written afterwards"* - which
+is true of the batch's CREATION and says nothing about its per-frame
+DRAW. The box is the billboard shader's own: bottom-anchored, standing
+`size.h` up from the origin and reaching `size.w / 2` in any horizontal
+direction, because the quad turns to face the eye. One scratch box,
+reused, because the test runs once a peer a frame.
+
+A culled peer casts no shadow while off screen - exactly what the
+world's own flats have done since EV3, since the shadow pass reads the
+list this builds.
+
+### And the instrument that was missing
+
+`?perf` times the frame on the GPU; `?perf=zones` breaks that number
+into passes. **Neither can see a millisecond of JavaScript.** So a
+script-bound frame could be investigated in this session only by reading
+the code and guessing which half of the work was which - the exact trap
+VC6d's own lesson names.
+
+`?perf=cpu` tiles the same zones on the main thread's clock. Same
+`mark(name)` call sites, no extension needed (so it answers on every
+browser, including the ones the GPU timer refuses), and `markCpu(name)`
+lets a host mark a phase that issues no GL at all - which is most of a
+simulation frame. The world host now marks `online`, `sim`, `batches`,
+`flats`, `people` beside the existing `grass` and `world`, and the line
+names its clock so no reader can mistake a CPU zone for a GPU one:
+
+```
+[perf] cpu 16.00ms | world 8.00 | sim 5.00 | online 2.00 | grass 1.00 | draws 1365
+```
+
+The two clocks do not run together: under `?perf=cpu` the GPU clock
+stands down, because the CPU arm reports before the GPU branch is
+reached and a clock left running there pushes a sample a frame into a
+list nothing drains.
+
+**The lesson: PERF-ON measured the online name pass at 153 GL calls a
+name and took it to 14 on 15 September. NAME1 landed twenty-six hours
+later and moved the face a player actually sees off that pass entirely -
+online forces the enhanced lane, the enhanced lane has a `document`, and
+`nameFrame` returns through the DOM layer before `drawNamePoints` is
+reached. The measured win is real and it is on a path players do not
+take. Nobody re-measured, because there was no instrument that could.**
+
+**Pinned** in `test/perfon2_peercull.test.js` (6). Mutants
+`tools/mutants/perfon2.json`: 13 - 13 dead, 0 survived.
+
+
+## PERF-FLICKER + PERF-LIGHTS - two costs the night was paying for nothing (2026-09-19)
+
+Mac: *"I don't want more tests, I want actual performance fixes."* Fair.
+Two, both on the frame's critical path, both found by reading the hot
+path with the readout's own verdict in hand - script 23.3 ms on a
+19.7 ms frame, so the CPU is the budget and GL calls issued from JS are
+how it is spent.
+
+### PERF-FLICKER - the lantern flicker was rebuilding every shadow cube, every frame
+
+EL8 spends the point casters carefully. The nearest `SHADOW_NEAR_CASTERS`
+redraw their six cube faces every frame; the rest every
+`SHADOW_FAR_CASTER_EVERY`. Six casters, so about **twenty** face replays
+a frame out of thirty-six. A slot also redraws when its light **changed**,
+which is right - a new lantern in a slot needs its own map:
+
+```js
+const changed = !(sl[o] === pos[0] && sl[o+1] === pos[1] && sl[o+2] === pos[2] && sl[o+3] === far);
+```
+
+But `far` is the light's range, and **a lantern's range is animated**.
+`CityLightAnimator` (world/worldClock.js) wanders every light's range
+inside a one-unit band at fourteen steps a second - that is the flicker.
+So `changed` was true for every caster on almost every frame, every slot
+rebuilt all six faces, and EL8's whole schedule was dead: **thirty-six
+face replays a frame instead of twenty**, each one a full replay of the
+casters within that lantern's reach.
+
+The saving was designed, measured, and then quietly given back by an
+animation in another file. Nothing in either file was wrong on its own.
+
+The fix is one line plus a law: the cube map's far plane is the light's
+range **rounded UP** to `SHADOW_FAR_QUANTUM`, and the rounded value is
+what the face matrices, the change test and `pointParams` all take - they
+must agree, because the fragment stage reconstructs depth from `P.w`.
+Rounding UP means the far plane is never inside the lantern's reach, so
+no shadow is ever clipped short; the cost is depth spread over a slightly
+longer range, which at 512 square on a 24-bit buffer is nothing. A
+quantum of 4 swallows the whole one-unit wobble of an 18-unit lantern:
+the pin drives the real animator for 600 frames, checks the range really
+does move, and holds that every one of those frames maps to ONE far
+plane.
+
+### PERF-LIGHTS - a fresh object per lantern per frame, all night
+
+The night branch built its light list from scratch every frame:
+
+```js
+const sceneLights = [];
+for (const p of built.values()) {
+  const t = state.pixelTranslation(p.px, p.py);        // a triple a pixel
+  for (const l of p.lights) sceneLights.push({ x: …, y: …, z: … });   // an object a lantern
+}
+```
+
+A town at night is hundreds of lanterns, sixty times a second, every one
+of them thrown away the moment `nearestLights` had picked its sixteen -
+in a frame that is already script-bound. The objects are refilled in
+place now, the translation writes into one reused triple, and the live
+count rides into the selector as a new trailing argument whose default
+(`-1`) keeps every other caller's meaning exactly. A night frame
+allocates nothing here at all.
+
+The selection is untouched, and that is pinned rather than asserted: 60
+random towns, each selected both ways - a freshly built list, and the
+pool with stale entries past the live count - **identical every time**.
+
+**Pinned** in `test/perfon2_peercull.test.js`. Mutants
+`tools/mutants/perfon2.json`: 19 - 19 dead, 0 survived.
+
+**The lesson: EL8's schedule and the lantern flicker were each correct,
+and the pair was not. A cache key that includes an animated value is not
+a cache, and nothing in either file could see the other.**
+
+
+## PERF-CROWD + PERF-BASIS - the town was never culled, and the sun's basis went up once a flat (2026-09-19)
+
+Continuing on fixes. Two more, both found by reading the submission path
+with the readout's verdict in hand - 1365 draws, script 23.3 ms.
+
+### PERF-CROWD - the whole live crowd was submitted uncut
+
+PERF-ON2 culled the peers. It turns out they were not the only list the
+host hands the renderer by hand:
+
+```js
+if (livePersonBatches.length) renderer.drawBillboards(livePersonBatches, camRight, UP_Y);
+```
+
+`livePersonBatches` is the townspeople, the city watch, the exterior
+foes, the dropped ground piles, the blow effects, the dropped torches and
+the camps. **Not one of them was frustum-tested.** Every townsman behind
+the camera was a draw, two texture binds and its uniforms, every frame -
+and in a town that list is most of the frame's billboards. The world's
+own flats have had this test since EV3; these never did.
+
+Same one-line shape as the peers, so both now take the same test, and the
+peers' hand-rolled box is retired with it.
+
+**The sphere had to be lifted, and that is the whole correctness of it.**
+`createBillboardBatch` stores a sphere over the placement points with the
+sprite's half-diagonal added to the radius. But the billboard vertex
+shader is BOTTOM-ANCHORED - `uUp * ((aCorner.y + 0.5) * uSize.y)` - so a
+sprite stands its full height ABOVE its placement point, and a sphere of
+radius `hypot(w, h) / 2` about that point does not reach the top of
+anything taller than it is wide. A person is exactly that shape: at
+w = 1, h = 3 the stored radius is 1.58 against a head at 3.0. Culling by
+the stored sphere would clip heads at the top of the screen. Lifting the
+centre by half the height bounds the quad exactly, and the pin holds both
+halves - that the unlifted sphere fails and the lifted one does not.
+
+(The shadow replay's own `batchVisible` has the same unlifted sphere. It
+is left alone: a shadow popping at a cascade edge is not a head
+disappearing, and changing it would move EL5's pinned culling counts.
+Recorded here rather than fixed quietly.)
+
+### PERF-BASIS - two uniform uploads a flat, for two numbers that could not change
+
+Inside the shadow replay's billboard loop:
+
+```js
+gl.uniform3fv(P.bb.right, recordBasis ? r.right : this._right);
+gl.uniform3fv(P.bb.up,    recordBasis ? r.up    : this._up);
+```
+
+Four cases, and only ONE of them varies per flat. `up` is the constant
+`[0,1,0]`, or the record's own basis which is fixed for the record.
+`right` is the frame's sun basis, computed once in `frame()` before the
+cascade loop - **unless** this is a lantern's replay, where each flat
+turns to face the lantern (EL6). So a sun cascade was paying two uniform
+uploads a flat for two numbers that could not change, three cascades
+deep, every frame. On a script-bound frame a GL call that cannot change
+anything is the purest waste there is.
+
+Both are hoisted to once a record; the lantern arm keeps its per-flat
+upload, because flattening every sprite's shadow to one direction is a
+bug, not a saving. And the texture bind now skips its repeats, as the
+main pass's has since PERF3.
+
+**The campaign found a hole that was there before this change**: nothing
+in the suite could fail a mutant that stopped the lantern's flats turning
+to face it. It is pinned now.
+
+**Pinned** in `test/perfon2_peercull.test.js`. Mutants
+`tools/mutants/perfon2.json`: 22 - 22 dead, 0 survived.
+
+
+## PERF-CROWD2 - the billboard pass culls, so no host can forget to (2026-09-19)
+
+PERF-ON2 found the peers submitted uncut. PERF-CROWD found the whole town
+beside them. Then the same shape turned up everywhere else:
+
+| host | list |
+|---|---|
+| `dungeonContext.js:5140` | the mobiles, the drops, the spells |
+| `worldModes.js:6189` | the dungeon's flats, camps, torches and peers |
+| `worldModes.js:6373` | the interior's flats and peers |
+| `worldModes.js:6379-6413` | blood, torches, drops, foes, guards - **five separate uncut calls** |
+| `exterior.js:4803`, `world.js:10852` | the spell missiles |
+| `exterior.js:4865` | the fixed city's townspeople |
+| `interior.js:352`, `dungeon.js:1008` | the flats, the camps, the torches |
+
+Seven call sites, and an eighth waiting to be written next year. **Fixing
+them one at a time is how this bug got to be in eight places.** The test
+belongs in the pass, so `drawBillboards` takes it and every host is
+correct by construction.
+
+**It culls AFTER the shadow record, on purpose.** `recordBillboards` runs
+first and takes the whole list, so everything still CASTS - only the
+drawing is culled. Nothing goes dark because its caster stepped off
+screen. (The world host's own lists are culled a step earlier, before
+they are even collected; that is EV3's existing behaviour for its flats
+and the peers and crowd now match it.)
+
+The planes are recomputed once a CALL rather than cached on the frame
+stamp, because the panel bracket swaps `_proj`/`_view` without bumping
+it - one 4x4 multiply a call against what it saves is not a trade worth
+thinking about. The sphere is the batch's own, lifted half a height for
+the bottom anchor, exactly as PERF-CROWD's is and for the same reason.
+`?cull=off` turns it off with everything else, and `stats.bbCulled` says
+how many the frame skipped.
+
+**Pinned** in `test/perfon2_peercull.test.js`. Mutants
+`tools/mutants/perfon2.json`: 28 - 28 dead, 0 survived.
+
+**The lesson: the same one-line omission in eight places is not eight
+bugs, it is one bug in the wrong layer.**
+
+
+## GRAIN1 - the distant ground was unfiltered, and the shader is why (2026-09-19)
+
+Mac: *"distance terrian has a weird grain look"* - and, before asking for
+it, *"im not sure if we can tackle this without taking a performance
+hit"*. **It costs nothing, and it may give some back.** That is worth
+saying first because the worry was reasonable.
+
+### What the grain is
+
+Minification aliasing. The tile array was `TEXTURE_MIN_FILTER = NEAREST`
+with no mipmap, so past a few tiles out a screen pixel covers a dozen
+texels and NEAREST picks exactly one of them - a *different* one each
+time the camera drifts a fraction. The ground boils. A mipmap is the
+only cure for it.
+
+### Why there wasn't one
+
+Not an oversight. The terrain shaders sample a per-tile UV:
+
+```glsl
+vec2 tileUV = fract(unwrapped);          // jumps 1 -> 0 at every tile edge
+vec2 tuv = ROT[t] * tileUV + TRANS[t];
+texture(uTileArr, vec3(tuv, float(layer)));
+```
+
+`texture()` picks its mip from the screen-space derivative of the
+coordinate it is handed. At each of those `fract` jumps the derivative is
+a whole tile wide, the hardware reads that as *"this pixel covers the
+entire texture"*, and it samples the coarsest mip. Turn mipmapping on
+naively and you get a blurred line drawn around all 16,384 tiles of every
+streamed pixel - far worse than the grain.
+
+### The fix
+
+`unwrapped` does not jump. Its derivative is the true footprint, and
+`ROT[t]` is constant across the fragment, so rotating it gives that
+footprint in the rotated tile's own frame:
+
+```glsl
+vec2 gx = ROT[t] * dFdx(unwrapped);
+vec2 gy = ROT[t] * dFdy(unwrapped);
+textureGrad(uTileArr, vec3(tuv, float(layer)), gx, gy);
+```
+
+One sample either way. Both terrain shaders take it, and so does the
+water pass, which samples the same array through the same `fract` wrap
+(its own rollover would have drawn the same line).
+
+Then the texture side: `generateMipmap`, `LINEAR_MIPMAP_LINEAR` on
+minification, and **`NEAREST` left exactly where it was on
+magnification** - the near field is where Daggerfall's texels are meant
+to be square and visible, a mipmap has no say there, and LINEAR would
+smear the one place the art is read at full size. The distance is bought
+and the near field is untouched.
+
+A 2D ARRAY mipmaps each layer independently, so no tile can bleed into
+another the way an atlas would - the other reason atlases ship unmipped
+and this need not.
+
+Anisotropy where the driver has it, capped at 4. Terrain is read at a
+grazing angle almost everywhere, and an isotropic mip must take the wider
+of the two footprints - so it over-blurs along the view and still aliases
+across it. This is the one term that buys back the sharpness the mipmap
+costs. Optional: a driver without the extension still draws, and the
+mipmap alone already removes the grain.
+
+### The cost, honestly
+
+- `textureGrad` against `texture`: one sample either way. Explicit
+  gradients can cost a little on some hardware; it is one instruction's
+  worth, not a pass.
+- The mipmap **reduces** texture bandwidth at distance. Unmipped
+  minification is the worst case for a texture cache - every neighbouring
+  pixel reads a scattered texel. Mipped, it reads a coherent block. At
+  distance this is a saving, not a cost.
+- Memory: +33% on the tile array. 56 layers at 64x64 RGBA is under a
+  megabyte, so the chain is a third of that.
+- Anisotropy at 4x is real fill-rate work, and it is the only line here
+  that spends anything.
+
+And the frame this ships into is **CPU-bound** - the readout that opened
+this arc was script 23.3 ms against a 19.7 ms frame. GPU filtering is
+not what it is short of.
+
+**Verified in real WebGL2** (headless Chromium, not asserted from
+memory): the construct compiles, and `EXT_texture_filter_anisotropic`
+reports a maximum of 16 there.
+
+**Pinned** in `test/grain1_terrainmip.test.js` (4). Mutants
+`tools/mutants/grain1.json`: 10 - 10 dead, 0 survived.
+
+**The lesson: "we cannot filter this" was true of the sampler it was
+written against, and had been carried as a property of the terrain ever
+since. The wrap was never the obstacle - handing the wrapped coordinate
+to the hardware was.**
+
+## GHOST1 (2026-09-19) - THE SPRITES THAT WERE CULLED WHILE THEY WERE ON SCREEN - SHIPPED
+
+Two reports in `#bug-reports`, the same afternoon:
+
+> **Clerical Error:** "loaded from a save and we have ghost campfires now"
+> - with a screenshot of a flame that is a blurred glow and nothing else.
+
+> **kurkku:** "sprites disappear and reappear at certain(?) angles"
+
+One bug, in the billboard frustum cull PERF-CROWD and PERF-CROWD2 had
+added the same day. Two things were wrong with it.
+
+### 1. The planes were not normalised
+
+`frustumPlanes` (EV3) returns its Gribb/Hartmann planes **unnormalised**,
+on purpose and with its own note saying so: `aabbOutside` only reads the
+SIGN of `a*px + b*py + c*pz + d`, and normalising would spend four square
+roots a frame on nothing.
+
+`sphereInPlanes` is not that test. It compares `dot + d < -r`, and that
+is a world distance against a world radius **only when the normal is a
+unit vector**. That is exactly why `spherePlanes` exists beside it, and
+why the shadow replay and the air pass have always gone through it.
+
+Both new culls skipped it. On a 60-degree frustum the side planes carry
+`|n|` = 1.40 and the top and bottom exactly 2.00, so a sprite's radius
+counted for as little as **half of itself** and the cull ate a band
+around the frustum's edge proportional to the sprite's own size. Swept
+over ~440,000 placements whose quad genuinely lands inside the clip box,
+the raw planes throw some away at every sprite size tested; the
+normalised ones throw away none. The band is widest where the planes
+converge - close to the eye, which is where you stand when you look at a
+campfire - and at the screen edge, which is what turning does to
+everything else. Both reports, one cause.
+
+### 2. The lift was in the wrong place, which is what made it a GHOST
+
+A billboard's stored sphere is over the PLACEMENT points, and the vertex
+shader is bottom-anchored (`uUp * ((aCorner.y + 0.5) * uSize.y)`), so the
+quad stands its full height above that point. PERF-CROWD lifted the
+centre half a height to bound it - correctly - and PERF-CROWD2 wrote the
+same lift again in the renderer. Neither put it in `batchVisible`, which
+is the copy the shadow replay and the **air pass's emission replay** cull
+by.
+
+So two passes asked different questions about one sprite. The main pass
+dropped a flat the emitters kept, and what was left on screen was the
+BLOOM of a sprite that never drew: a blurred, sourceless glow where the
+fire should be. A ghost campfire, exactly as reported and exactly as
+photographed.
+
+The lift lives in `batchVisible` now and the two hand copies are gone -
+`renderer._bbVisible` and `world.js`'s `billboardOutside` both delegate.
+A negative height (`droppedTorches`' flame, drawn on a negated
+`localScale.y`) lifts DOWNWARD by the same rule, which is where its quad
+actually hangs.
+
+### The change that had to be free
+
+`world.js`'s `_planes` now serve both tests, so EV3's box culling reads
+normalised planes too. Dividing four coefficients by a positive length
+cannot move a sign, so every `aabbOutside` decision is bit-for-bit what
+it was - pinned over 10,000 boxes rather than argued. The cost is six
+square roots a frame.
+
+**Pinned** in `test/ghost1_spritecull.test.js` (6) - the measurement of
+`|n|`, the over-cull sweep from the outside (quad corners projected
+through the same proj*view the shader uses), the conservative direction,
+the lift and its one home, and the EV3 equivalence. Mutants
+`tools/mutants/ghost1.json`: 10 - 10 dead, 0 survived. Four
+`perfon2.json` records retired: their laws moved into `bounds.js` and
+`ghost1.json` kills them there.
+
+**The lesson: a helper that exists BECAUSE the other one is wrong for
+your case is not interchangeable with it. `spherePlanes` sat next to
+`frustumPlanes` with a comment saying precisely why, and two new callers
+reached past it. And when two passes cull the same object by two copies
+of one rule, the bug does not hide - it draws.**
+
+## PERF-SUN (2026-09-19) - THE EXTERIOR WAS PAYING PER FRAGMENT, AND THE SKY PROVED IT
+
+Mac: *"exterior shadows at a distance, tree sway at a distance, and
+whatever else can cause insane performance issues. On the outside, I'm
+receiving over 1000 calls and looking up in the sky restores frame
+rate."*
+
+### Looking up is the diagnosis
+
+The sun cascades are built around the **eye**, not the view direction,
+and each shadow replay culls by its own cascade's frustum. None of that
+changes when the camera tilts. The air pass, the sky, the sim: all
+unchanged. The one thing that collapses when you look at the sky is the
+number of **shaded fragments**.
+
+So the >1000 draw calls, whatever else they cost, are not what the sky
+gives back. The exterior was spending itself per fragment, on ground
+that fills nearly the whole screen.
+
+### PERF-SUN1 - the far cascade took nine taps for a texel two pixels wide
+
+`sunShadowAt` filtered 3x3 in every cascade. And each of those nine
+samples is **already a 2x2**: the sun map is `COMPARE_REF_TO_TEXTURE`
+with `LINEAR` filtering, so one `texture()` on it is a hardware bilinear
+PCF over four texels and the loop was an effective 4x4 filter.
+
+That is worth it where the texel is coarse against the pixel. Cascade 0
+is 12 units over 2048 - a 1.2 cm texel, EL7's contact hairline, the
+whole reason the near cascade exists. The **far** cascade is 240 units:
+a 23 cm texel, which at a hundred metres on a 60-degree field is about
+two pixels across. One hardware tap there is already a 2x2 over a
+two-pixel texel; the other eight soften nothing anyone can see - over
+**most of an outdoor screen**, because cascade 2 is everything past 48
+units.
+
+The nearest two cascades keep the kernel. The far one returns on one
+tap, before the loop.
+
+### PERF-SUN2 - the shadow was read where the sun cannot reach
+
+Every lane shader wrote the sun term as one flat product:
+
+```glsl
+float diff = max(dot(n, uLightDir), 0.0) * cloudShadowAt(vWorldPos) * sunShadowAt(vWorldPos, n);
+```
+
+**GLSL evaluates every operand of a product.** A surface whose normal
+faces away from the sun paid nine hardware-PCF compares and a cloud-deck
+sample, and then multiplied them by the zero sitting in front of them.
+Every north-facing wall, every back slope, and the whole world whenever
+the sun is low.
+
+`diff` reaches the light exactly once, as `uSunColor * (uSunScale *
+diff)` - so gating it on `ndl > 0.0` **or** on `uSunScale > 0.0` cannot
+move a pixel; it only skips arriving at the same zero. The `uSunScale`
+half is a uniform branch, free and coherent, and it takes out dusk, dawn
+and the whole night as well. A FLAT has no normal, so its gate is
+`uBBSun` - the sun's entire share of the tint, and zero at night - which
+stops every sprite in the world reading the sun map after dark.
+
+Verified in a real WebGL2 driver rather than asserted:
+`tools/perfSunShaderProbe.mjs` compiles all four lane shaders and both
+water variants.
+
+### The tree sway is cleared
+
+It is not a per-frame cost. `floraSwayOf` runs once per BATCH when the
+pixel is built, each host uploads **one** wind vector a frame for every
+flat in the world, and the lean is a few instructions on four vertices a
+sprite. Recorded so the next reader does not go looking.
+
+What was wrong beside it: `floraSwayOn` minted a `URLSearchParams` and
+parsed the query string **once a frame** to answer a question that
+cannot change while the page is open. Read once now, as `?cull=off` is;
+the pref beside it stays live, because the player can toggle that
+mid-session.
+
+### RECORDED, NOT FIXED - the >1000 draw calls
+
+Named here because it is a real finding and this slice is not its fix.
+
+A streamed pixel's static models are merged by PERF4 into one mesh with
+**one sub-mesh per texture**, and that is where the draw count lives: a
+town pixel with thirty distinct wall and roof textures is thirty draws,
+times every visible pixel. The obvious saving - cull the merged batch
+per sub-mesh, using the bounds `createMesh` already computes and the
+shadow replay already tests - **does not work here**, and the reason is
+worth writing down: a merged sub-mesh is one texture's geometry across
+the WHOLE pixel, and a pixel is 128 tiles at 6.4 units, or 819 units
+across. Its bounding sphere spans the pixel, so the test would almost
+never fire.
+
+**CORRECTED 2026-09-19, same day:** the remedy first written here -
+merge per texture *and* per spatial cluster - is wrong, and the
+arithmetic says so in one line. The current scheme is already the
+MINIMUM draw count: one per distinct texture. Splitting a pixel into
+sixteen cells turns thirty textures into up to 480 sub-meshes, and even
+if only three cells are in the frustum that is ninety draws where there
+were thirty. Clustering trades draw calls AWAY to buy vertex work; it is
+a fill win and a draw-call LOSS, and this finding was about the draw
+count.
+
+What the draw count actually is, recounted: terrain is one per visible
+pixel, the merged static batch is one per texture per visible pixel, and
+**the flats are one per (archive, record) per pixel** - which across the
+streamed grid is the largest single source, and the one MAC1 already
+cut the small far ones out of. Collapsing those would need either a
+texture array over an archive's records (so one draw covers many
+records) or world-space centres merged across pixels (which costs the
+per-pixel frustum cull that EV3 pays for). Both are real projects with a
+real trade, and neither is a line of code. Recorded as an open question
+rather than a plan.
+
+**Pinned** in `test/perfsun_fragment.test.js` (4). Mutants
+`tools/mutants/perfsun.json`: 15 - 15 dead, 0 survived. Two older
+records re-aimed by content (`el2.json`, `el7.json`) and EL7's own water
+pin with them.
+
+**The lesson: "over 1000 calls" named the thing that was easiest to
+count, and the sky named the thing that was actually being paid. A
+product in a shader is not a series of conditions - it is a promise to
+evaluate all of them.**
+
+## PERF-FOG (2026-09-19) - A UNIFORM WAS BEING DECODED ONCE A FRAGMENT
+
+Found by keeping on looking after PERF-SUN, in the same place and for
+the same reason: what does every exterior fragment actually run?
+
+`elFinish` is the lane's output - the tonemap, the fog blend, the
+in-scatter, the encode, the dither - and it runs in **every lane shader
+there is**: the terrain, the meshes, the rigs and every flat in the
+world. It opened with:
+
+```glsl
+vec3 col = mix(elDecode(uFogColor), tm, fogFactorAt(wp));
+```
+
+`elDecode` is the piecewise sRGB curve - three `pow()` calls. **On a
+uniform.** The value is identical for every pixel of the frame and it
+was being recomputed for every one of them, all day, everywhere.
+
+GLSL has nowhere to hoist a uniform-only expression to: there is no
+per-draw stage between the uniform and the fragment. So the only place
+it can be computed once is the host, and the only way to say that is to
+send the colour already decoded. `uFogColorLin` is declared in the
+shared block (so a fifth lane shader cannot be written without it),
+`_fogLocs` looks it up with the rest of the fog, and `_uploadFog` sends
+it only to a program that asked - a classic program does not declare it,
+and a lane program that never calls `elFinish` has it optimised out, so
+both read null and skip.
+
+**The law is not restated.** The lane already carries the decoder the
+shader compiles - `decode3` - and the renderer reaches it through the
+lane it was handed, so there is no second copy of the sRGB constants
+here, only a place to keep the answer. The cache is keyed on the display
+triple it came from, starts at NaN (a zero triple would match a
+legitimately black fog and never recompute), keeps its own scratch
+rather than `_c3`'s (which is handed to whoever asks next), and is
+invalidated on a lane swap - a cache keyed on its input alone cannot see
+that the *function* changed.
+
+The far ring pastes the same block but has its own finish and its own
+upload path, so it keeps its own decode. Named so the asymmetry reads as
+a decision.
+
+**The failure this could not be allowed to have is a black fog.** A
+uniform the optimiser drops reads back as null, the upload skips it, and
+`elFinish` mixes toward black - which compiles clean and shows only on a
+foggy day. Source cannot answer that, so `tools/perfSunShaderProbe.mjs`
+links all four lane programs in a real driver and asks for the location.
+
+**Pinned** in `test/perffog_uniform.test.js` (4). Mutants
+`tools/mutants/perffog.json`: 11 - 11 dead, 0 survived. EL1's fog pin
+and its `glsl-fog-blend-raw` mutant re-aimed by content: the law EL1
+states - the fog is blended in linear and re-encoded, so a fogged
+fragment IS the fog colour - is unchanged; only where the decode happens
+moved.
+
+**The lesson: a shader is the one place where "it's just a constant"
+costs you two million times a frame. The exterior's real bill was never
+in the things that were easy to count.**
+
+## TREES1 (2026-09-19) - THE DARKENING ON THE TREES WAS PERF-SUN1 MEETING A SPRITE
+
+Mac, the day PERF-SUN shipped: *"There's this weird darkening effect
+happening to trees."*
+
+Mine, and the argument that produced it was **half right**.
+
+PERF-SUN1 gave the far cascade one shadow tap instead of nine, on this
+reasoning: each tap is already a hardware 2x2, the far cascade's texel is
+about two pixels at a hundred metres, so the extra eight soften nothing
+anyone can resolve. That is an **antialiasing** argument, and it holds
+perfectly for the terrain, the meshes, the rigs and the water - every one
+of which shades **per fragment**, so neighbouring pixels smooth a coarse
+filter whatever the lookup returns.
+
+**A flat is not like that.** `EL_BB_FS` reads the sun map ONCE, at the
+sprite's base, and wears that single value over the entire quad - which
+is EL2's own decision, because a sprite sampled at its own fragment would
+shadow itself. For a tree the kernel is therefore not softening an edge.
+It is the only gradation the tree has.
+
+So with one tap: a tree whose foot sits near a shadow edge stops being
+*partly* shaded and becomes fully lit or fully dark, the whole sprite at
+once - and jumps again at the cascade boundary as you walk toward it. A
+weird darkening effect happening to trees.
+
+`sunShadowSoftAt` keeps the kernel at every distance, and the flat is its
+only caller. One body, one early return, behind `!soft`. The saving
+stands almost entirely: the ground is where the fragments are, and flats
+are a thin slice beside it.
+
+**Pinned** in `test/perfsun_fragment.test.js`. The pin asks the CALL
+SITES, not the shader text: every one of these shaders pastes
+`SHADOW_GLSL` and therefore contains *both* function names, so "which
+does this shader use" can only be asked of what is left when the block is
+removed. It holds that the flat takes the soft one and never the cheap
+one, that every per-fragment surface takes the cheap one and never the
+soft one (or the saving goes), and that the body has exactly one early
+return - a soft path that still fell through to the cheap tap would be
+this very bug wearing the name of its own fix. 5 more mutants, all dead.
+EL2's flat pin re-aimed by content: its law - the flat's sun term wears
+both shadows, read at its base - is unchanged.
+
+**The lesson: the optimisation was correct about the pixels and wrong
+about one caller, because that caller does not have pixels in the sense
+the argument assumed. "It's below the resolution of a pixel" means
+nothing to a surface that takes one sample for ten thousand of them.**
+
+## WEEDS1 (2026-09-19) - EVERY WEED IN THE WORLD WAS CASTING INTO THE 240-UNIT CASCADE
+
+Mac, after TREES1: *"its better, what else can we do?"*
+
+F5 already culls a caster too small to shadow a texel of the cascade it
+is being replayed into. It has been there since the field report that
+found the standing shadows. And for flats it was **dead**, for a reason
+that is only obvious once said out loud:
+
+> F5 measures the BATCH'S SPHERE. A billboard batch is every flat of one
+> (archive, record) across a whole streamed pixel - and a pixel is 128
+> tiles at 6.4 units, **819 across**.
+
+So a batch of ankle-high weeds scattered over a pixel carries a bounding
+sphere of several hundred units and sails straight through a test looking
+for things under 47 cm, while every sprite in it is thirty centimetres.
+Three orders of magnitude apart. Every weed, flower, pebble and ground
+prop in the world was replayed into the far cascade, where its shadow is
+one texel.
+
+The right measure for a flat is the **sprite**, which the batch already
+carries as `size`. This is MAC1's argument - *"all the billboards in the
+distance ESPECIALLY ALL THE SMALL ONES"* - applied to the pass that never
+got it.
+
+### Four texels, and why that number confines the change
+
+Against each cascade's texel:
+
+| cascade | radius | texel | four texels |
+| --- | --- | --- | --- |
+| 0 | 12 | 1.2 cm | 4.7 cm |
+| 1 | 48 | 4.7 cm | 19 cm |
+| 2 | 240 | 23 cm | **94 cm** |
+
+The near two land *below* the existing `SHADOW_FLAT_MIN_HEIGHT` of 0.5,
+so they cannot move - the change is confined to the far cascade by
+construction rather than by intent. There, nothing under about a metre
+casts any more. A tree, a person and a fence post all clear it; a weed, a
+flower and a small bush do not, and the largest shadow removed is a few
+screen pixels at a hundred metres.
+
+The **lantern** replays pass no texel and are untouched, which is right
+and not merely convenient: a cube face is 512 over a range of about
+eighteen units, so four of its texels is 28 cm - under the floor anyway.
+
+### F5's batch line is retired with it
+
+Once the sprite test exists, F5 can no longer decide anything about a
+flat. A single-flat batch's radius is `hypot(w, h) / 2`, so F5 fired only
+when `hypot(w, h) < 4 texels` - and that implies `h < 4 texels`, which is
+the sprite test itself. A multi-flat batch's sphere spans its pixel and
+F5 never fired on it at all.
+
+**How that was found is the useful part.** F5's own behavioural pin in
+`bugs5_field.test.js` kept passing after WEEDS1 landed - but for the
+wrong reason: the same flat was now culled by the height test instead.
+Its MUTANT survived, which is what said so. The pin is re-aimed onto
+WEEDS1 with a WIDE short flat added (the one shape F5 could never catch),
+and F5's test over MESHES and terrain, at the top of the replay loop, is
+untouched and still live.
+
+**Pinned** in `test/weeds1_flatcasters.test.js` (4), including the
+subsumption checked arithmetically over five sprite shapes rather than
+argued. Mutants `tools/mutants/weeds1.json`: 8 - 8 dead. Six `bugs5.json`
+records re-aimed by content and one retired with the line it mutated.
+
+**The lesson: a cull that measures the wrong extent is not a weak cull,
+it is no cull at all - and it will sit there for months looking like one,
+because the code that would have caught it is the code it is standing in
+for.**
+
+## GRAIN2 - "Why dont we crank it to 16?" (2026-09-19)
+
+The honest answer to that question is: **4 was a guess, and the 16 I
+quoted was not your hardware.**
+
+GRAIN1 reported `EXT_texture_filter_anisotropic` at a maximum of 16,
+"verified in real WebGL2". That WebGL2 is **SwiftShader** - ANGLE's
+software rasteriser, which is the only GL this container has. It reports
+16 because it can do 16 in software; it says nothing about any GPU, and
+its cost profile for anisotropic taps is nothing like one. The number was
+reported honestly and read further than it should have been.
+
+So the two things worth knowing:
+
+**Why not just set 16.** Anisotropy is paid in fill rate, on the pass
+that covers more screen than any other. Most of the sharpness arrives by
+4x and the curve flattens hard after it - but "flattens" is not "free",
+and the machine that pays is not always the one asking. This is a
+multiplayer port; a laptop on integrated graphics is a player too.
+
+**Why 16 is probably fine anyway, on this texture.** The expensive case
+for anisotropy is a large working set streaming from VRAM. The terrain
+tile array is 56 layers of 64x64 - under a megabyte with its mipmap
+chain, small enough to stay resident in cache. Sixteen taps of a texture
+that never leaves L2 is a very different proposition from sixteen taps of
+a 4K album. The folklore is about the latter.
+
+Neither of those is a measurement, and this session cannot make one. So
+the number stops being a number chosen once for everybody and becomes a
+**dial**: `groundSharpness`, off / default (4x) / maximum, on the
+Features page beside the cloud dial, the player's own online, landing on
+the next world load as every quality dial does.
+
+`anisotropyFor(tier, driverMax)` is the whole law and it is pure:
+`off` is 1 (the extension's own word for none - not 0, which is not a
+legal value), `max` is whatever the driver allows, `default` is 4 capped
+by the driver, and an unknown tier - a pref written by a future build -
+falls back to the default rather than to the maximum. A driver with no
+extension answers 1 for every tier and the renderer then asks for
+nothing at all.
+
+**Pinned** in `test/grain1_terrainmip.test.js`. Mutants
+`tools/mutants/grain1.json`: 15 - 15 dead, 0 survived.
+
+**The lesson: a number nobody can measure should not be spelled into the
+source as though somebody had. GRAIN1's 4 was defensible and its 16 was
+a software rasteriser talking - the fix for both is the same, and it is
+not a better guess.**
+
+## DSH1 - "The far away horizon is still viewable even though it's cloudy" (2026-09-20)
+
+A screenshot of an overcast evening: a grey lid from the zenith down, and
+under it a **hard red line along the whole horizon**, the same colour in
+every direction, with the tree line below it. The first read was that the
+weather was not reaching the sky. That was right about the symptom and
+wrong about the sky - because **the sky in that frame is not the port's**.
+
+### The port's own dome cannot make this picture
+
+Before touching anything, the dome was swept in the sky lab (`sky.html`,
+no game data) across seven weathers and nine hours, sampling one pixel
+just above the horizon and one just below. The below-horizon reading is
+never more saturated than `(172, 144, 135)` and never red - `pal.horizon`
+has no such colour in it, and `skyState` greys what it does have by the
+weather before anybody reads it. **So the frame was not the port's dome**,
+and the same sweep under `?sky=dynamic` answered in one run: `(231, 119,
+48)`, `(211, 100, 48)`, `(82, 18, 40)` - saturated warm colours that do
+not move when the weather does.
+
+The sky was **Dynamic Skies**, which is `Enabled: true` by default and is
+the third tier of the Enhanced Environments row, so a player who never
+opened the mod's panel is running it.
+
+### Two causes, one line
+
+**1. The colour the deck fades into.** The volumetric march closes every
+far bank on `uHorizonColor` (aerial perspective: `fade = 1 - exp(-t0 /
+14000)`, which saturates within a couple of degrees of the horizon), and
+`cloudsStateUnderMod` handed it `st.clearColor` - the mod's
+`RenderSettings.fogColor` - unchanged. At dusk that colour is a saturated
+red. The mod's own dome shows it only in the half-degree strip where
+Unity's procedural skybox lerps sky to ground (`SKY_GROUND_THRESHOLD`,
+0.01 in sine); the port's deck was painting it across the entire far ring.
+
+The port's dome has never had this problem, and not by luck: `skyState`
+greys its horizon by the row's `grey` before it becomes anything's
+`clearColor`. So the mod's colour takes **the same greying**, toward the
+deck's OWN shade rather than a fixed grey, because the far end of an
+overcast lid is its near end seen through air. Sunny is `grey 0` and comes
+through **1:1**, which is the whole point: this is not a rewrite of the
+mod's sky, it is the port's own weather law applied to a number the port
+was already choosing on the mod's behalf.
+
+**2. The last half-degree.** With the colour fixed the line got fainter
+and did not go away, because the lid stopped short of the ground twice
+over: the composite `discard`ed at `el <= 0.0`, and the march answered its
+own near early-out (`dir.y <= 0.004`) with `vec4(0, 0, 0, 1)` - "no cloud,
+nothing absorbed" - so the dome came through the lid in the strip where
+the mod's hot band lives. Both are closed: the near early-out gives
+`vec4(uHorizonColor, 0.0)`, the same answer the FAR early-out beside it
+already gave, and the composite carries the map's bottom row over a
+**skirt** of `HORIZON_SKIRT` (0.012 rad) below the horizon before letting
+the dome stand again.
+
+A skirt, not a floor. An earlier cut held the bottom row all the way to
+the nadir and it showed at once on a **clear** dusk: the deck is thin
+above the horizon (yellow sky through the gaps) and the held row is fully
+covering, so the ground half became a flat opaque slab with a hard edge -
+a new artefact traded for the old one. The skirt is sized to the one strip
+it exists to cover: Unity's 0.01, with room.
+
+### What the lab was actually testing
+
+Three earlier attempts changed nothing on screen, twice in the mod's own
+shader and once in the composite, and none of them was checked before the
+next was written. A **green marker** settled it in one run - paint below
+the horizon pure green and screenshot - and it showed the red line
+surviving ABOVE the green, which is the fact that pointed at the
+composite's own bottom rows rather than at the mod's cloud fade. The
+reverted work is not in the diff; the habit that produced it is the thing
+worth recording.
+
+**Pinned** in `test/dsh1_horizon.test.js` (5): the greying at 0, at 1 and
+monotone between; `modHorizon` total against a missing shade, a missing
+row and a greyness off either end; the EASED row winning over the
+weather's name (the controller hands one and the name beside it is stale
+mid-front); the skirt's bounds argued against the number it exists to
+clear; and the two early-outs holding the same answer so the lid has no
+seam. Mutants `tools/mutants/dsh1.json`: 18 - 18 dead. DS2's own horizon
+pin re-aimed by content, and VC3's two composite pins with it.
+
+**The lesson: the port chooses numbers on a vendored mod's behalf, and
+those choices are the PORT'S, not the mod's - "1:1" covers the mod's
+shader, not the state the port synthesises to feed its own passes. The
+red line was in nobody's code and in one of our decisions.**

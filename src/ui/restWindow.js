@@ -64,14 +64,24 @@ import { loadImg, nativeMetrics, drawImg, shadowText, NATIVE_W } from './nativeP
 import { drawMenuBackdrop } from './chargenArt.js';   // D3: Setup :137-138, ParentPanel.BackgroundColor = Color.black
 import { isEnhanced } from '../systems/uiSkin.js';   // CLK4: the enhanced skin's rest is a veil, not a wall
 import { dateFromClassicMinutes } from '../systems/gameDate.js';   // OL2: the world's clock, read for the counter page
-import { ONLINE_MINUTES_PER_MS } from '../net/wire.js';   // OL2: the pace, derived from the one rate rather than spelled
 
 /** CLK4 (the Clock arc): on the ENHANCED skin the resting page is a
  *  translucent veil over the world instead of DFU's opaque black, so
  *  the time-lapse Mac chose - the sun sweeping, the clouds streaming,
  *  a front building and passing on the clock - is a thing the player
- *  watches. The selection page and the classic skin keep DFU's "Hide
- *  world while resting" verbatim. */
+ *  watches. The classic skin keeps DFU's "Hide world while resting"
+ *  verbatim.
+ *
+ *  REST-VEIL2 (2026-09-19, Mac: "opening up the rest menu has a black
+ *  background behind it") - AND THE SELECTION PAGE TOO. CLK4 relaxed
+ *  the RESTING page only, so the page a player actually opens with the
+ *  key still blacked the world out whole: press it and the world is
+ *  gone, pick a rest and the world comes back under the veil. One skin
+ *  cannot hold both answers to "does this window hide the world" three
+ *  keystrokes apart. The veil is now the enhanced skin's answer for
+ *  every page of this window; the classic skin is untouched, because
+ *  the opaque black IS DFU there (Setup :137-138,
+ *  ParentPanel.BackgroundColor = Color.black). */
 export const REST_VEIL = Object.freeze([0, 0, 0, 0.35]);
 
 const PANEL = [0.05, 0.05, 0.09, 0.92];
@@ -145,16 +155,15 @@ export async function preloadRestArt(deps) {
 }
 export const restArtLoaded = () => !!_art;
 
-/** OL2: the world's time of day and the pace of a rested hour, for the
- *  counter page under the shared clock. The pace is derived from the
- *  wire's one rate (an hour of the world is 60 / (rate * 60000) real
- *  minutes - five at TimeScale 12), not spelled, so a rate change
- *  cannot leave a stale number on the page. */
-export const REAL_MINUTES_PER_WORLD_HOUR = Math.round(60 / (ONLINE_MINUTES_PER_MS * 60000));
+/** OL2: the world's time of day, for the counter page under the shared
+ *  clock. RESTX2 (2026-09-17) retired the pace half of the line ("an
+ *  hour here is 5 real minutes"): online a rest paces on the window's
+ *  own timer now, exactly as offline, and the world's clock is what it
+ *  always was under a rest - untouched. The line says that instead. */
 export function restClockLine(worldMinutes) {
   const d = dateFromClassicMinutes(worldMinutes);
   const two = (n) => String(n).padStart(2, '0');
-  return `World time ${two(d.hour)}:${two(d.minute)} - an hour here is ${REAL_MINUTES_PER_WORLD_HOUR} real minutes`;
+  return `World time ${two(d.hour)}:${two(d.minute)} - resting does not move it`;
 }
 
 export class RestWindow {
@@ -218,7 +227,7 @@ export class RestWindow {
     // (InputManager.cs:634-637) - so the opening release is already
     // spent when DFU's window first runs, and :193's bare `GetKeyUp`
     // is safe there. Every host here opens on the key DOWN
-    // (world.js:5222, exterior.js:2427, ui/input.js:343), and that same
+    // (world.js:6595, exterior.js:2737, ui/input.js:418), and that same
     // key's release is then routed straight into the freshly mounted
     // window, so the release door needs the deferral DFU gives every
     // window whose open edge IS the down: DaggerfallAutomapWindow.cs
@@ -727,10 +736,9 @@ export class RestWindow {
     // nothing is added and the page is what it was).
     //
     // AUDIT RESTX: this is LOITER's decoration now. RESTX1 took the REST
-    // modes off the shared clock - online a rest resolves in one frame
-    // and this page is never drawn for one - and left loiter riding it,
-    // because passing time is what loiter is for. The read below is
-    // unchanged and still right; only what it is FOR narrowed.
+    // modes off the shared clock; RESTX2 put every mode on the window's
+    // own timer, online included. The read below is unchanged: the
+    // page says the world's time, which a rest online never moves.
     const shared = this.deps.sharedMinutes?.();
     if (Number.isFinite(shared)) st.worldMinutes = shared;
     return st;
@@ -757,9 +765,14 @@ export class RestWindow {
     const m = nativeMetrics(canvas);
     // Setup :137-138, DFU's own comment: "Hide world while resting" -
     // ParentPanel.BackgroundColor = Color.black, opaque, so the world
-    // AND the HUD the host painted under this overlay go away. CLK4: a
-    // veil instead while RESTING on the enhanced skin (see REST_VEIL).
-    if (this.state === 'resting' && isEnhanced()) drawMenuBackdrop(renderer, canvas, REST_VEIL);
+    // AND the HUD the host painted under this overlay go away. That is
+    // what the CLASSIC skin draws, here as there.
+    //
+    // REST-VEIL2: the enhanced skin draws the veil on EVERY page of
+    // this window, not just the resting one (see REST_VEIL). The
+    // per-state test CLK4 left here is what made opening the menu black
+    // the world out and picking a rest bring it back.
+    if (isEnhanced()) drawMenuBackdrop(renderer, canvas, REST_VEIL);
     else drawMenuBackdrop(renderer, canvas);
     const st = this.status();
     if (st.panel === 'main') {
@@ -793,7 +806,7 @@ export class RestWindow {
       shadowText(renderer, font, `Health ${v.health}/${v.maxHealth}  Fatigue ${v.fatigue}  Magicka ${v.magicka}`,
         m, 0, REST_PANEL_Y + REST_COUNTER_RECT[3] + 8, { align: 'center', w: NATIVE_W });
     }
-    // OL2: the world's clock and the pace, under the vitals, while the clock paces the rest
+    // OL2: the world's clock, under the vitals, while the shared clock stands (RESTX2: the pace half is gone)
     if (Number.isFinite(st.worldMinutes)) {
       shadowText(renderer, font, restClockLine(st.worldMinutes), m, 0, REST_PANEL_Y + REST_COUNTER_RECT[3] + 18, { align: 'center', w: NATIVE_W });
     }

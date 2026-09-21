@@ -44,20 +44,20 @@
 // as the computed remote target, the 750kg gates, the dungeon exit
 // rule); Use mode, the 1016 info text and the IsLightSource equip
 // branch at U25 (AUDIT 23 trimmed that list). The LETTER OF CREDIT
-// went last and whole: minted at systems/inventory.js:67
+// went last and whole: minted at systems/inventory.js:68
 // (DaggerfallTradeWindow.cs:1044-1048), summed by creditAmount at
 // systems/court.js:207 (ItemCollection.GetCreditAmount, ItemCollection
 // .cs:108-118), spent letters-before-coins with the shortfall returned
 // by deductGold at court.js:249 (DeductGoldAmount, PlayerEntity.cs
 // :1324-1354), banked at systems/banking.js:482/:495, and described by
-// the 1007 text at systems/itemInfo.js:101. Nothing was ever owed at
+// the 1007 text at systems/itemInfo.js:104. Nothing was ever owed at
 // THIS surface anyway - DaggerfallInventoryWindow.cs has no
 // letter-of-credit arm at all.
 
 import { loadImg, nativeMetrics, drawImg, drawImgSub, drawImgCrop, shadowText, DEFAULT_TEXT_COLOR } from './nativePanel.js';
 import { getBool } from '../systems/settings.js';   // UI4: EnableInventoryInfoPanel
 import { layoutMessageBox, drawMessageBox, messageBoxHit, MB_BUTTONS } from './messageBox.js';   // U25
-import { useItem, isLightSource, isPotionRecipe, nextVariant } from '../systems/useItem.js';   // U25; AUDIT 64 F49/F50
+import { useItem, isLightSource, isPotionRecipe, nextVariant, USE_PENDING } from '../systems/useItem.js';   // U25; AUDIT 64 F49/F50
 import { potionRecipeByKey } from '../systems/potions.js';   // AUDIT 64 F49: PotionRecipeIngredients' recipe lookup
 import { itemInfoRows, itemInfoPanelRows, infoPanelShorten, questLetterName, INFO_TEXT } from '../systems/itemInfo.js';   // U25; AUDIT 64 F51
 import { paintingImage, setPaintingArtDeps } from './paintingImage.js';   // ROAD-A7: the painting's picture
@@ -94,10 +94,12 @@ import { LIST_SLOTS, scrollerHit, applyScroll, makeIconDrawer, drawStackLabel, s
 import { templateByIndex, itemBaseValue, inventoryItemImage } from '../systems/itemTemplates.js';
 import { FntFile } from '../formats/fntFile.js';
 import { audio } from '../systems/audio.js';
+import { immersiveFootsteps } from '../systems/immersiveFootsteps.js';   // IF1: the inventory close refreshes the mod's armour slots
 import { SOUND } from '../systems/soundClips.js';
 import { makeFont, drawText } from './text.js';
 import { typedChar } from './input.js';   // U26: one reader for both hosts' key routing
 import { firstHotkey } from '../systems/dialogShortcuts.js';   // A8: the DaggerfallShortcut table
+import { expandRowValues } from '../systems/quest/questMacros.js';   // MACROS1: a used item's record through its own context (%map)
 
 export const INV_RECTS = Object.freeze({
   tabWeapons: [0, 0, 92, 10],        // weaponsAndArmorRect
@@ -164,15 +166,18 @@ export const goldPanelRows = (gold, weightKg) => [
   { text: `Weight: ${weightKg % 1 === 0 ? weightKg.toFixed(0) : weightKg.toFixed(2)} kg`, center: true },
 ];
 /** The arms whose destination window the port has not built. Named,
- *  so a Use click SAYS something rather than eating itself. */
-export const USE_PENDING = Object.freeze({
-  book: 'You cannot read that yet.',
-  potion: 'You drink the potion.',
-  map: 'You study the map.',
-  questItem: 'Nothing happens.',
-  enchanted: 'Nothing happens.',
-  spellbook: 'You cannot open your spellbook here.',
-});
+ *  so a Use click SAYS something rather than eating itself.
+ *
+ *  QS2: THE TABLE LIVES IN `systems/useItem.js` NOW, and this is the re-export
+ *  every reader already had. It is keyed by `useItem`'s own result KINDS, so
+ *  it belonged beside them - and it had become an import a SYSTEMS module
+ *  needed (systems/quickslots.js speaks the same ladder from the key), which
+ *  made `systems/ -> ui/nativeInventory.js` a real edge and closed a cycle
+ *  through targetIconPanel: five test files died on
+ *  `Cannot access 'LOCAL_TARGET_ICON_RECT' before initialization` the moment
+ *  anything imported the quickslots. A window's strings may live under systems;
+ *  a system reaching up into a window is how that cycle came back. */
+export { USE_PENDING };
 
 /** TEXT.RSC 25 - the drop-gold prompt (:1272). */
 export const GOLD_TO_DROP_TEXT_ID = 25;
@@ -499,6 +504,11 @@ export class NativeInventoryWindow {
    *  skipped and a session drop was silently LOST. */
   _closeSilently() {
     this.done = true;
+    // IF1: UIManager.OnWindowChange's inventory arm (ImmersiveFootstepsMain
+    // .cs:372-398) - the inventory window popped, so the mod re-reads the
+    // seven armour slots; this is the one close law (B-C1), so every
+    // host's inventory reaches it.
+    immersiveFootsteps.onInventoryClose(this.hooks.entity ?? null);
     // FX1 (F128): SetEquipDelayTime(true) on the pop - the ONE bill
     // for this visit, then DFU's "Equipping %s" cue per changed hand
     // (:729-756; the string is Internal_Strings' equippingWeapon,
@@ -644,8 +654,18 @@ export class NativeInventoryWindow {
       else this.boxes = [{ rows: [{ text: USE_PENDING.spellbook, center: true }] }];
       return;
     }
+    // SURV3: Camping Equipment and the Campfire Kit are PLACED, and the
+    // ground is the host's - the pack closes first (the one overlay
+    // slot, the spellbook arm's law) and the host's hook decides where
+    // the camp stands and says so on the HUD. A host with no ground
+    // keeps the window and says so.
+    if (r.kind === 'pitchCamp' || r.kind === 'placeFire') {
+      if (this.hooks.placeCamp) { this._closeSilently(); this.hooks.placeCamp(r.item); }
+      else this.boxes = [{ rows: [{ text: USE_PENDING[r.kind], center: true }] }];
+      return;
+    }
     if (r.text) this.boxes = [{ rows: [{ text: r.text, center: true }] }];
-    else if (r.textId && this.hooks.rows) this.boxes = [{ rows: this.hooks.rows(r.textId) ?? [] }];
+    else if (r.textId && this.hooks.rows) this.boxes = [{ rows: expandRowValues(this.hooks.rows(r.textId) ?? [], r.macros ?? null) }];   // MACROS1: %map is the map's name
     else if (r.pending) this.boxes = [{ rows: [{ text: USE_PENDING[r.kind] ?? 'Nothing happens.', center: true }] }];
     if (r.kind === 'variant' && this.hooks.entity) refreshPaperDoll(this.hooks.entity);
     // AUDIT 22 F9: `enchanted` is now a RIDER on the arm's own result

@@ -2,6 +2,7 @@
 // themselves. Every pin below fails under a one-character mutation of
 // the law it names (checked by hand at authoring time).
 import { test } from 'node:test';
+import { setPref } from '../src/systems/uiPrefs.js';
 import assert from 'node:assert/strict';
 import { inventoryItemImage, templateByIndex } from '../src/systems/itemTemplates.js';
 import { paperdollItemImage } from '../src/ui/paperDoll.js';
@@ -96,6 +97,7 @@ test('17f F4: the pants variant rolls over the TEMPLATE variant count', () => {
 });
 
 test('17f F12: item names come from the TEMPLATE, not a hand copy', () => {
+  setPref('survival', false);   // AUDIT SURV E: the survival kit rides after DFU's bag; this pin is DFU's bag alone
   // DaggerfallUnityItem.ItemName is ItemTemplate.name - the port's
   // hand-written "Short shirt"/"Casual pants" were lower-cased.
   const e = { gender: 'female', race: 'Khajiit' };
@@ -142,7 +144,13 @@ function walkChargen(onDone) {
   key('Equal', 6); key('ArrowDown', 3);
   key('Equal', 6); key('Enter');      // the three skill pools -> reflexes
   key('Enter');                       // U13: the reflex pick -> U16's summary
-  key('Enter');                       // U16: the summary's OK -> done
+  key('Enter');                       // U16: the summary's OK -> the wizard's last screen
+  // ORL1: ...and the LEVELING CHOICE, which the door puts up after the
+  // wizard and before `done` (chargenSession.withLevelingChoice). The
+  // cursor starts on Daggerfall's own system, so this Enter is the walk
+  // taking the default - which is the character every pin below already
+  // expected to get.
+  key('Enter');
   return w;
 }
 

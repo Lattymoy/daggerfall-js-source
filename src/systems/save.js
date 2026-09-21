@@ -27,11 +27,17 @@ import { seedBundleSeq } from './effects.js';   // X10: the live-bundle counter'
 import { SOCIAL_GROUPS } from '../formats/factionFile.js';   // AUDIT 24
 import { travelMapSaveData, restoreTravelMapSaveData } from './travelMapState.js';   // U41: TravelMapSaveData
 import { getEscortFacesSaveData, restoreEscortFacesSaveData } from '../ui/hudEscortFaces.js';   // FE1: SaveData_v1.escortingFaces
+import { quickslotSaveData, restoreQuickslotSaveData } from './quickslots.js';   // QS1: the quickslot diamond rides the one composer
 import { resetMagicRoundMarker, sharedClockOn, worldMinutes, alignEntityClocks } from './worldTick.js';   // EntityEffectBroker.InitMagicRoundTimer, on the LOAD arm (:230-233); AUDIT WORLD5 C4: a load online is an arrival
+import { alignSurvival } from './survival/needs.js';   // SURV7: the needs' markers on the load arm
 import { isMembershipStore } from './guilds.js';   // V2e: the two-book membership store rides the save whole
+import { createBankAccounts, createHouses } from './banking.js';   // JAN1: a save with no accounts restores the full table - an EMPTY one is truthy and the host's `??=` never minted it
+import { setItemFields } from './itemTemplates.js';   // JAN1: an item saved before MAC-N1 (no value) is set on the way in, so the trade strip never sums NaN
 import { restoreKnightlyOrderFlags } from './knightlyGifts.js';   // D9: KnightlyOrder.RestoreGuildData's armour-bit back-fill
 import { GUILD_GROUPS } from '../formats/factionFile.js';   // the membership book's key IS the guild group
 import { appStorage } from './appStorage.js';   // DA1: localStorage in a browser, real save files in the desktop shell
+import { isOnlinePage } from './onlineLane.js';   // ONLINE-DEATH-FIX: the page is online
+import { respawnHealth } from './deathRespawn.js';   // ONLINE-DEATH-FIX: the SAME half-health an online respawn leaves
 
 /** One membership book, rows copied (GuildMembership_v1's shape). */
 const copyMembershipBook = (book) => Object.fromEntries(
@@ -60,7 +66,27 @@ const ENTITY_FIELDS = [
   'health', 'maxHealth', 'magicka', 'maxMagicka', 'fatigue',
   'currentBreath',   // P12 (SerializablePlayer carries it; missing = 0/surfaced on old saves)
   'startingLevelUpSkillSum', 'currentLevelUpSkillSum',
-  'readyToLevelUp', 'pendingLevel', 'chargenDone',
+  // `pendingBonusPool` rides beside `pendingLevel` for the reason the
+  // roll was moved onto the entity at all (AUDIT LV2, reopened): a
+  // pool that did not survive the save would be re-rolled by a save
+  // and a load, which is the same exploit through a slower door.
+  'readyToLevelUp', 'pendingLevel', 'pendingBonusPool', 'chargenDone',
+  // ORL1 (2026-09-17): WHICH LEVELING SYSTEM THIS CHARACTER LEVELS BY,
+  // and the mod's bar. `levelingSystem` is answered ONCE, at chargen,
+  // and is a property of the CHARACTER rather than of the install -
+  // which is why it rides here and not in modSettings beside the mod's
+  // sliders. The Mods pane switch decides whether a new character is
+  // ASKED; this decides what an existing one plays.
+  //
+  // A SAVE WRITTEN BEFORE THIS SLICE carries none of the three. The
+  // reader leaves them undefined, `usesVirtueLeveling` reads undefined
+  // as classic, and the two bar fields default to 0 at their only
+  // readers - so an old save loads as exactly the character it was.
+  // The mod's own save does the same with one value (player.lua:707-716
+  // persists `skillPointRollUp` alone and nothing else); the port
+  // carries the bar too, because Daggerfall has no engine-side level
+  // progress counter for it to live in the way Morrowind does.
+  'levelingSystem', 'levelProgress', 'levelRollUp',
   // AUDIT 17h F1: the six BIOGRAPHY modifiers, which DFU persists
   // one-for-one (SerializablePlayer.cs:136-141, :305-310). Without
   // them a load reset every biography answer's lasting effect.
@@ -130,9 +156,9 @@ export const newSkillsRecentlyRaised = () => [0, 0];
  *  Masque of Clavicus buffed five social groups instead of eleven for
  *  the life of that character. Dropping the member costs nothing:
  *  enchantmentMagicRound clears the player's array at the head of
- *  every magic round (enchantments.js:827, DFU's ClearReactionMods at
+ *  every magic round (enchantments.js:841, DFU's ClearReactionMods at
  *  PlayerEntity.cs:1567-1570) and the folds re-apply it in the same
- *  pass, off worldTick.js:240 - so a load lands DFU's own shape, the
+ *  pass, off worldTick.js:325 - so a load lands DFU's own shape, the
  *  live mods left standing until the next DoMagicRound re-derives
  *  them eleven wide. An older snapshot's key is simply ignored (the
  *  restore loop skips what REP_ARRAYS does not name), so the envelope
@@ -163,7 +189,7 @@ export const copyEffectEntry = (a) => {
 };
 
 /** A plain-object snapshot of the player + scene extras. */
-export function snapshotPlayer(entity, { position = null, pose = null, classicMinutes = 0, readiedSpellIndex = null, world = null, locationKey = null, quest = null, talk = null, interior = null, dungeon = null, travelMap = null, escortingFaces = null, smallerDungeonsState = 0 } = {}) {
+export function snapshotPlayer(entity, { position = null, pose = null, classicMinutes = 0, readiedSpellIndex = null, world = null, locationKey = null, quest = null, talk = null, interior = null, dungeon = null, travelMap = null, escortingFaces = null, quickslots = null, spawns = null, smallerDungeonsState = 0 } = {}) {
   // Q4-v: `quest` is the bridge's whole envelope (machine + notebook +
   // the one-time list) - opaque here, exactly like `world`.
   // TK-i: `talk` is TalkManager's SaveDataConversation (the rumor
@@ -199,7 +225,21 @@ export function snapshotPlayer(entity, { position = null, pose = null, classicMi
   // before it restores the position (PlayerEnterExit.cs:534-537). Null
   // anywhere but a dungeon; a save from before it was carried reads
   // null and the world host finds the dungeon by its id instead.
-  const snap = { v: SAVE_VERSION, position, pose, classicMinutes, readiedSpellIndex, world, locationKey, quest, talk, interior, dungeon, travelMap, escortingFaces, smallerDungeonsState };
+  // AUDIT TTL1 (found while adding `spawns`): `quickslots` was NOT
+  // among the names above, and this envelope's own comment says what
+  // that costs - "an unnamed option is dropped in silence". QS1's
+  // composer built the block, every save threw it away, and
+  // restoreQuickslotSaveData read undefined and CLEARED the diamond:
+  // the quickslots have never survived a load since QS1 landed.
+  //
+  // TTL1: `spawns` is the spawned-dungeon ledger (world/spawnedDungeons
+  // .js createSpawnLedger().toJSON()) - the two clocks are about time
+  // passing, so a reload with no memory of them would restart both and
+  // nothing would ever expire across a session. Named here rather than
+  // in the `world` bag because that bag is written in EXTERIOR mode
+  // alone, and the dungeon a spawn's clock is counting is exactly
+  // where a player saves.
+  const snap = { v: SAVE_VERSION, position, pose, classicMinutes, readiedSpellIndex, world, locationKey, quest, talk, interior, dungeon, travelMap, escortingFaces, quickslots, spawns, smallerDungeonsState };
   // W1: DFU persists exactly ONE weather value (playerPosition.weather)
   // and re-rolls the six-zone array on the next date change - the sim
   // is a module singleton, so the envelope reads it here and every
@@ -207,6 +247,10 @@ export function snapshotPlayer(entity, { position = null, pose = null, classicMi
   snap.weather = snapshotWeather();
   for (const k of ENTITY_FIELDS) snap[k] = entity[k];
   snap.stats = { ...entity.stats };
+  // SURV1: the needs record (survival/needs.js) - its markers are classic
+  // minutes and its counters plain numbers; the note throttles are not
+  // state and are not carried.
+  snap.survival = entity.survival ? { ...entity.survival, notes: undefined } : null;
   // AUDIT 17e: pre-chargen the entity carries a flat NUMBER here
   // (the stand-in entity's flat skills, characters/playerEntity.js:28)
   // - spreading it threw. RECORDED, and no divergence from
@@ -490,7 +534,12 @@ export function restorePlayer(entity, snap, spellsByIndex = null) {
   // number, orphaning every maxMagickaModifier producer. Idempotent.
   defineLiveMaxMagicka(entity);
   for (const k of ENTITY_FIELDS) entity[k] = snap[k];
+  // ONLINE-DEATH-FIX: NEVER LOAD DEAD ONLINE. hurtPlayer fires the death only on the alive->0 TRANSITION, so a
+  // character restored at 0 HP can never die again and is stuck at 0% (unkillable). Online, a death is a respawn, so a
+  // dead save (the exit autosave can write one) comes back at the respawn's own half health. Offline is untouched.
+  if (isOnlinePage() && !((entity.health ?? 0) > 0)) entity.health = respawnHealth(entity.maxHealth);
   entity.stats = { ...snap.stats };
+  entity.survival = snap.survival && typeof snap.survival === 'object' ? { ...snap.survival, notes: {} } : null;   // SURV1: a pre-SURV save starts fresh at the host's first tick
   // Pre-S15 saves carry no fatigue: default to rested (MaxFatigue =
   // (Str + End) x 64) - the additive-field shape DFU's serializer
   // gives missing members, so the envelope version holds at 1.
@@ -498,13 +547,16 @@ export function restorePlayer(entity, snap, spellsByIndex = null) {
   entity.skills = Array.isArray(snap.skills) ? [...snap.skills] : snap.skills;   // AUDIT 17e: pre-chargen skills is a flat number
   entity.skillUses = [...snap.skillUses];
   entity.career = snap.career ? { ...snap.career } : entity.career;
-  entity.items = snap.items.map((it) => ({ ...it }));
-  entity.wagonItems = (snap.wagonItems ?? []).map((it) => ({ ...it }));   // W-slice (pre-W saves restore empty)
-  entity.otherItems = (snap.otherItems ?? []).map((it) => ({ ...it }));   // R1: the in-repair collection (pre-R1 saves restore empty)
+  entity.items = snap.items.map((it) => setItemFields(it));   // JAN1: SetItem's two writes on every item in (a copy, as before)
+  entity.wagonItems = (snap.wagonItems ?? []).map((it) => setItemFields(it));   // W-slice (pre-W saves restore empty); JAN1: set on the way in
+  entity.otherItems = (snap.otherItems ?? []).map((it) => setItemFields(it));   // R1: the in-repair collection (pre-R1 saves restore empty); JAN1: set on the way in
   entity.rentedRooms = (snap.rentedRooms ?? []).map((r) => ({ ...r }));   // U39: the rented rooms (pre-U39 saves restore empty)
-  entity.bankAccounts = (snap.bankAccounts ?? []).map((a) => ({ ...a }));   // B1 (pre-B1 saves restore empty)
+  // JAN1 (2026-09-18, Janome: CRASH `region 17 is outside the 0 bank accounts`, a softlock at the bank): a pre-B1 save
+  // restored an EMPTY table, which is truthy, so worldModes' `??= createBankAccounts` never minted one and every bank
+  // reader threw by DFU's own ValidateRegion law. No accounts saved is no accounts opened: the full table, as a new game.
+  entity.bankAccounts = snap.bankAccounts?.length ? snap.bankAccounts.map((a) => ({ ...a })) : createBankAccounts();   // B1
   entity.sceneCache = restoreSceneCache(createSceneCache(), snap.sceneCache);   // P1
-  entity.houses = (snap.houses ?? []).map((h) => ({ ...h }));
+  entity.houses = snap.houses?.length ? snap.houses.map((h) => ({ ...h })) : createHouses(entity.bankAccounts.length);   // JAN1: the same law for the house registry (H1 mints it beside the accounts)
   entity.ownedShip = snap.ownedShip ?? -1;
   entity.boardShipPosition = snap.boardShipPosition ?? null;   // TR4 (:425)
   entity.anchorPosition = snap.anchorPosition ? { ...snap.anchorPosition } : null;   // TP-slice
@@ -755,9 +807,10 @@ export function restorePlayer(entity, snap, spellsByIndex = null) {
   // after it: a quick load, a boot ?load or a dungeon's own load restored the save's own clock into every marker,
   // and the next tick caught up the distance to the world (or read it negative).
   if (sharedClockOn()) { alignEntityClocks(entity, worldMinutes()); rollClimateWeathersForDay(worldMinutes()); }
+  if (sharedClockOn()) alignSurvival(entity, Math.floor(worldMinutes()), Math.floor(snap.classicMinutes ?? 0));   // SURV7: the needs' markers - a save from more than a day ago starts fed, watered and rested (WORLD5's law for these)
   // AUDIT 39: the three extras above ride back out too - a save from
   // before they were carried reads the same null/0 they used to.
-  return { position: snap.position, pose: snap.pose ?? null, classicMinutes: snap.classicMinutes, readiedSpellIndex: snap.readiedSpellIndex, world: snap.world ?? null, locationKey: snap.locationKey ?? null, quest: snap.quest ?? null, talk: snap.talk ?? null, interior: snap.interior ?? null, dungeon: snap.dungeon ?? null, travelMap: snap.travelMap ?? null, escortingFaces: snap.escortingFaces ?? null, smallerDungeonsState: snap.smallerDungeonsState ?? 0 };
+  return { position: snap.position, pose: snap.pose ?? null, classicMinutes: snap.classicMinutes, readiedSpellIndex: snap.readiedSpellIndex, world: snap.world ?? null, locationKey: snap.locationKey ?? null, quest: snap.quest ?? null, talk: snap.talk ?? null, interior: snap.interior ?? null, dungeon: snap.dungeon ?? null, travelMap: snap.travelMap ?? null, escortingFaces: snap.escortingFaces ?? null, quickslots: snap.quickslots ?? null, spawns: snap.spawns ?? null, smallerDungeonsState: snap.smallerDungeonsState ?? 0 };
 }
 
 /** MAC6 #1: the dungeon a save was taken in, found by its id across
@@ -789,7 +842,7 @@ export function dungeonPixelFor(locationKey, locations, toPixel) {
  *  machine and rumor mill. `talk` is the trio world.js already
  *  composes: { mill, tree, session } (rumorMill + topicTree +
  *  npcSession = SaveDataConversation whole, TK-i/ii/iv). */
-export function composeSessionState({ questBridge = null, talk = null } = {}) {
+export function composeSessionState({ questBridge = null, talk = null, spawnLedger = null } = {}) {
   return {
     quest: questBridge ? questBridge.snapshot() : null,
     talk: talk ? { ...talk.mill.getSaveData(), ...talk.tree.getSaveData(), ...talk.session.getSaveData() } : null,
@@ -803,6 +856,17 @@ export function composeSessionState({ questBridge = null, talk = null } = {}) {
     // escort portraits ride every save, off the one panel, exactly as
     // DFU reaches DaggerfallHUD.EscortingFaces from its serializer.
     escortingFaces: getEscortFacesSaveData(),
+    // QS1: the quickslot diamond's two consumables and its swap weapon
+    // (systems/quickslots.js) - per-character state, so it rides the
+    // save and not the browser's prefs shelf.
+    quickslots: quickslotSaveData(),
+    // TTL1: the spawned-dungeon ledger. Passed in rather than read off
+    // a module singleton like its neighbours because it belongs to the
+    // ONE world host that owns `locationIndex`; the dungeon host
+    // forwards the same object in, so a save made underground carries
+    // it too. Null in the standalone ?dungeon scene, which has no
+    // overworld and therefore no spawns.
+    spawns: spawnLedger ? spawnLedger.toJSON() : null,
   };
 }
 
@@ -877,7 +941,7 @@ export function removeAllOrphanedItems(entity, getQuest) {
  *  standing on a pre-TK save (world.js quickLoad, recorded there).
  *  Returns whether a quest envelope was present, for the world host's
  *  _questStarted latch. */
-export function restoreSessionState(extras, { questBridge = null, talk = null, entity = null } = {}) {
+export function restoreSessionState(extras, { questBridge = null, talk = null, entity = null, spawnLedger = null } = {}) {
   // restore(null) is a no-op and the live machine stands (Q4-v law).
   questBridge?.restore(extras?.quest ?? null);
   // U41: SetTravelMapFromSaveData(null) is DFU's own arm for a save
@@ -889,6 +953,14 @@ export function restoreSessionState(extras, { questBridge = null, talk = null, e
   // null is DFU's OWN arm here: a save without the block CLEARS the
   // panel, so a pre-FE1 save loads with no stale portraits.
   restoreEscortFacesSaveData(extras?.escortingFaces ?? null);
+  // QS1: the same arm - a save without the block CLEARS the slots, so
+  // a pre-QS save and another character's never carry a stale kind.
+  restoreQuickslotSaveData(extras?.quickslots ?? null);
+  // TTL1: a save with no ledger LOADS AN EMPTY ONE, the same arm its
+  // neighbours take. That is not a loss: an unknown spawn is noted on
+  // the next build of its pixel and simply starts its seven days over,
+  // which is what every pre-TTL1 save has to mean.
+  spawnLedger?.load(extras?.spawns ?? null);
   if (extras?.talk && talk) {
     talk.mill.restoreSaveData(extras.talk);
     talk.tree.restoreSaveData(extras.talk);   // the orphan sweep + relink + TellMeAbout tail run inside

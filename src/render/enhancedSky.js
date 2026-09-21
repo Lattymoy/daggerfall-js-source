@@ -384,9 +384,27 @@ export function skyState({ minuteOfDay, weather = 'sunny', classicMinutes = 0, s
   const cloudLitDay = w.lit, cloudShadeDay = w.shade;
   // By night the clouds are the night's own colour, faintly lit by the moons.
   const nightLit = [0.16, 0.19, 0.25], nightShade = [0.07, 0.09, 0.13];
-  const twilight = clamp01((elevDeg + 12) / 16);   // 0 well below the horizon, 1 by day
-  const lit = mix3(nightLit, mix3(cloudLitDay, pal.sun, 0.25 * (1 - clamp01(elevDeg / 20))), twilight);
-  const shade = mix3(nightShade, cloudShadeDay, twilight);
+  // VC6b (2026-09-18, Mac: "in the evening when the sun is setting and
+  // the sky is golden, clouds arent influenced by the sun"). Three
+  // numbers here, and the dome's own decks take them with the volumetric
+  // field, because they are one palette:
+  //  - the twilight ramp reached ONE only at twelve degrees up and was
+  //    three quarters at the horizon, so a quarter of the cloud's colour
+  //    was already night in the golden hour. The clouds are 1400 m up:
+  //    they hold their own colour until the sun is below THEIR horizon
+  //    (VC6b's dip, a degree and a half) and only then walk to night,
+  //    over the civil twilight that follows.
+  //  - the lit colour leaned a quarter of the way toward the sun's at a
+  //    low sun. Over half, now, and off a curve that is spent by sixteen
+  //    degrees rather than twenty, so noon is untouched and the last
+  //    hour is the sun's colour.
+  //  - the shade was the weather's grey at every hour. The shaded side
+  //    of a cloud at dusk is lit by the horizon's glow, which is what
+  //    the palette's own `glow` already is.
+  const twilight = clamp01((elevDeg + 9) / 10);   // 0 by deep dusk, 1 at and above the horizon
+  const lowSun = 1 - clamp01(elevDeg / 16);
+  const lit = mix3(nightLit, mix3(cloudLitDay, pal.sun, 0.55 * lowSun), twilight);
+  const shade = mix3(nightShade, mix3(cloudShadeDay, pal.glow, 0.30 * (1 - clamp01(elevDeg / 12))), twilight);
   // CLK3: the phase is CONTINUOUS on the clock - a moon that used to
   // jump 45 degrees along its arc at midnight (and the moonlight with
   // it) now walks there through the day. A caller's own `phases` (the

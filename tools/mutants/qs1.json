@@ -1,0 +1,229 @@
+[
+  {
+    "name": "QS1-the-key-forgets-the-recipe",
+    "file": "src/systems/quickslots.js",
+    "old": "  return [item.group ?? '', item.templateIndex ?? '', item.material ?? '', item.potionRecipeKey ?? '',",
+    "new": "  return [item.group ?? '', item.templateIndex ?? '', item.material ?? '', '',",
+    "tests": [
+      "test/quickslots.test.js"
+    ]
+  },
+  {
+    "name": "QS1-the-key-remembers-the-condition",
+    "file": "src/systems/quickslots.js",
+    "old": "    item.legendary ?? '', ench, custom, affixes].join('|');",
+    "new": "    item.legendary ?? '', ench, custom, affixes, item.currentCondition ?? ''].join('|');",
+    "tests": [
+      "test/quickslots.test.js"
+    ]
+  },
+  {
+    "name": "QS1-a-torch-is-a-consumable",
+    "file": "src/systems/quickslots.js",
+    "old": "export const isQuickConsumable = (item) => isPotion(item) || isDrug(item);",
+    "new": "export const isQuickConsumable = (item) => isPotion(item) || isDrug(item) || item?.group === 'UselessItems2';",
+    "tests": [
+      "test/quickslots.test.js"
+    ]
+  },
+  {
+    "name": "QS1-the-held-weapon-is-a-swap-target",
+    "file": "src/systems/quickslots.js",
+    "old": "export const canSwapTo = (item) => !!item && item.group === 'Weapons' && item.templateIndex !== ARROW && !isEquipped(item);",
+    "new": "export const canSwapTo = (item) => !!item && item.group === 'Weapons' && item.templateIndex !== ARROW;",
+    "tests": [
+      "test/quickslots.test.js"
+    ]
+  },
+  {
+    "name": "QS1-one-kind-in-two-slots",
+    "file": "src/systems/quickslots.js",
+    "old": "  if (slot !== 'swap') for (const s of CONSUMABLE_SLOTS) if (s !== slot && state[s]?.key === key) state[s] = null;",
+    "new": "",
+    "tests": [
+      "test/quickslots.test.js"
+    ]
+  },
+  {
+    "name": "QS1-the-count-is-the-first-stack-alone",
+    "file": "src/systems/quickslots.js",
+    "old": "    count += Math.max(0, it.stackCount ?? 1);",
+    "new": "    if (count === 0) count = Math.max(0, it.stackCount ?? 1);",
+    "tests": [
+      "test/quickslots.test.js"
+    ]
+  },
+  {
+    "name": "QS1-the-swap-takes-the-first-record-broken-or-not",
+    "file": "src/systems/quickslots.js",
+    "old": "  const item = matches.find((it) => !isBrokenItem(it)) ?? matches[0] ?? null;",
+    "new": "  const item = matches[0] ?? null;",
+    "tests": [
+      "test/quickslots.test.js"
+    ]
+  },
+  {
+    "name": "QS1-the-shield-wins-over-the-lit-torch",
+    "file": "src/systems/quickslots.js",
+    "old": "  if (lit) off = cell(lit, { kind: 'torch' });\n  else if (left && isShieldTemplate(left.templateIndex)) off = cell(left, { kind: 'shield' });",
+    "new": "  if (left && isShieldTemplate(left.templateIndex)) off = cell(left, { kind: 'shield' });\n  else if (lit) off = cell(lit, { kind: 'torch' });",
+    "tests": [
+      "test/quickslots.test.js"
+    ]
+  },
+  {
+    "name": "QS1-the-use-drinks-without-the-host-hook",
+    "file": "src/systems/quickslots.js",
+    "old": "    drinkPotion: hooks.drinkPotion ?? null,",
+    "new": "    drinkPotion: null,",
+    "tests": [
+      "test/quickslots.test.js"
+    ]
+  },
+  {
+    "name": "QS1-the-pending-stand-in-never-said",
+    "file": "src/systems/quickslots.js",
+    "old": "    ?? (res.pending ? (USE_PENDING[res.kind] ?? 'Nothing happens.') : null)",
+    "new": "",
+    "tests": [
+      "test/quickslots.test.js"
+    ]
+  },
+  {
+    "name": "QS1-the-swap-skips-the-broken-refusal",
+    "file": "src/systems/quickslots.js",
+    "old": "  if (isBrokenItem(r.item)) return refuse(ITEM_BROKEN_TEXT_ID, 'broken');",
+    "new": "",
+    "tests": [
+      "test/quickslots.test.js"
+    ]
+  },
+  {
+    "name": "QS1-the-swap-skips-the-forbidden-refusal",
+    "file": "src/systems/quickslots.js",
+    "old": "  if (isForbiddenEquip(entity?.career, r.item)) return refuse(FORBIDDEN_EQUIPMENT_TEXT_ID, 'forbidden');",
+    "new": "",
+    "tests": [
+      "test/quickslots.test.js"
+    ]
+  },
+  {
+    "name": "QS1-the-swap-bills-no-pause",
+    "file": "src/systems/quickslots.js",
+    "old": "  billEquipDelayOnClose(entity, snap);\n  // THE NEXT SWAP is what left the hand",
+    "new": "  // THE NEXT SWAP is what left the hand",
+    "tests": [
+      "test/quickslots.test.js"
+    ]
+  },
+  {
+    "name": "QS1-the-leaver-is-forgotten",
+    "file": "src/systems/quickslots.js",
+    "old": "  if (leaver && canSwapTo(leaver)) state.swap = { key: quickslotKey(leaver), name: itemLongName(leaver) };\n  else if (!previous)",
+    "new": "  if (!previous)",
+    "tests": [
+      "test/quickslots.test.js"
+    ]
+  },
+  {
+    "name": "QS1-the-slot-survives-a-save-without-the-block",
+    "file": "src/systems/quickslots.js",
+    "old": "  clearQuickslots();\n  if (!data || typeof data !== 'object') return;",
+    "new": "  if (!data || typeof data !== 'object') return;\n  clearQuickslots();",
+    "tests": [
+      "test/quickslots.test.js"
+    ]
+  },
+  {
+    "name": "QS1-the-restore-takes-any-shape",
+    "file": "src/systems/quickslots.js",
+    "old": "    if (e && typeof e.key === 'string' && typeof e.name === 'string') state[s] = { key: e.key, name: e.name };",
+    "new": "    if (e) state[s] = { key: e.key, name: e.name };",
+    "tests": [
+      "test/quickslots.test.js"
+    ]
+  },
+  {
+    "name": "QS1-the-enchanted-record-keyed-once-for-ever",
+    "file": "src/systems/quickslots.js",
+    "old": "  if (!plain(item)) return computeKey(item);",
+    "new": "",
+    "tests": [
+      "test/quickslots.test.js"
+    ]
+  },
+  {
+    "name": "AUDITQS-F2-empty-hands-clear-the-slot-again",
+    "file": "src/systems/quickslots.js",
+    "old": "  else if (!previous) state.swap = { key: leftOnly ? BARE_KEYS.L : BARE_KEYS.R, name: BARE_NAME };",
+    "new": "",
+    "tests": [
+      "test/quickslots.test.js"
+    ]
+  },
+  {
+    "name": "AUDITQS-F2-bare-hands-put-nothing-away",
+    "file": "src/systems/quickslots.js",
+    "old": "    unequipSlot(entity, hand);\n    billEquipDelayOnClose(entity, snap);",
+    "new": "    billEquipDelayOnClose(entity, snap);",
+    "tests": [
+      "test/quickslots.test.js"
+    ]
+  },
+  {
+    "name": "AUDITQS-F7-the-held-record-is-gone",
+    "file": "src/systems/quickslots.js",
+    "old": "  const held = item ? null : (ofKind.find((it) => isEquipped(it)) ?? null);",
+    "new": "  const held = null;",
+    "tests": [
+      "test/quickslots.test.js"
+    ]
+  },
+  {
+    "name": "AUDITQS-F4-the-left-hand-bow-is-a-socket",
+    "file": "src/systems/quickslots.js",
+    "old": "  else if (left) off = cell(left, { kind: 'weapon' });",
+    "new": "",
+    "tests": [
+      "test/quickslots.test.js"
+    ]
+  },
+  {
+    "name": "AUDITQS-F2-putting-the-weapon-away-bills-no-pause",
+    "file": "src/systems/quickslots.js",
+    "old": "    unequipSlot(entity, hand);\n    billEquipDelayOnClose(entity, snap);",
+    "new": "    unequipSlot(entity, hand);",
+    "tests": [
+      "test/quickslots.test.js"
+    ]
+  },
+  {
+    "name": "QS4-the-off-hand-presses-with-no-light-at-all",
+    "file": "src/systems/quickslots.js",
+    "old": "    if (typeof switchHand !== 'function') { say?.(QUICKSLOT_TEXT.noLight); return { kind: 'none' }; }",
+    "new": "",
+    "tests": [
+      "test/qs4_offhand.test.js",
+      "test/macr_fixes.test.js"
+    ],
+    "why_reaimed": " MAC-R2/R3 (2026-09-17) moved the line; re-aimed to its new text."
+  },
+  {
+    "name": "QS4-the-mods-verdict-is-ignored",
+    "file": "src/systems/quickslots.js",
+    "old": "  return toggleLight() === true ? { kind: 'light', lit: !!entity?.lightSource } : { kind: 'refused' };",
+    "new": "  toggleLight(); return { kind: 'light', lit: !!entity?.lightSource };",
+    "tests": [
+      "test/quickslots.test.js"
+    ]
+  },
+  {
+    "name": "QS4-a-lit-light-is-not-carrying-one",
+    "file": "src/systems/quickslots.js",
+    "old": "  const carries = !!entity?.lightSource || packOf(entity).some(isLightSource);",
+    "new": "  const carries = packOf(entity).some(isLightSource);",
+    "tests": [
+      "test/quickslots.test.js"
+    ]
+  }
+]

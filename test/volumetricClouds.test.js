@@ -11,6 +11,8 @@ import { fileURLToPath } from 'node:url';
 import {
   QUALITY, SWEEP_FRAMES, WORLD_PER_DRIFT, VC_PROFILE, easeProfile, cloudLight, MARCH_FS, COMPOSITE_FS, SHADOW_FS, MARCH_UNIFORMS, COMPOSITE_UNIFORMS, SHADOW_UNIFORMS,
   SHADOW_EXTENT, PIXEL_METRES, shadowOrigin,
+  horizonDip, EARTH_RADIUS_M, MARCH_SLACK, WARP_METRES, FIELD_PERIOD_METRES, VARIATION_METRES, SHAPE_METRES, CLOUD_FIELD_GLSL,   // VC6
+  HORIZON_SKIRT,   // DSH1
 } from '../src/render/volumetricClouds.js';
 import { easeWeather, WEATHER_SKY, WEATHER_EASE_MINUTES } from '../src/render/enhancedSky.js';
 import { WEATHER_TYPES } from '../src/world/weather.js';
@@ -22,18 +24,22 @@ test('VC3: the profile - one row per weather, eased on the weather ease\'s own e
   assert.deepEqual(Object.keys(VC_PROFILE).sort(), [...WEATHER_TYPES].sort(), 'a profile for every weather the sim can produce, and no more');
   for (const [name, p] of Object.entries(VC_PROFILE)) {
     assert.ok(p.base >= 0 && p.top > p.base, `${name}: a slab with a base below its top`);   // WEATHER2d: the sandstorm's wall stands on the ground (base 0)
-    for (const k of ['density', 'dark', 'flat', 'shear']) assert.ok(p[k] >= 0 && p[k] <= 1, `${name}.${k} is 0..1`);   // AUDIT 65 PN-2: shear was the one field no assertion touched
+    for (const k of ['density', 'dark', 'flat', 'shear', 'vary']) assert.ok(p[k] >= 0 && p[k] <= 1, `${name}.${k} is 0..1`);   // AUDIT 65 PN-2: shear was the one field no assertion touched; VC6a: and vary
   }
   // AUDIT 65 PN-2: the table itself. The inequalities below say WHY each
   // row is what it is and stay; these say WHAT it is - nothing else in the
   // tree held a single one of these numbers (src/render/volumetricClouds.js).
-  assert.deepEqual(VC_PROFILE.sunny,    { base: 1400, top: 3200, density: 0.60, dark: 0.00, flat: 0.10, shear: 0.35 });
-  assert.deepEqual(VC_PROFILE.cloudy,   { base: 1200, top: 3000, density: 0.70, dark: 0.10, flat: 0.35, shear: 0.40 });
-  assert.deepEqual(VC_PROFILE.overcast, { base: 800,  top: 1600, density: 0.80, dark: 0.30, flat: 0.90, shear: 0.20 });
-  assert.deepEqual(VC_PROFILE.fog,      { base: 150,  top: 600,  density: 1.00, dark: 0.20, flat: 1.00, shear: 0.05 });
-  assert.deepEqual(VC_PROFILE.rain,     { base: 600,  top: 2600, density: 0.90, dark: 0.50, flat: 0.70, shear: 0.30 });
-  assert.deepEqual(VC_PROFILE.snow,     { base: 600,  top: 2000, density: 0.80, dark: 0.30, flat: 0.85, shear: 0.20 });
-  assert.deepEqual(VC_PROFILE.thunder,  { base: 500,  top: 4200, density: 1.00, dark: 0.70, flat: 0.50, shear: 0.50 });
+  assert.deepEqual(VC_PROFILE.sunny,    { base: 1400, top: 3200, density: 0.60, dark: 0.00, flat: 0.10, shear: 0.35, vary: 0.50 });
+  assert.deepEqual(VC_PROFILE.cloudy,   { base: 1200, top: 3000, density: 0.70, dark: 0.10, flat: 0.35, shear: 0.40, vary: 0.45 });
+  assert.deepEqual(VC_PROFILE.overcast, { base: 800,  top: 1600, density: 0.80, dark: 0.30, flat: 0.90, shear: 0.20, vary: 0.15 });
+  assert.deepEqual(VC_PROFILE.fog,      { base: 150,  top: 600,  density: 1.00, dark: 0.20, flat: 1.00, shear: 0.05, vary: 0.00 });
+  assert.deepEqual(VC_PROFILE.rain,     { base: 600,  top: 2600, density: 0.90, dark: 0.50, flat: 0.70, shear: 0.30, vary: 0.25 });
+  assert.deepEqual(VC_PROFILE.snow,     { base: 600,  top: 2000, density: 0.80, dark: 0.30, flat: 0.85, shear: 0.20, vary: 0.20 });
+  // VC6a: a lid weather has NO type variation - fog and a sandstorm are
+  // one thing everywhere, and the whole term must collapse for them.
+  assert.equal(VC_PROFILE.fog.vary, 0); assert.equal(VC_PROFILE.sandstorm.vary, 0);
+  assert.ok(VC_PROFILE.sunny.vary > VC_PROFILE.overcast.vary, 'a scattered sky has the most to vary, a lid the least');
+  assert.deepEqual(VC_PROFILE.thunder,  { base: 500,  top: 4200, density: 1.00, dark: 0.70, flat: 0.50, shear: 0.50, vary: 0.40 });
   assert.ok(VC_PROFILE.overcast.flat > VC_PROFILE.sunny.flat && VC_PROFILE.thunder.dark > VC_PROFILE.overcast.dark, 'a lid is flat, a storm dark');
   assert.ok(VC_PROFILE.thunder.top > VC_PROFILE.sunny.top && VC_PROFILE.fog.top < 1000, 'the storm towers, the fog lies low');
   // the SAME clock as the row: after dt, the profile has crossed exactly the fraction the row has
@@ -56,14 +62,28 @@ test('VC3: the light - the sun while it is up, else the brighter visible moon, d
   assert.ok(night.color[0] < 0.2 && night.day === 0, 'dim');
   const set = cloudLight({ sunDir: [0, -0.2, 0.98], sun: [0, 0, 0], masser: { ...masser, dir: [0.3, -0.1, 0.9] }, secunda: { ...secunda, vis: 0 } });
   assert.deepEqual(set.color, [0, 0, 0], 'no light: the sun down, Masser set, Secunda dark');
-  // VC4d: the sun's weight fades over its last degrees (y from -0.02 to
-  // 0.06), the moon's share rising as it goes - no pop at the horizon
-  const dusk = cloudLight({ sunDir: [0, 0.02, 0.9998], sun: [1, 0.5, 0.3], masser, secunda });
-  assert.ok(dusk.day > 0.49 && dusk.day < 0.51, 'half way down, half the weight');
-  assert.ok(dusk.color[0] < 1 && dusk.color[0] > night.color[0], 'between the sun\'s and the moon\'s');
-  assert.deepEqual(dusk.dir, [0, 0.02, 0.9998], 'still the sun\'s direction while any of it is up');
-  const gone = cloudLight({ sunDir: [0, -0.02, 0.9998], sun: [1, 0.5, 0.3], masser, secunda });
-  assert.deepEqual(gone, night, 'at -0.02 the sun weighs nothing: the moon\'s light exactly');
+  // ═══ VC6b: THE SUN SETS FOR THE CLOUD LAST ═════════════════════════
+  // The weight used to fade from y = -0.02 to 0.06 - a window fitted by
+  // eye, which put the cloud's light out while the sun was still two
+  // and a half degrees UP, in the middle of Mac's golden hour. It is
+  // geometry, not taste: a deck whose middle stands h metres up sees
+  // sqrt(2h/R) radians past the ground's horizon, so it keeps the sun
+  // until the sun is that far BELOW it. The fade is over the last 0.025
+  // in sine - the disc's own width plus the deck's depth.
+  const sunny = VC_PROFILE.sunny, mid = (sunny.base + sunny.top) / 2;
+  assert.ok(Math.abs(horizonDip(mid) - Math.sqrt(2 * mid / EARTH_RADIUS_M)) < 1e-12, 'the dip is sqrt(2h/R)');
+  assert.ok(horizonDip(mid) > 0.026 && horizonDip(mid) < 0.028, `a 2300 m deck sees 1.54 degrees further: ${horizonDip(mid)}`);
+  assert.equal(horizonDip(0), 0, 'a deck on the ground sees no further than the ground');
+  assert.ok(horizonDip(4200) > horizonDip(1400), "a thunderhead's top holds the sun longest");
+  const at = (y) => cloudLight({ sunDir: [0, y, Math.sqrt(1 - y * y)], sun: [1, 0.5, 0.3], masser, secunda }, sunny);
+  assert.equal(at(0).day, 1, 'the sun ON the horizon still lights the deck WHOLE - this is the hour the report is about');
+  assert.ok(at(-0.01).day > 0.4 && at(-0.01).day < 0.7, 'half a degree under, most of it');
+  assert.equal(at(-horizonDip(mid)).day, 0, "at the deck's OWN horizon the sun is gone, and not before");
+  assert.deepEqual(at(0.02).dir, [0, 0.02, Math.sqrt(1 - 0.0004)], "the sun's direction while any of it is up");
+  assert.deepEqual(cloudLight({ sunDir: [0, -0.05, 0.9987], sun: [1, 0.5, 0.3], masser, secunda }, sunny), night, "well under, the moon's light exactly");
+  // the default slab is the sunny deck's, so a caller that hands none
+  // reads the light the controller's own profile would have given it
+  assert.equal(cloudLight({ sunDir: [0, 0, 1], sun: [1, 0.5, 0.3], masser, secunda }).day, 1);
 });
 
 test('VC3: the map, the sweep, the drift - the numbers the rest of the outdoors already keeps', () => {
@@ -87,8 +107,10 @@ test('VC3: the shaders - the composite\'s ray is the dome\'s line for line, ever
     'float cy = cos(uYaw), sy = sin(uYaw);',
     'vec3 dir = normalize(vec3(r1.x * cy + r1.z * sy, r1.y, -r1.x * sy + r1.z * cy));'];
   for (const l of rayLines) { assert.ok(dome.includes(l), `the dome carries: ${l}`); assert.ok(COMPOSITE_FS.includes(l), `the composite carries: ${l}`); }
-  assert.match(COMPOSITE_FS, /vec2 uv = vec2\(az \/ \(2\.0 \* PI\), el \/ \(0\.5 \* PI\)\);/, 'azimuth across, elevation up');
-  assert.match(COMPOSITE_FS, /if \(el <= 0\.0\) discard;/, 'below the horizon the dome stands');
+  assert.match(COMPOSITE_FS, /vec2 uv = vec2\(az \/ \(2\.0 \* PI\), max\(el, 0\.0\) \/ \(0\.5 \* PI\)\);/, 'azimuth across, elevation up - and the bottom row over the skirt');
+  // DSH1: the lid clears the horizon by a skirt, then the dome stands again.
+  assert.match(COMPOSITE_FS, new RegExp(`if \\(el <= -${HORIZON_SKIRT}\\) discard;`), 'past the skirt the dome stands');
+  assert.ok(HORIZON_SKIRT > 0.01 && HORIZON_SKIRT < 0.03, 'the skirt clears Unity\'s 0.01 sky-to-ground strip and is still under two degrees');
   assert.match(MARCH_FS, /vec3 dir = vec3\(sin\(az\) \* cos\(el\), sin\(el\), cos\(az\) \* cos\(el\)\);/, 'the march reads the same map coordinates back into a direction');
   for (const [fs, names] of [[MARCH_FS, MARCH_UNIFORMS], [COMPOSITE_FS, COMPOSITE_UNIFORMS], [SHADOW_FS, SHADOW_UNIFORMS]]) {   // all THREE marched programs (the review: a drifted SHADOW_UNIFORMS was silent)
     const declared = [...fs.matchAll(/uniform\s+\w+\s+(\w+)/g)].map((m) => m[1]);
@@ -165,18 +187,20 @@ test('VC3: the seam - the clouds ride the dome only, behind the one switch, on t
   assert.match(rr, /if \(saved\.cloudShadow\) \{ this\._cloudShadow = saved\.cloudShadow; this\._csStamp\+\+; \}/, 'and returns it');
   for (const h of ['src/scenes/world.js', 'src/scenes/exterior.js']) assert.match(read(h), /renderer\.setCloudShadow\(sky\?\.cloudShadow \?\? null\);[^\n]*\n\s*mwViewDrawBody\(/, `${h}: the body takes the frame's deck`);
   // VC5 review: the FP arm is lens-local geometry at the origin - the deck is borrowed off for it, and only for it
-  assert.match(rr, /renderCharacterSprite\(mesh, modelMatrix, proj, view, pw, ph, \{ lensLocal = false \} = \{\}\)/);
+  // MAC-P: the pass is `_renderCharacterSprite` now - `renderCharacterSprite` wraps it with the
+  // viewmodel light borrow, and the lens-local flag it takes is unchanged.
+  assert.match(rr, /_renderCharacterSprite\(mesh, modelMatrix, proj, view, pw, ph, \{ lensLocal = false \} = \{\}\)/);
   assert.match(rr, /const sd = lensLocal \? this\._cloudShadow : null;\s*\n\s*if \(sd\) \{ this\._cloudShadow = null; this\._csStamp\+\+; \}/, 'borrowed off');
   // AUDIT 65 RS-2: the deck's return is still here and still
   // unconditional - but it is now the TAIL of one finally that returns
   // the GL state first (the sprite FBO, the world rect, the clear
   // colour), which used to sit below the block and never ran on a
   // throw. The behavioural half is test/glstate.test.js's RS-2 pin.
-  assert.match(rr, /finally \{\s*\n\s*gl\.bindFramebuffer\(gl\.FRAMEBUFFER, null\);\s*\n(?:\s*\/\/[^\n]*\n)*\s*this\._restoreWorldViewport\(\);\s*\n\s*const cc = this\._clearColor;\s*\n\s*gl\.clearColor\(cc\[0\], cc\[1\], cc\[2\], cc\[3\]\);\s*\n\s*this\._proj = sp; this\._view = sv; this\._fogMode = sf;\s*\n\s*if \(sd\) \{ this\._cloudShadow = sd; this\._csStamp\+\+; \}\s*\n\s*\}/, 'and returned with the stamp bumped, whatever the draw did');
-  assert.match(read('src/combat/fpArm.js'), /renderer\.renderCharacterSprite\(mesh, NIF_TO_PASS, proj, view, pw, ph, \{ lensLocal: true \}\)/, 'the arm says so');
+  assert.match(rr, /finally \{\s*\n\s*gl\.bindFramebuffer\(gl\.FRAMEBUFFER, this\._frameFbo \?\? null\);[^\n]*\n(?:\s*\/\/[^\n]*\n)*\s*this\._restoreWorldViewport\(\);\s*\n\s*const cc = this\._clearColor;\s*\n\s*gl\.clearColor\(cc\[0\], cc\[1\], cc\[2\], cc\[3\]\);\s*\n\s*this\._proj = sp; this\._view = sv; this\._fogMode = sf;\s*\n(?:\s*this\._spriteDepth--;[^\n]*\n)?\s*if \(sd\) \{ this\._cloudShadow = sd; this\._csStamp\+\+; \}\s*\n\s*\}/, 'and returned with the stamp bumped, whatever the draw did');   // AUDIT-EL F2: the sprite depth returns in the same finally
+  assert.match(read('src/combat/fpArm.js'), /renderer\.renderCharacterSprite\(mesh, NIF_TO_PASS, proj, view, pw, phFull, \{ lensLocal: true, viewmodelLight: vmLight \}\)/, 'the arm says so');
   assert.doesNotMatch(read('src/render/characterSprite.js'), /lensLocal/, 'the rig sprite box is in the world: it keeps the deck');
   assert.match(shared, /clouds\?\.setState\(enhancedSky\.state, weatherRowNow, weatherName, easeDt, driftXZ, extra\?\.flash \?\? 0, extra\?\.pos \?\? null, extra\?\.cells \?\? null\);/, 'the eased row, the front-stretched dt, the one drift integral, the host\'s flash and position (WEATHER2c: and the field\'s cells)');
-  assert.match(shared, /draw\(yaw, pitch, fovY, aspect, viewport = \[0, 0, gl\.drawingBufferWidth, gl\.drawingBufferHeight\]\) \{\s*\n\s*\(enhancedSky \?\? dynamicSky \?\? sky\)\.draw\(yaw, pitch, fovY, aspect\);\s*\n\s*if \(clouds\) \{ clouds\.update\(viewport\); clouds\.draw\(yaw, pitch, fovY, aspect\); \}/, 'marched then composited after the dome, inside the host\'s marked span');
+  assert.match(shared, /const meter = meterFor\(gl\);\s*\n\s*meter\?\.mark\('sky'\);\s*\n\s*\(enhancedSky \?\? dynamicSky \?\? sky\)\.draw\(yaw, pitch, fovY, aspect\);\s*\n\s*if \(clouds\) \{ clouds\.update\(viewport\); clouds\.draw\(yaw, pitch, fovY, aspect\); \}[^\n]*\n\s*meter\?\.mark\('world'\);/, 'marched then composited after the dome, inside the host\'s marked span (VC6d: and inside its own perf span, which hands the frame back to the world\'s)');
   const dome = read('src/render/enhancedSky.js');
   assert.match(dome, /gl\.uniform1f\(u\.uCloudCover, this\.cloudsExternal \? 0 : s\.cloudCover\);/, 'cover 0 to the dome\'s shader under the clouds; the state keeps the row\'s');
   for (const h of ['src/scenes/world.js', 'src/scenes/exterior.js']) {

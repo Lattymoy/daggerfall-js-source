@@ -43,6 +43,9 @@ test('composeSessionState: bridge + trio -> {quest, talk}; absent halves -> null
   assert.deepEqual(composeSessionState({}), {
     quest: null,
     talk: null,
+    // QS1: the quickslot diamond's three slots ride the same composer.
+    quickslots: { c1: null, c2: null, swap: null, spell: null },   // QS6: the spell slot rides the same block
+    spawns: null,   // TTL1: no ledger passed (the standalone ?dungeon scene has no overworld and therefore no spawns)
     travelMap: {
       filterDungeons: false, filterTemples: false, filterHomes: false, filterTowns: false,
       filterRoads: false, filterTracks: false,   // ROADS 12

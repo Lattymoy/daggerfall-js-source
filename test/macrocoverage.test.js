@@ -106,19 +106,23 @@ test('M-X: the date/time block - one-based days and months, the suffix law, MinT
 test('M-X: the player globals - vitals, MagicResist, encumbrance, %ski, the signed modifiers, pronouns', () => {
   const entity = {
     magicka: 25, maxMagicka: 40,
-    stats: { strength: 60, willpower: 47 },
+    stats: { strength: 60, willpower: 47, agility: 70, endurance: 45 },
     skills: { 4: 100, 7: 60 },
     career: { primarySkills: [7, 4, 2] },
-    toHitModifier: 2, damageModifier: -3, hitPointsModifier: 0,
   };
   const hooks = { playerEntity: () => entity, playerGender: () => 'female', playerName: () => 'Jane Iron Doe' };
   assert.equal(getContextValue('%spc', null, hooks), '25');
   assert.equal(getContextValue('%spt', null, hooks), '40');
   assert.equal(getContextValue('%enc', null, hooks), '90', 'MaxEncumbrance = floor(str * 1.5)');
   assert.equal(getContextValue('%mad', null, hooks), '4', 'MagicResist = floor(will / 10)');
-  assert.equal(getContextValue('%thd', null, hooks), '+2', 'the "+0;-0;0" signed format');
-  assert.equal(getContextValue('%dam', null, hooks), '-3');
-  assert.equal(getContextValue('%hea', null, hooks), '0', 'zero is bare');
+  // ATTRMACRO1: these four are COMPUTED off the live stat, as DaggerfallEntity declares them - they are not fields
+  // on the entity. This fixture used to CARRY them as fields (toHitModifier: 2, damageModifier: -3,
+  // hitPointsModifier: 0), which pinned the port's own mistake: nothing in the tree ever assigned those fields, so
+  // every real player read `undefined ?? 0` and the signed format dressed the nothing up as a modifier.
+  assert.equal(getContextValue('%thd', null, hooks), '+2', 'ToHitModifier(agility 70) = 7 - 5, in the "+0;-0;0" signed format');
+  assert.equal(getContextValue('%dam', null, hooks), '+2', 'DamageModifier(strength 60) = floor((60 - 50) / 5)');
+  assert.equal(getContextValue('%hea', null, hooks), '-1', 'HitPointsModifier(endurance 45) = 4 - 5');
+  assert.equal(getContextValue('%hmd', null, hooks), '-1', 'HealingRateModifier reads endurance too');
   assert.match(getContextValue('%ski', null, hooks), /^[A-Z]/, 'the first PRIMARY at permanent 100 answers its name');
   entity.skills[4] = 99;
   assert.equal(getContextValue('%ski', null, hooks), 'BLANK', 'no mastered primary: "BLANK", verbatim');
@@ -228,4 +232,91 @@ test('M-X: the error shapes hold - call-throughs, null rows, and the news pair',
   const talkWorld = { factionNPCEnemy: () => 'the enemies', factionNPCAlly: () => 'the allies' };
   assert.equal(getContextValue('%fae', null, { world: talkWorld }), 'the enemies');
   assert.equal(getContextValue('%fea', null, { world: talkWorld }), 'the allies');
+});
+
+// ── ATTRMACRO1: THE EIGHT ATTRIBUTE DESCRIPTIONS ────────────────────
+//
+// Mac, 2026-09-18: "none of the attribute explanations show actual values." Clicking an attribute on the character
+// sheet popped its TEXT.RSC record with the tokens raw - "With your strength of %str, you are considered %ark",
+// "%enc kilograms is your maximum encumbrance". Two things were missing and the box needed both: the window made
+// NO macro pass at all (DFU's line is SetTextTokens(tag, playerEntity.Stats) - a record AND a source), and the
+// stats MCP behind %str..%luc and %ark did not exist anywhere in the port, so those nine had been wired to
+// `call(mcp, ...)` with nothing on the other end since the macro table was written.
+//
+// These pins drive the REAL expander over a REAL entity and read numbers and a word out of it. A pin that only
+// asserted "no % survives" would pass on a box full of empty strings.
+test('ATTRMACRO1: the attribute box expands against the player stats - a live number, the rating WORD, the signed modifier and the encumbrance', async () => {
+  const { statDescriptionRows } = await import('../src/systems/talkMacros.js');
+  // TEXT.RSC record 0, which is not in this container (no ARENA2) - transcribed from the player's own screenshot,
+  // which is the same text the reference ships.
+  const REC0 = [
+    { text: 'STRENGTH', center: true },
+    { text: 'Strength governs encumbrance, weapon damage' },
+    { text: 'With your strength of %str, you are considered %ark.' },
+    { text: '%dam modifier is factored into your' },
+    { text: '%enc kilograms is your maximum encumbrance.' },
+  ];
+  const e = { stats: { strength: 62, intelligence: 50, willpower: 50, agility: 50, endurance: 50, personality: 50, speed: 50, luck: 50 } };
+  const out = statDescriptionRows(REC0.map((r) => ({ ...r })), e);
+  const text = out.map((r) => r.text).join('\n');
+  assert.match(text, /With your strength of 62, you are considered athletic\./, 'the live value, and the rating word for it');
+  // the modifier: pinned by WHAT IT TRACKS rather than by a constant, because a combat-overhaul mod may legally
+  // replace the formula - what must never change is that %dam reads the live STRENGTH and is signed
+  assert.match(text, /^[+-]?\d+ modifier is factored into your$/m, 'a signed number, not a token');
+  const damOf = (str) => statDescriptionRows([{ text: '%dam' }], { stats: { ...e.stats, strength: str } })[0].text;
+  assert.notEqual(damOf(20), damOf(90), 'the damage modifier moves with STRENGTH...');
+  const agiOf = (agi) => statDescriptionRows([{ text: '%dam' }], { stats: { ...e.stats, agility: agi } })[0].text;
+  assert.equal(agiOf(20), agiOf(90), '...and not with agility, which is the to-hit modifier\'s stat');
+  assert.match(damOf(90), /^\+/, 'a strong character\'s modifier is signed with a plus');
+  assert.match(text, /^93 kilograms is your maximum encumbrance\.$/m, 'MaxEncumbrance = floor(62 * 1.5)');
+  assert.doesNotMatch(text, /%\w|\[nullMCP\]|\[srcDataUnknown\]|\[unhandled\]/, 'no token and no sentinel survives the pass');
+  assert.equal(out[0].center, true, 'and the row SHAPE survives - the centre flag is what titles the record');
+  // the rows are not mutated in place: the caller's copy is its own (the expander mutates what it is given)
+  assert.match(REC0[2].text, /%str/, 'the source rows are left as they came');
+});
+
+test('ATTRMACRO1: the rating word is the LAST stat macro\'s, which is why %ark has no argument - and every attribute has its own ten words', async () => {
+  const { statDescriptionRows } = await import('../src/systems/talkMacros.js');
+  const { STAT_RATINGS, statsMacroSource } = await import('../src/systems/quest/questMacros.js');
+  const e = { stats: { strength: 62, intelligence: 95, willpower: 50, agility: 50, endurance: 50, personality: 50, speed: 50, luck: 5 } };
+  // %ark reads whatever stat macro ran before it, in the same expansion, left to right
+  assert.deepEqual(statDescriptionRows([{ text: '%int %ark' }], e).map((r) => r.text), ['95 genius']);
+  assert.deepEqual(statDescriptionRows([{ text: '%luc %ark' }], e).map((r) => r.text), ['5 cursed']);
+  assert.deepEqual(statDescriptionRows([{ text: '%str %ark' }], e).map((r) => r.text), ['62 athletic']);
+  // ...and a bare %ark with no stat before it answers the reference's own defaults: Strength, value 0
+  assert.deepEqual(statDescriptionRows([{ text: '%ark' }], e).map((r) => r.text), ['pathetic']);
+  // the table itself: eight attributes, ten words each, and the one row that breaks the pattern is kept as written
+  assert.deepEqual(Object.keys(STAT_RATINGS),
+    ['strength', 'intelligence', 'willpower', 'agility', 'endurance', 'personality', 'speed', 'luck']);
+  for (const [k, v] of Object.entries(STAT_RATINGS)) assert.equal(v.length, 10, `${k} has ten ratings`);
+  assert.equal(STAT_RATINGS.willpower[4], 'unassertive', 'willpower does NOT say "about average" at 4 - do not tidy it');
+  assert.equal(STAT_RATINGS.strength[4], 'about average');
+  // the thresholds, by behaviour rather than by reading the table back: a decade per step, the top one open
+  const src = statsMacroSource({ stats: { strength: 0 } });
+  src.str(); assert.equal(src.attributeRating(), STAT_RATINGS.strength[0], '0 is the bottom word');
+  for (const [v, i] of [[9, 0], [10, 1], [49, 4], [50, 5], [89, 8], [90, 9], [100, 9]]) {
+    const s2 = statsMacroSource({ stats: { strength: v } });
+    s2.str();
+    assert.equal(s2.attributeRating(), STAT_RATINGS.strength[i], `strength ${v} rates at index ${i}`);
+  }
+});
+
+test('ATTRMACRO1: the character sheet runs that pass on the box it pops, and only there', async () => {
+  const { CharSheet, STATS_ROLLOUT_SELECT } = await import('../src/ui/charsheet.js');
+  const e = { stats: { strength: 62, intelligence: 50, willpower: 50, agility: 50, endurance: 50, personality: 50, speed: 50, luck: 50 } };
+  const se = STATS_ROLLOUT_SELECT;
+  const w = new CharSheet(e, { rows: () => [{ text: 'With your strength of %str, you are considered %ark.' }] });
+  assert.ok(w.click(se.x + 1, se.y + 1), 'the attribute is answered');
+  const rows = w.child?.rows ?? w.child?.lines ?? [];
+  const text = rows.map((r) => (typeof r === 'string' ? r : r.text)).join('\n');
+  assert.match(text, /strength of 62, you are considered athletic/, 'the box the player sees carries the values');
+  // a host with no TEXT.RSC still clicks and consumes, and still pops NO box - the empty path must not throw
+  const bare = new CharSheet(e);
+  assert.ok(bare.click(se.x + 1, se.y + 1));
+  assert.equal(bare.child, null);
+  // and the pass is at the CALL SITE, not inside the shared `rows` hook - the journal, the item text, the health
+  // box and the skills dialog all read through that same hook and must not acquire a stats MCP
+  const src = readFileSync(new URL('../src/ui/charsheet.js', import.meta.url), 'utf8');
+  assert.match(src, /const rows = statDescriptionRows\(this\.hooks\.rows\?\.\(statDescriptionTextId\(i\)\) \?\? \[\], this\.entity\);/);
+  assert.equal((src.match(/statDescriptionRows\(/g) ?? []).length, 1, 'exactly one call site');
 });

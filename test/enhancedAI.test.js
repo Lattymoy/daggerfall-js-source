@@ -60,7 +60,7 @@ test('ENHANCED AI 1: a room of triangles bakes, and a path bends around a wall',
   const cols = trianglesToColliders(P, I, { cs: AGENT.cs });
   const nav = buildNav(cols, AGENT);
   const chf = buildCompact(nav, AGENT);
-  // ANCHORED, as project-final bakes it (main.js:260): the component that
+  // ANCHORED, as project-final bakes it (main.js:300): the component that
   // holds the agents' home survives, everything else is dropped. The
   // anchor is an {x, z}; findPath's points are [x, y, z].
   buildRegions(chf, { anchor: { x: 1, z: 5 } }); buildContours(chf); buildPolyMesh(chf); buildPolyMeshDetail(chf, cols);
@@ -167,7 +167,7 @@ test('ENHANCED AI 3: the bake reads the Collider\u2019s own triangles, needs an 
 // What the body owes when the archives land: load the dungeon block
 // meshes through dungeonContext's own loader, feed them with
 // `collider.addMesh('dungeon', cpu.positions, cpu.indices, matrix)`
-// (src/scenes/dungeonContext.js:524), `bakeNavFromCollider(collider,
+// (src/scenes/dungeonContext.js:550), `bakeNavFromCollider(collider,
 // { anchor: <the entry marker's xyz> })` (src/ai/navBake.js), then assert
 // `bake.stats.polys > 0`, that the entry and every waypoint of
 // `navPath(bake, entry, firstHall)` locates via `__locatePolyIndexed`,
@@ -218,4 +218,85 @@ test('ENHANCED AI 3b: the client bakes without a worker, caches, and a hydrated 
   const src = readFileSync('src/scenes/dungeonContext.js', 'utf8');
   assert.match(src, /if \(playerFeet && !enhancedNav\.requested && getPref\('enhancedAI'\)\) \{/, 'the host asks once, with the switch on, once the feet are known');
   assert.match(src, /api\.enhancedNav = enhancedNav;/, 'and exposes the bake for the motor');
+});
+
+// DEGENERATE-BAKE GUARD (2026-09-20, Mac's patch): a report of foes
+// standing idle across most of a dungeon traced to a navmesh bake that
+// had culled almost the whole level. `buildRegions` keeps only the
+// anchor's connected component, so a real bug - the voxelizer missing a
+// real passage - and a genuinely disconnected region look IDENTICAL from
+// here: a tiny poly count against a large amount of input geometry. This
+// guard does not try to tell them apart, and does not need to. Either
+// way, permanently caching that result is the wrong call, because the
+// store survives a reload and the key is stable for the same dungeon: a
+// bad bake deserves a fresh attempt next visit, not to be stuck for good.
+test('ENHANCED AI 3b / DEGENERATE-BAKE: a bake that culls almost everything is not cached, so the next visit retries', async () => {
+  const { Collider } = await import('../src/player/collider.js');
+  const { NavClient, DEGENERATE_MIN_TRIS, DEGENERATE_MIN_POLYS } = await import('../src/ai/navClient.js');
+  const Id = new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
+  const P = [], I = []; const Y = -5;
+  const quad = (a, b, c, d) => { const s = P.length / 3; P.push(...a, ...b, ...c, ...d); I.push(s, s + 1, s + 2, s, s + 2, s + 3); };
+  // the small room the anchor stands in - the only thing that should bake into polys
+  quad([0, Y, 0], [10, Y, 0], [10, Y, 10], [0, Y, 10]);
+  for (const [a, b] of [[[0, 0], [10, 0]], [[10, 0], [10, 10]], [[10, 10], [0, 10]], [[0, 10], [0, 0]]]) {
+    quad([a[0], Y, a[1]], [b[0], Y, b[1]], [b[0], Y + 3, b[1]], [a[0], Y + 3, a[1]]);
+  }
+  // ...and a big mass of floor with no shared edge to it. Finely subdivided
+  // rather than placed far away, so the bake stays cheap here; it stands in
+  // for "most of a large dungeon", whether that is a real gap or a missed
+  // corridor.
+  for (let i = 0; i < 1200; i++) {
+    const ox = 15 + (i % 40) * 0.3, oz = Math.floor(i / 40) * 0.3;
+    quad([ox, Y, oz], [ox + 0.3, Y, oz], [ox + 0.3, Y, oz + 0.3], [ox, Y, oz + 0.3]);
+  }
+  const collider = new Collider(() => -Infinity);
+  collider.addMesh('dungeon', new Float32Array(P), new Uint32Array(I), Id);
+  const mem = new Map();
+  const store = { async get(k) { return mem.get(k) ?? null; }, async set(k, v) { mem.set(k, v); } };
+  const warnings = []; const origWarn = console.warn; console.warn = (...a) => warnings.push(a.join(' '));
+  try {
+    const client = new NavClient({ store, WorkerCtor: undefined });
+    const a = await client.bake({ collider, anchor: [1, Y, 5], key: 'dungeon:degenerate' });
+    assert.ok(a && a.chf && !a.cached, 'baked here, no worker');
+    // the fixture really is the shape this guard is about: a large input
+    // that came back with almost nothing, which is what the numbers see.
+    assert.ok(a.stats.polys < DEGENERATE_MIN_POLYS, `sanity: the anchor's own room is all that connected (${a.stats.polys} polys)`);
+    assert.ok(I.length / 3 >= DEGENERATE_MIN_TRIS,
+      'and the input is genuinely large, which is what keeps an honestly-small dungeon out of this');
+    assert.equal(mem.size, 0, 'a bake this disproportionate to its input never reaches the store');
+    assert.ok(warnings.some((w) => w.includes('degenerate')), 'and says so on the console, for a report exactly like the one that found it');
+    const b = await client.bake({ collider, anchor: [1, Y, 5], key: 'dungeon:degenerate' });
+    assert.equal(b.cached, false, 'so the very next visit gets a fresh bake, not the same bad one for ever');
+  } finally {
+    console.warn = origWarn;
+  }
+});
+
+// ...and the other half of the law: an honestly SMALL dungeon - few
+// triangles, honestly few polys - is never touched by the guard. This is
+// the pin the first cut of the rule needed: it measured against the
+// voxelizer's own box count, and a tall thin wall voxelizes into far more
+// boxes than its floor does, so a perfectly healthy little room tripped
+// it. The guard measures `input.tris`, the same stable count the cache key
+// is built from.
+test('ENHANCED AI 3b / DEGENERATE-BAKE: an honestly small dungeon still caches', async () => {
+  const { Collider } = await import('../src/player/collider.js');
+  const { NavClient, DEGENERATE_MIN_TRIS } = await import('../src/ai/navClient.js');
+  const Id = new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
+  const P = [], I = []; const Y = -5;
+  const quad = (a, b, c, d) => { const s = P.length / 3; P.push(...a, ...b, ...c, ...d); I.push(s, s + 1, s + 2, s, s + 2, s + 3); };
+  quad([0, Y, 0], [10, Y, 0], [10, Y, 10], [0, Y, 10]);
+  for (const [a, b] of [[[0, 0], [10, 0]], [[10, 0], [10, 10]], [[10, 10], [0, 10]], [[0, 10], [0, 0]]]) {
+    quad([a[0], Y, a[1]], [b[0], Y, b[1]], [b[0], Y + 3, b[1]], [a[0], Y + 3, a[1]]);
+  }
+  assert.ok(I.length / 3 < DEGENERATE_MIN_TRIS, 'the fixture is below the guard’s floor, which is the whole point');
+  const collider = new Collider(() => -Infinity);
+  collider.addMesh('dungeon', new Float32Array(P), new Uint32Array(I), Id);
+  const mem = new Map();
+  const store = { async get(k) { return mem.get(k) ?? null; }, async set(k, v) { mem.set(k, v); } };
+  const client = new NavClient({ store, WorkerCtor: undefined });
+  await client.bake({ collider, anchor: [1, Y, 5], key: 'dungeon:small' });
+  assert.equal(mem.size, 1, 'a small room bakes small and is cached, as it always was');
+  const again = await client.bake({ collider, anchor: [1, Y, 5], key: 'dungeon:small' });
+  assert.equal(again.cached, true, 'and comes back from the store on the next visit');
 });

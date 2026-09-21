@@ -1,0 +1,53 @@
+name: intro quality
+
+on:
+  push:
+    branches: [codex/cinematic-intro-overhaul]
+  pull_request:
+    paths:
+      - 'src/ui/intro*.js'
+      - 'src/systems/introTheme.js'
+      - 'src/assets/intro/**'
+      - 'src/assets/branding/**'
+      - 'tools/intro*.mjs'
+      - 'test/intro.test.js'
+      - '.github/workflows/intro-quality.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: intro-quality-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  cinematic:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: sudo apt-get update && sudo apt-get install -y ffmpeg
+      - name: Source, types, tests, build
+        run: npm run check
+      - name: Independent decoded music landmarks
+        if: ${{ !cancelled() }}
+        run: mkdir -p test-harness/intro && node tools/introAudioCheck.mjs test-harness/intro/audio-landmarks.json
+      - name: Live clock, transitions, ownership and responsive presentation
+        if: ${{ !cancelled() }}
+        run: node tools/introProbe.mjs
+      - name: Rendered review video (zero audio shift)
+        if: ${{ !cancelled() }}
+        run: node tools/introCapture.mjs
+      - name: Preserve review evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: daggerfall-intro-review
+          path: test-harness/intro/
+          retention-days: 30

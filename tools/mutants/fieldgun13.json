@@ -1,0 +1,95 @@
+[
+  {
+    "name": "FIELD-GUN13-1-the-gun-draws-with-a-scabbard-again",
+    "file": "src/combat/weaponRig.js",
+    "old": "      if (thunderlockHeld()) {\n        if (!_tlSounds) { _tlSounds = true; installThunderlockSounds(audio); }\n        audio.playOneShot(TL_SFX.close, GUN_FEEL.sfxVolume * 0.95, gunPitch());\n      } else {\n        audio.playOneShot(equipSoundFor(playerWeapon.weapon) ?? SOUND.DrawWeapon);\n      }",
+    "new": "      audio.playOneShot(equipSoundFor(playerWeapon.weapon) ?? SOUND.DrawWeapon);",
+    "tests": [
+      "test/thunderlock.test.js"
+    ]
+  },
+  {
+    "name": "FIELD-GUN13-2-the-flash-is-darkened-by-the-room-again",
+    "file": "src/combat/weaponRig.js",
+    "old": "    renderer.drawScreenQuad(tex, rect, undefined, lit ?? undefined);",
+    "new": "    renderer.drawScreenQuad(tex, rect, undefined, tint ?? undefined);",
+    "tests": [
+      "test/thunderlock.test.js"
+    ]
+  },
+  {
+    "name": "FIELD-GUN13-3-the-lift-multiplies-so-a-black-room-stays-black",
+    "file": "src/combat/gunFeel.js",
+    "old": "  flashLight: 0.6, flashGain: 1.9,",
+    "new": "  flashLight: 0.6, flashGain: 1.0,",
+    "tests": [
+      "test/thunderlock.test.js"
+    ]
+  },
+  {
+    "name": "FIELD-GUN13-4-the-muzzle-throws-no-light",
+    "file": "src/systems/thunderlock.js",
+    "old": "  const glow = entity?._thunderlockFlash;\n  if (!(glow > 0) || !feet) return null;",
+    "new": "  const glow = entity?._thunderlockFlash;\n  if (true) return null;\n  if (!(glow > 0) || !feet) return null;",
+    "tests": [
+      "test/thunderlock.test.js"
+    ]
+  },
+  {
+    "name": "FIELD-GUN13-5-one-host-forgets-the-flash",
+    "file": "src/scenes/exterior.js",
+    "old": "playerTorchLight(playerEntity, player.pos, cam.yaw), thunderlockMuzzleLight(playerEntity, player.pos, cam.yaw), ...camps.lights()",
+    "new": "playerTorchLight(playerEntity, player.pos, cam.yaw), ...camps.lights()",
+    "tests": [
+      "test/thunderlock.test.js"
+    ]
+  },
+  {
+    "name": "FIELD-GUN13-6-the-module-never-hears-about-the-sheathe",
+    "file": "src/combat/weaponRig.js",
+    "old": "      shown: !reloading && !sheathed,",
+    "new": "      shown: !reloading,",
+    "tests": [
+      "test/thunderlock.test.js"
+    ]
+  },
+  {
+    "name": "FIELD-GUN13-7-the-holster-only-dips",
+    "file": "src/combat/weaponRig.js",
+    "old": "      hiddenTarget: sheathed ? GUN_FEEL.sheathTarget : GUN_FEEL.hiddenTarget,",
+    "new": "      hiddenTarget: GUN_FEEL.hiddenTarget,",
+    "tests": [
+      "test/thunderlock.test.js"
+    ]
+  },
+  {
+    "name": "FIELD-GUN13-8-the-gate-relaxes-every-leg-of-shown",
+    "file": "src/combat/weaponRig.js",
+    "old": "      const gunSliding = !!c && thunderlockHeld() && thunderlockSliding()\n        && !spellArmed() && !fpsSpellCasting.isPlayingAnim && (entity?.equipCountdown ?? 0) <= 0\n        && !eotbHidesWeapon() && !fpArm.active();\n",
+    "new": "      const gunSliding = !!c && thunderlockHeld() && thunderlockSliding();\n",
+    "tests": [
+      "test/thunderlock.test.js"
+    ]
+  },
+  {
+    "name": "FIELD-GUN13-9-the-sheathe-leg-is-said-negatively",
+    "file": "src/combat/weaponRig.js",
+    "old": "  function thunderlockSliding() {\n    if (!playerWeapon.sheathed) return false;",
+    "new": "  function thunderlockSliding() {\n    if (shown()) return false;",
+    "tests": [
+      "test/thunderlock.test.js"
+    ]
+  },
+  {
+    "name": "FIELD-GUN13-10-the-clone-draws-on-a-sliding-frame",
+    "file": "src/combat/weaponRig.js",
+    "old": "      if (gunSliding && !shown()) return;\n",
+    "new": "",
+    "tests": [
+      "test/thunderlock.test.js",
+      "test/ht1_handheldtorches.test.js",
+      "test/ww1_weaponwidget.test.js",
+      "test/mwattach.test.js"
+    ]
+  }
+]

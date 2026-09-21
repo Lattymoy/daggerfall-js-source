@@ -4,7 +4,7 @@
 // both read the port's own state shapes off the mod's material, sun and
 // orbits. One home, importable by the sky lab without dragging the
 // whole scene controller in behind it.
-import { skyState, moonlightTerm } from './enhancedSky.js';
+import { skyState, moonlightTerm, WEATHER_SKY } from './enhancedSky.js';   // DSH1: the row's greyness, for the colour the deck fades into
 import { isNight, daylightScale } from '../world/worldClock.js';
 
 /** DS2: THE CLOUDS' STATE UNDER THE MOD. VolumetricClouds reads six
@@ -24,8 +24,33 @@ export function cloudsStateUnderMod(st, moons, { minuteOfDay, weather, classicMi
     sunDir: st.sunDir,
     masser: moons?.masser ?? base.masser,
     secunda: moons?.secunda ?? base.secunda,
-    horizon: st.clearColor ?? base.horizon,
+    horizon: modHorizon(st.clearColor ?? base.horizon, base.cloudShade, row ?? WEATHER_SKY[weather] ?? WEATHER_SKY.sunny),
   };
+}
+
+/** DSH1 (2026-09-20, Mac: "The far away horizon is still viewable even
+ *  though it's cloudy"): THE COLOUR THE DECK FADES INTO IS THE WEATHER'S
+ *  TOO.
+ *
+ *  The march's aerial perspective closes every far bank on this one
+ *  colour, and handing it the mod's RenderSettings.fogColor unchanged
+ *  made a full overcast lid end in a hard sunset line: the mod's fog
+ *  colour at dusk is a saturated red, its own dome shows it only in the
+ *  half-degree strip at the horizon, and the deck was painting it across
+ *  the whole far ring. The port's own dome has never had this - its
+ *  horizon is greyed by the weather's `grey` before anything reads it
+ *  (enhancedSky.skyState) - so the mod's colour gets the same treatment
+ *  here, toward the deck's OWN shade rather than a fixed grey, because
+ *  the far end of an overcast lid is the near end of it seen through
+ *  air. Sunny is grey 0 and comes through the mod's colour untouched. */
+export function modHorizon(modColor, shade, w) {
+  const g = Math.max(0, Math.min(1, w?.grey ?? 0));
+  if (g === 0 || !shade) return modColor;
+  return [
+    modColor[0] + (shade[0] - modColor[0]) * g,
+    modColor[1] + (shade[1] - modColor[1]) * g,
+    modColor[2] + (shade[2] - modColor[2]) * g,
+  ];
 }
 
 /** DS1: the moons as moonlightTerm reads them, from the mod's own

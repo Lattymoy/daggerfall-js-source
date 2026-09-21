@@ -248,5 +248,5 @@ test('TSR4c: a miss over a collider that has a ground answers the ground, not th
   assert.equal(new Collider(() => 7).heightAt(0, 0), 7);
   const { readFileSync } = await import('node:fs');
   const world = readFileSync(new URL('../src/scenes/world.js', import.meta.url), 'utf8');
-  assert.match(world, /const collider = new Collider\(heightAt\);/, 'the exterior collider\'s ground IS the terrain');
+  assert.match(world, /const collider = new Collider\(heightAt, surfaceAt\);/, 'the exterior collider\'s ground IS the terrain - and (BLOOD1 AUDIT 3) what is PLACED on it asks the drawn surface, the capsule the bilinear floor');
 });

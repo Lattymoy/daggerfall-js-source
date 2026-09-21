@@ -18,6 +18,7 @@ import {
   mountEnhancedInventory,   // AUDIT INV2: the pane is MOUNTED and the gesture DRIVEN
 } from '../src/ui/enhancedInventory.js';
 import { WAGON_KG_LIMIT } from '../src/systems/itemTransfer.js';
+import { SMALL_CART_TEMPLATE } from '../src/systems/inventorySession.js';   // MAC-M2 B: a cart in the bag, so the loot bar's one surviving button draws
 import { USE_PENDING } from '../src/ui/nativeInventory.js';
 import {
   createInventoryWindow, inventoryDoorReady,
@@ -92,7 +93,7 @@ test('U53: encumbrance is the same expression the sheet and the classic window u
     'LIVE strength - a drained player must not be told they can carry the undrained amount');
   // ...and the OTHER half. PlayerEntity.CarriedWeight (:184) is the
   // items PLUS the gold counter's weight, and the pane composes it by
-  // hand (enhancedInventory.js:175-176) because it is handed the list
+  // hand (enhancedInventory.js:191-192) because it is handed the list
   // and not the entity - so it must still land on inventory
   // .carriedWeight's answer.
   assert.equal(m.encumbrance.now, Math.trunc(carriedWeight(e)));
@@ -396,8 +397,12 @@ test('U53: no host builds a pack past the door', () => {
 test('U53: Escape and F6 close it, and F6 is claimed', () => {
   const src = read('src/ui/enhancedInventory.js');
   const onKey = src.slice(src.indexOf('function onKey(e)'), src.indexOf('function releaseLock()'));
-  assert.match(onKey, /overlayAction\(e\) !== 'back' && e\.key !== 'F6'/);
-  const testAt = onKey.indexOf("e.key !== 'F6'");
+  // MAC-C: the key is the REGISTRY's, not the literal - a rebound
+  // Inventory used to open the pack on the player's key and close it
+  // on Bethesda's. The law this pin states (decide, THEN claim) is
+  // unchanged.
+  assert.match(onKey, /overlayAction\(e\) !== 'back' && act !== 'Inventory'/);
+  const testAt = onKey.indexOf("act !== 'Inventory'");
   const claimAt = onKey.lastIndexOf('e.preventDefault()');
   assert.ok(testAt > 0 && claimAt > testAt, 'decide it used the key before claiming it');
   // AUDIT INV2 A-F7: and ABOVE that decision sits the drag's abort - Escape
@@ -979,9 +984,16 @@ test('PX20b: a LOOT target opens its own frame alone - the pack is never built',
   assert.match(render, /frame\.append\(tip\);/);
   assert.match(render, /frame\.addEventListener\('click'/);
   assert.doesNotMatch(render, /win\.addEventListener\('click'/, 'the listener follows the frame, not the pack');
-  // The way back, and only when there is somewhere to go.
-  assert.match(src, /if \(!packOpen\) \{\n    const b = el\('button', 'act', 'Pack'\);/);
-  assert.match(src, /b\.onclick = \(\) => \{ packOpen = true; picked = null; render\(\); \};/);
+  // MAC-M2 B (2026-09-16, Mac: "Remove the gold and pack buttons from
+  // the looting menu"): PX20b's way BACK is gone by his call, so a loot
+  // session is drawn or not drawn and never switches. The pin is
+  // INVERTED rather than deleted - a Pack button quietly returning is
+  // exactly the drift a removed pin stops catching.
+  const c = code('src/ui/enhancedInventory.js');
+  assert.doesNotMatch(c, /el\('button', 'act', 'Pack'\)/,
+    'no Pack button: the way to the pack is to close the pile and press the key that has always opened it');
+  assert.equal((c.match(/packOpen = /g) ?? []).length, 2,
+    'packOpen is declared and decided on the way in - nothing else moves it');
   // The transfer ladder is untouched: this slice draws frames.
   for (const law of ['function take(', 'function stow(', 'remoteModel', 'toggleWagon']) {
     assert.ok(src.includes(law), `${law} is still here - PX20b changed what is DRAWN`);
@@ -1575,10 +1587,19 @@ test('AUDIT INV2: every way a drag can END ends it - release, cancel, Escape, an
   withPack(({ dom, rows, ghost, at, down, move }) => {
     at(dom.body); down(rows()[0], 10, 10); move(60, 60);
     // A RIGHT-CLICK, and Android's long-press, raise this with no cancel
-    // behind it. Nothing listened, so the drag stayed live for ever and
-    // the row was un-draggable until something repainted it.
+    // behind it. INV2 listened and ended the drag on it. MAC-R4 (2026-09-17)
+    // RETIRED that end: a touch pointer's IMPLICIT capture of the row is
+    // given back at the press (see dragFrom), so a repaint that detaches
+    // the row - which raises the same event - can no longer kill a hold;
+    // a right-click never starts a session (button > 0), and the
+    // long-press menu is refused for the session's life. So a lost
+    // capture is NOT an end now, and the cancel that a really-taken
+    // pointer sends still is.
     dom.win.fire('lostpointercapture', { pointerId: DRAG.id });
-    assert.equal(ghost(), null, 'a lost capture ends it');
+    assert.notEqual(ghost(), null, 'MAC-R4: a lost capture does not end it - the session holds no capture to lose');
+    assert.equal(dom.win.count('lostpointercapture'), 0, 'and nothing listens for it');
+    dom.win.fire('pointercancel', { pointerId: DRAG.id });
+    assert.equal(ghost(), null, 'a cancel still does');
   });
   withPack(({ dom, e, rows, ghost, at, down, move }) => {
     const before = e.items.length;
@@ -1754,8 +1775,11 @@ test('MAC-M1: ONE suffix, shared by the three hovers that show it', () => {
   // and they share ONE builder: three copies of a rule is three chances
   // to disagree, which is the shape half of this month's findings had.
   const W = (templateIndex, material = 0) => ({ group: 'Weapons', templateIndex, material, stackCount: 1 });
-  assert.equal(itemStatSuffix(itemLine(W(113))), ' (0 - 5)');
-  assert.equal(itemStatSuffix(itemLine({ group: 'Armor', templateIndex: 103, material: 0x0200, stackCount: 1 })), ' (+7)');
+  // MAC-M2 joined the hands to it - one suffix still, two facts.
+  assert.equal(itemStatSuffix(itemLine(W(113))), ' (0 - 5 · One-handed)');
+  assert.equal(itemStatSuffix(itemLine(W(122, 9))), ' (8 - 24 · Two-handed)');
+  assert.equal(itemStatSuffix(itemLine({ group: 'Armor', templateIndex: 103, material: 0x0200, stackCount: 1 })), ' (+7)',
+    'armour keeps its rating alone - hands is a weapon’s question');
   assert.equal(itemStatSuffix(itemLine({ group: 'Books', templateIndex: 0, stackCount: 1 })), '',
     'a book gets no brackets, not empty ones');
   assert.equal(itemStatSuffix(null), '', 'and a missing line is not a crash');
@@ -1794,4 +1818,280 @@ test('MAC-M1: the card draws the stat FIRST, and the worn map’s hover carries 
     'the worn slot’s hover reads the same line');
   assert.match(src, /tile\.title = line\.name \+ itemStatSuffix\(line\);/,
     'and so does the grid tile - the most literal "tooltip" in the report');
+});
+
+// ═══ MAC-M2 A: THE BODY DRAGS TOO ════════════════════════════════
+//
+// 2026-09-16, Mac: "Hold to drag enhanced functionality doesn't work
+// when trying to take items off your character."
+//
+// It did not, and the reason is one line: INV1 attached `dragFrom` to
+// the LIST's rows alone (`if (from === 'local') dragFrom(row, item)`)
+// and made the body a drop TARGET, so the gesture only ever ran one
+// way. A press on a filled slot panel started no drag session at all -
+// no ghost, no window listeners, nothing to release - which is not a
+// refusal the player can read, it is a dead hold.
+//
+// DRIVEN, for AUDIT INV2's reason: a pin over a declaration is not a
+// pin over a feature. These press a real worn panel, move a real
+// pointer and read what actually came off.
+
+/** The pane with something WORN, which the map cannot draw without. */
+function withWorn(fn) {
+  return withPack((k) => {
+    const cuirass = k.e.items.find((it) => it.name === 'Cuirass');
+    assert.ok(equipItem(k.e, cuirass), 'the hero is wearing the cuirass');
+    assert.ok(isEquipped(cuirass), 'and the table says so');
+    k.view.repaint();
+    const panels = k.dom.doc.querySelectorAll('.wornrow').filter((n) => !n.classList.contains('wornempty'));
+    assert.equal(panels.length, 1, 'exactly one filled family on the map');
+    const dock = k.dom.doc.querySelectorAll('.pack-dock')[0];
+    assert.ok(dock, 'and the pack dock, which is where a piece comes off to');
+    return fn({ ...k, cuirass, panel: panels[0], dock });
+  }, { items: () => [mk('Longsword'), mk('Dagger'), mk('Cuirass', 'Armor')] });
+}
+
+test('MAC-M2: a HOLD on a worn slot really picks the piece up, and the pack is where it comes off', () => {
+  withWorn(({ e, view, cuirass, panel, dock, ghost, label, at, down, move, up }) => {
+    at(dock);
+    down(panel, 100, 100);
+    assert.equal(ghost(), null, 'a press alone carries nothing - a tap is still a pick');
+
+    // THE BUG: this used to produce nothing at all, because the panel
+    // had no pointerdown handler on it.
+    move(140, 160);
+    const g = ghost();
+    assert.ok(g, 'the drag really carries the worn piece');
+    assert.ok(g.querySelector('.tile'), 'and it is the item\'s own tile');
+    assert.equal(label(), 'Take off',
+      'the word on the ghost is the slot card\'s own act - one function for both directions');
+    assert.equal(dock.classList.contains('dragover'), true,
+      'and the pack lights as ONE target, the way the map does for the other direction');
+    assert.equal(panel.classList.contains('dragging'), true, 'the panel it left goes quiet');
+
+    up(140, 160);
+    assert.equal(ghost(), null, 'the release puts it down');
+    assert.equal(isEquipped(cuirass), false, 'released over the pack, the piece came OFF');
+    assert.equal(e.items.includes(cuirass), true, 'and it is in the bag, not on the floor');
+    assert.equal(view.dropped().length, 0, 'nothing was dropped on the ground');
+  });
+});
+
+test('MAC-M2: and it comes off NOWHERE else - the ground and the map are both "never mind"', () => {
+  // DFU's local list IS FilterLocalItems, which never shows an equipped
+  // item, so no transfer law can reach one: a worn cuirass released
+  // over the world would lie on the ground AND stay in the equip table.
+  // The card beside the item says the same thing in its own words
+  // ("WORN ITEMS HAVE NO STOW"), and the drag must not invent one.
+  withWorn(({ dom, e, view, cuirass, panel, label, at, down, move, up }) => {
+    at(dom.body);                       // out over the world
+    down(panel, 10, 10); move(60, 60);
+    assert.equal(label(), '', 'off the panel a worn piece promises nothing');
+    up(60, 60);
+    assert.equal(isEquipped(cuirass), true, 'and still wears it');
+    assert.equal(view.dropped().length, 0, 'with nothing on the ground');
+    assert.equal(e.items.includes(cuirass), true);
+  });
+  withWorn(({ dom, cuirass, panel, label, at, down, move, up }) => {
+    const map = dom.doc.querySelectorAll('.wornmap')[0];
+    at(map);                            // released back on the body
+    down(panel, 10, 10); move(60, 60);
+    assert.equal(label(), '', 'a release back on the map is the cancel gesture');
+    up(60, 60);
+    assert.equal(isEquipped(cuirass), true, 'so nothing happened');
+  });
+});
+
+test('MAC-M2: the plain click on a slot is untouched - it picks, and the card still takes the piece off', () => {
+  // The mis-click law: a worn panel SELECTS, never undresses. What a
+  // drag must not do is break that, and it nearly did - the release
+  // leaves a latch, and without consuming it every unequip-by-drag also
+  // cycled the family it had just emptied.
+  withWorn(({ dom, cuirass, panel }) => {
+    panel.onclick?.({});
+    const tip = dom.doc.querySelectorAll('.packtip')[0];
+    assert.ok(tip, 'a plain click raises the card');
+    assert.equal(isEquipped(cuirass), true, 'and takes nothing off by itself');
+    const act = tip.querySelectorAll('button').find((b) => b.textContent === 'Take off');
+    assert.ok(act, 'whose primary act is Take off');
+    act.onclick?.({});
+    assert.equal(isEquipped(cuirass), false, 'click-to-unequip still works');
+  });
+  withWorn(({ dom, cuirass, panel, dock, at, down, move, up }) => {
+    at(dock);
+    down(panel, 10, 10); move(60, 60); up(60, 60);
+    assert.equal(isEquipped(cuirass), false, 'the drag took it off');
+    // the panel is detached by the repaint; its click must still be a
+    // no-op, because the release consumed the latch on the way out
+    panel.onclick?.({});
+    assert.equal(dom.doc.querySelectorAll('.packtip').length, 0,
+      'a release that DRAGGED is never also a pick - here as in the list');
+  });
+});
+
+// ═══ MAC-M2 B: THE LOOT WINDOW IS FOR TAKING ═════════════════════
+//
+// 2026-09-16, Mac: "Remove the gold and pack buttons from the looting
+// menu."
+//
+// Neither is DFU's in this frame. DFU has ONE parchment, so its
+// goldButton (DaggerfallInventoryWindow.cs:47/:515-517) sits on the
+// player's own panel beside BOTH lists, and there is no "Pack" button
+// anywhere in the reference at all - PX20b minted that one to reopen
+// the pack its loot-only frame had replaced. Over a corpse the gold
+// field's verb is "Drop" and `dropGold` adds the stack to
+// `remoteTarget`, so the control offered to put the purse INTO the
+// body.
+//
+// DRIVEN: the pane is mounted on a real loot target and the bar is READ.
+
+/** The bar the remote side draws, as words. */
+const barOf = (dom) => {
+  const acts = dom.doc.querySelectorAll('.remoteacts');
+  assert.equal(acts.length, 1, 'the remote side draws exactly one action bar');
+  return acts[0].children.map((b) => b.textContent);
+};
+
+test('MAC-M2 B: a loot session’s bar carries no Gold and no Pack', () => {
+  const pile = [mk('Dagger')];
+  withPack(({ dom }) => {
+    assert.ok(dom.doc.querySelectorAll('.loot-win').length, 'the pile has its own frame');
+    assert.equal(dom.doc.querySelectorAll('.pack-win').length, 0, 'and the pack is not built (PX20b)');
+    assert.deepEqual(barOf(dom), [], 'nothing on the bar - the window is for taking');
+    assert.equal(dom.doc.querySelectorAll('.goldfield').length, 0, 'and the gold field is unreachable with it');
+  }, { deps: { loot: { items: () => pile } } });
+});
+
+test('MAC-M2 B: the WAGON button is untouched - it is the one control the loot bar keeps', () => {
+  // The cart is a real destination for what you just took, and its
+  // refusals are inventorySession's law. Only the two Mac named go.
+  const pile = [mk('Dagger')];
+  withPack(({ dom }) => {
+    assert.deepEqual(barOf(dom), ['Wagon'], 'the wagon, and only the wagon');
+  }, {
+    items: () => [mk('Longsword'),
+      { name: 'Small cart', group: 'Transportation', templateIndex: SMALL_CART_TEMPLATE, stackCount: 1 }],
+    deps: { loot: { items: () => pile } },
+  });
+});
+
+test('MAC-M2 B: the NORMAL pack keeps its Gold button - the gate is the session, not the frame', () => {
+  // The pack opened on the inventory key is untouched: it drops
+  // something on the ground, the ground frame arrives, and Gold is on
+  // it exactly as it always was.
+  withPack(({ dom, e, view, rows, at, down, move, up }) => {
+    assert.ok(dom.doc.querySelectorAll('.pack-win').length, 'a pack session, not a loot one');
+    at(dom.body); down(rows()[0], 10, 10); move(60, 60); up(60, 60);
+    assert.equal(view.dropped().length, 1, 'something is on the ground now');
+    assert.ok(e.items.length, 'and the bag still has the rest');
+    assert.ok(barOf(dom).includes('Gold'), 'so the ground frame carries Gold, as it always did');
+    assert.equal(barOf(dom).includes('Pack'), false, 'and never the Pack button, which is gone for good');
+  });
+});
+
+// ═══ MAC-M2: ONE HAND OR TWO ═════════════════════════════════════════
+//
+// 2026-09-16, Mac: "The Tooltip of weapons should also show if the
+// weapon is 1h or 2h."
+//
+// The fact was already in the tree and had never been shown to the
+// player: `getItemHands` (characters/equipTable.js) is the port's
+// verbatim ItemEquipTable.GetItemHands, and it is what the equip table,
+// the paperdoll's record pick, Weapon Widget's mirror rows and Handheld
+// Torches' hand law all ask. The card learnt to ask it too - through
+// ONE new presenter in systems/itemInfo.js, beside MAC-M1's two - so
+// there is still exactly one list of which weapons take both hands.
+
+test('MAC-M2: every weapon template’s hands, against GetItemHands’ own table', async () => {
+  const { itemHandsLine } = await import('../src/systems/itemInfo.js');
+  const W = (templateIndex, material = 0) => ({ group: 'Weapons', templateIndex, material, stackCount: 1 });
+
+  // DFU's WEAPON_HANDS row by row (equipRules.js, extraction-generated
+  // from ItemEquipTable.GetItemHands), as WORDS. deepEqual against the
+  // whole space rather than a spot check: promoting ANY one weapon to
+  // two-handed - or demoting one - reddens this, which is the property
+  // an `assert.ok(bows >= 8)` never had.
+  const hands = Object.fromEntries(
+    Array.from({ length: 18 }, (_, i) => 113 + i).map((t) => [t, itemHandsLine(W(t))]));
+  assert.deepEqual(hands, {
+    113: 'One-handed',    // Dagger
+    114: 'One-handed',    // Tanto
+    115: 'Two-handed',    // Staff
+    116: 'One-handed',    // Shortsword
+    117: 'One-handed',    // Wakizashi
+    118: 'One-handed',    // Broadsword
+    119: 'One-handed',    // Saber
+    120: 'One-handed',    // Longsword
+    121: 'One-handed',    // Katana
+    122: 'Two-handed',    // Claymore
+    123: 'Two-handed',    // Dai-katana
+    124: 'One-handed',    // Mace
+    125: 'Two-handed',    // Flail
+    126: 'Two-handed',    // Warhammer
+    127: 'One-handed',    // Battle Axe - EITHER in DFU, and the axe most
+    128: 'Two-handed',    // War Axe    - often got backwards
+    129: 'Two-handed',    // Short Bow - with the switching setting off
+    130: 'Two-handed',    // Long Bow
+  });
+
+  // An ARROW is a weapon by group and is not swung: MAC-M1's own
+  // presenter question, and the same answer.
+  const { TEMPLATES } = await import('../src/systems/useItem.js');
+  assert.equal(itemHandsLine({ group: 'Weapons', templateIndex: TEMPLATES.Arrow, material: 0, stackCount: 5 }), null);
+  // ...and nothing that is not a weapon grows a row.
+  for (const g of ['Armor', 'Books', 'MiscItems', 'UselessItems2', 'Jewellery']) {
+    assert.equal(itemHandsLine({ group: g, templateIndex: 111, stackCount: 1 }), null, `${g} shows no hands`);
+  }
+  assert.equal(itemHandsLine(null), null, 'and a missing item is not a crash');
+});
+
+test('MAC-M2: the card reads GetItemHands, not a list of its own', async () => {
+  const { itemHandsLine } = await import('../src/systems/itemInfo.js');
+  const { getItemHands, ITEM_HANDS } = await import('../src/characters/equipTable.js');
+  const { setValue } = await import('../src/systems/settings.js');
+  const W = (templateIndex) => ({ group: 'Weapons', templateIndex, material: 0, stackCount: 1 });
+
+  // ONE HOME. The word the card prints IS the verdict the equip table
+  // routes by, for every template - so the card can never say
+  // "One-handed" about a weapon that empties both hands.
+  for (let t = 113; t <= 130; t++) {
+    const expect = getItemHands(W(t)) === ITEM_HANDS.Both ? 'Two-handed' : 'One-handed';
+    assert.equal(itemHandsLine(W(t)), expect, `template ${t}`);
+  }
+
+  // THE BOW IS THE PROOF, because its row is not a constant:
+  // `BowLeftHandWithSwitching` (ItemEquipTable.cs:633-635) makes a bow
+  // LeftOnly, and the table then puts it in the off hand beside a
+  // sword. A card holding its own table would still be calling it
+  // two-handed.
+  try {
+    setValue('Enhancements', 'BowLeftHandWithSwitching', true);
+    assert.equal(itemHandsLine(W(130)), 'One-handed', 'with switching on the bow takes one hand, and the card says so');
+    assert.equal(itemHandsLine(W(122)), 'Two-handed', 'and the setting moves nothing else');
+  } finally {
+    setValue('Enhancements', 'BowLeftHandWithSwitching', false);
+  }
+  assert.equal(itemHandsLine(W(130)), 'Two-handed', 'switched back off, the classic answer returns');
+});
+
+test('MAC-M2: itemLine carries the hands and the card draws the row', () => {
+  const W = (templateIndex, material = 0) => ({ group: 'Weapons', templateIndex, material, stackCount: 1 });
+  assert.equal(itemLine(W(122, 9)).hands, 'Two-handed', 'the line the card reads carries it');
+  assert.equal(itemLine(W(120)).hands, 'One-handed');
+  assert.equal(itemLine({ group: 'Books', templateIndex: 0, stackCount: 1 }).hands, null);
+
+  // The DOM half is a source sweep, as this file's header says.
+  const src = readFileSync(new URL('../src/ui/enhancedInventory.js', import.meta.url), 'utf8')
+    .replace(/^\s*\/\/.*$/gm, '');
+  const stats = src.slice(src.indexOf("const dl = el('dl', 'stats');"));
+  const body = stats.slice(0, stats.indexOf('c.append(dl);'));
+  const dmg = body.indexOf("pair('Damage', line.damage);");
+  const hnd = body.indexOf("pair('Hands', line.hands);");
+  const wgt = body.indexOf("pair('Weight'");
+  assert.ok(hnd > 0, 'the card builds a Hands row');
+  assert.ok(dmg < hnd && hnd < wgt,
+    'it sits under the damage - the same question, how the thing is swung - and above the weight');
+  // and NO second table: the word is itemInfo's, off equipTable's law.
+  assert.doesNotMatch(src, /Two-handed/,
+    'the skin names no weapon-hands words of its own - itemHandsLine owns them');
 });

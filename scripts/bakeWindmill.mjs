@@ -232,6 +232,23 @@ export function parseCollada(text, materialTextures = null, { nodeMatrix = 'asse
 // out; that was read off the DAE, and the PREFAB binds 067_1 / 091_2 /
 // 091_3 to it. The reader was right to refuse an unbound material; the
 // mistake was not supplying the binding.
+// THE BAKE ONLY RUNS WHEN IT IS THE THING BEING RUN.
+//
+// BLOOD1b found this the hard way: `test/windmillmesh.test.js` imports
+// `parseCollada` from here to pin the bake against the vendored source,
+// and importing a top-level script RUNS it - so every suite run
+// rewrote `src/world/windmillMesh.js` while other workers were
+// importing it. `node --test` runs files in parallel, and a worker
+// that read the file mid-write got a truncated module:
+// "does not provide an export named 'BODY'", in whichever test
+// happened to be unlucky. It looked like a flake and was a race.
+//
+// The parser above is the part a test wants; everything below writes
+// the tree, and nothing that writes the tree should happen because
+// somebody imported a function.
+const RUN = import.meta.url === `file://${process.argv[1]}`;
+if (RUN) {
+
 const BODY_MATERIALS = {
   'Walls-material': [364, 2],
   'Plank-material': [67, 1],
@@ -344,3 +361,5 @@ ${machinery.children.map((c) => `  Object.freeze({ name: '${c.name}', mesh: '${c
 ]);
 `);
 console.log('wrote src/world/windmillMesh.js');
+
+}   // RUN

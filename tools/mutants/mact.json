@@ -1,0 +1,94 @@
+[
+  {
+    "name": "MACT-the-up-ring-takes-a-release-it-never-captured",
+    "file": "src/ui/input.js",
+    "old": "export function noteKeyUp(edges, code) { if (!edges) return; if (edges.own && !edges.own.delete(code)) return; edges.up.add(code); }",
+    "new": "export function noteKeyUp(edges, code) { if (!edges) return; edges.own?.delete(code); edges.up.add(code); }",
+    "tests": [
+      "test/mact_bugs.test.js"
+    ]
+  },
+  {
+    "name": "MACT-the-chat-lets-the-field's-down-through-to-the-host",
+    "file": "src/ui/chatPanel.js",
+    "old": "      else swallowBrowserKey(e);\n      e.stopPropagation();\n      return;",
+    "new": "      else swallowBrowserKey(e);\n      return;",
+    "tests": [
+      "test/mact_bugs.test.js"
+    ]
+  },
+  {
+    "name": "MACT-the-glare-forgets-the-carried-flag",
+    "file": "src/render/airPass.js",
+    "old": "      if (f.carried && f.carried[i]) continue;",
+    "new": "      if (f.carried && f.carried[i] && false) continue;",
+    "tests": [
+      "test/mact_bugs.test.js"
+    ]
+  },
+  {
+    "name": "MACT-the-torch-record-says-nothing",
+    "file": "src/systems/playerTorch.js",
+    "old": "    carried: true,\n  };",
+    "new": "    carried: false,\n  };",
+    "tests": [
+      "test/mact_bugs.test.js"
+    ]
+  },
+  {
+    "name": "MACT-the-mask-marks-every-appended-light",
+    "file": "src/scenes/magicCandle.js",
+    "old": "    if (l.carried) carried[i] = 1;",
+    "new": "    carried[i] = 1;",
+    "tests": [
+      "test/mact_bugs.test.js"
+    ]
+  },
+  {
+    "name": "MACT-the-mask-is-lifted-after-the-cut",
+    "file": "src/render/renderer.js",
+    "old": "    const carried = data.carried ?? null;\n    this._pointCarried = carried ? carried.subarray(0, n) : null;\n    this._pointLights = data.subarray ? data.subarray(0, n * 4) : data;",
+    "new": "    this._pointLights = data.subarray ? data.subarray(0, n * 4) : data;\n    const carried = this._pointLights.carried ?? null;\n    this._pointCarried = carried ? carried.subarray(0, n) : null;",
+    "tests": [
+      "test/mact_bugs.test.js"
+    ]
+  },
+  {
+    "name": "MACT-the-flash-forgets-to-shift-the-mask",
+    "file": "src/render/renderer.js",
+    "old": "      m[0] = 0; m.set(this._pointCarried.subarray(0, keep), 1);",
+    "new": "      m.set(this._pointCarried.subarray(0, keep), 0); m[keep] = 0;",
+    "tests": [
+      "test/mact_bugs.test.js"
+    ]
+  },
+  {
+    "name": "MACT-the-caster-pick-ignores-the-mask",
+    "file": "src/render/shadowPass.js",
+    "old": "    if (carried && carried[i]) continue;",
+    "new": "    if (carried && carried[i] && false) continue;",
+    "tests": [
+      "test/mact_bugs.test.js"
+    ]
+  },
+  {
+    "name": "MACT-the-caster-table-forgets-the-hand",
+    "file": "src/render/shadowPass.js",
+    "old": "    if (f.carried) for (let i = 0, m = Math.min(L.length >> 2, SHADOW_CASTER_TABLE); i < m; i++) if (f.carried[i]) this.casterOf[i] = -2;",
+    "new": "",
+    "tests": [
+      "test/mact_bugs.test.js"
+    ]
+  },
+  {
+    "name": "MACT-the-march-ignores-the-table",
+    "file": "src/render/enhancedLighting.js",
+    "old": "      : (k == -2 || d > uPointLights[i].w",
+    "new": "      : (d > uPointLights[i].w",
+    "tests": [
+      "test/mact_bugs.test.js",
+      "test/el5_field.test.js",
+      "test/el8_contact.test.js"
+    ]
+  }
+]

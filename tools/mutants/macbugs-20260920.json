@@ -1,0 +1,83 @@
+[
+  {
+    "name": "MACBUG1-the-mill-is-a-trap-again",
+    "file": "src/world/interiorLayout.js",
+    "old": "  if (doors.length === 0) {\n    const enter = markers.find((m) => m.type === INTERIOR_MARKER.ENTER)\n      ?? markers.find((m) => m.type === INTERIOR_MARKER.REST);\n    if (enter) doors.push(exitDoorAt(enter, blockIndex, recordIndex));\n  }",
+    "new": "",
+    "tests": [
+      "test/windmillinterior.test.js"
+    ]
+  },
+  {
+    "name": "MACBUG1-the-exit-is-added-to-every-interior",
+    "file": "src/world/interiorLayout.js",
+    "old": "  if (doors.length === 0) {",
+    "new": "  if (doors.length >= 0) {",
+    "tests": [
+      "test/windmillinterior.test.js"
+    ]
+  },
+  {
+    "name": "MACBUG1-the-player-is-stood-inside-the-door",
+    "file": "src/world/interiorLayout.js",
+    "old": "    normal: { x: 0, y: 0, z: 1 },",
+    "new": "    normal: { x: 0, y: 0, z: 0 },",
+    "tests": [
+      "test/windmillinterior.test.js"
+    ]
+  },
+  {
+    "name": "MACBUG2-the-shop-and-the-town-leave-the-table",
+    "file": "src/ui/guildServiceWindows.js",
+    "old": "  shopName, cityName,\n});",
+    "new": "});",
+    "tests": [
+      "test/guildserviceflows.test.js"
+    ]
+  },
+  {
+    "name": "MACBUG2-one-flow-forgets-to-pass-them-on",
+    "file": "src/ui/guildServiceWindows.js",
+    "old": "  const ctxFor = (amount) => ({ amount, gold: goldAmount(entity), god: godName, playerName: entity.name ?? '', ...identity(entity, { shopName, cityName }) });",
+    "new": "  const ctxFor = (amount) => ({ amount, gold: goldAmount(entity), god: godName, playerName: entity.name ?? '', ...identity(entity) });",
+    "tests": [
+      "test/guildserviceflows.test.js"
+    ]
+  },
+  {
+    "name": "MACBUG2-the-host-forgets-one-door",
+    "file": "src/scenes/worldModes.js",
+    "old": "        shopName: b?.name ?? null, cityName: townTalk?.cityName?.() ?? null,   // MAC-BUG2\n",
+    "new": "",
+    "tests": [
+      "test/guildserviceflows.test.js"
+    ]
+  },
+  {
+    "name": "MACBUG3-the-repair-job-is-left-on-the-saves-clock",
+    "file": "src/systems/worldTick.js",
+    "old": "      if (Number.isFinite(it.repairData?.timeStarted)) it.repairData.timeStarted = due(it.repairData.timeStarted);",
+    "new": "",
+    "tests": [
+      "test/auditworld5.test.js"
+    ]
+  },
+  {
+    "name": "MACBUG3-only-the-pack-is-walked-again",
+    "file": "src/systems/worldTick.js",
+    "old": "  for (const bag of [entity.items, entity.otherItems, entity.wagonItems]) {",
+    "new": "  for (const bag of [entity.items]) {",
+    "tests": [
+      "test/auditworld5.test.js"
+    ]
+  },
+  {
+    "name": "MACBUG3-a-not-in-repair-sentinel-is-shifted-into-a-date",
+    "file": "src/systems/worldTick.js",
+    "old": "      if (Number.isFinite(it.repairData?.timeStarted)) it.repairData.timeStarted = due(it.repairData.timeStarted);",
+    "new": "      if (Number.isFinite(it.repairData?.timeStarted)) it.repairData.timeStarted += (delta ?? 0);",
+    "tests": [
+      "test/auditworld5.test.js"
+    ]
+  }
+]

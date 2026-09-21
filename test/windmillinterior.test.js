@@ -89,3 +89,74 @@ test('WM2g: a model the player\'s ARCH3D lacks drops its placement, not the inte
   assert.ok(missing.placements.length < whole.placements.length,
     'the fixture no longer drops anything - it proves nothing');
 });
+
+test('MAC-BUG1: an interior with no door of its own gets one at its enter marker - the mill is no longer a trap', async () => {
+  // Mac, 2026-09-20: "got locked inside a windmill when i went inside.
+  // not sure if it's all of them that do that."
+  //
+  // IT IS ALL OF THEM, and the reason is that a building's way out is
+  // not a record in its own data - it is a STATIC DOOR baked into one
+  // of the interior's placed MODELS. Every classic interior has one, so
+  // nothing in the port had ever needed to ask whether an interior HAS
+  // one, and an empty door list fails silently: `interiorCtx.doors` is
+  // what the hosts turn into the only activation targets an interior
+  // offers, and an empty array is a perfectly good array.
+  //
+  // The mill's way IN is a CLASSIC model (118, the structure beside it -
+  // windmillMesh.js's PLACEMENTS say so). Nothing in Kamer's interior
+  // carries a door, so the door that let you in had no twin inside. All
+  // seven mills share the one interior.
+  const { DOOR_TYPE } = await import('../src/world/meshReader.js');
+  const { interiorLanding, doorWorldPosition } = await import('../src/player/enterExit.js');
+  const { INTERIOR_MARKER } = await import('../src/world/interiorLayout.js');
+
+  const block = {
+    name: 'FARMAA00.RMB', index: 704,
+    rmbBlock: { subRecords: [{ exterior: { block3dObjectRecords: [] }, interior: {} }] },
+  };
+  const recordIndex = attachWindmillRecord(block);
+  const doorless = {
+    positions: new Float32Array([0, 0, 0, 1, 0, 0, 0, 1, 0]),
+    indices: new Uint32Array([0, 1, 2]),
+    subMeshes: [{ textureArchive: 67, textureRecord: 1, startIndex: 0, primitiveCount: 1 }],
+    doors: [],
+  };
+
+  // THE VENDORED DATA'S OWN CLAIM, first: this interior really does
+  // carry no door record and no door-bearing model - the pin is not
+  // about a fixture.
+  assert.equal(WINDMILL_INTERIOR.blockDoorRecords.length, 0, 'the vendored interior has no action doors');
+
+  const out = layoutInterior(block, block.index, recordIndex, () => doorless);
+  assert.equal(out.doors.length, 1, 'the mill has exactly one way out');
+  const exit = out.doors[0];
+  assert.equal(exit.synthesised, true, 'and it is the port’s, marked as such');
+  assert.equal(exit.doorType, DOOR_TYPE.BUILDING, 'a BUILDING door, which is what the hosts’ exit target reads');
+
+  // IT STANDS WHERE THE PLAYER LANDS. `interiorLanding` already falls
+  // back to the enter marker when it finds no door, so that marker is
+  // the threshold the interior itself already claims - the exit is the
+  // same point named twice, not a guess about geometry.
+  const enter = out.markers.find((m) => m.type === INTERIOR_MARKER.ENTER);
+  assert.ok(enter, 'the mill has an enter marker to stand it on');
+  assert.deepEqual(doorWorldPosition(exit).map((v) => +v.toFixed(4)),
+    [enter.x, enter.y, enter.z].map((v) => +v.toFixed(4)),
+    'the exit is at the marker - its matrix is the identity, so the centre IS the position');
+
+  // ...and the landing steps OFF it rather than standing the player
+  // inside the door's own box (a zero normal would).
+  const landing = interiorLanding([0, 0, 0], [[enter.x, enter.y, enter.z]], out.doors);
+  assert.ok(landing, 'the E-press lands');
+  assert.ok(Math.hypot(landing[0] - enter.x, landing[1] - enter.y, landing[2] - enter.z) > 0.5,
+    'the feet stand clear of the door');
+
+  // A LAST RESORT, NOT A POLICY: an interior that produced even one
+  // real door is untouched, so no classic building's door set moves.
+  const withDoor = {
+    ...doorless,
+    doors: [{ type: DOOR_TYPE.BUILDING, index: 0, vert0: { x: -1, y: 0, z: 0 }, vert2: { x: 1, y: 2, z: 0 }, normal: { x: 0, y: 0, z: 1 } }],
+  };
+  const classic = layoutInterior(block, block.index, recordIndex, () => withDoor);
+  assert.ok(classic.doors.length > 1, 'a real door set is bigger than one');
+  assert.ok(!classic.doors.some((d) => d.synthesised), 'and nothing was added to it');
+});

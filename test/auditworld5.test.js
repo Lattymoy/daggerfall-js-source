@@ -21,11 +21,11 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { RELAY_VERSION } from '../server/src/index.js';
+import { relayVersionAtLeast } from './relayVersion.mjs';
 import { CLASSIC_GAME_START_TIME, MINUTES_PER_DAY } from '../src/systems/gameDate.js';
 import { worldMinutes, setWorldMinutes, setSharedClock, alignEntityClocks, resetMagicRoundMarker, tickPlayerMinutes, claimMagicRounds } from '../src/systems/worldTick.js';
 import { setSharedWeather, resetWeatherSim, rollClimateWeathersForDay, weatherForClimate, ZONE_CLIMATES, tickWeather, currentWeatherEnum, weatherJumpStamp, evolveClimateWeathers, setWeatherEvolution, WEATHER_ENUM } from '../src/systems/weatherSim.js';
-import { RestSession, MINUTES_PER_TICK } from '../src/systems/restSession.js';
+import { RestSession, MINUTES_PER_TICK, REST_WAIT_PER_HOUR, LOITER_WAIT_PER_HOUR } from '../src/systems/restSession.js';
 import { exhaustionOutcome } from '../src/systems/rest.js';
 import { snapshotPlayer, restorePlayer } from '../src/systems/save.js';
 import { liveVampirism } from '../src/systems/racialLive.js';
@@ -73,7 +73,7 @@ test('AUDIT WORLD5 C2: a source that steps BACKWARDS re-anchors the tick\'s read
   } finally { offline(); }
   assert.match(rd('src/systems/worldTick.js'), /if \(_sharedClock\(\) < classicMinutes\) classicMinutes = _sharedClock\(\);/, 'the re-anchor');
   const w = rd('src/scenes/world.js');
-  assert.match(w, /online\.onClock = \(offsetMs\) => \{ const was = _sharedOffsetMs; _sharedOffsetMs = offsetMs; if \(Math\.abs\(offsetMs - was\) > 1000\) onlineArrival\(\); \};/, 'a correction over a second is an arrival');
+  assert.match(w, /online\.onClock = \(offsetMs\) => \{ const was = _sharedOffsetMs; _sharedOffsetMs = offsetMs; if \(Math\.abs\(offsetMs - was\) > 1000\) \{ onlineArrival\(\); alignSurvival\(playerEntity, Math\.floor\(worldMinutes\(\)\), Math\.floor\(worldMinutes\(\)\)\); \} \};/, 'a correction over a second is an arrival');
   assert.match(w, /const onlineArrival = \(\) => \{ alignEntityClocks\(playerEntity, worldMinutes\(\)\); rollClimateWeathersForDay\(worldMinutes\(\)\); refreshSeason\(worldMinutes\(\)\); \};\s*onlineArrival\(\);/, 'the same arrival the session\'s start runs');
 });
 
@@ -87,6 +87,13 @@ test('AUDIT WORLD5 C3: the alignment is a SHIFT of every marker the save carries
     bankAccounts: [{ regionIndex: 0, loanTotal: 500, loanDueDate: save + 5000 }, { regionIndex: 1, loanTotal: 0, loanDueDate: 0 }],
     rentedRooms: [{ expiryMinutes: save + 1200 }],
     items: [{ timeForItemToDisappear: save + 30 }, { timeForItemToDisappear: 0 }],
+    // MAC-BUG3: a REPAIR JOB is a deadline like the loan and the room,
+    // and it lives in a collection this walk had never looked at.
+    otherItems: [
+      { name: 'Steel Cuirass', currentCondition: 1843, maxCondition: 6144, repairData: { buildingKey: 4242, timeStarted: save - 200, repairTime: 4 * MINUTES_PER_DAY } },
+      { name: 'not in repair', repairData: { buildingKey: 0, timeStarted: 0, repairTime: 0 } },
+    ],
+    wagonItems: [{ timeForItemToDisappear: save + 90 }],
     guildMemberships: { mortal: { FightersGuild: { guild: 'Fighters', rank: 1, lastRankChange: day(save) - 3 } }, vampire: {} },
   });
   for (const [label, now] of [['a young world, the save far ahead of it', save - 30 * MINUTES_PER_DAY], ['an old world, the save far behind it', save + 375 * MINUTES_PER_DAY + 17]]) {
@@ -110,6 +117,20 @@ test('AUDIT WORLD5 C3: the alignment is a SHIFT of every marker the save carries
       assert.equal(e.rentedRooms[0].expiryMinutes, save + 1200 + d, 'the room keeps its twenty hours');
       assert.equal(e.items[0].timeForItemToDisappear, save + 30 + d, 'the summoned item its half hour');
       assert.equal(e.items[1].timeForItemToDisappear, 0, 'an item that never disappears still never does');
+      // MAC-BUG3 (2026-09-20, Mac: "repairing items doesn't work. he
+      // just takes your gold and doesn't actually repair anything...
+      // when online, at least"). The smith's job is dated by the same
+      // clock `isRepairFinished` reads back, so a world behind the save
+      // never reached the due time and the item was never handed over -
+      // a player paying gold and getting nothing. Two collections were
+      // missing from this walk entirely, not just one field.
+      assert.equal(e.otherItems[0].repairData.timeStarted, save - 200 + d, 'the armour at the smith keeps its place in the queue');
+      assert.equal(e.otherItems[1].repairData.timeStarted, 0, 'a zero timeStarted is DFU\'s "not in repair" sentinel and stays zero');
+      assert.equal(e.wagonItems[0].timeForItemToDisappear, save + 90 + d, 'and the WAGON is a collection too');
+      // the whole point, stated as the player sees it: the job is due
+      // the same distance away as it was before the clock moved
+      assert.equal((e.otherItems[0].repairData.timeStarted + e.otherItems[0].repairData.repairTime) - now,
+        (save - 200 + 4 * MINUTES_PER_DAY) - save, 'four days out before, four days out after');
       assert.equal(e.guildMemberships.mortal.FightersGuild.lastRankChange, day(now) - 3, 'the rank changed three days ago');
       assert.equal(now - e.lastSkillCheckTime, 100, 'the skill check is a hundred minutes old on the world\'s clock - before C3 an old save in a young world read it as days in the future and raised nothing for real days');
     } finally { offline(); }
@@ -202,63 +223,55 @@ test('AUDIT WORLD5 C6: online the collapse\'s hour cannot be charged, so it is n
   assert.deepEqual(exhaustionOutcome({ entity: P(), enemiesNearby: true }).kind, 'death', 'the fatal arms untouched');
 });
 
-test('AUDIT WORLD5 C7 (RESTX1: on LOITER): a session COVERED under the shared clock loses the world\'s time it covers, keeping less than one sub-tick, as the timer loses it offline; a leap of the clock (a hidden tab) is taken one sub-tick a FRAME, so every hourly check reads a frame of its own', () => {
-  // RESTX1 (2026-09-15) RE-AIMED THIS PIN, and the law it holds is
-  // unchanged - only its subject narrowed. C7 was written on a TIMED
-  // rest, because when it landed every mode rode the shared clock.
-  // Mac's call ("for online I want to change the rest mechanic to not
-  // use any time") took the REST modes off that clock entirely: online
-  // a rest now resolves at once and passes no minutes. LOITER still
-  // rides it - passing time is loiter's whole purpose - so the covered
-  // frame, the lost hour, the kept remainder and the one-sub-tick-a-
-  // frame leap are all still exactly this, and still worth holding.
-  // The rest half's new law is test/restx1_online_rest.test.js.
+test('AUDIT WORLD5 C7 (RESTX2: on the timer, every mode): a session COVERED loses the real time it covers, keeping less than one sub-tick, and a leap of the shared clock (a hidden tab) is NOT a leap of the session - the timer alone paces it, so every hourly check reads a frame of its own by construction', () => {
+  // C7 was written on the shared clock (one sub-tick a FRAME across a
+  // leap); RESTX1 narrowed it to loiter; RESTX2 (2026-09-17) retired
+  // the shared-clock pacing whole - test/restx2_online_rest.test.js.
+  // What C7 held and still holds: a covered frame banks nothing, the
+  // remainder under one sub-tick is kept, and a foe wandering in is
+  // seen on the hour it arrives.
   let clock = 8000;
   let covered = false;
   const d = restDeps({ sharedMinutes: () => clock });
   const s = new RestSession('loiter', 9, d, -1, () => !covered);
-  s.tick(0.016);   // the anchor
-  clock += 10; s.tick(0.016);
+  const sub = LOITER_WAIT_PER_HOUR / MINUTES_PER_TICK;
+  s.tick(sub);
   assert.equal(d.minutes, 10, 'one sub-tick');
   covered = true;
   clock += 605;
-  assert.equal(s.tick(0.016), null, 'covered: nothing');
+  assert.equal(s.tick(sub * 60), null, 'covered: nothing - sixty sub-ticks of real time under a cover bank nothing');
   covered = false;
-  s.tick(0.016);
-  assert.equal(d.minutes, 10, 'uncovered: the covered hour is LOST, not banked - before C7 sixty sub-ticks ran in this one frame');
-  clock += 5; s.tick(0.016);
+  s.tick(0.001);
+  assert.equal(d.minutes, 10, 'uncovered: the covered hour is LOST, not banked');
+  s.tick(sub);
   assert.equal(d.minutes, 20, 'the remainder under one sub-tick was kept, as the timer keeps its fraction');
-  // the leap: one sub-tick a frame, and the hourly enemy check on its own frame
+  assert.deepEqual(d.ends, [8010, 8020], 'the session\'s own sim-minutes, seeded at 8000: the clock\'s 605-minute leap is not in them');
+  // the hidden tab: the clock leapt three hours; the session owes nothing for it
   let foes = false;
   const d2 = restDeps({ sharedMinutes: () => clock, enemiesNearby: () => foes });
   const s2 = new RestSession('loiter', 9, d2);
-  s2.tick(0.016);
-  clock += 180;   // three hours the tab was hidden
-  const frames = [];
-  let result = null;
-  for (let f = 0; f < 20 && !result; f++) { if (f === 5) foes = true; result = s2.tick(0.016); frames.push(result); }   // a foe wanders in while the first hour resolves
-  assert.equal(frames.length, 6, 'six frames, six sub-ticks: the first hour, and its check');
+  clock += 180;
+  assert.equal(s2.tick(0.016), null);
+  assert.equal(d2.minutes, 0, 'three hours of the world\'s clock: not one sub-tick of the session');
+  let result = null, frames = 0;
+  for (let f = 0; f < 40 && !result; f++) { if (f === 3) foes = true; result = s2.tick(sub); frames++; }
+  assert.equal(frames, 6, 'six sub-ticks of the timer: the first hour, and its check');
   assert.equal(d2.minutes, 60);
-  assert.deepEqual(frames.slice(0, 5), [null, null, null, null, null]);
-  assert.equal(result?.enemyBroke, true, 'the first hour\'s check, on its own frame, saw the foe and broke the rest - before C7 all three hours resolved in one frame against one snapshot of the foes');
+  assert.equal(result?.enemyBroke, true, 'the first hour\'s check saw the foe and broke the rest');
 });
 
-test('AUDIT WORLD5 C8 (RESTX1: on LOITER): the sub-tick\'s own span rides to the host - its end, the reading just counted, under the shared clock; null offline - and the dungeon\'s rest arm reads its spawn window and its broker window off it, not off a clock it is refused', () => {
-  // RESTX1 re-aimed the shared-clock half onto LOITER - see C7 above.
-  // The OFFLINE half below is still a timed rest, because offline every
-  // mode rides the window's own timer exactly as it always did.
+test('AUDIT WORLD5 C8 (RESTX2): the sub-tick\'s own span rides to the host - its end: online the session\'s local sim-minute (the shared reading at the first sub-tick, ten a sub-tick from there); null offline - and the dungeon\'s rest arm reads its spawn window and its broker window off it, not off a clock it is refused', () => {
   let clock = 5000.4;
   const d = restDeps({ sharedMinutes: () => clock });
-  const s = new RestSession('loiter', 2, d);
-  s.tick(0.016);
-  clock += 10; s.tick(0.016);
-  clock += 10; s.tick(0.016);
-  assert.deepEqual(d.ends, [5010.4, 5020.4], 'each sub-tick\'s end: the reading, ten apart - two distinct windows');
+  const s = new RestSession('timed', 2, d);
+  const sub = REST_WAIT_PER_HOUR / MINUTES_PER_TICK;
+  s.tick(sub); clock += 300; s.tick(sub);
+  assert.deepEqual(d.ends, [5010, 5020], 'each sub-tick\'s end: the seed floored, ten apart - two distinct windows; the clock moving between them is not read');
   const off = restDeps();
   const so = new RestSession('timed', 2, off);
-  so.tick(0.13);   // one of the timer's sub-ticks (REST_WAIT_PER_HOUR / MINUTES_PER_TICK real seconds)
+  so.tick(sub);
   assert.deepEqual(off.ends, [null], 'offline the host reads its own clock');
-  assert.match(rd('src/systems/restSession.js'), /this\.deps\.advanceMinutes\(MINUTES_PER_TICK, this\._sharedAt\);/);
+  assert.match(rd('src/systems/restSession.js'), /this\.deps\.advanceMinutes\(MINUTES_PER_TICK, online \? this\._onlineSimMinutes : null\);/);
   const dc = rd('src/scenes/dungeonContext.js');
   const i = dc.indexOf('const _restAdvance = (n, sharedEnd = null) => {');
   const arm = dc.slice(i, dc.indexOf('\n  };', i));
@@ -275,8 +288,13 @@ test('AUDIT WORLD5 by source: the sentence refills nothing online (C9), exterior
   assert.equal((af.match(/if \(!sharedClockOn\(\)\) fillVitalSigns\(playerEntity\);/g) ?? []).length, 1, 'the sentence\'s refill alone is gated');
   assert.ok((af.match(/^\s*fillVitalSigns\(playerEntity\);/gm) ?? []).length >= 2, 'the rescue\'s and the acquittal\'s refills stand - neither costs a day offline either');
   assert.match(rd('src/scenes/exterior.js'), /questClockStepMax: \(\) => \(sharedClockOn\(\) \? PLAYED_STEP_MAX_SECONDS : Infinity\),/, 'C10 (WORLD7\'s word: the same as world.js\'s)');
-  assert.match(rd('server/src/index.js'), /"now":\$\{Date\.now\(\)\}\}`;/, 'C11: not the hello\'s start, four awaits earlier');
-  assert.equal(RELAY_VERSION, 'world66', 'C11: the relay bumped (WORLD6a and its audit bumped it again; WORLD6b for the cell)');
+  // SRV-N appended `v` after it, so the stamp is no longer the last field.
+  // What C11 is about is unchanged and is what is matched: Date.now() is
+  // CALLED where the welcome is built, not read from a variable set when
+  // the hello began - four storage awaits earlier, every millisecond of
+  // which the client carried as the relay's clock.
+  assert.match(rd('server/src/index.js'), /"now":\$\{Date\.now\(\)\},"v":/, 'C11: not the hello\'s start, four awaits earlier');
+  assert.ok(relayVersionAtLeast(66), 'C11: the relay bumped, and has not gone backwards since (SRV-N: asked monotonically - five pins used to retype one moving number)');
   assert.match(rd('src/ui/enhancedMenu.js'), /The clock and the sky are the world\\'s and run on real time: a rest, a trip, a sentence or a lesson takes none of it, and the quest clocks stand still\./, 'C12');
   const w = rd('src/scenes/world.js');
   const install = w.indexOf("if (params.has('online')) { setSharedClock(() => sharedClassicMinutes(Date.now() + _sharedOffsetMs), (m) => wallMsForClassicMinutes(m) - _sharedOffsetMs); setSharedWeather(true); }");

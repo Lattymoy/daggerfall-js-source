@@ -29,6 +29,7 @@ import { isPotion, isPotionRecipe, isParchment, TEMPLATES } from './useItem.js';
 import { expandLetterSignoff } from './quest/questMacros.js';   // ResolveItemLongName's quest-letter arm (ItemHelper.cs:335-348)
 import { itemArmorValue, isShieldTemplate } from './armorMaterials.js';
 import { weaponMaterialModifier, weaponMinDamage, weaponMaxDamage, WEAPON_MATERIALS } from '../characters/weapons.js';
+import { getItemHands, ITEM_HANDS } from '../characters/equipTable.js';   // MAC-M2: GetItemHands, the one home
 import { ARMOR_MATERIAL } from './armorMaterials.js';
 import { getInt } from './settings.js';   // AUDIT 28 W3: HelmAndShieldMaterialDisplay
 import { srand, rand, randomRangeInclusive } from '../formats/dfRandom.js';   // the painting identity's whole PRNG
@@ -37,7 +38,9 @@ import { soulTrapNameSuffix } from './mysticism.js';   // F077: ResolveItemLongN
 import { potionRecipeByKey } from './potions.js';   // IM1: %po's producer (GetPotionRecipe)
 import { bookTitle } from './books.js';   // IM1: GetBookTitle's legacy-data arm
 import { dfRandPick } from '../formats/textRsc.js';   // ROAD-A7: GetRandomTokens' dfRand draw
-import { hasArtifactEffect, hasArtifactSubtype, ARTIFACTS } from './artifactEffects.js';   // ROAD-U: the identity DFU reads off the item's own record
+import { hasArtifactEffect, hasArtifactSubtype, ARTIFACTS } from './artifactEffects.js';
+import { isSurvivalItem, isCampingEquipment, isCampfireKit, isSkillet } from './survival/items.js';   // SURV5: the survival items' own info box
+import { isFood, foodOf, foodStage, foodSatiety, isWaterskin, waterIn, WATERSKIN_CAPACITY_KG, STAGE_WORDS } from './survival/food.js';   // ROAD-U: the identity DFU reads off the item's own record
 
 /** The thirteen ids GetItemInfo names as constants (:750-762). */
 export const INFO_TEXT = Object.freeze({
@@ -84,7 +87,7 @@ export const potionRecipeTokens = () => [
  *  W3: this read the constant 0 with a "the port has no settings
  *  layer" note that U29 made stale - it reads the setting now, at the
  *  point of use as DFU does. `item.material` IS DFU's raw
- *  nativeMaterialValue (equip.js:138), so the `>=` compares hold. */
+ *  nativeMaterialValue (equip.js:140), so the `>=` compares hold. */
 export function armorShouldShowMaterial(item, setting = getInt('GUI', 'HelmAndShieldMaterialDisplay', 0, 3)) {
   // `artifact` is the classic FLAGS word's artifact bit: minted by
   // loot.js's createArtifact (SetArtifact's :617) and read straight
@@ -231,6 +234,39 @@ export function armourModString(item) {
 export const itemDamageLine = (item) => (
   item?.group === 'Weapons' && item.templateIndex !== TEMPLATES.Arrow
     ? weaponDamageString(item) : null);
+
+/**
+ * MAC-M2 (Mac: "The Tooltip of weapons should also show if the weapon
+ * is 1h or 2h"): THE OTHER THING A PLAYER PICKS A WEAPON BY, for the
+ * same surface MAC-M1 gave the damage to.
+ *
+ * NO NEW TABLE. Which weapons take both hands is `getItemHands`
+ * (characters/equipTable.js), the port's verbatim GetItemHands and its
+ * one home - the equip table routes by it, the paperdoll's record pick
+ * reads it, Weapon Widget's mirror rows and Handheld Torches' hand law
+ * both ask it. A second list here would be a second chance to disagree
+ * with the hand the item actually lands in, which is precisely what the
+ * row is telling the player about.
+ *
+ * So the BOW answers whatever the table will do with it: DFU's
+ * `BowLeftHandWithSwitching` (ItemEquipTable.cs:633-635) makes a bow
+ * LeftOnly when it is on and Both when it is off, and the card says
+ * one-handed or two-handed to match. A card that read a static table
+ * would tell a player their long bow needs both hands while the equip
+ * table was putting it in the off hand beside a sword.
+ *
+ * Weapons only, as Mac asked. A shield is ItemHands.LeftOnly and this
+ * would happily say "One-handed" about one, but the number a shield is
+ * FOR is its armour rating and that row already draws; the classic
+ * popup says nothing about hands for either, and its records are DFU's
+ * (THE NATIVE-WINDOW RULE), so this row is the enhanced card's alone.
+ *
+ * @returns {string|null} the line to show, or null if this item has none
+ */
+export const itemHandsLine = (item) => (
+  item?.group === 'Weapons' && item.templateIndex !== TEMPLATES.Arrow
+    ? (getItemHands(item) === ITEM_HANDS.Both ? 'Two-handed' : 'One-handed')
+    : null);
 
 /** The armour rating's other half. DFU shows `%mod` on both armour
  *  records (1000 and 1014), so there is no template to exclude - every
@@ -614,6 +650,21 @@ export const getBookAuthor = (id) => _bookAuthors.get(id) ?? null;
  *  (or found cached) first and the frozen description comes back with
  *  it. `paintingVariant` is GetRandomTokens(id, dfRand: true) for the
  *  four part records, defaulting to the host's own variant reader. */
+/** SURV5: a survival item's info box - the name, the weight, and what it is for: a food's worth and its stage, a
+ *  skin's water, the gear's uses. Built tokens in the box's own row shape. */
+export function survivalInfoTokens(item) {
+  const t = templateByIndex(item?.templateIndex);
+  const out = [{ text: item?.name ?? t?.name ?? '', center: true }, { text: `Weight: ${unitWeightInKg(item).toFixed(2)} kilograms`, center: true }];
+  if (isFood(item)) {
+    const s = foodStage(item);
+    out.push({ text: `Nourishes for ${foodSatiety(item)} minutes${s > 0 ? ` (${STAGE_WORDS[s].toLowerCase()})` : ''}`, center: true });
+    if (foodOf(item)?.raw) out.push({ text: 'Raw - cook it at a fire.', center: true });
+  } else if (isWaterskin(item)) out.push({ text: `Water: ${waterIn(item).toFixed(1)} of ${WATERSKIN_CAPACITY_KG.toFixed(1)} kg`, center: true });
+  else if (isCampingEquipment(item) || isCampfireKit(item)) out.push({ text: `${item.currentCondition ?? 0} use${item.currentCondition === 1 ? '' : 's'} left`, center: true });
+  else if (isSkillet(item)) out.push({ text: 'Cooking at a campfire goes twice as fast.', center: true });
+  return out;
+}
+
 export function itemInfoRows(item, rows, macros = {}) {
   let painting = macros.painting ?? null;
   let record = null;
@@ -621,6 +672,7 @@ export function itemInfoRows(item, rows, macros = {}) {
   // same shape - GetItemInfo's MiscItems switch (:793-794) hands back
   // BUILT tokens rather than a record id, so both bypass `rows(id)`.
   if (isPotionRecipe(item)) record = potionRecipeTokens();
+  if (isSurvivalItem(item)) record = survivalInfoTokens(item);   // SURV5: built tokens, like the recipe's - the custom rows have no TEXT.RSC record
   if (!painting && item?.group === 'Paintings' && _paintFile) {
     // ROAD-A7: every one of the painting reads is GetRandomTokens with
     // dfRand TRUE (InitPaintingInfo :65 and the four macro readers

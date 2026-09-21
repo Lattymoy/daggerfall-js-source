@@ -161,6 +161,58 @@ export const MOD_SETTINGS = Object.freeze({
   // is a SliderFloatKey and reads as a number on its range; `step` is
   // the Mods pane's stepper for it. Descriptions are the mod's own where
   // it wrote one. Plus the port's `Enabled` (MO1: on).
+  // SW1 (2026-09-19) - SHIELD WIDGET 1.6, RedRoryOTheGlen. The mod's own
+  // eight sections restated flat, section and name joined with a dot, in
+  // the bundle's own order with the bundle's own defaults, ranges and
+  // descriptions. The six keys the mod ships with no description carry
+  // the port's words instead. Plus the port's `Enabled` (MO1: on).
+  'shield-widget': Object.freeze({
+    title: 'Shield Widget',
+    author: 'RedRoryOTheGlen',
+    keys: Object.freeze({
+      Enabled: Object.freeze({
+        default: true,
+        description: 'A shield in the first-person view, which classic Daggerfall never drew: the one in your hand, in its own '
+          + 'metal, battering as it wears and moving aside when you sheathe, swing or cast.',
+      }),
+      'Shield.Scale': Object.freeze({ default: 1.0, min: 0.8, max: 1.2, float: true, step: 0.1, description: 'Size of the sprite' }),
+      'Shield.OffsetHorizontal': Object.freeze({ default: 0.5, min: -1.0, max: 1.0, float: true, step: 0.1, description: 'Offsets the sprite relative to the left edge of the screen' }),
+      'Shield.OffsetVertical': Object.freeze({ default: 0.5, min: -1.0, max: 1.0, float: true, step: 0.1, description: 'Offsets the sprite relative to the bottom edge of the screen' }),
+      'Shield.Speed': Object.freeze({ default: 1.0, min: 0.0, max: 2.0, float: true, step: 0.1, description: 'Speed of stance transition when attacking' }),
+      'Shield.WhenSheathed': Object.freeze({ default: 1, options: Object.freeze(['Hide', 'Off-screen', 'Corner', 'Ready']), description: 'The shield\'s behavior when sheathing your weapon' }),
+      'Shield.WhenAttacking': Object.freeze({ default: 1, options: Object.freeze(['Hide', 'Off-screen', 'Corner', 'Ready']), description: 'The shield\'s behavior when attacking with a weapon' }),
+      'Shield.WhenCasting': Object.freeze({ default: 1, options: Object.freeze(['Hide', 'Off-screen', 'Corner', 'Ready']), description: 'The shield\'s behavior when readying or while casting a spell' }),
+      'Shield.LockAspectRatio': Object.freeze({ default: true, description: 'Enable to prevent the sprite from stretching or squishing depending on the screen\'s aspect rato' }),
+      'Shield.ConditionThresholdUpper': Object.freeze({ default: 75, min: 55, max: 95, description: 'The first condition threshold for the changing of the sprite.' }),
+      'Shield.ConditionThresholdLower': Object.freeze({ default: 25, min: 5, max: 45, description: 'The second condition threshold for the changing of the sprite' }),
+      'Modules.Bob': Object.freeze({ default: true, description: 'Bob: the shield sways as you walk.' }),
+      'Modules.Inertia': Object.freeze({ default: false, description: 'Inertia: the shield lags the look and your movement.' }),
+      'Modules.Animation': Object.freeze({ default: false, description: 'Animation: the shield is raised and lowered frame by frame instead of sliding (art by WilhelmBlack).' }),
+      'Modules.Step': Object.freeze({ default: false, description: 'Step: the shield\u2019s position is rounded so it moves in steps.' }),
+      'Modules.Recoil': Object.freeze({ default: false, description: 'Recoil: a blow that lands on the shield rocks it and rings it. Needs Physical Combat and Armor Overhaul, which is what raises the event.' }),
+      'Bob.Length': Object.freeze({ default: 100, min: 0, max: 200, description: 'Amount of bobs in a single stride' }),
+      'Bob.Offset': Object.freeze({ default: 0.0, min: 0.0, max: 3.0, float: true, step: 0.1, description: 'Advances the bob timing. For use with weapon bob.' }),
+      'Bob.SizeX': Object.freeze({ default: 1.0, min: 0.0, max: 2.0, float: true, step: 0.1, description: 'Extent of horizontal movement when bobbing' }),
+      'Bob.SizeY': Object.freeze({ default: 1.0, min: 0.0, max: 2.0, float: true, step: 0.1, description: 'Extent of vertical movement when bobbing' }),
+      'Bob.SpeedMove': Object.freeze({ default: 1.0, min: 0.0, max: 2.0, float: true, step: 0.1, description: 'Speed of transition between stationary and moving' }),
+      'Bob.SpeedState': Object.freeze({ default: 1.0, min: 0.0, max: 2.0, float: true, step: 0.1, description: 'Speed of transition between movement states' }),
+      'Bob.Shape': Object.freeze({ default: 0, options: Object.freeze(['U', 'Sideways 8', 'Inverted U']), description: 'Shape of bob' }),
+      'Bob.BobWhileIdle': Object.freeze({ default: true, description: 'Whether the shield will slightly bob while stationary' }),
+      'Inertia.Scale': Object.freeze({ default: 1.0, min: 0.0, max: 2.0, float: true, step: 0.1, description: 'The maximum distance that the sprite will be offset' }),
+      'Inertia.Speed': Object.freeze({ default: 1.0, min: 0.0, max: 2.0, float: true, step: 0.1, description: 'The speed that the sprite will move at towards the target offset' }),
+      'Inertia.ForwardDepth': Object.freeze({ default: 1.0, min: 0.0, max: 2.0, float: true, step: 0.1, description: 'Multiplier for the change in scale when moving forward or backward' }),
+      'Inertia.ForwardSpeed': Object.freeze({ default: 1.0, min: 0.0, max: 2.0, float: true, step: 0.1, description: 'The speed that the sprite will scale towards the target depth' }),
+      'Animation.Speed': Object.freeze({ default: 1.0, min: 0.0, max: 2.0, float: true, step: 0.1, description: 'Determines how fast the animation plays' }),
+      'Animation.Direction': Object.freeze({ default: 0, options: Object.freeze(['Both', 'Forward Only', 'Reverse Only']), description: 'Set which animations will play during actions' }),
+      'Step.Length': Object.freeze({ default: 1, min: 1, max: 10, description: 'The number (x8) whose multiples will be used for snapping' }),
+      'Step.Condition': Object.freeze({ default: 0, options: Object.freeze(['Sheathe/Attack Only', 'All Transforms']), description: 'Whether the snapping only affects Sheathing or also other options like Bob, Inertia and Recoil' }),
+      'Recoil.Scale': Object.freeze({ default: 1.0, min: 0.0, max: 2.0, float: true, step: 0.1, description: 'The amount the shield will recoil' }),
+      'Recoil.Offset': Object.freeze({ default: false, description: 'Whether the shield should be moved to the center when recoiling' }),
+      'Recoil.Speed': Object.freeze({ default: 1.0, min: 0.0, max: 2.0, float: true, step: 0.1, description: 'The speed that the shield recovers from recoil' }),
+      'Recoil.Condition': Object.freeze({ default: 2, options: Object.freeze(['Hit On Shield', 'Miss On Shield', 'Attack On Shield', 'Any Hit', 'Any Miss', 'Any Attack']), description: 'Event required for the shield to recoil' }),
+      'Compatibility.TextureScaleFactor': Object.freeze({ default: 1, min: 0, max: 8, description: 'Divides the sprite\u2019s pixel size. Raise it if a replacement texture pack draws the shield too large.' }),
+    }),
+  }),
   'weapon-widget': Object.freeze({
     title: 'Weapon Widget',
     author: 'RedRoryOTheGlen',
@@ -231,7 +283,20 @@ export const MOD_SETTINGS = Object.freeze({
           + 'keys to ignite, drop or throw one (a thrown torch can set a foe alight). A first-person hand holds the '
           + 'light, and a dropped torch burns on the ground, lights the room and can be picked up.',
       }),
-      'Handling.ToggleLightInput': Object.freeze({ default: "F", text: true, description: 'Button used to quickly ignite or douse your light source' }),
+      // SOC5 (2026-09-16, Mac: "Players should be able to interact with others
+      // in the world upon encountering them by pressing F on their body"): THE
+      // SECOND DEPARTURE FROM THE MOD'S SHIPPED KEYS, and the same shape as
+      // HT4's below. Handheld Torches ships F, and in Daggerfall Unity that is
+      // free. It is not free here any more: SOC5 spends F on the port's own
+      // SocialInteract action (systems/inputActions.js DEFAULT_BINDINGS), the
+      // key Mac named, and online forces every vendored mod ON
+      // (systems/onlineLane.js) - so one press would both open the F-menu on a
+      // player and light a torch, for every player online, by default. O is
+      // unbound in DFU's own defaults and unused by this mod's other two keys
+      // and by every other vendored mod, and it says what it does: on and off.
+      // The player may still bind it wherever they like; this is about what
+      // SHIPS. test/ht1_handheldtorches.test.js HT4 is the gate that caught it.
+      'Handling.ToggleLightInput': Object.freeze({ default: "O", text: true, description: 'Button used to quickly ignite or douse your light source' }),
       'Handling.RememberLastLightSource': Object.freeze({ default: true, description: 'Igniting with the key re-lights the light you last doused, if you still carry one.' }),
       // HT4 (2026-09-15, Mac: "Pressing tab drops torches, tab is reserved
       // for the menu"): THE ONE DEPARTURE FROM THE MOD'S SHIPPED KEYS.
@@ -244,7 +309,26 @@ export const MOD_SETTINGS = Object.freeze({
       // own defaults (inputActions.js DEFAULT_BINDINGS) and unused by the
       // mod's other two keys, and it stays the player's to rebind.
       'Handling.ManualDropInput': Object.freeze({ default: "G", text: true, description: 'Button used to manually drop a light source' }),
-      'Handling.OnStow': Object.freeze({ default: 1, options: Object.freeze(["Unequip", "Drop"]), description: 'Behavior when forced to stow a light source' }),
+      // HT7 (2026-09-17, Mac: "Take care of both") - THE ONE DEFAULT THIS
+      // PORT MOVES, and it is an owner decision rather than a misread.
+      //
+      // Handheld Torches ships `OnStow = Drop` (1), and the port kept it
+      // with every other shipped default. HT6 recorded the consequence:
+      // with the weapon DRAWN, equipping a shield puts your lit torch on
+      // the floor - and since HT6 made the law run at the equip moment,
+      // it happens while the inventory is still open, in front of you.
+      // A player who equips a shield mid-fight has not asked to drop
+      // anything, and a torch on a dungeon floor is an item lost to
+      // whoever does not think to look down.
+      //
+      // So the port DEFAULTS to Unequip (0) - the light goes back to the
+      // pack and `RememberLastLightSource` lights it again when a hand
+      // comes free, which is the behaviour the rest of this mod is built
+      // around. The mod's own default is ONE CLICK away on the Mods
+      // pane's dial; nothing about the Drop path is removed, and the
+      // throw (Throwing.ThrowTorchInput) is still how you put a torch on
+      // the floor on purpose.
+      'Handling.OnStow': Object.freeze({ default: 0, options: Object.freeze(["Unequip", "Drop"]), description: 'Behavior when forced to stow a light source' }),
       'Handling.OnPick': Object.freeze({ default: 1, options: Object.freeze(["Store", "Equip", "Force Equip"]), description: 'Behavior when picking up a light source' }),
       'Handling.StowWhenSpellcasting': Object.freeze({ default: true, description: 'Casting, or holding a readied spell, stows the light: no free hand.' }),
       'Handling.StowWhenClimbing': Object.freeze({ default: true, description: 'Climbing stows the light: no free hand.' }),
@@ -274,7 +358,19 @@ export const MOD_SETTINGS = Object.freeze({
       // torch is lit) and `draw()` still answers false, so a player lights a
       // torch and sees nothing. This ONE default departs; Ledger A row MODS-ON.
       'Modules.Sprite': Object.freeze({ default: true, description: 'Sprite: a first-person hand holding the lit torch or lantern.' }),
-      'Modules.Bob': Object.freeze({ default: false, description: 'Bob: the sprite sways as you walk.' }),
+      // HT5 (2026-09-16, Mac: "the torch when being held isn't affected by
+      // the weapon bob like everything else"): THE THIRD DEPARTURE FROM THE
+      // MOD'S SHIPPED KEYS. The mod ships its three motion modules OFF -
+      // they restate Weapon Widget's Bob, Inertia and Step laws so the hand
+      // can move WITH the weapon, and the mod leaves it to the player to
+      // switch on whichever the widget has on (its Bob.Offset says so: "For
+      // use with weapon bob"). This port ships Weapon Widget with Bob ON
+      // (its own shipped default), so a torch hand that shipped still beside
+      // a weapon that sways is the two mods disagreeing about one walk. Bob
+      // follows the widget's shipped default; Inertia and Step stay off, as
+      // the widget ships them. The player may still turn any of the three
+      // either way; this is about what SHIPS.
+      'Modules.Bob': Object.freeze({ default: true, description: 'Bob: the sprite sways as you walk, in step with Weapon Widget\u2019s bob.' }),
       'Modules.Inertia': Object.freeze({ default: false, description: 'Inertia: the sprite lags the look and your movement.' }),
       'Modules.Step': Object.freeze({ default: false, description: 'Step: the sprite\u2019s position is rounded so it moves in steps.' }),
       'Presentation.Tint': Object.freeze({ default: true, description: 'Matches the weapon sprite\'s tint when using First-Person-Lighting.' }),
@@ -420,17 +516,273 @@ export const MOD_SETTINGS = Object.freeze({
       'Animation.SyncFootsteps': Object.freeze({ default: true, description: 'Footstep sounds fire on the sprite\u2019s own footfalls.' }),
       'Animation.BillboardScale': Object.freeze({ default: 1.0, min: 0, max: 10, float: true, description: 'Size of the player sprite.' }),
       'Animation.FineBillboardScale': Object.freeze({ default: 0.0, min: 0, max: 1, float: true, description: 'Added to BillboardScale, for a finer adjustment.' }),
-      'Animation.GlobalOffsetScale': Object.freeze({ default: 1.0, min: 0, max: 10, float: true, description: 'Multiplier on every sprite offset.' }),
-      'Animation.FineGlobalOffsetScale': Object.freeze({ default: 0.0, min: 0, max: 1, float: true, description: 'Added to GlobalOffsetScale, for a finer adjustment.' }),
+      'Animation.GlobalOffsetScale': Object.freeze({ default: 1.0, min: 0, max: 10, float: true, description: 'Multiplier on every sprite offset. INERT in the mod itself: its assembly reads the dial into a field nothing consumes (get_scaleOffset has no caller), and the port keeps that.' }),
+      'Animation.FineGlobalOffsetScale': Object.freeze({ default: 0.0, min: 0, max: 1, float: true, description: 'Added to GlobalOffsetScale, for a finer adjustment - inert, as that is.' }),
       'Compatibility.Don\'tHideWeapon': Object.freeze({ default: false, description: 'Stops the FPV Weapon graphic from being hidden or shown' }),
       'Compatibility.Don\'tHideHorse': Object.freeze({ default: false, description: 'Stops the FPV Horse graphic from being hidden or shown' }),
       'Compatibility.Don\'tOffsetAttacks': Object.freeze({ default: false, description: 'Stops the attack-from-body code from running for melee and ranged' }),
       'Debug.ShowMessages': Object.freeze({ default: true, description: 'Print the mod\u2019s own status lines when the view or the shoulder changes.' }),
     }),
   }),
+  // IF1 (2026-09-16, Mac: "Next mod we will be adding 1:1"): IMMERSIVE
+  // FOOTSTEPS 1.01 (Kirk.O). The shipped modsettings.json's four sections
+  // and ten keys, section and name joined with a dot, the port's own
+  // `Enabled` in front (MO1: on by default). The mod ships its clips in
+  // two qualities and LoadAudio picks by SoundClipQuality; the two
+  // ErrorLogging keys and the compat-warning key are declared so the pane
+  // matches the mod's, though the port has no log file to spam and no
+  // Better Ambience / Tempered Interiors / Travel Options to warn about.
+  'immersive-footsteps': Object.freeze({
+    title: 'Immersive Footsteps',
+    author: 'Kirk.O',
+    keys: Object.freeze({
+      Enabled: Object.freeze({
+        default: true,
+        description: 'Kirk.O\u2019s Immersive Footsteps 1.01, 1:1: footsteps by the ground you walk on, armour that sways as you move.',
+      }),
+      'AudioQualitySettings.SoundClipQuality': Object.freeze({ default: 0, options: Object.freeze(['Low-Quality (Retro)', 'High-Quality']), description: 'What Quality Sound-Clips Get Used' }),
+      'FootstepSettings.AllowFootstepSounds': Object.freeze({ default: true, description: 'If Player Footsteps Should Make A Sound || Default = True' }),
+      'FootstepSettings.FootstepVolumeMulti': Object.freeze({ default: 1.0, min: 0.0, max: 10.0, float: true, step: 0.1, description: 'The Volume Level Multiplier For Footstep Sounds' }),
+      'FootstepSettings.FootstepFrequency': Object.freeze({ default: 0.6, min: 0.3, max: 3.0, float: true, step: 0.1, description: 'How Frequent Footstep Sounds Should Be, Lower = More Often, Higher = Less Often' }),
+      'ArmorSwaySettings.AllowArmorSwaySounds': Object.freeze({ default: true, description: 'If Armor Specific Sounds Play When The Player Moves About || Default = True' }),
+      'ArmorSwaySettings.ArmorSwayVolumeMulti': Object.freeze({ default: 1.0, min: 0.0, max: 10.0, float: true, step: 0.1, description: 'The Volume Level Multiplier For Armor Sway Sounds' }),
+      'ArmorSwaySettings.ArmorSwayFrequency': Object.freeze({ default: 0.6, min: 0.3, max: 3.0, float: true, step: 0.1, description: 'How Frequent Armor Sway Sounds Should Be, Lower = More Often, Higher = Less Often' }),
+      'ErrorLoggingAndCompatibilitySettings.AllowModCompatWarnings': Object.freeze({ default: true, description: 'If Mod Should Give Warning Messages About Detected Incompatibility Issues || Default = True' }),
+      'ErrorLoggingAndCompatibilitySettings.AllowVerboseErrorLogging': Object.freeze({ default: false, description: 'If Mod Should Print Full & Verbose Error Logs For Debugging || Default = False' }),
+      'ErrorLoggingAndCompatibilitySettings.DoNotSpamExceptionsLogs': Object.freeze({ default: true, description: 'Only Log Mod Exceptions Once Per Session, To Not Fill Log File || Default = True' }),
+    }),
+  }),
+  // BA1 (2026-09-16, Mac: "Next mod to integrate 1:1 ensuring compatibility"):
+  // BETTER AMBIENCE 0.1.4 (Joshua Steinhauer). The shipped modsettings.json's
+  // six sections and twenty keys, section and name joined with a dot (the
+  // section names carry spaces, as the mod wrote them: 'Better Footsteps.enable'),
+  // the port's own `Enabled` in front (MO1). ONE DEPARTURE FROM THE SHIPPED
+  // KEYS: `Better Footsteps.enable` ships OFF. The mod ships it on, and so
+  // does Immersive Footsteps ship its own stride on - and Immersive Footsteps'
+  // author wrote the ruling (ImmersiveFootstepsMain.cs:424-449): with both
+  // on "you will be constantly hearing overlapping footstep sounds", so
+  // "you should always have Better Ambience's 'Better Footsteps' setting
+  // disabled", and it posts a warning box at every game start until you do.
+  // This port ships the pair the way that author says a player should run
+  // them, and ports his warning for the player who turns both on anyway.
+  // BA2 (2026-09-17, Mac: "before any lighting work/the ambient mod that was
+  // introduced I really liked how the dungeons were properly dark ... is
+  // there any way to reintroduce that properly?"): THE SECOND DEPARTURE.
+  // `Dungeon Lighting.enableFogAmbientEffect` ships OFF. The mod ships it
+  // on, and on it replaces DFU's flat 0.12 dungeon ambient with a Trilight
+  // grey of ~0.40 tinted toward the dungeon's fog colour - three times the
+  // classic dark, and past the Dungeon Brightness setting, which only
+  // scales the flat ambient. Off, a dungeon is as dark as DFU's (and, under
+  // the enhanced lane, EL4's dark on top); the fog and the reverb stay as
+  // shipped, and a player who sets the toggle keeps it. The other departure
+  // is the footsteps' above.
+  // Every other module ships as the mod ships it. The keys the mod wrote no
+  // description for carry the port's words (the pin requires one).
+  'better-ambience': Object.freeze({
+    title: 'Better Ambience',
+    author: 'Joshua Steinhauer',
+    keys: Object.freeze({
+      Enabled: Object.freeze({
+        default: true,
+        description: 'Joshua Steinhauer\u2019s Better Ambience 0.1.4, 1:1: the camera shakes when you are hurt, a dungeon gets its own fog, light and echo, and rain is heard indoors.',
+      }),
+      'Better Footsteps.enable': Object.freeze({ default: false, description: 'Enables better footsteps module' }),
+      'Better Footsteps.armorVolume': Object.freeze({ default: 1.0, min: 0.0, max: 2.0, float: true, step: 0.1, description: 'Volume for armor clanking' }),
+      'Better Footsteps.footstepVolume': Object.freeze({ default: 1.0, min: 0.0, max: 2.0, float: true, step: 0.1, description: 'Volume for footsteps' }),
+      'Dungeon Reverb.level': Object.freeze({ default: 1, options: Object.freeze(['Low', 'Medium', 'High']), description: 'How much a dungeon echoes: Low is a cave, Medium a stone room, High a quarry.' }),
+      'Camera Shake.shakeAmountAdd': Object.freeze({ default: 0.0, min: 0.0, max: 20.0, float: true, step: 0.5, description: 'Shake added to every hit, before the hit\u2019s own share.' }),
+      'Camera Shake.shakeAmountMultiplier': Object.freeze({ default: 10.0, min: 0.0, max: 20.0, float: true, step: 0.5, description: 'Shake per hit, scaled by the damage as a share of your full health.' }),
+      'Camera Shake.maxShake': Object.freeze({ default: 10.0, min: 0.1, max: 30.0, float: true, step: 0.5, description: 'The most one hit can shake the camera.' }),
+      'Camera Shake.roughness': Object.freeze({ default: 10.0, min: 0.1, max: 30.0, float: true, step: 0.5, description: 'How jarring the shake is: lower is smoother.' }),
+      'Camera Shake.fadeInTime': Object.freeze({ default: 0.3, min: 0.05, max: 3.0, float: true, step: 0.05, description: 'Seconds the shake takes to build.' }),
+      'Camera Shake.fadeOutTime': Object.freeze({ default: 0.5, min: 0.05, max: 3.0, float: true, step: 0.05, description: 'Seconds the shake takes to settle.' }),
+      'Dungeon Fog.enableFog': Object.freeze({ default: true, description: 'Enables random dungeon Fog Effect' }),
+      'Dungeon Fog.maxFogDistance': Object.freeze({ default: 100.0, min: 20.0, max: 200.0, float: true, step: 1, description: 'Max fog distance from fog start' }),
+      'Dungeon Fog.minFogDistance': Object.freeze({ default: 80.0, min: 20.0, max: 200.0, float: true, step: 1, description: 'Min fog distance from fog start' }),
+      'Dungeon Fog.maxFogStart': Object.freeze({ default: 10.0, min: 0.0, max: 100.0, float: true, step: 1, description: 'Max fog start from camera' }),
+      'Dungeon Fog.minFogStart': Object.freeze({ default: 0.0, min: 0.0, max: 100.0, float: true, step: 1, description: 'Min fog start from camera' }),
+      'Dungeon Lighting.enableFogAmbientEffect': Object.freeze({ default: false, description: 'Enables custom dungeon ambient lighting' }),   // BA2: ships off (see above)
+      'Dungeon Lighting.dungeonDarkness': Object.freeze({ default: 1.0, min: 0.0, max: 3.0, float: true, step: 0.1, description: 'The darkness of dungeons' }),
+      'Dungeon Lighting.fogAmbientEffect': Object.freeze({ default: 0.2, min: 0.0, max: 1.0, float: true, step: 0.05, description: 'How much the random dungeon color affects dungeon lighting' }),
+      'Better Rain.enableBetterRain': Object.freeze({ default: true, description: 'Makes rain particles look a bit better' }),
+      'Better Rain.enableBetterSnow': Object.freeze({ default: true, description: 'Makes snow particles look a bit better' }),
+    }),
+  }),
+  // ORL1 (2026-09-17): OBLIVION-REMASTER-LIKE LEVELING 0.5.3 - the
+  // first MORROWIND mod in this store, and the only one whose switches
+  // come out of OpenMW `I.Settings.registerGroup` calls rather than a
+  // `modsettings.json`. The mod's own two groups are `levelUpSettings`
+  // (settings.lua:10-64) and `skillSettings` (:66-108); their names,
+  // minimums and defaults are the mod's, and the DESCRIPTIONS are the
+  // author's own English strings out of `l10n/en.yaml` - the pane shows
+  // them as they were written, the same law the other mods' rows follow.
+  //
+  // `Enabled` is the port's, as every vendored mod carries one, and
+  // here it decides ONE thing: whether a new character is ever ASKED
+  // the question. Off, and chargen never shows the prompt and every
+  // character levels the Daggerfall way. It does not change a
+  // character who has already answered - `entity.levelingSystem` is on
+  // the save and the save is the law (systems/oblivionLeveling.js).
+  //
+  // `primarySkillsImpact` IS THE PORT'S OWN and has no key in the mod,
+  // because Morrowind has no primary skills. Its description says so,
+  // so the pane never presents it as the author's work.
+  'oblivion-remaster-leveling': Object.freeze({
+    title: 'Oblivion Remaster Like Leveling',
+    // The archive names no author (no LICENCE, no script header, an
+    // empty `.omwaddon` author field). The registry row and the vendor
+    // README both carry the same open record; until Mac fills it in,
+    // the pane says what is true rather than inventing a name.
+    author: 'Nexus Morrowind 56569',
+    keys: Object.freeze({
+      Enabled: Object.freeze({
+        default: true,
+        description: 'Oblivion Remastered’s leveling in place of Daggerfall’s: every skill you raise fills a 100-point bar, and levelling up hands you a purse of virtues to spend where you choose. New characters are asked which system they want.',
+      }),
+      attributePoints: Object.freeze({ default: 12, min: 0, max: 60, description: 'Amount of points for increasing attributes' }),
+      maxUpdatableAttribute: Object.freeze({ default: 3, min: 2, max: 8, description: 'The number of attributes to be increased in one level up' }),
+      allowLuckIncrease: Object.freeze({ default: true, description: 'Allow Luck to be increased by more than one point' }),
+      luckIncreaseCost: Object.freeze({ default: 4, min: 1, max: 20, description: 'Cost to upgrade Luck by one point' }),
+      // The port's own, for Daggerfall's third tier of chosen skills.
+      primarySkillsImpact: Object.freeze({ default: 8, min: 0, max: 100, description: 'Points given by a Primary Skill level up (100 points required to level up). Daggerfall has a tier of skills Morrowind does not, so this knob is the port’s own; it ships equal to the major skills’, which is where the mod’s own top tier sits.' }),
+      majorSkillsImpact: Object.freeze({ default: 8, min: 0, max: 100, description: 'Points given by a Major Skill level up (100 points required to level up)' }),
+      minorSkillsImpact: Object.freeze({ default: 6, min: 0, max: 100, description: 'Points given by a Minor Skill level up (100 points required to level up)' }),
+      miscSkillsImpact: Object.freeze({ default: 2, min: 0, max: 100, description: 'Points given by a Misc Skill level up (100 points required to level up)' }),
+    }),
+  }),
+  // TO1 (2026-09-17, Mac: "This is the next daggerfall mod we are to
+  // implement 1:1"): TRAVEL OPTIONS 1.11 (Hazelnut). Its twelve sections
+  // as modsettings.json ships them, the key named section-dot-name;
+  // descriptions are the mod's own, verbatim. The shipped file's five
+  // unnamed spacer sections ("__", "-", "_", "--", ".") carry no keys
+  // and are noted where they fall. Plus the port's `Enabled` (MO1: on).
+  //
+  // A key with `color` is a ColorKey - DFU has the kind natively
+  // (ModSettings.ColorKey) and the port did not until this mod, which
+  // has seventeen of them: the fourteen travel-map location colours,
+  // the middle-click mark, and the junction map's player and background.
+  // The value is an `#rrggbbaa` string; the mod's own presets write the
+  // same eight hex digits without the hash ("D77727FF"), and
+  // `colorKeyRgba` below reads either.
+  'travel-options': Object.freeze({
+    title: 'Travel Options',
+    author: 'Hazelnut',
+    keys: Object.freeze({
+      Enabled: Object.freeze({
+        default: true,
+        description: 'Hazelnut\u2019s Travel Options 1.11, 1:1: the travel map and its popup decide between Daggerfall\u2019s own '
+          + 'fast travel and a TIME ACCELERATED journey you actually walk - the world streaming past at up to sixty times speed, '
+          + 'with a control panel to steer it, encounters and locations pausing it, and roads and tracks to follow. Off returns '
+          + 'the classic travel map and fast travel alone.',
+      }),
+      'CautiousTravel.PlayerControlledCautiousTravel': Object.freeze({ default: true, description: "Enables the travel option \"Cautiously\" to initiate time accelerated travel, instead of vanilla fast travel" }),
+      'CautiousTravel.SpeedPenalty': Object.freeze({ default: 20, min: 5, max: 40, description: "Speed penalty for travelling cautiously, as a percentage" }),
+      'CautiousTravel.MaxChanceToAvoidEncounter': Object.freeze({ default: 95, min: 60, max: 100, description: "Maximum chance to avoid an encounter when travelling cautiously, as a percentage" }),
+      'CautiousTravel.HealthMinimumPercentage': Object.freeze({ default: 5, min: 0, max: 25, description: "Level of health that will automatically pause the journey when travelling cautiously, as a percentage" }),
+      'CautiousTravel.FatigueMinimumValue': Object.freeze({ default: 5, min: 0, max: 50, description: "Level of fatigue that will automatically pause the journey when travelling cautiously, absolute value" }),
+      // TO-FIELD2 (Mac, 2026-09-18): "travel options instantly transports
+      // you to a destination and theres no travel". DEPARTURE FROM THE
+      // MOD'S SHIPPED DEFAULT, on Mac's word, and it is the whole of that
+      // report. IsPlayerControlledTravel is an AND over three toggles
+      // (travelPopUp.js:183): `(cautiousTravel || !speedCautious) &&
+      // (stopAtInnsTravel || !sleepModeInn) && !travelShip`. The popup
+      // opens with `sleepModeInn = true` - classic Daggerfall's own
+      // default, stopping at inns - so with this key false the second
+      // clause is false and EVERY default trip fell to DFU's fast
+      // travel. A player had to find the Camp Out toggle before the mod
+      // they turned on ever ran. Hazelnut ships it false because his
+      // mod is opt-in over vanilla; here the walked journey IS the
+      // feature, so it is on. The key is still a key: turning it off in
+      // the Mods pane restores the mod's own default exactly.
+      'StopAtInnsTravel.PlayerControlledInnsTravel': Object.freeze({ default: true, description: "Enables the stop for night travel option \"Inns\" to initiate time accelerated travel, instead of fast travel" }),
+      'ShipTravel.OnlyFromPorts': Object.freeze({ default: true, description: "Restricts ship travel to be possible only from places with ports" }),
+      'ShipTravel.OnlyToPorts': Object.freeze({ default: false, description: "Restricts ship travel to be possible only if destination has a port, if from ports setting is enabled" }),
+      'GeneralOptions.AllowTargetingMapCoordinates': Object.freeze({ default: true, description: "Allows travel map to target any coordinates using time accelerated travel" }),
+      'GeneralOptions.LocationPause': Object.freeze({ default: 0, options: Object.freeze(["off", "nearby", "entered"]), description: "Auto pause when encountering a game location during real time accelerated travel" }),
+      'GeneralOptions.AllowWeather': Object.freeze({ default: false, description: "Allows weather effects during time accelerated travel" }),
+      'GeneralOptions.AllowAnnoyingSounds': Object.freeze({ default: false, description: "Allows footstep and hoof sounds during time accelerated travel" }),
+      'GeneralOptions.AllowRealGrass': Object.freeze({ default: false, description: "Allows the Real Grass mod to run during time accelerated travel" }),
+      'TimeAcceleration.DefaultStartingAcceleration': Object.freeze({ default: 4, options: Object.freeze(["1", "2", "3", "5", "10", "15", "20", "25", "30", "40", "50"]), description: "The initial time acceleration used after starting the game" }),
+      'TimeAcceleration.AlwaysUseStartingAcceleration': Object.freeze({ default: false, description: "Always uses the default starting acceleration when initiating a journey, rather than value from the previous journey" }),
+      'TimeAcceleration.AccelerationLimit': Object.freeze({ default: 60, min: 10, max: 100, description: "The maximum limit allowed for time acceleration, road following is limited to half this amount" }),
+      'Teleportation.EnablePaidTeleportation': Object.freeze({ default: false, description: "Enable paid Mages teleportation service for all guild members, before rank 8" }),
+      // the shipped file's spacer section "__" carries no keys
+      'RoadsIntegration.Enable': Object.freeze({ default: true, description: "Enhances the travel map with larger location dots for cities & towns, and shows roads & tracks with toggle buttons" }),
+      'RoadsIntegration.VariableSizeDots': Object.freeze({ default: true, description: "All locations, except for cities & towns, are rendered as smaller dots" }),
+      // AUDIT-TO1 I1: the mod ships index 1, "F" - and F is the key SOC5
+      // spent on SocialInteract (inputActions.js DEFAULT_BINDINGS), the
+      // same collision HT4 moved Handheld Torches' light toggle off.
+      // One press did both: the friends card opened AND a road leg
+      // began. Of the mod's own six: F is SOC5's, G is Handheld
+      // Torches' light toggle (HT4), O its ignite and X its throw
+      // (Throwing.ThrowTorchInput above) - so K, index 3, is the one
+      // letter nothing in the port or a vendored mod answers. The
+      // player may still pick F from the list; this is about what
+      // SHIPS. `keyChoice` DECLARES the kind, the way `axis` does, so
+      // the HT4 pin walks this choice list as it walks a TextKey and
+      // never has to guess whether "U" is a key or a bob shape.
+      'RoadsIntegration.FollowPathsKey': Object.freeze({ default: 3, keyChoice: true, options: Object.freeze(["None", "F", "G", "K", "O", "X", "Custom Key Bind"]), description: "Sets the key to initiate time accelerated travelling following paths if roads integration enabled" }),
+      'RoadsIntegration.FollowPathsCustomKeyBind': Object.freeze({ default: "", text: true, description: "Custom key bind for following paths used if CustomBind set above" }),
+      'RoadsIntegration.EnableWaterways': Object.freeze({ default: false, description: "Enhances the travel map with rivers and streams with a toggle button" }),
+      'RoadsIntegration.EnableStreamsToggle': Object.freeze({ default: false, description: "Adds a streams toggle button separate from rivers button" }),
+      'RoadsIntegration.MarkLocationColor': Object.freeze({ default: '#ffeb05ff', color: true, description: "The colour used to highlight locations using middle mouse button on travel map" }),
+      // the shipped file's spacer section "-" carries no keys
+      'FastTravelCostScaling.FastTravelCostScaleFactor': Object.freeze({ default: 1, min: 1, max: 10, description: "Scales the cost of inns when using standard fast travel, suggest x4-x6 for Climate & Calories." }),
+      'FastTravelCostScaling.ShipTravelCostScaleFactor': Object.freeze({ default: 1, min: 1, max: 10, description: "Scales the cost of ships when using standard fast travel, suggest x2-x3 for Climate & Calories." }),
+      // the shipped file's spacer section "_" carries no keys
+      'RoadsJunctionMap.Enable': Object.freeze({ default: true, description: "Enables the junction mini-map" }),
+      'RoadsJunctionMap.PersistentMap': Object.freeze({ default: false, description: "Set this to have the junction mini-map always displayed when following paths" }),
+      'RoadsJunctionMap.ToggleMapOffPaths': Object.freeze({ default: true, description: "Set this to have the junction mini-map toggled when follow key pressed and not on a path" }),
+      'RoadsJunctionMap.ScreenSize': Object.freeze({ default: 75, min: 40, max: 200, description: "The width and height the mini-map is rendered on the screen" }),
+      'RoadsJunctionMap.ScreenPositionX': Object.freeze({ default: 235, min: 0, max: 280, description: "The X coordinate the mini-map is rendered on the screen" }),
+      'RoadsJunctionMap.ScreenPositionY': Object.freeze({ default: 10, min: 0, max: 160, description: "The Y coordinate the mini-map is rendered on the screen" }),
+      'RoadsJunctionMap.FilterMode': Object.freeze({ default: 0, options: Object.freeze(["Point", "Bilinear", "Trilinear"]), description: "Pixel filtering to use when rendering the mini-map" }),
+      'RoadsJunctionMap.Circular': Object.freeze({ default: true, description: "Draw the mini-map in a circle around the player" }),
+      'RoadsJunctionMap.PlayerColor': Object.freeze({ default: '#ff0000ff', color: true, description: "The colour of the player position and direction indicator" }),
+      'RoadsJunctionMap.Opaque': Object.freeze({ default: false, description: "Render the mini-map with an opaque background color" }),
+      'RoadsJunctionMap.BackgroundColor': Object.freeze({ default: '#327f19ff', color: true, description: "The opaque background color to use for the mini-map" }),
+      // the shipped file's spacer section "--" carries no keys
+      // the shipped file's spacer section "." carries no keys
+      'LocationColours.DungeonLabyrinth': Object.freeze({ default: '#d77727ff', color: true, description: "The colour shown on the travel map" }),
+      'LocationColours.DungeonKeep': Object.freeze({ default: '#bf571bff', color: true, description: "The colour shown on the travel map" }),
+      'LocationColours.DungeonRuin': Object.freeze({ default: '#ab330fff', color: true, description: "The colour shown on the travel map" }),
+      'LocationColours.Graveyard': Object.freeze({ default: '#930f07ff', color: true, description: "The colour shown on the travel map" }),
+      'LocationColours.Coven': Object.freeze({ default: '#0f0f0fff', color: true, description: "The colour shown on the travel map" }),
+      'LocationColours.Farm': Object.freeze({ default: '#9b696aff', color: true, description: "The colour shown on the travel map" }),
+      'LocationColours.WealthyHome': Object.freeze({ default: '#bc8a8aff', color: true, description: "The colour shown on the travel map" }),
+      'LocationColours.PoorHome': Object.freeze({ default: '#7e5159ff', color: true, description: "The colour shown on the travel map" }),
+      'LocationColours.Temple': Object.freeze({ default: '#b0cdffff', color: true, description: "The colour shown on the travel map" }),
+      'LocationColours.Cult': Object.freeze({ default: '#447cc0ff', color: true, description: "The colour shown on the travel map" }),
+      'LocationColours.Tavern': Object.freeze({ default: '#8c5637ff', color: true, description: "The colour shown on the travel map" }),
+      'LocationColours.City': Object.freeze({ default: '#e3b490ff', color: true, description: "The colour shown on the travel map" }),
+      'LocationColours.Hamlet': Object.freeze({ default: '#c18564ff', color: true, description: "The colour shown on the travel map" }),
+      'LocationColours.Village': Object.freeze({ default: '#a56446ff', color: true, description: "The colour shown on the travel map" }),
+    }),
+  }),
 });
 
 let memory = null;
+
+/** AUDIT SOC D4 - THE ONE MIGRATION THIS STORE HAS.
+ *
+ *  Handheld Torches shipped its light toggle on "F" and the port carried that verbatim until SOC5 spent F on the
+ *  port's own SocialInteract action; HT4's gate forbids a vendored mod SHIPPING a key the port has already spent,
+ *  so the declared default moved to "O" (see the key's own comment above). A default only answers for a player who
+ *  never touched the dial - and every player who opened the Mods pane before this slice has a SAVED "F" in this
+ *  file, written by the pane from the old default, which would light a torch on every press of the social key.
+ *
+ *  So a stored value that is EXACTLY "F" is deleted on load, once, and the file written back without it: the
+ *  shipped "O" then applies, like it does for everyone else. A player who deliberately chose some other key keeps
+ *  it, and a player who deliberately chose F... also loses it, which is the trade - there is nothing in the file
+ *  that tells the two apart, and a torch on the social key is the worse of the two wrongs. */
+const HT_LIGHT_KEY = Object.freeze({ vendor: 'handheld-torches', key: 'Handling.ToggleLightInput', was: 'F' });
+function migrate(m) {
+  const held = m?.[HT_LIGHT_KEY.vendor];
+  if (!held || held[HT_LIGHT_KEY.key] !== HT_LIGHT_KEY.was) return false;
+  delete held[HT_LIGHT_KEY.key];
+  return true;
+}
+
 function load() {
   if (memory) return memory;
   memory = {};
@@ -438,6 +790,7 @@ function load() {
     const raw = appStorage()?.getItem(STORE_KEY);
     if (raw) memory = JSON.parse(raw) ?? {};
   } catch { memory = {}; }
+  if (migrate(memory)) save();   // AUDIT SOC D4: once, on the load that found it
   return memory;
 }
 function save() {
@@ -459,7 +812,44 @@ export function isTextKey(def) { return def && def.text === true; }
 /** HT1: a TupleIntKey / TupleFloatKey - `tuple` names the pair's kind,
  *  the value `[first, second]`. */
 export function isTupleKey(def) { return def && (def.tuple === 'int' || def.tuple === 'float'); }
+/** TO1: a ColorKey (DFU's ModSettings.ColorKey - Travel Options has
+ *  seventeen) - `color` declared, the value an `#rrggbbaa` string. */
+export function isColorKey(def) { return def && def.color === true; }
+
+/** TO1: the eight hex digits of a ColorKey, in either of the two
+ *  spellings the mod itself uses - `#rrggbbaa` as this store writes it
+ *  and `RRGGBBAA` as its own presets write it (modpresets.json:
+ *  "D77727FF") - as `[r, g, b, a]` 0..255. Three or six digits are
+ *  accepted too and take a full alpha, because a player typing a
+ *  colour into the pane types "#c08a3e". Anything unreadable answers
+ *  null, and the caller falls back to the declared default. */
+export function colorKeyRgba(value) {
+  if (Array.isArray(value) && value.length === 4 && value.every((n) => Number.isFinite(n))) {
+    return value.map((n) => Math.max(0, Math.min(255, Math.trunc(n))));
+  }
+  if (typeof value !== 'string') return null;
+  let s = value.trim();
+  if (s.startsWith('#')) s = s.slice(1);
+  if (!/^[0-9a-fA-F]+$/.test(s)) return null;
+  if (s.length === 3) s = s.split('').map((c) => c + c).join('') + 'ff';
+  else if (s.length === 4) s = s.split('').map((c) => c + c).join('');
+  else if (s.length === 6) s += 'ff';
+  else if (s.length !== 8) return null;
+  return [0, 2, 4, 6].map((i) => parseInt(s.slice(i, i + 2), 16));
+}
+
+/** The canonical spelling this store keeps: `#rrggbbaa`, lower case. */
+export function colorKeyHex(rgba) {
+  const c = colorKeyRgba(rgba);
+  if (!c) return null;
+  return '#' + c.map((n) => n.toString(16).padStart(2, '0')).join('');
+}
+
 function coerce(def, v) {
+  if (isColorKey(def)) {
+    const hex = colorKeyHex(v);
+    return hex ?? def.default;
+  }
   if (isTextKey(def)) {
     const t = typeof v === 'string' ? v.trim() : '';
     return t.length ? t : def.default;

@@ -1,0 +1,164 @@
+[
+  {
+    "name": "SURV2-a-waterskin-weighs-nothing-for-its-water",
+    "file": "src/systems/inventory.js",
+    "old": "  if (Number.isFinite(item.water) && item.water > 0) base += item.water;   // SURV2: a waterskin weighs its water",
+    "new": "",
+    "tests": [
+      "test/surv2_items.test.js"
+    ]
+  },
+  {
+    "name": "SURV2-fruit-stacks",
+    "file": "src/systems/survival/items.js",
+    "old": "stackCount: t.stackable ? Math.max(1, stackCount) : 1 }));",
+    "new": "stackCount: Math.max(1, stackCount) }));",
+    "tests": [
+      "test/surv2_items.test.js"
+    ]
+  },
+  {
+    "name": "SURV2-a-mouldy-food-keeps-the-fresh-picture",
+    "file": "src/systems/survival/items.js",
+    "old": "    item.worldTextureArchive = item.templateIndex;\n    item.worldTextureRecord = s === FOOD_STAGE.Mouldy ? 0 : 1;",
+    "new": "",
+    "tests": [
+      "test/surv2_items.test.js"
+    ]
+  },
+  {
+    "name": "SURV2-eating-does-not-take-one-off-the-stack",
+    "file": "src/systems/survival/items.js",
+    "old": "    takeOne();\n    if (entity && r.sick)",
+    "new": "    if (entity && r.sick)",
+    "tests": [
+      "test/surv2_items.test.js"
+    ]
+  },
+  {
+    "name": "SURV2-the-drink-does-not-relieve-thirst",
+    "file": "src/systems/survival/items.js",
+    "old": "      s.thirst = Math.max(0, s.thirst - DRINK_RELIEF);\n      for (const k of Object.keys(s.notes ?? {})) if (k.startsWith('thirst:')) delete s.notes[k];\n    }\n    return { kind: 'drank'",
+    "new": "    }\n    return { kind: 'drank'",
+    "tests": [
+      "test/surv2_items.test.js"
+    ]
+  },
+  {
+    "name": "SURV2-a-poor-store-always-carries-camping-gear",
+    "file": "src/systems/survival/items.js",
+    "old": "  if (quality >= 5 || dice100(30, rolls())) out.push(createSurvivalItem(TEMPLATE.CampingEquipment));",
+    "new": "  out.push(createSurvivalItem(TEMPLATE.CampingEquipment));",
+    "tests": [
+      "test/surv2_items.test.js"
+    ]
+  },
+  {
+    "name": "SURV2-the-corpses-meat-is-never-turning",
+    "file": "src/systems/survival/loot.js",
+    "old": "      if (item && rolls() < 0.5) spoilFood(item);   // half of it is already turning",
+    "new": "",
+    "tests": [
+      "test/surv2_items.test.js"
+    ]
+  },
+  {
+    "name": "SURV2-luck-does-not-widen-the-butchering",
+    "file": "src/systems/survival/loot.js",
+    "old": "    const n = scaledCount(range(min, max + Math.max(0, lm - 5), rolls), ANIMAL_LOOT_SCALE, rolls);",
+    "new": "    const n = scaledCount(range(min, max, rolls), ANIMAL_LOOT_SCALE, rolls);",
+    "tests": [
+      "test/surv2_items.test.js"
+    ]
+  },
+  {
+    "name": "SURV2-a-ghost-carries-a-meal",
+    "file": "src/systems/survival/loot.js",
+    "old": "  if (isHumanoid(entity)) {",
+    "new": "  if (true) {",
+    "tests": [
+      "test/surv2_items.test.js"
+    ]
+  },
+  {
+    "name": "SURV2-a-vendor-archive-is-gated-like-a-pick",
+    "file": "src/systems/textureReplacement.js",
+    "old": "  if (_vendor.has(key)) return true;\n  if (!textureReplacementEnabled()) return false;\n  return _index.has(key);",
+    "new": "  if (!textureReplacementEnabled()) return false;\n  return _index.has(key) || _vendor.has(key);",
+    "tests": [
+      "test/surv2_items.test.js"
+    ]
+  },
+  {
+    "name": "SURV2-a-user-pick-drops-the-ports-own-pixels",
+    "file": "src/systems/textureReplacement.js",
+    "old": "  for (const k of _decoded.keys()) if (!_vendor.has(k)) _decoded.delete(k);   // a new pick must not inherit the old one's pixels; the port's own stay",
+    "new": "  _decoded.clear();",
+    "tests": [
+      "test/surv2_items.test.js"
+    ]
+  },
+  {
+    "name": "SURV2-the-ladder-reaches-the-book-arm-for-our-items",
+    "file": "src/systems/useItem.js",
+    "old": "  if (isSurvivalItem(item)) out = useSurvivalItem(item, collection, { entity, now: nowMinute, rolls, currentDay: Math.trunc(nowMinute / 1440), inflict: inflictDisease });",
+    "new": "  if (false) out = null;",
+    "tests": [
+      "test/surv2_items.test.js"
+    ]
+  },
+  {
+    "name": "AUDITVC6-the-watchs-death-rolls-on-Math-random-again",
+    "file": "src/scenes/cityGuards.js",
+    "old": "      raiseEnemyDeath(g.entity, { rolls: rand, luck: liveStat(playerEntity, 'luck') });",
+    "new": "      raiseEnemyDeath(g.entity, { luck: liveStat(playerEntity, 'luck') });",
+    "tests": [
+      "test/surv2_items.test.js"
+    ]
+  },
+  {
+    "name": "AUDITVC6-the-watchs-death-invents-a-luck-of-50",
+    "file": "src/scenes/cityGuards.js",
+    "old": "      raiseEnemyDeath(g.entity, { rolls: rand, luck: liveStat(playerEntity, 'luck') });",
+    "new": "      raiseEnemyDeath(g.entity, { rolls: rand });",
+    "tests": [
+      "test/surv2_items.test.js"
+    ]
+  },
+  {
+    "name": "AUDITVC6-the-encounter-pools-death-rolls-on-Math-random-again",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "      raiseEnemyDeath(f.entity, { rolls, luck: liveStat(playerEntity, 'luck') });",
+    "new": "      raiseEnemyDeath(f.entity);",
+    "tests": [
+      "test/surv2_items.test.js"
+    ]
+  },
+  {
+    "name": "AUDITVC6-the-dungeons-death-invents-a-luck-of-50",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "      raiseEnemyDeath(foe.entity, { luck: liveStat(playerEntity, 'luck') });",
+    "new": "      raiseEnemyDeath(foe.entity);",
+    "tests": [
+      "test/surv2_items.test.js"
+    ]
+  },
+  {
+    "name": "AUDITVC6-the-handler-ignores-the-luck-it-is-handed",
+    "file": "src/systems/survival/loot.js",
+    "old": "    const luck = opts.luck ?? 50;   // AUDIT VC6: the raiser's own player, or the floor",
+    "new": "    const luck = 50;   // AUDIT VC6: the raiser's own player, or the floor",
+    "tests": [
+      "test/surv2_items.test.js"
+    ]
+  },
+  {
+    "name": "AUDITVC6-the-handler-ignores-the-stream-it-is-handed",
+    "file": "src/systems/survival/loot.js",
+    "old": "for (const item of corpseFood(entity, { luck, rolls: opts.rolls ?? Math.random })) entity.items.push(item);",
+    "new": "for (const item of corpseFood(entity, { luck })) entity.items.push(item);",
+    "tests": [
+      "test/surv2_items.test.js"
+    ]
+  }
+]

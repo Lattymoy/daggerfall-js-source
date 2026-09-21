@@ -99,6 +99,13 @@ export function playerArchiveFor(item, template, { gender = 'male', race = 'Bret
     // real weapon ever called, so every female character drew the
     // male weapon art.
     if (item.templateIndex === ARROW_TEMPLATE) return base;
+    // A CUSTOM WEAPON HAS NO FEMALE ARCHIVE TO BE OFF BY ONE FROM.
+    // ApplyWeaponMaterial's tail exists because classic art ships as
+    // the pair 233/234; the port's own weapon (systems/thunderlock.js)
+    // registers ONE archive of its own, and subtracting from it would
+    // ask for a texture nobody registered - a female character holding
+    // an invisible gun.
+    if (template?.custom) return base;
     return gender === 'female' ? base - 1 : base;
   }
   return base;

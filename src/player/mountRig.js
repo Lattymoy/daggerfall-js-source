@@ -51,6 +51,11 @@ import { SOUND } from '../systems/soundClips.js';
 export function createMountRig({
   renderer, canvas, fetchBytes, palette, audio,
   player, playerEntity, showOverlay, onShip = null, paused = () => false,
+  // AUDIT-TO1 J1: TransportManager.RidingVolumeScale, which Travel
+  // Options zeroes for an accelerated journey (TravelOptionsMod.cs:1227
+  // -1229) and restores at its end (:1264). A host that hands none
+  // rides at DFU's own 1.
+  ridingVolumeScale = () => 1,
 }) {
   const animator = new RidingAnimator();   // TR2: the mount's frames, loop and neigh
   let art = null;                          // TR2: the four CFA frames of the mount under you
@@ -118,7 +123,7 @@ export function createMountRig({
         paused: ridePaused,
         movingLessThanHalfSpeed: player.movingLessThanHalfSpeed,
         running: player.isRunning,
-        soundVolume: 1,
+        soundVolume: ridingVolumeScale(),   // AUDIT-TO1 J1: 0 for the length of an accelerated journey
       });
       if (r.neigh) audio.playOneShot(SOUND.AnimalHorse, RIDING_VOLUME_SCALE);
       audio.setLoop('riding', r.playing ? SOUND[r.clip] : null, { volume: r.volume, pitch: r.pitch });

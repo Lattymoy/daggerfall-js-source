@@ -35,6 +35,33 @@ const SUBSTEPS_MAX = 256;
 const GROUND_NY = Math.cos((SLOPE_LIMIT_DEG * Math.PI) / 180);
 const SKIN = 0.02;
 
+/** The slack on the broad-phase box, in world units: the triangles' own arithmetic is float, so the box is grown by
+ *  a hair rather than trusted to the last bit. Far below CELL, so it costs nothing in rejects. */
+const BOX_SKIN = 1e-3;
+/** AUDIT NAME1 F2: THE BROAD PHASE. Does the segment `origin + dir * [0, limit]` touch this box at all?
+ *  Slab test, exact - a miss here CANNOT hide a hit, because every triangle in the bucket is inside the box the
+ *  bucket's own vertices made (BOX_SKIN covers the rounding of that arithmetic). Written as a free function rather
+ *  than inline so the one reject is the same reject for every walk that later wants it.
+ *  @returns {boolean} true when the box must be walked */
+export function segmentHitsBox(ox, oy, oz, dir, min, max, limit) {
+  if (!(limit >= 0)) return false;
+  let tMin = 0, tMax = limit;
+  for (let k = 0; k < 3; k++) {
+    const lo = min[k] - BOX_SKIN, hi = max[k] + BOX_SKIN;
+    if (!(hi >= lo)) return false;           // an empty bucket has no box and nothing to walk
+    const d = dir[k];
+    const ok = k === 0 ? ox : k === 1 ? oy : oz;   // BLOOD1 AUDIT 3: read in place - this ran per bucket per ray, and boxed the origin into a fresh array each time
+    if (d === 0) { if (ok < lo || ok > hi) return false; continue; }
+    const inv = 1 / d;
+    let t1 = (lo - ok) * inv, t2 = (hi - ok) * inv;
+    if (t1 > t2) { const s = t1; t1 = t2; t2 = s; }
+    if (t1 > tMin) tMin = t1;
+    if (t2 < tMax) tMax = t2;
+    if (tMin > tMax) return false;
+  }
+  return true;
+}
+
 function closestPointOnTriangle(p, a, b, c, out) {
   // Ericson, Real-Time Collision Detection 5.1.5.
   const ab = [b[0] - a[0], b[1] - a[1], b[2] - a[2]];
@@ -79,11 +106,27 @@ function closestPointOnTriangle(p, a, b, c, out) {
   out[2] = a[2] + ab[2] * v + ac[2] * w;
 }
 
+/** MAC-BUG W5: how far apart the two samples of a central difference
+ *  are. Half a unit - wide enough that the terrain sampler's own
+ *  interpolation answers two different heights on a real slope,
+ *  narrow enough that a drop of blood reads the hill it is on rather
+ *  than the one over the ridge. */
+const GROUND_NORMAL_STEP = 0.5;
+
 export class Collider {
-  /** @param {(x:number,z:number)=>number} heightAt floor beneath everything */
-  constructor(heightAt = () => -Infinity) {
+  /** @param {(x:number,z:number)=>number} heightAt floor beneath everything
+   *  @param {((x:number,z:number)=>number)|null} [surfaceAt] BLOOD1 AUDIT 3:
+   *  the DRAWN ground, where it differs from the floor the capsule
+   *  walks on. The world host's `heightAt` is a bilinear read of the
+   *  heightmap; the terrain it draws is two triangles a quad, and the
+   *  two surfaces are up to 0.08 apart on real grades (terrainSurface.js
+   *  measured it) - four times a mark's 2cm lift. The capsule keeps
+   *  the bilinear floor it has always had; a thing PLACED on the ground
+   *  (surfaceHit, groundNormal) asks where the ground is drawn. */
+  constructor(heightAt = () => -Infinity, surfaceAt = null) {
     this.heightAt = heightAt;
-    this._buckets = new Map(); // key -> {tris: Float32Array, grid: Map, t: () => [x,y,z]}
+    this.surfaceAt = typeof surfaceAt === 'function' ? surfaceAt : null;
+    this._buckets = new Map(); // key -> {tris, grid: Map, t: () => [x,y,z], min: [x,y,z], max: [x,y,z]}   // AUDIT NAME1 F2: the bounds are the ray's broad phase
   }
 
   /**
@@ -93,7 +136,11 @@ export class Collider {
   addMesh(bucketKey, positions, indices, matrix, translation = null) {
     let bucket = this._buckets.get(bucketKey);
     if (!bucket) {
-      bucket = { tris: [], grid: new Map(), t: translation || (() => ZERO3) };
+      // AUDIT NAME1 F2: `min`/`max` are the bucket's own bounds in ITS
+      // OWN space (the translation is applied to the RAY, as the DDA
+      // already does), kept as the triangles go in - one compare per
+      // vertex, paid once at load, against a walk paid per ray.
+      bucket = { tris: [], grid: new Map(), t: translation || (() => ZERO3), min: [Infinity, Infinity, Infinity], max: [-Infinity, -Infinity, -Infinity] };
       this._buckets.set(bucketKey, bucket);
     }
     const m = matrix;
@@ -113,6 +160,12 @@ export class Collider {
       const c = tx(indices[i + 2]);
       const idx = bucket.tris.length;
       bucket.tris.push([a, b, c]);
+      for (const v of [a, b, c]) {
+        for (let k = 0; k < 3; k++) {
+          if (v[k] < bucket.min[k]) bucket.min[k] = v[k];
+          if (v[k] > bucket.max[k]) bucket.max[k] = v[k];
+        }
+      }
       const minX = Math.floor(Math.min(a[0], b[0], c[0]) / CELL);
       const maxX = Math.floor(Math.max(a[0], b[0], c[0]) / CELL);
       const minZ = Math.floor(Math.min(a[2], b[2], c[2]) / CELL);
@@ -170,6 +223,19 @@ export class Collider {
       const ox = origin[0] - t[0];
       const oy = origin[1] - t[1];
       const oz = origin[2] - t[2];
+      // AUDIT NAME1 F2: THE BUCKET'S OWN BOX, FIRST. Without it every
+      // ray walked a full 2-D DDA to maxDist through EVERY bucket -
+      // and an exterior collider holds one bucket per streamed map
+      // pixel plus the gates and the action doors, 20-60 in a town. The
+      // name pass casts one ray a peer, so the walk was multiplied by
+      // the crowd: the audit measured 3.85 ms a frame at 30 buckets x
+      // 60 peers and 24 ms at 60 x 199. Measured again here over a
+      // synthetic 30-bucket town, before and after: 2.13 -> 0.19 ms a
+      // frame at 60 peers, 8.63 -> 0.33 at 199, and 209 cell lookups
+      // for 60 rays where the bare DDA walks 21,720. A box test is six
+      // compares, and a bucket the ray never enters is now six
+      // compares.
+      if (!segmentHitsBox(ox, oy, oz, dir, bucket.min, bucket.max, Math.min(maxDist, best))) continue;
       // 2D DDA across cells.
       let cx = Math.floor(ox / CELL);
       let cz = Math.floor(oz / CELL);
@@ -213,6 +279,64 @@ export class Collider {
       normal = [nx, ny, nz];
     }
     return { dist: best, key: bestKey, normal };
+  }
+
+  /**
+   * MAC-BUG W5 (Mac, 2026-09-20: "blood doesn't work outside") - THE
+   * SAME RAY, PLUS THE GROUND.
+   *
+   * `raycastHit` walks BUCKETS ALONE: triangles, registered by
+   * `addMesh`. That is the whole of the world indoors and underground,
+   * where a floor is a mesh - and it is why every caller that wants a
+   * wall, a ceiling, a head-bump or a line of sight wants exactly
+   * that, and why this is a SECOND door rather than a change to it.
+   *
+   * Outside, the ground is not a mesh. It is `heightAt` - the terrain
+   * sampler in the world host, a flat constant in the exterior one -
+   * applied to the capsule in `_resolveSphere` and nowhere else. So a
+   * ray cast straight down from something standing on the ground hits
+   * NOTHING, and a caller that reads "nothing" as "no surface" is
+   * right indoors and silently wrong in the whole outdoors.
+   *
+   * This answers whichever is NEARER, so a walkway over a valley still
+   * catches what lands on it, and the terrain still catches what
+   * misses the walkway. The floor is only ever met on the way DOWN.
+   *
+   * The ground's normal is its own SLOPE, by central difference on the
+   * sampler rather than a flat up: a hillside is a surface, and a quad
+   * laid flat on a hill stands in it. A sampler with no slope (the
+   * exterior host's constant) answers straight up by construction, so
+   * the flat case costs nothing but the four lookups.
+   */
+  surfaceHit(origin, dir, maxDist, filter = null) {
+    const mesh = this.raycastHit(origin, dir, maxDist, filter);
+    if (!(dir[1] < 0)) return mesh;
+    const floor = (this.surfaceAt ?? this.heightAt)(origin[0], origin[2]);   // BLOOD1 AUDIT 3: the drawn ground, where the host draws one
+    if (!Number.isFinite(floor)) return mesh;
+    const d = (origin[1] - floor) / -dir[1];
+    if (!(d >= 0) || d > maxDist) return mesh;
+    if (mesh && Number.isFinite(mesh.dist) && mesh.dist <= d) return mesh;
+    return { dist: d, key: null, normal: this.groundNormal(origin[0], origin[2]) };
+  }
+
+  /** The ground's slope where it is asked, as a unit normal. Central
+   *  difference over GROUND_NORMAL_STEP: the gradient of a height
+   *  field is (-dh/dx, 1, -dh/dz), normalised. A sampler that answers
+   *  a constant - or one that runs off the edge of what is streamed -
+   *  gives straight up, which is the right answer for flat ground and
+   *  the safe one for no ground at all. */
+  groundNormal(x, z) {
+    const h = GROUND_NORMAL_STEP;
+    const at = this.surfaceAt ?? this.heightAt;   // BLOOD1 AUDIT 3: the slope of the DRAWN ground - inside one triangle the difference is its plane exactly
+    const hx = at(x + h, z) - at(x - h, z);
+    const hz = at(x, z + h) - at(x, z - h);
+    if (!Number.isFinite(hx) || !Number.isFinite(hz)) return [0, 1, 0];
+    // `|| 0` is not belt and braces: -0 over flat ground is a real
+    // answer that compares unequal to 0 and reads as a negative
+    // gradient to anything that tests the sign.
+    const nx = (-hx / (2 * h)) || 0, nz = (-hz / (2 * h)) || 0;
+    const l = Math.hypot(nx, 1, nz) || 1;
+    return [nx / l, 1 / l, nz / l];
   }
 
   /**

@@ -940,6 +940,118 @@ export function weaponRecords(bytes) {
   return out;
 }
 
+/** MW-D51: THE CARRIABLE LIGHTS - Morrowind's torch is a LIGH record
+ *  with a mesh, carried in the left hand at the Shield Bone (the same
+ *  slot a shield takes: PRT_Shield / Slot_CarriedLeft) and animated by
+ *  the "torch" group on the LEFT ARM's blend mask. LHDT is 24 bytes
+ *  (loadligh.hpp): float mWeight (0), int mValue (4), int mTime (8),
+ *  int mRadius (12), uint32 mColor (16), int mFlags (20) - and the
+ *  flags are Dynamic 0x1, CARRY 0x2, Negative 0x4, Flicker 0x8, Fire
+ *  0x10, OffDefault 0x20, FlickerSlow 0x40, Pulse 0x80, PulseSlow
+ *  0x100. Only a light the player can CARRY is a candidate for the
+ *  hand; a wall sconce is a LIGH record too. */
+export const MW_LIGHT_CARRY = 0x2;
+export const MW_LIGHT_FIRE = 0x10;
+function readLight(bytes, rec) {
+  const e = { id: '', model: '', name: '', carry: false, fire: false, flags: 0 };
+  for (const sub of subrecords(bytes, rec)) {
+    if (sub.name === 'NAME') e.id = zstr(bytes, sub.start, sub.len).toLowerCase();
+    else if (sub.name === 'MODL') e.model = zstr(bytes, sub.start, sub.len).replace(/\\/g, '/').toLowerCase();
+    else if (sub.name === 'FNAM') e.name = zstr(bytes, sub.start, sub.len);
+    else if (sub.name === 'LHDT') {
+      if (sub.len < 24) continue;   // refused, not read past
+      const dv = new DataView(bytes.buffer, bytes.byteOffset + sub.start, 24);
+      e.flags = dv.getInt32(20, true);
+      e.carry = (e.flags & MW_LIGHT_CARRY) !== 0;
+      e.fire = (e.flags & MW_LIGHT_FIRE) !== 0;
+    }
+  }
+  return e.id && e.model ? e : null;
+}
+
+export function lightRecords(bytes) {
+  const out = [];
+  for (const rec of walkEsm(bytes)) {
+    if (rec.type !== 'LIGH') continue;
+    const e = readLight(bytes, rec);
+    if (e) out.push(e);
+  }
+  return out;
+}
+
+/** MW-D51: WHICH TORCH. Daggerfall's Torch (TEMPLATES.Torch, 247) is
+ *  one item; Morrowind's are many LIGH records. The reference holds
+ *  whatever record the inventory's Slot_CarriedLeft carries - here the
+ *  slot is DF's lit light, so the record is chosen by the same shape
+ *  MW-D38's pickWeaponRecord uses for a blade: a CARRIABLE light whose
+ *  id names a torch, the plain `torch` first (retail's "Torch"), then
+ *  the shortest id (torch_256 over torch_256_yellow - the base over
+ *  its variants), and - MW-D50's law - only one whose mesh the
+ *  attached archives carry, or a torch resolves to a mesh the build
+ *  cannot read and the card says nothing useful. */
+export function pickTorchRecord(lights, { has = null } = {}) {
+  const cands = (lights ?? []).filter((l) => l && l.carry && l.model && /torch/.test(l.id)
+    && (!has || has(`meshes/${l.model}`)));
+  if (!cands.length) return null;
+  const exact = cands.find((l) => l.id === 'torch');
+  if (exact) return exact;
+  return cands.slice().sort((a, b) => a.id.length - b.id.length || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0))[0];
+}
+
+/** MW-D51 / RULE 25: the bones of ONE blend mask, by the reference's
+ *  own walk (Animation::detectBlendMask, animation.cpp): a bone belongs
+ *  to the mask whose root name it meets FIRST walking up its parents -
+ *  "Bip01 L Clavicle" is the left arm, and the arm test wins over the
+ *  spine because the clavicle is met before the spine on the way up.
+ *  Answers the LOWERCASED node names under `rootName` (itself
+ *  included), which is the spelling poseSkeleton looks tracks up by.
+ *  A skeleton without the root (the fixture rigs, a rig cut down to an
+ *  arm) answers the empty set, and the caller overlays nothing. */
+export function blendMaskBones(skeleton, rootName = 'bip01 l clavicle') {
+  const out = new Set();
+  if (!skeleton || !skeleton.nodes) return out;
+  const want = String(rootName).toLowerCase();
+  for (const [ref, node] of skeleton.nodes) {
+    let at = ref;
+    let hops = 0;
+    while (at !== undefined && at !== null && at >= 0 && hops++ < 256) {
+      const n = skeleton.nodes.get(at);
+      if (!n) break;
+      if (String(n.name || '').toLowerCase() === want) { out.add(String(node.name || '').toLowerCase()); break; }
+      at = n.parent;
+    }
+  }
+  return out;
+}
+
+/** MW-D51 / RULES 25+26, THE ONE MASK THIS PORT NOW HAS: a second
+ *  animation state WINNING one blend mask while the frame's winner
+ *  keeps the rest. The reference resolves per bone group at
+ *  resetActiveGroups and installs each winner's clock on its mask; in
+ *  the port's single-winner pose pass (fpArm.js's update) the same
+ *  outcome is a TRACK MAP that answers the overlay's track for a bone
+ *  in the mask and the base's track for every other bone, read through
+ *  a SAMPLER that samples an overlay track at the OVERLAY's own clock.
+ *  poseSkeleton asks `tracks.get(name)` and `sampleTrack(track, time)`
+ *  and nothing else, so the pair drops in with no change to the pass.
+ *  A mask bone the overlay does not key falls to the base's track (the
+ *  reference attaches no controller for it and the node keeps its last
+ *  transform; the base's is the safer reading of "last"). */
+export function overlayTracks(base, overlay, bones) {
+  // AUDIT MW-TORCH F4: ONE merged Map per (base, overlay, mask) - built
+  // eagerly so the frame's lookups allocate nothing. The caller memoises
+  // it on those three identities.
+  const out = new Map(base ?? []);
+  if (overlay && bones) {
+    for (const [name, t] of overlay) if (bones.has(name) && t) out.set(name, { __overlay: t });
+  }
+  return out;
+}
+export function overlaySampler(sampleTrack, clock) {
+  const at = typeof clock === 'function' ? clock : () => clock;
+  return (track, time) => (track && track.__overlay ? sampleTrack(track.__overlay, at()) : sampleTrack(track, time));
+}
+
 /** MW-D30: the CLOT records - the ARMO reader's twin, plus CTDT's
  *  TYPE, which the composer needs twice over: DF garments resolve to
  *  MW clothing BY TYPE (a shirt is any CLOT of type 2, id-sorted),
@@ -1095,7 +1207,7 @@ export const ARM_GMST_IDS = Object.freeze([GMST_SNEAK_DELTA]);
 /** MW-LOAD: the SHAPE of extractArmRecords' answer. Bumped whenever a
  *  reader above changes what it returns, so a derived set written by
  *  an older build is refused and re-extracted rather than read wrong. */
-export const ARM_RECORDS_VERSION = 1;
+export const ARM_RECORDS_VERSION = 2;   // MW-D51: + the LIGH records (a set without them is re-extracted)
 
 /**
  * MW-LOAD: EVERY record the arm build reads, in ONE pass of the master.
@@ -1117,7 +1229,7 @@ export const ARM_RECORDS_VERSION = 1;
  */
 export function extractArmRecords(bytes, { gmst = ARM_GMST_IDS } = {}) {
   const want = new Set(gmst.map((id) => String(id).toLowerCase()));
-  const out = { version: ARM_RECORDS_VERSION, parts: [], races: [], armors: [], clothes: [], weapons: [], gmst: {} };
+  const out = { version: ARM_RECORDS_VERSION, parts: [], races: [], armors: [], clothes: [], weapons: [], lights: [], gmst: {} };
   const races = new Map();
   for (const rec of walkEsm(bytes)) {
     switch (rec.type) {
@@ -1126,6 +1238,7 @@ export function extractArmRecords(bytes, { gmst = ARM_GMST_IDS } = {}) {
       case 'ARMO': { const e = readArmor(bytes, rec); if (e) out.armors.push(e); break; }
       case 'CLOT': { const e = readClothing(bytes, rec); if (e) out.clothes.push(e); break; }
       case 'WEAP': { const e = readWeapon(bytes, rec); if (e) out.weapons.push(e); break; }
+      case 'LIGH': { const e = readLight(bytes, rec); if (e) out.lights.push(e); break; }   // MW-D51
       case 'GMST': {
         const g = readGmst(bytes, rec);
         if (want.has(g.name) && !Object.hasOwn(out.gmst, g.name)) out.gmst[g.name] = g.value;
@@ -1143,7 +1256,7 @@ export function extractArmRecords(bytes, { gmst = ARM_GMST_IDS } = {}) {
  *  a torn one, answers false and is re-extracted. */
 export function isArmRecords(r) {
   return !!r && typeof r === 'object' && r.version === ARM_RECORDS_VERSION
-    && ['parts', 'races', 'armors', 'clothes', 'weapons'].every((k) => Array.isArray(r[k]))
+    && ['parts', 'races', 'armors', 'clothes', 'weapons', 'lights'].every((k) => Array.isArray(r[k]))
     && !!r.gmst && typeof r.gmst === 'object';
 }
 
@@ -1766,13 +1879,14 @@ export function checkRequiredBones(report) {
  * rather than a second copy of the same arithmetic - which is what lets
  * the result be re-posed at all.
  */
-export async function assembleFirstPersonArm({ skeletonBytes, parts }) {
+export async function assembleFirstPersonArm({ skeletonBytes, parts, boneSources = [] }) {
   const mod = {};
   try {
     ({ parseNif: mod.parseNif } = await import('./mwNifFile.js'));
     ({ buildSkeleton: mod.buildSkeleton, poseSkeleton: mod.poseSkeleton,
       skeletonSpaceMatrices: mod.skelMats, skinBatch: mod.skinBatch,
-      accumRootRef: mod.accumRootRef, trackBinding: mod.trackBinding } = await import('./mwSkin.js'));
+      accumRootRef: mod.accumRootRef, trackBinding: mod.trackBinding,
+      injectSkeletonNodes: mod.injectSkeletonNodes } = await import('./mwSkin.js'));
     ({ bindPart: mod.bindPart, attachmentTransform: mod.attachmentTransform } = await import('./mwCharacter.js'));
     ({ PART_BONES: mod.PART_BONES } = await import('./mwNpc.js'));
   } catch (err) {
@@ -1789,10 +1903,25 @@ export async function assembleFirstPersonArm({ skeletonBytes, parts }) {
 
   const pieces = [];
   const notes = [];
-  bindPartsInto({ pieces, notes, skeleton, fns: mod }, parts);
+  const effects = [];   // MAC-Q
+  // WS1: the bone addons (OpenMW's `use additional anim sources`) join
+  // the skeleton BEFORE any part binds, so a part may attach at a bone
+  // the addon brought. Each is `{ name, bytes }`; a file that will not
+  // parse is a note, never the assembly's refusal.
+  const injected = [];
+  for (const src of boneSources ?? []) {
+    try {
+      const r = mod.injectSkeletonNodes(skeleton, mod.parseNif(src.bytes));
+      injected.push({ name: src.name, added: r.added, skipped: r.skipped });
+    } catch (err) {
+      notes.push(`bones: ${src.name}: ${err.message}`);
+    }
+  }
+  bindPartsInto({ pieces, notes, effects, skeleton, fns: mod }, parts);
   const assembly = {
     ok: pieces.length > 0,
     pieces,
+    effects,   // MAC-Q: the parts' particle systems, placed like their rigid shapes
     notes,
     skeleton,
     rootRef,
@@ -1801,6 +1930,7 @@ export async function assembleFirstPersonArm({ skeletonBytes, parts }) {
     // frame; this function already paid for them once.
     fns: mod,
     bounds: null,
+    injected,   // WS1: what each bone addon added
     error: pieces.length ? null : 'nothing bound - see the notes for why',
   };
   // THE REST POSE IS NOW "pose at t=0 with no tracks" - one home, and the
@@ -1819,6 +1949,7 @@ export async function assembleFirstPersonArm({ skeletonBytes, parts }) {
 export function bindPartsInto(assembly, parts) {
   const mod = assembly.fns;
   const { skeleton, pieces, notes } = assembly;
+  const effects = assembly.effects ?? (assembly.effects = []);   // MAC-Q: the parts' particle systems
   // MW-D44: the WEAPON's own BoneOffset, kept for the ammunition that
   // rides inside its mesh. resolveWeaponParts pushes 'weapon' before
   // 'arrow', so by the time the arrow binds this is the offset the
@@ -1826,6 +1957,12 @@ export function bindPartsInto(assembly, parts) {
   // every other part list and reset per call, so a body without a
   // weapon cannot inherit a stale one.
   let weaponBoneOffset = null;
+  // WS1: the SCABBARD's offset, for what rides inside its file - the
+  // holstered weapon the base mesh stands in for (getInstance(mesh,
+  // weaponNode)) and the quiver's arrows (getInstance(model, arrowNode))
+  // are bare instances under nodes of the scabbard's graph, so they wear
+  // the scabbard's PAT exactly as the arrow wears the weapon's (MW-D44).
+  let sheathBoneOffset = null;
   for (const part of parts) {
     // `part.bones` overrides the table so a test can drive real assembly
     // against a fixture skeleton whose bone names are not Morrowind's.
@@ -1849,7 +1986,7 @@ export function bindPartsInto(assembly, parts) {
       }
       let bound;
       try {
-        bound = mod.bindPart(skeleton, nif, bone ? { attachBone: bone } : {});
+        bound = mod.bindPart(skeleton, nif, { ...(bone ? { attachBone: bone } : {}), underNode: part.underNode, excludeNode: part.excludeNode });   // WS1: a subtree of the file
       } catch (err) {
         notes.push(`${part.slot} @ ${bone}: ${err.message}`);
         continue;
@@ -1952,7 +2089,7 @@ export function bindPartsInto(assembly, parts) {
         const nodeName = nodeRef != null && skeleton.nodes.has(nodeRef) ? skeleton.nodes.get(nodeRef).name : (bone || '');
         const mirror = nodeName.includes('Left');
         for (const batch of bound.attached) {
-          pieces.push({ slot: part.slot, bone, kind: 'rigid', mirrored: mirror,
+          pieces.push({ slot: part.slot, bone, kind: 'rigid', mirrored: mirror, tag: part.tag ?? null,   // WS1: a part's own tag (the quiver slot's index)
             // MW-D16: a part instanced under a node INSIDE another part's
             // mesh (the arrow, under the bow's ArrowBone) carries that
             // node's whole chain. It is baked in ONCE here rather than
@@ -2016,14 +2153,32 @@ export function bindPartsInto(assembly, parts) {
             // other way.
             boneOffset: part.ammo
               ? (part.preTransform ? weaponBoneOffset : null)
-              : (bound.boneOffset || null),
+              : part.bare
+                ? (part.inheritOffsetFrom === 'sheath' ? sheathBoneOffset : null)   // WS1: a bare instance under the scabbard's node
+                : (bound.boneOffset || null),
             uvs: batch.uvs || null, colors: batch.colors || null, material: batch.material || null,
             positions: new Float32Array(batch.positions.length), indices: batch.indices });
+        }
+        // MAC-Q: THE PART'S PARTICLE SYSTEMS ride the same placement its
+        // rigid shapes do - the bone, the mirror, rule 14's offset and the
+        // part's pre-transform - because they were authored in the same
+        // file at the same origin. A torch's flame is one. They are kept
+        // apart from the pieces (a piece is a triangle list; this is a
+        // law and a clock) on `assembly.effects`, which combat/fpArm.js
+        // runs and draws. Only a RIGID part carries them: a skinned file's
+        // particles would follow a bone this flattener does not track.
+        for (const desc of bound.effects ?? []) {
+          effects.push({
+            slot: part.slot, bone, mirrored: mirror, tag: part.tag ?? null,
+            attachRef: bound.attachRef, boneOffset: bound.boneOffset || null, pre: part.preTransform || null,
+            desc, material: desc.material,
+          });
         }
         // MW-D44: the weapon's offset, held for the ammunition that
         // rides inside its mesh. Only the weapon's - a shield or a body
         // part must not lend the arrow anything.
         if (part.slot === 'weapon') weaponBoneOffset = bound.boneOffset || null;
+        if (part.slot === 'sheath') sheathBoneOffset = bound.boneOffset || null;   // WS1
       }
       // THE SILENT HOLE, CLOSED. A bone whose every NAMED skinned shape
       // fails rule 15's filter used to bind NOTHING and say NOTHING -

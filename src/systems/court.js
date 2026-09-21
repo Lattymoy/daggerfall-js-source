@@ -36,10 +36,10 @@
 // site). The prison time-skip riding the host clock callback is the
 // port's seam shape, not a remainder.
 // BANISHMENT'S CONSEQUENCES SHIPPED: `SeverePunishmentFlags |= 1` is
-// written at scenes/arrestFlow.js:439-442 (severePunishment, off
-// OnPop) and read every catch-up minute by encounters.js:220
+// written at scenes/arrestFlow.js:463-466 (severePunishment, off
+// OnPop) and read every catch-up minute by encounters.js:237
 // passiveGuardSpawns - PlayerEntity.cs:507's 10% banished-player
-// guard roll - fed at scenes/world.js:2024-2026. (The guild rescues -
+// guard roll - fed at scenes/world.js:2451-2453. (The guild rescues -
 // Thieves/Dark Brotherhood - landed at CR1, guildRescue below.)
 
 import { rand } from '../formats/dfRandom.js';

@@ -69,15 +69,20 @@ test('LT1: the paired shape prepends player lights to BOTH arrays under the one 
   assert.deepEqual([...out.colors.slice(6, 9)], [0, 1, 0]);
 });
 
+/** AUDIT-EL F4: the cap is the RENDERER's now (setPointLights cuts to the installed set's), not the composer's - the classic set's sixteen, applied here as the renderer applies it */
+const cappedBy16 = (data, colors = null) => { const st = { maxPointLights: 16, _pointColor: new Float32Array([1, 1, 1]), _pointColors: null, _pointLights: null }; Renderer.prototype.setPointLights.call(st, data, null, colors); return st; };
 test('LT1: the paired cap drops FAR lights, never the player\'s own', () => {
   const many = Array.from({ length: 16 }, (_, i) => ({ x: i + 1, y: 0, z: 0, range: 5, color: [i / 16, 0, 0] }));
   const base = nearestLights(many, [0, 0, 0], 16, many.map((l) => l.range), (l) => l.color);
   const out = withPlayerLights(base, { x: 0, y: 0, z: 0, range: 3 });
-  assert.equal(out.data.length / 4, 16, 'capped at the renderer\'s 16');
-  assert.equal(out.colors.length / 3, 16);
-  assert.equal(out.data[0], 0, 'the player light leads');
-  assert.equal(out.data[15 * 4], 15, 'the 16th slot is the 15th base light - the farthest dropped');
-  assert.ok(Math.abs(out.colors[15 * 3] - 14 / 16) < 1e-6, 'its colour dropped WITH it');
+  assert.equal(out.data.length / 4, 17, 'AUDIT-EL F4: the composer keeps every light - the cap is the installed set\'s, in the renderer');
+  assert.equal(out.colors.length / 3, 17);
+  const st = cappedBy16(out.data, out.colors);
+  assert.equal(st._pointLights.length / 4, 16, 'capped at the classic set\'s 16 by setPointLights');
+  assert.equal(st._pointColors.length / 3, 16);
+  assert.equal(st._pointLights[0], 0, 'the player light leads');
+  assert.equal(st._pointLights[15 * 4], 15, 'the 16th slot is the 15th base light - the farthest dropped');
+  assert.ok(Math.abs(st._pointColors[15 * 3] - 14 / 16) < 1e-6, 'its colour dropped WITH it');
 });
 
 test('LT1: a paired base with no live player lights comes back untouched', () => {
@@ -94,6 +99,8 @@ const rendererState = () => ({
   _pointColor: new Float32Array([1, 1, 1]),
   _pointColors: null,
   _pointColorScratch: new Float32Array(16 * 3),
+  maxPointLights: 16,   // EL1: the installed set's cap
+  _lane: null,
 });
 
 test('LT1: setPointLights stores the per-light colours and CLEARS them when a host passes none', () => {
@@ -124,9 +131,13 @@ test('LT1: _pointColorData answers the host array as-is, or the shared colour sp
 
 test('LT1: all four fragment shaders accumulate vec3 pointAcc off uPointColors[i]; the scalar channel is GONE', () => {
   const r = src('render/renderer.js');
-  assert.equal((r.match(/uniform vec3 uPointColors\[16\]/g) ?? []).length, 4, 'the vec3 array in all four programs');
-  assert.equal((r.match(/vec3 pointAcc = vec3\(0\.0\);/g) ?? []).length, 4);
-  assert.equal((r.match(/\* uPointColors\[i\];/g) ?? []).length, 4, 'every accumulation weighted per light');
+  // MAC-BUG W4 (2026-09-20): FIVE, not four. The DECAL pass grew the
+  // same term - a blood mark was lit by ambient alone while the gib
+  // from the same blow took the full light - and it took this one
+  // character for character, which is what EL1's own pin holds it to.
+  assert.equal((r.match(/uniform vec3 uPointColors\[16\]/g) ?? []).length, 5, 'the vec3 array in all five programs');
+  assert.equal((r.match(/vec3 pointAcc = vec3\(0\.0\);/g) ?? []).length, 5);
+  assert.equal((r.match(/\* uPointColors\[i\];/g) ?? []).length, 5, 'every accumulation weighted per light');
   assert.equal(/uniform vec3 uPointColor;/.test(r), false, 'the shared uniform left the shaders');
   assert.equal(/pointDiff/.test(r), false, 'no scalar accumulator survives');
 });

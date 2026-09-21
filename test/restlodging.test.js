@@ -3,6 +3,7 @@
 // MoveToBed (:601-609), and the IllegalRestWarning confirm the WHILE
 // and HEALED buttons raise ahead of both (:641-692).
 import { test } from 'node:test';
+import './modsOff.js';   // SURV4: this suite pins DFU's own rested hour - the survival arc's costed rest (survival/rest.js) is a mod, off here so the hour is DFU's
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import {
@@ -495,7 +496,7 @@ test('S40 restVitals: one home for the rested hour, and the dungeon host uses it
   }
   // ...and createRestDeps CALLS them rather than closing over a value.
   assert.match(src('src/scenes/shared.js'),
-    /tickVitals: \(\) => restVitals\(entity, \{ day: day\(\), inside: inside\(\) \}\),/);
+    /tickVitals: \(\) => \{[^\n]*restHour\(entity, _kind, \(\) => restVitals\(entity, \{ day: day\(\), inside: inside\(\) \}\)\); \},/);   // SURV4: the hour by its kind, restVitals still the one home
 
   // Each of the three must be at max INDEPENDENTLY: fill two and the
   // completion must still be false, or FullRest ends early.
@@ -1273,7 +1274,7 @@ test('S40 IsResting: raised on OPEN, cleared on EVERY exit, and the enchant rate
   assert.doesNotMatch(src('src/scenes/world.js'), /isResting stays absent/);
   // ...and the flags are written by the ONE composition, not by four
   // hosts that each have to remember.
-  assert.match(src('src/scenes/shared.js'), /setResting: \(b\) => \{ entity\.isResting = !!b; \},/);
+  assert.match(src('src/scenes/shared.js'), /setResting: \(b\) => \{\s*entity\.isResting = !!b;/);
   assert.match(src('src/scenes/shared.js'), /setLoitering: \(b\) => \{ entity\.isLoitering = !!b; \},/);
   // The window has exactly ONE door that sets `done`.
   assert.equal((src('src/ui/restWindow.js').match(/this\.done = true/g) ?? []).length, 1);
@@ -1388,7 +1389,9 @@ test('D3: the native pages are the two DFU panels, and nothing else moved onto a
   const w = src('src/ui/restWindow.js');
   // Setup :137-138 - "Hide world while resting", opaque black, so the
   // host's HUD goes with the world.
-  assert.match(w, /if \(this\.state === 'resting' && isEnhanced\(\)\) drawMenuBackdrop\(renderer, canvas, REST_VEIL\);\s*\n\s*else drawMenuBackdrop\(renderer, canvas\);/, 'opaque black, verbatim - the enhanced skin\'s resting page alone takes CLK4\'s veil');
+  // REST-VEIL2: the classic skin keeps it verbatim; the enhanced skin
+  // takes CLK4's veil on EVERY page of this window, selection included.
+  assert.match(w, /if \(isEnhanced\(\)\) drawMenuBackdrop\(renderer, canvas, REST_VEIL\);\s*\n\s*else drawMenuBackdrop\(renderer, canvas\);/, 'opaque black for the classic skin, the veil for the enhanced one - whole-window either way');
   // ShowStatus assigns the counter panel's BackgroundTexture per mode
   // and DFU's explicit 105x41 Size wins over the IMG's own.
   assert.match(w, /drawImg\(renderer, _art\[st\.texture\], m, REST_COUNTER_X, REST_PANEL_Y,\n\s+REST_COUNTER_RECT\[2\], REST_COUNTER_RECT\[3\]\);/);

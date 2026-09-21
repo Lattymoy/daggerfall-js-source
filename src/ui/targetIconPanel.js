@@ -27,7 +27,7 @@ import { drawImgCrop, shadowText } from './nativePanel.js';
 import { DEFAULT_TOOLTIP_TEXT_FG } from './toolTip.js';
 import { CifRciFile } from '../formats/cifRciFile.js';
 import { TextureFile, texName } from '../formats/textureFile.js';   // G5: the drop icon is a WORLD FLAT's record
-import { bitmapToColor32 } from './hud.js';
+import { bitmapToColor32 } from '../formats/color32Order.js';
 
 /** InventoryContainerImages (DaggerfallUnityEnums.cs:540-553) - the
  *  record index into INVE16I0.CIF, in the enum's own order. */

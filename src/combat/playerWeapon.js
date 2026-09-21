@@ -23,8 +23,9 @@
 
 import {
   createWeaponMachine, machineAttack, machineStep, gestureDirection,
-  MAX_GESTURE_SECONDS, BOW_DRAWN_HOLD_FRAME, machineCancelBowDraw,
+  MAX_GESTURE_SECONDS, BOW_DRAWN_HOLD_FRAME, machineCancelBowDraw, THUNDERLOCK_NUM_FRAMES,
 } from '../characters/weaponStates.js';
+import { GUN_FEEL, GUN_TICK_SECONDS, GUN_COOLDOWN_SECONDS } from './gunFeel.js';   // FIELD-GUN7: the lab's cadence, from the one home
 import { DIRECTION_TO_STRIKE, ATTACKS_FP, sampleClip } from '../characters/anims.js';
 import { combinePose } from '../characters/animate.js';
 import { weaponTypeForItem, WEAPON_TYPES } from './fpsWeapon.js';
@@ -323,7 +324,7 @@ export class PlayerWeapon {
    * `sum over both hands of (EquipDelayTimes[GroupIndex] - 500)`,
    * divided by 1.7, onto the hand now in use.
    *
-   * PORT NOTE (the CH3 collapse, equip.js:63): DFU keeps a countdown
+   * PORT NOTE (the CH3 collapse, equip.js:65): DFU keeps a countdown
    * PER HAND and this bill lands on the used one; the port sums both
    * into entity.equipCountdown, so the bill lands on the one clock.
    * Same delay, same block on the swing - only the per-hand split is
@@ -496,6 +497,27 @@ export class PlayerWeapon {
     // was shipped but nothing ever set isBow - bows swung on the melee
     // clock. Read per step, exactly like the unarmed gate above.
     this.machine.isBow = t === WEAPON_TYPES.Bow;
+    // THE PORT'S OWN WEAPON is RANGED but not a BOW, and the
+    // difference is the whole of why it is worth saying: a bow DRAWS -
+    // StrikeUp winds up, the string holds at frame 3, StrikeDown
+    // looses - and a gun has a trigger. So it keeps the melee
+    // one-shot (`isBow` false, six frames instead of five through
+    // `machine.frames`) and takes the RANGED half of the bow's laws -
+    // the cooldown, and a shot that spends ammunition - through
+    // `machine.ranged`. The skill it is scored on is Archery either
+    // way; that is weaponSkillUsed's answer, not the machine's.
+    const thunderlock = t === WEAPON_TYPES.Thunderlock || t === WEAPON_TYPES.Thunderlock_Magic;
+    this.machine.ranged = t === WEAPON_TYPES.Bow || thunderlock;
+    this.machine.frames = thunderlock ? THUNDERLOCK_NUM_FRAMES : null;
+    // FIELD-GUN7: and the three the lab settled that the game was
+    // answering with its own SPD-driven formulas - the frame clock
+    // (14fps, not ~5 at average speed), the reload (a fixed 1.7s, not
+    // a cooldown that moves with the character) and the hit frame
+    // (the muzzle flash, not the melee frame after it). Null for
+    // every other weapon, which is the classic answer untouched.
+    this.machine.tick = thunderlock ? GUN_TICK_SECONDS : null;
+    this.machine.cooldown = thunderlock ? GUN_COOLDOWN_SECONDS : null;
+    this.machine.hitFrame = thunderlock ? GUN_FEEL.hitFrame : null;
     return machineStep(this.machine, dt, this.liveSpeed);
   }
 

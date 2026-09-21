@@ -417,3 +417,48 @@ export function playerArrowOrigin(eye, lookDir, flipHorizontal = bowHandFlipped(
     eye[2] - uz * PLAYER_ARROW_DOWN + rz * side,
   ];
 }
+
+/**
+ * FIELD-GUN17 (Mac: "the orb doesnt allign with the barrel when
+ * firing. Its above the barrel") - A NAMED DEPARTURE, ahead of the
+ * verbatim arm above: the same eye, the same basis, a DIFFERENT
+ * offset.
+ *
+ * `playerArrowOrigin` is GetAimPosition, and GetAimPosition is right
+ * about the one ranged weapon Daggerfall has: 0.11 below the eye and
+ * 0.15 to the hand is the nock of a DRAWN BOW. The Thunderlock is
+ * this port's own weapon and it is not held where a bow is held, so
+ * the shaft's offset put its orb well above the barrel. DFU has no
+ * answer here because DFU has no gun.
+ *
+ * `muzzle` is a CAMERA-SPACE offset - {right, up, forward}, already
+ * measured off the drawn frame by weaponRig.thunderlockMuzzle - so
+ * this only has to turn it into world axes on the same basis the arm
+ * above rebuilds. No handedness term: the mirror is a fact about the
+ * DRAWN RECT and thunderlockMuzzle has already applied it, where
+ * PLAYER_ARROW_SIDE is a bare number that has to be flipped here.
+ */
+/** AUDIT FIELD-GUN-MW F2: THE FORK, ONCE. Both arrow spawn seams (combat/arrowFlight.js and the dungeon host's
+ *  own missiles) used to restate it: a supplied muzzle wins, nothing supplied keeps GetAimPosition's bow-hand arm.
+ *  The Morrowind rig's third-person answer is a WORLD point (`{ world }`, combat/rigMuzzle.js) - behind the body a
+ *  lens offset is the wrong shape - and a third arm restated in two places is how the two drift, so the fork lives
+ *  here and the seams call it. */
+export function playerShotOrigin(eye, lookDir, muzzle) {
+  if (muzzle?.world) return [...muzzle.world];
+  return muzzle ? playerMuzzleOrigin(eye, lookDir, muzzle) : playerArrowOrigin(eye, lookDir);
+}
+
+export function playerMuzzleOrigin(eye, lookDir, muzzle) {
+  const fl = Math.hypot(lookDir[0], lookDir[1], lookDir[2]) || 1;
+  const f = [lookDir[0] / fl, lookDir[1] / fl, lookDir[2] / fl];
+  let rx = f[2], rz = -f[0];
+  const rl = Math.hypot(rx, rz);
+  if (rl < 1e-6) { rx = 1; rz = 0; } else { rx /= rl; rz /= rl; }
+  const ux = f[1] * rz, uy = f[2] * rx - f[0] * rz, uz = -f[1] * rx;
+  const r = muzzle?.right ?? 0, u = muzzle?.up ?? 0, d = muzzle?.forward ?? 0;
+  return [
+    eye[0] + rx * r + ux * u + f[0] * d,
+    eye[1] + uy * u + f[1] * d,
+    eye[2] + rz * r + uz * u + f[2] * d,
+  ];
+}

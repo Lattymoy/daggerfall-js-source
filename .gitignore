@@ -1,5 +1,7 @@
 node_modules/
 dist/
+# the gun lab's own build (vite.config.gun.js)
+dist-gun/
 .DS_Store
 
 # Original game data - freeware but not redistributable. NEVER commit.
@@ -60,3 +62,6 @@ prototype/
 
 # ONLINE1: wrangler's local state beside the relay
 server/.wrangler/
+
+# Probe output (tools/enhancedLightingProbe.mjs PNGs and the like) - never commit.
+scratch/

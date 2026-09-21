@@ -28,6 +28,8 @@ import { BODY_PARTS, NUMBER_BODY_PARTS, materialArmorValue, itemArmorValue, SHIE
 import { weaponSkillUsed } from '../characters/weapons.js';   // wave 29: GetWeaponSkillUsed keys on the TEMPLATE
 import { SKILLS, WEAPON_SKILL } from './skills.js';   // S23: the weapon partition, single-sourced
 import { EQUIP_DELAY_TIMES } from '../characters/weaponStates.js';   // CH3 (characters-13): the swap-pause table gains its consumer
+import { startingProvisions } from './survival/items.js';   // SURV2: the new character's kit
+import { survivalOn } from './survival/switch.js';   // SURV2: the one switch
 
 export { EQUIP_SLOTS, ITEM_HANDS };
 const ARROW = 131;
@@ -303,12 +305,12 @@ export function rebuildEquipState(entity) {
  *  like any other item. Idempotent per entity.
  *
  *  SUPERSEDED, not pending. S3d shipped the real roll -
- *  systems/startingGear.js:68 assignStartingGear (ItemHelper's
+ *  systems/startingGear.js:70 assignStartingGear (ItemHelper's
  *  AssignStartingGear), run on both creation paths at
- *  chargenSession.js:136 (?class= headless) and :221 (the wizard) -
+ *  chargenSession.js:140 (?class= headless) and :221 (the wizard) -
  *  and the guard below (`entity.equip || items.length`) makes this a
  *  no-op for any character that went through either. What is left is
- *  residue at the two host calls (world.js:1974, exterior.js:1100):
+ *  residue at the two host calls (world.js:2401, exterior.js:1178):
  *  a chargenDone entity whose bag AND equip table are both empty
  *  still takes a free dagger here. Deleting the calls is a behaviour
  *  change, so it waits for a slice that owns one. */
@@ -318,6 +320,11 @@ export function seedStartingEquipment(entity) {
   const dagger = mintCondition({ group: 'Weapons', templateIndex: 113, name: 'Dagger', material: 0, flags: 0, minDamage: 1, maxDamage: 6 });   // AUDIT 23 (items-13/C13): no port site mints bit 0x10 (the claim is true again); items-5 condition
   entity.items.push(dagger);
   equipItem(entity, dagger);
+  // SURV2: a new character sets out with provisions - two sacks of
+  // rations, a full waterskin, worn camping gear and a fire kit with
+  // two lights left (survival/items.js startingProvisions; the mod's
+  // own OnStartGame kit, plus the port's fire).
+  if (survivalOn()) for (const it of startingProvisions()) entity.items.push(it);
 }
 
 // ---- U8h: ARMOR VALUES (DaggerfallEntity.UpdateEquippedArmorValues

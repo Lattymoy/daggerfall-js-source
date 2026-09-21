@@ -1,0 +1,30 @@
+[
+ {
+  "name": "GRASS4-the-key-is-a-string-again-so-every-blade-allocates-one",
+  "file": "src/render/labGrass.js",
+  "old": "export const pieceKey = (px, py) => px * 65536 + py;",
+  "new": "export const pieceKey = (px, py) => `${px},${py}`;",
+  "tests": ["test/perf8.test.js"]
+ },
+ {
+  "name": "GRASS4-the-key-folds-the-northern-half-of-the-world-onto-the-southern",
+  "file": "src/render/labGrass.js",
+  "old": "export const pieceKey = (px, py) => px * 65536 + py;",
+  "new": "export const pieceKey = (px, py) => px * 65536 + Math.abs(py);",
+  "tests": ["test/perf8.test.js"]
+ },
+ {
+  "name": "GRASS4-the-strides-too-short-so-neighbouring-pixels-collide",
+  "file": "src/render/labGrass.js",
+  "old": "export const pieceKey = (px, py) => px * 65536 + py;",
+  "new": "export const pieceKey = (px, py) => px * 512 + py;",
+  "tests": ["test/perf8.test.js"]
+ },
+ {
+  "name": "GRASS4-the-index-is-built-on-one-key-and-read-with-another",
+  "file": "src/render/labGrass.js",
+  "old": "    return byKey.get(pieceKey(px, py)) ?? null;",
+  "new": "    return byKey.get(pieceKey(py, px)) ?? null;",
+  "tests": ["test/perf8.test.js"]
+ }
+]

@@ -1,0 +1,121 @@
+[
+  {
+    "name": "MAC-BUG-W5-1-the-spray-goes-back-to-the-bucket-ray",
+    "file": "src/combat/bloodMarks.js",
+    "old": "      const h = col.surfaceHit([fromX, pos[1], fromZ], dir, reach);",
+    "new": "      const h = col.raycastHit([fromX, pos[1], fromZ], dir, reach);",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "MAC-BUG-W5-2-the-fallers-go-back-to-it",
+    "file": "src/combat/bloodMarks.js",
+    "old": "      const h = col?.surfaceHit ? col.surfaceHit(step.from, step.dir, step.dist) : null;",
+    "new": "      const h = col?.raycastHit ? col.raycastHit(step.from, step.dir, step.dist) : null;",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "MAC-BUG-W5-3-surfaceHit-ignores-the-ground-entirely",
+    "file": "src/player/collider.js",
+    "old": "    if (!(dir[1] < 0)) return mesh;",
+    "new": "    return mesh;   /* eslint-disable-line no-unreachable */\n    if (!(dir[1] < 0)) return mesh;",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "MAC-BUG-W5-4-the-floor-is-met-on-the-way-up-too-so-blood-sticks-to-the-sky",
+    "file": "src/player/collider.js",
+    "old": "    if (!(dir[1] < 0)) return mesh;",
+    "new": "    if (dir[1] === 0) return mesh;",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "MAC-BUG-W5-5-the-ground-wins-even-when-a-mesh-is-nearer",
+    "file": "src/player/collider.js",
+    "old": "    if (mesh && Number.isFinite(mesh.dist) && mesh.dist <= d) return mesh;",
+    "new": "    if (false) return mesh;",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "MAC-BUG-W5-6-the-reach-stops-being-honoured-so-spatter-off-a-walkway-still-marks",
+    "file": "src/player/collider.js",
+    "old": "    if (!(d >= 0) || d > maxDist) return mesh;",
+    "new": "    if (!(d >= 0)) return mesh;",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "MAC-BUG-W5-7-a-dungeons-minus-infinity-floor-is-treated-as-a-surface",
+    "file": "src/player/collider.js",
+    "old": "    if (!Number.isFinite(floor)) return mesh;",
+    "new": "    if (floor === null) return mesh;",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ],
+    "equivalent": true,
+    "why": "-Infinity survives this guard and then dies at the next one: `d` solves to Infinity, which `d > maxDist` rejects, so a dungeon's floorless collider answers the bucket ray either way. The guard is kept because it says WHY a dungeon has no ground - `heightAt` answering -Infinity is the port's word for \"no floor here\" - where the reach check is about distance and would silently do the same job for the wrong reason."
+  },
+  {
+    "name": "MAC-BUG-W5-8-the-slope-is-dropped-and-every-mark-lies-flat",
+    "file": "src/player/collider.js",
+    "old": "    return { dist: d, key: null, normal: this.groundNormal(origin[0], origin[2]) };",
+    "new": "    return { dist: d, key: null, normal: [0, 1, 0] };",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "MAC-BUG-W5-9-the-gradient-loses-its-sign-so-a-hill-leans-the-wrong-way",
+    "file": "src/player/collider.js",
+    "old": "    const nx = (-hx / (2 * h)) || 0, nz = (-hz / (2 * h)) || 0;",
+    "new": "    const nx = (hx / (2 * h)) || 0, nz = (hz / (2 * h)) || 0;",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "MAC-BUG-W5-10-the-central-difference-forgets-to-halve-the-span",
+    "file": "src/player/collider.js",
+    "old": "    const nx = (-hx / (2 * h)) || 0, nz = (-hz / (2 * h)) || 0;",
+    "new": "    const nx = (-hx / h) || 0, nz = (-hz / h) || 0;",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "MAC-BUG-W5-11-a-NaN-sampler-builds-a-NaN-normal",
+    "file": "src/player/collider.js",
+    "old": "    if (!Number.isFinite(hx) || !Number.isFinite(hz)) return [0, 1, 0];",
+    "new": "    if (hx == null || hz == null) return [0, 1, 0];",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "MAC-BUG-W5-12-the-gradient-keeps-minus-zero-over-flat-ground",
+    "file": "src/player/collider.js",
+    "old": "    const nx = (-hx / (2 * h)) || 0, nz = (-hz / (2 * h)) || 0;",
+    "new": "    const nx = -hx / (2 * h), nz = -hz / (2 * h);",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  },
+  {
+    "name": "MAC-BUG-W5-13-the-pools-gate-still-asks-for-the-door-it-no-longer-knocks-on",
+    "file": "src/combat/bloodMarks.js",
+    "old": "    if (!col?.surfaceHit) return null;",
+    "new": "    if (!col?.raycastHit) return null;",
+    "tests": [
+      "test/blood1_decals.test.js"
+    ]
+  }
+]
