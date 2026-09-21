@@ -464,6 +464,66 @@ is the answer to whether it reads: all four quarters traced, every
 plate carrying its own quarter, a landmark lettered proud of the shops
 at rest, and a quest proud of the landmarks.
 
+## EM-BUG1 / EM-BUG2 — two the tabs cost, both from the same shape
+
+Mac, 2026-09-21, from play:
+
+> 1. Regression where your equipped weapon isnt stowed when the map is
+>    out, and it shows the map and your weapon on the screen
+> 2. You cannot press the M key to stow the map
+
+Both are the price of the arc's own central move. Three windows became
+ONE window with three sheets, and two laws that had been written for
+the travel map alone did not widen with it.
+
+**EM-BUG1 — one flag was answering two questions.** MAP-WEAPON gave the
+weapon rig a gate: `if (sheetWindowUp()) return;` (`combat/weaponRig.js`),
+because hands holding a map are not also holding a sword. The host
+answered it off the window's own duck tag, `isTravelMap` — fine while
+this window WAS the travel map.
+
+Then EM4 narrowed that tag, correctly and for a good reason: once the
+same window opens on a town or a crypt, a constant `true` is a lie,
+because the tag also gates whether travel is offered from the sheet. It
+became `this._slot.ids.includes('world')` — *the bay is reachable from
+here*.
+
+That is the right answer to the travel question and the wrong answer to
+the weapon one, and nothing said the two were different questions. On a
+town sheet and a dungeon sheet `isTravelMap` is false, so the gate
+stopped firing and the weapon drew over the map. The fix is to stop
+overloading the flag: `holdsScreen` is declared constant on the window
+and answers only "a map holds the screen"; `isTravelMap` stays derived
+and answers only "travel is offered here".
+
+**...and three hosts never had the gate at all.** The second half, which
+the flag hid. `sheetWindowUp` was wired in `scenes/world.js` and nowhere
+else, because when MAP-WEAPON was written the world host was the only
+one that could open the sheet. EM3 and EM4 gave the same window a door
+in a dungeon, in a building and on the second exterior host; none of
+those three rigs grew the term. So even with the flag fixed, the
+dungeon automap would still have come up with a sword through it. All
+four hosts read their own slot now.
+
+**EM-BUG2 — the key that opens it could not shut it.** The sheet's
+close arm was `code === 'Escape' || actionForCode(bindings(), code) ===
+'TravelMap'`, written when the only way in was the TravelMap key. Every
+door EM3 and EM4 added is behind the AUTOMAP key, so in a dungeon, a
+town or a building the map opened on M and refused to close on it. The
+classic twin has always taken its own binding back
+(`ui/automapWindow.js`); this one takes both actions now, on every
+sheet, because the tabs mean one window can be entered by either key and
+the player should not have to remember which.
+
+**WHAT LET THE FIRST ONE THROUGH.** `test/map3_heldpose.test.js` pinned
+the gate — and pinned it as `isTravelMap`, so when EM4 narrowed the tag
+the pin was updated to match the new shape and went green over the
+regression. A pin that asserts the wiring as it is will always agree
+with the wiring as it is. It now asserts the law instead: every host
+reads its own slot, the screen tag is constant, the travel tag is
+derived, and neither answers the other's question. Nine mutants, nine
+dead, including one per host that simply removes the term.
+
 ## Doctrine, unchanged
 
 The sprite is Mac's, the maps are computed, the names are the game's

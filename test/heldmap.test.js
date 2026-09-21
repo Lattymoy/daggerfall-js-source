@@ -3109,3 +3109,29 @@ test('ENH-NOTICE3 (AUDIT B4/B6): the card\'s refusal wears no hint (nothing dism
     win.dispose();
   });
 });
+
+// ── EM-BUG2 (Mac, 2026-09-21: "You cannot press the M key to stow the
+// map") ──────────────────────────────────────────────────────────────
+test('EM-BUG2: the key that opens the sheet shuts it - the AutoMap binding as well as TravelMap, on every sheet', () => {
+  const held = readFileSync(new URL('../src/ui/heldMap.js', import.meta.url), 'utf8');
+  // THE WHOLE BUG IN ONE LINE. This arm was written when the sheet was
+  // the WORLD map alone, so it took the TravelMap action and Escape.
+  // EM3 and EM4 gave the same window three more doors - a dungeon's
+  // plan, a town's, a building's - and every one of them is behind the
+  // AutoMap key, so the key that opened the map could not shut it.
+  assert.match(held, /const _act = actionForCode\(bindings\(\), code\);\s*\n\s*if \(code === 'Escape' \|\| _act === 'TravelMap' \|\| _act === 'AutoMap'\) \{/,
+    'both map actions, and Escape, take the same door out');
+  assert.doesNotMatch(held, /if \(code === 'Escape' \|\| actionForCode\(bindings\(\), code\) === 'TravelMap'\) \{/,
+    'never the travel action alone again - that is the shape that shipped');
+  // the action is resolved ONCE - the arm is taken on every key that
+  // reaches the sheet, so this is the hot path's own lookup
+  assert.equal((held.match(/const _act = actionForCode\(bindings\(\), code\);/g) || []).length, 1);
+  // ...and the classic twin has always taken its own binding back, which
+  // is the law this one is keeping rather than inventing
+  const classic = readFileSync(new URL('../src/ui/automapWindow.js', import.meta.url), 'utf8');
+  assert.match(classic, /if \(this\.automapBinding && normalizeCode\(code, e\) === this\.automapBinding\)/,
+    'ui/automapWindow.js: DFU’s own window closes on the AutoMap key');
+  // the binding the sheet answers to is the PLAYER's, read live off the
+  // store - a rebound map key still closes the map it opened
+  assert.match(held, /import \{[^}]*actionForCode[^}]*\} from/);
+});

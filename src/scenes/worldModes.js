@@ -640,6 +640,13 @@ export function createWorldModes(host) {
   // combat/fpsSpellCasting.js holds the animation as a singleton and
   // whichever rig owns the frame draws it - which indoors is this one.
   const interiorWeapon = createWeaponRig({
+    // EM-BUG1: HANDS HOLDING A MAP ARE NOT ALSO HOLDING A SWORD.
+    // MAP-WEAPON gave the world host this gate when only the world
+    // host could open the sheet; EM3/EM4 gave the same window a door
+    // here too and this bag never grew the term, so the map came up
+    // with the weapon still drawn over it. The window's own tag, read
+    // off this host's slot, as world.js reads off its own.
+    sheetWindowUp: () => interiorOverlay?.holdsScreen === true,
     activateHeld: () => held(keys, 'ActivateCenterObject') || !!host.activateDown?.(),   // AUDIT 62 F8 (review): the finger's press too - it reaches this host ONLY through activateDown, never through `keys`   // AUDIT 28 W12: the drawn bow's un-draw key
     spellArmed: () => magic?.spellArmed() ?? false, abortSpell: () => magic?.abortReadySpell(),   // M2; MAC-O1: WeaponManager.Update:251 - the ReadyWeapon key puts a readied spell away and draws
     renderer, canvas, fetchBytes, palette, audio, entity: playerEntity,
@@ -5354,7 +5361,7 @@ export function createWorldModes(host) {
           hudMessageSink: (t) => questBridge?.notebook?.addMessage(t),
           // MAC1 J: and the relock the dungeon's pause door needs, on
           // the same threading - the context owns no canvas of its own
-          // (dungeonContext.js:5899), so the OUTER host's one rides in.
+          // (dungeonContext.js:5906), so the OUTER host's one rides in.
           // This is the most-played pause door of the six: world.js
           // gates its own Escape ladder on exterior mode, so underground
           // the key falls to routeKey -> ui/input.js:657 -> the
@@ -6338,7 +6345,7 @@ export function createWorldModes(host) {
           // AUDIT 39r: and the FLASH, which this arm was copied without.
           // An arrow reaches the player through BowDamage ->
           // ApplyDamageToPlayer -> SendDamageToPlayer, the same door as
-          // a blow (world.js:7968's own wave-46 note); the interior
+          // a blow (world.js:7972's own wave-46 note); the interior
           // MELEE hit already flashes inside exteriorFoes, so only this
           // arm - which applies its own damage - was missing it.
           flashPlayerDamage(dmg);   // BA1: RemoveHealth carries the amount
@@ -7156,7 +7163,7 @@ export function createWorldModes(host) {
   addEventListener('mousedown', (e) => {
     // AUDIT-MACK F2: THIS HOST DOES NOT FEED THE HELD SET, and MAC-K1
     // briefly made it. `keys` is not this host's - it arrives on the
-    // host bag (`exterior.js:3454`, `world.js`'s twin), and the OUTER
+    // host bag (`exterior.js:3461`, `world.js`'s twin), and the OUTER
     // host's own mousedown writes `keys.add(mouseCode(e.button))`
     // UNGATED, before any mode test, on a listener that is never
     // removed. So the three button codes were already in the Set while
@@ -8660,9 +8667,9 @@ export function createWorldModes(host) {
      *  .cs:175-176 writes `weaponDrawn`/`usingLeftHand` off it,
      *  :420-421 restores them onto it. The port has FOUR PlayerWeapons
      *  (world.js's, this file's `interiorWeapon` :538, dungeonContext's
-     *  and exterior.js's - which this seam does not reach: that host has no save path at all, its charter exterior.js:3045-3067), and IS1 routed the inside-a-building save to
+     *  and exterior.js's - which this seam does not reach: that host has no save path at all, its charter exterior.js:3052-3074), and IS1 routed the inside-a-building save to
      *  the WORLD host's composer - which reads its own exterior rig
-     *  unconditionally (world.js:5252). So an F9 pressed in a shop
+     *  unconditionally (world.js:5256). So an F9 pressed in a shop
      *  recorded the street's sheath and hand, and the load wrote them
      *  back into the street's rig; the rig actually in the player's
      *  hands was in no envelope at all.
@@ -8689,7 +8696,7 @@ export function createWorldModes(host) {
      *  presenter for the whole visit) or the interior's? world.js's gate read townTalk's slot alone. */
     deathUp() { return mode === 'dungeon' ? !!dungeonCtx?.deathUp?.() : interiorOverlay instanceof DeathScreen; },
     /** The restore half - and NOT gated on the mode, deliberately.
-     *  worldQuickLoad calls forceExitToExterior FIRST (world.js:5344)
+     *  worldQuickLoad calls forceExitToExterior FIRST (world.js:5348)
      *  and only re-enters the building at :4217, so the mode at apply
      *  time is whatever the LOAD landed in, not whatever the SAVE was
      *  taken in: an outdoor save loaded while the player was indoors
@@ -8699,8 +8706,8 @@ export function createWorldModes(host) {
      *
      *  FLAG ONLY and presence-gated - both laws now stated once, in
      *  combat/playerWeapon.js's applyWeaponPose, with the citation.
-     *  HARD2c: this used to spell them out, and named `world.js:5457`
-     *  and `dungeonContext.js:5969` for its two sibling copies - lines
+     *  HARD2c: this used to spell them out, and named `world.js:5461`
+     *  and `dungeonContext.js:5976` for its two sibling copies - lines
      *  that had moved to :4418 and :5457. Three copies of a two-line
      *  law, and even the comment pointing between them had gone stale. */
     applyWeaponPose(pose) {

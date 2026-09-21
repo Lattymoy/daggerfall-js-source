@@ -3245,7 +3245,11 @@ export async function bootWorld(canvas, renderer, params, status) {
     // closed by Escape, by a travel, by a quest popup taking the slot
     // or by a teardown, and a flag would have to be lowered at all of
     // them. The tag is the window's own (`isTravelMap`).
-    sheetWindowUp: () => townTalk.overlay?.isTravelMap === true,
+    // EM-BUG1: `holdsScreen`, not `isTravelMap`. The travel tag was
+    // narrowed by EM4 to mean "the bay is reachable from here", which
+    // is false on a town sheet - so this gate stopped firing there and
+    // the weapon drew over the map.
+    sheetWindowUp: () => townTalk.overlay?.holdsScreen === true,
   });
   autoBuildArms(playerEntity);   // MWA1: a continuing session's arms, at boot (a new character's come after the wizard, a load's after the restore)
   // WEAPON-VIS1: a live read of exactly what shown() gates on, always
@@ -3417,7 +3421,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // and dungeonContext.js:2350 mounts the same one, gated on
   // `opts.enchantCtx !== false` because setDefaultEnchantCtx is a
   // session singleton and EC1 already routes THIS host's mount into
-  // that context through modes.dungeonCtx - so worldModes.js:4738
+  // that context through modes.dungeonCtx - so worldModes.js:4745
   // passes false beside its `chargen: false` and only the standalone
   // ?dungeon route mounts its own. S40 filled isResting
   // in - the sentence that stood here said it "stays absent above
@@ -5252,7 +5256,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // so an F9 pressed inside a shop recorded the street's sheath and
     // hand. The mode host answers for the rig that is actually drawn
     // and null outside interior mode (the dungeon owns its own
-    // composer, dungeonContext.js:5879), so exterior mode and a
+    // composer, dungeonContext.js:5886), so exterior mode and a
     // pre-seam mode host compose exactly as before, per field.
     const wp = modes?.weaponPose?.() ?? null;
     const snap = snapshotPlayer(playerEntity, {
@@ -7145,7 +7149,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // exterior -> the townTalk overlay, interior OR dungeon -> the mode
   // machine's slot. U43-ii shipped the dungeon half: showQuestBox
   // offers the window to `modes.showQuestOverlay` below, and
-  // worldModes answers it in BOTH modes (worldModes.js:7650-7713 -
+  // worldModes answers it in BOTH modes (worldModes.js:7657-7720 -
   // dungeon routes to dungeonCtx.showOverlay), so a dungeon popup is
   // shown rather than logged loudly and dropped.
   // AUDIT 24 (wave 21): DaggerfallMessageBox.Show() is a

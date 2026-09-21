@@ -1,0 +1,92 @@
+[
+  {
+    "name": "EMBUG1-the-gate-rides-the-travel-tag-again-so-a-town-sheet-stops-hiding-the-weapon",
+    "file": "src/scenes/world.js",
+    "old": "    sheetWindowUp: () => townTalk.overlay?.holdsScreen === true,",
+    "new": "    sheetWindowUp: () => townTalk.overlay?.isTravelMap === true,",
+    "tests": [
+      "test/map3_heldpose.test.js",
+      "test/heldmap.test.js"
+    ]
+  },
+  {
+    "name": "EMBUG1-the-dungeon-host-loses-the-gate-again",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    sheetWindowUp: () => activeOverlay?.holdsScreen === true,\n",
+    "new": "",
+    "tests": [
+      "test/map3_heldpose.test.js",
+      "test/heldmap.test.js"
+    ]
+  },
+  {
+    "name": "EMBUG1-the-interior-host-loses-the-gate-again",
+    "file": "src/scenes/worldModes.js",
+    "old": "    sheetWindowUp: () => interiorOverlay?.holdsScreen === true,\n",
+    "new": "",
+    "tests": [
+      "test/map3_heldpose.test.js",
+      "test/heldmap.test.js"
+    ]
+  },
+  {
+    "name": "EMBUG1-the-second-exterior-host-loses-the-gate-again",
+    "file": "src/scenes/exterior.js",
+    "old": "    sheetWindowUp: () => townTalk.overlay?.holdsScreen === true,\n",
+    "new": "",
+    "tests": [
+      "test/map3_heldpose.test.js",
+      "test/heldmap.test.js"
+    ]
+  },
+  {
+    "name": "EMBUG1-the-window-stops-declaring-that-it-holds-the-screen",
+    "file": "src/ui/heldMap.js",
+    "old": "    this.holdsScreen = true;",
+    "new": "    this.holdsScreen = false;",
+    "tests": [
+      "test/map3_heldpose.test.js",
+      "test/heldmap.test.js"
+    ]
+  },
+  {
+    "name": "EMBUG1-the-travel-tag-is-asserted-again-so-a-crypt-offers-travel",
+    "file": "src/ui/heldMap.js",
+    "old": "    this.isTravelMap = this._slot.ids.includes('world');",
+    "new": "    this.isTravelMap = true;",
+    "tests": [
+      "test/map3_heldpose.test.js",
+      "test/heldmap.test.js"
+    ]
+  },
+  {
+    "name": "EMBUG1-the-rig-stops-asking-at-all",
+    "file": "src/combat/weaponRig.js",
+    "old": "      if (sheetWindowUp()) return;",
+    "new": "      if (false) return;",
+    "tests": [
+      "test/map3_heldpose.test.js",
+      "test/heldmap.test.js"
+    ]
+  },
+  {
+    "name": "EMBUG2-the-sheet-takes-the-travel-key-alone-again-so-M-cannot-shut-it",
+    "file": "src/ui/heldMap.js",
+    "old": "    if (code === 'Escape' || _act === 'TravelMap' || _act === 'AutoMap') {",
+    "new": "    if (code === 'Escape' || _act === 'TravelMap') {",
+    "tests": [
+      "test/map3_heldpose.test.js",
+      "test/heldmap.test.js"
+    ]
+  },
+  {
+    "name": "EMBUG2-the-sheet-takes-the-automap-key-alone-so-the-world-map-cannot-shut",
+    "file": "src/ui/heldMap.js",
+    "old": "    if (code === 'Escape' || _act === 'TravelMap' || _act === 'AutoMap') {",
+    "new": "    if (code === 'Escape' || _act === 'AutoMap') {",
+    "tests": [
+      "test/map3_heldpose.test.js",
+      "test/heldmap.test.js"
+    ]
+  }
+]

@@ -403,16 +403,27 @@ export class HeldMapWindow {
     this.deps = deps;
     this.done = false;
     this.isChoiceWindow = true;
-    // MAP-WEAPON: the scene's tick tag, this file's own idiom
+    // MAP-WEAPON / EM-BUG1: the scene's tick tag, this file's own idiom
     // (`isRestWindow`, `isVirtueLevelUp`): the weapon rig asks whether
     // a map holds the screen and must not import a UI class to ask.
     //
-    // EM4: DERIVED, not declared. The world host reads this tag to know
-    // a TRAVEL map is up (`sheetWindowUp`), and once the same window
-    // also opens on a town or a dungeon the constant `true` became a
-    // lie - a crypt's plan is not a thing you can travel from. It is
-    // set below, off the slot, once the slot knows what this place
-    // offers: true exactly where the bay is reachable.
+    // THIS IS ITS OWN TAG NOW, AND THAT IS THE BUG EM4 LEFT. The rig's
+    // question was riding on `isTravelMap`, which EM4 correctly
+    // narrowed from a constant `true` to "the bay is reachable from
+    // here" - a crypt's plan is not a thing you can travel from. But
+    // one flag was answering two unrelated questions, and narrowing it
+    // for the travel one silently un-answered the other: a town or
+    // dungeon sheet stopped hiding the weapon, so the player stood
+    // holding a map AND a drawn sword (Mac: "your equipped weapon isnt
+    // stowed when the map is out").
+    //
+    // Hands holding a map are not also holding a sword, wherever the
+    // map came from. So this is constant, declared here, and true for
+    // every sheet this window can wear.
+    this.holdsScreen = true;
+    // EM4: DERIVED, not declared - and now answering ONLY the question
+    // it is named for. Set below, off the slot: true exactly where the
+    // bay is reachable.
     this.isTravelMap = false;
     // MAP-FIELD2: the vitals and the status icons go while the sheet is
     // out - it is held in the player's own hands, and a bar drawn over
@@ -594,7 +605,19 @@ export class HeldMapWindow {
         return;
       }
     }
-    if (code === 'Escape' || actionForCode(bindings(), code) === 'TravelMap') {
+    // EM-BUG2: THE KEY THAT OPENS IT SHUTS IT, whichever key that was.
+    // This arm was written when the sheet was the WORLD map alone, so
+    // it took the TravelMap action and Escape. EM3 and EM4 gave the
+    // same window three more doors - a dungeon's plan, a town's, a
+    // building's - all of them behind the AutoMap key, and none of
+    // them could be closed by the key that opened them (Mac: "You
+    // cannot press the M key to stow the map"). The classic twin has
+    // always taken its own binding back (ui/automapWindow.js); so does
+    // this one now. Both actions, on every sheet, because the tabs mean
+    // one window can be entered by either key and the player should not
+    // have to remember which.
+    const _act = actionForCode(bindings(), code);
+    if (code === 'Escape' || _act === 'TravelMap' || _act === 'AutoMap') {
       e?.preventDefault?.();
       if (this._phase !== 'map') return;      // the sheet is moving: let it land
       // the diseased box steps back to the PANEL, not out of it - the
