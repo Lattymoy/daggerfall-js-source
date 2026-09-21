@@ -105,7 +105,9 @@ import { labelOf, helpOf, INSTEAD, TIER_TEXT } from '../ui/settingsCopy.js';
 import {
   effectiveSettings, setValue, saveSettings, resetToDefaults, tierOf, DEFAULTS,
 } from '../systems/settings.js';
-import { mostRecentRestorable, restorableSaves, deleteSave, QUICK_SAVE_NAME } from '../systems/saveSlots.js';   // SAV4: the slot store; SLOTS1: every slot
+import { mostRecentRestorable, restorableSaves, deleteSave, QUICK_SAVE_NAME } from '../systems/saveSlots.js';
+import { exportSavesZip, collectSlots, importSlots, entriesFromFiles, slotPathOf, TRANSFER_ZIP_NAME } from '../systems/saveTransfer.js';   // SP1: saves move between the website and the app
+import { appStorage } from '../systems/appStorage.js';   // SP1: the store under this build - the browser's on the site, the file store in the app   // SAV4: the slot store; SLOTS1: every slot
 import { uiSkin, otherSkin, setUiSkin, SKIN_NAMES, isEnhanced } from '../systems/uiSkin.js';   // FD1: which boot rail
 import { getPref, setPref, isOpen, setOpen } from '../systems/uiPrefs.js';
 import { DEFAULT_SERVER } from '../net/online.js';   // ONLINE1: the relay this port hosts, the field's placeholder   // R7: the port's own switches; SO1: the folded tiers' memory
@@ -643,6 +645,63 @@ function paneLoad(body) {
     body.append(empty('Not from here',
       'This part of the game has no load door. Reach a saved game from the main menu instead.'));
   }
+  body.append(transferCard(saves.length));
+}
+
+// SP1 (2026-09-21, a player: "my saves its all gone"; Mac: "we need
+// parity between browser and the install"): THE SAVES MOVE. The website
+// keeps a save in the browser's storage for its origin and the app keeps
+// the same save as files under its own folder, and nothing carried one
+// to the other - a player who installed the app after playing on the
+// site opened it to empty slots. Export writes every slot as one zip in
+// the app's own on-disk layout; Import takes that zip, or a picked
+// Saves folder, into whatever store is under this build. Neither
+// overwrites a slot the store already holds (systems/saveTransfer.js).
+let _transferNote = null;
+function transferCard(count) {
+  const c = el('div', 'card');
+  c.append(el('span', 'tag grey', 'Move saves'));
+  c.append(el('h3', null, 'Between the website and the app'));
+  const shell = globalThis.daggerShell;
+  c.append(el('p', 'meta', shell?.savesPath
+    ? `This app keeps your saves as files in ${shell.savesPath}. Export them as one zip to carry to the website, or import a zip the website exported.`
+    : 'The website keeps your saves in this browser. Export them as one zip to carry to the desktop app or another browser, or import a zip the app or another browser exported.'));
+  if (_transferNote) { c.append(el('p', 'meta', _transferNote)); _transferNote = null; }
+  const zipIn = el('input'); zipIn.type = 'file'; zipIn.accept = '.zip,application/zip'; zipIn.style.display = 'none';
+  const dirIn = el('input'); dirIn.type = 'file'; dirIn.setAttribute('webkitdirectory', ''); dirIn.multiple = true; dirIn.style.display = 'none';
+  const done = (slots, r) => {
+    const n = r.imported.length;
+    _transferNote = !slots.length ? 'No saves in that selection. Pick the zip an Export made, or a Saves folder holding SAVE0, SAVE1, ...'
+      : `Imported ${n} save${n === 1 ? '' : 's'}${r.skipped ? `, ${r.skipped} already here` : ''}${r.failed ? `, ${r.failed} could not be written` : ''}.`;
+    render();
+  };
+  zipIn.onchange = async () => {
+    const f = zipIn.files?.[0]; if (!f) return;
+    try {
+      const { readZipEntries } = await import('../scenes/dataSource.js');   // the port's own reader, methods 0 and 8
+      const slots = collectSlots(await readZipEntries(f, { pick: (names) => names.filter((n) => slotPathOf(n)) }));
+      done(slots, importSlots(slots, appStorage()));
+    } catch (err) { _transferNote = `Could not read ${f.name}: ${err?.message ?? err}`; render(); }
+  };
+  dirIn.onchange = async () => {
+    const slots = collectSlots(await entriesFromFiles([...(dirIn.files ?? [])]));
+    done(slots, importSlots(slots, appStorage()));
+  };
+  c.append(zipIn, dirIn);
+  c.append(acts([
+    { label: 'Export all saves', primary: true, disabled: !count, onClick: () => {
+      const zip = exportSavesZip(appStorage());
+      if (!zip) { _transferNote = 'Nothing to export.'; render(); return; }
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(new Blob([zip], { type: 'application/zip' }));
+      a.download = TRANSFER_ZIP_NAME;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(a.href), 30000);
+    } },
+    { label: 'Import a zip', onClick: () => zipIn.click() },
+    { label: 'Import a Saves folder', onClick: () => dirIn.click() },
+  ]));
+  return c;
 }
 
 // ── SAVE GAME (pause only) ───────────────────────────────────────
