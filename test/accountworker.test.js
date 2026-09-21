@@ -15,14 +15,18 @@
 // proves the law and the SQL, not the deployment.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import { DatabaseSync } from 'node:sqlite';
 import worker, { ACCOUNT_VERSION, MAX_BODY_BYTES, _resetKeyForTests } from '../server-account/src/index.js';
 import {
   createGuest, openSession, resolveSession, closeSession, closeAllSessions,
-  devicesOf, accountView, displayName, accountKind, hashSecret, mintId, handleRefusal,
+  devicesOf, accountView, displayName, accountKind, hashSecret, mintId, handleRefusal, LOGIN_MAX,
 } from '../server-account/src/accounts.js';
 import { guestName, GUEST_BANKS, pick, isGuestShaped, isHandleShaped } from '../server-account/src/guestName.js';
+import {
+  hashPassword, verifyPassword, needsRehash, parseStored, passwordRefusal,
+  mintRecoveryCode, canonicalCode, PBKDF2_ITERS, CODE_ALPHABET,
+} from '../server-account/src/password.js';
 import { verifyToken, importPublicKeyB64, ID_RE, nameIsIssuable } from '../src/net/identityToken.js';
 
 const src = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
@@ -34,10 +38,15 @@ const NOW = 1_758_400_000;
  *  `prepare().bind().first()/run()/all()`, and this is that surface and
  *  nothing more - a fake that offered more than D1 does would let a
  *  query pass here and fail in production. */
+const MIGRATIONS = readdirSync(new URL('../server-account/migrations', import.meta.url))
+  .filter((f) => f.endsWith('.sql')).sort();
+
 function d1() {
   const db = new DatabaseSync(':memory:');
   db.exec('PRAGMA foreign_keys = ON');
-  db.exec(src('server-account/migrations/0001_accounts.sql'));
+  // EVERY migration, in order, walked - so a migration added later is
+  // under test without anybody remembering to list it here.
+  for (const f of MIGRATIONS) db.exec(src(`server-account/migrations/${f}`));
   return {
     _raw: db,
     prepare(sql) {
@@ -57,16 +66,26 @@ const ctx = (db) => ({ db, subtle, rand, nowS: NOW });
 
 test('ACC1b: the migration is the real schema, and applying it twice changes nothing', () => {
   const db = d1();
-  // IDEMPOTENT BY CONSTRUCTION - every statement IF NOT EXISTS - so the
-  // deploy can run every migration every time and nobody has to
-  // remember which ones landed.
+  // 0001 IS IDEMPOTENT BY CONSTRUCTION - every statement IF NOT EXISTS.
   assert.doesNotThrow(() => db._raw.exec(src('server-account/migrations/0001_accounts.sql')));
+  // ...AND 0002 IS NOT, because SQLite has no `ALTER TABLE ... ADD
+  // COLUMN IF NOT EXISTS`. That is a fact about SQLite rather than a
+  // choice, and it is the reason migrations are applied by hand once
+  // each rather than on every deploy - pinned so the claim in the file
+  // and the behaviour cannot part.
+  assert.throws(() => db._raw.exec(src('server-account/migrations/0002_passwords.sql')), /duplicate column/i);
+  assert.match(src('server-account/migrations/0001_accounts.sql'), /THAT IS NOT TRUE OF EVERY MIGRATION/);
+
   const tables = db._raw.prepare("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name").all().map((r) => r.name);
-  assert.deepEqual(tables, ['players', 'sessions']);
+  assert.deepEqual(tables, ['players', 'rate_limits', 'sessions']);
   // ACC1b IS IDENTITY ALONE. Saves and provider links arrive as their
   // own migrations rather than as columns somebody added here.
   const cols = db._raw.prepare('PRAGMA table_info(players)').all().map((c) => c.name);
-  assert.deepEqual(cols.sort(), ['created_at', 'guest_name', 'handle', 'handle_lc', 'id', 'last_seen', 'muted_until']);
+  assert.deepEqual(cols.sort(), ['created_at', 'email', 'guest_name', 'handle', 'handle_lc', 'id',
+    'last_seen', 'muted_until', 'password', 'recovery_hash', 'registered_at']);
+  // SAVES AND PROVIDER LINKS ARE STILL NOT HERE. They arrive as their
+  // own migrations rather than as columns somebody added to this one.
+  assert.ok(!cols.some((c) => /save|slot|provider|blob|r2/i.test(c)), `ACC2's columns arrived early: ${cols}`);
 });
 
 test('ACC1b: a guest is a REAL ROW from first contact, and its secret is never stored', async () => {
@@ -423,4 +442,280 @@ test('ACC1b: the service names its own deploy, and the version is in step', asyn
   assert.match(toml, /#\s*\[\[d1_databases\]\]/, 'the binding is live; the database id must be real');
   assert.doesNotMatch(toml, /^\s*\[\[d1_databases\]\]/m);
   assert.match(toml, /PUT-THE-ID-FROM-STEP-1-HERE/);
+});
+
+// ── ACC1c: USERNAME, PASSWORD, AND THE ONE WAY BACK IN ──────────────
+//
+// Mac (2026-09-21): "I want email completely optional. Username and
+// Password will be the main thing for the account", and "Yes" to a
+// recovery code when asked what a player does who forgets one.
+
+test('ACC1c: the stored password is self-describing, so its cost can be raised without logging anybody out', async () => {
+  const stored = await hashPassword('correct horse battery', { subtle, rand });
+  const parsed = parseStored(stored);
+  assert.equal(parsed.alg, 'pbkdf2-sha256');
+  assert.equal(parsed.iters, PBKDF2_ITERS);
+  assert.equal(parsed.salt.length, 16, 'a per-account salt, not a pepper');
+  assert.ok(PBKDF2_ITERS >= 210_000, 'below OWASP\'s current figure for this pairing');
+
+  assert.equal(await verifyPassword('correct horse battery', stored, { subtle }), true);
+  assert.equal(await verifyPassword('correct horse batterz', stored, { subtle }), false);
+
+  // A ROW WRITTEN AT AN OLDER COST STILL VERIFIES, and is flagged for
+  // rewriting. A bare hash column cannot be upgraded without logging
+  // everybody out, which is the whole reason the string carries its own
+  // parameters.
+  const old = await hashPassword('correct horse battery', { subtle, rand }, 10_000);
+  assert.equal(await verifyPassword('correct horse battery', old, { subtle }), true);
+  assert.equal(needsRehash(old), true);
+  assert.equal(needsRehash(stored), false);
+
+  // two accounts with the SAME password do not share a hash
+  const a = await hashPassword('hunter2hunter2', { subtle, rand });
+  const b = await hashPassword('hunter2hunter2', { subtle, rand });
+  assert.notEqual(a, b, 'the salt is not per-account');
+
+  // a row nobody can parse is a refusal, never a throw - and never a pass
+  for (const junk of [null, undefined, '', 'x', '$$$$', 'md5$1$a$b', `pbkdf2-sha256$1$${'a'.repeat(24)}$x`]) {
+    assert.equal(parseStored(junk), null, `${String(junk)} parsed`);
+    assert.equal(await verifyPassword('anything', junk, { subtle }), false);
+  }
+
+  // NFKC FIRST: the same password typed on two keyboards is the same
+  // password, and two byte strings to a KDF.
+  const composed = 'caféphrase';          // é as one code point
+  const decomposed = 'caféphrase';       // e + combining acute
+  assert.notEqual(composed, decomposed);
+  const h = await hashPassword(composed, { subtle, rand });
+  assert.equal(await verifyPassword(decomposed, h, { subtle }), true, 'a decomposed accent locked its owner out');
+
+  // length in CODE POINTS, because that is what a person counts
+  assert.equal(passwordRefusal('short'), 'short');
+  assert.equal(passwordRefusal('12345678'), null);
+  assert.equal(passwordRefusal('\u{1F600}'.repeat(8)), null, 'eight emoji is eight characters');
+  assert.equal(passwordRefusal('x'.repeat(1000)), 'long');
+  assert.equal(passwordRefusal(null), 'shape');
+  // ...and no composition rules: "must contain a symbol" buys
+  // `Password1!` a hundred million times over
+  assert.equal(passwordRefusal('all lower case letters'), null);
+});
+
+test('ACC1c: THE RECOVERY CODE ROUND-TRIPS - the bug that would have locked people out', async () => {
+  // The first cut folded Q to 0 and U to V on input. Q IS IN THE
+  // ALPHABET, so a minted code carrying one canonicalised to a
+  // different string than the one that was hashed - the very first code
+  // this file ever printed, 7GEPQ-47BS9-AYK70-QMWYW, could not have
+  // been used. This is the pin that would have caught it, and it is
+  // driven over enough draws to be sure rather than lucky.
+  for (let i = 0; i < 2000; i++) {
+    const code = mintRecoveryCode(rand);
+    assert.equal(canonicalCode(code), code.replace(/-/g, ''),
+      `a minted code does not survive being read back: ${code}`);
+  }
+  const code = mintRecoveryCode(rand);
+  assert.match(code, /^[0-9A-Z]{5}-[0-9A-Z]{5}-[0-9A-Z]{5}-[0-9A-Z]{5}$/);
+  assert.ok(!CODE_ALPHABET.includes('U'), 'U is excluded from the alphabet, not folded onto V');
+  for (const c of code.replace(/-/g, '')) assert.ok(CODE_ALPHABET.includes(c));
+
+  // A PERSON WROTE THIS DOWN AND IS TYPING IT BACK. Lower case, spaces
+  // instead of dashes, a scrawled O for a zero and an l for a one - all
+  // of it is the same code, because refusing somebody their own account
+  // over a serif is not a security property.
+  const canon = canonicalCode(code);
+  assert.equal(canonicalCode(code.toLowerCase()), canon);
+  assert.equal(canonicalCode(code.replace(/-/g, ' ')), canon);
+  assert.equal(canonicalCode(`  ${code}  `), canon);
+  assert.equal(canonicalCode('O11I2-34567-89ABC-DEFGH'), '011123456789ABCDEFGH');
+  // ...and something that is not a code at all is null rather than a guess
+  for (const bad of [null, 42, '', 'TOOSHORT', `${code}EXTRA`, 'UUUUU-UUUUU-UUUUU-UUUUU']) {
+    assert.equal(canonicalCode(bad), null, `${String(bad)} was read as a code`);
+  }
+  assert.equal(new Set([...Array(200)].map(() => mintRecoveryCode(rand))).size, 200, 'codes repeat');
+});
+
+test('ACC1c: registering is an UPGRADE IN PLACE, and the code is shown exactly once', async () => {
+  const { call } = await stand();
+  const guest = (await call('POST', '/v1/auth/guest', {})).body;
+
+  const reg = await call('POST', '/v1/auth/register', { secret: guest.secret, handle: 'Nystul', password: 'a good long one' });
+  assert.equal(reg.status, 200);
+  assert.match(reg.body.recoveryCode, /^[0-9A-Z]{5}(-[0-9A-Z]{5}){3}$/);
+
+  // THE SAME ACCOUNT. Not a new row - the id a player already had, and
+  // the friends and saves that will hang off it, are untouched.
+  const acct = (await call('GET', `/v1/account?secret=${encodeURIComponent(guest.secret)}`)).body;
+  assert.equal(acct.account.playerId, guest.id, 'registering minted a new account');
+  assert.equal(acct.account.name, 'Nystul');
+  assert.equal(acct.account.kind, 'linked');
+  assert.equal(acct.account.guestName, guest.name, 'the name the world gave them is still on the row');
+
+  // ...and the token says so, which is how the wall at the saves will
+  // ever be able to tell
+  const tok = (await call('POST', '/v1/auth/token', { secret: guest.secret })).body;
+  assert.equal(tok.name, 'Nystul');
+  assert.equal(tok.kind, 'linked');
+
+  // THE CODE IS NEVER READABLE AGAIN - not from the account, not from
+  // anywhere. It is a credential, not a hint.
+  assert.ok(!JSON.stringify(acct).includes(reg.body.recoveryCode));
+  assert.ok(!/recovery/i.test(JSON.stringify(acct)), `the account view mentions recovery: ${JSON.stringify(acct)}`);
+
+  // registering twice is refused, and so is a taken name
+  assert.equal((await call('POST', '/v1/auth/register', { secret: guest.secret, handle: 'Other', password: 'a good long one' })).body.error, 'already-registered');
+  const second = (await call('POST', '/v1/auth/guest', {})).body;
+  const taken = await call('POST', '/v1/auth/register', { secret: second.secret, handle: 'NYSTUL', password: 'a good long one' });
+  assert.equal(taken.body.error, 'handle-taken', 'casing smuggled a duplicate past the index');
+  assert.equal((await call('POST', '/v1/auth/register', { secret: second.secret, handle: 'Ok', password: 'a good long one' })).body.error, 'handle-shape');
+  assert.equal((await call('POST', '/v1/auth/register', { secret: second.secret, handle: 'Fine', password: 'short' })).body.error, 'password-short');
+});
+
+test('ACC1c: logging in costs the same for a handle nobody holds as for a wrong password', async () => {
+  const { call } = await stand();
+  const guest = (await call('POST', '/v1/auth/guest', {})).body;
+  await call('POST', '/v1/auth/register', { secret: guest.secret, handle: 'Medora', password: 'a good long one' });
+
+  const ok = await call('POST', '/v1/auth/login', { handle: 'MEDORA', password: 'a good long one', label: 'phone' });
+  assert.equal(ok.status, 200, 'the handle is case-insensitive to log in with, as it is to take');
+  assert.equal(ok.body.id, guest.id);
+  assert.ok(ok.body.secret, 'logging in is how a SECOND device gets a credential');
+  assert.equal((await call('POST', '/v1/auth/token', { secret: ok.body.secret })).status, 200);
+  // ...and the first device is untouched: a login is not a rotation
+  assert.equal((await call('POST', '/v1/auth/token', { secret: guest.secret })).status, 200);
+
+  // A REFUSAL NAMES NO CAUSE. The same word for both, so the form
+  // cannot be asked which names exist.
+  const noUser = await call('POST', '/v1/auth/login', { handle: 'NobodyAtAll', password: 'a good long one' });
+  const noPass = await call('POST', '/v1/auth/login', { handle: 'Medora', password: 'the wrong one entirely' });
+  assert.equal(noUser.status, 401);
+  assert.deepEqual(noUser.body, noPass.body, 'the two refusals are distinguishable');
+
+  // ...AND NEITHER DOES THE CLOCK. Without this the form is a username
+  // oracle: an attacker learns which names exist by timing, which is
+  // "do not confirm the account exists" undone by a stopwatch. The
+  // margin is generous because a shared CI box is noisy; what it
+  // catches is the shape that MATTERS - a missing user skipping the
+  // derivation entirely, which is a whole order of magnitude.
+  const time = async (body) => {
+    const t0 = performance.now();
+    for (let i = 0; i < 3; i++) await call('POST', '/v1/auth/login', body);
+    return performance.now() - t0;
+  };
+  const tNoUser = await time({ handle: 'StillNobody', password: 'a good long one' });
+  const tNoPass = await time({ handle: 'Medora', password: 'still wrong' });
+  const ratio = Math.max(tNoUser, tNoPass) / Math.max(1, Math.min(tNoUser, tNoPass));
+  assert.ok(ratio < 4, `a handle nobody holds costs ${tNoUser.toFixed(0)}ms against ${tNoPass.toFixed(0)}ms - the derivation is being skipped`);
+});
+
+test('ACC1c: the recovery code sets a new password, mints a NEW code, and signs every device out', async () => {
+  const { call } = await stand();
+  const guest = (await call('POST', '/v1/auth/guest', {})).body;
+  const reg = await call('POST', '/v1/auth/register', { secret: guest.secret, handle: 'Kithlan', password: 'the old one here' });
+  const other = (await call('POST', '/v1/auth/login', { handle: 'Kithlan', password: 'the old one here' })).body;
+
+  const back = await call('POST', '/v1/auth/recover', {
+    handle: 'kithlan', code: reg.body.recoveryCode.toLowerCase(), password: 'the new one here',
+  });
+  assert.equal(back.status, 200);
+  assert.equal(back.body.id, guest.id);
+
+  // A NEW CODE, because a player who spends their only way in and is
+  // left with none has simply had the same cliff moved one step away.
+  assert.ok(back.body.recoveryCode);
+  assert.notEqual(back.body.recoveryCode, reg.body.recoveryCode);
+
+  // EVERY OTHER DEVICE IS SIGNED OUT - the reason somebody is standing
+  // here may be that another person has their password.
+  assert.equal((await call('POST', '/v1/auth/token', { secret: guest.secret })).status, 401);
+  assert.equal((await call('POST', '/v1/auth/token', { secret: other.secret })).status, 401);
+  assert.equal((await call('POST', '/v1/auth/token', { secret: back.body.secret })).status, 200, 'the device that recovered was signed out too');
+
+  // the old password is gone, the new one works, the old code is spent
+  assert.equal((await call('POST', '/v1/auth/login', { handle: 'Kithlan', password: 'the old one here' })).status, 401);
+  assert.equal((await call('POST', '/v1/auth/login', { handle: 'Kithlan', password: 'the new one here' })).status, 200);
+  const reused = await call('POST', '/v1/auth/recover', { handle: 'Kithlan', code: reg.body.recoveryCode, password: 'another one here' });
+  assert.equal(reused.status, 401, 'a spent recovery code still worked');
+
+  // and a code for a handle nobody holds is refused the same way
+  assert.equal((await call('POST', '/v1/auth/recover', { handle: 'Nobody', code: reg.body.recoveryCode, password: 'another one here' })).body.error, 'bad-code');
+});
+
+test('ACC1c: guessing is throttled, per handle and per address', async () => {
+  const { call } = await stand();
+  const guest = (await call('POST', '/v1/auth/guest', {})).body;
+  await call('POST', '/v1/auth/register', { secret: guest.secret, handle: 'Barenziah', password: 'a good long one' });
+
+  let sawRate = false;
+  for (let i = 0; i < LOGIN_MAX + 4; i++) {
+    const r = await call('POST', '/v1/auth/login', { handle: 'Barenziah', password: `wrong ${i}` });
+    if (r.status === 429) { sawRate = true; break; }
+  }
+  assert.ok(sawRate, `${LOGIN_MAX} wrong passwords in a window did not slow anybody down`);
+  // ...and the CORRECT password is refused too while the window holds,
+  // which is the point: a throttle a right answer walks through is not
+  // a throttle.
+  assert.equal((await call('POST', '/v1/auth/login', { handle: 'Barenziah', password: 'a good long one' })).status, 429);
+  assert.ok(LOGIN_MAX >= 5 && LOGIN_MAX <= 20, 'a bound a fat-fingered player trips, or one an attacker does not');
+
+  // A SUCCESSFUL LOGIN FORGIVES THE KEY, so somebody who mistyped twice
+  // and then got it right is not still on a countdown.
+  const fresh = await stand();
+  const g2 = (await fresh.call('POST', '/v1/auth/guest', {})).body;
+  await fresh.call('POST', '/v1/auth/register', { secret: g2.secret, handle: 'Clavicus', password: 'a good long one' });
+  for (let i = 0; i < 3; i++) await fresh.call('POST', '/v1/auth/login', { handle: 'Clavicus', password: 'nope' });
+  assert.equal((await fresh.call('POST', '/v1/auth/login', { handle: 'Clavicus', password: 'a good long one' })).status, 200);
+  for (let i = 0; i < LOGIN_MAX - 1; i++) {
+    assert.notEqual((await fresh.call('POST', '/v1/auth/login', { handle: 'Clavicus', password: 'nope' })).status, 429,
+      'the counter was not forgiven by the correct login');
+  }
+});
+
+test('ACC1c: a password is changed with the OLD one, and email is COMPLETELY optional', async () => {
+  const { call } = await stand();
+  const guest = (await call('POST', '/v1/auth/guest', {})).body;
+  await call('POST', '/v1/auth/register', { secret: guest.secret, handle: 'Sheogorath', password: 'the first one' });
+  const phone = (await call('POST', '/v1/auth/login', { handle: 'Sheogorath', password: 'the first one' })).body;
+
+  // A STOLEN DEVICE SHOULD NOT BE ABLE TO LOCK ITS OWNER OUT, so the
+  // old password is required even from inside a live session.
+  assert.equal((await call('POST', '/v1/account/password', { secret: guest.secret, oldPassword: 'wrong', password: 'the second one' })).status, 401);
+  assert.equal((await call('POST', '/v1/account/password', { secret: guest.secret, oldPassword: 'the first one', password: 'short' })).body.error, 'password-short');
+  assert.equal((await call('POST', '/v1/account/password', { secret: guest.secret, oldPassword: 'the first one', password: 'the second one' })).status, 200);
+
+  // every OTHER device out; this one stays, because the person who just
+  // proved the old password is the owner
+  assert.equal((await call('POST', '/v1/auth/token', { secret: guest.secret })).status, 200);
+  assert.equal((await call('POST', '/v1/auth/token', { secret: phone.secret })).status, 401);
+
+  // EMAIL IS OPTIONAL AND MEANS IT: the account has worked through all
+  // of the above without one, and setting one changes nothing about
+  // what it can do.
+  const before = (await call('GET', `/v1/account?secret=${encodeURIComponent(guest.secret)}`)).body;
+  assert.ok(!('email' in before.account), 'an address a player never gave is being shipped back to them');
+  assert.equal((await call('POST', '/v1/account/email', { secret: guest.secret, email: 'someone@example.com' })).status, 200);
+  assert.equal((await call('POST', '/v1/account/email', { secret: guest.secret, email: 'not an address' })).body.error, 'email');
+  assert.equal((await call('POST', '/v1/account/email', { secret: guest.secret, email: null })).status, 200, 'an address cannot be taken off again');
+  // nothing is gated behind it
+  assert.equal((await call('POST', '/v1/auth/token', { secret: guest.secret })).status, 200);
+});
+
+test('ACC1c: no credential of any kind is stored in the clear, or shipped back', async () => {
+  const { call, env } = await stand();
+  const guest = (await call('POST', '/v1/auth/guest', {})).body;
+  const reg = await call('POST', '/v1/auth/register', { secret: guest.secret, handle: 'Uriel', password: 'a memorable phrase' });
+
+  const dump = JSON.stringify(env.DB._raw.prepare('SELECT * FROM players').all());
+  assert.ok(!dump.includes('a memorable phrase'), 'the password is in the database');
+  assert.ok(!dump.includes(reg.body.recoveryCode), 'the recovery code is in the database');
+  assert.ok(!dump.includes(canonicalCode(reg.body.recoveryCode)), 'the recovery code is in the database, canonicalised');
+  // ...and what IS there is the self-describing hash, for both
+  const row = env.DB._raw.prepare('SELECT * FROM players WHERE id = ?').get(guest.id);
+  for (const col of ['password', 'recovery_hash']) {
+    assert.ok(parseStored(row[col]), `${col} is not a hash this service wrote`);
+  }
+  assert.notEqual(row.password, row.recovery_hash);
+
+  const view = JSON.stringify((await call('GET', `/v1/account?secret=${encodeURIComponent(guest.secret)}`)).body);
+  for (const leak of ['a memorable phrase', reg.body.recoveryCode, row.password, row.recovery_hash]) {
+    assert.ok(!view.includes(leak), `the account view ships ${leak.slice(0, 20)}`);
+  }
 });

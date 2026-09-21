@@ -17,9 +17,15 @@
 #
 #   1. Make the database, and put the id below:
 #        npx wrangler d1 create daggerfall-accounts
-#   2. Apply the migrations (idempotent - every statement IF NOT EXISTS):
+#   2. Apply the migrations, IN ORDER AND ONCE EACH:
 #        npx wrangler d1 execute daggerfall-accounts --remote \
 #          --file=server-account/migrations/0001_accounts.sql
+#        npx wrangler d1 execute daggerfall-accounts --remote \
+#          --file=server-account/migrations/0002_passwords.sql
+#      0001 is idempotent (every statement is IF NOT EXISTS) and 0002
+#      IS NOT - `ALTER TABLE ADD COLUMN` has no IF NOT EXISTS, so a
+#      second application errors with `duplicate column`. That is a
+#      refusal, not damage: nothing is half-applied by it.
 #   3. Mint the signing key pair:
 #        node tools/mintIdentityKeys.mjs
 #      ...then put the PRIVATE half in as a secret - it must never be

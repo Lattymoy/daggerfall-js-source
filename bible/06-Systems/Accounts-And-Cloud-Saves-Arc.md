@@ -323,13 +323,23 @@ A player who never plays online never has any of this happen to them.
 Cloud saves as the source of truth are **not** on this list. That would
 be its own arc, after a long boring stretch of the backup path working.
 
+**THIS ORDER CHANGED AT STEP 3, AND THE REASON IS MAC'S.** The list
+above hung chosen names off provider linking (step 5, "once linking
+exists to hang them on") because a provider was assumed to be how a
+player proves who they are on the next device. Mac's *"Username and
+Password will be the main thing for the account"* makes the handle the
+identity itself and the password the proof, so ACC1c shipped both
+straight after ACC1b and a provider is now an optional convenience
+rather than the foundation. Steps 3 and 5 collapse into that; step 4
+is unchanged and next.
+
 ---
 
 ## ACC1b — SHIPPED 2026-09-21: the account service
 
 `server-account/` — a second Cloudflare Worker over D1. Identity alone:
-guests, sessions and the token. No provider links (ACC1c), no saves
-(ACC2). **It is written and tested and it is not deployed**, because
+guests, sessions and the token. No password yet (ACC1c), no provider
+links, no saves (ACC2). **It is written and tested and it is not deployed**, because
 creating a D1 database and putting a secret on the account are things
 only Mac's Cloudflare login can do; `server-account/wrangler.toml`
 carries the four steps, and the D1 binding is commented out on purpose
@@ -386,6 +396,89 @@ multiple must never answer. And nothing had ever *sent* a name in a
 token request, so a client-asserted name could have come back signed,
 which is worse than an unsigned one because the relay would believe it.
 
+## ACC1c — SHIPPED 2026-09-21: the username, the password, and the one way back in
+
+Mac: *"Also want to mention I want email completely optional. Username
+and Password will be the main thing for the account"* — and, asked what
+a player does who forgets one: *"Yes"* to a recovery code.
+
+**EMAIL OPTIONAL MEANS PASSWORD RESET IS IMPOSSIBLE.** There is no
+address to send a link to and no second fact about the player the
+service holds, so a forgotten password would be a lost account — and
+with it the cloud saves, which are the only reason the account exists.
+A design whose failure mode is "your forty-hour character is gone" is
+not one to ship quietly, so the recovery code is not a nicety here; it
+is the whole of what email would otherwise have been.
+
+The code is minted at registration, shown **once**, and stored exactly
+as the password is: hashed, salted, unreadable on this side. Spending it
+sets a new password **and mints a new one**, because a player left with
+no way back in has simply had the same cliff moved one step away.
+
+**REGISTERING IS AN UPGRADE IN PLACE.** The guest row *is* the account —
+ACC0's wall again — so a handle and a password are two columns filling
+in on a row that already exists, and the id, the sessions and (later)
+the saves come along untouched. Nothing migrates.
+
+**PBKDF2-SHA256 AT 210,000 ITERATIONS**, because it is what WebCrypto
+gives a Worker. scrypt and argon2 are better and neither is available
+without shipping WASM into a hot path; that trade is written in
+`server-account/src/password.js` rather than pretended away. **The
+stored form is self-describing** — `pbkdf2-sha256$<iters>$<salt>$<hash>`
+— so the count can be raised in a year and every existing row still
+verifies under the count it was written with, then gets rewritten at the
+new one on its owner's next correct login. A bare hash column cannot be
+upgraded without logging everybody out.
+
+**THE RECOVERY CODE ROUND-TRIPS, AND THE PIN FOUND THE BUG THAT SAYS
+WHY THAT IS WORTH PINNING.** The first cut folded Crockford's ambiguous
+letters as `O→0`, `I/L→1`, **and `Q→0`, `U→V`**. But **Q is in the
+alphabet** — so the very first code the generator printed,
+`7GEPQ-47BS9-AYK70-QMWYW`, could never have been typed back in. A
+generator and a reader that disagree about their own alphabet lock out
+exactly the people who need the code, and nothing but a round trip
+catches it. The folding is now the three letters Crockford actually
+folds, and 2000 minted codes go back through the canonicaliser
+lowercased, spaced and mis-typed.
+
+**LOGGING IN COSTS THE SAME FOR A HANDLE NOBODY HOLDS.** A miss derives
+against a dummy stored hash instead of returning early, because a fast
+401 is a free enumeration of the whole player table. The pin measures
+it rather than reading the code, which is the only way that claim means
+anything.
+
+**GUESSING IS THROTTLED PER HANDLE AND PER ADDRESS**, ten in fifteen
+minutes, in a `rate_limits` row rather than in memory — a Worker isolate
+is not a place to keep a counter, and one that lives there is reset by
+the platform whenever it feels like it. The correct password is refused
+too while the window holds (a throttle a right answer walks through is
+not a throttle), and a successful login forgives the key, so somebody
+who mistyped twice is not still on a countdown.
+
+**A PASSWORD IS CHANGED WITH THE OLD ONE**, even from inside a live
+session: a stolen phone should not be able to lock its owner out. That
+act signs every *other* device out and keeps the one that proved the old
+password. Recovery signs out *every* device including the one standing
+there, because the reason somebody is recovering may be that another
+person has their password.
+
+**AND EMAIL IS COMPLETELY OPTIONAL AND MEANS IT.** The account
+registers, logs in, recovers and changes its password with no address
+ever set; an address a player never gave is not in the account view at
+all; one that is given can be taken off again; and nothing anywhere is
+gated behind having one.
+
+`0002_passwords.sql` is a **separate migration and it is not
+idempotent**, which 0001's note nearly got wrong for it: `ALTER TABLE
+ADD COLUMN` has no `IF NOT EXISTS`, so applying 0002 twice errors with
+`duplicate column`. That is a refusal rather than damage — nothing is
+half-applied — and the migrations are applied once each, in order.
+
+18 mutants, 16 dead, 2 recorded equivalent: the compare's short-circuit,
+which is not measurable through a PBKDF2 derivation that dwarfs it, and
+a refusal-naming mutation that moves both spellings together, so the
+equality the pin actually asserts still holds.
+
 ## WHAT MAC HAS TO DO BEFORE ANY OF THIS IS LIVE
 
 None of it can come from CI; it creates resources rather than deploying
@@ -393,7 +486,10 @@ code. `server-account/wrangler.toml` carries the same list.
 
 1. `npx wrangler d1 create daggerfall-accounts`, then put the id in the
    toml and uncomment the binding.
-2. Apply `server-account/migrations/0001_accounts.sql` (idempotent).
+2. Apply `server-account/migrations/0001_accounts.sql`, then
+   `0002_passwords.sql` — in order and once each. 0001 is
+   idempotent; 0002 is not, because `ALTER TABLE ADD COLUMN` has no
+   `IF NOT EXISTS`.
 3. `node tools/mintIdentityKeys.mjs` — the private half goes in with
    `wrangler secret put IDENTITY_PRIVATE_KEY`, the public half into the
    relay's config, where it is not a secret at all.

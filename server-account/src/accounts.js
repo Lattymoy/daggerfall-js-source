@@ -29,6 +29,10 @@
 
 import { guestName, isHandleShaped, isGuestShaped } from './guestName.js';
 import { ID_RE, nameIsIssuable } from '../../src/net/identityToken.js';
+import {
+  hashPassword, verifyPassword, needsRehash, passwordRefusal,
+  mintRecoveryCode, codeForHashing,
+} from './password.js';
 
 /** A session's raw secret, in bytes. 32 bytes of CSPRNG is the whole
  *  of the credential; nothing about the player is encoded in it. */
@@ -213,4 +217,157 @@ export function handleRefusal(handle) {
   if (isGuestShaped(h)) return 'shape';         // belt and braces: the two spaces cannot overlap
   if (!nameIsIssuable(h)) return 'refused';     // NAME-F1/F2, at entry
   return null;
+}
+
+// ── ACC1c: USERNAME, PASSWORD, AND THE ONE WAY BACK IN ──────────────
+
+/** How many failures a key may have in a window, and how long the
+ *  window is. Passwords bring online guessing, which tokens did not. */
+export const LOGIN_MAX = 10;
+export const LOGIN_WINDOW_S = 15 * 60;
+
+/**
+ * A fixed-window counter, per key, by UPSERT - so the table is bounded
+ * by the number of distinct ACTIVE keys rather than by traffic.
+ * Answers true when the caller is over its allowance.
+ */
+export async function overRate({ db, nowS }, key, max = LOGIN_MAX, windowS = LOGIN_WINDOW_S) {
+  const start = Math.floor(nowS / windowS) * windowS;
+  // ONE ROUND TRIP, by RETURNING - the count comes back from the write
+  // rather than from a SELECT after it, which is both a second call to
+  // D1 and a window in which another request can bump the row and make
+  // this caller read somebody else's number.
+  const row = await db.prepare(`INSERT INTO rate_limits (key, window_start, count) VALUES (?, ?, 1)
+    ON CONFLICT(key) DO UPDATE SET
+      count = CASE WHEN rate_limits.window_start = excluded.window_start THEN rate_limits.count + 1 ELSE 1 END,
+      window_start = excluded.window_start
+    RETURNING count`).bind(key, start).first();
+  return (row?.count ?? 0) > max;
+}
+
+/** A successful login forgives the key, so a player who mistyped twice
+ *  and then got it right is not still on a countdown. */
+export async function clearRate({ db }, key) {
+  await db.prepare('DELETE FROM rate_limits WHERE key = ?').bind(key).run();
+}
+
+/**
+ * REGISTER - an UPGRADE IN PLACE of the guest row this session already
+ * belongs to. Not a new account: the id, the friends that will hang off
+ * it and the saves that will hang off it are all already this player's,
+ * which is the property ACC0 has been protecting since it opened.
+ *
+ * Returns `{ recoveryCode }` - THE ONLY TIME IT IS EVER READABLE.
+ */
+export async function register({ db, subtle, rand, nowS }, playerId, { handle, password }) {
+  const hRefusal = handleRefusal(handle);
+  if (hRefusal) return { error: `handle-${hRefusal}` };
+  const pRefusal = passwordRefusal(password);
+  if (pRefusal) return { error: `password-${pRefusal}` };
+
+  const player = await db.prepare('SELECT * FROM players WHERE id = ?').bind(playerId).first();
+  if (!player) return { error: 'no-account' };
+  if (player.handle) return { error: 'already-registered' };
+
+  const code = mintRecoveryCode(rand);
+  const [pw, rc] = await Promise.all([
+    hashPassword(password, { subtle, rand }),
+    hashPassword(codeForHashing(code), { subtle, rand }),
+  ]);
+  try {
+    await db.prepare('UPDATE players SET handle = ?, handle_lc = ?, password = ?, recovery_hash = ?, registered_at = ? WHERE id = ?')
+      .bind(handle, handle.toLowerCase(), pw, rc, nowS, playerId).run();
+  } catch (e) {
+    // THE UNIQUE INDEX IS THE AUTHORITY ON WHETHER A NAME IS TAKEN, not
+    // a SELECT before the write - two registrations in the same instant
+    // both see it free and one of them is wrong.
+    if (/UNIQUE|constraint/i.test(String(e?.message ?? e))) return { error: 'handle-taken' };
+    throw e;
+  }
+  return { recoveryCode: code, handle };
+}
+
+/**
+ * LOG IN with a username and password, and mint this device a session.
+ *
+ * A HANDLE NOBODY HOLDS COSTS WHAT A WRONG PASSWORD COSTS. Without
+ * that, the form is a username oracle: an attacker learns which names
+ * exist by timing, which is the whole of "do not confirm the account
+ * exists" undone by the clock.
+ */
+export async function login({ db, subtle, rand, nowS }, { handle, password, deviceLabel = null }) {
+  const lc = String(handle ?? '').toLowerCase();
+  if (await overRate({ db, nowS }, `login:${lc}`)) return { error: 'rate' };
+
+  const player = lc ? await db.prepare('SELECT * FROM players WHERE handle_lc = ?').bind(lc).first() : null;
+  // The work happens either way. `verifyPassword` derives against a
+  // throwaway salt when it is handed nothing it can parse, so this is
+  // not a sleep pretending to be constant time - it is the same
+  // derivation.
+  const ok = await verifyPassword(password, player?.password ?? null, { subtle });
+  if (!player || !ok) return { error: 'bad-login' };
+
+  await clearRate({ db }, `login:${lc}`);
+  // The cost of a hash goes up over the years. The only moment the
+  // plaintext is in hand is a correct login, so that is when a row is
+  // rewritten at the current count.
+  if (needsRehash(player.password)) {
+    const fresh = await hashPassword(password, { subtle, rand });
+    await db.prepare('UPDATE players SET password = ? WHERE id = ?').bind(fresh, player.id).run();
+  }
+  const session = await openSession({ db, subtle, rand, nowS }, player.id, deviceLabel);
+  return { id: player.id, name: displayName(player), kind: accountKind(player), ...session };
+}
+
+/**
+ * THE WAY BACK IN. The code sets a new password, mints a NEW code, and
+ * SIGNS EVERY DEVICE OUT - because the reason somebody is standing here
+ * may be that another person has their password.
+ */
+export async function recover({ db, subtle, rand, nowS }, { handle, code, password }) {
+  const lc = String(handle ?? '').toLowerCase();
+  if (await overRate({ db, nowS }, `recover:${lc}`)) return { error: 'rate' };
+  const pRefusal = passwordRefusal(password);
+  if (pRefusal) return { error: `password-${pRefusal}` };
+
+  const canon = codeForHashing(code);
+  const player = lc ? await db.prepare('SELECT * FROM players WHERE handle_lc = ?').bind(lc).first() : null;
+  // Same shape as login: the derivation happens whether or not there is
+  // anything to compare it against.
+  const ok = await verifyPassword(canon ?? '', player?.recovery_hash ?? null, { subtle });
+  if (!player || !canon || !ok) return { error: 'bad-code' };
+
+  const next = mintRecoveryCode(rand);
+  const [pw, rc] = await Promise.all([
+    hashPassword(password, { subtle, rand }),
+    hashPassword(codeForHashing(next), { subtle, rand }),
+  ]);
+  await db.prepare('UPDATE players SET password = ?, recovery_hash = ? WHERE id = ?').bind(pw, rc, player.id).run();
+  await closeAllSessions({ db }, player.id);
+  await clearRate({ db }, `recover:${lc}`);
+  const session = await openSession({ db, subtle, rand, nowS }, player.id, null);
+  return { id: player.id, name: displayName(player), recoveryCode: next, ...session };
+}
+
+/** Change a password from inside a session, which needs the OLD one -
+ *  a stolen device should not be able to lock its owner out. Every
+ *  OTHER device is signed out; this one stays. */
+export async function changePassword({ db, subtle, rand }, player, session, { oldPassword, password }) {
+  const pRefusal = passwordRefusal(password);
+  if (pRefusal) return { error: `password-${pRefusal}` };
+  if (!player.password) return { error: 'not-registered' };
+  if (!await verifyPassword(oldPassword, player.password, { subtle })) return { error: 'bad-login' };
+  const pw = await hashPassword(password, { subtle, rand });
+  await db.prepare('UPDATE players SET password = ? WHERE id = ?').bind(pw, player.id).run();
+  await db.prepare('DELETE FROM sessions WHERE player_id = ? AND id != ?').bind(player.id, session.id).run();
+  return { ok: true };
+}
+
+/** An address, or none at all. COMPLETELY OPTIONAL (Mac) - nothing is
+ *  gated behind it and an account works forever without one. */
+export async function setEmail({ db }, playerId, email) {
+  const e = email === null || email === '' ? null : String(email ?? '').trim();
+  if (e !== null && (e.length > 254 || !/^[^@\s]+@[^@\s.]+\.[^@\s]+$/.test(e))) return { error: 'email' };
+  await db.prepare('UPDATE players SET email = ? WHERE id = ?').bind(e, playerId).run();
+  return { email: e };
 }

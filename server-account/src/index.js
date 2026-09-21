@@ -50,6 +50,7 @@
 import {
   createGuest, openSession, resolveSession, closeSession, closeAllSessions,
   devicesOf, accountView, displayName, accountKind,
+  register, login, recover, changePassword, setEmail, overRate,
 } from './accounts.js';
 import { mintToken, MAX_TTL_S } from '../../src/net/identityToken.js';
 
@@ -68,7 +69,19 @@ export const MAX_BODY_BYTES = 4 * 1024;
 export const ROUTES = new Set([
   '/v1/health', '/v1/auth/guest', '/v1/auth/token', '/v1/auth/session',
   '/v1/account', '/v1/auth/logout',
+  // ACC1c: username and password. `register` needs a session (it
+  // upgrades the guest row that session belongs to); `login` and
+  // `recover` are the two that do NOT, because a player standing at
+  // them has no session yet - which is exactly why they are the two
+  // that are throttled.
+  '/v1/auth/register', '/v1/auth/login', '/v1/auth/recover',
+  '/v1/account/password', '/v1/account/email',
 ]);
+
+/** The routes a caller reaches WITHOUT a credential. Everything else
+ *  resolves a session first. Named rather than special-cased inside the
+ *  ladder, so "what can a stranger reach?" has one answer. */
+export const OPEN_ROUTES = new Set(['/v1/health', '/v1/auth/guest', '/v1/auth/login', '/v1/auth/recover']);
 
 const json = (body, status = 200, origin = '*') => new Response(JSON.stringify(body), {
   status,
@@ -146,11 +159,33 @@ export default {
     const ctx = { db, subtle, rand, nowS };
 
     try {
-      if (path === '/v1/auth/guest' && request.method === 'POST') {
+      if (OPEN_ROUTES.has(path)) {
+        if (request.method !== 'POST') return no('method', 405, origin);
         const body = await readBody(request);
         if (!body) return no('body', 400, origin);
-        const made = await createGuest(ctx, { deviceLabel: body.label ?? null });
-        return json(made, 200, origin);
+
+        // ONE BUCKET PER CALLER for everything a stranger can reach, so
+        // a single address cannot mint accounts or grind passwords
+        // without limit. The per-HANDLE buckets inside login/recover
+        // are the other half - one stops a flood, the other stops a
+        // patient attacker with many addresses picking one account.
+        const ip = request.headers.get('cf-connecting-ip') || 'unknown';
+        if (await overRate(ctx, `ip:${ip}`, 60)) return no('rate', 429, origin);
+
+        if (path === '/v1/auth/guest') {
+          const made = await createGuest(ctx, { deviceLabel: body.label ?? null });
+          return json(made, 200, origin);
+        }
+        if (path === '/v1/auth/login') {
+          const r = await login(ctx, { handle: body.handle, password: body.password, deviceLabel: body.label ?? null });
+          // A REFUSAL NAMES NO CAUSE a stranger could use: `bad-login`
+          // is the same word for a handle nobody holds and a password
+          // that is wrong, and the two cost the same time besides.
+          return r.error ? no(r.error, r.error === 'rate' ? 429 : 401, origin) : json(r, 200, origin);
+        }
+        // /v1/auth/recover
+        const r = await recover(ctx, { handle: body.handle, code: body.code, password: body.password });
+        return r.error ? no(r.error, r.error === 'rate' ? 429 : 401, origin) : json(r, 200, origin);
       }
 
       // EVERY ROUTE BELOW NEEDS A SECRET, and resolving it is the same
@@ -187,6 +222,26 @@ export default {
           account: accountView(who.player, nowS),
           devices: await devicesOf(ctx, who.player.id),
         }, 200, origin);
+      }
+
+      if (path === '/v1/auth/register' && request.method === 'POST') {
+        // AN UPGRADE IN PLACE of the row this session already belongs
+        // to - not a new account. The recovery code in the answer is
+        // THE ONLY TIME IT IS EVER READABLE.
+        const r = await register(ctx, who.player.id, { handle: body.handle, password: body.password });
+        return r.error ? no(r.error, 400, origin) : json(r, 200, origin);
+      }
+
+      if (path === '/v1/account/password' && request.method === 'POST') {
+        const r = await changePassword(ctx, who.player, who.session, { oldPassword: body.oldPassword, password: body.password });
+        return r.error ? no(r.error, r.error === 'bad-login' ? 401 : 400, origin) : json(r, 200, origin);
+      }
+
+      if (path === '/v1/account/email' && request.method === 'POST') {
+        // COMPLETELY OPTIONAL (Mac). Nothing is gated behind it, and
+        // `null` takes it off again.
+        const r = await setEmail(ctx, who.player.id, body.email ?? null);
+        return r.error ? no(r.error, 400, origin) : json(r, 200, origin);
       }
 
       if (path === '/v1/auth/logout' && request.method === 'POST') {

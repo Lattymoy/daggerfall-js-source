@@ -6,8 +6,12 @@
 --   npx wrangler d1 execute daggerfall-accounts --remote \
 --     --file=server-account/migrations/0001_accounts.sql
 --
--- Applied by server-account/deploy, which runs every migration in
--- order and is idempotent (every statement is IF NOT EXISTS).
+-- Every statement here is IF NOT EXISTS, so re-running this file costs
+-- nothing. THAT IS NOT TRUE OF EVERY MIGRATION: SQLite has no
+-- `ALTER TABLE ... ADD COLUMN IF NOT EXISTS`, so 0002 onwards must be
+-- applied ONCE each and will error on a second run. The error is
+-- harmless ("duplicate column name") and is the reason migrations are
+-- applied by hand rather than on every deploy.
 
 -- ── PLAYERS ────────────────────────────────────────────────────────
 -- A row exists from a player's FIRST contact, guest or not. A guest is
