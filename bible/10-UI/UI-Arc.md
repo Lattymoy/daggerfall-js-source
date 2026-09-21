@@ -16538,7 +16538,7 @@ container, so whether DFU itself consumes the last three is not
 verified here; they are recorded, pinned as exactly four, and a fifth
 - or one of these gaining a reader - reddens the suite.
 
-**Pinned** in `test/pad1.test.js` (9): the dispatch target with a fake
+**Pinned** in `test/pad1.test.js` (10): the dispatch target with a fake
 document and the REAL synth; the twenty names both ways and every
 vendored mod's TextKey default (an axis-named setting and an unbound
 one excepted, by name); the layout's laws (pad-only, once each, off the
@@ -16550,7 +16550,11 @@ as the quickslot through the registry; the six glyphs and the tag; and
 the derived four; and THE CONSEQUENCE - a combo bound on a pad-defaulted
 action is double-bound, so DFU's modifier-first law applies where the
 single-bound quirk (R9) used to, and clearing the pad row brings the
-quirk back byte for byte. Campaign `tools/mutants/pad1.json`: 14 mutants, 14
+quirk back byte for byte; and (Mac: "changing the keybind on the quick
+pane should change the glyph also") the chip follows the live registry
+through the pane's own apply - the diamond reads `bindings()` every
+frame and keys its repaint on the bound code, so a rebind is a new
+picture on the next frame. Campaign `tools/mutants/pad1.json`: 14 mutants, 14
 killed, on a green file - the first two runs were on a file that did
 not load (a trailing comment swallowed a one-line statement, twice),
 and read 14/14 both times; PERF-RIG1's F3 lesson again, caught by

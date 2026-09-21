@@ -249,3 +249,32 @@ test('PAD1-E every registry action has a consumer, or is on the recorded list of
   const unread = ACTIONS.filter((a) => !files.some(([, src]) => new RegExp(`(?<![A-Za-z0-9_])${a}(?![A-Za-z0-9_])`).test(src)));
   assert.deepEqual(unread.sort(), ['CenterView', 'PrintScreen', 'Slide', 'ToggleConsole'], `unrouted: ${unread}`);
 });
+
+// Mac, on PAD1: "changing the keybind on the quick pane should change the
+// glyph also". It does, and this is the seam that makes it so: the HUD's
+// diamond reads `bindings()` - the live registry - EVERY frame, the pane's
+// CONTINUE applies its staged copy into that same registry, and the chip's
+// repaint key folds the bound code (or the key's text) in, so a rebind is
+// a new key and a new picture on the next frame - the pad's glyph when the
+// pad is the live device, the key's name otherwise.
+test('PAD1-F a rebind through the controls pane changes the quickslot chip: the tag follows the live registry and its repaint key is the code', () => {
+  const store = createBindings(); resetDefaults(store);
+  const pad = { bindings: store, controller: true, family: 'xbox' };
+  assert.deepEqual(quickslotTag('QuickUse1', pad), { kind: 'glyph', family: 'xbox', code: 'JoystickAxis7Button0' });
+  // the pane's apply, exactly: stage, move the secondary, apply into the registry
+  const u = createUnsavedKeybinds(store);
+  u.secondary.set('QuickUse1', 'JoystickButton5');
+  applyUnsavedKeybinds(store, u);
+  assert.deepEqual(quickslotTag('QuickUse1', pad), { kind: 'glyph', family: 'xbox', code: 'JoystickButton5' }, 'the chip is the new button');
+  assert.equal(getBinding(store, 'Jump', false), null, 'RB was Jump\'s; DFU\'s single-bind law took it (the pane\'s duplicate check would have said so first)');
+  // and on the keyboard side
+  u.primary.set('QuickUse1', 'KeyG');
+  applyUnsavedKeybinds(store, u);
+  assert.deepEqual(quickslotTag('QuickUse1', { ...pad, controller: false }), { kind: 'key', text: 'G' });
+  // the HUD's frame reads the LIVE store and keys its repaint on the tag
+  const hud = rd('src/ui/enhancedHud.js');
+  assert.match(hud, /const tagOpts = \{ bindings: bindings\(\), controller, family: family \?\? 'xbox' \};/, 'the registry, read in the frame - never captured at build');
+  assert.match(hud, /\.\.\.\['main', 'off', 'c1', 'c2'\]\.map\(\(k\) => tagKey\(tags\[k\]\)\),/, 'the tags are in the block\'s signature');
+  assert.match(rd('src/ui/quickslotTags.js'), /export const tagKey = \(t\) => \(t \? \(t\.kind === 'glyph' \? `g:\$\{t\.family\}:\$\{t\.code\}` : `k:\$\{t\.text\}`\) : ''\);/, 'the key carries the code');
+  assert.match(rd('src/ui/enhancedControls.js'), /applyUnsavedKeybinds\(bindings\(\), unsaved\);/, 'the pane writes the same registry');
+});
