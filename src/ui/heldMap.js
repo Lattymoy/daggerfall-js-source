@@ -97,6 +97,7 @@ import { isPlayerControlledTravel, enforceShipRestriction, shipTravelRefusal, sc
 // window calls (ui/travelMapOptions.js), so the two skins cannot drift.
 import { teleportCost, teleportCostPrompt, portsFilterAllows, locationInfoRows, resumePrompt } from './travelMapOptions.js';
 import { hasPort } from '../systems/travelPorts.js';
+import { noticeHold, noticeRelease } from './enhancedNotice.js';   // ENH-NOTICE3: this window's own click-anywhere boxes, as the enhanced panel
 import { TRAVEL_OPTIONS_TEXT as TO_TEXT, format as toFormat } from '../systems/travelOptionsText.js';
 import { getDaggerfallDistance, MatchesCutOff } from '../systems/editDistance.js';
 import { checkLocationDiscovered } from './travelMapWindow.js';
@@ -464,6 +465,13 @@ export class HeldMapWindow {
     this._info = null;          // the I key's box, or the H key's
     this._top = null;           // 'resume' | null - the mod's Yes/No over the sheet
     this._resumeAsked = false;  // once per open
+    /** ENH-NOTICE3: the I/H box's own notice OWNER, separate from the
+     *  window itself (which owns the card's refusal line). Two owners
+     *  because the two boxes are independent - the card can be holding
+     *  a ship refusal while the I key raises the building list over it -
+     *  and one owner means one panel, so the second raise would blank
+     *  the first. */
+    this._infoOwner = {};
 
     this._mountChrome();
     this._tornDown = false;
@@ -708,6 +716,14 @@ export class HeldMapWindow {
     if (this._tornDown) return;
     this._tornDown = true;
     this.deps.holder?.release?.();   // MAP3: the arms let the sheet go, whichever lane stood
+    // ENH-NOTICE3 / EVERY ALLOCATION HAS AN OWNER: both held panels
+    // (the card's refusal, the I/H box's) arm no watchdog, so this is
+    // the only thing that can take them down. `_teardown` and not
+    // `_close` because it is the one home every way out comes through -
+    // Escape, the Close button, a commit, dispose() from a host that
+    // took the slot - and it runs before `done` reads true.
+    noticeRelease(this);
+    noticeRelease(this._infoOwner);
     this._unmountChrome();
     // ownership-checked: a second window minted after this one owns
     // the surface now, and an unconditional delete would blind it
@@ -1243,18 +1259,57 @@ export class HeldMapWindow {
     this._renderBox();
   }
 
+  /** ENH-NOTICE3: the I/H box's words, as the panel carries rows. The
+   *  two-column grid of building counts becomes one row per cell - the
+   *  panel is a column at the screen's edge and has no second column to
+   *  give - and the title rides a highlighted row rather than an <h3>.
+   *  No "any key or click to close" row: the panel says
+   *  ClickAnywhereToClose in its own hint (enhancedNotice.js's
+   *  NOTICE_HINT), so a second copy would be two captions. */
+  _infoNoticeRows() {
+    const i = this._info;
+    if (!i) return null;
+    const out = [];
+    if (i.title) out.push({ text: i.title, center: true, highlight: true });
+    for (const r of i.rows) out.push({ text: r, center: false });
+    for (const c of i.cells) out.push({ text: c, center: false });
+    return out.length ? out : null;
+  }
+
   /** The box over the sheet: the I/H box, or the resume prompt. */
   _renderBox() {
     const box = this._chrome?.box;
     if (!box) return;
     box.innerHTML = '';
-    const open = !!this._info || this._top === 'resume';
+    // ENH-NOTICE3 - WHICH OF THE TWO IS A NOTICE, off the mod's own
+    // source. The I key's building list and the H help are
+    // `infoBox.ClickAnywhereToClose = true`
+    // (TravelOptionsMapWindow.cs:452-453) and the "no knowledge"
+    // answer is `DaggerfallUI.MessageBox(MsgNoKnowledge)` (:462),
+    // which is ClickAnywhereToClose by construction
+    // (DaggerfallUI.cs:1328-1336) - so both are the panel's. The
+    // RESUME prompt is a
+    // `DaggerfallMessageBox(..., CommonMessageBoxButtons.YesNo, ...)`
+    // (:334-338): a DECISION, and it keeps the box, because Yes and No
+    // have to stand under the words the player is answering.
+    const onPanel = noticeHold(this._infoOwner, this._infoNoticeRows());
+    const modal = !!this._info || this._top === 'resume';
+    // The box itself only opens for what it still has to draw. With the
+    // info on the panel it stays display:none and the ROOT keeps
+    // `hmmodal` on its own: the words moved, the modality did not, and
+    // an empty .hmbox would paint a bordered blank over the bay
+    // (ui/enhancedStyle.js:1266-1271 - the frame is the box's, not its
+    // children's).
+    const open = modal && !(this._info && onPanel);
     box.classList.toggle('open', open);
     box.style.display = open ? 'block' : 'none';
     // AUDIT-MAP H6: a box holds the WHOLE sheet - the search, the Close
     // button, the ports button and the card go pointer-dead under it, or
-    // a search pick under the resume prompt could begin a second journey
-    this._chrome.root.classList.toggle('hmmodal', open);
+    // a search pick under the resume prompt could begin a second journey.
+    // Read off `modal`, never `open`: the dismissing press is the ROOT's
+    // capture listener (_mountChrome below), not the box's, so the panel
+    // arm must keep the chrome dead exactly as the drawn box did.
+    this._chrome.root.classList.toggle('hmmodal', modal);
     if (!open) return;
     if (this._info) {
       if (this._info.title) box.append(el('h3', 'hmbox-title', this._info.title));
@@ -2003,6 +2058,32 @@ export class HeldMapWindow {
     if (!card) return;
     card.innerHTML = '';
     card.classList.toggle('open', !!this._selected && this._phase === 'map');
+    // ENH-NOTICE3 - THE CARD'S `notice` IS A CLICK-ANYWHERE BOX in both
+    // of its two writers, and on the enhanced skin it is the panel's:
+    //
+    //   - the ship refusal (_toggleOpt below) is one of
+    //     TravelOptionsPopUp.cs:168-180's three message boxes, which the
+    //     classic twin still draws as a buttonless parchment
+    //     (ui/travelPopUp.js:611-617, `this.top` with no MB_BUTTONS)
+    //   - "not enough gold" (_confirmDiseased below) is
+    //     DaggerfallTravelPopUp.cs:394-406, showNotEnoughGoldPopup,
+    //     `messageBox.ClickAnywhereToClose = true` over TEXT.RSC 454
+    //
+    // The card's other lines are NOT notices and stay: the diseased
+    // warning is DaggerfallTravelPopUp.cs:421-426's Yes/No, the teleport
+    // fee is TravelOptionsMapWindow.cs:480-484's Yes/No, and the toggles
+    // and the trip's own figures are the popup's labels, not a box.
+    // Raised before the early return below so a card that goes away -
+    // the selection cleared, the sheet lowering - takes its panel with
+    // it rather than leaving one held over the world.
+    // ...and the teleport FEE REFUSAL is a third: TravelOptionsMapWindow
+    // .cs:497-500's `DaggerfallUI.MessageBox(notEnoughGoldId)`, the same
+    // click-anywhere box - the card keeps its Close, which is the map's
+    // own exit (:498 CloseWindow), under a panel that carries the words.
+    const fee = this._panel === 'teleport' ? (this._panelState?.fee ?? null) : null;
+    const feeRefused = !!(fee && !fee.canPay);
+    const cardNotice = (this._panel === 'travel' && this._panelState?.notice) || (feeRefused ? 'You do not have enough gold.' : null) || null;
+    const onPanel = noticeHold(this, cardNotice ? [{ text: cardNotice, center: true }] : null);
     if (!this._selected || this._phase !== 'map') return;
     const { summary } = this._selected;
     card.append(el('h3', 'hmname', this._selected.name || 'Unknown place'));
@@ -2011,11 +2092,11 @@ export class HeldMapWindow {
       : (REGION_NAMES[summary.regionIndex] ?? '')));
 
     if (this._panel === 'teleport') {
-      const fee = this._panelState?.fee ?? null;
       // AUDIT-TO1 C3: the fee first. No purse for it: the mod's
-      // notEnoughGold box, and the map closes (:497-500).
-      if (fee && !fee.canPay) {
-        card.append(el('p', 'hmprompt', 'You do not have enough gold.'));
+      // notEnoughGold box, and the map closes (:497-500). ENH-NOTICE3:
+      // the words are the panel's above; the card keeps the Close.
+      if (feeRefused) {
+        if (!onPanel) card.append(el('p', 'hmprompt', 'You do not have enough gold.'));
         const row = el('div', 'hmacts');
         const ok = el('button', 'act hmghost', 'Close');
         ok.onclick = () => this._confirmTeleport(false);
@@ -2101,7 +2182,7 @@ export class HeldMapWindow {
       if (_fk && _fk !== 'None' && this._to?.settings?.roadsIntegration) {
         card.append(el('p', 'hmmeta', `On the road, press ${_fk} to follow it.`));
       }
-      if (st.notice) card.append(el('p', 'hmnotice', st.notice));
+      if (st.notice && !onPanel) card.append(el('p', 'hmnotice', st.notice));
       const row = el('div', 'hmacts');
       const go = el('button', 'act', 'Begin journey');
       go.onclick = () => this._begin();

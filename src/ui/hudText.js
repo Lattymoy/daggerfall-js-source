@@ -27,13 +27,28 @@
 // is on: a second queue for the enhanced skin would be a second
 // PopupText, and two of them drift apart on the first line that pops
 // while a window is open. What the skin changes is the PAINT, so
-// `draw` branches at its top and hands ui/enhancedHudText.js the frame
-// this class would have drawn - the same rows, the same slide. The
+// `draw` branches at its top and hands the enhanced face the frame
+// this class would have drawn - the same rows, in the same order. The
 // classic arm below is byte for byte what it was.
+//
+// ENH-NOTICE3 (2026-09-21, Mac: "All mods, including climates and
+// calories need to utilize the enhanced notification popup"): THE
+// ENHANCED FACE IS THE NOTICE STACK. FONT1's face was a DOM column at
+// the top of the screen (ui/enhancedHudText.js, retired); that was a
+// second enhanced face beside the notice panel ENH-NOTICE1 gave the
+// message box, and the lines the player most wanted in the panel -
+// Climates & Calories' hunger, thirst and cold, the Ambient Text
+// mod's street lines, the torches' burn-out, every skill-up and loot
+// tally - are exactly this class's rows (DaggerfallUI.AddHUDText, the
+// HUD-text kind, never a box). So each row is a TOAST in that stack
+// now (ui/enhancedNotice.js drawEnhancedToasts): a panel of its own,
+// keyed by the row's id under this model's key, in while PopupText's
+// timer keeps the row and out when this class pops it. The rows carry
+// an id for that reason alone - the classic arm never reads it.
 import { drawText, measureText } from './text.js';
 import { nativeMetrics, NATIVE_W, DEFAULT_TEXT_COLOR } from './nativePanel.js';
 import { isEnhanced } from '../systems/uiSkin.js';
-import { drawEnhancedHudText, releaseEnhancedHudText } from './enhancedHudText.js';
+import { drawEnhancedToasts, releaseEnhancedToasts } from './enhancedNotice.js';
 
 /** AUDIT FONT F1: every model gets a name of its own, so two never
  *  share one DOM column - see ui/enhancedHudText.js's header for why
@@ -60,6 +75,11 @@ export class HudText {
      *  stands over this column - see observe() below. */
     this.covered = false;
     this.lines = [];
+    /** ENH-NOTICE3: the next row's id - each row is its own toast under
+     *  the enhanced skin, and a toast must know which row it is across
+     *  frames (a row that left the frame was POPPED; a row still in it
+     *  stays put). Per model, never reused. */
+    this._nextId = 0;
     this.timer = 0;
     this.nextPopDelay = HUD_TEXT_POP_DELAY;
     // AUDIT 24 (wave 22): PopupText.AddText's LAST line is
@@ -79,7 +99,7 @@ export class HudText {
     if (this.lines.length === 0) this.timer = delayInSeconds;
     else if (this.timer >= 0) this.timer = Math.max(this.timer, delayInSeconds);
     else this.nextPopDelay = Math.max(this.nextPopDelay, delayInSeconds);
-    this.lines.push({ text });
+    this.lines.push({ id: ++this._nextId, text });
     this.onMessage?.(text);
   }
 
@@ -104,8 +124,10 @@ export class HudText {
    *  described twice and the two must not disagree. */
   frame() {
     const maxCount = Math.min(this.lines.length, HUD_TEXT_MAX_ROWS);
+    const drawn = this.lines.slice(0, maxCount + 1);
     return {
-      rows: this.lines.slice(0, maxCount + 1).map((l) => l.text),
+      rows: drawn.map((l) => l.text),
+      ids: drawn.map((l) => l.id),   // ENH-NOTICE3: beside the rows, so a toast keeps its row across frames
       slide: this.timer < 0 ? this.timer / HUD_TEXT_POP_DELAY : 0,
     };
   }
@@ -121,13 +143,13 @@ export class HudText {
    *  gate they already had, and on the classic skin this is nothing at
    *  all - which is exactly what the classic did with those frames. */
   hide() {
-    if (isEnhanced() && typeof document !== 'undefined') drawEnhancedHudText({ rows: [], slide: 0, visible: false }, undefined, this.key);
+    if (isEnhanced() && typeof document !== 'undefined') drawEnhancedToasts({ rows: [], ids: [], slide: 0, visible: false }, undefined, this.key);
   }
 
   /** EVERY ALLOCATION HAS AN OWNER (AUDIT FONT F1): a model whose host
-   *  is ending takes its DOM column with it. */
+   *  is ending takes its toasts with it. */
   dispose() {
-    if (typeof document !== 'undefined') releaseEnhancedHudText(this.key);
+    if (typeof document !== 'undefined') releaseEnhancedToasts(this.key);
   }
 
   /** AUDIT FONT F4 - WHAT THE HOST CAN SEE AND THIS MODEL CANNOT: a
@@ -136,13 +158,15 @@ export class HudText {
    *  The classic column is painted by the host BEFORE the window on
    *  top of it (scenes/townTalk.js draws the column, then the overlay
    *  stack), which is DFU's order too - DaggerfallHUD paints under the
-   *  top window. The DOM column is at z-index 4 over the canvas and
-   *  obeys no such order, so under the enhanced skin the popup lines
-   *  stood OVER the death screen, the rest and save windows, the
-   *  travel pop-up, the quest journal and every MessageBox. So the
-   *  hosts REPORT their window slot per frame - the same idiom
-   *  ui/hud.js already uses for the mid-screen label's `observe` -
-   *  and the enhanced arm hides the column for as long as one stands.
+   *  top window. A DOM face is over the canvas and obeys no such
+   *  order, so under the enhanced skin the popup lines stood OVER the
+   *  death screen, the rest and save windows, the travel pop-up, the
+   *  quest journal and every MessageBox. So the hosts REPORT their
+   *  window slot per frame - the same idiom ui/hud.js already uses for
+   *  the mid-screen label's `observe` - and the enhanced arm hides the
+   *  toasts for as long as one stands (ENH-NOTICE3 kept the law: the
+   *  stack is the box's too, and a toast under a box the player is
+   *  reading is DFU's column under DFU's box).
    *  The classic arm reads it not at all: there the draw order has
    *  always said it, and DFU really does paint that column under the
    *  window. A window slot is the HOST's to know, and a fourth
@@ -151,13 +175,14 @@ export class HudText {
   observe(covered) { this.covered = !!covered; }
 
   /** PopupText.Draw verbatim, in NativePanel coordinates - and, under
-   *  the enhanced skin, the same frame handed to the DOM column
-   *  instead (FONT1). The hosts pass a fourth argument (the HUD scale)
-   *  and this has never declared one: the classic column measures
-   *  itself off the native panel and the enhanced one off --hud-scale. */
+   *  the enhanced skin, the same frame handed to the notice stack as
+   *  toasts instead (FONT1, ENH-NOTICE3). The hosts pass a fourth
+   *  argument (the HUD scale) and this has never declared one: the
+   *  classic column measures itself off the native panel and the
+   *  enhanced face off the sheet. */
   draw(renderer, canvas, font) {
     if (isEnhanced() && typeof document !== 'undefined') {
-      drawEnhancedHudText({ ...this.frame(), visible: !this.covered }, undefined, this.key);
+      drawEnhancedToasts({ ...this.frame(), visible: !this.covered }, undefined, this.key);
       return;
     }
     if (!font || !this.lines.length) return;

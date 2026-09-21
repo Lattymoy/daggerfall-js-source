@@ -22,7 +22,7 @@
 //
 //   F3  IT ASSUMED THE POPULATION WAS `ui/*Door.js`. It is not: twelve
 //       window CLASSES are constructed straight into a slot, and
-//       townTalk.js:1122 paints every COVERED window too
+//       townTalk.js:1124 paints every COVERED window too
 //       (`eachCoveredWindow((w) => w.draw(...))`), so depth is in the
 //       contract as well as the top.
 //
@@ -56,7 +56,7 @@ test('CRASH2: the required arms are DERIVED from the hosts, not typed here', () 
     'interior.js:368 calls `overlay.tick(dt)` unguarded every frame; CRASH1 omitted `tick` from the contract entirely.');
   // and the arms a host TESTS before calling stay the window's own choice
   for (const arm of ['hover', 'pointer', 'keyup', 'click']) {
-    assert.ok(optional.has(arm), `\`${arm}\` is guarded at every call site, so it is optional by design (townTalk.js:432 says so)`);
+    assert.ok(optional.has(arm), `\`${arm}\` is guarded at every call site, so it is optional by design (townTalk.js:433 says so)`);
   }
 });
 

@@ -38,6 +38,24 @@
 // transition carry it in; dismissal swaps `notice-in` for `notice-out`
 // and the node leaves after NOTICE_SLIDE_MS. The waits go through
 // `schedule`, which a test replaces to run them at once.
+//
+// ENH-NOTICE3 (2026-09-21, Mac: "All mods, including climates and
+// calories need to utilize the enhanced notification popup"): THE
+// SAME STACK CARRIES THE HUD LINE. DaggerfallUI.AddHUDText - the
+// PopupText rows Climates & Calories, Ambient Text, the torches, the
+// skill-ups and the loot tallies speak through - is not a box: it is
+// timed, it is not modal, and nothing dismisses it. FONT1 gave it a
+// DOM column of its own at the top of the screen, which was a second
+// enhanced face beside this one, and the one the player did not read
+// as "the notification". So the column is retired and each PopupText
+// row is a TOAST here: its own panel in this stack, no hint, keyed by
+// the row's id under its model's key, in for as long as PopupText's
+// own timer keeps the row and out when the model pops it. The MODEL
+// is still ui/hudText.js's single timer (drawEnhancedToasts is
+// handed its frame each draw); only the face moved. And a DOM-native
+// window that raises a box of its own (the tavern, the inventory,
+// the held map) HOLDS a panel here - no per-frame draw, so no
+// watchdog - until it releases it.
 
 import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
 import { isEnhanced } from '../systems/uiSkin.js';
@@ -69,17 +87,19 @@ function buildStack(doc) {
   return root;
 }
 
-function buildPanel(doc, key) {
+function buildPanel(doc, key, toast = false) {
   const host = doc.createElement('div');
-  host.className = 'notice';
+  host.className = toast ? 'notice notice-toast' : 'notice';
   host.dataset.owner = key;
   const body = doc.createElement('div');
   body.className = 'notice-body';
   host.append(body);
-  const hint = doc.createElement('div');
-  hint.className = 'notice-hint';
-  hint.textContent = NOTICE_HINT;
-  host.append(hint);
+  if (!toast) {   // a toast is not dismissed, so it carries no "click or press a key"
+    const hint = doc.createElement('div');
+    hint.className = 'notice-hint';
+    hint.textContent = NOTICE_HINT;
+    host.append(hint);
+  }
   stack.append(host);
   // Appended off-screen, and the browser must COMPUTE that resting
   // style before the class changes it, or there is no "before" for
@@ -88,8 +108,8 @@ function buildPanel(doc, key) {
   // nothing - measured, not assumed). Reading offsetWidth forces
   // the flush; the fake document has none and needs none.
   void host.offsetWidth;
-  host.className = 'notice notice-in';
-  return { host, body, rows: [], last: {}, watchdog: null };
+  host.className = toast ? 'notice notice-toast notice-in' : 'notice notice-in';
+  return { host, body, rows: [], last: {}, watchdog: null, toast };
 }
 
 /** A row record as the box carries it: a string, a { text, center,
@@ -120,9 +140,12 @@ function paintRow(doc, node, row) {
  * One frame of ONE box's notice.
  *
  * `frame.rows` are the box's lines (strings or row records), in order;
- * `frame.visible === false` hides the panel without releasing it. `key`
- * names the OWNER - two boxes never share a panel. Returns the panel
- * (or null off a document) so a test can read what was painted.
+ * `frame.visible === false` hides the panel without releasing it;
+ * `frame.toast` makes the panel a toast (no hint - ENH-NOTICE3);
+ * `frame.hold` arms no watchdog, for an owner that does not draw per
+ * frame (a DOM window) and releases by hand. `key` names the OWNER -
+ * two boxes never share a panel. Returns the panel (or null off a
+ * document) so a test can read what was painted.
  */
 export function drawEnhancedNotice(frame, doc = (typeof document === 'undefined' ? null : document), key = 'box') {
   if (!doc) return null;
@@ -130,11 +153,11 @@ export function drawEnhancedNotice(frame, doc = (typeof document === 'undefined'
   let p = panels.get(key);
   if (!p && !lines.length) return null;
   if (!stack) stack = buildStack(doc);
-  if (!p) { p = buildPanel(doc, key); panels.set(key, p); }
+  if (!p) { p = buildPanel(doc, key, !!frame?.toast); panels.set(key, p); }
   const { host, body, rows, last } = p;
   // the watchdog: re-armed on every draw, fires only when the draws stop
   cancel(p.watchdog);
-  p.watchdog = schedule(() => { if (panels.get(key) === p) releaseEnhancedNotice(key); }, NOTICE_WATCHDOG_MS);
+  p.watchdog = frame?.hold ? null : schedule(() => { if (panels.get(key) === p) releaseEnhancedNotice(key); }, NOTICE_WATCHDOG_MS);
 
   const shown = lines.length > 0;
   if (last.on !== shown) { last.on = shown; host.style.display = shown ? '' : 'none'; }
@@ -161,7 +184,7 @@ export function releaseEnhancedNotice(key) {
   if (!p) return;
   panels.delete(key);
   cancel(p.watchdog);
-  p.host.className = 'notice notice-out';
+  p.host.className = p.toast ? 'notice notice-toast notice-out' : 'notice notice-out';
   const gone = () => {
     try { p.host.remove(); } catch { /* already gone */ }
     if (!panels.size) { try { stack?.remove(); } catch { /* already gone */ } stack = null; }
@@ -217,6 +240,72 @@ export function noticeFrame(owner, rows) {
   return drawEnhancedNotice({ rows }, undefined, owner._noticeKey) != null;
 }
 
+/**
+ * A DOM-NATIVE WINDOW'S OWN BOX (ENH-NOTICE3). The tavern, the
+ * inventory and the held map are DOM under the enhanced skin and raise
+ * DFU's click-anywhere box from inside themselves; they have no
+ * per-frame draw, so the panel is HELD - no watchdog - from this call
+ * until noticeRelease(owner). `rows` null releases. The window keeps
+ * its own dismissal (its scrim, its key), exactly as the classic
+ * windows keep theirs under noticeFrame. True: the panel is up.
+ */
+export function noticeHold(owner, rows) {
+  if (!rows || !isEnhanced()) { noticeRelease(owner); return false; }
+  owner._noticeKey ??= noticeKey();
+  return drawEnhancedNotice({ rows, hold: true }, undefined, owner._noticeKey) != null;
+}
+
+/** key -> Set of the row ids that owner has toasts for. */
+const toasts = new Map();
+const toastKey = (owner, id) => `${owner}:${id}`;
+
+/**
+ * ONE FRAME OF ONE PopupText MODEL, AS TOASTS (ENH-NOTICE3). `frame`
+ * is ui/hudText.js's own (`rows` front first, `ids` beside them,
+ * `visible` the host's draw gate); each row is a panel of its own,
+ * keyed by its id under `key`, so a row that was there last frame and
+ * is not in this one has been POPPED by PopupText's timer and slides
+ * out, while the rows still queued stay put - a new line never
+ * re-slides the old ones. `visible === false` hides them all without
+ * releasing (a hidden HUD, AUDIT FONT F4's covering window); the
+ * queue is untouched, as it always was. Returns the owner's live
+ * panels, for a test.
+ */
+export function drawEnhancedToasts(frame, doc = (typeof document === 'undefined' ? null : document), key = 'hud') {
+  if (!doc) return [];
+  const ids = frame?.ids ?? [];
+  const rows = frame?.rows ?? [];
+  const visible = frame?.visible !== false;
+  let mine = toasts.get(key);
+  if (!mine && !ids.length) return [];
+  if (!mine) { mine = new Set(); toasts.set(key, mine); }
+  const out = [];
+  for (let i = 0; i < ids.length; i++) {
+    const host = drawEnhancedNotice({ rows: [rows[i] ?? ''], visible, toast: true }, doc, toastKey(key, ids[i]));
+    if (host) { mine.add(ids[i]); out.push(host); }
+  }
+  for (const id of [...mine]) {
+    if (ids.includes(id)) continue;
+    // popped by the model (gone from the frame) - or hidden with an
+    // empty frame, which is the same hide as above, not a release
+    if (!visible && !ids.length) { drawEnhancedNotice({ visible: false, toast: true }, doc, toastKey(key, id)); out.push(panels.get(toastKey(key, id))?.host); continue; }
+    releaseEnhancedNotice(toastKey(key, id));
+    mine.delete(id);
+  }
+  if (!mine.size) toasts.delete(key);
+  return out.filter(Boolean);
+}
+
+/** EVERY ALLOCATION HAS AN OWNER: a PopupText model whose host is
+ *  ending takes its toasts with it (scenes/dungeonContext.js's destroy,
+ *  through HudText.dispose). */
+export function releaseEnhancedToasts(key) {
+  const mine = toasts.get(key);
+  if (!mine) return;
+  for (const id of mine) releaseEnhancedNotice(toastKey(key, id));
+  toasts.delete(key);
+}
+
 /** The live panels' keys, for a probe. */
 export const enhancedNoticeKeys = () => [...panels.keys()];
 
@@ -224,6 +313,7 @@ export const enhancedNoticeKeys = () => [...panels.keys()];
 export function destroyEnhancedNotice() {
   for (const p of panels.values()) { cancel(p.watchdog); try { p.host.remove(); } catch { /* gone */ } }
   panels.clear();
+  toasts.clear();
   try { stack?.remove(); } catch { /* gone */ }
   stack = null;
 }

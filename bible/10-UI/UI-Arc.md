@@ -352,6 +352,132 @@ it. Eight mutants over the hooks (a hook dropped, a decision handed
 to the panel, `_close` and the field step not releasing, the seam's
 null and classic arms), each killed.
 
+### ENH-NOTICE3 - THE ONE DOOR, AND THE HUD LINE AS A TOAST (2026-09-21, Mac: "I do notice the new enhanced pop up system isn't working for everything. All mods, including climates and calories need to utilize the enhanced notification popup. This needs a proper detailed audit, maybe a refactor")
+
+**THE AUDIT.** Three Opus lanes, one question each. The first
+inventoried every producer of on-screen text in the port - 27
+families, from the quest machine's parchments to the torches' "your
+torch has burned out" - and sorted them by the DFU door each goes
+through. The second walked every ported mod (Climates & Calories,
+Ambient Text, Travel Options, the torches, the survival menus) line by
+line. The third designed the seam. What they found together:
+
+1. **THE HUD-TEXT KIND WAS A SECOND FACE.** `DaggerfallUI.AddHUDText`
+   - PopupText, the top-of-screen rows - is what Climates & Calories'
+   stage, temperature, exposure, waterskin, rations and camp lines
+   speak through, and Ambient Text's street lines, and the torches,
+   and every skill-up and loot tally. FONT1 drew them in a DOM column
+   at the top-centre under the compass. ENH-NOTICE1 then put the
+   message box at the right edge, and the player read the column as
+   "not the notification". Two enhanced faces for text the game says.
+2. **NOTHING FUNNELLED THE BOX.** ENH-NOTICE1/2 hooked the panel where
+   the parchment was DRAWN; nothing decided which class a producer
+   BUILT. Six host seams each chose by hand (`townTalk.showOverlay(new
+   ChoiceWindow({ lines }))` above ground, `pushDungeonWindow(new
+   ActionTextBox(lines))` below), and `scenes/shared.js`'s infection
+   factory carried that split as a `showText` dependency.
+3. **THE BUG MAC HIT.** `scenes/world.js`'s Travel Options wiring
+   read `messageBox: (line) => townTalk.say(line)`: the mod names two
+   DFU doors correctly (`say` is AddHUDText, `messageBox` is
+   MessageBox) and the host wired both to one, so its nine boxes -
+   the arrival, the stops, the enemies refusals, the H help - printed
+   as one fading HUD line.
+4. **THREE DOM WINDOWS DREW THEIR OWN CARDS**, each a
+   `DaggerfallUI.MessageBox` in the C#: the tavern's `boxScrim`
+   (DaggerfallTavernWindow.cs:190/:194/:224/:301/:326), the
+   inventory's `sheet-notice` (DaggerfallInventoryWindow.cs:1330-1341,
+   :1370-1381, the wagon and gold refusals), the held map's `hmnotice`
+   and I/H box (TravelOptionsPopUp.cs:168-180, DaggerfallTravelPopUp
+   .cs:394-406, TravelOptionsMapWindow.cs:452-462/:497-500). And the
+   hunt window's busy page was still a canvas parchment.
+
+**THE SEAM: `systems/notify.js`.** DFU has one door - a static on
+`DaggerfallUI` (`MessageBox` :1328-1365, `AddHUDText` :759-775,
+`PopupMessage` :820-824, `SetMidScreenText` :783-789) that reaches
+`uiManager.TopWindow` because DFU has one window stack. The port's
+hosts hold one overlay slot each, so the door OFFERS: each live host
+registers a presenter `{ mount(win, { push, onClosed }), hudText(text,
+delay), active(), priority }` and `messageBox(text, opts)` asks them
+by priority then recency - the dungeon context (20) before
+worldModes' modal modes (10, through the hoisted `showQuestOverlay`:
+interior mounts, dungeon hands over, exterior refuses) before
+townTalk's outdoor slot (0) - which is `world.js`'s showQuestBox
+ladder written once. A presenter that refuses passes the box on; a box
+no presenter takes lands on the HUD line and the handle answers null
+(FALLBACK, NOT SILENCE - U43-ii's silent-first-ten-minutes failure).
+The handle carries `addNext` (AddNextMessageBox), `done` and the
+window. `push` defaults TRUE because every DaggerfallUI.MessageBox is
+PushWindow (UserInterfaceManager.cs:79-91, ROAD-B B5); `previousWindow`
+and `highlightColor` ride through to the ActionTextBox. **THE LAW:
+notify decides WHICH MODEL, the draw decides WHICH FACE** - the door
+never imports the skin; the fork stays in `ui/actionText.js`,
+`ui/hudText.js`, `ui/midScreenText.js`.
+
+**THE HUD LINE AS A TOAST.** `HudText` rows carry an id now
+(`frame().ids` beside `rows`), and under the enhanced skin `draw`
+hands the frame to `ui/enhancedNotice.js`'s `drawEnhancedToasts`: one
+`.notice.notice-toast` panel per row in the SAME stack the box slides
+into, keyed `${model.key}:${id}`, no hint (nothing dismisses a toast),
+the popup's yellow on the box's dark. A row still in the frame keeps
+its node (a third line never re-slides the first two); a row that
+left the frame was popped by PopupText's timer and slides out; `hide`
+and a covered window hide them all without releasing (AUDIT FONT F4's
+law, kept); `dispose` releases the model's own. The model did not
+move: the queue, the timer, the rubberband, the maxRows+1 cut, the
+notebook tail and the classic draw are PopupText's as FONT1 left them.
+The column is RETIRED - `drawEnhancedHudText`, `releaseEnhancedHudText`,
+the `.hudtext` rules, `HUD_TEXT_TOP_PX` and its four siblings, the
+chat-peek offsets, the narrow top - and `ui/enhancedHudText.js` keeps
+the mid-screen label and the online status line. `tools/font1Probe.mjs`
+measures the toasts (right edge, two models stacking, a long line
+wrapping, no hint) where it measured the column.
+
+**THE MIGRATION.** The Travel Options wiring calls `messageBox(line)`.
+The enchant/Azura seam (world.js, exterior.js, dungeonContext.js), the
+quest machine's `messageBox`, the holiday `showRecord` twins, the
+mod-compatibility box, `townTalk.showBox`, DaggerfallAction's ShowText
+(`previousWindow: false`, DFU's null passed through) and the infection
+factory all go through the door; the factory's `showText` dependency
+and its four host wirings are gone. Two of these REPLACED before (the
+enchant seam, `showBox`) and push now, which is a fix by the C#. The
+three DOM windows hold a panel through `noticeHold(owner, rows)` - no
+per-frame draw, so no watchdog - and release it on their own dismissal
+and on unmount (the held map under two owners, because the I/H box
+opens over a card that may hold a refusal); a box WITH buttons keeps
+its card (the tavern's price offer, the map's resume and diseased
+prompts, the inventory's gold and split fields). The hunt's busy page
+takes `noticeFrame` like the eight classic windows. `.pack-shell
+.sheet-notice` and `.hmnotice` left the sheet with their last renderer.
+
+**NOT MOVED, LISTED** (each a plain MessageBox a later pass moves with
+its C# in hand): the status-box chains (DisplayStatusInfo, four hosts -
+the handle's `addNext` already fits), the rest/mastery `box:` deps
+(one factory, four builders, the infection's old shape), the exhaustion
+boxes, `worldModes.js`'s bookshelf refusal, the mobile-activate `modal:`
+dep, the dungeon's `hudBox`; and the keyed `ChoiceWindow` menus and the
+court flow, which are boxes WITH BUTTONS the door does not mint.
+
+**Pinned.** `test/notify.test.js` (16): routing, refusal, recency, the
+inactive presenter, the unregister, the fallback, `hudText`/`popupMessage`
+with the delay, push and `onClosed`, the chain, the options, `toRows`,
+the skin pin, the migrated seams by source, the registrations as live
+code, the Travel Options wiring, and the mod driven with spies (arrival
+and refusal to the box, the no-path line to the HUD).
+`test/enhnotice3_hosts.test.js` (2): the three presenters and their
+order, the dungeon's unregister, no window class under `src/systems`.
+`test/hudtext.test.js` rewritten onto the toasts (15);
+`test/enhancedNotice.test.js` +2 (`noticeHold`, `drawEnhancedToasts`),
+the roster widened; `test/tavernwindow.test.js` +3,
+`test/enhancedInventory.test.js` +3, `test/heldmap.test.js` +1 and two
+re-pinned, `test/surv6_hunting.test.js` +2; the old-law pins in
+`roadb_push_doors`, `ba1_betterambience`, `audit63_quests_talk`,
+`audit64_hud`, `audit24_wave22`, `waveD_dungeonHost` and `automap`
+moved to the new law. Campaign: `tools/mutants/enhnotice3.json` 37
+mutants, 37 dead; `tools/mutants/font1.json`'s 26 column records
+re-aimed by content, 51 of the slice's records run against the four
+modules, 51 dead. Ledger A rows THE ONE DOOR EVERY MESSAGE GOES THROUGH
+and THE HUD LINE AS A TOAST.
+
 ## MENU1-WARM - THE MENU BYTES ARE ASKED FOR EARLY (2026-09-19)
 
 Mac: *"Also look for any elements of hitching, or hiccups."*
@@ -580,17 +706,17 @@ still push CLASSIC canvas windows as children under the DOM, and so
 does the pack's USE arm.
 
     THE SPELLBOOK       FIVE construction sites across FOUR hosts:
-                        worldModes.js:1925 (the factory) and :1904 (a
+                        worldModes.js:1932 (the factory) and :1904 (a
                         HAND-ROLLED second one, 342 lines below it in
                         the same file),
-                        dungeonContext.js:1013, world.js:2051,
-                        exterior.js:2275. It is the only window TWO
+                        dungeonContext.js:1014, world.js:2052,
+                        exterior.js:2280. It is the only window TWO
                         enhanced screens already push - the sheet's
                         button and the pack's USE hand-off, whose
                         close-then-hand-over ordering U55 got
                         backwards. No law needs extracting first.
     THE LOGBOOK         THREE sites: charSheetNav.js:53,
-    / NOTEBOOK          world.js:6174, dungeonContext.js:6325. A seam
+    / NOTEBOOK          world.js:6208, dungeonContext.js:6358. A seam
                         wants making, as U52's and U53's did.
     HISTORY             ONE site (charSheetNav.js:61), and it reads
                         only the entity's backStory. The small one.
@@ -6681,7 +6807,7 @@ still speaking to devtools, both of them one line of plumbing rather
 than an arc:
 
 - `townTalk.frame` ticks and draws the HUD TEXT LAYER as well as the
-  overlay (`townTalk.js:617, :598`), and both exterior hosts called it
+  overlay (`townTalk.js:618, :599`), and both exterior hosts called it
   in their modal branch only WHEN A WINDOW WAS UP. AUDIT F2-I1 added
   that line to tick a window and gated it on the window existing. So
   inside a building a broken weapon, a fatigue warning and a level-up
@@ -8318,7 +8444,7 @@ same answer: `ui/spellbookDoor.js`, with each host handing it only
 what that host knows.
 
 THE "HAND-ROLLED DUPLICATE" WAS NOT ONE. The board recorded
-worldModes.js:2742 as a second book built by hand 342 lines below the
+worldModes.js:2749 as a second book built by hand 342 lines below the
 factory. Read closely it is the SPELL MERCHANT'S SHOP - buyMode, with
 `offered`, the building's quality, the shop name, the haggling skills
 and the classic clock. A different question with different deps, and
@@ -8401,7 +8527,7 @@ mutations, 4 dead.
 
 PX24 (Mac: "with the logbook and history, I want them as one detailed
 UI"): THE CHRONICLE. Two classic windows built at four sites -
-questJournal.js from charSheetNav:53, world.js:2467 and
+questJournal.js from charSheetNav:53, world.js:2468 and
 dungeonContext.js, playerHistory.js from charSheetNav:61 - become ONE
 seam (ui/chronicleDoor.js, the U52/U53/PX23 shape a sixth time) and,
 on the enhanced skin, ONE WINDOW.
@@ -9028,7 +9154,7 @@ and firing THAT twice is a second PopToHUD.
 
 ### Why only two of the four hosts crashed
 
-`worldModes.js:5695` and `dungeonContext.js:1537` answer the same
+`worldModes.js:5702` and `dungeonContext.js:1544` answer the same
 `onClose` by nulling their slot and never disposing - nothing to
 re-enter. Only the two hosts that come through `townTalk.closeOverlay`
 dispose. **The four-hosts rule caught this one by accident**: the two
@@ -10272,9 +10398,9 @@ re-resolved the `exterior.js` half of a three-file sentence and left the
 `ExteriorAutomapWindow` construction, `:4101` on a `locationName:`
 field). Both halves are now read by `test/citedrift.test.js` - the
 existing entries only ever captured the exterior number, which is how
-the other half went stale unnoticed. (The rest cite named `world.js:6507`,
+the other half went stale unnoticed. (The rest cite named `world.js:6541`,
 the first of the host's TWO identical `act === 'Rest'` arms; ROAD-H H5
-deleted the second and the cite is `world.js:6513` now.)
+deleted the second and the cite is `world.js:6547` now.)
 
 ## AUDIT 62 F24/F25 - THE SENTINEL SWEEP WAS TWO WINDOWS SHORT (2026-09-07)
 
@@ -10691,7 +10817,7 @@ the interior half:
 
 - The callback was handed to `openTalkWindow`'s FIRST mount and lost by
   every later one. `showOverlay` writes `_onOverlayClosed` on each call
-  (`townTalk.js:562-588`), so in the art-less greeting chain a tone
+  (`townTalk.js:563-589`), so in the art-less greeting chain a tone
   press (`toneOption`'s reshow) or a Where-is page (`openCategories` ->
   `pagedList`) re-mounted with `onClosed` null and threw the restore
   away - the player escaped the conversation and the popup DFU keeps
@@ -13924,7 +14050,7 @@ items off your character."*
 
 It did not, and the whole of the reason is one line. INV1 hung the
 gesture on the pack's rows - `itemRow`'s `if (from === 'local')
-dragFrom(row, item)` (`ui/enhancedInventory.js:1767`) - and made the
+dragFrom(row, item)` (`ui/enhancedInventory.js:1774`) - and made the
 body a drop TARGET, with `equippedList` saying so in its own comment:
 *"the body is the equip target - `dragFrom`'s pointerup finds it by hit
 test, so the map needs no handler of its own"*. True for the direction
@@ -15060,9 +15186,9 @@ whether an entry MATCHES and asserts nothing.
 Following it out was worse than the symptom. Five Ledger rows cite a
 PAIR - `` `world.js:N`, `exterior.js:M` `` - and the table captured `M`
 alone. So `M` was re-resolved at every wave for a year and `N` was never
-read: `world.js:4694` named a line that is 8950, `:792` one that is
+read: `world.js:4710` named a line that is 8950, `:793` one that is
 1215, `:1094` one that is 2194, `:3903` one that is 3066, `:3920` one
-that is 8907. `world.js:4429-4461` and `dungeonContext.js:1385` were
+that is 8907. `world.js:4445-4477` and `dungeonContext.js:1392` were
 stale the same way. Seven numbers re-resolved BY CONTENT, every
 uncaptured half de-baked to `\d+`, and eight new entries added so every
 number in a pair is captured. The half nobody reads cannot rot in
@@ -16604,7 +16730,7 @@ says in its own header that a second `--apply` against the same base
 moves every cite AGAIN. Recovering this slice's line shifts by
 reverting the tree except the files it had edited re-created exactly
 that: the kept files still carried the first pass's moves, and the
-second pass moved them a second time - `dungeonContext.js:2289` became
+second pass moved them a second time - `dungeonContext.js:2316` became
 2221 where the line had gone to 2215. The repair is a pairing walk:
 read HEAD's number at the same position in the same file, resolve it
 BY CONTENT in the working tree, and write that. Forty-seven cites came

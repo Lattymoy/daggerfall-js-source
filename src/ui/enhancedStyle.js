@@ -83,53 +83,14 @@ export const fontsUrl = (families) =>
  *  own claim. */
 export const ENHANCED_FONTS_URL = fontsUrl([FONT_DISPLAY, FONT_DATA, FONT_PIXEL_BRAND, FONT_PIXEL_DATA]);
 
-/* FONT1: THE POPUP COLUMN'S TWO NUMBERS, in one home. The sheet below
-   sets them and ui/enhancedHudText.js reads them - the slide is
-   computed in pixels from the row height, so a row that is 20px in the
-   sheet and 18 in the module would scroll out by the wrong amount
-   every time a line leaves. `TOP` clears the compass strip and a named
-   target's bar (measured in Chromium, tools/font1Probe.mjs). */
-export const HUD_TEXT_TOP_PX = 96;
-export const HUD_TEXT_ROW_PX = 20;
-/* AUDIT FONT F9: the narrow top was a LITERAL in the max-width 860
-   block while the wide one was interpolated from the export above, so
-   a slice that moved the compass would have moved one of the two. It
-   is an export like its sibling, and the sheet interpolates both. */
-export const HUD_TEXT_TOP_NARROW_PX = 82;
-
-/* AUDIT FONT F7: THE COLUMN AND THE CHAT PEEK SHARE A CORNER, and at
-   the tops above they share it almost entirely. `.dfchat` (ui/chatPanel
-   .js) is fixed at top 44 - 72 on the touch skin - and its PEEK is
-   CHAT_PEEK (net/chat.js, 5) lines of `.dfchat-line` under it; the
-   panel is z-index 5 and the column z-index 4, so on a 430px phone the
-   chat's last five lines simply sat on top of "Your Long Blade skill
-   has improved." and neither was readable.
-   So where the chat is MOUNTED the column starts under the peek
-   instead. The numbers below are the chat sheet's own, and they are
-   CHECKED TWICE: test/hudtext.test.js reads the tops, the line box and
-   the gap back out of CHAT_CSS itself, so a chat that moves reddens
-   this rather than sliding back under the column; and
-   tools/font1Probe.mjs builds the real panel in Chromium and measures
-   where it actually ends (248.5 and 292.5 at the time of writing).
-   A peek line WRAPS at 440px more often than not, which is where the
-   two rows per line come from - the probe is the ruler for that.
-   The alternative, measuring the panel on every frame, is a forced
-   layout sixty times a second for a surface that moves twice a
-   session. */
-const CHAT_TOP_PX = 44;               // `.dfchat` top
-const CHAT_TOP_TOUCH_PX = 72;         // `.dfchat.touch` top
-const CHAT_PEEK_LINES = 5;            // net/chat.js CHAT_PEEK
-const CHAT_PEEK_ROWS = 2;             // a peek line wraps in a 440px box (measured)
-const CHAT_PEEK_LINE_PX = 13 * 1.35;  // `.dfchat-line` font-size x line-height
-const CHAT_PEEK_GAP_PX = 3;           // `.dfchat-peek` gap
-const CHAT_HINT_PX = 17;              // `.dfchat-hint` ("Enter to chat") and its 4px margin - the desktop tail
-const CHAT_OPEN_BTN_PX = 33;          // `.dfchat.touch .dfchat-open` (the Chat button) in the hint's place
-const CHAT_AIR_PX = 4;                // ...and a step of air, so the first popup line is not flush against it
-const chatPeekBottom = (top, tail) => Math.ceil(
-  top + CHAT_PEEK_LINES * CHAT_PEEK_ROWS * CHAT_PEEK_LINE_PX
-  + (CHAT_PEEK_LINES - 1) * CHAT_PEEK_GAP_PX + tail + CHAT_AIR_PX);
-export const HUD_TEXT_TOP_CHAT_PX = chatPeekBottom(CHAT_TOP_PX, CHAT_HINT_PX);
-export const HUD_TEXT_TOP_CHAT_TOUCH_PX = chatPeekBottom(CHAT_TOP_TOUCH_PX, CHAT_OPEN_BTN_PX);
+/* ENH-NOTICE3 (2026-09-21): the popup column's numbers - HUD_TEXT_TOP_PX
+   (96, under the compass block), HUD_TEXT_ROW_PX (20, the slide's row),
+   HUD_TEXT_TOP_NARROW_PX (AUDIT FONT F9) and the two chat-peek offsets
+   (AUDIT FONT F7, computed off the chat sheet's own line box) - left
+   with the column. PopupText's rows are toasts in the notice stack now
+   (ui/enhancedNotice.js, `.notice.notice-toast` below), at the right
+   edge, where the compass, the chat's peek and the mid-screen label
+   are not. Ledger A row "THE HUD LINE AS A TOAST". */
 
 export const ENHANCED_CSS = `
 /* ── FIX-D: the digit five is Silkscreen's - see ui/pixelifyFive.js */
@@ -1317,7 +1278,6 @@ body.draglock .wornrow, body.draglock .wornmap { touch-action: none; }
 }
 .hmpick.on { color: var(--brass); border-color: var(--brass); background: #12161b; }
 .hmtrip { margin: 12px 0 0; }
-.hmnotice { color: #d98074; font-size: 13px; margin: 10px 0 0; }
 /* the foot: the hint, the zoom band and (SOC6) the party legend in ONE
    row, so nothing floats at a guessed height (AUDIT SOC C10/D5's lesson) */
 .hmfoot {
@@ -2244,62 +2204,6 @@ body.draglock .wornrow, body.draglock .wornmap { touch-action: none; }
   font-size: 12px; letter-spacing: 0.08em; color: var(--bone); }
 .hud-need.danger { color: rgb(243,239,44); border-color: var(--brass); text-shadow: 2px 2px 0 rgb(93,77,12); }
 
-/* ── FONT1: THE POPUP COLUMN ─────────────────────────────────────
-   Every line the game says without opening a window - the Ambient Text
-   mod's street lines, "Your Long Blade skill has improved.", the loot
-   tallies - drew in the classic BITMAP font under this skin until
-   FONT1, because the enhanced HUD replaced the bars and never took the
-   text (ui/enhancedHudText.js, ui/hudText.js). It is PopupText's own
-   column, in this skin's face: centred, growing downward, sliding up
-   by one row as the front line leaves, in the classic shadowed pair
-   the classic popup is drawn in (nativePanel DEFAULT_TEXT_COLOR is
-   rgb(243,239,44) and its shadow rgb(93,77,12) - the same yellow the
-   mode word wears above).
-
-   IT STARTS BELOW THE COMPASS. The classic column starts at the top of
-   the native panel; here the compass strip (top 18, 26 tall) and the
-   target bar stand there, so 96px clears both - measured, not guessed
-   (tools/font1Probe.mjs). The row box is 20px, which is
-   ENHANCED_HUD_TEXT_ROW_H in that module: the slide is computed in
-   pixels from it, so the two numbers are one number.
-
-   AUDIT FONT F1 - THE STACK AND THE COLUMNS. There is more than one
-   PopupText model alive in this port (scenes/townTalk.js's and
-   scenes/dungeonContext.js's, both live on ?world in a dungeon), so
-   the column is TWO elements: \`.hudtext-stack\`, one per document,
-   which owns the place, the z-index and --hud-scale; and a \`.hudtext\`
-   inside it PER OWNER, which owns that model's rows and that model's
-   own scroll-out. Two models stack rather than overwrite one element.
-
-   AUDIT FONT F2 - THE SLIDE IS INSIDE THE SCALE. \`--hudtext-slide\` is
-   a translateY on the inner column, so at --hud-scale 2 a row leaves
-   by two scaled rows rather than by one unscaled one.
-
-   AUDIT FONT F8 - A LONG LINE IS DRAWN WHOLE. The classic column draws
-   the whole string (PopupText.Draw measures it and centres it; nothing
-   clips), and a quest or TEXT.RSC line is regularly longer than 86vw
-   on a phone, so an ellipsis took the operative half of it. The rows
-   wrap; the box is a MINIMUM height, and the module measures the
-   front row rather than assuming it is one. */
-.hudtext-stack { position: fixed; left: 50%; top: ${HUD_TEXT_TOP_PX}px; z-index: 4; pointer-events: none;
-  transform: translateX(-50%) scale(var(--hud-scale, 1));
-  transform-origin: top center;
-  display: flex; flex-direction: column; align-items: center;
-  max-width: min(680px, 86vw); }
-.hudtext { display: flex; flex-direction: column; align-items: center; width: 100%;
-  transform: translateY(var(--hudtext-slide, 0px));
-  font-family: ${PIXEL_STACK}; -webkit-font-smoothing: none;
-  font-variant-ligatures: none; font-feature-settings: 'liga' 0, 'clig' 0;
-  color: rgb(243,239,44); text-shadow: 2px 2px 0 rgb(93,77,12); }
-.hudtext-row { min-height: ${HUD_TEXT_ROW_PX}px; line-height: ${HUD_TEXT_ROW_PX}px; font-size: 14px;
-  letter-spacing: 0.04em; white-space: normal; overflow-wrap: anywhere; text-align: center; max-width: 100%; }
-
-/* AUDIT FONT F7: ...and it steps out of the chat's peek where the chat
-   is mounted. \`:has\` is the whole rule - a browser without it keeps the
-   compass-clearing top, which is what shipped. */
-body:has(.dfchat) .hudtext-stack { top: ${HUD_TEXT_TOP_CHAT_PX}px; }
-body:has(.dfchat.touch) .hudtext-stack { top: ${HUD_TEXT_TOP_CHAT_TOUCH_PX}px; }
-
 /* FONT1: THE MID-SCREEN LABEL - DaggerfallHUD's OTHER text surface
    (AUDIT 64 F34, ui/midScreenText.js): one centred line that replaces
    itself, where the mode word and every "You are too far away" is
@@ -2358,8 +2262,6 @@ body:has(.dfchat.touch) .hudtext-stack { top: ${HUD_TEXT_TOP_CHAT_TOUCH_PX}px; }
   .hud-qicon { max-width: 32px; max-height: 32px; }
   .hud-qwtrack, .hud-qwfill { stroke-width: 6; }
   .hud-qcount { right: 18px; bottom: 13px; font-size: 11px; }
-  /* the compass and the bar above it move up with .hud-top, so the column follows them */
-  .hudtext-stack { top: ${HUD_TEXT_TOP_NARROW_PX}px; }
 }
 
 /* PX25: the doors the F5 sheet carried, on the page that is the sheet. */
@@ -3310,8 +3212,6 @@ body:has(.dfchat.touch) .hudtext-stack { top: ${HUD_TEXT_TOP_CHAT_TOUCH_PX}px; }
 .pack-shell .packcarry .px-meter { width: 140px; height: 8px;
   border: 2px solid rgba(125,116,96,0.55); background: rgba(0,0,0,0.4); }
 .pack-shell .packgold { display: flex; align-items: baseline; }
-.pack-shell .sheet-notice { color: #c5bda2; text-align: center;
-  text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
 .pack-shell ::-webkit-scrollbar { display: none; }
 .pack-shell .pack-dock .packcol, .pack-shell .packlists, .loot-win { scrollbar-width: none; }
 .loot-win::-webkit-scrollbar { display: none; }
@@ -3567,7 +3467,7 @@ body:has(.dfchat.touch) .hudtext-stack { top: ${HUD_TEXT_TOP_CHAT_TOUCH_PX}px; }
   text-shadow: 2px 2px 0 rgba(0,0,0,0.85); }
 .hmmeta { color: #7d7460; font-size: 13px; letter-spacing: 0.2em; text-transform: uppercase;
   text-align: center; text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
-.hmprompt, .hmnotice { color: #c5bda2; text-align: center; font-size: 15px;
+.hmprompt { color: #c5bda2; text-align: center; font-size: 15px;
   text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
 .hmpair { display: flex; justify-content: space-between; gap: 14px;
   border-bottom: 2px solid rgba(125,116,96,0.3); min-height: 32px; align-items: baseline; }
@@ -3712,12 +3612,11 @@ body:has(.dfchat.touch) .hudtext-stack { top: ${HUD_TEXT_TOP_CHAT_TOUCH_PX}px; }
    notification", with the window deferred - "Notify, then you choose".
 
    WHERE IT SITS, AND WHY NOT WHERE THE REFERENCE PUTS IT. Skyrim's
-   notification is top-centre; this HUD's top-centre is taken twice
-   over - the compass strip at 18 and the popup column at
-   HUD_TEXT_TOP_PX, which is the surface every other line in the game
-   arrives on. A second centred stack there would sit on the first the
-   first time an ambient line and a level-up landed together. So it
-   goes where THIS hud already puts what is happening to YOU: above
+   notification is top-centre; this HUD's top-centre is taken by the
+   compass strip at 18 (and was, until ENH-NOTICE3 moved PopupText's
+   rows to the right-edge notice stack, by the popup column under it,
+   which is where every other line in the game arrived). So it goes
+   where THIS hud already puts what is happening to YOU: above
    the bottom block, with the vitals and the quickslots, growing
    upward from a fixed foot so a flurry of skill rows never walks down
    into them.
@@ -3857,9 +3756,22 @@ button.lv-note.lv-clickable:hover, button.lv-note.lv-clickable:focus-visible {
   font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: #7d7460;
   text-align: right;
 }
+/* ENH-NOTICE3: A TOAST - one PopupText row (DaggerfallUI.AddHUDText:
+   a Climates & Calories line, an ambient line, a skill-up, a loot
+   tally) in the same stack, timed by PopupText's own timer and never
+   dismissed, so it wears no hint and a quieter edge than the box the
+   player must answer: the popup column's yellow (nativePanel
+   DEFAULT_TEXT_COLOR rgb(243,239,44)) on the box's dark, so the two
+   kinds read apart at a glance. */
+.notice.notice-toast {
+  padding: 8px 18px 8px 14px; border-left-color: rgba(243,239,44,0.55);
+  background: rgba(10,12,17,0.82);
+}
+.notice.notice-toast .notice-row { font-size: 14px; color: rgb(243,239,44); text-shadow: 2px 2px 0 rgb(93,77,12); text-align: center; }
 @media (max-width: 720px) {
   .notice-stack { max-width: 88vw; gap: 6px; }
   .notice { width: 88vw; padding: 10px 14px 8px 12px; }
+  .notice.notice-toast { padding: 6px 12px 6px 10px; }
   .notice-row { font-size: 13px; }
   .notice-cell:first-child { min-width: 5em; }
 }

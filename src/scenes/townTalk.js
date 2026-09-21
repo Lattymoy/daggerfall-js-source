@@ -68,6 +68,7 @@ import { FACTION_TYPES } from '../formats/factionFile.js';
 import { skillValue, tallySkill, SKILLS } from '../systems/skills.js';
 import { liveStat } from '../systems/statMods.js';   // AUDIT 63 F4: TalkManager.cs:665 reads Stats.LivePersonality (DaggerfallStats.cs:55), not the base
 import { ActionTextBox } from '../ui/actionText.js';   // ROAD-D D10: DaggerfallUI.MessageBox, the port's parchment
+import { registerPresenter, messageBox } from '../systems/notify.js';   // ENH-NOTICE3: this slot and this PopupText, offered to the one door every message goes through - and the door itself, for this host's own box seam
 import { preloadTalkArt, setNpcPortrait, clearNpcPortrait } from '../ui/nativeTalk.js';   // U8b   // ROAD-D D10: SetNPCPortrait
 import { createTalkWindow, talkDoorReady } from '../ui/talkDoor.js';   // ET1: the ONE door - the classic window or the enhanced panel over it
 import { requestLook } from '../player/pointerLock.js';   // ET1: the panel's Goodbye relocks inside its own gesture (MAC1)
@@ -1100,13 +1101,14 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     // the DRAW half is gated - PopupText.Update retires rows from
     // DaggerfallHUD.Update, which renderHUD does not touch.
     // FONT1: ...and the ELSE says so out loud. The enhanced skin draws
-    // this column in the DOM (ui/enhancedHudText.js), and a DOM column
-    // stays painted unless it is told to hide - AUDIT 64 F37's own law -
-    // so a frame the gate refuses must reach `hide()` rather than simply
-    // skip the paint. On the classic skin `hide()` does nothing, which
-    // is what skipping the call always did.
+    // these rows in the DOM (toasts in the notice stack since
+    // ENH-NOTICE3, ui/enhancedNotice.js), and a DOM face stays painted
+    // unless it is told to hide - AUDIT 64 F37's own law - so a frame
+    // the gate refuses must reach `hide()` rather than simply skip the
+    // paint. On the classic skin `hide()` does nothing, which is what
+    // skipping the call always did.
     // AUDIT FONT F4: ...and the host REPORTS its window slot first. The classic column is drawn HERE and the overlay
-    // stack just below it, so on that skin a window covers it; the enhanced column is DOM at z-index 4 and covers the
+    // stack just below it, so on that skin a window covers it; the enhanced face is DOM over the canvas and covers the
     // window instead, so it is told to go for as long as one stands.
     hud.observe(!!overlay);
     if (font && hudRenderEnabled()) hud.draw(renderer, canvas, font, s); else hud.hide();
@@ -1229,6 +1231,22 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     return true;
   }
 
+  // ENH-NOTICE3: THIS HOST'S SLOT AND THIS HOST'S PopupText, OFFERED
+  // ONCE. systems/notify.js is the door every DaggerfallUI.MessageBox
+  // and AddHUDText goes through, and a box it is handed reaches a
+  // host's slot only through a presenter. This one is the OUTDOOR
+  // slot, at priority 0: the modal mode hosts (worldModes' interior
+  // arm, the dungeon context) stand in front of it, which is the
+  // order world.js's showQuestBox ladder always asked them in. A push
+  // is pushOverlay (the box lands over what is open, B5's law); a
+  // replace is showOverlay (the dispatching door). No unregister: this
+  // host lives as long as the page (every scene change in this port
+  // ends in location.replace - ui/enhancedHudText.js, AUDIT FONT F12).
+  registerPresenter({
+    mount: (win, { push, onClosed }) => { if (push) return pushOverlay(win, onClosed); showOverlay(win, onClosed); return true; },
+    hudText: (line, delayInSeconds) => { hud.add(line, delayInSeconds); return true; },
+    priority: 0,
+  });
   return {
     keydown, keyup, tryActivate, frame, ensureLoaded, nextMode, setMode, showOverlay, pushOverlay, setTopics, pointerdown, pointer, wheel, hover,   // ROAD-B B1: pushOverlay is the stacking door beside the replacing one   // U45: setMode is the large HUD's mode panel, whose cycle is not nextMode's   // c2/S10: `pointer` is the RELEASE route (down rides pointerdown, move rides hover)
     openTalkWindow,   // B7: TalkToStaticNPC's window push routes here (worldModes' click + the guild popup's TALK)
@@ -1273,11 +1291,28 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
      *  different member with a different draw. */
     recordTokens: (id) => textRsc?.tokensById(id) ?? [],
     /** AUDIT 63 F3: DaggerfallUI.MessageBox's parchment, the port's
-     *  ActionTextBox, through this host's one overlay door - the same
-     *  swap ROAD-D D10 made for the pickpocket boxes. The three
-     *  TalkToNpc refusals (TalkManager.cs:2626/:2632/:2645) are modal
-     *  boxes in DFU, never AddHUDText. */
-    showBox: (rows) => showOverlay(new ActionTextBox(rows.length ? rows : [''])),
+     *  ActionTextBox - the three TalkToNpc refusals
+     *  (TalkManager.cs:2626/:2632/:2645) are modal boxes in DFU,
+     *  never AddHUDText.
+     *
+     *  ENH-NOTICE3: through the ONE DOOR, and the two changes are
+     *  deliberate. (1) It no longer builds the window: this host's
+     *  presenter (registered above) is what the seam finds while the
+     *  player is in the street, and a caller standing in a building
+     *  or a dungeon now reaches THAT host's slot instead of painting
+     *  into an outdoor one nobody is looking at. (2) It PUSHES where
+     *  it used to REPLACE. `showOverlay` disposed whatever held the
+     *  slot; DFU's own door does not - `DaggerfallUI.MessageBox` is
+     *  `new DaggerfallMessageBox(uiManager, uiManager.TopWindow);
+     *  ...; messageBox.Show()` (DaggerfallUI.cs:1346-1358) and Show
+     *  is PushWindow (UserInterfaceManager.cs:79-91). Both remaining
+     *  kinds that come through here are that: the talk refusals
+     *  above, and Travel Options' H help, which the mod raises with
+     *  `DaggerfallUI.MessageBox(HelpText)` while its own control UI
+     *  is the top window (TravelOptionsMod.cs:1335-1338 ->
+     *  DisplayHelpInfo :1246-1256) - a box OVER the panel it explains,
+     *  never one that closes it. */
+    showBox: (rows) => messageBox(rows.length ? rows : ['']),
     /** AUDIT 24: TextProvider.GetRandomText - a flat pool of every Text
      *  token in the record, NOT a variant pick. %oth's seam. */
     randomText: (id) => textRsc?.randomTextById(id, rolls) ?? '',

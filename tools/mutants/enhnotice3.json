@@ -1,0 +1,346 @@
+[
+  {
+    "name": "ENH-NOTICE3-townTalk-push-routed-to-replace",
+    "file": "src/scenes/townTalk.js",
+    "old": "    mount: (win, { push, onClosed }) => { if (push) return pushOverlay(win, onClosed); showOverlay(win, onClosed); return true; },",
+    "new": "    mount: (win, { push, onClosed }) => { showOverlay(win, onClosed); return true; },",
+    "tests": [
+      "test/enhnotice3_hosts.test.js"
+    ]
+  },
+  {
+    "name": "ENH-NOTICE3-townTalk-in-front-of-the-modal-hosts",
+    "file": "src/scenes/townTalk.js",
+    "old": "    hudText: (line, delayInSeconds) => { hud.add(line, delayInSeconds); return true; },\n    priority: 0,",
+    "new": "    hudText: (line, delayInSeconds) => { hud.add(line, delayInSeconds); return true; },\n    priority: 30,",
+    "tests": [
+      "test/enhnotice3_hosts.test.js"
+    ]
+  },
+  {
+    "name": "ENH-NOTICE3-townTalk-drops-the-AddHUDText-delay",
+    "file": "src/scenes/townTalk.js",
+    "old": "    hudText: (line, delayInSeconds) => { hud.add(line, delayInSeconds); return true; },\n    priority: 0,",
+    "new": "    hudText: (line) => { hud.add(line); return true; },\n    priority: 0,",
+    "tests": [
+      "test/enhnotice3_hosts.test.js"
+    ]
+  },
+  {
+    "name": "ENH-NOTICE3-worldModes-exterior-arm-swallows-the-box",
+    "file": "src/scenes/worldModes.js",
+    "old": "    if (mode === 'dungeon' && dungeonCtx?.showOverlay) return dungeonCtx.showOverlay(win);\n    return false;\n  }",
+    "new": "    if (mode === 'dungeon' && dungeonCtx?.showOverlay) return dungeonCtx.showOverlay(win);\n    return true;\n  }",
+    "tests": [
+      "test/enhnotice3_hosts.test.js"
+    ]
+  },
+  {
+    "name": "ENH-NOTICE3-worldModes-registers-nothing",
+    "file": "src/scenes/worldModes.js",
+    "old": "  registerPresenter({ mount: (win) => showQuestOverlay(win), priority: 10 });",
+    "new": "",
+    "tests": [
+      "test/enhnotice3_hosts.test.js"
+    ]
+  },
+  {
+    "name": "ENH-NOTICE3-worldModes-level-with-the-dungeon",
+    "file": "src/scenes/worldModes.js",
+    "old": "  registerPresenter({ mount: (win) => showQuestOverlay(win), priority: 10 });",
+    "new": "  registerPresenter({ mount: (win) => showQuestOverlay(win), priority: 20 });",
+    "tests": [
+      "test/enhnotice3_hosts.test.js"
+    ]
+  },
+  {
+    "name": "ENH-NOTICE3-dungeon-mount-is-the-one-slot-write",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    mount: (win) => pushDungeonWindow(win),\n    hudText: (line, delayInSeconds) => { hudText.add(line, delayInSeconds); return true; },\n    priority: 20,",
+    "new": "    mount: (win) => { activeOverlay = win; return true; },\n    hudText: (line, delayInSeconds) => { hudText.add(line, delayInSeconds); return true; },\n    priority: 20,",
+    "tests": [
+      "test/enhnotice3_hosts.test.js"
+    ]
+  },
+  {
+    "name": "ENH-NOTICE3-dungeon-behind-the-modal-modes",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    hudText: (line, delayInSeconds) => { hudText.add(line, delayInSeconds); return true; },\n    priority: 20,",
+    "new": "    hudText: (line, delayInSeconds) => { hudText.add(line, delayInSeconds); return true; },\n    priority: 5,",
+    "tests": [
+      "test/enhnotice3_hosts.test.js"
+    ]
+  },
+  {
+    "name": "ENH-NOTICE3-dungeon-never-unregisters",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "      _unregisterPresenter();   // ENH-NOTICE3: the next box goes to the host that stands, not to this stack\n",
+    "new": "",
+    "tests": [
+      "test/enhnotice3_hosts.test.js"
+    ]
+  },
+  {
+    "name": "ENH-NOTICE3-a-skin-fork-in-the-door",
+    "file": "src/systems/notify.js",
+    "old": "import { ActionTextBox } from '../ui/actionText.js';",
+    "new": "import { ActionTextBox } from '../ui/actionText.js';\nimport { isEnhanced } from './uiSkin.js';\nvoid isEnhanced;",
+    "tests": [
+      "test/enhnotice3_hosts.test.js"
+    ]
+  },
+  {
+    "name": "ENH-NOTICE3-P4-priority-sort-reversed",
+    "file": "src/systems/notify.js",
+    "old": ".sort((a, b) => ((b.p.priority ?? 0) - (a.p.priority ?? 0)) || (b.i - a.i))",
+    "new": ".sort((a, b) => ((a.p.priority ?? 0) - (b.p.priority ?? 0)) || (b.i - a.i))",
+    "tests": [
+      "test/notify.test.js"
+    ]
+  },
+  {
+    "name": "ENH-NOTICE3-P4-recency-tiebreak-reversed",
+    "file": "src/systems/notify.js",
+    "old": "|| (b.i - a.i))",
+    "new": "|| (a.i - b.i))",
+    "tests": [
+      "test/notify.test.js"
+    ]
+  },
+  {
+    "name": "ENH-NOTICE3-P4-active-filter-dropped",
+    "file": "src/systems/notify.js",
+    "old": ".filter(({ p }) => p.active?.() !== false)",
+    "new": ".filter(() => true)",
+    "tests": [
+      "test/notify.test.js"
+    ]
+  },
+  {
+    "name": "ENH-NOTICE3-P4-hud-fallback-dropped",
+    "file": "src/systems/notify.js",
+    "old": "  hudText(rows.map(rowText).join(' '));\n  return null;",
+    "new": "  return null;",
+    "tests": [
+      "test/notify.test.js"
+    ]
+  },
+  {
+    "name": "ENH-NOTICE3-P4-push-forced-true",
+    "file": "src/systems/notify.js",
+    "old": "if (p.mount(win, { push: !!push, onClosed: onClose })) return handle;",
+    "new": "if (p.mount(win, { push: true, onClosed: onClose })) return handle;",
+    "tests": [
+      "test/notify.test.js"
+    ]
+  },
+  {
+    "name": "ENH-NOTICE3-P4-onClose-never-forwarded",
+    "file": "src/systems/notify.js",
+    "old": "if (p.mount(win, { push: !!push, onClosed: onClose })) return handle;",
+    "new": "if (p.mount(win, { push: !!push, onClosed: null })) return handle;",
+    "tests": [
+      "test/notify.test.js"
+    ]
+  },
+  {
+    "name": "ENH-NOTICE3-P4-addNext-a-no-op",
+    "file": "src/systems/notify.js",
+    "old": "    addNext(next) { win.addNext(toRows(next)); return handle; },",
+    "new": "    addNext(next) { return handle; },",
+    "tests": [
+      "test/notify.test.js"
+    ]
+  },
+  {
+    "name": "ENH-NOTICE3-P4-box-built-without-its-options",
+    "file": "src/systems/notify.js",
+    "old": "const win = new ActionTextBox(rows, { highlightColor, previousWindow });",
+    "new": "const win = new ActionTextBox(rows);",
+    "tests": [
+      "test/notify.test.js"
+    ]
+  },
+  {
+    "name": "ENH-NOTICE3-P4-toRows-keeps-an-empty-array",
+    "file": "src/systems/notify.js",
+    "old": "if (Array.isArray(text)) return text.length ? text : [''];",
+    "new": "if (Array.isArray(text)) return text;",
+    "tests": [
+      "test/notify.test.js"
+    ]
+  },
+  {
+    "name": "ENH-NOTICE3-P4-toRows-does-not-split-on-newlines",
+    "file": "src/systems/notify.js",
+    "old": "return String(text).split('\\n');",
+    "new": "return [String(text)];",
+    "tests": [
+      "test/notify.test.js"
+    ]
+  },
+  {
+    "name": "ENH-NOTICE3-P4-hudText-claims-a-queue-nobody-took",
+    "file": "src/systems/notify.js",
+    "old": "    if (p.hudText(String(text ?? ''), delay)) return true;\n  }\n  return false;",
+    "new": "    if (p.hudText(String(text ?? ''), delay)) return true;\n  }\n  return true;",
+    "tests": [
+      "test/notify.test.js"
+    ]
+  },
+  {
+    "name": "ENH-NOTICE3-P4-a-skin-fork-in-the-door",
+    "file": "src/systems/notify.js",
+    "old": "import { ActionTextBox } from '../ui/actionText.js';",
+    "new": "import { ActionTextBox } from '../ui/actionText.js';\nimport { isEnhanced } from './uiSkin.js';\nconst _face = () => isEnhanced();",
+    "tests": [
+      "test/notify.test.js"
+    ]
+  },
+  {
+    "name": "ENH-NOTICE3-P4-travel-options-messagebox-collapsed-onto-the-hud-line",
+    "file": "src/scenes/world.js",
+    "old": "    messageBox: (line) => messageBox(line),",
+    "new": "    messageBox: (line) => townTalk.say(line),",
+    "tests": [
+      "test/notify.test.js"
+    ]
+  },
+  {
+    "name": "ENH-NOTICE3-P4-azura-seam-builds-its-own-window",
+    "file": "src/scenes/world.js",
+    "old": "      messageBox: (id) => {\n        const lines = plainLines(townTalk.lines(id));\n        if (lines?.length) messageBox(lines);\n      },",
+    "new": "      messageBox: (id) => {\n        const lines = plainLines(townTalk.lines(id));\n        if (lines?.length) townTalk.showOverlay(new ChoiceWindow({ lines }));\n      },",
+    "tests": [
+      "test/notify.test.js",
+      "test/roadb_push_doors.test.js"
+    ]
+  },
+  {
+    "name": "ENH-NOTICE3-P4-holiday-text-back-through-the-town-box-door",
+    "file": "src/scenes/exterior.js",
+    "old": "        if (rows.length) messageBox(rows);",
+    "new": "        if (rows.length) townTalk.showBox(rows);",
+    "tests": [
+      "test/notify.test.js",
+      "test/audit64_time_weather.test.js"
+    ]
+  },
+  {
+    "name": "ENH-NOTICE3-P4-infection-factory-takes-a-per-host-window-again",
+    "file": "src/scenes/shared.js",
+    "old": "export function wireInfectionVideos(renderer, { textAt = null, factionDict = null, transferToCemetery = null } = {}) {",
+    "new": "export function wireInfectionVideos(renderer, { textAt = null, showText = null, factionDict = null, transferToCemetery = null } = {}) {",
+    "tests": [
+      "test/notify.test.js",
+      "test/roadb_push_doors.test.js"
+    ]
+  },
+  {
+    "name": "ENH-NOTICE3-P4-infection-popup-drawn-by-the-host-again",
+    "file": "src/scenes/shared.js",
+    "old": "      if (lines?.length) messageBox(lines);",
+    "new": "      if (lines?.length) showText?.(lines);",
+    "tests": [
+      "test/notify.test.js",
+      "test/roadb_push_doors.test.js",
+      "test/infection.test.js"
+    ]
+  },
+  {
+    "name": "ENH-NOTICE3-P4-ShowText-drops-DaggerfallActions-null-previousWindow",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    messageBox(lines, { previousWindow: false });",
+    "new": "    messageBox(lines);",
+    "tests": [
+      "test/notify.test.js",
+      "test/roadb_push_doors.test.js",
+      "test/audit64_hud.test.js"
+    ]
+  },
+  {
+    "name": "ENH-NOTICE3-P4-townTalk-showBox-builds-and-replaces-again",
+    "file": "src/scenes/townTalk.js",
+    "old": "    showBox: (rows) => messageBox(rows.length ? rows : ['']),",
+    "new": "    showBox: (rows) => showOverlay(new ActionTextBox(rows.length ? rows : [''])),",
+    "tests": [
+      "test/notify.test.js"
+    ]
+  },
+  {
+    "name": "ENH-NOTICE3-P4-mod-compatibility-box-built-by-the-host-again",
+    "file": "src/scenes/world.js",
+    "old": "      reportModCompatibilityIssues({ showText: (lines) => messageBox(lines) });",
+    "new": "      reportModCompatibilityIssues({ showText: (lines) => townTalk.pushOverlay(new ChoiceWindow({ lines })) });",
+    "tests": [
+      "test/notify.test.js",
+      "test/ba1_betterambience.test.js"
+    ]
+  },
+  {
+    "name": "ENH-NOTICE3-P4-talk-refusal-back-through-the-town-box-door",
+    "file": "src/scenes/world.js",
+    "old": "      messageBox(rows.length ? rows : ['You get no response.']);",
+    "new": "      townTalk.showBox(rows.length ? rows : ['You get no response.']);",
+    "tests": [
+      "test/notify.test.js",
+      "test/audit63_quests_talk.test.js"
+    ]
+  },
+  {
+    "name": "ENH-NOTICE3-P4-townTalk-registration-commented-out",
+    "file": "src/scenes/townTalk.js",
+    "old": "  registerPresenter({\n    mount: (win, { push, onClosed })",
+    "new": "  // registerPresenter({\n  // mount: (win, { push, onClosed })",
+    "tests": [
+      "test/notify.test.js"
+    ]
+  },
+  {
+    "name": "ENH-NOTICE3-P4-worldModes-registration-commented-out",
+    "file": "src/scenes/worldModes.js",
+    "old": "  registerPresenter({ mount: (win) => showQuestOverlay(win), priority: 10 });",
+    "new": "  // registerPresenter({ mount: (win) => showQuestOverlay(win), priority: 10 });",
+    "tests": [
+      "test/notify.test.js"
+    ]
+  },
+  {
+    "name": "ENH-NOTICE3-P4-dungeon-registration-commented-out",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "  const _unregisterPresenter = registerPresenter({",
+    "new": "  // const _unregisterPresenter = registerPresenter({",
+    "tests": [
+      "test/notify.test.js"
+    ]
+  },
+  {
+    "name": "ENH-NOTICE3-P4-mod-arrival-box-sent-to-the-hud-line",
+    "file": "src/systems/travelOptions.js",
+    "old": "      messageBox(T.MsgArrived);\n    };\n    st.lastLocation = deps.currentLocation?.() ?? null;\n    initTravelUI();\n  }\n\n  /** :495-519, BeginTravelToCoords",
+    "new": "      say(T.MsgArrived);\n    };\n    st.lastLocation = deps.currentLocation?.() ?? null;\n    initTravelUI();\n  }\n\n  /** :495-519, BeginTravelToCoords",
+    "tests": [
+      "test/notify.test.js",
+      "test/to1_travelOptions.test.js"
+    ]
+  },
+  {
+    "name": "ENH-NOTICE3-P4-mod-enemies-refusal-sent-to-the-hud-line",
+    "file": "src/systems/travelOptions.js",
+    "old": "        else messageBox(T.MsgEnemies);",
+    "new": "        else say(T.MsgEnemies);",
+    "tests": [
+      "test/notify.test.js",
+      "test/to1_travelOptions.test.js"
+    ]
+  },
+  {
+    "name": "ENH-NOTICE3-P4-mod-no-path-hud-line-sent-to-the-box-door",
+    "file": "src/systems/travelOptions.js",
+    "old": "        drawJunctionMap(mp);\n        say(T.MsgNoPath);",
+    "new": "        drawJunctionMap(mp);\n        messageBox(T.MsgNoPath);",
+    "tests": [
+      "test/notify.test.js"
+    ]
+  }
+]
