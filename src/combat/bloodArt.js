@@ -235,6 +235,92 @@ export function bloodMarkKind({ pool = false, wall = false, print = false, stret
   return stretch > 1.5 ? 'streak' : 'spatter';
 }
 
+// ── BLOOD3: THE MARK IS A FILM, NOT A STICKER ────────────────────
+// (2026-09-21, Mac: "I think the blood is too shiny and flat.")
+//
+// BOTH faults were one line of the decal shader each.
+//
+// FLAT. The albedo was `ink * tint` - and the ink is WHITE (the atlas
+// carries shape in alpha and a faint grain in rgb), so every texel of a
+// pool came out the same red. A real mark is not a coloured shape, it
+// is a FILM of an absorbing liquid over a surface, and what your eye
+// reads as depth is that the thin part passes light and the deep part
+// does not. Blood absorbs green and blue far harder than red, so a
+// smear's thin edge is a bright scarlet and its body is a deep maroon
+// going to black. The atlas's ALPHA is already that thickness - the
+// shapes fall off softly at their rims because that is where there is
+// less of it - and nothing was reading it as anything but coverage.
+//
+// The law is Beer-Lambert, anchored at the deep end so the colour a
+// full-thickness mark already had does not move: `tint * exp(ABSORB *
+// (1 - thick))`. At thick = 1 the factor is 1 and the mark is the red
+// it has always been; thinner, each channel brightens by its own
+// absorption, red least, so the rim turns toward orange as well as
+// bright. One exp per fragment, no texture, no uniform.
+//
+// SHINY. The wet glint was EL_WET_STRENGTH (0.9) of the light's colour
+// wherever the half-vector lined up, over the WHOLE mark, with no
+// Fresnel - which is the look of wet plastic sheeting, not of a liquid.
+// Two things fix it and both are physical. A water film reflects about
+// 4% head-on and approaches all of it at a grazing angle (Schlick), so
+// the sheen belongs at the glancing edge of a pool and nowhere else.
+// And wetness is not uniform across a mark: the thin rim dries first
+// and the deep middle holds the wet, so the sheen is a structured core
+// rather than a coat. `sheen = wet * smoothstep(LO, HI, thick) *
+// fresnel` - and with the angle term carrying most of the reduction,
+// the strength itself only had to come down a little.
+
+/** BLOOD3: the per-channel gain toward a THIN film - red passes, green
+ *  and blue are absorbed. At full thickness the gain is exactly 1, so
+ *  this only ever brightens a rim; it never darkens what was there. */
+export const BLOOD_ABSORB = Object.freeze([0.50, 0.95, 0.95]);
+/** BLOOD3: a water film's reflectance head-on (Schlick's F0 for n =
+ *  1.33). The display curve lifts a small linear glint a long way, so
+ *  the difference between this and a glass-like 0.04 is the difference
+ *  between a sheen and a shine on the case the player sees most - a
+ *  mark on the floor, underfoot, viewed almost straight down. */
+export const BLOOD_F0 = 0.02;
+/** BLOOD3: where a mark's rim has dried and where it is still wet. */
+export const WET_THICK_LO = 0.15;
+export const WET_THICK_HI = 0.75;
+/** BLOOD3: how far the rim's shoulder tilts the surface normal - the
+ *  meniscus, off the thickness gradient, so a pool has a lit edge. */
+export const BLOOD_MENISCUS = 0.85;
+
+/** BLOOD3: the film's colour at a coverage - the shader's own law, in
+ *  JS, so a pin can drive it rather than read it. `thick` is the
+ *  atlas's alpha; `tint` the mark's full-thickness colour. */
+export function filmColour(tint, thick) {
+  const d = 1 - Math.max(0, Math.min(1, thick));
+  return [0, 1, 2].map((i) => (tint?.[i] ?? 0) * Math.exp(BLOOD_ABSORB[i] * d));
+}
+
+/**
+ * BLOOD3: THE THICKNESS IS COVERAGE TIMES DENSITY, and it has to be
+ * both. The first cut of this read the atlas's ALPHA alone - and alpha
+ * is also what the mark is blended by, so exactly where the film law
+ * said "thin, bright, orange" the mark was also fading out, and where
+ * the mark is solid the law had nothing to say. The depth cancelled
+ * itself. The atlas's INK carries the other half and always did: the
+ * shape's shade times its grain, a real variation ACROSS a mark at full
+ * coverage, which the albedo had been spending as a flat darkener.
+ * Read as density it is what it looks like - where the smear ran thin
+ * the light gets through. `thick = alpha * ink`.
+ */
+export const filmThickness = (alpha, ink) => Math.max(0, Math.min(1, alpha)) * Math.max(0, Math.min(1, ink));
+
+/** BLOOD3: the sheen at a fragment - the mark's wetness, thinned out
+ *  at a dry rim, through Schlick at the view's angle. `ndotv` is the
+ *  cosine between the surface normal and the eye. */
+export function wetSheen(wet, thick, ndotv) {
+  if (!(wet > 0)) return 0;
+  const t = Math.max(0, Math.min(1, thick));
+  const x = Math.max(0, Math.min(1, (t - WET_THICK_LO) / Math.max(1e-6, WET_THICK_HI - WET_THICK_LO)));
+  const depth = x * x * (3 - 2 * x);   // smoothstep, the shader's own
+  const fres = BLOOD_F0 + (1 - BLOOD_F0) * Math.pow(1 - Math.max(0, Math.min(1, ndotv)), 5);
+  return wet * depth * fres;
+}
+
 /** A fresh mark's tint: the blood's red, a shade darker by the roll -
  *  one factor on all three channels, so it is a shade and not a hue. */
 export function freshTint(rng = Math.random) {

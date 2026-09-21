@@ -12,8 +12,8 @@
   {
     "name": "MACBUGW6-2-the-twin-lights-an-undecoded-texel",
     "file": "src/render/enhancedLighting.js",
-    "old": "  vec3 albedo = elDecode(t.rgb) * elDecode(vColor.rgb);",
-    "new": "  vec3 albedo = t.rgb * vColor.rgb;",
+    "old": "  vec3 albedo = elDecode(t.rgb) * elDecode(vColor.rgb)",
+    "new": "  vec3 albedo = t.rgb * vColor.rgb",
     "tests": [
       "test/blood1_decals.test.js"
     ]

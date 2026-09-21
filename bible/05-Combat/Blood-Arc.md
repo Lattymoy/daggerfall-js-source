@@ -1299,5 +1299,71 @@ Slices, each behind its own `features.js` row:
    recorded equivalent (`tools/mutants/blood1.json` is 307;
    `macbugw4.json`, `macbugw6.json` and `el4.json` re-aimed).
 
+13. **BLOOD3 - the film and the sheen.** SHIPPED (2026-09-21, Mac: *"I
+   think the blood is too shiny and flat"*). Two complaints, two
+   causes, and neither was the art.
+
+   FLAT. The decal's albedo was `ink * tint`, and the ink atlas is
+   WHITE - RGB is `shade * grain`, alpha is coverage. Multiply a white
+   grain by one tint and every texel of a pool comes out the same red:
+   a sticker, whatever the brush did. Blood is not a colour, it is a
+   FILM, and a film's colour is its depth: Beer-Lambert,
+   `tint * exp(ABSORB * (1 - thick))`, anchored so that FULL thickness
+   is exactly a no-op - which is the whole reason the AUDIT 4 parity
+   law ("a mark is lit as the wall it lies on") survives this slice
+   untouched. `BLOOD_ABSORB` is `[0.50, 0.95, 0.95]`: red passes, green
+   and blue are absorbed near twice as hard, so a thinning smear
+   brightens AND WARMS toward orange, which is what blood does and what
+   makes a flat shape read as depth. Deep `0.580 0.050 0.040` goes to
+   `0.956 0.129 0.103` at the rim.
+
+   AND THE THICKNESS IS NOT THE ALPHA. The first cut used `t.a` and
+   the law cancelled itself out - visible in the probe's picture, not
+   in any pin. Alpha is also what the mark is BLENDED by, so the thin
+   rim the film brightens is the rim that is fading out, and the solid
+   body has no variation left to read. The ink's grain is the density
+   the atlas already carries: `thick = t.a * t.r`, coverage times
+   density. Both decal shaders take it, off the one imported constant.
+
+   SHINY. `EL_WET_STRENGTH` was 0.9 - nine tenths of the lamp,
+   wherever the half-vector lined up, at ANY angle. That is the
+   reflectance of polished plastic, and it is why a wet mark read as a
+   white patch. A liquid film is SCHLICK: `F0 + (1-F0)*(1-n.v)^5` with
+   water's F0 = 0.02 (n = 1.33). Two per cent head-on - the case the
+   player sees most, a mark underfoot - and most of the light only at
+   a graze. What is left after Fresnel is `EL_WET_STRENGTH` 0.55, and
+   the sheen is gated by the mark's own DEPTH as well
+   (`smoothstep(0.15, 0.75, thick)`), so a dried rim does not shine
+   while its body is still wet. ONE number feeds both the lantern
+   glint and the sun's - one wetness, not two.
+
+   THE MENISCUS. A pool has a raised edge, so its rim catches light a
+   flat quad never could. The thickness gradient is two extra atlas
+   taps (one texel along each axis) turned into a world-space slope
+   through the quad's OWN tangent frame, solved from `dFdx/dFdy` of
+   the world position against the same of the UV; the normal tilts
+   AWAY from the rise (`n - slope * 0.85`) - a bank of liquid, not a
+   dent. It is computed BEFORE `sunVis`, so the shadows and the sun
+   read the bumped normal and not the flat one, and it is guarded on a
+   non-degenerate frame and a non-flat patch, so a quad seen edge-on
+   divides by nothing.
+
+   The classic set takes the FILM only (it has no specular at all and
+   never had); the lane takes all three. `tools/bloodProbe.mjs` reads
+   the whole frame now and bands it by thickness: the lane's marks
+   come back deep `132,13,9` against thin `72,8,6` - warmth 0.083 to
+   0.101 - and the wet checks hold at `wet 137,25,23 vs dry 136,15,12`
+   with red keeping a 5.48x lead over the glint. 31 of 31 checks pass
+   on a real GPU.
+
+   Pins: three (the film's anchor, its monotone brightening and
+   warming, the declared absorption term for term, the clamps and the
+   no-NaN; the sheen's depth gate and its Schlick, and that it is a
+   sheen underfoot and a sheen only at a graze; both shaders, the
+   meniscus's taps and frame and its place before the sun, the one
+   wetness, the probe's own rows), two re-aimed (the classic shader's
+   film in W4, the probe's wet strings in 2f). Mutants: 14, 14 dead
+   (`tools/mutants/blood3.json`).
+
 The numbers in THE FACTS are the target to feel like. The code that
 hits them is ours.

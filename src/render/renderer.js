@@ -466,7 +466,8 @@ export function groundSharpnessTier(search = globalThis.location?.search ?? '') 
 import { multiply as mat4Multiply } from '../world/mat4.js';   // PERF-CROWD2: proj * view, for this call's planes
 import { PerfMeter, perfOn, perfZones, perfCpu, setMeter } from './perfMeter.js';   // EL8: `?perf`   // EL5: the bounds every bundle carries for the replays' culling   // EL2: the lane's shadow maps - a leaf that compiles nothing until a lane asks
 import { AirPass, AIR_ADAPT_UNIT as ADAPT_UNIT, AIR_CONTACT_UNIT as CONTACT_UNIT } from './airPass.js';   // EL3: the ambient occlusion, the bloom and the shafts - the same kind of leaf; EL4: the eye's unit; EL6: all of it off the frame's own depth, at the resolve
-import { decalIndices, DECAL_FLOATS_PER_VERTEX } from '../combat/bloodDecals.js';   // BLOOD1a: the index winding and the vertex stride are the decal module's, so the writer and the buffer cannot disagree about the format
+import { decalIndices, DECAL_FLOATS_PER_VERTEX } from '../combat/bloodDecals.js';   // BLOOD1a: the index winding
+import { BLOOD_ABSORB } from '../combat/bloodArt.js';   // BLOOD3: the film's absorption - the classic mark takes the depth, the lane takes the sheen too and the vertex stride are the decal module's, so the writer and the buffer cannot disagree about the format
 import { SHADE_DARK } from '../systems/concealDraw.js';   // ECV1 / AUDIT 65 PN-3: the shade's pull toward black, interpolated into BB_FS below - the shader restated 0.12 as a second literal. The LEAF, not systems/combatVisuals.js, which re-exports it: that module's graph would take this file's closure from 13 modules to 69
 
 const BB_FS = `#version 300 es
@@ -861,7 +862,15 @@ void main() {
   // set watched the ground go dark under a cloud while the blood on it
   // stayed bright - W4's fault with the sign reversed.
   vec3 lightAcc = ambient + uDecalSun * (diff * cloudShadowAt(vWorld)) + uDecalMoon * mdiff + pointAcc + (iAtt * iAtt * max(dot(n, iL / max(iD, 1e-4)), 0.0)) * uIndirectColor;
-  vec3 rgb = t.rgb * vColor.rgb * lightAcc;
+  // BLOOD3 (Mac: "the blood is too shiny and flat"): THE MARK IS A
+  // FILM here too. The atlas's alpha is a thickness and the ink over it
+  // is white, so a mark was one flat red; Beer-Lambert through the film
+  // brightens a thinning rim toward orange and leaves the body the
+  // maroon it was (at full thickness the factor is exactly 1). The
+  // LANE's twin carries the rest of the slice - the meniscus normal and
+  // the sheen's Fresnel - because a classic mark has no glint to temper
+  // and no lantern rig to catch a rim with. See combat/bloodArt.js.
+  vec3 rgb = t.rgb * vColor.rgb * exp(vec3(${BLOOD_ABSORB[0]}, ${BLOOD_ABSORB[1]}, ${BLOOD_ABSORB[2]}) * (1.0 - t.a * t.r)) * lightAcc;
   float a = t.a * vColor.a;
   float f = fogFactorAt(vWorld);
   outColor = vec4(mix(uFogColor, rgb, f), a);

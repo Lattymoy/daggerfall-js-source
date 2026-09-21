@@ -49,10 +49,21 @@ const out = await page.evaluate(async () => {
   document.body.append(canvas);
   const r = new Renderer(canvas);
 
-  // A KNOWN TEXTURE: 8x8 of Daggerfall's own blood red, fully opaque.
+  // A KNOWN TEXTURE: 8x8 of a saturated blood red, fully opaque.
+  //
+  // BLOOD3: FULL in the channel the film reads, and so is the wall's
+  // twin below. The decal pass draws one thing in this game - the blood
+  // atlas, whose rgb is WHITE INK (the shape and its grain) and whose
+  // alpha is coverage - so the shader reads `alpha * r` as the film's
+  // thickness. A fixture at 168 red stands in for ink at 66% density:
+  // the film would brighten it, and the LIGHTING parity checks below,
+  // which are about light and not albedo, would read that gain as a
+  // lighting difference. At full density the film is exactly a no-op
+  // (`exp(ABSORB * 0) = 1`) - the property it is anchored on - and the
+  // parity checks go back to measuring the one thing they are named for.
   const W = 8, H = 8;
   const colors = new Uint8ClampedArray(W * H * 4);
-  for (let i = 0; i < W * H; i++) { colors[i * 4] = 168; colors[i * 4 + 1] = 16; colors[i * 4 + 2] = 16; colors[i * 4 + 3] = 255; }
+  for (let i = 0; i < W * H; i++) { colors[i * 4] = 255; colors[i * 4 + 1] = 16; colors[i * 4 + 2] = 16; colors[i * 4 + 3] = 255; }
   const red = { colors, width: W, height: H };
 
   // The pool's own door, driven exactly as a host drives it - so the
@@ -110,7 +121,7 @@ const out = await page.evaluate(async () => {
   // A FOE STANDS IN THE SAME PASS. If a splash is black where a sprite
   // beside it is not, the difference is not the lighting - so the
   // comparison is made rather than assumed.
-  r.uploadTexture(199, '8#0', { colors: (() => { const c = new Uint8ClampedArray(W * H * 4); for (let i = 0; i < W * H; i++) { c[i * 4] = 168; c[i * 4 + 1] = 16; c[i * 4 + 2] = 16; c[i * 4 + 3] = 255; } return c; })(), width: W, height: H });
+  r.uploadTexture(199, '8#0', { colors: (() => { const c = new Uint8ClampedArray(W * H * 4); for (let i = 0; i < W * H; i++) { c[i * 4] = 255; c[i * 4 + 1] = 16; c[i * 4 + 2] = 16; c[i * 4 + 3] = 255; } return c; })(), width: W, height: H });
   const foe = r.createBillboardBatch(199, 8, { w: 2, h: 2 }, [[0, 0, 0]]);
   foe.frame = 0;
   const foeShot = (label, setup, lights = null) => {
@@ -226,7 +237,7 @@ const out = await page.evaluate(async () => {
     corner(0, -1.2, -1.2); corner(1, -1.2, 1.2); corner(2, 1.2, 1.2); corner(3, 1.2, -1.2);
     r.writeDecalSlot(own, 0, quad);
   };
-  const ownShot = (label, tint, setup, lights = null, wet = 0) => {
+  const ownShot = (label, tint, setup, lights = null, wet = 0, clear = null) => {
     wear(tint, wet);
     setup();
     r.setPointLights(lights ?? new Float32Array(0), [1, 1, 1], null);
@@ -236,16 +247,38 @@ const out = await page.evaluate(async () => {
     const gl = r.gl;
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
     gl.viewport(0, 0, 128, 128);
-    gl.clearColor(0, 0, 1, 1);
+    gl.clearColor(...(clear ?? [0, 0, 1, 1]));
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     r.drawDecals(own, atlasTex);
     const px = new Uint8Array(4);
     gl.readPixels(64, 64, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, px);
-    return { label, px: [...px] };
+    // BLOOD3: and the WHOLE frame, for the flatness question. A mark
+    // that is one colour is a sticker; a film is deep where the blood
+    // pools and brighter, warmer, where it ran thin. Over the mark's
+    // WELL-COVERED pixels only - a rim pixel is blended with whatever is
+    // behind it, so its colour is the background's as much as the
+    // blood's, and the signature lives in the body, where the ink's
+    // grain varies the density at full coverage. The film shot clears to
+    // BLACK for the same reason: a blue clear leaks into every edge.
+    const all = new Uint8Array(128 * 128 * 4);
+    gl.readPixels(0, 0, 128, 128, gl.RGBA, gl.UNSIGNED_BYTE, all);
+    const reds = [];
+    for (let i = 0; i < all.length; i += 4) {
+      if (all[i] > all[i + 2] && all[i] >= 24) reds.push([all[i], all[i + 1], all[i + 2]]);
+    }
+    reds.sort((a, b) => a[0] - b[0]);
+    const band = (from, to) => {
+      const part = reds.slice(Math.floor(reds.length * from), Math.max(1, Math.floor(reds.length * to)));
+      if (!part.length) return null;
+      const m = [0, 1, 2].map((c) => part.reduce((s, p) => s + p[c], 0) / part.length);
+      return { r: m[0], g: m[1], b: m[2], warm: m[0] > 0 ? (m[1] + m[2]) / 2 / m[0] : 0 };
+    };
+    return { label, px: [...px], film: { n: reds.length, thin: band(0, 0.2), deep: band(0.8, 1) } };
   };
   const fresh = freshTint(() => 0.5), dried = driedTint(fresh, DRY_STAGES);
   const noonLit = () => r.setLighting([0.55, 0.55, 0.55], 1, [1, 0.96, 0.9]);
   const ownRows = [];
+  const ownFilm = [];   // BLOOD3: the mark's own spread, per lane
   for (const [laneName, enter, leave] of [['classic', () => {}, () => {}], ['lane', async () => { const { EL_LANE } = await import('/src/render/enhancedLighting.js'); r.setLightingLane(EL_LANE); r.setExposure(1.1); }, () => r.setLightingLane(null)]]) {
     await enter();
     ownRows.push({ lane: laneName, what: 'fresh at noon', px: ownShot('', fresh, noonLit).px });
@@ -255,6 +288,7 @@ const out = await page.evaluate(async () => {
     // BLOOD2f: the same fresh mark WET - the lane glints it under the torch and in the sun; the classic set does not know the float
     ownRows.push({ lane: laneName, what: 'fresh WET, dungeon + torch', px: ownShot('', fresh, dungeon, TORCH, 1).px });
     ownRows.push({ lane: laneName, what: 'fresh WET at noon', px: ownShot('', fresh, noonLit, null, 1).px });
+    ownFilm.push({ lane: laneName, ...ownShot('', fresh, noonLit, null, 0, [0, 0, 0, 1]).film });   // BLOOD3
     leave();
   }
 
@@ -289,6 +323,7 @@ const out = await page.evaluate(async () => {
     frames,
     lane,
     ownRows,
+    ownFilm,   // BLOOD3
   };
 });
 
@@ -357,13 +392,42 @@ for (const lane of ['classic', 'lane']) {
   // BLOOD2f: the wet sheen - the lane's glint, the classic set's nothing
   const wT = at('fresh WET, dungeon + torch'), wN = at('fresh WET at noon');
   if (lane === 'lane') {
-    check('OWN lane: a WET mark under a torch glints - brighter than the same mark dry, and the glint carries the lamp’s white into the green and blue',
-      wT[0] > fT[0] + 20 && wT[1] > fT[1] + 20 && wT[2] > fT[2] + 20, `wet ${wT.join(',')} vs dry ${fT.join(',')}`);
-    check('OWN lane: and in the sun', wN[0] >= fN[0] && wN[1] > fN[1] + 10, `wet ${wN.join(',')} vs dry ${fN.join(',')}`);
+    // BLOOD3 (Mac: "the blood is too shiny and flat"): THE SHEEN IS AN
+    // ANGLE NOW. It used to be nine tenths of the light wherever the
+    // half-vector lined up, at ANY angle - the look of wet plastic. A
+    // liquid film is Schlick: about two per cent head-on, most of the
+    // light at a graze. The ANGLE itself is pinned where it can be
+    // isolated - the pure `wetSheen` in test/blood1_decals.test.js -
+    // because it cannot be isolated HERE: the glint is a Blinn-Phong
+    // lobe as well as a Fresnel term, and turning the quad to a grazing
+    // angle walks the normal out of the lobe, so the picture would
+    // answer about the lobe and be read as the angle. What a picture CAN
+    // settle is the thing Mac reported - that a wet mark was a white
+    // patch - and this view is the worst case for it: dead-on, where
+    // Fresnel is at its weakest and the lobe at its peak.
+    check('OWN lane: a WET mark under a torch still glints - the lamp\'s white carried into the green and blue',
+      wT[1] >= fT[1] + 6 && wT[2] >= fT[2] + 6 && wT[0] >= fT[0], `wet ${wT.join(',')} vs dry ${fT.join(',')}`);
+    check('OWN lane: ...but it is still BLOOD, not a white highlight - the red keeps a clear lead over the glint',
+      wT[0] > wT[1] * 2.2 && wT[0] > wT[2] * 2.2, `wet ${wT.join(',')} (r/g ${(wT[0] / Math.max(1, wT[1])).toFixed(2)})`);
+    check('OWN lane: and in the sun the same law - a lift, and the mark stays red',
+      wN[1] >= fN[1] && wN[0] >= fN[0] && wN[0] > wN[1] * 2.2, `wet ${wN.join(',')} vs dry ${fN.join(',')}`);
   } else {
     check('OWN classic: the wet float means nothing to the classic set - the same mark, wet or dry',
       wT.join(',') === fT.join(',') && wN.join(',') === fN.join(','), `wet ${wT.join(',')} vs dry ${fT.join(',')}`);
   }
+}
+// BLOOD3: THE MARK IS NOT ONE COLOUR. The albedo was ink x tint, and
+// the ink is white, so every texel of a pool came out the same red - a
+// sticker. The ink's grain is a DENSITY, and blood absorbs green and
+// blue far harder than red, so where the smear ran thin it has to come
+// out warmer as well as lighter in the body of the mark.
+for (const f of out.ownFilm ?? []) {
+  const d = f.deep, t = f.thin;
+  console.log(`  FILM ${f.lane}: ${f.n} px, deep ${d?.r.toFixed(0)},${d?.g.toFixed(0)},${d?.b.toFixed(0)} | thin ${t?.r.toFixed(0)},${t?.g.toFixed(0)},${t?.b.toFixed(0)} (warmth ${d?.warm.toFixed(3)} -> ${t?.warm.toFixed(3)})`);
+  check(`FILM ${f.lane}: a mark is not ONE red - the ink's grain is a density, so its body carries a real range of it`,
+    !!d && !!t && d.r > t.r * 1.25, `deep ${d?.r.toFixed(0)} against thin ${t?.r.toFixed(0)}`);
+  check(`FILM ${f.lane}: ...and the thinner blood is WARMER - green and blue pass a thinning film, which is the whole of reading it as depth`,
+    !!d && !!t && t.warm > d.warm * 1.08, `warmth deep ${d?.warm.toFixed(3)} -> thin ${t?.warm.toFixed(3)}`);
 }
 const laneDusk = out.lane.find((x) => x.what === 'dusk');
 check('LANE dusk: the mark is RED, not the near-black the classic program drew under the lane', (laneDusk?.decal[0] ?? 0) > 50, `rgba ${laneDusk?.decal.join(',')}`);

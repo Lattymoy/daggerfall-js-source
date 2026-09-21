@@ -1937,7 +1937,7 @@ test('MAC-BUG W4: a MARK takes the same light a CHUNK takes - the two passes of 
   assert.match(meshFs, /float mdiff = max\(dot\(n, uMoonDir\), 0\.0\);/);
   assert.match(decalFs, /vec3 ambient = uTrilight > 0\.5 \? \(n\.y >= 0\.0 \? mix\(uTint, uAmbientSky, n\.y\) : mix\(uTint, uAmbientGround, -n\.y\)\) : uTint;/, 'the trilight ambient, as MESH_FS has it');
   assert.match(decalFs, /vec3 lightAcc = ambient \+ uDecalSun \* \(diff \* cloudShadowAt\(vWorld\)\) \+ uDecalMoon \* mdiff \+ pointAcc \+ \(iAtt \* iAtt \* max\(dot\(n, iL \/ max\(iD, 1e-4\)\), 0\.0\)\) \* uIndirectColor;/);   // BLOOD1 AUDIT 3: and under the cloud's shadow, as the mesh's sun term is
-  assert.match(decalFs, /vec3 rgb = t\.rgb \* vColor\.rgb \* lightAcc;/);
+  assert.match(decalFs, /vec3 rgb = t\.rgb \* vColor\.rgb \* exp\(vec3\(.*?\) \* \(1\.0 - t\.a \* t\.r\)\) \* lightAcc;/, 'BLOOD3: the film\u2019s absorption rides between the texel and the light');
   assert.doesNotMatch(decalFs, /vec3 rgb = t\.rgb \* vColor\.rgb \* uTint;/,
     'ambient alone is what made the mark black');
 
@@ -2002,12 +2002,12 @@ test('MAC-BUG W6 by source: the decal has a LANE TWIN, the flat’s model on the
 
   // THE FLAT'S MODEL, TERM FOR TERM WITH EL_BB_FS - a mark and a chunk
   // are the same blood, and under this lane they were not.
-  assert.match(EL_DECAL_FS, /vec3 albedo = elDecode\(t\.rgb\) \* elDecode\(vColor\.rgb\);/, 'the texel AND the tint decode - each on its own, the curve being what it is (BLOOD1 AUDIT 3)');
+  assert.match(EL_DECAL_FS, /vec3 albedo = elDecode\(t\.rgb\) \* elDecode\(vColor\.rgb\)[^\n]*\n\s*\* exp\(vec3\([\d., ]+\) \* \(1\.0 - thick\)\);/, 'the texel AND the tint decode - each on its own, the curve being what it is (BLOOD1 AUDIT 3) - and BLOOD3\u2019s film over the pair');
   assert.match(EL_BB_FS, /vec3 albedo = max\(elDecode\(tex\.rgb\) - emission, vec3\(0\.0\)\);/, '(the flat decodes its texel - the comparison is against something real)');
   // BLOOD AUDIT 4: the SURFACE's terms on the lane too - elPointLit and
   // elIndirectLit (N.L, the lantern's map, the contact shadow, the
   // glint), which is what the mesh under the mark takes
-  assert.match(EL_DECAL_FS, /vec3 lit = albedo \* \(ambient \+ sunLit \+ moonLit \+ elPointLitWet\(vWorld, n, vWet, glint\) \+ elIndirectLit\(vWorld, n\)\);/, 'the mesh’s lantern and indirect terms, N.L - and (BLOOD AUDIT 5) the moon by N.L and the trilight ambient');
+  assert.match(EL_DECAL_FS, /vec3 lit = albedo \* \(ambient \+ sunLit \+ moonLit \+ elPointLitWet\(vWorld, n, sheen, glint\) \+ elIndirectLit\(vWorld, n\)\);/, 'the mesh’s lantern and indirect terms, N.L - and (BLOOD AUDIT 5) the moon by N.L and the trilight ambient');
   assert.match(EL_DECAL_FS, /vec3 moonLit = uDecalMoon \* max\(dot\(n, uMoonDir\), 0\.0\);/);
   assert.match(EL_DECAL_FS, /vec3 ambient = uTrilight > 0\.5 \? \(n\.y >= 0\.0 \? mix\(uTint, uAmbientSky, n\.y\) : mix\(uTint, uAmbientGround, -n\.y\)\) : uTint;/);
   assert.match(EL_DECAL_FS, /float sunVis = \(dot\(uDecalSun, uDecalSun\) > 0\.0 && ndl > 0\.0\) \? cloudShadowAt\(vWorld\) \* sunShadowAt\(vWorld, n\) : 0\.0;/, 'the sun’s visibility ONCE - the nine-tap map is read for the diffuse and the glint together');
@@ -3414,7 +3414,7 @@ test('BLOOD2f: the wet float rides the slot - one fresh, falling as the square w
 
 test('BLOOD2f: the lane glints a wet mark - the lamp and the sun seen in it at the wet gloss, scaled by the wetness, nothing when dry; the classic set does not know the float', () => {
   assert.ok(EL_WET_GLOSS > F_SPEC_GLOSS * 2 && EL_WET_STRENGTH > F_SPEC_STRENGTH * 4, 'far tighter and far brighter than stone');
-  assert.equal(EL_WET_GLOSS, 64); assert.equal(EL_WET_STRENGTH, 0.9);
+  assert.equal(EL_WET_GLOSS, 64); assert.equal(EL_WET_STRENGTH, 0.55);   // BLOOD3: Schlick took the head-on case to 4%, so what is left is the grazing band
   // the attribute, the varying
   const r = a4Read('src/render/renderer.js');
   const vs = r.slice(r.indexOf('const DECAL_VS = `'), r.indexOf('`;', r.indexOf('const DECAL_VS = `')));
@@ -3427,7 +3427,7 @@ test('BLOOD2f: the lane glints a wet mark - the lamp and the sun seen in it at t
   // the lane's term
   assert.match(F_DECAL_FS, /in float vWet;/);
   assert.match(F_DECAL_FS, /lit \+= glint \+ sunGlint;/, 'added AFTER the albedo multiply - a highlight is the light’s colour');
-  assert.match(F_DECAL_FS, /vec3 sunGlint = vWet > 0\.0\s*\n\s*\? uDecalSun \* \(pow\(max\(dot\(n, normalize\(uLightDir \+ normalize\(uCamPos - vWorld\)\)\), 0\.0\), 64\.0\) \* 0\.9 \* vWet \* sunVis\)/, 'the sun’s glint: Blinn-Phong at the wet gloss, on the ONE sun visibility (BLOOD AUDIT 5)');
+  assert.match(F_DECAL_FS, /vec3 sunGlint = sheen > 0\.0\s*\n\s*\? uDecalSun \* \(pow\(max\(dot\(n, normalize\(uLightDir \+ normalize\(uCamPos - vWorld\)\)\), 0\.0\), 64\.0\) \* 0\.55 \* sheen \* sunVis\)/, 'the sun’s glint: Blinn-Phong at the wet gloss, on the ONE sun visibility (BLOOD AUDIT 5)');
   // BLOOD AUDIT 5: ONE lantern loop for the diffuse and the glint - the
   // same shadow answer for both (a mark in a contact shadow is
   // glint-shadowed too), the pow skipped where the mark is dry
@@ -3440,7 +3440,8 @@ test('BLOOD2f: the lane glints a wet mark - the lamp and the sun seen in it at t
   assert.doesNotMatch(F_DECAL_FS, /elWetGlint/, 'no second loop');
   // the probe reads it
   const probe = a4Read('tools/bloodProbe.mjs');
-  assert.match(probe, /a WET mark under a torch glints - brighter than the same mark dry/);
+  assert.match(probe, /a WET mark under a torch still glints/);
+  assert.match(probe, /it is still BLOOD, not a white highlight/, 'BLOOD3: the picture settles what Mac reported - a wet mark is not a white patch');
   assert.match(probe, /the wet float means nothing to the classic set/);
   assert.match(probe, /new Float32Array\(4 \* 10\)/, 'ten floats a corner');
   assert.doesNotMatch(probe, /new Float32Array\(4 \* 9\)/);
@@ -3579,4 +3580,104 @@ test('BLOOD AUDIT 5: by source - the menu shows a row’s default for a stored v
   assert.match(menu, /const found = tiers\.findIndex\(\(\[v\]\) => String\(v\) === cur\);\s*\n\s*const at = found >= 0 \? found : Math\.max\(0, tiers\.findIndex/, 'the chooser');
   const row = E_FEATURES.find((f) => f.id === 'blood-gore');
   assert.match(row.effect, /when the game is next reloaded \(a dungeon takes it on entry\)/, 'three pools live a page; only the dungeon rebuilds on entry');
+});
+
+// ── BLOOD3: THE MARK IS A FILM ───────────────────────────────────
+// (2026-09-21, Mac: "I think the blood is too shiny and flat.")
+// Two faults, one line of the decal shader each, and both laws are pure
+// functions here so a pin drives them rather than reading them.
+test('BLOOD3 flat: the film’s colour is the tint at full thickness and brightens - and WARMS - as it thins', async () => {
+  const { filmColour, filmThickness, BLOOD_ABSORB, BLOOD_BASE } = await import('../src/combat/bloodArt.js');
+  const warm = (c) => (c[1] + c[2]) / 2 / c[0];
+  // THE ANCHOR, and the whole reason the lighting-parity law survives
+  // this slice: at full thickness the film is exactly a no-op, so a
+  // mark on a wall is still lit as the wall is and is still its tint.
+  assert.deepEqual(filmColour(BLOOD_BASE, 1), [...BLOOD_BASE]);
+  assert.deepEqual(filmColour([0.4, 0.1, 0.1], 1), [0.4, 0.1, 0.1]);
+  // ...and thinner is brighter, every channel, monotonically
+  let prev = filmColour(BLOOD_BASE, 1);
+  for (const th of [0.8, 0.6, 0.4, 0.2, 0]) {
+    const c = filmColour(BLOOD_BASE, th);
+    for (let i = 0; i < 3; i++) assert.ok(c[i] > prev[i], `channel ${i} brightens at ${th}`);
+    assert.ok(warm(c) > warm(prev), 'and warms - green and blue are absorbed harder, so they gain more');
+    prev = c;
+  }
+  // the gain is Beer-Lambert on the declared absorption, and red is the
+  // channel that passes: a thinning mark turns toward orange, which is
+  // what blood does and what makes a flat shape read as depth
+  assert.ok(BLOOD_ABSORB[0] < BLOOD_ABSORB[1] && BLOOD_ABSORB[0] < BLOOD_ABSORB[2], 'red is absorbed least');
+  assert.equal(BLOOD_ABSORB[1], BLOOD_ABSORB[2], 'green and blue alike - blood is a red filter, not a tinted one');
+  for (const th of [0, 0.35, 1]) {
+    const c = filmColour(BLOOD_BASE, th);
+    for (let i = 0; i < 3; i++) assert.ok(Math.abs(c[i] - BLOOD_BASE[i] * Math.exp(BLOOD_ABSORB[i] * (1 - th))) < 1e-12);
+  }
+  assert.deepEqual(filmColour(BLOOD_BASE, 2), [...BLOOD_BASE], 'clamped - a thickness past full is still full');
+  assert.deepEqual(filmColour(BLOOD_BASE, -1), filmColour(BLOOD_BASE, 0));
+  assert.deepEqual(filmColour(null, 1), [0, 0, 0], 'no tint, no colour - never NaN');
+  // THE THICKNESS IS COVERAGE TIMES DENSITY. Alpha alone cancels itself
+  // out: it is also what the mark is blended by, so the thin rim the law
+  // brightens is the rim that is fading out, and the solid body has no
+  // variation left to read. The ink carries the rest.
+  assert.equal(filmThickness(1, 1), 1);
+  assert.equal(filmThickness(1, 0.5), 0.5, 'full coverage, half density - a thin place in a solid mark');
+  assert.equal(filmThickness(0.5, 1), 0.5);
+  assert.equal(filmThickness(2, 2), 1); assert.equal(filmThickness(-1, 1), 0);
+});
+
+test('BLOOD3 shiny: the sheen is the mark’s depth times Schlick at the view’s angle - a sheen at a graze, almost nothing underfoot', async () => {
+  const { wetSheen, BLOOD_F0, WET_THICK_LO, WET_THICK_HI } = await import('../src/combat/bloodArt.js');
+  // A DRY MARK HAS NONE, whatever the angle.
+  for (const nv of [0, 0.3, 1]) assert.equal(wetSheen(0, 1, nv), 0);
+  // HEAD-ON it is F0 and no more - the case the player sees most, a mark
+  // on the floor looked at from above, and the one Mac called shiny.
+  assert.ok(Math.abs(wetSheen(1, 1, 1) - BLOOD_F0) < 1e-12);
+  assert.ok(BLOOD_F0 <= 0.03, `a water film, not glass (${BLOOD_F0})`);
+  // AT A GRAZE it is most of the light - which is where a wet thing IS
+  // shiny, and the whole reason the strength did not have to go to zero.
+  const graze = wetSheen(1, 1, 0.1);
+  assert.ok(graze > wetSheen(1, 1, 1) * 15, `the graze is ${(graze / wetSheen(1, 1, 1)).toFixed(0)}x the head-on case`);
+  assert.ok(graze > 0.4 && graze < 1, `and is a sheen, not a mirror (${graze.toFixed(3)})`);
+  // ...monotone between, so there is no edge for the eye to catch on
+  let prev = -1;
+  for (const nv of [1, 0.9, 0.7, 0.5, 0.3, 0.1, 0]) { const s = wetSheen(1, 1, nv); assert.ok(s > prev); prev = s; }
+  assert.ok(Math.abs(wetSheen(1, 1, 0) - 1) < 1e-9, 'edge-on, all of it - Schlick at the limit');
+  // A MARK DOES NOT DRY EVENLY: the thin rim goes first, the deep middle
+  // holds it, so the sheen is a core and not a coat.
+  assert.equal(wetSheen(1, WET_THICK_LO, 0.1), 0, 'a rim at the dry threshold has none');
+  assert.ok(wetSheen(1, WET_THICK_HI, 0.1) > wetSheen(1, (WET_THICK_LO + WET_THICK_HI) / 2, 0.1) * 1.5, 'and the deep part has far more than the middling');
+  assert.equal(wetSheen(1, WET_THICK_HI, 0.1), graze, 'past the wet threshold it is the full sheen');
+  assert.ok(WET_THICK_LO < WET_THICK_HI);
+  // and the mark's own wetness still scales all of it - the dry pass works
+  assert.ok(Math.abs(wetSheen(0.5, 1, 0.1) - graze * 0.5) < 1e-12);
+});
+
+test('BLOOD3 by source: both decal shaders carry the film, and the LANE carries the meniscus and the Fresnel sheen', async () => {
+  const { EL_DECAL_FS, EL_WET_STRENGTH } = await import('../src/render/enhancedLighting.js');
+  const { BLOOD_ABSORB, BLOOD_F0, BLOOD_MENISCUS, WET_THICK_LO, WET_THICK_HI } = await import('../src/combat/bloodArt.js');
+  const classic = readFileSync(new URL('../src/render/renderer.js', import.meta.url), 'utf8');
+  const abs = `vec3(${BLOOD_ABSORB[0]}, ${BLOOD_ABSORB[1]}, ${BLOOD_ABSORB[2]})`;
+  // the film, in BOTH sets - the fix for "flat" is not the lane's alone
+  assert.ok(EL_DECAL_FS.includes('float thick = t.a * t.r;'), 'the lane: coverage times the ink’s density');
+  assert.ok(EL_DECAL_FS.includes(`* exp(${abs} * (1.0 - thick));`), 'and Beer-Lambert over the pair');
+  assert.ok(classic.includes('exp(vec3(${BLOOD_ABSORB[0]}, ${BLOOD_ABSORB[1]}, ${BLOOD_ABSORB[2]}) * (1.0 - t.a * t.r))'),
+    'the classic set takes the same film off the same constant - one law, imported, never a second copy of the numbers');
+  assert.match(classic, /import \{ BLOOD_ABSORB \} from '\.\.\/combat\/bloodArt\.js'/);
+  // the meniscus: the thickness gradient, in the quad's own tangent frame
+  assert.ok(EL_DECAL_FS.includes('vec2 ts = 1.0 / vec2(textureSize(uTex, 0));'), 'a texel of the atlas');
+  assert.match(EL_DECAL_FS, /vec2 duv = vec2\(texture\(uTex, vUV \+ vec2\(ts\.x, 0\.0\)\)\.a, texture\(uTex, vUV \+ vec2\(0\.0, ts\.y\)\)\.a\) - vec2\(thick\);/, 'two taps, one along each axis');
+  assert.ok(EL_DECAL_FS.includes(`n = normalize(n - slope * ${BLOOD_MENISCUS});`), 'and the normal tilts AWAY from the rise - a bank of liquid, not a dent');
+  assert.ok(EL_DECAL_FS.indexOf('n = normalize(n - slope') < EL_DECAL_FS.indexOf('float sunVis'), 'before anything reads the normal, or the shadows and the sun would take the flat one');
+  assert.ok(EL_DECAL_FS.includes('float uvDet = dux.x * duy.y - duy.x * dux.y;') && EL_DECAL_FS.includes('if (abs(uvDet) > 1e-12 && dot(duv, duv) > 0.0) {'),
+    'a degenerate frame or a flat patch is left alone - no divide by zero on a quad seen edge-on');
+  // the sheen: depth, then Schlick, then ONE number for both glints
+  assert.ok(EL_DECAL_FS.includes(`float sheen = vWet * smoothstep(${WET_THICK_LO}, ${WET_THICK_HI}, thick)`), 'the wet is the mark’s own depth');
+  assert.ok(EL_DECAL_FS.includes(`* (${BLOOD_F0} + ${(1 - BLOOD_F0).toFixed(2)} * pow(1.0 - clamp(dot(n, normalize(uCamPos - vWorld)), 0.0, 1.0), 5.0));`), 'through Schlick at the view’s angle');
+  assert.ok(EL_DECAL_FS.includes('elPointLitWet(vWorld, n, sheen, glint)') && EL_DECAL_FS.includes('vec3 sunGlint = sheen > 0.0'),
+    'and the lamp’s glint and the sun’s take the same number - one wetness, not two');
+  assert.ok(!EL_DECAL_FS.includes(', vWet, glint)') && !EL_DECAL_FS.includes('* vWet * sunVis'), 'nothing still glints off the raw per-mark float');
+  assert.equal(EL_WET_STRENGTH, 0.55);
+  // the probe drives the picture where a pin cannot
+  const probe = readFileSync(new URL('../tools/bloodProbe.mjs', import.meta.url), 'utf8');
+  assert.ok(probe.includes('FILM ${f.lane}: a mark is not ONE red') && probe.includes('the thinner blood is WARMER'), 'the probe reads the film off a real frame');
+  assert.ok(probe.includes('it is still BLOOD, not a white highlight'), '...and that a wet mark did not become a white patch');
 });

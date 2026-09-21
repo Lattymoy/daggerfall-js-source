@@ -1,0 +1,100 @@
+[
+  {
+    "name": "BLOOD3-the-film-is-not-anchored-at-full-thickness",
+    "file": "src/combat/bloodArt.js",
+    "old": "  const d = 1 - Math.max(0, Math.min(1, thick));",
+    "new": "  const d = Math.max(0, Math.min(1, thick));",
+    "tests": ["test/blood1_decals.test.js"]
+  },
+  {
+    "name": "BLOOD3-the-thickness-is-not-clamped-so-a-thickness-past-full-darkens",
+    "file": "src/combat/bloodArt.js",
+    "old": "  const d = 1 - Math.max(0, Math.min(1, thick));",
+    "new": "  const d = 1 - thick;",
+    "tests": ["test/blood1_decals.test.js"]
+  },
+  {
+    "name": "BLOOD3-a-missing-tint-is-NaN-rather-than-black",
+    "file": "src/combat/bloodArt.js",
+    "old": "  return [0, 1, 2].map((i) => (tint?.[i] ?? 0) * Math.exp(BLOOD_ABSORB[i] * d));",
+    "new": "  return [0, 1, 2].map((i) => tint?.[i] * Math.exp(BLOOD_ABSORB[i] * d));",
+    "tests": ["test/blood1_decals.test.js"]
+  },
+  {
+    "name": "BLOOD3-blood-absorbs-every-channel-alike-so-a-thinning-mark-never-warms",
+    "file": "src/combat/bloodArt.js",
+    "old": "export const BLOOD_ABSORB = Object.freeze([0.50, 0.95, 0.95]);",
+    "new": "export const BLOOD_ABSORB = Object.freeze([0.95, 0.95, 0.95]);",
+    "tests": ["test/blood1_decals.test.js"]
+  },
+  {
+    "name": "BLOOD3-blood-is-a-tinted-filter-rather-than-a-red-one",
+    "file": "src/combat/bloodArt.js",
+    "old": "export const BLOOD_ABSORB = Object.freeze([0.50, 0.95, 0.95]);",
+    "new": "export const BLOOD_ABSORB = Object.freeze([0.50, 0.95, 0.80]);",
+    "tests": ["test/blood1_decals.test.js"]
+  },
+  {
+    "name": "BLOOD3-the-thickness-is-coverage-alone-the-bug-that-cancels-the-film-out",
+    "file": "src/combat/bloodArt.js",
+    "old": "export const filmThickness = (alpha, ink) => Math.max(0, Math.min(1, alpha)) * Math.max(0, Math.min(1, ink));",
+    "new": "export const filmThickness = (alpha, ink) => Math.max(0, Math.min(1, alpha));",
+    "tests": ["test/blood1_decals.test.js"]
+  },
+  {
+    "name": "BLOOD3-the-sheen-skips-Schlick-and-glints-at-every-angle",
+    "file": "src/combat/bloodArt.js",
+    "old": "  const fres = BLOOD_F0 + (1 - BLOOD_F0) * Math.pow(1 - Math.max(0, Math.min(1, ndotv)), 5);",
+    "new": "  const fres = 1;",
+    "tests": ["test/blood1_decals.test.js"]
+  },
+  {
+    "name": "BLOOD3-the-sheen-ignores-the-marks-depth-so-a-dried-rim-shines",
+    "file": "src/combat/bloodArt.js",
+    "old": "  const depth = x * x * (3 - 2 * x);   // smoothstep, the shader's own",
+    "new": "  const depth = 1;   // smoothstep, the shader's own",
+    "tests": ["test/blood1_decals.test.js"]
+  },
+  {
+    "name": "BLOOD3-the-film-is-a-glass-plate-rather-than-a-water-one",
+    "file": "src/combat/bloodArt.js",
+    "old": "export const BLOOD_F0 = 0.02;",
+    "new": "export const BLOOD_F0 = 0.2;",
+    "tests": ["test/blood1_decals.test.js"]
+  },
+  {
+    "name": "BLOOD3-the-lanes-thickness-is-coverage-alone",
+    "file": "src/render/enhancedLighting.js",
+    "old": "  float thick = t.a * t.r;",
+    "new": "  float thick = t.a;",
+    "tests": ["test/blood1_decals.test.js"]
+  },
+  {
+    "name": "BLOOD3-the-meniscus-is-a-dent-rather-than-a-bank",
+    "file": "src/render/enhancedLighting.js",
+    "old": "    n = normalize(n - slope * ${BLOOD_MENISCUS});",
+    "new": "    n = normalize(n + slope * ${BLOOD_MENISCUS});",
+    "tests": ["test/blood1_decals.test.js"]
+  },
+  {
+    "name": "BLOOD3-the-meniscus-divides-by-a-degenerate-tangent-frame",
+    "file": "src/render/enhancedLighting.js",
+    "old": "  if (abs(uvDet) > 1e-12 && dot(duv, duv) > 0.0) {",
+    "new": "  if (true) {",
+    "tests": ["test/blood1_decals.test.js"]
+  },
+  {
+    "name": "BLOOD3-the-wet-glint-is-back-to-nine-tenths-of-the-light",
+    "file": "src/render/enhancedLighting.js",
+    "old": "export const EL_WET_STRENGTH = 0.55;",
+    "new": "export const EL_WET_STRENGTH = 0.9;",
+    "tests": ["test/blood1_decals.test.js"]
+  },
+  {
+    "name": "BLOOD3-the-classic-set-keeps-the-flat-sticker",
+    "file": "src/render/renderer.js",
+    "old": "  vec3 rgb = t.rgb * vColor.rgb * exp(vec3(${BLOOD_ABSORB[0]}, ${BLOOD_ABSORB[1]}, ${BLOOD_ABSORB[2]}) * (1.0 - t.a * t.r)) * lightAcc;",
+    "new": "  vec3 rgb = t.rgb * vColor.rgb * lightAcc;",
+    "tests": ["test/blood1_decals.test.js"]
+  }
+]

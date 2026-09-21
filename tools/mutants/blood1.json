@@ -1422,8 +1422,8 @@
   {
     "name": "AUDIT3-the-twin-decodes-the-product",
     "file": "src/render/enhancedLighting.js",
-    "old": "  vec3 albedo = elDecode(t.rgb) * elDecode(vColor.rgb);",
-    "new": "  vec3 albedo = elDecode(t.rgb * vColor.rgb);",
+    "old": "  vec3 albedo = elDecode(t.rgb) * elDecode(vColor.rgb)",
+    "new": "  vec3 albedo = elDecode(t.rgb * vColor.rgb)",
     "tests": [
       "test/blood1_decals.test.js",
       "test/el1_enhancedlighting.test.js"
@@ -2227,7 +2227,7 @@
   {
     "name": "AUDIT4-the-lane-decal-takes-the-flat-s-lanterns-again",
     "file": "src/render/enhancedLighting.js",
-    "old": "  vec3 lit = albedo * (ambient + sunLit + moonLit + elPointLitWet(vWorld, n, vWet, glint) + elIndirectLit(vWorld, n));",
+    "old": "  vec3 lit = albedo * (ambient + sunLit + moonLit + elPointLitWet(vWorld, n, sheen, glint) + elIndirectLit(vWorld, n));",
     "new": "  vec3 base = vWorld + n * 0.5; glint = vec3(0.0);\n  vec3 lit = albedo * (ambient + sunLit + moonLit + elPointFlat(vWorld, base) + elIndirectFlat(vWorld));",
     "tests": [
       "test/blood1_decals.test.js"
@@ -2713,8 +2713,8 @@
   {
     "name": "AUDIT5-the-lane-decal-forgets-the-moon",
     "file": "src/render/enhancedLighting.js",
-    "old": "  vec3 lit = albedo * (ambient + sunLit + moonLit + elPointLitWet(vWorld, n, vWet, glint) + elIndirectLit(vWorld, n));",
-    "new": "  vec3 lit = albedo * (ambient + sunLit + elPointLitWet(vWorld, n, vWet, glint) + elIndirectLit(vWorld, n));",
+    "old": "  vec3 lit = albedo * (ambient + sunLit + moonLit + elPointLitWet(vWorld, n, sheen, glint) + elIndirectLit(vWorld, n));",
+    "new": "  vec3 lit = albedo * (ambient + sunLit + elPointLitWet(vWorld, n, sheen, glint) + elIndirectLit(vWorld, n));",
     "tests": [
       "test/blood1_decals.test.js"
     ]
@@ -2731,8 +2731,8 @@
   {
     "name": "AUDIT5-the-sun-map-is-read-twice",
     "file": "src/render/enhancedLighting.js",
-    "old": "* ${EL_WET_STRENGTH} * vWet * sunVis)",
-    "new": "* ${EL_WET_STRENGTH} * vWet * cloudShadowAt(vWorld) * sunShadowAt(vWorld, n))",
+    "old": "* ${EL_WET_STRENGTH} * sheen * sunVis)",
+    "new": "* ${EL_WET_STRENGTH} * sheen * cloudShadowAt(vWorld) * sunShadowAt(vWorld, n))",
     "tests": [
       "test/blood1_decals.test.js"
     ]
