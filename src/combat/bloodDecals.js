@@ -155,9 +155,9 @@ export const SPRAY_SHARE = 0.12;
  *  says. Each drop costs a raycast and an overkill is the worst case,
  *  so the ceiling is decided at the top of this file rather than at
  *  the bottom of a frame. At the ladder's top rung the share lands
- *  just under it, which is the point: the cap shapes nothing a real
- *  hit does, and catches a density setting or a future rung that
- *  would. */
+ *  EXACTLY on it (200 x 0.12 is 24, in doubles too - BLOOD1 AUDIT 3
+ *  corrected "just under"), so the cap shapes nothing a real hit does
+ *  and catches a density setting or a future rung that would. */
 export const SPRAY_MAX = 24;
 /** How many marks a rate is worth. Always at least one: BLOOD1a's
  *  single mark is the FLOOR of this and not a case it replaced. */
@@ -177,7 +177,13 @@ export function sprayRadius(rate) {
   return SPRAY_RADIUS_MIN + (SPRAY_RADIUS_MAX - SPRAY_RADIUS_MIN) * t;
 }
 
-/** How far a drop's angle may wander off its share of the circle. */
+/** How far a drop's angle may wander off its share of the circle, AS A
+ *  FRACTION OF THAT SHARE. BLOOD1 AUDIT 3: this was 0.9 RADIANS - fine
+ *  at the bottom rung's four drops (90 degrees apart) and nonsense at
+ *  the top rung's twenty-four (15 degrees apart, wobbling 52), where
+ *  the even turn the comment below argues for was wholly swamped and
+ *  every spray had drops on top of each other. Nine tenths of a slot
+ *  keeps neighbours from crossing. */
 export const SPRAY_WOBBLE = 0.9;
 
 /**
@@ -198,7 +204,7 @@ export const SPRAY_WOBBLE = 0.9;
 export function sprayOffset(i, count, radius, rng = Math.random) {
   if (!(i > 0)) return [0, 0];
   const n = Math.max(1, count);
-  const turn = (i / n) * Math.PI * 2 + (rng() - 0.5) * SPRAY_WOBBLE;
+  const turn = (i / n) * Math.PI * 2 + (rng() - 0.5) * SPRAY_WOBBLE * (Math.PI * 2 / n);   // BLOOD1 AUDIT 3: the wobble is a share of the slot, not an angle
   const r = (radius > 0 ? radius : 0) * Math.sqrt(Math.min(1, (i + rng()) / n));
   return [Math.cos(turn) * r, Math.sin(turn) * r];
 }
@@ -275,8 +281,10 @@ export function isCeilingNormal(normal) {
  * The reference's particles fly in every direction and the ones that
  * go up find the ceiling; this port rays instead of flying, so the
  * share that looks up has to be a number rather than something that
- * emerges. One in four, BY INDEX rather than by chance, so a spray
- * always has some of both and a test can say which.
+ * emerges. One in four, BY INDEX rather than by chance, so a spray of
+ * four or more always has some of both and a test can say which -
+ * and a spray of fewer has none (BLOOD1 AUDIT 3, said plainly: the
+ * chunk's two-drop splat and the drip's one-drop splat never look up).
  *
  * DROP ZERO NEVER LOOKS UP. It is the pool under the body, and a hit
  * that stained the ceiling instead of the floor where it happened
@@ -335,7 +343,7 @@ export const SWING_LEAN = 0.08;
  * straight up and it comes straight back down.
  */
 export function swingThrow(state, forward) {
-  const p = SWING_PUSH[state];
+  const p = Object.hasOwn(SWING_PUSH, state) ? SWING_PUSH[state] : null;   // BLOOD1 AUDIT 3: a frozen object still has a prototype - 'constructor' answered a function and the maths NaN
   if (!p) return [0, 0];
   // The push is in the player's frame, so it needs their basis - and
   // only the FLAT part of it, since the answer is a ground offset.
@@ -433,6 +441,37 @@ export function surfaceBasis(normal, turn = 0) {
   };
 }
 
+/**
+ * BLOOD2a - A BASIS ALONG A DIRECTION. Spatter is not round: a drop
+ * flung from a body lands elongated along its travel, the further it
+ * flew the longer. `along` is that travel in world space; projected
+ * onto the surface it becomes the quad's `right`, and `up` closes the
+ * same right-handed frame surfaceBasis makes (right x up = normal), so
+ * the winding and the lift are the ones every other mark has. A travel
+ * with no component in the plane (straight down onto a floor) falls
+ * back to the spun basis, which is what an unthrown drop gets anyway.
+ */
+export function basisAlong(normal, along, turn = 0) {
+  const n = unit(normal) ?? [0, 1, 0];
+  const a = along ? [along[0], along[1], along[2]] : null;
+  if (!a) return surfaceBasis(n, turn);
+  const d = a[0] * n[0] + a[1] * n[1] + a[2] * n[2];
+  const r = unit([a[0] - n[0] * d, a[1] - n[1] * d, a[2] - n[2] * d]);
+  if (!r) return surfaceBasis(n, turn);
+  return { normal: n, right: r, up: cross(n, r) };
+}
+
+/** BLOOD2a - HOW LONG A STREAK GETS. A drop at the body's own spot is
+ *  round; one flung to the edge of the spray's reach is this many times
+ *  longer than it is wide, and the ones between scale with how far they
+ *  flew. The port's own number: two and a half reads as cast-off blood
+ *  without turning a drop into a line. */
+export const STREAK_MAX = 2.5;
+export function streakFor(flown, reach) {
+  if (!(flown > 0) || !(reach > 0)) return 1;
+  return 1 + Math.min(1, flown / reach) * (STREAK_MAX - 1);
+}
+
 const cross = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
 function unit(v) {
   if (!v) return null;
@@ -476,7 +515,8 @@ export function writeDecalQuad(out, offset, decal, uv = null) {
   const u0 = uv?.u0 ?? 0, v0 = uv?.v0 ?? 0, u1 = uv?.u1 ?? 1, v1 = uv?.v1 ?? 1;
   const [px, py, pz] = decal.pos;
   const h = decal.size / 2;
-  const rx = decal.right[0] * h, ry = decal.right[1] * h, rz = decal.right[2] * h;
+  const hs = h * (decal.stretch ?? 1);   // BLOOD2a: longer along `right` by the streak
+  const rx = decal.right[0] * hs, ry = decal.right[1] * hs, rz = decal.right[2] * hs;
   const ux = decal.up[0] * h, uy = decal.up[1] * h, uz = decal.up[2] * h;
   const c = decal.tint ?? WHITE;
   const corner = (i, sx, sy, u, v) => {
@@ -531,12 +571,20 @@ export function decalIndices(capacity) {
  * @param {{capacity?:number, rng?:() => number}} [opts]
  */
 export function createBloodDecalPool({ capacity = 1000, rng = Math.random } = {}) {
-  const cap = Math.max(1, Math.floor(capacity));
+  // BLOOD1 AUDIT 3: a NaN or an Infinity here threw RangeError at the
+  // array - the switch can never hand one, a host passing a raw pref
+  // could. Not a number is the default, as it is for the switch.
+  const cap = Math.max(1, Math.floor(Number.isFinite(Number(capacity)) ? Number(capacity) : 1000));
   /** @type {Array<any>} */
   const ring = new Array(cap).fill(null);
   let next = 0;        // the slot `place` takes
   let serial = 0;      // how many have ever been placed
   let live = 0;
+  // BLOOD1 AUDIT 3: THE HIGH-WATER MARK - the slots ever touched, so a
+  // ring holding three marks draws three quads and not its capacity.
+  // Slots fill in order from zero, so the live ones are always the
+  // prefix [0, touched) until the ring wraps, and the whole ring after.
+  let touched = 0;
 
   /**
    * Lay a mark. `point` is where the blood met the surface and
@@ -544,9 +592,11 @@ export function createBloodDecalPool({ capacity = 1000, rng = Math.random } = {}
    * (already turned to face the ray). Answers the decal, or null when
    * the caller handed nothing to place it on.
    */
-  function place(point, normal, { size = 1, tint = null, parent = null, turn = null } = {}) {
+  function place(point, normal, { size = 1, tint = null, turn = null, along = null, stretch = 1, uv = null } = {}) {
     if (!point || !Number.isFinite(point[0]) || !Number.isFinite(point[1]) || !Number.isFinite(point[2])) return null;
-    const basis = surfaceBasis(normal, Number.isFinite(turn) ? turn : rng() * Math.PI * 2);
+    // BLOOD2a: a drop that flew lies ALONG its travel; one that did not
+    // spins as it always has.
+    const basis = along ? basisAlong(normal, along, Number.isFinite(turn) ? turn : rng() * Math.PI * 2) : surfaceBasis(normal, Number.isFinite(turn) ? turn : rng() * Math.PI * 2);
     const slot = next;
     const d = {
       slot,
@@ -562,16 +612,26 @@ export function createBloodDecalPool({ capacity = 1000, rng = Math.random } = {}
       normal: basis.normal,
       right: basis.right,
       up: basis.up,
-      size: Math.max(0, size),
+      // BLOOD1 AUDIT 3: a NaN size wrote NaN into all twelve position
+      // floats of the slot; a mark with no size is a mark of size zero.
+      size: Number.isFinite(size) ? Math.max(0, size) : 0,
+      // BLOOD2a: the streak - how many times longer along `right` than
+      // across. One is a round drop, the pool's own.
+      stretch: Number.isFinite(stretch) ? Math.max(1, stretch) : 1,
       tint,
-      // A mark on something that MOVES rides it: the reference lets a
-      // decal attach to a parent so blood on a body travels with the
-      // body. `parent` answers a position each frame, or null.
-      parent,
+      // BLOOD2b: the atlas cell this mark wears - { u0, v0, u1, v1 } - or
+      // null for the whole texture, as BLOOD1a's single frame was.
+      uv,
+      // BLOOD1 AUDIT 3: the `parent` a mark could "ride" is GONE. It was
+      // stored and never read - the corners are baked into the GPU slot
+      // at place, `pos` is world space, and shiftOrigin moved a parented
+      // mark too - so the field promised a capability nothing had. A
+      // mark rides nothing; blood on a body is the body's own art.
     };
     if (!ring[slot]) live++;
     ring[slot] = d;
     next = (next + 1) % cap;
+    if (slot + 1 > touched) touched = slot + 1;
     return d;
   }
 
@@ -594,6 +654,10 @@ export function createBloodDecalPool({ capacity = 1000, rng = Math.random } = {}
    */
   function shiftOrigin(delta) {
     if (!delta) return 0;
+    // BLOOD1 AUDIT 3: a non-finite delta poisoned every live mark's
+    // position IN PLACE and answered the count as if it had worked;
+    // nothing short of clear() recovers from that.
+    if (!Number.isFinite(delta[0]) || !Number.isFinite(delta[1]) || !Number.isFinite(delta[2])) return 0;
     let n = 0;
     for (const d of ring) {
       if (!d) continue;
@@ -606,11 +670,28 @@ export function createBloodDecalPool({ capacity = 1000, rng = Math.random } = {}
   /** A mode change throws the room away, and the blood with it. */
   function clear() {
     ring.fill(null);
-    next = 0; live = 0;
+    next = 0; live = 0; touched = 0;
     return true;
   }
 
+  /**
+   * BLOOD1 AUDIT 3: THE DRAW RANGES, oldest first. One draw composites
+   * in SLOT order under depthMask(false) and blending, so once the
+   * ring has wrapped the oldest live marks - slots [next, cap) - would
+   * draw LAST, over the newest. That broke the one ordering the module
+   * goes out of its way to get right (the burst under the pool). Two
+   * ranges, [next, cap) then [0, next), put the oldest down first; an
+   * unwrapped ring is the one prefix [0, touched).
+   * @returns {Array<[number, number]>} half-open slot ranges
+   */
+  function ranges() {
+    if (touched < cap) return touched > 0 ? [[0, touched]] : [];
+    return next > 0 ? [[next, cap], [0, next]] : [[0, cap]];
+  }
+
   return {
+    ranges,
+    get touched() { return touched; },
     place, decals, shiftOrigin, clear,
     get capacity() { return cap; },
     get count() { return live; },

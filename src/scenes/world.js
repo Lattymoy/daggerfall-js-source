@@ -1027,7 +1027,28 @@ export async function bootWorld(canvas, renderer, params, status) {
     }
     return -Infinity;
   };
-  const collider = new Collider(heightAt);
+  // BLOOD1 AUDIT 3: WHERE THE GROUND IS DRAWN. `heightAt` above is the
+  // bilinear read the capsule has always walked on; the terrain is cut
+  // into two triangles a quad (terrainSurface.js says why the two
+  // surfaces differ, and measured it: up to 0.08 apart on real grades).
+  // The grass placer asks this; the blood - lifted 2cm off "the
+  // ground" - was the one thing still placed by bilinear, so on a hill
+  // a mark lay clipped into the slope on one half of a quad and floated
+  // over it on the other. The capsule keeps its floor; what is PLACED
+  // asks this.
+  const _stT = [0, 0, 0];
+  const surfaceAt = (x, z) => {
+    const c = state.compensation;
+    const px = state.mapOrigin.x + Math.floor((x - c[0]) / TERRAIN_SIZE);
+    const py = state.mapOrigin.y - Math.floor((z - c[2]) / TERRAIN_SIZE);
+    const p = built.get(`${px},${py}`);
+    if (!p) return -Infinity;
+    const t = state.pixelTranslation(p.px, p.py, _stT);
+    const lx = x - t[0], lz = z - t[2];
+    if (lx < 0 || lz < 0 || lx >= TERRAIN_SIZE || lz >= TERRAIN_SIZE) return -Infinity;
+    return surfaceHeightAt(p.samples, lx, lz, p._stride ?? 1) + t[1];
+  };
+  const collider = new Collider(heightAt, surfaceAt);
   // Building doors (P3): registered pixel-local at build, activated
   // against the live translation; each carries what the transition
   // needs (its block + building record + sibling exterior doors).
@@ -1257,7 +1278,7 @@ export async function bootWorld(canvas, renderer, params, status) {
             unionBox(box);
             models.push({ gpu: parts.body, local, _box: box, _order: -1 });   // EV6: the mills group together
             collider.addMesh(key, BODY.positions, BODY.indices, local,
-              () => state.pixelTranslation(px, py));
+              ((o) => () => state.pixelTranslation(px, py, o))([0, 0, 0]));   // BLOOD1 AUDIT 3: one array a bucket, not one a call - every ray asks every bucket
             windmills.push({ local, state: { angle: rotorPhase(px + local[12], py + local[14]) } });
           }
         }
@@ -1297,7 +1318,7 @@ export async function bootWorld(canvas, renderer, params, status) {
           }
           const gateKey = isCityGate(placed.modelIdNum) ? `${key}:gate:${pixelGates.length}` : key;
           collider.addMesh(gateKey, cpu.positions, cpu.indices, local,
-            () => state.pixelTranslation(px, py));
+            ((o) => () => state.pixelTranslation(px, py, o))([0, 0, 0]));   // BLOOD1 AUDIT 3: the same
           // THE BULLETIN BOARDS. RMBLayout stands model 41739
           // STANDALONE rather than combining it (:857, :935) for the
           // sole purpose of hanging DaggerfallBulletinBoard off it
@@ -1335,7 +1356,7 @@ export async function bootWorld(canvas, renderer, params, status) {
                 [placed.modelIdNum, { gpu, cpu }],
                 [otherId, otherGpu && otherCpu ? { gpu: otherGpu, cpu: otherCpu } : null],
               ]),
-              translation: () => state.pixelTranslation(px, py),
+              translation: ((o) => () => state.pixelTranslation(px, py, o))([0, 0, 0]),   // BLOOD1 AUDIT 3: the same
             });
           }
           // Building models expose their static doors for E-transitions.
@@ -5206,7 +5227,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // so an F9 pressed inside a shop recorded the street's sheath and
     // hand. The mode host answers for the rig that is actually drawn
     // and null outside interior mode (the dungeon owns its own
-    // composer, dungeonContext.js:5744), so exterior mode and a
+    // composer, dungeonContext.js:5750), so exterior mode and a
     // pre-seam mode host compose exactly as before, per field.
     const wp = modes?.weaponPose?.() ?? null;
     const snap = snapshotPlayer(playerEntity, {

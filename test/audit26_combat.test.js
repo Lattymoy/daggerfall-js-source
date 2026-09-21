@@ -191,7 +191,7 @@ test('F040: a falling watchman bleeds, like every other falling enemy', () => {
   // the sibling pool has done this since CH3 - one law, both pools
   const xf = src('scenes/exteriorFoes.js');
   const xarm = xf.slice(xf.indexOf('if (f.ai.landedFall > 0'));
-  assert.ok(xarm.slice(0, 2000).includes('hitEffects?.showBloodSplash(0, f.ai._centre(), null, bloodHit(fdmg, f.entity));'));
+  assert.ok(xarm.slice(0, 2000).includes('hitEffects?.showBloodSplash(0, f.ai._centre(), null, { ...bloodHit(fdmg, f.entity), markIndex: ENEMY_BASICS[f.mobileType]?.bloodIndex ?? 0 });'));   // BLOOD1 AUDIT 3: the splash at 0, the mark the foe's own
 });
 
 test('F206: a damaging fall in a dungeon flashes the screen', () => {

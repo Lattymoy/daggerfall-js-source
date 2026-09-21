@@ -724,6 +724,97 @@ const BB_CORNERS = Object.freeze([
 /** AUDIT-EL F5: what a WORLD host passes beginFrame - the lane replays its records for this frame and not for a map's, a video's or a menu's. */
 export const WORLD_FRAME = Object.freeze({ world: true });
 /** The classic world programs' point-light cap (uPointLights[16] in every shader above); a lane brings its own. */
+/** BLOOD1a - THE DECAL PASS, the port's own blood marks. The vertex shader
+ *  is shared by the classic program and the lane's twin (MAC-BUG W6):
+ *  a decal's corners are baked in world space by bloodDecals.js, so it
+ *  has no model matrix and no basis to carry. */
+const DECAL_VS = `#version 300 es
+layout(location=0) in vec3 aPos;
+layout(location=1) in vec2 aUV;
+layout(location=2) in vec4 aColor;
+uniform mat4 uProj, uView;
+out vec2 vUV; out vec4 vColor; out vec3 vWorld;
+void main() { vUV = aUV; vColor = aColor; vWorld = aPos; gl_Position = uProj * uView * vec4(aPos, 1.0); }`;
+/** The CLASSIC decal fragment shader - MAC-BUG W4's flat model, term for
+ *  term with BB_FS above. MAC-BUG W6 (Mac: "super dark coloring instead
+ *  of red"): this program has a LANE TWIN now, render/enhancedLighting.js's
+ *  EL_DECAL_FS, built into the lane's world set beside the other four -
+ *  because under the lane every colour the renderer uploads arrives
+ *  DECODED to linear, and a classic program handed linear light,
+ *  multiplying an sRGB texel and writing with no exposure, tonemap or
+ *  encode, drew a mark two to eight times darker than the flat beside
+ *  it. This one runs only on the classic set, where the flats take the
+ *  same display-space light it does. */
+const DECAL_FS = `#version 300 es
+precision highp float;
+in vec2 vUV; in vec4 vColor; in vec3 vWorld;
+uniform sampler2D uTex;
+uniform vec3 uTint;
+// MAC-BUG W4: the SAME terms the billboard pass gives a flat, and
+// spelled the same way on purpose - a mark on a floor and a chunk in
+// the air above it are the same blood, and they were lit by different
+// amounts of the scene.
+uniform vec3 uDecalSun;
+uniform int uPointCount;
+uniform vec4 uPointLights[16];   // xyz scene-space, w range
+uniform vec3 uPointColors[16];
+uniform vec4 uIndirect;
+uniform vec3 uIndirectColor;
+uniform vec3 uFogColor;
+uniform int uFogMode;
+uniform float uFogDensity;
+uniform vec2 uFogRange;
+uniform vec3 uCamPos;
+${CLOUD_SHADOW_GLSL}
+out vec4 outColor;
+float fogFactorAt(vec3 worldPos) {
+  if (uFogMode == 0) return 1.0;
+  float d = length(worldPos - uCamPos);
+  if (uFogMode == 1) return clamp((uFogRange.y - d) / max(uFogRange.y - uFogRange.x, 1e-4), 0.0, 1.0);
+  if (uFogMode == 3) { float f = uFogDensity * d; return exp(-f * f); }
+  return exp(-uFogDensity * d);
+}
+void main() {
+  vec4 t = texture(uTex, vUV);
+  // A DEGENERATE SLOT still rasterises nothing, but a live one whose
+  // texel is fully clear must not draw a black square either.
+  if (t.a < 0.01) discard;
+  // MAC-BUG W4 (Mac: "Also blood is black"). THIS TOOK AMBIENT AND
+  // NOTHING ELSE, and the line that set it said what it was for - "the
+  // scene's own light, so a mark on a dungeon floor is as dark as the
+  // floor". It was darker than the floor by every term it left out: the
+  // floor is a mesh lit by ambient AND the sun AND the point lights,
+  // and a dungeon's ambient is 0.12, so a red mark came out at about
+  // two units of red. Black. Worse, the GIBS from the same kill go
+  // through drawBillboards and were lit in full, so one hit put lit
+  // chunks over a black smear.
+  //
+  // A decal has no normal, exactly as a billboard has none, so it takes
+  // the billboard's model: attenuation-only point lights (squared
+  // linear falloff), the sun's Lambert-average half, and the indirect
+  // term on the same attenuation. Written to mirror that shader term
+  // for term so the two cannot drift.
+  vec3 pointAcc = vec3(0.0);
+  for (int i = 0; i < 16; i++) {
+    if (i >= uPointCount) break;
+    float d = length(uPointLights[i].xyz - vWorld);
+    float att = clamp(1.0 - d / uPointLights[i].w, 0.0, 1.0);
+    pointAcc += att * att * uPointColors[i];
+  }
+  float iD = length(uIndirect.xyz - vWorld);
+  float iAtt = clamp(1.0 - iD / max(uIndirect.w, 1e-4), 0.0, 1.0);
+  // BLOOD1 AUDIT 3: the CLOUD'S SHADOW on the sun term, as every other
+  // classic world shader has it (BB_FS's sun term, under cloudShadowAt). The
+  // deck rides the Environments pref and this program rides the
+  // Lighting one being OFF, so a player with the deck and the classic
+  // set watched the ground go dark under a cloud while the blood on it
+  // stayed bright - W4's fault with the sign reversed.
+  vec3 lightAcc = uTint + uDecalSun * cloudShadowAt(vWorld) + pointAcc + iAtt * iAtt * uIndirectColor;
+  vec3 rgb = t.rgb * vColor.rgb * lightAcc;
+  float a = t.a * vColor.a;
+  float f = fogFactorAt(vWorld);
+  outColor = vec4(mix(uFogColor, rgb, f), a);
+}`;
 const CLASSIC_MAX_LIGHTS = 16;
 /** BLOOD1a: pos3 + uv2 + rgba4, in bytes. */
 const DECAL_STRIDE = DECAL_FLOATS_PER_VERTEX * 4;
@@ -1000,7 +1091,7 @@ export class Renderer {
     this.maxPointLights = CLASSIC_MAX_LIGHTS;
     this._decA = new Float32Array(3); this._decB = new Float32Array(3); this._decC = new Float32Array(3);   // AUDIT F4: three, because one site decodes the ambient, the moon AND the sun and holds all three   // EL1: the decode scratch (two, for the billboard tint's two terms)
     this._pointColorDec = new Float32Array(CLASSIC_MAX_LIGHTS * 3);
-    this._classicSet = this._buildWorldSet({ key: 'classic', meshFs: FS, bbFs: BB_FS, terrainFs: TERRAIN_FS, charFs: CHAR_FS });
+    this._classicSet = this._buildWorldSet({ key: 'classic', meshFs: FS, bbFs: BB_FS, terrainFs: TERRAIN_FS, charFs: CHAR_FS, decalFs: DECAL_FS });   // MAC-BUG W6: and the decal pass, its fifth
     this._installWorldSet(this._classicSet);
     this._ambientTri = null;
 
@@ -1440,6 +1531,16 @@ export class Renderer {
       char: this._buildProgram(CHAR_VS, src.charFs),
       bb: this._buildProgram(BB_VS, src.bbFs),
       terrain: this._buildProgram(TERRAIN_VS, src.terrainFs),
+      // MAC-BUG W6: the decal is the set's FIFTH program. A set that brings
+      // no twin lights its marks on the classic one - which is the exact
+      // state W6 was reported in, so the lane the port ships carries one
+      // (pinned), and this fallback exists for a foreign lane alone.
+      decal: this._buildProgram(DECAL_VS, src.decalFs ?? DECAL_FS),
+      // BLOOD1 AUDIT 3: and the cap that program DECLARES. A foreign lane
+      // with no twin gets the classic program under its own forty-eight,
+      // and an upload of forty-eight into a vec4[16] is an INVALID_OPERATION
+      // and an unlit mark - so the cut is the program's, never the lane's.
+      decalLights: src.decalFs ? (src.maxLights ?? CLASSIC_MAX_LIGHTS) : CLASSIC_MAX_LIGHTS,
     };
   }
 
@@ -1532,6 +1633,11 @@ export class Renderer {
     this._csLoc.mesh = [gl.getUniformLocation(this.program, 'uCloudShadowMap'), gl.getUniformLocation(this.program, 'uCloudShadowRect')];
     this._csLoc.char = [gl.getUniformLocation(this.charProgram, 'uCloudShadowMap'), gl.getUniformLocation(this.charProgram, 'uCloudShadowRect')];
     this._csLoc.bb = [gl.getUniformLocation(this.bbProgram, 'uCloudShadowMap'), gl.getUniformLocation(this.bbProgram, 'uCloudShadowRect')];
+    // MAC-BUG W6: the decal pass is the set's, so its program, its table and its cloud-shadow pair are re-looked-up with the rest
+    this.decalProgram = set.decal;
+    this._decal = this._decalLocs(set.decal);
+    this._decalLights = set.decalLights ?? CLASSIC_MAX_LIGHTS;   // BLOOD1 AUDIT 3: the installed decal program's own cap
+    this._csLoc.decal = [gl.getUniformLocation(set.decal, 'uCloudShadowMap'), gl.getUniformLocation(set.decal, 'uCloudShadowRect')];
     this.tUTileArr = gl.getUniformLocation(this.terrainProgram, 'uTileArr');
     this.tUTilemap = gl.getUniformLocation(this.terrainProgram, 'uTilemap');
     this.tUTileSize = gl.getUniformLocation(this.terrainProgram, 'uTileSize');
@@ -1582,7 +1688,7 @@ export class Renderer {
       a.contact = { prevDepth: gl.getUniformLocation(p, 'uPrevDepth'), prevVP: gl.getUniformLocation(p, 'uPrevVP'), prevProjInfo: gl.getUniformLocation(p, 'uPrevProjInfo'), contactParams: gl.getUniformLocation(p, 'uContactParams') };   // EL8
       return a;
     };
-    this._el = { mesh: elLocs(set.mesh), char: elLocs(set.char), bb: elLocs(set.bb), terrain: elLocs(set.terrain) };
+    this._el = { mesh: elLocs(set.mesh), char: elLocs(set.char), bb: elLocs(set.bb), terrain: elLocs(set.terrain), decal: elLocs(set.decal) };   // MAC-BUG W6: the decal's lane uniforms ride the same table
     this._tFrameStamp = -1;
     this._csUploaded = {};
     this._emissionColorUp = null;
@@ -2593,7 +2699,6 @@ void main() {
   createDecalBatch(capacity) {
     const gl = this.gl;
     const cap = Math.max(1, Math.floor(capacity));
-    this._ensureDecalProgram();
     const vao = gl.createVertexArray();
     this._bindVao(vao);
     const vb = gl.createBuffer();
@@ -2622,11 +2727,17 @@ void main() {
     return true;
   }
 
-  drawDecals(batch, tex) {
+  /** `ranges` (BLOOD1 AUDIT 3) is the pool's own list of half-open slot
+   *  ranges in AGE order (bloodDecals.js `ranges()`): an unwrapped ring
+   *  is one prefix and draws only the slots ever touched, a wrapped one
+   *  is two so the oldest marks composite first. Without it the whole
+   *  capacity is drawn, in slot order. */
+  drawDecals(batch, tex, ranges = null) {
     if (!batch || !tex) return;
     this._close2D();   // PERF-2D: the baseline back, before anything that needs it
     const gl = this.gl;
     this._use(this.decalProgram);
+    this._uploadCloudShadow('decal');   // MAC-BUG W6 / BLOOD1 AUDIT 3: the mark takes the cloud's shadow as the flat beside it does, on both programs
     const d = this._decal;
     gl.uniformMatrix4fv(d.proj, false, this._proj);
     gl.uniformMatrix4fv(d.view, false, this._view);
@@ -2658,40 +2769,43 @@ void main() {
       gl.uniform3f(d.tint, 1, 1, 1);
       gl.uniform3f(d.sun, 0, 0, 0);
     }
-    // MAC-BUG W4 - THE DECAL IS A FIFTH CLASSIC PROGRAM AND HAS NO LANE
-    // TWIN, so it takes the CLASSIC SIXTEEN even where the Enhanced
-    // Lighting lane gives the other four forty-eight. Said out loud and
-    // clamped rather than left to be discovered: `_pointLights` really
-    // does hold 48 under the lane, and a shader declaring
-    // `uPointLights[16]` handed a count of 48 reads off the end of its
-    // own array.
-    //
-    // WHAT IT COSTS, honestly: the sixteen a decal gets are the sixteen
-    // NEAREST, because `nearestLights` has already sorted them by
-    // distance before any of this - the same sixteen the whole renderer
-    // had before the lane existed. A mark under the seventeenth lantern
-    // in a forty-eight-light hall is lit by the sixteen closer ones.
-    // The alternative is a fifth lane shader with its own exposure,
-    // in-scatter and encode, which is a slice rather than a bug fix.
-    const dCount = Math.min(this._pointLights.length >> 2, CLASSIC_MAX_LIGHTS);
+    // MAC-BUG W4 pinned this as "a fifth classic program with no lane
+    // twin", cutting to the classic sixteen under the lane's forty-eight.
+    // MAC-BUG W6 gave it the twin (enhancedLighting.js EL_DECAL_FS), so
+    // the cap is the INSTALLED DECAL PROGRAM'S - sixteen on the classic
+    // one, forty-eight on the lane's - and a mark under the seventeenth
+    // lantern in a forty-eight-light hall is lit by all of them, as the
+    // chunk above it is. BLOOD1 AUDIT 3: the program's cap and not the
+    // lane's, because a lane that brings no twin runs the classic
+    // program under forty-eight lanterns (the set's `decalLights`).
+    const dCount = Math.min(this._pointLights.length >> 2, this._decalLights);
     gl.uniform1i(d.pointCount, dCount);
     if (dCount > 0) {
-      gl.uniform4fv(d.pointLights, this._pointLights.subarray(0, dCount * 4));
+      gl.uniform4fv(d.pointLights, this._pointLights.subarray ? this._pointLights.subarray(0, dCount * 4) : this._pointLights.slice(0, dCount * 4));   // BLOOD1 AUDIT 3: drawTerrain's own guard - a host handing a plain array
       gl.uniform3fv(d.pointColors, this._pointColorData(dCount));   // already cut to the slot count (AUDIT-EL F3)
     }
     gl.uniform4fv(d.indirect, this._indirect);
     gl.uniform3fv(d.indirectColor, this._c3(this._indirectColor));
+    this._uploadEl('decal');   // MAC-BUG W6: the exposure, the in-scatter, the shadow maps and the eye - what makes the lane's mark the lane's (a no-op on the classic set)
     this._bindVao(batch.vao);
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
     gl.depthMask(false);
     gl.disable(gl.CULL_FACE);   // a mark on a ceiling is seen from behind its own normal
-    gl.drawElements(gl.TRIANGLES, batch.capacity * 6, gl.UNSIGNED_INT, 0);
+    if (ranges && ranges.length) {
+      for (const [a, b] of ranges) {
+        const lo = Math.max(0, a | 0), hi = Math.min(batch.capacity, b | 0);
+        if (hi > lo) { gl.drawElements(gl.TRIANGLES, (hi - lo) * 6, gl.UNSIGNED_INT, lo * 6 * 4); this.stats.draws++; }   // four bytes an index
+      }
+    } else {
+      gl.drawElements(gl.TRIANGLES, batch.capacity * 6, gl.UNSIGNED_INT, 0);
+      this.stats.draws++;
+    }
     gl.depthMask(true);
     gl.enable(gl.CULL_FACE);
     gl.disable(gl.BLEND);
     this._bindVao(null);
-    this.stats.texBinds++; this.stats.draws++;
+    this.stats.texBinds++;
   }
 
   destroyDecalBatch(batch) {
@@ -2702,84 +2816,13 @@ void main() {
     gl.deleteVertexArray(batch.vao);
   }
 
-  /** PERF-WARM: built once, off the draw path, like every other
-   *  program in this file. */
-  _ensureDecalProgram() {
+  /** MAC-BUG W6: the decal program's uniform table, for whichever set is
+   *  installed - the classic DECAL_FS or the lane's twin (they share every
+   *  name; the lane's adds its own, which _uploadEl and the shadow, cloud
+   *  and fog tables look up by the same route the other four take). */
+  _decalLocs(P) {
     const gl = this.gl;
-    if (this.decalProgram) return;
-    const vs = `#version 300 es
-layout(location=0) in vec3 aPos;
-layout(location=1) in vec2 aUV;
-layout(location=2) in vec4 aColor;
-uniform mat4 uProj, uView;
-out vec2 vUV; out vec4 vColor; out vec3 vWorld;
-void main() { vUV = aUV; vColor = aColor; vWorld = aPos; gl_Position = uProj * uView * vec4(aPos, 1.0); }`;
-    const fs = `#version 300 es
-precision highp float;
-in vec2 vUV; in vec4 vColor; in vec3 vWorld;
-uniform sampler2D uTex;
-uniform vec3 uTint;
-// MAC-BUG W4: the SAME terms the billboard pass gives a flat, and
-// spelled the same way on purpose - a mark on a floor and a chunk in
-// the air above it are the same blood, and they were lit by different
-// amounts of the scene.
-uniform vec3 uDecalSun;
-uniform int uPointCount;
-uniform vec4 uPointLights[16];   // xyz scene-space, w range
-uniform vec3 uPointColors[16];
-uniform vec4 uIndirect;
-uniform vec3 uIndirectColor;
-uniform vec3 uFogColor;
-uniform int uFogMode;
-uniform float uFogDensity;
-uniform vec2 uFogRange;
-uniform vec3 uCamPos;
-out vec4 outColor;
-float fogFactorAt(vec3 worldPos) {
-  if (uFogMode == 0) return 1.0;
-  float d = length(worldPos - uCamPos);
-  if (uFogMode == 1) return clamp((uFogRange.y - d) / max(uFogRange.y - uFogRange.x, 1e-4), 0.0, 1.0);
-  if (uFogMode == 3) { float f = uFogDensity * d; return exp(-f * f); }
-  return exp(-uFogDensity * d);
-}
-void main() {
-  vec4 t = texture(uTex, vUV);
-  // A DEGENERATE SLOT still rasterises nothing, but a live one whose
-  // texel is fully clear must not draw a black square either.
-  if (t.a < 0.01) discard;
-  // MAC-BUG W4 (Mac: "Also blood is black"). THIS TOOK AMBIENT AND
-  // NOTHING ELSE, and the line that set it said what it was for - "the
-  // scene's own light, so a mark on a dungeon floor is as dark as the
-  // floor". It was darker than the floor by every term it left out: the
-  // floor is a mesh lit by ambient AND the sun AND the point lights,
-  // and a dungeon's ambient is 0.12, so a red mark came out at about
-  // two units of red. Black. Worse, the GIBS from the same kill go
-  // through drawBillboards and were lit in full, so one hit put lit
-  // chunks over a black smear.
-  //
-  // A decal has no normal, exactly as a billboard has none, so it takes
-  // the billboard's model: attenuation-only point lights (squared
-  // linear falloff), the sun's Lambert-average half, and the indirect
-  // term on the same attenuation. Written to mirror that shader term
-  // for term so the two cannot drift.
-  vec3 pointAcc = vec3(0.0);
-  for (int i = 0; i < 16; i++) {
-    if (i >= uPointCount) break;
-    float d = length(uPointLights[i].xyz - vWorld);
-    float att = clamp(1.0 - d / uPointLights[i].w, 0.0, 1.0);
-    pointAcc += att * att * uPointColors[i];
-  }
-  float iD = length(uIndirect.xyz - vWorld);
-  float iAtt = clamp(1.0 - iD / max(uIndirect.w, 1e-4), 0.0, 1.0);
-  vec3 lightAcc = uTint + uDecalSun + pointAcc + iAtt * iAtt * uIndirectColor;
-  vec3 rgb = t.rgb * vColor.rgb * lightAcc;
-  float a = t.a * vColor.a;
-  float f = fogFactorAt(vWorld);
-  outColor = vec4(mix(uFogColor, rgb, f), a);
-}`;
-    this.decalProgram = this._buildProgram(vs, fs);
-    const P = this.decalProgram;
-    this._decal = {
+    return {
       proj: gl.getUniformLocation(P, 'uProj'),
       view: gl.getUniformLocation(P, 'uView'),
       tex: gl.getUniformLocation(P, 'uTex'),
@@ -2790,11 +2833,7 @@ void main() {
       pointColors: gl.getUniformLocation(P, 'uPointColors'),
       indirect: gl.getUniformLocation(P, 'uIndirect'),
       indirectColor: gl.getUniformLocation(P, 'uIndirectColor'),
-      fogColor: gl.getUniformLocation(P, 'uFogColor'),
-      fogMode: gl.getUniformLocation(P, 'uFogMode'),
-      fogDensity: gl.getUniformLocation(P, 'uFogDensity'),
-      fogRange: gl.getUniformLocation(P, 'uFogRange'),
-      camPos: gl.getUniformLocation(P, 'uCamPos'),
+      ...this._fogLocs(P),   // MAC-BUG W6: the lane's decal wants uFogColorLin too, and _fogLocs is the one table that knows the whole set
     };
   }
 

@@ -206,7 +206,7 @@ export function createHitEffects({
      *  six rows DFU gives a 2 splash differently from everything else. */
     showBloodSplash: (bloodIndex, pos, facing = null, hit = null) => {
       const entry = spawn(bloodIndex ?? 0, pos, facing);
-      marks?.place?.(bloodIndex, pos, hit);   // BLOOD1a: the splash plays, the mark stays
+      marks?.place?.(hit?.markIndex ?? bloodIndex, pos, hit);   // BLOOD1a: the splash plays, the mark stays   // BLOOD1 AUDIT 3: a site whose SPLASH index is not the foe's (the fall sites' literal 0) names the mark's own, so the bloodless gate holds
       return entry;
     },
 

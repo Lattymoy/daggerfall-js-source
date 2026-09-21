@@ -14,6 +14,11 @@
 //
 //     npx vite --port 5199 &
 //     node tools/bloodProbe.mjs
+//
+// MAC-BUG W4 and W5 read the CLASSIC set. MAC-BUG W6 ("super dark
+// coloring instead of red") added the LANE rows at the bottom: the port
+// ships with Enhanced Lighting on, and every row above it was green
+// while every mark a player saw was dark.
 import { chromium } from 'playwright';
 
 const BASE = process.env.PROBE_BASE ?? 'http://127.0.0.1:5199';
@@ -156,12 +161,36 @@ const out = await page.evaluate(async () => {
   frames.push(decalShot('DECAL: dungeon ambient + a torch on it', dungeon, new Float32Array([0, 0, 0, 14])));
   frames.push(decalShot('DECAL: exterior noon', () => r.setLighting([0.55, 0.55, 0.55], 1, [1, 0.96, 0.9])));
 
+  // ── MAC-BUG W6 (Mac: "super dark coloring instead of red") ──────
+  // EVERYTHING ABOVE RAN ON THE CLASSIC SET, and the port ships with the
+  // Enhanced Lighting lane ON. Under the lane the renderer decodes every
+  // colour it uploads to linear and the lane's shaders encode at the
+  // end; a classic program handed that light draws an undecoded texel
+  // times a linear number with no exposure, tonemap or encode - which is
+  // what the decal pass was. So the same rows again, under the lane, a
+  // sprite and a mark side by side at four states of light.
+  const { EL_LANE } = await import('/src/render/enhancedLighting.js');
+  r.setLightingLane(EL_LANE);
+  r.setExposure(1.1);
+  const dusk = () => r.setLighting([0.25, 0.25, 0.3], 0.25, [0.9, 0.6, 0.4]);
+  const lane = [];
+  for (const [what, setup, lights] of [
+    ['noon', () => r.setLighting([0.55, 0.55, 0.55], 1, [1, 0.96, 0.9]), null],
+    ['dusk', dusk, null],
+    ['dungeon + a torch', dungeon, new Float32Array([0, 0, 0, 14])],
+    ['dungeon, no lights', dungeon, null],
+  ]) {
+    lane.push({ what, sprite: foeShot(`LANE sprite: ${what}`, setup, lights).px, decal: decalShot(`LANE decal: ${what}`, setup, lights).px });
+  }
+  r.setLightingLane(null);
+
   return {
     archive: BLOOD_ARCHIVE,
     uploaded,
     batches: fx.batches().length,
     textureKeys: [...r.textures.keys()].filter((k) => String(k).startsWith('380')),
     frames,
+    lane,
   };
 });
 
@@ -170,6 +199,7 @@ console.log('uploaded keys     ', out.uploaded);
 console.log('renderer tex keys ', out.textureKeys);
 console.log('live batches      ', out.batches);
 for (const f of out.frames) console.log(`  ${f.label.padEnd(38)} -> rgba ${f.px.join(',')}`);
+for (const x of out.lane) console.log(`  LANE ${x.what.padEnd(20)} sprite ${x.sprite.join(',').padEnd(16)} decal ${x.decal.join(',')}`);
 
 check('the pool uploaded a texture for the splash', out.uploaded.length > 0, out.uploaded.join(' '));
 check('the key the pool uploads is the key the billboard pass asks for',
@@ -199,6 +229,17 @@ check('A TORCH LIGHTS THE MARK, as it lights the chunk above it',
   Math.abs(dTorch[0] - torch[0]) <= 2, `decal ${dTorch.join(',')} vs sprite ${torch.join(',')}`);
 check('and at noon the mark takes the SUN, not the ambient alone',
   Math.abs(dNoon[0] - noon[0]) <= 2, `decal ${dNoon.join(',')} vs sprite ${noon.join(',')}`);
+// MAC-BUG W6: and under the LANE the two passes still agree, to the unit,
+// at every state - the rows that were never read before, and where the
+// mark came back at 25 against the sprite's 69 at dusk and 2 against 17
+// in a dark dungeon.
+for (const x of out.lane) {
+  check(`LANE ${x.what}: the mark is lit as the sprite beside it is`,
+    Math.abs(x.decal[0] - x.sprite[0]) <= 2 && Math.abs(x.decal[1] - x.sprite[1]) <= 2 && Math.abs(x.decal[2] - x.sprite[2]) <= 2,
+    `decal ${x.decal.join(',')} vs sprite ${x.sprite.join(',')}`);
+}
+const laneDusk = out.lane.find((x) => x.what === 'dusk');
+check('LANE dusk: the mark is RED, not the near-black the classic program drew under the lane', (laneDusk?.decal[0] ?? 0) > 50, `rgba ${laneDusk?.decal.join(',')}`);
 check('no page errors', errors.length === 0, errors.join(' | '));
 
 await browser.close();

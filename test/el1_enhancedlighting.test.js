@@ -15,6 +15,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
   EL_LANE, EL_MAX_LIGHTS, EL_CLASSIC_MAX_LIGHTS, EL_EXPOSURE, EL_WHITE, EL_LIGHT_GAIN, EL_FLAME_COLOR, EL_SCATTER,
+  EL_DECAL_FS,   // MAC-BUG W6
   EL_MESH_FS, EL_BB_FS, EL_TERRAIN_FS, EL_CHAR_FS, EL_FAR_RING_FS, EL_GLSL,
   enhancedLightingOn, exposureFor, elDecode, elEncode, elDecode3, elDecodeN, elAttenuation, elTonemap, elScatter,
   elScatterDensity, syncLightingLane, lanternColor,
@@ -192,19 +193,26 @@ test('EL1: the five lane shaders declare the 48-light arrays and the lane\'s two
   const r = read('src/render/renderer.js');
   // MAC-BUG W4 (2026-09-20): FIVE now, not four. The DECAL pass grew a
   // point-light term - a blood mark was lit by ambient alone while the
-  // gib from the same blow took the full light - and it is a CLASSIC
-  // program with NO LANE TWIN. That is the honest state and it is
-  // pinned as such below rather than left to be found: under the lane
-  // the other four see forty-eight lights and a decal sees the nearest
-  // sixteen.
+  // gib from the same blow took the full light. W4 left it a classic
+  // program with NO lane twin and pinned that as a limit about the cap.
+  // MAC-BUG W6 (same day, Mac: "super dark coloring instead of red"):
+  // the cap was the small half. Under the lane the renderer DECODES
+  // every colour it uploads, and a classic program handed linear light
+  // wrote an undecoded texel times it with no exposure, tonemap or
+  // encode - a mark two to eight times darker than the flat beside it.
+  // So the decal has its twin now (EL_DECAL_FS), the set builds five,
+  // and the classic program keeps its sixteen.
   assert.equal((r.match(/uniform vec4 uPointLights\[16\];/g) || []).length, 5, 'five classic programs at sixteen - the four world programs and the decal pass');
   assert.equal((r.match(/float att = clamp\(1\.0 - d \/ uPointLights\[i\]\.w, 0\.0, 1\.0\);/g) || []).length, 5, 'the classic falloff, five programs');
-  // ...and the decal CLAMPS to that cap rather than reading off the end
-  // of its own array when the lane hands the renderer forty-eight.
-  const dec = r.slice(r.indexOf('  drawDecals(batch, tex) {'), r.indexOf('\n  }\n', r.indexOf('  drawDecals(batch, tex) {')));
-  assert.match(dec, /const dCount = Math\.min\(this\._pointLights\.length >> 2, CLASSIC_MAX_LIGHTS\);/,
-    'the decal pass cuts to the classic cap - `_pointLights` really does hold 48 under the lane');
+  // ...and the decal cuts to the INSTALLED SET'S cap - sixteen on the
+  // classic program, forty-eight on the lane's - never to a literal,
+  // and never past its own array.
+  const dec = r.slice(r.indexOf('  drawDecals(batch, tex, ranges = null) {'), r.indexOf('\n  }\n', r.indexOf('  drawDecals(batch, tex, ranges = null) {')));
+  assert.match(dec, /const dCount = Math\.min\(this\._pointLights\.length >> 2, this\._decalLights\);/,
+    'the decal pass cuts to the installed decal PROGRAM\u2019s cap - the lane\u2019s forty-eight with the twin, the classic sixteen without one (BLOOD1 AUDIT 3)');
   assert.match(dec, /this\._pointLights\.subarray\(0, dCount \* 4\)/, '...and uploads only that many');
+  assert.match(EL_DECAL_FS, new RegExp(`uniform vec4 uPointLights\\[${EL_MAX_LIGHTS}\\];`), 'the lane\u2019s decal declares the lane\u2019s forty-eight, so the cap above never reads off its end');
+  assert.equal(EL_LANE.decalFs, EL_DECAL_FS, 'and the lane carries it');
   assert.ok(!/uELExposure/.test(r.slice(0, r.indexOf('export class Renderer'))), 'no lane uniform in a classic shader');
   assert.ok(!/import .* from '\.\/enhancedLighting\.js'/.test(r), 'the renderer does not import the lane - a host hands it over, and a classic page never loads its shaders into a program');
   assert.match(r, /const CLASSIC_MAX_LIGHTS = 16;/); assert.ok(!/16 \* 4|16 \* 3|Math\.min\(15,/.test(r), 'no literal cap in the renderer');
@@ -214,24 +222,24 @@ test('EL1: the renderer builds the classic set alone, compiles the lane once on 
   const { calls, canvas } = recordingGl();
   const r = new Renderer(canvas);
   const boot = count(calls, 'compileShader');
-  assert.equal(boot, 12, 'the classic boot: four world programs + water + water surface, a VS and an FS each');
+  assert.equal(boot, 14, 'the classic boot: four world programs + the decal pass (MAC-BUG W6) + water + water surface, a VS and an FS each');
   const classicMesh = r.program, classicBb = r.bbProgram, classicTerrain = r.terrainProgram, classicChar = r.charProgram;
   assert.equal(r.lightingLane, null); assert.equal(r.maxPointLights, 16);
   r.setLightingLane(EL_LANE);
-  assert.equal(count(calls, 'compileShader') - boot, 18, 'the lane: four programs, a VS and an FS each; EL2: and the shadow pass\'s three depth programs; EL7: the rigs\' depth program and the water surface\'s lane program');
+  assert.equal(count(calls, 'compileShader') - boot, 20, 'the lane: five programs (MAC-BUG W6: the decal\'s twin), a VS and an FS each; EL2: and the shadow pass\'s three depth programs; EL7: the rigs\' depth program and the water surface\'s lane program');
   assert.equal(r.lightingLane, EL_LANE); assert.equal(r.maxPointLights, 48);
   assert.notEqual(r.program, classicMesh); assert.notEqual(r.bbProgram, classicBb); assert.notEqual(r.terrainProgram, classicTerrain); assert.notEqual(r.charProgram, classicChar);
   const laneMesh = r.program;
   const lookups = count(calls, 'getUniformLocation');
   r.setLightingLane(EL_LANE);
-  assert.equal(count(calls, 'compileShader') - boot, 18, 'the same lane again compiles nothing');
+  assert.equal(count(calls, 'compileShader') - boot, 20, 'the same lane again compiles nothing');
   assert.equal(count(calls, 'getUniformLocation'), lookups, 'and looks nothing up: the same lane again is a no-op');
   r.setLightingLane(null);
-  assert.equal(count(calls, 'compileShader') - boot, 18, 'back to classic compiles nothing');
+  assert.equal(count(calls, 'compileShader') - boot, 20, 'back to classic compiles nothing');
   assert.equal(r.program, classicMesh); assert.equal(r.bbProgram, classicBb); assert.equal(r.terrainProgram, classicTerrain); assert.equal(r.charProgram, classicChar);
   assert.equal(r.maxPointLights, 16); assert.equal(r.lightingLane, null);
   r.setLightingLane(EL_LANE);
-  assert.equal(count(calls, 'compileShader') - boot, 18, 'the lane again is the kept set');
+  assert.equal(count(calls, 'compileShader') - boot, 20, 'the lane again is the kept set');
   assert.equal(r.program, laneMesh);
   // the cap: 48 lights survive setPointLights on the lane, 16 on classic
   const lights = new Float32Array(60 * 4).map((_, i) => i);
@@ -298,6 +306,37 @@ test('EL1: on the lane every colour goes up decoded and the lane\'s uniforms rid
   assert.ok(near(pc[0], elDecode(0.5), 1e-6));
   r.setLightingLane(null);
   assert.equal(r._pointColorData(1)[0], 0.5, 'classic: as given');
+});
+
+test('MAC-BUG W6: the set compiles the decal’s twin - the classic one at boot, the lane’s on install - and the draw uses whichever is installed', () => {
+  const { calls, canvas } = recordingGl();
+  const r = new Renderer(canvas);
+  const sources = () => calls.filter((c) => c[0] === 'shaderSource').map((c) => c[2]);
+  const classicDecal = sources().filter((src) => /uDecalSun/.test(src));
+  assert.equal(classicDecal.length, 1, 'one decal FS compiled at boot');
+  assert.ok(!/elFinish/.test(classicDecal[0]) && /uPointLights\[16\]/.test(classicDecal[0]), 'the classic one');
+  const bootProgram = r.decalProgram;
+  assert.ok(bootProgram, 'installed with the set, not lazily on the first batch');
+  r.setLightingLane(EL_LANE);
+  assert.ok(sources().includes(EL_DECAL_FS), 'the lane compiles the twin');
+  assert.notEqual(r.decalProgram, bootProgram, 'and the draw now uses it');
+  assert.ok(r._el.decal && 'shadow' in r._el.decal, 'with the lane uniform table the other four have');
+  assert.ok(Array.isArray(r._csLoc.decal), 'and the cloud shadow pair');
+  const laneProgram = r.decalProgram;
+  r.setLightingLane(null);
+  assert.equal(r.decalProgram, bootProgram, 'back to classic is the boot program again');
+  r.setLightingLane(EL_LANE);
+  assert.equal(r.decalProgram, laneProgram, 'and the lane’s is kept across the swap, like the other four');
+  assert.equal(r._decalLights, 48, 'BLOOD1 AUDIT 3: the lane’s decal declares forty-eight, so the draw cuts to forty-eight');
+  // ...and a FOREIGN lane that brings no twin runs the classic program,
+  // whose cap is sixteen - not the lane's forty-eight, which would be an
+  // upload of forty-eight into a vec4[16] and an INVALID_OPERATION
+  const { meshFs, bbFs, terrainFs, charFs, farRingFs, maxLights, decode3, decodeN, scatterDensity, scatter } = EL_LANE;
+  r.setLightingLane({ key: 'foreign-no-twin', meshFs, bbFs, terrainFs, charFs, farRingFs, maxLights, decode3, decodeN, scatterDensity, scatter });
+  assert.equal(r.maxPointLights, 48, 'the lane’s cap for the four it replaces');
+  assert.equal(r._decalLights, 16, 'and the classic sixteen for the decal it did not');
+  assert.ok(!/elFinish/.test(sources().at(-1)) || sources().filter((src) => /uDecalSun/.test(src)).length === 2, 'the classic decal FS, compiled again for that set');
+  r.setLightingLane(null);
 });
 
 test('EL1: the far ring takes the lane at construction - its FS, the decode, the exposure - and is the classic ring without one', () => {

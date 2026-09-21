@@ -45,9 +45,9 @@
 //      colour - which is the sky's colour at the horizon, drawn by a
 //      program this lane does not touch.
 //
-// TWO PROFILES ARE TWO PROGRAMS (precipitation.js's doctrine): the four
-// fragment shaders here REPLACE the renderer's mesh, billboard, terrain
-// and character fragment shaders when the lane is installed
+// TWO PROFILES ARE TWO PROGRAMS (precipitation.js's doctrine): the five
+// fragment shaders here REPLACE the renderer's mesh, billboard, terrain,
+// character and (MAC-BUG W6) decal fragment shaders when the lane is installed
 // (Renderer.setLightingLane), under the SAME uniform names the renderer
 // already uploads plus this lane's own (uELExposure, uELScatter). The
 // classic lane never compiles them; a shader fault is still a boot fault
@@ -491,6 +491,90 @@ void main() {
   outColor = vec4(elFinish(lit, vBBWorld), alpha);
 }`;
 
+/** MAC-BUG W6 (2026-09-20, Mac: "super dark coloring instead of red") -
+ *  THE DECAL FRAGMENT SHADER OF THE LANE: the classic DECAL_FS's every
+ *  term (renderer.js - MAC-BUG W4's flat model, term for term with the
+ *  billboard pass), lit on the lane's pipeline.
+ *
+ *  WHY IT EXISTS. W4 left the decal "a fifth classic program with no
+ *  lane twin", and pinned that as a limit about the LIGHT CAP (sixteen
+ *  lanterns of forty-eight). The cap was the small half. Under the lane
+ *  the renderer DECODES every colour it uploads - the ambient, the sun,
+ *  the moon, the lanterns, the indirect (`_c3`, `_pointColorData`) -
+ *  because the lane's shaders light in linear and encode at the end.
+ *  The classic decal program took those linear values as if they were
+ *  display ones, multiplied an UNDECODED texel by them, and wrote the
+ *  product straight to the canvas: no exposure, no tonemap, no encode.
+ *  A dungeon's 0.12 ambient decodes to 0.013, and 0.013 written raw is
+ *  three units of red. Measured in a real context beside a sprite in
+ *  the same light (tools/bloodProbe.mjs, the LANE rows): dusk 25
+ *  against the sprite's 69, a dark dungeon 2 against 17, noon 128
+ *  against 137. Every mark the port has drawn under its default
+ *  lighting has been darker than the blood it came from.
+ *
+ *  THE MODEL IS THE FLAT'S, as W4 chose it: a mark has no normal in
+ *  its vertex format, so it takes the billboard's attenuation-only
+ *  lantern term, the sun's Lambert-average half, and the indirect on
+ *  the same attenuation - EL_BB_FS above, term for term, so the two
+ *  passes of one blow agree under this lane as they do under the
+ *  classic one. `vColor` is the decal's tint and decodes WITH the
+ *  texel, as EL_CHAR_FS decodes its vertex colour.
+ *
+ *  THE ONE THING A MARK HAS THAT A FLAT DOES NOT is a surface. A flat
+ *  reads its shadows half a unit up from its base so the sprite cannot
+ *  shadow itself; a mark on a CEILING read half a unit UP would read
+ *  inside the rock. So the mark's normal is derived from its own quad
+ *  (the screen-space derivatives of a planar quad are exact), turned
+ *  to face the eye, and the shadow is read half a unit out along IT -
+ *  a floor's mark reads up, a ceiling's down, a wall's into the room. */
+export const EL_DECAL_FS = `#version 300 es
+precision highp float;
+in vec2 vUV; in vec4 vColor; in vec3 vWorld;
+uniform sampler2D uTex;
+uniform vec3 uTint;
+uniform vec3 uDecalSun;
+uniform int uPointCount;
+uniform vec4 uPointLights[${EL_MAX_LIGHTS}];
+uniform vec3 uPointColors[${EL_MAX_LIGHTS}];
+uniform vec4 uIndirect;
+uniform vec3 uIndirectColor;
+uniform vec3 uFogColor;
+uniform int uFogMode;
+uniform float uFogDensity;
+uniform vec2 uFogRange;
+uniform vec3 uCamPos;
+uniform sampler2D uCloudShadowMap;
+uniform vec4 uCloudShadowRect;
+float cloudShadowAt(vec3 wp) {
+  if (uCloudShadowRect.w <= 0.0) return 1.0;
+  vec2 uv = (wp.xz - uCloudShadowRect.xy) * uCloudShadowRect.z;
+  if (uv.x < 0.0 || uv.y < 0.0 || uv.x > 1.0 || uv.y > 1.0) return 1.0;
+  return 1.0 - (1.0 - texture(uCloudShadowMap, uv).r) * uCloudShadowRect.w;
+}
+${EL_GLSL}
+${SHADOW_GLSL}
+${AIR_CONTACT_GLSL}
+${EL_FOG_GLSL}
+${EL_POINT_LIT_GLSL}
+out vec4 outColor;
+void main() {
+  vec4 t = texture(uTex, vUV);
+  // A DEGENERATE SLOT still rasterises nothing, but a live one whose
+  // texel is fully clear must not draw a black square either.
+  if (t.a < 0.01) discard;
+  vec3 albedo = elDecode(t.rgb) * elDecode(vColor.rgb);   // BLOOD1 AUDIT 3: each decoded on its own - the curve is not linear, so a tinted mark would have been the wrong colour on this lane alone
+  // the mark's own surface, from its own quad, facing the eye - and a
+  // quad seen edge-on has no derivative to speak of, so it takes up
+  // rather than NaN (BLOOD1 AUDIT 3)
+  vec3 c = cross(dFdx(vWorld), dFdy(vWorld));
+  vec3 n = dot(c, c) > 1e-12 ? normalize(c) : vec3(0.0, 1.0, 0.0);
+  if (dot(n, uCamPos - vWorld) < 0.0) n = -n;
+  vec3 base = vWorld + n * 0.5;   // the flat's half unit, along the surface rather than up
+  vec3 sunLit = dot(uDecalSun, uDecalSun) > 0.0 ? uDecalSun * cloudShadowAt(vWorld) * sunShadowSoftAt(base, n) : vec3(0.0);
+  vec3 lit = albedo * (uTint + sunLit + elPointFlat(vWorld, base) + elIndirectFlat(vWorld));
+  outColor = vec4(elFinish(lit, vWorld), t.a * vColor.a);
+}`;
+
 /** The terrain fragment shader of the lane - the classic TERRAIN_FS's
  *  tilemap read and rotation table, lit on the lane's pipeline. */
 export const EL_TERRAIN_FS = `#version 300 es
@@ -700,8 +784,8 @@ void main() {
   outColor = vec4(elEncode(col) + (bayer4(gl_FragCoord.xy) - ${BAYER_MEAN}) / 255.0, 1.0);   // EL6: the ring's sky gradient, dithered at the byte
 }`;
 
-/** THE LANE the renderer installs (Renderer.setLightingLane): the four
- *  fragment shaders, the light cap, the colour decode, and the lane's
+/** THE LANE the renderer installs (Renderer.setLightingLane): the five
+ *  fragment shaders (MAC-BUG W6: the decal's), the light cap, the colour decode, and the lane's
  *  own uniforms' values. One frozen object, so a renderer can tell "the
  *  same lane again" by identity and keep its compiled programs. */
 export const EL_LANE = Object.freeze({
@@ -710,6 +794,7 @@ export const EL_LANE = Object.freeze({
   bbFs: EL_BB_FS,
   terrainFs: EL_TERRAIN_FS,
   charFs: EL_CHAR_FS,
+  decalFs: EL_DECAL_FS,   // MAC-BUG W6: the blood marks' twin - without it a lane lights its marks on the classic program, which is the bug
   farRingFs: EL_FAR_RING_FS,
   shadows: true,   // EL2: the renderer builds its ShadowPass for this lane
   air: true,       // EL3: and its AirPass, behind `?air=off` (syncLightingLane reads the door)

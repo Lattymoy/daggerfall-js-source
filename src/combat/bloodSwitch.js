@@ -14,7 +14,8 @@ export const BLOOD_PREF = 'blood-marks';
 /** ON by default: the splash has always played, and the mark is what a
  *  player expects to still be there. `?blood=off` and the row both turn
  *  it off. */
-export const bloodMarksOn = () => getPref(BLOOD_PREF) !== false;
+export const bloodMarksOn = (search = globalThis.location?.search ?? '') =>
+  getPref(BLOOD_PREF) !== false && new URLSearchParams(search).get('blood') !== 'off';   // BLOOD1 AUDIT 3: the door the comment above promised and nothing had built - windAudio.js's own shape
 
 /** HOW MANY MARKS EXIST BEFORE YOURS IS REUSED - a count, not a
  *  lifetime (Blood-Arc.md's reading of the reference makes the same
@@ -55,7 +56,7 @@ export const bloodOverkillOn = () => getPref(BLOOD_OVERKILL_PREF) !== false;
  *  cannot each spell it differently (the FOUR HOSTS RULE's own
  *  hazard). */
 export const bloodDecalDeps = Object.freeze({
-  enabled: bloodMarksOn,
+  enabled: () => bloodMarksOn(),
   capacity: bloodCapacity,
   density: bloodDensity,
   overkill: bloodOverkillOn,

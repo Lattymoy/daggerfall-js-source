@@ -1534,7 +1534,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // owned, and destroy() hands it back (the _prevPassiveHost idiom this
   // file already uses for its other process-global seams). A bare null
   // would not do: on ?world and ?exterior the previous holder is the
-  // host's own townTalk sink (world.js:8083 / exterior.js:3319), set
+  // host's own townTalk sink (world.js:8104 / exterior.js:3319), set
   // once at boot and never again, so nulling on the way out of the
   // first dungeon would silently un-file every mid-screen label above
   // ground for the rest of the session - MC-1's own bug, re-opened.
@@ -3099,7 +3099,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
               // AUDIT 39 (#64) / THE FOUR HOSTS RULE - SHIPPED (wave D):
               // this host was the FOURTH BODY of the player-arrow law
               // and is now the fourth CALLER. combat/arrowFlight.js's
-              // playerArrowHitFoe is the one copy world.js:11232,
+              // playerArrowHitFoe is the one copy world.js:11253,
               // exterior.js:4761 and worldModes.js:6346 already ran;
               // the flag said the divergence would bite and it already
               // had. This copy splashed at the ARROW TIP
@@ -4836,7 +4836,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         if (dmg > 0) {
           audio.play3d(SOUND.FallDamage, [f.ai.feet[0], f.ai.feet[1], f.ai.feet[2]], 1, { maxDistance: 16 });
           // AUDIT 62 F20: the TRANSFORM (feet + centreOffset), per the note above.
-          hitEffects?.showBloodSplash(0, f.ai._centre(), null, bloodHit(dmg, f.entity));   // BLOOD1b: a fall bleeds by what it cost, like any other blow
+          hitEffects?.showBloodSplash(0, f.ai._centre(), null, { ...bloodHit(dmg, f.entity), markIndex: ENEMY_BASICS[f.mobileType]?.bloodIndex ?? 0 });   // BLOOD1b: a fall bleeds by what it cost, like any other blow   // BLOOD1 AUDIT 3: the SPLASH is record 0 for everyone (EnemyMotor.cs:1403-1407's own literal), the MARK is the foe's own - a skeleton's fall stains nothing
           damageFoe(f, dmg, null, null, { fromPlayer: false });   // F041: a fall is nobody's attack
         }
       }
@@ -5134,8 +5134,14 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     droppedLoot.tickFlats(dt);   // FA1 slice 3
     const _dropBatches = droppedLoot.batches();
     const _spellBatches = magic.batches();   // M3: player spell missiles
+    // BLOOD1 AUDIT 3: the ring is NOT drawn here. It was - inside this
+    // gate - and both dungeon hosts already draw the context's pool by
+    // its handle beside the level's own flats (worldModes.js's dungeon
+    // arm, dungeon.js), so the world-hosted dungeon drew every mark and
+    // every chunk TWICE a frame, and the standalone host drew them only
+    // while a foe, a drop or a spell was alive: clear the level and the
+    // floor went clean. The host owns the pass, as the other three do.
     if (_mobileBatches.length || _dropBatches.length || _spellBatches.length) {
-      bloodMarks.draw(new Float32Array([-view[0], -view[4], -view[8]]), UP_Y);   // BLOOD1a: under the billboards, as the exterior hosts have it   // BLOOD1b: and the chunks over them, on the basis the draw below uses
       renderer.drawBillboards([..._mobileBatches, ..._dropBatches, ..._spellBatches],
         new Float32Array([-view[0], -view[4], -view[8]]), UP_Y);
     }
@@ -6555,6 +6561,25 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // billboardBatches is the static layout art AND every batch a
       // hand-off pool pushed into it (hitEffects' splashes since HE1,
       // :2418) - which is why nothing below may end those pools again.
+      // HARD1 (the generative lifetime gate's first catch) / BLOOD1
+      // AUDIT 3: the blood splashes own a billboard batch each while
+      // they animate (hitEffects.js mints one per spawn and frees it on
+      // retire), and THIS POOL HANDS EVERY BATCH AWAY AS IT IS BORN -
+      // `onSpawn` pushes it into billboardBatches and `onRetire` splices
+      // it back out (:2616-2617). HARD1's first pass put a clear() BELOW
+      // the loop that frees that list and it was a double free; the
+      // note that replaced it said "nothing to do here", and that left
+      // the one hole this pool has: a splash whose archive is still
+      // WARMING when the dungeon goes (the first blood of a session,
+      // the player dead or quickloading or recalled before TEXTURE.380
+      // resolves) had nothing to tell its continuation the room was
+      // gone - `entry.dead` is set by retire() alone - so it minted a
+      // batch into the orphaned list and nothing ever freed it. The
+      // clear goes ABOVE the loop: retire() splices each live batch out
+      // of the list before it frees it, so every batch is freed exactly
+      // once, by whichever of the two reaches it first, and every
+      // warming entry is dead before the room is.
+      hitEffects.clear();
       for (const b of billboardBatches) renderer.destroyBatch(b);
       if (staticBatch) { renderer.destroyMesh(staticBatch); staticBatch = null; }   // PERF5
       // AUDIT 17e F29 / EVERY ALLOCATION HAS AN OWNER: foes and
@@ -6580,23 +6605,6 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       camps.destroyAll();   // SURV3: a fire's batch is this context's too
       droppedTorches.destroyAll();
       weaponRig.dispose?.();
-      // HARD1 (the generative lifetime gate's first catch): the blood
-      // splashes own a billboard batch each while they animate
-      // (hitEffects.js mints one per spawn and frees it on retire) -
-      // and THIS POOL HANDS EVERY BATCH AWAY AS IT IS BORN. It is built
-      // with `onSpawn: (b) => billboardBatches.push(b)` (:2418), so the
-      // owner is that list, and the list is freed above. Nothing to do
-      // here, and doing something is worse than nothing: HARD1's first
-      // pass added `hitEffects.clear()` on this line and that was a
-      // DOUBLE FREE of every live splash - :6093 frees the batch, then
-      // retire() frees it again. Benign in WebGL (deleting a deleted
-      // object is a no-op) and wrong all the same.
-      //
-      // The interior host's `interiorHitEffects.clear()` is NOT the same
-      // line and was never a precedent for one: that pool is built with
-      // no `onSpawn` (worldModes.js:581), so it owns its batches and
-      // clear() is the only thing that frees them - and it runs on a
-      // between-buildings RESET, not a teardown.
       // AUDIT 64 F41: the scene ambience leaves with the scene too -
       // it holds the dungeon loop handles AND a row in the module's
       // live-instance registry (the port's stand-in for DFU's static
