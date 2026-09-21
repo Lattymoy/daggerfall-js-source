@@ -113,6 +113,14 @@ jobs:
         run: npm version "${{ steps.reltag.outputs.version }}" --no-git-tag-version --allow-same-version
         working-directory: app
 
+      # DA7: `--publish never` uploads nothing (softprops attaches the
+      # files below), but with a publish PROVIDER in app/package.json
+      # electron-builder still writes the updater's metadata - latest.yml
+      # / latest-linux.yml and the blockmaps beside the installers, and
+      # app-update.yml inside them - which is what electron-updater in
+      # the shell reads back from the release at that tag. The
+      # metadata rides the release with the installers, or the updater
+      # finds nothing and every copy falls back to the notice.
       - name: Build installers
         run: npx electron-builder --publish never
         working-directory: app
@@ -126,6 +134,8 @@ jobs:
             app/release/*.AppImage
             app/release/*.exe
             app/release/*.dmg
+            app/release/latest*.yml
+            app/release/*.blockmap
           generate_release_notes: true
 
       - name: Keep installers as run artifacts (manual runs)
@@ -137,4 +147,6 @@ jobs:
             app/release/*.AppImage
             app/release/*.exe
             app/release/*.dmg
+            app/release/latest*.yml
+            app/release/*.blockmap
           if-no-files-found: error

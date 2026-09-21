@@ -20,6 +20,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { createHitEffects, bloodCentre, SPARKLES_RECORD, BLOOD_ARCHIVE } from '../src/scenes/hitEffects.js';
+import { GLOBAL_SCALE } from '../src/world/meshReader.js';   // FIELD-GUN20: the rig's 16 px sprite, in units
 import { castEnemySpell } from '../src/characters/enemyCasting.js';
 
 const rd = (f) => readFileSync(new URL(`../${f}`, import.meta.url), 'utf8');
@@ -94,7 +95,7 @@ test('audit24 wave44: the pool shows them, and they are a one-shot like the spla
   assert.equal(r.built.length, 1);
   assert.equal(r.built[0].archive, 380);
   assert.equal(r.built[0].record, SPARKLES_RECORD);
-  assert.deepEqual(r.built[0].centres[0], [1, 2, 3]);
+  assert.deepEqual(r.built[0].centres[0], [1, 2 - (16 * GLOBAL_SCALE) / 2, 3], 'FIELD-GUN20: centred on the position - the base half a height under it');
   // it ends, like every other one-shot in the pool
   for (let i = 0; i < 6; i++) fx.tick(1 / 10);
   assert.equal(fx.batches().length, 0, 'a splash that never ends is a leak');

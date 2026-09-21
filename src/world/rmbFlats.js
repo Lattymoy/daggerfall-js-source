@@ -108,6 +108,28 @@ export function billboardSize(t, record) {
   return t?.archive != null && hasTextureReplacement(t.archive, record, 0) ? applyBillboardXml(t.archive, record, size) : size;
 }
 
+/**
+ * FIELD-GUN20 (2026-09-21, Mac: "The orb projectile that fires is still
+ * not aligned with coming out of the barrel"): THE BASE OF A CENTRED
+ * BILLBOARD. The renderer bottom-anchors EVERY batch - its centre sits
+ * half a height above the placement base - because that is
+ * DaggerfallBillboard.AlignToBase (:410-416, `offset.y = Size.y / 2`)
+ * baked in, and every flat a block places calls it. A MISSILE does not:
+ * DaggerfallMissile.cs:601-602 creates the billboard at
+ * `localPosition = Vector3.zero` on the missile's own transform, and
+ * EnemyBlood.cs:32-35 sets the splash's `transform.position` to the hit
+ * point - both are CENTRED on the position they are given. So a lane
+ * that places one of those by its position hands the renderer this: the
+ * position with half the billboard's height taken off, and the sprite's
+ * centre lands where DFU's does.
+ * @param {number[]} pos - where the sprite's CENTRE belongs
+ * @param {{w:number,h:number}} size - billboardSize's answer for it
+ * @returns {number[]} the placement base for createBillboardBatch
+ */
+export function centredBase(pos, size) {
+  return [pos[0], pos[1] - (size?.h ?? 0) / 2, pos[2]];
+}
+
 export function scaledBillboardSize(size, scale) {
   const xChange = Math.trunc(size.width * (scale.width / SCALE_DIVISOR));
   const yChange = Math.trunc(size.height * (scale.height / SCALE_DIVISOR));

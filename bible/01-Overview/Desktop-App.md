@@ -192,6 +192,80 @@ builds ever exist, electron-updater can replace the notice on
 Windows/Linux; the notice composes with that rather than fighting
 it.
 
+## Updating in place (DA7, 2026-09-21)
+
+Mac: *"With the auto.install releases. Is there an easy way to make it
+where players dont have to manually install each release?"* - *"#1 is
+best?"* - *"Do it."*
+
+REL3 made every merge a release, and DA6's notice asked the player to
+download and install each one - several a day. Where the installer can
+replace itself, it now does: `electron-updater` in the shell reads the
+release's `latest.yml`, downloads the new installer in the background
+(a block delta where one exists) and installs it when the app quits.
+The player does nothing and is on the latest build within one restart.
+
+**Three files, one feature, none importing another** - which is why
+each is pinned. The SHELL (`app/main.cjs`): the updater is loaded
+lazily, `autoDownload` and `autoInstallOnAppQuit` on, never a
+prerelease or a downgrade, its launch errors swallowed; the launch
+forks on the transport INSIDE DA6's two gates (the File menu checkbox
+and `DAGGER_NO_UPDATE_CHECK`), so the probe still never reaches GitHub,
+and the manual menu item reports downloading, up-to-date and
+unreachable out loud on either transport. The BUILD
+(`app/package.json`): a `publish` PROVIDER naming the repo - without
+one electron-builder writes no update metadata at all, whatever
+`--publish` says (read in `app-builder-lib`'s PublishManager: `--publish
+never` only gates the UPLOAD; `latest.yml`, `latest-linux.yml`, the
+blockmaps and the installers' own `app-update.yml` come from the
+config's provider) - and `electron-updater` a RUNTIME dependency,
+because electron-builder packs `dependencies` and never
+`devDependencies`. The WORKFLOW: the metadata rides the release beside
+the installers (`latest*.yml`, `*.blockmap`), and the run-artifact door
+keeps it too.
+
+**Which copies.** `app/lib/autoUpdate.cjs` is the one table, pure:
+`updater` for an installed copy on any platform but macOS that is not
+the portable exe - today the NSIS install and the AppImage, the two
+electron-builder already cuts; `notice` for macOS (an unsigned app
+cannot swap itself there, and no signing identity exists), the Windows
+portable exe (a bare file that unpacks into `%TEMP%`; electron-builder
+writes no `app-update.yml` into it, and its launcher marks its process
+with `PORTABLE_EXECUTABLE_DIR`), and an unpackaged `electron .`. DA6
+stands under it as the fallback for those three, unchanged.
+
+**How the updater finds a release.** The GitHub provider asks
+`releases/latest` for its `tag_name` and downloads `latest.yml` under
+that tag - so REL3's `app-v0.1.NNNN` tags work as they are (the
+provider's version compare is on the yml's own `version`, not the
+tag). An unsigned Windows installer skips the updater's signature
+check (no `publisherName` in the metadata, `NsisUpdater.verifySignature`
+returns before it verifies), so unsigned builds update unsigned builds.
+`allowPrerelease` is off, so a hand-cut prerelease never reaches a
+player's copy.
+
+**What changed in the record's own words.** DA6's "nothing here should
+apply code silently" was the reason for the notice; DA7 reverses it on
+Mac's word, for the two transports where the swap is the installer's
+own and the player's files never move. DA6's other reason - macOS -
+stands, and macOS keeps the notice.
+
+**Pinned** in `test/autoupdate.test.js` (4): the transport table by
+value and DERIVED (every packaged, non-portable, non-mac platform is
+the updater's); the shell's settings, the launch fork inside the gate,
+the loud path's three answers; the provider, the dependency's kind, the
+workflow's two attach steps; and DA6 standing (the silent notice, the
+browser Download, one call, the probe's opt-out). Campaign
+`tools/mutants/da7.json`: 9 - each transport misrouted, the download
+that never installs, the launch that always notices, the launch that
+escapes the gate, the release without its metadata, no provider, the
+dependency moved to dev - all dead.
+
+**Not seen on a machine.** No release has yet been cut with this in it;
+the first one after the merge carries the metadata, and copies
+installed from IT onward update in place. A copy installed before it
+has no updater and takes the notice one last time.
+
 ## What deliberately did NOT move
 
 Music packs, texture packs and Morrowind data still live in IndexedDB

@@ -113,7 +113,7 @@ test('audit26 F033: the flash is record 1 of the MISSILE\'s archive at 15fps, wi
   assert.match(he, /spawn\(IMPACT_RECORD, pos, null,/);
   // the entry carries archive/fps so a recenter can REBUILD the batch
   assert.match(he, /const entry = \{ batch: null, anim: null, dead: false, record, pos: at, at: \[\.\.\.at\], size: null, archive, fps, scale, tracked \};/);
-  assert.match(he, /e\.batch = renderer\.createBillboardBatch\(e\.archive, e\.record, e\.size, \[e\.pos\]\);/);
+  assert.match(he, /e\.batch = renderer\.createBillboardBatch\(e\.archive, e\.record, e\.size, \[centredBase\(e\.pos, e\.size\)\]\);/);   // FIELD-GUN20: rebuilt where it was built - CENTRED on its position, the base half a height under it
   // ...and the ANIM is built on the entry's archive too. That is
   // unobservable today - flatFps overrides only ANIMALS (201) and
   // LIGHTS (210), so the blood archive and the five missile archives
