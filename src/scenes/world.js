@@ -169,6 +169,7 @@ import { createCityGuards } from './cityGuards.js';   // G1
 import { createArrestFlow } from './arrestFlow.js';
 import { clearCrimeOnLocationExit, addGold, goldAmount, deductGold, totalGoldAmount, deductGoldPieces } from '../systems/court.js';   // AUDIT 17e F6   // G2   // F-slice: travel gold; U41: GetGoldAmount + the pieces half of DeductFastTravelGold
 import { makeInView } from '../player/cameraView.js';   // AUDIT 17e F24
+import { worldHoverFrame, destroyWorldPlaque } from '../ui/worldPlaque.js';   // WORLD-HOVER: the one seam each host calls
 import { mwViewFirstPerson, mwViewFrame, mwViewWheel, mwViewDrawBody, mwViewFootstep, mwViewLoadPose, mwViewNewGame, mwViewRebase, mwViewAttachWagon, mwViewDrawWagon, mwViewWagonTargets, mwViewWagonActivate } from '../player/mwView.js';   // MW-D25: the Morrowind camera; AUDIT-EOTB2: the sprite's stride and the load's POV
 import { mwCamera, PITCH_LIMIT } from '../player/mwCamera.js';   // MW-D30: persistence + the reference pitch clamp
 import { pickActivatableHit, pickQuestFoe, pickFoe } from '../player/activate.js';   // G3: corpse loot; QG1: the foe-click door; TI1: the lock-on pick
@@ -1055,6 +1056,20 @@ export async function bootWorld(canvas, renderer, params, status) {
   // against the live translation; each carries what the transition
   // needs (its block + building record + sibling exterior doors).
   const buildingDoors = []; // {door, pixelKey, dfBlock, recordIndex, climateBase, season (A1: INTERIOR_SEASON)}
+  // WORLD-HOVER: WHEN THE DOOR TARGET LIST STOPS BEING TRUE.
+  //
+  // Measured rather than guessed: ASSEMBLING this list is 95-97% of a
+  // hover's cost in this host - ~200 us and ~4,500 allocations a frame
+  // at 300 doors, because `shiftedDoor` below spreads and slices per
+  // door - while the ray that reads it is ~3 us. Per-press that never
+  // mattered; per-FRAME it is the PERF-TOWN1 shape exactly.
+  //
+  // So the list is rebuilt when it CHANGES rather than when it is
+  // asked, and this counter is what "changes" means: a pixel streaming
+  // in, a pixel streaming out, and the floating origin recentring -
+  // three discrete events, no polling. Everything else in the world
+  // can move without touching a static door.
+  let doorGeneration = 0;
   const TERRAIN_INDICES = buildTerrainIndices();
   // EV4: the far ring's strided twin - 33x33 plus its crack skirt, a
   // 16x triangle cut per pixel. Enhanced only: the 1:1 lane keeps full
@@ -1370,6 +1385,7 @@ export async function bootWorld(canvas, renderer, params, status) {
             // hardcoded 0 made it unreachable from this host.
             const staticDoors = getStaticDoors(cpu, b.dfBlock.index, placed.recordIndex, local);
             for (const door of staticDoors) {
+              doorGeneration += 1;   // WORLD-HOVER: a pixel's doors arriving
               buildingDoors.push({
                 door, pixelKey: key, dfBlock: b.dfBlock,
                 // A1: the season a door carries INSIDE is the
@@ -1845,7 +1861,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // across every rebuild (duplicate E-targets + unbounded growth
     // on long streams; the directory's dedup had been masking it).
     for (let i = buildingDoors.length - 1; i >= 0; i--) {
-      if (buildingDoors[i].pixelKey === key) buildingDoors.splice(i, 1);
+      if (buildingDoors[i].pixelKey === key) { buildingDoors.splice(i, 1); doorGeneration += 1; }   // WORLD-HOVER: ...and leaving
     }
     // P2-slice (items-2): a loose pile dies WITH its pixel - the
     // reference's mid-session collection sweep (CollectLooseObjects);
@@ -2848,6 +2864,23 @@ export async function bootWorld(canvas, renderer, params, status) {
   });
   /** SURV3: the water sources under the ray - every built pixel's, in scene coordinates, and the list the pick indexes. */
   let _springs = [];
+  // WORLD-HOVER: the port's OWN world objects, each named by the module
+  // that STANDS it - World Tooltips' extension API (vendor .cs:225-257)
+  // rather than its ladder, because Daggerfall has no camps, no dropped
+  // torches and no cart, so the mod has no word for any of them. The
+  // two corpse pools are here for a different reason: their bodies are
+  // PX21c's itemised rows, which predate the mod and are not gated on
+  // its switch.
+  //
+  // Insertion order is priority, and it is the ACTIVATION ladder's own
+  // order, so the plaque reads a tie the way the press resolves one.
+  const _hoverNamers = [
+    (key) => camps.hoverName?.(key) ?? null,
+    (key) => droppedTorches.hoverName?.(key) ?? null,
+    (key) => exteriorFoes.hoverName?.(key) ?? null,
+    (key) => cityGuards.hoverName?.(key) ?? null,
+  ];
+
   const springTargets = () => {
     _springs = [];
     if (!survivalOn()) return [];
@@ -3412,7 +3445,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // and dungeonContext.js:2349 mounts the same one, gated on
   // `opts.enchantCtx !== false` because setDefaultEnchantCtx is a
   // session singleton and EC1 already routes THIS host's mount into
-  // that context through modes.dungeonCtx - so worldModes.js:4891
+  // that context through modes.dungeonCtx - so worldModes.js:5188
   // passes false beside its `chargen: false` and only the standalone
   // ?dungeon route mounts its own. S40 filled isResting
   // in - the sentence that stood here said it "stays absent above
@@ -3497,11 +3530,11 @@ export async function bootWorld(canvas, renderer, params, status) {
     // through the one that owns the billboard - `exteriorFoePool` is
     // the watch AND the encounter foes, and this arm reached the
     // encounter pool's remover for both. That was not a leak: removeFoe
-    // (exteriorFoes.js:371-376) never looks the record up in `foes`, and
+    // (exteriorFoes.js:375-380) never looks the record up in `foes`, and
     // both pools share this host's one renderer, so a struck WATCHMAN
-    // got exactly what removeGuard (cityGuards.js:1286-1288) gives it -
+    // got exactly what removeGuard (cityGuards.js:1298-1312) gives it -
     // batch freed, `dead = true`, no corpse, skipped by the next AI pass
-    // (cityGuards.js:820) and spliced out at the end of it (:1009).
+    // (cityGuards.js:822) and spliced out at the end of it (:1011).
     // Routing by POOL MEMBERSHIP is an OWNERSHIP fix: each pool owns the
     // teardown of its own records so the two can diverge safely, and
     // removeFoe's `questBehaviour?.notifyDestroyed()` (exteriorFoes.js
@@ -7120,7 +7153,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // exterior -> the townTalk overlay, interior OR dungeon -> the mode
   // machine's slot. U43-ii shipped the dungeon half: showQuestBox
   // offers the window to `modes.showQuestOverlay` below, and
-  // worldModes answers it in BOTH modes (worldModes.js:7808-7871 -
+  // worldModes answers it in BOTH modes (worldModes.js:8105-8168 -
   // dungeon routes to dungeonCtx.showOverlay), so a dungeon popup is
   // shown rather than logged loudly and dropped.
   // AUDIT 24 (wave 21): DaggerfallMessageBox.Show() is a
@@ -9301,6 +9334,10 @@ export async function bootWorld(canvas, renderer, params, status) {
       ...e, door: shiftedDoor(e),
       dfLocation: locationIndex.get(e.pixelKey), group: e.pixelKey,
     })),
+    // WORLD-HOVER: the token that says whether the list above is still
+    // the one it was. See `doorGeneration`'s own note for why this
+    // host has one and the fixed city does not.
+    doorGeneration: () => doorGeneration,
     // IS1: the save composer's doors for the interior mode's pause and
     // F9/F11 (GameManager.cs:570-586 dispatches the quick keys
     // scene-free). THE FOUR HOSTS: world.js hands its ONE composer in
@@ -10447,6 +10484,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       sky.offsetOrigin(r.offset);   // VC4: the clouds and their shadow keep their place over the land
       // AUDIT 17e F23: everything else holding a WORLD position must
       // follow the origin too, or it strands 819.2 units behind.
+      doorGeneration += 1;   // WORLD-HOVER: the floating origin moved, so every door's WORLD matrix did
       cityGuards.offsetAll(r.offset);
       exteriorFoes.offsetAll(r.offset);   // X-slice
       labGrassField = null;   // AUDIT 49 F2 / GR5: the field is baked in world coordinates - a new world starts empty
@@ -11367,11 +11405,11 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
         // AFTER the damage fork closes (:615), so a shaft that lost the
         // roll still enrages what it hit and wakes the area. ROAD-G G1
         // (review): the WATCH carries the pair now
-        // (cityGuards.js:582-587), so this seam ROUTES by pool exactly
+        // (cityGuards.js:586-591), so this seam ROUTES by pool exactly
         // as `dealDamage` above it does, instead of excluding the
         // guards - a zero-damage shaft into a pacified watchman has to
         // reach the same door the zero-damage SWING already reaches
-        // (cityGuards.js:1074). DFU makes no pool distinction:
+        // (cityGuards.js:1078). DFU makes no pool distinction:
         // AssignBowDamageToTarget's player arm (DaggerfallMissile.cs
         // :660-688) calls WeaponDamage, so :630 runs for the shaft as
         // for the swing.
@@ -11506,6 +11544,33 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
         mountRig.frame(dt);
       }
       drawPeerNames(proj, view, mwv.eye);   // ONLINE1: the names over the heads
+      // WORLD-HOVER: the plaque, where this host already draws its HUD.
+      // It races EXACTLY what the press races - the same six live picks
+      // against the same door/person/board set, settled by the same
+      // `raceWinner` - so it can never name what the button ignores.
+      // The port's own world objects name themselves, each from the
+      // module that STANDS the target, through World Tooltips' own
+      // extension API. `gamePaused()` is this arm's `cursorActive`.
+      {
+        const _hd = [Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), Math.cos(cam.yaw) * Math.cos(cam.pitch)];
+        worldHoverFrame({
+          eye: cam.pos,
+          dir: _hd,
+          collider,
+          canvas,
+          cursorActive: gamePaused(),
+          pick: () => modes.exteriorHoverPick(cam.pos, _hd, {
+            corpse: pickActivatableHit(cam.pos, _hd, [...cityGuards.lootTargets(), ...exteriorFoes.lootTargets()], collider),
+            pile: pickActivatableHit(cam.pos, _hd, droppedLoot.lootTargets(), collider),
+            torch: pickActivatableHit(cam.pos, _hd, droppedTorches.targets(), collider),
+            wagon: pickActivatableHit(cam.pos, _hd, mwViewWagonTargets(RAY_DISTANCE), collider),
+            camp: pickActivatableHit(cam.pos, _hd, camps.targets(), collider),
+            water: pickActivatableHit(cam.pos, _hd, springTargets(), collider),
+          }),
+          name: (key) => modes.exteriorHoverName(key, { eye: cam.pos, dir: _hd, names: _hoverNamers }),
+          contents: (key) => (typeof key === 'string' && key.startsWith('droppedLoot:') ? (droppedLoot.contents?.(key) ?? null) : null),
+        });
+      }
       drawHud(renderer, canvas, hudArt, playerEntity,
         ((Math.atan2(_hfw[0], _hfw[1]) / (Math.PI * 2)) % 1 + 1) % 1, dt,
         { font: townTalk.font, cursorActive: gamePaused(),

@@ -85,7 +85,9 @@ import { enemyControllerHeight, idleSpriteHeight } from '../characters/enemyAnch
 import { tallySkill, SKILLS } from '../systems/skills.js';
 import { WEAPON_REACH } from '../combat/playerWeapon.js';
 import { rayPersonDistance } from './townTalk.js';
-import { mintCorpseMarker, playBodyFall, playRareDrop, corpseLootTargets, openCorpseLoot, sayEnemyDied, raiseEnemyDeath } from './corpseMarker.js';
+import { mintCorpseMarker, playBodyFall, playRareDrop, corpseLootTargets, corpseEntryFor, openCorpseLoot, sayEnemyDied, raiseEnemyDeath } from './corpseMarker.js';
+import { corpseName } from '../systems/worldTooltips.js';   // WORLD-HOVER: "<who> (dead)", the mod's own word (.cs:525)
+import { enemyDisplayName } from '../characters/enemyBasics.js';   // GetLocalizedEnemyName, the index law in one place
 import { bloodCentre } from './hitEffects.js';   // AUDIT 24 (wave 39): EnemyBlood.ShowBloodSplash
 import { bloodHit, LETHAL_HIT } from '../combat/bloodDecals.js';   // BLOOD1b: the blow, in the shape the mark's ladder reads
 import { EnemySoundSource, acuteHearingMultiplier } from '../characters/enemySounds.js';   // AUDIT 24 (wave 41): EnemySounds.cs, one home
@@ -149,7 +151,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
   // with no Y test. The default keeps the two street pools as they were.
   playerInside = false,
   // ROAD-G G1: GameManager.MakeEnemiesHostile over the HOST's whole
-  // area, the encounter pool's dep to the line (exteriorFoes.js:113).
+  // area, the encounter pool's dep to the line (exteriorFoes.js:117).
   // DaggerfallEntityBehaviour.cs:255-258 fires it when a NON-hostile
   // enemy is struck by the player, and Knight_CityWatch is an
   // EnemyClass - one of the two EntityTypes that walk (:250). This
@@ -578,7 +580,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
    *  which arrowFlight.js calls unconditionally (arrowFlight.js:306)
    *  because `dealDamage` is inside its own `dmg > 0` fork - so the
    *  door is PUBLIC (the returned surface below), exactly as the
-   *  encounter pool's is (exteriorFoes.js:1798). */
+   *  encounter pool's is (exteriorFoes.js:1811). */
   function handleAttackFromPlayer(g, playerFeet = null) {
     if (!g?.ai) return;
     if (!g.ai.isHostile) makeAreaHostile?.();
@@ -1157,6 +1159,16 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
       idOf: (g) => g.id,   // AUDIT 39: stable across the walk-away prune, where an index is not
     });
   }
+  /** WORLD-HOVER: as the encounter pool's - one namer beside the one
+   *  producer, so the watch's bodies and the encounter pool's can never
+   *  read differently. */
+  const hoverName = (key) => {
+    const e = corpseEntryFor(guards, key, 'guardCorpse', {
+      isCorpse: (g) => !!g.corpse && !!g.entity,
+      idOf: (g) => g.id,
+    });
+    return e ? { title: corpseName(enemyDisplayName(e.mobileType)) } : null;   // .cs:525
+  };
   // MAC-E: and the general arm is the WINDOW now (PlayerActivate.cs:957),
   // not a bulk transfer - `openWindow` is the host's own inventory door.
   function takeLoot(key, say2 = () => {}, openWindow = null) {
@@ -1288,7 +1300,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
     releaseGuardBatch(g);
     g.dead = true;   // no `corpse` - a removed guard is destroyed, not killed
   }
-  return { guards, spawnCityGuards, makeNpcGuardsIntoEnemies, anyWatchStanding, update, offsetAll, collectPixel, clearLive, resolvePlayerHit, resolveCivilianHit, activeCount, lootTargets, takeLoot, snapshotWorld, restoreWorld, removeGuard, handleAttackFromPlayer,
+  return { guards, spawnCityGuards, makeNpcGuardsIntoEnemies, anyWatchStanding, update, offsetAll, collectPixel, clearLive, resolvePlayerHit, resolveCivilianHit, activeCount, lootTargets, hoverName, takeLoot, snapshotWorld, restoreWorld, removeGuard, handleAttackFromPlayer,
     // M2 (spellcasting above ground): the player's spell damage rides
     // THE SAME door the melee swing uses - corpse, Murder on the kill,
     // hostility - so a fireball is not a free crime channel.

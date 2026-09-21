@@ -51,9 +51,10 @@ test('F016: the static NPC name bank is the REGION\'s, and the race path is gone
   // a person BEFORE the click, so it must read the same bank or the
   // hover and the click would call one person two things.
   const wm = src('scenes/worldModes.js');
-  assert.equal((wm.match(/nameBank: currentNameBank\(\)/g) ?? []).length, 5, 'every static-NPC name site');
-  // (WORLD-HOVER's fifth is the INTERIOR plaque's - the dungeon's is
-  // the fourth. Both hover arms read the same bank as their click.)
+  assert.equal((wm.match(/nameBank: currentNameBank\(\)/g) ?? []).length, 6, 'every static-NPC name site');
+  // (WORLD-HOVER added three: the dungeon plaque's, the interior
+  // plaque's and the street's. Every hover arm reads the same bank as
+  // the click beside it, or the two would call one person two things.)
   assert.ok(wm.includes('const currentNameBank = () => getNameBankOfRegion('), 'GetNameBankOfCurrentRegion');
 });
 

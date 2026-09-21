@@ -125,3 +125,49 @@ export function raceActivation({
 
   return { loot, drop, torchWins, wagonWins, campWins, waterWins, nonPersonRival, rival };
 }
+
+/**
+ * WORLD-HOVER: THE RACE'S WINNER, AS A HIT.
+ *
+ * `raceActivation` above answers WHO BEAT WHOM - which arm the press
+ * should take - because that is all a press needs: it dispatches into
+ * the winning arm and the arm knows its own subject. A plaque needs
+ * something the press never asks for: the winner ITSELF, so it can say
+ * what the thing is called.
+ *
+ * That could have been a second race written out in the hover. It is
+ * not, and HARD2 is the reason: the race WAS written by hand in
+ * world.js and exterior.js, character for character, which is how
+ * AUDIT 66 F7 shipped a torch that had to beat the pile but not the
+ * door. A third copy - one that only a readout reads, so nobody would
+ * ever notice it drifting - is the same bug with a longer fuse.
+ *
+ * So the ordering law is spelled ONCE, here, and both readers take it:
+ * NEAREST WINS, AND A TIE GOES TO WHOEVER COMES FIRST IN THIS LIST.
+ *
+ * The order is not a guess. `raceActivation` answers each custom
+ * activation with `<= Math.min(...)`, so on an exact tie MORE THAN ONE
+ * of its flags is true, and which one takes the press is decided by
+ * the order the host TESTS them in - `campWins`, then `waterWins`,
+ * then `wagonWins`, then the torch, then the body, then the pile, then
+ * the door/person/board set. That ladder is the precedence, and it is
+ * what this list is. A pin drives the two against each other over the
+ * same picks, including at exact ties, so a change to one that the
+ * other does not follow goes red.
+ *
+ * The door/person/board set arrives as a HIT rather than a distance,
+ * because unlike the press the plaque has to name which door.
+ *
+ * @returns {RayPick|null} the winning pick, with its own key and reach
+ */
+export function raceWinner({
+  corpse = null, pile = null, torch = null, wagon = null, camp = null, water = null, ground = null,
+} = {}) {
+  let best = null;
+  // The tie order IS the precedence order; `<` keeps the earlier one.
+  for (const p of [camp, water, wagon, torch, corpse, pile, ground]) {
+    if (!p) continue;
+    if (best === null || p.distance < best.distance) best = p;
+  }
+  return best;
+}

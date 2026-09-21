@@ -213,12 +213,22 @@ export function showWorldPlaque(frame, anchor = null) {
  * anyway, or rebuild one only when something moved, without this module
  * knowing or caring which.
  *
+ * `pick` is the escape hatch, and it exists for one host shape. The
+ * two exterior hosts do not race ONE target list: they run seven picks
+ * (the bodies, the piles, the torches, the cart, the camps, the water,
+ * and the door/person/board set) and settle them with
+ * `player/activationRace.js`. A plaque that raced a single merged list
+ * would resolve ties differently from the press on the frame it
+ * mattered, which is the one thing this surface exists not to do - so
+ * those hosts hand over the race's own winner instead, and `targets`
+ * goes unread.
+ *
  * `name` and `contents` are the host's namer and its read-only contents
  * accessor; the ladder they implement is systems/worldHover.js's
  * subject, not this file's.
  */
 export function worldHoverFrame({
-  eye = null, dir = null, targets = null, collider = null,
+  eye = null, dir = null, targets = null, collider = null, pick = null,
   cursorActive = false, canvas = null, name = null, contents = null,
 } = {}) {
   if (!worldPlaqueOn()) return null;
@@ -227,7 +237,7 @@ export function worldHoverFrame({
   // plaque's. In the dungeon this was an accident of scheduling - the
   // driver only ran with no overlay up - and an accident is not a law.
   if (cursorActive || !eye || !dir || !collider) { showWorldPlaque(null); return null; }
-  const hit = pickActivatableHit(eye, dir, targets?.() ?? [], collider);
+  const hit = pick ? pick() : pickActivatableHit(eye, dir, targets?.() ?? [], collider);
   const frame = resolveHover(hit, { name, contents });
   showWorldPlaque(frame, plaqueAnchor(canvas));
   return frame;

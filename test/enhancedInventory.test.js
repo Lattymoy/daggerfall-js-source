@@ -1169,7 +1169,8 @@ test('PX21c / WORLD-HOVER: the plaque names a pile without opening it, on the ta
   assert.match(frame, /targets: api\.dungeonActivationTargets,/,
     'a THUNK, and the SAME list the press races - one construction seam, so the plaque cannot name what the button ignores');
   assert.match(frame, /contents: api\.lootContents,/);
-  assert.match(hov, /const hit = pickActivatableHit\(eye, dir, targets\?\.\(\) \?\? \[\], collider\);/, 'the take\'s own pick');
+  assert.match(hov, /const hit = pick \? pick\(\) : pickActivatableHit\(eye, dir, targets\?\.\(\) \?\? \[\], collider\);/,
+    'the take\'s own pick - or, where a host races seven sets rather than one, that host\'s own raced winner');
   // lootContents shares takeLoot's key vocabulary rather than a second one.
   assert.match(ctx, /lootContents\(key\) \{[\s\S]{0,400}const \[kind, iStr\] = key\.split\(':'\);/);
   for (const kind of ["'loot'", "'corpse'", "'droppedLoot'"]) {

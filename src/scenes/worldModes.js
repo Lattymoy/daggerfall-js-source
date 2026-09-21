@@ -123,10 +123,11 @@ import { makeFont } from '../ui/text.js';
 import { hudScale } from '../ui/hud.js';
 import { containerTextureRecord } from '../systems/containers.js';
 import { composeNamer } from '../systems/worldHover.js';
+import { raceWinner } from '../player/activationRace.js';   // WORLD-HOVER: the race's WINNER, so the plaque names what the press would open
 import { worldHoverFrame, destroyWorldPlaque } from '../ui/worldPlaque.js';   // WORLD-HOVER: the one seam each host calls
 import { staticDoorName, npcHoverName, questResourceName, worldTooltipsOn, hideInteractTooltip,
   houseContainerName, actionName, actionDoorName, lootPileName,
-  BOOKSHELF_TEXT, SHOP_SHELF_TEXT, LADDER_TEXT } from '../systems/worldTooltips.js';   // WORLD-HOVER: the mod's ladder for the families THIS host stands   // WORLD-HOVER: the mod's ladder for the families THIS host stands
+  BOOKSHELF_TEXT, SHOP_SHELF_TEXT, LADDER_TEXT, BULLETIN_BOARD_TEXT } from '../systems/worldTooltips.js';   // WORLD-HOVER: the mod's ladder for the families THIS host stands   // WORLD-HOVER: the mod's ladder for the families THIS host stands
 import { LOCATION_TYPES } from '../formats/mapsFile.js';   // WORLD-HOVER: .cs:775-781 - a dungeon exit names its town, or the region   // WORLD-HOVER: the texture record is DERIVED at its one reader, off the stored model id
 import { isShop, isRepairShop, stockShopShelf, stockHouseContainer, PRIVATE_PROPERTY_TEXT_ID, calculateCost, calculateTradePrice, regionPriceAdjustment, SHOP_BUYS_GROUPS, shopBuysItem, stockSoulGems, stockGuildMagicItems, stockGuildPotions, createStockedDate, needsRestock } from '../systems/shopStock.js';   // X6: the soul-gem shelf; G4: the two guild shelves; A2: the daily restock
 import { identifySpellPass, identifiedTallyText, NOT_ENOUGH_SPELL_POINTS_TEXT } from '../systems/tradeModes.js';   // X7: the Identify SPELL's per-item roll; F067: its magicka refusal
@@ -389,7 +390,7 @@ export function createWorldModes(host) {
   // The host destructure moves with it, because `say` closes over
   // `townTalk`. It reads only the function's own argument, so it is
   // safe anywhere inside the body.
-  const { canvas, renderer, player, cam, keys, latch, blocks, pipeline, doorTargets, npcTargets = null, boardTargets = null, buildingTargets = null, bulletinBoardNews = null, baseCollider, voxelfolk = false, piece = 0, paint = false, buildingDataForDoor = null, townTalk = null, magic = null, spellsByIndex = null, questBridge = null, questSceneCtx = null, npcSession = null, talkSave = null, onQuestRestored = null, discoveryLocationId = null, questBuildingSource = null, gps = null, buildingDirectory = null } = host;   // AUDIT 63 F49: questBuildingSource = PlayerGPS.DiscoverBuilding's { currentMapID, isBuildingQuestResource } pair   // H1: the location's whole building list, for the houses-for-sale roll   // V5: gps = PlayerGPS's location reads, for CanRest   // R1: the discovery store's location key (the anti-grind record's namespace)   // B4: the quicksave composer's trio + the world host's _questStarted latch   // Q4-v: the quest bridge + the host's scene-context closure ({mapId, locationIndex})   // M2: the host's cast engine + SPELLS.STD getter ride in   // host.foes: C8 E1 rigged class enemies in dungeons; buildingDataForDoor: E2's shop identity closure; townTalk: U23's static-NPC seam
+  const { canvas, renderer, player, cam, keys, latch, blocks, pipeline, doorTargets, doorGeneration = null, npcTargets = null, boardTargets = null, buildingTargets = null, bulletinBoardNews = null, baseCollider, voxelfolk = false, piece = 0, paint = false, buildingDataForDoor = null, townTalk = null, magic = null, spellsByIndex = null, questBridge = null, questSceneCtx = null, npcSession = null, talkSave = null, onQuestRestored = null, discoveryLocationId = null, questBuildingSource = null, gps = null, buildingDirectory = null } = host;   // AUDIT 63 F49: questBuildingSource = PlayerGPS.DiscoverBuilding's { currentMapID, isBuildingQuestResource } pair   // H1: the location's whole building list, for the houses-for-sale roll   // V5: gps = PlayerGPS's location reads, for CanRest   // R1: the discovery store's location key (the anti-grind record's namespace)   // B4: the quicksave composer's trio + the world host's _questStarted latch   // Q4-v: the quest bridge + the host's scene-context closure ({mapId, locationIndex})   // M2: the host's cast engine + SPELLS.STD getter ride in   // host.foes: C8 E1 rigged class enemies in dungeons; buildingDataForDoor: E2's shop identity closure; townTalk: U23's static-NPC seam
   let swingKeyLatch = false;   // MAC-SWING1: a swing bound to a key or pad code, polled in frame()
   const moveAxes = new MoveAxes();   // AUDIT 28 W8: MovementAcceleration - the modal frames' own axes
   // U43-ii: the interior HUD-text layer is the OUTER host's, and
@@ -1042,8 +1043,8 @@ export function createWorldModes(host) {
    *  This host owned two pools and ran NO fan-out at all - no
    *  runMagicRoundsFor, so no tickActiveEffects and no updatePoisons
    *  (worldTick.js:317-318), and no killIfAnyLiveStatZero. Both pools
-   *  READ the effect list every frame (exteriorFoes.js:860-860 and
-   *  cityGuards.js:828-829 each take `entityIsParalyzed` +
+   *  READ the effect list every frame (exteriorFoes.js:862-864 and
+   *  cityGuards.js:830-833 each take `entityIsParalyzed` +
    *  `applyEnemyMotorEffectFlags`), and nothing ever ended one: a
    *  Continuous Damage bundle on a foe in a shop never took a round,
    *  a poison inflicted at this host's own onInflictPoison never
@@ -4332,10 +4333,45 @@ export function createWorldModes(host) {
    *  street NPC or a bulletin board nearer than the foe takes the
    *  click - the two exterior hosts cannot answer that without the
    *  distance this set resolves to. */
-  function exteriorActivationTargets() {
+  /**
+   * WORLD-HOVER: THE DOOR HALF, CACHED - and only this half.
+   *
+   * MEASURED, NOT GUESSED: assembling this list is 95-97% of a hover's
+   * cost in the streaming host (~200 us and ~4,500 allocations a frame
+   * at 300 doors, because its `shiftedDoor` spreads and slices per
+   * door), while the ray that reads it is ~3 us and the pick ~21 ns a
+   * target. Per-press that never mattered; per-FRAME it is the
+   * PERF-TOWN1 shape exactly - the loop whose collector meetings that
+   * slice already had to go and fix.
+   *
+   * So the doors are rebuilt when they CHANGE, not when they are
+   * asked. The host's `doorGeneration` is what "change" means, and it
+   * is three discrete events (a pixel in, a pixel out, the floating
+   * origin recentring) rather than a poll. A host that does not shift
+   * its doors - the fixed city - answers no generation at all, and
+   * then this rebuilds every time, which is exactly what it did before
+   * and is cheap there because its `doorTargets` hands its list back
+   * raw.
+   *
+   * THE LIVE FAMILIES ARE NOT CACHED. The street's people and the
+   * boards are cheap, and they MOVE - a stale person is a plaque
+   * naming someone who has walked away, which is the one thing this
+   * whole surface exists not to do.
+   */
+  let _doorCache = null;
+  function exteriorDoorTargets() {
+    const gen = doorGeneration?.();
+    if (gen !== undefined && _doorCache && _doorCache.gen === gen) return _doorCache;
     const entries = doorTargets();
     // AUDIT 65 MC-2: the DOOR reaches for the RAY, as the boards below do - ActivateStaticDoor's own `hit.distance > DoorActivationDistance` refusal (:501-504) can only speak if the pick hands the door over.
     const targets = entries.map((entry, i) => ({ key: i, aabb: doorWorldAabb(entry.door), distance: RAY_DISTANCE, reach: DOOR_ACTIVATION_DISTANCE }));
+    _doorCache = { gen, entries, targets };
+    return _doorCache;
+  }
+
+  function exteriorActivationTargets() {
+    const { entries, targets: _doorRows } = exteriorDoorTargets();
+    const targets = [..._doorRows];
     // AUDIT 26 (F019/F190): THE STREET'S STATIC NPCs, in the SAME ray
     // as the doors. DFU has one activation raycast above ground and
     // routes by what it hit (PlayerActivate.cs:1229 reads the
@@ -4374,6 +4410,118 @@ export function createWorldModes(host) {
   function exteriorActivationDistance(eye = player.eye, dir = eyeDir()) {
     if (mode !== 'exterior') return Infinity;
     return pickActivatableHit(eye, dir, exteriorActivationTargets().targets, baseCollider())?.distance ?? Infinity;
+  }
+
+  /**
+   * THE STATIC-BUILDING HIT, resolved to its directory record - one
+   * home, because WORLD-HOVER gave it a second reader.
+   *
+   * PlayerActivate.cs:341-361 box-tests the ONE ray's hit POINT against
+   * the block's StaticBuildings. The building is deliberately NOT an
+   * activation target: every building door lies inside its own
+   * building box, so an enclosing box would win on distance and
+   * swallow every entry click (AUDIT 64 F11, pinned).
+   *
+   * The press ran this inline; the plaque has to ask the same question
+   * to name a shop from the street, and a second copy of a box test is
+   * how the two would come to disagree about which building you are
+   * looking at.
+   */
+  function buildingUnderRay(eye, dir) {
+    if (!buildingTargets) return null;
+    const list = buildingTargets();
+    if (!list.length) return null;
+    const wall = baseCollider().raycast(eye, dir, RAY_DISTANCE);
+    if (!(wall < RAY_DISTANCE)) return null;
+    const bhit = staticBuildingsHasHit(list, [
+      eye[0] + dir[0] * wall, eye[1] + dir[1] * wall, eye[2] + dir[2] * wall,
+    ]);
+    if (!bhit) return null;
+    const bd = buildingDataForDoor?.({
+      dfBlock: bhit.dfBlock, recordIndex: bhit.recordIndex, pixelKey: bhit.pixelKey,
+      // the StaticBuilding's own matrix is in the host's layout frame
+      // already; it identifies THIS block instance, which is what
+      // DFU's per-cell building key is built from (RMBLayout.cs:888).
+      door: { matrix: bhit.matrix }, pixelLocal: true,
+    }) ?? null;
+    return bd && bd.buildingType != null ? bd : null;
+  }
+
+  /**
+   * WORLD-HOVER: THE EXTERIOR'S WORDS, and the one seam both outer
+   * hosts call.
+   *
+   * world.js and exterior.js run the same activation ladder character
+   * for character - that hand-copying is what HARD2 extracted
+   * `raceActivation` for, after AUDIT 66 F7 shipped a torch that had
+   * to beat the pile in one host and not the other. A hover written
+   * twice would be the same bug with a longer fuse, and worse, because
+   * only a readout would read it and nobody would notice it drifting.
+   * So it is written once, here, beside the ladder it must agree with.
+   *
+   * The host hands its six live picks; this races them against the
+   * door/person/board set through `raceWinner`, which spells the
+   * precedence ONCE for the press and the plaque alike.
+   */
+  function exteriorHoverPick(eye, dir, picks = {}) {
+    if (mode !== 'exterior') return null;
+    const { targets } = exteriorActivationTargets();
+    const ground = pickActivatableHit(eye, dir, targets, baseCollider());
+    return raceWinner({ ...picks, ground });
+  }
+
+  /**
+   * ...and what the winner is called. World Tooltips' ladder over the
+   * families this host stands, with the port's own objects answering
+   * for themselves through the mod's extension API.
+   */
+  function exteriorHoverName(key, { eye, dir, names = [] } = {}) {
+    // THE HOST'S OWN NAMERS RUN FIRST, which is the mod's own law for
+    // its extension API (vendor .cs:225-257, walked before the mod's
+    // ladder). They are where the port's own world objects answer -
+    // the two corpse pools, the player's dropped piles, the torches,
+    // the camps, the springs, the cart - each from the module that
+    // STANDS the target, so a namer can never name something its own
+    // producer did not put in the ray.
+    const own = composeNamer(names)(key);
+    if (own) return own;
+    if (!worldTooltipsOn()) return null;
+    const { npcs } = exteriorActivationTargets();
+    // THE DOOR KEY IS A BARE NUMBER - the index into `entries` - which
+    // is why this tests the type rather than a prefix.
+    if (typeof key === 'number') {
+      // .cs:683-760, GetStaticDoorText's building arm. The mod
+      // DISCOVERS the building to read its name, and Mac's call was to
+      // port that 1:1 - so looking at a shopfront maps it, which is a
+      // recorded departure from DFU (Ledger A), not from the mod.
+      const bd = buildingUnderRay(eye, dir);
+      if (!bd) return null;
+      const locId = discoveryLocationId?.() ?? null;
+      if (!locId) return null;
+      discoverBuilding(locId, bd, null, questBuildingSource);   // .cs:718
+      const db = getDiscoveredBuilding(locId, bd.buildingKey);
+      if (!db) return null;
+      return staticDoorName('building', {
+        displayName: db.displayName,
+        locationName: host.currentLocation?.()?.Name ?? '',
+        buildingType: bd.buildingType,
+        unlocked: resolveBuildingUnlocked(bd),
+        quality: bd.quality ?? 0,
+      });
+    }
+    if (typeof key !== 'string') return null;
+    if (key.startsWith('board:')) return { title: BULLETIN_BOARD_TEXT };   // .cs:315-318
+    if (key.startsWith('person:')) {                                       // .cs:325-393
+      const pn = npcs[Number(key.split(':')[1])];
+      if (!pn) return null;
+      const dict = townTalk?.factionDict ?? null;
+      const display = staticNpcName(staticNpcData(pn, { ...(questSceneCtx?.() ?? {}), buildingKey: 0,
+        ...(pn?.context != null ? { context: pn.context } : {}) }),
+      { getFaction: (id) => dict?.get(id) ?? null, nameBank: currentNameBank() });
+      const t = npcHoverName(display, { archive: pn.archive ?? -1, record: pn.record ?? -1 });
+      return t ? { title: t } : null;
+    }
+    return null;
   }
 
   /** BuildingIsUnlocked's ONE evaluation (PlayerActivate.cs:358): DFU
@@ -4456,25 +4604,8 @@ export function createWorldModes(host) {
     // be wrong twice over: every building door lies inside its own
     // building box, so the enclosing box would win on distance and
     // swallow every entry click.
-    const bhit = buildingTargets ? (() => {
-      const list = buildingTargets();
-      if (!list.length) return null;
-      const wall = baseCollider().raycast(eye, dir, RAY_DISTANCE);
-      if (!(wall < RAY_DISTANCE)) return null;
-      return staticBuildingsHasHit(list, [
-        eye[0] + dir[0] * wall, eye[1] + dir[1] * wall, eye[2] + dir[2] * wall,
-      ]);
-    })() : null;
-    if (bhit) {
-      const bd = buildingDataForDoor?.({
-        dfBlock: bhit.dfBlock, recordIndex: bhit.recordIndex, pixelKey: bhit.pixelKey,
-        // the StaticBuilding's own matrix is in the host's layout frame
-        // already; it identifies THIS block instance, which is what
-        // DFU's per-cell building key is built from (RMBLayout.cs:888).
-        door: { matrix: bhit.matrix }, pixelLocal: true,
-      }) ?? null;
-      if (bd && bd.buildingType != null) activateBuilding(bd, resolveBuildingUnlocked(bd));
-    }
+    const bd = buildingUnderRay(eye, dir);
+    if (bd) activateBuilding(bd, resolveBuildingUnlocked(bd));
     const { entries, npcs, boards, targets } = exteriorActivationTargets();
     const { key, distance: _hitDist, reach: _hitReach } = pickActivatableHit(eye, dir, targets, baseCollider()) ?? { key: null };
     if (key === null) return false;
@@ -6486,7 +6617,7 @@ export function createWorldModes(host) {
           // AUDIT 39r: and the FLASH, which this arm was copied without.
           // An arrow reaches the player through BowDamage ->
           // ApplyDamageToPlayer -> SendDamageToPlayer, the same door as
-          // a blow (world.js:7896's own wave-46 note); the interior
+          // a blow (world.js:7977's own wave-46 note); the interior
           // MELEE hit already flashes inside exteriorFoes, so only this
           // arm - which applies its own damage - was missing it.
           flashPlayerDamage(dmg);   // BA1: RemoveHealth carries the amount
@@ -6521,10 +6652,10 @@ export function createWorldModes(host) {
         // AUDIT 58: WeaponManager.cs:630 after the damage fork - a
         // zero-damage shaft still enrages its mark and the room.
         // ROAD-G G1 (review): the interior WATCH carries the pair now
-        // (cityGuards.js:582-587), so this seam splits by pool exactly
+        // (cityGuards.js:586-591), so this seam splits by pool exactly
         // as `dealDamage` above it does rather than dropping the
         // non-encounter half - the zero-damage SWING already reaches
-        // that door (cityGuards.js:1074) and the shaft owes the same.
+        // that door (cityGuards.js:1078) and the shaft owes the same.
         onAttackFromPlayer: (f) => (f._encounter
           ? interiorFoes?.attackFromPlayer(f, player.pos, 'arrow')   // AUDIT WORLD6b-iii(e) A2: the pool's one door, the shaft's kind on it
           : interiorGuards?.handleAttackFromPlayer(f, player.pos)),
@@ -7319,7 +7450,7 @@ export function createWorldModes(host) {
   addEventListener('mousedown', (e) => {
     // AUDIT-MACK F2: THIS HOST DOES NOT FEED THE HELD SET, and MAC-K1
     // briefly made it. `keys` is not this host's - it arrives on the
-    // host bag (`exterior.js:3437`, `world.js`'s twin), and the OUTER
+    // host bag (`exterior.js:3449`, `world.js`'s twin), and the OUTER
     // host's own mousedown writes `keys.add(mouseCode(e.button))`
     // UNGATED, before any mode test, on a listener that is never
     // removed. So the three button codes were already in the Set while
@@ -8819,9 +8950,9 @@ export function createWorldModes(host) {
      *  .cs:175-176 writes `weaponDrawn`/`usingLeftHand` off it,
      *  :420-421 restores them onto it. The port has FOUR PlayerWeapons
      *  (world.js's, this file's `interiorWeapon` :538, dungeonContext's
-     *  and exterior.js's - which this seam does not reach: that host has no save path at all, its charter exterior.js:3027-3049), and IS1 routed the inside-a-building save to
+     *  and exterior.js's - which this seam does not reach: that host has no save path at all, its charter exterior.js:3039-3061), and IS1 routed the inside-a-building save to
      *  the WORLD host's composer - which reads its own exterior rig
-     *  unconditionally (world.js:5230). So an F9 pressed in a shop
+     *  unconditionally (world.js:5311). So an F9 pressed in a shop
      *  recorded the street's sheath and hand, and the load wrote them
      *  back into the street's rig; the rig actually in the player's
      *  hands was in no envelope at all.
@@ -8848,7 +8979,7 @@ export function createWorldModes(host) {
      *  presenter for the whole visit) or the interior's? world.js's gate read townTalk's slot alone. */
     deathUp() { return mode === 'dungeon' ? !!dungeonCtx?.deathUp?.() : interiorOverlay instanceof DeathScreen; },
     /** The restore half - and NOT gated on the mode, deliberately.
-     *  worldQuickLoad calls forceExitToExterior FIRST (world.js:5322)
+     *  worldQuickLoad calls forceExitToExterior FIRST (world.js:5403)
      *  and only re-enters the building at :4217, so the mode at apply
      *  time is whatever the LOAD landed in, not whatever the SAVE was
      *  taken in: an outdoor save loaded while the player was indoors
@@ -8858,7 +8989,7 @@ export function createWorldModes(host) {
      *
      *  FLAG ONLY and presence-gated - both laws now stated once, in
      *  combat/playerWeapon.js's applyWeaponPose, with the citation.
-     *  HARD2c: this used to spell them out, and named `world.js:5436`
+     *  HARD2c: this used to spell them out, and named `world.js:5517`
      *  and `dungeonContext.js:5995` for its two sibling copies - lines
      *  that had moved to :4418 and :5457. Three copies of a two-line
      *  law, and even the comment pointing between them had gone stale. */
@@ -8963,6 +9094,8 @@ export function createWorldModes(host) {
     },
     tryEnter,
     exteriorActivationDistance,   // AUDIT 63 F33 (review): the rival distance the living-foe arm must beat
+    exteriorHoverPick,   // WORLD-HOVER: the plaque's winner, raced exactly as the press's is
+    exteriorHoverName,   // ...and what that winner is called
     attemptExteriorDoorBash,   // ROAD-B: WeaponEnvDamage's static-door arm (PlayerActivate.cs:1056-1079)
     frame,
     installShotProbes,

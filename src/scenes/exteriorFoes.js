@@ -49,7 +49,9 @@ import { validFoeRecord, CELL_PUPPETS_MAX, CELL_WATCH_PUPPETS_MAX, CELL_FRAME_RE
 import { CORPSE_ACTIVATION_DISTANCE } from '../player/activate.js';
 import { WEAPON_REACH } from '../combat/playerWeapon.js';   // AUDIT WATCH1 B2: a peer's melee blow on my watch lands from the player's own reach, no farther   // AUDIT WORLD6b-iii(c) A1/C7: the owner reads the taker's reach
 import { createWeapon, bowDamageArrow } from '../combat/enemyEquipment.js';   // MAC-N1: the recovered shaft is CreateWeapon's arrow, value and all   // AUDIT WORLD6b-ii B2: a puppet's weapon is its owner's word, rebuilt from the descriptor   // AUDIT WORLD6b B3/C2: a cell's record projected and its puppets capped, the wire's law
-import { mintCorpseMarker, playBodyFall, playRareDrop, corpseLootTargets, takeCorpseLoot, openCorpseLoot, sayEnemyDied, raiseEnemyDeath } from './corpseMarker.js';
+import { mintCorpseMarker, playBodyFall, playRareDrop, corpseLootTargets, corpseEntryFor, takeCorpseLoot, openCorpseLoot, sayEnemyDied, raiseEnemyDeath } from './corpseMarker.js';
+import { corpseName } from '../systems/worldTooltips.js';   // WORLD-HOVER: "<who> (dead)", the mod's own word (.cs:525)
+import { enemyDisplayName } from '../characters/enemyBasics.js';   // GetLocalizedEnemyName, the index law in one place
 import { bloodCentre } from './hitEffects.js';   // AUDIT 24 (wave 39): EnemyBlood.ShowBloodSplash
 import { bloodHit } from '../combat/bloodDecals.js';   // BLOOD1b: the blow, in the shape the mark's ladder reads
 import { addItem } from '../systems/inventory.js';   // AR1: BowDamage's recoverable arrow, in the TARGET's items
@@ -1137,6 +1139,17 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       feetOf: (f) => f.corpseMarker?.pos ?? f.ai?.feet ?? null,
     });
   }
+  /** WORLD-HOVER: what the plaque calls one of these bodies, off the
+   *  SAME entry list and the same key vocabulary the targets are minted
+   *  from - a namer written beside the producer cannot name a body the
+   *  producer did not stand. */
+  const hoverName = (key) => {
+    const e = corpseEntryFor(foes, key, 'foeCorpse', {
+      isCorpse: (f) => !!f.corpse && !!f.entity && (!f.puppet || (f._pup?.o | 0) > 0),
+      idOf: (f) => (f.uid ??= _nextUid++),
+    });
+    return e ? { title: corpseName(enemyDisplayName(e.mobileType)) } : null;   // .cs:525
+  };
   // MAC-E: and the general arm is the WINDOW now (PlayerActivate.cs:957),
   // not a bulk transfer - `openWindow` is the host's own inventory door.
   // The PUPPET arm below is untouched: a peer's body is its owner's to
@@ -1795,7 +1808,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     _pupPending.clear();
   }
 
-  return { foes, spawnFoe, damageFoe, handleAttackFromPlayer, attackFromPlayer, update, resolvePlayerHit, poisonFoe, batches, offsetAll, activeCount, lootTargets, takeLoot, snapshotWorld, restoreWorld, destroy,
+  return { foes, spawnFoe, damageFoe, handleAttackFromPlayer, attackFromPlayer, update, resolvePlayerHit, poisonFoe, batches, offsetAll, activeCount, lootTargets, hoverName, takeLoot, snapshotWorld, restoreWorld, destroy,
     /** AUDIT 39: CleanupUntrackedObjects' enemy half (StreamingWorld.cs
      *  :1624-1635), which a teleport reaches too through
      *  ClearStreamingWorld -> CollectLooseObjects(true) (:993-998) -

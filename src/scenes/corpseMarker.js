@@ -209,6 +209,36 @@ export function corpseLootTargets(entries, keyPrefix, { isCorpse, feetOf, idOf =
 }
 
 /**
+ * WORLD-HOVER: WHICH BODY a corpse key names, off the same entry list
+ * and the same identity `corpseLootTargets` above mints its keys from.
+ *
+ * This is the half both pools genuinely share - walking their own list
+ * under the producer's own `isCorpse`/`idOf` law - and it lives beside
+ * the producer for the reason AUDIT 24 (wave 38) had to fix once
+ * already: the watch's bodies and the encounter pool's are the same
+ * kind of thing, and the moment one of them is walked by a second,
+ * hand-written rule they stop agreeing.
+ *
+ * It answers the ENTRY and not the word. The word is World Tooltips'
+ * (`corpseName`, vendor .cs:525) and the pools apply it - because this
+ * module is reached, through `unleveledLoot`, from `worldTick`, which
+ * `worldTooltips` itself imports by way of the building hours. An
+ * import from here would close that ring and this file's own
+ * `_deathHandlers` would be read before it exists. A caller of a rule
+ * is not a copy of it; a cycle is a crash at boot.
+ */
+export function corpseEntryFor(entries, key, keyPrefix, { isCorpse, idOf = null }) {
+  let i = -1;
+  for (const e of entries ?? []) {
+    i += 1;
+    if (!isCorpse(e)) continue;
+    const id = idOf ? idOf(e) : i;
+    if (`${keyPrefix}:${id}` === key) return e;
+  }
+  return null;
+}
+
+/**
  * THE TAKE (MAC-E). This was PlayerActivate's whole corpse arm and is
  * not any more - `openCorpseLoot` above is. What is left is the
  * transfer itself, and its ONE caller is the online grant landing
