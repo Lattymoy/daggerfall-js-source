@@ -2,7 +2,7 @@
   "name": "daggerfall-js-app",
   "productName": "Daggerfall Enhanced",
   "private": true,
-  "version": "0.1.4",
+  "version": "0.1.0",
   "description": "Daggerfall Enhanced - the downloadable desktop shell. Loads the same dist/ the website deploys; adds ARENA2-from-disk and file-backed saves.",
   "author": "Lattymoy",
   "homepage": "https://daggerfalljs.dev/",
@@ -49,6 +49,15 @@
         "nsis",
         "portable"
       ]
+    },
+    "nsis": {
+      "artifactName": "DaggerfallEnhanced-${version}-win-${arch}-setup.${ext}",
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "perMachine": false
+    },
+    "portable": {
+      "artifactName": "DaggerfallEnhanced-${version}-win-${arch}-portable.${ext}"
     },
     "mac": {
       "target": [

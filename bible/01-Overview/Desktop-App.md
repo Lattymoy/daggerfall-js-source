@@ -103,6 +103,25 @@ does.
 
 ## The release channel
 
+**REL3 (2026-09-21, Mac: "is there a way to auto push a release on each
+merge?"): EVERY MAIN PUSH CUTS A RELEASE**, from the same commit the site
+deploys. The version is DERIVED, never bumped by hand: MAJOR.MINOR from
+`app/package.json`'s committed base (`0.1.0` - CI owns the patch), PATCH
+the count of commits on main (`git rev-list --count HEAD`, so the
+checkout is full-depth) - monotonic, reproducible from the commit, and
+newer than every hand-cut release before it (0.1.5 → 0.1.9xx). The
+marker file and REL1's gate are retired: ONE shell variable names the
+number and both the release tag and the `npm version` stamp read it,
+which is the whole of REL1's lesson with the second number removed. The
+tag-push and dispatch doors stay as manual overrides and take their
+version from the tag they name. Runs queue in one concurrency group
+rather than cancel - a release half uploaded is worse than one late.
+The cost is what it is: three OS builds per merge, and the desktop
+update notice fires per merge, exactly as the site's own new-build
+notice (SRV-N2) does. Pinned in `test/updatecheck.test.js`. The
+paragraph below is the history it replaced.
+
+
 `.github/workflows/release-desktop.yml` cuts a release through any
 of three doors: pushing a tag shaped `app-v*`, a workflow_dispatch
 with `release_tag`, or - the door an ordinary merged PR can open -
@@ -119,7 +138,22 @@ Whichever door, the ubuntu job carries the whole `npm run check`
 gate, all three OS runners package installers (AppImage, NSIS +
 portable exe, dmg - unsigned; macOS players right-click-Open the
 first time), and the artifacts attach to a GitHub Release at that
-tag. The landing page's "On your desktop"
+tag. **REL2 (2026-09-21): "NSIS + portable exe" was a claim, not a
+fact, from app-v0.1.0 through app-v0.1.4.** Both Windows targets were
+declared under ONE `artifactName`, so both wrote
+`DaggerfallEnhanced-<v>-win-x64.exe` and the second overwrote the
+first - every release carried exactly one Windows exe, and a player's
+report ("the installer is installing to Temp/3JbF0.../Daggerfall
+Enhanced.exe") says which one survived: the PORTABLE, which unpacks
+into a random `%TEMP%` folder and runs from there, and which has no
+directory to choose because it is not an installer. Each Windows
+target names its own artifact now (`-win-x64-setup.exe`,
+`-win-x64-portable.exe`), the NSIS installer is the ASSISTED kind
+(`oneClick: false`, `allowToChangeInstallationDirectory: true`,
+per-user), and the release glob attaches every exe. Saves and the
+ARENA2 path never moved with the exe either way - they live in
+`<appData>/Daggerfall JavaScript` (BR1). Pinned in
+`test/relwin1.test.js`; app-v0.1.5 is the first release with both. The landing page's "On your desktop"
 section points at `releases/latest`, so cutting a release IS
 updating the site's download - no site change needed per release.
 `workflow_dispatch` builds the same installers as run artifacts
