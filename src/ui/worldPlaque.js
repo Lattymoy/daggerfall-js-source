@@ -56,6 +56,8 @@ let node = null;
 let shownSig = null;
 let lastX = null;
 let lastTop = null;
+let _faults = 0;        // AUDIT-WH L1: contained frames, counted
+let _faultSaid = false; // ...and said once, not once a frame
 
 function ensure() {
   if (node || typeof document === 'undefined') return node;
@@ -237,11 +239,40 @@ export function worldHoverFrame({
   // plaque's. In the dungeon this was an accident of scheduling - the
   // driver only ran with no overlay up - and an accident is not a law.
   if (cursorActive || !eye || !dir || !collider) { showWorldPlaque(null); return null; }
-  const hit = pick ? pick() : pickActivatableHit(eye, dir, targets?.() ?? [], collider);
-  const frame = resolveHover(hit, { name, contents });
-  showWorldPlaque(frame, plaqueAnchor(canvas));
-  return frame;
+  // CONTAINED, COUNTED AND SAID - ONCRASH1's law, and a READOUT is a
+  // stronger case for it than the wire frame that law was written for:
+  // nothing this surface can compute is worth a dead game.
+  //
+  // `pick`, `targets`, `name` and `contents` are HOST closures, called
+  // from inside four frame bodies that have no error boundary between
+  // them and `requestAnimationFrame`. AUDIT-WH C1 was one instance -
+  // a namer handed the exterior door's numeric key called `startsWith`
+  // on it - and the class is the point, because `composeNamer` and
+  // `addActivationNamer` are documented as "the same door a third
+  // party would use". An extension API into an uncontained call path
+  // is a crash waiting for its first extension.
+  //
+  // Said ONCE (the online lane's own idiom - a latch, not a per-frame
+  // console), and the plaque goes down rather than freezing on its
+  // last answer: a readout that cannot answer shows nothing.
+  try {
+    const hit = pick ? pick() : pickActivatableHit(eye, dir, targets?.() ?? [], collider);
+    const frame = resolveHover(hit, { name, contents });
+    showWorldPlaque(frame, plaqueAnchor(canvas));
+    return frame;
+  } catch (e) {
+    _faults += 1;
+    if (!_faultSaid) {
+      _faultSaid = true;
+      console.warn(`[world-hover] the plaque could not resolve and is standing down for this frame: ${e?.message ?? e}`);
+    }
+    try { showWorldPlaque(null); } catch { /* the draw itself is gone; nothing left to hide */ }
+    return null;
+  }
 }
+
+/** For tests and the console: how many frames the seam has contained. */
+export const worldHoverFaults = () => _faults;
 
 /** Tear down with the host that raised it. */
 export function destroyWorldPlaque() {
@@ -250,6 +281,8 @@ export function destroyWorldPlaque() {
   shownSig = null;
   lastX = null;
   lastTop = null;
+  _faults = 0;
+  _faultSaid = false;
 }
 
 /** For tests. */

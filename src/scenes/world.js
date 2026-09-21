@@ -59,7 +59,7 @@ import { CityNavigation } from '../world/cityNavigation.js';   // T2 towns
 import { TownPopulation } from '../systems/townPopulation.js';
 import { GUARD_TEXTURE, MobilePerson, PERSON_TEXTURES, personWantsToStop } from '../characters/mobilePerson.js';
 import { bowDamageArrow } from '../combat/enemyEquipment.js';   // MAC-N1: the recovered shaft is CreateWeapon's arrow, value and all
-import { createTownTalk, rayPersonDistance } from './townTalk.js';   // AUDIT 63 F33 (review): the townsfolk's own pick distance, the enemy arm's rival
+import { createTownTalk, rayPersonDistance, nearestPerson } from './townTalk.js';   // AUDIT 63 F33 (review): the townsfolk's own pick distance, the enemy arm's rival
 import { createPlayerMagic } from './hostMagic.js';   // M2: spellcasting above ground
 import { setDefaultEnchantCtx } from '../systems/enchantments.js';   // E2: the host's enchantCtx mount
 import { createEnchantCtx, standLooseFoe, LOOSE_FOE_PLACE_ATTEMPTS } from './hostEnchant.js';   // FS1 (wave D): the ctx BODY and DFU's loose-foe placement, one copy for the two hosts that mount them
@@ -170,11 +170,13 @@ import { createArrestFlow } from './arrestFlow.js';
 import { clearCrimeOnLocationExit, addGold, goldAmount, deductGold, totalGoldAmount, deductGoldPieces } from '../systems/court.js';   // AUDIT 17e F6   // G2   // F-slice: travel gold; U41: GetGoldAmount + the pieces half of DeductFastTravelGold
 import { makeInView } from '../player/cameraView.js';   // AUDIT 17e F24
 import { worldHoverFrame, destroyWorldPlaque } from '../ui/worldPlaque.js';   // WORLD-HOVER: the one seam each host calls
+import { composeContents } from '../systems/worldHover.js';   // WORLD-HOVER: the contents ladder's one law (AUDIT-WH H3)
+import { mobilePersonName } from '../systems/worldTooltips.js';   // WORLD-HOVER H2: MobilePersonNPC.NameNPC (.cs:299-302)
 import { mwViewFirstPerson, mwViewFrame, mwViewWheel, mwViewDrawBody, mwViewFootstep, mwViewLoadPose, mwViewNewGame, mwViewRebase, mwViewAttachWagon, mwViewDrawWagon, mwViewWagonTargets, mwViewWagonActivate } from '../player/mwView.js';   // MW-D25: the Morrowind camera; AUDIT-EOTB2: the sprite's stride and the load's POV
 import { mwCamera, PITCH_LIMIT } from '../player/mwCamera.js';   // MW-D30: persistence + the reference pitch clamp
 import { pickActivatableHit, pickQuestFoe, pickFoe } from '../player/activate.js';   // G3: corpse loot; QG1: the foe-click door; TI1: the lock-on pick
 import { raceActivation } from '../player/activationRace.js';   // HARD2: one home for "the nearest thing under the one ray takes the click"
-import { RAY_DISTANCE, DEFAULT_ACTIVATION_DISTANCE, TOO_FAR_AWAY_TEXT } from '../player/activate.js';   // AUDIT 63 F33: ActivateMobileEnemy (PlayerActivate.cs:800-841); AUDIT 65 MC-2: the loot handlers' refusal
+import { RAY_DISTANCE, DEFAULT_ACTIVATION_DISTANCE, MOBILE_NPC_ACTIVATION_DISTANCE, TOO_FAR_AWAY_TEXT } from '../player/activate.js';   // AUDIT 63 F33: ActivateMobileEnemy (PlayerActivate.cs:800-841); AUDIT 65 MC-2: the loot handlers' refusal
 import { setMidScreenText } from '../ui/midScreenText.js';   // AUDIT 64 F34: DaggerfallHUD's centred label, where PlayerActivate's refusals go
 import { tryMobileEnemyActivate } from '../player/mobileEnemyActivate.js';
 import { FOUND_NOTHING_VALUABLE_TEXT_ID } from '../systems/talk.js';   // GetRandomText(8999)
@@ -2879,7 +2881,41 @@ export async function bootWorld(canvas, renderer, params, status) {
     (key) => droppedTorches.hoverName?.(key) ?? null,
     (key) => exteriorFoes.hoverName?.(key) ?? null,
     (key) => cityGuards.hoverName?.(key) ?? null,
+    // WORLD-HOVER H2: THE MOD'S MOBILE BAND (.cs:297-313). A live foe
+    // is named by the pool that stands it, and only when it is not
+    // hostile; a walking townsperson by `MobilePersonNPC.NameNPC`, off
+    // the same live pool and the same index the pick raced.
+    (key) => exteriorFoes.liveHoverName?.(key) ?? null,
+    (key) => cityGuards.liveHoverName?.(key) ?? null,
+    (key) => {
+      if (typeof key !== 'string' || !key.startsWith('mobileNpc:')) return null;
+      const t = mobilePersonName(_livePersons[Number(key.split(':')[1])]?.person?.nameNPC);
+      return t ? { title: t } : null;
+    },
   ];
+  /** WORLD-HOVER H2: the nearest townsperson as a RAY PICK - the
+   *  press's own scan (townTalk's `nearestPerson`, which `tryActivate`
+   *  takes too), dressed in the shape the race reads. The RAY's
+   *  distance with the MOD's 6.4 beside it, because the band is a gate
+   *  inside the handler and not a shorter ray (AUDIT 65 MC-2). */
+  const _hoverPersonPick = (eye, dir) => {
+    const n = nearestPerson(eye, dir, _livePersons);
+    return n && Number.isFinite(n.distance)
+      ? { key: `mobileNpc:${n.index}`, distance: n.distance, reach: MOBILE_NPC_ACTIVATION_DISTANCE }
+      : null;
+  };
+  // WORLD-HOVER: and what the ITEMISED ones HOLD - the same ladder,
+  // the same pools, in the same order (AUDIT-WH H3). This used to be a
+  // ternary written inline at the frame that knew about `droppedLoot:`
+  // alone, so the two corpse prefixes - itemised since the first slice
+  // - answered null and every body outdoors read "Empty" over a full
+  // pack. Each pool answers for its own bodies, beside the producer
+  // that stands them.
+  const _hoverContents = composeContents([
+    (key) => (key.startsWith('droppedLoot:') ? (droppedLoot.contents?.(key) ?? null) : null),
+    (key) => exteriorFoes.hoverContents?.(key) ?? null,
+    (key) => cityGuards.hoverContents?.(key) ?? null,
+  ]);
 
   const springTargets = () => {
     _springs = [];
@@ -3442,10 +3478,10 @@ export async function bootWorld(canvas, renderer, params, status) {
   // ?dungeon host RAN every CastWhenUsed / CastWhenStrikes / SoulBound
   // / affinity arm against no ctx at all. They are optional-chained, so
   // it WAS silent. WAVE D closed it: the body is scenes/hostEnchant.js
-  // and dungeonContext.js:2349 mounts the same one, gated on
+  // and dungeonContext.js:2350 mounts the same one, gated on
   // `opts.enchantCtx !== false` because setDefaultEnchantCtx is a
   // session singleton and EC1 already routes THIS host's mount into
-  // that context through modes.dungeonCtx - so worldModes.js:5188
+  // that context through modes.dungeonCtx - so worldModes.js:5215
   // passes false beside its `chargen: false` and only the standalone
   // ?dungeon route mounts its own. S40 filled isResting
   // in - the sentence that stood here said it "stays absent above
@@ -3532,9 +3568,9 @@ export async function bootWorld(canvas, renderer, params, status) {
     // encounter pool's remover for both. That was not a leak: removeFoe
     // (exteriorFoes.js:375-380) never looks the record up in `foes`, and
     // both pools share this host's one renderer, so a struck WATCHMAN
-    // got exactly what removeGuard (cityGuards.js:1298-1312) gives it -
+    // got exactly what removeGuard (cityGuards.js:1344-1358) gives it -
     // batch freed, `dead = true`, no corpse, skipped by the next AI pass
-    // (cityGuards.js:822) and spliced out at the end of it (:1011).
+    // (cityGuards.js:823) and spliced out at the end of it (:1012).
     // Routing by POOL MEMBERSHIP is an OWNERSHIP fix: each pool owns the
     // teardown of its own records so the two can diverge safely, and
     // removeFoe's `questBehaviour?.notifyDestroyed()` (exteriorFoes.js
@@ -5280,7 +5316,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // so an F9 pressed inside a shop recorded the street's sheath and
     // hand. The mode host answers for the rig that is actually drawn
     // and null outside interior mode (the dungeon owns its own
-    // composer, dungeonContext.js:5965), so exterior mode and a
+    // composer, dungeonContext.js:5991), so exterior mode and a
     // pre-seam mode host compose exactly as before, per field.
     const wp = modes?.weaponPose?.() ?? null;
     const snap = snapshotPlayer(playerEntity, {
@@ -7153,7 +7189,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // exterior -> the townTalk overlay, interior OR dungeon -> the mode
   // machine's slot. U43-ii shipped the dungeon half: showQuestBox
   // offers the window to `modes.showQuestOverlay` below, and
-  // worldModes answers it in BOTH modes (worldModes.js:8105-8168 -
+  // worldModes answers it in BOTH modes (worldModes.js:8149-8212 -
   // dungeon routes to dungeonCtx.showOverlay), so a dungeon popup is
   // shown rather than logged loudly and dropped.
   // AUDIT 24 (wave 21): DaggerfallMessageBox.Show() is a
@@ -9867,7 +9903,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       // window held in the townTalk slot while the player was inside a
       // building or a dungeon, and gated it on the window existing -
       // but townTalk.frame ticks and draws the HUD TEXT LAYER too
-      // (townTalk.js:632, :613). So every HUD line raised in a modal
+      // (townTalk.js:632, :640). So every HUD line raised in a modal
       // mode had nowhere to land, which is why the interior weapon
       // rig's `say` was a console.warn and the interior ticker's was a
       // console.log. Drawn ABOVE the modal render, which is where
@@ -11405,11 +11441,11 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
         // AFTER the damage fork closes (:615), so a shaft that lost the
         // roll still enrages what it hit and wakes the area. ROAD-G G1
         // (review): the WATCH carries the pair now
-        // (cityGuards.js:586-591), so this seam ROUTES by pool exactly
+        // (cityGuards.js:587-592), so this seam ROUTES by pool exactly
         // as `dealDamage` above it does, instead of excluding the
         // guards - a zero-damage shaft into a pacified watchman has to
         // reach the same door the zero-damage SWING already reaches
-        // (cityGuards.js:1078). DFU makes no pool distinction:
+        // (cityGuards.js:1079). DFU makes no pool distinction:
         // AssignBowDamageToTarget's player arm (DaggerfallMissile.cs
         // :660-688) calls WeaponDamage, so :630 runs for the shaft as
         // for the swing.
@@ -11566,9 +11602,15 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
             wagon: pickActivatableHit(cam.pos, _hd, mwViewWagonTargets(RAY_DISTANCE), collider),
             camp: pickActivatableHit(cam.pos, _hd, camps.targets(), collider),
             water: pickActivatableHit(cam.pos, _hd, springTargets(), collider),
+            // WORLD-HOVER H2: the two the PRESS races in its own arms
+            // above raceActivation - a live foe and a walking
+            // townsperson. Without them the plaque named the shopfront
+            // behind whoever was standing in front of it.
+            foe: pickActivatableHit(cam.pos, _hd, [...exteriorFoes.liveTargets(), ...cityGuards.liveTargets()], collider),
+            person: _hoverPersonPick(cam.pos, _hd),
           }),
           name: (key) => modes.exteriorHoverName(key, { eye: cam.pos, dir: _hd, names: _hoverNamers }),
-          contents: (key) => (typeof key === 'string' && key.startsWith('droppedLoot:') ? (droppedLoot.contents?.(key) ?? null) : null),
+          contents: _hoverContents,
         });
       }
       drawHud(renderer, canvas, hudArt, playerEntity,

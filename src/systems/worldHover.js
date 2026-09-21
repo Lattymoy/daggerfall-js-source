@@ -116,6 +116,36 @@ export function composeNamer(namers) {
 }
 
 /**
+ * THE SAME LADDER, FOR WHAT A CONTAINER HOLDS.
+ *
+ * AUDIT-WH H3. An itemised key draws a LIST, and the list comes from
+ * whichever of the host's pools stood that key - the dropped piles,
+ * the encounter pool's bodies, the watch's. Both above-ground hosts
+ * wrote that routing out as one hand-built ternary that knew about
+ * `droppedLoot:` alone, so the two corpse prefixes - itemised since the
+ * first slice - fell through to null and every body outdoors read
+ * "Empty" over a full pack.
+ *
+ * It is `composeNamer`'s law with a different predicate: FIRST NON-NULL
+ * WINS, insertion order is priority. An EMPTY body answers `[]` and
+ * stops the walk (a body that holds nothing is an answer); one this
+ * reader does not stand answers null and the next reader is asked.
+ *
+ * The key is always a string here - `resolveHover` only reaches for
+ * contents behind `keyItemises`, which refuses anything else - so a
+ * reader may use `startsWith` without the guard a NAMER needs.
+ */
+export function composeContents(readers) {
+  return (key) => {
+    for (const fn of readers ?? []) {
+      const r = fn?.(key);
+      if (r) return r;
+    }
+    return null;
+  };
+}
+
+/**
  * THE FRAME. One record, and the draw paints exactly what is in it.
  *
  *   key    - the winning pick's key; the identity the guard compares

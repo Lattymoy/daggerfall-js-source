@@ -1166,8 +1166,13 @@ test('PX21c / WORLD-HOVER: the plaque names a pile without opening it, on the ta
   assert.ok(frame.length > 0 && frame.length < 12000, 'the window is the head of drawFoes, not the whole function');
   assert.doesNotMatch(frame, /_hoverAt/, 'the 10Hz clock is GONE, not left ticking beside the per-frame call');
   assert.match(frame, /worldHoverFrame\(\{/, 'one seam, called where the host already draws');
-  assert.match(frame, /targets: api\.dungeonActivationTargets,/,
+  // AUDIT-WH H2 wrapped the thunk in a `pick` so the LIVE bodies can be
+  // raced beside the list, exactly as the press races them in an arm of
+  // its own - but it is still that one list, built once, inside the call.
+  assert.match(frame, /ground: pickActivatableHit\(eye, d, api\.dungeonActivationTargets\(\), collider\),/,
     'a THUNK, and the SAME list the press races - one construction seam, so the plaque cannot name what the button ignores');
+  assert.match(frame, /foe: pickActivatableHit\(eye, d, liveFoeTargets\(foes, 'mobileFoe'\), collider\),/,
+    '...and the live foes beside it, through the one precedence both readers share');
   assert.match(frame, /contents: api\.lootContents,/);
   assert.match(hov, /const hit = pick \? pick\(\) : pickActivatableHit\(eye, dir, targets\?\.\(\) \?\? \[\], collider\);/,
     'the take\'s own pick - or, where a host races seven sets rather than one, that host\'s own raced winner');

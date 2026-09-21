@@ -200,19 +200,80 @@ export function pickFoeHit(eye, dir, foes, collider, distance = DEFAULT_ACTIVATI
   return pickFoeAlong(eye, dir, foes, collider, distance, () => true);
 }
 
+/** The volume `pickFoeAlong` strikes: the foe's controller, at its
+ *  feet. ONE expression, because `liveFoeTargets` below hands the same
+ *  box to `pickActivatableHit` and the two sweeps must agree on what
+ *  the ray hit. */
+export function foeAabb(f) {
+  const feet = f?.ai?.feet;
+  if (!feet) return null;
+  const h = f.ai?.height ?? 1.8;
+  const half = 0.45;
+  return {
+    min: [feet[0] - half, feet[1], feet[2] - half],
+    max: [feet[0] + half, feet[1] + h, feet[2] + half],
+  };
+}
+
+/**
+ * WORLD-HOVER (AUDIT-WH H2): THE LIVE FOES, as activation targets.
+ *
+ * Every host's PRESS races a living enemy - `tryMobileEnemyActivate`,
+ * which sweeps the pool itself (PlayerActivate.ActivateMobileEnemy,
+ * :800-841) - and no host's PLAQUE did, so a foe standing between the
+ * crosshair and a shopfront lost the readout's race outright and the
+ * door behind it drew its name. This is the family, in the shape the
+ * hover's one seam already takes, so each host stands it beside the
+ * rest rather than sweeping a second time.
+ *
+ * The RAY's distance with the MOD's own 6.4 beside it: World Tooltips
+ * names a live entity only inside MobileNPCActivationDistance
+ * (.cs:297-313) while the press has no distance gate on the Info arm
+ * at all, and AUDIT 65 MC-2's law is that a family reaches for the ray
+ * and carries its handler's reach.
+ *
+ * `idOf` is the pool's own stable handle - the same one its corpse
+ * keys use - so a namer can find the foe again after the list has been
+ * spliced (AUDIT 39).
+ */
+export function liveFoeTargets(foes, keyPrefix, { idOf = null } = {}) {
+  const targets = [];
+  let i = -1;
+  for (const f of foes ?? []) {
+    i += 1;
+    if (!f || f.dead || !f.entity) continue;
+    const aabb = foeAabb(f);
+    if (!aabb) continue;
+    targets.push({
+      key: `${keyPrefix}:${idOf ? idOf(f) : i}`,
+      aabb,
+      distance: RAY_DISTANCE,
+      reach: MOBILE_NPC_ACTIVATION_DISTANCE,
+    });
+  }
+  return targets;
+}
+
+/** WHICH live foe a key names - `corpseEntryFor`'s twin, over the same
+ *  list and the same identity `liveFoeTargets` minted from. */
+export function liveFoeFor(foes, key, keyPrefix, { idOf = null } = {}) {
+  if (typeof key !== 'string' || !key.startsWith(`${keyPrefix}:`)) return null;
+  let i = -1;
+  for (const f of foes ?? []) {
+    i += 1;
+    if (!f || f.dead || !f.entity) continue;
+    if (`${keyPrefix}:${idOf ? idOf(f) : i}` === key) return f;
+  }
+  return null;
+}
+
 function pickFoeAlong(eye, dir, foes, collider, distance, accept) {
   let best = null;
   let bestD = Infinity;
   for (const f of foes ?? []) {
     if (!f || f.dead || !accept(f)) continue;
-    const feet = f.ai?.feet;
-    if (!feet) continue;
-    const h = f.ai?.height ?? 1.8;
-    const half = 0.45;
-    const aabb = {
-      min: [feet[0] - half, feet[1], feet[2] - half],
-      max: [feet[0] + half, feet[1] + h, feet[2] + half],
-    };
+    const aabb = foeAabb(f);
+    if (!aabb) continue;
     const d = rayAabb(eye, dir, aabb);
     if (d === null || d > distance || d >= bestD) continue;
     const wall = collider?.raycast?.(eye, dir, d) ?? Infinity;
@@ -259,7 +320,7 @@ export function pickActivatable(eye, dir, targets, collider) {
  * `distance` is widened to RAY_DISTANCE so it can WIN the pick
  * therefore carries its real `reach` beside it, and the ladder speaks
  * the refusal when the winner came back out of reach. This is the
- * bulletin board's idiom (scenes/worldModes.js:4659-4669) given a
+ * bulletin board's idiom (scenes/worldModes.js:4686-4696) given a
  * field, not a second pick: one ray, one winner, the gate downstream.
  * Targets that were never widened answer `reach === distance`, which
  * the pre-gate has already enforced, so they can never refuse.

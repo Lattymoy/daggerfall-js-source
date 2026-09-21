@@ -46,11 +46,11 @@ import { onMonsterHit, SPIDER_TOUCH_SPELL_INDEX } from '../systems/diseases.js';
 import { MINUTES_PER_DAY } from '../systems/worldTick.js';
 import { FOES_MS } from '../net/online.js';   // AUDIT ALL B2: the watchman moved since the frame the striker swung at
 import { validFoeRecord, CELL_PUPPETS_MAX, CELL_WATCH_PUPPETS_MAX, CELL_FRAME_RECORDS_MAX, POSE_BOUND, POSE_Y_BOUND, tokenGate, FOE_HEALTH_MAX, hitPoisonOf, HIT_ARROWS_MAX } from '../net/wire.js';
-import { CORPSE_ACTIVATION_DISTANCE } from '../player/activate.js';
+import { CORPSE_ACTIVATION_DISTANCE, liveFoeTargets, liveFoeFor } from '../player/activate.js';   // WORLD-HOVER H2: the LIVE bodies, in the shape the hover's one seam takes
 import { WEAPON_REACH } from '../combat/playerWeapon.js';   // AUDIT WATCH1 B2: a peer's melee blow on my watch lands from the player's own reach, no farther   // AUDIT WORLD6b-iii(c) A1/C7: the owner reads the taker's reach
 import { createWeapon, bowDamageArrow } from '../combat/enemyEquipment.js';   // MAC-N1: the recovered shaft is CreateWeapon's arrow, value and all   // AUDIT WORLD6b-ii B2: a puppet's weapon is its owner's word, rebuilt from the descriptor   // AUDIT WORLD6b B3/C2: a cell's record projected and its puppets capped, the wire's law
-import { mintCorpseMarker, playBodyFall, playRareDrop, corpseLootTargets, corpseEntryFor, takeCorpseLoot, openCorpseLoot, sayEnemyDied, raiseEnemyDeath } from './corpseMarker.js';
-import { corpseName } from '../systems/worldTooltips.js';   // WORLD-HOVER: "<who> (dead)", the mod's own word (.cs:525)
+import { mintCorpseMarker, playBodyFall, playRareDrop, corpseLootTargets, corpseEntryFor, corpseContents, takeCorpseLoot, openCorpseLoot, sayEnemyDied, raiseEnemyDeath } from './corpseMarker.js';
+import { corpseName, mobileEntityName } from '../systems/worldTooltips.js';   // WORLD-HOVER: "<who> (dead)", the mod's own word (.cs:525); H2: and a LIVE one's, when it is not hostile (.cs:304-313)
 import { enemyDisplayName } from '../characters/enemyBasics.js';   // GetLocalizedEnemyName, the index law in one place
 import { bloodCentre } from './hitEffects.js';   // AUDIT 24 (wave 39): EnemyBlood.ShowBloodSplash
 import { bloodHit } from '../combat/bloodDecals.js';   // BLOOD1b: the blow, in the shape the mark's ladder reads
@@ -1130,25 +1130,81 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
   // The watch has had this since G3; it is the same shape, and now the
   // same code (PlayerActivate's CorpseMarker arm lives in
   // corpseMarker.js for both).
+  /** WHICH OF THIS POOL'S ENTRIES IS A BODY, AND WHICH BODY IT IS -
+   *  once. AUDIT-WH H3: the targets, the namer and the contents all
+   *  walk this list under the same two rules, and the bag was written
+   *  out at each of them. Three copies of an identity law is three
+   *  chances for the plaque to name or list a body the press cannot
+   *  open - AUDIT 39's own failure (an index where a stable id
+   *  belongs), one seam along. */
+  /** WHICH ENTRY IS WHICH - alive or dead, one identity. AUDIT WORLD6b
+   *  B15: stable across the puppets' splices, where an index is not
+   *  (AUDIT 39's law, the watch's shape). */
+  const idOf = (f) => (f.uid ??= _nextUid++);
+  const corpseLens = {
+    isCorpse: (f) => !!f.corpse && !!f.entity && (!f.puppet || (f._pup?.o | 0) > 0),   // WORLD6b-iii(c): a puppet's body is a target while its owner's word says it holds something
+    idOf,
+    // the GROUND position the marker landed on, not where the foe
+    // died - a flyer's body is metres below its last feet.
+    feetOf: (f) => f.corpseMarker?.pos ?? f.ai?.feet ?? null,
+  };
   function lootTargets() {
-    return corpseLootTargets(foes, 'foeCorpse', {
-      isCorpse: (f) => !!f.corpse && !!f.entity && (!f.puppet || (f._pup?.o | 0) > 0),   // WORLD6b-iii(c): a puppet's body is a target while its owner's word says it holds something
-      idOf: (f) => (f.uid ??= _nextUid++),   // AUDIT WORLD6b B15: stable across the puppets' splices, where an index is not (AUDIT 39's law, the watch's shape)
-      // the GROUND position the marker landed on, not where the foe
-      // died - a flyer's body is metres below its last feet.
-      feetOf: (f) => f.corpseMarker?.pos ?? f.ai?.feet ?? null,
-    });
+    return corpseLootTargets(foes, 'foeCorpse', corpseLens);
   }
   /** WORLD-HOVER: what the plaque calls one of these bodies, off the
    *  SAME entry list and the same key vocabulary the targets are minted
    *  from - a namer written beside the producer cannot name a body the
    *  producer did not stand. */
   const hoverName = (key) => {
-    const e = corpseEntryFor(foes, key, 'foeCorpse', {
-      isCorpse: (f) => !!f.corpse && !!f.entity && (!f.puppet || (f._pup?.o | 0) > 0),
-      idOf: (f) => (f.uid ??= _nextUid++),
-    });
+    const e = corpseEntryFor(foes, key, 'foeCorpse', corpseLens);
     return e ? { title: corpseName(enemyDisplayName(e.mobileType)) } : null;   // .cs:525
+  };
+  /** ...and what it HOLDS (AUDIT-WH H3). `foeCorpse:` itemises, so the
+   *  plaque draws a LIST for it; without this the host's `contents`
+   *  answered null and every body in the wilderness read "Empty" over a
+   *  full pack. A PUPPET's pile is its owner's and is not ours to
+   *  publish - the take asks the owner for it (see takeLoot) - so it
+   *  answers nothing and the plaque falls back to the name alone. */
+  const hoverContents = (key) => {
+    const e = corpseEntryFor(foes, key, 'foeCorpse', corpseLens);
+    return e && !e.puppet ? corpseContents(e) : null;
+  };
+  /** WORLD-HOVER (AUDIT-WH H2): THE LIVE BODIES, as ray targets.
+   *
+   *  The mod names a living entity inside MobileNPCActivationDistance
+   *  (.cs:304-313) and the plaque had no sight of one at all: a foe
+   *  standing between the crosshair and a shopfront lost the plaque's
+   *  race outright and the door behind it drew its name. The press had
+   *  always raced them (`tryMobileEnemyActivate`, its own AABB sweep),
+   *  which is precisely the disagreement the slice exists to prevent.
+   *
+   *  Minted here rather than swept in the host, for the reason the
+   *  corpses are: the key vocabulary is the POOL's, so the namer below
+   *  can answer off the same list and cannot name a foe this pool did
+   *  not stand. The AABB is `pickFoeAlong`'s own (half 0.45, the ai's
+   *  height) so the two sweeps agree on what the ray strikes, and the
+   *  RAY's distance with the MOD's reach beside it is AUDIT 65 MC-2's
+   *  law - the band's 6.4 is a gate inside the handler, not a shorter
+   *  ray.
+   */
+  function liveTargets() {
+    return liveFoeTargets(foes, 'mobileFoe', { idOf });
+  }
+  /** ...and what a live one is called (.cs:308-311). `Entity.Name` is
+   *  the port's `enemyDisplayName`, the same word the body wears when
+   *  it falls, and the HOSTILE gate is the mod's - a motor that says
+   *  hostile answers nothing, so the plaque stays silent over the
+   *  thing trying to kill you. A foe with no motor IS named (the
+   *  condition is `!enemyMotor || !IsHostile`), which here is a
+   *  headless stub standing without an `ai`. */
+  const liveHoverName = (key) => {
+    // AUDIT-WH C1: `liveFoeFor` refuses a non-string key itself - the
+    // host's namer ladder is handed EVERY key the ray can win, and the
+    // exterior door's is a bare NUMBER.
+    const f = liveFoeFor(foes, key, 'mobileFoe', { idOf });
+    if (!f) return null;
+    const t = mobileEntityName(enemyDisplayName(f.mobileType), { hostile: !!f.ai?.isHostile });
+    return t ? { title: t } : null;
   };
   // MAC-E: and the general arm is the WINDOW now (PlayerActivate.cs:957),
   // not a bulk transfer - `openWindow` is the host's own inventory door.
@@ -1808,7 +1864,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     _pupPending.clear();
   }
 
-  return { foes, spawnFoe, damageFoe, handleAttackFromPlayer, attackFromPlayer, update, resolvePlayerHit, poisonFoe, batches, offsetAll, activeCount, lootTargets, hoverName, takeLoot, snapshotWorld, restoreWorld, destroy,
+  return { foes, spawnFoe, damageFoe, handleAttackFromPlayer, attackFromPlayer, update, resolvePlayerHit, poisonFoe, batches, offsetAll, activeCount, lootTargets, hoverName, hoverContents, liveTargets, liveHoverName, takeLoot, snapshotWorld, restoreWorld, destroy,
     /** AUDIT 39: CleanupUntrackedObjects' enemy half (StreamingWorld.cs
      *  :1624-1635), which a teleport reaches too through
      *  ClearStreamingWorld -> CollectLooseObjects(true) (:993-998) -

@@ -596,7 +596,11 @@ test('AUDIT 39r: the three re-read Testing.md rows agree with the suites they de
   assert.ok(!testing.includes('the `guards` array stays index-stable because lootTargets keys corpses by index'),
     'the lifetimes row is teaching index-stability again');
   const cg = read('src/scenes/cityGuards.js');
-  assert.match(cg, /idOf: \(g\) => g\.id,/);
+  // AUDIT-WH H2 moved the spelling to ONE const, read by the corpse
+  // lens and by the live-foe producer the plaque races. The law the
+  // row states - a minted id, never the array index - is unchanged.
+  assert.match(cg, /const idOf = \(g\) => g\.id;/);
+  assert.match(cg, /\n    idOf,\n/);
   assert.match(cg, /guards\.splice\(i, 1\);/);
 
   // ImprovesTalents(0) writes the enchantment fold both readers read

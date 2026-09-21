@@ -4,111 +4,143 @@
     "file": "src/systems/survival/camp.js",
     "old": "  if (kind === CAMP_KIND.Tent && place.insideDungeon) return { ok: false, text: CAMP_TEXT.noTentBelow };",
     "new": "",
-    "tests": ["test/surv3_camps.test.js"]
+    "tests": [
+      "test/surv3_camps.test.js"
+    ]
   },
   {
     "name": "SURV3-a-kit-fire-can-be-stoked",
     "file": "src/systems/survival/camp.js",
     "old": "  if (!camp || camp.kind !== CAMP_KIND.Tent) return false;",
     "new": "  if (!camp) return false;",
-    "tests": ["test/surv3_camps.test.js"]
+    "tests": [
+      "test/surv3_camps.test.js"
+    ]
   },
   {
     "name": "SURV3-a-cold-tent-is-swept-like-a-dead-fire",
     "file": "src/systems/survival/camp.js",
     "old": "export const campExpired = (camp, now) => camp?.kind === CAMP_KIND.Fire && !fireLit(camp, now);",
     "new": "export const campExpired = (camp, now) => !fireLit(camp, now);",
-    "tests": ["test/surv3_camps.test.js"]
+    "tests": [
+      "test/surv3_camps.test.js"
+    ]
   },
   {
     "name": "SURV3-the-last-light-leaves-the-kit-in-the-pack",
     "file": "src/systems/survival/camp.js",
     "old": "    spent = true;\n    const i = Array.isArray(list) ? list.indexOf(item) : -1;\n    if (i >= 0) list.splice(i, 1);",
     "new": "    spent = true;",
-    "tests": ["test/surv3_camps.test.js"]
+    "tests": [
+      "test/surv3_camps.test.js"
+    ]
   },
   {
     "name": "SURV3-cooking-keeps-the-stage",
     "file": "src/systems/survival/camp.js",
     "old": "  const cooked = createSurvivalItem(f.cooks, { foodStage: Math.max(0, foodStage(item) - 1) });",
     "new": "  const cooked = createSurvivalItem(f.cooks, { foodStage: foodStage(item) });",
-    "tests": ["test/surv3_camps.test.js"]
+    "tests": [
+      "test/surv3_camps.test.js"
+    ]
   },
   {
     "name": "SURV3-a-skillet-is-no-faster",
     "file": "src/systems/survival/camp.js",
     "old": "minutes: skillet ? SKILLET_COOK_MINUTES : COOK_MINUTES,",
     "new": "minutes: COOK_MINUTES,",
-    "tests": ["test/surv3_camps.test.js"]
+    "tests": [
+      "test/surv3_camps.test.js"
+    ]
   },
   {
     "name": "SURV3-a-cold-fire-warms",
     "file": "src/systems/survival/camp.js",
     "old": "    if (!fireLit(c, now)) continue;\n    const d = Math.hypot(",
     "new": "    const d = Math.hypot(",
-    "tests": ["test/surv3_camps.test.js"]
+    "tests": [
+      "test/surv3_camps.test.js"
+    ]
   },
   {
     "name": "SURV3-the-wire-takes-a-camp-anywhere",
     "file": "src/systems/survival/camp.js",
     "old": "  if (Math.abs(r.p[0]) > POSE_BOUND || Math.abs(r.p[2]) > POSE_BOUND || Math.abs(r.p[1]) > POSE_Y_BOUND) return null;",
     "new": "",
-    "tests": ["test/surv3_camps.test.js"]
+    "tests": [
+      "test/surv3_camps.test.js"
+    ]
   },
   {
     "name": "SURV3-an-owners-word-keeps-their-old-camps",
     "file": "src/systems/survival/camp.js",
     "old": "  const kept = (camps ?? []).filter((c) => c.owner !== owner);",
     "new": "  const kept = [...(camps ?? [])];",
-    "tests": ["test/surv3_camps.test.js"]
+    "tests": [
+      "test/surv3_camps.test.js"
+    ]
   },
   {
     "name": "SURV3-anyone-may-pack-your-camp",
     "file": "src/systems/survival/camp.js",
     "old": "  if (mine) rows.push({ key: 'pack',",
     "new": "  rows.push({ key: 'pack',",
-    "tests": ["test/surv3_camps.test.js"]
+    "tests": [
+      "test/surv3_camps.test.js"
+    ]
   },
   {
     "name": "SURV3-a-dead-kit-fire-stands-for-ever",
     "file": "src/scenes/camps.js",
     "old": "      if (campExpired(c.rec, t)) { drop(c); if (c.owner == null) onChanged?.(); continue; }",
     "new": "",
-    "tests": ["test/surv3_camps.test.js"]
+    "tests": [
+      "test/surv3_camps.test.js"
+    ]
   },
   {
     "name": "SURV3-the-pixel-sweep-leaves-the-camp",
     "file": "src/scenes/camps.js",
     "old": "    for (let i = camps.length - 1; i >= 0; i--) if (camps[i].pixelKey === key) { unmount(camps[i]); camps.splice(i, 1); }",
     "new": "",
-    "tests": ["test/surv3_camps.test.js"]
+    "tests": [
+      "test/surv3_camps.test.js"
+    ]
   },
   {
     "name": "SURV3-my-own-id-is-a-peers-word",
     "file": "src/scenes/camps.js",
     "old": "    if (typeof owner !== 'string' || !owner || owner === (selfId?.() ?? null)) return false;",
     "new": "    if (typeof owner !== 'string' || !owner) return false;",
-    "tests": ["test/surv3_camps.test.js"]
+    "tests": [
+      "test/surv3_camps.test.js"
+    ]
   },
   {
     "name": "SURV3-a-camp-beats-the-door",
     "file": "src/player/activationRace.js",
-    "old": "  const campWins = !!camp && campD <= Math.min(lootD, dropD, torchD, wagonD, waterD, doorDistance);",
-    "new": "  const campWins = !!camp && campD <= Math.min(lootD, dropD, torchD, wagonD, waterD);",
-    "tests": ["test/surv3_camps.test.js"]
+    "old": "  const ground = Number.isFinite(doorDistance) ? { key: GROUND_KEY, distance: doorDistance } : null;",
+    "new": "  const ground = null;",
+    "tests": [
+      "test/surv3_camps.test.js"
+    ]
   },
   {
     "name": "SURV3-the-scene-cache-drops-the-camps",
     "file": "src/systems/sceneCache.js",
     "old": "    camps: camps.map((c) => ({ ...c, pos: [...(c.pos ?? [])] })),",
     "new": "    camps: [],",
-    "tests": ["test/surv3_camps.test.js"]
+    "tests": [
+      "test/surv3_camps.test.js"
+    ]
   },
   {
     "name": "SURV3-the-classic-pack-keeps-the-window-open",
     "file": "src/ui/nativeInventory.js",
     "old": "      if (this.hooks.placeCamp) { this._closeSilently(); this.hooks.placeCamp(r.item); }",
     "new": "      if (this.hooks.placeCamp) { this.hooks.placeCamp(r.item); }",
-    "tests": ["test/surv3_camps.test.js"]
+    "tests": [
+      "test/surv3_camps.test.js"
+    ]
   }
 ]

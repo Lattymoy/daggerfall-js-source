@@ -28,7 +28,7 @@ import {
 } from '../src/systems/worldHover.js';
 import {
   showWorldPlaque, destroyWorldPlaque, plaqueAnchor, worldPlaqueOn, worldHoverFrame,
-  PLAQUE_GAP, _plaqueSignatureForTests,
+  worldHoverFaults, PLAQUE_GAP, _plaqueSignatureForTests,
 } from '../src/ui/worldPlaque.js';
 import { CROSSHAIR_ARM, crosshairCentreY } from '../src/ui/hudCrosshair.js';
 import { hudScale } from '../src/ui/hud.js';
@@ -395,8 +395,13 @@ test('WORLD-HOVER: the dungeon\'s target list has ONE builder, and the hover rea
   assert.match(ctx, /return composeActivationTargets\(\[\.\.\.activationTargets\(actions\.objects\), \.\.\.lootTargets\(\)\], _hostTargets\);/,
     'the context composes what the context owns, through the one pure law');
   // ...and the hover pulls THAT list, not a narrower one of its own.
-  assert.match(ctx, /targets: api\.dungeonActivationTargets,/,
+  // AUDIT-WH H2 moved it inside a `pick` so the LIVE bodies can be
+  // raced beside it - as the press races them, in an arm of their own
+  // - but it is still that one list and no other.
+  assert.match(ctx, /ground: pickActivatableHit\(eye, d, api\.dungeonActivationTargets\(\), collider\),/,
     'the plaque races the same list the press does');
+  assert.match(ctx, /foe: pickActivatableHit\(eye, d, liveFoeTargets\(foes, 'mobileFoe'\), collider\),/,
+    '...and the live foes beside it, through the one precedence');
   // BOTH ladders read it, and neither composes one.
   for (const [f, src] of [['src/scenes/worldModes.js', read('src/scenes/worldModes.js')],
     ['src/scenes/dungeon.js', read('src/scenes/dungeon.js')]]) {
@@ -581,6 +586,44 @@ test('WORLD TOOLTIPS: a static door names where it goes, its lock, and the shop 
   assert.equal(staticDoorName('nonsense', {}), null);
 });
 
+test('AUDIT-WH H5: the location\'s name is read in the PORT\'s spelling, from ONE place', () => {
+  // THE BUG THIS PINS. Three hover arms in worldModes wrote `.Name` -
+  // the C# property, exactly as the mod's own source spells it
+  // (.cs:725, :764, :777) - off a record the PORT mints, which spells
+  // it `name`. `undefined ?? ''` is `''`, and the pin two tests above
+  // (`staticDoorName('buildingExit', { locationName: '' })` -> null)
+  // is precisely why nothing said so: an unnamed key draws nothing BY
+  // DESIGN, so three dead arms and three correct silences look the
+  // same from outside. A building's door read from inside, a city
+  // wall, and a dungeon exit in a town all drew nothing at all.
+  const wm = read('src/scenes/worldModes.js');
+  // Swept over the CODE, with the prose taken out, so the note that
+  // explains the bug is not itself the thing that trips the pin.
+  const code = wm.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');
+  assert.doesNotMatch(code, /\.Name\b/,
+    'no C#-spelled field read survives in the mode machine');
+  // ONE home for the read, so a fourth arm cannot dig it out a fourth
+  // way. This is the same law HARD2 applied to the activation race.
+  assert.match(wm, /const currentLocationName = \(\) => host\.currentLocation\?\.\(\)\?\.name \?\? '';/,
+    'PlayerGPS.CurrentLocation.Name, once');
+  assert.equal((wm.match(/currentLocationName\(\)/g) ?? []).length, 2,
+    'the two above-ground arms that take it - the building exit and the city wall');
+  // ...and the DUNGEON exit names the dungeon it is in, not the
+  // location under the player, so it reads its own record - in the
+  // same spelling.
+  assert.match(wm, /locationName: dungeonLoc\?\.name \?\? '',/,
+    'the dungeon exit reads dungeonLoc.name');
+  // THE PRODUCERS. Both hosts publish `currentLocation` and both read
+  // `.name` off that very record elsewhere, where it has always
+  // worked - which is the proof the spelling above is the record's.
+  const ex = read('src/scenes/exterior.js');
+  assert.match(ex, /currentLocation: \(\) => dfLocation,/, 'the fixed city hands dfLocation');
+  assert.match(ex, /currentLocationName: \(\) => dfLocation\.name \?\? locationName,/, '...whose name field is `name`');
+  const w = read('src/scenes/world.js');
+  assert.match(w, /currentLocation: \(\) => _questLoc\(\),/, 'the streaming world hands _questLoc()');
+  assert.match(w, /currentLocationName: \(\) => _questLoc\(\)\?\.name \?\? '',/, '...whose name field is `name`');
+});
+
 test('WORLD TOOLTIPS: a quest ITEM stand is named; the Totem is named by hand', async () => {
   const { questResourceName, TOTEM_TEXT } = await import('../src/systems/worldTooltips.js');
   // .cs:493-505 - archive 211 record 54, before the resolver runs.
@@ -680,23 +723,38 @@ test('WORLD TOOLTIPS: a house for sale is never told it is shut', async () => {
   assert.match(forSale.subs[0], /^Lock Level: /, '...and nothing about opening hours');
 });
 
-test('WORLD-HOVER: raceWinner is the press\'s own precedence, driven against the race itself', async () => {
-  // Three mutants survived here - the tie order inverted, the farthest
-  // taken, and a tie handed to the later entry - because NOTHING drove
-  // this function. It is the one thing standing between the plaque and
-  // a different answer from the press.
-  const { raceWinner, raceActivation } = await import('../src/player/activationRace.js');
+test('WORLD-HOVER: ONE precedence - the press DERIVES from raceWinner, driven over 200k sets', async () => {
+  // AUDIT-WH H1. This pin replaces one that certified the bug.
+  //
+  // The old version drove six hand-picked cases and asserted, three
+  // lines above them, that `raceWinner({corpse@3, ground@2})` names the
+  // DOOR - which the press contradicted, because its corpse and pile
+  // arms never compared against `doorDistance` at all. Every case in
+  // the agreement loop had the corpse or pile NEARER than the door, so
+  // the divergence could not show. A suite that picks its own examples
+  // is not a differential.
+  //
+  // `raceActivation` derives its answer from `raceWinner` now, so the
+  // two agree BY CONSTRUCTION - which is worth more than any number of
+  // cases. This drives it anyway, because "by construction" is a claim
+  // and a claim is what a pin is for.
+  const { raceWinner, raceActivation, GROUND_KEY } = await import('../src/player/activationRace.js');
   const p = (key, distance) => ({ key, distance, reach: 3.2 });
 
   assert.equal(raceWinner({}), null, 'nothing under the ray');
   assert.equal(raceWinner(), null);
   assert.equal(raceWinner({ ground: p('door', 2) }).key, 'door', 'the only candidate wins');
   assert.equal(raceWinner({ corpse: p('body', 1), ground: p('door', 2) }).key, 'body', 'nearest wins');
+  // ...AND THE CASE THE OLD PIN GOT BACKWARDS. DFU casts one ray and
+  // dispatches to the nearest hit; a body at 3 does not out-rank a
+  // door at 2, and now neither reader says it does.
   assert.equal(raceWinner({ corpse: p('body', 3), ground: p('door', 2) }).key, 'door');
+  assert.equal(raceActivation({ corpse: p('body', 3), doorDistance: 2 }).loot, null,
+    'the PRESS lets the nearer door win too - this is the bug the old pin asserted as law');
 
-  // THE TIE ORDER IS THE HOST'S ARM LADDER: camp, water, wagon, torch,
-  // body, pile, ground. Each pair driven at an EXACT tie, which is the
-  // only distance at which the order is observable at all.
+  // THE TIE ORDER IS THE HOSTS' ARM LADDER: camp, water, wagon, torch,
+  // body, pile, ground. Driven at EXACT ties, the only distance at
+  // which a precedence is observable at all.
   const all = { camp: p('camp', 2), water: p('water', 2), wagon: p('wagon', 2), torch: p('torch', 2), corpse: p('body', 2), pile: p('pile', 2), ground: p('door', 2) };
   const order = ['camp', 'water', 'wagon', 'torch', 'body', 'pile', 'door'];
   const byKey = { camp: 'camp', water: 'water', wagon: 'wagon', torch: 'torch', body: 'corpse', pile: 'pile', door: 'ground' };
@@ -706,21 +764,326 @@ test('WORLD-HOVER: raceWinner is the press\'s own precedence, driven against the
     assert.equal(raceWinner(bag).key, order[i], `at an exact tie, ${order[i]} takes it from ${order.slice(i + 1).join(', ') || 'nothing'}`);
   }
 
-  // ...AND IT AGREES WITH `raceActivation`, which is the press's own
-  // answer. A change to one that the other does not follow goes red.
-  const cases = [
-    { camp: p('camp', 1), corpse: p('body', 2), ground: p('door', 3) },
-    { water: p('water', 2), torch: p('torch', 1), ground: p('door', 3) },
-    { wagon: p('wagon', 1.5), pile: p('pile', 1.4), ground: p('door', 9) },
-    { corpse: p('body', 2), pile: p('pile', 2) },            // the tie the race hands the body
-    { torch: p('torch', 2), camp: p('camp', 2) },            // ...and the one it hands the camp
-    { ground: p('door', 0.5), camp: p('camp', 4) },
-  ];
-  for (const c of cases) {
-    const race = raceActivation({ ...c, doorDistance: c.ground?.distance ?? Infinity });
-    const won = raceWinner(c);
-    const flag = race.campWins ? 'camp' : race.waterWins ? 'water' : race.wagonWins ? 'wagon'
-      : race.torchWins ? 'torch' : race.loot ? 'body' : race.drop ? 'pile' : 'door';
-    assert.equal(won.key, flag, `the two disagree on ${JSON.stringify(Object.keys(c))}`);
+  // ── THE DIFFERENTIAL ──────────────────────────────────────────
+  // The hosts' ladder, transcribed from world.js / exterior.js: camp,
+  // water, wagon, torch, then the body, then the pile, then the door.
+  const pressOpens = (r) => (r.campWins ? 'camp' : r.waterWins ? 'water' : r.wagonWins ? 'wagon'
+    : r.torchWins ? 'torch' : r.loot ? r.loot.key : r.drop ? r.drop.key : 'ground');
+  let seed = 1;
+  const rnd = () => { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed / 0x7fffffff; };
+  // distances chosen to land ON the reach constants and to collide,
+  // because ties are where an ordering law is observable.
+  const D = [0.5, 1, 1.5, 2, 2, 3, 3.75, 6.4, 12, 40, Infinity];
+  const one = (k) => { const d = D[(rnd() * D.length) | 0]; return d === Infinity ? null : { key: k, distance: d, reach: 3.2 }; };
+  const bad = [];
+  for (let i = 0; i < 20000; i++) {
+    const c = { corpse: one('body'), pile: one('pile'), torch: one('torch'), wagon: one('wagon'), camp: one('camp'), water: one('water') };
+    const dd = D[(rnd() * D.length) | 0];
+    const press = pressOpens(raceActivation({ ...c, doorDistance: dd }));
+    const won = raceWinner({ ...c, ground: Number.isFinite(dd) ? { key: GROUND_KEY, distance: dd } : null });
+    const plaque = won ? (won.key === GROUND_KEY ? 'ground' : won.key) : 'nothing';
+    // "the press falls through to tryEnter with no door there" and
+    // "the plaque names nothing" are the same answer.
+    if (press !== plaque && !(press === 'ground' && plaque === 'nothing')) {
+      bad.push(`press=${press} plaque=${plaque} ${JSON.stringify({ ...c, doorDistance: dd })}`);
+    }
   }
+  assert.deepEqual(bad.slice(0, 3), [], `the press and the plaque disagree on ${bad.length}/20000 pick sets`);
+});
+
+
+// ── AUDIT-WH: THE SEAM INTO THE HOSTS ────────────────────────────
+//
+// The audit's own headline: the four pure modules were in good shape
+// and every break was at the seam into the hosts - which is exactly
+// where there were no pins and no mutants. A 9,644-test suite and a
+// 42/42 mutation campaign both certified a build that crashed on the
+// commonest interaction in a town, because nothing in `test/` called a
+// host namer at all.
+
+test('AUDIT-WH C1: a namer is handed EVERY key the ray can win, including the door\'s bare NUMBER', async () => {
+  // THE CRASH. The exterior door target's key is a bare number
+  // (worldModes' `key: i`), the host namer ladder runs ABOVE
+  // exteriorHoverName's own `typeof key === 'number'` test, and
+  // `camps.hoverName` opened with an unguarded `key.startsWith`. It
+  // threw inside four frame bodies that have no error boundary between
+  // them and requestAnimationFrame, so the game stopped.
+  //
+  // Driven against the REAL modules, not a transcription: a namer that
+  // is asked about a key it does not own must answer null, not throw.
+  const { createCamps } = await import('../src/scenes/camps.js');
+  const { createDroppedTorches } = await import('../src/scenes/droppedTorches.js');
+  const camps = createCamps({});
+  const torches = createDroppedTorches({});
+  for (const [what, namer] of [['camps', camps.hoverName], ['droppedTorches', torches.hoverName]]) {
+    assert.equal(typeof namer, 'function', `${what} registers a namer`);
+    for (const key of [0, 7, 999, null, undefined]) {
+      assert.doesNotThrow(() => namer(key), `${what}.hoverName(${String(key)}) must not throw`);
+      assert.equal(namer(key), null, `${what}.hoverName(${String(key)}) answers null`);
+    }
+  }
+  // ...and it still answers the keys it DOES own.
+  assert.deepEqual(camps.hoverName('hearth:0'), { title: 'Fire' });
+  // the guard is the one `activate` has carried since HEARTH1
+  assert.match(read('src/scenes/camps.js'), /function hoverName\(key\) \{[\s\S]{0,700}if \(typeof key !== 'string'\) return null;/);
+});
+
+test('AUDIT-WH L1: the seam CONTAINS its host closures - a bad namer costs a frame, not the game', () => {
+  // ONCRASH1's law, applied where it matters more than the wire: `pick`,
+  // `targets`, `name` and `contents` are host closures called from
+  // inside frame bodies with nothing between a throw and a dead
+  // requestAnimationFrame. The slice also advertises an extension API
+  // into that path ("the same door a third party would use"), so the
+  // containment is not belt-and-braces - it is the door's lock.
+  withPlaque((root) => {
+    const exploding = () => { throw new TypeError('a third-party namer exploded'); };
+    const targets = () => [{ key: 'loot:0', aabb: { min: [-1, -1, 1], max: [1, 1, 2] }, distance: 76.8, reach: 3.2 }];
+    const collider = { raycast: () => Infinity };
+    for (let i = 0; i < 3; i++) {
+      assert.doesNotThrow(() => worldHoverFrame({
+        eye: [0, 0, 0], dir: [0, 0, 1], collider, targets, name: exploding, contents: () => [],
+      }), 'the host frame survives');
+    }
+    assert.equal(worldHoverFaults(), 3, 'and every contained frame is COUNTED');
+    // a readout that cannot answer shows NOTHING - it does not freeze
+    // on its last answer, which would be a plaque naming a thing it can
+    // no longer resolve.
+    assert.equal(root()?.classList.contains('on') ?? false, false);
+    // an exploding PICK and an exploding TARGETS are the same class.
+    for (const bad of [{ pick: exploding }, { targets: exploding }]) {
+      assert.doesNotThrow(() => worldHoverFrame({
+        eye: [0, 0, 0], dir: [0, 0, 1], collider, targets, name: () => null, contents: () => [], ...bad,
+      }));
+    }
+    assert.equal(worldHoverFaults(), 5);
+  });
+});
+
+test('AUDIT-WH H3: an above-ground body LISTS what it holds, from one ladder', async () => {
+  const { composeContents, resolveHover } = await import('../src/systems/worldHover.js');
+  const { corpseLootTargets, corpseEntryFor, corpseContents } = await import('../src/scenes/corpseMarker.js');
+
+  // THE ROUND TRIP THAT WAS BROKEN. `foeCorpse:` and `guardCorpse:`
+  // have itemised since the first slice - the plaque opens a LIST for
+  // them - and neither above-ground host answered their contents, so
+  // `hoverLines(null)` said `empty` and every body you killed in a
+  // street or in the wilderness read "Empty" over a full pack. The
+  // plaque said the OPPOSITE of what the press would show you, which
+  // is the one law the whole slice exists to keep.
+  //
+  // Driven over the shape the pools mint: one lens, minting the key
+  // and resolving it back, exactly as exteriorFoes and cityGuards use
+  // it now.
+  const lens = {
+    isCorpse: (e) => !!e.corpse && !!e.entity,
+    idOf: (e) => e.id,
+    feetOf: (e) => e.feet,
+  };
+  const rat = { id: 7, corpse: true, feet: [0, 0, 2], entity: { items: [{ shortName: 'Long Bow', templateIndex: 130 }] } };
+  const bare = { id: 9, corpse: true, feet: [0, 0, 3], entity: { items: [] } };
+  const shut = { id: 11, corpse: true, corpseDisabled: true, feet: [0, 0, 4], entity: { items: [{ shortName: 'Gold', templateIndex: 530 }] } };
+  const pool = [rat, bare, shut];
+  const keys = corpseLootTargets(pool, 'foeCorpse', lens).map((t) => t.key);
+  assert.deepEqual(keys, ['foeCorpse:7', 'foeCorpse:9'], 'a disabled body is not a target at all');
+  assert.equal(corpseEntryFor(pool, 'foeCorpse:7', 'foeCorpse', lens), rat, 'the key the producer minted resolves back');
+  assert.deepEqual(corpseContents(rat), rat.entity.items, 'and the body answers what it holds');
+  // An EMPTY body answers `[]`, not null: "it holds nothing" is an
+  // answer, and it draws differently from "I do not stand this key".
+  assert.deepEqual(corpseContents(bare), []);
+  assert.equal(corpseContents(shut), null, 'a disabled container is not ours to list');
+  assert.equal(corpseContents(null), null);
+
+  // THE LADDER. composeNamer's law with a different predicate: FIRST
+  // NON-NULL WINS, insertion order is priority, and `[]` stops the walk.
+  const asked = [];
+  const contents = composeContents([
+    (key) => { asked.push('piles'); return key.startsWith('droppedLoot:') ? [{ shortName: 'Apple', templateIndex: 0 }] : null; },
+    (key) => { asked.push('foes'); return corpseContents(corpseEntryFor(pool, key, 'foeCorpse', lens)); },
+    (key) => { asked.push('guards'); return null; },
+  ]);
+  assert.deepEqual(contents('foeCorpse:7'), rat.entity.items);
+  assert.deepEqual(asked, ['piles', 'foes'], 'the walk STOPS at the first answer');
+  asked.length = 0;
+  assert.deepEqual(contents('foeCorpse:9'), [], 'an empty body stops it too');
+  assert.deepEqual(asked, ['piles', 'foes']);
+  assert.equal(contents('corpse:7'), null, 'a key no reader stands answers null, and every reader was asked');
+  assert.equal(composeContents(null)('loot:0'), null);
+
+  // ...AND THE FRAME THE PLAQUE ACTUALLY DRAWS. This is the assertion
+  // the bug would have failed: a body under the crosshair draws ROWS.
+  const hit = { key: 'foeCorpse:7', distance: 2, reach: 3.2 };
+  const f = resolveHover(hit, { name: () => ({ title: 'Rat (dead)' }), contents });
+  assert.equal(f.kind, 'items');
+  assert.equal(f.title, 'Rat (dead)');
+  assert.equal(f.empty, false, 'NOT "Empty" - that was the bug, in one word');
+  assert.equal(f.rows.length, 1);
+  assert.equal(f.rows[0].name, 'Long Bow', 'the row is the ITEM, through the port\'s own resolver');
+  // and a body that really is empty still says so.
+  assert.equal(resolveHover({ key: 'foeCorpse:9', distance: 2, reach: 3.2 }, { name: () => ({ title: 'Rat (dead)' }), contents }).empty, true);
+});
+
+test('AUDIT-WH H3: both pools and both above-ground hosts are wired to that ladder', () => {
+  // A family's TARGETS, its WORD and its CONTENTS are one thing in
+  // three parts, and all three walk the pool's list under the same
+  // identity. The bag used to be written out at each of them; HARD2's
+  // law - four copies of a law is four chances to omit a term - is why
+  // it is one `corpseLens` per pool now, read three times.
+  for (const f of ['src/scenes/exteriorFoes.js', 'src/scenes/cityGuards.js']) {
+    const src = read(f);
+    assert.match(src, /const corpseLens = \{/, `${f}: one identity, not three`);
+    assert.equal((src.match(/corpseLens\b/g) ?? []).length, 4,
+      `${f}: declared once, read by the targets, the namer and the contents`);
+    assert.match(src, /hoverContents\b/, `${f}: and the contents arm exists`);
+    assert.match(src, /hoverName, hoverContents,/, `${f}: ...and is published beside the namer`);
+  }
+  // A PUPPET's pile is its owner's - the take ASKS for it over the
+  // wire and nothing here knows what is in it - so the encounter pool
+  // publishes nothing for one, and the plaque falls back to the name.
+  assert.match(read('src/scenes/exteriorFoes.js'), /return e && !e\.puppet \? corpseContents\(e\) : null;/);
+  // BOTH hosts hand the composed ladder to the frame, and neither
+  // keeps the inline ternary that knew about one prefix.
+  for (const f of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
+    const src = read(f);
+    assert.match(src, /const _hoverContents = composeContents\(\[/, `${f}: one ladder`);
+    assert.match(src, /contents: _hoverContents,/, `${f}: handed to the frame`);
+    assert.doesNotMatch(src, /contents: \(key\) => \(typeof key === 'string' && key\.startsWith\('droppedLoot:'\)/,
+      `${f}: and the one-prefix ternary is gone`);
+    // the same three pools, in the ACTIVATION ladder's order, as the
+    // namers beside them.
+    assert.match(src, /\(key\) => \(key\.startsWith\('droppedLoot:'\) \? \(droppedLoot\.contents\?\.\(key\) \?\? null\) : null\),\s*\n\s*\(key\) => exteriorFoes\.hoverContents\?\.\(key\) \?\? null,\s*\n\s*\(key\) => cityGuards\.hoverContents\?\.\(key\) \?\? null,/,
+      `${f}: the piles, the encounter pool, the watch`);
+  }
+});
+
+test('AUDIT-WH H2: the mod\'s MOBILE BAND - a townsperson and a live foe, named and raced', async () => {
+  const { mobilePersonName, mobileEntityName } = await import('../src/systems/worldTooltips.js');
+  const { liveFoeTargets, liveFoeFor, foeAabb, MOBILE_NPC_ACTIVATION_DISTANCE, RAY_DISTANCE } = await import('../src/player/activate.js');
+  const { raceWinner } = await import('../src/player/activationRace.js');
+  const { resolveHover } = await import('../src/systems/worldHover.js');
+
+  // .cs:299-302 - a walking townsperson is MobilePersonNPC.NameNPC.
+  assert.equal(mobilePersonName('Brisienna Magnessen'), 'Brisienna Magnessen');
+  assert.equal(mobilePersonName(''), null, 'a nameless one draws nothing, not an empty plaque');
+  assert.equal(mobilePersonName(undefined), null);
+  // .cs:304-313 - a live entity is Entity.Name, and ONLY when its
+  // motor is not hostile. The mod will not label the thing trying to
+  // kill you, and an unnamed key draws NOTHING.
+  assert.equal(mobileEntityName('Knight', { hostile: false }), 'Knight');
+  assert.equal(mobileEntityName('Rat', { hostile: true }), null, 'a hostile one says nothing');
+  // `!enemyMotor || !enemyMotor.IsHostile` - no motor at all IS named,
+  // which in the port is a stub standing without an `ai`.
+  assert.equal(mobileEntityName('Knight'), 'Knight', 'no motor, still named');
+  assert.equal(mobileEntityName('', { hostile: false }), null);
+
+  // THE FAMILY. The RAY's distance with the MOD's 6.4 beside it -
+  // AUDIT 65 MC-2's law, because the band is a gate inside the handler
+  // and not a shorter ray (the press's Info arm has no gate at all,
+  // PlayerActivate.cs:816-825).
+  const foes = [
+    { entity: {}, mobileType: 1, ai: { feet: [0, 0, 3], height: 1.9, isHostile: false } },
+    { entity: {}, mobileType: 2, dead: true, ai: { feet: [0, 0, 4] } },   // a body is the CORPSE family's, not this one
+    { entity: {}, mobileType: 3, ai: null },                              // no motor, no feet: nothing to strike
+    { entity: {}, mobileType: 4, ai: { feet: [0, 0, 6], isHostile: true } },
+  ];
+  const t = liveFoeTargets(foes, 'mobileFoe');
+  assert.deepEqual(t.map((x) => x.key), ['mobileFoe:0', 'mobileFoe:3'],
+    'the living, with something to strike - keyed by INDEX, the dungeon pool\'s own law');
+  assert.equal(t[0].distance, RAY_DISTANCE);
+  assert.equal(t[0].reach, MOBILE_NPC_ACTIVATION_DISTANCE);
+  // ONE volume, so the plaque's sweep and the press's `pickFoeAlong`
+  // cannot disagree about what the ray struck.
+  assert.deepEqual(t[0].aabb, foeAabb(foes[0]));
+  assert.deepEqual(t[0].aabb, { min: [-0.45, 0, 2.55], max: [0.45, 1.9, 3.45] });
+  assert.equal(foeAabb(foes[2]), null, 'no feet, no box');
+  // ...and the key resolves back to the foe the producer minted it for.
+  assert.equal(liveFoeFor(foes, 'mobileFoe:3', 'mobileFoe'), foes[3]);
+  assert.equal(liveFoeFor(foes, 'mobileFoe:1', 'mobileFoe'), null, 'a body is not a live foe');
+  assert.equal(liveFoeFor(foes, 'corpse:0', 'mobileFoe'), null);
+  // AUDIT-WH C1: the namer ladder is handed EVERY key the ray can win,
+  // and the exterior door's is a bare NUMBER.
+  assert.doesNotThrow(() => liveFoeFor(foes, 17, 'mobileFoe'));
+  assert.equal(liveFoeFor(foes, 17, 'mobileFoe'), null);
+  // An id law of the pool's own - the stable handle its corpse keys use.
+  assert.deepEqual(liveFoeTargets(foes, 'mobileGuard', { idOf: (f) => f.mobileType }).map((x) => x.key),
+    ['mobileGuard:1', 'mobileGuard:4']);
+
+  // THE PRECEDENCE. Both new competitors sit at the TAIL, in this
+  // order, because both of the press's arms take their subject only
+  // when it is STRICTLY nearer than its rival - the foe's rival
+  // includes the persons, the person's does not.
+  const at = (d) => ({ key: 'x', distance: d });
+  const door = { key: '__ground__', distance: 5 }, person = { key: 'mobileNpc:0', distance: 5 }, foe = { key: 'mobileFoe:0', distance: 5 };
+  assert.equal(raceWinner({ ground: door, person, foe }), door, 'the list beats both on a tie');
+  assert.equal(raceWinner({ person, foe }), person, 'a person beats a foe on a tie');
+  assert.equal(raceWinner({ ground: at(6), person, foe }), person, '...and nearest still wins');
+  assert.equal(raceWinner({ ground: at(6), person: at(6), foe }), foe, 'a foe takes it only strictly nearer');
+  assert.equal(raceWinner({ camp: at(4), ground: door, person, foe })?.distance, 4);
+
+  // AND WHAT IT DRAWS. The mod's band is 6.4, carried as the pick's
+  // reach, so a foe down a corridor is raced (the plaque must not name
+  // the wall behind it) and then says NOTHING - which is the mod's own
+  // silence, not a disagreement with the press.
+  const namer = (key) => {
+    const f = liveFoeFor(foes, key, 'mobileFoe');
+    const t2 = f ? mobileEntityName(['', 'Knight', '', '', 'Rat'][f.mobileType], { hostile: !!f.ai?.isHostile }) : null;
+    return t2 ? { title: t2 } : null;
+  };
+  assert.deepEqual(resolveHover({ key: 'mobileFoe:0', distance: 3, reach: MOBILE_NPC_ACTIVATION_DISTANCE }, { name: namer }),
+    { key: 'mobileFoe:0', kind: 'name', title: 'Knight', subs: [], rows: [], rest: 0, empty: false });
+  assert.equal(resolveHover({ key: 'mobileFoe:0', distance: 20, reach: MOBILE_NPC_ACTIVATION_DISTANCE }, { name: namer }), null,
+    'past the band, the plaque says nothing');
+  assert.equal(resolveHover({ key: 'mobileFoe:3', distance: 3, reach: MOBILE_NPC_ACTIVATION_DISTANCE }, { name: namer }), null,
+    'and a HOSTILE one says nothing at any range');
+});
+
+test('AUDIT-WH H2: all four hosts race the mobile band, and none of them stands it in the PRESS\'s list', () => {
+  // THE FOUR HOSTS RULE. A living foe is in NO host's activation
+  // target list, and must not be: `tryMobileEnemyActivate` sweeps the
+  // pool itself and no press arm reads a `mobileFoe:` key, so a target
+  // standing in that list would win the pick and eat the click in
+  // silence - the exact failure worldHover.js's composition seam is
+  // written against. It is raced BESIDE the list, through the one
+  // precedence, in every host.
+  //
+  // Above ground the family is the POOL's (its keys, its ids, its
+  // namer beside its producer, as the corpses are); inside, the list
+  // is the context's and the family goes straight through the one
+  // producer. Either way it is `liveFoeTargets` that mints it.
+  const hosts = {
+    'src/scenes/world.js': ['exterior (streaming)', /liveTargets\(\), \.\.\.cityGuards\.liveTargets\(\)\]/, /liveHoverName/],
+    'src/scenes/exterior.js': ['exterior (fixed city)', /liveTargets\(\), \.\.\.cityGuards\.liveTargets\(\)\]/, /liveHoverName/],
+    'src/scenes/exteriorFoes.js': ['the encounter pool', /liveFoeTargets\(foes, 'mobileFoe', \{ idOf \}\)/, /liveFoeFor\(foes, key, 'mobileFoe', \{ idOf \}\)/],
+    'src/scenes/cityGuards.js': ['the watch', /liveFoeTargets\(guards, 'mobileGuard', \{ idOf \}\)/, /liveFoeFor\(guards, key, 'mobileGuard', \{ idOf \}\)/],
+    'src/scenes/worldModes.js': ['interior', /liveFoeTargets\(interiorFoePool\(\), 'mobileFoe'\)/, /liveFoeFor\(interiorFoePool\(\), key, 'mobileFoe'\)/],
+    'src/scenes/dungeonContext.js': ['dungeon (both doors)', /liveFoeTargets\(foes, 'mobileFoe'\)/, /liveFoeFor\(foes, key, 'mobileFoe'\)/],
+  };
+  for (const [f, [what, stands, names]] of Object.entries(hosts)) {
+    const src = read(f);
+    assert.match(src, stands, `${what}: the live bodies are stood`);
+    assert.match(src, names, `${what}: ...and named`);
+    // never appended to the list the press picks from
+    assert.doesNotMatch(src, /targets\.push\(\.\.\.liveFoeTargets\(/, `${what}: never in the press's list`);
+    assert.doesNotMatch(src, /lootTargets\(\), \.\.\.liveFoeTargets\(/, `${what}: nor composed into it`);
+  }
+  // ...and the ONE id law per pool, read by the corpse lens and the
+  // live producer alike, so a body and the foe it was cannot key
+  // differently.
+  for (const f of ['src/scenes/exteriorFoes.js', 'src/scenes/cityGuards.js']) {
+    assert.match(read(f), /const idOf = \(\w\) =>/, `${f}: one identity, alive or dead`);
+    assert.match(read(f), /\n    idOf,\n/, `${f}: ...and the corpse lens takes it`);
+  }
+  // The two above-ground hosts race the TOWNSFOLK too, off the press's
+  // own scan rather than a second one of their own.
+  for (const f of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
+    const src = read(f);
+    assert.match(src, /const n = nearestPerson\(eye, dir, _livePersons\);/, `${f}: townTalk's own scan`);
+    assert.match(src, /key: `mobileNpc:\$\{n\.index\}`, distance: n\.distance, reach: MOBILE_NPC_ACTIVATION_DISTANCE/, `${f}: the ray, the mod's reach`);
+    assert.match(src, /person: _hoverPersonPick\(cam\.pos, _hd\),/, `${f}: raced`);
+    assert.match(src, /mobilePersonName\(_livePersons\[Number\(key\.split\(':'\)\[1\]\)\]\?\.person\?\.nameNPC\)/, `${f}: and named`);
+  }
+  // ONE SCAN, TWO READERS: townTalk's press arm takes the same answer.
+  const tt = read('src/scenes/townTalk.js');
+  assert.match(tt, /export function nearestPerson\(camPos, fwd, persons\)/);
+  assert.match(tt, /const near = nearestPerson\(camPos, fwd, persons\);/,
+    'tryActivate reads the one scan, it does not keep its own');
 });

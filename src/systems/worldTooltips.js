@@ -219,6 +219,42 @@ export function lootPileName(items) {
 /** A corpse's word (.cs:525): the entity's name and "(dead)". */
 export const corpseName = (entityName) => `${entityName || 'Body'} (dead)`;
 
+// ── THE MOBILE BAND (.cs:297-321) ───────────────────────────────
+//
+// AUDIT-WH H2. The mod names three things inside
+// PlayerActivate.MobileNPCActivationDistance and nothing beyond it -
+// a walking townsperson, a LIVE entity that is not hostile, and the
+// bulletin board. The band was unported: the plaque raced a door
+// behind a townsperson the press would have talked to, and said
+// nothing about either.
+//
+// The distance is the MOD's, not the port's press. The press reaches
+// for the RAY and speaks its own refusal inside the handler
+// (AUDIT 65 MC-2), and ActivateMobileEnemy's Info arm has no distance
+// gate at all (PlayerActivate.cs:816-825). So a townsperson or a foe
+// out past 6.4 still takes the press and the plaque still says
+// NOTHING about it - which is not a disagreement between them but the
+// mod's own silence, carried as the pick's `reach`.
+
+/** .cs:299-302 - a walking townsperson is MobilePersonNPC.NameNPC,
+ *  the same field the talk session takes its partner's name from. */
+export const mobilePersonName = (nameNPC) => (nameNPC || null);
+
+/**
+ * .cs:304-313 - a live entity is `Entity.Name`, and ONLY when its
+ * EnemyMotor says it is not hostile.
+ *
+ * The condition is `!enemyMotor || !enemyMotor.IsHostile`, so a foe
+ * with no motor at all IS named - which in the port is a headless stub
+ * standing without an `ai`. A hostile one answers nothing and the
+ * plaque draws nothing over it, exactly as an unnamed key does: the
+ * mod will not label the thing that is trying to kill you.
+ */
+export function mobileEntityName(entityName, { hostile = false } = {}) {
+  if (hostile) return null;
+  return entityName || null;
+}
+
 // ── THE TOTEM (.cs:493-505) ─────────────────────────────────────
 //
 // A quest ITEM resource is named by ResolveItemLongName, except the

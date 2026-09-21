@@ -239,6 +239,29 @@ export function corpseEntryFor(entries, key, keyPrefix, { isCorpse, idOf = null 
 }
 
 /**
+ * WORLD-HOVER: WHAT A BODY HOLDS, read-only.
+ *
+ * AUDIT-WH H3. `foeCorpse:` and `guardCorpse:` have been in the hover
+ * model's ITEMISED_KEYS since the first slice - the plaque opens a LIST
+ * for them rather than a name - and neither above-ground host answered
+ * their contents, so `contents?.(key) ?? null` fell to null and
+ * `hoverLines(null)` answered `empty`. Every body you killed in a
+ * street or in the wilderness read "Empty" over a full pack, which is
+ * the one thing the plaque exists not to do: it said the opposite of
+ * what the press would show you.
+ *
+ * It is the same read `openCorpseLoot` makes one line into the take
+ * (`entry.entity?.items`), and it lives beside it for that reason. A
+ * DISABLED body answers null and not `[]` - it is not a target any
+ * more (:942-947 disables the container), and the two answers draw
+ * differently.
+ */
+export function corpseContents(entry) {
+  if (!entry || entry.corpseDisabled) return null;
+  return entry.entity?.items ?? null;
+}
+
+/**
  * THE TAKE (MAC-E). This was PlayerActivate's whole corpse arm and is
  * not any more - `openCorpseLoot` above is. What is left is the
  * transfer itself, and its ONE caller is the online grant landing

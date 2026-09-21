@@ -360,8 +360,8 @@
   {
     "name": "WORLD-HOVER-raceWinner-tie-order-inverted",
     "file": "src/player/activationRace.js",
-    "old": "  for (const p of [camp, water, wagon, torch, corpse, pile, ground]) {",
-    "new": "  for (const p of [ground, pile, corpse, torch, wagon, water, camp]) {",
+    "old": "  for (const p of [camp, water, wagon, torch, corpse, pile, ground, person, foe]) {",
+    "new": "  for (const p of [foe, person, ground, pile, corpse, torch, wagon, water, camp]) {",
     "tests": [
       "test/worldhover.test.js"
     ]
@@ -380,6 +380,213 @@
     "file": "src/player/activationRace.js",
     "old": "    if (best === null || p.distance < best.distance) best = p;",
     "new": "    if (best === null || p.distance <= best.distance) best = p;",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-location-name-read-in-C-sharp",
+    "file": "src/scenes/worldModes.js",
+    "old": "  const currentLocationName = () => host.currentLocation?.()?.name ?? '';",
+    "new": "  const currentLocationName = () => host.currentLocation?.()?.Name ?? '';",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-dungeon-exit-name-read-in-C-sharp",
+    "file": "src/scenes/worldModes.js",
+    "old": "        locationName: dungeonLoc?.name ?? '',",
+    "new": "        locationName: dungeonLoc?.Name ?? '',",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-location-name-dug-out-a-second-way",
+    "file": "src/scenes/worldModes.js",
+    "old": "        return staticDoorName('buildingExit', { locationName: currentLocationName() });",
+    "new": "        return staticDoorName('buildingExit', { locationName: host.currentLocation?.()?.locationName ?? '' });",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-a-body-answers-nothing-it-holds",
+    "file": "src/scenes/corpseMarker.js",
+    "old": "  if (!entry || entry.corpseDisabled) return null;\n  return entry.entity?.items ?? null;",
+    "new": "  if (!entry || entry.corpseDisabled) return null;\n  return null;",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-a-disabled-body-is-still-listed",
+    "file": "src/scenes/corpseMarker.js",
+    "old": "  if (!entry || entry.corpseDisabled) return null;\n  return entry.entity?.items ?? null;",
+    "new": "  if (!entry) return null;\n  return entry.entity?.items ?? null;",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-an-empty-body-does-not-stop-the-contents-walk",
+    "file": "src/systems/worldHover.js",
+    "old": "      const r = fn?.(key);\n      if (r) return r;",
+    "new": "      const r = fn?.(key);\n      if (r?.length) return r;",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-contents-ladder-takes-the-last-answer",
+    "file": "src/systems/worldHover.js",
+    "old": "export function composeContents(readers) {\n  return (key) => {\n    for (const fn of readers ?? []) {\n      const r = fn?.(key);\n      if (r) return r;\n    }\n    return null;\n  };\n}",
+    "new": "export function composeContents(readers) {\n  return (key) => {\n    let last = null;\n    for (const fn of readers ?? []) {\n      const r = fn?.(key);\n      if (r) last = r;\n    }\n    return last;\n  };\n}",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-the-watch-answers-no-contents",
+    "file": "src/scenes/cityGuards.js",
+    "old": "  const hoverContents = (key) => corpseContents(corpseEntryFor(guards, key, 'guardCorpse', corpseLens));",
+    "new": "  const hoverContents = () => null;",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-a-puppets-pile-is-published",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "    return e && !e.puppet ? corpseContents(e) : null;",
+    "new": "    return e ? corpseContents(e) : null;",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-the-streaming-host-lists-piles-alone",
+    "file": "src/scenes/world.js",
+    "old": "    (key) => exteriorFoes.hoverContents?.(key) ?? null,\n    (key) => cityGuards.hoverContents?.(key) ?? null,\n  ]);",
+    "new": "  ]);",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-a-hostile-foe-is-named",
+    "file": "src/systems/worldTooltips.js",
+    "old": "export function mobileEntityName(entityName, { hostile = false } = {}) {\n  if (hostile) return null;",
+    "new": "export function mobileEntityName(entityName, { hostile = false } = {}) {\n  if (false) return null;",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-a-nameless-townsperson-draws-an-empty-plaque",
+    "file": "src/systems/worldTooltips.js",
+    "old": "export const mobilePersonName = (nameNPC) => (nameNPC || null);",
+    "new": "export const mobilePersonName = (nameNPC) => (nameNPC ?? '');",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-a-foe-beats-a-townsperson-on-a-tie",
+    "file": "src/player/activationRace.js",
+    "old": "  for (const p of [camp, water, wagon, torch, corpse, pile, ground, person, foe]) {",
+    "new": "  for (const p of [camp, water, wagon, torch, corpse, pile, ground, foe, person]) {",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-a-townsperson-beats-the-door-on-a-tie",
+    "file": "src/player/activationRace.js",
+    "old": "  for (const p of [camp, water, wagon, torch, corpse, pile, ground, person, foe]) {",
+    "new": "  for (const p of [camp, water, wagon, torch, corpse, pile, person, ground, foe]) {",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-the-mobile-band-reaches-as-far-as-the-ray",
+    "file": "src/player/activate.js",
+    "old": "      distance: RAY_DISTANCE,\n      reach: MOBILE_NPC_ACTIVATION_DISTANCE,\n    });\n  }\n  return targets;\n}",
+    "new": "      distance: RAY_DISTANCE,\n      reach: RAY_DISTANCE,\n    });\n  }\n  return targets;\n}",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-a-body-is-stood-as-a-live-foe",
+    "file": "src/player/activate.js",
+    "old": "    if (!f || f.dead || !f.entity) continue;\n    const aabb = foeAabb(f);\n    if (!aabb) continue;\n    targets.push({",
+    "new": "    if (!f || !f.entity) continue;\n    const aabb = foeAabb(f);\n    if (!aabb) continue;\n    targets.push({",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-the-live-foe-box-is-not-the-press-s",
+    "file": "src/player/activate.js",
+    "old": "  const half = 0.45;\n  return {\n    min: [feet[0] - half, feet[1], feet[2] - half],\n    max: [feet[0] + half, feet[1] + h, feet[2] + half],\n  };",
+    "new": "  const half = 0.6;\n  return {\n    min: [feet[0] - half, feet[1], feet[2] - half],\n    max: [feet[0] + half, feet[1] + h, feet[2] + half],\n  };",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-liveFoeFor-drops-the-non-string-guard",
+    "file": "src/player/activate.js",
+    "old": "  if (typeof key !== 'string' || !key.startsWith(`${keyPrefix}:`)) return null;",
+    "new": "  if (!key.startsWith(`${keyPrefix}:`)) return null;",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-the-dungeon-plaque-stops-racing-live-foes",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "          foe: pickActivatableHit(eye, d, liveFoeTargets(foes, 'mobileFoe'), collider),\n",
+    "new": "",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-the-press-s-list-grows-a-live-foe",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "      return composeActivationTargets([...activationTargets(actions.objects), ...lootTargets()], _hostTargets);",
+    "new": "      return composeActivationTargets([...activationTargets(actions.objects), ...lootTargets(), ...liveFoeTargets(foes, 'mobileFoe')], _hostTargets);",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-tryActivate-keeps-its-own-person-scan",
+    "file": "src/scenes/townTalk.js",
+    "old": "    const near = nearestPerson(camPos, fwd, persons);\n    const best = near?.entry ?? null, bestDist = near?.distance ?? Infinity;",
+    "new": "    let best = null, bestDist = Infinity;\n    for (const p of persons) {\n      const d = rayPersonDistance(camPos, fwd, p.pos);\n      if (d < bestDist) { best = p; bestDist = d; }\n    }",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-the-fixed-city-stops-racing-townsfolk",
+    "file": "src/scenes/exterior.js",
+    "old": "            person: _hoverPersonPick(cam.pos, _hd),\n",
+    "new": "",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-the-streaming-host-stops-naming-townsfolk",
+    "file": "src/scenes/world.js",
+    "old": "      const t = mobilePersonName(_livePersons[Number(key.split(':')[1])]?.person?.nameNPC);",
+    "new": "      const t = null;",
     "tests": [
       "test/worldhover.test.js"
     ]
