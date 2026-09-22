@@ -420,11 +420,7 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
       // own input - RestWindow calls closeOverlay() so the slot is
       // free before RaiseSkills can want it for a level-up screen -
       // and the unguarded re-read threw on the key that closes it.
-      if (overlay?.done) dropOverlay();
-      // MENU-RELOCK: if that key dismissed the last window, reclaim
-      // mouselook while the closing key is still a browser user gesture.
-      // A frame-late makeLookGate request can be refused by pointer-lock.
-      if (!overlay && !otherOverlayActive?.()) requestLook(canvas);
+      if (overlay?.done) dropOverlay(); if (!overlay && !otherOverlayActive?.()) requestLook(canvas);
       return true;
     }
     // AUDIT 58 (talk lane) - THE MODE KEYS SIT UNDER THE WINDOW GATE.
@@ -478,10 +474,7 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     if (!overlay) return false;
     if (typeof overlay.keyup !== 'function') return true;
     overlay.keyup(e.code, e);
-    if (overlay?.done) dropOverlay();
-    // Automap and other two-phase windows can close on key-up rather
-    // than key-down; that release is also the transient gesture.
-    if (!overlay && !otherOverlayActive?.()) requestLook(canvas);
+    if (overlay?.done) dropOverlay(); if (!overlay && !otherOverlayActive?.()) requestLook(canvas);
     return true;
   }
 
