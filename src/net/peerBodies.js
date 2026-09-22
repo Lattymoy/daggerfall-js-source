@@ -146,6 +146,7 @@ export class PeerBodies {
     this._failed = new Map();   // lookKey -> { until, reason }
     this._queue = Promise.resolve();
     this._phase = 0;   // PEER-CADENCE: each new body takes the next phase, so bodies on the same cadence pose on different frames
+    this._frame = 0;   // AUDIT PEER-CADENCE F1: the frame the cadence counts on - the MODULE's, not each body's (see _place)
   }
 
   /** Is this body standing for its peer: built, in range, its peer present, the rig live? */
@@ -171,6 +172,7 @@ export class PeerBodies {
     const gen = this._generation();
     if (gen !== this._gen) { this._gen = gen; this._failed.clear(); this.destroy(); }   // AUDIT MWBODY A9: new data, new bodies
     const now = this._now();
+    this._frame++;
     // SLAM4: the failed looks age out. A look was only ever forgotten when a peer wearing THAT look asked again
     // (`:180`), so a look nobody wears again stayed for the life of the session - and a crowd is mostly looks seen
     // once. BODY_RETRY_MS has passed for these; they are nothing but memory.
@@ -180,7 +182,7 @@ export class PeerBodies {
     // the sweep first (the cap counts what stands, not what is leaving)
     for (const [id, b] of [...this._bodies]) {
       if (live.has(id)) { b.goneAt = null; continue; }
-      if (b.goneAt == null) { b.goneAt = now; b.swing = null; b.pending = null; }   // AUDIT WORLD C7: a body that lingers re-latches its counts on the way back - what happened out of sight is not replayed
+      if (b.goneAt == null) { b.goneAt = now; b.swing = null; b.pending = null; b.posed = false; }   // AUDIT WORLD C7: a body that lingers re-latches its counts on the way back - what happened out of sight is not replayed. AUDIT PEER-CADENCE F2: and its skin is stale on the way back - the first frame back poses
       else if (now - b.goneAt > BODY_LINGER_MS) this._release(id);
     }
     // the peers with a body: their feet, pace and camera
@@ -212,7 +214,7 @@ export class PeerBodies {
       if (this._bodies.size >= BODIES_MAX && !this._yield(w.d2)) break;
       const peer = w.peer;
       const b = { id: peer.id, key: lookKey(peer.look), rig: this._createRig(), state: 'building', cam: null, feet: null, yaw: peer.shown.yaw, speed: 0, goneAt: null, far: false, d2: w.d2, builtAt: now, swing: null, cast: null, pending: null, held: false, ammo: null, weapon: null,
-        posed: false, tick: 0, phase: this._phase++, bank: 0 };   // PEER-CADENCE
+        posed: false, phase: this._phase++, bank: 0 };   // PEER-CADENCE
       this._bodies.set(peer.id, b);
       b.rig.attach(this.renderer, () => b.cam);
       this._place(b, peer, toScene, dt, near);
@@ -255,18 +257,25 @@ export class PeerBodies {
       // AUDIT MWBODY A1: a throw from one peer's rig is that peer's doll, never the frame's end
       try {
         this._arm(b, peer.shown);
-        // PEER-CADENCE: the skin on its cadence, the clocks every frame. The FIRST step of a standing body always
-        // poses (the third-person mesh is minted by the first upload, and `thirdActive` waits on it - a body that
-        // skipped its first frame would stand as the doll for a frame); after that, one frame in `every`, the
-        // bodies staggered by phase so eight far bodies do not all skin on the same frame. The skipped frames' dt
-        // is banked for the particle step, which keeps wall time on the frame that poses.
+        // PEER-CADENCE: the skin on its cadence, the clocks every frame. A body with NO SKIN TO KEEP always poses:
+        // its first step (the third-person mesh is minted by the first upload, and `thirdActive` waits on it - a
+        // body that skipped its first frame would stand as the doll for a frame), its first step back from far or
+        // from a linger (the kept skin is seconds old - AUDIT PEER-CADENCE F2), and the step after a rebuild let the
+        // mesh go (setWeapon on an arrow's nock, setTorch - the rig releases the mesh in an async tick, and a skipped
+        // frame would have shown the doll: `thirdActive` says so - AUDIT PEER-CADENCE F3). Otherwise one frame in
+        // `every`, counted on the MODULE's frame with a phase per body, so bodies on one cadence skin on different
+        // frames whenever their builds landed (AUDIT PEER-CADENCE F1: a per-body tick started on the standing frame
+        // made the stagger an accident of the build queue - eight bodies landed a frame apart all skinned together).
+        // The skipped frames' dt is banked for the particle step, which keeps wall time on the frame that poses.
         b.bank += dt;
-        const pose = !b.posed || (b.tick + b.phase) % poseCadenceFor(b.d2) === 0;
-        b.tick++;
+        const pose = !b.posed || !(b.rig.thirdActive?.() ?? true) || (this._frame + b.phase) % poseCadenceFor(b.d2) === 0;
         if (pose) { b.rig.update(dt, { pose: true, effectsDt: b.bank }); b.bank = 0; b.posed = true; }
         else b.rig.update(dt, { pose: false });
       } catch (e) { this._fail(b, `update threw: ${e?.message ?? e}`); }
-    } else if (b.swing != null) { b.swing = peer.shown.an | 0; b.cast = peer.shown.cn | 0; b.pending = null; }   // AUDIT WORLD C7: not arming (far, or frozen) - the counts follow, so a blow out of sight is not replayed on waking
+    } else {
+      b.posed = false;   // AUDIT PEER-CADENCE F2: far (or a frozen frame) - whatever skin stands is stale by the time it is stepped again
+      if (b.swing != null) { b.swing = peer.shown.an | 0; b.cast = peer.shown.cn | 0; b.pending = null; }   // AUDIT WORLD C7: not arming (far, or frozen) - the counts follow, so a blow out of sight is not replayed on waking
+    }
   }
 
   /** MAC7 #1 (Mac: "no weapons"): the weapon and the swing, off the wire's own bits - the rig's weapon drawn while

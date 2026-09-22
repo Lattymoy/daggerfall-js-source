@@ -377,6 +377,39 @@ directory by `test/audit18_bible_docs.test.js`:
   two screenshots (tools/shots/grasspx4-old-16x32.png and -new-8x16);
   the six size-bound pins rewritten to the fractions; 39 mutants, 39
   dead (the renderer-constructor record re-aimed at the `tuft` door).
+  **AUDIT GRASS-PX4 (same day, Mac: "Audit before merging"): ONE LENS
+  OVER THE SHEET, SEVEN FINDINGS, FOUR PAID.** (F1) `paintTuft` carried a
+  SECOND copy of the highlight threshold's formula, and a sheet built
+  from a copy is pinned by neither: `h * 21 / 32` in that copy survived
+  every pin and took the highlight off three of the shipped tufts. The
+  three laws are ONE function each now (`tuftMarginFor`, `bladeMinFor`,
+  `highlightMinFor`), read by the constants and by layTuft/paintTuft
+  alike, and the shipped sheet's highlight count (39 texels) is pinned
+  beside the 19/20 and 9/10 edges through paintTuft. (F2) The "shortest
+  blade" clamp NEVER FIRED - the height law's own floor, floor(0.45 h),
+  is above it at both sizes, so `PX_BLADE_MIN` described a law the sheet
+  never exercised (and had since 16x32). The clamp is gone and the
+  constant is the law's floor (7 of 16, 14 of 32), with a pin that a
+  blade reaches it and none goes under, over 3000 seeds. (F3) "No tuft
+  on its edge column" was a property of the eight shipped seeds, not of
+  the code: the seed head is two texels wide to the tip's RIGHT, and a
+  headed tip one column short of the edge painted the edge column on
+  6% of tufts at 8x16 (3% at 16x32) - a reseed or a ninth variant would
+  have failed the pin. A headed blade's lean is clamped one column
+  further in, the way the tip already was; pinned over 3000 seeds at
+  both sizes, column 0 and column w-1 empty. (F4) `layTuft` recomputed
+  the margin instead of reading the constant - same fix as F1. The
+  16x32 door still reproduces the OLD sheet byte for byte (the lens
+  compared it against HEAD~1's module: 128x32 and every mip level, 0
+  bytes differ), because none of the shipped old seeds had a head at
+  the edge. Noted, not paid: the head, the base and the two-row
+  highlight are texel-sized and so relatively larger at 8x16 (a quarter
+  of the width where they were an eighth) - consistent with "a texel is
+  a pixel", but "the sheet's size and nothing else" overstated it; the
+  lean scale `(w / 16)` and `(h / 32)` are indistinguishable while a
+  tuft is 1:2. Eight mutants added (the three thresholds, the head at
+  the edge, the margin twice, the floor and the height law drifting
+  apart).
   **GRASS AUDIT 1 (2026-09-21, Mac: "do an audit on this"): THREE
   LENSES OVER THE PIXEL GRASS, TWENTY FINDINGS, ALL PAID.** The sheet
   and the fragment stage; the vertex stage, the draw path and the

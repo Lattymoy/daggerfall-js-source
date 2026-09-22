@@ -351,5 +351,77 @@
   "tests": [
    "test/grasspx.test.js"
   ]
+ },
+ {
+  "name": "AUDIT-PX4-paintTuft-highlightMin-21-of-32",
+  "file": "src/render/grassPixelArt.js",
+  "old": "export const highlightMinFor = (h) => Math.round(h * 20 / 32);",
+  "new": "export const highlightMinFor = (h) => Math.round(h * 21 / 32);",
+  "tests": [
+   "test/grasspx.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-PX4-paintTuft-highlightMin-19-of-32",
+  "file": "src/render/grassPixelArt.js",
+  "old": "export const highlightMinFor = (h) => Math.round(h * 20 / 32);",
+  "new": "export const highlightMinFor = (h) => Math.round(h * 19 / 32);",
+  "tests": [
+   "test/grasspx.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-PX4-paintTuft-reads-its-own-threshold",
+  "file": "src/render/grassPixelArt.js",
+  "old": "  const highlightMin = highlightMinFor(h);",
+  "new": "  const highlightMin = Math.round(h * 21 / 32);",
+  "tests": [
+   "test/grasspx.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-PX4-the-seed-head-may-paint-the-edge-column",
+  "file": "src/render/grassPixelArt.js",
+  "old": "    if (head) lean = Math.min(w - 3 - x0, lean);\n",
+  "new": "",
+  "tests": [
+   "test/grasspx.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-PX4-the-margin-is-two-sixteenths",
+  "file": "src/render/grassPixelArt.js",
+  "old": "export const tuftMarginFor = (w) => Math.max(1, Math.round(w * 3 / 16));",
+  "new": "export const tuftMarginFor = (w) => Math.max(1, Math.round(w * 2 / 16));",
+  "tests": [
+   "test/grasspx.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-PX4-layTuft-margin-is-its-own",
+  "file": "src/render/grassPixelArt.js",
+  "old": "  const margin = tuftMarginFor(w);",
+  "new": "  const margin = Math.max(1, Math.round(w * 2 / 16));",
+  "tests": [
+   "test/grasspx.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-PX4-the-blade-floor-is-not-the-height-laws",
+  "file": "src/render/grassPixelArt.js",
+  "old": "export const bladeMinFor = (h) => Math.floor(h * 0.45);",
+  "new": "export const bladeMinFor = (h) => Math.floor(h * 0.4);",
+  "tests": [
+   "test/grasspx.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-PX4-the-height-law-drifts-from-its-floor",
+  "file": "src/render/grassPixelArt.js",
+  "old": "    const height = Math.floor(h * (0.45 + rnd() * 0.55));",
+  "new": "    const height = Math.floor(h * (0.4 + rnd() * 0.6));",
+  "tests": [
+   "test/grasspx.test.js"
+  ]
  }
 ]

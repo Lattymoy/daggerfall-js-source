@@ -338,7 +338,7 @@ export const GRASSPX_VS_EDITS = Object.freeze([
   // frame. The sway law is untouched above this list: uTime, the gust
   // wave, the lean, exactly as the lab has them.
   Object.freeze({
-    why: 'the pixel quad is not tapered - the sprite carries the shape - and it is HALF ITS DRAWN HEIGHT wide, so a 16x32 sprite is square texels on every blade, buried or not',
+    why: 'the pixel quad is not tapered - the sprite carries the shape - and it is HALF ITS DRAWN HEIGHT wide, so a 2:1 tuft (16x32 then, 8x16 since GRASS-PX4) is square texels on every blade, buried or not',
     from: '  p.xz += side * (aCorner.x-0.5) * aInst2.w * (1.0 - vT*0.75);',
     to: '  p.xz += side * (aCorner.x-0.5) * mix(aInst2.w * (1.0 - vT*0.75), h * 0.5, uPixel);   // GRASS-PX; GRASS AUDIT 1: the width is the height\'s, per blade',
   }),

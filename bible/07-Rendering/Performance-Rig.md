@@ -266,6 +266,67 @@ two rigs and compared their skins.
 - GPU skinning (above) still removes the skin's cost outright rather
   than dividing it.
 
+## AUDIT PEER-CADENCE (same day, Mac: "Audit before merging") - three lenses, four findings paid
+
+The rig side (fpArm.js), the peer side (peerBodies.js) and the probe,
+each read adversarially with scratch scripts against the real fixture
+rig. What the reading found, and what changed:
+
+**F1 - the stagger was an accident of the build queue, not a law.** The
+cadence counted on a PER-BODY tick that started on the frame the body
+stood, and bodies stand when their builds land - one at a time, seconds
+apart. The residue that decides a body's skinning frame was `(phase -
+standing frame) mod every`, which is arbitrary: eight bodies at 40 m
+whose builds landed one frame apart (or four, or 121) all skinned on
+the SAME frame - `0,8,0,0,8,0` per frame, the exact spike the phase was
+written to prevent - and the pin passed only because the fixture lands
+all three builds inside one settle. The cadence counts on the MODULE's
+frame now (`this._frame`, stepped once in `sync`), so the phase alone
+decides the residue whenever a body stood. Pinned: eight bodies
+introduced a frame apart, at most three skin on any frame; two bodies
+at 20 m landed on frames of different parity skin on different frames.
+
+**F2 - a body back from far, or from a linger, drew a skin seconds old.**
+The far and lingering frames neither step nor pose, and `posed` stayed
+true, so the first frame back took its cadence slot: `has()` true,
+drawn, on the limb pose and sheath stance from before the sleep. Both
+seams forget the skin now (`posed = false` in the sweep when a body
+starts to linger, and on any frame the body is not stepped), and the
+pin drives a body out past BODY_RANGE and back, and out of the drawable
+set and back, and holds the first step a pose - and the frame after a
+plain skip again, so the reset is one frame and not a latch.
+
+**F3 - a rebuild that let the mesh go left the body as the doll for a
+frame or two.** `setWeapon` (an archer's nock - `_arm` calls it on the
+first pose whose `am` bit is set, and on every toggle), `setTorch` and
+`build` all release the third mesh in an async tick between frames.
+Before the cadence the next update re-minted it before anyone looked;
+now a skipped frame returned above the upload, `thirdActive` was false,
+`_standing` false, and remotePlayers drew the paperdoll at doll height
+for a frame (`.B..BBBB` at 40 m, measured). The pose decision asks the
+rig whether it HAS a skin to keep (`thirdActive`), and a body without
+one poses whatever the cadence. The stub rig in the pins carries a
+`skinned` flag minted by a posing step and let go by a rebuild, so the
+seam is executed rather than described.
+
+**F4 (pins) - the middle band and the seams had no behavioural pin.** A
+mutant reading the cadence at TWICE the distance survived: the sync-level
+pins stood at 5 m and 40 m and nothing between. Through `sync` now: 9.9
+and 10 m every frame, 12 and 24 m one in two, 26 m one in three. Six
+mutants added for the four findings (the distance doubled, an even phase
+for every body, the module frame never counted, the far and the linger
+skin kept, a meshless body waiting for its slot) - all dead; the old
+per-body tick mutant retired with the tick.
+
+Notes, not paid: `dist2` ignores y (a peer 30 m straight up reads d2 0),
+pre-existing for BODY_RANGE and now also the dearest cadence; a piece's
+particle effect stays visible one or two frames after its piece hides
+(the `gpu.hidden` write is inside the particle step); the particle sim
+under a banked dt overshoots a particle's life by up to three frames
+instead of one. The probe's "before" was checked by driving a scratch
+copy of the module with `[[Infinity, 1]]`: 1.00 / 1.00 / 1.00, and HEAD
+0.74 / 0.52 / 0.43, as recorded.
+
 ## PERF-READ1 - the `hud` span was the vsync wait (2026-09-21)
 
 Mac pasted a `?perf=cpu` readout from the road: `cpu 17.15ms | hud 7.09 |

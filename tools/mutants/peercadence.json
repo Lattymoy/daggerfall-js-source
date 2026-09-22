@@ -20,8 +20,8 @@
  {
   "name": "PEERCADENCE-the-first-step-of-a-standing-body-may-skip",
   "file": "src/net/peerBodies.js",
-  "old": "        const pose = !b.posed || (b.tick + b.phase) % poseCadenceFor(b.d2) === 0;",
-  "new": "        const pose = (b.tick + b.phase) % poseCadenceFor(b.d2) === 0;",
+  "old": "        const pose = !b.posed || !(b.rig.thirdActive?.() ?? true) || (this._frame + b.phase) % poseCadenceFor(b.d2) === 0;",
+  "new": "        const pose = !(b.rig.thirdActive?.() ?? true) || (this._frame + b.phase) % poseCadenceFor(b.d2) === 0;",
   "tests": [
    "test/peercadence.test.js"
   ]
@@ -29,17 +29,8 @@
  {
   "name": "PEERCADENCE-every-body-shares-one-phase",
   "file": "src/net/peerBodies.js",
-  "old": "        posed: false, tick: 0, phase: this._phase++, bank: 0 };",
-  "new": "        posed: false, tick: 0, phase: 0, bank: 0 };",
-  "tests": [
-   "test/peercadence.test.js"
-  ]
- },
- {
-  "name": "PEERCADENCE-the-tick-never-advances",
-  "file": "src/net/peerBodies.js",
-  "old": "        b.tick++;\n        if (pose)",
-  "new": "        if (pose)",
+  "old": "        posed: false, phase: this._phase++, bank: 0 };   // PEER-CADENCE",
+  "new": "        posed: false, phase: 0, bank: 0 };   // PEER-CADENCE",
   "tests": [
    "test/peercadence.test.js"
   ]
@@ -74,8 +65,8 @@
  {
   "name": "PEERCADENCE-the-cadence-is-read-off-the-body-when-it-stood",
   "file": "src/net/peerBodies.js",
-  "old": "(b.tick + b.phase) % poseCadenceFor(b.d2) === 0;",
-  "new": "(b.tick + b.phase) % poseCadenceFor(b.cadenceD2 ??= b.d2) === 0;",
+  "old": "(this._frame + b.phase) % poseCadenceFor(b.d2) === 0;",
+  "new": "(this._frame + b.phase) % poseCadenceFor(b.cadenceD2 ??= b.d2) === 0;",
   "tests": [
    "test/peercadence.test.js"
   ]
@@ -131,6 +122,60 @@
   "file": "src/combat/fpArm.js",
   "old": "      if (idleState) advanceClip(idleState, (idleSource || rig()).keys, dt, null);\n      refreshIdle();",
   "new": "      if (idleState && pose) advanceClip(idleState, (idleSource || rig()).keys, dt, null);\n      refreshIdle();",
+  "tests": [
+   "test/peercadence.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-PEERCADENCE-the-cadence-reads-twice-the-distance",
+  "file": "src/net/peerBodies.js",
+  "old": "    b.d2 = near ? dist2(f, near) : 0;",
+  "new": "    b.d2 = near ? dist2(f, near) * 4 : 0;",
+  "tests": [
+   "test/peercadence.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-PEERCADENCE-every-body-takes-an-even-phase",
+  "file": "src/net/peerBodies.js",
+  "old": "        posed: false, phase: this._phase++, bank: 0 };",
+  "new": "        posed: false, phase: (this._phase += 2), bank: 0 };",
+  "tests": [
+   "test/peercadence.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-PEERCADENCE-the-module-never-counts-a-frame",
+  "file": "src/net/peerBodies.js",
+  "old": "    this._frame++;\n",
+  "new": "",
+  "tests": [
+   "test/peercadence.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-PEERCADENCE-a-far-body-keeps-its-stale-skin",
+  "file": "src/net/peerBodies.js",
+  "old": "      b.posed = false;   // AUDIT PEER-CADENCE F2: far",
+  "new": "      // AUDIT PEER-CADENCE F2: far",
+  "tests": [
+   "test/peercadence.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-PEERCADENCE-a-lingering-body-keeps-its-stale-skin",
+  "file": "src/net/peerBodies.js",
+  "old": "b.swing = null; b.pending = null; b.posed = false; }",
+  "new": "b.swing = null; b.pending = null; }",
+  "tests": [
+   "test/peercadence.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-PEERCADENCE-a-body-with-no-mesh-waits-for-its-slot",
+  "file": "src/net/peerBodies.js",
+  "old": "const pose = !b.posed || !(b.rig.thirdActive?.() ?? true) || (this._frame + b.phase)",
+  "new": "const pose = !b.posed || (this._frame + b.phase)",
   "tests": [
    "test/peercadence.test.js"
   ]
