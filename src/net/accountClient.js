@@ -119,6 +119,12 @@ export const REFUSALS = Object.freeze({
   // and gets a different sentence.
   'not-held': 'That title is not yours to wear any more.',
   'no-title': 'The account service does not know that title. The game may need updating.',
+  // MOD1, moderation. A moderator reads these in chat, beside the
+  // command they just typed.
+  'not-moderator': 'Only moderators can do that.',
+  protected: 'Moderators cannot be muted.',
+  'no-player': 'That player could not be found.',
+  'bad-minutes': 'A mute is 1 to 10080 minutes (one week).',
   server: 'The account service had a problem. Try again.',
   offline: 'Could not reach the account service. Check your connection.',
 });
@@ -232,6 +238,13 @@ export const equipTitle = (io, title) => call(io, '/v1/account/title', { title: 
  *  credits the gap by its own clock (net/playClock.js says why), and
  *  answers the running total. `{ playedS }`. */
 export const beatPlay = (io) => call(io, '/v1/account/played', {});
+
+/** MOD1: MUTE AN ACCOUNT for `minutes` (0 lifts it). The service
+ *  decides whether this player may; the answer carries an `order` the
+ *  service signed, which the caller carries to every room it holds so
+ *  the mute lands now rather than on the target's next reconnect.
+ *  `{ ok, target, name, until, order }`. */
+export const muteAccount = (io, target, minutes) => call(io, '/v1/mod/mute', { target, minutes });
 
 /** ACC1d: A SIGNED WORD THE RELAY CAN CHECK, for one connection.
  *  `{ token, name, kind, expiresAt }`. The service signs the name it

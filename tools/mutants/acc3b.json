@@ -104,8 +104,8 @@
   {
     "name": "ACC3b-11-the-remembered-introduction-loses-the-badge",
     "file": "src/net/online.js",
-    "old": "    this._known.set(id, { name: p.name, title: p.title, glyphs: p.glyphs, look: p.look });",
-    "new": "    this._known.set(id, { name: p.name, look: p.look });",
+    "old": "    this._known.set(id, { name: p.name, title: p.title, glyphs: p.glyphs, sub: p.sub, look: p.look });",
+    "new": "    this._known.set(id, { name: p.name, sub: p.sub, look: p.look });",
     "tests": [
       "test/acc3badge.test.js"
     ],

@@ -2981,3 +2981,80 @@ read by the same law; the relay's hash is unchanged.
 
 **Account service + site only.** The relay's bundle is untouched, so the
 relay deploy is a no-op and **drops nobody**.
+
+## MOD1 — the moderator shield, /mute and /unmute (2026-09-22)
+
+> Next up I want a moderator glyph and moderator chat commands
+
+Asked which: **/mute and /unmute**, and the **blue shield**.
+
+### Who is a moderator
+
+`MODERATOR_HANDLES` in the service's config — the same law as
+`DEVELOPER_HANDLES`: a reviewed, deployed edit grants it, taking the
+handle off revokes it on the next token and the next call, and nothing is
+stored. **It ships empty** until Mac names them. A developer may moderate
+without being listed (`canModerate`), but the **shield** is the
+moderator list's alone — the dev mark already says more. A guest can be
+neither: the list names people, and a guest row is a device.
+
+### Where the authority lives — and where it does not
+
+A mute is an authority, and the build that passes a naive test is the one
+where a client says *"I am a moderator, mute Bob"* and something believes
+it. So:
+
+- **The service decides.** `POST /v1/mod/mute {target, minutes}` checks
+  the caller against the lists, **refuses a moderator or developer as a
+  target** (a mod-on-mod fight is Mac's to settle) and a self-mute, bounds
+  it at a week (`MUTE_MAX_MIN`, one home in `src/net/moderation.js`), and
+  writes `muted_until` — ACC0's own column — with **`muted_by`**
+  (migration 0006), so the power leaves a record.
+- **The row is the truth, and every later token carries it** as the `mu`
+  claim. A reconnect cannot shed a mute; every room reads it at the hello.
+- **Live rooms hear it through a signed ORDER.** The relay cannot read
+  D1, so the service also signs `{o:'mute', s, mu}` — a minute-long token
+  of a **different shape** from an identity. One key signs both, and the
+  shapes keep them apart: an identity needs an issuable `n`, an order must
+  carry none. The moderator's client carries the order into every room it
+  holds; **the relay checks the signature and never asks who carried it.**
+- **The newest order wins.** A replayed mute inside its minute cannot undo
+  the unmute that followed it, and a hello whose token predates the room's
+  newest order takes the order's word — so a token minted a moment before
+  the mute cannot carry its holder past it.
+
+A muted player's line goes nowhere — not even back to them — and they
+alone are told `{t:'muted', until}`. They still read chat.
+
+### A name is not an account
+
+Two guests can share a generated name. So chat lines and a channel's
+roster carry **`sub`**, the sender's verified account from their token
+(not `acct`: that word is the social hub's own id, a different law). The
+command resolves a typed name against the players the relay has named,
+and **two matches is a refusal, never a guess**. A name may have a space
+in it — every guest's does — so the minutes are the last word.
+
+### What it costs
+
+**A relay deploy — `world90` — which drops every connected player once.**
+The token module and the wire are in the relay's bundle. The account
+service deploys beside it and drops nobody.
+
+**Honestly bounded:** a player muted while standing in a place room the
+moderator is not in is muted there on their next connection to it (every
+room change is one), not instantly; the world channel — where everyone is
+— hears it at once.
+
+- `src/net/identityToken.js` — `mod` glyph, `mu` claim, `ORDER_KINDS`,
+  `mintOrder` / `verifyOrder` / `orderValid`, one shared verify ladder.
+- `server-account/` — `canModerate`, `isModerator`, `muteAccount`,
+  `/v1/mod/mute`, `acct5`, migration 0006, `MODERATOR_HANDLES`.
+- `server/src/index.js` — `sub` and `mu` on the attachment, the muted
+  refusal, the `mute` arm, `_orders`, `_loadKey`.
+- `src/net/wire.js` — the frames, `MUTE_HZ_MAX`, `subOf`,
+  `mutedUntilOf`. `src/net/online.js` — `sub` on peers and lines,
+  `onMuted`, `sendMuteOrder`.
+- `src/net/moderation.js` — the commands, the lookup, the words.
+- `src/ui/playerBadge.js`, `enhancedAccount.js` — the blue shield.
+- `test/mod1.test.js` — 15 pins. `tools/mutants/mod1.json` — 20, all dead.

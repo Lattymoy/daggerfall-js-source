@@ -82,10 +82,13 @@ export const TITLE_RGBA = Object.freeze({
 
 /** A glyph's colour. The sprout is green because Mac said green; the
  *  dev glyph takes the Developer title's own red, read from it rather
- *  than repeated, so the two halves of one grant cannot drift apart. */
+ *  than repeated, so the two halves of one grant cannot drift apart;
+ *  the moderator's shield is blue because Mac picked the blue shield
+ *  (MOD1). */
 export const GLYPH_RGBA = Object.freeze({
   sprout: Object.freeze([0.42, 0.82, 0.36, 1]),   // #6bd15c
   dev: TITLE_RGBA.developer,
+  mod: Object.freeze([0.29, 0.565, 0.886, 1]),   // #4a90e2
 });
 
 /** THE CLASSIC FACE'S STAND-IN: one character, and it must be one the
@@ -94,6 +97,7 @@ export const GLYPH_RGBA = Object.freeze({
 export const GLYPH_MARK = Object.freeze({
   sprout: '+',
   dev: '*',
+  mod: '#',   // MOD1: the classic face has no shield; a hash reads as a badge at that size
 });
 
 /** The printable range the classic font covers. ACC1d-MARK's own bound,
@@ -111,12 +115,14 @@ export const GLYPH_PATH = Object.freeze({
   sprout: 'M8 15V7M8 9C8 9 5 9 3.5 7.5S2 3 2 3s3 0 4.5 1.5S8 9 8 9zM8 8c0 0 3 0 4.5-1.5S14 2 14 2s-3 0-4.5 1.5S8 8 8 8z',
   // a developer's angle brackets
   dev: 'M5.5 4L1.5 8l4 4M10.5 4l4 4-4 4',
+  // MOD1: a moderator's shield - a flat top, straight sides, a point below
+  mod: 'M8 1.5L2.5 3.5v4c0 3.5 2.4 6 5.5 7 3.1-1 5.5-3.5 5.5-7v-4z',
 });
 
 /** Is this glyph DRAWN as an outline rather than filled? The sprout is
  *  a shape and the brackets are strokes; said here so the layer does
  *  not have to know which is which by name. */
-export const GLYPH_STROKE = Object.freeze({ sprout: true, dev: true });
+export const GLYPH_STROKE = Object.freeze({ sprout: true, dev: true, mod: true });
 
 /**
  * The title a peer wears, ready to draw: `{ key, text, rgba }`, or

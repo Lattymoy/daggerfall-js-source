@@ -48,6 +48,8 @@
 //   POST /v1/account/title { title }      -> { ok, titles[], title, glyphs[] }
 // ACC4, time played. A beat carries no number - this clock measures:
 //   POST /v1/account/played {}            -> { playedS }
+// MOD1, moderation. The caller must be a moderator or a developer:
+//   POST /v1/mod/mute { target, minutes } -> { ok, target, name, until, order }
 //
 // ACC2, and every one of them needs a REGISTERED account (the wall):
 //   GET    /v1/saves                                   -> { saves[] }
@@ -88,10 +90,10 @@ import {
   createGuest, openSession, resolveSession, closeSession, closeAllSessions,
   devicesOf, accountView, displayName, accountKind,
   register, login, recover, changePassword, setEmail, overRate,
-  accountWardrobe, equipTitle, creditPlay,
+  accountWardrobe, equipTitle, creditPlay, muteAccount, isMuted, mutedUntil,
   ACCOUNT_MAX, ACCOUNT_WINDOW_S,
 } from './accounts.js';
-import { mintToken, MAX_TTL_S, TOKEN_V } from '../../src/net/identityToken.js';
+import { mintToken, mintOrder, MAX_TTL_S, TOKEN_V } from '../../src/net/identityToken.js';
 import { ACCOUNT_VERSION, MAX_BODY_BYTES, ROUTES, OPEN_ROUTES, savePathOf, SAVE_MAX_BYTES, SHOT_MAX_BYTES } from './service.js';
 import { listSaves, putCard, putBlob, getBlob, deleteSave, saveCardOf } from './saves.js';
 import { signingKey } from './signing.js';
@@ -280,8 +282,12 @@ export default {
           t: titleWorn(who.player, env),
           g: glyphsOf(who.player, env, nowS),
         };
+        // MOD1: A MUTE RIDES THE TOKEN, so a reconnect cannot shed one -
+        // every room reads it off the signature at the hello. Only while
+        // it runs: a mute that has ended is simply absent.
+        const mu = isMuted(who.player, nowS) ? mutedUntil(who.player) : undefined;
         const token = await mintToken(
-          { s: who.player.id, n: displayName(who.player), k: accountKind(who.player), ...wardrobe },
+          { s: who.player.id, n: displayName(who.player), k: accountKind(who.player), ...wardrobe, mu },
           key, { subtle, nowS },
         );
         return json({
@@ -290,6 +296,7 @@ export default {
           kind: accountKind(who.player),
           title: wardrobe.t ?? null,
           glyphs: wardrobe.g,
+          mutedUntil: mu ?? 0,
           expiresAt: nowS + MAX_TTL_S,
         }, 200, origin);
       }
@@ -324,6 +331,22 @@ export default {
         // title is simply not theirs. Same reading as the save wall.
         const r = await equipTitle(ctx, who.player, env, body.title ?? null);
         return r.error ? no(r.error, r.error === 'not-held' ? 403 : 400, origin) : json(r, 200, origin);
+      }
+
+      if (path === '/v1/mod/mute' && request.method === 'POST') {
+        // MOD1: THE ROW FIRST, THE ORDER SECOND. The row is the truth and
+        // every later token carries it; the order is only how rooms that
+        // are ALREADY holding the target hear it now. So a service with
+        // no signing key still mutes - it just cannot tell live rooms,
+        // and says so rather than pretending.
+        const r = await muteAccount(ctx, who.player, env, { target: body.target, minutes: body.minutes });
+        if (r.error) {
+          const status = r.error === 'not-moderator' || r.error === 'protected' ? 403 : r.error === 'no-player' ? 404 : 400;
+          return no(r.error, status, origin);
+        }
+        const key = await signingKey(env, subtle);
+        const order = key ? await mintOrder({ s: r.target, mu: r.until }, key, { subtle, nowS }) : null;
+        return json({ ...r, order }, 200, origin);
       }
 
       if (path === '/v1/account/played' && request.method === 'POST') {

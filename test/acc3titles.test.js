@@ -203,7 +203,7 @@ test('ACC3: the token carries the badge, and a body edited to claim one that is 
   assert.equal(claimsValid({ ...base, g: [...GLYPHS, 'sprout'] }), false, 'more slots than there are glyphs');
   assert.equal(GLYPHS_MAX, GLYPHS.length, 'the bound is the vocabulary\'s own size, not a number somebody picked');
   assert.deepEqual([...TITLES], ['founder', 'developer'], 'Mac\'s two, in his order');
-  assert.deepEqual([...GLYPHS], ['sprout', 'dev']);
+  assert.deepEqual([...GLYPHS], ['sprout', 'dev', 'mod'], 'MOD1 added the moderator shield, last - the order is the order a name draws them in');
 });
 
 // ── THE SERVICE, end to end ─────────────────────────────────────────

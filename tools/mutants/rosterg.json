@@ -2,7 +2,7 @@
   {
     "name": "G1-channel-welcome-names-nobody",
     "file": "server/src/index.js",
-    "old": "        const named = others.slice(0, CHAT_ROSTER_MAX).map((b) => badged({ id: b.id, name: b.name }, b));   // ACC3: and whatever the token vouched for, beside it",
+    "old": "        const named = others.slice(0, CHAT_ROSTER_MAX).map((b) => badged({ id: b.id, name: b.name, sub: b.sub }, b));",
     "new": "        const named = [];",
     "tests": [
       "test/rosterg.test.js",
@@ -32,8 +32,8 @@
   {
     "name": "G4-channel-join-carries-the-look",
     "file": "server/src/index.js",
-    "old": "        const said = JSON.stringify(badged({ t: 'join', id: m.id, name: who.name }, who));",
-    "new": "        const said = JSON.stringify(badged({ t: 'join', id: m.id, name: who.name, look: m.look }, who));",
+    "old": "        const said = JSON.stringify(badged({ t: 'join', id: m.id, name: who.name, sub: who.subject }, who));",
+    "new": "        const said = JSON.stringify(badged({ t: 'join', id: m.id, name: who.name, sub: who.subject, look: m.look }, who));",
     "tests": [
       "test/rosterg.test.js",
       "test/chat1.test.js"

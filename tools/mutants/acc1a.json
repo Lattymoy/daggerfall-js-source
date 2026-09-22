@@ -20,7 +20,7 @@
   {
     "name": "ACC1a-3-the-claims-are-trusted-once-signed",
     "file": "src/net/identityToken.js",
-    "old": "  if (!claimsValid(claims, { maxTtlS })) return { ok: false, why: 'claims' };",
+    "old": "  if (!valid(claims)) return { ok: false, why: 'claims' };",
     "new": "  if (false) return { ok: false, why: 'claims' };",
     "tests": [
       "test/identitytoken.test.js"
