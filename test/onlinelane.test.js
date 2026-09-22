@@ -112,8 +112,16 @@ test('OL1 - THE FUTURE HALF: every boolean switch the port declares is either fo
   assert.equal(onlineForcedPref('enhancedAI', '?online=1'), true);
   assert.equal(onlineForcedPref('enhancedAI', ''), undefined);
   assert.equal(onlineForcedPref('grassDensity', '?online=1'), undefined);
-  assert.equal(onlineForcedModSetting('pcaao', 'Enabled', '?online=1'), undefined,
-    'MODS-ONLINE-2: the striker rolls the damage and the host applies the number - the formulas were never shared');
+  // MODS-ONLINE-4 (2026-09-22, Mac: "What about player balance?"):
+  // back to the room, and for a reason MODS-ONLINE-2 never asked about.
+  // Its reading was right - the striker rolls the damage and the host
+  // applies the number, so nothing desyncs - but OWNERSHIP IS NOT
+  // PRIVACY: a world room's layout foes are its HOST's (WORLD2), so
+  // the host's formulas are what the whole party fights.
+  assert.equal(onlineForcedModSetting('pcaao', 'Enabled', '?online=1'), true,
+    'the host\'s combat rules are the party\'s combat rules');
+  assert.equal(onlineForcedModSetting('shield-widget', 'Enabled', '?online=1'), undefined,
+    '...while a block, which only ever mitigates the DEFENDER\'s own blow, is still the player\'s');
   assert.equal(onlineForcedModSetting('dynamic-skies', 'densitySetting', '?online=1'), undefined);
 });
 
@@ -123,7 +131,7 @@ test('OL1 by source: the three read paths ask the one home first, the menu locks
   assert.match(rd('src/systems/modSettings.js'), /const forced = onlineForcedModSetting\(vendor, key\);[^\n]*\n\s*if \(forced !== undefined\) return forced;\s*const v = load\(\)\[vendor\]\?\.\[key\];/);
   const menu = rd('src/ui/enhancedMenu.js');
   assert.match(menu, /if \(onlineForcedPref\(key\) !== undefined\) lockOnline\(b, main\);/, 'a forced pref row is locked');
-  assert.match(menu, /if \(ground !== undefined\) lockOnline\(b, null, \{ note: ONLINE_GROUND_NOTE, value: ground \}\);/, 'a forced mod row is locked, with its OWN reason');
+  assert.match(menu, /if \(ground !== undefined\) lockOnline\(b, null, \{ note: vendor === 'roads-hazelnut' \? ONLINE_GROUND_NOTE : ONLINE_SHARED_NOTE, value: ground \}\);/, 'a forced mod row is locked, with the reason it is actually locked FOR');
   assert.match(menu, /function lockOnline\(b, main, \{ note = ONLINE_LOCK_NOTE, value = true \} = \{\}\) \{\s*b\.textContent = value \? 'On \(online\)' : 'Off \(online\)';/, 'the lock says so and answers nothing');
   assert.match(menu, /if \(isOnlinePage\(\)\) body\.append\(el\('p', 'meta', ONLINE_MODS_NOTE\)\);/, 'the Mods pane says it once at the top');
   assert.match(menu, /Online is the enhanced lane: every enhancement the port owns is on for everyone\./, 'the Online pane');

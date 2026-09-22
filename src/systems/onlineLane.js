@@ -186,15 +186,53 @@ export function onlineForcedPref(key, search) {
  * paintRoads), so a river paints tiles and never moves a height. It is
  * paint, and paint is the player's.
  *
- * So: every vendored mod's `Enabled` is the player's, online as
- * offline, and what the lane forces is two switches under one mod -
- * the floor the room shares.
+ * MODS-ONLINE-4 (2026-09-22, Mac: "What about player balance?"): AND
+ * THE READING ABOVE ANSWERED THE WRONG QUESTION FOR THREE OF THEM.
+ *
+ * "Does it desync?" and "does my switch reach another player?" are not
+ * the same question, and the passes above only asked the first. The
+ * port really is owner-authoritative, so nothing below breaks a room -
+ * but OWNERSHIP IS NOT PRIVACY. Two of the places a machine owns
+ * something are places its answer is handed to everyone else:
+ *
+ *   THE HOST OWNS THE DUNGEON'S FOES. A world room's layout foes are
+ *   streamed by its host and stood as puppets by everyone else
+ *   (WORLD2), so the host's Meaner Monsters and PCAAO are not "the
+ *   host's own game" - they are what the whole party fights. A host
+ *   with either off runs a softer dungeon for four other people who
+ *   never chose that, and none of them can see why.
+ *
+ *   ITEMS CHANGE HANDS. A corpse's pile is granted to peers
+ *   (WORLD6b-iii(c)) and a room's containers are shared (WORLD4), so
+ *   Unleveled Loot's rolls do not stay with the roller. One player
+ *   rolling level-scaled drops and handing them across is two
+ *   rulesets feeding one economy.
+ *
+ * So these three are the room's - not because a room where they
+ * differ falls apart, but because a room where they differ is one
+ * player's setting spending someone else's evening.
+ *
+ * WHAT STAYED THE PLAYER'S AFTER THE SAME QUESTION. Climates &
+ * Calories reaches another player only through a corpse's FOOD -
+ * meat and rations, no power and no gear - and forcing it means
+ * nobody may opt out of freezing to death, which is a live
+ * complaint; the Shield Widget, Handheld Torches, Oblivion leveling
+ * and Travel Options only ever make the player's OWN run harder or
+ * easier, and the last two of those mostly harder.
+ *
+ * So: what the lane forces is the floor the room stands on, and the
+ * three switches that spend a stranger's evening.
  */
 export const ONLINE_ROOM_MOD_KEYS = Object.freeze({
   'roads-hazelnut': Object.freeze({
     Enabled: true,        // which network is painted, and so which beds are smoothed
     SmoothRoads: true,    // whether the beds are smoothed at all - the dial that gave the floor away
   }),
+  // MODS-ONLINE-4: the host's foes are the party's foes.
+  meanerMonsters: Object.freeze({ Enabled: true }),
+  pcaao: Object.freeze({ Enabled: true }),
+  // MODS-ONLINE-4: a roll that leaves the roller's hands.
+  unleveledLoot: Object.freeze({ Enabled: true }),
 });
 
 /**
@@ -224,10 +262,8 @@ export const ONLINE_PLAYERS_OWN_MODS = [
   'better-ambience',       // ambient audio and the dungeon's darkness, both drawn locally
   // MODS-ONLINE-2 (2026-09-22): what the port already resolves at the
   // machine that owns the actor, so the wire carries the result and
-  // never the rule.
-  'pcaao',                       // the striker's damage number; applyHit trusts it without recomputing
-  'meanerMonsters',              // a foe's stats, minted where it spawns; a peer steps a puppet, not a rule
-  'unleveledLoot',               // the owner rolls and grants the pile (WORLD6b-iii(c))
+  // never the rule - and which MODS-ONLINE-4 then re-asked "does my
+  // switch reach another player?", moving three of them back.
   'shield-widget',               // the block is the DEFENDER's - damageShieldPool runs where the blow lands
   'handheld-torches',            // an item in my save with a light on my screen
   'oblivion-remaster-leveling',  // written into a character at creation and kept by that character

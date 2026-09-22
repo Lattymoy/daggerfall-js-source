@@ -521,7 +521,7 @@ function paneOnline(body) {
   c.append(el('span', 'tag', 'Online'));
   c.append(el('h3', null, 'Bring your character into the shared world'));
   // AUDIT WORLD34 D5: the copy said the pre-WORLD1 truth ("Nothing else is shared yet") - what a player is promised here is the law
-  c.append(el('p', 'meta', 'Everyone brings their own save; you see each other everywhere and can talk. A dungeon is one shared world: its foes, doors, levers, platforms and every chest anyone has opened are the same for everyone in it, and it remembers. A building is a shared world too: its doors, and every shelf and cupboard anyone has opened, are the same for everyone in it, and it remembers. Towns and the open country share who is there and the creatures that find you: what one player meets, everyone nearby sees and fights - and its creatures can hurt you too. The clock and the sky are the world\'s and run on real time: a rest, a trip, a sentence or a lesson takes none of it, and the quest clocks stand still. Online is the enhanced lane: every enhancement the port owns is on for everyone. Your mods stay yours - turn any of them on or off online, except the two road switches, because the road beds are smoothed into the terrain and a room has to share one ground.'));   // AUDIT WORLD5 C12: the shared clock, said at the door; OL1: the lane, said at the door
+  c.append(el('p', 'meta', 'Everyone brings their own save; you see each other everywhere and can talk. A dungeon is one shared world: its foes, doors, levers, platforms and every chest anyone has opened are the same for everyone in it, and it remembers. A building is a shared world too: its doors, and every shelf and cupboard anyone has opened, are the same for everyone in it, and it remembers. Towns and the open country share who is there and the creatures that find you: what one player meets, everyone nearby sees and fights - and its creatures can hurt you too. The clock and the sky are the world\'s and run on real time: a rest, a trip, a sentence or a lesson takes none of it, and the quest clocks stand still. Online is the enhanced lane: every enhancement the port owns is on for everyone. Most of your mods stay yours - turn them on or off online as you like. Five switches are the room\u2019s: Basic Roads, because the beds are smoothed into the terrain and a room shares one ground, and Meaner Monsters, the Combat and Armor Overhaul and Unleveled Loot, because a dungeon\u2019s foes belong to whoever hosts it and loot changes hands.'));   // AUDIT WORLD5 C12: the shared clock, said at the door; OL1: the lane, said at the door
   const field = (label, key, placeholder, maxLength = 24) => {
     const wrap = el('label', 'field');
     wrap.append(el('span', 'fieldlabel', label));
@@ -1182,8 +1182,11 @@ const ONLINE_LOCK_NOTE = 'On while online - the shared world is the enhanced lan
 /** MODS-ONLINE-2: the Mods pane's own line. The lane's note (above)
  *  is about the PORT's switches and was wrong over the tiles the
  *  moment a mod stopped being forced. */
-const ONLINE_MODS_NOTE = 'Your mods are yours online: turn any of them on or off. The two Basic Roads switches are the exception - road beds are smoothed into the terrain, so every player in a room has to stand on the same ground.';
+const ONLINE_MODS_NOTE = 'Most of your mods are yours online: turn them on or off as you like. Five switches are the room\u2019s - Basic Roads (the beds are smoothed into the terrain, so everyone stands on the same ground), and Meaner Monsters, the Combat and Armor Overhaul and Unleveled Loot, because a dungeon\u2019s foes are its host\u2019s and loot changes hands.';
 const ONLINE_GROUND_NOTE = 'Set while online - the road beds are smoothed into the terrain, so every player in a room has to stand on the same ground. Your own choice returns when you play offline.';
+/** MODS-ONLINE-4: the other three, and their reason is not the ground -
+ *  it is that this switch would be spending somebody else's evening. */
+const ONLINE_SHARED_NOTE = 'On while online - a dungeon\u2019s monsters belong to whoever is hosting it and loot passes between players, so a room has to agree on this one. Your own choice returns when you play offline.';
 function lockOnline(b, main, { note = ONLINE_LOCK_NOTE, value = true } = {}) {
   b.textContent = value ? 'On (online)' : 'Off (online)';
   b.classList.toggle('primary', !!value);
@@ -1816,7 +1819,7 @@ function modRow(vendor, key, def, { name = null, note = null, home = false } = {
     if (on) b.classList.add('primary');
     b.onclick = () => { setModSetting(vendor, key, !modSetting(vendor, key)); render(); };
     const ground = onlineForcedModSetting(vendor, key);   // MODS-ONLINE-2: the road switches the room's ground depends on; every other mod switch is free online
-    if (ground !== undefined) lockOnline(b, null, { note: ONLINE_GROUND_NOTE, value: ground });
+    if (ground !== undefined) lockOnline(b, null, { note: vendor === 'roads-hazelnut' ? ONLINE_GROUND_NOTE : ONLINE_SHARED_NOTE, value: ground });
     ctl.append(b);
   }
   row.append(ctl);

@@ -69,7 +69,7 @@
   {
     "name": "the-menu-lock-gives-the-lanes-reason-for-a-ground-switch",
     "file": "src/ui/enhancedMenu.js",
-    "old": "    if (ground !== undefined) lockOnline(b, null, { note: ONLINE_GROUND_NOTE, value: ground });",
+    "old": "    if (ground !== undefined) lockOnline(b, null, { note: vendor === 'roads-hazelnut' ? ONLINE_GROUND_NOTE : ONLINE_SHARED_NOTE, value: ground });",
     "new": "    if (ground !== undefined) lockOnline(b, null);",
     "tests": [
       "test/modsonline.test.js",
@@ -121,6 +121,35 @@
     "tests": [
       "test/modsonline.test.js",
       "test/surv2_items.test.js"
+    ]
+  },
+  {
+    "name": "the-balance-three-are-freed-again",
+    "file": "src/systems/onlineLane.js",
+    "old": "  meanerMonsters: Object.freeze({ Enabled: true }),\n  pcaao: Object.freeze({ Enabled: true }),",
+    "new": "",
+    "tests": [
+      "test/modsonline.test.js",
+      "test/onlinelane.test.js"
+    ]
+  },
+  {
+    "name": "the-loot-roll-is-freed-again",
+    "file": "src/systems/onlineLane.js",
+    "old": "  unleveledLoot: Object.freeze({ Enabled: true }),\n",
+    "new": "",
+    "tests": [
+      "test/modsonline.test.js"
+    ]
+  },
+  {
+    "name": "every-locked-row-wears-the-grounds-reason-again",
+    "file": "src/ui/enhancedMenu.js",
+    "old": "vendor === 'roads-hazelnut' ? ONLINE_GROUND_NOTE : ONLINE_SHARED_NOTE",
+    "new": "ONLINE_GROUND_NOTE",
+    "tests": [
+      "test/modsonline.test.js",
+      "test/onlinelane.test.js"
     ]
   }
 ]
