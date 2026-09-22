@@ -2165,6 +2165,15 @@ skin is enhanced (over `?skin=classic` too - a shared world has one
 lane), every enhancement the port owns is on, and every vendored mod is
 enabled, whatever the player's shelf says.
 
+> **Superseded in its mod half by MODS-ONLINE-2 (2026-09-22), below.**
+> Everything on this page about the SKIN and the port's own switches
+> still stands. The vendored mods do not: every mod's `Enabled` is the
+> player's now, online as offline, and the lane forces exactly the two
+> Basic Roads switches the room's terrain heights depend on. The
+> reading that got there - and why forcing `Enabled` while leaving
+> `SmoothRoads` a dial was giving the floor away anyway - is recorded
+> there.
+
 **A read, not a write.** The forcing lives in `systems/onlineLane.js`
 and is asked FIRST by the three places a switch is read - `uiSkin.js`
 (the skin), `uiPrefs.js getPref` (the port's own switches) and
@@ -2225,6 +2234,83 @@ off both copies before the menu runs, so a reload after an online
 session does not show the Mods pane locked for a player who has not
 chosen yet. One home, not a second read path. The record is
 `01-Overview/Mac-Bugs-N.md`.
+
+## MODS-ONLINE-2 (2026-09-22): the mods are the player's, the ground is the room's
+
+**Mac: "Is it possible to allow all mods to be toggled on and off for
+online?" and then, of the first answer, "So all mods can now be
+toggled?"** The first answer was half of one. MODS-ONLINE freed eight
+mods and left eight forced because they sounded like world state. This
+is the other half, and it comes from a reading of the PORT rather than
+a reading of the names.
+
+**The port is already owner-authoritative everywhere a mod could
+disagree.** A blow's damage is the STRIKER's number and the host
+applies it without recomputing (`dungeonContext.js applyHit`: "The
+number is a peer's word and the host trusts it"), so PCAAO's formulas
+were never shared. A foe's stats are minted where it SPAWNS
+(`meanerMonsters` edits `makeEnemyEntity`) and a peer steps a puppet,
+so a joiner already fights the host's foes under the host's numbers
+whatever their own shelf says. A corpse's pile is rolled and granted by
+the owner's word (WORLD6b-iii(c)), so Unleveled Loot's rolls are the
+owner's. A blow is mitigated where it LANDS - `damageShieldPool` inside
+`damageFoe` for a foe, inside `hurtPlayer` for me - so the Shield
+Widget's block is always the defender's own, which is the opposite of
+what MODS-ONLINE concluded from its name. Oblivion leveling is written
+into a character at creation and kept by that character; Handheld
+Torches is an item in my save with a light on my screen; Travel Options
+is my own journey, and OL2 already spends no world time online. None of
+that reaches a second machine as a RULE. It reaches it as a RESULT,
+which is what the wire carries.
+
+**One thing is not a rule - it is the floor.** Basic Roads rewrites
+TERRAIN HEIGHTS: `terrainGen.js` calls `smoothRoadHeights` over the
+road beds, so `Enabled` (whether Hazelnut's network or the port's own
+generated one is painted, BR3) and `SmoothRoads` (whether the beds are
+smoothed at all) decide where the ground IS. Two players who disagree
+stand on two floors along every road in the Bay, and a pose is a
+position on that floor, so each sees the other sunk into or floating
+over the bed.
+
+**And the old lane had it backwards.** It forced `Enabled` and left
+`SmoothRoads` alone, because `SmoothRoads` is a DIAL and the lane's
+rule was "force every mod's `Enabled`, leave its dials". So the
+heights have been diverging online since the lane was written, for
+anyone who turned the smoothing off for the "minor extra performance"
+its own description offers - forcing `Enabled` bought the room nothing
+while the dial beside it gave the floor away. The table is by KEY now,
+not by mod, which is what makes that fixable at all.
+`RiversAndStreams` is deliberately NOT in it, and that is measured
+rather than argued: `SMOOTHED_TILES` is `{46, 0xff}` - the road bed -
+and the painter lays a road before it ever considers water, so a river
+paints tiles and never moves a height. The pin runs the real smoother
+over every tile the river and stream tables can write and reads the
+heights back unchanged.
+
+**What the player sees.** The Mods pane's line used to be the lane's
+("On while online - the shared world is the enhanced lane, whole"),
+which stopped being true of that pane the moment a mod stopped being
+forced; the Online pane's door claimed "every enhancement and every mod
+is on for everyone". Both say what is true now, and the two locked road
+rows carry their OWN reason rather than the lane's - a lock that gives
+the wrong reason is as useless as a refusal nobody can see.
+
+**A declared key is an OWN key.** The surviving mutant found a second
+hole rather than a missing assertion. `modSettings.js` read
+`MOD_SETTINGS[vendor]?.keys?.[key]` and treated anything truthy as a
+declaration, so every name on `Object.prototype` was one: a read of
+`toString` or `constructor` sailed past "is not a declared switch" and
+answered `undefined`, and a WRITE of one coerced against a function and
+stored it. The same mistake in the lane is what exposed it -
+`room['toString']` is a function and would have been handed back as a
+forced setting value. All three doors take own keys now, vendor and key
+both.
+
+Pins: `test/modsonline.test.js` (7), `test/onlinelane.test.js`
+re-aimed, `test/worldhover.test.js` re-aimed; mutants:
+`tools/mutants/modsonline1.json` 12, 12 dead.
+Not verified in a browser: no online session exists in this container.
+
 
 ## OL2 (2026-09-14): the rest window says the clock, the trip says it arrives now
 

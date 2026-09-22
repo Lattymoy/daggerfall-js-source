@@ -9,7 +9,7 @@
 // defaults without a DOM.
 
 import { appStorage } from './appStorage.js';   // the one storage seam - localStorage lives there alone
-import { onlineForcedModSetting } from './onlineLane.js';   // OL1: online, every mod is enabled
+import { onlineForcedModSetting } from './onlineLane.js';   // MODS-ONLINE-2: online, the room's ground is forced and every other switch is the player's
 
 const STORE_KEY = 'dfjs-mod-settings';
 
@@ -898,13 +898,32 @@ function coerce(def, v) {
  *  ModSettings - that answers undefined for a mod the port has not
  *  vendored (DFU: the mod is not loaded) instead of throwing. */
 export function modSettingIfDeclared(vendor, key) {
-  return MOD_SETTINGS[vendor]?.keys?.[key] ? modSetting(vendor, key) : undefined;
+  return declaredKey(vendor, key) ? modSetting(vendor, key) : undefined;
 }
 
+/**
+ * MODS-ONLINE-2: A DECLARED KEY IS AN OWN KEY. The three doors below
+ * read `MOD_SETTINGS[vendor].keys[key]` and treated anything truthy as
+ * a declaration - so every name on Object.prototype was one. A read of
+ * `toString`, `constructor` or `valueOf` sailed past "is not a declared
+ * switch" and answered `undefined` (its `def.default` does not exist)
+ * instead of throwing, and a WRITE of one coerced against a function
+ * and stored it under the vendor. Nothing in the port asks for those
+ * names, which is why it was never seen; a mod id or key that ever
+ * comes from data would have found it.
+ *
+ * The same mistake, made in the lane, is what caught this: the survivor
+ * of tools/mutants/modsonline1.json dropped `Object.hasOwn` from
+ * onlineForcedModSetting, where `room['toString']` is a FUNCTION and
+ * would have been handed back as a forced setting value.
+ */
+const declaredKey = (vendor, key) =>
+  (Object.hasOwn(MOD_SETTINGS, vendor) && Object.hasOwn(MOD_SETTINGS[vendor].keys, key) ? MOD_SETTINGS[vendor].keys[key] : undefined);
+
 export function modSetting(vendor, key) {
-  const def = MOD_SETTINGS[vendor]?.keys?.[key];
+  const def = declaredKey(vendor, key);
   if (!def) throw new Error(`modSetting: ${vendor}/${key} is not a declared switch`);
-  const forced = onlineForcedModSetting(vendor, key);   // OL1: online is the enhanced lane, whole - `Enabled` reads true and the store is not written
+  const forced = onlineForcedModSetting(vendor, key);   // MODS-ONLINE-2: online, a key the room's ground depends on reads the room's value and the store is not written
   if (forced !== undefined) return forced;
   const v = load()[vendor]?.[key];
   return v === undefined ? def.default : coerce(def, v);
@@ -921,7 +940,7 @@ export function modSettingsOf(vendor) {
 }
 
 export function setModSetting(vendor, key, value) {
-  const def = MOD_SETTINGS[vendor]?.keys?.[key];
+  const def = declaredKey(vendor, key);
   if (!def) throw new Error(`setModSetting: ${vendor}/${key} is not a declared switch`);
   const m = load();
   const v = coerce(def, value);

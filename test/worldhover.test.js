@@ -2064,9 +2064,14 @@ test('AUDIT-WH R7/R8/P7/P9: the list has a cap, a readout is the player\'s onlin
   // on and off for online?"), and the whole classification is held by
   // test/modsonline.test.js. What this pin owns is its OWN case: World
   // Tooltips is on that list and the lane does not force it.
+  // MODS-ONLINE-2 (2026-09-22) re-aimed the third line. The lane no
+  // longer asks "is this vendor exempt?" - it asks whether the KEY is
+  // one the room's ground depends on, and nothing else is forced at
+  // all. R8's own case is unchanged and stronger: World Tooltips is on
+  // the player's list AND the lane forces none of its keys.
   assert.match(ol, /export const ONLINE_PLAYERS_OWN_MODS = \[/);
   assert.match(ol, /'world-tooltips',/);
-  assert.match(ol, /if \(ONLINE_PLAYERS_OWN_MODS\.includes\(vendor\)\) return undefined;/);
+  assert.match(ol, /const room = ONLINE_ROOM_MOD_KEYS\[vendor\];\s*\n\s*if \(!room \|\| !Object\.hasOwn\(room, key\)\) return undefined;/);
 
   // P7: ONE BUILDER, THREE READERS, NO SHARED SLOT. `springTargets()`
   // used to refill a module-level array on its way to the targets and

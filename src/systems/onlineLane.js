@@ -7,15 +7,24 @@
 // lane's; a mod's roads and seasons are a mod's), so two players in one
 // world could stand under two skies on two road networks. Mac's answer
 // is not a per-switch rule but a lane: while the page is ONLINE, the
-// skin is enhanced, every enhancement the port owns is on, and every
-// vendored mod is enabled - whatever the player's shelf says, and
-// whatever a probe's `?skin=classic` says. The shelf is not written:
-// the forcing is a READ, for this page load, so the player's own
-// choices stand again the moment they play offline.
+// skin is enhanced and every enhancement the port owns is on -
+// whatever the player's shelf says, and whatever a probe's
+// `?skin=classic` says. The shelf is not written: the forcing is a
+// READ, for this page load, so the player's own choices stand again
+// the moment they play offline.
+//
+// THE VENDORED MODS ARE NOT IN THAT SENTENCE ANY MORE (MODS-ONLINE-2,
+// 2026-09-22, Mac: "Is it possible to allow all mods to be toggled on
+// and off for online?"). Every mod's `Enabled` is the player's now,
+// online as offline; the lane forces exactly the two switches the
+// room's GROUND depends on. The reading that got there - why a
+// damage formula, a foe's stats, a loot roll and a block were never
+// shared to begin with, and why a road bed is - is written over
+// ONLINE_ROOM_MOD_KEYS below.
 //
 // ONE HOME, THREE READ PATHS. The three places a switch is read -
 // uiSkin.js (the skin), uiPrefs.js getPref (the port's own switches)
-// and modSettings.js modSetting (a mod's `Enabled`) - each ask this
+// and modSettings.js modSetting (a mod's switches) - each ask this
 // module first. Nothing is forced at a mount site, because a port that
 // forces at forty-seven `isEnhanced()` sites is a port where the
 // forty-eighth is missed. And the FUTURE half of Mac's sentence is a
@@ -118,50 +127,94 @@ export function onlineForcedPref(key, search) {
   return isOnlinePage(search) && Object.hasOwn(ONLINE_FORCED_PREFS, key) ? ONLINE_FORCED_PREFS[key] : undefined;
 }
 
-/** The one mod key the lane forces: every vendored mod's `Enabled`.
- *  A mod's other switches (a fog density, a material swap) are the
- *  player's, as its own modsettings would leave them. */
-export const ONLINE_FORCED_MOD_KEY = 'Enabled';
+/**
+ * THE MOD KEYS THE ONLINE LANE FORCES - AND THEY ARE THE GROUND.
+ *
+ * MODS-ONLINE-2 (2026-09-22, Mac: "Is it possible to allow all mods to
+ * be toggled on and off for online?" / "So all mods can now be
+ * toggled?"). The first answer was half of one: eight mods freed, eight
+ * left forced because they sounded like world state. This is the other
+ * half, and it is a READING of the port rather than a reading of the
+ * names.
+ *
+ * WHAT THE ROOM ACTUALLY AGREES ON. The port is already owner-
+ * authoritative everywhere a mod could disagree, by design and by pin:
+ *
+ *   - a blow's damage is the STRIKER's number and the host applies it
+ *     without recomputing (dungeonContext applyHit: "The number is a
+ *     peer's word and the host trusts it"), so PCAAO's formulas were
+ *     never shared - each machine already rolls its own;
+ *   - a foe's stats are minted where it SPAWNS (meanerMonsters edits
+ *     makeEnemyEntity) and a peer sees a puppet the owner steps, so a
+ *     joiner already fights the host's foes under the host's numbers,
+ *     whatever the joiner's shelf says;
+ *   - a corpse's loot is rolled and granted by the owner's word
+ *     (WORLD6b-iii(c)), so Unleveled Loot's rolls are the owner's;
+ *   - a blow AT a body is mitigated where it lands - hurtPlayer for me,
+ *     damageFoe for the host's foe, both through damageShieldPool - so
+ *     the Shield Widget's block is always the defender's own;
+ *   - Oblivion leveling is written into a CHARACTER at creation and
+ *     kept by that character; Handheld Torches is an item in my save
+ *     with a light on my screen; Travel Options is my own journey
+ *     (OL2 already spends no world time online).
+ *
+ * None of those reaches a second machine as a RULE. Each reaches it as
+ * a RESULT, which is exactly what the wire carries.
+ *
+ * ONE THING IS DIFFERENT, and it is not a rule either - it is the
+ * floor. Basic Roads rewrites TERRAIN HEIGHTS: terrainGen calls
+ * smoothRoadHeights over the road beds, so which network is painted
+ * (`Enabled`: Hazelnut's arrays or the port's own generated network,
+ * BR3) and whether the beds are smoothed at all (`SmoothRoads`) decide
+ * where the ground IS. Two players who disagree stand on two floors
+ * along every road in the Bay, and a pose is a position on that floor,
+ * so each sees the other sunk into or floating over the bed. That is
+ * the room disagreeing about the world itself, and it is the only
+ * place in the shelf where a switch does that.
+ *
+ * AND THIS WAS ALREADY BROKEN. `SmoothRoads` is a DIAL, and the old
+ * lane forced only `Enabled`, so the smoothing has been the player's
+ * on every online page since the lane was written - the heights
+ * already diverged, quietly, for anyone who turned it off for the
+ * "minor extra performance" its own description offers. Forcing
+ * `Enabled` bought the room nothing while its own dial gave the floor
+ * away. So the table is by KEY, not by mod.
+ *
+ * `RiversAndStreams` is NOT here, and that is measured too:
+ * SMOOTHED_TILES is {46, 0xff} - the road and track beds - and the
+ * painter lays a road before it ever considers water (roadPainter
+ * paintRoads), so a river paints tiles and never moves a height. It is
+ * paint, and paint is the player's.
+ *
+ * So: every vendored mod's `Enabled` is the player's, online as
+ * offline, and what the lane forces is two switches under one mod -
+ * the floor the room shares.
+ */
+export const ONLINE_ROOM_MOD_KEYS = Object.freeze({
+  'roads-hazelnut': Object.freeze({
+    Enabled: true,        // which network is painted, and so which beds are smoothed
+    SmoothRoads: true,    // whether the beds are smoothed at all - the dial that gave the floor away
+  }),
+});
 
 /**
- * THE MODS WHOSE `Enabled` IS STILL THE PLAYER'S, ONLINE.
+ * THE MODS WHOSE EVERY SWITCH IS THE PLAYER'S, ONLINE.
  *
- * AUDIT-WH R8. OL1's law is that a room plays one game: every vendored
- * mod is on, so what one player walks through another player walks
- * through. That reasoning is about the WORLD - a mod that moves a
- * light, stands an object, changes a roll or writes a save record is
- * exactly what the room has to agree on.
+ * Hand-written, and that is the point: test/onlinelane.test.js walks
+ * MOD_SETTINGS and fails on a vendor that is in neither this list nor
+ * ONLINE_ROOM_MOD_KEYS, so a new mod cannot land without someone
+ * answering the question above for it. A list derived from the table
+ * would agree with the table by construction and pin nothing.
  *
- * A mod that draws a READOUT on your own screen is not. World Tooltips
- * names what your crosshair is on; it stands nothing, rolls nothing,
- * writes nothing and is not on the wire. Forcing it is the same
- * category error as forcing `chatHidden` or `peerClassSprites` would
- * be - both of which this lane already leaves alone, and for this
- * reason (see ONLINE_PLAYERS_OWN_PREFS above: "purely a local
- * rendering choice; it changes nothing the room agrees on").
- *
- * The mod's OTHER switches were never forced - only `Enabled` is - so
- * `HideDefaultInteractTooltip` was already the player's and this makes
- * the pair consistent.
+ * AUDIT-WH R8's own case (world-tooltips) and MODS-ONLINE's seven are
+ * kept first, with the reason each was freed; the eight below them are
+ * MODS-ONLINE-2's, each with what the port does instead of sharing it.
  */
 export const ONLINE_PLAYERS_OWN_MODS = [
-  // AUDIT-WH R8's own case, and the one that set the test.
+  // AUDIT-WH R8: a readout is the player's - it stands nothing, rolls
+  // nothing, writes nothing and is not on the wire.
   'world-tooltips',
-  // MODS-ONLINE (2026-09-22, Mac: "Is it possible to allow all mods to
-  // be toggled on and off for online?"). Yes - for every mod that
-  // answers R8's question the same way World Tooltips does, and the
-  // answer is a READING of what each one touches rather than a guess
-  // at what it sounds like. Two of the candidates failed on that
-  // reading and stayed forced, which is the whole reason it is a
-  // reading: the Shield Widget sounds cosmetic and carries
-  // `hitShield(damage, item)` and a block coroutine - it is in the
-  // damage path, and two players disagreeing about whether a blow was
-  // blocked is the room disagreeing; Handheld Torches sounds like a
-  // light and is an EQUIPPED ITEM in the save with a light in the
-  // world.
-  //
-  // What is left is the set that draws on your own screen and nowhere
-  // else. None of them reaches the wire, a save record, or a roll:
+  // MODS-ONLINE (2026-09-22): what draws on your own screen and nowhere else.
   'dynamic-skies',         // the sky dome over a weather the room already shares (WORLD5 rolls it; this only paints it)
   'seasons-iliac-bay',     // which texture archives load for the season - a swap in front of the same terrain
   'weapon-widget',         // the first-person weapon's own motion; no damage, no timing, no attack state
@@ -169,10 +222,23 @@ export const ONLINE_PLAYERS_OWN_MODS = [
   'ambient-text',          // flavour lines on your own screen
   'immersive-footsteps',   // your own footstep audio
   'better-ambience',       // ambient audio and the dungeon's darkness, both drawn locally
+  // MODS-ONLINE-2 (2026-09-22): what the port already resolves at the
+  // machine that owns the actor, so the wire carries the result and
+  // never the rule.
+  'pcaao',                       // the striker's damage number; applyHit trusts it without recomputing
+  'meanerMonsters',              // a foe's stats, minted where it spawns; a peer steps a puppet, not a rule
+  'unleveledLoot',               // the owner rolls and grants the pile (WORLD6b-iii(c))
+  'shield-widget',               // the block is the DEFENDER's - damageShieldPool runs where the blow lands
+  'handheld-torches',            // an item in my save with a light on my screen
+  'oblivion-remaster-leveling',  // written into a character at creation and kept by that character
+  'travel-options',              // my own journey; OL2 already spends no world time online
 ];
 
-/** The forced value of a mod's switch on an online page, else undefined. */
+/** The forced value of a mod's switch on an online page, else undefined -
+ *  the table above, by vendor AND key, so a mod may have one switch the
+ *  room owns and the rest the player's. */
 export function onlineForcedModSetting(vendor, key, search) {
-  if (ONLINE_PLAYERS_OWN_MODS.includes(vendor)) return undefined;
-  return isOnlinePage(search) && key === ONLINE_FORCED_MOD_KEY ? true : undefined;
+  const room = ONLINE_ROOM_MOD_KEYS[vendor];
+  if (!room || !Object.hasOwn(room, key)) return undefined;
+  return isOnlinePage(search) ? room[key] : undefined;
 }
