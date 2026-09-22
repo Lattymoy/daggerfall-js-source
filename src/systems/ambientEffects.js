@@ -12,7 +12,8 @@
 //               "somewhere on the horizon" (a random yaw 20deg above
 //               the horizon, min dist 3000 - effectively everywhere)
 //   sunnyDay:   {BirdCall1, BirdCall2} somewhere around
-//   clearNight: the AmbientCrickets loop only
+//   clearNight: the AmbientCrickets loop only - in CHORUSES here, with
+//               quiet spells between (CRICKET-QUIET, a recorded departure)
 // Exteriors map weather/time exactly as WeatherManager does: raining
 // -> Rain, storming -> Storm, else day -> SunnyDay / night ->
 // ClearNight (snow/fog/overcast fold into day/night - only rain
@@ -52,6 +53,22 @@ export const AMBIENT_SOUNDS = Object.freeze({
 });
 export const AMBIENT_RAIN_LOOP = 389;      // AmbientRaining
 export const AMBIENT_CRICKETS_LOOP = 6;    // AmbientCrickets
+/** CRICKET-QUIET (2026-09-22, Mac: "The cricket noise at night is way
+ *  too persistent. I want to make a change that lowers its occurrence
+ *  and persistence, but doesn't remove it as a sound"). A DEPARTURE,
+ *  recorded (Port-Ledger A): DFU starts AmbientCrickets at full volume
+ *  when night falls and never lets it rest until dawn
+ *  (AmbientEffectsPlayer.Update, :138-141). Here the night keeps its
+ *  crickets as CHORUSES - one opens as the night does, swells in, sings
+ *  for `bout` seconds at `volume`, dies away, and a `quiet` spell passes
+ *  before the next. Integer-second rolls, System.Random.Next's
+ *  exclusive max, the same as every other wait in this player. */
+export const CRICKET_CHORUS = Object.freeze({
+  volume: 0.55,           // a chorus's gain - DFU plays the loop at 1
+  bout: Object.freeze([20, 46]),    // a chorus lasts 20..45 s
+  quiet: Object.freeze([45, 121]),  // then 45..120 s of silence
+  fade: 3,                // seconds to swell in and to die away
+});
 /** AUDIT 26 F089: cemeteryAmbientSounds (:45-50) - the bird is listed
  *  TWICE, so a graveyard calls it two draws in three. */
 export const CEMETERY_AMBIENT_SOUNDS = Object.freeze([113, 14, 14]);   // AmbientDistantHowl, AmbientCreepyBirdCall x2
@@ -109,6 +126,11 @@ export class AmbientEffects {
     this._waterCounter = 0;
     this._rainLoop = null;
     this._cricketsLoop = null;
+    /** CRICKET-QUIET: where the night's chorus cycle stands - 'bout'
+     *  (singing), 'quiet' (a silent spell) or null (not a clear night). */
+    this._cricketPhase = null;
+    this._cricketT = 0;
+    this._cricketLen = 0;
     /** AmbientEffectsPlayer.cs:31 `public bool IsMuted = false;` - the
      *  flag the video handlers raise and Update's first line reads. */
     this.isMuted = false;
@@ -209,6 +231,38 @@ export class AmbientEffects {
     if (this._rainLoop) { this._rainLoop.stop(); this._rainLoop = null; }
     if (this._cricketsLoop) { this._cricketsLoop.stop(); this._cricketsLoop = null; }
     this._startWaiting();
+    // CRICKET-QUIET: a clear night opens with a chorus, as DFU's does
+    this._cricketPhase = null;
+    if (preset === 'clearNight') this._cricketPhaseTo('bout');
+  }
+
+  /** CRICKET-QUIET: enter a phase and roll its length - Next(min, max). */
+  _cricketPhaseTo(phase) {
+    const [lo, hi] = CRICKET_CHORUS[phase];
+    this._cricketPhase = phase;
+    this._cricketT = 0;
+    this._cricketLen = lo + Math.floor(this.rng() * (hi - lo));
+  }
+
+  /** CRICKET-QUIET: the chorus cycle, one frame. A chorus opens the
+   *  loop silent, swells over `fade`, holds at `volume` and dies away
+   *  over the last `fade`; then the loop is STOPPED for the quiet spell
+   *  - nothing sounds between choruses. */
+  _updateCrickets(dt) {
+    this._cricketT += dt;
+    if (this._cricketPhase === 'quiet') {
+      if (this._cricketT >= this._cricketLen) this._cricketPhaseTo('bout');
+      return;
+    }
+    if (this._cricketT >= this._cricketLen) {
+      if (this._cricketsLoop) { this._cricketsLoop.stop(); this._cricketsLoop = null; }
+      this._cricketPhaseTo('quiet');
+      return;
+    }
+    if (!this._cricketsLoop) this._cricketsLoop = this.engine.loop(AMBIENT_CRICKETS_LOOP, 0);
+    const { volume, fade } = CRICKET_CHORUS;
+    const swell = Math.min(1, this._cricketT / fade, (this._cricketLen - this._cricketT) / fade);
+    this._cricketsLoop?.setVolume?.(volume * Math.max(0, swell));
   }
 
   /** AmbientEffectsPlayer_OnVideoStart (:536-548) / _OnVideoEnd
@@ -310,9 +364,8 @@ export class AmbientEffects {
       this._rainLoop.setVolume?.(this.rainGain);
       this._rainGainSet = this.rainGain;
     }
-    if (this.preset === 'clearNight' && !this._cricketsLoop) {
-      this._cricketsLoop = this.engine.loop(AMBIENT_CRICKETS_LOOP, 1);
-    }
+    // CRICKET-QUIET: choruses, not DFU's all-night loop (see CRICKET_CHORUS)
+    if (this.preset === 'clearNight') this._updateCrickets(dt);
     this._busy = Math.max(0, this._busy - dt);
     this._counter += dt;
     this._waterCounter += dt;
