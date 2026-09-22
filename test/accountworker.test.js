@@ -95,8 +95,15 @@ test('ACC1b: the migration is the real schema, and applying it twice changes not
   // ACC1b IS IDENTITY ALONE, and the PLAYERS row still is: the save
   // arrived beside it, never inside it.
   const cols = db._raw.prepare('PRAGMA table_info(players)').all().map((c) => c.name);
+  // ACC3 added exactly ONE - `title`, the title a player WEARS, which
+  // is the only part of a wardrobe that is a choice. Every GRANT is
+  // derived (server-account/src/titles.js): founder from a cutoff over
+  // `registered_at`, the sprout from `created_at`, developer from the
+  // service's own config. None of those is a column, and this row is
+  // the pin that says so.
   assert.deepEqual(cols.sort(), ['created_at', 'email', 'guest_name', 'handle', 'handle_lc', 'id',
-    'last_seen', 'muted_until', 'password', 'recovery_hash', 'registered_at']);
+    'last_seen', 'muted_until', 'password', 'recovery_hash', 'registered_at', 'title']);
+  assert.ok(!cols.some((c) => /founder|developer|sprout|glyph|grant/i.test(c)), `a grant became a column: ${cols}`);
   // SAVES AND PROVIDER LINKS ARE STILL NOT HERE. They arrive as their
   // own migrations rather than as columns somebody added to this one.
   assert.ok(!cols.some((c) => /save|slot|provider|blob|r2/i.test(c)), `ACC2's columns arrived early: ${cols}`);

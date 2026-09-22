@@ -40,8 +40,12 @@
 //   POST /v1/auth/guest   { label? }      -> { id, secret, sessionId, name, kind }
 //   POST /v1/auth/token   { secret }      -> { token, name, kind, expiresAt }
 //   POST /v1/auth/session { secret, label? } -> { secret, sessionId }   (a second device)
-//   GET  /v1/account      Authorization: Bearer <secret> -> { account, devices[] }
+//   GET  /v1/account      Authorization: Bearer <secret> -> { account, wardrobe, devices[] }
 //   POST /v1/auth/logout  { secret, all? }-> { revoked, scope }
+//
+// ACC3, the wardrobe. A player HOLDS titles by derivation and WEARS at
+// most one, which is the only part of it that is a choice:
+//   POST /v1/account/title { title }      -> { ok, titles[], title, glyphs[] }
 //
 // ACC2, and every one of them needs a REGISTERED account (the wall):
 //   GET    /v1/saves                                   -> { saves[] }
@@ -82,12 +86,14 @@ import {
   createGuest, openSession, resolveSession, closeSession, closeAllSessions,
   devicesOf, accountView, displayName, accountKind,
   register, login, recover, changePassword, setEmail, overRate,
+  accountWardrobe, equipTitle,
   ACCOUNT_MAX, ACCOUNT_WINDOW_S,
 } from './accounts.js';
 import { mintToken, MAX_TTL_S, TOKEN_V } from '../../src/net/identityToken.js';
 import { ACCOUNT_VERSION, MAX_BODY_BYTES, ROUTES, OPEN_ROUTES, savePathOf, SAVE_MAX_BYTES, SHOT_MAX_BYTES } from './service.js';
 import { listSaves, putCard, putBlob, getBlob, deleteSave, saveCardOf } from './saves.js';
 import { signingKey } from './signing.js';
+import { titleWorn, glyphsOf } from './titles.js';
 
 // THIS MODULE EXPORTS `default` AND NOTHING ELSE, and that is a
 // runtime requirement rather than a preference: in a module Worker
@@ -252,11 +258,38 @@ export default {
         // cannot vouch for them. Said plainly rather than by minting
         // something the relay will refuse.
         if (!key) return no('no-signing-key', 503, origin);
+        // ═══ ACC3: THE BADGE RIDES IN THE TOKEN ══════════════════
+        //
+        // A title and a glyph are read off the SIGNED claims and never
+        // off anything a client says about itself - which is the exact
+        // hole ACC1g closed one slice ago for the NAME, and a title is
+        // a stronger thing to claim than a name is. A client that
+        // announced "I am a Developer" over the wire would be believed
+        // by every other client in the room; a client that announces it
+        // here is simply not signed for.
+        //
+        // DERIVED AT MINT, so both are answered by the row and the
+        // config AS THEY ARE NOW, and both lapse on their own: a
+        // developer taken off the list, or a sprout that has aged past
+        // two weeks, stops being signed for on the next token - with
+        // no cron and no column to clear. A token lives MAX_TTL_S, so
+        // the badge is at most five minutes stale.
+        const wardrobe = {
+          t: titleWorn(who.player, env),
+          g: glyphsOf(who.player, env, nowS),
+        };
         const token = await mintToken(
-          { s: who.player.id, n: displayName(who.player), k: accountKind(who.player) },
+          { s: who.player.id, n: displayName(who.player), k: accountKind(who.player), ...wardrobe },
           key, { subtle, nowS },
         );
-        return json({ token, name: displayName(who.player), kind: accountKind(who.player), expiresAt: nowS + MAX_TTL_S }, 200, origin);
+        return json({
+          token,
+          name: displayName(who.player),
+          kind: accountKind(who.player),
+          title: wardrobe.t ?? null,
+          glyphs: wardrobe.g,
+          expiresAt: nowS + MAX_TTL_S,
+        }, 200, origin);
       }
 
       if (path === '/v1/auth/session' && request.method === 'POST') {
@@ -268,10 +301,27 @@ export default {
       }
 
       if (path === '/v1/account' && request.method === 'GET') {
+        // ACC3: THE WARDROBE IS ITS OWN FIELD and not folded into the
+        // account, because it is a different KIND of fact. An account
+        // view is the row; a wardrobe is the row read against this
+        // service's config and clock, which is why it alone takes env.
         return json({
           account: accountView(who.player, nowS),
+          wardrobe: accountWardrobe(who.player, env, nowS),
           devices: await devicesOf(ctx, who.player.id),
         }, 200, origin);
+      }
+
+      if (path === '/v1/account/title' && request.method === 'POST') {
+        // EQUIP ONE, OR NONE. Mac: "tap the account icon to equip 1
+        // feature along with signing out." An absent `title` and an
+        // explicit `null` both mean take it off - a player may always
+        // wear nothing, and there is nothing to refuse them for.
+        //
+        // 403 AND NOT 401 for `not-held`: the credential is good, the
+        // title is simply not theirs. Same reading as the save wall.
+        const r = await equipTitle(ctx, who.player, env, body.title ?? null);
+        return r.error ? no(r.error, r.error === 'not-held' ? 403 : 400, origin) : json(r, 200, origin);
       }
 
       if (path === '/v1/auth/register' && request.method === 'POST') {

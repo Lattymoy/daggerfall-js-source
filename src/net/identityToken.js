@@ -161,6 +161,46 @@ export const SKEW_S = 30;
  *  saves" without asking the account service a second question. */
 export const ACCOUNT_KINDS = Object.freeze(['guest', 'linked']);
 
+/* ═══ ACC3: WHAT A PLAYER WEARS, AND WHY IT RIDES THE TOKEN ═══════════
+ *
+ * Mac (2026-09-22): "Player titles appear above a player name... 1st
+ * title is Founder with a gold color, 2nd title is Developer with a red
+ * color", and "name glyphs... appear on the right side of the player
+ * name".
+ *
+ * A TITLE A CLIENT COULD ASSERT IS A TITLE EVERY CLIENT HAS. This is
+ * the same hole ACC1g just shut on the name, one field over: if the
+ * hello carried `title: 'developer'` the relay could only sanitise it,
+ * and the first person to open devtools would be a developer. So the
+ * account service - the only thing that knows what a player was granted
+ * - signs it into the token, and the relay reads it OUT of the token
+ * exactly as it reads the name.
+ *
+ * AND IT COSTS NOTHING TO ADD NOW. Mac's own framing: "Next feature
+ * before this becomes a live addition." The token module is in the
+ * relay bundle, so a claim added here bumps RELAY_VERSION and drops
+ * every connected player - but the deployed relay is world84 and both
+ * world86 (ACC1g) and world87 (this) are still on the branch, so all
+ * of it rides ONE drop rather than three. After that merge each would
+ * cost its own.
+ */
+
+/** The titles that exist. A title is WORN one at a time, so a token
+ *  carries at most one. Grants are the service's business (who HOLDS
+ *  one); this list is the vocabulary both ends share. */
+export const TITLES = Object.freeze(['founder', 'developer']);
+
+/** The glyphs that exist. A glyph is not worn, it is TRUE of a player -
+ *  sprout is "this account is new", dev is "this is a developer" - so a
+ *  token may carry several and a player chooses none of them. */
+export const GLYPHS = Object.freeze(['sprout', 'dev']);
+
+/** The bound on `g`, and it is the vocabulary's own size rather than a
+ *  number somebody picked: a token carrying more glyph slots than there
+ *  are glyphs is a minter that got greedy or a body that got edited,
+ *  and either way the verifier says no. */
+export const GLYPHS_MAX = GLYPHS.length;
+
 const enc = new TextEncoder();
 const dec = new TextDecoder();
 
@@ -198,10 +238,12 @@ export function nameIsIssuable(name) {
 /**
  * The claims, as they ride. Short keys because this travels in a hello
  * on every connection and the payload is base64 on top.
- * @typedef {{s: string, n: string, k: 'guest'|'linked', i: number, e: number}} Claims
+ * @typedef {{s: string, n: string, k: 'guest'|'linked', i: number, e: number, t?: string, g?: string[]}} Claims
  *   s  the account id          n  the display name
  *   k  guest or linked         i  issued at, epoch seconds
  *   e  expires at, epoch seconds
+ *   t  the title WORN, absent for none (ACC3)
+ *   g  the glyphs TRUE of this player, absent for none (ACC3)
  */
 
 /** The account id's own shape - the same one `net/social.js` already
@@ -219,6 +261,16 @@ export function claimsValid(c, { maxTtlS = MAX_TTL_S } = {}) {
   if (typeof c.s !== 'string' || !ID_RE.test(c.s)) return false;
   if (!nameIsIssuable(c.n)) return false;
   if (!ACCOUNT_KINDS.includes(c.k)) return false;
+  // ACC3: the two OPTIONAL claims, and optional means ABSENT rather
+  // than null or '' - a token from a build before this slice has
+  // neither, and a player who wears no title has no `t`. Present and
+  // wrong is refused; present and right is the only other answer.
+  if (c.t !== undefined && !TITLES.includes(c.t)) return false;
+  if (c.g !== undefined) {
+    if (!Array.isArray(c.g) || c.g.length > GLYPHS_MAX) return false;
+    if (!c.g.every((g) => GLYPHS.includes(g))) return false;
+    if (new Set(c.g).size !== c.g.length) return false;   // a repeat is a longer claim set saying one thing
+  }
   if (!Number.isSafeInteger(c.i) || !Number.isSafeInteger(c.e)) return false;
   if (c.e <= c.i) return false;                 // a token that is born dead
   if (c.e - c.i > maxTtlS) return false;        // a minter that got greedy
@@ -229,14 +281,19 @@ export function claimsValid(c, { maxTtlS = MAX_TTL_S } = {}) {
  * MINT. The account service's half - it holds the private key and
  * nothing else does.
  *
- * @param {{s:string, n:string, k:'guest'|'linked'}} who
+ * @param {{s:string, n:string, k:'guest'|'linked', t?:string, g?:string[]}} who
  * @param {CryptoKey} privateKey  an Ed25519 private key
  * @param {{subtle: SubtleCrypto, nowS: number, ttlS?: number}} env
  * @returns {Promise<string>}
  */
 export async function mintToken(who, privateKey, { subtle, nowS, ttlS = MAX_TTL_S }) {
   if (!Number.isSafeInteger(nowS)) throw new TypeError('mintToken needs an integer epoch-seconds clock');
+  // ACC3: `t` and `g` are written ONLY when there is something to say,
+  // so a player with no title and no glyph mints the exact bytes this
+  // minter has always minted.
   const claims = { s: who?.s, n: who?.n, k: who?.k, i: nowS, e: nowS + ttlS };
+  if (who?.t !== undefined) claims.t = who.t;
+  if (who?.g !== undefined && who.g.length) claims.g = who.g;
   // A BAD CLAIM SET IS REFUSED AT THE MINTER. The verifier would refuse
   // it too, but at the player's machine, where the only thing anyone
   // learns is that online is broken.

@@ -178,7 +178,7 @@ import { verifyToken, importPublicKeyB64, MAX_TTL_S } from '../../src/net/identi
  *  flood cannot grow the map without end. */
 const SPENT_MAX = 4096;
 
-import { roomOf, parseClient, inRange, poseGate, chatGate, tokenGate, rosterFor, isChatRoom, isWorldRoom, isCellRoom, streamsFoes, hitOwnerOf, worldFrameMaxFor, CELL_FRAME_RECORDS_MAX, HELLO_HZ_MAX, CHAT_HELLO_HZ_MAX, CHAT_ROOM_HZ_MAX, SOCKETS_MAX, CHAT_SOCKETS_MAX, DROP_STRIKES_MAX, CHAT_STRIKES_MAX, WORLD_MIN_MS, WORLD_CHUNK, WORLD_TTL_MS, WORLD_PREFIX, FOES_PREFIX, foesGate, byteGate, FOES_ROOM_BYTES_PER_S, HIT_ROOM_HZ_MAX, ACT_ROOM_HZ_MAX, ACT_ROOM_BYTES_PER_S, actGate, MAX_FRAME_BYTES, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, HIT_ROOM_BYTES_PER_S, whoGate, whoIdOf, WHO_ROOM_HZ_MAX, poseFan, poseChanged, RELAY_VERSION, KEEPALIVE_FAN_MS, ACT_SENDER_BYTES_PER_S, CHAT_ROSTER_MAX, isSocialRoom, socialGate, partyGate, SOCIAL_ROOM_HZ_MAX, FRIENDS_MAX, PENDING_MAX, PARTY_MAX, PARTY_INVITES_MAX, INVITE_TTL_MS, PARTY_OFFLINE_MS, ACCOUNT_TABS_MAX, mintPartyId, SOCIAL_REPEAT_MS, ACCOUNT_IDLE_MS, ACCOUNT_SWEEP_MS, SWEEP_STEP_MS, SWEEP_PAGE } from './relay.js';
+import { roomOf, parseClient, inRange, poseGate, chatGate, tokenGate, rosterFor, badged, isChatRoom, isWorldRoom, isCellRoom, streamsFoes, hitOwnerOf, worldFrameMaxFor, CELL_FRAME_RECORDS_MAX, HELLO_HZ_MAX, CHAT_HELLO_HZ_MAX, CHAT_ROOM_HZ_MAX, SOCKETS_MAX, CHAT_SOCKETS_MAX, DROP_STRIKES_MAX, CHAT_STRIKES_MAX, WORLD_MIN_MS, WORLD_CHUNK, WORLD_TTL_MS, WORLD_PREFIX, FOES_PREFIX, foesGate, byteGate, FOES_ROOM_BYTES_PER_S, HIT_ROOM_HZ_MAX, ACT_ROOM_HZ_MAX, ACT_ROOM_BYTES_PER_S, actGate, MAX_FRAME_BYTES, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, HIT_ROOM_BYTES_PER_S, whoGate, whoIdOf, WHO_ROOM_HZ_MAX, poseFan, poseChanged, RELAY_VERSION, KEEPALIVE_FAN_MS, ACT_SENDER_BYTES_PER_S, CHAT_ROSTER_MAX, isSocialRoom, socialGate, partyGate, SOCIAL_ROOM_HZ_MAX, FRIENDS_MAX, PENDING_MAX, PARTY_MAX, PARTY_INVITES_MAX, INVITE_TTL_MS, PARTY_OFFLINE_MS, ACCOUNT_TABS_MAX, mintPartyId, SOCIAL_REPEAT_MS, ACCOUNT_IDLE_MS, ACCOUNT_SWEEP_MS, SWEEP_STEP_MS, SWEEP_PAGE } from './relay.js';
 
 // AUDIT WORLD34 D4: the relay names itself in /health. SLAM13 (AUDIT SLAM A5): the name lives in net/wire.js, so the
 // welcome can carry it; /health reads it through the import above. LOCALDEV1: it is NOT re-exported from this module -
@@ -627,7 +627,21 @@ export class Room {
     if (this._spent.size >= SPENT_MAX) this._spent.delete(this._spent.keys().next().value);
     this._spent.set(sig, r.claims.e);
 
-    return { name: r.claims.n, kind: r.claims.k, subject: r.claims.s };
+    // ═══ ACC3: THE BADGE COMES OUT OF THE SIGNATURE ══════════════
+    //
+    // A title and a glyph are read off the VERIFIED claims, beside the
+    // name, and the room never asks a client for either. That is the
+    // same law ACC1g just put on the name one slice ago and it matters
+    // more here: a name is a thing to be, and a title is a thing to be
+    // BELIEVED - "Developer" over somebody's head is a claim every
+    // other player in the room reads as this project's own word.
+    //
+    // `claimsValid` has already checked both against the two closed
+    // lists (identityToken.js TITLES and GLYPHS) before `verifyToken`
+    // said ok, so what comes out here is one of a handful of known
+    // strings or nothing. The room does not re-check and does not need
+    // to: an unknown badge cannot have been signed for.
+    return { name: r.claims.n, kind: r.claims.k, subject: r.claims.s, title: r.claims.t, glyphs: r.claims.g };
   }
 
   async _message(ws, message) {
@@ -696,7 +710,7 @@ export class Room {
       // refused token never reaches the roster at all.
       const who = await this._named(m, now);
       if (who.error) { this._refuse(ws, who.error); return; }
-      if (!this._setAttach(ws, { ...a, id: m.id, name: who.name, pose: chat ? null : m.pose, since: replaced?.since ?? now })) { this._refuse(ws, 'hello too large'); return; }
+      if (!this._setAttach(ws, { ...a, id: m.id, name: who.name, title: who.title, glyphs: who.glyphs, pose: chat ? null : m.pose, since: replaced?.since ?? now })) { this._refuse(ws, 'hello too large'); return; }
       // SRV-N: `v` rides EVERY welcome, a channel's included. A player in the enhanced skin holds a presence socket
       // and one chat socket per tab; whichever reconnects first after a hand deploy is the one that notices, and the
       // client's detector (net/updateNotice.js) is a Set so the rest of them say nothing. SLAM13 (AUDIT SLAM A5): and
@@ -707,9 +721,9 @@ export class Room {
         // panel read the player's own cell instead. The names are on the attachments already (no look, no storage
         // read - the hello path stays as cheap as AUDIT CHAT A1 priced it); socket order, cut at CHAT_ROSTER_MAX, with
         // `n` the true count. The join below is said here too, with the name and nothing else.
-        const named = others.slice(0, CHAT_ROSTER_MAX).map((b) => ({ id: b.id, name: b.name }));   // ACC1g: a name and nothing beside it - every name in this room was verified to get in, so a per-name verdict says the same thing about everybody
+        const named = others.slice(0, CHAT_ROSTER_MAX).map((b) => badged({ id: b.id, name: b.name }, b));   // ACC3: and whatever the token vouched for, beside it   // ACC1g: a name and nothing beside it - every name in this room was verified to get in, so a per-name verdict says the same thing about everybody
         if (!this._send(ws, JSON.stringify({ t: 'welcome', id: m.id, peers: named, n: others.length + 1, v: RELAY_VERSION, now: Date.now() }))) return;   // AUDIT SOC B7: the relay's clock rides the channel's welcome too (WORLD5's `now`), so the hub link reads last-seen and an invite's lapse on the relay's time without waiting on the presence session's welcome
-        const said = JSON.stringify({ t: 'join', id: m.id, name: who.name });
+        const said = JSON.stringify(badged({ t: 'join', id: m.id, name: who.name }, who));
         for (const [other, b] of [...this._all()]) if (other !== ws && b.id) this._send(other, said);
         // SOC1: the account, in the hub - after the welcome and the join, so a client's session has reset on the
         // welcome before its picture lands; a hello naming none is a build before this slice, admitted as it was
@@ -751,7 +765,7 @@ export class Room {
       // SRV-N / SLAM13 (AUDIT SLAM A5): the relay's VERSION rides it (`v`, last), so a client can tell a restarted relay from the one it was talking to, and one built against another law can say so
       const welcome = `{"t":"welcome","id":${JSON.stringify(m.id)},"peers":${JSON.stringify(roster)},"host":${JSON.stringify(host)},"world":${world ?? 'null'},"now":${Date.now()},"v":${JSON.stringify(RELAY_VERSION)}}`;
       if (!this._send(ws, welcome)) return;
-      const join = JSON.stringify({ t: 'join', id: m.id, name: who.name, look: m.look, pose: m.pose });
+      const join = JSON.stringify(badged({ t: 'join', id: m.id, name: who.name, look: m.look, pose: m.pose }, who));
       for (const [other, b] of [...this._all()]) if (other !== ws && b.id) this._send(other, join);
       return;
     }
@@ -974,7 +988,12 @@ export class Room {
       // B2: the pose rides only WITHIN RANGE - the pose fan's own law (a stranger heard through that fan is in range by
       // construction; a room without the law, a dungeon's, says it); past the range the answer named a member's
       // position the fan had refused to say, a radar over the whole cell
-      this._send(ws, JSON.stringify({ t: 'join', id: b.id, name: b.name, look, pose: inRange(a.key ?? '', a.pose, b.pose) ? (b.pose ?? null) : null }));
+      // ACC3: AND THE BADGE, off the attachment, exactly as the welcome
+      // and the join carry it. A stranger learned this way is the one
+      // peer that would otherwise arrive unbadged while everyone else
+      // is badged - a signal true most of the time, which is the shape
+      // ACC1d-MARK was retired for being.
+      this._send(ws, JSON.stringify(badged({ t: 'join', id: b.id, name: b.name, look, pose: inRange(a.key ?? '', a.pose, b.pose) ? (b.pose ?? null) : null }, b)));
       return;
     }
     if (m.t === 'pose' || m.t === 'ping') {

@@ -108,7 +108,7 @@ test('ACC1d: the minter asks the REAL route, with the secret in the header and n
   // really answers a `token` key.
   const svc = rd('server-account/src/index.js');
   assert.match(svc, /path === '\/v1\/auth\/token' && request\.method === 'POST'/, 'the route the minter posts to');
-  assert.match(svc, /return json\(\{ token,/, 'and the key it reads back');
+  assert.match(svc, /return json\(\{\s*\n\s*token,/, 'and the key it reads back (ACC3 put the wardrobe beside it, so the answer is spread over lines now)');
   assert.match(rd('src/net/accountClient.js'), /call\(io, '\/v1\/auth\/token'/, 'spelled once, in the ladder');
   assert.equal(typeof mintIdentity, 'function', 'the route has a name, so no call site spells a path');
 });

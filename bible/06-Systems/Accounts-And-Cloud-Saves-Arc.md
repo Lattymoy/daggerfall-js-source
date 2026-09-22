@@ -2261,7 +2261,8 @@ wins"*.
 - `server/src/index.js` — `_named` refuses both arms; the attachment,
   the join, the roster, the `who` answer and the chat line drop `v`.
 - `src/net/wire.js` — `rosterFor` drops `v`; `RELAY_VERSION` world85 →
-  **world86**.
+  **world86** (and ACC3 carried it on to world87 the same day, so both
+  ride one drop).
 - `src/net/online.js`, `src/net/chat.js` — no `v` on a peer or a line.
 - `src/net/remotePlayers.js`, `src/ui/nameLayer.js` — the mark retired.
 - `src/ui/enhancedMenu.js` — the name field replaced by who you are; the
@@ -2316,3 +2317,155 @@ inside this change is how a diff stops being reviewable. It cannot just
 go — `scenes/world.js` still reads `onlineServer`, and deleting the only
 way to set it would leave a read nothing can answer. **Owed: a text row
 kind in settingsMap, and this field moved into it.**
+
+---
+
+## ACC3 — titles and glyphs (2026-09-22)
+
+> Next feature before this becomes a live addition.
+>
+> 1. Player titles and Name glyphs
+> Players can tap the account icon to equip 1 feature along with signing
+> out.
+>
+> Player titles appear above a player name. We will develop 2 titles to
+> start out.
+>
+> 1st title is Founder with a gold color
+> 2nd title is Developer with a red color
+>
+> All current players should be granted the founder title
+>
+> 2nd is name glyphs. These small glyphs appear on the right side of the
+> player name. These are as follows
+>
+> Sprouting green plant. Attached to new accounts for 2 weeks
+>
+> Developer glyph specifficaly for developers
+
+Two answers settled the open halves of it before any code: **Developer
+is granted by a config list of handles**, and **Founder goes to
+registered accounts only**.
+
+### EVERY GRANT IS DERIVED, AND NOT ONE OF THEM IS A COLUMN
+
+This is the whole design, and it is this repo's own **DERIVED OVER
+ENUMERATED** applied to the one place a grant is usually a row:
+
+| | held when |
+|---|---|
+| **Founder** | `registered_at <= FOUNDER_UNTIL` (1790121600 — 2026-09-23T00:00:00Z) |
+| **Developer** | the handle is in `env.DEVELOPER_HANDLES` |
+| **sprout** | `nowS - created_at < SPROUT_S` (two weeks) |
+| **dev** | the same list as the Developer title |
+
+**Mac asked that "all current players should be granted the founder
+title", and the obvious migration is an `UPDATE` over every row.** There
+is none, and that is the design rather than an omission. A walk records
+a fact ONCE, at a moment nobody can re-derive: a row added by hand
+afterwards has no flag and nothing says why, a row restored from a
+backup has whatever the backup had, and *"who is a founder?"* can only
+be answered by reading every row. A cutoff answers it in one line, gives
+the same set today, and is still right tomorrow.
+
+**The sprout is the same argument with teeth.** A glyph that expires
+after two weeks, *stored*, needs something to come along and remove it.
+That is a cron, and a cron is a thing that can stop running while
+everything looks fine — **AUDIT-ACC F9 settled exactly this**, one
+system over, for idle sessions. Derived from `created_at` it expires
+because time passed, which is not a job anybody can forget to run.
+
+**And a developer is a list in config** because granting one is a thing
+a person does by editing a reviewed, deployed file — not by reaching
+into a live database at three in the morning. Taking a handle back off
+that list is the whole of revoking it: the title and the glyph both stop
+being signed for on that player's next token, with nothing to clear.
+
+### D1 — HOLDING IS NOT WEARING, and only the wearing is stored
+
+A player may hold two titles and wears at most one — Mac: *"equip 1
+feature"*. `players.title` is the **only** column ACC3 adds, because the
+worn title is the only part of a wardrobe that is a **choice**.
+
+Equipping validates against the set derived *now*, and `titleWorn` asks
+the same question again on the way out — so a developer taken off the
+list stops wearing the badge without anybody remembering to clear a
+column, and a column somebody edits by hand is not a grant.
+
+`migrations/0004_titles.sql` is one `ALTER TABLE` and a long note saying
+why there is no walk beneath it.
+
+### D2 — THE BADGE RIDES THE SIGNATURE, and this is ACC1g's law one field over
+
+ACC1g shut this hole on the **name** hours earlier. A title is the
+stronger claim of the two: *"Developer"* over somebody's head reads as
+this project's own word about them, and if the hello carried
+`title: 'developer'` the relay could only sanitise it — the first person
+to open devtools would be a developer.
+
+So the account service, the only thing that knows what a player was
+granted, **signs** `t` and `g` into the token, and the relay reads them
+**out** of the verified claims exactly as it reads the name. `TITLES`
+and `GLYPHS` are closed lists in `src/net/identityToken.js` and
+`claimsValid` checks both *before* `verifyToken` says ok — so an unknown
+badge cannot have been signed for, and the relay never re-checks one.
+
+**The token is derived at mint**, so both lapse on their own: a token
+lives `MAX_TTL_S`, which makes a badge at most five minutes stale.
+
+### D3 — absent, never null
+
+`wire.js` `badged` puts the two keys on a row **only when there is a
+badge**, the same discipline `look.class` keeps two hundred lines up.
+Most players wear nothing, so `"title":null` on every row of a 64-peer
+welcome is bytes paid for saying nothing — and a reader that has to tell
+*"no title"* from *"this build has no such key"* has two answers where
+one will do.
+
+It is one function, used by the welcome's roster, the join, the channel
+roster **and the `who` answer** — that last one is built by hand rather
+than by `rosterFor`, and is exactly where one peer comes to be the only
+unbadged one in a badged room. That is a signal true most of the time,
+which is the shape **ACC1d-MARK was retired for being**.
+
+### D4 — it costs nothing NOW and would cost a deploy later
+
+Mac's own framing: *"Next feature before this becomes a live addition."*
+`identityToken.js` is in the relay bundle, so a claim added to it bumps
+`RELAY_VERSION` and drops every connected player. **The deployed relay
+is still world84**; world86 (ACC1g) and world87 (this) are both on the
+branch, so all of it rides ONE drop rather than three. After that merge
+each would cost its own.
+
+### SHIPPED 2026-09-22 — the service, the token and the relay
+
+- `server-account/src/titles.js` — new. The four grants, the wardrobe,
+  the equip refusal. Pure, and it takes `env` and `nowS` rather than
+  reaching for either.
+- `server-account/migrations/0004_titles.sql` — new. `title TEXT`, and
+  no walk.
+- `server-account/src/accounts.js` — `accountWardrobe`, `equipTitle`.
+- `server-account/src/index.js` — `/v1/auth/token` mints with the
+  wardrobe; `/v1/account` answers it beside the account view; the new
+  `POST /v1/account/title` equips one, or none.
+- `server-account/src/service.js` — `/v1/account/title` in `ROUTES`;
+  `ACCOUNT_VERSION` acct2 → **acct3**.
+- `server-account/wrangler.toml` — `DEVELOPER_HANDLES`, empty. **It
+  ships empty on purpose: nobody holds the Developer title until a
+  handle is written there.**
+- `src/net/identityToken.js` — `TITLES`, `GLYPHS`, `GLYPHS_MAX`; the
+  `t`/`g` claims, minted and validated.
+- `src/net/wire.js` — `badged`; `rosterFor` carries it;
+  `RELAY_VERSION` world86 → **world87**.
+- `server/src/index.js` — `_named` returns the badge off the claims; the
+  attachment holds it; the welcome, the join, the channel roster and the
+  `who` answer carry it.
+- `test/acc3titles.test.js` — 13 pins. `test/fakeRoom.mjs` mints a
+  badged token, and a `title` on a hello frame is **deleted** rather
+  than sent: the relay ignores it, and a harness that could set one
+  would be testing the wrong half forever.
+- `tools/mutants/acc3a.json` — 12, all dead.
+
+**OWED, and it is the half a player can see: `ACC3b`.** The name layer
+does not draw either yet, and the account icon has no equip control on
+it. Nothing above reaches a screen until it does.

@@ -82,7 +82,13 @@ export function roomSigner(env, now = () => Date.now()) {
   const token = async (id, who = {}) => {
     const kp = await signer();
     const claims = { s: who.s ?? `acct-${id}`, n: who.n ?? String(id), k: who.k ?? 'guest' };
-    const key = `${claims.s}|${claims.n}|${claims.k}`;
+    // ACC3: the badge, when the caller asked for one. Signed like the
+    // name and for the same reason - the relay reads a title OUT of
+    // the token and never off the frame - so a harness that wants a
+    // titled peer has to mint one, which is exactly the point.
+    if (who.t !== undefined) claims.t = who.t;
+    if (who.g !== undefined) claims.g = who.g;
+    const key = `${claims.s}|${claims.n}|${claims.k}|${claims.t ?? ''}|${(claims.g ?? []).join('+')}`;
     const nowS = Math.floor(now() / 1000);
     const prev = lastI.get(key);
     let i = nowS - 1;
@@ -148,8 +154,13 @@ export function fakeRoom(key, { now = () => Date.now() } = {}) {
     // harness that signed one name and typed another would be testing
     // that the frame is ignored, over and over, in every pin that ever
     // names a peer.
-    const tok = 'tok' in over ? over.tok : await token(id, { n: over.name ?? String(id) });
+    // ACC3: a `title`/`glyphs` on the frame is minted INTO the token,
+    // never laid on the frame - the relay ignores what a client says
+    // about its own badge, and a harness that could set one on the
+    // frame would be testing the wrong half forever.
+    const tok = 'tok' in over ? over.tok : await token(id, { n: over.name ?? String(id), t: over.title, g: over.glyphs });
     const frame = { t: 'hello', id, secret: 'secret-of-' + id, name: id, look, pose, ...over };
+    delete frame.title; delete frame.glyphs;   // ACC3: they went into the token above; the wire has no such hello field
     if (tok == null) delete frame.tok; else frame.tok = tok;
     return room.webSocketMessage(ws, JSON.stringify(frame));
   };

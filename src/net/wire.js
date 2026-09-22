@@ -18,8 +18,9 @@
 //                    {t:'act', data}                    a change to the room's doors, levers, movers and loot, from anyone in it (WORLD3/WORLD4)
 //                    {t:'social', k, acct?, peer?, party?}   a friend or party act, in the HUB alone (SOC1): SOCIAL_HZ_MAX a second
 //                    {t:'party', p}                     my party pose - where I stand and how I fare - to the hub (SOC1): PARTY_HZ_MAX a second
-//   room -> client:  {t:'welcome', id, peers:[{id,name,look,pose}], host, world, now}   now: the relay's clock, ms (WORLD5)
-//                    {t:'join', id, name, look, pose}   {t:'leave', id}
+//   room -> client:  {t:'welcome', id, peers:[{id,name,look,pose,title?,glyphs?}], host, world, now}   now: the relay's clock, ms (WORLD5)
+//                    {t:'join', id, name, look, pose, title?, glyphs?}   {t:'leave', id}
+//                    ACC3: `title` and `glyphs` are read off the hello's VERIFIED token and are absent when there is no badge
 //                    {t:'pose', id, p}                  {t:'pong'}
 //                    {t:'chat', id, name, text, at}     to everyone who hears it, the sender included
 //                    {t:'host', id}                     the room's host changed (WORLD1)
@@ -744,7 +745,7 @@ export const KEEPALIVE_FAN_MS = HEARTBEAT_MS / 2;
  *  carries it (`v`), and a client whose wire.js was built against another version says so on the console: the client
  *  is deployed by CI and the relay by hand, so a skew between them is the ordinary state of a release day, and until
  *  now nothing on either end could see it. */
-export const RELAY_VERSION = 'world86';   // RELAY-H1: KEEPALIVE_FAN_MS follows HEARTBEAT_MS 5000 -> 20000 (the floor is 10 s now)   // ONLINE-CLASS1: a look carries the character's class name, so a peer without a Morrowind body stands as its class-enemy sprite   // ACC1d: the hello carries an identity token and the relay verifies the name out of it   // ACC1g: and the token is REQUIRED - a hello the relay cannot verify is refused, so a name can no longer be typed
+export const RELAY_VERSION = 'world87';   // RELAY-H1: KEEPALIVE_FAN_MS follows HEARTBEAT_MS 5000 -> 20000 (the floor is 10 s now)   // ONLINE-CLASS1: a look carries the character's class name, so a peer without a Morrowind body stands as its class-enemy sprite   // ACC1d: the hello carries an identity token and the relay verifies the name out of it   // ACC1g: and the token is REQUIRED - a hello the relay cannot verify is refused, so a name can no longer be typed   // ACC3: the token carries a TITLE and GLYPHS, and `badged` puts them on the welcome's rows, the join and the channel roster - read off the signature, never off the client
 
 /** The listeners sorted by distance from `from`, nearest first; one with no pose yet sorts last, because a peer that
  *  has never said where it is cannot be near. The ordering is Euclidean in the POSE'S OWN FRAME, which is a cell's
@@ -1161,6 +1162,41 @@ export const relayVersionOf = (v) => (typeof v === 'string' && v.length > 0 && v
 /** What a joiner is told: everyone else in the room who has said hello
  *  - the nearest ROSTER_MAX to `near` when there is a pose to measure
  *  from (a world cell), the first ROSTER_MAX otherwise. */
+/** ═══ ACC3: THE BADGE ON A WIRE ROW, AND WHY IT IS OMITTED ════════
+ *
+ * Mac (2026-09-22): "Player titles appear above a player name ... name
+ * glyphs appear on the right side of the player name."
+ *
+ * Both ride BESIDE the name on every row that carries one - a welcome
+ * peer, a join, a channel roster - and the relay reads them off the
+ * VERIFIED token claims, never off anything a client said about itself
+ * (server/src/index.js `_named`). That is ACC1g's law applied to a
+ * stronger claim than a name: "Developer" over somebody's head reads
+ * as this project's own word about them.
+ *
+ * THE KEYS ARE ABSENT AND NOT NULL when there is no badge, which is
+ * the same discipline `look.class` keeps two hundred lines up and for
+ * the same two reasons. Most players wear nothing, so `"title":null`
+ * on every row of a 64-peer welcome is bytes paid for saying nothing;
+ * and a reader that has to tell "no title" from "the key is not in
+ * this build" has one answer instead of two.
+ *
+ * ONE HOME BOTH ENDS: the relay builds rows with it, and the client
+ * reads them, so neither can drift into carrying a field the other
+ * does not.
+ *
+ * @param {any} row  the row so far - returned, mutated, by design
+ * @param {any} from anything carrying `title` and `glyphs` (a token's
+ *                   claims as `_named` projects them, or an attachment)
+ */
+export function badged(row, from) {
+  const t = from?.title;
+  if (typeof t === 'string' && t) row.title = t;
+  const g = from?.glyphs;
+  if (Array.isArray(g) && g.length) row.glyphs = g;
+  return row;
+}
+
 export function rosterFor(peers, meId, near = null) {
   const out = [];
   // ACC1g: AND `v` IS GONE FROM IT. ACC1d put the relay's verdict on
@@ -1170,7 +1206,8 @@ export function rosterFor(peers, meId, near = null) {
   // unmarked, a signal true half the time. The gate makes the whole
   // field say one thing: every peer in this room was verified to get
   // in, so a per-name verdict carries no information about any of them.
-  for (const p of peers) if (p && p.id && p.id !== meId) out.push({ id: p.id, name: p.name, look: p.look, pose: p.pose ?? null });
+  // ACC3: and the badge, off the attachment the token wrote - omitted, not nulled, when there is none (`badged`).
+  for (const p of peers) if (p && p.id && p.id !== meId) out.push(badged({ id: p.id, name: p.name, look: p.look, pose: p.pose ?? null }, p));
   // SLAM5 (2026-09-16, AUDIT SLAM): ONE METRIC. This ranked by `pixelDistance` - Chebyshev on MAP PIXELS, 32768 units
   // wide - while the pose fan ranks by squared Euclidean in the pose's own frame. Two different metrics over the same
   // set DO NOT NEST, so `POSE_FAN_MAX <= ROSTER_MAX` bought nothing: measured at an event standing, only 11 of the 32

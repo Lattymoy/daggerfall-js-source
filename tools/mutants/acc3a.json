@@ -1,0 +1,98 @@
+[
+  {
+    "name": "ACC3a-1-founder-becomes-a-column",
+    "file": "server-account/src/titles.js",
+    "old": "  if (Number.isFinite(player?.registered_at) && player.registered_at <= FOUNDER_UNTIL) held.push('founder');",
+    "new": "  if (player?.founder) held.push('founder');",
+    "tests": ["test/acc3titles.test.js"],
+    "note": "THE WHOLE DESIGN, inverted. Mac asked that 'all current players should be granted the founder title' and the obvious migration walks the table and writes a flag. A walk records a fact ONCE, at a moment nobody can re-derive: a row inserted by hand afterwards has no flag and nothing says why, a row restored from a backup has whatever the backup had, and 'who is a founder?' can only be answered by reading every row. The cutoff answers it in one line and keeps answering it."
+  },
+  {
+    "name": "ACC3a-2-the-cutoff-turned-exclusive",
+    "file": "server-account/src/titles.js",
+    "old": "player.registered_at <= FOUNDER_UNTIL",
+    "new": "player.registered_at < FOUNDER_UNTIL",
+    "tests": ["test/acc3titles.test.js"],
+    "note": "An off-by-one on a boundary nobody would ever notice by hand: an account registered in the last second of the day Mac asked for this is not a founder. The pin drives the boundary on both sides for exactly this."
+  },
+  {
+    "name": "ACC3a-3-founder-granted-to-guests-too",
+    "file": "server-account/src/titles.js",
+    "old": "  if (Number.isFinite(player?.registered_at) && player.registered_at <= FOUNDER_UNTIL) held.push('founder');",
+    "new": "  if (!Number.isFinite(player?.registered_at) || player.registered_at <= FOUNDER_UNTIL) held.push('founder');",
+    "tests": ["test/acc3titles.test.js"],
+    "note": "Mac's own call when asked ('Registered accounts only'). A guest row is device-bound and one storage clear from gone, so a founding title on one is a title that vanishes with a cleared browser - and every new guest would mint one forever, which is the opposite of what a founding title means."
+  },
+  {
+    "name": "ACC3a-4-the-sprout-stored-instead-of-derived",
+    "file": "server-account/src/titles.js",
+    "old": "  if (Number.isFinite(player?.created_at) && nowS - player.created_at < SPROUT_S) on.push('sprout');",
+    "new": "  if (player?.sprout) on.push('sprout');",
+    "tests": ["test/acc3titles.test.js"],
+    "note": "A glyph that expires after two weeks, stored, needs something to come along and remove it - a cron, and a cron is a thing that can stop running while everything looks fine (AUDIT-ACC F9 settled exactly this one system over). Derived from created_at it expires because time passed, which is not a job anybody can forget to run."
+  },
+  {
+    "name": "ACC3a-5-the-developer-list-believed-case-sensitively",
+    "file": "server-account/src/titles.js",
+    "old": "  return new Set(raw.split(',').map((h) => h.trim().toLowerCase()).filter(Boolean));",
+    "new": "  return new Set(raw.split(',').filter(Boolean));",
+    "tests": ["test/acc3titles.test.js"],
+    "note": "Handles are unique on handle_lc, so 'MacK' and 'mack' are one account - and a config list that is neither trimmed nor folded grants the title to one spelling of it and not the other, silently, depending on how somebody typed a comma-separated line."
+  },
+  {
+    "name": "ACC3a-6-a-worn-title-trusted-without-the-grant",
+    "file": "server-account/src/titles.js",
+    "old": "  return titlesHeld(player, env).includes(t) ? t : undefined;",
+    "new": "  return t;",
+    "tests": ["test/acc3titles.test.js"],
+    "note": "HOLDING IS NOT WEARING. The stored column is a choice made once; a grant is a fact checked now. Trust the column and a developer taken off the list goes on wearing the badge forever, because nothing walks the table to clear it - which is the same stored-fact trap as the founder column, one field over."
+  },
+  {
+    "name": "ACC3a-7-equip-checks-the-vocabulary-and-not-the-grant",
+    "file": "server-account/src/titles.js",
+    "old": "  return titlesHeld(player, env).includes(title) ? null : 'not-held';",
+    "new": "  return null;",
+    "tests": ["test/acc3titles.test.js"],
+    "note": "Any player may then equip any title that EXISTS - which is the whole hole. 'Developer' over somebody's head reads as this project's own word about them, and a client that can write it by asking politely is a client that can say anything."
+  },
+  {
+    "name": "ACC3a-8-the-token-carries-what-the-caller-asked-for",
+    "file": "server-account/src/index.js",
+    "old": "        const wardrobe = {\n          t: titleWorn(who.player, env),\n          g: glyphsOf(who.player, env, nowS),\n        };",
+    "new": "        const wardrobe = { t: body.title, g: body.glyphs };",
+    "tests": ["test/acc3titles.test.js", "test/accountworker.test.js"],
+    "note": "The exact hole ACC1g closed one slice ago for the NAME, re-opened one field over and for a stronger claim. The signature is the only thing standing between a player and any badge in the vocabulary; a mint that signs the request body makes the signature worth nothing."
+  },
+  {
+    "name": "ACC3a-9-the-relay-believes-the-frame",
+    "file": "server/src/index.js",
+    "old": "    return { name: r.claims.n, kind: r.claims.k, subject: r.claims.s, title: r.claims.t, glyphs: r.claims.g };",
+    "new": "    return { name: r.claims.n, kind: r.claims.k, subject: r.claims.s, title: m.title, glyphs: m.glyphs };",
+    "tests": ["test/acc3titles.test.js"],
+    "note": "The other end of the same hole: the relay holds the public half and can verify, so the badge is only worth what the signature says. Read it off the hello and the first person to open devtools is a Developer."
+  },
+  {
+    "name": "ACC3a-10-the-badge-nulled-rather-than-omitted",
+    "file": "src/net/wire.js",
+    "old": "  const t = from?.title;\n  if (typeof t === 'string' && t) row.title = t;\n  const g = from?.glyphs;\n  if (Array.isArray(g) && g.length) row.glyphs = g;",
+    "new": "  row.title = from?.title ?? null;\n  row.glyphs = from?.glyphs ?? [];",
+    "tests": ["test/acc3titles.test.js"],
+    "note": "The same discipline look.class keeps: most players wear nothing, so a null title and an empty list on every row of a 64-peer welcome is bytes paid for saying nothing - and a reader that must tell 'no title' from 'this build has no such key' has two answers where one will do."
+  },
+  {
+    "name": "ACC3a-11-the-who-answer-left-unbadged",
+    "file": "server/src/index.js",
+    "old": "      this._send(ws, JSON.stringify(badged({ t: 'join', id: b.id, name: b.name, look, pose: inRange(a.key ?? '', a.pose, b.pose) ? (b.pose ?? null) : null }, b)));",
+    "new": "      this._send(ws, JSON.stringify({ t: 'join', id: b.id, name: b.name, look, pose: inRange(a.key ?? '', a.pose, b.pose) ? (b.pose ?? null) : null }));",
+    "tests": ["test/acc3titles.test.js"],
+    "note": "This join is built by hand rather than by rosterFor, so it is exactly where one peer comes to be the only unbadged one in a room where everybody else is badged - a signal true most of the time, which is the shape ACC1d-MARK was retired for being."
+  },
+  {
+    "name": "ACC3a-12-the-glyph-vocabulary-opened",
+    "file": "src/net/identityToken.js",
+    "old": "    if (!c.g.every((g) => GLYPHS.includes(g))) return false;",
+    "new": "    if (!c.g.every((g) => typeof g === 'string')) return false;",
+    "tests": ["test/acc3titles.test.js", "test/identitytoken.test.js"],
+    "note": "The closed vocabulary is what lets the relay read a badge out of a verified token WITHOUT re-checking it: an unknown badge cannot have been signed for. Open it and every reader downstream - the name layer included - has to defend itself against a glyph name nobody has ever seen."
+  }
+]

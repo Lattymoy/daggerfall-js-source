@@ -29,7 +29,7 @@
  *  reason: a deploy that did not happen looks exactly like one that
  *  did. Kept in step with ACCOUNT_VERSION in wrangler.toml, which
  *  test/accountworker.test.js holds. */
-export const ACCOUNT_VERSION = 'acct2';   // acct2: ACC2's save routes
+export const ACCOUNT_VERSION = 'acct3';   // acct3: ACC3's titles and glyphs
 
 /** A body bigger than this is not a request this service has. Read
  *  BEFORE the JSON is parsed, so a megabyte of nothing costs nothing. */
@@ -116,6 +116,10 @@ export const ROUTES = new Set([
   // that are throttled.
   '/v1/auth/register', '/v1/auth/login', '/v1/auth/recover',
   '/v1/account/password', '/v1/account/email',
+  // ACC3: the one WRITE in the wardrobe. Holding a title is derived
+  // and nothing can equip a glyph, so this is the only thing about
+  // either that a player chooses - and so the only route.
+  '/v1/account/title',
   // ACC2: the LISTING is a fixed path; every other save route carries
   // the slot in it and is matched by `savePathOf`.
   '/v1/saves',

@@ -36,6 +36,7 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { guestName, isHandleShaped, isGuestShaped } from './guestName.js';
+import { wardrobeOf, equipRefusal } from './titles.js';   // ACC3: what a player holds, wears and is true of - all four derived
 import { ID_RE, nameIsIssuable } from '../../src/net/identityToken.js';
 import {
   hashPassword, verifyPassword, needsRehash, passwordRefusal,
@@ -266,6 +267,36 @@ export function accountView(player, nowS) {
     createdAt: player.created_at,
     muted: isMuted(player, nowS),
   };
+}
+
+/**
+ * ACC3 - THE WARDROBE, and the one write in it.
+ *
+ * `accountView` takes no env and this does, which is the seam saying
+ * something true: a NAME is the row's, and a GRANT is the row read
+ * against the service's own config and clock. Handing env in here
+ * rather than folding the wardrobe into `accountView` keeps that
+ * difference visible at every call site.
+ */
+export const accountWardrobe = (player, env, nowS) => wardrobeOf(player, env, nowS);
+
+/**
+ * EQUIP ONE, or none. Mac: "tap the account icon to equip 1 feature".
+ *
+ * The refusal is checked against what the player HOLDS, derived now -
+ * so a title that has lapsed cannot go on being worn by a row nobody
+ * has looked at since, and a title nobody was ever granted cannot be
+ * written by a client that asks nicely. `null` takes it off and is
+ * always allowed.
+ */
+export async function equipTitle({ db, nowS }, player, env, title) {
+  const why = equipRefusal(title, player, env);
+  if (why) return { error: why };
+  await db.prepare('UPDATE players SET title = ?, last_seen = ? WHERE id = ?')
+    .bind(title, nowS, player.id).run();
+  // The ROW this answer describes is the row after the write, so the
+  // caller never has to re-read to know what it did.
+  return { ok: true, ...wardrobeOf({ ...player, title }, env, nowS) };
 }
 
 /** A handle a player asks for, judged before anything is written: one
