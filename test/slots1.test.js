@@ -54,7 +54,7 @@ test('SLOTS1: the pick seams hand a key and a name over once (mutant: a pick tak
   // TILE2: a TILE per slot now, in one grid - Mac: "I want [this pane]
   // reserved for a detailed tile based design for your saves". The
   // pressed one is still the character brought in.
-  assert.match(online, /body\.append\(tileGrid\(saves,[\s\S]*?_pickedSaveKey = save\.key;\s*\n\s*onAction\('online'\);/,
+  assert.match(online, /body\.append\(tileGrid\(saves,[\s\S]*?_pickedSaveKey = save\.key; onAction\('online'\);/,
     'a tile per slot, the pressed one is the character brought in');
   // ACC1g MOVED THE GUARD OFF THIS BUTTON, and the reason is the whole
   // slice: NAME-F2's check was about a name the player TYPED into this

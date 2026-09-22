@@ -833,13 +833,73 @@ function accountWindow() {
 // head and the relay to join ride the prefs shelf. The action boots
 // the world host with ?online beside ?load (main.js).
 function paneOnline(body) {
+  // ═══ ACC1h: THE PANE IS THE TILES ══════════════════════════════════
+  //
+  // Mac: "So the online pane should just be the new save panels,
+  // correct?" - and he had said it once already, when ACC1f moved the
+  // account card off this pane: "I want [the Online pane] reserved for
+  // a detailed tile based design for your saves."
+  //
+  // It was not. It carried a heading, a paragraph of prose about what a
+  // shared world shares, a text field for a name, a Relay field and a
+  // line telling the player to pick a character. ACC1g took the name
+  // field; this takes the rest, and what is left is the thing the pane
+  // was reserved for.
+  //
+  // WHERE EACH PIECE WENT, because none of it was deleted for tidiness:
+  //
+  //   the shared-world prose  -> 11-Multiplayer/Multiplayer.md, which
+  //       is where the law it describes is written down. A wall of text
+  //       above a row of tiles is read once and skipped for ever; the
+  //       promises in it are the RELAY's and are pinned there.
+  //   the Relay field         -> BELOW the tiles, quiet. It is an
+  //       override for pointing at a test relay and it is not a thing
+  //       to meet on the way in - but it is the only way to set the
+  //       pref `scenes/world.js` still reads, so deleting it would
+  //       leave a read nothing can answer. Settings is where it
+  //       belongs; `ui/settingsMap.js` has no free-text row kind yet,
+  //       and inventing one inside this change is how a diff stops
+  //       being reviewable.
+  //   the name field          -> gone with ACC1g. The account issues it.
+  //
+  // WHAT A TILE CANNOT SAY FOR ITSELF STAYS, and it is one line: why
+  // the buttons are dead when nobody is signed in, and the way in. A
+  // player looking at their own characters with every button greyed out
+  // and no reason on screen is the fault this pane would otherwise have.
   const saves = savedGames();
-  const c = el('div', 'card');
-  c.append(el('span', 'tag', 'Online'));
-  c.append(el('h3', null, 'Bring your character into the shared world'));
-  // AUDIT WORLD34 D5: the copy said the pre-WORLD1 truth ("Nothing else is shared yet") - what a player is promised here is the law
-  c.append(el('p', 'meta', 'Everyone brings their own save; you see each other everywhere and can talk. A dungeon is one shared world: its foes, doors, levers, platforms and every chest anyone has opened are the same for everyone in it, and it remembers. A building is a shared world too: its doors, and every shelf and cupboard anyone has opened, are the same for everyone in it, and it remembers. Towns and the open country share who is there and the creatures that find you: what one player meets, everyone nearby sees and fights - and its creatures can hurt you too. The clock and the sky are the world\'s and run on real time: a rest, a trip, a sentence or a lesson takes none of it, and the quest clocks stand still. Online is the enhanced lane: every enhancement the port owns is on for everyone. Most of your mods stay yours - turn them on or off online as you like. Five switches are the room\u2019s: Basic Roads, because the beds are smoothed into the terrain and a room shares one ground, and Meaner Monsters, the Combat and Armor Overhaul and Unleveled Loot, because a dungeon\u2019s foes belong to whoever hosts it and loot changes hands.'));   // AUDIT WORLD5 C12: the shared clock, said at the door; OL1: the lane, said at the door
-  const field = (label, key, placeholder, maxLength = 24) => {
+  const who = storedSession(appStorage());
+  if (!who) {
+    const c = el('div', 'card');
+    c.append(el('p', 'meta bad', 'Online needs an account, so a name over a head is one nobody else can wear. A guest takes one press and no email.'));
+    const go = el('button', 'act primary');
+    go.type = 'button';
+    go.textContent = 'Sign in or continue as guest';
+    // THE WINDOW LIVES AT THE DOOR (ACC1f) and this sends the player
+    // there rather than growing a second home for it here.
+    go.onclick = () => { section = 'home'; accountOpen = true; render(); };
+    c.append(go);
+    body.append(c);
+  }
+  if (!saves.length) {
+    body.append(empty('No saved games', 'Online brings a saved character in. Save a game and every slot of it appears here.'));
+    return;
+  }
+  // TILE2 (Mac: "a detailed tile based design for your saves"): the
+  // slots, with the character's own face on them, and the press brings
+  // that character in - its key rides the boot (takePickedSaveKey).
+  body.append(tileGrid(saves, (save) => ({
+    current: save.key === saves[0]?.key,
+    actions: [{
+      label: 'Play online',
+      primary: true,
+      // ACC1g: signed out is a DEAD button with the reason one card up,
+      // not a live one that fails at the relay. The relay owns the rule
+      // and refuses an unverified hello whatever this pane does.
+      disabled: !who,
+      onClick: () => { _pickedSaveKey = save.key; onAction('online'); },
+    }],
+  })));
+  const field = (label, key, placeholder, maxLength) => {
     const wrap = el('label', 'field');
     wrap.append(el('span', 'fieldlabel', label));
     const input = el('input');
@@ -848,89 +908,18 @@ function paneOnline(body) {
     wrap.append(input);
     return wrap;
   };
-  // ═══ ACC1g: THE NAME IS THE ACCOUNT'S NOW, AND THERE IS NO FIELD
-  //
-  // Mac: "You shouldnt be able to just type a name and enter
-  // anymore.... this is what the account system is for."
-  //
-  // A text field reading "Name over your head" stood here and its
-  // contents went into the hello, where the relay only sanitised them -
-  // so a player could type anybody's name and walk in wearing it. That
-  // is the impersonation hole ACC1a opened this arc to close, and ACC1d
-  // said out loud that a token made a name trustworthy without making
-  // one mandatory. The relay refuses an unverified hello now, so the
-  // field is not merely unnecessary: it would be a box that promises a
-  // name the server will not give.
-  //
-  // WHAT STANDS IN ITS PLACE IS WHO YOU ARE, read from the session this
-  // device holds - a storage read and no network, the same one the
-  // door's profile mark makes, so opening this pane on a train still
-  // works.
-  //
-  // NAME-F2's ENTRY HALF MOVED WITH IT, and did not disappear: the
-  // filter that refused `Cum` at this field now refuses it at
-  // REGISTRATION, where a name is chosen once instead of per session -
-  // `server-account/src/accounts.js handleRefusal` ends in
-  // `nameIsIssuable`, which is `sanitizeName(h) === h`, which is the
-  // very function carrying `nameAllowed`. One filter, one home, asked
-  // earlier and asked once.
-  const who = storedSession(appStorage());
-  const idBox = el('div', 'field');
-  idBox.append(el('span', 'fieldlabel', 'Name over your head'));
-  if (who) {
-    // A GUEST IS SAID TO BE ONE, because "guest" here is not a lesser
-    // player - it is a name this device can lose. ACC1e's card is where
-    // that is fixed, and a player who never reads it should still know
-    // which of the two they are holding.
-    idBox.append(el('p', 'meta', who.kind === 'guest'
-      ? `${who.name} - a guest name, kept on this device. Add a password to keep it.`
-      : `${who.name} - your account.`));
-  } else {
-    idBox.append(el('p', 'meta bad', 'Online needs an account, so a name over a head is one nobody else can wear. A guest takes one press and no email.'));
-  }
-  c.append(idBox);
-  if (!who) {
-    const go = el('button', 'act primary');
-    go.type = 'button';
-    go.textContent = 'Sign in or continue as guest';
-    // THE WINDOW LIVES AT THE DOOR (ACC1f), and this sends the player
-    // there rather than growing a second home for it here: that card
-    // was drawn in a pixel window over the px-home and the three faults
-    // the screenshot found were all rules that did not reach it. One
-    // window, one place, one set of rules that have been looked at.
-    go.onclick = () => { section = 'home'; accountOpen = true; render(); };
-    c.append(go);
-  }
-  c.append(field('Relay', 'onlineServer', DEFAULT_SERVER, 200));
-  // SLOTS1 (Mac: "the ability to choose which save to use in online"):
-  // every restorable slot is a card, and the one pressed is the
-  // character brought in - its key rides the boot (takePickedSaveKey).
-  c.append(el('p', 'meta', saves.length ? 'Pick the character to bring in:' : 'Save a game first: Online brings a saved character in.'));
-  body.append(c);
-  // TILE2 (Mac: "I want [this pane] reserved for a detailed tile based
-  // design for your saves"): the same slots the list drew, as tiles
-  // with the character's own face on them.
-  body.append(tileGrid(saves, (save) => ({
-    current: save.key === saves[0]?.key,
-    actions: [{
-      label: 'Play online',
-      primary: true,
-      // ACC1g: SIGNED OUT IS A DEAD BUTTON WITH A REASON ABOVE IT, not
-      // a live one that fails at the relay. The relay owns the rule and
-      // refuses an unverified hello whatever this pane does - this is
-      // only the pane declining to send a player into a refusal it can
-      // already see, with the sentence and the way in one card up.
-      //
-      // NAME-F2's refusal was here and has moved to registration (see
-      // the card above): a name is chosen once, at the account, rather
-      // than re-judged on every press of this button.
-      disabled: !who,
-      onClick: () => {
-        _pickedSaveKey = save.key;
-        onAction('online');
-      },
-    }],
-  })));
+  // AUDIT WORLD34 D5: AND THE PROMISE STAYS ON THE PAGE. What a player
+  // is told here is the law, and the pins that hold this sentence
+  // against the relay's own behaviour are the reason it says true
+  // things - it once said "Nothing else is shared yet", which WORLD1
+  // had already made false. So it moves BELOW the tiles rather than
+  // going: the pane opens as the characters, and the rules a player is
+  // agreeing to are still on the surface they enter through, where a
+  // page in the bible cannot reach them.
+  const foot = el('div', 'card svonlinefoot');
+  foot.append(el('p', 'meta', 'Everyone brings their own save; you see each other everywhere and can talk. A dungeon is one shared world: its foes, doors, levers, platforms and every chest anyone has opened are the same for everyone in it, and it remembers. A building is a shared world too: its doors, and every shelf and cupboard anyone has opened, are the same for everyone in it, and it remembers. Towns and the open country share who is there and the creatures that find you: what one player meets, everyone nearby sees and fights - and its creatures can hurt you too. The clock and the sky are the world\'s and run on real time: a rest, a trip, a sentence or a lesson takes none of it, and the quest clocks stand still. Online is the enhanced lane: every enhancement the port owns is on for everyone. Most of your mods stay yours - turn them on or off online as you like. Five switches are the room\u2019s: Basic Roads, because the beds are smoothed into the terrain and a room shares one ground, and Meaner Monsters, the Combat and Armor Overhaul and Unleveled Loot, because a dungeon\u2019s foes belong to whoever hosts it and loot changes hands.'));   // AUDIT WORLD5 C12: the shared clock, said at the door; OL1: the lane, said at the door
+  foot.append(field('Relay', 'onlineServer', DEFAULT_SERVER, 200));
+  body.append(foot);
 }
 
 function paneLoad(body) {

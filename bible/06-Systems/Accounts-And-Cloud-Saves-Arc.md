@@ -2278,3 +2278,41 @@ wins"*.
 deploy fires on merge to main: it drops every connected player, **and
 from that moment nobody can join without a session.** Every player
 online today is using a typed name.
+
+---
+
+## ACC1h — the Online pane is the tiles (2026-09-22)
+
+> So the online pane should just be the new save panels, correct?
+
+He had said it once already, when ACC1f moved the account card off this
+pane: *"I want [the Online pane] reserved for a detailed tile based
+design for your saves."* It was not. Above the tiles stood a heading, a
+paragraph about what a shared world shares, a text field for a name, a
+Relay field and a line telling the player to pick a character. ACC1g
+took the name field; this takes the rest.
+
+**The pane opens as the characters.** One card above them only when
+nobody is signed in — the reason the buttons are dead, and the way in —
+because a player looking at their own characters with every button
+greyed out and no reason on screen is the fault this pane would
+otherwise have.
+
+### Nothing was deleted for tidiness
+
+**The shared-world promise moved BELOW the tiles, not out.** AUDIT
+WORLD34 D5's law is that *what a player is told here is the law*, and
+the pins that hold that sentence against the relay's own behaviour are
+the reason it says true things — it once said *"Nothing else is shared
+yet"*, which WORLD1 had already made false. Twelve pins went red when it
+was cut, which is those pins doing their job. So the rules a player is
+agreeing to are still on the surface they enter through, where a page in
+the bible cannot reach them; they are simply no longer in the way.
+
+**The Relay field went with it,** and that is a compromise stated as
+one: Settings is where an override a player sets once belongs, but
+`ui/settingsMap.js` has no free-text row kind yet, and inventing one
+inside this change is how a diff stops being reviewable. It cannot just
+go — `scenes/world.js` still reads `onlineServer`, and deleting the only
+way to set it would leave a read nothing can answer. **Owed: a text row
+kind in settingsMap, and this field moved into it.**
