@@ -1126,6 +1126,11 @@ export async function bootExterior(canvas, renderer, params, status) {
    *  `modes?.` because the mode machine is built further down and the
    *  event handlers that ask this are bound before it exists. */
   const gamePaused = () => townTalk.overlayActive || (modes?.overlayHeld ?? false);
+  // MENU-RELOCK: close-edge pointer lock belongs to the closing gesture,
+  // not the following animation frame where Chromium may refuse it.
+  const relockAfterUiInput = () => {
+    if (!gamePaused() && document.pointerLockElement !== canvas) requestLook(canvas);
+  };
 
   // ═══ MAC-K3: THE MOUNT ═════════════════════════════════════════
   //
@@ -2339,6 +2344,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     onTap: (slot) => (slot === 'spell' ? quickSpell() : quickUse(slot === 'c1' ? 1 : 2)),
   });
   const makeInventoryWindow = (extra = {}) => createInventoryWindow({
+    relock: () => requestLook(canvas),
     openBook: openBookHook,   // B1: the use-mode book arm
     placeCamp: (item) => camps.placeItem(item, playerEntity.items ?? []),   // SURV3
     say: (l) => townTalk.say(l),   // FX1 (F128): the "Equipping %s" cue on close
@@ -2370,6 +2376,7 @@ export async function bootExterior(canvas, renderer, params, status) {
   // only what this host knows - the entity, the engine, the cost and
   // the way it reaches TEXT.RSC.
   const makeSpellbookWindow = () => (_spellbook = createSpellbookWindow({
+    relock: () => requestLook(canvas),
     entity: playerEntity,
     magic,
     castCost: (sp) => calculateCastCost(sp, playerEntity).sp,
@@ -2386,6 +2393,7 @@ export async function bootExterior(canvas, renderer, params, status) {
   // which mounts this host's windows rather than building its own -
   // had no way to reach it, and F5 in a shop did nothing.
   const makeCharSheetWindow = () => createCharSheetWindow({
+    relock: () => requestLook(canvas),
     entity: playerEntity,
     artDeps: { renderer, fetchBytes, palette },
     rows: (id, pick) => townTalk.lines(id, pick),   // AUDIT 58: the eight attribute popups' TEXT.RSC records 0..7
@@ -2429,6 +2437,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     // warm, then let the door refuse.
     preloadQuestJournalArt({ renderer, fetchBytes, palette });
     return createChronicleWindow({
+      relock: () => requestLook(canvas),
       ...questJournalHooks(),
       mode,
       entity: playerEntity,
@@ -2731,7 +2740,7 @@ export async function bootExterior(canvas, renderer, params, status) {
   let backButtonHeld = false;
   addEventListener('keydown', (e) => {
     if (e.code === 'Escape') backButtonHeld = true;
-    if (townTalk.keydown(e)) return;
+    if (townTalk.keydown(e)) { relockAfterUiInput(); return; }
     // U8a: F5 opens the classic character sheet (the dungeon's key,
     // host rule); preventDefault stops the browser reload.
     // AUDIT 17e F41: preventDefault must run for F5 in EVERY mode -
@@ -2909,7 +2918,15 @@ export async function bootExterior(canvas, renderer, params, status) {
   // movement Set since the first host and never told the open window
   // anything; DFU's buttons hear both edges (Button.cs:79-92) and the
   // travel popup's EXIT is the deferral that needs the release.
-  addEventListener('keyup', (e) => { keys.delete(e.code); noteKeyUp(latch.edge, e.code); if (e.code === 'Escape') backButtonHeld = false; if (e.code === 'AltLeft') e.preventDefault(); townTalk.keyup(e); modes?.keyup?.(e); });   // ROAD-E E1: the up seam reaches BOTH slots this host feeds - the outer overlay and the mode machine's
+  addEventListener('keyup', (e) => {
+    keys.delete(e.code);
+    noteKeyUp(latch.edge, e.code);
+    if (e.code === 'Escape') backButtonHeld = false;
+    if (e.code === 'AltLeft') e.preventDefault();
+    townTalk.keyup(e);
+    modes?.keyup?.(e);
+    relockAfterUiInput();
+  });   // ROAD-E E1: the up seam reaches BOTH slots this host feeds - the outer overlay and the mode machine's
   // U45: Actions.ActivateCursor (Enter) frees the mouse during play
   // and takes it back - PlayerMouseLook.cursorActive, which had been
   // bound since I1 with no consumer at all. Without it the large HUD
@@ -2946,8 +2963,8 @@ export async function bootExterior(canvas, renderer, params, status) {
   // is the same. test/audit24_wave37.test.js holds both halves of it:
   // `modes?.` on every reference above the declaration, and `var` at it.
   canvas.addEventListener('pointerdown', (e) => {
-    if (townTalk.pointerdown(e)) return;
-    if (modes?.pointerdown?.(e)) return;
+    if (townTalk.pointerdown(e)) { relockAfterUiInput(); return; }
+    if (modes?.pointerdown?.(e)) { relockAfterUiInput(); return; }
     // U45: the large HUD's panels, BEFORE the relock - a click on the
     // bar is a button press, never a grab for the pointer.
     const _r = canvas.getBoundingClientRect();
@@ -2989,7 +3006,11 @@ export async function bootExterior(canvas, renderer, params, status) {
   // rides `townTalk.hover` (the mousemove listener below), so this is
   // the third phase and the only one with no existing route - a town
   // map that never hears the release keeps panning forever.
-  addEventListener('pointerup', (e) => { townTalk.pointer('up', e); modes?.pointerup?.(e); });
+  addEventListener('pointerup', (e) => {
+    townTalk.pointer('up', e);
+    modes?.pointerup?.(e);
+    relockAfterUiInput();
+  });
   // C9: RMB is a weapon control (drag-to-swing) exactly as the
   // dungeon host - the drag feeds the rig INSTEAD of the look.
   // MAC-L3: the browser menu is shut for the WHOLE page, not just this
@@ -3470,6 +3491,7 @@ export async function bootExterior(canvas, renderer, params, status) {
   // V2c: createWorldModes also registers setPassiveSpecialsHost (the
   // sunlight/holy-place seam) for THIS page - THE FOUR HOSTS RULE.
   var modes = createWorldModes({
+    relockAfterUiInput,
     activateDir: () => _tapDir,   // TI1: the tap's ray for the modal ladders (eyeDir)
     activateLockOnly: () => _tapLockOnly,   // TS1: the stick-half tap - the modal ladders stop after the lock pick
     currentRegionIndex: () => dfLocation?.regionIndex ?? -1,   // UL1: PlayerGPS.CurrentRegionIndex - the fixed city's
