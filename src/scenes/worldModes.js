@@ -5889,6 +5889,11 @@ export function createWorldModes(host) {
           // context, so the dungeon's own togglePause (dungeonContext.js)
           // had nothing to read and its Load pane never refused online.
           dungeonOnline: () => host.dungeonOnline?.() ?? false,
+          // CASTLE1: the world host's load, for a save the dungeon's own
+          // door finds was taken somewhere else (dungeonContext.js
+          // quickLoad). Absent on a host with no such load, and the
+          // context keeps its line.
+          worldLoad: host.loadSave ? (key) => host.loadSave(key) : null,
           // TTL1: the spawned-dungeon clocks. The context tells the host
           // when it has built a synthesized dungeon and when the place
           // is empty; the host owns the ledger and the map pixel.
@@ -7669,6 +7674,7 @@ export function createWorldModes(host) {
       actions: dungeonCtx.actions.objects.size,
     }) : null;
     window.__dungeonExit = () => tryExitDungeon();
+    window.__dungeonQuickLoad = (key = null) => { dungeonCtx?.quickLoad?.((p) => player.spawn(p[0], p[1], p[2]), key); return !!dungeonCtx; };   // CASTLE1 probe surface: the dungeon's OWN load door (F12 / the pause menu underground)
     // CASTLE1 probe surface: what the dungeon ray sees from the current eye.
     window.__dungeonProbe = () => {
       if (!dungeonCtx) return null;

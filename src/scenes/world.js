@@ -7351,7 +7351,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // exterior -> the townTalk overlay, interior OR dungeon -> the mode
   // machine's slot. U43-ii shipped the dungeon half: showQuestBox
   // offers the window to `modes.showQuestOverlay` below, and
-  // worldModes answers it in BOTH modes (worldModes.js:8543-8607 -
+  // worldModes answers it in BOTH modes (worldModes.js:8549-8613 -
   // dungeon routes to dungeonCtx.showOverlay), so a dungeon popup is
   // shown rather than logged loudly and dropped.
   // AUDIT 24 (wave 21): DaggerfallMessageBox.Show() is a
@@ -9675,6 +9675,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // quickSaveNow can also update a character's AutoSave slot on the
     // way out, not only QuickSave - see its own header.
     quickSave: (saveName) => worldQuickSave(saveName),
+    loadSave: (key) => worldQuickLoad(key != null ? { key } : {}),   // CASTLE1: the dungeon's own load door hands a save from another place here (dungeonContext.js quickLoad)
     quickLoad: () => worldQuickLoad(),
     relock: () => requestLook(canvas),   // MAC1: the interior arm's pause door relocks through this host's canvas
     // ONLINE-LOAD1: the building host's own reflection of the same
@@ -9873,7 +9874,13 @@ export async function bootWorld(canvas, renderer, params, status) {
   // WINDOW is the third-party UnityConsole prefab, not DFU source).
   installConsoleProbe();
   if (shotMode) { modes.installShotProbes(); installTownProbes(); }
-  if (shotMode) { window.__quickSave = () => worldQuickSave(); window.__quickLoad = () => worldQuickLoad(); window.__hudLines = () => JSON.stringify(townTalk._debug().hud ?? null); }   // CASTLE1 probe surface (tools/castleProbe.mjs)
+  if (shotMode) {   // CASTLE1 probe surface (tools/castleProbe.mjs)
+    window.__quickSave = (name) => modes.quickSaveNow(name);   // the standing host's OWN composer (the dungeon's underground)
+    window.__quickLoad = () => worldQuickLoad();
+    window.__loadSave = (key) => worldQuickLoad({ key });
+    window.__saveKeys = () => JSON.stringify(saveKeysOfCharacter(playerEntity.name).map((key) => ({ key, name: saveInfoOf(key)?.saveName ?? null })));
+    window.__hudLines = () => JSON.stringify(townTalk._debug().hud ?? null);
+  }
   if (shotMode) window.__magic = () => JSON.stringify({ mp: playerEntity.magicka, readied: magic.readied()?.name ?? null, armed: magic.spellArmed(), missiles: magic.missileCount(), mode: modes?.mode ?? 'exterior', book: (playerEntity.spells ?? []).map((sp) => ({ name: sp.name, range: sp.rangeType })) });   // M5 cast probe
   if (shotMode) {
     // F-slice probe surface: the travel state + the nearest real

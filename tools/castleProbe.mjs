@@ -99,31 +99,63 @@ check(before.pick?.key === 'exit:0', `the ray at the exit door names the exit ($
   check(after === 'exterior', `the exit door answers (mode after: ${after})`);
 }
 
-// The save/load half of the report: quicksave INSIDE the castle, then load it back.
-if ((await ev(() => window.__mode())) !== 'dungeon') {
-  console.log('(not in the dungeon any more - re-entering for the save/load half)');
+// The save/load half of the report. Three loads, the way a player makes
+// them: the dungeon's OWN door (F12 / the pause menu underground) on a
+// save taken in this castle; that same door on a save taken on the
+// street (another place - the world host's load must take over and put
+// the player there); and the street's load on the castle save (the load
+// re-enters the SAVED dungeon, not the first door the streaming world
+// loaded).
+const untilMode = async (want, ms = 240000) => {
+  for (const until = Date.now() + ms; Date.now() < until;) {
+    const m = await ev(() => window.__mode());
+    const idle = await ev(() => window.__streamIdle());
+    if (m === want && idle) return m;
+    await page.waitForTimeout(1000);
+  }
+  return await ev(() => window.__mode());
+};
+const reenter = async () => {
+  if ((await ev(() => window.__mode())) === 'dungeon') return;
   await ev(([p, y]) => window.__warpTo(p, y), [stand, yaw]);
   await page.waitForTimeout(500);
   await ev(() => window.__enter());
-  for (const until = Date.now() + 120000; Date.now() < until;) { if ((await ev(() => window.__mode())) === 'dungeon') break; await page.waitForTimeout(500); }
+  await untilMode('dungeon', 120000);
   await page.waitForTimeout(3000);
-}
-const saved = await ev(() => window.__quickSave());
-console.log(`__quickSave -> ${JSON.stringify(saved)}`);
-await page.waitForTimeout(1000);
-const keyBefore = JSON.parse(await ev(() => window.__dungeonProbe())).locationKey;
-await ev(() => window.__quickLoad());
-for (const until = Date.now() + 180000; Date.now() < until;) {
-  const idle = await ev(() => window.__streamIdle());
-  const m = await ev(() => window.__mode());
-  if (idle && m === 'dungeon') break;
-  await page.waitForTimeout(1000);
-}
-await page.waitForTimeout(3000);
-const afterLoad = JSON.parse(await ev(() => window.__dungeonProbe()) ?? 'null');
-console.log(`after load: mode=${await ev(() => window.__mode())} key=${afterLoad?.locationKey} (saved in ${keyBefore}) hud=${JSON.stringify(afterLoad?.hud)} pick=${JSON.stringify(afterLoad?.pick)} containing=${JSON.stringify(afterLoad?.containing)} feet=${JSON.stringify(afterLoad?.feet)}`);
-console.log('street hud: ' + await ev(() => window.__hudLines()));
-check(afterLoad && afterLoad.locationKey === keyBefore, 'the load comes home to the same dungeon');
+};
+await reenter();
+const castleKey = JSON.parse(await ev(() => window.__dungeonProbe())).locationKey;
+console.log(`castle save -> ${await ev(() => window.__quickSave('castle'))}`);
+await page.waitForTimeout(500);
+const keys = JSON.parse(await ev(() => window.__saveKeys()));
+const castleSave = keys.find((k) => k.name === 'castle')?.key ?? null;
+check(castleSave != null, `the castle save has a slot (${JSON.stringify(keys)})`);
+// 1. the dungeon's own door, the castle's own save: home, no line
+await ev((k) => window.__dungeonQuickLoad(k), castleSave);
+await page.waitForTimeout(2500);
+let p1 = JSON.parse(await ev(() => window.__dungeonProbe()) ?? 'null');
+console.log(`load 1 (own door, castle save): mode=${await ev(() => window.__mode())} key=${p1?.locationKey} hud=${JSON.stringify(p1?.hud)}`);
+check(p1 && p1.locationKey === castleKey && !(p1.hud ?? []).some((l) => /different dungeon/.test(l)), 'the dungeon\'s own door loads its own save in place');
+// 2. a save from the STREET, loaded through the dungeon's own door
+await ev(() => window.__dungeonExit());
+await untilMode('exterior', 60000);
+await page.waitForTimeout(2000);
+console.log(`street save -> ${await ev(() => window.__quickSave('street'))}`);
+await page.waitForTimeout(500);
+const streetSave = JSON.parse(await ev(() => window.__saveKeys())).find((k) => k.name === 'street')?.key ?? null;
+check(streetSave != null, 'the street save has a slot');
+await reenter();
+await ev((k) => window.__dungeonQuickLoad(k), streetSave);
+const m2 = await untilMode('exterior');
+console.log(`load 2 (own door, street save): mode=${m2} street hud=${await ev(() => window.__hudLines())}`);
+check(m2 === 'exterior', 'a save from another place, loaded underground, puts the player THERE (the world host\'s load took it)');
+// 3. the street's load on the castle save: the SAVED dungeon is re-entered
+await ev((k) => window.__loadSave(k), castleSave);
+const m3 = await untilMode('dungeon');
+await page.waitForTimeout(2000);
+const p3 = JSON.parse(await ev(() => window.__dungeonProbe()) ?? 'null');
+console.log(`load 3 (street load, castle save): mode=${m3} key=${p3?.locationKey} (saved in ${castleKey}) hud=${JSON.stringify(p3?.hud)} feet=${JSON.stringify(p3?.feet)}`);
+check(m3 === 'dungeon' && p3?.locationKey === castleKey && !(p3.hud ?? []).some((l) => /different dungeon/.test(l)), 'the load comes home to the saved dungeon, and the dungeon host agrees it is the one');
 await shot('3-after.png');
 const real = errors.filter((e) => !/CURSOR\.IMG|Failed to load resource/.test(e));
 check(real.length === 0, real.length ? `page errors: ${real.slice(0, 3).join(' | ')}` : 'zero page errors');
