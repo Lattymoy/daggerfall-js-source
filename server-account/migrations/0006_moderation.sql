@@ -1,0 +1,17 @@
+-- MOD1 (2026-09-22) - WHO MUTED THIS ACCOUNT.
+--
+--   npx wrangler d1 migrations apply daggerfall-accounts --remote
+--
+-- Applied exactly once through the `d1_migrations` ledger, which the
+-- deploy runs (ACC1-CI).
+--
+-- Mac: "moderator chat commands" - /mute and /unmute. The mute itself
+-- needs no column: ACC0 put `muted_until` on the row in 0001 for exactly
+-- this. What it did not have is WHO: a moderator's power with no record
+-- of its use is a power nobody can review. So the moderator's account
+-- id is written beside every mute, and cleared with it.
+--
+-- WHO IS A MODERATOR IS NOT HERE. It is MODERATOR_HANDLES in the
+-- service's config, for the reason DEVELOPER_HANDLES is: granting one is
+-- a reviewed, deployed edit, not a write into a live database.
+ALTER TABLE players ADD COLUMN muted_by TEXT;

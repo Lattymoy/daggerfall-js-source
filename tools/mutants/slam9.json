@@ -80,8 +80,8 @@
   {
     "name": "Q7-remember-no-reinsert",
     "file": "src/net/online.js",
-    "old": "    this._known.delete(id);\n    this._known.set(id, { name: p.name, title: p.title, glyphs: p.glyphs, look: p.look });",
-    "new": "    if (!this._known.has(id)) this._known.set(id, { name: p.name, title: p.title, glyphs: p.glyphs, look: p.look });",
+    "old": "    this._known.delete(id);\n    this._known.set(id, { name: p.name, title: p.title, glyphs: p.glyphs, sub: p.sub, look: p.look });",
+    "new": "    if (!this._known.has(id)) this._known.set(id, { name: p.name, title: p.title, glyphs: p.glyphs, sub: p.sub, look: p.look });",
     "tests": [
       "test/slam9.test.js",
       "test/slam6.test.js",

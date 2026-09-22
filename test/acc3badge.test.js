@@ -319,6 +319,6 @@ test('ACC3b: a peer WEARS THE NEWEST HELLO\'S badge, including none - and the cl
   const src = rd('src/net/online.js');
   assert.match(src, /const \{ title, glyphs \} = readBadge\(p\);/, 'the peer is built through the one reader');
   assert.match(src, /\(\{ title: p\.title, glyphs: p\.glyphs \} = readBadge\(m\)\);/, 'and a second hello replaces it');
-  assert.match(src, /this\._known\.set\(id, \{ name: p\.name, title: p\.title, glyphs: p\.glyphs, look: p\.look \}\);/, 'the remembered introduction keeps it, so a socket blip does not strip a title');
+  assert.match(src, /this\._known\.set\(id, \{ name: p\.name, title: p\.title, glyphs: p\.glyphs,[^}]* look: p\.look \}\);/, 'the remembered introduction keeps it, so a socket blip does not strip a title');   // MOD1: `sub` rides beside it
   assert.doesNotMatch(src, /title: m\.title/, 'nothing takes a badge off a frame without the check');
 });

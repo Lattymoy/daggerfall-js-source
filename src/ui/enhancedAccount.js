@@ -40,6 +40,7 @@ import { TITLE_TEXT, GLYPH_PATH, GLYPH_STROKE, glyphBadges, badgeClass } from '.
 export const GLYPH_LABEL = Object.freeze({
   sprout: 'New account',
   dev: 'Developer',
+  mod: 'Moderator',
 });
 
 /** ACC4: THE TWO FACTS MAC ASKED FOR, as words. Pure, so node pins

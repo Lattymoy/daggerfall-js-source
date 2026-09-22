@@ -46,6 +46,7 @@ on:
       - "src/net/identityToken.js"
       - "src/net/handleShape.js"
       - "src/net/nameFilter.js"
+      - "src/net/moderation.js"
       - "src/net/playClock.js"
       - "src/net/wire.js"
       - "src/world/mat4.js"
@@ -393,6 +394,16 @@ jobs:
           if [ "$code" != "200" ] || ! grep -q '"playedS":0' /tmp/beat.json; then
             echo "::error::the time-played beat failed on the deployed Worker ($code) - a first beat must answer playedS 0"
             exit 1
+          fi
+
+          # MOD1: THE MODERATION ROUTE IS LIVE AND SHUT. A guest is nobody's
+          # moderator, so it must be refused 403 - a 404 is a route that did
+          # not deploy, a 500 a migration that did not apply.
+          code=$(curl -sS --max-time 15 -o /tmp/mod.json -w '%{http_code}' -X POST "$base/v1/mod/mute" \
+            -H 'content-type: application/json' -d "{\"secret\":\"$secret\",\"target\":\"p_nobody\",\"minutes\":1}")
+          echo "mod/mute as a guest -> $code"
+          if [ "$code" != "403" ] || ! grep -q '"not-moderator"' /tmp/mod.json; then
+            echo "::error::/v1/mod/mute did not refuse a guest as not-moderator ($code)"; cat /tmp/mod.json || true; exit 1
           fi
 
           handle="smoke$(date +%s | tail -c 7)"

@@ -353,19 +353,29 @@ import { readFileSync as _rf } from 'node:fs';
  *  Durable Object. Read from the SOURCE rather than copied, so the day
  *  the method changes this pin is driving the new one - a copy here
  *  would be a second implementation agreeing with itself. */
+/** One method's body, lifted off the class by its signature line. */
+function methodBody(text, sig) {
+  const start = text.indexOf(sig);
+  assert.ok(start > 0, `server/src/index.js no longer has ${sig.trim()} - this pin is driving nothing`);
+  const end = text.indexOf('\n  }\n', start) + 4;
+  return text.slice(start + sig.length, end - 4);
+}
+
 async function namedOf(room, m, now) {
   const text = _rf(new URL('../server/src/index.js', import.meta.url), 'utf8');
-  const start = text.indexOf('  async _named(m, now) {');
-  assert.ok(start > 0, 'server/src/index.js no longer has a _named - this pin is driving nothing');
-  const end = text.indexOf('\n  }\n', start) + 4;
-  const body = text.slice(start + '  async _named(m, now) {'.length, end - 4);
-  // the two module-level names the method closes over
+  const body = methodBody(text, '  async _named(m, now) {');
+  // MOD1: `_named` asks `_loadKey` for the key now (the mute order checks
+  // with the same one), so that method is lifted off the SOURCE too.
+  const loadBody = methodBody(text, '  async _loadKey() {');
+  const load = new Function('importPublicKeyB64', 'crypto', 'console', `return async function () {${loadBody}};`)(importPublicKeyB64, globalThis.crypto, console);
+  if (!room._loadKey) room._loadKey = load;
+  // the module-level names the method closes over
   const fn = new Function('m', 'now', 'verifyToken', 'importPublicKeyB64', 'MAX_TTL_S', 'SPENT_MAX', 'crypto', 'console',
     `return (async () => {${body}})()`);
   return fn.call(room, m, now, verifyToken, importPublicKeyB64, MAX_TTL_S, 4096, globalThis.crypto, console);
 }
 
-const roomWith = (pub) => ({ env: { IDENTITY_PUBLIC_KEY: pub }, _spent: new Map(), _verifyKey: undefined });
+const roomWith = (pub) => ({ env: { IDENTITY_PUBLIC_KEY: pub }, _spent: new Map(), _orders: new Map(), _verifyKey: undefined });
 
 test('ACC1d/F8: A TOKEN IS SPENT ONCE - the same token presented twice is refused the second time', async () => {
   const kp = await keys();
@@ -452,12 +462,12 @@ test('ACC1d: the TTL ceiling is config, and config may only TIGHTEN the module\'
   const token = await mint(kp);   // minted at the module's full MAX_TTL_S
 
   // a relay that allows less than the token was minted for refuses it
-  const tight = { env: { IDENTITY_PUBLIC_KEY: pub, IDENTITY_MAX_TTL_S: '5' }, _spent: new Map(), _verifyKey: undefined };
+  const tight = { env: { IDENTITY_PUBLIC_KEY: pub, IDENTITY_MAX_TTL_S: '5' }, _spent: new Map(), _orders: new Map(), _verifyKey: undefined };
   const r = await namedOf(tight, { tok: token, name: 'x' }, now);
   assert.match(r.error ?? '', /^token /, 'a relay configured to 5s honoured a 300s token');
 
   // ...and one that asks for MORE than the module allows does not get it
-  const loose = { env: { IDENTITY_PUBLIC_KEY: pub, IDENTITY_MAX_TTL_S: String(MAX_TTL_S * 100) }, _spent: new Map(), _verifyKey: undefined };
+  const loose = { env: { IDENTITY_PUBLIC_KEY: pub, IDENTITY_MAX_TTL_S: String(MAX_TTL_S * 100) }, _spent: new Map(), _orders: new Map(), _verifyKey: undefined };
   const wide = await namedOf(loose, { tok: token, name: 'x' }, now);
   assert.equal(wide.error, undefined, 'a sane token was refused under a generous config');
   const src2 = _rf(new URL('../server/src/index.js', import.meta.url), 'utf8');
