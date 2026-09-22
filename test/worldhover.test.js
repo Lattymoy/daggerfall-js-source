@@ -1261,7 +1261,7 @@ test('AUDIT-WH H3: both pools and both above-ground hosts are wired to that ladd
 });
 
 test('AUDIT-WH H2: the mod\'s MOBILE BAND - a townsperson and a live foe, named and raced', async () => {
-  const { mobilePersonName, mobileEntityName } = await import('../src/systems/worldTooltips.js');
+  const { mobilePersonName, mobileEntityName, liveEntityName } = await import('../src/systems/worldTooltips.js');
   const { liveFoeTargets, liveFoeFor, foeAabb, MOBILE_NPC_ACTIVATION_DISTANCE, RAY_DISTANCE } = await import('../src/player/activate.js');
   const { raceWinner } = await import('../src/player/activationRace.js');
   const { resolveHover } = await import('../src/systems/worldHover.js');
@@ -1279,6 +1279,39 @@ test('AUDIT-WH H2: the mod\'s MOBILE BAND - a townsperson and a live foe, named 
   // which in the port is a stub standing without an `ai`.
   assert.equal(mobileEntityName('Knight'), 'Knight', 'no motor, still named');
   assert.equal(mobileEntityName('', { hostile: false }), null);
+  // AUDIT-WH2 L4-F1: ...AND WHICH MEMBER THE WORD COMES FROM. The
+  // campaign caught this one with no pin behind it: reverting the four
+  // call sites to `enemyDisplayName(f.mobileType)` survived.
+  //
+  // The mod's LIVE arm is `.cs:310`
+  // `((DaggerfallEntityBehaviour)comp).Entity.Name`, which is
+  // EnemyEntity.cs:314 `name = career.Name` - set after the if/else, so
+  // a monster and a class enemy both take their CAREER's name. The mod's
+  // CORPSE arm is a different member entirely: `.cs:526`
+  // `loot.entityName`, which GameObjectHelper.cs:701 fills from
+  // `GetLocalizedEnemyName(...)`. The port handed the corpse's member to
+  // the live arm, so a living city watchman was labelled from the enemy
+  // table instead of his career.
+  assert.equal(liveEntityName({ entity: { name: 'Knight' } }, 'City Watch'), 'Knight',
+    'the CAREER name wins - it is the member the mod reads');
+  // RECORDED DEPARTURE: the port's enemy entity only carries a career
+  // name for CLASS enemies (`name: isClass ? career.name : undefined`,
+  // characters/enemyEntity.js), because nothing else has ever needed a
+  // monster's career template. A monster falls through to the enemy
+  // name, which is the only word the port holds for it.
+  assert.equal(liveEntityName({ entity: { name: undefined } }, 'Rat'), 'Rat',
+    'a monster has no career name in this port and takes the enemy name');
+  assert.equal(liveEntityName({}, 'Rat'), 'Rat', 'and so does a record with no entity at all');
+  assert.equal(liveEntityName(null, null), null, 'no word anywhere is no word');
+  assert.match(read('src/characters/enemyEntity.js'), /name: isClass \? career\.name : undefined,/,
+    'the departure above is this line - if the port ever loads monster careers, the fallback stops being reachable');
+  // ...and all FOUR hosts read it through that one door rather than
+  // reaching for the corpse's member again.
+  for (const [f, v] of [['src/scenes/exteriorFoes.js', 'f'], ['src/scenes/cityGuards.js', 'g'],
+    ['src/scenes/worldModes.js', 'f'], ['src/scenes/dungeonContext.js', 'f']]) {
+    assert.match(read(f), new RegExp(String.raw`mobileEntityName\(liveEntityName\(${v}, enemyDisplayName\(${v}\.mobileType\)\), \{ hostile: !!${v}\.ai\?\.isHostile \}\)`),
+      `${f}: the live arm takes Entity.Name, with the enemy name only as the port's fallback`);
+  }
 
   // THE FAMILY. The RAY's distance with the MOD's 6.4 beside it -
   // AUDIT 65 MC-2's law, because the band is a gate inside the handler
