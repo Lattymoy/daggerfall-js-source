@@ -79,5 +79,41 @@
     "tests": [
       "test/daedrasummoning.test.js"
     ]
+  },
+  {
+    "name": "DAEDRA2-the-summoning-gates-on-coins-again",
+    "file": "src/scenes/worldModes.js",
+    "old": "            gold: totalGoldAmount(playerEntity),",
+    "new": "            gold: goldAmount(playerEntity),",
+    "tests": [
+      "test/daedrasummoning.test.js"
+    ]
+  },
+  {
+    "name": "DAEDRA2-the-shelf-gates-on-coins-again",
+    "file": "src/scenes/worldModes.js",
+    "old": "    if (totalGoldAmount(playerEntity) < price) return null;",
+    "new": "    if (goldAmount(playerEntity) < price) return null;",
+    "tests": [
+      "test/daedrasummoning.test.js"
+    ]
+  },
+  {
+    "name": "DAEDRA2-the-repair-counter-gates-on-coins-again",
+    "file": "src/scenes/worldModes.js",
+    "old": "    if (totalGoldAmount(playerEntity) < price) {",
+    "new": "    if (goldAmount(playerEntity) < price) {",
+    "tests": [
+      "test/daedrasummoning.test.js"
+    ]
+  },
+  {
+    "name": "DAEDRA2-a-letter-stops-being-tender",
+    "file": "src/systems/court.js",
+    "old": "export function totalGoldAmount(player) {\n  return goldAmount(player) + creditAmount(player);\n}",
+    "new": "export function totalGoldAmount(player) {\n  return goldAmount(player);\n}",
+    "tests": [
+      "test/daedrasummoning.test.js"
+    ]
   }
 ]

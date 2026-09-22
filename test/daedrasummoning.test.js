@@ -27,6 +27,8 @@ import {
 import { expandRowValues } from '../src/systems/quest/questMacros.js';   // DAEDRA1: the walk the boxes go through
 import { FACTION_FLAGS } from '../src/systems/factionRep.js';
 import { serviceDestination } from '../src/systems/guildServiceFlow.js';
+import { goldAmount, totalGoldAmount, deductGold } from '../src/systems/court.js';   // DAEDRA2: the two quantities and the payment that knows the difference
+import { LETTER_OF_CREDIT_TEMPLATE } from '../src/systems/inventory.js';   // ...and what paper is, from its own home
 
 const SRC = join(dirname(fileURLToPath(import.meta.url)), '..', 'src');
 const code = (p) => readFileSync(join(SRC, p), 'utf8')
@@ -294,4 +296,69 @@ test('DAEDRA1b: the coven keeps a RAW reader, and hands THAT to the summoning fl
     "the window's own boxes expand once, off the raw reader");
   assert.match(modes, /openServiceFlow\('guildServiceDaedraSummoning', \{\s*guild: null, memberships: \[\], store, rows: rawRows,/,
     'and the flow is handed the RAW reader, not the expanded one - the whole of this fix');
+});
+
+test('DAEDRA2: a letter of credit pays for a summoning - the gate is what the payment can spend', () => {
+  // Opus, reading DFU against the port before the merge: the flow gated
+  // on `goldAmount` (coins) and paid with `deductGold` (coins AND
+  // letters). DFU tests PlayerEntity.GetGoldAmount() and pays with
+  // DeductGoldAmount(), and both of those know about paper - so a
+  // character holding a letter big enough was turned away as too poor
+  // from a bill the very next line could have settled.
+  //
+  // A summoning is the worst place for it: `summoningCost` is 200,000
+  // at reputation zero, which is far past what anyone carries in coin.
+  // At that price the gate is ALWAYS the letter, so the whole service
+  // was unreachable for the players it was priced for.
+  const cost = summoningCost(0);
+  assert.equal(cost, 200000, 'the price the gate has to admit');
+
+  // the two quantities, as court.js draws the line
+  const withLetter = { goldPieces: 10, items: [{ templateIndex: LETTER_OF_CREDIT_TEMPLATE, value: 250000 }] };
+  assert.equal(goldAmount(withLetter), 10, 'coins alone');
+  assert.equal(totalGoldAmount(withLetter), 250010, 'coins and paper - DFU GetGoldAmount');
+
+  // THE GATE. Driven through attemptSummoning itself, because that is
+  // the function the host hands its number to.
+  const daedra = DAEDRA[HIRCINE_INDEX];
+  const args = { daedra, summonerRep: 0, daedraRep: () => 0, hasSummoned: () => false, rolls: () => 0 };
+  assert.equal(attemptSummoning({ ...args, gold: goldAmount(withLetter) }).kind, 'poor',
+    'coins alone turn this character away - the bug, stated');
+  assert.notEqual(attemptSummoning({ ...args, gold: totalGoldAmount(withLetter) }).kind, 'poor',
+    'and their letter gets them through, which is what DFU does');
+
+  // AND THE PAYMENT REALLY TAKES IT, so the gate is not admitting a
+  // bill that cannot be settled - the other half of the mismatch.
+  const payer = { goldPieces: 10, items: [{ templateIndex: LETTER_OF_CREDIT_TEMPLATE, value: 250000 }] };
+  deductGold(payer, cost);
+  // DFU's DeductGoldAmount does NOT break the purse open first: when the
+  // coins cannot cover the bill it spends LETTERS for the whole of it,
+  // whole ones and then part of the last (PlayerEntity.cs:1331-1341).
+  // So the ten coins are still there and the letter carries all 200,000
+  // - which is worth pinning precisely, because the obvious guess
+  // (purse first, paper for the shortfall) is wrong and this pin caught
+  // it being written down that way.
+  assert.equal(payer.goldPieces, 10, 'the purse is NOT broken into for a bill the paper can carry');
+  assert.equal(payer.items[0].value, 50000, 'the letter carries the whole price - 250000 - 200000');
+  assert.equal(totalGoldAmount(payer), 50010, 'and the wealth left is what the gate would see next time');
+});
+
+test('DAEDRA2: every gate whose payment spends letters is asked the same question', () => {
+  // The mismatch is a CLASS, not a line: AUDIT 26 F103-F105/F178 named
+  // it in banking ("the gate and the payment disagreed with each
+  // other") and three more seams in this host still had it - the
+  // summoning, the shop shelf's buy, and the repair counter. Each pays
+  // with `deductGold`; each now gates on `totalGoldAmount`.
+  //
+  // Pinned as a RULE over the source rather than three times over, so a
+  // fourth seam written tomorrow is caught by the same line: no gate
+  // may compare a coins-only purse against a price it then pays with
+  // deductGold.
+  const modes = code('scenes/worldModes.js');
+  assert.doesNotMatch(modes, /goldAmount\(playerEntity\) < price/,
+    'no price is gated on coins alone');
+  for (const site of [/gold: totalGoldAmount\(playerEntity\)/, /if \(totalGoldAmount\(playerEntity\) < price\) return null;/,
+    /if \(totalGoldAmount\(playerEntity\) < price\) \{/]) {
+    assert.match(modes, site, `the gate takes GetGoldAmount: ${site}`);
+  }
 });
