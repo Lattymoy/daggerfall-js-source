@@ -1398,6 +1398,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // for how each reaches TEXT.RSC; that difference is all this host
   // hands it now.
   const makeSpellbookWindow = () => createSpellbookWindow({
+    relock: () => opts.relock?.(),
     entity: playerEntity,
     magic,
     castCost: (sp) => calculateCastCost(sp, playerEntity).sp,
@@ -1432,6 +1433,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // through its own. This host has no map, so it leaves gotoPlace
     // unset - the same nothing a CanFindPlace miss gives.
     return createChronicleWindow({
+      relock: () => opts.relock?.(),
       ...questJournalHooks(),
       mode,
       entity: playerEntity,
@@ -1518,6 +1520,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     const sup = racialSuppressInventory(playerEntity);
     if (sup) { hudText.add(sup.text); return null; }
     return createInventoryWindow({
+      relock: () => opts.relock?.(),
       openBook: openBookHook,   // B1: the use-mode book arm
       placeCamp: (item) => camps.placeItem(item, playerEntity.items ?? []),   // SURV3: a fire on the floor
       say: (l) => hudText.add(l),   // FX1 (F128): the "Equipping %s" cue on close
@@ -6671,6 +6674,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       preloadCharSheetArt({ renderer, fetchBytes, palette });   // U8a: lazy - ready by the next open at worst
       warmLevelUpWindow();   // LV1's audit: and the level-up window's chunk with it, for the same reason and on the same terms
       return createCharSheetWindow({
+        relock: () => opts.relock?.(),
         entity: playerEntity,
         artDeps: { renderer, fetchBytes, palette },
         rows: (id, pick) => textRsc?.variantLinesById(id, pick ?? Math.random) ?? [],   // AUDIT 58: the eight attribute popups' TEXT.RSC records 0..7
