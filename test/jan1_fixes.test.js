@@ -51,7 +51,7 @@ test('JAN1 (1): the pack\'s CharacterSheet key closes the pack and opens the she
     assert.equal(exits, 1, 'the pack closed first'); assert.equal(opened, 1, 'and the sheet opened after');
   });
   const s = rd('src/ui/enhancedInventory.js');
-  assert.ok(s.includes("    const openCharSheet = deps.openCharSheet;\n    onExit();                 // the pack's own close law runs FIRST...\n    openCharSheet();"), 'by source: the hook is captured before onExit');
+  assert.ok(s.includes("    const openCharSheet = deps.openCharSheet;\n    onHandoff();              // the pack's own close law runs FIRST...\n    openCharSheet();"), 'by source: the hook is captured before the handoff close');
   assert.ok(s.includes("if (act === 'CharacterSheet' && typeof deps?.openCharSheet === 'function') {"), 'and the arm asks for a function, not a truthy bag entry');
 });
 
