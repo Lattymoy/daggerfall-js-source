@@ -1068,6 +1068,28 @@ export function getContextValue(symbolStr, quest, hooks) {
   return getMacroValue(symbolStr, mcp, hooks, quest?.externalMCP ?? null);
 }
 
+/** MACRO-5: `SetTextTokens(tokens, mcp)` for a walk - the value map a
+ *  MacroDataSource answers, over the ONE table. DFU hands a box its
+ *  subject (an effect, an item) and MacroHelper asks that subject every
+ *  row; the port's walks take value maps, so this turns a source into
+ *  one: each row asks `source` through its own handler, lazily, and a
+ *  row the source cannot answer (NotImplemented, a null, a throw) is
+ *  null - "this caller does not know" - so the world still answers the
+ *  global rows, exactly as expandMacroValues orders them. The table
+ *  names the symbol once; nothing here repeats it. */
+export function sourceValues(source) {
+  const mcp = { source };
+  const out = {};
+  for (const token of Object.keys(HANDLERS)) {
+    out[token.slice(1)] = () => {
+      let v;
+      try { v = getMacroValue(token, mcp, null, null); } catch { return null; }
+      return isErrorShape(v, token) ? null : v;
+    };
+  }
+  return out;
+}
+
 // ---- ExpandQuestMessage (QuestMacroHelper.cs:91-160) ----
 
 /** Expands macros inside message tokens IN PLACE. revealDialogLinks

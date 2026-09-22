@@ -136,7 +136,8 @@ import {
   preloadSpellIcons, drawSpellIcon, drawTargetIcon, drawElementIcon,
   TARGET_DESCRIPTIONS, ELEMENT_DESCRIPTIONS,
 } from './spellIcons.js';
-import { effectByKey, spellBookDescriptionId } from '../systems/spellEffects.js';
+import { effectByKey, spellBookDescriptionId, effectMacroSource } from '../systems/spellEffects.js';
+import { expandRowValues, sourceValues } from '../systems/quest/questMacros.js';   // MACRO-5: the effect popup's source
 import { calculateTradePrice } from '../systems/shopStock.js';
 import { ROW_SPACING, SELECTED_TEXT_COLOR } from './listPicker.js';   // ListBox.cs:36-37 and DaggerfallUI.cs:62 - one home each
 import { VerticalScrollBar, drawScrollThumb } from './verticalScrollBar.js';   // ROAD-D2: DFU's own VerticalScrollBar, art and all - and ROAD-G G4: the LIVE component, drag included
@@ -919,7 +920,10 @@ export class SpellbookWindow {
     if (!e) return null;
     const id = spellBookDescriptionId(`${e.type},${e.subType & 0xff}`);
     if (id == null) return null;
-    const rows = this._boxText(id);
+    // MACRO-5: SetTextTokens(effect.SpellBookDescription, EFFECT) - the
+    // box's source is the effect itself (EntityEffectMCP), not the
+    // book's trade source, so %bdr..%clm are its own settings.
+    const rows = expandRowValues(this.deps.rows?.(id) ?? [], sourceValues(effectMacroSource(e)));
     return rows.length ? rows : null;
   }
 
