@@ -4017,6 +4017,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   };
 
   const makeInventoryWindow = (extra = {}) => createInventoryWindow({
+    relock: () => requestLook(canvas),
     openBook: openBookHook,   // B1: the use-mode book arm
     placeCamp: (item) => camps.placeItem(item, playerEntity.items ?? []),   // SURV3: Camping Equipment and the Campfire Kit are placed on this host's ground
     say: (l) => townTalk.say(l),   // FX1 (F128): the "Equipping %s" cue on close
@@ -4079,6 +4080,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // only what this host knows - the entity, the engine, the cost and
   // the way it reaches TEXT.RSC.
   const makeSpellbookWindow = () => (_spellbook = createSpellbookWindow({
+    relock: () => requestLook(canvas),
     entity: playerEntity,
     magic,
     castCost: (sp) => calculateCastCost(sp, playerEntity).sp,
@@ -4095,6 +4097,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // which mounts this host's windows rather than building its own -
   // had no way to reach it, and F5 in a shop did nothing.
   const makeCharSheetWindow = () => createCharSheetWindow({
+    relock: () => requestLook(canvas),
     entity: playerEntity,
     artDeps: { renderer, fetchBytes, palette },
     rows: (id, pick) => townTalk.lines(id, pick),   // AUDIT 58: the eight attribute popups' TEXT.RSC records 0..7
@@ -4121,6 +4124,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // journal. This is the same shape spellbookDoor's callers use: the
     // host hands over what only it knows, and the door picks the skin.
     return createChronicleWindow({
+      relock: () => requestLook(canvas),
       entity: playerEntity,
       // MAC-K2: the walk the Quests section draws - the bridge's one.
       questLog: () => questBridge?.questLog() ?? { active: [], finished: [] },
@@ -6662,6 +6666,12 @@ export async function bootWorld(canvas, renderer, params, status) {
   const pointerSurfaces = new Set();
   const surfaceOpen = (name) => { pointerSurfaces.add(name); setCursorActive(false); releaseLook(); };
   const surfaceClose = (name) => { pointerSurfaces.delete(name); if (!pointerSurfaces.size && !gamePaused()) requestLook(canvas); };
+  // MENU-RELOCK: a UI close must take mouselook back while the key/click
+  // that closed it still owns browser activation. The frame gate is only
+  // a fallback; Chromium can refuse a request made on the next frame.
+  const relockAfterUiInput = () => {
+    if (!gamePaused() && !pointerSurfaces.size && document.pointerLockElement !== canvas) requestLook(canvas);
+  };
   addEventListener('keydown', (e) => {
     // FIX-E: QUICKLOAD WORKS FROM UNDER ANY OVERLAY - the death screen's
     // own "F11 load" hint, and the one arm ui/input.js's routeKey lets
@@ -6682,7 +6692,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       return;
     }
     if (e.code === 'Escape') backButtonHeld = true;
-    if (townTalk.keydown(e)) return;
+    if (townTalk.keydown(e)) { relockAfterUiInput(); return; }
     // U8a: F5 opens the classic character sheet (the dungeon's key,
     // host rule); preventDefault stops the browser reload.
     // AUDIT 17e F41: preventDefault must run for F5 in EVERY mode -
@@ -6890,7 +6900,15 @@ export async function bootWorld(canvas, renderer, params, status) {
   // movement Set since the first host and never told the open window
   // anything; DFU's buttons hear both edges (Button.cs:79-92) and the
   // travel popup's EXIT is the deferral that needs the release.
-  addEventListener('keyup', (e) => { keys.delete(e.code); noteKeyUp(latch.edge, e.code); if (e.code === 'Escape') backButtonHeld = false; if (e.code === 'AltLeft') e.preventDefault(); townTalk.keyup(e); modes?.keyup?.(e); });   // ROAD-E E1: the up seam reaches BOTH slots this host feeds - the outer overlay and the mode machine's
+  addEventListener('keyup', (e) => {
+    keys.delete(e.code);
+    noteKeyUp(latch.edge, e.code);
+    if (e.code === 'Escape') backButtonHeld = false;
+    if (e.code === 'AltLeft') e.preventDefault();
+    townTalk.keyup(e);
+    modes?.keyup?.(e);
+    relockAfterUiInput();
+  });   // ROAD-E E1: the up seam reaches BOTH slots this host feeds - the outer overlay and the mode machine's
   // U45: Actions.ActivateCursor (Enter) - PlayerMouseLook.cursorActive,
   // bound since I1 with no consumer, and the flag the large HUD's
   // IsLargeHUDInteractable actually is.
@@ -6924,8 +6942,8 @@ export async function bootWorld(canvas, renderer, params, status) {
   // test/audit24_wave37.test.js holds both halves of the cure: `modes?.`
   // on every reference above the declaration, and `var` at it.
   canvas.addEventListener('pointerdown', (e) => {
-    if (townTalk.pointerdown(e)) return;
-    if (modes?.pointerdown?.(e)) return;
+    if (townTalk.pointerdown(e)) { relockAfterUiInput(); return; }
+    if (modes?.pointerdown?.(e)) { relockAfterUiInput(); return; }
     // U45: the large HUD's panels, BEFORE the relock.
     const _r = canvas.getBoundingClientRect();
     if (routeLargeHudClick(
@@ -6985,7 +7003,11 @@ export async function bootWorld(canvas, renderer, params, status) {
   // rides `townTalk.hover` (the mousemove listener below), so this is
   // the third phase and the only one with no existing route - a town
   // map that never hears the release keeps panning forever.
-  addEventListener('pointerup', (e) => { townTalk.pointer('up', e); modes?.pointerup?.(e); });
+  addEventListener('pointerup', (e) => {
+    townTalk.pointer('up', e);
+    modes?.pointerup?.(e);
+    relockAfterUiInput();
+  });
   // C9: RMB is a weapon control (drag-to-swing) exactly as the
   // dungeon host - the drag feeds the rig INSTEAD of the look.
   // MAC-L3: the browser menu is shut for the WHOLE page, not just this
@@ -9235,6 +9257,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // reference BEFORE this line must therefore be `modes?.` - which is
   // what test/audit24_wave37.test.js asserts, both ways.
   var modes = createWorldModes({
+    relockAfterUiInput,
     // ONLINE1: the peers in a modal mode - their billboards on the mode's own pass, their names after its HUD
     extraBillboards: () => remotePlayers?.batches() ?? [],
     drawPeerNames: ({ proj, view, eye }) => drawPeerNames(proj, view, eye),
