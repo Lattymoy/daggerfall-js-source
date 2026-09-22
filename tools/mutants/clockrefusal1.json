@@ -1,0 +1,58 @@
+[
+  {
+    "name": "refusal-predicate-always-true",
+    "file": "src/systems/worldTick.js",
+    "old": "export const worldClockAdvances = () => !_sharedClock;",
+    "new": "export const worldClockAdvances = () => true;",
+    "tests": [
+      "test/clockrefusal.test.js"
+    ]
+  },
+  {
+    "name": "shared-clock-stops-refusing",
+    "file": "src/systems/worldTick.js",
+    "old": "  if (_sharedClock) return _sharedClock();\n  return setWorldMinutes(_worldMinutes + (Number(delta) || 0));",
+    "new": "  return setWorldMinutes(_worldMinutes + (Number(delta) || 0));",
+    "tests": [
+      "test/clockrefusal.test.js"
+    ],
+    "equivalent": true,
+    "why": "the refusal is DOUBLED: setWorldMinutes carries the same `if (_sharedClock) return _sharedClock()` one level down, so removing advanceWorldMinutes's own early return changes nothing - the write still refuses and the same shared minute comes back. Worth knowing rather than contriving a pin for: the outer guard is belt-and-braces, not the law."
+  },
+  {
+    "name": "prison-branch-flattened",
+    "file": "src/scenes/arrestFlow.js",
+    "old": "          if (!sharedClockOn()) fillVitalSigns(playerEntity);\n          else reviveForPlay(playerEntity);",
+    "new": "          fillVitalSigns(playerEntity);",
+    "tests": [
+      "test/clockrefusal.test.js"
+    ]
+  },
+  {
+    "name": "camp-goes-silent-again",
+    "file": "src/scenes/camps.js",
+    "old": "    if (!cam?.feet) { say(CAMP_TEXT.noSpot); return false; }",
+    "new": "    if (!cam?.feet) return false;",
+    "tests": [
+      "test/clockrefusal.test.js"
+    ]
+  },
+  {
+    "name": "camp-shared-arm-goes-silent",
+    "file": "src/scenes/camps.js",
+    "old": "    if (r.text) say(r.text);\n    if (!r.ok) return false;",
+    "new": "    if (!r.ok) return false;",
+    "tests": [
+      "test/clockrefusal.test.js"
+    ]
+  },
+  {
+    "name": "a-refusal-loses-its-words",
+    "file": "src/systems/survival/camp.js",
+    "old": "  if (place.inTown) return { ok: false, text: SURVIVAL_USE_TEXT.campingTown };",
+    "new": "  if (place.inTown) return { ok: false, text: null };",
+    "tests": [
+      "test/clockrefusal.test.js"
+    ]
+  }
+]

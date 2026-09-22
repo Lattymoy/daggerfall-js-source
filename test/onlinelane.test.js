@@ -91,8 +91,15 @@ test('OL1 - THE FUTURE HALF: every boolean switch the port declares is either fo
   for (const vendor of ONLINE_PLAYERS_OWN_MODS) assert.ok(MOD_SETTINGS[vendor], `${vendor} is a vendored mod`);
   assert.equal(onlineForcedModSetting('world-tooltips', 'Enabled', '?online=1'), undefined,
     'a purely local readout is not the room\'s business');
-  assert.equal(onlineForcedModSetting('dynamic-skies', 'Enabled', '?online=1'), true,
-    '...and a mod that changes the world still is');
+  // MODS-ONLINE (2026-09-22) re-aimed this contrast. It used to name
+  // `dynamic-skies` as "a mod that changes the world" - the author's
+  // shorthand for an obvious counterexample rather than a ruling on
+  // that mod, and on a reading it does not hold: Dynamic Skies PAINTS
+  // a weather WORLD5 already rolls and shares, and moves no object,
+  // no roll and no save record. It is the player's now. The contrast
+  // this line exists to draw is kept, on a mod nobody can argue about.
+  assert.equal(onlineForcedModSetting('meanerMonsters', 'Enabled', '?online=1'), true,
+    '...and a mod that changes what a foe IS still is the room\'s');
   assert.equal(onlineForcedPref('enhancedAI', '?online=1'), true);
   assert.equal(onlineForcedPref('enhancedAI', ''), undefined);
   assert.equal(onlineForcedPref('grassDensity', '?online=1'), undefined);

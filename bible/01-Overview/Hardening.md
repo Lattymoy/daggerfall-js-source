@@ -170,8 +170,8 @@ carried only the first of the two lines, so a player fighting with the
 left-hand weapon loaded back holding the right hand's item, or bare
 fists. By the time it was found, the two restore lines had drifted six
 and thirteen lines apart inside their own hosts, and the comment in
-`worldModes.js` that pointed between them cited `world.js:5653` and
-`dungeonContext.js:6115` - lines that had moved to `:4796` and `:6090`.
+`worldModes.js` that pointed between them cited `world.js:5658` and
+`dungeonContext.js:6114` - lines that had moved to `:4795` and `:6089`.
 *Three copies of a rule, and the signpost between them stale as well.*
 
 The pair lives in `src/combat/playerWeapon.js` now - `weaponPoseOf`,

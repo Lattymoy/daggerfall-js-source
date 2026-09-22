@@ -837,8 +837,8 @@
   {
     "name": "WORLD-HOVER-online-forces-the-readout-on",
     "file": "src/systems/onlineLane.js",
-    "old": "export const ONLINE_PLAYERS_OWN_MODS = ['world-tooltips'];",
-    "new": "export const ONLINE_PLAYERS_OWN_MODS = [];",
+    "old": "  // AUDIT-WH R8's own case, and the one that set the test.\n  'world-tooltips',\n",
+    "new": "",
     "tests": [
       "test/onlinelane.test.js"
     ]

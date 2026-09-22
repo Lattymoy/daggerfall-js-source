@@ -876,7 +876,7 @@ does the pack's USE arm.
                         close-then-hand-over ordering U55 got
                         backwards. No law needs extracting first.
     THE LOGBOOK         THREE sites: charSheetNav.js:53,
-    / NOTEBOOK          world.js:6413, dungeonContext.js:6569. A seam
+    / NOTEBOOK          world.js:6418, dungeonContext.js:6568. A seam
                         wants making, as U52's and U53's did.
     HISTORY             ONE site (charSheetNav.js:61), and it reads
                         only the entity's backStory. The small one.
@@ -10559,9 +10559,9 @@ re-resolved the `exterior.js` half of a three-file sentence and left the
 `ExteriorAutomapWindow` construction, `:4101` on a `locationName:`
 field). Both halves are now read by `test/citedrift.test.js` - the
 existing entries only ever captured the exterior number, which is how
-the other half went stale unnoticed. (The rest cite named `world.js:6759`,
+the other half went stale unnoticed. (The rest cite named `world.js:6750`,
 the first of the host's TWO identical `act === 'Rest'` arms; ROAD-H H5
-deleted the second and the cite is `world.js:6765` now.)
+deleted the second and the cite is `world.js:6756` now.)
 
 ## AUDIT 62 F24/F25 - THE SENTINEL SWEEP WAS TWO WINDOWS SHORT (2026-09-07)
 
@@ -17468,6 +17468,113 @@ tells you a temple is shut and DFU does not; and a palace substitutes
 its own word for "Store".
 
 The classic skin has none of it, byte for byte.
+
+## CHARGEN-REFLEX — the Continue button was covered, not dead (2026-09-22)
+
+Fay on Discord, desktop build 0.1.3612: *"Just downloaded the latest
+build (0.1.3612) and tried to make a new character. The Continue button
+on the Reflex page is not clickable. Tried all the different reflex
+options, but I can only click the Back button."*
+
+**A character could not be created at all.** That is as bad as a bug
+gets in this project — it is the first screen a new player meets.
+
+### The two guesses that were wrong
+
+Both are pinned now, precisely because they cost the most time:
+
+1. **The button is disabled.** It is not, and never was. The stats and
+   skills screens disable their primary on an unspent pool; the
+   reflexes stage sets no `disabled` at all.
+2. **The flow is stuck.** It is not. Driving `ChargenFlow` headless —
+   `state = 'reflexes'`, `input('confirm')` — reaches `summary` exactly
+   as `_enterSummary` intends.
+
+The tell was in her own report and I nearly walked past it: she could
+click the reflex bands, and she could click Back. So `paint()` worked
+and the flow was live. Only that one button was dead.
+
+### What it actually was
+
+`.choose` is `display: grid; place-content: center; height: 100%` with
+no overflow. `.stagebody` is `display: grid` with no `grid-template-rows`,
+so its implicit row is `auto` — which is **max-content**. A stage taller
+than the pane therefore kept its full height while `.stagebody` itself
+shrank under `flex: 1; min-height: 0`, and the difference spilled out of
+the bottom as **visible overflow** — directly under the opaque
+`.actionbar` that is laid out straight after it.
+
+The reflexes stage is 748px tall: five answers at `min-height: 88px`,
+plus the heading, the gaps and the padding. So on any window shorter
+than that, the `.acts` row carrying Continue was painted *underneath*
+the action bar. `document.elementFromPoint` at the button's own centre
+answers `DIV.actionbar` at 1280×720.
+
+**Reflexes is the only `.choose` stage with a Continue at all.** Sex,
+class method and biography method all advance on the *answer* itself,
+so none of them has a button that can be buried. Reflexes needs a
+separate confirm because the band is pre-selected — and it is also the
+tallest stage in the wizard. It was the one screen where this could
+strand a player, and nothing measured it.
+
+**And it is green at 1920×1080**, which is why it shipped: anyone
+developing on a large screen sees a wizard that works perfectly.
+
+### Measured, because node cannot see a painted rectangle
+
+`tools/chargenReflexProbe.mjs` builds the real wizard DOM against the
+real `ENHANCED_CSS` and reads `elementFromPoint` at each control's
+centre, at eight window sizes. Before the fix: covered by `.actionbar`
+at 1280×720, and outside the viewport entirely at 1280×600, 1024×576,
+900×500 and 800×600 — five sizes red, 1920×1080 and 1600×900 green.
+`SHOW_BUG=1` restores both halves of the old state and re-proves it,
+because a probe that can only ever print OK proves nothing. The first
+version of this probe *did* only print OK: it reverted the CSS but not
+the markup, which is not the shipped-before state at all.
+
+The harness also lied once before that, and the lesson is the repo's
+own: a first draft used hand-written markup with no height chain, so
+`.choose` measured 748 at every viewport and the numbers were an
+artefact of my page rather than a fact about the wizard. Mirroring the
+real DOM — `.shell.wizard` → `.side` + `.pane`, with `.pane`'s own
+`overflow: auto` — is what made the measurement mean anything.
+
+### The fix is two halves
+
+**The layout can give way.** `.stagebody` gets
+`grid-template-rows: minmax(0, 1fr)` so the row can shrink, and
+`.choose` gets `place-content: safe center` with `overflow-y: auto`.
+Plain `center` is a trap: when content exceeds the box, centred content
+overflows *both* ways and the half above the start edge can never be
+scrolled to. `safe` falls back to `start` in exactly that case.
+
+**The primary action leaves the scrolling stage.** A stage that needs a
+confirm now *declares* it (`stagePrimary`) and the action bar draws it,
+beside Back — outside the stage, always on screen, immune to stage
+height. The slot is cleared before each stage renders so no stage can
+inherit the last one's button, and a stage may declare `disabled` (only
+the name stage does, because `AcceptName` leaves an empty name inert and
+the skin shows that as a disabled primary rather than a silent one).
+
+### What is done and what is not
+
+The three stages on the **mandatory path** are converted — the name
+stage, the biography reputation box, and reflexes. A covered primary on
+any of those is a wizard nobody can finish.
+
+Four short card panes still draw a primary inside a `.choose`:
+`classQuestionsStage`, `customBoxPane`, `faceStage`, `summaryStage`.
+The CSS half covers them — `.choose` scrolls now rather than spilling
+under the bar, so they are reachable — but they are second-class until
+converted. **They were left deliberately**: this session has no ARENA2
+data, so those screens cannot be rendered and checked, and converting
+four stages blind risks a regression worse than the bug being fixed.
+They are a named `KNOWN` list in the pin that may shrink and never grow,
+so a *new* offender fails the suite.
+
+3 pins, 8 mutants, 8 dead. The node pins are the weaker half and say so
+in their own header: the proof is the browser probe, and CI does not run
+it.
 
 ## QUICK-LOOT - taking from the plaque, without a window (2026-09-22, Mac)
 

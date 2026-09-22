@@ -154,7 +154,7 @@ import { elementalResistanceChance, ELEMENTS } from '../systems/spellcast.js';  
 import { rollCampEncounterOnChunkLoad, amGroupRollOwner } from '../systems/campEncounters.js';   // CAMP1: the group-encounter roll - camps and packs; CAMP-NOTIMER: the chunk-load twin is this host's ONLY trigger now, so the timer's entry point is gone from here
 import { WORLD_SALT, spawnsDungeon, pickTemplate, synthesizeDungeonLocation, spawnTemplates, createSpawnLedger } from '../world/spawnedDungeons.js';   // SPAWNED-DUNGEONS1: online, a pixel may hold a dungeon; TTL1: ...and it does not hold it for ever
 import { isMainStoryDungeon } from '../world/dungeonTextures.js';   // SPAWNED-DUNGEONS1: the main story's own dungeons are never cloned
-import { nearestSafeLocation, respawnFlavorText, respawnHealth, undergroundWakeSpot, undergroundWakeText } from '../systems/deathRespawn.js';   // D-ONLINE1: online, a death respawns instead of ending the run   // X-slice; the rest refusal raises the alert and asks the RESTING variant, the townsfolk idle the STRICT one; the catch-up loop's watch arm
+import { nearestSafeLocation, respawnFlavorText, respawnHealth, reviveForPlay, undergroundWakeSpot, undergroundWakeText } from '../systems/deathRespawn.js';   // D-ONLINE1: online, a death respawns instead of ending the run   // X-slice; the rest refusal raises the alert and asks the RESTING variant, the townsfolk idle the STRICT one; the catch-up loop's watch arm
 import { snapshotPlayer, restorePlayer, resolvePendingSpells, composeSessionState, restoreSessionState, dungeonPixelFor } from '../systems/save.js';   // P-slice: the above-ground quicksave; B4: the ONE quest+talk composer
 import { saveSlot, loadSlot, quickLoadSlot, mostRecentRestorable, QUICK_SAVE_NAME, saveKeysOfCharacter, saveInfoOf, requestScreenshot, capturePendingScreenshot } from '../systems/saveSlots.js';   // SAV4: the quicksave is a SLOT named QuickSave (SaveLoadManager.QuickSave/QuickLoad); SS1: the shot arms at save and lands at frame end   // ONLINE-AUTOSAVE1: saveKeysOfCharacter/saveInfoOf - every slot this character already has, kept in sync on an online exit too
 import { frameBegin, frameEnd, frameAbort } from '../systems/frameClock.js';   // PERF1: the frame's script time; AUDIT-WH2 L1-F4: and the door an early return takes
@@ -5162,7 +5162,13 @@ export async function bootWorld(canvas, renderer, params, status) {
     // clear the overlay, all synchronous). This is that order.
     if (_respawning) return;   // and a second death mid-flight cannot start a second respawn
     _respawning = true;
-    playerEntity.health = respawnHealth(playerEntity.maxHealth);
+    // DEATHLOOP1: the health AND the cause. MAC-D3 put the heal first
+    // so no frame could see a dead player with no death screen; this
+    // also ends the drains that were emptying the bar, because a
+    // poisoned player revived at half health is back at zero within
+    // seconds and the whole respawn runs again (SquidKamer: "its
+    // basically permanent death for your character").
+    reviveForPlay(playerEntity, { force: true });
     surfacePlayer();
     _deathWasOnline = null;   // armed fresh for the NEXT death
     const mode = modes?.mode ?? 'exterior';
@@ -5203,7 +5209,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       // down or awaited. Re-asserted here only because a teleport can
       // cross a cell that re-reads vitals; it is the same value, so
       // this is idempotent rather than a second mercy.
-      if (!(playerEntity.health > 0)) { playerEntity.health = respawnHealth(playerEntity.maxHealth); surfacePlayer(); }
+      if (!(playerEntity.health > 0)) { reviveForPlay(playerEntity); surfacePlayer(); }
       townTalk.showOverlay(new ActionTextBox([respawnFlavorText(kind)]));
     }).finally(() => { _respawning = false; });
   }

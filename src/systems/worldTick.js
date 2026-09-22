@@ -1033,8 +1033,32 @@ export function resetMagicRoundMarker(v = null) {
   return _lastMagicRoundMinute;
 }
 
-/** Move the clock forward (or back, for a load). WORLD5: refused under the shared clock. */
+/**
+ * Move the clock forward (or back, for a load). WORLD5: refused under
+ * the shared clock.
+ *
+ * CLOCK-REFUSAL (2026-09-22). THE REFUSAL IS INVISIBLE TO THE CALLER
+ * AND THAT HAS ALREADY COST ONE BUG. It answers a number either way -
+ * the shared clock's current minute when it refuses, the new minute
+ * when it moves - so nothing downstream can tell whether the hours it
+ * asked for actually passed. DEATHLOOP1's second half was exactly
+ * that: the prison release asked for the sentence's days, got a
+ * plausible number back, and let the player out at the health they
+ * came in with, which for someone arrested while dying was dead.
+ *
+ * The contract is not changed here, because every caller reads the
+ * answer as "the clock now" and that is still true. What is added is a
+ * way to ASK, and a pin (test/clockrefusal.test.js) that requires
+ * every caller either to consult it or to be listed with the reason it
+ * does not need to. A silent refusal is fine; an unnoticed one is not.
+ */
 export function advanceWorldMinutes(delta) {
   if (_sharedClock) return _sharedClock();
   return setWorldMinutes(_worldMinutes + (Number(delta) || 0));
 }
+
+/** CLOCK-REFUSAL: false while the shared clock stands, when asking the
+ *  world clock to move is a no-op. The one question a caller that
+ *  MEANS the passage of time - a sentence served, nights at an inn,
+ *  hours of rest - has to ask before it trusts its own request. */
+export const worldClockAdvances = () => !_sharedClock;

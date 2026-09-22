@@ -2056,7 +2056,16 @@ test('AUDIT-WH R7/R8/P7/P9: the list has a cap, a readout is the player\'s onlin
   // the wire - the same category as `chatHidden`, which the lane has
   // always left alone.
   const ol = read('src/systems/onlineLane.js');
-  assert.match(ol, /export const ONLINE_PLAYERS_OWN_MODS = \['world-tooltips'\];/);
+  // MODS-ONLINE (2026-09-22) re-aimed this line. It matched the list
+  // LITERALLY - `= ['world-tooltips'];` - which froze it at one entry
+  // and so asserted "exactly one readout is the player's" when R8's
+  // law is "a readout is". Seven more mods answer R8's question the
+  // same way now (Mac: "Is it possible to allow all mods to be toggled
+  // on and off for online?"), and the whole classification is held by
+  // test/modsonline.test.js. What this pin owns is its OWN case: World
+  // Tooltips is on that list and the lane does not force it.
+  assert.match(ol, /export const ONLINE_PLAYERS_OWN_MODS = \[/);
+  assert.match(ol, /'world-tooltips',/);
   assert.match(ol, /if \(ONLINE_PLAYERS_OWN_MODS\.includes\(vendor\)\) return undefined;/);
 
   // P7: ONE BUILDER, THREE READERS, NO SHARED SLOT. `springTargets()`

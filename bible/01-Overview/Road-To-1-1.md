@@ -108,7 +108,7 @@ in the wave reports.
   UpdateNpcPresence on pop, the toggle-binding close - and, on the same
   stack, the two recorded stages Wave A routed here: the courtroom
   backdrop, ONE window on CORT01I0 with every box of the trial pushed
-  over it (`ui/prisonScreen.js:62`, `scenes/arrestFlow.js:121`), and
+  over it (`ui/prisonScreen.js:62`, `scenes/arrestFlow.js:122`), and
   the prison screen's held-Back accelerator, DFU's raw Escape poll
   rather than a binding (`ui/prisonScreen.js:68`). Both pinned by
   `test/roadb_court_backdrop.test.js` (10).

@@ -790,13 +790,10 @@ function repBoxPane() {
     const text = typeof row === 'string' ? row : row.text;
     if (text?.trim()) card.append(el('p', null, text));
   }
-  const a = el('div', 'acts');
-  const ok = el('button', 'act primary', 'Go on');
-  ok.onclick = () => { flow.input('confirm'); paint(); };
-  a.append(ok);
-  card.append(a);
   wrap.append(card);
   pane.append(wrap);
+  // CHARGEN-REFLEX: declared, not drawn - see reflexStage.
+  stagePrimary = { label: 'Go on', act: () => { flow.input('confirm'); paint(); } };
   return pane;
 }
 
@@ -831,20 +828,29 @@ function nameStage() {
     while (flow.name.length) flow.input('backspace');
     for (const ch of next) flow.input(`char:${ch}`);
     box.value = flow.name;
-    ok.disabled = !flow.name.length;
+    if (nameOk) nameOk.disabled = !flow.name.length;
   };
   box.onkeydown = (e) => { if (e.key === 'Enter' && flow.name.length) { flow.input('confirm'); paint(); } };
   wrap.append(box);
 
+  // 'Suggest one' is not the stage's PRIMARY and stays on the stage;
+  // Continue is declared, so the action bar carries it (CHARGEN-REFLEX).
   const a = el('div', 'acts');
-  const ok = el('button', 'act primary', 'Continue');
-  ok.disabled = !flow.name.length;
-  ok.onclick = () => { flow.input('confirm'); paint(); };
   const dice = el('button', 'act', 'Suggest one');
   dice.onclick = () => { flow.applyHit({ randomName: true }); paint(); };
-  a.append(ok, dice);
+  a.append(dice);
   wrap.append(a);
   pane.append(wrap);
+  // AcceptName (CreateCharNameSelect.cs:137-140) leaves an empty name
+  // INERT rather than refusing loudly; the enhanced skin shows that as
+  // a disabled primary instead, so the button has to follow the box as
+  // it is typed into - `bind` hands the stage the button the bar drew.
+  stagePrimary = {
+    label: 'Continue',
+    disabled: !flow.name.length,
+    act: () => { flow.input('confirm'); paint(); },
+    bind: (btn) => { nameOk = btn; },
+  };
   requestAnimationFrame(() => box.focus());
   return pane;
 }
@@ -1084,12 +1090,20 @@ function reflexStage() {
     col.append(b);
   }
   wrap.append(col);
-  const a = el('div', 'acts');
-  const ok = el('button', 'act primary', 'Continue');
-  ok.onclick = () => { flow.input('confirm'); paint(); };
-  a.append(ok);
-  wrap.append(a);
   pane.append(wrap);
+  // CHARGEN-REFLEX: this stage's Continue is DECLARED, not drawn here.
+  // It used to live in a `.acts` row at the bottom of `.choose`, and
+  // `.choose` is centred and full-height: on any window shorter than
+  // the five answers need, the row overflowed past the bottom of
+  // `.stagebody` and the opaque `.actionbar` painted straight over it.
+  // The button was visible and un-clickable - `elementFromPoint` at
+  // its centre answered `.actionbar` - which is what a player reported
+  // as a wizard that could not be finished. Every OTHER `.choose`
+  // stage advances on the ANSWER itself and so has no such row; this
+  // one needs a separate confirm because the band is pre-selected.
+  // So the confirm goes where Back already lives: the action bar is
+  // outside the scrolling stage and is always on screen.
+  stagePrimary = { label: 'Continue', act: () => { flow.input('confirm'); paint(); } };
   return pane;
 }
 
@@ -1260,6 +1274,13 @@ function paint() {
  *  ui/domRepaint.js for why every repaint needs that. */
 let groundTimer = null;   // PX13: the wizard sky's 8fps clock - cleared by every repaint and by unmount
 
+// CHARGEN-REFLEX: a stage that needs a primary action the player can
+// always reach declares it here, and the action bar draws it beside
+// Back. Reset on every repaint BEFORE the stage runs, so a stage that
+// declares nothing cannot inherit the last one's button.
+let stagePrimary = null;
+let nameOk = null;   // the name stage's own handle on the bar's button
+
 function paintInto() {
   if (groundTimer) { clearInterval(groundTimer); groundTimer = null; }
   host.innerHTML = '';
@@ -1331,6 +1352,8 @@ function paintInto() {
     face: faceStage, stats: statsStage, skills: skillsStage,
     reflexes: reflexStage, summary: summaryStage,
   };
+  stagePrimary = null;
+  nameOk = null;
   pane.append(flow.biogRepBox?.length
     ? repBoxPane()
     : (STAGES[flow.state] ?? (() => pendingStage(STAGE_RAIL[here])))());
@@ -1348,6 +1371,13 @@ function paintInto() {
     paint();
   };
   bar.append(back);
+  if (stagePrimary) {
+    const go = el('button', 'act primary', stagePrimary.label);
+    go.disabled = !!stagePrimary.disabled;
+    go.onclick = stagePrimary.act;
+    bar.append(go);
+    stagePrimary.bind?.(go);
+  }
   pane.append(bar);
 
   shell.append(side, pane);

@@ -57,7 +57,7 @@
   {
     "name": "MACD3-the-heal-goes-back-to-the-end-after-the-teleport-the-death-loop",
     "file": "src/scenes/world.js",
-    "old": "    playerEntity.health = respawnHealth(playerEntity.maxHealth);\n    surfacePlayer();\n    _deathWasOnline = null;",
+    "old": "    reviveForPlay(playerEntity, { force: true });\n    surfacePlayer();\n    _deathWasOnline = null;",
     "new": "    _deathWasOnline = null;",
     "tests": [
       "test/inputactions.test.js",
