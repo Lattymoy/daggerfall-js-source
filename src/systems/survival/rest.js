@@ -58,16 +58,34 @@ export const restCost = (kind) => REST_COST[kind] ?? REST_COST.rough;
  * rates, the Medical tally); a rough hour keeps only `recovery` of what
  * it gained. Answers the hour's "fully healed" only when nothing was
  * taken back.
+ *
+ * PARTY-REST10 (2026-09-21, per-request: confirmed by direct testing - a rough hour's kept fraction was
+ * TRUNCATED AND DISCARDED independently every single hour, never carried forward. DFU's own recovery formula
+ * (healthRecoveryRate) is typically a SMALL WHOLE NUMBER per hour (often exactly 1 at low level) - half of 1,
+ * floored, is 0, forever, no matter how many hours pass, for any character whose raw hourly gain never
+ * happens to be even. This was flagged once already (PARTY-REST4's own write-up: "confirmed... intentional,
+ * punishing design") but "intentional" described the RATE being halved, never a raw gain landing on exactly
+ * the wrong parity being locked out of Rough rest's health recovery FOR THE REST OF THE GAME - which is what
+ * actually happened once tested. `carry`, when passed, banks the fractional remainder Math.trunc discards
+ * this hour so the NEXT call (the next simulated hour) starts from it instead of from zero - two half-points
+ * become one whole point over two hours, rather than two zeros forever. Optional and defaults to a fresh,
+ * per-call {0,0,0}: a caller that does not keep `carry` across hours (this function's only caller before this
+ * change, and every existing single-hour test) gets EXACTLY the old one-hour-at-a-time truncation, unchanged.
  */
-export function restHour(entity, kind, tick) {
+export function restHour(entity, kind, tick, carry = { health: 0, fatigue: 0, magicka: 0 }) {
   const c = restCost(kind);
   const h0 = entity.health ?? 0, f0 = entity.fatigue ?? 0, m0 = entity.magicka ?? 0;
   const healed = !!tick();
   if (c.recovery >= 1) return healed;
   const h1 = entity.health ?? 0, f1 = entity.fatigue ?? 0, m1 = entity.magicka ?? 0;
-  entity.health = h0 + Math.trunc((h1 - h0) * c.recovery);
-  entity.fatigue = f0 + Math.trunc((f1 - f0) * c.recovery);
-  entity.magicka = m0 + Math.trunc((m1 - m0) * c.recovery);
+  const rawH = (h1 - h0) * c.recovery + carry.health;
+  const rawF = (f1 - f0) * c.recovery + carry.fatigue;
+  const rawM = (m1 - m0) * c.recovery + carry.magicka;
+  const gainH = Math.trunc(rawH), gainF = Math.trunc(rawF), gainM = Math.trunc(rawM);
+  carry.health = rawH - gainH; carry.fatigue = rawF - gainF; carry.magicka = rawM - gainM;
+  entity.health = h0 + gainH;
+  entity.fatigue = f0 + gainF;
+  entity.magicka = m0 + gainM;
   return healed && entity.health === h1 && entity.fatigue === f1 && entity.magicka === m1;
 }
 

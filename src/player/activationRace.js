@@ -206,11 +206,14 @@ export const GROUND_KEY = '__ground__';
  */
 export function raceWinner({
   corpse = null, pile = null, torch = null, wagon = null, camp = null, water = null, ground = null,
-  person = null, foe = null,
+  person = null, peer = null, foe = null,
 } = {}) {
   let best = null;
   // The tie order IS the precedence order; `<` keeps the earlier one.
-  for (const p of [camp, water, wagon, torch, corpse, pile, ground, person, foe]) {
+  // PEER-PLAQUE1: another player (`peer`, player/socialPick.js peerRayPick) stands between the townsperson and
+  // the foe - a body like the person's, measured through the same cylinder (rayPersonDistance), and the press
+  // has no arm for it at all (the F key is its own gesture, SOC5), so the plaque is the only thing that races it.
+  for (const p of [camp, water, wagon, torch, corpse, pile, ground, person, peer, foe]) {
     if (!p) continue;
     if (best === null || p.distance < best.distance) best = p;
   }

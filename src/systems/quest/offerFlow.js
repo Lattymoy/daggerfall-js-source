@@ -304,7 +304,7 @@ export class QuestOfferFlow {
       // C#'s accept call rides the exitOnClose DEFAULT (two args)
       const popup = this._showQuestPopupMessage(this.offeredQuest, QUEST_MESSAGES.AcceptQuest);
       this.machine.startQuestImmediate(this.offeredQuest);
-      return { kind: 'accepted', popup };
+      return { kind: 'accepted', popup, quest: this.offeredQuest };
     }
     const md = this.machine.deps;
     md.removeQuestInfoTopics?.(this.offeredQuest.uid);

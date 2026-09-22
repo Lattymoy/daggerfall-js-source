@@ -259,7 +259,7 @@ import { defaultActionTemplates } from './actions.js';
 import { QuestResourceBehaviour } from './resourceBehaviour.js';
 import { FACTION_TYPES } from '../../formats/factionFile.js';
 import { SECONDS_PER_WEEK } from '../gameDate.js';
-import { Quest } from './quest.js';
+import { Quest, nextUid } from './quest.js';
 import { Task } from './task.js';
 import { Person } from './person.js';
 import { Place } from './place.js';
@@ -285,11 +285,42 @@ export { SECONDS_PER_WEEK };
 export const PROTECTED_QUESTS = Object.freeze(['S0000999', 'S0000977', '_BRISIEN']);
 const isProtectedQuest = (quest) => PROTECTED_QUESTS.some((n) => n.toLowerCase() === (quest.questName ?? '').toLowerCase());
 
+/** QUEST1 "COUNTS AS ACCEPT/ADVANCE": restoreSaveData deliberately
+ *  never replays an action - a LOAD must not refire a reward, reset a
+ *  timer, or repeat dialogue. Correct for almost everything, but not
+ *  from a RECEIVER's own point of view for the handful of one-time
+ *  actions that actually DO something to the local player the moment
+ *  they complete - a teleport that moves nobody, or a reward that
+ *  hands nobody an item, defeats the point of sharing a quest that has
+ *  already progressed. Each of these three is individually verified
+ *  self-contained (reads/writes only THIS quest's own hooks - the
+ *  receiver's own inventory, own entity, own world - never a
+ *  cross-player reference), which is exactly why the set is this
+ *  short: PayMoney (a FEE the player pays to proceed, not a reward -
+ *  rearming it would silently charge the receiver gold they never
+ *  agreed to spend) and GiveItem (its target can be an arbitrary
+ *  resource, not necessarily the player, and was not confidently
+ *  verified) are both deliberately left OUT rather than guessed at. */
+const REPLAYABLE_ONE_TIME_ACTIONS = new Set(['TeleportPc', 'GivePc', 'TrainPc']);
+
 export class QuestMachine {
   constructor(deps = {}) {
     this.deps = deps;
     this.quests = new Map();          // uid -> Quest
     this.questsToInvoke = [];
+    // QUEST1: quest names currently kept in LIVE sync with a party -
+    // set on both a fresh receive AND on a manual share (bidirectional:
+    // either side's later progress should resync the other), read by
+    // updateSharedQuest's own gate so a resync can never overwrite a
+    // quest the player got independently and never shared at all.
+    this.sharedQuestNames = new Set();
+    // AUDIT DROPS A2: the shared quests this player FINISHED (tombstoned while in sharedQuestNames) - a later
+    // resync or a fresh receipt of the same name is refused, so a partner who is behind can neither drag a
+    // finished quest back into play nor pay its rewards a second time.
+    this.finishedSharedQuestNames = new Set();
+    // AUDIT DROPS A2: uid -> the `task:action` keys already re-armed once - a reward fires at most once per
+    // action for the life of the quest, whatever order the resyncs arrive in.
+    this._rearmed = new Map();
     this.actionTemplates = [];
     this.globalVars = new Map();      // link id -> bool
     this.siteLinks = [];              // QuestMachine.cs siteLinks - the world<->marker bridge (Q3-i)
@@ -937,6 +968,191 @@ export class QuestMachine {
     }
   }
 
+  // ── OURS, not DFU's: quest sharing (systems/questShare.js is the ──
+  // orchestration; these three are the machine-level moves it needs,
+  // kept here because they touch the same private bits restoreSaveData
+  // does (the constructor args, the resolvers, siteLinks). Nothing
+  // below runs unless questShare.js's own three gates already passed.
+
+  /** Is a quest by this NAME already active for this player - the
+   *  "receiver already has this exact quest" gate. Answers on the
+   *  quest's questName (what a shared copy would carry), not identity,
+   *  since a fresh local accept and an incoming share are never the
+   *  same object. */
+  hasActiveQuestNamed(questName) {
+    for (const quest of this.quests.values()) if (quest.questName === questName) return true;
+    return false;
+  }
+
+  /** SENDER side: one quest's own envelope, in the exact shape
+   *  restoreSaveData already reads (getSaveData(), unchanged) - a
+   *  quest that isn't this machine's answers null rather than
+   *  throwing, so a stale Share button (the quest just completed, the
+   *  window closed) fails quietly. `uid` is coerced to a Number - the
+   *  Map is keyed by the raw numeric uid, but questBridge.js's own
+   *  questLog() stringifies it for the UI's `key`/`id` fields
+   *  (`String(q.uid)`, ui/questRail.js's own `id`), and Map.get uses
+   *  strict identity: a caller handing this the UI's own id (a string)
+   *  would otherwise miss every time, silently. */
+  getShareableQuestData(uid) {
+    const quest = this.quests.get(Number(uid));
+    return quest ? quest.getSaveData() : null;
+  }
+
+  /** A questName:index -> isComplete snapshot of every action this
+   *  quest currently carries, task order preserved - updateSharedQuest's
+   *  own "what changed" read, taken BEFORE a resync overwrites anything. */
+  _snapshotActionCompletion(quest) {
+    const map = new Map();
+    let t = 0;
+    for (const task of quest.tasks.values()) {
+      let a = 0;
+      for (const action of task.actions) { map.set(`${t}:${a}`, action.isComplete); a++; }
+      t++;
+    }
+    return map;
+  }
+
+  /** Rearms whichever REPLAYABLE_ONE_TIME_ACTIONS action NEWLY became
+   *  complete since `before` (a fresh receive passes `before: null`,
+   *  meaning everything already complete counts as "just happened" -
+   *  there is no earlier local copy to compare against). An action
+   *  already complete on a PRIOR sync (present as `true` in `before`
+   *  too) is left alone, so a reward can never fire twice for the same
+   *  receiver. Same task/action ORDER as the snapshot - restoreSaveData
+   *  rebuilds the actions array from the SAME quest source, so position
+   *  is a stable identity across one restore even though the action
+   *  OBJECTS themselves are new instances each time. */
+  _rearmNewlyCompletedEffects(quest, before) {
+    let t = 0;
+    for (const task of quest.tasks.values()) {
+      let a = 0;
+      for (const action of task.actions) {
+        const key = `${t}:${a}`;
+        const was = before ? (before.get(key) ?? false) : false;
+        if (!was && action.isComplete && REPLAYABLE_ONE_TIME_ACTIONS.has(action.typeName)) {
+          let done = this._rearmed.get(quest.uid);
+          if (!done) { done = new Set(); this._rearmed.set(quest.uid, done); }
+          if (!done.has(key)) { done.add(key); action.isComplete = false; }   // AUDIT DROPS A2: once per action, ever
+        }
+        a++;
+      }
+      t++;
+    }
+  }
+
+  /** RECEIVER side: the SAME reconstruction restoreSaveData's own loop
+   *  runs for one quest out of a save file, fed a network envelope
+   *  instead - same constructor args, same resolvers, so this cannot
+   *  drift from what loading a save already does correctly. The UID is
+   *  NOT the sender's: two independent machines mint UIDs from their
+   *  own counters, so keeping the sender's risks colliding with an
+   *  unrelated quest this player already has. A fresh local one is
+   *  minted instead (nextUid bumps ensureUidAtLeast too, so the two
+   *  counters need no further reconciling). Only cosmetic fallout: a
+   *  handful of %macro tokens seed their random pick off quest.uid
+   *  (questMacros.js) and so may read a different pick than the
+   *  sender's - never a mechanic, always flavour text.
+   *
+   *  Site links are not copied - they cannot be, verbatim, across two
+   *  machines that mint their own UIDs - but do not need to be either:
+   *  createSiteLink reads a Place resource's OWN already-restored
+   *  siteDetails, so re-running it once per Place resource, now that
+   *  this quest has its final local UID, reaches the exact link a
+   *  fresh accept would have made. */
+  receiveSharedQuest(questData) {
+    const quest = this._newQuest();
+    const uid = nextUid();
+    // AUDIT DROPS A3: an envelope the restore chokes on is REFUSED (null), never half a quest on the live table
+    try { quest.restoreSaveData({ ...questData, uid }, this._saveResolvers()); } catch (e) { console.warn(`[quest] shared quest refused: ${e?.message ?? e}`); return null; }
+    this.quests.set(quest.uid, quest);
+    for (const resource of quest.resources.values()) {
+      if (resource.isPlace && resource.siteDetails) this.createSiteLink(quest, resource.symbol);
+    }
+    this.sharedQuestNames.add(quest.questName);
+    this._rearmNewlyCompletedEffects(quest, null);
+    return quest;
+  }
+
+  /** Is this quest name one this player either shared out or received via
+   *  a share - the gate updateSharedQuest reads, and the one thing that
+   *  makes a resync safe: a quest the player got independently (never
+   *  shared, either direction) is never in this set, so an incoming
+   *  update can never silently overwrite THEIR progress with someone
+   *  else's under the same name. */
+  hasSharedQuestNamed(questName) { return this.sharedQuestNames.has(questName); }
+
+  /** SENDER side: marks a quest this player is manually sharing OUT as
+   *  now kept in live sync too - the bidirectional half of the design
+   *  (receiveSharedQuest already marks the RECEIVED half). Idempotent;
+   *  a quest already in the set (an earlier share, or one received from
+   *  someone else under the same name) is untouched. */
+  markQuestShared(questName) { this.sharedQuestNames.add(questName); }
+
+  /** RECEIVER side, the RESYNC arm: the SAME quest (by name, already in
+   *  sharedQuestNames) getting a fresher copy of someone else's progress -
+   *  updates the EXISTING local Quest object in place, keeping THIS
+   *  machine's own uid (never the sender's, same reasoning
+   *  receiveSharedQuest's own note gives - and doubly so here, since
+   *  overwriting an uid a live quest is already running under would
+   *  orphan every reference to it: site links, the UI's own selection).
+   *  Answers null - a no-op, not an error - for a quest name this
+   *  machine has no live copy of at all (the fresh-share path is
+   *  receiveSharedQuest's, not this one's).
+   *
+   *  Also runs the SAME "counts as advance" rearm receiveSharedQuest
+   *  does - completion (and whatever it hands out - GivePc, TrainPc)
+   *  most often arrives THIS way, as a later resync of an
+   *  already-shared quest, not as the very first receipt. The
+   *  before/after diff is what keeps this safe run after run: only an
+   *  action that JUST turned complete in THIS update fires again: one
+   *  already complete from an earlier sync is left alone. */
+  updateSharedQuest(questName, questData) {
+    const quest = [...this.quests.values()].find((q) => q.questName === questName);
+    if (!quest) return null;
+    // AUDIT DROPS A2: a quest this player has FINISHED is never dragged back into play by a partner who is behind
+    if (quest.questComplete || quest.questTombstoned) return null;
+    // AUDIT DROPS A3: DRY RUN first - restoreSaveData clears as it goes, so an envelope it chokes on halfway
+    // (`{tasks: 7}`) left the LIVE quest with no resources and no tasks. A scratch Quest takes the fall instead.
+    const scratch = this._newQuest();
+    const uid = quest.uid;
+    try { scratch.restoreSaveData({ ...questData, uid }, this._saveResolvers()); } catch (e) { console.warn(`[quest] shared quest resync refused: ${e?.message ?? e}`); return null; }
+    const before = this._snapshotActionCompletion(quest);
+    quest.restoreSaveData({ ...questData, uid }, this._saveResolvers());
+    // AUDIT DROPS A2: completion is MONOTONIC - an action this player already saw complete never reads false
+    // again off a partner's older copy (it would run a second time, reward and all, when its task next ticked)
+    let t = 0;
+    for (const task of quest.tasks.values()) {
+      let a = 0;
+      for (const action of task.actions) { if (before.get(`${t}:${a}`) === true && !action.isComplete) action.isComplete = true; a++; }
+      t++;
+    }
+    for (const resource of quest.resources.values()) {
+      if (resource.isPlace && resource.siteDetails) this.createSiteLink(quest, resource.symbol);
+    }
+    this._rearmNewlyCompletedEffects(quest, before);
+    return quest;
+  }
+
+  /** QUEST1: a Quest with THIS machine's registry, clock, hooks and played step - the one door a shared quest is born
+   *  through (receiveSharedQuest) and the scratch a resync is dry-run on (updateSharedQuest, AUDIT DROPS A3). */
+  _newQuest() {
+    const nowSeconds = () => this.deps.nowSeconds?.() ?? 0;
+    return new Quest({ nowSeconds, actionFactory: this._actionFactory, hooks: this._buildHooks(), questClockStepMax: () => this.deps.questClockStepMax?.() ?? Infinity });
+  }
+
+  /** AUDIT DROPS A1: the receiver's OWN parse of a quest by name - the reference an incoming envelope's shape is
+   *  held against (systems/questShare.js shapeMismatch) and the source of its Item resources' items. Not
+   *  scheduled, not started; null when this machine has no source for the name or the parse fails. */
+  parseQuestShape(questName, factionId = 0) {
+    const lines = this.deps.getQuestSourceLines?.(questName);
+    if (!lines) return null;
+    return this.parseQuestForLists(lines, Number(factionId) || 0);
+  }
+
+  /** AUDIT DROPS A2: was a quest by this name finished (tombstoned) while kept in sync with the party? */
+  hasFinishedSharedQuestNamed(questName) { return this.finishedSharedQuestNames.has(questName); }
+
   /** The reflection stand-in: the resource registry and the ACTION
    *  registry keyed by each template's explicit typeName (built
    *  fresh so late registerAction calls are honored). */
@@ -1005,6 +1221,9 @@ export class QuestMachine {
   /** Dispose resources then task actions (Quest.cs Dispose order,
    *  AUDIT quest-P5), mark tombstoned (site-link scrub rides Q3). */
   tombstoneQuest(quest) {
+    // AUDIT DROPS A2: a finished shared quest leaves the live-sync set and is remembered as finished - see the
+    // constructor's own note on the two sets
+    if (this.sharedQuestNames.has(quest.questName)) { this.sharedQuestNames.delete(quest.questName); this.finishedSharedQuestNames.add(quest.questName); this._rearmed.delete(quest.uid); }
     for (const resource of quest.resources.values()) resource.dispose();
     for (const task of quest.tasks.values()) task.disposeActions();
     // RemoveAllQuestSiteLinks (QuestMachine.cs:1042-1048): a
@@ -1107,7 +1326,7 @@ export class QuestMachine {
    *  faction ("This effectively shuts down several named NPCs during
    *  main quest") - and TalkManager.cs does not contain the word
    *  Listener at all. The port already ships that reader, at
-   *  src/scenes/worldModes.js:2647. A pending marker over shipped work
+   *  src/scenes/worldModes.js:2652. A pending marker over shipped work
    *  is worse than no marker: it sends the next reader looking for
    *  work that is done, in a file that never had it. */
   addFactionListener(factionID, owner) {

@@ -2739,6 +2739,16 @@ ${badgeCss()}
 /* AUDIT ENH-NOTICE3 B1: with the words on the notice panel the click-catcher is THE SCREEN, not the window's rectangle - DFU's ClickAnywhereToClose takes the press anywhere, and the panel stands at the right edge, outside a centred window. */
 .tavern-shell .sb-ask.sb-screen { position: fixed; inset: 0; }
 .tavern-shell .px-win { width: min(460px, 92vw); height: auto; max-height: min(560px, 82dvh); }
+/* PARTY-REST DROP (2026-09-22): the enhanced rest window (ui/enhancedRest.js) - a small centred dialog in the
+   tavern panel's own size class, never the generic .px-win default (min(920px,94vw) x min(620px,74dvh) - most of
+   the screen, pinned top-left, the same missing-shell bug the tavern and merchant panels shipped with); the hours
+   field big and centred, not the gold field's small left-aligned one; the vitals line under the meter (REST-VITALS1). */
+.rest-shell { display: flex; align-items: center; justify-content: center; }
+.rest-shell .px-win { width: min(420px, 92vw); height: auto; max-height: min(420px, 80dvh); }
+.rest-shell .hours-field { display: block; width: 140px; margin: 4px auto 22px; font-family: inherit;
+  font-size: 34px; text-align: center; background: #0e1013; color: var(--bone, #e9e4d9);
+  border: 1px solid var(--iron, #2b323b); border-radius: 3px; padding: 6px 8px; }
+.rest-shell .vitals-line { margin: 10px 0 0; font-size: 14px; color: var(--dim, #8b8578); font-variant-numeric: tabular-nums; }
 .tavern-shell .px-body { flex: 0 1 auto; overflow-y: auto; padding: 18px 22px 22px; }
 .tavern-shell .sb-top { display: grid; grid-template-columns: 1fr auto 1fr;
   align-items: center; padding: 12px 16px;
@@ -2843,6 +2853,10 @@ ${badgeCss()}
 .cr-shell .cr-foldall { margin: 0 0 14px; max-width: 66ch; }
 .cr-shell .cr-entry.cr-shut { padding-bottom: 12px; }
 .cr-shell .cr-entry.cr-shut .cr-head { padding-bottom: 0; margin-bottom: 0; border-bottom: 0; }
+/* QUEST1: the Share button, inside the chosen quest's own opened frame -
+   a small action set off from the prose below it, not another line of
+   journal text. */
+.cr-shell .cr-share { min-width: 60px; }
 .cr-shell .sb-frame { margin: 0 0 16px; }
 .cr-shell .cr-compose { display: flex; gap: 10px; margin: 0 0 18px; max-width: 66ch; }
 .cr-shell .cr-compose input { flex: 1; min-width: 0; min-height: 44px; padding: 8px 12px;

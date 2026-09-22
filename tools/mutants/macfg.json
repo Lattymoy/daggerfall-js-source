@@ -47,8 +47,8 @@
   {
     "name": "MAC-F-the-body-draws-through-the-fold",
     "file": "src/ui/enhancedChronicle.js",
-    "old": "        if (!isFolded(folded, section, i)) for (const line of e.body) entry.append(el('p', null, line));",
-    "new": "        for (const line of e.body) entry.append(el('p', null, line));",
+    "old": "        if (!isFolded(folded, section, i)) {\n          for (const line of e.body) entry.append(el('p', null, line));\n        }",
+    "new": "        {\n          for (const line of e.body) entry.append(el('p', null, line));\n        }",
     "tests": [
       "test/macfg_fold_and_specials.test.js"
     ]

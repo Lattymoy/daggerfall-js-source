@@ -2043,6 +2043,8 @@ function peerSpritesCard() {
     + 'looks like a Warrior, a Mage like a Mage - animated and puppeted by what they\u2019re actually doing, the '
     + 'same sprite a hostile one of them already is. Off: the flat paperdoll portrait instead, standing still.'));
   c.append(prefRow('peerClassSprites', 'Animated class sprite', 'On: the sprite above. Off: the paperdoll.', { home: true }));
+  c.append(prefRow('peerAttackSounds', 'Attack sounds', 'On: hear other players\u2019 weapon swings. Off: silent, no matter how close.', { home: true }));   // PEER-FS1: the two peer-sound switches, beside the sprite one
+  c.append(prefRow('peerFootsteps', 'Footstep sounds', 'On: hear other players\u2019 footsteps as they walk. Off: silent, no matter how close.', { home: true }));
   return c;
 }
 

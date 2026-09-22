@@ -83,8 +83,8 @@
   {
     "name": "SURV4-the-kind-is-read-every-hour",
     "file": "src/scenes/shared.js",
-    "old": "      if (b) { _kind = survivalOn() ? restKind() : REST_KIND.Bed; _roughHours = 0; }",
-    "new": "      if (b) { _kind = REST_KIND.Rough; _roughHours = 0; }",
+    "old": "        _kind = survivalOn() ? (_restKindOverride ?? restKind)() : REST_KIND.Bed; _roughHours = 0;",
+    "new": "        _kind = REST_KIND.Rough; _roughHours = 0;",
     "tests": [
       "test/surv4_rest.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "SURV4-the-mod-off-still-costs",
     "file": "src/scenes/shared.js",
-    "old": "_kind = survivalOn() ? restKind() : REST_KIND.Bed;",
-    "new": "_kind = restKind();",
+    "old": "_kind = survivalOn() ? (_restKindOverride ?? restKind)() : REST_KIND.Bed;",
+    "new": "_kind = (_restKindOverride ?? restKind)();",
     "tests": [
       "test/surv4_rest.test.js"
     ]
