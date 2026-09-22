@@ -176,7 +176,7 @@ test('QS2: the enhanced pane draws the three under their OWN heading, and the co
   assert.deepEqual(PORT_GROUPS[1].rows.map((r) => [r.action, r.label]), [
     ['QuickUse1', 'Use quickslot 1'],
     ['QuickUse2', 'Use quickslot 2'],
-    ['QuickSpell', 'Ready quickslot spell'],   // QS6: the spell slot, beside the two it behaves like
+    ['QuickSpell', 'Ready quickslot spell (hold to cycle the book)'],   // QS6: the spell slot, beside the two it behaves like
     ['QuickSwap', 'Swap weapon'],              // QS6: still here, still rebindable, shipped unbound
     ['QuickOffHand', 'Off hand: light, douse or swap'],   // QS4's press, and QS6's fold
   ]);

@@ -871,7 +871,18 @@ function drawSpellChip(view, tag) {
   last.qspell = sig;
   const chip = parts.spellChip;
   chip.chip.classList.toggle('on', !!sp);
-  if (!sp) return;
+  // HOTSLOT (2026-09-22): an EMPTY slot is a socket, as the diamond's
+  // cells are (departure 4) - drawn dim with its key, so the key is
+  // seen and, on a phone, the first tap has a chip to land on (the
+  // tap fills it from the book: spellQuickslotPress). Hidden, the slot
+  // could never be filled without a keyboard.
+  chip.chip.classList.toggle('empty', !sp);
+  if (!sp) {
+    chip.chip.classList.remove('readied', 'ghost', 'cycling');
+    chip.name.textContent = 'No spell';
+    quickTag(chip, 'spellcap', tag);
+    return;
+  }
   chip.chip.classList.toggle('readied', !!sp.readied);
   chip.chip.classList.toggle('ghost', !sp.spell);
   chip.chip.classList.toggle('cycling', lamp);

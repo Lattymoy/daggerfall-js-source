@@ -1019,7 +1019,7 @@ export function textureParams(gl, opts = {}) {
  * cutout, and only ui/titleScreen.js asks for anything else.
  */
 export function screenQuadBlends(tex, color, opts = {}) {
-  return (!tex && color[3] < 1) || Boolean(tex && opts.blend);
+  return (!tex && (color[3] ?? 1) < 1) || Boolean(tex && opts.blend);   // BLACK-ARMS: an absent alpha is 1, the upload's own law
 }
 
 /** setFog takes a STRING mode and shadows an int; the panel bracket
@@ -3019,9 +3019,20 @@ void main() {
       q.cw = gl.drawingBufferWidth; q.ch = gl.drawingBufferHeight;
     }
     gl.uniform4f(this._screenQuad.src, src.u0, src.v0, src.u1, src.v1);
-    if (q.r !== color[0] || q.g !== color[1] || q.b !== color[2] || q.a !== color[3]) {
-      gl.uniform4f(this._screenQuad.color, color[0], color[1], color[2], color[3]);
-      q.r = color[0]; q.g = color[1]; q.b = color[2]; q.a = color[3];
+    // BLACK-ARMS (2026-09-22, a player on Discord: "Weapon and torch are
+    // blacked out"): `color` is the shader's vec4, but the light a flat
+    // takes (`flatLightAt`, MAC-I) is an RGB triple, and the classic
+    // weapon, the torch hand and the casting hands all hand it here as
+    // it is. `color[3]` was then undefined, `uniform4f` takes an
+    // unrestricted float and uploaded NaN, and the fragment's alpha
+    // came out NaN - which ANGLE/D3D and most drivers store as 0 on the
+    // premultiplied canvas, so the page's black showed through every
+    // opaque texel: a solid silhouette with a perfect cutout, on THEIR
+    // machine and not on ours. An absent alpha is 1, as the default is.
+    const a = color[3] ?? 1;
+    if (q.r !== color[0] || q.g !== color[1] || q.b !== color[2] || q.a !== a) {
+      gl.uniform4f(this._screenQuad.color, color[0], color[1], color[2], a);
+      q.r = color[0]; q.g = color[1]; q.b = color[2]; q.a = a;
     }
     const useTex = tex ? 1 : 0, blendTex = (tex && opts.blend) ? 1 : 0;
     if (q.useTex !== useTex) { gl.uniform1i(this._screenQuad.useTex, useTex); q.useTex = useTex; }

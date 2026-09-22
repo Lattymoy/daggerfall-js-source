@@ -355,7 +355,7 @@ export const MOD_SETTINGS = Object.freeze({
       'Handling.StowWhenSpellcasting': Object.freeze({ default: true, description: 'Casting, or holding a readied spell, stows the light: no free hand.' }),
       'Handling.StowWhenClimbing': Object.freeze({ default: true, description: 'Climbing stows the light: no free hand.' }),
       'Handling.StowWhenSwimming': Object.freeze({ default: true, description: 'Swimming stows the light: no free hand.' }),
-      'Handling.RelaxedTwoHandedWeapons': Object.freeze({ default: true, description: 'Two-handed weapons will only occupy your off-hand when attacking' }),
+      'Handling.RelaxedTwoHandedWeapons': Object.freeze({ default: false, description: 'Two-handed weapons will only occupy your off-hand when attacking' }),   // 3ARMS: the mod ships true; the port ships false - see the departure in Handheld-Torches.md
       'Handling.RelaxedLanterns': Object.freeze({ default: false, description: 'If enabled, will not stow lanterns when both hands are occupied' }),
       'Throwing.ThrowTorchInput': Object.freeze({ default: "X", text: true, description: 'Hold to wind up a throw, release to throw a torch.' }),
       'Throwing.ThrowStrength': Object.freeze({ default: 1.0, min: 0.0, max: 10.0, float: true, step: 0.25, description: 'Multiplier on the throw\u2019s speed (25 at full Strength).' }),

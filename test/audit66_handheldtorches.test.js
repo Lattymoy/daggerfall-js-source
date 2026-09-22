@@ -290,7 +290,7 @@ test('AUDIT 66 pins: the bow in the LEFT hand takes the right hand too - with a 
   slots[EQUIP_SLOTS.RightHand] = weapon(WEAPONS.Dagger);
   r.ctx.usingRightHand = false;
   r.twice();
-  assert.deepEqual([r.h._w.handLeft, r.h._w.handRight], [true, false], 'a dagger in the right: the left is free');
+  assert.deepEqual([r.h._w.handLeft, r.h._w.handRight], [false, false], '3ARMS: a dagger in the right, and the LEFT is the punching hand while the right is not in use (HandheldTorches.cs:1315) - the arm the port had missed');
   slots[EQUIP_SLOTS.LeftHand] = weapon(WEAPONS.Long_Bow);
   r.twice();
   assert.deepEqual([r.h._w.handLeft, r.h._w.handRight], [false, false], 'the bow takes the left AND reaches across for the right (IL 0x2cf0)');

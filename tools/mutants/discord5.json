@@ -1,0 +1,190 @@
+[
+  {
+    "name": "D5-BLACK-ARMS-alpha-not-defaulted",
+    "file": "src/render/renderer.js",
+    "old": "    const a = color[3] ?? 1;\n",
+    "new": "    const a = color[3];\n",
+    "tests": [
+      "test/discord5.test.js"
+    ]
+  },
+  {
+    "name": "D5-BLACK-ARMS-alpha-defaulted-to-zero",
+    "file": "src/render/renderer.js",
+    "old": "    const a = color[3] ?? 1;\n",
+    "new": "    const a = color[3] ?? 0;\n",
+    "tests": [
+      "test/discord5.test.js"
+    ]
+  },
+  {
+    "name": "D5-BLACK-ARMS-shadow-compares-the-missing-alpha",
+    "file": "src/render/renderer.js",
+    "old": "q.a !== a) {\n      gl.uniform4f(this._screenQuad.color, color[0], color[1], color[2], a);",
+    "new": "q.a !== color[3]) {\n      gl.uniform4f(this._screenQuad.color, color[0], color[1], color[2], a);",
+    "tests": [
+      "test/discord5.test.js"
+    ]
+  },
+  {
+    "name": "D5-3ARMS-right-slot-back-to-LeftOnly",
+    "file": "src/systems/handheldTorches.js",
+    "old": "      if (getItemHands(right) === ITEM_HANDS.Both) {",
+    "new": "      if (getItemHands(right) === ITEM_HANDS.LeftOnly) {",
+    "tests": [
+      "test/ht1_handheldtorches.test.js",
+      "test/discord5.test.js"
+    ]
+  },
+  {
+    "name": "D5-3ARMS-relaxed-ignores-the-swing",
+    "file": "src/systems/handheldTorches.js",
+    "old": "        if (w.s.twoHandedRelaxed) { if (isBow(right) || w.attacking) w.handLeft = false; }",
+    "new": "        if (w.s.twoHandedRelaxed) { if (isBow(right)) w.handLeft = false; }",
+    "tests": [
+      "test/ht1_handheldtorches.test.js",
+      "test/discord5.test.js"
+    ]
+  },
+  {
+    "name": "D5-3ARMS-relaxed-strict-alike",
+    "file": "src/systems/handheldTorches.js",
+    "old": "        if (w.s.twoHandedRelaxed) { if (isBow(right) || w.attacking) w.handLeft = false; }\n        else w.handLeft = false;",
+    "new": "        if (isBow(right) || w.attacking) w.handLeft = false;",
+    "tests": [
+      "test/ht1_handheldtorches.test.js",
+      "test/discord5.test.js"
+    ]
+  },
+  {
+    "name": "D5-3ARMS-punching-left-hand-free",
+    "file": "src/systems/handheldTorches.js",
+    "old": "    } else if (!sheathedNow && !usingRightNow) w.handLeft = false;   // bare left hand",
+    "new": "    } else if (false) w.handLeft = false;   // bare left hand",
+    "tests": [
+      "test/ht1_handheldtorches.test.js",
+      "test/audit66_handheldtorches.test.js",
+      "test/discord5.test.js"
+    ]
+  },
+  {
+    "name": "D5-3ARMS-left-slot-Both-clause",
+    "file": "src/systems/handheldTorches.js",
+    "old": "      if (getItemHands(left) === ITEM_HANDS.Both || isBow(left)) w.handRight = false;",
+    "new": "      if (isBow(left)) w.handRight = false;",
+    "tests": [
+      "test/ht1_handheldtorches.test.js",
+      "test/discord5.test.js"
+    ]
+  },
+  {
+    "name": "D5-3ARMS-widget-mirror-back-to-LeftOnly",
+    "file": "src/combat/weaponWidget.js",
+    "old": "    if (getItemHands(w.specificWeapon) !== ITEM_HANDS.Both) return false;",
+    "new": "    if (getItemHands(w.specificWeapon) !== ITEM_HANDS.LeftOnly) return false;",
+    "tests": [
+      "test/ww1_weaponwidget.test.js",
+      "test/discord5.test.js"
+    ]
+  },
+  {
+    "name": "D5-3ARMS-relaxed-ships-on",
+    "file": "src/systems/modSettings.js",
+    "old": "      'Handling.RelaxedTwoHandedWeapons': Object.freeze({ default: false,",
+    "new": "      'Handling.RelaxedTwoHandedWeapons': Object.freeze({ default: true,",
+    "tests": [
+      "test/ht1_handheldtorches.test.js",
+      "test/discord5.test.js"
+    ]
+  },
+  {
+    "name": "D5-TORCH-BIND-toggle-key-uncurated",
+    "file": "src/systems/features.js",
+    "old": "  'handheld-torches': Object.freeze(['Handling.ToggleLightInput', 'Handling.ManualDropInput', 'Throwing.ThrowTorchInput',",
+    "new": "  'handheld-torches': Object.freeze(['Handling.ManualDropInput', 'Throwing.ThrowTorchInput',",
+    "tests": [
+      "test/discord5.test.js"
+    ]
+  },
+  {
+    "name": "D5-TORCH-BIND-eotb-keys-uncurated",
+    "file": "src/systems/features.js",
+    "old": "  'eye-of-the-beholder': Object.freeze(['Camera.SwitchShoulder', 'AutoTogglePerspective.ToggleInput', 'Camera.LongitudinalDistance',",
+    "new": "  'eye-of-the-beholder': Object.freeze(['Camera.LongitudinalDistance',",
+    "tests": [
+      "test/discord5.test.js"
+    ]
+  },
+  {
+    "name": "D5-TORCH-BIND-foot-continue-dead",
+    "file": "src/ui/enhancedControls.js",
+    "old": "  cont2.onclick = act(applyAndSave);",
+    "new": "  cont2.onclick = act(() => {});",
+    "tests": [
+      "test/discord5.test.js"
+    ]
+  },
+  {
+    "name": "D5-TORCH-BIND-foot-continue-missing",
+    "file": "src/ui/enhancedControls.js",
+    "old": "  foot.append(cont2);\n  body.append(foot);",
+    "new": "  body.append(foot);",
+    "tests": [
+      "test/discord5.test.js"
+    ]
+  },
+  {
+    "name": "D5-HOTSLOT-doubled-book-pins-the-cycle",
+    "file": "src/systems/quickslots.js",
+    "old": "  return bookOf(entity).filter((sp) => keyedSpell(sp) && !seen.has(sp.index) && (seen.add(sp.index), true));",
+    "new": "  return bookOf(entity).filter((sp) => keyedSpell(sp) && (seen.add(sp.index), true));",
+    "tests": [
+      "test/discord5.test.js"
+    ]
+  },
+  {
+    "name": "D5-HOTSLOT-book-button-never-clears",
+    "file": "src/ui/enhancedSpellbook.js",
+    "old": "    if (inSlot) clearSpellQuickslot(); else setSpellQuickslot(sel.spell);",
+    "new": "    setSpellQuickslot(sel.spell);",
+    "tests": [
+      "test/discord5.test.js"
+    ]
+  },
+  {
+    "name": "D5-HOTSLOT-book-button-does-not-rerender",
+    "file": "src/ui/enhancedSpellbook.js",
+    "old": "    notice = inSlot ? 'Taken out of the quickslot.' : 'In the quickslot - press its key to ready it, hold to cycle the book.';\n    render();",
+    "new": "    notice = inSlot ? 'Taken out of the quickslot.' : 'In the quickslot - press its key to ready it, hold to cycle the book.';",
+    "tests": [
+      "test/discord5.test.js"
+    ]
+  },
+  {
+    "name": "D5-HOTSLOT-empty-chip-hidden",
+    "file": "src/ui/enhancedHud.js",
+    "old": "  chip.chip.classList.toggle('empty', !sp);",
+    "new": "  chip.chip.classList.toggle('empty', false);",
+    "tests": [
+      "test/discord5.test.js"
+    ]
+  },
+  {
+    "name": "D5-LOOT-REGEN-take-says-nothing",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "        const _q = lootHolder(key) ? lootKeyOf(key) : null;\n        if (_q) publishLoot(_q);\n",
+    "new": "",
+    "tests": [
+      "test/discord5.test.js"
+    ]
+  },
+  {
+    "name": "D5-LOOT-REGEN-emptied-pile-not-settled",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "        if (!source.length) onEmptied?.();\n        return source.length;",
+    "new": "        return source.length;",
+    "tests": [
+      "test/discord5.test.js"
+    ]
+  }
+]
