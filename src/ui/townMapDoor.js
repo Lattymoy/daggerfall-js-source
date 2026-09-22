@@ -24,7 +24,7 @@
 // a dynamic import would make the slot briefly empty.
 // ═══════════════════════════════════════════════════════════════════
 
-import { isEnhanced } from '../systems/uiSkin.js';
+import { heldMapWorn } from './mapSkin.js';   // MAP-TOGGLE: the skin AND the player's switch
 import { ExteriorAutomapWindow, preloadExteriorAutomapArt, exteriorAutomapArtLoaded } from './exteriorAutomapWindow.js';
 import { HeldMapWindow } from './heldMap.js';
 
@@ -35,7 +35,7 @@ export { preloadExteriorAutomapArt };
  *  no ARENA2 raster at all - the block grids are bytes the host already
  *  holds. Same law as ui/travelMapDoor.js and ui/automapDoor.js. */
 export function townMapDoorReady() {
-  return (isEnhanced() && typeof document !== 'undefined') || exteriorAutomapArtLoaded();
+  return heldMapWorn() || exteriorAutomapArtLoaded();
 }
 
 /**
@@ -51,7 +51,7 @@ export function townMapDoorReady() {
  * `if (win)` guards keep meaning.
  */
 export function createTownMapWindow(deps = {}) {
-  if (isEnhanced() && typeof document !== 'undefined') {
+  if (heldMapWorn()) {
     return new HeldMapWindow({
       ...(deps.travel ?? {}),
       where: deps.where ?? (() => ({ inLocation: true })),

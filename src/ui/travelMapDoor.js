@@ -23,7 +23,7 @@
 // here would buy nothing and cost the one-shot contract.
 // ═══════════════════════════════════════════════════════════════════
 
-import { isEnhanced } from '../systems/uiSkin.js';
+import { heldMapWorn, heldMapChosen } from './mapSkin.js';   // MAP-TOGGLE: the skin AND the player's switch
 import {
   TravelMapWindow, preloadTravelMapArt, travelMapArtLoaded, canFindPlace,
 } from './travelMapWindow.js';
@@ -39,7 +39,7 @@ export { preloadTravelMapArt, travelMapArtLoaded, canFindPlace };
  *  that can hand the dep bag can open it. Same law as
  *  ui/charSheetDoor.js. */
 export function travelMapDoorReady() {
-  return isEnhanced() || travelMapArtLoaded();
+  return heldMapChosen() || travelMapArtLoaded();
 }
 
 /**
@@ -61,7 +61,7 @@ export function createTravelMapWindow(deps = {}) {
   // `document` for the reason every fork before this one gives: node
   // drives these hosts headless and keeps the canvas window rather
   // than getting a special case written for it.
-  if (isEnhanced() && typeof document !== 'undefined') {
+  if (heldMapWorn()) {
     return new HeldMapWindow(deps);
   }
   return travelMapArtLoaded() ? new TravelMapWindow(deps) : null;
