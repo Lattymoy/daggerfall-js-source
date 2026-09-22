@@ -15,7 +15,7 @@ export const MODES = ['steal', 'grab', 'info', 'dialogue'];
  *  InputManager.Actions.StealMode)) ChangeInteractionMode(...)` and its
  *  three siblings (PlayerActivate.cs:221-228) - and the F1-F4 that
  *  reach them are only InputManager's DEFAULT bindings
- *  (InputManager.cs:999-1002, ported at systems/inputActions.js:129-132).
+ *  (InputManager.cs:999-1002, ported at systems/inputActions.js:140-143).
  *  Both dispatch sites in this port keyed a literal `{ F1: 'steal', ...
  *  }[e.code]` table instead, so the four rows the controls grid offers
  *  were inert in both directions: a Steal moved to KeyP did nothing,
