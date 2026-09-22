@@ -1731,6 +1731,65 @@ body.draglock .wornrow, body.draglock .wornmap { touch-action: none; }
 .px-about:hover, .px-about:focus-visible { outline: none;
   color: rgb(243,239,44); border-color: var(--brass);
   text-shadow: 2px 2px 0 rgb(93,77,12); }
+
+/* ── ACC1f: THE PROFILE MARK AND THE ACCOUNT WINDOW ─────────────────
+   Mac: the online details live "as a popup on main menu startup and a
+   new profile icon". The mark takes the door's TOP-RIGHT corner - the
+   one the foot's About box does not use - and wears the About box's
+   own face rather than a new one, because two corner buttons that
+   look unrelated read as two different kinds of thing. */
+.px-profile {
+  position: absolute; top: 18px; right: 18px; z-index: 4;
+  display: flex; align-items: center; gap: 10px;
+  font: inherit; font-size: 15px; letter-spacing: 0.12em;
+  text-transform: uppercase; color: #d8cfae; cursor: pointer;
+  min-height: 44px; padding: 8px 16px;
+  background: rgba(10,12,17,0.55); border: 2px solid #7d7460;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.8);
+}
+.px-profile:hover, .px-profile:focus-visible { outline: none;
+  color: rgb(243,239,44); border-color: var(--brass);
+  text-shadow: 2px 2px 0 rgb(93,77,12); }
+/* The gem is FILLED when there is a session and HOLLOW when there is
+   not - the same two glyphs the rail uses for on and off, so "am I
+   signed in" is answerable at a glance without reading the word. */
+.px-profileicon { font-size: 12px; line-height: 1; }
+.px-profilename { max-width: 14ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* THE WINDOW is the pause window's frame with the account card inside
+   it, so the door has ONE kind of modal rather than two. It is
+   shorter, because the card is a card and not a journal. */
+/* THE SCRIM. Without it the door's own menu reads straight through the
+   window - CONTINUE and NEW GAME sitting behind the sign-in copy - and
+   a modal you can read the page through is a modal nobody believes is
+   modal. The pause face uses rgba(10,12,17,0.55) over a LIVE frame;
+   this sits over the still door, so it can be heavier. */
+.px-acctstage { display: grid; place-items: center; position: absolute; inset: 0; z-index: 5;
+  background: rgba(6,8,12,0.82); }
+.px-win.px-acctwin { height: auto; max-height: min(760px, 86dvh); width: min(560px, 94vw);
+  background: #0a0c11; }
+.px-win.px-acctwin .px-body { padding: 26px 24px 8px; }
+/* The card inside brings its own frame, and a box inside a box reads
+   as a mistake - the window IS the frame here. */
+.px-win.px-acctwin .card.acct { border: 0; background: none; padding: 0; margin: 0; }
+.px-winfoot { display: flex; justify-content: center; padding: 6px 0 18px; }
+.px-winclose {
+  font: inherit; font-size: 16px; letter-spacing: 0.14em; text-indent: 0.14em;
+  text-transform: uppercase; color: #d8cfae; cursor: pointer;
+  min-height: 44px; padding: 8px 22px;
+  background: rgba(10,12,17,0.55); border: 2px solid #7d7460;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.8);
+}
+.px-winclose:hover, .px-winclose:focus-visible { outline: none;
+  color: rgb(243,239,44); border-color: var(--brass);
+  text-shadow: 2px 2px 0 rgb(93,77,12); }
+
+@media (max-width: 480px) {
+  /* On a phone the wordmark owns the top, so the mark loses its word
+     and keeps its gem - a 44px target either way. */
+  .px-profile { top: 10px; right: 10px; padding: 8px 12px; }
+  .px-profilename { display: none; }
+}
 @media (max-width: 480px) {
   .px-wordmark { font-size: 60px; }
   .px-menu button { font-size: 24px; letter-spacing: 0.12em; text-indent: 0.12em; }
@@ -1786,7 +1845,12 @@ body.draglock .wornrow, body.draglock .wornmap { touch-action: none; }
   text-transform: uppercase; text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
 .shell .card, .shell .dcard { border: 2px solid rgba(125,116,96,0.55); border-radius: 0;
   background: rgba(0,0,0,0.35); }
-.shell .card h3, .shell .dcard h3, .shell .empty h3 { font-family: inherit; font-weight: 400;
+/* ACC1f: ...AND THE DOOR'S WINDOW, which is a third host for the same
+   markup. This rule was .shell only, so the account card's heading
+   came out in Cormorant inside a pixel-skinned window - the one thing
+   on the door not drawn in whole pixels. Found by screenshotting it. */
+.shell .card h3, .shell .dcard h3, .shell .empty h3,
+.px-win .card h3, .px-win .dcard h3, .px-win .empty h3 { font-family: inherit; font-weight: 400;
   letter-spacing: 0.12em; text-transform: uppercase;
   text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
 /* CR1: the credited work's title wears the pixel face like every other
@@ -1796,14 +1860,18 @@ body.draglock .wornrow, body.draglock .wornmap { touch-action: none; }
   text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
 .shell .tag { color: rgb(243,239,44); text-shadow: 2px 2px 0 rgb(93,77,12);
   letter-spacing: 0.24em; background: none; border: 0; }
-.shell .act { border: 2px solid rgba(125,116,96,0.55); border-radius: 0; background: none;
+/* ACC1f: the same widening as the heading above - these were .shell
+   only, so a card's buttons inside the door's window came out
+   lowercase and unspaced beside a CLOSE that was neither. */
+.shell .act, .px-win .card .act { border: 2px solid rgba(125,116,96,0.55); border-radius: 0; background: none;
   letter-spacing: 0.14em; text-transform: uppercase; color: var(--bone);
   text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
-.shell .act:hover, .shell .act:focus-visible { color: rgb(243,239,44); border-color: var(--brass);
+.shell .act:hover, .shell .act:focus-visible,
+.px-win .card .act:hover, .px-win .card .act:focus-visible { color: rgb(243,239,44); border-color: var(--brass);
   background: none; text-shadow: 2px 2px 0 rgb(93,77,12); }
-.shell .act.primary { color: rgb(243,239,44); border-color: var(--brass); background: none;
+.shell .act.primary, .px-win .card .act.primary { color: rgb(243,239,44); border-color: var(--brass); background: none;
   text-shadow: 2px 2px 0 rgb(93,77,12); }
-.shell .act:disabled { color: rgba(125,116,96,0.45); border-color: rgba(125,116,96,0.3); }
+.shell .act:disabled, .px-win .card .act:disabled { color: rgba(125,116,96,0.45); border-color: rgba(125,116,96,0.3); }
 /* ── the settings screen ── */
 .shell .subbtn { letter-spacing: 0.1em; text-transform: uppercase; border-radius: 0;
   text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }

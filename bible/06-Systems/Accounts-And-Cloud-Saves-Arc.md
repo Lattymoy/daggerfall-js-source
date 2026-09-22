@@ -1168,3 +1168,62 @@ oversold. And the client now holds two identities — SOC1's hub-minted
 `dagger.online.account` and this service's session — which ACC1b already
 settled: the merge belongs at the hub, the only thing holding both
 credentials at once.
+
+
+---
+
+## ACC1f — the account moves to the front door (2026-09-22)
+
+Mac: *"In my mind for the online mode panel. I want it reserved for a
+detailed tile based design for your saves which will translate to the
+load character pane also... The online details itself will live as a
+popup on main menu startup and a new profile icon."*
+
+So ACC1e's card leaves the Online pane, which is being reserved for the
+character tiles, and becomes two things on the pixel door:
+
+- **A window over the home screen**, offered once per visit to a device
+  with nobody signed in. Mac: only when not signed in.
+- **A profile mark, top-right** — the corner the foot's About box does
+  not use. It reopens the window any time.
+
+**IT IS AN OFFER, NOT A GATE.** ACC0's wall is at cloud saves; every
+door on the screen works without an account. It closes on Escape, on
+the Close button, and on a tap outside, exactly as the pause window
+does.
+
+**ONCE PER VISIT, NOT ONCE PER RENDER.** `renderHome` runs again on
+every skin switch, every Escape and every repaint. A window that
+reopened each time would be one a player cannot get past, so
+`accountOffered` latches on the first offer while the mark can reopen
+it freely.
+
+### Three things the screenshot found that no test would have
+
+The card looked right standing alone. In its real host it did not:
+
+1. **No scrim.** The door's own menu — CONTINUE, NEW GAME, ONLINE —
+   read straight through the window. A modal you can read the page
+   through is not one anybody believes.
+2. **The heading was Cormorant in a pixel window.** `.shell .card h3`
+   forces the pixel face, and the door is `.px-home`, not `.shell`, so
+   the rule never reached it. The card's heading was the one thing on
+   the door not drawn in whole pixels. Same for `.shell .act`, which
+   left the card's buttons lowercase beside a spaced, uppercase CLOSE.
+   Both rules are widened to the door's window rather than copied.
+3. The window had no floor of its own.
+
+All three are host-integration faults, invisible to a card rendered on
+its own page — which is what ACC1e's probe does, and the reason the
+question *"are the screenshots of each popup"* was worth asking.
+
+### And a pin that had become false
+
+`test/outsideTap.test.js` asserted `closeOnOutsideTap` appears in the
+menu exactly **once**, with the reason *"the pause face only - the
+front door has no scrim"*. True until this slice; the door has a scrim
+now, exactly when the account window is open. The pin names **both**
+wirings rather than counting loosely, so a third scrim added without
+its own outside-tap still reddens — and it checks the account one is
+guarded by `accountOpen`, because a front door wired unconditionally
+would close on every tap.

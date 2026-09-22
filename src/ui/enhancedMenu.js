@@ -153,7 +153,7 @@ import '../world/outdoors.js';   // RF4: the outdoors lane too
 // thinks (ui/accountFlow.js, node-drivable), this draws it
 import { AccountFlow } from './accountFlow.js';
 import { accountCard } from './enhancedAccount.js';
-import { serviceBase } from '../net/accountClient.js';
+import { serviceBase, storedSession } from '../net/accountClient.js';
 
 // ── THE RAIL ─────────────────────────────────────────────────────
 // Six destinations. Mac's call: the menus get set up now even where
@@ -225,6 +225,11 @@ let mode = 'boot';
 let sections = SECTIONS_BOOT;
 let hooks = {};
 let keyHandler = null;
+// ACC1f (Mac: "The online details itself will live as a popup on main
+// menu startup and a new profile icon"): whether the account window is
+// open, and whether startup has already offered it once.
+let accountOpen = false;
+let accountOffered = false;
 let lockHandler = null;
 let resizeHandler = null;   // PX1: the home ground's redraw-on-resize
 let groundTimer = null;     // PX1b: the home sky's 8fps clock - cleared by every rebuild and by unmount
@@ -514,46 +519,77 @@ function paneTest(body) {
 }
 
 // ── LOAD GAME ────────────────────────────────────────────────────
-// ═══ ACC1e: THE ACCOUNT CARD, AT THE HEAD OF THE ONLINE PANE ══════
+// ═══ ACC1f: THE ACCOUNT LIVES ON THE FRONT DOOR ═══════════════════
 //
-// Mac: "Should we go ahead and build the account creation screen" -
-// "Yes, please be detailed and match the enhanced aesthetic."
+// Mac: "I want [the Online pane] reserved for a detailed tile based
+// design for your saves... The online details itself will live as a
+// popup on main menu startup and a new profile icon."
 //
-// IT SITS ABOVE THE ONLINE CARD AND GATES NOTHING. ACC0's wall is at
-// cloud saves and nowhere else: a guest connects, is seen, walks and
-// chats, and every button below this card works with no account at
-// all. Putting it FIRST is not a toll - it is where a player looks for
-// "who am I here", and the card's own copy says the game is playable
-// without one.
+// ACC1e put the card at the head of the Online pane. That pane is
+// being reserved for the character tiles, so the card moves to the
+// door: a window over the pixel home, offered ONCE at startup when
+// nobody is signed in, and reachable any time from the profile mark.
 //
-// NOTHING IS ASKED OF THE NETWORK UNLESS THIS DEVICE ALREADY HAS A
-// SESSION. `flow.start()` returns immediately on a device with none,
-// so opening Online on a train draws the card and stops. That is
-// pinned in test/accountflow.test.js rather than hoped for here.
+// THE OFFER IS NOT A GATE. It is shown only to a device with no
+// session, it closes on a tap outside exactly as the pause window
+// does, and nothing behind it is blocked - ACC0's wall is at cloud
+// saves and every door on this screen works without an account.
 //
-// THE FLOW IS MADE PER MOUNT, deliberately: the pane is rebuilt every
-// time it is opened, and a flow held in a module-level variable would
-// carry a half-typed password from the last time somebody looked at
-// this screen. A password does not outlive the card it was typed into.
-function accountBlock() {
+// ONCE PER VISIT, not once per render. `renderHome` runs again on
+// every skin switch, every Escape and every repaint, and a window
+// that reopened each time would be a window a player cannot get past.
+// `accountOffered` latches on the first offer.
+function accountBody() {
   const host = el('div', 'acctmount');
   let card = null;
   const flow = AccountFlow({
     io: { fetch: (...a) => globalThis.fetch(...a), base: serviceBase(appStorage()) },
     storage: appStorage(),
-    // EVERY state change repaints, which is why no arm of the flow has
-    // to remember to. `card` is null only during the first build, when
-    // paint() is about to run anyway.
     onChange: () => card?.paint(),
   });
   card = accountCard(document, flow);
   host.append(card.root);
-  // Not awaited: the pane must be on screen before the service is
-  // asked anything. A rejection cannot escape either - `start` catches
-  // its own refusals, and this guard is the belt for a bug in it,
-  // because a throw here would take the whole Online pane with it.
+  // Not awaited: the door must be on screen before the service is
+  // asked anything, and `start` catches its own refusals. The guard is
+  // the belt for a bug in it - a throw here would take the door with it.
   Promise.resolve(flow.start()).catch(() => {});
   return host;
+}
+
+/** Is there a session on this device? A storage read, no network - so
+ *  the door can decide whether to offer the window without waiting on
+ *  anything, which is what makes opening the menu on a train work. */
+const signedIn = () => !!storedSession(appStorage());
+
+/** The profile mark, top-right of the door - the corner About does not
+ *  use. It says who you are when it knows, and offers the way in when
+ *  it does not. */
+function profileMark() {
+  const b = el('button', 'px-profile');
+  b.type = 'button';
+  const who = storedSession(appStorage());
+  b.setAttribute('aria-label', who ? `Account: ${who.name ?? 'signed in'}` : 'Sign in or create an account');
+  b.append(el('span', 'px-profileicon', who ? '\u25c6' : '\u25c7'));
+  b.append(el('span', 'px-profilename', who?.name ?? 'Sign in'));
+  b.onclick = () => { accountOpen = true; render(); };
+  return b;
+}
+
+/** The window itself, wearing the pause window's own frame. */
+function accountWindow() {
+  const win = el('div', 'px-win px-acctwin');
+  for (const c of ['tl', 'tr', 'bl', 'br']) win.append(el('span', `px-gem px-corner px-${c}`));
+  const body = el('div', 'px-body');
+  body.append(accountBody());
+  win.append(body);
+  const foot = el('div', 'px-winfoot');
+  const close = el('button', 'px-winclose');
+  close.type = 'button';
+  close.append(el('span', 'px-c', '\u25c6'), document.createTextNode('Close'), el('span', 'px-c', '\u25c6'));
+  close.onclick = () => { accountOpen = false; render(); };
+  foot.append(close);
+  win.append(foot);
+  return win;
 }
 
 // ONLINE1 (2026-09-12, Mac: "add an option to the menu labeled online
@@ -564,7 +600,6 @@ function accountBlock() {
 // the world host with ?online beside ?load (main.js).
 function paneOnline(body) {
   const saves = savedGames();
-  body.append(accountBlock());
   const c = el('div', 'card');
   c.append(el('span', 'tag', 'Online'));
   c.append(el('h3', null, 'Bring your character into the shared world'));
@@ -2325,6 +2360,23 @@ function renderHome() {
   stage.append(menu);
   home.append(stage);
 
+  // ACC1f: the profile mark, top-right - the corner the foot's About
+  // box does not use.
+  home.append(profileMark());
+
+  // ...and the window, offered ONCE per visit to a device with nobody
+  // signed in. `accountOffered` latches here rather than in the
+  // opener, so the mark can reopen it as often as a player likes.
+  if (!accountOpen && !accountOffered && !signedIn()) { accountOffered = true; accountOpen = true; }
+  if (accountOpen) {
+    const acct = el('div', 'px-stage px-acctstage');
+    acct.append(accountWindow());
+    home.append(acct);
+    // OT1, the same law the pause window lives under: a tap outside
+    // closes it. The account is never a thing a player is stuck in.
+    closeOnOutsideTap(home, '.px-win', () => { accountOpen = false; render(); });
+  }
+
   appendPxFoot(home);
   app.append(home);
 }
@@ -2990,7 +3042,12 @@ function onKey(e) {
   // not preventDefault a key you did not take, or Tab stops moving
   // focus and the screen becomes unreachable to anyone driving it that
   // way).
-  const back = confirming ? () => { confirming = null; render(); }
+  // ACC1f: the account window is the innermost thing Escape can close,
+  // ahead of the confirm card and the help sheet - it is a modal over
+  // the door, so the one press that means "not that" must close IT
+  // rather than walk the screen out from under it.
+  const back = accountOpen ? () => { accountOpen = false; render(); }
+    : confirming ? () => { confirming = null; render(); }
     : sheetOpen ? () => { sheetOpen = false; render(); }
       : section !== 'home' ? () => go('home')   // PX1/PX2: a section backs out to the face
         : mode === 'pause' ? () => onAction('resume')   // Escape on the pause face resumes
