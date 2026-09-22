@@ -8381,16 +8381,12 @@ export function createWorldModes(host) {
     // through a shop door. This routes the same ui/input.js table the
     // dungeon arm has always used, over an interior ctx.
     if (mode === 'interior') {
-      const hadOverlay = !!interiorKeyCtx.uiOverlayActive;
-      if (routeKey(e, interiorKeyCtx, null, keys)) e.preventDefault();   // AUDIT 58 (f3/input): the held-keys Set, so routeKey's actionOf resolves COMBOS (InputManager.cs:1666-1712) - see the note at the world host's own actionOf call
-      if (hadOverlay && !interiorKeyCtx.uiOverlayActive) host.relock?.();
+      if (routeKey(e, interiorKeyCtx, null, keys)) e.preventDefault(); if (!interiorKeyCtx.uiOverlayActive && document.pointerLockElement !== canvas) host.relock?.();   // AUDIT 58 (f3/input): the held-keys Set, so routeKey's actionOf resolves COMBOS (InputManager.cs:1666-1712) - see the note at the world host's own actionOf call
       return;
     }
     // The input map (ui/input.js) owns all bindings.
     if (mode !== 'dungeon' || !dungeonCtx) return;
-    const hadOverlay = !!dungeonCtx.uiOverlayActive;
-    if (routeKey(e, dungeonCtx, (p) => player.spawn(p[0], p[1], p[2]), keys)) e.preventDefault();   // P14 (AUDIT 23): a load clears motion state, same applier as dungeon.js   // AUDIT 58 (f3/input): + the held-keys Set, so a rebound combo reaches the dispatch
-    if (hadOverlay && !dungeonCtx.uiOverlayActive) host.relock?.();
+    if (routeKey(e, dungeonCtx, (p) => player.spawn(p[0], p[1], p[2]), keys)) e.preventDefault(); if (!dungeonCtx.uiOverlayActive && document.pointerLockElement !== canvas) host.relock?.();   // P14 (AUDIT 23): a load clears motion state, same applier as dungeon.js   // AUDIT 58 (f3/input): + the held-keys Set, so a rebound combo reaches the dispatch
   });
 
   // U8c: pointer routing for interior native windows (the townTalk
@@ -8519,15 +8515,11 @@ export function createWorldModes(host) {
       if (!interiorOverlay) return false;
       interiorOverlay.keyup?.(e.code, e);
       if (interiorOverlay?.done) interiorOverlay = null;
-      interiorWindows.reconcile(interiorOverlay);   // a release that closes the top window is PopWindow too
-      if (!interiorOverlay) host.relock?.();
+      interiorWindows.reconcile(interiorOverlay); if (!interiorOverlay && document.pointerLockElement !== canvas) host.relock?.();   // a release that closes the top window is PopWindow too
       return true;
     }
     if (mode !== 'dungeon' || !dungeonCtx) return false;
-    const hadOverlay = !!dungeonCtx.uiOverlayActive;
-    const handled = routeKeyUp(e, dungeonCtx);
-    if (hadOverlay && !dungeonCtx.uiOverlayActive) host.relock?.();
-    return handled;
+    const handled = routeKeyUp(e, dungeonCtx); if (!dungeonCtx.uiOverlayActive && document.pointerLockElement !== canvas) host.relock?.(); return handled;
   }
 
   /** The wheel seam (U-scroll), the pointerdown shape: an open
