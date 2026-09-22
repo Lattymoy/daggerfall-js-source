@@ -49,6 +49,8 @@ public/visual-changes/
 firsthour-shots/
 # CASTLE1: the castle probe's shots (tools/castleProbe.mjs default SHOTS dir).
 castle-shots/
+# MAP-LANE: the map lane probe's shots (tools/mapLaneProbe.mjs default SHOTS dir).
+maplane-shots/
 
 # THE ONE ALLOWED .BSA: the MW fixture archive is OURS - written by
 # test/fixtures/mw/generate.py from pyffi-authored meshes and a hand-

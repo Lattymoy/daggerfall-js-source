@@ -17,7 +17,8 @@ process.env.PLAYWRIGHT_BROWSERS_PATH ??= '/opt/pw-browsers';
 const server = await createServer({ root: process.cwd(), server: { port: 5233, strictPort: true, hmr: false, watch: null } });
 await server.listen();
 const browser = await chromium.launch({ headless: true, args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--autoplay-policy=no-user-gesture-required'] });
-const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
+const [VW, VH] = (process.env.VIEW ?? '1280x800').split('x').map(Number);   // VIEW=WxH: the reporters' viewport, when known
+const page = await browser.newPage({ viewport: { width: VW, height: VH } });
 const errors = [];
 page.on('pageerror', (e) => errors.push(String(e.stack ?? e.message)));
 page.on('console', (m) => { if (m.type() === 'error' && !/CURSOR\.IMG|status of 404|ERR_CERT/.test(m.text())) errors.push(`[console] ${m.text()}`); });
@@ -53,7 +54,7 @@ for (const key of ['KeyM', 'KeyV']) {
   console.log(`${key}: heldMap=${s}`);
   console.log(`${key}: rig=${await rig()}`);
   console.log(`${key}: chrome=${await ev(() => { const r = document.querySelector('.hmroot, [class*="hm"]'); const st = r ? document.querySelector('[class*="hmstage"], .hmstage') : null; const ink = document.querySelector('canvas[class*="hmink"], .hmink'); const rect = (el) => el ? JSON.stringify(el.getBoundingClientRect()) : null; return JSON.stringify({ root: r?.className ?? null, stage: rect(st), stageTransform: st?.style?.transform ?? null, ink: rect(ink), inkOpacity: ink?.style?.opacity ?? null, inkTransform: (ink?.style?.transform ?? '').slice(0, 60) }); })}`);
-  await shot(`${key}.png`);
+  await shot(`${key}-${VW}x${VH}.png`);
   const st = s ? JSON.parse(s) : null;
   check(!!st, `${key} opened the held map`);
   check(st?.lane === 'hands' && st?.placed === true, `${key}: the sheet is in the Morrowind hands (lane ${st?.lane}, placed ${st?.placed})`);
