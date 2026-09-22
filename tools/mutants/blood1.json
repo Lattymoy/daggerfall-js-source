@@ -1460,7 +1460,7 @@
   {
     "name": "BLOOD2a-a-drop-meeting-a-wall-is-lost-again",
     "file": "src/combat/bloodMarks.js",
-    "old": "          lay([wx, pos[1], wz], wall.normal ?? [-ox / run, 0, -oz / run], { size: dropSize(i, rate, rng), turn: 0 }, bloodMarkKind({ wall: true }));\n          continue;",
+    "old": "          lay([wx, pos[1], wz], wall.normal ?? [-ox / run, 0, -oz / run], { size: dropSize(i, rate, rng), turn: lean }, bloodMarkKind({ wall: true }));\n          continue;",
     "new": "          continue;",
     "tests": [
       "test/blood1_decals.test.js"
@@ -1469,8 +1469,8 @@
   {
     "name": "BLOOD2a-the-wall-mark-lands-at-the-drop-s-spot-not-the-wall",
     "file": "src/combat/bloodMarks.js",
-    "old": "          lay([wx, pos[1], wz], wall.normal ?? [-ox / run, 0, -oz / run], { size: dropSize(i, rate, rng), turn: 0 }, bloodMarkKind({ wall: true }));\n          continue;",
-    "new": "          lay([fromX, pos[1], fromZ], wall.normal ?? [-ox / run, 0, -oz / run], { size: dropSize(i, rate, rng), turn: 0 }, bloodMarkKind({ wall: true }));\n          continue;",
+    "old": "          lay([wx, pos[1], wz], wall.normal ?? [-ox / run, 0, -oz / run], { size: dropSize(i, rate, rng), turn: lean }, bloodMarkKind({ wall: true }));\n          continue;",
+    "new": "          lay([fromX, pos[1], fromZ], wall.normal ?? [-ox / run, 0, -oz / run], { size: dropSize(i, rate, rng), turn: lean }, bloodMarkKind({ wall: true }));\n          continue;",
     "tests": [
       "test/blood1_decals.test.js"
     ]
@@ -1478,7 +1478,7 @@
   {
     "name": "BLOOD2a-the-wall-mark-is-a-streak",
     "file": "src/combat/bloodMarks.js",
-    "old": "          lay([wx, pos[1], wz], wall.normal ?? [-ox / run, 0, -oz / run], { size: dropSize(i, rate, rng), turn: 0 }, bloodMarkKind({ wall: true }));\n          continue;",
+    "old": "          lay([wx, pos[1], wz], wall.normal ?? [-ox / run, 0, -oz / run], { size: dropSize(i, rate, rng), turn: lean }, bloodMarkKind({ wall: true }));\n          continue;",
     "new": "          lay([wx, pos[1], wz], wall.normal ?? [-ox / run, 0, -oz / run], { size: dropSize(i, rate, rng), turn: 0, along: [ox, 0, oz], stretch: streakFor(run, radius) }, bloodMarkKind({ wall: true }));\n          continue;",
     "tests": [
       "test/blood1_decals.test.js"
@@ -1649,8 +1649,8 @@
   {
     "name": "BLOOD2b-the-wall-s-mark-is-spatter",
     "file": "src/combat/bloodMarks.js",
-    "old": "{ size: dropSize(i, rate, rng), turn: 0 }, bloodMarkKind({ wall: true }));",
-    "new": "{ size: dropSize(i, rate, rng), turn: 0 }, bloodMarkKind({}));",
+    "old": "{ size: dropSize(i, rate, rng), turn: lean }, bloodMarkKind({ wall: true }));",
+    "new": "{ size: dropSize(i, rate, rng), turn: lean }, bloodMarkKind({}));",
     "tests": [
       "test/blood1_decals.test.js"
     ]
@@ -1685,7 +1685,7 @@
   {
     "name": "BLOOD2b-the-wall-s-run-is-not-hung-from-world-up",
     "file": "src/combat/bloodMarks.js",
-    "old": "{ size: dropSize(i, rate, rng), turn: 0 }, bloodMarkKind({ wall: true }));",
+    "old": "{ size: dropSize(i, rate, rng), turn: lean }, bloodMarkKind({ wall: true }));",
     "new": "{ size: dropSize(i, rate, rng) }, bloodMarkKind({ wall: true }));",
     "tests": [
       "test/blood1_decals.test.js"

@@ -47,8 +47,8 @@
   {
     "name": "AUDITBLOOD3-a-drips-bead-is-its-thinnest-point",
     "file": "src/combat/bloodArt.js",
-    "old": "    return { a: Math.max(bead, run, foot), depth: 1 - Math.max(0, Math.min(1, along < 0 ? 1 : along)) };",
-    "new": "    return { a: Math.max(bead, run, foot), depth: Math.max(0, Math.min(1, along < 0 ? 1 : along)) };",
+    "old": "    return { a, depth: Math.max(0, Math.min(1, Math.max(dBead, dFoot, dRun))) };",
+    "new": "    return { a, depth: 1 - Math.max(0, Math.min(1, Math.max(dBead, dFoot, dRun))) };",
     "tests": [
       "test/blood1_decals.test.js"
     ]
