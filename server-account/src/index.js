@@ -46,6 +46,8 @@
 // ACC3, the wardrobe. A player HOLDS titles by derivation and WEARS at
 // most one, which is the only part of it that is a choice:
 //   POST /v1/account/title { title }      -> { ok, titles[], title, glyphs[] }
+// ACC4, time played. A beat carries no number - this clock measures:
+//   POST /v1/account/played {}            -> { playedS }
 //
 // ACC2, and every one of them needs a REGISTERED account (the wall):
 //   GET    /v1/saves                                   -> { saves[] }
@@ -86,7 +88,7 @@ import {
   createGuest, openSession, resolveSession, closeSession, closeAllSessions,
   devicesOf, accountView, displayName, accountKind,
   register, login, recover, changePassword, setEmail, overRate,
-  accountWardrobe, equipTitle,
+  accountWardrobe, equipTitle, creditPlay,
   ACCOUNT_MAX, ACCOUNT_WINDOW_S,
 } from './accounts.js';
 import { mintToken, MAX_TTL_S, TOKEN_V } from '../../src/net/identityToken.js';
@@ -322,6 +324,13 @@ export default {
         // title is simply not theirs. Same reading as the save wall.
         const r = await equipTitle(ctx, who.player, env, body.title ?? null);
         return r.error ? no(r.error, r.error === 'not-held' ? 403 : 400, origin) : json(r, 200, origin);
+      }
+
+      if (path === '/v1/account/played' && request.method === 'POST') {
+        // ACC4: A BEAT, AND NOTHING IN IT IS READ. Whatever the body
+        // says, the credit is the gap by THIS clock (accounts.js
+        // `creditPlay`), so there is no field a client could inflate.
+        return json(await creditPlay(ctx, who.player.id), 200, origin);
       }
 
       if (path === '/v1/auth/register' && request.method === 'POST') {

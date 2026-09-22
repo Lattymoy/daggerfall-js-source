@@ -38,6 +38,7 @@
 import { guestName, isHandleShaped, isGuestShaped } from './guestName.js';
 import { wardrobeOf, equipRefusal } from './titles.js';   // ACC3: what a player holds, wears and is true of - all four derived
 import { ID_RE, nameIsIssuable } from '../../src/net/identityToken.js';
+import { PLAY_GRACE_S } from '../../src/net/playClock.js';   // ACC4: the widest gap one beat may credit - one home both ends
 import {
   hashPassword, verifyPassword, needsRehash, passwordRefusal,
   mintRecoveryCode, codeForHashing,
@@ -265,8 +266,40 @@ export function accountView(player, nowS) {
     handle: player.handle ?? null,
     guestName: player.guest_name,
     createdAt: player.created_at,
+    // ACC4: the two facts on the profile card. `registeredAt` is null
+    // for a guest - there is no date to show, and 0 would be 1970.
+    registeredAt: Number.isSafeInteger(player.registered_at) ? player.registered_at : null,
+    playedS: Number.isSafeInteger(player.played_s) ? player.played_s : 0,
     muted: isMuted(player, nowS),
   };
+}
+
+/**
+ * ACC4 - ONE BEAT OF TIME PLAYED, credited by THIS clock.
+ *
+ * The client sends no number (src/net/playClock.js says why). The gap
+ * from the account's last beat to now is credited if it is positive and
+ * no wider than PLAY_GRACE_S; anything wider is a new sitting and
+ * credits nothing. Either way the beat becomes the last one.
+ *
+ * ONE STATEMENT, AND THAT IS THE CORRECTNESS. Read-then-write would let
+ * two tabs beating the same account both read the same `played_at` and
+ * both credit the same minutes. SQLite runs one UPDATE at a time, so
+ * the gap is always measured from whichever beat really landed last -
+ * two tabs count the wall clock once. `MAX` keeps a beat that arrives
+ * out of order from dragging the clock backwards.
+ */
+export async function creditPlay({ db, nowS }, playerId) {
+  const row = await db.prepare(
+    `UPDATE players SET
+       played_s = played_s + CASE
+         WHEN played_at IS NOT NULL AND ?1 > played_at AND ?1 - played_at <= ?2 THEN ?1 - played_at
+         ELSE 0 END,
+       played_at = MAX(COALESCE(played_at, ?1), ?1)
+     WHERE id = ?3
+     RETURNING played_s`,
+  ).bind(nowS, PLAY_GRACE_S, playerId).first();
+  return { playedS: Number.isSafeInteger(row?.played_s) ? row.played_s : 0 };
 }
 
 /**

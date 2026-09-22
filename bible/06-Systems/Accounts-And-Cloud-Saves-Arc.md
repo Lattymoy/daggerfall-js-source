@@ -2898,3 +2898,86 @@ believe.
 
 **Client-only — no relay change, no account-service change.** It ships
 with the site build and drops nobody.
+
+## ACC4 — registered date and time played on the profile card (2026-09-22)
+
+> Lets add an account registered date and time played to the icon profile
+
+### The registered date was already a column
+
+`registered_at` has been stamped by `register` since 0002. `accountView`
+now carries it as `registeredAt`, **null for a guest** — there is no date
+to show, and a 0 would print as 1970. The card draws a `Registered` row
+only when there is a date; a guest's `Kind` row already says why not.
+
+### Time played is measured by the service's clock, never the client's
+
+The obvious build is a counter in the tab that posts *"I played 300
+seconds"*. That is a number the client **asserts**, and ACC1g and ACC3
+settled what this project does with a client's word about itself.
+
+So a tab in the world sends a **beat with no number in it** every
+`PLAY_BEAT_S` (five minutes) while the page is visible
+(`src/net/playClock.js`). The service credits the gap from the account's
+last beat **by its own clock**, capped at `PLAY_GRACE_S` (two beats,
+derived). A gap wider than that is a new sitting and credits nothing —
+the tab was closed, the machine slept, the page sat hidden.
+
+- **A forged beat cannot credit more than real time.** The route never
+  reads the body.
+- **Two tabs, or two devices, count the wall clock once.** Each beat
+  measures from whichever beat really landed last. That is why
+  `creditPlay` is **one `UPDATE … RETURNING`**, not read-then-write: two
+  beats in flight together would both read the same last beat and both
+  add it. The pin drives exactly that race.
+- **A late, out-of-order beat credits nothing** and does not drag the
+  clock back (`MAX`).
+- **The cost, said plainly:** the tail of each sitting — under one beat —
+  is not counted, and the first beat of a sitting opens it rather than
+  crediting. That is the honest price of never believing a client about
+  a duration.
+- **Guest time counts.** Registering upgrades the same row, so every
+  minute a guest played is kept.
+- **Every existing row starts at zero.** Nothing counted time before
+  0005, so there is no history to derive from, and a backfill would be a
+  guess written down as a fact.
+
+The world host starts the clock once per page (bootWorld runs once),
+online or not — a signed-in player in a single-player world is still
+playing. The session is read at each beat, so signing in mid-sitting
+counts from the next knock. An `auth` answer to a beat is **left alone**:
+forgetting a dead session is the minter's and the card's job, each of
+which can say so on screen.
+
+### And a hole found on the way
+
+`account-deploy.yml` fires on a path filter, and that filter named
+`src/net/identityToken.js` as the one file outside `server-account/` the
+Worker bundles. It bundles **six**: the handle shape, the name filter,
+the wire, mat4 and the name tables as well. A change to any of those five
+shipped nowhere. The filter now lists all of them plus `playClock.js`,
+and `test/accountdeploy.test.js` **walks the Worker's import graph** and
+holds the filter to it, instead of naming one file. The walk moved from
+`relayversion.test.js` into `test/importGraph.mjs` so both Workers are
+read by the same law; the relay's hash is unchanged.
+
+- `server-account/migrations/0005_played.sql` — `played_s`, `played_at`.
+- `server-account/src/accounts.js` — `creditPlay`; `accountView` gains
+  `registeredAt` and `playedS`.
+- `server-account/src/index.js`, `service.js` — `POST
+  /v1/account/played`; `ACCOUNT_VERSION` `acct4` (and wrangler.toml).
+- `src/net/playClock.js` — `PLAY_BEAT_S`, `PLAY_GRACE_S`,
+  `startPlayClock`.
+- `src/net/accountClient.js` — `beatPlay`, `accountPlayBeat`.
+- `src/scenes/world.js` — the clock starts, gated on visibility.
+- `src/ui/enhancedAccount.js` — `registeredText`, `playedText`, the two
+  rows. It still styles nothing.
+- `.github/workflows/account-deploy.yml` — the filter; the smoke step
+  now beats a throwaway guest on real D1 and requires `playedS: 0`,
+  because `RETURNING` and numbered parameters are exactly the class of
+  thing node runs and a platform might not.
+- `test/acc4played.test.js` — 13 pins. `tools/mutants/acc4.json` — 15,
+  all dead.
+
+**Account service + site only.** The relay's bundle is untouched, so the
+relay deploy is a no-op and **drops nobody**.

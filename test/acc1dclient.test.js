@@ -282,7 +282,7 @@ test('ACC1d: the wire checks the token\'s SHAPE and nothing else - kept, absent,
 
 test('ACC1d: the host builds ONE minter and hands it to the presence session AND every channel link (mutant: a seam nothing calls)', () => {
   const w = rd('src/scenes/world.js');
-  assert.match(w, /import \{ accountTokenMinter, storedSession \} from '\.\.\/net\/accountClient\.js'/);
+  assert.match(w, /import \{ accountTokenMinter, storedSession(, [A-Za-z]+)* \} from '\.\.\/net\/accountClient\.js'/);   // ACC4: the same import carries the play beat too
   // NAME-ADOPT: and every answer's identity flows back onto the live
   // sessions - the half of this seam that was missing, which is why a
   // player saw their character's name while everybody else saw the handle.
