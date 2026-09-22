@@ -49,7 +49,9 @@ test('ENH-NOTICE3: three presenters, asked dungeon (20) before the modal modes (
   // own quest door reaches the same stack the moment `mode` reads
   // 'dungeon' and reads no `_live`, so no statement may run between
   // the flip and the adoption - the adoption comes first.
-  assert.match(modes, /\n      ctx\.goLive\?\.\(\);[^\n]*\n      mode = 'dungeon';\n/, 'mutants: worldModes never adopts (every dungeon box falls to the street for the whole visit); adopts after the flip (a gap the quest door can land a box in)');
+  // AUDIT-WH2 L1-F5: `mode` has ONE writer now; the ADOPTION ORDER is
+  // what this pin holds and it is unchanged.
+  assert.match(modes, /\n      ctx\.goLive\?\.\(\);[^\n]*\n      setMode\('dungeon'\);\n/, 'mutants: worldModes never adopts (every dungeon box falls to the street for the whole visit); adopts after the flip (a gap the quest door can land a box in)');
   // A PIN MUST FAIL (re-audit C11): exactly ONE adoption call in the
   // mode machine and exactly ONE write of `_live` in the context - a
   // second `goLive` before the build's awaits, or a `_live = true`

@@ -420,8 +420,8 @@ test('EOTB-IL: AutoTogglePerspective ships DISARMED - the sum of nine Don\'tChan
   closeLane();
   assert.equal(mwViewTransition('Interior'), false, 'off the lane the door does nothing');
   const wm = rd('src/scenes/worldModes.js');
-  assert.match(wm, /mode = 'interior';\s*\n\s*host\.unlockOn\?\.\(\);[^\n]*\n\s*mwViewTransition\('Interior'\);/);
-  assert.match(wm, /mode = 'dungeon';\s*\n\s*host\.unlockOn\?\.\(\);[^\n]*\n\s*mwViewTransition\('Interior'\);/, 'OnTransitionDungeonInterior (IL_06bf)');
+  assert.match(wm, /setMode\('interior'\);\s*\n\s*host\.unlockOn\?\.\(\);[^\n]*\n\s*mwViewTransition\('Interior'\);/);   // AUDIT-WH2 L1-F5: the flip is setMode now - the ORDER this pin holds is unchanged
+  assert.match(wm, /setMode\('dungeon'\);\s*\n\s*host\.unlockOn\?\.\(\);[^\n]*\n\s*mwViewTransition\('Interior'\);/, 'OnTransitionDungeonInterior (IL_06bf)');
   assert.equal((wm.match(/mwViewTransition\('Exterior'\)/g) ?? []).length, 2, 'the building\'s exit and the dungeon\'s (IL_06e1)');
 });
 

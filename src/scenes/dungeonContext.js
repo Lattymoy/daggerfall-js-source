@@ -193,8 +193,11 @@ import { flashPlayerDamage } from '../ui/damageFlash.js';
 import { resetVitalsDetector } from '../ui/hudVitals.js';   // BLOOD AUDIT 5: the load's detector reset   // AUDIT 24 (wave 39): ShowPlayerDamage
 import { activeMemberships } from '../systems/guilds.js';   // F117
 import { avoidDeath, AVOID_DEATH_TEXT } from '../systems/guildServices.js';   // F117: Stendarr
-import { pickActivatableHit, RAY_DISTANCE, TREASURE_ACTIVATION_DISTANCE } from '../player/activate.js';   // PX21c: the hover runs the take's own pick; AUDIT 65 MC-2: the ray's reach, and each family's own
-import { showLootHover, destroyLootHover } from '../ui/lootHover.js';   // PX21c
+import { activationTargets, liveFoeTargets, liveFoeFor, pickActivatableHit, RAY_DISTANCE, TREASURE_ACTIVATION_DISTANCE } from '../player/activate.js';
+import { raceWinner } from '../player/activationRace.js';   // WORLD-HOVER H2: the ONE precedence the press and the plaque share
+import { composeActivationTargets, composeNamer } from '../systems/worldHover.js';
+import { worldTooltipsOn, hideInteractTooltip, corpseName, mobileEntityName, liveEntityName, lootPileName, actionName, actionDoorName } from '../systems/worldTooltips.js';   // WORLD-HOVER: the mod's ladder, arm by arm   // WORLD-HOVER: the composition law is pure, so it lives with the model and can be DRIVEN   // WORLD-HOVER: the ONE construction seam composes the action objects' targets here; AUDIT 65 MC-2: the ray's reach, and each family's own
+import { worldHoverFrame, destroyWorldPlaque } from '../ui/worldPlaque.js';   // PX21c, WORLD-HOVER: one seam, one plaque
 import { isEnhanced } from '../systems/uiSkin.js';
 import { combatVisualsOn, foeDraw, markConcealedHit } from '../systems/combatVisuals.js';   // ECV1: what the enhanced skin draws for a concealed foe
 import { UnderwaterFog } from '../render/underwaterFog.js';   // ROAD-B (b3): UnderwaterFog.cs, called from PlayerEnterExit.Update's dungeon guard
@@ -229,7 +232,7 @@ const q3 = (v) => Math.round(v * 1000) / 1000; const GENDER_BIT = ['male', 'fema
 const HIT_POS_MAX = 1e6;
 // AUDIT FOES FOE5: the most damage one peer's blow may claim. The host TRUSTS the number (it never recomputes - the
 // striker's own calc is the game's), so without a bound any joiner could one-shot every foe in the room and empty it
-// through the kill door. The exterior twin has carried this bound since WORLD6b (exteriorFoes.js:1707); the dungeon
+// through the kill door. The exterior twin has carried this bound since WORLD6b (exteriorFoes.js:1858); the dungeon
 // had none. Past anything a legal swing, shaft or blast can roll.
 const HIT_DMG_MAX = 10000;
 /** AUDIT WORLD3 E3: can the ONE build chain actually stand this species? Both of buildFoeAt's branches need a truthy
@@ -549,13 +552,13 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
           // logic object; the model stays static (draw + collider
           // below). Origin = the placement translation (CastSpell
           // fires missiles from here, +40*GlobalScale up, verbatim).
-          const eo = actions.addEffect(bi, p.position, p.action, [matrix[12], matrix[13], matrix[14]]);
+          const eo = actions.addEffect(bi, p.position, p.action, [matrix[12], matrix[13], matrix[14]], p.modelIdNum);
           eo.aabb = aabb;   // collision triggers test against this
         } else {
           // Relay: the delegate is routed (Teleport/text) or a
           // verbatim no-op; the CHAIN through it must live, and its
           // collider makes it a Direct/Attack/collision target.
-          actions.addRelay(bi, p.position, p.action, aabb, [matrix[12], matrix[13], matrix[14]]);
+          actions.addRelay(bi, p.position, p.action, aabb, [matrix[12], matrix[13], matrix[14]], p.modelIdNum);
         }
       }
       // A1: the entry carries its identity (the action system's own
@@ -1603,7 +1606,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // owned, and destroy() hands it back (the _prevPassiveHost idiom this
   // file already uses for its other process-global seams). A bare null
   // would not do: on ?world and ?exterior the previous holder is the
-  // host's own townTalk sink (world.js:8215 / exterior.js:3345), set
+  // host's own townTalk sink (world.js:8345 / exterior.js:3426), set
   // once at boot and never again, so nulling on the way out of the
   // first dungeon would silently un-file every mid-screen label above
   // ground for the rest of the session - MC-1's own bug, re-opened.
@@ -1739,7 +1742,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   let lastPlayerFeet = null, lastPlayerHeight = CAPSULE_HEIGHT;   // ROAD-H H2: the LIVE player capsule the last frame carried - explodeAt measures the AoE sphere against it (DaggerfallMissile.cs:481)
   // (enhancedNav is declared beside `foes` at the top of this function -
   // see the note there for why it cannot live here.)
-  let _hoverAt = 0;   // PX21c: the plaque's 10Hz cadence   // S11: the save position
+  // S11: the save position
   let debugHud = false;   // F8 diagnostics
   let _motorState = '';
   let _motorYaw = 0;   // A1: the automap window's player-arrow heading
@@ -2114,7 +2117,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // copied mount would have diverged the first time an arm grew.
   /** DR1: THE TWO SPELL WINDOWS THIS HOST MOUNTS NOW, and the one door
    *  they go through. `mountSpellWindow` is worldModes'
-   *  mountSpellWindow DUNGEON ARM (worldModes.js:1129,
+   *  mountSpellWindow DUNGEON ARM (worldModes.js:1186,
    *  `dungeonCtx?.showOverlay(win)`) resolved to what it actually
    *  calls here - this file's own pushDungeonWindow, which IS
    *  UserInterfaceManager.PushWindow. So a spell window raised over an
@@ -2624,7 +2627,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // NEXT updateMissiles pass to fill. But the push lands in a
     // MICROTASK - this is async and its one caller does not await it -
     // and both hosts draw dynamicDraws BEFORE they call drawFoes
-    // (dungeon.js:1001 against :1039; worldModes.js:6273 against :6273).   // QS6: both pairs' SECOND half was stale before this slice - they named neither `drawFoes` call, and a positional bump would have moved a wrong number by the right offset; re-resolved by content
+    // (dungeon.js:1048 against :1078; worldModes.js:7425 against :7449).   // QS6: both pairs' SECOND half was stale before this slice - they named neither `drawFoes` call, and a positional bump would have moved a wrong number by the right offset; re-resolved by content
     // So the very next frame drew the arrow with a NULL matrix, and
     // `uniformMatrix4fv(uModel, false, null)` throws - Float32List is
     // a non-nullable WebIDL union. Firing a bow killed the frame loop,
@@ -3188,8 +3191,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
               // AUDIT 39 (#64) / THE FOUR HOSTS RULE - SHIPPED (wave D):
               // this host was the FOURTH BODY of the player-arrow law
               // and is now the fourth CALLER. combat/arrowFlight.js's
-              // playerArrowHitFoe is the one copy world.js:11442,
-              // exterior.js:4805 and worldModes.js:6433 already ran;
+              // playerArrowHitFoe is the one copy world.js:11591,
+              // exterior.js:4908 and worldModes.js:7005 already ran;
               // the flag said the divergence would bite and it already
               // had. This copy splashed at the ARROW TIP
               // (`[m.pos[0], m.pos[1], m.pos[2]]`) on the claim that
@@ -3543,7 +3546,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     if (!_authority || !data || typeof data !== 'object') return false;
     const i = data.i | 0, dmg = Number(data.dmg);
     const f = foes[i];
-    // AUDIT FOES FOE5: BOUNDED, as the exterior twin's applyHit is (exteriorFoes.js:1707). The number is a peer's
+    // AUDIT FOES FOE5: BOUNDED, as the exterior twin's applyHit is (exteriorFoes.js:1858). The number is a peer's
     // word and the host trusts it without recomputing, so an unbounded one let any joiner one-shot every foe in the
     // room - and, through the kill door, empty it. 10000 is past anything a legal swing, shaft or blast can roll.
     if (!f || i >= _layoutFoes || f.dead || !Number.isFinite(dmg) || dmg < 0 || dmg > HIT_DMG_MAX) return false;
@@ -4022,7 +4025,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // InstantiatePrefab's a fresh GameObject per saved record, so
     // EnemyEntity's `PickpocketByPlayerAttempted` default is the loaded
     // truth for every enemy. The re-minting pools match that by
-    // construction (exteriorFoes.js:1346's restoreWorld goes through
+    // construction (exteriorFoes.js:1497's restoreWorld goes through
     // spawnFoe), but this host patches the LIVE foes in place, so a
     // same-dungeon reload kept a raised latch and a failed pickpocket
     // could never be retried - falsifying the law
@@ -4642,30 +4645,91 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     hitEffects.bleedPlayer(dt, playerFeet, playerEntity);   // BLOOD2e: and the player's own blood, at the feet
     droppedTorches.tick(dt);   // HT1: the burn, the flight, the flames
     camps.tick(dt);   // SURV3: the fires burn down
-    // PX21c: THE HOVER PLAQUE, from the frame function both dungeon
-    // hosts already call - the splash clock's reasoning, one slice on.
-    // It runs the SAME pick the take runs, at 10Hz rather than every
-    // frame (a raycast over every pile and corpse is not free, and a
-    // plaque that answers within a tenth of a second answers instantly
-    // to a player). Enhanced skin only: the classic HUD says nothing
-    // about a pile until you open it, which is Daggerfall's own answer.
-    _hoverAt += dt;
-    if (_hoverAt >= 0.1) {
-      _hoverAt = 0;
-      let key = null;
-      if (isEnhanced() && eye) {
-        const dir = [-view[2], -view[6], -view[10]];
-        // AUDIT 65 MC-2: the pick now reaches as far as the RAY does,
-        // so the plaque must apply the handler's own reach itself -
-        // the player can SEE a pile across the room and cannot open
-        // it, and DFU's HUD says nothing about one until you activate.
-        const hit = pickActivatableHit(eye, dir, api.lootTargets(), collider);
-        const k = hit && hit.distance <= hit.reach ? hit.key : null;
-        if (k && (k.startsWith('loot:') || k.startsWith('corpse:') || k.startsWith('droppedLoot:'))) key = k;
-      }
-      showLootHover(key, key ? api.lootContents(key) : null,
-        key?.startsWith('corpse:') ? 'Remains' : 'Loot');
-    }
+    // PX21c / WORLD-HOVER: THE HOVER PLAQUE, from the frame function
+    // both dungeon hosts already call - the splash clock's reasoning,
+    // one slice on. It runs the SAME pick the take runs, so it cannot
+    // disagree with what pressing the button would open. Enhanced skin
+    // only: the classic HUD says nothing about a pile until you open
+    // it, which is Daggerfall's own answer.
+    //
+    // EVERY FRAME NOW, not at 10 Hz. PX21c throttled it because "a
+    // raycast over every pile and corpse is not free" - the cost was
+    // guessed, and the guess was wrong by two orders of magnitude.
+    // Measured on this pick: one collider ray is ~3 us and the whole
+    // tick over `lootTargets()` is ~3 us more, which is 0.0005 ms of a
+    // 16.7 ms frame. What the throttle bought was nothing; what it cost
+    // was a plaque that lagged the crosshair by up to a tenth of a
+    // second, so sweeping past a rack of barrels named them out of step
+    // with the reticle and the name stuck after you looked away.
+    //
+    // AND THE OTHER HALF, CORRECTED (AUDIT-WH P4). This block used to
+    // end "`lootTargets()` is 18 entries and is not [expensive]", and
+    // eight lines below it the call hands over
+    // `dungeonActivationTargets()` - which is `lootTargets()` PLUS
+    // `activationTargets(actions.objects)`, and that is a full VERTEX
+    // WALK per action object per frame (AUDIT 63 F37's live-pose law:
+    // `objectAabb` -> `worldAabb` over the model's positions, because
+    // a lever that has swung must not be picked at the box it had
+    // before it swung). A justification resting on a number the next
+    // statement invalidates is worse than none.
+    //
+    // MEASURED, normalized: 0.068 ms for 62 objects at ~78 verts, and
+    // 0.582 ms for 150 at ~300 - so a busy RDB level costs about 3.5%
+    // of a 16.7 ms frame here, not 0.0005%. It is still worth paying,
+    // and the reason is the one this seam exists for: this is the
+    // SAME list the press races, and a cheaper list of the plaque's
+    // own would be a second answer to "what is under the crosshair".
+    // The throttle is still the wrong saving - it bought 90% of a cost
+    // that is dominated by the list, not the ray, and paid for it in a
+    // readout that lagged the reticle.
+    //
+    // THE CACHE THIS DOES NOT HAVE, and why: the exterior host's door
+    // cache keys on a GENERATION the host bumps at three discrete
+    // events. An action object has no such event - it moves whenever
+    // its animation does - so the only correct cache here would key on
+    // every object's matrix, which is the walk it would be replacing.
+    // The exterior hosts hand over a list they hold anyway; this one
+    // is built, and that is the honest cost of the law above.
+    //
+    // (The expensive half of a hover in this port is BUILDING the
+    // target list, not casting the ray - which is why the seam takes a
+    // thunk and the hosts with real lists hand over one they are
+    // holding anyway.)
+    worldHoverFrame({
+      eye,
+      dir: eye ? [-view[2], -view[6], -view[10]] : null,
+      // the SAME list the press races - one seam, so the plaque cannot
+      // name what the button ignores...
+      // WORLD-HOVER H2: ...and the LIVE BODIES beside it, which are in
+      // no target list at all. `tryMobileEnemyActivate` sweeps the pool
+      // itself and the press takes a foe only when it is STRICTLY
+      // nearer than the list's winner; standing one IN the list would
+      // eat the click in silence, because no press arm reads that key.
+      // So it is raced here, through the one precedence `raceWinner`
+      // spells, where the list wins a tie as the strict `<` does.
+      pick: () => {
+        const d = eye ? [-view[2], -view[6], -view[10]] : null;
+        if (!d) return null;
+        return raceWinner({
+          ground: pickActivatableHit(eye, d, api.dungeonActivationTargets(), collider),
+          foe: pickActivatableHit(eye, d, liveFoeTargets(foes, 'mobileFoe'), collider),
+        });
+      },
+      collider,
+      canvas,
+      // AUDIT-WH H4: THE PLAQUE'S OWN WORD, not a scheduling accident.
+      // The record claimed the dungeon's "only runs with no overlay up"
+      // had been replaced by law and it had not - this call had no
+      // `cursorActive` at all, and both dungeon hosts return above
+      // `drawFoes` when an overlay is live, so the law was still the
+      // accident. Those returns take it down now (`hideWorldPlaque`
+      // beside `hideHudText`); this is the belt, and it is the CONTEXT's
+      // own answer - a host with a window of its own over the dungeon
+      // (townTalk's slot) hides it on its own branch.
+      cursorActive: dungeonPaused(),
+      contents: api.lootContents,
+      name: api.hoverName,   // WORLD-HOVER: the mod's ladder, the port's own objects, then whatever the host stands
+    });
     const _mobileBatches = [];   // C11: the frame's live sprite-mobile quads
     if (playerFeet) { lastPlayerFeet = [...playerFeet]; lastPlayerHeight = playerHeight; }   // ROAD-H H2: the enemy AoC blast reads the player's live capsule through castEnemySpell
     // ENHANCED AI 3b: ONE BAKE PER DUNGEON, off the frame, once the
@@ -5406,6 +5470,140 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // host is told ONCE, not once a frame for the rest of the visit.
   let _clearedCheckT = 0, _clearedSent = false;
   const CLEARED_CHECK_INTERVAL_S = 5;
+
+  // WORLD-HOVER hoisted this OUT of the api literal: the construction
+  // seam below composes it, and a method reaching back through `api`
+  // inside `api`'s own initialiser is the TDZ shape the boot gate
+  // refuses (test/tdz_selfreference.test.js). A named function is what
+  // both of them call, and `api.lootTargets` below is the same one.
+  // S2 pickup: piles + dead foes' corpses as activation targets;
+  // U26: activating one now OPENS THE INVENTORY with the pile as the
+  // remote target, which is what PlayerActivate does - the old
+  // takeLoot vacuumed everything in one keypress.
+  function lootTargets() {
+    const targets = [];
+    // AUDIT 65 MC-2: every kind here competes for the ray at the
+    // RAY's reach (PlayerActivate.cs:76/:314) and carries its own
+    // handler constant beside it, because the refusal is spoken
+    // INSIDE the handler - ActivateLootContainer's
+    // `hit.distance > TreasureActivationDistance` (:868-873) and the
+    // corpse arm's `hit.distance > CorpseActivationDistance`
+    // (:936-941), each SetMidScreenText(youAreTooFarAway). Dropping
+    // the target at the pick, as the port did, answers with silence
+    // and lets the click fall through to whatever stood behind it.
+    lootPiles.forEach((p, i) => {
+      if (!p.batch) return;
+      const [hx, hy] = p.half;
+      targets.push({ key: `loot:${i}`, aabb: { min: [p.pos[0] - hx, p.pos[1], p.pos[2] - hx], max: [p.pos[0] + hx, p.pos[1] + hy * 2, p.pos[2] + hx] }, distance: RAY_DISTANCE, reach: TREASURE_ACTIVATION_DISTANCE });
+    });
+    foes.forEach((f, i) => {
+      if (!f.dead || !f.entity?.items?.length) return;
+      const p = f.ai.feet;
+      // PlayerActivate.cs:85/:938 - a corpse has its OWN reach,
+      // CorpseActivationDistance = 150 * GlobalScale = 3.75, not the
+      // 128-unit default the loot piles use.
+      targets.push({ key: `corpse:${i}`, aabb: { min: [p[0] - 0.5, p[1], p[2] - 0.5], max: [p[0] + 0.5, p[1] + 0.6, p[2] + 0.5] }, distance: RAY_DISTANCE, reach: CORPSE_ACTIVATION_DISTANCE });
+    });
+    targets.push(...droppedLoot.lootTargets());   // U26: the player's own drops
+    targets.push(...droppedTorches.targets());   // HT1: the dropped torches, at the mod's 3.2
+    targets.push(...camps.targets());   // SURV3: the fires, at the same 3.2
+    return targets;
+  }
+
+  // WORLD-HOVER: the host-registered halves of the activation target
+  // list and of the naming ladder (see addActivationTargets and
+  // addActivationNamer below). The context's own namer runs LAST, so a
+  // host can override a word for a family it stands differently.
+  const _hostTargets = [];
+  const _hostNamers = [];
+
+  /**
+   * The context's own arm of the naming ladder: World Tooltips' words
+   * for what a dungeon stands, each cited to the mod's source.
+   *
+   * It answers NOTHING it does not know, which is the mod's own
+   * behaviour (an empty `ret` leaves the tooltip down, .cs:169-172) and
+   * what stops an unported family labelling itself with its key string.
+   */
+  function _dungeonHoverName(key) {
+    // AUDIT-WH2 L2-F5: C1's guard. The exterior ladder got it when C1
+    // shipped and the other three did not; this one is reached through
+    // `addActivationNamer`, which the tree documents as the door a third
+    // party would use, so it must survive a key it did not mint.
+    if (typeof key !== 'string') return null;
+    const modOn = worldTooltipsOn();
+    const hide = hideInteractTooltip();
+    // PX21c's loot rows come first and are NOT the mod's - they are
+    // the port's own departure and predate its arrival, so they answer
+    // whether the mod is switched on or off.
+    if (key.startsWith('corpse:')) {
+      const f = foes[Number(key.split(':')[1])];
+      // .cs:526 - the entity's name and "(dead)".
+      return f ? { title: corpseName(enemyDisplayName(f.mobileType)) } : null;
+    }
+    if (key.startsWith('loot:') || key.startsWith('droppedLoot:')) {
+      // .cs:534-548 - a pile of ONE is named by that one item; the
+      // port lists the rest UNDER this title rather than stopping here.
+      return { title: lootPileName(api.lootContents(key)) };
+    }
+    if (!modOn) return null;
+    // .cs:304-312 - a LIVE entity is `Entity.Name`, and only when its
+    // motor says it is not hostile. Keyed by INDEX, as this pool's
+    // corpses are: a dungeon's foe list is never spliced.
+    if (key.startsWith('mobileFoe:')) {
+      const f = liveFoeFor(foes, key, 'mobileFoe');
+      if (!f) return null;
+      const t = mobileEntityName(liveEntityName(f, enemyDisplayName(f.mobileType)), { hostile: !!f.ai?.isHostile });
+      return t ? { title: t } : null;
+    }
+    if (key.startsWith('door:') || key.startsWith('act:')) {
+      const o = actions.objects.get(key) ?? null;
+      if (!o) return null;
+      // .cs:641-650 - an action door says "Door", and its lock level
+      // when it is locked. DaggerfallActionDoor.IsLocked is
+      // currentLockValue > 0.
+      if (o.kind === 'door') return actionDoorName((o.currentLockValue ?? 0) > 0, o.currentLockValue ?? 0);
+      // .cs:400-471 - Direct/Direct6/MultiTrigger only, by model id.
+      const t = actionName(o.triggerFlag, o.modelIdNum, { hideInteract: hide });
+      return t ? { title: t } : null;
+    }
+    return null;
+  }
+  /**
+   * AUDIT-WH M10: THE EXTENSION NAMERS RUN FIRST, and the mod's own
+   * ladder last.
+   *
+   * That is the mod's documented order - `EnumerateCustomHoverText`
+   * is the FIRST statement of the tooltip body (.cs:285) and the bands
+   * below it are guarded on `IsNullOrEmpty(ret)`, so a registered namer
+   * wins outright - and the port had it inverted: the dungeon's
+   * own ladder ran ahead of the torches, the camps and whatever the
+   * host stands.
+   *
+   * AUDIT-WH2 L4-F2: "every band" was too strong and is corrected
+   * above. The `DefaultActivationDistance` block at .cs:397 opens on
+   * the distance alone, with no `IsNullOrEmpty(ret)` beside it - it is
+   * the one band that would run under a filled `ret`, and its own arms
+   * then overwrite it. It does not change this ordering (the extension
+   * namers are still first and still win every band that IS guarded);
+   * it is simply not true of all of them, and systems/worldTooltips.js
+   * already states it correctly.
+   *
+   * It is INERT TODAY, because the key sets are disjoint - nothing a
+   * torch or a camp answers is a key `_dungeonHoverName` knows. That
+   * is exactly why it is worth fixing rather than noting: the day a
+   * host stands a family whose key this context also names, the
+   * precedence decides it, and a precedence that only becomes
+   * observable at the moment it goes wrong is the FONT1 two-faces
+   * shape. The interior and the exterior arms already run their host
+   * namers first; this makes the three agree.
+   */
+  const _namer = composeNamer([
+    (key) => droppedTorches.hoverName?.(key) ?? null,   // HT1, through the mod's extension API
+    (key) => camps.hoverName?.(key) ?? null,            // SURV3/HEARTH1, likewise
+    (key, hit) => composeNamer(_hostNamers)(key, hit),  // ...and whatever the host stands
+    _dungeonHoverName,                                  // ...then the mod's own ladder (.cs:285-296)
+  ]);
 
   const api = {
     // AUDIT 19 / 1:1: SelectCurrentSong's dungeon arm seeds DFRandom with
@@ -6585,39 +6783,69 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         && !(pn.action && (pn.action.actionFlag === ACTION_FLAGS.ShowText
           || pn.action.actionFlag === ACTION_FLAGS.ShowTextWithInput)));
     },
-    // S2 pickup: piles + dead foes' corpses as activation targets;
-    // U26: activating one now OPENS THE INVENTORY with the pile as the
-    // remote target, which is what PlayerActivate does - the old
-    // takeLoot vacuumed everything in one keypress.
-    lootTargets() {
-      const targets = [];
-      // AUDIT 65 MC-2: every kind here competes for the ray at the
-      // RAY's reach (PlayerActivate.cs:76/:314) and carries its own
-      // handler constant beside it, because the refusal is spoken
-      // INSIDE the handler - ActivateLootContainer's
-      // `hit.distance > TreasureActivationDistance` (:868-873) and the
-      // corpse arm's `hit.distance > CorpseActivationDistance`
-      // (:936-941), each SetMidScreenText(youAreTooFarAway). Dropping
-      // the target at the pick, as the port did, answers with silence
-      // and lets the click fall through to whatever stood behind it.
-      lootPiles.forEach((p, i) => {
-        if (!p.batch) return;
-        const [hx, hy] = p.half;
-        targets.push({ key: `loot:${i}`, aabb: { min: [p.pos[0] - hx, p.pos[1], p.pos[2] - hx], max: [p.pos[0] + hx, p.pos[1] + hy * 2, p.pos[2] + hx] }, distance: RAY_DISTANCE, reach: TREASURE_ACTIVATION_DISTANCE });
-      });
-      foes.forEach((f, i) => {
-        if (!f.dead || !f.entity?.items?.length) return;
-        const p = f.ai.feet;
-        // PlayerActivate.cs:85/:938 - a corpse has its OWN reach,
-        // CorpseActivationDistance = 150 * GlobalScale = 3.75, not the
-        // 128-unit default the loot piles use.
-        targets.push({ key: `corpse:${i}`, aabb: { min: [p[0] - 0.5, p[1], p[2] - 0.5], max: [p[0] + 0.5, p[1] + 0.6, p[2] + 0.5] }, distance: RAY_DISTANCE, reach: CORPSE_ACTIVATION_DISTANCE });
-      });
-      targets.push(...droppedLoot.lootTargets());   // U26: the player's own drops
-      targets.push(...droppedTorches.targets());   // HT1: the dropped torches, at the mod's 3.2
-      targets.push(...camps.targets());   // SURV3: the fires, at the same 3.2
-      return targets;
+    /**
+     * WORLD-HOVER: THE ONE CONSTRUCTION SEAM for this dungeon's
+     * activation targets.
+     *
+     * The list was built inline in TWO places against this same
+     * context - the modal host's dungeon arm (scenes/worldModes.js)
+     * and the standalone dev door's (scenes/dungeon.js) - and the
+     * hover would have been a third. That is the failure AUDIT 17i
+     * names: a family added later is seen by whichever builder its
+     * author happened to be looking at, and the other two go on
+     * quietly answering an older world.
+     *
+     * The context composes what the context OWNS - the action objects
+     * and `lootTargets` (piles, corpses, the player's own drops, the
+     * dropped torches, the camps). Everything else a host stands - its
+     * exit doors, its quest stands, its static NPCs - the host
+     * REGISTERS, once, at mount.
+     *
+     * Registering rather than taking an options bag is the whole
+     * point. A host that cannot ANSWER a family must not stand it:
+     * the standalone `?dungeon` door has no world to exit to and no
+     * `exit:` or `person:` arm in its ladder, so such a target would
+     * win the pick and eat the press in silence. That difference
+     * between the two hosts is real today and entirely invisible -
+     * it IS the difference between two hand-copied lists. Here it is
+     * one line at each mount, and the hover inherits it for free,
+     * which is what stops the plaque naming something the button
+     * ignores.
+     */
+    addActivationTargets(fn) {
+      if (typeof fn !== 'function') return () => {};
+      _hostTargets.push(fn);
+      return () => { const i = _hostTargets.indexOf(fn); if (i >= 0) _hostTargets.splice(i, 1); };
     },
+    /** WORLD-HOVER: the naming half of the same seam - the mod's own
+     *  extension API (vendor .cs:228-257), insertion order, first
+     *  answer with a title wins. A host registers a namer for each
+     *  family it registered targets for, so the two halves cannot
+     *  drift apart: a family nobody stands is a family nobody names. */
+    addActivationNamer(fn) {
+      if (typeof fn !== 'function') return () => {};
+      _hostNamers.push(fn);
+      return () => { const i = _hostNamers.indexOf(fn); if (i >= 0) _hostNamers.splice(i, 1); };
+    },
+    /**
+     * WORLD-HOVER: THE DUNGEON'S OWN WORDS - World Tooltips' ladder
+     * (systems/worldTooltips.js) over the families this context owns,
+     * then the port-own objects through the mod's extension API, then
+     * whatever the HOST registered. Insertion order is priority and
+     * the first answer with a title wins, which is the mod's own law
+     * (vendor .cs:228-257).
+     *
+     * Everything the mod names is gated on ITS switch; the loot rows
+     * are PX21c's and are not, which is why `loot:`/`corpse:`/
+     * `droppedLoot:` still answer with the switch off. That split is
+     * recorded on the mod's Features row in as many words.
+     */
+    hoverName(key, hit) { return _namer(key, hit); },
+    dungeonActivationTargets() {
+      // effects ride their precomputed aabb (crash fix, audit 2026-08-16)
+      return composeActivationTargets([...activationTargets(actions.objects), ...lootTargets()], _hostTargets);
+    },
+    lootTargets,
     /** PX21c: what a loot key HOLDS, without opening it - the same
      *  three kinds takeLoot resolves, read-only, for the hover plaque.
      *  It shares takeLoot's own key vocabulary rather than inventing a
@@ -6640,7 +6868,18 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       const [kind, iStr] = key.split(':');
       const i = Number(iStr);
       if (kind === 'droppedTorch') return droppedTorches.activate(key, mode) ? 1 : 0;   // HT1: PickUpLightSource
-      if (kind === 'camp') return camps.activate(key, mode) ? 1 : 0;   // SURV3: the fire's menu, or its name
+      // SURV3: the fire's menu, or its name. AUDIT-WH2 L2-F1: and a
+      // `hearth:` beside it - HEARTH1 says all FOUR HOSTS collect the
+      // world fires and stand a ray target that opens the cooking list,
+      // and the dungeon collected them (dungeonHearths, off the RDB
+      // flats), stood them (camps.targets()) and named them ('Fire')
+      // without ever growing the arm that answers. `camps.activate`
+      // already routes both keys; only this line was missing, so E on a
+      // brazier fell through to the ActionSystem, matched no object,
+      // and was CONSUMED - no cooking list, no Info line, and nothing
+      // behind it activated either. The same object opens the list
+      // outdoors and indoors.
+      if (kind === 'camp' || kind === 'hearth') return camps.activate(key, mode) ? 1 : 0;
       let source = null;
       let onEmptied = null;
       let lootHooks = null;   // G5: DaggerfallLoot's identity, per kind
@@ -6708,7 +6947,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       _unregisterPresenter();   // ENH-NOTICE3: the registration leaves with the context (the dead latch above is what REFUSES a box in the meantime - pushDungeonWindow reads it, AUDIT ENH-NOTICE3 F2)
       // PX21c: the plaque leaves with the host that raised it - AFTER
       // the latch, which NT1 pins as the first act of this function.
-      destroyLootHover();
+      destroyWorldPlaque();
       // A1: OnTransitionToDungeonExterior's automap half - marks the
       // player outside and, at AutomapNumberOfDungeons = 0, forgets
       // the map the moment you leave (Automap.cs:2530-2534).

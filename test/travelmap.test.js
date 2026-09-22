@@ -299,7 +299,12 @@ test('U41: the world host mounts the art window and keeps performFastTravel\'s o
   // PIN MOVED (BLOOD1 AUDIT 2), 4000 -> 4900: the sweep clears the
   // splash pool and its ring beside the missiles and the arrows, with
   // its own note, above the needles.
-  const core = src.slice(k, k + 4900);
+  // PIN MOVED (AUDIT-WH P9), 4900 -> 5800: the door cache's
+  // invalidation is STATED here now - `state.init` re-anchors the
+  // floating origin and returns no offset, so the recenter bump cannot
+  // see it, and the teleport was safe only because the destroy loop
+  // above happens to run first.
+  const core = src.slice(k, k + 5800);
   for (const needle of ['destroyPixel(bx, by)', 'state.init(px, py)', 'buildPixel(first.px']) {
     assert.ok(core.includes(needle), `the core carries ${needle}`);
   }

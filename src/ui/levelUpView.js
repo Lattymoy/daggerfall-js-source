@@ -132,7 +132,7 @@ export const ATTRIBUTE_BLURB = Object.freeze({
   intelligence: 'Sets your pool of spell points, by your class\'s own multiplier.',
   // systems/spellcast.js:158 - `saving += magicResist(liveStat(target,
   // 'willpower'))`, the CONSUMER of DFU's MagicResist. The first cut
-  // cited systems/quest/questMacros.js:575, which only PRINTS the same
+  // cited systems/quest/questMacros.js:595, which only PRINTS the same
   // figure for %mr, and a display is not evidence that a number does
   // anything (LV1's audit).
   willpower: 'Hardens you against magic: a tenth of it goes into every saving throw.',

@@ -197,6 +197,27 @@ export function createCamps({
     return out;
   }
   const forKey = (key) => camps.find((c) => `camp:${c.rec.id}` === key) ?? null;
+  /** WORLD-HOVER: the port's OWN world objects, named through World
+   *  Tooltips' extension API (vendor .cs:228-257) rather than wedged
+   *  into its ladder - the mod has no word for a camp because
+   *  Daggerfall has no camps. A tent and its fire share one `camp:`
+   *  key (two boxes, one subject), so the kind decides the word; a
+   *  `hearth:` is any world fire, which HEARTH1 stood a box on. */
+  function hoverName(key) {
+    // AUDIT-WH C1: the type guard `activate` eleven lines below has
+    // carried since HEARTH1, and this did not. The EXTERIOR door key is
+    // a bare NUMBER (worldModes' `key: i`), this namer is rung one of
+    // the host ladder, and that ladder runs ABOVE exteriorHoverName's
+    // own `typeof key === 'number'` test - so `key.startsWith` threw
+    // inside the frame body and killed requestAnimationFrame on the
+    // commonest interaction in a town. A namer is handed EVERY key the
+    // ray can win, not only the ones this module mints.
+    if (typeof key !== 'string') return null;
+    if (key.startsWith('hearth:')) return { title: 'Fire' };
+    const c = forKey(key);
+    if (!c) return null;
+    return { title: c.rec.kind === CAMP_KIND.Tent ? 'Camp' : 'Campfire' };
+  }
   /** Info and Talk name it; Grab and Steal open the menu. */
   function activate(key, mode) {
     // HEARTH1: a world fire is not a camp. It cannot be rested AT as an
@@ -348,7 +369,7 @@ export function createCamps({
   }
 
   return {
-    placeItem, tick, batches, lights, draw, targets, activate, openMenu, openCook, byFire, campAt,
+    placeItem, tick, batches, lights, draw, targets, hoverName, activate, openMenu, openCook, byFire, campAt,
     destroyAll, collectPixel, offsetAll, snapshot, restore, wireRecords, applyOwner, sweepOwners,
     get camps() { return camps; }, own,
   };

@@ -225,6 +225,19 @@ export async function loadHud({ fetchBytes, ImgFile, palette, renderer }) {
 let lastLargeHudBar = null;
 export const largeHudBar = () => lastLargeHudBar;
 
+/** WORLD-HOVER: WHERE THE RETICLE IS, for anything that must stand
+ *  beside it. This module's own comment already says the geometry
+ *  constants live here and that hudCrosshair must not import back into
+ *  it - so the plaque under the crosshair asks the same question the
+ *  crosshair's own draw asks, off the same two terms, rather than four
+ *  hosts each passing a scale and a bar height they would have to keep
+ *  in step by hand. Both are pure of the frame: `hudScale` is a
+ *  function of the canvas, and the docked bar is latched above. */
+export const hudReticle = (canvas) => ({
+  scale: hudScale(canvas?.width ?? 0, canvas?.height ?? 0),
+  largeHudHeight: dockedLargeHudHeight(lastLargeHudBar),
+});
+
 // U46 - THE ACTIVE-SPELL ICONS. One blink clock and one tooltip for
 // the whole game, because DFU has one HUD: four hosts each counting
 // their own phase would strobe when the player walks through a door.

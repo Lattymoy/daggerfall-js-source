@@ -85,7 +85,10 @@ import { enemyControllerHeight, idleSpriteHeight } from '../characters/enemyAnch
 import { tallySkill, SKILLS } from '../systems/skills.js';
 import { WEAPON_REACH } from '../combat/playerWeapon.js';
 import { rayPersonDistance } from './townTalk.js';
-import { mintCorpseMarker, playBodyFall, playRareDrop, corpseLootTargets, openCorpseLoot, sayEnemyDied, raiseEnemyDeath } from './corpseMarker.js';
+import { mintCorpseMarker, playBodyFall, playRareDrop, corpseLootTargets, corpseEntryFor, corpseContents, openCorpseLoot, sayEnemyDied, raiseEnemyDeath } from './corpseMarker.js';
+import { liveFoeTargets, liveFoeFor } from '../player/activate.js';   // WORLD-HOVER H2: the LIVE bodies, in the shape the hover's one seam takes
+import { corpseName, mobileEntityName, liveEntityName } from '../systems/worldTooltips.js';   // WORLD-HOVER: "<who> (dead)", the mod's own word (.cs:526); H2: and a LIVE one's, when it is not hostile (.cs:304-312)
+import { enemyDisplayName } from '../characters/enemyBasics.js';   // GetLocalizedEnemyName, the index law in one place
 import { bloodCentre } from './hitEffects.js';   // AUDIT 24 (wave 39): EnemyBlood.ShowBloodSplash
 import { bloodHit, LETHAL_HIT } from '../combat/bloodDecals.js';   // BLOOD1b: the blow, in the shape the mark's ladder reads
 import { EnemySoundSource, acuteHearingMultiplier } from '../characters/enemySounds.js';   // AUDIT 24 (wave 41): EnemySounds.cs, one home
@@ -149,7 +152,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
   // with no Y test. The default keeps the two street pools as they were.
   playerInside = false,
   // ROAD-G G1: GameManager.MakeEnemiesHostile over the HOST's whole
-  // area, the encounter pool's dep to the line (exteriorFoes.js:113).
+  // area, the encounter pool's dep to the line (exteriorFoes.js:119).
   // DaggerfallEntityBehaviour.cs:255-258 fires it when a NON-hostile
   // enemy is struck by the player, and Knight_CityWatch is an
   // EnemyClass - one of the two EntityTypes that walk (:250). This
@@ -578,7 +581,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
    *  which arrowFlight.js calls unconditionally (arrowFlight.js:306)
    *  because `dealDamage` is inside its own `dmg > 0` fork - so the
    *  door is PUBLIC (the returned surface below), exactly as the
-   *  encounter pool's is (exteriorFoes.js:1798). */
+   *  encounter pool's is (exteriorFoes.js:1867). */
   function handleAttackFromPlayer(g, playerFeet = null) {
     if (!g?.ai) return;
     if (!g.ai.isHostile) makeAreaHostile?.();
@@ -1150,13 +1153,68 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
   // disables the container, :942-947 - this skipped it silently), and
   // a body holding nothing but arrows is collected whole (:948-952),
   // which is the ordinary outcome of killing a guard with a bow.
+  /** WHICH GUARD IS A BODY, AND WHICH BODY - once, as the encounter
+   *  pool's (AUDIT-WH H3). The targets, the namer and the contents walk
+   *  this list under the same two rules; writing the bag out at each of
+   *  them is three chances for the plaque to disagree with the press. */
+  /** WHICH GUARD IS WHICH - alive or dead, one identity. AUDIT 39:
+   *  stable across the walk-away prune, where an index is not. */
+  const idOf = (g) => g.id;
+  const corpseLens = {
+    isCorpse: (g) => !!g.corpse && !!g.entity,
+    feetOf: (g) => g.corpseMarker?.pos ?? g.ai?.feet ?? null,
+    idOf,
+  };
   function lootTargets() {
-    return corpseLootTargets(guards, 'guardCorpse', {
-      isCorpse: (g) => !!g.corpse && !!g.entity,
-      feetOf: (g) => g.corpseMarker?.pos ?? g.ai?.feet ?? null,
-      idOf: (g) => g.id,   // AUDIT 39: stable across the walk-away prune, where an index is not
-    });
+    return corpseLootTargets(guards, 'guardCorpse', corpseLens);
   }
+  /** WORLD-HOVER: as the encounter pool's - one namer beside the one
+   *  producer, so the watch's bodies and the encounter pool's can never
+   *  read differently. */
+  const hoverName = (key) => {
+    const e = corpseEntryFor(guards, key, 'guardCorpse', corpseLens);
+    return e ? { title: corpseName(enemyDisplayName(e.mobileType)) } : null;   // .cs:526
+  };
+  /** ...and what it holds (AUDIT-WH H3). `guardCorpse:` itemises, so
+   *  without this a dead guard read "Empty" over the sword and mail the
+   *  press would have shown you. The watch has no puppets - a peer's
+   *  guard is not a thing this pool stands - so there is no owner arm
+   *  here, unlike the encounter pool's. */
+  const hoverContents = (key) => corpseContents(corpseEntryFor(guards, key, 'guardCorpse', corpseLens));
+  /** WORLD-HOVER (AUDIT-WH H2): THE LIVE BODIES, as ray targets.
+   *
+   *  The mod names a living entity inside MobileNPCActivationDistance
+   *  (.cs:304-312) and the plaque had no sight of one at all: a foe
+   *  standing between the crosshair and a shopfront lost the plaque's
+   *  race outright and the door behind it drew its name. The press had
+   *  always raced them (`tryMobileEnemyActivate`, its own AABB sweep),
+   *  which is precisely the disagreement the slice exists to prevent.
+   *
+   *  Minted here rather than swept in the host, for the reason the
+   *  corpses are: the key vocabulary is the POOL's, so the namer below
+   *  can answer off the same list and cannot name a foe this pool did
+   *  not stand. The AABB is `pickFoeAlong`'s own (half 0.45, the ai's
+   *  height) so the two sweeps agree on what the ray strikes, and the
+   *  RAY's distance with the MOD's reach beside it is AUDIT 65 MC-2's
+   *  law - the band's 6.4 is a gate inside the handler, not a shorter
+   *  ray.
+   */
+  function liveTargets() {
+    return liveFoeTargets(guards, 'mobileGuard', { idOf });
+  }
+  /** ...and what a live one is called (.cs:308-311) - the encounter
+   *  pool's twin. A watchman standing his post is NOT hostile, so this
+   *  is the arm that actually speaks in a peaceful street; one who has
+   *  been raised on you says nothing, which is the mod's own silence. */
+  const liveHoverName = (key) => {
+    // AUDIT-WH C1: `liveFoeFor` refuses a non-string key itself - the
+    // host's namer ladder is handed EVERY key the ray can win, and the
+    // exterior door's is a bare NUMBER.
+    const g = liveFoeFor(guards, key, 'mobileGuard', { idOf });
+    if (!g) return null;
+    const t = mobileEntityName(liveEntityName(g, enemyDisplayName(g.mobileType)), { hostile: !!g.ai?.isHostile });
+    return t ? { title: t } : null;
+  };
   // MAC-E: and the general arm is the WINDOW now (PlayerActivate.cs:957),
   // not a bulk transfer - `openWindow` is the host's own inventory door.
   function takeLoot(key, say2 = () => {}, openWindow = null) {
@@ -1288,7 +1346,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
     releaseGuardBatch(g);
     g.dead = true;   // no `corpse` - a removed guard is destroyed, not killed
   }
-  return { guards, spawnCityGuards, makeNpcGuardsIntoEnemies, anyWatchStanding, update, offsetAll, collectPixel, clearLive, resolvePlayerHit, resolveCivilianHit, activeCount, lootTargets, takeLoot, snapshotWorld, restoreWorld, removeGuard, handleAttackFromPlayer,
+  return { guards, spawnCityGuards, makeNpcGuardsIntoEnemies, anyWatchStanding, update, offsetAll, collectPixel, clearLive, resolvePlayerHit, resolveCivilianHit, activeCount, lootTargets, hoverName, hoverContents, liveTargets, liveHoverName, takeLoot, snapshotWorld, restoreWorld, removeGuard, handleAttackFromPlayer,
     // M2 (spellcasting above ground): the player's spell damage rides
     // THE SAME door the melee swing uses - corpse, Murder on the kill,
     // hostility - so a fireball is not a free crime channel.

@@ -91,6 +91,7 @@ not the date the slice shipped, where those differ.
 | `weapon-widget` | manifest, settings | RedRoryOTheGlen | 1.6 | shipped zip `Weapon_Widget-860-1-6`; behaviour off the DLL's IL | granted (Mac handed the zip over 2026-09-14) - **RECORD OPEN** | WW1-WW4 | 2026-09-14 | `05-Combat/Weapon-Widget.md` |
 | `shield-widget` | manifest, settings, presets | RedRoryOTheGlen | 1.6 | shipped zip `Shield_Widget-733-1-6`; behaviour off the DLL's IL | granted (Mac handed the zip over 2026-09-19) - **RECORD OPEN** | SW1 | 2026-09-19 | `05-Combat/Shield-Widget.md` |
 | `windmills-kamer` | five `.dae` meshes + placements | Kamer | 2.0 | `WindMills.rar`, supplied by Mac 2026-08-29 | granted by the author, confirmed by Mac 2026-08-29 | WM1 | 2026-08-29 | `03-World/Windmills.md` |
+| `world-tooltips` | manifest, settings, and the mod's OWN source - the bundle ships `Modded_HUDTooltipWindow.cs` as a Unity TextAsset, so nothing here is a decompile | jefetienne | 1.1 | shipped zip `World_Tooltips_-_Windows_1.1-158-1-1-1655327614`, handed over by Mac 2026-09-21; `tools/worldTooltipsAssets.mjs` reproduces all three vendored files byte for byte | MIT ("Copyright (c) 2009-2018 jefetienne", shipped as `LICENSE-world-tooltips`, beside Daggerfall Workshop's own) | WORLD-HOVER | 2026-09-21 | `10-UI/UI-Arc.md` |
 
 ## Known deviations, per row
 

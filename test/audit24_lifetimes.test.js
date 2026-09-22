@@ -88,8 +88,13 @@ test('audit24 lifetimes: a city guard frees its batch on both death paths, and t
   // per-frame walk over `guards` paid for them. DFU destroys the
   // walk-away watch outright (EnemyEntity.cs:184-191) and keeps only
   // the killed body. So the key is the guard's own id now, and the
-  // prune is the encounter pool's (exteriorFoes.js:961).
-  assert.match(src, /idOf: \(g\) => g\.id/, 'lootTargets keys by a stable id');
+  // prune is the encounter pool's (exteriorFoes.js:967).
+  // AUDIT-WH H2 moved the spelling, not the law: the id function is
+  // one const now, read by the corpse lens AND by the live-foe
+  // producer the plaque races, so a guard and the body it becomes
+  // cannot key differently.
+  assert.match(src, /const idOf = \(g\) => g\.id;/, 'one stable id for this pool');
+  assert.match(src, /\n    idOf,\n/, 'and lootTargets keys by it');
   assert.doesNotMatch(src, /guardCorpse:\$\{i\}/, 'never by the array index again');
   assert.match(src, /guards\.find\(\(g\) => g\.id === id\)/, 'and takeLoot resolves the same name');
   assert.match(src, /for \(let i = guards\.length - 1; i >= 0; i--\) if \(guards\[i\]\.dead && !guards\[i\]\.corpse\) guards\.splice\(i, 1\);/,

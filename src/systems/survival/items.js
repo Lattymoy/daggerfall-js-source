@@ -207,6 +207,17 @@ export const WATER_SOURCE_FLATS = Object.freeze({ 212: Object.freeze([0, 2, 8, 9
 export const DRY_SOURCE_FLATS = Object.freeze({ 212: Object.freeze([3]) });
 export const WATER_SOURCE_MODELS = Object.freeze([41220, 41221, 41222]);
 export const DRY_SOURCE_TEXT = 'This fountain is dry as dust.';
+
+/** WORLD-HOVER (AUDIT-WH M6): what the PLAQUE calls one. The mod has
+ *  no word for a water source - it is Climates & Calories' object
+ *  (SURV3), standing in the same ray - so it rides World Tooltips'
+ *  extension API like the torches and the camps.
+ *
+ *  A DRY one carries the press's own sentence as a sub-line rather
+ *  than a second title: the plaque exists so the decision happens in
+ *  the world, and "this one is dry" is the whole decision here. */
+export const WATER_SOURCE_NAME = 'Water Source';
+export const waterSourceHoverName = (dry) => ({ title: WATER_SOURCE_NAME, subs: dry ? [DRY_SOURCE_TEXT] : [] });
 export const isWaterSourceFlat = (archive, record) => (WATER_SOURCE_FLATS[archive] ?? []).includes(record);
 export const isDrySourceFlat = (archive, record) => (DRY_SOURCE_FLATS[archive] ?? []).includes(record);
 

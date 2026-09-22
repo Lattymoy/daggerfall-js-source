@@ -145,6 +145,8 @@ export const MOD_CURATED = Object.freeze({
   // through FT4's three-way - so without these five its particle settings had no tile to open.
   'dynamic-skies': Object.freeze(['ActivatePixelSnow', 'densitySetting', 'MinParticleSize',
     'MaxParticleSize', 'MaxParticles']),
+  // WORLD-HOVER: the mod's one knob, which is the one a player would move.
+  'world-tooltips': Object.freeze(['HideDefaultInteractTooltip']),
   'weapon-widget': Object.freeze(['Swings.Speed', 'Bob.Length', 'Inertia.Scale']),
   // SW1: the three a player reaches for first - how big the shield sits,
   // where it sits, and what it does when the weapon comes out.
@@ -578,6 +580,7 @@ export const FEATURES = Object.freeze([
   // switches every frame; the stride is the mod's the moment its clips are
   // decoded (a fetch here, where the mod's LoadAudio is synchronous).
   modFeature('immersive-footsteps', 'Takes effect at once.', 'world'),
+  modFeature('world-tooltips', 'Takes effect at once.', 'world'),   // WORLD-HOVER: the hover reads the switch on the frame it draws
   // BA1 (2026-09-16): BETTER AMBIENCE - read every frame; the dungeon's fog
   // and light are rolled at the door, so those two land on the next dungeon.
   modFeature('better-ambience', 'Takes effect at once. A dungeon\u2019s fog and light are rolled at its door.', 'world'),

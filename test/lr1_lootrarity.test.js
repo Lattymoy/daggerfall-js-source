@@ -57,7 +57,7 @@ import { skillValue, SKILLS } from '../src/systems/skills.js';
 import { entityMaxEncumbrance, maxEncumbrance } from '../src/combat/formulas.js';
 import { savingThrow, EFFECT_FLAGS } from '../src/systems/spellcast.js';
 import { itemBackgroundColour, scrollerToolTipText } from '../src/ui/itemScroller.js';
-import { hoverLines } from '../src/ui/lootHover.js';
+import { hoverLines } from '../src/systems/worldHover.js';   // WORLD-HOVER
 import { playRareDrop, takeCorpseLoot } from '../src/scenes/corpseMarker.js';   // AUDIT-LR: the peer's take is the one take law
 import { TEST_LOOT, testEntryById, seedTestLoot, TEST_LOOT_BASES } from '../src/systems/testRoom.js';
 import { itemNameParts } from '../src/systems/itemInfo.js';   // LR6: what the pack ROW actually prints
@@ -447,13 +447,13 @@ test('LR1: the skins - the native cell tints and the tooltip lists, the enhanced
   assert.equal(LR.rarityColour(r), null);
   const css = read('src/ui/enhancedStyle.js');
   for (const t of ['magic', 'rare', 'legendary', 'artifact']) {
-    assert.match(css, new RegExp(`\\.itemrow\\[data-rarity="${t}"\\] \\.itemname > span:first-child, \\.packdetail \\.card\\[data-rarity="${t}"\\] h3, \\.loothover-row\\[data-rarity="${t}"\\] > span:first-child \\{ color: ${LR.RARITIES[t].colour}; \\}`), `${t}'s rule carries the table's colour`);
+    assert.match(css, new RegExp(`\\.itemrow\\[data-rarity="${t}"\\] \\.itemname > span:first-child, \\.packdetail \\.card\\[data-rarity="${t}"\\] h3, \\.wplaque-row\\[data-rarity="${t}"\\] > span:first-child \\{ color: ${LR.RARITIES[t].colour}; \\}`), `${t}'s rule carries the table's colour`);
   }
   const inv = read('src/ui/enhancedInventory.js');
   assert.match(inv, /name: parts\.name \|\| t\?\.name \|\| 'Unknown',/, 'the enhanced pack names through ResolveItemLongName\'s name part now (RF6; LR1: ResolveItemName inside it)');
   assert.match(inv, /const r = rarityAttr\(item\); if \(r\) row\.dataset\.rarity = r;/, 'a row wears its tier');
   assert.match(inv, /const lines = rarityLines\(picked\); if \(lines\.length\)/, 'the card lists the lines');
-  assert.match(read('src/ui/lootHover.js'), /if \(r\.rarity\) row\.dataset\.rarity = r\.rarity;/);
+  assert.match(read('src/ui/worldPlaque.js'), /if \(r\.rarity\) row\.dataset\.rarity = r\.rarity;/);
   assert.match(read('src/ui/nativeInventory.js'), /armorLabelValue\(av\[i\] \?\? 100, entityArmorDisplayMod\(this\.hooks\.entity, i\)\)/, 'the doll\'s numbers, per part (RF1)');
   assert.match(read('src/ui/enhancedInventory.js'), /material: parts\.material \|\| null,/, 'LR4: the enhanced row names no material until identified - RF6: the long name\'s own prefix, which an unidentified item has none of');
 });

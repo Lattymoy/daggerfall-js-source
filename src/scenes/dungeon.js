@@ -10,7 +10,7 @@
 
 import { Arch3dFile } from '../formats/arch3dFile.js';
 import { WORLD_FRAME } from '../render/renderer.js';   // AUDIT-EL F5
-import { frameBegin, frameEnd } from '../systems/frameClock.js';   // PERF1: the frame's script time
+import { frameBegin, frameEnd, frameAbort } from '../systems/frameClock.js';   // PERF1: the frame's script time; AUDIT-WH2 L1-F4: and the door an early return takes
 import { INTERIOR_CLEAR } from '../render/renderer.js';
 import { getInteractionMode, setInteractionMode, MODE_ACTIONS } from '../player/interactionMode.js';   // R1: the global PlayerActivate mode; AUDIT 58: its four ACTIONS
 import { setMidScreenText } from '../ui/midScreenText.js';   // AUDIT 64 F34: DaggerfallHUD's centred label
@@ -41,13 +41,14 @@ import { mwViewFrame, mwViewWheel, mwViewDrawBody, mwViewFootstep } from '../pla
 import { PITCH_LIMIT } from '../player/mwCamera.js';   // MW-D30: camera.cpp:323-331's own clamp
 import { jumpSpeedMultiplier, isEnhancedJumping } from '../systems/skills.js';   // AUDIT 64 F2: CheckAirControl's IsEnhancedJumping disjunct
 import { pickFoe,   // TI1: the lock-on pick
-  pickActivatableHit, activationTargets,   // AUDIT 63 F33 (review): the pick hands its distance back so the enemy arm can lose to a nearer target
+  pickActivatableHit,   // AUDIT 63 F33 (review): the pick hands its distance back so the enemy arm can lose to a nearer target   // WORLD-HOVER: the LIST comes off the context's one seam now
   RAY_DISTANCE, TOO_FAR_AWAY_TEXT,   // AUDIT 65 MC-2: the ONE reach the foe arm competes at (DFU's one ray), and the refusal each handler speaks for itself
 } from '../player/activate.js';
 // AUDIT 63 F33: PlayerActivate.ActivateMobileEnemy (:800-841) - the
 // standalone dungeon's copy of the living-foe arm.
 import { tryMobileEnemyActivate } from '../player/mobileEnemyActivate.js';
 import { FOUND_NOTHING_VALUABLE_TEXT_ID } from '../systems/talk.js';   // GetRandomText(8999)
+import { hideWorldPlaque, destroyWorldPlaque } from '../ui/worldPlaque.js';   // AUDIT-WH H4: the plaque's hide door, for the overlay branch that returns above drawFoes
 import { createMusicDirector, fetchBytes, motorStats, climbingDeps, ridePlatform, doorSpellFor, wireDoorSpells, claimFrame, frameAlive, frameHeld } from './shared.js';
 import { keyEdges, noteKeyDown, noteKeyUp, beginInputFrame, pressed, released, pressedCode, routeKey, routeKeyUp, held, moveHeld, anyMove, actionOf, swallowBrowserKey, mouseCode, isSwingButton, swingHeld, keyboardLook, installContextMenuGuard, swingKeyHeld } from '../ui/input.js';
 import { armUnloadGuard } from '../systems/unloadGuard.js';   // MAC-L3: one door in front of every way out of a running game   // AUDIT 39r: the mouse half of the held set
@@ -127,7 +128,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
       // below, after this context; null falls to standing defaults.
       motorState: () => (_motorRef ? { eyeLevel: _motorRef.eye[1] - _motorRef.pos[1], capsule: _motorRef.height } : null),
       // MAC1 J: this host's canvas, for the pause door's relock. The
-      // context owns none of its own (dungeonContext.js:5906), so each
+      // context owns none of its own (dungeonContext.js:6302), so each
       // dungeon host hands its own in and the resume gesture carries
       // the pointer back with it (ui/pauseDoor.js:270-287).
       relock: () => requestLook(canvas) });
@@ -260,8 +261,13 @@ export async function bootDungeon(canvas, renderer, params, status) {
         playerFeet: player.pos,
         nothingText: () => ctx.randomText?.(FOUND_NOTHING_VALUABLE_TEXT_ID) || 'You found nothing valuable.',   // GetRandomText(8999)
       });
-    const targets = activationTargets(ctx.actions.objects);   // effects ride their precomputed aabb (crash fix, audit 2026-08-16)
-    targets.push(...ctx.lootTargets());   // S2: piles + lootable corpses
+    // WORLD-HOVER: ONE construction seam, shared with the modal host
+    // and the hover plaque. This host registers NOTHING with it, and
+    // that is the recorded difference rather than an accident of two
+    // hand-copied lists: the dev door has no world to exit to and no
+    // `exit:` or `person:` arm in the ladder below, so standing those
+    // targets would win the pick and eat the press in silence.
+    const targets = ctx.dungeonActivationTargets();
     const _pick = pickActivatableHit(eye, dir, targets, ctx.collider);
     if (_enemyArm(RAY_DISTANCE, _pick?.distance ?? Infinity)) return null;   // MC-2: the split pair's FAR half ran with `nearerThan` Infinity, so a foe 20 off ate a click DFU gives a chest at 5
     const key = _pick?.key ?? null;
@@ -272,7 +278,14 @@ export async function bootDungeon(canvas, renderer, params, status) {
     // they carry the droppedLoot: prefix. Without this arm a dungeon
     // drop was one-way - the pile drew, the ray found it, and E did
     // nothing. The probe caught it on the first pickup.
-    if (key !== null && (key.startsWith('loot:') || key.startsWith('corpse:') || key.startsWith('droppedLoot:') || key.startsWith('droppedTorch:'))) {
+    // AUDIT-WH2 L2-F1/F2: `camp:` and `hearth:` too. The dungeon
+    // CONTEXT stands both for whichever host drives it - a Campfire Kit
+    // can be lit underground (only a TENT is refused there) and every
+    // brazier is a `hearth:` - and this host routed neither, so both
+    // read their name on the plaque and ate the press in silence. The
+    // modal dungeon arm answers them; two hosts over one context must
+    // not disagree about one key.
+    if (key !== null && (key.startsWith('loot:') || key.startsWith('corpse:') || key.startsWith('droppedLoot:') || key.startsWith('droppedTorch:') || key.startsWith('camp:') || key.startsWith('hearth:'))) {
       ctx.takeLoot(key, getInteractionMode());   // HT1: a dropped torch takes the mode (Grab/Steal picks it up, Info/Talk names it)
       return key;
     }
@@ -657,13 +670,22 @@ export async function bootDungeon(canvas, renderer, params, status) {
   });
   const _frameToken = claimFrame();   // P0: this session owns the loop until someone claims after it
   function frame(now) {
-    if (!frameAlive(_frameToken)) return;   // P0: a later boot or an unwind killed this loop
+    // AUDIT-WH L4: THE PLAQUE DIES WITH THE LOOP THAT RAISED IT. This
+    // is the host's only unwind point - a later boot or an unwind has
+    // taken the frame - and the plaque is a `document.body` child, so
+    // without this a name stayed painted over the next scene (or over
+    // the title menu) until something else happened to write it. The
+    // modal arms have said this at their mode exits since the slice
+    // shipped; the HOSTS that drive it never did, and `world.js`
+    // imported the door without ever calling it. A host that boots
+    // after this one rebuilds the node on its first painted frame.
+    if (!frameAlive(_frameToken)) { destroyWorldPlaque(); return; }   // P0: a later boot or an unwind killed this loop
     frameBegin(now);   // PERF1: the script time (systems/frameClock.js)
     beginInputFrame(keyEdge);   // MWCROUCH
     // AUDIT 39 (#160): a full-screen video owns the canvas for its
     // lifetime (DFU pauses the game for it). The loop WAITS - it
     // neither simulates nor draws - and the clock does not accrue.
-    if (frameHeld()) { last = now; requestAnimationFrame(frame); return; }
+    if (frameHeld()) { frameAbort(); hideWorldPlaque(); last = now; requestAnimationFrame(frame); return; }
     const dt = Math.min(0.1, (now - last) / 1000);
     // AUDIT 28 W7 + F-C1/F-C2 (self-audit 3): PlayerMouseLook.Update's
     // three answers - paused (:241-244) returns before ApplyLook and the
@@ -1028,7 +1050,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
     // townTalk drawing a second column behind them either. So the hide
     // doors ride the branch's own first line, before the return.
     if (ctx.uiOverlayActive) {
-      ctx.hideHudText?.(); ctx.tickOverlay(dt); ctx.drawOverlay(canvas);
+      ctx.hideHudText?.(); hideWorldPlaque(); ctx.tickOverlay(dt); ctx.drawOverlay(canvas);   // AUDIT-WH H4: the plaque is a DOM node and this return is ABOVE drawFoes, where the hover lives
       // U26: the shot counter advances HERE TOO. This early return
       // skipped it, so __frame froze the moment any overlay opened -
       // and the Process rule says a probe must frame-sync rather than
@@ -1037,6 +1059,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
       frames++;
       if (shotMode) window.__frame = frames;
       capturePendingScreenshot(canvas);   // SS1: a save armed under an overlay still lands its shot
+      frameAbort();   // AUDIT-WH2 L1-F4: the frame never reached frameEnd - close the token, take no sample
       requestAnimationFrame(frame);
       return;   // U2b/U3: hold gameplay, keep the loop (AUDIT 18 F5: the overlay's own clock still runs - DFU's RestWindow.Update ticks on realtime under timeScale 0)
     }

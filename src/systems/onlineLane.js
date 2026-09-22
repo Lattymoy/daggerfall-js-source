@@ -123,7 +123,31 @@ export function onlineForcedPref(key, search) {
  *  player's, as its own modsettings would leave them. */
 export const ONLINE_FORCED_MOD_KEY = 'Enabled';
 
+/**
+ * THE MODS WHOSE `Enabled` IS STILL THE PLAYER'S, ONLINE.
+ *
+ * AUDIT-WH R8. OL1's law is that a room plays one game: every vendored
+ * mod is on, so what one player walks through another player walks
+ * through. That reasoning is about the WORLD - a mod that moves a
+ * light, stands an object, changes a roll or writes a save record is
+ * exactly what the room has to agree on.
+ *
+ * A mod that draws a READOUT on your own screen is not. World Tooltips
+ * names what your crosshair is on; it stands nothing, rolls nothing,
+ * writes nothing and is not on the wire. Forcing it is the same
+ * category error as forcing `chatHidden` or `peerClassSprites` would
+ * be - both of which this lane already leaves alone, and for this
+ * reason (see ONLINE_PLAYERS_OWN_PREFS above: "purely a local
+ * rendering choice; it changes nothing the room agrees on").
+ *
+ * The mod's OTHER switches were never forced - only `Enabled` is - so
+ * `HideDefaultInteractTooltip` was already the player's and this makes
+ * the pair consistent.
+ */
+export const ONLINE_PLAYERS_OWN_MODS = ['world-tooltips'];
+
 /** The forced value of a mod's switch on an online page, else undefined. */
 export function onlineForcedModSetting(vendor, key, search) {
+  if (ONLINE_PLAYERS_OWN_MODS.includes(vendor)) return undefined;
   return isOnlinePage(search) && key === ONLINE_FORCED_MOD_KEY ? true : undefined;
 }

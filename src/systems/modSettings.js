@@ -50,6 +50,28 @@ export const MOD_SETTINGS = Object.freeze({
       MaxParticles: Object.freeze({ default: 20, min: 15, max: 20, description: 'Maximum number of snow flake particles (multiplied by 1000)' }),
     }),
   }),
+  // WORLD-HOVER: WORLD TOOLTIPS 1.1 (jefetienne). The mod ships exactly
+  // ONE key, and its description is the author's own word for word -
+  // it exists so the main quest's puzzles are not given away by a
+  // label on the thing you are meant to find for yourself.
+  // `Enabled` is the port's, as it is for every vendored mod (MO1).
+  'world-tooltips': Object.freeze({
+    title: 'World Tooltips',
+    author: 'jefetienne',
+    keys: Object.freeze({
+      Enabled: Object.freeze({
+        default: true,
+        description: 'A name under the crosshair for whatever you are looking at: a person, a shop and the hours it keeps, '
+          + 'a door and its lock level, the dungeon beyond an exit, a lever, a wheel, a ladder, a bookshelf, and a Daedra '
+          + 'waiting to be summoned. The mod\u2019s own ladder, in its own order, worn in the enhanced skin\u2019s dress. Off, the '
+          + 'plaque still lists what a chest or a body holds - that is the port\u2019s own and has no switch.',
+      }),
+      HideDefaultInteractTooltip: Object.freeze({
+        default: false,
+        description: 'Enable to not give a default indication on interactable objects that may have been intended to be secret, particularly regarding puzzles in the main quest.',
+      }),
+    }),
+  }),
   'seasons-iliac-bay': Object.freeze({
     title: 'Seasons of the Iliac Bay',
     author: 'RosyTheRascal',

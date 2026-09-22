@@ -83,15 +83,35 @@ test('HARD2: the torch takes the click only when nothing on the ground AND no do
   assert.equal(raceActivation({ torch: at('droppedTorch:1', 60) }).torchWins, true, 'a winner out of reach is still the winner, and its arm refuses out loud');
 });
 
-test('HARD2: the extraction is EQUIVALENT - the law the hosts used to write out, over every input, agrees', () => {
+test('HARD2 / AUDIT-WH H1: the law MOVED once, on purpose - and ONLY where the body and the pile ignored the door', () => {
   // AUDIT-HARD put this in the tree. The extraction's proof was a
   // differential run in a scratchpad and quoted in a commit message,
   // which is a proof nobody can re-run - and this port's whole doctrine
   // is that the evidence is checkable. So the OLD arithmetic lives here,
   // lifted character for character out of world.js at d784ecd~1, and the
-  // two are made to agree on every combination of the inputs that can
-  // reach them. Change `activationRace.js` and this says whether the law
-  // moved or only the code did.
+  // two are run against each other over every combination of the inputs
+  // that can reach them.
+  //
+  // IT USED TO ASSERT THEY AGREE EVERYWHERE, and that assertion was
+  // certifying a bug. The old law answered `loot` and `drop` by
+  // comparing the body against the pile AND NOTHING ELSE, so a corpse
+  // twelve metres down the street came back as the winner over a shop
+  // door at your feet - and then refused itself with "You are too far
+  // away." DFU casts ONE ray (PlayerActivate.cs:314) and dispatches to
+  // its NEAREST hit; nothing in it lets a far body out-rank a near door.
+  // It was found because the world hover needed the race's WINNER
+  // rather than its flags, and the two answers disagreed on 9.3% of
+  // pick sets (AUDIT-WH H1).
+  //
+  // Mac's call (2026-09-21, "b") was to fix the PRESS rather than teach
+  // the plaque the press's quirk, so `raceActivation` now DERIVES from
+  // `raceWinner` and there is one ordering law for both readers. This
+  // pin therefore no longer says "they agree". It says the disagreement
+  // is EXACTLY that class and nothing else - every field the fix did not
+  // touch still matches character for character, and every difference
+  // that remains is a body or a pile the old law named while something
+  // nearer was on the ray. A second change to the law shows up here as
+  // a case that fails to fit the shape.
   const old = (corpse, pile, torch, doorDist, persons) => {
     const _pileNearer = !!pile && !(corpse && corpse.distance <= pile.distance);
     const _lootPick = _pileNearer ? null : corpse, _dropPick = _pileNearer ? pile : null;
@@ -113,8 +133,9 @@ test('HARD2: the extraction is EQUIVALENT - the law the hosts used to write out,
   // person lists cover none, one, a tie, and one that never wins.
   const D = [null, 0, 0.5, 1, 3.2, 3.3, 8, 76.8, Infinity];
   const PERSONS = [[], [3], [0.5, 40], [Infinity], [3.2, 3.2]];
-  let n = 0;
+  let n = 0, moved = 0;
   const differ = [];
+  const unchangedDiffer = [];
   for (const c of D) for (const pl of D) for (const t of D) for (const dd of D) for (const ps of PERSONS) {
     const corpse = c === null ? null : at('foeCorpse:1', c);
     const pile = pl === null ? null : at('droppedLoot:2', pl);
@@ -123,12 +144,39 @@ test('HARD2: the extraction is EQUIVALENT - the law the hosts used to write out,
     const a = old(corpse, pile, torch, door, ps);
     const b = raceActivation({ corpse, pile, torch, doorDistance: door, personDistances: ps });
     n += 1;
-    const same = (a.loot?.key ?? null) === (b.loot?.key ?? null) && (a.drop?.key ?? null) === (b.drop?.key ?? null)
-      && a.torchWins === b.torchWins && Object.is(a.nonPersonRival, b.nonPersonRival) && Object.is(a.rival, b.rival);
-    if (!same && differ.length < 5) differ.push({ in: [c, pl, t, dd, ps], old: a, now: b });
+    // THE THREE FIELDS THE FIX DID NOT TOUCH. The torch already raced
+    // the door (AUDIT 66 F7 put it there), and both rivals are pure
+    // minima over the same terms - so these must still agree on every
+    // one of the 32805 sets, and a change to any of them is a law that
+    // moved without anybody saying so.
+    if (a.torchWins !== b.torchWins) unchangedDiffer.push({ in: [c, pl, t, dd, ps], field: 'torchWins', old: a.torchWins, now: b.torchWins });
+    if (!Object.is(a.nonPersonRival, b.nonPersonRival)) unchangedDiffer.push({ in: [c, pl, t, dd, ps], field: 'nonPersonRival', old: a.nonPersonRival, now: b.nonPersonRival });
+    if (!Object.is(a.rival, b.rival)) unchangedDiffer.push({ in: [c, pl, t, dd, ps], field: 'rival', old: a.rival, now: b.rival });
+    // ...AND THE ONE THAT DID. Where loot/drop differ, the old law had
+    // named a subject while something nearer was on the same ray. The
+    // new law drops it, which is the only shape a difference may take:
+    //   - the torch is at or before the body/pile in the tie order, so
+    //     it takes them at an equal distance too;
+    //   - the door/board/NPC set comes AFTER them, so only a strictly
+    //     nearer one takes them.
+    // A difference that fits neither is a second change to the law.
+    for (const field of ['loot', 'drop']) {
+      if ((a[field]?.key ?? null) === (b[field]?.key ?? null)) continue;
+      moved += 1;
+      const named = a[field];
+      const fits = !!named && b[field] === null
+        && ((torch !== null && torch.distance <= named.distance) || door < named.distance);
+      if (!fits && differ.length < 5) differ.push({ in: [c, pl, t, dd, ps], field, old: a[field], now: b[field] });
+    }
   }
   assert.equal(n, 32805, 'the whole input domain, so a narrowed one cannot make this pass by covering less');
-  assert.deepEqual(differ, [], 'the extracted law disagrees with the one the hosts used to write out');
+  assert.deepEqual(unchangedDiffer.slice(0, 5), [], 'a field the fix never touched has moved');
+  assert.deepEqual(differ, [], 'a difference that is NOT "the old law named a subject something nearer had already beaten"');
+  // and the class is not empty - if it were, this pin would be passing
+  // by asserting nothing about a fix that had quietly been reverted.
+  assert.ok(moved > 0, 'the departure is REAL - the old law and the new one do differ');
+  assert.equal(moved, 16200,
+    'and over exactly this many of the 65610 loot/drop answers in the domain, so a wider change shows up here');
 });
 
 test('HARD2: both exterior hosts ask the ONE race and hand-roll none of it, and no other host grew a second copy', () => {

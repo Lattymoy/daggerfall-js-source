@@ -416,6 +416,18 @@ export function createDroppedTorches({
     }));
   }
   const forKey = (key) => dropped.find((d) => `droppedTorch:${d.id}` === key) ?? null;
+  /** WORLD-HOVER: what the plaque calls a torch on the floor. The mod
+   *  has no word for one - a dropped light source is the port's own
+   *  object (HT1) - so it rides World Tooltips' extension API
+   *  (vendor .cs:228-257) instead of being wedged into its ladder.
+   *  The word is the item's own template name, which is what Info mode
+   *  already says about it one line below. */
+  function hoverName(key) {
+    const d = forKey(key);
+    if (!d) return null;
+    const t = templateByIndex(d.template)?.name;
+    return t ? { title: t } : null;
+  }
   /** PickUpLightSource (0x3be4): Grab or Steal picks it up; Info or Talk names it. */
   function activate(key, mode) {
     const d = forKey(key);
@@ -488,7 +500,7 @@ export function createDroppedTorches({
   }
 
   return {
-    spawnLightSource, spawnLightSourceProjectile, tick, lights, batches, targets, activate, destroyAll, collectPixel, offsetAll, snapshot, restore,
+    spawnLightSource, spawnLightSourceProjectile, tick, lights, batches, targets, hoverName, activate, destroyAll, collectPixel, offsetAll, snapshot, restore,
     igniteFoe, foeBurning,
     get dropped() { return dropped; }, get projectiles() { return projectiles; },
     setOnPickedUp(fn) { onPickedUp = typeof fn === 'function' ? fn : null; },

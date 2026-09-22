@@ -188,8 +188,26 @@ test('AUDIT 39 #160: every rAF host WAITS on the hold instead of drawing under t
   for (const h of ['src/scenes/world.js', 'src/scenes/exterior.js', 'src/scenes/dungeon.js']) {
     const s = read(h);
     // straight after the ownership check, before any state is read
-    assert.match(s, /if \(!frameAlive\(_frameToken\)\) return;[\s\S]{0,400}?\n\s+if \(frameHeld\(\)\) \{ last = now; requestAnimationFrame\(frame\); return; \}\n\s+const dt =/,
-      `${h} waits out the video and keeps its loop`);
+    // AUDIT-WH L3: ...and the world plaque goes down on that same line.
+    // It is a DOM node and this return is ABOVE the frame's hover call,
+    // so a name that was on screen when the video took the canvas
+    // floated over the infection dream until the video ended.
+    //
+    // AUDIT-WH2 L5-F24: AND THE GAP IS NAMED, NOT MEASURED. This ran
+    // `[\s\S]{0,800}?` between the two guards, which is not "before any
+    // state is read" - it is "within 800 characters", and 800 characters
+    // is room for a dozen statements. All three hosts spell the gap
+    // identically, so the pin can say what is allowed: the clock's
+    // stamp, the input frame, and comment lines. Anything else - a read,
+    // a draw, a tick - fails here, which is the sentence above.
+    assert.match(s, new RegExp(
+      String.raw`if \(!frameAlive\(_frameToken\)\) \{ destroyWorldPlaque\(\); return; \}[^\n]*\n`
+      + String.raw`\s+frameBegin\(now\);[^\n]*\n`
+      + String.raw`\s+beginInputFrame\([A-Za-z.]+\);[^\n]*\n`
+      + String.raw`(?:\s*//[^\n]*\n)*`
+      + String.raw`\s+if \(frameHeld\(\)\) \{ frameAbort\(\); hideWorldPlaque\(\); last = now; requestAnimationFrame\(frame\); return; \}\n`
+      + String.raw`\s+const dt =`),
+    `${h} waits out the video and keeps its loop`);
   }
   // the seam's own half
   const SH = read('src/scenes/shared.js');

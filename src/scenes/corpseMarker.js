@@ -209,6 +209,59 @@ export function corpseLootTargets(entries, keyPrefix, { isCorpse, feetOf, idOf =
 }
 
 /**
+ * WORLD-HOVER: WHICH BODY a corpse key names, off the same entry list
+ * and the same identity `corpseLootTargets` above mints its keys from.
+ *
+ * This is the half both pools genuinely share - walking their own list
+ * under the producer's own `isCorpse`/`idOf` law - and it lives beside
+ * the producer for the reason AUDIT 24 (wave 38) had to fix once
+ * already: the watch's bodies and the encounter pool's are the same
+ * kind of thing, and the moment one of them is walked by a second,
+ * hand-written rule they stop agreeing.
+ *
+ * It answers the ENTRY and not the word. The word is World Tooltips'
+ * (`corpseName`, vendor .cs:526) and the pools apply it - because this
+ * module is reached, through `unleveledLoot`, from `worldTick`, which
+ * `worldTooltips` itself imports by way of the building hours. An
+ * import from here would close that ring and this file's own
+ * `_deathHandlers` would be read before it exists. A caller of a rule
+ * is not a copy of it; a cycle is a crash at boot.
+ */
+export function corpseEntryFor(entries, key, keyPrefix, { isCorpse, idOf = null }) {
+  let i = -1;
+  for (const e of entries ?? []) {
+    i += 1;
+    if (!isCorpse(e)) continue;
+    const id = idOf ? idOf(e) : i;
+    if (`${keyPrefix}:${id}` === key) return e;
+  }
+  return null;
+}
+
+/**
+ * WORLD-HOVER: WHAT A BODY HOLDS, read-only.
+ *
+ * AUDIT-WH H3. `foeCorpse:` and `guardCorpse:` have been in the hover
+ * model's ITEMISED_KEYS since the first slice - the plaque opens a LIST
+ * for them rather than a name - and neither above-ground host answered
+ * their contents, so `contents?.(key) ?? null` fell to null and
+ * `hoverLines(null)` answered `empty`. Every body you killed in a
+ * street or in the wilderness read "Empty" over a full pack, which is
+ * the one thing the plaque exists not to do: it said the opposite of
+ * what the press would show you.
+ *
+ * It is the same read `openCorpseLoot` makes one line into the take
+ * (`entry.entity?.items`), and it lives beside it for that reason. A
+ * DISABLED body answers null and not `[]` - it is not a target any
+ * more (:942-947 disables the container), and the two answers draw
+ * differently.
+ */
+export function corpseContents(entry) {
+  if (!entry || entry.corpseDisabled) return null;
+  return entry.entity?.items ?? null;
+}
+
+/**
  * THE TAKE (MAC-E). This was PlayerActivate's whole corpse arm and is
  * not any more - `openCorpseLoot` above is. What is left is the
  * transfer itself, and its ONE caller is the online grant landing
