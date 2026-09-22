@@ -22,7 +22,7 @@
   {
     "name": "QS2-the-three-never-yield-in-the-classic-windows",
     "file": "src/systems/inputActions.js",
-    "old": "export const PORT_ACTIONS = Object.freeze(['SocialInteract', 'QuickUse1', 'QuickUse2', 'QuickSwap', 'QuickOffHand', 'QuickSpell', 'QuickLootAll', 'QuickLootOpen']);",
+    "old": "export const PORT_ACTIONS = Object.freeze(['SocialInteract', 'QuickUse1', 'QuickUse2', 'QuickSwap', 'QuickOffHand', 'QuickSpell', 'QuickLootAll', 'QuickLootOpen', 'FreeMouse']);",
     "new": "export const PORT_ACTIONS = Object.freeze(['SocialInteract']);",
     "tests": [
       "test/qs2_inputs.test.js",

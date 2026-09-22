@@ -142,8 +142,8 @@
   {
     "name": "WORLD-HOVER-a-null-frame-is-merely-skipped",
     "file": "src/ui/worldPlaque.js",
-    "old": "    blank(n);\n    return;\n  }\n  paint(n, frame, quickLootRow(frame));",
-    "new": "    return;\n  }\n  paint(n, frame, quickLootRow(frame));",
+    "old": "    blank(n);\n    return;\n  }\n  paint(n, frame, quickLootRow(frame), stats);",
+    "new": "    return;\n  }\n  paint(n, frame, quickLootRow(frame), stats);",
     "tests": [
       "test/worldhover.test.js"
     ]
@@ -189,8 +189,8 @@
   {
     "name": "WORLD-HOVER-the-signature-guard-retires",
     "file": "src/ui/worldPlaque.js",
-    "old": "  const sig = `${frameSignature(frame)}|${quickLootRow(frame)}`;\n  if (sig === shownSig) return;",
-    "new": "  const sig = `${frameSignature(frame)}|${quickLootRow(frame)}`;\n  if (false) return;",
+    "old": "  const sig = `${frameSignature(frame)}|${quickLootRow(frame)}|${statsSide(lastX, globalThis.innerWidth ?? 0)}`;\n  if (sig === shownSig) return;",
+    "new": "  const sig = `${frameSignature(frame)}|${quickLootRow(frame)}|${statsSide(lastX, globalThis.innerWidth ?? 0)}`;\n  if (false) return;",
     "tests": [
       "test/worldhover.test.js"
     ]

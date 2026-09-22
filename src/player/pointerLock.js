@@ -64,8 +64,14 @@ export function toggleCursorActive(canvas) {
   return _cursorActive;
 }
 
-/** One call per host at boot: Enter (Actions.ActivateCursor) frees
- *  the mouse during play and takes it back. `isWindowUp` is the
+/** FREEMOUSE: the action the port added beside DFU's, for the players
+ *  who want a key that is ONLY the mouse. Named here because this is
+ *  the one module that reads it. */
+export const FREE_MOUSE_ACTION = 'FreeMouse';
+
+/** One call per host at boot: Enter (Actions.ActivateCursor) or the
+ *  player's own FreeMouse key frees the mouse during play and takes it
+ *  back. `isWindowUp` is the
  *  host's own overlay predicate - DFU gates on !IsGamePaused, and a
  *  window up is this port's paused. */
 export function bindCursorToggle(canvas, isWindowUp = () => false, actionOf = null) {
@@ -89,7 +95,17 @@ export function bindCursorToggle(canvas, isWindowUp = () => false, actionOf = nu
     // every later click was refused by the precedence line, for good.
     if (overlayOpen()) return;
     if (isTextEntryTarget(e.target)) return;   // PL2: a name being typed into a DOM field is not the toggle
-    if (actionOf(e) !== 'ActivateCursor') return;
+    // FREEMOUSE: TWO ACTIONS, ONE TOGGLE. `ActivateCursor` is DFU's
+    // (PlayerMouseLook.cs:190) and keeps its meaning; `FreeMouse` is
+    // the port's own row, minted because ActivateCursor's default key
+    // is Enter and online Enter is also the chat's open, so the press
+    // a player reaches for to free the mouse is the press that opens a
+    // text box. They are ORed HERE rather than given a listener each:
+    // one toggle, one flag, one place that can refuse it - a second
+    // binding over `_cursorActive` is the bug PL3 spent a whole slice
+    // on, in a new hat.
+    const act = actionOf(e);
+    if (act !== 'ActivateCursor' && act !== FREE_MOUSE_ACTION) return;
     e.preventDefault();
     // PL1: "Don't allow activate cursor for 0.3 seconds after closing
     // an input message box" (PlayerMouseLook.cs:192-196).

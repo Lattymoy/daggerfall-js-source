@@ -188,8 +188,16 @@ test('WORLD-HOVER: an itemised frame carries the rows, the tail and the empty fl
     'an itemised key with no word draws nothing, like every other key');
   assert.equal(resolveHover(hit('corpse:1'), { contents: () => [{ name: 'Ruby' }] }), null,
     '...and no namer at all is the same answer, not a different word');
-  assert.deepEqual(hoverLines([{ name: 'Ruby', stackCount: 4 }]).shown,
-    [{ name: 'Ruby', stack: 4, rarity: null }]);
+  // QUICK-LOOT-STATS: the row grew an `item` - the source object, so
+  // the plaque can read the lit row's stats without walking the pile a
+  // second time. This pin's law is unchanged and is about what is
+  // DRAWN, so it compares the drawn fields and names the new one
+  // separately rather than freezing the whole shape.
+  const ruby = { name: 'Ruby', stackCount: 4 };
+  const rubyRow = hoverLines([ruby]).shown[0];
+  assert.deepEqual({ name: rubyRow.name, stack: rubyRow.stack, rarity: rubyRow.rarity },
+    { name: 'Ruby', stack: 4, rarity: null });
+  assert.equal(rubyRow.item, ruby, 'and the row carries the item it was made from, by reference');
 });
 
 // ── THE GUARD SEES WHAT WOULD BE PAINTED ─────────────────────────
@@ -2111,6 +2119,85 @@ test('AUDIT-WH R7/R8/P7/P9: the list has a cap, a readout is the player\'s onlin
 // moving the highlight actually repaints - which it does not for free,
 // because a frame whose rows and title are unchanged is the very case
 // the signature guard exists to skip.
+
+// ── QUICK-LOOT-STATS: THE LIT ROW'S NUMBERS, BESIDE THE LIST ─────
+//
+// (2026-09-22, a player relayed by Mac: "can it show the stats of the
+// items next to the quickloot window? So i dont have to pick up
+// everything to check in my inventory if its worth keeping".) These two
+// live here rather than in test/quicklootstats.test.js because they
+// need the fake document above - that file holds the parts that can be
+// driven without one, which is most of it.
+
+test('QUICK-LOOT-STATS: the panel is drawn beside the lit row, and follows the highlight', () => withPlaque((root) => {
+  setPref('quickLoot', true);
+  resetQuickLoot();
+  globalThis.innerWidth = 1280;
+  try {
+    const items = [
+      { name: 'Dagger', group: 'Weapons', templateIndex: 121, material: 3, maxCondition: 200, currentCondition: 150 },
+      { name: 'Bread' },
+    ];
+    const { shown, rest, empty } = hoverLines(items);
+    const f = { key: 'pile:stats', kind: 'items', title: 'Loot Pile', subs: [], rows: shown, rest, empty };
+    foldQuickLoot(f);
+    showWorldPlaque(f, { x: 640, top: 40 });
+
+    const panels = find(root(), 'wplaque-stats');
+    assert.equal(panels.length, 1, 'one panel, for the one lit row');
+    assert.equal(panels[0].dataset.side, 'right', 'the middle of a desktop has room on the reading side');
+    const keys = find(panels[0], 'wplaque-statkey').map((n) => n.textContent);
+    assert.ok(keys.includes('Damage'), 'the weapon is lit, so it says what it hits for');
+    assert.ok(keys.includes('Weight'));
+
+    // The second row has nothing but a weight - and the panel must
+    // FOLLOW the highlight, or a player reads one item's numbers under
+    // another item's name, which is worse than no panel at all.
+    quickLootWheel(120);
+    foldQuickLoot(f);
+    showWorldPlaque(f, { x: 640, top: 40 });
+    const after = find(root(), 'wplaque-stats');
+    assert.equal(after.length, 1, 'still exactly one - the old panel is not left behind');
+    assert.ok(!find(after[0], 'wplaque-statkey').map((n) => n.textContent).includes('Damage'),
+      'the bread does not hit for anything');
+
+    // Nothing lit, nothing drawn: a door has no rows, so no panel.
+    resetQuickLoot();
+    const door = { key: 'door:1', kind: 'name', title: 'A Door', subs: [], rows: [], rest: 0, empty: false };
+    foldQuickLoot(door);
+    showWorldPlaque(door, { x: 640, top: 40 });
+    assert.equal(find(root(), 'wplaque-stats').length, 0, 'a door says nothing about stats');
+  } finally { resetQuickLoot(); delete globalThis.innerWidth; }
+}));
+
+test('QUICK-LOOT-STATS: a narrower window repaints the panel onto the other side', () => withPlaque((root) => {
+  // THE CASE THE SIGNATURE GUARD DOES NOT COVER FOR FREE. The panel's
+  // side is a function of where the plaque stands and how wide the
+  // window is, and NEITHER is in the frame - so a resize with the
+  // crosshair held still leaves the frame, the rows and the highlight
+  // all identical, and the guard would skip the repaint while the panel
+  // hung off the edge it was laid out against.
+  setPref('quickLoot', true);
+  resetQuickLoot();
+  try {
+    const items = [{ name: 'Dagger', group: 'Weapons', templateIndex: 121, material: 3, maxCondition: 200, currentCondition: 150 }];
+    const { shown, rest, empty } = hoverLines(items);
+    const f = { key: 'pile:resize', kind: 'items', title: 'Loot Pile', subs: [], rows: shown, rest, empty };
+    foldQuickLoot(f);
+
+    globalThis.innerWidth = 1280;
+    showWorldPlaque(f, { x: 700, top: 40 });
+    assert.equal(find(root(), 'wplaque-stats')[0]?.dataset.side, 'right', 'room to the right at 1280');
+
+    // The SAME frame, the SAME anchor, the same highlight - only the
+    // window narrowed. `frameSignature` and the highlight are both
+    // unchanged, so this repaints ONLY because the side is in the guard.
+    globalThis.innerWidth = 1000;
+    showWorldPlaque(f, { x: 700, top: 40 });
+    assert.equal(find(root(), 'wplaque-stats')[0]?.dataset.side, 'left',
+      'the window narrowed under a still crosshair, and the panel moved');
+  } finally { resetQuickLoot(); delete globalThis.innerWidth; }
+}));
 
 test('QUICK-LOOT B3: the lit row is drawn lit, and only one of them', () => withPlaque((root) => {
   setPref('quickLoot', true);

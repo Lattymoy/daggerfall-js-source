@@ -85,6 +85,23 @@ export const ACTIONS = Object.freeze([
   // player would rebind into a clash.
   'QuickLootAll',
   'QuickLootOpen',
+  // FREEMOUSE (2026-09-22, Mac: "an entirely new keybind. A mouse free
+  // that allows you to toggle the use of your mouse"). APPENDED, like
+  // every port action before it.
+  //
+  // THE TOGGLE ITSELF IS NOT NEW - `ActivateCursor` is DFU's own
+  // (PlayerMouseLook.cs:190-198) and the port has read it since U45.
+  // What is new is a key that is ONLY that. ActivateCursor's default
+  // is Enter, and online Enter is also the chat's open
+  // (ui/chatPanel.js CHAT_OPEN_ACTION), so the one press a player
+  // reaches for to free the mouse is the same press that opens a text
+  // box - a collision PL3 had to work around rather than resolve,
+  // because DFU's binding is DFU's. A second ACTION resolves it
+  // instead of arguing with it: Enter keeps DFU's meaning, this is the
+  // player's own, and the two are ORed at the one reader
+  // (player/pointerLock.js bindCursorToggle) so there is no second
+  // toggle to keep in step.
+  'FreeMouse',
 ]);
 
 /** AUDIT SOC D3: THE PORT'S OWN ROWS, NAMED SO THE CLASSIC WINDOWS CAN YIELD THEM.
@@ -97,7 +114,7 @@ export const ACTIONS = Object.freeze([
  *  because it draws the row (ui/enhancedControls.js PORT_ROWS, the 'Online' group) and can rebind it.
  *  QS2: the three quickslot actions join it for the same reason, off the same face - the enhanced pane draws them
  *  under their own 'Quickslots' heading and the classic windows cannot draw them at all. */
-export const PORT_ACTIONS = Object.freeze(['SocialInteract', 'QuickUse1', 'QuickUse2', 'QuickSwap', 'QuickOffHand', 'QuickSpell', 'QuickLootAll', 'QuickLootOpen']);   // QUICK-LOOT B4: the plaque's two, drawn in the enhanced pane under their own heading - the classic windows cannot draw them at all
+export const PORT_ACTIONS = Object.freeze(['SocialInteract', 'QuickUse1', 'QuickUse2', 'QuickSwap', 'QuickOffHand', 'QuickSpell', 'QuickLootAll', 'QuickLootOpen', 'FreeMouse']);   // QUICK-LOOT B4: the plaque's two, drawn in the enhanced pane under their own heading - the classic windows cannot draw them at all
 
 const ACTION_SET = new Set(ACTIONS);
 
@@ -186,6 +203,28 @@ export const DEFAULT_BINDINGS = Object.freeze([
   // rebindable rows inert in both directions.
   ['KeyP', 'QuickLootAll'],
   ['KeyJ', 'QuickLootOpen'],
+  // FREEMOUSE: Y, and it is what is LEFT rather than what is apt.
+  //
+  // The sweep QUICK-LOOT B4 ran, run again: of the twenty-six letters,
+  // DFU's own table spends A C D E F H I J L M N P Q R S T U V W Z,
+  // the port spends F (SOC5), J and P (quick loot), and the vendored
+  // mods' defaults and OFFERED CHOICES spend B (Eye Of The Beholder's
+  // SwitchShoulder), G (Handheld Torches' ManualDrop), K (Travel
+  // Options' FollowPaths choice), O and X. That leaves exactly one
+  // letter, and this is it.
+  //
+  // The obvious keys are all spoken for and each for a reason worth
+  // not undoing: Alt is Sneak, Backquote is the console, Tab is the
+  // pixel dial (PX15), and Enter is the very collision this action
+  // exists to get away from.
+  //
+  // A key that is merely free is the honest cost of a keymap this
+  // full - it is an ACTION, so a player who wants it under their
+  // thumb moves it in the controls pane, which is the whole reason
+  // this is a row rather than an `e.code` test in a host (AUDIT 58's
+  // lesson: a key-literal table there made four rebindable rows inert
+  // in both directions).
+  ['KeyY', 'FreeMouse'],
   // QS2: THE NUMBER ROW, which is the one place a Souls player's hand already
   // goes. Digit1-Digit4 are unspent by SetupDefaults, unspent by the port
   // (PX15's Tab, HT4's G, SOC5's F, HT's O and X are the whole of the port's

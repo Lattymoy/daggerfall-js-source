@@ -154,14 +154,29 @@ const QUICKLOOT_ROWS = Object.freeze([
   Object.freeze({ action: 'QuickLootAll', label: 'Take everything' }),
   Object.freeze({ action: 'QuickLootOpen', label: 'Open the container' }),
 ]);
+/** FREEMOUSE (2026-09-22, Mac: "an entirely new keybind. A mouse free
+ *  that allows you to toggle the use of your mouse"): its own heading,
+ *  and it holds ONE row on purpose. The alternative was to file it
+ *  under 'Online' - where the chat collision that motivates it lives -
+ *  and that is the mistake QS2 already named: a group whose title does
+ *  not describe its rows is worse than no group. Freeing the mouse is
+ *  not an online thing; it is a thing you do to read the screen. */
+export const MOUSE_GROUP_TITLE = 'Mouse';
+const MOUSE_ROWS = Object.freeze([
+  // The LABEL says what it does in the player's words, not the
+  // action's: "free the mouse" is the thing they came here looking
+  // for, and it is a toggle, so the row says both halves.
+  Object.freeze({ action: 'FreeMouse', label: 'Free the mouse (press again to look)' }),
+]);
 /** The port's own headings, in the order the pane draws them. */
 export const PORT_GROUPS = Object.freeze([
   Object.freeze({ title: PORT_GROUP_TITLE, rows: ONLINE_ROWS }),
   Object.freeze({ title: QUICKSLOT_GROUP_TITLE, rows: QUICKSLOT_ROWS }),
   Object.freeze({ title: QUICKLOOT_GROUP_TITLE, rows: QUICKLOOT_ROWS }),
+  Object.freeze({ title: MOUSE_GROUP_TITLE, rows: MOUSE_ROWS }),
 ]);
 /** Every port row, flat: the coverage rule's half of the answer. */
-export const PORT_ROWS = Object.freeze([...ONLINE_ROWS, ...QUICKSLOT_ROWS, ...QUICKLOOT_ROWS]);
+export const PORT_ROWS = Object.freeze([...ONLINE_ROWS, ...QUICKSLOT_ROWS, ...QUICKLOOT_ROWS, ...MOUSE_ROWS]);
 
 /** ShowMultipleAssignmentsMessage's line, the string the classic grid
  *  draws (ui/controlsWindow.js's `top === 'dupes'` row). The same

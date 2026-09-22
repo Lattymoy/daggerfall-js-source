@@ -70,12 +70,24 @@ export function hoverItemAt(items, row, max = HOVER_MAX) {
   return hoverItems(items)[row] ?? null;
 }
 
-/** The lines a pile shows: name, and a count when a stack. Pure. */
+/** The lines a pile shows: name, a count when a stack, and the ITEM
+ *  itself. Pure.
+ *
+ *  QUICK-LOOT-STATS: the item rides the row so the plaque can READ the
+ *  highlighted one's stats without a second walk from row index to
+ *  item - `hoverItemAt` already does that walk for the take, and two
+ *  walks is two chances for the row seen and the row described to
+ *  disagree. It is a READ handle and nothing more: the take still goes
+ *  through the container's own loot hooks (quickLoot.js says why), so
+ *  the boundary that matters - who may MUTATE a container - is
+ *  untouched. `frameSignature` deliberately does not fold it in: a
+ *  reference is not something a player can see change. */
 export function hoverLines(items, max = HOVER_MAX) {
   const rows = hoverItems(items).map((it) => ({
     name: itemNameParts(it).name || 'Something',   // RF6: the long name's name part - a potion its %po, a soul trap its soul; LR1: unidentified is the bare template (the resolver already answers a template-less item its own name)
     stack: (it.stackCount ?? 1) > 1 ? it.stackCount : 0,
     rarity: rarityAttr(it),   // LR1: null with the switch off or for Common
+    item: it,
   }));
   const shown = rows.slice(0, max);
   const rest = rows.length - shown.length;

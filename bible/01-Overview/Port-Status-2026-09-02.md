@@ -324,7 +324,7 @@ reference surface absent · **Departure** = deliberate, ledgered.
 | **ui-hud** | Verbatim (classic) / Partial (enhanced default) | **Verbatim on both skins** | The skin fork moved BELOW the game-state seams: `ui/hud.js:499` runs `updateHudVitals` and `:554` `drawNearDeathFlicker`, both above the enhanced branch at `:606` and above the `!art` return, and the enhanced HUD takes the Detect markers at `:621`. `lastHealthLost()` is no longer pinned at 0, so `CameraRecoiler` lives in all three hosts. |
 | **ui-windows-a** | Rect parity excellent / two crash doors | **Verbatim** | ROAD-D D2 shipped both scroll thumbs (`chargenArt.js:777` over `RECTS.pickScroll`, `spellbookWindow.js:1011` over the 7-wide rail). |
 | **ui-windows-b** | Broadly ported | **Verbatim** | Both automaps are native windows. ROAD-D D6 built the ship purchase over the shared bank-market mount and gave `buildingIsUnlocked` the `ownsShip` key its last arm needed. |
-| **ui-enhanced** | Departure lane | **Departure lane, scoped** | `ui/worldPlaque.js:238` puts the skin gate above `ensure()`, so the unscoped `*`/`html`/`body`/`button`/`#app` rules never reach the classic page. 9 modules / 8,940 lines. |
+| **ui-enhanced** | Departure lane | **Departure lane, scoped** | `ui/worldPlaque.js:301` puts the skin gate above `ensure()`, so the unscoped `*`/`html`/`body`/`button`/`#app` rules never reach the classic page. 9 modules / 8,940 lines. |
 | **xcut-seams** | Clean, with one block | **Clean** | The quest machine's region-faction block was the wave. |
 | **xcut-async** | Disciplined / one missing sweep | **Disciplined** | `CleanupUntrackedObjects` has a counterpart in both halves. |
 | **xcut-tests-docs** | Gated half exact / ungated half rotting | **Gated half exact** | The flag list is byte-identical to `regenOpenFlags --check`; `Testing.md:4` is pinned to a live walk of `test/` by `test/manifest.test.js`. |
@@ -500,7 +500,7 @@ are the **narrowed remainders** Wave D recorded rather than shipped
   `%`), `talkMacros.js` carries none - it is the MCP: TalkManagerMCP's
   thirteen overrides over the one GameManager the host hands in - and
   all four sentinels are reachable and pinned.*
-- ~~**`src/systems/inputActions.js:837`** - STILL FLAGGED, NARROWED (GP1,
+- ~~**`src/systems/inputActions.js:876`** - STILL FLAGGED, NARROWED (GP1,
   2026-09-11)~~ **RETIRED (GP3, 2026-09-11): the pad plays, its window is built, its cursor works a window - the note stands where the flag stood.** ~~axes and joystick. *The port has no gamepad input
   layer, so `AxisActions` and `JoystickUIActions` have no source to
   bind and `loadKeyBinds` deliberately ignores those blocks in a

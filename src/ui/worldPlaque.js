@@ -39,7 +39,7 @@
 // at `(Screen.height - largeHUD.Rectangle.height) / 2` under a docked
 // large HUD (vendor .cs:1097-1112) - so ROAD-E E5's law, that a docked
 // bar moves the reticle, moves the plaque with it for free.
-import { injectEnhancedStyle } from './enhancedStyle.js';
+import { injectEnhancedStyle, PLAQUE_MAX_W, STATS_W, STATS_GAP, STATS_MARGIN } from './enhancedStyle.js';   // QUICK-LOOT-STATS: the layout numbers live with the dress that draws them
 import { isEnhanced } from '../systems/uiSkin.js';
 import { isTouchDevice } from './touchDevice.js';
 import { crosshairCentreY, CROSSHAIR_ARM } from './hudCrosshair.js';
@@ -47,12 +47,45 @@ import { hudReticle } from './hud.js';   // the reticle's own two terms, from th
 import { pickActivatableHit } from '../player/activate.js';
 import { frameMark } from '../systems/frameClock.js';   // AUDIT-WH P3: the frame in flight, so the gate's two terms are computed once in it
 import { resolveHover, frameSignature } from '../systems/worldHover.js';
-import { foldQuickLoot, quickLootRow, resetQuickLoot } from '../systems/quickLoot.js';   // QUICK-LOOT B3: the highlight is the FEATURE's - this draws it and frees it, it does not own it
+import { foldQuickLoot, quickLootRow, quickLootStats, resetQuickLoot } from '../systems/quickLoot.js';   // QUICK-LOOT B3: the highlight is the FEATURE's - this draws it and frees it, it does not own it; QUICK-LOOT-STATS: and the lit row's own numbers
 
 /** The gap in CSS pixels between the cross's lower arm tip and the
  *  plaque's top edge. Large enough that the two never read as one
  *  shape, small enough that the name is plainly about the reticle. */
 export const PLAQUE_GAP = 18;
+
+/**
+ * QUICK-LOOT-STATS: WHICH SIDE THE STAT PANEL STANDS ON, decided by
+ * arithmetic rather than by hope.
+ *
+ * The plaque is centred on the reticle (`translateX(-50%)`), so a panel
+ * pinned to its right edge runs off a narrow screen - and the player
+ * asked for the stats NEXT TO the window, so "next to" has to mean next
+ * to on every screen rather than on the author's.
+ *
+ * The widths are IMPORTED from the sheet that draws them
+ * (enhancedStyle.js), not restated: a layout decided against a number
+ * the CSS no longer uses is a panel half off the screen, and two
+ * literals is exactly how that happens. The plaque's HALF is taken at
+ * its maximum - a short title makes the box narrower than the max and
+ * never wider, so the conservative read is the safe one both ways.
+ *
+ * Right first (the reading order, and where a right-handed player's
+ * eye already is), then left, then BELOW - which is not a failure
+ * state but the honest answer on a phone, where nothing fits beside
+ * anything.
+ *
+ * Pure, so the three cases can be driven rather than eyeballed at one
+ * window size - which is exactly how CHARGEN-REFLEX's harness lied.
+ */
+export function statsSide(anchorX, viewportWidth) {
+  const half = PLAQUE_MAX_W / 2;
+  const need = half + STATS_GAP + STATS_W + STATS_MARGIN;
+  if (!Number.isFinite(anchorX) || !Number.isFinite(viewportWidth) || viewportWidth <= 0) return 'below';
+  if (anchorX + need <= viewportWidth) return 'right';
+  if (anchorX - need >= 0) return 'left';
+  return 'below';
+}
 
 /** AUDIT-WH2 L3-F2: a plaque that has not been drawn for this long is
  *  gone - take it down. ENH-NOTICE1's own constant and its own reason
@@ -142,7 +175,7 @@ export function plaqueAnchor(canvas) {
   };
 }
 
-function paint(n, f, sel = -1) {
+function paint(n, f, sel = -1, stats = []) {
   n.textContent = '';
   n.classList.toggle('has-list', f.kind === 'items');
   const title = document.createElement('div');
@@ -204,6 +237,36 @@ function paint(n, f, sel = -1) {
     more.textContent = `and ${f.rest} more`;
     list.append(more);
   }
+  // QUICK-LOOT-STATS: the lit row's own numbers, BESIDE the list.
+  // A child of the plaque rather than a second fixed node, so it
+  // rides the reticle's anchor for free and the one teardown that
+  // already takes the plaque down takes it with it - a second
+  // top-level overlay is a second thing to forget to hide (AUDIT 64
+  // F37, the law ENH-NOTICE1's watchdog exists for).
+  if (!stats.length) return;
+  const panel = document.createElement('div');
+  panel.className = 'wplaque-stats';
+  panel.dataset.side = statsSide(lastX, globalThis.innerWidth ?? 0);
+  for (const r of stats) {
+    const line = document.createElement('div');
+    line.className = 'wplaque-statrow';
+    // A row with no label is a SENTENCE, not a pair - a survival
+    // item's "Raw - cook it at a fire." has no left-hand word and
+    // drawing an empty one would open a gap the eye reads as a
+    // missing value.
+    if (r.label) {
+      const k = document.createElement('span');
+      k.className = 'wplaque-statkey';
+      k.textContent = r.label;
+      line.append(k);
+    } else line.classList.add('wplaque-statnote');
+    const v = document.createElement('span');
+    v.className = 'wplaque-statval';
+    v.textContent = r.text;
+    line.append(v);
+    panel.append(line);
+  }
+  n.append(panel);
 }
 
 /**
@@ -297,7 +360,14 @@ export function showWorldPlaque(frame, anchor = null) {
   // so a wheel click that moves the highlight down one row leaves the
   // frame identical and would not have repainted. Same defect PX21c had
   // with the key, one field further out.
-  const sig = `${frameSignature(frame)}|${quickLootRow(frame)}`;
+  // QUICK-LOOT-STATS: the stat rows are derived from the lit row, so
+  // the selection already covers them - EXCEPT that the panel's SIDE
+  // is a function of where the plaque stands and how wide the window
+  // is, and neither is in the frame. A resize with the crosshair held
+  // still would otherwise leave the panel off the screen edge it was
+  // laid out against.
+  const stats = quickLootStats(frame);
+  const sig = `${frameSignature(frame)}|${quickLootRow(frame)}|${statsSide(lastX, globalThis.innerWidth ?? 0)}`;
   if (sig === shownSig) return;
   shownSig = sig;
   if (!frame) {
@@ -308,7 +378,7 @@ export function showWorldPlaque(frame, anchor = null) {
     blank(n);
     return;
   }
-  paint(n, frame, quickLootRow(frame));
+  paint(n, frame, quickLootRow(frame), stats);
   n.classList.add('on');
 }
 

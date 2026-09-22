@@ -219,13 +219,20 @@ test('FIX-F: the pane offers the classic grid’s 38 actions and the ADVANCED si
   // QUICK-LOOT B4 WIDENED IT BY A FIFTH GROUP, on the same rule: two
   // more port actions that belong to neither DFU list, under a heading
   // that describes them both.
+  // FREEMOUSE WIDENED IT BY A SIXTH, holding ONE row - and the heading
+  // is the reason it is not filed under 'Online', where the Enter/chat
+  // collision that motivates it lives. Freeing the mouse is not an
+  // online thing; it is a thing you do to read the screen, and QS2
+  // already paid for the lesson that a group whose title does not
+  // describe its rows is worse than no group.
   assert.deepEqual(PORT_ROWS.map((r) => r.action),
     ['SocialInteract', 'QuickUse1', 'QuickUse2', 'QuickSpell', 'QuickSwap', 'QuickOffHand',
-      'QuickLootAll', 'QuickLootOpen']);   // QS6: the spell slot, above the swap it took the key from
+      'QuickLootAll', 'QuickLootOpen', 'FreeMouse']);   // QS6: the spell slot, above the swap it took the key from
   assert.deepEqual(PORT_GROUPS.map((g) => [g.title, ...g.rows.map((r) => r.action)]), [
     ['Online', 'SocialInteract'],
     ['Quickslots', 'QuickUse1', 'QuickUse2', 'QuickSpell', 'QuickSwap', 'QuickOffHand'],
     ['Quick loot', 'QuickLootAll', 'QuickLootOpen'],
+    ['Mouse', 'FreeMouse'],
   ]);
   assert.deepEqual(PORT_GROUPS.flatMap((g) => g.rows), [...PORT_ROWS], 'the union really is the groups, not a second list beside them');
   // together: every bindable action, none twice

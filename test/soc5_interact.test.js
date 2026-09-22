@@ -486,7 +486,7 @@ test('AUDIT SOC D3: the port own action YIELDS in the classic windows - a grid a
   // same reason - the classic grid is Actions[2..40) on fixed art and the
   // ADVANCED popup is DFU's six, so none of the four is drawable there.
   assert.deepEqual([...PORT_ACTIONS], ['SocialInteract', 'QuickUse1', 'QuickUse2', 'QuickSwap', 'QuickOffHand', 'QuickSpell',
-    'QuickLootAll', 'QuickLootOpen']);   // QUICK-LOOT B4: the two loot keys yield on the same rule - neither the grid's art nor DFU's six can draw them; QS6: the spell slot yields there too
+    'QuickLootAll', 'QuickLootOpen', 'FreeMouse']);   // QUICK-LOOT B4: the two loot keys yield on the same rule - neither the grid's art nor DFU's six can draw them; QS6: the spell slot yields there too; FREEMOUSE: and the mouse toggle's own row, for the same reason
   const store = createBindings();
   resetDefaults(store);
   assert.equal(getBinding(store, 'SocialInteract'), 'KeyF');

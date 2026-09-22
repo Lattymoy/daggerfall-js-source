@@ -1070,8 +1070,15 @@ test('PX21c / WORLD-HOVER: the plaque names a pile without opening it, on the ta
   // plaque paints exactly what is in it.
   const { hoverLines, HOVER_MAX, resolveHover, frameSignature } = await import('../src/systems/worldHover.js');
   assert.deepEqual(hoverLines([]), { shown: [], rest: 0, empty: true });
-  assert.deepEqual(hoverLines([{ name: 'Ruby', stackCount: 3 }, { name: 'Helm' }]),
+  // QUICK-LOOT-STATS: a row carries its source `item` too, so the
+  // plaque can read the lit one's stats without a second walk. The law
+  // here is about what is DRAWN and the tail, so the drawn fields are
+  // compared and the reference is named on its own line.
+  const twoItems = [{ name: 'Ruby', stackCount: 3 }, { name: 'Helm' }];
+  const two = hoverLines(twoItems);
+  assert.deepEqual({ shown: two.shown.map(({ name, stack, rarity }) => ({ name, stack, rarity })), rest: two.rest, empty: two.empty },
     { shown: [{ name: 'Ruby', stack: 3, rarity: null }, { name: 'Helm', stack: 0, rarity: null }], rest: 0, empty: false });   // LR1: a row wears its tier, null with the switch off
+  assert.deepEqual(two.shown.map((r) => r.item), twoItems, 'each row carries its own item, in order');
   const many = hoverLines(Array.from({ length: HOVER_MAX + 4 }, (_, i) => ({ name: `x${i}` })));
   assert.equal(many.shown.length, HOVER_MAX);
   assert.equal(many.rest, 4);
@@ -1093,7 +1100,8 @@ test('PX21c / WORLD-HOVER: the plaque names a pile without opening it, on the ta
     'out of reach is not named at all');
   const near = resolveHover({ key: 'loot:3', distance: 1, reach: 3.2 }, pile);
   assert.equal(near.kind, 'items');
-  assert.deepEqual(near.rows, [{ name: 'Ruby', stack: 2, rarity: null }]);
+  assert.deepEqual(near.rows.map(({ name, stack, rarity }) => ({ name, stack, rarity })),
+    [{ name: 'Ruby', stack: 2, rarity: null }]);   // QUICK-LOOT-STATS: the drawn fields; the row also carries its item
   assert.equal(resolveHover(null, {}), null, 'nothing under the crosshair');
   // A key the ladder has no word for draws NOTHING - the mod's own
   // behaviour (an empty `ret` leaves the tooltip down, .cs:169-172), and
