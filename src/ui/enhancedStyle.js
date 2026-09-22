@@ -209,6 +209,99 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
 .stats dt { color: var(--dim); font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; }
 .stats dd { margin: 0; font-variant-numeric: tabular-nums; }
 
+/* ── TILE1: THE SAVE TILE (ui/saveTile.js) ─────────────────────────
+   Mac: "a detailed tile based design for your saves... showing your
+   portrait and character information".
+
+   A GRID RATHER THAN A LIST. Three panes listed the same slots as full
+   width cards, so four saves filled a screen and a player scrolled to
+   find a character they would have recognised at a glance. The tiles
+   are as wide as they need to be and as many as fit.
+
+   THE TILE ITSELF IS A THREE PART GRID: the face down the left in its
+   own column, everything about the character beside it, and the
+   actions along the foot spanning both - so the buttons line up across
+   every tile in a row however tall the text above them runs.
+
+   It borrows the skin rather than bringing one: --iron for the rule,
+   --bone for the name, --dim for the quiet lines, --brass for the
+   primary. Nothing here is a new design language. */
+.svgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 14px; margin-bottom: 18px; }
+.svtile {
+  /* THREE ROWS: the character, a filler that eats the slack, and the
+     foot. Without the filler every tile's buttons sat wherever its own
+     text ended, and a row of equal-height tiles had its buttons at four
+     different heights - measured in tools/saveTileProbe.mjs, and it
+     reads as four misaligned cards rather than one row. */
+  display: grid; grid-template-columns: 96px 1fr; grid-template-rows: auto 1fr auto;
+  gap: 0 16px;
+  border: 1px solid var(--iron); background: #12161b; padding: 16px; position: relative;
+}
+/* The slot this pane is ABOUT - the most recent, or the one a save
+   would overwrite. One brass edge, no badge and no extra word. */
+.svtile.sv-current { border-color: var(--brass); }
+
+/* THE WELL. A fixed box so a tile is the same height whether its
+   portrait loaded or not - a grid that reflows when ten CIF reads land
+   is a list that jumps under a player's finger. */
+.svface {
+  grid-row: 1 / span 2; width: 96px; height: 116px;
+  border: 1px solid var(--iron); background: #0a0c11;
+  display: flex; align-items: center; justify-content: center; overflow: hidden;
+}
+.svface canvas {
+  /* THE PIXELS, AS THEY ARE. A 2x nearest-neighbour head is the art
+     Daggerfall shipped; smoothing it is a portrait of a different
+     game. */
+  image-rendering: pixelated; max-width: 100%; max-height: 100%; display: block;
+}
+.svinitial { font-family: var(--display); font-size: 40px; color: var(--iron); }
+
+.svwho { grid-column: 2; grid-row: 1; min-width: 0; }
+.svwho h3 { font-family: var(--display); font-weight: 400; font-size: 21px; margin: 0 0 2px; overflow-wrap: anywhere; }
+.svsub { color: var(--bone); font-size: 13px; margin: 0 0 2px; }
+.svwhen { color: var(--dim); font-size: 12px; margin: 0 0 10px; }
+.svwho .stats { gap: 4px 14px; margin: 0; }
+
+/* THE NAME AND THE SLOT SHARE ONE ROW. Not the slot pinned to the
+   tile's corner: a slot name is the player's own words and can be a
+   sentence, and pinned it ran straight into a long character name
+   (measured at "Mithriil Stormaire" beside "a very long slot name
+   indeed"). Sharing a row makes the slot GIVE WAY, which is the right
+   precedence - the character is who a player is looking for. */
+.svtop { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.svtop h3 { flex: 0 1 auto; min-width: 0; }
+.svslot {
+  flex: 0 1 auto; min-width: 0;
+  font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--dim);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+
+/* ── THE CLOUD LINE (ACC2) ───────────────────────────────────────
+   ONE line and at most one button, and only when there is an account
+   to have a backup on. ACC0's wall is at cloud saves, and a player
+   without one is not nagged about it on every tile. */
+/* The foot: pinned to the bottom row, spanning both columns. */
+.svfoot { grid-column: 1 / -1; grid-row: 3; }
+.svcloud {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--iron);
+}
+.svsay { font-size: 12px; letter-spacing: 0.06em; color: var(--dim); flex: 1 1 auto; }
+.svcloud.is-saved .svsay { color: var(--verdigris); }
+.svcloud.is-bad .svsay { color: var(--ruby); }
+.svcloud .act { padding: 7px 12px; min-height: 32px; font-size: 12px; }
+
+.svtile .acts { margin-top: 12px; }
+.svtile .acts .act { padding: 9px 16px; min-height: 38px; }
+
+/* A phone holds one tile across, and the face beside the text still
+   reads - so the columns stay and only the gaps tighten. */
+@media (max-width: 560px) {
+  .svgrid { grid-template-columns: 1fr; }
+  .svtile { padding: 14px; gap: 4px 12px; }
+}
+
 .acts { display: flex; gap: 8px; flex-wrap: wrap; }
 .act {
   padding: 12px 20px; border: 1px solid var(--iron); color: var(--dim);

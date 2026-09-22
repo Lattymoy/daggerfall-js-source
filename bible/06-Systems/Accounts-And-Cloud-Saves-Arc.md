@@ -1610,9 +1610,28 @@ would have restored the wrong game.
 
 Mutants: `tools/mutants/acc2.json`, 22, **22 dead and 0 survived**.
 
-### What is left of ACC2
+### ACC2c — SHIPPED 2026-09-22: the surface, on the tiles
 
-The transport is done and nothing calls it yet. The trigger and the
-surface are the tile picker's, by D6 and by Mac's own order — the Online
-pane is "reserved for a detailed tile based design for your saves which
-will translate to the load character pane also".
+D6's trigger, where it belongs. The save tile (TILE1, recorded in
+`bible/10-UI/UI-Arc.md`) carries ONE cloud line and at most one button:
+*Not backed up* with **Back up**, *Backed up · 2 hours ago* with **Back
+up again**, *Backing up…*, or the service's own refusal in ruby with
+**Try again**.
+
+**And nothing at all where there is no registered account.** ACC0's wall
+is at cloud saves, and a player who has not asked for one is not told
+about it on every tile they own — `off` is the state most players are
+in, and it draws no line.
+
+The listing is asked ONCE per visit to the menu and latches, because a
+pane repaints on every press, every skin switch and every Escape; a push
+clears the latch rather than patching the list, so what the tiles say
+the cloud holds always came from the cloud.
+
+**What is still not done, and is deliberately not:** nothing uploads by
+itself, and a save that exists ONLY in the cloud is not drawn yet — the
+tiles list what is on this device. Pulling a save down onto a second
+device is `pullSlot`, it is pinned end to end against the real service,
+and what it needs is a surface: a tile for a cloud-only save, with
+**Download** where **Load** sits. That is the next slice, and it is
+small.

@@ -17169,3 +17169,108 @@ not load (a trailing comment swallowed a one-line statement, twice),
 and read 14/14 both times; PERF-RIG1's F3 lesson again, caught by
 reading the pass count against the run.
 
+
+---
+
+## TILE1/TILE2 — THE SAVE TILE (2026-09-22)
+
+Mac, after ACC1f moved the account card off the Online pane:
+
+> I want [the Online pane] reserved for a detailed tile based design
+> for your saves which will translate to the load character pane also.
+> Basically showing your portrait and character information.
+
+### What a tile carries, and what it deliberately does not
+
+Mac, two hours earlier, on the account card: *"Nothing is centered,
+there's uneeded text explaining what an account is"*. So a tile carries
+**facts about a character and no prose at all**:
+
+| | |
+|---|---|
+| the face | who this is, before a word is read |
+| the name | and under it race, class and level |
+| the moment | the in-game date and hour the save was taken at |
+| the slot | its name, sharing the heading's row and giving way to it |
+| two numbers | health and gold, the pair every card already had |
+| the cloud | one line, and **only where there is an account** |
+| the actions | the pane's own, and a Delete where it belongs |
+
+A pin holds the no-prose rule by looking for the SHAPE an explanation
+would take, rather than by counting words.
+
+### ONE tile, THREE panes — and that is the point
+
+Online, Load Game and Save Game all list the same slots, and all three
+drew their own `card slot`: the same four lines, hand-rolled three
+times. That is how three panes come to disagree about what a save IS.
+`slotCard` is gone; the tile knows nothing about a pane and the panes
+hand it their own actions.
+
+Mac named Online and Load. **Save Game went too**, because leaving one
+of the three drawing something else is exactly the drift one tile was
+made to end — and on that pane `current` marks the slot the name field
+would OVERWRITE, so the brass edge moves as the player types.
+
+### The face has one home, and it is not the one chargenArt owns
+
+Drawing a head lived inside `systems/chargenSession.js`, where only the
+wizard could reach it. The tile is the second caller, so it moved to
+`ui/facePortrait.js` rather than being copied — two copies of "which
+CIF, which palette, which record" drift the day one learns about a
+mod's replacement art.
+
+It is `loadFaceCanvases`, **not** `loadFaceSet`, which `ui/chargenArt.js`
+already exports and which is a different thing under a similar name: that
+one uploads the same ten records as GL TEXTURES for the classic screen
+and returns nothing. AUDIT 24's duplicate-declaration ratchet caught the
+collision the moment the second one existed.
+
+**The identity the portrait needs was already in the save.** S3c/U9 put
+`race`, `gender` and `faceIndex` on the envelope; the menu's row simply
+never read them. Nothing new is stored.
+
+### The two faults the BROWSER found, and neither was findable in source
+
+- **`.tile` was already taken.** It is the inventory and trade item
+  icon — 30x30, `display: grid; place-items: center` — so every save
+  tile was squashed by a rule written for something else and every
+  measurement read 34x34. The classes are `sv`-prefixed now, and the
+  pin that holds it is derived: it walks the classes `saveTile.js`
+  really puts in the DOM and asserts no other module under `src/ui`
+  draws one, with the BORROWED vocabulary (`act`, `acts`, `primary`,
+  `stats`) named and exempt because those are the skin's own words and
+  are meant to be shared.
+- **A long slot name ran into a long character name.** It was pinned to
+  the tile's corner; it shares the heading's row by flex now and gives
+  way, which is the right precedence — the character is who a player is
+  looking for.
+
+A third came out of writing the node pin rather than the browser one:
+`agoText` used `Math.round`, and past the 90-second threshold the
+rounded minute count is never 1 — so **"1 minute ago" was a branch
+nothing could produce**. It floors now, which also overstates nothing.
+
+### The cloud line (ACC2)
+
+One line, at most one button, and **nothing at all where there is no
+registered account** — ACC0's wall is at cloud saves and `off` is the
+state most players are in. A refusal is the SERVICE's own sentence
+handed in, because a second sentence here for a word
+`net/accountClient.js` already explains is two sentences for one
+refusal.
+
+**This is ACC2 D6's surface.** Nothing uploads by itself: an upload
+inside the save path would put a network call in the one operation this
+game must never fail, and a backup that happens invisibly is a backup
+whose failure is also invisible. The listing is asked ONCE per visit and
+latches, because a pane repaints on every press.
+
+**Pinned** in `test/savetile.test.js` (8) and measured in
+`tools/saveTileProbe.mjs` (18 checks, `npm run savetile`). Mutants:
+`tools/mutants/tile.json`, 11, **10 dead and 1 recorded equivalent**.
+
+**STILL OPEN, and it is Mac's call:** the portraits could not be
+photographed here — a real head needs the player's own Daggerfall files
+and this container has none — so the sheets he was sent use STAND-INS at
+a head record's real size. The layout is proved; the art on it is not.

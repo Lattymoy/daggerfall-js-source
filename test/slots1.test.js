@@ -51,8 +51,11 @@ test('SLOTS1: the pick seams hand a key and a name over once (mutant: a pick tak
   // the panes set them beside the verb the census pins
   const online = menu.slice(menu.indexOf('function paneOnline(body)'), menu.indexOf('function paneLoad(body)'));
   assert.match(online, /const saves = savedGames\(\);/);
-  assert.match(online, /for \(const save of saves\) \{[\s\S]*?_pickedSaveKey = save\.key;\s*\n\s*onAction\('online'\);/,
-    'a card per slot, the pressed one is the character brought in');
+  // TILE2: a TILE per slot now, in one grid - Mac: "I want [this pane]
+  // reserved for a detailed tile based design for your saves". The
+  // pressed one is still the character brought in.
+  assert.match(online, /body\.append\(tileGrid\(saves,[\s\S]*?_pickedSaveKey = save\.key;\s*\n\s*onAction\('online'\);/,
+    'a tile per slot, the pressed one is the character brought in');
   // NAME-F2: ...and the name is checked BEFORE the pick is taken. The
   // order is the point: `takePickedSaveKey` is a one-shot, so a pick
   // stored and then refused would leave the key latched for the next
@@ -69,19 +72,35 @@ test('SLOTS1: the pick seams hand a key and a name over once (mutant: a pick tak
   assert.match(online.slice(guard, latch), /return; \}/, 'and it really RETURNS rather than falling through');
   assert.doesNotMatch(online, /disabled: !save/, 'no single most-recent button any more');
   const load = menu.slice(menu.indexOf('function paneLoad(body)'), menu.indexOf('// ── SAVE GAME'));
-  assert.match(load, /_pickedSaveKey = save\.key; onAction\('load'\);/); assert.match(load, /deletable: true/, 'the Load cards delete');
-  const card = menu.slice(menu.indexOf('function slotCard('), menu.indexOf('function savedGame()'));
-  assert.match(card, /label: 'Delete', onClick: \(\) => ask\([\s\S]{0,300}deleteSave\(save\.key\)/, 'delete asks first and removes the slot it shows');
+  assert.match(load, /_pickedSaveKey = save\.key; onAction\('load'\);/);
+  // TILE2: the delete moved onto the Load pane's own tile actions with
+  // the card it used to live on - it still ASKS, and it still takes the
+  // slot it is drawn beside and no other.
+  assert.match(load, /label: 'Delete', onClick: \(\) => ask\([\s\S]{0,400}deleteSave\(save\.key\)/, 'delete asks first and removes the slot it shows');
   assert.doesNotMatch(load, /More saves/, 'the note that the list rode the classic window is gone with the reason for it');
   const save = menu.slice(menu.indexOf('function paneSave(body)'), menu.indexOf('// ── EXIT (pause only)'));
   assert.match(save, /const mine = savedGames\(\)\.filter\(\(s\) => \(myId \? s\.characterId === myId : s\.characterName === me\)\);/, 'the character\u2019s own slots - CHARID1: by id, so a namesake\u2019s are not offered to overwrite');
   assert.match(save, /_pickedSaveName = input\.value\.trim\(\) \|\| QUICK_SAVE_NAME; onAction\('save'\);/, 'the typed name rides the save verb');
-  assert.match(save, /_pickedSaveName = save\.saveName; onAction\('save'\);/, 'a slot card overwrites that slot');
+  assert.match(save, /_pickedSaveName = save\.saveName; onAction\('save'\);/, 'a slot tile overwrites that slot');
   assert.match(save, /sensitivity: 'accent'/, 'the overwrite match is the classic window\'s own (localeCompare, accent-insensitive)');
   assert.doesNotMatch(save, /One slot/, 'the one-slot note is gone with the one slot');
   // one list producer for the cards and the most-recent card
   assert.match(menu, /function savedGames\(\) \{\s*\n\s*try \{ return restorableSaves\(\)\.map\(saveOf\); \}/);
-  assert.match(menu, /function slotCard\(save, \{ primaryLabel, onPrimary, disabled = false, deletable = false \}\)/);
+  // TILE2: ONE TILE FOR THREE PANES. `slotCard` is gone - three
+  // hand-rolled copies of "career, level, date, time" is how three
+  // panes come to disagree about what a save is, and the pin that held
+  // its signature would have held the drift in place.
+  assert.doesNotMatch(menu, /function slotCard\(/, 'the old per-pane card is gone');
+  assert.match(menu, /function tileGrid\(saves, forSave\) \{/, 'and one grid builds them');
+  // ...and ALL THREE panes that list slots draw them, sliced to the
+  // pane rather than searched across the file, so a pane that stopped
+  // reddens here.
+  const paneText = (from, to) => menu.slice(menu.indexOf(from), menu.indexOf(to));
+  for (const [name, from, to] of [
+    ['Online', 'function paneOnline(body)', 'function paneLoad(body)'],
+    ['Load', 'function paneLoad(body)', '// ── SAVE GAME'],
+    ['Save', 'function paneSave(body)', '// ── EXIT (pause only)'],
+  ]) assert.match(paneText(from, to), /tileGrid\(/, `the ${name} pane draws tiles`);
 });
 
 test('SLOTS1: the doors act on the pick - main.js sets ?loadkey for load and online alone (set-or-delete), the pause door routes the name to saveAs and the key to loadKey behind the verbs the MAC1 pin reads, and the world host\'s load arm reads the key (mutant: the key set on Continue)', () => {

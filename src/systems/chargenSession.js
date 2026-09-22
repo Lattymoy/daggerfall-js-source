@@ -626,11 +626,10 @@ function enhancedChargenOverlay(flow, { onDone, onCancel, hudScale = 2 } = {}) {
  *  lost. */
 async function chargenViewDeps() {
   const out = { picker: null, picture: null, palette: null, loadFaces: null, textRsc: null };
-  const [{ ImgFile }, { DFPalette }, { CifRciFile }, { TextRsc }, races, { bitmapCanvas }] =
+  const [{ ImgFile }, { DFPalette }, { TextRsc }, { loadFaceCanvases }] =
     await Promise.all([
       import('../formats/imgFile.js'), import('../formats/dfPalette.js'),
-      import('../formats/cifRciFile.js'), import('../formats/textRsc.js'),
-      import('./races.js'), import('../ui/bitmapCanvas.js'),
+      import('../formats/textRsc.js'), import('../ui/facePortrait.js'),
     ]);
   const { getBytes } = await import('../scenes/dataSource.js');
   const img = async (name) => {
@@ -648,16 +647,12 @@ async function chargenViewDeps() {
     out.picker = await img('TAMRIEL2.IMG');
     try { out.picture = await img('TMAP00I0.IMG'); }
     catch (e) { console.warn('[chargen] TMAP00I0 unavailable; the Imperial Province is absent', e); }
-    out.loadFaces = async (raceKey, gender) => {
-      const name = races.raceArt(raceKey, gender).heads;
-      const cif = new CifRciFile();
-      cif.load(await getBytes(name), name, pal);
-      const set = [];
-      for (let i = 0; i < races.FACES_PER_RACE; i++) {
-        set.push(bitmapCanvas(cif.getDFBitmap(i, 0), rgb, { scale: 2 }));
-      }
-      return set;
-    };
+    // TILE1: ONE HOME. This was the only place that knew which CIF a
+    // race's heads live in, which palette reads it and which record is
+    // which - and the save tiles are the second caller, so it moved to
+    // `ui/facePortrait.js` rather than being copied. Two copies of that
+    // drift the day one of them learns about a mod's replacement art.
+    out.loadFaces = (raceKey, gender) => loadFaceCanvases(raceKey, gender, { scale: 2 });
   } catch (e) {
     console.warn('[chargen] the map art is unavailable; the homelands fall to a list', e);
   }

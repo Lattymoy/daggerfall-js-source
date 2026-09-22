@@ -1,0 +1,256 @@
+// TILE1/TILE2 — THE SAVE TILE, PINNED WHERE IT THINKS.
+//
+// Mac: "I want [the Online pane] reserved for a detailed tile based
+// design for your saves which will translate to the load character
+// pane also. Basically showing your portrait and character
+// information."
+//
+// node cannot draw a tile, and test/enhancedChargen.test.js settled
+// what that means here: pin the part that does arithmetic and MEASURE
+// the drawn surface in a real browser (tools/saveTileProbe.mjs, 18
+// checks, `npm run savetile`). The browser half is where the two real
+// faults came from - `.tile` was already the inventory item icon's
+// class, and a long slot name ran into a long character name - and
+// neither is a thing a source sweep could see.
+//
+// What is here is what a node test can actually hold: the tile's own
+// arithmetic, the fact that ONE tile now serves THREE panes, and the
+// seams that make the whole thing drivable at all.
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { readFileSync, readdirSync } from 'node:fs';
+import { saveTile, agoText, tileLine, tileWhen, initialOf, CLOUD_STATES } from '../src/ui/saveTile.js';
+
+const rd = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
+
+/** A Document that does exactly what the tile asks of one - no more,
+ *  because a stub that offers more than a Document does lets a call
+ *  pass here and fail in a browser. */
+function fakeDoc() {
+  const make = (tag) => {
+    const n = {
+      tagName: tag.toUpperCase(), className: '', textContent: '', type: '', disabled: false,
+      childNodes: [], onclick: null,
+      append(...kids) { for (const k of kids) { k.parent = n; this.childNodes.push(k); } },
+      remove() { const i = this.parent?.childNodes.indexOf(this); if (i >= 0) this.parent.childNodes.splice(i, 1); },
+    };
+    return n;
+  };
+  return { createElement: make };
+}
+const walk = (n, out = []) => { out.push(n); for (const k of n.childNodes ?? []) walk(k, out); return out; };
+const byClass = (n, cls) => walk(n).filter((x) => String(x.className).split(' ').includes(cls));
+const text = (n, cls) => byClass(n, cls)[0]?.textContent ?? null;
+
+const SAVE = {
+  name: 'Nystul', race: 'Breton', career: 'Battlemage', level: 12,
+  health: 84, maxHealth: 120, gold: 14230,
+  when: '17th of Hearthfire, 3E 405', hour: '21:40', saveName: 'QuickSave',
+};
+
+test('TILE1: the tile carries FACTS ABOUT A CHARACTER and no prose', () => {
+  const t = saveTile(fakeDoc(), SAVE, { actions: [{ label: 'Load', primary: true }] });
+  assert.equal(walk(t).find((n) => n.tagName === 'H3').textContent, 'Nystul');
+  assert.equal(text(t, 'svsub'), 'Breton · Battlemage · level 12');
+  assert.equal(text(t, 'svwhen'), '17th of Hearthfire, 3E 405 · 21:40');
+  assert.equal(text(t, 'svslot'), 'QuickSave');
+  const dd = walk(t).filter((n) => n.tagName === 'DD').map((n) => n.textContent);
+  assert.deepEqual(dd, ['84 / 120', '14,230']);
+
+  // Mac, on the account card two hours before this one: "Nothing is
+  // centered, there's uneeded text explaining what an account is". So
+  // the tile has NO paragraph that explains anything - every string on
+  // it is a fact about this save, and the pin holds that by looking for
+  // the shape the explanation would take.
+  const src = rd('src/ui/saveTile.js');
+  const strings = [...src.matchAll(/el\('p', '[a-z ]*', '([^'\n]{25,})'\)/g)].map((m) => m[1]);
+  assert.deepEqual(strings, [], `the tile grew prose: ${strings.join(' | ')}`);
+});
+
+test('TILE1: a missing field drops out rather than leaving a dangling separator', () => {
+  assert.equal(tileLine({ race: 'Nord' }), 'Nord');
+  assert.equal(tileLine({ race: 'Nord', level: 3 }), 'Nord · level 3');
+  assert.equal(tileLine({ career: 'Bard' }), 'Bard');
+  assert.equal(tileLine({}), '');
+  assert.equal(tileLine(null), '');
+  assert.equal(tileWhen({ when: 'x' }), 'x');
+  assert.equal(tileWhen({}), '');
+  // ...and a save with nothing on it at all still draws a tile rather
+  // than throwing on the pane that lists it.
+  const bare = saveTile(fakeDoc(), {}, {});
+  assert.equal(walk(bare).find((n) => n.tagName === 'H3').textContent, 'Unnamed');
+  assert.equal(saveTile(fakeDoc(), null, {}) && true, true);
+});
+
+test('TILE1: a tile with no portrait draws the character\'s INITIAL, and a promise never blocks the tile', async () => {
+  const none = saveTile(fakeDoc(), SAVE, {});
+  assert.equal(text(none, 'svinitial'), 'N', 'a letter reads as somebody; a hole reads as a broken image');
+  assert.equal(initialOf({ name: '  ' }), '?');
+  assert.equal(initialOf({}), '?');
+
+  // A CANVAS HANDED IN DIRECTLY replaces the initial at once.
+  const art = { tagName: 'CANVAS', className: '', childNodes: [], append() {} };
+  const now = saveTile(fakeDoc(), SAVE, { face: art });
+  assert.equal(byClass(now, 'svinitial').length, 0);
+  assert.ok(walk(now).includes(art));
+
+  // A PROMISE DOES NOT BLOCK THE TILE - the pane is on screen first and
+  // the face lands later, because a list that waits on ten CIF reads is
+  // a menu that opens late.
+  let settle;
+  const later = saveTile(fakeDoc(), SAVE, { face: new Promise((r) => { settle = r; }) });
+  assert.equal(text(later, 'svinitial'), 'N', 'the tile is drawn before the art');
+  settle(art);
+  await Promise.resolve(); await Promise.resolve();
+  assert.equal(byClass(later, 'svinitial').length, 0, 'and the initial gives way when it lands');
+
+  // A FACE THAT NEVER ARRIVES IS AN ORDINARY TILE, not a rejection that
+  // escapes into the pane.
+  const failed = saveTile(fakeDoc(), SAVE, { face: Promise.reject(new Error('no CIF')) });
+  await Promise.resolve(); await Promise.resolve();
+  assert.equal(text(failed, 'svinitial'), 'N');
+});
+
+test('TILE2/ACC2: the cloud line, and the state that draws NONE of it', () => {
+  // NO ACCOUNT, NO LINE. ACC0's wall is at cloud saves, and a player
+  // who has not asked for one is not told about it on every tile.
+  for (const cloud of [null, { state: 'off' }, {}]) {
+    assert.equal(byClass(saveTile(fakeDoc(), SAVE, { cloud }), 'svcloud').length, 0, JSON.stringify(cloud));
+  }
+  assert.deepEqual(CLOUD_STATES, ['off', 'none', 'saved', 'busy', 'bad']);
+
+  assert.equal(text(saveTile(fakeDoc(), SAVE, { cloud: { state: 'none' } }), 'svsay'), 'Not backed up');
+  assert.equal(text(saveTile(fakeDoc(), SAVE, { cloud: { state: 'saved' } }), 'svsay'), 'Backed up');
+  assert.equal(text(saveTile(fakeDoc(), SAVE, { cloud: { state: 'saved', when: '2 hours ago' } }), 'svsay'), 'Backed up · 2 hours ago');
+  assert.equal(text(saveTile(fakeDoc(), SAVE, { cloud: { state: 'busy' } }), 'svsay'), 'Backing up…');
+
+  // A REFUSAL IS THE SERVICE'S OWN SENTENCE, handed in: this file owns
+  // no words about why a backup failed, which is what stops a second
+  // sentence existing for a refusal accountClient.js already explains.
+  assert.equal(text(saveTile(fakeDoc(), SAVE, { cloud: { state: 'bad', why: 'Your cloud backup is full.' } }), 'svsay'), 'Your cloud backup is full.');
+  assert.equal(text(saveTile(fakeDoc(), SAVE, { cloud: { state: 'bad' } }), 'svsay'), 'Could not back up');
+  // a state nobody knows is not a crash and is not "backed up"
+  assert.equal(text(saveTile(fakeDoc(), SAVE, { cloud: { state: 'frobnicated' } }), 'svsay'), 'Not backed up');
+});
+
+test('TILE2: how long ago, in words a player reads at a glance', () => {
+  const now = 1_758_400_000;
+  assert.equal(agoText(now, now), 'just now');
+  assert.equal(agoText(now - 89, now), 'just now');
+  assert.equal(agoText(now - 120, now), '2 minutes ago');
+  // ...and the SINGULAR is reachable. It was not: past the 90-second
+  // threshold `Math.round(d / 60)` is never 1, so "1 minute ago" was a
+  // branch nothing could ever produce. Found by writing the pin.
+  assert.equal(agoText(now - 90, now), '1 minute ago');
+  assert.equal(agoText(now - 119, now), '1 minute ago');
+  assert.equal(agoText(now - 3600, now), '1 hour ago');
+  assert.equal(agoText(now - 7200, now), '2 hours ago');
+  assert.equal(agoText(now - 3600 * 23, now), '23 hours ago');
+  assert.equal(agoText(now - 86400, now), '1 day ago');
+  assert.equal(agoText(now - 86400 * 9, now), '9 days ago');
+  // A CLOCK THAT RAN BACKWARDS IS NOT A NEGATIVE AGE. The service's
+  // stamp and the browser's clock are two clocks, and they disagree.
+  assert.equal(agoText(now + 500, now), 'just now');
+  for (const bad of [null, undefined, NaN, '5', {}]) assert.equal(agoText(bad, now), '', String(bad));
+});
+
+test('TILE2: a disabled action is not wired, and the actions are the PANE\'S - the tile knows no pane', () => {
+  let pressed = 0;
+  const t = saveTile(fakeDoc(), SAVE, {
+    actions: [
+      { label: 'Load', primary: true, onClick: () => { pressed++; } },
+      { label: 'Delete', onClick: () => { pressed += 10; } },
+      { label: 'Nope', disabled: true, onClick: () => { pressed += 100; } },
+    ],
+  });
+  const buttons = walk(t).filter((n) => n.tagName === 'BUTTON');
+  assert.deepEqual(buttons.map((b) => b.textContent), ['Load', 'Delete', 'Nope']);
+  assert.equal(buttons[0].className, 'act primary');
+  assert.equal(buttons[1].className, 'act');
+  assert.equal(buttons[2].disabled, true);
+  assert.equal(buttons[2].onclick, null, 'a disabled button carries no handler at all');
+  buttons[0].onclick(); buttons[1].onclick();
+  assert.equal(pressed, 11);
+
+  // THE TILE KNOWS NO PANE. Not "Load", not "Play online", not
+  // "Overwrite" - those are the panes' words, and a tile that spelled
+  // one would be a tile only one pane could use.
+  const src = rd('src/ui/saveTile.js');
+  for (const word of ['Play online', 'Overwrite', "'Load'", 'onAction', 'appStorage', 'cloudSaves']) {
+    assert.ok(!src.includes(word), `the tile names a pane's own business: ${word}`);
+  }
+});
+
+test('TILE2: ONE tile for THREE panes, and the classes it draws belong to nobody else', () => {
+  const menu = rd('src/ui/enhancedMenu.js');
+  // The drift this retired: three hand-rolled copies of the same four
+  // lines is how three panes come to disagree about what a save is.
+  assert.doesNotMatch(menu, /function slotCard\(/, 'the old per-pane card is gone');
+  assert.match(menu, /import \{ saveTile, agoText \} from '\.\/saveTile\.js'/);
+  const pane = (from, to) => menu.slice(menu.indexOf(from), menu.indexOf(to));
+  for (const [name, from, to] of [
+    ['Online', 'function paneOnline(body)', 'function paneLoad(body)'],
+    ['Load', 'function paneLoad(body)', '// ── SAVE GAME'],
+    ['Save', 'function paneSave(body)', '// ── EXIT (pause only)'],
+  ]) assert.match(pane(from, to), /tileGrid\(/, `the ${name} pane draws tiles`);
+
+  // ═══ THE CLASS NAMES ARE THIS TILE'S ALONE ══════════════════════
+  //
+  // The probe found `.tile` was ALREADY the inventory and trade item
+  // icon (30x30, ui/enhancedInventory.js and ui/enhancedTrade.js), so
+  // the save tiles were being squashed by a rule written for something
+  // else - and every check about their size read 34x34. A source sweep
+  // could have caught it and did not, because nobody thought to look.
+  // This is that sweep, derived: the classes saveTile.js really puts in
+  // the DOM, against every other module that puts classes in the DOM.
+  //
+  // THE BORROWED VOCABULARY IS EXEMPT AND NAMED: `act`, `acts`,
+  // `primary` and `stats` are the skin's own words and are SUPPOSED to
+  // be shared - enhancedStyle.js's header says two copies of a design
+  // language is how the front door and the rooms drift apart. What may
+  // not be shared is a class this tile INVENTS, and `.tile` was exactly
+  // that.
+  const BORROWED = new Set(['act', 'acts', 'primary', 'stats']);
+  const src = rd('src/ui/saveTile.js');
+  const mine = new Set([...src.matchAll(/el\('[a-z0-9]+', '([a-z0-9 -]+)'/g)]
+    .flatMap((m) => m[1].split(' ')).filter(Boolean));
+  for (const m of src.matchAll(/el\('[a-z0-9]+', `([a-z0-9-]+)/g)) mine.add(m[1]);
+  for (const b of BORROWED) mine.delete(b);
+  assert.ok(mine.size >= 6, `the class walk found only ${[...mine].join(', ')} - it has stopped seeing its subject`);
+  const others = readdirSync(new URL('../src/ui', import.meta.url))
+    .filter((f) => f.endsWith('.js') && f !== 'saveTile.js');
+  for (const f of others) {
+    const other = rd(`src/ui/${f}`);
+    for (const cls of mine) {
+      assert.ok(!new RegExp(`'${cls}'|\`${cls}[\`\\s]`).test(other),
+        `ui/${f} also draws a "${cls}" - two modules, one class, and the later CSS rule wins`);
+    }
+  }
+});
+
+test('TILE1: the face has ONE home, and it is not the one chargenArt already owns', () => {
+  // The drawing lived inside systems/chargenSession.js, where only the
+  // wizard could reach it. The save tile is the second caller, so it
+  // moved rather than being copied.
+  const session = rd('src/systems/chargenSession.js');
+  assert.match(session, /import\('\.\.\/ui\/facePortrait\.js'\)/);
+  assert.match(session, /out\.loadFaces = \(raceKey, gender\) => loadFaceCanvases\(raceKey, gender, \{ scale: 2 \}\);/);
+  assert.doesNotMatch(session, /CifRciFile/, 'the wizard no longer knows which file a race\'s heads live in');
+
+  // ...AND IT IS NAMED APART FROM chargenArt.js's `loadFaceSet`, which
+  // is a different thing under a similar name: that one uploads the
+  // same ten records as GL TEXTURES and returns nothing. AUDIT 24's
+  // ratchet caught the collision the moment the second one existed.
+  const face = rd('src/ui/facePortrait.js');
+  assert.match(face, /export async function loadFaceCanvases\(/);
+  assert.doesNotMatch(face, /export async function loadFaceSet\(/);
+  assert.match(rd('src/ui/chargenArt.js'), /export async function loadFaceSet\(/, 'the other one is still there, which is why the name had to differ');
+
+  // THE IDENTITY THE PORTRAIT NEEDS WAS ALREADY IN THE SAVE - S3c/U9
+  // put race, gender and faceIndex on the envelope. Nothing new is
+  // stored; the menu's row simply stopped throwing three fields away.
+  assert.match(rd('src/systems/save.js'), /'name', 'gender', 'race', 'raceId', 'faceIndex'/);
+  const menu = rd('src/ui/enhancedMenu.js');
+  assert.match(menu, /race: typeof snap\.race === 'string' \? snap\.race : null,/);
+  assert.match(menu, /faceIndex: Number\.isInteger\(snap\.faceIndex\) \? snap\.faceIndex : 0,/);
+});

@@ -357,7 +357,11 @@ test('Load and Continue are only drawn when there IS a save', () => {
   assert.ok(cont.indexOf("onAction('continue')") > cont.indexOf('if (!save)'),
     'the Continue button is inside the has-a-save arm');
   const load = src.slice(src.indexOf('function paneLoad'), src.indexOf('// ── SETTINGS'));
-  assert.match(load, /for \(const save of saves\) \{/, 'SLOTS1: Load draws every restorable slot, a card each');
+  // SLOTS1 drew a card each; TILE2 draws a TILE each, in one grid (Mac:
+  // the tile design "will translate to the load character pane also").
+  // Same law, and the pin follows the code rather than holding the old
+  // shape in place.
+  assert.match(load, /body\.append\(tileGrid\(saves,/, 'SLOTS1/TILE2: Load draws every restorable slot, a tile each');
   assert.match(load, /if \(!saves\.length\) body\.append\(empty\(/, '...and says so when there are none');
 });
 
