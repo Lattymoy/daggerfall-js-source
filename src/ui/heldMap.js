@@ -1756,12 +1756,18 @@ export class HeldMapWindow {
     // deps, and everything the card bills or commits reads the blessed
     // minutes.
     const minutes = guildFastTravel(this.deps.playerEntity?.() ?? null, time.minutes);
-    // OL2 / AUDIT-MAP H1: online the world's clock does not wait - no
-    // nights, so no inn is paid and the arrival is now; the popup's own
-    // `sleepModeInn && !noWorldTime()` and its zero days
+    // OL2 / AUDIT-MAP H1: online the world's clock does not wait, so
+    // the arrival is now and the day count is zero.
+    //
+    // TRAVEL-FARE (2026-09-22, kurkku): the FARE is billed online now -
+    // the inn's gold is the price of the journey, not rent on elapsed
+    // time, and the popup's own reasoning is at ui/travelPopUp.js. The
+    // two surfaces bill the SAME trip, so this clause has to move with
+    // it or the enhanced map quotes one price and the classic popup
+    // another for one ride.
     const nwt = !!this.deps.noWorldTime?.();
     const cost = calculateTripCost(minutes, time.oceanPixels, {
-      sleepModeInn: st.opts.sleepModeInn && !nwt, hasShip: st.hasShip, travelShip: st.opts.travelShip,
+      sleepModeInn: st.opts.sleepModeInn, hasShip: st.hasShip, travelShip: st.opts.travelShip,
       // TravelTimeCalculator.cs:163 - the same Knightly Order consult
       // the native popup makes; the enhanced skin bills the same fare.
       freeTavernRooms: !!this.deps.freeTavernRooms?.(),
@@ -2353,7 +2359,7 @@ export class HeldMapWindow {
     //   - the ship refusal (_toggleOpt below) is one of
     //     TravelOptionsPopUp.cs:168-180's three message boxes, which the
     //     classic twin still draws as a buttonless parchment
-    //     (ui/travelPopUp.js:611-617, `this.top` with no MB_BUTTONS)
+    //     (ui/travelPopUp.js:642-648, `this.top` with no MB_BUTTONS)
     //   - "not enough gold" (_confirmDiseased below) is
     //     DaggerfallTravelPopUp.cs:394-406, showNotEnoughGoldPopup,
     //     `messageBox.ClickAnywhereToClose = true` over TEXT.RSC 454

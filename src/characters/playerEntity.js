@@ -2,7 +2,7 @@
 // place). These initial values are the PRE-CHARGEN state only:
 // createCharacter (systems/chargen) rolls the real career the first
 // time a chargen-running context boots, and every host runs it
-// through systems/chargenSession.js - dungeonContext.js:2039,
+// through systems/chargenSession.js - dungeonContext.js:2064,
 // world.js:2638, exterior.js:1292 and applyHeadlessChargen for the
 // test room (AUDIT 23).
 //
@@ -146,7 +146,44 @@ export function damageShieldPool(entity, dmg) {
   return dmg;
 }
 
+/**
+ * ARREST-SHIELD (2026-09-22, Revverie: "when guards come to arrest you
+ * and you go to trial, you still can die which happened to me (idk if
+ * a guard continue to aggro me or if it was a bandit of sorts) ... the
+ * game crashed when that happened ... just froze and I had to kill
+ * it"): THE ONE DAMAGE DOOR TAKES A VETO.
+ *
+ * The arrest flow already withheld a GUARD's blow while a trial is up
+ * online (scenes/arrestFlow.js onGuardHit), and its own note says why:
+ * "the player can still be standing in the street". Online the court
+ * sequence cannot pause the world - WORLD5 makes the clock the
+ * room's - so the boxes are read standing in the open. But the guard
+ * arm is the only arm there was, and a town's foes hunt every player
+ * in the cell (WORLD6b-ii). A bandit's blow, a spell, a fall, drowning:
+ * none of them was a guard, so none of them was withheld, and dying
+ * inside the court sequence is a death screen fighting a modal trial
+ * for the same window. That is the freeze.
+ *
+ * The veto sits in FRONT of the shield pool and in front of the
+ * bypassShield door both, because "you are in a trial" outranks even
+ * DFU's SetHealth(0) collapses - drowning during your own sentencing
+ * is exactly as wrong as the bandit was. It is a READ: it withholds a
+ * blow, it never queues one, which is the law onGuardHit already
+ * states ("every guard swing that landed WHILE the box was up is
+ * simply never delivered, not queued for later").
+ *
+ * One veto, registered by the flow that owns the question - a second
+ * copy of "am I in a trial" is a second chance to disagree with the
+ * first.
+ */
+let _damageVeto = null;
+export function registerPlayerDamageVeto(fn) { _damageVeto = typeof fn === 'function' ? fn : null; }
+/** For a caller that needs to know a blow would be withheld before it
+ *  spends anything on delivering one. */
+export const playerDamageWithheld = () => { try { return !!_damageVeto?.(); } catch { return false; } };
+
 export function hurtPlayer(entity, dmg, { bypassShield = false } = {}) {
+  if (playerDamageWithheld()) return false;   // ARREST-SHIELD: before the shield pool AND before the SetHealth(0) door
   if (!(dmg > 0)) return false;
   // X1: THE SHIELD POOL (Shield.cs DamageShield :78-98) sits in front
   // of the health subtraction, on the ONE door every damage source

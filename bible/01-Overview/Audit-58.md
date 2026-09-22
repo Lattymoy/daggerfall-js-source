@@ -224,7 +224,7 @@ mitigates in `DaggerfallEntity.DecreaseHealth`
 (`Assets/Scripts/Game/Entities/DaggerfallEntity.cs:312-328`), the base
 class every entity passes through, with DFU's own comment "from all
 sources"; the port consumed the pool only in `hurtPlayer`
-(`src/characters/playerEntity.js:164`) and the three foe doors subtracted
+(`src/characters/playerEntity.js:201`) and the three foe doors subtracted
 raw, so a Shield cast on a foe absorbed nothing. Beside it: `CastReadySpell`
 had grown a magicka-sufficiency refusal DFU does not have and re-priced
 the spell at click time, the six concealment effects lost DFU's

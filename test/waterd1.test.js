@@ -145,7 +145,7 @@ test('WATER-D1: no host draws the dungeon water itself, and both name the tile a
   assert.match(read('src/scenes/worldModes.js'), /uploadRecord\(waterArchive, 0\);\s*\n\s*ctx\.setWaterArchive\(waterArchive\);/, 'the world-hosted dungeon');
 });
 
-test('WATER-D1: the colour has one home, and the level law it draws is untouched', () => {
+test('WATER-D1: the colour has one home, and the level law it draws is untouched (WATER-BACK: and no longer asks whether the dungeon was spawned)', () => {
   const ctx = read('src/scenes/dungeonContext.js');
   assert.match(ctx, /export const DUNGEON_WATER_COLOR = Object\.freeze\(\[1, 1, 1, 0\.82\]\);/, 'the classic tile tinted only by alpha (AUDIT 65 CV-3/MC-5)');
   const dir = join(root, 'src/scenes');
@@ -154,6 +154,6 @@ test('WATER-D1: the colour has one home, and the level law it draws is untouched
     assert.ok(!/\[1, 1, 1, 0\.82\]/.test(read(`src/scenes/${f}`)), `${f}: the literal lived in both hosts; it lives in the context now`);
   }
   // R7's law, where the quads are minted - the fix moved the DRAW, not the LEVEL
-  assert.match(ctx, /if \(b\.layout\.waterLevel !== 10000 && !dfLocation\?\.spawned\) \{\s*\n\s*waterQuads\.push\(\{\s*\n\s*x: b\.originX, z: b\.originZ, size: RDB_SIDE,\s*\n\s*y: -b\.layout\.waterLevel \* GLOBAL_SCALE,/);
+  assert.match(ctx, /if \(b\.layout\.waterLevel !== 10000\) \{\s*\n\s*waterQuads\.push\(\{\s*\n\s*x: b\.originX, z: b\.originZ, size: RDB_SIDE,\s*\n\s*y: -b\.layout\.waterLevel \* GLOBAL_SCALE,/);
   assert.match(read('src/world/rdbLayout.js'), /if \(src\.soundIndex !== 0\) waterLevel = -8 \* src\.soundIndex;/, 'SetRDBResourceData, verbatim');
 });

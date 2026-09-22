@@ -2177,7 +2177,7 @@ test('AUDIT-MAP A9/H8: a summary with no region index names nothing rather than 
   assert.equal(wheelPixels({ deltaY: 'x' }, 800), 0);
 });
 
-test('AUDIT-MAP H1: online the world\'s clock does not wait - no inn is billed, the journey reads "now", and the popup\'s own line is on the card (mutants: online-bills-inns, online-counts-days)', () => {
+test('AUDIT-MAP H1 + TRAVEL-FARE: online the journey reads "now" and the fare is billed AS OFFLINE, on the same card as the popup\'s line (mutants: online-waives-the-fare, online-counts-days)', () => {
   withDocument(() => {
     const climate = () => CLIMATES.Woodlands;
     const win = open(mkWin({ noWorldTime: () => true, getClimateIndex: climate }));
@@ -2186,8 +2186,15 @@ test('AUDIT-MAP H1: online the world\'s clock does not wait - no inn is billed, 
     const st = win._panelState;
     assert.equal(st.opts.sleepModeInn, true, 'the toggle stands');
     const t = calculateTravelTime({ x: 5, y: 5 }, { x: 9, y: 5 }, { speedCautious: true, sleepModeInn: true, travelShip: true, hasHorse: false, hasCart: false }, climate);
+    // TRAVEL-FARE (2026-09-22, kurkku): the card used to be compared
+    // against a NO-INN cost, which is what made a free trip look
+    // correct here. The two surfaces bill ONE journey, so the enhanced
+    // map is compared against the fare a player would pay offline -
+    // the inn included, DFU's "always at least one stay" included.
+    const withInn = calculateTripCost(t.minutes, t.oceanPixels, { sleepModeInn: true, hasShip: false, travelShip: true });
     const noInn = calculateTripCost(t.minutes, t.oceanPixels, { sleepModeInn: false, hasShip: false, travelShip: true });
-    assert.equal(st.trip.piecesCost, noInn.piecesCost, 'but no inn is paid');
+    assert.ok(withInn.piecesCost > noInn.piecesCost, 'the fixture really does have an inn to bill');
+    assert.equal(st.trip.piecesCost, withInn.piecesCost, 'the inn IS paid online - the fare is the journey\'s price');
     assert.equal(st.trip.days, 0, 'and the arrival is now');
     assert.equal(st.trip.online, true);
     const texts = win._chrome.card.children.flatMap((c) => (c.children ?? []).map((k) => k.textContent));

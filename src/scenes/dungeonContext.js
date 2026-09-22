@@ -705,18 +705,43 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     for (const l of collectDungeonLights(b.dfBlock)) {
       lights.push({ x: l.x + b.originX, y: l.y, z: l.z + b.originZ, range: l.range });
     }
-    // WATER OFF IN A SPAWNED DUNGEON (2026-09-20, Mac's patch). A
-    // spawn's water has been reported wrong every time - shown well
-    // below the floor, in patches, reading like a no-clip glitch - and
-    // rather than keep chasing the placement, a spawn simply gets no
-    // water quads. A REAL dungeon is untouched.
+    // WATER-BACK (2026-09-22, kurkku: "invisible water", with a picture
+    // of a dry dungeon): THE BAND-AID OUTLIVED ITS BUG BY ONE DAY.
     //
-    // `b.layout.waterLevel` itself is left alone, and that is the
-    // point: `dungeon.blocks` is the TEMPLATE'S own shared array (see
-    // world/spawnedDungeons.js's synthesizeDungeonLocation), so
-    // writing the sentinel into it here would corrupt the real dungeon
+    // AIWATER (2026-09-20) took the water out of every SPAWNED dungeon
+    // because "a spawn's water has been reported wrong every time -
+    // shown well below the floor, in patches, reading like a no-clip
+    // glitch", and said so honestly: "rather than keep chasing the
+    // placement". WATER-D1 (2026-09-21, the next morning) then chased
+    // it and CAUGHT it, and it was not the placement at all - both
+    // dungeon hosts called `renderer.drawWater` AFTER drawFoes
+    // returned, which is after the first screen quad, which is where
+    // the enhanced-lighting lane resolves its frame target; the quad
+    // landed on the default framebuffer whose depth buffer holds no
+    // world, so it passed the depth test everywhere. A plane through
+    // every wall and every floor, wherever you stood. WATER-D1's own
+    // words: "The level itself was never the defect: the quads sit
+    // exactly where DFU's AddWater puts its plane (R7)."
+    //
+    // A spawn was never special. It was just where people met the bug,
+    // because spawns are where people were. With the cause closed the
+    // exclusion only does what kurkku photographed: it makes a
+    // flooded dungeon dry, which is the ONE thing nobody asked for.
+    //
+    // LostMyLeg's caution on the report - "when water textures are
+    // activated again they clip through walls and players will see
+    // water all the time" - is a memory of the pre-WATER-D1 defect, and
+    // it is the right thing to be careful about: test/waterback.test.js
+    // holds the draw ORDER that makes it safe, so the day someone moves
+    // the call back after a screen quad, that reddens rather than
+    // shipping.
+    //
+    // `b.layout.waterLevel` is still left alone, and that reason stands
+    // whatever else changes: `dungeon.blocks` is the TEMPLATE'S own
+    // shared array (world/spawnedDungeons.js synthesizeDungeonLocation),
+    // so writing the sentinel into it would corrupt the real dungeon
     // this was cloned from and every other spawn sharing that template.
-    if (b.layout.waterLevel !== 10000 && !dfLocation?.spawned) {
+    if (b.layout.waterLevel !== 10000) {
       waterQuads.push({
         x: b.originX, z: b.originZ, size: RDB_SIDE,
         y: -b.layout.waterLevel * GLOBAL_SCALE,
@@ -4496,11 +4521,16 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
    *  Off every block DFU reports playerBlockIndex == -1 and simply
    *  does not call UpdateFog that frame (:349-352); null says so. */
   function blockWaterLevelAt(x, z) {
-    // ...and no water means none of what water implies: this feeds the
-    // underwater fog and the "am I swimming" check, so without it a
-    // spawn would keep the green murk and a half-submerged player with
-    // nothing on screen to explain either.
-    if (dfLocation?.spawned) return 10000;
+    // WATER-BACK: AIWATER's other half, and it never covered the whole
+    // question. Three doors answer "is there water here" - this one
+    // (the fog and the swim check), `waterSurfaceYAt` above (the swim
+    // TOGGLE and P12's drowning tick) and the draw's quads - and the
+    // spawn exclusion was written into two of the three. So a spawned
+    // dungeon had water that `waterSurfaceYAt` could still put a
+    // player INTO and drown them in, with no plane drawn and no fog to
+    // say why: invisible water in the literal sense, and the dangerous
+    // sense rather than the ugly one. Removing it is what puts the
+    // three back on one answer.
     for (const b of dungeon.blocks) {
       if (x >= b.originX && x < b.originX + RDB_SIDE && z >= b.originZ && z < b.originZ + RDB_SIDE) {
         return b.layout.waterLevel;

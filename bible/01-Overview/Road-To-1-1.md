@@ -108,7 +108,7 @@ in the wave reports.
   UpdateNpcPresence on pop, the toggle-binding close - and, on the same
   stack, the two recorded stages Wave A routed here: the courtroom
   backdrop, ONE window on CORT01I0 with every box of the trial pushed
-  over it (`ui/prisonScreen.js:62`, `scenes/arrestFlow.js:122`), and
+  over it (`ui/prisonScreen.js:62`, `scenes/arrestFlow.js:123`), and
   the prison screen's held-Back accelerator, DFU's raw Escape poll
   rather than a binding (`ui/prisonScreen.js:68`). Both pinned by
   `test/roadb_court_backdrop.test.js` (10).
@@ -231,7 +231,7 @@ replace-mode mount door plus the sweep of the subtree under it, and GS2
 reworded `systems/skills.js:165` - a RETIREMENT RECORD whose only claim
 on the list was that it wrote the marker down in the past tense.
 DR1 (2026-09-03) took another
-(`scenes/dungeonContext.js:2170`, the standalone dungeon host's two
+(`scenes/dungeonContext.js:2195`, the standalone dungeon host's two
 window seams) by BUILDING them: "a DFU original that does not exist"
 had been that flag's stated blocker, and it was a claim about the
 SCENE, not about the two windows - both of which have DFU originals

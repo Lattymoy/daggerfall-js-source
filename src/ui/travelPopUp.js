@@ -137,7 +137,7 @@ export const LABEL_POS = Object.freeze({ gold: [148, 97], cost: [117, 107], time
 /** secondsCountdownTickFastTravel (:31). */
 export const COUNTDOWN_TICK = 0.05;
 /** OL2: the line under the panel while the trip takes no world time. */
-export const ONLINE_TRAVEL_LINE = 'Online: the world\'s clock does not wait. You arrive now, and no inn is paid.';
+export const ONLINE_TRAVEL_LINE = 'Online: the world\'s clock does not wait. You arrive now - the journey is still paid for.';
 /** notEnoughGoldTextId (:396) and the diseased warning's record (:422). */
 export const NOT_ENOUGH_GOLD_TEXT_ID = 454;
 export const DISEASED_WARNING_TEXT_ID = 1010;
@@ -267,10 +267,15 @@ export class TravelPopUpWindow {
    *  arrival is now. The host says so through `deps.noWorldTime`
    *  (world.js: sharedClockOn); a host that says nothing travels as
    *  DFU does. While it is true the day countdown is empty (the trip
-   *  begins on the next tick), no inn night is paid (there are no
-   *  nights - DFU's "always at least one stay" is a night too), and the
-   *  window says it under the panel; the fare for a ship's passage
-   *  stands, because a crossing is a crossing. */
+   *  begins on the next tick) and the window says so under the panel.
+   *
+   *  TRAVEL-FARE (2026-09-22): the FARE is no longer waived. This used
+   *  to read "no inn night is paid (there are no nights)", which was
+   *  right about the nights and wrong about the unit - DFU bills the
+   *  trip's HOURS, and the journey has a length online even though the
+   *  clock will not advance over it. The ship clause was always the
+   *  correct reading of the same question ("a crossing is a crossing")
+   *  and now both halves agree. The zero days stand. */
   noWorldTime() { return !!this.deps.noWorldTime?.(); }
 
   /** Refresh -> UpdateTogglePanels + UpdateLabels (:254-258). The
@@ -341,9 +346,35 @@ export class TravelPopUpWindow {
     // anyway (Guild.FastTravel is `return duration`).
     this.travelTimeTotalMins = guildFastTravel(this.deps.playerEntity?.() ?? null,
       this.travelTimeTotalMins);
-    // OL2: no nights online (noWorldTime), so no inn - the toggle stands, the cost ignores it
+    // TRAVEL-FARE (2026-09-22, kurkku: "really long trips (or journeys
+    // of any distance) don't cost anything when player-controlled
+    // cautious travel is disabled ... ship travel has the cost it
+    // should"): THE INN'S GOLD IS THE PRICE OF THE JOURNEY, NOT RENT
+    // ON ELAPSED TIME. This reverses HALF of OL2 and nothing else.
+    //
+    // OL2 reasoned that online there are no nights, so no night is
+    // paid - and it is right about the nights. It is the wrong unit.
+    // DFU derives this cost from the trip's HOURS, which the port
+    // still computes online: the journey has a length, and only the
+    // world's clock declines to advance over it. OL2 already drew
+    // that line itself, one clause later, and drew it correctly -
+    // "the fare for a ship's passage stands, because a crossing is a
+    // crossing". A ride is a ride on the same reading.
+    //
+    // WHAT IT WAS IN PRACTICE, which is how kurkku found it: turn
+    // Travel Options' player-controlled cautious travel OFF, and a
+    // trip stops being WALKED and becomes an instant arrival - which
+    // online took no time AND no gold. Free teleportation to anywhere
+    // in the Bay, from a mod toggle. Ship fare still billed, which is
+    // exactly why it read as a bug rather than a rule: one journey
+    // cost money and the other did not.
+    //
+    // MODS-ONLINE-4's lesson, one day old: a thing correct by the
+    // letter can still be wrong for the room. The days stay zero and
+    // the arrival stays now - that half of OL2 is untouched, and it
+    // is the half players asked for.
     const c0 = calculateTripCost(this.travelTimeTotalMins, t.oceanPixels, {
-      sleepModeInn: this.sleepModeInn && !this.noWorldTime(),   // OL2
+      sleepModeInn: this.sleepModeInn,   // TRAVEL-FARE: billed online too
       hasShip: this.hasShip,
       travelShip: this.travelShip,
       // TravelTimeCalculator.cs:163 consults the Knightly Order's
