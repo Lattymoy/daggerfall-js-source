@@ -334,7 +334,13 @@ export async function bootDungeon(canvas, renderer, params, status) {
   // DFU's `GetKeyUp` (the automap's two-phase toggle-close) or polls
   // `GetKey` (its twenty-two IsPressedWith camera arms) could not.
   // routeKey's mirror, on the same ctx.
-  addEventListener('keyup', (e) => { keys.delete(e.code); noteKeyUp(keyEdge, e.code); if (e.code === 'AltLeft') e.preventDefault(); routeKeyUp(e, ctx); });   // MWCROUCH: ...and the release, for SwitchHand's ActionComplete edge
+  addEventListener('keyup', (e) => {
+    keys.delete(e.code);
+    noteKeyUp(keyEdge, e.code);
+    if (e.code === 'AltLeft') e.preventDefault();
+    routeKeyUp(e, ctx);
+    relockAfterUiInput();
+  });   // MWCROUCH: ...and the release, for SwitchHand's ActionComplete edge
   // U14: an OPEN overlay owns the pointer - the click goes to the
   // window, not to the pointer lock. This host had no pointer path at
   // all, so chargen here was keyboard-only while the exterior hosts
@@ -352,7 +358,8 @@ export async function bootDungeon(canvas, renderer, params, status) {
       // double-click and debug-teleport handlers poll Input.GetKey at
       // the click, and this seam is the port's only reader of that.
       if (v) ctx.overlayPointer?.('down', v[0], v[1], e.button, { ctrl: !!e.ctrlKey, shift: !!e.shiftKey });
-      if (v && ctx.overlayClick?.(v[0], v[1], e.button === 2, e.button === 1)) return;   // G5: the middle button too
+      if (v && ctx.overlayClick?.(v[0], v[1], e.button === 2, e.button === 1)) { relockAfterUiInput(); return; }   // G5: the middle button too
+      relockAfterUiInput();
       return;   // a window is up: never grab the pointer behind it
     }
     // U45: the large HUD's eleven panels, BEFORE the relock - a click
@@ -388,6 +395,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
       (e.clientX - r.left) * (canvas.width / r.width),
       (e.clientY - r.top) * (canvas.height / r.height));
     ctx.overlayPointer?.('up', v ? v[0] : -1, v ? v[1] : -1, e.button);
+    relockAfterUiInput();
   });
   // U-scroll: the wheel reaches an open window (question scroll, list
   // pickers); passive:false so the page never scrolls under the game.
@@ -638,6 +646,9 @@ export async function bootDungeon(canvas, renderer, params, status) {
   // very pass that was closing it. The pin below now sweeps ALL FOUR.
   const musicDirector = createMusicDirector();
   const lookGate = makeLookGate(canvas);
+  const relockAfterUiInput = () => {
+    if (!ctx.uiOverlayActive && document.pointerLockElement !== canvas) requestLook(canvas);
+  };
   // AT2: AMBIENT TEXT CLAIMS ITS HOST. THE FOUR HOSTS, and the reason
   // this scene is here while two of the four are not:
   //
