@@ -879,6 +879,7 @@ function dragStop(commit) {
  *  than one Manhattan sum, and `.draglock` does NOT take the pan back
  *  for the gesture in flight - `onDragHold` does. */
 const TOUCH_HOLD_MS = 320;
+export const MOUSE_HOLD_MS = 180;
 /** INV3 (2026-09-17, Mac: "Hold to drag functionality in inventory
  *  sometimes doesnt work"): AND THE AXIS THAT CANNOT SCROLL IS NOT
  *  EVIDENCE OF A SCROLL.
@@ -946,6 +947,9 @@ const onDragMove = (e) => {
       return;
     }
     if (Math.abs(dx) + Math.abs(dy) <= 4) return;
+    // A quick mouse drag still starts immediately at the movement
+    // threshold. Clear the hold timer so it cannot arm a second time.
+    if (drag.hold) { clearTimeout(drag.hold); drag.hold = null; }
     drag.moved = true;
     ghostStart(drag.item);
   }
@@ -998,7 +1002,11 @@ function dragFrom(row, item, source = 'local') {
     // INV3: `ox`/`oy` is where the finger LANDED and the slop is measured
     // from it; `x`/`y` is where the finger is NOW and the ghost arms on it.
     drag = { id: e.pointerId, item, row, ox: e.clientX, oy: e.clientY, x: e.clientX, y: e.clientY, moved: false, want: null, touch, hold: null, source };
-    if (touch) drag.hold = setTimeout(dragArm, TOUCH_HOLD_MS);
+    // Mouse now has a real click-and-hold path too. Previously it only
+    // armed after crossing a 4px movement threshold, so a precise or
+    // slow press could feel like the drag simply failed. Movement still
+    // starts a mouse drag instantly; holding is the deterministic backup.
+    drag.hold = setTimeout(dragArm, touch ? TOUCH_HOLD_MS : MOUSE_HOLD_MS);
     // MAC-R4 (2026-09-17, Mac: "Hold to drag in the enhanced inventory
     // sometimes doesn't work properly"): A TOUCH POINTER CAPTURES THE ROW
     // IT LANDS ON, IMPLICITLY, and a captured row that a repaint detaches
