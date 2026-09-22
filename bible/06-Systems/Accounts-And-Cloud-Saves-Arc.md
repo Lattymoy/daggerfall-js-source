@@ -2993,7 +2993,7 @@ Asked which: **/mute and /unmute**, and the **blue shield**.
 `MODERATOR_HANDLES` in the service's config — the same law as
 `DEVELOPER_HANDLES`: a reviewed, deployed edit grants it, taking the
 handle off revokes it on the next token and the next call, and nothing is
-stored. **It ships empty** until Mac names them. A developer may moderate
+stored. **Asynian** is the first (Mac: "Username is Asynian"). A developer may moderate
 without being listed (`canModerate`), but the **shield** is the
 moderator list's alone — the dev mark already says more. A guest can be
 neither: the list names people, and a guest row is a device.

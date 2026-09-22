@@ -78,10 +78,10 @@ DEVELOPER_HANDLES = "Lattymoy"
 # MOD1: THE MODERATORS - the blue shield beside the name, and /mute and
 # /unmute in chat. Comma-separated handles, case-insensitive, the same
 # as the line above; a developer may already moderate without being
-# listed here. EMPTY until Mac names them (Mac: "Ill provide ... names
-# once all our accounts are created"). Taking a handle off revokes the
-# shield on the next token and the commands on the next call.
-MODERATOR_HANDLES = ""
+# listed here. Asynian is the first (Mac, 2026-09-22: "Username is
+# Asynian"). Taking a handle off revokes the shield on the next token
+# and the commands on the next call.
+MODERATOR_HANDLES = "Asynian"
 
 [[d1_databases]]
 binding = "DB"
