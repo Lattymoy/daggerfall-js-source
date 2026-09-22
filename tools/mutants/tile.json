@@ -1,0 +1,115 @@
+[
+  {
+    "name": "TILE-1-the-tile-steals-a-class-another-module-already-draws",
+    "file": "src/ui/saveTile.js",
+    "old": "  const root = el('div', `svtile${current ? ' sv-current' : ''}`);",
+    "new": "  const root = el('div', `tile${current ? ' sv-current' : ''}`);",
+    "tests": [
+      "test/savetile.test.js"
+    ],
+    "note": "This is not hypothetical: `.tile` IS the inventory and trade item icon (30x30), and the first cut of the save tile used it. Every tile drew at 34x34 and every measurement in the probe was about a rule written for something else. A later CSS rule wins, silently."
+  },
+  {
+    "name": "TILE-2-the-portrait-blocks-the-list",
+    "file": "src/ui/saveTile.js",
+    "old": "    waited.then((art) => { if (art) { fallback.remove(); well.append(art); } }).catch(() => {});",
+    "new": "    fallback.remove();\n    waited.then((art) => { if (art) well.append(art); }).catch(() => {});",
+    "tests": [
+      "test/savetile.test.js"
+    ],
+    "note": "The well is empty for as long as the CIF takes, so a pane of ten saves opens as ten empty boxes - and a face that never loads leaves them empty for ever. The initial is what makes a slow or missing portrait an ordinary tile."
+  },
+  {
+    "name": "TILE-3-a-face-that-will-not-load-escapes-into-the-pane",
+    "file": "src/ui/saveTile.js",
+    "old": ".catch(() => {});\n  } else if (face) {",
+    "new": ";\n  } else if (face) {",
+    "tests": [
+      "test/savetile.test.js"
+    ],
+    "note": "An unhandled rejection out of a menu repaint, on every player whose copy of Daggerfall has no FACE CIF. The chargen wizard's own law is NEVER TRAPS, on a surface a player reaches far more often."
+  },
+  {
+    "name": "TILE-4-a-disabled-button-is-still-wired",
+    "file": "src/ui/saveTile.js",
+    "old": "  if (a.onClick && !a.disabled) b.onclick = a.onClick;",
+    "new": "  if (a.onClick) b.onclick = a.onClick;",
+    "tests": [
+      "test/savetile.test.js"
+    ],
+    "note": "The Load button is disabled in the pause pane where the host has no quickLoad. A handler behind a disabled button is a press that does something on a keyboard, and the pane disabled it because it CANNOT be done."
+  },
+  {
+    "name": "TILE-5-no-account-is-nagged-on-every-tile",
+    "file": "src/ui/saveTile.js",
+    "old": "  if (cloud && cloud.state && cloud.state !== 'off') {",
+    "new": "  if (cloud) {",
+    "tests": [
+      "test/savetile.test.js"
+    ],
+    "note": "ACC0's wall is at cloud saves and a player who has not asked for an account is not told about it on every tile they own. `off` is the state most players are in."
+  },
+  {
+    "name": "TILE-6-a-refusal-gets-a-second-sentence-here",
+    "file": "src/ui/saveTile.js",
+    "old": "      bad: cloud.why || 'Could not back up',",
+    "new": "      bad: 'Could not back up',",
+    "tests": [
+      "test/savetile.test.js"
+    ],
+    "note": "The service says WHY - full backup, too large, signed out - and accountClient.js owns the sentence for each. Dropping it here throws the only useful half away and leaves a player with nothing to act on."
+  },
+  {
+    "name": "TILE-7-a-clock-that-ran-backwards-is-a-negative-age",
+    "file": "src/ui/saveTile.js",
+    "old": "  const d = Math.max(0, Math.floor(nowS - thenS));",
+    "new": "  const d = Math.floor(nowS - thenS);",
+    "tests": [
+      "test/savetile.test.js"
+    ],
+    "note": "A clock that ran backwards. The service's stamp and the browser's clock are two clocks and they disagree - but the FIRST branch already answers this, so the clamp changes nothing that can be observed.",
+    "equivalent": true,
+    "why": "EQUIVALENT, and recorded rather than pinned around. A negative age is always under the 90-second threshold, so it answers 'just now' either way - the clamp is belt for a reader, not a branch. Driven to find that out: the pin that presents a stamp from the future passes with the clamp gone."
+  },
+  {
+    "name": "TILE-8-the-singular-goes-back-to-being-unreachable",
+    "file": "src/ui/saveTile.js",
+    "old": "  const m = Math.floor(d / 60);",
+    "new": "  const m = Math.round(d / 60);",
+    "tests": [
+      "test/savetile.test.js"
+    ],
+    "note": "Past the 90-second threshold `Math.round(d / 60)` is never 1, so \"1 minute ago\" is a branch nothing can produce - found by writing the pin rather than by reading the code."
+  },
+  {
+    "name": "TILE-9-the-save-envelope-s-identity-is-thrown-away-again",
+    "file": "src/ui/enhancedMenu.js",
+    "old": "    faceIndex: Number.isInteger(snap.faceIndex) ? snap.faceIndex : 0,",
+    "new": "",
+    "tests": [
+      "test/savetile.test.js"
+    ],
+    "note": "S3c/U9 put race, gender and faceIndex on the envelope years of slices ago; the menu's row simply never read them. Without the face index every tile draws face 0 - the wrong character, confidently."
+  },
+  {
+    "name": "TILE-10-the-face-goes-back-to-living-inside-the-wizard",
+    "file": "src/systems/chargenSession.js",
+    "old": "    out.loadFaces = (raceKey, gender) => loadFaceCanvases(raceKey, gender, { scale: 2 });",
+    "new": "    out.loadFaces = async () => [];",
+    "tests": [
+      "test/savetile.test.js"
+    ],
+    "note": "The one home, unplugged from its first caller: the wizard silently loses every portrait while the tile keeps its own, which is exactly the drift two copies produce and the reason it moved."
+  },
+  {
+    "name": "TILE-11-one-pane-keeps-its-own-card",
+    "file": "src/ui/enhancedMenu.js",
+    "old": "  const grid = tileGrid(mine, (save) => ({",
+    "new": "  const grid = el('div', 'svgrid'); void ((save) => ({",
+    "tests": [
+      "test/savetile.test.js",
+      "test/slots1.test.js"
+    ],
+    "note": "Three panes list the same slots. Leaving one of them drawing something else is how three panes come to disagree about what a save is, which is the whole reason one tile exists."
+  }
+]

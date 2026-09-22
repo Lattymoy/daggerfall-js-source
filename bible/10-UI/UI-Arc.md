@@ -869,14 +869,14 @@ does the pack's USE arm.
                         worldModes.js:2141 (the factory) and :1904 (a
                         HAND-ROLLED second one, 342 lines below it in
                         the same file),
-                        dungeonContext.js:1046, world.js:2111,
+                        dungeonContext.js:1046, world.js:2113,
                         exterior.js:2373. It is the only window TWO
                         enhanced screens already push - the sheet's
                         button and the pack's USE hand-off, whose
                         close-then-hand-over ordering U55 got
                         backwards. No law needs extracting first.
     THE LOGBOOK         THREE sites: charSheetNav.js:53,
-    / NOTEBOOK          world.js:6419, dungeonContext.js:6599. A seam
+    / NOTEBOOK          world.js:6421, dungeonContext.js:6599. A seam
                         wants making, as U52's and U53's did.
     HISTORY             ONE site (charSheetNav.js:61), and it reads
                         only the entity's backStory. The small one.
@@ -8688,7 +8688,7 @@ mutations, 4 dead.
 
 PX24 (Mac: "with the logbook and history, I want them as one detailed
 UI"): THE CHRONICLE. Two classic windows built at four sites -
-questJournal.js from charSheetNav:53, world.js:2526 and
+questJournal.js from charSheetNav:53, world.js:2498 and
 dungeonContext.js, playerHistory.js from charSheetNav:61 - become ONE
 seam (ui/chronicleDoor.js, the U52/U53/PX23 shape a sixth time) and,
 on the enhanced skin, ONE WINDOW.
@@ -10559,9 +10559,9 @@ re-resolved the `exterior.js` half of a three-file sentence and left the
 `ExteriorAutomapWindow` construction, `:4101` on a `locationName:`
 field). Both halves are now read by `test/citedrift.test.js` - the
 existing entries only ever captured the exterior number, which is how
-the other half went stale unnoticed. (The rest cite named `world.js:6779`,
+the other half went stale unnoticed. (The rest cite named `world.js:6781`,
 the first of the host's TWO identical `act === 'Rest'` arms; ROAD-H H5
-deleted the second and the cite is `world.js:6785` now.)
+deleted the second and the cite is `world.js:6787` now.)
 
 ## AUDIT 62 F24/F25 - THE SENTINEL SWEEP WAS TWO WINDOWS SHORT (2026-09-07)
 
@@ -15349,9 +15349,9 @@ whether an entry MATCHES and asserts nothing.
 Following it out was worse than the symptom. Five Ledger rows cite a
 PAIR - `` `world.js:N`, `exterior.js:M` `` - and the table captured `M`
 alone. So `M` was re-resolved at every wave for a year and `N` was never
-read: `world.js:4884` named a line that is 8950, `:805` one that is
+read: `world.js:4854` named a line that is 8950, `:806` one that is
 1215, `:1094` one that is 2194, `:3903` one that is 3066, `:3920` one
-that is 8907. `world.js:4620-4652` and `dungeonContext.js:1418` were
+that is 8907. `world.js:4622-4654` and `dungeonContext.js:1418` were
 stale the same way. Seven numbers re-resolved BY CONTENT, every
 uncaptured half de-baked to `\d+`, and eight new entries added so every
 number in a pair is captured. The half nobody reads cannot rot in
@@ -17810,3 +17810,148 @@ past it for the slot. `test/roadb_host_pause.test.js` reddened on it
 exactly the job it was written for. The context publishes the answer as
 its own word now, `unpausedOverlay`, beside the `uiOverlayActive` it is
 the other half of.
+
+---
+
+## TILE1/TILE2 — THE SAVE TILE (2026-09-22)
+
+Mac, after ACC1f moved the account card off the Online pane:
+
+> I want [the Online pane] reserved for a detailed tile based design
+> for your saves which will translate to the load character pane also.
+> Basically showing your portrait and character information.
+
+### What a tile carries, and what it deliberately does not
+
+Mac, two hours earlier, on the account card: *"Nothing is centered,
+there's uneeded text explaining what an account is"*. So a tile carries
+**facts about a character and no prose at all**:
+
+| | |
+|---|---|
+| the face | who this is, before a word is read |
+| the name | and under it race, class and level |
+| the moment | the in-game date and hour the save was taken at |
+| the slot | its name, sharing the heading's row and giving way to it |
+| two numbers | health and gold, the pair every card already had |
+| the cloud | one line, and **only where there is an account** |
+| the actions | the pane's own, and a Delete where it belongs |
+
+A pin holds the no-prose rule by looking for the SHAPE an explanation
+would take, rather than by counting words.
+
+### ONE tile, THREE panes — and that is the point
+
+Online, Load Game and Save Game all list the same slots, and all three
+drew their own `card slot`: the same four lines, hand-rolled three
+times. That is how three panes come to disagree about what a save IS.
+`slotCard` is gone; the tile knows nothing about a pane and the panes
+hand it their own actions.
+
+Mac named Online and Load. **Save Game went too**, because leaving one
+of the three drawing something else is exactly the drift one tile was
+made to end — and on that pane `current` marks the slot the name field
+would OVERWRITE, so the brass edge moves as the player types.
+
+### The face has one home, and it is not the one chargenArt owns
+
+Drawing a head lived inside `systems/chargenSession.js`, where only the
+wizard could reach it. The tile is the second caller, so it moved to
+`ui/facePortrait.js` rather than being copied — two copies of "which
+CIF, which palette, which record" drift the day one learns about a
+mod's replacement art.
+
+It is `loadFaceCanvases`, **not** `loadFaceSet`, which `ui/chargenArt.js`
+already exports and which is a different thing under a similar name: that
+one uploads the same ten records as GL TEXTURES for the classic screen
+and returns nothing. AUDIT 24's duplicate-declaration ratchet caught the
+collision the moment the second one existed.
+
+**The identity the portrait needs was already in the save.** S3c/U9 put
+`race`, `gender` and `faceIndex` on the envelope; the menu's row simply
+never read them. Nothing new is stored.
+
+### The two faults the BROWSER found, and neither was findable in source
+
+- **`.tile` was already taken.** It is the inventory and trade item
+  icon — 30x30, `display: grid; place-items: center` — so every save
+  tile was squashed by a rule written for something else and every
+  measurement read 34x34. The classes are `sv`-prefixed now, and the
+  pin that holds it is derived: it walks the classes `saveTile.js`
+  really puts in the DOM and asserts no other module under `src/ui`
+  draws one, with the BORROWED vocabulary (`act`, `acts`, `primary`,
+  `stats`) named and exempt because those are the skin's own words and
+  are meant to be shared.
+- **A long slot name ran into a long character name.** It was pinned to
+  the tile's corner; it shares the heading's row by flex now and gives
+  way, which is the right precedence — the character is who a player is
+  looking for.
+
+A third came out of writing the node pin rather than the browser one:
+`agoText` used `Math.round`, and past the 90-second threshold the
+rounded minute count is never 1 — so **"1 minute ago" was a branch
+nothing could produce**. It floors now, which also overstates nothing.
+
+### The cloud line (ACC2)
+
+One line, at most one button, and **nothing at all where there is no
+registered account** — ACC0's wall is at cloud saves and `off` is the
+state most players are in. A refusal is the SERVICE's own sentence
+handed in, because a second sentence here for a word
+`net/accountClient.js` already explains is two sentences for one
+refusal.
+
+**This is ACC2 D6's surface.** Nothing uploads by itself: an upload
+inside the save path would put a network call in the one operation this
+game must never fail, and a backup that happens invisibly is a backup
+whose failure is also invisible. The listing is asked ONCE per visit and
+latches, because a pane repaints on every press.
+
+**Pinned** in `test/savetile.test.js` (11) and measured in
+`tools/saveTileProbe.mjs` (21 checks, `npm run savetile`). Mutants:
+`tools/mutants/tile.json`, 11, **10 dead and 1 recorded equivalent**, and
+`tools/mutants/audit312.json`, 10, **9 dead and 1 recorded equivalent**.
+
+### AUDIT-312 (2026-09-22, Mac: "Let's audit this") — three of the five
+### findings were on this surface
+
+The numbering and the full account are in
+`bible/06-Systems/Accounts-And-Cloud-Saves-Arc.md`; what belongs here is
+what changed on the tile.
+
+**F3 — the cloud line's STATE now lives in `ui/saveTile.js`, not in the
+menu.** `cloudStateOf` is pure and beside the states it names, and it
+answers a refusal WORD rather than a sentence, because the sentences
+belong to `net/accountClient.js`'s one table. It moved because
+`ui/enhancedMenu.js` is DOM and a boot: three mutants of that arithmetic
+survived THE WHOLE SUITE, and each is a lie about a player's own backup —
+an unfinished upload reading as a finished one, a listing never re-asked
+after a push, and every character's QuickSave sharing one slot key.
+
+**F1 — a backed-up slot carries `Delete backup`.** The route and the
+client call existed and nothing called either, while the refusal at the
+bound already told a player to "delete a save there to make room". It
+says *backup* because the tile already has a **Delete**, the pane's own,
+which removes the save from this device — two buttons reading `Delete`
+one row apart, one destroying the game and one destroying the copy, is
+the worst label this menu could carry. It asks twice, and the sheet was
+re-measured with both cloud buttons on one line.
+
+**F2 — a sixth cloud state, `wait`.** A card written before CHARID1 fell
+to `off`, so it drew no cloud line at all: no button and no reason,
+beside tiles that had one. It carries the (now shorter) sentence and NO
+button, and it reads DIM rather than ruby, because a wait is not a
+failure.
+
+**F5 — the ten heads stay POSITIONAL.** `loadFaceCanvases` ended
+`.filter(Boolean)`, which compacts — and `faceIndex` addresses a RECORD
+NUMBER. One record that will not draw shifted every later face down by
+one, while `ui/chargenArt.js`'s `loadFaceSet`, reading the same ten
+records, never compacts. Two homes for the ten heads disagreeing about
+what index 5 means is the exact drift the extraction exists to prevent.
+Both readers already draw something where a face is missing.
+
+**STILL OPEN, and it is Mac's call:** the portraits could not be
+photographed here — a real head needs the player's own Daggerfall files
+and this container has none — so the sheets he was sent use STAND-INS at
+a head record's real size. The layout is proved; the art on it is not.

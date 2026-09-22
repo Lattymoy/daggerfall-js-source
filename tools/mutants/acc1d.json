@@ -1,0 +1,172 @@
+[
+  {
+    "name": "ACC1d-1-a-token-can-be-replayed",
+    "file": "server/src/index.js",
+    "old": "    if (this._spent.has(sig)) return { error: 'token spent' };",
+    "new": "    if (false) return { error: 'token spent' };",
+    "tests": [
+      "test/identitytoken.test.js"
+    ],
+    "note": "F8, settled by Mac: a token is spent once. Without this, a token captured off one hello is a name anybody can wear in that room for its whole lifetime."
+  },
+  {
+    "name": "ACC1d-2-the-vouched-name-comes-off-the-FRAME",
+    "file": "server/src/index.js",
+    "old": "    return { name: r.claims.n, kind: r.claims.k, subject: r.claims.s, title: r.claims.t, glyphs: r.claims.g };",
+    "new": "    return { name: m.name, kind: r.claims.k, subject: r.claims.s, title: r.claims.t, glyphs: r.claims.g };",
+    "tests": [
+      "test/identitytoken.test.js"
+    ],
+    "note": "THE WHOLE SEAM. The name must come OUT of the token - a signed claim set beats a typed one, and after ACC1g there is no typed one at all. Read off the frame, the signature verifies and then names whoever the sender asked to be."
+  },
+  {
+    "name": "ACC1d-3-a-failed-token-is-a-quiet-downgrade",
+    "file": "server/src/index.js",
+    "old": "    if (!r.ok) return { error: `token ${r.why}` };",
+    "new": "    if (!r.ok) return { name: m.name, verified: false };",
+    "tests": [
+      "test/identitytoken.test.js"
+    ],
+    "note": "A client that MEANT to send a token and sent a bad one must hear so. Admitting it unverified is how a forged token and an expired one become indistinguishable from a client that sent none."
+  },
+  {
+    "name": "ACC1g-4-a-keyless-relay-admits-everybody",
+    "file": "server/src/index.js",
+    "old": "    if (!this._verifyKey) return { error: 'sign-ins cannot be checked right now' };",
+    "new": "    if (!this._verifyKey) return { name: m.name, kind: 'guest', subject: 'acct-unchecked' };",
+    "tests": [
+      "test/identitytoken.test.js"
+    ],
+    "note": "THIS ARM CHANGED DIRECTION WITH ACC1g. While a token was optional, admitting an unnamed hello over a mistyped key was the lesser failure; with the wall at the door it IS the hole - a relay that cannot verify cannot tell an issued name from a typed one, so admitting everybody reopens exactly what the gate closes. What keeps a bad key from taking the game dark is the DEPLOY checking it against what the account service publishes."
+  },
+  {
+    "name": "ACC1d-5-config-may-LOOSEN-the-modules-ceiling",
+    "file": "server/src/index.js",
+    "old": "      ? Math.min(configured, MAX_TTL_S) : MAX_TTL_S;",
+    "new": "      ? configured : MAX_TTL_S;",
+    "tests": [
+      "test/identitytoken.test.js"
+    ],
+    "note": "F8's second half (bible ACC1d D3). A generous number typed in wrangler.toml would silently grant long-lived tokens; MAX_TTL_S is the hard ceiling and config may only tighten it."
+  },
+  {
+    "name": "ACC1d-6-the-wire-admits-any-string-as-a-token",
+    "file": "src/net/wire.js",
+    "old": "      if (typeof m.tok !== 'string' || !TOKEN_RE.test(m.tok)) return { error: 'bad token' };",
+    "new": "      if (typeof m.tok !== 'string') return { error: 'bad token' };",
+    "tests": [
+      "test/acc1dclient.test.js"
+    ],
+    "note": "The shape check is the only bound before an unbounded string reaches WebCrypto on the relay. A megabyte of rubbish would be parsed, hashed and refused far more expensively than here."
+  },
+  {
+    "name": "ACC1d-7-an-absent-token-is-sent-as-null",
+    "file": "src/net/online.js",
+    "old": "    if (this.token) frame.tok = this.token;",
+    "new": "    frame.tok = this.token;",
+    "tests": [
+      "test/acc1dclient.test.js"
+    ],
+    "note": "`tok: null` is a MALFORMED token, not an absent one, and wire.js refuses it - so every signed-out player, and every player the account service could not answer, would be refused the connection entirely."
+  },
+  {
+    "name": "ACC1d-8-the-token-is-minted-once-and-reused",
+    "file": "src/net/online.js",
+    "old": "        this.token = await this._mint();",
+    "new": "        this.token = this.token ?? await this._mint();",
+    "tests": [
+      "test/acc1dclient.test.js"
+    ],
+    "note": "The relay spends a token once (D4). A held-over token is refused on the second connection, so the player's own reconnect - or their second room - would be the replay the relay is guarding against."
+  },
+  {
+    "name": "ACC1d-9-the-mint-is-unbounded",
+    "file": "src/net/online.js",
+    "old": "      return await Promise.race([\n        Promise.resolve(this.mintToken()).catch(() => null),\n        new Promise((r) => setTimeout(() => r(null), TOKEN_WAIT_MS)),\n      ]);",
+    "new": "      return await this.mintToken();",
+    "tests": [
+      "test/acc1dclient.test.js"
+    ],
+    "note": "An account service that never answers would hold the hello for ever: a second Worker's bad minute taking the game offline, which is the exact coupling ACC0's two-Worker split exists to prevent."
+  },
+  {
+    "name": "ACC1d-10-a-late-token-is-sent-down-a-dead-socket",
+    "file": "src/net/online.js",
+    "old": "        this.token = await this._mint();\n        // the socket may have been replaced or closed while we waited\n        if (this._roomOf(ws) == null) return;",
+    "new": "        this.token = await this._mint();",
+    "tests": [
+      "test/acc1dclient.test.js"
+    ],
+    "note": "The mint is an await, and a room change or a drop during it replaces the socket. Without the re-check, the hello goes out on a closed socket and the token is spent on nothing."
+  },
+  {
+    "name": "ACC1d-11-a-bad-minute-signs-the-player-out",
+    "file": "src/net/accountClient.js",
+    "old": "    if (answer.error === 'auth') forgetSession(storage);",
+    "new": "    forgetSession(storage);",
+    "tests": [
+      "test/acc1dclient.test.js"
+    ],
+    "note": "`rate`, `no-signing-key` and `offline` say NOTHING about whether the credential is good. Forgetting the session over one would make an account service outage a permanent sign-out on every device that tried to connect."
+  },
+  {
+    "name": "ACC1d-12-a-signed-out-player-asks-anyway",
+    "file": "src/net/accountClient.js",
+    "old": "    if (!session) return null;",
+    "new": "    if (false) return null;",
+    "tests": [
+      "test/acc1dclient.test.js"
+    ],
+    "note": "A round trip per socket on behalf of nobody, and a throw on the connect path where a null was the whole contract."
+  },
+  {
+    "name": "ACC1d-13-the-presence-session-sends-no-token",
+    "file": "src/scenes/world.js",
+    "old": "      mintToken: identityMinter,",
+    "new": "",
+    "tests": [
+      "test/acc1dclient.test.js"
+    ],
+    "note": "The seam built, verified and deployed, and nothing calling it. The relay would vouch for nobody and the whole slice would read as working."
+  },
+  {
+    "name": "ACC1d-14-the-chat-link-sends-no-token",
+    "file": "src/scenes/world.js",
+    "old": "      link.mintToken = identityMinter;",
+    "new": "",
+    "tests": [
+      "test/acc1dclient.test.js"
+    ],
+    "note": "The hub is where a name is READ. An unsigned name in chat is exactly the impersonation this arc exists to make visible."
+  },
+  {
+    "name": "ACC1d-15-the-relay-deploys-with-an-unchecked-key",
+    "file": ".github/workflows/relay-deploy.yml",
+    "old": "          if [ \"$want\" != \"$got\" ]; then\n            echo \"::error::the relay's IDENTITY_PUBLIC_KEY is not the one the account service publishes - every identity token would be refused\"\n            exit 1\n          fi",
+    "new": "          :",
+    "tests": [
+      "test/relaydeploy.test.js"
+    ],
+    "note": "bible ACC1d D2: the key is a second copy of a fact the service publishes, and a stale one fails in the worst possible way - every hello refused as a bad signature with nothing saying why. The deploy is where that is free to catch."
+  },
+  {
+    "name": "ACC1d-16-an-account-outage-blocks-the-relays-deploy",
+    "file": ".github/workflows/relay-deploy.yml",
+    "old": "            echo \"::warning::/v1/pubkey did not answer - the relay's key could not be checked against it\"\n            exit 0",
+    "new": "            echo \"::error::/v1/pubkey did not answer - the relay's key could not be checked against it\"\n            exit 1",
+    "tests": [
+      "test/relaydeploy.test.js"
+    ],
+    "note": "A service that does not answer is not a mismatch. Refusing the relay's deploy over a SECOND Worker being slow is the exact coupling D1 and D2 both refused."
+  },
+  {
+    "name": "ACC1d-17-a-freshly-minted-pair-strands-the-relay",
+    "file": ".github/workflows/account-deploy.yml",
+    "old": "          if [ \"$want\" != \"$key\" ]; then",
+    "new": "          if false; then",
+    "tests": [
+      "test/accountdeploy.test.js"
+    ],
+    "note": "The deploy that can MINT a new pair is the one whose green run would leave the relay's configured copy wrong. Checking anywhere else is checking after the damage."
+  }
+]

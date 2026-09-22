@@ -40,7 +40,7 @@
 // Not a DFU member: Daggerfall Unity has no chat and no roster.
 // Ledger A row (ONLINE).
 import { tagOf } from './chat.js';
-import { sanitizeName } from './wire.js';
+import { sanitizeName, readBadge } from './wire.js';
 
 /** How many rows the panel will hold. The relay's own ROSTER_MAX
  *  bounds what a room reports; this is the drawing's own ceiling, so
@@ -80,17 +80,27 @@ export function rosterRows(session) {
   const rows = [];
   const seen = new Set();
   /** @param {string|null|undefined} id @param {string|null|undefined} name @param {boolean} me */
-  const push = (id, name, me) => {
+  const push = (id, name, me, from = null) => {
     if (id == null || seen.has(id)) return;
     seen.add(id);
-    rows.push({ id, name: sanitizeName(name), tag: tagOf(id), me });
+    // ACC3c: THE BADGE COMES ALONG, through the wire's own reader - the
+    // roster is a list of NAMES and a name wears a title everywhere
+    // else it is drawn, so a bare one here is the same name saying two
+    // different things on one screen. `readBadge` rather than a second
+    // spelling of the vocabulary check, for the reason it exists.
+    rows.push({ id, name: sanitizeName(name), tag: tagOf(id), me, ...readBadge(from) });
   };
   // ME FIRST into the list, though not first in the ORDER - the sort
   // below puts the player wherever their name falls, because a roster
   // that pins you to the top is a roster you cannot find yourself in
   // by reading. The row is marked instead.
-  push(session?.id ?? null, session?.name ?? '', true);
-  for (const p of session?.peers?.values?.() ?? []) push(p?.id ?? null, p?.name ?? '', false);
+  // MY OWN ROW WEARS MY OWN BADGE, and the session is where it lands:
+  // the relay never sends me my own roster entry, so without this the
+  // one name a player looks at most is the one name with no title on
+  // it (ACC1d-MARK's shape, again - a signal true for everybody but
+  // you reads as a fault in your own account).
+  push(session?.id ?? null, session?.name ?? '', true, session);
+  for (const p of session?.peers?.values?.() ?? []) push(p?.id ?? null, p?.name ?? '', false, p);
 
   rows.sort((a, b) => {
     const n = a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' });

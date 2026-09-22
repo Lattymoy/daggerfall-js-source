@@ -1,0 +1,98 @@
+[
+  {
+    "name": "ACC3c-1-the-client-decides-what-is-held",
+    "file": "src/ui/accountFlow.js",
+    "old": "      self.wardrobe = { titles: r.data.titles, title: r.data.title, glyphs: r.data.glyphs };",
+    "new": "      self.wardrobe = { ...self.wardrobe, title: want };",
+    "tests": ["test/acc3wear.test.js"],
+    "note": "The grant is DERIVED at the service and can lapse between this card being drawn and the button being pressed - a developer taken off the config list is the real case. Patching the local copy instead of taking the service's answer whole means the card goes on offering a title the service has stopped granting, and shows it worn when the write was refused."
+  },
+  {
+    "name": "ACC3c-2-the-refusal-writes-anyway",
+    "file": "src/ui/accountFlow.js",
+    "old": "      if (!r.ok) return refuse(accountRefusalText(r.error));",
+    "new": "      if (!r.ok) { self.wardrobe = { ...self.wardrobe, title: want }; return refuse(accountRefusalText(r.error)); }",
+    "tests": ["test/acc3wear.test.js"],
+    "note": "A refusal that half-lands is worse than one that does not land at all: the card then shows the title worn AND the sentence saying it is not yours, and the player has no way to tell which one is true."
+  },
+  {
+    "name": "ACC3c-3-pressing-the-worn-one-re-equips-it",
+    "file": "src/ui/accountFlow.js",
+    "old": "    const want = self.wardrobe?.title === title ? null : (title ?? null);",
+    "new": "    const want = title ?? null;",
+    "tests": ["test/acc3wear.test.js"],
+    "note": "Then the only way to wear nothing is a separate button, which does nothing whenever nothing is worn - and Mac asked for ONE control on the account icon, not two."
+  },
+  {
+    "name": "ACC3c-4-a-second-press-while-one-is-in-flight",
+    "file": "src/ui/accountFlow.js",
+    "old": "    if (self.busy || self.stage !== 'in') return false;",
+    "new": "    if (self.stage !== 'in') return false;",
+    "tests": ["test/acc3wear.test.js"],
+    "note": "ONE PRESS IS ONE WRITE - this flow's founding rule, written for registration opening two guest rows. Two equips in flight answer in whatever order the network chooses, and the LAST answer wins, which is not the last button pressed."
+  },
+  {
+    "name": "ACC3c-5-a-missing-wardrobe-read-as-an-empty-one",
+    "file": "src/ui/accountFlow.js",
+    "old": "    self.wardrobe = r.data.wardrobe ?? null;",
+    "new": "    self.wardrobe = r.data.wardrobe ?? { titles: [], title: null, glyphs: [] };",
+    "tests": ["test/acc3wear.test.js"],
+    "note": "Null means 'this service does not answer one' and an empty list means 'you hold nothing' - the card draws no picker for the first and could draw an empty one for the second. A build talking to a service from before ACC3 must get the first, or every player is shown a control that can never do anything."
+  },
+  {
+    "name": "ACC3c-6-the-wardrobe-outlives-the-account",
+    "file": "src/ui/accountFlow.js",
+    "old": "    self.account = null;\n    self.wardrobe = null;   // ACC3c: a wardrobe outliving its account is a title drawn for nobody",
+    "new": "    self.account = null;",
+    "tests": ["test/acc3wear.test.js"],
+    "note": "The card lands on `out` with a title picker still on it, offering to equip something for an account nobody is signed in to - and the next sign-in inherits the last player's wardrobe until /v1/account answers."
+  },
+  {
+    "name": "ACC3c-7-the-card-paints-its-own-colour",
+    "file": "src/ui/enhancedAccount.js",
+    "old": "        const b = el('button', `acttitle ${badgeClass('tl', key)}${worn ? ' worn' : ''}`, TITLE_TEXT[key] ?? key);",
+    "new": "        const b = el('button', `acttitle${worn ? ' worn' : ''}`, TITLE_TEXT[key] ?? key);\n        b.style.color = key === 'founder' ? '#ffc84a' : '#e2453a';",
+    "tests": ["test/acc3wear.test.js", "test/enhancedaccount.test.js"],
+    "note": "Exactly what the first cut of this slice did, and ACC1e's own pin caught it. Two copies of a design language is how the front door and the rooms behind it drift apart - and this one also hard-codes the two titles, so a third draws in the developer's red."
+  },
+  {
+    "name": "ACC3c-8-the-glyph-becomes-a-button",
+    "file": "src/ui/enhancedAccount.js",
+    "old": "        const chip = el('span', `acctglyph ${badgeClass('gl', g.key)}`);",
+    "new": "        const chip = el('button', `acctglyph ${badgeClass('gl', g.key)}`);",
+    "tests": ["test/acc3wear.test.js"],
+    "note": "A glyph is TRUE of an account - the sprout is its age, the dev mark is a grant - and nothing equips one. A control that cannot be operated is worse than a fact that never offered to be."
+  },
+  {
+    "name": "ACC3c-9-the-skin-loses-the-walked-rules",
+    "file": "src/ui/enhancedStyle.js",
+    "old": "${badgeCss()}",
+    "new": "",
+    "tests": ["test/acc3wear.test.js"],
+    "note": "The card writes a class and nothing carries the colour, so every title button draws in the card's own bone - Mac named gold and red specifically, and the picker would show neither."
+  },
+  {
+    "name": "ACC3c-10-my-own-roster-row-goes-unbadged",
+    "file": "src/net/roster.js",
+    "old": "  push(session?.id ?? null, session?.name ?? '', true, session);",
+    "new": "  push(session?.id ?? null, session?.name ?? '', true);",
+    "tests": ["test/acc3wear.test.js"],
+    "note": "The relay never sends me my own roster entry, so my row is built from the session. Without the badge, the one name a player looks at most is the only name in the list with no title on it - which reads as a fault in their own account. ACC1d-MARK's shape, a third time."
+  },
+  {
+    "name": "ACC3c-11-the-roster-trusts-the-relay",
+    "file": "src/net/roster.js",
+    "old": "    rows.push({ id, name: sanitizeName(name), tag: tagOf(id), me, ...readBadge(from) });",
+    "new": "    rows.push({ id, name: sanitizeName(name), tag: tagOf(id), me, title: from?.title ?? null, glyphs: from?.glyphs ?? [] });",
+    "tests": ["test/acc3wear.test.js"],
+    "note": "A second spelling of the vocabulary check, and a weaker one: the relay only ever sends what a signature carried, so anything else is a relay that is older, newer or not ours - and an unchecked `title` is arbitrary text painted beside a name in a list."
+  },
+  {
+    "name": "ACC3c-12-the-badge-left-out-of-the-repaint-key",
+    "file": "src/ui/chatPanel.js",
+    "old": "(r.me ? 1 : 0) + ':' + (r.title ?? '') + ':' + (r.glyphs ?? []).join('+')",
+    "new": "(r.me ? 1 : 0)",
+    "tests": ["test/acc3wear.test.js"],
+    "note": "This list repaints only when the key moves - SOC3 put the open menu in it for the same reason. A title equipped, or a sprout that aged past two weeks, changes nothing else about the row, so the roster stays correct in the model and wrong on screen until somebody else joins the room."
+  }
+]

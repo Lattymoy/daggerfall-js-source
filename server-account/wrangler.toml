@@ -57,10 +57,24 @@ enabled = true
 [vars]
 # Answered by /health so a deploy that did not happen cannot look like
 # one that did. Kept in step with ACCOUNT_VERSION in src/index.js.
-ACCOUNT_VERSION = "acct1"
+ACCOUNT_VERSION = "acct3"
 # The site that may call this. "*" while nothing is live; it is narrowed
 # to the real origin before a single account exists.
 ALLOWED_ORIGIN = "*"
+# ACC3: WHO HOLDS THE DEVELOPER TITLE. A comma-separated list of
+# handles, case-folded by server-account/src/titles.js on the way in.
+#
+# A LIST IN CONFIG AND NOT A COLUMN, because granting one is a thing a
+# person does by editing a file that is reviewed and deployed - not by
+# reaching into a live database at three in the morning. Taking a
+# handle back off this list takes the title off too, on that player's
+# next token, because the grant is read fresh every time rather than
+# stored anywhere.
+#
+# EMPTY IS A VALID ANSWER and is what this ships as: nobody holds it
+# until a handle is written here. It is not a secret - a title is a
+# thing other players are meant to see.
+DEVELOPER_HANDLES = "Lattymoy"
 
 [[d1_databases]]
 binding = "DB"
@@ -90,3 +104,23 @@ database_id = "resolved-by-account-deploy-workflow"
 # minted in the same breath as the private half by a job no person
 # watches - and the service hands it to anybody who asks, at /v1/pubkey,
 # rather than waiting to be copied into a file by hand.
+
+# ── ACC2: THE SAVE BLOBS ───────────────────────────────────────────
+# R2 rather than D1 for one measured reason: a Daggerfall save already
+# hits QuotaExceededError in localStorage (systems/save.js handles it by
+# name), which puts its size class above D1's practical per-row ceiling
+# and above a Worker's JSON body cap. R2 also has no egress fee, which
+# matters for a game nobody pays for.
+#
+# A BUCKET NAME IS NOT AN ID, so unlike the database above there is
+# nothing to resolve: the name IS the reference. What the deploy still
+# has to do is CREATE it if it is missing, idempotently, exactly as it
+# creates the database - ACC1-CI's whole argument (Mac: "The token
+# provided allows you to take this on yourself. I am not needed at all")
+# applies unchanged, because the same API token does both.
+#
+# The keys are player-first (server-account/src/service.js saveKey), so
+# everything one account holds is a prefix walk.
+[[r2_buckets]]
+binding = "SAVES"
+bucket_name = "daggerfall-saves"

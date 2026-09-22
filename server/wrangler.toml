@@ -32,6 +32,27 @@ compatibility_date = "2026-09-01"
 account_id = "a27adccb38c8e8b82fa32e5736274a94"
 workers_dev = true
 
+# ═══ ACC1d: THE KEY THE RELAY VERIFIES NAMES WITH ══════════════════
+#
+# A VAR AND NOT A SECRET, deliberately: a public key can verify and
+# cannot mint, so there is nothing here to hide. The account service
+# publishes the same value at /v1/pubkey and that copy is the
+# authority; this one is the relay's, and `account-deploy.yml` checks
+# the two against each other, because a mismatch means every verify
+# fails silently - the worst failure mode this seam has and the
+# easiest one to catch at deploy time.
+#
+# EMPTY IS A LEGAL STATE. A relay with no key vouches for nobody and
+# admits everybody, which is what it did before this slice; it does not
+# refuse the room and it does not pretend it checked.
+[vars]
+IDENTITY_PUBLIC_KEY = "2ZbUhjpY80Hne60_ucjzCZMF0i5DsarfaWW9SDU5ei4"
+# The lifetime ceiling this relay will honour, beside the key it
+# belongs with (AUDIT-ACC F8, bible ACC1d D3). `MAX_TTL_S` in
+# src/net/identityToken.js is the hard ceiling the module itself
+# refuses past; this may only TIGHTEN it, never widen it.
+IDENTITY_MAX_TTL_S = "300"
+
 # AUDIT ONLINE A17: an uncaught error in the object is logged, not lost
 [observability]
 enabled = true

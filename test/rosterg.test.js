@@ -51,7 +51,7 @@ test('ROSTER-G: the list is CUT at CHAT_ROSTER_MAX and the count is not - a full
   const realNow = Date.now; let clock = 1e12; Date.now = () => clock;
   try {
     const n = CHAT_ROSTER_MAX + 3;
-    for (let i = 0; i < n; i++) { if (i % 40 === 39) clock += 1000; const s = r.connect(); await r.hello(s, `p${String(i).padStart(4, '0')}`, null, { name: `N${i}` }); }
+    for (let i = 0; i < n; i++) { if (i % 40 === 39) clock += 1000; const s = r.connect(); await r.hello(s, `p${String(i).padStart(4, '0')}`); }   // ACC1g: the id IS the name - `N16` folds to a slur under NAME-F1 and no token can carry one
     clock += 1000;
     const last = r.connect(); await r.hello(last, 'zzzz-9999', null, { name: 'Last' });
     const w = last.sent[0];
@@ -92,6 +92,6 @@ test('ROSTER-G: world.js hands the panel the ACTIVE CHANNEL\'s link, with the pr
   assert.match(panel, /if \(dup\.has\(r\.name\.toLowerCase\(\)\)\) n\.append\(el\('span', 'dfchat-who-tag', '#' \+ r\.tag\)\);/, 'the tag is conditional on a shared name');
   // the relay's side, by source: a channel's welcome is built from `others` by name, cut and counted
   const idx = rd('server/src/index.js');
-  assert.match(idx, /const named = others\.slice\(0, CHAT_ROSTER_MAX\)\.map\(\(b\) => \(\{ id: b\.id, name: b\.name \}\)\);/);
+  assert.match(idx, /const named = others\.slice\(0, CHAT_ROSTER_MAX\)\.map\(\(b\) => badged\(\{ id: b\.id, name: b\.name \}, b\)\);/, 'ACC1g took the per-name VERDICT off this row - every name in the room was verified to get in, so it said the same thing about everybody; ACC3 put a BADGE on it, which is the opposite kind of field: a title is held by a few and is read out of the signature');
   assert.doesNotMatch(idx, /if \(isChatRoom\(a\.key\)\) return;   \/\/ a channel announced no join/, 'the leave arm no longer skips a channel');
 });

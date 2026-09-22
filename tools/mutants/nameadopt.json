@@ -1,0 +1,90 @@
+[
+  {
+    "name": "NAME-ADOPT-1-the-flow-never-adopts",
+    "file": "src/ui/accountFlow.js",
+    "old": "    adoptIdentity(storage, { name: r.data.account?.name, kind: r.data.account?.kind });",
+    "new": "",
+    "tests": ["test/nameadopt.test.js"],
+    "note": "BUG 1 VERBATIM. `register` answers the handle and a recovery code, not a session, so the store keeps the guest's name - and the top-right button reads the store. Mac: \"The top right corner button doesnt update with name\"."
+  },
+  {
+    "name": "NAME-ADOPT-2-the-minter-throws-the-answer-away",
+    "file": "src/net/accountClient.js",
+    "old": "        adoptIdentity(storage, who);\n",
+    "new": "",
+    "tests": ["test/nameadopt.test.js"],
+    "note": "The state the arc shipped in: the token kept, and `name`, `kind`, `title` and `glyphs` dropped on the floor beside it."
+  },
+  {
+    "name": "NAME-ADOPT-3-the-host-never-hears",
+    "file": "src/net/accountClient.js",
+    "old": "        try { onIssued?.(who); } catch { /* the token still goes */ }",
+    "new": "",
+    "tests": ["test/nameadopt.test.js"],
+    "note": "The store would be right and the LIVE sessions would not - the roster keeps the character's name until the page reloads."
+  },
+  {
+    "name": "NAME-ADOPT-4-a-broken-host-costs-the-token",
+    "file": "src/net/accountClient.js",
+    "old": "        try { onIssued?.(who); } catch { /* the token still goes */ }",
+    "new": "        onIssued?.(who);",
+    "tests": ["test/nameadopt.test.js"],
+    "note": "A display seam that throws would take the hello's word with it - and since ACC1g a tokenless hello is REFUSED, so a bug in how a name is drawn becomes a player who cannot connect at all."
+  },
+  {
+    "name": "NAME-ADOPT-5-adopt-resurrects-a-session",
+    "file": "src/net/accountClient.js",
+    "old": "  const was = storedSession(storage);\n  if (!was) return false;",
+    "new": "  const was = storedSession(storage) ?? {};",
+    "tests": ["test/nameadopt.test.js"],
+    "note": "A mint answer landing after a sign-out would write a session back - a signed-out player signed back in by a network race, with no secret in the row."
+  },
+  {
+    "name": "NAME-ADOPT-6-adopt-writes-every-time",
+    "file": "src/net/accountClient.js",
+    "old": "  if (next.name === was.name && next.kind === was.kind) return false;   // nothing to write, and a write is a storage event every open tab hears",
+    "new": "",
+    "tests": ["test/nameadopt.test.js"],
+    "note": "A mint happens on every connect and a store write is a `storage` event in every other open tab - the menu repaints for nothing, across the whole browser, every reconnect."
+  },
+  {
+    "name": "NAME-ADOPT-7-the-session-keeps-the-character",
+    "file": "src/net/online.js",
+    "old": "      if (n !== this.name) { this.name = n; changed = true; }",
+    "new": "      if (n !== this.name) { changed = true; }",
+    "tests": ["test/nameadopt.test.js"],
+    "note": "BUG 2 VERBATIM. Mac: \"Ingame your name shows for other people but you still see your character name in the chat menu\"."
+  },
+  {
+    "name": "NAME-ADOPT-8-my-own-badge-never-arrives",
+    "file": "src/net/online.js",
+    "old": "    if (b.title !== (this.title ?? null)) { this.title = b.title; changed = true; }",
+    "new": "",
+    "tests": ["test/nameadopt.test.js"],
+    "note": "The same bug on the badge, unreported because nobody held a title yet: ACC3c built my roster row from the session and nothing ever put a title on it. The first developer to equip one would have seen it on everybody's screen but their own."
+  },
+  {
+    "name": "NAME-ADOPT-9-my-own-badge-trusted-unchecked",
+    "file": "src/net/online.js",
+    "old": "    const b = readBadge({ title, glyphs });",
+    "new": "    const b = { title: title ?? null, glyphs: glyphs ?? [] };",
+    "tests": ["test/nameadopt.test.js"],
+    "note": "A second spelling of the vocabulary check, and a missing one: a badge this build has never heard of would be painted beside my own name while being refused beside everybody else's."
+  },
+  {
+    "name": "NAME-ADOPT-10-the-host-starts-from-the-character",
+    "file": "src/scenes/world.js",
+    "old": "      name: storedSession(appStorage())?.name || playerEntity.name || 'Traveller',",
+    "new": "      name: playerEntity.name || 'Traveller',",
+    "tests": ["test/nameadopt.test.js"],
+    "note": "The line under the comment that said it \"is carried no further\". It was: into the session's own name, which the roster draws my row from. Without the stored name first, the roster is wrong until the first mint answers."
+  },
+  {
+    "name": "NAME-ADOPT-11-only-the-presence-session-hears",
+    "file": "src/scenes/world.js",
+    "old": "    for (const link of chatLinks?.values?.() ?? []) link.adoptIdentity?.(who);",
+    "new": "",
+    "tests": ["test/nameadopt.test.js"],
+    "note": "The roster draws my row from the CHAT link its tab holds, not from the presence session - so correcting only `online` fixes nothing Mac could see."
+  }
+]

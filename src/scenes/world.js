@@ -272,6 +272,8 @@ import { createDataPipeline } from './dataPipeline.js';
 import { createWorldModes } from './worldModes.js';
 import { setAmbientTextHost, tickAmbientText } from '../systems/ambientText.js';   // AT2: Ambient Text's one component - this host claims it and feeds it the frame
 import { OnlineSession, roomKeyFor, DEFAULT_SERVER, WORLD_PUBLISH_MS, FOES_MS, FOES_FULL_MS, FOES_STALE_MS } from '../net/online.js';   // ONLINE1: the session; WORLD1: the room's memory
+import { accountTokenMinter, storedSession } from '../net/accountClient.js';   // ACC1d: the hello's signed word, minted per connection from the account session this device holds
+import { appStorage } from '../systems/appStorage.js';   // ACC1d: where that session lives - the app's store, not the tab's (a second tab is the same player)
 import { POSE_STRIKES, isWorldRoom, isCellRoom, cellHaloFor, actFrameFits, sharedClassicMinutes, wallMsForClassicMinutes } from '../net/wire.js';   // WORLD6b-iii(b): the cell seam's halo   // MAC7 #1: the swing's kind on the wire; AUDIT WORLD4 A1: whether an act frame can be said at all
 import { hasDaggerfallArrows } from '../combat/fpArm.js';   // MAC7 #2: the arrow bit on the wire - weaponRig's own read
 import { drawText } from '../ui/text.js';   // ONLINE1: the session's status line
@@ -3626,7 +3628,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // through the one that owns the billboard - `exteriorFoePool` is
     // the watch AND the encounter foes, and this arm reached the
     // encounter pool's remover for both. That was not a leak: removeFoe
-    // (exteriorFoes.js:375-380) never looks the record up in `foes`, and
+    // (exteriorFoes.js:377-382) never looks the record up in `foes`, and
     // both pools share this host's one renderer, so a struck WATCHMAN
     // got exactly what removeGuard (cityGuards.js:1344-1358) gives it -
     // batch freed, `dead = true`, no corpse, skipped by the next AI pass
@@ -8681,11 +8683,54 @@ export async function bootWorld(canvas, renderer, params, status) {
   let onlineToScene = (p) => [p.x, p.y, p.z];
   const ROOM_HOLD_MS = 500;   // AUDIT ONLINE D11: a room key holds this long before the socket moves - a cell edge is not a churn
   const ONLINE_MOVE_HOLD_MS = 250;   // ONLINE-MVFLICKER1: see the outgoing `mv` computation's own header - debounces a single stray zero-delta sample
+  // ACC1d: ONE minter, shared by the presence session and every channel
+  // link - it holds no token and caches nothing, so a shared minter is
+  // still a FRESH token per socket, which is what the relay's spend-once
+  // rule (bible ACC1d D4) requires. Built once because reading the store
+  // is the only work it does before a call.
+  // NAME-ADOPT: every mint's answer says who this device IS, and every
+  // live session takes it in - the presence session AND each chat link,
+  // because the chat roster draws my own row from whichever link its
+  // tab holds. `chatLinks` is read at the moment of the answer, not
+  // captured here: the links are built after this and rebuilt on rejoin.
+  const adoptIssued = (who) => {
+    online?.adoptIdentity?.(who);
+    for (const link of chatLinks?.values?.() ?? []) link.adoptIdentity?.(who);
+  };
+  const identityMinter = accountTokenMinter({ fetch: (u, i) => globalThis.fetch(u, i), storage: appStorage(), onIssued: adoptIssued });
   const onlineStart = () => {
     online = new OnlineSession({
       url: params.get('server') || getPref('onlineServer') || DEFAULT_SERVER,
-      name: params.get('name') || getPref('onlineName') || playerEntity.name || 'Traveller',
+      // ACC1g: THE RELAY TAKES THE NAME OUT OF THE TOKEN AND IGNORES
+      // THIS ONE. Two typed sources stood here - a `?name=` in the URL
+      // and the `onlineName` pref - and both were the impersonation
+      // hole: the relay only sanitised what arrived. They are gone.
+      //
+      // NAME-ADOPT CORRECTED WHAT THIS COMMENT SAID. It read "fills the
+      // frame's shape and is carried no further" - and it WAS carried
+      // further: into this session's own `name`, which the chat roster
+      // draws MY row from. So every other player saw the handle and the
+      // player saw their character (Mac: "you still see your character
+      // name in the chat menu"). The name here is now the one the account
+      // service ISSUED, as far as this device knows it, and every mint's
+      // answer corrects it (`adoptIssued` above). The character's name is
+      // only the last resort, for a build whose store holds no session -
+      // which the Online pane's own gate (ACC1h) does not let reach here.
+      // (It also said "ACC1g-b takes the field off the wire, in this same
+      // deploy". It did not: wire.js still requires a name on a hello and
+      // the relay still ignores it. Said here rather than left standing.)
+      name: storedSession(appStorage())?.name || playerEntity.name || 'Traveller',
       look: composeLook(playerEntity),
+      // ACC1d: the client's half of the token seam. The session calls
+      // this on every socket open and puts the answer in the hello;
+      // `accountTokenMinter` answers null for every reason a player
+      // might have no token, so a signed-out player, a cleared browser
+      // and an account service having a bad minute all connect exactly
+      // as they did before this slice. Built here rather than in
+      // net/online.js because online.js must stay a module a node test
+      // can drive: `fetch` and the storage are arguments, the same law
+      // net/accountClient.js's own header states.
+      mintToken: identityMinter,
     });
     // WORLD1: the room's memory in - a welcome that carries the world the room keeps lands on the standing dungeon
     // (the mode machine refuses another dungeon's); a new host publishes at once
@@ -8782,9 +8827,22 @@ export async function bootWorld(canvas, renderer, params, status) {
     for (const tab of chatLog.tabs) {
       const link = new OnlineSession({ url: online.url, name: online.name, look: online.look, id: online.id, secret: online.secret, presence: false });
       link.onChat = (line) => chatLog.push(tab.id, line);
+      // RED1: the SERVER's own line, and it lands on the log with the
+      // flag set HERE - from the frame type the relay used, never from
+      // anything on the frame. It rides the ordinary log, so ChatLog's
+      // own peek draws it over the world for a player who never opens
+      // the panel: a broadcast nobody sees is not one.
+      link.onRed = (line) => chatLog.push(tab.id, { text: line.text, at: line.at, red: true });
       link.onRelay = onRelayVersion;
       link.join(tab.room);
       chatLinks.set(tab.id, link);
+      // ACC1d: the channel link mints too, and it is the link that most
+      // needs to - the hub is where a name is READ, so an unsigned name
+      // in chat is the impersonation this arc exists to make visible.
+      // Set after the constructor, not in it, for the same reason `acct`
+      // below is: CHAT1's pin holds those five lines as they stand, and
+      // the hello is built when the socket opens, a turn later.
+      link.mintToken = identityMinter;
       // SOC2: the HUB tab's link carries the account (net/social.js accountId - the profile's, not the tab's); the
       // presence session never does, and a later channel tab would not either: the hub is the one room that checks
       // it. Set after the join, which is safe because a socket opens on a later turn and the hello is built when it
@@ -8816,6 +8874,17 @@ export async function bootWorld(canvas, renderer, params, status) {
           });
           return true;
         }
+        // RED1 (Mac: "a red text system (kind of like warframe) where I
+        // can message chat as the server"). THE COMMAND IS ALWAYS
+        // PARSED AND NEVER GUARDED HERE: whether this player may speak
+        // as the server is a question about their TOKEN's signature,
+        // and only the relay holds the key - a check here would be a
+        // second copy of an authority this side does not hold, wrong
+        // the moment a grant lapses. The relay ignores it from anybody
+        // it did not sign for, and nothing is echoed back, so a player
+        // who tries learns nothing from the silence.
+        const red = /^\/red\s+([\s\S]+)$/i.exec(text.trim());
+        if (red) return chatLinks.get(tabId)?.sendRed(red[1]) ?? false;
         return chatLinks.get(tabId)?.sendChat(text) ?? false;   // false keeps the line in the field (B2)
       },
       // CHAT-R1 (Mac: "a sidepanel on the chat ui showing all currently
@@ -11632,11 +11701,11 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
         // AFTER the damage fork closes (:615), so a shaft that lost the
         // roll still enrages what it hit and wakes the area. ROAD-G G1
         // (review): the WATCH carries the pair now
-        // (cityGuards.js:587-592), so this seam ROUTES by pool exactly
+        // (cityGuards.js:590-595), so this seam ROUTES by pool exactly
         // as `dealDamage` above it does, instead of excluding the
         // guards - a zero-damage shaft into a pacified watchman has to
         // reach the same door the zero-damage SWING already reaches
-        // (cityGuards.js:1079). DFU makes no pool distinction:
+        // (cityGuards.js:1082). DFU makes no pool distinction:
         // AssignBowDamageToTarget's player arm (DaggerfallMissile.cs
         // :660-688) calls WeaponDamage, so :630 runs for the shaft as
         // for the swing.
@@ -11742,7 +11811,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     // layer, because a talk window is a modal above the vitals.
     // AUDIT 39: THE CALL IS UNCONDITIONAL. drawHud runs the damage
     // flash and the enhanced DOM HUD ABOVE its own `!art` return
-    // (hud.js:402-430) because neither reads ARENA2 - "a player whose
+    // (hud.js:415-443) because neither reads ARENA2 - "a player whose
     // HUD art failed to load still has vitals". Wrapping the whole
     // call in `if (hudArt)` inverted that: hudArt starts null and is
     // filled by a fire-and-forget load whose failure leaves it null

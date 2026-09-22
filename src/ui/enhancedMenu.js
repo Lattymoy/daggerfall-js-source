@@ -91,7 +91,6 @@
 
 import { fpArm, hasDaggerfallArrows } from '../combat/fpArm.js';
 import { questRail, journalLines, questTitleOf } from './questRail.js';   // MAC-K2: the ONE quest walk, shared with the chronicle
-import { entryVerdict } from '../net/nameFilter.js';   // NAME-F2: the entry-side refusal; net/wire.js's sanitizeName is the half that holds   // AUDIT-CHATR F2/F3: ONE verdict, given the save it is about
 import { closeOnOutsideTap } from './enhancedOverlays.js';   // OT1: a tap on the scrim resumes
 import { TEST_PRESETS, TEST_RIDE, TEST_LOOT } from '../systems/testRoom.js';   // TR3: the one home the pane shows; TSR4: the ride; LR3: the loot ladder
 import { mwRaceId } from '../formats/mwNpc.js';
@@ -149,6 +148,14 @@ import { paneControls, discardControlsStaging, captureArmed } from './enhancedCo
 import { FEATURES, KINDS, KIND_ORDER, GROUPS, GROUP_ORDER, filterFeatures, featureCounts, featureForControl, resolveControl, modModules, modDials } from '../systems/features.js';   // FT14: the groups and each mod's curated keys
 import '../world/landView.js';   // RF4: the land-view lane registers itself with the registry
 import '../world/outdoors.js';   // RF4: the outdoors lane too
+// ACC1e: the account card at the head of the Online pane - the flow
+// thinks (ui/accountFlow.js, node-drivable), this draws it
+import { AccountFlow } from './accountFlow.js';
+import { accountCard } from './enhancedAccount.js';
+import { saveTile, cloudStateOf, saveFromCard } from './saveTile.js';   // TILE1 (Mac: "a detailed tile based design for your saves... showing your portrait and character information"), and ACC2c's card-shaped save
+import { loadFace } from './facePortrait.js';   // TILE1: the character's face, the one home chargen also reads
+import { cloudIo, cloudList, pushSlot, pullSlot, removeCloudSlot, cloudOnly, slotKeyOf, cloudRefusalText } from '../systems/cloudSaves.js';   // ACC2: the backup a tile can offer, AUDIT-312 F1's delete, and ACC2c's download of a save that is only up there
+import { serviceBase, storedSession } from '../net/accountClient.js';
 
 // ── THE RAIL ─────────────────────────────────────────────────────
 // Six destinations. Mac's call: the menus get set up now even where
@@ -220,6 +227,23 @@ let mode = 'boot';
 let sections = SECTIONS_BOOT;
 let hooks = {};
 let keyHandler = null;
+// ACC1f (Mac: "The online details itself will live as a popup on main
+// menu startup and a new profile icon"): whether the account window is
+// open, and whether startup has already offered it once.
+let accountOpen = false;
+let accountOffered = false;
+// ═══ TILE2/ACC2: WHAT THE CLOUD HOLDS, ASKED ONCE PER VISIT ═══════
+//
+// A pane repaints on every press, every skin switch and every Escape.
+// A listing per repaint would be a request per keystroke, so the ask
+// LATCHES the way the account offer does and the answer repaints once.
+// `null` means unasked or unanswerable - a tile then draws no cloud
+// line at all, which is also what a player with no account sees.
+let cloudCards = null;
+let cloudAsked = false;
+let cloudBusy = null;    // the slot being pushed or removed, as slotKeyOf writes it
+let cloudWhy = null;     // { slot, error } - the last refusal WORD, under the slot it was about
+let cloudArm = null;     // the slot whose Delete is armed - a destructive act asks twice (AUDIT-312 F1)
 let lockHandler = null;
 let resizeHandler = null;   // PX1: the home ground's redraw-on-resize
 let groundTimer = null;     // PX1b: the home sky's 8fps clock - cleared by every rebuild and by unmount
@@ -267,6 +291,13 @@ function saveOf(entry) {
     characterName: entry.info?.characterName ?? snap.name ?? '',
     characterId: entry.info?.characterId ?? null,   // CHARID1
     name: snap.name || 'Unnamed',
+    // TILE1: the identity the PORTRAIT needs, and it was already in the
+    // envelope - S3c/U9 put `race`, `gender` and `faceIndex` on the
+    // save when the identity started riding it. Nothing new is stored;
+    // this row simply stopped throwing three fields away.
+    race: typeof snap.race === 'string' ? snap.race : null,
+    gender: snap.gender === 'female' ? 'female' : 'male',
+    faceIndex: Number.isInteger(snap.faceIndex) ? snap.faceIndex : 0,
     career: snap.career?.name ?? null,
     level: snap.level ?? null,
     health: snap.health, maxHealth: snap.maxHealth,
@@ -282,23 +313,243 @@ function savedGames() {
   try { return restorableSaves().map(saveOf); } catch { return []; }
 }
 
-/** One slot's card: the slot's name as the tag, the character's line and numbers, the press and (optionally) its delete. */
-function slotCard(save, { primaryLabel, onPrimary, disabled = false, deletable = false }) {
-  const c = el('div', 'card slot');
-  c.append(el('span', 'tag grey', save.saveName));
-  c.append(el('h3', null, save.name));
-  c.append(el('p', 'meta', saveLine(save)));
-  c.append(stats(saveStats(save)));
-  const list = [{ label: primaryLabel, primary: true, disabled, onClick: disabled ? null : onPrimary }];
-  // the destructive action asks first, and deletes THIS slot alone
-  if (deletable) list.push({ label: 'Delete', onClick: () => ask(
-    'Delete this save',
-    `Deleting ${save.name}'s "${save.saveName}" cannot be undone.`,
-    'Delete',
-    () => { try { deleteSave(save.key); } catch { /* storage disabled */ } render(); },
-  ) });
-  c.append(acts(list));
-  return c;
+// ═══ TILE1/TILE2: THE TILES ══════════════════════════════════════
+//
+// Mac: the Online pane is "reserved for a detailed tile based design
+// for your saves which will translate to the load character pane
+// also". The tile itself is ui/saveTile.js and knows nothing about a
+// pane; these three functions are what a pane hands it.
+
+/** The slot's key on the SERVICE, which is (character, save name) and
+ *  never the local number - the local integer is a fact about one
+ *  store (bible ACC2 D2). `systems/cloudSaves.js` writes it, because
+ *  this file's own copy had dropped the character half (AUDIT-312 F3).
+ */
+const cloudKeyOf = (save) => slotKeyOf(save);
+
+/** Ask the service what it holds, ONCE per visit to this menu. Nothing
+ *  waits on it: the tiles are drawn with no cloud line and gain one
+ *  when the answer lands. A signed-out or guest device never asks. */
+function ensureCloud() {
+  if (cloudAsked) return;
+  cloudAsked = true;
+  const io = cloudIo({ fetch: (...a) => globalThis.fetch(...a), storage: appStorage() });
+  if (!io) return;
+  cloudList(io).then((r) => { if (r.ok) { cloudCards = r.saves; render(); } }).catch(() => {});
+}
+
+/** The cloud line for one slot, or the state that draws none.
+ *
+ *  THE DECISION IS `ui/saveTile.js`'s `cloudStateOf` and not this
+ *  function's: AUDIT-312 F3 found three mutants of the arithmetic that
+ *  once lived here surviving the whole suite, because a module that is
+ *  DOM and a boot is a module no node pin can drive. What is left here
+ *  is what only a menu can do - the handlers. */
+function cloudFor(save) {
+  const slot = cloudKeyOf(save);
+  const state = cloudStateOf({
+    // NO ACCOUNT, NO LINE. ACC0's wall is at cloud saves, and a player
+    // who has not asked for one is not told about it on every tile.
+    signedIn: !!cloudIo({ fetch: () => {}, storage: appStorage() }),
+    characterId: save.characterId,
+    card: (cloudCards ?? []).find((c) => slotKeyOf(c) === slot) ?? null,
+    busy: cloudBusy === slot,
+    error: cloudWhy?.slot === slot ? cloudWhy.error : null,
+    nowS: Math.floor(Date.now() / 1000),
+  });
+  const why = state.error ? cloudRefusalText(state.error) : null;
+  const line = { state: state.state, when: state.when, why, actions: [] };
+  switch (state.state) {
+    // A WAIT HAS NO BUTTON. The act it needs is loading the save, which
+    // is the tile's own Load and is already there.
+    case 'off': case 'busy': case 'wait': break;
+    case 'bad':
+      line.actions.push({ label: 'Try again', onClick: () => backUp(save) });
+      break;
+    case 'saved':
+      line.actions.push({ label: 'Back up again', onClick: () => backUp(save) });
+      // ═══ AUDIT-312 F1: THE DELETE HAD NO DOOR ═══════════════════
+      //
+      // The route existed (DELETE /v1/saves/…), `removeCloudSlot`
+      // existed, and NOTHING CALLED EITHER - while the refusal table
+      // already told a player at the bound to "delete a save there to
+      // make room". An account at SAVES_MAX could never back up again
+      // and the only sentence it was given named an act the game did
+      // not offer.
+      //
+      // IT SAYS `backup`, because the tile ALREADY has a Delete - the
+      // pane's own, which removes the save from this device. Two
+      // buttons reading `Delete` one row apart, one destroying the game
+      // and one destroying the copy of it, is the worst label in this
+      // menu. Measured on the sheet rather than argued about.
+      //
+      // AND IT ASKS TWICE, because this is the one button here that
+      // destroys anything. The armed slot is cleared by the press, by
+      // arming a different tile, and by the next visit to the menu.
+      line.actions.push(cloudArm === slot
+        ? { label: 'Delete backup?', primary: true, onClick: () => removeBackup(save) }
+        : { label: 'Delete backup', onClick: () => { cloudArm = slot; render(); } });
+      break;
+    default:   // 'none'
+      line.actions.push({ label: 'Back up', onClick: () => backUp(save) });
+  }
+  return line;
+}
+
+/** THE PLAYER'S OWN ACT. Nothing uploads by itself (bible ACC2 D6): an
+ *  upload inside the save path would put a network call in the one
+ *  operation this game must never fail, and a backup that happens
+ *  invisibly is a backup whose failure is also invisible. This is the
+ *  surface that can show it failing. */
+function backUp(save) {
+  runCloud(save, (io) => pushSlot(io, appStorage(), save.key));
+}
+
+/** ...AND THE PLAYER'S OWN DELETE (AUDIT-312 F1). It removes the COPY
+ *  and never the save: `removeCloudSlot` does not touch this device's
+ *  store, because the cloud is a backup and deleting a backup is not
+ *  deleting a game. It is the one act here that destroys anything, so
+ *  `cloudFor` arms it on a first press and only the second one calls
+ *  this. */
+function removeBackup(save) {
+  cloudArm = null;
+  runCloud(save, (io) => removeCloudSlot(io, { characterId: save.characterId, saveName: save.saveName }));
+}
+
+/** ═══ ACC2c — THE DOWNLOAD, AND THE ONLY DOOR BACK ═════════════════
+ *
+ *  ACC2 built the backup and nothing could read one back. `pullSlot`
+ *  was written and pinned end to end against the real service and had
+ *  ZERO CALLERS, because a cloud card only ever reached a player as the
+ *  cloud LINE on a local tile - and a card with no local tile has no
+ *  line to appear on. A cleared browser or a second device showed an
+ *  empty save list with the player's games three feet away in R2.
+ *
+ *  It goes through `runCloud` like the other two, so a download is busy
+ *  under its own slot and a refusal is the service's own word under it.
+ *  `pullSlot` answers `{ ok: true, skipped: true }` for a save the
+ *  store already holds, which is SP1's law and not a failure - the
+ *  listing is re-asked either way and the tile leaves this grid for the
+ *  one above it. */
+function download(card) {
+  runCloud(card, (io) => pullSlot(io, appStorage(), card));
+}
+
+/** The cloud line for a card with NO save under it. Its own function
+ *  rather than an argument to `cloudFor`, because every rung of that
+ *  ladder is a question about a local slot and none of them can be
+ *  asked here; the decision is still `cloudStateOf`'s, which takes
+ *  `local: false` and keeps the two acts a download can be in. */
+function cloudForCard(card) {
+  const slot = slotKeyOf(card);
+  const state = cloudStateOf({
+    signedIn: true,   // a card only reaches this surface through a listing, which needs a session
+    card,
+    local: false,
+    busy: cloudBusy === slot,
+    error: cloudWhy?.slot === slot ? cloudWhy.error : null,
+    nowS: Math.floor(Date.now() / 1000),
+  });
+  const line = { state: state.state, when: state.when, why: state.error ? cloudRefusalText(state.error) : null, actions: [] };
+  // THE DELETE BELONGS HERE TOO, and this is the rest of AUDIT-312 F1
+  // rather than a new idea: F1 gave a player the way to act on "delete
+  // a save there to make room" and gave it to them on LOCAL tiles only,
+  // so a cloud-only slot went on holding its share of SAVES_MAX with no
+  // surface that could ever free it. Same word, same two presses.
+  if (state.state === 'only') {
+    line.actions.push(cloudArm === slot
+      ? { label: 'Delete backup?', primary: true, onClick: () => removeBackup(card) }
+      : { label: 'Delete backup', onClick: () => { cloudArm = slot; render(); } });
+  }
+  return line;
+}
+
+/** ONE LADDER FOR BOTH ACTS, because a push and a delete differ only in
+ *  the call: busy under this slot, the service's own word under this
+ *  slot when it refuses, and THE LISTING ASKED AGAIN rather than
+ *  patched when it does not - one answer about what the cloud holds,
+ *  and it comes from the cloud. */
+function runCloud(save, call) {
+  const io = cloudIo({ fetch: (...a) => globalThis.fetch(...a), storage: appStorage() });
+  if (!io) return;
+  const slot = cloudKeyOf(save);
+  cloudBusy = slot;
+  cloudWhy = null;
+  render();
+  call(io).then((r) => {
+    cloudBusy = null;
+    // THE WORD, NOT THE SENTENCE. `cloudFor` asks accountClient.js for
+    // the sentence at paint time, so a refusal held over a repaint
+    // cannot drift out of step with the one table that owns it.
+    if (r.ok) { cloudAsked = false; ensureCloud(); }
+    else cloudWhy = { slot, error: r.error };
+    render();
+  }).catch(() => { cloudBusy = null; render(); });
+}
+
+/** One save, as a tile - the face asked for lazily, the cloud line
+ *  where there is an account, and the pane's own actions. */
+function tileOf(save, { actions, current = false }) {
+  return saveTile(document, save, {
+    actions,
+    cloud: cloudFor(save),
+    // The face is a PROMISE and the tile draws without it: a list that
+    // waited on ten CIF reads is a menu that opens late.
+    face: loadFace(save, { scale: 2, copy: true }),
+    current,
+  });
+}
+
+/** Every slot as tiles, in one grid. */
+function tileGrid(saves, forSave) {
+  ensureCloud();
+  const grid = el('div', 'svgrid');
+  for (const save of saves) grid.append(tileOf(save, forSave(save)));
+  return grid;
+}
+
+/** ACC2c — the saves that are ONLY in the cloud, as tiles of their own,
+ *  or null where there are none.
+ *
+ *  A SEPARATE GRID UNDER A HEADING, not mixed into the one above. These
+ *  are not slots on this device: nothing can load one, nothing can
+ *  overwrite one, and the Save pane's `current` edge means nothing
+ *  about one. Sorting them into the same grid would put four tiles in a
+ *  row of which two answer a different set of buttons, and a player
+ *  would learn the difference by pressing.
+ *
+ *  THE SET DIFFERENCE IS `cloudOnly`'s, in systems/cloudSaves.js, for
+ *  AUDIT-312 F3's reason: this file is DOM and a boot, and arithmetic
+ *  about what a player's own backup holds is arithmetic a pin must be
+ *  able to drive. */
+function cloudOnlyGrid(saves) {
+  const cards = cloudOnly(cloudCards, saves);
+  if (!cards.length) return null;
+  const box = el('div', 'svcloudonly');
+  box.append(el('h4', null, cards.length === 1 ? 'One save is only in your backup' : `${cards.length} saves are only in your backup`));
+  // THE ONE LINE OF PROSE THIS GRID GETS, because without it the
+  // heading is a statement and not an instruction: a player looking at
+  // a character they cannot press Load on needs to be told what the
+  // button does before they press it.
+  box.append(el('p', 'meta', 'Download one to bring it back to this device.'));
+  const grid = el('div', 'svgrid');
+  for (const card of cards) {
+    grid.append(saveTile(document, saveFromCard(card, dateFromClassicMinutes, dateString), {
+      cloud: cloudForCard(card),
+      // NO FACE, AND NOT A BUG. Nothing about a portrait was ever
+      // uploaded (server-account/src/saves.js keeps eleven columns and
+      // none of them is a look), so the well draws the character's
+      // initial - TILE1's own no-face arm, reached honestly.
+      actions: [{
+        label: 'Download',
+        primary: true,
+        disabled: cloudBusy === slotKeyOf(card),
+        onClick: () => download(card),
+      }],
+    }));
+  }
+  box.append(grid);
+  return box;
 }
 
 function savedGame() {
@@ -509,6 +760,72 @@ function paneTest(body) {
 }
 
 // ── LOAD GAME ────────────────────────────────────────────────────
+// ═══ ACC1f: THE ACCOUNT LIVES ON THE FRONT DOOR ═══════════════════
+//
+// Mac: "I want [the Online pane] reserved for a detailed tile based
+// design for your saves... The online details itself will live as a
+// popup on main menu startup and a new profile icon."
+//
+// ACC1e put the card at the head of the Online pane. That pane is
+// being reserved for the character tiles, so the card moves to the
+// door: a window over the pixel home, offered ONCE at startup when
+// nobody is signed in, and reachable any time from the profile mark.
+//
+// THE OFFER IS NOT A GATE. It is shown only to a device with no
+// session, it closes on a tap outside exactly as the pause window
+// does, and nothing behind it is blocked - ACC0's wall is at cloud
+// saves and every door on this screen works without an account.
+//
+// ONCE PER VISIT, not once per render. `renderHome` runs again on
+// every skin switch, every Escape and every repaint, and a window
+// that reopened each time would be a window a player cannot get past.
+// `accountOffered` latches on the first offer.
+function accountBody() {
+  const host = el('div', 'acctmount');
+  let card = null;
+  const flow = AccountFlow({
+    io: { fetch: (...a) => globalThis.fetch(...a), base: serviceBase(appStorage()) },
+    storage: appStorage(),
+    onChange: () => card?.paint(),
+  });
+  card = accountCard(document, flow, { onClose: () => { accountOpen = false; render(); } });
+  host.append(card.root);
+  // Not awaited: the door must be on screen before the service is
+  // asked anything, and `start` catches its own refusals. The guard is
+  // the belt for a bug in it - a throw here would take the door with it.
+  Promise.resolve(flow.start()).catch(() => {});
+  return host;
+}
+
+/** Is there a session on this device? A storage read, no network - so
+ *  the door can decide whether to offer the window without waiting on
+ *  anything, which is what makes opening the menu on a train work. */
+const signedIn = () => !!storedSession(appStorage());
+
+/** The profile mark, top-right of the door - the corner About does not
+ *  use. It says who you are when it knows, and offers the way in when
+ *  it does not. */
+function profileMark() {
+  const b = el('button', 'px-profile');
+  b.type = 'button';
+  const who = storedSession(appStorage());
+  b.setAttribute('aria-label', who ? `Account: ${who.name ?? 'signed in'}` : 'Sign in or create an account');
+  b.append(el('span', 'px-profileicon', who ? '\u25c6' : '\u25c7'));
+  b.append(el('span', 'px-profilename', who?.name ?? 'Sign in'));
+  b.onclick = () => { accountOpen = true; render(); };
+  return b;
+}
+
+/** The window itself, wearing the pause window's own frame. */
+function accountWindow() {
+  const win = el('div', 'px-win px-acctwin');
+  for (const c of ['tl', 'tr', 'bl', 'br']) win.append(el('span', `px-gem px-corner px-${c}`));
+  const body = el('div', 'px-body');
+  body.append(accountBody());
+  win.append(body);
+  return win;
+}
+
 // ONLINE1 (2026-09-12, Mac: "add an option to the menu labeled online
 // which allows you to bring your own developed character into a
 // massive server"): THE ONLINE DOOR. The most recent save is the
@@ -516,13 +833,73 @@ function paneTest(body) {
 // head and the relay to join ride the prefs shelf. The action boots
 // the world host with ?online beside ?load (main.js).
 function paneOnline(body) {
+  // ═══ ACC1h: THE PANE IS THE TILES ══════════════════════════════════
+  //
+  // Mac: "So the online pane should just be the new save panels,
+  // correct?" - and he had said it once already, when ACC1f moved the
+  // account card off this pane: "I want [the Online pane] reserved for
+  // a detailed tile based design for your saves."
+  //
+  // It was not. It carried a heading, a paragraph of prose about what a
+  // shared world shares, a text field for a name, a Relay field and a
+  // line telling the player to pick a character. ACC1g took the name
+  // field; this takes the rest, and what is left is the thing the pane
+  // was reserved for.
+  //
+  // WHERE EACH PIECE WENT, because none of it was deleted for tidiness:
+  //
+  //   the shared-world prose  -> 11-Multiplayer/Multiplayer.md, which
+  //       is where the law it describes is written down. A wall of text
+  //       above a row of tiles is read once and skipped for ever; the
+  //       promises in it are the RELAY's and are pinned there.
+  //   the Relay field         -> BELOW the tiles, quiet. It is an
+  //       override for pointing at a test relay and it is not a thing
+  //       to meet on the way in - but it is the only way to set the
+  //       pref `scenes/world.js` still reads, so deleting it would
+  //       leave a read nothing can answer. Settings is where it
+  //       belongs; `ui/settingsMap.js` has no free-text row kind yet,
+  //       and inventing one inside this change is how a diff stops
+  //       being reviewable.
+  //   the name field          -> gone with ACC1g. The account issues it.
+  //
+  // WHAT A TILE CANNOT SAY FOR ITSELF STAYS, and it is one line: why
+  // the buttons are dead when nobody is signed in, and the way in. A
+  // player looking at their own characters with every button greyed out
+  // and no reason on screen is the fault this pane would otherwise have.
   const saves = savedGames();
-  const c = el('div', 'card');
-  c.append(el('span', 'tag', 'Online'));
-  c.append(el('h3', null, 'Bring your character into the shared world'));
-  // AUDIT WORLD34 D5: the copy said the pre-WORLD1 truth ("Nothing else is shared yet") - what a player is promised here is the law
-  c.append(el('p', 'meta', 'Everyone brings their own save; you see each other everywhere and can talk. A dungeon is one shared world: its foes, doors, levers, platforms and every chest anyone has opened are the same for everyone in it, and it remembers. A building is a shared world too: its doors, and every shelf and cupboard anyone has opened, are the same for everyone in it, and it remembers. Towns and the open country share who is there and the creatures that find you: what one player meets, everyone nearby sees and fights - and its creatures can hurt you too. The clock and the sky are the world\'s and run on real time: a rest, a trip, a sentence or a lesson takes none of it, and the quest clocks stand still. Online is the enhanced lane: every enhancement the port owns is on for everyone. Most of your mods stay yours - turn them on or off online as you like. Five switches are the room\u2019s: Basic Roads, because the beds are smoothed into the terrain and a room shares one ground, and Meaner Monsters, the Combat and Armor Overhaul and Unleveled Loot, because a dungeon\u2019s foes belong to whoever hosts it and loot changes hands.'));   // AUDIT WORLD5 C12: the shared clock, said at the door; OL1: the lane, said at the door
-  const field = (label, key, placeholder, maxLength = 24) => {
+  const who = storedSession(appStorage());
+  if (!who) {
+    const c = el('div', 'card');
+    c.append(el('p', 'meta bad', 'Online needs an account, so a name over a head is one nobody else can wear. A guest takes one press and no email.'));
+    const go = el('button', 'act primary');
+    go.type = 'button';
+    go.textContent = 'Sign in or continue as guest';
+    // THE WINDOW LIVES AT THE DOOR (ACC1f) and this sends the player
+    // there rather than growing a second home for it here.
+    go.onclick = () => { section = 'home'; accountOpen = true; render(); };
+    c.append(go);
+    body.append(c);
+  }
+  if (!saves.length) {
+    body.append(empty('No saved games', 'Online brings a saved character in. Save a game and every slot of it appears here.'));
+    return;
+  }
+  // TILE2 (Mac: "a detailed tile based design for your saves"): the
+  // slots, with the character's own face on them, and the press brings
+  // that character in - its key rides the boot (takePickedSaveKey).
+  body.append(tileGrid(saves, (save) => ({
+    current: save.key === saves[0]?.key,
+    actions: [{
+      label: 'Play online',
+      primary: true,
+      // ACC1g: signed out is a DEAD button with the reason one card up,
+      // not a live one that fails at the relay. The relay owns the rule
+      // and refuses an unverified hello whatever this pane does.
+      disabled: !who,
+      onClick: () => { _pickedSaveKey = save.key; onAction('online'); },
+    }],
+  })));
+  const field = (label, key, placeholder, maxLength) => {
     const wrap = el('label', 'field');
     wrap.append(el('span', 'fieldlabel', label));
     const input = el('input');
@@ -531,82 +908,18 @@ function paneOnline(body) {
     wrap.append(input);
     return wrap;
   };
-  // ═══ NAME-F2: THE NAME IS REFUSED HERE, WITH A REASON ══════════
-  //
-  // Mac, 2026-09-16: "a proper censoring system for players choosing
-  // their online name. Im seeing a lot of names like 'Cum'".
-  //
-  // This is the half a player SEES. The half that holds is
-  // `net/wire.js`'s `sanitizeName`, which the relay runs on every
-  // hello - a check that lived only here would be a check a devtools
-  // console removes. Both, or neither is worth writing.
-  //
-  // What is checked is the EFFECTIVE name, not the field: an empty
-  // field falls through to the chosen save's own character name
-  // (scenes/world.js's onlineStart ladder), so a character called Cum
-  // who never touches this field must be told here rather than
-  // discovering it as a silent rename in the world.
-  //
-  // AUDIT-CHATR F2/F3: and the ladder is walked by `entryVerdict`, once,
-  // with the save the verdict is ABOUT. Written out here it was written
-  // twice - `saves[0]` for the painted line, the pressed card's save for
-  // the press - so the two could disagree, and did: a refused second
-  // character got a dead button and a blank reason. `entryVerdict` also
-  // lets an EMPTY ladder through, because empty is Traveller and the
-  // line below this field says so.
-  const nameField = field('Name over your head', 'onlineName', saves[0]?.name ?? 'Your name', 24);
-  const nameWhy = el('p', 'meta nameveto');
-  const nameVerdict = (saveName) => entryVerdict(getPref('onlineName'), saveName);
-  // The DEFAULT subject is the most recent save - the one whose name is
-  // already this field's placeholder - so the standing line is about the
-  // character a reader is looking at. It can be a false RED (the field
-  // empty, the first save rude, the player about to press the third
-  // card's button), and that is the survivable direction: the press
-  // repaints about the save it refused, so the reason a player acts on
-  // is always the right one.
-  const paintName = (saveName = saves[0]?.name) => {
-    const v = nameVerdict(saveName);
-    nameWhy.textContent = v.ok ? '' : v.reason;
-    nameWhy.classList.toggle('bad', !v.ok);
-    nameField.classList.toggle('bad', !v.ok);
-  };
-  const nameInput = nameField.querySelector?.('input');
-  if (nameInput) {
-    const already = nameInput.oninput;
-    nameInput.oninput = (e) => { already?.(e); paintName(); };
-  }
-  c.append(nameField);
-  // AUDIT-CHATR F6: this line used to promise "24 plain letters and
-  // digits; anything else is dropped". It is not what sanitizeName does
-  // and never was - it keeps every PRINTABLE ASCII character, so
-  // `Bob Smith` and `Bob!!!` survive whole and it is the accents and the
-  // emoji that go. A player reading the old line would have thought the
-  // space in their name was about to vanish.
-  c.append(el('p', 'meta', 'Up to 24 characters; anything outside plain ASCII is dropped, and an empty name shows as Traveller.'));
-  c.append(nameWhy);
-  paintName();
-  c.append(field('Relay', 'onlineServer', DEFAULT_SERVER, 200));
-  // SLOTS1 (Mac: "the ability to choose which save to use in online"):
-  // every restorable slot is a card, and the one pressed is the
-  // character brought in - its key rides the boot (takePickedSaveKey).
-  c.append(el('p', 'meta', saves.length ? 'Pick the character to bring in:' : 'Save a game first: Online brings a saved character in.'));
-  body.append(c);
-  for (const save of saves) {
-    body.append(slotCard(save, {
-      primaryLabel: 'Play online',
-      // NAME-F2: the refusal is a REFUSAL, not a warning beside a
-      // button that works anyway. A name the filter rejects does not
-      // join - the field is repainted so the reason is under the
-      // player's eye at the moment they pressed.
-      onPrimary: () => {
-        // ...about THIS save, and repainted about this save, so the
-        // reason under the field is the one that stopped the press.
-        if (!nameVerdict(save.name).ok) { paintName(save.name); nameInput?.focus?.(); return; }
-        _pickedSaveKey = save.key;
-        onAction('online');
-      },
-    }));
-  }
+  // AUDIT WORLD34 D5: AND THE PROMISE STAYS ON THE PAGE. What a player
+  // is told here is the law, and the pins that hold this sentence
+  // against the relay's own behaviour are the reason it says true
+  // things - it once said "Nothing else is shared yet", which WORLD1
+  // had already made false. So it moves BELOW the tiles rather than
+  // going: the pane opens as the characters, and the rules a player is
+  // agreeing to are still on the surface they enter through, where a
+  // page in the bible cannot reach them.
+  const foot = el('div', 'card svonlinefoot');
+  foot.append(el('p', 'meta', 'Everyone brings their own save; you see each other everywhere and can talk. A dungeon is one shared world: its foes, doors, levers, platforms and every chest anyone has opened are the same for everyone in it, and it remembers. A building is a shared world too: its doors, and every shelf and cupboard anyone has opened, are the same for everyone in it, and it remembers. Towns and the open country share who is there and the creatures that find you: what one player meets, everyone nearby sees and fights - and its creatures can hurt you too. The clock and the sky are the world\'s and run on real time: a rest, a trip, a sentence or a lesson takes none of it, and the quest clocks stand still. Online is the enhanced lane: every enhancement the port owns is on for everyone. Most of your mods stay yours - turn them on or off online as you like. Five switches are the room\u2019s: Basic Roads, because the beds are smoothed into the terrain and a room shares one ground, and Meaner Monsters, the Combat and Armor Overhaul and Unleveled Loot, because a dungeon\u2019s foes belong to whoever hosts it and loot changes hands.'));   // AUDIT WORLD5 C12: the shared clock, said at the door; OL1: the lane, said at the door
+  foot.append(field('Relay', 'onlineServer', DEFAULT_SERVER, 200));
+  body.append(foot);
 }
 
 function paneLoad(body) {
@@ -630,18 +943,42 @@ function paneLoad(body) {
   // below says which it is rather than dimming a control with no
   // explanation attached to it.
   const canLoad = mode !== 'pause' || typeof hooks.quickLoad === 'function';
-  for (const save of saves) {
-    // NO CONFIRM ON LOAD, in either mode. It discards unsaved play,
-    // which is the shape AUDIT F3/F4 made confirm - but classic's
-    // own pause window loads on one press (pauseWindow.js:317-319) and
-    // so does F11, and inventing a prompt on exactly one of the
-    // port's three load doors is a divergence, not a safety net.
-    body.append(slotCard(save, {
-      primaryLabel: 'Load', disabled: !canLoad, deletable: true,
-      onPrimary: () => { _pickedSaveKey = save.key; onAction('load'); },
-    }));
-  }
-  if (!saves.length) body.append(empty('No saved games', 'Save a game and every slot of it appears here.'));
+  // TILE2 (Mac: the tile design "will translate to the load character
+  // pane also"): the same tiles the Online pane draws, with this
+  // pane's own actions on them.
+  body.append(tileGrid(saves, (save) => ({
+    current: save.key === saves[0]?.key,
+    actions: [
+      // NO CONFIRM ON LOAD, in either mode. It discards unsaved play,
+      // which is the shape AUDIT F3/F4 made confirm - but classic's
+      // own pause window loads on one press (pauseWindow.js:317-319)
+      // and so does F11, and inventing a prompt on exactly one of the
+      // port's three load doors is a divergence, not a safety net.
+      { label: 'Load', primary: true, disabled: !canLoad, onClick: () => { _pickedSaveKey = save.key; onAction('load'); } },
+      // ...and the destructive one still asks, and takes THIS slot
+      // alone.
+      { label: 'Delete', onClick: () => ask(
+        'Delete this save',
+        `Deleting ${save.name}'s "${save.saveName}" cannot be undone.`,
+        'Delete',
+        () => { try { deleteSave(save.key); } catch { /* storage disabled */ } render(); },
+      ) },
+    ],
+  })));
+  // ACC2c: ...and under them, the saves that are only in the backup.
+  // THIS PANE AND NO OTHER. Online brings a character in to play NOW
+  // and a save that is not here cannot be brought in until it is
+  // downloaded, so offering it there is a two-step act at a one-step
+  // door; Save writes rather than reads, and a cloud-only slot in that
+  // grid would be an Overwrite target for a game this device does not
+  // have. Load's whole job is getting a game back, so it is the door.
+  const onlyCloud = cloudOnlyGrid(saves);
+  if (onlyCloud) body.append(onlyCloud);
+  // AND "NO SAVED GAMES" IS FALSE WHEN THE ACCOUNT HAS SOME. The old
+  // line ends "Save a game and every slot of it appears here", which
+  // told a player with a shelf full of backups that they had none -
+  // which is the very sentence this slice exists to stop being shown.
+  if (!saves.length && !onlyCloud) body.append(empty('No saved games', 'Save a game and every slot of it appears here.'));
   if (mode === 'pause' && typeof hooks.quickLoad !== 'function') {
     body.append(empty('Not from here',
       'This part of the game has no load door. Reach a saved game from the main menu instead.'));
@@ -762,9 +1099,20 @@ function paneSave(body) {
   c.append(line, numbers);
   c.append(acts([{ label: 'Save', primary: true, onClick: () => { _pickedSaveName = input.value.trim() || QUICK_SAVE_NAME; onAction('save'); } }]));
   body.append(c);
-  for (const save of mine) {
-    body.append(slotCard(save, { primaryLabel: 'Overwrite', onPrimary: () => { _pickedSaveName = save.saveName; onAction('save'); } }));
-  }
+  // TILE2: the same tiles the other two panes draw. Mac named Online
+  // and Load; this pane lists the SAME slots, and leaving one of the
+  // three on the old card is exactly the drift one tile was made to
+  // end - three hand-rolled copies of "career, level, date, time" is
+  // how three panes come to disagree about what a save is.
+  //
+  // `current` marks the slot the name field would OVERWRITE, so the
+  // brass edge moves as the player types rather than naming a slot
+  // nobody is about to touch.
+  const grid = tileGrid(mine, (save) => ({
+    current: save.saveName.localeCompare(input.value.trim() || QUICK_SAVE_NAME, undefined, { sensitivity: 'accent' }) === 0,
+    actions: [{ label: 'Overwrite', primary: true, onClick: () => { _pickedSaveName = save.saveName; onAction('save'); } }],
+  }));
+  body.append(grid);
 }
 
 // ── EXIT (pause only) ────────────────────────────────────────────
@@ -2290,6 +2638,23 @@ function renderHome() {
   stage.append(menu);
   home.append(stage);
 
+  // ACC1f: the profile mark, top-right - the corner the foot's About
+  // box does not use.
+  home.append(profileMark());
+
+  // ...and the window, offered ONCE per visit to a device with nobody
+  // signed in. `accountOffered` latches here rather than in the
+  // opener, so the mark can reopen it as often as a player likes.
+  if (!accountOpen && !accountOffered && !signedIn()) { accountOffered = true; accountOpen = true; }
+  if (accountOpen) {
+    const acct = el('div', 'px-stage px-acctstage');
+    acct.append(accountWindow());
+    home.append(acct);
+    // OT1, the same law the pause window lives under: a tap outside
+    // closes it. The account is never a thing a player is stuck in.
+    closeOnOutsideTap(home, '.px-win', () => { accountOpen = false; render(); });
+  }
+
   appendPxFoot(home);
   app.append(home);
 }
@@ -2955,7 +3320,12 @@ function onKey(e) {
   // not preventDefault a key you did not take, or Tab stops moving
   // focus and the screen becomes unreachable to anyone driving it that
   // way).
-  const back = confirming ? () => { confirming = null; render(); }
+  // ACC1f: the account window is the innermost thing Escape can close,
+  // ahead of the confirm card and the help sheet - it is a modal over
+  // the door, so the one press that means "not that" must close IT
+  // rather than walk the screen out from under it.
+  const back = accountOpen ? () => { accountOpen = false; render(); }
+    : confirming ? () => { confirming = null; render(); }
     : sheetOpen ? () => { sheetOpen = false; render(); }
       : section !== 'home' ? () => go('home')   // PX1/PX2: a section backs out to the face
         : mode === 'pause' ? () => onAction('resume')   // Escape on the pause face resumes
@@ -3033,6 +3403,15 @@ export function mountEnhancedMenu(host, {
   if (!morrowindDataCounted()) {
     countMorrowindArchives().then(() => { if (app === host && host.isConnected) render(); }).catch(() => {});
   }
+  // ACC2c: THE CLOUD LATCH IS PER VISIT, and AUDIT-312 F4 found it was
+  // per PAGE LOAD - the module state simply stayed true, so a player
+  // who backed a save up on their phone, came back to this tab and
+  // reopened the menu was shown the listing from the last time it was
+  // asked. The latch exists so a REPAINT does not re-ask; a fresh mount
+  // is a fresh visit. The armed Delete goes with it, because an armed
+  // destructive button must never outlive the screen it was armed on.
+  cloudAsked = false;
+  cloudArm = null;
   sections = mode === 'pause' ? SECTIONS_PAUSE : isEnhanced() ? SECTIONS_BOOT : SECTIONS_CLASSIC;   // FD1: one door, two rails
   // WHICH PANE OPENS. Both doors open on the PIXEL HOME (PX1/PX2) -
   // the face itself, every section one press away. Pause used to open

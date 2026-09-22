@@ -51,9 +51,53 @@
 
 /* global atob, btoa */
 
-/** OWASP's current figure for PBKDF2-SHA256. Raise it, and old rows
- *  keep working - that is what the stored form is for. */
-export const PBKDF2_ITERS = 210_000;
+/** ═══ THE CLOUDFLARE CEILING, AND HOW IT GOT PAST EVERYTHING ══════
+ *
+ * CLOUDFLARE WORKERS REFUSES PBKDF2 ABOVE 100,000 ITERATIONS:
+ *
+ *   NotSupportedError: Pbkdf2 failed: iteration counts above 100000
+ *   are not supported
+ *
+ * It is a DoS guard on their side and it is production-only. This was
+ * 210,000 - OWASP's figure for this pairing - and every password route
+ * on the live service answered 500: register, login, and recover, from
+ * the day they deployed. Nobody had ever successfully registered. Mac
+ * found it by trying, minutes after the arc went live.
+ *
+ * ═══ WHY NO GATE CAUGHT IT, WHICH IS THE REAL FINDING ═════════════
+ *
+ * `test/accountworker.test.js` drives the whole thing in node, and
+ * node has no such cap. `tools/accountProbe.mjs` exists precisely
+ * because IMPORTABILITY IS NOT DEPLOYABILITY (AUDIT-ACC F2 stood the
+ * Worker up in a real workerd after the suite was green over a Worker
+ * that could not boot) - and it stands the service in workerd, which
+ * ALSO has no such cap. It even MEASURED this: "PBKDF2 at 210,000
+ * costs 36ms there", green, against a runtime that was never going to
+ * enforce the limit.
+ *
+ * So the lesson is one rung further out than F2's: LOCAL WORKERD IS
+ * NOT CLOUDFLARE. A probe in workerd proves the code runs; it does not
+ * prove the platform will allow it. The only thing that could have
+ * caught this is a request to the DEPLOYED Worker, which is now what
+ * `.github/workflows/account-deploy.yml` makes after every deploy.
+ *
+ * ═══ WHAT THIS COSTS, SAID PLAINLY ════════════════════════════════
+ *
+ * 100,000 is BELOW OWASP's recommendation for PBKDF2-SHA256 (600,000),
+ * and below the 210,000 this arc chose. It is the most the platform
+ * will run, so the honest options are this or a different KDF, and a
+ * different KDF is not a thing to design during an outage.
+ *
+ * IT IS NOT STUCK HERE. The stored form is self-describing
+ * (`pbkdf2-sha256$<iters>$<salt>$<derived>`) and `needsRehash` upgrades
+ * a row on its owner's next correct login, so the work factor can be
+ * raised later - by chaining two capped derivations, say - without
+ * logging anybody out. And right now there is nothing to migrate:
+ * register has never once succeeded, so no row was ever written at the
+ * old cost.
+ */
+export const PBKDF2_CAP = 100_000;
+export const PBKDF2_ITERS = PBKDF2_CAP;
 export const SALT_BYTES = 16;
 export const DERIVED_BITS = 256;
 export const ALG = 'pbkdf2-sha256';
@@ -105,8 +149,21 @@ export function passwordRefusal(pw) {
  * better than `===` short-circuiting on the first byte.
  */
 export function timingSafeEqual(a, b) {
-  const x = a instanceof Uint8Array ? a : new Uint8Array(0);
-  const y = b instanceof Uint8Array ? b : new Uint8Array(0);
+  // ═══ AUDIT-PW P2: IT USED TO FAIL OPEN ═══════════════════════════
+  //
+  // Both arguments were COERCED to an empty array when they were not
+  // byte arrays - so `timingSafeEqual(null, null)` was TRUE, and so was
+  // `timingSafeEqual(undefined, {})`. Two lengths of 0 XOR to 0, the
+  // loop does not run, and a function whose whole job is to say NO
+  // says yes. Nothing reaches it that way today (verifyPassword is its
+  // only caller and always hands it two real derivations), which is
+  // exactly why it could sit there: a defensive coercion that defends
+  // in the wrong direction, on the one primitive in this service that
+  // must never guess.
+  //
+  // ANYTHING THAT IS NOT A PAIR OF BYTE ARRAYS IS NOT EQUAL.
+  if (!(a instanceof Uint8Array) || !(b instanceof Uint8Array)) return false;
+  const x = a; const y = b;
   let diff = x.length ^ y.length;
   const n = Math.max(x.length, y.length);
   for (let i = 0; i < n; i++) diff |= (x[i % (x.length || 1)] ?? 0) ^ (y[i % (y.length || 1)] ?? 0);
@@ -120,8 +177,30 @@ async function derive(pw, salt, iters, subtle) {
 }
 
 /** Hash a password (or a recovery code - it is the same kind of thing
- *  and gets the same treatment). */
+ *  and gets the same treatment).
+ *
+ *  ═══ AUDIT-PW P1: IT REFUSES TO HASH NOTHING ════════════════════
+ *
+ *  `normalise` answers '' for anything that is not a string, and this
+ *  is the one chokepoint every stored credential in this service goes
+ *  through - so it is where the refusal belongs.
+ *
+ *  THE HOLE IT CLOSES IS NOT HYPOTHETICAL; this file's own note below
+ *  records the day it was open. `codeForHashing` has TWO CONTRACTS: at
+ *  the mint (accounts.js register/recover) a null is impossible, and at
+ *  the check a null is the ordinary answer to a typo. Nothing enforced
+ *  the first. So a minted code that failed to canonicalise - which is
+ *  what the Q fold did to `7GEPQ-47BS9-AYK70-QMWYW` - hashed the EMPTY
+ *  STRING into `recovery_hash`, and the check arm then compares
+ *  `canon ?? ''` against it: EVERY account registered in that window is
+ *  opened by typing any string that is not a code at all.
+ *
+ *  A password cannot reach here empty (`passwordRefusal` runs first at
+ *  all three call sites and its floor is 8), so nothing legitimate is
+ *  refused and the throw is a programming error rather than a player's.
+ */
 export async function hashPassword(pw, { subtle, rand }, iters = PBKDF2_ITERS) {
+  if (!normalise(pw)) throw new Error('refusing to hash an empty credential - a caller handed this null or ""');
   const salt = new Uint8Array(SALT_BYTES);
   rand(salt);
   const out = await derive(pw, salt, iters, subtle);

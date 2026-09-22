@@ -36,7 +36,8 @@
 //
 // Not a DFU member: Daggerfall Unity has no other players and no chat. Ledger A row (ONLINE).
 import { PIXELIFY_FIVE_FACE, PIXEL_STACK } from './pixelifyFive.js';   // the enhanced face, with FIX-D's five ahead of it
-import { NAME_GAP_PX, namePixelSize, nameViewportScale } from '../net/remotePlayers.js';   // the anchor's gap, and the size law's own two doors (AUDIT NAME1 F3)
+import { NAME_GAP_PX, namePixelSize, nameViewportScale } from '../net/remotePlayers.js';
+import { titleBadge, glyphBadges, GLYPH_STROKE, cssRgba } from './playerBadge.js';   // ACC3: the same table the classic pass reads - one law, two faces   // the anchor's gap, and the size law's own two doors (AUDIT NAME1 F3)
 
 export const NAME_STYLE_ID = 'dagger-names-style';
 
@@ -60,12 +61,13 @@ export const BUBBLE_ELLIPSIS = '...';
 
 /** A peer's name colour for the DOM, from the picture's OWN answer (net/social.js colorOf -> PARTY_GREEN or null).
  *  The green has one home and this is not a second one: `cssRgba(PARTY_GREEN)` IS PARTY_GREEN_CSS, which a pin
- *  holds - so the party's green survives the move to the DOM without the colour being written down twice. */
-export function cssRgba(rgba) {
-  if (!Array.isArray(rgba) || rgba.length < 3) return null;
-  const hex = (v) => Math.max(0, Math.min(255, Math.round(Number(v) * 255))).toString(16).padStart(2, '0');
-  return `#${hex(rgba[0])}${hex(rgba[1])}${hex(rgba[2])}`;
-}
+ *  holds - so the party's green survives the move to the DOM without the colour being written down twice.
+ *
+ *  ACC3c MOVED THE FUNCTION AND KEPT THE DOOR. It lives in ui/playerBadge.js now, because the account card's own
+ *  SHEET needs it and a sheet may not import this layer - which would pull the whole remote-player pass in behind
+ *  it. Re-exported rather than relocated at every call site: this is where the party green has crossed into the DOM
+ *  since SOC4, and moving that import would be a change to SOC4's seam for a reason that is not SOC4's. */
+export { cssRgba };
 
 /** A line's own opacity at `age` ms: full through BUBBLE_HOLD of the window, then down to nothing at the end. */
 export function bubbleAlpha(age, life = BUBBLE_MS) {
@@ -136,7 +138,28 @@ export const NAME_CSS = `${PIXELIFY_FIVE_FACE}
    page that reached this layer before the enhanced sheet loaded drew the names in the HUD's ivory and the panels
    beside them in bone. One token, one fallback. */
 .dfname-tag { white-space: nowrap; line-height: 1; color: var(--bone, #e9e4d9);
-  text-shadow: 0 1px 0 #000, 0 0 3px #000, 0 0 3px #000; }
+  text-shadow: 0 1px 0 #000, 0 0 3px #000, 0 0 3px #000;
+  /* ACC3: the name and its glyphs are ONE row, centred together, so a
+     badged peer's label stays centred on their own skull. */
+  display: flex; align-items: center; gap: .3em; }
+/* ACC3 - THE TITLE, ABOVE THE NAME (Mac). Its own line in the column
+   the label already is, smaller than the name because it is a label ON
+   a name rather than a second name, and in ITS OWN COLOUR: gold IS the
+   Founder title, so the party green colorOf paints the name with does
+   not reach it. An EMPTY title takes no room at all - :empty drops the
+   element - so an untitled label is exactly what it was before this
+   existed, which is what every peer is today. */
+.dfname-title { white-space: nowrap; line-height: 1; font-size: .78em; margin-bottom: .18em;
+  letter-spacing: .04em; text-shadow: 0 1px 0 #000, 0 0 3px #000, 0 0 3px #000; }
+.dfname-title:empty { display: none; }
+/* ACC3 - THE GLYPHS, right of the name. Sized off the label's own em so
+   they shrink with distance exactly as the name does, and drawn in
+   currentColor so ui/playerBadge.js is the only place a colour is
+   decided. An empty run takes no room and no gap. */
+.dfname-glyphs { display: flex; align-items: center; gap: .18em; }
+.dfname-glyphs:empty { display: none; }
+.dfname-glyph { width: .95em; height: .95em; display: block;
+  filter: drop-shadow(0 1px 0 #000) drop-shadow(0 0 2px #000); }
 /* The bubble wraps at a bounded WIDTH (15em of its own size, so it stays a bubble at every distance) and the text
    is cut at a bounded LENGTH before it ever gets here (bubbleText). */
 .dfname-bubble { position: relative; max-width: 15em; margin-bottom: .45em; padding: .3em .55em;
@@ -196,11 +219,56 @@ export function createNameLayer({ doc = document, now = () => Date.now() } = {})
     node.className = 'dfname';
     const bubble = doc.createElement('div');
     bubble.className = 'dfname-bubble off';
-    const name = doc.createElement('div');
-    name.className = 'dfname-tag';
-    node.append(bubble, name);
+    // ACC3: the title is a SIBLING above the name row rather than a
+    // span inside it, because Mac put it above the name and a flex row
+    // cannot stack. `.dfname` is already a column, so it costs an
+    // element and no layout.
+    const title = doc.createElement('div');
+    title.className = 'dfname-title';
+    const tag = doc.createElement('div');
+    tag.className = 'dfname-tag';
+    const name = doc.createElement('span');
+    name.className = 'dfname-who';
+    const glyphs = doc.createElement('span');
+    glyphs.className = 'dfname-glyphs';
+    tag.append(name, glyphs);
+    node.append(bubble, title, tag);
     root.append(node);
-    return { node, bubble, name };
+    return { node, bubble, title, tag, name, glyphs, worn: null };
+  };
+
+  /** ACC3: the glyph run, REBUILT ONLY WHEN IT CHANGES. A glyph set is
+   *  a fact about an account and changes about twice in a player's
+   *  life, while this runs every frame for every visible peer - so the
+   *  keys are compared and the SVGs are left alone, which is this
+   *  layer's own "write only what changed" discipline (ui/partyPanel).
+   */
+  const setGlyphs = (tag, peer) => {
+    const badges = glyphBadges(peer);
+    const key = badges.map((g) => g.key).join(',');
+    if (tag.worn === key) return;
+    tag.worn = key;
+    tag.glyphs.textContent = '';
+    for (const g of badges) {
+      const svg = doc.createElementNS?.('http://www.w3.org/2000/svg', 'svg');
+      if (!svg) return;   // a document that cannot make one draws none, rather than throwing under a name
+      svg.setAttribute('class', 'dfname-glyph');
+      svg.setAttribute('viewBox', '0 0 16 16');
+      svg.setAttribute('aria-hidden', 'true');
+      if (g.rgba) svg.style.color = cssRgba(g.rgba) ?? '';
+      const path = doc.createElementNS('http://www.w3.org/2000/svg', 'path');
+      path.setAttribute('d', g.path);
+      // `currentColor` on both, so the colour above is the one decision.
+      if (GLYPH_STROKE[g.key]) {
+        path.setAttribute('fill', 'none');
+        path.setAttribute('stroke', 'currentColor');
+        path.setAttribute('stroke-width', '1.6');
+        path.setAttribute('stroke-linecap', 'round');
+        path.setAttribute('stroke-linejoin', 'round');
+      } else path.setAttribute('fill', 'currentColor');
+      svg.append(path);
+      tag.glyphs.append(svg);
+    }
   };
 
   /** A line over a peer's head. The newest REPLACES the one before it (delete then set, so the entry is also the
@@ -282,6 +350,15 @@ export function createNameLayer({ doc = document, now = () => Date.now() } = {})
         setStyle(tag.node, 'fontSize', `${namePixelSize(p.scale ?? 1, vp, hudScale).toFixed(1)}px`);
         setText(tag.name, p.name ?? '');
         setStyle(tag.name, 'color', cssRgba(colorOf?.(p.id)) ?? '');
+        // ACC3: the title above, in ITS colour, and the glyphs beside.
+        // `colorOf` is deliberately not asked for either: the party's
+        // green says "this is my party" about a NAME, and gold says
+        // "this is a Founder" - one erasing the other would take away
+        // the distinction Mac asked for.
+        const badge = titleBadge(p);
+        setText(tag.title, badge?.text ?? '');
+        setStyle(tag.title, 'color', badge ? (cssRgba(badge.rgba) ?? '') : '');
+        setGlyphs(tag, p);
         const b = bubbles.get(p.id);
         // AUDIT NAME1 F9: a bubble is SHOWN when it can be seen. A negative age - a clock stepped backwards, a
         // relay stamp from the future taken as `at` - is alpha 0, and an invisible box was still being counted by

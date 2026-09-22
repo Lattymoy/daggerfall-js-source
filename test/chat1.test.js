@@ -289,7 +289,7 @@ test('CHAT1 / AUDIT CHAT: the session as a CHANNEL (presence: false) - the hello
   ws.receive({ t: 'chat', id: 'bob-0002', name: '  Bob <b>  ', text: ' yo \u202e', at: 6 });
   assert.deepEqual(heard, [
     { id: 'mac-0001', name: 'Mac', text: 'hi all', at: 5, mine: true },
-    { id: 'bob-0002', name: 'Bob <b>', text: 'yo', at: 6, mine: false },
+    { id: 'bob-0002', name: 'Bob <b>', text: 'yo', at: 6, mine: false },   // ACC1g: no verdict on the name - every name in the room was verified to get in
   ], 'the line in: the name and the text checked by the relay\'s own law, mine by id');
   ws.receive({ t: 'chat', name: 'x', text: 'no id' }); ws.receive({ t: 'chat', id: 'bob-0002', text: '   ' }); ws.receive({ t: 'chat', id: 'bob-0002', text: 7 });
   assert.equal(heard.length, 2, 'a line with no id or nothing to say is dropped');
@@ -354,7 +354,7 @@ test('CHAT1 / AUDIT CHAT: the log - the World tab from CHAT_TABS (one today, eac
   assert.equal(log.push('world', { id: 'a', name: 'A', text: '' }), null, 'nothing to say: nothing kept');
   assert.equal(log.version, v0, 'and nothing to show');
   const l1 = log.push('world', { id: 'a', name: 'A', text: 'one', at: 5 });
-  assert.deepEqual(l1, { seq: 1, id: 'a', name: 'A', text: 'one', at: 5, t: 10_000, mine: false, system: false });   // SRV-N: every line carries the flag, and a player's is false
+  assert.deepEqual(l1, { seq: 1, id: 'a', name: 'A', text: 'one', at: 5, t: 10_000, mine: false, system: false, red: false });   // SRV-N: every line carries the flag, and a player's is false   // ACC1g: and no `v` - ACC1d's verdict left the wire with the gate   // RED1: and `red` the same way, false on a player's line - it is the SERVER speaking, set from the relay's own frame type and never from a field
   assert.equal(log.tab('world').unread, 1, 'closed: unread');
   assert.ok(log.version > v0);
   log.push('world', { id: 'me', name: 'Me', text: 'two', mine: true });
@@ -629,7 +629,11 @@ test('CHAT1 / AUDIT CHAT: the host by source - world.js starts the chat with the
   assert.match(w, /import \{ requestLook, releaseLook, makeLookGate, bindCursorToggle, setCursorActive, cursorActive \} from '\.\.\/player\/pointerLock\.js';/);   // AUDIT-TO1 I2: cursorActive joined the import
   assert.match(w, /if \(enhanced && typeof document !== 'undefined'\) chatStart\(\);/, 'the enhanced skin\'s, with a document (node has none)');
   assert.match(w, /const chatStart = \(\) => \{\s*if \(!online\.url\) return;/, 'AUDIT CHAT A9/B1: a relay the law refused is no relay for the chat either');
-  assert.match(w, /for \(const tab of chatLog\.tabs\) \{\s*const link = new OnlineSession\(\{ url: online\.url, name: online\.name, look: online\.look, id: online\.id, secret: online\.secret, presence: false \}\);\s*link\.onChat = \(line\) => chatLog\.push\(tab\.id, line\);\s*link\.onRelay = onRelayVersion;\s*link\.join\(tab\.room\);\s*chatLinks\.set\(tab\.id, link\);/, 'a channel session per tab, the presence session\'s identity, a line to its tab');
+  assert.match(w, /for \(const tab of chatLog\.tabs\) \{\s*const link = new OnlineSession\(\{ url: online\.url, name: online\.name, look: online\.look, id: online\.id, secret: online\.secret, presence: false \}\);\s*link\.onChat = \(line\) => chatLog\.push\(tab\.id, line\);[\s\S]{0,700}?link\.onRelay = onRelayVersion;\s*link\.join\(tab\.room\);\s*chatLinks\.set\(tab\.id, link\);/, 'a channel session per tab, the presence session\'s identity, a line to its tab');
+  // RED1: and the SERVER's own line beside the player's, with the flag
+  // set HERE from the relay's frame type - test/red1_server_say.test.js
+  // holds what that means; this holds that the host really wires it.
+  assert.match(w, /link\.onRed = \(line\) => chatLog\.push\(tab\.id, \{ text: line\.text, at: line\.at, red: true \}\);/, 'the server line lands on the same log');
   // UNSTUCK1 (2026-09-20): onSend stopped being a one-liner - a LOCAL
   // command is checked before the relay round trip - so the old pin,
   // which matched the whole arrow verbatim, could no longer hold. It is

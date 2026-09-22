@@ -33,7 +33,16 @@
 //   - the real migrations apply to a real D1 through wrangler's own
 //     ledger, in order;
 //   - a token minted BY THE WORKER verifies against the key the Worker
-//     PUBLISHES - the exact seam ACC1d will use, both ends live.
+//     PUBLISHES - the exact seam ACC1d will use, both ends live;
+//   - ACC2's SAVES BINDING IS REALLY BOUND (AUDIT-312 F4). A save goes
+//     up and comes back byte for byte out of workerd's own R2, the
+//     guest wall and the account isolation hold in the runtime, and the
+//     delete takes the object as well as the row. The suite drives
+//     these routes over a Map behind an R2-shaped face; a Map cannot
+//     tell you whether the bucket in wrangler.toml exists, and a
+//     binding that is absent does not crash - it answers `no-storage`,
+//     which reaches a player as "Cloud saves are unavailable right now"
+//     with a green suite behind it.
 //
 // ═══ WHAT IT STILL DOES NOT PROVE ══════════════════════════════════
 //
@@ -53,7 +62,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { verifyToken, importPublicKeyB64 } from '../src/net/identityToken.js';
 import { PBKDF2_ITERS } from '../server-account/src/password.js';
-import { ACCOUNT_VERSION } from '../server-account/src/service.js';
+import { ACCOUNT_VERSION, SHOT_MAX_BYTES } from '../server-account/src/service.js';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const acct = join(root, 'server-account');
@@ -76,6 +85,23 @@ const ok = (name, pass, detail = '') => {
 };
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+// ═══ EVERY RUN GETS ITS OWN STATE (AUDIT-312) ══════════════════════
+//
+// `wrangler --local` keeps its D1 and R2 under server-account/.wrangler
+// and REUSES them, so this probe was only correct the first time it was
+// ever run: the second run registered a username the first run already
+// took, then logged in with a password the first run's recovery check
+// had changed, and reported six failures that were about the LAST run
+// rather than about the service. The migration check read "no
+// migrations to apply" as "no migrations".
+//
+// A probe that is only right once is a probe nobody can re-run, which
+// is the whole point of one. `--persist-to` a fresh temp directory, and
+// every run stands the service up on an empty database.
+const STATE = mkdtempSync(join(tmpdir(), 'acctprobe-state-'));
+const HANDLE = 'ProbeWalker';
+const STRANGER = 'ProbeStranger';
 
 // `node:http` RATHER THAN fetch, deliberately. This container sets
 // HTTPS_PROXY/NO_PROXY, and a probe that talks to 127.0.0.1 through
@@ -110,6 +136,37 @@ function call(method, path, body, opts = {}) {
 const post = (path, body) => call('POST', path, body ?? {});
 const get = (path, opts) => call('GET', path, undefined, opts);
 
+/** ACC2's blob routes speak RAW BYTES in both directions - a save is
+ *  hundreds of kilobytes and base64 in a JSON envelope is a third more
+ *  of them, paid twice. `call` above would stringify, so these have
+ *  their own door, and it keeps the BUFFER rather than a decoded string
+ *  because "byte for byte" is the claim under test. */
+function raw(method, path, buf, bearer) {
+  return new Promise((resolve, reject) => {
+    const req = httpRequest({
+      host: '127.0.0.1', port: PORT, path, method, timeout: 30_000,
+      headers: {
+        ...(buf ? { 'content-type': 'application/octet-stream', 'content-length': buf.length } : {}),
+        ...(bearer ? { authorization: `Bearer ${bearer}` } : {}),
+      },
+    }, (res) => {
+      const parts = [];
+      res.on('data', (d) => parts.push(d));
+      res.on('end', () => {
+        const all = Buffer.concat(parts);
+        const type = res.headers['content-type'] ?? '';
+        let body = null;
+        if (type.includes('json')) { try { body = JSON.parse(all.toString('utf8')); } catch { /* not json */ } }
+        resolve({ status: res.statusCode, type, buf: all, body });
+      });
+    });
+    req.on('timeout', () => { req.destroy(new Error('timed out')); });
+    req.on('error', reject);
+    if (buf) req.write(buf);
+    req.end();
+  });
+}
+
 // THE THROWAWAY PAIR NEVER TOUCHES THE REPO. It is minted for this run,
 // written to a private file in the OS temp dir, and deleted in the
 // `finally`. The real pair is minted by the deploy and read by nobody.
@@ -125,7 +182,7 @@ try {
   writeFileSync(envFile, `IDENTITY_PRIVATE_KEY=${priv}\nIDENTITY_PUBLIC_KEY=${pub}\n`, { mode: 0o600 });
 
   console.log('== applying the real migrations to a local D1, through wrangler\'s ledger');
-  const [migBin, migArgs] = cmd(['d1', 'migrations', 'apply', 'daggerfall-accounts', '--local']);
+  const [migBin, migArgs] = cmd(['d1', 'migrations', 'apply', 'daggerfall-accounts', '--local', '--persist-to', STATE]);
   const mig = await run(migBin, migArgs, { cwd: acct, timeout: 300_000 });
   // wrangler reprints its whole summary table once per migration, so
   // the names repeat - dedupe before comparing, and compare against
@@ -164,7 +221,7 @@ try {
   // a wrapper around `wrangler`, which is a wrapper around `workerd`;
   // killing the pid this call returns leaves the grandchild running,
   // holding the port, and every later run of this probe hangs on it.
-  const [devBin, devArgs] = cmd(['dev', '--local', '--port', String(PORT), '--ip', '127.0.0.1', '--env-file', envFile]);
+  const [devBin, devArgs] = cmd(['dev', '--local', '--persist-to', STATE, '--port', String(PORT), '--ip', '127.0.0.1', '--env-file', envFile]);
   dev = spawn(devBin, devArgs, { cwd: acct, stdio: ['ignore', 'pipe', 'pipe'], detached: true });
   let log = '';
   dev.stdout.on('data', (d) => { log += d; });
@@ -249,23 +306,96 @@ try {
   console.log('== password, recovery and the throttle, in the runtime that will run them');
   const t0 = Date.now();
   const reg = (await post('/v1/auth/register',
-    { secret: guest.secret, handle: 'ProbeWalker', password: 'a good long one' })).body;
+    { secret: guest.secret, handle: HANDLE, password: 'a good long one' })).body;
   const regMs = Date.now() - t0;
   ok('registering is an UPGRADE IN PLACE - the id does not change', Boolean(reg?.recoveryCode));
   const view = (await get('/v1/account', { bearer: guest.secret })).body;
   ok('...the same player id, now linked', view?.account?.id === guest.id && view?.account?.kind === 'linked');
   // TWO derivations (password + recovery code) plus D1 round trips.
+  // WORKERD IS NOT CLOUDFLARE, and this line is where that was learned.
+  // It measured "PBKDF2 at 210,000 costs 36ms" and passed, against a
+  // runtime with no iteration cap, while the deployed Worker answered
+  // 500 to every password route. The timing is still worth having; the
+  // CEILING is the thing this probe cannot see, so it says so and the
+  // suite holds the number instead.
   ok(`PBKDF2 at ${PBKDF2_ITERS} fits a Worker's CPU budget`, regMs < 10_000, `register took ${regMs}ms`);
+  ok('...and is at or under the cap Cloudflare enforces in PRODUCTION ONLY (workerd does not)', PBKDF2_ITERS <= 100_000, `${PBKDF2_ITERS} would be NotSupportedError on the real platform`);
 
-  const good = await post('/v1/auth/login', { handle: 'probewalker', password: 'a good long one' });
+  const good = await post('/v1/auth/login', { handle: HANDLE.toLowerCase(), password: 'a good long one' });
   ok('a handle is case-insensitive on the way in', good.status === 200);
   const miss = await post('/v1/auth/login', { handle: 'nobody-holds-this', password: 'a good long one' });
-  const wrong = await post('/v1/auth/login', { handle: 'ProbeWalker', password: 'not the password' });
+  const wrong = await post('/v1/auth/login', { handle: HANDLE, password: 'not the password' });
   ok('a handle nobody holds and a wrong password refuse identically',
     miss.status === wrong.status && miss.body?.error === wrong.body?.error, miss.body?.error);
 
+  // ═══ ACC2: THE SAVE ROUTES, AGAINST REAL LOCAL R2 ══════════════
+  //
+  // AUDIT-312 F4. This probe exists because IMPORTABILITY IS NOT
+  // DEPLOYABILITY - and ACC2 added a whole new BINDING (`SAVES`, an R2
+  // bucket) plus seven routes, and nothing here asked the one question
+  // this tool was written to ask. The gap mattered more than it looks:
+  // a binding that is absent does not crash, it answers `no-storage`,
+  // so a mis-declared bucket would have reached players as "Cloud saves
+  // are unavailable right now" for ever, with a green suite and a green
+  // deploy behind it.
+  //
+  // `test/cloudsaves.test.js` drives these routes over a Map behind an
+  // R2-shaped face. THIS drives them over workerd's own R2, which is
+  // the half a Map cannot answer for.
+  console.log('== the cloud saves, against real local R2');
+  const me = (await post('/v1/auth/login', { handle: HANDLE, password: 'a good long one' })).body;
+  const SLOT = '/v1/saves/c0ffee00-1111-2222-3333-444455556666/before%20the%20lich';
+  ok('a linked account starts with no cloud saves',
+    (await get('/v1/saves', { bearer: me.secret })).body?.saves?.length === 0);
+
+  // THE WALL, in the runtime. A guest is refused, and the same request
+  // from the linked account above is not - a refusal check with no
+  // positive control is green over a service that refuses everybody.
+  const visitor = (await post('/v1/auth/guest', { label: 'probe-guest' })).body;
+  const walled = await get('/v1/saves', { bearer: visitor.secret });
+  ok('a GUEST is walled out of the save routes', walled.status === 403 && walled.body?.error === 'saves-need-account',
+    `${walled.status} ${walled.body?.error}`);
+
+  const blob = Buffer.from(`{"probe":"${'x'.repeat(4096)}"}`);
+  ok('a blob with no card is refused (SAV4: a slot is only real WITH its SaveInfo)',
+    (await raw('PUT', `${SLOT}/data`, blob, me.secret)).status === 404);
+  const card = await call('PUT', SLOT, { characterName: 'Nystul', gameTime: 42, realTime: Date.now() }, { bearer: me.secret });
+  ok('the card creates the slot', card.status === 200 && card.body?.created === true,
+    `${card.status} ${JSON.stringify(card.body)}`);
+  const put = await raw('PUT', `${SLOT}/data`, blob, me.secret);
+  ok('the blob lands in R2 and the row counts its bytes',
+    put.status === 200 && put.body?.bytes === blob.length, `${put.status} ${JSON.stringify(put.body)}`);
+  const listed = (await get('/v1/saves', { bearer: me.secret })).body?.saves ?? [];
+  ok('...and the listing says so', listed.length === 1 && listed[0].bytes === blob.length
+    && listed[0].saveName === 'before the lich', JSON.stringify(listed[0]));
+  const down = await raw('GET', `${SLOT}/data`, undefined, me.secret);
+  ok('THE BYTES COME BACK OUT OF REAL R2, byte for byte',
+    Buffer.compare(down.buf, blob) === 0, `${down.status} ${down.buf.length} of ${blob.length}`);
+  ok('...as an octet-stream and not a JSON envelope around base64',
+    down.type.includes('octet-stream'), down.type);
+  ok('the shot is bounded apart from the save',
+    (await raw('PUT', `${SLOT}/shot`, Buffer.alloc(SHOT_MAX_BYTES + 1), me.secret)).status === 413);
+
+  // ANOTHER ACCOUNT, THE SAME CHARACTER ID AND THE SAME SLOT NAME -
+  // which two people produce the moment both call a save QuickSave.
+  const other = (await post('/v1/auth/guest', { label: 'probe-other' })).body;
+  await post('/v1/auth/register', { secret: other.secret, handle: STRANGER, password: 'a good long one' });
+  ok('another account cannot read this slot',
+    (await raw('GET', `${SLOT}/data`, undefined, other.secret)).status === 404);
+  ok('...and cannot delete it either',
+    (await call('DELETE', SLOT, undefined, { bearer: other.secret })).status === 404);
+  ok('...and this slot is still here', (await get('/v1/saves', { bearer: me.secret })).body?.saves?.length === 1);
+
+  // AUDIT-312 F1: the player's own delete, which had no door in the
+  // game until this audit and is the remedy the `too-many-saves`
+  // sentence names.
+  ok('the player\'s own delete takes the slot', (await call('DELETE', SLOT, undefined, { bearer: me.secret })).status === 200);
+  ok('...the row is gone', (await get('/v1/saves', { bearer: me.secret })).body?.saves?.length === 0);
+  ok('...and so is the object in R2', (await raw('GET', `${SLOT}/data`, undefined, me.secret)).status === 404);
+
+  console.log('== back to the account: recovery');
   const back = await post('/v1/auth/recover',
-    { handle: 'ProbeWalker', code: reg.recoveryCode.toLowerCase(), password: 'the new one here' });
+    { handle: HANDLE, code: reg.recoveryCode.toLowerCase(), password: 'the new one here' });
   ok('the recovery code ROUND-TRIPS through a real request, lowercased', back.status === 200);
   ok('...and mints a NEW code', Boolean(back.body?.recoveryCode) && back.body.recoveryCode !== reg.recoveryCode);
   ok('...and signs the old devices out', (await post('/v1/auth/token', { secret: guest.secret })).status === 401);
@@ -282,6 +412,7 @@ try {
     }
   }
   rmSync(tmp, { recursive: true, force: true });
+  rmSync(STATE, { recursive: true, force: true });
 }
 
 console.log(`\n${checks - bad}/${checks} checks passed`);

@@ -44,7 +44,6 @@ export const PREF_DEFAULTS = Object.freeze({
   skin: 'enhanced',
   // ONLINE1 (2026-09-12): the Online door's two fields - the name over the
   // player's head and the relay to join (net/online.js DEFAULT_SERVER when empty).
-  onlineName: '',
   onlineServer: '',
   // CHAT-R2 (2026-09-16, Mac: "a hide chat button"): the chat put
   // away, across sessions. A player who hid it wants it hidden next

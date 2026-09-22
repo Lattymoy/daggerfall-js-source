@@ -4,8 +4,17 @@ ACC0 — the design record, 2026-09-21. ~~Nothing below has shipped.~~
 **ACC1a, ACC1b, ACC1c and ACC1-CI have shipped since**, and AUDIT-ACC
 has been over all of them; the sections below carry their own dated
 headings and this line was left stale for half a day, which is the
-exact failure DEPLOY-PROSE was opened for. Nothing is DEPLOYED yet: the
-deploy fires on merge to main.
+exact failure DEPLOY-PROSE was opened for. ~~Nothing is DEPLOYED yet:
+the deploy fires on merge to main.~~ **IT MERGED AND IT DEPLOYED**
+(6743d3bdb, 2026-09-21): the account service is LIVE at
+`https://daggerfall-accounts.mackcothran.workers.dev`, `/v1/health`
+serves `acct1`, and `/v1/pubkey` publishes the signing pair's public
+half. The first-ever run created the database, applied both migrations
+through the ledger and minted the pair, with nobody touching a
+Cloudflare dashboard — and the relay deploy on the same commit finished
+having deployed nothing, because `RELAY_VERSION` was unchanged, so not
+one player was dropped. That is the two-Worker split's central claim,
+demonstrated rather than argued.
 
 This page is the shape agreed with Mac before any code, and it says
 what is decided, what is lifted from another repo, what is genuinely
@@ -755,11 +764,48 @@ Bounded by `MAX_TTL_S` and by TLS, and the stakes today are a name on a
 roster. But *"the only people who can take a name are the people who
 can be banned"* is weaker if a name can be **borrowed** for five
 minutes, and that is a decision rather than something to discover after
-ACC1d ships. The cheap answer is **one-shot at the relay**: a client
-mints one token per connection, so nothing legitimate presents the same
-token twice, and `e` bounds how long the hub must remember. Written into
-`src/net/identityToken.js` itself, **now**, while that file is still
-outside the relay bundle and editing its comments is free.
+ACC1d ships.
+
+**MAC SETTLED IT (2026-09-21).** Asked whether to close replay or accept
+the five-minute window: *"Yes"*. **A token is spent once.** The relay
+keeps the signatures it has verified and refuses a repeat; `e` bounds
+how long it must remember, so the set sweeps itself. It is cheap
+precisely because of how this token is used — a client mints one per
+connection from its session secret, so nothing legitimate ever presents
+the same token twice. Rejected alternatives: a nonce claim needs shared
+state to check and buys nothing this does not, and binding to the socket
+is awkward over a WebSocket upgrade. **And the TTL ceiling belongs in
+the relay's config beside the public key**, not passed in at a call
+site: the relay hands `maxTtlS` to `verifyToken`, so a generous value
+typed at whichever call happens to be in front of somebody silently
+grants long-lived tokens — the second-home shape SLAM13 burned the relay
+on.
+
+**NOTHING ENFORCES IT YET, AND THE RECORD SAYS SO.** The refusal lives
+in the relay, which does not import the token module. What exists today
+is the decision, written into `src/net/identityToken.js` while that file
+is still outside the relay bundle and editing its comments is free — and
+a gate in `test/identitytoken.test.js` that holds it against
+`RELAY_GRAPH` and **fails the day ACC1d puts the module in the bundle**.
+
+That gate's second arm is a **tripwire on purpose**, and two wrong cuts
+got it there. It first asked whether anything in the bundle matched a
+seen/replay pattern, and passed the instant the module joined — because
+the module's own note says the relay *"keeps the signatures it has seen
+and refuses a repeat"*, so the comment describing the work satisfied the
+check for the work. That is ACC1-CI's sentinel survivor verbatim, found
+the same way: by simulating the event rather than trusting the pin. With
+comments stripped and the module excluded from its own population, it
+then **refused a real refusal** — `seenTokens` and `isReplay`, because
+`\breplay\b` does not match `isReplay`. A pattern guessing identifier
+spellings is an enumeration, and an enumeration disagrees with the code
+the day somebody names something reasonably. A static grep cannot tell a
+relay that refuses a repeat from one that mentions refusing a repeat,
+and inventing the relay's API from a test file would be designing ACC1d
+before ACC1d is written. So the arm does not try to be satisfiable: it
+fails, says what must be true, and names the pin that must replace it —
+one that presents the same token twice and proves the second is
+refused.
 
 ### F9 — a session never expired
 
@@ -987,3 +1033,1868 @@ ever reaching the parser. The only way there is a body that is
 shipped garbage — and the verifier must still refuse rather than throw,
 because a throw out of a hello is ONCRASH1's lesson: it does not end
 that socket, it ends the reader.
+
+
+---
+
+## ACC1e — the account creation screen (2026-09-21)
+
+Mac: *"Should we go ahead and build the account creation screen"* — and,
+told it was the right thing to do before ACC1d: *"Yes, please be
+detailed and match the enhanced aesthetic."*
+
+**IT WENT FIRST BECAUSE IT IS FREE.** The card talks to the account
+service over HTTPS and touches nothing in the relay bundle, so no
+`RELAY_VERSION` bump and nobody is dropped. ACC1d costs every connected
+player their session, and spending that once — after the screen exists —
+means one deploy delivers something a player can see.
+
+**IT GATES NOTHING.** It sits at the head of the Online pane, above
+ONLINE1's card, and every button below it works with no account at all.
+ACC0's wall is at cloud saves and nowhere else.
+
+### The split: the flow thinks, the card draws
+
+`ui/accountFlow.js` holds every stage, every field, every refusal and
+every rule about what may be pressed. `ui/enhancedAccount.js` walks what
+the flow says and makes DOM. That is `ChargenFlow` / `enhancedChargen.js`
+again, and `test/enhancedChargen.test.js` says why: *"node cannot draw
+them; what IS testable is the part that does arithmetic."* Everything a
+player can get **wrong** about an account is arithmetic.
+
+`net/accountClient.js` is the third piece — one home for where the
+service is, what its routes are, and **what its refusals mean**. The
+translation table is keyed by exactly the words `server-account/src/`
+emits, and a pin walks that source: a word the service can answer with
+and this side has no sentence for reddens. That is how `not-found` and
+`no-database` were found missing.
+
+### What the card is careful about
+
+- **One press is one account.** Registering is two calls — open a guest
+  row, then upgrade it in place — and a press between them opens a
+  second guest row with no handle, no password and nothing that will
+  ever adopt it. The pin holds the first call open and presses again.
+- **A failed upgrade keeps the session.** `handle-taken` leaves a real
+  row this device owns; dropping the secret would strand it and make the
+  next press open another.
+- **A dead credential signs the device out; a blip does not.** `auth`
+  means the service has stopped honouring the secret. `offline` says
+  nothing about it, and a player signed out by a bad second is a bug.
+- **The recovery code is a stage, not a line in a corner.** Email is
+  completely optional, so there is no reset link and this code *is* the
+  reset. It is never written to storage, the only way off that stage is
+  an explicit *"I have written it down"*, and a second way off would be
+  a way to lose an account by taking it.
+- **A password is sent exactly as typed.** The handle is trimmed; a
+  password is not. Trimming here while the service hashes what it was
+  sent is a login that works from this client and fails from every other.
+
+### ACC1e F1 — a rule in the skin read a token nothing declares
+
+`.card label.field .fieldlabel` said `color: var(--ash)`, and **nothing
+in the tree has ever declared `--ash`** — one use, no declaration. The
+property was invalid at computed-value time, so every field label in the
+enhanced skin inherited `--bone` instead of a quiet label colour:
+ONLINE1's two fields, the save slot's name, and this arc's, since the day
+the rule was written.
+
+No source sweep sees that — the rule is present and spelled correctly.
+`tools/accountCardProbe.mjs` stands the card up in a real Chromium and
+reads the **computed** colour, which comes back as `--bone` exactly. Put
+the bug back and the probe fails naming the colour. `--dim` is what it
+wanted and what `.card .meta` one line up already uses.
+
+### The probe was photographing the fallbacks
+
+Mac, seeing the first sheet: *"Does this use the enhanced font"*.
+
+It does — a heading takes `var(--display)` and everything else
+`var(--data)`, inherited from the skin rather than declared locally, and
+that was true from the first commit. **But the sheet was not showing
+them.** The probe injected `ENHANCED_CSS` and never loaded a single font
+file, so Georgia stood in for Cormorant and system-ui for Barlow Semi
+Condensed, and the result was photographed and offered as the design.
+
+Declaring a family and rendering in it are different claims, and no
+source sweep can tell them apart — the CSS is correct either way. The
+probe now fetches the faces in node from the skin's own
+`ENHANCED_FONTS_URL` and inlines them as data URIs, so the page still
+makes no network call, and three checks ask the question directly:
+`document.fonts.check` for whether the file actually arrived, and the
+computed family on a heading and on body copy.
+
+The same class of error as ACC1e F1, one level up: F1 was a rule that
+looked right and never applied, this was a *measurement* that looked
+right and measured the wrong thing.
+
+### And the shapes moved, because the direction of every import matters
+
+`GUEST_NAME_RE` and `HANDLE_RE` were born in
+`server-account/src/guestName.js`. The client now has a field to type a
+handle into and has to ask the same question — but every import in this
+repo runs one way, `server/` and `server-account/` taking from `src/` and
+never the reverse. A client file reaching into `server-account/` would
+have been the only edge going backwards, and an architecture with one
+exception in it is an architecture nobody can state.
+
+**Both halves moved together**, to `src/net/handleShape.js`, because
+ACC1b's own comment says why: *"both halves of it are exported from here
+so neither can drift from the other."* Taking `HANDLE_RE` alone would
+have broken the property that sentence exists to hold. `guestName.js`
+imports and re-exports them, so every existing reader is unchanged.
+
+`test/mutantdrift.test.js` caught the move and demanded the two `acc1b`
+mutants be re-aimed by content, which they were.
+
+### What is pinned
+
+`accountflow.test.js` 21, `enhancedaccount.test.js` 12, and
+`npm run acctcard` — 9 checks in a real browser at every stage, desktop
+and phone. Mutants: `tools/mutants/acc1e.json`, 12, **12 dead and 0
+survived**.
+
+One survived the first run and it was a real hole: the "a password is
+not trimmed" law was stated in a comment above `pw()` and asked by
+nothing, so a mutant that trimmed passwords walked straight through a
+green suite. It has its own pin now.
+
+### Still open after this
+
+The card creates an account that changes nothing a player can see until
+**ACC1d** reads the name off the token (the relay), or **ACC2** brings
+the saves. That is stated plainly in the card's own copy rather than
+oversold. And the client now holds two identities — SOC1's hub-minted
+`dagger.online.account` and this service's session — which ACC1b already
+settled: the merge belongs at the hub, the only thing holding both
+credentials at once.
+
+
+---
+
+## ACC1f — the account moves to the front door (2026-09-22)
+
+Mac: *"In my mind for the online mode panel. I want it reserved for a
+detailed tile based design for your saves which will translate to the
+load character pane also... The online details itself will live as a
+popup on main menu startup and a new profile icon."*
+
+So ACC1e's card leaves the Online pane, which is being reserved for the
+character tiles, and becomes two things on the pixel door:
+
+- **A window over the home screen**, offered once per visit to a device
+  with nobody signed in. Mac: only when not signed in.
+- **A profile mark, top-right** — the corner the foot's About box does
+  not use. It reopens the window any time.
+
+**IT IS AN OFFER, NOT A GATE.** ACC0's wall is at cloud saves; every
+door on the screen works without an account. It closes on Escape, on
+the Close button, and on a tap outside, exactly as the pause window
+does.
+
+**ONCE PER VISIT, NOT ONCE PER RENDER.** `renderHome` runs again on
+every skin switch, every Escape and every repaint. A window that
+reopened each time would be one a player cannot get past, so
+`accountOffered` latches on the first offer while the mark can reopen
+it freely.
+
+### Three things the screenshot found that no test would have
+
+The card looked right standing alone. In its real host it did not:
+
+1. **No scrim.** The door's own menu — CONTINUE, NEW GAME, ONLINE —
+   read straight through the window. A modal you can read the page
+   through is not one anybody believes.
+2. **The heading was Cormorant in a pixel window.** `.shell .card h3`
+   forces the pixel face, and the door is `.px-home`, not `.shell`, so
+   the rule never reached it. The card's heading was the one thing on
+   the door not drawn in whole pixels. Same for `.shell .act`, which
+   left the card's buttons lowercase beside a spaced, uppercase CLOSE.
+   Both rules are widened to the door's window rather than copied.
+3. The window had no floor of its own.
+
+All three are host-integration faults, invisible to a card rendered on
+its own page — which is what ACC1e's probe does, and the reason the
+question *"are the screenshots of each popup"* was worth asking.
+
+### And a pin that had become false
+
+`test/outsideTap.test.js` asserted `closeOnOutsideTap` appears in the
+menu exactly **once**, with the reason *"the pause face only - the
+front door has no scrim"*. True until this slice; the door has a scrim
+now, exactly when the account window is open. The pin names **both**
+wirings rather than counting loosely, so a third scrim added without
+its own outside-tap still reddens — and it checks the account one is
+guarded by `accountOpen`, because a front door wired unconditionally
+would close on every tap.
+
+
+---
+
+## ACC1d — the design, before the code (2026-09-22)
+
+Mac: *"Go in order. Take your time."* So: ACC1d, then ACC2, then the
+tile picker. This section is the record ACC0 set the precedent for —
+what is decided and **why**, written before anything is built, because
+this is the slice that costs every connected player their session.
+
+### The seam, as it is today
+
+```
+client   net/online.js  _helloFrame()  { t:'hello', id, secret, name, look, pose }
+wire     net/wire.js    parseClient()  name = sanitizeName(m.name)
+relay    server/src/index.js           m.name -> the attachment, join, chat, roster, the hub's account record
+```
+
+**The client asserts its own name and nothing checks it.** That is the
+hole ACC1a opened this arc to close.
+
+### What ACC1d adds
+
+The hello carries `tok`. `wire.js` validates its **shape** only — it is
+sync and pure and must stay that way. The relay **verifies** it
+(`verifyToken`, async, needs the public key) and, on success, takes the
+name **out of the token** instead of off the frame.
+
+### D1 — is the token REQUIRED? No, and that is deliberate
+
+Three ways to go, and the two rejected ones are recorded because the
+reasoning is the load-bearing part:
+
+- **Required.** Every client without one is refused. It closes the hole
+  completely and it makes the relay unusable whenever the account
+  service is down — a second Worker's outage taking the game offline is
+  exactly the coupling the two-Worker split (ACC0) exists to avoid. It
+  also breaks every client that has not reloaded, and a relay deploy
+  drops everyone at once, so that window is real.
+- **Optional, name from the token when present.** Costs nothing and
+  buys nothing: a forger omits the token and asserts whatever they
+  like.
+- **Optional, and the relay says which names it VOUCHES FOR.** Taken.
+
+A verified hello carries its name from the token and the join and
+roster frames mark it. An unverified one is admitted exactly as it is
+today. Impersonation stops being invisible: a name nobody signed is a
+name the client can show as unsigned.
+
+**AND THE HONEST LIMIT, stated here rather than discovered later:** a
+token makes a name TRUSTWORTHY, it does not yet make one MANDATORY.
+Until the requirement flips, a client can still assert any name it
+likes — it simply cannot get the relay to vouch for it. ACC0's wall
+("the only people who can take a name are the people who can be
+banned") is not fully standing until that flip, and the flip is its own
+slice with its own deploy.
+
+### D2 — where the public key lives: the relay's config
+
+`server/wrangler.toml`, as a var rather than a secret — a public key can
+verify and cannot mint, so there is nothing to hide. Fetching
+`/v1/pubkey` at runtime instead would put the account service in the
+relay's startup path, which is the coupling D1 just refused.
+
+It is a second copy of a fact the service publishes, so the **deploy
+checks them against each other**: `account-deploy.yml` already reads
+`/v1/pubkey`, and a mismatch means every verify fails silently, which is
+the worst possible failure mode and the easiest to catch at deploy.
+
+### D3 — the TTL ceiling lives beside the key
+
+F8's second half. `verifyToken` takes `maxTtlS` from the caller, so a
+generous value typed at whichever call site happens to be in front of
+somebody silently grants long-lived tokens. It is config, next to the
+key, with `MAX_TTL_S` as the hard ceiling the module itself refuses
+past.
+
+### D4 — one-shot, and exactly what that does and does not close
+
+F8, settled by Mac: **a token is spent once.** The relay keeps the
+signatures it has verified and refuses a repeat; `e` bounds how long it
+must remember, so the set sweeps itself.
+
+**IT IS PER-ROOM, because the relay has no global state that a hello
+could touch without becoming a bottleneck** — ACC0 refused exactly that
+for provider links, and a hello is far hotter than a sign-in. So:
+
+- A token captured and replayed **into the same room** is refused. That
+  is where the victim is and where impersonation is worth doing.
+- A token replayed into a **different room**, or after that room's
+  object has been evicted, is not caught.
+
+Closing the second case needs shared state on the hello path. It is not
+worth that, and saying so here is better than a comment claiming the
+replay window is shut.
+
+### What this costs
+
+`wire.js` gains a field and `server/src/index.js` gains an import, so
+`RELAY_GRAPH` grows and SLAM8's hash changes. **`RELAY_VERSION` bumps
+and the deploy drops every connected player.** That is the price this
+arc has been saving up for since ACC0 chose two Workers, and it buys
+the whole token seam in one drop rather than several.
+
+`test/identitytoken.test.js`'s F8 gate fires the moment the module joins
+the bundle and must be replaced by a pin that presents the same token
+twice and proves the second is refused. That is the point of it.
+
+### D5 — the mark is CARRIED and it is not DRAWN, and that is on purpose
+
+D1 says impersonation "stops being invisible", and that sentence was
+one step ahead of the code when it was written. The relay decides `v`;
+the question nobody had answered is what a player SEES.
+
+The answer this slice gives is: the fact travels all the way to the
+client, and nothing new is drawn. `v` rides the join, the welcome's
+roster, the `who` answer and every chat line; `net/online.js` keeps it
+on the peer as a hard boolean, and `net/chat.js` keeps it on the line
+the panel draws from. What is missing is exactly one thing — a mark
+beside a name — and that is a DESIGN, on a surface Mac reviews.
+
+Two reasons for the split, and the second is the load-bearing one:
+
+- Mac has not seen a mark. This session already shipped a sign-in
+  window he sent back twice ("What the hell is this design", "Nothing
+  is centered"); inventing a badge at three in the morning and calling
+  the arc finished is how that happens a third time.
+- **A relay deploy drops every connected player, and a client build
+  does not.** If the flag stopped at the relay, the day the mark is
+  drawn would cost another drop. Carrying it now makes the UI slice a
+  client build and nothing else.
+
+So the honest state, stated here rather than discovered later: after
+ACC1d the relay knows which names it vouches for, the client knows,
+and the player does not. That last step is a UI slice.
+
+### AND ONE THING THE FIRST CUT GOT WRONG, worth recording
+
+`rosterFor` did not carry `v`. The join frame did, so every peer who
+arrived AFTER you would have been marked and every peer already
+standing in the room would not — a signal that is true half the time,
+which is worse than no signal, and one that could only have been fixed
+by a second relay deploy. It was found by asking what the WELCOME
+carries rather than by reading the code that was just written, and it
+is why the pins walk both doors.
+
+### SHIPPED 2026-09-22
+
+- `src/net/wire.js` — the hello's `tok`, shape only; `rosterFor` carries
+  `v`. `RELAY_VERSION` world84 → **world85**.
+- `server/src/index.js` — `_named` verifies, spends the signature once
+  (`SPENT_MAX`, swept by `e`), and takes the name out of the token; the
+  attachment, the join, the roster, the `who` answer, the chat line and
+  the hub's record all carry the decided name and `v`.
+- `server/wrangler.toml` — `IDENTITY_PUBLIC_KEY` and
+  `IDENTITY_MAX_TTL_S`, as vars (D2, D3).
+- Both deploy workflows — the relay's copy of the public key is checked
+  against what the account service publishes, on the deploy that can
+  mint a new pair AND before the relay's own wrangler run. An
+  unreachable service warns; a real disagreement stops the deploy.
+- `src/net/accountClient.js` — `mintIdentity` and `accountTokenMinter`:
+  one fresh token per connection, `null` for every reason a player may
+  have none, never a throw.
+- `src/net/online.js` — `mintToken`, `TOKEN_WAIT_MS`, an async open that
+  is bounded and swallowed and re-checks its socket; `v` kept on the
+  peer and on the chat line.
+- `src/scenes/world.js` — ONE minter, handed to the presence session and
+  to every channel link.
+- Pins: `test/acc1dclient.test.js` (15), four new arms in
+  `test/identitytoken.test.js`, one each in `test/relaydeploy.test.js`
+  and `test/accountdeploy.test.js`. Mutants:
+  `tools/mutants/acc1d.json`, 22, **22 dead and 0 survived**.
+
+**NOT DEPLOYED.** The relay deploy fires on merge to main and drops
+every connected player when it does.
+
+---
+
+## ACC2 — the design, before the code (2026-09-22)
+
+Mac: *"Go in order. Take your time."* ACC1d is done; this is step 4 of
+*THE ORDER TO BUILD IT* — **the card and the blob, backup only**.
+
+The page above already decided the shape (*THE SAVES: R2 for the blob,
+D1 for the card*) and the limit (*THE CLOUD IS A BACKUP AND A TRANSFER.
+THE LOCAL SAVE STAYS AUTHORITATIVE*). What follows is what that shape
+runs into once it meets `systems/saveSlots.js` as it actually exists,
+and the decisions nobody had made yet.
+
+### D1 — cloud saves are for LINKED accounts, and a guest is refused
+
+ACC0's table says it and nothing has enforced it, because until now
+there was nothing to enforce it on. The service checks it, not the
+client, and the reason is sharper than "the table says so":
+
+**A guest account is one storage clear away from gone.** That is stated
+plainly in ACC0 as the residue of the wall. A backup filed under a
+credential the player can lose by clearing their browser is a backup
+that cannot be restored — which is the one promise a backup may not
+break. Offering it would be worse than refusing it.
+
+It is also, as ACC0 argued, the second reason to link, and the one a
+player actually wants: a name, and their saves on the next device.
+
+The refusal word is `not-registered`, which `accountClient.js` already
+translates ("This account has no password yet.").
+
+### D2 — a cloud slot is keyed by (character, SAVE NAME), never by the local index
+
+This is the decision the existing code forces, and it would have been
+easy to get wrong.
+
+`systems/saveSlots.js` keys a slot in storage by an INTEGER — SAV4's
+`CreateNewSavePath`, *"a new pair takes the FIRST FREE integer key"*.
+That integer is a fact about ONE store. Two devices that saved in a
+different order hold the same character's "QuickSave" under different
+numbers, and a cloud keyed by the number would file them as two saves
+and then overwrite the wrong one.
+
+The slot's IDENTITY is already written down and is not the integer:
+SAV4 takes it from DFU's `FindSaveFolderByNames` and CHARID1 corrected
+its first half — **a save is (characterId, saveName)**. So that is the
+key here too:
+
+    PRIMARY KEY (player_id, character_id, save_name)
+
+and the R2 objects hang off the same triple. The local integer never
+leaves the device that minted it, which is exactly what CHARID1 shipped
+for.
+
+### D3 — R2 keys are player-first, so a deleted account is one sweep
+
+    saves/{playerId}/{characterId}/{saveName}/data
+    saves/{playerId}/{characterId}/{saveName}/shot
+
+Player first is not cosmetic: R2 lists by prefix, so "delete everything
+this account holds" is a prefix walk rather than a join against D1. A
+save name is a player-typed string, so it is encoded into the key
+rather than pasted into it, and the service bounds its length.
+
+### D4 — the bounds, and the one that would have been missed
+
+`MAX_BODY_BYTES` in `service.js` is **4 KiB**, and `readBody` enforces
+it before parsing. Every route this service has today is a small JSON
+body, so that bound is right for all of them and WRONG for a save,
+which is hundreds of kilobytes. A save route that went through
+`readBody` would refuse every real save; one that quietly bypassed the
+cap would have no cap at all. So the blob routes read a RAW body with
+their own, named bound:
+
+| | |
+|---|---|
+| `SAVE_MAX_BYTES` | 4 MiB — a Daggerfall envelope is a few hundred KB; this is headroom for a long game and a hard stop for anything else |
+| `SHOT_MAX_BYTES` | 256 KiB — a 320x200 JPEG is ~20 KB |
+| `SAVES_MAX` | 60 slots per account |
+| `SAVE_NAME_MAX` | 64 characters |
+
+An account at `SAVES_MAX` is refused with `too-many-saves` rather than
+having its oldest slot silently taken: this is a BACKUP, and a backup
+that deletes things to make room is not one.
+
+### D5 — a download does not get a new merge rule; it reuses SP1's
+
+The obvious thing to write is a sync: compare timestamps, take the
+newer. That is the design ACC0 refused — *"a design where the cloud is
+the truth is one where a sync bug is catastrophic"* — and it would also
+be a SECOND answer to a question this repo has already answered.
+
+`systems/saveTransfer.js` (SP1) defines what happens when a slot
+arrives from elsewhere, and it was written because a player thought
+they had lost their saves:
+
+> a slot never overwrites another: it takes its own number when that
+> number is free, the first free one when it is not, and a slot the
+> store already holds (same character, same slot name, same game
+> minute) is skipped rather than doubled.
+
+A cloud download is a slot arriving from elsewhere. It goes through
+that law, unchanged. **The cloud is a third destination for a carrier
+that already works** — the page said so before any of this was built,
+and the carrier is where the merge rule stays.
+
+### D6 — NOT automatic, and this is a narrowing of ACC0's step 4 with a reason
+
+Step 4 says *"Upload on save"*. This slice does not do that, and the
+departure is recorded rather than quietly taken:
+
+- An upload inside the save path puts a NETWORK CALL in the one
+  operation this game must never fail. `systems/save.js` handles
+  `QuotaExceededError` by name today; it has no arm for "the account
+  service was slow" and should not grow one.
+- A backup that happens invisibly is a backup whose failure is also
+  invisible. The whole point of ACC0's limit is that a failure here is
+  *"a message rather than a lost game"* — and a message needs somewhere
+  to appear.
+
+So ACC2 builds the transport and the explicit push and pull. **The
+trigger rides with the tile picker**, which is the next thing Mac asked
+for and is the surface where a player can see a save go up and see it
+fail. That keeps ACC0's promise rather than dropping it.
+
+### D7 — the bucket is created by the deploy, like the database was
+
+ACC1-CI's whole argument (Mac: *"The token provided allows you to take
+this on yourself. I am not needed at all"*) applies unchanged: the same
+API token that creates a D1 database creates an R2 bucket. So
+`account-deploy.yml` creates it if absent, idempotently, before the
+deploy — and the binding is in `wrangler.toml` where the D1 binding
+already is. Nobody opens a dashboard.
+
+### What this costs
+
+**Nothing in the relay bundle, so NOBODY IS DROPPED.** `RELAY_GRAPH` is
+unchanged by every line of ACC2 — which is the two-Worker split earning
+its keep for the second time this week, and is why this slice can land
+the day after one that dropped the whole room.
+
+### ACC2a — SHIPPED 2026-09-22: the service half
+
+- `server-account/migrations/0003_saves.sql` — the card, keyed
+  `(player_id, character_id, save_name)`, with `bytes`/`shot_bytes`
+  saying what R2 actually holds.
+- `server-account/src/saves.js` — list, put the card, put a blob, get a
+  blob, delete. Every statement binds the player the caller proved.
+- `server-account/src/service.js` — `savePathOf`, `saveKey`,
+  `savePrefix`, and the four bounds. `ACCOUNT_VERSION` acct1 → **acct2**.
+- `server-account/src/index.js` — the seven routes and the wall.
+- `server-account/wrangler.toml` — the `SAVES` R2 binding.
+- `.github/workflows/account-deploy.yml` — creates the bucket if absent,
+  before the deploy.
+- `src/net/accountClient.js` — a sentence for each of the six new
+  refusal words.
+
+**Two pins fired on their own subject the moment this landed, and both
+were right to.** `accountflow.test.js`'s refusal walk read three named
+files and so missed every word `saves.js` returns — it walks the
+service's whole `src/` directory now, because a three-file list is an
+enumeration and an enumeration disagrees with the tree the day somebody
+adds a file. And `accountworker.test.js`'s schema pin listed the tables;
+`saves` arriving as its OWN table rather than as columns on `players` is
+exactly what 0001's header promised would happen, so the list moved and
+the promise is quoted beside it.
+
+Mutants: `tools/mutants/acc2.json`, 14 at this slice, **14 dead and 0
+survived** — ACC2b took the same file to 22, which is what it holds now.
+
+**NOT DEPLOYED**, and when it is, it drops nobody: `RELAY_GRAPH` is
+untouched by every line of it.
+
+### ACC2b — SHIPPED 2026-09-22: the client half
+
+`src/systems/cloudSaves.js`, pure over `{fetch, storage}` the way
+`net/accountClient.js` is: push a slot, pull one, list, delete. No UI —
+**the tile picker draws it**, which is the next thing Mac asked for and
+the surface where a player can watch a backup succeed or fail (D6).
+
+Three things it deliberately does NOT do, each because the answer
+already exists somewhere:
+
+- **It does not merge.** A download is a slot arriving from elsewhere,
+  so it goes through SP1's `importSlots` unchanged. There is no
+  timestamp comparison here and no conflict rule, because writing one
+  would be a second answer to a question this repo answered when a
+  player said "my saves its all gone".
+- **It does not restate the size bound.** The service owns it and
+  answers `too-large`; a copy of the number on this side is a second
+  home for a fact, and the sentence a player needs is the same either
+  way.
+- **It does not own the service's words.** `CLOUD_REFUSALS` holds only
+  the refusals this side can make, and a pin asserts the two tables are
+  disjoint — one word, one sentence.
+
+**The mutation campaign found a weak pin, which is what it is for.**
+The encoding pin tested a save called `before the lich`, and a space
+survives an unencoded path by accident because the URL constructor
+escapes it — so the mutant that deleted every `encodeURIComponent`
+walked through. It tests `a/b`, `danger#1`, `x?y` and `100%` now. The
+hash is the sharp one: it truncates the path at the fragment, so
+`danger#1` would have been filed and fetched as `danger`, and a player
+would have restored the wrong game.
+
+Mutants: `tools/mutants/acc2.json`, 22, **22 dead and 0 survived**.
+
+### ACC2c — SHIPPED 2026-09-22: the surface, on the tiles
+
+D6's trigger, where it belongs. The save tile (TILE1, recorded in
+`bible/10-UI/UI-Arc.md`) carries ONE cloud line and at most one button:
+*Not backed up* with **Back up**, *Backed up · 2 hours ago* with **Back
+up again**, *Backing up…*, or the service's own refusal in ruby with
+**Try again**.
+
+**And nothing at all where there is no registered account.** ACC0's wall
+is at cloud saves, and a player who has not asked for one is not told
+about it on every tile they own — `off` is the state most players are
+in, and it draws no line.
+
+The listing is asked ONCE per visit to the menu and latches, because a
+pane repaints on every press, every skin switch and every Escape; a push
+clears the latch rather than patching the list, so what the tiles say
+the cloud holds always came from the cloud.
+
+**What is still not done, and is deliberately not:** nothing uploads by
+itself, and a save that exists ONLY in the cloud is not drawn yet — the
+tiles list what is on this device. Pulling a save down onto a second
+device is `pullSlot`, it is pinned end to end against the real service,
+and what it needs is a surface: a tile for a cloud-only save, with
+**Download** where **Load** sits. That is the next slice, and it is
+small.
+
+(The DELETE was on that list too, silently — AUDIT-312 F1 found it and
+paid it. See below.)
+
+---
+
+## AUDIT-312 — 2026-09-22, Mac: "Let's audit this"
+
+The four slices on PR #312 that AUDIT-ACC had not seen, because they did
+not exist when it ran: **ACC1d**, **ACC2a**, **ACC2b** and **TILE1/TILE2**
+(the tile half is recorded in `bible/10-UI/UI-Arc.md`; the findings are
+numbered once, here).
+
+Five lenses, the arc's usual: does it RUN, is the service safe read
+adversarially, what did it break, do the pins derive, and does the record
+say true things. **Twelve adversarial mutants were written against laws
+these slices claim**, and four survived. Everything below was driven, not
+read.
+
+### What held
+
+- **The relay's token seam.** Four mutants at the sharp parts — a relay
+  that vouches for names it cannot verify, a config var that loosens the
+  module's hard TTL ceiling, a spend-set that sweeps itself empty before
+  it is asked, and a client that puts `tok: null` in the hello (which
+  `wire.js` refuses, so it would cost every signed-out player the room).
+  All four died.
+- **The save service's isolation.** A `DELETE` that reaches past its own
+  account, a slot bound never counted, a thumbnail bounded by the save's
+  4 MiB limit — all dead, and the announced-content-length check turned
+  out to be pinned too (it was written off as un-pinnable and is not).
+- **The recorded campaigns re-run honestly**: `acc1d.json` 22,
+  `acc2.json` 22, `tile.json` 11 — **54 dead, 1 recorded equivalent, 0
+  survived**, which is what the PR claims.
+- **The Worker still boots** in workerd with ACC2's new R2 binding, and
+  the migration ledger applies `0003_saves.sql` in order.
+
+### F1 — THE DELETE HAD NO DOOR, and the refusal table already named it
+
+`DELETE /v1/saves/{char}/{name}` existed. `removeCloudSlot` existed.
+**Nothing called either**, and nothing in the record said so — ACC2c's
+"what is still not done" listed the download and not this.
+
+It is not a missing nicety. `SAVES_MAX` is 60, at the bound a new slot is
+refused, and the sentence the player is handed is *"Your cloud backup is
+full. Delete a save there to make room."* — an instruction to do
+something **the game gave them no way to do**. An account that filled up
+could never back up again.
+
+Paid: the tile's cloud line carries **Delete backup** on a backed-up
+slot. It says *backup* because the tile already has a **Delete**, the
+pane's own, which removes the save from this device — two buttons reading
+`Delete` one row apart, one destroying the game and one destroying the
+copy, is the worst label this menu could carry. It **asks twice** (the
+armed slot is cleared by the press, by arming another tile, and by the
+next visit to the menu), and `removeCloudSlot` never touches the local
+store, because the cloud is the copy.
+
+### F2 — `no-character` was a sentence no surface could show
+
+A card written before CHARID1 has no character id. `cloudFor` returned
+`off` for it, which draws **no cloud line at all** — so a legacy save sat
+in the list with no backup button and no reason, beside tiles that had
+one, and the sentence ACC2b wrote for exactly this case could never
+appear.
+
+Paid: a sixth cloud state, `wait`, with the sentence and **no button** —
+the act it needs is loading the save, which is the tile's own Load. The
+table's sentence was **shortened** to suit the surface it now has
+("Load this save once, then it can be backed up."), because Mac's rule
+for a tile is facts and no prose.
+
+### F3 — the menu's cloud arithmetic was where no pin could reach it
+
+The decision about what a tile says — signed in, legacy, busy, refused,
+backed up — lived inside `ui/enhancedMenu.js`, which is DOM and a boot
+and which no node test in this tree can drive. Three mutants of it went
+through **the whole suite** untouched:
+
+| mutant | what a player would have seen |
+|---|---|
+| `card.bytes > 0` → `card` | an upload that died between the row and the blob reads as **Backed up** |
+| the listing patched, not re-asked | a backup that lands never changes the tile until the menu is closed and reopened |
+| the slot key drops the character | every character's QuickSave is one slot: one spinner, one error, one armed Delete on all of them |
+
+Paid at the root: the decision is `ui/saveTile.js`'s `cloudStateOf`
+(pure, beside the states it names, returning a refusal **word** and never
+a sentence), and the slot key is `systems/cloudSaves.js`'s `slotKeyOf`,
+which is the module that owns "a slot is (character, save name)". What
+is left in the menu is the handlers, which is all a menu should hold.
+
+### F4 — `tools/accountProbe.mjs` never saw ACC2
+
+The probe exists because **importability is not deployability** — it was
+written the day the Worker could not boot while the suite was green. ACC2
+added a whole new binding (`SAVES`) and seven routes, and the probe never
+touched them.
+
+The gap is worse than it looks: **a binding that is absent does not
+crash.** `env.SAVES` missing answers `no-storage`, which reaches a player
+as "Cloud saves are unavailable right now" — with a green suite and a
+green deploy behind it, for ever.
+
+Paid: the probe drives a whole save round trip in workerd against its own
+R2 — the guest wall, a blob refused without a card, the card, the bytes
+back **byte for byte** as an octet-stream, the shot bounded apart from
+the save, another account refused a read and a delete, and the player's
+own delete taking the object as well as the row.
+
+**And the probe was only ever correct once.** `wrangler --local` reuses
+its state under `server-account/.wrangler`, so the second run registered
+a username the first had taken and logged in with a password the first
+run's recovery check had changed — six failures that were about the last
+run rather than about the service, and a migration check that read "no
+migrations to apply" as "no migrations". It stands on a fresh
+`--persist-to` directory now, and two runs back to back are 36/36 twice.
+
+### F5 — the extraction changed the ten heads' contract
+
+TILE1 lifted the face drawing out of `systems/chargenSession.js` into
+`ui/facePortrait.js`, which is right. But the new one ends
+`.filter(Boolean)` and the old one did not.
+
+`faceIndex` is on the save envelope and it addresses a **record number**.
+`bitmapCanvas` returns null for a record with no data, so one bad record
+shifted every later face down by one — while `ui/chargenArt.js`'s
+`loadFaceSet`, the OTHER reader of the same ten records, pushes for every
+index and never compacts. Two homes for the ten heads that disagree about
+what index 5 means is precisely the drift the extraction says it exists
+to prevent. Both readers already draw something where a face is missing,
+so the hole is safe and it is kept.
+
+### F6 — smaller, and recorded rather than paid
+
+- **The cloud latch was per page load, not per visit.** ACC2c's record
+  says "asked ONCE per visit to the menu"; the latch was module state and
+  nothing cleared it, so a player who backed a save up on their phone and
+  reopened this menu saw whatever listing was last fetched. A fresh mount
+  clears it now (and the armed Delete with it — an armed destructive
+  button must not outlive the screen it was armed on).
+- **The spent-set's eviction comment claims more than it holds.** "past
+  it the OLDEST goes, so a flood cannot evict the token somebody is about
+  to present" — the set holds SPENT tokens, so what an eviction exposes
+  is a replay of an already-presented one. The real bound is the 300 s
+  TTL plus the mint rate (`ACCOUNT_MAX` 240/min per account), which makes
+  4096 live entries in one room inside one token's life a deliberate act
+  with several accounts, by somebody who already has the victim's token
+  off the wire. Left as it is; the sentence is the thing that was wrong.
+- **`encodeURIComponent` on the R2 key's player half is equivalent**, and
+  that was DRIVEN rather than assumed: `accounts.js` mints ids base64url,
+  so the call is a no-op over every id that can exist. Belt for the day
+  that alphabet changes, recorded as equivalent in
+  `tools/mutants/audit312.json`.
+- **`pullSlot` is still the one live dead seam**, as ACC2c says — the
+  cloud-only tile is the next slice.
+
+Mutants: `tools/mutants/audit312.json`, 10, **9 dead and 1 recorded
+equivalent**.
+
+---
+
+## AUDIT-PW — 2026-09-22, Mac: "Can you read those"
+
+The two things AUDIT-ACC named as unexamined and never came back to:
+`server-account/src/password.js` had never had the adversarial read the
+token got, and `tools/accountProbe.mjs` had never been mutated. Both
+were named again at the end of AUDIT-312, which is the second time a
+record has said so — so they are done here rather than named a third
+time.
+
+### P1 — NOTHING MAY HASH AN EMPTY CREDENTIAL, and the hole was live
+
+`codeForHashing` has **two contracts**. At the mint (`register`,
+`recover`) a null is impossible; at the check a null is the ordinary
+answer to a typo. **Nothing enforced the first.**
+
+`normalise` answers `''` for anything that is not a string, so a minted
+code that failed to canonicalise hashed the **empty string** into
+`recovery_hash` — and `recover` compares `canon ?? ''` against that row.
+Every account registered in such a window is opened by typing any string
+that is not a code at all. Driven, before the fix:
+
+```
+codeForHashing('NOT-A-VALID-CODE!!')  -> null
+hashPassword(null)                    -> pbkdf2-sha256$...   (of '')
+verifyPassword(codeForHashing('total garbage') ?? '', that)  -> TRUE
+```
+
+**It has happened once.** password.js's own note records the Q fold
+doing exactly this to `7GEPQ-47BS9-AYK70-QMWYW` — and the only thing
+that caught it was a test over minted codes. Nothing in the code refused
+to store the result, so the same shape would come back with the next
+alphabet change.
+
+Paid at the chokepoint: `hashPassword` refuses an empty normalised
+input, because it is the one door every stored credential in this
+service goes through. It **throws** rather than returning a refusal — a
+caller that hands it nothing is a programming error, and the router
+turns it into a logged 500 that stores nothing, which is the right
+failure for this. Nothing legitimate is refused: `passwordRefusal`'s
+floor is 8 and it runs first at all three password sites, and a minted
+code is twenty characters.
+
+### P2 — the constant-time compare failed OPEN
+
+`timingSafeEqual` **coerced** anything that was not a `Uint8Array` to an
+empty one. Two lengths of 0 XOR to 0, the loop never runs, and the one
+primitive in this service whose whole job is to say NO said yes:
+
+```
+timingSafeEqual(null, null)      -> true
+timingSafeEqual(undefined, {})   -> true
+```
+
+Unreachable today — `verifyPassword` is its only caller and always hands
+it two real derivations — which is exactly why it could sit there. A
+defensive default that defends in the wrong direction is worse than no
+default, because it reads as care. Anything that is not a pair of byte
+arrays is unequal now.
+
+**And the campaign found this pin's own blind spot.** The loop reads
+`x[i % x.length]` so that a byte is read on every iteration whichever
+array is shorter — which means a short array that **repeats** into a
+longer one matches it byte for byte, and the length XOR seeding `diff`
+is the only thing that says no. A *prefix* dies without it; a *repeat*
+does not, and the pin only tested a prefix. `[1,2]` against `[1,2,1,2]`
+is held now.
+
+### P3 — the mint's own guarantee, widened
+
+What was P1's only guard is kept as a pin in its own right: 2,000 minted
+codes must survive their own canonicalisation, and every letter the
+alphabet **contains** must come back unchanged (the Q fold's shape,
+stated as a law rather than as one remembered case).
+
+### What held
+
+PBKDF2-SHA256 at 210,000 with a per-account salt and a self-describing
+stored form; NFKC before the KDF; the rehash-on-correct-login upgrade
+path; `verifyPassword` deriving before it checks whether the row parsed,
+so "no password" and "wrong password" cost the same; `parseStored`
+refusing rather than throwing; the code alphabet a power of two with the
+mask exact and a throw if it ever stops being one; and `needsRehash`
+consulted only after a verified login.
+
+Mutants: `tools/mutants/auditpw.json`, 6, **6 dead and 0 survived** (one
+survived the first run — the repeat case above).
+
+### And the probe has been mutated at last
+
+`tools/accountProbe.mjs` was named never-mutated beside password.js. The
+question a campaign asks of a PROBE is the inverse of the usual one:
+**break the service, and does the probe go red?**
+
+| mutant | the suite sees it |
+|---|---|
+| a named value export back on the entrypoint | **no** — workerd refuses to start over a constant while the suite stays green BECAUSE it imports those very names |
+| the R2 binding renamed in `wrangler.toml` | **no** — the suite hands the Worker its own env and never reads that file |
+| the hash cost raised out of a Worker's CPU budget | no — the suite gets slower and stays green |
+| a migration that stops applying through wrangler's ledger | yes, but not through the ledger the deploy runs |
+
+Mutants: `tools/mutants/acctprobe.json`, 4, **4 dead and 0 survived.**
+
+---
+
+## ACC1d-MARK — the mark over the head (2026-09-22)
+
+Mac, asked where the relay's verdict should be drawn: *"Should be over
+the head in online how it currently works."*
+
+ACC1d ended by naming exactly one thing it had deliberately not done.
+Its **D5** says it plainly: *"after ACC1d the relay knows which names it
+vouches for, the client knows, and the player does not. That last step
+is a UI slice."* This is that slice, and it is a **client build** —
+which is the whole reason D5 carried `v` to the peer rather than
+stopping it at the relay. No `RELAY_VERSION` bump, nobody dropped.
+
+### THE POLARITY IS MAC'S, AND THE FIRST CUT HAD IT BACKWARDS
+
+The first cut put a `?` on the names the relay could **not** vouch for,
+reasoning that the useful signal is the missing one. Mac asked the
+question that takes that apart:
+
+> Why a question mark since even guests get a name?
+
+He is right, and the answer is that **the verdict does not divide guest
+from account.** A guest with a session mints a token like anybody else
+and the relay vouches for the name inside it. What it actually divides
+is **a name the player TYPED from a name the service ISSUED**:
+
+- **No session.** The hello carries whatever stands in `onlineName` —
+  the *"Name over your head"* field in `ui/enhancedMenu.js` — and the
+  relay only sanitises it for length and for the word filter. It can be
+  anybody's, which is the impersonation hole ACC1a opened this arc to
+  close.
+- **A session, guest or linked alike.** The account service signs a
+  token and the relay takes the name **out of it**.
+
+So the badge goes on the name that was **checked**. Three reasons, and
+the third is the one that settles it:
+
+1. It can only ever appear where the service issued the name, so it
+   **never becomes wallpaper** — which the `?` would be today, with the
+   account window an offer rather than a gate.
+2. It is the shape every reader already knows: a mark you look *for*,
+   not an accusation you have to learn to ignore.
+3. **It fails safe.** A relay whose public key will not import vouches
+   for nobody — so it badges nobody, where the old polarity would have
+   accused every head in the room at once.
+
+### Beside the name, never inside it
+
+The name is centred on the skull. Prefixing a glyph into the string
+moves the label off the head it belongs to — and only for the badged
+peers, so it reads as *those* names drifting. So the badge is its own
+draw in the classic face (`NAME_MARK_GAP_PX` to the left of the label's
+left edge, measured off the name's own width) and its own `<span>` in
+the DOM face, which also means `setText` on the name cannot wipe it
+every frame.
+
+### And the colour stays where it was
+
+SOC4's party green says **who somebody is to you**. The badge says
+**whether the service issued the name**. Two systems, one pixel, and the
+colour belongs to the first — so the badge keeps the sheet's own ink and
+the tint stays on the name element. Moving the colour up to the wrapper
+to cover both is what the first cut did, and it broke two NAME1 pins,
+which were right.
+
+### ABSENT IS UNVOUCHED, and it is the relay's encoding that says so
+
+The wire has **no `v: false`.** `server/src/index.js` sends
+`v: who.verified || undefined` and omits the field otherwise, on the
+join, the roster, the `who` answer and the chat line alike — a byte
+saved on the frame every player sends. So the shape a real unvouched
+peer arrives in is a peer with **no `v` at all**, and the client's read
+is `e.peer.v === true` because that is the only reading that agrees with
+the sender. `net/online.js` has normalised it to a hard boolean on the
+peer since ACC1d, so the point sees one or the other and never the gap.
+
+**The campaign found this one, not the reading.** MARK-7 flips the read
+to `!== false`, and it *survived* the first run: every pin said `v:
+false` out loud, which is a frame the relay never sends. Under this
+polarity it is the worse bug of the two, because the badge is the thing
+a player is asked to *trust* — so a mutant that badges the unchecked is
+a lie rather than a missing warning. The pin holds the relay's own line
+now, and a peer with the field missing entirely.
+
+### ONE ASCII GLYPH, and ASCII is necessary rather than sufficient
+
+The classic face draws through a Daggerfall bitmap font and can only put
+on screen what that font has a record for — `drawText` draws **nothing
+at all** for a glyph of zero width, so a badge the font lacks is one the
+classic skin silently never shows while the DOM face shows it. A tick is
+the obvious badge and is not in that font; `NAME_MARK` is `*`, the pin
+holds it inside the font's own glyph range, and the mutant that swaps it
+for `\u2713` is dead. **The limit, stated rather than left to be found:
+this container has no ARENA2, so the real FONT0003 is not read here.**
+
+### SHIPPED 2026-09-22
+
+- `src/net/remotePlayers.js` — `NAME_MARK`, `NAME_MARK_GAP_PX`;
+  `namePoints` carries `vouched` on the point (a fact about the PEER,
+  unlike `colorOf`, which is the social system's knowledge asked for by
+  id); `drawNamePoints` draws the badge beside the label.
+- `src/ui/nameLayer.js` — the tag is a wrapper over a `.dfname-mark`
+  span and a `.dfname-who` span; an empty badge takes no room
+  (`:empty` drops its margin), so an unbadged label is exactly the
+  element it was before this existed.
+- Pins: `test/name1_bubbles.test.js` 20 → **21**. The fixture sets `v`
+  EXPLICITLY and its default is **not vouched** — the plain label, which
+  is what those pins are about and what an ordinary peer is today.
+- Two neighbouring pins were re-aimed rather than worked around, and
+  both got stronger for it. `test/soc4_partyhud.test.js` read the white
+  fallback off the draw call; it reads it off the `tint` both draws take,
+  so SOC4's law now covers the badge as well as the name — *SOC4 owns
+  that colour and ACC1d-MARK does not get a second opinion on it.*
+  `test/perfon_text_run.test.js` measured one draw per peer; it measures
+  both cases, and a badged room is **2n draws and still nothing that
+  scales with how long anybody's name is**, which is the whole of what
+  PERF-ON was ever about.
+- Mutants: acc1dmark.json, 8, **8 dead and 0 survived** (the file is
+  gone with the slice - ACC1g retired it hours later, below).
+  Two survived a first run. MARK-3: prefixing the badge INTO the name
+  leaves the *run count* unchanged, so the pin read the badged peer's
+  name draw as having the same glyph count as when nobody is badged.
+  MARK-7 was the one above. MARK-8 held Mac's correction as a law
+  rather than as a memory.
+
+### AND THEN ACC1g RETIRED IT, hours later and for his own reason
+
+The badge meant something only while a name could be VERIFIED **or**
+TYPED. Mac closed the typed one the same night, so every name over
+every head is a checked one and the badge appeared on all of them -
+which is the wallpaper he named when he took the first polarity apart.
+It is gone, with `NAME_MARK`, `NAME_MARK_GAP_PX`, the point's `vouched`,
+the DOM layer's span, its pin and its campaign; `v` leaves the wire in
+the same deploy, because the badge was its only reader.
+
+**The mechanism is in the history and in this page, not in a dead
+branch:** a mark beside a label, measured off the name's own width so
+the label stays centred on the skull, drawn in both faces out of one
+point, in the name's own colour. If a later slice needs one - a
+moderator, a party leader, a mute - that is where to read how it was
+done, and how not to do it (MARK-3 and MARK-7 both survived their first
+run).
+
+---
+
+## ACC2c — the save that is only in the cloud (2026-09-22)
+
+Mac, asked whether to build it: *"And yes."*
+
+### ACC2 BUILT THE BACKUP AND NOTHING COULD READ ONE BACK
+
+`pullSlot` was written, pinned end to end against the real service in a
+real workerd, and had **zero callers.** Not a missing button — a missing
+*surface*: a cloud card only ever reached a player as the cloud LINE on
+a local tile, and a card with no local tile has no line to appear on.
+
+So the one case cloud saves exist for did not work. A player who cleared
+their browser, or sat down at a second machine, opened Load and saw
+**"No saved games. Save a game and every slot of it appears here"**,
+with their games three feet away in R2 and nothing on screen admitting
+they existed. That sentence was the symptom and it is now one of the
+things this slice deletes.
+
+### The difference is a set difference, and it lives in `systems/`
+
+`cloudOnly(cards, saves)` — the cards no local slot answers to, keyed by
+`slotKeyOf`, the same key the cloud line is asked with. So a card gets
+**a line on a tile or a tile of its own, never both and never neither**,
+and the pin asserts exactly that, card by card.
+
+It is not in the menu, and that is AUDIT-312 F3's finding taken
+seriously rather than repeated: `ui/enhancedMenu.js` is DOM and a boot,
+and the last copy of a slot key written there had **dropped the
+character half** — which makes every character's QuickSave one slot —
+and the mutant of it went through the whole suite untouched. Here, that
+same mutant dies: one local QuickSave would otherwise hide *every* other
+character's cloud QuickSave, and those saves would go on being invisible,
+which is the failure this slice exists to end.
+
+### The card is smaller than a save, so the tile says less
+
+`server-account/src/saves.js` keeps eleven columns and **none of them is
+a race, a class, a level, a health, a gold or a look.** None of it was
+ever uploaded. So `saveFromCard` hands back a shape with those fields
+**absent** — not zero, not a dash — and the tile degrades on its own:
+`tileLine` joins nothing and is never appended, the stats list stays
+empty and is never appended, and the well falls back to the character's
+initial. **Not one special case in the drawing, and not one invented
+fact.** Two mutants hold that line: a level read off `save_version`, and
+the initial taken from the slot name so a tile reads `QuickSave` where
+the character goes.
+
+`gameTime` **is** classic minutes — `saveSlots.js`'s own `SaveInfo`
+typedef says so of the very field `pushSlot` copies up — so the date and
+hour are derived by the same two calls a local tile's are, rather than
+by a second interpretation of one number.
+
+### `only` is a seventh state, and its own whole ladder
+
+Every rung of the local cloud ladder is a question about a *local* slot:
+whether it predates CHARID1, whether its upload finished, whether it has
+been backed up at all. **None is answerable about a save that is not
+here** — a card with no `characterId` is still a card, not a `wait` — so
+`local: false` is its own arm rather than a flag threaded through five
+branches. What *is* still true of it is kept: a download in flight is
+`busy`, and a refused one carries the service's own word.
+
+The sentence is **"Only in your backup"**, not "Backed up". Under a tile
+whose only copy *is* the backup, "Backed up" tells a player they have
+two of something they have one of. It wears `is-only`, and the probe
+reads it **brass** against the backed-up line's verdigris in a real
+Chromium.
+
+### One pane, and the delete that F1 half-finished
+
+**Load, and no other.** Online brings a character in to play *now* and
+cannot use a save that is not here, so offering it there is a two-step
+act at a one-step door; Save writes rather than reads, and a cloud-only
+slot in that grid would be an Overwrite target for a game this device
+does not have. Load's whole job is getting a game back.
+
+And the tile carries **Delete backup**, two presses, which is **the rest
+of AUDIT-312 F1**: that slice gave a player the way to act on *"delete a
+save there to make room"* and gave it to them on LOCAL tiles only — so a
+cloud-only slot went on holding its share of `SAVES_MAX` with no surface
+that could ever release it. Same word, same arm.
+
+### SHIPPED 2026-09-22
+
+- `src/systems/cloudSaves.js` — `cloudOnly`.
+- `src/ui/saveTile.js` — `saveFromCard`; `CLOUD_STATES` gains `only`
+  (appended, so nothing positional moves); `cloudStateOf` takes `local`,
+  defaulting **true** so every caller written before this slice reads
+  exactly what it read.
+- `src/ui/enhancedMenu.js` — `download` (the caller `pullSlot` never
+  had, through `runCloud`), `cloudForCard`, `cloudOnlyGrid`, and the
+  narrowed empty case.
+- `src/ui/enhancedStyle.js` — `.svcloudonly` and `.svcloud.is-only`.
+- Pins: `test/cloudsaves.test.js` 19 → **21**, `test/savetile.test.js`
+  11 → **13**. Probe: `npm run savetile` 18 → **29 checks**, which is
+  where the heading's face, the brass, and a tile that could have
+  collapsed to a strip were actually measured.
+- Mutants: `tools/mutants/acc2c.json`, 10, **10 dead and 0 survived.**
+
+---
+
+## ACC1g — the wall moves to the door (2026-09-22)
+
+> You shouldnt be able to just type a name and enter anymore.... this is
+> what the account system is for
+
+### THIS IS THE FLIP ACC1d NAMED AND DID NOT MAKE
+
+ACC1d's own record says it out loud: *"a token makes a name TRUSTWORTHY,
+it does not yet make one MANDATORY, and ACC0's wall is not fully
+standing until that flip, which is its own slice with its own deploy."*
+This is that slice.
+
+Until here the hello carried a `name` **the client wrote** and the relay
+only sanitised it. ACC1e put a text field in front of it — *"Name over
+your head"* — and a URL could set it too. So anybody could type
+anybody's name and walk in wearing it: the impersonation hole ACC1a
+opened this arc to close, still open at the end of six slices about
+closing it.
+
+**ACC0's wall moves.** That page said *THE WALL IS AT CLOUD SAVES AND
+NOWHERE ELSE*, and the argument was that a guest should be able to
+connect, be seen, walk and chat under a generated name. **That argument
+still holds and the wall still doesn't cost a guest anything** — a guest
+session mints a token like anybody else, so the price of getting in is
+one press of *Continue as guest* and no email. What changed is that
+there is no longer a way to be in the room **unnamed by the service**.
+Mac's own bargain from ACC0 — *the only people who can take a name are
+the people who can be banned* — is the whole of it, and this is the line
+where it becomes true.
+
+### The relay refuses, and both arms are refusals
+
+```
+no token       -> 'sign in to play online'
+no usable key  -> 'sign-ins cannot be checked right now'
+token, bad     -> refused, loudly (unchanged)
+token, good    -> the name out of the TOKEN (unchanged)
+```
+
+**The second arm changed direction.** While a token was optional, a
+relay that could not verify admitted everybody unnamed, on the reasoning
+that refusing the world over a mistyped config was the worse failure.
+With the wall at the door that reading *is* the hole: a relay that
+cannot verify cannot tell an issued name from a typed one. It fails
+closed, and what keeps that from being how the game goes dark is at the
+**deploy**, not here — both workflows check the relay's copy of the
+public key against what the account service publishes, and a real
+disagreement stops the deploy before a player sees it.
+
+### What the player sees
+
+The *"Name over your head"* field is **gone**, with the `onlineName`
+pref and the `?name=` URL override behind it. In its place the Online
+pane says who you are, read from the session on this device — a storage
+read and no network, the same one the door's profile mark makes. Signed
+out, it says why and offers the way in; **Play online** is a dead button
+rather than a live one that fails at the relay.
+
+**NAME-F2's entry half moved and did not disappear.** The filter that
+refused `Cum` at that field now refuses it at **registration**, where a
+name is chosen once instead of re-judged on every press:
+`handleRefusal` ends in `nameIsIssuable`, which is
+`sanitizeName(h) === h`, which is the very function carrying
+`nameAllowed`. One filter, one home, asked earlier and asked once.
+
+### `v` leaves the wire, and the mark with it
+
+Every admitted socket is verified now, so the per-name verdict on the
+join, the roster, the `who` answer and the chat line said the same thing
+about everybody — a field carrying no information. It goes in **this**
+deploy rather than a later one, because a wire change costs a drop and
+this deploy is already paying for one. ACC1d-MARK, its only reader, is
+retired above for the same reason: a badge on every head is no badge.
+
+### What the fixtures learned, which is a finding about the tests
+
+**Eighty-nine relay pins went red on the gate**, and that is the gate
+telling the truth about what every one of them had been assuming. The
+fix is not a back door in the room: `test/fakeRoom.mjs` mints a **real
+Ed25519 token** against a real key and the room really verifies it, so
+those pins now run through the door a player runs through rather than
+around it. Three things fell out of it:
+
+- **The token's name is the frame's**, because the relay takes the name
+  out of the token and ignores the frame's. A harness that signed one
+  name and typed another would be re-proving that the frame is ignored,
+  in every pin that ever names a peer.
+- **`n16` cannot be minted.** Two fixtures named their peers `n${i}` and
+  `N${i}`, and the sixteenth folds to a slur under NAME-F1's leet
+  normalisation — so `sanitizeName` answers `Traveller` and
+  `nameIsIssuable` refuses. The old fixtures never noticed because
+  nothing checked the name they typed. **A token has to be issuable to
+  exist**, which is the filter reaching one layer further than it used
+  to.
+- **The harness's own uniqueness bug, found by the room.** The room
+  spends a signature once and Ed25519 is deterministic, so two helloes
+  for one identity need different claims. Counting mints and subtracting
+  from the *current* clock cancels out the moment the clock moves: a
+  test ticking its fake clock past a second boundary minted `nowS - 1`
+  and then `(nowS + 1) - 2` — the same instant, the same bytes, refused
+  as a replay. Each identity's issued-at is kept as a **value** now and
+  only ever goes down.
+
+Two pins were also measuring the wall clock without knowing it. WORLD1's
+host tie-break gave the other three sockets a +10ms head start and
+relied on the test reaching the hello inside that window; it freezes the
+clock and sets three equal stamps now, which is what its own comment
+always said the case was — *"the same-millisecond tie the smaller id
+wins"*.
+
+### SHIPPED 2026-09-22
+
+- `server/src/index.js` — `_named` refuses both arms; the attachment,
+  the join, the roster, the `who` answer and the chat line drop `v`.
+- `src/net/wire.js` — `rosterFor` drops `v`; `RELAY_VERSION` world85 →
+  **world86** (and ACC3 carried it on to world87 the same day, so both
+  ride one drop).
+- `src/net/online.js`, `src/net/chat.js` — no `v` on a peer or a line.
+- `src/net/remotePlayers.js`, `src/ui/nameLayer.js` — the mark retired.
+- `src/ui/enhancedMenu.js` — the name field replaced by who you are; the
+  button gated on a session. `src/scenes/world.js` — the two typed name
+  sources gone. `src/systems/uiPrefs.js` — `onlineName` gone.
+- `test/fakeRoom.mjs` — `roomSigner`, shared with slam5's own harness.
+- Pins: `test/identitytoken.test.js`'s two admit-arms rewritten as
+  refusals; `test/acc1dclient.test.js`'s three verdict pins replaced by
+  their inverse (no door may carry one, and a peer must not keep one a
+  stale relay sends); NAME-F2, AUDIT-CHATR F2/F6 and SLOTS1 re-aimed to
+  where the name is now judged.
+
+**NOT DEPLOYED, and the price is the arc's largest yet.** The relay
+deploy fires on merge to main: it drops every connected player, **and
+from that moment nobody can join without a session.** Every player
+online today is using a typed name.
+
+---
+
+## ACC1h — the Online pane is the tiles (2026-09-22)
+
+> So the online pane should just be the new save panels, correct?
+
+He had said it once already, when ACC1f moved the account card off this
+pane: *"I want [the Online pane] reserved for a detailed tile based
+design for your saves."* It was not. Above the tiles stood a heading, a
+paragraph about what a shared world shares, a text field for a name, a
+Relay field and a line telling the player to pick a character. ACC1g
+took the name field; this takes the rest.
+
+**The pane opens as the characters.** One card above them only when
+nobody is signed in — the reason the buttons are dead, and the way in —
+because a player looking at their own characters with every button
+greyed out and no reason on screen is the fault this pane would
+otherwise have.
+
+### Nothing was deleted for tidiness
+
+**The shared-world promise moved BELOW the tiles, not out.** AUDIT
+WORLD34 D5's law is that *what a player is told here is the law*, and
+the pins that hold that sentence against the relay's own behaviour are
+the reason it says true things — it once said *"Nothing else is shared
+yet"*, which WORLD1 had already made false. Twelve pins went red when it
+was cut, which is those pins doing their job. So the rules a player is
+agreeing to are still on the surface they enter through, where a page in
+the bible cannot reach them; they are simply no longer in the way.
+
+**The Relay field went with it,** and that is a compromise stated as
+one: Settings is where an override a player sets once belongs, but
+`ui/settingsMap.js` has no free-text row kind yet, and inventing one
+inside this change is how a diff stops being reviewable. It cannot just
+go — `scenes/world.js` still reads `onlineServer`, and deleting the only
+way to set it would leave a read nothing can answer. **Owed: a text row
+kind in settingsMap, and this field moved into it.**
+
+---
+
+## ACC3 — titles and glyphs (2026-09-22)
+
+> Next feature before this becomes a live addition.
+>
+> 1. Player titles and Name glyphs
+> Players can tap the account icon to equip 1 feature along with signing
+> out.
+>
+> Player titles appear above a player name. We will develop 2 titles to
+> start out.
+>
+> 1st title is Founder with a gold color
+> 2nd title is Developer with a red color
+>
+> All current players should be granted the founder title
+>
+> 2nd is name glyphs. These small glyphs appear on the right side of the
+> player name. These are as follows
+>
+> Sprouting green plant. Attached to new accounts for 2 weeks
+>
+> Developer glyph specifficaly for developers
+
+Two answers settled the open halves of it before any code: **Developer
+is granted by a config list of handles**, and **Founder goes to
+registered accounts only**.
+
+### EVERY GRANT IS DERIVED, AND NOT ONE OF THEM IS A COLUMN
+
+This is the whole design, and it is this repo's own **DERIVED OVER
+ENUMERATED** applied to the one place a grant is usually a row:
+
+| | held when |
+|---|---|
+| **Founder** | `registered_at <= FOUNDER_UNTIL` (1790121600 — 2026-09-23T00:00:00Z) |
+| **Developer** | the handle is in `env.DEVELOPER_HANDLES` |
+| **sprout** | `nowS - created_at < SPROUT_S` (two weeks) |
+| **dev** | the same list as the Developer title |
+
+**Mac asked that "all current players should be granted the founder
+title", and the obvious migration is an `UPDATE` over every row.** There
+is none, and that is the design rather than an omission. A walk records
+a fact ONCE, at a moment nobody can re-derive: a row added by hand
+afterwards has no flag and nothing says why, a row restored from a
+backup has whatever the backup had, and *"who is a founder?"* can only
+be answered by reading every row. A cutoff answers it in one line, gives
+the same set today, and is still right tomorrow.
+
+**The sprout is the same argument with teeth.** A glyph that expires
+after two weeks, *stored*, needs something to come along and remove it.
+That is a cron, and a cron is a thing that can stop running while
+everything looks fine — **AUDIT-ACC F9 settled exactly this**, one
+system over, for idle sessions. Derived from `created_at` it expires
+because time passed, which is not a job anybody can forget to run.
+
+**And a developer is a list in config** because granting one is a thing
+a person does by editing a reviewed, deployed file — not by reaching
+into a live database at three in the morning. Taking a handle back off
+that list is the whole of revoking it: the title and the glyph both stop
+being signed for on that player's next token, with nothing to clear.
+
+### D1 — HOLDING IS NOT WEARING, and only the wearing is stored
+
+A player may hold two titles and wears at most one — Mac: *"equip 1
+feature"*. `players.title` is the **only** column ACC3 adds, because the
+worn title is the only part of a wardrobe that is a **choice**.
+
+Equipping validates against the set derived *now*, and `titleWorn` asks
+the same question again on the way out — so a developer taken off the
+list stops wearing the badge without anybody remembering to clear a
+column, and a column somebody edits by hand is not a grant.
+
+`migrations/0004_titles.sql` is one `ALTER TABLE` and a long note saying
+why there is no walk beneath it.
+
+### D2 — THE BADGE RIDES THE SIGNATURE, and this is ACC1g's law one field over
+
+ACC1g shut this hole on the **name** hours earlier. A title is the
+stronger claim of the two: *"Developer"* over somebody's head reads as
+this project's own word about them, and if the hello carried
+`title: 'developer'` the relay could only sanitise it — the first person
+to open devtools would be a developer.
+
+So the account service, the only thing that knows what a player was
+granted, **signs** `t` and `g` into the token, and the relay reads them
+**out** of the verified claims exactly as it reads the name. `TITLES`
+and `GLYPHS` are closed lists in `src/net/identityToken.js` and
+`claimsValid` checks both *before* `verifyToken` says ok — so an unknown
+badge cannot have been signed for, and the relay never re-checks one.
+
+**The token is derived at mint**, so both lapse on their own: a token
+lives `MAX_TTL_S`, which makes a badge at most five minutes stale.
+
+### D3 — absent, never null
+
+`wire.js` `badged` puts the two keys on a row **only when there is a
+badge**, the same discipline `look.class` keeps two hundred lines up.
+Most players wear nothing, so `"title":null` on every row of a 64-peer
+welcome is bytes paid for saying nothing — and a reader that has to tell
+*"no title"* from *"this build has no such key"* has two answers where
+one will do.
+
+It is one function, used by the welcome's roster, the join, the channel
+roster **and the `who` answer** — that last one is built by hand rather
+than by `rosterFor`, and is exactly where one peer comes to be the only
+unbadged one in a badged room. That is a signal true most of the time,
+which is the shape **ACC1d-MARK was retired for being**.
+
+### D4 — it costs nothing NOW and would cost a deploy later
+
+Mac's own framing: *"Next feature before this becomes a live addition."*
+`identityToken.js` is in the relay bundle, so a claim added to it bumps
+`RELAY_VERSION` and drops every connected player. **The deployed relay
+is still world84**; world86 (ACC1g) and world87 (this) are both on the
+branch, so all of it rides ONE drop rather than three. After that merge
+each would cost its own.
+
+### SHIPPED 2026-09-22 — the service, the token and the relay
+
+- `server-account/src/titles.js` — new. The four grants, the wardrobe,
+  the equip refusal. Pure, and it takes `env` and `nowS` rather than
+  reaching for either.
+- `server-account/migrations/0004_titles.sql` — new. `title TEXT`, and
+  no walk.
+- `server-account/src/accounts.js` — `accountWardrobe`, `equipTitle`.
+- `server-account/src/index.js` — `/v1/auth/token` mints with the
+  wardrobe; `/v1/account` answers it beside the account view; the new
+  `POST /v1/account/title` equips one, or none.
+- `server-account/src/service.js` — `/v1/account/title` in `ROUTES`;
+  `ACCOUNT_VERSION` acct2 → **acct3**.
+- `server-account/wrangler.toml` — `DEVELOPER_HANDLES`, empty. **It
+  ships empty on purpose: nobody holds the Developer title until a
+  handle is written there.**
+- `src/net/identityToken.js` — `TITLES`, `GLYPHS`, `GLYPHS_MAX`; the
+  `t`/`g` claims, minted and validated.
+- `src/net/wire.js` — `badged`; `rosterFor` carries it;
+  `RELAY_VERSION` world86 → **world87**.
+- `server/src/index.js` — `_named` returns the badge off the claims; the
+  attachment holds it; the welcome, the join, the channel roster and the
+  `who` answer carry it.
+- `test/acc3titles.test.js` — 13 pins. `test/fakeRoom.mjs` mints a
+  badged token, and a `title` on a hello frame is **deleted** rather
+  than sent: the relay ignores it, and a harness that could set one
+  would be testing the wrong half forever.
+- `tools/mutants/acc3a.json` — 12, all dead.
+
+**OWED, and it is the half a player can see: `ACC3b`.** The name layer
+does not draw either yet, and the account icon has no equip control on
+it. Nothing above reaches a screen until it does.
+
+### ACC3b — SHIPPED 2026-09-22: over a head, in both faces
+
+**`src/ui/playerBadge.js` is the one home, and it is deliberately NOT in
+`identityToken.js`.** That module owns what EXISTS and is in the relay
+bundle, where a word of presentation costs a `RELAY_VERSION` bump and
+drops every connected player — and the relay has no opinion about gold.
+So the vocabulary is imported from there and the appearance lives here,
+where it can be changed for nothing. A pin WALKS `TITLES` and `GLYPHS`
+and requires an entry for every member, so a third title added to the
+token cannot reach a screen as a blank.
+
+**A glyph has TWO spellings and it is written down.** The enhanced DOM
+layer can draw a sprouting plant; the classic bitmap pass draws through
+a Daggerfall font and puts *nothing* on screen for a glyph that font
+lacks — ACC1d-MARK learned that with a tick, one slice earlier. So each
+glyph carries an SVG `path` for the face that can, and a one-character
+`mark` inside FONT0003's own range for the face that cannot. The limit
+is stated rather than left to be found: **this container has no ARENA2,
+so the real font is not read by any pin — the range is.**
+
+A title has ONE spelling, because it is a word, and both faces draw a
+word. Only its colour is spelled twice (an RGBA array, `cssRgba` for the
+DOM), which is exactly how SOC4's party green already crosses that seam.
+
+**The title's colour is not `colorOf`'s.** SOC4 owns the NAME's green;
+gold IS the Founder title. Either painted over the other erases a
+distinction somebody asked for, so they are two labels with two owners
+and a mutant holds the line.
+
+**`readBadge` is the inverse of `badged`, and lives beside it** in
+`wire.js` — the client's half of one field, so a badge cannot be written
+one way and understood another. The relay never calls it (it reads a
+badge out of a verified token, never off the wire); it is there because
+the alternative is a second spelling of one law in `net/online.js`. It
+CHECKS the vocabulary, because what arrives is a stranger's word: the
+relay only sends what a signature carried, so anything else is a relay
+that is older, newer, or not ours.
+
+- `src/ui/playerBadge.js` — new. The words, the colours, the marks, the
+  paths; `titleBadge`, `glyphBadges`, `glyphMarks`.
+- `src/net/wire.js` — `readBadge`; `RELAY_VERSION` world87 → **world88**.
+- `src/net/online.js` — the peer carries the badge, wears the NEWEST
+  hello's including none, and the remembered introduction keeps it so a
+  socket blip does not strip every title in the room.
+- `src/net/remotePlayers.js` — the badge rides the POINT (a fact about
+  the peer, unlike `colorOf`); the classic pass draws the title on its
+  own line above and the glyphs inside the centred run.
+- `src/ui/nameLayer.js` — `.dfname-title` above the row, `.dfname-glyphs`
+  after the name, the run rebuilt only when the badge changes.
+- `test/acc3badge.test.js` — 8 pins. `tools/mutants/acc3b.json` — 12,
+  11 dead and 1 recorded equivalent.
+
+**THE CAMPAIGN CAUGHT THE PIN THAT WAS SUPPOSED TO HOLD THE DRIFT.** A
+badge beside a name widens the run the label is centred on, and a run
+measured without it walks every badged name half a badge off its own
+skull — NAME1's entire complaint, re-made sideways by the feature meant
+to decorate it. The first cut of that pin compared two centres with a
+four-pixel tolerance and the mutant walked straight through: a pin about
+drift that tolerated the drift. The left edge is DERIVED now, through
+the same `measureText` the draw uses and at the point's own perspective
+scale — half the WHOLE run left of the head, and demonstrably not half
+the name.
+
+**And the recorded equivalent is honest rather than convenient.** The
+client's glyph bound (`glyphs.length >= GLYPHS_MAX`) is unreachable by
+construction: the duplicate test over a closed vocabulary already
+implies it, and `GLYPHS_MAX` is that vocabulary's own length. It stays
+because it is the TOKEN's bound restated at the client's door, for the
+day somebody relaxes the duplicate test — AUDIT-PW P2 is the standing
+example of why keeping such a guard is right.
+
+### ACC3c — SHIPPED 2026-09-22: the control, and the roster
+
+> Players can tap the account icon to equip 1 feature along with
+> signing out.
+
+Where he put it. The signed-in card gains a **Title** row of the titles
+this account holds, and a **Glyphs** row beside it that is not pressable.
+
+**THE CLIENT DOES NOT DECIDE WHAT IS HELD.** The grant is derived at the
+service and can lapse *between the card being drawn and the button being
+pressed* — a handle taken off `DEVELOPER_HANDLES` is the real case — so
+the flow asks and takes the service's answer **whole**, including a
+`titles` list that shrank in the same breath as the write. A client that
+patched its own copy would go on offering a title nobody grants any more.
+
+**Pressing the one already worn takes it off**, because a picker whose
+only route to wearing nothing is a second button is a button that does
+nothing most of the time — and Mac asked for one control.
+
+**And the glyphs are not buttons.** A glyph is *true* of an account —
+the sprout is its age, the dev mark is a grant — so nothing equips one,
+and a control that cannot be operated is worse than a fact that never
+offered to be. A pin reads the source to hold that.
+
+### The card almost broke ACC1e's own rule, and the pin caught it
+
+`ui/enhancedAccount.js` **may not style itself** — enhancedStyle.js's
+header says why: *two copies of a design language is how the front door
+and the rooms behind it drift apart*. The first cut of this slice wrote
+`style.color` straight off the badge table, and ACC1e's pin went red.
+
+It was right, and the fix is better than what it refused: the card
+writes a **class**, and `enhancedStyle.js` emits one rule per title and
+per glyph from `badgeCss()`, **walked out of the vocabulary**. The gold
+on this card and the gold over a head are now one fact, and a third
+title gets a colour without anybody remembering to write one.
+
+`cssRgba` moved to `ui/playerBadge.js` with `ui/nameLayer.js`
+re-exporting it — three surfaces cross that seam now, and a stylesheet
+may not import a layer that drags the whole remote-player pass in behind
+it. SOC4's pin that the party green survives the trip is untouched,
+deliberately: moving that import would be a change to SOC4's seam for a
+reason that is not SOC4's.
+
+### The roster wears it too, and MY OWN ROW is the one that mattered
+
+A roster is a list of names, and a name wears a title everywhere else it
+is drawn — a bare one here is the same name saying two things on one
+screen. **The relay never sends me my own roster entry**, so my row is
+built from the session, and without the badge there the one name a
+player looks at most would be the only one in the list with no title on
+it. That is ACC1d-MARK's shape a third time: a signal true for everybody
+but you reads as a fault in your own account.
+
+It goes through `readBadge`, not a second spelling of the check. And it
+is **in the repaint key** — that list redraws only when the key moves
+(SOC3 put the open menu there for the same reason), so a title equipped,
+or a sprout aged past two weeks, would otherwise stay correct in the
+model and wrong on screen until somebody else joined the room.
+
+- `src/net/accountClient.js` — `equipTitle`; `not-held` and `no-title`
+  in the refusal table, two sentences because they are two situations.
+- `src/ui/accountFlow.js` — `wardrobe` beside `account`, and `equip`.
+- `src/ui/enhancedAccount.js` — the picker, `GLYPH_LABEL`.
+- `src/ui/enhancedStyle.js` — the wardrobe's rules, plus `badgeCss()`.
+- `src/ui/playerBadge.js` — `cssRgba`, `badgeClass`, `badgeCss`.
+- `src/net/roster.js`, `src/ui/chatPanel.js` — the badge on a row.
+- `test/acc3wear.test.js` — 10 pins. `tools/mutants/acc3c.json` — 12,
+  all dead.
+
+**THE CAMPAIGN CAUGHT A FIXTURE THAT PROVED NOTHING.** The pin for *"the
+flow takes the service's answer whole"* had the service answer exactly
+what a local patch would have produced, so the mutant that patches
+locally walked through it. The fixture now answers a wardrobe that
+**shrank** — the developer grant gone, the dev glyph with it — which is
+the real shape of the case and kills it.
+
+**STILL OWED: `DEVELOPER_HANDLES` ships empty.** Nobody holds the
+Developer title until a handle is written into it. Mac (2026-09-22):
+*"Ill have provide developer names once all our accounts are created."*
+
+---
+
+## RED1 — the server speaking (2026-09-22)
+
+> Before we merge after everything, I want to set up a red text system
+> (kind of like warframe) where I can message chat as the server before
+> we merge.
+
+Warframe's red text: the developer says something to everybody at once,
+and everybody can tell it is not a player saying it.
+
+### D1 — A LINE THAT LOOKS OFFICIAL IS THE MOST VALUABLE FORGERY HERE
+
+*"The relay is restarting in 5 minutes."* *"There is a duplication bug,
+log out now."* *"The developers are giving away X — click this."* Every
+one of them costs a player something, and every one is free to whoever
+can make a line look like the server.
+
+So the authority is **a signature and nothing else**, and it is a
+signature this arc already mints: `a.glyphs` on the socket's attachment,
+written by `_named` out of the verified token claims and writable by
+nothing else on that socket.
+
+**The right to speak as the server is the same fact as the dev mark
+beside the name.** Granted by a handle in `DEVELOPER_HANDLES`, revoked
+by taking it off — within one token's life, with nothing to clear
+anywhere, because the grant was never stored.
+
+### D2 — NO SECOND CREDENTIAL, and that is the point
+
+An admin password, a `/v1/broadcast` route, a separate signing key —
+each was available and each is **another thing that can leak and another
+thing somebody has to remember to revoke**. The one already here is
+audited, already signed, and already expires.
+
+The client never asks whether it may. Whether a socket can do this is a
+question about a signature and only the relay holds the key, so a check
+in `scenes/world.js` would be a second copy of an authority this side
+does not hold — wrong the moment a grant lapses or arrives, and
+protecting nothing.
+
+### D3 — its own frame type, and no speaker
+
+```
+client -> relay:  {t:'say',  text}        shape checked by wire.js, nothing more
+relay  -> all:    {t:'red',  text, at}    no id, no name
+```
+
+`net/chat.js`'s note beside `system` says why a notice must not be
+recognised by a **name**: the relay lets a player call themselves
+anything the filter allows, so a notice known by the string *"Server"*
+would be one rename away from a player announcing a fake restart.
+
+This is one step stronger. A flag on a chat line would be a **field**,
+and a player can put a field on a frame. Its own frame type is something
+a player cannot send at all, so the client marks the line from the type
+and **there is nothing on it to forge**. It carries no id and no name
+because nobody is speaking it — and that makes it a system line by
+construction, which keeps every reader that already understands system
+lines correct without being told (`bubbleLineOk` would otherwise hang a
+chat bubble over the head of a peer whose id is the empty string).
+
+### D4 — rated, and refused in silence
+
+`RED_HZ_MAX` is its own bucket, under `CHAT_HZ_MAX`: a player's line
+reaches a room, this reaches **every player in the game**. The grant says
+who may speak and the bucket says how often; an authority with no rate is
+one careless account away from an outage.
+
+A player who sends `say` is **ignored, not refused**. A refusal would
+tell a stranger the frame exists and is worth attacking.
+
+### THE PINS CAUGHT A FEATURE THAT WOULD HAVE SHIPPED DEAD
+
+`RED_HZ_MAX` was first written as **0.5** — "one every two seconds",
+which reads perfectly well. `tokenGate` starts a fresh bucket with
+`rate` tokens and a pass costs a whole one, so **at any rate below 1 the
+first frame is refused and so is every frame after it.** Red text would
+have been silently non-functional, in a slice whose entire point is
+being able to say something when it matters.
+
+It is 1 now; a pin holds the floor with the reason on it; and the
+constraint is written at **`tokenGate`'s own door**, so the next slice
+that wants "one every ten seconds" meets it before shipping rather than
+after. That needs a different shape — a stamp of the last pass, not a
+bucket — and whoever needs one should write that rather than pass a
+fraction.
+
+### SHIPPED 2026-09-22
+
+- `src/net/wire.js` — `RED_HZ_MAX`, `redGate`, the `say` frame;
+  `RELAY_VERSION` world88 → **world89**.
+- `server/src/index.js` — the grant, the bucket, the fan.
+- `src/net/online.js` — `sendRed`, `onRed`, gated coming in (CHAT-G).
+- `src/net/chat.js` — `red` on a line, and every red line a system line.
+- `src/scenes/world.js` — `/red <text>`, parsed and never guarded.
+- `src/ui/chatPanel.js` — `.dfchat-line.red`, not an italic aside: the
+  system's notices are asides and this is an announcement.
+- `test/red1_server_say.test.js` — 9 pins. `tools/mutants/red1.json` —
+  12, all dead.
+
+**It rides the ordinary log**, so `ChatLog.peek` draws it over the world
+for a player who never opens the panel. A broadcast nobody sees is not
+one.
+
+**HOW MAC USES IT:** sign in on an account whose handle is in
+`DEVELOPER_HANDLES`, open chat, type `/red <the announcement>`. It
+reaches everyone in the world channel — which is the one room every
+player is in (ROSTER-G), so it reaches everybody, including players
+down a dungeon. Until a handle is written into that config **nobody can
+send one, including Mac**.
+
+---
+
+## ACC-CAP — the outage the arc shipped, and why nothing caught it (2026-09-22)
+
+> The account service had a problem. Try again.
+
+Mac, minutes after the merge went live, trying to create the account he
+needed in order to send red text. **Every password route on the deployed
+service was answering 500** — register, login and recover — and had been
+since the moment they first deployed.
+
+### The cause
+
+**Cloudflare Workers refuses PBKDF2 above 100,000 iterations.**
+
+```
+NotSupportedError: Pbkdf2 failed: iteration counts above 100000
+are not supported
+```
+
+It is a DoS guard on their side. ACC1c chose **210,000** — OWASP's figure
+for PBKDF2-SHA256 — so every call to `hashPassword` and `verifyPassword`
+threw, the router's catch turned it into a logged 500, and the client
+showed its `server` sentence.
+
+Guest sign-in was fine throughout, which is the shape that gave it away:
+guests are hashed with **SHA-256** and never touch PBKDF2.
+
+### Why every gate was green — and this is the finding
+
+| | sees the cap? |
+|---|---|
+| `test/accountworker.test.js` (node) | no — node has no cap |
+| `tools/accountProbe.mjs` (**real workerd**) | **no — workerd has no cap either** |
+| `/v1/health` after deploy | no — it hashes nothing |
+| a human registering | **yes, immediately** |
+
+The cap is **production-only**. `wrangler dev`, Miniflare and node all
+run higher counts happily.
+
+**AUDIT-ACC F2 built that probe on the lesson that IMPORTABILITY IS NOT
+DEPLOYABILITY** — the suite was green over a Worker that could not boot,
+because the tests imported the very names workerd rejected. The probe
+answered that by standing the service up in a real workerd.
+
+**This is the same lesson one rung further out: LOCAL WORKERD IS NOT
+CLOUDFLARE.** A probe in workerd proves the code runs. It does not prove
+the platform will *allow* it. And the probe did not merely miss this — it
+**measured it and passed**, printing *"PBKDF2 at 210,000 costs 36ms
+there"* against a runtime that was never going to enforce the limit.
+
+**A pin was actively holding the broken value.** `accountworker.test.js`
+asserted `PBKDF2_ITERS >= 210_000`, *"below OWASP's current figure for
+this pairing"*. It now holds the **platform's** bound instead, because a
+number the runtime will not execute protects nobody.
+
+### What it costs, said plainly
+
+100,000 is below OWASP's recommendation (600,000 for PBKDF2-SHA256) and
+below the 210,000 this arc chose. It is the most Cloudflare will run, so
+the honest options were this or a different KDF, and a different KDF is
+not a thing to design during an outage.
+
+**It is not stuck here.** The stored form is self-describing
+(`pbkdf2-sha256$<iters>$<salt>$<derived>`) and `needsRehash` upgrades a
+row on its owner's next correct login — ACC1c built for exactly this. The
+work factor can be bought back later by **chaining two capped
+derivations**, with nobody logged out. And there was nothing to migrate:
+**register had never once succeeded**, so no row was ever written at the
+old cost.
+
+### The gate that would have caught it, now standing
+
+`account-deploy.yml` verified `/v1/health`, which proves the Worker is up
+and serving this version and **nothing about whether it works**. It now
+makes the one request no local runtime can fake: **a real registration
+against the deployed Worker on Cloudflare** — a throwaway handle and a
+guest row that costs nothing. A 500 there fails the deploy instead of a
+player.
+
+- `server-account/src/password.js` — `PBKDF2_CAP`, and `PBKDF2_ITERS`
+  set to it, with the whole story at the constant.
+- `test/accountworker.test.js` — the pin re-aimed at the platform bound.
+- `tools/accountProbe.mjs` — asserts the cap as well as the cost, and
+  says out loud that it cannot see the ceiling.
+- `.github/workflows/account-deploy.yml` — the registration smoke test.
+- `tools/mutants/acc1c.json`, `acctprobe.json` — both anchors re-aimed.
+
+**THE DEPLOY THAT FIXES THIS DROPS NOBODY.** It is `server-account/`
+only — the two-Worker split earning its keep on the day after the one
+that dropped the whole room.
+
+---
+
+## NAME-ADOPT — the one person who could not see their own name (2026-09-22)
+
+> 1. The top right corner button doesnt update with name
+> 2. Ingame your name shows for other people but you still see your
+>    character name in the chat menu
+
+The first hour the arc was live, and the first account anybody made.
+
+### One cause, two symptoms — and a third nobody had reported
+
+The account service **issues** a name. The relay takes it out of the
+token and shows it to everybody **else**. And this device **never took it
+in for itself**:
+
+- **Bug 1.** `register` answers the handle and a recovery code — *not* a
+  session. So the session this device keeps was still written with the
+  **guest's** name, and the top-right button reads the stored session.
+- **Bug 2.** The online session was built from the **character's** name,
+  under a comment that said it *"is carried no further"*. It was carried
+  further: into the session's own `name`, which the chat roster draws
+  **my** row from.
+- **Bug 3, unreported.** The same thing on the badge. ACC3c built my own
+  roster row from the session, and nothing had ever put a title on the
+  session — so the first developer to equip one would have seen it on
+  every screen but their own.
+
+So everybody in the room read `Lattymoy`, and the one person who did not
+was Lattymoy.
+
+**And the answer was in hand the whole time.** `accountTokenMinter` kept
+`answer.data.token` and dropped `name`, `kind`, `title` and `glyphs`
+lying right beside it.
+
+### The law
+
+**The issued identity is the service's answer, and this device adopts it
+wherever the service states it** — `/v1/account` and every
+`/v1/auth/token`. One door writes it back (`adoptIdentity`), and the live
+sessions take it in the same breath.
+
+The door **never creates a session** — an answer landing after a sign-out
+must not resurrect one — never touches the secret or the id, and writes
+nothing when nothing changed, because a mint happens on every connect and
+a store write is an event every open tab hears.
+
+A host whose display seam throws **does not cost the hello its token**.
+Since ACC1g a tokenless hello is refused, so a bug in how a name is
+*drawn* would otherwise be a player who cannot *connect*.
+
+### And the comment that caused it
+
+It read *"fills the frame's shape and is carried no further. ACC1g-b
+takes the field off the wire, in this same deploy."* Both halves were
+false: the name went into the session, and ACC1g-b never happened —
+`wire.js` still requires a name on a hello and the relay still ignores
+it. Corrected where it stood rather than left for the next reader to
+believe.
+
+- `src/net/accountClient.js` — `adoptIdentity`; the minter adopts and
+  calls `onIssued`, still returning the token alone.
+- `src/ui/accountFlow.js` — `start()` adopts what `/v1/account` says.
+- `src/net/online.js` — `adoptIdentity` on the session, through
+  `sanitizeName` and `readBadge`.
+- `src/scenes/world.js` — the session starts from the stored issued
+  name; every mint corrects the presence session and every chat link.
+- `test/nameadopt.test.js` — 7 pins, **each bug reproduced before it is
+  shown fixed**. `tools/mutants/nameadopt.json` — 11, all dead.
+
+**Client-only — no relay change, no account-service change.** It ships
+with the site build and drops nobody.
