@@ -92,17 +92,7 @@ and a lit lantern is stowed with "You can't hold a light source right
 now" unless `RelaxedLanterns`; a sheathed player is not told. A hand
 freed lights the remembered light again.
 
-**The `== LeftOnly` quirk.** IL 0x2d1a compares the right slot's
-`GetItemHands()` to 2 (LeftOnly). A two-hander answers Both (4), so the
-`RelaxedTwoHandedWeapons` arm - the off-hand taken only while attacking
-- fires on nothing a right hand holds: a claymore in the right leaves
-the left free, relaxed or not, and the relaxed switch changes nothing.
-Weapon Widget's mirror overrides have the same compare (WW1 records
-it). Kept exactly; the port's `ITEM_HANDS` table (None 0, RightOnly 1,
-LeftOnly 2, Either 3, Both 4) is the word - the DFU enum's declaration
-could not be fetched this session, and `GetItemHands` answers Both for
-the two-handers and LeftOnly for shields as the port's `equip.js` has
-it.
+**~~The `== LeftOnly` quirk~~ - A MISREAD, CLOSED BY 3ARMS (2026-09-22).** IL 0x2d1a compares the right slot's `GetItemHands()` to 2, and this record read 2 through the PORT's own `ITEM_HANDS` table (None 0, RightOnly 1, LeftOnly 2, Either 3, Both 4) because the DFU declaration could not be fetched that session. It has been now: `DaggerfallUnityEnums.cs:526-533` declares `None, Either, Both, LeftOnly, RightOnly`, so 2 is BOTH, and the mod's own source says it in words - `GetItemHands(itemRightHand) == ItemHands.Both //if right hand item is two-handed, occupy the other hand even if free` (HandheldTorches.cs:1323; the left slot's arm at :1311 is the same compare beside the bow). The arm fired on nothing for as long as the port had it: a lit torch stood beside every staff, claymore and warhammer, never stowed for a swing, and the relaxed switch changed nothing. See 3ARMS below for what changed; Weapon Widget's mirror overrides carried the same misread (WW1 records it, and 3ARMS closed it there too).
 
 ## The keys and the actions
 
@@ -675,3 +665,40 @@ lane". Giving them a real one means attaching a torch mesh to a hand
 bone, and the port reads WEAP, ARMO and CLOT records but not **LIGH**:
 lights are a record kind it has never needed. That is a slice of its
 own, the size of the original weapon work, and it is not started.
+
+## 3ARMS + TORCH-BIND - THREE ARMS ON SCREEN, AND THE KEYS NOBODY COULD REBIND (2026-09-22, Discord bug-reports through Mac)
+
+Ignatious: "Torch and a Two-Handed weapon simultaneously" - a lit torch in the left hand beside a two-armed
+two-hander sprite. teuton: "No option to rebind Handheld Torches actions".
+
+**3ARMS.** The IL's `GetItemHands() == 2` is `ItemHands.Both` in DFU's own enum (the quirk paragraph above, struck).
+`updateFreeHand` reads the mod's law now, from its published source (HandheldTorches.cs:1296-1340): a Both-handed
+item or a bow in the LEFT slot takes the right hand; an empty left hand you are punching with (`!UsingRightHand`,
+:1315) is in use, the arm the port had missed beside the bare right's (0x2d53); a two-hander in the RIGHT slot takes
+the off hand - always under strict, and for a bow or while a swing is in flight under `RelaxedTwoHandedWeapons`
+(:1325-1332; `attacking` is the machine off Idle, as the port already read it). HT7's departure stands: what is
+worn takes a hand sheathed or drawn, so "both hands free" is the sheathed stance with nothing worn. Weapon Widget's
+`mirrorOverride` (FPSWeaponClone.cs:2378, the same `== ItemHands.Both`) compares to Both too, so the three
+`Miscellaneous.MirrorTwoHanded*` switches do what they say.
+
+**The FOURTH departure from the mod's shipped keys:** `Handling.RelaxedTwoHandedWeapons` ships OFF (the mod: on).
+Relaxed, the mod shows the torch hand beside a RESTING two-hander - three arms with the classic sprites, in DFU too -
+and stows it only for the swing; HT7 already decided that a held weapon is held, so a held two-hander takes both
+hands and the light stows (remembered, re-lit when the weapon comes off) until the player flips the switch, which
+the tile drawer offers now. Existing players get the new default: the mod store persists only what a player set.
+
+**TORCH-BIND.** The three TextKeys (`Handling.ToggleLightInput`, `Handling.ManualDropInput`,
+`Throwing.ThrowTorchInput`) are the mod's own key store, read raw by the hosts (`keyDown`), never registry actions
+(QS4's reasoning stands: `QuickOffHand` is the registry's door to the toggle). The Mods pane that captured them went
+with FT14, and its replacement - the tile drawer - draws only `MOD_CURATED`, which named none of them: the capture
+row existed, the persistence existed, nothing drew it. Curated now, with the relaxed switch; and the same class
+closed for Eye Of The Beholder's `Camera.SwitchShoulder` / `AutoTogglePerspective.ToggleInput` and Travel Options'
+`RoadsIntegration.FollowPathsCustomKeyBind`, the other TextKeys a module reads. The Controls page's Continue - the
+half of the report that was not a bug, "if you scroll up after rebinding, there should be a Continue" - is in
+UI-Arc.md's DISCORD5 record.
+
+Pins: `test/ht1_handheldtorches.test.js` (the hand table under the mod's law - strict, relaxed at rest, relaxed in a
+swing, the punching left hand, both-free-only-sheathed; the fourth departure in the defaults table),
+`test/audit66_handheldtorches.test.js` (the punching hand), `test/ww1_weaponwidget.test.js` (a claymore mirrors
+under its switch), `test/discord5.test.js` (both compares by source, the relaxed default, every read TextKey in its
+tile). `tools/mutants/discord5.json`: 20 records, 20 dead. Not verified in a browser.

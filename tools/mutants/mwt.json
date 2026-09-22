@@ -112,8 +112,8 @@
   {
     "name": "HT7-the-sheathed-stance-frees-a-worn-left-hand-again",
     "file": "src/systems/handheldTorches.js",
-    "old": "    if (left) {\n      w.handLeft = false;\n      if (getItemHands(left) === ITEM_HANDS.LeftOnly) { if (!usingRightNow) w.handLeft = false; }\n      else if (isBow(left)) w.handRight = false;\n    }",
-    "new": "    if (left && !sheathedNow) {\n      w.handLeft = false;\n      if (getItemHands(left) === ITEM_HANDS.LeftOnly) { if (!usingRightNow) w.handLeft = false; }\n      else if (isBow(left)) w.handRight = false;\n    }",
+    "old": "    if (left) {\n      w.handLeft = false;\n      if (getItemHands(left) === ITEM_HANDS.Both || isBow(left)) w.handRight = false;\n    }",
+    "new": "    if (left && !sheathedNow) {\n      w.handLeft = false;\n      if (getItemHands(left) === ITEM_HANDS.Both || isBow(left)) w.handRight = false;\n    }",
     "tests": [
       "test/ht6_offhand.test.js",
       "test/ht1_handheldtorches.test.js"

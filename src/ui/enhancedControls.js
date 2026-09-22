@@ -135,7 +135,7 @@ const QUICKSLOT_ROWS = Object.freeze([
   Object.freeze({ action: 'QuickUse2', label: 'Use quickslot 2' }),
   // QS6: the SPELL slot, beside the two consumables it behaves like -
   // a tap readies, a hold cycles the book.
-  Object.freeze({ action: 'QuickSpell', label: 'Ready quickslot spell' }),
+  Object.freeze({ action: 'QuickSpell', label: 'Ready quickslot spell (hold to cycle the book)' }),   // HOTSLOT: the hold was said nowhere
   // QS6: the swap keeps its row and its rebind; what it lost is the
   // default key, so a player who wants one of their own comes here.
   Object.freeze({ action: 'QuickSwap', label: 'Swap weapon' }),
@@ -484,4 +484,13 @@ export function paneControls(body, { render = () => {} } = {}) {
   // and because the classic window - which this pane is the skin of - has no
   // place for it at all: the enhanced window is the one door to rebinding F.
   for (const g of PORT_GROUPS) group(body, g.title, g.rows.map((r) => [r.action, r.label]));
+  // TORCH-BIND (2026-09-22, a player: "Keybind changes do not stick?" -
+  // the one Continue sat 53 rows above the row they had just bound, and
+  // leaving dropped the change): the head card is sticky now, and the
+  // list closes on a second Continue, the same applyAndSave.
+  const foot = el('div', 'card ctl-foot');
+  const cont2 = el('button', 'act primary ctl-continue ctl-continue-foot', 'Continue');
+  cont2.onclick = act(applyAndSave);
+  foot.append(cont2);
+  body.append(foot);
 }

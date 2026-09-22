@@ -330,18 +330,29 @@ export function createHandheldTorches({
     // and the ONE clause that stays stance-bound is the mod's own bare
     // right hand "in use" (0x2d53): an empty hand you are not swinging
     // with is free, which is what lets a weaponless player carry a light.
+    // 3ARMS (2026-09-22, a player on Discord: "Torch and a Two-Handed
+    // weapon simultaneously" - three arms on screen): the IL's
+    // `GetItemHands() == 2` was read as LeftOnly because the port's own
+    // ITEM_HANDS numbering puts LeftOnly at 2. DFU's enum is declared
+    // None, Either, Both, LeftOnly, RightOnly (DaggerfallUnityEnums.cs
+    // :526-533), so 2 is BOTH - and the mod's source says it in words:
+    // `GetItemHands(itemRightHand) == ItemHands.Both //if right hand
+    // item is two-handed, occupy the other hand even if free`
+    // (HandheldTorches.cs:1323). The arm fired on nothing for as long
+    // as the port has had it, so a lit torch stood beside every staff,
+    // claymore and warhammer, and never stowed for a swing. The left
+    // slot's arm (:1311) is the same compare: a Both-handed item or a
+    // bow in the left takes the right.
     if (left) {
       w.handLeft = false;
-      if (getItemHands(left) === ITEM_HANDS.LeftOnly) { if (!usingRightNow) w.handLeft = false; }
-      else if (isBow(left)) w.handRight = false;
-    }
+      if (getItemHands(left) === ITEM_HANDS.Both || isBow(left)) w.handRight = false;
+    } else if (!sheathedNow && !usingRightNow) w.handLeft = false;   // bare left hand, in use for punching (:1315) - stance-bound like the right's below
     if (right) {
       w.handRight = false;
-      // IL 0x2d1a: `GetItemHands() == 2` (LeftOnly) - a two-hander
-      // answers Both (4), so the relaxed-two-hander arm below fires
-      // on nothing a right hand holds; kept exactly as the mod has it
-      if (getItemHands(right) === ITEM_HANDS.LeftOnly) {
-        if (w.s.twoHandedRelaxed) { if (isBow(right)) w.handLeft = false; else if (w.attacking) w.handLeft = false; }
+      if (getItemHands(right) === ITEM_HANDS.Both) {
+        // RelaxedTwoHandedWeapons: the off hand is taken for a bow, or
+        // while a swing is in flight; strict: always (:1325-1332)
+        if (w.s.twoHandedRelaxed) { if (isBow(right) || w.attacking) w.handLeft = false; }
         else w.handLeft = false;
       }
     } else if (!sheathedNow && usingRightNow) w.handRight = false;   // bare right hand, in use (0x2d53) - and only with the weapon up

@@ -93,7 +93,7 @@ mirror and clip laws are untouched.
 | `get_offsetSpeedLive` (0x284) | `offsetSpeedLive` | LiveSpeed / 100 * offsetSpeed. |
 | `GetAnimTickTime` (0x2a90) | `widgetAnimTickTime` | A bow's 0.0625, FormulaHelper's melee tick; with Swings on the remap `Lerp(0.045918, 0.352041, InverseLerp(0, 2, t / 0.198979))` - the bow's branch lands on the swing test too. |
 | `OverrideAlignment` (0x3440) | `overrideAlignment` | StrikeDown / StrikeUp of anything but bow, bare hands, dagger, warhammer: drawn centred, the inner edge on the middle. The werecreature is NOT exempt. |
-| `CheckForMirrorOverride` (0x34c0) | `mirrorOverride` | `GetItemHands() == 2` (LeftOnly); a two-hander answers Both, so the three Miscellaneous mirrors fire on nothing a hand can hold - kept as the mod has it, pinned. |
+| `CheckForMirrorOverride` (0x34c0) | `mirrorOverride` | `GetItemHands() == 2` - and 2 is `ItemHands.Both` in DFU's enum (FPSWeaponClone.cs:2378 says it in words); the port had read it as its own LeftOnly and the three Miscellaneous mirrors fired on nothing until 3ARMS (2026-09-22, Handheld-Torches.md) - a claymore mirrors under its switch now, pinned. |
 | `CheckForOffsetOverride` (0x35a4) | `offsetOverride` | Everything but bare hands and the werecreature leans. |
 | `CheckForRecoveryOverride` (0x35d8) | `recoveryOverride` | A StrikeUp of anything but a dagger recovers in reverse. |
 | `PlaySheatheSound` (0x31b0) | `playSheatheSound` | SoundClips 417 at the sheathe edge. |
