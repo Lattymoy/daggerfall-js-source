@@ -138,5 +138,85 @@
       "test/accountdeploy.test.js"
     ],
     "note": "A second home for a fact that already has one. A rename in the config leaves the workflow creating the wrong bucket, and the Worker then will not start - which is SLAM13's shape and the exact thing AUDIT-ACC F16 paid for on the host."
+  },
+  {
+    "name": "ACC2b-15-the-card-is-not-sent-first",
+    "file": "src/systems/cloudSaves.js",
+    "old": "  const card = await ask(io, slotPath(characterId, saveName), {",
+    "new": "  const card = await ask(io, slotPath(characterId, saveName) + '?skip', {",
+    "tests": [
+      "test/cloudsaves.test.js"
+    ],
+    "note": "The card is what CREATES the slot, and the service refuses a blob no row names. A push whose card never lands fails its own next call for ever - and the failure reads as a service fault rather than a client one."
+  },
+  {
+    "name": "ACC2b-16-a-legacy-card-is-pushed-under-an-empty-character",
+    "file": "src/systems/cloudSaves.js",
+    "old": "  if (!characterId) return { ok: false, error: 'no-character' };",
+    "new": "  if (false) return { ok: false, error: 'no-character' };",
+    "tests": [
+      "test/cloudsaves.test.js"
+    ],
+    "note": "CHARID1: a card written before characters had ids. Without the check the slot is filed under an empty id, which the service's own matcher refuses - so the player is told 'the game may need updating' about a save that simply has not been loaded yet."
+  },
+  {
+    "name": "ACC2b-17-already-here-is-reported-as-a-failure",
+    "file": "src/systems/cloudSaves.js",
+    "old": "  if (r.skipped) return { ok: true, key: null, skipped: true };",
+    "new": "  if (false) return { ok: true, key: null, skipped: true };",
+    "tests": [
+      "test/cloudsaves.test.js"
+    ],
+    "note": "SP1's law skips a save the store already holds. A player who presses Restore on a save they already have has lost nothing, and an error there is a lie that sends them looking for a bug."
+  },
+  {
+    "name": "ACC2b-18-a-blip-signs-the-player-out",
+    "file": "src/systems/cloudSaves.js",
+    "old": "    if (error === 'auth') forgetSession(io.storage);",
+    "new": "    forgetSession(io.storage);",
+    "tests": [
+      "test/cloudsaves.test.js"
+    ],
+    "note": "accountClient.js's law, reached through this module: `rate`, `no-storage` and `offline` say nothing about whether the credential is good, and a guest meeting the save wall would be signed out for being a guest."
+  },
+  {
+    "name": "ACC2b-19-the-shot-is-sent-even-when-there-is-none",
+    "file": "src/systems/cloudSaves.js",
+    "old": "  if (slot.shot) shot = await ask(io, slotPath(characterId, saveName, 'shot'), { method: 'PUT', raw: slot.shot });",
+    "new": "  shot = await ask(io, slotPath(characterId, saveName, 'shot'), { method: 'PUT', raw: slot.shot ?? '' });",
+    "tests": [
+      "test/cloudsaves.test.js"
+    ],
+    "note": "A save without a capture is ordinary - saveSlots.js drops the stale picture on an overwrite without one. An empty PUT spends a round trip to store nothing and makes `shotBytes` lie about a thumbnail that does not exist."
+  },
+  {
+    "name": "ACC2b-20-a-save-name-is-pasted-into-the-path",
+    "file": "src/systems/cloudSaves.js",
+    "old": "  `/v1/saves/${encodeURIComponent(characterId)}/${encodeURIComponent(saveName)}${part ? `/${part}` : ''}`;",
+    "new": "  `/v1/saves/${characterId}/${saveName}${part ? `/${part}` : ''}`;",
+    "tests": [
+      "test/cloudsaves.test.js"
+    ],
+    "note": "A save name is the player's own words - 'before the lich' has spaces, and a name with a slash addresses another slot's part. The service's matcher decodes exactly what this encodes."
+  },
+  {
+    "name": "ACC2b-21-a-signed-out-device-gets-an-io-anyway",
+    "file": "src/systems/cloudSaves.js",
+    "old": "  if (!session) return null;",
+    "new": "  if (false) return null;",
+    "tests": [
+      "test/cloudsaves.test.js"
+    ],
+    "note": "Not signed in is the ordinary state of most players, not an error - and an io built from a session that is not there reads `secret` off null on the connect path."
+  },
+  {
+    "name": "ACC2b-22-this-side-shadows-a-refusal-the-service-owns",
+    "file": "src/systems/cloudSaves.js",
+    "old": "  'no-save': 'That save is not on this device.',",
+    "new": "  'no-save': 'That save is not on this device.',\n  'too-many-saves': 'No more saves.',",
+    "tests": [
+      "test/cloudsaves.test.js"
+    ],
+    "note": "One word, one sentence. A table here that shadows a word the service can send means a player meets two different sentences for one refusal, depending on which module happened to translate it."
   }
 ]

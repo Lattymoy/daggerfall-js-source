@@ -451,3 +451,292 @@ test('ACC2: with no bucket bound, a save route says so rather than pretending', 
   // service that is half up says which half.
   assert.equal((await call('GET', '/v1/saves', undefined, me.secret)).status, 200);
 });
+
+// ════════════════════════════════════════════════════════════════════
+// ACC2b — THE CLIENT HALF.
+//
+// `systems/cloudSaves.js` is pure over {fetch, storage}, so a whole
+// push and pull is driven here against a fetch that answers THE REAL
+// SERVICE - not a stub of it. The `service()` helper below wires the
+// real Worker to a fetch-shaped function, so these pins are an
+// end-to-end round trip through the same code the deploy ships, which
+// is the only way a client pin can be more than a pin about a stub.
+// ════════════════════════════════════════════════════════════════════
+
+import {
+  cloudIo, cloudList, pushSlot, pullSlot, removeCloudSlot, localSlot,
+  slotPath as clientSlotPath, CLOUD_REFUSALS, cloudRefusalText,
+} from '../src/systems/cloudSaves.js';
+import { SESSION_KEY, REFUSALS } from '../src/net/accountClient.js';
+import { SAVE_DATA_PREFIX, SAVE_INFO_PREFIX, SAVE_SHOT_PREFIX } from '../src/systems/characterId.js';
+import { saveSlot, enumerateSaves } from '../src/systems/saveSlots.js';
+
+/** The slots a store really holds, by saveSlots.js's own enumeration -
+ *  SAV4's law that a slot is only real with its card, asked of the module
+ *  that owns it rather than by counting keys here. */
+const slotsIn = (storage) => [...enumerateSaves(storage).info.entries()].map(([key, info]) => ({ key, info }));
+
+/** Storage that behaves like appStorage: strings in, strings out, and
+ *  `length`/`key(i)` because saveSlots.js and saveTransfer.js sweep it. */
+function fakeStorage() {
+  const m = new Map();
+  return {
+    _map: m,
+    get length() { return m.size; },
+    key: (i) => [...m.keys()][i] ?? null,
+    getItem: (k) => (m.has(k) ? m.get(k) : null),
+    setItem: (k, v) => { m.set(k, String(v)); },
+    removeItem: (k) => m.delete(k),
+  };
+}
+
+/** The REAL Worker behind a fetch-shaped function. */
+function fetchOf(env) {
+  return (url, init) => worker.fetch(new Request(url, init), env);
+}
+
+const INFO = (over = {}) => JSON.stringify({
+  saveVersion: 3,
+  saveName: 'QuickSave',
+  characterName: 'Nystul',
+  dateAndTime: { gameTime: 123456, realTime: 1_758_400_000_000 },
+  dfuVersion: 'b123',
+  characterId: CHAR,
+  ...over,
+});
+const putLocal = (storage, key, over = {}, { data = '{"world":1}', shot = null } = {}) => {
+  storage.setItem(SAVE_DATA_PREFIX + key, data);
+  storage.setItem(SAVE_INFO_PREFIX + key, INFO(over));
+  if (shot) storage.setItem(SAVE_SHOT_PREFIX + key, shot);
+};
+
+/** A stand with a signed-in, registered account and a local store. */
+async function client() {
+  const { env, call, linked } = await stand();
+  const me = await linked('Nystul');
+  const storage = fakeStorage();
+  storage.setItem(SESSION_KEY, JSON.stringify({ id: me.id, name: me.name, kind: 'linked', sessionId: me.sessionId, secret: me.secret }));
+  const io = cloudIo({ fetch: fetchOf(env), storage });
+  return { env, call, me, storage, io };
+}
+
+test('ACC2b: a whole slot goes up and comes back down, through the REAL service', async () => {
+  const { storage, io } = await client();
+  const data = JSON.stringify({ world: 'x'.repeat(2000) });
+  const shot = 'data:image/jpeg;base64,/9j/4AAQSkZJRg==';
+  putLocal(storage, 0, {}, { data, shot });
+
+  const up = await pushSlot(io, storage, 0);
+  assert.equal(up.ok, true, up.error);
+  assert.equal(up.bytes, new TextEncoder().encode(data).byteLength);
+  assert.equal(up.shot, true);
+
+  const list = await cloudList(io);
+  assert.equal(list.ok, true);
+  assert.equal(list.saves.length, 1);
+  assert.equal(list.saves[0].characterId, CHAR);
+  assert.equal(list.saves[0].saveName, 'QuickSave');
+  assert.equal(list.saves[0].characterName, 'Nystul');
+
+  // ...ONTO A DIFFERENT DEVICE, which is the case that matters: an
+  // empty store, and the slot arrives whole.
+  const other = fakeStorage();
+  other.setItem(SESSION_KEY, storage.getItem(SESSION_KEY));
+  const down = await pullSlot(io, other, list.saves[0]);
+  assert.equal(down.ok, true, down.error);
+  assert.equal(other.getItem(SAVE_DATA_PREFIX + down.key), data, 'the save itself');
+  assert.equal(other.getItem(SAVE_SHOT_PREFIX + down.key), shot, 'and its screenshot');
+
+  // THE CARD IT REBUILDS IS THE ONE saveSlots.js READS. Not a shape
+  // invented here: the slot enumerates, under its own name, for its own
+  // character.
+  const slots = slotsIn(other);
+  assert.equal(slots.length, 1);
+  assert.equal(slots[0].info.saveName, 'QuickSave');
+  assert.equal(slots[0].info.characterId, CHAR);
+  assert.equal(slots[0].info.characterName, 'Nystul');
+  assert.equal(slots[0].info.dateAndTime.gameTime, 123456);
+});
+
+test('ACC2b: a download is SP1\'s import law and not a second merge rule', async () => {
+  const { storage, io } = await client();
+  putLocal(storage, 0, {}, { data: '{"a":1}' });
+  assert.equal((await pushSlot(io, storage, 0)).ok, true);
+  const card = (await cloudList(io)).saves[0];
+
+  // THE SAME SAVE, ALREADY HELD, IS SKIPPED RATHER THAN DOUBLED - SP1's
+  // law verbatim (same character, same slot name, same game minute),
+  // and the reason it exists is that a player pressed Restore twice.
+  const again = await pullSlot(io, storage, card);
+  assert.equal(again.ok, true, 'already here is not a failure');
+  assert.equal(again.skipped, true);
+  assert.equal(again.key, null);
+  assert.equal(slotsIn(storage).length, 1, 'nothing was doubled');
+
+  // A SLOT NEVER OVERWRITES ANOTHER. With slot 0 occupied by a
+  // DIFFERENT save, the arriving one takes the first free number.
+  const other = fakeStorage();
+  putLocal(other, 0, { saveName: 'elsewhere', dateAndTime: { gameTime: 9, realTime: 9 } });
+  const down = await pullSlot(io, other, card);
+  assert.equal(down.ok, true);
+  assert.notEqual(down.key, 0, 'it took a free number rather than the one it wanted');
+  assert.equal(slotsIn(other).length, 2, 'both saves are there');
+
+  // DERIVED: the module really goes through saveTransfer rather than
+  // writing the three keys itself, which is what makes the law above
+  // one law instead of two.
+  const s = src('src/systems/cloudSaves.js');
+  assert.match(s, /import \{ importSlots \} from '\.\/saveTransfer\.js'/);
+  assert.match(s, /importSlots\(/);
+  assert.doesNotMatch(s.split('export async function pullSlot')[1] ?? '', /setItem\(/, 'the pull writes the store through the carrier, never around it');
+});
+
+test('ACC2b: the card goes FIRST, the shot is optional, and the credential is only ever a header', async () => {
+  const { env, storage } = await client();
+  const seen = [];
+  const io = cloudIo({
+    fetch: (url, init) => { seen.push({ url, init }); return fetchOf(env)(url, init); },
+    storage,
+  });
+  putLocal(storage, 0, {}, { shot: 'data:image/jpeg;base64,AAAA' });
+  assert.equal((await pushSlot(io, storage, 0)).ok, true);
+
+  // THE ORDER IS THE LAW: the card creates the slot, and the service
+  // refuses a blob that no row names. A push that sent the data first
+  // would fail its own first call for ever.
+  assert.deepEqual(seen.map((c) => c.url.replace(/^[^/]*\/\/[^/]*/, '')), [
+    clientSlotPath(CHAR, 'QuickSave'),
+    clientSlotPath(CHAR, 'QuickSave', 'data'),
+    clientSlotPath(CHAR, 'QuickSave', 'shot'),
+  ]);
+  for (const c of seen) {
+    assert.equal(c.init.method, 'PUT');
+    assert.equal(c.init.headers.authorization, 'Bearer ' + JSON.parse(storage.getItem(SESSION_KEY)).secret);
+    // AUDIT-ACC F13, on this side: never a URL.
+    assert.doesNotMatch(c.url, /secret|Bearer/i);
+  }
+
+  // A SLOT WITH NO SCREENSHOT IS STILL A BACKUP - the shot is skipped,
+  // not faked, and the push still succeeds.
+  const bare = fakeStorage();
+  bare.setItem(SESSION_KEY, storage.getItem(SESSION_KEY));
+  putLocal(bare, 0, { saveName: 'no picture' });
+  seen.length = 0;
+  assert.equal((await pushSlot(cloudIo({ fetch: (u, i) => { seen.push({ url: u, init: i }); return fetchOf(env)(u, i); }, storage: bare }), bare, 0)).ok, true);
+  assert.equal(seen.length, 2, 'the card and the data, and no empty shot');
+});
+
+test('ACC2b: the slot the SERVICE refuses, and the slot this side refuses, each say what to do about it', async () => {
+  const { env, storage, io } = await client();
+
+  // A CARD WITH NO characterId IS A CARD FROM BEFORE CHARID1. It is
+  // adopted the first time its character is loaded, so this is a wait
+  // and the sentence says so rather than reading as a wall.
+  putLocal(storage, 1, { characterId: undefined });
+  const legacy = await pushSlot(io, storage, 1);
+  assert.deepEqual(legacy, { ok: false, error: 'no-character' });
+  assert.match(cloudRefusalText('no-character'), /Load it once/);
+
+  // A LOCAL SLOT THAT IS NOT THERE.
+  assert.deepEqual(await pushSlot(io, storage, 99), { ok: false, error: 'no-save' });
+  // ...and a half-written one is not a slot either (SAV4's law, kept on
+  // this side too).
+  storage.setItem(SAVE_DATA_PREFIX + 5, '{}');
+  assert.equal(localSlot(storage, 5), null, 'data with no card is not a slot');
+  assert.deepEqual(await pushSlot(io, storage, 5), { ok: false, error: 'no-save' });
+
+  // NOBODY SIGNED IN is not an error state - `cloudIo` answers null,
+  // and every entry point says the same word.
+  const out = fakeStorage();
+  assert.equal(cloudIo({ fetch: fetchOf(env), storage: out }), null);
+  for (const r of [await cloudList(null), await pushSlot(null, out, 0), await pullSlot(null, out, { characterId: CHAR, saveName: 'x' })]) {
+    assert.deepEqual(r, { ok: false, error: 'signed-out' });
+  }
+
+  // THE SERVICE'S WORDS KEEP THE SERVICE'S SENTENCES, and this side's
+  // table may not shadow one. A word in both would mean two different
+  // sentences for one refusal.
+  const shared = Object.keys(CLOUD_REFUSALS).filter((k) => k in REFUSALS);
+  assert.deepEqual(shared, [], 'a refusal word with two sentences');
+  assert.equal(cloudRefusalText('too-many-saves'), REFUSALS['too-many-saves'], 'the service\'s word falls through to the one table that owns it');
+  assert.equal(cloudRefusalText('utterly-unknown'), REFUSALS.server, 'and an unknown word is still a sentence');
+});
+
+test('ACC2b: a guest, a dead credential and an offline service each fail the way they should', async () => {
+  // THE WALL REACHES THE CLIENT. A guest is signed in - this is not the
+  // signed-out case - and the service refuses; the sentence names what
+  // to do about it.
+  const { env, guest } = await stand();
+  const g = await guest();
+  const gs = fakeStorage();
+  gs.setItem(SESSION_KEY, JSON.stringify({ id: g.id, secret: g.secret }));
+  putLocal(gs, 0);
+  const gio = cloudIo({ fetch: fetchOf(env), storage: gs });
+  const r = await pushSlot(gio, gs, 0);
+  assert.equal(r.error, 'saves-need-account');
+  assert.match(cloudRefusalText(r.error), /username/);
+  assert.ok(gs.getItem(SESSION_KEY), 'a guest is not signed out for being a guest');
+
+  // A DEAD CREDENTIAL IS FORGOTTEN, and only that one: accountClient's
+  // law, reached through this module.
+  const dead = fakeStorage();
+  dead.setItem(SESSION_KEY, JSON.stringify({ id: 'x', secret: 'not-a-session-secret-at-all' }));
+  putLocal(dead, 0);
+  const dio = cloudIo({ fetch: fetchOf(env), storage: dead });
+  assert.equal((await pushSlot(dio, dead, 0)).error, 'auth');
+  assert.equal(dead.getItem(SESSION_KEY), null, 'a secret the service has stopped honouring is not a session');
+
+  // AND A NETWORK FAILURE IS A REFUSAL, NOT A THROW - ONCRASH1's law:
+  // a throw out of a button handler ends more than the button.
+  const off = fakeStorage();
+  off.setItem(SESSION_KEY, JSON.stringify({ id: 'x', secret: 'y' }));
+  putLocal(off, 0);
+  const oio = cloudIo({ fetch: async () => { throw new Error('network down'); }, storage: off });
+  assert.deepEqual(await cloudList(oio), { ok: false, error: 'offline' });
+  assert.equal((await pushSlot(oio, off, 0)).error, 'offline');
+  assert.ok(off.getItem(SESSION_KEY), 'a blip does not sign anybody out');
+});
+
+test('ACC2b: a real slot written by saveSlots.js pushes - the two ends agree about what a card is', async () => {
+  const { storage, io } = await client();
+  // NOT A HAND-WRITTEN CARD. saveSlots.js's own writer makes the slot,
+  // so the fields this module reads (`characterId`, `saveName`,
+  // `dateAndTime`) are the fields that module really writes - which is
+  // the drift a hand-built fixture would hide.
+  const wrote = saveSlot('Nystul', 'before the lich',
+    { characterId: CHAR, classicMinutes: 500, v: 3, world: 1 }, { storage });
+  assert.equal(wrote.ok, true, 'saveSlots wrote a slot');
+  const up = await pushSlot(io, storage, wrote.key);
+  assert.equal(up.ok, true, up.error);
+  assert.equal(up.saveName, 'before the lich', 'a name with spaces rides encoded');
+
+  // AND THE NAMES THAT REALLY NEED THE ENCODE. A space survives an
+  // unencoded path by accident - the URL constructor escapes it - so a
+  // pin that tests only spaces is green over a module that encodes
+  // nothing. A SLASH addresses another slot's part, and a HASH
+  // TRUNCATES THE PATH at the fragment, so `danger#1` would be filed
+  // and fetched as `danger`. Both are names a player can type.
+  for (const name of ['a/b', 'danger#1', 'x?y', '100%']) {
+    const w = saveSlot('Nystul', name, { characterId: CHAR, classicMinutes: 7, v: 3 }, { storage });
+    assert.equal(w.ok, true);
+    const r = await pushSlot(io, storage, w.key);
+    assert.equal(r.ok, true, `${name}: ${r.error}`);
+    assert.equal(r.saveName, name);
+  }
+  const names = (await cloudList(io)).saves.map((c) => c.saveName).sort();
+  assert.deepEqual(names, ['100%', 'a/b', 'before the lich', 'danger#1', 'x?y'],
+    'every name arrived as itself - none truncated, none folded into another slot');
+
+  const card = (await cloudList(io)).saves.find((c) => c.saveName === 'before the lich');
+  assert.ok(card);
+  assert.equal(card.gameTime, 500);
+  assert.equal(card.characterId, CHAR);
+
+  // AND THE DELETE TOUCHES THE CLOUD ONLY, and only the slot it names.
+  // The cloud is the copy; deleting the copy is not deleting the save.
+  const before = slotsIn(storage).length;
+  assert.equal((await removeCloudSlot(io, card)).ok, true);
+  const left = (await cloudList(io)).saves.map((c) => c.saveName).sort();
+  assert.deepEqual(left, ['100%', 'a/b', 'danger#1', 'x?y'], 'one slot went, and only that one');
+  assert.equal(slotsIn(storage).length, before, 'every save is still on this device');
+});

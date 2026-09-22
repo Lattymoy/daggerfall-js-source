@@ -1575,3 +1575,44 @@ Mutants: `tools/mutants/acc2.json`, 14, **14 dead and 0 survived**.
 
 **NOT DEPLOYED**, and when it is, it drops nobody: `RELAY_GRAPH` is
 untouched by every line of it.
+
+### ACC2b — SHIPPED 2026-09-22: the client half
+
+`src/systems/cloudSaves.js`, pure over `{fetch, storage}` the way
+`net/accountClient.js` is: push a slot, pull one, list, delete. No UI —
+**the tile picker draws it**, which is the next thing Mac asked for and
+the surface where a player can watch a backup succeed or fail (D6).
+
+Three things it deliberately does NOT do, each because the answer
+already exists somewhere:
+
+- **It does not merge.** A download is a slot arriving from elsewhere,
+  so it goes through SP1's `importSlots` unchanged. There is no
+  timestamp comparison here and no conflict rule, because writing one
+  would be a second answer to a question this repo answered when a
+  player said "my saves its all gone".
+- **It does not restate the size bound.** The service owns it and
+  answers `too-large`; a copy of the number on this side is a second
+  home for a fact, and the sentence a player needs is the same either
+  way.
+- **It does not own the service's words.** `CLOUD_REFUSALS` holds only
+  the refusals this side can make, and a pin asserts the two tables are
+  disjoint — one word, one sentence.
+
+**The mutation campaign found a weak pin, which is what it is for.**
+The encoding pin tested a save called `before the lich`, and a space
+survives an unencoded path by accident because the URL constructor
+escapes it — so the mutant that deleted every `encodeURIComponent`
+walked through. It tests `a/b`, `danger#1`, `x?y` and `100%` now. The
+hash is the sharp one: it truncates the path at the fragment, so
+`danger#1` would have been filed and fetched as `danger`, and a player
+would have restored the wrong game.
+
+Mutants: `tools/mutants/acc2.json`, 22, **22 dead and 0 survived**.
+
+### What is left of ACC2
+
+The transport is done and nothing calls it yet. The trigger and the
+surface are the tile picker's, by D6 and by Mac's own order — the Online
+pane is "reserved for a detailed tile based design for your saves which
+will translate to the load character pane also".
