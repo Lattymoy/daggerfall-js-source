@@ -77,7 +77,9 @@ test('G8: the seam threads host-to-law', () => {
   assert.ok(flow.includes('updateRank(memberships, guild, entity, store, now, { revealLocation, ownsHouse })'),
     'onPushEffects hands the reveal seam to updateRank');
   const wm = readFileSync(new URL('../src/scenes/worldModes.js', import.meta.url), 'utf8');
-  assert.ok(wm.includes('revealLocation: host.revealLocation ?? null'), 'the interior host threads it');
+  // MACRO-4: through the popup's own wrapper, which keeps the revealed name for %dng
+  assert.ok(wm.includes('const name = host.revealLocation(noteKey); if (name) revealedDungeon = name; return name;'), 'the interior host threads it');
+  assert.ok(/steps: \(\) => onPushEffects\([\s\S]{0,400}?\n\s+revealLocation,/.test(wm), 'and hands the wrapper to the push effects');
   const w = readFileSync(new URL('../src/scenes/world.js', import.meta.url), 'utf8');
   assert.ok(w.includes('const picked = discoverRandomLocation(rows);'), 'the world host builds the region candidates');
   assert.ok(w.includes('row.mapId, discovered: row.discovered'), 'off the map TABLE, not full location reads');

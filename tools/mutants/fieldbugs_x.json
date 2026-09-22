@@ -56,7 +56,7 @@
   {
     "name": "X3-join-rows-verbatim-again",
     "file": "src/scenes/worldModes.js",
-    "old": "const rows = (id) => expandGuildRows(townTalk?.lines?.(id) ?? [], { playerName: playerEntity.name, factionName: orderName });",
+    "old": "const rows = (id) => expandGuildRows(townTalk?.lines?.(id) ?? [], guildMacros);",
     "new": "const rows = (id) => townTalk?.lines?.(id) ?? [];",
     "tests": [
       "test/fieldbugs_x.test.js"

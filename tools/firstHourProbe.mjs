@@ -556,7 +556,7 @@ if (inShop) {
     // DFU'S TRADE WINDOW IS TWO GESTURES, NOT ONE. A click on the
     // shelf STAGES the item into the basket and moves the COST; the
     // MODE ACTION button ("BUY") commits the lot and takes the gold
-    // (nativeTrade.js:13, :276-296). The first draft of this stage
+    // (nativeTrade.js:13, :277-297). The first draft of this stage
     // clicked once, saw the purse unmoved, and was about to report
     // that buying was broken - the screenshot settled it: COST had
     // gone 0 -> 348 and the goods were sitting in the basket. The

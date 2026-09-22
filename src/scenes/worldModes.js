@@ -155,7 +155,7 @@ import {
   receiveHouseDecision, claimHouse, ALREADY_GIVEN_HOUSE,   // H1
 } from '../systems/knightlyGifts.js';   // G6
 import { mintCondition, setItemFields, itemValueOf } from '../systems/itemTemplates.js';   // G6: the gift's pieces mint like any other item; MAC-N1: with SetItem's name and value
-import { npcServiceKind, freeHealing, freeMagickaRecharge, avoidDeath, AVOID_DEATH_TEXT } from '../systems/guildServices.js';
+import { npcServiceKind, freeHealing, freeMagickaRecharge, avoidDeath, AVOID_DEATH_TEXT, DEITY_DESCRIPTIONS } from '../systems/guildServices.js';   // MACRO-4: %gdd
 import { createGuildForGroup, ORDERS } from '../systems/guildVariants.js';
 import { membershipOf, joinGuild, joinDecision, activeMemberships } from '../systems/guilds.js';   // V2e: GuildManager.Memberships, the per-read vampire book pick
 import { ensureFactionRep } from '../systems/factionRep.js';
@@ -2216,6 +2216,14 @@ export function createWorldModes(host) {
       icons: { getTexture, uploadRecord, textures: renderer.textures },
       entity: playerEntity,   // AUDIT 17f: icons address for the wearer's morphology
       shopName: b.name ?? '',
+      // MACRO-4: TradeMacroDataSource.GuildTitle (DaggerfallTradeWindow.cs
+      // :1181-1187) - a guild's own title at a guild's counter, the
+      // player's first name at a shop's. %pct in record 260.
+      guildTitle: () => {
+        const dict = townTalk?.factionDict ?? null;
+        const g = guildFactionId != null ? guildOfFaction(guildFactionId, resolveVariantGuild(dict), dict) : null;
+        return g ? getTitle(membershipOf(activeMemberships(playerEntity), g), playerEntity, g) : null;
+      },
     });
   }
 
@@ -3589,7 +3597,26 @@ export function createWorldModes(host) {
     // GuildServicePopupWindow hands ITSELF to MacroHelper for every box - %pcn/%pcf are the player, %fon (and %kno,
     // the same source) is the guild's faction name off FACTION.TXT. MH1's one walk (expandGuildMacros), not a second.
     const orderName = dict?.get?.(guild.factionId)?.name ?? null;
-    const rows = (id) => expandGuildRows(townTalk?.lines?.(id) ?? [], { playerName: playerEntity.name, factionName: orderName });
+    // MACRO-4: THE GUILD IS THE SOURCE, as DFU's Guild.GuildMacroDataSource
+    // is - %lev/%pct its title (read when the box is SHOWN, so a promotion
+    // names the new rank), a temple's deity for %god and %fon and its line
+    // for %gdd (TempleMacroDataSource), and the dungeon a Thieves Guild or
+    // Dark Brotherhood promotion just revealed for %dng. The map carried
+    // only the player and the faction name, so every rank change printed
+    // "the rank of %lev".
+    let revealedDungeon = null;
+    const revealLocation = host.revealLocation
+      ? (noteKey) => { const name = host.revealLocation(noteKey); if (name) revealedDungeon = name; return name; }
+      : null;
+    const guildMacros = {
+      playerName: playerEntity.name,
+      factionName: guild?.divine ?? orderName,
+      guildTitle: () => getTitle(membershipOf(activeMemberships(playerEntity), guild), playerEntity, guild),
+      god: guild?.divine ?? null,
+      godDesc: guild?.divine ? (DEITY_DESCRIPTIONS[guild.divine] ?? null) : null,
+      dungeon: () => revealedDungeon,
+    };
+    const rows = (id) => expandGuildRows(townTalk?.lines?.(id) ?? [], guildMacros);
     // U24: a window that dispatches to another window must not be
     // nulled by its OWN onClose - DFU closes the popup and pushes the
     // next one, and the port's overlay slot is single. The identity
@@ -3604,7 +3631,7 @@ export function createWorldModes(host) {
       steps: () => onPushEffects(playerEntity, guild, memberships, store, gameDate(), {
         freeHealing: freeHealing(guild, membershipOf(memberships, guild)),
         freeMagickaRecharge: freeMagickaRecharge(guild, membershipOf(memberships, guild), playerEntity),
-        revealLocation: host.revealLocation ?? null,   // G8: the TG/DB map reveals
+        revealLocation,   // G8: the TG/DB map reveals - MACRO-4: through the popup's own wrapper, which keeps the name for %dng
         // F114: OwnsHouse per CURRENT region (DaggerfallBankManager.cs:136).
         ownsHouse: () => ownsHouse(playerEntity.houses ?? [], interiorBuilding?.regionIndex ?? 0),
       }),

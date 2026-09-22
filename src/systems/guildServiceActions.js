@@ -44,7 +44,7 @@ import { expandMacroValues } from './quest/questMacros.js';   // MH1: the ONE ma
  *
  *  The shared %pcn/%pcf/%cn/%oth ride the same value map, so a guild
  *  record with a player name in it reads correctly too. */
-export function expandGuildMacros(text, { amount = null, gold = null, god = null, guildTitle = null, roomHours = null, race = null, honorific = null, shopName = null, factionName = null, playerName = '', cityName = '' } = {}) {
+export function expandGuildMacros(text, { amount = null, gold = null, god = null, godDesc = null, guildTitle = null, dungeon = null, roomHours = null, race = null, honorific = null, shopName = null, factionName = null, playerName = '', cityName = '' } = {}) {
   // MH1: ONE walk (questMacros.expandMacroValues) over ONE value map.
   // A null value leaves its token VERBATIM - exactly the `if (x !=
   // null)` guards the old replaceAll chain carried - and the walk's
@@ -59,7 +59,16 @@ export function expandGuildMacros(text, { amount = null, gold = null, god = null
     a: amount == null ? null : String(amount),
     gii: gold == null ? null : String(gold),
     god,
-    pct: guildTitle,
+    // MACRO-4: Temple.TempleMacroDataSource.GodDesc (Temple.cs:567-570) -
+    // "God of Logic" and the rest, the deity's own line.
+    gdd: godDesc,
+    // MACRO-4: %lev and %pct are ONE MacroHelper row, GuildTitle (:128) -
+    // the rank the promotion box names. The map carried only %pct, so
+    // every rank change in every guild printed "the rank of %lev".
+    pct: guildTitle, lev: guildTitle,
+    // MACRO-4: ThievesGuild/DarkBrotherhood's Dungeon() - the place the
+    // promotion just revealed (ThievesGuild.cs:279-282).
+    dng: dungeon,
     // U39: MacroHelper.cs:80 `{ "%dwr", RoomHoursLeft }` - the hours a
     // rented room still has to run, which the tavern's "how many
     // ADDITIONAL days" prompt quotes back at the player.
