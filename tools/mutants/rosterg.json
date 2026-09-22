@@ -2,7 +2,7 @@
   {
     "name": "G1-channel-welcome-names-nobody",
     "file": "server/src/index.js",
-    "old": "const named = others.slice(0, CHAT_ROSTER_MAX).map((b) => ({ id: b.id, name: b.name }));",
+    "old": "const named = others.slice(0, CHAT_ROSTER_MAX).map((b) => ({ id: b.id, name: b.name, ...(b.v ? { v: true } : {}) }));",
     "new": "const named = [];",
     "tests": [
       "test/rosterg.test.js",
@@ -32,7 +32,7 @@
   {
     "name": "G4-channel-join-carries-the-look",
     "file": "server/src/index.js",
-    "old": "const said = JSON.stringify({ t: 'join', id: m.id, name: m.name });",
+    "old": "const said = JSON.stringify({ t: 'join', id: m.id, name: who.name, v: who.verified || undefined });",
     "new": "const said = JSON.stringify({ t: 'join', id: m.id, name: m.name, look: m.look, pose: null });",
     "tests": [
       "test/rosterg.test.js",

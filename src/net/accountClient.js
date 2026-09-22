@@ -201,6 +201,13 @@ export const setEmail = (io, email) => call(io, '/v1/account/email', { email: em
 /** THIS device by default. `all` is a separate, explicit act. */
 export const logout = (io, all = false) => call(io, '/v1/auth/logout', { all });
 
+/** ACC1d: A SIGNED WORD THE RELAY CAN CHECK, for one connection.
+ *  `{ token, name, kind, expiresAt }`. The service signs the name it
+ *  holds - this side does not get to say what goes in it, which is the
+ *  whole point of the seam. A service with no signing pair answers
+ *  `no-signing-key` rather than minting something the relay refuses. */
+export const mintIdentity = (io) => call(io, '/v1/auth/token', {});
+
 // ── THE SESSION ON THIS DEVICE ──────────────────────────────────────
 
 /**
@@ -237,6 +244,45 @@ export function keepSession(storage, { id, name, kind, sessionId, secret }) {
  *  same way with nothing on screen explaining why. */
 export function forgetSession(storage) {
   try { storage?.removeItem?.(SESSION_KEY); return true; } catch { return false; }
+}
+
+/**
+ * ACC1d: ONE FRESH TOKEN FOR ONE RELAY CONNECTION.
+ *
+ * This is what `OnlineSession({ mintToken })` (net/online.js) calls on
+ * every socket open, and its answer is the hello's `tok`. The relay
+ * spends a token once (bible ACC1d D4), so there is no caching here and
+ * there must not be: a token held over and sent twice is the exact frame
+ * the relay refuses, and a player who reconnected would be refused their
+ * own name.
+ *
+ * IT ANSWERS `null` FOR EVERY REASON A PLAYER MIGHT HAVE NO TOKEN - no
+ * session on this device, a service that is down, a rate limit, a secret
+ * the service has stopped honouring. Never a throw. ACC1d D1 admits an
+ * unverified hello exactly as every build before this slice did, so the
+ * cost of a bad minute at the account service is a name the relay will
+ * not vouch for, never a connection the player cannot make. That is the
+ * two-Worker split's whole claim (ACC0) and this is where it is paid.
+ *
+ * @param {object} io
+ * @param {(url: string, init: object) => Promise<any>} io.fetch
+ * @param {any} io.storage  appStorage() in the app, a Map in a test
+ * @returns {() => Promise<string|null>}
+ */
+export function accountTokenMinter({ fetch, storage }) {
+  return async () => {
+    const session = storedSession(storage);
+    if (!session) return null;
+    const answer = await mintIdentity({ fetch, base: serviceBase(storage), secret: session.secret });
+    if (answer.ok) return typeof answer.data?.token === 'string' ? answer.data.token : null;
+    // A SECRET THE SERVICE HAS STOPPED HONOURING IS NOT A SESSION, and
+    // `forgetSession`'s own note says why keeping one is worse than
+    // dropping it. ONLY `auth`: every other refusal is the service
+    // having a bad minute, and signing a player out over a 503 or a
+    // rate limit would make an outage permanent.
+    if (answer.error === 'auth') forgetSession(storage);
+    return null;
+  };
 }
 
 /** The service this device talks to. Overridable the same way the

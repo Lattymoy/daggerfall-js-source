@@ -163,6 +163,21 @@
 // in one party fought over the seat's pose - the NEWEST tab speaks for
 // the seat. C20 the picture names my own tabs (`peers`), so a second
 // tab of mine is no stranger to friend.
+// ═══ ACC1d: THE RELAY VERIFIES THE NAME IT IS TOLD ════════════════
+//
+// THIS IMPORT IS THE EXPENSIVE LINE IN THE ARC. It puts
+// src/net/identityToken.js in RELAY_GRAPH, so SLAM8's hash changes,
+// RELAY_VERSION bumps, and the deploy drops every connected player.
+// ACC0 chose two Workers so that account work would NOT cost this; the
+// token seam is the one piece that has to be paid for, and it is paid
+// once here rather than a little at a time.
+import { verifyToken, importPublicKeyB64, MAX_TTL_S } from '../../src/net/identityToken.js';
+/** ACC1d/F8: the most spent signatures one room remembers. Every entry
+ *  expires within MAX_TTL_S and the hello gate bounds how fast they can
+ *  arrive, so honest traffic never comes near this; it is here so a
+ *  flood cannot grow the map without end. */
+const SPENT_MAX = 4096;
+
 import { roomOf, parseClient, inRange, poseGate, chatGate, tokenGate, rosterFor, isChatRoom, isWorldRoom, isCellRoom, streamsFoes, hitOwnerOf, worldFrameMaxFor, CELL_FRAME_RECORDS_MAX, HELLO_HZ_MAX, CHAT_HELLO_HZ_MAX, CHAT_ROOM_HZ_MAX, SOCKETS_MAX, CHAT_SOCKETS_MAX, DROP_STRIKES_MAX, CHAT_STRIKES_MAX, WORLD_MIN_MS, WORLD_CHUNK, WORLD_TTL_MS, WORLD_PREFIX, FOES_PREFIX, foesGate, byteGate, FOES_ROOM_BYTES_PER_S, HIT_ROOM_HZ_MAX, ACT_ROOM_HZ_MAX, ACT_ROOM_BYTES_PER_S, actGate, MAX_FRAME_BYTES, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, HIT_ROOM_BYTES_PER_S, whoGate, whoIdOf, WHO_ROOM_HZ_MAX, poseFan, poseChanged, RELAY_VERSION, KEEPALIVE_FAN_MS, ACT_SENDER_BYTES_PER_S, CHAT_ROSTER_MAX, isSocialRoom, socialGate, partyGate, SOCIAL_ROOM_HZ_MAX, FRIENDS_MAX, PENDING_MAX, PARTY_MAX, PARTY_INVITES_MAX, INVITE_TTL_MS, PARTY_OFFLINE_MS, ACCOUNT_TABS_MAX, mintPartyId, SOCIAL_REPEAT_MS, ACCOUNT_IDLE_MS, ACCOUNT_SWEEP_MS, SWEEP_STEP_MS, SWEEP_PAGE } from './relay.js';
 
 // AUDIT WORLD34 D4: the relay names itself in /health. SLAM13 (AUDIT SLAM A5): the name lives in net/wire.js, so the
@@ -208,8 +223,24 @@ const COOL_MAX = 4096;
 const unlisted = (r, now) => !!r && !(r.friends?.length) && !(r.in?.length) && !(r.out?.length) && !r.party && !(r.invites ?? []).some((i) => now - i.at < INVITE_TTL_MS);
 
 export class Room {
-  constructor(state) {
+  constructor(state, env) {
     this.state = state;
+    // ACC1d: the runtime hands a Durable Object (state, env) and this
+    // class had been taking the first alone. The public key and the TTL
+    // ceiling are config (bible ACC1d D2/D3), so the object needs it.
+    this.env = env ?? {};
+    /** The verifying key, imported once per instance. A CryptoKey
+     *  cannot be stored, so this is memory and dies with the object -
+     *  which is right: it is derived from a config string that cannot
+     *  change without a deploy, and a deploy is a new object. */
+    this._verifyKey = undefined;   // undefined = not tried, null = there is none
+    /** ACC1d/F8: THE SIGNATURES THIS ROOM HAS ALREADY HONOURED, and
+     *  when each stops mattering. A token is spent once (Mac). PER-ROOM
+     *  and in memory, because the relay has no global state a hello
+     *  could touch without becoming the bottleneck ACC0 refused for
+     *  provider links - the record says exactly what that does and does
+     *  not close. */
+    this._spent = new Map();
     this._idx = null;   // ws -> attachment, read once (A7); rebuilt when the socket set changes
     this._roomChat = null;   // AUDIT CHAT A2: the room's own chat budget - on the instance, since a sleeping room fans nothing
     this._roomFoes = null;   // AUDIT WORLD2 A5: the room's foes byte budget (the frame times its listeners)
@@ -489,6 +520,80 @@ export class Room {
     try { await this._message(ws, message); } finally { await this._reap(); }
   }
 
+  /**
+   * ═══ ACC1d: THE NAME, VERIFIED ══════════════════════════════════
+   *
+   * Answers `{ name, verified }` for a hello, or `{ error }` to refuse
+   * it. Three arms and they are all refusals or plain facts, never a
+   * repair - identityToken.js's own law, on this side too.
+   *
+   *   no token        -> the name off the frame, `verified: false`.
+   *                      A build from before this slice, or a client
+   *                      that could not reach the account service. The
+   *                      record (ACC1d D1) says why that is admitted
+   *                      and what it costs.
+   *   token, verified -> the name out of the TOKEN, `verified: true`.
+   *                      The frame's own `name` is ignored entirely; a
+   *                      signed claim set beats a typed one.
+   *   token, refused  -> the hello is REFUSED, loudly.
+   *
+   * THE THIRD ARM IS A REFUSAL AND NOT A DOWNGRADE, which is a real
+   * choice. Admitting a failed token as "unverified" would mean an
+   * expired one silently drops a player to their typed name with
+   * nothing on screen saying why, and a REPLAYED one quietly succeeds
+   * at exactly the level the attacker wanted. A refusal is recoverable:
+   * the client mints a fresh token per connection, so a retry fixes an
+   * expiry, and a replay hears no.
+   */
+  async _named(m, now) {
+    if (!m.tok) return { name: m.name, verified: false };
+
+    if (this._verifyKey === undefined) {
+      const raw = this.env.IDENTITY_PUBLIC_KEY;
+      this._verifyKey = null;
+      if (typeof raw === 'string' && raw) {
+        // A BAD KEY IS NOT A CRASH. A mistyped config must not take the
+        // room down on its first hello; it leaves the relay unable to
+        // vouch for anybody, which the deploy's own check is there to
+        // catch before a player ever sees it.
+        try { this._verifyKey = await importPublicKeyB64(raw, { subtle: crypto.subtle }); }
+        catch (e) { console.warn('[room] IDENTITY_PUBLIC_KEY will not import', e?.message ?? e); }
+      }
+    }
+    // NO KEY, NO CLAIM. A relay that cannot verify does not get to
+    // pretend it did, and it does not get to refuse everybody either.
+    if (!this._verifyKey) return { name: m.name, verified: false };
+
+    const nowS = Math.floor(now / 1000);
+    // THE CEILING IS CONFIG, BESIDE THE KEY (F8, and bible ACC1d D3).
+    // A call site that passes its own is how a generous value comes to
+    // grant long-lived tokens where nobody is looking. `MAX_TTL_S` is
+    // the module's own hard ceiling and config may only tighten it.
+    const configured = Number(this.env.IDENTITY_MAX_TTL_S);
+    const maxTtlS = Number.isSafeInteger(configured) && configured > 0
+      ? Math.min(configured, MAX_TTL_S) : MAX_TTL_S;
+
+    const r = await verifyToken(m.tok, this._verifyKey, { subtle: crypto.subtle, nowS, maxTtlS });
+    if (!r.ok) return { error: `token ${r.why}` };
+
+    // ═══ SPENT ONCE ══════════════════════════════════════════════
+    // The signature is the token's own unique part; `e` says how long
+    // this room must remember it, so the set sweeps itself rather than
+    // needing a cron that can silently stop running (F9's lesson, one
+    // system over).
+    const sig = m.tok.slice(m.tok.lastIndexOf('.') + 1);
+    for (const [k, until] of this._spent) if (until <= nowS) this._spent.delete(k);
+    if (this._spent.has(sig)) return { error: 'token spent' };
+    // A BOUND, because a map that only grows is a room that eventually
+    // stops. At MAX_TTL_S and the hello gate's own rate this cannot be
+    // reached by honest traffic; past it the OLDEST goes, so a flood
+    // cannot evict the token somebody is about to present.
+    if (this._spent.size >= SPENT_MAX) this._spent.delete(this._spent.keys().next().value);
+    this._spent.set(sig, r.claims.e);
+
+    return { name: r.claims.n, verified: true, kind: r.claims.k, subject: r.claims.s };
+  }
+
   async _message(ws, message) {
     let a = this._attach(ws);
     // AUDIT WORLD A1: a large frame - or any frame shaped as a world frame - is the host's memory or nothing, and is
@@ -550,7 +655,12 @@ export class Room {
       if (!others.length) { try { await this._sweep(); } catch (e) { console.warn('[room] sweep failed', e?.message ?? e); } await this.state.storage.put('hellos', gate.bucket); }   // an empty room forgets every look and secret an unclean close left behind - not its hello gate (AUDIT SOC A2: contained - a failed list here made every first hello into an empty hub throw before its welcome)
       await this.state.storage.put(secretKey(m.id), m.secret);
       if (!chat) { await this.state.storage.put(lookKey(m.id), m.look); this._looks.set(m.id, m.look); }   // a channel keeps no look: nobody is drawn from it
-      if (!this._setAttach(ws, { ...a, id: m.id, name: m.name, pose: chat ? null : m.pose, since: replaced?.since ?? now })) { this._refuse(ws, 'hello too large'); return; }
+      // ACC1d: the name this socket will wear, and whether the relay
+      // vouches for it. Asked BEFORE the attachment is written, so a
+      // refused token never reaches the roster at all.
+      const who = await this._named(m, now);
+      if (who.error) { this._refuse(ws, who.error); return; }
+      if (!this._setAttach(ws, { ...a, id: m.id, name: who.name, v: who.verified || undefined, pose: chat ? null : m.pose, since: replaced?.since ?? now })) { this._refuse(ws, 'hello too large'); return; }
       // SRV-N: `v` rides EVERY welcome, a channel's included. A player in the enhanced skin holds a presence socket
       // and one chat socket per tab; whichever reconnects first after a hand deploy is the one that notices, and the
       // client's detector (net/updateNotice.js) is a Set so the rest of them say nothing. SLAM13 (AUDIT SLAM A5): and
@@ -561,9 +671,9 @@ export class Room {
         // panel read the player's own cell instead. The names are on the attachments already (no look, no storage
         // read - the hello path stays as cheap as AUDIT CHAT A1 priced it); socket order, cut at CHAT_ROSTER_MAX, with
         // `n` the true count. The join below is said here too, with the name and nothing else.
-        const named = others.slice(0, CHAT_ROSTER_MAX).map((b) => ({ id: b.id, name: b.name }));
+        const named = others.slice(0, CHAT_ROSTER_MAX).map((b) => ({ id: b.id, name: b.name, ...(b.v ? { v: true } : {}) }));   // ACC1d: and the relay's verdict on each name, absent where it vouched for nobody
         if (!this._send(ws, JSON.stringify({ t: 'welcome', id: m.id, peers: named, n: others.length + 1, v: RELAY_VERSION, now: Date.now() }))) return;   // AUDIT SOC B7: the relay's clock rides the channel's welcome too (WORLD5's `now`), so the hub link reads last-seen and an invite's lapse on the relay's time without waiting on the presence session's welcome
-        const said = JSON.stringify({ t: 'join', id: m.id, name: m.name });
+        const said = JSON.stringify({ t: 'join', id: m.id, name: who.name, v: who.verified || undefined });
         for (const [other, b] of [...this._all()]) if (other !== ws && b.id) this._send(other, said);
         // SOC1: the account, in the hub - after the welcome and the join, so a client's session has reset on the
         // welcome before its picture lands; a hello naming none is a build before this slice, admitted as it was
@@ -605,7 +715,7 @@ export class Room {
       // SRV-N / SLAM13 (AUDIT SLAM A5): the relay's VERSION rides it (`v`, last), so a client can tell a restarted relay from the one it was talking to, and one built against another law can say so
       const welcome = `{"t":"welcome","id":${JSON.stringify(m.id)},"peers":${JSON.stringify(roster)},"host":${JSON.stringify(host)},"world":${world ?? 'null'},"now":${Date.now()},"v":${JSON.stringify(RELAY_VERSION)}}`;
       if (!this._send(ws, welcome)) return;
-      const join = JSON.stringify({ t: 'join', id: m.id, name: m.name, look: m.look, pose: m.pose });
+      const join = JSON.stringify({ t: 'join', id: m.id, name: who.name, v: who.verified || undefined, look: m.look, pose: m.pose });
       for (const [other, b] of [...this._all()]) if (other !== ws && b.id) this._send(other, join);
       return;
     }
@@ -828,7 +938,7 @@ export class Room {
       // B2: the pose rides only WITHIN RANGE - the pose fan's own law (a stranger heard through that fan is in range by
       // construction; a room without the law, a dungeon's, says it); past the range the answer named a member's
       // position the fan had refused to say, a radar over the whole cell
-      this._send(ws, JSON.stringify({ t: 'join', id: b.id, name: b.name, look, pose: inRange(a.key ?? '', a.pose, b.pose) ? (b.pose ?? null) : null }));
+      this._send(ws, JSON.stringify({ t: 'join', id: b.id, name: b.name, v: b.v || undefined, look, pose: inRange(a.key ?? '', a.pose, b.pose) ? (b.pose ?? null) : null }));
       return;
     }
     if (m.t === 'pose' || m.t === 'ping') {
@@ -903,7 +1013,7 @@ export class Room {
       const room = tokenGate(this._roomChat, now, CHAT_ROOM_HZ_MAX);
       this._roomChat = room.bucket;
       if (!room.pass) return;
-      const out = JSON.stringify({ t: 'chat', id: a.id, name: a.name, text: m.text, at: now });
+      const out = JSON.stringify({ t: 'chat', id: a.id, name: a.name, v: a.v || undefined, text: m.text, at: now });
       const chat = isChatRoom(a.key);
       for (const [other, b] of [...this._all()]) {
         if (!b.id) continue;
@@ -1088,7 +1198,11 @@ export class Room {
     }
     let a = this._attach(ws);
     if (a.id !== m.id) return;   // replaced or gone while storage answered
-    let rec = { ...((await this._acct(m.acct)) ?? newAcct(m.name, now)), name: m.name, seen: now };
+    // ACC1d: the name the relay DECIDED, off the attachment, not the one
+    // the frame asked for - `_named` has already run and `a.name` is
+    // its answer. A durable record keyed on an unchecked claim is the
+    // shape this slice exists to close.
+    let rec = { ...((await this._acct(m.acct)) ?? newAcct(a.name, now)), name: a.name, seen: now };
     let party = null;
     if (rec.party) {
       party = await this._livingParty(rec.party, now);

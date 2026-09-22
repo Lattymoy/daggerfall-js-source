@@ -1,0 +1,222 @@
+[
+  {
+    "name": "ACC1d-1-a-token-can-be-replayed",
+    "file": "server/src/index.js",
+    "old": "    if (this._spent.has(sig)) return { error: 'token spent' };",
+    "new": "    if (false) return { error: 'token spent' };",
+    "tests": [
+      "test/identitytoken.test.js"
+    ],
+    "note": "F8, settled by Mac: a token is spent once. Without this, a token captured off one hello is a name anybody can wear in that room for its whole lifetime."
+  },
+  {
+    "name": "ACC1d-2-the-vouched-name-comes-off-the-FRAME",
+    "file": "server/src/index.js",
+    "old": "    return { name: r.claims.n, verified: true, kind: r.claims.k, subject: r.claims.s };",
+    "new": "    return { name: m.name, verified: true, kind: r.claims.k, subject: r.claims.s };",
+    "tests": [
+      "test/identitytoken.test.js"
+    ],
+    "note": "The whole slice. A valid token beside any name the client fancies, marked verified - the relay vouching for a name nobody signed, which is worse than not vouching at all."
+  },
+  {
+    "name": "ACC1d-3-a-failed-token-is-a-quiet-downgrade",
+    "file": "server/src/index.js",
+    "old": "    if (!r.ok) return { error: `token ${r.why}` };",
+    "new": "    if (!r.ok) return { name: m.name, verified: false };",
+    "tests": [
+      "test/identitytoken.test.js"
+    ],
+    "note": "A client that MEANT to send a token and sent a bad one must hear so. Admitting it unverified is how a forged token and an expired one become indistinguishable from a client that sent none."
+  },
+  {
+    "name": "ACC1d-4-a-keyless-relay-refuses-everybody",
+    "file": "server/src/index.js",
+    "old": "    if (!this._verifyKey) return { name: m.name, verified: false };",
+    "new": "    if (!this._verifyKey) return { error: 'no verifying key' };",
+    "tests": [
+      "test/identitytoken.test.js"
+    ],
+    "note": "bible ACC1d D1: a relay that cannot verify does not get to pretend it did, and does not get to shut the game either. A mistyped config would take every room down."
+  },
+  {
+    "name": "ACC1d-5-config-may-LOOSEN-the-modules-ceiling",
+    "file": "server/src/index.js",
+    "old": "      ? Math.min(configured, MAX_TTL_S) : MAX_TTL_S;",
+    "new": "      ? configured : MAX_TTL_S;",
+    "tests": [
+      "test/identitytoken.test.js"
+    ],
+    "note": "F8's second half (bible ACC1d D3). A generous number typed in wrangler.toml would silently grant long-lived tokens; MAX_TTL_S is the hard ceiling and config may only tighten it."
+  },
+  {
+    "name": "ACC1d-6-the-wire-admits-any-string-as-a-token",
+    "file": "src/net/wire.js",
+    "old": "      if (typeof m.tok !== 'string' || !TOKEN_RE.test(m.tok)) return { error: 'bad token' };",
+    "new": "      if (typeof m.tok !== 'string') return { error: 'bad token' };",
+    "tests": [
+      "test/acc1dclient.test.js"
+    ],
+    "note": "The shape check is the only bound before an unbounded string reaches WebCrypto on the relay. A megabyte of rubbish would be parsed, hashed and refused far more expensively than here."
+  },
+  {
+    "name": "ACC1d-7-an-absent-token-is-sent-as-null",
+    "file": "src/net/online.js",
+    "old": "    if (this.token) frame.tok = this.token;",
+    "new": "    frame.tok = this.token;",
+    "tests": [
+      "test/acc1dclient.test.js"
+    ],
+    "note": "`tok: null` is a MALFORMED token, not an absent one, and wire.js refuses it - so every signed-out player, and every player the account service could not answer, would be refused the connection entirely."
+  },
+  {
+    "name": "ACC1d-8-the-token-is-minted-once-and-reused",
+    "file": "src/net/online.js",
+    "old": "        this.token = await this._mint();",
+    "new": "        this.token = this.token ?? await this._mint();",
+    "tests": [
+      "test/acc1dclient.test.js"
+    ],
+    "note": "The relay spends a token once (D4). A held-over token is refused on the second connection, so the player's own reconnect - or their second room - would be the replay the relay is guarding against."
+  },
+  {
+    "name": "ACC1d-9-the-mint-is-unbounded",
+    "file": "src/net/online.js",
+    "old": "      return await Promise.race([\n        Promise.resolve(this.mintToken()).catch(() => null),\n        new Promise((r) => setTimeout(() => r(null), TOKEN_WAIT_MS)),\n      ]);",
+    "new": "      return await this.mintToken();",
+    "tests": [
+      "test/acc1dclient.test.js"
+    ],
+    "note": "An account service that never answers would hold the hello for ever: a second Worker's bad minute taking the game offline, which is the exact coupling ACC0's two-Worker split exists to prevent."
+  },
+  {
+    "name": "ACC1d-10-a-late-token-is-sent-down-a-dead-socket",
+    "file": "src/net/online.js",
+    "old": "        this.token = await this._mint();\n        // the socket may have been replaced or closed while we waited\n        if (this._roomOf(ws) == null) return;",
+    "new": "        this.token = await this._mint();",
+    "tests": [
+      "test/acc1dclient.test.js"
+    ],
+    "note": "The mint is an await, and a room change or a drop during it replaces the socket. Without the re-check, the hello goes out on a closed socket and the token is spent on nothing."
+  },
+  {
+    "name": "ACC1d-11-a-bad-minute-signs-the-player-out",
+    "file": "src/net/accountClient.js",
+    "old": "    if (answer.error === 'auth') forgetSession(storage);",
+    "new": "    forgetSession(storage);",
+    "tests": [
+      "test/acc1dclient.test.js"
+    ],
+    "note": "`rate`, `no-signing-key` and `offline` say NOTHING about whether the credential is good. Forgetting the session over one would make an account service outage a permanent sign-out on every device that tried to connect."
+  },
+  {
+    "name": "ACC1d-12-a-signed-out-player-asks-anyway",
+    "file": "src/net/accountClient.js",
+    "old": "    if (!session) return null;",
+    "new": "    if (false) return null;",
+    "tests": [
+      "test/acc1dclient.test.js"
+    ],
+    "note": "A round trip per socket on behalf of nobody, and a throw on the connect path where a null was the whole contract."
+  },
+  {
+    "name": "ACC1d-13-the-presence-session-sends-no-token",
+    "file": "src/scenes/world.js",
+    "old": "      mintToken: identityMinter,",
+    "new": "",
+    "tests": [
+      "test/acc1dclient.test.js"
+    ],
+    "note": "The seam built, verified and deployed, and nothing calling it. The relay would vouch for nobody and the whole slice would read as working."
+  },
+  {
+    "name": "ACC1d-14-the-chat-link-sends-no-token",
+    "file": "src/scenes/world.js",
+    "old": "      link.mintToken = identityMinter;",
+    "new": "",
+    "tests": [
+      "test/acc1dclient.test.js"
+    ],
+    "note": "The hub is where a name is READ. An unsigned name in chat is exactly the impersonation this arc exists to make visible."
+  },
+  {
+    "name": "ACC1d-15-the-relay-deploys-with-an-unchecked-key",
+    "file": ".github/workflows/relay-deploy.yml",
+    "old": "          if [ \"$want\" != \"$got\" ]; then\n            echo \"::error::the relay's IDENTITY_PUBLIC_KEY is not the one the account service publishes - every identity token would be refused\"\n            exit 1\n          fi",
+    "new": "          :",
+    "tests": [
+      "test/relaydeploy.test.js"
+    ],
+    "note": "bible ACC1d D2: the key is a second copy of a fact the service publishes, and a stale one fails in the worst possible way - every hello refused as a bad signature with nothing saying why. The deploy is where that is free to catch."
+  },
+  {
+    "name": "ACC1d-16-an-account-outage-blocks-the-relays-deploy",
+    "file": ".github/workflows/relay-deploy.yml",
+    "old": "            echo \"::warning::/v1/pubkey did not answer - the relay's key could not be checked against it\"\n            exit 0",
+    "new": "            echo \"::error::/v1/pubkey did not answer - the relay's key could not be checked against it\"\n            exit 1",
+    "tests": [
+      "test/relaydeploy.test.js"
+    ],
+    "note": "A service that does not answer is not a mismatch. Refusing the relay's deploy over a SECOND Worker being slow is the exact coupling D1 and D2 both refused."
+  },
+  {
+    "name": "ACC1d-17-a-freshly-minted-pair-strands-the-relay",
+    "file": ".github/workflows/account-deploy.yml",
+    "old": "          if [ \"$want\" != \"$key\" ]; then",
+    "new": "          if false; then",
+    "tests": [
+      "test/accountdeploy.test.js"
+    ],
+    "note": "The deploy that can MINT a new pair is the one whose green run would leave the relay's configured copy wrong. Checking anywhere else is checking after the damage."
+  },
+  {
+    "name": "ACC1d-18-the-welcomes-roster-drops-the-verdict",
+    "file": "src/net/wire.js",
+    "old": "out.push({ id: p.id, name: p.name, look: p.look, pose: p.pose ?? null, ...(p.v ? { v: true } : {}) });",
+    "new": "out.push({ id: p.id, name: p.name, look: p.look, pose: p.pose ?? null });",
+    "tests": [
+      "test/acc1dclient.test.js"
+    ],
+    "note": "The join carries it and the roster would not: everybody who arrives after you is marked and everybody already standing there is not. A signal that is true half the time is worse than none - and getting it back costs another relay deploy, which drops every connected player."
+  },
+  {
+    "name": "ACC1d-19-every-peer-reads-as-vouched-for",
+    "file": "src/net/online.js",
+    "old": "look: validLook(p.look), v: p.v === true, told: true",
+    "new": "look: validLook(p.look), v: true, told: true",
+    "tests": [
+      "test/acc1dclient.test.js"
+    ],
+    "note": "The relay's verdict replaced by a constant yes - the client vouching for names nobody signed, which is the exact failure the token was built to end."
+  },
+  {
+    "name": "ACC1d-20-a-stale-verdict-outlives-the-hello-that-earned-it",
+    "file": "src/net/online.js",
+    "old": "p.name = sanitizeName(m.name); p.look = validLook(m.look); p.v = m.v === true; p.told = true;",
+    "new": "p.name = sanitizeName(m.name); p.look = validLook(m.look); p.told = true;",
+    "tests": [
+      "test/acc1dclient.test.js"
+    ],
+    "note": "A peer that signed out and re-hello'd keeps the tick it earned last time. That is an impersonation the mark would actively help, rather than show."
+  },
+  {
+    "name": "ACC1d-21-the-chat-line-loses-the-verdict",
+    "file": "src/net/online.js",
+    "old": "this.onChat?.({ id: m.id, name: sanitizeName(m.name), v: m.v === true, text,",
+    "new": "this.onChat?.({ id: m.id, name: sanitizeName(m.name), text,",
+    "tests": [
+      "test/acc1dclient.test.js"
+    ],
+    "note": "A chat log is where a name is READ, so it is where impersonation is worth doing. The relay already says which names it vouches for; dropping it here throws that away on the client's side of a deploy nobody can repeat cheaply."
+  },
+  {
+    "name": "ACC1d-22-a-system-line-can-be-vouched-for",
+    "file": "src/net/chat.js",
+    "old": "mine: !!mine, system: !!system, v: !!v && !system };",
+    "new": "mine: !!mine, system: !!system, v: !!v };",
+    "tests": [
+      "test/acc1dclient.test.js"
+    ],
+    "note": "A system line has no name behind it, so a tick on one is a tick on nothing - and the lines the client itself writes are the easiest place for a forged one to hide."
+  }
+]

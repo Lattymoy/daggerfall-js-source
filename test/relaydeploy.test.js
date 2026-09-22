@@ -229,3 +229,38 @@ test('SRV-N/CI: nothing in live source calls the deploy a hand command while the
   assert.match(rd('server/wrangler.toml'), /relay-deploy\.yml/,
     'and no longer names the workflow that performs it');
 });
+
+test('ACC1d D2: the relay\'s identity key is CHECKED against the service that publishes it, and an unreachable service is not a mismatch', () => {
+  const wf = rd(WF);
+  const toml = rd('server/wrangler.toml');
+
+  // THE KEY IS A VAR, NOT A SECRET, and that is the decision: a public
+  // key can verify and cannot mint, so there is nothing to hide - and
+  // fetching it at runtime would put the account service in the relay's
+  // startup path, which is the coupling ACC0's two-Worker split exists
+  // to refuse.
+  const key = /^IDENTITY_PUBLIC_KEY\s*=\s*"([^"]+)"/m.exec(toml)?.[1];
+  assert.ok(key, 'the relay carries the public half');
+  assert.match(key, /^[A-Za-z0-9_-]{43}$/, 'a raw Ed25519 public key, base64url, no padding');
+  const ttl = /^IDENTITY_MAX_TTL_S\s*=\s*"(\d+)"/m.exec(toml)?.[1];
+  assert.ok(ttl && Number(ttl) > 0, 'and the TTL ceiling beside it (D3), because a call site that passes its own is how a generous value spreads');
+
+  // THE WORKFLOW READS THE TOML rather than carrying a second copy. A
+  // key typed into a workflow is a third home for a fact that already
+  // has two, and it would agree with nothing on the day it drifts.
+  assert.match(wf, /grep -oP '\^IDENTITY_PUBLIC_KEY[^']*' server\/wrangler\.toml/, 'the key comes out of the config the deploy ships');
+  assert.doesNotMatch(wf, new RegExp(key.slice(0, 20)), 'and never as a literal in the workflow');
+  assert.match(wf, /\/v1\/pubkey/, 'checked against what the account service publishes');
+
+  // AN UNREACHABLE SERVICE IS A WARNING, NOT A REFUSAL. Blocking the
+  // relay's deploy because a SECOND Worker is slow is the exact
+  // coupling D1 and D2 both refused; only a key that answers and
+  // disagrees stops it.
+  const step = /- name: The relay's identity key matches[\s\S]*?\n\n/.exec(wf)?.[0] ?? '';
+  assert.ok(step, 'the step is there');
+  assert.match(step, /if \[ -z "\$got" \]; then\s*\n\s*echo "::warning::[^\n]*"\s*\n\s*exit 0/, 'no answer: a warning and a pass');
+  assert.match(step, /if \[ "\$want" != "\$got" \]; then\s*\n\s*echo "::error::[^\n]*"\s*\n\s*exit 1/, 'a real disagreement: an error and a stop');
+  // ...and it runs BEFORE the deploy, because a relay deployed with a
+  // key nothing can verify against refuses every hello silently.
+  assert.ok(wf.indexOf('- name: The relay\'s identity key matches') < wf.indexOf('- name: Deploy'), 'before wrangler runs, not after');
+});

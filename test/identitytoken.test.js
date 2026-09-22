@@ -330,80 +330,120 @@ test('ACC1a: PURE, and both ends can import it', async () => {
   assert.deepEqual(imports, ['./wire.js'], 'a new import here is a new file in the relay\'s bundle');
 });
 
-// ═══ AUDIT-ACC F8, SETTLED: A TOKEN IS SPENT ONCE ═══════════════════
+// ═══ ACC1d: THE TRIPWIRE FIRED, AND THIS IS WHAT REPLACED IT ═══════
 //
-// Mac, asked whether to close replay or accept the five-minute window:
-// "Yes". The refusal itself belongs in the RELAY - it is the thing that
-// remembers signatures - and the relay does not import this module yet,
-// so there is nothing here to drive. What a pin CAN do today is make
-// sure the decision cannot be quietly lost between now and ACC1d, and
-// the way it does that is by watching the one event that matters: the
-// moment `src/net/identityToken.js` joins the relay's bundle.
+// The gate this slice removed said, in its own failure message:
 //
-// DERIVED FROM RELAY_GRAPH, NOT FROM A DATE OR A FLAG. The same walk
-// SLAM13 hashes the relay with answers "is this file in the bundle
-// yet?", so ACC1d cannot land without going past this pin and nobody
-// has to remember to come back and switch it on.
+//   REPLACE THIS PIN with one that DRIVES it: present the same token
+//   twice and prove the second is refused.
 //
-// THE SECOND ARM IS A TRIPWIRE AND IS MEANT TO BE, which took two
-// wrong cuts to arrive at and both are worth the lines:
+// It fired the moment `server/src/index.js` imported this module, which
+// is the moment it was written for. What stands here now is the thing
+// it was demanding: the relay's own `_named`, driven with a REAL key
+// pair and a REAL token, twice.
 //
-//   1. It first asked whether anything in the bundle matched a
-//      seen/replay pattern - and PASSED the instant the module joined,
-//      because THIS FILE'S OWN NOTE says the relay "keeps the
-//      signatures it has seen and refuses a repeat". The comment
-//      describing the work satisfied the check for the work. That is
-//      ACC1-CI's sentinel survivor verbatim.
-//   2. Comments stripped and the module excluded from its own
-//      population, it then refused a REAL refusal - `seenTokens` and
-//      `isReplay` - because `\breplay\b` does not match `isReplay`. A
-//      pattern guessing identifier spellings is an enumeration, and an
-//      enumeration disagrees with the code the day somebody names
-//      something reasonably.
-//
-// There is no third pattern worth writing. A static grep cannot tell a
-// relay that refuses a repeat from one that merely mentions refusing a
-// repeat, and inventing the relay's API here - "it must export a spend
-// check shaped like THIS" - would be designing ACC1d from a test file
-// before ACC1d is written. So this arm does not try to be satisfiable:
-// it fails, and it says what has to be true and what must replace it.
-// ACC1d discharges it by driving the real refusal, which is the pin
-// this one exists to demand.
-import { RELAY_GRAPH } from './relayversion.test.js';
+// The room is not stood up - `_named` is a method on a big Durable
+// Object and node has no workerd. It is driven the way this suite
+// drives any pure-ish method: on a bare object carrying the two fields
+// it reads (`env`, `_spent`), with WebCrypto doing the arithmetic for
+// real. A stub signature would have proved something about the stub.
+import { readFileSync as _rf } from 'node:fs';
 
-const TOKEN_MODULE = 'src/net/identityToken.js';
+/** `_named` lifted off the class, so node can call it without a
+ *  Durable Object. Read from the SOURCE rather than copied, so the day
+ *  the method changes this pin is driving the new one - a copy here
+ *  would be a second implementation agreeing with itself. */
+async function namedOf(room, m, now) {
+  const text = _rf(new URL('../server/src/index.js', import.meta.url), 'utf8');
+  const start = text.indexOf('  async _named(m, now) {');
+  assert.ok(start > 0, 'server/src/index.js no longer has a _named - this pin is driving nothing');
+  const end = text.indexOf('\n  }\n', start) + 4;
+  const body = text.slice(start + '  async _named(m, now) {'.length, end - 4);
+  // the two module-level names the method closes over
+  const fn = new Function('m', 'now', 'verifyToken', 'importPublicKeyB64', 'MAX_TTL_S', 'SPENT_MAX', 'crypto', 'console',
+    `return (async () => {${body}})()`);
+  return fn.call(room, m, now, verifyToken, importPublicKeyB64, MAX_TTL_S, 4096, globalThis.crypto, console);
+}
 
-test('AUDIT-ACC F8: a token is spent ONCE - this fails the day ACC1d puts the token module in the relay bundle', () => {
-  // (0) THE GATE MUST BE ABLE TO SEE ITS OWN SUBJECT. This whole pin
-  //     turns on one membership test, and a membership test against a
-  //     path the walk never spells is green forever - the vacuous-pin
-  //     hazard HARD5-3 exists for. wire.js lives in the same directory
-  //     and IS in the bundle, so it proves the spelling this pin asks
-  //     in is the spelling RELAY_GRAPH answers in.
-  assert.ok(RELAY_GRAPH.includes('src/net/wire.js'),
-    'the membership test can no longer see a file it is meant to find - the path spelling has drifted');
+const roomWith = (pub) => ({ env: { IDENTITY_PUBLIC_KEY: pub }, _spent: new Map(), _verifyKey: undefined });
 
-  const note = src(TOKEN_MODULE);
+test('ACC1d/F8: A TOKEN IS SPENT ONCE - the same token presented twice is refused the second time', async () => {
+  const kp = await keys();
+  const pub = _b64url.encode(new Uint8Array(await subtle.exportKey("raw", kp.publicKey)));
+  const token = await mint(kp);
+  const room = roomWith(pub);
+  const now = NOW * 1000;
 
-  // (1) THE DECISION IS RECORDED IN THE FILE BOTH ENDS IMPORT.
-  assert.match(note, /spent once|one-shot/i,
-    'the F8 decision is no longer written in the module both ends import');
-  assert.match(note, /refuses a repeat/i, 'the note no longer says what the relay must do');
+  const first = await namedOf(room, { tok: token, name: 'anything' }, now);
+  assert.equal(first.error, undefined, `the first presentation was refused: ${first.error}`);
+  assert.equal(first.verified, true, 'the relay did not vouch for a token it just verified');
+  // THE NAME COMES OUT OF THE TOKEN, and the frame's own is ignored -
+  // that is the whole point of the seam.
+  assert.equal(first.name, WHO.n);
 
-  // (2) ...AND THE NOTE MAY NOT OVERSTATE ITSELF while the relay has
-  //     never heard of this file. A comment that describes a refusal
-  //     nothing performs is the defect this whole arc keeps paying for.
-  if (!RELAY_GRAPH.includes(TOKEN_MODULE)) {
-    assert.match(note, /NOTHING HERE ENFORCES EITHER YET/,
-      'the token module claims the replay refusal is built, and the relay does not even import this file yet');
-    return;
+  const second = await namedOf(room, { tok: token, name: 'anything' }, now);
+  assert.equal(second.error, 'token spent', 'the same token was honoured twice');
+  assert.equal(second.verified, undefined);
+});
+
+test('ACC1d: a hello with NO token is admitted with its own name, unvouched', async () => {
+  const kp = await keys();
+  const pub = _b64url.encode(new Uint8Array(await subtle.exportKey("raw", kp.publicKey)));
+  const r = await namedOf(roomWith(pub), { name: 'Traveller' }, NOW * 1000);
+  assert.deepEqual(r, { name: 'Traveller', verified: false },
+    'a build from before this slice must connect exactly as it always did');
+});
+
+test('ACC1d: a relay with NO key vouches for nobody and refuses nobody', async () => {
+  // The state a relay is in before its config carries a key, and the
+  // state a mistyped one leaves it in. It must not pretend it checked,
+  // and it must not take the room down.
+  for (const pub of [undefined, '', 'not-a-key']) {
+    const r = await namedOf(roomWith(pub), { tok: 'v1.aaa.bbb', name: 'Traveller' }, NOW * 1000);
+    assert.deepEqual(r, { name: 'Traveller', verified: false }, `key ${JSON.stringify(pub)}`);
   }
+});
 
-  assert.fail(
-    `${TOKEN_MODULE} is in the relay bundle now, so a stolen token is worth ${MAX_TTL_S} seconds of somebody's name.\n`
-    + '  Mac settled this before ACC1d was written: A TOKEN IS SPENT ONCE.\n'
-    + '  The relay must keep the signatures it has verified and refuse a repeat; `e` bounds how long it must remember.\n'
-    + '  The TTL ceiling belongs in the relay\'s config beside the public key, not passed in at a call site.\n'
-    + '  REPLACE THIS PIN with one that DRIVES it: present the same token twice and prove the second is refused.\n'
-    + '  Deleting it without that is the one move this gate exists to make visible.');
+test('ACC1d: a token that does not verify REFUSES the hello - it is never a quiet downgrade', async () => {
+  const kp = await keys();
+  const stranger = await keys();
+  const pub = _b64url.encode(new Uint8Array(await subtle.exportKey("raw", kp.publicKey)));
+  const now = NOW * 1000;
+
+  // signed by somebody else's key
+  const forged = await mint(stranger);
+  const a = await namedOf(roomWith(pub), { tok: forged, name: 'Nystul' }, now);
+  assert.match(a.error ?? '', /^token /, 'a token signed by a stranger was admitted');
+
+  // expired: minted far enough back that `e` has passed
+  const old = await mint(kp, WHO, { nowS: NOW - 10_000 });
+  const b = await namedOf(roomWith(pub), { tok: old, name: 'Nystul' }, now);
+  assert.match(b.error ?? '', /^token /, 'an expired token was admitted');
+
+  // A DOWNGRADE WOULD BE THE BUG: admitting these as `verified: false`
+  // would let a replay quietly succeed at exactly the level the
+  // attacker wanted, and would drop an honest player to their typed
+  // name with nothing on screen saying why.
+  assert.equal(a.name, undefined);
+  assert.equal(b.name, undefined);
+});
+
+test('ACC1d: the TTL ceiling is config, and config may only TIGHTEN the module\'s own', async () => {
+  const kp = await keys();
+  const pub = _b64url.encode(new Uint8Array(await subtle.exportKey("raw", kp.publicKey)));
+  const now = NOW * 1000;
+  const token = await mint(kp);   // minted at the module's full MAX_TTL_S
+
+  // a relay that allows less than the token was minted for refuses it
+  const tight = { env: { IDENTITY_PUBLIC_KEY: pub, IDENTITY_MAX_TTL_S: '5' }, _spent: new Map(), _verifyKey: undefined };
+  const r = await namedOf(tight, { tok: token, name: 'x' }, now);
+  assert.match(r.error ?? '', /^token /, 'a relay configured to 5s honoured a 300s token');
+
+  // ...and one that asks for MORE than the module allows does not get it
+  const loose = { env: { IDENTITY_PUBLIC_KEY: pub, IDENTITY_MAX_TTL_S: String(MAX_TTL_S * 100) }, _spent: new Map(), _verifyKey: undefined };
+  const wide = await namedOf(loose, { tok: token, name: 'x' }, now);
+  assert.equal(wide.verified, true, 'a sane token was refused under a generous config');
+  const src2 = _rf(new URL('../server/src/index.js', import.meta.url), 'utf8');
+  assert.match(src2, /Math\.min\(configured, MAX_TTL_S\)/,
+    'config can widen the ceiling past the module\'s own, which is the door F8 asked to be shut');
 });

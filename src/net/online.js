@@ -85,6 +85,12 @@ export const POSE_HZ_MIN = 4;
  *  all - ordinary play in the Bay is two or three people and must not pay for an event it is not having. */
 export const POSE_CROWD = 24;
 /** SLAM3: the bounds on a measured ease interval - a burst must not snap a peer, a silence must not make it crawl. */
+/** ACC1d: the whole budget a hello will wait for an identity token.
+ *  Past it the connection goes ahead unsigned. Short on purpose: this
+ *  sits between the socket opening and the first frame, so it is time a
+ *  player spends staring at nothing. */
+export const TOKEN_WAIT_MS = 2500;
+
 export const GAP_MIN_MS = 50;
 export const GAP_MAX_MS = 1000;
 /** SLAM3: HOW OFTEN TO SPEAK IN A CROWD.
@@ -232,7 +238,7 @@ export const THREW_KINDS_MAX = 32;
 const monoNow = () => (typeof performance !== 'undefined' && typeof performance.now === 'function' ? performance.now() : Date.now());
 
 export class OnlineSession {
-  constructor({ url = DEFAULT_SERVER, name = 'Traveller', look = null, id = null, secret = null, presence = true, acct = null, asecret = null, WebSocketImpl = globalThis.WebSocket, now = () => Date.now(), rand = Math.random } = {}) {
+  constructor({ url = DEFAULT_SERVER, name = 'Traveller', look = null, id = null, secret = null, presence = true, acct = null, asecret = null, mintToken = null, WebSocketImpl = globalThis.WebSocket, now = () => Date.now(), rand = Math.random } = {}) {
     this.url = relayUrl(url || DEFAULT_SERVER);   // wss:// anywhere, ws:// on localhost alone; anything else is no relay (A16/E11)
     this.secret = secret ?? peerSecret();
     // SOC2: the ACCOUNT rides the hello only when the caller hands both halves in - the hub link's alone (world.js
@@ -247,6 +253,19 @@ export class OnlineSession {
     this._lastParty = null;       // SOC2: the last party pose that LEFT, and when - an unchanged one is not re-sent, and a socket that reopens re-sends the first (the hub's attachment is fresh)
     this._lastPartyAt = -Infinity;
     this.name = name;
+    // ═══ ACC1d: THE IDENTITY TOKEN ═════════════════════════════════
+    //
+    // `mintToken` is an async () => string|null the HOST supplies - the
+    // session does not know the account service exists and must not:
+    // it is the wire's own object, and giving it a fetch would put the
+    // account service in the reconnect path of every room and halo.
+    //
+    // One token per CONNECTION, minted just before the hello, because
+    // the relay spends it once (F8) and a reused one is refused. A
+    // session with no minter sends no token and is admitted exactly as
+    // every build before this slice was.
+    this.mintToken = mintToken;
+    this.token = null;
     this.presence = !!presence;   // false: a channel's session (CHAT1) - no pose out, a ping for a heartbeat
     this.onChat = null;           // (line) => void: a chat line in - {id, name, text, at, mine}
     this.onFoes = null;           // WORLD2: (id, data) => void - the host's live foes in (a non-host's, from the room's host alone)
@@ -627,15 +646,45 @@ export class OnlineSession {
    *  a session without it sends the hello every build before SOC1 sent, key for key). */
   _helloFrame() {
     const frame = { t: 'hello', id: this.id, secret: this.secret, name: this.name, look: this.look, pose: this.presence ? this._pose : null };
+    // ACC1d: only when there IS one. A `tok: null` would be a malformed
+    // token rather than an absent one, and wire.js refuses that - which
+    // is right, and is why the key is not written at all when empty.
+    if (this.token) frame.tok = this.token;
     if (this.acct && this.asecret) { frame.acct = this.acct; frame.asecret = this.asecret; }
     return frame;
   }
 
+  /** ACC1d: one token, or null, and never a throw and never a hang.
+   *  TOKEN_WAIT_MS is the whole budget: past it the hello goes without
+   *  one, which is a connection that works and a name the relay will
+   *  not vouch for - strictly better than a player who cannot connect
+   *  because a second Worker is having a bad minute. */
+  async _mint() {
+    try {
+      return await Promise.race([
+        Promise.resolve(this.mintToken()).catch(() => null),
+        new Promise((r) => setTimeout(() => r(null), TOKEN_WAIT_MS)),
+      ]);
+    } catch { return null; }
+  }
+
   /** The one handler set for a socket, the primary's or a halo's - the role is read at event time (_roomOf). */
   _bind(ws) {
-    ws.onopen = () => {
+    ws.onopen = async () => {
       const room = this._roomOf(ws);
       if (room == null) return;
+      // ACC1d: A FRESH TOKEN PER CONNECTION, minted here because the
+      // relay spends each one once. Awaiting before the hello is safe -
+      // the relay says nothing until it has heard one - and it is
+      // BOUNDED and SWALLOWED: an account service that is slow or down
+      // must cost a connection a moment, never the connection itself.
+      // A session with no token is admitted as every build before this
+      // slice was (bible ACC1d D1).
+      if (this.mintToken) {
+        this.token = await this._mint();
+        // the socket may have been replaced or closed while we waited
+        if (this._roomOf(ws) == null) return;
+      }
       const frame = this._helloFrame();
       const hello = JSON.stringify(frame);
       if (room === this.room) {
@@ -1013,7 +1062,11 @@ export class OnlineSession {
         }
         return;
       }
-      this._deliver('chat', () => this.onChat?.({ id: m.id, name: sanitizeName(m.name), text, at: Number.isFinite(m.at) ? m.at : now, mine: m.id === this.id }));
+      // ACC1d: the line carries the relay's verdict on the NAME beside it,
+      // because a chat log is where a name is read and an impersonation
+      // is worth doing. A hard boolean for the same reason `_peer` keeps
+      // one: never a "maybe".
+      this._deliver('chat', () => this.onChat?.({ id: m.id, name: sanitizeName(m.name), v: m.v === true, text, at: Number.isFinite(m.at) ? m.at : now, mine: m.id === this.id }));
     } else if (m.t === 'social') {
       // AUDIT SOC B3: GATED COMING IN, as a chat line is (CHAT-G) - a note or an error becomes a chat line (net/chat.js
       // keeps CHAT_KEEP of them, so an ungated stream is a player's history deleted) and the rest a repaint; the
@@ -1046,12 +1099,17 @@ export class OnlineSession {
 
   _peer(p, now) {
     const pose = validPose(p.pose);
-    return { id: p.id, name: sanitizeName(p.name), look: validLook(p.look), told: true, pose, from: pose, at: now, seenAt: now, shown: pose ? { ...pose } : null };
+    // ACC1d: `v` IS THE RELAY'S WORD AND NOTHING ELSE. It rides the
+    // welcome's roster and every join; it is kept as a hard boolean so
+    // a peer the relay did not vouch for can never read as "maybe".
+    // NOT DRAWN YET - bible ACC1d D5 says why, and says whose call the
+    // mark's design is.
+    return { id: p.id, name: sanitizeName(p.name), look: validLook(p.look), v: p.v === true, told: true, pose, from: pose, at: now, seenAt: now, shown: pose ? { ...pose } : null };
   }
 
   /** A known peer said hello again: its name and look are the new ones, its pose arrives as any other. */
   _refresh(p, m, now) {
-    p.name = sanitizeName(m.name); p.look = validLook(m.look); p.told = true; p.recall = false;   // SLAM6: an introduction, so the asks stop (SLAM14: the recall's too)
+    p.name = sanitizeName(m.name); p.look = validLook(m.look); p.v = m.v === true; p.told = true; p.recall = false;   // SLAM6: an introduction, so the asks stop (SLAM14: the recall's too)   // ACC1d: a fresh hello is a fresh verdict - a peer that signed out and re-hello'd is NOT still vouched for
     this._remember(p.id, p);   // SLAM9: and it is kept, so a blip cannot un-introduce it
     const pose = validPose(m.pose);
     if (pose) this._arrive(p, pose, now); else p.seenAt = now;

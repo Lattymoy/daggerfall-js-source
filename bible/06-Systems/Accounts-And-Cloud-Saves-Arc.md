@@ -1227,3 +1227,179 @@ wirings rather than counting loosely, so a third scrim added without
 its own outside-tap still reddens — and it checks the account one is
 guarded by `accountOpen`, because a front door wired unconditionally
 would close on every tap.
+
+
+---
+
+## ACC1d — the design, before the code (2026-09-22)
+
+Mac: *"Go in order. Take your time."* So: ACC1d, then ACC2, then the
+tile picker. This section is the record ACC0 set the precedent for —
+what is decided and **why**, written before anything is built, because
+this is the slice that costs every connected player their session.
+
+### The seam, as it is today
+
+```
+client   net/online.js  _helloFrame()  { t:'hello', id, secret, name, look, pose }
+wire     net/wire.js    parseClient()  name = sanitizeName(m.name)
+relay    server/src/index.js           m.name -> the attachment, join, chat, roster, the hub's account record
+```
+
+**The client asserts its own name and nothing checks it.** That is the
+hole ACC1a opened this arc to close.
+
+### What ACC1d adds
+
+The hello carries `tok`. `wire.js` validates its **shape** only — it is
+sync and pure and must stay that way. The relay **verifies** it
+(`verifyToken`, async, needs the public key) and, on success, takes the
+name **out of the token** instead of off the frame.
+
+### D1 — is the token REQUIRED? No, and that is deliberate
+
+Three ways to go, and the two rejected ones are recorded because the
+reasoning is the load-bearing part:
+
+- **Required.** Every client without one is refused. It closes the hole
+  completely and it makes the relay unusable whenever the account
+  service is down — a second Worker's outage taking the game offline is
+  exactly the coupling the two-Worker split (ACC0) exists to avoid. It
+  also breaks every client that has not reloaded, and a relay deploy
+  drops everyone at once, so that window is real.
+- **Optional, name from the token when present.** Costs nothing and
+  buys nothing: a forger omits the token and asserts whatever they
+  like.
+- **Optional, and the relay says which names it VOUCHES FOR.** Taken.
+
+A verified hello carries its name from the token and the join and
+roster frames mark it. An unverified one is admitted exactly as it is
+today. Impersonation stops being invisible: a name nobody signed is a
+name the client can show as unsigned.
+
+**AND THE HONEST LIMIT, stated here rather than discovered later:** a
+token makes a name TRUSTWORTHY, it does not yet make one MANDATORY.
+Until the requirement flips, a client can still assert any name it
+likes — it simply cannot get the relay to vouch for it. ACC0's wall
+("the only people who can take a name are the people who can be
+banned") is not fully standing until that flip, and the flip is its own
+slice with its own deploy.
+
+### D2 — where the public key lives: the relay's config
+
+`server/wrangler.toml`, as a var rather than a secret — a public key can
+verify and cannot mint, so there is nothing to hide. Fetching
+`/v1/pubkey` at runtime instead would put the account service in the
+relay's startup path, which is the coupling D1 just refused.
+
+It is a second copy of a fact the service publishes, so the **deploy
+checks them against each other**: `account-deploy.yml` already reads
+`/v1/pubkey`, and a mismatch means every verify fails silently, which is
+the worst possible failure mode and the easiest to catch at deploy.
+
+### D3 — the TTL ceiling lives beside the key
+
+F8's second half. `verifyToken` takes `maxTtlS` from the caller, so a
+generous value typed at whichever call site happens to be in front of
+somebody silently grants long-lived tokens. It is config, next to the
+key, with `MAX_TTL_S` as the hard ceiling the module itself refuses
+past.
+
+### D4 — one-shot, and exactly what that does and does not close
+
+F8, settled by Mac: **a token is spent once.** The relay keeps the
+signatures it has verified and refuses a repeat; `e` bounds how long it
+must remember, so the set sweeps itself.
+
+**IT IS PER-ROOM, because the relay has no global state that a hello
+could touch without becoming a bottleneck** — ACC0 refused exactly that
+for provider links, and a hello is far hotter than a sign-in. So:
+
+- A token captured and replayed **into the same room** is refused. That
+  is where the victim is and where impersonation is worth doing.
+- A token replayed into a **different room**, or after that room's
+  object has been evicted, is not caught.
+
+Closing the second case needs shared state on the hello path. It is not
+worth that, and saying so here is better than a comment claiming the
+replay window is shut.
+
+### What this costs
+
+`wire.js` gains a field and `server/src/index.js` gains an import, so
+`RELAY_GRAPH` grows and SLAM8's hash changes. **`RELAY_VERSION` bumps
+and the deploy drops every connected player.** That is the price this
+arc has been saving up for since ACC0 chose two Workers, and it buys
+the whole token seam in one drop rather than several.
+
+`test/identitytoken.test.js`'s F8 gate fires the moment the module joins
+the bundle and must be replaced by a pin that presents the same token
+twice and proves the second is refused. That is the point of it.
+
+### D5 — the mark is CARRIED and it is not DRAWN, and that is on purpose
+
+D1 says impersonation "stops being invisible", and that sentence was
+one step ahead of the code when it was written. The relay decides `v`;
+the question nobody had answered is what a player SEES.
+
+The answer this slice gives is: the fact travels all the way to the
+client, and nothing new is drawn. `v` rides the join, the welcome's
+roster, the `who` answer and every chat line; `net/online.js` keeps it
+on the peer as a hard boolean, and `net/chat.js` keeps it on the line
+the panel draws from. What is missing is exactly one thing — a mark
+beside a name — and that is a DESIGN, on a surface Mac reviews.
+
+Two reasons for the split, and the second is the load-bearing one:
+
+- Mac has not seen a mark. This session already shipped a sign-in
+  window he sent back twice ("What the hell is this design", "Nothing
+  is centered"); inventing a badge at three in the morning and calling
+  the arc finished is how that happens a third time.
+- **A relay deploy drops every connected player, and a client build
+  does not.** If the flag stopped at the relay, the day the mark is
+  drawn would cost another drop. Carrying it now makes the UI slice a
+  client build and nothing else.
+
+So the honest state, stated here rather than discovered later: after
+ACC1d the relay knows which names it vouches for, the client knows,
+and the player does not. That last step is a UI slice.
+
+### AND ONE THING THE FIRST CUT GOT WRONG, worth recording
+
+`rosterFor` did not carry `v`. The join frame did, so every peer who
+arrived AFTER you would have been marked and every peer already
+standing in the room would not — a signal that is true half the time,
+which is worse than no signal, and one that could only have been fixed
+by a second relay deploy. It was found by asking what the WELCOME
+carries rather than by reading the code that was just written, and it
+is why the pins walk both doors.
+
+### SHIPPED 2026-09-22
+
+- `src/net/wire.js` — the hello's `tok`, shape only; `rosterFor` carries
+  `v`. `RELAY_VERSION` world84 → **world85**.
+- `server/src/index.js` — `_named` verifies, spends the signature once
+  (`SPENT_MAX`, swept by `e`), and takes the name out of the token; the
+  attachment, the join, the roster, the `who` answer, the chat line and
+  the hub's record all carry the decided name and `v`.
+- `server/wrangler.toml` — `IDENTITY_PUBLIC_KEY` and
+  `IDENTITY_MAX_TTL_S`, as vars (D2, D3).
+- Both deploy workflows — the relay's copy of the public key is checked
+  against what the account service publishes, on the deploy that can
+  mint a new pair AND before the relay's own wrangler run. An
+  unreachable service warns; a real disagreement stops the deploy.
+- `src/net/accountClient.js` — `mintIdentity` and `accountTokenMinter`:
+  one fresh token per connection, `null` for every reason a player may
+  have none, never a throw.
+- `src/net/online.js` — `mintToken`, `TOKEN_WAIT_MS`, an async open that
+  is bounded and swallowed and re-checks its socket; `v` kept on the
+  peer and on the chat line.
+- `src/scenes/world.js` — ONE minter, handed to the presence session and
+  to every channel link.
+- Pins: `test/acc1dclient.test.js` (15), four new arms in
+  `test/identitytoken.test.js`, one each in `test/relaydeploy.test.js`
+  and `test/accountdeploy.test.js`. Mutants:
+  `tools/mutants/acc1d.json`, 22, **22 dead and 0 survived**.
+
+**NOT DEPLOYED.** The relay deploy fires on merge to main and drops
+every connected player when it does.

@@ -89,17 +89,29 @@
 // to be in front of somebody is the second-home shape SLAM13 burned us
 // on.
 //
-// NOTHING HERE ENFORCES EITHER YET, AND THAT IS THE POINT OF SAYING SO:
-// the refusal lives in the relay, which does not import this file yet.
-// test/identitytoken.test.js holds the decision against RELAY_GRAPH and
-// fails the day ACC1d puts this module in the bundle without it.
+// ACC1d BUILT BOTH (2026-09-22), so the paragraphs above describe
+// RUNNING CODE and not an intention. `server/src/index.js` `_named`
+// verifies the token, keeps the signature for as long as `e` says the
+// room must remember it, refuses a repeat, and takes the name out of
+// the token; the ceiling is `IDENTITY_MAX_TTL_S` beside the public key
+// in `server/wrangler.toml`, and config may only TIGHTEN `MAX_TTL_S`.
 //
-// This note is written HERE, in the file both ends import, and it is
-// written NOW because this module is not in the relay bundle yet
-// (RELAY_GRAPH is five files and none of them is this one). The moment
-// ACC1d imports it, every edit to this comment costs a RELAY_VERSION
-// bump and drops every connected player - DEPLOY-PROSE's lesson, paid
-// in advance for once.
+// AND THE HONEST BOUND, BECAUSE THE REFUSAL IS PER ROOM: a Durable
+// Object is the only memory a hello can touch without becoming a global
+// object every connection queues behind (ACC0 refused exactly that for
+// provider links, and a hello is far hotter than a sign-in). So a token
+// replayed into the SAME room is refused - that is where the victim is
+// and where impersonation is worth doing - and one replayed into a
+// different room, or after that room's object has been evicted, is not
+// caught. bible ACC1d D4 says why the line sits there rather than
+// claiming the window is shut.
+//
+// THIS COMMENT IS EXPENSIVE NOW. The module is in RELAY_GRAPH, so
+// SLAM8 hashes its raw bytes: every edit here costs a RELAY_VERSION
+// bump, and a bump on main deploys the relay and DROPS EVERY CONNECTED
+// PLAYER. That is why the note above was written BEFORE the import
+// landed - DEPLOY-PROSE's lesson, paid in advance for once - and why a
+// correction from here on waits for a slice that is bumping anyway.
 // ═══════════════════════════════════════════════════════════════════
 
 /* global atob, btoa */

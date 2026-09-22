@@ -306,7 +306,7 @@ test('WATCH1 by source: world.js hands the pool the watch (the guards list, hurt
   assert.match(w, /dealDamage: \(f, d\) => \(cityGuards\.guards\.includes\(f\)/, 'by pool membership, never by species - a 146 puppet is the encounter pool\'s');
   assert.match(w, /onAttackFromPlayer: \(f\) => \(cityGuards\.guards\.includes\(f\)/);
   assert.equal(ef.includes('crimeCommitted'), false, 'the striker\'s pool has no crime machinery (exteriorfoes.test.js\'s sweep, still true)');
-  assert.ok(rd('src/net/wire.js').includes("export const RELAY_VERSION = 'world84'"), 'no wire SHAPE change (a record is a record) - the version moved because wire.js gained a reader constant, CELL_WATCH_PUPPETS_MAX (world81), again at the main merge for a moved comment line (world83), and again when RELAY-H1 retuned HEARTBEAT_MS and added PING_MS (world84): the relay bundle\'s bytes are its law (SLAM8)');
+  assert.ok(rd('src/net/wire.js').includes("export const RELAY_VERSION = 'world85'"), 'no wire SHAPE change (a record is a record) - the version moved because wire.js gained a reader constant, CELL_WATCH_PUPPETS_MAX (world81), again at the main merge for a moved comment line (world83), again when RELAY-H1 retuned HEARTBEAT_MS and added PING_MS (world84), and again for ACC1d\'s `tok` field and the roster\'s `v` (world85): the relay bundle\'s bytes are its law (SLAM8)');
 });
 
 test('AUDIT ALL (the audit of AUDIT WATCH1): a pending build\'s species is fixed at the build - a peer re-wording a pending watch without `t` neither escapes the watch\'s count nor stands a foe (the cap held); the frame\'s trim reserves the watch\'s live share behind a full encounter roll; a peer\'s killing shaft puts no Arrow into the body it emptied; a restore keeps a watchman\'s level', async () => {

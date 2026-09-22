@@ -266,6 +266,8 @@ import { createDataPipeline } from './dataPipeline.js';
 import { createWorldModes } from './worldModes.js';
 import { setAmbientTextHost, tickAmbientText } from '../systems/ambientText.js';   // AT2: Ambient Text's one component - this host claims it and feeds it the frame
 import { OnlineSession, roomKeyFor, DEFAULT_SERVER, WORLD_PUBLISH_MS, FOES_MS, FOES_FULL_MS, FOES_STALE_MS } from '../net/online.js';   // ONLINE1: the session; WORLD1: the room's memory
+import { accountTokenMinter } from '../net/accountClient.js';   // ACC1d: the hello's signed word, minted per connection from the account session this device holds
+import { appStorage } from '../systems/appStorage.js';   // ACC1d: where that session lives - the app's store, not the tab's (a second tab is the same player)
 import { POSE_STRIKES, isWorldRoom, isCellRoom, cellHaloFor, actFrameFits, sharedClassicMinutes, wallMsForClassicMinutes } from '../net/wire.js';   // WORLD6b-iii(b): the cell seam's halo   // MAC7 #1: the swing's kind on the wire; AUDIT WORLD4 A1: whether an act frame can be said at all
 import { hasDaggerfallArrows } from '../combat/fpArm.js';   // MAC7 #2: the arrow bit on the wire - weaponRig's own read
 import { drawText } from '../ui/text.js';   // ONLINE1: the session's status line
@@ -8516,11 +8518,27 @@ export async function bootWorld(canvas, renderer, params, status) {
   let onlineToScene = (p) => [p.x, p.y, p.z];
   const ROOM_HOLD_MS = 500;   // AUDIT ONLINE D11: a room key holds this long before the socket moves - a cell edge is not a churn
   const ONLINE_MOVE_HOLD_MS = 250;   // ONLINE-MVFLICKER1: see the outgoing `mv` computation's own header - debounces a single stray zero-delta sample
+  // ACC1d: ONE minter, shared by the presence session and every channel
+  // link - it holds no token and caches nothing, so a shared minter is
+  // still a FRESH token per socket, which is what the relay's spend-once
+  // rule (bible ACC1d D4) requires. Built once because reading the store
+  // is the only work it does before a call.
+  const identityMinter = accountTokenMinter({ fetch: (u, i) => globalThis.fetch(u, i), storage: appStorage() });
   const onlineStart = () => {
     online = new OnlineSession({
       url: params.get('server') || getPref('onlineServer') || DEFAULT_SERVER,
       name: params.get('name') || getPref('onlineName') || playerEntity.name || 'Traveller',
       look: composeLook(playerEntity),
+      // ACC1d: the client's half of the token seam. The session calls
+      // this on every socket open and puts the answer in the hello;
+      // `accountTokenMinter` answers null for every reason a player
+      // might have no token, so a signed-out player, a cleared browser
+      // and an account service having a bad minute all connect exactly
+      // as they did before this slice. Built here rather than in
+      // net/online.js because online.js must stay a module a node test
+      // can drive: `fetch` and the storage are arguments, the same law
+      // net/accountClient.js's own header states.
+      mintToken: identityMinter,
     });
     // WORLD1: the room's memory in - a welcome that carries the world the room keeps lands on the standing dungeon
     // (the mode machine refuses another dungeon's); a new host publishes at once
@@ -8620,6 +8638,13 @@ export async function bootWorld(canvas, renderer, params, status) {
       link.onRelay = onRelayVersion;
       link.join(tab.room);
       chatLinks.set(tab.id, link);
+      // ACC1d: the channel link mints too, and it is the link that most
+      // needs to - the hub is where a name is READ, so an unsigned name
+      // in chat is the impersonation this arc exists to make visible.
+      // Set after the constructor, not in it, for the same reason `acct`
+      // below is: CHAT1's pin holds those five lines as they stand, and
+      // the hello is built when the socket opens, a turn later.
+      link.mintToken = identityMinter;
       // SOC2: the HUB tab's link carries the account (net/social.js accountId - the profile's, not the tab's); the
       // presence session never does, and a later channel tab would not either: the hub is the one room that checks
       // it. Set after the join, which is safe because a socket opens on a later turn and the hello is built when it

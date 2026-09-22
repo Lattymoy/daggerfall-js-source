@@ -416,3 +416,25 @@ test('ACC1-CI: nothing in the service still claims a person has to do this by ha
       'the deploy workflow is gone and nothing tells a reader the work is theirs again');
   }
 });
+
+test('ACC1d D2: the service\'s deploy checks the RELAY\'s copy of the public key, and says what to paste when it is stale', () => {
+  const wf = rd(WF);
+  // THE MINTING STEP IS THE DANGEROUS ONE. A newly minted pair is a
+  // relay whose configured copy is now wrong, and the failure mode is
+  // the worst there is: every hello refused as a bad signature, with
+  // nothing anywhere saying why. So the deploy that can mint is the
+  // deploy that checks.
+  const step = /- name: Verify the service can hand back its own public key[\s\S]*?(?=\n      - name: |\n$)/.exec(wf)?.[0] ?? '';
+  assert.ok(step, 'the pubkey step is there');
+  assert.match(step, /grep -oP '\^IDENTITY_PUBLIC_KEY[^']*' server\/wrangler\.toml/, 'the relay\'s copy, read from the config that ships it');
+  assert.match(step, /if \[ "\$want" != "\$key" \]; then/, 'compared against what this service publishes');
+  assert.match(step, /exit 1/, 'and a mismatch fails the deploy');
+  // AND IT SAYS WHAT TO DO. A red step naming two keys nobody can read
+  // is a red step somebody re-runs; the summary carries the value.
+  assert.match(step, /GITHUB_STEP_SUMMARY/, 'the correct value goes somewhere a person can copy it from');
+  assert.doesNotMatch(wf, /IDENTITY_PRIVATE_KEY[^\n]*GITHUB_STEP_SUMMARY/, 'and never the private half');
+  // THE KEY IS NEVER TYPED HERE, in either workflow: one home, which is
+  // the relay's own config.
+  const key = /^IDENTITY_PUBLIC_KEY\s*=\s*"([^"]+)"/m.exec(rd('server/wrangler.toml'))?.[1] ?? '';
+  assert.doesNotMatch(wf, new RegExp(key.slice(0, 20)), 'no literal copy in the workflow');
+});

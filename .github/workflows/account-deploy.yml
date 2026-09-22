@@ -308,3 +308,34 @@ jobs:
             exit 1
           fi
           echo "the service publishes a ${#key}-character public key"
+
+          # ═══ ACC1d D2: THE TWO COPIES ARE CHECKED AGAINST EACH OTHER
+          #
+          # The relay carries the public half as a plain var, because a
+          # key that can verify and cannot mint has nothing to hide, and
+          # fetching it at runtime would put this service in the relay's
+          # startup path - the coupling the two-Worker split exists to
+          # refuse. The price of that copy is drift, and drift here has
+          # the worst failure mode there is: EVERY verify fails, every
+          # hello is refused as `token bad signature`, and nothing says
+          # why. So it is caught at deploy, where it is free.
+          want=$(grep -oP '^IDENTITY_PUBLIC_KEY\s*=\s*"\K[^"]+' server/wrangler.toml || true)
+          if [ -z "$want" ]; then
+            echo "::error::server/wrangler.toml carries no IDENTITY_PUBLIC_KEY - the relay cannot verify anything"
+            exit 1
+          fi
+          if [ "$want" != "$key" ]; then
+            echo "::error::the relay's configured public key does not match the one this service publishes - every token would be refused"
+            {
+              echo "### The relay's identity key is stale"
+              echo ""
+              echo "\`server/wrangler.toml\` says \`IDENTITY_PUBLIC_KEY = \"$want\"\`,"
+              echo "but this service publishes:"
+              echo ""
+              echo "    $key"
+              echo ""
+              echo "Update the relay's config to that value and let the relay deploy."
+            } >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+          echo "and the relay's configured copy matches it"

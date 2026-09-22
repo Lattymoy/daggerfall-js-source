@@ -419,6 +419,17 @@ const finite = (v) => typeof v === 'number' && Number.isFinite(v);
 const uint = (v, max) => (finite(v) && v >= 0 ? Math.min(max, Math.floor(v)) : null);
 const ID_RE = /^[A-Za-z0-9_-]{4,40}$/;
 const SECRET_RE = /^[A-Za-z0-9_-]{8,64}$/;
+/** ACC1d: what an identity token LOOKS like - `v1.<base64url body>.<base64url sig>`,
+ *  which is `src/net/identityToken.js`'s own shape. Bounded because an
+ *  unbounded string reaches WebCrypto on the relay, and the verifier
+ *  refuses an oversized one anyway (TOKEN_MAX there); this is the
+ *  cheaper refusal, before a frame is even accepted.
+ *
+ *  THE VERSION PREFIX IS NOT SPELLED OUT HERE. identityToken.js is the
+ *  one home for which version exists and the verifier refuses anything
+ *  else before parsing a byte; a second copy of `v1` in this file would
+ *  be a second thing to forget on the day there is a v2. */
+const TOKEN_RE = /^[A-Za-z0-9]{1,8}\.[A-Za-z0-9_-]{1,512}\.[A-Za-z0-9_-]{1,128}$/;
 
 /** The name a refused one becomes. Not a mask (`C**` is a shape a
  *  player treats as a puzzle) and not an error the relay could not
@@ -733,7 +744,7 @@ export const KEEPALIVE_FAN_MS = HEARTBEAT_MS / 2;
  *  carries it (`v`), and a client whose wire.js was built against another version says so on the console: the client
  *  is deployed by CI and the relay by hand, so a skew between them is the ordinary state of a release day, and until
  *  now nothing on either end could see it. */
-export const RELAY_VERSION = 'world84';   // RELAY-H1: KEEPALIVE_FAN_MS follows HEARTBEAT_MS 5000 -> 20000 (the floor is 10 s now)   // ONLINE-CLASS1: a look carries the character's class name, so a peer without a Morrowind body stands as its class-enemy sprite
+export const RELAY_VERSION = 'world85';   // RELAY-H1: KEEPALIVE_FAN_MS follows HEARTBEAT_MS 5000 -> 20000 (the floor is 10 s now)   // ONLINE-CLASS1: a look carries the character's class name, so a peer without a Morrowind body stands as its class-enemy sprite   // ACC1d: the hello carries an identity token and the relay verifies the name out of it
 
 /** The listeners sorted by distance from `from`, nearest first; one with no pose yet sorts last, because a peer that
  *  has never said where it is cannot be near. The ordering is Euclidean in the POSE'S OWN FRAME, which is a cell's
@@ -973,6 +984,30 @@ export function parseClient(text, { hasHello = false } = {}) {
     if (!look) return { error: 'bad look' };
     const pose = validPose(m.pose);
     const hello = { t: 'hello', id, secret, name: sanitizeName(m.name), look, pose };
+    // ═══ ACC1d: THE IDENTITY TOKEN, OPTIONAL, AND ITS SHAPE ONLY ══
+    //
+    // `parseClient` is SYNC AND PURE and has to stay that way - it is
+    // the law both ends run, and a verifier needs WebCrypto, a public
+    // key and an await. So this checks that `tok` could be a token and
+    // nothing more; server/src/index.js does the arithmetic, because
+    // only the relay holds the key.
+    //
+    // A HELLO WITHOUT ONE IS ADMITTED, exactly as SOC1's account pair
+    // is admitted when absent: it is a build from before this slice, or
+    // a client that could not reach the account service. ACC1d's record
+    // (bible ACC1d D1) says why the token is not required - a second
+    // Worker's outage must not take the game offline - and says the
+    // honest limit out loud: a token makes a name TRUSTWORTHY, it does
+    // not yet make one MANDATORY.
+    //
+    // A MALFORMED ONE IS AN ERROR, not a quiet drop. A client that
+    // meant to send a token and sent rubbish should hear so, the same
+    // way a malformed account pair is `bad account` rather than a
+    // silent downgrade to no account at all.
+    if (m.tok !== undefined) {
+      if (typeof m.tok !== 'string' || !TOKEN_RE.test(m.tok)) return { error: 'bad token' };
+      hello.tok = m.tok;
+    }
     // SOC1: the account, optional - and BOTH or neither. A hello that names an account without its secret, or a
     // malformed either, is not the port's client (accountId/accountSecret mint the shape the law admits), so it is an
     // error like a bad id, not a hello quietly admitted without an account. A hello naming none is a build before
@@ -1128,7 +1163,12 @@ export const relayVersionOf = (v) => (typeof v === 'string' && v.length > 0 && v
  *  from (a world cell), the first ROSTER_MAX otherwise. */
 export function rosterFor(peers, meId, near = null) {
   const out = [];
-  for (const p of peers) if (p && p.id && p.id !== meId) out.push({ id: p.id, name: p.name, look: p.look, pose: p.pose ?? null });
+  // ACC1d: `v` RIDES THE ROSTER TOO. The join frame carries it, and a
+  // roster that dropped it would mark the people who arrive AFTER you
+  // and leave everybody already standing there unmarked - a signal
+  // that is true half the time is worse than none. `undefined` is
+  // absent once stringified, so an unverified peer costs no bytes.
+  for (const p of peers) if (p && p.id && p.id !== meId) out.push({ id: p.id, name: p.name, look: p.look, pose: p.pose ?? null, ...(p.v ? { v: true } : {}) });
   // SLAM5 (2026-09-16, AUDIT SLAM): ONE METRIC. This ranked by `pixelDistance` - Chebyshev on MAP PIXELS, 32768 units
   // wide - while the pose fan ranks by squared Euclidean in the pose's own frame. Two different metrics over the same
   // set DO NOT NEST, so `POSE_FAN_MAX <= ROSTER_MAX` bought nothing: measured at an event standing, only 11 of the 32

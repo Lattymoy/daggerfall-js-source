@@ -148,30 +148,23 @@
     ]
   },
   {
-    "name": "ACC1a-17-F8-the-note-claims-the-refusal-is-built",
+    "name": "ACC1a-17-F8-the-note-goes-back-to-saying-nothing-is-built",
     "file": "src/net/identityToken.js",
-    "old": "// NOTHING HERE ENFORCES EITHER YET, AND THAT IS THE POINT OF SAYING SO:",
-    "new": "// The relay refuses a repeat today, so this is all handled already:",
+    "old": "// ACC1d BUILT BOTH (2026-09-22), so the paragraphs above describe",
+    "new": "// NOTHING HERE ENFORCES EITHER YET, AND THAT IS THE POINT OF SAYING SO:",
     "tests": [
-      "test/identitytoken.test.js"
-    ]
+      "test/acc1dclient.test.js"
+    ],
+    "note": "ACC1a wrote that sentence while the refusal was unbuilt and it was true; the relay imports this file now, so it is a lie - DEPLOY-PROSE's shape exactly, and the shape this project keeps paying for. The gate derives membership from RELAY_GRAPH, so it cannot go stale by nobody remembering."
   },
   {
-    "name": "ACC1a-18-F8-the-note-stops-saying-what-the-relay-must-do",
+    "name": "ACC1a-18-F8-the-note-drops-the-per-room-bound",
     "file": "src/net/identityToken.js",
-    "old": "// keeps the signatures it has seen and refuses a repeat; `e` bounds how",
-    "new": "// keeps some state about what it has seen; `e` bounds how",
+    "old": "// AND THE HONEST BOUND, BECAUSE THE REFUSAL IS PER ROOM: a Durable",
+    "new": "// AND THE WINDOW IS SHUT, WHEREVER THE TOKEN IS PRESENTED: a Durable",
     "tests": [
-      "test/identitytoken.test.js"
-    ]
-  },
-  {
-    "name": "ACC1a-19-F8-the-gate-watches-a-path-the-bundle-walk-never-spells",
-    "file": "test/identitytoken.test.js",
-    "old": "const TOKEN_MODULE = 'src/net/identityToken.js';",
-    "new": "const TOKEN_MODULE = 'src/net/identity-token.js';",
-    "tests": [
-      "test/identitytoken.test.js"
-    ]
+      "test/acc1dclient.test.js"
+    ],
+    "note": "A token replayed into a DIFFERENT room, or after that room's object has been evicted, is not caught - bible ACC1d D4 refused to claim otherwise, because a comment claiming a shut window is worse than no comment at all."
   }
 ]

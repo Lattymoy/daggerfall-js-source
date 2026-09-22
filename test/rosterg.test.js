@@ -92,6 +92,6 @@ test('ROSTER-G: world.js hands the panel the ACTIVE CHANNEL\'s link, with the pr
   assert.match(panel, /if \(dup\.has\(r\.name\.toLowerCase\(\)\)\) n\.append\(el\('span', 'dfchat-who-tag', '#' \+ r\.tag\)\);/, 'the tag is conditional on a shared name');
   // the relay's side, by source: a channel's welcome is built from `others` by name, cut and counted
   const idx = rd('server/src/index.js');
-  assert.match(idx, /const named = others\.slice\(0, CHAT_ROSTER_MAX\)\.map\(\(b\) => \(\{ id: b\.id, name: b\.name \}\)\);/);
+  assert.match(idx, /const named = others\.slice\(0, CHAT_ROSTER_MAX\)\.map\(\(b\) => \(\{ id: b\.id, name: b\.name, \.\.\.\(b\.v \? \{ v: true \} : \{\}\) \}\)\);/, 'ACC1d: and the verdict rides each row');
   assert.doesNotMatch(idx, /if \(isChatRoom\(a\.key\)\) return;   \/\/ a channel announced no join/, 'the leave arm no longer skips a channel');
 });

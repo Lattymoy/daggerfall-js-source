@@ -288,8 +288,8 @@ test('CHAT1 / AUDIT CHAT: the session as a CHANNEL (presence: false) - the hello
   ws.receive({ t: 'chat', id: 'mac-0001', name: 'Mac', text: 'hi all', at: 5 });
   ws.receive({ t: 'chat', id: 'bob-0002', name: '  Bob <b>  ', text: ' yo \u202e', at: 6 });
   assert.deepEqual(heard, [
-    { id: 'mac-0001', name: 'Mac', text: 'hi all', at: 5, mine: true },
-    { id: 'bob-0002', name: 'Bob <b>', text: 'yo', at: 6, mine: false },
+    { id: 'mac-0001', name: 'Mac', text: 'hi all', at: 5, mine: true, v: false },
+    { id: 'bob-0002', name: 'Bob <b>', text: 'yo', at: 6, mine: false, v: false },   // ACC1d: and the relay's verdict on the name, false where it vouched for nobody
   ], 'the line in: the name and the text checked by the relay\'s own law, mine by id');
   ws.receive({ t: 'chat', name: 'x', text: 'no id' }); ws.receive({ t: 'chat', id: 'bob-0002', text: '   ' }); ws.receive({ t: 'chat', id: 'bob-0002', text: 7 });
   assert.equal(heard.length, 2, 'a line with no id or nothing to say is dropped');
@@ -354,7 +354,7 @@ test('CHAT1 / AUDIT CHAT: the log - the World tab from CHAT_TABS (one today, eac
   assert.equal(log.push('world', { id: 'a', name: 'A', text: '' }), null, 'nothing to say: nothing kept');
   assert.equal(log.version, v0, 'and nothing to show');
   const l1 = log.push('world', { id: 'a', name: 'A', text: 'one', at: 5 });
-  assert.deepEqual(l1, { seq: 1, id: 'a', name: 'A', text: 'one', at: 5, t: 10_000, mine: false, system: false });   // SRV-N: every line carries the flag, and a player's is false
+  assert.deepEqual(l1, { seq: 1, id: 'a', name: 'A', text: 'one', at: 5, t: 10_000, mine: false, system: false, v: false });   // SRV-N: every line carries the flag, and a player's is false   // ACC1d: and `v`, the relay's verdict on the name
   assert.equal(log.tab('world').unread, 1, 'closed: unread');
   assert.ok(log.version > v0);
   log.push('world', { id: 'me', name: 'Me', text: 'two', mine: true });
