@@ -5852,7 +5852,6 @@ export function createWorldModes(host) {
           activateHeld: () => held(keys, 'ActivateCenterObject') || !!host.activateDown?.(),
           survivalEnv: () => host.survivalEnv?.() ?? null,   // SURV7: the outer host's env; the dungeon overrides the flags it owns
           // PARTY-REST2: forwarded straight from THIS host's own host.partyRestGate (world.js's own gate) - see its doc comment.
-          partyRestGate: () => host.partyRestGate?.(),
           // PARTY-REST28: forwarded straight from THIS host's own host.markPartyRestSpent (world.js's own
           // function), the same way partyRestGate itself already is - see its doc comment for the bug this closes.
           markPartyRestSpent: () => host.markPartyRestSpent?.(),
@@ -5872,9 +5871,9 @@ export function createWorldModes(host) {
           // dungeonOnline/survivalEnv/useMagicItem already delegate.
           partyMembers: () => host.partyMembers?.() ?? [],
           shareQuest: (uid, questName, displayName) => host.shareQuest?.(uid, questName, displayName),
+          partyRestGate: () => host.partyRestGate?.(),   // PARTY-REST2 (AUDIT DROPS D1): the dungeon's rest asks the party too - ONE copy (main carried two; eslint no-dupe-keys)
           // PEER-PLAQUE1: the plaque's peer pick, delegated the same way - the dungeon's own eye, the outer host's peers
           peerHoverPick: () => host.peerHoverPick?.() ?? null,   // AUDIT DROPS E3: the F key's own ray, not the dungeon's eye
-          partyRestGate: () => host.partyRestGate?.() ?? null,   // PARTY-REST2 (AUDIT DROPS D1): the dungeon's rest asks the party too
           pointerSurfaceUp: () => !!host.pointerSurfaceUp?.(),   // AUDIT DROPS E1: the plaque comes down under a pointer surface
           // D-ONLINE1: the dungeon death screen's own door - see
           // dungeonContext.js's DeathScreen construction. Delegates to

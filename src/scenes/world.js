@@ -7509,7 +7509,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // exterior -> the townTalk overlay, interior OR dungeon -> the mode
   // machine's slot. U43-ii shipped the dungeon half: showQuestBox
   // offers the window to `modes.showQuestOverlay` below, and
-  // worldModes answers it in BOTH modes (worldModes.js:8613-8677 -
+  // worldModes answers it in BOTH modes (worldModes.js:8612-8676 -
   // dungeon routes to dungeonCtx.showOverlay), so a dungeon popup is
   // shown rather than logged loudly and dropped.
   // AUDIT 24 (wave 21): DaggerfallMessageBox.Show() is a
@@ -9721,6 +9721,18 @@ export async function bootWorld(canvas, renderer, params, status) {
   // Extracted here so all three hosts share the identical reset (forwarded the same way onEnemyBreak/
   // canceledByFollower already are), rather than three copies that can drift out of sync with each other again.
   const markPartyRestSpent = () => {
+    // REST-OFFLINE1 (Discord, 2026-09-22, a crash report: "TypeError: Cannot
+    // read properties of null (reading 'now') at markPartyRestSpent <-
+    // toggleRest <- travel"): OFFLINE THERE IS NO PARTY AND NO SOCIAL
+    // CLOCK. `social` is built by socialStart alone, which never runs
+    // without a connected online account, and partyRestGate answers null
+    // on `!social?.party` for the same reason - but this reset, called on
+    // every granted rest (the outdoor R, the interior and dungeon rests,
+    // the travel window's "rest until" arm), read `social.now()`
+    // unconditionally and threw the whole rest away with the frame. Every
+    // field it resets is party state; with no party there is nothing to
+    // spend.
+    if (!social) return;
     _partyRestReady = false;   // PARTY-REST2: spent the moment it is acted on - next nap asks again
     // PARTY-REST2f (2026-09-20, per-request: "it also seems it cant initiate a new rest it tell me vote is
     // still ongoing" - the bug this closed): a genuinely RESOLVED vote - this one, right now, succeeding -
