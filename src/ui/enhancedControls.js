@@ -62,11 +62,11 @@
 // a typing surface.
 
 import { ACTIONS, saveKeyBinds } from '../systems/inputActions.js';
-import { bindings, mouseCode } from './input.js';   // MAC-K1: a mouse button is a binding, so the capture must be able to take one
+import { bindings, mouseCode, swingMode } from './input.js';   // MAC-K1: a mouse button is a binding, so the capture must be able to take one
 import {
   createUnsavedKeybinds, currentDict, setUnsavedBinding, checkDuplicates,
   applyUnsavedKeybinds, resetUnsavedToDefaults, buttonText, splitCamel,
-  comboFromEvent, removeKeybindPromptRows,
+  comboFromEvent, removeKeybindPromptRows, swingHint,
 } from '../systems/controlsConfig.js';
 
 /** The shell's own `el`, three lines, kept LOCAL on purpose:
@@ -381,6 +381,8 @@ function keyRow(action, label) {
   const row = el('div', 'row ctl-row');
   const main = el('div', 'row-main');
   main.append(el('div', 'row-name', label));
+  // SWING-LABEL: the one row whose button is not the whole answer - see swingHint.
+  if (action === 'SwingWeapon' && unsaved.usingPrimary) main.append(el('div', 'row-sub', swingHint(code ?? null, swingMode(), dict.get('ReadyWeapon') ?? null)));
   row.append(main);
 
   const ctl = el('div', 'ctl');

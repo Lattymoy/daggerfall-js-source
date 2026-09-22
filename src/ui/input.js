@@ -108,7 +108,7 @@ export function swingChainState({ width = globalThis.innerWidth ?? 0, height = g
   const codes = [];
   for (const dict of [b.primary, b.secondary]) for (const [code, a] of dict) if (a === 'SwingWeapon') codes.push(code);
   const button = swingButton();
-  const mode = getInt('Controls', 'WeaponSwingMode', 0, 2);
+  const mode = swingMode();
   const threshold = getFloat('Controls', 'WeaponAttackThreshold', 0.001, 1.0);
   return {
     codes,
@@ -120,6 +120,10 @@ export function swingChainState({ width = globalThis.innerWidth ?? 0, height = g
     travelPx: Math.round(threshold * Math.max(width, height)),
   };
 }
+/** Controls/WeaponSwingMode - 0 Gesture (the drag), 1 Click, 2 Click or
+ *  Hold. SWING-LABEL: one reader for the readout above and the enhanced
+ *  controls pane's Swing Weapon line. */
+export function swingMode() { return getInt('Controls', 'WeaponSwingMode', 0, 2); }
 let _said = false;
 /** Tests only: the line is said ONCE per session by design, so driving
  *  it over several states needs the latch let go. */

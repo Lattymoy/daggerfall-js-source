@@ -30,7 +30,7 @@ export const CITY_LIGHT_COLOR = Object.freeze([1, 1, 1]);
  * @param {object} dfBlock - BlocksFile.getBlock output (type Rmb).
  * @param {(record:number) => {w:number,h:number}} getScaledSize -
  *   scaledBillboardSize for archive 210 records.
- * @returns {Array<{record:number,x:number,y:number,z:number}>}
+ * @returns {Array<{record:number,x:number,y:number,z:number,foot:number,w:number,h:number}>}
  */
 export function collectCityLights(dfBlock, getScaledSize) {
   const rmb = dfBlock.rmbBlock;
@@ -51,6 +51,10 @@ export function collectCityLights(dfBlock, getScaledSize) {
       x: obj.xPos * GLOBAL_SCALE,
       y: -obj.yPos * GLOBAL_SCALE + size.h,
       z: (obj.zPos + RMB_DIMENSION) * GLOBAL_SCALE,
+      // FIX-D: and the SPRITE the light sits on top of - its base and
+      // its size - so a brazier's eye box is the brazier (survival/
+      // hearth.js hearthAabb) rather than a guess hung off the flame.
+      foot: -obj.yPos * GLOBAL_SCALE, w: size.w, h: size.h,
     });
   }
 
@@ -66,6 +70,7 @@ export function collectCityLights(dfBlock, getScaledSize) {
         x: obj.xPos * GLOBAL_SCALE + subX,
         y: -obj.yPos * GLOBAL_SCALE + size.h,
         z: (obj.zPos + RMB_DIMENSION) * GLOBAL_SCALE + subZ,
+        foot: -obj.yPos * GLOBAL_SCALE, w: size.w, h: size.h,   // FIX-D
       });
     }
   }
