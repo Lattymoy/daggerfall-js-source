@@ -115,5 +115,35 @@
     "tests": [
       "test/deathloop1.test.js"
     ]
+  },
+  {
+    "name": "corpse-latch-never-lowers",
+    "file": "src/player/eotbBody.js",
+    "old": "    if (died) {\n      if (last.died) return;\n      initialize();",
+    "new": "    if (died) {\n      return;\n      initialize();",
+    "tests": [
+      "test/deathloop1.test.js",
+      "test/eotb_audit2.test.js"
+    ]
+  },
+  {
+    "name": "corpse-latch-lowers-even-while-dead",
+    "file": "src/player/eotbBody.js",
+    "old": "      if (last.died) return;\n      initialize();",
+    "new": "      initialize();",
+    "tests": [
+      "test/deathloop1.test.js",
+      "test/eotb_audit2.test.js"
+    ]
+  },
+  {
+    "name": "corpse-latch-lowered-without-reinit",
+    "file": "src/player/eotbBody.js",
+    "old": "      if (last.died) return;\n      initialize();   // alive again: the clip stops, the table returns to Idle, one forced orientation",
+    "new": "      if (last.died) return;\n      died = false;",
+    "tests": [
+      "test/deathloop1.test.js",
+      "test/eotb_audit2.test.js"
+    ]
   }
 ]

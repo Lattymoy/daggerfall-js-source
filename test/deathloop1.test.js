@@ -175,3 +175,45 @@ test('F11 BELONGS TO THE GAME: the desktop shell claims no key the default bindi
   assert.deepEqual(collisions, [],
     'a shell accelerator on a bound key is the F11 bug again under another name');
 });
+
+// ── DEATH-BODY1: A REVIVED PLAYER IS NOT A CORPSE ────────────────
+//
+// Muriel: "Using the linux appimage, if you die in the tutorial
+// dungeon and press F11 to load, you load the game but are visually a
+// corpse. You can act normally, but are a corpse." kurkku saw the same
+// ("It just goes away on its own, must be some bug with Eye of the
+// Beholder"). trashBattery confirmed it on Arch and named the cause:
+// "zooming into first person and then back out into 3rd person fixes
+// it. looks like loading the game after a death doesn't update the
+// character model state."
+//
+// Filed with DEATHLOOP1 because it is the same family - a revival the
+// port has and the reference does not - and it is the OTHER half of a
+// death that the player survives.
+test('DEATH-BODY1: coming back to life lowers the death latch, wherever the life came from', async () => {
+  const { eotbBody } = await import('../src/player/eotbBody.js');
+  const src = readFileSync(new URL('../src/player/eotbBody.js', import.meta.url), 'utf8');
+
+  // The latch is read at the top of LateUpdate and it is the ENTITY's
+  // state that lowers it - not a toggle, not a load hook, not any one
+  // caller remembering to reach in.
+  const late = src.slice(src.indexOf('function lateUpdate('));
+  const body = late.slice(0, late.indexOf('\n  }\n'))
+    .split('\n').filter((l) => !l.trim().startsWith('//') && !l.trim().startsWith('*')).join('\n');
+  assert.match(body, /if \(died\) \{\s*\n\s*if \(last\.died\) return;\s*\n\s*initialize\(\);/,
+    'a live player with the latch up re-initializes instead of staying frozen');
+
+  // AND IT IS NOT A LOAD HOOK. A fix bolted onto the load path would
+  // have left the online respawn and the prison release still frozen,
+  // because neither of those is a load - so the pin refuses that shape
+  // outright rather than only checking the one report's route.
+  assert.ok(!/function onLoad|restoreFromSave|onQuickLoad/.test(src),
+    'the body follows the entity; it does not subscribe to one caller');
+
+  // The module instance is what makes this possible to get wrong: it
+  // survives every revival the port has, where the mod's object does
+  // not survive a death at all.
+  assert.match(src, /export const eotbBody = createEotbBody\(\);/,
+    'one module-level body, which is why a latch on it outlives a death');
+  assert.equal(typeof eotbBody.state, 'function');
+});
