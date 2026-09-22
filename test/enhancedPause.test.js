@@ -624,7 +624,7 @@ test('PX28: Tab puts away what it opened, then raises the dial', () => {
   // teardown - a stack that grows a dead arm would swallow a Tab.
   for (const door of ['inventoryDoor', 'spellbookDoor', 'chronicleDoor', 'charSheetDoor']) {
     const s = read(`src/ui/${door}.js`);
-    assert.match(s, /unregister = registerOverlay\(close\);/, `${door} registers`);
+    assert.match(s, /unregister = registerOverlay\(closeToGame\);/, `${door} registers its final-exit close`);
     assert.match(s, /unregister\(\);/, `${door} unregisters on teardown`);
   }
 });
