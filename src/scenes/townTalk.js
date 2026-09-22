@@ -63,7 +63,9 @@ import { ChoiceWindow } from '../ui/talkWindow.js';
 import { buildBuildingDirectory, questorCandidateBuildings, TOPIC_CATEGORIES, whereIsAnswer, reactionTier012, buildingHint } from '../systems/talkTopics.js';
 import { LIST_ITEM_TYPE, QUESTION_TYPE } from '../systems/topicTree.js';   // TK-vi: the window's rows are the tree's ListItems; B6: the Work question type
 import { discoverBuilding } from '../systems/discovery.js';   // T4: %loc's mark side effect
-import { getNameBankOfRegion } from '../characters/nameHelper.js';
+import { getNameBankOfRegion, fullName as nameHelperFullName, GENDERS } from '../characters/nameHelper.js';   // MACRO-6: %fn/%mn in the engine-less answer
+import { talkMacroSource } from '../systems/talkMacros.js';
+import { bumpSeed } from '../formats/dfRandom.js';
 import { FACTION_TYPES } from '../formats/factionFile.js';
 import { skillValue, tallySkill, SKILLS } from '../systems/skills.js';
 import { liveStat } from '../systems/statMods.js';   // AUDIT 63 F4: TalkManager.cs:665 reads Stats.LivePersonality (DaggerfallStats.cs:55), not the base
@@ -1104,17 +1106,30 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     // the two exteriors, so isInside is false; %loc's mark side effect
     // (MacroHelper.cs:1085-1090) is the discoverBuilding call, keyed
     // region:location until the automap arc brings the map pixel id.
-    let hint = '';
-    if (raw.includes('%hnt')) {
+    //
+    // MACRO-6: the roll rides EACH OCCURRENCE - %hnt and %hnt2 each call
+    // GetKeySubjectBuildingHint in C# (DialogHint/DialogHint2's
+    // LocalBuilding arm, TalkManagerMCP.cs:82-122), so the hint is a
+    // function the walk calls per macro, and a record with neither
+    // never rolls.
+    const hint = () => {
       const h = buildingHint(rolls, false);
-      hint = randomVariant(h.textId, h.reveal ? '... Let me just mark %loc here on your map' : '%di of here')   // MAC-U: the no-data fallback is the table's phrase too
+      const text = randomVariant(h.textId, h.reveal ? '... Let me just mark %loc here on your map' : '%di of here')   // MAC-U: the no-data fallback is the table's phrase too
         .replaceAll('%loc', building.name).replaceAll('%di', a.direction);
       // RP1: the discovery key is the CURRENT region's. This read the
       // boot region, so a building revealed after streaming across a
       // border was filed under the region the session started in and
       // the map never showed it where the player actually was.
       if (h.reveal) discoverBuilding(`${regionNow()}:${cityName()}`, building, null, questBuildingSource);   // AUDIT 63 F49: TalkManager.cs:1290's DiscoverBuilding takes the quest name-override arm too (PlayerGPS.cs:945-959)
-    }
+      return text;
+    };
+    // MACRO-6: FemaleName/MaleName off TalkManagerMCP's own source (the
+    // region's name bank, and MaleName's DFRandom seed nudge), the ones
+    // the engine path answers through - 7269 and 7275-7294 carry them.
+    const names = talkMacroSource({
+      fullName: (gender) => nameHelperFullName(getNameBankOfRegion(regionNow()), gender === 'female' ? GENDERS.Female : GENDERS.Male),
+      bumpSeed,
+    });
     // AUDIT 18 F1: ExpandRandomTextRecord (TalkManager.cs:3580-3587)
     // runs the FULL MacroHelper over the answer record - %oth and %cn
     // resolve here exactly as they do in the greeting.
@@ -1125,6 +1140,7 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
       hint, key: building.name,
       honorific: honorificOf(playerEntity.gender),   // T4: the real %hnr/%ra
       race: raceDisplayName(playerEntity.race),
+      femaleName: () => names.femaleName(), maleName: () => names.maleName(),
     });
   }
 

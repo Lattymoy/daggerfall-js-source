@@ -1,0 +1,51 @@
+[
+ {
+  "name": "MACRO-6-hnt2-has-no-row",
+  "file": "src/systems/talkSession.js",
+  "old": "    hnt: hint, hnt2: hint, key, hnr: honorific, ra: race,",
+  "new": "    hnt: hint, key, hnr: honorific, ra: race,",
+  "tests": ["test/macro6_talk.test.js"]
+ },
+ {
+  "name": "MACRO-6-no-names-in-the-answer",
+  "file": "src/systems/talkSession.js",
+  "old": "    fn: femaleName, fn2: femaleName, mn: maleName, mn2: maleName,",
+  "new": "",
+  "tests": ["test/macro6_talk.test.js"]
+ },
+ {
+  "name": "MACRO-6-names-swapped",
+  "file": "src/systems/talkSession.js",
+  "old": "    fn: femaleName, fn2: femaleName, mn: maleName, mn2: maleName,",
+  "new": "    fn: maleName, fn2: femaleName, mn: femaleName, mn2: maleName,",
+  "tests": ["test/macro6_talk.test.js"]
+ },
+ {
+  "name": "MACRO-6-host-hands-no-names",
+  "file": "src/scenes/townTalk.js",
+  "old": "      femaleName: () => names.femaleName(), maleName: () => names.maleName(),",
+  "new": "",
+  "tests": ["test/macro6_talk.test.js"]
+ },
+ {
+  "name": "MACRO-6-no-trim",
+  "file": "src/systems/answerPipeline.js",
+  "old": "  return String(name).replace(/\\.+$/, '');",
+  "new": "  return String(name);",
+  "tests": ["test/macro6_talk.test.js"]
+ },
+ {
+  "name": "MACRO-6-the-row-object-again",
+  "file": "src/scenes/world.js",
+  "old": "        return r == null ? null : (typeof r === 'string' ? r : r.text ?? null);",
+  "new": "        return r ?? null;",
+  "tests": ["test/macro6_talk.test.js"]
+ },
+ {
+  "name": "MACRO-6-eager-hint",
+  "file": "src/scenes/townTalk.js",
+  "old": "      hint, key: building.name,",
+  "new": "      hint: hint(), key: building.name,",
+  "tests": ["test/mapReveal.test.js", "test/macro6_talk.test.js"]
+ }
+]

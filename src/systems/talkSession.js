@@ -105,10 +105,18 @@ export function expandAnswerRecord(raw, {
   // off the entity; these are the pre-chargen entity's values, for
   // callers with no identity in hand.
   honorific = honorificOf('male'), race = raceDisplayName('Breton'),
+  // MACRO-6: TalkManagerMCP's other answers a Where-is record carries.
+  // %hnt2 is DialogHint2, whose LocalBuilding arm is the SAME
+  // GetKeySubjectBuildingHint as %hnt (TalkManagerMCP.cs:103-122), and
+  // %fn/%mn are FemaleName/MaleName (:58-71) - 7269 and 7275-7294 carry
+  // them, and the host with no talk engine printed them raw. A function
+  // is called per occurrence, as C# calls the handler per macro.
+  femaleName = null, maleName = null,
 } = {}) {
   return expandMacroValues(raw, {
     pcf: known(playerName) && firstName(playerName), pcn: known(playerName), cn: known(cityName), oth: oath,
-    hnt: hint, key, hnr: honorific, ra: race,
+    hnt: hint, hnt2: hint, key, hnr: honorific, ra: race,
+    fn: femaleName, fn2: femaleName, mn: maleName, mn2: maleName,
   });
 }
 

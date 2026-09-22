@@ -75,7 +75,7 @@ export function hostSlots() {
 /** The enclosing function body of line `i`, by indentation.
  *
  *  THE SCOPE IS THE LAW, NOT A WINDOW SIZE. The first pass here used a
- *  fixed four-line lookback and so called `townTalk.js:1271`
+ *  fixed four-line lookback and so called `townTalk.js:1287`
  *  `overlay.hover(...)` unguarded - its guard, `if (!overlay?.hover)
  *  return false`, sits eight lines up at the top of the same function.
  *  HARD2's D10 pin was re-aimed off a fixed 80-line window for exactly
@@ -117,12 +117,12 @@ export function inProbe(lines, i) {
  * there, so `?.` on the object saves nothing, and a missing method is
  * a TypeError thrown inside the host's own event handler - which is a
  * crash the player sees and no test does. A guarded call is the
- * window's own choice (`townTalk.js:488`: "OPTIONAL by design").
+ * window's own choice (`townTalk.js:490`: "OPTIONAL by design").
  *
  * @returns {{required: Map<string, string[]>, optional: Set<string>, probeOnly: Map<string, string[]>}}
  */
 export function hostArms() {
-  const required = new Map();   // arm -> ["townTalk.js:423", ...]
+  const required = new Map();   // arm -> ["townTalk.js:425", ...]
   const optional = new Set();
   const probeOnly = new Map();
   for (const { path, src, slots } of hostSlots()) {
