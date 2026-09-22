@@ -157,7 +157,7 @@ export function createCharSheetWindow(deps = {}) {
       : new LevelUpScreen(deps.entity, undefined, { fanfare }));
     // `document` for the reason this file's other fork gives: node
     // drives these hosts headless and keeps the canvas windows.
-    if (isEnhanced() && typeof document !== 'undefined') return enhancedLevelUpOverlay(rollout(), deps.entity);
+    if (isEnhanced() && typeof document !== 'undefined') return enhancedLevelUpOverlay(rollout(), deps.entity, deps.relock);
     if (virtue) return new VirtueLevelUpScreen(deps.entity);
     if (isEnhanced()) return new LevelUpScreen(deps.entity);
     // ...and the CLASSIC lane falls through to the sheet, which mounts
@@ -183,7 +183,7 @@ export function createCharSheetWindow(deps = {}) {
     // anything new. What changes is which face is inside it, and the
     // sheet's own four buttons become that page's doors, out of these
     // same hooks: PX25 built the Stats page to take them.
-    return enhancedSheetPageOverlay(hooks, deps.entity);
+    return enhancedSheetPageOverlay(hooks, deps.entity, deps.relock);
   }
   return new CharSheet(deps.entity, hooks);
 }
@@ -194,7 +194,7 @@ export function createCharSheetWindow(deps = {}) {
  * enhancedMenu's; this only chooses the page and forwards the sheet's
  * own four buttons onto it.
  */
-function enhancedSheetPageOverlay(hooks, entity = null) {
+function enhancedSheetPageOverlay(hooks, entity = null, relock = null) {
   let fired = false;
   let view = null;
   let unregister = () => {};   // PX28
@@ -205,7 +205,7 @@ function enhancedSheetPageOverlay(hooks, entity = null) {
   // z-index 13, the pause door's depth: they are peers, never stacked.
   host.style.cssText = 'position:fixed;inset:0;z-index:13;background:transparent;overflow:hidden';
   document.body.append(host);
-  const close = () => {
+  const close = (relockLook = false) => {
     if (fired) return;
     try { ascendView?.destroy?.(); } catch { /* already gone */ }   // ASCEND-ANYTIME: the sheet key closes whatever is on top
     ascendView = null;
@@ -221,10 +221,12 @@ function enhancedSheetPageOverlay(hooks, entity = null) {
     // is the hazard this file's own siblings warn about.
     globalThis.removeEventListener?.('keydown', onSheetKey, true);
     unregister();
+    if (relockLook) relock?.();
   };
+  const closeToGame = () => close(true);
   // PX28: AFTER `close` exists - a const is not hoisted, and the
   // first placement of this line read it before its initialiser.
-  unregister = registerOverlay(close);
+  unregister = registerOverlay(closeToGame);
   // MAC-C (2026-09-17, Mac: "you can exit out of the F6 menu
   // (inventory) by pressing F6 again, but you cannot do the same for
   // the F5 one (char sheet)" + "it would be extra cool if you could
@@ -262,8 +264,12 @@ function enhancedSheetPageOverlay(hooks, entity = null) {
     e.preventDefault();
     e.stopPropagation();
     const toPack = act === 'Inventory';
-    close();                              // the sheet's own close law runs FIRST...
-    if (toPack) hooks.inventory();        // ...and this replaces the slot it just freed
+    if (toPack) {
+      close();                            // handoff: free the slot but keep the cursor for the successor
+      hooks.inventory();                  // ...which replaces the slot it just freed
+    } else {
+      closeToGame();                      // final exit: take look back inside this key gesture
+    }
   }
   /** THE PAGE'S OWN OPTIONS, named once. ASCEND-ANYTIME mounts this
    *  page a SECOND time - after a view of the stars closes over it -
@@ -273,7 +279,7 @@ function enhancedSheetPageOverlay(hooks, entity = null) {
     return {
       mode: 'pause',
       at: 'stats',
-      onAction: (a) => { if (a === 'resume') close(); },
+      onAction: (a) => { if (a === 'resume') closeToGame(); },
       // The sheet's own buttons, onto the page PX25 built to take
       // them. A host that hands no hook gets no button, which is the
       // same honest refusal the classic sheet gives.
@@ -348,7 +354,7 @@ function enhancedSheetPageOverlay(hooks, entity = null) {
   function remountPage() {
     mountEnhancedChunk({
       load: () => import('./enhancedMenu.js'),
-      alive: () => !fired, host, onDismiss: close, label: 'charsheet',
+      alive: () => !fired, host, onDismiss: closeToGame, label: 'charsheet',
       mount: ({ mountEnhancedMenu }) => { view = mountEnhancedMenu(host, pageOpts()); },
     });
   }
@@ -363,7 +369,7 @@ function enhancedSheetPageOverlay(hooks, entity = null) {
   // unhandled rejection and a dial arm that did nothing.
   mountEnhancedChunk({
     load: () => import('./enhancedMenu.js'),
-    alive: () => !fired, host, onDismiss: close, label: 'charsheet',
+    alive: () => !fired, host, onDismiss: closeToGame, label: 'charsheet',
     mount: ({ mountEnhancedMenu }) => { view = mountEnhancedMenu(host, pageOpts()); },
   });
   return {
@@ -380,9 +386,8 @@ function enhancedSheetPageOverlay(hooks, entity = null) {
     hover() { /* the view has its own :hover, and no canvas to hit-test */ },
     tick() { /* nothing on this screen moves on a clock */ },
     draw() { /* DOM, not canvas */ },
-    close,
-    // `dispose` and `destroy` are both the hosts' words for the same
-    // act; the overlay this replaced answered both, so this does too.
+    close: closeToGame,
+    // Host replacement is a handoff, not a return to mouselook.
     dispose: close,
     destroy: close,
   };
@@ -442,7 +447,7 @@ export function paintLevelUpWait(host, { oghma = false } = {}) {
   return el;
 }
 
-function enhancedLevelUpOverlay(screen, entity) {
+function enhancedLevelUpOverlay(screen, entity, relock = null) {
   let fired = false;
   let view = null;
   const host = document.createElement('div');
@@ -465,14 +470,16 @@ function enhancedLevelUpOverlay(screen, entity) {
     try { wait?.remove(); } catch { /* already gone */ }
     wait = null;
   };
-  const close = () => {
+  const close = (relockLook = false) => {
     if (fired) return;
     stopWaiting();
     try { view?.destroy?.(); } catch { /* already gone */ }
     view = null;
     host.remove();
     fired = true;   // last: `done` must not be true while the DOM is up
+    if (relockLook) relock?.();
   };
+  const closeToGame = () => close(true);
   // MENU1: the ONE lazy-chunk door. A deploy that moved this chunk
   // leaves the notice up and the door OPEN - `done` stays false and
   // the host keeps the slot, so the game does not hand the keys back
@@ -483,10 +490,10 @@ function enhancedLevelUpOverlay(screen, entity) {
   // stream and which no player can observe).
   mountEnhancedChunk({
     load: () => import('./enhancedLevelUp.js'),
-    alive: () => !fired, host, onDismiss: close, label: 'levelup',
+    alive: () => !fired, host, onDismiss: closeToGame, label: 'levelup',
     mount: ({ mountEnhancedLevelUp }) => {
       stopWaiting();   // the window is the wait's successor, and takes the slot before it is torn down
-      view = mountEnhancedLevelUp(host, { screen, entity, onExit: close });
+      view = mountEnhancedLevelUp(host, { screen, entity, onExit: closeToGame });
     },
     // ...and the NOTICE is the other successor. Without this arm a
     // failed chunk left the wait underneath it saying "You have
@@ -528,8 +535,8 @@ function enhancedLevelUpOverlay(screen, entity) {
       close();
       return true;
     },
-    close,
-    // `dispose` and `destroy` are both the hosts' words for the same act.
+    close: closeToGame,
+    // Host disposal is not necessarily a return to play.
     dispose: close,
     destroy: close,
   };
