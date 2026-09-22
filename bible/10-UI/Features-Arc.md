@@ -203,7 +203,7 @@ switch operates nowhere but the home. On the home a settings switch's
 face toggles it (there is no help sheet there to open), as prefRow's
 face does.
 
-**Not done, by name.** The standalone dev host `scenes/dungeon.js:108`
+**Not done, by name.** The standalone dev host `scenes/dungeon.js:109`
 still reads the raw location - a probe door, sized by nothing, as the
 struck Ledger C row already says. Building on the feature (Mac's
 "genuine enhanced feature we can build on") is a design decision, not

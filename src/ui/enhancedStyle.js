@@ -799,12 +799,12 @@ body.draglock .wornrow, body.draglock .wornmap { touch-action: none; }
 .itemname small { color: var(--dim); font-size: 11.5px; }
 /* LR1: THE TIER COLOURS (systems/lootRarity.js RARITIES - the four
    hexes here are pinned against that table). A rolled row wears
-   data-rarity; the picked card's heading and the pile plaque's rows
+   data-rarity; the picked card's heading and the plaque's rows
    wear the same attribute. Common wears nothing. */
-.itemrow[data-rarity="magic"] .itemname > span:first-child, .packdetail .card[data-rarity="magic"] h3, .loothover-row[data-rarity="magic"] > span:first-child { color: #6f9ee8; }
-.itemrow[data-rarity="rare"] .itemname > span:first-child, .packdetail .card[data-rarity="rare"] h3, .loothover-row[data-rarity="rare"] > span:first-child { color: #e4c34f; }
-.itemrow[data-rarity="legendary"] .itemname > span:first-child, .packdetail .card[data-rarity="legendary"] h3, .loothover-row[data-rarity="legendary"] > span:first-child { color: #e07a2e; }
-.itemrow[data-rarity="artifact"] .itemname > span:first-child, .packdetail .card[data-rarity="artifact"] h3, .loothover-row[data-rarity="artifact"] > span:first-child { color: #b57bee; }
+.itemrow[data-rarity="magic"] .itemname > span:first-child, .packdetail .card[data-rarity="magic"] h3, .wplaque-row[data-rarity="magic"] > span:first-child { color: #6f9ee8; }
+.itemrow[data-rarity="rare"] .itemname > span:first-child, .packdetail .card[data-rarity="rare"] h3, .wplaque-row[data-rarity="rare"] > span:first-child { color: #e4c34f; }
+.itemrow[data-rarity="legendary"] .itemname > span:first-child, .packdetail .card[data-rarity="legendary"] h3, .wplaque-row[data-rarity="legendary"] > span:first-child { color: #e07a2e; }
+.itemrow[data-rarity="artifact"] .itemname > span:first-child, .packdetail .card[data-rarity="artifact"] h3, .wplaque-row[data-rarity="artifact"] > span:first-child { color: #b57bee; }
 .packdetail ul.rarity { list-style: none; margin: 4px 0 10px; padding: 0; font-family: var(--data); font-size: 13px; line-height: 1.5; }
 .packdetail ul.rarity li:first-child { text-transform: uppercase; letter-spacing: 0.16em; font-size: 10.5px; color: var(--dim); }
 .packdetail ul.rarity li:last-child:not(:first-child):not(:nth-child(2)) { color: var(--dim); font-style: italic; }
@@ -3328,27 +3328,61 @@ body.draglock .wornrow, body.draglock .wornmap { touch-action: none; }
 .loot-win .itemrow.on { background: rgba(192,138,62,0.14); outline: 0;
   box-shadow: inset 3px 0 0 var(--brass); }
 
-/* ── PX21c: THE LOOT HOVER PLAQUE ───────────────────────────────
-   A readout under the crosshair, not a control: centred low so it
-   never sits on the reticle, in the same dress as the floating
-   windows, with pointer-events off because nothing here is clickable.
-   It SNAPS on and off - the whole point is that it answers before you
-   have finished deciding to ask. */
-.loothover { position: fixed; left: 50%; bottom: 16%; transform: translateX(-50%);
+/* ── WORLD-HOVER (PX21c): THE PLAQUE AT THE CROSSHAIR ───────────
+   A readout, not a control: the same dress as the floating windows,
+   with pointer-events off because nothing here is clickable. It SNAPS
+   on and off - the whole point is that it answers before you have
+   finished deciding to ask.
+
+   PX21c stood it at "bottom: 16%" and said in a comment that it was
+   "centred low so it never sits on the reticle" - avoiding the cross
+   by standing far from it, because the rule had nowhere to read the
+   cross's real place. It does now: ui/worldPlaque.js measures the
+   reticle off hudCrosshair's own exports and writes --wp-x/--wp-top,
+   so the plaque hangs a fixed gap BELOW the cross and grows downward.
+   A docked large HUD moves the reticle (ROAD-E E5) and moves this with
+   it. The percentages are the fallback for a frame not yet drawn. */
+.wplaque { position: fixed; left: var(--wp-x, 50%); top: var(--wp-top, 55%);
+  transform: translateX(-50%);
   z-index: 6; display: none; min-width: 190px; max-width: 300px; padding: 10px 14px;
   background: rgba(10,12,17,0.9); border: 2px solid #7d7460; pointer-events: none;
   font-family: ${PIXEL_STACK}; -webkit-font-smoothing: none; color: #d8cfae;
   font-variant-ligatures: none; font-feature-settings: 'liga' 0, 'clig' 0;
   text-shadow: 2px 2px 0 rgba(0,0,0,0.85); }
-.loothover.on { display: block; }
-.loothover-head { font-size: 11px; letter-spacing: 0.3em; text-indent: 0.3em;
-  text-transform: uppercase; color: #7d7460; text-align: center;
-  padding-bottom: 8px; margin-bottom: 8px;
+.wplaque.on { display: block; }
+.wplaque-title { font-size: 15px; line-height: 1.4; text-align: center; color: #d8cfae; }
+.wplaque-titleline { display: block; }
+.wplaque-sub { font-size: 12px; line-height: 1.4; text-align: center; color: #7d7460; }
+/* PX21c's head rule, re-homed. Its TYPOGRAPHY retires with it - 11px
+   uppercase letterspaced was a KIND label ("LOOT", "REMAINS"), and the
+   merged surface names the thing itself ("Wardrobe", "Shop Shelf",
+   "Skeletal Warrior (dead)"), which is strictly more. What survives is
+   the divider, and only where there is something to divide. */
+.wplaque.has-list .wplaque-title { padding-bottom: 8px; margin-bottom: 8px;
   border-bottom: 2px solid rgba(125,116,96,0.3); }
-.loothover-row { display: flex; align-items: baseline; gap: 10px; font-size: 14px;
+.wplaque-row { display: flex; align-items: baseline; gap: 10px; font-size: 14px;
   line-height: 1.5; }
-.loothover-count { margin-left: auto; color: var(--brass); font-size: 12px; }
-.loothover-empty, .loothover-more { color: #7d7460; font-size: 12px; }
+.wplaque-count { margin-left: auto; color: var(--brass); font-size: 12px; }
+.wplaque-empty, .wplaque-more { color: #7d7460; font-size: 12px; }
+/* AUDIT-WH R7: THE LIST HAS ITS OWN NODE AND HAD NO RULE. The draw
+   emits a .wplaque-list wrapper round the rows and nothing styled it,
+   so the block existed only to be an unstyled div - and a plaque under
+   the reticle GROWS DOWNWARD, which on a short viewport (a laptop
+   under browser chrome, a 16:10 window with a docked large HUD) walks
+   a six-row pile off the bottom of the screen. The cap is the room
+   BELOW the cross, which is what the anchor already knows: --wp-top is
+   the plaque's own top edge, so 100vh minus it is exactly what is
+   left. The TITLE never moves - it is the thing the reticle is about -
+   so the rows are what gives. No scrollbar chrome: a readout is not a
+   control (the whole surface is pointer-events: none), so the overflow
+   is a CLIP, and the "and N more" tail already tells the truth about
+   what is not shown. */
+.wplaque-list { display: block; max-height: calc(100vh - var(--wp-top, 55%) - 24px);
+  overflow: hidden; }
+/* AUDIT ENH-NOTICE3 A6's lesson: a more-specific base rule outranks a
+   media block, so every base selector above is one class. */
+@media (max-width: 720px) { .wplaque { max-width: 88vw; padding: 8px 12px; }
+  .wplaque-row, .wplaque-title { font-size: 13px; } .wplaque-sub { font-size: 11px; } }
 
 /* ── PX21a: THE TRANSPORT STRIP ─────────────────────────────────
    What you travel with, under what you wear and carry. Two plaques,

@@ -356,8 +356,8 @@
   {
     "name": "AUDIT-NAME1-F1-dungeon-overlay-skips-the-name-pass",
     "file": "src/scenes/worldModes.js",
-    "old": "if (dungeonCtx.uiOverlayActive) { dungeonCtx.hideHudText?.(); dungeonCtx.tickOverlay(dt); host.drawPeerNames?.({ proj, view, eye: mwv.eye }); dungeonCtx.drawOverlay(canvas); return true; }",
-    "new": "if (dungeonCtx.uiOverlayActive) { dungeonCtx.hideHudText?.(); dungeonCtx.tickOverlay(dt); dungeonCtx.drawOverlay(canvas); return true; }",
+    "old": "if (dungeonCtx.uiOverlayActive) { dungeonCtx.hideHudText?.(); hideWorldPlaque(); dungeonCtx.tickOverlay(dt); host.drawPeerNames?.({ proj, view, eye: mwv.eye }); dungeonCtx.drawOverlay(canvas); return true; }",
+    "new": "if (dungeonCtx.uiOverlayActive) { dungeonCtx.hideHudText?.(); hideWorldPlaque(); dungeonCtx.tickOverlay(dt); dungeonCtx.drawOverlay(canvas); return true; }",
     "tests": [
       "test/name1_bubbles.test.js"
     ]

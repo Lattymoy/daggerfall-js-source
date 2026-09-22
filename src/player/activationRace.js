@@ -94,11 +94,11 @@ export function raceActivation({
 } = {}) {
   // the body and the pile, by distance, the tie to the body
   const pileNearer = !!pile && !(corpse && corpse.distance <= pile.distance);
-  const loot = pileNearer ? null : corpse;
-  const drop = pileNearer ? pile : null;
+  const body = pileNearer ? null : corpse;
+  const heap = pileNearer ? pile : null;
 
-  const lootD = loot?.distance ?? Infinity;
-  const dropD = drop?.distance ?? Infinity;
+  const lootD = body?.distance ?? Infinity;
+  const dropD = heap?.distance ?? Infinity;
   const torchD = torch?.distance ?? Infinity;
   const wagonD = wagon?.distance ?? Infinity;
   const campD = camp?.distance ?? Infinity;
@@ -108,20 +108,111 @@ export function raceActivation({
   const nonPersonRival = Math.min(lootD, dropD, torchD, wagonD, campD, waterD, doorDistance);
   const rival = Math.min(nonPersonRival, ...personDistances);
 
-  // the torch takes the click when nothing on the ground, and no door,
-  // is nearer. Its own reach is the ARM's business, not the race's: a
-  // winner out of reach still answers, which is how every handler
-  // family in this port refuses (AUDIT 65 MC-2).
-  const torchWins = !!torch && torchD <= Math.min(lootD, dropD, wagonD, campD, waterD, doorDistance);
-  // EOTB-IL: the cart is one more custom activation under the same ray
-  // (PlayerActivate's registered model 41239). Absent, nothing above
-  // changes - `wagonD` is Infinity and every term reads as it did.
-  const wagonWins = !!wagon && wagonD <= Math.min(lootD, dropD, torchD, campD, waterD, doorDistance);
-  // SURV3: two more custom activations under the same ray - a camp
-  // (the mod's tent and fire) and a water source (its fountains,
-  // wells and troughs). Absent, every term above reads as it did.
-  const campWins = !!camp && campD <= Math.min(lootD, dropD, torchD, wagonD, waterD, doorDistance);
-  const waterWins = !!water && waterD <= Math.min(lootD, dropD, torchD, wagonD, campD, doorDistance);
+  // ── ONE PRECEDENCE, AND IT IS `raceWinner`'S ─────────────────────
+  //
+  // AUDIT-WH H1 (Mac's call, 2026-09-21: "b"). This function used to
+  // answer six independent booleans, each its own `<= Math.min(...)`,
+  // and the four custom activations compared themselves against
+  // `doorDistance` while the BODY and the PILE did not. The hosts'
+  // ladder is `if (lootKey) ... else if (dropKey) ... else tryEnter()`,
+  // so a corpse anywhere under the 76.8 ray beat a door at your feet -
+  // and a corpse at twelve metres beat it and then refused itself with
+  // "You are too far away." DFU casts ONE ray (PlayerActivate.cs:314)
+  // and dispatches to the NEAREST hit; nothing in it lets a far body
+  // out-rank a near door.
+  //
+  // It was found because the world hover needed the race's WINNER, not
+  // its flags, and the two answers disagreed on 9.3% of pick sets. The
+  // fix is not to teach the plaque the press's quirk: it is to have
+  // ONE ordering law and derive both readers from it, so they cannot
+  // drift again. `raceWinner` below is that law - nearest wins, ties by
+  // the hosts' own arm order - and this function is now its first
+  // reader. The plaque is its second.
+  const ground = Number.isFinite(doorDistance) ? { key: GROUND_KEY, distance: doorDistance } : null;
+  const won = raceWinner({ camp, water, wagon, torch, corpse: body, pile: heap, ground });
+  const is = (p) => !!won && !!p && won === p;
 
-  return { loot, drop, torchWins, wagonWins, campWins, waterWins, nonPersonRival, rival };
+  return {
+    loot: is(body) ? body : null,
+    drop: is(heap) ? heap : null,
+    torchWins: is(torch),
+    wagonWins: is(wagon),
+    campWins: is(camp),
+    waterWins: is(water),
+    nonPersonRival,
+    rival,
+  };
+}
+
+/** The door/board/static-NPC set's stand-in inside the race. It is the
+ *  one competitor the press knows only as a DISTANCE (the plaque knows
+ *  it as a hit), so it needs a key to be told apart from the families
+ *  that carry one. */
+export const GROUND_KEY = '__ground__';
+
+/**
+ * WORLD-HOVER: THE RACE'S WINNER, AS A HIT.
+ *
+ * `raceActivation` above answers WHO BEAT WHOM - which arm the press
+ * should take - because that is all a press needs: it dispatches into
+ * the winning arm and the arm knows its own subject. A plaque needs
+ * something the press never asks for: the winner ITSELF, so it can say
+ * what the thing is called.
+ *
+ * That could have been a second race written out in the hover. It is
+ * not, and HARD2 is the reason: the race WAS written by hand in
+ * world.js and exterior.js, character for character, which is how
+ * AUDIT 66 F7 shipped a torch that had to beat the pile but not the
+ * door. A third copy - one that only a readout reads, so nobody would
+ * ever notice it drifting - is the same bug with a longer fuse.
+ *
+ * So the ordering law is spelled ONCE, here, and both readers take it:
+ * NEAREST WINS, AND A TIE GOES TO WHOEVER COMES FIRST IN THIS LIST.
+ *
+ * The order is not a guess. `raceActivation` answers each custom
+ * activation with `<= Math.min(...)`, so on an exact tie MORE THAN ONE
+ * of its flags is true, and which one takes the press is decided by
+ * the order the host TESTS them in - `campWins`, then `waterWins`,
+ * then `wagonWins`, then the torch, then the body, then the pile, then
+ * the door/person/board set. That ladder is the precedence, and it is
+ * what this list is. A pin drives the two against each other over the
+ * same picks, including at exact ties, so a change to one that the
+ * other does not follow goes red.
+ *
+ * The door/person/board set arrives as a HIT rather than a distance,
+ * because unlike the press the plaque has to name which door.
+ *
+ * TWO COMPETITORS THE PRESS RACES ELSEWHERE, at the tail (AUDIT-WH H2).
+ * A walking townsperson and a LIVE foe are not in any host's target
+ * list - they are picked by their own cylinder and their own AABB
+ * sweep, and the press races them in the two arms ABOVE
+ * `raceActivation`:
+ *
+ *   else if (_enemyArm(RAY_DISTANCE, _race.rival))        // the foe
+ *   else if (!townTalk.tryActivate(.., _race.nonPersonRival))  // the person
+ *
+ * Both of those arms take their subject only when it is STRICTLY
+ * nearer than its rival (`hit.distance < nearerThan`,
+ * mobileEnemyActivate.js:167; `bestDist < nearerThan`,
+ * townTalk.js:662), and the person's rival leaves the persons out
+ * while the foe's does not. Written out as one tie order that is
+ * exactly what those two strict tests produce: everything in a target
+ * list beats a person, a person beats a foe, and a foe loses every
+ * tie it is in. So they go here, last, in that order - and the plaque
+ * stops naming the shopfront behind the townsperson the press would
+ * have talked to.
+ *
+ * @returns {RayPick|null} the winning pick, with its own key and reach
+ */
+export function raceWinner({
+  corpse = null, pile = null, torch = null, wagon = null, camp = null, water = null, ground = null,
+  person = null, foe = null,
+} = {}) {
+  let best = null;
+  // The tie order IS the precedence order; `<` keeps the earlier one.
+  for (const p of [camp, water, wagon, torch, corpse, pile, ground, person, foe]) {
+    if (!p) continue;
+    if (best === null || p.distance < best.distance) best = p;
+  }
+  return best;
 }

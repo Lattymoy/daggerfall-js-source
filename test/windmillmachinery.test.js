@@ -165,7 +165,7 @@ test('WM4b: the wiring - the pipeline answers 41601 before ARCH3D, and both inte
   const replaceAt = fn.indexOf('MACHINERY_MODEL_ID');
   const archAt = fn.indexOf('arch.getRecordIndex(modelIdNum)');
   assert.ok(replaceAt > 0 && replaceAt < archAt, 'the replacement must be tried before ARCH3D');
-  assert.match(fn, /cpuModels\.set\(modelIdNum, \{ positions: MACHINERY\.positions/, 'the collider needs a CPU copy');
+  assert.match(fn, /cpuModels\.set\(modelIdNum, \{ modelIdNum, positions: MACHINERY\.positions/, 'the collider needs a CPU copy, and it carries its own id');
   assert.match(pipeline, /async function getMachineryParts\(\)/);
   assert.match(pipeline, /getMachineryParts, gpuMeshes/, 'the parts are not returned to the hosts');
   // The context builds the rotors and exports them; the roller's rest

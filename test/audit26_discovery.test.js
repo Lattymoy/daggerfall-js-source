@@ -235,7 +235,7 @@ test('F209: the latch and the owned-house guard are wired', () => {
   // interiorContext births containers `items: null` - the stock-once
   // latch the scene cache preserves (the shelf idiom).
   const ic = src('scenes/interiorContext.js');
-  assert.ok(ic.includes('containers.push({ cpu, matrix, items: null, record: containerTextureRecord(p.modelIdNum) });'));
+  assert.ok(ic.includes('containers.push({ cpu, matrix, items: null, modelIdNum: p.modelIdNum });'));
   // worldModes stocks on first access - and an OWNED house never
   // stocks (PlayerActivate.cs:905-913: your own furniture is empty).
   const wm = src('scenes/worldModes.js');
@@ -246,7 +246,7 @@ test('F209: the latch and the owned-house guard are wired', () => {
   // this pin makes is unchanged - worldModes stocks the container, and
   // an owned house never reaches that call - only the shape of the
   // stocking line moved.
-  assert.ok(wm.includes('c.items = stockHouseContainer({ buildingType: b?.buildingType, record: c.record }, playerEntity);'));
+  assert.ok(wm.includes('c.items = stockHouseContainer({ buildingType: b?.buildingType, record: containerTextureRecord(c.modelIdNum) }, playerEntity);'));
   const arm = wm.slice(wm.indexOf("if (key.startsWith('container:')) {"));
   // HC1 grew the arm (the ship guard, the Yes/No box, the loot-target
   // open) - the window widens with it, the guards themselves stand.

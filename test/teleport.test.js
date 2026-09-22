@@ -72,7 +72,7 @@ test('TP: the engine seam, the world prompt, the consume, the mode exit', () => 
   const wm = readFileSync(new URL('../src/scenes/worldModes.js', import.meta.url), 'utf8');
   const i = wm.indexOf('forceExitToExterior(');   // IS1 grew the signature ({ cacheScene })
   const fn = wm.slice(i, wm.indexOf('},', i));
-  assert.ok(fn.includes("mode = 'exterior';"), 'the forced exit lands the mode');
+  assert.ok(fn.includes("setMode('exterior');"), 'the forced exit lands the mode');   // AUDIT-WH2 L1-F5: and this is the teardown that FORGOT the door cache's free - setMode carries it now
   assert.ok(fn.includes('player.collider = baseCollider();'), 'and restores the exterior collider');
   // TP2: the FIXED-CITY host raises the same 4000 box now, off its own
   // prompt - it used to say "Recall pends here" for the whole spell,
