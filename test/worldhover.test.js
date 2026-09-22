@@ -1422,6 +1422,18 @@ test('AUDIT-WH R7/R8/P7/P9: the list has a cap, a readout is the player\'s onlin
   // "and N more" tail already tells the truth about the rest.
   assert.match(css, /\.wplaque \{[\s\S]{0,400}pointer-events: none;/);
 
+  // P3: the gate's two terms are computed once a frame, not twice -
+  // `isEnhanced()` parses a URLSearchParams and `isTouchDevice()` runs
+  // up to three matchMedia queries, and BOTH readers are load-bearing
+  // (the seam gates the resolve, the draw gates above `ensure()`), so
+  // what changes is how often the terms are asked rather than how
+  // often the gate is.
+  const hov = read('src/ui/worldPlaque.js');
+  assert.match(hov, /if \(mark !== null && _gateMark === mark\) return _gateOn;/);
+  // ...and it is dropped by the teardown, so a new host never inherits
+  // the last one's answer.
+  assert.match(hov.slice(hov.indexOf('export function destroyWorldPlaque')), /_gateMark = null;\n  _gateOn = false;/);
+
   // R8: OL1 forces every vendored mod's `Enabled` online so the room
   // plays one game. That reasoning is about the WORLD; a crosshair
   // label stands nothing, rolls nothing, writes nothing and is not on

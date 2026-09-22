@@ -132,8 +132,8 @@
   {
     "name": "WORLD-HOVER-touch-device-gets-the-plaque",
     "file": "src/ui/worldPlaque.js",
-    "old": "export const worldPlaqueOn = () => isEnhanced() && !isTouchDevice();",
-    "new": "export const worldPlaqueOn = () => isEnhanced();",
+    "old": "  _gateOn = isEnhanced() && !isTouchDevice();",
+    "new": "  _gateOn = isEnhanced();",
     "tests": [
       "test/worldhover.test.js",
       "test/enhancedInventory.test.js"
@@ -858,6 +858,24 @@
     "file": "src/scenes/world.js",
     "old": "    doorGeneration += 1;   // WORLD-HOVER: the origin was re-anchored, so every door's WORLD matrix moved with it",
     "new": "",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-the-gate-memo-outlives-the-host",
+    "file": "src/ui/worldPlaque.js",
+    "old": "  _gateMark = null;\n  _gateOn = false;\n}",
+    "new": "}",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-the-gate-memo-ignores-the-frame",
+    "file": "src/ui/worldPlaque.js",
+    "old": "  if (mark !== null && _gateMark === mark) return _gateOn;",
+    "new": "  if (_gateMark !== null) return _gateOn;",
     "tests": [
       "test/worldhover.test.js"
     ]

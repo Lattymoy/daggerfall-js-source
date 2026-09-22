@@ -17418,6 +17418,26 @@ the rAF stamp PERF1's clock already puts up: it changes exactly once a
 frame and is null BETWEEN frames, so the memo cannot carry an answer
 forward. The interior list is the same, and dies with its mode.
 
+**The six live picks, with a number** (AUDIT-WH P6). Each exterior
+frame runs seven picks - the bodies, the piles, the torches, the cart,
+the camps, the water and the door/person/board set - and the six live
+ones mint about **230 objects and ~14 KB a frame** (~14,000 objects
+and ~860 KB a second) between the target rows and their AABBs. That is
+PERF-TOWN1's own shape at about 1/19 the scale, and it is a large net
+win over the alternative (a second merged list would resolve ties
+differently from the press, which is the one thing this surface exists
+not to do) - but the record used to say only "they are cheap", and a
+cost with no number is the throttle's mistake wearing the other hat.
+
+**The door cache misses on a stream-in, by design** (AUDIT-WH P8). The
+generation bumps PER DOOR as a town pixel builds, inside a build that
+is already breathing, so the cache misses on every frame of that
+stream-in: **0.12-0.37 ms a frame, normalized** - exactly when the
+frame is most loaded. Steady state is ~100% hits (0 stale entries over
+4,000 driven frames). The alternative is a coarser generation that
+would serve a half-built city's doors, which is a plaque naming a door
+that is not there yet.
+
 **The one arm that is not a lookup carries the mod's own cache.** The
 building namer casts a collider ray and box-tests the location's
 buildings, and it ran every frame the crosshair rested on a shopfront.

@@ -172,7 +172,8 @@ test('NT1 / AUDIT-WH R6: the world plaque has ONE owner per host, and every one 
   // next host inherits a guard that says the plaque already shows what
   // it does not.
   const destroy = plaque.slice(plaque.indexOf('export function destroyWorldPlaque() {'));
-  for (const slot of ['node = null;', 'shownSig = null;', 'lastX = null;', 'lastTop = null;', '_faults = 0;', '_faultSaid = false;']) {
+  for (const slot of ['node = null;', 'shownSig = null;', 'lastX = null;', 'lastTop = null;',
+    '_faults = 0;', '_faultSaid = false;', '_gateMark = null;', '_gateOn = false;']) {
     assert.ok(destroy.includes(slot), `destroyWorldPlaque leaves ${slot.split(' ')[0]} behind`);
   }
   // THE SIX DOORS. Five of them were unpinned before AUDIT-WH R6, and
@@ -192,6 +193,6 @@ test('NT1 / AUDIT-WH R6: the world plaque has ONE owner per host, and every one 
   // The seam itself allocates nothing that outlives a frame: the only
   // persistent handle is the node, and the only growing state is a
   // fault COUNT.
-  assert.doesNotMatch(plaque, /^let (?!node|shownSig|lastX|lastTop|_faults|_faultSaid)/m,
+  assert.doesNotMatch(plaque, /^let (?!node|shownSig|lastX|lastTop|_faults|_faultSaid|_gateMark|_gateOn)/m,
     'a new module-level slot needs an owner and a line in destroyWorldPlaque');
 });

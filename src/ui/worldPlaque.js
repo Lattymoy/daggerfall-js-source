@@ -45,6 +45,7 @@ import { isTouchDevice } from './touchDevice.js';
 import { crosshairCentreY, CROSSHAIR_ARM } from './hudCrosshair.js';
 import { hudReticle } from './hud.js';   // the reticle's own two terms, from their home
 import { pickActivatableHit } from '../player/activate.js';
+import { frameMark } from '../systems/frameClock.js';   // AUDIT-WH P3: the frame in flight, so the gate's two terms are computed once in it
 import { resolveHover, frameSignature } from '../systems/worldHover.js';
 
 /** The gap in CSS pixels between the cross's lower arm tip and the
@@ -81,7 +82,31 @@ function ensure() {
  * real design and a later slice's; it is not this one wearing a media
  * query.
  */
-export const worldPlaqueOn = () => isEnhanced() && !isTouchDevice();
+export const worldPlaqueOn = () => {
+  // AUDIT-WH P3: ASKED ONCE A FRAME, NOT TWICE. Both readers are
+  // load-bearing and neither can go - `worldHoverFrame` gates the
+  // whole resolve, and `showWorldPlaque` gates ABOVE `ensure()`
+  // because a classic page must never reach `injectEnhancedStyle()`
+  // (AUDIT 39) - so what changes is how often the two TERMS are
+  // computed. `isEnhanced()` parses a URLSearchParams and
+  // `isTouchDevice()` runs up to three matchMedia queries, and every
+  // frame ran both twice.
+  //
+  // Memoised on `frameMark()`, which is the rAF stamp PERF1's clock
+  // already puts up: it changes exactly once a frame and is NULL
+  // between frames, so a skin flip or a tablet-mode flip is seen on
+  // the very next frame, and a caller outside a frame (a test, the
+  // console, a boot path) always recomputes. That last part is the
+  // one that matters here - L5's whole point is that both terms can
+  // change under a painted plaque.
+  const mark = frameMark();
+  if (mark !== null && _gateMark === mark) return _gateOn;
+  _gateOn = isEnhanced() && !isTouchDevice();
+  _gateMark = mark;
+  return _gateOn;
+};
+let _gateMark = null;
+let _gateOn = false;
 
 /**
  * Where the reticle is THIS frame, in CSS pixels, or null off a canvas.
@@ -318,6 +343,8 @@ export function destroyWorldPlaque() {
   lastTop = null;
   _faults = 0;
   _faultSaid = false;
+  _gateMark = null;
+  _gateOn = false;
 }
 
 /** For tests. */

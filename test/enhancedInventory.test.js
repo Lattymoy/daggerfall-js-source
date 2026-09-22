@@ -1138,7 +1138,7 @@ test('PX21c / WORLD-HOVER: the plaque names a pile without opening it, on the ta
   // through the FINGER, not the crosshair, so a centre-anchored plaque
   // would name what a tap would NOT open - the founding law broken on
   // every frame.
-  assert.match(hov, /export const worldPlaqueOn = \(\) => isEnhanced\(\) && !isTouchDevice\(\);/);
+  assert.match(hov, /_gateOn = isEnhanced\(\) && !isTouchDevice\(\);/);
 
   // AUDIT 39: AND THE SKIN GATE IS IN THE PLAQUE, ABOVE ensure().
   // The host gates only the PICK, and calls this every tick on every
