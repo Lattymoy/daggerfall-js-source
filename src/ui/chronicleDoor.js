@@ -101,7 +101,7 @@ function enhancedChronicleOverlay(deps, section) {
   let view = null;
   let done = false;
   let unregister = () => {};   // PX28
-  const close = () => {
+  const close = (relockLook = false) => {
     if (done) return;
     done = true;
     unregister();
@@ -109,17 +109,19 @@ function enhancedChronicleOverlay(deps, section) {
     try { host?.remove(); } catch { /* ditto */ }
     host = null; view = null;
     deps.onClose?.();
+    if (relockLook) deps.relock?.();
   };
+  const closeToGame = () => close(true);
   host = document.createElement('div');
   host.id = 'enhanced-chronicle';
   host.style.cssText = 'position:fixed;inset:0;z-index:11';
   document.body.append(host);
-  unregister = registerOverlay(close);
+  unregister = registerOverlay(closeToGame);
   // MENU1: the ONE lazy-chunk door (ui/enhancedChunk.js).
   mountEnhancedChunk({
     load: () => import('./enhancedChronicle.js'),
-    mount: ({ mountEnhancedChronicle }) => { view = mountEnhancedChronicle(host, { ...deps, section, onExit: close }); },
-    alive: () => !done, host, onDismiss: close, label: 'chronicle',
+    mount: ({ mountEnhancedChronicle }) => { view = mountEnhancedChronicle(host, { ...deps, section, onExit: closeToGame }); },
+    alive: () => !done, host, onDismiss: closeToGame, label: 'chronicle',
   });
   return {
     // THE HOST CONTRACT, in the hosts' own words - `input`, not
@@ -153,7 +155,7 @@ function enhancedChronicleOverlay(deps, section) {
     // with `dispose?.()`, and without it the div outlived the object:
     // a second logbook press left the first one's node in the body and
     // its Tab registration live.
-    close,
+    close: closeToGame,
     dispose: close,
     destroy: close,
   };
