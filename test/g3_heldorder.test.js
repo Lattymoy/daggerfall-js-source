@@ -326,7 +326,7 @@ test('G3: every host that owns a held-keys Set fills the RING before its dispatc
   // The overlay gates, by name: DFU's Update returns BEFORE PollInput
   // while a pausing window is up (:487-503), so a key typed into a
   // window joins no ring there either - the add stays below these.
-  const GATES = ['if (townTalk.keydown(e)) return;', 'if (overlay) {'];
+  const GATES = ['if (townTalk.keydown(e)) { relockAfterUiInput(); return; }', 'if (overlay) {'];
   const DISPATCH = ['actionOf(', 'routeKey(', 'toggleAutomap('];
   for (const f of hosts) {
     const h = ringHandler(body(f));
