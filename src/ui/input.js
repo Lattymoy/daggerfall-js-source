@@ -50,13 +50,94 @@ import {
 // AUDIT 64 F36/F37: DaggerfallHUD.Update's own shortcut arms. A leaf
 // on systems/ alone, so this module can take it without a cycle.
 import { hudShortcutKey } from './hudShortcuts.js';
+import { getInt, getFloat } from '../systems/settings.js';   // SWING-SAY: the swing mode and its threshold, for the boot readout
 
 // The registry singleton - built on first read, so the module can be
 // imported by tests without touching storage until asked.
 let _bindings = null;
-export function bindings() { return (_bindings ??= loadOrCreateBindings()); }
+export function bindings() {
+  if (_bindings) return _bindings;
+  _bindings = loadOrCreateBindings();
+  saySwingChain();   // SWING-SAY: once, at the moment the store is first real
+  return _bindings;
+}
 /** Tests (and the I3 controls window) swap the live store. */
 export function setBindings(b) { _bindings = b; }
+
+/**
+ * SWING-SAY (2026-09-22, Mac: "its not working on the install but works
+ * on the browser. Each time I bring this up you avoid it"): THE SWING
+ * CHAIN, SAID OUT LOUD, BECAUSE IT CANNOT BE READ FROM HERE.
+ *
+ * Three reports now - SquidKamer, Mango, Hawkiinz - all "the swing does
+ * not work in the installed build, it works in the browser". MAC-SWING1
+ * and MAC-D1 each found a real fault behind that sentence and each
+ * shipped; the reports continue. The whole chain reads sound from the
+ * source and the gesture fires in a test at ten pixels of travel, so
+ * whatever is left is STATE, and the state that differs between the two
+ * is the only asymmetry there is: the browser keeps its store in
+ * localStorage and the desktop app keeps its own FILE, which survives
+ * updates and reinstalls. One player, one machine, two stores - and the
+ * app's is the old one.
+ *
+ * What cannot be read from here can still be made to speak. This prints
+ * the live answer to every question the chain asks, in one line, at the
+ * one moment the store becomes real:
+ *
+ *   - every code SwingWeapon answers to, in both dicts, so a swing that
+ *     moved to a key or lost its mouse row is visible rather than
+ *     inferred;
+ *   - which DOM button that resolves to (-1 = none, and then the drag
+ *     has no button to hold, which is MAC-SWING1's case);
+ *   - whether the action is REACHABLE without a gamepad (MAC-D1's);
+ *   - the swing MODE, because Vanilla is the only mode that tracks a
+ *     drag and both earlier reporters worked around the bug by moving
+ *     to Click - a setting the app's file has kept ever since;
+ *   - the travel a swing needs, in pixels, which is the number that
+ *     would make a threshold fault obvious.
+ *
+ * It is a READOUT and nothing else: it changes no state and repairs
+ * nothing. A fix guessed from here would be a fix aimed at a machine I
+ * cannot see - this is the smallest thing that turns the next report
+ * into an answer instead of another round of this.
+ */
+export function swingChainState({ width = globalThis.innerWidth ?? 0, height = globalThis.innerHeight ?? 0 } = {}) {
+  const b = _bindings ?? bindings();
+  const codes = [];
+  for (const dict of [b.primary, b.secondary]) for (const [code, a] of dict) if (a === 'SwingWeapon') codes.push(code);
+  const button = swingButton();
+  const mode = getInt('Controls', 'WeaponSwingMode', 0, 2);
+  const threshold = getFloat('Controls', 'WeaponAttackThreshold', 0.001, 1.0);
+  return {
+    codes,
+    button,                                   // -1: no mouse code, so the drag has no button
+    reachable: codes.some((c) => !c.startsWith('Joystick')),
+    mode,                                     // 0 Vanilla (the drag), 1 Click, 2 Hold
+    modeName: ['Vanilla', 'Click', 'Hold'][mode] ?? String(mode),
+    threshold,
+    travelPx: Math.round(threshold * Math.max(width, height)),
+  };
+}
+let _said = false;
+/** Tests only: the line is said ONCE per session by design, so driving
+ *  it over several states needs the latch let go. */
+export function _resetSwingSay() { _said = false; }
+export function saySwingChain() {
+  if (_said || typeof console === 'undefined') return;
+  _said = true;
+  try {
+    const s = swingChainState();
+    // A WARNING when the drag cannot work, a log when it can - so the
+    // one state that matters stands out in a console a player is
+    // reading for the first time.
+    const broken = s.mode !== 0 || s.button < 0 || !s.reachable;
+    (broken ? console.warn : console.log)(
+      `[swing] SwingWeapon=${s.codes.join('+') || 'NOTHING'} button=${s.button} reachable=${s.reachable} `
+      + `mode=${s.modeName}(${s.mode}) threshold=${s.threshold} (~${s.travelPx}px of drag)`
+      + (s.mode !== 0 ? ' - only Vanilla tracks a drag' : '')
+      + (s.button < 0 ? ' - no mouse button holds the swing; the drag cannot start' : ''));
+  } catch { /* a readout never costs a boot */ }
+}
 
 /**
  * A8 - GetUnaryKey's COMBO ARM (:1670-1712) over the port's held-keys
